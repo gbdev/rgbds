@@ -1,10 +1,11 @@
-#include "asm.h"
-#include "lexer.h"
-#include "types.h"
-#include "main.h"
-#include "rpn.h"
-#include "asmy.h"
-#include "fstack.h"
+#include "asm/asm.h"
+#include "asm/lexer.h"
+#include "asm/types.h"
+#include "asm/main.h"
+#include "asm/rpn.h"
+#include "asm/asmy.h"
+#include "asm/fstack.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

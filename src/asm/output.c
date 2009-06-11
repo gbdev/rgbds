@@ -8,13 +8,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "asm.h"
-#include "output.h"
-#include "symbol.h"
-#include "mylink.h"
-#include "main.h"
-#include "rpn.h"
-#include "fstack.h"
+
+#include "asm/asm.h"
+#include "asm/output.h"
+#include "asm/symbol.h"
+#include "asm/mylink.h"
+#include "asm/main.h"
+#include "asm/rpn.h"
+#include "asm/fstack.h"
 
 #define SECTIONCHUNK	0x4000
 

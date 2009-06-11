@@ -1,5 +1,5 @@
-#ifndef TYPES_H
-#define TYPES_H 1
+#ifndef ASMOTOR_ASM_TYPES_H
+#define ASMOTOR_ASM_TYPES_H
 
 #if	defined(AMIGA) || defined(__GNUC__)
 #define	_MAX_PATH	512

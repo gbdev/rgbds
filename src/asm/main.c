@@ -10,10 +10,11 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
-#include "symbol.h"
-#include "fstack.h"
-#include "output.h"
-#include "main.h"
+
+#include "asm/symbol.h"
+#include "asm/fstack.h"
+#include "asm/output.h"
+#include "asm/main.h"
 
 int yyparse(void);
 void setuplex(void);

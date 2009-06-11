@@ -6,12 +6,12 @@
  *
  */
 
-#ifndef FSTACK_H
-#define FSTACK_H
+#ifndef ASMOTOR_ASM_FSTACK_H
+#define ASMOTOR_ASM_FSTACK_H
 
-#include "asm.h"
-#include "types.h"
-#include "lexer.h"
+#include "asm/asm.h"
+#include "asm/types.h"
+#include "asm/lexer.h"
 
 struct sContext {
 	YY_BUFFER_STATE FlexHandle;

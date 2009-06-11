@@ -1,7 +1,7 @@
-#include "symbol.h"
-#include "lexer.h"
-#include "rpn.h"
-#include "asmy.h"
+#include "asm/symbol.h"
+#include "asm/lexer.h"
+#include "asm/rpn.h"
+#include "asm/asmy.h"
 
 struct sLexInitString localstrings[] = {
 	{ "adc", T_Z80_ADC },

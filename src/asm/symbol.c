@@ -8,11 +8,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "asm.h"
-#include "symbol.h"
-#include "main.h"
-#include "mymath.h"
-#include "output.h"
+
+#include "asm/asm.h"
+#include "asm/symbol.h"
+#include "asm/main.h"
+#include "asm/mymath.h"
+#include "asm/output.h"
 
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff

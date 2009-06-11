@@ -20,7 +20,7 @@ rgbasm: $(obj)
 	gcc -Wall -o $@ $^ -lm
 
 .c.o:
-	gcc -Wall -DGAMEBOY -I. -I.. -Iinclude -Igameboy -g -c -o $@ $<
+	gcc -Wall -DGAMEBOY -I. -I.. -I../../include -Igameboy -g -c -o $@ $<
 
 .y.c:
 	bison -d -o $@ $^

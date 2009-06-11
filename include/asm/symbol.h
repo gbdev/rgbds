@@ -1,7 +1,7 @@
-#ifndef SYMBOL_H
-#define SYMBOL_H 1
+#ifndef ASMOTOR_SYMBOL_H
+#define ASMOTOR_SYMBOL_H
 
-#include "types.h"
+#include "asm/types.h"
 
 #define HASHSIZE 73
 #define MAXSYMLEN 256

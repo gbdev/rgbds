@@ -1,8 +1,8 @@
-#ifndef OUTPUT_H
-#define OUTPUT_H 1
+#ifndef ASMOTOR_ASM_OUTPUT_H
+#define ASMOTOR_ASM_OUTPUT_H
 
-#include "rpn.h"
-#include "types.h"
+#include "asm/rpn.h"
+#include "asm/types.h"
 
 struct Section {
 	char *pzName;

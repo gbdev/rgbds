@@ -1,5 +1,5 @@
-#ifndef	MAIN_H
-#define	MAIN_H
+#ifndef	ASMOTOR_MAIN_H
+#define	ASMOTOR_MAIN_H
 
 struct sOptions {
 	ULONG endian;

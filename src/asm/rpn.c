@@ -5,15 +5,15 @@
  *
  */
 
-#include "mylink.h"
-#include "types.h"
-#include "symbol.h"
-#include "asm.h"
-#include "main.h"
-#include "rpn.h"
-
 #include <stdio.h>
 #include <string.h>
+
+#include "asm/mylink.h"
+#include "asm/types.h"
+#include "asm/symbol.h"
+#include "asm/asm.h"
+#include "asm/main.h"
+#include "asm/rpn.h"
 
 void mergetwoexpressions(struct Expression *expr, struct Expression *src1,
 			 struct Expression *src2)

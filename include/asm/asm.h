@@ -6,14 +6,17 @@
  *
  */
 
-#ifndef ASM_H
-#define ASM_H
+#ifndef ASMOTOR_ASM_ASM_H
+#define ASMOTOR_ASM_ASM_H
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "types.h"
-#include "symbol.h"
+
+#include "asm/types.h"
+#include "asm/symbol.h"
+
 #include "localasm.h"
+
 #include "asmotor.h"
 
 extern SLONG nLineNo;

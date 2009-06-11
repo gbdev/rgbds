@@ -1,7 +1,7 @@
-#ifndef MATH_H
-#define MATH_H
+#ifndef ASMOTOR_ASM_MATH_H
+#define ASMOTOR_ASM_MATH_H
 
-#include "types.h"
+#include "asm/types.h"
 
 void math_DefinePI(void);
 void math_Print(SLONG i);

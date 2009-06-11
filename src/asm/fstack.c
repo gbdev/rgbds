@@ -8,11 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "symbol.h"
-#include "fstack.h"
-#include "types.h"
-#include "main.h"
-#include "lexer.h"
+
+#include "asm/symbol.h"
+#include "asm/fstack.h"
+#include "asm/types.h"
+#include "asm/main.h"
+#include "asm/lexer.h"
 
 /*
  * RGBAsm - FSTACK.C (FileStack routines)

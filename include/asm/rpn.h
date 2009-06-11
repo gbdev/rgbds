@@ -1,5 +1,5 @@
-#ifndef RPN_H
-#define RPN_H 1
+#ifndef ASMOTOR_ASM_RPN_H
+#define ASMOTOR_ASM_RPN_H
 
 struct Expression {
 	SLONG nVal;

@@ -1,8 +1,9 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef ASMOTOR_ASM_LEXER_H
+#define ASMOTOR_ASM_LEXER_H
 
-#include "types.h"
 #include <stdio.h>
+
+#include "asm/types.h"
 
 #define LEXHASHSIZE	512
 

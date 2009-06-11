@@ -1,10 +1,11 @@
-#include "asm.h"
-#include "symbol.h"
-#include "rpn.h"
-#include "asmy.h"
-#include "symbol.h"
-#include "main.h"
-#include "lexer.h"
+#include "asm/asm.h"
+#include "asm/symbol.h"
+#include "asm/rpn.h"
+#include "asm/asmy.h"
+#include "asm/symbol.h"
+#include "asm/main.h"
+#include "asm/lexer.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
