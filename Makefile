@@ -1,3 +1,5 @@
+cflags = -Wall -Iinclude -Iinclude/asm/gameboy -g
+
 all:
 
 rgbasm_obj := \
@@ -39,19 +41,19 @@ clean:
 	rm -rf rgbfix $(rgbfix_obj)
 
 rgbasm: $(rgbasm_obj)
-	gcc -Wall -o $@ $^ -lm
+	gcc $(cflags) -o $@ $^ -lm
 
 xlib: $(xlib_obj)
-	gcc -Wall -o $@ $^
+	gcc $(cflags) -o $@ $^
 
 xlink: $(xlink_obj)
-	gcc -Wall -o $@ $^
+	gcc $(cflags) -o $@ $^
 
 rgbfix: $(rgbfix_obj)
-	gcc -Wall -o $@ $^
+	gcc $(cflags) -o $@ $^
 
 .c.o:
-	gcc -Wall -DGAMEBOY -Iinclude -Iinclude/asm/gameboy -g -c -o $@ $<
+	gcc $(cflags) -DGAMEBOY -c -o $@ $<
 
 .y.c:
 	bison -d -o $@ $^
