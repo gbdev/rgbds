@@ -354,14 +354,14 @@ ULONG yylex(void)
 
 		s = pLexBuffer;
 		nOldFloatMask = nFloatLen = 0;
-		nFloatMask = tFloatingFirstChar[*s++];
+		nFloatMask = tFloatingFirstChar[(int) *s++];
 		while (nFloatMask && nFloatLen < nLexBufferLeng) {
 			nFloatLen += 1;
 			nOldFloatMask = nFloatMask;
 			if (nFloatLen == 1)
-				nFloatMask &= tFloatingSecondChar[*s++];
+				nFloatMask &= tFloatingSecondChar[(int) *s++];
 			else
-				nFloatMask &= tFloatingChars[*s++];
+				nFloatMask &= tFloatingChars[(int) *s++];
 		}
 
 		maxlen = nLexBufferLeng;

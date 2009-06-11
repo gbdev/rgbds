@@ -79,17 +79,16 @@ sLibrary *lib_ReadLib0(FILE * f, SLONG size)
 
 		while (size > 0) {
 			if (l == NULL) {
-				if ((l =
-				     (sLibrary *) malloc(sizeof(sLibrary))) ==
-				    NULL)
+				l = malloc(sizeof *l);
+				if (!l)
 					fatalerror("Out of memory");
 
 				first = l;
 			} else {
-				if ((l->pNext =
-				     (sLibrary *) malloc(sizeof(sLibrary))) ==
-				    NULL)
+				l->pNext = malloc(sizeof *l->pNext);
+				if (!l->pNext)
 					fatalerror("Out of memory");
+
 				l = l->pNext;
 			}
 
@@ -100,7 +99,7 @@ sLibrary *lib_ReadLib0(FILE * f, SLONG size)
 			size -= 2;
 			l->nByteLength = file_ReadLong(f);
 			size -= 4;
-			if (l->pData = (UBYTE *) malloc(l->nByteLength)) {
+			if ((l->pData = malloc(l->nByteLength))) {
 				fread(l->pData, sizeof(UBYTE), l->nByteLength,
 				      f);
 				size -= l->nByteLength;
@@ -119,7 +118,7 @@ sLibrary *lib_Read(char *filename)
 {
 	FILE *f;
 
-	if (f = fopen(filename, "rb")) {
+	if ((f = fopen(filename, "rb"))) {
 		SLONG size;
 		char ID[5];
 
@@ -157,7 +156,7 @@ BBOOL lib_Write(sLibrary * lib, char *filename)
 {
 	FILE *f;
 
-	if (f = fopen(filename, "wb")) {
+	if ((f = fopen(filename, "wb"))) {
 		fwrite("XLB0", sizeof(char), 4, f);
 		while (lib) {
 			file_WriteASCIIz(lib->tName, f);
@@ -207,18 +206,19 @@ sLibrary *lib_AddReplace(sLibrary * lib, char *filename)
 {
 	FILE *f;
 
-	if (f = fopen(filename, "rb")) {
+	if ((f = fopen(filename, "rb"))) {
 		sLibrary *module;
 		char truncname[MAXNAMELENGTH];
 
 		TruncateFileName(truncname, filename);
 
 		if ((module = lib_Find(lib, filename)) == NULL) {
-			if (module = (sLibrary *) malloc(sizeof(sLibrary))) {
-				module->pNext = lib;
-				lib = module;
-			} else
+			module = malloc(sizeof *module);
+			if (!module)
 				fatalerror("Out of memory");
+
+			module->pNext = lib;
+			lib = module;
 		} else {
 			/* Module already exists */
 			free(module->pData);
@@ -226,10 +226,11 @@ sLibrary *lib_AddReplace(sLibrary * lib, char *filename)
 
 		module->nByteLength = file_Length(f);
 		strcpy(module->tName, truncname);
-		if (module->pData = (UBYTE *) malloc(module->nByteLength)) {
-			fread(module->pData, sizeof(UBYTE), module->nByteLength,
-			      f);
-		}
+		module->pData = malloc(module->nByteLength);
+		if (!module->pData)
+			fatalerror("Out of memory");
+
+		fread(module->pData, sizeof(UBYTE), module->nByteLength, f);
 
 		printf("Added module '%s'\n", truncname);
 

@@ -72,34 +72,39 @@ void ProcessLinkfile(char *tzLinkfile)
 	FILE *pLinkfile;
 	enum eBlockType CurrentBlock = BLOCK_COMMENT;
 
-	if (pLinkfile = fopen(tzLinkfile, "rt")) {
-		while (!feof(pLinkfile)) {
-			char tzLine[256];
+	pLinkfile = fopen(tzLinkfile, "rt");
+	if (!pLinkfile) {
+		sprintf(temptext, "Unable to find linkfile '%s'\n", tzLinkfile);
+		fatalerror(temptext);
+	}
 
-			fscanf(pLinkfile, "%s\n", tzLine);
-			if (tzLine[0] != '#') {
-				if (tzLine[0] == '['
-				    && tzLine[strlen(tzLine) - 1] == ']') {
-					if (strcmpi("[objects]", tzLine) == 0)
-						CurrentBlock = BLOCK_OBJECTS;
-					else if (strcmpi("[output]", tzLine) ==
-						 0)
-						CurrentBlock = BLOCK_OUTPUT;
-					else if (strcmpi("[libraries]", tzLine)
-						 == 0)
-						CurrentBlock = BLOCK_LIBRARIES;
-					else if (strcmpi("[comment]", tzLine) ==
-						 0)
-						CurrentBlock = BLOCK_COMMENT;
-					else {
-						fclose(pLinkfile);
-						sprintf(temptext,
+	while (!feof(pLinkfile)) {
+		char tzLine[256];
+
+		fscanf(pLinkfile, "%s\n", tzLine);
+		if (tzLine[0] != '#') {
+			if (tzLine[0] == '['
+					&& tzLine[strlen(tzLine) - 1] == ']') {
+				if (strcmpi("[objects]", tzLine) == 0)
+					CurrentBlock = BLOCK_OBJECTS;
+				else if (strcmpi("[output]", tzLine) ==
+						0)
+					CurrentBlock = BLOCK_OUTPUT;
+				else if (strcmpi("[libraries]", tzLine)
+						== 0)
+					CurrentBlock = BLOCK_LIBRARIES;
+				else if (strcmpi("[comment]", tzLine) ==
+						0)
+					CurrentBlock = BLOCK_COMMENT;
+				else {
+					fclose(pLinkfile);
+					sprintf(temptext,
 							"Unknown block '%s'\n",
 							tzLine);
-						fatalerror(temptext);
-					}
-				} else {
-					switch (CurrentBlock) {
+					fatalerror(temptext);
+				}
+			} else {
+				switch (CurrentBlock) {
 					case BLOCK_COMMENT:
 						break;
 					case BLOCK_OBJECTS:
@@ -111,16 +116,12 @@ void ProcessLinkfile(char *tzLinkfile)
 					case BLOCK_OUTPUT:
 						out_Setname(tzLine);
 						break;
-					}
 				}
 			}
 		}
-		fclose(pLinkfile);
-	} else {
-		sprintf(temptext, "Unable to find linkfile '%s'\n", tzLinkfile);
-		fatalerror(temptext);
 	}
 
+	fclose(pLinkfile);
 }
 
 /*
@@ -179,7 +180,7 @@ int main(int argc, char *argv[])
 					int result;
 
 					result =
-					    sscanf(argv[argn - 1] + 2, "%x",
+					    sscanf(argv[argn - 1] + 2, "%lx",
 						   &fillchar);
 					if (!((result == EOF) || (result == 1))) {
 						fatalerror

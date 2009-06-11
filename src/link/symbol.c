@@ -74,34 +74,33 @@ SLONG sym_GetBank(char *tzName)
 
 void sym_CreateSymbol(char *tzName, SLONG nValue, SBYTE nBank)
 {
-	if (strcmp(tzName, "@") == 0) {
-	} else {
-		struct ISymbol **ppSym;
+	if (strcmp(tzName, "@") == 0)
+		return;
 
-		ppSym = &(tHash[calchash(tzName)]);
+	struct ISymbol **ppSym;
 
-		while (*ppSym) {
-			if (strcmp(tzName, (*ppSym)->pzName)) {
-				ppSym = &((*ppSym)->pNext);
-			} else {
-				if (nBank == -1)
-					return;
+	ppSym = &(tHash[calchash(tzName)]);
 
-				sprintf(temptext,
+	while (*ppSym) {
+		if (strcmp(tzName, (*ppSym)->pzName)) {
+			ppSym = &((*ppSym)->pNext);
+		} else {
+			if (nBank == -1)
+				return;
+
+			sprintf(temptext,
 					"Symbol '%s' defined more than once\n",
 					tzName);
-				fatalerror(temptext);
-			}
+			fatalerror(temptext);
 		}
+	}
 
-		if (*ppSym = (struct ISymbol *)malloc(sizeof(struct ISymbol))) {
-			if ((*ppSym)->pzName =
-			    (char *)malloc(strlen(tzName) + 1)) {
-				strcpy((*ppSym)->pzName, tzName);
-				(*ppSym)->nValue = nValue;
-				(*ppSym)->nBank = nBank;
-				(*ppSym)->pNext = NULL;
-			}
+	if ((*ppSym = malloc(sizeof **ppSym))) {
+		if (((*ppSym)->pzName = malloc(strlen(tzName) + 1))) {
+			strcpy((*ppSym)->pzName, tzName);
+			(*ppSym)->nValue = nValue;
+			(*ppSym)->nBank = nBank;
+			(*ppSym)->pNext = NULL;
 		}
 	}
 }

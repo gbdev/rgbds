@@ -154,7 +154,7 @@ SLONG calcrpn(struct sPatch * pPatch)
 			rpnpush(t & 0xFF);
 			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
 				sprintf(temptext,
-					"%s(%d) : Value must be in the HRAM area",
+					"%s(%ld) : Value must be in the HRAM area",
 					pPatch->pzFilename, pPatch->nLineNo);
 				fatalerror(temptext);
 			}
@@ -164,7 +164,7 @@ SLONG calcrpn(struct sPatch * pPatch)
 			rpnpush(t & 0xFF);
 			if (t < 0x2000 || t > 0x20FF) {
 				sprintf(temptext,
-					"%s(%d) : Value must be in the ZP area",
+					"%s(%ld) : Value must be in the ZP area",
 					pPatch->pzFilename, pPatch->nLineNo);
 				fatalerror(temptext);
 			}
@@ -212,7 +212,7 @@ SLONG calcrpn(struct sPatch * pPatch)
 				t = rpnpop();
 				if (t < low || t > high) {
 					sprintf(temptext,
-						"%s(%d) : Value must be in the range [%d;%d]",
+						"%s(%ld) : Value must be in the range [%ld;%ld]",
 						pPatch->pzFilename,
 						pPatch->nLineNo, low, high);
 					fatalerror(temptext);
@@ -249,7 +249,7 @@ void Patch(void)
 					    (UBYTE) t;
 				} else {
 					sprintf(temptext,
-						"%s(%d) : Value must be 8-bit\n",
+						"%s(%ld) : Value must be 8-bit\n",
 						pPatch->pzFilename,
 						pPatch->nLineNo);
 					fatalerror(temptext);
@@ -274,7 +274,7 @@ void Patch(void)
 					}
 				} else {
 					sprintf(temptext,
-						"%s(%d) : Value must be 16-bit\n",
+						"%s(%ld) : Value must be 16-bit\n",
 						pPatch->pzFilename,
 						pPatch->nLineNo);
 					fatalerror(temptext);

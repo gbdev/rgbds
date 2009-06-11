@@ -147,7 +147,7 @@ void AssignCodeSections(void)
 {
 	struct sSection *pSection;
 
-	while (pSection = FindLargestCode()) {
+	while ((pSection = FindLargestCode())) {
 		SLONG org;
 
 		if ((org = area_AllocCODEAnyBank(pSection->nByteSize)) != -1) {
@@ -173,48 +173,48 @@ void GBROM_AssignSections(void)
 	 */
 
 	for (i = 0; i < MAXBANKS; i += 1) {
-		if (BankFree[i] =
-		    (struct sFreeArea *)malloc(sizeof(struct sFreeArea))) {
-			if (i == 0) {
-				BankFree[i]->nOrg = 0x0000;
-				if (options & OPT_SMALL) {
-					BankFree[i]->nSize = 0x8000;
-					MaxAvail[i] = 0x8000;
-				} else {
-					BankFree[i]->nSize = 0x4000;
-					MaxAvail[i] = 0x4000;
-				}
-			} else if (i >= 1 && i <= 255) {
-				BankFree[i]->nOrg = 0x4000;
-				/*
-				 * Now, this shouldn't really be necessary... but for good
-				 * measure we'll do it anyway
-				 *
-				 */
-				if (options & OPT_SMALL) {
-					BankFree[i]->nSize = 0;
-					MaxAvail[i] = 0;
-				} else {
-					BankFree[i]->nSize = 0x4000;
-					MaxAvail[i] = 0x4000;
-				}
-			} else if (i == BANK_BSS) {
-				BankFree[i]->nOrg = 0xC000;
-				BankFree[i]->nSize = 0x2000;
-				MaxAvail[i] = 0x2000;
-			} else if (i == BANK_VRAM) {
-				BankFree[i]->nOrg = 0x8000;
-				BankFree[i]->nSize = 0x2000;
-				MaxAvail[i] = 0x2000;
-			} else if (i == BANK_HRAM) {
-				BankFree[i]->nOrg = 0xFF80;
-				BankFree[i]->nSize = 0x007F;
-				MaxAvail[i] = 0x007F;
-			}
-			BankFree[i]->pPrev = NULL;
-			BankFree[i]->pNext = NULL;
-		} else
+		BankFree[i] = malloc(sizeof *BankFree[i]);
+
+		if (!BankFree[i])
 			fatalerror("Out of memory!");
+
+		if (i == 0) {
+			BankFree[i]->nOrg = 0x0000;
+			if (options & OPT_SMALL) {
+				BankFree[i]->nSize = 0x8000;
+				MaxAvail[i] = 0x8000;
+			} else {
+				BankFree[i]->nSize = 0x4000;
+				MaxAvail[i] = 0x4000;
+			}
+		} else if (i >= 1 && i <= 255) {
+			BankFree[i]->nOrg = 0x4000;
+			/*
+			 * Now, this shouldn't really be necessary... but for
+			 * good measure we'll do it anyway.
+			 */
+			if (options & OPT_SMALL) {
+				BankFree[i]->nSize = 0;
+				MaxAvail[i] = 0;
+			} else {
+				BankFree[i]->nSize = 0x4000;
+				MaxAvail[i] = 0x4000;
+			}
+		} else if (i == BANK_BSS) {
+			BankFree[i]->nOrg = 0xC000;
+			BankFree[i]->nSize = 0x2000;
+			MaxAvail[i] = 0x2000;
+		} else if (i == BANK_VRAM) {
+			BankFree[i]->nOrg = 0x8000;
+			BankFree[i]->nSize = 0x2000;
+			MaxAvail[i] = 0x2000;
+		} else if (i == BANK_HRAM) {
+			BankFree[i]->nOrg = 0xFF80;
+			BankFree[i]->nSize = 0x007F;
+			MaxAvail[i] = 0x007F;
+		}
+		BankFree[i]->pPrev = NULL;
+		BankFree[i]->pNext = NULL;
 	}
 
 	/*
@@ -235,7 +235,7 @@ void GBROM_AssignSections(void)
 				    (&BankFree[BANK_BSS], pSection->nOrg,
 				     pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed BSS section at $%X",
+						"Unable to load fixed BSS section at $%lX",
 						pSection->nOrg);
 					fatalerror(temptext);
 				}
@@ -247,7 +247,7 @@ void GBROM_AssignSections(void)
 				    (&BankFree[BANK_HRAM], pSection->nOrg,
 				     pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed HRAM section at $%X",
+						"Unable to load fixed HRAM section at $%lX",
 						pSection->nOrg);
 					fatalerror(temptext);
 				}
@@ -259,7 +259,7 @@ void GBROM_AssignSections(void)
 				    (&BankFree[BANK_VRAM], pSection->nOrg,
 				     pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed VRAM section at $%X",
+						"Unable to load fixed VRAM section at $%lX",
 						pSection->nOrg);
 					fatalerror(temptext);
 				}
@@ -271,7 +271,7 @@ void GBROM_AssignSections(void)
 				    (&BankFree[BANK_HOME], pSection->nOrg,
 				     pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed HOME section at $%X",
+						"Unable to load fixed HOME section at $%lX",
 						pSection->nOrg);
 					fatalerror(temptext);
 				}
@@ -320,7 +320,7 @@ void GBROM_AssignSections(void)
 							    pSection->nOrg) {
 								sprintf
 								    (temptext,
-								     "Unable to load fixed CODE/DATA section at $%X in bank $%02X",
+								     "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
 								     pSection->
 								     nOrg,
 								     pSection->
@@ -333,7 +333,7 @@ void GBROM_AssignSections(void)
 							pSection->oAssigned = 1;
 						} else {
 							sprintf(temptext,
-								"Unable to load fixed CODE/DATA section at $%X in bank $%02X",
+								"Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
 								pSection->nOrg,
 								pSection->
 								nBank);
@@ -364,7 +364,7 @@ void GBROM_AssignSections(void)
 				     area_Alloc(&BankFree[pSection->nBank],
 						pSection->nByteSize)) == -1) {
 					sprintf(temptext,
-						"Unable to load fixed CODE/DATA section into bank $%02X",
+						"Unable to load fixed CODE/DATA section into bank $%02lX",
 						pSection->nBank);
 					fatalerror(temptext);
 				}
@@ -372,7 +372,7 @@ void GBROM_AssignSections(void)
 				DOMAXBANK(pSection->nBank);
 			} else {
 				sprintf(temptext,
-					"Unable to load fixed CODE/DATA section into bank $%02X",
+					"Unable to load fixed CODE/DATA section into bank $%02lX",
 					pSection->nBank);
 				fatalerror(temptext);
 			}
@@ -396,7 +396,7 @@ void GBROM_AssignSections(void)
 						      pSection->nByteSize)) ==
 			    -1) {
 				sprintf(temptext,
-					"Unable to load fixed CODE/DATA section at $%X into any bank",
+					"Unable to load fixed CODE/DATA section at $%lX into any bank",
 					pSection->nOrg);
 				fatalerror(temptext);
 			}
@@ -469,40 +469,41 @@ void PSION2_AssignSections(void)
 {
 	struct sSection *pSection;
 
-	if (BankFree[0] = (struct sFreeArea *)malloc(sizeof(struct sFreeArea))) {
-		BankFree[0]->nOrg = 0x0000;
-		BankFree[0]->nSize = 0x10000;
-		MaxAvail[0] = 0x10000;
-		BankFree[0]->pPrev = NULL;
-		BankFree[0]->pNext = NULL;
-
-		pSection = pSections;
-		while (pSection) {
-			if (pSection->oAssigned == 0
-			    && pSection->Type == SECT_CODE) {
-				pSection->oAssigned = 1;
-				pSection->nBank = 0;
-				pSection->nOrg = BankFree[0]->nOrg;
-				BankFree[0]->nOrg += pSection->nByteSize;
-				BankFree[0]->nSize -= pSection->nByteSize;
-			}
-			pSection = pSection->pNext;
-		}
-
-		pSection = pSections;
-		while (pSection) {
-			if (pSection->oAssigned == 0
-			    && pSection->Type == SECT_BSS) {
-				pSection->oAssigned = 1;
-				pSection->nBank = 0;
-				pSection->nOrg = BankFree[0]->nOrg;
-				BankFree[0]->nOrg += pSection->nByteSize;
-				BankFree[0]->nSize -= pSection->nByteSize;
-			}
-			pSection = pSection->pNext;
-		}
-	} else
+	BankFree[0] = malloc(sizeof *BankFree[0]);
+	if (!BankFree[0])
 		fatalerror("Out of memory!");
+
+	BankFree[0]->nOrg = 0x0000;
+	BankFree[0]->nSize = 0x10000;
+	MaxAvail[0] = 0x10000;
+	BankFree[0]->pPrev = NULL;
+	BankFree[0]->pNext = NULL;
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->oAssigned == 0
+				&& pSection->Type == SECT_CODE) {
+			pSection->oAssigned = 1;
+			pSection->nBank = 0;
+			pSection->nOrg = BankFree[0]->nOrg;
+			BankFree[0]->nOrg += pSection->nByteSize;
+			BankFree[0]->nSize -= pSection->nByteSize;
+		}
+		pSection = pSection->pNext;
+	}
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->oAssigned == 0
+				&& pSection->Type == SECT_BSS) {
+			pSection->oAssigned = 1;
+			pSection->nBank = 0;
+			pSection->nOrg = BankFree[0]->nOrg;
+			BankFree[0]->nOrg += pSection->nByteSize;
+			BankFree[0]->nSize -= pSection->nByteSize;
+		}
+		pSection = pSection->pNext;
+	}
 }
 
 void AssignSections(void)

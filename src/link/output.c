@@ -10,61 +10,65 @@
 char tzOutname[_MAX_PATH];
 BBOOL oOutput = 0;
 
-void writehome(FILE * f)
+void writehome(FILE *f)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
 
-	if (mem = (UBYTE *) malloc(MaxAvail[BANK_HOME])) {
-		if (fillchar != -1) {
-			memset(mem, fillchar, MaxAvail[BANK_HOME]);
-		}
-		MapfileInitBank(0);
+	mem = malloc(MaxAvail[BANK_HOME]);
+	if (!mem)
+		return;
 
-		pSect = pSections;
-		while (pSect) {
-			if (pSect->Type == SECT_HOME) {
-				memcpy(mem + pSect->nOrg, pSect->pData,
-				       pSect->nByteSize);
-				MapfileWriteSection(pSect);
-			}
-			pSect = pSect->pNext;
-		}
-
-		MapfileCloseBank(area_Avail(0));
-
-		fwrite(mem, 1, MaxAvail[BANK_HOME], f);
-		free(mem);
+	if (fillchar != -1) {
+		memset(mem, fillchar, MaxAvail[BANK_HOME]);
 	}
+	MapfileInitBank(0);
+
+	pSect = pSections;
+	while (pSect) {
+		if (pSect->Type == SECT_HOME) {
+			memcpy(mem + pSect->nOrg, pSect->pData,
+					pSect->nByteSize);
+			MapfileWriteSection(pSect);
+		}
+		pSect = pSect->pNext;
+	}
+
+	MapfileCloseBank(area_Avail(0));
+
+	fwrite(mem, 1, MaxAvail[BANK_HOME], f);
+	free(mem);
 }
 
-void writebank(FILE * f, SLONG bank)
+void writebank(FILE *f, SLONG bank)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
 
-	if (mem = (UBYTE *) malloc(MaxAvail[bank])) {
-		if (fillchar != -1) {
-			memset(mem, fillchar, MaxAvail[bank]);
-		}
+	mem = malloc(MaxAvail[bank]);
+	if (!mem)
+		return;
 
-		MapfileInitBank(bank);
-
-		pSect = pSections;
-		while (pSect) {
-			if (pSect->Type == SECT_CODE && pSect->nBank == bank) {
-				memcpy(mem + pSect->nOrg - 0x4000, pSect->pData,
-				       pSect->nByteSize);
-				MapfileWriteSection(pSect);
-			}
-			pSect = pSect->pNext;
-		}
-
-		MapfileCloseBank(area_Avail(bank));
-
-		fwrite(mem, 1, MaxAvail[bank], f);
-		free(mem);
+	if (fillchar != -1) {
+		memset(mem, fillchar, MaxAvail[bank]);
 	}
+
+	MapfileInitBank(bank);
+
+	pSect = pSections;
+	while (pSect) {
+		if (pSect->Type == SECT_CODE && pSect->nBank == bank) {
+			memcpy(mem + pSect->nOrg - 0x4000, pSect->pData,
+					pSect->nByteSize);
+			MapfileWriteSection(pSect);
+		}
+		pSect = pSect->pNext;
+	}
+
+	MapfileCloseBank(area_Avail(bank));
+
+	fwrite(mem, 1, MaxAvail[bank], f);
+	free(mem);
 }
 
 void out_Setname(char *tzOutputfile)
@@ -78,7 +82,7 @@ void GBROM_Output(void)
 	SLONG i;
 	FILE *f;
 
-	if (f = fopen(tzOutname, "wb")) {
+	if ((f = fopen(tzOutname, "wb"))) {
 		writehome(f);
 		for (i = 1; i <= MaxBankUsed; i += 1)
 			writebank(f, i);
@@ -104,7 +108,7 @@ void PSION2_Output(void)
 {
 	FILE *f;
 
-	if (f = fopen(tzOutname, "wb")) {
+	if ((f = fopen(tzOutname, "wb"))) {
 		struct sSection *pSect;
 		UBYTE *mem;
 		ULONG size = MaxAvail[0] - area_Avail(0);
@@ -115,7 +119,7 @@ void PSION2_Output(void)
 		fputc(size >> 8, f);
 		fputc(size, f);
 
-		if (mem = (UBYTE *) malloc(MaxAvail[0] - area_Avail(0))) {
+		if ((mem = malloc(MaxAvail[0] - area_Avail(0)))) {
 			MapfileInitBank(0);
 
 			pSect = pSections;

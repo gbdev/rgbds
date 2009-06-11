@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 					l = lib;
 
 					while (l) {
-						printf("%10d %s\n",
+						printf("%10ld %s\n",
 						       l->nByteLength,
 						       l->tName);
 						l = l->pNext;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 					if (l) {
 						FILE *f;
 
-						if (f = fopen(argv[argn], "wb")) {
+						if ((f = fopen(argv[argn], "wb"))) {
 							fwrite(l->pData,
 							       sizeof(UBYTE),
 							       l->nByteLength,
