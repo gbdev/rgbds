@@ -1,0 +1,33 @@
+RGBDS-linux
+
+Copyright (C) 1997  Carsten Sorensen <surfsmurf@matilde.demon.co.uk>
+Copyright (C) 1999  Justin Lloyd <jlloyd@imf.la> (?)
+Copyright (C) 2009  Vegard Nossum <vegard.nossum@gmail.com>
+
+
+What is RGBDS-linux?
+====================
+
+RGBDS-linux is a revival of the "Rednex GameBoy Development System" (RGBDS),
+a set of tools that allow you to compile your own games and programs for the
+Nintendo GameBoy.
+
+RGBDS consists of an assembler (rgbdasm), a linker (xlink), a library manager
+(xlib), and a tool for producing valid GameBoy ROM images (rgbfix).
+
+I _think_ this is the development history of RGBDS/ASMotor:
+
+	* Around 1997, Carsten Sorensen (AKA SurfSmurf) writes ASMotor as a
+	  general-purpose assembler/linker system for DOS/Win32
+
+	* Around 1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to
+	  read and produce Z80 assembly/machine code, and releases this
+	  version as RGBDS.
+
+This (RGBDS-linux) is an adaption of RGBDS intended for use on GNU/Linux
+systems. In short, we provide a project layout and user interface that is more
+familiar to GNU/Linux users. Note that we make no attempt to retain backwards
+compatibility with the original RGBDS, or even the possibility to run the
+programs on DOS/Win32.
+
+Also expect improvements and bugfixes to make their way into the source code.
