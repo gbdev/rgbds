@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
-#include "libwrap.h"
+
+#include "lib/types.h"
+#include "lib/libwrap.h"
 
 extern void fatalerror(char *s);
 

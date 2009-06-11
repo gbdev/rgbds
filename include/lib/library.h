@@ -1,7 +1,7 @@
-#ifndef LIBRARY_H
-#define LIBRARY_H
+#ifndef ASMOTOR_LIB_LIBRARY_H
+#define ASMOTOR_LIB_LIBRARY_H
 
-#include "libwrap.h"
+#include "lib/libwrap.h"
 
 extern sLibrary *lib_Read(char *filename);
 extern BBOOL lib_Write(sLibrary * lib, char *filename);

@@ -4,8 +4,9 @@
 #include <ctype.h>
 
 #include "asmotor.h"
-#include "types.h"
-#include "library.h"
+
+#include "lib/types.h"
+#include "lib/library.h"
 
 //      Quick and dirty...but it works
 #ifdef __GNUC__

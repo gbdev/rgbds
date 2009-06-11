@@ -1,7 +1,7 @@
-#ifndef LIBWRAP_H
-#define LIBWRAP_H
+#ifndef ASMOTOR_LIB_LIBWRAP_H
+#define ASMOTOR_LIB_LIBWRAP_H
 
-#include "types.h"
+#include "lib/types.h"
 
 #define MAXNAMELENGTH	256
 
