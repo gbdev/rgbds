@@ -67,7 +67,7 @@ SLONG sym_GetBank(char *tzName)
 		}
 	}
 
-	sprintf(temptext, "Unknown symbol '%s'");
+	sprintf(temptext, "Unknown symbol '%s'", tzName);
 	fatalerror(temptext);
 	return (0);
 }
