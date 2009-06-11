@@ -11,7 +11,7 @@
 
 #define	ASMOTOR
 
-#define	ASMOTOR_VERSION	"1.10"
+#define	ASMOTOR_VERSION	"1.10-linux" LOCALVERSION
 
 #define	ASM_VERSION		"1.08c"
 #define	LINK_VERSION	"1.06c"
