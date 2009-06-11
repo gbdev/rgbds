@@ -10,10 +10,10 @@
 #include "symbol.h"
 #include "asm.h"
 #include "main.h"
-#include	"rpn.h"
+#include "rpn.h"
 
-#include	<stdio.h>
-#include	<string.h>
+#include <stdio.h>
+#include <string.h>
 
 void mergetwoexpressions( struct Expression *expr, struct Expression *src1, struct Expression *src2 )
 {
@@ -25,7 +25,7 @@ void mergetwoexpressions( struct Expression *expr, struct Expression *src1, stru
    expr->isPCRel |= src2->isPCRel;
 }
 
-#define	joinexpr() mergetwoexpressions(expr,src1,src2)
+#define joinexpr() mergetwoexpressions(expr,src1,src2)
 
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
@@ -192,7 +192,7 @@ int	rpn_RangeCheck( struct Expression *expr, struct Expression *src, SLONG low, 
 	}
 }
 
-#ifdef	GAMEBOY
+#ifdef GAMEBOY
 void    rpn_CheckHRAM (struct Expression *expr, struct Expression *src)
 {
    *expr = *src;
@@ -200,7 +200,7 @@ void    rpn_CheckHRAM (struct Expression *expr, struct Expression *src)
 }
 #endif
 
-#ifdef	PCENGINE
+#ifdef PCENGINE
 void    rpn_CheckZP (struct Expression *expr, struct Expression *src)
 {
    *expr = *src;

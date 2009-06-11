@@ -1,15 +1,15 @@
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
-#include	"asmotor.h"
-#include	"types.h"
-#include	"library.h"
+#include "asmotor.h"
+#include "types.h"
+#include "library.h"
 
 //	Quick and dirty...but it works
 #ifdef __GNUC__
-#define	strcmpi	strcasecmp
+#define strcmpi	strcasecmp
 #endif
 
 /*

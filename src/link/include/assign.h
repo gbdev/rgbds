@@ -1,7 +1,7 @@
-#ifndef	ASSIGN_H
-#define	ASSIGN_H
+#ifndef ASSIGN_H
+#define ASSIGN_H
 
-#include	"types.h"
+#include "types.h"
 
 enum	eBankDefine
 {
@@ -11,7 +11,7 @@ enum	eBankDefine
 	BANK_HRAM
 };
 
-#define	MAXBANKS	259
+#define MAXBANKS	259
 
 extern	SLONG	area_Avail( SLONG bank );
 extern	void	AssignSections( void );

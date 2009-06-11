@@ -2,14 +2,14 @@
 #define LINK_H 1
 
 #if defined(AMIGA) || defined(__GNUC__)
-#define	_MAX_PATH	512
+#define _MAX_PATH	512
 #endif
 
-#include	"types.h"
+#include "types.h"
 
 extern	SLONG		options;
-#define	OPT_SMALL	0x01
-#define	OPT_SMART_C_LINK	0x02
+#define OPT_SMALL	0x01
+#define OPT_SMART_C_LINK	0x02
 
 enum	eRpnData
 {

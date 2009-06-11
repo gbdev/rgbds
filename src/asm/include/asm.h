@@ -9,12 +9,12 @@
 #ifndef ASM_H
 #define ASM_H
 
-#include	<stdlib.h>
-#include	<stdio.h>
-#include	"types.h"
-#include	"symbol.h"
-#include	"localasm.h"
-#include	"asmotor.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include "types.h"
+#include "symbol.h"
+#include "localasm.h"
+#include "asmotor.h"
 
 extern	SLONG	nLineNo;
 extern	ULONG	nTotalLines;
@@ -30,4 +30,4 @@ extern	UBYTE	oDontExpandStrings;
 #define MAXMACROARGS	9
 #define MAXINCPATHS		16
 
-#endif	//	ASM_H
+#endif //	ASM_H

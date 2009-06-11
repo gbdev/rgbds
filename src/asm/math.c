@@ -5,16 +5,16 @@
  *
  */
 
-#include	<math.h>
-#include	<stdio.h>
-#include	"types.h"
-#include	"mymath.h"
-#include	"symbol.h"
+#include <math.h>
+#include <stdio.h>
+#include "types.h"
+#include "mymath.h"
+#include "symbol.h"
 
-#define	fix2double(i)	((double)(i/65536.0))
-#define	double2fix(d)	((SLONG)(d*65536.0))
-#ifndef	PI
-#define	PI					(acos(-1))
+#define fix2double(i)	((double)(i/65536.0))
+#define double2fix(d)	((SLONG)(d*65536.0))
+#ifndef PI
+#define PI					(acos(-1))
 #endif
 
 /*

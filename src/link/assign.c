@@ -16,7 +16,7 @@ struct	sFreeArea	*BankFree[MAXBANKS];
 SLONG	MaxAvail[MAXBANKS];
 SLONG	MaxBankUsed;
 
-#define	DOMAXBANK(x)	{if( (x)>MaxBankUsed ) MaxBankUsed=(x);}
+#define DOMAXBANK(x)	{if( (x)>MaxBankUsed ) MaxBankUsed=(x);}
 
 SLONG	area_Avail( SLONG bank )
 {

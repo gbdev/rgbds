@@ -1,14 +1,14 @@
-#include	"asm.h"
-#include	"lexer.h"
-#include	"types.h"
-#include	"main.h"
-#include	"rpn.h"
-#include	"asmy.h"
-#include	"fstack.h"
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<ctype.h>
+#include "asm.h"
+#include "lexer.h"
+#include "types.h"
+#include "main.h"
+#include "rpn.h"
+#include "asmy.h"
+#include "fstack.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 struct sLexString
 {
@@ -18,10 +18,10 @@ struct sLexString
 	struct	sLexString	*pNext;
 };
 
-#define	pLexBuffer		(pCurrentBuffer->pBuffer)
-#define	nLexBufferLeng	(pCurrentBuffer->nBufferSize)
+#define pLexBuffer		(pCurrentBuffer->pBuffer)
+#define nLexBufferLeng	(pCurrentBuffer->nBufferSize)
 
-#define	SAFETYMARGIN	1024
+#define SAFETYMARGIN	1024
 
 extern ULONG symvaluetostring (char *dest, char *s);
 
@@ -37,9 +37,9 @@ ULONG	tFloatingChars[256];
 ULONG	nFloating;
 enum	eLexerState	lexerstate=LEX_STATE_NORMAL;
 
-#define	AtLineStart	pCurrentBuffer->oAtLineStart
+#define AtLineStart	pCurrentBuffer->oAtLineStart
 
-#ifdef	__GNUC__
+#ifdef __GNUC__
 void	strupr( char *s )
 {
 	while( *s )

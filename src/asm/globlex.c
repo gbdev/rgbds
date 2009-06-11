@@ -1,14 +1,14 @@
-#include	"asm.h"
-#include	"symbol.h"
-#include	"rpn.h"
-#include	"asmy.h"
-#include	"symbol.h"
-#include	"main.h"
-#include	"lexer.h"
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<math.h>
-#include	<string.h>
+#include "asm.h"
+#include "symbol.h"
+#include "rpn.h"
+#include "asmy.h"
+#include "symbol.h"
+#include "main.h"
+#include "lexer.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
 UBYTE	oDontExpandStrings=0;
 SLONG	nGBGfxID=-1;
@@ -308,7 +308,7 @@ struct sLexInitString staticstrings[] =
     "ds", T_POP_DS,
     NAME_DB, T_POP_DB,
     NAME_DW, T_POP_DW,
-#ifdef	NAME_DL
+#ifdef NAME_DL
     NAME_DL, T_POP_DL,
 #endif
     "section", T_POP_SECTION,
@@ -334,7 +334,7 @@ struct sLexInitString staticstrings[] =
     "endc", T_POP_ENDC,
 
     "bss", T_SECT_BSS,
-#if	defined(GAMEBOY) || defined(PCENGINE)
+#if defined(GAMEBOY) || defined(PCENGINE)
     "vram", T_SECT_VRAM,
 #endif
     "code", T_SECT_CODE,
@@ -346,7 +346,7 @@ struct sLexInitString staticstrings[] =
 
     NAME_RB, T_POP_RB,
     NAME_RW, T_POP_RW,
-#ifdef	NAME_RL
+#ifdef NAME_RL
     NAME_RL, T_POP_RL,
 #endif
     "equ", T_POP_EQU,

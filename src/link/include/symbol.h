@@ -1,7 +1,7 @@
-#ifndef	SYMBOL_H
-#define	SYMBOL_H
+#ifndef SYMBOL_H
+#define SYMBOL_H
 
-#include	"types.h"
+#include "types.h"
 
 void	sym_Init( void );
 void	sym_CreateSymbol( char *tzName, SLONG nValue, SBYTE nBank );

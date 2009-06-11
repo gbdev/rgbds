@@ -1,10 +1,10 @@
-#ifndef	LEXER_H
-#define	LEXER_H
+#ifndef LEXER_H
+#define LEXER_H
 
-#include	"types.h"
-#include	<stdio.h>
+#include "types.h"
+#include <stdio.h>
 
-#define	LEXHASHSIZE	512
+#define LEXHASHSIZE	512
 
 struct	sLexInitString
 {
@@ -32,8 +32,8 @@ enum	eLexerState
 	LEX_STATE_MACROARGS
 };
 
-#define	INITIAL			0
-#define	macroarg		3
+#define INITIAL			0
+#define macroarg		3
 
 typedef	struct	yy_buffer_state	*YY_BUFFER_STATE;
 
@@ -60,7 +60,7 @@ extern	void	yyunputbytes( ULONG count );
 
 extern	YY_BUFFER_STATE		pCurrentBuffer;
 
-#ifdef	__GNUC__
+#ifdef __GNUC__
 extern	void	strupr( char *s );
 extern	void	strlwr( char *s );
 #endif

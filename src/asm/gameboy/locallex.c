@@ -1,6 +1,6 @@
 #include "symbol.h"
-#include	"lexer.h"
-#include	"rpn.h"
+#include "lexer.h"
+#include "rpn.h"
 #include "asmy.h"
 
 struct sLexInitString localstrings[] =

@@ -1,8 +1,8 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H 1
 
-#include	"rpn.h"
-#include	"types.h"
+#include "rpn.h"
+#include "types.h"
 
 struct Section
 {

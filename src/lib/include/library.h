@@ -1,7 +1,7 @@
-#ifndef	LIBRARY_H
-#define	LIBRARY_H
+#ifndef LIBRARY_H
+#define LIBRARY_H
 
-#include	"libwrap.h"
+#include "libwrap.h"
 
 extern	sLibrary	*lib_Read( char *filename );
 extern	BBOOL		lib_Write( sLibrary *lib, char *filename );

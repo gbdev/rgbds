@@ -18,7 +18,7 @@
 int     yyparse (void);
 void    setuplex (void);
 
-#ifdef	AMIGA
+#ifdef AMIGA
 __near long __stack = 65536L;
 
 #endif

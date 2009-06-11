@@ -66,7 +66,7 @@ typedef void *pointer;
 typedef char *pointer;
 #endif
 
-#define	NULL	0
+#define NULL	0
 
 /* Different portions of Emacs need to call different versions of
    malloc.  The Emacs executable needs alloca to call xmalloc, because
@@ -86,7 +86,7 @@ typedef char *pointer;
 extern pointer malloc ();
 	And added the following line:
  */
-#include	<stdlib.h>
+#include <stdlib.h>
 
 /* Define STACK_DIRECTION if you know the direction of stack
    growth for your system; otherwise it will be automatically
@@ -97,17 +97,17 @@ extern pointer malloc ();
    STACK_DIRECTION = 0 => direction of growth unknown  */
 
 #ifndef STACK_DIRECTION
-#define	STACK_DIRECTION	0	/* Direction unknown.  */
+#define STACK_DIRECTION	0	/* Direction unknown.  */
 #endif
 
 #if STACK_DIRECTION != 0
 
-#define	STACK_DIR	STACK_DIRECTION	/* Known at compile-time.  */
+#define STACK_DIR	STACK_DIRECTION	/* Known at compile-time.  */
 
 #else /* STACK_DIRECTION == 0; need run-time code.  */
 
 static int stack_dir;		/* 1 or -1 once known.  */
-#define	STACK_DIR	stack_dir
+#define STACK_DIR	stack_dir
 
 static void
 find_stack_direction ()
@@ -140,8 +140,8 @@ find_stack_direction ()
    It is very important that sizeof(header) agree with malloc
    alignment chunk size.  The following default should work okay.  */
 
-#ifndef	ALIGN_SIZE
-#define	ALIGN_SIZE	sizeof(double)
+#ifndef ALIGN_SIZE
+#define ALIGN_SIZE	sizeof(double)
 #endif
 
 typedef union hdr

@@ -5,18 +5,18 @@
  *
  */
 
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	"asm.h"
-#include	"output.h"
-#include	"symbol.h"
-#include	"mylink.h"
-#include	"main.h"
-#include	"rpn.h"
-#include	"fstack.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "asm.h"
+#include "output.h"
+#include "symbol.h"
+#include "mylink.h"
+#include "main.h"
+#include "rpn.h"
+#include "fstack.h"
 
-#define		SECTIONCHUNK	0x4000
+#define SECTIONCHUNK	0x4000
 
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile

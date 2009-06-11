@@ -1,7 +1,7 @@
-#ifndef	MAIN_H
-#define	MAIN_H
+#ifndef MAIN_H
+#define MAIN_H
 
-#include	"types.h"
+#include "types.h"
 
 extern	void	PrintUsage( void );
 extern	void	fatalerror( char *s );

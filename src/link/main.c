@@ -1,20 +1,20 @@
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include	"object.h"
-#include	"output.h"
-#include	"assign.h"
-#include	"patch.h"
-#include	"asmotor.h"
-#include	"mylink.h"
-#include	"mapfile.h"
-#include	"main.h"
-#include	"library.h"
+#include "object.h"
+#include "output.h"
+#include "assign.h"
+#include "patch.h"
+#include "asmotor.h"
+#include "mylink.h"
+#include "mapfile.h"
+#include "main.h"
+#include "library.h"
 
 //	Quick and dirty...but it works
 #ifdef __GNUC__
-#define	strcmpi	strcasecmp
+#define strcmpi	strcasecmp
 #endif
 
 enum	eBlockType

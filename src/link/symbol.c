@@ -1,9 +1,9 @@
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	"main.h"
-#include	"patch.h"
-#include	"types.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "main.h"
+#include "patch.h"
+#include "types.h"
 
 #define HASHSIZE 73
 

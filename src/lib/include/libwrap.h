@@ -1,9 +1,9 @@
-#ifndef	LIBWRAP_H
-#define	LIBWRAP_H
+#ifndef LIBWRAP_H
+#define LIBWRAP_H
 
-#include	"types.h"
+#include "types.h"
 
-#define	MAXNAMELENGTH	256
+#define MAXNAMELENGTH	256
 
 struct	LibraryWrapper
 {

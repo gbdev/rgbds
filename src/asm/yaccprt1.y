@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include	<ctype.h>
+#include <ctype.h>
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
@@ -327,7 +327,7 @@ void	if_skip_to_endc( void )
 }
 
 
-#ifdef	PCENGINE
+#ifdef PCENGINE
 ULONG	ZP( struct Expression *expr )
 {
 	return( (!rpn_isReloc(expr)) && (expr->nVal>0x1FFF) && (expr->nVal<0x2100) );
