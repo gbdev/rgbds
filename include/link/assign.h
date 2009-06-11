@@ -1,7 +1,7 @@
-#ifndef ASSIGN_H
-#define ASSIGN_H
+#ifndef ASMOTOR_LINK_ASSIGN_H
+#define ASMOTOR_LINK_ASSIGN_H
 
-#include "types.h"
+#include "link/types.h"
 
 enum eBankDefine {
 	BANK_HOME = 0,

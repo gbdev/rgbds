@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mylink.h"
-#include "main.h"
+#include "link/mylink.h"
+#include "link/main.h"
 
 struct sSymbol **tSymbols;
 struct sSection *pSections = NULL;

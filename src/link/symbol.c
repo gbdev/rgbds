@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "main.h"
-#include "patch.h"
-#include "types.h"
+
+#include "link/main.h"
+#include "link/patch.h"
+#include "link/types.h"
 
 #define HASHSIZE 73
 

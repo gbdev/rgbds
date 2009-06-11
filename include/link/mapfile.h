@@ -1,5 +1,5 @@
-#ifndef	MAPFILE_H
-#define	MAPFILE_H
+#ifndef	ASMOTOR_LINK_MAPFILE_H
+#define	ASMOTOR_LINK_MAPFILE_H
 
 extern void SetMapfileName(char *name);
 extern void SetSymfileName(char *name);

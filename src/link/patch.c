@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mylink.h"
-#include "symbol.h"
-#include "main.h"
+#include "link/mylink.h"
+#include "link/symbol.h"
+#include "link/main.h"
 
 struct sSection *pCurrentSection;
 SLONG rpnstack[256];

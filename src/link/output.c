@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mylink.h"
-#include "mapfile.h"
-#include "main.h"
-#include "assign.h"
+#include "link/mylink.h"
+#include "link/mapfile.h"
+#include "link/main.h"
+#include "link/assign.h"
 
 char tzOutname[_MAX_PATH];
 BBOOL oOutput = 0;

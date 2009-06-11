@@ -3,9 +3,10 @@
 #include <string.h>
 
 #include "asmotor.h"
-#include "main.h"
-#include "mylink.h"
-#include "assign.h"
+
+#include "link/main.h"
+#include "link/mylink.h"
+#include "link/assign.h"
 
 FILE *mf = NULL;
 FILE *sf = NULL;

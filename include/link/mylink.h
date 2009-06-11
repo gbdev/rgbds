@@ -1,11 +1,11 @@
-#ifndef LINK_H
-#define LINK_H 1
+#ifndef ASMOTOR_LINK_LINK_H
+#define ASMOTOR_LINK_LINK_H
 
 #if defined(AMIGA) || defined(__GNUC__)
 #define _MAX_PATH	512
 #endif
 
-#include "types.h"
+#include "link/types.h"
 
 extern SLONG options;
 #define OPT_SMALL	0x01

@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
-#include "mylink.h"
-#include "main.h"
+
+#include "link/types.h"
+#include "link/mylink.h"
+#include "link/main.h"
 
 static BBOOL symboldefined(char *name)
 {

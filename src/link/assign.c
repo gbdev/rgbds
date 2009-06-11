@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mylink.h"
-#include "main.h"
-#include "symbol.h"
-#include "assign.h"
+
+#include "link/mylink.h"
+#include "link/main.h"
+#include "link/symbol.h"
+#include "link/assign.h"
 
 struct sFreeArea {
 	SLONG nOrg;

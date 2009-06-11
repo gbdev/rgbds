@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "object.h"
-#include "output.h"
-#include "assign.h"
-#include "patch.h"
 #include "asmotor.h"
-#include "mylink.h"
-#include "mapfile.h"
-#include "main.h"
-#include "library.h"
+
+#include "link/object.h"
+#include "link/output.h"
+#include "link/assign.h"
+#include "link/patch.h"
+#include "link/mylink.h"
+#include "link/mapfile.h"
+#include "link/main.h"
+#include "link/library.h"
 
 //      Quick and dirty...but it works
 #ifdef __GNUC__

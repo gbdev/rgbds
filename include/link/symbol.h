@@ -1,7 +1,7 @@
-#ifndef SYMBOL_H
-#define SYMBOL_H
+#ifndef ASMOTOR_LINK_SYMBOL_H
+#define ASMOTOR_LINK_SYMBOL_H
 
-#include "types.h"
+#include "link/types.h"
 
 void sym_Init(void);
 void sym_CreateSymbol(char *tzName, SLONG nValue, SBYTE nBank);

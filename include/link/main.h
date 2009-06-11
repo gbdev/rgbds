@@ -1,7 +1,7 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef ASMOTOR_LINK_MAIN_H
+#define ASMOTOR_LINK_MAIN_H
 
-#include "types.h"
+#include "link/types.h"
 
 extern void PrintUsage(void);
 extern void fatalerror(char *s);
