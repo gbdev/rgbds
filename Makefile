@@ -1,11 +1,60 @@
 all:
-	make -C src/asm rgbasm
-	make -C src/lib xlib
-	make -C src/link xlink
-	make -C src/rgbfix rgbfix
+
+rgbasm_obj := \
+	src/asm/alloca.o \
+	src/asm/asmy.o \
+	src/asm/fstack.o \
+	src/asm/globlex.o \
+	src/asm/lexer.o \
+	src/asm/main.o \
+	src/asm/math.o \
+	src/asm/output.o \
+	src/asm/rpn.o \
+	src/asm/symbol.o \
+	src/asm/gameboy/locallex.o
+
+xlib_obj := \
+	src/lib/library.o \
+	src/lib/main.o
+
+xlink_obj := \
+	src/link/assign.o \
+	src/link/library.o \
+	src/link/main.o \
+	src/link/mapfile.o \
+	src/link/object.o \
+	src/link/output.o \
+	src/link/patch.o \
+	src/link/symbol.o
+
+rgbfix_obj := \
+	src/rgbfix/main.o
+
+all: rgbasm xlib xlink rgbfix
 
 clean:
-	make -C src/asm clean
-	make -C src/lib clean
-	make -C src/link clean
-	make -C src/rgbfix clean
+	rm -rf rgbasm $(rgbasm_obj)
+	rm -rf xlib $(xlib_obj)
+	rm -rf xlink $(xlink_obj)
+	rm -rf rgbfix $(rgbfix_obj)
+
+rgbasm: $(rgbasm_obj)
+	gcc -Wall -o $@ $^ -lm
+
+xlib: $(xlib_obj)
+	gcc -Wall -o $@ $^
+
+xlink: $(xlink_obj)
+	gcc -Wall -o $@ $^
+
+rgbfix: $(rgbfix_obj)
+	gcc -Wall -o $@ $^
+
+.c.o:
+	gcc -Wall -DGAMEBOY -Iinclude -Iinclude/asm/gameboy -g -c -o $@ $<
+
+.y.c:
+	bison -d -o $@ $^
+
+src/asm/asmy.y: src/asm/yaccprt1.y src/asm/gameboy/yaccprt2.y src/asm/yaccprt3.y src/asm/gameboy/yaccprt4.y
+	cat $^ > $@

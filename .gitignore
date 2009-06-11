@@ -1,3 +1,9 @@
+# programs
+rgbasm
+rgbfix
+xlib
+xlink
+
 *.o
 
 # indent backup files
