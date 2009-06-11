@@ -25,30 +25,27 @@
  *
  */
 
-void    out_SetCurrentSection (struct Section *pSect);
+void out_SetCurrentSection(struct Section *pSect);
 
-struct	Patch
-{
-	char	tzFilename[_MAX_PATH + 1];
-	ULONG	nLine;
-	ULONG	nOffset;
-	UBYTE	nType;
-	ULONG	nRPNSize;
-	UBYTE	*pRPN;
-	struct	Patch	*pNext;
+struct Patch {
+	char tzFilename[_MAX_PATH + 1];
+	ULONG nLine;
+	ULONG nOffset;
+	UBYTE nType;
+	ULONG nRPNSize;
+	UBYTE *pRPN;
+	struct Patch *pNext;
 };
 
-struct PatchSymbol
-{
-	ULONG	ID;
-	struct	sSymbol		*pSymbol;
-	struct	PatchSymbol	*pNext;
+struct PatchSymbol {
+	ULONG ID;
+	struct sSymbol *pSymbol;
+	struct PatchSymbol *pNext;
 };
 
-struct	SectionStackEntry
-{
-	struct	Section	*pSection;
-	struct	SectionStackEntry	*pNext;
+struct SectionStackEntry {
+	struct Section *pSection;
+	struct SectionStackEntry *pNext;
 };
 
 /*
@@ -58,11 +55,10 @@ struct	SectionStackEntry
  *
  */
 
-struct	Section		*pSectionList=NULL,
-			   		*pCurrentSection=NULL;
-struct	PatchSymbol *pPatchSymbols=NULL;
-char	tzObjectname[_MAX_PATH];
-struct	SectionStackEntry	*pSectionStack=NULL;
+struct Section *pSectionList = NULL, *pCurrentSection = NULL;
+struct PatchSymbol *pPatchSymbols = NULL;
+char tzObjectname[_MAX_PATH];
+struct SectionStackEntry *pSectionStack = NULL;
 
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile
@@ -71,33 +67,31 @@ struct	SectionStackEntry	*pSectionStack=NULL;
  *
  */
 
-void	out_PushSection( void )
+void out_PushSection(void)
 {
-	struct	SectionStackEntry	*pSect;
+	struct SectionStackEntry *pSect;
 
-	if( (pSect=(struct SectionStackEntry *)malloc(sizeof(struct SectionStackEntry)))!=NULL )
-	{
-		pSect->pSection=pCurrentSection;
-		pSect->pNext=pSectionStack;
-		pSectionStack=pSect;
-	}
-	else
-		fatalerror( "No memory for section stack" );
+	if ((pSect =
+	     (struct SectionStackEntry *)
+	     malloc(sizeof(struct SectionStackEntry))) != NULL) {
+		pSect->pSection = pCurrentSection;
+		pSect->pNext = pSectionStack;
+		pSectionStack = pSect;
+	} else
+		fatalerror("No memory for section stack");
 }
 
-void	out_PopSection( void )
+void out_PopSection(void)
 {
-	if( pSectionStack )
-	{
-		struct	SectionStackEntry	*pSect;
+	if (pSectionStack) {
+		struct SectionStackEntry *pSect;
 
-		pSect=pSectionStack;
+		pSect = pSectionStack;
 		out_SetCurrentSection(pSect->pSection);
-		pSectionStack=pSect->pNext;
-		free( pSect );
-	}
-	else
-		fatalerror( "No entries in the section stack" );
+		pSectionStack = pSect->pNext;
+		free(pSect);
+	} else
+		fatalerror("No entries in the section stack");
 }
 
 /*
@@ -107,17 +101,16 @@ void	out_PopSection( void )
  *
  */
 
-ULONG   countsymbols( void )
+ULONG countsymbols(void)
 {
-	struct	PatchSymbol	*pSym;
-	ULONG	count=0;
+	struct PatchSymbol *pSym;
+	ULONG count = 0;
 
-	pSym=pPatchSymbols;
+	pSym = pPatchSymbols;
 
-	while( pSym )
-	{
-		count+=1;
-		pSym=pSym->pNext;
+	while (pSym) {
+		count += 1;
+		pSym = pSym->pNext;
 	}
 
 	return (count);
@@ -130,20 +123,19 @@ ULONG   countsymbols( void )
  *
  */
 
-ULONG   countsections( void )
+ULONG countsections(void)
 {
-	struct	Section	*pSect;
-	ULONG	count=0;
+	struct Section *pSect;
+	ULONG count = 0;
 
-	pSect=pSectionList;
+	pSect = pSectionList;
 
-	while( pSect )
-	{
-		count+=1;
-		pSect=pSect->pNext;
+	while (pSect) {
+		count += 1;
+		pSect = pSect->pNext;
 	}
 
-	return( count );
+	return (count);
 }
 
 /*
@@ -153,19 +145,18 @@ ULONG   countsections( void )
  *
  */
 
-ULONG	countpatches( struct Section *pSect )
+ULONG countpatches(struct Section * pSect)
 {
-	struct	Patch	*pPatch;
-	ULONG	r=0;
+	struct Patch *pPatch;
+	ULONG r = 0;
 
-	pPatch=pSect->pPatches;
-	while( pPatch )
-	{
-		r+=1;
-		pPatch=pPatch->pNext;
+	pPatch = pSect->pPatches;
+	while (pPatch) {
+		r += 1;
+		pPatch = pPatch->pNext;
 	}
 
-	return( r );
+	return (r);
 }
 
 /*
@@ -175,12 +166,12 @@ ULONG	countpatches( struct Section *pSect )
  *
  */
 
-void	fputlong( ULONG i, FILE * f )
+void fputlong(ULONG i, FILE * f)
 {
-	fputc( i, f);
-	fputc( i>>8, f );
-	fputc( i>>16, f );
-	fputc( i>>24, f );
+	fputc(i, f);
+	fputc(i >> 8, f);
+	fputc(i >> 16, f);
+	fputc(i >> 24, f);
 }
 
 /*
@@ -190,11 +181,11 @@ void	fputlong( ULONG i, FILE * f )
  *
  */
 
-void	fputstring( char *s, FILE * f )
+void fputstring(char *s, FILE * f)
 {
-	while( *s )
-	fputc( *s++, f );
-	fputc( 0, f );
+	while (*s)
+		fputc(*s++, f);
+	fputc(0, f);
 }
 
 /*
@@ -204,23 +195,22 @@ void	fputstring( char *s, FILE * f )
  *
  */
 
-ULONG	getsectid( struct Section *pSect )
+ULONG getsectid(struct Section *pSect)
 {
-	struct	Section	*sec;
-	ULONG	ID = 0;
+	struct Section *sec;
+	ULONG ID = 0;
 
-	sec=pSectionList;
+	sec = pSectionList;
 
-	while( sec )
-	{
-		if( sec==pSect)
-			return( ID );
-		ID+=1;
-		sec=sec->pNext;
+	while (sec) {
+		if (sec == pSect)
+			return (ID);
+		ID += 1;
+		sec = sec->pNext;
 	}
 
-	fatalerror( "INTERNAL: Unknown section" );
-	return( (ULONG)-1 );
+	fatalerror("INTERNAL: Unknown section");
+	return ((ULONG) - 1);
 }
 
 /*
@@ -230,14 +220,14 @@ ULONG	getsectid( struct Section *pSect )
  *
  */
 
-void    writepatch( struct Patch *pPatch, FILE * f )
+void writepatch(struct Patch *pPatch, FILE * f)
 {
-	fputstring( pPatch->tzFilename, f );
-	fputlong( pPatch->nLine, f );
-	fputlong( pPatch->nOffset, f );
-	fputc( pPatch->nType, f );
-	fputlong( pPatch->nRPNSize, f );
-	fwrite( pPatch->pRPN, 1, pPatch->nRPNSize, f );
+	fputstring(pPatch->tzFilename, f);
+	fputlong(pPatch->nLine, f);
+	fputlong(pPatch->nOffset, f);
+	fputc(pPatch->nType, f);
+	fputlong(pPatch->nRPNSize, f);
+	fwrite(pPatch->pRPN, 1, pPatch->nRPNSize, f);
 }
 
 /*
@@ -247,28 +237,26 @@ void    writepatch( struct Patch *pPatch, FILE * f )
  *
  */
 
-void    writesection( struct Section *pSect, FILE * f )
+void writesection(struct Section *pSect, FILE * f)
 {
 	//printf( "SECTION: %s, ID: %d\n", pSect->pzName, getsectid(pSect) );
 
-	fputlong (pSect->nPC, f);
-	fputc (pSect->nType, f);
-	fputlong (pSect->nOrg, f);		//      RGB1 addition
+	fputlong(pSect->nPC, f);
+	fputc(pSect->nType, f);
+	fputlong(pSect->nOrg, f);	//      RGB1 addition
 
-	fputlong (pSect->nBank, f);		//      RGB1 addition
+	fputlong(pSect->nBank, f);	//      RGB1 addition
 
-	if( (pSect->nType==SECT_HOME)
-	||	(pSect->nType==SECT_CODE) )
-	{
+	if ((pSect->nType == SECT_HOME)
+	    || (pSect->nType == SECT_CODE)) {
 		struct Patch *pPatch;
 
-		fwrite (pSect->tData, 1, pSect->nPC, f);
-		fputlong (countpatches (pSect), f);
+		fwrite(pSect->tData, 1, pSect->nPC, f);
+		fputlong(countpatches(pSect), f);
 
 		pPatch = pSect->pPatches;
-		while (pPatch)
-		{
-			writepatch (pPatch, f);
+		while (pPatch) {
+			writepatch(pPatch, f);
 			pPatch = pPatch->pNext;
 		}
 	}
@@ -281,54 +269,46 @@ void    writesection( struct Section *pSect, FILE * f )
  *
  */
 
-void    writesymbol (struct sSymbol *pSym, FILE * f)
+void writesymbol(struct sSymbol *pSym, FILE * f)
 {
-	char    symname[MAXSYMLEN * 2 + 1];
-	ULONG   type;
-	ULONG   offset;
-	SLONG   sectid;
+	char symname[MAXSYMLEN * 2 + 1];
+	ULONG type;
+	ULONG offset;
+	SLONG sectid;
 
-	if (pSym->nType & SYMF_IMPORT)
-	{
+	if (pSym->nType & SYMF_IMPORT) {
 		/* Symbol should be imported */
-		strcpy (symname, pSym->tzName);
-		offset=0;
-		sectid=-1;
+		strcpy(symname, pSym->tzName);
+		offset = 0;
+		sectid = -1;
 		type = SYM_IMPORT;
-	}
-	else if (pSym->nType & SYMF_EXPORT)
-	{
+	} else if (pSym->nType & SYMF_EXPORT) {
 		/* Symbol should be exported */
-		strcpy (symname, pSym->tzName);
+		strcpy(symname, pSym->tzName);
 		type = SYM_EXPORT;
 		offset = pSym->nValue;
 		if (pSym->nType & SYMF_CONST)
 			sectid = -1;
 		else
-			sectid = getsectid (pSym->pSection);
-	}
-	else
-	{
+			sectid = getsectid(pSym->pSection);
+	} else {
 		/* Symbol is local to this file */
-		if (pSym->nType & SYMF_LOCAL)
-		{
-			strcpy (symname, pSym->pScope->tzName);
-			strcat (symname, pSym->tzName);
-		}
-		else
-			strcpy (symname, pSym->tzName);
+		if (pSym->nType & SYMF_LOCAL) {
+			strcpy(symname, pSym->pScope->tzName);
+			strcat(symname, pSym->tzName);
+		} else
+			strcpy(symname, pSym->tzName);
 		type = SYM_LOCAL;
 		offset = pSym->nValue;
-		sectid = getsectid (pSym->pSection);
+		sectid = getsectid(pSym->pSection);
 	}
 
-	fputstring (symname, f);
-	fputc (type, f);
+	fputstring(symname, f);
+	fputc(type, f);
 
-	if (type != SYM_IMPORT)
-	{
-		fputlong (sectid, f);
-		fputlong (offset, f);
+	if (type != SYM_IMPORT) {
+		fputlong(sectid, f);
+		fputlong(offset, f);
 	}
 }
 
@@ -339,35 +319,33 @@ void    writesymbol (struct sSymbol *pSym, FILE * f)
  *
  */
 
-ULONG   addsymbol (struct sSymbol *pSym)
+ULONG addsymbol(struct sSymbol *pSym)
 {
-    struct PatchSymbol *pPSym,
-          **ppPSym;
-    ULONG   ID = 0;
+	struct PatchSymbol *pPSym, **ppPSym;
+	ULONG ID = 0;
 
-    pPSym = pPatchSymbols;
-    ppPSym = &(pPatchSymbols);
+	pPSym = pPatchSymbols;
+	ppPSym = &(pPatchSymbols);
 
-    while (pPSym)
-    {
+	while (pPSym) {
 		if (pSym == pPSym->pSymbol)
-		    return (pPSym->ID);
+			return (pPSym->ID);
 		ppPSym = &(pPSym->pNext);
 		pPSym = pPSym->pNext;
 		ID += 1;
-    }
+	}
 
-    if( (*ppPSym=pPSym=(struct PatchSymbol *)malloc(sizeof(struct PatchSymbol)))!=NULL )
-    {
+	if ((*ppPSym = pPSym =
+	     (struct PatchSymbol *)malloc(sizeof(struct PatchSymbol))) !=
+	    NULL) {
 		pPSym->pNext = NULL;
 		pPSym->pSymbol = pSym;
 		pPSym->ID = ID;
 		return (ID);
-    }
-    else
-		fatalerror ("No memory for patchsymbol");
+	} else
+		fatalerror("No memory for patchsymbol");
 
-    return ((ULONG) -1);
+	return ((ULONG) - 1);
 }
 
 /*
@@ -377,22 +355,20 @@ ULONG   addsymbol (struct sSymbol *pSym)
  *
  */
 
-void    addexports (void)
+void addexports(void)
 {
-    int     i;
+	int i;
 
-    for (i = 0; i < HASHSIZE; i += 1)
-    {
+	for (i = 0; i < HASHSIZE; i += 1) {
 		struct sSymbol *pSym;
 
 		pSym = tHashedSymbols[i];
-		while (pSym)
-		{
-		    if (pSym->nType & SYMF_EXPORT)
-			addsymbol (pSym);
-		    pSym = pSym->pNext;
+		while (pSym) {
+			if (pSym->nType & SYMF_EXPORT)
+				addsymbol(pSym);
+			pSym = pSym->pNext;
 		}
-    }
+	}
 }
 
 /*
@@ -402,30 +378,27 @@ void    addexports (void)
  *
  */
 
-struct Patch *allocpatch (void)
+struct Patch *allocpatch(void)
 {
-    struct Patch *pPatch,
-          **ppPatch;
+	struct Patch *pPatch, **ppPatch;
 
-    pPatch = pCurrentSection->pPatches;
-    ppPatch = &(pCurrentSection->pPatches);
+	pPatch = pCurrentSection->pPatches;
+	ppPatch = &(pCurrentSection->pPatches);
 
-    while (pPatch)
-    {
+	while (pPatch) {
 		ppPatch = &(pPatch->pNext);
 		pPatch = pPatch->pNext;
-    }
+	}
 
-    if( (*ppPatch=pPatch=(struct Patch *)malloc(sizeof (struct Patch)))!=NULL )
-    {
+	if ((*ppPatch = pPatch =
+	     (struct Patch *)malloc(sizeof(struct Patch))) != NULL) {
 		pPatch->pNext = NULL;
 		pPatch->nRPNSize = 0;
 		pPatch->pRPN = NULL;
-    }
-    else
-		fatalerror ("No memory for patch");
+	} else
+		fatalerror("No memory for patch");
 
-    return (pPatch);
+	return (pPatch);
 }
 
 /*
@@ -435,76 +408,69 @@ struct Patch *allocpatch (void)
  *
  */
 
-void    createpatch (ULONG type, struct Expression *expr)
+void createpatch(ULONG type, struct Expression *expr)
 {
-    struct Patch *pPatch;
-    UWORD   rpndata;
-    UBYTE   rpnexpr[2048];
-    char    tzSym[512];
-    ULONG   rpnptr = 0,
-            symptr;
+	struct Patch *pPatch;
+	UWORD rpndata;
+	UBYTE rpnexpr[2048];
+	char tzSym[512];
+	ULONG rpnptr = 0, symptr;
 
-    pPatch = allocpatch ();
-    pPatch->nType = type;
-    strcpy (pPatch->tzFilename, tzCurrentFileName);
-    pPatch->nLine = nLineNo;
-    pPatch->nOffset = nPC;
+	pPatch = allocpatch();
+	pPatch->nType = type;
+	strcpy(pPatch->tzFilename, tzCurrentFileName);
+	pPatch->nLine = nLineNo;
+	pPatch->nOffset = nPC;
 
-    while ((rpndata = rpn_PopByte (expr)) != 0xDEAD)
-    {
-		switch (rpndata)
-		{
-		    case RPN_CONST:
+	while ((rpndata = rpn_PopByte(expr)) != 0xDEAD) {
+		switch (rpndata) {
+		case RPN_CONST:
+			rpnexpr[rpnptr++] = RPN_CONST;
+			rpnexpr[rpnptr++] = rpn_PopByte(expr);
+			rpnexpr[rpnptr++] = rpn_PopByte(expr);
+			rpnexpr[rpnptr++] = rpn_PopByte(expr);
+			rpnexpr[rpnptr++] = rpn_PopByte(expr);
+			break;
+		case RPN_SYM:
+			symptr = 0;
+			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0) ;
+			if (sym_isConstant(tzSym)) {
+				ULONG value;
+
+				value = sym_GetConstantValue(tzSym);
 				rpnexpr[rpnptr++] = RPN_CONST;
-				rpnexpr[rpnptr++] = rpn_PopByte (expr);
-				rpnexpr[rpnptr++] = rpn_PopByte (expr);
-				rpnexpr[rpnptr++] = rpn_PopByte (expr);
-				rpnexpr[rpnptr++] = rpn_PopByte (expr);
-				break;
-		    case RPN_SYM:
-				symptr = 0;
-				while( (tzSym[symptr++]=rpn_PopByte(expr))!=0 );
-				if (sym_isConstant (tzSym))
-				{
-				    ULONG   value;
-
-				    value = sym_GetConstantValue (tzSym);
-				    rpnexpr[rpnptr++] = RPN_CONST;
-				    rpnexpr[rpnptr++] = value & 0xFF;
-				    rpnexpr[rpnptr++] = value >> 8;
-				    rpnexpr[rpnptr++] = value >> 16;
-				    rpnexpr[rpnptr++] = value >> 24;
-				}
-				else
-				{
-				    symptr = addsymbol (sym_FindSymbol (tzSym));
-				    rpnexpr[rpnptr++] = RPN_SYM;
-				    rpnexpr[rpnptr++] = symptr & 0xFF;
-				    rpnexpr[rpnptr++] = symptr >> 8;
-				    rpnexpr[rpnptr++] = symptr >> 16;
-				    rpnexpr[rpnptr++] = symptr >> 24;
-				}
-				break;
-		    case RPN_BANK:
-				symptr = 0;
-				while( (tzSym[symptr++]=rpn_PopByte(expr))!=0 );
-				symptr = addsymbol (sym_FindSymbol (tzSym));
-				rpnexpr[rpnptr++] = RPN_BANK;
+				rpnexpr[rpnptr++] = value & 0xFF;
+				rpnexpr[rpnptr++] = value >> 8;
+				rpnexpr[rpnptr++] = value >> 16;
+				rpnexpr[rpnptr++] = value >> 24;
+			} else {
+				symptr = addsymbol(sym_FindSymbol(tzSym));
+				rpnexpr[rpnptr++] = RPN_SYM;
 				rpnexpr[rpnptr++] = symptr & 0xFF;
 				rpnexpr[rpnptr++] = symptr >> 8;
 				rpnexpr[rpnptr++] = symptr >> 16;
 				rpnexpr[rpnptr++] = symptr >> 24;
-				break;
-		    default:
-				rpnexpr[rpnptr++] = rpndata;
-				break;
+			}
+			break;
+		case RPN_BANK:
+			symptr = 0;
+			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0) ;
+			symptr = addsymbol(sym_FindSymbol(tzSym));
+			rpnexpr[rpnptr++] = RPN_BANK;
+			rpnexpr[rpnptr++] = symptr & 0xFF;
+			rpnexpr[rpnptr++] = symptr >> 8;
+			rpnexpr[rpnptr++] = symptr >> 16;
+			rpnexpr[rpnptr++] = symptr >> 24;
+			break;
+		default:
+			rpnexpr[rpnptr++] = rpndata;
+			break;
 		}
-    }
-    if( (pPatch->pRPN=(UBYTE *)malloc(rpnptr))!=NULL )
-    {
-		memcpy (pPatch->pRPN, rpnexpr, rpnptr);
+	}
+	if ((pPatch->pRPN = (UBYTE *) malloc(rpnptr)) != NULL) {
+		memcpy(pPatch->pRPN, rpnexpr, rpnptr);
 		pPatch->nRPNSize = rpnptr;
-    }
+	}
 }
 
 /*
@@ -514,12 +480,12 @@ void    createpatch (ULONG type, struct Expression *expr)
  *
  */
 
-void    checksection (void)
+void checksection(void)
 {
-    if (pCurrentSection)
+	if (pCurrentSection)
 		return;
-    else
-		fatalerror ("Code generation before SECTION directive");
+	else
+		fatalerror("Code generation before SECTION directive");
 }
 
 /*
@@ -530,28 +496,30 @@ void    checksection (void)
  *
  */
 
-void    checkcodesection (SLONG size)
+void checkcodesection(SLONG size)
 {
-    checksection ();
-    if ((pCurrentSection->nType == SECT_HOME || pCurrentSection->nType == SECT_CODE)
-	&& (pCurrentSection->nPC + size <= MAXSECTIONSIZE))
-	{
-		if( ((pCurrentSection->nPC%SECTIONCHUNK)>((pCurrentSection->nPC+size)%SECTIONCHUNK))
-		&&	(pCurrentSection->nType == SECT_HOME || pCurrentSection->nType == SECT_CODE) )
-		{
-			if( (pCurrentSection->tData=
-				(UBYTE *)realloc( pCurrentSection->tData,
-				((pCurrentSection->nPC+size)/SECTIONCHUNK+1)*SECTIONCHUNK))!=NULL )
-			{
+	checksection();
+	if ((pCurrentSection->nType == SECT_HOME
+	     || pCurrentSection->nType == SECT_CODE)
+	    && (pCurrentSection->nPC + size <= MAXSECTIONSIZE)) {
+		if (((pCurrentSection->nPC % SECTIONCHUNK) >
+		     ((pCurrentSection->nPC + size) % SECTIONCHUNK))
+		    && (pCurrentSection->nType == SECT_HOME
+			|| pCurrentSection->nType == SECT_CODE)) {
+			if ((pCurrentSection->tData =
+			     (UBYTE *) realloc(pCurrentSection->tData,
+					       ((pCurrentSection->nPC +
+						 size) / SECTIONCHUNK +
+						1) * SECTIONCHUNK)) != NULL) {
 				return;
-			}
-			else
-				fatalerror( "Not enough memory to expand section" );
+			} else
+				fatalerror
+				    ("Not enough memory to expand section");
 		}
 		return;
-	}
-    else
-		fatalerror ("Section can't contain initialized data or section limit exceeded");
+	} else
+		fatalerror
+		    ("Section can't contain initialized data or section limit exceeded");
 }
 
 /*
@@ -561,37 +529,34 @@ void    checkcodesection (SLONG size)
  *
  */
 
-void    out_WriteObject (void)
+void out_WriteObject(void)
 {
-    FILE   *f;
+	FILE *f;
 
-    addexports ();
+	addexports();
 
-    if( (f=fopen(tzObjectname,"wb"))!=NULL )
-    {
+	if ((f = fopen(tzObjectname, "wb")) != NULL) {
 		struct PatchSymbol *pSym;
 		struct Section *pSect;
 
-		fwrite ("RGB2", 1, 4, f);
-		fputlong (countsymbols (), f);
-		fputlong (countsections (), f);
+		fwrite("RGB2", 1, 4, f);
+		fputlong(countsymbols(), f);
+		fputlong(countsections(), f);
 
 		pSym = pPatchSymbols;
-		while (pSym)
-		{
-		    writesymbol (pSym->pSymbol, f);
-		    pSym = pSym->pNext;
+		while (pSym) {
+			writesymbol(pSym->pSymbol, f);
+			pSym = pSym->pNext;
 		}
 
 		pSect = pSectionList;
-		while (pSect)
-		{
-		    writesection (pSect, f);
-		    pSect = pSect->pNext;
+		while (pSect) {
+			writesection(pSect, f);
+			pSect = pSect->pNext;
 		}
 
-		fclose (f);
-    }
+		fclose(f);
+	}
 }
 
 /*
@@ -601,17 +566,16 @@ void    out_WriteObject (void)
  *
  */
 
-void    out_PrepPass2 (void)
+void out_PrepPass2(void)
 {
-    struct Section *pSect;
+	struct Section *pSect;
 
-    pSect = pSectionList;
-    while (pSect)
-    {
+	pSect = pSectionList;
+	while (pSect) {
 		pSect->nPC = 0;
 		pSect = pSect->pNext;
-    }
-    pCurrentSection = NULL;
+	}
+	pCurrentSection = NULL;
 	pSectionStack = NULL;
 }
 
@@ -622,13 +586,13 @@ void    out_PrepPass2 (void)
  *
  */
 
-void    out_SetFileName (char *s)
+void out_SetFileName(char *s)
 {
-    strcpy (tzObjectname, s);
-    printf ("Output filename %s\n", s);
-    pSectionList = NULL;
-    pCurrentSection = NULL;
-    pPatchSymbols = NULL;
+	strcpy(tzObjectname, s);
+	printf("Output filename %s\n", s);
+	pSectionList = NULL;
+	pCurrentSection = NULL;
+	pPatchSymbols = NULL;
 }
 
 /*
@@ -638,56 +602,53 @@ void    out_SetFileName (char *s)
  *
  */
 
-struct Section *out_FindSection (char *pzName, ULONG secttype, SLONG org, SLONG bank)
+struct Section *out_FindSection(char *pzName, ULONG secttype, SLONG org,
+				SLONG bank)
 {
-    struct Section *pSect,
-          **ppSect;
+	struct Section *pSect, **ppSect;
 
-    ppSect = &pSectionList;
-    pSect = pSectionList;
+	ppSect = &pSectionList;
+	pSect = pSectionList;
 
-    while (pSect)
-    {
-		if (strcmp (pzName, pSect->pzName) == 0)
-		{
-		    if( secttype==pSect->nType && ((ULONG)org)==pSect->nOrg && ((ULONG)bank)==pSect->nBank)
-			{
+	while (pSect) {
+		if (strcmp(pzName, pSect->pzName) == 0) {
+			if (secttype == pSect->nType
+			    && ((ULONG) org) == pSect->nOrg
+			    && ((ULONG) bank) == pSect->nBank) {
 				return (pSect);
-			}
-		    else
-				fatalerror ("Section already exists but with a different type");
+			} else
+				fatalerror
+				    ("Section already exists but with a different type");
 		}
 		ppSect = &(pSect->pNext);
 		pSect = pSect->pNext;
-    }
+	}
 
-    if( (*ppSect=(pSect=(struct Section *)malloc(sizeof(struct Section))))!=NULL )
-    {
-		if( (pSect->pzName=(char *)malloc(strlen(pzName)+1))!=NULL )
-		{
-		    strcpy (pSect->pzName, pzName);
-		    pSect->nType = secttype;
-		    pSect->nPC = 0;
-		    pSect->nOrg = org;
-		    pSect->nBank = bank;
-		    pSect->pNext = NULL;
-		    pSect->pPatches = NULL;
-		    pPatchSymbols = NULL;
+	if ((*ppSect =
+	     (pSect =
+	      (struct Section *)malloc(sizeof(struct Section)))) != NULL) {
+		if ((pSect->pzName =
+		     (char *)malloc(strlen(pzName) + 1)) != NULL) {
+			strcpy(pSect->pzName, pzName);
+			pSect->nType = secttype;
+			pSect->nPC = 0;
+			pSect->nOrg = org;
+			pSect->nBank = bank;
+			pSect->pNext = NULL;
+			pSect->pPatches = NULL;
+			pPatchSymbols = NULL;
 
-			if( (pSect->tData=(UBYTE *)malloc(SECTIONCHUNK))!=NULL )
-			{
-		    	return (pSect);
-			}
-		    else
-				fatalerror ("Not enough memory for section");
-		}
-		else
-		    fatalerror ("Not enough memory for sectionname");
-    }
-    else
-		fatalerror ("Not enough memory for section");
+			if ((pSect->tData =
+			     (UBYTE *) malloc(SECTIONCHUNK)) != NULL) {
+				return (pSect);
+			} else
+				fatalerror("Not enough memory for section");
+		} else
+			fatalerror("Not enough memory for sectionname");
+	} else
+		fatalerror("Not enough memory for section");
 
-    return (NULL);
+	return (NULL);
 }
 
 /*
@@ -697,13 +658,13 @@ struct Section *out_FindSection (char *pzName, ULONG secttype, SLONG org, SLONG 
  *
  */
 
-void    out_SetCurrentSection (struct Section *pSect)
+void out_SetCurrentSection(struct Section *pSect)
 {
-    pCurrentSection = pSect;
-    nPC = pSect->nPC;
+	pCurrentSection = pSect;
+	nPC = pSect->nPC;
 
-    pPCSymbol->nValue = nPC;
-    pPCSymbol->pSection = pCurrentSection;
+	pPCSymbol->nValue = nPC;
+	pPCSymbol->pSection = pCurrentSection;
 }
 
 /*
@@ -713,9 +674,9 @@ void    out_SetCurrentSection (struct Section *pSect)
  *
  */
 
-void    out_NewSection (char *pzName, ULONG secttype)
+void out_NewSection(char *pzName, ULONG secttype)
 {
-    out_SetCurrentSection (out_FindSection (pzName, secttype, -1, -1));
+	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1));
 }
 
 /*
@@ -725,9 +686,9 @@ void    out_NewSection (char *pzName, ULONG secttype)
  *
  */
 
-void    out_NewAbsSection (char *pzName, ULONG secttype, SLONG org, SLONG bank)
+void out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 {
-    out_SetCurrentSection (out_FindSection (pzName, secttype, org, bank));
+	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank));
 }
 
 /*
@@ -737,16 +698,16 @@ void    out_NewAbsSection (char *pzName, ULONG secttype, SLONG org, SLONG bank)
  *
  */
 
-void    out_AbsByte (int b)
+void out_AbsByte(int b)
 {
-    checkcodesection (1);
-    b &= 0xFF;
-    if (nPass == 2)
+	checkcodesection(1);
+	b &= 0xFF;
+	if (nPass == 2)
 		pCurrentSection->tData[nPC] = b;
 
 	pCurrentSection->nPC += 1;
-    nPC += 1;
-    pPCSymbol->nValue += 1;
+	nPC += 1;
+	pPCSymbol->nValue += 1;
 }
 
 /*
@@ -756,21 +717,19 @@ void    out_AbsByte (int b)
  *
  */
 
-void    out_Skip (int skip)
+void out_Skip(int skip)
 {
-    checksection ();
-	if( (CurrentOptions.fillchar==-1)
-	||	!((pCurrentSection->nType == SECT_HOME) || (pCurrentSection->nType == SECT_CODE)) )
-	{
-	    pCurrentSection->nPC += skip;
-	    nPC += skip;
-	    pPCSymbol->nValue += skip;
-	}
-	else
-	{
-		checkcodesection( skip );
-		while( skip-- )
-			out_AbsByte( CurrentOptions.fillchar );
+	checksection();
+	if ((CurrentOptions.fillchar == -1)
+	    || !((pCurrentSection->nType == SECT_HOME)
+		 || (pCurrentSection->nType == SECT_CODE))) {
+		pCurrentSection->nPC += skip;
+		nPC += skip;
+		pPCSymbol->nValue += skip;
+	} else {
+		checkcodesection(skip);
+		while (skip--)
+			out_AbsByte(CurrentOptions.fillchar);
 	}
 }
 
@@ -781,11 +740,11 @@ void    out_Skip (int skip)
  *
  */
 
-void    out_String (char *s)
+void out_String(char *s)
 {
-    checkcodesection (strlen (s));
-    while (*s)
-	out_AbsByte (*s++);
+	checkcodesection(strlen(s));
+	while (*s)
+		out_AbsByte(*s++);
 }
 
 /*
@@ -796,24 +755,21 @@ void    out_String (char *s)
  *
  */
 
-void    out_RelByte (struct Expression *expr)
+void out_RelByte(struct Expression *expr)
 {
-    checkcodesection (1);
-    if (rpn_isReloc (expr))
-    {
-		if (nPass == 2)
-		{
-		    pCurrentSection->tData[nPC] = 0;
-		    createpatch (PATCH_BYTE, expr);
+	checkcodesection(1);
+	if (rpn_isReloc(expr)) {
+		if (nPass == 2) {
+			pCurrentSection->tData[nPC] = 0;
+			createpatch(PATCH_BYTE, expr);
 		}
 		pCurrentSection->nPC += 1;
 		nPC += 1;
 		pPCSymbol->nValue += 1;
-    }
-    else
-		out_AbsByte (expr->nVal);
+	} else
+		out_AbsByte(expr->nVal);
 
-	rpn_Reset (expr);
+	rpn_Reset(expr);
 }
 
 /*
@@ -823,27 +779,23 @@ void    out_RelByte (struct Expression *expr)
  *
  */
 
-void    out_AbsWord (int b)
+void out_AbsWord(int b)
 {
-    checkcodesection (2);
-    b &= 0xFFFF;
-    if (nPass == 2)
-    {
-		if( CurrentOptions.endian==ASM_LITTLE_ENDIAN )
-		{
+	checkcodesection(2);
+	b &= 0xFFFF;
+	if (nPass == 2) {
+		if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
 			pCurrentSection->tData[nPC] = b & 0xFF;
 			pCurrentSection->tData[nPC + 1] = b >> 8;
-		}
-		else
-		{
-			//	Assume big endian
+		} else {
+			//      Assume big endian
 			pCurrentSection->tData[nPC] = b >> 8;
-			pCurrentSection->tData[nPC+1] = b & 0xFF;
+			pCurrentSection->tData[nPC + 1] = b & 0xFF;
 		}
-    }
-    pCurrentSection->nPC += 2;
-    nPC += 2;
-    pPCSymbol->nValue += 2;
+	}
+	pCurrentSection->nPC += 2;
+	nPC += 2;
+	pPCSymbol->nValue += 2;
 }
 
 /*
@@ -854,37 +806,31 @@ void    out_AbsWord (int b)
  *
  */
 
-void    out_RelWord (struct Expression *expr)
+void out_RelWord(struct Expression *expr)
 {
-	ULONG	b;
+	ULONG b;
 
-    checkcodesection (2);
-    b = expr->nVal&0xFFFF;
-    if (rpn_isReloc (expr))
-    {
-		if (nPass == 2)
-		{
-			if( CurrentOptions.endian==ASM_LITTLE_ENDIAN )
-			{
-			    pCurrentSection->tData[nPC] = b & 0xFF;
-		    	pCurrentSection->tData[nPC + 1] = b >> 8;
-			    createpatch (PATCH_WORD_L,expr);
-			}
-			else
-			{
-				//	Assume big endian
-		    	pCurrentSection->tData[nPC] = b >> 8;
-			    pCurrentSection->tData[nPC+1] = b & 0xFF;
-			    createpatch (PATCH_WORD_B,expr);
+	checkcodesection(2);
+	b = expr->nVal & 0xFFFF;
+	if (rpn_isReloc(expr)) {
+		if (nPass == 2) {
+			if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
+				pCurrentSection->tData[nPC] = b & 0xFF;
+				pCurrentSection->tData[nPC + 1] = b >> 8;
+				createpatch(PATCH_WORD_L, expr);
+			} else {
+				//      Assume big endian
+				pCurrentSection->tData[nPC] = b >> 8;
+				pCurrentSection->tData[nPC + 1] = b & 0xFF;
+				createpatch(PATCH_WORD_B, expr);
 			}
 		}
 		pCurrentSection->nPC += 2;
 		nPC += 2;
 		pPCSymbol->nValue += 2;
-    }
-    else
-		out_AbsWord (expr->nVal);
-    rpn_Reset (expr);
+	} else
+		out_AbsWord(expr->nVal);
+	rpn_Reset(expr);
 }
 
 /*
@@ -894,30 +840,26 @@ void    out_RelWord (struct Expression *expr)
  *
  */
 
-void    out_AbsLong (SLONG b)
+void out_AbsLong(SLONG b)
 {
-    checkcodesection (sizeof(SLONG));
-    if (nPass == 2)
-    {
-		if( CurrentOptions.endian==ASM_LITTLE_ENDIAN )
-		{
+	checkcodesection(sizeof(SLONG));
+	if (nPass == 2) {
+		if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
 			pCurrentSection->tData[nPC] = b & 0xFF;
 			pCurrentSection->tData[nPC + 1] = b >> 8;
 			pCurrentSection->tData[nPC + 2] = b >> 16;
 			pCurrentSection->tData[nPC + 3] = b >> 24;
-		}
-		else
-		{
-			//	Assume big endian
+		} else {
+			//      Assume big endian
 			pCurrentSection->tData[nPC] = b >> 24;
-			pCurrentSection->tData[nPC+1] = b >> 16;
-			pCurrentSection->tData[nPC+2] = b >> 8;
-			pCurrentSection->tData[nPC+3] = b & 0xFF;
+			pCurrentSection->tData[nPC + 1] = b >> 16;
+			pCurrentSection->tData[nPC + 2] = b >> 8;
+			pCurrentSection->tData[nPC + 3] = b & 0xFF;
 		}
-    }
-    pCurrentSection->nPC += 4;
-    nPC += 4;
-    pPCSymbol->nValue += 4;
+	}
+	pCurrentSection->nPC += 4;
+	nPC += 4;
+	pPCSymbol->nValue += 4;
 }
 
 /*
@@ -928,41 +870,35 @@ void    out_AbsLong (SLONG b)
  *
  */
 
-void    out_RelLong (struct Expression *expr)
+void out_RelLong(struct Expression *expr)
 {
-	SLONG	b;
+	SLONG b;
 
-    checkcodesection (4);
-	b=expr->nVal;
-    if (rpn_isReloc (expr))
-    {
-		if (nPass == 2)
-		{
-			if( CurrentOptions.endian==ASM_LITTLE_ENDIAN )
-			{
-			    pCurrentSection->tData[nPC] = b & 0xFF;
-		    	pCurrentSection->tData[nPC + 1] = b >> 8;
-		    	pCurrentSection->tData[nPC + 2] = b >> 16;
-		    	pCurrentSection->tData[nPC + 3] = b >> 24;
-			    createpatch (PATCH_LONG_L,expr);
-			}
-			else
-			{
-				//	Assume big endian
-		    	pCurrentSection->tData[nPC] = b >> 24;
-		    	pCurrentSection->tData[nPC+1] = b >> 16;
-		    	pCurrentSection->tData[nPC+2] = b >> 8;
-			    pCurrentSection->tData[nPC+3] = b & 0xFF;
-			    createpatch (PATCH_LONG_B,expr);
+	checkcodesection(4);
+	b = expr->nVal;
+	if (rpn_isReloc(expr)) {
+		if (nPass == 2) {
+			if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
+				pCurrentSection->tData[nPC] = b & 0xFF;
+				pCurrentSection->tData[nPC + 1] = b >> 8;
+				pCurrentSection->tData[nPC + 2] = b >> 16;
+				pCurrentSection->tData[nPC + 3] = b >> 24;
+				createpatch(PATCH_LONG_L, expr);
+			} else {
+				//      Assume big endian
+				pCurrentSection->tData[nPC] = b >> 24;
+				pCurrentSection->tData[nPC + 1] = b >> 16;
+				pCurrentSection->tData[nPC + 2] = b >> 8;
+				pCurrentSection->tData[nPC + 3] = b & 0xFF;
+				createpatch(PATCH_LONG_B, expr);
 			}
 		}
 		pCurrentSection->nPC += 4;
 		nPC += 4;
 		pPCSymbol->nValue += 4;
-    }
-    else
-		out_AbsLong (expr->nVal);
-    rpn_Reset (expr);
+	} else
+		out_AbsLong(expr->nVal);
+	rpn_Reset(expr);
 }
 
 /*
@@ -972,17 +908,17 @@ void    out_RelLong (struct Expression *expr)
  *
  */
 
-void    out_PCRelByte (struct Expression *expr)
+void out_PCRelByte(struct Expression *expr)
 {
-	SLONG	b=expr->nVal;
+	SLONG b = expr->nVal;
 
-    checkcodesection (1);
-    b = (b & 0xFFFF) - (nPC + 1);
-    if (nPass == 2 && (b < -128 || b > 127))
-		yyerror ("PC-relative value must be 8-bit");
+	checkcodesection(1);
+	b = (b & 0xFFFF) - (nPC + 1);
+	if (nPass == 2 && (b < -128 || b > 127))
+		yyerror("PC-relative value must be 8-bit");
 
-    out_AbsByte (b);
-    rpn_Reset (expr);
+	out_AbsByte(b);
+	rpn_Reset(expr);
 }
 
 /*
@@ -992,36 +928,33 @@ void    out_PCRelByte (struct Expression *expr)
  *
  */
 
-void    out_BinaryFile (char *s)
+void out_BinaryFile(char *s)
 {
-    FILE   *f;
+	FILE *f;
 
-    fstk_FindFile (s);
+	fstk_FindFile(s);
 
-    if( (f=fopen(s,"rb"))!=NULL )
-    {
-		SLONG	fsize;
+	if ((f = fopen(s, "rb")) != NULL) {
+		SLONG fsize;
 
-		fseek (f, 0, SEEK_END);
-		fsize = ftell (f);
-		fseek (f, 0, SEEK_SET);
+		fseek(f, 0, SEEK_END);
+		fsize = ftell(f);
+		fseek(f, 0, SEEK_SET);
 
-		checkcodesection (fsize);
+		checkcodesection(fsize);
 
-		if (nPass == 2)
-		{
-		    SLONG	dest = nPC;
-		    SLONG	todo = fsize;
+		if (nPass == 2) {
+			SLONG dest = nPC;
+			SLONG todo = fsize;
 
-		    while (todo--)
-				pCurrentSection->tData[dest++] = fgetc (f);
+			while (todo--)
+				pCurrentSection->tData[dest++] = fgetc(f);
 		}
 
 		pCurrentSection->nPC += fsize;
 		nPC += fsize;
 		pPCSymbol->nValue += fsize;
-		fclose (f);
-    }
-    else
-		fatalerror ("File not found");
+		fclose(f);
+	} else
+		fatalerror("File not found");
 }

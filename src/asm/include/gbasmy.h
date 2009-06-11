@@ -1,9 +1,8 @@
-typedef union
-{
-    char tzSym[MAXSYMLEN+1];
-    char tzString[256];
-    struct Expression sVal;
-    SLONG nConstValue;
+typedef union {
+	char tzSym[MAXSYMLEN + 1];
+	char tzString[256];
+	struct Expression sVal;
+	SLONG nConstValue;
 } YYSTYPE;
 #define	T_NUMBER	258
 #define	T_STRING	259
@@ -148,6 +147,5 @@ typedef union
 #define	T_CC_NZ	398
 #define	T_CC_Z	399
 #define	T_CC_NC	400
-
 
 extern YYSTYPE yylval;

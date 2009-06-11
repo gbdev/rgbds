@@ -55,9 +55,8 @@
  *
  */
 
-enum
-{
-	RPN_ADD=0,
+enum {
+	RPN_ADD = 0,
 	RPN_SUB,
 	RPN_MUL,
 	RPN_DIV,
@@ -91,29 +90,26 @@ enum
 
 	RPN_RANGECHECK,
 
-	RPN_CONST=0x80,
-	RPN_SYM=0x81
+	RPN_CONST = 0x80,
+	RPN_SYM = 0x81
 };
 
-enum
-{
-	SECT_BSS=0,
+enum {
+	SECT_BSS = 0,
 	SECT_VRAM,
 	SECT_CODE,
 	SECT_HOME,
 	SECT_HRAM
 };
 
-enum
-{
-	SYM_LOCAL=0,
+enum {
+	SYM_LOCAL = 0,
 	SYM_IMPORT,
 	SYM_EXPORT
 };
 
-enum
-{
-	PATCH_BYTE=0,
+enum {
+	PATCH_BYTE = 0,
 	PATCH_WORD_L,
 	PATCH_LONG_L,
 	PATCH_WORD_B,

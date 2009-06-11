@@ -22,4 +22,4 @@
 #define	strnicmp strncasecmp
 #endif
 
-#endif	//	ASMOTOR_H
+#endif				//      ASMOTOR_H

@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-void	Patch( void );
-extern	SLONG	nPC;
+void Patch(void);
+extern SLONG nPC;
 
 #endif

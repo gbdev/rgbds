@@ -95,36 +95,33 @@
 
 /* "r" defs */
 
-enum
-{
-  REG_B=0,
-  REG_C,
-  REG_D,
-  REG_E,
-  REG_H,
-  REG_L,
-  REG_HL_IND,
-  REG_A
+enum {
+	REG_B = 0,
+	REG_C,
+	REG_D,
+	REG_E,
+	REG_H,
+	REG_L,
+	REG_HL_IND,
+	REG_A
 };
 
 /* "rr" defs */
 
-enum
-{
-  REG_BC_IND=0,
-  REG_DE_IND,
-  REG_HL_INDINC,
-  REG_HL_INDDEC,
+enum {
+	REG_BC_IND = 0,
+	REG_DE_IND,
+	REG_HL_INDINC,
+	REG_HL_INDDEC,
 };
 
 /* "ss" defs */
 
-enum
-{
-  REG_BC=0,
-  REG_DE,
-  REG_HL,
-  REG_SP
+enum {
+	REG_BC = 0,
+	REG_DE,
+	REG_HL,
+	REG_SP
 };
 
 /* "tt" defs */
@@ -138,17 +135,9 @@ enum
 
 /* "cc" defs */
 
-enum
-{
-  CC_NZ=0,
-  CC_Z,
-  CC_NC,
-  CC_C
+enum {
+	CC_NZ = 0,
+	CC_Z,
+	CC_NC,
+	CC_C
 };
-
-
-
-
-
-
-
