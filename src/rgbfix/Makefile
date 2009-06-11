@@ -10,4 +10,4 @@ rgbfix: $(obj)
 	gcc -Wall -o $@ $^
 
 .c.o:
-	gcc -Wall -I. -I.. -Iinclude -g -c -o $@ $<
+	gcc -Wall -I../../include -g -c -o $@ $<

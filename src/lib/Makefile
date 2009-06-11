@@ -9,4 +9,4 @@ xlib: $(obj)
 	gcc -Wall -o $@ $^
 
 .c.o:
-	gcc -Wall -I. -I.. -I../../include -g -c -o $@ $<
+	gcc -Wall -I../../include -g -c -o $@ $<

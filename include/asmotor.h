@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef	ASMOTOR_H
-#define	ASMOTOR_H
+#ifndef	ASMOTOR_ASMOTOR_H
+#define	ASMOTOR_ASMOTOR_H
 
 #define	ASMOTOR
 
@@ -22,4 +22,4 @@
 #define	strnicmp strncasecmp
 #endif
 
-#endif				//      ASMOTOR_H
+#endif
