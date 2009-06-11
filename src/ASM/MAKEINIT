@@ -1,0 +1,33 @@
+!ifndef	TARGET
+TARGET	=	DOS
+!endif
+
+!ifeq	TARGET	DOS
+!else
+!ifeq	TARGET	WIN95
+!else
+!error	Invalid TARGET (must be DOS or WIN95)
+!endif
+!endif
+
+BISONOPT=	--verbose -d
+BISON	=	bison $(BISONOPT)
+
+!ifeq	TARGET	DOS
+OBJDIR	=	OBJS\
+COPT	=	/zp4 /5s /fp3 /d2 /oneatx /i=..\include -i=..\.. /d2 /wx /bt=DOS
+!endif
+!ifeq	TARGET	WIN95
+OBJDIR	=	OBJS95\
+COPT	=	/zp4 /5s /fp3 /d2 /oneatx /i=..\include -i=..\.. /d2 /wx /bt=NT
+ALLOCA	=	alloca.obj
+!endif
+
+.y:		.;..
+.c:		.;..
+.h:		..\include
+.obj:		$(OBJDIR)
+
+OBJS	=	asmy.obj	main.obj	fstack.obj	globlex.obj     &
+		lexer.obj	math.obj	output.obj	rpn.obj		&
+		symbol.obj	locallex.obj	$(ALLOCA)

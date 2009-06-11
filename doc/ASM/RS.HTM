@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm RSSET, RSRESET, RB, RW</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>RSSET<BR>
+RERESET<BR>
+RB<BR>
+RW</H2></I><HR>
+
+<P>The <B>RS</B> group of commands is a handy way of defining structures:<BR>
+<BR>     
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>              RSRESET
+str_pStuff    RW   1
+str_tData     RB   256
+str_bCount    RB   1
+str_SIZEOF    RB   0</PRE>          
+</FONT></TD>
+</TR>
+</TABLE>
+<P>The example defines four <A HREF="equ.htm">equated</A> symbols:<BR>
+<BR>
+<TABLE BORDER=1>
+	<CAPTION><I>Defined symbols</I></CAPTION>
+
+<TR>
+	<TD><B><I>Name</I></B></TD>
+	<TD><B><I>Value</I></B></TD>
+</TR>
+<TR>
+	<TD>str_pStuff</TD>
+	<TD>0</TD>
+</TR>
+<TR>
+	<TD>str_tData</TD>
+	<TD>2</TD>
+</TR>
+<TR>
+	<TD>str_bCount</TD>
+	<TD>258</TD>
+</TR>
+<TR>
+	<TD>str_SIZEOF</TD>
+	<TD>259</TD>
+</TR>
+</TABLE>
+<BR>
+There are four commands in the RS group of commands:<BR>
+<BR>     
+<TABLE BORDER=1>
+	<CAPTION><I>RS related commands</I></CAPTION>
+
+<TR>
+	<TD><B><I>Command</I></B></TD>
+	<TD><B><I>Meaning</I></B></TD>
+</TR>
+<TR>
+	<TD>RSRESET</TD>
+	<TD>Resets the <A HREF="presym.htm">_RS</A> counter to zero</TD>
+</TR>
+<TR>
+	<TD>RSSET <I>constexpr</I></TD>
+	<TD>Sets the <A HREF="presym.htm">_RS</A> counter to <I>constexpr</I></TD>
+</TR>
+<TR>
+	<TD>RB <I>constexpr</I></TD>
+	<TD>Sets the preceding symbol to <A HREF="presym.htm">_RS</A> and adds <I>constexpr</I> to _RS</TD>
+</TR>
+<TR>
+	<TD>RW <I>constexpr</I></TD>
+	<TD>Sets the preceding symbol to <A HREF="presym.htm">_RS</A> and adds <I>constexpr*2</I> to _RS</TD>
+</TR>
+</TABLE>
+
+<P>Note that a colon (:) following the symbol-name is not allowed. RS symbols can be exported and imported. They don't change their value during the link process.<BR>
+
+<H3>See also:</H3>
+<UL>
+<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

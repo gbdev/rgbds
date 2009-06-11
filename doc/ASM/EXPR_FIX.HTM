@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm Fixed-point expression</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>Fixed-point expressions
+</H2></I>
+<HR>
+
+<P>Fixed point constants are basically normal 32-bit constants where the upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths). This means that you can use them in normal integer expression and indeed some integer operators like plus and minus don't care whether the operands are integer or fixed-point. You can easily convert a fixed-point number to an integer by shifting it right 16 bits. It follows that you can convert an integer to a fixed-point number by shifting it left.
+<P>Some things are different for fixed-point math though. Which is why you have the following functions to use:
+
+<TABLE BORDER=1>
+<TR>
+	<TD><B><I>Name</I></B></TD>
+	<TD><B><I>Operation</I></B></TD>
+</TR>
+<TR>
+	<TD>DIV(x,y)</TD>
+	<TD>x/y</TD>
+</TR>
+<TR>
+	<TD>MUL(x,y)</TD>
+	<TD>x*y</TD>
+</TR>
+<TR>
+	<TD>SIN(x)</TD>
+	<TD>sin(x)</TD>
+</TR>
+<TR>
+	<TD>COS(x)</TD>
+	<TD>cos(x)</TD>
+</TR>
+<TR>
+	<TD>TAN(x)</TD>
+	<TD>tan(x)</TD>
+</TR>
+<TR>
+	<TD>ASIN(x)</TD>
+	<TD>sin<SUP>-1</SUP>(x)</TD>
+</TR>
+<TR>
+	<TD>ACOS(x)</TD>
+	<TD>cos<SUP>-1</SUP>(x)</TD>
+</TR>
+<TR>
+	<TD>ATAN(x)</TD>
+	<TD>tan<SUP>-1</SUP>(x)</TD>
+</TR>
+<TR>
+	<TD>ATAN2(x,y)</TD>
+	<TD>(x,y) angle</TD>
+</TR>
+</TABLE>
+<P>These  functions are extremely useful for automatic generation of various tables. A circle has 65536.0
+degrees. Sine values are between [-1.0;1.0]<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>; --
+; -- Generate a 256 byte sine table with values between 0 and 128
+; --
+ANGLE   SET     0.0
+        REPT    256
+        DB      (MUL(64.0,SIN(ANGLE))+64.0)>>16
+ANGLE   SET     ANGLE+256.0
+        ENDR</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="symbols.htm">Symbols</A>
+	<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
+	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
+	<LI><A HREF="miscfunc.htm">Other functions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

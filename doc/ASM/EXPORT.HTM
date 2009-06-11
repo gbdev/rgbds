@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm EXPORT/XREF, IMPORT/XDEF, GLOBAL</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>EXPORT/XREF<BR>
+IMPORT/XDEF<BR>
+GLOBAL</H2></I><HR>
+
+<P>Importing and exporting of symbols is a feature that is very useful when your project spans many source-files and for example you
+need to jump to a routine defined in another file.<BR>
+<BR>
+<TABLE BORDER=1>
+	<CAPTION><I>Import/export commands</I></CAPTION>
+
+<TR>
+	<TD><B><I>Command</I></B></TD>
+	<TD><B><I>Meaning</I></B></TD>
+</TR>
+<TR>
+	<TD>IMPORT (or XREF) <I>label</I>[,<I>label</I>,...]</TD>
+	<TD>This  instructs the assembler to define label as if it were present
+                  in the current file but leave the address calculation to the linker.</TD>
+</TR>
+<TR>
+	<TD>EXPORT (or XDEF) <I>label</I>[,<I>label</I>,...]</TD>
+	<TD>The  assembler will make <I>label</I> accessible  to
+                  other files during the link process.</TD>
+</TR>
+<TR>
+	<TD>GLOBAL <I>label</I>[,<I>label</I>,...]</TD>
+	<TD>If <I>label</I> is defined during the assembly it will be exported,
+                  if not it will be imported. Handy (very!) for include-files.</TD>
+</TR>
+</TABLE>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

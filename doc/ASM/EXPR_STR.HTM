@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm String expressions</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>String expressions
+</H2></I>
+<HR>
+
+<P>The most basic string expression is any number of characters contained in double quotes ("for instance"). As in C the escape
+character is <B>\</B> and there is a number of commands you can use within a string:<BR>
+<BR>
+<TABLE BORDER=1>
+	<CAPTION><I>Escape characters:</I></CAPTION>
+<TR>
+	<TD><B><I>Character sequence</I></B></TD>
+	<TD><B><I>Meaning</I></B></TD>
+	<TD><B><I>Notes</I></B></TD>
+</TR>
+<TR>
+	<TD>\\</TD>
+	<TD>Backslash</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\"</TD>
+	<TD>Double-quote</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\{</TD>
+	<TD>Curly bracket left</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\}</TD>
+	<TD>Curly bracket right</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\n</TD>
+	<TD>Newline ($0A)</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\t</TD>
+	<TD>Tab ($09)</TD>
+	<TD></TD>
+</TR>
+<TR>
+	<TD>\1-\9</TD>
+	<TD>Macroargument</TD>
+	<TD>Only in macros</TD>
+</TR>
+<TR>
+	<TD>\@</TD>
+	<TD>Labelname suffix</TD>
+	<TD>Only in macros and repts</TD>
+</TR>
+</TABLE>
+
+<P>A funky feature is <B>{symbol}</B> withing a string. This will examine the type of the symbol and insert its
+value accordingly. If symbol is a string symbol the symbols value is simply copied. If it's a numeric symbol the value is converted
+to hexadecimal notation and inserted as a string.
+<P><B>HINT:</B> The <B>{symbol}</B> construct can also be used outside strings. The symbols value is again inserted as a
+string. This is just a short way of doing &quot{symbol}&quot.<BR>
+
+Whenever the macro-language expects a string you can actually use a string expression. This consists of one or more of these function. Yes, you can nest them. Note that some of these functions actually return an integer and can be used as part of an integer expression!<BR>
+<P><TABLE BORDER=1>
+	<CAPTION><I>String functions:</I></CAPTION>
+<TR>
+	<TD><B><I>Name</I></B></TD>
+	<TD><B><I>Operation</I></B></TD>
+</TR>
+<TR>
+	<TD>STRLEN(<I>stringexpr</I>)</TD>
+	<TD>Returns the number of characters in <I>string</I></TD>
+</TR>
+<TR>
+	<TD>STRCAT(<I>stringexpr1,stringexpr2</I>)</TD>
+	<TD>Appends <I>stringexpr2</I> to <I>stringexpr1</I>.</TD>
+</TR>
+<TR>
+	<TD>STRCMP(<I>stringexpr1,stringexpr2</I>)</TD>
+	<TD>Returns negative if <I>stringexpr1</I> is alphabetically less than <I>stringexpr2</I><BR>Zero if they match<BR>Positive if greater than</TD>
+</TR>
+<TR>
+	<TD>STRIN(<I>haystack,needle</I>)</TD>
+	<TD>Returns <I>needle</I>s position within <I>haystack</I> or zero if it's not present</TD>
+</TR>
+<TR>
+	<TD>STRSUB(<I>stringexpr,pos,count</I>)</TD>
+	<TD>Returns a substring of <I>stringexpr</I> starting at <I>pos</I> (first character is position 1) and with <I>count</I> characters</TD>
+</TR>
+<TR>
+	<TD>STRUPR(<I>stringexpr</I>)</TD>
+	<TD>Converts all characters in <I>string</I> to capitals and returns the new string</TD>
+</TR>
+<TR>
+	<TD>STRLWR(<I>string</I>)</TD>
+	<TD>Converts all characters in <I>string</I> to lower case and returns the new string</TD>
+</TR>
+</TABLE>
+
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="symbols.htm">Symbols</A>
+	<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
+	<LI><A HREF="expr_fix.htm">Fixed-point expressions and functions</A>
+	<LI><A HREF="miscfunc.htm">Other functions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

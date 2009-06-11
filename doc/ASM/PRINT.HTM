@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm PRINTT, PRINTV, PRINTF</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>PRINTT<BR>
+PRINTV<BR>
+PRINTF<BR>
+</H2></I>
+<HR>
+
+<P>These  three  instructions  type  text and  values  to stdout. Useful for debugging macros or wherever you may feel  the
+need to tell yourself some important information.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>PRINTT    "I'm the greatest programmer in the whole wide world\n"
+PRINTV    (2+3)/5
+PRINTF    MUL(3.14,3987.0)</PRE>   
+</FONT></TD>
+</TR>
+</TABLE>
+<B>PRINTT</B> prints out a string<BR>
+<B>PRINTV</B> prints out an integer value or, as in the example, the result of a calculation. Unsurprisingly you can also print out a <A HREF="symbols.htm">constant symbols</A> value<BR>
+<B>PRINTF</B> prints out a fixed point value.<BR>
+
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="asm/expr_int.htm">Integer and Boolean expressions</A>
+	<LI><A HREF="asm/expr_fix.htm">Fixed-point expressions and functions</A>
+	<LI><A HREF="asm/expr_str.htm">String expressions, functions and formatting</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

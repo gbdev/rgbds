@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm EQU</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>EQU</H2></I><HR>
+
+<P>EQUates are constant symbols. They can for example be used for things such as bit-definitions of hardware-registers.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>DONUT_ISGOOD   EQU  $01
+DONUT_ISBAD    EQU  $02</PRE>          
+</FONT></TD>
+</TR>
+</TABLE>
+<P>Note that a colon (:) following the label-name is not allowed. EQUates can be <A HREF="export.htm">exported and imported</A>. They don't change their value during the link process.<BR>
+
+<H3>See also:</H3>
+<UL>
+<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

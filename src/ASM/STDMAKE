@@ -1,0 +1,40 @@
+
+
+CC	=	wcc386 $(COPT) /d$(TARGET_SYSTEM)
+
+all:		$(EXE)
+
+$(EXE):		$(OBJS)
+		%create link.lnk
+!ifeq	TARGET	DOS
+		%append link.lnk system pmodew
+!endif
+!ifeq	TARGET	WIN95
+		%append link.lnk system nt
+!endif
+		%append link.lnk option map
+		%append link.lnk option stack=256k
+		%append link.lnk debug watcom all
+		%append link.lnk name $(EXE)
+		for %i in ($(OBJS)) do %append link.lnk file $(OBJDIR)\%i
+		wlink @link.lnk
+!ifeq	TARGET	DOS
+		d:\code\pmodew\pmwsetup /B0 $(EXE)
+!endif
+
+.c.obj:		.AUTODEPEND
+		$(CC) -fo=$(OBJDIR)$^. $[@
+
+.y.c:
+		$(BISON) -o $^. $[.
+
+asmy.y:		..\yaccprt1.y ..\yaccprt3.y yaccprt2.y yaccprt4.y
+		copy ..\yaccprt1.y+yaccprt2.y+..\yaccprt3.y+yaccprt4.y asmy.y
+
+clean:		.SYMBOLIC
+		del $(OBJDIR)*.obj
+		del asmy.*
+		del *.err
+		del $(EXE)
+		del *.map
+		del link.lnk

@@ -1,0 +1,219 @@
+<HTML>
+<HEAD>
+	<TITLE>RGB? Fileformat</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<HR><CENTER>
+<TABLE CELLPADDING=25 BORDER=0 BGCOLOR="#000000">
+<TR>
+	<TD><FONT COLOR="#FFFFFF"><H2>The RGB ObjectFileFormats</H2></FONT></TD>
+</TR>
+</TABLE>
+<HR>
+<H2>Table of Contents<BR></CENTER></H2>
+<UL>
+	<LI><A HREF="#Background">Background</A>
+	<LI><A HREF="#FileStructure">FileStructure</A>
+	<LI><A HREF="#RPN">Rpn Data</A>
+</UL>
+<BR>
+<HR><H3><BR><A NAME="Background">Background</A></H3>
+<P>I developed the RGB0 fileformat mainly because I needed a suitable dataformat to hold the output from <A HREF="asm.htm">xAsm</A> that was powerful to accomodate all the features I needed and also would make it easy for me to add
+new ones.
+The reason for documenting it is so people can write converters between it and other formats. Perhaps even develop other compilers for it?<BR>
+<BR>
+The RGB1 fileformat saw the light of day with the V1.02 of the old RGBDS release because of the addition of fixed sections.<BR>
+The RGB2 fileformat emerged because I needed to add support for big endian CPUs.
+<BR><HR><H3><BR><A NAME="FileStructure">FileStructure</A></H3>
+<B>LONG</B> is a 32-bit integer stored in little-endian  format (Intel)<BR>
+<B>BYTE</B> is an 8-bit integer<BR>
+<B>STRING</B> is a 0 terminated string of <B>BYTE</B><BR>
+<BR>
+Down to business...<BR>
+<PRE>
+    ; There's a header...
+      
+    BYTE    ID[4]                      ;"RGB0", "RGB1", "RGB2"
+    LONG    NumberOfSymbols            ;The number of symbols used in this file
+    LONG    NumberOfSections           ;The number of sections used in this file
+      
+    ; Now for some symbols
+      
+    REPT    NumberOfSymbols            ;<B>NumberOfSymbols</B> symboldefs follow
+        STRING  Name                   ;The name of this symbol
+        BYTE    Type                   ;0 = LOCAL symbol only used in this file
+                                       ;1 = IMPORT this symbol from elsewhere
+                                       ;2 = EXPORT this symbol to other objects
+        IF      Type != 1
+            LONG    SectionID          ;The section number in which this symbol
+                                       ;is defined.  If -1 this symbol is an EQUate
+            LONG Value                 ;The symbols value. If SectionID!=-1 it's the
+                                       ;offset into that section
+        ENDC
+    ENDR
+      
+    ; And I'll be... Sections!
+      
+    REPT NumberOfSections
+        LONG    Size                   ;Size in bytes of this section
+        BYTE    Type                   ;0 = BSS
+                                       ;1 = VRAM
+                                       ;2 = CODE
+                                       ;3 = HOME
+                                       ;4 = HRAM
+        LONG    Org                    ;Only present in RGB1. Address to fix this
+                                       ;section at. -1 if the linker should
+                                       ;decide (normal operation)
+        LONG    Bank                   ;Only present in RGB1. Bank to load this
+                                       ;section into. -1 if the linker should
+                                       ;decide (normal operation). This field is
+                                       ;only valid for CODE sections.
+        IF      Type==CODE || Type==HOME
+            BYTE Data[Size]
+            LONG NumberOfPatches
+               
+            ; These types of sections may have patches
+               
+            REPT NumberOfPatches
+                STRING    SourceFile   ;The name of the sourcefile (for
+                                       ;printing an errormessage)
+                LONG Line              ;The line of the sourcefile
+                LONG Offset            ;Offset into the section where patch
+                                       ;should be applied
+                BYTE Type              ;0 = BYTE patch
+                                       ;1 = little endian WORD patch
+                                       ;2 = little endianLONG patch
+                                       ;3 = big endian WORD patch (RGB2 and later)
+                                       ;4 = big endianLONG patch (RGB2 and later)
+                LONG RPNSize
+                BYTE RPN[RPNSize]      ;RPN definition below
+            ENDR
+        ENDC
+    ENDR</PRE>
+<BR><HR><H3><BR><A NAME="RPN">Rpn Data</A></H3>
+<P>Expressions in the objectfile are stored as <B>RPN</B>. This is an expression of the form "2 5 +". This will first push
+the value "2" to the stack. Then "5". The "+" operator pops two arguments from the stack, adds them, and then
+pushes the result on the stack, effectively replacing the two top arguments with their sum. In the <B>RGB</B> format <B>RPN</B>
+expression are stored as <B>BYTE</B>s with some bytes being special prefixes for integers and symbols.<BR>
+<BR>
+<TABLE BORDER=1 WIDTH="50%">
+	<CAPTION><I>RPN Expressions</I></CAPTION>
+<TR>
+	<TD ALIGN="Center"><B><I>Byte value</I></B></TD>
+	<TD><B><I>Meaning</I></B></TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$00</TD>
+	<TD>+ operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$01</TD>
+	<TD>- operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$02</TD>
+	<TD>* operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$03</TD>
+	<TD>/ operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$04</TD>
+	<TD>% operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$05</TD>
+	<TD>unary -</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$06</TD>
+	<TD>| operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$07</TD>
+	<TD>& operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$08</TD>
+	<TD>^ operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$09</TD>
+	<TD>unary ~</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0A</TD>
+	<TD>&& comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0B</TD>
+	<TD>|| comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0C</TD>
+	<TD>unary !</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0D</TD>
+	<TD>== comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0E</TD>
+	<TD>!= comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$0F</TD>
+	<TD>&gt comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$10</TD>
+	<TD>&lt comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$11</TD>
+	<TD>&gt= comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$12</TD>
+	<TD>&lt= comparison</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$13</TD>
+	<TD>&lt&lt operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$14</TD>
+	<TD>&gt&gt operator</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$15</TD>
+	<TD>BANK() function for Gameboy, a symbol ID follows</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$16</TD>
+	<TD>HRAMCheck for Gameboy, check if value is in HRAM and logically and it with 0xFF</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$17</TD>
+	<TD>ZeroPageCheck for PC-Engine, check if value is in ZP (0x2000-0x20FF) and logically and it with 0xFF</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$18</TD>
+	<TD>RangeCheck. LOW and HIGH signed LONGs follow. Checks a value to see if within the range [LOW;HIGH]. If not, generate an error.
+</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$80</TD>
+	<TD>LONG integer follows</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">$81</TD>
+	<TD>Symbol ID follows</TD>
+</TR>
+</TABLE>
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 18 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</BODY>
+</HTML>

@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>RGBFix</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<HR><CENTER>
+<TABLE CELLPADDING=25 BORDER=0 BGCOLOR="#000000">
+<TR>
+	<TD><FONT COLOR="#FFFFFF"><H2>RGBFix Documentation</H2></FONT></TD>
+</TR>
+</TABLE>
+<HR>
+<H2>Table of Contents<BR></H2></CENTER>
+<UL>
+<LI><A HREF="#History">History</A>
+<LI><A HREF="#Usage">Usage</A>
+<LI><A HREF="#Options">Options</A>
+</UL>
+<BR><HR><H3><BR><A NAME="History">History</A></H3>
+<TABLE BORDER=1>
+	<CAPTION><I>The history of RGBFix</I></CAPTION>
+<TR>
+	<TD ALIGN="Center"><B><I>Version</I></B></TD>
+	<TD ALIGN="Center"><B><I>Dated</I></B></TD>
+	<TD><B><I>Release notes</I></B></TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.0</TD>
+	<TD ALIGN="Center">1 Oct. 96</TD>
+	<TD>First release</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.01</TD>
+	<TD ALIGN="Center">3 Dec. 96</TD>
+	<TD>-t didn't Work. Fixed.</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.02</TD>
+	<TD ALIGN="Center">20 July 1997</TD>
+	<TD>RGBFix can now also truncate the ROM-images to a valid size.</TD>
+</TD>
+</TABLE>
+<BR>
+<HR><H3><BR><A NAME="Usage">Usage</A></H3><BR>
+<PRE>    rgbfix [options] image[.gb]</PRE>
+<BR>
+Options are preceded by a dash (-) and go as follows:<BR>
+<BR>
+<PRE>    t<B>name</B>   : Change title field of image
+    p       : Pad image to valid size
+    v       : Validate header
+    d       : Debug, don't change image
+    r       : Truncate image to valid size
+    h       : Short help text</PRE>
+<P><FONT SIZE="-1"><B>Note:</B>  <B>RGBFix</B> was previously released by me as a standalone program known as GBFix.
+I have chosen to release it in the <B>ASMotor</B> package instead from now on. Its usage has changed a bit from that of GBFix
+for the sake of consistence with the other <B>ASMotor</B> tools. Being part of <B>RGBDS</B> means <B>RGBFix</B>'
+distribution now follows the same rules as the rest of the <B>ASMotor</B> package. GBFix still follows its own rules.</FONT> <BR>
+<BR><HR><H3><BR><A NAME="Options">Options</A></H3>
+<P>How to use the various options.
+<H4><BR>
+Titlefield</H4>
+<P>This option changes the titlefield of the image to the string you specify truncated to a maximum of 16 characters. No 
+uppercase conversion is performed.<BR>
+<BR>
+<PRE>    rgbfix -tASMOTOR foobar.gb</PRE>
+<H4><BR>Pad Image</H4>
+<P>Pad the image to a valid size. 32Kb, 64Kb, 128Kb, 256Kb and 512Kb. RGBFix intelligently decides which one to use.
+The cartridge size byte in the image header is left unchanged. If you find this undesireable use the Validate Header option.<BR>
+<BR>
+<PRE>    rgbfix -p foobar.gb</PRE>
+<H4><BR>Truncate Image</H4>
+<P>Truncates the image to a valid size. 32Kb, 64Kb, 128Kb, 256Kb and 512Kb. RGBFix intelligently decides which one to use.
+The cartridge size byte in the image header is left unchanged. If you find this undesireable use the Validate Header option.<BR>
+<BR>
+<PRE>    rgbfix -r foobar.gb</PRE>
+<H4><BR>
+Validate Header</H4>
+<P>Examines the header for errors and validates them if any.<BR>
+<BR>     
+Areas examined:
+<UL>
+	<LI>Nintendo Character Area
+	<LI>ROM size byte
+	<LI>Cartridge type byte
+	<LI>Checksums
+</UL>   
+<BR>
+<PRE>    rgbfix -v foobar.gb</PRE>
+<H4><BR>
+Debug</H4>
+<P>Pretends it performs the desired changes.<BR>
+<BR>
+<PRE>    rgbfix -tASMOTOR -p -v -d foobar.gb</PRE>
+<BR>
+<HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 18 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</BODY>
+</HTML>

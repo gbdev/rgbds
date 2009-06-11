@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm DB, DW</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>DB<BR>
+DW
+</H2></I>
+<HR>
+
+<P>DB defines a list of bytes that will be stored in the final image. Ideal for tables and text.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>DB   1,2,3,4,"This is a string"</PRE>   
+</FONT></TD>
+</TR>
+</TABLE>
+<P>Alternatively you can use <B>DW</B> to store a list of words. Strings are not allowed as arguments to DW.
+<P>You can also use DB and DW without arguments. This works exactly like "DS 1" and "DS 2" respectively. Consequently DB and
+DW can be used in a BSS/HRAM/VRAM section.
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
+	<LI><A HREF="expr_fix.htm">Fixed-point expressions and functions</A>
+	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
+	<LI><A HREF="ds.htm">Declaring variables in a BSS section</A>
+	<LI><A HREF="miscfunc.htm">Other functions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 02 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

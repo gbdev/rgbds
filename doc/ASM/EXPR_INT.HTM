@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm Integer/Boolean expressions</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>Integer and Boolean expressions
+</H2></I>
+<HR>
+
+<P>An expression can be composed of many things. Expressions are always evaluated using signed 32-bit math.
+<P>The most basic expression is just a single number.
+<H4><BR>Numeric Formats</H4>
+<P>xAsm has a number of numeric formats.
+<UL>
+	<LI>Hexadecimal: $0123456789ABCDEF. Case-insensitive
+	<LI>Decimal: 0123456789
+	<LI>Octal: &01234567
+	<LI>Binary: %01
+	<LI>Fixedpoint (16.16): 01234.56789
+	<LI>Character constant: "ABYZ"
+	<LI>Gameboy graphics: `0123
+</UL>
+<P>The last one, Gameboy graphics, is quite interesting and useful. The values are actually pixel values and it converts
+the "chunky" data to "planar" data as used in the Gameboy.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>DW   `01012323</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+
+Admittedly an expression with just a single number is quite boring. To spice things up a bit there's a few operators you can use to perform calculations between numbers.
+<H4><BR>
+Operators</H4>
+<P>A great number of operators you can use in expressions are available (listed in order of precedence):
+<TABLE BORDER=1>
+	<CAPTION><I>Operators</I></CAPTION>
+
+<TR>
+	<TD><B><I>Operator</I></B></TD>
+	<TD><B><I>Meaning</I></B></TD>
+</TR>
+<TR>
+	<TD>( )</TD>
+	<TD>Precedence override</TD>
+</TR>
+<TR>
+	<TD>FUNC()</TD>
+	<TD>Functioncall</TD>
+</TR>
+<TR>
+	<TD>~ + -</TD>
+	<TD>Unary not/plus/minus</TD>
+</TR>
+<TR>
+	<TD>* / %</TD>
+	<TD>Multiply/divide/modulo</TD>
+</TR>
+<TR>
+	<TD>&lt&lt &gt&gt</TD>
+	<TD>Shift left/right</TD>
+</TR>
+<TR>
+	<TD>&amp | ^</TD>
+	<TD>Binary and/or/xor</TD>
+</TR>
+<TR>
+	<TD>+ -</TD>
+	<TD>Add/subtract</TD>
+</TR>
+<TR>
+	<TD>!= == &lt= &gt= &lt &gt</TD>
+	<TD>Boolean comparison</TD>
+</TR>
+<TR>
+	<TD>&amp&amp ||</TD>
+	<TD>Boolean and/or</TD>
+</TR>
+<TR>
+	<TD>!</TD>
+	<TD>Unary Boolean not</TD>
+</TR>
+</TABLE>     
+
+<P>The result of the boolean operators is zero if when FALSE and non-zero when TRUE. Thus it is legal to use an integer as the condition for <A HREF="if.htm">IF</A> blocks. You can use symbols instead of numbers in your expression if you wish.
+
+<P>An expression is said to be constant when it doesn't change its value during linking. This basically means that you can't use labels in those expressions. The instructions in the macro-language all require expressions that are constant<BR>
+
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="symbols.htm">Symbols</A>
+	<LI><A HREF="expr_fix.htm">Fixed-point expressions and functions</A>
+	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
+	<LI><A HREF="miscfunc.htm">Other functions</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

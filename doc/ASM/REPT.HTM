@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm REPT, ENDR</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>REPT<BR>
+ENDR
+</H2></I>
+<HR>
+
+<P>Suppose you're feeling lazy and you want to unroll a time consuming loop. <B>REPT</B> is here for that purpose. Everything between REPT and ENDR will be repeated a number of times just as if you done a copy/paste operation yourself<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>REPT 4
+add  a,c
+ENDR</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>This will assemble <B>add a,c</B> four times.<BR>
+<P>You can also use REPT to generate tables on the fly:
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>; --
+; -- Generate a 256 byte sine table with values between 0 and 128
+; --
+ANGLE   SET     0.0
+        REPT    256
+        DB      (MUL(64.0,SIN(ANGLE))+64.0)>>16
+ANGLE   SET     ANGLE+256.0
+        ENDR</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+
+REPT is also very useful in recursive macros and as in macros you can also use the special label operator \@. REPT-blocks can be nested.<BR>
+
+<H3>See also:</H3>
+<UL>
+<LI><A HREF="macro.htm#labelsuffix">\@</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

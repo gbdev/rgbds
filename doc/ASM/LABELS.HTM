@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm Labels</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>Labels</H2></I><HR>
+<P>One  of  the assemblers main tasks is to keep track of addresses for you so you don't have to remember obscure numbers but can make do with a meaningful name, a label.<BR>
+<P>This can be done in a number of ways:<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>GlobalLabel
+AnotherGlobal:
+.locallabel
+.yet_a_local:
+ThisWillBeExported::        ;note the two colons</PRE>          
+</FONT></TD>
+</TR>
+</TABLE>
+<P>This  is very similar to other assemblers. Local labels are  only accessible within the scope they are defined. A scope starts after a global label and ends at the next global label. You  may  or  may not have seen the <B>::</B> feature  before. It declares a normal global label but does an <A HREF="export.htm">EXPORT</A> at the same time.<BR>
+<P>Labels will normally change their value during the <A HREF="../link.htm">link process</A> and are thus <B>not</B> constant.<BR>
+<BR>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

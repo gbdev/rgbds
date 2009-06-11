@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>General Information</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<HR><CENTER>
+<TABLE BORDER=0 BGCOLOR="#000000" CELLPADDING=25>
+<TR>
+	<TD><FONT COLOR="#FFFFFF"><H2>ASMotor General Information</H2></FONT></TD>
+</TR>
+</TABLE>
+</CENTER>
+<HR>
+<H2><CENTER>Table of Contents
+</CENTER></H2>
+<UL>
+	<LI><A HREF="#BlahBlahBlah">BlahBlahBlah</A>
+	<LI><A HREF="#Author">The Author</A>
+	<LI><A HREF="#Introduction">Introduction</A>
+	<LI><A HREF="#Installation">Installation</A>
+	<LI><A HREF="#Documentation">The Documentation</A>
+	<LI><A HREF="#History">History</A>
+</UL>
+<BR><HR><H3><BR><A NAME="BlahBlahBlah">BlahBlahBlah</A></H3>
+<P>The <B>ASMotor</B> package (<A HREF="asm.htm">xAsm</A>, <A HREF="link.htm">xLink</A>, <A HREF="fix.htm">RGBFix</A>, examples and <A HREF="#Documentation">documentation</A>) is freeware and distributed as is. The
+author retains his copyright and right to modify the specifications and operation of the software without notice.
+<P>In other words this means I encourage you to...
+<UL>
+	<LI>use it for whatever purpose even professional work without me charging you a penny
+	<LI>copy it to another person (wholly or in part, though I'm sure he'd appreciate the whole package) in
+whatever form you find suitable
+	<LI>mass-distribute the <B>ASMotor</B> package if it is complete (<A HREF="asm.htm">xAsm</A>, <A HREF="link.htm">xLink</A>, <A HREF="fix.htm">RGBFix</A> and documentation).
+	<LI>contact me if you have any problems
+</UL>
+<P>This also means you can't...
+<UL>
+	<LI>blame me for loss of profit, data, sleep, food or other nasty things through the use or distribution of <B>ASMotor</B>. If
+you choose to use <B>ASMotor</B> you do so at your own risk.
+	<LI>expect me to be able to help you should you have a problem related or not to <B>ASMotor</B>.
+</UL>
+<P>I am happy to say that xAsm and xLink use PMODE/W as DOS-extender for the MS-DOS port! This means fast assembling of your sourcecodes. A lot faster. PMODE/W is a drop-in replacement for the bulky DOS4GW. If you are a programmer you should check out <A HREF="http://www.di.net/pmw">http://www.di.net/pmw</A><BR>
+"PMODE/W is Copyright (c) 1994-1997, Charles Scheffold and Thomas Pytel. All rights reserved."<BR>
+<BR><HR><H3><BR><A NAME="Author">The Author</A></H3>
+<P>Any questions? Write me!<BR>
+<BR>
+Carsten Sorensen<BR>
+1 Spring Court<BR>
+Guildford<BR>
+Surrey GU2 6QW<BR>
+United Kingdom<BR>
+<BR>
+<A NAME="Email">e-mail:</A><BR>
+<A HREF="mailto:surfsmurf@matilde.demon.co.uk">surfsmurf@matilde.demon.co.uk</A> (private)<BR>
+<A HREF="mailto:csorensen@ea.com">csorensen@ea.com</A> (work)<BR>
+<BR>
+Get the latest version from my web page at <A HREF="http://www.matilde.demon.co.uk">http://www.matilde.demon.co.uk</A>
+<BR><HR><H3><BR><A NAME="Introduction">Introduction</A></H3>
+<P><B>ASMotor</B> is  a  package currently  consisting of three programs (<A HREF="asm.htm">xAsm</A>, <A HREF="link.htm">xLink</A> and <A HREF="fix.htm">RGBFix</A>) originally designed for development on the Gameboy hand-held
+video-game console by Nintendo but recently it has moved towards being a target independent shell for making development of new
+assemblers for different processors easier.<BR>
+<A HREF="asm.htm">xAsm</A> is a decently fast assembler (up to <I>800000 lines/minute</I> (hrm well actually that's for 16384 lines of NOP's ;) on a P-120). It converts an assembler source into the <A HREF="rgb0.htm">RGB object-fileformat</A>.<BR>
+<A HREF="link.htm">xLink</A> is used to link multiple (one or more) object files together into one target file eg. a Gameboy ROM or Psion2 relocatable module.<BR>
+<A HREF="fix.htm">RGBFix</A> is used to apply some final cosmetic details to a Gameboy ROM-image.<BR>
+<P>This document does not try to teach you how to program in assembler, how  to program a specifix processor or the  Gameboy.
+It does just briefly explain the features of <A HREF="asm.htm">xAsm</A>  and <A HREF="link.htm">xLink</A>. Sometimes I will assume that you have actually worked  with assemblers before and that you are  familiar with the target processor.
+<P>Why another assembler? There seems to be millions out there! This project started out as a Gameboy assembler because none of the available assemblers had the features I wanted. Now the reason is I want to make the most powerful assembler. Ever ;) And I want to be able to re-use it easily whenever I encounter a new system with another processor.
+Don't  like it?  Something you'd like to see added? <A HREF="#Email">Mail me</A> and  I'll see what I can do.
+<P>The  <A HREF="asm.htm">assembler</A> and <A HREF="link.htm">linker</A> are written entirely in ANSI C using Bison for the parser. I try to maintain two pre-compiled ports  of <B>ASMotor</B>,  one  for  the  MS-DOS  environment  and  one  for  Linux.   Bison
+ is a GNU  tool  (compiler-compiler)  tailored  to  aid  in  the  development   of compilers which you will need if you want to compile it afresh.<BR>
+
+<BR><HR><H3><BR><A NAME="Installation">Installation</A></H3>
+<P>Anywhere  on  your  HD will do. For maximum  enjoyment  I  recommend   adding   the   directory   to   your    path.
+Alternatively you can run it from a floppy.<BR>
+
+<BR><HR><H3><BR><A NAME="Documentation">The Documentation</A></H3>
+<P>The  documentation only comes in one flavour. HTML. This has several advantages for me
+<UL>
+<LI>It's a more "portable" format.
+<LI>Not everybody has the nice fonts I used in the Word file.
+<LI>Hypertext r00lz. (Typesetting for programmers ;)
+<LI>I can put it "as is" on <A HREF="http://www.matilde.demon.co.uk">my web page</A>.
+</UL>
+
+<BR><HR><H3><BR><A NAME="History">History</A></H3>
+<TABLE BORDER=1>
+	<CAPTION><I>The history of ASMotor</I></CAPTION>
+
+<TR>
+	<TD ALIGN="Center"><B><I>Version</I></B></TD>
+	<TD ALIGN="Center"><I><B>Dated</B></I></TD>
+	<TD><B><I>Release notes</I></B></TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.0</TD>
+	<TD ALIGN="Center">03 July 1997</TD>
+	<TD>First release</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.01</TD>
+	<TD ALIGN="Center">20 July 1997</TD>
+	<TD><B>RGBDS fixes:</B><BR>
+	RGBFix can now also truncate the ROM-images to a valid size.<BR>
+	RGBAsm supports the LDD and LDI syntax plus [HLD] and [HLI]. LDH is
+	synonymous with LDIO.<BR>
+	Example filenames have been changed to adhere to Jeff Frohweins proposed
+	standard.<BR>
+	<B>General fixes:</B><BR>
+RGBLink knows about big and little endian. Plus it can do range checking
+on intermediate results in an expression. This is necessary to support
+different types of CPUs.<BR>
+RGBLink DIDN'T know about the special PC symbol "@" so if you used it
+more than once per sourcefile in an expression the linker had to
+resolve, things would go horribly wrong.<BR>
+There was a bug in the macro parameter passing. Any whitespace after the
+last parameter would be appended to the last parameter. Reported by Jeff Frohwein.<BR>
+A section stack has been implemented. Look up POPS and PUSHS in the
+manual. Jeff Frohweins doing again.<BR>
+OPT command added for defining and changing some options while assembling.<BR>
+You can now define which characters are used for the Gameboy graphics
+integer (`) using the commandline or the new OPT command. Cool idea by (surprise surprise) Jeff Frohwein.<BR>
+Also, an option stack has been added. Look up POPO and PUSHO in the
+manual.<BR>
+Fixed yet another line number bug reported by Jeff Frohwein (when will this guy leave me alone? ;)<BR>
+</TD>
+<TR>
+	<TD ALIGN="Center">1.02</TD>
+	<TD ALIGN="Center">22 July 1997</TD>
+	<TD><B>General fixes:</B><BR>
+The lamest typo bug of all time has been fixed. RGBAsm would output a word defined with DW as 4 bytes instead of 2. Jeff Frohwein reported this.<BR>
+The first line of an included file didn't assemble correctly.<BR>
+-b option added for setting the characters used for binary constants.<BR>
+</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.10</TD>
+	<TD ALIGN="Center">21 Sep 1997</TD>
+	<TD><B>General fixes:</B><BR>
+The assembler would crash if you tried to use a macro symbol in an expression.
+(Jeff Frohwein)<BR>
+You couldn't use STRCMP, STRLEN and STRIN in relocatable expressions. (Harry
+P. Mulder)<BR>
+Relocatable symbols are no longer allowed as arguments to the DEF function.<BR>
+Finally! A librarian and smart linking has been added.<BR>
+Bug fixed in the assembler where it would sometimes write out too many bytes
+for HRAM section definitions.<BR>
+-z options (set fill value used for uninitialised data) added to the
+assembler and linker.<BR>
+The assembler will now read in any type of ASCII file on any type of OS.
+</TABLE>
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 08 October 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</BODY>
+</HTML>

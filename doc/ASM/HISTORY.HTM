@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm History</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>xAsm History</H2></I><HR>
+
+<TABLE BORDER=1>
+	<CAPTION><I>The history of xAsm</I></CAPTION>
+
+<TR>
+	<TD ALIGN="Center"><B><I>Version</I></B></TD>
+	<TD ALIGN="Center"><B><I>Dated</I></B></TD>
+	<TD><B><I>Release notes</I></B></TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.0</TD>
+	<TD ALIGN="Center">1 Oct. 96</TD>
+	<TD>First release</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.01</TD>
+	<TD ALIGN="Center">1 Dec. 96</TD>
+	<TD>Fixed  bug  in <A HREF="incbin.htm">INCBIN</A> (sometimes reported the section full)<BR>
+                 Added <A HREF="miscfunc.htm">DEF()</A> function</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.02</TD>
+	<TD ALIGN="Center">12 Feb. 97</TD>
+	<TD>Added <A HREF="expr_str.htm">STRLEN(), STRCAT(), STRIN(), STRCMP(), STRSUB(), STRUPR() and STRLWR()</A> functions<BR>
+	<A HREF="export.htm">IMPORT/EXPORT/GLOBAL</A> takes multiple arguments now<BR>
+	<A HREF="section.htm">HRAM</A> sectiontype added<BR>
+	ORG like features added to <A HREF="section.htm">SECTION</A><BR>
+	<A HREF="trg_gb.htm">LDIO</A> mnemonic added</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.03</TD>
+	<TD ALIGN="Center">23 Mar. 97</TD>
+	<TD>The <A HREF="section.htm">HRAM section</A> was 128 bytes long instead of 127. potentially thrashing the interrupt enable register if you filled the HRAM.<BR>
+	The <A HREF="miscfunc.htm">BANK() function</A>, when used on a symbol defined in the current sourcefile, returned the wrong bank ID. (reported by Harry P. Mulder)<BR>
+	The <A HREF="miscfunc.htm">BANK() function</A> didn't check whether the argument was a properly defined symbol. (reported by Harry P. Mulder)<BR>
+	Completely new lexical analyser module. This fixed several linenumber bugs and other macro/if/rept related bugs. Also fixed a bug which made it possible to have equated symbols with the same name as a reserved keyword (if you get a "parse error" with this release on some of your sources, this is probably what is going on)<BR>
+	<A HREF="fail.htm">FAIL and WARN</A> commands.<BR>
+	<A HREF="presym.htm">__LINE__, __FILE__, __TIME__, __DATE__</A> predefined symbols added.<BR>
+</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.04</TD>
+	<TD ALIGN="Center">03 July 1997</TD>
+	<TD>First ASMotor release<BR>
+<A HREF="presym.htm">__TIME__ and __DATE__</A> give todays date instead of when the assembler was compiled.<BR>
+Sometimes the first line of a file wouldn't assemble correctly. Reported by Jeff Frohwein.<BR>
+Unrolling multiline <A HREF="equs.htm">string symbols</A> left the linecounter in a sorry state. Jeff Frohwein again.<BR>
+<A HREF="db.htm">DB and DW</A> can now (officially ;-) be used in BSS/HRAM/VRAM sections without any arguments to reserve a byte or a word respectively. Reported/suggested/inspired by Mr. Frohwein.<BR>
+The character # can now be used as part of a <A HREF="symbols.htm">symbol name</A>. Jeff....<BR>
+The <A HREF="rs.htm">RS</A> counter "_RS" is now defined from the very start of the assembly process instead of after the first RSSET or RSRESET.<BR>
+Bug fixed: You couldn't use \0-\9 and \@ in <A HREF="expr_str.htm">{} constructs</A><BR>
+<A HREF="purge.htm">PURGE</A> pseudo-op added. Purges a symbol from the symboltable and memory. Use with extreme caution! Inspired by Harry P. Mulder<BR>
+<A HREF="macro.htm">MACRO</A> parameter passing method changed drastically. Read (and re-read) the manual for details. Suggested by Harry P. Mulder.<BR>
+</TD>
+<TR>
+	<TD ALIGN="Center">1.05</TD>
+	<TD ALIGN="Center">20 July 1997</TD>
+	<TD><B>RGBDS fixes:</B><BR>
+	RGBAsm supports the LDD and LDI syntax plus [HLD] and [HLI]. LDH is
+	synonymous with LDIO.<BR>
+	<B>General fixes:</B><BR>
+There was a bug in the macro parameter passing. Any whitespace after the
+last parameter would be appended to the last parameter. Reported by Jeff Frohwein.<BR>
+A section stack has been implemented. Look up <A HREF="pops.htm">POPS and PUSHS</A>. Jeff Frohweins doing again.<BR>
+<A HREF="opt.htm">OPT</A> command added for defining and changing some options while assembling.<BR>
+You can now define which characters are used for the <A HREF="expr_int.htm">Gameboy graphics
+integer (`)</A> using the <A HREF="usage.htm">commandline</A> or the new <A HREF="opt.htm">OPT</A> command. Cool idea by (surprise surprise) Jeff Frohwein.<BR>
+Also, an option stack has been added. Look up <A HREF="popo.htm">POPO and PUSHO</A> in the
+manual.<BR>
+Fixed yet another line number bug reported by Jeff Frohwein (when will this guy leave me alone? ;)<BR>
+</TD>
+<TR>
+	<TD ALIGN="Center">1.06</TD>
+	<TD ALIGN="Center">22 July 1997</TD>
+	<TD><B>General fixes:</B><BR>
+The lamest typo bug of all time has been fixed. RGBAsm would output a word defined with DW as 4 bytes instead of 2. Jeff Frohwein reported this.<BR>
+The first line of an included file didn't assemble correctly.<BR>
+<A HREF="usage.htm">-b option</A> added for setting the characters used for binary constants.<BR>
+</TD>
+</TR>
+<TR>
+	<TD ALIGN="Center">1.08</TD>
+	<TD ALIGN="Center">21 September 1997</TD>
+	<TD><B>General fixes:</B><BR>
+A crash occured if you tried to use a macro symbol in an expression.
+(Jeff Frohwein)<BR>
+You couldn't use STRCMP, STRLEN and STRIN in relocatable expressions. (Harry
+P. Mulder)<BR>
+Relocatable symbols are no longer allowed as arguments to the DEF function.<BR>
+Bug fixed in the assembler where it would sometimes write out too many bytes
+for HRAM section definitions.<BR>
+</TD>
+</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">02 July 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			DQ directive added for defining 32-bit data constants. See operation of DW & DB.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">05 July 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Allow only a part of a binary file to be included instead of the whole thing.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">10 June 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Added output of file dependency information for each file included/assembled. Enabled with a command line option.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Added ORG directive to allow anonymous sections.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Added ability to output error information in either RGBDS or Microsoft Developer Studio format.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Added pseudo-instructions to handle NE (not equal), EQ (equal), and LT (less than) on JR/JP/CALL instructions
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Added STRTRIM, STRLTRIM, STRRTRIM directives to allow trimming of white space from strings in macro arguments.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Bug Fix:</B>
+			<BR>
+			When an "unknown symbol" error was reported during the link phase the undefined symbol was not given.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.08</TD>
+		<TD ALIGN="Center">?? ???? 1999</TD>
+		<TD>
+			<B>Bug Fix:</B>
+			<BR>
+			Declaring a symbol as GLOBAL in a header file and then referencing it in code but never defining it would crash the linker.
+			<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD ALIGN="Center">1.09</TD>
+		<TD ALIGN="Center">08 February 2000</TD>
+		<TD>
+			<B>Feature:</B>
+			<BR>
+			Can now use a command line option to set the number format between a slightly tweaked Motorola/RGBDS format and Zilog.
+			<BR>
+			Hex numbers can now be represented as $FF or FFh.
+			<BR>
+			Octal as &77 or 77o.
+			<BR>
+			Binary as %10010110 or 10010110b.
+			<BR>
+			Gameboy graphics numbers as `1001 or 1001g.
+			<BR>
+			Decimal numbers remain unchanged.
+			<BR>
+		</TD>
+	</TR>
+
+</TABLE>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 September 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm OPT</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>OPT
+</H2></I>
+<HR>
+
+<P>OPT can be used to change <I>some</I> of the options during assembling you source instead of defining them on the commandline.<BR>
+<P>OPT takes a comma-seperated list of options as its argument:
+
+<P><TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>    PUSHO
+    OPT   g.oOX    ;Set the GB graphics constants to use these characters
+    DW    `..ooOOXX
+    POPO
+    DW    `00112233</PRE>   
+</FONT></TD>
+</TR>
+</TABLE>
+
+<P>The options that OPT can modify are currently: <B>b, e and g</B>
+
+<H3>See also:</H3>
+<UL>
+<LI><A HREF="usage.htm">Usage</A>
+<LI><A HREF="popo.htm">The option stack</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 20 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

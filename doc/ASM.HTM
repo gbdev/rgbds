@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<HR>
+<CENTER>
+<TABLE BORDER=0 BGCOLOR="#000000" CELLPADDING=25>
+<TR>
+	<TD><FONT COLOR="#FFFFFF"><H2>xAsm Documentation</H2></FONT></TD>
+</TR>
+</TABLE>
+</CENTER><HR>
+<H2><CENTER>Table of Contents</CENTER></H2>
+
+<H3>General stuff</H3>
+<UL>
+	<LI><A HREF="asm/history.htm">History</A>
+	<LI><A HREF="asm/usage.htm">Usage</A>
+	<LI><A HREF="asm/opt.htm">Changing options while assembling</A>
+	<LI><A HREF="asm/popo.htm">The option stack</A>
+	<LI><A HREF="asm/syntax.htm">Syntax and comments</A>
+	<LI><A HREF="asm/section.htm">Sections</A>
+</UL>
+
+<H3>Symbols</H3>
+<UL>
+	<LI><A HREF="asm/symbols.htm">Symbols</A>
+	<LI><A HREF="asm/export.htm">Exporting and importing symbols</A>
+	<LI><A HREF="asm/purge.htm">Purging symbols</A>
+	<LI><A HREF="asm/presym.htm">Predeclared symbols</A>
+</UL>
+
+<H3>The macrolanguage</H3>
+<UL>
+	<LI><A HREF="asm/print.htm">Printing out things during assembling</A>
+	<LI><A HREF="asm/rept.htm">Automatically repeating blocks of code</A>
+	<LI><A HREF="asm/fail.htm">Aborting the assembly process</A>
+	<LI><A HREF="asm/include.htm">Including other sourcefiles</A>
+	<LI><A HREF="asm/if.htm">Conditional assembling</A>
+	<LI><A HREF="asm/expr_int.htm">Integer and Boolean expressions</A>
+	<LI><A HREF="asm/expr_fix.htm">Fixed-point expressions and functions</A>
+	<LI><A HREF="asm/expr_str.htm">String expressions, functions and formatting</A>
+	<LI><A HREF="asm/miscfunc.htm">Other functions</A>
+</UL>
+
+<H3>Other ways than mnemonics to define data</H3>
+<UL>
+	<LI><A HREF="asm/db.htm">Defining constant data</A>
+	<LI><A HREF="asm/ds.htm">Declaring variables in a BSS section</A>
+	<LI><A HREF="asm/incbin.htm">Including binary files</A>
+</UL>
+
+<H3>Target specific information</H3>
+<UL>
+	<LI><A HREF="asm/trg_gb.htm">The Gameboy</A>
+</UL>
+
+<H3>Alphabetical list of the macro-language instructions and functions</H3>
+<UL>
+	<LI><A HREF="asm/presym.htm">@</A>
+	<LI><A HREF="asm/presym.htm">__DATE__</A>
+	<LI><A HREF="asm/presym.htm">__LINE__</A>
+	<LI><A HREF="asm/presym.htm">__TIME__</A>
+	<LI><A HREF="asm/presym.htm">_NARG</A>
+	<LI><A HREF="asm/presym.htm">_PI</A>
+	<LI><A HREF="asm/presym.htm">_RS</A>
+	<LI><A HREF="asm/expr_fix.htm">ACOS</A>
+	<LI><A HREF="asm/expr_fix.htm">ASIN</A>
+	<LI><A HREF="asm/expr_fix.htm">ATAN</A>
+	<LI><A HREF="asm/expr_fix.htm">ATAN2</A>
+	<LI><A HREF="asm/miscfunc.htm">BANK</A>
+	<LI><A HREF="asm/section.htm">BSS</A>
+	<LI><A HREF="asm/section.htm">CODE</A>
+	<LI><A HREF="asm/expr_fix.htm">COS</A>
+	<LI><A HREF="asm/section.htm">DATA</A>
+	<LI><A HREF="asm/db.htm">DB</A>
+	<LI><A HREF="asm/miscfunc.htm">DEF</A>
+	<LI><A HREF="asm/expr_fix.htm">DIV</A>
+	<LI><A HREF="asm/ds.htm">DS</A>
+	<LI><A HREF="asm/db.htm">DW</A>
+	<LI><A HREF="asm/if.htm">ELSE</A>
+	<LI><A HREF="asm/if.htm">ENDC</A>
+	<LI><A HREF="asm/macro.htm">ENDM</A>
+	<LI><A HREF="asm/rept.htm">ENDR</A>
+	<LI><A HREF="asm/equ.htm">EQU</A>
+	<LI><A HREF="asm/equs.htm">EQUS</A>
+	<LI><A HREF="asm/export.htm">EXPORT</A>
+	<LI><A HREF="asm/fail.htm">FAIL</A>
+	<LI><A HREF="asm/export.htm">GLOBAL</A>
+	<LI><A HREF="asm/section.htm">HRAM</A>
+	<LI><A HREF="asm/if.htm">IF</A>
+	<LI><A HREF="asm/export.htm">IMPORT</A>
+	<LI><A HREF="asm/incbin.htm">INCBIN</A>
+	<LI><A HREF="asm/include.htm">INCLUDE</A>
+	<LI><A HREF="asm/macro.htm">MACRO</A>
+	<LI><A HREF="asm/expr_fix.htm">MUL</A>
+	<LI><A HREF="asm/opt.htm">OPT</A>
+	<LI><A HREF="asm/popo.htm">POPO</A>
+	<LI><A HREF="asm/pops.htm">POPS</A>
+	<LI><A HREF="asm/print.htm">PRINTF</A>
+	<LI><A HREF="asm/print.htm">PRINTT</A>
+	<LI><A HREF="asm/print.htm">PRINTV</A>
+	<LI><A HREF="asm/purge.htm">PURGE</A>
+	<LI><A HREF="asm/popo.htm">PUSHO</A>
+	<LI><A HREF="asm/pops.htm">PUSHS</A>
+	<LI><A HREF="asm/rept.htm">REPT</A>
+	<LI><A HREF="asm/rs.htm">RB</A>
+	<LI><A HREF="asm/rs.htm">RSRESET</A>
+	<LI><A HREF="asm/rs.htm">RSSET</A>
+	<LI><A HREF="asm/rs.htm">RW</A>
+	<LI><A HREF="asm/section.htm">SECTION</A>
+	<LI><A HREF="asm/set.htm">SET</A>
+	<LI><A HREF="asm/shift.htm">SHIFT</A>
+	<LI><A HREF="asm/expr_fix.htm">SIN</A>
+	<LI><A HREF="asm/expr_str.htm">STRCAT</A>
+	<LI><A HREF="asm/expr_str.htm">STRCMP</A>
+	<LI><A HREF="asm/expr_str.htm">STRIN</A>
+	<LI><A HREF="asm/expr_str.htm">STRLEN</A>
+	<LI><A HREF="asm/expr_str.htm">STRLWR</A>
+	<LI><A HREF="asm/expr_str.htm">STRSUB</A>
+	<LI><A HREF="asm/expr_str.htm">STRUPR</A>
+	<LI><A HREF="asm/expr_fix.htm">TAN</A>
+	<LI><A HREF="asm/section.htm">VRAM</A>
+	<LI><A HREF="asm/fail.htm">WARN</A>
+	<LI><A HREF="asm/export.htm">XDEF</A>
+	<LI><A HREF="asm/export.htm">XREF</A>
+</UL>
+
+<BR><HR><FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 20 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</BODY>
+</HTML>

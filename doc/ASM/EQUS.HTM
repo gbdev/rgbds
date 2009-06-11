@@ -1,0 +1,47 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm EQUS</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>EQUS</H2></I><HR>
+
+<P>EQUS is used to define string-symbols. Wherever the assembler meets a string symbol its name is replaced with its value. If you are familiar with C you can think of it as the same as #define.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>COUNTREG EQUS "[hl+]"
+          
+         ld   a,COUNTREG</PRE>     
+</FONT></TD>
+</TR>
+</TABLE>
+<P>     (Note that : following the label-name is not allowed.)<BR>
+<P>This will be interpreted as:<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>         ld   a,[hl+]</PRE>   
+</FONT></TD>
+</TR>
+</TABLE>
+<P>String-symbols  can also be used to define  small  one-line macros:<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>PUSHA    EQUS "push af\npush bc\npush de\npush hl\n"</PRE>   
+</FONT></TD>
+</TR>
+</TABLE>
+<P>Note that a colon (:) following the label-name is not allowed. String equates can't be exported or imported.<BR>
+
+<H3>See also:</H3>
+<UL>
+	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+

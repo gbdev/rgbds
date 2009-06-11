@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm Gameboy</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>Gameboy
+</H2></I>
+<HR>
+
+<P>The full GB-Z80 instruction-set is implemented with a few modifications to the original Zilog syntax. This is due
+to a Bison problem but in my opinion the syntax is better than the original one.<BR>   
+<H4><BR>
+Instructions</H4>
+<PRE>    ADC
+    ADD
+    AND
+    BIT
+    CALL
+    CCF
+    CP
+    CPL
+    DAA
+    DEC
+    DI
+    EI
+    EX
+    HALT
+    INC
+    JP
+    JR
+    LD
+    LDD
+    LDI
+    LDH/LDIO    (see note below)
+    NOP
+    OR
+    POP
+    PUSH
+    RES
+    RET
+    RETI
+    RL
+    RLA
+    RLC
+    RLCA
+    RR
+    RRA
+    RRC
+    RRCA
+    RST
+    SBC
+    SCF
+    SET
+    SLA
+    SRA
+    SRL
+    STOP
+    SUB
+    SWAP
+    XOR</PRE>   
+<P>Note that you can use both
+<PRE>    OR   A,B
+    OR   B</PRE>   
+<H4><BR>Addressingmodes</H4>
+<P>Indirect addressing has been changed to [ ] instead  of ( ):<BR>
+<PRE>    A
+    B
+    C
+    D
+    E
+    H
+    L
+    AF
+    BC
+    DE
+    HL
+    SP
+    [BC]
+    [DE]
+    [HL]
+    [HL-]/[HLI]
+    [HL+]/[HLD]
+    [SP]
+    n8       (8 bit expression)
+    n16      (16 bit expression)
+    n3       (3 bit CONSTANT expression)
+    [n16]/[$FF00+n8]
+    [$FF00+C]/[C]</PRE>          
+<P>The  assembler will intelligently decide between  <B>[n16]</B> and  <B>[$FF00+n8]</B> in the LD instruction.  Note however  that  if  you  use  any <A HREF="symbols.htm">constant symbols</A> in the expression they had better  be defined before the instruction or your symbol-table may become mangled. Also worth noting is that it will only ever select the short $FF00 mode when you use constant symbols. NOT if you use symbols defined in a <A HREF="section.htm">HRAM section</A>. As this defies the whole point of implementing the HRAM sectiontype I've added the LDIO mnemonic. It works like the LD instruction but it will ALWAYS generate the $FF00+ form and it will also automatically logically AND the expression with $FF if it is relocatable. Which is what you want. Trust me ;)<BR>
+<BR>
+<H4>Conditioncodes</H4>
+<PRE>    C
+    NC
+    Z
+    NZ</PRE>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 20 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

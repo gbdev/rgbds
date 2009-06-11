@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm Syntax</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>xAsm Syntax</H2></I><HR>
+
+The syntax line-based, just as in any other assembler. Meaning that you do one instruction or pseudo-op per line:<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>[label] [instruction] [;comment]</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<BR>
+Example:<BR>
+<BR>   
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>John:          ld   a,87 ;Weee</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>A comment can also be an asterisk (*) followed by the comment if the asterisk is the first character on the line:
+<BR>
+<BR>   
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>********************************
+* These are full line comments *
+********************************</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+      
+<P>All pseudo-ops, mnemonics and registers (reserved keywords) are <I>case-insensitive</I> and all labels are <I>case-sensitive</I>.<BR>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>

@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>xAsm MACRO/ENDM</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#692764" TEXT="#F5A0D8" LINK="#8AAEE6" VLINK="#2B9DA4" ALINK="#95F0DA">
+<I><H2>MACRO<BR>
+ENDM</H2></I><HR>
+
+<P>One of the best features of an assembler is the ability to write macros for it. Macros also provide a method of passing
+arguments to them and they can then react to the input using IF-constructs.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>MyMacro:  MACRO
+          ld   a,80
+          call MyFunc
+          ENDM</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>The above example is a very simple macro. You execute the macro by typing its name.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>          add  a,b
+          ld   sp,hl
+          MyMacro        ;This will be expanded
+          sub  a,87</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>When the assembler meets MyMacro it will insert the macrodefinition (the text enclosed in <B>MACRO/ENDM</B>).
+<P><A NAME="labelsuffix"></A>Suppose your macro contains a loop.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>LoopyMacro:    MACRO
+               xor  a,a
+.loop          ld   [hl+],a
+               dec  c
+               jr   nz,.loop
+               ENDM</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<A TARGET="#labelsuffix"></A><P>This is fine. That is, if you only use the macro once per <A HREF="labels.htm">scope</A>. To get around this problem there is a special label string equate called <B>\@</B> that you can append to your labels and it will then expand to a unique string.
+<B>\@</B> also works in <A HREF="rept.htm">REPT-blocks</A> should you have any loops there.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>LoopyMacro:    MACRO
+               xor  a,a
+.loop\@        ld   [hl+],a
+               dec  c
+               jr   nz,.loop\@
+               ENDM</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<H4>Arguments</H4>
+<P>I'd like <I>LoopyMacro</I> a lot better if I didn't have to pre-load the registers with values and <I>then</I> call it.
+What  I'd like is the ability to pass it arguments and it then loaded the registers itself.
+<P>And I can do that. In macros you can get the arguments by using the special macro string equates <B>\1</B> through
+<B>\9</B>, <B>\1</B> being the first argument specified on the calling of the macro.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>LoopyMacro:    MACRO
+               ld   hl,\1
+               ld   c,\2
+               xor  a,a
+.loop\@        ld   [hl+],a
+               dec  c
+               jr   nz,.loop\@
+               ENDM</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>Now I can call the macro specifying two arguments. The first being the address and the second being a bytecount.
+The macro will then reset all bytes in this range.<BR>
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>               LoopyMacro     MyVars,54</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+<P>     You  can  specify up to nine arguments when  calling  a
+     macro.  Arguments are passed as string equates. There's no need to enclose them in quotes. Parameter passing has changed a bit since v1.03 in that an expression will not be evaluated first but passed directly. This means that it's probably a very good idea to use
+brackets around \1-\9 if you perform further calculations on them. For instance if you pass 1+2 as the first argument and then do
+
+<P><TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>    PRINTV  \1*2
+</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+
+you will get the value 5 on screen and not 6 as you might have expected..<BR>
+
+<P>Note that a colon (:) following the macro-name is required. Macros can't be exported or imported. It's valid to call a macro from a macro (yes, even the same one).<BR>
+
+<H3>See also:</H3>
+<UL>
+<LI><A HREF="shift.htm">SHIFT</A>
+</UL>
+
+<BR><HR>
+<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 02 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
