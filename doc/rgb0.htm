@@ -20,14 +20,14 @@
 	<LI><A HREF="#RPN">Rpn Data</A>
 </UL>
 <BR>
-<HR><H3><BR><A NAME="Background">Background</A></H3>
+<HR><H3 id="Background">Background</H3>
 <P>I developed the RGB0 fileformat mainly because I needed a suitable dataformat to hold the output from <A HREF="asm.htm">xAsm</A> that was powerful to accomodate all the features I needed and also would make it easy for me to add
 new ones.
 The reason for documenting it is so people can write converters between it and other formats. Perhaps even develop other compilers for it?<BR>
 <BR>
 The RGB1 fileformat saw the light of day with the V1.02 of the old RGBDS release because of the addition of fixed sections.<BR>
 The RGB2 fileformat emerged because I needed to add support for big endian CPUs.
-<BR><HR><H3><BR><A NAME="FileStructure">FileStructure</A></H3>
+<BR><HR><H3 id="FileStructure">FileStructure</H3>
 <B>LONG</B> is a 32-bit integer stored in little-endian  format (Intel)<BR>
 <B>BYTE</B> is an 8-bit integer<BR>
 <B>STRING</B> is a 0 terminated string of <B>BYTE</B><BR>
@@ -93,7 +93,7 @@ Down to business...<BR>
             ENDR
         ENDC
     ENDR</PRE>
-<BR><HR><H3><BR><A NAME="RPN">Rpn Data</A></H3>
+<BR><HR><H3 id="RPN">Rpn Data</H3>
 <P>Expressions in the objectfile are stored as <B>RPN</B>. This is an expression of the form "2 5 +". This will first push
 the value "2" to the stack. Then "5". The "+" operator pops two arguments from the stack, adds them, and then
 pushes the result on the stack, effectively replacing the two top arguments with their sum. In the <B>RGB</B> format <B>RPN</B>
