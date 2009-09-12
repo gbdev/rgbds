@@ -58,7 +58,7 @@ rgbfix: $(rgbfix_obj)
 	gcc $(cflags) -DGAMEBOY -c -o $@ $<
 
 .y.c:
-	bison -d -o $@ $^
+	yacc -d -o $@ $^
 
 src/asm/asmy.y: src/asm/yaccprt1.y src/asm/gameboy/yaccprt2.y src/asm/yaccprt3.y src/asm/gameboy/yaccprt4.y
 	cat $^ > $@
