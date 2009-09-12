@@ -380,7 +380,7 @@ const_16bit		:	relocconst
 						{
 							yyerror( "Expression must be 16-bit" );
 						}
-						$$=$1
+						$$=$1;
 					}
 ;
 

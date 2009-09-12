@@ -234,12 +234,12 @@ z80_ld			:	z80_ld_mem
 z80_ld_hl		:	T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
 					{ out_AbsByte(0xF8); out_RelByte(&$6); }
 				|	T_Z80_LD T_MODE_HL comma const_16bit
-					{ out_AbsByte(0x01|(REG_HL<<4)); out_RelWord(&$4) }
+					{ out_AbsByte(0x01|(REG_HL<<4)); out_RelWord(&$4); }
 ;
 z80_ld_sp		:	T_Z80_LD T_MODE_SP comma T_MODE_HL
 					{ out_AbsByte(0xF9); }
 				|	T_Z80_LD T_MODE_SP comma const_16bit
-					{ out_AbsByte(0x01|(REG_SP<<4)); out_RelWord(&$4) }
+					{ out_AbsByte(0x01|(REG_SP<<4)); out_RelWord(&$4); }
 ;
 
 z80_ld_mem		:	T_Z80_LD op_mem_ind comma T_MODE_SP
@@ -321,7 +321,7 @@ z80_ld_a		:	T_Z80_LD reg_r comma T_MODE_C_IND
 ;
 
 z80_ld_ss		:	T_Z80_LD reg_ss comma const_16bit
-					{ out_AbsByte(0x01|($2<<4)); out_RelWord(&$4) }
+					{ out_AbsByte(0x01|($2<<4)); out_RelWord(&$4); }
 ;
 
 z80_nop			:	T_Z80_NOP
@@ -443,56 +443,56 @@ z80_xor			:	T_Z80_XOR op_a_n	{ out_AbsByte(0xEE); out_RelByte(&$2); }
 				|	T_Z80_XOR op_a_r	{ out_AbsByte(0xA8|$2); }
 ;
 
-op_mem_ind		:	'[' const_16bit ']'	{ $$ = $2 }
+op_mem_ind		:	'[' const_16bit ']'	{ $$ = $2; }
 ;
 
-op_hl_ss 		:	reg_ss					{ $$ = $1 }
-				|	T_MODE_HL comma reg_ss	{ $$ = $3 }
+op_hl_ss 		:	reg_ss					{ $$ = $1; }
+				|	T_MODE_HL comma reg_ss	{ $$ = $3; }
 ;
 
-op_a_r			:	reg_r				{ $$ = $1 }
-				|	T_MODE_A comma reg_r	{ $$ = $3 }
+op_a_r			:	reg_r				{ $$ = $1; }
+				|	T_MODE_A comma reg_r	{ $$ = $3; }
 ;
 
-op_a_n			:	const_8bit				{ $$ = $1 }
-				|	T_MODE_A comma const_8bit	{ $$ = $3 }
+op_a_n			:	const_8bit				{ $$ = $1; }
+				|	T_MODE_A comma const_8bit	{ $$ = $3; }
 ;
 
 comma			:	','
 ;
 
-ccode			:	T_CC_NZ		{ $$ = CC_NZ }
-				|	T_CC_Z		{ $$ = CC_Z }
-				|	T_CC_NC		{ $$ = CC_NC }
-				|	T_MODE_C	{ $$ = CC_C }
+ccode			:	T_CC_NZ		{ $$ = CC_NZ; }
+				|	T_CC_Z		{ $$ = CC_Z; }
+				|	T_CC_NC		{ $$ = CC_NC; }
+				|	T_MODE_C	{ $$ = CC_C; }
 ;
 
-reg_r			:	T_MODE_B		{ $$ = REG_B }
-				|	T_MODE_C		{ $$ = REG_C }
-				|	T_MODE_D		{ $$ = REG_D }
-				|	T_MODE_E		{ $$ = REG_E }
-				|	T_MODE_H		{ $$ = REG_H }
-				|	T_MODE_L		{ $$ = REG_L }
-				|	T_MODE_HL_IND	{ $$ = REG_HL_IND }
-				|	T_MODE_A		{ $$ = REG_A }
+reg_r			:	T_MODE_B		{ $$ = REG_B; }
+				|	T_MODE_C		{ $$ = REG_C; }
+				|	T_MODE_D		{ $$ = REG_D; }
+				|	T_MODE_E		{ $$ = REG_E; }
+				|	T_MODE_H		{ $$ = REG_H; }
+				|	T_MODE_L		{ $$ = REG_L; }
+				|	T_MODE_HL_IND	{ $$ = REG_HL_IND; }
+				|	T_MODE_A		{ $$ = REG_A; }
 ;
 
-reg_tt			:	T_MODE_BC		{ $$ = REG_BC }
-				|	T_MODE_DE		{ $$ = REG_DE }
-				|	T_MODE_HL		{ $$ = REG_HL }
-				|	T_MODE_AF		{ $$ = REG_AF }
+reg_tt			:	T_MODE_BC		{ $$ = REG_BC; }
+				|	T_MODE_DE		{ $$ = REG_DE; }
+				|	T_MODE_HL		{ $$ = REG_HL; }
+				|	T_MODE_AF		{ $$ = REG_AF; }
 ;
 
-reg_ss			:	T_MODE_BC		{ $$ = REG_BC }
-				|	T_MODE_DE		{ $$ = REG_DE }
-				|	T_MODE_HL		{ $$ = REG_HL }
-				|	T_MODE_SP		{ $$ = REG_SP }
+reg_ss			:	T_MODE_BC		{ $$ = REG_BC; }
+				|	T_MODE_DE		{ $$ = REG_DE; }
+				|	T_MODE_HL		{ $$ = REG_HL; }
+				|	T_MODE_SP		{ $$ = REG_SP; }
 ;
 
-reg_rr			:	T_MODE_BC_IND		{ $$ = REG_BC_IND }
-				|	T_MODE_DE_IND		{ $$ = REG_DE_IND }
-				|	T_MODE_HL_INDINC	{ $$ = REG_HL_INDINC }
-				|	T_MODE_HL_INDDEC	{ $$ = REG_HL_INDDEC }
+reg_rr			:	T_MODE_BC_IND		{ $$ = REG_BC_IND; }
+				|	T_MODE_DE_IND		{ $$ = REG_DE_IND; }
+				|	T_MODE_HL_INDINC	{ $$ = REG_HL_INDINC; }
+				|	T_MODE_HL_INDDEC	{ $$ = REG_HL_INDDEC; }
 ;
 
 %%
