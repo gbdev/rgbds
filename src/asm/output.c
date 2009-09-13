@@ -959,3 +959,52 @@ void out_BinaryFile(char *s)
 	} else
 		fatalerror("File not found");
 }
+
+void	out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
+{
+	FILE *f;
+
+	if (start_pos < 0)
+		fatalerror("Start position cannot be negative");
+
+	if (length < 0)
+		fatalerror("Number of bytes to read must be greater than zero");
+
+	fstk_FindFile (s);
+
+	if( (f=fopen(s,"rb"))!=NULL )
+	{
+					SLONG		fsize;
+
+					fseek (f, 0, SEEK_END);
+					fsize = ftell (f);
+
+					if (start_pos >= fsize)
+								fatalerror("Specified start position is greater than length of file");
+
+					if( (start_pos + length) > fsize )
+								fatalerror("Specified range in INCBIN is out of bounds");
+
+					fseek (f, start_pos, SEEK_SET);
+
+					checkcodesection (length);
+
+					if (nPass == 2)
+					{
+						SLONG		dest = nPC;
+						SLONG		todo = length;
+
+						while (todo--)
+										pCurrentSection->tData[dest++] = fgetc (f);
+					}
+
+					pCurrentSection->nPC += length;
+					nPC += length;
+					pPCSymbol->nValue += length;
+
+					fclose (f);
+			}
+			else
+					fatalerror ("File not found");
+}
+

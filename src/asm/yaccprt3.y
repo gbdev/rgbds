@@ -274,6 +274,10 @@ include			:	T_POP_INCLUDE string
 
 incbin			:	T_POP_INCBIN string
 					{ out_BinaryFile( $2 ); }
+				|	T_POP_INCBIN string ',' const ',' const
+					{
+						out_BinaryFileSlice( $2, $4, $6 );
+					}
 ;
 
 printt			:	T_POP_PRINTT string
