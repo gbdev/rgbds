@@ -23,6 +23,18 @@ INCBIN    "sprites\\hero.bin"</PRE>
 </TR>
 </TABLE>
 
+<P>You can also include only part of a file with <B>INCBIN</B>. The example below includes 256 bytes from <I>data.bin</I> starting from position 78.<BR>
+
+<BR>
+<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
+<TR>
+	<TD><FONT COLOR="#00FF00">
+<PRE>INCBIN    "data.bin",78,256</PRE>
+</FONT></TD>
+</TR>
+</TABLE>
+
+
 <H3>See also:</H3>
 <UL>
 	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
