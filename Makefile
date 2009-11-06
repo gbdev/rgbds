@@ -1,6 +1,6 @@
 localversion = $(shell bash scripts/localversion.sh)
 
-cflags = -Wall -Iinclude -Iinclude/asm/gameboy -DLOCALVERSION=\"$(localversion)\" -g
+cflags = -Wall -Iinclude -Iinclude/asm/gameboy -DLOCALVERSION=\"$(localversion)\" -g -std=c99
 
 all:
 
@@ -43,22 +43,22 @@ clean:
 	rm -rf rgbfix $(rgbfix_obj)
 
 rgbasm: $(rgbasm_obj)
-	gcc $(cflags) -o $@ $^ -lm
+	${CC} $(cflags) -o $@ $^ -lm
 
 xlib: $(xlib_obj)
-	gcc $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $^
 
 xlink: $(xlink_obj)
-	gcc $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $^
 
 rgbfix: $(rgbfix_obj)
-	gcc $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $^
 
 .c.o:
-	gcc $(cflags) -DGAMEBOY -c -o $@ $<
+	${CC} $(cflags) -DGAMEBOY -c -o $@ $<
 
 .y.c:
-	yacc -d -o $@ $^
+	${YACC} -d -o $@ $^
 
 src/asm/asmy.y: src/asm/yaccprt1.y src/asm/gameboy/yaccprt2.y src/asm/yaccprt3.y src/asm/gameboy/yaccprt4.y
 	cat $^ > $@
