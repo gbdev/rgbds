@@ -1,100 +1,96 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xLink</TITLE>
+<!DOCTYPE HTML PUBliC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xLink</title>
         <link rel="stylesheet" type="text/css" href="./style.css">
-</HEAD>
-
-<BODY>
-<HR SIZE="3">
-<CENTER>
-<TABLE CELLPADDING=25 BORDER=0 BGCOLOR="#000000">
-<TR>
-	<TD><FONT COLOR="#FFFFFF"><H2>xLink Documentation</H2></FONT></TD>
-</TR>
-</TABLE>
-<HR><H2>Table of Contents<BR></CENTER></H2>
-<UL>
-<LI><A HREF="#History"> History</A>
-<LI><A HREF="#Usage"> Usage</A>
-<LI><A HREF="#Linkfile"> The Linkfile</A>
-<LI><A HREF="#OperationTG"> Operation for Gameboy</A>
-<LI><A HREF="#smallmode"> Operation for Gameboy small mode</A>
-<LI><A HREF="#psion2"> Operation for Psion2 relocatable modules</A>
-</UL>
+</head>
+<body>
+<h1>xLink Documentation</h1>
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#history"> History</a>
+<li><a href="#usage"> Usage</a>
+<li><a href="#linkfile"> The Linkfile</a>
+<li><a href="#operationtg"> Operation for Gameboy</a>
+<li><a href="#smallmode"> Operation for Gameboy small mode</a>
+<li><a href="#psion2"> Operation for Psion2 relocatable modules</a>
+</ul>
 <hr>
-<H3 id="History">History</H3>
-<TABLE BORDER=1>
-	<CAPTION><I>The history of xLink</I></CAPTION>
-<TR>
-	<TD ALIGN="Center"><B><I>Version</I></B></TD>
-	<TD ALIGN="Center"><B><I>Dated</I></B></TD>
-	<TD><B><I>Release notes</I></B></TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.0</TD>
-	<TD ALIGN="Center">1 Oct. 96</TD>
-	<TD>First release (RGBDS)</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.01</TD>
-	<TD ALIGN="Center">3 Dec. 96</TD>
-	<TD>BANK() didn't work. Fixed.<BR>
-		Sections were quite often output in the wrong order. Fixed.</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.02</TD>
-	<TD ALIGN="Center">12 Feb. 97</TD>
-	<TD><A HREF="#Usage">-s switch and mapfile option</A> added</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.03</TD>
-	<TD ALIGN="Center">23 Mar. 97</TD>
-	<TD><A HREF="#Usage">Mapfile</A> now shows BSS, VRAM and HRAM areas<BR>
-	There was a bug regarding <A HREF="#Operation">fixed HOME sections.</A> <BR></TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.04</TD>
-	<TD ALIGN="Center">03 July 1997</TD>
-	<TD>First ASMotor release. Supports big-endian CPUs as well. <A HREF="#Usage">Usage</A> changed to allow for different 	output fileformats</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">1.05</TD>
-	<TD ALIGN="Center">20 July 1997</TD>
-	<TD>We can now do range checking on intermediate results in an expression. This is necessary to support
-different types of CPUs.<BR>
-RGBLink DIDN'T know about the special PC symbol "@" so if you used it
-more than once per sourcefile in an expression the linker had to
-resolve, things would go horribly wrong.<BR>
-</TD>
-<TR>
-	<TD ALIGN="Center">1.06</TD>
-	<TD ALIGN="Center">21 September 1997</TD>
-	<TD>Smart linking and library support added<BR>
-	Program renamed to xLink<BR>
-</TD>
-</TABLE>
-<BR>
-<HR>
-<BR>
-<H3 id="Usage">Usage</H3>
-<PRE>    xlink [options] linkfile</PRE>
-<P>Options are preceded by a dash (-) and go as follows:<BR>
-<BR>
-<PRE>    h         : Short help text
-    m<B>mapfile</B>  : Write a mapfile</A>
+<h2 id="history">History</h2>
+<table>
+	<caption>The history of xLink</caption>
+<thead>
+<tr>
+	<th scope="col">Version</th>
+	<th scope="col">Dated</th>
+	<th scope="col">Release notes</th>
+</tr>
+</thead>
+<tr>
+	<td>1.0</td>
+	<td>1 Oct. 96</td>
+	<td>First release (RGBDS)</td>
+</tr>
+<tr>
+	<td>1.01</td>
+	<td>3 Dec. 96</td>
+	<td>
+<ul>
+	<li>BANK() didn't work. Fixed.</li>
+	<li>Sections were quite often output in the wrong order. Fixed.</li>
+</ul>
+</tr>
+<tr>
+	<td>1.02</td>
+	<td>12 Feb. 97</td>
+	<td><a href="#usage">-s switch and mapfile option</A> added</td>
+</tr>
+<tr>
+	<td>1.03</td>
+	<td>23 Mar. 97</td>
+	<td>
+<ul>
+	<li><a href="#usage">Mapfile</A> now shows BSS, VRAM and HRAM areas</li>
+	<li>There was a bug regarding <a href="#operation">fixed HOME sections.</a>
+</ul></td>
+</tr>
+<tr>
+	<td>1.04</td>
+	<td>03 July 1997</td>
+	<td>First ASMotor release. Supports big-endian CPUs as well. <a href="#usage">Usage</a> changed to allow for different 	output fileformats</td>
+</tr>
+<tr>
+	<td>1.05</td>
+	<td>20 July 1997</td>
+	<td>
+<ul>
+	<li>We can now do range checking on intermediate results in an expression. This is necessary to support different types of CPUs.</li>
+	<li>RGBLink DIDN’T know about the special PC symbol "@" so if you used it more than once per sourcefile in an expression the linker had to resolve, things would go horribly wrong.</li>
+</ul>
+</td>
+<tr>
+	<td>1.06</td>
+	<td>21 September 1997</td>
+	<td><ul><li>Smart linking and library support added
+	<li>Program renamed to xLink
+</ul>
+</td>
+</table>
+<h2 id="usage">Usage</h2>
+<pre>    xlink [options] linkfile</pre>
+<p>Options are preceded by a hyphen (-) and go as follows:
+<pre>    h         : Short help text
+    m<b>mapfile</b>  : Write a mapfile
     t         : Output target:
-      tg      : Gameboy <A HREF="#OperationTG">ROM image</A> (default)
-      ts      : Gameboy <A HREF="#smallmode">Small mode (32kB)</A> ROM image
-      tp      : <A HREF="#psion2">Psion2</A> relocatable module
-    z<B>HX</B>       : Set the byte value (hex format) used for uninitialised data (default is ? for random)
-</PRE>
-<HR>
-<H3 id="Linkfile">The Linkfile</H3>
-<P>A linkfile is used to tell <B>xLink</B> which objects to include and what the outputname should be. It is in plain ASCII-format.<BR>
-<BR>
-<PRE>    # Linkfile for foobar.gb
+      tg      : Gameboy <a href="#operationtg">ROM image</a> (default)
+      ts      : Gameboy <a href="#smallmode">Small mode (32kB)</a> ROM image
+      tp      : <a href="#psion2">Psion2</a> relocatable module
+    z<b>HX</b>       : Set the byte value (hex format) used for uninitialised data (default is ? for random)
+</pre>
+<h2 id="linkfile">The Linkfile</h2>
+<p>A linkfile is used to tell <B>xLink</B> which objects to include and what the outputname should be. It is in plain ASCII-format.
+<pre>    # Linkfile for foobar.gb
       
     [Objects]
     foo.obj
@@ -104,25 +100,22 @@ resolve, things would go horribly wrong.<BR>
     mylib.lib
 
     [Output]
-    foobar.gb</PRE>
-<P>A line starting with # is ignored.<BR>
-<P>If you use libraries they will only be included if one of the objects actually reference them. This works on a SECTION level and not on a module level. This means that when you write libraries you can put each subroutine in its own SECTION so only the relevant bits are included.
-<BR><HR><H3 id="OperationTG">Operation for Gameboy (-tg)</H3>
-<P><A HREF="asm.htm#sections">Sections</A> created with <B>HOME</B> in the assembler are placed in the GB bank #0 (the fixed bank $0000-$3FFF) in the order they are loaded from the objectfiles specified in the linkfile. So you want the first file in the linkfile to contain your header.
-<B>CODE/DATA</B> sections are placed in <I>any bank other than #0</I>. This means you have absolutely <U>no</U> control over which sections goes where. This insures minimal slack (unused bytes) at the end of each bank in the image.
-<P>Currently  the linker doesn't calculate the GB checksums.
-You must use <A HREF="fix.htm">RGBFix</A> to do this.<BR><BR>
+    foobar.gb</pre>
+<p>A line starting with # is ignored.
+<p>If you use libraries they will only be included if one of the objects actually reference them. This works on a SECTION level and not on a module level. This means that when you write libraries you can put each subroutine in its own SECTION so only the relevant bits are included.
+<h2 id="operationtg">Operation for Gameboy (-tg)</h2>
+<p><a href="asm.htm#sections">Sections</a> created with <b>HOME</b> in the assembler are placed in the GB bank #0 (the fixed bank $0000-$3FFF) in the order they are loaded from the objectfiles specified in the linkfile. So you want the first file in the linkfile to contain your header. <b>CODE/DATA</b> sections are placed in <em>any bank other than #0</em>. This means you have absolutely <em>no</em> control over which sections goes where. This insures minimal slack (unused bytes) at the end of each bank in the image.
+<p>Currently  the linker doesn't calculate the GB checksums.
+You must use <a href="fix.htm">RGBFix</a> to do this.
 
-<BR><HR><H3 id="smallmode">Operation for Gameboy small mode (-ts)</H3>
-<P>Small mode forces all <B>DATA/CODE</B> sections to be of type <B>HOME</B> and increases the
-<B>HOME</B> section size from 16kB to 32kB. This also means that <B>CODE/DATA/HOME</B> sections are written to the final image in the order you have specified in the linkfile.
-<P>Currently  the linker doesn't calculate the GB checksums.
-You must use <A HREF="fix.htm">RGBFix</A> to do this.<BR><BR>
+<h3 id="smallmode">Operation for Gameboy small mode (-ts)</h3>
+<p>Small mode forces all <b>DATA/CODE</b> sections to be of type <b>HOME</b> and increases the <b>HOME</b> section size from 16kB to 32kB. This also means that <b>CODE/DATA/HOME</b> sections are written to the final image in the order you have specified in the linkfile.
+<p>Currently  the linker doesn't calculate the GB checksums. You must use <a href="fix.htm">RGBFix</a> to do this.
 
-<BR><HR><H3 id="psion2">Operation for Psion2 relocatable modules (-tp)</H3>
-<P>This is a fileformat for the Psion2 that allows you to load your code into where ever there's any free space. The only sections types allowed are <B>HOME, DATA and BSS</B>. All CODE and DATA sections are written to the output file in the order specified in the linkfile. The BSS are actually then expanded to DATA sections filled with zeroes and appended. This might change later.<BR>
-The file looks like this (all values are big endian):
-<PRE>
+<h2 id="psion2">Operation for Psion2 relocatable modules (-tp)</h2>
+<p>This is a fileformat for the Psion2 that allows you to load your code into where ever there's any free space. The only sections types allowed are <b>HOME, DATA and BSS</b>. All CODE and DATA sections are written to the output file in the order specified in the linkfile. The BSS are actually then expanded to DATA sections filled with zeroes and appended. This might change later.
+<p>The file looks like this (all values are big endian):
+<pre>
 LONG    NumberOfDataBytes
 REPT    NumberOfDataBytes
     DB  x
@@ -131,9 +124,8 @@ LONG    NumberOfPatches
 REPT    NumberOfPatches
     LONG    x    ; A value to add to the word at address x in the code
 ENDR
-</PRE>
-
-<HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 08 October 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
-</BODY>
-</HTML>
+</pre>
+<hr>
+<p>Last updated 08 October 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

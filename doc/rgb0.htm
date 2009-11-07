@@ -1,40 +1,30 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>RGB? Fileformat</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>RGB? Fileformat</title>
         <link rel="stylesheet" type="text/css" href="./style.css">
-</HEAD>
-
-<BODY>
-<HR><CENTER>
-<TABLE CELLPADDING=25 BORDER=0 BGCOLOR="#000000">
-<TR>
-	<TD><FONT COLOR="#FFFFFF"><H2>The RGB ObjectFileFormats</H2></FONT></TD>
-</TR>
-</TABLE>
-<HR>
-<H2>Table of Contents<BR></CENTER></H2>
-<UL>
-	<LI><A HREF="#Background">Background</A>
-	<LI><A HREF="#FileStructure">FileStructure</A>
-	<LI><A HREF="#RPN">Rpn Data</A>
-</UL>
-<BR>
-<HR><H3 id="Background">Background</H3>
-<P>I developed the RGB0 fileformat mainly because I needed a suitable dataformat to hold the output from <A HREF="asm.htm">xAsm</A> that was powerful to accomodate all the features I needed and also would make it easy for me to add
-new ones.
-The reason for documenting it is so people can write converters between it and other formats. Perhaps even develop other compilers for it?<BR>
-<BR>
-The RGB1 fileformat saw the light of day with the V1.02 of the old RGBDS release because of the addition of fixed sections.<BR>
-The RGB2 fileformat emerged because I needed to add support for big endian CPUs.
-<BR><HR><H3 id="FileStructure">FileStructure</H3>
-<B>LONG</B> is a 32-bit integer stored in little-endian  format (Intel)<BR>
-<B>BYTE</B> is an 8-bit integer<BR>
-<B>STRING</B> is a 0 terminated string of <B>BYTE</B><BR>
-<BR>
-Down to business...<BR>
-<PRE>
+</head>
+<body>
+<h1>The RGB ObjectFileFormats</h1>
+<h2>Table of Contents</h2>
+<ul>
+	<li><a href="#background">Background</A>
+	<li><a href="#filestructure">FileStructure</A>
+	<li><a href="#rpn">Rpn Data</A>
+</ul>
+<h2 id="background">Background</h2>
+<p>I developed the RGB0 fileformat mainly because I needed a suitable dataformat to hold the output from <a href="asm.htm">xAsm</a> that was powerful to accomodate all the features I needed and also would make it easy for me to add new ones. The reason for documenting it is so people can write converters between it and other formats. Perhaps even develop other compilers for it?</p>
+<p>The RGB1 fileformat saw the light of day with the V1.02 of the old RGBDS release because of the addition of fixed sections.</p>
+<p>The RGB2 fileformat emerged because I needed to add support for big endian CPUs.</p>
+<h2 id="filestructure">FileStructure</h2>
+<ul>
+	<li><dfn>LONG</dfn> is a 32‐bit integer stored in little‐endian  format (Intel)
+	<li><dfn>BYTE</dfn> is an 8‐bit integer
+	<li><dfn>STRING</dfn> is a 0‐terminated string of <b>BYTE</b>
+</ul>
+<p>Down to business...</p>
+<pre>
     ; There's a header...
       
     BYTE    ID[4]                      ;"RGB0", "RGB1", "RGB2"
@@ -43,7 +33,7 @@ Down to business...<BR>
       
     ; Now for some symbols
       
-    REPT    NumberOfSymbols            ;<B>NumberOfSymbols</B> symboldefs follow
+    REPT    NumberOfSymbols            ;<b>NumberOfSymbols</b> symboldefs follow
         STRING  Name                   ;The name of this symbol
         BYTE    Type                   ;0 = LOCAL symbol only used in this file
                                        ;1 = IMPORT this symbol from elsewhere
@@ -93,130 +83,128 @@ Down to business...<BR>
                 BYTE RPN[RPNSize]      ;RPN definition below
             ENDR
         ENDC
-    ENDR</PRE>
-<BR><HR><H3 id="RPN">Rpn Data</H3>
-<P>Expressions in the objectfile are stored as <B>RPN</B>. This is an expression of the form "2 5 +". This will first push
-the value "2" to the stack. Then "5". The "+" operator pops two arguments from the stack, adds them, and then
-pushes the result on the stack, effectively replacing the two top arguments with their sum. In the <B>RGB</B> format <B>RPN</B>
-expression are stored as <B>BYTE</B>s with some bytes being special prefixes for integers and symbols.<BR>
-<BR>
-<TABLE BORDER=1 WIDTH="50%">
-	<CAPTION><I>RPN Expressions</I></CAPTION>
-<TR>
-	<TD ALIGN="Center"><B><I>Byte value</I></B></TD>
-	<TD><B><I>Meaning</I></B></TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$00</TD>
-	<TD>+ operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$01</TD>
-	<TD>- operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$02</TD>
-	<TD>* operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$03</TD>
-	<TD>/ operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$04</TD>
-	<TD>% operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$05</TD>
-	<TD>unary -</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$06</TD>
-	<TD>| operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$07</TD>
-	<TD>& operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$08</TD>
-	<TD>^ operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$09</TD>
-	<TD>unary ~</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0A</TD>
-	<TD>&& comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0B</TD>
-	<TD>|| comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0C</TD>
-	<TD>unary !</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0D</TD>
-	<TD>== comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0E</TD>
-	<TD>!= comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$0F</TD>
-	<TD>&gt comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$10</TD>
-	<TD>&lt comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$11</TD>
-	<TD>&gt= comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$12</TD>
-	<TD>&lt= comparison</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$13</TD>
-	<TD>&lt&lt operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$14</TD>
-	<TD>&gt&gt operator</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$15</TD>
-	<TD>BANK() function for Gameboy, a symbol ID follows</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$16</TD>
-	<TD>HRAMCheck for Gameboy, check if value is in HRAM and logically and it with 0xFF</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$17</TD>
-	<TD>ZeroPageCheck for PC-Engine, check if value is in ZP (0x2000-0x20FF) and logically and it with 0xFF</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$18</TD>
-	<TD>RangeCheck. LOW and HIGH signed LONGs follow. Checks a value to see if within the range [LOW;HIGH]. If not, generate an error.
-</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$80</TD>
-	<TD>LONG integer follows</TD>
-</TR>
-<TR>
-	<TD ALIGN="Center">$81</TD>
-	<TD>Symbol ID follows</TD>
-</TR>
-</TABLE>
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 18 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
-</BODY>
-</HTML>
+    ENDR</pre>
+<h2 id="rpn">Rpn Data</h2>
+<p>Expressions in the objectfile are stored as <abbr title="Reverse Polish Notation">RPN</abbr>. This is an expression of the form “2 5 +”. This will first push the value “2” to the stack. Then “5”. The “+” operator pops two arguments from the stack, adds them, and then pushes the result on the stack, effectively replacing the two top arguments with their sum. In the RGB format RPN expressions are stored as <b>BYTE</b>s with some bytes being special prefixes for integers and symbols.</p>
+<table>
+	<caption>RPN Expressions</caption>
+<thead>
+<tr>
+	<th scope="col">Byte value</th>
+	<th scope="col">Meaning</th>
+</tr>
+</thead>
+<tr>
+	<td>$00</td>
+	<td>+ operator</td>
+</tr>
+<tr>
+	<td>$01</td>
+	<td>- operator</td>
+</tr>
+<tr>
+	<td>$02</td>
+	<td>* operator</td>
+</tr>
+<tr>
+	<td>$03</td>
+	<td>/ operator</td>
+</tr>
+<tr>
+	<td>$04</td>
+	<td>% operator</td>
+</tr>
+<tr>
+	<td>$05</td>
+	<td>unary -</td>
+</tr>
+<tr>
+	<td>$06</td>
+	<td>| operator</td>
+</tr>
+<tr>
+	<td>$07</td>
+	<td>& operator</td>
+</tr>
+<tr>
+	<td>$08</td>
+	<td>^ operator</td>
+</tr>
+<tr>
+	<td>$09</td>
+	<td>unary ~</td>
+</tr>
+<tr>
+	<td>$0A</td>
+	<td>&& comparison</td>
+</tr>
+<tr>
+	<td>$0B</td>
+	<td>|| comparison</td>
+</tr>
+<tr>
+	<td>$0C</td>
+	<td>unary !</td>
+</tr>
+<tr>
+	<td>$0D</td>
+	<td>== comparison</td>
+</tr>
+<tr>
+	<td>$0E</td>
+	<td>!= comparison</td>
+</tr>
+<tr>
+	<td>$0F</td>
+	<td>&gt comparison</td>
+</tr>
+<tr>
+	<td>$10</td>
+	<td>&lt comparison</td>
+</tr>
+<tr>
+	<td>$11</td>
+	<td>&gt= comparison</td>
+</tr>
+<tr>
+	<td>$12</td>
+	<td>&lt= comparison</td>
+</tr>
+<tr>
+	<td>$13</td>
+	<td>&lt&lt operator</td>
+</tr>
+<tr>
+	<td>$14</td>
+	<td>&gt&gt operator</td>
+</tr>
+<tr>
+	<td>$15</td>
+	<td>BANK() function for Gameboy, a symbol ID follows</td>
+</tr>
+<tr>
+	<td>$16</td>
+	<td>HRAMCheck for Gameboy, check if value is in HRAM and logically and it with 0xFF</td>
+</tr>
+<tr>
+	<td>$17</td>
+	<td>ZeroPageCheck for PC-Engine, check if value is in ZP (0x2000-0x20FF) and logically and it with 0xFF</td>
+</tr>
+<tr>
+	<td>$18</td>
+	<td>RangeCheck. LOW and HIGH signed LONGs follow. Checks a value to see if within the range [LOW;HIGH]. If not, generate an error.
+</td>
+</tr>
+<tr>
+	<td>$80</td>
+	<td>LONG integer follows</td>
+</tr>
+<tr>
+	<td>$81</td>
+	<td>Symbol ID follows</td>
+</tr>
+</table>
+<hr>
+<p>Last updated 18 July 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>
