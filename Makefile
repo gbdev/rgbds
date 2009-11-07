@@ -4,6 +4,12 @@ cflags = -Wall -Iinclude -Iinclude/asm/gameboy -DLOCALVERSION=\"$(localversion)\
 
 all:
 
+yacc_pre := \
+	src/asm/yaccprt1.y\
+	src/asm/gameboy/yaccprt2.y\
+	src/asm/yaccprt3.y\
+	src/asm/gameboy/yaccprt4.y
+
 rgbasm_obj := \
 	src/asm/alloca.o \
 	src/asm/asmy.o \
@@ -43,22 +49,22 @@ clean:
 	rm -rf rgbfix $(rgbfix_obj)
 
 rgbasm: $(rgbasm_obj)
-	${CC} $(cflags) -o $@ $^ -lm
+	${CC} $(cflags) -o $@ $(rgbasm_obj) -lm
 
 xlib: $(xlib_obj)
-	${CC} $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $(xlib_obj)
 
 xlink: $(xlink_obj)
-	${CC} $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $(xlink_obj)
 
 rgbfix: $(rgbfix_obj)
-	${CC} $(cflags) -o $@ $^
+	${CC} $(cflags) -o $@ $(rgbfix_obj)
 
 .c.o:
 	${CC} $(cflags) -DGAMEBOY -c -o $@ $<
 
-.y.c:
-	${YACC} -d -o $@ $^
+src/asm/asmy.c: src/asm/asmy.y
+	${YACC} -d -o $@ $<
 
-src/asm/asmy.y: src/asm/yaccprt1.y src/asm/gameboy/yaccprt2.y src/asm/yaccprt3.y src/asm/gameboy/yaccprt4.y
-	cat $^ > $@
+src/asm/asmy.y: $(yacc_pre)
+	cat $(yacc_pre) > $@
