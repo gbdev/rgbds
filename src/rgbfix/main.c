@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include "asmotor.h"
 
@@ -57,10 +58,35 @@ void PrintUsage(void)
 	exit(0);
 }
 
-void FatalError(char *s)
+void vFatalError(char *s, va_list ap)
 {
-	printf("\n***ERROR: %s\n\n", s);
-	PrintUsage();
+	fprintf(stderr, "*ERROR* : ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+}
+
+void FatalError(char *s, ...)
+{
+	va_list ap;
+	va_start (ap, s);
+	vFatalError(s, ap);
+	va_end(ap);
+	exit(5);
+}
+
+void vWarning(char *s, va_list ap)
+{
+	fprintf(stderr, "*WARNING* : ");
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
+}
+
+void Warning(char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	vWarning(s, ap);
+	va_end(ap);
 }
 
 long int FileSize(FILE * f)
