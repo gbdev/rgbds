@@ -20,7 +20,7 @@
 
 void fatalerror(char *s)
 {
-	printf("*ERROR* : %s\n", s);
+	fprintf(stderr,"*ERROR* : %s\n", s);
 	exit(5);
 }
 
