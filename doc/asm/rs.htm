@@ -1,90 +1,76 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm RSSET, RSRESET, RB, RW</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm RSSET, RSRESET, RB, RW</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>RSSET<BR>
-RERESET<BR>
-RB<BR>
-RW</H2></I><HR>
-
-<P>The <B>RS</B> group of commands is a handy way of defining structures:<BR>
-<BR>     
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>              RSRESET
+</head>
+<body>
+<h1>RSSET, RERESET, RB, RW</h1>
+<p>The <dfn>RS</dfn> group of commands is a handy way of defining structures:</p>
+<pre>              RSRESET
 str_pStuff    RW   1
 str_tData     RB   256
 str_bCount    RB   1
-str_SIZEOF    RB   0</PRE>          
-</FONT></TD>
-</TR>
-</TABLE>
-<P>The example defines four <A HREF="equ.htm">equated</A> symbols:<BR>
-<BR>
-<TABLE BORDER=1>
-	<CAPTION><I>Defined symbols</I></CAPTION>
-
-<TR>
-	<TD><B><I>Name</I></B></TD>
-	<TD><B><I>Value</I></B></TD>
-</TR>
-<TR>
-	<TD>str_pStuff</TD>
-	<TD>0</TD>
-</TR>
-<TR>
-	<TD>str_tData</TD>
-	<TD>2</TD>
-</TR>
-<TR>
-	<TD>str_bCount</TD>
-	<TD>258</TD>
-</TR>
-<TR>
-	<TD>str_SIZEOF</TD>
-	<TD>259</TD>
-</TR>
-</TABLE>
-<BR>
-There are four commands in the RS group of commands:<BR>
-<BR>     
-<TABLE BORDER=1>
-	<CAPTION><I>RS related commands</I></CAPTION>
-
-<TR>
-	<TD><B><I>Command</I></B></TD>
-	<TD><B><I>Meaning</I></B></TD>
-</TR>
-<TR>
-	<TD>RSRESET</TD>
-	<TD>Resets the <A HREF="presym.htm">_RS</A> counter to zero</TD>
-</TR>
-<TR>
-	<TD>RSSET <I>constexpr</I></TD>
-	<TD>Sets the <A HREF="presym.htm">_RS</A> counter to <I>constexpr</I></TD>
-</TR>
-<TR>
-	<TD>RB <I>constexpr</I></TD>
-	<TD>Sets the preceding symbol to <A HREF="presym.htm">_RS</A> and adds <I>constexpr</I> to _RS</TD>
-</TR>
-<TR>
-	<TD>RW <I>constexpr</I></TD>
-	<TD>Sets the preceding symbol to <A HREF="presym.htm">_RS</A> and adds <I>constexpr*2</I> to _RS</TD>
-</TR>
-</TABLE>
-
-<P>Note that a colon (:) following the symbol-name is not allowed. RS symbols can be exported and imported. They don't change their value during the link process.<BR>
-
-<H3>See also:</H3>
-<UL>
-<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
-</UL>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+str_SIZEOF    RB   0</pre>
+<p>The example defines four <a href="equ.htm">equated</a> symbols:</p>
+<table>
+	<caption>Defined symbols</caption>
+<thead>
+<tr>
+	<th scope="col">Name</th>
+	<th scope="col">Value</th>
+</tr>
+</thead>
+<tr>
+	<td>str_pStuff</td>
+	<td>0</td>
+</tr>
+<tr>
+	<td>str_tData</td>
+	<td>2</td>
+</tr>
+<tr>
+	<td>str_bCount</td>
+	<td>258</td>
+</tr>
+<tr>
+	<td>str_SIZEOF</td>
+	<td>259</td>
+</tr>
+</table>
+<p>There are four commands in the RS group of commands:</p>
+<table>
+	<caption>RS related commands</caption>
+<thead>
+<tr>
+	<th scope="col">Command</th>
+	<th scope="col">Meaning</th>
+</tr>
+</thead>
+<tr>
+	<td>RSRESET</td>
+	<td>Resets the <a href="presym.htm">_RS</a> counter to zero</td>
+</tr>
+<tr>
+	<td>RSSET <i>constexpr</i></td>
+	<td>Sets the <a href="presym.htm">_RS</a> counter to <i>constexpr</i></td>
+</tr>
+<tr>
+	<td>RB <i>constexpr</i></td>
+	<td>Sets the preceding symbol to <a href="presym.htm">_RS</a> and adds <i>constexpr</i> to _RS</td>
+</tr>
+<tr>
+	<td>RW <i>constexpr</i></td>
+	<td>Sets the preceding symbol to <a href="presym.htm">_RS</a> and adds <i>constexpr*2</i> to _RS</td>
+</tr>
+</table>
+<p>Note that a colon (:) following the symbol-name is not allowed. RS symbols can be exported and imported. They don't change their value during the link process.</p>
+<h1>See also:</h1>
+<ul>
+<li><a href="expr_int.htm">Integer and Boolean expressions</a>
+</ul>
+<hr>
+<p>Last updated 21 June 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

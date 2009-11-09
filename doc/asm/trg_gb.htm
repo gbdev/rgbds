@@ -1,102 +1,102 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm Gameboy</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm Gameboy</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>Gameboy
-</H2></I>
-<HR>
-
-<P>The full GB-Z80 instruction-set is implemented with a few modifications to the original Zilog syntax. This is due
-to a Bison problem but in my opinion the syntax is better than the original one.<BR>   
-<H4><BR>
-Instructions</H4>
-<PRE>    ADC
-    ADD
-    AND
-    BIT
-    CALL
-    CCF
-    CP
-    CPL
-    DAA
-    DEC
-    DI
-    EI
-    EX
-    HALT
-    INC
-    JP
-    JR
-    LD
-    LDD
-    LDI
-    LDH/LDIO    (see note below)
-    NOP
-    OR
-    POP
-    PUSH
-    RES
-    RET
-    RETI
-    RL
-    RLA
-    RLC
-    RLCA
-    RR
-    RRA
-    RRC
-    RRCA
-    RST
-    SBC
-    SCF
-    SET
-    SLA
-    SRA
-    SRL
-    STOP
-    SUB
-    SWAP
-    XOR</PRE>   
-<P>Note that you can use both
-<PRE>    OR   A,B
-    OR   B</PRE>   
-<H4><BR>Addressingmodes</H4>
-<P>Indirect addressing has been changed to [ ] instead  of ( ):<BR>
-<PRE>    A
-    B
-    C
-    D
-    E
-    H
-    L
-    AF
-    BC
-    DE
-    HL
-    SP
-    [BC]
-    [DE]
-    [HL]
-    [HL-]/[HLI]
-    [HL+]/[HLD]
-    [SP]
-    n8       (8 bit expression)
-    n16      (16 bit expression)
-    n3       (3 bit CONSTANT expression)
-    [n16]/[$FF00+n8]
-    [$FF00+C]/[C]</PRE>          
-<P>The  assembler will intelligently decide between  <B>[n16]</B> and  <B>[$FF00+n8]</B> in the LD instruction.  Note however  that  if  you  use  any <A HREF="symbols.htm">constant symbols</A> in the expression they had better  be defined before the instruction or your symbol-table may become mangled. Also worth noting is that it will only ever select the short $FF00 mode when you use constant symbols. NOT if you use symbols defined in a <A HREF="section.htm">HRAM section</A>. As this defies the whole point of implementing the HRAM sectiontype I've added the LDIO mnemonic. It works like the LD instruction but it will ALWAYS generate the $FF00+ form and it will also automatically logically AND the expression with $FF if it is relocatable. Which is what you want. Trust me ;)<BR>
-<BR>
-<H4>Conditioncodes</H4>
-<PRE>    C
-    NC
-    Z
-    NZ</PRE>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 20 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</head>
+<body>
+<h1>Gameboy</h1>
+<p>The full GB-Z80 instruction-set is implemented with a few modifications to the original Zilog syntax. This is due to a Bison problem but in my opinion the syntax is better than the original one.</p>
+<h2>Instructions</h2>
+<ul>
+    <li>ADC
+    <li>ADD
+    <li>AND
+    <li>BIT
+    <li>CALL
+    <li>CCF
+    <li>CP
+    <li>CPL
+    <li>DAA
+    <li>DEC
+    <li>DI
+    <li>EI
+    <li>EX
+    <li>HALT
+    <li>INC
+    <li>JP
+    <li>JR
+    <li>LD
+    <li>LDD
+    <li>LDI
+    <li>LDH/LDIO    (see note below)
+    <li>NOP
+    <li>OR
+    <li>POP
+    <li>PUSH
+    <li>RES
+    <li>RET
+    <li>RETI
+    <li>RL
+    <li>RLA
+    <li>RLC
+    <li>RLCA
+    <li>RR
+    <li>RRA
+    <li>RRC
+    <li>RRCA
+    <li>RST
+    <li>SBC
+    <li>SCF
+    <li>SET
+    <li>SLA
+    <li>SRA
+    <li>SRL
+    <li>STOP
+    <li>SUB
+    <li>SWAP
+    <li>XOR
+</ul>
+<p>Note that you can use both
+<pre>    OR   A,B
+    OR   B</pre>
+<h2>Addressingmodes</h2>
+<p>Indirect addressing has been changed to [ ] instead  of ( ):</p>
+<ul>
+   <li> A
+   <li> B
+   <li> C
+   <li> D
+   <li> E
+   <li> H
+   <li> L
+   <li> AF
+   <li> BC
+   <li> DE
+   <li> HL
+   <li> SP
+   <li> [BC]
+   <li> [DE]
+   <li> [HL]
+   <li> [HL-]/[HLI]
+   <li> [HL+]/[HLD]
+   <li> [SP]
+   <li> n8       (8 bit expression)
+   <li> n16      (16 bit expression)
+   <li> n3       (3 bit CONSTANT expression)
+   <li> [n16]/[$FF00+n8]
+   <li> [$FF00+C]/[C]
+</ul>
+<p>The  assembler will intelligently decide between  <b>[n16]</b> and  <b>[$FF00+n8]</b> in the LD instruction.  Note however  that  if  you  use  any <a href="symbols.htm">constant symbols</a> in the expression they had better  be defined before the instruction or your symbol-table may become mangled. Also worth noting is that it will only ever select the short $FF00 mode when you use constant symbols. NOT if you use symbols defined in a <a href="section.htm">HRAM section</a>. As this defies the whole point of implementing the HRAM sectiontype I've added the LDIO mnemonic. It works like the LD instruction but it will ALWAYS generate the $FF00+ form and it will also automatically logically AND the expression with $FF if it is relocatable. Which is what you want. Trust me ;)</p>
+<h2>Conditioncodes</h2>
+<ul>
+<li>    C
+<li>    NC
+<li>    Z
+<li>    NZ
+</ul>
+<hr>
+<p>Last updated 20 July 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

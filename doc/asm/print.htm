@@ -1,40 +1,29 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm PRINTT, PRINTV, PRINTF</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm PRINTT, PRINTV, PRINTF</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>PRINTT<BR>
-PRINTV<BR>
-PRINTF<BR>
-</H2></I>
-<HR>
-
-<P>These  three  instructions  type  text and  values  to stdout. Useful for debugging macros or wherever you may feel  the
-need to tell yourself some important information.<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>PRINTT    "I'm the greatest programmer in the whole wide world\n"
+</head>
+<body>
+<h1>PRINTT, PRINTV, PRINTF</h1>
+<p>These  three  instructions  type  text and  values  to stdout. Useful for debugging macros or wherever you may feel the need to tell yourself some important information.</p>
+<pre>PRINTT    "I'm the greatest programmer in the whole wide world\n"
 PRINTV    (2+3)/5
-PRINTF    MUL(3.14,3987.0)</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<B>PRINTT</B> prints out a string<BR>
-<B>PRINTV</B> prints out an integer value or, as in the example, the result of a calculation. Unsurprisingly you can also print out a <A HREF="symbols.htm">constant symbols</A> value<BR>
-<B>PRINTF</B> prints out a fixed point value.<BR>
+PRINTF    MUL(3.14,3987.0)</pre>
+<ul>
+	<li><dfn>PRINTT</dfn> prints out a string</li>
+	<li><dfn>PRINTV</dfn> prints out an integer value or, as in the example, the result of a calculation. Unsurprisingly you can also print out a <a href="symbols.htm">constant symbols</a> value</li>
+	<li><dfn>PRINTF</dfn> prints out a fixed point value.</li>
+</ul>
 
-<H3>See also:</H3>
-<UL>
-	<LI><A HREF="asm/expr_int.htm">Integer and Boolean expressions</A>
-	<LI><A HREF="asm/expr_fix.htm">Fixed-point expressions and functions</A>
-	<LI><A HREF="asm/expr_str.htm">String expressions, functions and formatting</A>
-</UL>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+<h1>See also:</h1>
+<ul>
+	<li><a href="asm/expr_int.htm">Integer and Boolean expressions</a>
+	<li><a href="asm/expr_fix.htm">Fixed-point expressions and functions</a>
+	<li><a href="asm/expr_str.htm">String expressions, functions and formatting</a>
+</ul>
+<hr>
+<p>Last updated 21 June 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

@@ -1,26 +1,18 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm PURGE</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm PURGE</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>PURGE</H2></I><HR>
-
-<P>The PURGE command allows you to completely remove a symbol from the symbol table as if it had never existed. USE WITH EXTREME CAUTION!!! I can't stress this enough but you <B>seriously</B> need to know what you are doing. DON'T purge symbol that you use in expressions the linker needs to calculate. In fact, it's probably not even safe to purge anything other than string symbols and macros.<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>Kamikaze    EQUS    "I don't want to live anymore"
+</head>
+<body>
+<h1>PURGE</h1>
+<p>The PURGE command allows you to completely remove a symbol from the symbol table as if it had never existed. USE WITH EXTREME CAUTION!!! I can’t stress this enough but you <em>seriously</em> need to know what you are doing. DON’T purge symbol that you use in expressions the linker needs to calculate. In fact, it’s probably not even safe to purge anything other than string symbols and macros.</p>
+<pre>Kamikaze    EQUS    "I don't want to live anymore"
 AOLer       EQUS    "Me too"
-            PURGE   Kamikaze,AOLer</PRE>          
-</FONT></TD>
-</TR>
-</TABLE>
-<P>Note that string symbols that are part of a PURGE command WILL NOT BE EXPANDED as the ONLY exception to this rule.<BR>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 02 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+            PURGE   Kamikaze,AOLer</pre>
+<p>Note that string symbols that are part of a PURGE command WILL NOT BE EXPANDED as the ONLY exception to this rule.</p>
+<hr>
+<p>Last updated 02 July 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

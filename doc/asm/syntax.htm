@@ -1,47 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm Syntax</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm Syntax</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
+</head>
 
-<BODY>
-<I><H2>xAsm Syntax</H2></I><HR>
-
-The syntax line-based, just as in any other assembler. Meaning that you do one instruction or pseudo-op per line:<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>[label] [instruction] [;comment]</PRE>
-</FONT></TD>
-</TR>
-</TABLE>
-<BR>
-Example:<BR>
-<BR>   
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>John:          ld   a,87 ;Weee</PRE>
-</FONT></TD>
-</TR>
-</TABLE>
-<P>A comment can also be an asterisk (*) followed by the comment if the asterisk is the first character on the line:
-<BR>
-<BR>   
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>********************************
+<body>
+<h1>xAsm Syntax</h1>
+<p>The syntax line‐based, just as in any other assembler. Meaning that you do one instruction or pseudo‐op per line:</p>
+<pre>[label] [instruction] [;comment]</pre>
+<p>Example:</p>
+<pre>John:          ld   a,87 ;Weee</pre>
+<p>A comment can also be an asterisk (*) followed by the comment if the asterisk is the first character on the line:</p>
+<pre>********************************
 * These are full line comments *
-********************************</PRE>
-</FONT></TD>
-</TR>
-</TABLE>
-      
-<P>All pseudo-ops, mnemonics and registers (reserved keywords) are <I>case-insensitive</I> and all labels are <I>case-sensitive</I>.<BR>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+********************************</pre>
+<p>All pseudo‐ops, mnemonics and registers (reserved keywords) are <em>case‐insensitive</em> and all labels are <em>case‐sensitive</em>.</p>
+<hr>
+<p>Last updated 21 June 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

@@ -1,95 +1,63 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm SECTION</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm SECTION</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>SECTION</H2></I>
-<HR>
-
-<P>Before you can start writing code you must define a section. This tells the assembler what kind of data follows and if it is code where to put it.<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>SECTION   "CoolStuff",CODE</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P>This switches to the section called <B>"CoolStuff"</B> (or creates it if it doesn't already exits) and it defines
-it as a code section. All sections within a sourcefile must be identified by a <B>unique</B> name.<BR>
-<BR>
-<TABLE BORDER=1>
-	<CAPTION><I>Section types</I></CAPTION>
-
-<TR>
-	<TD><B><I>Name</I></B></TD>
-	<TD><B><I>Function</I></B></TD>
-</TR>
-<TR>
-	<TD>CODE</TD>
-	<TD>A code section. The linker decides where to put this. For the Gameboy it also decides which bank to put it in except #0 (the HOME bank).</TD>
-</TR>
-<TR>
-	<TD>DATA</TD>
-	<TD>Really just a synonym for CODE.</TD>
-</TR>
-<TR>
-	<TD>BSS</TD>
-	<TD>This section is for variables. For the Gameboy it will be placed where the Gameboy RAM is.</TD>
-</TR>
-<TR>
-	<TD>HOME</TD>
-	<TD>Gameboy ONLY: A code section that will be placed in Gameboy bank #0.</TD>
-</TR>
-<TR>
-	<TD>VRAM</TD>
-	<TD>Gameboy ONLY: This section is for allocating VRAM and will be placed where the Gameboy VRAM is.</TD>
-</TR>
-<TR>
-	<TD>HRAM</TD>
-	<TD>Gameboy ONLY: This section is for allocating variables in the high RAM area ($FF80-$FFFE) and will be placed there. Suggested by Jens Ch. Restemeier. NOTE WELL: if you use this method of allocating HRAM the assembler will NOT choose the short addressingmode in the LD instruction because the actual address calculation is done by the linker! If you find this undesirable you can use <A HREF="rs.htm">RSSET/RB/RW</A> instead or use the LDIO mnemonic. The address calculation is then done by the assembler.</TD>
-</TR>
-</TABLE>     
-<P>Due to quite a lot of emails requesting an ORG directive you can now add an address to the sectiontype for the Gameboy:<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>SECTION   "CoolStuff",HOME[$1234]</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P>This will force the section to address $1234. This also works with the other sectiontypes. For CODE/DATA sections the linker  will then place the section in any bank at the address you specify. If you also want to specify the bank you can do:<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>SECTION   "CoolStuff",DATA[$4567],BANK[3]</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P>And if you only want to force the section into a certain bank, and not it's position within the bank, that's also possible:<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>SECTION   "CoolStuff",CODE,BANK[7]</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P><B>HINT:</B> If you think this is a lot of typing for doing a simple ORG type thing you can quite easily write an intelligent macro (called ORG for example) that uses <A HREF="expr_str.htm">\@</A> for the sectionname and determines correct sectiontype etc as arguments for SECTION<BR>
-
-<H3>See also:</H3>
-<UL>
-<LI><A HREF="../link.htm">xLink</A> documentation
-<LI><A HREF="expr_int.htm">Integer and Boolean expressions</A>
-<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
-<LI><A HREF="pops.htm">POPS and PUSHS:</A> The section stack.
-</UL>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated á18 July 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</head>
+<body>
+<h1>SECTION</h1>
+<p>Before you can start writing code you must define a section. This tells the assembler what kind of data follows and if it is code where to put it.</p>
+<pre>SECTION   "CoolStuff",CODE</pre>
+<p>This switches to the section called <b>"CoolStuff"</b> (or creates it if it doesn't already exits) and it defines it as a code section. All sections within a sourcefile must be identified by a <em>unique</em> name.</p>
+<table>
+	<caption>Section types</caption>
+<thead>
+<tr>
+	<th scope="col">Name</th>
+	<th scope="col">Function</th>
+</tr>
+</thead>
+<tr>
+	<td>CODE</td>
+	<td>A code section. The linker decides where to put this. For the Gameboy it also decides which bank to put it in except #0 (the HOME bank).</td>
+</tr>
+<tr>
+	<td>DATA</td>
+	<td>Really just a synonym for CODE.</td>
+</tr>
+<tr>
+	<td>BSS</td>
+	<td>This section is for variables. For the Gameboy it will be placed where the Gameboy RAM is.</td>
+</tr>
+<tr>
+	<td>HOME</td>
+	<td>Gameboy ONLY: A code section that will be placed in Gameboy bank #0.</td>
+</tr>
+<tr>
+	<td>VRAM</td>
+	<td>Gameboy ONLY: This section is for allocating VRAM and will be placed where the Gameboy VRAM is.</td>
+</tr>
+<tr>
+	<td>HRAM</td>
+	<td>Gameboy ONLY: This section is for allocating variables in the high RAM area ($FF80-$FFFE) and will be placed there. Suggested by Jens Ch. Restemeier. NOTE WELL: if you use this method of allocating HRAM the assembler will NOT choose the short addressingmode in the LD instruction because the actual address calculation is done by the linker! If you find this undesirable you can use <a href="rs.htm">RSSET/RB/RW</a> instead or use the LDIO mnemonic. The address calculation is then done by the assembler.</td>
+</tr>
+</table>
+<p>Due to quite a lot of emails requesting an ORG directive you can now add an address to the sectiontype for the Gameboy:</p>
+<pre>SECTION   "CoolStuff",HOME[$1234]</pre>
+<p>This will force the section to address $1234. This also works with the other sectiontypes. For CODE/DATA sections the linker  will then place the section in any bank at the address you specify. If you also want to specify the bank you can do:</p>
+<pre>SECTION   "CoolStuff",DATA[$4567],BANK[3]</pre>
+<p>And if you only want to force the section into a certain bank, and not it's position within the bank, that's also possible:</p>
+<pre>SECTION   "CoolStuff",CODE,BANK[7]</pre>
+<p><strong>HINT:</strong> If you think this is a lot of typing for doing a simple ORG type thing you can quite easily write an intelligent macro (called ORG for example) that uses <a href="expr_str.htm">\@</a> for the sectionname and determines correct sectiontype etc as arguments for SECTION</p>
+<h1>See also:</h1>
+<ul>
+<li><a href="../link.htm">xLink</a> documentation
+<li><a href="expr_int.htm">Integer and Boolean expressions</a>
+<li><a href="expr_str.htm">String expressions, functions and formatting</a>
+<li><a href="pops.htm">POPS and PUSHS:</a> The section stack.
+</ul>
+<hr>
+<p>Last updated á18 July 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

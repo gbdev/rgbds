@@ -1,49 +1,27 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm EQUS</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm EQUS</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>EQUS</H2></I><HR>
-
-<P>EQUS is used to define string-symbols. Wherever the assembler meets a string symbol its name is replaced with its value. If you are familiar with C you can think of it as the same as #define.<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>COUNTREG EQUS "[hl+]"
+</head>
+<body>
+<h1>EQUS</h1>
+<p>EQUS is used to define string-symbols. Wherever the assembler meets a string symbol its name is replaced with its value. If you are familiar with C you can think of it as the same as #define.</p>
+<pre>COUNTREG EQUS "[hl+]"
           
-         ld   a,COUNTREG</PRE>     
-</FONT></TD>
-</TR>
-</TABLE>
-<P>     (Note that : following the label-name is not allowed.)<BR>
-<P>This will be interpreted as:<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>         ld   a,[hl+]</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P>String-symbols  can also be used to define  small  one-line macros:<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>PUSHA    EQUS "push af\npush bc\npush de\npush hl\n"</PRE>   
-</FONT></TD>
-</TR>
-</TABLE>
-<P>Note that a colon (:) following the label-name is not allowed. String equates can't be exported or imported.<BR>
-
-<H3>See also:</H3>
-<UL>
-	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
-</UL>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
-
+         ld   a,COUNTREG</pre>
+<p>(Note that : following the label-name is not allowed.)</p>
+<p>This will be interpreted as:</p>
+<pre>         ld   a,[hl+]</pre>
+<p>String-symbols can also be used to define small one-line macros:</p>
+<pre>PUSHA    EQUS "push af\npush bc\npush de\npush hl\n"</pre>
+<p>Note that a colon (:) following the label-name is not allowed. String equates can't be exported or imported.</p>
+<h1>See also:</h1>
+<ul>
+	<li><a href="expr_str.htm">String expressions, functions and formatting</a>
+</ul>
+<hr>
+<p>Last updated 21 June 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>

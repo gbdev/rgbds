@@ -1,44 +1,22 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-	<TITLE>xAsm INCBIN</TITLE>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>xAsm INCBIN</title>
         <link rel="stylesheet" type="text/css" href="../style.css">
-</HEAD>
-
-<BODY>
-<I><H2>INCBIN
-</H2></I>
-<HR>
-
-<P>You  probably have some graphics you'd like to include. Use <B>INCBIN</B> to include a raw binary
-file as it  is. If the file isn't found in the current directory the <A HREF="usage.htm">include-path</A> list will be searched.<BR>
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>INCBIN    "titlepic.bin"
-INCBIN    "sprites\\hero.bin"</PRE>
-</FONT></TD>
-</TR>
-</TABLE>
-
-<P>You can also include only part of a file with <B>INCBIN</B>. The example below includes 256 bytes from <I>data.bin</I> starting from position 78.<BR>
-
-<BR>
-<TABLE BORDER=0 BGCOLOR="Black" CELLPADDING=8 WIDTH="50%">
-<TR>
-	<TD><FONT COLOR="#00FF00">
-<PRE>INCBIN    "data.bin",78,256</PRE>
-</FONT></TD>
-</TR>
-</TABLE>
-
-
-<H3>See also:</H3>
-<UL>
-	<LI><A HREF="expr_str.htm">String expressions, functions and formatting</A>
-</UL>
-
-<BR><HR>
-<FONT SIZE="-1"><I><P ALIGN=RIGHT>Last updated 21 June 1997 by <A HREF="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</A></P></I></FONT>
+</head>
+<body>
+<h1>INCBIN</h1>
+<p>You  probably have some graphics you’d like to include. Use <dfn>INCBIN</dfn> to include a raw binary file as it is. If the file isn’t found in the current directory the <a href="usage.htm">include-path</a> list will be searched.</p>
+<pre>INCBIN    "titlepic.bin"
+INCBIN    "sprites\\hero.bin"</pre>
+<p>You can also include only part of a file with <b>INCBIN</b>. The example below includes 256 bytes from <i>data.bin</i> starting from position 78.</p>
+<pre>INCBIN    "data.bin",78,256</pre>
+<h1>See also:</h1>
+<ul>
+	<li><a href="expr_str.htm">String expressions, functions and formatting</a>
+</ul>
+<hr>
+<p>Last updated 21 June 1997 by <a href="mailto:surfsmurf@matilde.demon.co.uk">Carsten Sorensen</a></p>
+</body>
+</html>
