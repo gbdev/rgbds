@@ -56,73 +56,71 @@ struct sOptionStackEntry {
 
 struct sOptionStackEntry *pOptionStack = NULL;
 
-void opt_SetCurrentOptions(struct sOptions *pOpt)
+void 
+opt_SetCurrentOptions(struct sOptions * pOpt)
 {
 	if (nGBGfxID != -1) {
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				     CurrentOptions.gbgfx[0]);
+		    CurrentOptions.gbgfx[0]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				     CurrentOptions.gbgfx[1]);
+		    CurrentOptions.gbgfx[1]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				     CurrentOptions.gbgfx[2]);
+		    CurrentOptions.gbgfx[2]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				     CurrentOptions.gbgfx[3]);
+		    CurrentOptions.gbgfx[3]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					   CurrentOptions.gbgfx[0]);
+		    CurrentOptions.gbgfx[0]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					   CurrentOptions.gbgfx[1]);
+		    CurrentOptions.gbgfx[1]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					   CurrentOptions.gbgfx[2]);
+		    CurrentOptions.gbgfx[2]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					   CurrentOptions.gbgfx[3]);
+		    CurrentOptions.gbgfx[3]);
 	}
-
 	if (nBinaryID != -1) {
 		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[0],
-				     CurrentOptions.binary[0]);
+		    CurrentOptions.binary[0]);
 		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[1],
-				     CurrentOptions.binary[1]);
+		    CurrentOptions.binary[1]);
 		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[0],
-					   CurrentOptions.binary[0]);
+		    CurrentOptions.binary[0]);
 		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[1],
-					   CurrentOptions.binary[1]);
+		    CurrentOptions.binary[1]);
 	}
-
 	CurrentOptions = *pOpt;
 
 	if (nGBGfxID != -1) {
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				  CurrentOptions.gbgfx[0]);
+		    CurrentOptions.gbgfx[0]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				  CurrentOptions.gbgfx[1]);
+		    CurrentOptions.gbgfx[1]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				  CurrentOptions.gbgfx[2]);
+		    CurrentOptions.gbgfx[2]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				  CurrentOptions.gbgfx[3]);
+		    CurrentOptions.gbgfx[3]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					CurrentOptions.gbgfx[0]);
+		    CurrentOptions.gbgfx[0]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					CurrentOptions.gbgfx[1]);
+		    CurrentOptions.gbgfx[1]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					CurrentOptions.gbgfx[2]);
+		    CurrentOptions.gbgfx[2]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					CurrentOptions.gbgfx[3]);
+		    CurrentOptions.gbgfx[3]);
 	}
-
 	if (nBinaryID != -1) {
 		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[0],
-				  CurrentOptions.binary[0]);
+		    CurrentOptions.binary[0]);
 		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[1],
-				  CurrentOptions.binary[1]);
+		    CurrentOptions.binary[1]);
 		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[0],
-					CurrentOptions.binary[0]);
+		    CurrentOptions.binary[0]);
 		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[1],
-					CurrentOptions.binary[1]);
+		    CurrentOptions.binary[1]);
 	}
-
 }
 
-void opt_Parse(char *s)
+void 
+opt_Parse(char *s)
 {
 	struct sOptions newopt;
 
@@ -197,13 +195,14 @@ void opt_Parse(char *s)
 	opt_SetCurrentOptions(&newopt);
 }
 
-void opt_Push(void)
+void 
+opt_Push(void)
 {
 	struct sOptionStackEntry *pOpt;
 
 	if ((pOpt =
-	     (struct sOptionStackEntry *)
-	     malloc(sizeof(struct sOptionStackEntry))) != NULL) {
+		(struct sOptionStackEntry *)
+		malloc(sizeof(struct sOptionStackEntry))) != NULL) {
 		pOpt->Options = CurrentOptions;
 		pOpt->pNext = pOptionStack;
 		pOptionStack = pOpt;
@@ -211,7 +210,8 @@ void opt_Push(void)
 		fatalerror("No memory for option stack");
 }
 
-void opt_Pop(void)
+void 
+opt_Pop(void)
 {
 	if (pOptionStack) {
 		struct sOptionStackEntry *pOpt;
@@ -223,7 +223,6 @@ void opt_Pop(void)
 	} else
 		fatalerror("No entries in the option stack");
 }
-
 /*
  * RGBAsm - MAIN.C
  *
@@ -231,7 +230,8 @@ void opt_Pop(void)
  *
  */
 
-void yyerror(char *s)
+void 
+yyerror(char *s)
 {
 	printf("*ERROR*\t");
 	fstk_Dump();
@@ -239,12 +239,12 @@ void yyerror(char *s)
 	nErrors += 1;
 }
 
-void fatalerror(char *s)
+void 
+fatalerror(char *s)
 {
 	yyerror(s);
 	exit(5);
 }
-
 /*
  * RGBAsm - MAIN.C
  *
@@ -252,10 +252,11 @@ void fatalerror(char *s)
  *
  */
 
-void PrintUsage(void)
+void 
+PrintUsage(void)
 {
 	printf(APPNAME " v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	       ")\n\nUsage: " EXENAME " [options] asmfile\n");
+	    ")\n\nUsage: " EXENAME " [options] asmfile\n");
 	printf("Options:\n");
 	printf("\t-h\t\tThis text\n");
 	printf("\t-i<path>\tExtra include path\n");
@@ -263,16 +264,15 @@ void PrintUsage(void)
 	printf("\t-e(l|b)\t\tChange endianness (CAUTION!)\n");
 	printf
 	    ("\t-g<ASCI>\tChange the four characters used for Gameboy graphics\n"
-	     "\t\t\tconstants (default is 0123)\n");
+	    "\t\t\tconstants (default is 0123)\n");
 	printf
 	    ("\t-b<AS>\t\tChange the two characters used for binary constants\n"
-	     "\t\t\t(default is 01)\n");
+	    "\t\t\t(default is 01)\n");
 	printf
 	    ("\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	     "\t\t\tdata (default is ? for random)\n");
+	    "\t\t\tdata (default is ? for random)\n");
 	exit(0);
 }
-
 /*
  * RGBAsm - MAIN.C
  *
@@ -280,7 +280,8 @@ void PrintUsage(void)
  *
  */
 
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
 	char *tzMainfile;
 	int argn = 1;
@@ -299,8 +300,9 @@ int main(int argc, char *argv[])
 	DefaultOptions.gbgfx[3] = '3';
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
-	DefaultOptions.fillchar = -1;	//      fill uninitialised data with random values
-	opt_SetCurrentOptions(&DefaultOptions);
+	DefaultOptions.fillchar = -1;
+	//fill uninitialised data with random values
+	    opt_SetCurrentOptions(&DefaultOptions);
 
 	while (argv[argn][0] == '-' && argc) {
 		switch (argv[argn][1]) {
@@ -321,7 +323,7 @@ int main(int argc, char *argv[])
 			break;
 		default:
 			printf("*ERROR*\t :\n\tUnknown option '%c'\n",
-			       argv[argn][1]);
+			    argv[argn][1]);
 			exit(5);
 			break;
 		}
@@ -331,8 +333,7 @@ int main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	/*tzMainfile=argv[argn++];
-	 * argc-=1; */
+	/* tzMainfile=argv[argn++]; argc-=1; */
 	tzMainfile = argv[argn];
 
 	setuplex();
@@ -375,36 +376,36 @@ int main(int argc, char *argv[])
 
 					nEndClock = clock();
 					timespent =
-					    ((double)(nEndClock - nStartClock))
-					    / (double)CLOCKS_PER_SEC;
+					    ((double) (nEndClock - nStartClock))
+					    / (double) CLOCKS_PER_SEC;
 					printf
 					    ("Success! %ld lines in %d.%02d seconds ",
-					     nTotalLines, (int)timespent,
-					     ((int)(timespent * 100.0)) % 100);
+					    nTotalLines, (int) timespent,
+					    ((int) (timespent * 100.0)) % 100);
 					if (timespent == 0)
 						printf
 						    ("(INFINITY lines/minute)\n");
 					else
 						printf("(%d lines/minute)\n",
-						       (int)(60 / timespent *
-							     nTotalLines));
+						    (int) (60 / timespent *
+							nTotalLines));
 					out_WriteObject();
 				} else {
 					printf
 					    ("Assembly aborted in pass 2 (%ld errors)!\n",
-					     nErrors);
+					    nErrors);
 					//sym_PrintSymbolTable();
 					exit(5);
 				}
 			} else {
 				printf
 				    ("*ERROR*\t:\tUnterminated IF construct (%ld levels)!\n",
-				     nIFDepth);
+				    nIFDepth);
 				exit(5);
 			}
 		} else {
 			printf("Assembly aborted in pass 1 (%ld errors)!\n",
-			       nErrors);
+			    nErrors);
 			exit(5);
 		}
 	} else {

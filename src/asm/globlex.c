@@ -16,7 +16,8 @@ UBYTE oDontExpandStrings = 0;
 SLONG nGBGfxID = -1;
 SLONG nBinaryID = -1;
 
-SLONG gbgfx2bin(char ch)
+SLONG 
+gbgfx2bin(char ch)
 {
 	SLONG i;
 
@@ -29,7 +30,8 @@ SLONG gbgfx2bin(char ch)
 	return (0);
 }
 
-SLONG binary2bin(char ch)
+SLONG 
+binary2bin(char ch)
 {
 	SLONG i;
 
@@ -37,13 +39,13 @@ SLONG binary2bin(char ch)
 		if (CurrentOptions.binary[i] == ch) {
 			return (i);
 		}
-
 	}
 
 	return (0);
 }
 
-SLONG char2bin(char ch)
+SLONG 
+char2bin(char ch)
 {
 	if (ch >= 'a' && ch <= 'f')
 		return (ch - 'a' + 10);
@@ -59,7 +61,8 @@ SLONG char2bin(char ch)
 
 typedef SLONG(*x2bin) (char ch);
 
-SLONG ascii2bin(char *s)
+SLONG 
+ascii2bin(char *s)
 {
 	SLONG radix = 10;
 	SLONG result = 0;
@@ -103,7 +106,8 @@ SLONG ascii2bin(char *s)
 	return (result);
 }
 
-ULONG ParseFixedPoint(char *s, ULONG size)
+ULONG 
+ParseFixedPoint(char *s, ULONG size)
 {
 	char dest[256];
 	ULONG i = 0, dot = 0;
@@ -128,7 +132,8 @@ ULONG ParseFixedPoint(char *s, ULONG size)
 	return (1);
 }
 
-ULONG ParseNumber(char *s, ULONG size)
+ULONG 
+ParseNumber(char *s, ULONG size)
 {
 	char dest[256];
 
@@ -139,7 +144,8 @@ ULONG ParseNumber(char *s, ULONG size)
 	return (1);
 }
 
-ULONG ParseSymbol(char *src, ULONG size)
+ULONG 
+ParseSymbol(char *src, ULONG size)
 {
 	char dest[MAXSYMLEN + 1];
 	int copied = 0, size_backup = size;
@@ -196,7 +202,8 @@ ULONG ParseSymbol(char *src, ULONG size)
 	}
 }
 
-ULONG PutMacroArg(char *src, ULONG size)
+ULONG 
+PutMacroArg(char *src, ULONG size)
 {
 	char *s;
 
@@ -209,7 +216,8 @@ ULONG PutMacroArg(char *src, ULONG size)
 	return (0);
 }
 
-ULONG PutUniqueArg(char *src, ULONG size)
+ULONG 
+PutUniqueArg(char *src, ULONG size)
 {
 	src = src;
 	yyskipbytes(size);
@@ -225,119 +233,119 @@ enum {
 extern struct sLexInitString localstrings[];
 
 struct sLexInitString staticstrings[] = {
-	{ "||", T_OP_LOGICOR },
-	{ "&&", T_OP_LOGICAND },
-	{ "==", T_OP_LOGICEQU },
-	{ ">", T_OP_LOGICGT },
-	{ "<", T_OP_LOGICLT },
-	{ ">=", T_OP_LOGICGE },
-	{ "<=", T_OP_LOGICLE },
-	{ "!=", T_OP_LOGICNE },
-	{ "!", T_OP_LOGICNOT },
-	{ "|", T_OP_OR },
-	{ "^", T_OP_XOR },
-	{ "&", T_OP_AND },
-	{ "<<", T_OP_SHL },
-	{ ">>", T_OP_SHR },
-	{ "+", T_OP_ADD },
-	{ "-", T_OP_SUB },
-	{ "*", T_OP_MUL },
-	{ "/", T_OP_DIV },
-	{ "%", T_OP_MOD },
-	{ "~", T_OP_NOT },
+	{"||", T_OP_LOGICOR},
+	{"&&", T_OP_LOGICAND},
+	{"==", T_OP_LOGICEQU},
+	{">", T_OP_LOGICGT},
+	{"<", T_OP_LOGICLT},
+	{">=", T_OP_LOGICGE},
+	{"<=", T_OP_LOGICLE},
+	{"!=", T_OP_LOGICNE},
+	{"!", T_OP_LOGICNOT},
+	{"|", T_OP_OR},
+	{"^", T_OP_XOR},
+	{"&", T_OP_AND},
+	{"<<", T_OP_SHL},
+	{">>", T_OP_SHR},
+	{"+", T_OP_ADD},
+	{"-", T_OP_SUB},
+	{"*", T_OP_MUL},
+	{"/", T_OP_DIV},
+	{"%", T_OP_MOD},
+	{"~", T_OP_NOT},
 
-	{ "def", T_OP_DEF },
+	{"def", T_OP_DEF},
 
-	{ "bank", T_OP_BANK },
+	{"bank", T_OP_BANK},
 
-	{ "div", T_OP_FDIV },
-	{ "mul", T_OP_FMUL },
-	{ "sin", T_OP_SIN },
-	{ "cos", T_OP_COS },
-	{ "tan", T_OP_TAN },
-	{ "asin", T_OP_ASIN },
-	{ "acos", T_OP_ACOS },
-	{ "atan", T_OP_ATAN },
-	{ "atan2", T_OP_ATAN2 },
+	{"div", T_OP_FDIV},
+	{"mul", T_OP_FMUL},
+	{"sin", T_OP_SIN},
+	{"cos", T_OP_COS},
+	{"tan", T_OP_TAN},
+	{"asin", T_OP_ASIN},
+	{"acos", T_OP_ACOS},
+	{"atan", T_OP_ATAN},
+	{"atan2", T_OP_ATAN2},
 
-	{ "strcmp", T_OP_STRCMP },
-	{ "strin", T_OP_STRIN },
-	{ "strsub", T_OP_STRSUB },
-	{ "strlen", T_OP_STRLEN },
-	{ "strcat", T_OP_STRCAT },
-	{ "strupr", T_OP_STRUPR },
-	{ "strlwr", T_OP_STRLWR },
+	{"strcmp", T_OP_STRCMP},
+	{"strin", T_OP_STRIN},
+	{"strsub", T_OP_STRSUB},
+	{"strlen", T_OP_STRLEN},
+	{"strcat", T_OP_STRCAT},
+	{"strupr", T_OP_STRUPR},
+	{"strlwr", T_OP_STRLWR},
 
-	{ "include", T_POP_INCLUDE },
-	{ "printt", T_POP_PRINTT },
-	{ "printv", T_POP_PRINTV },
-	{ "printf", T_POP_PRINTF },
-	{ "export", T_POP_EXPORT },
-	{ "xdef", T_POP_EXPORT },
-	{ "import", T_POP_IMPORT },
-	{ "xref", T_POP_IMPORT },
-	{ "global", T_POP_GLOBAL },
-	{ "ds", T_POP_DS },
-	{ NAME_DB, T_POP_DB },
-	{ NAME_DW, T_POP_DW },
+	{"include", T_POP_INCLUDE},
+	{"printt", T_POP_PRINTT},
+	{"printv", T_POP_PRINTV},
+	{"printf", T_POP_PRINTF},
+	{"export", T_POP_EXPORT},
+	{"xdef", T_POP_EXPORT},
+	{"import", T_POP_IMPORT},
+	{"xref", T_POP_IMPORT},
+	{"global", T_POP_GLOBAL},
+	{"ds", T_POP_DS},
+	{NAME_DB, T_POP_DB},
+	{NAME_DW, T_POP_DW},
 #ifdef NAME_DL
-	{ NAME_DL, T_POP_DL },
+	{NAME_DL, T_POP_DL},
 #endif
-	{ "section", T_POP_SECTION },
-	{ "purge", T_POP_PURGE },
+	{"section", T_POP_SECTION},
+	{"purge", T_POP_PURGE},
 
-	{ "rsreset", T_POP_RSRESET },
-	{ "rsset", T_POP_RSSET },
+	{"rsreset", T_POP_RSRESET},
+	{"rsset", T_POP_RSSET},
 
-	{ "incbin", T_POP_INCBIN },
+	{"incbin", T_POP_INCBIN},
 
-	{ "fail", T_POP_FAIL },
-	{ "warn", T_POP_WARN },
+	{"fail", T_POP_FAIL},
+	{"warn", T_POP_WARN},
 
-	{ "macro", T_POP_MACRO },
+	{"macro", T_POP_MACRO},
 
 	/* Not needed but we have it here just to protect the name */
-	{ "endm", T_POP_ENDM },
-	{ "shift", T_POP_SHIFT },
+	{"endm", T_POP_ENDM},
+	{"shift", T_POP_SHIFT},
 
-	{ "rept", T_POP_REPT },
+	{"rept", T_POP_REPT},
 	/* Not needed but we have it here just to protect the name */
-	{ "endr", T_POP_ENDR },
+	{"endr", T_POP_ENDR},
 
-	{ "if", T_POP_IF },
-	{ "else", T_POP_ELSE },
-	{ "endc", T_POP_ENDC },
+	{"if", T_POP_IF},
+	{"else", T_POP_ELSE},
+	{"endc", T_POP_ENDC},
 
-	{ "bss", T_SECT_BSS },
+	{"bss", T_SECT_BSS},
 #if defined(GAMEBOY) || defined(PCENGINE)
-	{ "vram", T_SECT_VRAM },
+	{"vram", T_SECT_VRAM},
 #endif
-	{ "code", T_SECT_CODE },
-	{ "data", T_SECT_CODE },
+	{"code", T_SECT_CODE},
+	{"data", T_SECT_CODE},
 #ifdef GAMEBOY
-	{ "home", T_SECT_HOME },
-	{ "hram", T_SECT_HRAM },
+	{"home", T_SECT_HOME},
+	{"hram", T_SECT_HRAM},
 #endif
 
-	{ NAME_RB, T_POP_RB },
-	{ NAME_RW, T_POP_RW },
+	{NAME_RB, T_POP_RB},
+	{NAME_RW, T_POP_RW},
 #ifdef NAME_RL
-	{ NAME_RL, T_POP_RL },
+	{NAME_RL, T_POP_RL},
 #endif
-	{ "equ", T_POP_EQU },
-	{ "equs", T_POP_EQUS },
+	{"equ", T_POP_EQU},
+	{"equs", T_POP_EQUS},
 
-	{ "set", T_POP_SET },
-	{ "=", T_POP_SET },
+	{"set", T_POP_SET},
+	{"=", T_POP_SET},
 
-	{ "pushs", T_POP_PUSHS },
-	{ "pops", T_POP_POPS },
-	{ "pusho", T_POP_PUSHO },
-	{ "popo", T_POP_POPO },
+	{"pushs", T_POP_PUSHS},
+	{"pops", T_POP_POPS},
+	{"pusho", T_POP_PUSHO},
+	{"popo", T_POP_POPO},
 
-	{ "opt", T_POP_OPT },
+	{"opt", T_POP_OPT},
 
-	{ NULL, 0 }
+	{NULL, 0}
 };
 
 struct sLexFloat tNumberToken = {
@@ -365,7 +373,8 @@ struct sLexFloat tMacroUniqueToken = {
 	T_LEX_MACROUNIQUE
 };
 
-void setuplex(void)
+void 
+setuplex(void)
 {
 	ULONG id;
 
@@ -373,62 +382,62 @@ void setuplex(void)
 	lex_AddStrings(staticstrings);
 	lex_AddStrings(localstrings);
 
-	//      Macro arguments
+	//Macro arguments
 
-	id = lex_FloatAlloc(&tMacroArgToken);
+	    id = lex_FloatAlloc(&tMacroArgToken);
 	lex_FloatAddFirstRange(id, '\\', '\\');
 	lex_FloatAddSecondRange(id, '0', '9');
 	id = lex_FloatAlloc(&tMacroUniqueToken);
 	lex_FloatAddFirstRange(id, '\\', '\\');
 	lex_FloatAddSecondRange(id, '@', '@');
 
-	//      Decimal constants
+	//Decimal constants
 
-	id = lex_FloatAlloc(&tNumberToken);
+	    id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, '0', '9');
 	lex_FloatAddRange(id, '0', '9');
 
-	//      Binary constants
+	//Binary constants
 
-	nBinaryID = id = lex_FloatAlloc(&tNumberToken);
+	    nBinaryID = id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '%', '%');
 	lex_FloatAddSecondRange(id, CurrentOptions.binary[0],
-				CurrentOptions.binary[0]);
+	    CurrentOptions.binary[0]);
 	lex_FloatAddSecondRange(id, CurrentOptions.binary[1],
-				CurrentOptions.binary[1]);
+	    CurrentOptions.binary[1]);
 	lex_FloatAddRange(id, CurrentOptions.binary[0],
-			  CurrentOptions.binary[0]);
+	    CurrentOptions.binary[0]);
 	lex_FloatAddRange(id, CurrentOptions.binary[1],
-			  CurrentOptions.binary[1]);
+	    CurrentOptions.binary[1]);
 
-	//      Octal constants
+	//Octal constants
 
-	id = lex_FloatAlloc(&tNumberToken);
+	    id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '&', '&');
 	lex_FloatAddSecondRange(id, '0', '7');
 	lex_FloatAddRange(id, '0', '7');
 
-	//      Gameboy gfx constants
+	//Gameboy gfx constants
 
-	nGBGfxID = id = lex_FloatAlloc(&tNumberToken);
+	    nGBGfxID = id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '`', '`');
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[0],
-				CurrentOptions.gbgfx[0]);
+	    CurrentOptions.gbgfx[0]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[1],
-				CurrentOptions.gbgfx[1]);
+	    CurrentOptions.gbgfx[1]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[2],
-				CurrentOptions.gbgfx[2]);
+	    CurrentOptions.gbgfx[2]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[3],
-				CurrentOptions.gbgfx[3]);
+	    CurrentOptions.gbgfx[3]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[0], CurrentOptions.gbgfx[0]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[1], CurrentOptions.gbgfx[1]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[2], CurrentOptions.gbgfx[2]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[3], CurrentOptions.gbgfx[3]);
 
-	//      Hex constants
+	//Hex constants
 
-	id = lex_FloatAlloc(&tNumberToken);
+	    id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '$', '$');
 	lex_FloatAddSecondRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, 'A', 'F');
@@ -437,9 +446,9 @@ void setuplex(void)
 	lex_FloatAddRange(id, 'A', 'F');
 	lex_FloatAddRange(id, 'a', 'f');
 
-	//      ID's
+	//ID 's
 
-	id = lex_FloatAlloc(&tIDToken);
+	    id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, 'a', 'z');
 	lex_FloatAddFirstRange(id, 'A', 'Z');
 	lex_FloatAddFirstRange(id, '_', '_');
@@ -458,9 +467,9 @@ void setuplex(void)
 	lex_FloatAddRange(id, '@', '@');
 	lex_FloatAddRange(id, '#', '#');
 
-	//      Local ID
+	//Local ID
 
-	id = lex_FloatAlloc(&tIDToken);
+	    id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, '.', '.');
 	lex_FloatAddSecondRange(id, 'a', 'z');
 	lex_FloatAddSecondRange(id, 'A', 'Z');
@@ -473,14 +482,14 @@ void setuplex(void)
 	lex_FloatAddRange(id, '@', '@');
 	lex_FloatAddRange(id, '#', '#');
 
-	//      @ ID
+	//@ID
 
-	id = lex_FloatAlloc(&tIDToken);
+	    id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, '@', '@');
 
-	//      Fixed point constants
+	//Fixed point constants
 
-	id = lex_FloatAlloc(&tFixedPointToken);
+	    id = lex_FloatAlloc(&tFixedPointToken);
 	lex_FloatAddFirstRange(id, '.', '.');
 	lex_FloatAddFirstRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, '.', '.');

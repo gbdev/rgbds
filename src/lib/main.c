@@ -8,7 +8,7 @@
 #include "lib/types.h"
 #include "lib/library.h"
 
-//      Quick and dirty...but it works
+// Quick and dirty...but it works
 #ifdef __GNUC__
 #define strcmpi	strcasecmp
 #endif
@@ -18,34 +18,35 @@
  *
  */
 
-void fatalerror(char *s)
+void 
+fatalerror(char *s)
 {
-	fprintf(stderr,"*ERROR* : %s\n", s);
+	fprintf(stderr, "*ERROR* : %s\n", s);
 	exit(5);
 }
-
 /*
  * Print the usagescreen
  *
  */
 
-void PrintUsage(void)
+void 
+PrintUsage(void)
 {
 	printf("xLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n"
-	       "Usage: xlib library command [module1 module2 ... modulen]\n"
-	       "Commands:\n\ta\tAdd/replace modules to library\n"
-	       "\td\tDelete modules from library\n"
-	       "\tl\tList library contents\n"
-	       "\tx\tExtract modules from library\n");
+	    "Usage: xlib library command [module1 module2 ... modulen]\n"
+	    "Commands:\n\ta\tAdd/replace modules to library\n"
+	    "\td\tDelete modules from library\n"
+	    "\tl\tList library contents\n"
+	    "\tx\tExtract modules from library\n");
 	exit(0);
 }
-
 /*
  * The main routine
  *
  */
 
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
 	SLONG argn = 0;
 	char *libname;
@@ -90,8 +91,8 @@ int main(int argc, char *argv[])
 
 					while (l) {
 						printf("%10ld %s\n",
-						       l->nByteLength,
-						       l->tName);
+						    l->nByteLength,
+						    l->tName);
 						l = l->pNext;
 					}
 				}
@@ -106,13 +107,13 @@ int main(int argc, char *argv[])
 
 						if ((f = fopen(argv[argn], "wb"))) {
 							fwrite(l->pData,
-							       sizeof(UBYTE),
-							       l->nByteLength,
-							       f);
+							    sizeof(UBYTE),
+							    l->nByteLength,
+							    f);
 							fclose(f);
 							printf
 							    ("Extracted module '%s'\n",
-							     argv[argn]);
+							    argv[argn]);
 						} else
 							fatalerror
 							    ("Unable to write module");

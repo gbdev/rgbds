@@ -18,7 +18,6 @@ struct sLexString {
 	ULONG nNameLength;
 	struct sLexString *pNext;
 };
-
 #define pLexBuffer		(pCurrentBuffer->pBuffer)
 #define nLexBufferLeng	(pCurrentBuffer->nBufferSize)
 
@@ -41,7 +40,8 @@ enum eLexerState lexerstate = LEX_STATE_NORMAL;
 #define AtLineStart	pCurrentBuffer->oAtLineStart
 
 #ifdef __GNUC__
-void strupr(char *s)
+void 
+strupr(char *s)
 {
 	while (*s) {
 		*s = toupper(*s);
@@ -49,31 +49,35 @@ void strupr(char *s)
 	}
 }
 
-void strlwr(char *s)
+void 
+strlwr(char *s)
 {
 	while (*s) {
 		*s = tolower(*s);
 		s += 1;
 	}
 }
-
 #endif
-void yyskipbytes(ULONG count)
+void 
+yyskipbytes(ULONG count)
 {
 	pLexBuffer += count;
 }
 
-void yyunputbytes(ULONG count)
+void 
+yyunputbytes(ULONG count)
 {
 	pLexBuffer -= count;
 }
 
-void yyunput(char c)
+void 
+yyunput(char c)
 {
 	*(--pLexBuffer) = c;
 }
 
-void yyunputstr(char *s)
+void 
+yyunputstr(char *s)
 {
 	SLONG i;
 
@@ -83,31 +87,35 @@ void yyunputstr(char *s)
 		yyunput(s[i--]);
 }
 
-void yy_switch_to_buffer(YY_BUFFER_STATE buf)
+void 
+yy_switch_to_buffer(YY_BUFFER_STATE buf)
 {
 	pCurrentBuffer = buf;
 }
 
-void yy_set_state(enum eLexerState i)
+void 
+yy_set_state(enum eLexerState i)
 {
 	lexerstate = i;
 }
 
-void yy_delete_buffer(YY_BUFFER_STATE buf)
+void 
+yy_delete_buffer(YY_BUFFER_STATE buf)
 {
 	free(buf->pBufferStart - SAFETYMARGIN);
 	free(buf);
 }
 
-YY_BUFFER_STATE yy_scan_bytes(char *mem, ULONG size)
+YY_BUFFER_STATE 
+yy_scan_bytes(char *mem, ULONG size)
 {
 	YY_BUFFER_STATE pBuffer;
 
 	if ((pBuffer =
-	     (YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) !=
+		(YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) !=
 	    NULL) {
 		if ((pBuffer->pBuffer = pBuffer->pBufferStart =
-		     (char *)malloc(size + 1 + SAFETYMARGIN)) != NULL) {
+			(char *) malloc(size + 1 + SAFETYMARGIN)) != NULL) {
 			pBuffer->pBuffer += SAFETYMARGIN;
 			pBuffer->pBufferStart += SAFETYMARGIN;
 			memcpy(pBuffer->pBuffer, mem, size);
@@ -117,17 +125,17 @@ YY_BUFFER_STATE yy_scan_bytes(char *mem, ULONG size)
 			return (pBuffer);
 		}
 	}
-
 	fatalerror("Out of memory!");
 	return (NULL);
 }
 
-YY_BUFFER_STATE yy_create_buffer(FILE * f)
+YY_BUFFER_STATE 
+yy_create_buffer(FILE * f)
 {
 	YY_BUFFER_STATE pBuffer;
 
 	if ((pBuffer =
-	     (YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) !=
+		(YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) !=
 	    NULL) {
 		ULONG size;
 
@@ -136,7 +144,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE * f)
 		fseek(f, 0, SEEK_SET);
 
 		if ((pBuffer->pBuffer = pBuffer->pBufferStart =
-		     (char *)malloc(size + 2 + SAFETYMARGIN)) != NULL) {
+			(char *) malloc(size + 2 + SAFETYMARGIN)) != NULL) {
 			char *mem;
 			ULONG instring = 0;
 
@@ -167,15 +175,15 @@ YY_BUFFER_STATE yy_create_buffer(FILE * f)
 						mem[0] = '\n';
 						mem += 1;
 					} else if (mem[0] == '\n'
-						   && mem[1] == '*') {
+					    && mem[1] == '*') {
 						mem += 1;
 						while (!
-						       (*mem == '\n'
+						    (*mem == '\n'
 							|| *mem == '\0'))
 							*mem++ = ' ';
 					} else if (*mem == ';') {
 						while (!
-						       (*mem == '\n'
+						    (*mem == '\n'
 							|| *mem == '\0'))
 							*mem++ = ' ';
 					} else
@@ -187,19 +195,20 @@ YY_BUFFER_STATE yy_create_buffer(FILE * f)
 			return (pBuffer);
 		}
 	}
-
 	fatalerror("Out of memory!");
 	return (NULL);
 }
 
-ULONG lex_FloatAlloc(struct sLexFloat * tok)
+ULONG 
+lex_FloatAlloc(struct sLexFloat * tok)
 {
 	tLexFloat[nFloating] = (*tok);
 
 	return (1 << (nFloating++));
 }
 
-void lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingChars[start] &= ~id;
@@ -207,7 +216,8 @@ void lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingChars[start] |= id;
@@ -215,7 +225,8 @@ void lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingFirstChar[start] &= ~id;
@@ -223,7 +234,8 @@ void lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingFirstChar[start] |= id;
@@ -231,7 +243,8 @@ void lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingSecondChar[start] &= ~id;
@@ -239,7 +252,8 @@ void lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void lex_FloatAddSecondRange(ULONG id, UWORD start, UWORD end)
+void 
+lex_FloatAddSecondRange(ULONG id, UWORD start, UWORD end)
 {
 	while (start <= end) {
 		tFloatingSecondChar[start] |= id;
@@ -247,7 +261,8 @@ void lex_FloatAddSecondRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-struct sLexFloat *lexgetfloat(ULONG id)
+struct sLexFloat *
+lexgetfloat(ULONG id)
 {
 	ULONG r = 0, mask = 1;
 
@@ -262,7 +277,8 @@ struct sLexFloat *lexgetfloat(ULONG id)
 	return (&tLexFloat[r]);
 }
 
-ULONG lexcalchash(char *s)
+ULONG 
+lexcalchash(char *s)
 {
 	ULONG r = 0;
 
@@ -274,7 +290,8 @@ ULONG lexcalchash(char *s)
 	return (r);
 }
 
-void lex_Init(void)
+void 
+lex_Init(void)
 {
 	ULONG i;
 
@@ -292,7 +309,8 @@ void lex_Init(void)
 	nFloating = 0;
 }
 
-void lex_AddStrings(struct sLexInitString *lex)
+void 
+lex_AddStrings(struct sLexInitString * lex)
 {
 	while (lex->tzName) {
 		struct sLexString **ppHash;
@@ -302,13 +320,13 @@ void lex_AddStrings(struct sLexInitString *lex)
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
 
-//   printf( "%s has hashvalue %d\n", lex->tzName, hash );
+		//printf("%s has hashvalue %d\n", lex->tzName, hash);
 
 		if (((*ppHash) =
-		     (struct sLexString *)malloc(sizeof(struct sLexString))) !=
+			(struct sLexString *) malloc(sizeof(struct sLexString))) !=
 		    NULL) {
 			if (((*ppHash)->tzName =
-			     (char *)strdup(lex->tzName)) != NULL) {
+				(char *) strdup(lex->tzName)) != NULL) {
 				(*ppHash)->nNameLength = strlen(lex->tzName);
 				(*ppHash)->nToken = lex->nToken;
 				(*ppHash)->pNext = NULL;
@@ -327,7 +345,8 @@ void lex_AddStrings(struct sLexInitString *lex)
 	}
 }
 
-ULONG yylex(void)
+ULONG 
+yylex(void)
 {
 	ULONG hash, maxlen;
 	char *s;
@@ -339,7 +358,7 @@ ULONG yylex(void)
 	case LEX_STATE_NORMAL:
 		AtLineStart = 0;
 
- scanagain:
+scanagain:
 
 		while (*pLexBuffer == ' ' || *pLexBuffer == '\t') {
 			linestart = 0;
@@ -353,7 +372,6 @@ ULONG yylex(void)
 				goto scanagain;
 			}
 		}
-
 		s = pLexBuffer;
 		nOldFloatMask = nFloatLen = 0;
 		nFloatMask = tFloatingFirstChar[(int) *s++];
@@ -385,14 +403,13 @@ ULONG yylex(void)
 					if (lex->nNameLength == yyleng) {
 						if (strnicmp
 						    (pLexBuffer, lex->tzName,
-						     yyleng) == 0) {
+							yyleng) == 0) {
 							pLongestFixed = lex;
 						}
 					}
 					lex = lex->pNext;
 				}
 			}
-
 		}
 
 		if (nFloatLen == 0 && pLongestFixed == NULL) {
@@ -401,7 +418,7 @@ ULONG yylex(void)
 
 				pLexBuffer += 1;
 				while ((*pLexBuffer != '"')
-				       && (*pLexBuffer != '\n')) {
+				    && (*pLexBuffer != '\n')) {
 					char ch, *marg;
 
 					if ((ch = *pLexBuffer++) == '\\') {
@@ -423,9 +440,9 @@ ULONG yylex(void)
 						case '8':
 						case '9':
 							if ((marg =
-							     sym_FindMacroArg(ch
-									      -
-									      '0'))
+								sym_FindMacroArg(ch
+								    -
+								    '0'))
 							    != NULL) {
 								while (*marg)
 									yylval.
@@ -438,8 +455,8 @@ ULONG yylex(void)
 							break;
 						case '@':
 							if ((marg =
-							     sym_FindMacroArg
-							     (-1)) != NULL) {
+								sym_FindMacroArg
+								(-1)) != NULL) {
 								while (*marg)
 									yylval.
 									    tzString
@@ -455,15 +472,14 @@ ULONG yylex(void)
 						int i = 0;
 
 						while ((*pLexBuffer != '}')
-						       && (*pLexBuffer != '"')
-						       && (*pLexBuffer !=
-							   '\n')) {
+						    && (*pLexBuffer != '"')
+						    && (*pLexBuffer !=
+							'\n')) {
 							if ((ch =
-							     *pLexBuffer++) ==
+								*pLexBuffer++) ==
 							    '\\') {
 								switch (ch =
-									(*pLexBuffer++))
-								{
+								    (*pLexBuffer++)) {
 								case '0':
 								case '1':
 								case '2':
@@ -497,16 +513,15 @@ ULONG yylex(void)
 						sym[i] = 0;
 						index +=
 						    symvaluetostring(&yylval.
-								     tzString
-								     [index],
-								     sym);
+						    tzString
+						    [index],
+						    sym);
 						if (*pLexBuffer == '}')
 							pLexBuffer += 1;
 						else
 							yyerror("Missing }");
 						ch = 0;
 					}
-
 					if (ch)
 						yylval.tzString[index++] = ch;
 				}
@@ -526,7 +541,7 @@ ULONG yylex(void)
 				pLexBuffer += 1;
 
 				while ((*pLexBuffer != '}')
-				       && (*pLexBuffer != '\n')) {
+				    && (*pLexBuffer != '\n')) {
 					if ((ch = *pLexBuffer++) == '\\') {
 						switch (ch = (*pLexBuffer++)) {
 						case '0':
@@ -540,9 +555,9 @@ ULONG yylex(void)
 						case '8':
 						case '9':
 							if ((marg =
-							     sym_FindMacroArg(ch
-									      -
-									      '0'))
+								sym_FindMacroArg(ch
+								    -
+								    '0'))
 							    != NULL) {
 								while (*marg)
 									sym[i++]
@@ -553,8 +568,8 @@ ULONG yylex(void)
 							break;
 						case '@':
 							if ((marg =
-							     sym_FindMacroArg
-							     (-1)) != NULL) {
+								sym_FindMacroArg
+								(-1)) != NULL) {
 								while (*marg)
 									sym[i++]
 									    =
@@ -582,13 +597,11 @@ ULONG yylex(void)
 				return (*pLexBuffer++);
 			}
 		}
-
 		if (nFloatLen == 0) {
 			yyleng = pLongestFixed->nNameLength;
 			pLexBuffer += yyleng;
 			return (pLongestFixed->nToken);
 		}
-
 		if (pLongestFixed == NULL) {
 			struct sLexFloat *tok;
 
@@ -598,7 +611,6 @@ ULONG yylex(void)
 				if (tok->Callback(pLexBuffer, yyleng) == 0)
 					goto scanagain;
 			}
-
 			if (tok->nToken == T_ID && linestart) {
 				pLexBuffer += yyleng;
 				return (T_LABEL);
@@ -607,7 +619,6 @@ ULONG yylex(void)
 				return (tok->nToken);
 			}
 		}
-
 		if (nFloatLen > pLongestFixed->nNameLength) {
 			struct sLexFloat *tok;
 
@@ -617,7 +628,6 @@ ULONG yylex(void)
 				if (tok->Callback(pLexBuffer, yyleng) == 0)
 					goto scanagain;
 			}
-
 			if (tok->nToken == T_ID && linestart) {
 				pLexBuffer += yyleng;
 				return (T_LABEL);
@@ -642,7 +652,7 @@ ULONG yylex(void)
 			}
 
 			while ((*pLexBuffer != ',')
-			       && (*pLexBuffer != '\n')) {
+			    && (*pLexBuffer != '\n')) {
 				char ch, *marg;
 
 				if ((ch = *pLexBuffer++) == '\\') {
@@ -664,8 +674,8 @@ ULONG yylex(void)
 					case '8':
 					case '9':
 						if ((marg =
-						     sym_FindMacroArg(ch -
-								      '0')) !=
+							sym_FindMacroArg(ch -
+							    '0')) !=
 						    NULL) {
 							while (*marg)
 								yylval.
@@ -677,7 +687,7 @@ ULONG yylex(void)
 						break;
 					case '@':
 						if ((marg =
-						     sym_FindMacroArg(-1)) !=
+							sym_FindMacroArg(-1)) !=
 						    NULL) {
 							while (*marg)
 								yylval.
@@ -693,13 +703,12 @@ ULONG yylex(void)
 					int i = 0;
 
 					while ((*pLexBuffer != '}')
-					       && (*pLexBuffer != '"')
-					       && (*pLexBuffer != '\n')) {
+					    && (*pLexBuffer != '"')
+					    && (*pLexBuffer != '\n')) {
 						if ((ch =
-						     *pLexBuffer++) == '\\') {
+							*pLexBuffer++) == '\\') {
 							switch (ch =
-								(*pLexBuffer++))
-							{
+							    (*pLexBuffer++)) {
 							case '0':
 							case '1':
 							case '2':
@@ -711,9 +720,9 @@ ULONG yylex(void)
 							case '8':
 							case '9':
 								if ((marg =
-								     sym_FindMacroArg
-								     (ch -
-								      '0')) !=
+									sym_FindMacroArg
+									(ch -
+									    '0')) !=
 								    NULL) {
 									while
 									    (*marg)
@@ -723,8 +732,8 @@ ULONG yylex(void)
 								break;
 							case '@':
 								if ((marg =
-								     sym_FindMacroArg
-								     (-1)) !=
+									sym_FindMacroArg
+									(-1)) !=
 								    NULL) {
 									while
 									    (*marg)
@@ -739,15 +748,14 @@ ULONG yylex(void)
 					sym[i] = 0;
 					index +=
 					    symvaluetostring(&yylval.
-							     tzString[index],
-							     sym);
+					    tzString[index],
+					    sym);
 					if (*pLexBuffer == '}')
 						pLexBuffer += 1;
 					else
 						yyerror("Missing }");
 					ch = 0;
 				}
-
 				if (ch)
 					yylval.tzString[index++] = ch;
 			}

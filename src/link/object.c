@@ -21,7 +21,8 @@ BBOOL oReadLib = 0;
  *
  */
 
-SLONG readlong(FILE * f)
+SLONG 
+readlong(FILE * f)
 {
 	SLONG r;
 
@@ -33,7 +34,8 @@ SLONG readlong(FILE * f)
 	return (r);
 }
 
-UWORD readword(FILE * f)
+UWORD 
+readword(FILE * f)
 {
 	UWORD r;
 
@@ -42,13 +44,13 @@ UWORD readword(FILE * f)
 
 	return (r);
 }
-
 /*
  * Read a NULL terminated string from a file
  *
  */
 
-SLONG readasciiz(char *s, FILE * f)
+SLONG 
+readasciiz(char *s, FILE * f)
 {
 	SLONG r = 0;
 
@@ -57,13 +59,13 @@ SLONG readasciiz(char *s, FILE * f)
 
 	return (r + 1);
 }
-
 /*
  * Allocate a new section and link it into the list
  *
  */
 
-struct sSection *AllocSection(void)
+struct sSection *
+AllocSection(void)
 {
 	struct sSection **ppSections;
 
@@ -80,20 +82,19 @@ struct sSection *AllocSection(void)
 		fatalerror("Out of memory!");
 		return NULL;
 	}
-
 	(*ppSections)->tSymbols = tSymbols;
 	(*ppSections)->pNext = NULL;
 	(*ppSections)->pPatches = NULL;
 	(*ppSections)->oAssigned = 0;
 	return *ppSections;
 }
-
 /*
  * Read a symbol from a file
  *
  */
 
-struct sSymbol *obj_ReadSymbol(FILE * f)
+struct sSymbol *
+obj_ReadSymbol(FILE * f)
 {
 	char s[256];
 	struct sSymbol *pSym;
@@ -108,27 +109,26 @@ struct sSymbol *obj_ReadSymbol(FILE * f)
 		fatalerror("Out of memory!");
 
 	strcpy(pSym->pzName, s);
-	if ((pSym->Type = (enum eSymbolType)fgetc(f)) != SYM_IMPORT) {
+	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
 	}
-
 	return pSym;
 }
-
 /*
  * RGB0 object reader routines
  *
  */
 
-struct sSection *obj_ReadRGB0Section(FILE * f)
+struct sSection *
+obj_ReadRGB0Section(FILE * f)
 {
 	struct sSection *pSection;
 
 	pSection = AllocSection();
 
 	pSection->nByteSize = readlong(f);
-	pSection->Type = (enum eSectionType)fgetc(f);
+	pSection->Type = (enum eSectionType) fgetc(f);
 	pSection->nOrg = -1;
 	pSection->nBank = -1;
 
@@ -137,7 +137,6 @@ struct sSection *obj_ReadRGB0Section(FILE * f)
 	if ((options & OPT_SMALL) && (pSection->Type == SECT_CODE)) {
 		pSection->Type = SECT_HOME;
 	}
-
 	if ((pSection->Type == SECT_CODE) || (pSection->Type == SECT_HOME)) {
 		/*
 		 * These sectiontypes contain data...
@@ -153,7 +152,7 @@ struct sSection *obj_ReadRGB0Section(FILE * f)
 			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
-					pSection->nByteSize, f);
+			    pSection->nByteSize, f);
 			nNumberOfPatches = readlong(f);
 			ppPatch = &pSection->pPatches;
 
@@ -176,12 +175,12 @@ struct sSection *obj_ReadRGB0Section(FILE * f)
 				strcpy(pPatch->pzFilename, s);
 
 				pPatch->nLineNo =
-					readlong(f);
+				    readlong(f);
 				pPatch->nOffset =
-					readlong(f);
+				    readlong(f);
 				pPatch->Type =
-					(enum ePatchType)
-					fgetc(f);
+				    (enum ePatchType)
+				    fgetc(f);
 
 				if ((pPatch->nRPNSize = readlong(f)) > 0) {
 					pPatch->pRPN = malloc(pPatch->nRPNSize);
@@ -189,7 +188,7 @@ struct sSection *obj_ReadRGB0Section(FILE * f)
 						fatalerror("Out of memory!");
 
 					fread(pPatch->pRPN, sizeof(UBYTE),
-						pPatch->nRPNSize, f);
+					    pPatch->nRPNSize, f);
 				} else
 					pPatch->pRPN = NULL;
 
@@ -202,11 +201,11 @@ struct sSection *obj_ReadRGB0Section(FILE * f)
 			pSection->pData = &dummymem;
 		}
 	}
-
 	return pSection;
 }
 
-void obj_ReadRGB0(FILE *pObjfile)
+void 
+obj_ReadRGB0(FILE * pObjfile)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -224,7 +223,7 @@ void obj_ReadRGB0(FILE *pObjfile)
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile);
 	} else
-		tSymbols = (struct sSymbol **)&dummymem;
+		tSymbols = (struct sSymbol **) & dummymem;
 
 	/* Next we have the sections */
 
@@ -259,20 +258,20 @@ void obj_ReadRGB0(FILE *pObjfile)
 			tSymbols[i]->pSection = NULL;
 	}
 }
-
 /*
  * RGB1 object reader routines
  *
  */
 
-struct sSection *obj_ReadRGB1Section(FILE *f)
+struct sSection *
+obj_ReadRGB1Section(FILE * f)
 {
 	struct sSection *pSection;
 
 	pSection = AllocSection();
 
 	pSection->nByteSize = readlong(f);
-	pSection->Type = (enum eSectionType)fgetc(f);
+	pSection->Type = (enum eSectionType) fgetc(f);
 	/*
 	 * And because of THIS new feature I'll have to rewrite loads and
 	 * loads of stuff... oh well it needed to be done anyway
@@ -286,7 +285,6 @@ struct sSection *obj_ReadRGB1Section(FILE *f)
 	if ((options & OPT_SMALL) && (pSection->Type == SECT_CODE)) {
 		pSection->Type = SECT_HOME;
 	}
-
 	if ((pSection->Type == SECT_CODE) || (pSection->Type == SECT_HOME)) {
 		/*
 		 * These sectiontypes contain data...
@@ -302,7 +300,7 @@ struct sSection *obj_ReadRGB1Section(FILE *f)
 			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
-				pSection->nByteSize, f);
+			    pSection->nByteSize, f);
 			nNumberOfPatches = readlong(f);
 			ppPatch = &pSection->pPatches;
 
@@ -328,10 +326,10 @@ struct sSection *obj_ReadRGB1Section(FILE *f)
 				if ((pPatch->nRPNSize = readlong(f)) > 0) {
 					pPatch->pRPN = malloc(pPatch->nRPNSize);
 					if (!pPatch->pRPN)
-						fatalerror ("Out of memory!");
+						fatalerror("Out of memory!");
 
 					fread(pPatch->pRPN, sizeof(UBYTE),
-						pPatch->nRPNSize, f);
+					    pPatch->nRPNSize, f);
 				} else
 					pPatch->pRPN = NULL;
 
@@ -344,11 +342,11 @@ struct sSection *obj_ReadRGB1Section(FILE *f)
 			pSection->pData = &dummymem;
 		}
 	}
-
 	return pSection;
 }
 
-void obj_ReadRGB1(FILE *pObjfile)
+void 
+obj_ReadRGB1(FILE * pObjfile)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -366,7 +364,7 @@ void obj_ReadRGB1(FILE *pObjfile)
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile);
 	} else
-		tSymbols = (struct sSymbol **)&dummymem;
+		tSymbols = (struct sSymbol **) & dummymem;
 
 	/* Next we have the sections */
 
@@ -401,13 +399,13 @@ void obj_ReadRGB1(FILE *pObjfile)
 			tSymbols[i]->pSection = NULL;
 	}
 }
-
 /*
  * The main objectfileloadroutine (phew)
  *
  */
 
-void obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
+void 
+obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 {
 	char tzHeader[8];
 
@@ -419,12 +417,13 @@ void obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 			obj_ReadRGB0(pObjfile);
 			break;
 		case '1':
-		case '2':	//      V2 is really the same but the are new patch types
-			obj_ReadRGB1(pObjfile);
+		case '2':
+			//V2 is really the same but the are new patch types
+			    obj_ReadRGB1(pObjfile);
 			break;
 		default:
 			sprintf(temptext, "'%s' is an unsupported version\n",
-				tzObjectfile);
+			    tzObjectfile);
 			fatalerror(temptext);
 			break;
 		}
@@ -434,7 +433,8 @@ void obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	}
 }
 
-void obj_Readfile(char *tzObjectfile)
+void 
+obj_Readfile(char *tzObjectfile)
 {
 	FILE *pObjfile;
 
@@ -448,14 +448,14 @@ void obj_Readfile(char *tzObjectfile)
 		sprintf(temptext, "Unable to open '%s'\n", tzObjectfile);
 		fatalerror(temptext);
 	}
-
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
 	fclose(pObjfile);
 
 	oReadLib = 0;
 }
 
-SLONG file_Length(FILE * f)
+SLONG 
+file_Length(FILE * f)
 {
 	ULONG r, p;
 
@@ -467,7 +467,8 @@ SLONG file_Length(FILE * f)
 	return (r);
 }
 
-void lib_ReadXLB0(FILE * f)
+void 
+lib_ReadXLB0(FILE * f)
 {
 	SLONG size;
 
@@ -486,7 +487,8 @@ void lib_ReadXLB0(FILE * f)
 	}
 }
 
-void lib_Readfile(char *tzLibfile)
+void 
+lib_Readfile(char *tzLibfile)
 {
 	FILE *pObjfile;
 
@@ -497,7 +499,6 @@ void lib_Readfile(char *tzLibfile)
 		sprintf(temptext, "Unable to open '%s'\n", tzLibfile);
 		fatalerror(temptext);
 	}
-
 	char tzHeader[5];
 
 	fread(tzHeader, sizeof(char), 4, pObjfile);
@@ -506,7 +507,7 @@ void lib_Readfile(char *tzLibfile)
 		lib_ReadXLB0(pObjfile);
 	else {
 		sprintf(temptext, "'%s' is an invalid library\n",
-				tzLibfile);
+		    tzLibfile);
 		fatalerror(temptext);
 	}
 	fclose(pObjfile);

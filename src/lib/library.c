@@ -7,7 +7,8 @@
 
 extern void fatalerror(char *s);
 
-SLONG file_Length(FILE * f)
+SLONG 
+file_Length(FILE * f)
 {
 	ULONG r, p;
 
@@ -19,7 +20,8 @@ SLONG file_Length(FILE * f)
 	return (r);
 }
 
-SLONG file_ReadASCIIz(char *b, FILE * f)
+SLONG 
+file_ReadASCIIz(char *b, FILE * f)
 {
 	SLONG r = 0;
 
@@ -29,7 +31,8 @@ SLONG file_ReadASCIIz(char *b, FILE * f)
 	return (r + 1);
 }
 
-void file_WriteASCIIz(char *b, FILE * f)
+void 
+file_WriteASCIIz(char *b, FILE * f)
 {
 	while (*b)
 		fputc(*b++, f);
@@ -37,7 +40,8 @@ void file_WriteASCIIz(char *b, FILE * f)
 	fputc(0, f);
 }
 
-UWORD file_ReadWord(FILE * f)
+UWORD 
+file_ReadWord(FILE * f)
 {
 	UWORD r;
 
@@ -47,13 +51,15 @@ UWORD file_ReadWord(FILE * f)
 	return (r);
 }
 
-void file_WriteWord(UWORD w, FILE * f)
+void 
+file_WriteWord(UWORD w, FILE * f)
 {
 	fputc(w, f);
 	fputc(w >> 8, f);
 }
 
-ULONG file_ReadLong(FILE * f)
+ULONG 
+file_ReadLong(FILE * f)
 {
 	ULONG r;
 
@@ -65,7 +71,8 @@ ULONG file_ReadLong(FILE * f)
 	return (r);
 }
 
-void file_WriteLong(UWORD w, FILE * f)
+void 
+file_WriteLong(UWORD w, FILE * f)
 {
 	fputc(w, f);
 	fputc(w >> 8, f);
@@ -73,7 +80,8 @@ void file_WriteLong(UWORD w, FILE * f)
 	fputc(w >> 24, f);
 }
 
-sLibrary *lib_ReadLib0(FILE * f, SLONG size)
+sLibrary *
+lib_ReadLib0(FILE * f, SLONG size)
 {
 	if (size) {
 		sLibrary *l = NULL, *first = NULL;
@@ -102,7 +110,7 @@ sLibrary *lib_ReadLib0(FILE * f, SLONG size)
 			size -= 4;
 			if ((l->pData = malloc(l->nByteLength))) {
 				fread(l->pData, sizeof(UBYTE), l->nByteLength,
-				      f);
+				    f);
 				size -= l->nByteLength;
 			} else
 				fatalerror("Out of memory");
@@ -111,11 +119,11 @@ sLibrary *lib_ReadLib0(FILE * f, SLONG size)
 		}
 		return (first);
 	}
-
 	return (NULL);
 }
 
-sLibrary *lib_Read(char *filename)
+sLibrary *
+lib_Read(char *filename)
 {
 	FILE *f;
 
@@ -128,7 +136,6 @@ sLibrary *lib_Read(char *filename)
 			fclose(f);
 			return (NULL);
 		}
-
 		fread(ID, sizeof(char), 4, f);
 		ID[4] = 0;
 		size -= 4;
@@ -148,12 +155,13 @@ sLibrary *lib_Read(char *filename)
 	} else {
 		printf
 		    ("Library '%s' not found, it will be created if necessary\n",
-		     filename);
+		    filename);
 		return (NULL);
 	}
 }
 
-BBOOL lib_Write(sLibrary * lib, char *filename)
+BBOOL 
+lib_Write(sLibrary * lib, char *filename)
 {
 	FILE *f;
 
@@ -172,11 +180,11 @@ BBOOL lib_Write(sLibrary * lib, char *filename)
 		printf("Library '%s' closed\n", filename);
 		return (1);
 	}
-
 	return (0);
 }
 
-void TruncateFileName(char *dest, char *src)
+void 
+TruncateFileName(char *dest, char *src)
 {
 	SLONG l;
 
@@ -187,7 +195,8 @@ void TruncateFileName(char *dest, char *src)
 	strcpy(dest, &src[l + 1]);
 }
 
-sLibrary *lib_Find(sLibrary * lib, char *filename)
+sLibrary *
+lib_Find(sLibrary * lib, char *filename)
 {
 	char truncname[MAXNAMELENGTH];
 
@@ -203,7 +212,8 @@ sLibrary *lib_Find(sLibrary * lib, char *filename)
 	return (lib);
 }
 
-sLibrary *lib_AddReplace(sLibrary * lib, char *filename)
+sLibrary *
+lib_AddReplace(sLibrary * lib, char *filename)
 {
 	FILE *f;
 
@@ -237,11 +247,11 @@ sLibrary *lib_AddReplace(sLibrary * lib, char *filename)
 
 		fclose(f);
 	}
-
 	return (lib);
 }
 
-sLibrary *lib_DeleteModule(sLibrary * lib, char *filename)
+sLibrary *
+lib_DeleteModule(sLibrary * lib, char *filename)
 {
 	char truncname[MAXNAMELENGTH];
 	sLibrary **pp, **first;
@@ -276,7 +286,8 @@ sLibrary *lib_DeleteModule(sLibrary * lib, char *filename)
 	return (*first);
 }
 
-void lib_Free(sLibrary * lib)
+void 
+lib_Free(sLibrary * lib)
 {
 	while (lib) {
 		sLibrary *l;

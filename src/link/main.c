@@ -13,7 +13,7 @@
 #include "link/main.h"
 #include "link/library.h"
 
-//      Quick and dirty...but it works
+// Quick and dirty...but it works
 #ifdef __GNUC__
 #define strcmpi	strcasecmp
 #endif
@@ -36,39 +36,40 @@ char smartlinkstartsymbol[256];
  *
  */
 
-void fatalerror(char *s)
+void 
+fatalerror(char *s)
 {
 	printf("*ERROR* : %s\n", s);
 	exit(5);
 }
-
 /*
  * Print the usagescreen
  *
  */
 
-void PrintUsage(void)
+void 
+PrintUsage(void)
 {
 	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	       ")\n\n" "Usage: xlink [options] linkfile\n"
-	       "Options:\n\t-h\t\tThis text\n"
-	       "\t-m<mapfile>\tWrite a mapfile\n"
-	       "\t-n<symfile>\tWrite a NO$GMB compatible symfile\n"
-	       "\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	       "\t\t\tdata (default is ? for random)\n"
-	       "\t-s<symbol>\tPerform smart linking starting with <symbol>\n"
-	       "\t-t\t\tOutput target\n" "\t\t-tg\tGameboy ROM image(default)\n"
-	       "\t\t-ts\tGameboy small mode (32kB)\n"
-	       "\t\t-tp\tPsion2 reloc module\n");
+	    ")\n\n" "Usage: xlink [options] linkfile\n"
+	    "Options:\n\t-h\t\tThis text\n"
+	    "\t-m<mapfile>\tWrite a mapfile\n"
+	    "\t-n<symfile>\tWrite a NO$GMB compatible symfile\n"
+	    "\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
+	    "\t\t\tdata (default is ? for random)\n"
+	    "\t-s<symbol>\tPerform smart linking starting with <symbol>\n"
+	    "\t-t\t\tOutput target\n" "\t\t-tg\tGameboy ROM image(default)\n"
+	    "\t\t-ts\tGameboy small mode (32kB)\n"
+	    "\t\t-tp\tPsion2 reloc module\n");
 	exit(0);
 }
-
 /*
  * Parse the linkfile and load all the objectfiles
  *
  */
 
-void ProcessLinkfile(char *tzLinkfile)
+void 
+ProcessLinkfile(char *tzLinkfile)
 {
 	FILE *pLinkfile;
 	enum eBlockType CurrentBlock = BLOCK_COMMENT;
@@ -78,45 +79,44 @@ void ProcessLinkfile(char *tzLinkfile)
 		sprintf(temptext, "Unable to find linkfile '%s'\n", tzLinkfile);
 		fatalerror(temptext);
 	}
-
 	while (!feof(pLinkfile)) {
 		char tzLine[256];
 
 		fscanf(pLinkfile, "%s\n", tzLine);
 		if (tzLine[0] != '#') {
 			if (tzLine[0] == '['
-					&& tzLine[strlen(tzLine) - 1] == ']') {
+			    && tzLine[strlen(tzLine) - 1] == ']') {
 				if (strcmpi("[objects]", tzLine) == 0)
 					CurrentBlock = BLOCK_OBJECTS;
 				else if (strcmpi("[output]", tzLine) ==
-						0)
+				    0)
 					CurrentBlock = BLOCK_OUTPUT;
 				else if (strcmpi("[libraries]", tzLine)
-						== 0)
+				    == 0)
 					CurrentBlock = BLOCK_LIBRARIES;
 				else if (strcmpi("[comment]", tzLine) ==
-						0)
+				    0)
 					CurrentBlock = BLOCK_COMMENT;
 				else {
 					fclose(pLinkfile);
 					sprintf(temptext,
-							"Unknown block '%s'\n",
-							tzLine);
+					    "Unknown block '%s'\n",
+					    tzLine);
 					fatalerror(temptext);
 				}
 			} else {
 				switch (CurrentBlock) {
-					case BLOCK_COMMENT:
-						break;
-					case BLOCK_OBJECTS:
-						obj_Readfile(tzLine);
-						break;
-					case BLOCK_LIBRARIES:
-						lib_Readfile(tzLine);
-						break;
-					case BLOCK_OUTPUT:
-						out_Setname(tzLine);
-						break;
+				case BLOCK_COMMENT:
+					break;
+				case BLOCK_OBJECTS:
+					obj_Readfile(tzLine);
+					break;
+				case BLOCK_LIBRARIES:
+					lib_Readfile(tzLine);
+					break;
+				case BLOCK_OUTPUT:
+					out_Setname(tzLine);
+					break;
 				}
 			}
 		}
@@ -124,13 +124,13 @@ void ProcessLinkfile(char *tzLinkfile)
 
 	fclose(pLinkfile);
 }
-
 /*
  * The main routine
  *
  */
 
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
 	SLONG argn = 0;
 
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 				break;
 			default:
 				sprintf(temptext, "Unknown option 't%c'\n",
-					opt);
+				    opt);
 				fatalerror(temptext);
 				break;
 			}
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
 					result =
 					    sscanf(argv[argn - 1] + 2, "%lx",
-						   &fillchar);
+					    &fillchar);
 					if (!((result == EOF) || (result == 1))) {
 						fatalerror
 						    ("Invalid argument for option 'z'\n");

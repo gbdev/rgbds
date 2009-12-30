@@ -10,20 +10,23 @@ SLONG rpnstack[256];
 SLONG rpnp;
 SLONG nPC;
 
-void rpnpush(SLONG i)
+void 
+rpnpush(SLONG i)
 {
 	rpnstack[rpnp++] = i;
 }
 
-SLONG rpnpop(void)
+SLONG 
+rpnpop(void)
 {
 	return (rpnstack[--rpnp]);
 }
 
-SLONG getsymvalue(SLONG symid)
+SLONG 
+getsymvalue(SLONG symid)
 {
 	switch (pCurrentSection->tSymbols[symid]->Type) {
-	case SYM_IMPORT:
+		case SYM_IMPORT:
 		return (sym_GetValue(pCurrentSection->tSymbols[symid]->pzName));
 		break;
 	case SYM_EXPORT:
@@ -31,13 +34,13 @@ SLONG getsymvalue(SLONG symid)
 		{
 			if (strcmp
 			    (pCurrentSection->tSymbols[symid]->pzName,
-			     "@") == 0) {
+				"@") == 0) {
 				return (nPC);
 			} else
 				return (pCurrentSection->tSymbols[symid]->
-					nOffset +
-					pCurrentSection->tSymbols[symid]->
-					pSection->nOrg);
+				    nOffset +
+				    pCurrentSection->tSymbols[symid]->
+				    pSection->nOrg);
 		}
 	default:
 		break;
@@ -46,16 +49,17 @@ SLONG getsymvalue(SLONG symid)
 	return (0);
 }
 
-SLONG getsymbank(SLONG symid)
+SLONG 
+getsymbank(SLONG symid)
 {
 	switch (pCurrentSection->tSymbols[symid]->Type) {
-	case SYM_IMPORT:
+		case SYM_IMPORT:
 		return (sym_GetBank(pCurrentSection->tSymbols[symid]->pzName));
 		break;
 	case SYM_EXPORT:
 	case SYM_LOCAL:
 		return (pCurrentSection->tSymbols[symid]->pSection->nBank);
-		//return( pCurrentSection->nBank );
+		//return (pCurrentSection->nBank);
 	default:
 		break;
 	}
@@ -63,7 +67,8 @@ SLONG getsymbank(SLONG symid)
 	return (0);
 }
 
-SLONG calcrpn(struct sPatch * pPatch)
+SLONG 
+calcrpn(struct sPatch * pPatch)
 {
 	SLONG t, size;
 	UBYTE *rpn;
@@ -154,8 +159,8 @@ SLONG calcrpn(struct sPatch * pPatch)
 			rpnpush(t & 0xFF);
 			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
 				sprintf(temptext,
-					"%s(%ld) : Value must be in the HRAM area",
-					pPatch->pzFilename, pPatch->nLineNo);
+				    "%s(%ld) : Value must be in the HRAM area",
+				    pPatch->pzFilename, pPatch->nLineNo);
 				fatalerror(temptext);
 			}
 			break;
@@ -164,8 +169,8 @@ SLONG calcrpn(struct sPatch * pPatch)
 			rpnpush(t & 0xFF);
 			if (t < 0x2000 || t > 0x20FF) {
 				sprintf(temptext,
-					"%s(%ld) : Value must be in the ZP area",
-					pPatch->pzFilename, pPatch->nLineNo);
+				    "%s(%ld) : Value must be in the ZP area",
+				    pPatch->pzFilename, pPatch->nLineNo);
 				fatalerror(temptext);
 			}
 			break;
@@ -212,9 +217,9 @@ SLONG calcrpn(struct sPatch * pPatch)
 				t = rpnpop();
 				if (t < low || t > high) {
 					sprintf(temptext,
-						"%s(%ld) : Value must be in the range [%ld;%ld]",
-						pPatch->pzFilename,
-						pPatch->nLineNo, low, high);
+					    "%s(%ld) : Value must be in the range [%ld;%ld]",
+					    pPatch->pzFilename,
+					    pPatch->nLineNo, low, high);
 					fatalerror(temptext);
 				}
 				rpnpush(t);
@@ -226,7 +231,8 @@ SLONG calcrpn(struct sPatch * pPatch)
 	return (rpnpop());
 }
 
-void Patch(void)
+void 
+Patch(void)
 {
 	struct sSection *pSect;
 
@@ -249,9 +255,9 @@ void Patch(void)
 					    (UBYTE) t;
 				} else {
 					sprintf(temptext,
-						"%s(%ld) : Value must be 8-bit\n",
-						pPatch->pzFilename,
-						pPatch->nLineNo);
+					    "%s(%ld) : Value must be 8-bit\n",
+					    pPatch->pzFilename,
+					    pPatch->nLineNo);
 					fatalerror(temptext);
 				}
 				break;
@@ -263,20 +269,20 @@ void Patch(void)
 						pSect->pData[pPatch->nOffset] =
 						    t & 0xFF;
 						pSect->pData[pPatch->nOffset +
-							     1] =
+						    1] =
 						    (t >> 8) & 0xFF;
 					} else {
-						//      Assume big endian
-						pSect->pData[pPatch->nOffset] =
+						//Assume big endian
+						    pSect->pData[pPatch->nOffset] =
 						    (t >> 8) & 0xFF;
 						pSect->pData[pPatch->nOffset +
-							     1] = t & 0xFF;
+						    1] = t & 0xFF;
 					}
 				} else {
 					sprintf(temptext,
-						"%s(%ld) : Value must be 16-bit\n",
-						pPatch->pzFilename,
-						pPatch->nLineNo);
+					    "%s(%ld) : Value must be 16-bit\n",
+					    pPatch->pzFilename,
+					    pPatch->nLineNo);
 					fatalerror(temptext);
 				}
 				break;

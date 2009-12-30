@@ -10,7 +10,8 @@
 char tzOutname[_MAX_PATH];
 BBOOL oOutput = 0;
 
-void writehome(FILE *f)
+void 
+writehome(FILE * f)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
@@ -28,7 +29,7 @@ void writehome(FILE *f)
 	while (pSect) {
 		if (pSect->Type == SECT_HOME) {
 			memcpy(mem + pSect->nOrg, pSect->pData,
-					pSect->nByteSize);
+			    pSect->nByteSize);
 			MapfileWriteSection(pSect);
 		}
 		pSect = pSect->pNext;
@@ -40,7 +41,8 @@ void writehome(FILE *f)
 	free(mem);
 }
 
-void writebank(FILE *f, SLONG bank)
+void 
+writebank(FILE * f, SLONG bank)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
@@ -52,14 +54,13 @@ void writebank(FILE *f, SLONG bank)
 	if (fillchar != -1) {
 		memset(mem, fillchar, MaxAvail[bank]);
 	}
-
 	MapfileInitBank(bank);
 
 	pSect = pSections;
 	while (pSect) {
 		if (pSect->Type == SECT_CODE && pSect->nBank == bank) {
 			memcpy(mem + pSect->nOrg - 0x4000, pSect->pData,
-					pSect->nByteSize);
+			    pSect->nByteSize);
 			MapfileWriteSection(pSect);
 		}
 		pSect = pSect->pNext;
@@ -71,13 +72,15 @@ void writebank(FILE *f, SLONG bank)
 	free(mem);
 }
 
-void out_Setname(char *tzOutputfile)
+void 
+out_Setname(char *tzOutputfile)
 {
 	strcpy(tzOutname, tzOutputfile);
 	oOutput = 1;
 }
 
-void GBROM_Output(void)
+void 
+GBROM_Output(void)
 {
 	SLONG i;
 	FILE *f;
@@ -89,7 +92,6 @@ void GBROM_Output(void)
 
 		fclose(f);
 	}
-
 	for (i = 256; i < MAXBANKS; i += 1) {
 		struct sSection *pSect;
 		MapfileInitBank(i);
@@ -104,7 +106,8 @@ void GBROM_Output(void)
 	}
 }
 
-void PSION2_Output(void)
+void 
+PSION2_Output(void)
 {
 	FILE *f;
 
@@ -126,11 +129,11 @@ void PSION2_Output(void)
 			while (pSect) {
 				if (pSect->Type == SECT_CODE) {
 					memcpy(mem + pSect->nOrg, pSect->pData,
-					       pSect->nByteSize);
+					    pSect->nByteSize);
 					MapfileWriteSection(pSect);
 				} else {
 					memset(mem + pSect->nOrg, 0,
-					       pSect->nByteSize);
+					    pSect->nByteSize);
 				}
 				pSect = pSect->pNext;
 			}
@@ -140,7 +143,6 @@ void PSION2_Output(void)
 			fwrite(mem, 1, MaxAvail[0] - area_Avail(0), f);
 			free(mem);
 		}
-
 		relocpatches = 0;
 		pSect = pSections;
 		while (pSect) {
@@ -187,11 +189,12 @@ void PSION2_Output(void)
 	}
 }
 
-void Output(void)
+void 
+Output(void)
 {
 	if (oOutput) {
 		switch (outputtype) {
-		case OUTPUT_GBROM:
+			case OUTPUT_GBROM:
 			GBROM_Output();
 			break;
 		case OUTPUT_PSION2:

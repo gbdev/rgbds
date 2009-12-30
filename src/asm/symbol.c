@@ -32,7 +32,8 @@ char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
 char SavedDATE[256];
 
-SLONG Callback_NARG(struct sSymbol *sym)
+SLONG 
+Callback_NARG(struct sSymbol * sym)
 {
 	ULONG i = 0;
 
@@ -43,12 +44,12 @@ SLONG Callback_NARG(struct sSymbol *sym)
 	return (i);
 }
 
-SLONG Callback__LINE__(struct sSymbol * sym)
+SLONG 
+Callback__LINE__(struct sSymbol * sym)
 {
 	sym = sym;
 	return (nLineNo);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -56,14 +57,14 @@ SLONG Callback__LINE__(struct sSymbol * sym)
  *
  */
 
-SLONG getvaluefield(struct sSymbol * sym)
+SLONG 
+getvaluefield(struct sSymbol * sym)
 {
 	if (sym->Callback) {
 		return (sym->Callback(sym));
 	} else
 		return (sym->nValue);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -71,7 +72,8 @@ SLONG getvaluefield(struct sSymbol * sym)
  *
  */
 
-ULONG calchash(char *s)
+ULONG 
+calchash(char *s)
 {
 	ULONG hash = 0;
 
@@ -80,7 +82,6 @@ ULONG calchash(char *s)
 
 	return (hash % HASHSIZE);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -88,7 +89,8 @@ ULONG calchash(char *s)
  *
  */
 
-struct sSymbol *createsymbol(char *s)
+struct sSymbol *
+createsymbol(char *s)
 {
 	struct sSymbol **ppsym;
 	ULONG hash;
@@ -100,7 +102,7 @@ struct sSymbol *createsymbol(char *s)
 		ppsym = &((*ppsym)->pNext);
 
 	if (((*ppsym) =
-	     (struct sSymbol *)malloc(sizeof(struct sSymbol))) != NULL) {
+		(struct sSymbol *) malloc(sizeof(struct sSymbol))) != NULL) {
 		strcpy((*ppsym)->tzName, s);
 		(*ppsym)->nValue = 0;
 		(*ppsym)->nType = 0;
@@ -115,7 +117,6 @@ struct sSymbol *createsymbol(char *s)
 		return (NULL);
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -123,7 +124,8 @@ struct sSymbol *createsymbol(char *s)
  *
  */
 
-struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
+struct sSymbol *
+findsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
 	SLONG hash;
@@ -140,7 +142,6 @@ struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
 	}
 	return (NULL);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -148,7 +149,8 @@ struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
  *
  */
 
-struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
+struct sSymbol **
+findpsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
 	SLONG hash;
@@ -165,7 +167,6 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 	}
 	return (NULL);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -173,7 +174,8 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
  *
  */
 
-struct sSymbol *sym_FindSymbol(char *tzName)
+struct sSymbol *
+sym_FindSymbol(char *tzName)
 {
 	struct sSymbol *pscope;
 
@@ -184,7 +186,6 @@ struct sSymbol *sym_FindSymbol(char *tzName)
 
 	return (findsymbol(tzName, pscope));
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -192,7 +193,8 @@ struct sSymbol *sym_FindSymbol(char *tzName)
  *
  */
 
-void sym_Purge(char *tzName)
+void 
+sym_Purge(char *tzName)
 {
 	struct sSymbol **ppSym;
 	struct sSymbol *pscope;
@@ -219,7 +221,6 @@ void sym_Purge(char *tzName)
 		yyerror(temptext);
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -227,7 +228,8 @@ void sym_Purge(char *tzName)
  *
  */
 
-ULONG sym_isConstDefined(char *tzName)
+ULONG 
+sym_isConstDefined(char *tzName)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -244,15 +246,16 @@ ULONG sym_isConstDefined(char *tzName)
 			return (1);
 		} else {
 			sprintf(temptext,
-				"'%s' is not allowed as argument to the DEF function",
-				tzName);
+			    "'%s' is not allowed as argument to the DEF function",
+			    tzName);
 			fatalerror(temptext);
 		}
 	}
 	return (0);
 }
 
-ULONG sym_isDefined(char *tzName)
+ULONG 
+sym_isDefined(char *tzName)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -268,7 +271,6 @@ ULONG sym_isDefined(char *tzName)
 	else
 		return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -276,7 +278,8 @@ ULONG sym_isDefined(char *tzName)
  *
  */
 
-ULONG sym_isConstant(char *s)
+ULONG 
+sym_isConstant(char *s)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -289,10 +292,8 @@ ULONG sym_isConstant(char *s)
 		if (psym->nType & SYMF_CONST)
 			return (1);
 	}
-
 	return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -300,7 +301,8 @@ ULONG sym_isConstant(char *s)
  *
  */
 
-char *sym_GetStringValue(char *tzSym)
+char *
+sym_GetStringValue(char *tzSym)
 {
 	struct sSymbol *pSym;
 
@@ -313,7 +315,6 @@ char *sym_GetStringValue(char *tzSym)
 
 	return (NULL);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -321,7 +322,8 @@ char *sym_GetStringValue(char *tzSym)
  *
  */
 
-ULONG sym_GetConstantValue(char *s)
+ULONG 
+sym_GetConstantValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -343,7 +345,6 @@ ULONG sym_GetConstantValue(char *s)
 
 	return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -351,7 +352,8 @@ ULONG sym_GetConstantValue(char *s)
  *
  */
 
-ULONG sym_GetValue(char *s)
+ULONG 
+sym_GetValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -364,7 +366,7 @@ ULONG sym_GetValue(char *s)
 		if (psym->nType & SYMF_DEFINED) {
 			if (psym->nType & (SYMF_MACRO | SYMF_STRING)) {
 				sprintf(temptext,
-					"'%s' is a macro or string symbol", s);
+				    "'%s' is a macro or string symbol", s);
 				yyerror(temptext);
 			}
 			return (getvaluefield(psym));
@@ -389,7 +391,6 @@ ULONG sym_GetValue(char *s)
 
 	return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -397,7 +398,8 @@ ULONG sym_GetValue(char *s)
  *
  */
 
-ULONG sym_GetDefinedValue(char *s)
+ULONG 
+sym_GetDefinedValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
 
@@ -410,10 +412,9 @@ ULONG sym_GetDefinedValue(char *s)
 		if ((psym->nType & SYMF_DEFINED)) {
 			if (psym->nType & (SYMF_MACRO | SYMF_STRING)) {
 				sprintf(temptext,
-					"'%s' is a macro or string symbol", s);
+				    "'%s' is a macro or string symbol", s);
 				yyerror(temptext);
 			}
-
 			return (getvaluefield(psym));
 		} else {
 			sprintf(temptext, "'%s' not defined", s);
@@ -426,7 +427,6 @@ ULONG sym_GetDefinedValue(char *s)
 
 	return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -434,7 +434,8 @@ ULONG sym_GetDefinedValue(char *s)
  *
  */
 
-void sym_ShiftCurrentMacroArgs(void)
+void 
+sym_ShiftCurrentMacroArgs(void)
 {
 	SLONG i;
 
@@ -445,7 +446,8 @@ void sym_ShiftCurrentMacroArgs(void)
 	currentmacroargs[MAXMACROARGS - 1] = NULL;
 }
 
-char *sym_FindMacroArg(SLONG i)
+char *
+sym_FindMacroArg(SLONG i)
 {
 	if (i == -1)
 		i = MAXMACROARGS + 1;
@@ -453,7 +455,8 @@ char *sym_FindMacroArg(SLONG i)
 	return (currentmacroargs[i - 1]);
 }
 
-void sym_UseNewMacroArgs(void)
+void 
+sym_UseNewMacroArgs(void)
 {
 	SLONG i;
 
@@ -463,7 +466,8 @@ void sym_UseNewMacroArgs(void)
 	}
 }
 
-void sym_SaveCurrentMacroArgs(char *save[])
+void 
+sym_SaveCurrentMacroArgs(char *save[])
 {
 	SLONG i;
 
@@ -471,7 +475,8 @@ void sym_SaveCurrentMacroArgs(char *save[])
 		save[i] = currentmacroargs[i];
 }
 
-void sym_RestoreCurrentMacroArgs(char *save[])
+void 
+sym_RestoreCurrentMacroArgs(char *save[])
 {
 	SLONG i;
 
@@ -479,7 +484,8 @@ void sym_RestoreCurrentMacroArgs(char *save[])
 		currentmacroargs[i] = save[i];
 }
 
-void sym_FreeCurrentMacroArgs(void)
+void 
+sym_FreeCurrentMacroArgs(void)
 {
 	SLONG i;
 
@@ -489,7 +495,8 @@ void sym_FreeCurrentMacroArgs(void)
 	}
 }
 
-void sym_AddNewMacroArg(char *s)
+void 
+sym_AddNewMacroArg(char *s)
 {
 	SLONG i = 0;
 
@@ -505,7 +512,8 @@ void sym_AddNewMacroArg(char *s)
 		yyerror("A maximum of 9 arguments allowed");
 }
 
-void sym_SetMacroArgID(ULONG nMacroCount)
+void 
+sym_SetMacroArgID(ULONG nMacroCount)
 {
 	char s[256];
 
@@ -513,14 +521,14 @@ void sym_SetMacroArgID(ULONG nMacroCount)
 	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
-void sym_UseCurrentMacroArgs(void)
+void 
+sym_UseCurrentMacroArgs(void)
 {
 	SLONG i;
 
 	for (i = 1; i <= MAXMACROARGS; i += 1)
 		sym_AddNewMacroArg(sym_FindMacroArg(i));
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -528,11 +536,11 @@ void sym_UseCurrentMacroArgs(void)
  *
  */
 
-struct sSymbol *sym_FindMacro(char *s)
+struct sSymbol *
+sym_FindMacro(char *s)
 {
 	return (findsymbol(s, NULL));
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -540,7 +548,8 @@ struct sSymbol *sym_FindMacro(char *s)
  *
  */
 
-void sym_AddEqu(char *tzSym, SLONG value)
+void 
+sym_AddEqu(char *tzSym, SLONG value)
 {
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
@@ -550,7 +559,7 @@ void sym_AddEqu(char *tzSym, SLONG value)
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
 				sprintf(temptext, "'%s' already defined",
-					tzSym);
+				    tzSym);
 				yyerror(temptext);
 			}
 		} else
@@ -563,7 +572,6 @@ void sym_AddEqu(char *tzSym, SLONG value)
 		}
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -571,7 +579,8 @@ void sym_AddEqu(char *tzSym, SLONG value)
  *
  */
 
-void sym_AddString(char *tzSym, char *tzValue)
+void 
+sym_AddString(char *tzSym, char *tzValue)
 {
 	struct sSymbol *nsym;
 
@@ -585,7 +594,7 @@ void sym_AddString(char *tzSym, char *tzValue)
 
 	if (nsym) {
 		if ((nsym->pMacro =
-		     (char *)malloc(strlen(tzValue) + 1)) != NULL)
+			(char *) malloc(strlen(tzValue) + 1)) != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
 			fatalerror("No memory for stringequate");
@@ -594,7 +603,6 @@ void sym_AddString(char *tzSym, char *tzValue)
 		nsym->pScope = NULL;
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -602,7 +610,8 @@ void sym_AddString(char *tzSym, char *tzValue)
  *
  */
 
-ULONG sym_isString(char *tzSym)
+ULONG 
+sym_isString(char *tzSym)
 {
 	struct sSymbol *pSym;
 
@@ -612,7 +621,6 @@ ULONG sym_isString(char *tzSym)
 	}
 	return (0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -620,7 +628,8 @@ ULONG sym_isString(char *tzSym)
  *
  */
 
-void sym_AddSet(char *tzSym, SLONG value)
+void 
+sym_AddSet(char *tzSym, SLONG value)
 {
 	struct sSymbol *nsym;
 
@@ -634,7 +643,6 @@ void sym_AddSet(char *tzSym, SLONG value)
 		nsym->pScope = NULL;
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -642,7 +650,8 @@ void sym_AddSet(char *tzSym, SLONG value)
  *
  */
 
-void sym_AddLocalReloc(char *tzSym)
+void 
+sym_AddLocalReloc(char *tzSym)
 {
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
@@ -653,7 +662,7 @@ void sym_AddLocalReloc(char *tzSym)
 			if ((nsym = findsymbol(tzSym, pScope)) != NULL) {
 				if (nsym->nType & SYMF_DEFINED) {
 					sprintf(temptext,
-						"'%s' already defined", tzSym);
+					    "'%s' already defined", tzSym);
 					yyerror(temptext);
 				}
 			} else
@@ -670,7 +679,6 @@ void sym_AddLocalReloc(char *tzSym)
 			fatalerror("Local label in main scope");
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -678,7 +686,8 @@ void sym_AddLocalReloc(char *tzSym)
  *
  */
 
-void sym_AddReloc(char *tzSym)
+void 
+sym_AddReloc(char *tzSym)
 {
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
@@ -688,7 +697,7 @@ void sym_AddReloc(char *tzSym)
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
 				sprintf(temptext, "'%s' already defined",
-					tzSym);
+				    tzSym);
 				yyerror(temptext);
 			}
 		} else
@@ -704,7 +713,6 @@ void sym_AddReloc(char *tzSym)
 	pScope = findsymbol(tzSym, NULL);
 
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -712,7 +720,8 @@ void sym_AddReloc(char *tzSym)
  *
  */
 
-void sym_Export(char *tzSym)
+void 
+sym_Export(char *tzSym)
 {
 	if (nPass == 1) {
 		/* only export symbols in pass 1 */
@@ -735,7 +744,6 @@ void sym_Export(char *tzSym)
 	}
 
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -743,7 +751,8 @@ void sym_Export(char *tzSym)
  *
  */
 
-void sym_Import(char *tzSym)
+void 
+sym_Import(char *tzSym)
 {
 	if (nPass == 1) {
 		/* only import symbols in pass 1 */
@@ -753,12 +762,10 @@ void sym_Import(char *tzSym)
 			sprintf(temptext, "'%s' already defined", tzSym);
 			yyerror(temptext);
 		}
-
 		if ((nsym = createsymbol(tzSym)) != NULL)
 			nsym->nType |= SYMF_IMPORT;
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -766,7 +773,8 @@ void sym_Import(char *tzSym)
  *
  */
 
-void sym_Global(char *tzSym)
+void 
+sym_Global(char *tzSym)
 {
 	if (nPass == 2) {
 		/* only globalize symbols in pass 2 */
@@ -786,7 +794,6 @@ void sym_Global(char *tzSym)
 		}
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -794,7 +801,8 @@ void sym_Global(char *tzSym)
  *
  */
 
-void sym_AddMacro(char *tzSym)
+void 
+sym_AddMacro(char *tzSym)
 {
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
@@ -804,7 +812,7 @@ void sym_AddMacro(char *tzSym)
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
 				sprintf(temptext, "'%s' already defined",
-					tzSym);
+				    tzSym);
 				yyerror(temptext);
 			}
 		} else
@@ -819,7 +827,6 @@ void sym_AddMacro(char *tzSym)
 		}
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -827,11 +834,11 @@ void sym_AddMacro(char *tzSym)
  *
  */
 
-void sym_PrepPass1(void)
+void 
+sym_PrepPass1(void)
 {
 	sym_Init();
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -839,7 +846,8 @@ void sym_PrepPass1(void)
  *
  */
 
-void sym_PrepPass2(void)
+void 
+sym_PrepPass2(void)
 {
 	SLONG i;
 
@@ -865,7 +873,6 @@ void sym_PrepPass2(void)
 	sym_AddString("__DATE__", SavedDATE);
 	sym_AddSet("_RS", 0);
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -873,7 +880,8 @@ void sym_PrepPass2(void)
  *
  */
 
-void sym_Init(void)
+void 
+sym_Init(void)
 {
 	SLONG i;
 	time_t tod;
@@ -907,13 +915,11 @@ void sym_Init(void)
 		sym_AddString("__TIME__", SavedTIME);
 		sym_AddString("__DATE__", SavedDATE);
 	}
-
 	pScope = NULL;
 
 	math_DefinePI();
 
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -921,7 +927,8 @@ void sym_Init(void)
  *
  */
 
-void sym_PrintSymbolTable(void)
+void 
+sym_PrintSymbolTable(void)
 {
 	ULONG i;
 
@@ -934,8 +941,8 @@ void sym_PrintSymbolTable(void)
 		while (sym != NULL) {
 			if (sym->nType & SYMF_LOCAL)
 				printf("LOCAL : '%s%s' - %08lX\n",
-				       sym->pScope->tzName, sym->tzName,
-				       getvaluefield(sym));
+				    sym->pScope->tzName, sym->tzName,
+				    getvaluefield(sym));
 			else if (sym->nType & (SYMF_MACRO | SYMF_STRING)) {
 				ULONG i = 0;
 
@@ -950,24 +957,23 @@ void sym_PrintSymbolTable(void)
 				printf("\"\n");
 			} else if (sym->nType & SYMF_EXPORT)
 				printf("EXPORT: '%s' - %08lX\n", sym->tzName,
-				       getvaluefield(sym));
+				    getvaluefield(sym));
 			else if (sym->nType & SYMF_IMPORT)
 				printf("IMPORT: '%s'\n", sym->tzName);
 			else if (sym->nType & SYMF_EQU)
 				printf("EQU   : '%s' - %08lX\n", sym->tzName,
-				       getvaluefield(sym));
+				    getvaluefield(sym));
 			else if (sym->nType & SYMF_SET)
 				printf("SET   : '%s' - %08lX\n", sym->tzName,
-				       getvaluefield(sym));
+				    getvaluefield(sym));
 			else
 				printf("SYMBOL: '%s' - %08lX\n", sym->tzName,
-				       getvaluefield(sym));
+				    getvaluefield(sym));
 
 			sym = sym->pNext;
 		}
 	}
 }
-
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -975,7 +981,8 @@ void sym_PrintSymbolTable(void)
  *
  */
 
-void sym_DumpMacroArgs(void)
+void 
+sym_DumpMacroArgs(void)
 {
 	ULONG i;
 

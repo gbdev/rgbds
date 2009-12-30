@@ -15,8 +15,9 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 
-void mergetwoexpressions(struct Expression *expr, struct Expression *src1,
-			 struct Expression *src2)
+void 
+mergetwoexpressions(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	*expr = *src1;
 	memcpy(&(expr->tRPN[expr->nRPNLength]), src2->tRPN, src2->nRPNLength);
@@ -25,7 +26,6 @@ void mergetwoexpressions(struct Expression *expr, struct Expression *src1,
 	expr->isReloc |= src2->isReloc;
 	expr->isPCRel |= src2->isPCRel;
 }
-
 #define joinexpr() mergetwoexpressions(expr,src1,src2)
 
 /*
@@ -35,11 +35,11 @@ void mergetwoexpressions(struct Expression *expr, struct Expression *src1,
  *
  */
 
-//UBYTE   rpnexpr[2048];
-//ULONG   rpnptr = 0;
-//ULONG   rpnoutptr = 0;
-//ULONG   reloc = 0;
-//ULONG   pcrel = 0;
+//UBYTE rpnexpr[2048];
+//ULONG rpnptr = 0;
+//ULONG rpnoutptr = 0;
+//ULONG reloc = 0;
+//ULONG pcrel = 0;
 
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
@@ -48,11 +48,11 @@ void mergetwoexpressions(struct Expression *expr, struct Expression *src1,
  *
  */
 
-void pushbyte(struct Expression *expr, int b)
+void 
+pushbyte(struct Expression * expr, int b)
 {
 	expr->tRPN[expr->nRPNLength++] = b & 0xFF;
 }
-
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
  *
@@ -60,11 +60,11 @@ void pushbyte(struct Expression *expr, int b)
  *
  */
 
-void rpn_Reset(struct Expression *expr)
+void 
+rpn_Reset(struct Expression * expr)
 {
 	expr->nRPNLength = expr->nRPNOut = expr->isReloc = expr->isPCRel = 0;
 }
-
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
  *
@@ -72,14 +72,14 @@ void rpn_Reset(struct Expression *expr)
  *
  */
 
-UWORD rpn_PopByte(struct Expression *expr)
+UWORD 
+rpn_PopByte(struct Expression * expr)
 {
 	if (expr->nRPNOut == expr->nRPNLength) {
 		return (0xDEAD);
 	} else
 		return (expr->tRPN[expr->nRPNOut++]);
 }
-
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
  *
@@ -87,11 +87,11 @@ UWORD rpn_PopByte(struct Expression *expr)
  *
  */
 
-ULONG rpn_isReloc(struct Expression * expr)
+ULONG 
+rpn_isReloc(struct Expression * expr)
 {
 	return (expr->isReloc);
 }
-
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
  *
@@ -99,11 +99,11 @@ ULONG rpn_isReloc(struct Expression * expr)
  *
  */
 
-ULONG rpn_isPCRelative(struct Expression * expr)
+ULONG 
+rpn_isPCRelative(struct Expression * expr)
 {
 	return (expr->isPCRel);
 }
-
 /*
  * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
  *
@@ -111,7 +111,8 @@ ULONG rpn_isPCRelative(struct Expression * expr)
  *
  */
 
-void rpn_Number(struct Expression *expr, ULONG i)
+void 
+rpn_Number(struct Expression * expr, ULONG i)
 {
 	rpn_Reset(expr);
 	pushbyte(expr, RPN_CONST);
@@ -122,7 +123,8 @@ void rpn_Number(struct Expression *expr, ULONG i)
 	expr->nVal = i;
 }
 
-void rpn_Symbol(struct Expression *expr, char *tzSym)
+void 
+rpn_Symbol(struct Expression * expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
 		struct sSymbol *psym;
@@ -143,7 +145,8 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
 }
 
-void rpn_Bank(struct Expression *expr, char *tzSym)
+void 
+rpn_Bank(struct Expression * expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
 		struct sSymbol *psym;
@@ -164,8 +167,9 @@ void rpn_Bank(struct Expression *expr, char *tzSym)
 		yyerror("BANK argument must be a relocatable identifier");
 }
 
-int rpn_RangeCheck(struct Expression *expr, struct Expression *src, SLONG low,
-		   SLONG high)
+int 
+rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
+    SLONG high)
 {
 	*expr = *src;
 
@@ -184,9 +188,9 @@ int rpn_RangeCheck(struct Expression *expr, struct Expression *src, SLONG low,
 		return (expr->nVal >= low && expr->nVal <= high);
 	}
 }
-
 #ifdef GAMEBOY
-void rpn_CheckHRAM(struct Expression *expr, struct Expression *src)
+void 
+rpn_CheckHRAM(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_HRAM);
@@ -194,171 +198,193 @@ void rpn_CheckHRAM(struct Expression *expr, struct Expression *src)
 #endif
 
 #ifdef PCENGINE
-void rpn_CheckZP(struct Expression *expr, struct Expression *src)
+void 
+rpn_CheckZP(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_PCEZP);
 }
 #endif
 
-void rpn_LOGNOT(struct Expression *expr, struct Expression *src)
+void 
+rpn_LOGNOT(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_LOGUNNOT);
 }
 
-void rpn_LOGOR(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGOR(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal || src2->nVal);
 	pushbyte(expr, RPN_LOGOR);
 }
 
-void rpn_LOGAND(struct Expression *expr, struct Expression *src1,
-		struct Expression *src2)
+void 
+rpn_LOGAND(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal && src2->nVal);
 	pushbyte(expr, RPN_LOGAND);
 }
 
-void rpn_LOGEQU(struct Expression *expr, struct Expression *src1,
-		struct Expression *src2)
+void 
+rpn_LOGEQU(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal == src2->nVal);
 	pushbyte(expr, RPN_LOGEQ);
 }
 
-void rpn_LOGGT(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGGT(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal > src2->nVal);
 	pushbyte(expr, RPN_LOGGT);
 }
 
-void rpn_LOGLT(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGLT(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal < src2->nVal);
 	pushbyte(expr, RPN_LOGLT);
 }
 
-void rpn_LOGGE(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGGE(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal >= src2->nVal);
 	pushbyte(expr, RPN_LOGGE);
 }
 
-void rpn_LOGLE(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGLE(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal <= src2->nVal);
 	pushbyte(expr, RPN_LOGLE);
 }
 
-void rpn_LOGNE(struct Expression *expr, struct Expression *src1,
-	       struct Expression *src2)
+void 
+rpn_LOGNE(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal != src2->nVal);
 	pushbyte(expr, RPN_LOGNE);
 }
 
-void rpn_ADD(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_ADD(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal + src2->nVal);
 	pushbyte(expr, RPN_ADD);
 }
 
-void rpn_SUB(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_SUB(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal - src2->nVal);
 	pushbyte(expr, RPN_SUB);
 }
 
-void rpn_XOR(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_XOR(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal ^ src2->nVal);
 	pushbyte(expr, RPN_XOR);
 }
 
-void rpn_OR(struct Expression *expr, struct Expression *src1,
-	    struct Expression *src2)
+void 
+rpn_OR(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal | src2->nVal);
 	pushbyte(expr, RPN_OR);
 }
 
-void rpn_AND(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_AND(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal & src2->nVal);
 	pushbyte(expr, RPN_AND);
 }
 
-void rpn_SHL(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_SHL(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal << src2->nVal);
 	pushbyte(expr, RPN_SHL);
 }
 
-void rpn_SHR(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_SHR(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal >> src2->nVal);
 	pushbyte(expr, RPN_SHR);
 }
 
-void rpn_MUL(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_MUL(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal * src2->nVal);
 	pushbyte(expr, RPN_MUL);
 }
 
-void rpn_DIV(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_DIV(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal / src2->nVal);
 	pushbyte(expr, RPN_DIV);
 }
 
-void rpn_MOD(struct Expression *expr, struct Expression *src1,
-	     struct Expression *src2)
+void 
+rpn_MOD(struct Expression * expr, struct Expression * src1,
+    struct Expression * src2)
 {
 	joinexpr();
 	expr->nVal = (expr->nVal % src2->nVal);
 	pushbyte(expr, RPN_MOD);
 }
 
-void rpn_UNNEG(struct Expression *expr, struct Expression *src)
+void 
+rpn_UNNEG(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	expr->nVal = -expr->nVal;
 	pushbyte(expr, RPN_UNSUB);
 }
 
-void rpn_UNNOT(struct Expression *expr, struct Expression *src)
+void 
+rpn_UNNOT(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	expr->nVal = expr->nVal ^ 0xFFFFFFFF;

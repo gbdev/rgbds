@@ -18,7 +18,8 @@ SLONG MaxBankUsed;
 
 #define DOMAXBANK(x)	{if( (x)>MaxBankUsed ) MaxBankUsed=(x);}
 
-SLONG area_Avail(SLONG bank)
+SLONG 
+area_Avail(SLONG bank)
 {
 	SLONG r;
 	struct sFreeArea *pArea;
@@ -34,7 +35,8 @@ SLONG area_Avail(SLONG bank)
 	return (r);
 }
 
-SLONG area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
+SLONG 
+area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 {
 	struct sFreeArea *pArea;
 
@@ -55,8 +57,8 @@ SLONG area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 					struct sFreeArea *pNewArea;
 
 					if ((pNewArea =
-					     (struct sFreeArea *)
-					     malloc(sizeof(struct sFreeArea)))
+						(struct sFreeArea *)
+						malloc(sizeof(struct sFreeArea)))
 					    != NULL) {
 						*pNewArea = *pArea;
 						pNewArea->pPrev = pArea;
@@ -80,7 +82,8 @@ SLONG area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 	return (-1);
 }
 
-SLONG area_AllocAbsCODEAnyBank(SLONG org, SLONG size)
+SLONG 
+area_AllocAbsCODEAnyBank(SLONG org, SLONG size)
 {
 	SLONG i;
 
@@ -92,7 +95,8 @@ SLONG area_AllocAbsCODEAnyBank(SLONG org, SLONG size)
 	return (-1);
 }
 
-SLONG area_Alloc(struct sFreeArea ** ppArea, SLONG size)
+SLONG 
+area_Alloc(struct sFreeArea ** ppArea, SLONG size)
 {
 	struct sFreeArea *pArea;
 
@@ -114,7 +118,8 @@ SLONG area_Alloc(struct sFreeArea ** ppArea, SLONG size)
 	return (-1);
 }
 
-SLONG area_AllocCODEAnyBank(SLONG size)
+SLONG 
+area_AllocCODEAnyBank(SLONG size)
 {
 	SLONG i, org;
 
@@ -126,7 +131,8 @@ SLONG area_AllocCODEAnyBank(SLONG size)
 	return (-1);
 }
 
-struct sSection *FindLargestCode(void)
+struct sSection *
+FindLargestCode(void)
 {
 	struct sSection *pSection, *r = NULL;
 	SLONG nLargest = 0;
@@ -144,7 +150,8 @@ struct sSection *FindLargestCode(void)
 	return (r);
 }
 
-void AssignCodeSections(void)
+void 
+AssignCodeSections(void)
 {
 	struct sSection *pSection;
 
@@ -161,7 +168,8 @@ void AssignCodeSections(void)
 	}
 }
 
-void GBROM_AssignSections(void)
+void 
+GBROM_AssignSections(void)
 {
 	SLONG i;
 	struct sSection *pSection;
@@ -234,10 +242,10 @@ void GBROM_AssignSections(void)
 			case SECT_BSS:
 				if (area_AllocAbs
 				    (&BankFree[BANK_BSS], pSection->nOrg,
-				     pSection->nByteSize) != pSection->nOrg) {
+					pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed BSS section at $%lX",
-						pSection->nOrg);
+					    "Unable to load fixed BSS section at $%lX",
+					    pSection->nOrg);
 					fatalerror(temptext);
 				}
 				pSection->oAssigned = 1;
@@ -246,10 +254,10 @@ void GBROM_AssignSections(void)
 			case SECT_HRAM:
 				if (area_AllocAbs
 				    (&BankFree[BANK_HRAM], pSection->nOrg,
-				     pSection->nByteSize) != pSection->nOrg) {
+					pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed HRAM section at $%lX",
-						pSection->nOrg);
+					    "Unable to load fixed HRAM section at $%lX",
+					    pSection->nOrg);
 					fatalerror(temptext);
 				}
 				pSection->oAssigned = 1;
@@ -258,10 +266,10 @@ void GBROM_AssignSections(void)
 			case SECT_VRAM:
 				if (area_AllocAbs
 				    (&BankFree[BANK_VRAM], pSection->nOrg,
-				     pSection->nByteSize) != pSection->nOrg) {
+					pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed VRAM section at $%lX",
-						pSection->nOrg);
+					    "Unable to load fixed VRAM section at $%lX",
+					    pSection->nOrg);
 					fatalerror(temptext);
 				}
 				pSection->oAssigned = 1;
@@ -270,10 +278,10 @@ void GBROM_AssignSections(void)
 			case SECT_HOME:
 				if (area_AllocAbs
 				    (&BankFree[BANK_HOME], pSection->nOrg,
-				     pSection->nByteSize) != pSection->nOrg) {
+					pSection->nByteSize) != pSection->nOrg) {
 					sprintf(temptext,
-						"Unable to load fixed HOME section at $%lX",
-						pSection->nOrg);
+					    "Unable to load fixed HOME section at $%lX",
+					    pSection->nOrg);
 					fatalerror(temptext);
 				}
 				pSection->oAssigned = 1;
@@ -314,30 +322,30 @@ void GBROM_AssignSections(void)
 						    && pSection->nBank <= 255) {
 							if (area_AllocAbs
 							    (&BankFree
-							     [pSection->nBank],
-							     pSection->nOrg,
-							     pSection->
-							     nByteSize) !=
+								[pSection->nBank],
+								pSection->nOrg,
+								pSection->
+								nByteSize) !=
 							    pSection->nOrg) {
 								sprintf
 								    (temptext,
-								     "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
-								     pSection->
-								     nOrg,
-								     pSection->
-								     nBank);
+								    "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
+								    pSection->
+								    nOrg,
+								    pSection->
+								    nBank);
 								fatalerror
 								    (temptext);
 							}
 							DOMAXBANK(pSection->
-								  nBank);
+							    nBank);
 							pSection->oAssigned = 1;
 						} else {
 							sprintf(temptext,
-								"Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
-								pSection->nOrg,
-								pSection->
-								nBank);
+							    "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX",
+							    pSection->nOrg,
+							    pSection->
+							    nBank);
 							fatalerror(temptext);
 						}
 					}
@@ -362,19 +370,19 @@ void GBROM_AssignSections(void)
 			/* User wants to have a say... and he's pissed */
 			if (pSection->nBank >= 1 && pSection->nBank <= 255) {
 				if ((pSection->nOrg =
-				     area_Alloc(&BankFree[pSection->nBank],
-						pSection->nByteSize)) == -1) {
+					area_Alloc(&BankFree[pSection->nBank],
+					    pSection->nByteSize)) == -1) {
 					sprintf(temptext,
-						"Unable to load fixed CODE/DATA section into bank $%02lX",
-						pSection->nBank);
+					    "Unable to load fixed CODE/DATA section into bank $%02lX",
+					    pSection->nBank);
 					fatalerror(temptext);
 				}
 				pSection->oAssigned = 1;
 				DOMAXBANK(pSection->nBank);
 			} else {
 				sprintf(temptext,
-					"Unable to load fixed CODE/DATA section into bank $%02lX",
-					pSection->nBank);
+				    "Unable to load fixed CODE/DATA section into bank $%02lX",
+				    pSection->nBank);
 				fatalerror(temptext);
 			}
 		}
@@ -391,14 +399,15 @@ void GBROM_AssignSections(void)
 		if (pSection->oAssigned == 0
 		    && pSection->Type == SECT_CODE
 		    && pSection->nOrg != -1 && pSection->nBank == -1) {
-			/* User wants to have a say... and he's back with a vengeance */
+			/* User wants to have a say... and he's back with a
+			 * vengeance */
 			if ((pSection->nBank =
-			     area_AllocAbsCODEAnyBank(pSection->nOrg,
-						      pSection->nByteSize)) ==
+				area_AllocAbsCODEAnyBank(pSection->nOrg,
+				    pSection->nByteSize)) ==
 			    -1) {
 				sprintf(temptext,
-					"Unable to load fixed CODE/DATA section at $%lX into any bank",
-					pSection->nOrg);
+				    "Unable to load fixed CODE/DATA section at $%lX into any bank",
+				    pSection->nOrg);
 				fatalerror(temptext);
 			}
 			pSection->oAssigned = 1;
@@ -419,8 +428,8 @@ void GBROM_AssignSections(void)
 			switch (pSection->Type) {
 			case SECT_BSS:
 				if ((pSection->nOrg =
-				     area_Alloc(&BankFree[BANK_BSS],
-						pSection->nByteSize)) == -1) {
+					area_Alloc(&BankFree[BANK_BSS],
+					    pSection->nByteSize)) == -1) {
 					fatalerror("BSS section too large\n");
 				}
 				pSection->nBank = BANK_BSS;
@@ -428,8 +437,8 @@ void GBROM_AssignSections(void)
 				break;
 			case SECT_HRAM:
 				if ((pSection->nOrg =
-				     area_Alloc(&BankFree[BANK_HRAM],
-						pSection->nByteSize)) == -1) {
+					area_Alloc(&BankFree[BANK_HRAM],
+					    pSection->nByteSize)) == -1) {
 					fatalerror("HRAM section too large");
 				}
 				pSection->nBank = BANK_HRAM;
@@ -437,8 +446,8 @@ void GBROM_AssignSections(void)
 				break;
 			case SECT_VRAM:
 				if ((pSection->nOrg =
-				     area_Alloc(&BankFree[BANK_VRAM],
-						pSection->nByteSize)) == -1) {
+					area_Alloc(&BankFree[BANK_VRAM],
+					    pSection->nByteSize)) == -1) {
 					fatalerror("VRAM section too large");
 				}
 				pSection->nBank = BANK_VRAM;
@@ -446,8 +455,8 @@ void GBROM_AssignSections(void)
 				break;
 			case SECT_HOME:
 				if ((pSection->nOrg =
-				     area_Alloc(&BankFree[BANK_HOME],
-						pSection->nByteSize)) == -1) {
+					area_Alloc(&BankFree[BANK_HOME],
+					    pSection->nByteSize)) == -1) {
 					fatalerror("HOME section too large");
 				}
 				pSection->nBank = BANK_HOME;
@@ -466,7 +475,8 @@ void GBROM_AssignSections(void)
 	AssignCodeSections();
 }
 
-void PSION2_AssignSections(void)
+void 
+PSION2_AssignSections(void)
 {
 	struct sSection *pSection;
 
@@ -483,7 +493,7 @@ void PSION2_AssignSections(void)
 	pSection = pSections;
 	while (pSection) {
 		if (pSection->oAssigned == 0
-				&& pSection->Type == SECT_CODE) {
+		    && pSection->Type == SECT_CODE) {
 			pSection->oAssigned = 1;
 			pSection->nBank = 0;
 			pSection->nOrg = BankFree[0]->nOrg;
@@ -496,7 +506,7 @@ void PSION2_AssignSections(void)
 	pSection = pSections;
 	while (pSection) {
 		if (pSection->oAssigned == 0
-				&& pSection->Type == SECT_BSS) {
+		    && pSection->Type == SECT_BSS) {
 			pSection->oAssigned = 1;
 			pSection->nBank = 0;
 			pSection->nOrg = BankFree[0]->nOrg;
@@ -507,10 +517,11 @@ void PSION2_AssignSections(void)
 	}
 }
 
-void AssignSections(void)
+void 
+AssignSections(void)
 {
 	switch (outputtype) {
-	case OUTPUT_GBROM:
+		case OUTPUT_GBROM:
 		GBROM_AssignSections();
 		break;
 	case OUTPUT_PSION2:
@@ -519,7 +530,8 @@ void AssignSections(void)
 	}
 }
 
-void CreateSymbolTable(void)
+void 
+CreateSymbolTable(void)
 {
 	struct sSection *pSect;
 
@@ -535,18 +547,18 @@ void CreateSymbolTable(void)
 		while (i--) {
 			if ((pSect->tSymbols[i]->Type == SYM_EXPORT) &&
 			    ((pSect->tSymbols[i]->pSection == pSect) ||
-			     (pSect->tSymbols[i]->pSection == NULL))) {
+				(pSect->tSymbols[i]->pSection == NULL))) {
 				if (pSect->tSymbols[i]->pSection == NULL)
 					sym_CreateSymbol(pSect->tSymbols[i]->
-							 pzName,
-							 pSect->tSymbols[i]->
-							 nOffset, -1);
+					    pzName,
+					    pSect->tSymbols[i]->
+					    nOffset, -1);
 				else
 					sym_CreateSymbol(pSect->tSymbols[i]->
-							 pzName,
-							 pSect->nOrg +
-							 pSect->tSymbols[i]->
-							 nOffset, pSect->nBank);
+					    pzName,
+					    pSect->nOrg +
+					    pSect->tSymbols[i]->
+					    nOffset, pSect->nBank);
 			}
 		}
 		pSect = pSect->pNext;

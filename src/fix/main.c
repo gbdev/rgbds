@@ -36,16 +36,16 @@ unsigned char NintendoChar[48] = {
 	0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC,
 	0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E,
 };
-
 /*
  * Misc. routines
  *
  */
 
-void PrintUsage(void)
+void 
+PrintUsage(void)
 {
 	printf("RGBFix v" RGBFIX_VERSION
-		" (part of ASMotor " ASMOTOR_VERSION ")\n\n");
+	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
 	printf("Usage: rgbfix [options] image[.gb]\n");
 	printf("Options:\n");
@@ -60,30 +60,34 @@ void PrintUsage(void)
 	exit(0);
 }
 
-void vFatalError(char *s, va_list ap)
+void 
+vFatalError(char *s, va_list ap)
 {
 	fprintf(stderr, "*ERROR* : ");
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
 }
 
-void FatalError(char *s, ...)
+void 
+FatalError(char *s,...)
 {
 	va_list ap;
-	va_start (ap, s);
+	va_start(ap, s);
 	vFatalError(s, ap);
 	va_end(ap);
 	exit(5);
 }
 
-void vWarning(char *s, va_list ap)
+void 
+vWarning(char *s, va_list ap)
 {
 	fprintf(stderr, "*WARNING* : ");
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
 }
 
-void Warning(char *s, ...)
+void 
+Warning(char *s,...)
 {
 	va_list ap;
 	va_start(ap, s);
@@ -91,7 +95,8 @@ void Warning(char *s, ...)
 	va_end(ap);
 }
 
-long int FileSize(FILE * f)
+long int 
+FileSize(FILE * f)
 {
 	long prevpos;
 	long r;
@@ -104,7 +109,8 @@ long int FileSize(FILE * f)
 	return (r);
 }
 
-int FileExists(char *s)
+int 
+FileExists(char *s)
 {
 	FILE *f;
 
@@ -114,13 +120,13 @@ int FileExists(char *s)
 	} else
 		return (0);
 }
-
 /*
  * Das main
  *
  */
 
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
 	int argn = 1;
 	char filename[512];
@@ -133,7 +139,7 @@ int main(int argc, char *argv[])
 		PrintUsage();
 
 	while (argn < argc) {
-		if(argv[argn][0] == '-') {
+		if (argv[argn][0] == '-') {
 			switch (argv[argn][1]) {
 			case '?':
 			case 'h':
@@ -156,14 +162,14 @@ int main(int argc, char *argv[])
 				ulOptions |= OPTF_TITLE;
 				break;
 			case 'q':
-				ulOptions|=OPTF_QUIET;
+				ulOptions |= OPTF_QUIET;
 				break;
 			}
 		}
 		argn++;
 	}
 
-	if(argv[argc - 1][0] == '-')
+	if (argv[argc - 1][0] == '-')
 		PrintUsage();
 
 	strcpy(filename, argv[argc - 1]);
@@ -172,7 +178,7 @@ int main(int argc, char *argv[])
 		strcat(filename, ".gb");
 
 	f = fopen(filename, "rb+");
-        if( (f=fopen(filename,"rb+"))!=NULL ) {
+	if ((f = fopen(filename, "rb+")) != NULL) {
 
 		/*
 		 * -d (Debug) option code
@@ -182,7 +188,6 @@ int main(int argc, char *argv[])
 		if ((ulOptions & OPTF_DEBUG) && !(ulOptions & OPTF_QUIET)) {
 			printf("-d (Debug) option enabled...\n");
 		}
-
 		/*
 		 * -p (Pad) option code
 		 *
@@ -197,10 +202,9 @@ int main(int argc, char *argv[])
 			while (size > padto)
 				padto *= 2;
 
-			if(!(ulOptions & OPTF_QUIET)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				printf("Padding to %ldkB:\n", padto / 1024);
 			}
-
 			/*
 			   if( padto<=0x80000L )
 			   {
@@ -217,11 +221,11 @@ int main(int argc, char *argv[])
 				}
 				fflush(f);
 
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tAdded %ld bytes\n", bytesadded);
 				}
 			} else {
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tNo padding needed\n");
 				}
 			}
@@ -231,7 +235,6 @@ int main(int argc, char *argv[])
 			   FatalError( "Image size exceeds 512kB" );
 			   */
 		}
-
 		/*
 		 * -r (Truncate) option code
 		 *
@@ -247,10 +250,9 @@ int main(int argc, char *argv[])
 			while (size < padto)
 				padto /= 2;
 
-			if(!(ulOptions & OPTF_QUIET)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				printf("Truncating to %ldkB:\n", padto / 1024);
 			}
-
 			mkstemp(tempfile);
 
 			if ((ulOptions & OPTF_DEBUG) == 0) {
@@ -267,14 +269,13 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-
 		/*
 		 * -t (Set carttitle) option code
 		 *
 		 */
 
 		if (ulOptions & OPTF_TITLE) {
-			if(!(ulOptions & OPTF_QUIET)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				printf("Setting cartridge title:\n");
 			}
 			if ((ulOptions & OPTF_DEBUG) == 0) {
@@ -283,11 +284,10 @@ int main(int argc, char *argv[])
 				fwrite(cartname, 16, 1, f);
 				fflush(f);
 			}
-			if(!(ulOptions & OPTF_QUIET)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tTitle set to %s\n", cartname);
 			}
 		}
-
 		/*
 		 * -v (Validate header) option code
 		 *
@@ -299,10 +299,10 @@ int main(int argc, char *argv[])
 			long carttype;
 			unsigned short cartchecksum = 0, calcchecksum = 0;
 			unsigned char cartcompchecksum = 0, calccompchecksum =
-				0;
+			0;
 			int ch;
 
-			if(!(ulOptions & OPTF_VALIDATE)) {
+			if (!(ulOptions & OPTF_VALIDATE)) {
 				printf("Validating header:\n");
 			}
 			fflush(stdout);
@@ -331,15 +331,14 @@ int main(int argc, char *argv[])
 
 			fflush(f);
 
-			if(!(ulOptions & OPTF_QUIET)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				if (byteschanged)
 					printf
-						("\tChanged %ld bytes in the Nintendo Character Area\n",
-						 byteschanged);
+					    ("\tChanged %ld bytes in the Nintendo Character Area\n",
+					    byteschanged);
 				else
 					printf("\tNintendo Character Area is OK\n");
 			}
-
 			/* ROM size */
 
 			fflush(f);
@@ -357,18 +356,16 @@ int main(int argc, char *argv[])
 					fputc(calcromsize, f);
 					fflush(f);
 				}
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tChanged ROM size byte from 0x%02lX (%ldkB) to 0x%02lX (%ldkB)\n",
-						 cartromsize,
-						 (0x8000L << cartromsize) / 1024,
-						 calcromsize,
-						 (0x8000L << calcromsize) / 1024);
+					    cartromsize,
+					    (0x8000L << cartromsize) / 1024,
+					    calcromsize,
+					    (0x8000L << calcromsize) / 1024);
 				}
-			} else
-				if(!(ulOptions & OPTF_QUIET)) {
-					printf("\tROM size byte is OK\n");
-				}
-
+			} else if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tROM size byte is OK\n");
+			}
 			/* Cartridge type */
 
 			fflush(f);
@@ -385,17 +382,16 @@ int main(int argc, char *argv[])
 						fputc(0x01, f);
 						fflush(f);
 					}
-					if(!(ulOptions & OPTF_QUIET)) {
+					if (!(ulOptions & OPTF_QUIET)) {
 						printf
-							("\tCartridge type byte changed to 0x01\n");
+						    ("\tCartridge type byte changed to 0x01\n");
 					}
-				} else
-					if(!(ulOptions & OPTF_QUIET)) {
-						printf("\tCartridge type byte is OK\n");
-					}
+				} else if (!(ulOptions & OPTF_QUIET)) {
+					printf("\tCartridge type byte is OK\n");
+				}
 			} else {
 				/* carttype byte can be anything? */
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tCartridge type byte is OK\n");
 				}
 			}
@@ -436,13 +432,13 @@ int main(int argc, char *argv[])
 					fputc(calcchecksum & 0xFF, f);
 				}
 				fflush(f);
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf
-						("\tChecksum changed from 0x%04lX to 0x%04lX\n",
-						 (long)cartchecksum, (long)calcchecksum);
+					    ("\tChecksum changed from 0x%04lX to 0x%04lX\n",
+					    (long) cartchecksum, (long) calcchecksum);
 				}
 			} else {
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tChecksum is OK\n");
 				}
 			}
@@ -453,23 +449,22 @@ int main(int argc, char *argv[])
 				if ((ulOptions & OPTF_DEBUG) == 0)
 					fputc(calccompchecksum, f);
 				fflush(f);
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf
-						("\tCompChecksum changed from 0x%02lX to 0x%02lX\n",
-						 (long)cartcompchecksum,
-						 (long)calccompchecksum);
+					    ("\tCompChecksum changed from 0x%02lX to 0x%02lX\n",
+					    (long) cartcompchecksum,
+					    (long) calccompchecksum);
 				}
 			} else {
-				if(!(ulOptions & OPTF_QUIET)) {
+				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tCompChecksum is OK\n");
 				}
 			}
 
 		}
-
 		fclose(f);
 	} else {
-		FatalError("File '%s' not found",filename);
+		FatalError("File '%s' not found", filename);
 	}
 
 	return (0);

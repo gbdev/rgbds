@@ -6,7 +6,8 @@
 #include "link/mylink.h"
 #include "link/main.h"
 
-static BBOOL symboldefined(char *name)
+static BBOOL 
+symboldefined(char *name)
 {
 	struct sSection *pSect;
 
@@ -23,14 +24,14 @@ static BBOOL symboldefined(char *name)
 				    0)
 					return (1);
 			}
-
 		}
 		pSect = pSect->pNext;
 	}
 	return (0);
 }
 
-static BBOOL addmodulecontaining(char *name)
+static BBOOL 
+addmodulecontaining(char *name)
 {
 	struct sSection **ppLSect;
 
@@ -46,7 +47,7 @@ static BBOOL addmodulecontaining(char *name)
 				    (*ppLSect)->tSymbols[i]->pSection))) {
 				if (strcmp
 				    ((*ppLSect)->tSymbols[i]->pzName,
-				     name) == 0) {
+					name) == 0) {
 					struct sSection **ppSect;
 					ppSect = &pSections;
 					while (*ppSect)
@@ -58,14 +59,14 @@ static BBOOL addmodulecontaining(char *name)
 					return (1);
 				}
 			}
-
 		}
 		ppLSect = &((*ppLSect)->pNext);
 	}
 	return (0);
 }
 
-void AddNeededModules(void)
+void 
+AddNeededModules(void)
 {
 	struct sSection *pSect;
 
@@ -84,21 +85,19 @@ void AddNeededModules(void)
 			*ppLSect = (*ppLSect)->pNext;
 			(*ppSect)->pNext = NULL;
 
-			/*ppLSect=&((*ppLSect)->pNext); */
+			/* ppLSect=&((*ppLSect)->pNext); */
 		}
 		return;
 	}
-
 	if (options & OPT_SMART_C_LINK) {
 		if (!addmodulecontaining(smartlinkstartsymbol)) {
 			sprintf(temptext, "Can't find start symbol '%s'",
-				smartlinkstartsymbol);
+			    smartlinkstartsymbol);
 			fatalerror(temptext);
 		} else
 			printf("Smart linking with symbol '%s'\n",
-			       smartlinkstartsymbol);
+			    smartlinkstartsymbol);
 	}
-
 	pSect = pSections;
 
 	while (pSect) {
@@ -109,10 +108,9 @@ void AddNeededModules(void)
 			    || (pSect->tSymbols[i]->Type == SYM_LOCAL)) {
 				if (!symboldefined(pSect->tSymbols[i]->pzName)) {
 					addmodulecontaining(pSect->tSymbols[i]->
-							    pzName);
+					    pzName);
 				}
 			}
-
 		}
 		pSect = pSect->pNext;
 	}
