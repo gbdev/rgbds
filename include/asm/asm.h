@@ -33,4 +33,4 @@ extern UBYTE oDontExpandStrings;
 #define MAXMACROARGS	9
 #define MAXINCPATHS		16
 
-#endif				//       ASM_H
+#endif	/* //       ASM_H */

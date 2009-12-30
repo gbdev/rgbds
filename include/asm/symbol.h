@@ -15,19 +15,25 @@ struct sSymbol {
 	struct Section *pSection;
 	ULONG ulMacroSize;
 	char *pMacro;
-	 SLONG(*Callback) (struct sSymbol *);
+	     SLONG(*Callback) (struct sSymbol *);
 };
-
-#define SYMF_RELOC		0x001	/* symbol will be reloc'ed during linking, it's absolute value is unknown */
-#define SYMF_EQU		0x002	/* symbol is defined using EQU, will not be changed during linking */
-#define SYMF_SET		0x004	/* symbol is (re)defined using SET, will not be changed during linking */
+#define SYMF_RELOC		0x001	/* symbol will be reloc'ed during
+					 * linking, it's absolute value is
+					 * unknown */
+#define SYMF_EQU		0x002	/* symbol is defined using EQU, will
+					 * not be changed during linking */
+#define SYMF_SET		0x004	/* symbol is (re)defined using SET,
+					 * will not be changed during linking */
 #define SYMF_EXPORT		0x008	/* symbol should be exported */
-#define SYMF_IMPORT		0x010	/* symbol is imported, it's value is unknown */
+#define SYMF_IMPORT		0x010	/* symbol is imported, it's value is
+					 * unknown */
 #define SYMF_LOCAL		0x020	/* symbol is a local symbol */
-#define SYMF_DEFINED	0x040	/* symbol has been defined, not only referenced */
+#define SYMF_DEFINED	0x040	/* symbol has been defined, not only
+				 * referenced */
 #define SYMF_MACRO		0x080	/* symbol is a macro */
 #define SYMF_STRING		0x100	/* symbol is a stringsymbol */
-#define SYMF_CONST		0x200	/* symbol has a constant value, will not be changed during linking */
+#define SYMF_CONST		0x200	/* symbol has a constant value, will
+					 * not be changed during linking */
 
 void sym_PrepPass1(void);
 void sym_PrepPass2(void);

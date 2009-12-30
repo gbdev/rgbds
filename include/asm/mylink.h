@@ -115,5 +115,4 @@ enum {
 	PATCH_WORD_B,
 	PATCH_LONG_B
 };
-
 #endif

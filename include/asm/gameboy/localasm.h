@@ -105,7 +105,6 @@ enum {
 	REG_HL_IND,
 	REG_A
 };
-
 /* "rr" defs */
 
 enum {
@@ -114,7 +113,6 @@ enum {
 	REG_HL_INDINC,
 	REG_HL_INDDEC,
 };
-
 /* "ss" defs */
 
 enum {
@@ -123,7 +121,6 @@ enum {
 	REG_HL,
 	REG_SP
 };
-
 /* "tt" defs */
 
 /*

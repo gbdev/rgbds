@@ -9,7 +9,6 @@ enum eBankDefine {
 	BANK_VRAM,
 	BANK_HRAM
 };
-
 #define MAXBANKS	259
 
 extern SLONG area_Avail(SLONG bank);
