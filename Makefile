@@ -38,7 +38,7 @@ xlink_obj := \
 	src/link/symbol.o
 
 rgbfix_obj := \
-	src/rgbfix/main.o
+	src/fix/main.o
 
 all: rgbasm xlib xlink rgbfix
 
