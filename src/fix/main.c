@@ -51,7 +51,9 @@ PrintUsage(void)
 	printf("Options:\n");
 	printf("\t-h\t\tThis text\n");
 	printf("\t-d\t\tDebug: Don't change image\n");
-	printf("\t-p\t\tPad image to valid size\n\t\t\tPads to 32/64/128/256/512kB as appropriate\n");
+	printf("\t-p[XX]\t\tPad image to valid size\n"
+		"\t\t\tPads to 32/64/128/256/512kB as appropriate\n"
+		"\t\t\tAn optional hexadecimal pad value can be supplied (default is 0");
 	printf("\t-r\t\ttRuncate image to valid size\n\t\t\tTruncates to 32/64/128/256/512kB as appropriate\n");
 	printf("\t-t<name>\tChange cartridge title field (16 characters)\n");
 	printf("\t-v\t\tValidate header\n\t\t\tCorrects - Nintendo Character Area (0x0104)\n\t\t\t\t - ROM type (0x0147)\n\t\t\t\t - ROM size (0x0148)\n\t\t\t\t - Checksums (0x014D-0x014F)\n");
