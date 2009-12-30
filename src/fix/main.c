@@ -129,39 +129,44 @@ int main(int argc, char *argv[])
 
 	ulOptions = 0;
 
-	if ((--argc) == 0)
+	if (argc == 1)
 		PrintUsage();
 
-	while (*argv[argn] == '-') {
-		argc -= 1;
-		switch (argv[argn++][1]) {
-		case '?':
-		case 'h':
-			PrintUsage();
-			break;
-		case 'd':
-			ulOptions |= OPTF_DEBUG;
-			break;
-		case 'p':
-			ulOptions |= OPTF_PAD;
-			break;
-		case 'r':
-			ulOptions |= OPTF_TRUNCATE;
-			break;
-		case 'v':
-			ulOptions |= OPTF_VALIDATE;
-			break;
-		case 't':
-			strncpy(cartname, argv[argn - 1] + 2, 16);
-			ulOptions |= OPTF_TITLE;
-			break;
-		case 'q':
-			ulOptions|=OPTF_QUIET;
-			break;
+	while (argn < argc) {
+		if(argv[argn][0] == '-') {
+			switch (argv[argn][1]) {
+			case '?':
+			case 'h':
+				PrintUsage();
+				break;
+			case 'd':
+				ulOptions |= OPTF_DEBUG;
+				break;
+			case 'p':
+				ulOptions |= OPTF_PAD;
+				break;
+			case 'r':
+				ulOptions |= OPTF_TRUNCATE;
+				break;
+			case 'v':
+				ulOptions |= OPTF_VALIDATE;
+				break;
+			case 't':
+				strncpy(cartname, argv[argn] + 2, 16);
+				ulOptions |= OPTF_TITLE;
+				break;
+			case 'q':
+				ulOptions|=OPTF_QUIET;
+				break;
+			}
 		}
+		argn++;
 	}
 
-	strcpy(filename, argv[argn++]);
+	if(argv[argc - 1][0] == '-')
+		PrintUsage();
+
+	strcpy(filename, argv[argc - 1]);
 
 	if (!FileExists(filename))
 		strcat(filename, ".gb");
