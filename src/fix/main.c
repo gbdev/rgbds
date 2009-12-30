@@ -21,6 +21,7 @@
 #define OPTF_TRUNCATE	0x10L
 #define OPTF_QUIET	0x20L
 #define OPTF_RAMSIZE	0x40L
+#define OPTF_MBCTYPE	0x80L
 
 unsigned long ulOptions;
 
@@ -142,6 +143,7 @@ main(int argc, char *argv[])
 	FILE *f;
 	int pad_value = 0;
 	int ram_size = 0;
+	int mbc_type = 0;
 
 	ulOptions = 0;
 
@@ -170,6 +172,20 @@ main(int argc, char *argv[])
 					FatalError("RAM size must be between 0 and FF");
 				} else {
 					FatalError("Invalid argument for option 'm'");
+				}
+				break;
+			case 'b':
+				ulOptions |= OPTF_MBCTYPE;
+				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
+					int result;
+					result = sscanf(argv[argn] + 2, "%x", &mbc_type);
+					if (!((result == EOF) || (result == 1))) {
+						FatalError("Invalid argument for option 'b'");
+					}
+				} else if (strlen(argv[argn] + 2) > 0) {
+					FatalError("MBC type must be between 0 and FF");
+				} else {
+					FatalError("Invalid argument for option 'b'");
 				}
 				break;
 			case 'p':
@@ -335,6 +351,23 @@ main(int argc, char *argv[])
 
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tRAM size set to %#02X\n", ram_size);
+			}
+		}
+		/*
+		 * -b (Set MBC type) option code
+		 */
+		if (ulOptions & OPTF_MBCTYPE) {
+			/* carttype byte can be anything? */
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting MBC type\n");
+			}
+			fflush(f);
+			fseek(f, 0x147L, SEEK_SET);
+			fputc(mbc_type, f);
+			fflush(f);
+
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tMBC type set to %#02X\n", mbc_type);
 			}
 		}
 		/*
