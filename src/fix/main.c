@@ -20,6 +20,7 @@
 #define OPTF_TITLE	0x08L
 #define OPTF_TRUNCATE	0x10L
 #define OPTF_QUIET	0x20L
+#define OPTF_RAMSIZE	0x40L
 
 unsigned long ulOptions;
 
@@ -51,7 +52,8 @@ PrintUsage(void)
 	printf("Options:\n");
 	printf("  -h\t\tThis text\n");
 	printf("  -d\t\tDebug: Don't change image\n");
-	printf("  -p[XX]\t\tPad image to valid size\n"
+	printf("  -m<hx>\tChange RAM size of cartridge\n");
+	printf("  -p[<hx>]\tPad image to valid size\n"
 		"\t\tPads to 32/64/128/256/512kB as appropriate\n"
 		"\t\tAn optional hexadecimal pad value can be supplied (default is 0)");
 	printf("  -r\t\ttRuncate image to valid size\n\t\t\tTruncates to 32/64/128/256/512kB as appropriate\n");
@@ -139,6 +141,7 @@ main(int argc, char *argv[])
 	char cartname[32];
 	FILE *f;
 	int pad_value = 0;
+	int ram_size = 0;
 
 	ulOptions = 0;
 
@@ -154,6 +157,20 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				ulOptions |= OPTF_DEBUG;
+				break;
+			case 'm':
+				ulOptions |= OPTF_RAMSIZE;
+				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
+					int result;
+					result = sscanf(argv[argn] + 2,"%x", &ram_size);
+					if (!((result == EOF) || (result == 1))) {
+						FatalError("Invalid argument for option 'm'");
+					}
+				} else if (strlen(argv[argn] + 2) > 0) {
+					FatalError("RAM size must be between 0 and FF");
+				} else {
+					FatalError("Invalid argument for option 'm'");
+				}
 				break;
 			case 'p':
 				ulOptions |= OPTF_PAD;
@@ -300,6 +317,24 @@ main(int argc, char *argv[])
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tTitle set to %s\n", cartname);
+			}
+		}
+		/*
+		 * -m (Set ram size) option code
+		 *
+		 */
+		if (ulOptions & OPTF_RAMSIZE) {
+			/* carttype byte can be anything? */
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting RAM size\n");
+			}
+			fflush(f);
+			fseek(f, 0x149L, SEEK_SET);
+			fputc(ram_size, f);
+			fflush(f);
+
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tRAM size set to %#02X\n", ram_size);
 			}
 		}
 		/*
