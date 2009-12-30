@@ -64,6 +64,7 @@ PrintUsage(void)
 		"\t\t\t - ROM type (0x0147)\n"
 		"\t\t\t - ROM size (0x0148)\n"
 		"\t\t\t - Checksums (0x014D-0x014F)\n");
+	printf("  -b<hx>\tSet MBC type\n");
 	printf("  -q\t\tExecute quietly (suppress all text except errors)\n");
 
 	exit(0);
