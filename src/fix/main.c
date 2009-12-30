@@ -130,6 +130,83 @@ FileExists(char *s)
 		return (0);
 }
 /*
+0147       Cartridge type:
+           0 - ROM ONLY                12 - ROM+MBC3+RAM
+           1 - ROM+MBC1                13 - ROM+MBC3+RAM+BATT
+           2 - ROM+MBC1+RAM            19 - ROM+MBC5
+           3 - ROM+MBC1+RAM+BATT       1A - ROM+MBC5+RAM
+           5 - ROM+MBC2                1B - ROM+MBC5+RAM+BATT
+           6 - ROM+MBC2+BATTERY        1C - ROM+MBC5+RUMBLE
+           8 - ROM+RAM                 1D - ROM+MBC5+RUMBLE+SRAM
+           9 - ROM+RAM+BATTERY         1E - ROM+MBC5+RUMBLE+SRAM+BATT
+           B - ROM+MMM01               1F - Pocket Camera
+           C - ROM+MMM01+SRAM          FD - Bandai TAMA5
+           D - ROM+MMM01+SRAM+BATT     FE - Hudson HuC-3
+           F - ROM+MBC3+TIMER+BATT     FF - Hudson HuC-1
+          10 - ROM+MBC3+TIMER+RAM+BATT
+          11 - ROM+MBC3
+*/
+char *
+MBC_String(unsigned char mbc_type)
+{
+	switch (mbc_type) {
+		case 0x00:
+			return "ROM ONLY";
+		case 0x01:
+			return "ROM+MBC1";
+		case 0x02:
+			return "ROM+MBC1+RAM";
+		case 0x03:
+			return "ROM+MBC1+RAM+BATTERY";
+		case 0x05:
+			return "ROM+MBC2";
+		case 0x06:
+			return "ROM+MBC2+BATTERY";
+		case 0x08:
+			return "ROM+RAM";
+		case 0x09:
+			return "ROM+RAM+BATTERY";
+		case 0x0B:
+			return "ROM+MMM01";
+		case 0x0C:
+			return "ROM+MMM01+SRAM";
+		case 0x0D:
+			return "ROM+MMM01+SRAM+BATTERY";
+		case 0x0F:
+			return "ROM+MBC3+TIMER+BATTERY";
+		case 0x10:
+			return "ROM+MBC3+TIMER+RAM+BATTERY";
+		case 0x11:
+			return "ROM+MBC3";
+		case 0x12:
+			return "ROM+MBC3+RAM";
+		case 0x13:
+			return "ROM+MBC3+RAM+BATTERY";
+		case 0x19:
+			return "ROM+MBC5";
+		case 0x1A:
+			return "ROM+MBC5+RAM";
+		case 0x1B:
+			return "ROM+MBC5+RAM+BATTERY";
+		case 0x1C:
+			return "ROM+MBC5+RUMBLE";
+		case 0x1D:
+			return "ROM+MBC5+RUMBLE+SRAM";
+		case 0x1E:
+			return "ROM+MBC5+RUMBLE+SRAM+BATTERY";
+		case 0x1F:
+			return "Pocket Camera";
+		case 0xFD:
+			return "Bandai TAMA5";
+		case 0xFE:
+			return "Hudson HuC-3";
+		case 0xFF:
+			return "Hudson HuC-1";
+		default:
+			return "Unknown MBC type";
+	}
+}
+/*
  * Das main
  *
  */
@@ -367,7 +444,7 @@ main(int argc, char *argv[])
 			fflush(f);
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tMBC type set to %#02X\n", mbc_type);
+				printf("\tMBC type set to %#02X (%s)\n", mbc_type, MBC_String(mbc_type));
 			}
 		}
 		/*
