@@ -132,6 +132,7 @@ main(int argc, char *argv[])
 	char filename[512];
 	char cartname[32];
 	FILE *f;
+	int pad_value = 0;
 
 	ulOptions = 0;
 
@@ -150,6 +151,13 @@ main(int argc, char *argv[])
 				break;
 			case 'p':
 				ulOptions |= OPTF_PAD;
+				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
+					int result;
+					result = sscanf(argv[argn] + 2, "%x", &pad_value);
+					if (!((result == EOF) || (result == 1))) {
+						FatalError("Invalid argument for option 'p'");
+					}
+				}
 				break;
 			case 'r':
 				ulOptions |= OPTF_TRUNCATE;
@@ -203,7 +211,7 @@ main(int argc, char *argv[])
 				padto *= 2;
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Padding to %ldkB:\n", padto / 1024);
+				printf("Padding to %ldkB with pad value %#02X\n", padto / 1024, pad_value & 0xFF);
 			}
 			/*
 			   if( padto<=0x80000L )
@@ -216,7 +224,7 @@ main(int argc, char *argv[])
 				while (size < padto) {
 					size += 1;
 					if ((ulOptions & OPTF_DEBUG) == 0)
-						fputc(0, f);
+						fputc(pad_value & 0xFF, f);
 					bytesadded += 1;
 				}
 				fflush(f);
