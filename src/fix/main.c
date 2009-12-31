@@ -14,14 +14,15 @@
  *
  */
 
-#define OPTF_DEBUG	0x01L
-#define OPTF_PAD	0x02L
-#define OPTF_VALIDATE	0x04L
-#define OPTF_TITLE	0x08L
-#define OPTF_TRUNCATE	0x10L
-#define OPTF_QUIET	0x20L
-#define OPTF_RAMSIZE	0x40L
-#define OPTF_MBCTYPE	0x80L
+#define OPTF_DEBUG	0x001L
+#define OPTF_PAD	0x002L
+#define OPTF_VALIDATE	0x004L
+#define OPTF_TITLE	0x008L
+#define OPTF_TRUNCATE	0x010L
+#define OPTF_QUIET	0x020L
+#define OPTF_RAMSIZE	0x040L
+#define OPTF_MBCTYPE	0x080L
+#define OPTF_GBCMODE	0x100L
 
 unsigned long ulOptions;
 
@@ -65,6 +66,8 @@ PrintUsage(void)
 		"\t\t\t - ROM size (0x0148)\n"
 		"\t\t\t - Checksums (0x014D-0x014F)\n");
 	printf("  -b<hx>\tSet MBC type\n");
+	printf("  -c\t\tSet Game Boy Color compatible flag ([0x143] = 0x80)\n");
+	printf("  -o\t\tSet Game Boy Color only flag       ([0x143] = 0xC0)\n");
 	printf("  -q\t\tExecute quietly (suppress all text except errors)\n");
 
 	exit(0);
@@ -222,6 +225,7 @@ main(int argc, char *argv[])
 	int pad_value = 0;
 	int ram_size = 0;
 	int mbc_type = 0;
+	int gbc_mode = 0;
 
 	ulOptions = 0;
 
@@ -288,6 +292,14 @@ main(int argc, char *argv[])
 				break;
 			case 'q':
 				ulOptions |= OPTF_QUIET;
+				break;
+			case 'o':
+				ulOptions |= OPTF_GBCMODE;
+				gbc_mode = 0xC0;
+				break;
+			case 'c':
+				ulOptions |= OPTF_GBCMODE;
+				gbc_mode = 0x80;
 				break;
 			}
 		}
@@ -446,6 +458,28 @@ main(int argc, char *argv[])
 
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tMBC type set to %#02X (%s)\n", mbc_type, MBC_String(mbc_type));
+			}
+		}
+		/*
+		 * -c/-o (Set GBC only/compatible mode)
+		 */
+		if (ulOptions & OPTF_GBCMODE) {
+			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0x80) {
+				printf("Setting Game Boy Color compatible mode\n");
+			}
+			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0xC0) {
+				printf("Setting Game Boy Color only mode\n");
+			}
+			fflush(f);
+			fseek(f, 0x143L, SEEK_SET);
+			fputc(gbc_mode, f);
+			fflush(f);
+
+			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0x80) {
+				printf("\tGame Boy Color compatible mode set\n");
+			}
+			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0xC0) {
+				printf("\tGame Boy Color only mode set\n");
 			}
 		}
 		/*
