@@ -294,10 +294,16 @@ main(int argc, char *argv[])
 				ulOptions |= OPTF_QUIET;
 				break;
 			case 'o':
+				if (ulOptions & OPTF_GBCMODE) {
+					FatalError("-c and -o can't be used together");
+				}
 				ulOptions |= OPTF_GBCMODE;
 				gbc_mode = 0xC0;
 				break;
 			case 'c':
+				if (ulOptions & OPTF_GBCMODE) {
+					FatalError("-c and -o can't be used together");
+				}
 				ulOptions |= OPTF_GBCMODE;
 				gbc_mode = 0x80;
 				break;
