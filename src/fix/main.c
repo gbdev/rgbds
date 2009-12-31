@@ -481,6 +481,12 @@ main(int argc, char *argv[])
 			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0xC0) {
 				printf("\tGame Boy Color only mode set\n");
 			}
+
+			if (ulOptions & OPTF_TITLE) { 
+				if (cartname[0xF]) {
+					Warning("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'c' : 'o');
+				}
+			}
 		}
 		/*
 		 * -v (Validate header) option code
