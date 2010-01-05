@@ -270,7 +270,7 @@ PrintUsage(void)
 	    "\t\t\t(default is 01)\n");
 	printf
 	    ("\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	    "\t\t\tdata (default is ? for random)\n");
+	    "\t\t\tdata (? for random, default is 0x00)\n");
 	exit(0);
 }
 /*

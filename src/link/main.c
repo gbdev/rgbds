@@ -56,7 +56,7 @@ PrintUsage(void)
 	    "\t-m<mapfile>\tWrite a mapfile\n"
 	    "\t-n<symfile>\tWrite a NO$GMB compatible symfile\n"
 	    "\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	    "\t\t\tdata (default is ? for random)\n"
+	    "\t\t\tdata (? for random, default is 0x00)\n"
 	    "\t-s<symbol>\tPerform smart linking starting with <symbol>\n"
 	    "\t-t\t\tOutput target\n" "\t\t-tg\tGameboy ROM image(default)\n"
 	    "\t\t-ts\tGameboy small mode (32kB)\n"
