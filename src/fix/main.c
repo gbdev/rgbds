@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 			}
 			if ((ulOptions & OPTF_DEBUG) == 0) {
 				fflush(f);
-				fseek(f, 0x13F, SEEK_SET);
+				fseek(f, 0x144, SEEK_SET);
 				fwrite(nlicensee, 2, 1, f);
 				fflush(f);
 			}
