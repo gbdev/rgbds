@@ -58,7 +58,7 @@ PrintUsage(void)
 	printf("  -h\t\tThis text\n");
 	printf("  -d\t\tDebug: Don't change image\n");
 	printf("  -m<hx>\tChange RAM size of cartridge\n");
-	printf("  -j\tSet the non-Japanese region flag\n");
+	printf("  -j\t\tSet the non-Japanese region flag\n");
 	printf("  -p[<hx>]\tPad image to valid size\n"
 		"\t\tPads to 32/64/128/256/512kB as appropriate\n"
 		"\t\tAn optional hexadecimal pad value can be supplied (default is 0)");
@@ -495,7 +495,7 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tRegion code set to non-Japan\n");
+				printf("Region code set to non-Japan\n");
 			}
 		}
 		/*
