@@ -23,6 +23,7 @@
 #define OPTF_RAMSIZE	0x040L
 #define OPTF_MBCTYPE	0x080L
 #define OPTF_GBCMODE	0x100L
+#define OPTF_JAPAN	0x200L
 
 unsigned long ulOptions;
 
@@ -55,6 +56,7 @@ PrintUsage(void)
 	printf("  -h\t\tThis text\n");
 	printf("  -d\t\tDebug: Don't change image\n");
 	printf("  -m<hx>\tChange RAM size of cartridge\n");
+	printf("  -j\tSet the non-Japanese region flag\n");
 	printf("  -p[<hx>]\tPad image to valid size\n"
 		"\t\tPads to 32/64/128/256/512kB as appropriate\n"
 		"\t\tAn optional hexadecimal pad value can be supplied (default is 0)");
@@ -256,6 +258,9 @@ main(int argc, char *argv[])
 					FatalError("Invalid argument for option 'm'");
 				}
 				break;
+			case 'j':
+				ulOptions |= OPTF_JAPAN;
+				break;
 			case 'b':
 				ulOptions |= OPTF_MBCTYPE;
 				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
@@ -447,6 +452,19 @@ main(int argc, char *argv[])
 
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tRAM size set to %#02X\n", ram_size);
+			}
+		}
+		/*
+		 * -j (Set region flag) option code
+		 */
+		if (ulOptions & OPTF_JAPAN) {
+			fflush(f);
+			fseek(f, 0x14A, SEEK_SET);
+			fputc(1, f);
+			fflush(f);
+
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tRegion code set to non-Japan\n");
 			}
 		}
 		/*
