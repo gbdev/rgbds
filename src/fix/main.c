@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 	strcpy(filename, argv[argc - 1]);
 
 	if (!FileExists(filename))
-		strcat(filename, ".gb");
+		strncat(filename, ".gb", 3);
 
 	f = fopen(filename, "rb+");
 	if ((f = fopen(filename, "rb+")) != NULL) {
