@@ -25,6 +25,7 @@
 #define OPTF_GBCMODE	0x100L
 #define OPTF_JAPAN	0x200L
 #define OPTF_SGBMODE	0x400L
+#define OPTF_NLICENSEE	0x800L
 
 unsigned long ulOptions;
 
@@ -63,6 +64,7 @@ PrintUsage(void)
 		"\t\tAn optional hexadecimal pad value can be supplied (default is 0)");
 	printf("  -r\t\ttRuncate image to valid size\n\t\t\tTruncates to 32/64/128/256/512kB as appropriate\n");
 	printf("  -t<name>\tChange cartridge title field (16 characters)\n");
+	printf("  -k<code>\tChange licensee code (2 characters)\n");
 	printf("  -v\t\tValidate header\n"
 		"\t\tCorrects - Nintendo Character Area (0x0104)\n"
 		"\t\t\t - ROM type (0x0147)\n"
@@ -225,6 +227,7 @@ main(int argc, char *argv[])
 	int argn = 1;
 	char filename[512];
 	char cartname[32];
+	char nlicensee[3];
 	FILE *f;
 	int pad_value = 0;
 	int ram_size = 0;
@@ -296,6 +299,10 @@ main(int argc, char *argv[])
 			case 't':
 				strncpy(cartname, argv[argn] + 2, 16);
 				ulOptions |= OPTF_TITLE;
+				break;
+			case 'k':
+				strncpy(nlicensee, argv[argn] + 2, 2);
+				ulOptions |= OPTF_NLICENSEE;
 				break;
 			case 'q':
 				ulOptions |= OPTF_QUIET;
@@ -439,6 +446,23 @@ main(int argc, char *argv[])
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tTitle set to %s\n", cartname);
+			}
+		}
+		/*
+		 * -k (Set new licensee) option code
+		 */
+		if (ulOptions & OPTF_NLICENSEE) {
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting new licensee:\n");
+			}
+			if ((ulOptions & OPTF_DEBUG) == 0) {
+				fflush(f);
+				fseek(f, 0x13F, SEEK_SET);
+				fwrite(nlicensee, 2, 1, f);
+				fflush(f);
+			}
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tLicensee set to %s\n", nlicensee);
 			}
 		}
 		/*
