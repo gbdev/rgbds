@@ -24,6 +24,7 @@
 #define OPTF_MBCTYPE	0x080L
 #define OPTF_GBCMODE	0x100L
 #define OPTF_JAPAN	0x200L
+#define OPTF_SGBMODE	0x400L
 
 unsigned long ulOptions;
 
@@ -70,6 +71,7 @@ PrintUsage(void)
 	printf("  -b<hx>\tSet MBC type\n");
 	printf("  -c\t\tSet Game Boy Color compatible flag ([0x143] = 0x80)\n");
 	printf("  -o\t\tSet Game Boy Color only flag       ([0x143] = 0xC0)\n");
+	printf("  -s\t\tSet Super Game Boy flags\n");
 	printf("  -q\t\tExecute quietly (suppress all text except errors)\n");
 
 	exit(0);
@@ -312,6 +314,9 @@ main(int argc, char *argv[])
 				ulOptions |= OPTF_GBCMODE;
 				gbc_mode = 0x80;
 				break;
+			case 's':
+				ulOptions |= OPTF_SGBMODE;
+				break;
 			}
 		}
 		argn++;
@@ -510,6 +515,23 @@ main(int argc, char *argv[])
 				if (cartname[0xF]) {
 					Warning("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'c' : 'o');
 				}
+			}
+		}
+		/*
+		 * -s (Set SGB mode) option code
+		 */
+		if (ulOptions & OPTF_SGBMODE) {
+			fflush(f);
+			// set old licensee code to 0x33
+			fseek(f, 0x14B, SEEK_SET);
+			fputc(0x33, f);
+			// set SGB flag to 0x03
+			fseek(f, 0x146, SEEK_SET);
+			fputc(3, f);
+			fflush(f);
+
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting SGB mode flag\n");
 			}
 		}
 		/*
