@@ -300,8 +300,7 @@ main(int argc, char *argv[])
 	DefaultOptions.gbgfx[3] = '3';
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
-	DefaultOptions.fillchar = -1;
-	//fill uninitialised data with random values
+	DefaultOptions.fillchar = 0; // -1 => fill uninitialized data with random values
 	    opt_SetCurrentOptions(&DefaultOptions);
 
 	while (argv[argn][0] == '-' && argc) {
