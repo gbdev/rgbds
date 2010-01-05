@@ -47,6 +47,7 @@ clean:
 	rm -rf xlib $(xlib_obj)
 	rm -rf xlink $(xlink_obj)
 	rm -rf rgbfix $(rgbfix_obj)
+	rm -rf src/asm/asmy.c
 
 rgbasm: $(rgbasm_obj)
 	${CC} $(cflags) -o $@ $(rgbasm_obj) -lm
