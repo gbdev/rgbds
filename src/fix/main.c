@@ -224,6 +224,9 @@ MBC_String(unsigned char mbc_type)
 int 
 main(int argc, char *argv[])
 {
+	int ch;
+	char *ep;
+
 	int argn = 1;
 	char filename[512];
 	char cartname[32];
@@ -239,97 +242,81 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		PrintUsage();
 
-	while (argn < argc) {
-		if (argv[argn][0] == '-') {
-			switch (argv[argn][1]) {
-			case '?':
-			case 'h':
-				PrintUsage();
-				break;
-			case 'd':
-				ulOptions |= OPTF_DEBUG;
-				break;
-			case 'm':
-				ulOptions |= OPTF_RAMSIZE;
-				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
-					int result;
-					result = sscanf(argv[argn] + 2,"%x", &ram_size);
-					if (!((result == EOF) || (result == 1))) {
-						FatalError("Invalid argument for option 'm'");
-					}
-				} else if (strlen(argv[argn] + 2) > 0) {
-					FatalError("RAM size must be between 0 and FF");
-				} else {
-					FatalError("Invalid argument for option 'm'");
-				}
-				break;
-			case 'j':
-				ulOptions |= OPTF_JAPAN;
-				break;
-			case 'b':
-				ulOptions |= OPTF_MBCTYPE;
-				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
-					int result;
-					result = sscanf(argv[argn] + 2, "%x", &mbc_type);
-					if (!((result == EOF) || (result == 1))) {
-						FatalError("Invalid argument for option 'b'");
-					}
-				} else if (strlen(argv[argn] + 2) > 0) {
-					FatalError("MBC type must be between 0 and FF");
-				} else {
-					FatalError("Invalid argument for option 'b'");
-				}
-				break;
-			case 'p':
-				ulOptions |= OPTF_PAD;
-				if (strlen(argv[argn] + 2) > 0 && strlen(argv[argn] + 2) <= 2) {
-					int result;
-					result = sscanf(argv[argn] + 2, "%x", &pad_value);
-					if (!((result == EOF) || (result == 1))) {
-						FatalError("Invalid argument for option 'p'");
-					}
-				}
-				break;
-			case 'r':
-				ulOptions |= OPTF_TRUNCATE;
-				break;
-			case 'v':
-				ulOptions |= OPTF_VALIDATE;
-				break;
-			case 't':
-				strncpy(cartname, argv[argn] + 2, 16);
-				ulOptions |= OPTF_TITLE;
-				break;
-			case 'k':
-				strncpy(nlicensee, argv[argn] + 2, 2);
-				ulOptions |= OPTF_NLICENSEE;
-				break;
-			case 'q':
-				ulOptions |= OPTF_QUIET;
-				break;
-			case 'o':
-				if (ulOptions & OPTF_GBCMODE) {
-					FatalError("-c and -o can't be used together");
-				}
-				ulOptions |= OPTF_GBCMODE;
-				gbc_mode = 0xC0;
-				break;
-			case 'c':
-				if (ulOptions & OPTF_GBCMODE) {
-					FatalError("-c and -o can't be used together");
-				}
-				ulOptions |= OPTF_GBCMODE;
-				gbc_mode = 0x80;
-				break;
-			case 's':
-				ulOptions |= OPTF_SGBMODE;
-				break;
+	while ((ch = getopt(argc, argv, "b:cdjk:m:op:qrst:v")) != -1) {
+		switch (ch) {
+		case 'd':
+			ulOptions |= OPTF_DEBUG;
+			break;
+		case 'm':
+			ulOptions |= OPTF_RAMSIZE;
+			ram_size = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				FatalError("Invalid argument for option 'm'");
+			if (ram_size < 0 || ram_size > 0xFF)
+				FatalError("Argument for option 'm' must be between 0 and 0xFF");
+			break;
+		case 'j':
+			ulOptions |= OPTF_JAPAN;
+			break;
+		case 'b':
+			ulOptions |= OPTF_MBCTYPE;
+			mbc_type = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				FatalError("Invalid argument for option 'b'");
+			if (mbc_type < 0 || mbc_type > 0xFF)
+				FatalError("Argument for option 'b' must be between 0 and 0xFF");
+			break;
+		case 'p':
+			ulOptions |= OPTF_PAD;
+			pad_value = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				FatalError("Invalid argument for option 'p'");
+			if (pad_value < 0 || pad_value > 0xFF)
+				FatalError("Argument for option 'p' must be between 0 and 0xFF");
+			break;
+		case 'r':
+			ulOptions |= OPTF_TRUNCATE;
+			break;
+		case 'v':
+			ulOptions |= OPTF_VALIDATE;
+			break;
+		case 't':
+			strncpy(cartname, optarg, 16);
+			ulOptions |= OPTF_TITLE;
+			break;
+		case 'k':
+			strncpy(nlicensee, optarg, 2);
+			ulOptions |= OPTF_NLICENSEE;
+			break;
+		case 'q':
+			ulOptions |= OPTF_QUIET;
+			break;
+		case 'o':
+			if (ulOptions & OPTF_GBCMODE) {
+				FatalError("-c and -o can't be used together");
 			}
+			ulOptions |= OPTF_GBCMODE;
+			gbc_mode = 0xC0;
+			break;
+		case 'c':
+			if (ulOptions & OPTF_GBCMODE) {
+				FatalError("-c and -o can't be used together");
+			}
+			ulOptions |= OPTF_GBCMODE;
+			gbc_mode = 0x80;
+			break;
+		case 's':
+			ulOptions |= OPTF_SGBMODE;
+			break;
+		default:
+			PrintUsage();
+			/* NOTREACHED */
 		}
-		argn++;
-	}
+		}
+		argc -= optind;
+		argv += optind;
 
-	if (argv[argc - 1][0] == '-')
+	if (argc == 0)
 		PrintUsage();
 
 	strcpy(filename, argv[argc - 1]);
