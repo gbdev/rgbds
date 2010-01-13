@@ -296,10 +296,6 @@ main(int argc, char *argv[])
 			if (!(ulOptions & OPTF_QUIET)) {
 				printf("Padding to %dKiB with pad value %#02x\n", padto / 1024, pad_value & 0xFF);
 			}
-			/*
-			   if( padto<=0x80000L )
-			   {
-			   */
 			if (size != padto) {
 				fflush(stdout);
 
@@ -345,11 +341,9 @@ main(int argc, char *argv[])
 			} else if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tROM size byte is OK\n");
 			}
-			/*
-			   }
-			   else
-			   FatalError( "Image size exceeds 512KiB" );
-			   */
+
+			if (calcromsize > 8)
+				warnx("ROM is %dKiB, max valid size is 8192KiB", (0x8000L << calcromsize) / 1024);
 		}
 		/*
 		 * -t (Set carttitle) option code
