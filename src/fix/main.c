@@ -284,8 +284,9 @@ main(int argc, char *argv[])
 		 */
 
 		if (ulOptions & OPTF_PAD) {
-			long size, padto;
-			long bytesadded = 0;
+			int size, padto;
+			int calcromsize, cartromsize;
+			int bytesadded = 0;
 
 			size = FileSize(f);
 			padto = 0x8000L;
@@ -293,7 +294,7 @@ main(int argc, char *argv[])
 				padto *= 2;
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Padding to %ldKiB with pad value %#02x\n", padto / 1024, pad_value & 0xFF);
+				printf("Padding to %dKiB with pad value %#02x\n", padto / 1024, pad_value & 0xFF);
 			}
 			/*
 			   if( padto<=0x80000L )
@@ -312,12 +313,37 @@ main(int argc, char *argv[])
 				fflush(f);
 
 				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tAdded %ld bytes\n", bytesadded);
+					printf("\tAdded %d bytes\n", bytesadded);
 				}
 			} else {
 				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tNo padding needed\n");
 				}
+			}
+			/* ROM size byte */
+
+			calcromsize = 0;
+			while (size > (0x8000L << calcromsize))
+				calcromsize += 1;
+
+			fseek(f, 0x148, SEEK_SET);
+			cartromsize = fgetc(f);
+
+			if (calcromsize != cartromsize) {
+				if (!(ulOptions & OPTF_DEBUG)) {
+					fseek(f, 0x148, SEEK_SET);
+					fputc(calcromsize, f);
+					fflush(f);
+				}
+				if (!(ulOptions & OPTF_QUIET)) {
+					printf("\tChanged ROM size byte from %#02x (%dKiB) to %#02x (%dKiB)\n",
+					    cartromsize,
+					    (0x8000L << cartromsize) / 1024,
+					    calcromsize,
+					    (0x8000L << calcromsize) / 1024);
+				}
+			} else if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tROM size byte is OK\n");
 			}
 			/*
 			   }
