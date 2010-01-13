@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 				padto *= 2;
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Padding to %ldkB with pad value %#02X\n", padto / 1024, pad_value & 0xFF);
+				printf("Padding to %ldKiB with pad value %#02X\n", padto / 1024, pad_value & 0xFF);
 			}
 			/*
 			   if( padto<=0x80000L )
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 			/*
 			   }
 			   else
-			   FatalError( "Image size exceeds 512kB" );
+			   FatalError( "Image size exceeds 512KiB" );
 			   */
 		}
 		/*
@@ -378,7 +378,7 @@ main(int argc, char *argv[])
 				padto /= 2;
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Truncating to %ldkB:\n", padto / 1024);
+				printf("Truncating to %ldKiB:\n", padto / 1024);
 			}
 			mkstemp(tempfile);
 
@@ -599,7 +599,7 @@ main(int argc, char *argv[])
 					fflush(f);
 				}
 				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tChanged ROM size byte from 0x%02lX (%ldkB) to 0x%02lX (%ldkB)\n",
+					printf("\tChanged ROM size byte from 0x%02lX (%ldKiB) to 0x%02lX (%ldKiB)\n",
 					    cartromsize,
 					    (0x8000L << cartromsize) / 1024,
 					    calcromsize,
