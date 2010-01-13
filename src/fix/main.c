@@ -18,7 +18,6 @@
 #define OPTF_PAD	0x002L
 #define OPTF_VALIDATE	0x004L
 #define OPTF_TITLE	0x008L
-#define OPTF_TRUNCATE	0x010L
 #define OPTF_QUIET	0x020L
 #define OPTF_RAMSIZE	0x040L
 #define OPTF_MBCTYPE	0x080L
@@ -53,7 +52,7 @@ PrintUsage(void)
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
-	printf("usage: rgbfix [-dcjoqrsv] [-b mbc_type] [-k licensee_str] [-m ram_size]\n");
+	printf("usage: rgbfix [-dcjoqsv] [-b mbc_type] [-k licensee_str] [-m ram_size]\n");
 	printf("\t\t[-p pad_value] [-t title_str] image[.gb]\n");
 
 	exit(1);
@@ -222,7 +221,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		PrintUsage();
 
-	while ((ch = getopt(argc, argv, "b:cdjk:m:op:qrst:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:cdjk:m:op:qst:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			ulOptions |= OPTF_DEBUG;
@@ -253,9 +252,6 @@ main(int argc, char *argv[])
 				FatalError("Invalid argument for option 'p'");
 			if (pad_value < 0 || pad_value > 0xFF)
 				FatalError("Argument for option 'p' must be between 0 and 0xFF");
-			break;
-		case 'r':
-			ulOptions |= OPTF_TRUNCATE;
 			break;
 		case 'v':
 			ulOptions |= OPTF_VALIDATE;
@@ -361,40 +357,6 @@ main(int argc, char *argv[])
 			   else
 			   FatalError( "Image size exceeds 512KiB" );
 			   */
-		}
-		/*
-		 * -r (Truncate) option code
-		 *
-		 */
-
-		if (ulOptions & OPTF_TRUNCATE) {
-			long size, padto;
-			char tempfile[] = "/tmp/rgbfix-XXXXXX";
-			FILE *tf;
-
-			size = FileSize(f);
-			padto = 256 * 32768;
-			while (size < padto)
-				padto /= 2;
-
-			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Truncating to %ldKiB:\n", padto / 1024);
-			}
-			mkstemp(tempfile);
-
-			if ((ulOptions & OPTF_DEBUG) == 0) {
-				if ((tf = fopen(tempfile, "wb")) != NULL) {
-					fseek(f, 0, SEEK_SET);
-					while (padto--) {
-						fputc(fgetc(f), tf);
-					}
-					fclose(f);
-					fclose(tf);
-					remove(filename);
-					rename(tempfile, filename);
-					f = fopen(filename, "rb+");
-				}
-			}
 		}
 		/*
 		 * -t (Set carttitle) option code
