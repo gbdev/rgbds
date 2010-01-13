@@ -53,30 +53,10 @@ PrintUsage(void)
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
-	printf("Usage: rgbfix [options] image[.gb]\n");
-	printf("Options:\n");
-	printf("  -h\t\tThis text\n");
-	printf("  -d\t\tDebug: Don't change image\n");
-	printf("  -m<hx>\tChange RAM size of cartridge\n");
-	printf("  -j\t\tSet the non-Japanese region flag\n");
-	printf("  -p[<hx>]\tPad image to valid size\n"
-		"\t\tPads to 32/64/128/256/512kB as appropriate\n"
-		"\t\tAn optional hexadecimal pad value can be supplied (default is 0)");
-	printf("  -r\t\ttRuncate image to valid size\n\t\t\tTruncates to 32/64/128/256/512kB as appropriate\n");
-	printf("  -t<name>\tChange cartridge title field (16 characters)\n");
-	printf("  -k<code>\tChange licensee code (2 characters)\n");
-	printf("  -v\t\tValidate header\n"
-		"\t\tCorrects - Nintendo Character Area (0x0104)\n"
-		"\t\t\t - ROM type (0x0147)\n"
-		"\t\t\t - ROM size (0x0148)\n"
-		"\t\t\t - Checksums (0x014D-0x014F)\n");
-	printf("  -b<hx>\tSet MBC type\n");
-	printf("  -c\t\tSet Game Boy Color compatible flag ([0x143] = 0x80)\n");
-	printf("  -o\t\tSet Game Boy Color only flag       ([0x143] = 0xC0)\n");
-	printf("  -s\t\tSet Super Game Boy flags\n");
-	printf("  -q\t\tExecute quietly (suppress all text except errors)\n");
+	printf("usage: rgbfix [-dcjoqrsv] [-b mbc_type] [-k licensee_str] [-m ram_size]\n");
+	printf("\t\t[-p pad_value] [-t title_str] image[.gb]\n");
 
-	exit(0);
+	exit(1);
 }
 
 void 
