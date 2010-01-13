@@ -173,7 +173,6 @@ main(int argc, char *argv[])
 	int ch;
 	char *ep;
 
-	int argn = 1;
 	char filename[512];
 	char cartname[32];
 	char nlicensee[3];
