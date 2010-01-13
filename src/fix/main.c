@@ -605,7 +605,7 @@ main(int argc, char *argv[])
 					fflush(f);
 				}
 				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tChanged ROM size byte from 0x%02lX (%ldKiB) to 0x%02lX (%ldKiB)\n",
+					printf("\tChanged ROM size byte from %#02x (%ldKiB) to %#02x (%ldKiB)\n",
 					    cartromsize,
 					    (0x8000L << cartromsize) / 1024,
 					    calcromsize,
