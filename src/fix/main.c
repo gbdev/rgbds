@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 
 		if (ulOptions & OPTF_PAD) {
 			int size, padto;
-			int calcromsize, cartromsize;
+			unsigned int calcromsize, cartromsize;
 			int bytesadded = 0;
 
 			size = FileSize(f);
@@ -334,16 +334,16 @@ main(int argc, char *argv[])
 				if (!(ulOptions & OPTF_QUIET)) {
 					printf("\tChanged ROM size byte from %#02x (%dKiB) to %#02x (%dKiB)\n",
 					    cartromsize,
-					    (0x8000L << cartromsize) / 1024,
+					    (0x8000 << cartromsize) / 1024,
 					    calcromsize,
-					    (0x8000L << calcromsize) / 1024);
+					    (0x8000 << calcromsize) / 1024);
 				}
 			} else if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tROM size byte is OK\n");
 			}
 
 			if (calcromsize > 8)
-				warnx("ROM is %dKiB, max valid size is 8192KiB", (0x8000L << calcromsize) / 1024);
+				warnx("ROM is %dKiB, max valid size is 8192KiB", (0x8000 << calcromsize) / 1024);
 		}
 		/*
 		 * -t (Set carttitle) option code
@@ -492,7 +492,7 @@ main(int argc, char *argv[])
 
 		if (ulOptions & OPTF_VALIDATE) {
 			long i, byteschanged = 0;
-			long cartromsize, calcromsize = 0, filesize;
+			unsigned int cartromsize, calcromsize = 0, filesize;
 			unsigned short cartchecksum = 0, calcchecksum = 0;
 			unsigned char cartcompchecksum = 0, calccompchecksum =
 			0;
@@ -553,11 +553,11 @@ main(int argc, char *argv[])
 					fflush(f);
 				}
 				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tChanged ROM size byte from %#02x (%ldKiB) to %#02x (%ldKiB)\n",
+					printf("\tChanged ROM size byte from %#02x (%dKiB) to %#02x (%dKiB)\n",
 					    cartromsize,
-					    (0x8000L << cartromsize) / 1024,
+					    (0x8000 << cartromsize) / 1024,
 					    calcromsize,
-					    (0x8000L << calcromsize) / 1024);
+					    (0x8000 << calcromsize) / 1024);
 				}
 			} else if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tROM size byte is OK\n");
