@@ -473,7 +473,6 @@ main(int argc, char *argv[])
 		if (ulOptions & OPTF_VALIDATE) {
 			long i, byteschanged = 0;
 			long cartromsize, calcromsize = 0, filesize;
-			long carttype;
 			unsigned short cartchecksum = 0, calcchecksum = 0;
 			unsigned char cartcompchecksum = 0, calccompchecksum =
 			0;
@@ -542,35 +541,6 @@ main(int argc, char *argv[])
 				}
 			} else if (!(ulOptions & OPTF_QUIET)) {
 				printf("\tROM size byte is OK\n");
-			}
-			/* Cartridge type */
-
-			fflush(f);
-			fseek(f, 0x0147L, SEEK_SET);
-			carttype = fgetc(f);
-			if (carttype == EOF)
-				carttype = 0x00;
-
-			if (FileSize(f) > 0x8000L) {
-				/* carttype byte must != 0x00 */
-				if (carttype == 0x00) {
-					if ((ulOptions & OPTF_DEBUG) == 0) {
-						fseek(f, -1, SEEK_CUR);
-						fputc(0x01, f);
-						fflush(f);
-					}
-					if (!(ulOptions & OPTF_QUIET)) {
-						printf
-						    ("\tCartridge type byte changed to 0x01\n");
-					}
-				} else if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tCartridge type byte is OK\n");
-				}
-			} else {
-				/* carttype byte can be anything? */
-				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tCartridge type byte is OK\n");
-				}
 			}
 
 			/* Checksum */
