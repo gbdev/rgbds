@@ -55,8 +55,8 @@ static void usage(void)
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
-	printf("usage: rgbfix [-dcjoqsv] [-b mbc_type] [-k licensee_str] [-m ram_size]\n");
-	printf("\t    [-p pad_value] [-t title_str] image[.gb]\n");
+	printf("usage: rgbfix [-dcjoqsv] [-b mbc_type] [-k licensee_str] [-p pad_value]\n");
+	printf("\t    [-r ram_size] [-t title_str] image[.gb]\n");
 
 	exit(EX_USAGE);
 }
@@ -193,13 +193,13 @@ main(int argc, char *argv[])
 		case 'd':
 			ulOptions |= OPTF_DEBUG;
 			break;
-		case 'm':
+		case 'r':
 			ulOptions |= OPTF_RAMSIZE;
 			ram_size = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'm'");
+				errx(EX_USAGE, "Invalid argument for option 'r'");
 			if (ram_size < 0 || ram_size > 0xFF)
-				errx(EX_USAGE, "Argument for option 'm' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'r' must be between 0 and 0xFF");
 			break;
 		case 'j':
 			ulOptions |= OPTF_JAPAN;
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 			}
 		}
 		/*
-		 * -m (Set ram size) option code
+		 * -r (Set ram size) option code
 		 *
 		 */
 		if (ulOptions & OPTF_RAMSIZE) {
