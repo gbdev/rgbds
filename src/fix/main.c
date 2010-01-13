@@ -546,23 +546,6 @@ main(int argc, char *argv[])
 			while (filesize > (0x8000L << calcromsize))
 				calcromsize += 1;
 
-			if (calcromsize != cartromsize) {
-				if ((ulOptions & OPTF_DEBUG) == 0) {
-					fseek(f, -1, SEEK_CUR);
-					fputc(calcromsize, f);
-					fflush(f);
-				}
-				if (!(ulOptions & OPTF_QUIET)) {
-					printf("\tChanged ROM size byte from %#02x (%dKiB) to %#02x (%dKiB)\n",
-					    cartromsize,
-					    (0x8000 << cartromsize) / 1024,
-					    calcromsize,
-					    (0x8000 << calcromsize) / 1024);
-				}
-			} else if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tROM size byte is OK\n");
-			}
-
 			/* Checksum */
 
 			fflush(f);
