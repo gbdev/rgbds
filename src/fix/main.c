@@ -544,7 +544,7 @@ main(int argc, char *argv[])
 			0;
 			int ch;
 
-			if (!(ulOptions & OPTF_VALIDATE)) {
+			if (!(ulOptions & OPTF_QUIET)) {
 				printf("Validating header:\n");
 			}
 			fflush(stdout);
