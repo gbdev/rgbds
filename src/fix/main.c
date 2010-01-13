@@ -49,16 +49,15 @@ unsigned char NintendoChar[48] = {
  *
  */
 
-void 
-PrintUsage(void)
+static void usage(void)
 {
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
 	printf("usage: rgbfix [-dcjoqsv] [-b mbc_type] [-k licensee_str] [-m ram_size]\n");
-	printf("\t\t[-p pad_value] [-t title_str] image[.gb]\n");
+	printf("\t    [-p pad_value] [-t title_str] image[.gb]\n");
 
-	exit(1);
+	exit(EX_USAGE);
 }
 
 long int 
@@ -187,7 +186,7 @@ main(int argc, char *argv[])
 	ulOptions = 0;
 
 	if (argc == 1)
-		PrintUsage();
+		usage();
 
 	while ((ch = getopt(argc, argv, "b:cdjk:m:op:qst:v")) != -1) {
 		switch (ch) {
@@ -253,7 +252,7 @@ main(int argc, char *argv[])
 			ulOptions |= OPTF_SGBMODE;
 			break;
 		default:
-			PrintUsage();
+			usage();
 			/* NOTREACHED */
 		}
 		}
@@ -261,7 +260,7 @@ main(int argc, char *argv[])
 		argv += optind;
 
 	if (argc == 0)
-		PrintUsage();
+		usage();
 
 	strcpy(filename, argv[argc - 1]);
 
