@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 				padto *= 2;
 
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Padding to %ldKiB with pad value %#02X\n", padto / 1024, pad_value & 0xFF);
+				printf("Padding to %ldKiB with pad value %#02x\n", padto / 1024, pad_value & 0xFF);
 			}
 			/*
 			   if( padto<=0x80000L )
@@ -412,7 +412,7 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tTitle set to %s\n", cartname);
+				printf("\tTitle set to '%s'\n", cartname);
 			}
 		}
 		/*
@@ -429,7 +429,7 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tLicensee set to %s\n", nlicensee);
+				printf("\tLicensee set to '%s'\n", nlicensee);
 			}
 		}
 		/*
@@ -439,7 +439,7 @@ main(int argc, char *argv[])
 		if (ulOptions & OPTF_RAMSIZE) {
 			/* carttype byte can be anything? */
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Setting RAM size\n");
+				printf("Setting RAM size:\n");
 			}
 			if (!(ulOptions & OPTF_DEBUG)) {
 				fflush(f);
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tRAM size set to %#02X\n", ram_size);
+				printf("\tRAM size set to %#02x\n", ram_size);
 			}
 		}
 		/*
@@ -462,7 +462,8 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Region code set to non-Japan\n");
+				printf("Setting region code:\n");
+				printf("\tRegion code set to non-Japan\n");
 			}
 		}
 		/*
@@ -471,7 +472,7 @@ main(int argc, char *argv[])
 		if (ulOptions & OPTF_MBCTYPE) {
 			/* carttype byte can be anything? */
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Setting MBC type\n");
+				printf("Setting MBC type:\n");
 			}
 			if (!(ulOptions & OPTF_DEBUG)) {
 				fflush(f);
@@ -480,18 +481,15 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("\tMBC type set to %#02X (%s)\n", mbc_type, MBC_String(mbc_type));
+				printf("\tMBC type set to %#02x (%s)\n", mbc_type, MBC_String(mbc_type));
 			}
 		}
 		/*
 		 * -c/-o (Set GBC only/compatible mode)
 		 */
 		if (ulOptions & OPTF_GBCMODE) {
-			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0x80) {
-				printf("Setting Game Boy Color compatible mode\n");
-			}
-			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0xC0) {
-				printf("Setting Game Boy Color only mode\n");
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting Game Boy Color flag:\n");
 			}
 			if (!(ulOptions & OPTF_DEBUG)) {
 				fflush(f);
@@ -500,10 +498,10 @@ main(int argc, char *argv[])
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0x80) {
-				printf("\tGame Boy Color compatible mode set\n");
+				printf("\tGBC flag set to GBC compatible (0x80)\n");
 			}
 			if (!(ulOptions & OPTF_QUIET) && gbc_mode == 0xC0) {
-				printf("\tGame Boy Color only mode set\n");
+				printf("\tGBC flag set to only (0xC0)\n");
 			}
 
 			if (ulOptions & OPTF_TITLE) { 
@@ -516,18 +514,26 @@ main(int argc, char *argv[])
 		 * -s (Set SGB mode) option code
 		 */
 		if (ulOptions & OPTF_SGBMODE) {
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("Setting SGB mode:\n");
+			}
 			if (!(ulOptions & OPTF_DEBUG)) {
 				fflush(f);
 				// set old licensee code to 0x33
 				fseek(f, 0x14B, SEEK_SET);
 				fputc(0x33, f);
+			}
+			if (!(ulOptions & OPTF_QUIET)) {
+				printf("\tOld licensee code set to 0x33\n");
+			}
+			if (!(ulOptions & OPTF_DEBUG)) {
 				// set SGB flag to 0x03
 				fseek(f, 0x146, SEEK_SET);
 				fputc(3, f);
 				fflush(f);
 			}
 			if (!(ulOptions & OPTF_QUIET)) {
-				printf("Setting SGB mode flag\n");
+				printf("\tSGB flag set to 0x03\n");
 			}
 		}
 		/*
