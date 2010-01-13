@@ -3,10 +3,13 @@
  *
  */
 
+#include <err.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
+#include <sysexits.h>
+
 #include "asmotor.h"
 
 /*
@@ -56,41 +59,6 @@ PrintUsage(void)
 	printf("\t\t[-p pad_value] [-t title_str] image[.gb]\n");
 
 	exit(1);
-}
-
-void 
-vFatalError(char *s, va_list ap)
-{
-	fprintf(stderr, "*ERROR* : ");
-	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
-}
-
-void 
-FatalError(char *s,...)
-{
-	va_list ap;
-	va_start(ap, s);
-	vFatalError(s, ap);
-	va_end(ap);
-	exit(5);
-}
-
-void 
-vWarning(char *s, va_list ap)
-{
-	fprintf(stderr, "*WARNING* : ");
-	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
-}
-
-void 
-Warning(char *s,...)
-{
-	va_list ap;
-	va_start(ap, s);
-	vWarning(s, ap);
-	va_end(ap);
 }
 
 long int 
@@ -230,9 +198,9 @@ main(int argc, char *argv[])
 			ulOptions |= OPTF_RAMSIZE;
 			ram_size = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				FatalError("Invalid argument for option 'm'");
+				errx(EX_USAGE, "Invalid argument for option 'm'");
 			if (ram_size < 0 || ram_size > 0xFF)
-				FatalError("Argument for option 'm' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'm' must be between 0 and 0xFF");
 			break;
 		case 'j':
 			ulOptions |= OPTF_JAPAN;
@@ -241,17 +209,17 @@ main(int argc, char *argv[])
 			ulOptions |= OPTF_MBCTYPE;
 			mbc_type = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				FatalError("Invalid argument for option 'b'");
+				errx(EX_USAGE, "Invalid argument for option 'b'");
 			if (mbc_type < 0 || mbc_type > 0xFF)
-				FatalError("Argument for option 'b' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'b' must be between 0 and 0xFF");
 			break;
 		case 'p':
 			ulOptions |= OPTF_PAD;
 			pad_value = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				FatalError("Invalid argument for option 'p'");
+				errx(EX_USAGE, "Invalid argument for option 'p'");
 			if (pad_value < 0 || pad_value > 0xFF)
-				FatalError("Argument for option 'p' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
 			break;
 		case 'v':
 			ulOptions |= OPTF_VALIDATE;
@@ -269,14 +237,14 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			if (ulOptions & OPTF_GBCMODE) {
-				FatalError("-c and -o can't be used together");
+				errx(EX_USAGE, "-c and -o can't be used together");
 			}
 			ulOptions |= OPTF_GBCMODE;
 			gbc_mode = 0xC0;
 			break;
 		case 'c':
 			if (ulOptions & OPTF_GBCMODE) {
-				FatalError("-c and -o can't be used together");
+				errx(EX_USAGE, "-c and -o can't be used together");
 			}
 			ulOptions |= OPTF_GBCMODE;
 			gbc_mode = 0x80;
@@ -468,7 +436,7 @@ main(int argc, char *argv[])
 
 			if (ulOptions & OPTF_TITLE) { 
 				if (cartname[0xF]) {
-					Warning("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'c' : 'o');
+					warnx("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'c' : 'o');
 				}
 			}
 		}
@@ -674,7 +642,7 @@ main(int argc, char *argv[])
 		}
 		fclose(f);
 	} else {
-		FatalError("File '%s' not found", filename);
+		errx(EX_NOINPUT, "File '%s' not found", filename);
 	}
 
 	return (0);
