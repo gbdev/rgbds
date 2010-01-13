@@ -190,19 +190,29 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "Ccdjk:m:p:qr:st:v")) != -1) {
 		switch (ch) {
+		case 'c':
+			if (ulOptions & OPTF_GBCMODE) {
+				errx(EX_USAGE, "-c and -C can't be used together");
+			}
+			ulOptions |= OPTF_GBCMODE;
+			gbc_mode = 0xC0;
+			break;
+		case 'C':
+			if (ulOptions & OPTF_GBCMODE) {
+				errx(EX_USAGE, "-c and -C can't be used together");
+			}
+			ulOptions |= OPTF_GBCMODE;
+			gbc_mode = 0x80;
+			break;
 		case 'd':
 			ulOptions |= OPTF_DEBUG;
 			break;
-		case 'r':
-			ulOptions |= OPTF_RAMSIZE;
-			ram_size = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'r'");
-			if (ram_size < 0 || ram_size > 0xFF)
-				errx(EX_USAGE, "Argument for option 'r' must be between 0 and 0xFF");
-			break;
 		case 'j':
 			ulOptions |= OPTF_JAPAN;
+			break;
+		case 'k':
+			strncpy(nlicensee, optarg, 2);
+			ulOptions |= OPTF_NLICENSEE;
 			break;
 		case 'm':
 			ulOptions |= OPTF_MBCTYPE;
@@ -220,36 +230,26 @@ main(int argc, char *argv[])
 			if (pad_value < 0 || pad_value > 0xFF)
 				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
 			break;
-		case 'v':
-			ulOptions |= OPTF_VALIDATE;
+		case 'q':
+			ulOptions |= OPTF_QUIET;
+			break;
+		case 'r':
+			ulOptions |= OPTF_RAMSIZE;
+			ram_size = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(EX_USAGE, "Invalid argument for option 'r'");
+			if (ram_size < 0 || ram_size > 0xFF)
+				errx(EX_USAGE, "Argument for option 'r' must be between 0 and 0xFF");
+			break;
+		case 's':
+			ulOptions |= OPTF_SGBMODE;
 			break;
 		case 't':
 			strncpy(cartname, optarg, 16);
 			ulOptions |= OPTF_TITLE;
 			break;
-		case 'k':
-			strncpy(nlicensee, optarg, 2);
-			ulOptions |= OPTF_NLICENSEE;
-			break;
-		case 'q':
-			ulOptions |= OPTF_QUIET;
-			break;
-		case 'c':
-			if (ulOptions & OPTF_GBCMODE) {
-				errx(EX_USAGE, "-c and -C can't be used together");
-			}
-			ulOptions |= OPTF_GBCMODE;
-			gbc_mode = 0xC0;
-			break;
-		case 'C':
-			if (ulOptions & OPTF_GBCMODE) {
-				errx(EX_USAGE, "-c and -C can't be used together");
-			}
-			ulOptions |= OPTF_GBCMODE;
-			gbc_mode = 0x80;
-			break;
-		case 's':
-			ulOptions |= OPTF_SGBMODE;
+		case 'v':
+			ulOptions |= OPTF_VALIDATE;
 			break;
 		default:
 			usage();
