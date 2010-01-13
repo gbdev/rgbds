@@ -55,7 +55,7 @@ static void usage(void)
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
-	printf("usage: rgbfix [-dcjoqsv] [-b mbc_type] [-k licensee_str] [-p pad_value]\n");
+	printf("usage: rgbfix [-dcjoqsv] [-m mbc_type] [-k licensee_str] [-p pad_value]\n");
 	printf("\t    [-r ram_size] [-t title_str] image[.gb]\n");
 
 	exit(EX_USAGE);
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:cdjk:m:op:qst:v")) != -1) {
+	while ((ch = getopt(argc, argv, "cdjk:m:op:qr:st:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			ulOptions |= OPTF_DEBUG;
@@ -204,13 +204,13 @@ main(int argc, char *argv[])
 		case 'j':
 			ulOptions |= OPTF_JAPAN;
 			break;
-		case 'b':
+		case 'm':
 			ulOptions |= OPTF_MBCTYPE;
 			mbc_type = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'b'");
+				errx(EX_USAGE, "Invalid argument for option 'm'");
 			if (mbc_type < 0 || mbc_type > 0xFF)
-				errx(EX_USAGE, "Argument for option 'b' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'm' must be between 0 and 0xFF");
 			break;
 		case 'p':
 			ulOptions |= OPTF_PAD;
@@ -416,7 +416,7 @@ main(int argc, char *argv[])
 			}
 		}
 		/*
-		 * -b (Set MBC type) option code
+		 * -m (Set MBC type) option code
 		 */
 		if (ulOptions & OPTF_MBCTYPE) {
 			/* carttype byte can be anything? */
