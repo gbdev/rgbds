@@ -55,7 +55,7 @@ static void usage(void)
 	printf("RGBFix v" RGBFIX_VERSION
 	    " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 
-	printf("usage: rgbfix [-dcjoqsv] [-m mbc_type] [-k licensee_str] [-p pad_value]\n");
+	printf("usage: rgbfix [-Ccdjqsv] [-m mbc_type] [-k licensee_str] [-p pad_value]\n");
 	printf("\t    [-r ram_size] [-t title_str] image[.gb]\n");
 
 	exit(EX_USAGE);
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "cdjk:m:op:qr:st:v")) != -1) {
+	while ((ch = getopt(argc, argv, "Ccdjk:m:p:qr:st:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			ulOptions |= OPTF_DEBUG;
@@ -234,16 +234,16 @@ main(int argc, char *argv[])
 		case 'q':
 			ulOptions |= OPTF_QUIET;
 			break;
-		case 'o':
+		case 'c':
 			if (ulOptions & OPTF_GBCMODE) {
-				errx(EX_USAGE, "-c and -o can't be used together");
+				errx(EX_USAGE, "-c and -C can't be used together");
 			}
 			ulOptions |= OPTF_GBCMODE;
 			gbc_mode = 0xC0;
 			break;
-		case 'c':
+		case 'C':
 			if (ulOptions & OPTF_GBCMODE) {
-				errx(EX_USAGE, "-c and -o can't be used together");
+				errx(EX_USAGE, "-c and -C can't be used together");
 			}
 			ulOptions |= OPTF_GBCMODE;
 			gbc_mode = 0x80;
@@ -434,7 +434,7 @@ main(int argc, char *argv[])
 			}
 		}
 		/*
-		 * -c/-o (Set GBC only/compatible mode)
+		 * -C/-c (Set GBC only/compatible mode)
 		 */
 		if (ulOptions & OPTF_GBCMODE) {
 			if (!(ulOptions & OPTF_QUIET)) {
@@ -455,7 +455,7 @@ main(int argc, char *argv[])
 
 			if (ulOptions & OPTF_TITLE) { 
 				if (cartname[0xF]) {
-					warnx("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'c' : 'o');
+					warnx("Last character of cartridge title was overwritten by '-%c' option", gbc_mode == 0x80 ? 'C' : 'c');
 				}
 			}
 		}
