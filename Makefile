@@ -27,7 +27,7 @@ xlib_obj := \
 	src/lib/library.o \
 	src/lib/main.o
 
-xlink_obj := \
+rgblink_obj := \
 	src/link/assign.o \
 	src/link/library.o \
 	src/link/main.o \
@@ -40,12 +40,12 @@ xlink_obj := \
 rgbfix_obj := \
 	src/fix/main.o
 
-all: rgbasm xlib xlink rgbfix
+all: rgbasm xlib rgblink rgbfix
 
 clean:
 	rm -rf rgbasm $(rgbasm_obj)
 	rm -rf xlib $(xlib_obj)
-	rm -rf xlink $(xlink_obj)
+	rm -rf rgblink $(rgblink_obj)
 	rm -rf rgbfix $(rgbfix_obj)
 	rm -rf src/asm/asmy.c
 
@@ -55,8 +55,8 @@ rgbasm: $(rgbasm_obj)
 xlib: $(xlib_obj)
 	${CC} $(cflags) -o $@ $(xlib_obj)
 
-xlink: $(xlink_obj)
-	${CC} $(cflags) -o $@ $(xlink_obj)
+rgblink: $(rgblink_obj)
+	${CC} $(cflags) -o $@ $(rgblink_obj)
 
 rgbfix: $(rgbfix_obj)
 	${CC} $(cflags) -o $@ $(rgbfix_obj)

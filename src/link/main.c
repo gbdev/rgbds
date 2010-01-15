@@ -40,9 +40,9 @@ char smartlinkstartsymbol[256];
 static void 
 usage(void)
 {
-	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
+	printf("RGBLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("usage: xlink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
+	printf("usage: rgblink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
 	printf("\t     [-z pad_value] objectfile [...]\n");
 
 	exit(EX_USAGE);
