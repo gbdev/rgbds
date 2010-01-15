@@ -29,7 +29,6 @@ enum eBlockType {
 SLONG options = 0;
 SLONG fillchar = 0;
 enum eOutputType outputtype = OUTPUT_GBROM;
-char temptext[1024];
 char smartlinkstartsymbol[256];
 
 /*
