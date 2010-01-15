@@ -1,7 +1,8 @@
+#include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "asmotor.h"
 
@@ -13,17 +14,6 @@
 #define strcmpi	strcasecmp
 #endif
 
-/*
- * Print out an errormessage
- *
- */
-
-void 
-fatalerror(char *s)
-{
-	fprintf(stderr, "*ERROR* : %s\n", s);
-	exit(5);
-}
 /*
  * Print the usagescreen
  *
@@ -115,10 +105,10 @@ main(int argc, char *argv[])
 							    ("Extracted module '%s'\n",
 							    argv[argn]);
 						} else
-							fatalerror
-							    ("Unable to write module");
+							errx(5,
+							    "Unable to write module");
 					} else
-						fatalerror("Module not found");
+						errx(5, "Module not found");
 
 					argn += 1;
 					argc -= 1;
@@ -126,12 +116,12 @@ main(int argc, char *argv[])
 				lib_Free(lib);
 				break;
 			default:
-				fatalerror("Invalid command");
+				errx(5, "Invalid command");
 				break;
 			}
 
 		} else {
-			fatalerror("Invalid command");
+			errx(5, "Invalid command");
 		}
 	} else
 		PrintUsage();

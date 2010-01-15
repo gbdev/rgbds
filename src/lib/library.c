@@ -5,8 +5,6 @@
 #include "lib/types.h"
 #include "lib/libwrap.h"
 
-extern void fatalerror(char *s);
-
 SLONG 
 file_Length(FILE * f)
 {
@@ -90,13 +88,13 @@ lib_ReadLib0(FILE * f, SLONG size)
 			if (l == NULL) {
 				l = malloc(sizeof *l);
 				if (!l)
-					fatalerror("Out of memory");
+					errx(5, "Out of memory");
 
 				first = l;
 			} else {
 				l->pNext = malloc(sizeof *l->pNext);
 				if (!l->pNext)
-					fatalerror("Out of memory");
+					errx(5, "Out of memory");
 
 				l = l->pNext;
 			}
@@ -113,7 +111,7 @@ lib_ReadLib0(FILE * f, SLONG size)
 				    f);
 				size -= l->nByteLength;
 			} else
-				fatalerror("Out of memory");
+				errx(5, "Out of memory");
 
 			l->pNext = NULL;
 		}
@@ -149,7 +147,7 @@ lib_Read(char *filename)
 			return (r);
 		} else {
 			fclose(f);
-			fatalerror("Not a valid xLib library");
+			errx(5, "Not a valid xLib library");
 			return (NULL);
 		}
 	} else {
@@ -226,7 +224,7 @@ lib_AddReplace(sLibrary * lib, char *filename)
 		if ((module = lib_Find(lib, filename)) == NULL) {
 			module = malloc(sizeof *module);
 			if (!module)
-				fatalerror("Out of memory");
+				errx(5, "Out of memory");
 
 			module->pNext = lib;
 			lib = module;
@@ -239,7 +237,7 @@ lib_AddReplace(sLibrary * lib, char *filename)
 		strcpy(module->tName, truncname);
 		module->pData = malloc(module->nByteLength);
 		if (!module->pData)
-			fatalerror("Out of memory");
+			errx(5, "Out of memory");
 
 		fread(module->pData, sizeof(UBYTE), module->nByteLength, f);
 
@@ -279,7 +277,7 @@ lib_DeleteModule(sLibrary * lib, char *filename)
 	}
 
 	if (!found)
-		fatalerror("Module not found");
+		errx(5, "Module not found");
 	else
 		printf("Module '%s' deleted from library\n", truncname);
 
