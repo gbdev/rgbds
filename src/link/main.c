@@ -37,20 +37,14 @@ char smartlinkstartsymbol[256];
  *
  */
 
-void 
-PrintUsage(void)
+static void 
+usage(void)
 {
 	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\n" "Usage: xlink [options] linkfile\n"
-	    "Options:\n\t-h\t\tThis text\n"
-	    "\t-m<mapfile>\tWrite a mapfile\n"
-	    "\t-n<symfile>\tWrite a NO$GMB compatible symfile\n"
-	    "\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	    "\t\t\tdata (? for random, default is 0x00)\n"
-	    "\t-s<symbol>\tPerform smart linking starting with <symbol>\n"
-	    "\t-t\t\tOutput target\n" "\t\t-tg\tGameboy ROM image(default)\n"
-	    "\t\t-ts\tGameboy small mode (32kB)\n"
-	    "\t\t-tp\tPsion2 reloc module\n");
+	    ")\n\n");
+	printf("usage: xlink [m mapfile] [-n symfile] [-s symbol] [-tg | -ts | -tp]\n");
+	printf("\t    [-z pad_value] linkfile\n");
+
 	exit(0);
 }
 /*
@@ -126,7 +120,7 @@ main(int argc, char *argv[])
 	SLONG argn = 0;
 
 	if (argc == 1)
-		PrintUsage();
+		usage();
 
 	while ((ch = getopt(argc, argv, "m:n:s:t:z:")) != -1) {
 		switch (ch) {
@@ -169,7 +163,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		default:
-			PrintUsage();
+			usage();
 			/* NOTREACHED */
 		}
 	}
@@ -185,7 +179,7 @@ main(int argc, char *argv[])
 		Output();
 		CloseMapfile();
 	} else
-		PrintUsage();
+		usage();
 
 	return (0);
 }
