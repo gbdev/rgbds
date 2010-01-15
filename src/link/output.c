@@ -20,9 +20,7 @@ writehome(FILE * f)
 	if (!mem)
 		return;
 
-	if (fillchar != -1) {
-		memset(mem, fillchar, MaxAvail[BANK_HOME]);
-	}
+	memset(mem, fillchar, MaxAvail[BANK_HOME]);
 	MapfileInitBank(0);
 
 	pSect = pSections;
@@ -51,9 +49,7 @@ writebank(FILE * f, SLONG bank)
 	if (!mem)
 		return;
 
-	if (fillchar != -1) {
-		memset(mem, fillchar, MaxAvail[bank]);
-	}
+	memset(mem, fillchar, MaxAvail[bank]);
 	MapfileInitBank(bank);
 
 	pSect = pSections;

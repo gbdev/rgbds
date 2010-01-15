@@ -29,7 +29,7 @@ enum eBlockType {
 };
 
 SLONG options = 0;
-SLONG fillchar = 0;
+SLONG fillchar;
 char smartlinkstartsymbol[256];
 
 /*
@@ -142,15 +142,11 @@ main(int argc, char *argv[])
 			options |= OPT_SMALL;
 			break;
 		case 'z':
-			if (optarg[0] == '?')
-				fillchar = -1;
-			else {
-				fillchar = strtoul(optarg, &ep, 0);
-				if (optarg[0] == '\0' || *ep != '\0')
-					errx(EX_USAGE, "Invalid argument for option 'z'");
-				if (fillchar < 0 || fillchar > 0xFF)
-					errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
-			}
+			fillchar = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(EX_USAGE, "Invalid argument for option 'z'");
+			if (fillchar < 0 || fillchar > 0xFF)
+				errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
 			break;
 		default:
 			usage();
