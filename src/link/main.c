@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
 
 #include "asmotor.h"
@@ -45,7 +46,7 @@ usage(void)
 	printf("usage: xlink [m mapfile] [-n symfile] [-s symbol] [-tg | -ts | -tp]\n");
 	printf("\t    [-z pad_value] linkfile\n");
 
-	exit(0);
+	exit(EX_USAGE);
 }
 /*
  * Parse the linkfile and load all the objectfiles
@@ -60,7 +61,7 @@ ProcessLinkfile(char *tzLinkfile)
 
 	pLinkfile = fopen(tzLinkfile, "rt");
 	if (!pLinkfile) {
-		errx(5, "Unable to find linkfile '%s'", tzLinkfile);
+		errx(EX_NOINPUT, "Unable to find linkfile '%s'", tzLinkfile);
 	}
 	while (!feof(pLinkfile)) {
 		char tzLine[256];
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
 				outputtype = OUTPUT_PSION2;
 				break;
 			default:
-				errx(5, "Invalid argument to option t");
+				errx(EX_USAGE, "Invalid argument to option t");
 				break;
 			}
 			break;
@@ -157,9 +158,9 @@ main(int argc, char *argv[])
 			else {
 				fillchar = strtoul(optarg, &ep, 0);
 				if (optarg[0] == '\0' || *ep != '\0')
-					errx(5, "Invalid argument for option 'z'");
+					errx(EX_USAGE, "Invalid argument for option 'z'");
 				if (fillchar < 0 || fillchar > 0xFF)
-					errx(5, "Argument for option 'z' must be between 0 and 0xFF");
+					errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
 			}
 			break;
 		default:
