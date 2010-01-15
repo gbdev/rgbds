@@ -16,11 +16,6 @@
 #include "link/main.h"
 #include "link/library.h"
 
-// Quick and dirty...but it works
-#ifdef __GNUC__
-#define strcmpi	strcasecmp
-#endif
-
 enum eBlockType {
 	BLOCK_COMMENT,
 	BLOCK_OBJECTS,

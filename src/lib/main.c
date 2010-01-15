@@ -9,11 +9,6 @@
 #include "lib/types.h"
 #include "lib/library.h"
 
-// Quick and dirty...but it works
-#ifdef __GNUC__
-#define strcmpi	strcasecmp
-#endif
-
 /*
  * Print the usagescreen
  *

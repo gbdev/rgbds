@@ -401,7 +401,7 @@ scanagain:
 				lex = tLexHash[hash];
 				while (lex) {
 					if (lex->nNameLength == yyleng) {
-						if (strnicmp
+						if (strncasecmp
 						    (pLexBuffer, lex->tzName,
 							yyleng) == 0) {
 							pLongestFixed = lex;
