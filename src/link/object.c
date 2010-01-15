@@ -3,6 +3,7 @@
  *
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,7 +80,7 @@ AllocSection(void)
 
 	*ppSections = malloc(sizeof **ppSections);
 	if (!*ppSections) {
-		fatalerror("Out of memory!");
+		errx(5, "Out of memory!");
 		return NULL;
 	}
 	(*ppSections)->tSymbols = tSymbols;
@@ -101,12 +102,12 @@ obj_ReadSymbol(FILE * f)
 
 	pSym = malloc(sizeof *pSym);
 	if (!pSym)
-		fatalerror("Out of memory!");
+		errx(5, "Out of memory!");
 
 	readasciiz(s, f);
 	pSym->pzName = malloc(strlen(s) + 1);
 	if (!pSym->pzName)
-		fatalerror("Out of memory!");
+		errx(5, "Out of memory!");
 
 	strcpy(pSym->pzName, s);
 	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
@@ -145,7 +146,7 @@ obj_ReadRGB0Section(FILE * f)
 		if (pSection->nByteSize) {
 			pSection->pData = malloc(pSection->nByteSize);
 			if (!pSection->pData)
-				fatalerror("Out of memory!");
+				errx(5, "Out of memory!");
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
@@ -163,14 +164,14 @@ obj_ReadRGB0Section(FILE * f)
 			while (nNumberOfPatches--) {
 				pPatch = malloc(sizeof *pPatch);
 				if (!pPatch)
-					fatalerror("Out of memory!");
+					errx(5, "Out of memory!");
 
 				*ppPatch = pPatch;
 				readasciiz(s, f);
 
 				pPatch->pzFilename = malloc(strlen(s) + 1);
 				if (!pPatch->pzFilename)
-					fatalerror("Out of memory!");
+					errx(5, "Out of memory!");
 
 				strcpy(pPatch->pzFilename, s);
 
@@ -185,7 +186,7 @@ obj_ReadRGB0Section(FILE * f)
 				if ((pPatch->nRPNSize = readlong(f)) > 0) {
 					pPatch->pRPN = malloc(pPatch->nRPNSize);
 					if (!pPatch->pRPN)
-						fatalerror("Out of memory!");
+						errx(5, "Out of memory!");
 
 					fread(pPatch->pRPN, sizeof(UBYTE),
 					    pPatch->nRPNSize, f);
@@ -218,7 +219,7 @@ obj_ReadRGB0(FILE * pObjfile)
 	if (nNumberOfSymbols) {
 		tSymbols = malloc(nNumberOfSymbols * sizeof(struct sSymbol *));
 		if (!tSymbols)
-			fatalerror("Out of memory!");
+			errx(5, "Out of memory!");
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile);
@@ -293,7 +294,7 @@ obj_ReadRGB1Section(FILE * f)
 		if (pSection->nByteSize) {
 			pSection->pData = malloc(pSection->nByteSize);
 			if (!pSection->pData)
-				fatalerror("Out of memory!");
+				errx(5, "Out of memory!");
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
@@ -311,13 +312,13 @@ obj_ReadRGB1Section(FILE * f)
 			while (nNumberOfPatches--) {
 				pPatch = malloc(sizeof *pPatch);
 				if (!pPatch)
-					fatalerror("Out of memory!");
+					errx(5, "Out of memory!");
 
 				*ppPatch = pPatch;
 				readasciiz(s, f);
 				pPatch->pzFilename = malloc(strlen(s) + 1);
 				if (!pPatch->pzFilename)
-					fatalerror("Out of memory!");
+					errx(5, "Out of memory!");
 
 				strcpy(pPatch->pzFilename, s);
 				pPatch->nLineNo = readlong(f);
@@ -326,7 +327,7 @@ obj_ReadRGB1Section(FILE * f)
 				if ((pPatch->nRPNSize = readlong(f)) > 0) {
 					pPatch->pRPN = malloc(pPatch->nRPNSize);
 					if (!pPatch->pRPN)
-						fatalerror("Out of memory!");
+						errx(5, "Out of memory!");
 
 					fread(pPatch->pRPN, sizeof(UBYTE),
 					    pPatch->nRPNSize, f);
@@ -359,7 +360,7 @@ obj_ReadRGB1(FILE * pObjfile)
 	if (nNumberOfSymbols) {
 		tSymbols = malloc(nNumberOfSymbols * sizeof *tSymbols);
 		if (!tSymbols)
-			fatalerror("Out of memory!");
+			errx(5, "Out of memory!");
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile);
@@ -422,14 +423,12 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 			    obj_ReadRGB1(pObjfile);
 			break;
 		default:
-			sprintf(temptext, "'%s' is an unsupported version\n",
+			errx(5, "'%s' is an unsupported version",
 			    tzObjectfile);
-			fatalerror(temptext);
 			break;
 		}
 	} else {
-		sprintf(temptext, "'%s' is not a valid object\n", tzObjectfile);
-		fatalerror(temptext);
+		errx(5, "'%s' is not a valid object", tzObjectfile);
 	}
 }
 
@@ -445,8 +444,7 @@ obj_Readfile(char *tzObjectfile)
 
 	pObjfile = fopen(tzObjectfile, "rb");
 	if (!pObjfile) {
-		sprintf(temptext, "Unable to open '%s'\n", tzObjectfile);
-		fatalerror(temptext);
+		errx(5, "Unable to open '%s'", tzObjectfile);
 	}
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
 	fclose(pObjfile);
@@ -496,8 +494,7 @@ lib_Readfile(char *tzLibfile)
 
 	pObjfile = fopen(tzLibfile, "rb");
 	if (!pObjfile) {
-		sprintf(temptext, "Unable to open '%s'\n", tzLibfile);
-		fatalerror(temptext);
+		errx(5, "Unable to open '%s'", tzLibfile);
 	}
 	char tzHeader[5];
 
@@ -506,9 +503,8 @@ lib_Readfile(char *tzLibfile)
 	if (strcmp(tzHeader, "XLB0") == 0)
 		lib_ReadXLB0(pObjfile);
 	else {
-		sprintf(temptext, "'%s' is an invalid library\n",
+		errx(5, "'%s' is an invalid library",
 		    tzLibfile);
-		fatalerror(temptext);
 	}
 	fclose(pObjfile);
 }

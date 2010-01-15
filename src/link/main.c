@@ -1,3 +1,4 @@
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,17 +33,6 @@ char temptext[1024];
 char smartlinkstartsymbol[256];
 
 /*
- * Print out an errormessage
- *
- */
-
-void 
-fatalerror(char *s)
-{
-	printf("*ERROR* : %s\n", s);
-	exit(5);
-}
-/*
  * Print the usagescreen
  *
  */
@@ -76,8 +66,7 @@ ProcessLinkfile(char *tzLinkfile)
 
 	pLinkfile = fopen(tzLinkfile, "rt");
 	if (!pLinkfile) {
-		sprintf(temptext, "Unable to find linkfile '%s'\n", tzLinkfile);
-		fatalerror(temptext);
+		errx(5, "Unable to find linkfile '%s'", tzLinkfile);
 	}
 	while (!feof(pLinkfile)) {
 		char tzLine[256];
@@ -99,10 +88,9 @@ ProcessLinkfile(char *tzLinkfile)
 					CurrentBlock = BLOCK_COMMENT;
 				else {
 					fclose(pLinkfile);
-					sprintf(temptext,
-					    "Unknown block '%s'\n",
+					errx(5, 
+					    "Unknown block '%s'",
 					    tzLine);
-					fatalerror(temptext);
 				}
 			} else {
 				switch (CurrentBlock) {
@@ -167,9 +155,8 @@ main(int argc, char *argv[])
 				outputtype = OUTPUT_PSION2;
 				break;
 			default:
-				sprintf(temptext, "Unknown option 't%c'\n",
+				errx(5, "Unknown option 't%c'",
 				    opt);
-				fatalerror(temptext);
 				break;
 			}
 			break;
@@ -184,12 +171,12 @@ main(int argc, char *argv[])
 					    sscanf(argv[argn - 1] + 2, "%lx",
 					    &fillchar);
 					if (!((result == EOF) || (result == 1))) {
-						fatalerror
-						    ("Invalid argument for option 'z'\n");
+						errx(5, 
+						    "Invalid argument for option 'z'");
 					}
 				}
 			} else {
-				fatalerror("Invalid argument for option 'z'\n");
+				errx(5, "Invalid argument for option 'z'");
 			}
 			break;
 		case 's':
@@ -197,8 +184,7 @@ main(int argc, char *argv[])
 			strcpy(smartlinkstartsymbol, argv[argn - 1] + 2);
 			break;
 		default:
-			sprintf(temptext, "Unknown option '%c'\n", opt);
-			fatalerror(temptext);
+			errx(5, "Unknown option '%c'", opt);
 			break;
 		}
 	}

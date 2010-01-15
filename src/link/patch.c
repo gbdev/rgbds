@@ -1,3 +1,4 @@
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -45,8 +46,7 @@ getsymvalue(SLONG symid)
 	default:
 		break;
 	}
-	fatalerror("*INTERNAL* UNKNOWN SYMBOL TYPE");
-	return (0);
+	errx(5, "*INTERNAL* UNKNOWN SYMBOL TYPE");
 }
 
 SLONG 
@@ -63,8 +63,7 @@ getsymbank(SLONG symid)
 	default:
 		break;
 	}
-	fatalerror("*INTERNAL* UNKNOWN SYMBOL TYPE");
-	return (0);
+	errx(5, "*INTERNAL* UNKNOWN SYMBOL TYPE");
 }
 
 SLONG 
@@ -158,20 +157,18 @@ calcrpn(struct sPatch * pPatch)
 			t = rpnpop();
 			rpnpush(t & 0xFF);
 			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
-				sprintf(temptext,
+				errx(5,
 				    "%s(%ld) : Value must be in the HRAM area",
 				    pPatch->pzFilename, pPatch->nLineNo);
-				fatalerror(temptext);
 			}
 			break;
 		case RPN_PCEZP:
 			t = rpnpop();
 			rpnpush(t & 0xFF);
 			if (t < 0x2000 || t > 0x20FF) {
-				sprintf(temptext,
+				errx(5,
 				    "%s(%ld) : Value must be in the ZP area",
 				    pPatch->pzFilename, pPatch->nLineNo);
-				fatalerror(temptext);
 			}
 			break;
 		case RPN_CONST:
@@ -216,11 +213,10 @@ calcrpn(struct sPatch * pPatch)
 				high |= (*rpn++) << 24;
 				t = rpnpop();
 				if (t < low || t > high) {
-					sprintf(temptext,
+					errx(5,
 					    "%s(%ld) : Value must be in the range [%ld;%ld]",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo, low, high);
-					fatalerror(temptext);
 				}
 				rpnpush(t);
 				size -= 8;
@@ -254,11 +250,10 @@ Patch(void)
 					pSect->pData[pPatch->nOffset] =
 					    (UBYTE) t;
 				} else {
-					sprintf(temptext,
+					errx(5,
 					    "%s(%ld) : Value must be 8-bit\n",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo);
-					fatalerror(temptext);
 				}
 				break;
 			case PATCH_WORD_L:
@@ -279,11 +274,10 @@ Patch(void)
 						    1] = t & 0xFF;
 					}
 				} else {
-					sprintf(temptext,
+					errx(5,
 					    "%s(%ld) : Value must be 16-bit\n",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo);
-					fatalerror(temptext);
 				}
 				break;
 			case PATCH_LONG_L:
