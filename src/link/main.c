@@ -42,8 +42,8 @@ usage(void)
 {
 	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("usage: xlink [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
-	printf("\t     [-t [g | s ] [-z pad_value] objectfile [...]\n");
+	printf("usage: xlink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
+	printf("\t     [-z pad_value] objectfile [...]\n");
 
 	exit(EX_USAGE);
 }
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "l:m:n:o:s:t:z:")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:n:o:s:tz:")) != -1) {
 		switch (ch) {
 		case 'l':
 			lib_Readfile(optarg);
@@ -139,16 +139,7 @@ main(int argc, char *argv[])
 			strcpy(smartlinkstartsymbol, optarg);
 			break;
 		case 't':
-			switch (optarg[0]) {
-			case 's':
-				options |= OPT_SMALL;
-				/* FALLTHROUGH */
-			case 'g':
-				break;
-			default:
-				errx(EX_USAGE, "Invalid argument to option t");
-				break;
-			}
+			options |= OPT_SMALL;
 			break;
 		case 'z':
 			if (optarg[0] == '?')
