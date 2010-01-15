@@ -43,8 +43,8 @@ usage(void)
 {
 	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("usage: xlink [m mapfile] [-n symfile] [-s symbol] [-tg | -ts | -tp]\n");
-	printf("\t    [-z pad_value] linkfile\n");
+	printf("usage: xlink [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
+	printf("\t     [-t [g | s | p]] [-z pad_value] objectfile [...]\n");
 
 	exit(EX_USAGE);
 }
