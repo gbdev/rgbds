@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 
 #
 # Use git to figure out which version we are using.

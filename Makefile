@@ -1,4 +1,4 @@
-localversion = $(shell bash scripts/localversion.sh)
+localversion = $(shell sh scripts/localversion.sh)
 
 cflags = -Wall -Iinclude -Iinclude/asm/gameboy -DLOCALVERSION=\"$(localversion)\" -g -std=c99 -D_POSIX_C_SOURCE=200112L
 
