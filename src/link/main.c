@@ -29,7 +29,7 @@ enum eBlockType {
 };
 
 SLONG options = 0;
-SLONG fillchar;
+SLONG fillchar = 0;
 char smartlinkstartsymbol[256];
 
 /*
