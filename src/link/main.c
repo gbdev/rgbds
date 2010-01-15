@@ -47,65 +47,7 @@ usage(void)
 
 	exit(EX_USAGE);
 }
-/*
- * Parse the linkfile and load all the objectfiles
- *
- */
 
-void 
-ProcessLinkfile(char *tzLinkfile)
-{
-	FILE *pLinkfile;
-	enum eBlockType CurrentBlock = BLOCK_COMMENT;
-
-	pLinkfile = fopen(tzLinkfile, "rt");
-	if (!pLinkfile) {
-		errx(EX_NOINPUT, "Unable to find linkfile '%s'", tzLinkfile);
-	}
-	while (!feof(pLinkfile)) {
-		char tzLine[256];
-
-		fscanf(pLinkfile, "%s\n", tzLine);
-		if (tzLine[0] != '#') {
-			if (tzLine[0] == '['
-			    && tzLine[strlen(tzLine) - 1] == ']') {
-				if (strcmpi("[objects]", tzLine) == 0)
-					CurrentBlock = BLOCK_OBJECTS;
-				else if (strcmpi("[output]", tzLine) ==
-				    0)
-					CurrentBlock = BLOCK_OUTPUT;
-				else if (strcmpi("[libraries]", tzLine)
-				    == 0)
-					CurrentBlock = BLOCK_LIBRARIES;
-				else if (strcmpi("[comment]", tzLine) ==
-				    0)
-					CurrentBlock = BLOCK_COMMENT;
-				else {
-					fclose(pLinkfile);
-					errx(5, 
-					    "Unknown block '%s'",
-					    tzLine);
-				}
-			} else {
-				switch (CurrentBlock) {
-				case BLOCK_COMMENT:
-					break;
-				case BLOCK_OBJECTS:
-					obj_Readfile(tzLine);
-					break;
-				case BLOCK_LIBRARIES:
-					lib_Readfile(tzLine);
-					break;
-				case BLOCK_OUTPUT:
-					out_Setname(tzLine);
-					break;
-				}
-			}
-		}
-	}
-
-	fclose(pLinkfile);
-}
 /*
  * The main routine
  *
