@@ -118,18 +118,22 @@ main(int argc, char *argv[])
 	int ch;
 	char *ep;
 
-	SLONG argn = 0;
-
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "m:n:s:t:z:")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:n:o:s:t:z:")) != -1) {
 		switch (ch) {
+		case 'l':
+			lib_Readfile(optarg);
+			break;
 		case 'm':
 			SetMapfileName(optarg);
 			break;
 		case 'n':
 			SetSymfileName(optarg);
+			break;
+		case 'o':
+			out_Setname(optarg);
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;
@@ -171,16 +175,18 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 1) {
-		ProcessLinkfile(argv[argc - 1]);
-		AddNeededModules();
-		AssignSections();
-		CreateSymbolTable();
-		Patch();
-		Output();
-		CloseMapfile();
-	} else
+	if (argc == 0)
 		usage();
+
+	for (int i = 0; i < argc; ++i)
+		obj_Readfile(argv[i]);
+
+	AddNeededModules();
+	AssignSections();
+	CreateSymbolTable();
+	Patch();
+	Output();
+	CloseMapfile();
 
 	return (0);
 }
