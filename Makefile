@@ -23,7 +23,7 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/asm/gameboy/locallex.o
 
-xlib_obj := \
+rgblib_obj := \
 	src/lib/library.o \
 	src/lib/main.o
 
@@ -40,11 +40,11 @@ rgblink_obj := \
 rgbfix_obj := \
 	src/fix/main.o
 
-all: rgbasm xlib rgblink rgbfix
+all: rgbasm rgblib rgblink rgbfix
 
 clean:
 	rm -rf rgbasm $(rgbasm_obj)
-	rm -rf xlib $(xlib_obj)
+	rm -rf rgblib $(rgblib_obj)
 	rm -rf rgblink $(rgblink_obj)
 	rm -rf rgbfix $(rgbfix_obj)
 	rm -rf src/asm/asmy.c
@@ -52,8 +52,8 @@ clean:
 rgbasm: $(rgbasm_obj)
 	${CC} $(cflags) -o $@ $(rgbasm_obj) -lm
 
-xlib: $(xlib_obj)
-	${CC} $(cflags) -o $@ $(xlib_obj)
+rgblib: $(rgblib_obj)
+	${CC} $(cflags) -o $@ $(rgblib_obj)
 
 rgblink: $(rgblink_obj)
 	${CC} $(cflags) -o $@ $(rgblink_obj)

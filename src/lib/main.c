@@ -32,8 +32,8 @@ fatalerror(char *s)
 void 
 PrintUsage(void)
 {
-	printf("xLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n"
-	    "Usage: xlib library command [module1 module2 ... modulen]\n"
+	printf("RGBLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n"
+	    "Usage: rgblib library command [module1 module2 ... modulen]\n"
 	    "Commands:\n\ta\tAdd/replace modules to library\n"
 	    "\td\tDelete modules from library\n"
 	    "\tl\tList library contents\n"
