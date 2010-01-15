@@ -170,7 +170,7 @@ AssignCodeSections(void)
 }
 
 void 
-GBROM_AssignSections(void)
+AssignSections(void)
 {
 	SLONG i;
 	struct sSection *pSection;
@@ -440,61 +440,6 @@ GBROM_AssignSections(void)
 	}
 
 	AssignCodeSections();
-}
-
-void 
-PSION2_AssignSections(void)
-{
-	struct sSection *pSection;
-
-	BankFree[0] = malloc(sizeof *BankFree[0]);
-	if (!BankFree[0])
-		errx(5, "Out of memory!");
-
-	BankFree[0]->nOrg = 0x0000;
-	BankFree[0]->nSize = 0x10000;
-	MaxAvail[0] = 0x10000;
-	BankFree[0]->pPrev = NULL;
-	BankFree[0]->pNext = NULL;
-
-	pSection = pSections;
-	while (pSection) {
-		if (pSection->oAssigned == 0
-		    && pSection->Type == SECT_CODE) {
-			pSection->oAssigned = 1;
-			pSection->nBank = 0;
-			pSection->nOrg = BankFree[0]->nOrg;
-			BankFree[0]->nOrg += pSection->nByteSize;
-			BankFree[0]->nSize -= pSection->nByteSize;
-		}
-		pSection = pSection->pNext;
-	}
-
-	pSection = pSections;
-	while (pSection) {
-		if (pSection->oAssigned == 0
-		    && pSection->Type == SECT_BSS) {
-			pSection->oAssigned = 1;
-			pSection->nBank = 0;
-			pSection->nOrg = BankFree[0]->nOrg;
-			BankFree[0]->nOrg += pSection->nByteSize;
-			BankFree[0]->nSize -= pSection->nByteSize;
-		}
-		pSection = pSection->pNext;
-	}
-}
-
-void 
-AssignSections(void)
-{
-	switch (outputtype) {
-		case OUTPUT_GBROM:
-		GBROM_AssignSections();
-		break;
-	case OUTPUT_PSION2:
-		PSION2_AssignSections();
-		break;
-	}
 }
 
 void 

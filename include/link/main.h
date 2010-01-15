@@ -7,11 +7,4 @@ extern void usage(void);
 extern SLONG fillchar;
 extern char smartlinkstartsymbol[256];
 
-enum eOutputType {
-	OUTPUT_GBROM,
-	OUTPUT_PSION2
-};
-
-extern enum eOutputType outputtype;
-
 #endif

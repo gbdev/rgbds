@@ -30,7 +30,6 @@ enum eBlockType {
 
 SLONG options = 0;
 SLONG fillchar = 0;
-enum eOutputType outputtype = OUTPUT_GBROM;
 char smartlinkstartsymbol[256];
 
 /*
@@ -44,7 +43,7 @@ usage(void)
 	printf("xLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
 	printf("usage: xlink [-l library] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n");
-	printf("\t     [-t [g | s | p]] [-z pad_value] objectfile [...]\n");
+	printf("\t     [-t [g | s ] [-z pad_value] objectfile [...]\n");
 
 	exit(EX_USAGE);
 }
@@ -141,15 +140,10 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			switch (optarg[0]) {
-			case 'g':
-				outputtype = OUTPUT_GBROM;
-				break;
 			case 's':
-				outputtype = OUTPUT_GBROM;
 				options |= OPT_SMALL;
-				break;
-			case 'p':
-				outputtype = OUTPUT_PSION2;
+				/* FALLTHROUGH */
+			case 'g':
 				break;
 			default:
 				errx(EX_USAGE, "Invalid argument to option t");
