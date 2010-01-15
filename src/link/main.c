@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "asmotor.h"
 
@@ -119,30 +120,28 @@ ProcessLinkfile(char *tzLinkfile)
 int 
 main(int argc, char *argv[])
 {
+	int ch;
+	char *ep;
+
 	SLONG argn = 0;
 
-	argc -= 1;
-	argn += 1;
-
-	if (argc == 0)
+	if (argc == 1)
 		PrintUsage();
 
-	while (*argv[argn] == '-') {
-		char opt;
-		argc -= 1;
-		switch (opt = argv[argn++][1]) {
-		case '?':
-		case 'h':
-			PrintUsage();
-			break;
+	while ((ch = getopt(argc, argv, "m:n:s:t:z:")) != -1) {
+		switch (ch) {
 		case 'm':
-			SetMapfileName(argv[argn - 1] + 2);
+			SetMapfileName(optarg);
 			break;
 		case 'n':
-			SetSymfileName(argv[argn - 1] + 2);
+			SetSymfileName(optarg);
+			break;
+		case 's':
+			options |= OPT_SMART_C_LINK;
+			strcpy(smartlinkstartsymbol, optarg);
 			break;
 		case 't':
-			switch (opt = argv[argn - 1][2]) {
+			switch (optarg[0]) {
 			case 'g':
 				outputtype = OUTPUT_GBROM;
 				break;
@@ -154,42 +153,31 @@ main(int argc, char *argv[])
 				outputtype = OUTPUT_PSION2;
 				break;
 			default:
-				errx(5, "Unknown option 't%c'",
-				    opt);
+				errx(5, "Invalid argument to option t");
 				break;
 			}
 			break;
 		case 'z':
-			if (strlen(argv[argn - 1] + 2) <= 2) {
-				if (strcmp(argv[argn - 1] + 2, "?") == 0) {
-					fillchar = -1;
-				} else {
-					int result;
-
-					result =
-					    sscanf(argv[argn - 1] + 2, "%lx",
-					    &fillchar);
-					if (!((result == EOF) || (result == 1))) {
-						errx(5, 
-						    "Invalid argument for option 'z'");
-					}
-				}
-			} else {
-				errx(5, "Invalid argument for option 'z'");
+			if (optarg[0] == '?')
+				fillchar = -1;
+			else {
+				fillchar = strtoul(optarg, &ep, 0);
+				if (optarg[0] == '\0' || *ep != '\0')
+					errx(5, "Invalid argument for option 'z'");
+				if (fillchar < 0 || fillchar > 0xFF)
+					errx(5, "Argument for option 'z' must be between 0 and 0xFF");
 			}
 			break;
-		case 's':
-			options |= OPT_SMART_C_LINK;
-			strcpy(smartlinkstartsymbol, argv[argn - 1] + 2);
-			break;
 		default:
-			errx(5, "Unknown option '%c'", opt);
-			break;
+			PrintUsage();
+			/* NOTREACHED */
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	if (argc == 1) {
-		ProcessLinkfile(argv[argn++]);
+		ProcessLinkfile(argv[argc - 1]);
 		AddNeededModules();
 		AssignSections();
 		CreateSymbolTable();
