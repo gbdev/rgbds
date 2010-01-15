@@ -12,7 +12,4 @@ typedef signed short SWORD;
 typedef unsigned long ULONG;
 typedef signed long SLONG;
 
-#define	ASM_LITTLE_ENDIAN	0
-#define	ASM_BIG_ENDIAN		1
-
 #endif

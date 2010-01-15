@@ -788,14 +788,8 @@ out_AbsWord(int b)
 	checkcodesection(2);
 	b &= 0xFFFF;
 	if (nPass == 2) {
-		if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
-			pCurrentSection->tData[nPC] = b & 0xFF;
-			pCurrentSection->tData[nPC + 1] = b >> 8;
-		} else {
-			//Assume big endian
-			    pCurrentSection->tData[nPC] = b >> 8;
-			pCurrentSection->tData[nPC + 1] = b & 0xFF;
-		}
+		pCurrentSection->tData[nPC] = b & 0xFF;
+		pCurrentSection->tData[nPC + 1] = b >> 8;
 	}
 	pCurrentSection->nPC += 2;
 	nPC += 2;
@@ -818,16 +812,9 @@ out_RelWord(struct Expression * expr)
 	b = expr->nVal & 0xFFFF;
 	if (rpn_isReloc(expr)) {
 		if (nPass == 2) {
-			if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
-				pCurrentSection->tData[nPC] = b & 0xFF;
-				pCurrentSection->tData[nPC + 1] = b >> 8;
-				createpatch(PATCH_WORD_L, expr);
-			} else {
-				//Assume big endian
-				    pCurrentSection->tData[nPC] = b >> 8;
-				pCurrentSection->tData[nPC + 1] = b & 0xFF;
-				createpatch(PATCH_WORD_B, expr);
-			}
+			pCurrentSection->tData[nPC] = b & 0xFF;
+			pCurrentSection->tData[nPC + 1] = b >> 8;
+			createpatch(PATCH_WORD_L, expr);
 		}
 		pCurrentSection->nPC += 2;
 		nPC += 2;
@@ -848,18 +835,10 @@ out_AbsLong(SLONG b)
 {
 	checkcodesection(sizeof(SLONG));
 	if (nPass == 2) {
-		if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
-			pCurrentSection->tData[nPC] = b & 0xFF;
-			pCurrentSection->tData[nPC + 1] = b >> 8;
-			pCurrentSection->tData[nPC + 2] = b >> 16;
-			pCurrentSection->tData[nPC + 3] = b >> 24;
-		} else {
-			//Assume big endian
-			    pCurrentSection->tData[nPC] = b >> 24;
-			pCurrentSection->tData[nPC + 1] = b >> 16;
-			pCurrentSection->tData[nPC + 2] = b >> 8;
-			pCurrentSection->tData[nPC + 3] = b & 0xFF;
-		}
+		pCurrentSection->tData[nPC] = b & 0xFF;
+		pCurrentSection->tData[nPC + 1] = b >> 8;
+		pCurrentSection->tData[nPC + 2] = b >> 16;
+		pCurrentSection->tData[nPC + 3] = b >> 24;
 	}
 	pCurrentSection->nPC += 4;
 	nPC += 4;
@@ -882,20 +861,11 @@ out_RelLong(struct Expression * expr)
 	b = expr->nVal;
 	if (rpn_isReloc(expr)) {
 		if (nPass == 2) {
-			if (CurrentOptions.endian == ASM_LITTLE_ENDIAN) {
-				pCurrentSection->tData[nPC] = b & 0xFF;
-				pCurrentSection->tData[nPC + 1] = b >> 8;
-				pCurrentSection->tData[nPC + 2] = b >> 16;
-				pCurrentSection->tData[nPC + 3] = b >> 24;
-				createpatch(PATCH_LONG_L, expr);
-			} else {
-				//Assume big endian
-				    pCurrentSection->tData[nPC] = b >> 24;
-				pCurrentSection->tData[nPC + 1] = b >> 16;
-				pCurrentSection->tData[nPC + 2] = b >> 8;
-				pCurrentSection->tData[nPC + 3] = b & 0xFF;
-				createpatch(PATCH_LONG_B, expr);
-			}
+			pCurrentSection->tData[nPC] = b & 0xFF;
+			pCurrentSection->tData[nPC + 1] = b >> 8;
+			pCurrentSection->tData[nPC + 2] = b >> 16;
+			pCurrentSection->tData[nPC + 3] = b >> 24;
+			createpatch(PATCH_LONG_L, expr);
 		}
 		pCurrentSection->nPC += 4;
 		nPC += 4;

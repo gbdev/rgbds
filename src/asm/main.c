@@ -127,24 +127,6 @@ opt_Parse(char *s)
 	newopt = CurrentOptions;
 
 	switch (s[0]) {
-	case 'e':
-		switch (s[1]) {
-		case 'b':
-			newopt.endian = ASM_BIG_ENDIAN;
-			printf
-			    ("*WARNING*\t :\n\tEndianness forced to BIG for destination CPU\n");
-			break;
-		case 'l':
-			newopt.endian = ASM_LITTLE_ENDIAN;
-			printf
-			    ("*WARNING*\t :\n\tEndianness forced to LITTLE for destination CPU\n");
-			break;
-		default:
-			printf
-			    ("*ERROR*\t :\n\tArgument to option -e must be 'b' or 'l'\n");
-			exit(5);
-		}
-		break;
 	case 'g':
 		if (strlen(&s[1]) == 4) {
 			newopt.gbgfx[0] = s[1];
@@ -261,7 +243,6 @@ PrintUsage(void)
 	printf("\t-h\t\tThis text\n");
 	printf("\t-i<path>\tExtra include path\n");
 	printf("\t-o<file>\tWrite objectoutput to <file>\n");
-	printf("\t-e(l|b)\t\tChange endianness (CAUTION!)\n");
 	printf
 	    ("\t-g<ASCI>\tChange the four characters used for Gameboy graphics\n"
 	    "\t\t\tconstants (default is 0123)\n");
@@ -293,7 +274,6 @@ main(int argc, char *argv[])
 
 	/* yydebug=1; */
 
-	DefaultOptions.endian = ASM_DEFAULT_ENDIAN;
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
 	DefaultOptions.gbgfx[2] = '2';
@@ -314,7 +294,6 @@ main(int argc, char *argv[])
 		case 'o':
 			out_SetFileName(&(argv[argn][2]));
 			break;
-		case 'e':
 		case 'g':
 		case 'b':
 		case 'z':

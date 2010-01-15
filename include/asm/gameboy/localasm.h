@@ -83,8 +83,6 @@
 
 #define MAXSECTIONSIZE	0x4000
 
-#define	ASM_DEFAULT_ENDIAN	ASM_LITTLE_ENDIAN
-
 #define	APPNAME			"RGBAsm"
 #define	EXENAME			"rgbasm"
 
