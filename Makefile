@@ -62,7 +62,7 @@ rgbfix: $(rgbfix_obj)
 	${CC} $(cflags) -o $@ $(rgbfix_obj)
 
 .c.o:
-	${CC} $(cflags) -DGAMEBOY -c -o $@ $<
+	${CC} $(cflags) -c -o $@ $<
 
 src/asm/asmy.c: src/asm/asmy.y
 	${YACC} -d -o $@ $<

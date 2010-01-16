@@ -188,23 +188,12 @@ rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
 		return (expr->nVal >= low && expr->nVal <= high);
 	}
 }
-#ifdef GAMEBOY
 void 
 rpn_CheckHRAM(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_HRAM);
 }
-#endif
-
-#ifdef PCENGINE
-void 
-rpn_CheckZP(struct Expression * expr, struct Expression * src)
-{
-	*expr = *src;
-	pushbyte(expr, RPN_PCEZP);
-}
-#endif
 
 void 
 rpn_LOGNOT(struct Expression * expr, struct Expression * src)

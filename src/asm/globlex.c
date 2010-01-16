@@ -317,15 +317,11 @@ struct sLexInitString staticstrings[] = {
 	{"endc", T_POP_ENDC},
 
 	{"bss", T_SECT_BSS},
-#if defined(GAMEBOY) || defined(PCENGINE)
 	{"vram", T_SECT_VRAM},
-#endif
 	{"code", T_SECT_CODE},
 	{"data", T_SECT_CODE},
-#ifdef GAMEBOY
 	{"home", T_SECT_HOME},
 	{"hram", T_SECT_HRAM},
-#endif
 
 	{NAME_RB, T_POP_RB},
 	{NAME_RW, T_POP_RW},

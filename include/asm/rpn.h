@@ -77,11 +77,6 @@ void rpn_Reset(struct Expression * expr);
 int 
 rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
     SLONG high);
-#ifdef	GAMEBOY
 void rpn_CheckHRAM(struct Expression * expr, struct Expression * src1);
-#endif
-#ifdef	PCENGINE
-void rpn_CheckZP(struct Expression * expr, struct Expression * src);
-#endif
 
 #endif
