@@ -83,9 +83,6 @@
 
 #define MAXSECTIONSIZE	0x4000
 
-#define	APPNAME			"RGBAsm"
-#define	EXENAME			"rgbasm"
-
 #define	NAME_DB			"db"
 #define	NAME_DW			"dw"
 #define	NAME_RB			"rb"

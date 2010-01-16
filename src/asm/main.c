@@ -228,21 +228,9 @@ fatalerror(char *s)
 void 
 PrintUsage(void)
 {
-	printf(APPNAME " v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\nUsage: " EXENAME " [options] asmfile\n");
-	printf("Options:\n");
-	printf("\t-h\t\tThis text\n");
-	printf("\t-i<path>\tExtra include path\n");
-	printf("\t-o<file>\tWrite objectoutput to <file>\n");
-	printf
-	    ("\t-g<ASCI>\tChange the four characters used for Gameboy graphics\n"
-	    "\t\t\tconstants (default is 0123)\n");
-	printf
-	    ("\t-b<AS>\t\tChange the two characters used for binary constants\n"
-	    "\t\t\t(default is 01)\n");
-	printf
-	    ("\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
-	    "\t\t\tdata (default is 0x00)\n");
+	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
+	    ")\n\n");
+	printf("Usage: rgbasm [-b chars] [-g chars] [-i path] [-o outfile] [-z pad_value] file\n");
 	exit(EX_USAGE);
 }
 /*
