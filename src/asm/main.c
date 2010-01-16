@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:i:o:z:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:g:i:o:p:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -292,12 +292,12 @@ main(int argc, char *argv[])
 		case 'o':
 			out_SetFileName(optarg);
 			break;
-		case 'z':
+		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'z'");
+				errx(EX_USAGE, "Invalid argument for option 'p'");
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
-				errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
 			break;
 		default:
 			PrintUsage();

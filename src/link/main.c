@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "l:m:n:o:s:tz:")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:n:o:p:s:t")) != -1) {
 		switch (ch) {
 		case 'l':
 			lib_Readfile(optarg);
@@ -71,19 +71,19 @@ main(int argc, char *argv[])
 		case 'o':
 			out_Setname(optarg);
 			break;
+		case 'p':
+			fillchar = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(EX_USAGE, "Invalid argument for option 'p'");
+			if (fillchar < 0 || fillchar > 0xFF)
+				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
+			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;
 			strcpy(smartlinkstartsymbol, optarg);
 			break;
 		case 't':
 			options |= OPT_SMALL;
-			break;
-		case 'z':
-			fillchar = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'z'");
-			if (fillchar < 0 || fillchar > 0xFF)
-				errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
 			break;
 		default:
 			usage();
