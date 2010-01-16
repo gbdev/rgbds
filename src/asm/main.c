@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -253,12 +254,14 @@ PrintUsage(void)
 int 
 main(int argc, char *argv[])
 {
+	int ch;
+	char *ep;
+
+	struct sOptions newopt;
+
 	char *tzMainfile;
-	int argn = 1;
 
-	argc -= 1;
-
-	if (argc == 0)
+	if (argc == 1)
 		PrintUsage();
 
 	/* yydebug=1; */
@@ -270,35 +273,56 @@ main(int argc, char *argv[])
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
 	DefaultOptions.fillchar = 0;
-	    opt_SetCurrentOptions(&DefaultOptions);
 
-	while (argv[argn][0] == '-' && argc) {
-		switch (argv[argn][1]) {
-		case 'h':
-			PrintUsage();
+	opt_SetCurrentOptions(&DefaultOptions);
+
+	newopt = CurrentOptions;
+
+	while ((ch = getopt(argc, argv, "b:g:i:o:z:")) != -1) {
+		switch (ch) {
+		case 'b':
+			if (strlen(optarg) == 2) {
+				newopt.binary[0] = optarg[1];
+				newopt.binary[1] = optarg[2];
+			} else {
+				errx(5, "Must specify exactly 2 characters for option 'b'");
+			}
+		case 'g':
+			if (strlen(optarg) == 4) {
+				newopt.gbgfx[0] = optarg[1];
+				newopt.gbgfx[1] = optarg[2];
+				newopt.gbgfx[2] = optarg[3];
+				newopt.gbgfx[3] = optarg[4];
+			} else {
+				errx(5, "Must specify exactly 4 characters for option 'g'");
+			}
 			break;
 		case 'i':
-			fstk_AddIncludePath(&(argv[argn][2]));
+			fstk_AddIncludePath(optarg);
 			break;
 		case 'o':
-			out_SetFileName(&(argv[argn][2]));
+			out_SetFileName(optarg);
 			break;
-		case 'g':
-		case 'b':
 		case 'z':
-			opt_Parse(&argv[argn][1]);
+			newopt.fillchar = strtoul(optarg, &ep, 0);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(5, "Invalid argument for option 'z'");
+			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
+				errx(5, "Argument for option 'z' must be between 0 and 0xFF");
 			break;
 		default:
-			errx(5, "Unknown option '%c'", argv[argn][1]);
+			PrintUsage();
 		}
-		argn += 1;
-		argc -= 1;
 	}
+	argc -= optind;
+	argv += optind;
+
+	opt_SetCurrentOptions(&newopt);
 
 	DefaultOptions = CurrentOptions;
 
 	/* tzMainfile=argv[argn++]; argc-=1; */
-	tzMainfile = argv[argn];
+	tzMainfile = argv[argc - 1];
 
 	setuplex();
 
