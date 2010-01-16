@@ -238,14 +238,12 @@ fstk_FindFile(char *s)
  */
 
 ULONG 
-fstk_RunInclude(char *s)
+fstk_RunInclude(char *tzFileName)
 {
 	FILE *f;
-	char tzFileName[_MAX_PATH + 1];
 
 	//printf("INCLUDE: %s\n", s);
 
-	strcpy(tzFileName, s);
 	fstk_FindFile(tzFileName);
 	//printf("INCLUDING: %s\n", tzFileName);
 
