@@ -3,7 +3,6 @@
 
 #include "link/types.h"
 
-extern void usage(void);
 extern SLONG fillchar;
 extern char smartlinkstartsymbol[256];
 
