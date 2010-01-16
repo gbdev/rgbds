@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -136,7 +137,7 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(5, "Must specify exactly 4 characters for option 'g'");
+			errx(EX_USAGE, "Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -242,7 +243,7 @@ PrintUsage(void)
 	printf
 	    ("\t-z<hx>\t\tSet the byte value (hex format) used for uninitialised\n"
 	    "\t\t\tdata (default is 0x00)\n");
-	exit(0);
+	exit(EX_USAGE);
 }
 /*
  * RGBAsm - MAIN.C
@@ -285,7 +286,7 @@ main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				errx(5, "Must specify exactly 2 characters for option 'b'");
+				errx(EX_USAGE, "Must specify exactly 2 characters for option 'b'");
 			}
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -294,7 +295,7 @@ main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				errx(5, "Must specify exactly 4 characters for option 'g'");
+				errx(EX_USAGE, "Must specify exactly 4 characters for option 'g'");
 			}
 			break;
 		case 'i':
@@ -306,9 +307,9 @@ main(int argc, char *argv[])
 		case 'z':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(5, "Invalid argument for option 'z'");
+				errx(EX_USAGE, "Invalid argument for option 'z'");
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
-				errx(5, "Argument for option 'z' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'z' must be between 0 and 0xFF");
 			break;
 		default:
 			PrintUsage();
