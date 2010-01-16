@@ -5,11 +5,12 @@
  *
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+#include <err.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -134,9 +135,7 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			printf
-			    ("*ERROR*\t :\n\tMust specify exactly 4 characters for option 'g'\n");
-			exit(5);
+			errx(5, "Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -144,9 +143,7 @@ opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			printf
-			    ("*ERROR*\t :\n\tMust specify exactly 2 characters for option 'b'\n");
-			exit(5);
+			errx(5, "Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 	case 'z':
@@ -155,14 +152,10 @@ opt_Parse(char *s)
 
 			result = sscanf(&s[1], "%lx", &newopt.fillchar);
 			if (!((result == EOF) || (result == 1))) {
-				printf
-				    ("*ERROR*\t :\n\tInvalid argument for option 'z'\n");
-				exit(5);
+				errx(5, "Invalid argument for option 'z'");
 			}
 		} else {
-			printf
-			    ("*ERROR*\t :\n\tInvalid argument for option 'z'\n");
-			exit(5);
+			errx(5, "Invalid argument for option 'z'");
 		}
 		break;
 	default:
@@ -296,10 +289,7 @@ main(int argc, char *argv[])
 			opt_Parse(&argv[argn][1]);
 			break;
 		default:
-			printf("*ERROR*\t :\n\tUnknown option '%c'\n",
-			    argv[argn][1]);
-			exit(5);
-			break;
+			errx(5, "Unknown option '%c'", argv[argn][1]);
 		}
 		argn += 1;
 		argc -= 1;
@@ -372,8 +362,7 @@ main(int argc, char *argv[])
 					exit(5);
 				}
 			} else {
-				printf
-				    ("*ERROR*\t:\tUnterminated IF construct (%ld levels)!\n",
+				errx(5, "Unterminated IF construct (%ld levels)!",
 				    nIFDepth);
 				exit(5);
 			}
