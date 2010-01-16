@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 	int ch;
 	char *ep;
 
-	char filename[512];
+	char *filename;
 	char cartname[32];
 	char nlicensee[3];
 	FILE *f;
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	strcpy(filename, argv[argc - 1]);
+	filename = argv[argc - 1];
 
 	if (!FileExists(filename))
 		strncat(filename, ".gb", 3);
