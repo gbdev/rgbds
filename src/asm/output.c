@@ -724,8 +724,7 @@ void
 out_Skip(int skip)
 {
 	checksection();
-	if ((CurrentOptions.fillchar == -1)
-	    || !((pCurrentSection->nType == SECT_HOME)
+	if (!((pCurrentSection->nType == SECT_HOME)
 		|| (pCurrentSection->nType == SECT_CODE))) {
 		pCurrentSection->nPC += skip;
 		nPC += skip;

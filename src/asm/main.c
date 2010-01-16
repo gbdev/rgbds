@@ -151,17 +151,13 @@ opt_Parse(char *s)
 		break;
 	case 'z':
 		if (strlen(&s[1]) <= 2) {
-			if (strcmp(&s[1], "?") == 0) {
-				newopt.fillchar = -1;
-			} else {
-				int result;
+			int result;
 
-				result = sscanf(&s[1], "%lx", &newopt.fillchar);
-				if (!((result == EOF) || (result == 1))) {
-					printf
-					    ("*ERROR*\t :\n\tInvalid argument for option 'z'\n");
-					exit(5);
-				}
+			result = sscanf(&s[1], "%lx", &newopt.fillchar);
+			if (!((result == EOF) || (result == 1))) {
+				printf
+				    ("*ERROR*\t :\n\tInvalid argument for option 'z'\n");
+				exit(5);
 			}
 		} else {
 			printf
@@ -280,7 +276,7 @@ main(int argc, char *argv[])
 	DefaultOptions.gbgfx[3] = '3';
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
-	DefaultOptions.fillchar = 0; // -1 => fill uninitialized data with random values
+	DefaultOptions.fillchar = 0;
 	    opt_SetCurrentOptions(&DefaultOptions);
 
 	while (argv[argn][0] == '-' && argc) {
