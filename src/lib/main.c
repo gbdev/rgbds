@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asmotor.h"
 
@@ -23,7 +24,7 @@ PrintUsage(void)
 	    "\td\tDelete modules from library\n"
 	    "\tl\tList library contents\n"
 	    "\tx\tExtract modules from library\n");
-	exit(0);
+	exit(EX_USAGE);
 }
 /*
  * The main routine
@@ -100,10 +101,10 @@ main(int argc, char *argv[])
 							    ("Extracted module '%s'\n",
 							    argv[argn]);
 						} else
-							errx(5,
+							errx(EX_NOINPUT,
 							    "Unable to write module");
 					} else
-						errx(5, "Module not found");
+						errx(EX_NOINPUT, "Module not found");
 
 					argn += 1;
 					argc -= 1;
@@ -111,12 +112,12 @@ main(int argc, char *argv[])
 				lib_Free(lib);
 				break;
 			default:
-				errx(5, "Invalid command");
+				errx(EX_USAGE, "Invalid command");
 				break;
 			}
 
 		} else {
-			errx(5, "Invalid command");
+			errx(EX_USAGE, "Invalid command");
 		}
 	} else
 		PrintUsage();
