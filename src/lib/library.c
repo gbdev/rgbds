@@ -182,27 +182,14 @@ lib_Write(sLibrary * lib, char *filename)
 	return (0);
 }
 
-void 
-TruncateFileName(char *dest, char *src)
-{
-	SLONG l;
-
-	l = strlen(src) - 1;
-	while ((l >= 0) && (src[l] != '\\') && (src[l] != '/'))
-		l -= 1;
-
-	strcpy(dest, &src[l + 1]);
-}
-
 sLibrary *
 lib_Find(sLibrary * lib, char *filename)
 {
-	char truncname[MAXNAMELENGTH];
-
-	TruncateFileName(truncname, filename);
+	if (strlen(filename) >= MAXNAMELENGTH)
+		errx(5, "Module name too long: %s", filename);
 
 	while (lib) {
-		if (strcmp(lib->tName, truncname) == 0)
+		if (strcmp(lib->tName, filename) == 0)
 			break;
 
 		lib = lib->pNext;
@@ -218,9 +205,9 @@ lib_AddReplace(sLibrary * lib, char *filename)
 
 	if ((f = fopen(filename, "rb"))) {
 		sLibrary *module;
-		char truncname[MAXNAMELENGTH];
 
-		TruncateFileName(truncname, filename);
+		if (strlen(filename) >= MAXNAMELENGTH)
+			errx(5, "Module name too long: %s", filename);
 
 		if ((module = lib_Find(lib, filename)) == NULL) {
 			module = malloc(sizeof *module);
@@ -235,14 +222,14 @@ lib_AddReplace(sLibrary * lib, char *filename)
 		}
 
 		module->nByteLength = file_Length(f);
-		strcpy(module->tName, truncname);
+		strcpy(module->tName, filename);
 		module->pData = malloc(module->nByteLength);
 		if (!module->pData)
 			errx(5, "Out of memory");
 
 		fread(module->pData, sizeof(UBYTE), module->nByteLength, f);
 
-		printf("Added module '%s'\n", truncname);
+		printf("Added module '%s'\n", filename);
 
 		fclose(f);
 	}
@@ -252,16 +239,17 @@ lib_AddReplace(sLibrary * lib, char *filename)
 sLibrary *
 lib_DeleteModule(sLibrary * lib, char *filename)
 {
-	char truncname[MAXNAMELENGTH];
 	sLibrary **pp, **first;
 	BBOOL found = 0;
 
 	pp = &lib;
 	first = pp;
 
-	TruncateFileName(truncname, filename);
+	if (strlen(filename) >= MAXNAMELENGTH)
+		errx(5, "Module name too long: %s", filename);
+
 	while ((*pp) && (!found)) {
-		if (strcmp((*pp)->tName, truncname) == 0) {
+		if (strcmp((*pp)->tName, filename) == 0) {
 			sLibrary *t;
 
 			t = *pp;
@@ -280,7 +268,7 @@ lib_DeleteModule(sLibrary * lib, char *filename)
 	if (!found)
 		errx(5, "Module not found");
 	else
-		printf("Module '%s' deleted from library\n", truncname);
+		printf("Module '%s' deleted from library\n", filename);
 
 	return (*first);
 }
