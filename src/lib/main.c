@@ -41,7 +41,6 @@ main(int argc, char *argv[])
 	argn += 1;
 
 	if (argc >= 2) {
-		UBYTE command;
 		sLibrary *lib;
 
 		lib = lib_Read(libname = argv[argn++]);
