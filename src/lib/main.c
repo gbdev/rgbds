@@ -47,78 +47,73 @@ main(int argc, char *argv[])
 		lib = lib_Read(libname = argv[argn++]);
 		argc -= 1;
 
-		if (strlen(argv[argn]) == 1) {
-			command = argv[argn++][0];
+		if (strcmp(argv[argn], "add")) {
+			argn += 1;
 			argc -= 1;
 
-			switch (tolower(command)) {
-			case 'a':
-				while (argc) {
-					lib = lib_AddReplace(lib, argv[argn++]);
-					argc -= 1;
-				}
-				lib_Write(lib, libname);
-				lib_Free(lib);
-				break;
-			case 'd':
-				while (argc) {
-					lib =
-					    lib_DeleteModule(lib, argv[argn++]);
-					argc -= 1;
-				}
-				lib_Write(lib, libname);
-				lib_Free(lib);
-				break;
-			case 'l':
-				{
-					sLibrary *l;
-
-					l = lib;
-
-					while (l) {
-						printf("%10ld %s\n",
-						    l->nByteLength,
-						    l->tName);
-						l = l->pNext;
-					}
-				}
-				break;
-			case 'x':
-				while (argc) {
-					sLibrary *l;
-
-					l = lib_Find(lib, argv[argn]);
-					if (l) {
-						FILE *f;
-
-						if ((f = fopen(argv[argn], "wb"))) {
-							fwrite(l->pData,
-							    sizeof(UBYTE),
-							    l->nByteLength,
-							    f);
-							fclose(f);
-							printf
-							    ("Extracted module '%s'\n",
-							    argv[argn]);
-						} else
-							errx(EX_NOINPUT,
-							    "Unable to write module");
-					} else
-						errx(EX_NOINPUT, "Module not found");
-
-					argn += 1;
-					argc -= 1;
-				}
-				lib_Free(lib);
-				break;
-			default:
-				errx(EX_USAGE, "Invalid command");
-				break;
+			while (argc) {
+				lib = lib_AddReplace(lib, argv[argn++]);
+				argc -= 1;
 			}
+			lib_Write(lib, libname);
+			lib_Free(lib);
+		} else if (strcmp(argv[argn], "delete")) {
+			argn += 1;
+			argc -= 1;
 
-		} else {
-			errx(EX_USAGE, "Invalid command");
-		}
+			while (argc) {
+				lib =
+				    lib_DeleteModule(lib, argv[argn++]);
+				argc -= 1;
+			}
+			lib_Write(lib, libname);
+			lib_Free(lib);
+		} else if (strcmp(argv[argn], "extract")) {
+			argn += 1;
+			argc -= 1;
+
+			while (argc) {
+				sLibrary *l;
+
+				l = lib_Find(lib, argv[argn]);
+				if (l) {
+					FILE *f;
+
+					if ((f = fopen(argv[argn], "wb"))) {
+						fwrite(l->pData,
+						    sizeof(UBYTE),
+						    l->nByteLength,
+						    f);
+						fclose(f);
+						printf
+						    ("Extracted module '%s'\n",
+						    argv[argn]);
+					} else
+						errx(EX_NOINPUT,
+						    "Unable to write module");
+				} else
+					errx(EX_NOINPUT, "Module not found");
+
+				argn += 1;
+				argc -= 1;
+			}
+			lib_Free(lib);
+		} else if (strcmp(argv[argn], "list")) {
+			argn += 1;
+			argc -= 1;
+
+			sLibrary *l;
+
+			l = lib;
+
+			while (l) {
+				printf("%10ld %s\n",
+				    l->nByteLength,
+				    l->tName);
+				l = l->pNext;
+			}
+		} else
+			PrintUsage();
 	} else
 		PrintUsage();
 
