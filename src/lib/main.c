@@ -15,15 +15,11 @@
  *
  */
 
-void 
-PrintUsage(void)
+static void 
+usage(void)
 {
-	printf("RGBLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n"
-	    "Usage: rgblib library command [module1 module2 ... modulen]\n"
-	    "Commands:\n\ta\tAdd/replace modules to library\n"
-	    "\td\tDelete modules from library\n"
-	    "\tl\tList library contents\n"
-	    "\tx\tExtract modules from library\n");
+	printf("RGBLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
+	printf("usage: rgblib file [add | delete | extract | list] [module ...]\n");
 	exit(EX_USAGE);
 }
 /*
@@ -112,9 +108,9 @@ main(int argc, char *argv[])
 				l = l->pNext;
 			}
 		} else
-			PrintUsage();
+			usage();
 	} else
-		PrintUsage();
+		usage();
 
 	return (0);
 }
