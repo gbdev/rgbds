@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 		lib = lib_Read(libname = argv[argn++]);
 		argc -= 1;
 
-		if (strcmp(argv[argn], "add")) {
+		if (strcmp(argv[argn], "add") == 0) {
 			argn += 1;
 			argc -= 1;
 
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 			}
 			lib_Write(lib, libname);
 			lib_Free(lib);
-		} else if (strcmp(argv[argn], "delete")) {
+		} else if (strcmp(argv[argn], "delete") == 0) {
 			argn += 1;
 			argc -= 1;
 
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 			}
 			lib_Write(lib, libname);
 			lib_Free(lib);
-		} else if (strcmp(argv[argn], "extract")) {
+		} else if (strcmp(argv[argn], "extract") == 0) {
 			argn += 1;
 			argc -= 1;
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 				argc -= 1;
 			}
 			lib_Free(lib);
-		} else if (strcmp(argv[argn], "list")) {
+		} else if (strcmp(argv[argn], "list") == 0) {
 			argn += 1;
 			argc -= 1;
 
