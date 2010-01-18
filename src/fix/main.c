@@ -4,6 +4,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -614,7 +615,9 @@ main(int argc, char *argv[])
 		}
 		fclose(f);
 	} else {
-		errx(EX_NOINPUT, "File '%s' not found", filename);
+		fprintf(stderr, "Could not open file '%s' : %s\n", filename,
+		    strerror(errno));
+		exit(EX_NOINPUT);
 	}
 
 	return (0);
