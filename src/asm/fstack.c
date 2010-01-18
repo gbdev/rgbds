@@ -46,19 +46,6 @@ ULONG ulMacroReturnValue;
 #define STAT_isMacroArg		2
 #define STAT_isREPTBlock	3
 
-ULONG 
-filesize(char *s)
-{
-	FILE *f;
-	ULONG size = 0;
-
-	if ((f = fopen(s, "r")) != NULL) {
-		fseek(f, 0, SEEK_END);
-		size = ftell(f);
-		fclose(f);
-	}
-	return (size);
-}
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
  *
