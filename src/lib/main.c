@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +86,7 @@ main(int argc, char *argv[])
 						    argv[argn]);
 					} else
 						errx(EX_NOINPUT,
-						    "Unable to write module");
+						    "Unable to write module '%s' : %s", argv[argn], strerror(errno));
 				} else
 					errx(EX_NOINPUT, "Module not found");
 
