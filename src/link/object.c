@@ -4,9 +4,11 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "link/mylink.h"
 #include "link/main.h"
@@ -443,9 +445,9 @@ obj_Readfile(char *tzObjectfile)
 		oReadLib = 0;
 
 	pObjfile = fopen(tzObjectfile, "rb");
-	if (!pObjfile) {
-		errx(5, "Unable to open '%s'", tzObjectfile);
-	}
+	if (pObjfile == NULL)
+		errx(EX_NOINPUT, "Unable to open object '%s' : %s",
+		    tzObjectfile, strerror(errno));
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
 	fclose(pObjfile);
 
@@ -493,6 +495,9 @@ lib_Readfile(char *tzLibfile)
 	oReadLib = 1;
 
 	pObjfile = fopen(tzLibfile, "rb");
+	if (pObjfile == NULL)
+		errx(EX_NOINPUT, "Unable to open object '%s' : %s",
+		    tzObjectfile, strerror(errno));
 	if (!pObjfile) {
 		errx(5, "Unable to open '%s'", tzLibfile);
 	}
