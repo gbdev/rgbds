@@ -17,7 +17,7 @@ SLONG sfbank;
 void 
 SetMapfileName(char *name)
 {
-	mf = fopen(name, "wt");
+	mf = fopen(name, "w");
 
 	if (!mf)
 		errx(5, "Unable to open mapfile for writing");
@@ -26,7 +26,7 @@ SetMapfileName(char *name)
 void 
 SetSymfileName(char *name)
 {
-	sf = fopen(name, "wt");
+	sf = fopen(name, "w");
 
 	if (!sf)
 		errx(5, "Unable to open symfile for writing");

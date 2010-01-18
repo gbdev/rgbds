@@ -52,7 +52,7 @@ filesize(char *s)
 	FILE *f;
 	ULONG size = 0;
 
-	if ((f = fopen(s, "rt")) != NULL) {
+	if ((f = fopen(s, "r")) != NULL) {
 		fseek(f, 0, SEEK_END);
 		size = ftell(f);
 		fclose(f);
@@ -247,7 +247,7 @@ fstk_RunInclude(char *tzFileName)
 	fstk_FindFile(tzFileName);
 	//printf("INCLUDING: %s\n", tzFileName);
 
-	if ((f = fopen(tzFileName, "rt")) != NULL) {
+	if ((f = fopen(tzFileName, "r")) != NULL) {
 		pushcontext();
 		nLineNo = 1;
 		nCurrentStatus = STAT_isInclude;
@@ -383,7 +383,7 @@ fstk_Init(char *s)
 	fstk_FindFile(tzFileName);
 
 	pFileStack = NULL;
-	if ((pCurrentFile = fopen(tzFileName, "rt")) != NULL) {
+	if ((pCurrentFile = fopen(tzFileName, "r")) != NULL) {
 		nMacroCount = 0;
 		nCurrentStatus = STAT_isInclude;
 		strcpy(tzCurrentFileName, tzFileName);
