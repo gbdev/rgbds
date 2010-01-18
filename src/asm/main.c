@@ -230,7 +230,7 @@ PrintUsage(void)
 {
 	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("Usage: rgbasm [-b chars] [-g chars] [-i path] [-o outfile] [-z pad_value] file\n");
+	printf("Usage: rgbasm [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value] file\n");
 	exit(EX_USAGE);
 }
 /*
