@@ -47,6 +47,7 @@ macro			:	T_ID
 
 						if( !fstk_RunMacro($1) )
 						{
+							fprintf(stderr, "Macro '%s' not defined", $1);
 							yyerror( "No such macro" );
 						}
 					}
