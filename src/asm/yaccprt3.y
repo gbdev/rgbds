@@ -267,6 +267,7 @@ include			:	T_POP_INCLUDE string
 					{
 						if( !fstk_RunInclude($2) )
 						{
+							fprintf(stderr, "Could not open file '%s' : %s\n", $2, strerror(errno));
 							yyerror( "File not found" );
 						}
 					}
