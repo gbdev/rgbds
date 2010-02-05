@@ -497,7 +497,7 @@ lib_Readfile(char *tzLibfile)
 	pObjfile = fopen(tzLibfile, "rb");
 	if (pObjfile == NULL)
 		errx(EX_NOINPUT, "Unable to open object '%s' : %s",
-		    tzObjectfile, strerror(errno));
+		    tzLibfile, strerror(errno));
 	if (!pObjfile) {
 		errx(5, "Unable to open '%s'", tzLibfile);
 	}
