@@ -615,8 +615,7 @@ main(int argc, char *argv[])
 		}
 		fclose(f);
 	} else {
-		errx(EX_NOINPUT, "Could not open file '%s' : %s", filename,
-		    strerror(errno));
+		err(EX_NOINPUT, "Could not open file '%s'", filename);
 	}
 
 	return (0);

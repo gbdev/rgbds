@@ -446,8 +446,8 @@ obj_Readfile(char *tzObjectfile)
 
 	pObjfile = fopen(tzObjectfile, "rb");
 	if (pObjfile == NULL)
-		errx(EX_NOINPUT, "Unable to open object '%s' : %s",
-		    tzObjectfile, strerror(errno));
+		err(EX_NOINPUT, "Unable to open object '%s'",
+		    tzObjectfile);
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
 	fclose(pObjfile);
 
@@ -496,8 +496,7 @@ lib_Readfile(char *tzLibfile)
 
 	pObjfile = fopen(tzLibfile, "rb");
 	if (pObjfile == NULL)
-		errx(EX_NOINPUT, "Unable to open object '%s' : %s",
-		    tzLibfile, strerror(errno));
+		err(EX_NOINPUT, "Unable to open object '%s'", tzLibfile);
 	if (!pObjfile) {
 		errx(5, "Unable to open '%s'", tzLibfile);
 	}

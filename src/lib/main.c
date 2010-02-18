@@ -85,8 +85,8 @@ main(int argc, char *argv[])
 						    ("Extracted module '%s'\n",
 						    argv[argn]);
 					} else
-						errx(EX_NOINPUT,
-						    "Unable to write module '%s' : %s", argv[argn], strerror(errno));
+						err(EX_NOINPUT,
+						    "Unable to write module '%s'", argv[argn]);
 				} else
 					errx(EX_NOINPUT, "Module not found");
 
