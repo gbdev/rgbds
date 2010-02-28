@@ -1,0 +1,61 @@
+.Dd $\&Mdocdate$
+.Dt RGBASM 1
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgbasm
+.Nd Game Boy assembler
+.\" SECTION
+.Sh SYNOPSIS
+.Nm rgbasm
+.Op Fl b Ar chars
+.Op Fl g Ar chars
+.Op Fl i Ar path
+.Op Fl o Ar outfile
+.Op Fl p Ar pad_value
+.Ar file
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm
+program creates an object file from an assembly source file. Its arguments
+are as follows:
+.Bl -tag -width Ds
+.\" ITEM
+.It Fl b Ar chars
+Change the two characters used for binary constants. The defaults are 01.
+.\" ITEM
+.It Fl g Ar chars
+Change the four characters used for binary constants. The defaults are 0123.
+.\" ITEM
+.It Fl i Ar path
+Add an include path.
+.\" ITEM
+.It Fl o Ar outfile
+Write an object file to the given filename.
+.\" ITEM
+.It Fl p Ar pad_value
+When padding an image, pad with this value. The default is 0x00.
+.El
+.\" SECTION
+.Sh EXAMPLES
+Assembling a basic source file is simple:
+.Pp
+.D1 $ rgbasm \-o bar.o foo.asm
+.Pp
+The resulting object file is not yet a usable ROM image \(em it must first be
+run through
+.Xr rgblink 1
+and
+.Xr rgbfix 1 .
+.\" SECTION
+.Sh SEE ALSO
+.Xr rgbds 7 ,
+.Xr rgbfix 1 ,
+.Xr rgblib 1 ,
+.Xr rgblink 1 ,
+.Xr gbz80 7
+.\" SECTION
+.Sh HISTORY
+.Nm
+was originally written by Carsten Sørensen as part of the ASMotor package,
+and was later packaged in RGBDS by Justin Lloyd.

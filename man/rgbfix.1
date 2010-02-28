@@ -1,0 +1,111 @@
+.Dd $\&Mdocdate$
+.Dt RGBFIX 1
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgbfix
+.Nd Game Boy checksum fixer
+.\" SECTION
+.Sh SYNOPSIS
+.Nm rgbfix
+.Op Fl Ccdjqrsv
+.Op Fl k Ar licensee_str
+.Op Fl m Ar mbc_type
+.Op Fl p Ar pad_value
+.Op Fl r Ar ram_size
+.Op Fl t Ar title_str
+.Ar file Ns Op .gb
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm
+program changes headers of Game Boy ROM images. It also performs other
+filetype operations, such as truncation. The arguments are as follows:
+.Bl -tag -width Ds
+.\" ITEM
+.It Fl C
+Set the Game Boy Color compatible flag: [0x143] = 0x80. This flag and the
+.Fl c
+flag are mutually exclusive.
+.\" ITEM
+.It Fl c
+Set the Game Boy Color only flag: [0x143] = 0xC0. This flag and the
+.Fl C
+flag are mutually exclusive.
+.\" ITEM
+.It Fl d
+Don't perform any changes, just pretend to for debugging.
+.\" ITEM
+.It Fl j
+Set the non-Japanese region flag: [0x14A] = 1.
+.\" ITEM
+.It Fl k Ar licensee_str
+Set the new licensee string ([0x144\(en0x145]) to a given string, truncated
+to at most two characters.
+.\" ITEM
+.It Fl m Ar mbc_type
+Set the MBC type, [0x147], to a given value from 0 to 0xFF.
+.\" ITEM
+.It Fl p Ar pad_value
+Pad the image to a valid size with a given pad value from 0 to 0xFF.
+.Nm
+will automatically pick a size from 32KiB, 64KiB, 128KiB, ..., 8192KiB and
+give a warning thereafter. The cartridge size byte ([0x148]) will be changed
+to reflect this new size.
+.\" ITEM
+.It Fl q
+Enable quiet mode, suppressing all text except errors.
+.\" ITEM
+.It Fl r Ar ram_size
+Set the RAM size, [0x149], to a given value from 0 to 0xFF.
+.\" ITEM
+.It Fl s
+Set the SGB flag: [0x146] = 3, and set the old licensee code: [0x14B] = 0x33.
+.\" ITEM
+.It Fl t Ar title
+Set the title string ([0x134\(en0x143]) to a given string, truncated to at
+most 16 characters. It is recommended to use 15 characters instead, to avoid
+clashing with the CGB flag (
+.Fl c
+or
+.Fl C Ns
+).
+.\" ITEM
+.It Fl v
+Validate the header and fix checksums: the Nintendo character area
+([0x104\(en0x133]), the header checksum ([0x14D]), and the global checksum
+([0x14E\(en0x14F]).
+.El
+.\" SECTION
+.Sh EXAMPLES
+Most values in the ROM header are only cosmetic. The bare minimum requirements
+for a workable image are checksums, the Nintendo logo, and (if needed) the
+CGB/SGB flags. It is a good idea to pad the image to a valid size as well
+("valid" meaning a multiple of 32KiB).
+.Pp
+The following will make a plain, no-color Game Boy game without checking for
+a valid size:
+.Pp
+.D1 $ rgbfix \-v foo.gb
+.Pp
+The following will make a SGB-enabled, color-enabled game with a title of
+"foobar", and pad it to a multiple of 32KiB. (The Game Boy itself does not
+use the title, but some emulators or ROM managers might.)
+.Pp
+.D1 $ rgbfix \-vCs \-p 0 \-t foobar baz.gb
+.Pp
+The following will duplicate the header (sans global checksum) of the game
+"Survival Kids":
+.Pp
+.D1 $ rgbfix \-Cjsv \-k A4 \-m 0x1B \-p 0xFF \-r 3 \-t SURVIVALKIDAVKE SurvivalKids.gbc
+.\" SECTION
+.Sh SEE ALSO
+.Xr rgbds 7 ,
+.Xr rgbasm 1 ,
+.Xr rgblib 1 ,
+.Xr rgblink 1 ,
+.Xr gbz80 7
+.\" SECTION
+.Sh HISTORY
+.Nm
+was originally released by Carsten Sørensen as a standalone program called
+gbfix. It was later integrated with the ASMotor package, which became RGBDS.

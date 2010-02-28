@@ -1,0 +1,44 @@
+.Dd $\&Mdocdate$
+.Dt RGBLIB 1
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgblib
+.Nd Game Boy library manager
+.\" SECTION
+.Sh SYNOPSIS
+.Nm rgblib
+.Ar library
+.Op add | delete | extract | list
+.Ar module ...
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm
+program manages libraries for use with
+.Xr rgblink 1 .
+.Bl -tag -width Ds
+.\" ITEM
+.It add
+Add the given modules to the library.
+.\" ITEM
+.It delete
+Delete the given modules from the library.
+.\" ITEM
+.It extract
+Extract the given modules from the library.
+.\" ITEM
+.It list
+List all the modules in the library.
+.El
+.\" SECTION
+.Sh SEE ALSO
+.Xr rgbds 7 ,
+.Xr rgbasm 1 ,
+.Xr rgbfix 1 ,
+.Xr rgblink 1 ,
+.Xr gbz80 7
+.\" SECTION
+.Sh HISTORY
+.Nm
+was originally released by Carsten Sørensen as part of the ASMotor package,
+and was later packaged in RGBDS by Justin Lloyd.
