@@ -18,17 +18,20 @@
 .Sh DESCRIPTION
 The
 .Nm
-program changes headers of Game Boy ROM images. It also performs other
-filetype operations, such as truncation. The arguments are as follows:
+program changes headers of Game Boy ROM images.
+It also performs other filetype operations, such as truncation.
+The arguments are as follows:
 .Bl -tag -width Ds
 .\" ITEM
 .It Fl C
-Set the Game Boy Color compatible flag: [0x143] = 0x80. This flag and the
+Set the Game Boy Color compatible flag: [0x143] = 0x80.
+This flag and the
 .Fl c
 flag are mutually exclusive.
 .\" ITEM
 .It Fl c
-Set the Game Boy Color only flag: [0x143] = 0xC0. This flag and the
+Set the Game Boy Color only flag: [0x143] = 0xC0.
+This flag and the
 .Fl C
 flag are mutually exclusive.
 .\" ITEM
@@ -49,8 +52,8 @@ Set the MBC type, [0x147], to a given value from 0 to 0xFF.
 Pad the image to a valid size with a given pad value from 0 to 0xFF.
 .Nm
 will automatically pick a size from 32KiB, 64KiB, 128KiB, ..., 8192KiB and
-give a warning thereafter. The cartridge size byte ([0x148]) will be changed
-to reflect this new size.
+give a warning thereafter.
+The cartridge size byte ([0x148]) will be changed to reflect this new size.
 .\" ITEM
 .It Fl q
 Enable quiet mode, suppressing all text except errors.
@@ -63,8 +66,9 @@ Set the SGB flag: [0x146] = 3, and set the old licensee code: [0x14B] = 0x33.
 .\" ITEM
 .It Fl t Ar title
 Set the title string ([0x134\(en0x143]) to a given string, truncated to at
-most 16 characters. It is recommended to use 15 characters instead, to avoid
-clashing with the CGB flag (
+most 16 characters.
+It is recommended to use 15 characters instead, to avoid clashing with the CGB
+flag (
 .Fl c
 or
 .Fl C
@@ -77,10 +81,11 @@ Validate the header and fix checksums: the Nintendo character area
 .El
 .\" SECTION
 .Sh EXAMPLES
-Most values in the ROM header are only cosmetic. The bare minimum requirements
-for a workable image are checksums, the Nintendo logo, and (if needed) the
-CGB/SGB flags. It is a good idea to pad the image to a valid size as well
-("valid" meaning a multiple of 32KiB).
+Most values in the ROM header are only cosmetic.
+The bare minimum requirements for a workable image are checksums, the Nintendo
+logo, and (if needed) the CGB/SGB flags.
+It is a good idea to pad the image to a valid size as well ("valid" meaning a
+multiple of 32KiB).
 .Pp
 The following will make a plain, no-color Game Boy game without checking for
 a valid size:
@@ -88,8 +93,9 @@ a valid size:
 .D1 $ rgbfix \-v foo.gb
 .Pp
 The following will make a SGB-enabled, color-enabled game with a title of
-"foobar", and pad it to a multiple of 32KiB. (The Game Boy itself does not
-use the title, but some emulators or ROM managers might.)
+"foobar", and pad it to a multiple of 32KiB.
+(The Game Boy itself does not use the title, but some emulators or ROM managers
+might.)
 .Pp
 .D1 $ rgbfix \-vCs \-p 0 \-t foobar baz.gb
 .Pp
@@ -108,4 +114,5 @@ The following will duplicate the header (sans global checksum) of the game
 .Sh HISTORY
 .Nm
 was originally released by Carsten Sørensen as a standalone program called
-gbfix. It was later integrated with the ASMotor package, which became RGBDS.
+gbfix.
+It was later integrated with the ASMotor package, which became RGBDS.

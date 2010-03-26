@@ -24,8 +24,8 @@ program links objects created by
 into a single Game Boy ROM file.
 .Pp
 By default, HOME sections created by the assembler are placed in the 16KiB
-bank 0, and CODE/DATA sections are placed in any bank except bank 0. If your
-ROM will only be 32KiB, you can use the
+bank 0, and CODE/DATA sections are placed in any bank except bank 0.
+If your ROM will only be 32KiB, you can use the
 .Fl t
 option to override this.
 .Pp
@@ -36,8 +36,8 @@ The arguments are as follows:
 Include a referenced library module created with
 .Xr rgblib 1 .
 Note that specified libraries will be included only if needed\(emthat is, if
-a SECTION from a library is referenced by an object file. Only the relevant
-SECTION will be included, rather than the entire module.
+a SECTION from a library is referenced by an object file.
+Only the relevant SECTION will be included, rather than the entire module.
 .\" ITEM
 .It Fl m Ar mapfile
 Write a mapfile to the given filename.
@@ -66,7 +66,8 @@ image like so:
 .D1 $ rgblink \-o bar.gb foo.o
 .Pp
 The resulting bar.gb will not have correct checksums (unless you put them in
-the assembly source). You should use
+the assembly source).
+You should use
 .Xr rgbfix 1
 to fix these so that the program will actually run in a Game Boy:
 .Pp
