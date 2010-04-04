@@ -1,33 +1,36 @@
-RGBDS-linux
+----------------
+  RGBDS README
+----------------
 
-Copyright (C) 1997  Carsten Sorensen <surfsmurf@matilde.demon.co.uk>
-Copyright (C) 1999  Justin Lloyd <jlloyd@imf.la> (?)
-Copyright (C) 2009  Vegard Nossum <vegard.nossum@gmail.com>
+RGBDS (Rednex Game Boy Development System) is a free assembler/linker package
+for the Game Boy and Game Boy Color. It consists of:
+
+  - rgbasm  (assembler)
+  - rgblink (linker)
+  - rgblib  (library manager)
+  - rgbfix  (checksum/header fixer)
+
+rgbds-linux is a fork of the original RGBDS which aims to make the programs
+more like other UNIX tools.
 
 
-What is RGBDS-linux?
-====================
+  Building RGBDS
+================
 
-RGBDS-linux is a revival of the "Rednex GameBoy Development System" (RGBDS),
-a set of tools that allow you to compile your own games and programs for the
-Nintendo GameBoy.
+To build the programs on a UNIX or UNIX-like system, just run in your terminal:
 
-RGBDS consists of an assembler (rgbdasm), a linker (xlink), a library manager
-(xlib), and a tool for producing valid GameBoy ROM images (rgbfix).
+  make
 
-I _think_ this is the development history of RGBDS/ASMotor:
+There is no install target -- just copy the binaries (rgbasm, rgbfix, rgblib,
+and rgblink) to a folder in your $PATH.
 
-	* Around 1997, Carsten Sorensen (AKA SurfSmurf) writes ASMotor as a
-	  general-purpose assembler/linker system for DOS/Win32
+To build the documentation, use the man target:
 
-	* Around 1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to
-	  read and produce Z80 assembly/machine code, and releases this
-	  version as RGBDS.
+  make man
 
-This (RGBDS-linux) is an adaption of RGBDS intended for use on GNU/Linux
-systems. In short, we provide a project layout and user interface that is more
-familiar to GNU/Linux users. Note that we make no attempt to retain backwards
-compatibility with the original RGBDS, or even the possibility to run the
-programs on DOS/Win32.
+This will create manual pages (rgbasm.0, rgbfix.0, rgblib.0, and rgblink.0)
+which can be read with a pager such as more(1):
 
-Also expect improvements and bugfixes to make their way into the source code.
+  more rgbasm.0
+
+There are no Windows installation instructions at this time.
