@@ -1,8 +1,5 @@
-localversion = $(shell sh scripts/localversion.sh)
-
-CFLAGS += -Wall -Iinclude -Iinclude/asm/gameboy \
-		-DLOCALVERSION=\"$(localversion)\" -g -std=c99 \
-		-D_POSIX_C_SOURCE=200112L
+CFLAGS +=	-Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99 \
+			-D_POSIX_C_SOURCE=200112L
 
 yacc_pre := \
 	src/asm/yaccprt1.y\
