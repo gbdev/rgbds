@@ -41,33 +41,33 @@ rgbfix_obj := \
 all: rgbasm rgblib rgblink rgbfix
 
 clean:
-	rm -rf rgbasm $(rgbasm_obj)
-	rm -rf rgblib $(rgblib_obj)
-	rm -rf rgblink $(rgblink_obj)
-	rm -rf rgbfix $(rgbfix_obj)
-	rm -rf src/asm/asmy.c
-	rm -rf rgbasm.0 rgbfix.0 rgblib.0 rgblink.0
+	@rm -rf rgbasm $(rgbasm_obj)
+	@rm -rf rgblib $(rgblib_obj)
+	@rm -rf rgblink $(rgblink_obj)
+	@rm -rf rgbfix $(rgbfix_obj)
+	@rm -rf src/asm/asmy.c
+	@rm -rf rgbasm.0 rgbfix.0 rgblib.0 rgblink.0
 
 rgbasm: $(rgbasm_obj)
-	${CC} $(CFLAGS) -o $@ $(rgbasm_obj) -lm
+	@${CC} $(CFLAGS) -o $@ $(rgbasm_obj) -lm
 
 rgblib: $(rgblib_obj)
-	${CC} $(CFLAGS) -o $@ $(rgblib_obj)
+	@${CC} $(CFLAGS) -o $@ $(rgblib_obj)
 
 rgblink: $(rgblink_obj)
-	${CC} $(CFLAGS) -o $@ $(rgblink_obj)
+	@${CC} $(CFLAGS) -o $@ $(rgblink_obj)
 
 rgbfix: $(rgbfix_obj)
-	${CC} $(CFLAGS) -o $@ $(rgbfix_obj)
+	@${CC} $(CFLAGS) -o $@ $(rgbfix_obj)
 
 .c.o:
-	${CC} $(CFLAGS) -c -o $@ $<
+	@${CC} $(CFLAGS) -c -o $@ $<
 
 src/asm/asmy.c: src/asm/asmy.y
-	${YACC} -d -o $@ $<
+	@${YACC} -d -o $@ $<
 
 src/asm/asmy.y: $(yacc_pre)
-	cat $(yacc_pre) > $@
+	@cat $(yacc_pre) > $@
 
 man: rgbasm.0 rgbfix.0 rgblib.0 rgblink.0
 
