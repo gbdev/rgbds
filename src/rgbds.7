@@ -1,0 +1,25 @@
+.Dd $\&Mdocdate$
+.Dt RGBDS 1
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgbds
+.Nd Rednex Game Boy Development System
+.\" SECTION
+.Sh Examples
+To get a working ROM image from a single assembly source file:
+.Pp
+.D1 $ rgbasm \-o bar.o foo.asm
+.D1 $ rgblink \-o baz.gb bar.o
+.D1 $ rgbfix \-v \-p 0 baz.gb
+.\" SECTION
+.Sh SEE ALSO
+.Xr rgbasm 1 ,
+.Xr rgbfix 1 ,
+.Xr rgblib 1 ,
+.Xr rgblink 1 ,
+.Xr gbz80 7
+.\" SECTION
+.Sh HISTORY
+.Nm
+grew out of the ASMotor package released by Carsten S\(/orensen.
+It was first released as a Game Boy software package by Justin Lloyd.

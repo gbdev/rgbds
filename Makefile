@@ -52,6 +52,7 @@ install: all
 	@install -s -o root -g bin -m 555 rgbfix ${PREFIX}/bin/rgbfix
 	@install -s -o root -g bin -m 555 rgblink ${PREFIX}/bin/rgblink
 	@install -s -o root -g bin -m 555 rgblib ${PREFIX}/bin/rgblib
+	@install -o root -g bin -m 444 src/rgbds.7 ${PREFIX}/man/cat7/rgbds.7
 	@install -o root -g bin -m 444 src/asm/rgbasm.1 \
 		${PREFIX}/man/cat1/rgbasm.1
 	@install -o root -g bin -m 444 src/fix/rgbfix.1 \
