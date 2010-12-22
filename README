@@ -14,14 +14,20 @@ rgbds-linux is a fork of the original RGBDS which aims to make the programs
 more like other UNIX tools.
 
 
-  Building RGBDS
-================
+  Installing RGBDS
+==================
 
 To build the programs on a UNIX or UNIX-like system, just run in your terminal:
 
   make
 
-There is no install target -- just copy the binaries (rgbasm, rgbfix, rgblib,
-and rgblink) to a folder in your $PATH.
+Then to install the compiled programs and manual pages, run (with appropriate
+privileges):
+
+  make install
+
+You can read the manuals with the man(1) command. E.g.,
+
+  man 1 rgbasm
 
 There are no Windows installation instructions at this time.
