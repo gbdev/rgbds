@@ -24,13 +24,4 @@ To build the programs on a UNIX or UNIX-like system, just run in your terminal:
 There is no install target -- just copy the binaries (rgbasm, rgbfix, rgblib,
 and rgblink) to a folder in your $PATH.
 
-To build the documentation, use the man target:
-
-  make man
-
-This will create manual pages (rgbasm.0, rgbfix.0, rgblib.0, and rgblink.0)
-which can be read with a pager such as more(1):
-
-  more rgbasm.0
-
 There are no Windows installation instructions at this time.

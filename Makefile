@@ -46,7 +46,6 @@ clean:
 	@rm -rf rgblink $(rgblink_obj)
 	@rm -rf rgbfix $(rgbfix_obj)
 	@rm -rf src/asm/asmy.c
-	@rm -rf rgbasm.0 rgbfix.0 rgblib.0 rgblink.0
 
 rgbasm: $(rgbasm_obj)
 	@${CC} $(CFLAGS) -o $@ $(rgbasm_obj) -lm
@@ -68,17 +67,3 @@ src/asm/asmy.c: src/asm/asmy.y
 
 src/asm/asmy.y: $(yacc_pre)
 	@cat $(yacc_pre) > $@
-
-man: rgbasm.0 rgbfix.0 rgblib.0 rgblink.0
-
-rgbasm.0: man/rgbasm.1
-	nroff -mdoc man/rgbasm.1 > rgbasm.0
-
-rgbfix.0: man/rgbfix.1
-	nroff -mdoc man/rgbfix.1 > rgbfix.0
-
-rgblib.0: man/rgblib.1
-	nroff -mdoc man/rgblib.1 > rgblib.0
-
-rgblink.0: man/rgblink.1
-	nroff -mdoc man/rgblink.1 > rgblink.0
