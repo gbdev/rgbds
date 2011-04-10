@@ -44,7 +44,7 @@ Set the non-Japanese region flag:
 = 1.
 .It Fl k Ar licensee_str
 Set the new licensee string
-.Pq Ad 0x144 \(en Ad 0x145]
+.Pq Ad 0x144 No Ns \(en Ns Ad 0x145
 to a given string, truncated to at most two characters.
 .It Fl l Ar licensee_id
 Set the old licensee code,
@@ -77,21 +77,18 @@ Set the SGB flag:
 = 3.
 .It Fl t Ar title
 Set the title string
-.Pq Ad 0x134 \(en Ad 0x143
+.Pq Ad 0x134 No Ns \(en Ns Ad 0x143
 to a given string, truncated to at most 16 characters.
 It is recommended to use 15 characters instead, to avoid clashing with the CGB
-flag (
-.Fl c
-or
-.Fl C
-.Ns ).
+flag
+.Pq Fl c No or Fl C .
 .It Fl v
 Validate the header and fix checksums: the Nintendo character area
-.Pq Ad 0x104 \(en Ad 0x133 ,
+.Pq Ad 0x104 No Ns \(en Ns Ad 0x133 ,
 the header checksum
 .Pq Ad 0x14D ,
 and the global checksum
-.Pq Ad 0x14E \(en Ad 0x14F .
+.Pq Ad 0x14E No Ns \(en Ns Ad 0x14F .
 .El
 .Sh EXAMPLES
 Most values in the ROM header are only cosmetic.
