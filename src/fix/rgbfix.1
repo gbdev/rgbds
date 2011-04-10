@@ -94,8 +94,8 @@ and the global checksum
 Most values in the ROM header are only cosmetic.
 The bare minimum requirements for a workable image are checksums, the Nintendo
 logo, and (if needed) the CGB/SGB flags.
-It is a good idea to pad the image to a valid size as well ("valid" meaning a
-multiple of 32KiB).
+It is a good idea to pad the image to a valid size as well
+.Pq Dq valid No meaning a multiple of 32KiB .
 .Pp
 The following will make a plain, no-color Game Boy game without checking for
 a valid size:
@@ -103,14 +103,19 @@ a valid size:
 .D1 $ rgbfix \-v foo.gb
 .Pp
 The following will make a SGB-enabled, color-enabled game with a title of
-"foobar", and pad it to a multiple of 32KiB.
-(The Game Boy itself does not use the title, but some emulators or ROM managers
-might.)
+.Dq foobar ,
+and pad it to a multiple of 32KiB.
+.Po
+The Game Boy itself does not use the title, but some emulators or ROM managers
+might.
+.Pc
 .Pp
 .D1 $ rgbfix \-vcs \-p 0 \-t foobar baz.gb
 .Pp
-The following will duplicate the header (sans global checksum) of the game
-"Survival Kids":
+The following will duplicate the header
+.Pq sans global checksum
+of the game
+.Dq Survival Kids :
 .Pp
 .D1 $ rgbfix \-cjsv \-k A4 \-m 0x1B \-p 0xFF \-r 3 \-t SURVIVALKIDAVKE SurvivalKids.gbc
 .Sh SEE ALSO

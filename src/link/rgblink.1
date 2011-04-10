@@ -46,7 +46,9 @@ When padding an image, pad with this value. The default is 0x00.
 .It Fl s Ar symbol
 ???
 .It Fl t
-Write a tiny (32KiB) ROM file. This forces all DATA/CODE sections to be of
+Write a tiny
+.Pq 32KiB
+ROM file. This forces all DATA/CODE sections to be of
 type HOME, and increases the HOME section size from 16KiB to 32KiB.
 .El
 .Sh EXAMPLES
@@ -55,8 +57,8 @@ image like so:
 .Pp
 .D1 $ rgblink \-o bar.gb foo.o
 .Pp
-The resulting bar.gb will not have correct checksums (unless you put them in
-the assembly source).
+The resulting bar.gb will not have correct checksums
+.Pq unless you put them in the assembly source .
 You should use
 .Xr rgbfix 1
 to fix these so that the program will actually run in a Game Boy:
