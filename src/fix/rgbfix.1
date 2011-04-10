@@ -4,7 +4,6 @@
 .Sh NAME
 .Nm rgbfix
 .Nd Game Boy checksum fixer
-.\" SECTION
 .Sh SYNOPSIS
 .Nm rgbfix
 .Op Fl Ccjsv
@@ -16,7 +15,6 @@
 .Op Fl r Ar ram_size
 .Op Fl t Ar title_str
 .Ar file
-.\" SECTION
 .Sh DESCRIPTION
 The
 .Nm
@@ -24,7 +22,6 @@ program changes headers of Game Boy ROM images.
 It also performs other filetype operations, such as truncation.
 The arguments are as follows:
 .Bl -tag -width Ds
-.\" ITEM
 .It Fl C
 Set the Game Boy Color\(enonly flag:
 .Ad 0x143
@@ -32,7 +29,6 @@ Set the Game Boy Color\(enonly flag:
 If both this and the
 .Fl c
 flag are set, this takes precedence.
-.\" ITEM
 .It Fl c
 Set the Game Boy Color\(encompatible flag:
 .Ad 0x143
@@ -42,33 +38,27 @@ If both this and the
 flag are set,
 .Fl C
 takes precedence.
-.\" ITEM
 .It Fl j
 Set the non-Japanese region flag:
 .Ad 0x14A
 = 1.
-.\" ITEM
 .It Fl k Ar licensee_str
 Set the new licensee string
 .Pq Ad 0x144 \(en Ad 0x145]
 to a given string, truncated to at most two characters.
-.\" ITEM
 .It Fl l Ar licensee_id
 Set the old licensee code,
 .Ad 0x14B ,
 to a given value from 0 to 0xFF.
 This value is deprecated and should be set to 0x33 in all new software.
-.\" ITEM
 .It Fl m Ar mbc_type
 Set the MBC type,
 .Ad 0x147 ,
 to a given value from 0 to 0xFF.
-.\" ITEM
 .It Fl n Ar rom_version
 Set the ROM version,
 .Ad 0x14C ,
 to a given value from 0 to 0xFF.
-.\" ITEM
 .It Fl p Ar pad_value
 Pad the image to a valid size with a given pad value from 0 to 0xFF.
 .Nm
@@ -77,17 +67,14 @@ give a warning thereafter.
 The cartridge size byte
 .Pq Ad 0x148
 will be changed to reflect this new size.
-.\" ITEM
 .It Fl r Ar ram_size
 Set the RAM size,
 .Ad 0x149 ,
 to a given value from 0 to 0xFF.
-.\" ITEM
 .It Fl s
 Set the SGB flag:
 .Ad 0x146
 = 3.
-.\" ITEM
 .It Fl t Ar title
 Set the title string
 .Pq Ad 0x134 \(en Ad 0x143
@@ -98,7 +85,6 @@ flag (
 or
 .Fl C
 .Ns ).
-.\" ITEM
 .It Fl v
 Validate the header and fix checksums: the Nintendo character area
 .Pq Ad 0x104 \(en Ad 0x133 ,
@@ -107,7 +93,6 @@ the header checksum
 and the global checksum
 .Pq Ad 0x14E \(en Ad 0x14F .
 .El
-.\" SECTION
 .Sh EXAMPLES
 Most values in the ROM header are only cosmetic.
 The bare minimum requirements for a workable image are checksums, the Nintendo
@@ -131,14 +116,12 @@ The following will duplicate the header (sans global checksum) of the game
 "Survival Kids":
 .Pp
 .D1 $ rgbfix \-cjsv \-k A4 \-m 0x1B \-p 0xFF \-r 3 \-t SURVIVALKIDAVKE SurvivalKids.gbc
-.\" SECTION
 .Sh SEE ALSO
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,
 .Xr rgblib 1 ,
 .Xr rgblink 1 ,
 .Xr gbz80 7
-.\" SECTION
 .Sh HISTORY
 .Nm
 was originally released by Carsten S\(/orensen as a standalone program called

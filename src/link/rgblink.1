@@ -4,7 +4,6 @@
 .Sh NAME
 .Nm rgblink
 .Nd Game Boy linker
-.\" SECTION
 .Sh SYNOPSIS
 .Nm rgblink
 .Op Fl t
@@ -15,7 +14,6 @@
 .Op Fl p Ar pad_value
 .Op Fl s Ar symbol
 .Ar
-.\" SECTION
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,34 +29,26 @@ option to override this.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
-.\" ITEM
 .It Fl l Ar library
 Include a referenced library module created with
 .Xr rgblib 1 .
 Note that specified libraries will be included only if needed\(emthat is, if
 a SECTION from a library is referenced by an object file.
 Only the relevant SECTION will be included, rather than the entire module.
-.\" ITEM
 .It Fl m Ar mapfile
 Write a mapfile to the given filename.
-.\" ITEM
 .It Fl n Ar symfile
 Write a symbol file to the given filename.
-.\" ITEM
 .It Fl o Ar outfile
 Write ROM image to the given filename.
-.\" ITEM
 .It Fl p Ar pad_value
 When padding an image, pad with this value. The default is 0x00.
-.\" ITEM
 .It Fl s Ar symbol
 ???
-.\" ITEM
 .It Fl t
 Write a tiny (32KiB) ROM file. This forces all DATA/CODE sections to be of
 type HOME, and increases the HOME section size from 16KiB to 32KiB.
 .El
-.\" SECTION
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM
 image like so:
@@ -72,14 +62,12 @@ You should use
 to fix these so that the program will actually run in a Game Boy:
 .Pp
 .D1 $ rgbfix \-v bar.gb
-.\" SECTION
 .Sh SEE ALSO
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,
 .Xr rgbfix 1 ,
 .Xr rgblib 1 ,
 .Xr gbz80 7
-.\" SECTION
 .Sh HISTORY
 .Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,
