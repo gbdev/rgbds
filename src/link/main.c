@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 
 #include "asmotor.h"
@@ -40,7 +39,7 @@ usage(void)
 	printf("usage: rgblink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile]\n");
 	printf("\t    [-s symbol] [-z pad_value] objectfile [...]\n");
 
-	exit(EX_USAGE);
+	exit(1);
 }
 
 /*
@@ -74,9 +73,9 @@ main(int argc, char *argv[])
 		case 'p':
 			fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'p'");
+				errx(1, "Invalid argument for option 'p'");
 			if (fillchar < 0 || fillchar > 0xFF)
-				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
+				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;

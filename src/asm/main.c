@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -137,7 +136,7 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(EX_USAGE, "Must specify exactly 4 characters for option 'g'");
+			errx(1, "Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -231,7 +230,7 @@ PrintUsage(void)
 	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
 	printf("Usage: rgbasm [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value] file\n");
-	exit(EX_USAGE);
+	exit(1);
 }
 /*
  * RGBAsm - MAIN.C
@@ -274,7 +273,7 @@ main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				errx(EX_USAGE, "Must specify exactly 2 characters for option 'b'");
+				errx(1, "Must specify exactly 2 characters for option 'b'");
 			}
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -283,7 +282,7 @@ main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				errx(EX_USAGE, "Must specify exactly 4 characters for option 'g'");
+				errx(1, "Must specify exactly 4 characters for option 'g'");
 			}
 			break;
 		case 'i':
@@ -295,9 +294,9 @@ main(int argc, char *argv[])
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(EX_USAGE, "Invalid argument for option 'p'");
+				errx(1, "Invalid argument for option 'p'");
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
-				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
+				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
 			break;
 		default:
 			PrintUsage();

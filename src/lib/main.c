@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "asmotor.h"
 
@@ -21,7 +20,7 @@ usage(void)
 {
 	printf("RGBLib v" LIB_VERSION " (part of ASMotor " ASMOTOR_VERSION ")\n\n");
 	printf("usage: rgblib file [add | delete | extract | list] [module ...]\n");
-	exit(EX_USAGE);
+	exit(1);
 }
 /*
  * The main routine
@@ -85,10 +84,10 @@ main(int argc, char *argv[])
 						    ("Extracted module '%s'\n",
 						    argv[argn]);
 					} else
-						err(EX_NOINPUT,
+						err(1,
 						    "Unable to write module '%s'", argv[argn]);
 				} else
-					errx(EX_NOINPUT, "Module not found");
+					errx(1, "Module not found");
 
 				argn += 1;
 				argc -= 1;

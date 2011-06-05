@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "link/mylink.h"
 #include "link/main.h"
@@ -446,7 +445,7 @@ obj_Readfile(char *tzObjectfile)
 
 	pObjfile = fopen(tzObjectfile, "rb");
 	if (pObjfile == NULL)
-		err(EX_NOINPUT, "Unable to open object '%s'",
+		err(1, "Unable to open object '%s'",
 		    tzObjectfile);
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
 	fclose(pObjfile);
@@ -496,7 +495,7 @@ lib_Readfile(char *tzLibfile)
 
 	pObjfile = fopen(tzLibfile, "rb");
 	if (pObjfile == NULL)
-		err(EX_NOINPUT, "Unable to open object '%s'", tzLibfile);
+		err(1, "Unable to open object '%s'", tzLibfile);
 	if (!pObjfile) {
 		errx(5, "Unable to open '%s'", tzLibfile);
 	}
