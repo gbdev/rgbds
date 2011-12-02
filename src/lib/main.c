@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,11 +82,16 @@ main(int argc, char *argv[])
 						printf
 						    ("Extracted module '%s'\n",
 						    argv[argn]);
-					} else
-						err(1,
-						    "Unable to write module '%s'", argv[argn]);
-				} else
-					errx(1, "Module not found");
+					} else {
+						fprintf(stderr,
+						    "Unable to write module '%s': ", argv[argn]);
+						perror(NULL);
+						exit(1);
+					}
+				} else {
+					fprintf(stderr, "Module not found\n");
+					exit(1);
+				}
 
 				argn += 1;
 				argc -= 1;

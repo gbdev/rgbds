@@ -1,4 +1,3 @@
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,14 +87,18 @@ lib_ReadLib0(FILE * f, SLONG size)
 		while (size > 0) {
 			if (l == NULL) {
 				l = malloc(sizeof *l);
-				if (!l)
-					errx(5, "Out of memory");
+				if (!l) {
+					fprintf(stderr, "Out of memory\n");
+					exit(1);
+				}
 
 				first = l;
 			} else {
 				l->pNext = malloc(sizeof *l->pNext);
-				if (!l->pNext)
-					errx(5, "Out of memory");
+				if (!l->pNext) {
+					fprintf(stderr, "Out of memory\n");
+					exit(1);
+				}
 
 				l = l->pNext;
 			}
@@ -111,8 +114,10 @@ lib_ReadLib0(FILE * f, SLONG size)
 				fread(l->pData, sizeof(UBYTE), l->nByteLength,
 				    f);
 				size -= l->nByteLength;
-			} else
-				errx(5, "Out of memory");
+			} else {
+				fprintf(stderr, "Out of memory\n");
+				exit(1);
+			}
 
 			l->pNext = NULL;
 		}
@@ -148,8 +153,8 @@ lib_Read(char *filename)
 			return (r);
 		} else {
 			fclose(f);
-			errx(5, "Not a valid xLib library");
-			return (NULL);
+			fprintf(stderr, "Not a valid xLib library\n");
+			exit(1);
 		}
 	} else {
 		printf
@@ -185,8 +190,10 @@ lib_Write(sLibrary * lib, char *filename)
 sLibrary *
 lib_Find(sLibrary * lib, char *filename)
 {
-	if (strlen(filename) >= MAXNAMELENGTH)
-		errx(5, "Module name too long: %s", filename);
+	if (strlen(filename) >= MAXNAMELENGTH) {
+		fprintf(stderr, "Module name too long: %s\n", filename);
+		exit(1);
+	}
 
 	while (lib) {
 		if (strcmp(lib->tName, filename) == 0)
@@ -206,13 +213,18 @@ lib_AddReplace(sLibrary * lib, char *filename)
 	if ((f = fopen(filename, "rb"))) {
 		sLibrary *module;
 
-		if (strlen(filename) >= MAXNAMELENGTH)
-			errx(5, "Module name too long: %s", filename);
+		if (strlen(filename) >= MAXNAMELENGTH) {
+			fprintf(stderr, "Module name too long: %s\n",
+			    filename);
+			exit(1);
+		}
 
 		if ((module = lib_Find(lib, filename)) == NULL) {
 			module = malloc(sizeof *module);
-			if (!module)
-				errx(5, "Out of memory");
+			if (!module) {
+				fprintf(stderr, "Out of memory\n");
+				exit(1);
+			}
 
 			module->pNext = lib;
 			lib = module;
@@ -224,8 +236,10 @@ lib_AddReplace(sLibrary * lib, char *filename)
 		module->nByteLength = file_Length(f);
 		strcpy(module->tName, filename);
 		module->pData = malloc(module->nByteLength);
-		if (!module->pData)
-			errx(5, "Out of memory");
+		if (!module->pData) {
+			fprintf(stderr, "Out of memory\n");
+			exit(1);
+		}
 
 		fread(module->pData, sizeof(UBYTE), module->nByteLength, f);
 
@@ -245,8 +259,10 @@ lib_DeleteModule(sLibrary * lib, char *filename)
 	pp = &lib;
 	first = pp;
 
-	if (strlen(filename) >= MAXNAMELENGTH)
-		errx(5, "Module name too long: %s", filename);
+	if (strlen(filename) >= MAXNAMELENGTH) {
+		fprintf(stderr, "Module name too long: %s\n", filename);
+		exit(1);
+	}
 
 	while ((*pp) && (!found)) {
 		if (strcmp((*pp)->tName, filename) == 0) {
@@ -265,9 +281,10 @@ lib_DeleteModule(sLibrary * lib, char *filename)
 		pp = &((*pp)->pNext);
 	}
 
-	if (!found)
-		errx(5, "Module not found");
-	else
+	if (!found) {
+		fprintf(stderr, "Module not found\n");
+		exit(1);
+	} else
 		printf("Module '%s' deleted from library\n", filename);
 
 	return (*first);

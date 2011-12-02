@@ -1,4 +1,3 @@
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,10 +71,14 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			fillchar = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'p'");
-			if (fillchar < 0 || fillchar > 0xFF)
-				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
+			if (optarg[0] == '\0' || *ep != '\0') {
+				fprintf(stderr, "Invalid argument for option 'p'\n");
+				exit(1);
+			}
+			if (fillchar < 0 || fillchar > 0xFF) {
+				fprintf(stderr, "Argument for option 'p' must be between 0 and 0xFF");
+				exit(1);
+			}
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;

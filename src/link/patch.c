@@ -1,5 +1,5 @@
-#include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "link/mylink.h"
@@ -46,7 +46,8 @@ getsymvalue(SLONG symid)
 	default:
 		break;
 	}
-	errx(5, "*INTERNAL* UNKNOWN SYMBOL TYPE");
+	fprintf(stderr, "*INTERNAL* UNKNOWN SYMBOL TYPE\n");
+	exit(1);
 }
 
 SLONG 
@@ -63,7 +64,8 @@ getsymbank(SLONG symid)
 	default:
 		break;
 	}
-	errx(5, "*INTERNAL* UNKNOWN SYMBOL TYPE");
+	fprintf(stderr, "*INTERNAL* UNKNOWN SYMBOL TYPE\n");
+	exit(1);
 }
 
 SLONG 
@@ -157,18 +159,20 @@ calcrpn(struct sPatch * pPatch)
 			t = rpnpop();
 			rpnpush(t & 0xFF);
 			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
-				errx(5,
-				    "%s(%ld) : Value must be in the HRAM area",
+				fprintf(stderr,
+				    "%s(%ld) : Value must be in the HRAM area\n",
 				    pPatch->pzFilename, pPatch->nLineNo);
+				exit(1);
 			}
 			break;
 		case RPN_PCEZP:
 			t = rpnpop();
 			rpnpush(t & 0xFF);
 			if (t < 0x2000 || t > 0x20FF) {
-				errx(5,
-				    "%s(%ld) : Value must be in the ZP area",
+				fprintf(stderr,
+				    "%s(%ld) : Value must be in the ZP area\n",
 				    pPatch->pzFilename, pPatch->nLineNo);
+				exit(1);
 			}
 			break;
 		case RPN_CONST:
@@ -213,10 +217,11 @@ calcrpn(struct sPatch * pPatch)
 				high |= (*rpn++) << 24;
 				t = rpnpop();
 				if (t < low || t > high) {
-					errx(5,
-					    "%s(%ld) : Value must be in the range [%ld;%ld]",
+					fprintf(stderr,
+					    "%s(%ld) : Value must be in the range [%ld;%ld]\n",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo, low, high);
+					exit(1);
 				}
 				rpnpush(t);
 				size -= 8;
@@ -250,10 +255,11 @@ Patch(void)
 					pSect->pData[pPatch->nOffset] =
 					    (UBYTE) t;
 				} else {
-					errx(5,
+					fprintf(stderr,
 					    "%s(%ld) : Value must be 8-bit\n",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo);
+					exit(1);
 				}
 				break;
 			case PATCH_WORD_L:
@@ -274,10 +280,11 @@ Patch(void)
 						    1] = t & 0xFF;
 					}
 				} else {
-					errx(5,
+					fprintf(stderr,
 					    "%s(%ld) : Value must be 16-bit\n",
 					    pPatch->pzFilename,
 					    pPatch->nLineNo);
+					exit(1);
 				}
 				break;
 			case PATCH_LONG_L:

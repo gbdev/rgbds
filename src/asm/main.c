@@ -5,7 +5,6 @@
  *
  */
 
-#include <err.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,7 +135,9 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(1, "Must specify exactly 4 characters for option 'g'");
+			fprintf(stderr, "Must specify exactly 4 characters "
+			    "for option 'g'\n");
+			exit(1);
 		}
 		break;
 	case 'b':
@@ -144,7 +145,9 @@ opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			errx(5, "Must specify exactly 2 characters for option 'b'");
+			fprintf(stderr, "Must specify exactly 2 characters "
+			    "for option 'b'\n");
+			exit(1);
 		}
 		break;
 	case 'z':
@@ -153,10 +156,13 @@ opt_Parse(char *s)
 
 			result = sscanf(&s[1], "%lx", &newopt.fillchar);
 			if (!((result == EOF) || (result == 1))) {
-				errx(5, "Invalid argument for option 'z'");
+				fprintf(stderr,
+				    "Invalid argument for option 'z'\n");
+				exit(1);
 			}
 		} else {
-			errx(5, "Invalid argument for option 'z'");
+			fprintf(stderr, "Invalid argument for option 'z'\n");
+			exit(1);
 		}
 		break;
 	default:
@@ -273,7 +279,9 @@ main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				errx(1, "Must specify exactly 2 characters for option 'b'");
+				fprintf(stderr, "Must specify exactly "
+				    "2 characters for option 'b'\n");
+				exit(1);
 			}
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -282,7 +290,9 @@ main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				errx(1, "Must specify exactly 4 characters for option 'g'");
+				fprintf(stderr, "Must specify exactly "
+				    "4 characters for option 'g'\n");
+				exit(1);
 			}
 			break;
 		case 'i':
@@ -293,10 +303,16 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'p'");
-			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
-				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
+			if (optarg[0] == '\0' || *ep != '\0') {
+				fprintf(stderr,
+				    "Invalid argument for option 'p'\n");
+				exit(1);
+			}
+			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF) {
+				fprintf(stderr, "Argument for option 'p' "
+				    "must be between 0 and 0xFF\n");
+				exit(1);
+			}
 			break;
 		default:
 			PrintUsage();
@@ -374,14 +390,16 @@ main(int argc, char *argv[])
 					exit(5);
 				}
 			} else {
-				errx(5, "Unterminated IF construct (%ld levels)!",
+				fprintf(stderr,
+				    "Unterminated IF construct (%ld levels)!\n",
 				    nIFDepth);
-				exit(5);
+				exit(1);
 			}
 		} else {
-			printf("Assembly aborted in pass 1 (%ld errors)!\n",
+			fprintf(stderr,
+			    "Assembly aborted in pass 1 (%ld errors)!\n",
 			    nErrors);
-			exit(5);
+			exit(1);
 		}
 	} else {
 		printf("File '%s' not found\n", tzMainfile);
