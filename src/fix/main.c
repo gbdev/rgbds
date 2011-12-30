@@ -24,9 +24,10 @@
 static void
 usage(void)
 {
-	printf("usage: rgbfix [-Ccjsv] [-k licensee_str] [-l licensee_id] "
-	    "[-m mbc_type]\n" "           [-n rom_version] [-p pad_value] "
-	    "[-r ram_size] [-t title_str] file.gb\n");
+	printf("usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] "
+	    "[-l licensee_id]\n" "              [-m mbc_type] [-n rom_version] "
+	    "[-p pad_value] [-r ram_size]\n"
+	    "              [-t title_str] file.gb\n");
 }
 
 int
@@ -56,6 +57,7 @@ main(int argc, char *argv[])
 	/* all flags default to false unless options specify otherwise */
 	bool validate = false;
 	bool settitle = false;
+	bool setid = false;
 	bool colorcompatible = false;
 	bool coloronly = false;
 	bool nonjapan = false;
@@ -68,6 +70,7 @@ main(int argc, char *argv[])
 	bool setversion = false;
 
 	char *title = NULL; /* game title in ASCII */
+	char *id = NULL; /* game ID in ASCII */
 	char *newlicensee = NULL; /* new licensee ID, two ASCII characters */
 
 	int licensee = -1;  /* old licensee ID */
@@ -76,13 +79,24 @@ main(int argc, char *argv[])
 	int version = -1;   /* mask ROM version number */
 	int padvalue = -1;  /* to pad the rom with if it changes size */
 
-	while ((ch = getopt(argc, argv, "Ccjk:l:m:n:p:sr:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			coloronly = true;
 			/* FALLTHROUGH */
 		case 'c':
 			colorcompatible = true;
+			break;
+		case 'i':
+			setid = true;
+
+			if (strlen(optarg) != 4) {
+				fprintf(stderr, "Game ID %s must be exactly 4 "
+				    "characters\n", optarg);
+				exit(1);
+			}
+
+			id = optarg;
 			break;
 		case 'j':
 			nonjapan = true;
@@ -251,11 +265,27 @@ main(int argc, char *argv[])
 		 * may conflict.
 		 */
 
+		/*
+		 * See also: Game ID at 0x13F–0x142. These four ASCII
+		 * characters may conflict with the title.
+		 */
+
 		fseek(rom, 0x134, SEEK_SET);
 		fwrite(title, 1, strlen(title) + 1, rom);
 
 		while (ftell(rom) < 0x143)
 			fputc(0, rom);
+	}
+
+	if (setid) {
+		/*
+		 * Offset 0x13F–0x142: Game ID
+		 * This is a four-character game ID in ASCII (no high-bit
+		 * characters).
+		 */
+
+		fseek(rom,0x13F,SEEK_SET);
+		fwrite(id, 1, 4, rom);
 	}
 
 	if (colorcompatible) {

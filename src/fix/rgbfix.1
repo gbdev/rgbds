@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm rgbfix
 .Op Fl Ccjsv
+.Op Fl i Ar game_id
 .Op Fl k Ar licensee_str
 .Op Fl l Ar licensee_id
 .Op Fl m Ar mbc_type
@@ -38,6 +39,12 @@ If both this and the
 flag are set,
 .Fl C
 takes precedence.
+.It Fl i Ar game_id
+Set the game ID string
+.Pq Ad 0x13F No Ns \(en Ns Ad 0x142
+to a given string of exactly 4 characters.
+If both this and the title are set, the game ID will overwrite the
+overlapping portion of the title.
 .It Fl j
 Set the non-Japanese region flag:
 .Ad 0x14A
@@ -82,6 +89,8 @@ to a given string, truncated to at most 16 characters.
 It is recommended to use 15 characters instead, to avoid clashing with the CGB
 flag
 .Pq Fl c No or Fl C .
+If both this and the game ID are set, the game ID will overwrite the
+overlapping portion of the title.
 .It Fl v
 Validate the header and fix checksums: the Nintendo character area
 .Pq Ad 0x104 No Ns \(en Ns Ad 0x133 ,
