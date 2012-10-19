@@ -26,9 +26,27 @@ privileges):
 
   make install
 
-You can read the manuals with the man(1) command. E.g.,
+After installation, you can read the manuals with the man(1) command. E.g.,
 
   man 1 rgbasm
+
+
+Note: the variables described below can affect installation behavior when given
+on the make command line. For example, to install rgbds in your home directory
+instead of systemwide, run the following:
+
+  mkdir -p $HOME/{bin,man/man1,man/man7}
+  make install PREFIX=$HOME
+
+
+PREFIX: Location where RGBDS will be installed. Defaults to /usr/local.
+
+BINPREFIX: Location where the RGBDS programs will be installed. Defaults
+to ${PREFIX}/bin.
+
+MANPREFIX: Location where the RGBDS man pages will be installed. Defaults
+to ${PREFIX}/man.
+
 
   Installing RGBDS (Windows)
 ============================

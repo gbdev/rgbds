@@ -1,5 +1,9 @@
 CFLAGS +=	-Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
-PREFIX ?=      /usr/local
+
+# User-defined variables
+PREFIX =	/usr/local
+BINPREFIX =	${PREFIX}/bin
+MANPREFIX =	${PREFIX}/man
 
 yacc_pre := \
 	src/asm/yaccprt1.y\
@@ -47,19 +51,19 @@ clean:
 	@rm -rf src/asm/asmy.c
 
 install: all
-	@install -s -o root -g bin -m 555 rgbasm ${PREFIX}/bin/rgbasm
-	@install -s -o root -g bin -m 555 rgbfix ${PREFIX}/bin/rgbfix
-	@install -s -o root -g bin -m 555 rgblink ${PREFIX}/bin/rgblink
-	@install -s -o root -g bin -m 555 rgblib ${PREFIX}/bin/rgblib
-	@install -o root -g bin -m 444 src/rgbds.7 ${PREFIX}/man/cat7/rgbds.7
-	@install -o root -g bin -m 444 src/asm/rgbasm.1 \
-		${PREFIX}/man/cat1/rgbasm.1
-	@install -o root -g bin -m 444 src/fix/rgbfix.1 \
-		${PREFIX}/man/cat1/rgbfix.1
-	@install -o root -g bin -m 444 src/link/rgblink.1 \
-		${PREFIX}/man/cat1/rgblink.1
-	@install -o root -g bin -m 444 src/lib/rgblib.1 \
-		${PREFIX}/man/cat1/rgblib.1
+	@install -s -m 555 rgbasm ${BINPREFIX}/rgbasm
+	@install -s -m 555 rgbfix ${BINPREFIX}/rgbfix
+	@install -s -m 555 rgblink ${BINPREFIX}/rgblink
+	@install -s -m 555 rgblib ${BINPREFIX}/rgblib
+	@install -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
+	@install -m 444 src/asm/rgbasm.1 \
+		${MANPREFIX}/man1/rgbasm.1
+	@install -m 444 src/fix/rgbfix.1 \
+		${MANPREFIX}/man1/rgbfix.1
+	@install -m 444 src/link/rgblink.1 \
+		${MANPREFIX}/man1/rgblink.1
+	@install -m 444 src/lib/rgblib.1 \
+		${MANPREFIX}/man1/rgblib.1
 
 rgbasm: $(rgbasm_obj)
 	@${CC} $(CFLAGS) -o $@ $(rgbasm_obj) -lm
