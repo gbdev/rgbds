@@ -45,10 +45,10 @@ rgbfix_obj := \
 all: rgbasm rgblib rgblink rgbfix
 
 clean:
-	${Q}rm -rf rgbasm $(rgbasm_obj)
-	${Q}rm -rf rgblib $(rgblib_obj)
-	${Q}rm -rf rgblink $(rgblink_obj)
-	${Q}rm -rf rgbfix $(rgbfix_obj)
+	${Q}rm -rf rgbasm ${rgbasm_obj}
+	${Q}rm -rf rgblib ${rgblib_obj}
+	${Q}rm -rf rgblink ${rgblink_obj}
+	${Q}rm -rf rgbfix ${rgbfix_obj}
 	${Q}rm -rf src/asm/asmy.c
 
 install: all
@@ -66,23 +66,23 @@ install: all
 	${Q}install -m 444 src/lib/rgblib.1 \
 		${MANPREFIX}/man1/rgblib.1
 
-rgbasm: $(rgbasm_obj)
-	${Q}${CC} $(CFLAGS) -o $@ $(rgbasm_obj) -lm
+rgbasm: ${rgbasm_obj}
+	${Q}${CC} ${CFLAGS} -o $@ ${rgbasm_obj} -lm
 
-rgblib: $(rgblib_obj)
-	${Q}${CC} $(CFLAGS) -o $@ $(rgblib_obj)
+rgblib: ${rgblib_obj}
+	${Q}${CC} ${CFLAGS} -o $@ ${rgblib_obj}
 
-rgblink: $(rgblink_obj)
-	${Q}${CC} $(CFLAGS) -o $@ $(rgblink_obj)
+rgblink: ${rgblink_obj}
+	${Q}${CC} ${CFLAGS} -o $@ ${rgblink_obj}
 
-rgbfix: $(rgbfix_obj)
-	${Q}${CC} $(CFLAGS) -o $@ $(rgbfix_obj)
+rgbfix: ${rgbfix_obj}
+	${Q}${CC} ${CFLAGS} -o $@ ${rgbfix_obj}
 
 .c.o:
-	${Q}${CC} $(CFLAGS) -c -o $@ $<
+	${Q}${CC} ${CFLAGS} -c -o $@ $<
 
 src/asm/asmy.c: src/asm/asmy.y
 	${Q}${YACC} -d -o $@ $<
 
-src/asm/asmy.y: $(yacc_pre)
-	${Q}cat $(yacc_pre) > $@
+src/asm/asmy.y: ${yacc_pre}
+	${Q}cat ${yacc_pre} > $@
