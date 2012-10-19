@@ -45,10 +45,10 @@ rgbfix_obj := \
 all: rgbasm rgblib rgblink rgbfix
 
 clean:
-	${Q}rm -rf rgbasm ${rgbasm_obj}
-	${Q}rm -rf rgblib ${rgblib_obj}
-	${Q}rm -rf rgblink ${rgblink_obj}
-	${Q}rm -rf rgbfix ${rgbfix_obj}
+	${Q}rm -rf rgbasm rgbasm.exe ${rgbasm_obj}
+	${Q}rm -rf rgblib rgblib.exe ${rgblib_obj}
+	${Q}rm -rf rgblink rgblink.exe ${rgblink_obj}
+	${Q}rm -rf rgbfix rgbfix.exe ${rgbfix_obj}
 	${Q}rm -rf src/asm/asmy.c
 
 install: all
@@ -86,3 +86,15 @@ src/asm/asmy.c: src/asm/asmy.y
 
 src/asm/asmy.y: ${yacc_pre}
 	${Q}cat ${yacc_pre} > $@
+
+
+# Below is a target for the project maintainer to easily create win32 exes.
+# This is not for Windows users!
+# If you're building on Windows with Cygwin or Mingw, just follow the Unix
+# install instructions instead.
+mingw:
+	${Q}env PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
+	${Q}mv rgbasm rgbasm.exe
+	${Q}mv rgblib rgblib.exe
+	${Q}mv rgblink rgblink.exe
+	${Q}mv rgbfix rgbfix.exe
