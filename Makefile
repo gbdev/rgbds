@@ -1,5 +1,4 @@
-CFLAGS +=	-Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99 \
-			-D_POSIX_C_SOURCE=200112L
+CFLAGS +=	-Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
 PREFIX ?=      /usr/local
 
 yacc_pre := \
