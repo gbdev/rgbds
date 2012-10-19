@@ -47,6 +47,9 @@ to ${PREFIX}/bin.
 MANPREFIX: Location where the RGBDS man pages will be installed. Defaults
 to ${PREFIX}/man.
 
+Q: Whether to quiet the build or not. To make the build more verbose, clear
+this variable. Defaults to @.
+
 
   Installing RGBDS (Windows)
 ============================
