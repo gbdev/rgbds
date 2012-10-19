@@ -98,3 +98,14 @@ mingw:
 	${Q}mv rgblib rgblib.exe
 	${Q}mv rgblink rgblink.exe
 	${Q}mv rgbfix rgbfix.exe
+
+# Below is a target for the project maintainer to easily create web manuals.
+# It relies on mandoc: http://mdocml.bsd.lv
+MANDOC =	-Thtml -Oman=/rgbds/manual/%N/ -Ostyle=/rgbds/manual/manual.css -Ios=General
+
+wwwman:
+	${Q}mandoc ${MANDOC} src/rgbds.7 | sed s/OpenBSD/General/ > rgbds.html
+	${Q}mandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > rgbasm.html
+	${Q}mandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > rgbfix.html
+	${Q}mandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > rgblib.html
+	${Q}mandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > rgblink.html
