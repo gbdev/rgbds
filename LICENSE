@@ -1,11 +1,19 @@
-http://www.otakunozoku.com/1999/08/01/rednex-gameboy-development-system/
+rgbasm, rgblink, and rgblib are derived from Justin Lloyd's RGBDS, which
+is released under the following license:
 
-"The executables are free to use, either for personal hobby use, or full
-blown commercial productions--I know of at least a dozen commercial
-games you can purchase that are written with RGBDS--and the source code
-is free to modify.
+                      DO WHATEVER PUBLIC LICENSE*
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
-"The only thing I ask is that you do not charge for either distributing
-the executables or source code, and any derivative works you give
-credit to the original authors of the tools. That means you have to say
-'Thanks' to the original authors SurfSmurf and Otaku."
+  0. You can do whatever you want to with the work.
+  1. You cannot stop anybody from doing whatever they want to with the work.
+  2. You cannot revoke anybody elses DO WHATEVER PUBLIC LICENSE in the work.
+
+ This program is free software. It comes without any warranty, to
+ the extent permitted by applicable law. You can redistribute it
+ and/or modify it under the terms of the DO WHATEVER PUBLIC LICENSE
+ 
+ Software originally created by Justin Lloyd @ http://otakunozoku.com/
+
+
+rgbfix was rewritten from scratch by Anthony J. Bentley, and is released
+under the ISC license; see the source file for the text of the license.
