@@ -392,6 +392,15 @@ scanagain:
 		hash = 0;
 		s = pLexBuffer;
 		while (yyleng < nLexMaxLeng) {
+			/* XXX: Kludge warning! The dereference of s below
+			 * may go beyond the end of the buffer. We use the
+			 * following test to stop that from happening,
+			 * without really understanding what the rest of
+			 * the code is doing. This may not be the correct
+			 * fix! */
+			if (!*s)
+				break;
+
 			yyleng += 1;
 			hash = ((hash << 1) + (toupper(*s))) % LEXHASHSIZE;
 			s += 1;
