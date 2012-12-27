@@ -90,7 +90,7 @@ area_AllocAbsCODEAnyBank(SLONG org, SLONG size)
 {
 	SLONG i;
 
-	for (i = 1; i <= 255; i += 1) {
+	for (i = 1; i <= 511; i += 1) {
 		if (area_AllocAbs(&BankFree[i], org, size) == org)
 			return (i);
 	}
@@ -126,7 +126,7 @@ area_AllocCODEAnyBank(SLONG size)
 {
 	SLONG i, org;
 
-	for (i = 1; i <= 255; i += 1) {
+	for (i = 1; i <= 511; i += 1) {
 		if ((org = area_Alloc(&BankFree[i], size)) != -1)
 			return ((i << 16) | org);
 	}
@@ -204,7 +204,7 @@ AssignSections(void)
 				BankFree[i]->nSize = 0x4000;
 				MaxAvail[i] = 0x4000;
 			}
-		} else if (i >= 1 && i <= 255) {
+		} else if (i >= 1 && i <= 511) {
 			BankFree[i]->nOrg = 0x4000;
 			/*
 			 * Now, this shouldn't really be necessary... but for
@@ -327,7 +327,7 @@ AssignSections(void)
 						 */
 
 						if (pSection->nBank >= 1
-						    && pSection->nBank <= 255) {
+						    && pSection->nBank <= 511) {
 							if (area_AllocAbs
 							    (&BankFree
 								[pSection->nBank],
@@ -365,7 +365,7 @@ AssignSections(void)
 		    && pSection->Type == SECT_CODE
 		    && pSection->nOrg == -1 && pSection->nBank != -1) {
 			/* User wants to have a say... and he's pissed */
-			if (pSection->nBank >= 1 && pSection->nBank <= 255) {
+			if (pSection->nBank >= 1 && pSection->nBank <= 511) {
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
 					    pSection->nByteSize)) == -1) {

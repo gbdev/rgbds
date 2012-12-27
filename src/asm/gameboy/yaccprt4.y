@@ -13,7 +13,7 @@ section:
 	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
 		{
 			if( $4==SECT_CODE ) {
-				if( $8>=1 && $8<=255 )
+				if( $8>=1 && $8<=0x1ff )
 					out_NewAbsSection($2,$4,-1,$8);
 				else
 					yyerror( "BANK value out of range" );
@@ -24,7 +24,7 @@ section:
 		{
 			if( $4==SECT_CODE ) {
 				if( $6>=0 && $6<0x10000 ) {
-					if( $11>=1 && $11<=255 )
+					if( $11>=1 && $11<=0x1ff )
 						out_NewAbsSection($2,$4,$6,$11);
 					else
 						yyerror( "BANK value out of range" );

@@ -59,7 +59,7 @@ MapfileInitBank(SLONG bank)
 		currentbank = bank;
 		if (bank == 0)
 			fprintf(mf, "Bank #0 (HOME):\n");
-		else if (bank <= 255)
+		else if (bank < BANK_BSS)
 			fprintf(mf, "Bank #%ld:\n", bank);
 		else if (bank == BANK_BSS)
 			fprintf(mf, "BSS:\n");
@@ -69,7 +69,7 @@ MapfileInitBank(SLONG bank)
 			fprintf(mf, "VRAM:\n");
 	}
 	if (sf) {
-		sfbank = (bank >= 1 && bank <= 255) ? bank : 0;
+		sfbank = (bank >= 1 && bank <= 511) ? bank : 0;
 	}
 }
 
