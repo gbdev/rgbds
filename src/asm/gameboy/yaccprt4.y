@@ -1,48 +1,46 @@
-section			:	T_POP_SECTION string ',' sectiontype
-					{ out_NewSection($2,$4); }
-				|	T_POP_SECTION string ',' sectiontype '[' const ']'
-					{
-						if( $6>=0 && $6<0x10000 )
-							out_NewAbsSection($2,$4,$6,-1);
-						else
-							yyerror( "Address must be 16-bit" );
-					}
-				|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
-					{
-						if( $4==SECT_CODE )
-						{
-							if( $8>=1 && $8<=255 )
-								out_NewAbsSection($2,$4,-1,$8);
-							else
-								yyerror( "BANK value out of range" );
-						}
-						else
-							yyerror( "BANK only allowed for CODE/DATA" );
-					}
-				|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
-					{
-						if( $4==SECT_CODE )
-						{
-							if( $6>=0 && $6<0x10000 )
-							{
-								if( $11>=1 && $11<=255 )
-									out_NewAbsSection($2,$4,$6,$11);
-								else
-									yyerror( "BANK value out of range" );
-							}
-							else
-								yyerror( "Address must be 16-bit" );
-						}
-						else
-							yyerror( "BANK only allowed for CODE/DATA" );
-					}
+section:
+		T_POP_SECTION string ',' sectiontype
+		{
+			out_NewSection($2,$4);
+		}
+	|	T_POP_SECTION string ',' sectiontype '[' const ']'
+		{
+			if( $6>=0 && $6<0x10000 )
+				out_NewAbsSection($2,$4,$6,-1);
+			else
+				yyerror( "Address must be 16-bit" );
+		}
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
+		{
+			if( $4==SECT_CODE ) {
+				if( $8>=1 && $8<=255 )
+					out_NewAbsSection($2,$4,-1,$8);
+				else
+					yyerror( "BANK value out of range" );
+			} else
+				yyerror( "BANK only allowed for CODE/DATA" );
+		}
+	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
+		{
+			if( $4==SECT_CODE ) {
+				if( $6>=0 && $6<0x10000 ) {
+					if( $11>=1 && $11<=255 )
+						out_NewAbsSection($2,$4,$6,$11);
+					else
+						yyerror( "BANK value out of range" );
+				} else
+					yyerror( "Address must be 16-bit" );
+			} else
+				yyerror( "BANK only allowed for CODE/DATA" );
+		}
 ;
 
-sectiontype		:	T_SECT_BSS	{ $$=SECT_BSS; }
-				|	T_SECT_VRAM	{ $$=SECT_VRAM; }
-				|	T_SECT_CODE	{ $$=SECT_CODE; }
-				|	T_SECT_HOME	{ $$=SECT_HOME; }
-				|	T_SECT_HRAM	{ $$=SECT_HRAM; }
+sectiontype:
+		T_SECT_BSS	{ $$=SECT_BSS; }
+	|	T_SECT_VRAM	{ $$=SECT_VRAM; }
+	|	T_SECT_CODE	{ $$=SECT_CODE; }
+	|	T_SECT_HOME	{ $$=SECT_HOME; }
+	|	T_SECT_HRAM	{ $$=SECT_HRAM; }
 ;
 
 
