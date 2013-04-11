@@ -29,6 +29,7 @@ usage(void)
 	    "[-l licensee_id]\n" "              [-m mbc_type] [-n rom_version] "
 	    "[-p pad_value] [-r ram_size]\n"
 	    "              [-t title_str] file.gb\n");
+	exit(1);
 }
 
 int
