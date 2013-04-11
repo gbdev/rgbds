@@ -45,10 +45,11 @@ rgbfix_obj := \
 all: rgbasm rgblib rgblink rgbfix
 
 clean:
-	${Q}rm -rf rgbasm rgbasm.exe ${rgbasm_obj}
-	${Q}rm -rf rgblib rgblib.exe ${rgblib_obj}
-	${Q}rm -rf rgblink rgblink.exe ${rgblink_obj}
-	${Q}rm -rf rgbfix rgbfix.exe ${rgbfix_obj}
+	${Q}rm -rf rgbds.html
+	${Q}rm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
+	${Q}rm -rf rgblib rgblib.exe ${rgblib_obj} rgblib.html
+	${Q}rm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
+	${Q}rm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
 	${Q}rm -rf src/asm/asmy.c
 
 install: all
