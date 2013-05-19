@@ -8,7 +8,7 @@ section:
 			if( $6>=0 && $6<0x10000 )
 				out_NewAbsSection($2,$4,$6,-1);
 			else
-				yyerror( "Address must be 16-bit" );
+				yyerror("Address $%x not 16-bit", $6);
 		}
 	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
 		{
@@ -16,9 +16,9 @@ section:
 				if( $8>=1 && $8<=0x1ff )
 					out_NewAbsSection($2,$4,-1,$8);
 				else
-					yyerror( "BANK value out of range" );
+					yyerror("ROM bank value $%x out of range (1 to $1ff)", $8);
 			} else
-				yyerror( "BANK only allowed for CODE/DATA" );
+				yyerror("BANK only allowed for CODE/DATA");
 		}
 	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
 		{
@@ -27,11 +27,11 @@ section:
 					if( $11>=1 && $11<=0x1ff )
 						out_NewAbsSection($2,$4,$6,$11);
 					else
-						yyerror( "BANK value out of range" );
+						yyerror("ROM bank value $%x out of range (1 to $1ff)", 8);
 				} else
-					yyerror( "Address must be 16-bit" );
+					yyerror("Address $%x not 16-bit", $6);
 			} else
-				yyerror( "BANK only allowed for CODE/DATA" );
+				yyerror("BANK only allowed for CODE/DATA");
 		}
 ;
 
@@ -196,7 +196,7 @@ z80_ldio		:	T_Z80_LDIO T_MODE_A comma op_mem_ind
 						if( (!rpn_isReloc(&$4))
 						&&	($4.nVal<0 || ($4.nVal>0xFF && $4.nVal<0xFF00) || $4.nVal>0xFFFF) )
 						{
-							yyerror( "Source must be in the IO/HRAM area" );
+							yyerror("Source address $%x not in HRAM ($FF00 to $FFFE)", $4.nVal);
 						}
 
 						out_AbsByte(0xF0);
@@ -210,7 +210,7 @@ z80_ldio		:	T_Z80_LDIO T_MODE_A comma op_mem_ind
 						if( (!rpn_isReloc(&$2))
 						&&	($2.nVal<0 || ($2.nVal>0xFF && $2.nVal<0xFF00) || $2.nVal>0xFFFF) )
 						{
-							yyerror( "Destination must be in the IO/HRAM area" );
+							yyerror("Destination address $%x not in HRAM ($FF00 to $FFFE)", $2.nVal);
 						}
 
 						out_AbsByte(0xE0);
@@ -271,7 +271,7 @@ z80_ld_r		:	T_Z80_LD reg_r comma const_8bit
 					{
 						if( ($2==REG_HL_IND) && ($4==REG_HL_IND) )
 						{
-							yyerror( "LD (HL),(HL) not allowed" );
+							yyerror("LD [HL],[HL] not a valid instruction");
 						}
 						else
 							out_AbsByte(0x40|($2<<3)|$4);
@@ -284,7 +284,7 @@ z80_ld_a		:	T_Z80_LD reg_r comma T_MODE_C_IND
 							out_AbsByte(0xF2);
 						else
 						{
-							yyerror( "Destination operand must be A" );
+							yyerror("Destination operand must be A");
 						}
 					}
 				|	T_Z80_LD reg_r comma reg_rr
@@ -293,7 +293,7 @@ z80_ld_a		:	T_Z80_LD reg_r comma T_MODE_C_IND
 							out_AbsByte(0x0A|($4<<4));
 						else
 						{
-							yyerror( "Destination operand must be A" );
+							yyerror("Destination operand must be A");
 						}
 					}
 				|	T_Z80_LD reg_r comma op_mem_ind
@@ -313,7 +313,7 @@ z80_ld_a		:	T_Z80_LD reg_r comma T_MODE_C_IND
 						}
 						else
 						{
-							yyerror( "Destination operand must be A" );
+							yyerror("Destination operand must be A");
 						}
 					}
 ;
@@ -390,11 +390,11 @@ z80_rst 		:	T_Z80_RST const_8bit
 					{
 						if( rpn_isReloc(&$2) )
 						{
-							yyerror( "Address for RST must be absolute" );
+							yyerror("Address for RST must be absolute");
 						}
 						else if( ($2.nVal&0x38)!=$2.nVal )
 						{
-							yyerror( "Invalid address for RST" );
+							yyerror("Invalid address $%x for RST", $2.nVal);
 						}
 						else
 							out_AbsByte(0xC7|$2.nVal);

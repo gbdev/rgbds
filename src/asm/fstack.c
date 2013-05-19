@@ -163,7 +163,7 @@ yywrap(void)
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
  *
- * Dump the context stack to stdout
+ * Dump the context stack to stderr
  *
  */
 
@@ -175,11 +175,12 @@ fstk_Dump(void)
 	pLastFile = pFileStack;
 
 	while (pLastFile) {
-		printf("%s(%ld) -> ", pLastFile->tzFileName, pLastFile->nLine);
+		fprintf(stderr, "%s(%ld) -> ", pLastFile->tzFileName,
+		    pLastFile->nLine);
 		pLastFile = pLastFile->pNext;
 	}
 
-	printf("%s(%ld)", tzCurrentFileName, nLineNo);
+	fprintf(stderr, "%s(%ld)", tzCurrentFileName, nLineNo);
 }
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
@@ -326,7 +327,7 @@ fstk_RunString(char *s)
 		    yy_scan_bytes(pSym->pMacro, strlen(pSym->pMacro));
 		yy_switch_to_buffer(CurrentFlexHandle);
 	} else
-		yyerror("No such string symbol");
+		yyerror("No such string symbol '%s'", s);
 }
 /*
  * RGBAsm - FSTACK.C (FileStack routines)

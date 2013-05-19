@@ -217,8 +217,7 @@ sym_Purge(char *tzName)
 
 		free(pSym);
 	} else {
-		sprintf(temptext, "'%s' not defined", tzName);
-		yyerror(temptext);
+		yyerror("'%s' not defined", tzName);
 	}
 }
 /*
@@ -245,10 +244,8 @@ sym_isConstDefined(char *tzName)
 		    nType & (SYMF_EQU | SYMF_SET | SYMF_MACRO | SYMF_STRING)) {
 			return (1);
 		} else {
-			sprintf(temptext,
-			    "'%s' is not allowed as argument to the DEF function",
-			    tzName);
-			fatalerror(temptext);
+			fatalerror("'%s' is not allowed as argument to the "
+			    "DEF function", tzName);
 		}
 	}
 	return (0);
@@ -309,8 +306,7 @@ sym_GetStringValue(char *tzSym)
 	if ((pSym = sym_FindSymbol(tzSym)) != NULL)
 		return (pSym->pMacro);
 	else {
-		sprintf(temptext, "Stringsymbol '%s' not defined", tzSym);
-		yyerror(temptext);
+		yyerror("Stringsymbol '%s' not defined", tzSym);
 	}
 
 	return (NULL);
@@ -339,8 +335,7 @@ sym_GetConstantValue(char *s)
 			fatalerror("Expression must have a constant value");
 		}
 	} else {
-		sprintf(temptext, "'%s' not defined", s);
-		yyerror(temptext);
+		yyerror("'%s' not defined", s);
 	}
 
 	return (0);
@@ -365,9 +360,7 @@ sym_GetValue(char *s)
 	if ((psym = findsymbol(s, pscope)) != NULL) {
 		if (psym->nType & SYMF_DEFINED) {
 			if (psym->nType & (SYMF_MACRO | SYMF_STRING)) {
-				sprintf(temptext,
-				    "'%s' is a macro or string symbol", s);
-				yyerror(temptext);
+				yyerror("'%s' is a macro or string symbol", s);
 			}
 			return (getvaluefield(psym));
 		} else {
@@ -375,8 +368,7 @@ sym_GetValue(char *s)
 				/* 0x80 seems like a good default value... */
 				return (0x80);
 			} else {
-				sprintf(temptext, "'%s' not defined", s);
-				yyerror(temptext);
+				yyerror("'%s' not defined", s);
 			}
 		}
 	} else {
@@ -384,8 +376,7 @@ sym_GetValue(char *s)
 			createsymbol(s);
 			return (0x80);
 		} else {
-			sprintf(temptext, "'%s' not defined", s);
-			yyerror(temptext);
+			yyerror("'%s' not defined", s);
 		}
 	}
 
@@ -411,18 +402,14 @@ sym_GetDefinedValue(char *s)
 	if ((psym = findsymbol(s, pscope)) != NULL) {
 		if ((psym->nType & SYMF_DEFINED)) {
 			if (psym->nType & (SYMF_MACRO | SYMF_STRING)) {
-				sprintf(temptext,
-				    "'%s' is a macro or string symbol", s);
-				yyerror(temptext);
+				yyerror("'%s' is a macro or string symbol", s);
 			}
 			return (getvaluefield(psym));
 		} else {
-			sprintf(temptext, "'%s' not defined", s);
-			yyerror(temptext);
+			yyerror("'%s' not defined", s);
 		}
 	} else {
-		sprintf(temptext, "'%s' not defined", s);
-		yyerror(temptext);
+		yyerror("'%s' not defined", s);
 	}
 
 	return (0);
@@ -558,9 +545,7 @@ sym_AddEqu(char *tzSym, SLONG value)
 
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				sprintf(temptext, "'%s' already defined",
-				    tzSym);
-				yyerror(temptext);
+				yyerror("'%s' already defined", tzSym);
 			}
 		} else
 			nsym = createsymbol(tzSym);
@@ -586,8 +571,7 @@ sym_AddString(char *tzSym, char *tzValue)
 
 	if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 		if (nsym->nType & SYMF_DEFINED) {
-			sprintf(temptext, "'%s' already defined", tzSym);
-			yyerror(temptext);
+			yyerror("'%s' already defined", tzSym);
 		}
 	} else
 		nsym = createsymbol(tzSym);
@@ -661,9 +645,7 @@ sym_AddLocalReloc(char *tzSym)
 		if (pScope) {
 			if ((nsym = findsymbol(tzSym, pScope)) != NULL) {
 				if (nsym->nType & SYMF_DEFINED) {
-					sprintf(temptext,
-					    "'%s' already defined", tzSym);
-					yyerror(temptext);
+					yyerror("'%s' already defined", tzSym);
 				}
 			} else
 				nsym = createsymbol(tzSym);
@@ -696,9 +678,7 @@ sym_AddReloc(char *tzSym)
 
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				sprintf(temptext, "'%s' already defined",
-				    tzSym);
-				yyerror(temptext);
+				yyerror("'%s' already defined", tzSym);
 			}
 		} else
 			nsym = createsymbol(tzSym);
@@ -739,8 +719,7 @@ sym_Export(char *tzSym)
 			if (nsym->nType & SYMF_DEFINED)
 				return;
 		}
-		sprintf(temptext, "'%s' not defined", tzSym);
-		yyerror(temptext);
+		yyerror("'%s' not defined", tzSym);
 	}
 
 }
@@ -759,8 +738,7 @@ sym_Import(char *tzSym)
 		struct sSymbol *nsym;
 
 		if (findsymbol(tzSym, NULL)) {
-			sprintf(temptext, "'%s' already defined", tzSym);
-			yyerror(temptext);
+			yyerror("'%s' already defined", tzSym);
 		}
 		if ((nsym = createsymbol(tzSym)) != NULL)
 			nsym->nType |= SYMF_IMPORT;
@@ -811,9 +789,7 @@ sym_AddMacro(char *tzSym)
 
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				sprintf(temptext, "'%s' already defined",
-				    tzSym);
-				yyerror(temptext);
+				yyerror("'%s' already defined", tzSym);
 			}
 		} else
 			nsym = createsymbol(tzSym);

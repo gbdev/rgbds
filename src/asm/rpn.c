@@ -155,8 +155,7 @@ rpn_Bank(struct Expression * expr, char *tzSym)
 
 		psym = sym_FindSymbol(tzSym);
 		if (nPass == 2 && psym == NULL) {
-			sprintf(temptext, "'%s' not defined", tzSym);
-			yyerror(temptext);
+			yyerror("'%s' not defined", tzSym);
 		}
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK);

@@ -19,8 +19,8 @@ extern void opt_Push(void);
 extern void opt_Pop(void);
 extern void opt_Parse(char *s);
 
-void fatalerror(char *s);
-void yyerror(char *s);
+void fatalerror(const char *fmt, ...);
+void yyerror(const char *fmt, ...);
 
 extern char temptext[1024];
 

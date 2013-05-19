@@ -47,8 +47,7 @@ macro			:	T_ID
 
 						if( !fstk_RunMacro($1) )
 						{
-							fprintf(stderr, "Macro '%s' not defined", $1);
-							yyerror( "No such macro" );
+							yyerror("Macro '%s' not defined", $1);
 						}
 					}
 ;
@@ -138,11 +137,11 @@ pushs			:	T_POP_PUSHS
 ;
 
 fail			:	T_POP_FAIL string
-					{ fatalerror($2); }
+					{ fatalerror("%s", $2); }
 ;
 
 warn			:	T_POP_WARN string
-					{ yyerror($2); }
+					{ yyerror("%s", $2); }
 ;
 
 shift			:	T_POP_SHIFT
@@ -268,8 +267,7 @@ include			:	T_POP_INCLUDE string
 					{
 						if( !fstk_RunInclude($2) )
 						{
-							fprintf(stderr, "Could not open file '%s' : %s\n", $2, strerror(errno));
-							yyerror( "File not found" );
+							yyerror("Could not open file '%s' : %s\n", $2, strerror(errno));
 						}
 					}
 ;
@@ -328,7 +326,7 @@ const_3bit		:	const
 					{
 						if( ($1<0) || ($1>7) )
 						{
-							yyerror( "Immediate value must be 3-bit" );
+							yyerror("Immediate value must be 3-bit");
 						}
 						else
 							$$=$1&0x7;
@@ -366,7 +364,7 @@ const_PCrel		:	relocconst
 					{
 						$$ = $1;
 						if( !rpn_isPCRelative(&$1) )
-							yyerror( "Expression must be PC-relative" );
+							yyerror("Expression must be PC-relative");
 					}
 ;
 
@@ -374,7 +372,7 @@ const_8bit		:	relocconst
 					{
 						if( (!rpn_isReloc(&$1)) && (($1.nVal<-128) || ($1.nVal>255)) )
 						{
-							yyerror( "Expression must be 8-bit" );
+							yyerror("Expression must be 8-bit");
 						}
 						$$=$1;
 					}
@@ -384,7 +382,7 @@ const_16bit		:	relocconst
 					{
 						if( (!rpn_isReloc(&$1)) && (($1.nVal<-32768) || ($1.nVal>65535)) )
 						{
-							yyerror( "Expression must be 16-bit" );
+							yyerror("Expression must be 16-bit");
 						}
 						$$=$1;
 					}
