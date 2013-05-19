@@ -328,30 +328,6 @@ void	if_skip_to_endc( void )
 	nLineNo-=1;
 }
 
-
-#ifdef PCENGINE
-ULONG	ZP( struct Expression *expr )
-{
-	return( (!rpn_isReloc(expr)) && (expr->nVal>0x1FFF) && (expr->nVal<0x2100) );
-}
-
-void	out_ZPByte( struct Expression *expr )
-{
-	if( rpn_isReloc(expr) )
-	{
-		rpn_CheckZP(expr,expr);
-		out_RelByte(expr);
-	}
-	else
-	{
-		if( ZP(expr) )
-			out_AbsByte(expr->nVal-0x2000);
-		else
-			fatalerror( "Value not in zeropage");
-	}
-}
-#endif
-
 %}
 
 %union

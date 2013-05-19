@@ -1,9 +1,7 @@
 #ifndef ASMOTOR_LIB_TYPES_H
 #define ASMOTOR_LIB_TYPES_H
 
-#if	defined(AMIGA) || defined(__GNUC__)
 #define	_MAX_PATH	512
-#endif
 
 typedef unsigned char UBYTE;
 typedef signed char SBYTE;

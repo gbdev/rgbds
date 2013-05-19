@@ -21,11 +21,6 @@
 int yyparse(void);
 void setuplex(void);
 
-#ifdef AMIGA
-__near long __stack = 65536L;
-
-#endif
-
 /*
  * RGBAsm - MAIN.C
  *
