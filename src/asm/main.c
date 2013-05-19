@@ -284,6 +284,7 @@ main(int argc, char *argv[])
 				    "2 characters for option 'b'\n");
 				exit(1);
 			}
+			break;
 		case 'g':
 			if (strlen(optarg) == 4) {
 				newopt.gbgfx[0] = optarg[1];
