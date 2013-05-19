@@ -35,8 +35,6 @@ ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
 
 extern int yydebug;
 
-char temptext[1024];
-
 /*
  * RGBAsm - MAIN.C
  *

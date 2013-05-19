@@ -22,8 +22,6 @@ extern void opt_Parse(char *s);
 void fatalerror(const char *fmt, ...);
 void yyerror(const char *fmt, ...);
 
-extern char temptext[1024];
-
 #define	YY_FATAL_ERROR fatalerror
 
 #ifdef	YYLMAX
