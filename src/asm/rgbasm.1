@@ -6,6 +6,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm rgbasm
+.Op Fl h
 .Op Fl b Ar chars
 .Op Fl g Ar chars
 .Op Fl i Ar path
@@ -24,6 +25,17 @@ The defaults are 01.
 .It Fl g Ar chars
 Change the four characters used for binary constants.
 The defaults are 0123.
+.It Fl h
+By default,
+.Nm
+inserts a
+.Sq nop
+instruction immediately after any
+.Sq halt
+instruction.
+The
+.Fl h
+option disables this behavior.
 .It Fl i Ar path
 Add an include path.
 .It Fl o Ar outfile

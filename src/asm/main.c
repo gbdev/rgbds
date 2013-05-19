@@ -8,6 +8,7 @@
 #include <math.h>
 #include <getopt.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,8 @@ void setuplex(void);
  * VARIABLES
  *
  */
+
+bool haltnop;
 
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
@@ -238,7 +241,8 @@ PrintUsage(void)
 {
 	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("Usage: rgbasm [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value] file\n");
+	printf("Usage: rgbasm [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
+	    "              file\n");
 	exit(1);
 }
 /*
@@ -258,6 +262,8 @@ main(int argc, char *argv[])
 
 	char *tzMainfile;
 
+	haltnop = true;
+
 	if (argc == 1)
 		PrintUsage();
 
@@ -275,7 +281,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:i:o:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:g:hi:o:p:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -298,6 +304,9 @@ main(int argc, char *argv[])
 				    "4 characters for option 'g'\n");
 				exit(1);
 			}
+			break;
+		case 'h':
+			haltnop = false;
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);

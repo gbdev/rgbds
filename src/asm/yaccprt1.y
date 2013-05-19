@@ -1,6 +1,7 @@
 %{
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,8 @@
 #include "asm/rpn.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
+
+extern bool haltnop;
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;

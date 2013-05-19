@@ -153,8 +153,13 @@ z80_ex			:	T_Z80_EX T_MODE_HL comma T_MODE_SP_IND
 					{ out_AbsByte(0xE3); }
 ;
 
-z80_halt		:	T_Z80_HALT
-					{ out_AbsByte(0x76); out_AbsByte(0x00); }
+z80_halt: T_Z80_HALT
+		{
+			out_AbsByte(0x76);
+			if (haltnop) {
+				out_AbsByte(0x00);
+			}
+		}
 ;
 
 z80_inc			:	T_Z80_INC reg_r
