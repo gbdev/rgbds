@@ -17,8 +17,15 @@ section:
 					out_NewAbsSection($2,$4,-1,$8);
 				else
 					yyerror("ROM bank value $%x out of range (1 to $1ff)", $8);
-			} else
-				yyerror("BANK only allowed for CODE/DATA");
+			} else if ($4 == SECT_VRAM) {
+				if ($8 >= 0 && $8 <= 1)  {
+					out_NewAbsSection($2, $4, -1, $8);
+				} else {
+					yyerror("VRAM bank value $%x out of range (0 to 1)", $8);
+				}
+			} else {
+				yyerror("BANK only allowed for CODE/DATA or VRAM sections");
+			}
 		}
 	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
 		{
@@ -27,11 +34,22 @@ section:
 					if( $11>=1 && $11<=0x1ff )
 						out_NewAbsSection($2,$4,$6,$11);
 					else
-						yyerror("ROM bank value $%x out of range (1 to $1ff)", 8);
+						yyerror("ROM bank value $%x out of range (1 to $1ff)", $11);
 				} else
 					yyerror("Address $%x not 16-bit", $6);
-			} else
-				yyerror("BANK only allowed for CODE/DATA");
+			} else if ($4 == SECT_VRAM) {
+				if ($6 >= 0 && $6 < 0x10000) {
+					if ($11 >= 0 && $11 <= 1) {
+						out_NewAbsSection($2,$4,$6,$11);
+					} else {
+						yyerror("VRAM bank value $%x out of range (0 to 1)", $11);
+					}
+				} else {
+					yyerror("Address $%x not 16-bit", $6);
+				}
+			} else {
+				yyerror("BANK only allowed for CODE/DATA or VRAM sections");
+			}
 		}
 ;
 

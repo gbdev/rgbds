@@ -7,9 +7,9 @@ enum eBankDefine {
 	BANK_HOME = 0,
 	BANK_BSS = 512,
 	BANK_VRAM,
-	BANK_HRAM
+	BANK_HRAM = 515
 };
-#define MAXBANKS	515
+#define MAXBANKS	516
 
 extern SLONG area_Avail(SLONG bank);
 extern void AssignSections(void);
