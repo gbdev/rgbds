@@ -5,6 +5,7 @@
  *
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -928,7 +929,7 @@ out_BinaryFile(char *s)
 		pPCSymbol->nValue += fsize;
 		fclose(f);
 	} else
-		fatalerror("File not found");
+		fatalerror("Could not open file '%s': %s", s, strerror(errno));
 }
 
 void 
@@ -973,5 +974,5 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 
 		fclose(f);
 	} else
-		fatalerror("File not found");
+		fatalerror("Could not open file '%s': %s", s, strerror(errno));
 }
