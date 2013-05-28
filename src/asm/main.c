@@ -206,18 +206,24 @@ opt_Pop(void)
  *
  */
 
-void 
-yyerror(const char *fmt, ...)
+void
+verror(const char *fmt, va_list args)
 {
 	fprintf(stderr, "ERROR:\t");
 	fstk_Dump();
 	fprintf(stderr, " :\n\t");
-	va_list args;
-	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
-	va_end(args);
 	fprintf(stderr, "\n");
 	nErrors += 1;
+}
+
+void 
+yyerror(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	verror(fmt, args);
+	va_end(args);
 }
 
 void 
@@ -225,7 +231,7 @@ fatalerror(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	yyerror(fmt, args);
+	verror(fmt, args);
 	va_end(args);
 	exit(5);
 }
