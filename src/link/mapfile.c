@@ -65,8 +65,8 @@ MapfileInitBank(SLONG bank)
 			fprintf(mf, "BSS:\n");
 		else if (bank == BANK_HRAM)
 			fprintf(mf, "HRAM:\n");
-		else if (bank == BANK_VRAM)
-			fprintf(mf, "VRAM:\n");
+		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)
+			fprintf(mf, "VRAM Bank #%ld:\n", bank - BANK_VRAM);
 	}
 	if (sf) {
 		sfbank = (bank >= 1 && bank <= 511) ? bank : 0;

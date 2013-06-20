@@ -322,6 +322,7 @@ struct sLexInitString staticstrings[] = {
 	{"data", T_SECT_CODE},
 	{"home", T_SECT_HOME},
 	{"hram", T_SECT_HRAM},
+	{"wramx", T_SECT_WRAMX},
 
 	{NAME_RB, T_POP_RB},
 	{NAME_RW, T_POP_RW},
