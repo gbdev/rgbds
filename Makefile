@@ -50,7 +50,7 @@ clean:
 	${Q}rm -rf rgblib rgblib.exe ${rgblib_obj} rgblib.html
 	${Q}rm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	${Q}rm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	${Q}rm -rf src/asm/asmy.c
+	${Q}rm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
 
 install: all
 	${Q}install -s -m 555 rgbasm ${BINPREFIX}/rgbasm
