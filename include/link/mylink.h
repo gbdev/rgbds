@@ -54,7 +54,8 @@ enum eSectionType {
 	SECT_CODE,
 	SECT_HOME,
 	SECT_HRAM,
-	SECT_WRAMX
+	SECT_WRAMX,
+	SECT_SRAM
 };
 
 struct sSection {

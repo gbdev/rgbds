@@ -16,10 +16,12 @@ struct sFreeArea *BankFree[MAXBANKS];
 SLONG MaxAvail[MAXBANKS];
 SLONG MaxBankUsed;
 SLONG MaxWBankUsed;
+SLONG MaxSBankUsed;
 SLONG MaxVBankUsed;
 
 #define DOMAXBANK(x)	{if( (x)>MaxBankUsed ) MaxBankUsed=(x);}
 #define DOMAXWBANK(x)	{if( (x)>MaxWBankUsed ) MaxWBankUsed=(x);}
+#define DOMAXSBANK(x)	{if( (x)>MaxSBankUsed ) MaxSBankUsed=(x);}
 #define DOMAXVBANK(x)	{if( (x)>MaxVBankUsed ) MaxVBankUsed=(x);}
 
 SLONG 
@@ -87,6 +89,19 @@ area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 	}
 
 	return (-1);
+}
+
+SLONG
+area_AllocAbsSRAMAnyBank(SLONG org, SLONG size)
+{
+	int i;
+	for (i = 0; i < 4; ++i) {
+		if (area_AllocAbs(&BankFree[BANK_SRAM + i], org, size) == org) {
+			return BANK_SRAM + i;
+		}
+	}
+
+	return -1;
 }
 
 SLONG
@@ -166,6 +181,19 @@ area_AllocVRAMAnyBank(SLONG size)
 }
 
 SLONG
+area_AllocSRAMAnyBank(SLONG size)
+{
+	SLONG i, org;
+	for (i = 0; i < 4; ++i) {
+		if ((org = area_Alloc(&BankFree[BANK_SRAM + i], size)) != -1) {
+			return (i << 16) | org;
+		}
+	}
+
+	return -1;
+}
+
+SLONG
 area_AllocWRAMAnyBank(SLONG size)
 {
 	SLONG i, org;
@@ -231,6 +259,25 @@ FindLargestVRAM(void)
 }
 
 struct sSection *
+FindLargestSRAM(void)
+{
+	struct sSection *pSection, *r = NULL;
+	SLONG nLargest = 0;
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->oAssigned == 0 && pSection->Type == SECT_SRAM) {
+			if (pSection->nByteSize > nLargest) {
+				nLargest = pSection->nByteSize;
+				r = pSection;
+			}
+		}
+		pSection = pSection->pNext;
+	}
+	return r;
+}
+
+struct sSection *
 FindLargestCode(void)
 {
 	struct sSection *pSection, *r = NULL;
@@ -265,6 +312,27 @@ AssignVRAMSections(void)
 		} else {
 			fprintf(stderr,
 			    "Unable to place VRAM section anywhere\n");
+			exit(1);
+		}
+	}
+}
+
+void
+AssignSRAMSections(void)
+{
+	struct sSection *pSection;
+
+	while ((pSection = FindLargestSRAM())) {
+		SLONG org;
+
+		if ((org = area_AllocSRAMAnyBank(pSection->nByteSize)) != -1) {
+			pSection->nOrg = org & 0xFFFF;
+			pSection->nBank = org >> 16;
+			pSection->oAssigned = 1;
+			DOMAXSBANK(pSection->nBank);
+		} else {
+			fprintf(stderr,
+			    "Unable to place SRAM section anywhere\n");
 			exit(1);
 		}
 	}
@@ -362,8 +430,13 @@ AssignSections(void)
 			BankFree[i]->nOrg = 0xC000;
 			BankFree[i]->nSize = 0x1000;
 			MaxAvail[i] = 0x1000;
+		} else if (i >= BANK_SRAM && i <= BANK_SRAM + 3) {
+			/* Swappable SRAM bank */
+			BankFree[i]->nOrg = 0xA000;
+			BankFree[i]->nSize = 0x2000;
+			MaxAvail[i] = 0x2000;
 		} else if (i >= BANK_WRAMX && i <= BANK_WRAMX + 6) {
-			/* Swappable VRAM bank */
+			/* Swappable WRAM bank */
 			BankFree[i]->nOrg = 0xD000;
 			BankFree[i]->nSize = 0x1000;
 			MaxAvail[i] = 0x1000;
@@ -418,6 +491,59 @@ AssignSections(void)
 				}
 				pSection->oAssigned = 1;
 				pSection->nBank = BANK_HRAM;
+				break;
+			case SECT_SRAM:
+				if (pSection->nBank == -1) {
+					/*
+					 * User doesn't care which bank.
+					 * Therefore he must here be specifying
+					 * position within the bank.
+					 * Defer until later.
+					 */
+					;
+				} else {
+					/*
+					 * User specified which bank to use.
+					 * Does he also care about position
+					 * within the bank?
+					 */
+					if (pSection->nOrg == -1) {
+						/*
+						 * Nope, any position will do
+						 * Again, we'll do that later
+						 *
+						 */
+						;
+					} else {
+						/*
+						 * Bank and position within the
+						 * bank are hardcoded.
+						 */
+
+						if (pSection->nBank >= 0
+						    && pSection->nBank <= 3) {
+							pSection->nBank +=
+							    BANK_SRAM;
+							if (area_AllocAbs
+							    (&BankFree
+							    [pSection->nBank],
+							    pSection->nOrg,
+							    pSection->nByteSize)
+							    != pSection->nOrg) {
+								fprintf(stderr,
+"Unable to load fixed SRAM section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
+								exit(1);
+							}
+							DOMAXVBANK(pSection->
+							    nBank);
+							pSection->oAssigned = 1;
+						} else {
+							fprintf(stderr,
+"Unable to load fixed SRAM section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
+							exit(1);
+						}
+					}
+				}
 				break;
 			case SECT_WRAMX:
 				if (pSection->nBank == -1) {
@@ -621,6 +747,24 @@ AssignSections(void)
 				exit(1);
 			}
 		} else if (pSection->oAssigned == 0
+		    && pSection->Type == SECT_SRAM
+		    && pSection->nOrg == -1 && pSection->nBank != -1) {
+			pSection->nBank += BANK_SRAM;
+			/* User wants to have a say... and he's pissed */
+			if (pSection->nBank >= BANK_SRAM && pSection->nBank <= BANK_SRAM + 3) {
+				if ((pSection->nOrg =
+					area_Alloc(&BankFree[pSection->nBank],
+					    pSection->nByteSize)) == -1) {
+					fprintf(stderr, "Unable to load fixed SRAM section into bank $%02lX\n", pSection->nBank);
+					exit(1);
+				}
+				pSection->oAssigned = 1;
+				DOMAXSBANK(pSection->nBank);
+			} else {
+				fprintf(stderr, "Unable to load fixed VRAM section into bank $%02lX\n", pSection->nBank);
+				exit(1);
+			}
+		} else if (pSection->oAssigned == 0
 		    && pSection->Type == SECT_VRAM
 		    && pSection->nOrg == -1 && pSection->nBank != -1) {
 			pSection->nBank += BANK_VRAM;
@@ -629,13 +773,13 @@ AssignSections(void)
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
 					    pSection->nByteSize)) == -1) {
-					fprintf(stderr, "Unable to load fixed VRAM section into bank $%02lX\n", pSection->nBank - BANK_VRAM);
+					fprintf(stderr, "Unable to load fixed VRAM section into bank $%02lX\n", pSection->nBank);
 					exit(1);
 				}
 				pSection->oAssigned = 1;
 				DOMAXVBANK(pSection->nBank);
 			} else {
-				fprintf(stderr, "Unable to load fixed VRAM section into bank $%02lX\n", pSection->nBank - BANK_VRAM);
+				fprintf(stderr, "Unable to load fixed VRAM section into bank $%02lX\n", pSection->nBank);
 				exit(1);
 			}
 		} else if (pSection->oAssigned == 0
@@ -696,6 +840,20 @@ AssignSections(void)
 			pSection->oAssigned = 1;
 			DOMAXVBANK(pSection->nBank);
 		} else if (pSection->oAssigned == 0
+		    && pSection->Type == SECT_SRAM
+		    && pSection->nOrg != -1 && pSection->nBank == -1) {
+			/* User wants to have a say... and he's back with a
+			 * vengeance */
+			if ((pSection->nBank =
+				area_AllocAbsSRAMAnyBank(pSection->nOrg,
+				    pSection->nByteSize)) ==
+			    -1) {
+				fprintf(stderr, "Unable to load fixed SRAM section at $%lX into any bank\n", pSection->nOrg);
+				exit(1);
+			}
+			pSection->oAssigned = 1;
+			DOMAXSBANK(pSection->nBank);
+		} else if (pSection->oAssigned == 0
 		    && pSection->Type == SECT_WRAMX
 		    && pSection->nOrg != -1 && pSection->nBank == -1) {
 			/* User wants to have a say... and he's back with a
@@ -743,6 +901,8 @@ AssignSections(void)
 				pSection->nBank = BANK_HRAM;
 				pSection->oAssigned = 1;
 				break;
+			case SECT_SRAM:
+				break;
 			case SECT_VRAM:
 				break;
 			case SECT_WRAMX:
@@ -771,6 +931,7 @@ AssignSections(void)
 	AssignCodeSections();
 	AssignVRAMSections();
 	AssignWRAMSections();
+	AssignSRAMSections();
 }
 
 void 

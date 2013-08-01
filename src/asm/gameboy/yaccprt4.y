@@ -17,6 +17,12 @@ section:
 					out_NewAbsSection($2,$4,-1,$8);
 				else
 					yyerror("ROM bank value $%x out of range (1 to $1ff)", $8);
+			} else if ($4 == SECT_SRAM) {
+				if ($8 >= 0 && $8 <= 3) {
+					out_NewAbsSection($2, $4, -1, $8);
+				} else {
+					yyerror("SRAM bank value $%x out of range (0 to 3)", $8);
+				}
 			} else if ($4 == SECT_WRAMX) {
 				if ($8 >= 1 && $8 <= 7) {
 					out_NewAbsSection($2, $4, -1, $8);
@@ -30,7 +36,7 @@ section:
 					yyerror("VRAM bank value $%x out of range (0 to 1)", $8);
 				}
 			} else {
-				yyerror("BANK only allowed for CODE/DATA, WRAMX, or VRAM sections");
+				yyerror("BANK only allowed for CODE/DATA, WRAMX, SRAM, or VRAM sections");
 			}
 		}
 	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
@@ -43,6 +49,16 @@ section:
 						yyerror("ROM bank value $%x out of range (1 to $1ff)", $11);
 				} else
 					yyerror("Address $%x not 16-bit", $6);
+			} else if ($4 == SECT_SRAM) {
+				if ($6 >= 0 && $6 < 0x10000) {
+					if ($11 >= 0 && $11 <= 3) {
+						out_NewAbsSection($2, $4, $6, $11);
+					} else {
+						yyerror("SRAM bank value $%x out of range (0 to 3)", $11);
+					}
+				} else {
+					yyerror("Address $%x not 16-bit", $6);
+				}
 			} else if ($4 == SECT_WRAMX) {
 				if ($6 >= 0 && $6 < 0x10000) {
 					if ($11 >= 1 && $11 <= 7) {
@@ -64,7 +80,7 @@ section:
 					yyerror("Address $%x not 16-bit", $6);
 				}
 			} else {
-				yyerror("BANK only allowed for CODE/DATA, WRAMX, or VRAM sections");
+				yyerror("BANK only allowed for CODE/DATA, WRAMX, SRAM, or VRAM sections");
 			}
 		}
 ;
@@ -76,6 +92,7 @@ sectiontype:
 	|	T_SECT_HOME	{ $$=SECT_HOME; }
 	|	T_SECT_HRAM	{ $$=SECT_HRAM; }
 	|	T_SECT_WRAMX	{ $$=SECT_WRAMX; }
+	|	T_SECT_SRAM	{ $$=SECT_SRAM; }
 ;
 
 
