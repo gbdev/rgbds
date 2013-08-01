@@ -132,7 +132,7 @@ area_AllocAbsVRAMAnyBank(SLONG org, SLONG size)
 }
 
 SLONG 
-area_AllocAbsCODEAnyBank(SLONG org, SLONG size)
+area_AllocAbsROMXAnyBank(SLONG org, SLONG size)
 {
 	SLONG i;
 
@@ -208,7 +208,7 @@ area_AllocWRAMAnyBank(SLONG size)
 }
 
 SLONG 
-area_AllocCODEAnyBank(SLONG size)
+area_AllocROMXAnyBank(SLONG size)
 {
 	SLONG i, org;
 
@@ -285,7 +285,7 @@ FindLargestCode(void)
 
 	pSection = pSections;
 	while (pSection) {
-		if (pSection->oAssigned == 0 && pSection->Type == SECT_CODE) {
+		if (pSection->oAssigned == 0 && pSection->Type == SECT_ROMX) {
 			if (pSection->nByteSize > nLargest) {
 				nLargest = pSection->nByteSize;
 				r = pSection;
@@ -367,14 +367,14 @@ AssignCodeSections(void)
 	while ((pSection = FindLargestCode())) {
 		SLONG org;
 
-		if ((org = area_AllocCODEAnyBank(pSection->nByteSize)) != -1) {
+		if ((org = area_AllocROMXAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
 			pSection->oAssigned = 1;
 			DOMAXBANK(pSection->nBank);
 		} else {
 			fprintf(stderr,
-			    "Unable to place CODE section anywhere\n");
+			    "Unable to place ROMX section anywhere\n");
 			exit(1);
 		}
 	}
@@ -425,7 +425,7 @@ AssignSections(void)
 				BankFree[i]->nSize = 0x4000;
 				MaxAvail[i] = 0x4000;
 			}
-		} else if (i == BANK_BSS) {
+		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
 			BankFree[i]->nSize = 0x1000;
@@ -468,17 +468,17 @@ AssignSections(void)
 			/* User wants to have a say... */
 
 			switch (pSection->Type) {
-			case SECT_BSS:
+			case SECT_WRAM0:
 				if (area_AllocAbs
-				    (&BankFree[BANK_BSS], pSection->nOrg,
+				    (&BankFree[BANK_WRAM0], pSection->nOrg,
 					pSection->nByteSize) != pSection->nOrg) {
 					fprintf(stderr,
-					    "Unable to load fixed BSS section "
+					    "Unable to load fixed WRAM0 section "
 					    "at $%lX\n", pSection->nOrg);
 					exit(1);
 				}
 				pSection->oAssigned = 1;
-				pSection->nBank = BANK_BSS;
+				pSection->nBank = BANK_WRAM0;
 				break;
 			case SECT_HRAM:
 				if (area_AllocAbs
@@ -651,19 +651,19 @@ AssignSections(void)
 					}
 				}
 				break;
-			case SECT_HOME:
+			case SECT_ROM0:
 				if (area_AllocAbs
-				    (&BankFree[BANK_HOME], pSection->nOrg,
+				    (&BankFree[BANK_ROM0], pSection->nOrg,
 					pSection->nByteSize) != pSection->nOrg) {
 					fprintf(stderr, "Unable to load fixed "
-					    "HOME section at $%lX\n",
+					    "ROM0 section at $%lX\n",
 					    pSection->nOrg);
 					exit(1);
 				}
 				pSection->oAssigned = 1;
-				pSection->nBank = BANK_HOME;
+				pSection->nBank = BANK_ROM0;
 				break;
-			case SECT_CODE:
+			case SECT_ROMX:
 				if (pSection->nBank == -1) {
 					/*
 					 * User doesn't care which bank, so he must want to
@@ -703,14 +703,14 @@ AssignSections(void)
 								pSection->
 								nByteSize) !=
 							    pSection->nOrg) {
-								fprintf(stderr, "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
+								fprintf(stderr, "Unable to load fixed ROMX section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
 								exit(1);
 							}
 							DOMAXBANK(pSection->
 							    nBank);
 							pSection->oAssigned = 1;
 						} else {
-							fprintf(stderr, "Unable to load fixed CODE/DATA section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
+							fprintf(stderr, "Unable to load fixed ROMX section at $%lX in bank $%02lX\n", pSection->nOrg, pSection->nBank);
 							exit(1);
 						}
 					}
@@ -723,27 +723,27 @@ AssignSections(void)
 	}
 
 	/*
-	 * Next, let's assign all the bankfixed ONLY CODE sections...
+	 * Next, let's assign all the bankfixed ONLY ROMX sections...
 	 *
 	 */
 
 	pSection = pSections;
 	while (pSection) {
 		if (pSection->oAssigned == 0
-		    && pSection->Type == SECT_CODE
+		    && pSection->Type == SECT_ROMX
 		    && pSection->nOrg == -1 && pSection->nBank != -1) {
 			/* User wants to have a say... and he's pissed */
 			if (pSection->nBank >= 1 && pSection->nBank <= 511) {
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
 					    pSection->nByteSize)) == -1) {
-					fprintf(stderr, "Unable to load fixed CODE/DATA section into bank $%02lX\n", pSection->nBank);
+					fprintf(stderr, "Unable to load fixed ROMX section into bank $%02lX\n", pSection->nBank);
 					exit(1);
 				}
 				pSection->oAssigned = 1;
 				DOMAXBANK(pSection->nBank);
 			} else {
-				fprintf(stderr, "Unable to load fixed CODE/DATA section into bank $%02lX\n", pSection->nBank);
+				fprintf(stderr, "Unable to load fixed ROMX section into bank $%02lX\n", pSection->nBank);
 				exit(1);
 			}
 		} else if (pSection->oAssigned == 0
@@ -805,22 +805,22 @@ AssignSections(void)
 	}
 
 	/*
-	 * Now, let's assign all the floating bank but fixed CODE sections...
+	 * Now, let's assign all the floating bank but fixed ROMX sections...
 	 *
 	 */
 
 	pSection = pSections;
 	while (pSection) {
 		if (pSection->oAssigned == 0
-		    && pSection->Type == SECT_CODE
+		    && pSection->Type == SECT_ROMX
 		    && pSection->nOrg != -1 && pSection->nBank == -1) {
 			/* User wants to have a say... and he's back with a
 			 * vengeance */
 			if ((pSection->nBank =
-				area_AllocAbsCODEAnyBank(pSection->nOrg,
+				area_AllocAbsROMXAnyBank(pSection->nOrg,
 				    pSection->nByteSize)) ==
 			    -1) {
-				fprintf(stderr, "Unable to load fixed CODE/DATA section at $%lX into any bank\n", pSection->nOrg);
+				fprintf(stderr, "Unable to load fixed ROMX section at $%lX into any bank\n", pSection->nOrg);
 				exit(1);
 			}
 			pSection->oAssigned = 1;
@@ -881,14 +881,14 @@ AssignSections(void)
 	while (pSection) {
 		if (pSection->oAssigned == 0) {
 			switch (pSection->Type) {
-			case SECT_BSS:
+			case SECT_WRAM0:
 				if ((pSection->nOrg =
-					area_Alloc(&BankFree[BANK_BSS],
+					area_Alloc(&BankFree[BANK_WRAM0],
 					    pSection->nByteSize)) == -1) {
-					fprintf(stderr, "BSS section too large\n");
+					fprintf(stderr, "WRAM0 section too large\n");
 					exit(1);
 				}
-				pSection->nBank = BANK_BSS;
+				pSection->nBank = BANK_WRAM0;
 				pSection->oAssigned = 1;
 				break;
 			case SECT_HRAM:
@@ -907,17 +907,17 @@ AssignSections(void)
 				break;
 			case SECT_WRAMX:
 				break;
-			case SECT_HOME:
+			case SECT_ROM0:
 				if ((pSection->nOrg =
-					area_Alloc(&BankFree[BANK_HOME],
+					area_Alloc(&BankFree[BANK_ROM0],
 					    pSection->nByteSize)) == -1) {
-					fprintf(stderr, "HOME section too large\n");
+					fprintf(stderr, "ROM0 section too large\n");
 					exit(1);
 				}
-				pSection->nBank = BANK_HOME;
+				pSection->nBank = BANK_ROM0;
 				pSection->oAssigned = 1;
 				break;
-			case SECT_CODE:
+			case SECT_ROMX:
 				break;
 			default:
 				fprintf(stderr, "(INTERNAL) Unknown section type!\n");

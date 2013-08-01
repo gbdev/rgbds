@@ -59,10 +59,10 @@ MapfileInitBank(SLONG bank)
 		currentbank = bank;
 		if (bank == 0)
 			fprintf(mf, "Bank #0 (HOME):\n");
-		else if (bank < BANK_BSS)
+		else if (bank < BANK_WRAM0)
 			fprintf(mf, "Bank #%ld:\n", bank);
-		else if (bank == BANK_BSS)
-			fprintf(mf, "BSS:\n");
+		else if (bank == BANK_WRAM0)
+			fprintf(mf, "WRAM0:\n");
 		else if (bank == BANK_HRAM)
 			fprintf(mf, "HRAM:\n");
 		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)

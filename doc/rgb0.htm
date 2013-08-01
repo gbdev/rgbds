@@ -50,10 +50,10 @@
       
     REPT NumberOfSections
         LONG    Size                   ;Size in bytes of this section
-        BYTE    Type                   ;0 = BSS
+        BYTE    Type                   ;0 = WRAM0
                                        ;1 = VRAM
-                                       ;2 = CODE
-                                       ;3 = HOME
+                                       ;2 = ROMX
+                                       ;3 = ROM0
                                        ;4 = HRAM
         LONG    Org                    ;Only present in RGB1. Address to fix this
                                        ;section at. -1 if the linker should
@@ -61,8 +61,8 @@
         LONG    Bank                   ;Only present in RGB1. Bank to load this
                                        ;section into. -1 if the linker should
                                        ;decide (normal operation). This field is
-                                       ;only valid for CODE sections.
-        IF      Type==CODE || Type==HOME
+                                       ;only valid for ROMX sections.
+        IF      Type==ROMX || Type==ROM0
             BYTE Data[Size]
             LONG NumberOfPatches
                

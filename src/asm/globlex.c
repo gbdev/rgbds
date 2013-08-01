@@ -316,11 +316,14 @@ struct sLexInitString staticstrings[] = {
 	{"else", T_POP_ELSE},
 	{"endc", T_POP_ENDC},
 
-	{"bss", T_SECT_BSS},
+	{"wram0", T_SECT_WRAM0},
+	{"bss", T_SECT_WRAM0}, /* deprecated */
 	{"vram", T_SECT_VRAM},
-	{"code", T_SECT_CODE},
-	{"data", T_SECT_CODE},
-	{"home", T_SECT_HOME},
+	{"code", T_SECT_ROMX}, /* deprecated */
+	{"data", T_SECT_ROMX}, /* deprecated */
+	{"romx", T_SECT_ROMX},
+	{"home", T_SECT_ROM0}, /* deprecated */
+	{"rom0", T_SECT_ROM0},
 	{"hram", T_SECT_HRAM},
 	{"wramx", T_SECT_WRAMX},
 	{"sram", T_SECT_SRAM},

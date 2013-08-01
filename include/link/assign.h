@@ -4,8 +4,8 @@
 #include "link/types.h"
 
 enum eBankDefine {
-	BANK_HOME = 0,
-	BANK_BSS = 512,
+	BANK_ROM0 = 0,
+	BANK_WRAM0 = 512,
 	BANK_WRAMX,
 	BANK_VRAM = 520,
 	BANK_HRAM = 522,

@@ -16,16 +16,16 @@ writehome(FILE * f)
 	struct sSection *pSect;
 	UBYTE *mem;
 
-	mem = malloc(MaxAvail[BANK_HOME]);
+	mem = malloc(MaxAvail[BANK_ROM0]);
 	if (!mem)
 		return;
 
-	memset(mem, fillchar, MaxAvail[BANK_HOME]);
+	memset(mem, fillchar, MaxAvail[BANK_ROM0]);
 	MapfileInitBank(0);
 
 	pSect = pSections;
 	while (pSect) {
-		if (pSect->Type == SECT_HOME) {
+		if (pSect->Type == SECT_ROM0) {
 			memcpy(mem + pSect->nOrg, pSect->pData,
 			    pSect->nByteSize);
 			MapfileWriteSection(pSect);
@@ -35,7 +35,7 @@ writehome(FILE * f)
 
 	MapfileCloseBank(area_Avail(0));
 
-	fwrite(mem, 1, MaxAvail[BANK_HOME], f);
+	fwrite(mem, 1, MaxAvail[BANK_ROM0], f);
 	free(mem);
 }
 
@@ -54,7 +54,7 @@ writebank(FILE * f, SLONG bank)
 
 	pSect = pSections;
 	while (pSect) {
-		if (pSect->Type == SECT_CODE && pSect->nBank == bank) {
+		if (pSect->Type == SECT_ROMX && pSect->nBank == bank) {
 			memcpy(mem + pSect->nOrg - 0x4000, pSect->pData,
 			    pSect->nByteSize);
 			MapfileWriteSection(pSect);

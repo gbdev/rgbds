@@ -252,8 +252,8 @@ writesection(struct Section * pSect, FILE * f)
 	    fputlong(pSect->nBank, f);
 	//RGB1 addition
 
-	    if ((pSect->nType == SECT_HOME)
-	    || (pSect->nType == SECT_CODE)) {
+	    if ((pSect->nType == SECT_ROM0)
+	    || (pSect->nType == SECT_ROMX)) {
 		struct Patch *pPatch;
 
 		fwrite(pSect->tData, 1, pSect->nPC, f);
@@ -504,13 +504,13 @@ void
 checkcodesection(SLONG size)
 {
 	checksection();
-	if ((pCurrentSection->nType == SECT_HOME
-		|| pCurrentSection->nType == SECT_CODE)
+	if ((pCurrentSection->nType == SECT_ROM0
+		|| pCurrentSection->nType == SECT_ROMX)
 	    && (pCurrentSection->nPC + size <= MAXSECTIONSIZE)) {
 		if (((pCurrentSection->nPC % SECTIONCHUNK) >
 			((pCurrentSection->nPC + size) % SECTIONCHUNK))
-		    && (pCurrentSection->nType == SECT_HOME
-			|| pCurrentSection->nType == SECT_CODE)) {
+		    && (pCurrentSection->nType == SECT_ROM0
+			|| pCurrentSection->nType == SECT_ROMX)) {
 			if ((pCurrentSection->tData =
 				(UBYTE *) realloc(pCurrentSection->tData,
 				    ((pCurrentSection->nPC +
@@ -725,8 +725,8 @@ void
 out_Skip(int skip)
 {
 	checksection();
-	if (!((pCurrentSection->nType == SECT_HOME)
-		|| (pCurrentSection->nType == SECT_CODE))) {
+	if (!((pCurrentSection->nType == SECT_ROM0)
+		|| (pCurrentSection->nType == SECT_ROMX))) {
 		pCurrentSection->nPC += skip;
 		nPC += skip;
 		pPCSymbol->nValue += skip;

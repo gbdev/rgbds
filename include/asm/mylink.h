@@ -30,7 +30,7 @@
  * Section:
  * LONG SizeInBytes
  * char Type
- * if( Type!=BSS )
+ * if( Type!=WRAM0 )
  * {
  *		char Data[SizeInBytes]
  *		Patches
@@ -95,10 +95,10 @@ enum {
 };
 
 enum {
-	SECT_BSS = 0,
+	SECT_WRAM0 = 0,
 	SECT_VRAM,
-	SECT_CODE,
-	SECT_HOME,
+	SECT_ROMX,
+	SECT_ROM0,
 	SECT_HRAM,
 	SECT_WRAMX,
 	SECT_SRAM

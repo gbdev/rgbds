@@ -49,10 +49,10 @@ enum eRpnData {
 };
 
 enum eSectionType {
-	SECT_BSS,
+	SECT_WRAM0,
 	SECT_VRAM,
-	SECT_CODE,
-	SECT_HOME,
+	SECT_ROMX,
+	SECT_ROM0,
 	SECT_HRAM,
 	SECT_WRAMX,
 	SECT_SRAM

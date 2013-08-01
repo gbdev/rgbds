@@ -139,10 +139,10 @@ obj_ReadRGB0Section(FILE * f)
 
 	/* does the user want the -s mode? */
 
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_CODE)) {
-		pSection->Type = SECT_HOME;
+	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
+		pSection->Type = SECT_ROM0;
 	}
-	if ((pSection->Type == SECT_CODE) || (pSection->Type == SECT_HOME)) {
+	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
 		/*
 		 * These sectiontypes contain data...
 		 *
@@ -294,10 +294,10 @@ obj_ReadRGB1Section(FILE * f)
 
 	/* does the user want the -s mode? */
 
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_CODE)) {
-		pSection->Type = SECT_HOME;
+	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
+		pSection->Type = SECT_ROM0;
 	}
-	if ((pSection->Type == SECT_CODE) || (pSection->Type == SECT_HOME)) {
+	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
 		/*
 		 * These sectiontypes contain data...
 		 *
