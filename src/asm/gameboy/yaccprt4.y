@@ -226,6 +226,8 @@ z80_jp			:	T_Z80_JP const_16bit
 					{ out_AbsByte(0xC2|($2<<3)); out_RelWord(&$4); }
 				|	T_Z80_JP T_MODE_HL_IND
 					{ out_AbsByte(0xE9); }
+				|	T_Z80_JP T_MODE_HL
+					{ out_AbsByte(0xE9); }
 ;
 
 z80_jr			:	T_Z80_JR const_PCrel
