@@ -247,7 +247,7 @@ PrintUsage(void)
 {
 	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("Usage: rgbasm [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
+	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
 	    "              file\n");
 	exit(1);
 }
@@ -282,12 +282,13 @@ main(int argc, char *argv[])
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
 	DefaultOptions.fillchar = 0;
+	DefaultOptions.verbose = false;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:hi:o:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:g:hi:o:p:v")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -333,6 +334,9 @@ main(int argc, char *argv[])
 				exit(1);
 			}
 			break;
+		case 'v':
+			newopt.verbose = true;
+			break;
 		default:
 			PrintUsage();
 		}
@@ -349,7 +353,9 @@ main(int argc, char *argv[])
 
 	setuplex();
 
-	printf("Assembling %s\n", tzMainfile);
+	if (CurrentOptions.verbose) {
+		printf("Assembling %s\n", tzMainfile);
+	}
 
 	nStartClock = clock();
 
@@ -361,7 +367,9 @@ main(int argc, char *argv[])
 	nErrors = 0;
 	sym_PrepPass1();
 	if (fstk_Init(tzMainfile)) {
-		printf("Pass 1...\n");
+		if (CurrentOptions.verbose) {
+			printf("Pass 1...\n");
+		}
 
 		yy_set_state(LEX_STATE_NORMAL);
 		opt_SetCurrentOptions(&DefaultOptions);
@@ -380,7 +388,9 @@ main(int argc, char *argv[])
 				yy_set_state(LEX_STATE_NORMAL);
 				opt_SetCurrentOptions(&DefaultOptions);
 
-				printf("Pass 2...\n");
+				if (CurrentOptions.verbose) {
+					printf("Pass 2...\n");
+				}
 
 				if (yyparse() == 0 && nErrors == 0) {
 					double timespent;
@@ -389,17 +399,19 @@ main(int argc, char *argv[])
 					timespent =
 					    ((double) (nEndClock - nStartClock))
 					    / (double) CLOCKS_PER_SEC;
-					printf
-					    ("Success! %ld lines in %d.%02d seconds ",
-					    nTotalLines, (int) timespent,
-					    ((int) (timespent * 100.0)) % 100);
-					if (timespent == 0)
+					if (CurrentOptions.verbose) {
 						printf
-						    ("(INFINITY lines/minute)\n");
-					else
-						printf("(%d lines/minute)\n",
-						    (int) (60 / timespent *
-							nTotalLines));
+						    ("Success! %ld lines in %d.%02d seconds ",
+						    nTotalLines, (int) timespent,
+						    ((int) (timespent * 100.0)) % 100);
+						if (timespent == 0)
+							printf
+							    ("(INFINITY lines/minute)\n");
+						else
+							printf("(%d lines/minute)\n",
+							    (int) (60 / timespent *
+								nTotalLines));
+					}
 					out_WriteObject();
 				} else {
 					printf

@@ -594,7 +594,9 @@ void
 out_SetFileName(char *s)
 {
 	strcpy(tzObjectname, s);
-	printf("Output filename %s\n", s);
+	if (CurrentOptions.verbose) {
+		printf("Output filename %s\n", s);
+	}
 	pSectionList = NULL;
 	pCurrentSection = NULL;
 	pPatchSymbols = NULL;
