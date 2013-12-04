@@ -1,10 +1,13 @@
 #ifndef	ASMOTOR_MAIN_H
 #define	ASMOTOR_MAIN_H
 
+#include <stdbool.h>
+
 struct sOptions {
 	char gbgfx[4];
 	char binary[2];
 	SLONG fillchar;
+	bool verbose;
 	    //-1 == random
 };
 

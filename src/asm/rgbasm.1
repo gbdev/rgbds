@@ -6,6 +6,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm rgbasm
+.Op Fl v
 .Op Fl h
 .Op Fl b Ar chars
 .Op Fl g Ar chars
@@ -43,6 +44,8 @@ Write an object file to the given filename.
 .It Fl p Ar pad_value
 When padding an image, pad with this value.
 The default is 0x00.
+.It Fl v
+Be verbose.
 .El
 .Sh EXAMPLES
 Assembling a basic source file is simple:
