@@ -4,6 +4,7 @@
 #include "link/types.h"
 
 extern SLONG fillchar;
+extern SLONG isPatch;
 extern char smartlinkstartsymbol[256];
 
 #endif
