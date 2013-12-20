@@ -24,6 +24,7 @@ enum eBlockType {
 
 SLONG options = 0;
 SLONG fillchar = 0;
+SLONG isPatch = 0;
 char smartlinkstartsymbol[256];
 
 /*
@@ -56,7 +57,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "l:m:n:o:p:s:t")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:n:o:p:s:tq")) != -1) {
 		switch (ch) {
 		case 'l':
 			lib_Readfile(optarg);
@@ -80,6 +81,9 @@ main(int argc, char *argv[])
 				fprintf(stderr, "Argument for option 'p' must be between 0 and 0xFF");
 				exit(1);
 			}
+			break;
+		case 'q':
+			isPatch = 1;
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;

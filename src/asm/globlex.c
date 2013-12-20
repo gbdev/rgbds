@@ -298,6 +298,7 @@ struct sLexInitString staticstrings[] = {
 	{"rsset", T_POP_RSSET},
 
 	{"incbin", T_POP_INCBIN},
+	{"charmap", T_POP_CHARMAP},
 
 	{"fail", T_POP_FAIL},
 	{"warn", T_POP_WARN},
