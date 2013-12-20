@@ -88,6 +88,7 @@ simple_pseudoop	:	include
 				|	rsreset
 				|	rsset
 				|	incbin
+				|	charmap
 				|	rept
 				|	shift
 				|	fail
@@ -280,6 +281,24 @@ incbin			:	T_POP_INCBIN string
 					}
 ;
 
+charmap			:	T_POP_CHARMAP string ',' string
+					{
+						if(charmap_Add($2, $4[0] & 0xFF) == -1)
+						{
+							fprintf(stderr, "Error parsing charmap. Either you've added too many (%i), or the input character length is too long (%i)' : %s\n", MAXCHARMAPS, CHARMAPLENGTH, strerror(errno));
+							yyerror("Error parsing charmap.");
+						}
+					}
+				|	T_POP_CHARMAP string ',' const
+					{
+						if(charmap_Add($2, $4 & 0xFF) == -1)
+						{
+							fprintf(stderr, "Error parsing charmap. Either you've added too many (%i), or the input character length is too long (%i)' : %s\n", MAXCHARMAPS, CHARMAPLENGTH, strerror(errno));
+							yyerror("Error parsing charmap.");
+						}
+					}
+;
+
 printt			:	T_POP_PRINTT string
 					{
 						if( nPass==1 )
@@ -339,7 +358,7 @@ constlist_8bit	:	constlist_8bit_entry
 
 constlist_8bit_entry	:               { out_Skip( 1 ); }
 						|	const_8bit	{ out_RelByte( &$1 ); }
-			   			|	string		{ out_String( $1 );  }
+			   			|	string		{ char *s; int length; s = $1; length = charmap_Convert(&s); out_AbsByteGroup(s, length); free(s); }
 ;
 
 constlist_16bit	:	constlist_16bit_entry
@@ -394,7 +413,7 @@ relocconst		:	T_ID
 				|	T_NUMBER
 						{ rpn_Number(&$$,$1);	$$.nVal = $1; }
 				|	string
-						{ ULONG r; r=str2int($1); rpn_Number(&$$,r); $$.nVal=r; }
+						{ char *s; int length; ULONG r; s = $1; length = charmap_Convert(&s); r = str2int2(s, length); free(s); rpn_Number(&$$,r); $$.nVal=r; }
 				|	T_OP_LOGICNOT relocconst %prec NEG
 						{ rpn_LOGNOT(&$$,&$2); }
 				|	relocconst T_OP_LOGICOR relocconst
