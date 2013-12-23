@@ -109,7 +109,7 @@ ascii2bin(char *s)
 ULONG 
 ParseFixedPoint(char *s, ULONG size)
 {
-	char dest[256];
+	//char dest[256];
 	ULONG i = 0, dot = 0;
 
 	while (size && dot != 2) {
@@ -117,13 +117,13 @@ ParseFixedPoint(char *s, ULONG size)
 			dot += 1;
 
 		if (dot < 2) {
-			dest[i] = s[i];
+			//dest[i] = s[i];
 			size -= 1;
 			i += 1;
 		}
 	}
 
-	dest[i] = 0;
+	//dest[i] = 0;
 
 	yyunputbytes(size);
 
