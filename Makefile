@@ -15,6 +15,7 @@ yacc_pre := \
 rgbasm_obj := \
 	src/asm/alloca.o \
 	src/asm/asmy.o \
+	src/asm/charmap.o \
 	src/asm/fstack.o \
 	src/asm/globlex.o \
 	src/asm/lexer.o \

@@ -8,6 +8,7 @@
 
 #include "asm/symbol.h"
 #include "asm/asm.h"
+#include "asm/charmap.h"
 #include "asm/output.h"
 #include "asm/mylink.h"
 #include "asm/fstack.h"
@@ -38,6 +39,21 @@ ULONG	str2int( char *s )
 	{
 		r<<=8;
 		r|=(UBYTE)(*s++);
+	}
+	return( r );
+}
+
+ULONG	str2int2( char *s, int length )
+{
+	int i;
+	ULONG r=0;
+	i = (length - 4 < 0 ? 0 : length - 4);
+	while(i < length)
+	{
+		r<<=8;
+		r|=(UBYTE)(s[i]);
+		i++;
+		
 	}
 	return( r );
 }
@@ -401,6 +417,7 @@ void	if_skip_to_endc( void )
 %token	T_POP_ENDM
 %token	T_POP_RSRESET T_POP_RSSET
 %token	T_POP_INCBIN T_POP_REPT
+%token	T_POP_CHARMAP
 %token	T_POP_SHIFT
 %token	T_POP_ENDR
 %token	T_POP_FAIL
