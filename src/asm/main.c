@@ -5,8 +5,8 @@
  *
  */
 
+#define _XOPEN_SOURCE 500
 #include <math.h>
-#include <getopt.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
