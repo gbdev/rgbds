@@ -75,6 +75,11 @@ charmap_Add(char *input, UBYTE output)
 		charmap = &globalCharmap;
 	}
 
+	if(nPass == 2)
+	{
+		return charmap -> count;
+	}
+
 	if(charmap -> count > MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
 	{
 		return -1;
@@ -84,7 +89,7 @@ charmap_Add(char *input, UBYTE output)
 	if(input_length > 1)
 	{
 		i = 0;
-		while(i < charmap -> count)
+		while(i < charmap -> count + 1)
 		{
 			if(input_length > strlen(charmap -> input[i]))
 			{
@@ -97,7 +102,7 @@ charmap_Add(char *input, UBYTE output)
 			}
 			i++;
 		}
-		while(i < charmap -> count)
+		while(i < charmap -> count + 1)
 		{
 			memcpy(temp2i, charmap -> input[i], CHARMAPLENGTH + 1);
 			memcpy(charmap -> input[i], temp1i, CHARMAPLENGTH + 1);
@@ -107,13 +112,13 @@ charmap_Add(char *input, UBYTE output)
 			temp1o = temp2o;
 			i++;
 		}
-		memcpy(charmap -> input[charmap -> count], temp1i, CHARMAPLENGTH + 1);
-		charmap -> output[charmap -> count] = temp1o;
+		memcpy(charmap -> input[charmap -> count + 1], temp1i, CHARMAPLENGTH + 1);
+		charmap -> output[charmap -> count + 1] = temp1o;
 	}
 	else
 	{
-		memcpy(charmap -> input[charmap -> count - 1], input, CHARMAPLENGTH + 1);
-		charmap -> output[charmap -> count - 1] = output;
+		memcpy(charmap -> input[charmap -> count], input, CHARMAPLENGTH + 1);
+		charmap -> output[charmap -> count] = output;
 	}
 	return ++charmap -> count;
 }
