@@ -57,7 +57,12 @@ install: all
 	${Q}install -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	${Q}install -s -m 555 rgblink ${BINPREFIX}/rgblink
 	${Q}install -s -m 555 rgblib ${BINPREFIX}/rgblib
-	${Q}install -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
+	${Q}install -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
+		(echo Installing manpages to ${MANPREFIX} failed. >&2 && \
+		 echo Check where your manpages are installed and set the \
+		      proper directory >&2 && \
+		 echo with, e.g., make install MANPREFIX=/usr/share/man \
+		 >&2 ; false)
 	${Q}install -m 444 src/asm/rgbasm.1 \
 		${MANPREFIX}/man1/rgbasm.1
 	${Q}install -m 444 src/fix/rgbfix.1 \
