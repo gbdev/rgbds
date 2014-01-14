@@ -290,6 +290,8 @@ z80_ld			:	z80_ld_mem
 
 z80_ld_hl		:	T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
 					{ out_AbsByte(0xF8); out_RelByte(&$6); }
+				|	T_Z80_LD T_MODE_HL comma T_MODE_SP const_8bit
+					{ out_AbsByte(0xF8); out_RelByte(&$5); }
 				|	T_Z80_LD T_MODE_HL comma const_16bit
 					{ out_AbsByte(0x01|(REG_HL<<4)); out_RelWord(&$4); }
 ;
