@@ -365,12 +365,12 @@ sym_GetValue(char *s)
 			}
 			return (getvaluefield(psym));
 		} else {
-			if ((nPass == 1) || (psym->nType & SYMF_IMPORT)) {
-				/* 0x80 seems like a good default value... */
-				return (0x80);
-			} else {
-				yyerror("'%s' not defined", s);
+			if (nPass == 2) {
+				/* Assume undefined symbols are imported from somewhere else */
+				psym->nType |= SYMF_IMPORT;
 			}
+			/* 0x80 seems like a good default value... */
+			return (0x80);
 		}
 	} else {
 		if (nPass == 1) {
