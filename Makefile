@@ -13,7 +13,6 @@ yacc_pre := \
 	src/asm/gameboy/yaccprt4.y
 
 rgbasm_obj := \
-	src/asm/alloca.o \
 	src/asm/asmy.o \
 	src/asm/fstack.o \
 	src/asm/globlex.o \
