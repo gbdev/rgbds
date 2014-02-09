@@ -390,11 +390,10 @@ main(int argc, char *argv[])
 			headbyte++;
 		}
 
-		while (newsize != ftell(rom)) /* ROM needs resizing */
-			fputc(padvalue, rom);
-
 		if (newsize > 0x800000) /* ROM is bigger than 8MiB */
 			fprintf(stderr, "ROM size is bigger than 8MiB\n");
+
+		ftruncate(fileno(rom), newsize);
 
 		fseek(rom, 0x148, SEEK_SET);
 		fputc(headbyte, rom);
