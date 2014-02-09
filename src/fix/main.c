@@ -380,6 +380,7 @@ main(int argc, char *argv[])
 
 		/* We will pad the ROM to match the size given in the header. */
 		int romsize, newsize, headbyte;
+		uint8_t *buf;
 		fseek(rom, 0, SEEK_END);
 		romsize = ftell(rom);
 		newsize = 0x8000;
@@ -393,10 +394,14 @@ main(int argc, char *argv[])
 		if (newsize > 0x800000) /* ROM is bigger than 8MiB */
 			fprintf(stderr, "ROM size is bigger than 8MiB\n");
 
-		ftruncate(fileno(rom), newsize);
+		buf = malloc(newsize - romsize);
+		memset(buf, padvalue, newsize - romsize);
+		fwrite(buf, 1, newsize - romsize, rom);
 
 		fseek(rom, 0x148, SEEK_SET);
 		fputc(headbyte, rom);
+
+		free(buf);
 	}
 
 	if (setramsize) {
