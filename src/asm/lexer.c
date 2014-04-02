@@ -460,6 +460,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro argument not defined");
 							}
 							break;
 						case '@':
@@ -473,6 +475,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro unique label string not defined");
 							}
 							break;
 						}
@@ -504,6 +508,8 @@ scanagain:
 										    (*marg)
 											sym[i++] = *marg++;
 										ch = 0;
+									} else {
+										yyerror("Macro argument not defined");
 									}
 									break;
 								case '@':
@@ -512,6 +518,8 @@ scanagain:
 										    (*marg)
 											sym[i++] = *marg++;
 										ch = 0;
+									} else {
+										yyerror("Macro unique label string not defined");
 									}
 									break;
 								}
@@ -573,6 +581,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro argument not defined");
 							}
 							break;
 						case '@':
@@ -584,6 +594,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro unique label string not defined");
 							}
 							break;
 						}
@@ -692,6 +704,8 @@ scanagain:
 								    [index++] =
 								    *marg++;
 							ch = 0;
+						} else {
+							yyerror("Macro argument not defined");
 						}
 						break;
 					case '@':
@@ -704,6 +718,8 @@ scanagain:
 								    [index++] =
 								    *marg++;
 							ch = 0;
+						} else {
+							yyerror("Macro unique label not defined");
 						}
 						break;
 					}
@@ -737,6 +753,8 @@ scanagain:
 									    (*marg)
 										sym[i++] = *marg++;
 									ch = 0;
+								} else {
+									yyerror("Macro argument not defined");
 								}
 								break;
 							case '@':
@@ -748,6 +766,8 @@ scanagain:
 									    (*marg)
 										sym[i++] = *marg++;
 									ch = 0;
+								} else {
+									yyerror("Macro unique label string not defined");
 								}
 								break;
 							}
