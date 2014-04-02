@@ -438,7 +438,6 @@ scanagain:
 						case 't':
 							ch = '\t';
 							break;
-						case '0':
 						case '1':
 						case '2':
 						case '3':
@@ -493,7 +492,6 @@ scanagain:
 							    '\\') {
 								switch (ch =
 								    (*pLexBuffer++)) {
-								case '0':
 								case '1':
 								case '2':
 								case '3':
@@ -561,7 +559,6 @@ scanagain:
 				    && (*pLexBuffer != '\n')) {
 					if ((ch = *pLexBuffer++) == '\\') {
 						switch (ch = (*pLexBuffer++)) {
-						case '0':
 						case '1':
 						case '2':
 						case '3':
@@ -684,7 +681,6 @@ scanagain:
 					case 't':
 						ch = '\t';
 						break;
-					case '0':
 					case '1':
 					case '2':
 					case '3':
@@ -734,7 +730,6 @@ scanagain:
 							*pLexBuffer++) == '\\') {
 							switch (ch =
 							    (*pLexBuffer++)) {
-							case '0':
 							case '1':
 							case '2':
 							case '3':
