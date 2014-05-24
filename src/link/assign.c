@@ -573,8 +573,8 @@ AssignSections(void)
 						 * bank are hardcoded.
 						 */
 
-						if (pSection->nBank >= 1
-						    && pSection->nBank <= 7) {
+						if (pSection->nBank >= (1-1)
+						    && pSection->nBank <= (7-1)) {
 							pSection->nBank +=
 							    BANK_WRAMX;
 							if (area_AllocAbs
