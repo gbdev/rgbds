@@ -25,7 +25,7 @@ section:
 				}
 			} else if ($4 == SECT_WRAMX) {
 				if ($8 >= 1 && $8 <= 7) {
-					out_NewAbsSection($2, $4, -1, $8);
+					out_NewAbsSection($2, $4, -1, $8-1);
 				} else {
 					yyerror("WRAMX bank value $%x out of range (1 to 7)", $8);
 				}
@@ -62,7 +62,7 @@ section:
 			} else if ($4 == SECT_WRAMX) {
 				if ($6 >= 0 && $6 < 0x10000) {
 					if ($11 >= 1 && $11 <= 7) {
-						out_NewAbsSection($2, $4, $6, $11);
+						out_NewAbsSection($2, $4, $6, $11-1);
 					} else {
 						yyerror("WRAMX bank value $%x out of range (1 to 7)", $11);
 					}
@@ -290,6 +290,8 @@ z80_ld			:	z80_ld_mem
 
 z80_ld_hl		:	T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
 					{ out_AbsByte(0xF8); out_RelByte(&$6); }
+				|	T_Z80_LD T_MODE_HL comma T_MODE_SP const_8bit
+					{ out_AbsByte(0xF8); out_RelByte(&$5); }
 				|	T_Z80_LD T_MODE_HL comma const_16bit
 					{ out_AbsByte(0x01|(REG_HL<<4)); out_RelWord(&$4); }
 ;
