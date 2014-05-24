@@ -74,7 +74,20 @@ MapfileInitBank(SLONG bank)
 			fprintf(mf, "SRAM Bank #%ld:\n", bank - BANK_SRAM);
 	}
 	if (sf) {
-		sfbank = (bank >= 1 && bank <= 511) ? bank : 0;
+		if (bank < BANK_WRAM0)
+			sfbank = bank;
+		else if (bank == BANK_WRAM0)
+			sfbank = 0;
+		else if (bank < BANK_VRAM)
+			sfbank = bank - BANK_WRAMX + 1;
+		else if (bank == BANK_HRAM)
+			sfbank = 0;
+		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)
+			sfbank = bank - BANK_VRAM;
+		else if (bank < MAXBANKS)
+			sfbank = bank - BANK_SRAM;
+		else
+			sfbank = 0;
 	}
 }
 
