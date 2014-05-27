@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+
 #include "asm/asm.h"
 #include "asm/symbol.h"
 #include "asm/rpn.h"
@@ -6,11 +11,6 @@
 #include "asm/lexer.h"
 
 #include "asmy.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
 
 UBYTE oDontExpandStrings = 0;
 SLONG nGBGfxID = -1;

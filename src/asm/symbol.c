@@ -14,6 +14,7 @@
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/output.h"
+#include "asm/gnustring.h"
 
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff

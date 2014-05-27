@@ -15,31 +15,13 @@
 #include "asm/rpn.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
+#include "asm/gnustring.h"
 
 extern bool haltnop;
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
 
-int	strncasecmp(const char* first, const char* second, int count)
-{
-	#define lower(a) (tolower((unsigned char)*(a)))
-	if (count == 0)
-	{
-		return 0;
-	}
-	while (count-- != 0 && lower(first) == lower(second))
-	{
-		if (count == 0 || *first == '\0' || *second == '\0')
-		{
-			break;
-		}
-		first++;
-		second++;
-	}
-	return lower(first) - lower(second);
-	#undef lower
-}
 
 ULONG	symvaluetostring( char *dest, char *sym )
 {
