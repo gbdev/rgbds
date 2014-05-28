@@ -70,4 +70,6 @@ ULONG sym_isDefined(char *tzName);
 void sym_Purge(char *tzName);
 ULONG sym_isConstDefined(char *tzName);
 
+struct sSymbol *createsymbol(char *s);
+
 #endif
