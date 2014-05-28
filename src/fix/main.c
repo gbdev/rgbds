@@ -221,8 +221,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-	argc -= optind;
-	argv += optind;
 
 	/*
 	 * Write changes to ROM
