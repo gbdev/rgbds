@@ -127,7 +127,7 @@ ParseFixedPoint(char *s, ULONG size)
 
 	yyunputbytes(size);
 
-	yylval.nConstValue = (SLONG) (atof(s) * 65536);
+	yylval.nConstValue = (SLONG) (atof(dest) * 65536);
 
 	return (1);
 }
