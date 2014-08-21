@@ -75,10 +75,10 @@ getvaluefield(struct sSymbol * sym)
 ULONG 
 calchash(char *s)
 {
-	ULONG hash = 0;
+	ULONG hash = 5381;
 
 	while (*s != 0)
-		hash += (*s++);
+		hash = (hash * 33) ^ (*s++);
 
 	return (hash % HASHSIZE);
 }

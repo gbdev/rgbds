@@ -43,6 +43,7 @@ struct PatchSymbol {
 	ULONG ID;
 	struct sSymbol *pSymbol;
 	struct PatchSymbol *pNext;
+	struct PatchSymbol *pBucketNext; // next symbol in hash table bucket
 };
 
 struct SectionStackEntry {
@@ -56,8 +57,10 @@ struct SectionStackEntry {
  *
  */
 
+struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
 struct Section *pSectionList = NULL, *pCurrentSection = NULL;
 struct PatchSymbol *pPatchSymbols = NULL;
+struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
 char tzObjectname[_MAX_PATH];
 struct SectionStackEntry *pSectionStack = NULL;
 
@@ -327,30 +330,32 @@ ULONG
 addsymbol(struct sSymbol * pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
-	ULONG ID = 0;
+	static ULONG nextID = 0;
+	ULONG hash;
 
-	pPSym = pPatchSymbols;
-	ppPSym = &(pPatchSymbols);
+	hash = calchash(pSym->tzName);
+	ppPSym = &(tHashedPatchSymbols[hash]);
 
-	while (pPSym) {
-		if (pSym == pPSym->pSymbol)
-			return (pPSym->ID);
-		ppPSym = &(pPSym->pNext);
-		pPSym = pPSym->pNext;
-		ID += 1;
+	while ((*ppPSym) != NULL) {
+		if (pSym == (*ppPSym)->pSymbol)
+			return (*ppPSym)->ID;
+		ppPSym = &((*ppPSym)->pBucketNext);
 	}
 
 	if ((*ppPSym = pPSym =
 		(struct PatchSymbol *) malloc(sizeof(struct PatchSymbol))) !=
 	    NULL) {
 		pPSym->pNext = NULL;
+		pPSym->pBucketNext = NULL;
 		pPSym->pSymbol = pSym;
-		pPSym->ID = ID;
-		return (ID);
+		pPSym->ID = nextID++;
 	} else
 		fatalerror("No memory for patchsymbol");
 
-	return ((ULONG) - 1);
+	*ppPatchSymbolsTail = pPSym;
+	ppPatchSymbolsTail = &(pPSym->pNext);
+
+	return pPSym->ID;
 }
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile
@@ -385,23 +390,17 @@ addexports(void)
 struct Patch *
 allocpatch(void)
 {
-	struct Patch *pPatch, **ppPatch;
+	struct Patch *pPatch;
 
-	pPatch = pCurrentSection->pPatches;
-	ppPatch = &(pCurrentSection->pPatches);
-
-	while (pPatch) {
-		ppPatch = &(pPatch->pNext);
-		pPatch = pPatch->pNext;
-	}
-
-	if ((*ppPatch = pPatch =
+	if ((pPatch =
 		(struct Patch *) malloc(sizeof(struct Patch))) != NULL) {
-		pPatch->pNext = NULL;
+		pPatch->pNext = pCurrentSection->pPatches;
 		pPatch->nRPNSize = 0;
 		pPatch->pRPN = NULL;
 	} else
 		fatalerror("No memory for patch");
+
+	pCurrentSection->pPatches = pPatch;
 
 	return (pPatch);
 }
