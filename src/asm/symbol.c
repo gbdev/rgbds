@@ -26,7 +26,6 @@ struct sSymbol *tHashedSymbols[HASHSIZE];
 struct sSymbol *pScope = NULL;
 struct sSymbol *pPCSymbol = NULL;
 struct sSymbol *p_NARGSymbol = NULL;
-struct sSymbol *p__LINE__Symbol = NULL;
 char *currentmacroargs[MAXMACROARGS + 1];
 char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
@@ -44,12 +43,6 @@ Callback_NARG(struct sSymbol * sym)
 	return (i);
 }
 
-SLONG 
-Callback__LINE__(struct sSymbol * sym)
-{
-	sym = sym;
-	return (nLineNo);
-}
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -879,9 +872,6 @@ sym_Init(void)
 	sym_AddEqu("_NARG", 0);
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;
-	sym_AddEqu("__LINE__", 0);
-	p__LINE__Symbol = findsymbol("__LINE__", NULL);
-	p__LINE__Symbol->Callback = Callback__LINE__;
 
 	sym_AddEqu("__ASM__", (SLONG) (atof(ASM_VERSION) * 65536));
 	sym_AddSet("_RS", 0);
