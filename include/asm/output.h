@@ -26,6 +26,7 @@ void out_PCRelByte(struct Expression * expr);
 void out_WriteObject(void);
 void out_Skip(int skip);
 void out_BinaryFile(char *s);
+void out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length);
 void out_String(char *s);
 void out_AbsLong(SLONG b);
 void out_RelLong(struct Expression * expr);

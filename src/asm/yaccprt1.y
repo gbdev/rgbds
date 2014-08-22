@@ -15,11 +15,13 @@
 #include "asm/rpn.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
+#include "asm/gnustring.h"
 
 extern bool haltnop;
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
+
 
 ULONG	symvaluetostring( char *dest, char *sym )
 {

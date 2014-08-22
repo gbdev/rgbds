@@ -1,16 +1,17 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 #include "asm/asm.h"
 #include "asm/lexer.h"
 #include "asm/types.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "asm/gnustring.h"
 
 #include "asmy.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
 struct sLexString {
 	char *tzName;

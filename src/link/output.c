@@ -88,7 +88,10 @@ Output(void)
 
 		fclose(f);
 	}
-	for (i = 256; i < MAXBANKS; i += 1) {
+
+	// Skip all ROM banks, they have been already written. Start from the first non-ROM bank. See "assign.h"
+
+	for (i = BANK_WRAM0; i < MAXBANKS; i += 1) {
 		struct sSection *pSect;
 		MapfileInitBank(i);
 		pSect = pSections;
