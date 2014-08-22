@@ -438,7 +438,6 @@ scanagain:
 						case 't':
 							ch = '\t';
 							break;
-						case '0':
 						case '1':
 						case '2':
 						case '3':
@@ -460,6 +459,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro argument not defined");
 							}
 							break;
 						case '@':
@@ -473,6 +474,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro unique label string not defined");
 							}
 							break;
 						}
@@ -489,7 +492,6 @@ scanagain:
 							    '\\') {
 								switch (ch =
 								    (*pLexBuffer++)) {
-								case '0':
 								case '1':
 								case '2':
 								case '3':
@@ -504,6 +506,8 @@ scanagain:
 										    (*marg)
 											sym[i++] = *marg++;
 										ch = 0;
+									} else {
+										yyerror("Macro argument not defined");
 									}
 									break;
 								case '@':
@@ -512,6 +516,8 @@ scanagain:
 										    (*marg)
 											sym[i++] = *marg++;
 										ch = 0;
+									} else {
+										yyerror("Macro unique label string not defined");
 									}
 									break;
 								}
@@ -553,7 +559,6 @@ scanagain:
 				    && (*pLexBuffer != '\n')) {
 					if ((ch = *pLexBuffer++) == '\\') {
 						switch (ch = (*pLexBuffer++)) {
-						case '0':
 						case '1':
 						case '2':
 						case '3':
@@ -573,6 +578,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro argument not defined");
 							}
 							break;
 						case '@':
@@ -584,6 +591,8 @@ scanagain:
 									    =
 									    *marg++;
 								ch = 0;
+							} else {
+								yyerror("Macro unique label string not defined");
 							}
 							break;
 						}
@@ -672,7 +681,6 @@ scanagain:
 					case 't':
 						ch = '\t';
 						break;
-					case '0':
 					case '1':
 					case '2':
 					case '3':
@@ -692,6 +700,8 @@ scanagain:
 								    [index++] =
 								    *marg++;
 							ch = 0;
+						} else {
+							yyerror("Macro argument not defined");
 						}
 						break;
 					case '@':
@@ -704,6 +714,8 @@ scanagain:
 								    [index++] =
 								    *marg++;
 							ch = 0;
+						} else {
+							yyerror("Macro unique label not defined");
 						}
 						break;
 					}
@@ -718,7 +730,6 @@ scanagain:
 							*pLexBuffer++) == '\\') {
 							switch (ch =
 							    (*pLexBuffer++)) {
-							case '0':
 							case '1':
 							case '2':
 							case '3':
@@ -737,6 +748,8 @@ scanagain:
 									    (*marg)
 										sym[i++] = *marg++;
 									ch = 0;
+								} else {
+									yyerror("Macro argument not defined");
 								}
 								break;
 							case '@':
@@ -748,6 +761,8 @@ scanagain:
 									    (*marg)
 										sym[i++] = *marg++;
 									ch = 0;
+								} else {
+									yyerror("Macro unique label string not defined");
 								}
 								break;
 							}
