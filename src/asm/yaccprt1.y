@@ -21,14 +21,38 @@ extern bool haltnop;
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
 
-ULONG	symvaluetostring( char *dest, char *sym )
+size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 {
-	if( sym_isString(sym) )
-		strcpy( dest, sym_GetStringValue(sym) );
-	else
-		sprintf( dest, "$%lX", sym_GetConstantValue(sym) );
+	size_t length;
 
-	return( strlen(dest) );
+	if (sym_isString(sym)) {
+		char *src = sym_GetStringValue(sym);
+		size_t i;
+
+		for (i = 0; src[i] != 0; i++) {
+			if (i >= maxLength) {
+				fatalerror("Symbol value too long to fit buffer");
+			}
+			dest[i] = src[i];
+		}
+
+		length = i;
+	} else {
+		ULONG value = sym_GetConstantValue(sym);
+		int fullLength = snprintf(dest, maxLength + 1, "$%lX", value);
+
+		if (fullLength < 0) {
+			fatalerror("snprintf encoding error");
+		} else {
+			length = (size_t)fullLength;
+
+			if (length > maxLength) {
+				fatalerror("Symbol value too long to fit buffer");
+			}
+		}
+	}
+
+	return length;
 }
 
 ULONG	str2int( char *s )
@@ -335,8 +359,8 @@ void	if_skip_to_endc( void )
 
 %union
 {
-    char tzSym[MAXSYMLEN+1];
-    char tzString[256];
+    char tzSym[MAXSYMLEN + 1];
+    char tzString[MAXSTRLEN + 1];
     struct Expression sVal;
     SLONG nConstValue;
 }
