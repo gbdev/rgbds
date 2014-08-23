@@ -230,6 +230,11 @@ ULONG	isIf( char *s )
 	return( (strncasecmp(s,"If",2)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[2]) );
 }
 
+ULONG	isElif( char *s )
+{
+	return( (strncasecmp(s,"Elif",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
+}
+
 ULONG	isElse( char *s )
 {
 	return( (strncasecmp(s,"Else",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
@@ -240,119 +245,126 @@ ULONG	isEndc( char *s )
 	return( (strncasecmp(s,"Endc",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
 }
 
-void	if_skip_to_else( void )
+void if_skip_to_else()
 {
-	SLONG	level=1, len, instring=0;
-	char	*src=pCurrentBuffer->pBuffer;
+	int level = 1;
+	bool inString = false;
+	char *src = pCurrentBuffer->pBuffer;
 
-	while( *src && level )
+	while (*src && level)
 	{
-		if( *src=='\n' )
-			nLineNo+=1;
+		if (*src == '\n')
+			nLineNo++;
 
-		if( instring==0 )
+		if (!inString)
 		{
-			if( isIf(src) )
+			if (isIf(src))
 			{
-				level+=1;
-				src+=2;
+				level++;
+				src += 2;
 			}
-			else if( level==1 && isElse(src) )
+			else if (level == 1 && isElif(src))
 			{
-				level-=1;
-				src+=4;
+				level--;
+				skipElif = false;
 			}
-			else if( isEndc(src) )
+			else if (level == 1 && isElse(src))
 			{
-				level-=1;
-				if( level!=0 )
-					src+=4;
+				level--;
+				src += 4;
+			}
+			else if (isEndc(src))
+			{
+				level--;
+				if (level != 0)
+					src += 4;
 			}
 			else
 			{
-				if( *src=='\"' )
-					instring=1;
-				src+=1;
+				if (*src == '\"')
+					inString = true;
+				src++;
 			}
 		}
 		else
 		{
-			if( *src=='\\' )
+			switch (*src)
 			{
-				src+=2;
-			}
-			else if( *src=='\"' )
-			{
-				src+=1;
-				instring=0;
-			}
-			else
-			{
-				src+=1;
+			case '\\':
+				src += 2;
+				break;
+			case '\"':
+				src++;
+				inString = false;
+				break;
+			default:
+				src++;
+				break;
 			}
 		}
 	}
 
-	len=src-pCurrentBuffer->pBuffer;
+	int len = src - pCurrentBuffer->pBuffer;
 
-	yyskipbytes( len );
-	yyunput( '\n' );
-	nLineNo-=1;
+	yyskipbytes(len);
+	yyunput('\n');
+	nLineNo--;
 }
 
-void	if_skip_to_endc( void )
+void if_skip_to_endc()
 {
-	SLONG	level=1, len, instring=0;
-	char	*src=pCurrentBuffer->pBuffer;
+	int level = 1;
+	bool inString = false;
+	char *src = pCurrentBuffer->pBuffer;
 
-	while( *src && level )
+	while (*src && level)
 	{
-		if( *src=='\n' )
-			nLineNo+=1;
+		if (*src == '\n')
+			nLineNo++;
 
-		if( instring==0 )
+		if (!inString)
 		{
-			if( isIf(src) )
+			if (isIf(src))
 			{
-				level+=1;
-				src+=2;
+				level++;
+				src += 2;
 			}
-			else if( isEndc(src) )
+			else if (isEndc(src))
 			{
-				level-=1;
-				if( level!=0 )
-					src+=4;
+				level--;
+				if (level != 0)
+					src += 4;
 			}
 			else
 			{
-				if( *src=='\"' )
-					instring=1;
-				src+=1;
+				if (*src == '\"')
+					inString = true;
+				src++;
 			}
 		}
 		else
 		{
-			if( *src=='\\' )
+			switch (*src)
 			{
-				src+=2;
-			}
-			else if( *src=='\"' )
-			{
-				src+=1;
-				instring=0;
-			}
-			else
-			{
-				src+=1;
+			case '\\':
+				src += 2;
+				break;
+			case '\"':
+				src++;
+				inString = false;
+				break;
+			default:
+				src++;
+				break;
 			}
 		}
 	}
 
-	len=src-pCurrentBuffer->pBuffer;
+	int len = src - pCurrentBuffer->pBuffer;
 
-	yyskipbytes( len );
-	yyunput( '\n' );
-	nLineNo-=1;
+	yyskipbytes(len);
+	yyunput('\n');
+	nLineNo--;
 }
 
 %}
@@ -414,7 +426,8 @@ void	if_skip_to_endc( void )
 %token	<tzSym> T_POP_SET
 %token	<tzSym> T_POP_EQUS
 
-%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_IF T_POP_ELSE T_POP_ENDC
+%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV
+%token	T_POP_IF T_POP_ELSE T_POP_ELIF T_POP_ENDC
 %token	T_POP_IMPORT T_POP_EXPORT T_POP_GLOBAL
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
 %token	T_POP_SECTION
