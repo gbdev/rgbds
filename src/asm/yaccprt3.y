@@ -75,6 +75,7 @@ simple_pseudoop	:	include
 				|	printt
 				|	printv
 				|	if
+				|	elif
 				|	else
 				|	endc
 				|	import
@@ -301,18 +302,39 @@ printf			:	T_POP_PRINTF const
 					}
 ;
 
-if				:	T_POP_IF const
+if			:	T_POP_IF const
 					{
 						nIFDepth+=1;
 						if( !$2 )
 						{
-							if_skip_to_else();	/* will continue parsing just after ELSE or just at ENDC keyword */
+							if_skip_to_else(); /* will continue parsing just after ELSE or just at ELIF or ENDC keyword */
 						}
 					}
+;
+
+elif			:	T_POP_ELIF const
+					{
+						if (skipElif)
+						{
+							// This is for when ELIF is reached at the end of an IF or ELIF block for which the condition was true.
+							if_skip_to_endc(); /* will continue parsing just at ENDC keyword */
+						}
+						else
+						{
+							// This is for when ELIF is skipped to because the condition of the previous IF or ELIF block was false.
+							skipElif = true;
+
+							if (!$2)
+							{
+								if_skip_to_else(); /* will continue parsing just after ELSE or just at ELIF or ENDC keyword */
+							}
+						}
+					}
+;
 
 else			:	T_POP_ELSE
 					{
-						if_skip_to_endc();		/* will continue parsing just at ENDC keyword */
+						if_skip_to_endc(); /* will continue parsing just at ENDC keyword */
 					}
 ;
 

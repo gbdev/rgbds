@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "asm/types.h"
 #include "asm/symbol.h"
@@ -24,6 +25,7 @@ extern ULONG nTotalLines;
 extern ULONG nPC;
 extern ULONG nPass;
 extern ULONG nIFDepth;
+extern bool skipElif;
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern struct sSymbol *tHashedSymbols[HASHSIZE];

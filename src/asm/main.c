@@ -35,6 +35,7 @@ bool haltnop;
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
 ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
+bool skipElif;
 
 extern int yydebug;
 
@@ -362,6 +363,7 @@ main(int argc, char *argv[])
 	nLineNo = 1;
 	nTotalLines = 0;
 	nIFDepth = 0;
+	skipElif = true;
 	nPC = 0;
 	nPass = 1;
 	nErrors = 0;
@@ -379,6 +381,7 @@ main(int argc, char *argv[])
 				nTotalLines = 0;
 				nLineNo = 1;
 				nIFDepth = 0;
+				skipElif = true;
 				nPC = 0;
 				nPass = 2;
 				nErrors = 0;
