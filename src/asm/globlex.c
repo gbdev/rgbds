@@ -329,6 +329,7 @@ struct sLexInitString staticstrings[] = {
 
 	{"if", T_POP_IF},
 	{"else", T_POP_ELSE},
+	{"elif", T_POP_ELIF},
 	{"endc", T_POP_ENDC},
 
 	{"wram0", T_SECT_WRAM0},

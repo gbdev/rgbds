@@ -289,129 +289,75 @@ void	copymacro( void )
 	yyskipbytes( ulNewMacroSize+4 );
 }
 
-ULONG	isIf( char *s )
+ULONG	isIf(char *s)
 {
-	return( (strncasecmp(s,"If",2)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[2]) );
+	return((strncasecmp(s,"If",2) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[2]));
 }
 
-ULONG	isElse( char *s )
+ULONG	isElif(char *s)
 {
-	return( (strncasecmp(s,"Else",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
+	return((strncasecmp(s,"Elif",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
 }
 
-ULONG	isEndc( char *s )
+ULONG	isElse(char *s)
 {
-	return( (strncasecmp(s,"Endc",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
+	return((strncasecmp(s,"Else",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
 }
 
-void	if_skip_to_else( void )
+ULONG	isEndc(char *s)
 {
-	SLONG	level=1, len, instring=0;
-	char	*src=pCurrentBuffer->pBuffer;
+	return((strncasecmp(s,"Endc",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
+}
 
-	while( *src && level )
-	{
-		if( *src=='\n' )
-			nLineNo+=1;
+void	if_skip_to_else()
+{
+	SLONG level = 1;
+	bool inString = false;
+	char *src=pCurrentBuffer->pBuffer;
 
-		if( instring==0 )
-		{
-			if( isIf(src) )
-			{
-				level+=1;
-				src+=2;
-			}
-			else if( level==1 && isElse(src) )
-			{
-				level-=1;
-				src+=4;
-			}
-			else if( isEndc(src) )
-			{
-				level-=1;
-				if( level!=0 )
-					src+=4;
-			}
-			else
-			{
-				if( *src=='\"' )
-					instring=1;
-				src+=1;
-			}
+	while (*src && level) {
+		if (*src == '\n') {
+			nLineNo++;
 		}
-		else
-		{
-			if( *src=='\\' )
-			{
-				src+=2;
-			}
-			else if( *src=='\"' )
-			{
-				src+=1;
-				instring=0;
-			}
-			else
-			{
-				src+=1;
-			}
-		}
-	}
 
-	if (level != 0) {
-		fatalerror("Unterminated IF construct");
-	}
+		if (!inString) {
+			if (isIf(src)) {
+				level++;
+				src += 2;
 
-	len=src-pCurrentBuffer->pBuffer;
+			} else if (level == 1 && isElif(src)) {
+				level--;
+				skipElif = false;
 
-	yyskipbytes( len );
-	yyunput( '\n' );
-	nLineNo-=1;
-}
+			} else if (level == 1 && isElse(src)) {
+				level--;
+				src += 4;
 
-void	if_skip_to_endc( void )
-{
-	SLONG	level=1, len, instring=0;
-	char	*src=pCurrentBuffer->pBuffer;
+			} else if (isEndc(src)) {
+				level--;
+				if (level != 0) {
+					src += 4;
+				}
 
-	while( *src && level )
-	{
-		if( *src=='\n' )
-			nLineNo+=1;
+			} else {
+				if (*src=='\"') {
+					inString = true;
+				}
+				src++;
+			}
+		} else {
+			switch (*src) {
+			case '\\':
+				src += 2;
+				break;
 
-		if( instring==0 )
-		{
-			if( isIf(src) )
-			{
-				level+=1;
-				src+=2;
-			}
-			else if( isEndc(src) )
-			{
-				level-=1;
-				if( level!=0 )
-					src+=4;
-			}
-			else
-			{
-				if( *src=='\"' )
-					instring=1;
-				src+=1;
-			}
-		}
-		else
-		{
-			if( *src=='\\' )
-			{
-				src+=2;
-			}
-			else if( *src=='\"' )
-			{
-				src+=1;
-				instring=0;
-			}
-			else
-			{
-				src+=1;
+			case '\"':
+				src++;
+				inString = false;
+
+			default:
+				src++;
+				break;
 			}
 		}
 	}
@@ -420,11 +366,69 @@ void	if_skip_to_endc( void )
 		fatalerror("Unterminated IF construct");
 	}
 
-	len=src-pCurrentBuffer->pBuffer;
+	SLONG len = src - pCurrentBuffer->pBuffer;
 
-	yyskipbytes( len );
-	yyunput( '\n' );
-	nLineNo-=1;
+	yyskipbytes(len);
+	yyunput('\n');
+	nLineNo--;
+}
+
+void	if_skip_to_endc()
+{
+	SLONG level = 1;
+	bool inString = false;
+	char *src=pCurrentBuffer->pBuffer;
+
+	while (*src && level) {
+		if (*src == '\n') {
+			nLineNo++;
+		}
+
+		if (!inString) {
+			if (isIf(src)) {
+				level++;
+				src += 2;
+
+			} else if (isEndc(src)) {
+				level--;
+				if (level != 0) {
+					src += 4;
+				}
+
+			} else {
+				if (*src=='\"') {
+					inString = true;
+				}
+				src++;
+			}
+		}
+		else {
+			switch (*src) {
+			case '\\':
+				src += 2;
+				break;
+
+			case '\"':
+				src++;
+				inString = false;
+				break;
+
+			default:
+				src++;
+				break;
+			}
+		}
+	}
+
+	if (level != 0) {
+		fatalerror("Unterminated IF construct");
+	}
+
+	SLONG len = src - pCurrentBuffer->pBuffer;
+
+	yyskipbytes(len);
+	yyunput('\n');
+	nLineNo--;
 }
 
 %}
@@ -492,7 +496,7 @@ void	if_skip_to_endc( void )
 %token	<tzSym> T_POP_SET
 %token	<tzSym> T_POP_EQUS
 
-%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_IF T_POP_ELSE T_POP_ENDC
+%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
 %token	T_POP_IMPORT T_POP_EXPORT T_POP_GLOBAL
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
 %token	T_POP_SECTION
@@ -627,6 +631,7 @@ simple_pseudoop	:	include
 				|	printt
 				|	printv
 				|	if
+				|	elif
 				|	else
 				|	endc
 				|	import
@@ -867,26 +872,47 @@ printf			:	T_POP_PRINTF const
 					}
 ;
 
-if				:	T_POP_IF const
-					{
-						nIFDepth+=1;
-						if( !$2 )
-						{
-							if_skip_to_else();	/* will continue parsing just after ELSE or just at ENDC keyword */
+if				:	T_POP_IF const {
+						nIFDepth++;
+						if (!$2) {
+							if_skip_to_else(); // Continue parsing after ELSE, or at ELIF or ENDC keyword
 						}
-					}
+					};
 
-else			:	T_POP_ELSE
-					{
-						if_skip_to_endc();		/* will continue parsing just at ENDC keyword */
-					}
-;
+elif			:	T_POP_ELIF const {
+						if (nIFDepth <= 0) {
+							fatalerror("Found ELIF outside an IF construct");
+						}
 
-endc			:	T_POP_ENDC
-					{
-						nIFDepth-=1;
-					}
-;
+						if (skipElif) {
+							// This is for when ELIF is reached at the end of an IF or ELIF block for which the condition was true.
+							if_skip_to_endc(); // Continue parsing at ENDC keyword
+
+						} else {
+							// This is for when ELIF is skipped to because the condition of the previous IF or ELIF block was false.
+							skipElif = true;
+
+							if (!$2) {
+								if_skip_to_else(); // Continue parsing after ELSE, or at ELIF or ENDC keyword
+							}
+						}
+					};
+
+else			:	T_POP_ELSE {
+						if (nIFDepth <= 0) {
+							fatalerror("Found ELSE outside an IF construct");
+						}
+
+						if_skip_to_endc(); // Continue parsing at ENDC keyword
+					};
+
+endc			:	T_POP_ENDC {
+						if (nIFDepth <= 0) {
+							fatalerror("Found ENDC outside an IF construct");
+						}
+
+						nIFDepth--;
+					};
 
 const_3bit		:	const
 					{
