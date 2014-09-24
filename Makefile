@@ -22,7 +22,9 @@ rgbasm_obj := \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
-	src/asm/gameboy/locallex.o
+	src/asm/gameboy/locallex.o \
+	src/extern/strlcpy.o \
+	src/extern/strlcat.o
 
 rgblib_obj := \
 	src/lib/library.o \

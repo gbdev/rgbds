@@ -9,6 +9,8 @@
 #ifndef ASMOTOR_ASM_FSTACK_H
 #define ASMOTOR_ASM_FSTACK_H
 
+#include <stdio.h>
+
 #include "asm/asm.h"
 #include "asm/types.h"
 #include "asm/lexer.h"
@@ -27,14 +29,17 @@ struct sContext {
 	ULONG nREPTBlockSize;
 };
 
-extern ULONG fstk_RunInclude(char *s);
+void
+fstk_RunInclude(char *);
 extern void fstk_RunMacroArg(SLONG s);
-extern ULONG fstk_Init(char *s);
+void
+fstk_Init(char *);
 extern void fstk_Dump(void);
 extern void fstk_AddIncludePath(char *s);
 extern ULONG fstk_RunMacro(char *s);
 extern void fstk_RunRept(ULONG count);
-extern void fstk_FindFile(char *s);
+FILE *
+fstk_FindFile(char *);
 
 extern int yywrap(void);
 

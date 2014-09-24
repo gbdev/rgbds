@@ -348,7 +348,6 @@ main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	/* tzMainfile=argv[argn++]; argc-=1; */
 	tzMainfile = argv[argc - 1];
 
 	setuplex();
@@ -366,75 +365,71 @@ main(int argc, char *argv[])
 	nPass = 1;
 	nErrors = 0;
 	sym_PrepPass1();
-	if (fstk_Init(tzMainfile)) {
-		if (CurrentOptions.verbose) {
-			printf("Pass 1...\n");
-		}
+	fstk_Init(tzMainfile);
+	if (CurrentOptions.verbose) {
+		printf("Pass 1...\n");
+	}
 
-		yy_set_state(LEX_STATE_NORMAL);
-		opt_SetCurrentOptions(&DefaultOptions);
+	yy_set_state(LEX_STATE_NORMAL);
+	opt_SetCurrentOptions(&DefaultOptions);
 
-		if (yyparse() == 0 && nErrors == 0) {
-			if (nIFDepth == 0) {
-				nTotalLines = 0;
-				nLineNo = 1;
-				nIFDepth = 0;
-				nPC = 0;
-				nPass = 2;
-				nErrors = 0;
-				sym_PrepPass2();
-				out_PrepPass2();
-				fstk_Init(tzMainfile);
-				yy_set_state(LEX_STATE_NORMAL);
-				opt_SetCurrentOptions(&DefaultOptions);
+	if (yyparse() == 0 && nErrors == 0) {
+		if (nIFDepth == 0) {
+			nTotalLines = 0;
+			nLineNo = 1;
+			nIFDepth = 0;
+			nPC = 0;
+			nPass = 2;
+			nErrors = 0;
+			sym_PrepPass2();
+			out_PrepPass2();
+			fstk_Init(tzMainfile);
+			yy_set_state(LEX_STATE_NORMAL);
+			opt_SetCurrentOptions(&DefaultOptions);
 
+			if (CurrentOptions.verbose) {
+				printf("Pass 2...\n");
+			}
+
+			if (yyparse() == 0 && nErrors == 0) {
+				double timespent;
+
+				nEndClock = clock();
+				timespent =
+				    ((double) (nEndClock - nStartClock))
+				    / (double) CLOCKS_PER_SEC;
 				if (CurrentOptions.verbose) {
-					printf("Pass 2...\n");
-				}
-
-				if (yyparse() == 0 && nErrors == 0) {
-					double timespent;
-
-					nEndClock = clock();
-					timespent =
-					    ((double) (nEndClock - nStartClock))
-					    / (double) CLOCKS_PER_SEC;
-					if (CurrentOptions.verbose) {
-						printf
-						    ("Success! %ld lines in %d.%02d seconds ",
-						    nTotalLines, (int) timespent,
-						    ((int) (timespent * 100.0)) % 100);
-						if (timespent == 0)
-							printf
-							    ("(INFINITY lines/minute)\n");
-						else
-							printf("(%d lines/minute)\n",
-							    (int) (60 / timespent *
-								nTotalLines));
-					}
-					out_WriteObject();
-				} else {
 					printf
-					    ("Assembly aborted in pass 2 (%ld errors)!\n",
-					    nErrors);
-					//sym_PrintSymbolTable();
-					exit(5);
+					    ("Success! %ld lines in %d.%02d seconds ",
+					    nTotalLines, (int) timespent,
+					    ((int) (timespent * 100.0)) % 100);
+					if (timespent == 0)
+						printf
+						    ("(INFINITY lines/minute)\n");
+					else
+						printf("(%d lines/minute)\n",
+						    (int) (60 / timespent *
+							nTotalLines));
 				}
+				out_WriteObject();
 			} else {
-				fprintf(stderr,
-				    "Unterminated IF construct (%ld levels)!\n",
-				    nIFDepth);
-				exit(1);
+				printf
+				    ("Assembly aborted in pass 2 (%ld errors)!\n",
+				    nErrors);
+				//sym_PrintSymbolTable();
+				exit(5);
 			}
 		} else {
 			fprintf(stderr,
-			    "Assembly aborted in pass 1 (%ld errors)!\n",
-			    nErrors);
+			    "Unterminated IF construct (%ld levels)!\n",
+			    nIFDepth);
 			exit(1);
 		}
 	} else {
-		printf("File '%s' not found\n", tzMainfile);
-		exit(5);
+		fprintf(stderr,
+		    "Assembly aborted in pass 1 (%ld errors)!\n",
+		    nErrors);
+		exit(1);
 	}
-	return (0);
+	return 0;
 }

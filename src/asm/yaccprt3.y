@@ -265,10 +265,7 @@ set				:	T_LABEL T_POP_SET const
 
 include			:	T_POP_INCLUDE string
 					{
-						if( !fstk_RunInclude($2) )
-						{
-							yyerror("Could not open file '%s' : %s\n", $2, strerror(errno));
-						}
+						fstk_RunInclude($2);
 					}
 ;
 

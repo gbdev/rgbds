@@ -907,30 +907,33 @@ out_BinaryFile(char *s)
 {
 	FILE *f;
 
-	fstk_FindFile(s);
+	f = fstk_FindFile(s);
+	if (f == NULL) {
+		fprintf(stderr, "Unable to open incbin file '%s': ",
+		    s);
+		perror(NULL);
+		exit(1);
+	}
 
-	if ((f = fopen(s, "rb")) != NULL) {
-		SLONG fsize;
+	SLONG fsize;
 
-		fseek(f, 0, SEEK_END);
-		fsize = ftell(f);
-		fseek(f, 0, SEEK_SET);
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-		checkcodesection(fsize);
+	checkcodesection(fsize);
 
-		if (nPass == 2) {
-			SLONG dest = nPC;
-			SLONG todo = fsize;
+	if (nPass == 2) {
+		SLONG dest = nPC;
+		SLONG todo = fsize;
 
-			while (todo--)
-				pCurrentSection->tData[dest++] = fgetc(f);
-		}
-		pCurrentSection->nPC += fsize;
-		nPC += fsize;
-		pPCSymbol->nValue += fsize;
-		fclose(f);
-	} else
-		fatalerror("Could not open file '%s': %s", s, strerror(errno));
+		while (todo--)
+			pCurrentSection->tData[dest++] = fgetc(f);
+	}
+	pCurrentSection->nPC += fsize;
+	nPC += fsize;
+	pPCSymbol->nValue += fsize;
+	fclose(f);
 }
 
 void 
@@ -944,36 +947,39 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 	if (length < 0)
 		fatalerror("Number of bytes to read must be greater than zero");
 
-	fstk_FindFile(s);
+	f = fstk_FindFile(s);
+	if (f == NULL) {
+		fprintf(stderr, "Unable to open included file '%s': ",
+		    s);
+		perror(NULL);
+		exit(1);
+	}
 
-	if ((f = fopen(s, "rb")) != NULL) {
-		SLONG fsize;
+	SLONG fsize;
 
-		fseek(f, 0, SEEK_END);
-		fsize = ftell(f);
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
 
-		if (start_pos >= fsize)
-			fatalerror("Specified start position is greater than length of file");
+	if (start_pos >= fsize)
+		fatalerror("Specified start position is greater than length of file");
 
-		if ((start_pos + length) > fsize)
-			fatalerror("Specified range in INCBIN is out of bounds");
+	if ((start_pos + length) > fsize)
+		fatalerror("Specified range in INCBIN is out of bounds");
 
-		fseek(f, start_pos, SEEK_SET);
+	fseek(f, start_pos, SEEK_SET);
 
-		checkcodesection(length);
+	checkcodesection(length);
 
-		if (nPass == 2) {
-			SLONG dest = nPC;
-			SLONG todo = length;
+	if (nPass == 2) {
+		SLONG dest = nPC;
+		SLONG todo = length;
 
-			while (todo--)
-				pCurrentSection->tData[dest++] = fgetc(f);
-		}
-		pCurrentSection->nPC += length;
-		nPC += length;
-		pPCSymbol->nValue += length;
+		while (todo--)
+			pCurrentSection->tData[dest++] = fgetc(f);
+	}
+	pCurrentSection->nPC += length;
+	nPC += length;
+	pPCSymbol->nValue += length;
 
-		fclose(f);
-	} else
-		fatalerror("Could not open file '%s': %s", s, strerror(errno));
+	fclose(f);
 }
