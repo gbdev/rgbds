@@ -37,7 +37,7 @@ usage(void)
 {
 	printf("RGBLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
 	    ")\n\n");
-	printf("usage: rgblink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile]\n");
+	printf("usage: rgblink [-t] [-m mapfile] [-n symfile] [-o outfile]\n");
 	printf("\t    [-s symbol] [-z pad_value] objectfile [...]\n");
 
 	exit(1);
@@ -59,9 +59,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "l:m:n:o:p:s:t")) != -1) {
 		switch (ch) {
-		case 'l':
-			lib_Readfile(optarg);
-			break;
 		case 'm':
 			SetMapfileName(optarg);
 			break;

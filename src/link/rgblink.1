@@ -29,12 +29,6 @@ option to override this.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl l Ar library
-Include a referenced library module created with
-.Xr rgblib 1 .
-Note that specified libraries will be included only if needed\(emthat is, if
-a SECTION from a library is referenced by an object file.
-Only the relevant SECTION will be included, rather than the entire module.
 .It Fl m Ar mapfile
 Write a mapfile to the given filename.
 .It Fl n Ar symfile
@@ -70,7 +64,6 @@ to fix these so that the program will actually run in a Game Boy:
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,
 .Xr rgbfix 1 ,
-.Xr rgblib 1 ,
 .Xr gbz80 7
 .Sh HISTORY
 .Nm

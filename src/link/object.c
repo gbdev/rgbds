@@ -494,26 +494,3 @@ lib_ReadXLB0(FILE * f)
 		obj_ReadOpenFile(f, name);
 	}
 }
-
-void 
-lib_Readfile(char *tzLibfile)
-{
-	FILE *pObjfile;
-
-	oReadLib = 1;
-
-	pObjfile = fopen(tzLibfile, "rb");
-	if (pObjfile == NULL) {
-		err(1, "Unable to open object '%s'", tzLibfile);
-	}
-	char tzHeader[5];
-
-	fread(tzHeader, sizeof(char), 4, pObjfile);
-	tzHeader[4] = 0;
-	if (strcmp(tzHeader, "XLB0") == 0)
-		lib_ReadXLB0(pObjfile);
-	else {
-		errx(1, "'%s' is an invalid library", tzLibfile);
-	}
-	fclose(pObjfile);
-}

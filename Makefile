@@ -27,11 +27,6 @@ rgbasm_obj := \
 	src/extern/strlcpy.o \
 	src/extern/strlcat.o
 
-rgblib_obj := \
-	src/lib/library.o \
-	src/lib/main.o \
-	src/extern/err.o
-
 rgblink_obj := \
 	src/link/assign.o \
 	src/link/library.o \
@@ -47,12 +42,11 @@ rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/err.o
 
-all: rgbasm rgblib rgblink rgbfix
+all: rgbasm rgblink rgbfix
 
 clean:
 	$Qrm -rf rgbds.html
 	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
-	$Qrm -rf rgblib rgblib.exe ${rgblib_obj} rgblib.html
 	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
@@ -61,7 +55,6 @@ install: all
 	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
 	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
-	$Qinstall -s -m 555 rgblib ${BINPREFIX}/rgblib
 	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
 		(echo Installing manpages to ${MANPREFIX} failed. >&2 && \
 		 echo Check where your manpages are installed and set the \
@@ -74,14 +67,9 @@ install: all
 		${MANPREFIX}/man1/rgbfix.1
 	$Qinstall -m 444 src/link/rgblink.1 \
 		${MANPREFIX}/man1/rgblink.1
-	$Qinstall -m 444 src/lib/rgblib.1 \
-		${MANPREFIX}/man1/rgblib.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
-
-rgblib: ${rgblib_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgblib_obj}
 
 rgblink: ${rgblink_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgblink_obj}
@@ -107,7 +95,6 @@ mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
 		make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
-	$Qmv rgblib rgblib.exe
 	$Qmv rgblink rgblink.exe
 	$Qmv rgbfix rgbfix.exe
 
@@ -122,8 +109,6 @@ wwwman:
 		rgbasm.html
 	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > \
 		rgbfix.html
-	$Qmandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > \
-		rgblib.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
 
