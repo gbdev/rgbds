@@ -36,7 +36,7 @@ struct sSymbol *pCurrentMacro;
 YY_BUFFER_STATE CurrentFlexHandle;
 FILE *pCurrentFile;
 ULONG nCurrentStatus;
-char tzCurrentFileName[_MAX_PATH + 1];
+char *tzCurrentFileName;
 char IncludePaths[MAXINCPATHS][_MAX_PATH + 1];
 SLONG NextIncPath = 0;
 ULONG nMacroCount;
@@ -75,8 +75,7 @@ pushcontext(void)
 		(struct sContext *) malloc(sizeof(struct sContext))) != NULL) {
 		(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 		(*ppFileStack)->pNext = NULL;
-		strcpy((char *) (*ppFileStack)->tzFileName,
-		    (char *) tzCurrentFileName);
+		(*ppFileStack)->tzFileName = tzCurrentFileName;
 		(*ppFileStack)->nLine = nLineNo;
 		switch ((*ppFileStack)->nStatus = nCurrentStatus) {
 		case STAT_isMacroArg:
@@ -137,8 +136,7 @@ popcontext(void)
 			nLineNo += 1;
 
 		CurrentFlexHandle = pLastFile->FlexHandle;
-		strcpy((char *) tzCurrentFileName,
-		    (char *) pLastFile->tzFileName);
+		tzCurrentFileName = pLastFile->tzFileName;
 		switch (nCurrentStatus = pLastFile->nStatus) {
 		case STAT_isMacroArg:
 		case STAT_isMacro:
@@ -256,7 +254,7 @@ fstk_RunInclude(char *tzFileName)
 	pushcontext();
 	nLineNo = 1;
 	nCurrentStatus = STAT_isInclude;
-	strcpy(tzCurrentFileName, tzFileName);
+	tzCurrentFileName = tzFileName;
 	pCurrentFile = f;
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
@@ -284,7 +282,7 @@ fstk_RunMacro(char *s)
 		nLineNo = -1;
 		sym_UseNewMacroArgs();
 		nCurrentStatus = STAT_isMacro;
-		strcpy(tzCurrentFileName, s);
+		tzCurrentFileName = s;
 		pCurrentMacro = sym;
 		CurrentFlexHandle =
 		    yy_scan_bytes(pCurrentMacro->pMacro,
@@ -294,32 +292,7 @@ fstk_RunMacro(char *s)
 	} else
 		return (0);
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up a macroargument for parsing
- *
- */
 
-void 
-fstk_RunMacroArg(SLONG s)
-{
-	char *sym;
-
-	if (s == '@')
-		s = -1;
-	else
-		s -= '0';
-
-	if ((sym = sym_FindMacroArg(s)) != NULL) {
-		pushcontext();
-		nCurrentStatus = STAT_isMacroArg;
-		sprintf(tzCurrentFileName, "%c", (UBYTE) s);
-		CurrentFlexHandle = yy_scan_bytes(sym, strlen(sym));
-		yy_switch_to_buffer(CurrentFlexHandle);
-	} else
-		fatalerror("No such macroargument");
-}
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
  *
@@ -335,7 +308,7 @@ fstk_RunString(char *s)
 	if ((pSym = sym_FindSymbol(s)) != NULL) {
 		pushcontext();
 		nCurrentStatus = STAT_isMacroArg;
-		strcpy(tzCurrentFileName, s);
+		tzCurrentFileName = s;
 		CurrentFlexHandle =
 		    yy_scan_bytes(pSym->pMacro, strlen(pSym->pMacro));
 		yy_switch_to_buffer(CurrentFlexHandle);
@@ -392,7 +365,7 @@ fstk_Init(char *s)
 
 	nMacroCount = 0;
 	nCurrentStatus = STAT_isInclude;
-	strcpy(tzCurrentFileName, tzFileName);
+	tzCurrentFileName = tzFileName;
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
 	nLineNo = 1;

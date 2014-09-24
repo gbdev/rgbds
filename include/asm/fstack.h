@@ -19,7 +19,7 @@ struct sContext {
 	YY_BUFFER_STATE FlexHandle;
 	struct sSymbol *pMacro;
 	struct sContext *pNext;
-	char tzFileName[_MAX_PATH + 1];
+	char *tzFileName;
 	char *tzMacroArgs[MAXMACROARGS + 1];
 	SLONG nLine;
 	ULONG nStatus;
