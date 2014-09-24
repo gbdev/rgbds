@@ -6,6 +6,7 @@
 
 #include "asmotor.h"
 
+#include "extern/err.h"
 #include "lib/types.h"
 #include "lib/library.h"
 
@@ -83,10 +84,8 @@ main(int argc, char *argv[])
 						    ("Extracted module '%s'\n",
 						    argv[argn]);
 					} else {
-						fprintf(stderr,
-						    "Unable to write module '%s': ", argv[argn]);
-						perror(NULL);
-						exit(1);
+						err(1,
+						    "Unable to write module '%s'", argv[argn]);
 					}
 				} else {
 					fprintf(stderr, "Module not found\n");

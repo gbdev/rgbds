@@ -22,6 +22,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "extern/err.h"
+
 static void
 usage(void)
 {
@@ -47,9 +49,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if ((rom = fopen(argv[argc - 1], "rb+")) == NULL) {
-		fprintf(stderr, "Error opening file %s: \n", argv[argc - 1]);
-		perror(NULL);
-		exit(1);
+		err(1, "Error opening file %s", argv[argc - 1]);
 	}
 
 	/*
@@ -93,9 +93,8 @@ main(int argc, char *argv[])
 			setid = true;
 
 			if (strlen(optarg) != 4) {
-				fprintf(stderr, "Game ID %s must be exactly 4 "
-				    "characters\n", optarg);
-				exit(1);
+				errx(1, "Game ID %s must be exactly 4 "
+				    "characters", optarg);
 			}
 
 			id = optarg;
@@ -107,10 +106,8 @@ main(int argc, char *argv[])
 			setnewlicensee = true;
 
 			if (strlen(optarg) != 2) {
-				fprintf(stderr,
-				    "New licensee code %s is not the correct "
-				    "length of 2 characters\n", optarg);
-				exit(1);
+				errx(1, "New licensee code %s is not the "
+				    "correct length of 2 characters", optarg);
 			}
 
 			newlicensee = optarg;
@@ -120,15 +117,11 @@ main(int argc, char *argv[])
 
 			licensee = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'l'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'l'");
 			}
 			if (licensee < 0 || licensee > 0xFF) {
-				fprintf(stderr,
-				    "Argument for option 'l' must be "
-				    "between 0 and 255\n");
-				exit(1);
+				errx(1, "Argument for option 'l' must be "
+				    "between 0 and 255");
 			}
 			break;
 		case 'm':
@@ -136,15 +129,11 @@ main(int argc, char *argv[])
 
 			cartridge = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'm'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'm'");
 			}
 			if (cartridge < 0 || cartridge > 0xFF) {
-				fprintf(stderr,
-				    "Argument for option 'm' must be "
-				    "between 0 and 255\n");
-				exit(1);
+				errx(1, "Argument for option 'm' must be "
+				    "between 0 and 255");
 			}
 			break;
 		case 'n':
@@ -152,15 +141,11 @@ main(int argc, char *argv[])
 
 			version = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'n'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'n'");
 			}
 			if (version < 0 || version > 0xFF) {
-				fprintf(stderr,
-				    "Argument for option 'n' must be "
-				    "between 0 and 255\n");
-				exit(1);
+				errx(1, "Argument for option 'n' must be "
+				    "between 0 and 255");
 			}
 			break;
 		case 'p':
@@ -168,15 +153,11 @@ main(int argc, char *argv[])
 
 			padvalue = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'p'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'p'");
 			}
 			if (padvalue < 0 || padvalue > 0xFF) {
-				fprintf(stderr,
-				    "Argument for option 'p' must be "
-				    "between 0 and 255\n");
-				exit(1);
+				errx(1, "Argument for option 'p' must be "
+				    "between 0 and 255");
 			}
 			break;
 		case 'r':
@@ -184,14 +165,11 @@ main(int argc, char *argv[])
 
 			ramsize = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'r'\n");
+				errx(1, "Invalid argument for option 'r'");
 			}
 			if (ramsize < 0 || ramsize > 0xFF) {
-				fprintf(stderr,
-				    "Argument for option 'r' must be "
-				    "between 0 and 255\n");
-				exit(1);
+				errx(1, "Argument for option 'r' must be "
+				    "between 0 and 255");
 			}
 			break;
 		case 's':
@@ -201,15 +179,13 @@ main(int argc, char *argv[])
 			settitle = true;
 
 			if (strlen(optarg) > 16) {
-				fprintf(stderr, "Title %s is greater than the "
-				    "maximum of 16 characters\n", optarg);
-				exit(1);
+				errx(1, "Title %s is greater than the "
+				    "maximum of 16 characters", optarg);
 			}
 
 			if (strlen(optarg) == 16)
-				fprintf(stderr,
-				    "Title %s is 16 chars, it is best "
-				    "to keep it to 15 or fewer\n", optarg);
+				warnx("Title %s is 16 chars, it is best to "
+				    "keep it to 15 or fewer", optarg);
 
 			title = optarg;
 			break;
@@ -313,8 +289,7 @@ main(int argc, char *argv[])
 			byte |= 1 << 6;
 
 		if (byte & 0x3F)
-			fprintf(stderr,
-			    "Color flag conflicts with game title\n");
+			warnx("Color flag conflicts with game title");
 
 		fseek(rom, 0x143, SEEK_SET);
 		fputc(byte, rom);
@@ -351,9 +326,8 @@ main(int argc, char *argv[])
 		 */
 
 		if (!setlicensee)
-			fprintf(stderr,
-			    "You should probably set both '-s' and "
-			    "'-l 0x33'\n");
+			warnx("You should probably set both '-s' and "
+			    "'-l 0x33'");
 
 		fseek(rom, 0x146, SEEK_SET);
 		fputc(3, rom);
@@ -390,7 +364,7 @@ main(int argc, char *argv[])
 		}
 
 		if (newsize > 0x800000) /* ROM is bigger than 8MiB */
-			fprintf(stderr, "ROM size is bigger than 8MiB\n");
+			warnx("ROM size is bigger than 8MiB");
 
 		buf = malloc(newsize - romsize);
 		memset(buf, padvalue, newsize - romsize);

@@ -23,12 +23,14 @@ rgbasm_obj := \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
 	src/asm/gameboy/locallex.o \
+	src/extern/err.o \
 	src/extern/strlcpy.o \
 	src/extern/strlcat.o
 
 rgblib_obj := \
 	src/lib/library.o \
-	src/lib/main.o
+	src/lib/main.o \
+	src/extern/err.o
 
 rgblink_obj := \
 	src/link/assign.o \
@@ -38,10 +40,12 @@ rgblink_obj := \
 	src/link/object.o \
 	src/link/output.o \
 	src/link/patch.o \
-	src/link/symbol.o
+	src/link/symbol.o \
+	src/extern/err.o
 
 rgbfix_obj := \
-	src/fix/main.o
+	src/fix/main.o \
+	src/extern/err.o
 
 all: rgbasm rgblib rgblink rgbfix
 

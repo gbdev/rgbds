@@ -6,6 +6,7 @@
 
 #include "asmotor.h"
 
+#include "extern/err.h"
 #include "link/object.h"
 #include "link/output.h"
 #include "link/assign.h"
@@ -73,8 +74,7 @@ main(int argc, char *argv[])
 		case 'p':
 			fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr, "Invalid argument for option 'p'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'p'");
 			}
 			if (fillchar < 0 || fillchar > 0xFF) {
 				fprintf(stderr, "Argument for option 'p' must be between 0 and 0xFF");

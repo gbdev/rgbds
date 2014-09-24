@@ -4,6 +4,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "extern/err.h"
 
 #include "asmy.h"
 
@@ -213,9 +214,8 @@ void
 lex_CheckCharacterRange(UWORD start, UWORD end)
 {
 	if (start > end || start < 1 || end > 127) {
-		fprintf(stderr, "Invalid character range (start: %u, end: %u)\n",
+		errx(1, "Invalid character range (start: %u, end: %u)",
 		        start, end);
-		exit(1);
 	}
 }
 
@@ -343,8 +343,6 @@ lex_AddStrings(struct sLexInitString * lex)
 		ppHash = &tLexHash[hash = lexcalchash(lex->tzName)];
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
-
-		//printf("%s has hashvalue %d\n", lex->tzName, hash);
 
 		if (((*ppHash) =
 			(struct sLexString *) malloc(sizeof(struct sLexString))) !=

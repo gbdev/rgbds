@@ -11,18 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef STRL_IN_LIBC
-#define strlcpy rgbds_strlcpy
-#define strlcat rgbds_strlcat
-size_t strlcpy(char *, const char *, size_t);
-size_t strlcat(char *, const char *, size_t);
-#endif
-
 #include "asm/symbol.h"
 #include "asm/fstack.h"
 #include "asm/types.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
+#include "extern/err.h"
+#include "extern/strl.h"
 
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
@@ -245,10 +240,8 @@ fstk_RunInclude(char *tzFileName)
 	f = fstk_FindFile(tzFileName);
 
 	if (f == NULL) {
-		fprintf(stderr, "Unable to open included file '%s': ",
+		err(1, "Unable to open included file '%s'",
 		    tzFileName);
-		perror(NULL);
-		exit(1);
 	}
 
 	pushcontext();
@@ -357,10 +350,7 @@ fstk_Init(char *s)
 	pFileStack = NULL;
 	pCurrentFile = fopen(tzFileName, "rb");
 	if (pCurrentFile == NULL) {
-		fprintf(stderr, "Unable to open file '%s': ",
-		    tzFileName);
-		perror(NULL);
-		exit(1);
+		err(1, "Unable to open file '%s'", tzFileName);
 	}
 
 	nMacroCount = 0;

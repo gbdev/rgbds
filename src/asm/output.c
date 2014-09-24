@@ -17,6 +17,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "extern/err.h"
 
 #define SECTIONCHUNK	0x4000
 
@@ -909,10 +910,7 @@ out_BinaryFile(char *s)
 
 	f = fstk_FindFile(s);
 	if (f == NULL) {
-		fprintf(stderr, "Unable to open incbin file '%s': ",
-		    s);
-		perror(NULL);
-		exit(1);
+		err(1, "Unable to open incbin file '%s'", s);
 	}
 
 	SLONG fsize;
@@ -949,10 +947,7 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 
 	f = fstk_FindFile(s);
 	if (f == NULL) {
-		fprintf(stderr, "Unable to open included file '%s': ",
-		    s);
-		perror(NULL);
-		exit(1);
+		err(1, "Unable to open included file '%s'", s);
 	}
 
 	SLONG fsize;
