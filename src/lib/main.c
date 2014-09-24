@@ -98,9 +98,6 @@ main(int argc, char *argv[])
 			}
 			lib_Free(lib);
 		} else if (strcmp(argv[argn], "list") == 0) {
-			argn += 1;
-			argc -= 1;
-
 			sLibrary *l;
 
 			l = lib;
