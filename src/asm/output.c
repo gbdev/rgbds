@@ -61,7 +61,7 @@ struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
 struct Section *pSectionList = NULL, *pCurrentSection = NULL;
 struct PatchSymbol *pPatchSymbols = NULL;
 struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
-char tzObjectname[_MAX_PATH];
+char *tzObjectname;
 struct SectionStackEntry *pSectionStack = NULL;
 
 /*
@@ -592,7 +592,7 @@ out_PrepPass2(void)
 void 
 out_SetFileName(char *s)
 {
-	strcpy(tzObjectname, s);
+	tzObjectname = s;
 	if (CurrentOptions.verbose) {
 		printf("Output filename %s\n", s);
 	}
