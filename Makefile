@@ -1,4 +1,4 @@
-CFLAGS +=	-Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
+REALCFLAGS =	${CFLAGS} -Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
 
 # User-defined variables
 PREFIX =	/usr/local
@@ -74,19 +74,19 @@ install: all
 		${MANPREFIX}/man1/rgblib.1
 
 rgbasm: ${rgbasm_obj}
-	$Q${CC} ${CFLAGS} -o $@ ${rgbasm_obj} -lm
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
 
 rgblib: ${rgblib_obj}
-	$Q${CC} ${CFLAGS} -o $@ ${rgblib_obj}
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgblib_obj}
 
 rgblink: ${rgblink_obj}
-	$Q${CC} ${CFLAGS} -o $@ ${rgblink_obj}
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgblink_obj}
 
 rgbfix: ${rgbfix_obj}
-	$Q${CC} ${CFLAGS} -o $@ ${rgbfix_obj}
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
 .c.o:
-	$Q${CC} ${CFLAGS} -c -o $@ $<
+	$Q${CC} ${REALCFLAGS} -c -o $@ $<
 
 src/asm/asmy.c: src/asm/asmy.y
 	$Q${YACC} -d -o $@ $<
@@ -122,3 +122,5 @@ wwwman:
 		rgblib.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
+
+.POSIX:
