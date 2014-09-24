@@ -100,7 +100,8 @@ src/asm/asmy.y: ${yacc_pre}
 # If you're building on Windows with Cygwin or Mingw, just follow the Unix
 # install instructions instead.
 mingw:
-	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
+	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
+		make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblib rgblib.exe
 	$Qmv rgblink rgblink.exe
@@ -108,11 +109,16 @@ mingw:
 
 # Below is a target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv
-MANDOC =	-Thtml -Oman=/rgbds/manual/%N/ -Ostyle=/rgbds/manual/manual.css -Ios=General
+MANDOC =	-Thtml -Ios=General -Oman=/rgbds/manual/%N/ \
+			-Ostyle=/rgbds/manual/manual.css
 
 wwwman:
 	$Qmandoc ${MANDOC} src/rgbds.7 | sed s/OpenBSD/General/ > rgbds.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > rgbasm.html
-	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > rgbfix.html
-	$Qmandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > rgblib.html
-	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > rgblink.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > \
+		rgbasm.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > \
+		rgbfix.html
+	$Qmandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > \
+		rgblib.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
+		rgblink.html
