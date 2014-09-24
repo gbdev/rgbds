@@ -24,7 +24,7 @@ extern ULONG nTotalLines;
 extern ULONG nPC;
 extern ULONG nPass;
 extern ULONG nIFDepth;
-extern char *tzCurrentFileName;
+extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
