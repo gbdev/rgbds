@@ -93,7 +93,8 @@ src/asm/asmy.y: ${yacc_pre}
 # install instructions instead.
 mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
-		make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
+		make CC=gcc CFLAGS="-I/usr/local/mingw32/include \
+			-D__progname=\\\"\\\" ${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
 	$Qmv rgbfix rgbfix.exe

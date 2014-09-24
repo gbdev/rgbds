@@ -21,12 +21,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <err.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include "extern/err.h"
 
+#ifndef __MINGW32__
 extern char *__progname;
+#endif
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
