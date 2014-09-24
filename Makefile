@@ -46,53 +46,53 @@ rgbfix_obj := \
 all: rgbasm rgblib rgblink rgbfix
 
 clean:
-	${Q}rm -rf rgbds.html
-	${Q}rm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
-	${Q}rm -rf rgblib rgblib.exe ${rgblib_obj} rgblib.html
-	${Q}rm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
-	${Q}rm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	${Q}rm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
+	$Qrm -rf rgbds.html
+	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
+	$Qrm -rf rgblib rgblib.exe ${rgblib_obj} rgblib.html
+	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
+	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
+	$Qrm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
 
 install: all
-	${Q}install -s -m 555 rgbasm ${BINPREFIX}/rgbasm
-	${Q}install -s -m 555 rgbfix ${BINPREFIX}/rgbfix
-	${Q}install -s -m 555 rgblink ${BINPREFIX}/rgblink
-	${Q}install -s -m 555 rgblib ${BINPREFIX}/rgblib
-	${Q}install -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
+	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
+	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
+	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
+	$Qinstall -s -m 555 rgblib ${BINPREFIX}/rgblib
+	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
 		(echo Installing manpages to ${MANPREFIX} failed. >&2 && \
 		 echo Check where your manpages are installed and set the \
 		      proper directory >&2 && \
 		 echo with, e.g., make install MANPREFIX=/usr/share/man \
 		 >&2 ; false)
-	${Q}install -m 444 src/asm/rgbasm.1 \
+	$Qinstall -m 444 src/asm/rgbasm.1 \
 		${MANPREFIX}/man1/rgbasm.1
-	${Q}install -m 444 src/fix/rgbfix.1 \
+	$Qinstall -m 444 src/fix/rgbfix.1 \
 		${MANPREFIX}/man1/rgbfix.1
-	${Q}install -m 444 src/link/rgblink.1 \
+	$Qinstall -m 444 src/link/rgblink.1 \
 		${MANPREFIX}/man1/rgblink.1
-	${Q}install -m 444 src/lib/rgblib.1 \
+	$Qinstall -m 444 src/lib/rgblib.1 \
 		${MANPREFIX}/man1/rgblib.1
 
 rgbasm: ${rgbasm_obj}
-	${Q}${CC} ${CFLAGS} -o $@ ${rgbasm_obj} -lm
+	$Q${CC} ${CFLAGS} -o $@ ${rgbasm_obj} -lm
 
 rgblib: ${rgblib_obj}
-	${Q}${CC} ${CFLAGS} -o $@ ${rgblib_obj}
+	$Q${CC} ${CFLAGS} -o $@ ${rgblib_obj}
 
 rgblink: ${rgblink_obj}
-	${Q}${CC} ${CFLAGS} -o $@ ${rgblink_obj}
+	$Q${CC} ${CFLAGS} -o $@ ${rgblink_obj}
 
 rgbfix: ${rgbfix_obj}
-	${Q}${CC} ${CFLAGS} -o $@ ${rgbfix_obj}
+	$Q${CC} ${CFLAGS} -o $@ ${rgbfix_obj}
 
 .c.o:
-	${Q}${CC} ${CFLAGS} -c -o $@ $<
+	$Q${CC} ${CFLAGS} -c -o $@ $<
 
 src/asm/asmy.c: src/asm/asmy.y
-	${Q}${YACC} -d -o $@ $<
+	$Q${YACC} -d -o $@ $<
 
 src/asm/asmy.y: ${yacc_pre}
-	${Q}cat ${yacc_pre} > $@
+	$Qcat ${yacc_pre} > $@
 
 
 # Below is a target for the project maintainer to easily create win32 exes.
@@ -100,19 +100,19 @@ src/asm/asmy.y: ${yacc_pre}
 # If you're building on Windows with Cygwin or Mingw, just follow the Unix
 # install instructions instead.
 mingw:
-	${Q}env PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
-	${Q}mv rgbasm rgbasm.exe
-	${Q}mv rgblib rgblib.exe
-	${Q}mv rgblink rgblink.exe
-	${Q}mv rgbfix rgbfix.exe
+	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin make CC=gcc CFLAGS="-I/usr/local/mingw32/include ${CFLAGS}"
+	$Qmv rgbasm rgbasm.exe
+	$Qmv rgblib rgblib.exe
+	$Qmv rgblink rgblink.exe
+	$Qmv rgbfix rgbfix.exe
 
 # Below is a target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv
 MANDOC =	-Thtml -Oman=/rgbds/manual/%N/ -Ostyle=/rgbds/manual/manual.css -Ios=General
 
 wwwman:
-	${Q}mandoc ${MANDOC} src/rgbds.7 | sed s/OpenBSD/General/ > rgbds.html
-	${Q}mandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > rgbasm.html
-	${Q}mandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > rgbfix.html
-	${Q}mandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > rgblib.html
-	${Q}mandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > rgblink.html
+	$Qmandoc ${MANDOC} src/rgbds.7 | sed s/OpenBSD/General/ > rgbds.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > rgbasm.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > rgbfix.html
+	$Qmandoc ${MANDOC} src/lib/rgblib.1 | sed s/OpenBSD/General/ > rgblib.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > rgblink.html
