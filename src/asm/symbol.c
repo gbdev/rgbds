@@ -873,7 +873,6 @@ sym_Init(void)
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;
 
-	sym_AddEqu("__ASM__", (SLONG) (atof(ASM_VERSION) * 65536));
 	sym_AddSet("_RS", 0);
 
 	if (time(&tod) != -1) {

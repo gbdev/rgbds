@@ -4,8 +4,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "asmotor.h"
-
 #include "extern/err.h"
 #include "link/object.h"
 #include "link/output.h"
@@ -35,8 +33,6 @@ char smartlinkstartsymbol[256];
 static void 
 usage(void)
 {
-	printf("RGBLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\n");
 	printf("usage: rgblink [-t] [-m mapfile] [-n symfile] [-o outfile]\n");
 	printf("\t    [-s symbol] [-z pad_value] objectfile [...]\n");
 

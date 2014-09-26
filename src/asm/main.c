@@ -242,8 +242,6 @@ fatalerror(const char *fmt, ...)
 void 
 PrintUsage(void)
 {
-	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\n");
 	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
 	    "              file\n");
 	exit(1);
