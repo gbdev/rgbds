@@ -504,9 +504,12 @@ void
 checkcodesection(SLONG size)
 {
 	checksection();
-	if ((pCurrentSection->nType == SECT_ROM0
-		|| pCurrentSection->nType == SECT_ROMX)
-	    && (pCurrentSection->nPC + size <= MAXSECTIONSIZE)) {
+	if (pCurrentSection->nType != SECT_ROM0 &&
+	    pCurrentSection->nType != SECT_ROMX) {
+		errx(1, "Section '%s' cannot contain code or data (not a "
+		    "ROM0 or ROMX)", pCurrentSection->pzName);
+	}
+	if (pCurrentSection->nPC + size <= MAXSECTIONSIZE) {
 		if (((pCurrentSection->nPC % SECTIONCHUNK) >
 			((pCurrentSection->nPC + size) % SECTIONCHUNK))
 		    && (pCurrentSection->nType == SECT_ROM0
@@ -523,8 +526,7 @@ checkcodesection(SLONG size)
 		}
 		return;
 	} else
-		fatalerror
-		    ("Section can't contain initialized data or section limit exceeded");
+		errx(1, "Section '%s' is too big", pCurrentSection->pzName);
 }
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile
