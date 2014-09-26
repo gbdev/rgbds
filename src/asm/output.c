@@ -77,9 +77,7 @@ out_PushSection(void)
 {
 	struct SectionStackEntry *pSect;
 
-	if ((pSect =
-		(struct SectionStackEntry *)
-		malloc(sizeof(struct SectionStackEntry))) != NULL) {
+	if ((pSect = malloc(sizeof(struct SectionStackEntry))) != NULL) {
 		pSect->pSection = pCurrentSection;
 		pSect->pNext = pSectionStack;
 		pSectionStack = pSect;
@@ -343,9 +341,7 @@ addsymbol(struct sSymbol * pSym)
 		ppPSym = &((*ppPSym)->pBucketNext);
 	}
 
-	if ((*ppPSym = pPSym =
-		(struct PatchSymbol *) malloc(sizeof(struct PatchSymbol))) !=
-	    NULL) {
+	if ((*ppPSym = pPSym = malloc(sizeof(struct PatchSymbol))) != NULL) {
 		pPSym->pNext = NULL;
 		pPSym->pBucketNext = NULL;
 		pPSym->pSymbol = pSym;
@@ -393,8 +389,7 @@ allocpatch(void)
 {
 	struct Patch *pPatch;
 
-	if ((pPatch =
-		(struct Patch *) malloc(sizeof(struct Patch))) != NULL) {
+	if ((pPatch = malloc(sizeof(struct Patch))) != NULL) {
 		pPatch->pNext = pCurrentSection->pPatches;
 		pPatch->nRPNSize = 0;
 		pPatch->pRPN = NULL;
@@ -472,7 +467,7 @@ createpatch(ULONG type, struct Expression * expr)
 			break;
 		}
 	}
-	if ((pPatch->pRPN = (UBYTE *) malloc(rpnptr)) != NULL) {
+	if ((pPatch->pRPN = malloc(rpnptr)) != NULL) {
 		memcpy(pPatch->pRPN, rpnexpr, rpnptr);
 		pPatch->nRPNSize = rpnptr;
 	}
@@ -633,11 +628,8 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 		pSect = pSect->pNext;
 	}
 
-	if ((*ppSect =
-		(pSect =
-		    (struct Section *) malloc(sizeof(struct Section)))) != NULL) {
-		if ((pSect->pzName =
-			(char *) malloc(strlen(pzName) + 1)) != NULL) {
+	if ((*ppSect = (pSect = malloc(sizeof(struct Section)))) != NULL) {
+		if ((pSect->pzName = malloc(strlen(pzName) + 1)) != NULL) {
 			strcpy(pSect->pzName, pzName);
 			pSect->nType = secttype;
 			pSect->nPC = 0;
@@ -647,8 +639,7 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 			pSect->pPatches = NULL;
 			pPatchSymbols = NULL;
 
-			if ((pSect->tData =
-				(UBYTE *) malloc(SECTIONCHUNK)) != NULL) {
+			if ((pSect->tData = malloc(SECTIONCHUNK)) != NULL) {
 				return (pSect);
 			} else
 				fatalerror("Not enough memory for section");

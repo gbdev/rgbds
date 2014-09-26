@@ -173,9 +173,7 @@ opt_Push(void)
 {
 	struct sOptionStackEntry *pOpt;
 
-	if ((pOpt =
-		(struct sOptionStackEntry *)
-		malloc(sizeof(struct sOptionStackEntry))) != NULL) {
+	if ((pOpt = malloc(sizeof(struct sOptionStackEntry))) != NULL) {
 		pOpt->Options = CurrentOptions;
 		pOpt->pNext = pOptionStack;
 		pOptionStack = pOpt;

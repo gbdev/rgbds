@@ -66,8 +66,7 @@ pushcontext(void)
 	while (*ppFileStack)
 		ppFileStack = &((*ppFileStack)->pNext);
 
-	if ((*ppFileStack =
-		(struct sContext *) malloc(sizeof(struct sContext))) != NULL) {
+	if ((*ppFileStack = malloc(sizeof(struct sContext))) != NULL) {
 		(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 		(*ppFileStack)->pNext = NULL;
 		strcpy((char *) (*ppFileStack)->tzFileName,

@@ -94,8 +94,7 @@ createsymbol(char *s)
 	while ((*ppsym) != NULL)
 		ppsym = &((*ppsym)->pNext);
 
-	if (((*ppsym) =
-		(struct sSymbol *) malloc(sizeof(struct sSymbol))) != NULL) {
+	if (((*ppsym) = malloc(sizeof(struct sSymbol))) != NULL) {
 		strcpy((*ppsym)->tzName, s);
 		(*ppsym)->nValue = 0;
 		(*ppsym)->nType = 0;
@@ -570,8 +569,7 @@ sym_AddString(char *tzSym, char *tzValue)
 		nsym = createsymbol(tzSym);
 
 	if (nsym) {
-		if ((nsym->pMacro =
-			(char *) malloc(strlen(tzValue) + 1)) != NULL)
+		if ((nsym->pMacro = malloc(strlen(tzValue) + 1)) != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
 			fatalerror("No memory for stringequate");

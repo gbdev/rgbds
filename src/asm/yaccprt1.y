@@ -130,8 +130,7 @@ void	copyrept( void )
 	src=pCurrentBuffer->pBuffer;
 	ulNewMacroSize=len;
 
-	if( (tzNewMacro=(char *)malloc(ulNewMacroSize+1))!=NULL )
-	{
+	if ((tzNewMacro = malloc(ulNewMacroSize + 1)) != NULL) {
 		ULONG i;
 
 		tzNewMacro[ulNewMacroSize]=0;
@@ -140,8 +139,7 @@ void	copyrept( void )
 			if( (tzNewMacro[i]=src[i])=='\n' )
 				nLineNo+=1;
 		}
-	}
-	else
+	} else
 		fatalerror( "No mem for REPT block" );
 
 	yyskipbytes( ulNewMacroSize+4 );

@@ -64,7 +64,6 @@ area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 					struct sFreeArea *pNewArea;
 
 					if ((pNewArea =
-						(struct sFreeArea *)
 						malloc(sizeof(struct sFreeArea)))
 					    != NULL) {
 						*pNewArea = *pArea;

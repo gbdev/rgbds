@@ -116,11 +116,9 @@ yy_scan_bytes(char *mem, ULONG size)
 {
 	YY_BUFFER_STATE pBuffer;
 
-	if ((pBuffer =
-		(YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) !=
-	    NULL) {
+	if ((pBuffer = malloc(sizeof(struct yy_buffer_state))) != NULL) {
 		if ((pBuffer->pBufferRealStart =
-			(char *) malloc(size + 1 + SAFETYMARGIN)) != NULL) {
+		    malloc(size + 1 + SAFETYMARGIN)) != NULL) {
 			pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 			pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
 			memcpy(pBuffer->pBuffer, mem, size);
@@ -139,8 +137,7 @@ yy_create_buffer(FILE * f)
 {
 	YY_BUFFER_STATE pBuffer;
 
-	if ((pBuffer =
-		(YY_BUFFER_STATE) malloc(sizeof(struct yy_buffer_state))) != NULL) {
+	if ((pBuffer = malloc(sizeof(struct yy_buffer_state))) != NULL) {
 		ULONG size;
 
 		fseek(f, 0, SEEK_END);
@@ -148,7 +145,7 @@ yy_create_buffer(FILE * f)
 		fseek(f, 0, SEEK_SET);
 
 		if ((pBuffer->pBufferRealStart =
-			(char *) malloc(size + 2 + SAFETYMARGIN)) != NULL) {
+			malloc(size + 2 + SAFETYMARGIN)) != NULL) {
 			char *mem;
 			ULONG instring = 0;
 
@@ -344,9 +341,7 @@ lex_AddStrings(struct sLexInitString * lex)
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
 
-		if (((*ppHash) =
-			(struct sLexString *) malloc(sizeof(struct sLexString))) !=
-		    NULL) {
+		if (((*ppHash) = malloc(sizeof(struct sLexString))) != NULL) {
 			if (((*ppHash)->tzName =
 				(char *) strdup(lex->tzName)) != NULL) {
 				(*ppHash)->nNameLength = strlen(lex->tzName);
