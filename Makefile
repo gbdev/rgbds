@@ -1,3 +1,5 @@
+.POSIX:
+
 REALCFLAGS =	${CFLAGS} -Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
 
 # User-defined variables
@@ -77,11 +79,14 @@ rgblink: ${rgblink_obj}
 rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
+.y.c:
+	$Q${YACC} -d ${YFLAGS} -o $@ $<
+
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
 
-src/asm/asmy.c: src/asm/asmy.y
-	$Q${YACC} -d -o $@ $<
+src/asm/gameboy/locallex.c src/asm/globlex.c src/asm/lexer.c: src/asm/asmy.h
+src/asm/asmy.h: src/asm/asmy.c
 
 src/asm/asmy.y: ${yacc_pre}
 	$Qcat ${yacc_pre} > $@
@@ -112,5 +117,3 @@ wwwman:
 		rgbfix.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
-
-.POSIX:
