@@ -59,18 +59,10 @@ install: all
 	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
 	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man7
-	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
-		(echo Installing manpages to ${MANPREFIX} failed. >&2 && \
-		 echo Check where your manpages are installed and set the \
-		      proper directory >&2 && \
-		 echo with, e.g., make install MANPREFIX=/usr/share/man \
-		 >&2 ; false)
-	$Qinstall -m 444 src/asm/rgbasm.1 \
-		${MANPREFIX}/man1/rgbasm.1
-	$Qinstall -m 444 src/fix/rgbfix.1 \
-		${MANPREFIX}/man1/rgbfix.1
-	$Qinstall -m 444 src/link/rgblink.1 \
-		${MANPREFIX}/man1/rgblink.1
+	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
+	$Qinstall -m 444 src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
+	$Qinstall -m 444 src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
+	$Qinstall -m 444 src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
