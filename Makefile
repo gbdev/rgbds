@@ -3,10 +3,10 @@
 REALCFLAGS =	${CFLAGS} -Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
 
 # User-defined variables
-PREFIX =	/usr/local
-BINPREFIX =	${PREFIX}/bin
-MANPREFIX =	${PREFIX}/man
-Q =		@
+PREFIX ?= /usr/local
+BINPREFIX = ${PREFIX}/bin
+MANPREFIX = ${PREFIX}/share/man
+Q = @
 
 yacc_pre := \
 	src/asm/yaccprt1.y\
@@ -54,9 +54,11 @@ clean:
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
 
 install: all
+	$Qmkdir -p ${BINPREFIX} 
 	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
 	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
+	$Qmkdir -p ${MANPREFIX}/man7 ${MANPREFIX}/man1
 	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7 || \
 		(echo Installing manpages to ${MANPREFIX} failed. >&2 && \
 		 echo Check where your manpages are installed and set the \
