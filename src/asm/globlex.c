@@ -208,10 +208,14 @@ PutMacroArg(char *src, ULONG size)
 	char *s;
 
 	yyskipbytes(size);
-	if ((s = sym_FindMacroArg(src[1] - '0')) != NULL) {
-		yyunputstr(s);
+	if ((size == 2 && src[1] >= '1' && src[1] <= '9')) {
+		if ((s = sym_FindMacroArg(src[1] - '0')) != NULL) {
+			yyunputstr(s);
+		} else {
+			yyerror("Macro argument not defined");
+		}
 	} else {
-		yyerror("Macro argument not defined");
+		yyerror("Invalid macro argument");
 	}
 	return (0);
 }
@@ -387,7 +391,7 @@ setuplex(void)
 
 	    id = lex_FloatAlloc(&tMacroArgToken);
 	lex_FloatAddFirstRange(id, '\\', '\\');
-	lex_FloatAddSecondRange(id, '0', '9');
+	lex_FloatAddSecondRange(id, '1', '9');
 	id = lex_FloatAlloc(&tMacroUniqueToken);
 	lex_FloatAddFirstRange(id, '\\', '\\');
 	lex_FloatAddSecondRange(id, '@', '@');

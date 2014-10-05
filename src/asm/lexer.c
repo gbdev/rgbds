@@ -437,7 +437,6 @@ CopyMacroArg(char *dest, size_t maxLength, char c)
 	int argNum;
 	
 	switch (c) {
-	case '0':
 	case '1':
 	case '2':
 	case '3':
