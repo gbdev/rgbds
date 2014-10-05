@@ -5,6 +5,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -431,6 +432,8 @@ sym_FindMacroArg(SLONG i)
 	if (i == -1)
 		i = MAXMACROARGS + 1;
 
+	assert(i-1 >= 0 &&
+	    i-1 < sizeof(currentmacroargs)/sizeof(*currentmacroargs));
 	return (currentmacroargs[i - 1]);
 }
 
