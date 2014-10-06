@@ -79,7 +79,7 @@ rgbfix: ${rgbfix_obj}
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
 
-src/asm/gameboy/locallex.c src/asm/globlex.c src/asm/lexer.c: src/asm/asmy.h
+src/asm/gameboy/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c
 
 src/asm/asmy.y: ${yacc_pre}
