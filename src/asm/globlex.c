@@ -223,9 +223,15 @@ PutMacroArg(char *src, ULONG size)
 ULONG 
 PutUniqueArg(char *src, ULONG size)
 {
+	char *s;
+
 	src = src;
 	yyskipbytes(size);
-	yyunputstr(sym_FindMacroArg(-1));
+	if ((s = sym_FindMacroArg(-1)) != NULL) {
+		yyunputstr(s);
+	} else {
+		yyerror("Macro unique label string not defined");
+	}
 	return (0);
 }
 
