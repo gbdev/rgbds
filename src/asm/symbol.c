@@ -433,7 +433,7 @@ sym_FindMacroArg(SLONG i)
 		i = MAXMACROARGS + 1;
 
 	assert(i-1 >= 0 &&
-	    i-1 < sizeof(currentmacroargs)/sizeof(*currentmacroargs));
+	    i-1 < sizeof currentmacroargs / sizeof *currentmacroargs);
 	return (currentmacroargs[i - 1]);
 }
 
