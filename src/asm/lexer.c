@@ -164,7 +164,10 @@ yy_create_buffer(FILE * f)
 				if (*mem == '\"')
 					instring = 1 - instring;
 
-				if (instring) {
+				if (mem[0] == '\\' &&
+				    (mem[1] == '\"' || mem[1] == '\\')) {
+					mem += 2;
+				} else if (instring) {
 					mem += 1;
 				} else {
 					if ((mem[0] == 10 && mem[1] == 13)
