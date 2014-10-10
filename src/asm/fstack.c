@@ -19,6 +19,10 @@
 #include "extern/err.h"
 #include "extern/strl.h"
 
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
+
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
  *
