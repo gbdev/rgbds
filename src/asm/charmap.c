@@ -54,9 +54,13 @@ readUTF8Char(char *destination, char *source)
 	{
 		size = 2;
 	}
-	else
+	else if(first != '\0')
 	{
 		size = 1;
+	}
+	else
+	{
+		size = 0;
 	}
 	strncpy(destination, source, size);
 	destination[size] = 0;
@@ -145,7 +149,7 @@ charmap_Convert(char **input)
 	struct Charmap *charmap;
 
 	char outchar[CHARMAPLENGTH + 1];
-	char *input_temp, *buffer;
+	char *buffer;
 	int i, j, length;
 
 	if(pCurrentSection && pCurrentSection -> charmap)
@@ -157,7 +161,6 @@ charmap_Convert(char **input)
 		charmap = &globalCharmap;
 	}
 
-	input_temp = *input;
 	if((buffer = (char *) malloc(strlen(*input))) == NULL)
 	{
 		fatalerror("Not enough memory for buffer");
@@ -195,7 +198,6 @@ charmap_Convert(char **input)
 		}
 		*input += j;
 	}
-	*input = input_temp;
 	*input = buffer;
 	return length;
 }
