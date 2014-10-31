@@ -23,7 +23,7 @@
 #include "asm/main.h"
 #include "asm/output.h"
 
-struct Charmap globalCharmap;
+struct Charmap globalCharmap = {0};
 
 extern struct Section *pCurrentSection;
 
@@ -67,7 +67,7 @@ int
 charmap_Add(char *input, UBYTE output)
 {
 	int i, input_length;
-	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1], temp1o, temp2o;
+	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1], temp1o = 0, temp2o = 0;
 
 	struct Charmap *charmap;
 
@@ -79,7 +79,7 @@ charmap_Add(char *input, UBYTE output)
 		}
 		else
 		{
-			if((charmap = (struct Charmap *) malloc(sizeof(struct Charmap))) == NULL)
+			if((charmap = (struct Charmap *) calloc(1, sizeof(struct Charmap))) == NULL)
 			{
 				fatalerror("Not enough memory for charmap");
 			}
@@ -110,7 +110,7 @@ charmap_Add(char *input, UBYTE output)
 			if(input_length > strlen(charmap -> input[i]))
 			{
 				memcpy(temp1i, charmap -> input[i], CHARMAPLENGTH + 1);
-				memcpy(charmap -> input[i], input, CHARMAPLENGTH + 1);
+				memcpy(charmap -> input[i], input, input_length);
 				temp1o = charmap -> output[i];
 				charmap -> output[i] = output;
 				i++;
@@ -133,7 +133,7 @@ charmap_Add(char *input, UBYTE output)
 	}
 	else
 	{
-		memcpy(charmap -> input[charmap -> count], input, CHARMAPLENGTH + 1);
+		memcpy(charmap -> input[charmap -> count], input, input_length);
 		charmap -> output[charmap -> count] = output;
 	}
 	return ++charmap -> count;
@@ -157,7 +157,6 @@ charmap_Convert(char **input)
 		charmap = &globalCharmap;
 	}
 
-	length = 0;
 	input_temp = *input;
 	if((buffer = (char *) malloc(strlen(*input))) == NULL)
 	{
