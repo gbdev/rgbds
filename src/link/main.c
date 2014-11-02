@@ -4,8 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "asmotor.h"
-
+#include "extern/err.h"
 #include "link/object.h"
 #include "link/output.h"
 #include "link/assign.h"
@@ -34,9 +33,7 @@ char smartlinkstartsymbol[256];
 static void 
 usage(void)
 {
-	printf("RGBLink v" LINK_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\n");
-	printf("usage: rgblink [-t] [-l library] [-m mapfile] [-n symfile] [-o outfile]\n");
+	printf("usage: rgblink [-t] [-m mapfile] [-n symfile] [-o outfile]\n");
 	printf("\t    [-s symbol] [-z pad_value] objectfile [...]\n");
 
 	exit(1);
@@ -58,9 +55,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "l:m:n:o:p:s:t")) != -1) {
 		switch (ch) {
-		case 'l':
-			lib_Readfile(optarg);
-			break;
 		case 'm':
 			SetMapfileName(optarg);
 			break;
@@ -73,8 +67,7 @@ main(int argc, char *argv[])
 		case 'p':
 			fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr, "Invalid argument for option 'p'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'p'");
 			}
 			if (fillchar < 0 || fillchar > 0xFF) {
 				fprintf(stderr, "Argument for option 'p' must be between 0 and 0xFF");

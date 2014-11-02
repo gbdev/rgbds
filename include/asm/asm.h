@@ -17,8 +17,6 @@
 
 #include "localasm.h"
 
-#include "asmotor.h"
-
 extern SLONG nLineNo;
 extern ULONG nTotalLines;
 extern ULONG nPC;

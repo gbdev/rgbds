@@ -7,8 +7,7 @@
 #include "link/main.h"
 #include "link/assign.h"
 
-char tzOutname[_MAX_PATH];
-BBOOL oOutput = 0;
+char *tzOutname;
 
 void 
 writehome(FILE * f)
@@ -71,8 +70,7 @@ writebank(FILE * f, SLONG bank)
 void 
 out_Setname(char *tzOutputfile)
 {
-	strcpy(tzOutname, tzOutputfile);
-	oOutput = 1;
+	tzOutname = tzOutputfile;
 }
 
 void 

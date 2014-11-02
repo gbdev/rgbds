@@ -6,6 +6,7 @@
  */
 
 #define _XOPEN_SOURCE 500
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -27,7 +28,6 @@ struct sSymbol *tHashedSymbols[HASHSIZE];
 struct sSymbol *pScope = NULL;
 struct sSymbol *pPCSymbol = NULL;
 struct sSymbol *p_NARGSymbol = NULL;
-struct sSymbol *p__LINE__Symbol = NULL;
 char *currentmacroargs[MAXMACROARGS + 1];
 char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
@@ -45,12 +45,6 @@ Callback_NARG(struct sSymbol * sym)
 	return (i);
 }
 
-SLONG 
-Callback__LINE__(struct sSymbol * sym)
-{
-	sym = sym;
-	return (nLineNo);
-}
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
  *
@@ -76,10 +70,10 @@ getvaluefield(struct sSymbol * sym)
 ULONG 
 calchash(char *s)
 {
-	ULONG hash = 0;
+	ULONG hash = 5381;
 
 	while (*s != 0)
-		hash += (*s++);
+		hash = (hash * 33) ^ (*s++);
 
 	return (hash % HASHSIZE);
 }
@@ -102,8 +96,7 @@ createsymbol(char *s)
 	while ((*ppsym) != NULL)
 		ppsym = &((*ppsym)->pNext);
 
-	if (((*ppsym) =
-		(struct sSymbol *) malloc(sizeof(struct sSymbol))) != NULL) {
+	if (((*ppsym) = malloc(sizeof(struct sSymbol))) != NULL) {
 		strcpy((*ppsym)->tzName, s);
 		(*ppsym)->nValue = 0;
 		(*ppsym)->nType = 0;
@@ -440,6 +433,8 @@ sym_FindMacroArg(SLONG i)
 	if (i == -1)
 		i = MAXMACROARGS + 1;
 
+	assert(i-1 >= 0 &&
+	    i-1 < sizeof currentmacroargs / sizeof *currentmacroargs);
 	return (currentmacroargs[i - 1]);
 }
 
@@ -578,8 +573,7 @@ sym_AddString(char *tzSym, char *tzValue)
 		nsym = createsymbol(tzSym);
 
 	if (nsym) {
-		if ((nsym->pMacro =
-			(char *) malloc(strlen(tzValue) + 1)) != NULL)
+		if ((nsym->pMacro = malloc(strlen(tzValue) + 1)) != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
 			fatalerror("No memory for stringequate");
@@ -849,6 +843,10 @@ sym_PrepPass2(void)
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
 	sym_AddSet("_RS", 0);
+
+	sym_AddEqu("_NARG", 0);
+	p_NARGSymbol = findsymbol("_NARG", NULL);
+	p_NARGSymbol->Callback = Callback_NARG;
 }
 /*
  * RGBAsm - SYMBOL.C - Symboltable stuff
@@ -876,11 +874,7 @@ sym_Init(void)
 	sym_AddEqu("_NARG", 0);
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;
-	sym_AddEqu("__LINE__", 0);
-	p__LINE__Symbol = findsymbol("__LINE__", NULL);
-	p__LINE__Symbol->Callback = Callback__LINE__;
 
-	sym_AddEqu("__ASM__", (SLONG) (atof(ASM_VERSION) * 65536));
 	sym_AddSet("_RS", 0);
 
 	if (time(&tod) != -1) {

@@ -5,6 +5,8 @@
  *
  */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +16,12 @@
 #include "asm/types.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
+#include "extern/err.h"
+#include "extern/strl.h"
+
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
 
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
@@ -62,8 +70,7 @@ pushcontext(void)
 	while (*ppFileStack)
 		ppFileStack = &((*ppFileStack)->pNext);
 
-	if ((*ppFileStack =
-		(struct sContext *) malloc(sizeof(struct sContext))) != NULL) {
+	if ((*ppFileStack = malloc(sizeof(struct sContext))) != NULL) {
 		(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 		(*ppFileStack)->pNext = NULL;
 		strcpy((char *) (*ppFileStack)->tzFileName,
@@ -195,28 +202,33 @@ fstk_AddIncludePath(char *s)
 	strcpy(IncludePaths[NextIncPath++], s);
 }
 
-void 
-fstk_FindFile(char *s)
+FILE *
+fstk_FindFile(char *fname)
 {
-	char t[_MAX_PATH + 1];
-	SLONG i = -1;
+	char path[PATH_MAX];
+	int i;
+	FILE *f;
 
-	strcpy(t, s);
+	if ((f = fopen(fname, "rb")) != NULL || errno != ENOENT) {
+		return f;
+	}
 
-	while (i < NextIncPath) {
-		FILE *f;
-
-		if ((f = fopen(t, "rb")) != NULL) {
-			fclose(f);
-			strcpy(s, t);
-			return;
+	for (i = 0; i < NextIncPath; ++i) {
+		if (strlcpy(path, IncludePaths[i], sizeof path) >= 
+		    sizeof path) {
+			continue;
 		}
-		i += 1;
-		if (i < NextIncPath) {
-			strcpy(t, IncludePaths[i]);
-			strcat(t, s);
+		if (strlcat(path, fname, sizeof path) >= sizeof path) {
+			continue;
+		}
+
+		if ((f = fopen(path, "rb")) != NULL || errno != ENOENT) {
+			return f;
 		}
 	}
+
+	errno = ENOENT;
+	return NULL;
 }
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
@@ -225,33 +237,30 @@ fstk_FindFile(char *s)
  *
  */
 
-ULONG 
+void
 fstk_RunInclude(char *tzFileName)
 {
 	FILE *f;
 
-	//printf("INCLUDE: %s\n", s);
+	f = fstk_FindFile(tzFileName);
 
-	fstk_FindFile(tzFileName);
-	//printf("INCLUDING: %s\n", tzFileName);
+	if (f == NULL) {
+		err(1, "Unable to open included file '%s'",
+		    tzFileName);
+	}
 
-	if ((f = fopen(tzFileName, "r")) != NULL) {
-		pushcontext();
-		nLineNo = 1;
-		nCurrentStatus = STAT_isInclude;
-		strcpy(tzCurrentFileName, tzFileName);
-		pCurrentFile = f;
-		CurrentFlexHandle = yy_create_buffer(pCurrentFile);
-		yy_switch_to_buffer(CurrentFlexHandle);
+	pushcontext();
+	nLineNo = 1;
+	nCurrentStatus = STAT_isInclude;
+	strcpy(tzCurrentFileName, tzFileName);
+	pCurrentFile = f;
+	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
+	yy_switch_to_buffer(CurrentFlexHandle);
 
-		//Dirty hack to give the INCLUDE directive a linefeed
+	//Dirty hack to give the INCLUDE directive a linefeed
 
-		    yyunput('\n');
-		nLineNo -= 1;
-
-		return (1);
-	} else
-		return (0);
+	yyunput('\n');
+	nLineNo -= 1;
 }
 /*
  * RGBAsm - FSTACK.C (FileStack routines)
@@ -360,7 +369,7 @@ fstk_RunRept(ULONG count)
  *
  */
 
-ULONG 
+void
 fstk_Init(char *s)
 {
 	char tzFileName[_MAX_PATH + 1];
@@ -368,17 +377,16 @@ fstk_Init(char *s)
 	sym_AddString("__FILE__", s);
 
 	strcpy(tzFileName, s);
-	fstk_FindFile(tzFileName);
-
 	pFileStack = NULL;
-	if ((pCurrentFile = fopen(tzFileName, "r")) != NULL) {
-		nMacroCount = 0;
-		nCurrentStatus = STAT_isInclude;
-		strcpy(tzCurrentFileName, tzFileName);
-		CurrentFlexHandle = yy_create_buffer(pCurrentFile);
-		yy_switch_to_buffer(CurrentFlexHandle);
-		nLineNo = 1;
-		return (1);
-	} else
-		return (0);
+	pCurrentFile = fopen(tzFileName, "rb");
+	if (pCurrentFile == NULL) {
+		err(1, "Unable to open file '%s'", tzFileName);
+	}
+
+	nMacroCount = 0;
+	nCurrentStatus = STAT_isInclude;
+	strcpy(tzCurrentFileName, tzFileName);
+	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
+	yy_switch_to_buffer(CurrentFlexHandle);
+	nLineNo = 1;
 }

@@ -19,6 +19,7 @@
 #include "asm/fstack.h"
 #include "asm/output.h"
 #include "asm/main.h"
+#include "extern/err.h"
 
 int yyparse(void);
 void setuplex(void);
@@ -133,9 +134,8 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			fprintf(stderr, "Must specify exactly 4 characters "
-			    "for option 'g'\n");
-			exit(1);
+			errx(1, "Must specify exactly 4 characters for "
+			    "option 'g'");
 		}
 		break;
 	case 'b':
@@ -143,9 +143,8 @@ opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			fprintf(stderr, "Must specify exactly 2 characters "
-			    "for option 'b'\n");
-			exit(1);
+			errx(1, "Must specify exactly 2 characters for option "
+			    "'b'");
 		}
 		break;
 	case 'z':
@@ -154,12 +153,10 @@ opt_Parse(char *s)
 
 			result = sscanf(&s[1], "%lx", &newopt.fillchar);
 			if (!((result == EOF) || (result == 1))) {
-				fprintf(stderr,
-				    "Invalid argument for option 'z'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'z'");
 			}
 		} else {
-			fprintf(stderr, "Invalid argument for option 'z'\n");
+			errx(1, "Invalid argument for option 'z'");
 			exit(1);
 		}
 		break;
@@ -176,9 +173,7 @@ opt_Push(void)
 {
 	struct sOptionStackEntry *pOpt;
 
-	if ((pOpt =
-		(struct sOptionStackEntry *)
-		malloc(sizeof(struct sOptionStackEntry))) != NULL) {
+	if ((pOpt = malloc(sizeof(struct sOptionStackEntry))) != NULL) {
 		pOpt->Options = CurrentOptions;
 		pOpt->pNext = pOptionStack;
 		pOptionStack = pOpt;
@@ -245,8 +240,6 @@ fatalerror(const char *fmt, ...)
 void 
 PrintUsage(void)
 {
-	printf("RGBAsm v" ASM_VERSION " (part of ASMotor " ASMOTOR_VERSION
-	    ")\n\n");
 	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
 	    "              file\n");
 	exit(1);
@@ -295,9 +288,8 @@ main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				fprintf(stderr, "Must specify exactly "
-				    "2 characters for option 'b'\n");
-				exit(1);
+				errx(1, "Must specify exactly 2 characters for "
+				    "option 'b'");
 			}
 			break;
 		case 'g':
@@ -307,9 +299,8 @@ main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				fprintf(stderr, "Must specify exactly "
-				    "4 characters for option 'g'\n");
-				exit(1);
+				errx(1, "Must specify exactly 4 characters for "
+				    "option 'g'");
 			}
 			break;
 		case 'h':
@@ -324,14 +315,11 @@ main(int argc, char *argv[])
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0') {
-				fprintf(stderr,
-				    "Invalid argument for option 'p'\n");
-				exit(1);
+				errx(1, "Invalid argument for option 'p'");
 			}
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF) {
-				fprintf(stderr, "Argument for option 'p' "
-				    "must be between 0 and 0xFF\n");
-				exit(1);
+				errx(1, "Argument for option 'p' must be "
+				    "between 0 and 0xFF");
 			}
 			break;
 		case 'v':
@@ -348,7 +336,6 @@ main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	/* tzMainfile=argv[argn++]; argc-=1; */
 	tzMainfile = argv[argc - 1];
 
 	setuplex();
@@ -366,75 +353,67 @@ main(int argc, char *argv[])
 	nPass = 1;
 	nErrors = 0;
 	sym_PrepPass1();
-	if (fstk_Init(tzMainfile)) {
-		if (CurrentOptions.verbose) {
-			printf("Pass 1...\n");
-		}
+	fstk_Init(tzMainfile);
+	if (CurrentOptions.verbose) {
+		printf("Pass 1...\n");
+	}
 
-		yy_set_state(LEX_STATE_NORMAL);
-		opt_SetCurrentOptions(&DefaultOptions);
+	yy_set_state(LEX_STATE_NORMAL);
+	opt_SetCurrentOptions(&DefaultOptions);
 
-		if (yyparse() == 0 && nErrors == 0) {
-			if (nIFDepth == 0) {
-				nTotalLines = 0;
-				nLineNo = 1;
-				nIFDepth = 0;
-				nPC = 0;
-				nPass = 2;
-				nErrors = 0;
-				sym_PrepPass2();
-				out_PrepPass2();
-				fstk_Init(tzMainfile);
-				yy_set_state(LEX_STATE_NORMAL);
-				opt_SetCurrentOptions(&DefaultOptions);
+	if (yyparse() == 0 && nErrors == 0) {
+		if (nIFDepth == 0) {
+			nTotalLines = 0;
+			nLineNo = 1;
+			nIFDepth = 0;
+			nPC = 0;
+			nPass = 2;
+			nErrors = 0;
+			sym_PrepPass2();
+			out_PrepPass2();
+			fstk_Init(tzMainfile);
+			yy_set_state(LEX_STATE_NORMAL);
+			opt_SetCurrentOptions(&DefaultOptions);
 
+			if (CurrentOptions.verbose) {
+				printf("Pass 2...\n");
+			}
+
+			if (yyparse() == 0 && nErrors == 0) {
+				double timespent;
+
+				nEndClock = clock();
+				timespent =
+				    ((double) (nEndClock - nStartClock))
+				    / (double) CLOCKS_PER_SEC;
 				if (CurrentOptions.verbose) {
-					printf("Pass 2...\n");
-				}
-
-				if (yyparse() == 0 && nErrors == 0) {
-					double timespent;
-
-					nEndClock = clock();
-					timespent =
-					    ((double) (nEndClock - nStartClock))
-					    / (double) CLOCKS_PER_SEC;
-					if (CurrentOptions.verbose) {
-						printf
-						    ("Success! %ld lines in %d.%02d seconds ",
-						    nTotalLines, (int) timespent,
-						    ((int) (timespent * 100.0)) % 100);
-						if (timespent == 0)
-							printf
-							    ("(INFINITY lines/minute)\n");
-						else
-							printf("(%d lines/minute)\n",
-							    (int) (60 / timespent *
-								nTotalLines));
-					}
-					out_WriteObject();
-				} else {
 					printf
-					    ("Assembly aborted in pass 2 (%ld errors)!\n",
-					    nErrors);
-					//sym_PrintSymbolTable();
-					exit(5);
+					    ("Success! %ld lines in %d.%02d seconds ",
+					    nTotalLines, (int) timespent,
+					    ((int) (timespent * 100.0)) % 100);
+					if (timespent == 0)
+						printf
+						    ("(INFINITY lines/minute)\n");
+					else
+						printf("(%d lines/minute)\n",
+						    (int) (60 / timespent *
+							nTotalLines));
 				}
+				out_WriteObject();
 			} else {
-				fprintf(stderr,
-				    "Unterminated IF construct (%ld levels)!\n",
-				    nIFDepth);
-				exit(1);
+				printf
+				    ("Assembly aborted in pass 2 (%ld errors)!\n",
+				    nErrors);
+				//sym_PrintSymbolTable();
+				exit(5);
 			}
 		} else {
-			fprintf(stderr,
-			    "Assembly aborted in pass 1 (%ld errors)!\n",
-			    nErrors);
-			exit(1);
+			errx(1, "Unterminated IF construct (%ld levels)!",
+			    nIFDepth);
 		}
 	} else {
-		printf("File '%s' not found\n", tzMainfile);
-		exit(5);
+		errx(1, "Assembly aborted in pass 1 (%ld errors)!",
+		    nErrors);
 	}
-	return (0);
+	return 0;
 }

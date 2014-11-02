@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "extern/err.h"
 #include "link/main.h"
 #include "link/patch.h"
 #include "link/types.h"
@@ -53,8 +54,7 @@ sym_GetValue(char *tzName)
 			}
 		}
 
-		fprintf(stderr, "Unknown symbol '%s'\n", tzName);
-		exit(1);
+		errx(1, "Unknown symbol '%s'", tzName);
 	}
 }
 
@@ -72,8 +72,7 @@ sym_GetBank(char *tzName)
 		}
 	}
 
-	fprintf(stderr, "Unknown symbol '%s'\n", tzName);
-	exit(1);
+	errx(1, "Unknown symbol '%s'", tzName);
 }
 
 void 
@@ -93,10 +92,7 @@ sym_CreateSymbol(char *tzName, SLONG nValue, SBYTE nBank)
 			if (nBank == -1)
 				return;
 
-			fprintf(stderr,
-			    "Symbol '%s' defined more than once\n",
-			    tzName);
-			exit(1);
+			errx(1, "Symbol '%s' defined more than once", tzName);
 		}
 	}
 

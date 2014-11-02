@@ -5,7 +5,8 @@
 
 #include "asm/types.h"
 
-#define LEXHASHSIZE	512
+#define LEXHASHSIZE (1 << 11)
+#define MAXSTRLEN 255
 
 struct sLexInitString {
 	char *tzName;
@@ -18,7 +19,9 @@ struct sLexFloat {
 };
 
 struct yy_buffer_state {
-	char *pBufferStart;
+	char *pBufferRealStart; // actual starting address
+	char *pBufferStart; // address where the data is initially written
+	                    // after the "safety margin"
 	char *pBuffer;
 	ULONG nBufferSize;
 	ULONG oAtLineStart;

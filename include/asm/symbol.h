@@ -3,7 +3,7 @@
 
 #include "asm/types.h"
 
-#define HASHSIZE 73
+#define HASHSIZE (1 << 16)
 #define MAXSYMLEN 256
 
 struct sSymbol {
@@ -35,6 +35,7 @@ struct sSymbol {
 #define SYMF_CONST		0x200	/* symbol has a constant value, will
 					 * not be changed during linking */
 
+ULONG calchash(char *s);
 void sym_PrepPass1(void);
 void sym_PrepPass2(void);
 void sym_AddLocalReloc(char *tzSym);

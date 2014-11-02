@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "extern/err.h"
 #include "link/types.h"
 #include "link/mylink.h"
 #include "link/main.h"
@@ -91,9 +92,8 @@ AddNeededModules(void)
 	}
 	if (options & OPT_SMART_C_LINK) {
 		if (!addmodulecontaining(smartlinkstartsymbol)) {
-			fprintf(stderr, "Can't find start symbol '%s'\n",
+			errx(1, "Can't find start symbol '%s'",
 			    smartlinkstartsymbol);
-			exit(1);
 		} else
 			printf("Smart linking with symbol '%s'\n",
 			    smartlinkstartsymbol);

@@ -18,6 +18,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "extern/err.h"
 
 #define SECTIONCHUNK	0x4000
 
@@ -44,6 +45,7 @@ struct PatchSymbol {
 	ULONG ID;
 	struct sSymbol *pSymbol;
 	struct PatchSymbol *pNext;
+	struct PatchSymbol *pBucketNext; // next symbol in hash table bucket
 };
 
 struct SectionStackEntry {
@@ -57,9 +59,11 @@ struct SectionStackEntry {
  *
  */
 
+struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
 struct Section *pSectionList = NULL, *pCurrentSection = NULL;
 struct PatchSymbol *pPatchSymbols = NULL;
-char tzObjectname[_MAX_PATH];
+struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
+char *tzObjectname;
 struct SectionStackEntry *pSectionStack = NULL;
 
 /*
@@ -74,9 +78,7 @@ out_PushSection(void)
 {
 	struct SectionStackEntry *pSect;
 
-	if ((pSect =
-		(struct SectionStackEntry *)
-		malloc(sizeof(struct SectionStackEntry))) != NULL) {
+	if ((pSect = malloc(sizeof(struct SectionStackEntry))) != NULL) {
 		pSect->pSection = pCurrentSection;
 		pSect->pNext = pSectionStack;
 		pSectionStack = pSect;
@@ -328,30 +330,30 @@ ULONG
 addsymbol(struct sSymbol * pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
-	ULONG ID = 0;
+	static ULONG nextID = 0;
+	ULONG hash;
 
-	pPSym = pPatchSymbols;
-	ppPSym = &(pPatchSymbols);
+	hash = calchash(pSym->tzName);
+	ppPSym = &(tHashedPatchSymbols[hash]);
 
-	while (pPSym) {
-		if (pSym == pPSym->pSymbol)
-			return (pPSym->ID);
-		ppPSym = &(pPSym->pNext);
-		pPSym = pPSym->pNext;
-		ID += 1;
+	while ((*ppPSym) != NULL) {
+		if (pSym == (*ppPSym)->pSymbol)
+			return (*ppPSym)->ID;
+		ppPSym = &((*ppPSym)->pBucketNext);
 	}
 
-	if ((*ppPSym = pPSym =
-		(struct PatchSymbol *) malloc(sizeof(struct PatchSymbol))) !=
-	    NULL) {
+	if ((*ppPSym = pPSym = malloc(sizeof(struct PatchSymbol))) != NULL) {
 		pPSym->pNext = NULL;
+		pPSym->pBucketNext = NULL;
 		pPSym->pSymbol = pSym;
-		pPSym->ID = ID;
-		return (ID);
+		pPSym->ID = nextID++;
 	} else
 		fatalerror("No memory for patchsymbol");
 
-	return ((ULONG) - 1);
+	*ppPatchSymbolsTail = pPSym;
+	ppPatchSymbolsTail = &(pPSym->pNext);
+
+	return pPSym->ID;
 }
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile
@@ -386,23 +388,16 @@ addexports(void)
 struct Patch *
 allocpatch(void)
 {
-	struct Patch *pPatch, **ppPatch;
+	struct Patch *pPatch;
 
-	pPatch = pCurrentSection->pPatches;
-	ppPatch = &(pCurrentSection->pPatches);
-
-	while (pPatch) {
-		ppPatch = &(pPatch->pNext);
-		pPatch = pPatch->pNext;
-	}
-
-	if ((*ppPatch = pPatch =
-		(struct Patch *) malloc(sizeof(struct Patch))) != NULL) {
-		pPatch->pNext = NULL;
+	if ((pPatch = malloc(sizeof(struct Patch))) != NULL) {
+		pPatch->pNext = pCurrentSection->pPatches;
 		pPatch->nRPNSize = 0;
 		pPatch->pRPN = NULL;
 	} else
 		fatalerror("No memory for patch");
+
+	pCurrentSection->pPatches = pPatch;
 
 	return (pPatch);
 }
@@ -473,7 +468,7 @@ createpatch(ULONG type, struct Expression * expr)
 			break;
 		}
 	}
-	if ((pPatch->pRPN = (UBYTE *) malloc(rpnptr)) != NULL) {
+	if ((pPatch->pRPN = malloc(rpnptr)) != NULL) {
 		memcpy(pPatch->pRPN, rpnexpr, rpnptr);
 		pPatch->nRPNSize = rpnptr;
 	}
@@ -505,9 +500,12 @@ void
 checkcodesection(SLONG size)
 {
 	checksection();
-	if ((pCurrentSection->nType == SECT_ROM0
-		|| pCurrentSection->nType == SECT_ROMX)
-	    && (pCurrentSection->nPC + size <= MAXSECTIONSIZE)) {
+	if (pCurrentSection->nType != SECT_ROM0 &&
+	    pCurrentSection->nType != SECT_ROMX) {
+		errx(1, "Section '%s' cannot contain code or data (not a "
+		    "ROM0 or ROMX)", pCurrentSection->pzName);
+	}
+	if (pCurrentSection->nPC + size <= MAXSECTIONSIZE) {
 		if (((pCurrentSection->nPC % SECTIONCHUNK) >
 			((pCurrentSection->nPC + size) % SECTIONCHUNK))
 		    && (pCurrentSection->nType == SECT_ROM0
@@ -524,8 +522,7 @@ checkcodesection(SLONG size)
 		}
 		return;
 	} else
-		fatalerror
-		    ("Section can't contain initialized data or section limit exceeded");
+		errx(1, "Section '%s' is too big", pCurrentSection->pzName);
 }
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile
@@ -594,7 +591,7 @@ out_PrepPass2(void)
 void 
 out_SetFileName(char *s)
 {
-	strcpy(tzObjectname, s);
+	tzObjectname = s;
 	if (CurrentOptions.verbose) {
 		printf("Output filename %s\n", s);
 	}
@@ -632,11 +629,8 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 		pSect = pSect->pNext;
 	}
 
-	if ((*ppSect =
-		(pSect =
-		    (struct Section *) malloc(sizeof(struct Section)))) != NULL) {
-		if ((pSect->pzName =
-			(char *) malloc(strlen(pzName) + 1)) != NULL) {
+	if ((*ppSect = (pSect = malloc(sizeof(struct Section)))) != NULL) {
+		if ((pSect->pzName = malloc(strlen(pzName) + 1)) != NULL) {
 			strcpy(pSect->pzName, pzName);
 			pSect->nType = secttype;
 			pSect->nPC = 0;
@@ -647,8 +641,7 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 			pSect->charmap = NULL;
 			pPatchSymbols = NULL;
 
-			if ((pSect->tData =
-				(UBYTE *) malloc(SECTIONCHUNK)) != NULL) {
+			if ((pSect->tData = malloc(SECTIONCHUNK)) != NULL) {
 				return (pSect);
 			} else
 				fatalerror("Not enough memory for section");
@@ -918,30 +911,30 @@ out_BinaryFile(char *s)
 {
 	FILE *f;
 
-	fstk_FindFile(s);
+	f = fstk_FindFile(s);
+	if (f == NULL) {
+		err(1, "Unable to open incbin file '%s'", s);
+	}
 
-	if ((f = fopen(s, "rb")) != NULL) {
-		SLONG fsize;
+	SLONG fsize;
 
-		fseek(f, 0, SEEK_END);
-		fsize = ftell(f);
-		fseek(f, 0, SEEK_SET);
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-		checkcodesection(fsize);
+	checkcodesection(fsize);
 
-		if (nPass == 2) {
-			SLONG dest = nPC;
-			SLONG todo = fsize;
+	if (nPass == 2) {
+		SLONG dest = nPC;
+		SLONG todo = fsize;
 
-			while (todo--)
-				pCurrentSection->tData[dest++] = fgetc(f);
-		}
-		pCurrentSection->nPC += fsize;
-		nPC += fsize;
-		pPCSymbol->nValue += fsize;
-		fclose(f);
-	} else
-		fatalerror("Could not open file '%s': %s", s, strerror(errno));
+		while (todo--)
+			pCurrentSection->tData[dest++] = fgetc(f);
+	}
+	pCurrentSection->nPC += fsize;
+	nPC += fsize;
+	pPCSymbol->nValue += fsize;
+	fclose(f);
 }
 
 void 
@@ -955,36 +948,36 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 	if (length < 0)
 		fatalerror("Number of bytes to read must be greater than zero");
 
-	fstk_FindFile(s);
+	f = fstk_FindFile(s);
+	if (f == NULL) {
+		err(1, "Unable to open included file '%s'", s);
+	}
 
-	if ((f = fopen(s, "rb")) != NULL) {
-		SLONG fsize;
+	SLONG fsize;
 
-		fseek(f, 0, SEEK_END);
-		fsize = ftell(f);
+	fseek(f, 0, SEEK_END);
+	fsize = ftell(f);
 
-		if (start_pos >= fsize)
-			fatalerror("Specified start position is greater than length of file");
+	if (start_pos >= fsize)
+		fatalerror("Specified start position is greater than length of file");
 
-		if ((start_pos + length) > fsize)
-			fatalerror("Specified range in INCBIN is out of bounds");
+	if ((start_pos + length) > fsize)
+		fatalerror("Specified range in INCBIN is out of bounds");
 
-		fseek(f, start_pos, SEEK_SET);
+	fseek(f, start_pos, SEEK_SET);
 
-		checkcodesection(length);
+	checkcodesection(length);
 
-		if (nPass == 2) {
-			SLONG dest = nPC;
-			SLONG todo = length;
+	if (nPass == 2) {
+		SLONG dest = nPC;
+		SLONG todo = length;
 
-			while (todo--)
-				pCurrentSection->tData[dest++] = fgetc(f);
-		}
-		pCurrentSection->nPC += length;
-		nPC += length;
-		pPCSymbol->nValue += length;
+		while (todo--)
+			pCurrentSection->tData[dest++] = fgetc(f);
+	}
+	pCurrentSection->nPC += length;
+	nPC += length;
+	pPCSymbol->nValue += length;
 
-		fclose(f);
-	} else
-		fatalerror("Could not open file '%s': %s", s, strerror(errno));
+	fclose(f);
 }

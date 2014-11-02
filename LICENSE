@@ -1,5 +1,5 @@
-rgbasm, rgblink, and rgblib are derived from Justin Lloyd's RGBDS, which
-is released under the following license:
+rgbasm and rgblink are derived from Justin Lloyd's RGBDS, which is
+released under the following license:
 
                       DO WHATEVER PUBLIC LICENSE*
    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
@@ -17,3 +17,9 @@ is released under the following license:
 
 rgbfix was rewritten from scratch by Anthony J. Bentley, and is released
 under the ISC license; see the source file for the text of the license.
+
+extern/err.c is derived from the Musl C library, http://www.musl-libc.org,
+and is released under the MIT license.
+
+extern/strl.c is derived from the OpenBSD Project, http://www.openbsd.org,
+and is released under the BSD license.
