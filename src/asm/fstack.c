@@ -284,7 +284,7 @@ fstk_RunMacro(char *s)
 		pCurrentMacro = sym;
 		CurrentFlexHandle =
 		    yy_scan_bytes(pCurrentMacro->pMacro,
-		    (pCurrentMacro->ulMacroSize < MAXSYMLEN ? MAXSYMLEN : pCurrentMacro->ulMacroSize)); //Dirty hack to fix small macros using long label names.
+		    strlen(pCurrentMacro->pMacro));
 		yy_switch_to_buffer(CurrentFlexHandle);
 		return (1);
 	} else
