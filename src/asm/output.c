@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "asm/asm.h"
+#include "asm/charmap.h"
 #include "asm/output.h"
 #include "asm/symbol.h"
 #include "asm/mylink.h"
@@ -637,6 +638,7 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 			pSect->nBank = bank;
 			pSect->pNext = NULL;
 			pSect->pPatches = NULL;
+			pSect->charmap = NULL;
 			pPatchSymbols = NULL;
 
 			if ((pSect->tData = malloc(SECTIONCHUNK)) != NULL) {
@@ -708,6 +710,14 @@ out_AbsByte(int b)
 	pCurrentSection->nPC += 1;
 	nPC += 1;
 	pPCSymbol->nValue += 1;
+}
+
+void 
+out_AbsByteGroup(char *s, int length)
+{
+	checkcodesection(length);
+	while (length--)
+		out_AbsByte(*s++);
 }
 /*
  * RGBAsm - OUTPUT.C - Outputs an objectfile

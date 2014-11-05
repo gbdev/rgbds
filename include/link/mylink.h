@@ -1,7 +1,9 @@
 #ifndef ASMOTOR_LINK_LINK_H
 #define ASMOTOR_LINK_LINK_H
 
+#ifndef _MAX_PATH
 #define _MAX_PATH	512
+#endif
 
 #include "link/types.h"
 

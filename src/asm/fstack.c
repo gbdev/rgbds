@@ -284,7 +284,7 @@ fstk_RunMacro(char *s)
 		pCurrentMacro = sym;
 		CurrentFlexHandle =
 		    yy_scan_bytes(pCurrentMacro->pMacro,
-		    pCurrentMacro->ulMacroSize);
+		    strlen(pCurrentMacro->pMacro));
 		yy_switch_to_buffer(CurrentFlexHandle);
 		return (1);
 	} else

@@ -27,7 +27,7 @@
 #include "extern/err.h"
 
 #ifndef __MINGW32__
-extern char *__progname;
+char *__progname;
 #endif
 
 void rgbds_vwarn(const char *fmt, va_list ap)

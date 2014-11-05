@@ -1,7 +1,9 @@
 #ifndef ASMOTOR_LINK_TYPES_H
 #define ASMOTOR_LINK_TYPES_H
 
+#ifndef _MAX_PATH
 #define	_MAX_PATH	512
+#endif
 
 typedef unsigned char UBYTE;
 typedef signed char SBYTE;
