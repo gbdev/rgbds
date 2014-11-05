@@ -47,13 +47,13 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 	putc('\n', stderr);
 }
 
-void rgbds_verr(int status, const char *fmt, va_list ap)
+_Noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 {
 	vwarn(fmt, ap);
 	exit(status);
 }
 
-void rgbds_verrx(int status, const char *fmt, va_list ap)
+_Noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
 {
 	vwarnx(fmt, ap);
 	exit(status);
@@ -75,7 +75,7 @@ void rgbds_warnx(const char *fmt, ...)
 	va_end(ap);
 }
 
-void rgbds_err(int status, const char *fmt, ...)
+_Noreturn void rgbds_err(int status, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -83,7 +83,7 @@ void rgbds_err(int status, const char *fmt, ...)
 	va_end(ap);
 }
 
-void rgbds_errx(int status, const char *fmt, ...)
+_Noreturn void rgbds_errx(int status, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
