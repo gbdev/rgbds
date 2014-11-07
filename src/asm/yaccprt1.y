@@ -1,5 +1,4 @@
 %{
-#define _XOPEN_SOURCE 500
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>

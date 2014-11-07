@@ -14,7 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _XOPEN_SOURCE 500
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

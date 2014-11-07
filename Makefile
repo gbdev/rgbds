@@ -1,6 +1,7 @@
 .POSIX:
 
-REALCFLAGS =	${CFLAGS} -Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99
+REALCFLAGS =	${CFLAGS} -Wall -Iinclude -Iinclude/asm/gameboy -g -std=c99 \
+		-D_POSIX_C_SOURCE=200112L
 
 # User-defined variables
 PREFIX =	/usr/local
