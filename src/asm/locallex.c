@@ -2,7 +2,7 @@
 #include "asm/lexer.h"
 #include "asm/rpn.h"
 
-#include "../asmy.h"
+#include "asmy.h"
 
 struct sLexInitString localstrings[] = {
 	{"adc", T_Z80_ADC},

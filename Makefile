@@ -1,7 +1,7 @@
 .POSIX:
 
 WARNFLAGS =	-Wall -Werror=implicit-int
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -Iinclude/asm/gameboy -g \
+REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200112L
 
 # User-defined variables
@@ -12,9 +12,9 @@ Q =		@
 
 yacc_pre := \
 	src/asm/yaccprt1.y\
-	src/asm/gameboy/yaccprt2.y\
+	src/asm/yaccprt2.y\
 	src/asm/yaccprt3.y\
-	src/asm/gameboy/yaccprt4.y
+	src/asm/yaccprt4.y
 
 rgbasm_obj := \
 	src/asm/asmy.o \
@@ -27,7 +27,7 @@ rgbasm_obj := \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
-	src/asm/gameboy/locallex.o \
+	src/asm/locallex.o \
 	src/extern/err.o \
 	src/extern/strlcpy.o \
 	src/extern/strlcat.o
@@ -54,7 +54,7 @@ clean:
 	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
 	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	$Qrm -rf src/asm/asmy.c src/asm/asmy.h src/asm/asmy.y
+	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
 
 install: all
 	$Qmkdir -p ${BINPREFIX}
@@ -82,12 +82,8 @@ rgbfix: ${rgbfix_obj}
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
 
-src/asm/gameboy/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
+src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c
-
-src/asm/asmy.y: ${yacc_pre}
-	$Qcat ${yacc_pre} > $@
-
 
 # Below is a target for the project maintainer to easily create win32 exes.
 # This is not for Windows users!
