@@ -225,7 +225,6 @@ PutUniqueArg(char *src, ULONG size)
 {
 	char *s;
 
-	src = src;
 	yyskipbytes(size);
 	if ((s = sym_FindMacroArg(-1)) != NULL) {
 		yyunputstr(s);

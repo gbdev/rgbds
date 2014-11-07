@@ -37,7 +37,6 @@ Callback_NARG(struct sSymbol * sym)
 {
 	ULONG i = 0;
 
-	sym = sym;
 	while (currentmacroargs[i] && i < MAXMACROARGS)
 		i += 1;
 
