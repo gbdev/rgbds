@@ -951,8 +951,8 @@ relocconst		:	T_ID
 						{ rpn_UNNOT(&$$,&$2); }
 				|	T_OP_BANK '(' T_ID ')'
 						{ rpn_Bank(&$$,$3); $$.nVal = 0; }
-				|	T_OP_DEF '(' T_ID ')'
-						{ rpn_Number(&$$,sym_isConstDefined($3)); }
+				|	T_OP_DEF { oDontExpandStrings=1; } '(' T_ID ')'
+						{ rpn_Number(&$$,sym_isConstDefined($4)); oDontExpandStrings=0; }
 				|	T_OP_FDIV '(' const ',' const ')'			{ rpn_Number(&$$,math_Div($3,$5)); }
 				|	T_OP_FMUL '(' const ',' const ')'			{ rpn_Number(&$$,math_Mul($3,$5)); }
 				|	T_OP_SIN '(' const ')'			{ rpn_Number(&$$,math_Sin($3)); }
@@ -1015,7 +1015,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	T_OP_ACOS '(' const ')'			{ $$ = math_ACos($3); }
 				|	T_OP_ATAN '(' const ')'			{ $$ = math_ATan($3); }
 				|	T_OP_ATAN2 '(' const ',' const ')'	{ $$ = math_ATan2($3,$5); }
-				|	T_OP_DEF '(' T_ID ')'				{ $$ = sym_isConstDefined($3); }
+				|	T_OP_DEF { oDontExpandStrings=1; } '(' T_ID ')'	{ $$ = sym_isConstDefined($4); oDontExpandStrings=0; }
 				|	T_OP_STRCMP '(' string ',' string ')'	{ $$ = strcmp( $3, $5 ); }
 				|	T_OP_STRIN '(' string ',' string ')'
 					{
