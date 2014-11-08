@@ -155,4 +155,37 @@ SLONG
 math_Div(SLONG i, SLONG j)
 {
 	return (double2fix(fix2double(i) / fix2double(j)));
+}/*
+ * RGBAsm - MATH.C (Fixedpoint math routines)
+ *
+ * Round
+ *
+ */
+
+SLONG 
+math_Round(SLONG i)
+{
+	return double2fix(round(fix2double(i)));
+}/*
+ * RGBAsm - MATH.C (Fixedpoint math routines)
+ *
+ * Ceil
+ *
+ */
+
+SLONG 
+math_Ceil(SLONG i)
+{
+	return double2fix(ceil(fix2double(i)));
+}/*
+ * RGBAsm - MATH.C (Fixedpoint math routines)
+ *
+ * Floor
+ *
+ */
+
+SLONG 
+math_Floor(SLONG i)
+{
+	return double2fix(floor(fix2double(i)));
 }

@@ -267,6 +267,9 @@ struct sLexInitString staticstrings[] = {
 
 	{"bank", T_OP_BANK},
 
+	{"round", T_OP_ROUND},
+	{"ceil", T_OP_CEIL},
+	{"floor", T_OP_FLOOR},
 	{"div", T_OP_FDIV},
 	{"mul", T_OP_FMUL},
 	{"sin", T_OP_SIN},

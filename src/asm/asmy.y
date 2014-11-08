@@ -412,6 +412,10 @@ void	if_skip_to_endc( void )
 %left	T_OP_ATAN2
 %left	T_OP_FDIV
 %left	T_OP_FMUL
+%left	T_OP_ROUND
+%left	T_OP_CEIL
+%left	T_OP_FLOOR
+
 
 %left	T_OP_STRCMP
 %left	T_OP_STRIN
@@ -953,6 +957,9 @@ relocconst		:	T_ID
 						{ rpn_Bank(&$$,$3); $$.nVal = 0; }
 				|	T_OP_DEF { oDontExpandStrings=1; } '(' T_ID ')'
 						{ rpn_Number(&$$,sym_isConstDefined($4)); oDontExpandStrings=0; }
+				|	T_OP_ROUND '(' const ')'			{ rpn_Number(&$$,math_Round($3)); }
+				|	T_OP_CEIL '(' const ')'			{ rpn_Number(&$$,math_Ceil($3)); }
+				|	T_OP_FLOOR '(' const ')'			{ rpn_Number(&$$,math_Floor($3)); }
 				|	T_OP_FDIV '(' const ',' const ')'			{ rpn_Number(&$$,math_Div($3,$5)); }
 				|	T_OP_FMUL '(' const ',' const ')'			{ rpn_Number(&$$,math_Mul($3,$5)); }
 				|	T_OP_SIN '(' const ')'			{ rpn_Number(&$$,math_Sin($3)); }
@@ -1006,6 +1013,9 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	T_OP_ADD const %prec NEG		{ $$ = +$2; }
 				|	T_OP_SUB const %prec NEG		{ $$ = -$2; }
 				|	T_OP_NOT const %prec NEG		{ $$ = 0xFFFFFFFF^$2; }
+				|	T_OP_ROUND '(' const ')'		{ $$ = math_Round($3); }
+				|	T_OP_CEIL '(' const ')'			{ $$ = math_Ceil($3); }
+				|	T_OP_FLOOR '(' const ')'		{ $$ = math_Floor($3); }
 				|	T_OP_FDIV '(' const ',' const ')'			{ $$ = math_Div($3,$5); }
 				|	T_OP_FMUL '(' const ',' const ')'			{ $$ = math_Mul($3,$5); }
 				|	T_OP_SIN '(' const ')'			{ $$ = math_Sin($3); }
