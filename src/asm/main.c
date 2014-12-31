@@ -30,6 +30,9 @@ void setuplex(void);
  *
  */
 
+int cldefines_index;
+int cldefines_size;
+char **cldefines;
 bool haltnop;
 
 clock_t nStartClock, nEndClock;
@@ -193,6 +196,43 @@ opt_Pop(void)
 	} else
 		fatalerror("No entries in the option stack");
 }
+void
+opt_AddDefine(char *s)
+{
+	char *value, *equals;
+	if(cldefines_index >= cldefines_size)
+	{
+		cldefines_size *= 2;
+		cldefines = realloc(cldefines, cldefines_size * 2 * sizeof(void *));
+		if(!cldefines)
+		{
+			fatalerror("No memory for command line defines");
+		}
+	}
+	equals = strchr(s, '=');
+	if(equals)
+	{
+		*equals = '\0';
+		value = equals + 1;
+	}
+	else
+	{
+		value = "1";
+	}
+	cldefines[cldefines_index++] = s;
+	cldefines[cldefines_index++] = value;
+}
+
+void
+opt_ParseDefines()
+{
+	int i;
+
+	for(i = 0; i < cldefines_index; i += 2)
+	{
+		sym_AddString(cldefines[i], cldefines[i + 1]);
+	}
+}
 /*
  * RGBAsm - MAIN.C
  *
@@ -239,7 +279,7 @@ fatalerror(const char *fmt, ...)
 void 
 PrintUsage(void)
 {
-	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
+	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-Dname[=value]] [-p pad_value]\n"
 	    "              file\n");
 	exit(1);
 }
@@ -259,6 +299,13 @@ main(int argc, char *argv[])
 	struct sOptions newopt;
 
 	char *tzMainfile;
+
+	cldefines_size = 32;
+	cldefines = malloc(cldefines_size * 2 * sizeof(void *));
+	if(!cldefines)
+	{
+		fatalerror("No memory for command line defines");
+	}
 
 	haltnop = true;
 
@@ -280,7 +327,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:hi:o:p:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:g:hi:o:D:p:v")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -310,6 +357,9 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			out_SetFileName(optarg);
+			break;
+		case 'D':
+			opt_AddDefine(optarg);
 			break;
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
@@ -353,6 +403,7 @@ main(int argc, char *argv[])
 	nErrors = 0;
 	sym_PrepPass1();
 	fstk_Init(tzMainfile);
+	opt_ParseDefines();
 	if (CurrentOptions.verbose) {
 		printf("Pass 1...\n");
 	}
@@ -374,6 +425,7 @@ main(int argc, char *argv[])
 			yy_set_state(LEX_STATE_NORMAL);
 			opt_SetCurrentOptions(&DefaultOptions);
 
+			opt_ParseDefines();
 			if (CurrentOptions.verbose) {
 				printf("Pass 2...\n");
 			}
