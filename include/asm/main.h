@@ -8,6 +8,7 @@ struct sOptions {
 	char binary[2];
 	SLONG fillchar;
 	bool verbose;
+	bool haltnop;
 	    //-1 == random
 };
 
