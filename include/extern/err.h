@@ -29,6 +29,7 @@
 #else
 
 #include <stdarg.h>
+#include "extern/stdnoreturn.h"
 
 #define warn rgbds_warn
 #define vwarn rgbds_vwarn
@@ -49,10 +50,10 @@ void vwarn(const char *, va_list);
 void warnx(const char *, ...);
 void vwarnx(const char *, va_list);
 
-_Noreturn void err(int, const char *, ...);
-_Noreturn void verr(int, const char *, va_list);
-_Noreturn void errx(int, const char *, ...);
-_Noreturn void verrx(int, const char *, va_list);
+noreturn void err(int, const char *, ...);
+noreturn void verr(int, const char *, va_list);
+noreturn void errx(int, const char *, ...);
+noreturn void verrx(int, const char *, va_list);
 
 #ifdef __cplusplus
 }

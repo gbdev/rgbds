@@ -93,7 +93,7 @@ mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
 		make CC=gcc CFLAGS="-I/usr/local/mingw32/include \
 			-D__progname=\\\"\\\" \
-			-D_Noreturn='__attribute__((noreturn))' ${CFLAGS}"
+			${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
 	$Qmv rgbfix rgbfix.exe
