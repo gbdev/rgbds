@@ -29,7 +29,7 @@
 #else
 
 #include <stdarg.h>
-#include "extern/stdnoreturn.h"
+#include "stdnoreturn.h"
 
 #define warn rgbds_warn
 #define vwarn rgbds_vwarn
