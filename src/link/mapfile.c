@@ -72,14 +72,13 @@ MapfileInitBank(SLONG bank)
 void 
 MapfileWriteSection(struct sSection * pSect)
 {
-	if (!mf && !sf)
-		return;
-
 	SLONG i;
 
-	fprintf(mf, "  SECTION: $%04lX-$%04lX ($%04lX bytes)\n",
-	    pSect->nOrg, pSect->nOrg + pSect->nByteSize - 1,
-	    pSect->nByteSize);
+	if (mf) {
+		fprintf(mf, "  SECTION: $%04lX-$%04lX ($%04lX bytes)\n",
+		    pSect->nOrg, pSect->nOrg + pSect->nByteSize - 1,
+		    pSect->nByteSize);
+	}
 
 	for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
 		struct sSymbol *pSym;
