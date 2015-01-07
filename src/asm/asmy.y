@@ -1,7 +1,6 @@
 %{
 #include <ctype.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +16,6 @@
 #include "asm/rpn.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
-
-extern bool haltnop;
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
@@ -1264,7 +1261,7 @@ z80_ex			:	T_Z80_EX T_MODE_HL comma T_MODE_SP_IND
 z80_halt: T_Z80_HALT
 		{
 			out_AbsByte(0x76);
-			if (haltnop) {
+			if (CurrentOptions.haltnop) {
 				out_AbsByte(0x00);
 			}
 		}

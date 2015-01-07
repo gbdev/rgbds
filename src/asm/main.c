@@ -7,7 +7,6 @@
 
 #include <math.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +28,6 @@ void setuplex(void);
  * VARIABLES
  *
  */
-
-bool haltnop;
 
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
@@ -260,7 +257,7 @@ main(int argc, char *argv[])
 
 	char *tzMainfile;
 
-	haltnop = true;
+
 
 	if (argc == 1)
 		PrintUsage();
@@ -275,6 +272,7 @@ main(int argc, char *argv[])
 	DefaultOptions.binary[1] = '1';
 	DefaultOptions.fillchar = 0;
 	DefaultOptions.verbose = false;
+	DefaultOptions.haltnop = true;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
@@ -303,7 +301,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'h':
-			haltnop = false;
+			newopt.haltnop = false;
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);
