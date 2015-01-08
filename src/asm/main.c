@@ -11,6 +11,7 @@
 #include "asm/output.h"
 #include "asm/main.h"
 #include "extern/err.h"
+#include "extern/reallocarray.h"
 
 int yyparse(void);
 void setuplex(void);
@@ -184,7 +185,7 @@ opt_AddDefine(char *s)
 	if(cldefines_index >= cldefines_size)
 	{
 		cldefines_size *= 2;
-		cldefines = realloc(cldefines, cldefines_size * 2 * sizeof(void *));
+		cldefines = reallocarray(cldefines, cldefines_size, 2 * sizeof(void *));
 		if(!cldefines)
 		{
 			fatalerror("No memory for command line defines");
@@ -267,7 +268,7 @@ main(int argc, char *argv[])
 	char *tzMainfile;
 
 	cldefines_size = 32;
-	cldefines = malloc(cldefines_size * 2 * sizeof(void *));
+	cldefines = reallocarray(cldefines_size, 2 * sizeof(void *));
 	if(!cldefines)
 	{
 		fatalerror("No memory for command line defines");
