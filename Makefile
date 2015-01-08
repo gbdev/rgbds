@@ -1,6 +1,6 @@
 .POSIX:
 
-WARNFLAGS =	-Wall -Werror=implicit-int
+WARNFLAGS =	-Wall -Werror=implicit
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
