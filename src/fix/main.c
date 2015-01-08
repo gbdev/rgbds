@@ -41,17 +41,6 @@ main(int argc, char *argv[])
 	char *ep;
 
 	/*
-	 * Open the ROM file
-	 */
-
-	if (argc < 2)
-		usage();
-
-	if ((rom = fopen(argv[argc - 1], "rb+")) == NULL) {
-		err(1, "Error opening file %s", argv[argc - 1]);
-	}
-
-	/*
 	 * Parse command-line options
 	 */
 
@@ -195,6 +184,20 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		usage();
+
+	/*
+	 * Open the ROM file
+	 */
+
+	if ((rom = fopen(argv[argc - 1], "rb+")) == NULL) {
+		err(1, "Error opening file %s", argv[argc - 1]);
 	}
 
 	/*
