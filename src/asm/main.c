@@ -233,11 +233,12 @@ fatalerror(const char *fmt, ...)
  *
  */
 
-void 
-PrintUsage(void)
+static void 
+usage(void)
 {
-	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-p pad_value]\n"
-	    "              file\n");
+	printf(
+"Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile]\n"
+"              [-p pad_value] file.asm\n");
 	exit(1);
 }
 /*
@@ -260,7 +261,7 @@ main(int argc, char *argv[])
 
 
 	if (argc == 1)
-		PrintUsage();
+		usage();
 
 	/* yydebug=1; */
 
@@ -323,7 +324,7 @@ main(int argc, char *argv[])
 			newopt.verbose = true;
 			break;
 		default:
-			PrintUsage();
+			usage();
 		}
 	}
 	argc -= optind;
@@ -334,7 +335,7 @@ main(int argc, char *argv[])
 	DefaultOptions = CurrentOptions;
 
 	if (argc == 0)
-		PrintUsage();
+		usage();
 
 	tzMainfile = argv[argc - 1];
 

@@ -26,10 +26,10 @@
 static void
 usage(void)
 {
-	printf("usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] "
-	    "[-l licensee_id]\n" "              [-m mbc_type] [-n rom_version] "
-	    "[-p pad_value] [-r ram_size]\n"
-	    "              [-t title_str] file.gb\n");
+	printf(
+"usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] [-l licensee_id]\n"
+"              [-m mbc_type] [-n rom_version] [-p pad_value] [-r ram_size]\n"
+"              [-t title_str] file\n");
 	exit(1);
 }
 
