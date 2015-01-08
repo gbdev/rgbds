@@ -333,6 +333,9 @@ main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
+	if (argc == 0)
+		PrintUsage();
+
 	tzMainfile = argv[argc - 1];
 
 	setuplex();
