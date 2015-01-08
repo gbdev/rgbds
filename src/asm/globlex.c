@@ -7,12 +7,13 @@
 
 #include "asmy.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
-UBYTE oDontExpandStrings = 0;
+bool oDontExpandStrings = false;
 SLONG nGBGfxID = -1;
 SLONG nBinaryID = -1;
 
@@ -184,7 +185,7 @@ ParseSymbol(char *src, ULONG size)
 
 	dest[copied] = 0;
 
-	if (oDontExpandStrings == 0 && sym_isString(dest)) {
+	if (!oDontExpandStrings && sym_isString(dest)) {
 		char *s;
 
 		yyskipbytes(size_backup);
