@@ -1,10 +1,3 @@
-/*
- * RGBAsm - MAIN.C
- *
- * INCLUDES
- *
- */
-
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -22,13 +15,6 @@
 int yyparse(void);
 void setuplex(void);
 
-/*
- * RGBAsm - MAIN.C
- *
- * VARIABLES
- *
- */
-
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
 ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
@@ -36,10 +22,7 @@ ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
 extern int yydebug;
 
 /*
- * RGBAsm - MAIN.C
- *
  * Option stack
- *
  */
 
 struct sOptions DefaultOptions;
@@ -190,13 +173,10 @@ opt_Pop(void)
 	} else
 		fatalerror("No entries in the option stack");
 }
-/*
- * RGBAsm - MAIN.C
- *
- * Error handling
- *
- */
 
+/*
+ * Error handling
+ */
 void
 verror(const char *fmt, va_list args)
 {
@@ -226,12 +206,6 @@ fatalerror(const char *fmt, ...)
 	va_end(args);
 	exit(5);
 }
-/*
- * RGBAsm - MAIN.C
- *
- * Help text
- *
- */
 
 static void 
 usage(void)
@@ -241,12 +215,6 @@ usage(void)
 "              [-p pad_value] file.asm\n");
 	exit(1);
 }
-/*
- * RGBAsm - MAIN.C
- *
- * main
- *
- */
 
 int 
 main(int argc, char *argv[])

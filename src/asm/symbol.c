@@ -1,8 +1,5 @@
 /*
- * RGBAsm - SYMBOL.C - Symboltable and macroargs stuff
- *
- * INCLUDES
- *
+ * Symboltable and macroargs stuff
  */
 
 #include <assert.h>
@@ -15,13 +12,6 @@
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/output.h"
-
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * VARIABLES
- *
- */
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
 struct sSymbol *pScope = NULL;
@@ -44,12 +34,8 @@ Callback_NARG(struct sSymbol * sym)
 }
 
 /*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
  * Get the nValue field of a symbol
- *
  */
-
 SLONG 
 getvaluefield(struct sSymbol * sym)
 {
@@ -58,13 +44,10 @@ getvaluefield(struct sSymbol * sym)
 	} else
 		return (sym->nValue);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Calculate the hash value for a string
- *
- */
 
+/*
+ * Calculate the hash value for a string
+ */
 ULONG 
 calchash(char *s)
 {
@@ -75,13 +58,10 @@ calchash(char *s)
 
 	return (hash % HASHSIZE);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Create a new symbol by name
- *
- */
 
+/*
+ * Create a new symbol by name
+ */
 struct sSymbol *
 createsymbol(char *s)
 {
@@ -110,12 +90,8 @@ createsymbol(char *s)
 	}
 }
 /*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
  * Find a symbol by name and scope
- *
  */
-
 struct sSymbol *
 findsymbol(char *s, struct sSymbol * scope)
 {
@@ -134,13 +110,10 @@ findsymbol(char *s, struct sSymbol * scope)
 	}
 	return (NULL);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Find the pointer to a symbol by name and scope
- *
- */
 
+/*
+ * Find the pointer to a symbol by name and scope
+ */
 struct sSymbol **
 findpsymbol(char *s, struct sSymbol * scope)
 {
@@ -159,13 +132,10 @@ findpsymbol(char *s, struct sSymbol * scope)
 	}
 	return (NULL);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Find a symbol by name and scope
- *
- */
 
+/*
+ * Find a symbol by name and scope
+ */
 struct sSymbol *
 sym_FindSymbol(char *tzName)
 {
@@ -178,13 +148,10 @@ sym_FindSymbol(char *tzName)
 
 	return (findsymbol(tzName, pscope));
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Purge a symbol
- *
- */
 
+/*
+ * Purge a symbol
+ */
 void 
 sym_Purge(char *tzName)
 {
@@ -212,13 +179,10 @@ sym_Purge(char *tzName)
 		yyerror("'%s' not defined", tzName);
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Determine if a symbol has been defined
- *
- */
 
+/*
+ * Determine if a symbol has been defined
+ */
 ULONG 
 sym_isConstDefined(char *tzName)
 {
@@ -260,13 +224,10 @@ sym_isDefined(char *tzName)
 	else
 		return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Determine if the symbol is a constant
- *
- */
 
+/*
+ * Determine if the symbol is a constant
+ */
 ULONG 
 sym_isConstant(char *s)
 {
@@ -283,13 +244,10 @@ sym_isConstant(char *s)
 	}
 	return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Get a string equate's value
- *
- */
 
+/*
+ * Get a string equate's value
+ */
 char *
 sym_GetStringValue(char *tzSym)
 {
@@ -303,13 +261,10 @@ sym_GetStringValue(char *tzSym)
 
 	return (NULL);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Return a constant symbols value
- *
- */
 
+/*
+ * Return a constant symbols value
+ */
 ULONG 
 sym_GetConstantValue(char *s)
 {
@@ -332,13 +287,10 @@ sym_GetConstantValue(char *s)
 
 	return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Return a symbols value... "estimated" if not defined yet
- *
- */
 
+/*
+ * Return a symbols value... "estimated" if not defined yet
+ */
 ULONG 
 sym_GetValue(char *s)
 {
@@ -374,13 +326,10 @@ sym_GetValue(char *s)
 
 	return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Return a defined symbols value... aborts if not defined yet
- *
- */
 
+/*
+ * Return a defined symbols value... aborts if not defined yet
+ */
 ULONG 
 sym_GetDefinedValue(char *s)
 {
@@ -406,13 +355,10 @@ sym_GetDefinedValue(char *s)
 
 	return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Macro argument stuff
- *
- */
 
+/*
+ * Macro argument stuff
+ */
 void 
 sym_ShiftCurrentMacroArgs(void)
 {
@@ -510,25 +456,19 @@ sym_UseCurrentMacroArgs(void)
 	for (i = 1; i <= MAXMACROARGS; i += 1)
 		sym_AddNewMacroArg(sym_FindMacroArg(i));
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Find a macro by name
- *
- */
 
+/*
+ * Find a macro by name
+ */
 struct sSymbol *
 sym_FindMacro(char *s)
 {
 	return (findsymbol(s, NULL));
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Add an equated symbol
- *
- */
 
+/*
+ * Add an equated symbol
+ */
 void 
 sym_AddEqu(char *tzSym, SLONG value)
 {
@@ -551,13 +491,10 @@ sym_AddEqu(char *tzSym, SLONG value)
 		}
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Add a string equated symbol
- *
- */
 
+/*
+ * Add a string equated symbol
+ */
 void 
 sym_AddString(char *tzSym, char *tzValue)
 {
@@ -580,13 +517,10 @@ sym_AddString(char *tzSym, char *tzValue)
 		nsym->pScope = NULL;
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * check if symbol is a string equated symbol
- *
- */
 
+/*
+ * check if symbol is a string equated symbol
+ */
 ULONG 
 sym_isString(char *tzSym)
 {
@@ -598,13 +532,10 @@ sym_isString(char *tzSym)
 	}
 	return (0);
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Alter a SET symbols value
- *
- */
 
+/*
+ * Alter a SET symbols value
+ */
 void 
 sym_AddSet(char *tzSym, SLONG value)
 {
@@ -620,13 +551,10 @@ sym_AddSet(char *tzSym, SLONG value)
 		nsym->pScope = NULL;
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Add a local (.name) relocatable symbol
- *
- */
 
+/*
+ * Add a local (.name) relocatable symbol
+ */
 void 
 sym_AddLocalReloc(char *tzSym)
 {
@@ -654,13 +582,10 @@ sym_AddLocalReloc(char *tzSym)
 			fatalerror("Local label in main scope");
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Add a relocatable symbol
- *
- */
 
+/*
+ * Add a relocatable symbol
+ */
 void 
 sym_AddReloc(char *tzSym)
 {
@@ -684,15 +609,11 @@ sym_AddReloc(char *tzSym)
 		}
 	}
 	pScope = findsymbol(tzSym, NULL);
-
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Export a symbol
- *
- */
 
+/*
+ * Export a symbol
+ */
 void 
 sym_Export(char *tzSym)
 {
@@ -716,13 +637,10 @@ sym_Export(char *tzSym)
 	}
 
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Import a symbol
- *
- */
 
+/*
+ * Import a symbol
+ */
 void 
 sym_Import(char *tzSym)
 {
@@ -737,13 +655,10 @@ sym_Import(char *tzSym)
 			nsym->nType |= SYMF_IMPORT;
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Globalize a symbol (export if defined, import if not)
- *
- */
 
+/*
+ * Globalize a symbol (export if defined, import if not)
+ */
 void 
 sym_Global(char *tzSym)
 {
@@ -765,13 +680,10 @@ sym_Global(char *tzSym)
 		}
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Add a macro definition
- *
- */
 
+/*
+ * Add a macro definition
+ */
 void 
 sym_AddMacro(char *tzSym)
 {
@@ -796,25 +708,19 @@ sym_AddMacro(char *tzSym)
 		}
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Prepare for pass #1
- *
- */
 
+/*
+ * Prepare for pass #1
+ */
 void 
 sym_PrepPass1(void)
 {
 	sym_Init();
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Prepare for pass #2
- *
- */
 
+/*
+ * Prepare for pass #2
+ */
 void 
 sym_PrepPass2(void)
 {
@@ -846,13 +752,10 @@ sym_PrepPass2(void)
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * Initialise the symboltable
- *
- */
 
+/*
+ * Initialize the symboltable
+ */
 void 
 sym_Init(void)
 {
@@ -889,13 +792,10 @@ sym_Init(void)
 	math_DefinePI();
 
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * DEBUG: Print the symbol table
- *
- */
 
+/*
+ * DEBUG: Print the symbol table
+ */
 void 
 sym_PrintSymbolTable(void)
 {
@@ -943,13 +843,10 @@ sym_PrintSymbolTable(void)
 		}
 	}
 }
-/*
- * RGBAsm - SYMBOL.C - Symboltable stuff
- *
- * DEBUG: Dump the macroargs
- *
- */
 
+/*
+ * DEBUG: Dump the macroargs
+ */
 void 
 sym_DumpMacroArgs(void)
 {

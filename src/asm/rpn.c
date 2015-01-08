@@ -1,8 +1,5 @@
 /*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * INCLUDES
- *
+ * Controls RPN expressions for objectfiles
  */
 
 #include <stdio.h>
@@ -29,49 +26,26 @@ mergetwoexpressions(struct Expression * expr, struct Expression * src1,
 #define joinexpr() mergetwoexpressions(expr,src1,src2)
 
 /*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * VARIABLES
- *
- */
-
-//UBYTE rpnexpr[2048];
-//ULONG rpnptr = 0;
-//ULONG rpnoutptr = 0;
-//ULONG reloc = 0;
-//ULONG pcrel = 0;
-
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
  * Add a byte to the RPN expression
- *
  */
-
 void 
 pushbyte(struct Expression * expr, int b)
 {
 	expr->tRPN[expr->nRPNLength++] = b & 0xFF;
 }
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * Reset the RPN module
- *
- */
 
+/*
+ * Reset the RPN module
+ */
 void 
 rpn_Reset(struct Expression * expr)
 {
 	expr->nRPNLength = expr->nRPNOut = expr->isReloc = expr->isPCRel = 0;
 }
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * Returns the next rpn byte in expression
- *
- */
 
+/*
+ * Returns the next rpn byte in expression
+ */
 UWORD 
 rpn_PopByte(struct Expression * expr)
 {
@@ -80,37 +54,28 @@ rpn_PopByte(struct Expression * expr)
 	} else
 		return (expr->tRPN[expr->nRPNOut++]);
 }
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * Determine if the current expression is relocatable
- *
- */
 
+/*
+ * Determine if the current expression is relocatable
+ */
 ULONG 
 rpn_isReloc(struct Expression * expr)
 {
 	return (expr->isReloc);
 }
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * Determine if the current expression can be pc-relative
- *
- */
 
+/*
+ * Determine if the current expression can be pc-relative
+ */
 ULONG 
 rpn_isPCRelative(struct Expression * expr)
 {
 	return (expr->isPCRel);
 }
-/*
- * RGBAsm - RPN.C - Controls RPN expressions for objectfiles
- *
- * Add symbols, constants and operators to expression
- *
- */
 
+/*
+ * Add symbols, constants and operators to expression
+ */
 void 
 rpn_Number(struct Expression * expr, ULONG i)
 {
@@ -187,6 +152,7 @@ rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
 		return (expr->nVal >= low && expr->nVal <= high);
 	}
 }
+
 void 
 rpn_CheckHRAM(struct Expression * expr, struct Expression * src)
 {
