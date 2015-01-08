@@ -70,15 +70,15 @@ main(int argc, char *argv[])
 	bool resize = false;
 	bool setversion = false;
 
-	char *title = NULL; /* game title in ASCII */
-	char *id = NULL; /* game ID in ASCII */
-	char *newlicensee = NULL; /* new licensee ID, two ASCII characters */
+	char *title; /* game title in ASCII */
+	char *id; /* game ID in ASCII */
+	char *newlicensee; /* new licensee ID, two ASCII characters */
 
-	int licensee = -1;  /* old licensee ID */
-	int cartridge = -1; /* cartridge hardware ID */
-	int ramsize = -1;   /* RAM size ID */
-	int version = -1;   /* mask ROM version number */
-	int padvalue = -1;  /* to pad the rom with if it changes size */
+	int licensee;  /* old licensee ID */
+	int cartridge; /* cartridge hardware ID */
+	int ramsize;   /* RAM size ID */
+	int version;   /* mask ROM version number */
+	int padvalue;  /* to pad the rom with if it changes size */
 
 	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:v")) != -1) {
 		switch (ch) {
