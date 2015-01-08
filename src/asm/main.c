@@ -251,8 +251,8 @@ static void
 usage(void)
 {
 	printf(
-"Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile]\n"
-"              [-p pad_value] file.asm\n");
+"Usage: rgbasm [-v] [-h] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
+"              [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
 
