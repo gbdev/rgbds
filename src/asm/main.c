@@ -373,7 +373,6 @@ main(int argc, char *argv[])
 				printf
 				    ("Assembly aborted in pass 2 (%ld errors)!\n",
 				    nErrors);
-				//sym_PrintSymbolTable();
 				exit(5);
 			}
 		} else {
