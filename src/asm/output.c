@@ -1,8 +1,5 @@
 /*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * INCLUDES
- *
+ * Outputs an objectfile
  */
 
 #include <errno.h>
@@ -21,13 +18,6 @@
 #include "extern/err.h"
 
 #define SECTIONCHUNK	0x4000
-
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Internal structures
- *
- */
 
 void out_SetCurrentSection(struct Section * pSect);
 
@@ -52,12 +42,6 @@ struct SectionStackEntry {
 	struct Section *pSection;
 	struct SectionStackEntry *pNext;
 };
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * VARIABLES
- *
- */
 
 struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
 struct Section *pSectionList = NULL, *pCurrentSection = NULL;
@@ -67,12 +51,8 @@ char *tzObjectname;
 struct SectionStackEntry *pSectionStack = NULL;
 
 /*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
  * Section stack routines
- *
  */
-
 void 
 out_PushSection(void)
 {
@@ -99,13 +79,10 @@ out_PopSection(void)
 	} else
 		fatalerror("No entries in the section stack");
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Count the number of symbols used in this object
- *
- */
 
+/*
+ * Count the number of symbols used in this object
+ */
 ULONG 
 countsymbols(void)
 {
@@ -121,13 +98,10 @@ countsymbols(void)
 
 	return (count);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Count the number of sections used in this object
- *
- */
 
+/*
+ * Count the number of sections used in this object
+ */
 ULONG 
 countsections(void)
 {
@@ -143,13 +117,10 @@ countsections(void)
 
 	return (count);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Count the number of patches used in this object
- *
- */
 
+/*
+ * Count the number of patches used in this object
+ */
 ULONG 
 countpatches(struct Section * pSect)
 {
@@ -164,13 +135,10 @@ countpatches(struct Section * pSect)
 
 	return (r);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write a long to a file (little-endian)
- *
- */
 
+/*
+ * Write a long to a file (little-endian)
+ */
 void 
 fputlong(ULONG i, FILE * f)
 {
@@ -179,13 +147,10 @@ fputlong(ULONG i, FILE * f)
 	fputc(i >> 16, f);
 	fputc(i >> 24, f);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write a NULL-terminated string to a file
- *
- */
 
+/*
+ * Write a NULL-terminated string to a file
+ */
 void 
 fputstring(char *s, FILE * f)
 {
@@ -193,13 +158,10 @@ fputstring(char *s, FILE * f)
 		fputc(*s++, f);
 	fputc(0, f);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Return a sections ID
- *
- */
 
+/*
+ * Return a section's ID
+ */
 ULONG 
 getsectid(struct Section * pSect)
 {
@@ -218,13 +180,10 @@ getsectid(struct Section * pSect)
 	fatalerror("INTERNAL: Unknown section");
 	return ((ULONG) - 1);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write a patch to a file
- *
- */
 
+/*
+ * Write a patch to a file
+ */
 void 
 writepatch(struct Patch * pPatch, FILE * f)
 {
@@ -235,13 +194,10 @@ writepatch(struct Patch * pPatch, FILE * f)
 	fputlong(pPatch->nRPNSize, f);
 	fwrite(pPatch->pRPN, 1, pPatch->nRPNSize, f);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write a section to a file
- *
- */
 
+/*
+ * Write a section to a file
+ */
 void 
 writesection(struct Section * pSect, FILE * f)
 {
@@ -269,13 +225,10 @@ writesection(struct Section * pSect, FILE * f)
 		}
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write a symbol to a file
- *
- */
 
+/*
+ * Write a symbol to a file
+ */
 void 
 writesymbol(struct sSymbol * pSym, FILE * f)
 {
@@ -319,13 +272,10 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 		fputlong(offset, f);
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Add a symbol to the object
- *
- */
 
+/*
+ * Add a symbol to the object
+ */
 ULONG 
 addsymbol(struct sSymbol * pSym)
 {
@@ -355,13 +305,10 @@ addsymbol(struct sSymbol * pSym)
 
 	return pPSym->ID;
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Add all exported symbols to the object
- *
- */
 
+/*
+ * Add all exported symbols to the object
+ */
 void 
 addexports(void)
 {
@@ -378,13 +325,10 @@ addexports(void)
 		}
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Allocate a new patchstructure and link it into the list
- *
- */
 
+/*
+ * Allocate a new patchstructure and link it into the list
+ */
 struct Patch *
 allocpatch(void)
 {
@@ -401,13 +345,10 @@ allocpatch(void)
 
 	return (pPatch);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Create a new patch (includes the rpn expr)
- *
- */
 
+/*
+ * Create a new patch (includes the rpn expr)
+ */
 void 
 createpatch(ULONG type, struct Expression * expr)
 {
@@ -473,13 +414,10 @@ createpatch(ULONG type, struct Expression * expr)
 		pPatch->nRPNSize = rpnptr;
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * A quick check to see if we have an initialized section
- *
- */
 
+/*
+ * A quick check to see if we have an initialized section
+ */
 void 
 checksection(void)
 {
@@ -488,14 +426,11 @@ checksection(void)
 	else
 		fatalerror("Code generation before SECTION directive");
 }
+
 /*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
- *
  */
-
 void 
 checkcodesection(SLONG size)
 {
@@ -524,13 +459,10 @@ checkcodesection(SLONG size)
 	} else
 		errx(1, "Section '%s' is too big", pCurrentSection->pzName);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Write an objectfile
- *
- */
 
+/*
+ * Write an objectfile
+ */
 void 
 out_WriteObject(void)
 {
@@ -561,13 +493,10 @@ out_WriteObject(void)
 		fclose(f);
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Prepare for pass #2
- *
- */
 
+/*
+ * Prepare for pass #2
+ */
 void 
 out_PrepPass2(void)
 {
@@ -581,13 +510,10 @@ out_PrepPass2(void)
 	pCurrentSection = NULL;
 	pSectionStack = NULL;
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Set the objectfilename
- *
- */
 
+/*
+ * Set the objectfilename
+ */
 void 
 out_SetFileName(char *s)
 {
@@ -599,16 +525,12 @@ out_SetFileName(char *s)
 	pCurrentSection = NULL;
 	pPatchSymbols = NULL;
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Find a section by name and type.  If it doesn't exist, create it
- *
- */
 
+/*
+ * Find a section by name and type.  If it doesn't exist, create it
+ */
 struct Section *
-out_FindSection(char *pzName, ULONG secttype, SLONG org,
-    SLONG bank)
+out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 {
 	struct Section *pSect, **ppSect;
 
@@ -652,13 +574,10 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org,
 
 	return (NULL);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Set the current section
- *
- */
 
+/*
+ * Set the current section
+ */
 void 
 out_SetCurrentSection(struct Section * pSect)
 {
@@ -668,37 +587,28 @@ out_SetCurrentSection(struct Section * pSect)
 	pPCSymbol->nValue = nPC;
 	pPCSymbol->pSection = pCurrentSection;
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Set the current section by name and type
- *
- */
 
+/*
+ * Set the current section by name and type
+ */
 void 
 out_NewSection(char *pzName, ULONG secttype)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1));
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Set the current section by name and type
- *
- */
 
+/*
+ * Set the current section by name and type
+ */
 void 
 out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank));
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output an absolute byte
- *
- */
 
+/*
+ * Output an absolute byte
+ */
 void 
 out_AbsByte(int b)
 {
@@ -719,13 +629,10 @@ out_AbsByteGroup(char *s, int length)
 	while (length--)
 		out_AbsByte(*s++);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Skip this many bytes
- *
- */
 
+/*
+ * Skip this many bytes
+ */
 void 
 out_Skip(int skip)
 {
@@ -741,13 +648,10 @@ out_Skip(int skip)
 			out_AbsByte(CurrentOptions.fillchar);
 	}
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output a NULL terminated string (excluding the NULL-character)
- *
- */
 
+/*
+ * Output a NULL terminated string (excluding the NULL-character)
+ */
 void 
 out_String(char *s)
 {
@@ -755,12 +659,10 @@ out_String(char *s)
 	while (*s)
 		out_AbsByte(*s++);
 }
+
 /*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
  * Output a relocatable byte.  Checking will be done to see if it
  * is an absolute value in disguise.
- *
  */
 
 void 
@@ -780,13 +682,10 @@ out_RelByte(struct Expression * expr)
 
 	rpn_Reset(expr);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output an absolute word
- *
- */
 
+/*
+ * Output an absolute word
+ */
 void 
 out_AbsWord(int b)
 {
@@ -800,14 +699,11 @@ out_AbsWord(int b)
 	nPC += 2;
 	pPCSymbol->nValue += 2;
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output a relocatable word.  Checking will be done to see if
- * is an absolute value in disguise.
- *
- */
 
+/*
+ * Output a relocatable word.  Checking will be done to see if
+ * it's an absolute value in disguise.
+ */
 void 
 out_RelWord(struct Expression * expr)
 {
@@ -828,13 +724,10 @@ out_RelWord(struct Expression * expr)
 		out_AbsWord(expr->nVal);
 	rpn_Reset(expr);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output an absolute longword
- *
- */
 
+/*
+ * Output an absolute longword
+ */
 void 
 out_AbsLong(SLONG b)
 {
@@ -849,14 +742,11 @@ out_AbsLong(SLONG b)
 	nPC += 4;
 	pPCSymbol->nValue += 4;
 }
+
 /*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
  * Output a relocatable longword.  Checking will be done to see if
  * is an absolute value in disguise.
- *
  */
-
 void 
 out_RelLong(struct Expression * expr)
 {
@@ -879,13 +769,10 @@ out_RelLong(struct Expression * expr)
 		out_AbsLong(expr->nVal);
 	rpn_Reset(expr);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output a PC-relative byte
- *
- */
 
+/*
+ * Output a PC-relative byte
+ */
 void 
 out_PCRelByte(struct Expression * expr)
 {
@@ -899,13 +786,10 @@ out_PCRelByte(struct Expression * expr)
 	out_AbsByte(b);
 	rpn_Reset(expr);
 }
-/*
- * RGBAsm - OUTPUT.C - Outputs an objectfile
- *
- * Output a binary file
- *
- */
 
+/*
+ * Output a binary file
+ */
 void 
 out_BinaryFile(char *s)
 {

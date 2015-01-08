@@ -1,8 +1,5 @@
 /*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * INCLUDES
- *
+ * Fixedpoint math routines
  */
 
 #include <math.h>
@@ -19,24 +16,17 @@
 #endif
 
 /*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
  * Define the _PI symbol
- *
  */
-
 void 
 math_DefinePI(void)
 {
 	sym_AddEqu("_PI", double2fix(PI));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Print a fixed point value
- *
- */
 
+/*
+ * Print a fixed point value
+ */
 void 
 math_Print(SLONG i)
 {
@@ -47,143 +37,110 @@ math_Print(SLONG i)
 		printf("-%ld.%05ld", (-i) >> 16,
 		    ((SLONG) (fix2double(-i) * 100000 + 0.5)) % 100000);
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate sine
- *
- */
 
+/*
+ * Calculate sine
+ */
 SLONG 
 math_Sin(SLONG i)
 {
 	return (double2fix(sin(fix2double(i) * 2 * PI / 65536)));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate cosine
- *
- */
 
+/*
+ * Calculate cosine
+ */
 SLONG 
 math_Cos(SLONG i)
 {
 	return (double2fix(cos(fix2double(i) * 2 * PI / 65536)));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate tangent
- *
- */
 
+/*
+ * Calculate tangent
+ */
 SLONG 
 math_Tan(SLONG i)
 {
 	return (double2fix(tan(fix2double(i) * 2 * PI / 65536)));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate sine^-1
- *
- */
 
+/*
+ * Calculate arcsine
+ */
 SLONG 
 math_ASin(SLONG i)
 {
 	return (double2fix(asin(fix2double(i)) / 2 / PI * 65536));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate cosine^-1
- *
- */
 
+/*
+ * Calculate arccosine
+ */
 SLONG 
 math_ACos(SLONG i)
 {
 	return (double2fix(acos(fix2double(i)) / 2 / PI * 65536));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate tangent^-1
- *
- */
 
+/*
+ * Calculate arctangent
+ */
 SLONG 
 math_ATan(SLONG i)
 {
 	return (double2fix(atan(fix2double(i)) / 2 / PI * 65536));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Calculate atan2
- *
- */
 
+/*
+ * Calculate atan2
+ */
 SLONG 
 math_ATan2(SLONG i, SLONG j)
 {
 	return (double2fix
 	    (atan2(fix2double(i), fix2double(j)) / 2 / PI * 65536));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Multiplication
- *
- */
 
+/*
+ * Multiplication
+ */
 SLONG 
 math_Mul(SLONG i, SLONG j)
 {
 	return (double2fix(fix2double(i) * fix2double(j)));
 }
-/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Division
- *
- */
 
+/*
+ * Division
+ */
 SLONG 
 math_Div(SLONG i, SLONG j)
 {
 	return (double2fix(fix2double(i) / fix2double(j)));
-}/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Round
- *
- */
+}
 
+/*
+ * Round
+ */
 SLONG 
 math_Round(SLONG i)
 {
 	return double2fix(round(fix2double(i)));
-}/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Ceil
- *
- */
+}
 
+/*
+ * Ceil
+ */
 SLONG 
 math_Ceil(SLONG i)
 {
 	return double2fix(ceil(fix2double(i)));
-}/*
- * RGBAsm - MATH.C (Fixedpoint math routines)
- *
- * Floor
- *
- */
+}
 
+/*
+ * Floor
+ */
 SLONG 
 math_Floor(SLONG i)
 {

@@ -1,13 +1,5 @@
-/*
- * RGBAsm - MAIN.C
- *
- * INCLUDES
- *
- */
-
 #include <math.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,17 +15,9 @@
 int yyparse(void);
 void setuplex(void);
 
-/*
- * RGBAsm - MAIN.C
- *
- * VARIABLES
- *
- */
-
 int cldefines_index;
 int cldefines_size;
 char **cldefines;
-bool haltnop;
 
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
@@ -42,10 +26,7 @@ ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
 extern int yydebug;
 
 /*
- * RGBAsm - MAIN.C
- *
  * Option stack
- *
  */
 
 struct sOptions DefaultOptions;
@@ -234,12 +215,8 @@ opt_ParseDefines()
 	}
 }
 /*
- * RGBAsm - MAIN.C
- *
  * Error handling
- *
  */
-
 void
 verror(const char *fmt, va_list args)
 {
@@ -269,26 +246,15 @@ fatalerror(const char *fmt, ...)
 	va_end(args);
 	exit(5);
 }
-/*
- * RGBAsm - MAIN.C
- *
- * Help text
- *
- */
 
-void 
-PrintUsage(void)
+static void 
+usage(void)
 {
-	printf("Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile] [-Dname[=value]] [-p pad_value]\n"
-	    "              file\n");
+	printf(
+"Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile]\n"
+"              [-p pad_value] file.asm\n");
 	exit(1);
 }
-/*
- * RGBAsm - MAIN.C
- *
- * main
- *
- */
 
 int 
 main(int argc, char *argv[])
@@ -307,10 +273,9 @@ main(int argc, char *argv[])
 		fatalerror("No memory for command line defines");
 	}
 
-	haltnop = true;
 
 	if (argc == 1)
-		PrintUsage();
+		usage();
 
 	/* yydebug=1; */
 
@@ -322,12 +287,13 @@ main(int argc, char *argv[])
 	DefaultOptions.binary[1] = '1';
 	DefaultOptions.fillchar = 0;
 	DefaultOptions.verbose = false;
+	DefaultOptions.haltnop = true;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:hi:o:D:p:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:g:hi:o:p:v")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -337,6 +303,9 @@ main(int argc, char *argv[])
 				errx(1, "Must specify exactly 2 characters for "
 				    "option 'b'");
 			}
+			break;
+		case 'D':
+			opt_AddDefine(optarg);
 			break;
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -350,16 +319,13 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'h':
-			haltnop = false;
+			newopt.haltnop = false;
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);
 			break;
 		case 'o':
 			out_SetFileName(optarg);
-			break;
-		case 'D':
-			opt_AddDefine(optarg);
 			break;
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
@@ -375,7 +341,7 @@ main(int argc, char *argv[])
 			newopt.verbose = true;
 			break;
 		default:
-			PrintUsage();
+			usage();
 		}
 	}
 	argc -= optind;
@@ -384,6 +350,9 @@ main(int argc, char *argv[])
 	opt_SetCurrentOptions(&newopt);
 
 	DefaultOptions = CurrentOptions;
+
+	if (argc == 0)
+		usage();
 
 	tzMainfile = argv[argc - 1];
 
@@ -455,7 +424,6 @@ main(int argc, char *argv[])
 				printf
 				    ("Assembly aborted in pass 2 (%ld errors)!\n",
 				    nErrors);
-				//sym_PrintSymbolTable();
 				exit(5);
 			}
 		} else {

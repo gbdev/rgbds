@@ -1,8 +1,5 @@
 /*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * INCLUDES
- *
+ * FileStack routines
  */
 
 #include <errno.h>
@@ -22,13 +19,6 @@
 #ifndef PATH_MAX
 #define PATH_MAX 256
 #endif
-
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * VARIABLES
- *
- */
 
 struct sContext *pFileStack;
 struct sSymbol *pCurrentMacro;
@@ -55,12 +45,8 @@ ULONG ulMacroReturnValue;
 #define STAT_isREPTBlock	3
 
 /*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
  * Context push and pop
- *
  */
-
 void 
 pushcontext(void)
 {
@@ -167,13 +153,10 @@ yywrap(void)
 {
 	return (popcontext());
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Dump the context stack to stderr
- *
- */
 
+/*
+ * Dump the context stack to stderr
+ */
 void 
 fstk_Dump(void)
 {
@@ -189,13 +172,10 @@ fstk_Dump(void)
 
 	fprintf(stderr, "%s(%ld)", tzCurrentFileName, nLineNo);
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Extra includepath stuff
- *
- */
 
+/*
+ * Extra includepath stuff
+ */
 void 
 fstk_AddIncludePath(char *s)
 {
@@ -230,13 +210,10 @@ fstk_FindFile(char *fname)
 	errno = ENOENT;
 	return NULL;
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up an include file for parsing
- *
- */
 
+/*
+ * Set up an include file for parsing
+ */
 void
 fstk_RunInclude(char *tzFileName)
 {
@@ -262,13 +239,10 @@ fstk_RunInclude(char *tzFileName)
 	yyunput('\n');
 	nLineNo -= 1;
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up a macro for parsing
- *
- */
 
+/*
+ * Set up a macro for parsing
+ */
 ULONG 
 fstk_RunMacro(char *s)
 {
@@ -290,13 +264,10 @@ fstk_RunMacro(char *s)
 	} else
 		return (0);
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up a macroargument for parsing
- *
- */
 
+/*
+ * Set up a macroargument for parsing
+ */
 void 
 fstk_RunMacroArg(SLONG s)
 {
@@ -316,13 +287,10 @@ fstk_RunMacroArg(SLONG s)
 	} else
 		fatalerror("No such macroargument");
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up a stringequate for parsing
- *
- */
 
+/*
+ * Set up a stringequate for parsing
+ */
 void 
 fstk_RunString(char *s)
 {
@@ -338,13 +306,10 @@ fstk_RunString(char *s)
 	} else
 		yyerror("No such string symbol '%s'", s);
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Set up a repeat block for parsing
- *
- */
 
+/*
+ * Set up a repeat block for parsing
+ */
 void 
 fstk_RunRept(ULONG count)
 {
@@ -362,13 +327,10 @@ fstk_RunRept(ULONG count)
 		yy_switch_to_buffer(CurrentFlexHandle);
 	}
 }
-/*
- * RGBAsm - FSTACK.C (FileStack routines)
- *
- * Initialize the filestack routines
- *
- */
 
+/*
+ * Initialize the filestack routines
+ */
 void
 fstk_Init(char *s)
 {

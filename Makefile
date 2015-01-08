@@ -1,6 +1,6 @@
 .POSIX:
 
-WARNFLAGS =	-Wall -Werror=implicit-int
+WARNFLAGS =	-Wall -Werror=implicit
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
@@ -9,12 +9,6 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
-
-yacc_pre := \
-	src/asm/yaccprt1.y\
-	src/asm/yaccprt2.y\
-	src/asm/yaccprt3.y\
-	src/asm/yaccprt4.y
 
 rgbasm_obj := \
 	src/asm/asmy.o \

@@ -26,10 +26,10 @@
 static void
 usage(void)
 {
-	printf("usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] "
-	    "[-l licensee_id]\n" "              [-m mbc_type] [-n rom_version] "
-	    "[-p pad_value] [-r ram_size]\n"
-	    "              [-t title_str] file.gb\n");
+	printf(
+"usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] [-l licensee_id]\n"
+"              [-m mbc_type] [-n rom_version] [-p pad_value] [-r ram_size]\n"
+"              [-t title_str] file\n");
 	exit(1);
 }
 
@@ -39,17 +39,6 @@ main(int argc, char *argv[])
 	FILE *rom;
 	int ch;
 	char *ep;
-
-	/*
-	 * Open the ROM file
-	 */
-
-	if (argc < 2)
-		usage();
-
-	if ((rom = fopen(argv[argc - 1], "rb+")) == NULL) {
-		err(1, "Error opening file %s", argv[argc - 1]);
-	}
 
 	/*
 	 * Parse command-line options
@@ -70,15 +59,15 @@ main(int argc, char *argv[])
 	bool resize = false;
 	bool setversion = false;
 
-	char *title = NULL; /* game title in ASCII */
-	char *id = NULL; /* game ID in ASCII */
-	char *newlicensee = NULL; /* new licensee ID, two ASCII characters */
+	char *title; /* game title in ASCII */
+	char *id; /* game ID in ASCII */
+	char *newlicensee; /* new licensee ID, two ASCII characters */
 
-	int licensee = -1;  /* old licensee ID */
-	int cartridge = -1; /* cartridge hardware ID */
-	int ramsize = -1;   /* RAM size ID */
-	int version = -1;   /* mask ROM version number */
-	int padvalue = -1;  /* to pad the rom with if it changes size */
+	int licensee;  /* old licensee ID */
+	int cartridge; /* cartridge hardware ID */
+	int ramsize;   /* RAM size ID */
+	int version;   /* mask ROM version number */
+	int padvalue;  /* to pad the rom with if it changes size */
 
 	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:v")) != -1) {
 		switch (ch) {
@@ -195,6 +184,20 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		usage();
+
+	/*
+	 * Open the ROM file
+	 */
+
+	if ((rom = fopen(argv[argc - 1], "rb+")) == NULL) {
+		err(1, "Error opening file %s", argv[argc - 1]);
 	}
 
 	/*

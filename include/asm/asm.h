@@ -9,8 +9,9 @@
 #ifndef ASMOTOR_ASM_ASM_H
 #define ASMOTOR_ASM_ASM_H
 
-#include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "asm/types.h"
 #include "asm/symbol.h"
@@ -26,7 +27,7 @@ extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
-extern UBYTE oDontExpandStrings;
+extern bool oDontExpandStrings;
 
 #define MAXMACROARGS	9
 #define MAXINCPATHS		16

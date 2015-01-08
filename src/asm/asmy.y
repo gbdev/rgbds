@@ -1,7 +1,6 @@
 %{
 #include <ctype.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +16,6 @@
 #include "asm/rpn.h"
 #include "asm/main.h"
 #include "asm/lexer.h"
-
-extern bool haltnop;
 
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
@@ -709,11 +706,11 @@ dl				:	T_POP_DL constlist_32bit
 
 purge			:	T_POP_PURGE
 					{
-						oDontExpandStrings=1;
+						oDontExpandStrings = true;
 					}
 					purge_list
 					{
-						oDontExpandStrings=0;
+						oDontExpandStrings = false;
 					}
 ;
 
@@ -955,8 +952,8 @@ relocconst		:	T_ID
 						{ rpn_UNNOT(&$$,&$2); }
 				|	T_OP_BANK '(' T_ID ')'
 						{ rpn_Bank(&$$,$3); $$.nVal = 0; }
-				|	T_OP_DEF { oDontExpandStrings=1; } '(' T_ID ')'
-						{ rpn_Number(&$$,sym_isConstDefined($4)); oDontExpandStrings=0; }
+				|	T_OP_DEF { oDontExpandStrings = true; } '(' T_ID ')'
+						{ rpn_Number(&$$,sym_isConstDefined($4)); oDontExpandStrings = false; }
 				|	T_OP_ROUND '(' const ')'			{ rpn_Number(&$$,math_Round($3)); }
 				|	T_OP_CEIL '(' const ')'			{ rpn_Number(&$$,math_Ceil($3)); }
 				|	T_OP_FLOOR '(' const ')'			{ rpn_Number(&$$,math_Floor($3)); }
@@ -1025,7 +1022,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	T_OP_ACOS '(' const ')'			{ $$ = math_ACos($3); }
 				|	T_OP_ATAN '(' const ')'			{ $$ = math_ATan($3); }
 				|	T_OP_ATAN2 '(' const ',' const ')'	{ $$ = math_ATan2($3,$5); }
-				|	T_OP_DEF { oDontExpandStrings=1; } '(' T_ID ')'	{ $$ = sym_isConstDefined($4); oDontExpandStrings=0; }
+				|	T_OP_DEF { oDontExpandStrings = true; } '(' T_ID ')'	{ $$ = sym_isConstDefined($4); oDontExpandStrings = false; }
 				|	T_OP_STRCMP '(' string ',' string ')'	{ $$ = strcmp( $3, $5 ); }
 				|	T_OP_STRIN '(' string ',' string ')'
 					{
@@ -1264,7 +1261,7 @@ z80_ex			:	T_Z80_EX T_MODE_HL comma T_MODE_SP_IND
 z80_halt: T_Z80_HALT
 		{
 			out_AbsByte(0x76);
-			if (haltnop) {
+			if (CurrentOptions.haltnop) {
 				out_AbsByte(0x00);
 			}
 		}

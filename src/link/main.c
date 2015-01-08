@@ -32,9 +32,9 @@ char smartlinkstartsymbol[256];
 static void 
 usage(void)
 {
-	printf("usage: rgblink [-t] [-m mapfile] [-n symfile] [-o outfile]\n");
-	printf("\t    [-s symbol] [-z pad_value] objectfile [...]\n");
-
+	printf(
+"usage: rgblink [-t] [-m mapfile] [-n symfile] [-o outfile] [-s symbol]\n"
+"               [-z pad_value] file [...]\n");
 	exit(1);
 }
 
