@@ -29,7 +29,7 @@ extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 
-#define MAXMACROARGS	9
+#define MAXMACROARGS	256
 #define MAXINCPATHS		16
 
 #endif	/* //       ASM_H */

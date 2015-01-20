@@ -436,7 +436,7 @@ sym_AddNewMacroArg(char *s)
 		else
 			newmacroargs[i] = NULL;
 	} else
-		yyerror("A maximum of 9 arguments allowed");
+		yyerror("A maximum of %d arguments allowed", MAXMACROARGS);
 }
 
 void 
