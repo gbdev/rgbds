@@ -497,21 +497,16 @@ void	if_skip_to_endc( void )
 
 %%
 
-asmfile			:	lines lastline
+asmfile			:	lines
 ;
 
-lastline		:	/* empty */
-				|	line
-					{ nLineNo+=1; nTotalLines+=1; }
-;
-
+/* Note: The lexer add '\n' at the end of the input */
 lines			:	/* empty */
 				|	lines line '\n'
 					{ nLineNo+=1; nTotalLines+=1; }
 ;
 
-line			:	/* empty */
-				|	label
+line			:	label
 				|	label cpu_command
 				|	label macro
 				|	label simple_pseudoop
