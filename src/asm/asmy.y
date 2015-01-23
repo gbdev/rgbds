@@ -540,7 +540,7 @@ macro : T_ID {
 		yy_set_state(LEX_STATE_NORMAL);
 
 		if (!fstk_RunMacro($1)) {
-			yyerror("Macro '%s' not defined", $1);
+			fatalerror("Macro '%s' not defined", $1);
 		}
 	};
 

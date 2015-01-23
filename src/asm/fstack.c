@@ -255,6 +255,8 @@ fstk_RunMacro(char *s)
 		sym_UseNewMacroArgs();
 		nCurrentStatus = STAT_isMacro;
 		strcpy(tzCurrentFileName, s);
+		if (sym->pMacro == NULL)
+			return 0;
 		pCurrentMacro = sym;
 		CurrentFlexHandle =
 		    yy_scan_bytes(pCurrentMacro->pMacro,
