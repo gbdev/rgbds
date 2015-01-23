@@ -10,7 +10,7 @@ BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
 
-rgbasm_obj := \
+rgbasm_obj = \
 	src/asm/asmy.o \
 	src/asm/charmap.o \
 	src/asm/fstack.o \
@@ -26,7 +26,7 @@ rgbasm_obj := \
 	src/extern/strlcpy.o \
 	src/extern/strlcat.o
 
-rgblink_obj := \
+rgblink_obj = \
 	src/link/assign.o \
 	src/link/library.o \
 	src/link/main.o \
@@ -37,7 +37,7 @@ rgblink_obj := \
 	src/link/symbol.o \
 	src/extern/err.o
 
-rgbfix_obj := \
+rgbfix_obj = \
 	src/fix/main.o \
 	src/extern/err.o
 
