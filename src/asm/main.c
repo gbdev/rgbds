@@ -323,6 +323,7 @@ main(int argc, char *argv[])
 	nErrors = 0;
 	sym_PrepPass1();
 	fstk_Init(tzMainfile);
+
 	if (CurrentOptions.verbose) {
 		printf("Pass 1...\n");
 	}
@@ -330,58 +331,48 @@ main(int argc, char *argv[])
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
-	if (yyparse() == 0 && nErrors == 0) {
-		if (nIFDepth == 0) {
-			nTotalLines = 0;
-			nLineNo = 1;
-			nIFDepth = 0;
-			nPC = 0;
-			nPass = 2;
-			nErrors = 0;
-			sym_PrepPass2();
-			out_PrepPass2();
-			fstk_Init(tzMainfile);
-			yy_set_state(LEX_STATE_NORMAL);
-			opt_SetCurrentOptions(&DefaultOptions);
-
-			if (CurrentOptions.verbose) {
-				printf("Pass 2...\n");
-			}
-
-			if (yyparse() == 0 && nErrors == 0) {
-				double timespent;
-
-				nEndClock = clock();
-				timespent =
-				    ((double) (nEndClock - nStartClock))
-				    / (double) CLOCKS_PER_SEC;
-				if (CurrentOptions.verbose) {
-					printf
-					    ("Success! %ld lines in %d.%02d seconds ",
-					    nTotalLines, (int) timespent,
-					    ((int) (timespent * 100.0)) % 100);
-					if (timespent == 0)
-						printf
-						    ("(INFINITY lines/minute)\n");
-					else
-						printf("(%d lines/minute)\n",
-						    (int) (60 / timespent *
-							nTotalLines));
-				}
-				out_WriteObject();
-			} else {
-				printf
-				    ("Assembly aborted in pass 2 (%ld errors)!\n",
-				    nErrors);
-				exit(5);
-			}
-		} else {
-			errx(1, "Unterminated IF construct (%ld levels)!",
-			    nIFDepth);
-		}
-	} else {
-		errx(1, "Assembly aborted in pass 1 (%ld errors)!",
-		    nErrors);
+	if (yyparse() != 0 || nErrors != 0) {
+		errx(1, "Assembly aborted in pass 1 (%ld errors)!", nErrors);
 	}
+
+	if (nIFDepth != 0) {
+		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
+	}
+
+	nTotalLines = 0;
+	nLineNo = 1;
+	nIFDepth = 0;
+	nPC = 0;
+	nPass = 2;
+	nErrors = 0;
+	sym_PrepPass2();
+	out_PrepPass2();
+	fstk_Init(tzMainfile);
+	yy_set_state(LEX_STATE_NORMAL);
+	opt_SetCurrentOptions(&DefaultOptions);
+
+	if (CurrentOptions.verbose) {
+		printf("Pass 2...\n");
+	}
+
+	if (yyparse() != 0 || nErrors != 0) {
+		errx(1, "Assembly aborted in pass 2 (%ld errors)!", nErrors);
+	}
+
+	double timespent;
+
+	nEndClock = clock();
+	timespent = ((double)(nEndClock - nStartClock))
+	    / (double)CLOCKS_PER_SEC;
+	if (CurrentOptions.verbose) {
+		printf("Success! %ld lines in %d.%02d seconds ", nTotalLines,
+		    (int) timespent, ((int) (timespent * 100.0)) % 100);
+		if (timespent == 0)
+			printf("(INFINITY lines/minute)\n");
+		else
+			printf("(%d lines/minute)\n",
+			    (int) (60 / timespent * nTotalLines));
+	}
+	out_WriteObject();
 	return 0;
 }
