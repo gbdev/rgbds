@@ -497,73 +497,68 @@ void	if_skip_to_endc( void )
 
 %%
 
-asmfile			:	lines lastline
-;
+asmfile : lines lastline;
 
-lastline		:	/* empty */
-				|	line
-					{ nLineNo+=1; nTotalLines+=1; }
-;
+lastline : /* empty */
+	| line {
+		nLineNo += 1;
+		nTotalLines += 1;
+	};
 
-lines			:	/* empty */
-				|	lines line '\n'
-					{ nLineNo+=1; nTotalLines+=1; }
-;
+lines : /* empty */
+	| lines line '\n' {
+		nLineNo += 1;
+		nTotalLines += 1;
+	};
 
-line			:	/* empty */
-				|	label
-				|	label cpu_command
-				|	label macro
-				|	label simple_pseudoop
-				|	pseudoop
-;
+line : /* empty */
+	| label
+	| label cpu_command
+	| label macro
+	| label simple_pseudoop
+	| pseudoop;
 
-label			:	/* empty */
-				|	T_LABEL			{	if( $1[0]=='.' )
-											sym_AddLocalReloc($1);
-										else
-											sym_AddReloc($1);
-									}
-				|	T_LABEL ':'		{	if( $1[0]=='.' )
-											sym_AddLocalReloc($1);
-										else
-											sym_AddReloc($1);
-									}
-				|	T_LABEL ':' ':'	{ sym_AddReloc($1); sym_Export($1); }
-;
+label : /* empty */
+	| T_LABEL {
+		if ($1[0] == '.')
+			sym_AddLocalReloc($1);
+		else
+			sym_AddReloc($1);
+	} | T_LABEL ':' {
+		if ($1[0] == '.')
+			sym_AddLocalReloc($1);
+		else
+			sym_AddReloc($1);
+	} | T_LABEL ':' ':' {
+		sym_AddReloc($1);
+		sym_Export($1);
+	};
 
-macro			:	T_ID
-					{
-						yy_set_state( LEX_STATE_MACROARGS );
-					}
-					macroargs
-					{
-						yy_set_state( LEX_STATE_NORMAL );
+macro : T_ID {
+		yy_set_state(LEX_STATE_MACROARGS);
+	} macroargs {
+		yy_set_state(LEX_STATE_NORMAL);
 
-						if( !fstk_RunMacro($1) )
-						{
-							yyerror("Macro '%s' not defined", $1);
-						}
-					}
-;
+		if (!fstk_RunMacro($1)) {
+			yyerror("Macro '%s' not defined", $1);
+		}
+	};
 
-macroargs		:	/* empty */
-				|	macroarg
-				|	macroarg ',' macroargs
-;
+macroargs : /* empty */
+	| macroarg
+	| macroarg ',' macroargs;
 
-macroarg 		:	T_STRING
-					{ sym_AddNewMacroArg( $1 ); }
-;
+macroarg : T_STRING {
+		sym_AddNewMacroArg($1);
+	};
 
-pseudoop		:	equ
-				|	set
-				|	rb
-				|	rw
-				|	rl
-				|	equs
-				|	macrodef
-;
+pseudoop : equ
+	| set
+	| rb
+	| rw
+	| rl
+	| equs
+	| macrodef;
 
 simple_pseudoop	:	include
 				|	printf
@@ -593,52 +588,44 @@ simple_pseudoop	:	include
 				|	pushs
 				|	popo
 				|	pusho
-				|	opt
-;
+				|	opt;
 
-opt				:	T_POP_OPT
-					{
-						yy_set_state( LEX_STATE_MACROARGS );
-					}
-					opt_list
-					{
-						yy_set_state( LEX_STATE_NORMAL );
-					}
-;
+opt : T_POP_OPT {
+		yy_set_state(LEX_STATE_MACROARGS);
+	} opt_list {
+		yy_set_state(LEX_STATE_NORMAL);
+	};
 
-opt_list		:	opt_list_entry
-				|	opt_list_entry ',' opt_list
-;
+opt_list : opt_list_entry
+	| opt_list_entry ',' opt_list;
 
-opt_list_entry	:	T_STRING
-					{
-						opt_Parse($1);
-					}
-;
+opt_list_entry : T_STRING {
+		opt_Parse($1);
+	};
 
-popo			:	T_POP_POPO
-					{ opt_Pop(); }
-;
+popo : T_POP_POPO {
+		opt_Pop();
+	};
 
-pusho			:	T_POP_PUSHO
-					{ opt_Push(); }
-;
+pusho : T_POP_PUSHO {
+		opt_Push();
+	};
 
-pops			:	T_POP_POPS
-					{ out_PopSection(); }
-;
+pops : T_POP_POPS {
+		out_PopSection();
+	};
 
-pushs			:	T_POP_PUSHS
-					{ out_PushSection(); }
-;
+pushs : T_POP_PUSHS {
+		out_PushSection();
+	};
 
-fail			:	T_POP_FAIL string
-					{ fatalerror("%s", $2); }
-;
+fail : T_POP_FAIL string {
+		fatalerror("%s", $2);
+	};
 
-warn			:	T_POP_WARN string
-					{ yyerror("%s", $2); }
-;
+warn : T_POP_WARN string {
+		yyerror("%s", $2);
+	};
 
 shift			:	T_POP_SHIFT
 					{ sym_ShiftCurrentMacroArgs(); }
