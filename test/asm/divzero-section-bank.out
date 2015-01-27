@@ -1,0 +1,3 @@
+ERROR:	foo.asm(1) :
+	syntax error
+rgbasm: Assembly aborted in pass 1 (1 errors)!
