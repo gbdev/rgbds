@@ -1000,7 +1000,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	const T_OP_MOD const			{
 	if ($3 == 0)
 		fatalerror("division by zero");
-	$$ = $1 % 3;
+	$$ = $1 % $3;
 	}
 				|	T_OP_ADD const %prec NEG		{ $$ = +$2; }
 				|	T_OP_SUB const %prec NEG		{ $$ = -$2; }
