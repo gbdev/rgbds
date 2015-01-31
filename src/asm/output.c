@@ -440,24 +440,30 @@ checkcodesection(SLONG size)
 		errx(1, "Section '%s' cannot contain code or data (not a "
 		    "ROM0 or ROMX)", pCurrentSection->pzName);
 	}
-	if (pCurrentSection->nPC + size <= MAXSECTIONSIZE) {
-		if (((pCurrentSection->nPC % SECTIONCHUNK) >
-			((pCurrentSection->nPC + size) % SECTIONCHUNK))
-		    && (pCurrentSection->nType == SECT_ROM0
-			|| pCurrentSection->nType == SECT_ROMX)) {
-			if ((pCurrentSection->tData =
-				(UBYTE *) realloc(pCurrentSection->tData,
-				    ((pCurrentSection->nPC +
-					    size) / SECTIONCHUNK +
-					1) * SECTIONCHUNK)) != NULL) {
-				return;
-			} else
-				fatalerror
-				    ("Not enough memory to expand section");
+	if (pCurrentSection->nPC + size > MAXSECTIONSIZE) {
+		/*
+		 * N.B.: This check is not sufficient to ensure the section
+		 * will fit, because there can be multiple sections of this
+		 * type. The definitive check must be done at the linking
+		 * stage.
+		 */
+		errx(1, "Section '%s' is too big (old size %d + %d > %d)",
+		    pCurrentSection->pzName, pCurrentSection->nPC, size,
+		    MAXSECTIONSIZE);
+	}
+	if (((pCurrentSection->nPC % SECTIONCHUNK) >
+	    ((pCurrentSection->nPC + size) % SECTIONCHUNK)) &&
+	    (pCurrentSection->nType == SECT_ROM0 ||
+	    pCurrentSection->nType == SECT_ROMX)) {
+		pCurrentSection->tData = realloc(pCurrentSection->tData,
+		    ((pCurrentSection->nPC + size) / SECTIONCHUNK + 1) *
+		    SECTIONCHUNK);
+
+		if (pCurrentSection->tData == NULL) {
+			err(1, "Could not expand section");
 		}
-		return;
-	} else
-		errx(1, "Section '%s' is too big", pCurrentSection->pzName);
+	}
+	return;
 }
 
 /*
