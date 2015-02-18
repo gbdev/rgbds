@@ -21,5 +21,8 @@ under the ISC license; see the source file for the text of the license.
 extern/err.c is derived from the Musl C library, http://www.musl-libc.org,
 and is released under the MIT license.
 
+extern/reallocarray.c is derived from the OpenBSD Project,
+http://www.openbsd.org, and is released under the ISC license.
+
 extern/strl.c is derived from the OpenBSD Project, http://www.openbsd.org,
 and is released under the BSD license.
