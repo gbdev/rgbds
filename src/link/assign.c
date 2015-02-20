@@ -305,6 +305,7 @@ AssignVRAMSections(void)
 		if ((org = area_AllocVRAMAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
+			//pSection->nBank += BANK_VRAM; // Not needed here
 			pSection->oAssigned = 1;
 			DOMAXVBANK(pSection->nBank);
 		} else {
@@ -324,6 +325,7 @@ AssignSRAMSections(void)
 		if ((org = area_AllocSRAMAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
+			pSection->nBank += BANK_SRAM;
 			pSection->oAssigned = 1;
 			DOMAXSBANK(pSection->nBank);
 		} else {
@@ -343,6 +345,7 @@ AssignWRAMSections(void)
 		if ((org = area_AllocWRAMAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
+			pSection->nBank += BANK_WRAMX - 1;
 			pSection->oAssigned = 1;
 			DOMAXWBANK(pSection->nBank);
 		} else {
@@ -557,8 +560,8 @@ AssignSections(void)
 						 * bank are hardcoded.
 						 */
 
-						if (pSection->nBank >= 1
-						    && pSection->nBank <= 7) {
+						if (pSection->nBank >= (1-1)
+						    && pSection->nBank <= (7-1)) {
 							pSection->nBank +=
 							    BANK_WRAMX;
 							if (area_AllocAbs
@@ -704,7 +707,9 @@ AssignSections(void)
 	 * Next, let's assign all the bankfixed ONLY ROMX sections...
 	 *
 	 */
-
+	
+	// Assign floating sections of non-swappable bank
+	
 	pSection = pSections;
 	while (pSection) {
 		if (pSection->oAssigned == 0
@@ -890,7 +895,9 @@ AssignSections(void)
 		}
 		pSection = pSection->pNext;
 	}
-
+	
+	// Assign floating sections (org and bank) of swappable banks
+	
 	AssignCodeSections();
 	AssignVRAMSections();
 	AssignWRAMSections();
