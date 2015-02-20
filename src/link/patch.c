@@ -6,6 +6,7 @@
 #include "link/mylink.h"
 #include "link/symbol.h"
 #include "link/main.h"
+#include "link/assign.h"
 
 struct sSection *pCurrentSection;
 SLONG rpnstack[256];
@@ -28,7 +29,7 @@ SLONG
 getsymvalue(SLONG symid)
 {
 	switch (pCurrentSection->tSymbols[symid]->Type) {
-		case SYM_IMPORT:
+	case SYM_IMPORT:
 		return (sym_GetValue(pCurrentSection->tSymbols[symid]->pzName));
 		break;
 	case SYM_EXPORT:
@@ -53,18 +54,32 @@ getsymvalue(SLONG symid)
 SLONG 
 getsymbank(SLONG symid)
 {
+	SLONG nBank;
 	switch (pCurrentSection->tSymbols[symid]->Type) {
-		case SYM_IMPORT:
-		return (sym_GetBank(pCurrentSection->tSymbols[symid]->pzName));
+	case SYM_IMPORT:
+		nBank = (sym_GetBank(pCurrentSection->tSymbols[symid]->pzName));
 		break;
 	case SYM_EXPORT:
 	case SYM_LOCAL:
-		return (pCurrentSection->tSymbols[symid]->pSection->nBank);
-		//return (pCurrentSection->nBank);
+		nBank = (pCurrentSection->tSymbols[symid]->pSection->nBank);
+		//nBank = (pCurrentSection->nBank);
+		break;
 	default:
+		fprintf(stderr, "*INTERNAL* UNKNOWN SYMBOL TYPE\n");
+		exit(1);
 		break;
 	}
-	errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
+
+	//printf("SECTION: %s at bank %d\n",pCurrentSection->tSymbols[symid]->pzName,nBank);
+	
+	if( (nBank >= BANK_WRAMX) && (nBank <= (BANK_WRAMX+6)) )
+		return nBank - BANK_WRAMX + 1;
+	if( (nBank >= BANK_VRAM) && (nBank <= (BANK_VRAM+1)) )
+		return nBank - BANK_VRAM;
+	if( (nBank >= BANK_SRAM) && (nBank <= (BANK_SRAM+3)) )
+		return nBank - BANK_SRAM;
+	
+	return nBank;
 }
 
 SLONG 
