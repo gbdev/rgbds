@@ -86,7 +86,7 @@ Output(void)
 
 		fclose(f);
 	}
-	for (i = 256; i < MAXBANKS; i += 1) {
+	for (i = BANK_WRAM0; i < MAXBANKS; i++) {
 		struct sSection *pSect;
 		MapfileInitBank(i);
 		pSect = pSections;
