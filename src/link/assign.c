@@ -324,6 +324,7 @@ AssignSRAMSections(void)
 		if ((org = area_AllocSRAMAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
+			pSection->nBank += BANK_SRAM;
 			pSection->oAssigned = 1;
 			DOMAXSBANK(pSection->nBank);
 		} else {
@@ -343,6 +344,7 @@ AssignWRAMSections(void)
 		if ((org = area_AllocWRAMAnyBank(pSection->nByteSize)) != -1) {
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
+			pSection->nBank += BANK_WRAMX - 1;
 			pSection->oAssigned = 1;
 			DOMAXWBANK(pSection->nBank);
 		} else {
@@ -557,8 +559,8 @@ AssignSections(void)
 						 * bank are hardcoded.
 						 */
 
-						if (pSection->nBank >= 1
-						    && pSection->nBank <= 7) {
+						if (pSection->nBank >= 0
+						    && pSection->nBank <= 6) {
 							pSection->nBank +=
 							    BANK_WRAMX;
 							if (area_AllocAbs
