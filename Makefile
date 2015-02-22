@@ -85,7 +85,7 @@ src/asm/asmy.h: src/asm/asmy.c
 # install instructions instead.
 mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
-		make CC=gcc CFLAGS="-I/usr/local/mingw32/include \
+		make WARNFLAGS= CC=gcc CFLAGS="-I/usr/local/mingw32/include \
 			-D__progname=\\\"\\\" \
 			${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
