@@ -53,6 +53,6 @@ this variable. Defaults to @.
   Installing RGBDS (Windows)
 ============================
 
-Windows builds are available here: http://anthony.bentley.name/rgbds/
+Windows builds are available here: https://github.com/bentley/rgbds/releases
 
 Copy the .exe files to C:\Windows\ or similar.
