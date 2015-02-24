@@ -185,7 +185,7 @@ opt_AddDefine(char *s)
 	if(cldefines_index >= cldefines_size)
 	{
 		cldefines_size *= 2;
-		cldefines = reallocarray(cldefines, cldefines_size
+		cldefines = reallocarray(cldefines, cldefines_size,
 		                        2 * sizeof(void *));
 		if(!cldefines)
 		{
@@ -270,7 +270,8 @@ main(int argc, char *argv[])
 	char *tzMainfile;
 
 	cldefines_size = 32;
-	cldefines = reallocarray(cldefines_size, 2 * sizeof(void *));
+	cldefines = reallocarray(cldefines, cldefines_size,
+	                        2 * sizeof(void *));
 	if(!cldefines)
 	{
 		fatalerror("No memory for command line defines");
