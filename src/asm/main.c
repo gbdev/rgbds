@@ -11,10 +11,14 @@
 #include "asm/output.h"
 #include "asm/main.h"
 #include "extern/err.h"
+#include "extern/reallocarray.h"
 
 int yyparse(void);
 void setuplex(void);
 
+int cldefines_index;
+int cldefines_size;
+char **cldefines;
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
 ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
@@ -174,6 +178,45 @@ opt_Pop(void)
 		fatalerror("No entries in the option stack");
 }
 
+void
+opt_AddDefine(char *s)
+{
+	char *value, *equals;
+	if(cldefines_index >= cldefines_size)
+	{
+		cldefines_size *= 2;
+		cldefines = reallocarray(cldefines, cldefines_size
+		                        2 * sizeof(void *));
+		if(!cldefines)
+		{
+			fatalerror("No memory for command line defines");
+		}
+	}
+	equals = strchr(s, '=');
+	if(equals)
+	{
+		*equals = '\0';
+		value = equals + 1;
+	}
+	else
+	{
+		value = "1";
+	}
+	cldefines[cldefines_index++] = s;
+	cldefines[cldefines_index++] = value;
+}
+
+void
+opt_ParseDefines()
+{
+	int i;
+
+	for(i = 0; i < cldefines_index; i += 2)
+	{
+		sym_AddString(cldefines[i], cldefines[i + 1]);
+	}
+}
+
 /*
  * Error handling
  */
@@ -211,8 +254,8 @@ static void
 usage(void)
 {
 	printf(
-"Usage: rgbasm [-v] [-h] [-b chars] [-g chars] [-i path] [-o outfile]\n"
-"              [-p pad_value] file.asm\n");
+"Usage: rgbasm [-v] [-h] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
+"              [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
 
@@ -226,7 +269,12 @@ main(int argc, char *argv[])
 
 	char *tzMainfile;
 
-
+	cldefines_size = 32;
+	cldefines = reallocarray(cldefines_size, 2 * sizeof(void *));
+	if(!cldefines)
+	{
+		fatalerror("No memory for command line defines");
+	}
 
 	if (argc == 1)
 		usage();
@@ -247,7 +295,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:g:hi:o:p:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:g:hi:o:p:v")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -257,6 +305,9 @@ main(int argc, char *argv[])
 				errx(1, "Must specify exactly 2 characters for "
 				    "option 'b'");
 			}
+			break;
+		case 'D':
+			opt_AddDefine(optarg);
 			break;
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -323,6 +374,7 @@ main(int argc, char *argv[])
 	nErrors = 0;
 	sym_PrepPass1();
 	fstk_Init(tzMainfile);
+	opt_ParseDefines();
 
 	if (CurrentOptions.verbose) {
 		printf("Pass 1...\n");
@@ -350,6 +402,7 @@ main(int argc, char *argv[])
 	fstk_Init(tzMainfile);
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
+	opt_ParseDefines();
 
 	if (CurrentOptions.verbose) {
 		printf("Pass 2...\n");
