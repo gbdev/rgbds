@@ -41,10 +41,6 @@
 #define errx rgbds_errx
 #define verrx rgbds_verrx
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void warn(const char *, ...);
 void vwarn(const char *, va_list);
 void warnx(const char *, ...);
@@ -54,10 +50,6 @@ noreturn void err(int, const char *, ...);
 noreturn void verr(int, const char *, va_list);
 noreturn void errx(int, const char *, ...);
 noreturn void verrx(int, const char *, va_list);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 
