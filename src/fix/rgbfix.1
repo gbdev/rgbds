@@ -109,7 +109,7 @@ It is a good idea to pad the image to a valid size as well
 The following will make a plain, no-color Game Boy game without checking for
 a valid size:
 .Pp
-.D1 $ rgbfix \-v foo.gb
+.D1 $ rgbfix -v foo.gb
 .Pp
 The following will make a SGB-enabled, color-enabled game with a title of
 .Dq foobar ,
@@ -119,14 +119,15 @@ The Game Boy itself does not use the title, but some emulators or ROM managers
 might.
 .Pc
 .Pp
-.D1 $ rgbfix \-vcs \-l 0x33 \-p 0 \-t foobar baz.gb
+.D1 $ rgbfix -vcs -l 0x33 -p 0 -t foobar baz.gb
 .Pp
 The following will duplicate the header
 .Pq sans global checksum
 of the game
 .Dq Survival Kids :
 .Pp
-.D1 $ rgbfix \-cjsv \-k A4 \-l 0x33 \-m 0x1B \-p 0xFF \-r 3 \-t SURVIVALKIDAVKE SurvivalKids.gbc
+.D1 $ rgbfix -cjsv -k A4 -l 0x33 -m 0x1B -p 0xFF -r 3 -t SURVIVALKIDAVKE \
+SurvivalKids.gbc
 .Sh SEE ALSO
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,

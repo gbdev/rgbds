@@ -50,7 +50,7 @@ section size from 16KiB to 32KiB.
 All you need for a basic ROM is an object file, which can be made into a ROM
 image like so:
 .Pp
-.D1 $ rgblink \-o bar.gb foo.o
+.D1 $ rgblink -o bar.gb foo.o
 .Pp
 The resulting bar.gb will not have correct checksums
 .Pq unless you put them in the assembly source .
@@ -58,7 +58,7 @@ You should use
 .Xr rgbfix 1
 to fix these so that the program will actually run in a Game Boy:
 .Pp
-.D1 $ rgbfix \-v bar.gb
+.D1 $ rgbfix -v bar.gb
 .Sh SEE ALSO
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,
