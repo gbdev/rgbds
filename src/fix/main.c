@@ -353,7 +353,8 @@ main(int argc, char *argv[])
 		 */
 
 		/* We will pad the ROM to match the size given in the header. */
-		int romsize, newsize, headbyte;
+		long romsize, newsize;
+		int headbyte;
 		uint8_t *buf;
 		fseek(rom, 0, SEEK_END);
 		romsize = ftell(rom);
