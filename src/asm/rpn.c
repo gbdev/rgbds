@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "asm/mylink.h"
-#include "asm/types.h"
+#include "types.h"
 #include "asm/symbol.h"
 #include "asm/asm.h"
 #include "asm/main.h"

@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #include "asm/asm.h"
-#include "asm/types.h"
+#include "types.h"
 #include "asm/lexer.h"
 
 struct sContext {

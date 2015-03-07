@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "asm/types.h"
+#include "types.h"
 #include "asm/symbol.h"
 
 #include "asm/localasm.h"

@@ -1,7 +1,7 @@
 #ifndef RGBDS_LINK_ASSIGN_H
 #define RGBDS_LINK_ASSIGN_H
 
-#include "link/types.h"
+#include "types.h"
 
 enum eBankDefine {
 	BANK_ROM0 = 0,

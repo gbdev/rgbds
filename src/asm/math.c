@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "asm/types.h"
+#include "types.h"
 #include "asm/mymath.h"
 #include "asm/symbol.h"
 

@@ -5,7 +5,7 @@
 #include "extern/err.h"
 #include "link/main.h"
 #include "link/patch.h"
-#include "link/types.h"
+#include "types.h"
 
 #define HASHSIZE 73
 

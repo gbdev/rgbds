@@ -1,7 +1,7 @@
 #ifndef RGBDS_LINK_SYMBOL_H
 #define RGBDS_LINK_SYMBOL_H
 
-#include "link/types.h"
+#include "types.h"
 
 void sym_Init(void);
 void sym_CreateSymbol(char *tzName, SLONG nValue, SBYTE nBank);

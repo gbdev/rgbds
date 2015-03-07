@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "extern/err.h"
-#include "link/types.h"
+#include "types.h"
 #include "link/mylink.h"
 #include "link/main.h"
 

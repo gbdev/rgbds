@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "asm/types.h"
+#include "types.h"
 
 #define LEXHASHSIZE (1 << 11)
 #define MAXSTRLEN 255

@@ -1,7 +1,7 @@
 #ifndef RGBDS_ASM_MATH_H
 #define RGBDS_ASM_MATH_H
 
-#include "asm/types.h"
+#include "types.h"
 
 void math_DefinePI(void);
 void math_Print(SLONG i);

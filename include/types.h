@@ -1,5 +1,5 @@
-#ifndef RGBDS_ASM_TYPES_H
-#define RGBDS_ASM_TYPES_H
+#ifndef RGBDS_TYPES_H
+#define RGBDS_TYPES_H
 
 #ifndef _MAX_PATH
 #define	_MAX_PATH	512
@@ -11,5 +11,6 @@ typedef unsigned short UWORD;
 typedef signed short SWORD;
 typedef unsigned long ULONG;
 typedef signed long SLONG;
+typedef signed char BBOOL;
 
 #endif

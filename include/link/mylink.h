@@ -5,7 +5,7 @@
 #define _MAX_PATH	512
 #endif
 
-#include "link/types.h"
+#include "types.h"
 
 extern SLONG options;
 #define OPT_SMALL	0x01

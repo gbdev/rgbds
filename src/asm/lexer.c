@@ -6,7 +6,7 @@
 
 #include "asm/asm.h"
 #include "asm/lexer.h"
-#include "asm/types.h"
+#include "types.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"

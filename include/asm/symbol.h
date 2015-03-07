@@ -1,7 +1,7 @@
 #ifndef RGBDS_SYMBOL_H
 #define RGBDS_SYMBOL_H
 
-#include "asm/types.h"
+#include "types.h"
 
 #define HASHSIZE (1 << 16)
 #define MAXSYMLEN 256

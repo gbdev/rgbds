@@ -2,7 +2,7 @@
 #define RGBDS_ASM_OUTPUT_H
 
 #include "asm/rpn.h"
-#include "asm/types.h"
+#include "types.h"
 
 struct Section {
 	char *pzName;
