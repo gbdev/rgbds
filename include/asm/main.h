@@ -1,5 +1,5 @@
-#ifndef	ASMOTOR_MAIN_H
-#define	ASMOTOR_MAIN_H
+#ifndef	RGBDS_MAIN_H
+#define	RGBDS_MAIN_H
 
 #include <stdbool.h>
 

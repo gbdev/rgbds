@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_ASM_RPN_H
-#define ASMOTOR_ASM_RPN_H
+#ifndef RGBDS_ASM_RPN_H
+#define RGBDS_ASM_RPN_H
 
 struct Expression {
 	SLONG nVal;

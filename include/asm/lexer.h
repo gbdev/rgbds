@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_ASM_LEXER_H
-#define ASMOTOR_ASM_LEXER_H
+#ifndef RGBDS_ASM_LEXER_H
+#define RGBDS_ASM_LEXER_H
 
 #include <stdio.h>
 

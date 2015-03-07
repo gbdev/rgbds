@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_LINK_ASSIGN_H
-#define ASMOTOR_LINK_ASSIGN_H
+#ifndef RGBDS_LINK_ASSIGN_H
+#define RGBDS_LINK_ASSIGN_H
 
 #include "link/types.h"
 

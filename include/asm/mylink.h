@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_ASM_LINK_H
-#define ASMOTOR_ASM_LINK_H
+#ifndef RGBDS_ASM_LINK_H
+#define RGBDS_ASM_LINK_H
 
 /* RGB0 .obj format:
  *

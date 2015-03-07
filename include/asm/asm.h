@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef ASMOTOR_ASM_ASM_H
-#define ASMOTOR_ASM_ASM_H
+#ifndef RGBDS_ASM_ASM_H
+#define RGBDS_ASM_ASM_H
 
 #include <stdbool.h>
 #include <stdio.h>

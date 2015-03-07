@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_ASM_TYPES_H
-#define ASMOTOR_ASM_TYPES_H
+#ifndef RGBDS_ASM_TYPES_H
+#define RGBDS_ASM_TYPES_H
 
 #ifndef _MAX_PATH
 #define	_MAX_PATH	512

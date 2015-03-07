@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_LINK_TYPES_H
-#define ASMOTOR_LINK_TYPES_H
+#ifndef RGBDS_LINK_TYPES_H
+#define RGBDS_LINK_TYPES_H
 
 #ifndef _MAX_PATH
 #define	_MAX_PATH	512

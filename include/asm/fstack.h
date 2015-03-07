@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef ASMOTOR_ASM_FSTACK_H
-#define ASMOTOR_ASM_FSTACK_H
+#ifndef RGBDS_ASM_FSTACK_H
+#define RGBDS_ASM_FSTACK_H
 
 #include <stdio.h>
 

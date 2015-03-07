@@ -1,5 +1,5 @@
-#ifndef	ASMOTOR_LINK_MAPFILE_H
-#define	ASMOTOR_LINK_MAPFILE_H
+#ifndef	RGBDS_LINK_MAPFILE_H
+#define	RGBDS_LINK_MAPFILE_H
 
 extern void SetMapfileName(char *name);
 extern void SetSymfileName(char *name);

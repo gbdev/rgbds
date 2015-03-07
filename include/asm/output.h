@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_ASM_OUTPUT_H
-#define ASMOTOR_ASM_OUTPUT_H
+#ifndef RGBDS_ASM_OUTPUT_H
+#define RGBDS_ASM_OUTPUT_H
 
 #include "asm/rpn.h"
 #include "asm/types.h"

@@ -1,5 +1,5 @@
-#ifndef ASMOTOR_SYMBOL_H
-#define ASMOTOR_SYMBOL_H
+#ifndef RGBDS_SYMBOL_H
+#define RGBDS_SYMBOL_H
 
 #include "asm/types.h"
 
