@@ -6,7 +6,7 @@
 #else
 
 #include <stdarg.h>
-#include "stdnoreturn.h"
+#include "extern/stdnoreturn.h"
 
 #define warn rgbds_warn
 #define vwarn rgbds_vwarn

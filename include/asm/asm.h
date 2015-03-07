@@ -16,7 +16,7 @@
 #include "asm/types.h"
 #include "asm/symbol.h"
 
-#include "localasm.h"
+#include "asm/localasm.h"
 
 extern SLONG nLineNo;
 extern ULONG nTotalLines;
