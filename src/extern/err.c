@@ -26,13 +26,11 @@
 #include <stdlib.h>
 #include "extern/err.h"
 
-#ifndef __MINGW32__
-char *__progname;
-#endif
+extern char *progname;
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: ", __progname);
+	fprintf (stderr, "%s: ", progname);
 	if (fmt) {
 		vfprintf(stderr, fmt, ap);
 		fputs (": ", stderr);
@@ -42,7 +40,7 @@ void rgbds_vwarn(const char *fmt, va_list ap)
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: ", __progname);
+	fprintf (stderr, "%s: ", progname);
 	if (fmt) vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
 }

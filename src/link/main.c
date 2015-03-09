@@ -24,6 +24,8 @@ SLONG options = 0;
 SLONG fillchar = 0;
 char smartlinkstartsymbol[256];
 
+char *progname;
+
 /*
  * Print the usagescreen
  *
@@ -51,6 +53,8 @@ main(int argc, char *argv[])
 
 	if (argc == 1)
 		usage();
+
+	progname = argv[0];
 
 	while ((ch = getopt(argc, argv, "m:n:o:p:s:t")) != -1) {
 		switch (ch) {

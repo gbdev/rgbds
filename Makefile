@@ -87,7 +87,6 @@ src/asm/asmy.h: src/asm/asmy.c
 mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
 		make WARNFLAGS= CC=gcc CFLAGS="-I/usr/local/mingw32/include \
-			-D__progname=\\\"\\\" \
 			${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
