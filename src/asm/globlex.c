@@ -161,7 +161,7 @@ ParseSymbol(char *src, ULONG size)
 			if (*src == '@')
 				marg = sym_FindMacroArg(-1);
 			else if (*src >= '0' && *src <= '9')
-				marg = sym_FindMacroArg(*src);
+				marg = sym_FindMacroArg(*src - '0');
 			else {
 				fatalerror("Malformed ID");
 				return (0);
