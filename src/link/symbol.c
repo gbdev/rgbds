@@ -76,7 +76,7 @@ sym_GetBank(char *tzName)
 }
 
 void 
-sym_CreateSymbol(char *tzName, SLONG nValue, SBYTE nBank)
+sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank)
 {
 	if (strcmp(tzName, "@") == 0)
 		return;
