@@ -2,7 +2,7 @@
 
 WARNFLAGS =	-Wall -Werror=implicit
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
-		-std=c99 -D_POSIX_C_SOURCE=200809L
+		-std=c99 -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
 
 # User-defined variables
 PREFIX =	/usr/local
