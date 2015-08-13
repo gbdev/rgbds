@@ -42,13 +42,20 @@ rgbfix_obj = \
 	src/fix/main.o \
 	src/extern/err.o
 
-all: rgbasm rgblink rgbfix
+rgbgfx_obj = \
+	src/gfx/main.o \
+	src/gfx/png.o \
+	src/gfx/gb.o \
+	src/extern/err.o
+
+all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
 	$Qrm -rf rgbds.html
 	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
 	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
+	$Qrm -rf rgbgfx ${rgbgfx_obj}
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
 
 install: all
@@ -56,11 +63,13 @@ install: all
 	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
 	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
+	$Qinstall -s -m 555 rgbgfx ${BINPREFIX}/rgbgfx
 	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man7
 	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
 	$Qinstall -m 444 src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
 	$Qinstall -m 444 src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
 	$Qinstall -m 444 src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
+	$Qinstall -m 444 src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
@@ -71,11 +80,17 @@ rgblink: ${rgblink_obj}
 rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
+rgbgfx: ${rgbgfx_obj}
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgbgfx_obj} `pkg-config --libs libpng`
+
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
+
+src/gfx/%.o: src/gfx/%.c
+	$Q${CC} ${REALCFLAGS} `pkg-config --cflags libpng` -c -o $@ $<
 
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c
