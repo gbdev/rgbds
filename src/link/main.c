@@ -22,7 +22,7 @@ enum eBlockType {
 
 SLONG options = 0;
 SLONG fillchar = 0;
-char smartlinkstartsymbol[256];
+char *smartlinkstartsymbol;
 
 char *progname;
 
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;
-			strcpy(smartlinkstartsymbol, optarg);
+			smartlinkstartsymbol = optarg;
 			break;
 		case 't':
 			options |= OPT_SMALL;
