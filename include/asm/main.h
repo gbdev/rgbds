@@ -9,6 +9,7 @@ struct sOptions {
 	SLONG fillchar;
 	bool verbose;
 	bool haltnop;
+	bool exportall;
 	    //-1 == random
 };
 

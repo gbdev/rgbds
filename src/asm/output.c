@@ -243,25 +243,27 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 		offset = 0;
 		sectid = -1;
 		type = SYM_IMPORT;
-	} else if (pSym->nType & SYMF_EXPORT) {
-		/* Symbol should be exported */
-		strcpy(symname, pSym->tzName);
-		type = SYM_EXPORT;
-		offset = pSym->nValue;
-		if (pSym->nType & SYMF_CONST)
-			sectid = -1;
-		else
-			sectid = getsectid(pSym->pSection);
 	} else {
-		/* Symbol is local to this file */
 		if (pSym->nType & SYMF_LOCAL) {
 			strcpy(symname, pSym->pScope->tzName);
 			strcat(symname, pSym->tzName);
 		} else
 			strcpy(symname, pSym->tzName);
-		type = SYM_LOCAL;
-		offset = pSym->nValue;
-		sectid = getsectid(pSym->pSection);
+		
+		if (pSym->nType & SYMF_EXPORT) {
+			/* Symbol should be exported */
+			type = SYM_EXPORT;
+			offset = pSym->nValue;
+			if (pSym->nType & SYMF_CONST)
+				sectid = -1;
+			else
+				sectid = getsectid(pSym->pSection);
+		} else {
+			/* Symbol is local to this file */
+			type = SYM_LOCAL;
+			offset = pSym->nValue;
+			sectid = getsectid(pSym->pSection);
+		}
 	}
 
 	fputstring(symname, f);
@@ -282,6 +284,7 @@ addsymbol(struct sSymbol * pSym)
 	struct PatchSymbol *pPSym, **ppPSym;
 	static ULONG nextID = 0;
 	ULONG hash;
+	
 
 	hash = calchash(pSym->tzName);
 	ppPSym = &(tHashedPatchSymbols[hash]);
