@@ -2,7 +2,7 @@
 #define RGBDS_ASM_CHARMAP_H
 
 #define MAXCHARMAPS	512
-#define CHARMAPLENGTH	8
+#define CHARMAPLENGTH	16
 
 struct Charmap {
 	int count;
