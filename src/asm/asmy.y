@@ -20,6 +20,49 @@
 char	*tzNewMacro;
 ULONG	ulNewMacroSize;
 
+void
+bankrangecheck(char *name, ULONG secttype, SLONG org, SLONG bank)
+{
+	SLONG minbank, maxbank;
+	char *stype;
+	switch (secttype) {
+	case SECT_ROMX:
+		stype = "ROMX";
+		minbank = 1;
+		maxbank = 0x1ff;
+		break;
+	case SECT_SRAM:
+		stype = "SRAM";
+		minbank = 0;
+		maxbank = 0x1ff;
+		break;
+	case SECT_WRAMX:
+		stype = "WRAMX";
+		minbank = 1;
+		maxbank = 7;
+		break;
+	case SECT_VRAM:
+		stype = "VRAM";
+		minbank = 0;
+		maxbank = 1;
+		break;
+	default:
+		yyerror("BANK only allowed for "
+		    "ROMX, WRAMX, SRAM, or VRAM sections");
+	}
+
+	if (bank < minbank || bank > maxbank) {
+		yyerror("%s bank value $%x out of range ($%x to $%x)",
+		    stype, bank, minbank, maxbank);
+	}
+
+	if (secttype == SECT_WRAMX) {
+		bank -= minbank;
+	}
+
+	out_NewAbsSection(name, secttype, org, bank);
+}
+
 size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 {
 	size_t length;
@@ -497,22 +540,16 @@ void	if_skip_to_endc( void )
 
 %%
 
-asmfile : lines lastline;
+asmfile : lines;
 
-lastline : /* empty */
-	| line {
-		nLineNo += 1;
-		nTotalLines += 1;
-	};
-
+/* Note: The lexer add '\n' at the end of the input */
 lines : /* empty */
 	| lines line '\n' {
 		nLineNo += 1;
 		nTotalLines += 1;
 	};
 
-line : /* empty */
-	| label
+line : label
 	| label cpu_command
 	| label macro
 	| label simple_pseudoop
@@ -1060,76 +1097,14 @@ section:
 		}
 	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
 		{
-			if( $4==SECT_ROMX ) {
-				if( $8>=1 && $8<=0x1ff )
-					out_NewAbsSection($2,$4,-1,$8);
-				else
-					yyerror("ROM bank value $%x out of range (1 to $1ff)", $8);
-			} else if ($4 == SECT_SRAM) {
-				if ($8 >= 0 && $8 <= 3) {
-					out_NewAbsSection($2, $4, -1, $8);
-				} else {
-					yyerror("SRAM bank value $%x out of range (0 to 3)", $8);
-				}
-			} else if ($4 == SECT_WRAMX) {
-				if ($8 >= 1 && $8 <= 7) {
-					out_NewAbsSection($2, $4, -1, $8 - 1);
-				} else {
-					yyerror("WRAMX bank value $%x out of range (1 to 7)", $8);
-				}
-			} else if ($4 == SECT_VRAM) {
-				if ($8 >= 0 && $8 <= 1) {
-					out_NewAbsSection($2, $4, -1, $8);
-				} else {
-					yyerror("VRAM bank value $%x out of range (0 to 1)", $8);
-				}
-			} else {
-				yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
-			}
+			bankrangecheck($2, $4, -1, $8);
 		}
 	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
 		{
-			if( $4==SECT_ROMX ) {
-				if( $6>=0 && $6<0x10000 ) {
-					if( $11>=1 && $11<=0x1ff )
-						out_NewAbsSection($2,$4,$6,$11);
-					else
-						yyerror("ROM bank value $%x out of range (1 to $1ff)", $11);
-				} else
-					yyerror("Address $%x not 16-bit", $6);
-			} else if ($4 == SECT_SRAM) {
-				if ($6 >= 0 && $6 < 0x10000) {
-					if ($11 >= 0 && $11 <= 3) {
-						out_NewAbsSection($2, $4, $6, $11);
-					} else {
-						yyerror("SRAM bank value $%x out of range (0 to 3)", $11);
-					}
-				} else {
-					yyerror("Address $%x not 16-bit", $6);
-				}
-			} else if ($4 == SECT_WRAMX) {
-				if ($6 >= 0 && $6 < 0x10000) {
-					if ($11 >= 1 && $11 <= 7) {
-						out_NewAbsSection($2, $4, $6, $11 - 1);
-					} else {
-						yyerror("WRAMX bank value $%x out of range (1 to 7)", $11);
-					}
-				} else {
-					yyerror("Address $%x not 16-bit", $6);
-				}
-			} else if ($4 == SECT_VRAM) {
-				if ($6 >= 0 && $6 < 0x10000) {
-					if ($11 >= 0 && $11 <= 1) {
-						out_NewAbsSection($2,$4,$6,$11);
-					} else {
-						yyerror("VRAM bank value $%x out of range (0 to 1)", $11);
-					}
-				} else {
-					yyerror("Address $%x not 16-bit", $6);
-				}
-			} else {
-				yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
+			if ($6 < 0 || $6 > 0x10000) {
+				yyerror("Address $%x not 16-bit", $6);
 			}
+			bankrangecheck($2, $4, $6, $11);
 		}
 ;
 

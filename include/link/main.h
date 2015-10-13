@@ -4,6 +4,6 @@
 #include "types.h"
 
 extern SLONG fillchar;
-extern char smartlinkstartsymbol[256];
+extern char *smartlinkstartsymbol;
 
 #endif

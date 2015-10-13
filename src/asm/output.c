@@ -389,7 +389,10 @@ createpatch(ULONG type, struct Expression * expr)
 				rpnexpr[rpnptr++] = value >> 16;
 				rpnexpr[rpnptr++] = value >> 24;
 			} else {
-				symptr = addsymbol(sym_FindSymbol(tzSym));
+				struct sSymbol *sym;
+				if ((sym = sym_FindSymbol(tzSym)) == NULL)
+					break;
+				symptr = addsymbol(sym);
 				rpnexpr[rpnptr++] = RPN_SYM;
 				rpnexpr[rpnptr++] = symptr & 0xFF;
 				rpnexpr[rpnptr++] = symptr >> 8;
@@ -397,15 +400,19 @@ createpatch(ULONG type, struct Expression * expr)
 				rpnexpr[rpnptr++] = symptr >> 24;
 			}
 			break;
-		case RPN_BANK:
+		case RPN_BANK: {
+			struct sSymbol *sym;
 			symptr = 0;
 			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0);
-			symptr = addsymbol(sym_FindSymbol(tzSym));
+			if ((sym = sym_FindSymbol(tzSym)) == NULL)
+				break;
+			symptr = addsymbol(sym);
 			rpnexpr[rpnptr++] = RPN_BANK;
 			rpnexpr[rpnptr++] = symptr & 0xFF;
 			rpnexpr[rpnptr++] = symptr >> 8;
 			rpnexpr[rpnptr++] = symptr >> 16;
 			rpnexpr[rpnptr++] = symptr >> 24;
+			}
 			break;
 		default:
 			rpnexpr[rpnptr++] = rpndata;
