@@ -1,7 +1,7 @@
-.POSIX:
-
+PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
+PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
+REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
 # User-defined variables
@@ -9,6 +9,7 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
+PKG_CONFIG =	pkg-config
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -42,13 +43,20 @@ rgbfix_obj = \
 	src/fix/main.o \
 	src/extern/err.o
 
-all: rgbasm rgblink rgbfix
+rgbgfx_obj = \
+	src/gfx/gb.o \
+	src/gfx/main.o \
+	src/gfx/png.o \
+	src/extern/err.o
+
+all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
 	$Qrm -rf rgbds.html
 	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
 	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
+	$Qrm -rf rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
 
 install: all
@@ -56,11 +64,13 @@ install: all
 	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
 	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
+	$Qinstall -s -m 555 rgbgfx ${BINPREFIX}/rgbgfx
 	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man7
 	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
 	$Qinstall -m 444 src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
 	$Qinstall -m 444 src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
 	$Qinstall -m 444 src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
+	$Qinstall -m 444 src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
@@ -70,6 +80,9 @@ rgblink: ${rgblink_obj}
 
 rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
+
+rgbgfx: ${rgbgfx_obj}
+	$Q${CC} `${PKG_CONFIG} --libs libpng` ${REALCFLAGS} -o $@ ${rgbgfx_obj}
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
@@ -105,3 +118,5 @@ wwwman:
 		rgbfix.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 | sed s/OpenBSD/General/ > \
+		rgbgfx.html
