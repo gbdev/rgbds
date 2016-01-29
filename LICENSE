@@ -18,6 +18,8 @@ released under the following license:
 rgbfix was rewritten from scratch by Anthony J. Bentley, and is released
 under the ISC license; see the source file for the text of the license.
 
+rgbgfx was written by stag019, and is released under the ISC license.
+
 The UTF-8 decoder in src/asm/charmap.c was written by Björn Höhrmann and is
 released under the MIT license. The remainder of charmap.c was written by
 stag019, and is released under the ISC license.
