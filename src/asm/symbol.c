@@ -122,16 +122,39 @@ findsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
 	SLONG hash;
+	int local;
+	int result;
 
-	hash = calchash(s);
+	// If referencing a local label from out of scope,
+	// use the parent label as the new scope.
+	local = 0;
+	while (s[local] != '\0' && s[local] != '.') {
+		local++;
+	}
+	if (local != 0 && s[local] == '.') {
+		s[local] = '\0';
+		hash = calchash(s);
+		s[local] = '.';
+	} else {
+		hash = calchash(s);
+	}
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL) {
 		if ((strcmp(s, (*ppsym)->tzName) == 0)
 		    && ((*ppsym)->pScope == scope)) {
 			return (*ppsym);
-		} else
+		} else {
+			if (local != 0 && s[local] == '.') {
+				s[local] = '\0';
+				result = strcmp(s, (*ppsym)->tzName);
+				s[local] = '.';
+				if (result == 0) {
+					return findsymbol(&(s[local]), *ppsym);
+				}
+			}
 			ppsym = &((*ppsym)->pNext);
+		}
 	}
 	return (NULL);
 }
