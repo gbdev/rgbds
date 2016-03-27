@@ -713,6 +713,10 @@ AssignSections(void)
 		    && pSection->Type == SECT_ROMX
 		    && pSection->nOrg == -1 && pSection->nBank != -1) {
 			/* User wants to have a say... and he's pissed */
+			if (options & OPT_OVERLAY) {
+			    errx(1, "All ROM sections must be fixed when using overlay");
+            }
+			
 			if (pSection->nBank >= 1 && pSection->nBank <= 511) {
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
@@ -789,6 +793,9 @@ AssignSections(void)
 		    && pSection->nOrg != -1 && pSection->nBank == -1) {
 			/* User wants to have a say... and he's back with a
 			 * vengeance */
+			if (options & OPT_OVERLAY) {
+			    errx(1, "All ROM sections must be fixed when using overlay");
+            }
 			if ((pSection->nBank =
 				area_AllocAbsROMXAnyBank(pSection->nOrg,
 				    pSection->nByteSize)) ==
@@ -875,6 +882,9 @@ AssignSections(void)
 			case SECT_WRAMX:
 				break;
 			case SECT_ROM0:
+			    if (options & OPT_OVERLAY) {
+			        errx(1, "All ROM sections must be fixed when using overlay");
+                }
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[BANK_ROM0],
 					    pSection->nByteSize)) == -1) {
@@ -884,6 +894,9 @@ AssignSections(void)
 				pSection->oAssigned = 1;
 				break;
 			case SECT_ROMX:
+			    if (options & OPT_OVERLAY) {
+			        errx(1, "All ROM sections must be fixed when using overlay");
+                }
 				break;
 			default:
 				errx(1, "(INTERNAL) Unknown section type!");
