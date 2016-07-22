@@ -1,0 +1,90 @@
+.Dd $Mdocdate$
+.Dt RGBGFX 1
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgbgfx
+.Nd Game Boy graphics converter
+.Sh SYNOPSIS
+.Nm rgbgfx
+.Op Fl DfFhPTv
+.Op Fl o Ar outfile
+.Op Fl d Ar depth
+.Op Fl p Ar palfile
+.Op Fl t Ar mapfile
+.Op Fl x Ar tiles
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm
+program converts PNG images into the Nintendo Game Boy's planar tile format.
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl D
+Debug features are enabled.
+.It Fl f
+Fix the input PNG file to be a correctly indexed image.
+.It Fl F
+Same as
+.Fl f ,
+but additionally, the input PNG file is fixed to have its parameters match the
+command line's parameters.
+.It Fl d Ar depth
+The bitdepth of the output image (either 1 or 2).
+By default, the bitdepth is 2 (two bits per pixel).
+.It Fl h
+Lay out tiles horizontally rather than vertically.
+.It Fl o Ar outfile
+The name of the output file.
+.It Fl p Ar palfile
+Raw bytes (8 bytes for two bits per pixel, 4 bytes for one bit per pixel)
+containing the RGB15 values in the little-endian byte order and then ordered
+from lightest to darkest.
+.It Fl P
+Same as
+.Fl p ,
+but the pallete file output name is made by taking the input filename,
+removing the file extension, and appending
+.Pa .pal .
+.It Fl t Ar mapfile
+If any tiles are the same, don't place the repeat tiles in the output file, and
+make a tilemap file.
+.It Fl T
+Same as
+.Fl t ,
+but the tilemap file output name is made by taking the input filename,
+removing the file extension, and appending
+.Pa .tilemap .
+.It Fl u
+Truncate repeated tiles. Useful with tilemaps.
+.It Fl v
+Verbose.
+Print errors when the command line parameters and the parameters in
+the PNG file don't match.
+.It Fl x Ar tiles
+Trim the end of the output file by this many tiles.
+.El
+.Sh EXAMPLES
+The following will take a PNG file with a bitdepth of 1, 2, or 8, and output
+planar 2bpp data:
+.Pp
+.D1 $ rgbgfx -o out.2bpp in.png
+.Pp
+The following creates a planar 2bpp file with only unique tiles, and its tilemap
+.Pa out.tilemap :
+.Pp
+.D1 $ rgbgfx -T -u -o out.2bpp in.png
+.Pp
+The following will do nothing:
+.Pp
+.D1 $ rgbgfx in.png
+.Sh SEE ALSO
+.Xr rgbds 7 ,
+.Xr rgbasm 1 ,
+.Xr rgblink 1 ,
+.Xr rgbfix 1 ,
+.Xr gbz80 7
+.Sh HISTORY
+.Nm
+was created by
+.An stag019
+to be included in RGBDS.
