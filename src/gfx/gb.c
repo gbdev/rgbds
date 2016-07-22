@@ -23,8 +23,8 @@ void transpose_tiles(struct GBImage *gb, int width) {
 
 	newdata = calloc(gb->size, 1);
 	for(i = 0; i < gb->size; i++) {
-		newbyte = i / (8 * gb->depth) * width * 8 * gb->depth;
-		newbyte = newbyte % gb->size + 8 * gb->depth * (newbyte / gb->size) + i % (8 * gb->depth);
+		newbyte = i / (8 * depth) * width * 8 * depth;
+		newbyte = newbyte % gb->size + 8 * depth * (newbyte / gb->size) + i % (8 * depth);
 		newdata[newbyte] = gb->data[i];
 	}
 
@@ -35,23 +35,20 @@ void transpose_tiles(struct GBImage *gb, int width) {
 
 void png_to_gb(struct PNGImage png, struct GBImage *gb) {
 	int x, y, byte;
-	png_byte *row, index;
+	png_byte index;
 
 	for(y = 0; y < png.height; y++) {
-		row = png.data[y];
 		for(x = 0; x < png.width; x++) {
-			index = row[x / (4 * (3 - gb->depth))] >> (8 - gb->depth - (x % (4 * (3 - gb->depth)) * gb->depth)) & 3;
+			index = png.data[y][x];
+			index &= (1 << depth) - 1;
 
-			if(png.type == PNG_COLOR_TYPE_GRAY) {
-				index = (gb->depth == 2 ? 3 : 1) - index;
-			}
 			if(!gb->horizontal) {
-				byte = y * gb->depth + x / 8 * png.height / 8 * 8 * gb->depth;
+				byte = y * depth + x / 8 * png.height / 8 * 8 * depth;
 			} else {
-				byte = y * gb->depth + x / 8 * png.height / 8 * 8 * gb->depth;
+				byte = y * depth + x / 8 * png.height / 8 * 8 * depth;
 			}
 			gb->data[byte] |= (index & 1) << (7 - x % 8);
-			if(gb->depth > 1) {
+			if(depth == 2) {
 				gb->data[byte + 1] |= (index >> 1) << (7 - x % 8);
 			}
 		}
@@ -69,18 +66,96 @@ void output_file(struct Options opts, struct GBImage gb) {
 	if(!f) {
 		err(EXIT_FAILURE, "Opening output file '%s' failed", opts.outfile);
 	}
-	fwrite(gb.data, 1, gb.size - gb.trim * 8 * gb.depth, f);
+	fwrite(gb.data, 1, gb.size - gb.trim * 8 * depth, f);
 
 	fclose(f);
 }
 
-void output_tilemap_file(struct Options opts) {
+int get_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles, int tile_size) {
+	int i, j;
+	for (i = 0; i < num_tiles; i++) {
+		for (j = 0; j < tile_size; j++) {
+			if (tile[j] != tiles[i][j]) {
+				break;
+			}
+		}
+		if (j >= tile_size) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void create_tilemap(struct Options opts, struct GBImage *gb, struct Tilemap *tilemap) {
+	int i, j;
+	int gb_i;
+	int tile_size;
+	int max_tiles;
+	int num_tiles;
+	int index;
+	int gb_size;
+	uint8_t *tile;
+	uint8_t **tiles;
+
+	tile_size = sizeof(uint8_t) * depth * 8;
+	gb_size = gb->size - (gb->trim * tile_size);
+	max_tiles = gb_size / tile_size;
+	tiles = malloc(sizeof(uint8_t*) * max_tiles);
+	num_tiles = 0;
+
+	tilemap->data = malloc(sizeof(uint8_t) * max_tiles);
+	tilemap->size = 0;
+
+	gb_i = 0;
+	while (gb_i < gb_size) {
+		tile = malloc(tile_size);
+		for (i = 0; i < tile_size; i++) {
+			tile[i] = gb->data[gb_i];
+			gb_i++;
+		}
+		if (opts.unique) {
+			index = get_tile_index(tile, tiles, num_tiles, tile_size);
+			if (index < 0) {
+				index = num_tiles;
+				tiles[num_tiles] = tile;
+				num_tiles++;
+			}
+		} else {
+			index = num_tiles;
+			tiles[num_tiles] = tile;
+			num_tiles++;
+		}
+		tilemap->data[tilemap->size] = index;
+		tilemap->size++;
+	}
+
+	if (opts.unique) {
+		free(gb->data);
+		gb->data = malloc(tile_size * num_tiles);
+		for (i = 0; i < num_tiles; i++) {
+			tile = tiles[i];
+			for (j = 0; j < tile_size; j++) {
+				gb->data[i * tile_size + j] = tile[j];
+			}
+		}
+		gb->size = i * tile_size;
+	}
+
+	for (i = 0; i < num_tiles; i++) {
+		free(tiles[i]);
+	}
+	free(tiles);
+}
+
+void output_tilemap_file(struct Options opts, struct Tilemap tilemap) {
 	FILE *f;
 
 	f = fopen(opts.mapfile, "wb");
 	if(!f) {
 		err(EXIT_FAILURE, "Opening tilemap file '%s' failed", opts.mapfile);
 	}
+
+	fwrite(tilemap.data, 1, tilemap.size, f);
 	fclose(f);
 
 	if(opts.mapout) {

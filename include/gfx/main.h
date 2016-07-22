@@ -34,8 +34,8 @@ struct Options {
 	bool verbose;
 	bool hardfix;
 	bool fix;
-	bool binary;
 	bool horizontal;
+	bool unique;
 	int trim;
 	char *mapfile;
 	bool mapout;
@@ -64,10 +64,16 @@ struct PNGImage {
 struct GBImage {
 	uint8_t *data;
 	int size;
-	int depth;
 	bool horizontal;
 	int trim;
 };
+
+struct Tilemap {
+	uint8_t *data;
+	int size;
+};
+
+int depth, colors;
 
 #include "gfx/png.h"
 #include "gfx/gb.h"

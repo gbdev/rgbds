@@ -18,15 +18,12 @@
 
 void input_png_file(struct Options opts, struct PNGImage *img) {
 	FILE *f;
-	int i, y, num_trans, depth, colors;
+	int i, y, num_trans;
 	bool has_palette;
 	png_byte *trans_alpha;
 	png_color_16 *trans_values;
 	bool *full_alpha;
 	png_color *palette;
-
-	depth = (opts.binary ? 1 : 2);
-	colors = depth * depth;
 
 	f = fopen(opts.infile, "rb");
 	if(!f) {
@@ -63,15 +60,20 @@ void input_png_file(struct Options opts, struct PNGImage *img) {
 
 	if(img->depth != depth) {
 		if(opts.verbose) {
-			warnx("Image bit depth is not %i.", depth);
+			warnx("Image bit depth is not %i (is %i).", depth, img->depth);
 		}
+	}
 
+	if (true) {
 		if(img->type == PNG_COLOR_TYPE_GRAY) {
 			if(img->depth < 8) {
 				png_set_expand_gray_1_2_4_to_8(img->png);
 			}
 			png_set_gray_to_rgb(img->png);
 		} else {
+			if(img->depth < 8) {
+				png_set_expand_gray_1_2_4_to_8(img->png);
+			}
 			has_palette = png_get_PLTE(img->png, img->info, &palette, &colors);
 		}
 
