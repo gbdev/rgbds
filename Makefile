@@ -1,7 +1,8 @@
 PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
 PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
+PNGLIBS !=	${PKG_CONFIG} --libs libpng
+REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
 # User-defined variables
@@ -9,7 +10,6 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
-PKG_CONFIG =	pkg-config
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -82,13 +82,16 @@ rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CC} `${PKG_CONFIG} --libs libpng` ${REALCFLAGS} -o $@ ${rgbgfx_obj}
+	$Q${CC} ${REALCFLAGS} ${PNGFLAGS} -o $@ ${rgbgfx_obj} ${PNGLIBS}
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
+
+src/gfx/%.o: src/gfx/%.c
+	$Q${CC} ${REALCFLAGS} ${PNGFLAGS} -c -o $@ $<
 
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c

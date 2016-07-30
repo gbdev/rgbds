@@ -17,9 +17,9 @@
 #ifndef RGBDS_GFX_MAIN_H
 #define RGBDS_GFX_MAIN_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <png.h>
-#include "extern/err.h"
 
 #define strequ(str1, str2) (strcmp(str1, str2) == 0)
 
@@ -28,8 +28,8 @@ struct Options {
 	bool verbose;
 	bool hardfix;
 	bool fix;
-	bool binary;
 	bool horizontal;
+	bool unique;
 	int trim;
 	char *mapfile;
 	bool mapout;
@@ -58,13 +58,15 @@ struct PNGImage {
 struct GBImage {
 	uint8_t *data;
 	int size;
-	int depth;
 	bool horizontal;
 	int trim;
 };
 
-#include "gfx/png.h"
-#include "gfx/gb.h"
+struct Tilemap {
+	uint8_t *data;
+	int size;
+};
+
+int depth, colors;
 
 #endif
-

@@ -16,36 +16,28 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <png.h>
 
 #include "gfx/main.h"
+#include "gfx/png.h"
+#include "gfx/gb.h"
+#include "extern/err.h"
 
-char *progname;
-
-static void
-usage(void)
-{
+static void usage(void) {
 	printf(
-"Usage: rgbgfx [-v] [-F] [-f] [-b] [-h] [-x #] [-t mapfile] [-T] [-p palfile]\n"
-"              [-P] [-o outfile] infile\n");
+"Usage: rgbgfx [-D] [-v] [-F] [-f] [-d #] [-h] [-x #] [-t mapfile] [-T]\n"
+"              [-u] [-p palfile] [-P] [-o outfile] infile\n");
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	int ch, size;
 	struct Options opts = {0};
 	struct PNGImage png = {0};
 	struct GBImage gb = {0};
+	struct Tilemap tilemap = {0};
 	char *ext;
 	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
-
-	progname = argv[0];
 
 	if (argc == 1) {
 		usage();
@@ -55,7 +47,9 @@ main(int argc, char *argv[])
 	opts.palfile = "";
 	opts.outfile = "";
 
-	while ((ch = getopt(argc, argv, "DvFfbhx:Tt:Pp:o:")) != -1) {
+	depth = 2;
+
+	while ((ch = getopt(argc, argv, "DvFfd:hx:Tt:uPp:o:")) != -1) {
 		switch(ch) {
 		case 'D':
 			opts.debug = true;
@@ -68,8 +62,8 @@ main(int argc, char *argv[])
 		case 'f':
 			opts.fix = true;
 			break;
-		case 'b':
-			opts.binary = true;
+		case 'd':
+			depth = strtoul(optarg, NULL, 0);
 			break;
 		case 'h':
 			opts.horizontal = true;
@@ -82,6 +76,9 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			opts.mapfile = optarg;
+			break;
+		case 'u':
+			opts.unique = true;
 			break;
 		case 'P':
 			opts.palout = true;
@@ -104,6 +101,11 @@ main(int argc, char *argv[])
 	}
 
 	opts.infile = argv[argc - 1];
+
+	if (depth != 1 && depth != 2) {
+		errx(1, "Depth option must be either 1 or 2.");
+	}
+	colors = 1 << depth;
 
 	input_png_file(opts, &png);
 
@@ -136,7 +138,7 @@ main(int argc, char *argv[])
 		opts.trim = png.trim;
 	}
 	if (opts.trim > png.width / 8 - 1) {
-		errx(EXIT_FAILURE, "Trim (%i) for input png file '%s' too large (max: %i)", opts.trim, opts.infile, png.width / 8 - 1);
+		errx(1, "Trim (%i) for input png file '%s' too large (max: %i)", opts.trim, opts.infile, png.width / 8 - 1);
 	}
 
 	if (!strequ(png.mapfile, opts.mapfile)) {
@@ -165,7 +167,7 @@ main(int argc, char *argv[])
 
 	if (!strequ(png.palfile, opts.palfile)) {
 		if (opts.verbose) {
-			warnx(errmsg, "pallette file");
+			warnx(errmsg, "palette file");
 		}
 		if (opts.hardfix) {
 			png.palfile = opts.palfile;
@@ -177,7 +179,7 @@ main(int argc, char *argv[])
 
 	if (png.palout != opts.palout) {
 		if (opts.verbose) {
-			warnx(errmsg, "pallette file");
+			warnx(errmsg, "palette file");
 		}
 		if (opts.hardfix) {
 			png.palout = opts.palout;
@@ -215,19 +217,22 @@ main(int argc, char *argv[])
 		}
 	}
 
-	gb.depth = (opts.binary ? 1 : 2);
-	gb.size = png.width * png.height / (4 * (3 - gb.depth));
+	gb.size = png.width * png.height * depth / 8;
 	gb.data = calloc(gb.size, 1);
 	gb.trim = opts.trim;
 	gb.horizontal = opts.horizontal;
 
-	if (*opts.outfile) {
+	if (*opts.outfile || *opts.mapfile) {
 		png_to_gb(png, &gb);
+		create_tilemap(opts, &gb, &tilemap);
+	}
+
+	if (*opts.outfile) {
 		output_file(opts, gb);
 	}
 
 	if (*opts.mapfile) {
-		output_tilemap_file(opts);
+		output_tilemap_file(opts, tilemap);
 	}
 
 	if (*opts.palfile) {
@@ -242,5 +247,5 @@ main(int argc, char *argv[])
 	free_png_data(&png);
 	free(gb.data);
 
-	return EXIT_SUCCESS;
+	return 0;
 }

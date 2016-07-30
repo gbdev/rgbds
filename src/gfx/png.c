@@ -14,25 +14,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-#include <png.h>
-#include "gfx/main.h"
+#include <stdlib.h>
 
-void
-input_png_file(struct Options opts, struct PNGImage *img)
-{
+#include "gfx/main.h"
+#include "gfx/png.h"
+#include "extern/err.h"
+
+void input_png_file(struct Options opts, struct PNGImage *img) {
 	FILE *f;
-	int i, y, num_trans, depth, colors;
+	int i, y, num_trans;
 	bool has_palette;
 	png_byte *trans_alpha;
 	png_color_16 *trans_values;
 	bool *full_alpha;
 	png_color *palette;
-
-	depth = (opts.binary ? 1 : 2);
-	colors = depth * depth;
 
 	f = fopen(opts.infile, "rb");
 	if (!f) {
@@ -69,96 +65,98 @@ input_png_file(struct Options opts, struct PNGImage *img)
 
 	if (img->depth != depth) {
 		if (opts.verbose) {
-			warnx("Image bit depth is not %i.", depth);
+			warnx("Image bit depth is not %i (is %i).", depth, img->depth);
 		}
+	}
 
-		has_palette = false;
-		if (img->type == PNG_COLOR_TYPE_GRAY) {
-			if (img->depth < 8) {
-				png_set_expand_gray_1_2_4_to_8(img->png);
-			}
-			png_set_gray_to_rgb(img->png);
-		} else {
-			has_palette = png_get_PLTE(img->png, img->info, &palette, &colors);
+	if (img->type == PNG_COLOR_TYPE_GRAY) {
+		if (img->depth < 8) {
+			png_set_expand_gray_1_2_4_to_8(img->png);
 		}
+		png_set_gray_to_rgb(img->png);
+	} else {
+		if (img->depth < 8) {
+			png_set_expand_gray_1_2_4_to_8(img->png);
+		}
+		has_palette = png_get_PLTE(img->png, img->info, &palette, &colors);
+	}
 
-		if (png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans, &trans_values)) {
-			if (img->type == PNG_COLOR_TYPE_PALETTE) {
-				full_alpha = malloc(sizeof(bool) * num_trans);
+	if (png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans, &trans_values)) {
+		if (img->type == PNG_COLOR_TYPE_PALETTE) {
+			full_alpha = malloc(sizeof(bool) * num_trans);
 
-				for (i = 0; i < num_trans; i++) {
-					if (trans_alpha[i] > 0) {
-						full_alpha[i] = false;
-					} else {
-						full_alpha[i] = true;
-					}
+			for (i = 0; i < num_trans; i++) {
+				if (trans_alpha[i] > 0) {
+					full_alpha[i] = false;
+				} else {
+					full_alpha[i] = true;
 				}
+			}
 
-				for (i = 0; i < num_trans; i++) {
-					if (full_alpha[i]) {
-						palette[i].red   = 0xFF;
-						palette[i].green = 0x00;
-						palette[i].blue  = 0xFF;
-						/* Set to the lightest color in the palette. */
-					}
+			for (i = 0; i < num_trans; i++) {
+				if (full_alpha[i]) {
+					palette[i].red   = 0xFF;
+					palette[i].green = 0x00;
+					palette[i].blue  = 0xFF;
+					/* Set to the lightest color in the palette. */
 				}
-
-				free(full_alpha);
-			} else {
-				/* Set to the lightest color in the image. */
 			}
 
-			png_free_data(img->png, img->info, PNG_FREE_TRNS, -1);
-		}
-
-		if (has_palette) {
-			/* Make sure palette only has the amount of colors you want. */
+			free(full_alpha);
 		} else {
-			/* Eventually when this copies colors from the image itself, make sure order is lightest to darkest. */
-			palette = malloc(sizeof(png_color) * colors);
-
-			if (strequ(opts.infile, "rgb.png")) {
-				palette[0].red   = 0xFF;
-				palette[0].green = 0xEF;
-				palette[0].blue  = 0xFF;
-
-				palette[1].red   = 0xF7;
-				palette[1].green = 0xF7;
-				palette[1].blue  = 0x8C;
-
-				palette[2].red   = 0x94;
-				palette[2].green = 0x94;
-				palette[2].blue  = 0xC6;
-
-				palette[3].red   = 0x39;
-				palette[3].green = 0x39;
-				palette[3].blue  = 0x84;
-			} else {
-				palette[0].red   = 0xFF;
-				palette[0].green = 0xFF;
-				palette[0].blue  = 0xFF;
-
-				palette[1].red   = 0xA9;
-				palette[1].green = 0xA9;
-				palette[1].blue  = 0xA9;
-
-				palette[2].red   = 0x55;
-				palette[2].green = 0x55;
-				palette[2].blue  = 0x55;
-
-				palette[3].red   = 0x00;
-				palette[3].green = 0x00;
-				palette[3].blue  = 0x00;
-			}
+			/* Set to the lightest color in the image. */
 		}
 
-		/* Also unfortunately, this sets it at 8 bit, and I cant find any option to reduce to 2 or 1 bit. */
-		png_set_quantize(img->png, palette, colors, colors, NULL, 1);
+		png_free_data(img->png, img->info, PNG_FREE_TRNS, -1);
+	}
 
-		if (!has_palette) {
-			png_set_PLTE(img->png, img->info, palette, colors);
-			free(palette);
+	if (has_palette) {
+		/* Make sure palette only has the amount of colors you want. */
+	} else {
+		/* Eventually when this copies colors from the image itself, make sure order is lightest to darkest. */
+		palette = malloc(sizeof(png_color) * colors);
+
+		if (strequ(opts.infile, "rgb.png")) {
+			palette[0].red   = 0xFF;
+			palette[0].green = 0xEF;
+			palette[0].blue  = 0xFF;
+
+			palette[1].red   = 0xF7;
+			palette[1].green = 0xF7;
+			palette[1].blue  = 0x8C;
+
+			palette[2].red   = 0x94;
+			palette[2].green = 0x94;
+			palette[2].blue  = 0xC6;
+
+			palette[3].red   = 0x39;
+			palette[3].green = 0x39;
+			palette[3].blue  = 0x84;
+		} else {
+			palette[0].red   = 0xFF;
+			palette[0].green = 0xFF;
+			palette[0].blue  = 0xFF;
+
+			palette[1].red   = 0xA9;
+			palette[1].green = 0xA9;
+			palette[1].blue  = 0xA9;
+
+			palette[2].red   = 0x55;
+			palette[2].green = 0x55;
+			palette[2].blue  = 0x55;
+
+			palette[3].red   = 0x00;
+			palette[3].green = 0x00;
+			palette[3].blue  = 0x00;
 		}
+	}
+
+	/* Also unfortunately, this sets it at 8 bit, and I cant find any option to reduce to 2 or 1 bit. */
+	png_set_quantize(img->png, palette, colors, colors, NULL, 1);
+
+	if (!has_palette) {
+		png_set_PLTE(img->png, img->info, palette, colors);
+		free(palette);
 	}
 
 	/* If other useless chunks exist (sRGB, bKGD, pHYs, gAMA, cHRM, iCCP, etc.) offer to remove? */
@@ -176,9 +174,7 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	fclose(f);
 }
 
-void
-get_text(struct PNGImage *png)
-{
+void get_text(struct PNGImage *png) {
 	png_text *text;
 	int i, numtxts, numremoved;
 
@@ -217,9 +213,7 @@ get_text(struct PNGImage *png)
 	png_set_text(png->png, png->info, text, numtxts - numremoved);
 }
 
-void
-set_text(struct PNGImage *png)
-{
+void set_text(struct PNGImage *png) {
 	png_text *text;
 	char buffer[3];
 
@@ -266,9 +260,7 @@ set_text(struct PNGImage *png)
 	free(text);
 }
 
-void
-output_png_file(struct Options opts, struct PNGImage *png)
-{
+void output_png_file(struct Options opts, struct PNGImage *png) {
 	FILE *f;
 	char *outfile;
 	png_struct *img;
@@ -311,9 +303,7 @@ output_png_file(struct Options opts, struct PNGImage *png)
 	}
 }
 
-void
-free_png_data(struct PNGImage *png)
-{
+void free_png_data(struct PNGImage *png) {
 	int y;
 
 	for (y = 0; y < png->height; y++) {
