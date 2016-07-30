@@ -26,7 +26,7 @@ void transpose_tiles(struct GBImage *gb, int width) {
 	int newbyte;
 
 	newdata = calloc(gb->size, 1);
-	for(i = 0; i < gb->size; i++) {
+	for (i = 0; i < gb->size; i++) {
 		newbyte = i / (8 * depth) * width * 8 * depth;
 		newbyte = newbyte % gb->size + 8 * depth * (newbyte / gb->size) + i % (8 * depth);
 		newdata[newbyte] = gb->data[i];
@@ -41,24 +41,24 @@ void png_to_gb(struct PNGImage png, struct GBImage *gb) {
 	int x, y, byte;
 	png_byte index;
 
-	for(y = 0; y < png.height; y++) {
-		for(x = 0; x < png.width; x++) {
+	for (y = 0; y < png.height; y++) {
+		for (x = 0; x < png.width; x++) {
 			index = png.data[y][x];
 			index &= (1 << depth) - 1;
 
-			if(!gb->horizontal) {
+			if (!gb->horizontal) {
 				byte = y * depth + x / 8 * png.height / 8 * 8 * depth;
 			} else {
 				byte = y * depth + x / 8 * png.height / 8 * 8 * depth;
 			}
 			gb->data[byte] |= (index & 1) << (7 - x % 8);
-			if(depth == 2) {
+			if (depth == 2) {
 				gb->data[byte + 1] |= (index >> 1) << (7 - x % 8);
 			}
 		}
 	}
 
-	if(!gb->horizontal) {
+	if (!gb->horizontal) {
 		transpose_tiles(gb, png.width / 8);
 	}
 }
@@ -67,7 +67,7 @@ void output_file(struct Options opts, struct GBImage gb) {
 	FILE *f;
 
 	f = fopen(opts.outfile, "wb");
-	if(!f) {
+	if (!f) {
 		err(1, "Opening output file '%s' failed", opts.outfile);
 	}
 	fwrite(gb.data, 1, gb.size - gb.trim * 8 * depth, f);
@@ -155,14 +155,14 @@ void output_tilemap_file(struct Options opts, struct Tilemap tilemap) {
 	FILE *f;
 
 	f = fopen(opts.mapfile, "wb");
-	if(!f) {
+	if (!f) {
 		err(1, "Opening tilemap file '%s' failed", opts.mapfile);
 	}
 
 	fwrite(tilemap.data, 1, tilemap.size, f);
 	fclose(f);
 
-	if(opts.mapout) {
+	if (opts.mapout) {
 		free(opts.mapfile);
 	}
 }
@@ -172,19 +172,19 @@ void output_palette_file(struct Options opts, struct PNGImage png) {
 	int i, colors, color;
 	png_color *palette;
 
-	if(png_get_PLTE(png.png, png.info, &palette, &colors)) {
+	if (png_get_PLTE(png.png, png.info, &palette, &colors)) {
 		f = fopen(opts.palfile, "wb");
-		if(!f) {
+		if (!f) {
 			err(1, "Opening palette file '%s' failed", opts.palfile);
 		}
-		for(i = 0; i < colors; i++) {
+		for (i = 0; i < colors; i++) {
 			color = palette[i].blue >> 3 << 10 | palette[i].green >> 3 << 5 | palette[i].red >> 3;
 			fwrite(&color, 2, 1, f);
 		}
 		fclose(f);
 	}
 
-	if(opts.palout) {
+	if (opts.palout) {
 		free(opts.palfile);
 	}
 }

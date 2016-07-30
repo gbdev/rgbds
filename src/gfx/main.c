@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	char *ext;
 	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
 
-	if(argc == 1) {
+	if (argc == 1) {
 		usage();
 	}
 
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
 	depth = 2;
 
-	while((ch = getopt(argc, argv, "DvFfd:hx:Tt:uPp:o:")) != -1) {
+	while ((ch = getopt(argc, argv, "DvFfd:hx:Tt:uPp:o:")) != -1) {
 		switch(ch) {
 		case 'D':
 			opts.debug = true;
@@ -96,13 +96,13 @@ int main(int argc, char *argv[]) {
 	argc -= optind;
 	argv += optind;
 
-	if(argc == 0) {
+	if (argc == 0) {
 		usage();
 	}
 
 	opts.infile = argv[argc - 1];
 
-	if(depth != 1 && depth != 2) {
+	if (depth != 1 && depth != 2) {
 		errx(1, "Depth option must be either 1 or 2.");
 	}
 	colors = 1 << depth;
@@ -114,83 +114,83 @@ int main(int argc, char *argv[]) {
 
 	get_text(&png);
 
-	if(png.horizontal != opts.horizontal) {
-		if(opts.verbose) {
+	if (png.horizontal != opts.horizontal) {
+		if (opts.verbose) {
 			warnx(errmsg, "horizontal");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.horizontal = opts.horizontal;
 		}
 	}
-	if(png.horizontal) {
+	if (png.horizontal) {
 		opts.horizontal = png.horizontal;
 	}
 
-	if(png.trim != opts.trim) {
-		if(opts.verbose) {
+	if (png.trim != opts.trim) {
+		if (opts.verbose) {
 			warnx(errmsg, "trim");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.trim = opts.trim;
 		}
 	}
-	if(png.trim) {
+	if (png.trim) {
 		opts.trim = png.trim;
 	}
-	if(opts.trim > png.width / 8 - 1) {
+	if (opts.trim > png.width / 8 - 1) {
 		errx(1, "Trim (%i) for input png file '%s' too large (max: %i)", opts.trim, opts.infile, png.width / 8 - 1);
 	}
 
-	if(!strequ(png.mapfile, opts.mapfile)) {
-		if(opts.verbose) {
+	if (!strequ(png.mapfile, opts.mapfile)) {
+		if (opts.verbose) {
 			warnx(errmsg, "tilemap file");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.mapfile = opts.mapfile;
 		}
 	}
-	if(!*opts.mapfile) {
+	if (!*opts.mapfile) {
 		opts.mapfile = png.mapfile;
 	}
 
-	if(png.mapout != opts.mapout) {
-		if(opts.verbose) {
+	if (png.mapout != opts.mapout) {
+		if (opts.verbose) {
 			warnx(errmsg, "tilemap file");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.mapout = opts.mapout;
 		}
 	}
-	if(png.mapout) {
+	if (png.mapout) {
 		opts.mapout = png.mapout;
 	}
 
-	if(!strequ(png.palfile, opts.palfile)) {
-		if(opts.verbose) {
+	if (!strequ(png.palfile, opts.palfile)) {
+		if (opts.verbose) {
 			warnx(errmsg, "palette file");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.palfile = opts.palfile;
 		}
 	}
-	if(!*opts.palfile) {
+	if (!*opts.palfile) {
 		opts.palfile = png.palfile;
 	}
 
-	if(png.palout != opts.palout) {
-		if(opts.verbose) {
+	if (png.palout != opts.palout) {
+		if (opts.verbose) {
 			warnx(errmsg, "palette file");
 		}
-		if(opts.hardfix) {
+		if (opts.hardfix) {
 			png.palout = opts.palout;
 		}
 	}
-	if(png.palout) {
+	if (png.palout) {
 		opts.palout = png.palout;
 	}
 
-	if(!*opts.mapfile && opts.mapout) {
-		if((ext = strrchr(opts.infile, '.')) != NULL) {
+	if (!*opts.mapfile && opts.mapout) {
+		if ((ext = strrchr(opts.infile, '.')) != NULL) {
 			size = ext - opts.infile + 9;
 			opts.mapfile = malloc(size);
 			strncpy(opts.mapfile, opts.infile, size);
@@ -203,8 +203,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if(!*opts.palfile && opts.palout) {
-		if((ext = strrchr(opts.infile, '.')) != NULL) {
+	if (!*opts.palfile && opts.palout) {
+		if ((ext = strrchr(opts.infile, '.')) != NULL) {
 			size = ext - opts.infile + 5;
 			opts.palfile = malloc(size);
 			strncpy(opts.palfile, opts.infile, size);
@@ -222,24 +222,24 @@ int main(int argc, char *argv[]) {
 	gb.trim = opts.trim;
 	gb.horizontal = opts.horizontal;
 
-	if(*opts.outfile || *opts.mapfile) {
+	if (*opts.outfile || *opts.mapfile) {
 		png_to_gb(png, &gb);
 		create_tilemap(opts, &gb, &tilemap);
 	}
 
-	if(*opts.outfile) {
+	if (*opts.outfile) {
 		output_file(opts, gb);
 	}
 
-	if(*opts.mapfile) {
+	if (*opts.mapfile) {
 		output_tilemap_file(opts, tilemap);
 	}
 
-	if(*opts.palfile) {
+	if (*opts.palfile) {
 		output_palette_file(opts, png);
 	}
 
-	if(opts.fix || opts.debug) {
+	if (opts.fix || opts.debug) {
 		set_text(&png);
 		output_png_file(opts, &png);
 	}
