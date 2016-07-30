@@ -1,7 +1,7 @@
-.POSIX:
-
+PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
+PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
+REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
 # User-defined variables
@@ -9,6 +9,7 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
+PKG_CONFIG =	pkg-config
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -43,9 +44,9 @@ rgbfix_obj = \
 	src/extern/err.o
 
 rgbgfx_obj = \
+	src/gfx/gb.o \
 	src/gfx/main.o \
 	src/gfx/png.o \
-	src/gfx/gb.o \
 	src/extern/err.o
 
 all: rgbasm rgblink rgbfix rgbgfx
