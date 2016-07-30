@@ -69,96 +69,94 @@ void input_png_file(struct Options opts, struct PNGImage *img) {
 		}
 	}
 
-	if (true) {
-		if(img->type == PNG_COLOR_TYPE_GRAY) {
-			if(img->depth < 8) {
-				png_set_expand_gray_1_2_4_to_8(img->png);
-			}
-			png_set_gray_to_rgb(img->png);
-		} else {
-			if(img->depth < 8) {
-				png_set_expand_gray_1_2_4_to_8(img->png);
-			}
-			has_palette = png_get_PLTE(img->png, img->info, &palette, &colors);
+	if(img->type == PNG_COLOR_TYPE_GRAY) {
+		if(img->depth < 8) {
+			png_set_expand_gray_1_2_4_to_8(img->png);
 		}
+		png_set_gray_to_rgb(img->png);
+	} else {
+		if(img->depth < 8) {
+			png_set_expand_gray_1_2_4_to_8(img->png);
+		}
+		has_palette = png_get_PLTE(img->png, img->info, &palette, &colors);
+	}
 
-		if(png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans, &trans_values)) {
-			if(img->type == PNG_COLOR_TYPE_PALETTE) {
-				full_alpha = malloc(sizeof(bool) * num_trans);
+	if(png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans, &trans_values)) {
+		if(img->type == PNG_COLOR_TYPE_PALETTE) {
+			full_alpha = malloc(sizeof(bool) * num_trans);
 
-				for(i = 0; i < num_trans; i++) {
-					if(trans_alpha[i] > 0) {
-						full_alpha[i] = false;
-					} else {
-						full_alpha[i] = true;
-					}
+			for(i = 0; i < num_trans; i++) {
+				if(trans_alpha[i] > 0) {
+					full_alpha[i] = false;
+				} else {
+					full_alpha[i] = true;
 				}
+			}
 
-				for(i = 0; i < num_trans; i++) {
-					if(full_alpha[i]) {
-						palette[i].red   = 0xFF;
-						palette[i].green = 0x00;
-						palette[i].blue  = 0xFF;
-						/* Set to the lightest color in the palette. */
-					}
+			for(i = 0; i < num_trans; i++) {
+				if(full_alpha[i]) {
+					palette[i].red   = 0xFF;
+					palette[i].green = 0x00;
+					palette[i].blue  = 0xFF;
+					/* Set to the lightest color in the palette. */
 				}
-
-				free(full_alpha);
-			} else {
-				/* Set to the lightest color in the image. */
 			}
 
-			png_free_data(img->png, img->info, PNG_FREE_TRNS, -1);
-		}
-
-		if(has_palette) {
-			/* Make sure palette only has the amount of colors you want. */
+			free(full_alpha);
 		} else {
-			/* Eventually when this copies colors from the image itself, make sure order is lightest to darkest. */
-			palette = malloc(sizeof(png_color) * colors);
-
-			if(strequ(opts.infile, "rgb.png")) {
-				palette[0].red   = 0xFF;
-				palette[0].green = 0xEF;
-				palette[0].blue  = 0xFF;
-
-				palette[1].red   = 0xF7;
-				palette[1].green = 0xF7;
-				palette[1].blue  = 0x8C;
-
-				palette[2].red   = 0x94;
-				palette[2].green = 0x94;
-				palette[2].blue  = 0xC6;
-
-				palette[3].red   = 0x39;
-				palette[3].green = 0x39;
-				palette[3].blue  = 0x84;
-			} else {
-				palette[0].red   = 0xFF;
-				palette[0].green = 0xFF;
-				palette[0].blue  = 0xFF;
-
-				palette[1].red   = 0xA9;
-				palette[1].green = 0xA9;
-				palette[1].blue  = 0xA9;
-
-				palette[2].red   = 0x55;
-				palette[2].green = 0x55;
-				palette[2].blue  = 0x55;
-
-				palette[3].red   = 0x00;
-				palette[3].green = 0x00;
-				palette[3].blue  = 0x00;
-			}
+			/* Set to the lightest color in the image. */
 		}
 
-		/* Also unfortunately, this sets it at 8 bit, and I cant find any option to reduce to 2 or 1 bit. */
-		png_set_quantize(img->png, palette, colors, colors, NULL, 1);
+		png_free_data(img->png, img->info, PNG_FREE_TRNS, -1);
+	}
 
-		if(!has_palette) {
-			png_set_PLTE(img->png, img->info, palette, colors);
-			free(palette);
+	if(has_palette) {
+		/* Make sure palette only has the amount of colors you want. */
+	} else {
+		/* Eventually when this copies colors from the image itself, make sure order is lightest to darkest. */
+		palette = malloc(sizeof(png_color) * colors);
+
+		if(strequ(opts.infile, "rgb.png")) {
+			palette[0].red   = 0xFF;
+			palette[0].green = 0xEF;
+			palette[0].blue  = 0xFF;
+
+			palette[1].red   = 0xF7;
+			palette[1].green = 0xF7;
+			palette[1].blue  = 0x8C;
+
+			palette[2].red   = 0x94;
+			palette[2].green = 0x94;
+			palette[2].blue  = 0xC6;
+
+			palette[3].red   = 0x39;
+			palette[3].green = 0x39;
+			palette[3].blue  = 0x84;
+		} else {
+			palette[0].red   = 0xFF;
+			palette[0].green = 0xFF;
+			palette[0].blue  = 0xFF;
+
+			palette[1].red   = 0xA9;
+			palette[1].green = 0xA9;
+			palette[1].blue  = 0xA9;
+
+			palette[2].red   = 0x55;
+			palette[2].green = 0x55;
+			palette[2].blue  = 0x55;
+
+			palette[3].red   = 0x00;
+			palette[3].green = 0x00;
+			palette[3].blue  = 0x00;
 		}
+	}
+
+	/* Also unfortunately, this sets it at 8 bit, and I cant find any option to reduce to 2 or 1 bit. */
+	png_set_quantize(img->png, palette, colors, colors, NULL, 1);
+
+	if(!has_palette) {
+		png_set_PLTE(img->png, img->info, palette, colors);
+		free(palette);
 	}
 
 	/* If other useless chunks exist (sRGB, bKGD, pHYs, gAMA, cHRM, iCCP, etc.) offer to remove? */
