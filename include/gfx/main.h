@@ -17,15 +17,9 @@
 #ifndef RGBDS_GFX_MAIN_H
 #define RGBDS_GFX_MAIN_H
 
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <png.h>
-
-#include "extern/err.h"
 
 #define strequ(str1, str2) (strcmp(str1, str2) == 0)
 
@@ -74,8 +68,5 @@ struct Tilemap {
 };
 
 int depth, colors;
-
-#include "gfx/png.h"
-#include "gfx/gb.h"
 
 #endif

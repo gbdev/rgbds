@@ -14,7 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "gfx/main.h"
+#include "gfx/png.h"
+#include "extern/err.h"
 
 void input_png_file(struct Options opts, struct PNGImage *img) {
 	FILE *f;

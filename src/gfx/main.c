@@ -14,7 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "gfx/main.h"
+#include "gfx/png.h"
+#include "gfx/gb.h"
+#include "extern/err.h"
 
 static void usage(void) {
 	printf(
@@ -240,5 +247,5 @@ int main(int argc, char *argv[]) {
 	free_png_data(&png);
 	free(gb.data);
 
-	return EXIT_SUCCESS;
+	return 0;
 }

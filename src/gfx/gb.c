@@ -14,7 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+
 #include "gfx/main.h"
+#include "gfx/gb.h"
+#include "extern/err.h"
 
 void transpose_tiles(struct GBImage *gb, int width) {
 	uint8_t *newdata;
