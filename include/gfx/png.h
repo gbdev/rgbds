@@ -24,4 +24,3 @@ void output_png_file(struct Options opts, struct PNGImage *png);
 void free_png_data(struct PNGImage *png);
 
 #endif
-

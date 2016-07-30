@@ -79,4 +79,3 @@ int depth, colors;
 #include "gfx/gb.h"
 
 #endif
-

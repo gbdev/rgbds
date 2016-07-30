@@ -308,4 +308,3 @@ void free_png_data(struct PNGImage *png) {
 	}
 	free(png->data);
 }
-

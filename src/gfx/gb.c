@@ -184,4 +184,3 @@ void output_palette_file(struct Options opts, struct PNGImage png) {
 		free(opts.palfile);
 	}
 }
-

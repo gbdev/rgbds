@@ -25,4 +25,3 @@ void output_tilemap_file(struct Options opts, struct Tilemap tilemap);
 void output_palette_file(struct Options opts, struct PNGImage png);
 
 #endif
-
