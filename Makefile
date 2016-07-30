@@ -55,7 +55,7 @@ clean:
 	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
 	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	$Qrm -rf rgbgfx ${rgbgfx_obj}
+	$Qrm -rf rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
 
 install: all
@@ -120,3 +120,5 @@ wwwman:
 		rgbfix.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 | sed s/OpenBSD/General/ > \
+		rgbgfx.html
