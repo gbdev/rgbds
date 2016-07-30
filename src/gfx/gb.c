@@ -68,7 +68,7 @@ void output_file(struct Options opts, struct GBImage gb) {
 
 	f = fopen(opts.outfile, "wb");
 	if(!f) {
-		err(EXIT_FAILURE, "Opening output file '%s' failed", opts.outfile);
+		err(1, "Opening output file '%s' failed", opts.outfile);
 	}
 	fwrite(gb.data, 1, gb.size - gb.trim * 8 * depth, f);
 
@@ -156,7 +156,7 @@ void output_tilemap_file(struct Options opts, struct Tilemap tilemap) {
 
 	f = fopen(opts.mapfile, "wb");
 	if(!f) {
-		err(EXIT_FAILURE, "Opening tilemap file '%s' failed", opts.mapfile);
+		err(1, "Opening tilemap file '%s' failed", opts.mapfile);
 	}
 
 	fwrite(tilemap.data, 1, tilemap.size, f);
@@ -175,7 +175,7 @@ void output_palette_file(struct Options opts, struct PNGImage png) {
 	if(png_get_PLTE(png.png, png.info, &palette, &colors)) {
 		f = fopen(opts.palfile, "wb");
 		if(!f) {
-			err(EXIT_FAILURE, "Opening palette file '%s' failed", opts.palfile);
+			err(1, "Opening palette file '%s' failed", opts.palfile);
 		}
 		for(i = 0; i < colors; i++) {
 			color = palette[i].blue >> 3 << 10 | palette[i].green >> 3 << 5 | palette[i].red >> 3;

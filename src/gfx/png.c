@@ -32,22 +32,22 @@ void input_png_file(struct Options opts, struct PNGImage *img) {
 
 	f = fopen(opts.infile, "rb");
 	if(!f) {
-		err(EXIT_FAILURE, "Opening input png file '%s' failed", opts.infile);
+		err(1, "Opening input png file '%s' failed", opts.infile);
 	}
 
 	img->png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!img->png) {
-		errx(EXIT_FAILURE, "Creating png structure failed");
+		errx(1, "Creating png structure failed");
 	}
 
 	img->info = png_create_info_struct(img->png);
 	if(!img->info) {
-		errx(EXIT_FAILURE, "Creating png info structure failed");
+		errx(1, "Creating png info structure failed");
 	}
 
 	/* Better error handling here? */
 	if(setjmp(png_jmpbuf(img->png))) {
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	png_init_io(img->png, f);
@@ -276,17 +276,17 @@ void output_png_file(struct Options opts, struct PNGImage *png) {
 
 	f = fopen(outfile, "wb");
 	if(!f) {
-		err(EXIT_FAILURE, "Opening output png file '%s' failed", outfile);
+		err(1, "Opening output png file '%s' failed", outfile);
 	}
 
 	img = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!img) {
-		errx(EXIT_FAILURE, "Creating png structure failed");
+		errx(1, "Creating png structure failed");
 	}
 
 	/* Better error handling here? */
 	if(setjmp(png_jmpbuf(img))) {
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
 	png_init_io(img, f);

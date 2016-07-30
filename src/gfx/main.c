@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 	opts.infile = argv[argc - 1];
 
 	if(depth != 1 && depth != 2) {
-		errx(EXIT_FAILURE, "Depth option must be either 1 or 2.");
+		errx(1, "Depth option must be either 1 or 2.");
 	}
 	colors = 1 << depth;
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 		opts.trim = png.trim;
 	}
 	if(opts.trim > png.width / 8 - 1) {
-		errx(EXIT_FAILURE, "Trim (%i) for input png file '%s' too large (max: %i)", opts.trim, opts.infile, png.width / 8 - 1);
+		errx(1, "Trim (%i) for input png file '%s' too large (max: %i)", opts.trim, opts.infile, png.width / 8 - 1);
 	}
 
 	if(!strequ(png.mapfile, opts.mapfile)) {
