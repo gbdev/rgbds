@@ -9,7 +9,6 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
-PKG_CONFIG =	pkg-config
 
 rgbasm_obj = \
 	src/asm/asmy.o \
