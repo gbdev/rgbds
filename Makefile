@@ -1,4 +1,3 @@
-PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
 PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
