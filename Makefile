@@ -1,3 +1,4 @@
+PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
 PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
@@ -8,7 +9,6 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
-PKG_CONFIG =	pkg-config
 
 rgbasm_obj = \
 	src/asm/asmy.o \
