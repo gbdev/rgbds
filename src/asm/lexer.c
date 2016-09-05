@@ -39,9 +39,8 @@ ULONG tFloatingChars[256];
 ULONG nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
-#ifdef __GNUC__
 void 
-strupr(char *s)
+upperstring(char *s)
 {
 	while (*s) {
 		*s = toupper(*s);
@@ -50,14 +49,14 @@ strupr(char *s)
 }
 
 void 
-strlwr(char *s)
+lowerstring(char *s)
 {
 	while (*s) {
 		*s = tolower(*s);
 		s += 1;
 	}
 }
-#endif
+
 void 
 yyskipbytes(ULONG count)
 {
@@ -352,7 +351,7 @@ lex_AddStrings(struct sLexInitString * lex)
 				(*ppHash)->nToken = lex->nToken;
 				(*ppHash)->pNext = NULL;
 
-				strupr((*ppHash)->tzName);
+				upperstring((*ppHash)->tzName);
 
 				if ((*ppHash)->nNameLength > nLexMaxLength)
 					nLexMaxLength = (*ppHash)->nNameLength;

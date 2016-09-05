@@ -1079,9 +1079,9 @@ string			:	T_STRING
 				|	T_OP_STRCAT '(' string ',' string ')'
 					{ strcpy($$,$3); strcat($$,$5); }
 				|	T_OP_STRUPR '(' string ')'
-					{ strcpy($$,$3); strupr($$); }
+					{ strcpy($$,$3); upperstring($$); }
 				|	T_OP_STRLWR '(' string ')'
-					{ strcpy($$,$3); strlwr($$); }
+					{ strcpy($$,$3); lowerstring($$); }
 ;
 section:
 		T_POP_SECTION string ',' sectiontype
