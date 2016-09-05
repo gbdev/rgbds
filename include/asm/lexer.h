@@ -60,8 +60,10 @@ extern void yyunputbytes(ULONG count);
 extern YY_BUFFER_STATE pCurrentBuffer;
 
 #ifdef __GNUC__
+#ifndef __MINGW32__
 extern void strupr(char *s);
 extern void strlwr(char *s);
+#endif
 #endif
 
 #endif

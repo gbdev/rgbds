@@ -40,6 +40,7 @@ ULONG nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
 #ifdef __GNUC__
+#ifndef __MINGW32__
 void 
 strupr(char *s)
 {
@@ -57,6 +58,7 @@ strlwr(char *s)
 		s += 1;
 	}
 }
+#endif
 #endif
 void 
 yyskipbytes(ULONG count)
