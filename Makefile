@@ -81,7 +81,7 @@ rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CC} `${PKG_CONFIG} --libs libpng` ${REALCFLAGS} -o $@ ${rgbgfx_obj}
+	$Q${CC} ${REALCFLAGS} -o $@ ${rgbgfx_obj} `${PKG_CONFIG} --libs libpng`
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
