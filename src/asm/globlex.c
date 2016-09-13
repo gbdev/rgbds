@@ -18,20 +18,6 @@ SLONG nGBGfxID = -1;
 SLONG nBinaryID = -1;
 
 SLONG 
-gbgfx2bin(char ch)
-{
-	SLONG i;
-
-	for (i = 0; i <= 3; i += 1) {
-		if (CurrentOptions.gbgfx[i] == ch) {
-			return (i);
-		}
-	}
-
-	return (0);
-}
-
-SLONG 
 binary2bin(char ch)
 {
 	SLONG i;
@@ -83,7 +69,7 @@ ascii2bin(char *s)
 	case '`':
 		radix = 4;
 		s += 1;
-		convertfunc = gbgfx2bin;
+		convertfunc = char2bin;
 		break;
 	case '%':
 		radix = 2;
@@ -92,18 +78,8 @@ ascii2bin(char *s)
 		break;
 	}
 
-	if (radix == 4) {
-		SLONG c;
-
-		while (*s != '\0') {
-			c = convertfunc(*s++);
-			result = result * 2 + ((c & 2) << 7) + (c & 1);
-		}
-	} else {
-		while (*s != '\0')
-			result = result * radix + convertfunc(*s++);
-	}
-
+	while (*s != '\0')
+		result = result * radix + convertfunc(*s++);
 	return (result);
 }
 
