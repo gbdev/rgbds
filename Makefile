@@ -1,7 +1,8 @@
 PKG_CONFIG =	pkg-config
 WARNFLAGS =	-Wall -Werror=implicit
 PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
+PNGLIBS !=	${PKG_CONFIG} --libs libpng
+REALCFLAGS =	${CFLAGS} ${WARNFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
 # User-defined variables
@@ -81,7 +82,7 @@ rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CC} `${PKG_CONFIG} --libs libpng` ${REALCFLAGS} -o $@ ${rgbgfx_obj}
+	$Q${CC} ${REALCFLAGS} ${PNGFLAGS} -o $@ ${rgbgfx_obj} ${PNGLIBS}
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
