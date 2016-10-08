@@ -12,6 +12,7 @@ SLONG math_ASin(SLONG i);
 SLONG math_ACos(SLONG i);
 SLONG math_ATan(SLONG i);
 SLONG math_ATan2(SLONG i, SLONG j);
+SLONG math_Pow(SLONG i, SLONG j); 
 SLONG math_Mul(SLONG i, SLONG j);
 SLONG math_Div(SLONG i, SLONG j);
 SLONG math_Round(SLONG i);
