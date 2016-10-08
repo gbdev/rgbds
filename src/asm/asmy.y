@@ -475,7 +475,7 @@ void	if_skip_to_endc( void )
 
 %token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_IF T_POP_ELSE T_POP_ENDC
 %token	T_POP_IMPORT T_POP_EXPORT T_POP_GLOBAL
-%token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
+%token	T_POP_DB T_POP_DS T_POP_DW T_POP_STR T_POP_DL 
 %token	T_POP_SECTION
 %token	T_POP_RB
 %token	T_POP_RW
@@ -609,6 +609,7 @@ simple_pseudoop	:	include
 				|	global
 				|	db
 				|	dw
+				|	str
 				|	dl
 				|	ds
 				|	section
@@ -725,6 +726,9 @@ db				:	T_POP_DB constlist_8bit
 dw				:	T_POP_DW constlist_16bit
 ;
 
+str				:	T_POP_STR constlist_8bit { out_AbsByte(0); } 
+; 
+ 
 dl				:	T_POP_DL constlist_32bit
 ;
 
