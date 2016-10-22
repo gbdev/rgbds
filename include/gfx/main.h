@@ -69,7 +69,7 @@ struct Tilemap {
 
 int depth, colors;
 
-#include "gfx/png.h"
+#include "gfx/makepng.h"
 #include "gfx/gb.h"
 
 #endif

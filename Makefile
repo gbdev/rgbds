@@ -45,7 +45,7 @@ rgbfix_obj = \
 rgbgfx_obj = \
 	src/gfx/gb.o \
 	src/gfx/main.o \
-	src/gfx/png.o \
+	src/gfx/makepng.o \
 	src/extern/err.o
 
 all: rgbasm rgblink rgbfix rgbgfx
