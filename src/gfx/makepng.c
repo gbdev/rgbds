@@ -163,7 +163,11 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	 * Also unfortunately, this sets it at 8 bit, and I can't find any
 	 * option to reduce to 2 or 1 bit.
 	 */
+#if PNG_LIBPNG_VER < 10402
+	png_set_dither(img->png, palette, colors, colors, NULL, 1);
+#else
 	png_set_quantize(img->png, palette, colors, colors, NULL, 1);
+#endif
 
 	if (!has_palette) {
 		png_set_PLTE(img->png, img->info, palette, colors);
