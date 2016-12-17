@@ -1,14 +1,13 @@
-PKG_CONFIG =	pkg-config
-WARNFLAGS =	-Wall -Werror=implicit
-PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
-		-std=c99 -D_POSIX_C_SOURCE=200809L
+CFLAGS  += -std=c99 -D_POSIX_C_SOURCE=200809L -Wall -Werror=implicit -D_POSIX_C_SOURCE=200809L -Iinclude -g
+YFLAGS  =
+LDFLAGS =
+LIBS    =
 
 # User-defined variables
-PREFIX =	/usr/local
-BINPREFIX =	${PREFIX}/bin
-MANPREFIX =	${PREFIX}/man
-Q =		@
+PREFIX    = /usr/local
+BINPREFIX = ${PREFIX}/bin
+MANPREFIX = ${PREFIX}/man
+Q         = @
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -71,23 +70,35 @@ install: all
 	$Qinstall -m 444 src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
 	$Qinstall -m 444 src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
 
+rgbasm: CFLAGS += ${ASM_CFLAGS}
+rgbasm: LDFLAGS += ${ASM_LDFLAGS}
+rgbasm: LIBS += ${ASM_LIBS}
 rgbasm: ${rgbasm_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
+	$Q${CC} ${CFLAGS} ${LDFLAGS} ${LIBS} -lm -o $@ ${rgbasm_obj}
 
+rgblink: CFLAGS += ${LINK_CFLAGS}
+rgblink: LDFLAGS += ${LINK_LDFLAGS}
+rgblink: LIBS += ${LINK_LIBS}
 rgblink: ${rgblink_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgblink_obj}
+	$Q${CC} ${CFLAGS} ${LDFLAGS} ${LIBS} -o $@ ${rgblink_obj}
 
+rgbfix: CFLAGS += ${FIX_CFLAGS}
+rgbfix: LDFLAGS += ${FIX_LDFLAGS}
+rgbfix: LIBS += ${FIX_LIBS}
 rgbfix: ${rgbfix_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
+	$Q${CC} ${CFLAGS} ${LDFLAGS} ${LIBS} -o $@ ${rgbfix_obj}
 
+rgbgfx: CFLAGS  += ${GFX_CFLAGS}
+rgbgfx: LDFLAGS += ${GFX_LDFLAGS}
+rgbgfx: LIBS    += ${GFX_LIBS}
 rgbgfx: ${rgbgfx_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgbgfx_obj} `${PKG_CONFIG} --libs libpng`
+	$Q${CC} ${CFLAGS} ${LDFLAGS} ${LIBS} -o $@ ${rgbgfx_obj} 
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
 
 .c.o:
-	$Q${CC} ${REALCFLAGS} -c -o $@ $<
+	$Q${CC} ${CFLAGS} -c -o $@ $<
 
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c
@@ -98,7 +109,7 @@ src/asm/asmy.h: src/asm/asmy.c
 # install instructions instead.
 mingw:
 	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
-		make WARNFLAGS= CC=gcc CFLAGS="-I/usr/local/mingw32/include \
+		make CC=gcc CFLAGS="-I/usr/local/mingw32/include \
 			${CFLAGS}"
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
