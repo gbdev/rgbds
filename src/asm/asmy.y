@@ -24,7 +24,7 @@ void
 bankrangecheck(char *name, ULONG secttype, SLONG org, SLONG bank)
 {
 	SLONG minbank, maxbank;
-	char *stype;
+	char *stype = NULL;
 	switch (secttype) {
 	case SECT_ROMX:
 		stype = "ROMX";
@@ -51,7 +51,7 @@ bankrangecheck(char *name, ULONG secttype, SLONG org, SLONG bank)
 		    "ROMX, WRAMX, SRAM, or VRAM sections");
 	}
 
-	if (bank < minbank || bank > maxbank) {
+	if (stype && (bank < minbank || bank > maxbank)) {
 		yyerror("%s bank value $%x out of range ($%x to $%x)",
 		    stype, bank, minbank, maxbank);
 	}
