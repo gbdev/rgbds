@@ -184,12 +184,10 @@ fstk_AddIncludePath(char *s)
 		return;
 	}
 
-	if (strlen(s) > _MAX_PATH) {
+	if (strlcpy(IncludePaths[NextIncPath++], s, _MAX_PATH) >= _MAX_PATH) {
 		fatalerror("Include path too long '%s'",s);
 		return;
 	}
-
-	strcpy(IncludePaths[NextIncPath++], s);
 }
 
 FILE *
