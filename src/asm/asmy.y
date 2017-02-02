@@ -182,6 +182,10 @@ void	copyrept( void )
 		}
 	}
 
+	if (level != 0) {
+		fatalerror("Unterminated REPT block");
+	}
+
 	len=src-pCurrentBuffer->pBuffer-4;
 
 	src=pCurrentBuffer->pBuffer;
@@ -255,6 +259,10 @@ void	copymacro( void )
 				src+=1;
 			}
 		}
+	}
+
+	if (level != 0) {
+		fatalerror("Unterminated MACRO definition");
 	}
 
 	len=src-pCurrentBuffer->pBuffer-4;
@@ -348,6 +356,10 @@ void	if_skip_to_else( void )
 		}
 	}
 
+	if (level != 0) {
+		fatalerror("Unterminated IF construct");
+	}
+
 	len=src-pCurrentBuffer->pBuffer;
 
 	yyskipbytes( len );
@@ -401,6 +413,10 @@ void	if_skip_to_endc( void )
 				src+=1;
 			}
 		}
+	}
+
+	if (level != 0) {
+		fatalerror("Unterminated IF construct");
 	}
 
 	len=src-pCurrentBuffer->pBuffer;
