@@ -519,14 +519,14 @@ AssignSections(void)
 							    pSection->nByteSize)
 							    != pSection->nOrg) {
 								errx(1,
-"Unable to load fixed SRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed SRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_SRAM);
 							}
 							DOMAXSBANK(pSection->
 							    nBank);
 							pSection->oAssigned = 1;
 						} else {
 							errx(1,
-"Unable to load fixed SRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed SRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_SRAM);
 						}
 					}
 				}
@@ -570,14 +570,14 @@ AssignSections(void)
 							    pSection->nByteSize)
 							    != pSection->nOrg) {
 								errx(1,
-"Unable to load fixed WRAMX section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed WRAMX section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_WRAMX);
 							}
 							DOMAXWBANK(pSection->
 							    nBank);
 							pSection->oAssigned = 1;
 						} else {
 							errx(1,
-"Unable to load fixed WRAMX section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed WRAMX section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_WRAMX);
 						}
 					}
 				}
@@ -621,14 +621,14 @@ AssignSections(void)
 							    pSection->nByteSize)
 							    != pSection->nOrg) {
 								errx(1,
-"Unable to load fixed VRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed VRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_VRAM);
 							}
 							DOMAXVBANK(pSection->
 							    nBank);
 							pSection->oAssigned = 1;
 						} else {
 							errx(1,
-"Unable to load fixed VRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
+"Unable to load fixed VRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank - BANK_VRAM);
 						}
 					}
 				}
@@ -734,12 +734,12 @@ AssignSections(void)
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
 					    pSection->nByteSize)) == -1) {
-					errx(1, "Unable to load fixed SRAM section into bank $%02lX", pSection->nBank);
+					errx(1, "Unable to load fixed SRAM section into bank $%02lX", pSection->nBank - BANK_SRAM);
 				}
 				pSection->oAssigned = 1;
 				DOMAXSBANK(pSection->nBank);
 			} else {
-				errx(1, "Unable to load fixed VRAM section into bank $%02lX", pSection->nBank);
+				errx(1, "Unable to load fixed SRAM section into bank $%02lX", pSection->nBank - BANK_SRAM);
 			}
 		} else if (pSection->oAssigned == 0
 		    && pSection->Type == SECT_VRAM
