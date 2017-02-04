@@ -421,7 +421,7 @@ AssignSections(void)
 			BankFree[i]->nOrg = 0xC000;
 			BankFree[i]->nSize = 0x1000;
 			MaxAvail[i] = 0x1000;
-		} else if (i >= BANK_SRAM && i <= BANK_SRAM + 3) {
+		} else if (i >= BANK_SRAM && i <= BANK_SRAM + 15) {
 			/* Swappable SRAM bank */
 			BankFree[i]->nOrg = 0xA000;
 			BankFree[i]->nSize = 0x2000;
@@ -509,7 +509,7 @@ AssignSections(void)
 						 */
 
 						if (pSection->nBank >= 0
-						    && pSection->nBank <= 3) {
+						    && pSection->nBank <= 15) {
 							pSection->nBank +=
 							    BANK_SRAM;
 							if (area_AllocAbs
@@ -521,7 +521,7 @@ AssignSections(void)
 								errx(1,
 "Unable to load fixed SRAM section at $%lX in bank $%02lX", pSection->nOrg, pSection->nBank);
 							}
-							DOMAXVBANK(pSection->
+							DOMAXSBANK(pSection->
 							    nBank);
 							pSection->oAssigned = 1;
 						} else {
@@ -730,7 +730,7 @@ AssignSections(void)
 		    && pSection->nOrg == -1 && pSection->nBank != -1) {
 			pSection->nBank += BANK_SRAM;
 			/* User wants to have a say... and he's pissed */
-			if (pSection->nBank >= BANK_SRAM && pSection->nBank <= BANK_SRAM + 3) {
+			if (pSection->nBank >= BANK_SRAM && pSection->nBank <= BANK_SRAM + 16) {
 				if ((pSection->nOrg =
 					area_Alloc(&BankFree[pSection->nBank],
 					    pSection->nByteSize)) == -1) {
