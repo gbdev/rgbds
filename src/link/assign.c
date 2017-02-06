@@ -60,7 +60,7 @@ ensureSectionTypeIsValid(enum eSectionType type)
 	}
 }
 
-SLONG 
+SLONG
 area_Avail(SLONG bank)
 {
 	SLONG r;
@@ -131,7 +131,7 @@ area_AllocAbsAnyBank(SLONG org, SLONG size, enum eSectionType type)
 
 	SLONG startBank = SECT_ATTRIBUTES[type].bank;
 	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
-	
+
 	for (int i = 0; i < bankCount; i++) {
 		if (area_AllocAbs(&BankFree[startBank + i], org, size) != -1) {
 			return startBank + i;
@@ -141,7 +141,7 @@ area_AllocAbsAnyBank(SLONG org, SLONG size, enum eSectionType type)
 	return -1;
 }
 
-SLONG 
+SLONG
 area_Alloc(struct sFreeArea ** ppArea, SLONG size)
 {
 	struct sFreeArea *pArea;
@@ -170,7 +170,7 @@ area_AllocAnyBank(SLONG size, enum eSectionType type) {
 
 	SLONG startBank = SECT_ATTRIBUTES[type].bank;
 	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
-	
+
 	for (int i = 0; i < bankCount; i++) {
 		SLONG org = area_Alloc(&BankFree[startBank + i], size);
 		if (org != -1) {
@@ -231,7 +231,7 @@ VerifyAndSetBank(struct sSection *pSection)
 		&& pSection->nBank < SECT_ATTRIBUTES[pSection->Type].minBank + SECT_ATTRIBUTES[pSection->Type].bankCount) {
 		pSection->nBank += SECT_ATTRIBUTES[pSection->Type].bank + SECT_ATTRIBUTES[pSection->Type].offset;
 		return true;
-		
+
 	} else {
 		return false;
 	}
@@ -280,7 +280,11 @@ AssignSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
-			BankFree[i]->nSize = 0x1000;
+			if (options & OPT_CONTWRAM) {
+				BankFree[i]->nSize = 0x2000;
+			} else {
+				BankFree[i]->nSize = 0x1000;
+			}
 		} else if (i >= BANK_SRAM && i < BANK_SRAM + BANK_COUNT_SRAM) {
 			/* Swappable SRAM bank */
 			BankFree[i]->nOrg = 0xA000;
@@ -300,7 +304,7 @@ AssignSections(void)
 		} else {
 			errx(1, "(INTERNAL) Unknown bank type!");
 		}
-		
+
 		MaxAvail[i] = BankFree[i]->nSize;
 		BankFree[i]->pPrev = NULL;
 		BankFree[i]->pNext = NULL;
@@ -317,6 +321,10 @@ AssignSections(void)
 		if ((pSection->nOrg != -1 || pSection->nBank != -1)
 		    && pSection->oAssigned == 0) {
 			/* User wants to have a say... */
+
+			if (pSection->Type == SECT_WRAMX && options & OPT_CONTWRAM) {
+				errx(1, "WRAMX not compatible with -w!");
+			}
 
 			switch (pSection->Type) {
 			case SECT_WRAM0:
@@ -407,7 +415,7 @@ AssignSections(void)
 				pSection->oAssigned = 1;
 				DOMAXBANK(pSection->Type, pSection->nBank);
 				break;
-					
+
 			default: // Handle other sections later
 				break;
 			}
@@ -458,7 +466,7 @@ AssignSections(void)
 	AssignBankedSections(SECT_SRAM);
 }
 
-void 
+void
 CreateSymbolTable(void)
 {
 	struct sSection *pSect;
