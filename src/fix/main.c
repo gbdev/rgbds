@@ -29,7 +29,7 @@ static void
 usage(void)
 {
 	printf(
-"usage: rgbfix [-Ccjsv] [-i game_id] [-k licensee_str] [-l licensee_id]\n"
+"usage: rgbfix [-bCcjsv] [-i game_id] [-k licensee_str] [-l licensee_id]\n"
 "              [-m mbc_type] [-n rom_version] [-p pad_value] [-r ram_size]\n"
 "              [-t title_str] file\n");
 	exit(1);
@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 	bool setramsize = false;
 	bool resize = false;
 	bool setversion = false;
+	bool setbanknumbyte = false;
 
 	char *title; /* game title in ASCII */
 	char *id; /* game ID in ASCII */
@@ -73,8 +74,11 @@ main(int argc, char *argv[])
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "bCci:jk:l:m:n:p:sr:t:v")) != -1) {
 		switch (ch) {
+		case 'b':
+			setbanknumbyte = true;
+			break;
 		case 'C':
 			coloronly = true;
 			/* FALLTHROUGH */
@@ -426,6 +430,28 @@ main(int argc, char *argv[])
 
 		fseek(rom, 0x14C, SEEK_SET);
 		fputc(version, rom);
+	}
+
+	if (setbanknumbyte) {
+		/*
+		 * Fill last byte of each ROM bank with its number.
+		 * For ROMs with more than 2 ROM banks up to 256.
+		 */
+
+		long romsize;
+		fseek(rom, 0, SEEK_END);
+		romsize = ftell(rom);
+
+		if ((romsize > (2*0x4000)) && (romsize <= (256*0x4000))) {
+
+			int addr = 0x7FFF;
+			for (uint8_t bankno = 1; addr < romsize; ++bankno, addr+=0x4000) {
+				fseek(rom, addr, SEEK_SET);
+				fwrite(&bankno, 1, 1, rom);
+			}
+		} else {
+			warnx("ROM size invalid for -b option");
+		}
 	}
 
 	if (validate) {

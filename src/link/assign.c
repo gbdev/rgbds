@@ -415,6 +415,10 @@ AssignSections(void)
 			} else {
 				BankFree[i]->nSize = 0x4000;
 				MaxAvail[i] = 0x4000;
+				if (options & OPT_BANK_NUM_BYTE) {
+					/* Reserve last byte of each ROM bank for its number. */
+					BankFree[i]->nSize --;
+				}
 			}
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
