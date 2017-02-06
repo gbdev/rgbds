@@ -419,8 +419,8 @@ AssignSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
-			BankFree[i]->nSize = 0x1000;
-			MaxAvail[i] = 0x1000;
+			BankFree[i]->nSize = 0x2000;
+			MaxAvail[i] = 0x2000;
 		} else if (i >= BANK_SRAM && i <= BANK_SRAM + 3) {
 			/* Swappable SRAM bank */
 			BankFree[i]->nOrg = 0xA000;
@@ -444,6 +444,21 @@ AssignSections(void)
 		}
 		BankFree[i]->pPrev = NULL;
 		BankFree[i]->pNext = NULL;
+	}
+
+	/*
+	 * If WRAMX banks are used, the user is probably targeting cgb instead of dmg.
+	 */
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->Type == SECT_WRAMX) {
+			BankFree[BANK_WRAM0]->nOrg = 0xC000;
+			BankFree[BANK_WRAM0]->nSize = 0x1000;
+			MaxAvail[BANK_WRAM0] = 0x1000;
+			break;
+		}
+		pSection = pSection->pNext;
 	}
 
 	/*
