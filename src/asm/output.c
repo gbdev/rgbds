@@ -201,17 +201,18 @@ writepatch(struct Patch * pPatch, FILE * f)
 void 
 writesection(struct Section * pSect, FILE * f)
 {
-	//printf("SECTION: %s, ID: %d\n", pSect->pzName, getsectid(pSect));
-
+	fputstring(pSect->pzName, f); // RGB3 addition
 	fputlong(pSect->nPC, f);
 	fputc(pSect->nType, f);
 	fputlong(pSect->nOrg, f);
 	//RGB1 addition
 
-	    fputlong(pSect->nBank, f);
+	fputlong(pSect->nBank, f);
 	//RGB1 addition
+		
+	fputlong(pSect->nAlign, f); // RGB3 addition
 
-	    if ((pSect->nType == SECT_ROM0)
+	if ((pSect->nType == SECT_ROM0)
 	    || (pSect->nType == SECT_ROMX)) {
 		struct Patch *pPatch;
 
@@ -490,7 +491,7 @@ out_WriteObject(void)
 		struct PatchSymbol *pSym;
 		struct Section *pSect;
 
-		fwrite("RGB2", 1, 4, f);
+		fwrite("RGB3", 1, 4, f);
 		fputlong(countsymbols(), f);
 		fputlong(countsections(), f);
 
@@ -546,7 +547,7 @@ out_SetFileName(char *s)
  * Find a section by name and type.  If it doesn't exist, create it
  */
 struct Section *
-out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
+out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG alignment)
 {
 	struct Section *pSect, **ppSect;
 
@@ -557,7 +558,8 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 		if (strcmp(pzName, pSect->pzName) == 0) {
 			if (secttype == pSect->nType
 			    && ((ULONG) org) == pSect->nOrg
-			    && ((ULONG) bank) == pSect->nBank) {
+			    && ((ULONG) bank) == pSect->nBank
+			    && ((ULONG) alignment == pSect->nAlign)) {
 				return (pSect);
 			} else
 				fatalerror
@@ -574,6 +576,7 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 			pSect->nPC = 0;
 			pSect->nOrg = org;
 			pSect->nBank = bank;
+			pSect->nAlign = alignment;
 			pSect->pNext = NULL;
 			pSect->pPatches = NULL;
 			pSect->charmap = NULL;
@@ -610,7 +613,7 @@ out_SetCurrentSection(struct Section * pSect)
 void 
 out_NewSection(char *pzName, ULONG secttype)
 {
-	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1));
+	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1, 1));
 }
 
 /*
@@ -619,7 +622,16 @@ out_NewSection(char *pzName, ULONG secttype)
 void 
 out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 {
-	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank));
+	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank, 1));
+}
+
+/*
+ * Set the current section by name and type, using a given byte alignment
+ */
+void 
+out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
+{
+	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank, alignment));
 }
 
 /*

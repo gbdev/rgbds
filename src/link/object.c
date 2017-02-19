@@ -18,6 +18,11 @@ struct sSection *pLibSections = NULL;
 UBYTE dummymem;
 BBOOL oReadLib = 0;
 
+enum ObjectFileContents {
+	CONTAINS_SECTION_NAME = 1 << 0,
+	CONTAINS_SECTION_ALIGNMENT = 1 << 1
+};
+
 /*
  * The usual byte order stuff
  *
@@ -143,10 +148,12 @@ obj_ReadRGB0Section(FILE * f)
 
 	pSection = AllocSection();
 
+	pSection->pzName = "";
 	pSection->nByteSize = readlong(f);
 	pSection->Type = (enum eSectionType) fgetc(f);
 	pSection->nOrg = -1;
 	pSection->nBank = -1;
+	pSection->nAlign = 1;
 
 	/* does the user want the -s mode? */
 
@@ -277,21 +284,28 @@ obj_ReadRGB0(FILE * pObjfile)
  */
 
 struct sSection *
-obj_ReadRGB1Section(FILE * f)
+obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 {
 	struct sSection *pSection;
 
 	pSection = AllocSection();
 
+	if (contents & CONTAINS_SECTION_NAME) {
+		readasciiz(&pSection->pzName, f);
+	} else {
+		pSection->pzName = "";
+	}
+
 	pSection->nByteSize = readlong(f);
 	pSection->Type = (enum eSectionType) fgetc(f);
-	/*
-	 * And because of THIS new feature I'll have to rewrite loads and
-	 * loads of stuff... oh well it needed to be done anyway
-	 *
-	 */
 	pSection->nOrg = readlong(f);
 	pSection->nBank = readlong(f);
+	
+	if (contents & CONTAINS_SECTION_ALIGNMENT) {
+		pSection->nAlign = readlong(f);
+	} else {
+		pSection->nAlign = 1;
+	}
 
 	/* does the user want the -s mode? */
 
@@ -356,7 +370,7 @@ obj_ReadRGB1Section(FILE * f)
 }
 
 void 
-obj_ReadRGB1(FILE * pObjfile)
+obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -383,7 +397,7 @@ obj_ReadRGB1(FILE * pObjfile)
 	while (nNumberOfSections--) {
 		struct sSection *pNewSection;
 
-		pNewSection = obj_ReadRGB1Section(pObjfile);
+		pNewSection = obj_ReadRGBSection(pObjfile, contents);
 		pNewSection->nNumberOfSymbols = nNumberOfSymbols;
 		if (pFirstSection == NULL)
 			pFirstSection = pNewSection;
@@ -430,7 +444,11 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 		case '1':
 		case '2':
 			//V2 is really the same but the are new patch types
-			    obj_ReadRGB1(pObjfile);
+			obj_ReadRGB(pObjfile, 0);
+			break;
+		case '3':
+			// V3 is very similiar, but contains section names and byte alignment
+			obj_ReadRGB(pObjfile, CONTAINS_SECTION_NAME | CONTAINS_SECTION_ALIGNMENT);
 			break;
 		default:
 			errx(1, "'%s' is an unsupported version", tzObjectfile);
