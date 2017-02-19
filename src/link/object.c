@@ -46,21 +46,41 @@ readword(FILE * f)
 
 	return (r);
 }
+
 /*
  * Read a NULL terminated string from a file
  *
  */
-
-SLONG 
-readasciiz(char *s, FILE * f)
+SLONG
+readasciiz(char **dest, FILE *f)
 {
 	SLONG r = 0;
-
-	while (((*s++) = fgetc(f)) != 0)
+	
+	size_t bufferLength = 16;
+	char *start = malloc(bufferLength);
+	char *s = start;
+	
+	if (!s) {
+		err(1, NULL);
+	}
+		
+	while (((*s++) = fgetc(f)) != 0) {
 		r += 1;
-
+		
+		if (r >= bufferLength) {
+			bufferLength *= 2;
+			start = realloc(start, bufferLength);
+			if (!start) {
+				err(1, NULL);
+			}
+			s = start + r;
+		}
+	}
+	
+	*dest = start;
 	return (r + 1);
 }
+
 /*
  * Allocate a new section and link it into the list
  *
@@ -97,7 +117,6 @@ AllocSection(void)
 struct sSymbol *
 obj_ReadSymbol(FILE * f)
 {
-	char s[256];
 	struct sSymbol *pSym;
 
 	pSym = malloc(sizeof *pSym);
@@ -105,13 +124,7 @@ obj_ReadSymbol(FILE * f)
 		err(1, NULL);
 	}
 
-	readasciiz(s, f);
-	pSym->pzName = malloc(strlen(s) + 1);
-	if (!pSym->pzName) {
-		err(1, NULL);
-	}
-
-	strcpy(pSym->pzName, s);
+	readasciiz(&pSym->pzName, f);
 	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
@@ -153,7 +166,6 @@ obj_ReadRGB0Section(FILE * f)
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
-			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
 			    pSection->nByteSize, f);
@@ -171,14 +183,7 @@ obj_ReadRGB0Section(FILE * f)
 				}
 
 				*ppPatch = pPatch;
-				readasciiz(s, f);
-
-				pPatch->pzFilename = malloc(strlen(s) + 1);
-				if (!pPatch->pzFilename) {
-					err(1, NULL);
-				}
-
-				strcpy(pPatch->pzFilename, s);
+				readasciiz(&pPatch->pzFilename, f);
 
 				pPatch->nLineNo =
 				    readlong(f);
@@ -306,7 +311,6 @@ obj_ReadRGB1Section(FILE * f)
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
-			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
 			    pSection->nByteSize, f);
@@ -324,13 +328,7 @@ obj_ReadRGB1Section(FILE * f)
 				}
 
 				*ppPatch = pPatch;
-				readasciiz(s, f);
-				pPatch->pzFilename = malloc(strlen(s) + 1);
-				if (!pPatch->pzFilename) {
-					err(1, NULL);
-				}
-
-				strcpy(pPatch->pzFilename, s);
+				readasciiz(&pPatch->pzFilename, f);
 				pPatch->nLineNo = readlong(f);
 				pPatch->nOffset = readlong(f);
 				pPatch->Type = (enum ePatchType) fgetc(f);
@@ -482,9 +480,9 @@ lib_ReadXLB0(FILE * f)
 
 	size = file_Length(f) - 4;
 	while (size) {
-		char name[256];
+		char *name;
 
-		size -= readasciiz(name, f);
+		size -= readasciiz(&name, f);
 		readword(f);
 		size -= 2;
 		readword(f);
@@ -492,5 +490,6 @@ lib_ReadXLB0(FILE * f)
 		size -= readlong(f);
 		size -= 4;
 		obj_ReadOpenFile(f, name);
+		free(name);
 	}
 }
