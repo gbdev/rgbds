@@ -631,7 +631,10 @@ out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 void 
 out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 {
-	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank, alignment));
+	if (alignment < 0) {
+		yyerror("Alignment must not be negative.");
+	}
+	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank, 1 << alignment));
 }
 
 /*
