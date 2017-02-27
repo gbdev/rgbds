@@ -118,10 +118,19 @@ rpn_Bank(struct Expression * expr, char *tzSym)
 
 		rpn_Reset(expr);
 
-		psym = sym_FindSymbol(tzSym);
-		if (nPass == 2 && psym == NULL) {
-			yyerror("'%s' not defined", tzSym);
+		if ((psym = sym_FindSymbol(tzSym)) != NULL) {
+			if (!(psym->nType & SYMF_DEFINED) && nPass == 2) {
+				/* Assume undefined symbols are imported from somewhere else */
+				psym->nType |= SYMF_IMPORT;
+			}
+		} else {
+			if (nPass == 1) {
+				createsymbol(tzSym);
+			} else {
+				yyerror("'%s' not defined", tzSym);
+			}
 		}
+
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK);
 		while (*tzSym)
