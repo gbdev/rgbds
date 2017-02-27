@@ -142,8 +142,9 @@ void	copyrept( void )
 {
 	SLONG	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
+	char	*bufferEnd = pCurrentBuffer->pBufferStart + pCurrentBuffer->nBufferSize;
 
-	while( *src && level )
+	while( src < bufferEnd && level )
 	{
 		if( instring==0 )
 		{
@@ -221,8 +222,9 @@ void	copymacro( void )
 {
 	SLONG	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
+	char	*bufferEnd = pCurrentBuffer->pBufferStart + pCurrentBuffer->nBufferSize;
 
-	while( *src && level )
+	while( src < bufferEnd && level )
 	{
 		if( instring==0 )
 		{

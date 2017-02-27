@@ -316,6 +316,9 @@ rpn_DIV(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
 	joinexpr();
+	if (src2->nVal == 0) {
+		fatalerror("division by zero");
+	}
 	expr->nVal = (expr->nVal / src2->nVal);
 	pushbyte(expr, RPN_DIV);
 }
@@ -325,6 +328,9 @@ rpn_MOD(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
 	joinexpr();
+	if (src2->nVal == 0) {
+		fatalerror("division by zero");
+	}
 	expr->nVal = (expr->nVal % src2->nVal);
 	pushbyte(expr, RPN_MOD);
 }
