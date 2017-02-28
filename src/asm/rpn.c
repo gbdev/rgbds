@@ -114,14 +114,11 @@ void
 rpn_Bank(struct Expression * expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
-		struct sSymbol *psym;
-
 		rpn_Reset(expr);
 
-		psym = sym_FindSymbol(tzSym);
-		if (nPass == 2 && psym == NULL) {
-			yyerror("'%s' not defined", tzSym);
-		}
+		/* Check that the symbol exists by evaluating and discarding the value. */
+		sym_GetValue(tzSym);
+
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK);
 		while (*tzSym)
@@ -316,6 +313,9 @@ rpn_DIV(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
 	joinexpr();
+	if (src2->nVal == 0) {
+		fatalerror("division by zero");
+	}
 	expr->nVal = (expr->nVal / src2->nVal);
 	pushbyte(expr, RPN_DIV);
 }
@@ -325,6 +325,9 @@ rpn_MOD(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
 	joinexpr();
+	if (src2->nVal == 0) {
+		fatalerror("division by zero");
+	}
 	expr->nVal = (expr->nVal % src2->nVal);
 	pushbyte(expr, RPN_MOD);
 }

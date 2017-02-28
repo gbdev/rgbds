@@ -6,7 +6,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm rgbasm
-.Op Fl hv
+.Op Fl Ehv
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
@@ -29,6 +29,8 @@ Add string symbol to the compiled source code. This is equivalent to
 .Cm EQUS
 .Qq Ar "value"
 in code. If a value is not specified, a value of 1 is given.
+.It Fl E
+Export all labels, including unreferenced and local labels.
 .It Fl g Ar chars
 Change the four characters used for binary constants.
 The defaults are 0123.
@@ -67,6 +69,8 @@ and
 .Xr rgbfix 1 ,
 .Xr rgblink 1 ,
 .Xr rgbds 7
+.Pp
+.Lk https://rednex.github.io/rgbds/asm.htm rgbasm assembly commands
 .Sh HISTORY
 .Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,

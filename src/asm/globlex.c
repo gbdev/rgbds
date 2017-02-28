@@ -97,7 +97,7 @@ ascii2bin(char *s)
 
 		while (*s != '\0') {
 			c = convertfunc(*s++);
-			result = result * 2 + ((c & 1) << 8) + ((c & 2) >> 1);
+			result = result * 2 + ((c & 2) << 7) + (c & 1);
 		}
 	} else {
 		while (*s != '\0')

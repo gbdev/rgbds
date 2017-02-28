@@ -30,6 +30,6 @@ extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 
 #define MAXMACROARGS	256
-#define MAXINCPATHS		16
+#define MAXINCPATHS		128
 
 #endif	/* //       ASM_H */

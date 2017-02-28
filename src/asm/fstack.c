@@ -179,7 +179,15 @@ fstk_Dump(void)
 void 
 fstk_AddIncludePath(char *s)
 {
-	strcpy(IncludePaths[NextIncPath++], s);
+	if (NextIncPath == MAXINCPATHS) {
+		fatalerror("Too many include directories passed from command line");
+		return;
+	}
+
+	if (strlcpy(IncludePaths[NextIncPath++], s, _MAX_PATH) >= _MAX_PATH) {
+		fatalerror("Include path too long '%s'",s);
+		return;
+	}
 }
 
 FILE *

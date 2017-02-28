@@ -2,6 +2,7 @@
 #define	RGBDS_MAIN_H
 
 #include <stdbool.h>
+#include "extern/stdnoreturn.h"
 
 struct sOptions {
 	char gbgfx[4];
@@ -9,6 +10,7 @@ struct sOptions {
 	SLONG fillchar;
 	bool verbose;
 	bool haltnop;
+	bool exportall;
 	    //-1 == random
 };
 
@@ -23,7 +25,7 @@ extern void opt_Push(void);
 extern void opt_Pop(void);
 extern void opt_Parse(char *s);
 
-void fatalerror(const char *fmt, ...);
+noreturn void fatalerror(const char *fmt, ...);
 void yyerror(const char *fmt, ...);
 
 #define	YY_FATAL_ERROR fatalerror

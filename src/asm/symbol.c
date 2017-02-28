@@ -21,6 +21,7 @@ char *currentmacroargs[MAXMACROARGS + 1];
 char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
 char SavedDATE[256];
+bool exportall;
 
 SLONG 
 Callback_NARG(struct sSymbol * sym)
@@ -575,6 +576,9 @@ sym_AddLocalReloc(char *tzSym)
 				nsym->nValue = nPC;
 				nsym->nType |=
 				    SYMF_RELOC | SYMF_LOCAL | SYMF_DEFINED;
+				if (exportall) {
+				   nsym->nType |= SYMF_EXPORT;
+				}
 				nsym->pScope = pScope;
 				nsym->pSection = pCurrentSection;
 			}
@@ -604,6 +608,9 @@ sym_AddReloc(char *tzSym)
 		if (nsym) {
 			nsym->nValue = nPC;
 			nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
+			if (exportall) {
+			   nsym->nType |= SYMF_EXPORT;
+			}
 			nsym->pScope = NULL;
 			nsym->pSection = pCurrentSection;
 		}
@@ -707,6 +714,13 @@ sym_AddMacro(char *tzSym)
 			nsym->pMacro = tzNewMacro;
 		}
 	}
+}
+
+/* 
+ * Set whether to export all relocable symbols by default
+ */
+void sym_SetExportAll(BBOOL set) {
+	exportall = set;
 }
 
 /*
