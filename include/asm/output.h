@@ -10,6 +10,7 @@ struct Section {
 	ULONG nPC;
 	ULONG nOrg;
 	ULONG nBank;
+	ULONG nAlign;
 	struct Section *pNext;
 	struct Patch *pPatches;
 	struct Charmap *charmap;
@@ -20,6 +21,7 @@ void out_PrepPass2(void);
 void out_SetFileName(char *s);
 void out_NewSection(char *pzName, ULONG secttype);
 void out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank);
+void out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank);
 void out_AbsByte(int b);
 void out_AbsByteGroup(char *s, int length);
 void out_RelByte(struct Expression * expr);

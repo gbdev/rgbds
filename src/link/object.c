@@ -18,6 +18,11 @@ struct sSection *pLibSections = NULL;
 UBYTE dummymem;
 BBOOL oReadLib = 0;
 
+enum ObjectFileContents {
+	CONTAINS_SECTION_NAME = 1 << 0,
+	CONTAINS_SECTION_ALIGNMENT = 1 << 1
+};
+
 /*
  * The usual byte order stuff
  *
@@ -46,21 +51,41 @@ readword(FILE * f)
 
 	return (r);
 }
+
 /*
  * Read a NULL terminated string from a file
  *
  */
-
-SLONG 
-readasciiz(char *s, FILE * f)
+SLONG
+readasciiz(char **dest, FILE *f)
 {
 	SLONG r = 0;
-
-	while (((*s++) = fgetc(f)) != 0)
+	
+	size_t bufferLength = 16;
+	char *start = malloc(bufferLength);
+	char *s = start;
+	
+	if (!s) {
+		err(1, NULL);
+	}
+		
+	while (((*s++) = fgetc(f)) != 0) {
 		r += 1;
-
+		
+		if (r >= bufferLength) {
+			bufferLength *= 2;
+			start = realloc(start, bufferLength);
+			if (!start) {
+				err(1, NULL);
+			}
+			s = start + r;
+		}
+	}
+	
+	*dest = start;
 	return (r + 1);
 }
+
 /*
  * Allocate a new section and link it into the list
  *
@@ -97,7 +122,6 @@ AllocSection(void)
 struct sSymbol *
 obj_ReadSymbol(FILE * f)
 {
-	char s[256];
 	struct sSymbol *pSym;
 
 	pSym = malloc(sizeof *pSym);
@@ -105,13 +129,7 @@ obj_ReadSymbol(FILE * f)
 		err(1, NULL);
 	}
 
-	readasciiz(s, f);
-	pSym->pzName = malloc(strlen(s) + 1);
-	if (!pSym->pzName) {
-		err(1, NULL);
-	}
-
-	strcpy(pSym->pzName, s);
+	readasciiz(&pSym->pzName, f);
 	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
@@ -130,10 +148,12 @@ obj_ReadRGB0Section(FILE * f)
 
 	pSection = AllocSection();
 
+	pSection->pzName = "";
 	pSection->nByteSize = readlong(f);
 	pSection->Type = (enum eSectionType) fgetc(f);
 	pSection->nOrg = -1;
 	pSection->nBank = -1;
+	pSection->nAlign = 1;
 
 	/* does the user want the -s mode? */
 
@@ -153,7 +173,6 @@ obj_ReadRGB0Section(FILE * f)
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
-			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
 			    pSection->nByteSize, f);
@@ -171,14 +190,7 @@ obj_ReadRGB0Section(FILE * f)
 				}
 
 				*ppPatch = pPatch;
-				readasciiz(s, f);
-
-				pPatch->pzFilename = malloc(strlen(s) + 1);
-				if (!pPatch->pzFilename) {
-					err(1, NULL);
-				}
-
-				strcpy(pPatch->pzFilename, s);
+				readasciiz(&pPatch->pzFilename, f);
 
 				pPatch->nLineNo =
 				    readlong(f);
@@ -272,21 +284,28 @@ obj_ReadRGB0(FILE * pObjfile)
  */
 
 struct sSection *
-obj_ReadRGB1Section(FILE * f)
+obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 {
 	struct sSection *pSection;
 
 	pSection = AllocSection();
 
+	if (contents & CONTAINS_SECTION_NAME) {
+		readasciiz(&pSection->pzName, f);
+	} else {
+		pSection->pzName = "";
+	}
+
 	pSection->nByteSize = readlong(f);
 	pSection->Type = (enum eSectionType) fgetc(f);
-	/*
-	 * And because of THIS new feature I'll have to rewrite loads and
-	 * loads of stuff... oh well it needed to be done anyway
-	 *
-	 */
 	pSection->nOrg = readlong(f);
 	pSection->nBank = readlong(f);
+	
+	if (contents & CONTAINS_SECTION_ALIGNMENT) {
+		pSection->nAlign = readlong(f);
+	} else {
+		pSection->nAlign = 1;
+	}
 
 	/* does the user want the -s mode? */
 
@@ -306,7 +325,6 @@ obj_ReadRGB1Section(FILE * f)
 
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
-			char s[256];
 
 			fread(pSection->pData, sizeof(UBYTE),
 			    pSection->nByteSize, f);
@@ -324,13 +342,7 @@ obj_ReadRGB1Section(FILE * f)
 				}
 
 				*ppPatch = pPatch;
-				readasciiz(s, f);
-				pPatch->pzFilename = malloc(strlen(s) + 1);
-				if (!pPatch->pzFilename) {
-					err(1, NULL);
-				}
-
-				strcpy(pPatch->pzFilename, s);
+				readasciiz(&pPatch->pzFilename, f);
 				pPatch->nLineNo = readlong(f);
 				pPatch->nOffset = readlong(f);
 				pPatch->Type = (enum ePatchType) fgetc(f);
@@ -358,7 +370,7 @@ obj_ReadRGB1Section(FILE * f)
 }
 
 void 
-obj_ReadRGB1(FILE * pObjfile)
+obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -385,7 +397,7 @@ obj_ReadRGB1(FILE * pObjfile)
 	while (nNumberOfSections--) {
 		struct sSection *pNewSection;
 
-		pNewSection = obj_ReadRGB1Section(pObjfile);
+		pNewSection = obj_ReadRGBSection(pObjfile, contents);
 		pNewSection->nNumberOfSymbols = nNumberOfSymbols;
 		if (pFirstSection == NULL)
 			pFirstSection = pNewSection;
@@ -432,7 +444,11 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 		case '1':
 		case '2':
 			//V2 is really the same but the are new patch types
-			    obj_ReadRGB1(pObjfile);
+			obj_ReadRGB(pObjfile, 0);
+			break;
+		case '3':
+			// V3 is very similiar, but contains section names and byte alignment
+			obj_ReadRGB(pObjfile, CONTAINS_SECTION_NAME | CONTAINS_SECTION_ALIGNMENT);
 			break;
 		default:
 			errx(1, "'%s' is an unsupported version", tzObjectfile);
@@ -482,9 +498,9 @@ lib_ReadXLB0(FILE * f)
 
 	size = file_Length(f) - 4;
 	while (size) {
-		char name[256];
+		char *name;
 
-		size -= readasciiz(name, f);
+		size -= readasciiz(&name, f);
 		readword(f);
 		size -= 2;
 		readword(f);
@@ -492,5 +508,6 @@ lib_ReadXLB0(FILE * f)
 		size -= readlong(f);
 		size -= 4;
 		obj_ReadOpenFile(f, name);
+		free(name);
 	}
 }
