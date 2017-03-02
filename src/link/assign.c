@@ -259,8 +259,9 @@ AssignFloatingBankSections(enum eSectionType type)
 		SLONG org;
 
 		if ((org = area_AllocAnyBank(pSection->nByteSize, pSection->nAlign, type)) != -1) {
-			if (pSection->Type == SECT_ROMX && options & OPT_OVERLAY) {
-				errx(1, "All ROMX sections must be fixed when using overlay");
+			if (options & OPT_OVERLAY && 
+			    (pSection->Type == SECT_ROMX || pSection->Type == SECT_ROM0)) {
+				errx(1, "All ROM sections must be fixed when using overlay");
 			}
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
@@ -405,8 +406,9 @@ AssignSections(void)
 	while (pSection) {
 		if (pSection->oAssigned == 0
 			&& pSection->nOrg != -1 && pSection->nBank == -1) {
-			if (pSection->Type == SECT_ROMX && options & OPT_OVERLAY) {
-				errx(1, "All ROMX sections must be fixed when using overlay");
+			if (options & OPT_OVERLAY && 
+			    (pSection->Type == SECT_ROMX || pSection->Type == SECT_ROM0)) {
+				errx(1, "All ROM sections must be fixed when using overlay");
 			}
 			switch (pSection->Type) {
 			case SECT_ROMX:
