@@ -631,8 +631,8 @@ out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 void 
 out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 {
-	if (alignment < 0) {
-		yyerror("Alignment must not be negative.");
+	if (alignment < 1 || alignment > 16) {
+		yyerror("Alignment must be between 1-16 bits.");
 	}
 	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank, 1 << alignment));
 }
