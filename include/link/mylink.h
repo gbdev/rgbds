@@ -63,8 +63,10 @@ enum eSectionType {
 struct sSection {
 	SLONG nBank;
 	SLONG nOrg;
+	SLONG nAlign;
 	BBOOL oAssigned;
 
+	char *pzName;
 	SLONG nByteSize;
 	enum eSectionType Type;
 	UBYTE *pData;

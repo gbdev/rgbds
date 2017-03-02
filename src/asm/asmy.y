@@ -460,7 +460,7 @@ void	if_skip_to_endc( void )
 %left	T_OP_MUL T_OP_DIV T_OP_MOD
 %left	T_OP_NOT
 %left	T_OP_DEF
-%left	T_OP_BANK
+%left	T_OP_BANK T_OP_ALIGN
 %left	T_OP_SIN
 %left	T_OP_COS
 %left	T_OP_TAN
@@ -1113,6 +1113,10 @@ section:
 			else
 				yyerror("Address $%x not 16-bit", $6);
 		}
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' const ']'
+		{
+			out_NewAlignedSection($2, $4, $8, -1);
+		}
 	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
 		{
 			bankrangecheck($2, $4, -1, $8);
@@ -1123,6 +1127,14 @@ section:
 				yyerror("Address $%x not 16-bit", $6);
 			}
 			bankrangecheck($2, $4, $6, $11);
+		}
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' const ']' ',' T_OP_BANK '[' const ']'
+		{
+			out_NewAlignedSection($2, $4, $8, $13);
+		}
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']' ',' T_OP_ALIGN '[' const ']'
+		{
+			out_NewAlignedSection($2, $4, $13, $8);
 		}
 ;
 
