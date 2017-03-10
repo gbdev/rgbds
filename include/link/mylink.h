@@ -57,7 +57,8 @@ enum eSectionType {
 	SECT_ROM0,
 	SECT_HRAM,
 	SECT_WRAMX,
-	SECT_SRAM
+	SECT_SRAM,
+	SECT_OAM
 };
 
 struct sSection {
