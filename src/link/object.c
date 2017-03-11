@@ -446,8 +446,8 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 			//V2 is really the same but the are new patch types
 			obj_ReadRGB(pObjfile, 0);
 			break;
-		case '3':
-			// V3 is very similiar, but contains section names and byte alignment
+		case '3': // V3 is very similiar, but contains section names and byte alignment
+		case '4': // V4 supports OAM sections, but is otherwise identical
 			obj_ReadRGB(pObjfile, CONTAINS_SECTION_NAME | CONTAINS_SECTION_ALIGNMENT);
 			break;
 		default:

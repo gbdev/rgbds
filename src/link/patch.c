@@ -68,12 +68,12 @@ getsymbank(SLONG symid)
 		errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
 	}
 
-	if (nBank == BANK_WRAM0) return 0;
-	if (nBank >= BANK_WRAMX && nBank <= (BANK_WRAMX+6))
+	if (nBank == BANK_WRAM0 || nBank == BANK_OAM) return 0;
+	if (nBank >= BANK_WRAMX && nBank < (BANK_WRAMX + BANK_COUNT_WRAMX))
 		return nBank - BANK_WRAMX + 1;
-	if (nBank >= BANK_VRAM && nBank <= (BANK_VRAM+1))
+	if (nBank >= BANK_VRAM && nBank < (BANK_VRAM + BANK_COUNT_VRAM))
 		return nBank - BANK_VRAM;
-	if (nBank >= BANK_SRAM && nBank <= (BANK_SRAM+3))
+	if (nBank >= BANK_SRAM && nBank < (BANK_SRAM + BANK_COUNT_SRAM))
 		return nBank - BANK_SRAM;
 
 	return nBank;

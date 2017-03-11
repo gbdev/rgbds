@@ -30,7 +30,7 @@ SLONG MaxSBankUsed;
 SLONG MaxVBankUsed;
 
 const enum eSectionType SECT_MIN = SECT_WRAM0;
-const enum eSectionType SECT_MAX = SECT_SRAM;
+const enum eSectionType SECT_MAX = SECT_OAM;
 const struct sSectionAttributes SECT_ATTRIBUTES[] = {
 	{"WRAM0", BANK_WRAM0, 0, 0, BANK_COUNT_WRAM0},
 	{"VRAM",  BANK_VRAM,  0, 0, BANK_COUNT_VRAM},
@@ -38,7 +38,8 @@ const struct sSectionAttributes SECT_ATTRIBUTES[] = {
 	{"ROM0",  BANK_ROM0,  0, 0, BANK_COUNT_ROM0},
 	{"HRAM",  BANK_HRAM,  0, 0, BANK_COUNT_HRAM},
 	{"WRAMX", BANK_WRAMX, 0, 0, BANK_COUNT_WRAMX},
-	{"SRAM",  BANK_SRAM,  0, 0, BANK_COUNT_SRAM}
+	{"SRAM",  BANK_SRAM,  0, 0, BANK_COUNT_SRAM},
+	{"OAM",   BANK_OAM,   0, 0, BANK_COUNT_OAM}
 };
 
 #define DOMAXBANK(x, y) {switch (x) { \
@@ -326,6 +327,9 @@ AssignSections(void)
 			/* Swappable VRAM bank */
 			BankFree[i]->nOrg = 0x8000;
 			BankFree[i]->nSize = 0x2000;
+		} else if (i == BANK_OAM) {
+			BankFree[i]->nOrg = 0xFE00;
+			BankFree[i]->nSize = 0x00A0;
 		} else if (i == BANK_HRAM) {
 			/* HRAM */
 			BankFree[i]->nOrg = 0xFF80;
@@ -355,6 +359,7 @@ AssignSections(void)
 			case SECT_WRAM0:
 			case SECT_HRAM:
 			case SECT_ROM0:
+			case SECT_OAM:
 				pSection->nBank = SECT_ATTRIBUTES[pSection->Type].bank;
 				if (area_AllocAbs(&BankFree[pSection->nBank], pSection->nOrg,
 					 pSection->nByteSize) == -1) {
