@@ -243,8 +243,13 @@ AssignFixedBankSections(enum eSectionType type)
 			pSection->oAssigned = 1;
 			DOMAXBANK(pSection->Type, pSection->nBank);
 		} else {
-			errx(1, "Unable to load fixed %s section into bank $%02lX",
-				SECT_ATTRIBUTES[pSection->Type].name, pSection->nBank);
+			if (pSection->nAlign <= 1) {
+				errx(1, "Unable to place '%s' (%s section) in bank $%02lX",
+					pSection->pzName, SECT_ATTRIBUTES[pSection->Type].name, pSection->nBank);
+			} else {
+				errx(1, "Unable to place '%s' (%s section) in bank $%02lX (with $%lX-byte alignment)",
+					pSection->pzName, SECT_ATTRIBUTES[pSection->Type].name, pSection->nBank, pSection->nAlign);
+			}
 		}
 	}
 }
@@ -265,8 +270,18 @@ AssignFloatingBankSections(enum eSectionType type)
 			pSection->oAssigned = 1;
 			DOMAXBANK(pSection->Type, pSection->nBank);
 		} else {
-			errx(1, "Unable to place %s section anywhere",
-				 SECT_ATTRIBUTES[type].name);
+			const char *locality = "anywhere";
+			if (SECT_ATTRIBUTES[pSection->Type].bankCount > 1) {
+				locality = "in any bank";
+			}
+			
+			if (pSection->nAlign <= 1) {
+				errx(1, "Unable to place '%s' (%s section) %s",
+					 pSection->pzName, SECT_ATTRIBUTES[type].name, locality);
+			} else {
+				errx(1, "Unable to place '%s' (%s section) %s (with $%lX-byte alignment)",
+					 pSection->pzName, SECT_ATTRIBUTES[type].name, locality, pSection->nAlign);
+			}
 		}
 	}	
 }
@@ -363,9 +378,8 @@ AssignSections(void)
 				pSection->nBank = SECT_ATTRIBUTES[pSection->Type].bank;
 				if (area_AllocAbs(&BankFree[pSection->nBank], pSection->nOrg,
 					 pSection->nByteSize) == -1) {
-					errx(1, "Unable to load fixed %s section at $%lX",
-						 SECT_ATTRIBUTES[pSection->Type].name,
-						 pSection->nOrg);
+					errx(1, "Unable to place '%s' (%s section) at $%lX",
+						 pSection->pzName, SECT_ATTRIBUTES[pSection->Type].name, pSection->nOrg);
 				}
 				pSection->oAssigned = 1;
 				break;
@@ -380,8 +394,8 @@ AssignSections(void)
 						DOMAXBANK(pSection->Type, pSection->nBank);
 						pSection->oAssigned = 1;
 					} else {
-						errx(1,
-							 "Unable to load fixed %s section at $%lX in bank $%02lX", SECT_ATTRIBUTES[pSection->Type].name, pSection->nOrg, pSection->nBank);
+						errx(1, "Unable to place '%s' (%s section) at $%lX in bank $%02lX",
+							pSection->pzName, SECT_ATTRIBUTES[pSection->Type].name, pSection->nOrg, pSection->nBank);
 					}
 				}
 				break;
@@ -415,8 +429,8 @@ AssignSections(void)
 				if ((pSection->nBank =
 					area_AllocAbsAnyBank(pSection->nOrg, pSection->nByteSize,
 						pSection->Type)) == -1) {
-					errx(1, "Unable to load fixed %s section at $%lX into any bank",
-						 SECT_ATTRIBUTES[pSection->Type].name, pSection->nOrg);
+					errx(1, "Unable to place '%s' (%s section) at $%lX in any bank",
+						 pSection->pzName, SECT_ATTRIBUTES[pSection->Type].name, pSection->nOrg);
 				}
 				pSection->oAssigned = 1;
 				DOMAXBANK(pSection->Type, pSection->nBank);
