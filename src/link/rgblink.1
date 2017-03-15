@@ -9,6 +9,7 @@
 .Op Fl t
 .Op Fl m Ar mapfile
 .Op Fl n Ar symfile
+.Op Fl O Ar overlayfile
 .Op Fl o Ar outfile
 .Op Fl p Ar pad_value
 .Op Fl s Ar symbol
@@ -32,6 +33,10 @@ The arguments are as follows:
 Write a mapfile to the given filename.
 .It Fl n Ar symfile
 Write a symbol file to the given filename.
+.It Fl O Ar overlayfile
+The ROM image to overlay sections over.
+When an overlay ROM is provided, all sections must be fixed.
+This may be used to patch an existing binray.
 .It Fl o Ar outfile
 Write ROM image to the given filename.
 .It Fl p Ar pad_value

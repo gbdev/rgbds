@@ -258,13 +258,16 @@ void
 AssignFloatingBankSections(enum eSectionType type)
 {
 	ensureSectionTypeIsValid(type);
-
+	
 	struct sSection *pSection;
 
 	while ((pSection = FindLargestSection(type, false))) {
 		SLONG org;
 
 		if ((org = area_AllocAnyBank(pSection->nByteSize, pSection->nAlign, type)) != -1) {
+			if (options & OPT_OVERLAY) {
+				errx(1, "All sections must be fixed when using overlay");
+			}
 			pSection->nOrg = org & 0xFFFF;
 			pSection->nBank = org >> 16;
 			pSection->oAssigned = 1;
@@ -421,6 +424,9 @@ AssignSections(void)
 	while (pSection) {
 		if (pSection->oAssigned == 0
 			&& pSection->nOrg != -1 && pSection->nBank == -1) {
+			if (options & OPT_OVERLAY) {
+				errx(1, "All sections must be fixed when using overlay");
+			}
 			switch (pSection->Type) {
 			case SECT_ROMX:
 			case SECT_VRAM:

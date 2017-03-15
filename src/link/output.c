@@ -8,9 +8,12 @@
 #include "link/assign.h"
 
 char *tzOutname;
+char *tzOverlayname = NULL;
+
+SLONG MaxOverlayBank;
 
 void 
-writehome(FILE * f)
+writehome(FILE * f, FILE * f_overlay)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
@@ -18,15 +21,20 @@ writehome(FILE * f)
 	mem = malloc(MaxAvail[BANK_ROM0]);
 	if (!mem)
 		return;
-
-	memset(mem, fillchar, MaxAvail[BANK_ROM0]);
+	
+	if (f_overlay != NULL) {
+		fseek(f_overlay, 0L, SEEK_SET);
+		fread(mem, 1, MaxAvail[BANK_ROM0], f_overlay);
+	} else {
+		memset(mem, fillchar, MaxAvail[BANK_ROM0]);
+	}
 	MapfileInitBank(0);
 
 	pSect = pSections;
 	while (pSect) {
 		if (pSect->Type == SECT_ROM0) {
 			memcpy(mem + pSect->nOrg, pSect->pData,
-			    pSect->nByteSize);
+				pSect->nByteSize);
 			MapfileWriteSection(pSect);
 		}
 		pSect = pSect->pNext;
@@ -39,7 +47,7 @@ writehome(FILE * f)
 }
 
 void 
-writebank(FILE * f, SLONG bank)
+writebank(FILE * f, FILE * f_overlay, SLONG bank)
 {
 	struct sSection *pSect;
 	UBYTE *mem;
@@ -48,14 +56,19 @@ writebank(FILE * f, SLONG bank)
 	if (!mem)
 		return;
 
-	memset(mem, fillchar, MaxAvail[bank]);
+	if (f_overlay != NULL && bank <= MaxOverlayBank) {
+		fseek(f_overlay, bank*0x4000, SEEK_SET);
+		fread(mem, 1, MaxAvail[bank], f_overlay);
+	} else {
+		memset(mem, fillchar, MaxAvail[bank]);
+	}
 	MapfileInitBank(bank);
 
 	pSect = pSections;
 	while (pSect) {
 		if (pSect->Type == SECT_ROMX && pSect->nBank == bank) {
 			memcpy(mem + pSect->nOrg - 0x4000, pSect->pData,
-			    pSect->nByteSize);
+				pSect->nByteSize);
 			MapfileWriteSection(pSect);
 		}
 		pSect = pSect->pNext;
@@ -74,17 +87,51 @@ out_Setname(char *tzOutputfile)
 }
 
 void 
+out_SetOverlayname(char *tzOverlayfile)
+{
+	tzOverlayname = tzOverlayfile;
+}
+
+
+void 
 Output(void)
 {
 	SLONG i;
 	FILE *f;
+	FILE *f_overlay = NULL;
+	
 
 	if ((f = fopen(tzOutname, "wb"))) {
-		writehome(f);
+		if (tzOverlayname) {
+			f_overlay = fopen(tzOverlayname, "rb");
+			if (!f_overlay) {
+				fprintf(stderr, "Failed to open overlay file %s\n", tzOverlayname);
+				exit(1);
+			}
+			fseek(f_overlay, 0, SEEK_END);
+			if (ftell(f_overlay) % 0x4000 != 0) {
+				fprintf(stderr, "Overlay file must be aligned to 0x4000 bytes\n");
+				exit(1);
+			}
+			MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
+			if (MaxOverlayBank < 1) {
+				fprintf(stderr, "Overlay file be at least 0x8000 bytes\n");
+				exit(1);
+			}
+			if (MaxOverlayBank > MaxBankUsed) {
+				MaxBankUsed = MaxOverlayBank;
+			}
+		}
+		
+		writehome(f, f_overlay);
 		for (i = 1; i <= MaxBankUsed; i += 1)
-			writebank(f, i);
+			writebank(f, f_overlay, i);
 
 		fclose(f);
+		
+		if (tzOverlayname) {
+			fclose(f_overlay);
+		}
 	}
 	for (i = BANK_WRAM0; i < MAXBANKS; i++) {
 		struct sSection *pSect;
