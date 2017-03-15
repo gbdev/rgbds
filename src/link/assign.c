@@ -332,7 +332,11 @@ AssignSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
-			BankFree[i]->nSize = 0x1000;
+			if (options & OPT_CONTWRAM) {
+				BankFree[i]->nSize = 0x2000;
+			} else {
+				BankFree[i]->nSize = 0x1000;
+			}
 		} else if (i >= BANK_SRAM && i < BANK_SRAM + BANK_COUNT_SRAM) {
 			/* Swappable SRAM bank */
 			BankFree[i]->nOrg = 0xA000;
@@ -372,6 +376,10 @@ AssignSections(void)
 		if ((pSection->nOrg != -1 || pSection->nBank != -1)
 		    && pSection->oAssigned == 0) {
 			/* User wants to have a say... */
+
+			if (pSection->Type == SECT_WRAMX && options & OPT_CONTWRAM) {
+				errx(1, "WRAMX not compatible with -w!");
+			}
 
 			switch (pSection->Type) {
 			case SECT_WRAM0:
