@@ -96,9 +96,14 @@ MapfileWriteSection(struct sSection * pSect)
 	SLONG i;
 
 	if (mf) {
-		fprintf(mf, "  SECTION: $%04lX-$%04lX ($%04lX bytes)\n",
-		    pSect->nOrg, pSect->nOrg + pSect->nByteSize - 1,
-		    pSect->nByteSize);
+		if (pSect->nByteSize > 0) {
+			fprintf(mf, "  SECTION: $%04lX-$%04lX ($%04lX bytes) [\"%s\"]\n",
+				pSect->nOrg, pSect->nOrg + pSect->nByteSize - 1,
+				pSect->nByteSize, pSect->pzName);
+		} else {
+			fprintf(mf, "  SECTION: $%04lX ($0 bytes) [\"%s\"]\n",
+				pSect->nOrg, pSect->pzName);
+		}
 	}
 
 	for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
