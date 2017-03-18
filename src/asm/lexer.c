@@ -565,6 +565,12 @@ yylex_ReadQuotedString()
 			case '"':
 				ch = '"';
 				break;
+			case '{':
+				ch = '{';
+				break;
+			case '}':
+				ch = '}';
+				break;
 			default:
 				maxLength = MAXSTRLEN - index;
 				length = CopyMacroArg(&yylval.tzString[index], maxLength, ch);
@@ -697,6 +703,12 @@ yylex_MACROARGS()
 				break;
 			case '\\':
 				ch = '\\';
+				break;
+			case '{':
+				ch = '{';
+				break;
+			case '}':
+				ch = '}';
 				break;
 			default:
 				maxLength = MAXSTRLEN - index;
