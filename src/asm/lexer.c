@@ -565,6 +565,9 @@ yylex_ReadQuotedString()
 			case '"':
 				ch = '"';
 				break;
+			case ',':
+				ch = ',';
+				break;
 			case '{':
 				ch = '{';
 				break;
@@ -703,6 +706,9 @@ yylex_MACROARGS()
 				break;
 			case '\\':
 				ch = '\\';
+				break;
+			case ',':
+				ch = ',';
 				break;
 			case '{':
 				ch = '{';
