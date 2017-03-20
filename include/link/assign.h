@@ -35,6 +35,9 @@ extern void CreateSymbolTable(void);
 extern SLONG MaxBankUsed;
 extern SLONG MaxAvail[MAXBANKS];
 
+void
+SetLinkerscriptName(char *tzLinkerscriptFile);
+
 int
 IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int bank);
 

@@ -4,10 +4,11 @@
 #include <string.h>
 
 #include "extern/err.h"
+#include "link/assign.h"
 #include "link/mylink.h"
 #include "link/main.h"
+#include "link/script.h"
 #include "link/symbol.h"
-#include "link/assign.h"
 
 struct sFreeArea {
 	SLONG nOrg;
@@ -338,6 +339,14 @@ AssignFloatingBankSections(enum eSectionType type)
 	}	
 }
 
+char *tzLinkerscriptName = NULL;
+
+void
+SetLinkerscriptName(char *tzLinkerscriptFile)
+{
+	tzLinkerscriptName = tzLinkerscriptFile;
+}
+
 void
 AssignSections(void)
 {
@@ -415,8 +424,16 @@ AssignSections(void)
 	}
 
 	/*
-	 * First, let's assign all the fixed sections...
-	 * And all because of that Jens Restemeier character ;)
+	 * First, let's parse the linkerscript.
+	 *
+	 */
+
+	if (tzLinkerscriptName) {
+		script_Parse(tzLinkerscriptName);
+	}
+
+	/*
+	 * Second, let's assign all the fixed sections...
 	 *
 	 */
 

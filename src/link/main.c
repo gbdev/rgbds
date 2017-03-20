@@ -31,12 +31,12 @@ char *progname;
  *
  */
 
-static void 
+static void
 usage(void)
 {
 	printf(
-"usage: rgblink [-tw] [-m mapfile] [-n symfile] [-O overlay] [-o outfile] \n"
-"               [-p pad_value] [-s symbol] file [...]\n");
+"usage: rgblink [-tw] [-l linkerscript] [-m mapfile] [-n symfile] [-O overlay]\n"
+"               [-o outfile] [-p pad_value] [-s symbol] file [...]\n");
 	exit(1);
 }
 
@@ -45,7 +45,7 @@ usage(void)
  *
  */
 
-int 
+int
 main(int argc, char *argv[])
 {
 	int ch;
@@ -56,8 +56,11 @@ main(int argc, char *argv[])
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "m:n:o:O:p:s:tw")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:n:o:O:p:s:tw")) != -1) {
 		switch (ch) {
+		case 'l':
+			SetLinkerscriptName(optarg);
+			break;
 		case 'm':
 			SetMapfileName(optarg);
 			break;
