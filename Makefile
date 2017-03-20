@@ -4,6 +4,12 @@ PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
+LFLAGS		:= --nounistd
+
+YACC		:= yacc
+FLEX		:= flex
+RM		:= rm -rf
+
 # User-defined variables
 PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
@@ -32,12 +38,15 @@ rgbasm_obj = \
 
 rgblink_obj = \
 	src/link/assign.o \
+	src/link/lexer.o \
 	src/link/library.o \
 	src/link/main.o \
 	src/link/mapfile.o \
 	src/link/object.o \
 	src/link/output.o \
 	src/link/patch.o \
+	src/link/parser.o \
+	src/link/script.o \
 	src/link/symbol.o \
 	src/extern/err.o
 
@@ -60,6 +69,7 @@ clean:
 	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
 	$Qrm -rf rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
 	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
+	$Qrm -rf src/link/lexer.c src/link/parser.c src/link/parser.h
 
 install: all
 	$Qmkdir -p ${BINPREFIX}
@@ -89,11 +99,20 @@ rgbgfx: ${rgbgfx_obj}
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
 
+.l.o:
+	$Q${RM} $*.c
+	$Q${FLEX} ${LFLAGS} -o $*.c $<
+	$Q${CC} ${REALCFLAGS} -c -o $@ $*.c
+	$Q${RM} $*.c
+
 .c.o:
 	$Q${CC} ${REALCFLAGS} -c -o $@ $<
 
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
 src/asm/asmy.h: src/asm/asmy.c
+
+src/link/lexer.o : src/link/parser.h
+src/link/parser.h : src/link/parser.c
 
 # Below is a target for the project maintainer to easily create win32 exes.
 # This is not for Windows users!
