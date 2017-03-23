@@ -82,6 +82,7 @@ install: all
 	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
 	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
 	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
+	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${MANPREFIX}/man1/rgblink.5
 	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
 
 rgbasm: ${rgbasm_obj}
