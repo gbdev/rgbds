@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm rgblink
 .Op Fl t
+.Op Fl w
 .Op Fl m Ar mapfile
 .Op Fl n Ar symfile
 .Op Fl O Ar overlayfile
@@ -44,6 +45,9 @@ When padding an image, pad with this value.
 The default is 0x00.
 .It Fl s Ar symbol
 ???
+.It Fl w
+Expand WRAM0 to the whole space assigned to WRAM and prevent the use of WRAMX
+sections.
 .It Fl t
 Write a tiny
 .Pq 32KiB
