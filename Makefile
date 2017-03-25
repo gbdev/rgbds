@@ -9,6 +9,9 @@ PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
 MANPREFIX =	${PREFIX}/man
 Q =		@
+STRIP = 	-s
+BINMODE =	555
+MANMODE =	444
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -60,16 +63,16 @@ clean:
 
 install: all
 	$Qmkdir -p ${BINPREFIX}
-	$Qinstall -s -m 555 rgbasm ${BINPREFIX}/rgbasm
-	$Qinstall -s -m 555 rgbfix ${BINPREFIX}/rgbfix
-	$Qinstall -s -m 555 rgblink ${BINPREFIX}/rgblink
-	$Qinstall -s -m 555 rgbgfx ${BINPREFIX}/rgbgfx
+	$Qinstall ${STRIP} -m ${BINMODE} rgbasm ${BINPREFIX}/rgbasm
+	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${BINPREFIX}/rgbfix
+	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${BINPREFIX}/rgblink
+	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${BINPREFIX}/rgbgfx
 	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man7
-	$Qinstall -m 444 src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
-	$Qinstall -m 444 src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
-	$Qinstall -m 444 src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
-	$Qinstall -m 444 src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
-	$Qinstall -m 444 src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
+	$Qinstall -m ${MANMODE} src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
+	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
+	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
+	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
+	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
