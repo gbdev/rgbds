@@ -4,6 +4,13 @@ PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
 REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
+# checks if libpng >= 1.6 (number at end (10600) represents version 1.06.00 aka 1.6)
+libpng := $(shell expr `pkg-config --modversion libpng | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/'`)
+libpng_uptodate := $(shell expr $(libpng) \>= 10600)
+ifeq "$(libpng_uptodate)" "0"
+  $(info libpng is NOT up-to-date. Requires libpng >= 1.6)
+endif
+
 # User-defined variables
 PREFIX =	/usr/local
 BINPREFIX =	${PREFIX}/bin
