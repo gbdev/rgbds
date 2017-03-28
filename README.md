@@ -8,8 +8,8 @@ for the Game Boy and Game Boy Color. It consists of:
   - rgbfix  (checksum/header fixer)
   - rgbgfx  (PNG‐to‐Game Boy graphics converter)
 
-rgbds-linux is a fork of the original RGBDS which aims to make the programs
-more like other UNIX tools.
+This is a fork of the original RGBDS which aims to make the programs more like
+other UNIX tools.
 
 
 ## Installing RGBDS (UNIX)
@@ -51,20 +51,27 @@ mkdir -p $HOME/{bin,man/man1,man/man7}
 make install PREFIX=$HOME
 ```
 
-`PREFIX`: Location where RGBDS will be installed. Defaults to /usr/local.
+`PREFIX`: Location where RGBDS will be installed. Defaults to `/usr/local`.
 
 `BINPREFIX`: Location where the RGBDS programs will be installed. Defaults
-to ${PREFIX}/bin.
+to `${PREFIX}/bin`.
 
 `MANPREFIX`: Location where the RGBDS man pages will be installed. Defaults
-to ${PREFIX}/man.
+to `${PREFIX}/man`.
 
 `Q`: Whether to quiet the build or not. To make the build more verbose, clear
-this variable. Defaults to @.
+this variable. Defaults to `@`.
+
+`STRIP`: Whether to strip the installed binaries of debug symbols or not.
+Defaults to `-s`.
+
+`BINMODE`: Permissions of the installed binaries. Defaults to `555`.
+
+`MANMODE`: Permissions of the installed manpages. Defaults to `444`.
 
 
 ## Installing RGBDS (Windows)
 
-Windows builds are available here: https://github.com/bentley/rgbds/releases
+Windows builds are available here: https://github.com/rednex/rgbds/releases
 
 Copy the .exe files to C:\Windows\ or similar.
