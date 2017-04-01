@@ -86,7 +86,10 @@ enum {
 
 	RPN_HRAM,
 
-	RPN_PCEZP,
+	/* TODO: This hasn't been removed in order not to break compatibility
+	 * with the existing object files, but it will be removed in a future
+	 * version. */
+	RPN_unused,
 
 	RPN_RANGECHECK,
 

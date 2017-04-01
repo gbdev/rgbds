@@ -175,15 +175,6 @@ calcrpn(struct sPatch * pPatch)
 				    pPatch->pzFilename, pPatch->nLineNo);
 			}
 			break;
-		case RPN_PCEZP:
-			t = rpnpop();
-			rpnpush(t & 0xFF);
-			if (t < 0x2000 || t > 0x20FF) {
-				errx(1,
-				    "%s(%ld) : Value must be in the ZP area",
-				    pPatch->pzFilename, pPatch->nLineNo);
-			}
-			break;
 		case RPN_CONST:
 			/* constant */
 			t = (*rpn++);
