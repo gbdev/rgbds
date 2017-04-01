@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "extern/err.h"
+#include "link/assign.h"
 #include "link/mylink.h"
 #include "link/main.h"
 
@@ -288,13 +289,18 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 {
 	struct sSection *pSection;
 
-	pSection = AllocSection();
+	char * pzName;
 
 	if (contents & CONTAINS_SECTION_NAME) {
-		readasciiz(&pSection->pzName, f);
+		readasciiz(&pzName, f);
+		if (IsSectionNameInUse(pzName))
+			errx(1, "Section name \"%s\" is already in use.", pzName);
 	} else {
-		pSection->pzName = "";
+		pzName = "";
 	}
+
+	pSection = AllocSection();
+	pSection->pzName = pzName;
 
 	pSection->nByteSize = readlong(f);
 	pSection->Type = (enum eSectionType) fgetc(f);

@@ -35,6 +35,9 @@ extern void CreateSymbolTable(void);
 extern SLONG MaxBankUsed;
 extern SLONG MaxAvail[MAXBANKS];
 
+int
+IsSectionNameInUse(const char *name);
+
 void
 SetLinkerscriptName(char *tzLinkerscriptFile);
 

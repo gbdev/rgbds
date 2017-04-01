@@ -217,6 +217,23 @@ FindLargestSection(enum eSectionType type, bool bankFixed)
 }
 
 int
+IsSectionNameInUse(const char *name)
+{
+	struct sSection *pSection;
+
+	pSection = pSections;
+	while (pSection) {
+		if (strcmp(pSection->pzName, name) == 0)
+			return 1;
+
+		pSection = pSection->pNext;
+	}
+
+	return 0;
+}
+
+
+int
 IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int bank)
 {
 	struct sSection *pSection;
