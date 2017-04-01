@@ -11,7 +11,7 @@ released under the following license:
  This program is free software. It comes without any warranty, to
  the extent permitted by applicable law. You can redistribute it
  and/or modify it under the terms of the DO WHATEVER PUBLIC LICENSE
- 
+
  Software originally created by Justin Lloyd @ http://otakunozoku.com/
 
 
@@ -19,6 +19,10 @@ rgbfix was rewritten from scratch by Anthony J. Bentley, and is released
 under the ISC license; see the source file for the text of the license.
 
 rgbgfx was written by stag019, and is released under the ISC license.
+
+Some files of rgblink were written by Antonio Niño Díaz, and they are relased
+under the ISC license. The affected files have the appropriate license in the
+header of the file.
 
 The UTF-8 decoder in src/asm/charmap.c was written by Björn Höhrmann and is
 released under the MIT license. The remainder of charmap.c was written by

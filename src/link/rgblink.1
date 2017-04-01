@@ -1,4 +1,4 @@
-.Dd February 26, 2015
+.Dd March 27, 2017
 .Dt RGBLINK 1
 .Os RGBDS Manual
 .Sh NAME
@@ -14,6 +14,7 @@
 .Op Fl o Ar outfile
 .Op Fl p Ar pad_value
 .Op Fl s Ar symbol
+.Op Fl l Ar linkerscript
 .Ar
 .Sh DESCRIPTION
 The
@@ -54,6 +55,14 @@ Write a tiny
 ROM file.
 This forces all ROMX sections to be of type ROM0, and increases the ROM0
 section size from 16KiB to 32KiB.
+.It Fl l Ar linkerscript
+Specify a linkerscript file that tells the linker how sections must be placed in
+the ROM.
+This file has priority over the attributes assigned in the source code, but they
+have to be consistent.
+See
+.Xr rgblink 5
+for more information about its format.
 .El
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM
@@ -70,9 +79,11 @@ to fix these so that the program will actually run in a Game Boy:
 .D1 $ rgbfix -v bar.gb
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
+.Xr rgblink 5 ,
 .Xr rgbfix 1 ,
 .Xr rgbds 7
 .Sh HISTORY
 .Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,
-and was later packaged in RGBDS by Justin Lloyd.
+and was later packaged in RGBDS by Justin Lloyd. It is now maintained by a
+number of contributors at https://github.com/rednex/rgbds.

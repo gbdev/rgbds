@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "extern/err.h"
+#include "link/assign.h"
 #include "link/mylink.h"
 #include "link/main.h"
+#include "link/script.h"
 #include "link/symbol.h"
-#include "link/assign.h"
 
 struct sFreeArea {
 	SLONG nOrg;
@@ -214,6 +216,54 @@ FindLargestSection(enum eSectionType type, bool bankFixed)
 	return r;
 }
 
+int
+IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int bank)
+{
+	struct sSection *pSection;
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->oAssigned == 0) {
+			if (strcmp(pSection->pzName, name) == 0) {
+				/* Section must be floating in source */
+				if (pSection->nOrg != -1 || pSection->nAlign != 1)
+					return 0;
+				/* It must have the same type in source and linkerscript */
+				if (pSection->Type != type)
+					return 0;
+				/* Bank number must be unassigned in source or equal */
+				if (pSection->nBank != -1 && pSection->nBank != bank)
+					return 0;
+				return 1;
+			}
+		}
+		pSection = pSection->pNext;
+	}
+
+	errx(1, "Section \"%s\" not found (or already used).\n", name);
+}
+
+unsigned int
+AssignSectionAddressByName(const char *name, unsigned int address)
+{
+	struct sSection *pSection;
+
+	pSection = pSections;
+	while (pSection) {
+		if (pSection->oAssigned == 0) {
+			if (strcmp(pSection->pzName, name) == 0) {
+				if (pSection->nOrg != -1 || pSection->nAlign != 1)
+					errx(1, "Section \"%s\" from linkerscript isn't floating.\n", name);
+				pSection->nOrg = address;
+				pSection->nAlign = -1;
+				return pSection->nByteSize;
+			}
+		}
+		pSection = pSection->pNext;
+	}
+
+	errx(1, "Section \"%s\" not found (or already used).\n", name);
+}
 
 bool
 VerifyAndSetBank(struct sSection *pSection)
@@ -287,6 +337,14 @@ AssignFloatingBankSections(enum eSectionType type)
 			}
 		}
 	}	
+}
+
+char *tzLinkerscriptName = NULL;
+
+void
+SetLinkerscriptName(char *tzLinkerscriptFile)
+{
+	tzLinkerscriptName = tzLinkerscriptFile;
 }
 
 void
@@ -366,8 +424,16 @@ AssignSections(void)
 	}
 
 	/*
-	 * First, let's assign all the fixed sections...
-	 * And all because of that Jens Restemeier character ;)
+	 * First, let's parse the linkerscript.
+	 *
+	 */
+
+	if (tzLinkerscriptName) {
+		script_Parse(tzLinkerscriptName);
+	}
+
+	/*
+	 * Second, let's assign all the fixed sections...
 	 *
 	 */
 

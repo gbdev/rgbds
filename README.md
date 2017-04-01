@@ -14,14 +14,18 @@ other UNIX tools.
 
 ## Installing RGBDS (UNIX)
 
-RGBDS requires libpng and pkg-config to be installed.
+RGBDS requires yacc, flex, libpng and pkg-config to be installed.
 
 On Mac OS X, install them with [Homebrew](http://brew.sh/). On other Unixes,
-use the built-in package manager.
+use the built-in package manager. For example, on Debian or Ubuntu:
 
-You can test if they're installed by running `pkg-config --cflags libpng`:
-if the output is a path, then you're good, and if it outputs an error then
-you need to install them via a package manager.
+```sh
+sudo apt-get install byacc flex pkg-config libpng-dev
+```
+
+You can test if libpng and pkg-config are installed by running
+`pkg-config --cflags libpng`: if the output is a path, then you're good, and if
+it outputs an error then you need to install them via a package manager.
 
 To build the programs on a UNIX or UNIX-like system, just run in your terminal:
 
