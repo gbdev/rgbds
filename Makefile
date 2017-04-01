@@ -77,7 +77,7 @@ install: all
 	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${BINPREFIX}/rgbfix
 	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${BINPREFIX}/rgblink
 	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${BINPREFIX}/rgbgfx
-	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man7
+	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man5 ${MANPREFIX}/man7
 	$Qinstall -m ${MANMODE} src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
 	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
 	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
