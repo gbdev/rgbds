@@ -42,6 +42,6 @@ int
 IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int bank);
 
 unsigned int
-AssignSectionAddressByName(const char *name, unsigned int address);
+AssignSectionAddressAndBankByName(const char *name, unsigned int address, int bank);
 
 #endif

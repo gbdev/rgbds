@@ -244,7 +244,7 @@ IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int b
 }
 
 unsigned int
-AssignSectionAddressByName(const char *name, unsigned int address)
+AssignSectionAddressAndBankByName(const char *name, unsigned int address, int bank)
 {
 	struct sSection *pSection;
 
@@ -254,7 +254,10 @@ AssignSectionAddressByName(const char *name, unsigned int address)
 			if (strcmp(pSection->pzName, name) == 0) {
 				if (pSection->nOrg != -1 || pSection->nAlign != 1)
 					errx(1, "Section \"%s\" from linkerscript isn't floating.\n", name);
+				if (pSection->nBank != -1 && pSection->nBank != bank)
+					errx(1, "Section \"%s\" from linkerscript has different bank number than in the source.\n", name);
 				pSection->nOrg = address;
+				pSection->nBank = bank;
 				pSection->nAlign = -1;
 				return pSection->nByteSize;
 			}

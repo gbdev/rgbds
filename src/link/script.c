@@ -213,6 +213,7 @@ void script_OutputSection(const char *section_name)
 
 	/* Move section to its place. */
 	bank[current_bank].address +=
-		AssignSectionAddressByName(section_name, bank[current_bank].address);
+		AssignSectionAddressAndBankByName(section_name,
+				bank[current_bank].address, current_real_bank);
 }
 
