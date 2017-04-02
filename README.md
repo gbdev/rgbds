@@ -12,12 +12,18 @@ This is a fork of the original RGBDS which aims to make the programs more like
 other UNIX tools.
 
 
-## Installing RGBDS (UNIX)
+## Building RGBDS
 
 RGBDS requires yacc, flex, libpng and pkg-config to be installed.
 
-On Mac OS X, install them with [Homebrew](http://brew.sh/). On other Unixes,
-use the built-in package manager. For example, on Debian or Ubuntu:
+On macOS, install the latter two with [Homebrew](http://brew.sh/):
+
+```sh
+brew install libpng pkg-config
+```
+
+On other Unixes, use the built-in package manager. For example, on Debian or
+Ubuntu:
 
 ```sh
 sudo apt-get install byacc flex pkg-config libpng-dev
@@ -72,6 +78,22 @@ Defaults to `-s`.
 `BINMODE`: Permissions of the installed binaries. Defaults to `555`.
 
 `MANMODE`: Permissions of the installed manpages. Defaults to `444`.
+
+
+## Installing RGBDS (macOS)
+
+If you would prefer not to build RGBDS yourself, you may also install it using
+[Homebrew](http://brew.sh/). To install the latest release, use:
+
+```sh
+brew install rgbds
+```
+
+To install RGBDS with all of the current changes in development (as seen on
+GitHub), use:
+```sh
+brew install rgbds --HEAD
+```
 
 
 ## Installing RGBDS (Windows)
