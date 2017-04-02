@@ -1,7 +1,7 @@
-PKG_CONFIG =	pkg-config
-WARNFLAGS =	-Wall -Werror=implicit
-PNGFLAGS !=	${PKG_CONFIG} --cflags libpng
-REALCFLAGS =	${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
+PKG_CONFIG	= pkg-config
+WARNFLAGS	= -Wall -Werror
+PNGFLAGS	!= ${PKG_CONFIG} --cflags libpng
+REALCFLAGS	= ${CFLAGS} ${WARNFLAGS} ${PNGFLAGS} -Iinclude -g \
 		-std=c99 -D_POSIX_C_SOURCE=200809L
 
 LFLAGS		:= --nounistd
@@ -11,13 +11,13 @@ FLEX		:= flex
 RM		:= rm -rf
 
 # User-defined variables
-PREFIX =	/usr/local
-BINPREFIX =	${PREFIX}/bin
-MANPREFIX =	${PREFIX}/man
-Q =		@
-STRIP = 	-s
-BINMODE =	555
-MANMODE =	444
+PREFIX		= /usr/local
+BINPREFIX	= ${PREFIX}/bin
+MANPREFIX	= ${PREFIX}/man
+Q		= @
+STRIP		= -s
+BINMODE		= 555
+MANMODE		= 444
 
 rgbasm_obj = \
 	src/asm/asmy.o \
@@ -63,13 +63,13 @@ rgbgfx_obj = \
 all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
-	$Qrm -rf rgbds.html
-	$Qrm -rf rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
-	$Qrm -rf rgblink rgblink.exe ${rgblink_obj} rgblink.html
-	$Qrm -rf rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	$Qrm -rf rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
-	$Qrm -rf src/asm/asmy.c src/asm/asmy.h
-	$Qrm -rf src/link/lexer.c src/link/parser.c src/link/parser.h
+	$Q${RM} rgbds.html
+	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
+	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html
+	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
+	$Q${RM} rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
+	$Q${RM} src/asm/asmy.c src/asm/asmy.h
+	$Q${RM} src/link/lexer.c src/link/parser.c src/link/parser.h
 
 install: all
 	$Qmkdir -p ${BINPREFIX}
