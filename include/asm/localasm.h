@@ -85,6 +85,7 @@
 
 #define	NAME_DB			"db"
 #define	NAME_DW			"dw"
+#define	NAME_STR		"str" 
 #define	NAME_RB			"rb"
 #define	NAME_RW			"rw"
 
