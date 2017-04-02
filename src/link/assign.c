@@ -390,7 +390,7 @@ AssignSections(void)
 		if (i == BANK_ROM0) {
 			/* ROM0 bank */
 			BankFree[i]->nOrg = 0x0000;
-			if (options & OPT_SMALL) {
+			if (options & OPT_TINY) {
 				BankFree[i]->nSize = 0x8000;
 			} else {
 				BankFree[i]->nSize = 0x4000;
@@ -402,7 +402,7 @@ AssignSections(void)
 			 * Now, this shouldn't really be necessary... but for
 			 * good measure we'll do it anyway.
 			 */
-			if (options & OPT_SMALL) {
+			if (options & OPT_TINY) {
 				BankFree[i]->nSize = 0;
 			} else {
 				BankFree[i]->nSize = 0x4000;

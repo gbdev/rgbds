@@ -158,7 +158,7 @@ obj_ReadRGB0Section(FILE * f)
 
 	/* does the user want the -s mode? */
 
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
+	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
 		pSection->Type = SECT_ROM0;
 	}
 	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
@@ -315,7 +315,7 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 
 	/* does the user want the -s mode? */
 
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
+	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
 		pSection->Type = SECT_ROM0;
 	}
 	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {

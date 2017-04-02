@@ -35,7 +35,7 @@ void script_InitSections(void)
 		if (i == BANK_ROM0) {
 			/* ROM0 bank */
 			bank[i].address = 0x0000;
-			if (options & OPT_SMALL) {
+			if (options & OPT_TINY) {
 				bank[i].top_address = 0x8000;
 			} else {
 				bank[i].top_address = 0x4000;
@@ -48,7 +48,7 @@ void script_InitSections(void)
 			 * Now, this shouldn't really be necessary... but for
 			 * good measure we'll do it anyway.
 			 */
-			if (options & OPT_SMALL) {
+			if (options & OPT_TINY) {
 				bank[i].top_address = 0x4000;
 			} else {
 				bank[i].top_address = 0x8000;
