@@ -141,5 +141,7 @@ wwwman:
 		rgbfix.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
 		rgblink.html
+	$Qmandoc ${MANDOC} src/link/rgblink.5 | sed s/OpenBSD/General/ > \
+		rgblink-script.html
 	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 | sed s/OpenBSD/General/ > \
 		rgbgfx.html
