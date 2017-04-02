@@ -21,6 +21,7 @@ char *currentmacroargs[MAXMACROARGS + 1];
 char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
 char SavedDATE[256];
+char SavedISODATE[256]; 
 bool exportall;
 
 SLONG
@@ -761,6 +762,7 @@ sym_PrepPass2(void)
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
+	sym_AddString("__ISODATE__", SavedISODATE); 
 	sym_AddSet("_RS", 0);
 
 	sym_AddEqu("_NARG", 0);
@@ -801,8 +803,10 @@ sym_Init(void)
 		tptr = localtime(&tod);
 		strftime(SavedTIME, sizeof(SavedTIME), "%H:%M:%S", tptr);
 		strftime(SavedDATE, sizeof(SavedDATE), "%d %B %Y", tptr);
+		strftime(SavedISODATE, sizeof(SavedISODATE), "%Y-%m-%d", tptr); 
 		sym_AddString("__TIME__", SavedTIME);
 		sym_AddString("__DATE__", SavedDATE);
+		sym_AddString("__ISODATE__", SavedISODATE); 
 	}
 	pScope = NULL;
 
