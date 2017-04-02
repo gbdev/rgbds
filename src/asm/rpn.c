@@ -12,7 +12,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 
-void 
+void
 mergetwoexpressions(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -28,7 +28,7 @@ mergetwoexpressions(struct Expression * expr, struct Expression * src1,
 /*
  * Add a byte to the RPN expression
  */
-void 
+void
 pushbyte(struct Expression * expr, int b)
 {
 	expr->tRPN[expr->nRPNLength++] = b & 0xFF;
@@ -37,7 +37,7 @@ pushbyte(struct Expression * expr, int b)
 /*
  * Reset the RPN module
  */
-void 
+void
 rpn_Reset(struct Expression * expr)
 {
 	expr->nRPNLength = expr->nRPNOut = expr->isReloc = expr->isPCRel = 0;
@@ -46,7 +46,7 @@ rpn_Reset(struct Expression * expr)
 /*
  * Returns the next rpn byte in expression
  */
-UWORD 
+UWORD
 rpn_PopByte(struct Expression * expr)
 {
 	if (expr->nRPNOut == expr->nRPNLength) {
@@ -58,7 +58,7 @@ rpn_PopByte(struct Expression * expr)
 /*
  * Determine if the current expression is relocatable
  */
-ULONG 
+ULONG
 rpn_isReloc(struct Expression * expr)
 {
 	return (expr->isReloc);
@@ -67,7 +67,7 @@ rpn_isReloc(struct Expression * expr)
 /*
  * Determine if the current expression can be pc-relative
  */
-ULONG 
+ULONG
 rpn_isPCRelative(struct Expression * expr)
 {
 	return (expr->isPCRel);
@@ -76,7 +76,7 @@ rpn_isPCRelative(struct Expression * expr)
 /*
  * Add symbols, constants and operators to expression
  */
-void 
+void
 rpn_Number(struct Expression * expr, ULONG i)
 {
 	rpn_Reset(expr);
@@ -88,7 +88,7 @@ rpn_Number(struct Expression * expr, ULONG i)
 	expr->nVal = i;
 }
 
-void 
+void
 rpn_Symbol(struct Expression * expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
@@ -110,7 +110,7 @@ rpn_Symbol(struct Expression * expr, char *tzSym)
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
 }
 
-void 
+void
 rpn_Bank(struct Expression * expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
@@ -128,7 +128,7 @@ rpn_Bank(struct Expression * expr, char *tzSym)
 		yyerror("BANK argument must be a relocatable identifier");
 }
 
-int 
+int
 rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
     SLONG high)
 {
@@ -150,21 +150,21 @@ rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
 	}
 }
 
-void 
+void
 rpn_CheckHRAM(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_HRAM);
 }
 
-void 
+void
 rpn_LOGNOT(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
 	pushbyte(expr, RPN_LOGUNNOT);
 }
 
-void 
+void
 rpn_LOGOR(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -173,7 +173,7 @@ rpn_LOGOR(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGOR);
 }
 
-void 
+void
 rpn_LOGAND(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -182,7 +182,7 @@ rpn_LOGAND(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGAND);
 }
 
-void 
+void
 rpn_LOGEQU(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -191,7 +191,7 @@ rpn_LOGEQU(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGEQ);
 }
 
-void 
+void
 rpn_LOGGT(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -200,7 +200,7 @@ rpn_LOGGT(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGGT);
 }
 
-void 
+void
 rpn_LOGLT(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -209,7 +209,7 @@ rpn_LOGLT(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGLT);
 }
 
-void 
+void
 rpn_LOGGE(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -218,7 +218,7 @@ rpn_LOGGE(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGGE);
 }
 
-void 
+void
 rpn_LOGLE(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -227,7 +227,7 @@ rpn_LOGLE(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGLE);
 }
 
-void 
+void
 rpn_LOGNE(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -236,7 +236,7 @@ rpn_LOGNE(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_LOGNE);
 }
 
-void 
+void
 rpn_ADD(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -245,7 +245,7 @@ rpn_ADD(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_ADD);
 }
 
-void 
+void
 rpn_SUB(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -254,7 +254,7 @@ rpn_SUB(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_SUB);
 }
 
-void 
+void
 rpn_XOR(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -263,7 +263,7 @@ rpn_XOR(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_XOR);
 }
 
-void 
+void
 rpn_OR(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -272,7 +272,7 @@ rpn_OR(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_OR);
 }
 
-void 
+void
 rpn_AND(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -281,7 +281,7 @@ rpn_AND(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_AND);
 }
 
-void 
+void
 rpn_SHL(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -290,7 +290,7 @@ rpn_SHL(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_SHL);
 }
 
-void 
+void
 rpn_SHR(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -299,7 +299,7 @@ rpn_SHR(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_SHR);
 }
 
-void 
+void
 rpn_MUL(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -308,7 +308,7 @@ rpn_MUL(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_MUL);
 }
 
-void 
+void
 rpn_DIV(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -320,7 +320,7 @@ rpn_DIV(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_DIV);
 }
 
-void 
+void
 rpn_MOD(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
@@ -332,7 +332,7 @@ rpn_MOD(struct Expression * expr, struct Expression * src1,
 	pushbyte(expr, RPN_MOD);
 }
 
-void 
+void
 rpn_UNNEG(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
@@ -340,7 +340,7 @@ rpn_UNNEG(struct Expression * expr, struct Expression * src)
 	pushbyte(expr, RPN_UNSUB);
 }
 
-void 
+void
 rpn_UNNOT(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;

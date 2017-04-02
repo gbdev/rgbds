@@ -53,7 +53,7 @@ struct SectionStackEntry *pSectionStack = NULL;
 /*
  * Section stack routines
  */
-void 
+void
 out_PushSection(void)
 {
 	struct SectionStackEntry *pSect;
@@ -66,7 +66,7 @@ out_PushSection(void)
 		fatalerror("No memory for section stack");
 }
 
-void 
+void
 out_PopSection(void)
 {
 	if (pSectionStack) {
@@ -83,7 +83,7 @@ out_PopSection(void)
 /*
  * Count the number of symbols used in this object
  */
-ULONG 
+ULONG
 countsymbols(void)
 {
 	struct PatchSymbol *pSym;
@@ -102,7 +102,7 @@ countsymbols(void)
 /*
  * Count the number of sections used in this object
  */
-ULONG 
+ULONG
 countsections(void)
 {
 	struct Section *pSect;
@@ -121,7 +121,7 @@ countsections(void)
 /*
  * Count the number of patches used in this object
  */
-ULONG 
+ULONG
 countpatches(struct Section * pSect)
 {
 	struct Patch *pPatch;
@@ -139,7 +139,7 @@ countpatches(struct Section * pSect)
 /*
  * Write a long to a file (little-endian)
  */
-void 
+void
 fputlong(ULONG i, FILE * f)
 {
 	fputc(i, f);
@@ -151,7 +151,7 @@ fputlong(ULONG i, FILE * f)
 /*
  * Write a NULL-terminated string to a file
  */
-void 
+void
 fputstring(char *s, FILE * f)
 {
 	while (*s)
@@ -162,7 +162,7 @@ fputstring(char *s, FILE * f)
 /*
  * Return a section's ID
  */
-ULONG 
+ULONG
 getsectid(struct Section * pSect)
 {
 	struct Section *sec;
@@ -184,7 +184,7 @@ getsectid(struct Section * pSect)
 /*
  * Write a patch to a file
  */
-void 
+void
 writepatch(struct Patch * pPatch, FILE * f)
 {
 	fputstring(pPatch->tzFilename, f);
@@ -198,7 +198,7 @@ writepatch(struct Patch * pPatch, FILE * f)
 /*
  * Write a section to a file
  */
-void 
+void
 writesection(struct Section * pSect, FILE * f)
 {
 	fputstring(pSect->pzName, f); // RGB3 addition
@@ -209,7 +209,7 @@ writesection(struct Section * pSect, FILE * f)
 
 	fputlong(pSect->nBank, f);
 	//RGB1 addition
-		
+
 	fputlong(pSect->nAlign, f); // RGB3 addition
 
 	if ((pSect->nType == SECT_ROM0)
@@ -230,7 +230,7 @@ writesection(struct Section * pSect, FILE * f)
 /*
  * Write a symbol to a file
  */
-void 
+void
 writesymbol(struct sSymbol * pSym, FILE * f)
 {
 	char symname[MAXSYMLEN * 2 + 1];
@@ -250,7 +250,7 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 			strcat(symname, pSym->tzName);
 		} else
 			strcpy(symname, pSym->tzName);
-		
+
 		if (pSym->nType & SYMF_EXPORT) {
 			/* Symbol should be exported */
 			type = SYM_EXPORT;
@@ -279,13 +279,12 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 /*
  * Add a symbol to the object
  */
-ULONG 
+ULONG
 addsymbol(struct sSymbol * pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
 	static ULONG nextID = 0;
 	ULONG hash;
-	
 
 	hash = calchash(pSym->tzName);
 	ppPSym = &(tHashedPatchSymbols[hash]);
@@ -313,7 +312,7 @@ addsymbol(struct sSymbol * pSym)
 /*
  * Add all exported symbols to the object
  */
-void 
+void
 addexports(void)
 {
 	int i;
@@ -353,7 +352,7 @@ allocpatch(void)
 /*
  * Create a new patch (includes the rpn expr)
  */
-void 
+void
 createpatch(ULONG type, struct Expression * expr)
 {
 	struct Patch *pPatch;
@@ -429,7 +428,7 @@ createpatch(ULONG type, struct Expression * expr)
 /*
  * A quick check to see if we have an initialized section
  */
-void 
+void
 checksection(void)
 {
 	if (pCurrentSection)
@@ -442,7 +441,7 @@ checksection(void)
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-void 
+void
 checkcodesection(SLONG size)
 {
 	checksection();
@@ -480,7 +479,7 @@ checkcodesection(SLONG size)
 /*
  * Write an objectfile
  */
-void 
+void
 out_WriteObject(void)
 {
 	FILE *f;
@@ -514,7 +513,7 @@ out_WriteObject(void)
 /*
  * Prepare for pass #2
  */
-void 
+void
 out_PrepPass2(void)
 {
 	struct Section *pSect;
@@ -531,7 +530,7 @@ out_PrepPass2(void)
 /*
  * Set the objectfilename
  */
-void 
+void
 out_SetFileName(char *s)
 {
 	tzObjectname = s;
@@ -597,7 +596,7 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG align
 /*
  * Set the current section
  */
-void 
+void
 out_SetCurrentSection(struct Section * pSect)
 {
 	pCurrentSection = pSect;
@@ -610,7 +609,7 @@ out_SetCurrentSection(struct Section * pSect)
 /*
  * Set the current section by name and type
  */
-void 
+void
 out_NewSection(char *pzName, ULONG secttype)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1, 1));
@@ -619,7 +618,7 @@ out_NewSection(char *pzName, ULONG secttype)
 /*
  * Set the current section by name and type
  */
-void 
+void
 out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank, 1));
@@ -628,7 +627,7 @@ out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
 /*
  * Set the current section by name and type, using a given byte alignment
  */
-void 
+void
 out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 {
 	if (alignment < 0 || alignment > 16) {
@@ -640,7 +639,7 @@ out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 /*
  * Output an absolute byte
  */
-void 
+void
 out_AbsByte(int b)
 {
 	checkcodesection(1);
@@ -653,7 +652,7 @@ out_AbsByte(int b)
 	pPCSymbol->nValue += 1;
 }
 
-void 
+void
 out_AbsByteGroup(char *s, int length)
 {
 	checkcodesection(length);
@@ -664,7 +663,7 @@ out_AbsByteGroup(char *s, int length)
 /*
  * Skip this many bytes
  */
-void 
+void
 out_Skip(int skip)
 {
 	checksection();
@@ -683,7 +682,7 @@ out_Skip(int skip)
 /*
  * Output a NULL terminated string (excluding the NULL-character)
  */
-void 
+void
 out_String(char *s)
 {
 	checkcodesection(strlen(s));
@@ -696,7 +695,7 @@ out_String(char *s)
  * is an absolute value in disguise.
  */
 
-void 
+void
 out_RelByte(struct Expression * expr)
 {
 	checkcodesection(1);
@@ -717,7 +716,7 @@ out_RelByte(struct Expression * expr)
 /*
  * Output an absolute word
  */
-void 
+void
 out_AbsWord(int b)
 {
 	checkcodesection(2);
@@ -735,7 +734,7 @@ out_AbsWord(int b)
  * Output a relocatable word.  Checking will be done to see if
  * it's an absolute value in disguise.
  */
-void 
+void
 out_RelWord(struct Expression * expr)
 {
 	ULONG b;
@@ -759,7 +758,7 @@ out_RelWord(struct Expression * expr)
 /*
  * Output an absolute longword
  */
-void 
+void
 out_AbsLong(SLONG b)
 {
 	checkcodesection(sizeof(SLONG));
@@ -778,7 +777,7 @@ out_AbsLong(SLONG b)
  * Output a relocatable longword.  Checking will be done to see if
  * is an absolute value in disguise.
  */
-void 
+void
 out_RelLong(struct Expression * expr)
 {
 	SLONG b;
@@ -804,7 +803,7 @@ out_RelLong(struct Expression * expr)
 /*
  * Output a PC-relative byte
  */
-void 
+void
 out_PCRelByte(struct Expression * expr)
 {
 	SLONG b = expr->nVal;
@@ -821,7 +820,7 @@ out_PCRelByte(struct Expression * expr)
 /*
  * Output a binary file
  */
-void 
+void
 out_BinaryFile(char *s)
 {
 	FILE *f;
@@ -852,7 +851,7 @@ out_BinaryFile(char *s)
 	fclose(f);
 }
 
-void 
+void
 out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 {
 	FILE *f;

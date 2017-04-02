@@ -29,7 +29,7 @@ enum ObjectFileContents {
  *
  */
 
-SLONG 
+SLONG
 readlong(FILE * f)
 {
 	SLONG r;
@@ -42,7 +42,7 @@ readlong(FILE * f)
 	return (r);
 }
 
-UWORD 
+UWORD
 readword(FILE * f)
 {
 	UWORD r;
@@ -224,7 +224,7 @@ obj_ReadRGB0Section(FILE * f)
 	return pSection;
 }
 
-void 
+void
 obj_ReadRGB0(FILE * pObjfile)
 {
 	struct sSection *pFirstSection;
@@ -375,7 +375,7 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 	return pSection;
 }
 
-void 
+void
 obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
 {
 	struct sSection *pFirstSection;
@@ -435,7 +435,7 @@ obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
  *
  */
 
-void 
+void
 obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 {
 	char tzHeader[8];
@@ -464,7 +464,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	}
 }
 
-void 
+void
 obj_Readfile(char *tzObjectfile)
 {
 	FILE *pObjfile;
@@ -484,7 +484,7 @@ obj_Readfile(char *tzObjectfile)
 	oReadLib = 0;
 }
 
-SLONG 
+SLONG
 file_Length(FILE * f)
 {
 	ULONG r, p;
@@ -497,7 +497,7 @@ file_Length(FILE * f)
 	return (r);
 }
 
-void 
+void
 lib_ReadXLB0(FILE * f)
 {
 	SLONG size;

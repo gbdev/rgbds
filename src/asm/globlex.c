@@ -17,7 +17,7 @@ bool oDontExpandStrings = false;
 SLONG nGBGfxID = -1;
 SLONG nBinaryID = -1;
 
-SLONG 
+SLONG
 gbgfx2bin(char ch)
 {
 	SLONG i;
@@ -31,7 +31,7 @@ gbgfx2bin(char ch)
 	return (0);
 }
 
-SLONG 
+SLONG
 binary2bin(char ch)
 {
 	SLONG i;
@@ -45,7 +45,7 @@ binary2bin(char ch)
 	return (0);
 }
 
-SLONG 
+SLONG
 char2bin(char ch)
 {
 	if (ch >= 'a' && ch <= 'f')
@@ -62,7 +62,7 @@ char2bin(char ch)
 
 typedef SLONG(*x2bin) (char ch);
 
-SLONG 
+SLONG
 ascii2bin(char *s)
 {
 	SLONG radix = 10;
@@ -107,7 +107,7 @@ ascii2bin(char *s)
 	return (result);
 }
 
-ULONG 
+ULONG
 ParseFixedPoint(char *s, ULONG size)
 {
 	//char dest[256];
@@ -133,7 +133,7 @@ ParseFixedPoint(char *s, ULONG size)
 	return (1);
 }
 
-ULONG 
+ULONG
 ParseNumber(char *s, ULONG size)
 {
 	char dest[256];
@@ -145,7 +145,7 @@ ParseNumber(char *s, ULONG size)
 	return (1);
 }
 
-ULONG 
+ULONG
 ParseSymbol(char *src, ULONG size)
 {
 	char dest[MAXSYMLEN + 1];
@@ -203,7 +203,7 @@ ParseSymbol(char *src, ULONG size)
 	}
 }
 
-ULONG 
+ULONG
 PutMacroArg(char *src, ULONG size)
 {
 	char *s;
@@ -221,7 +221,7 @@ PutMacroArg(char *src, ULONG size)
 	return (0);
 }
 
-ULONG 
+ULONG
 PutUniqueArg(char *src, ULONG size)
 {
 	char *s;
@@ -390,7 +390,7 @@ struct sLexFloat tMacroUniqueToken = {
 	T_LEX_MACROUNIQUE
 };
 
-void 
+void
 setuplex(void)
 {
 	ULONG id;

@@ -12,7 +12,7 @@ char *tzOverlayname = NULL;
 
 SLONG MaxOverlayBank;
 
-void 
+void
 writehome(FILE * f, FILE * f_overlay)
 {
 	struct sSection *pSect;
@@ -46,7 +46,7 @@ writehome(FILE * f, FILE * f_overlay)
 	free(mem);
 }
 
-void 
+void
 writebank(FILE * f, FILE * f_overlay, SLONG bank)
 {
 	struct sSection *pSect;
@@ -80,20 +80,20 @@ writebank(FILE * f, FILE * f_overlay, SLONG bank)
 	free(mem);
 }
 
-void 
+void
 out_Setname(char *tzOutputfile)
 {
 	tzOutname = tzOutputfile;
 }
 
-void 
+void
 out_SetOverlayname(char *tzOverlayfile)
 {
 	tzOverlayname = tzOverlayfile;
 }
 
 
-void 
+void
 Output(void)
 {
 	SLONG i;

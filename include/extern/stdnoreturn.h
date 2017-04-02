@@ -12,5 +12,5 @@
     #define noreturn _declspec( noreturn)
 #else
     /* unsupported, but no need to throw a fit */
-    #define noreturn 
+    #define noreturn
 #endif

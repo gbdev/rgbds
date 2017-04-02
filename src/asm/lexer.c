@@ -39,7 +39,7 @@ ULONG tFloatingChars[256];
 ULONG nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
-void 
+void
 upperstring(char *s)
 {
 	while (*s) {
@@ -48,7 +48,7 @@ upperstring(char *s)
 	}
 }
 
-void 
+void
 lowerstring(char *s)
 {
 	while (*s) {
@@ -57,19 +57,19 @@ lowerstring(char *s)
 	}
 }
 
-void 
+void
 yyskipbytes(ULONG count)
 {
 	pLexBuffer += count;
 }
 
-void 
+void
 yyunputbytes(ULONG count)
 {
 	pLexBuffer -= count;
 }
 
-void 
+void
 yyunput(char c)
 {
 	if (pLexBuffer <= pLexBufferRealStart)
@@ -78,7 +78,7 @@ yyunput(char c)
 	*(--pLexBuffer) = c;
 }
 
-void 
+void
 yyunputstr(char *s)
 {
 	int i, len;
@@ -92,26 +92,26 @@ yyunputstr(char *s)
 		*(--pLexBuffer) = s[i];
 }
 
-void 
+void
 yy_switch_to_buffer(YY_BUFFER_STATE buf)
 {
 	pCurrentBuffer = buf;
 }
 
-void 
+void
 yy_set_state(enum eLexerState i)
 {
 	lexerstate = i;
 }
 
-void 
+void
 yy_delete_buffer(YY_BUFFER_STATE buf)
 {
 	free(buf->pBufferStart - SAFETYMARGIN);
 	free(buf);
 }
 
-YY_BUFFER_STATE 
+YY_BUFFER_STATE
 yy_scan_bytes(char *mem, ULONG size)
 {
 	YY_BUFFER_STATE pBuffer;
@@ -132,7 +132,7 @@ yy_scan_bytes(char *mem, ULONG size)
 	return (NULL);
 }
 
-YY_BUFFER_STATE 
+YY_BUFFER_STATE
 yy_create_buffer(FILE * f)
 {
 	YY_BUFFER_STATE pBuffer;
@@ -219,7 +219,7 @@ lex_CheckCharacterRange(UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -230,7 +230,7 @@ lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -241,7 +241,7 @@ lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -252,7 +252,7 @@ lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -263,7 +263,7 @@ lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -274,7 +274,7 @@ lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
 	}
 }
 
-void 
+void
 lex_FloatAddSecondRange(ULONG id, UWORD start, UWORD end)
 {
 	lex_CheckCharacterRange(start, end);
@@ -302,7 +302,7 @@ lexgetfloat(ULONG nFloatMask)
 	return (&tLexFloat[i]);
 }
 
-ULONG 
+ULONG
 lexcalchash(char *s)
 {
 	ULONG hash = 0;
@@ -314,7 +314,7 @@ lexcalchash(char *s)
 	return (hash % LEXHASHSIZE);
 }
 
-void 
+void
 lex_Init(void)
 {
 	ULONG i;
@@ -333,7 +333,7 @@ lex_Init(void)
 	nFloating = 0;
 }
 
-void 
+void
 lex_AddStrings(struct sLexInitString * lex)
 {
 	while (lex->tzName) {
@@ -757,7 +757,7 @@ yylex_MACROARGS()
 	return 0;
 }
 
-ULONG 
+ULONG
 yylex(void)
 {
 	switch (lexerstate) {

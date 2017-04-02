@@ -63,7 +63,7 @@ ensureSectionTypeIsValid(enum eSectionType type)
 	}
 }
 
-SLONG 
+SLONG
 area_Avail(SLONG bank)
 {
 	SLONG r;
@@ -554,7 +554,7 @@ AssignSections(void)
 	}
 }
 
-void 
+void
 CreateSymbolTable(void)
 {
 	struct sSection *pSect;

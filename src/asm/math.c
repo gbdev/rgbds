@@ -18,7 +18,7 @@
 /*
  * Define the _PI symbol
  */
-void 
+void
 math_DefinePI(void)
 {
 	sym_AddEqu("_PI", double2fix(PI));
@@ -27,7 +27,7 @@ math_DefinePI(void)
 /*
  * Print a fixed point value
  */
-void 
+void
 math_Print(SLONG i)
 {
 	if (i >= 0)
@@ -41,7 +41,7 @@ math_Print(SLONG i)
 /*
  * Calculate sine
  */
-SLONG 
+SLONG
 math_Sin(SLONG i)
 {
 	return (double2fix(sin(fix2double(i) * 2 * PI / 65536)));
@@ -50,7 +50,7 @@ math_Sin(SLONG i)
 /*
  * Calculate cosine
  */
-SLONG 
+SLONG
 math_Cos(SLONG i)
 {
 	return (double2fix(cos(fix2double(i) * 2 * PI / 65536)));
@@ -59,7 +59,7 @@ math_Cos(SLONG i)
 /*
  * Calculate tangent
  */
-SLONG 
+SLONG
 math_Tan(SLONG i)
 {
 	return (double2fix(tan(fix2double(i) * 2 * PI / 65536)));
@@ -68,7 +68,7 @@ math_Tan(SLONG i)
 /*
  * Calculate arcsine
  */
-SLONG 
+SLONG
 math_ASin(SLONG i)
 {
 	return (double2fix(asin(fix2double(i)) / 2 / PI * 65536));
@@ -77,7 +77,7 @@ math_ASin(SLONG i)
 /*
  * Calculate arccosine
  */
-SLONG 
+SLONG
 math_ACos(SLONG i)
 {
 	return (double2fix(acos(fix2double(i)) / 2 / PI * 65536));
@@ -86,7 +86,7 @@ math_ACos(SLONG i)
 /*
  * Calculate arctangent
  */
-SLONG 
+SLONG
 math_ATan(SLONG i)
 {
 	return (double2fix(atan(fix2double(i)) / 2 / PI * 65536));
@@ -95,7 +95,7 @@ math_ATan(SLONG i)
 /*
  * Calculate atan2
  */
-SLONG 
+SLONG
 math_ATan2(SLONG i, SLONG j)
 {
 	return (double2fix
@@ -105,7 +105,7 @@ math_ATan2(SLONG i, SLONG j)
 /*
  * Multiplication
  */
-SLONG 
+SLONG
 math_Mul(SLONG i, SLONG j)
 {
 	return (double2fix(fix2double(i) * fix2double(j)));
@@ -114,7 +114,7 @@ math_Mul(SLONG i, SLONG j)
 /*
  * Division
  */
-SLONG 
+SLONG
 math_Div(SLONG i, SLONG j)
 {
 	return (double2fix(fix2double(i) / fix2double(j)));
@@ -123,7 +123,7 @@ math_Div(SLONG i, SLONG j)
 /*
  * Round
  */
-SLONG 
+SLONG
 math_Round(SLONG i)
 {
 	return double2fix(round(fix2double(i)));
@@ -132,7 +132,7 @@ math_Round(SLONG i)
 /*
  * Ceil
  */
-SLONG 
+SLONG
 math_Ceil(SLONG i)
 {
 	return double2fix(ceil(fix2double(i)));
@@ -141,7 +141,7 @@ math_Ceil(SLONG i)
 /*
  * Floor
  */
-SLONG 
+SLONG
 math_Floor(SLONG i)
 {
 	return double2fix(floor(fix2double(i)));

@@ -19,7 +19,7 @@ struct ISymbol {
 
 struct ISymbol *tHash[HASHSIZE];
 
-SLONG 
+SLONG
 calchash(char *s)
 {
 	SLONG r = 0;
@@ -29,7 +29,7 @@ calchash(char *s)
 	return (r % HASHSIZE);
 }
 
-void 
+void
 sym_Init(void)
 {
 	SLONG i;
@@ -37,7 +37,7 @@ sym_Init(void)
 		tHash[i] = NULL;
 }
 
-SLONG 
+SLONG
 sym_GetValue(char *tzName)
 {
 	if (strcmp(tzName, "@") == 0) {
@@ -58,7 +58,7 @@ sym_GetValue(char *tzName)
 	}
 }
 
-SLONG 
+SLONG
 sym_GetBank(char *tzName)
 {
 	struct ISymbol **ppSym;
@@ -75,7 +75,7 @@ sym_GetBank(char *tzName)
 	errx(1, "Unknown symbol '%s'", tzName);
 }
 
-void 
+void
 sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank)
 {
 	if (strcmp(tzName, "@") == 0)

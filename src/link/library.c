@@ -7,7 +7,7 @@
 #include "link/mylink.h"
 #include "link/main.h"
 
-static BBOOL 
+static BBOOL
 symboldefined(char *name)
 {
 	struct sSection *pSect;
@@ -31,7 +31,7 @@ symboldefined(char *name)
 	return (0);
 }
 
-static BBOOL 
+static BBOOL
 addmodulecontaining(char *name)
 {
 	struct sSection **ppLSect;
@@ -66,7 +66,7 @@ addmodulecontaining(char *name)
 	return (0);
 }
 
-void 
+void
 AddNeededModules(void)
 {
 	struct sSection *pSect;

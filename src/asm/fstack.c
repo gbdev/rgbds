@@ -47,7 +47,7 @@ ULONG ulMacroReturnValue;
 /*
  * Context push and pop
  */
-void 
+void
 pushcontext(void)
 {
 	struct sContext **ppFileStack;
@@ -84,7 +84,7 @@ pushcontext(void)
 		fatalerror("No memory for context");
 }
 
-int 
+int
 popcontext(void)
 {
 	struct sContext *pLastFile, **ppLastFile;
@@ -148,7 +148,7 @@ popcontext(void)
 		return (1);
 }
 
-int 
+int
 yywrap(void)
 {
 	return (popcontext());
@@ -157,7 +157,7 @@ yywrap(void)
 /*
  * Dump the context stack to stderr
  */
-void 
+void
 fstk_Dump(void)
 {
 	struct sContext *pLastFile;
@@ -176,7 +176,7 @@ fstk_Dump(void)
 /*
  * Extra includepath stuff
  */
-void 
+void
 fstk_AddIncludePath(char *s)
 {
 	if (NextIncPath == MAXINCPATHS) {
@@ -202,7 +202,7 @@ fstk_FindFile(char *fname)
 	}
 
 	for (i = 0; i < NextIncPath; ++i) {
-		if (strlcpy(path, IncludePaths[i], sizeof path) >= 
+		if (strlcpy(path, IncludePaths[i], sizeof path) >=
 		    sizeof path) {
 			continue;
 		}
@@ -251,7 +251,7 @@ fstk_RunInclude(char *tzFileName)
 /*
  * Set up a macro for parsing
  */
-ULONG 
+ULONG
 fstk_RunMacro(char *s)
 {
 	struct sSymbol *sym;
@@ -278,7 +278,7 @@ fstk_RunMacro(char *s)
 /*
  * Set up a macroargument for parsing
  */
-void 
+void
 fstk_RunMacroArg(SLONG s)
 {
 	char *sym;
@@ -301,7 +301,7 @@ fstk_RunMacroArg(SLONG s)
 /*
  * Set up a stringequate for parsing
  */
-void 
+void
 fstk_RunString(char *s)
 {
 	struct sSymbol *pSym;
@@ -320,7 +320,7 @@ fstk_RunString(char *s)
 /*
  * Set up a repeat block for parsing
  */
-void 
+void
 fstk_RunRept(ULONG count)
 {
 	if (count) {
