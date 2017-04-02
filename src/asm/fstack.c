@@ -193,7 +193,7 @@ fstk_AddIncludePath(char *s)
 FILE *
 fstk_FindFile(char *fname)
 {
-	char path[PATH_MAX];
+	char path[_MAX_PATH+1];
 	int i;
 	FILE *f;
 
