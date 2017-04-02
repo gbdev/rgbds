@@ -29,6 +29,12 @@ If your ROM will only be 32KiB, you can use the
 .Fl t
 option to override this.
 .Pp
+Similarly, WRAM0 sections are placed in the first 4KiB of WRAM bank 0 and WRAMX
+sections are placed in any bank except bank 0.
+If your ROM is designed for DMG, you can use the
+.Fl w
+option to override this.
+.Pp
 The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl m Ar mapfile
@@ -47,14 +53,13 @@ The default is 0x00.
 .It Fl s Ar symbol
 ???
 .It Fl w
-Expand WRAM0 to the whole space assigned to WRAM and prevent the use of WRAMX
-sections.
+Expand the WRAM0 section size from 4KiB to the full 8KiB assigned to WRAM and
+prohibit the use of WRAMX sections.
+Useful for ROMs designed for DMG.
 .It Fl t
-Write a tiny
-.Pq 32KiB
-ROM file.
-This forces all ROMX sections to be of type ROM0, and increases the ROM0
-section size from 16KiB to 32KiB.
+Expand the ROM0 section size from 16KiB to the full 32KiB assigned to ROM and
+prohibit the use of ROMX sections.
+Useful for ROMs that fit in 32 KiB.
 .It Fl l Ar linkerscript
 Specify a linkerscript file that tells the linker how sections must be placed in
 the ROM.

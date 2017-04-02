@@ -44,15 +44,7 @@ void script_InitSections(void)
 		} else if (i >= BANK_ROMX && i < BANK_ROMX + BANK_COUNT_ROMX) {
 			/* Swappable ROM bank */
 			bank[i].address = 0x4000;
-			/*
-			 * Now, this shouldn't really be necessary... but for
-			 * good measure we'll do it anyway.
-			 */
-			if (options & OPT_TINY) {
-				bank[i].top_address = 0x4000;
-			} else {
-				bank[i].top_address = 0x8000;
-			}
+			bank[i].top_address = 0x8000;
 			bank[i].type = SECT_ROMX;
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
