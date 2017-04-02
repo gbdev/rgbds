@@ -1,0 +1,2 @@
+ERROR: null-in-macro.asm(1):
+	Unterminated MACRO definition

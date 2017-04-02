@@ -1,2 +1,2 @@
-ERROR:	divzero-section-bank.asm(1) :
+ERROR: divzero-section-bank.asm(1):
 	division by zero

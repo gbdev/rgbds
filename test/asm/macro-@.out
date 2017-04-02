@@ -1,2 +1,2 @@
-ERROR:	macro-@.asm(1) -> @(-1) :
+ERROR: macro-@.asm(1) -> @(-1):
 	Macro '@' not defined
