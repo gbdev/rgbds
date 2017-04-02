@@ -15,7 +15,7 @@ symboldefined(char *name)
 	pSect = pSections;
 
 	while (pSect) {
-		ULONG i;
+		int i;
 
 		for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
 			if ((pSect->tSymbols[i]->Type == SYM_EXPORT)
@@ -39,7 +39,7 @@ addmodulecontaining(char *name)
 	ppLSect = &pLibSections;
 
 	while (*ppLSect) {
-		ULONG i;
+		int i;
 
 		for (i = 0; i < (*ppLSect)->nNumberOfSymbols; i += 1) {
 			if (((*ppLSect)->tSymbols[i]->Type == SYM_EXPORT)
@@ -101,7 +101,7 @@ AddNeededModules(void)
 	pSect = pSections;
 
 	while (pSect) {
-		ULONG i;
+		int i;
 
 		for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
 			if ((pSect->tSymbols[i]->Type == SYM_IMPORT)

@@ -107,7 +107,8 @@ readUTF8Char(char *dest, char *src)
 int
 charmap_Add(char *input, UBYTE output)
 {
-	int i, input_length;
+	int i;
+	size_t input_length;
 	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1], temp1o = 0,
 	    temp2o = 0;
 

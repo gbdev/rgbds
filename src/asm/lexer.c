@@ -435,7 +435,7 @@ yylex_GetLongestFixed()
 size_t
 CopyMacroArg(char *dest, size_t maxLength, char c)
 {
-	int i;
+	size_t i;
 	char *s;
 	int argNum;
 	

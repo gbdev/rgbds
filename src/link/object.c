@@ -60,7 +60,7 @@ readword(FILE * f)
 SLONG
 readasciiz(char **dest, FILE *f)
 {
-	SLONG r = 0;
+	size_t r = 0;
 	
 	size_t bufferLength = 16;
 	char *start = malloc(bufferLength);
