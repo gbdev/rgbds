@@ -226,9 +226,9 @@ opt_ParseDefines()
 void
 verror(const char *fmt, va_list args)
 {
-	fprintf(stderr, "ERROR:\t");
+	fprintf(stderr, "ERROR: ");
 	fstk_Dump();
-	fprintf(stderr, " :\n\t");
+	fprintf(stderr, ":\n\t");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 	nErrors += 1;
@@ -251,6 +251,21 @@ fatalerror(const char *fmt, ...)
 	verror(fmt, args);
 	va_end(args);
 	exit(5);
+}
+
+void
+warning(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	fprintf(stderr, "warning: ");
+	fstk_Dump();
+	fprintf(stderr, ":\n\t");
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
+	
+	va_end(args);
 }
 
 static void 

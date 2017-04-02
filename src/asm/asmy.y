@@ -1282,7 +1282,7 @@ z80_jp			:	T_Z80_JP const_16bit
 					{
 						out_AbsByte(0xE9);
 						if( nPass==1 )
-							printf("warning:'JP [HL]' is obsolete, use 'JP HL' instead.\n");
+							warning("'JP [HL]' is obsolete, use 'JP HL' instead.\n");
 					}
 				|	T_Z80_JP T_MODE_HL
 					{ out_AbsByte(0xE9); }
@@ -1300,7 +1300,7 @@ z80_ldi			:	T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
 					{
 						out_AbsByte(0x0A|(2<<4));
 						if( nPass==1 )
-							printf("warning:'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.\n");
+							warning("'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.\n");
 					}
 				|	T_Z80_LDI T_MODE_A comma T_MODE_HL_IND
 					{ out_AbsByte(0x0A|(2<<4)); }
@@ -1312,7 +1312,7 @@ z80_ldd			:	T_Z80_LDD T_MODE_HL_IND comma T_MODE_A
 					{
 						out_AbsByte(0x0A|(3<<4));
 						if( nPass==1 )
-							printf("warning:'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.\n");
+							warning("'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.\n");
 					}
 				|	T_Z80_LDD T_MODE_A comma T_MODE_HL_IND
 					{ out_AbsByte(0x0A|(3<<4)); }
