@@ -26,7 +26,7 @@ If you require the latest version in development, it should be possible to
 compile RGBDS with MinGW or Cygwin by following the instructions to build it
 on UNIX systems.
 
-### 1.2 Mac OS
+### 1.2 macOS
 
 You can build RGBDS by following the instructions below. However, if you would
 prefer not to build RGBDS yourself, you may also install it using
