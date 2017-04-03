@@ -30,9 +30,9 @@ extern char *progname;
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s:warning", progname);
+	fprintf (stderr, "%s: warning", progname);
 	if (fmt) {
-		fputs (":", stderr);
+		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
 	}
 	putc('\n', stderr);
@@ -41,9 +41,9 @@ void rgbds_vwarn(const char *fmt, va_list ap)
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s:warning", progname);
+	fprintf (stderr, "%s: warning", progname);
 	if (fmt) {
-		fputs (":", stderr);
+		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
 	}
 	putc('\n', stderr);
@@ -51,9 +51,9 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 
 noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s:error", progname);
+	fprintf (stderr, "%s: error", progname);
 	if (fmt) {
-		fputs (":", stderr);
+		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
 	}
 	putc('\n', stderr);
@@ -62,9 +62,9 @@ noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 
 noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s:error", progname);
+	fprintf (stderr, "%s: error", progname);
         if (fmt) {
-                fputs (":", stderr);
+                fputs (": ", stderr);
                 vfprintf(stderr, fmt, ap);
         }
 	putc('\n', stderr);
