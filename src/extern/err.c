@@ -30,30 +30,44 @@ extern char *progname;
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: ", progname);
+	fprintf (stderr, "%s:warning", progname);
 	if (fmt) {
+		fputs (":", stderr);
 		vfprintf(stderr, fmt, ap);
-		fputs (": ", stderr);
 	}
+	putc('\n', stderr);
 	perror(0);
 }
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: ", progname);
-	if (fmt) vfprintf(stderr, fmt, ap);
+	fprintf (stderr, "%s:warning", progname);
+	if (fmt) {
+		fputs (":", stderr);
+		vfprintf(stderr, fmt, ap);
+	}
 	putc('\n', stderr);
 }
 
 noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 {
-	vwarn(fmt, ap);
+	fprintf (stderr, "%s:error", progname);
+	if (fmt) {
+		fputs (":", stderr);
+		vfprintf(stderr, fmt, ap);
+	}
+	putc('\n', stderr);
 	exit(status);
 }
 
 noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
 {
-	vwarnx(fmt, ap);
+	fprintf (stderr, "%s:error", progname);
+        if (fmt) {
+                fputs (":", stderr);
+                vfprintf(stderr, fmt, ap);
+        }
+	putc('\n', stderr);
 	exit(status);
 }
 

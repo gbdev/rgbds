@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	progname = argv[0];
+	progname = "rgbasm";
 
 	/* yydebug=1; */
 

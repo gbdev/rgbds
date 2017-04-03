@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	progname = argv[0];
+	progname = "rgblink";
 
 	while ((ch = getopt(argc, argv, "l:m:n:o:O:p:s:tw")) != -1) {
 		switch (ch) {

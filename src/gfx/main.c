@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	char *ext;
 	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
 
-	progname = argv[0];
+	progname = "rgbgfx";
 
 	if (argc == 1) {
 		usage();
