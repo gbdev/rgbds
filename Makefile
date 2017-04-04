@@ -11,7 +11,7 @@ FLEX		:= flex
 RM		:= rm -rf
 
 # User-defined variables
-PREFIX		= /usr/local
+PREFIX		= ${DESTDIR}/usr/local
 BINPREFIX	= ${PREFIX}/bin
 MANPREFIX	= ${PREFIX}/man
 Q		= @
