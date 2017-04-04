@@ -21,7 +21,7 @@ writehome(FILE * f, FILE * f_overlay)
 	mem = malloc(MaxAvail[BANK_ROM0]);
 	if (!mem)
 		return;
-	
+
 	if (f_overlay != NULL) {
 		fseek(f_overlay, 0L, SEEK_SET);
 		fread(mem, 1, MaxAvail[BANK_ROM0], f_overlay);
@@ -99,7 +99,6 @@ Output(void)
 	SLONG i;
 	FILE *f;
 	FILE *f_overlay = NULL;
-	
 
 	if ((f = fopen(tzOutname, "wb"))) {
 		if (tzOverlayname) {
@@ -122,13 +121,13 @@ Output(void)
 				MaxBankUsed = MaxOverlayBank;
 			}
 		}
-		
+
 		writehome(f, f_overlay);
 		for (i = 1; i <= MaxBankUsed; i += 1)
 			writebank(f, f_overlay, i);
 
 		fclose(f);
-		
+
 		if (tzOverlayname) {
 			fclose(f_overlay);
 		}

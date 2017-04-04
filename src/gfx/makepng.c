@@ -316,7 +316,7 @@ output_png_file(struct Options opts, struct PNGImage *png)
 	png_init_io(img, f);
 
 	png_write_info(img, png->info);
-	
+
 	png_write_image(img, png->data);
 	png_write_end(img, NULL);
 

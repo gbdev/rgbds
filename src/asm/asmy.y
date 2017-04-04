@@ -118,7 +118,6 @@ ULONG	str2int2( char *s, int length )
 		r<<=8;
 		r|=(UBYTE)(s[i]);
 		i++;
-		
 	}
 	return( r );
 }

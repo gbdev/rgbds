@@ -103,14 +103,14 @@ area_doAlloc(struct sFreeArea *pArea, SLONG org, SLONG size)
 					pNewArea->nOrg = org + size;
 					pNewArea->nSize -= size + pArea->nSize;
 					return org;
-					
+
 				} else {
 					err(1, NULL);
 				}
 			}
 		}
 	}
-	
+
 	return -1;
 }
 
@@ -125,7 +125,7 @@ area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 		if (result != -1) {
 			return result;
 		}
-		
+
 		ppArea = &(pArea->pNext);
 		pArea = *ppArea;
 	}
@@ -140,7 +140,7 @@ area_AllocAbsAnyBank(SLONG org, SLONG size, enum eSectionType type)
 
 	SLONG startBank = SECT_ATTRIBUTES[type].bank;
 	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
-	
+
 	for (int i = 0; i < bankCount; i++) {
 		if (area_AllocAbs(&BankFree[startBank + i], org, size) != -1) {
 			return startBank + i;
@@ -156,20 +156,20 @@ area_Alloc(struct sFreeArea ** ppArea, SLONG size, SLONG alignment) {
 	if (alignment < 1) {
 		alignment = 1;
 	}
-	
+
 	pArea = *ppArea;
 	while (pArea) {
-		SLONG org = pArea->nOrg;	
+		SLONG org = pArea->nOrg;
 		if (org % alignment) {
 			org += alignment;
 		}
 		org -= org % alignment;
-		
+
 		SLONG result = area_doAlloc(pArea, org, size);
 		if (result != -1) {
 			return result;
 		}
-		
+
 		ppArea = &(pArea->pNext);
 		pArea = *ppArea;
 	}
@@ -183,7 +183,7 @@ area_AllocAnyBank(SLONG size, SLONG alignment, enum eSectionType type) {
 
 	SLONG startBank = SECT_ATTRIBUTES[type].bank;
 	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
-	
+
 	for (int i = 0; i < bankCount; i++) {
 		SLONG org = area_Alloc(&BankFree[startBank + i], size, alignment);
 		if (org != -1) {
@@ -212,7 +212,7 @@ FindLargestSection(enum eSectionType type, bool bankFixed)
 		}
 		pSection = pSection->pNext;
 	}
-	
+
 	return r;
 }
 
@@ -294,7 +294,7 @@ VerifyAndSetBank(struct sSection *pSection)
 		&& pSection->nBank < SECT_ATTRIBUTES[pSection->Type].minBank + SECT_ATTRIBUTES[pSection->Type].bankCount) {
 		pSection->nBank += SECT_ATTRIBUTES[pSection->Type].bank + SECT_ATTRIBUTES[pSection->Type].offset;
 		return true;
-		
+
 	} else {
 		return false;
 	}
@@ -328,7 +328,7 @@ void
 AssignFloatingBankSections(enum eSectionType type)
 {
 	ensureSectionTypeIsValid(type);
-	
+
 	struct sSection *pSection;
 
 	while ((pSection = FindLargestSection(type, false))) {
@@ -347,7 +347,7 @@ AssignFloatingBankSections(enum eSectionType type)
 			if (SECT_ATTRIBUTES[pSection->Type].bankCount > 1) {
 				locality = "in any bank";
 			}
-			
+
 			if (pSection->nAlign <= 1) {
 				errx(1, "Unable to place '%s' (%s section) %s",
 					 pSection->pzName, SECT_ATTRIBUTES[type].name, locality);
@@ -356,7 +356,7 @@ AssignFloatingBankSections(enum eSectionType type)
 					 pSection->pzName, SECT_ATTRIBUTES[type].name, locality, pSection->nAlign);
 			}
 		}
-	}	
+	}
 }
 
 char *tzLinkerscriptName = NULL;
@@ -429,7 +429,7 @@ AssignSections(void)
 		} else {
 			errx(1, "(INTERNAL) Unknown bank type!");
 		}
-		
+
 		MaxAvail[i] = BankFree[i]->nSize;
 		BankFree[i]->pPrev = NULL;
 		BankFree[i]->pNext = NULL;
@@ -523,7 +523,7 @@ AssignSections(void)
 				pSection->oAssigned = 1;
 				DOMAXBANK(pSection->Type, pSection->nBank);
 				break;
-					
+
 			default: // Handle other sections later
 				break;
 			}

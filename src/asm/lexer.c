@@ -438,7 +438,7 @@ CopyMacroArg(char *dest, size_t maxLength, char c)
 	size_t i;
 	char *s;
 	int argNum;
-	
+
 	switch (c) {
 	case '1':
 	case '2':
@@ -724,7 +724,7 @@ yylex_MACROARGS()
 					index += length;
 				else
 					fatalerror("Illegal character escape '%c'", ch);
-				
+
 				ch = 0;
 				break;
 			}

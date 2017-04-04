@@ -766,7 +766,7 @@ sym_PrepPass2(void)
 	sym_AddEqu("_NARG", 0);
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;
-	
+
 	math_DefinePI();
 }
 

@@ -61,18 +61,18 @@ SLONG
 readasciiz(char **dest, FILE *f)
 {
 	size_t r = 0;
-	
+
 	size_t bufferLength = 16;
 	char *start = malloc(bufferLength);
 	char *s = start;
-	
+
 	if (!s) {
 		err(1, NULL);
 	}
-		
+
 	while (((*s++) = fgetc(f)) != 0) {
 		r += 1;
-		
+
 		if (r >= bufferLength) {
 			bufferLength *= 2;
 			start = realloc(start, bufferLength);
@@ -82,7 +82,7 @@ readasciiz(char **dest, FILE *f)
 			s = start + r;
 		}
 	}
-	
+
 	*dest = start;
 	return (r + 1);
 }
