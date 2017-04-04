@@ -156,11 +156,13 @@ obj_ReadRGB0Section(FILE * f)
 	pSection->nBank = -1;
 	pSection->nAlign = 1;
 
-	/* does the user want the -s mode? */
-
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
-		pSection->Type = SECT_ROM0;
+	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
+		errx(1, "ROMX sections can't be used with option -t.");
 	}
+	if ((options & OPT_CONTWRAM) && (pSection->Type == SECT_WRAMX)) {
+		errx(1, "WRAMX sections can't be used with option -w.");
+	}
+
 	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
 		/*
 		 * These sectiontypes contain data...
@@ -306,18 +308,20 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 	pSection->Type = (enum eSectionType) fgetc(f);
 	pSection->nOrg = readlong(f);
 	pSection->nBank = readlong(f);
-	
+
 	if (contents & CONTAINS_SECTION_ALIGNMENT) {
 		pSection->nAlign = readlong(f);
 	} else {
 		pSection->nAlign = 1;
 	}
 
-	/* does the user want the -s mode? */
-
-	if ((options & OPT_SMALL) && (pSection->Type == SECT_ROMX)) {
-		pSection->Type = SECT_ROM0;
+	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
+		errx(1,  "ROMX sections can't be used with option -t.");
 	}
+	if ((options & OPT_CONTWRAM) && (pSection->Type == SECT_WRAMX)) {
+		errx(1, "WRAMX sections can't be used with option -w.");
+	}
+
 	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
 		/*
 		 * These sectiontypes contain data...

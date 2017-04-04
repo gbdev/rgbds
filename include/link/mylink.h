@@ -8,7 +8,7 @@
 #include "types.h"
 
 extern SLONG options;
-#define OPT_SMALL		0x01
+#define OPT_TINY		0x01
 #define OPT_SMART_C_LINK	0x02
 #define OPT_OVERLAY		0x04
 #define OPT_CONTWRAM		0x08

@@ -390,7 +390,7 @@ AssignSections(void)
 		if (i == BANK_ROM0) {
 			/* ROM0 bank */
 			BankFree[i]->nOrg = 0x0000;
-			if (options & OPT_SMALL) {
+			if (options & OPT_TINY) {
 				BankFree[i]->nSize = 0x8000;
 			} else {
 				BankFree[i]->nSize = 0x4000;
@@ -398,15 +398,7 @@ AssignSections(void)
 		} else if (i >= BANK_ROMX && i < BANK_ROMX + BANK_COUNT_ROMX) {
 			/* Swappable ROM bank */
 			BankFree[i]->nOrg = 0x4000;
-			/*
-			 * Now, this shouldn't really be necessary... but for
-			 * good measure we'll do it anyway.
-			 */
-			if (options & OPT_SMALL) {
-				BankFree[i]->nSize = 0;
-			} else {
-				BankFree[i]->nSize = 0x4000;
-			}
+			BankFree[i]->nSize = 0x4000;
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
@@ -462,10 +454,6 @@ AssignSections(void)
 		if ((pSection->nOrg != -1 || pSection->nBank != -1)
 		    && pSection->oAssigned == 0) {
 			/* User wants to have a say... */
-
-			if (pSection->Type == SECT_WRAMX && options & OPT_CONTWRAM) {
-				errx(1, "WRAMX not compatible with -w!");
-			}
 
 			switch (pSection->Type) {
 			case SECT_WRAM0:

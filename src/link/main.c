@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 			smartlinkstartsymbol = optarg;
 			break;
 		case 't':
-			options |= OPT_SMALL;
+			options |= OPT_TINY;
 			break;
 		case 'w':
 			/* Set to set WRAM as a single continuous block as on DMG.
