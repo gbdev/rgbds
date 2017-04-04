@@ -68,14 +68,8 @@ getsymbank(SLONG symid)
 		errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
 	}
 
-	if (nBank == BANK_WRAM0 || nBank == BANK_ROM0) {
-		/* This can have practical uses. */
-		return 0;
-	} else if (nBank == BANK_OAM) {
-		warnx("Trying to calculate BANK() of label in OAM.");
-		return 0;
-	} else 	if (nBank == BANK_HRAM) {
-		warnx("Trying to calculate BANK() of label in HRAM.");
+	if (nBank == BANK_WRAM0 || nBank == BANK_ROM0 || nBank == BANK_OAM ||
+			nBank == BANK_HRAM) {
 		return 0;
 	} else if (nBank >= BANK_WRAMX && nBank < (BANK_WRAMX + BANK_COUNT_WRAMX)) {
 		return nBank - BANK_WRAMX + 1;
