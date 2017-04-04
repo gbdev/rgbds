@@ -98,6 +98,11 @@ extern int yyparse();
 
 extern FILE *yyin;
 
+int yywrap (void)
+{
+	return 1;
+}
+
 void yyerror(char *s)
 {
 	errx(1, "%d:Linkerscript parse error: \"%s\"\n", nline, s);

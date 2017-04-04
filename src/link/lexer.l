@@ -16,7 +16,6 @@
 
 %option noinput
 %option nounput
-%option noyywrap
 
 %{
 #include <unistd.h>
