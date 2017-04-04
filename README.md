@@ -118,11 +118,12 @@ This is the complete list of user-defined variables:
 
 - `PREFIX`: Location where RGBDS will be installed. Defaults to `/usr/local`.
 
-- `BINPREFIX`: Location where the RGBDS programs will be installed. Defaults to
-  `${PREFIX}/bin`.
+- `bindir`: Location where the binaries will be installed. Defaults to `${PREFIX}/bin`.
 
-- `MANPREFIX`: Location where the RGBDS man pages will be installed. Defaults to
-  `${PREFIX}/man`.
+- `mandir`: Location where the manpages will be installed. Defaults to `${PREFIX}/man`.
+
+- `DESTDIR`: This is prepended to all paths during the installation. It is
+  mainly used for packaging.
 
 - `Q`: Whether to quiet the build or not. To make the build more verbose, clear
   this variable. Defaults to `@`.
