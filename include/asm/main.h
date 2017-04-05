@@ -11,6 +11,7 @@ struct sOptions {
 	bool verbose;
 	bool haltnop;
 	bool exportall;
+	bool warnings; /* true to enable warnings, false to disable them. */
 	    //-1 == random
 };
 

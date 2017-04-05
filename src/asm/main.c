@@ -256,6 +256,9 @@ fatalerror(const char *fmt, ...)
 void
 warning(const char *fmt, ...)
 {
+	if (!CurrentOptions.warnings)
+		return;
+
 	va_list args;
 	va_start(args, fmt);
 
@@ -312,12 +315,13 @@ main(int argc, char *argv[])
 	DefaultOptions.verbose = false;
 	DefaultOptions.haltnop = true;
 	DefaultOptions.exportall = false;
+	DefaultOptions.warnings = true;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:g:hi:o:p:vE")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:g:hi:o:p:vEw")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -366,6 +370,9 @@ main(int argc, char *argv[])
 			break;
 		case 'E':
 			newopt.exportall = true;
+			break;
+		case 'w':
+			newopt.warnings = false;
 			break;
 		default:
 			usage();
