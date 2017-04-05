@@ -1039,9 +1039,14 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	const T_OP_LOGICNE const 		{ $$ = $1 != $3; }
 				|	const T_OP_ADD const			{ $$ = $1 + $3; }
 				|	const T_OP_SUB const			{ $$ = $1 - $3; }
-				|	T_ID  T_OP_SUB T_ID				{ $$ = sym_GetDefinedValue($1) - sym_GetDefinedValue($3); }
+				|	T_ID  T_OP_SUB T_ID
+					{
+						if (sym_IsRelocDiffDefined($1, $3) == 0)
+							fatalerror("'%s - %s' not defined.", $1, $3);
+						$$ = sym_GetDefinedValue($1) - sym_GetDefinedValue($3);
+					}
 				|	const T_OP_XOR const			{ $$ = $1 ^ $3; }
-				|	const T_OP_OR const				{ $$ = $1 | $3; }
+				|	const T_OP_OR const			{ $$ = $1 | $3; }
 				|	const T_OP_AND const			{ $$ = $1 & $3; }
 				|	const T_OP_SHL const			{ $$ = $1 << $3; }
 				|	const T_OP_SHR const			{ $$ = $1 >> $3; }

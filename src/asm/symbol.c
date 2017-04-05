@@ -620,6 +620,49 @@ sym_AddReloc(char *tzSym)
 }
 
 /*
+ * Check if the subtraction of two symbols is defined. That is, either both
+ * symbols are defined and the result is a constant, or both symbols are
+ * relocatable and belong to the same section.
+ *
+ * It returns 1 if the difference is defined, 0 if not.
+ */
+int
+sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
+{
+	/* Do nothing the first pass. */
+	if (nPass != 2)
+		return 1;
+
+	struct sSymbol *nsym1, *nsym2;
+
+	/* Do the symbols exist? */
+	if ((nsym1 = sym_FindSymbol(tzSym1)) == NULL)
+		fatalerror("Symbol \"%s\" isn't defined.", tzSym1);
+	if ((nsym2 = sym_FindSymbol(tzSym2)) == NULL)
+		fatalerror("Symbol \"%s\" isn't defined.", tzSym2);
+
+	int s1reloc = (nsym1->nType & SYMF_RELOC) != 0;
+	int s2reloc = (nsym2->nType & SYMF_RELOC) != 0;
+
+	/* Both are non-relocatable */
+	if (!s1reloc && !s2reloc) return 1;
+
+	/* One of them relocatable, the other one not. */
+	if (s1reloc ^ s2reloc) return 0;
+
+	/* Both of them are relocatable. Make sure they are defined (internal
+         * coherency with sym_AddReloc and sym_AddLocalReloc). */
+	if (!(nsym1->nType & SYMF_DEFINED))
+		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym1);
+	if (!(nsym2->nType & SYMF_DEFINED))
+		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym2);
+
+	/* Both of them must be in the same section for the difference to be
+         * defined. */
+	return nsym1->pSection == nsym2->pSection;
+}
+
+/*
  * Export a symbol
  */
 void

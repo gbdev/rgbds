@@ -71,5 +71,6 @@ ULONG sym_GetDefinedValue(char *s);
 ULONG sym_isDefined(char *tzName);
 void sym_Purge(char *tzName);
 ULONG sym_isConstDefined(char *tzName);
+int sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
 
 #endif
