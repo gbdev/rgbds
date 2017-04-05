@@ -302,9 +302,6 @@ struct sLexInitString staticstrings[] = {
 	{"ds", T_POP_DS},
 	{NAME_DB, T_POP_DB},
 	{NAME_DW, T_POP_DW},
-#ifdef NAME_DL
-	{NAME_DL, T_POP_DL},
-#endif
 	{"section", T_POP_SECTION},
 	{"purge", T_POP_PURGE},
 
@@ -346,9 +343,6 @@ struct sLexInitString staticstrings[] = {
 
 	{NAME_RB, T_POP_RB},
 	{NAME_RW, T_POP_RW},
-#ifdef NAME_RL
-	{NAME_RL, T_POP_RL},
-#endif
 	{"equ", T_POP_EQU},
 	{"equs", T_POP_EQUS},
 
