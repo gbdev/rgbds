@@ -133,3 +133,19 @@ This is the complete list of user-defined variables:
 - `BINMODE`: Permissions of the installed binaries. Defaults to `555`.
 
 - `MANMODE`: Permissions of the installed manpages. Defaults to `444`.
+
+## 3 History
+
+- Around 1997, Carsten Sorensen (AKA SurfSmurf) writes ASMotor as a
+  general-purpose assembler/linker system for DOS/Win32
+
+- Around 1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to read and
+  produce GBZ80 assembly/machine code, and releases this version as RGBDS.
+
+- 2009, Vegard Nossum adapts the code to be more UNIX-like and releases this
+  version as rgbds-linux on [GitHub](https://github.com/vegard/rgbds-linux).
+
+- 2010, Anthony J. Bentley forks that repository. The fork becomes the reference
+  implementation of rgbds.
+
+- 2017, Bentley's repository is moved to a neutral name.
