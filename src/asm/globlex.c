@@ -329,17 +329,19 @@ struct sLexInitString staticstrings[] = {
 	{"endc", T_POP_ENDC},
 
 	{"wram0", T_SECT_WRAM0},
-	{"bss", T_SECT_WRAM0}, /* deprecated */
 	{"vram", T_SECT_VRAM},
-	{"code", T_SECT_ROMX}, /* deprecated */
-	{"data", T_SECT_ROMX}, /* deprecated */
 	{"romx", T_SECT_ROMX},
-	{"home", T_SECT_ROM0}, /* deprecated */
 	{"rom0", T_SECT_ROM0},
 	{"hram", T_SECT_HRAM},
 	{"wramx", T_SECT_WRAMX},
 	{"sram", T_SECT_SRAM},
 	{"oam", T_SECT_OAM},
+
+	/* Deprecated section type names */
+	{"home", T_SECT_HOME},
+	{"code", T_SECT_CODE},
+	{"data", T_SECT_DATA},
+	{"bss", T_SECT_BSS},
 
 	{NAME_RB, T_POP_RB},
 	{NAME_RW, T_POP_RW},

@@ -513,6 +513,7 @@ void	if_skip_to_endc( void )
 %token	T_POP_PUSHO
 %token	T_POP_OPT
 %token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
+%token	T_SECT_HOME T_SECT_DATA T_SECT_CODE T_SECT_BSS
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
 %token	T_Z80_BIT
@@ -1151,6 +1152,22 @@ sectiontype:
 	|	T_SECT_WRAMX	{ $$=SECT_WRAMX; }
 	|	T_SECT_SRAM	{ $$=SECT_SRAM; }
 	|	T_SECT_OAM	{ $$=SECT_OAM; }
+	|	T_SECT_HOME	{
+					warning("HOME section name is deprecated, use ROM0 instead.");
+					$$=SECT_ROM0;
+				}
+	|	T_SECT_DATA	{
+					warning("DATA section name is deprecated, use ROMX instead.");
+					$$=SECT_ROMX;
+				}
+	|	T_SECT_CODE	{
+					warning("CODE section name is deprecated, use ROMX instead.");
+					$$=SECT_ROMX;
+				}
+	|	T_SECT_BSS	{
+					warning("BSS section name is deprecated, use WRAM0 instead.");
+					$$=SECT_WRAM0;
+				}
 ;
 
 
