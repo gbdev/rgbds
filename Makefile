@@ -11,9 +11,10 @@ FLEX		:= flex
 RM		:= rm -rf
 
 # User-defined variables
-PREFIX		= ${DESTDIR}/usr/local
-BINPREFIX	= ${PREFIX}/bin
-MANPREFIX	= ${PREFIX}/man
+bindir 		= /usr/local/bin
+mandir 		= /usr/local/man
+BINPREFIX	= $(DESTDIR)$(bindir)
+MANPREFIX	= $(DESTDIR)$(mandir)
 Q		= @
 STRIP		= -s
 BINMODE		= 555
