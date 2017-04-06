@@ -690,24 +690,6 @@ sym_Export(char *tzSym)
 }
 
 /*
- * Import a symbol
- */
-void
-sym_Import(char *tzSym)
-{
-	if (nPass == 1) {
-		/* only import symbols in pass 1 */
-		struct sSymbol *nsym;
-
-		if (findsymbol(tzSym, NULL)) {
-			yyerror("'%s' already defined", tzSym);
-		}
-		if ((nsym = createsymbol(tzSym)) != NULL)
-			nsym->nType |= SYMF_IMPORT;
-	}
-}
-
-/*
  * Globalize a symbol (export if defined, import if not)
  */
 void

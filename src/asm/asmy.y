@@ -770,7 +770,13 @@ import_list		:	import_list_entry
 				|	import_list_entry ',' import_list
 ;
 
-import_list_entry	:	T_ID	{ sym_Import($1); }
+import_list_entry	:	T_ID	{
+						/* This is done automatically if
+						 * the label isn't found in the
+						 * list of defined symbols. */
+						if( nPass==1 )
+							warning("IMPORT is a deprecated keyword with no effect: %s", $1);
+					}
 ;
 
 export			:	T_POP_EXPORT export_list
