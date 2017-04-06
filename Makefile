@@ -11,10 +11,9 @@ FLEX		:= flex
 RM		:= rm -rf
 
 # User-defined variables
-bindir 		= /usr/local/bin
-mandir 		= /usr/local/man
-BINPREFIX	= $(DESTDIR)$(bindir)
-MANPREFIX	= $(DESTDIR)$(mandir)
+PREFIX 		= /usr/local
+bindir 		= ${PREFIX}/bin
+mandir 		= ${PREFIX}/man
 Q		= @
 STRIP		= -s
 BINMODE		= 555
@@ -73,18 +72,18 @@ clean:
 	$Q${RM} src/link/lexer.c src/link/parser.c src/link/parser.h
 
 install: all
-	$Qmkdir -p ${BINPREFIX}
-	$Qinstall ${STRIP} -m ${BINMODE} rgbasm ${BINPREFIX}/rgbasm
-	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${BINPREFIX}/rgbfix
-	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${BINPREFIX}/rgblink
-	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${BINPREFIX}/rgbgfx
-	$Qmkdir -p ${MANPREFIX}/man1 ${MANPREFIX}/man5 ${MANPREFIX}/man7
-	$Qinstall -m ${MANMODE} src/rgbds.7 ${MANPREFIX}/man7/rgbds.7
-	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${MANPREFIX}/man1/rgbasm.1
-	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${MANPREFIX}/man1/rgbfix.1
-	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${MANPREFIX}/man1/rgblink.1
-	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${MANPREFIX}/man5/rgblink.5
-	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${MANPREFIX}/man1/rgbgfx.1
+	$Qmkdir -p ${DESTDIR}${bindir}
+	$Qinstall ${STRIP} -m ${BINMODE} rgbasm ${DESTDIR}${bindir}/rgbasm
+	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${DESTDIR}${bindir}/rgbfix
+	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${DESTDIR}${bindir}/rgblink
+	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${DESTDIR}${bindir}/rgbgfx
+	$Qmkdir -p ${DESTDIR}${mandir}/man1 ${DESTDIR}${mandir}/man5 ${DESTDIR}${mandir}/man7
+	$Qinstall -m ${MANMODE} src/rgbds.7 ${DESTDIR}${mandir}/man7/rgbds.7
+	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${DESTDIR}${mandir}/man1/rgbasm.1
+	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${DESTDIR}${mandir}/man1/rgbfix.1
+	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${DESTDIR}${mandir}/man1/rgblink.1
+	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${DESTDIR}${mandir}/man5/rgblink.5
+	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${DESTDIR}${mandir}/man1/rgbgfx.1
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
