@@ -294,7 +294,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 			obj_ReadRGB(pObjfile);
 			break;
 		default:
-			errx(1, "'%s' uses an unsupported object file version. Please reassemble it.", tzObjectfile);
+			errx(1, "'%s' uses an unsupported object file version (%s). Please reassemble it.", tzObjectfile, tzHeader);
 		}
 	} else {
 		errx(1, "'%s' is not a valid object", tzObjectfile);
