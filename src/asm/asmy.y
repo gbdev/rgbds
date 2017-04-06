@@ -786,7 +786,14 @@ export_list		:	export_list_entry
 				|	export_list_entry ',' export_list
 ;
 
-export_list_entry	:	T_ID	{ sym_Export($1); }
+export_list_entry	:	T_ID	{
+						/* This is still useful if a
+						 * label is not defined as
+						 * global with two colons. */
+						if( nPass==1 )
+							warning("EXPORT is deprecated, use '%s::' instead.", $1);
+						sym_Export($1);
+					}
 ;
 
 global			:	T_POP_GLOBAL global_list
@@ -796,7 +803,17 @@ global_list		:	global_list_entry
 				|	global_list_entry ',' global_list
 ;
 
-global_list_entry	:	T_ID	{ sym_Global($1); }
+global_list_entry	:	T_ID	{
+						/* This is still useful if a
+						 * label is not defined as
+						 * global with two colons, but
+						 * it is useless for importing
+						 * them, the assembler does that
+						 * automatically.  */
+						if( nPass==1 )
+							warning("GLOBAL is deprecated, use '%s::' instead.", $1);
+						sym_Global($1);
+					}
 ;
 
 equ				:	T_LABEL T_POP_EQU const
