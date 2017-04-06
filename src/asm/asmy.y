@@ -473,6 +473,7 @@ void	if_skip_to_endc( void )
 %left	T_OP_CEIL
 %left	T_OP_FLOOR
 
+%token	T_OP_HIGH T_OP_LOW
 
 %left	T_OP_STRCMP
 %left	T_OP_STRIN
@@ -537,11 +538,12 @@ void	if_skip_to_endc( void )
 %token	T_Z80_SLA T_Z80_SRA T_Z80_SRL T_Z80_SUB T_Z80_SWAP
 %token	T_Z80_XOR
 
-%token	T_MODE_A T_MODE_B T_MODE_C T_MODE_C_IND T_MODE_D T_MODE_E T_MODE_H T_MODE_L
+%token	T_TOKEN_A T_TOKEN_B T_TOKEN_C T_TOKEN_D T_TOKEN_E T_TOKEN_H T_TOKEN_L
 %token	T_MODE_AF
 %token	T_MODE_BC T_MODE_BC_IND
 %token	T_MODE_DE T_MODE_DE_IND
 %token	T_MODE_SP T_MODE_SP_IND
+%token	T_MODE_C_IND
 %token	T_MODE_HL T_MODE_HL_IND T_MODE_HL_INDDEC T_MODE_HL_INDINC
 %token	T_CC_NZ T_CC_Z T_CC_NC
 
@@ -992,6 +994,10 @@ relocconst		:	T_ID
 						{ rpn_UNNEG(&$$,&$2); }
 				|	T_OP_NOT relocconst %prec NEG
 						{ rpn_UNNOT(&$$,&$2); }
+				|	T_OP_HIGH '(' relocconst ')'
+						{ rpn_HIGH(&$$, &$3); }
+				|	T_OP_LOW '(' relocconst ')'
+						{ rpn_LOW(&$$, &$3); }
 				|	T_OP_BANK '(' T_ID ')'
 						{ rpn_Bank(&$$,$3); $$.nVal = 0; }
 				|	T_OP_DEF { oDontExpandStrings = true; } '(' T_ID ')'
@@ -1611,10 +1617,33 @@ op_a_n			:	const_8bit				{ $$ = $1; }
 comma			:	','
 ;
 
+T_MODE_A		:	T_TOKEN_A
+				|	T_OP_HIGH '(' T_MODE_AF ')'
+;
+T_MODE_B		:	T_TOKEN_B
+				|	T_OP_HIGH '(' T_MODE_BC ')'
+;
+T_MODE_C		:	T_TOKEN_C
+				|	T_OP_LOW '(' T_MODE_BC ')'
+;
+T_MODE_D		:	T_TOKEN_D
+				|	T_OP_HIGH '(' T_MODE_DE ')'
+;
+T_MODE_E		:	T_TOKEN_E
+				|	T_OP_LOW '(' T_MODE_DE ')'
+;
+T_MODE_H		:	T_TOKEN_H
+				|	T_OP_HIGH '(' T_MODE_HL ')'
+;
+T_MODE_L		:	T_TOKEN_L
+				|	T_OP_LOW '(' T_MODE_HL ')'
+;
+
+
 ccode			:	T_CC_NZ		{ $$ = CC_NZ; }
 				|	T_CC_Z		{ $$ = CC_Z; }
 				|	T_CC_NC		{ $$ = CC_NC; }
-				|	T_MODE_C	{ $$ = CC_C; }
+				|	T_TOKEN_C	{ $$ = CC_C; }
 ;
 
 reg_r			:	T_MODE_B		{ $$ = REG_B; }

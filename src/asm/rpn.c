@@ -183,6 +183,46 @@ rpn_LOGAND(struct Expression * expr, struct Expression * src1,
 }
 
 void
+rpn_HIGH(struct Expression * expr, struct Expression * src)
+{
+	*expr = *src;
+
+	expr->nVal = (expr->nVal >> 8) & 0xFF;
+
+	pushbyte(expr, RPN_CONST);
+	pushbyte(expr, 8);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+
+	pushbyte(expr, RPN_SHR);
+
+	pushbyte(expr, RPN_CONST);
+	pushbyte(expr, 0xFF);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+
+	pushbyte(expr, RPN_AND);
+}
+
+void
+rpn_LOW(struct Expression * expr, struct Expression * src)
+{
+	*expr = *src;
+
+	expr->nVal = expr->nVal & 0xFF;
+
+	pushbyte(expr, RPN_CONST);
+	pushbyte(expr, 0xFF);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+	pushbyte(expr, 0);
+
+	pushbyte(expr, RPN_AND);
+}
+
+void
 rpn_LOGEQU(struct Expression * expr, struct Expression * src1,
     struct Expression * src2)
 {
