@@ -69,6 +69,8 @@ rpn_DIV(struct Expression * expr, struct Expression * src1,
 void
 rpn_MOD(struct Expression * expr, struct Expression * src1,
     struct Expression * src2);
+void rpn_HIGH(struct Expression * expr, struct Expression * src);
+void rpn_LOW(struct Expression * expr, struct Expression * src);
 void rpn_UNNEG(struct Expression * expr, struct Expression * src);
 void rpn_UNNOT(struct Expression * expr, struct Expression * src);
 UWORD rpn_PopByte(struct Expression * expr);
