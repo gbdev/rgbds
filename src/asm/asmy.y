@@ -681,7 +681,7 @@ fail : T_POP_FAIL string {
 	};
 
 warn : T_POP_WARN string {
-		yyerror("%s", $2);
+		warning("%s", $2);
 	};
 
 shift			:	T_POP_SHIFT
