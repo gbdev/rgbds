@@ -19,11 +19,6 @@ struct sSection *pLibSections = NULL;
 UBYTE dummymem;
 BBOOL oReadLib = 0;
 
-enum ObjectFileContents {
-	CONTAINS_SECTION_NAME = 1 << 0,
-	CONTAINS_SECTION_ALIGNMENT = 1 << 1
-};
-
 /*
  * The usual byte order stuff
  *
@@ -137,169 +132,20 @@ obj_ReadSymbol(FILE * f)
 	}
 	return pSym;
 }
+
 /*
- * RGB0 object reader routines
+ * RGB object reader routines
  *
  */
-
 struct sSection *
-obj_ReadRGB0Section(FILE * f)
+obj_ReadRGBSection(FILE * f)
 {
 	struct sSection *pSection;
 
-	pSection = AllocSection();
-
-	pSection->pzName = "";
-	pSection->nByteSize = readlong(f);
-	pSection->Type = (enum eSectionType) fgetc(f);
-	pSection->nOrg = -1;
-	pSection->nBank = -1;
-	pSection->nAlign = 1;
-
-	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
-		errx(1, "ROMX sections can't be used with option -t.");
-	}
-	if ((options & OPT_CONTWRAM) && (pSection->Type == SECT_WRAMX)) {
-		errx(1, "WRAMX sections can't be used with option -w.");
-	}
-
-	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
-		/*
-		 * These sectiontypes contain data...
-		 *
-		 */
-		if (pSection->nByteSize) {
-			pSection->pData = malloc(pSection->nByteSize);
-			if (!pSection->pData) {
-				err(1, NULL);
-			}
-
-			SLONG nNumberOfPatches;
-			struct sPatch **ppPatch, *pPatch;
-
-			fread(pSection->pData, sizeof(UBYTE),
-			    pSection->nByteSize, f);
-			nNumberOfPatches = readlong(f);
-			ppPatch = &pSection->pPatches;
-
-			/*
-			 * And patches...
-			 *
-			 */
-			while (nNumberOfPatches--) {
-				pPatch = malloc(sizeof *pPatch);
-				if (!pPatch) {
-					err(1, NULL);
-				}
-
-				*ppPatch = pPatch;
-				readasciiz(&pPatch->pzFilename, f);
-
-				pPatch->nLineNo =
-				    readlong(f);
-				pPatch->nOffset =
-				    readlong(f);
-				pPatch->Type =
-				    (enum ePatchType)
-				    fgetc(f);
-
-				if ((pPatch->nRPNSize = readlong(f)) > 0) {
-					pPatch->pRPN = malloc(pPatch->nRPNSize);
-					if (!pPatch->pRPN) {
-						err(1, NULL);
-					}
-
-					fread(pPatch->pRPN, sizeof(UBYTE),
-					    pPatch->nRPNSize, f);
-				} else
-					pPatch->pRPN = NULL;
-
-				pPatch->pNext = NULL;
-				ppPatch = &(pPatch->pNext);
-			}
-		} else {
-			/* Skip number of patches */
-			readlong(f);
-			pSection->pData = &dummymem;
-		}
-	}
-	return pSection;
-}
-
-void
-obj_ReadRGB0(FILE * pObjfile)
-{
-	struct sSection *pFirstSection;
-	SLONG nNumberOfSymbols, nNumberOfSections, i;
-
-	nNumberOfSymbols = readlong(pObjfile);
-	nNumberOfSections = readlong(pObjfile);
-
-	/* First comes the symbols */
-
-	if (nNumberOfSymbols) {
-		tSymbols = malloc(nNumberOfSymbols * sizeof(struct sSymbol *));
-		if (!tSymbols) {
-			err(1, NULL);
-		}
-
-		for (i = 0; i < nNumberOfSymbols; i += 1)
-			tSymbols[i] = obj_ReadSymbol(pObjfile);
-	} else
-		tSymbols = (struct sSymbol **) & dummymem;
-
-	/* Next we have the sections */
-
-	pFirstSection = NULL;
-	while (nNumberOfSections--) {
-		struct sSection *pNewSection;
-
-		pNewSection = obj_ReadRGB0Section(pObjfile);
-		pNewSection->nNumberOfSymbols = nNumberOfSymbols;
-		if (pFirstSection == NULL)
-			pFirstSection = pNewSection;
-	}
-
-	/*
-	 * Fill in the pSection entry in the symbolstructure.
-	 * This REALLY needs some cleaning up... but, hey, it works
-	 *
-	 */
-
-	for (i = 0; i < nNumberOfSymbols; i += 1) {
-		struct sSection *pConvSect = pFirstSection;
-
-		if (tSymbols[i]->Type != SYM_IMPORT
-		    && tSymbols[i]->nSectionID != -1) {
-			SLONG j = 0;
-			while (j != tSymbols[i]->nSectionID) {
-				j += 1;
-				pConvSect = pConvSect->pNext;
-			}
-			tSymbols[i]->pSection = pConvSect;
-		} else
-			tSymbols[i]->pSection = NULL;
-	}
-}
-/*
- * RGB1 object reader routines
- *
- */
-
-struct sSection *
-obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
-{
-	struct sSection *pSection;
-
-	char * pzName;
-
-	if (contents & CONTAINS_SECTION_NAME) {
-		readasciiz(&pzName, f);
-		if (IsSectionNameInUse(pzName))
-			errx(1, "Section name \"%s\" is already in use.", pzName);
-	} else {
-		pzName = "";
-	}
+	char *pzName;
+	readasciiz(&pzName, f);
+	if (IsSectionNameInUse(pzName))
+		errx(1, "Section name \"%s\" is already in use.", pzName);
 
 	pSection = AllocSection();
 	pSection->pzName = pzName;
@@ -308,12 +154,7 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 	pSection->Type = (enum eSectionType) fgetc(f);
 	pSection->nOrg = readlong(f);
 	pSection->nBank = readlong(f);
-
-	if (contents & CONTAINS_SECTION_ALIGNMENT) {
-		pSection->nAlign = readlong(f);
-	} else {
-		pSection->nAlign = 1;
-	}
+	pSection->nAlign = readlong(f);
 
 	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX)) {
 		errx(1,  "ROMX sections can't be used with option -t.");
@@ -380,7 +221,7 @@ obj_ReadRGBSection(FILE * f, enum ObjectFileContents contents)
 }
 
 void
-obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
+obj_ReadRGB(FILE * pObjfile)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -407,7 +248,7 @@ obj_ReadRGB(FILE * pObjfile, enum ObjectFileContents contents)
 	while (nNumberOfSections--) {
 		struct sSection *pNewSection;
 
-		pNewSection = obj_ReadRGBSection(pObjfile, contents);
+		pNewSection = obj_ReadRGBSection(pObjfile);
 		pNewSection->nNumberOfSymbols = nNumberOfSymbols;
 		if (pFirstSection == NULL)
 			pFirstSection = pNewSection;
@@ -448,20 +289,12 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	tzHeader[4] = 0;
 	if (strncmp(tzHeader, "RGB", 3) == 0) {
 		switch (tzHeader[3]) {
-		case '0':
-			obj_ReadRGB0(pObjfile);
-			break;
-		case '1':
-		case '2':
-			//V2 is really the same but the are new patch types
-			obj_ReadRGB(pObjfile, 0);
-			break;
-		case '3': // V3 is very similiar, but contains section names and byte alignment
+		case '3':
 		case '4': // V4 supports OAM sections, but is otherwise identical
-			obj_ReadRGB(pObjfile, CONTAINS_SECTION_NAME | CONTAINS_SECTION_ALIGNMENT);
+			obj_ReadRGB(pObjfile);
 			break;
 		default:
-			errx(1, "'%s' is an unsupported version", tzObjectfile);
+			errx(1, "'%s' uses an unsupported object file version (%s). Please reassemble it.", tzObjectfile, tzHeader);
 		}
 	} else {
 		errx(1, "'%s' is not a valid object", tzObjectfile);

@@ -1,14 +1,14 @@
 #ifndef RGBDS_ASM_LINK_H
 #define RGBDS_ASM_LINK_H
 
-/* RGB0 .obj format:
+/* RGB4 .o format:
  *
  * Header
  * Symbols
  * Sections
  *
  * Header:
- * "RGB0"
+ * "RGB4"
  * LONG NumberOfSymbols
  * LONG NumberOfSections
  *
@@ -18,7 +18,7 @@
  * Symbol:
  * char Name (NULL terminated)
  * char nType
- * if( nType!=SYM_IMPORT )
+ * if (nType != SYM_IMPORT)
  * {
  *		LONG SectionID
  *		LONG Offset
@@ -28,9 +28,13 @@
  * Section[NumberOfSections]
  *
  * Section:
+ * char SectionName (NULL-terminated)
  * LONG SizeInBytes
  * char Type
- * if( Type!=WRAM0 )
+ * LONG OrgPosition
+ * LONG Bank
+ * LONG Alignment
+ * if (Type == ROM0 || Type == ROMX)
  * {
  *		char Data[SizeInBytes]
  *		Patches
