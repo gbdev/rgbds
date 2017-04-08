@@ -445,6 +445,7 @@ AssignSections(void)
 	 */
 
 	if (tzLinkerscriptName) {
+		script_InitSections();
 		script_Parse(tzLinkerscriptName);
 	}
 

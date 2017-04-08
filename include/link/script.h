@@ -17,7 +17,15 @@
 #ifndef RGBDS_LINK_SCRIPT_H
 #define RGBDS_LINK_SCRIPT_H
 
+#include "extern/stdnoreturn.h"
+
+noreturn void script_fatalerror(const char *fmt, ...);
+
 void script_Parse(const char *path);
+
+void script_IncludeFile(const char *path);
+int script_IncludeDepthGet(void);
+void script_IncludePop(void);
 
 void script_InitSections(void);
 void script_SetCurrentSectionType(const char *type, unsigned int bank);
