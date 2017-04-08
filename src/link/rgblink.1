@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 27, 2017
+.Dd April 8, 2017
 .Dt RGBLINK 1
 .Os RGBDS Manual
 .Sh NAME
@@ -48,6 +48,7 @@ sections are placed in any bank except bank 0.
 If your ROM is designed for DMG, you can use the
 .Fl w
 option to override this.
+It will also prohibit the use of VRAM bank 1.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
@@ -67,8 +68,10 @@ The default is 0x00.
 .It Fl s Ar symbol
 ???
 .It Fl w
+Enable DMG mode.
 Expand the WRAM0 section size from 4KiB to the full 8KiB assigned to WRAM and
 prohibit the use of WRAMX sections.
+Prohibit the use of VRAM bank 1.
 Useful for ROMs designed for DMG.
 .It Fl t
 Expand the ROM0 section size from 16KiB to the full 32KiB assigned to ROM and

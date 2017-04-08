@@ -92,10 +92,14 @@ main(int argc, char *argv[])
 			options |= OPT_TINY;
 			break;
 		case 'w':
-			/* Set to set WRAM as a single continuous block as on DMG.
-			All WRAM sections must be WRAM0 as bankable WRAM sections do
-			not exist in this mode. A WRAMX section will raise an error. */
-			options |= OPT_CONTWRAM;
+			/*
+			 * Set to set WRAM as a single continuous block as on
+			 * DMG. All WRAM sections must be WRAM0 as bankable WRAM
+			 * sections do not exist in this mode. A WRAMX section
+			 * will raise an error. VRAM bank 1 can't be used if
+			 * this option is enabled either.
+			 */
+			options |= OPT_DMG_MODE;
 			break;
 		default:
 			usage();

@@ -402,7 +402,7 @@ AssignSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
-			if (options & OPT_CONTWRAM) {
+			if (options & OPT_DMG_MODE) {
 				BankFree[i]->nSize = 0x2000;
 			} else {
 				BankFree[i]->nSize = 0x1000;
@@ -418,7 +418,11 @@ AssignSections(void)
 		} else if (i >= BANK_VRAM && i < BANK_VRAM + BANK_COUNT_VRAM) {
 			/* Swappable VRAM bank */
 			BankFree[i]->nOrg = 0x8000;
-			BankFree[i]->nSize = 0x2000;
+			if (options & OPT_DMG_MODE && i != BANK_VRAM) {
+				BankFree[i]->nSize = 0;
+			} else {
+				BankFree[i]->nSize = 0x2000;
+			}
 		} else if (i == BANK_OAM) {
 			BankFree[i]->nOrg = 0xFE00;
 			BankFree[i]->nSize = 0x00A0;

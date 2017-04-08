@@ -49,7 +49,7 @@ void script_InitSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			bank[i].address = 0xC000;
-			if (options & OPT_CONTWRAM) {
+			if (options & OPT_DMG_MODE) {
 				bank[i].top_address = 0xE000;
 			} else {
 				bank[i].top_address = 0xD000;
@@ -68,8 +68,13 @@ void script_InitSections(void)
 		} else if (i >= BANK_VRAM && i < BANK_VRAM + BANK_COUNT_VRAM) {
 			/* Swappable VRAM bank */
 			bank[i].address = 0x8000;
-			bank[i].top_address = 0xA000;
 			bank[i].type = SECT_VRAM;
+			if (options & OPT_DMG_MODE && i != BANK_VRAM) {
+				/* In DMG the only available bank is bank 0. */
+				bank[i].top_address = 0x8000;
+			} else {
+				bank[i].top_address = 0xA000;
+			}
 		} else if (i == BANK_OAM) {
 			/* OAM */
 			bank[i].address = 0xFE00;
