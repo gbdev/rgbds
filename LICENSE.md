@@ -28,6 +28,7 @@ This also means you can't...
 
 Copyright (C) 1999  Justin Lloyd <jlloyd@imf.la> (?)
 
+```
                       DO WHATEVER PUBLIC LICENSE*
    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
@@ -40,6 +41,7 @@ Copyright (C) 1999  Justin Lloyd <jlloyd@imf.la> (?)
  and/or modify it under the terms of the DO WHATEVER PUBLIC LICENSE
 
  Software originally created by Justin Lloyd @ http://otakunozoku.com/
+```
 
 # rgbds-linux
 

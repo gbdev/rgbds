@@ -30,6 +30,21 @@ To get a working ROM image from a single assembly source file:
 .Xr rgblink 1 ,
 .Xr gbz80 7
 .Sh HISTORY
-.Nm
-grew out of the ASMotor package released by Carsten S\(/orensen.
-It was first released as a Game Boy software package by Justin Lloyd.
+.Bl -ohang
+.It
+1997, Carsten S\(/orensen (AKA SurfSmurf) writes ASMotor as a general-purpose
+assembler/linker system for DOS/Win32.
+.It
+1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to read and produce GBZ80
+assembly/machine code, and releases this version as RGBDS.
+.It
+2009, Vegard Nossum adapts the code to be more UNIX-like and releases this
+version as rgbds-linux on GitHub.
+.It
+2010, Anthony J. Bentley forks that repository. The fork becomes the reference
+implementation of rgbds.
+.It
+2017, Bentley's repository is moved to a neutral name.
+It is now maintained by a number of contributors at
+https://github.com/rednex/rgbds
+.El
