@@ -1,0 +1,1558 @@
+.\" Copyright (c) 2017 Antonio Nino Diaz <antonio_nd@outlook.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 8, 2017
+.Dt GBZ80 7
+.Os RGBDS Manual
+.Sh NAME
+.Nm gbz80
+.Nd CPU opcode reference
+.Sh DESCRIPTION
+This is the list of opcodes supported by
+.Xr rgbasm 1 ,
+including a short description, the number of bytes needed to encode them and the
+number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete
+them.
+.Pp
+.Sh LEGEND
+List of abbreviations used in this document.
+.Bl -tag
+.It Ar r8
+Any of the 8-bit registers
+.Pq Sy A , B , C , D , E , H , L .
+.It Ar r16
+Any of the general-purpose 16-bit registers
+.Pq Sy BC , DE , HL .
+.It Ar n8
+8-bit integer constant.
+.It Ar n16
+16-bit integer constant.
+.It Ar e8
+8-bit offset
+.Pq Fl Sy 128 No to Sy 127 .
+.It Ar u3
+3-bit unsigned integer constant
+.Pq Sy 0 No to Sy 7 .
+.It Ar cc
+Condition codes:
+.Bl -tag -compact
+.It Sy Z : No Execute if Z is set.
+.It Sy NZ : No Execute if Z is not set.
+.It Sy C : No Execute if C is set.
+.It Sy NC : No Execute if C is not set.
+.El
+.It Ar vec
+One of the
+.Ar RST
+vectors
+.Pq Sy 0x00 , 0x08 , 0x10 , 0x18 , 0x20 , 0x28 , 0x30 No and Sy 0x38 .
+.El
+.Pp
+.Sh INSTRUCTION OVERVIEW
+.Ss 8-bit Arithmetic and Logic Instructions
+.Bl -inset -compact
+.It Sx ADC A,r8
+.It Sx ADC A,[HL]
+.It Sx ADC A,n8
+.It Sx ADD A,r8
+.It Sx ADD A,[HL]
+.It Sx ADD A,n8
+.It Sx AND A,r8
+.It Sx AND A,[HL]
+.It Sx AND A,n8
+.It Sx CP A,r8
+.It Sx CP A,[HL]
+.It Sx CP A,n8
+.It Sx DEC r8
+.It Sx DEC [HL]
+.It Sx INC r8
+.It Sx INC [HL]
+.It Sx OR A,r8
+.It Sx OR A,[HL]
+.It Sx OR A,n8
+.It Sx SBC A,r8
+.It Sx SBC A,[HL]
+.It Sx SBC A,n8
+.It Sx SUB A,r8
+.It Sx SUB A,[HL]
+.It Sx SUB A,n8
+.It Sx XOR A,r8
+.It Sx XOR A,[HL]
+.It Sx XOR A,n8
+.El
+.Ss 16-bit Arithmetic Instructions
+.Bl -inset -compact
+.It Sx ADD HL,r16
+.It Sx DEC r16
+.It Sx INC r16
+.El
+.Ss Bit Operations Instructions
+.Bl -inset -compact
+.It Sx BIT u3,r8
+.It Sx BIT u3,[HL]
+.It Sx RES u3,r8
+.It Sx RES u3,[HL]
+.It Sx SET u3,r8
+.It Sx SET u3,[HL]
+.It Sx SWAP r8
+.It Sx SWAP [HL]
+.El
+.Ss Bit Shift Instructions
+.Bl -inset -compact
+.It Sx RL r8
+.It Sx RL [HL]
+.It Sx RLA
+.It Sx RLC r8
+.It Sx RLC [HL]
+.It Sx RLCA
+.It Sx RR r8
+.It Sx RR [HL]
+.It Sx RRA
+.It Sx RRC r8
+.It Sx RRC [HL]
+.It Sx RRCA
+.It Sx SLA r8
+.It Sx SLA [HL]
+.It Sx SRA r8
+.It Sx SRA [HL]
+.It Sx SRL r8
+.It Sx SRL [HL]
+.El
+.Ss Load Instructions
+.Bl -inset -compact
+.It Sx LD r8,r8
+.It Sx LD r8,n8
+.It Sx LD r16,n16
+.It Sx LD [HL],r8
+.It Sx LD [HL],n8
+.It Sx LD r8,[HL]
+.It Sx LD [r16],A
+.It Sx LD [n16],A
+.It Sx LD [$FF00+n8],A
+.It Sx LD [$FF00+C],A
+.It Sx LD A,[r16]
+.It Sx LD A,[n16]
+.It Sx LD A,[$FF00+n8]
+.It Sx LD A,[$FF00+C]
+.It Sx LD [HL+],A
+.It Sx LD [HL-],A
+.It Sx LD A,[HL+]
+.It Sx LD A,[HL-]
+.El
+.Ss Jumps and Subroutines
+.Bl -inset -compact
+.It Sx CALL n16
+.It Sx CALL cc,n16
+.It Sx JP HL
+.It Sx JP n16
+.It Sx JP cc,n16
+.It Sx JR e8
+.It Sx JR cc,e8
+.It Sx RET cc
+.It Sx RET
+.It Sx RETI
+.It Sx RST vec
+.El
+.Ss Stack Operations Instructions
+.Bl -inset -compact
+.It Sx ADD HL,SP
+.It Sx ADD SP,e8
+.It Sx DEC SP
+.It Sx INC SP
+.It Sx LD SP,n16
+.It Sx LD [n16],SP
+.It Sx LD HL,SP+e8
+.It Sx LD SP,HL
+.It Sx POP AF
+.It Sx POP r16
+.It Sx PUSH AF
+.It Sx PUSH r16
+.El
+.Ss Miscelaneous Instructions
+.Bl -inset -compact
+.It Sx CCF
+.It Sx CPL
+.It Sx DAA
+.It Sx DI
+.It Sx EI
+.It Sx HALT
+.It Sx NOP
+.It Sx SCF
+.It Sx STOP
+.El
+.Sh INSTRUCTION REFERENCE
+.Ss ADC A,r8
+Add the value in
+.Ar r8
+plus the carry flag to
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 3.
+.It
+.Sy C : No Set if overflow from bit 7.
+.El
+.Ss ADC A,[HL]
+Add the value pointed by
+.Sy HL
+plus the carry flag to
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx ADC A,r8
+.Ss ADC A,n8
+Add the value
+.Ar n8
+plus the carry flag to
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx ADC A,r8
+.Ss ADD A,r8
+Add the value in
+.Ar r8
+to
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 3.
+.It
+.Sy C : No Set if overflow from bit 7.
+.El
+.Ss ADD A,[HL]
+Add the value pointed by
+.Sy HL No to Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx ADD A,r8
+.Ss ADD A,n8
+Add the value
+.Ar n8
+to
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx ADD A,r8
+.Ss ADD HL,r16
+Add the value in
+.Ar r16
+to
+.Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 11.
+.It
+.Sy C : No Set if overflow from bit 15.
+.El
+.Ss ADD HL,SP
+Add the value in
+.Sy SP No to Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx ADD HL,r16
+.Ss ADD SP,e8
+Add the signed value
+.Ar e8
+to
+.Sy SP .
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 3.
+.It
+.Sy C : No Set if overflow from bit 7.
+.El
+.Ss AND A,r8
+Bitwise AND between the value in
+.Ar r8
+and
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 1
+.It
+.Sy C : No 0
+.El
+.Ss AND A,[HL]
+Bitwise AND between the value pointed by
+.Sy HL No and Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx AND A,r8
+.Ss AND A,n8
+Bitwise AND between the value in
+.Ar n8
+and
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx AND A,r8
+.Ss BIT u3,r8
+Test bit
+.Ar u3 No in register Ar r8 , No set the zero flag if bit not set.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if the selected bit is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 1
+.El
+.Ss BIT u3,[HL]
+Test bit
+.Ar u3 No in the byte pointed by Sy HL , No set the zero flag if bit not set.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx BIT u3,r8
+.Ss CALL n16
+Call address
+.Ar n16 .
+.Pp
+Cycles: 6
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss CALL cc,n16
+Call address
+.Ar n16 No if condition Ar cc No is met.
+.Pp
+Cycles: 6/3
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss CCF
+Complement Carry Flag.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Complemented.
+.El
+.Ss CP A,r8
+Subtract the value in
+.Ar r8
+from
+.Sy A No and set flags accordingly, but don't store the result.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 1
+.It
+.Sy H : No Set if no borrow from bit 4.
+.It
+.Sy C : No Set if no borrow
+.Pq set if Ar r8 No > Sy A .
+.El
+.Ss CP A,[HL]
+Subtract the value pointed by
+.Sy HL
+from
+.Sy A
+and set flags accordingly, but don't store the result.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx CP A,r8
+.Ss CP A,n8
+Subtract the value
+.Ar n8
+from
+.Sy A
+and set flags accordingly, but don't store the result.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx CP A,r8
+.Ss CPL
+Complement accumulator
+.Pq Sy A No = Sy ~A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy N : No 1
+.It
+.Sy H : No 1
+.El
+.Ss DAA
+Decimal adjust register A to get a correct BCD representation after an
+arithmetic instruction.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set or reset depending on the operation.
+.El
+.Ss DEC r8
+Decrement value in register
+.Ar r8 No by 1.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 1
+.It
+.Sy H : No Set if no borrow from bit 4.
+.El
+.Ss DEC [HL]
+Decrement the value pointed by
+.Sy HL No by 1.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx DEC r8
+.Ss DEC r16
+Decrement value in register
+.Ar r16 No by 1.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss DEC SP
+Decrement value in register
+.Sy SP No by 1.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss DI
+Disable Interrupts.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss EI
+Enable Interrupts.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss HALT
+Enter CPU low power mode.
+.Pp
+Cycles: -
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss INC r8
+Increment value in register
+.Ar r8 No by 1.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 3.
+.El
+.Ss INC [HL]
+Increment the value pointed by
+.Sy HL No by 1.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx INC r8
+.Ss INC r16
+Increment value in register
+.Ar r16 No by 1.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss INC SP
+Increment value in register
+.Sy SP No by 1.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss JP n16
+Absolute jump to address
+.Ar n16 .
+.Pp
+Cycles: 4
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss JP cc,n16
+Absolute jump to address
+.Ar n16 No if condition Ar cc No is met.
+.Pp
+Cycles: 4/3
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss JP HL
+Jump to address in
+.Sy HL , No that is, load Sy PC No with value in register Sy HL .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss JR e8
+Relative jump by adding
+.Ar e8 No to the current address.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss JR cc,e8
+Relative jump by adding
+.Ar e8 No to the current address if condition Ar cc No is met.
+.Pp
+Cycles: 3/2
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss LD r8,r8
+Store value in register on the right into register on the left.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD r8,n8
+Load value
+.Ar n8 No into register Ar r8 .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss LD r16,n16
+Load value
+.Ar n16 No into register Ar r16 .
+.Pp
+Cycles: 3
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss LD [HL],r8
+Store value in register
+.Ar r8 No into byte pointed by register Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD [HL],n8
+Store value
+.Ar n8 No into byte pointed by register Sy HL .
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss LD r8,[HL]
+Load value into register
+.Ar r8 No from byte pointed by register Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD [r16],A
+Store value in register
+.Sy A No into address pointed by register Ar r16 .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD [n16],A
+Store value in register
+.Sy A No into address Ar n16 .
+.Pp
+Cycles: 4
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss LD [$FF00+n8],A
+Store value in register
+.Sy A No into high RAM or I/O registers.
+.Pp
+The following synonym forces this encoding:
+.Sy LDH [$FF00+n8],A
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss LD [$FF00+C],A
+Store value in register
+.Sy A No into high RAM or I/O registers.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD A,[r16]
+Load value in register
+.Sy A No from address pointed by register Ar r16 .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD A,[n16]
+Load value in register
+.Sy A No from address Ar n16 .
+.Pp
+Cycles: 4
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss LD A,[$FF00+n8]
+Load value in register
+.Sy A No from high RAM or I/O registers.
+.Pp
+The following synonym forces this encoding:
+.Sy LDH A,[$FF00+n8]
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss LD A,[$FF00+C]
+Load value in register
+.Sy A No from high RAM or I/O registers.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD [HL+],A
+Store value in register
+.Sy A No into byte pointed by Sy HL No and post-increment Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD [HL-],A
+Store value in register
+.Sy A No into byte pointed by Sy HL No and post-decrement Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD A,[HL+]
+Load value into register
+.Sy A No from byte pointed by Sy HL No and post-increment Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD A,[HL-]
+Load value into register
+.Sy A No from byte pointed by Sy HL No and post-decrement Sy HL .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss LD SP,n16
+Load value
+.Ar n16 No into register Sy SP .
+.Pp
+Cycles: 3
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss LD [n16],SP
+Store
+.Sy SP No into addresses Ar n16 No (LSB) and Ar n16 No + 1 (MSB).
+.Pp
+Cycles: 5
+.Pp
+Bytes: 3
+.Pp
+Flags: None affected.
+.Ss LD HL,SP+e8
+Add the signed value
+.Ar e8
+to
+.Sy SP No and store the result in Sy HL.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No Set if overflow from bit 3.
+.It
+.Sy C : No Set if overflow from bit 7.
+.El
+.Ss LD SP,HL
+Load register
+.Sy HL No into register Sy SP .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss NOP
+No operation.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss OR A,r8
+Bitwise OR between the value in
+.Ar r8
+and
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No 0
+.El
+.Ss OR A,[HL]
+Bitwise OR between the value pointed by
+.Sy HL No and Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx OR A,r8
+.Ss OR A,n8
+Bitwise OR between the value in
+.Ar n8
+and
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx OR A,r8
+.Ss POP AF
+Pop register
+.Sy AF No from the stack.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss POP r16
+Pop register
+.Ar r16 No from the stack.
+.Pp
+Cycles: 3
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss PUSH AF
+Push register
+.Sy AF No into the stack.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss PUSH r16
+Push register
+.Ar r16 No into the stack.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss RES u3,r8
+Set bit
+.Ar u3 No in register Ar r8 No to 0.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss RES u3,[HL]
+Set bit
+.Ar u3 No in the byte pointed by Sy HL No to 0.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss RET
+Return from subroutine.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss RET cc
+Return from subroutine if condition
+.Ar cc No is met.
+.Pp
+Cycles: 5/2
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss RETI
+Return from subroutine and enable interrupts.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss RL r8
+Rotate register
+.Ar r8 No left through carry.
+.Pp
+.D1 C <- [7 <- 0] <- C
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RL [HL]
+Rotate value pointed by
+.Sy HL No left through carry.
+.Pp
+.D1 C <- [7 <- 0] <- C
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx RL r8
+.Ss RLA
+Rotate register
+.Sy A No left through carry.
+.Pp
+.D1 C <- [7 <- 0] <- C
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RLC r8
+Rotate register
+.Ar r8 No left.
+.Pp
+.D1 C <- [7 <- 0] <- [7]
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RLC [HL]
+Rotate value pointed by
+.Sy HL No left.
+.Pp
+.D1 C <- [7 <- 0] <- [7]
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx RLC r8
+.Ss RLCA
+Rotate register
+.Sy A No left.
+.Pp
+.D1 C <- [7 <- 0] <- [7]
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RR r8
+Rotate register
+.Ar r8 No right through carry.
+.Pp
+.D1 C -> [7 -> 0] -> C
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RR [HL]
+Rotate value pointed by
+.Sy HL No right through carry.
+.Pp
+.D1 C -> [7 -> 0] -> C
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx RR r8
+.Ss RRA
+Rotate register
+.Sy A No right through carry.
+.Pp
+.D1 C -> [7 -> 0] -> C
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RRC r8
+Rotate register
+.Ar r8 No right.
+.Pp
+.D1 [0] -> [7 -> 0] -> C
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RRC [HL]
+Rotate value pointed by
+.Sy HL No right.
+.Pp
+.D1 [0] -> [7 -> 0] -> C
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx RRC r8
+.Ss RRCA
+Rotate register
+.Sy A No right.
+.Pp
+.D1 [0] -> [7 -> 0] -> C
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No 0
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss RST vec
+Call restart vector
+.Ar vec .
+.Pp
+Cycles: 4
+.Pp
+Bytes: 1
+.Pp
+Flags: None affected.
+.Ss SBC A,r8
+Subtract the value in
+.Ar r8
+and the carry flag from
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 1
+.It
+.Sy H : No Set if no borrow from bit 4.
+.It
+.Sy C : No Set if no borrow
+.Pq set if Ar r8 No > Sy A .
+.El
+.Ss SBC A,[HL]
+Subtract the value pointed by
+.Sy HL
+and the carry flag from
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx SBC A,r8
+.Ss SBC A,n8
+Subtract the value
+.Ar n8
+and the carry flag from
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SBC A,r8
+.Ss SCF
+Set Carry Flag.
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No 1
+.El
+.Ss SET u3,r8
+Set bit
+.Ar u3 No in register Ar r8 No to 1.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss SET u3,[HL]
+Set bit
+.Ar u3 No in the byte pointed by Sy HL No to 1.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss SLA r8
+Shift left arithmetic register
+.Ar r8 .
+.Pp
+.D1 C <- [7 <- 0] <- 0
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss SLA [HL]
+Shift left arithmetic value pointed by
+.Sy HL .
+.Pp
+.D1 C <- [7 <- 0] <- 0
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SLA r8
+.Ss SRA r8
+Shift right arithmetic register
+.Ar r8 .
+.Pp
+.D1 [7] -> [7 -> 0] -> C
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss SRA [HL]
+Shift right arithmetic value pointed by
+.Sy HL .
+.Pp
+.D1 [7] -> [7 -> 0] -> C
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SRA r8
+.Ss SRL r8
+Shift right logic register
+.Ar r8 .
+.Pp
+.D1 0 -> [7 -> 0] -> C
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No Set according to result.
+.El
+.Ss SRL [HL]
+Shift right logic value pointed by
+.Sy HL .
+.Pp
+.D1 0 -> [7 -> 0] -> C
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SRA r8
+.Ss STOP
+Enter CPU very low power mode.
+Also used to switch between doube speed and normal CPU modes in GBC.
+.Pp
+Cycles: -
+.Pp
+Bytes: 2
+.Pp
+Flags: None affected.
+.Ss SUB A,r8
+Subtract the value in
+.Ar r8
+from
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 1
+.It
+.Sy H : No Set if no borrow from bit 4.
+.It
+.Sy C : No Set if no borrow
+.Pq set if Ar r8 No > Sy A .
+.El
+.Ss SUB A,[HL]
+Subtract the value pointed by
+.Sy HL No from Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx SUB A,r8
+.Ss SUB A,n8
+Subtract the value
+.Ar n8
+from
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SUB A,r8
+.Ss SWAP r8
+Swap upper 4 bits in register
+.Ar r8 No and the lower ones.
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No 0
+.El
+.Ss SWAP [HL]
+Swap upper 4 bits in the byte pointed by
+.Sy HL No and the lower ones.
+.Pp
+Cycles: 4
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx SWAP r8
+.Ss XOR A,r8
+Bitwise XOR between the value in
+.Ar r8
+and
+.Sy A .
+.Pp
+Cycles: 1
+.Pp
+Bytes: 1
+.Pp
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z : No Set if result is 0.
+.It
+.Sy N : No 0
+.It
+.Sy H : No 0
+.It
+.Sy C : No 0
+.El
+.Ss XOR A,[HL]
+Bitwise XOR between the value pointed by
+.Sy HL No and Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 1
+.Pp
+Flags: See
+.Sx XOR A,r8
+.Ss XOR A,n8
+Bitwise XOR between the value in
+.Ar n8
+and
+.Sy A .
+.Pp
+Cycles: 2
+.Pp
+Bytes: 2
+.Pp
+Flags: See
+.Sx XOR A,r8
+.Sh SEE ALSO
+.Xr rgbasm 1 ,
+.Xr rgbds 7
+.Sh HISTORY
+.Nm rgbds
+was originally written by Carsten S\(/orensen as part of the ASMotor package,
+and was later packaged in RGBDS by Justin Lloyd.
+It is now maintained by a number of contributors at
+https://github.com/rednex/rgbds.
