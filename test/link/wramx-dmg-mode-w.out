@@ -1,1 +1,1 @@
-rgblink: error: WRAMX sections can't be used with option -w.
+error: WRAMX sections can't be used with option -w.

@@ -24,8 +24,6 @@ SLONG options = 0;
 SLONG fillchar = 0;
 char *smartlinkstartsymbol;
 
-char *progname;
-
 /*
  * Print the usagescreen
  *
@@ -53,8 +51,6 @@ main(int argc, char *argv[])
 
 	if (argc == 1)
 		usage();
-
-	progname = "rgblink";
 
 	while ((ch = getopt(argc, argv, "l:m:n:o:O:p:s:tw")) != -1) {
 		switch (ch) {
