@@ -346,7 +346,9 @@ fstk_Init(char *s)
 {
 	char tzFileName[_MAX_PATH + 1];
 
-	sym_AddString("__FILE__", s);
+	char tzSymFileName[_MAX_PATH + 1 + 2];
+	snprintf(tzSymFileName, sizeof(tzSymFileName), "\"%s\"", s);
+	sym_AddString("__FILE__", tzSymFileName);
 
 	strcpy(tzFileName, s);
 	pFileStack = NULL;
