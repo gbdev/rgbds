@@ -44,11 +44,6 @@ enum eRpnData {
 
 	RPN_HRAM,
 
-	/* TODO: This hasn't been removed in order not to break compatibility
-	 * with the existing object files, but it will be removed in a future
-	 * version. */
-	RPN_unused,
-
 	RPN_RANGECHECK,
 
 	RPN_CONST = 0x80,
