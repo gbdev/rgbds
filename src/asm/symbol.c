@@ -12,6 +12,7 @@
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/output.h"
+#include "extern/err.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
 struct sSymbol *pScope = NULL;
@@ -21,6 +22,8 @@ char *currentmacroargs[MAXMACROARGS + 1];
 char *newmacroargs[MAXMACROARGS + 1];
 char SavedTIME[256];
 char SavedDATE[256];
+char SavedTIMESTAMP_ISO8601_LOCAL[256];
+char SavedTIMESTAMP_ISO8601_UTC[256];
 bool exportall;
 
 SLONG
@@ -795,6 +798,8 @@ sym_PrepPass2(void)
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
+	sym_AddString("__TIMESTAMP_ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
+	sym_AddString("__TIMESTAMP_ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
 	sym_AddSet("_RS", 0);
 
 	sym_AddEqu("_NARG", 0);
@@ -811,7 +816,7 @@ void
 sym_Init(void)
 {
 	SLONG i;
-	time_t tod;
+	time_t now;
 
 	for (i = 0; i < MAXMACROARGS; i += 1) {
 		currentmacroargs[i] = NULL;
@@ -829,15 +834,32 @@ sym_Init(void)
 
 	sym_AddSet("_RS", 0);
 
-	if (time(&tod) != -1) {
-		struct tm *tptr;
+	if (time(&now) != -1) {
+		struct tm *time_local = localtime(&now);
 
-		tptr = localtime(&tod);
-		strftime(SavedTIME, sizeof(SavedTIME), "\"%H:%M:%S\"", tptr);
-		strftime(SavedDATE, sizeof(SavedDATE), "\"%d %B %Y\"", tptr);
-		sym_AddString("__TIME__", SavedTIME);
-		sym_AddString("__DATE__", SavedDATE);
+		strftime(SavedTIME, sizeof(SavedTIME), "\"%H:%M:%S\"", time_local);
+		strftime(SavedDATE, sizeof(SavedDATE), "\"%d %B %Y\"", time_local);
+		strftime(SavedTIMESTAMP_ISO8601_LOCAL,
+			sizeof(SavedTIMESTAMP_ISO8601_LOCAL), "\"%FT%T%z\"", time_local);
+
+		struct tm *time_utc = gmtime(&now);
+		strftime(SavedTIMESTAMP_ISO8601_UTC,
+			sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%FT%TZ\"", time_utc);
+	} else {
+		warnx("Couldn't determine current time.");
+		/* The '?' have to be escaped or they will be treated as
+		 * trigraphs... */
+		strcpy(SavedTIME, "\"\?\?:\?\?:\?\?\"");
+		strcpy(SavedDATE, "\"\?\? \?\?\? \?\?\?\?\"");
+		strcpy(SavedTIMESTAMP_ISO8601_LOCAL, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?+\?\?\?\?\"");
+		strcpy(SavedTIMESTAMP_ISO8601_UTC, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?Z\"");
 	}
+
+	sym_AddString("__TIME__", SavedTIME);
+	sym_AddString("__DATE__", SavedDATE);
+	sym_AddString("__TIMESTAMP_ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
+	sym_AddString("__TIMESTAMP_ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+
 	pScope = NULL;
 
 	math_DefinePI();
