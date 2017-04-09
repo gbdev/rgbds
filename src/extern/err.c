@@ -26,11 +26,9 @@
 #include <stdlib.h>
 #include "extern/err.h"
 
-extern char *progname;
-
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: warning", progname);
+	fprintf (stderr, "warning");
 	if (fmt) {
 		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
@@ -41,7 +39,7 @@ void rgbds_vwarn(const char *fmt, va_list ap)
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: warning", progname);
+	fprintf (stderr, "warning");
 	if (fmt) {
 		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
@@ -51,7 +49,7 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 
 noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: error", progname);
+	fprintf (stderr, "error");
 	if (fmt) {
 		fputs (": ", stderr);
 		vfprintf(stderr, fmt, ap);
@@ -62,7 +60,7 @@ noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 
 noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
 {
-	fprintf (stderr, "%s: error", progname);
+	fprintf (stderr, "error");
         if (fmt) {
                 fputs (": ", stderr);
                 vfprintf(stderr, fmt, ap);

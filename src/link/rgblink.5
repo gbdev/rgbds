@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 27, 2017
+.Dd April 8, 2017
 .Dt RGBLINK 5
 .Os RGBDS Manual
 .Sh NAME
@@ -34,35 +34,42 @@ Any line can contain a comment starting with
 that ends at the end of the line:
 .Pp
   ROMX $F ; This is a comment
-   "Functions to read array"
-   ALIGN 8
-   "Array aligned to 256 bytes"
+    "Functions to read array"
+    ALIGN 8
+    "Array aligned to 256 bytes"
 
   WRAMX 2
-    "Some variables"
+     "Some variables"
 .Pp
 Numbers can be in decimal or hexadecimal format (the prefix is
 .Ql $ ) .
 It is an error if any bank or command is found before setting a bank.
 .Pp
-The possible bank types are: ROM0, ROMX, VRAM, WRAM0, WRAMX, OAM and HRAM.
-Types ROMX, VRAM, WRAMX and SRAM are banked, which means that it is needed to
-specify a bank after the type.
+Files can be included by using the
+.Ar INCLUDE No keyword followed by a string with the path of the file that has
+to be included.
+.Pp
+The possible bank types are:
+.Sy ROM0 , ROMX , VRAM , WRAM0 , WRAMX , OAM No and Sy HRAM .
+Types
+.Sy ROMX , VRAM , WRAMX No and Sy SRAM No are banked, which means that it is
+needed to specify a bank after the type.
 .Pp
 When a new bank statement is found, sections found after it will be placed
 right from the beginning of that bank.
 If the linkerscript switches to a different bank and then it comes back to the
 previous one it will continue from the last address that was used.
 .Pp
-The only two commands are ORG and ALIGN:
+The only two commands are
+.Ar ORG No and Ar ALIGN :
 .Bl -bullet
 .It
-ORG sets the address in which new sections will be placed.
+.Ar ORG No sets the address in which new sections will be placed.
 It can not be lower than the current address.
 .It
-ALIGN will increase the address until it is aligned to the specified boundary
-(it tries to set to 0 the number of bits specified after the command: ALIGN 8
-will align to $100).
+.Ar ALIGN No will increase the address until it is aligned to the specified
+boundary (it tries to set to 0 the number of bits specified after the command:
+.Ar ALIGN No 8 No will align to No $100 ) .
 .El
 .Pp
 Note: The bank, alignment, address and type of sections can be specified both

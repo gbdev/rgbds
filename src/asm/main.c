@@ -20,8 +20,6 @@ int cldefines_index;
 int cldefines_size;
 char **cldefines;
 
-char *progname;
-
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
 ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
@@ -300,8 +298,6 @@ main(int argc, char *argv[])
 
 	if (argc == 1)
 		usage();
-
-	progname = "rgbasm";
 
 	/* yydebug=1; */
 

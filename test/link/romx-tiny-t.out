@@ -1,1 +1,1 @@
-rgblink: error: ROMX sections can't be used with option -t.
+error: ROMX sections can't be used with option -t.

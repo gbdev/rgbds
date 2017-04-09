@@ -19,8 +19,6 @@
 #include <string.h>
 #include "gfx/main.h"
 
-char *progname;
-
 static void
 usage(void)
 {
@@ -40,8 +38,6 @@ main(int argc, char *argv[])
 	struct Tilemap tilemap = {0};
 	char *ext;
 	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
-
-	progname = "rgbgfx";
 
 	if (argc == 1) {
 		usage();

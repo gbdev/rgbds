@@ -23,8 +23,6 @@
 
 #include "extern/err.h"
 
-char *progname;
-
 static void
 usage(void)
 {
@@ -70,8 +68,6 @@ main(int argc, char *argv[])
 	int ramsize;   /* RAM size ID */
 	int version;   /* mask ROM version number */
 	int padvalue;  /* to pad the rom with if it changes size */
-
-	progname = "rgbfix";
 
 	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:v")) != -1) {
 		switch (ch) {
