@@ -63,9 +63,9 @@ rgbgfx_obj = \
 all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
-	$Q${RM} rgbds.html
+	$Q${RM} rgbds.html gbz80.html
 	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
-	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html
+	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html rgblink-script.html
 	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
 	$Q${RM} rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
 	$Q${RM} src/asm/asmy.c src/asm/asmy.h
