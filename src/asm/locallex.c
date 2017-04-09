@@ -17,7 +17,6 @@ struct sLexInitString localstrings[] = {
 	{"dec", T_Z80_DEC},
 	{"di", T_Z80_DI},
 	{"ei", T_Z80_EI},
-	{"ex", T_Z80_EX},
 	{"halt", T_Z80_HALT},
 	{"inc", T_Z80_INC},
 	{"jp", T_Z80_JP},

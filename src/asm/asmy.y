@@ -520,7 +520,7 @@ void	if_skip_to_endc( void )
 %token	T_Z80_BIT
 %token	T_Z80_CALL T_Z80_CCF T_Z80_CP T_Z80_CPL
 %token	T_Z80_DAA T_Z80_DEC T_Z80_DI
-%token	T_Z80_EI T_Z80_EX
+%token	T_Z80_EI
 %token	T_Z80_HALT
 %token	T_Z80_INC
 %token	T_Z80_JP T_Z80_JR
@@ -1195,7 +1195,6 @@ cpu_command		:	z80_adc
 				|	z80_dec
 				|	z80_di
 				|	z80_ei
-				|	z80_ex
 				|	z80_halt
 				|	z80_inc
 				|	z80_jp
@@ -1284,12 +1283,6 @@ z80_di			:	T_Z80_DI
 
 z80_ei			:	T_Z80_EI
 					{ out_AbsByte(0xFB); }
-;
-
-z80_ex			:	T_Z80_EX T_MODE_HL comma T_MODE_SP_IND
-					{ out_AbsByte(0xE3); }
-				|	T_Z80_EX T_MODE_SP_IND comma T_MODE_HL
-					{ out_AbsByte(0xE3); }
 ;
 
 z80_halt: T_Z80_HALT
