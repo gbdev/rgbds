@@ -28,6 +28,8 @@
 
 #include "parser.h"
 
+extern int yyparse();
+
 /* File include stack. */
 
 #define	MAX_INCLUDE_DEPTH 8
