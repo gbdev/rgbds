@@ -1475,8 +1475,14 @@ z80_ld_a		:	T_Z80_LD reg_r comma T_MODE_C_IND
 					}
 ;
 
-z80_ld_ss		:	T_Z80_LD reg_ss comma const_16bit
-					{ out_AbsByte(0x01|($2<<4)); out_RelWord(&$4); }
+z80_ld_ss		:	T_Z80_LD T_MODE_BC comma const_16bit
+					{ out_AbsByte(0x01|(REG_BC<<4)); out_RelWord(&$4); }
+				|	T_Z80_LD T_MODE_DE comma const_16bit
+					{ out_AbsByte(0x01|(REG_DE<<4)); out_RelWord(&$4); }
+				/*
+				 * HL is taken care of in z80_ld_hl
+				 * SP is taken care of in z80_ld_sp
+				 */
 ;
 
 z80_nop			:	T_Z80_NOP
