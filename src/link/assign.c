@@ -402,7 +402,7 @@ AssignSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
-			if (options & OPT_DMG_MODE) {
+			if (options & OPT_CONTWRAM) {
 				BankFree[i]->nSize = 0x2000;
 			} else {
 				BankFree[i]->nSize = 0x1000;

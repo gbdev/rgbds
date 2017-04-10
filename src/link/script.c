@@ -49,7 +49,7 @@ void script_InitSections(void)
 		} else if (i == BANK_WRAM0) {
 			/* WRAM */
 			bank[i].address = 0xC000;
-			if (options & OPT_DMG_MODE) {
+			if (options & OPT_CONTWRAM) {
 				bank[i].top_address = 0xE000;
 			} else {
 				bank[i].top_address = 0xD000;

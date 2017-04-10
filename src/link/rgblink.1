@@ -22,6 +22,7 @@
 .Nm rgblink
 .Op Fl t
 .Op Fl w
+.Op Fl d
 .Op Fl m Ar mapfile
 .Op Fl n Ar symfile
 .Op Fl O Ar overlayfile
@@ -45,10 +46,16 @@ option to override this.
 .Pp
 Similarly, WRAM0 sections are placed in the first 4KiB of WRAM bank 0 and WRAMX
 sections are placed in any bank except bank 0.
-If your ROM is designed for DMG, you can use the
+If your ROM doesn't use banked WRAM you can use option
 .Fl w
 option to override this.
-It will also prohibit the use of VRAM bank 1.
+.Pp
+Also, if your ROM is designed for DMG, you can make sure that you don't use any
+prohibited section by using the option
+.Fl d ,
+which implies
+.Fl w
+but also prohibits the use of VRAM bank 1.
 .Pp
 The arguments are as follows:
 .Bl -tag -width Ds
@@ -68,11 +75,14 @@ The default is 0x00.
 .It Fl s Ar symbol
 ???
 .It Fl w
-Enable DMG mode.
 Expand the WRAM0 section size from 4KiB to the full 8KiB assigned to WRAM and
 prohibit the use of WRAMX sections.
-Prohibit the use of VRAM bank 1.
-Useful for ROMs designed for DMG.
+.It Fl d
+Enable DMG mode.
+Prohibit the use of sections that doesn't exist on a DMG, such as WRAMX and VRAM
+bank 1.
+This option automatically enables
+.Fl w .
 .It Fl t
 Expand the ROM0 section size from 16KiB to the full 32KiB assigned to ROM and
 prohibit the use of ROMX sections.
