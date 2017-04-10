@@ -1,0 +1,16 @@
+language: c
+sudo: required
+install:
+  - ./.travis-deps.sh
+os:
+  - linux
+  - osx
+compiler:
+  - clang
+  - gcc
+script:
+  - make
+  - sudo make install
+after_success:
+  - pushd test/asm/ && ./test.sh && popd
+  - pushd test/link/ && ./test.sh && popd
