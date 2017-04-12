@@ -798,8 +798,8 @@ sym_PrepPass2(void)
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
-	sym_AddString("__TIMESTAMP_ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
-	sym_AddString("__TIMESTAMP_ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
+	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
 	sym_AddSet("_RS", 0);
 
 	sym_AddEqu("_NARG", 0);
@@ -857,8 +857,8 @@ sym_Init(void)
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
-	sym_AddString("__TIMESTAMP_ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
-	sym_AddString("__TIMESTAMP_ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
+	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
 
 	pScope = NULL;
 
