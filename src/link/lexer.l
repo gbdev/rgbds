@@ -15,7 +15,6 @@
  */
 
 %option noinput
-%option nounput
 %option yylineno
 
 %{
@@ -131,7 +130,22 @@ void script_IncludeFile(const char * path)
 	include_path[include_stack_ptr][sizeof(include_path[0])-1] = '\0';
 
 	yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
-	yylineno = 0;
+	yylineno = 1;
+
+	/*
+	 * The INCLUDE keyword is handled before reaching a newline token, it's
+	 * handled right after parsing the string with the file name that has to
+	 * be included. It isn't actually needed to include a newline after the
+	 * path, the last line of the linkerscript doesn't need to have a
+	 * newline character but it can have a command.
+	 *
+	 * This means that, when opening a new file, we must tell the parser
+	 * that what it is going to start at a new line or it will think that
+	 * the first line of the included script is the continuation of the
+	 * INCLUDE line of the parent script. If this is not done, the first
+	 * line of an included linkerscript can only be a comment (or empty).
+	 */
+	unput('\n');
 }
 
 int script_IncludeDepthGet(void)
