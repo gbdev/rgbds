@@ -96,9 +96,7 @@ struct sSymbol {
 enum ePatchType {
 	PATCH_BYTE = 0,
 	PATCH_WORD_L,
-	PATCH_LONG_L,
-	PATCH_WORD_B,
-	PATCH_LONG_B
+	PATCH_LONG_L
 };
 
 struct sPatch {
