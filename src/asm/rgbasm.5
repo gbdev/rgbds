@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 12, 2017
+.Dd April 16, 2017
 .Dt RGBASM 5
 .Os RGBDS Manual
 .Sh NAME
@@ -79,7 +79,7 @@ Valid banks range from 0 to 15.
 .It Sy WRAM0
 A general-purpose RAM section.
 Mapped to memory at $C000–$CFFF, or $C000-$DFFF if DMG mode is enabled in
-.Xr rgblink 1.
+.Xr rgblink 1 .
 Can only allocate memory, not fill it.
 .It Sy WRAMX
 A banked general-purpose RAM section.
@@ -87,7 +87,7 @@ Mapped to memory at $D000–$DFFF.
 Can only allocate memory, not fill it.
 Valid banks range from 1 to 7.
 Not available if DMG mode is enabled in
-.Xr rgblink 1.
+.Xr rgblink 1 .
 .It Sy OAM
 An object attributes RAM section.
 Mapped to memory at $FE00-$FE9F.
@@ -444,7 +444,8 @@ to
 if you perform further calculations on them.
 For instance, if you pass 1 + 2 as the first argument and then do
 .Ic PRINTV
-.Ic \[rs]1 Li * 2
+.Ic \[rs]1
+* 2
 you will get the value 5 on screen and not 6 as you might have expected.
 .Pp
 In reality, up to 256 arguments can be passed to a macro, but you can only use
@@ -550,7 +551,8 @@ Consequently,
 .Ic DB
 and
 .Ic DW
-can be used in a Sy WRAM0/WRAMX/HRAM/VRAM/SRAM
+can be used in a
+.Sy WRAM0 No / Sy WRAMX No / Sy HRAM No / Sy VRAM No / Sy SRAM
 section.
 .Ss Declaring variables in a RAM section
 .Ic DS
