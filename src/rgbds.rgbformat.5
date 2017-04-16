@@ -1,0 +1,194 @@
+.\" Copyright (c) 2017 Antonio Nino Diaz <antonio_nd@outlook.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 13, 2017
+.Dt RGBDS.RGBFORMAT 5
+.Os RGBDS Manual
+.Sh NAME
+.Nm rgbds.rgbformat
+.Nd file format documentation
+.Sh DESCRIPTION
+This is the description of the object files used by
+.Xr rgbasm 1
+and
+.Xr rgblink 1 .
+Please, note that the specifications may change.
+This toolchain is in development and new features may require adding more
+information to the current format, or modifying some fields, which would break
+compatibility with older versions.
+.Pp
+.Sh FILE STRUCTURE
+The following types are used:
+.Pp
+.Ar LONG
+is a 32‐bit integer stored in little‐endian format (Intel).
+.Ar BYTE
+is an 8‐bit integer.
+.Ar STRING
+is a 0‐terminated string of
+.Ar BYTE .
+.Pp
+.Bd -literal
+; Header
+
+BYTE    ID[4]            ; "RGB4"
+LONG    NumberOfSymbols  ; The number of symbols used in this file
+LONG    NumberOfSections ; The number of sections used in this file
+
+; Symbols
+
+REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
+
+    STRING  Name          ; The name of this symbol. Local symbols are stored
+                          ; as "Scope.Symbol".
+
+    BYTE    Type          ; 0 = LOCAL symbol only used in this file.
+                          ; 1 = IMPORT this symbol from elsewhere (unused).
+                          ; 2 = EXPORT this symbol to other objects.
+
+    IF      Type != 1     ; If symbol is defined in this object file.
+
+        LONG    SectionID ; The section number (of this object file) in which
+                          ; this symbol is defined.
+
+        LONG    Value     ; The symbols value. It's the offset into that
+                          ; symbol's section.
+
+    ENDC
+
+ENDR
+
+; Sections
+
+REPT NumberOfSections
+    STRING  Name  ; Name of the section
+
+    LONG    Size  ; Size in bytes of this section
+
+    BYTE    Type  ; 0 = WRAM0
+                  ; 1 = VRAM
+                  ; 2 = ROMX
+                  ; 3 = ROM0
+                  ; 4 = HRAM
+                  ; 5 = WRAMX
+                  ; 6 = SRAM
+                  ; 7 = OAM
+
+    LONG    Org   ; Address to fix this section at. -1 if the linker should
+                  ; decide (floating address).
+
+    LONG    Bank  ; Bank to load this section into. -1 if the linker should
+                  ; decide (floating bank). This field is only valid for ROMX,
+                  ; VRAM, WRAMX and SRAM sections.
+
+    LONG    Align ; Alignment of this section (expressed as number of low bits
+                  ; to leave as 0). -1 if not defined.
+
+    IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data.
+
+        BYTE    Data[Size]      ; Raw data of the section.
+
+        LONG    NumberOfPatches ; Number of patches to apply.
+
+        ; These types of sections may have patches
+
+        REPT    NumberOfPatches
+
+            STRING  SourceFile   ; Name of the source file (for printing error
+                                 ; messages).
+
+            LONG    Line         ; The line of the source file.
+
+            LONG    Offset       ; Offset into the section where patch should
+                                 ; be applied (in bytes).
+
+            BYTE    Type         ; 0 = BYTE patch.
+                                 ; 1 = little endian WORD patch.
+                                 ; 2 = little endianLONG patch.
+                                 ; 3 = big endian WORD patch (unused)
+                                 ; 4 = big endian LONG patch (unused)
+
+            LONG    RPNSize      ; Size of the buffer with the RPN.
+                                 ; expression.
+
+            BYTE    RPN[RPNSize] ; RPN expression. Definition below.
+
+        ENDR
+
+    ENDC
+
+ENDR
+.Ed
+.Ss RPN DATA
+Expressions in the object file are stored as RPN.
+This is an expression of the form
+.Do 2 5 + Dc .
+This will first push the value
+.Do 2 Dc to the stack.
+Then
+.Do 5 Dc .
+The
+.Do + Dc operator pops two arguments from the stack, adds them, and then pushes
+the result on the stack, effectively replacing the two top arguments with their
+sum.
+In the RGB format, RPN expressions are stored as BYTEs with some bytes being
+special prefixes for integers and symbols.
+.Pp
+.Bl -column -offset indent ".Sy String" ".Sy String"
+.It Sy Value Ta Sy Meaning
+.It Li $00 Ta Li + operator
+.It Li $01 Ta Li - operator
+.It Li $02 Ta Li * operator
+.It Li $03 Ta Li / operator
+.It Li $04 Ta Li % operator
+.It Li $05 Ta Li unary -
+.It Li $06 Ta Li | operator
+.It Li $07 Ta Li & operator
+.It Li $08 Ta Li ^ operator
+.It Li $09 Ta Li unary ~
+.It Li $0A Ta Li && comparison
+.It Li $0B Ta Li || comparison
+.It Li $0C Ta Li unary !
+.It Li $0D Ta Li == comparison
+.It Li $0E Ta Li != comparison
+.It Li $0F Ta Li > comparison
+.It Li $10 Ta Li < comparison
+.It Li $11 Ta Li >= comparison
+.It Li $12 Ta Li <= comparison
+.It Li $13 Ta Li << comparison
+.It Li $14 Ta Li >> comparison
+.It Li $15 Ta Li BANK()
+function.
+A symbol ID follows.
+.It Li $16 Ta Li HRAMCheck.
+Check if the value is in HRAM, AND it with 0xFF.
+.It Li $17 No Ta RangeCheck, LOW and HIGH signed LONGs follow.
+Check a value to see if it's within the range [LOW;HIGH].
+.It Li $80 Ta Ar LONG
+integer follows.
+.It Li $81 Ta Ar LONG
+Symbol ID follows.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr rgbasm 1 ,
+.Xr rgblink 1 ,
+.Xr rgbds 7 ,
+.Xr gbz80 7
+.Sh HISTORY
+.Nm rgbds
+was originally written by Carsten S\(/orensen as part of the ASMotor package,
+and was later packaged in RGBDS by Justin Lloyd.
+It is now maintained by a number of contributors at
+https://github.com/rednex/rgbds.
