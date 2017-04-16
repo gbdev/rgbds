@@ -201,16 +201,15 @@ writepatch(struct Patch * pPatch, FILE * f)
 void
 writesection(struct Section * pSect, FILE * f)
 {
-	fputstring(pSect->pzName, f); // RGB3 addition
+	fputstring(pSect->pzName, f);
+
 	fputlong(pSect->nPC, f);
+
 	fputc(pSect->nType, f);
+
 	fputlong(pSect->nOrg, f);
-	//RGB1 addition
-
 	fputlong(pSect->nBank, f);
-	//RGB1 addition
-
-	fputlong(pSect->nAlign, f); // RGB3 addition
+	fputlong(pSect->nAlign, f);
 
 	if ((pSect->nType == SECT_ROM0)
 	    || (pSect->nType == SECT_ROMX)) {

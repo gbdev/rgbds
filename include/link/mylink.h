@@ -45,8 +45,6 @@ enum eRpnData {
 
 	RPN_HRAM,
 
-	RPN_RANGECHECK,
-
 	RPN_CONST = 0x80,
 	RPN_SYM = 0x81
 };
@@ -96,9 +94,7 @@ struct sSymbol {
 enum ePatchType {
 	PATCH_BYTE = 0,
 	PATCH_WORD_L,
-	PATCH_LONG_L,
-	PATCH_WORD_B,
-	PATCH_LONG_B
+	PATCH_LONG_L
 };
 
 struct sPatch {

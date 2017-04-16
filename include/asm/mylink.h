@@ -1,64 +1,6 @@
 #ifndef RGBDS_ASM_LINK_H
 #define RGBDS_ASM_LINK_H
 
-/* RGB4 .o format:
- *
- * Header
- * Symbols
- * Sections
- *
- * Header:
- * "RGB4"
- * LONG NumberOfSymbols
- * LONG NumberOfSections
- *
- * Symbols:
- * Symbol[NumberOfSymbols]
- *
- * Symbol:
- * char Name (NULL terminated)
- * char nType
- * if (nType != SYM_IMPORT)
- * {
- *		LONG SectionID
- *		LONG Offset
- * }
- *
- * Sections:
- * Section[NumberOfSections]
- *
- * Section:
- * char SectionName (NULL-terminated)
- * LONG SizeInBytes
- * char Type
- * LONG OrgPosition
- * LONG Bank
- * LONG Alignment
- * if (Type == ROM0 || Type == ROMX)
- * {
- *		char Data[SizeInBytes]
- *		Patches
- * }
- *
- * Patches:
- * LONG NumberOfPatches
- * Patch[NumberOfPatches]
- *
- * Patch:
- * char Filename NULL-terminated
- * LONG LineNo
- * LONG Offset
- * char Type
- * LONG RpnByteSize
- * Rpn[RpnByteSize]
- *
- * Rpn:
- * Operators: 0x00-0x7F
- * Constants: 0x80 0x00000000
- * Symbols  : 0x81 0x00000000
- *
- */
-
 enum {
 	RPN_ADD = 0,
 	RPN_SUB,
@@ -90,13 +32,6 @@ enum {
 
 	RPN_HRAM,
 
-	/* TODO: This hasn't been removed in order not to break compatibility
-	 * with the existing object files, but it will be removed in a future
-	 * version. */
-	RPN_unused,
-
-	RPN_RANGECHECK,
-
 	RPN_CONST = 0x80,
 	RPN_SYM = 0x81
 };
@@ -121,8 +56,6 @@ enum {
 enum {
 	PATCH_BYTE = 0,
 	PATCH_WORD_L,
-	PATCH_LONG_L,
-	PATCH_WORD_B,
-	PATCH_LONG_B
+	PATCH_LONG_L
 };
 #endif

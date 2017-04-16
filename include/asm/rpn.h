@@ -76,9 +76,6 @@ void rpn_UNNOT(struct Expression * expr, struct Expression * src);
 UWORD rpn_PopByte(struct Expression * expr);
 void rpn_Bank(struct Expression * expr, char *tzSym);
 void rpn_Reset(struct Expression * expr);
-int
-rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
-    SLONG high);
 void rpn_CheckHRAM(struct Expression * expr, struct Expression * src1);
 
 #endif

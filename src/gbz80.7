@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 8, 2017
+.Dd April 12, 2017
 .Dt GBZ80 7
 .Os RGBDS Manual
 .Sh NAME
@@ -24,6 +24,14 @@ This is the list of opcodes supported by
 including a short description, the number of bytes needed to encode them and the
 number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete
 them.
+.Pp
+Note: All arithmetic/logic operations that use register
+.Sy A No as destination can omit the destination as it is assumed it's register
+.Sy A .
+The following two lines have the same effect:
+.Pp
+.Dl OR A,B
+.Dl OR B
 .Pp
 .Sh LEGEND
 List of abbreviations used in this document.

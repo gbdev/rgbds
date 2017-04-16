@@ -206,29 +206,6 @@ calcrpn(struct sPatch * pPatch)
 			rpnpush(getsymbank(t));
 			size -= 4;
 			break;
-		case RPN_RANGECHECK:
-			{
-				SLONG low, high;
-
-				low = (*rpn++);
-				low |= (*rpn++) << 8;
-				low |= (*rpn++) << 16;
-				low |= (*rpn++) << 24;
-				high = (*rpn++);
-				high |= (*rpn++) << 8;
-				high |= (*rpn++) << 16;
-				high |= (*rpn++) << 24;
-				t = rpnpop();
-				if (t < low || t > high) {
-					errx(1,
-					    "%s(%ld) : Value must be in the range [%ld;%ld]",
-					    pPatch->pzFilename,
-					    pPatch->nLineNo, low, high);
-				}
-				rpnpush(t);
-				size -= 8;
-				break;
-			}
 		}
 	}
 	return (rpnpop());
@@ -264,22 +241,12 @@ Patch(void)
 				}
 				break;
 			case PATCH_WORD_L:
-			case PATCH_WORD_B:
 				if (t >= -32768 && t <= 65535) {
 					t &= 0xFFFF;
-					if (pPatch->Type == PATCH_WORD_L) {
-						pSect->pData[pPatch->nOffset] =
-						    t & 0xFF;
-						pSect->pData[pPatch->nOffset +
-						    1] =
-						    (t >> 8) & 0xFF;
-					} else {
-						//Assume big endian
-						    pSect->pData[pPatch->nOffset] =
-						    (t >> 8) & 0xFF;
-						pSect->pData[pPatch->nOffset +
-						    1] = t & 0xFF;
-					}
+					pSect->pData[pPatch->nOffset] =
+						t & 0xFF;
+					pSect->pData[pPatch->nOffset + 1] =
+						(t >> 8) & 0xFF;
 				} else {
 					errx(1,
 					    "%s(%ld) : Value must be 16-bit",
@@ -295,15 +262,6 @@ Patch(void)
 				    (t >> 16) & 0xFF;
 				pSect->pData[pPatch->nOffset + 3] =
 				    (t >> 24) & 0xFF;
-				break;
-			case PATCH_LONG_B:
-				pSect->pData[pPatch->nOffset + 0] =
-				    (t >> 24) & 0xFF;
-				pSect->pData[pPatch->nOffset + 1] =
-				    (t >> 16) & 0xFF;
-				pSect->pData[pPatch->nOffset + 2] =
-				    (t >> 8) & 0xFF;
-				pSect->pData[pPatch->nOffset + 3] = t & 0xFF;
 				break;
 			}
 

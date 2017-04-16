@@ -128,28 +128,6 @@ rpn_Bank(struct Expression * expr, char *tzSym)
 		yyerror("BANK argument must be a relocatable identifier");
 }
 
-int
-rpn_RangeCheck(struct Expression * expr, struct Expression * src, SLONG low,
-    SLONG high)
-{
-	*expr = *src;
-
-	if (rpn_isReloc(src)) {
-		pushbyte(expr, RPN_RANGECHECK);
-		pushbyte(expr, low);
-		pushbyte(expr, low >> 8);
-		pushbyte(expr, low >> 16);
-		pushbyte(expr, low >> 24);
-		pushbyte(expr, high);
-		pushbyte(expr, high >> 8);
-		pushbyte(expr, high >> 16);
-		pushbyte(expr, high >> 24);
-		return (1);
-	} else {
-		return (expr->nVal >= low && expr->nVal <= high);
-	}
-}
-
 void
 rpn_CheckHRAM(struct Expression * expr, struct Expression * src)
 {
