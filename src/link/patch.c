@@ -206,29 +206,6 @@ calcrpn(struct sPatch * pPatch)
 			rpnpush(getsymbank(t));
 			size -= 4;
 			break;
-		case RPN_RANGECHECK:
-			{
-				SLONG low, high;
-
-				low = (*rpn++);
-				low |= (*rpn++) << 8;
-				low |= (*rpn++) << 16;
-				low |= (*rpn++) << 24;
-				high = (*rpn++);
-				high |= (*rpn++) << 8;
-				high |= (*rpn++) << 16;
-				high |= (*rpn++) << 24;
-				t = rpnpop();
-				if (t < low || t > high) {
-					errx(1,
-					    "%s(%ld) : Value must be in the range [%ld;%ld]",
-					    pPatch->pzFilename,
-					    pPatch->nLineNo, low, high);
-				}
-				rpnpush(t);
-				size -= 8;
-				break;
-			}
 		}
 	}
 	return (rpnpop());

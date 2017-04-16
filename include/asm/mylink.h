@@ -32,8 +32,6 @@ enum {
 
 	RPN_HRAM,
 
-	RPN_RANGECHECK,
-
 	RPN_CONST = 0x80,
 	RPN_SYM = 0x81
 };
