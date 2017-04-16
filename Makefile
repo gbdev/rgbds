@@ -63,7 +63,7 @@ rgbgfx_obj = \
 all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
-	$Q${RM} rgbds.html gbz80.html rgbds.rgbformat.html
+	$Q${RM} rgbds.html gbz80.html rgbds-rgbformat.html
 	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html rgbasm-lang.html
 	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html rgblink-script.html
 	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
@@ -137,18 +137,12 @@ MANDOC =	-Thtml -Ios=General -Oman=/rgbds/manual/%N/ \
 			-Ostyle=/rgbds/manual/manual.css
 
 wwwman:
-	$Qmandoc ${MANDOC} src/rgbds.7 | sed s/OpenBSD/General/ > rgbds.html
-	$Qmandoc ${MANDOC} src/gbz80.7 | sed s/OpenBSD/General/ > gbz80.html
-	$Qmandoc ${MANDOC} src/rgbds.rgbformat.5 | sed s/OpenBSD/General/ > rgbds.rgbformat.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > \
-		rgbasm.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.5 | sed s/OpenBSD/General/ > \
-		rgbasm-lang.html
-	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > \
-		rgbfix.html
-	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
-		rgblink.html
-	$Qmandoc ${MANDOC} src/link/rgblink.5 | sed s/OpenBSD/General/ > \
-		rgblink-script.html
-	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 | sed s/OpenBSD/General/ > \
-		rgbgfx.html
+	$Qmandoc ${MANDOC} src/rgbds.7 > rgbds.html
+	$Qmandoc ${MANDOC} src/gbz80.7 > gbz80.html
+	$Qmandoc ${MANDOC} src/rgbds.rgbformat.5 > rgbds-rgbformat.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > rgbasm.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > rgbasm-lang.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > rgbfix.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 > rgblink.html
+	$Qmandoc ${MANDOC} src/link/rgblink.5 > rgblink-script.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > rgbgfx.html
