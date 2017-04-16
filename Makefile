@@ -64,7 +64,7 @@ all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
 	$Q${RM} rgbds.html gbz80.html
-	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html
+	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html rgbasm-lang.html
 	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html rgblink-script.html
 	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
 	$Q${RM} rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
@@ -81,6 +81,7 @@ install: all
 	$Qinstall -m ${MANMODE} src/rgbds.7 ${DESTDIR}${mandir}/man7/rgbds.7
 	$Qinstall -m ${MANMODE} src/gbz80.7 ${DESTDIR}${mandir}/man7/gbz80.7
 	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${DESTDIR}${mandir}/man1/rgbasm.1
+	$Qinstall -m ${MANMODE} src/asm/rgbasm.5 ${DESTDIR}${mandir}/man1/rgbasm.5
 	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${DESTDIR}${mandir}/man1/rgbfix.1
 	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${DESTDIR}${mandir}/man1/rgblink.1
 	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${DESTDIR}${mandir}/man5/rgblink.5
@@ -139,6 +140,8 @@ wwwman:
 	$Qmandoc ${MANDOC} src/gbz80.7 | sed s/OpenBSD/General/ > gbz80.html
 	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | sed s/OpenBSD/General/ > \
 		rgbasm.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.5 | sed s/OpenBSD/General/ > \
+		rgbasm-lang.html
 	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | sed s/OpenBSD/General/ > \
 		rgbfix.html
 	$Qmandoc ${MANDOC} src/link/rgblink.1 | sed s/OpenBSD/General/ > \
