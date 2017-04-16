@@ -63,11 +63,11 @@ rgbgfx_obj = \
 all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
-	$Q${RM} rgbds.html gbz80.html rgbds-rgbformat.html
-	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.html rgbasm-lang.html
-	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.html rgblink-script.html
-	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.html
-	$Q${RM} rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.html
+	$Q${RM} rgbds.7.html gbz80.7.html rgbds.rgbformat.5.html
+	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.1.html rgbasm.5.html
+	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.1.html rgblink.5.html
+	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.1.html
+	$Q${RM} rgbgfx rgbgfx.exe ${rgbgfx_obj} rgbgfx.1.html
 	$Q${RM} src/asm/asmy.c src/asm/asmy.h
 	$Q${RM} src/link/lexer.c src/link/parser.c src/link/parser.h
 
@@ -133,16 +133,15 @@ mingw:
 
 # Below is a target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv
-MANDOC =	-Thtml -Ios=General -Oman=/rgbds/manual/%N/ \
-			-Ostyle=/rgbds/manual/manual.css
+MANDOC =	-Thtml -Ios=General -Oman=%N.%S.html -Ostyle=manual.css
 
 wwwman:
-	$Qmandoc ${MANDOC} src/rgbds.7 > rgbds.html
-	$Qmandoc ${MANDOC} src/gbz80.7 > gbz80.html
-	$Qmandoc ${MANDOC} src/rgbds.rgbformat.5 > rgbds-rgbformat.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > rgbasm.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > rgbasm-lang.html
-	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > rgbfix.html
-	$Qmandoc ${MANDOC} src/link/rgblink.1 > rgblink.html
-	$Qmandoc ${MANDOC} src/link/rgblink.5 > rgblink-script.html
-	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > rgbgfx.html
+	$Qmandoc ${MANDOC} src/rgbds.7 > rgbds.7.html
+	$Qmandoc ${MANDOC} src/gbz80.7 > gbz80.7.html
+	$Qmandoc ${MANDOC} src/rgbds.rgbformat.5 > rgbds.rgbformat.5.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > rgbasm.1.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > rgbasm.5.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > rgbfix.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 > rgblink.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.5 > rgblink.5.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > rgbgfx.1.html
