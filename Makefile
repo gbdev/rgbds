@@ -123,13 +123,23 @@ src/link/parser.h : src/link/parser.c
 # If you're building on Windows with Cygwin or Mingw, just follow the Unix
 # install instructions instead.
 mingw:
-	$Qenv PATH=/usr/local/mingw32/bin:/bin:/usr/bin:/usr/local/bin \
-		make WARNFLAGS= CC=gcc CFLAGS="-I/usr/local/mingw32/include \
-			${CFLAGS}"
-	$Qmv rgbasm rgbasm.exe
-	$Qmv rgblink rgblink.exe
-	$Qmv rgbfix rgbfix.exe
-	$Qmv rgbgfx rgbgfx.exe
+	$Q${RM} win32 win64
+	$Qmkdir win32 win64
+	$Qenv make clean
+	$Qenv PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
+		make CC=i686-w64-mingw32-gcc YACC=bison WARNFLAGS= -j
+	$Qmv rgbasm win32/rgbasm.exe
+	$Qmv rgblink win32/rgblink.exe
+	$Qmv rgbfix win32/rgbfix.exe
+	$Qmv rgbgfx win32/rgbgfx.exe
+	$Qenv make clean
+	$Qenv PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
+		make CC=x86_64-w64-mingw32-gcc YACC=bison WARNFLAGS= -j
+	$Qmv rgbasm win64/rgbasm.exe
+	$Qmv rgblink win64/rgblink.exe
+	$Qmv rgbfix win64/rgbfix.exe
+	$Qmv rgbgfx win64/rgbgfx.exe
+	$Qenv make clean
 
 # Below is a target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv
