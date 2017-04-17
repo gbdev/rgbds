@@ -403,6 +403,9 @@ main(int argc, char *argv[])
 	}
 
 	if (dependfile) {
+		if (!tzObjectname)
+			errx(1, "Dependency files can only be created if an output object file is specified.\n");
+
 		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
 	}
 
