@@ -217,6 +217,9 @@ fstk_FindFile(char *fname)
 		}
 
 		if ((f = fopen(path, "rb")) != NULL || errno != ENOENT) {
+			if (dependfile) {
+				fprintf(dependfile, "%s: %s\n", tzObjectname, path);
+			}
 			return f;
 		}
 	}
