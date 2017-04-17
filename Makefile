@@ -63,7 +63,7 @@ rgbgfx_obj = \
 all: rgbasm rgblink rgbfix rgbgfx
 
 clean:
-	$Q${RM} rgbds.7.html gbz80.7.html rgbds.rgbformat.5.html
+	$Q${RM} rgbds.7.html gbz80.7.html rgbds.5.html
 	$Q${RM} rgbasm rgbasm.exe ${rgbasm_obj} rgbasm.1.html rgbasm.5.html
 	$Q${RM} rgblink rgblink.exe ${rgblink_obj} rgblink.1.html rgblink.5.html
 	$Q${RM} rgbfix rgbfix.exe ${rgbfix_obj} rgbfix.1.html
@@ -80,7 +80,7 @@ install: all
 	$Qmkdir -p ${DESTDIR}${mandir}/man1 ${DESTDIR}${mandir}/man5 ${DESTDIR}${mandir}/man7
 	$Qinstall -m ${MANMODE} src/rgbds.7 ${DESTDIR}${mandir}/man7/rgbds.7
 	$Qinstall -m ${MANMODE} src/gbz80.7 ${DESTDIR}${mandir}/man7/gbz80.7
-	$Qinstall -m ${MANMODE} src/rgbds.rgbformat.5 ${DESTDIR}${mandir}/man7/rgbds.rgbformat.5
+	$Qinstall -m ${MANMODE} src/rgbds.5 ${DESTDIR}${mandir}/man7/rgbds.5
 	$Qinstall -m ${MANMODE} src/asm/rgbasm.1 ${DESTDIR}${mandir}/man1/rgbasm.1
 	$Qinstall -m ${MANMODE} src/asm/rgbasm.5 ${DESTDIR}${mandir}/man1/rgbasm.5
 	$Qinstall -m ${MANMODE} src/fix/rgbfix.1 ${DESTDIR}${mandir}/man1/rgbfix.1
@@ -138,7 +138,7 @@ MANDOC =	-Thtml -Ios=General -Oman=%N.%S.html -Ostyle=manual.css
 wwwman:
 	$Qmandoc ${MANDOC} src/rgbds.7 > rgbds.7.html
 	$Qmandoc ${MANDOC} src/gbz80.7 > gbz80.7.html
-	$Qmandoc ${MANDOC} src/rgbds.rgbformat.5 > rgbds.rgbformat.5.html
+	$Qmandoc ${MANDOC} src/rgbds.5 > rgbds.5.html
 	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > rgbasm.1.html
 	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > rgbasm.5.html
 	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > rgbfix.1.html
