@@ -24,7 +24,28 @@ char SavedTIME[256];
 char SavedDATE[256];
 char SavedTIMESTAMP_ISO8601_LOCAL[256];
 char SavedTIMESTAMP_ISO8601_UTC[256];
+char SavedDAY[3];
+char SavedMONTH[3];
+char SavedYEAR[5];
+char SavedHOUR[3];
+char SavedMINUTE[3];
+char SavedSECOND[3];
 bool exportall;
+
+void helper_RemoveLeadingZeros(char * string){
+	char * new_beginning = string;
+
+	while(*new_beginning == '0')
+		new_beginning++;
+
+	if(new_beginning == string)
+		return;
+
+	if(*new_beginning == '\0')
+		new_beginning--;
+
+	memmove(string, new_beginning, strlen(new_beginning) + 1);
+}
 
 SLONG
 Callback_NARG(struct sSymbol * sym)
@@ -800,6 +821,12 @@ sym_PrepPass2(void)
 	sym_AddString("__DATE__", SavedDATE);
 	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
 	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+	sym_AddString("__UTC_DAY__", SavedDAY);
+	sym_AddString("__UTC_MONTH__", SavedMONTH);
+	sym_AddString("__UTC_YEAR__", SavedYEAR);
+	sym_AddString("__UTC_HOUR__", SavedHOUR);
+	sym_AddString("__UTC_MINUTE__", SavedMINUTE);
+	sym_AddString("__UTC_SECOND__", SavedSECOND);
 	sym_AddSet("_RS", 0);
 
 	sym_AddEqu("_NARG", 0);
@@ -845,6 +872,19 @@ sym_Init(void)
 		struct tm *time_utc = gmtime(&now);
 		strftime(SavedTIMESTAMP_ISO8601_UTC,
 			sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%FT%TZ\"", time_utc);
+
+		strftime(SavedDAY, sizeof(SavedDAY), "%d", time_utc);
+		strftime(SavedMONTH, sizeof(SavedMONTH), "%m", time_utc);
+		strftime(SavedYEAR, sizeof(SavedYEAR), "%Y", time_utc);
+		strftime(SavedHOUR, sizeof(SavedHOUR), "%H", time_utc);
+		strftime(SavedMINUTE, sizeof(SavedMINUTE), "%M", time_utc);
+		strftime(SavedSECOND, sizeof(SavedSECOND), "%S", time_utc);
+
+		helper_RemoveLeadingZeros(SavedDAY);
+		helper_RemoveLeadingZeros(SavedMONTH);
+		helper_RemoveLeadingZeros(SavedHOUR);
+		helper_RemoveLeadingZeros(SavedMINUTE);
+		helper_RemoveLeadingZeros(SavedSECOND);
 	} else {
 		warnx("Couldn't determine current time.");
 		/* The '?' have to be escaped or they will be treated as
@@ -853,12 +893,24 @@ sym_Init(void)
 		strcpy(SavedDATE, "\"\?\? \?\?\? \?\?\?\?\"");
 		strcpy(SavedTIMESTAMP_ISO8601_LOCAL, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?+\?\?\?\?\"");
 		strcpy(SavedTIMESTAMP_ISO8601_UTC, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?Z\"");
+		strcpy(SavedDAY, "1");
+		strcpy(SavedMONTH, "1");
+		strcpy(SavedYEAR, "1900");
+		strcpy(SavedHOUR, "0");
+		strcpy(SavedMINUTE, "0");
+		strcpy(SavedSECOND, "0");
 	}
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
 	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
 	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+	sym_AddString("__UTC_DAY__", SavedDAY);
+	sym_AddString("__UTC_MONTH__", SavedMONTH);
+	sym_AddString("__UTC_YEAR__", SavedYEAR);
+	sym_AddString("__UTC_HOUR__", SavedHOUR);
+	sym_AddString("__UTC_MINUTE__", SavedMINUTE);
+	sym_AddString("__UTC_SECOND__", SavedSECOND);
 
 	pScope = NULL;
 
