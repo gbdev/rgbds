@@ -36,6 +36,9 @@ ULONG nCurrentREPTBlockCount;
 
 ULONG ulMacroReturnValue;
 
+extern char *tzObjectname;
+extern FILE *dependfile;
+
 /*
  * defines for nCurrentStatus
  */
@@ -198,6 +201,9 @@ fstk_FindFile(char *fname)
 	FILE *f;
 
 	if ((f = fopen(fname, "rb")) != NULL || errno != ENOENT) {
+		if (dependfile) {
+			fprintf(dependfile, "%s: %s\n", tzObjectname, fname);
+		}
 		return f;
 	}
 
@@ -211,6 +217,9 @@ fstk_FindFile(char *fname)
 		}
 
 		if ((f = fopen(path, "rb")) != NULL || errno != ENOENT) {
+			if (dependfile) {
+				fprintf(dependfile, "%s: %s\n", tzObjectname, path);
+			}
 			return f;
 		}
 	}

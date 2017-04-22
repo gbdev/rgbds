@@ -26,6 +26,9 @@ ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
 
 extern int yydebug;
 
+FILE *dependfile;
+extern char *tzObjectname;
+
 /*
  * Option stack
  */
@@ -274,7 +277,7 @@ usage(void)
 {
 	printf(
 "Usage: rgbasm [-hvE] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
-"              [-o outfile] [-p pad_value] file.asm\n");
+"              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
 
@@ -287,6 +290,8 @@ main(int argc, char *argv[])
 	struct sOptions newopt;
 
 	char *tzMainfile;
+
+	dependfile = NULL;
 
 	cldefines_size = 32;
 	cldefines = reallocarray(cldefines, cldefines_size,
@@ -317,7 +322,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:g:hi:o:p:vEw")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:g:hi:M:o:p:vEw")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -347,6 +352,11 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);
+			break;
+		case 'M':
+			if ((dependfile = fopen(optarg, "w")) == NULL) {
+				err(1, "Could not open dependfile %s", optarg);
+			}
 			break;
 		case 'o':
 			out_SetFileName(optarg);
@@ -390,6 +400,13 @@ main(int argc, char *argv[])
 
 	if (CurrentOptions.verbose) {
 		printf("Assembling %s\n", tzMainfile);
+	}
+
+	if (dependfile) {
+		if (!tzObjectname)
+			errx(1, "Dependency files can only be created if an output object file is specified.\n");
+
+		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
 	}
 
 	nStartClock = clock();
