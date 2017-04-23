@@ -110,7 +110,6 @@ make command line. For example, to install RGBDS in your home directory instead
 of systemwide, run the following:
 
 ```sh
-mkdir -p $HOME/{bin,man/man1,man/man7}
 make install PREFIX=$HOME
 ```
 
