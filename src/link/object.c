@@ -339,24 +339,3 @@ file_Length(FILE * f)
 
 	return (r);
 }
-
-void
-lib_ReadXLB0(FILE * f)
-{
-	SLONG size;
-
-	size = file_Length(f) - 4;
-	while (size) {
-		char *name;
-
-		size -= readasciiz(&name, f);
-		readword(f);
-		size -= 2;
-		readword(f);
-		size -= 2;
-		size -= readlong(f);
-		size -= 4;
-		obj_ReadOpenFile(f, name);
-		free(name);
-	}
-}
