@@ -160,12 +160,12 @@ obj_ReadRGBSection(FILE * f)
 		errx(1,  "ROMX sections can't be used with option -t.");
 	}
 	if ((options & OPT_CONTWRAM) && (pSection->Type == SECT_WRAMX)) {
-		errx(1, "WRAMX sections can't be used with option -w.");
+		errx(1, "WRAMX sections can't be used with options -w or -d.");
 	}
 	if (options & OPT_DMG_MODE) {
 		/* WRAMX sections are checked for OPT_CONTWRAM */
 		if (pSection->Type == SECT_VRAM && pSection->nBank == 1) {
-			errx(1, "VRAM bank 1 can't be used with option -w.");
+			errx(1, "VRAM bank 1 can't be used with option -d.");
 		}
 	}
 
