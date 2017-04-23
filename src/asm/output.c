@@ -17,7 +17,12 @@
 #include "asm/fstack.h"
 #include "extern/err.h"
 
-#define SECTIONCHUNK	0x4000
+/*
+ * Size allocated for code sections. This is the max size for any ROM section
+ * (which corresponds to a ROM0 section when the tiny flag is used in rgblink.
+ * RAM sections don't need to allocate any memory.
+ */
+#define MAXSECTIONSIZE	0x8000
 
 void out_SetCurrentSection(struct Section * pSect);
 
@@ -446,31 +451,19 @@ checkcodesection(SLONG size)
 	checksection();
 	if (pCurrentSection->nType != SECT_ROM0 &&
 	    pCurrentSection->nType != SECT_ROMX) {
-		errx(1, "Section '%s' cannot contain code or data (not a "
-		    "ROM0 or ROMX)", pCurrentSection->pzName);
+		errx(1, "Section '%s' cannot contain code or data (not a ROM0 or ROMX)",
+		     pCurrentSection->pzName);
 	}
 	if (pCurrentSection->nPC + size > MAXSECTIONSIZE) {
 		/*
-		 * N.B.: This check is not sufficient to ensure the section
-		 * will fit, because there can be multiple sections of this
-		 * type. The definitive check must be done at the linking
-		 * stage.
+		 * This check is here to trap broken code that generates
+		 * sections that are too big and to prevent the assembler from
+		 * generating huge object files. The size used to check is the
+		 * biggest possible section in a GB (a ROM0 section when ROMX
+		 * sections aren't used).
+		 * The real check must be done at the linking stage.
 		 */
-		errx(1, "Section '%s' is too big (old size %d + %d > %d)",
-		    pCurrentSection->pzName, pCurrentSection->nPC, size,
-		    MAXSECTIONSIZE);
-	}
-	if (((pCurrentSection->nPC % SECTIONCHUNK) >
-	    ((pCurrentSection->nPC + size) % SECTIONCHUNK)) &&
-	    (pCurrentSection->nType == SECT_ROM0 ||
-	    pCurrentSection->nType == SECT_ROMX)) {
-		pCurrentSection->tData = realloc(pCurrentSection->tData,
-		    ((pCurrentSection->nPC + size) / SECTIONCHUNK + 1) *
-		    SECTIONCHUNK);
-
-		if (pCurrentSection->tData == NULL) {
-			err(1, "Could not expand section");
-		}
+		errx(1, "Section '%s' is too big.", pCurrentSection->pzName);
 	}
 	return;
 }
@@ -580,10 +573,14 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG align
 			pSect->charmap = NULL;
 			pPatchSymbols = NULL;
 
-			if ((pSect->tData = malloc(SECTIONCHUNK)) != NULL) {
-				return (pSect);
-			} else
-				fatalerror("Not enough memory for section");
+			pSect->tData = NULL;
+			if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
+				/* It is only needed to allocate memory for ROM
+				 * sections. */
+				if ((pSect->tData = malloc(MAXSECTIONSIZE)) == NULL)
+					fatalerror("Not enough memory for section");
+			}
+			return (pSect);
 		} else
 			fatalerror("Not enough memory for sectionname");
 	} else
