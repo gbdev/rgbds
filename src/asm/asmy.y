@@ -1351,7 +1351,7 @@ z80_ldio		:	T_Z80_LDIO T_MODE_A comma op_mem_ind
 						if( (!rpn_isReloc(&$4))
 						&&	($4.nVal<0 || ($4.nVal>0xFF && $4.nVal<0xFF00) || $4.nVal>0xFFFF) )
 						{
-							yyerror("Source address $%x not in HRAM ($FF00 to $FFFE)", $4.nVal);
+							yyerror("Source address $%x not in $FF00 to $FFFF", $4.nVal);
 						}
 
 						out_AbsByte(0xF0);
@@ -1365,7 +1365,7 @@ z80_ldio		:	T_Z80_LDIO T_MODE_A comma op_mem_ind
 						if( (!rpn_isReloc(&$2))
 						&&	($2.nVal<0 || ($2.nVal>0xFF && $2.nVal<0xFF00) || $2.nVal>0xFFFF) )
 						{
-							yyerror("Destination address $%x not in HRAM ($FF00 to $FFFE)", $2.nVal);
+							yyerror("Destination address $%x not in $FF00 to $FFFF", $2.nVal);
 						}
 
 						out_AbsByte(0xE0);
@@ -1385,7 +1385,10 @@ z80_ld			:	z80_ld_mem
 ;
 
 z80_ld_hl		:	T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
-					{ out_AbsByte(0xF8); out_RelByte(&$6); }
+					{
+						out_AbsByte(0xF8); out_RelByte(&$6);
+						warning("'LD HL,[SP+e8]' is obsolete, use 'LD HL,SP+e8' instead.");
+					}
 				|	T_Z80_LD T_MODE_HL comma T_MODE_SP const_8bit
 					{ out_AbsByte(0xF8); out_RelByte(&$5); }
 				|	T_Z80_LD T_MODE_HL comma const_16bit
