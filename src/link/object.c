@@ -169,6 +169,42 @@ obj_ReadRGBSection(FILE * f)
 		}
 	}
 
+	unsigned int maxsize = 0;
+
+	/* Verify that the section isn't too big */
+	switch (pSection->Type)
+	{
+		case SECT_ROM0:
+			maxsize = (options & OPT_TINY) ? 0x8000 : 0x4000;
+			break;
+		case SECT_ROMX:
+			maxsize = 0x4000;
+			break;
+		case SECT_VRAM:
+		case SECT_SRAM:
+			maxsize = 0x2000;
+			break;
+		case SECT_WRAM0:
+			maxsize = (options & OPT_CONTWRAM) ? 0x2000 : 0x1000;
+			break;
+		case SECT_WRAMX:
+			maxsize = 0x1000;
+			break;
+		case SECT_OAM:
+			maxsize = 0xA0;
+			break;
+		case SECT_HRAM:
+			maxsize = 0x7F;
+			break;
+		default:
+			errx(1, "Section \"%s\" has an invalid section type.", pzName);
+			break;
+	}
+	if (pSection->nByteSize > maxsize) {
+		errx(1, "Section \"%s\" is bigger than the max size for that type: 0x%X > 0x%X",
+			pzName, pSection->nByteSize, maxsize);
+	}
+
 	if ((pSection->Type == SECT_ROMX) || (pSection->Type == SECT_ROM0)) {
 		/*
 		 * These sectiontypes contain data...

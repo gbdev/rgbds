@@ -17,8 +17,6 @@
 #include "asm/fstack.h"
 #include "extern/err.h"
 
-#define SECTIONCHUNK	0x4000
-
 void out_SetCurrentSection(struct Section * pSect);
 
 struct Patch {
@@ -78,6 +76,24 @@ out_PopSection(void)
 		free(pSect);
 	} else
 		fatalerror("No entries in the section stack");
+}
+
+ULONG
+getmaxsectionsize(ULONG secttype, char * sectname)
+{
+	switch (secttype)
+	{
+		case SECT_ROM0:  return 0x8000; /* If ROMX sections not used. */
+		case SECT_ROMX:  return 0x4000;
+		case SECT_VRAM:  return 0x2000;
+		case SECT_SRAM:  return 0x2000;
+		case SECT_WRAM0: return 0x2000; /* If WRAMX sections not used. */
+		case SECT_WRAMX: return 0x1000;
+		case SECT_OAM:   return 0xA0;
+		case SECT_HRAM:  return 0x7F;
+		default: break;
+	}
+	errx(1, "Section \"%s\" has an invalid section type.", sectname);
 }
 
 /*
@@ -441,38 +457,35 @@ checksection(void)
  * this much initialized data
  */
 void
-checkcodesection(SLONG size)
+checkcodesection(void)
 {
 	checksection();
 	if (pCurrentSection->nType != SECT_ROM0 &&
 	    pCurrentSection->nType != SECT_ROMX) {
-		errx(1, "Section '%s' cannot contain code or data (not a "
-		    "ROM0 or ROMX)", pCurrentSection->pzName);
+		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
+		     pCurrentSection->pzName);
 	}
-	if (pCurrentSection->nPC + size > MAXSECTIONSIZE) {
-		/*
-		 * N.B.: This check is not sufficient to ensure the section
-		 * will fit, because there can be multiple sections of this
-		 * type. The definitive check must be done at the linking
-		 * stage.
-		 */
-		errx(1, "Section '%s' is too big (old size %d + %d > %d)",
-		    pCurrentSection->pzName, pCurrentSection->nPC, size,
-		    MAXSECTIONSIZE);
-	}
-	if (((pCurrentSection->nPC % SECTIONCHUNK) >
-	    ((pCurrentSection->nPC + size) % SECTIONCHUNK)) &&
-	    (pCurrentSection->nType == SECT_ROM0 ||
-	    pCurrentSection->nType == SECT_ROMX)) {
-		pCurrentSection->tData = realloc(pCurrentSection->tData,
-		    ((pCurrentSection->nPC + size) / SECTIONCHUNK + 1) *
-		    SECTIONCHUNK);
+}
 
-		if (pCurrentSection->tData == NULL) {
-			err(1, "Could not expand section");
-		}
+/*
+ * Check if the section has grown too much.
+ */
+void
+checksectionoverflow(ULONG delta_size)
+{
+	ULONG maxsize = getmaxsectionsize(pCurrentSection->nType,
+					  pCurrentSection->pzName);
+
+	if (pCurrentSection->nPC + delta_size > maxsize) {
+		/*
+		 * This check is here to trap broken code that generates
+		 * sections that are too big and to prevent the assembler from
+		 * generating huge object files.
+		 * The real check must be done at the linking stage.
+		 */
+		fatalerror("Section '%s' is too big (max size = 0x%X bytes).",
+			pCurrentSection->pzName, maxsize);
 	}
-	return;
 }
 
 /*
@@ -580,10 +593,15 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG align
 			pSect->charmap = NULL;
 			pPatchSymbols = NULL;
 
-			if ((pSect->tData = malloc(SECTIONCHUNK)) != NULL) {
-				return (pSect);
-			} else
-				fatalerror("Not enough memory for section");
+			pSect->tData = NULL;
+			if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
+				/* It is only needed to allocate memory for ROM
+				 * sections. */
+				ULONG sectsize = getmaxsectionsize(secttype, pzName);
+				if ((pSect->tData = malloc(sectsize)) == NULL)
+					fatalerror("Not enough memory for section");
+			}
+			return (pSect);
 		} else
 			fatalerror("Not enough memory for sectionname");
 	} else
@@ -641,7 +659,8 @@ out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 void
 out_AbsByte(int b)
 {
-	checkcodesection(1);
+	checkcodesection();
+	checksectionoverflow(1);
 	b &= 0xFF;
 	if (nPass == 2)
 		pCurrentSection->tData[nPC] = b;
@@ -654,7 +673,8 @@ out_AbsByte(int b)
 void
 out_AbsByteGroup(char *s, int length)
 {
-	checkcodesection(length);
+	checkcodesection();
+	checksectionoverflow(length);
 	while (length--)
 		out_AbsByte(*s++);
 }
@@ -666,13 +686,14 @@ void
 out_Skip(int skip)
 {
 	checksection();
+	checksectionoverflow(skip);
 	if (!((pCurrentSection->nType == SECT_ROM0)
 		|| (pCurrentSection->nType == SECT_ROMX))) {
 		pCurrentSection->nPC += skip;
 		nPC += skip;
 		pPCSymbol->nValue += skip;
 	} else {
-		checkcodesection(skip);
+		checkcodesection();
 		while (skip--)
 			out_AbsByte(CurrentOptions.fillchar);
 	}
@@ -684,7 +705,8 @@ out_Skip(int skip)
 void
 out_String(char *s)
 {
-	checkcodesection(strlen(s));
+	checkcodesection();
+	checksectionoverflow(strlen(s));
 	while (*s)
 		out_AbsByte(*s++);
 }
@@ -697,7 +719,8 @@ out_String(char *s)
 void
 out_RelByte(struct Expression * expr)
 {
-	checkcodesection(1);
+	checkcodesection();
+	checksectionoverflow(1);
 	if (rpn_isReloc(expr)) {
 		if (nPass == 2) {
 			pCurrentSection->tData[nPC] = 0;
@@ -718,7 +741,8 @@ out_RelByte(struct Expression * expr)
 void
 out_AbsWord(int b)
 {
-	checkcodesection(2);
+	checkcodesection();
+	checksectionoverflow(2);
 	b &= 0xFFFF;
 	if (nPass == 2) {
 		pCurrentSection->tData[nPC] = b & 0xFF;
@@ -738,7 +762,8 @@ out_RelWord(struct Expression * expr)
 {
 	ULONG b;
 
-	checkcodesection(2);
+	checkcodesection();
+	checksectionoverflow(2);
 	b = expr->nVal & 0xFFFF;
 	if (rpn_isReloc(expr)) {
 		if (nPass == 2) {
@@ -760,7 +785,8 @@ out_RelWord(struct Expression * expr)
 void
 out_AbsLong(SLONG b)
 {
-	checkcodesection(sizeof(SLONG));
+	checkcodesection();
+	checksectionoverflow(sizeof(SLONG));
 	if (nPass == 2) {
 		pCurrentSection->tData[nPC] = b & 0xFF;
 		pCurrentSection->tData[nPC + 1] = b >> 8;
@@ -781,7 +807,8 @@ out_RelLong(struct Expression * expr)
 {
 	SLONG b;
 
-	checkcodesection(4);
+	checkcodesection();
+	checksectionoverflow(4);
 	b = expr->nVal;
 	if (rpn_isReloc(expr)) {
 		if (nPass == 2) {
@@ -807,7 +834,8 @@ out_PCRelByte(struct Expression * expr)
 {
 	SLONG b = expr->nVal;
 
-	checkcodesection(1);
+	checkcodesection();
+	checksectionoverflow(1);
 	b = (b & 0xFFFF) - (nPC + 1);
 	if (nPass == 2 && (b < -128 || b > 127))
 		yyerror("PC-relative value must be 8-bit");
@@ -835,7 +863,8 @@ out_BinaryFile(char *s)
 	fsize = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	checkcodesection(fsize);
+	checkcodesection();
+	checksectionoverflow(fsize);
 
 	if (nPass == 2) {
 		SLONG dest = nPC;
@@ -879,7 +908,8 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 
 	fseek(f, start_pos, SEEK_SET);
 
-	checkcodesection(length);
+	checkcodesection();
+	checksectionoverflow(length);
 
 	if (nPass == 2) {
 		SLONG dest = nPC;

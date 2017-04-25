@@ -80,8 +80,6 @@
 
  */
 
-#define MAXSECTIONSIZE	0x4000
-
 #define	NAME_DB			"db"
 #define	NAME_DW			"dw"
 #define	NAME_RB			"rb"
