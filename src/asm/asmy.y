@@ -482,6 +482,7 @@ void	if_skip_to_endc( void )
 %left	T_OP_STRCAT
 %left	T_OP_STRUPR
 %left	T_OP_STRLWR
+%left	T_OP_SYMSTR 
 
 %left	NEG     /* negation--unary minus */
 
@@ -1117,6 +1118,8 @@ string			:	T_STRING
 					{ strcpy($$,$3); upperstring($$); }
 				|	T_OP_STRLWR '(' string ')'
 					{ strcpy($$,$3); lowerstring($$); }
+				|  T_OP_SYMSTR '(' string ')' 
+					{ symvaluetostring($$, 64, $3); } 
 ;
 section:
 		T_POP_SECTION string ',' sectiontype
