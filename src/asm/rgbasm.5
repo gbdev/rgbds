@@ -340,6 +340,14 @@ String-symbols can also be used to define small one-line macros:
 Note that a colon (:) following the label-name is not allowed.
 String equates can't be exported or imported.
 .Pp
+.Sy Important note :
+An EQUS can be expanded to a string that contains another EQUS
+and it will be expanded as well.
+This means that, if you aren't careful, you may trap the assembler into an
+infinite loop if there's a circular dependency in the expansions.
+Also, a MACRO can have inside an EQUS which references the same MACRO, which has
+the same problem.
+.Pp
 .It Sy MACRO
 .Pp
 One of the best features of an assembler is the ability to write macros for it.
@@ -400,6 +408,14 @@ LoopyMacro: MACRO
             jr   nz,.loop\[rs]\@
             ENDM
 .Ed
+.Pp
+.Sy Important note :
+Since a MACRO can call itself (or a different MACRO that calls the first one)
+there can be problems of circular dependency.
+They trap the assembler in an infinite loop, so you have to be careful when
+using recursion with MACROs.
+Also, a MACRO can have inside an EQUS which references the same MACRO, which has
+the same problem.
 .Pp
 .Sy Macro Arguments
 .Pp
