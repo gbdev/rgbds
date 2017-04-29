@@ -535,7 +535,7 @@ yylex_ReadBracketedSymbol(char *dest, size_t index)
 	if (*pLexBuffer == '}')
 		pLexBuffer++;
 	else
-		yyerror("Missing }");
+		fatalerror("Missing }");
 
 	return length;
 }
@@ -601,7 +601,7 @@ yylex_ReadQuotedString()
 	if (*pLexBuffer == '"')
 		pLexBuffer++;
 	else
-		yyerror("Unterminated string");
+		fatalerror("Unterminated string");
 }
 
 ULONG

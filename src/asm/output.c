@@ -480,7 +480,8 @@ checksectionoverflow(ULONG delta_size)
 		/*
 		 * This check is here to trap broken code that generates
 		 * sections that are too big and to prevent the assembler from
-		 * generating huge object files.
+		 * generating huge object files or trying to allocate too much
+		 * memory.
 		 * The real check must be done at the linking stage.
 		 */
 		fatalerror("Section '%s' is too big (max size = 0x%X bytes).",
