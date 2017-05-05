@@ -677,7 +677,7 @@ pushs : T_POP_PUSHS {
 	};
 
 fail : T_POP_FAIL string {
-		fatalerror("%s", $2);
+		yyerror("%s", $2);
 	};
 
 warn : T_POP_WARN string {
