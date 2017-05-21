@@ -281,6 +281,7 @@ struct sLexInitString staticstrings[] = {
 	{"acos", T_OP_ACOS},
 	{"atan", T_OP_ATAN},
 	{"atan2", T_OP_ATAN2},
+	{"pow", T_OP_POW}, 
 
 	{"high", T_OP_HIGH},
 	{"low", T_OP_LOW},

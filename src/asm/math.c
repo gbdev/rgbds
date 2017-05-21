@@ -102,6 +102,15 @@ math_ATan2(SLONG i, SLONG j)
 	    (atan2(fix2double(i), fix2double(j)) / 2 / PI * 65536));
 }
 
+/* 
+ * Calculate pow 
+ */ 
+SLONG  
+math_Pow(SLONG i, SLONG j) 
+{ 
+	return (double2fix(pow(fix2double(i) * 65536, fix2double(j) * 65536)) / 65536); 
+} 
+
 /*
  * Multiplication
  */

@@ -467,6 +467,7 @@ void	if_skip_to_endc( void )
 %left	T_OP_ACOS
 %left	T_OP_ATAN
 %left	T_OP_ATAN2
+%left	T_OP_POW
 %left	T_OP_FDIV
 %left	T_OP_FMUL
 %left	T_OP_ROUND
@@ -1020,6 +1021,7 @@ relocconst		:	T_ID
 				|	T_OP_ACOS '(' const ')'			{ rpn_Number(&$$,math_ACos($3)); }
 				|	T_OP_ATAN '(' const ')'			{ rpn_Number(&$$,math_ATan($3)); }
 				|	T_OP_ATAN2 '(' const ',' const ')'	{ rpn_Number(&$$,math_ATan2($3,$5)); }
+				|	T_OP_POW '(' const ',' const ')'	{ rpn_Number(&$$,math_Pow($3,$5)); } 
 				|	T_OP_STRCMP '(' string ',' string ')'	{ rpn_Number(&$$,strcmp($3,$5)); }
 				|	T_OP_STRIN '(' string ',' string ')'
 					{
@@ -1089,6 +1091,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	T_OP_ACOS '(' const ')'			{ $$ = math_ACos($3); }
 				|	T_OP_ATAN '(' const ')'			{ $$ = math_ATan($3); }
 				|	T_OP_ATAN2 '(' const ',' const ')'	{ $$ = math_ATan2($3,$5); }
+				|	T_OP_POW '(' const ',' const ')'	{ $$ = math_Pow($3,$5); } 
 				|	T_OP_DEF { oDontExpandStrings = true; } '(' T_ID ')'	{ $$ = sym_isConstDefined($4); oDontExpandStrings = false; }
 				|	T_OP_STRCMP '(' string ',' string ')'	{ $$ = strcmp( $3, $5 ); }
 				|	T_OP_STRIN '(' string ',' string ')'
