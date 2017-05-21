@@ -123,6 +123,7 @@ findsymbol(char *s, struct sSymbol * scope)
 	struct sSymbol **ppsym;
 	SLONG hash;
 	int local;
+	int local2; // for testing the presence of another .
 	int result;
 
 	// If referencing a local label from out of scope,
@@ -135,9 +136,19 @@ findsymbol(char *s, struct sSymbol * scope)
 		s[local] = '\0';
 		hash = calchash(s);
 		s[local] = '.';
+		
+		local2 = local + 1;
+		while (s[local2] != '\0' && s[local2] != '.') {
+			local2++;
+		}
+		if (s[local2] == '.') {
+			fatalerror("'%s' is a nonsensical reference to a nested local symbol", s);
+			return (NULL);
+		}
 	} else {
 		hash = calchash(s);
 	}
+	
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL) {
