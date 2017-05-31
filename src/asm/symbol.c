@@ -122,33 +122,27 @@ findsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
 	SLONG hash;
-	int local;
-	int local2; // for testing the presence of another .
-	int result;
+	char *local;
+	bool match;
 
 	// If referencing a local label from out of scope,
 	// use the parent label as the new scope.
-	local = 0;
-	while (s[local] != '\0' && s[local] != '.') {
-		local++;
+	local = strchr(s, '.');
+	if (local && strchr(local + 1, '.')) {
+		fatalerror("'%s' is a nonsensical reference to a nested local symbol", s);
+		return (NULL);
 	}
-	if (local != 0 && s[local] == '.') {
-		s[local] = '\0';
+	if (local == s) {
+		local = NULL;
+	}
+	if (local) {
+		*local = '\0';
 		hash = calchash(s);
-		s[local] = '.';
-		
-		local2 = local + 1;
-		while (s[local2] != '\0' && s[local2] != '.') {
-			local2++;
-		}
-		if (s[local2] == '.') {
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol", s);
-			return (NULL);
-		}
+		*local = '.';
 	} else {
 		hash = calchash(s);
 	}
-	
+
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL) {
@@ -156,12 +150,12 @@ findsymbol(char *s, struct sSymbol * scope)
 		    && ((*ppsym)->pScope == scope)) {
 			return (*ppsym);
 		} else {
-			if (local != 0 && s[local] == '.') {
-				s[local] = '\0';
-				result = strcmp(s, (*ppsym)->tzName);
-				s[local] = '.';
-				if (result == 0) {
-					return findsymbol(&(s[local]), *ppsym);
+			if (local) {
+				*local = '\0';
+				match = strcmp(s, (*ppsym)->tzName) == 0;
+				*local = '.';
+				if (match) {
+					return findsymbol(local, *ppsym);
 				}
 			}
 			ppsym = &((*ppsym)->pNext);
