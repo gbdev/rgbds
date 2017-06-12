@@ -587,7 +587,11 @@ label : /* empty */
 		else
 			sym_AddReloc($1);
 	} | T_LABEL ':' ':' {
-		sym_AddReloc($1);
+		if ($1[0] == '.') {
+			sym_AddLocalReloc($1);
+		} else {
+			sym_AddReloc($1);
+		}
 		sym_Export($1);
 	};
 
