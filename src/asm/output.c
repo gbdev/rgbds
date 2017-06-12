@@ -260,11 +260,7 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 		sectid = -1;
 		type = SYM_IMPORT;
 	} else {
-		if (pSym->nType & SYMF_LOCAL) {
-			strcpy(symname, pSym->pScope->tzName);
-			strcat(symname, pSym->tzName);
-		} else
-			strcpy(symname, pSym->tzName);
+		strcpy(symname, pSym->tzName);
 
 		if (pSym->nType & SYMF_EXPORT) {
 			/* Symbol should be exported */

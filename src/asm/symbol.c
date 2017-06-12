@@ -114,26 +114,16 @@ createsymbol(char *s)
 		return (NULL);
 	}
 }
+
 /*
- * Find a symbol by name and scope
+ * Creates the full name of a local symbol in a given scope, by prepending
+ * the name with the parent symbol's name.
  */
-struct sSymbol *
-findsymbol(char *s, struct sSymbol * scope)
+size_t
+fullSymbolName(char *output, size_t outputSize, char *localName, struct sSymbol *scope)
 {
-	struct sSymbol **ppsym;
-	SLONG hash;
-
-	hash = calchash(s);
-	ppsym = &(tHashedSymbols[hash]);
-
-	while ((*ppsym) != NULL) {
-		if ((strcmp(s, (*ppsym)->tzName) == 0)
-		    && ((*ppsym)->pScope == scope)) {
-			return (*ppsym);
-		} else
-			ppsym = &((*ppsym)->pNext);
-	}
-	return (NULL);
+	struct sSymbol *parent = scope->pScope ? scope->pScope : scope;
+	return snprintf(output, outputSize, "%s%s", parent->tzName, localName);
 }
 
 /*
@@ -144,18 +134,40 @@ findpsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
 	SLONG hash;
+	char fullname[MAXSYMLEN + 1];
+		
+	if (s[0] == '.' && scope) {
+		fullSymbolName(fullname, sizeof(fullname), s, scope);
+		s = fullname;
+	}
+	
+	char *seperator;
+	if ((seperator = strchr(s, '.'))) {
+		if (strchr(seperator + 1, '.')) {
+			fatalerror("'%s' is a nonsensical reference to a nested local symbol", s);
+		}
+	}
 
 	hash = calchash(s);
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL) {
-		if ((strcmp(s, (*ppsym)->tzName) == 0)
-		    && ((*ppsym)->pScope == scope)) {
+		if ((strcmp(s, (*ppsym)->tzName) == 0)) {
 			return (ppsym);
 		} else
 			ppsym = &((*ppsym)->pNext);
 	}
 	return (NULL);
+}
+
+/*
+ * Find a symbol by name and scope
+ */
+struct sSymbol *
+findsymbol(char *s, struct sSymbol * scope)
+{
+	struct sSymbol **ppsym = findpsymbol(s, scope);
+	return ppsym ? *ppsym : NULL;
 }
 
 /*
@@ -593,31 +605,17 @@ sym_AddSet(char *tzSym, SLONG value)
 void
 sym_AddLocalReloc(char *tzSym)
 {
-	if ((nPass == 1)
-	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
-		/* only add local reloc symbols in pass 1 */
-		struct sSymbol *nsym;
-
-		if (pScope) {
-			if ((nsym = findsymbol(tzSym, pScope)) != NULL) {
-				if (nsym->nType & SYMF_DEFINED) {
-					yyerror("'%s' already defined", tzSym);
-				}
-			} else
-				nsym = createsymbol(tzSym);
-
-			if (nsym) {
-				nsym->nValue = nPC;
-				nsym->nType |=
-				    SYMF_RELOC | SYMF_LOCAL | SYMF_DEFINED;
-				if (exportall) {
-				   nsym->nType |= SYMF_EXPORT;
-				}
-				nsym->pScope = pScope;
-				nsym->pSection = pCurrentSection;
-			}
-		} else
-			fatalerror("Local label in main scope");
+	if (pScope) {
+		if (strlen(tzSym) + strlen(pScope->tzName) > MAXSYMLEN) {
+			fatalerror("Symbol too long");
+		}
+		
+		char fullname[MAXSYMLEN + 1];
+		fullSymbolName(fullname, sizeof(fullname), tzSym, pScope);
+		sym_AddReloc(fullname);
+		
+	} else {
+		fatalerror("Local label in main scope");
 	}
 }
 
@@ -627,12 +625,32 @@ sym_AddLocalReloc(char *tzSym)
 void
 sym_AddReloc(char *tzSym)
 {
+	struct sSymbol* scope = NULL;
+	
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
 		/* only add reloc symbols in pass 1 */
 		struct sSymbol *nsym;
+		char *localPtr = NULL;
+		
+		if ((localPtr = strchr(tzSym, '.')) != NULL) {			
+			if (!pScope) {
+				fatalerror("Local label in main scope");
+			}
+			
+			struct sSymbol *parent = pScope->pScope ? pScope->pScope : pScope;
+			int parentLen = localPtr - tzSym;
+			
+			if (strchr(localPtr + 1, '.') != NULL) {
+				fatalerror("'%s' is a nonsensical reference to a nested local symbol", tzSym);
+			} else if (strlen(parent->tzName) != parentLen || strncmp(tzSym, parent->tzName, parentLen) != 0) {
+				yyerror("Not currently in the scope of '%.*s'", parentLen, tzSym);
+			}
+			
+			scope = parent;
+		}
 
-		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
+		if ((nsym = findsymbol(tzSym, scope)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
 				yyerror("'%s' already defined", tzSym);
 			}
@@ -642,14 +660,17 @@ sym_AddReloc(char *tzSym)
 		if (nsym) {
 			nsym->nValue = nPC;
 			nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
+			if (localPtr) {
+				nsym->nType |= SYMF_LOCAL;
+			}
 			if (exportall) {
 			   nsym->nType |= SYMF_EXPORT;
 			}
-			nsym->pScope = NULL;
+			nsym->pScope = scope;
 			nsym->pSection = pCurrentSection;
 		}
 	}
-	pScope = findsymbol(tzSym, NULL);
+	pScope = findsymbol(tzSym, scope);
 }
 
 /*
@@ -705,7 +726,7 @@ sym_Export(char *tzSym)
 		/* only export symbols in pass 1 */
 		struct sSymbol *nsym;
 
-		if ((nsym = findsymbol(tzSym, 0)) == NULL)
+		if ((nsym = sym_FindSymbol(tzSym)) == NULL)
 			nsym = createsymbol(tzSym);
 
 		if (nsym)
@@ -713,7 +734,7 @@ sym_Export(char *tzSym)
 	} else {
 		struct sSymbol *nsym;
 
-		if ((nsym = findsymbol(tzSym, 0)) != NULL) {
+		if ((nsym = sym_FindSymbol(tzSym)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED)
 				return;
 		}
@@ -732,7 +753,7 @@ sym_Global(char *tzSym)
 		/* only globalize symbols in pass 2 */
 		struct sSymbol *nsym;
 
-		nsym = findsymbol(tzSym, 0);
+		nsym = sym_FindSymbol(tzSym);
 
 		if ((nsym == NULL) || ((nsym->nType & SYMF_DEFINED) == 0)) {
 			if (nsym == NULL)
