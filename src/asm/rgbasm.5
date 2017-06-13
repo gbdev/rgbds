@@ -223,13 +223,17 @@ GlobalLabel
 AnotherGlobal:
 \&.locallabel
 \&.yet_a_local:
+AnotherGlobal.with_another_local:
 ThisWillBeExported:: ;note the two colons
+ThisWillBeExported.too::
 .Ed
 .Pp
 In the line where a label is defined there musn't be any whitespace before it.
 Local labels are only accessible within the scope they are defined.
 A scope starts after a global label and ends at the next global label.
-Declaring a normal label with :: does an EXPORT at the same time.
+Declaring a label (global or local) with :: does an EXPORT at the same time.
+Local labels can be declared as scope.local or simply as as .local.
+If the former notation is used, the scope must be the actual current scope.
 .Pp
 Labels will normally change their value during the link process and are thus not
 constant.
