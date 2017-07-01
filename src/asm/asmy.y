@@ -1068,16 +1068,18 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	const T_OP_SHL const			{ $$ = $1 << $3; }
 				|	const T_OP_SHR const			{ $$ = $1 >> $3; }
 				|	const T_OP_MUL const			{ $$ = $1 * $3; }
-				|	const T_OP_DIV const			{
-	if ($3 == 0)
-		fatalerror("division by zero");
-	$$ = $1 / $3;
-	}
-				|	const T_OP_MOD const			{
-	if ($3 == 0)
-		fatalerror("division by zero");
-	$$ = $1 % $3;
-	}
+				|	const T_OP_DIV const
+					{
+						if ($3 == 0)
+							fatalerror("division by zero");
+						$$ = $1 / $3;
+					}
+				|	const T_OP_MOD const
+					{
+						if ($3 == 0)
+							fatalerror("division by zero");
+						$$ = $1 % $3;
+					}
 				|	T_OP_ADD const %prec NEG		{ $$ = +$2; }
 				|	T_OP_SUB const %prec NEG		{ $$ = -$2; }
 				|	T_OP_NOT const %prec NEG		{ $$ = 0xFFFFFFFF^$2; }
