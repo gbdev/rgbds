@@ -307,6 +307,8 @@ There are four commands in the RS group of commands:
 .Ic _RS No and adds Ar constexpr No to Ic _RS .
 .It Ic RW Ar constexpr Ta Sets the preceding symbol to
 .Ic _RS No and adds Ar constexpr No * 2 to Ic _RS.
+.It Ic RL Ar constexpr Ta Sets the preceding symbol to
+.Ic _RS No and adds Ar constexpr No * 4 to Ic _RS.
 .El
 .Pp
 Note that a colon (:) following the symbol-name is not allowed.
@@ -996,6 +998,7 @@ machine.
 .It Sx PUSHS
 .It Sx REPT
 .It Sx RB
+.It Sx RL
 .It Sx ROM0
 .It Sx ROMX
 .It Sx RSRESET
