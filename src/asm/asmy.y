@@ -439,6 +439,7 @@ void	if_skip_to_endc( void )
 
 %type	<sVal>	relocconst
 %type	<nConstValue>	const
+%type	<nConstValue>	uconst
 %type	<nConstValue>	const_3bit
 %type	<sVal>	const_8bit
 %type	<sVal>	const_16bit
@@ -692,7 +693,7 @@ shift			:	T_POP_SHIFT
 					{ sym_ShiftCurrentMacroArgs(); }
 ;
 
-rept			:	T_POP_REPT const
+rept			:	T_POP_REPT uconst
 					{
 						copyrept();
 						fstk_RunRept( $2 );
@@ -710,7 +711,7 @@ equs			:	T_LABEL T_POP_EQUS string
 					{ sym_AddString( $1, $3 ); }
 ;
 
-rsset			:	T_POP_RSSET const
+rsset			:	T_POP_RSSET uconst
 					{ sym_AddSet( "_RS", $2 ); }
 ;
 
@@ -718,28 +719,28 @@ rsreset			:	T_POP_RSRESET
 					{ sym_AddSet( "_RS", 0 ); }
 ;
 
-rl				:	T_LABEL T_POP_RL const
+rl				:	T_LABEL T_POP_RL uconst
 					{
 						sym_AddEqu( $1, sym_GetConstantValue("_RS") );
 						sym_AddSet( "_RS", sym_GetConstantValue("_RS")+4*$3 );
 					}
 ;
 
-rw				:	T_LABEL T_POP_RW const
+rw				:	T_LABEL T_POP_RW uconst
 					{
 						sym_AddEqu( $1, sym_GetConstantValue("_RS") );
 						sym_AddSet( "_RS", sym_GetConstantValue("_RS")+2*$3 );
 					}
 ;
 
-rb				:	T_LABEL T_POP_RB const
+rb				:	T_LABEL T_POP_RB uconst
 					{
 						sym_AddEqu( $1, sym_GetConstantValue("_RS") );
 						sym_AddSet( "_RS", sym_GetConstantValue("_RS")+$3 );
 					}
 ;
 
-ds				:	T_POP_DS const
+ds				:	T_POP_DS uconst
 					{ out_Skip( $2 ); }
 ;
 
@@ -821,7 +822,7 @@ include			:	T_POP_INCLUDE string
 
 incbin			:	T_POP_INCBIN string
 					{ out_BinaryFile( $2 ); }
-				|	T_POP_INCBIN string ',' const ',' const
+				|	T_POP_INCBIN string ',' uconst ',' uconst
 					{
 						out_BinaryFileSlice( $2, $4, $6 );
 					}
@@ -1042,6 +1043,14 @@ relocconst		:	T_ID
 						{ $$ = $2; }
 ;
 
+uconst			:	const
+					{
+						if($1 < 0)
+							fatalerror("Constant mustn't be negative: %d", $1);
+						$$=$1;
+					}
+;
+
 const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 				|	T_NUMBER 						{ $$ = $1; }
 				|	string						{ $$ = str2int($1); }
@@ -1115,7 +1124,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 
 string			:	T_STRING
 					{ strcpy($$,$1); }
-				|	T_OP_STRSUB '(' string ',' const ',' const ')'
+				|	T_OP_STRSUB '(' string ',' uconst ',' uconst ')'
 					{ strncpy($$,$3+$5-1,$7); $$[$7]=0; }
 				|	T_OP_STRCAT '(' string ',' string ')'
 					{ strcpy($$,$3); strcat($$,$5); }
@@ -1129,33 +1138,33 @@ section:
 		{
 			out_NewSection($2,$4);
 		}
-	|	T_POP_SECTION string ',' sectiontype '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype '[' uconst ']'
 		{
 			if( $6>=0 && $6<0x10000 )
 				out_NewAbsSection($2,$4,$6,-1);
 			else
 				yyerror("Address $%x not 16-bit", $6);
 		}
-	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' uconst ']'
 		{
 			out_NewAlignedSection($2, $4, $8, -1);
 		}
-	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' uconst ']'
 		{
 			bankrangecheck($2, $4, -1, $8);
 		}
-	|	T_POP_SECTION string ',' sectiontype '[' const ']' ',' T_OP_BANK '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype '[' uconst ']' ',' T_OP_BANK '[' uconst ']'
 		{
 			if ($6 < 0 || $6 > 0x10000) {
 				yyerror("Address $%x not 16-bit", $6);
 			}
 			bankrangecheck($2, $4, $6, $11);
 		}
-	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' const ']' ',' T_OP_BANK '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_ALIGN '[' uconst ']' ',' T_OP_BANK '[' uconst ']'
 		{
 			out_NewAlignedSection($2, $4, $8, $13);
 		}
-	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' const ']' ',' T_OP_ALIGN '[' const ']'
+	|	T_POP_SECTION string ',' sectiontype ',' T_OP_BANK '[' uconst ']' ',' T_OP_ALIGN '[' uconst ']'
 		{
 			out_NewAlignedSection($2, $4, $13, $8);
 		}
