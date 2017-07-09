@@ -502,7 +502,7 @@ out_WriteObject(void)
 		struct PatchSymbol *pSym;
 		struct Section *pSect;
 
-		fwrite("RGB4", 1, 4, f);
+		fwrite("RGB5", 1, 4, f);
 		fputlong(countsymbols(), f);
 		fputlong(countsections(), f);
 

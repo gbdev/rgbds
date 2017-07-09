@@ -336,8 +336,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	tzHeader[4] = 0;
 	if (strncmp(tzHeader, "RGB", 3) == 0) {
 		switch (tzHeader[3]) {
-		case '3':
-		case '4': // V4 supports OAM sections, but is otherwise identical
+		case '5':
 			obj_ReadRGB(pObjfile);
 			break;
 		default:
