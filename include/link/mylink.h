@@ -89,6 +89,8 @@ struct sSymbol {
 	SLONG nSectionID;	/* internal to object.c */
 	struct sSection *pSection;
 	SLONG nOffset;
+	char *pzFileName; /* File where the symbol was defined. */
+	ULONG nFileLine; /* Line where the symbol was defined. */
 };
 
 enum ePatchType {

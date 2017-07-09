@@ -281,6 +281,9 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 	fputstring(symname, f);
 	fputc(type, f);
 
+	fputstring(pSym->tzFileName, f);
+	fputlong(pSym->nFileLine, f);
+
 	if (type != SYM_IMPORT) {
 		fputlong(sectid, f);
 		fputlong(offset, f);

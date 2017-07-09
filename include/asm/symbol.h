@@ -15,7 +15,9 @@ struct sSymbol {
 	struct Section *pSection;
 	ULONG ulMacroSize;
 	char *pMacro;
-	     SLONG(*Callback) (struct sSymbol *);
+	SLONG(*Callback) (struct sSymbol *);
+	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
+	ULONG nFileLine; /* Line where the symbol was defined. */
 };
 #define SYMF_RELOC		0x001	/* symbol will be reloc'ed during
 					 * linking, it's absolute value is

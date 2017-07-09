@@ -126,7 +126,12 @@ obj_ReadSymbol(FILE * f)
 	}
 
 	readasciiz(&pSym->pzName, f);
-	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
+	pSym->Type = (enum eSymbolType)fgetc(f);
+
+	readasciiz(&pSym->pzFileName, f);
+	pSym->nFileLine = readlong(f);
+
+	if (pSym->Type != SYM_IMPORT) {
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
 	}
