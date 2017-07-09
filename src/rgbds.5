@@ -57,6 +57,10 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
                           ; 1 = IMPORT this symbol from elsewhere (unused).
                           ; 2 = EXPORT this symbol to other objects.
 
+    STRING  FileName      ; File where the symbol is defined.
+
+    LONG    FileLineNum   ; Line number in the file where the symbol is defined.
+
     IF      Type != 1     ; If symbol is defined in this object file.
 
         LONG    SectionID ; The section number (of this object file) in which

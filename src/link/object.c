@@ -126,7 +126,12 @@ obj_ReadSymbol(FILE * f)
 	}
 
 	readasciiz(&pSym->pzName, f);
-	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
+	pSym->Type = (enum eSymbolType)fgetc(f);
+
+	readasciiz(&pSym->pzFileName, f);
+	pSym->nFileLine = readlong(f);
+
+	if (pSym->Type != SYM_IMPORT) {
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
 	}
@@ -331,8 +336,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	tzHeader[4] = 0;
 	if (strncmp(tzHeader, "RGB", 3) == 0) {
 		switch (tzHeader[3]) {
-		case '3':
-		case '4': // V4 supports OAM sections, but is otherwise identical
+		case '5':
 			obj_ReadRGB(pObjfile);
 			break;
 		default:
