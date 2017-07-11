@@ -15,13 +15,15 @@ PNGCFLAGS	:= `${PKG_CONFIG} --static --cflags libpng`
 PNGLDFLAGS	:= `${PKG_CONFIG} --static --libs-only-L libpng`
 PNGLDLIBS	:= `${PKG_CONFIG} --static --libs-only-l libpng`
 
+VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
+
 WARNFLAGS	:= -Wall -Werror
 
 # Overridable CFLAGS
 CFLAGS		:= -g
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
-		   -Iinclude
+		   -Iinclude -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
 YFLAGS		:=
 LFLAGS		:= --nounistd
@@ -49,7 +51,9 @@ rgbasm_obj := \
 	src/extern/err.o \
 	src/extern/reallocarray.o \
 	src/extern/strlcpy.o \
-	src/extern/strlcat.o
+	src/extern/strlcat.o \
+	src/extern/version.o
+
 
 src/asm/asmy.h: src/asm/asmy.c
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
@@ -66,20 +70,23 @@ rgblink_obj := \
 	src/link/parser.o \
 	src/link/script.o \
 	src/link/symbol.o \
-	src/extern/err.o
+	src/extern/err.o \
+	src/extern/version.o
 
 src/link/parser.h: src/link/parser.c
 src/link/lexer.o: src/link/parser.h
 
 rgbfix_obj := \
 	src/fix/main.o \
-	src/extern/err.o
+	src/extern/err.o \
+	src/extern/version.o
 
 rgbgfx_obj := \
 	src/gfx/gb.o \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
-	src/extern/err.o
+	src/extern/err.o \
+	src/extern/version.o
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
