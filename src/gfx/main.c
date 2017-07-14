@@ -14,17 +14,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "extern/version.h"
 #include "gfx/main.h"
 
 static void
 usage(void)
 {
 	printf(
-"usage: rgbgfx [-DFfhPTuv] [-d #] [-o outfile] [-p palfile] [-t mapfile]\n"
-"[-x #] infile\n");
+"usage: rgbgfx [-DFfhPTuVv] [-d #] [-o outfile] [-p palfile] [-t mapfile]\n"
+"              [-x #] infile\n");
 	exit(1);
 }
 
@@ -49,7 +51,7 @@ main(int argc, char *argv[])
 
 	depth = 2;
 
-	while((ch = getopt(argc, argv, "DvFfd:hx:Tt:uPp:o:")) != -1) {
+	while((ch = getopt(argc, argv, "Dd:Ffho:Tt:uPp:Vvx:")) != -1) {
 		switch(ch) {
 		case 'D':
 			opts.debug = true;
@@ -89,8 +91,12 @@ main(int argc, char *argv[])
 		case 'o':
 			opts.outfile = optarg;
 			break;
+		case 'V':
+			printf("rgbgfx %s\n", get_package_version_string());
+			exit(0);
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;

@@ -12,6 +12,7 @@
 #include "asm/main.h"
 #include "extern/err.h"
 #include "extern/reallocarray.h"
+#include "extern/version.h"
 
 int yyparse(void);
 void setuplex(void);
@@ -276,7 +277,7 @@ static void
 usage(void)
 {
 	printf(
-"Usage: rgbasm [-hvE] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
+"Usage: rgbasm [-EhVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
 "              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
@@ -322,7 +323,7 @@ main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:g:hi:M:o:p:vEw")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:g:hi:M:o:p:EVvw")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -371,6 +372,9 @@ main(int argc, char *argv[])
 				    "between 0 and 0xFF");
 			}
 			break;
+		case 'V':
+			printf("rgbasm %s\n", get_package_version_string());
+			exit(0);
 		case 'v':
 			newopt.verbose = true;
 			break;
@@ -382,6 +386,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;

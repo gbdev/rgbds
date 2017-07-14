@@ -20,9 +20,7 @@
 .Nd Game Boy linker
 .Sh SYNOPSIS
 .Nm rgblink
-.Op Fl t
-.Op Fl w
-.Op Fl d
+.Op Fl dtVw
 .Op Fl m Ar mapfile
 .Op Fl n Ar symfile
 .Op Fl O Ar overlayfile
@@ -95,6 +93,8 @@ have to be consistent.
 See
 .Xr rgblink 5
 for more information about its format.
+.It Fl V
+Print the version of the program and exit.
 .El
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM

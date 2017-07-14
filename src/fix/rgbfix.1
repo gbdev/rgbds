@@ -20,7 +20,7 @@
 .Nd Game Boy checksum fixer
 .Sh SYNOPSIS
 .Nm rgbfix
-.Op Fl Ccjsv
+.Op Fl CcjsVv
 .Op Fl i Ar game_id
 .Op Fl k Ar licensee_str
 .Op Fl l Ar licensee_id
@@ -108,6 +108,8 @@ or
 .Pc .
 If both this and the game ID are set, the game ID will overwrite the
 overlapping portion of the title.
+.It Fl V
+Print the version of the program and exit.
 .It Fl v
 Validate the header and fix checksums: the Nintendo character area
 .Pq Ad 0x104 Ns \(en Ns Ad 0x133 ,
