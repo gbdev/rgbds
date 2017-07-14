@@ -337,6 +337,9 @@ main(int argc, char *argv[])
 		case 'D':
 			opt_AddDefine(optarg);
 			break;
+		case 'E':
+			newopt.exportall = true;
+			break;
 		case 'g':
 			if (strlen(optarg) == 4) {
 				newopt.gbgfx[0] = optarg[1];
@@ -377,9 +380,6 @@ main(int argc, char *argv[])
 			exit(0);
 		case 'v':
 			newopt.verbose = true;
-			break;
-		case 'E':
-			newopt.exportall = true;
 			break;
 		case 'w':
 			newopt.warnings = false;
