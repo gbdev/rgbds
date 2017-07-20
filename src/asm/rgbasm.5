@@ -612,6 +612,41 @@ You can also include only part of a file with
 The example below includes 256 bytes from data.bin starting from byte 78.
 .Pp
 .Dl INCBIN \[dq]data.bin\[dq],78,256
+.Ss Unions
+Unions allow multiple memory allocations to share the same space in memory,
+like unions in C.
+This allows you to easily reuse memory for different purposes, depending on
+the game's state.
+.Pp
+You create unions using the
+.Ic UNION ,
+.Ic NEXTU
+and
+.Ic ENDU
+keywords.
+.Ic NEXTU
+lets you create a new block of allocations, and you may use it as many times
+within a union as necessary.
+.Pp
+.Bd -literal -offset indent
+UNION
+Name: ds 8
+Nickname: ds 8
+NEXTU
+Health: dw
+Something: ds 3
+Lives: db
+NEXTU
+Temporary: ds 19
+ENDU
+.Ed
+.Pp
+This union will use up 19 bytes, as this is the size of the largest block
+(the last one, containing 'Temporary').
+Of course, as 'Name', 'Health', and 'Temporary' all point to the same memory
+locations, writes to any one of these will affect values read from the others.
+.Pp
+Unions may be used in any section, but code and data may not be included.
 .Sh THE MACRO LANGUAGE
 .Pp
 .Ss Printing things during assembly

@@ -18,19 +18,23 @@
 
 #include "asm/localasm.h"
 
+#define MAXUNIONS		128
+#define MAXMACROARGS	256
+#define MAXINCPATHS		128
+
 extern SLONG nLineNo;
 extern ULONG nTotalLines;
 extern ULONG nPC;
 extern ULONG nPass;
 extern ULONG nIFDepth;
 extern bool skipElif;
+extern ULONG nUnionDepth;
+extern ULONG unionStart[MAXUNIONS];
+extern ULONG unionSize[MAXUNIONS];
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
-
-#define MAXMACROARGS	256
-#define MAXINCPATHS		128
 
 #endif	/* //       ASM_H */

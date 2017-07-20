@@ -460,6 +460,8 @@ checkcodesection(void)
 	    pCurrentSection->nType != SECT_ROMX) {
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 		     pCurrentSection->pzName);
+	} else if (nUnionDepth > 0) {
+		fatalerror("UNIONs cannot contain code or data");
 	}
 }
 
@@ -613,6 +615,10 @@ out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG align
 void
 out_SetCurrentSection(struct Section * pSect)
 {
+	if (nUnionDepth > 0) {
+		fatalerror("Cannot change the section within a UNION");
+	}
+	
 	pCurrentSection = pSect;
 	nPC = pSect->nPC;
 
@@ -651,12 +657,11 @@ out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
 }
 
 /*
- * Output an absolute byte
+ * Output an absolute byte (bypassing ROM/union checks)
  */
 void
-out_AbsByte(int b)
+out_AbsByteBypassCheck(int b)
 {
-	checkcodesection();
 	checksectionoverflow(1);
 	b &= 0xFF;
 	if (nPass == 2)
@@ -665,6 +670,16 @@ out_AbsByte(int b)
 	pCurrentSection->nPC += 1;
 	nPC += 1;
 	pPCSymbol->nValue += 1;
+}
+
+/*
+ * Output an absolute byte
+ */
+void
+out_AbsByte(int b)
+{
+	checkcodesection();
+	out_AbsByteBypassCheck(b);
 }
 
 void
@@ -689,6 +704,9 @@ out_Skip(int skip)
 		pCurrentSection->nPC += skip;
 		nPC += skip;
 		pPCSymbol->nValue += skip;
+	} else if (nUnionDepth > 0) {
+		while (skip--)
+			out_AbsByteBypassCheck(CurrentOptions.fillchar);
 	} else {
 		checkcodesection();
 		while (skip--)
