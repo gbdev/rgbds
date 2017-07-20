@@ -1,3 +1,4 @@
+#!/bin/sh
 otemp=$(mktemp)
 gbtemp=$(mktemp)
 gbtemp2=$(mktemp)

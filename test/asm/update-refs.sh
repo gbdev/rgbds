@@ -1,3 +1,4 @@
+#!/bin/sh
 fname=$(mktemp)
 
 for i in *.asm; do

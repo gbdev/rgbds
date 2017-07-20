@@ -1,3 +1,4 @@
+#!/bin/sh
 fname=$(mktemp)
 rc=0
 
