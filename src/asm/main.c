@@ -22,8 +22,9 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 SLONG nLineNo;
-ULONG nTotalLines, nPass, nPC, nIFDepth, nErrors;
+ULONG nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
 bool skipElif;
+ULONG unionStart[128], unionSize[128];
 
 extern int yydebug;
 
@@ -416,6 +417,7 @@ main(int argc, char *argv[])
 	nTotalLines = 0;
 	nIFDepth = 0;
 	skipElif = true;
+	nUnionDepth = 0;
 	nPC = 0;
 	nPass = 1;
 	nErrors = 0;
@@ -438,11 +440,16 @@ main(int argc, char *argv[])
 	if (nIFDepth != 0) {
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
 	}
+	
+	if (nUnionDepth != 0) {
+		errx(1, "Unterminated UNION construct (%ld levels)!", nUnionDepth);
+	}
 
 	nTotalLines = 0;
 	nLineNo = 1;
 	nIFDepth = 0;
 	skipElif = true;
+	nUnionDepth = 0;
 	nPC = 0;
 	nPass = 2;
 	nErrors = 0;

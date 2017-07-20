@@ -431,6 +431,34 @@ void	if_skip_to_endc()
 	nLineNo--;
 }
 
+void startUnion() {
+	if (!pCurrentSection) {
+		fatalerror("UNIONs must be inside a SECTION");
+	}
+	
+	ULONG unionIndex = nUnionDepth;
+	nUnionDepth++;
+	if (nUnionDepth > MAXUNIONS) {
+		fatalerror("Too many nested UNIONs");
+	}
+	
+	unionStart[unionIndex] = nPC;
+	unionSize[unionIndex] = 0;
+}
+
+void updateUnion() {
+	ULONG unionIndex = nUnionDepth - 1;
+	ULONG size = nPC - unionStart[unionIndex];
+	
+	if (size > unionSize[unionIndex]) {
+		unionSize[unionIndex] = size;
+	}
+	
+	nPC = unionStart[unionIndex];
+	pCurrentSection->nPC = unionStart[unionIndex];
+	pPCSymbol->nValue = unionStart[unionIndex];
+}
+
 %}
 
 %union
@@ -506,6 +534,7 @@ void	if_skip_to_endc()
 %token	T_POP_MACRO
 %token	T_POP_ENDM
 %token	T_POP_RSRESET T_POP_RSSET
+%token	T_POP_UNION T_POP_NEXTU T_POP_ENDU
 %token	T_POP_INCBIN T_POP_REPT
 %token	T_POP_CHARMAP
 %token	T_POP_SHIFT
@@ -644,6 +673,9 @@ simple_pseudoop	:	include
 				|	section
 				|	rsreset
 				|	rsset
+				|	union
+				|	nextu
+				|	endu
 				|	incbin
 				|	charmap
 				|	rept
@@ -744,6 +776,31 @@ rb				:	T_LABEL T_POP_RB uconst
 						sym_AddSet( "_RS", sym_GetConstantValue("_RS")+$3 );
 					}
 ;
+
+union			:	T_POP_UNION {
+						startUnion();
+					};
+
+nextu			:	T_POP_NEXTU {
+						if (nUnionDepth <= 0) {
+							fatalerror("Found NEXTU outside of a UNION construct");
+						}
+	
+						updateUnion();
+					};
+
+endu			:	T_POP_ENDU {
+						if (nUnionDepth <= 0) {
+							fatalerror("Found ENDU outside of a UNION construct");
+						}
+						
+						updateUnion();
+	
+						nUnionDepth--;
+						nPC = unionStart[nUnionDepth] + unionSize[nUnionDepth];
+						pCurrentSection->nPC = nPC;
+						pPCSymbol->nValue = nPC;
+					};
 
 ds				:	T_POP_DS uconst
 					{ out_Skip( $2 ); }
