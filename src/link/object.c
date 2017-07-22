@@ -116,7 +116,7 @@ AllocSection(void)
  */
 
 struct sSymbol *
-obj_ReadSymbol(FILE * f)
+obj_ReadSymbol(FILE * f, char *tzObjectfile)
 {
 	struct sSymbol *pSym;
 
@@ -127,6 +127,8 @@ obj_ReadSymbol(FILE * f)
 
 	readasciiz(&pSym->pzName, f);
 	pSym->Type = (enum eSymbolType)fgetc(f);
+
+	pSym->pzObjFileName = tzObjectfile;
 
 	if (pSym->Type != SYM_IMPORT) {
 		readasciiz(&pSym->pzFileName, f);
@@ -268,7 +270,7 @@ obj_ReadRGBSection(FILE * f)
 }
 
 void
-obj_ReadRGB(FILE * pObjfile)
+obj_ReadRGB(FILE * pObjfile, char *tzObjectfile)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -285,7 +287,7 @@ obj_ReadRGB(FILE * pObjfile)
 		}
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
-			tSymbols[i] = obj_ReadSymbol(pObjfile);
+			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
 	} else
 		tSymbols = (struct sSymbol **) & dummymem;
 
@@ -337,7 +339,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 	if (strncmp(tzHeader, "RGB", 3) == 0) {
 		switch (tzHeader[3]) {
 		case '5':
-			obj_ReadRGB(pObjfile);
+			obj_ReadRGB(pObjfile, tzObjectfile);
 			break;
 		default:
 			errx(1, "'%s' uses an unsupported object file version (%s). Please reassemble it.", tzObjectfile, tzHeader);

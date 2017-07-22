@@ -12,8 +12,10 @@
 struct ISymbol {
 	char *pzName;
 	SLONG nValue;
-	SLONG nBank;
-	    //-1 = const
+	SLONG nBank; /* -1 = constant */
+	char tzObjFileName[_MAX_PATH + 1]; /* Object file where the symbol was defined. */
+	char tzFileName[_MAX_PATH + 1]; /* Source file where the symbol was defined. */
+	ULONG nFileLine; /* Line where the symbol was defined. */
 	struct ISymbol *pNext;
 };
 
@@ -76,7 +78,8 @@ sym_GetBank(char *tzName)
 }
 
 void
-sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank)
+sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank, char *tzObjFileName,
+		char *tzFileName, ULONG nFileLine)
 {
 	if (strcmp(tzName, "@") == 0)
 		return;
@@ -102,6 +105,11 @@ sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank)
 			(*ppSym)->nValue = nValue;
 			(*ppSym)->nBank = nBank;
 			(*ppSym)->pNext = NULL;
+			strncpy((*ppSym)->tzObjFileName, tzObjFileName,
+				sizeof((*ppSym)->tzObjFileName));
+			strncpy((*ppSym)->tzFileName, tzFileName,
+				sizeof((*ppSym)->tzFileName));
+			(*ppSym)->nFileLine = nFileLine;
 		}
 	}
 }
