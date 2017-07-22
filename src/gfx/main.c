@@ -14,17 +14,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "extern/version.h"
 #include "gfx/main.h"
 
 static void
 usage(void)
 {
 	printf(
-"usage: rgbgfx [-DFfhPTuv] [-d #] [-o outfile] [-p palfile] [-t mapfile]\n"
-"[-x #] infile\n");
+"usage: rgbgfx [-DFfhPTuVv] [-d #] [-o outfile] [-p palfile] [-t mapfile]\n"
+"              [-x #] infile\n");
 	exit(1);
 }
 
@@ -49,27 +51,30 @@ main(int argc, char *argv[])
 
 	depth = 2;
 
-	while((ch = getopt(argc, argv, "DvFfd:hx:Tt:uPp:o:")) != -1) {
+	while((ch = getopt(argc, argv, "Dd:Ffho:Tt:uPp:Vvx:")) != -1) {
 		switch(ch) {
 		case 'D':
 			opts.debug = true;
 			break;
-		case 'v':
-			opts.verbose = true;
+		case 'd':
+			depth = strtoul(optarg, NULL, 0);
 			break;
 		case 'F':
 			opts.hardfix = true;
 		case 'f':
 			opts.fix = true;
 			break;
-		case 'd':
-			depth = strtoul(optarg, NULL, 0);
-			break;
 		case 'h':
 			opts.horizontal = true;
 			break;
-		case 'x':
-			opts.trim = strtoul(optarg, NULL, 0);
+		case 'o':
+			opts.outfile = optarg;
+			break;
+		case 'P':
+			opts.palout = true;
+			break;
+		case 'p':
+			opts.palfile = optarg;
 			break;
 		case 'T':
 			opts.mapout = true;
@@ -80,17 +85,18 @@ main(int argc, char *argv[])
 		case 'u':
 			opts.unique = true;
 			break;
-		case 'P':
-			opts.palout = true;
+		case 'V':
+			printf("rgbgfx %s\n", get_package_version_string());
+			exit(0);
+		case 'v':
+			opts.verbose = true;
 			break;
-		case 'p':
-			opts.palfile = optarg;
-			break;
-		case 'o':
-			opts.outfile = optarg;
+		case 'x':
+			opts.trim = strtoul(optarg, NULL, 0);
 			break;
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;

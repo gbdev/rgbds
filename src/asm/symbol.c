@@ -13,6 +13,7 @@
 #include "asm/mymath.h"
 #include "asm/output.h"
 #include "extern/err.h"
+#include "extern/version.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
 struct sSymbol *pScope = NULL;
@@ -848,6 +849,9 @@ sym_PrepPass2(void)
 	sym_AddString("__UTC_HOUR__", SavedHOUR);
 	sym_AddString("__UTC_MINUTE__", SavedMINUTE);
 	sym_AddString("__UTC_SECOND__", SavedSECOND);
+	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
+	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
+	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
 	sym_AddSet("_RS", 0);
 
 	sym_AddEqu("_NARG", 0);

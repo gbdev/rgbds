@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "extern/err.h"
+#include "extern/version.h"
 #include "link/object.h"
 #include "link/output.h"
 #include "link/assign.h"
@@ -33,7 +34,7 @@ static void
 usage(void)
 {
 	printf(
-"usage: rgblink [-twd] [-l linkerscript] [-m mapfile] [-n symfile] [-O overlay]\n"
+"usage: rgblink [-dtVw] [-l linkerscript] [-m mapfile] [-n symfile] [-O overlay]\n"
 "               [-o outfile] [-p pad_value] [-s symbol] file [...]\n");
 	exit(1);
 }
@@ -52,7 +53,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "l:m:n:o:O:p:s:twd")) != -1) {
+	while ((ch = getopt(argc, argv, "dl:m:n:O:o:p:s:tVw")) != -1) {
 		switch (ch) {
 		case 'l':
 			SetLinkerscriptName(optarg);
@@ -98,7 +99,7 @@ main(int argc, char *argv[])
 			 * This option implies OPT_CONTWRAM.
 			 */
 			options |= OPT_DMG_MODE;
-			/* fallthrough */
+			/* FALLTHROUGH */
 		case 'w':
 			/* Set to set WRAM as a single continuous block as on
 			 * DMG. All WRAM sections must be WRAM0 as bankable WRAM
@@ -106,6 +107,9 @@ main(int argc, char *argv[])
 			 * will raise an error. */
 			options |= OPT_CONTWRAM;
 			break;
+		case 'V':
+			printf("rgblink %s\n", get_package_version_string());
+			exit(0);
 		default:
 			usage();
 			/* NOTREACHED */

@@ -20,7 +20,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm rgbasm
-.Op Fl Ehvw
+.Op Fl EhVvw
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
@@ -72,6 +72,8 @@ Write an object file to the given filename.
 .It Fl p Ar pad_value
 When padding an image, pad with this value.
 The default is 0x00.
+.It Fl V
+Print the version of the program and exit.
 .It Fl v
 Be verbose.
 .It Fl w
