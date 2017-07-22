@@ -95,7 +95,10 @@ sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank, char *tzObjFileName,
 			if (nBank == -1)
 				return;
 
-			errx(1, "Symbol '%s' defined more than once", tzName);
+			errx(1, "'%s' in both %s : %s(%d) and %s : %s(%d)",
+				tzName, tzObjFileName, tzFileName, nFileLine,
+				(*ppSym)->tzObjFileName,
+				(*ppSym)->tzFileName, (*ppSym)->nFileLine);
 		}
 	}
 
