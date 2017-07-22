@@ -41,6 +41,8 @@ extern void fstk_RunRept(ULONG count);
 FILE *
 fstk_FindFile(char *);
 
+int fstk_GetLine(void);
+
 extern int yywrap(void);
 
 #endif

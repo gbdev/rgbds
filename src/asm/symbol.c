@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "asm/asm.h"
+#include "asm/fstack.h"
 #include "asm/symbol.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
@@ -109,6 +110,8 @@ createsymbol(char *s)
 		(*ppsym)->pMacro = NULL;
 		(*ppsym)->pSection = NULL;
 		(*ppsym)->Callback = NULL;
+		strcpy((*ppsym)->tzFileName, tzCurrentFileName);
+		(*ppsym)->nFileLine = fstk_GetLine();
 		return (*ppsym);
 	} else {
 		fatalerror("No memory for symbol");
