@@ -704,27 +704,48 @@ calls infinitely (or until you run out of memory, whichever comes first).
 .Dl INCLUDE \[dq]irq.inc\[dq]
 .Pp
 .Ss Conditional assembling
-The three commands
+The four commands
 .Ic IF ,
-.Ic ELSE
+.Ic ELIF ,
+.Ic ELSE ,
 and
 .Ic ENDC
 are used to conditionally assemble parts of your file.
 This is a powerful feature commonly used in macros.
 .Pp
 .Bd -literal -offset indent
-IF 2+2==4
-PRINTT \[dq]2+2==4\[rs]n\[dq]
+IF NUM < 0
+  PRINTT \[dq]NUM < 0\[rs]n\[dq]
+ELIF NUM == 0
+  PRINTT \[dq]NUM == 0\[rs]n\[dq]
 ELSE
-PRINTT \[dq]2+2!=4\[rs]n\[dq]
+  PRINTT \[dq]NUM > 0\[rs]n\[dq]
 ENDC
 .Ed
 .Pp
 The
+.Ic ELIF
+and
 .Ic ELSE
-block is optional.
-.Ic IF No / Ic ELSE No / Ic ENDC
+blocks are optional.
+.Ic IF No / Ic ELIF No / Ic ELSE No / Ic ENDC
 blocks can be nested.
+.Pp
+Note that if an
+.Ic ELSE
+block is found before an
+.Ic ELIF
+block, the
+.Ic ELIF
+block will be ignored.
+All
+.Ic ELIF
+blocks must go before the
+.Ic ELSE
+block.
+Also, if there is more than one
+.Ic ELSE
+block, all of them but the first one are ignored.
 .Ss Integer and Boolean expressions
 An expression can be composed of many things.
 Expressions are always evaluated using signed 32-bit math.
@@ -970,6 +991,7 @@ machine.
 .It Sx DIV
 .It Sx DS
 .It Sx DW
+.It Sx ELIF
 .It Sx ELSE
 .It Sx ENDC
 .It Sx ENDM
