@@ -3,11 +3,13 @@
  *
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "extern/err.h"
 #include "link/assign.h"
 #include "link/mylink.h"
@@ -332,20 +334,22 @@ obj_ReadRGB(FILE * pObjfile, char *tzObjectfile)
 void
 obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 {
-	char tzHeader[8];
+	char tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING) + 1];
 
-	fread(tzHeader, sizeof(char), 4, pObjfile);
-	tzHeader[4] = 0;
-	if (strncmp(tzHeader, "RGB", 3) == 0) {
-		switch (tzHeader[3]) {
-		case '5':
-			obj_ReadRGB(pObjfile, tzObjectfile);
-			break;
-		default:
-			errx(1, "'%s' uses an unsupported object file version (%s). Please reassemble it.", tzObjectfile, tzHeader);
-		}
+	fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
+		pObjfile);
+
+	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
+
+	if (strncmp(tzHeader, RGBDS_OBJECT_VERSION_STRING,
+			strlen(RGBDS_OBJECT_VERSION_STRING)) == 0) {
+		obj_ReadRGB(pObjfile, tzObjectfile);
 	} else {
-		errx(1, "'%s' is not a valid object", tzObjectfile);
+		for (int i = 0; i < strlen(RGBDS_OBJECT_VERSION_STRING); i++)
+			if (!isprint(tzHeader[i]))
+				tzHeader[i] = '?';
+		errx(1, "%s: Invalid file or object file version [%s]",
+			tzObjectfile, tzHeader);
 	}
 }
 
