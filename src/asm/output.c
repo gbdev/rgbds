@@ -15,6 +15,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "common.h"
 #include "extern/err.h"
 
 void out_SetCurrentSection(struct Section * pSect);
@@ -282,6 +283,9 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 	fputc(type, f);
 
 	if (type != SYM_IMPORT) {
+		fputstring(pSym->tzFileName, f);
+		fputlong(pSym->nFileLine, f);
+
 		fputlong(sectid, f);
 		fputlong(offset, f);
 	}
@@ -501,7 +505,9 @@ out_WriteObject(void)
 		struct PatchSymbol *pSym;
 		struct Section *pSect;
 
-		fwrite("RGB4", 1, 4, f);
+		fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
+		       strlen(RGBDS_OBJECT_VERSION_STRING), f);
+
 		fputlong(countsymbols(), f);
 		fputlong(countsections(), f);
 

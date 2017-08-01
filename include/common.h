@@ -1,0 +1,6 @@
+#ifndef RGBDS_COMMON_H
+#define RGBDS_COMMON_H
+
+#define RGBDS_OBJECT_VERSION_STRING "RGB5"
+
+#endif /* RGBDS_COMMON_H */

@@ -3,11 +3,13 @@
  *
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "extern/err.h"
 #include "link/assign.h"
 #include "link/mylink.h"
@@ -116,7 +118,7 @@ AllocSection(void)
  */
 
 struct sSymbol *
-obj_ReadSymbol(FILE * f)
+obj_ReadSymbol(FILE * f, char *tzObjectfile)
 {
 	struct sSymbol *pSym;
 
@@ -126,7 +128,14 @@ obj_ReadSymbol(FILE * f)
 	}
 
 	readasciiz(&pSym->pzName, f);
-	if ((pSym->Type = (enum eSymbolType) fgetc(f)) != SYM_IMPORT) {
+	pSym->Type = (enum eSymbolType)fgetc(f);
+
+	pSym->pzObjFileName = tzObjectfile;
+
+	if (pSym->Type != SYM_IMPORT) {
+		readasciiz(&pSym->pzFileName, f);
+		pSym->nFileLine = readlong(f);
+
 		pSym->nSectionID = readlong(f);
 		pSym->nOffset = readlong(f);
 	}
@@ -263,7 +272,7 @@ obj_ReadRGBSection(FILE * f)
 }
 
 void
-obj_ReadRGB(FILE * pObjfile)
+obj_ReadRGB(FILE * pObjfile, char *tzObjectfile)
 {
 	struct sSection *pFirstSection;
 	SLONG nNumberOfSymbols, nNumberOfSections, i;
@@ -280,7 +289,7 @@ obj_ReadRGB(FILE * pObjfile)
 		}
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
-			tSymbols[i] = obj_ReadSymbol(pObjfile);
+			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
 	} else
 		tSymbols = (struct sSymbol **) & dummymem;
 
@@ -325,21 +334,22 @@ obj_ReadRGB(FILE * pObjfile)
 void
 obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 {
-	char tzHeader[8];
+	char tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING) + 1];
 
-	fread(tzHeader, sizeof(char), 4, pObjfile);
-	tzHeader[4] = 0;
-	if (strncmp(tzHeader, "RGB", 3) == 0) {
-		switch (tzHeader[3]) {
-		case '3':
-		case '4': // V4 supports OAM sections, but is otherwise identical
-			obj_ReadRGB(pObjfile);
-			break;
-		default:
-			errx(1, "'%s' uses an unsupported object file version (%s). Please reassemble it.", tzObjectfile, tzHeader);
-		}
+	fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
+		pObjfile);
+
+	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
+
+	if (strncmp(tzHeader, RGBDS_OBJECT_VERSION_STRING,
+			strlen(RGBDS_OBJECT_VERSION_STRING)) == 0) {
+		obj_ReadRGB(pObjfile, tzObjectfile);
 	} else {
-		errx(1, "'%s' is not a valid object", tzObjectfile);
+		for (int i = 0; i < strlen(RGBDS_OBJECT_VERSION_STRING); i++)
+			if (!isprint(tzHeader[i]))
+				tzHeader[i] = '?';
+		errx(1, "%s: Invalid file or object file version [%s]",
+			tzObjectfile, tzHeader);
 	}
 }
 

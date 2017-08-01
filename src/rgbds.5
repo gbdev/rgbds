@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 17, 2017
+.Dd July 22, 2017
 .Dt RGBDS 5
 .Os RGBDS Manual
 .Sh NAME
@@ -42,7 +42,7 @@ is a 0‐terminated string of
 .Bd -literal
 ; Header
 
-BYTE    ID[4]            ; "RGB4"
+BYTE    ID[4]            ; "RGB5"
 LONG    NumberOfSymbols  ; The number of symbols used in this file
 LONG    NumberOfSections ; The number of sections used in this file
 
@@ -58,6 +58,10 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
                           ; 2 = EXPORT this symbol to other objects.
 
     IF      Type != 1     ; If symbol is defined in this object file.
+
+        STRING  FileName  ; File where the symbol is defined.
+
+        LONG    LineNum   ; Line number in the file where the symbol is defined.
 
         LONG    SectionID ; The section number (of this object file) in which
                           ; this symbol is defined.

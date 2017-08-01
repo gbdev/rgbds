@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "asm/asm.h"
+#include "asm/fstack.h"
 #include "asm/symbol.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
@@ -109,6 +110,8 @@ createsymbol(char *s)
 		(*ppsym)->pMacro = NULL;
 		(*ppsym)->pSection = NULL;
 		(*ppsym)->Callback = NULL;
+		strcpy((*ppsym)->tzFileName, tzCurrentFileName);
+		(*ppsym)->nFileLine = fstk_GetLine();
 		return (*ppsym);
 	} else {
 		fatalerror("No memory for symbol");
@@ -518,7 +521,8 @@ sym_AddEqu(char *tzSym, SLONG value)
 
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined", tzSym);
+				yyerror("'%s' already defined in %s(%d)",
+					tzSym, nsym->tzFileName, nsym->nFileLine);
 			}
 		} else
 			nsym = createsymbol(tzSym);
@@ -550,7 +554,8 @@ sym_AddString(char *tzSym, char *tzValue)
 
 	if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 		if (nsym->nType & SYMF_DEFINED) {
-			yyerror("'%s' already defined", tzSym);
+			yyerror("'%s' already defined in %s(%d)",
+				tzSym, nsym->tzFileName, nsym->nFileLine);
 		}
 	} else
 		nsym = createsymbol(tzSym);
@@ -653,7 +658,8 @@ sym_AddReloc(char *tzSym)
 
 		if ((nsym = findsymbol(tzSym, scope)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined", tzSym);
+				yyerror("'%s' already defined in %s(%d)",
+					tzSym, nsym->tzFileName, nsym->nFileLine);
 			}
 		} else
 			nsym = createsymbol(tzSym);
@@ -782,7 +788,8 @@ sym_AddMacro(char *tzSym)
 
 		if ((nsym = findsymbol(tzSym, NULL)) != NULL) {
 			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined", tzSym);
+				yyerror("'%s' already defined in %s(%d)",
+					tzSym, nsym->tzFileName, nsym->nFileLine);
 			}
 		} else
 			nsym = createsymbol(tzSym);

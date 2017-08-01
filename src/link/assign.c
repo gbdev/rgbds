@@ -566,16 +566,21 @@ CreateSymbolTable(void)
 			    ((pSect->tSymbols[i]->pSection == pSect) ||
 				(pSect->tSymbols[i]->pSection == NULL))) {
 				if (pSect->tSymbols[i]->pSection == NULL)
-					sym_CreateSymbol(pSect->tSymbols[i]->
-					    pzName,
-					    pSect->tSymbols[i]->
-					    nOffset, -1);
+					sym_CreateSymbol(
+						pSect->tSymbols[i]->pzName,
+						pSect->tSymbols[i]->nOffset,
+						-1,
+						pSect->tSymbols[i]->pzObjFileName,
+						pSect->tSymbols[i]->pzFileName,
+						pSect->tSymbols[i]->nFileLine);
 				else
-					sym_CreateSymbol(pSect->tSymbols[i]->
-					    pzName,
-					    pSect->nOrg +
-					    pSect->tSymbols[i]->
-					    nOffset, pSect->nBank);
+					sym_CreateSymbol(
+						pSect->tSymbols[i]->pzName,
+						pSect->nOrg + pSect->tSymbols[i]->nOffset,
+						pSect->nBank,
+						pSect->tSymbols[i]->pzObjFileName,
+						pSect->tSymbols[i]->pzFileName,
+						pSect->tSymbols[i]->nFileLine);
 			}
 		}
 		pSect = pSect->pNext;
