@@ -23,7 +23,7 @@ ULONG	ulNewMacroSize;
 void
 bankrangecheck(char *name, ULONG secttype, SLONG org, SLONG bank)
 {
-	SLONG minbank, maxbank;
+	SLONG minbank = 0, maxbank = 0;
 	char *stype = NULL;
 	switch (secttype) {
 	case SECT_ROMX:
