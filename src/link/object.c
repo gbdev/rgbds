@@ -228,8 +228,11 @@ obj_ReadRGBSection(FILE * f)
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
 
-			fread(pSection->pData, sizeof(UBYTE),
-			    pSection->nByteSize, f);
+			if (fread(pSection->pData, sizeof(UBYTE),
+			    pSection->nByteSize, f) != pSection->nByteSize) {
+				err(1, "Read error.");
+                        }
+
 			nNumberOfPatches = readlong(f);
 			ppPatch = &pSection->pPatches;
 
@@ -254,8 +257,10 @@ obj_ReadRGBSection(FILE * f)
 						err(1, NULL);
 					}
 
-					fread(pPatch->pRPN, sizeof(UBYTE),
-					    pPatch->nRPNSize, f);
+					if (fread(pPatch->pRPN, sizeof(UBYTE),
+					    pPatch->nRPNSize, f) != pPatch->nRPNSize) {
+						errx(1, "Read error.");
+					}
 				} else
 					pPatch->pRPN = NULL;
 
@@ -336,8 +341,10 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 {
 	char tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING) + 1];
 
-	fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
-		pObjfile);
+	if (fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
+	    pObjfile) != strlen(RGBDS_OBJECT_VERSION_STRING)) {
+		errx(1, "%s: Read error.", tzObjectfile);
+	}
 
 	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
 
