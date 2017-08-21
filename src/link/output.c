@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "extern/err.h"
 #include "link/mylink.h"
 #include "link/mapfile.h"
 #include "link/main.h"
@@ -24,7 +25,10 @@ writehome(FILE * f, FILE * f_overlay)
 
 	if (f_overlay != NULL) {
 		fseek(f_overlay, 0L, SEEK_SET);
-		fread(mem, 1, MaxAvail[BANK_ROM0], f_overlay);
+		if (fread(mem, 1, MaxAvail[BANK_ROM0], f_overlay) !=
+		    MaxAvail[BANK_ROM0]) {
+			warnx("Failed to read data from overlay file.");
+		}
 	} else {
 		memset(mem, fillchar, MaxAvail[BANK_ROM0]);
 	}
@@ -58,7 +62,10 @@ writebank(FILE * f, FILE * f_overlay, SLONG bank)
 
 	if (f_overlay != NULL && bank <= MaxOverlayBank) {
 		fseek(f_overlay, bank*0x4000, SEEK_SET);
-		fread(mem, 1, MaxAvail[bank], f_overlay);
+		if (fread(mem, 1, MaxAvail[bank], f_overlay) !=
+		    MaxAvail[bank]) {
+			warnx("Failed to read data from overlay file.");
+		}
 	} else {
 		memset(mem, fillchar, MaxAvail[bank]);
 	}
