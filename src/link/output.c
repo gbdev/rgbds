@@ -111,18 +111,15 @@ Output(void)
 		if (tzOverlayname) {
 			f_overlay = fopen(tzOverlayname, "rb");
 			if (!f_overlay) {
-				fprintf(stderr, "Failed to open overlay file %s\n", tzOverlayname);
-				exit(1);
+				errx(1, "Failed to open overlay file %s\n", tzOverlayname);
 			}
 			fseek(f_overlay, 0, SEEK_END);
 			if (ftell(f_overlay) % 0x4000 != 0) {
-				fprintf(stderr, "Overlay file must be aligned to 0x4000 bytes\n");
-				exit(1);
+				errx(1, "Overlay file must be aligned to 0x4000 bytes\n");
 			}
 			MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
 			if (MaxOverlayBank < 1) {
-				fprintf(stderr, "Overlay file be at least 0x8000 bytes\n");
-				exit(1);
+				errx(1, "Overlay file must be at least 0x8000 bytes\n");
 			}
 			if (MaxOverlayBank > MaxBankUsed) {
 				MaxBankUsed = MaxOverlayBank;

@@ -77,8 +77,7 @@ main(int argc, char *argv[])
 				errx(1, "Invalid argument for option 'p'");
 			}
 			if (fillchar < 0 || fillchar > 0xFF) {
-				fprintf(stderr, "Argument for option 'p' must be between 0 and 0xFF");
-				exit(1);
+				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
 			}
 			break;
 		case 's':
