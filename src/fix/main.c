@@ -64,11 +64,11 @@ main(int argc, char *argv[])
 	char *id; /* game ID in ASCII */
 	char *newlicensee; /* new licensee ID, two ASCII characters */
 
-	int licensee;  /* old licensee ID */
-	int cartridge; /* cartridge hardware ID */
-	int ramsize;   /* RAM size ID */
-	int version;   /* mask ROM version number */
-	int padvalue;  /* to pad the rom with if it changes size */
+	int licensee = 0;  /* old licensee ID */
+	int cartridge = 0; /* cartridge hardware ID */
+	int ramsize = 0;   /* RAM size ID */
+	int version = 0;   /* mask ROM version number */
+	int padvalue = 0;  /* to pad the rom with if it changes size */
 
 	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:Vv")) != -1) {
 		switch (ch) {
