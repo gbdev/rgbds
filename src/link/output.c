@@ -115,11 +115,11 @@ Output(void)
 			}
 			fseek(f_overlay, 0, SEEK_END);
 			if (ftell(f_overlay) % 0x4000 != 0) {
-				errx(1, "Overlay file must be aligned to 0x4000 bytes\n");
+				errx(1, "Overlay file must be aligned to 0x4000 bytes.");
 			}
 			MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
 			if (MaxOverlayBank < 1) {
-				errx(1, "Overlay file must be at least 0x8000 bytes\n");
+				errx(1, "Overlay file must be at least 0x8000 bytes.");
 			}
 			if (MaxOverlayBank > MaxBankUsed) {
 				MaxBankUsed = MaxOverlayBank;
