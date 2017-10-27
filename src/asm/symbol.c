@@ -62,9 +62,8 @@ Callback_NARG(struct sSymbol * sym)
 }
 
 SLONG
-Callback__LINE__(struct sSymbol * sym)
+Callback__LINE__(struct sSymbol __attribute__((unused)) * sym)
 {
-	sym = sym;
 	return (nLineNo);
 }
 
