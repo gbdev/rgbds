@@ -305,6 +305,7 @@ struct sLexInitString staticstrings[] = {
 	{"ds", T_POP_DS},
 	{NAME_DB, T_POP_DB},
 	{NAME_DW, T_POP_DW},
+	{NAME_DL, T_POP_DL},
 	{"section", T_POP_SECTION},
 	{"purge", T_POP_PURGE},
 

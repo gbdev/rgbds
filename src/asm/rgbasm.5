@@ -558,30 +558,37 @@ The following symbols are defined by the assembler:
 .Ss Defining constant data
 .Ic DB
 defines a list of bytes that will be stored in the final image.
-Ideal for tables and text.
+Ideal for tables and text (which is not zero-terminated).
 .Pp
 .Dl DB 1,2,3,4,\[dq]This is a string\[dq]
 .Pp
 Alternatively, you can use
 .Ic DW
-to store a list of words.
+to store a list of words (16-bits) or
+.Ic DL
+to store a list of doublewords/longs (32-bits).
 Strings are not allowed as arguments to
-.Ic DW .
+.Ic DW
+and
+.Ic DL .
 .Pp
 You can also use
-.Ic DB
-and
+.Ic DB ,
 .Ic DW
-without arguments.
-This works exactly like
-.Sy DS 1
 and
+.Ic DL
+without arguments, or leaving empty elements at any point in the list.
+This works exactly like
+.Sy DS 1 ,
 .Sy DS 2
+and
+.Sy DS 4
 respectively.
 Consequently,
-.Ic DB
-and
+.Ic DB ,
 .Ic DW
+and
+.Ic DL
 can be used in a
 .Sy WRAM0 No / Sy WRAMX No / Sy HRAM No / Sy VRAM No / Sy SRAM
 section.
@@ -591,9 +598,10 @@ allocates a number of bytes.
 The content is undefined.
 This is the preferred method of allocationg space in a RAM section.
 You can, however, use
-.Ic DB
-and
+.Ic DB , 
 .Ic DW
+and
+.Ic DL
 without any arguments instead.
 .Pp
 .Dl DS str_SIZEOF ;allocate str_SIZEOF bytes
@@ -1036,6 +1044,7 @@ machine.
 .It Sx DB
 .It Sx DEF
 .It Sx DIV
+.It Sx DL
 .It Sx DS
 .It Sx DW
 .It Sx ELIF
