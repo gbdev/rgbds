@@ -982,32 +982,49 @@ const_3bit		:	const
 					}
 ;
 
-constlist_8bit	:	constlist_8bit_entry
-				|	constlist_8bit_entry ',' constlist_8bit
+constlist_8bit : constlist_8bit_entry
+	| constlist_8bit_entry ',' constlist_8bit
 ;
 
-constlist_8bit_entry	:               { out_Skip( 1 ); }
-						|	const_8bit	{ out_RelByte( &$1 ); }
-			   			|	string		{ char *s; int length; s = $1; length = charmap_Convert(&s); out_AbsByteGroup(s, length); free(s); }
+constlist_8bit_entry : /* empty */ {
+		out_Skip( 1 );
+		if( nPass==1 )
+			warning("Empty entry in list of 8-bit elements (treated as 0).");
+	} | const_8bit {
+		out_RelByte( &$1 );
+	} | string {
+		char *s = $1;
+		int length = charmap_Convert(&s);
+		out_AbsByteGroup(s, length);
+		free(s);
+	}
 ;
 
-constlist_16bit	:	constlist_16bit_entry
-				|	constlist_16bit_entry ',' constlist_16bit
+constlist_16bit : constlist_16bit_entry
+	| constlist_16bit_entry ',' constlist_16bit
 ;
 
-constlist_16bit_entry	:  				{ out_Skip( 2 ); }
-						|	const_16bit	{ out_RelWord( &$1 ); }
+constlist_16bit_entry : /* empty */ {
+		out_Skip( 2 );
+		if( nPass==1 )
+			warning("Empty entry in list of 16-bit elements (treated as 0).");
+	} | const_16bit {
+		out_RelWord( &$1 );
+	}
 ;
 
-
-constlist_32bit	:	constlist_32bit_entry
-				|	constlist_32bit_entry ',' constlist_32bit
+constlist_32bit : constlist_32bit_entry
+	| constlist_32bit_entry ',' constlist_32bit
 ;
 
-constlist_32bit_entry	:				{ out_Skip( 4 ); }
-						|	relocconst	{ out_RelLong( &$1 ); }
+constlist_32bit_entry : /* empty */ {
+		out_Skip( 4 );
+		if( nPass==1 )
+			warning("Empty entry in list of 32-bit elements (treated as 0).");
+	} | relocconst {
+		out_RelLong( &$1 );
+	}
 ;
-
 
 const_PCrel		:	relocconst
 					{
