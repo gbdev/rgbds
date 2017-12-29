@@ -806,13 +806,16 @@ ds				:	T_POP_DS uconst
 					{ out_Skip( $2 ); }
 ;
 
-db				:	T_POP_DB constlist_8bit
+db			:		T_POP_DB constlist_8bit_entry ',' constlist_8bit
+				|	T_POP_DB constlist_8bit_entry_single
 ;
 
-dw				:	T_POP_DW constlist_16bit
+dw			:		T_POP_DW constlist_16bit_entry ',' constlist_16bit
+				|	T_POP_DW constlist_16bit_entry_single
 ;
 
-dl				:	T_POP_DL constlist_32bit
+dl			:		T_POP_DL constlist_32bit_entry ',' constlist_32bit
+				|	T_POP_DL constlist_32bit_entry_single
 ;
 
 purge			:	T_POP_PURGE
@@ -1000,6 +1003,18 @@ constlist_8bit_entry : /* empty */ {
 	}
 ;
 
+constlist_8bit_entry_single : /* empty */ {
+		out_Skip( 1 );
+	} | const_8bit {
+		out_RelByte( &$1 );
+	} | string {
+		char *s = $1;
+		int length = charmap_Convert(&s);
+		out_AbsByteGroup(s, length);
+		free(s);
+	}
+;
+
 constlist_16bit : constlist_16bit_entry
 	| constlist_16bit_entry ',' constlist_16bit
 ;
@@ -1013,6 +1028,13 @@ constlist_16bit_entry : /* empty */ {
 	}
 ;
 
+constlist_16bit_entry_single : /* empty */ {
+		out_Skip( 2 );
+	} | const_16bit {
+		out_RelWord( &$1 );
+	}
+;
+
 constlist_32bit : constlist_32bit_entry
 	| constlist_32bit_entry ',' constlist_32bit
 ;
@@ -1021,6 +1043,13 @@ constlist_32bit_entry : /* empty */ {
 		out_Skip( 4 );
 		if( nPass==1 )
 			warning("Empty entry in list of 32-bit elements (treated as 0).");
+	} | relocconst {
+		out_RelLong( &$1 );
+	}
+;
+
+constlist_32bit_entry_single : /* empty */ {
+		out_Skip( 4 );
 	} | relocconst {
 		out_RelLong( &$1 );
 	}
