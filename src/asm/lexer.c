@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -152,7 +153,7 @@ yy_create_buffer(FILE * f)
 			pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 			pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
 
-			size = fread(pBuffer->pBuffer, sizeof(UBYTE), size, f);
+			size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
 			pBuffer->pBuffer[size] = '\n';
 			pBuffer->pBuffer[size + 1] = 0;
@@ -211,7 +212,7 @@ lex_FloatAlloc(struct sLexFloat *token)
  * start is greater than the end of the range.
  */
 void
-lex_CheckCharacterRange(UWORD start, UWORD end)
+lex_CheckCharacterRange(uint16_t start, uint16_t end)
 {
 	if (start > end || start < 1 || end > 127) {
 		errx(1, "Invalid character range (start: %u, end: %u)",
@@ -220,7 +221,7 @@ lex_CheckCharacterRange(UWORD start, UWORD end)
 }
 
 void
-lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
+lex_FloatDeleteRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -231,7 +232,7 @@ lex_FloatDeleteRange(ULONG id, UWORD start, UWORD end)
 }
 
 void
-lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
+lex_FloatAddRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -242,7 +243,7 @@ lex_FloatAddRange(ULONG id, UWORD start, UWORD end)
 }
 
 void
-lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
+lex_FloatDeleteFirstRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -253,7 +254,7 @@ lex_FloatDeleteFirstRange(ULONG id, UWORD start, UWORD end)
 }
 
 void
-lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
+lex_FloatAddFirstRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -264,7 +265,7 @@ lex_FloatAddFirstRange(ULONG id, UWORD start, UWORD end)
 }
 
 void
-lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
+lex_FloatDeleteSecondRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -275,7 +276,7 @@ lex_FloatDeleteSecondRange(ULONG id, UWORD start, UWORD end)
 }
 
 void
-lex_FloatAddSecondRange(ULONG id, UWORD start, UWORD end)
+lex_FloatAddSecondRange(ULONG id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 

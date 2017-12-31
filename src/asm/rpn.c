@@ -2,6 +2,7 @@
  * Controls RPN expressions for objectfiles
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -46,7 +47,7 @@ rpn_Reset(struct Expression * expr)
 /*
  * Returns the next rpn byte in expression
  */
-UWORD
+uint16_t
 rpn_PopByte(struct Expression * expr)
 {
 	if (expr->nRPNOut == expr->nRPNLength) {

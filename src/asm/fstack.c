@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -331,7 +332,7 @@ fstk_RunMacroArg(SLONG s)
 	if ((sym = sym_FindMacroArg(s)) != NULL) {
 		pushcontext();
 		nCurrentStatus = STAT_isMacroArg;
-		sprintf(tzCurrentFileName, "%c", (UBYTE) s);
+		sprintf(tzCurrentFileName, "%c", (uint8_t) s);
 		CurrentFlexHandle = yy_scan_bytes(sym, strlen(sym));
 		yy_switch_to_buffer(CurrentFlexHandle);
 	} else

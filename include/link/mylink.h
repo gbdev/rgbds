@@ -5,6 +5,8 @@
 #define _MAX_PATH	512
 #endif
 
+#include <stdint.h>
+
 #include "types.h"
 
 extern SLONG options;
@@ -64,12 +66,12 @@ struct sSection {
 	SLONG nBank;
 	SLONG nOrg;
 	SLONG nAlign;
-	BBOOL oAssigned;
+	uint8_t oAssigned;
 
 	char *pzName;
 	SLONG nByteSize;
 	enum eSectionType Type;
-	UBYTE *pData;
+	uint8_t *pData;
 	SLONG nNumberOfSymbols;
 	struct sSymbol **tSymbols;
 	struct sPatch *pPatches;
@@ -106,9 +108,9 @@ struct sPatch {
 	SLONG nOffset;
 	enum ePatchType Type;
 	SLONG nRPNSize;
-	UBYTE *pRPN;
+	uint8_t *pRPN;
 	struct sPatch *pNext;
-	BBOOL oRelocPatch;
+	uint8_t oRelocPatch;
 };
 
 extern struct sSection *pSections;

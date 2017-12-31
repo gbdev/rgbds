@@ -105,7 +105,7 @@ readUTF8Char(char *dest, char *src)
 }
 
 int
-charmap_Add(char *input, UBYTE output)
+charmap_Add(char *input, uint8_t output)
 {
 	int i;
 	size_t input_length;

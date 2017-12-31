@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,13 +12,13 @@
 char *tzOutname;
 char *tzOverlayname = NULL;
 
-SLONG MaxOverlayBank;
+int32_t MaxOverlayBank;
 
 void
 writehome(FILE * f, FILE * f_overlay)
 {
 	struct sSection *pSect;
-	UBYTE *mem;
+	uint8_t *mem;
 
 	mem = malloc(MaxAvail[BANK_ROM0]);
 	if (!mem)
@@ -51,10 +52,10 @@ writehome(FILE * f, FILE * f_overlay)
 }
 
 void
-writebank(FILE * f, FILE * f_overlay, SLONG bank)
+writebank(FILE * f, FILE * f_overlay, int32_t bank)
 {
 	struct sSection *pSect;
-	UBYTE *mem;
+	uint8_t *mem;
 
 	mem = malloc(MaxAvail[bank]);
 	if (!mem)
@@ -103,7 +104,7 @@ out_SetOverlayname(char *tzOverlayfile)
 void
 Output(void)
 {
-	SLONG i;
+	int32_t i;
 	FILE *f;
 	FILE *f_overlay = NULL;
 

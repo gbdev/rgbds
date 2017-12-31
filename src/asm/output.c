@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,9 +25,9 @@ struct Patch {
 	char tzFilename[_MAX_PATH + 1];
 	ULONG nLine;
 	ULONG nOffset;
-	UBYTE nType;
+	uint8_t nType;
 	ULONG nRPNSize;
-	UBYTE *pRPN;
+	uint8_t *pRPN;
 	struct Patch *pNext;
 };
 
@@ -371,8 +372,8 @@ void
 createpatch(ULONG type, struct Expression * expr)
 {
 	struct Patch *pPatch;
-	UWORD rpndata;
-	UBYTE rpnexpr[2048];
+	uint16_t rpndata;
+	uint8_t rpnexpr[2048];
 	char tzSym[512];
 	ULONG rpnptr = 0, symptr;
 

@@ -5,6 +5,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +19,8 @@
 struct sSymbol **tSymbols;
 struct sSection *pSections = NULL;
 struct sSection *pLibSections = NULL;
-UBYTE dummymem;
-BBOOL oReadLib = 0;
+uint8_t dummymem;
+uint8_t oReadLib = 0;
 
 /*
  * The usual byte order stuff
@@ -39,10 +40,10 @@ readlong(FILE * f)
 	return (r);
 }
 
-UWORD
+uint16_t
 readword(FILE * f)
 {
-	UWORD r;
+	uint16_t r;
 
 	r = fgetc(f);
 	r |= fgetc(f) << 8;
@@ -228,7 +229,7 @@ obj_ReadRGBSection(FILE * f)
 			SLONG nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
 
-			if (fread(pSection->pData, sizeof(UBYTE),
+			if (fread(pSection->pData, sizeof(uint8_t),
 			    pSection->nByteSize, f) != pSection->nByteSize) {
 				err(1, "Read error.");
                         }
@@ -257,7 +258,7 @@ obj_ReadRGBSection(FILE * f)
 						err(1, NULL);
 					}
 
-					if (fread(pPatch->pRPN, sizeof(UBYTE),
+					if (fread(pPatch->pRPN, sizeof(uint8_t),
 					    pPatch->nRPNSize, f) != pPatch->nRPNSize) {
 						errx(1, "Read error.");
 					}

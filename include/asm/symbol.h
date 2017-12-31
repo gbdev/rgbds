@@ -1,6 +1,8 @@
 #ifndef RGBDS_SYMBOL_H
 #define RGBDS_SYMBOL_H
 
+#include <stdint.h>
+
 #include "types.h"
 
 #define HASHSIZE (1 << 16)
@@ -38,7 +40,7 @@ struct sSymbol {
 					 * not be changed during linking */
 
 ULONG calchash(char *s);
-void sym_SetExportAll(BBOOL set);
+void sym_SetExportAll(uint8_t set);
 void sym_PrepPass1(void);
 void sym_PrepPass2(void);
 void sym_AddLocalReloc(char *tzSym);

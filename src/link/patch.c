@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,7 +87,7 @@ SLONG
 calcrpn(struct sPatch * pPatch)
 {
 	SLONG t, size;
-	UBYTE *rpn;
+	uint8_t *rpn;
 
 	rpnp = 0;
 
@@ -232,7 +233,7 @@ Patch(void)
 				if (t >= -128 && t <= 255) {
 					t &= 0xFF;
 					pSect->pData[pPatch->nOffset] =
-					    (UBYTE) t;
+					    (uint8_t) t;
 				} else {
 					errx(1,
 					    "%s(%ld) : Value must be 8-bit",

@@ -3,6 +3,7 @@
  */
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -814,7 +815,7 @@ sym_AddMacro(char *tzSym)
 /*
  * Set whether to export all relocable symbols by default
  */
-void sym_SetExportAll(BBOOL set) {
+void sym_SetExportAll(uint8_t set) {
 	exportall = set;
 }
 

@@ -1,12 +1,14 @@
 #ifndef RGBDS_ASM_OUTPUT_H
 #define RGBDS_ASM_OUTPUT_H
 
+#include <stdint.h>
+
 #include "asm/rpn.h"
 #include "types.h"
 
 struct Section {
 	char *pzName;
-	UBYTE nType;
+	uint8_t nType;
 	ULONG nPC;
 	ULONG nOrg;
 	ULONG nBank;
@@ -14,7 +16,7 @@ struct Section {
 	struct Section *pNext;
 	struct Patch *pPatches;
 	struct Charmap *charmap;
-	UBYTE *tData;
+	uint8_t *tData;
 };
 
 void out_PrepPass2(void);

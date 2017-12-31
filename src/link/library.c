@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +8,7 @@
 #include "link/mylink.h"
 #include "link/main.h"
 
-static BBOOL
+static uint8_t
 symboldefined(char *name)
 {
 	struct sSection *pSect;
@@ -31,7 +32,7 @@ symboldefined(char *name)
 	return (0);
 }
 
-static BBOOL
+static uint8_t
 addmodulecontaining(char *name)
 {
 	struct sSection **ppLSect;

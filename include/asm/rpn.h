@@ -1,9 +1,11 @@
 #ifndef RGBDS_ASM_RPN_H
 #define RGBDS_ASM_RPN_H
 
+#include <stdint.h>
+
 struct Expression {
 	SLONG nVal;
-	UBYTE tRPN[256];
+	uint8_t tRPN[256];
 	ULONG nRPNLength;
 	ULONG nRPNOut;
 	ULONG isReloc;
@@ -73,7 +75,7 @@ void rpn_HIGH(struct Expression * expr, struct Expression * src);
 void rpn_LOW(struct Expression * expr, struct Expression * src);
 void rpn_UNNEG(struct Expression * expr, struct Expression * src);
 void rpn_UNNOT(struct Expression * expr, struct Expression * src);
-UWORD rpn_PopByte(struct Expression * expr);
+uint16_t rpn_PopByte(struct Expression * expr);
 void rpn_Bank(struct Expression * expr, char *tzSym);
 void rpn_Reset(struct Expression * expr);
 void rpn_CheckHRAM(struct Expression * expr, struct Expression * src1);

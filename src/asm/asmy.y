@@ -1,6 +1,7 @@
 %{
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,7 +104,7 @@ ULONG	str2int( char *s )
 	while( *s )
 	{
 		r<<=8;
-		r|=(UBYTE)(*s++);
+		r|=(uint8_t)(*s++);
 	}
 	return( r );
 }
@@ -116,7 +117,7 @@ ULONG	str2int2( char *s, int length )
 	while(i < length)
 	{
 		r<<=8;
-		r|=(UBYTE)(s[i]);
+		r|=(uint8_t)(s[i]);
 		i++;
 	}
 	return( r );
