@@ -1220,7 +1220,7 @@ const			:	T_ID							{ $$ = sym_GetConstantValue($1); }
 					}
 				|	T_OP_ADD const %prec NEG		{ $$ = +$2; }
 				|	T_OP_SUB const %prec NEG		{ $$ = -$2; }
-				|	T_OP_NOT const %prec NEG		{ $$ = 0xFFFFFFFF^$2; }
+				|	T_OP_NOT const %prec NEG		{ $$ = ~$2; }
 				|	T_OP_ROUND '(' const ')'		{ $$ = math_Round($3); }
 				|	T_OP_CEIL '(' const ')'			{ $$ = math_Ceil($3); }
 				|	T_OP_FLOOR '(' const ')'		{ $$ = math_Floor($3); }

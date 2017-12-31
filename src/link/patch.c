@@ -128,7 +128,7 @@ calcrpn(struct sPatch * pPatch)
 			rpnpush(rpnpop() ^ rpnpop());
 			break;
 		case RPN_UNNOT:
-			rpnpush(rpnpop() ^ 0xFFFFFFFF);
+			rpnpush(~rpnpop());
 			break;
 		case RPN_LOGAND:
 			rpnpush(rpnpop() && rpnpop());

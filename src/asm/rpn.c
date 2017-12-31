@@ -362,6 +362,6 @@ void
 rpn_UNNOT(struct Expression * expr, struct Expression * src)
 {
 	*expr = *src;
-	expr->nVal = expr->nVal ^ 0xFFFFFFFF;
+	expr->nVal = ~expr->nVal;
 	pushbyte(expr, RPN_UNNOT);
 }
