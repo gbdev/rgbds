@@ -384,7 +384,7 @@ obj_Readfile(char *tzObjectfile)
 int32_t
 file_Length(FILE * f)
 {
-	ULONG r, p;
+	uint32_t r, p;
 
 	p = ftell(f);
 	fseek(f, 0, SEEK_END);

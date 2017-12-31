@@ -24,9 +24,9 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 int32_t nLineNo;
-ULONG nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
+uint32_t nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
 bool skipElif;
-ULONG unionStart[128], unionSize[128];
+uint32_t unionStart[128], unionSize[128];
 
 extern int yydebug;
 
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 	timespent = ((double)(nEndClock - nStartClock))
 	    / (double)CLOCKS_PER_SEC;
 	if (CurrentOptions.verbose) {
-		printf("Success! %ld lines in %d.%02d seconds ", nTotalLines,
+		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
 		    (int) timespent, ((int) (timespent * 100.0)) % 100);
 		if (timespent == 0)
 			printf("(INFINITY lines/minute)\n");

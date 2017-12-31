@@ -4,19 +4,17 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "types.h"
-
 #define LEXHASHSIZE (1 << 11)
 #define MAXSTRLEN 255
 
 struct sLexInitString {
 	char *tzName;
-	ULONG nToken;
+	uint32_t nToken;
 };
 
 struct sLexFloat {
-	ULONG(*Callback) (char *s, ULONG size);
-	ULONG nToken;
+	uint32_t(*Callback) (char *s, uint32_t size);
+	uint32_t nToken;
 };
 
 struct yy_buffer_state {
@@ -24,8 +22,8 @@ struct yy_buffer_state {
 	char *pBufferStart; // address where the data is initially written
 	                    // after the "safety margin"
 	char *pBuffer;
-	ULONG nBufferSize;
-	ULONG oAtLineStart;
+	uint32_t nBufferSize;
+	uint32_t oAtLineStart;
 };
 
 enum eLexerState {
@@ -39,24 +37,24 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
 extern void yy_set_state(enum eLexerState i);
 extern YY_BUFFER_STATE yy_create_buffer(FILE * f);
-extern YY_BUFFER_STATE yy_scan_bytes(char *mem, ULONG size);
+extern YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size);
 extern void yy_delete_buffer(YY_BUFFER_STATE);
 extern void yy_switch_to_buffer(YY_BUFFER_STATE);
-extern ULONG lex_FloatAlloc(struct sLexFloat * tok);
-extern void lex_FloatAddRange(ULONG id, uint16_t start, uint16_t end);
-extern void lex_FloatDeleteRange(ULONG id, uint16_t start, uint16_t end);
-extern void lex_FloatAddFirstRange(ULONG id, uint16_t start, uint16_t end);
-extern void lex_FloatDeleteFirstRange(ULONG id, uint16_t start, uint16_t end);
-extern void lex_FloatAddSecondRange(ULONG id, uint16_t start, uint16_t end);
-extern void lex_FloatDeleteSecondRange(ULONG id, uint16_t start, uint16_t end);
+extern uint32_t lex_FloatAlloc(struct sLexFloat * tok);
+extern void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end);
+extern void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end);
+extern void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end);
+extern void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end);
+extern void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end);
+extern void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end);
 extern void lex_Init(void);
 extern void lex_AddStrings(struct sLexInitString * lex);
-extern void lex_SetBuffer(char *buffer, ULONG len);
-extern ULONG yylex(void);
+extern void lex_SetBuffer(char *buffer, uint32_t len);
+extern uint32_t yylex(void);
 extern void yyunput(char c);
 extern void yyunputstr(char *s);
-extern void yyskipbytes(ULONG count);
-extern void yyunputbytes(ULONG count);
+extern void yyskipbytes(uint32_t count);
+extern void yyunputbytes(uint32_t count);
 
 extern YY_BUFFER_STATE pCurrentBuffer;
 

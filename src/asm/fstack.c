@@ -9,33 +9,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/symbol.h"
 #include "asm/fstack.h"
-#include "types.h"
-#include "asm/main.h"
 #include "asm/lexer.h"
+#include "asm/main.h"
+#include "asm/symbol.h"
+
 #include "extern/err.h"
 #include "extern/strl.h"
 
-#ifndef PATH_MAX
-#define PATH_MAX 256
-#endif
+#include "types.h"
 
 struct sContext *pFileStack;
 struct sSymbol *pCurrentMacro;
 YY_BUFFER_STATE CurrentFlexHandle;
 FILE *pCurrentFile;
-ULONG nCurrentStatus;
+uint32_t nCurrentStatus;
 char tzCurrentFileName[_MAX_PATH + 1];
 char IncludePaths[MAXINCPATHS][_MAX_PATH + 1];
 int32_t NextIncPath = 0;
-ULONG nMacroCount;
+uint32_t nMacroCount;
 
 char *pCurrentREPTBlock;
-ULONG nCurrentREPTBlockSize;
-ULONG nCurrentREPTBlockCount;
+uint32_t nCurrentREPTBlockSize;
+uint32_t nCurrentREPTBlockCount;
 
-ULONG ulMacroReturnValue;
+uint32_t ulMacroReturnValue;
 
 extern char *tzObjectname;
 extern FILE *dependfile;
@@ -228,7 +226,7 @@ fstk_AddIncludePath(char *s)
 FILE *
 fstk_FindFile(char *fname)
 {
-	char path[PATH_MAX];
+	char path[_MAX_PATH];
 	int i;
 	FILE *f;
 
@@ -292,7 +290,7 @@ fstk_RunInclude(char *tzFileName)
 /*
  * Set up a macro for parsing
  */
-ULONG
+uint32_t
 fstk_RunMacro(char *s)
 {
 	struct sSymbol *sym;
@@ -362,7 +360,7 @@ fstk_RunString(char *s)
  * Set up a repeat block for parsing
  */
 void
-fstk_RunRept(ULONG count)
+fstk_RunRept(uint32_t count)
 {
 	if (count) {
 		pushcontext();

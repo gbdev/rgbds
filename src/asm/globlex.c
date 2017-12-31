@@ -108,24 +108,20 @@ ascii2bin(char *s)
 	return (result);
 }
 
-ULONG
-ParseFixedPoint(char *s, ULONG size)
+uint32_t
+ParseFixedPoint(char *s, uint32_t size)
 {
-	//char dest[256];
-	ULONG i = 0, dot = 0;
+	uint32_t i = 0, dot = 0;
 
 	while (size && dot != 2) {
 		if (s[i] == '.')
 			dot += 1;
 
 		if (dot < 2) {
-			//dest[i] = s[i];
 			size -= 1;
 			i += 1;
 		}
 	}
-
-	//dest[i] = 0;
 
 	yyunputbytes(size);
 
@@ -134,8 +130,8 @@ ParseFixedPoint(char *s, ULONG size)
 	return (1);
 }
 
-ULONG
-ParseNumber(char *s, ULONG size)
+uint32_t
+ParseNumber(char *s, uint32_t size)
 {
 	char dest[256];
 
@@ -146,8 +142,8 @@ ParseNumber(char *s, ULONG size)
 	return (1);
 }
 
-ULONG
-ParseSymbol(char *src, ULONG size)
+uint32_t
+ParseSymbol(char *src, uint32_t size)
 {
 	char dest[MAXSYMLEN + 1];
 	int copied = 0, size_backup = size;
@@ -204,8 +200,8 @@ ParseSymbol(char *src, ULONG size)
 	}
 }
 
-ULONG
-PutMacroArg(char *src, ULONG size)
+uint32_t
+PutMacroArg(char *src, uint32_t size)
 {
 	char *s;
 
@@ -222,8 +218,8 @@ PutMacroArg(char *src, ULONG size)
 	return (0);
 }
 
-ULONG
-PutUniqueArg(char *src, ULONG size)
+uint32_t
+PutUniqueArg(char *src, uint32_t size)
 {
 	char *s;
 
@@ -399,7 +395,7 @@ struct sLexFloat tMacroUniqueToken = {
 void
 setuplex(void)
 {
-	ULONG id;
+	uint32_t id;
 
 	lex_Init();
 	lex_AddStrings(staticstrings);

@@ -6,12 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "asm/mylink.h"
-#include "types.h"
-#include "asm/symbol.h"
 #include "asm/asm.h"
 #include "asm/main.h"
+#include "asm/mylink.h"
 #include "asm/rpn.h"
+#include "asm/symbol.h"
 
 void
 mergetwoexpressions(struct Expression * expr, struct Expression * src1,
@@ -59,7 +58,7 @@ rpn_PopByte(struct Expression * expr)
 /*
  * Determine if the current expression is relocatable
  */
-ULONG
+uint32_t
 rpn_isReloc(struct Expression * expr)
 {
 	return (expr->isReloc);
@@ -68,7 +67,7 @@ rpn_isReloc(struct Expression * expr)
 /*
  * Determine if the current expression can be pc-relative
  */
-ULONG
+uint32_t
 rpn_isPCRelative(struct Expression * expr)
 {
 	return (expr->isPCRel);
@@ -78,7 +77,7 @@ rpn_isPCRelative(struct Expression * expr)
  * Add symbols, constants and operators to expression
  */
 void
-rpn_Number(struct Expression * expr, ULONG i)
+rpn_Number(struct Expression * expr, uint32_t i)
 {
 	rpn_Reset(expr);
 	pushbyte(expr, RPN_CONST);

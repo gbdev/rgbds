@@ -22,10 +22,13 @@
 #include <unistd.h>
 
 #include "extern/err.h"
+
 #include "link/mylink.h"
 #include "link/script.h"
 
 #include "parser.h"
+
+#include "types.h"
 
 extern int yyparse();
 

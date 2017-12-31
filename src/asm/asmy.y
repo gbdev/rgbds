@@ -18,11 +18,11 @@
 #include "asm/main.h"
 #include "asm/lexer.h"
 
-char	*tzNewMacro;
-ULONG	ulNewMacroSize;
+char *tzNewMacro;
+uint32_t ulNewMacroSize;
 
 void
-bankrangecheck(char *name, ULONG secttype, int32_t org, int32_t bank)
+bankrangecheck(char *name, uint32_t secttype, int32_t org, int32_t bank)
 {
 	int32_t minbank = 0, maxbank = 0;
 	char *stype = NULL;
@@ -81,8 +81,8 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 
 		length = i;
 	} else {
-		ULONG value = sym_GetConstantValue(sym);
-		int fullLength = snprintf(dest, maxLength + 1, "$%lX", value);
+		uint32_t value = sym_GetConstantValue(sym);
+		int fullLength = snprintf(dest, maxLength + 1, "$%X", value);
 
 		if (fullLength < 0) {
 			fatalerror("snprintf encoding error");
@@ -98,9 +98,9 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 	return length;
 }
 
-ULONG	str2int( char *s )
+uint32_t str2int( char *s )
 {
-	ULONG r=0;
+	uint32_t r=0;
 	while( *s )
 	{
 		r<<=8;
@@ -109,10 +109,10 @@ ULONG	str2int( char *s )
 	return( r );
 }
 
-ULONG	str2int2( char *s, int length )
+uint32_t str2int2( char *s, int length )
 {
 	int i;
-	ULONG r=0;
+	uint32_t r=0;
 	i = (length - 4 < 0 ? 0 : length - 4);
 	while(i < length)
 	{
@@ -123,22 +123,22 @@ ULONG	str2int2( char *s, int length )
 	return( r );
 }
 
-ULONG	isWhiteSpace( char s )
+uint32_t isWhiteSpace( char s )
 {
 	return( s==' ' || s=='\t' || s=='\0' || s=='\n' );
 }
 
-ULONG	isRept( char *s )
+uint32_t isRept( char *s )
 {
 	return( (strncasecmp(s,"REPT",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
 }
 
-ULONG	isEndr( char *s )
+uint32_t isEndr( char *s )
 {
 	return( (strncasecmp(s,"Endr",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
 }
 
-void	copyrept( void )
+void copyrept( void )
 {
 	int32_t	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
@@ -193,7 +193,7 @@ void	copyrept( void )
 	ulNewMacroSize=len;
 
 	if ((tzNewMacro = malloc(ulNewMacroSize + 1)) != NULL) {
-		ULONG i;
+		uint32_t i;
 
 		tzNewMacro[ulNewMacroSize]=0;
 		for( i=0; i<ulNewMacroSize; i+=1 )
@@ -208,17 +208,17 @@ void	copyrept( void )
 
 }
 
-ULONG	isMacro( char *s )
+uint32_t isMacro( char *s )
 {
 	return( (strncasecmp(s,"MACRO",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[5]) );
 }
 
-ULONG	isEndm( char *s )
+uint32_t isEndm( char *s )
 {
 	return( (strncasecmp(s,"Endm",4)==0) && isWhiteSpace(*(s-1)) && isWhiteSpace(s[4]) );
 }
 
-void	copymacro( void )
+void copymacro(void)
 {
 	int32_t	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
@@ -274,7 +274,7 @@ void	copymacro( void )
 
 	if( (tzNewMacro=(char *)malloc(ulNewMacroSize+2))!=NULL )
 	{
-		ULONG i;
+		uint32_t i;
 
 		tzNewMacro[ulNewMacroSize]='\n';
 		tzNewMacro[ulNewMacroSize+1]=0;
@@ -290,22 +290,22 @@ void	copymacro( void )
 	yyskipbytes( ulNewMacroSize+4 );
 }
 
-ULONG	isIf(char *s)
+uint32_t	isIf(char *s)
 {
 	return((strncasecmp(s,"If",2) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[2]));
 }
 
-ULONG	isElif(char *s)
+uint32_t	isElif(char *s)
 {
 	return((strncasecmp(s,"Elif",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
 }
 
-ULONG	isElse(char *s)
+uint32_t	isElse(char *s)
 {
 	return((strncasecmp(s,"Else",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
 }
 
-ULONG	isEndc(char *s)
+uint32_t	isEndc(char *s)
 {
 	return((strncasecmp(s,"Endc",4) == 0) && isWhiteSpace(s[-1]) && isWhiteSpace(s[4]));
 }
@@ -436,25 +436,25 @@ void startUnion() {
 	if (!pCurrentSection) {
 		fatalerror("UNIONs must be inside a SECTION");
 	}
-	
-	ULONG unionIndex = nUnionDepth;
+
+	uint32_t unionIndex = nUnionDepth;
 	nUnionDepth++;
 	if (nUnionDepth > MAXUNIONS) {
 		fatalerror("Too many nested UNIONs");
 	}
-	
+
 	unionStart[unionIndex] = nPC;
 	unionSize[unionIndex] = 0;
 }
 
 void updateUnion() {
-	ULONG unionIndex = nUnionDepth - 1;
-	ULONG size = nPC - unionStart[unionIndex];
-	
+	uint32_t unionIndex = nUnionDepth - 1;
+	uint32_t size = nPC - unionStart[unionIndex];
+
 	if (size > unionSize[unionIndex]) {
 		unionSize[unionIndex] = size;
 	}
-	
+
 	nPC = unionStart[unionIndex];
 	pCurrentSection->nPC = unionStart[unionIndex];
 	pPCSymbol->nValue = unionStart[unionIndex];
@@ -794,9 +794,9 @@ endu			:	T_POP_ENDU {
 						if (nUnionDepth <= 0) {
 							fatalerror("Found ENDU outside of a UNION construct");
 						}
-						
+
 						updateUnion();
-	
+
 						nUnionDepth--;
 						nPC = unionStart[nUnionDepth] + unionSize[nUnionDepth];
 						pCurrentSection->nPC = nPC;
@@ -844,9 +844,8 @@ import_list		:	import_list_entry
 ;
 
 import_list_entry	:	T_ID	{
-						/* This is done automatically if
-						 * the label isn't found in the
-						 * list of defined symbols. */
+						/* This is done automatically if the label isn't found
+						 * in the list of defined symbols. */
 						if( nPass==1 )
 							warning("IMPORT is a deprecated keyword with no effect: %s", $1);
 					}
@@ -1090,7 +1089,14 @@ relocconst		:	T_ID
 				|	T_NUMBER
 						{ rpn_Number(&$$,$1);	$$.nVal = $1; }
 				|	string
-						{ char *s; int length; ULONG r; s = $1; length = charmap_Convert(&s); r = str2int2(s, length); free(s); rpn_Number(&$$,r); $$.nVal=r; }
+						{
+							char *s = $1;
+							int length = charmap_Convert(&s);
+							uint32_t r = str2int2(s, length);
+							free(s);
+							rpn_Number(&$$,r);
+							$$.nVal=r;
+						}
 				|	T_OP_LOGICNOT relocconst %prec NEG
 						{ rpn_LOGNOT(&$$,&$2); }
 				|	relocconst T_OP_LOGICOR relocconst
@@ -1791,7 +1797,6 @@ T_MODE_H		:	T_TOKEN_H
 T_MODE_L		:	T_TOKEN_L
 				|	T_OP_LOW '(' T_MODE_HL ')'
 ;
-
 
 ccode			:	T_CC_NZ		{ $$ = CC_NZ; }
 				|	T_CC_Z		{ $$ = CC_Z; }

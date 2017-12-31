@@ -6,19 +6,19 @@
 #include <ctype.h>
 
 #include "asm/asm.h"
+#include "asm/fstack.h"
 #include "asm/lexer.h"
-#include "types.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
-#include "asm/fstack.h"
+
 #include "extern/err.h"
 
 #include "asmy.h"
 
 struct sLexString {
 	char *tzName;
-	ULONG nToken;
-	ULONG nNameLength;
+	uint32_t nToken;
+	uint32_t nNameLength;
 	struct sLexString *pNext;
 };
 #define pLexBufferRealStart (pCurrentBuffer->pBufferRealStart)
@@ -32,12 +32,12 @@ extern size_t symvaluetostring(char *dest, size_t maxLength, char *sym);
 struct sLexFloat tLexFloat[32];
 struct sLexString *tLexHash[LEXHASHSIZE];
 YY_BUFFER_STATE pCurrentBuffer;
-ULONG nLexMaxLength; // max length of all keywords and operators
+uint32_t nLexMaxLength; // max length of all keywords and operators
 
-ULONG tFloatingSecondChar[256];
-ULONG tFloatingFirstChar[256];
-ULONG tFloatingChars[256];
-ULONG nFloating;
+uint32_t tFloatingSecondChar[256];
+uint32_t tFloatingFirstChar[256];
+uint32_t tFloatingChars[256];
+uint32_t nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
 void
@@ -59,13 +59,13 @@ lowerstring(char *s)
 }
 
 void
-yyskipbytes(ULONG count)
+yyskipbytes(uint32_t count)
 {
 	pLexBuffer += count;
 }
 
 void
-yyunputbytes(ULONG count)
+yyunputbytes(uint32_t count)
 {
 	pLexBuffer -= count;
 }
@@ -113,7 +113,7 @@ yy_delete_buffer(YY_BUFFER_STATE buf)
 }
 
 YY_BUFFER_STATE
-yy_scan_bytes(char *mem, ULONG size)
+yy_scan_bytes(char *mem, uint32_t size)
 {
 	YY_BUFFER_STATE pBuffer;
 
@@ -139,7 +139,7 @@ yy_create_buffer(FILE * f)
 	YY_BUFFER_STATE pBuffer;
 
 	if ((pBuffer = malloc(sizeof(struct yy_buffer_state))) != NULL) {
-		ULONG size;
+		uint32_t size;
 
 		fseek(f, 0, SEEK_END);
 		size = ftell(f);
@@ -148,7 +148,7 @@ yy_create_buffer(FILE * f)
 		if ((pBuffer->pBufferRealStart =
 			malloc(size + 2 + SAFETYMARGIN)) != NULL) {
 			char *mem;
-			ULONG instring = 0;
+			uint32_t instring = 0;
 
 			pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 			pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
@@ -199,7 +199,7 @@ yy_create_buffer(FILE * f)
 	return (NULL);
 }
 
-ULONG
+uint32_t
 lex_FloatAlloc(struct sLexFloat *token)
 {
 	tLexFloat[nFloating] = *token;
@@ -221,7 +221,7 @@ lex_CheckCharacterRange(uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatDeleteRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -232,7 +232,7 @@ lex_FloatDeleteRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatAddRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -243,7 +243,7 @@ lex_FloatAddRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatDeleteFirstRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -254,7 +254,7 @@ lex_FloatDeleteFirstRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatAddFirstRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -265,7 +265,7 @@ lex_FloatAddFirstRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatDeleteSecondRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -276,7 +276,7 @@ lex_FloatDeleteSecondRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 void
-lex_FloatAddSecondRange(ULONG id, uint16_t start, uint16_t end)
+lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -287,7 +287,7 @@ lex_FloatAddSecondRange(ULONG id, uint16_t start, uint16_t end)
 }
 
 struct sLexFloat *
-lexgetfloat(ULONG nFloatMask)
+lexgetfloat(uint32_t nFloatMask)
 {
 	if (nFloatMask == 0) {
 		fatalerror("Internal error in lexgetfloat");
@@ -303,10 +303,10 @@ lexgetfloat(ULONG nFloatMask)
 	return (&tLexFloat[i]);
 }
 
-ULONG
+uint32_t
 lexcalchash(char *s)
 {
-	ULONG hash = 0;
+	uint32_t hash = 0;
 
 	while (*s) {
 		hash = (hash * 283) ^ toupper(*s++);
@@ -318,7 +318,7 @@ lexcalchash(char *s)
 void
 lex_Init(void)
 {
-	ULONG i;
+	uint32_t i;
 
 	for (i = 0; i < LEXHASHSIZE; i++) {
 		tLexHash[i] = NULL;
@@ -339,7 +339,7 @@ lex_AddStrings(struct sLexInitString * lex)
 {
 	while (lex->tzName) {
 		struct sLexString **ppHash;
-		ULONG hash;
+		uint32_t hash;
 
 		ppHash = &tLexHash[hash = lexcalchash(lex->tzName)];
 		while (*ppHash)
@@ -377,14 +377,14 @@ lex_AddStrings(struct sLexInitString * lex)
  * buffer will have their bits set in the float mask.
  */
 void
-yylex_GetFloatMaskAndFloatLen(ULONG *pnFloatMask, ULONG *pnFloatLen)
+yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 {
 	// Note that '\0' should always have a bit mask of 0 in the "floating"
 	// tables, so it doesn't need to be checked for separately.
 
 	char *s = pLexBuffer;
-	ULONG nOldFloatMask = 0;
-	ULONG nFloatMask = tFloatingFirstChar[(int)*s];
+	uint32_t nOldFloatMask = 0;
+	uint32_t nFloatMask = tFloatingFirstChar[(int)*s];
 
 	if (nFloatMask != 0) {
 		s++;
@@ -399,7 +399,7 @@ yylex_GetFloatMaskAndFloatLen(ULONG *pnFloatMask, ULONG *pnFloatLen)
 	}
 
 	*pnFloatMask = nOldFloatMask;
-	*pnFloatLen = (ULONG)(s - pLexBuffer);
+	*pnFloatLen = (uint32_t)(s - pLexBuffer);
 }
 
 /*
@@ -410,8 +410,8 @@ yylex_GetLongestFixed()
 {
 	struct sLexString *pLongestFixed = NULL;
 	char *s = pLexBuffer;
-	ULONG hash = 0;
-	ULONG length = 0;
+	uint32_t hash = 0;
+	uint32_t length = 0;
 
 	while (length < nLexMaxLength && *s) {
 		hash = (hash * 283) ^ toupper(*s);
@@ -605,12 +605,12 @@ yylex_ReadQuotedString()
 		fatalerror("Unterminated string");
 }
 
-ULONG
+uint32_t
 yylex_NORMAL()
 {
 	struct sLexString *pLongestFixed = NULL;
-	ULONG nFloatMask, nFloatLen;
-	ULONG linestart = AtLineStart;
+	uint32_t nFloatMask, nFloatLen;
+	uint32_t linestart = AtLineStart;
 
 	AtLineStart = 0;
 
@@ -682,7 +682,7 @@ scanagain:
 	return pLongestFixed->nToken;
 }
 
-ULONG
+uint32_t
 yylex_MACROARGS()
 {
 	size_t index = 0;
@@ -758,7 +758,7 @@ yylex_MACROARGS()
 	return 0;
 }
 
-ULONG
+uint32_t
 yylex(void)
 {
 	switch (lexerstate) {

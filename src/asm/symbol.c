@@ -54,7 +54,7 @@ void helper_RemoveLeadingZeros(char * string){
 int32_t
 Callback_NARG(struct sSymbol * sym)
 {
-	ULONG i = 0;
+	uint32_t i = 0;
 
 	while (currentmacroargs[i] && i < MAXMACROARGS)
 		i += 1;
@@ -83,10 +83,10 @@ getvaluefield(struct sSymbol * sym)
 /*
  * Calculate the hash value for a string
  */
-ULONG
+uint32_t
 calchash(char *s)
 {
-	ULONG hash = 5381;
+	uint32_t hash = 5381;
 
 	while (*s != 0)
 		hash = (hash * 33) ^ (*s++);
@@ -101,7 +101,7 @@ struct sSymbol *
 createsymbol(char *s)
 {
 	struct sSymbol **ppsym;
-	ULONG hash;
+	uint32_t hash;
 
 	hash = calchash(s);
 	ppsym = &(tHashedSymbols[hash]);
@@ -232,7 +232,7 @@ sym_Purge(char *tzName)
 /*
  * Determine if a symbol has been defined
  */
-ULONG
+uint32_t
 sym_isConstDefined(char *tzName)
 {
 	struct sSymbol *psym, *pscope;
@@ -256,7 +256,7 @@ sym_isConstDefined(char *tzName)
 	return (0);
 }
 
-ULONG
+uint32_t
 sym_isDefined(char *tzName)
 {
 	struct sSymbol *psym, *pscope;
@@ -277,7 +277,7 @@ sym_isDefined(char *tzName)
 /*
  * Determine if the symbol is a constant
  */
-ULONG
+uint32_t
 sym_isConstant(char *s)
 {
 	struct sSymbol *psym, *pscope;
@@ -314,7 +314,7 @@ sym_GetStringValue(char *tzSym)
 /*
  * Return a constant symbols value
  */
-ULONG
+uint32_t
 sym_GetConstantValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
@@ -340,7 +340,7 @@ sym_GetConstantValue(char *s)
 /*
  * Return a symbols value... "estimated" if not defined yet
  */
-ULONG
+uint32_t
 sym_GetValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
@@ -379,7 +379,7 @@ sym_GetValue(char *s)
 /*
  * Return a defined symbols value... aborts if not defined yet
  */
-ULONG
+uint32_t
 sym_GetDefinedValue(char *s)
 {
 	struct sSymbol *psym, *pscope;
@@ -490,11 +490,11 @@ sym_AddNewMacroArg(char *s)
 }
 
 void
-sym_SetMacroArgID(ULONG nMacroCount)
+sym_SetMacroArgID(uint32_t nMacroCount)
 {
 	char s[256];
 
-	sprintf(s, "_%ld", nMacroCount);
+	sprintf(s, "_%u", nMacroCount);
 	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
@@ -582,7 +582,7 @@ sym_AddString(char *tzSym, char *tzValue)
 /*
  * check if symbol is a string equated symbol
  */
-ULONG
+uint32_t
 sym_isString(char *tzSym)
 {
 	struct sSymbol *pSym;

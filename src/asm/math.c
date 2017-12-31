@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "types.h"
 #include "asm/mymath.h"
 #include "asm/symbol.h"
 

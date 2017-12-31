@@ -14,24 +14,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "types.h"
-#include "asm/symbol.h"
-
 #include "asm/localasm.h"
+#include "asm/symbol.h"
 
 #define MAXUNIONS		128
 #define MAXMACROARGS	256
 #define MAXINCPATHS		128
 
 extern int32_t nLineNo;
-extern ULONG nTotalLines;
-extern ULONG nPC;
-extern ULONG nPass;
-extern ULONG nIFDepth;
+extern uint32_t nTotalLines;
+extern uint32_t nPC;
+extern uint32_t nPass;
+extern uint32_t nIFDepth;
 extern bool skipElif;
-extern ULONG nUnionDepth;
-extern ULONG unionStart[MAXUNIONS];
-extern ULONG unionSize[MAXUNIONS];
+extern uint32_t nUnionDepth;
+extern uint32_t unionStart[MAXUNIONS];
+extern uint32_t unionSize[MAXUNIONS];
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern struct sSymbol *tHashedSymbols[HASHSIZE];

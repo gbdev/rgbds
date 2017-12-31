@@ -11,15 +11,15 @@
 struct sSymbol {
 	char tzName[MAXSYMLEN + 1];
 	int32_t nValue;
-	ULONG nType;
+	uint32_t nType;
 	struct sSymbol *pScope;
 	struct sSymbol *pNext;
 	struct Section *pSection;
-	ULONG ulMacroSize;
+	uint32_t ulMacroSize;
 	char *pMacro;
 	int32_t(*Callback) (struct sSymbol *);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
-	ULONG nFileLine; /* Line where the symbol was defined. */
+	uint32_t nFileLine; /* Line where the symbol was defined. */
 };
 #define SYMF_RELOC		0x001	/* symbol will be reloc'ed during
 					 * linking, it's absolute value is
@@ -39,7 +39,7 @@ struct sSymbol {
 #define SYMF_CONST		0x200	/* symbol has a constant value, will
 					 * not be changed during linking */
 
-ULONG calchash(char *s);
+uint32_t calchash(char *s);
 void sym_SetExportAll(uint8_t set);
 void sym_PrepPass1(void);
 void sym_PrepPass2(void);
@@ -57,23 +57,23 @@ void sym_FreeCurrentMacroArgs(void);
 void sym_AddEqu(char *tzSym, int32_t value);
 void sym_AddSet(char *tzSym, int32_t value);
 void sym_Init(void);
-ULONG sym_GetConstantValue(char *s);
-ULONG sym_isConstant(char *s);
+uint32_t sym_GetConstantValue(char *s);
+uint32_t sym_isConstant(char *s);
 struct sSymbol *sym_FindSymbol(char *tzName);
 void sym_Global(char *tzSym);
 char *sym_FindMacroArg(int32_t i);
 char *sym_GetStringValue(char *tzSym);
 void sym_UseCurrentMacroArgs(void);
-void sym_SetMacroArgID(ULONG nMacroCount);
-ULONG sym_isString(char *tzSym);
+void sym_SetMacroArgID(uint32_t nMacroCount);
+uint32_t sym_isString(char *tzSym);
 void sym_AddMacro(char *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
 void sym_AddString(char *tzSym, char *tzValue);
-ULONG sym_GetValue(char *s);
-ULONG sym_GetDefinedValue(char *s);
-ULONG sym_isDefined(char *tzName);
+uint32_t sym_GetValue(char *s);
+uint32_t sym_GetDefinedValue(char *s);
+uint32_t sym_isDefined(char *tzName);
 void sym_Purge(char *tzName);
-ULONG sym_isConstDefined(char *tzName);
+uint32_t sym_isConstDefined(char *tzName);
 int sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
 
 #endif

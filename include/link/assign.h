@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "mylink.h"
-#include "types.h"
 
 enum eBankCount {
 	BANK_COUNT_ROM0 = 1,

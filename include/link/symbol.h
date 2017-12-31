@@ -3,11 +3,9 @@
 
 #include <stdint.h>
 
-#include "types.h"
-
 void sym_Init(void);
 void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,
-			char *tzObjFileName, char *tzFileName, ULONG nFileLine);
+			char *tzObjFileName, char *tzFileName, uint32_t nFileLine);
 int32_t sym_GetValue(char *tzName);
 int32_t sym_GetBank(char *tzName);
 

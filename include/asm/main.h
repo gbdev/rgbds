@@ -17,7 +17,7 @@ struct sOptions {
 };
 
 extern char *tzNewMacro;
-extern ULONG ulNewMacroSize;
+extern uint32_t ulNewMacroSize;
 extern int32_t nGBGfxID;
 extern int32_t nBinaryID;
 

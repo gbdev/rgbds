@@ -4,15 +4,14 @@
 #include <stdint.h>
 
 #include "asm/rpn.h"
-#include "types.h"
 
 struct Section {
 	char *pzName;
 	uint8_t nType;
-	ULONG nPC;
-	ULONG nOrg;
-	ULONG nBank;
-	ULONG nAlign;
+	uint32_t nPC;
+	uint32_t nOrg;
+	uint32_t nBank;
+	uint32_t nAlign;
 	struct Section *pNext;
 	struct Patch *pPatches;
 	struct Charmap *charmap;
@@ -21,9 +20,9 @@ struct Section {
 
 void out_PrepPass2(void);
 void out_SetFileName(char *s);
-void out_NewSection(char *pzName, ULONG secttype);
-void out_NewAbsSection(char *pzName, ULONG secttype, int32_t org, int32_t bank);
-void out_NewAlignedSection(char *pzName, ULONG secttype, int32_t alignment, int32_t bank);
+void out_NewSection(char *pzName, uint32_t secttype);
+void out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank);
+void out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment, int32_t bank);
 void out_AbsByte(int b);
 void out_AbsByteGroup(char *s, int length);
 void out_RelByte(struct Expression * expr);

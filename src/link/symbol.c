@@ -4,8 +4,10 @@
 #include <string.h>
 
 #include "extern/err.h"
+
 #include "link/main.h"
 #include "link/patch.h"
+
 #include "types.h"
 
 #define HASHSIZE 73
@@ -16,7 +18,7 @@ struct ISymbol {
 	int32_t nBank; /* -1 = constant */
 	char tzObjFileName[_MAX_PATH + 1]; /* Object file where the symbol was defined. */
 	char tzFileName[_MAX_PATH + 1]; /* Source file where the symbol was defined. */
-	ULONG nFileLine; /* Line where the symbol was defined. */
+	uint32_t nFileLine; /* Line where the symbol was defined. */
 	struct ISymbol *pNext;
 };
 
@@ -80,7 +82,7 @@ sym_GetBank(char *tzName)
 
 void
 sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank, char *tzObjFileName,
-		char *tzFileName, ULONG nFileLine)
+		char *tzFileName, uint32_t nFileLine)
 {
 	if (strcmp(tzName, "@") == 0)
 		return;

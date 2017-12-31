@@ -23,16 +23,16 @@ void out_SetCurrentSection(struct Section * pSect);
 
 struct Patch {
 	char tzFilename[_MAX_PATH + 1];
-	ULONG nLine;
-	ULONG nOffset;
+	uint32_t nLine;
+	uint32_t nOffset;
 	uint8_t nType;
-	ULONG nRPNSize;
+	uint32_t nRPNSize;
 	uint8_t *pRPN;
 	struct Patch *pNext;
 };
 
 struct PatchSymbol {
-	ULONG ID;
+	uint32_t ID;
 	struct sSymbol *pSymbol;
 	struct PatchSymbol *pNext;
 	struct PatchSymbol *pBucketNext; // next symbol in hash table bucket
@@ -80,8 +80,8 @@ out_PopSection(void)
 		fatalerror("No entries in the section stack");
 }
 
-ULONG
-getmaxsectionsize(ULONG secttype, char * sectname)
+uint32_t
+getmaxsectionsize(uint32_t secttype, char * sectname)
 {
 	switch (secttype)
 	{
@@ -101,11 +101,11 @@ getmaxsectionsize(ULONG secttype, char * sectname)
 /*
  * Count the number of symbols used in this object
  */
-ULONG
+uint32_t
 countsymbols(void)
 {
 	struct PatchSymbol *pSym;
-	ULONG count = 0;
+	uint32_t count = 0;
 
 	pSym = pPatchSymbols;
 
@@ -120,11 +120,11 @@ countsymbols(void)
 /*
  * Count the number of sections used in this object
  */
-ULONG
+uint32_t
 countsections(void)
 {
 	struct Section *pSect;
-	ULONG count = 0;
+	uint32_t count = 0;
 
 	pSect = pSectionList;
 
@@ -139,11 +139,11 @@ countsections(void)
 /*
  * Count the number of patches used in this object
  */
-ULONG
+uint32_t
 countpatches(struct Section * pSect)
 {
 	struct Patch *pPatch;
-	ULONG r = 0;
+	uint32_t r = 0;
 
 	pPatch = pSect->pPatches;
 	while (pPatch) {
@@ -158,7 +158,7 @@ countpatches(struct Section * pSect)
  * Write a long to a file (little-endian)
  */
 void
-fputlong(ULONG i, FILE * f)
+fputlong(uint32_t i, FILE * f)
 {
 	fputc(i, f);
 	fputc(i >> 8, f);
@@ -180,11 +180,11 @@ fputstring(char *s, FILE * f)
 /*
  * Return a section's ID
  */
-ULONG
+uint32_t
 getsectid(struct Section * pSect)
 {
 	struct Section *sec;
-	ULONG ID = 0;
+	uint32_t ID = 0;
 
 	sec = pSectionList;
 
@@ -196,7 +196,7 @@ getsectid(struct Section * pSect)
 	}
 
 	fatalerror("INTERNAL: Unknown section");
-	return ((ULONG) - 1);
+	return ((uint32_t) - 1);
 }
 
 /*
@@ -251,8 +251,8 @@ void
 writesymbol(struct sSymbol * pSym, FILE * f)
 {
 	char symname[MAXSYMLEN * 2 + 1];
-	ULONG type;
-	ULONG offset;
+	uint32_t type;
+	uint32_t offset;
 	int32_t sectid;
 
 	if (pSym->nType & SYMF_IMPORT) {
@@ -295,12 +295,12 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 /*
  * Add a symbol to the object
  */
-ULONG
+uint32_t
 addsymbol(struct sSymbol * pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
-	static ULONG nextID = 0;
-	ULONG hash;
+	static uint32_t nextID = 0;
+	uint32_t hash;
 
 	hash = calchash(pSym->tzName);
 	ppPSym = &(tHashedPatchSymbols[hash]);
@@ -369,13 +369,13 @@ allocpatch(void)
  * Create a new patch (includes the rpn expr)
  */
 void
-createpatch(ULONG type, struct Expression * expr)
+createpatch(uint32_t type, struct Expression * expr)
 {
 	struct Patch *pPatch;
 	uint16_t rpndata;
 	uint8_t rpnexpr[2048];
 	char tzSym[512];
-	ULONG rpnptr = 0, symptr;
+	uint32_t rpnptr = 0, symptr;
 
 	pPatch = allocpatch();
 	pPatch->nType = type;
@@ -396,7 +396,7 @@ createpatch(ULONG type, struct Expression * expr)
 			symptr = 0;
 			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0);
 			if (sym_isConstant(tzSym)) {
-				ULONG value;
+				uint32_t value;
 
 				value = sym_GetConstantValue(tzSym);
 				rpnexpr[rpnptr++] = RPN_CONST;
@@ -474,9 +474,9 @@ checkcodesection(void)
  * Check if the section has grown too much.
  */
 void
-checksectionoverflow(ULONG delta_size)
+checksectionoverflow(uint32_t delta_size)
 {
-	ULONG maxsize = getmaxsectionsize(pCurrentSection->nType,
+	uint32_t maxsize = getmaxsectionsize(pCurrentSection->nType,
 					  pCurrentSection->pzName);
 
 	if (pCurrentSection->nPC + delta_size > maxsize) {
@@ -564,7 +564,7 @@ out_SetFileName(char *s)
  * Find a section by name and type.  If it doesn't exist, create it
  */
 struct Section *
-out_FindSection(char *pzName, ULONG secttype, int32_t org, int32_t bank, int32_t alignment)
+out_FindSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank, int32_t alignment)
 {
 	struct Section *pSect, **ppSect;
 
@@ -574,9 +574,9 @@ out_FindSection(char *pzName, ULONG secttype, int32_t org, int32_t bank, int32_t
 	while (pSect) {
 		if (strcmp(pzName, pSect->pzName) == 0) {
 			if (secttype == pSect->nType
-			    && ((ULONG) org) == pSect->nOrg
-			    && ((ULONG) bank) == pSect->nBank
-			    && ((ULONG) alignment == pSect->nAlign)) {
+			    && ((uint32_t) org) == pSect->nOrg
+			    && ((uint32_t) bank) == pSect->nBank
+			    && ((uint32_t) alignment == pSect->nAlign)) {
 				return (pSect);
 			} else
 				fatalerror
@@ -603,7 +603,7 @@ out_FindSection(char *pzName, ULONG secttype, int32_t org, int32_t bank, int32_t
 			if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
 				/* It is only needed to allocate memory for ROM
 				 * sections. */
-				ULONG sectsize = getmaxsectionsize(secttype, pzName);
+				uint32_t sectsize = getmaxsectionsize(secttype, pzName);
 				if ((pSect->tData = malloc(sectsize)) == NULL)
 					fatalerror("Not enough memory for section");
 			}
@@ -637,7 +637,7 @@ out_SetCurrentSection(struct Section * pSect)
  * Set the current section by name and type
  */
 void
-out_NewSection(char *pzName, ULONG secttype)
+out_NewSection(char *pzName, uint32_t secttype)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1, 1));
 }
@@ -646,7 +646,7 @@ out_NewSection(char *pzName, ULONG secttype)
  * Set the current section by name and type
  */
 void
-out_NewAbsSection(char *pzName, ULONG secttype, int32_t org, int32_t bank)
+out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank, 1));
 }
@@ -655,7 +655,7 @@ out_NewAbsSection(char *pzName, ULONG secttype, int32_t org, int32_t bank)
  * Set the current section by name and type, using a given byte alignment
  */
 void
-out_NewAlignedSection(char *pzName, ULONG secttype, int32_t alignment, int32_t bank)
+out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment, int32_t bank)
 {
 	if (alignment < 0 || alignment > 16) {
 		yyerror("Alignment must be between 0-16 bits.");
@@ -782,7 +782,7 @@ out_AbsWord(int b)
 void
 out_RelWord(struct Expression * expr)
 {
-	ULONG b;
+	uint32_t b;
 
 	checkcodesection();
 	checksectionoverflow(2);

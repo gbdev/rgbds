@@ -13,8 +13,9 @@
 #include <stdio.h>
 
 #include "asm/asm.h"
-#include "types.h"
 #include "asm/lexer.h"
+
+#include "types.h"
 
 struct sContext {
 	YY_BUFFER_STATE FlexHandle;
@@ -23,11 +24,11 @@ struct sContext {
 	char tzFileName[_MAX_PATH + 1];
 	char *tzMacroArgs[MAXMACROARGS + 1];
 	int32_t nLine;
-	ULONG nStatus;
+	uint32_t nStatus;
 	FILE *pFile;
 	char *pREPTBlock;
-	ULONG nREPTBlockCount;
-	ULONG nREPTBlockSize;
+	uint32_t nREPTBlockCount;
+	uint32_t nREPTBlockSize;
 };
 
 void
@@ -37,8 +38,8 @@ void
 fstk_Init(char *);
 extern void fstk_Dump(void);
 extern void fstk_AddIncludePath(char *s);
-extern ULONG fstk_RunMacro(char *s);
-extern void fstk_RunRept(ULONG count);
+extern uint32_t fstk_RunMacro(char *s);
+extern void fstk_RunRept(uint32_t count);
 FILE *
 fstk_FindFile(char *);
 

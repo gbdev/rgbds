@@ -1,15 +1,10 @@
 #ifndef RGBDS_LINK_LINK_H
 #define RGBDS_LINK_LINK_H
 
-#ifndef _MAX_PATH
-#define _MAX_PATH	512
-#endif
-
 #include <stdint.h>
 
-#include "types.h"
-
 extern int32_t options;
+
 #define OPT_TINY		0x01
 #define OPT_SMART_C_LINK	0x02
 #define OPT_OVERLAY		0x04
@@ -93,7 +88,7 @@ struct sSymbol {
 	int32_t nOffset;
 	char *pzObjFileName; /* Object file where the symbol is located. */
 	char *pzFileName; /* Source file where the symbol was defined. */
-	ULONG nFileLine; /* Line where the symbol was defined. */
+	uint32_t nFileLine; /* Line where the symbol was defined. */
 };
 
 enum ePatchType {

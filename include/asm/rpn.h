@@ -4,18 +4,18 @@
 #include <stdint.h>
 
 struct Expression {
-	int32_t nVal;
-	uint8_t tRPN[256];
-	ULONG nRPNLength;
-	ULONG nRPNOut;
-	ULONG isReloc;
-	ULONG isPCRel;
+	int32_t  nVal;
+	uint8_t  tRPN[256];
+	uint32_t nRPNLength;
+	uint32_t nRPNOut;
+	uint32_t isReloc;
+	uint32_t isPCRel;
 };
 
-ULONG rpn_isReloc(struct Expression * expr);
-ULONG rpn_isPCRelative(struct Expression * expr);
+uint32_t rpn_isReloc(struct Expression * expr);
+uint32_t rpn_isPCRelative(struct Expression * expr);
 void rpn_Symbol(struct Expression * expr, char *tzSym);
-void rpn_Number(struct Expression * expr, ULONG i);
+void rpn_Number(struct Expression * expr, uint32_t i);
 void rpn_LOGNOT(struct Expression * expr, struct Expression * src1);
 void
 rpn_LOGOR(struct Expression * expr, struct Expression * src1,
