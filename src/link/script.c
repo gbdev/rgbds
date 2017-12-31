@@ -14,23 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include "extern/err.h"
+
 #include "link/assign.h"
 #include "link/mylink.h"
 
 static struct {
-	unsigned int address; /* current address to write sections to */
-	unsigned int top_address; /* not inclusive */
+	uint32_t address; /* current address to write sections to */
+	uint32_t top_address; /* not inclusive */
 	enum eSectionType type;
 } bank[MAXBANKS];
 
-static int current_bank = -1; /* Bank as seen by the bank array */
-static int current_real_bank = -1; /* bank as seen by the GB */
+static int32_t current_bank = -1; /* Bank as seen by the bank array */
+static int32_t current_real_bank = -1; /* bank as seen by the GB */
 
 void script_InitSections(void)
 {
-	int i;
+	int32_t i;
 	for (i = 0; i < MAXBANKS; i++) {
 		if (i == BANK_ROM0) {
 			/* ROM0 bank */
@@ -91,7 +94,7 @@ void script_InitSections(void)
 	}
 }
 
-void script_SetCurrentSectionType(const char *type, unsigned int bank)
+void script_SetCurrentSectionType(const char *type, uint32_t bank)
 {
 	if (strcmp(type, "ROM0") == 0) {
 		if (bank != 0)
@@ -150,7 +153,7 @@ void script_SetCurrentSectionType(const char *type, unsigned int bank)
 	errx(1, "(Internal) Unknown section type \"%s\".\n", type);
 }
 
-void script_SetAddress(unsigned int addr)
+void script_SetAddress(uint32_t addr)
 {
 	if (current_bank == -1) {
 		errx(1, "Trying to set an address without assigned bank\n");
@@ -171,7 +174,7 @@ void script_SetAddress(unsigned int addr)
 	}
 }
 
-void script_SetAlignment(unsigned int alignment)
+void script_SetAlignment(uint32_t alignment)
 {
 	if (current_bank == -1) {
 		errx(1, "Trying to set an alignment without assigned bank\n");
@@ -181,8 +184,8 @@ void script_SetAlignment(unsigned int alignment)
 		errx(1, "Trying to set an alignment too big: %d\n", alignment);
 	}
 
-	unsigned int size = 1 << alignment;
-	unsigned int mask = size - 1;
+	uint32_t size = 1 << alignment;
+	uint32_t mask = size - 1;
 
 	if (bank[current_bank].address & mask) {
 		bank[current_bank].address &= ~mask;

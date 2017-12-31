@@ -74,6 +74,6 @@ uint32_t sym_GetDefinedValue(char *s);
 uint32_t sym_isDefined(char *tzName);
 void sym_Purge(char *tzName);
 uint32_t sym_isConstDefined(char *tzName);
-int sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
+int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
 
 #endif

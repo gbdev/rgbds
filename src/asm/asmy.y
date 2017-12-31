@@ -82,7 +82,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 		length = i;
 	} else {
 		uint32_t value = sym_GetConstantValue(sym);
-		int fullLength = snprintf(dest, maxLength + 1, "$%X", value);
+		int32_t fullLength = snprintf(dest, maxLength + 1, "$%X", value);
 
 		if (fullLength < 0) {
 			fatalerror("snprintf encoding error");
@@ -109,9 +109,9 @@ uint32_t str2int( char *s )
 	return( r );
 }
 
-uint32_t str2int2( char *s, int length )
+uint32_t str2int2( char *s, int32_t length )
 {
-	int i;
+	int32_t i;
 	uint32_t r=0;
 	i = (length - 4 < 0 ? 0 : length - 4);
 	while(i < length)
@@ -997,7 +997,7 @@ constlist_8bit_entry : /* empty */ {
 		out_RelByte( &$1 );
 	} | string {
 		char *s = $1;
-		int length = charmap_Convert(&s);
+		int32_t length = charmap_Convert(&s);
 		out_AbsByteGroup(s, length);
 		free(s);
 	}
@@ -1009,7 +1009,7 @@ constlist_8bit_entry_single : /* empty */ {
 		out_RelByte( &$1 );
 	} | string {
 		char *s = $1;
-		int length = charmap_Convert(&s);
+		int32_t length = charmap_Convert(&s);
 		out_AbsByteGroup(s, length);
 		free(s);
 	}
@@ -1091,7 +1091,7 @@ relocconst		:	T_ID
 				|	string
 						{
 							char *s = $1;
-							int length = charmap_Convert(&s);
+							int32_t length = charmap_Convert(&s);
 							uint32_t r = str2int2(s, length);
 							free(s);
 							rpn_Number(&$$,r);

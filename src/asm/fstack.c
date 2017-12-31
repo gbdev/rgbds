@@ -86,7 +86,7 @@ pushcontext(void)
 		fatalerror("No memory for context");
 }
 
-int
+static int32_t
 popcontext(void)
 {
 	struct sContext *pLastFile, **ppLastFile;
@@ -150,7 +150,7 @@ popcontext(void)
 		return (1);
 }
 
-int
+int32_t
 fstk_GetLine(void)
 {
 	struct sContext *pLastFile, **ppLastFile;
@@ -227,7 +227,7 @@ FILE *
 fstk_FindFile(char *fname)
 {
 	char path[_MAX_PATH];
-	int i;
+	int32_t i;
 	FILE *f;
 
 	if ((f = fopen(fname, "rb")) != NULL || errno != ENOENT) {

@@ -179,7 +179,7 @@ obj_ReadRGBSection(FILE * f)
 		}
 	}
 
-	unsigned int maxsize = 0;
+	uint32_t maxsize = 0;
 
 	/* Verify that the section isn't too big */
 	switch (pSection->Type)
@@ -353,7 +353,7 @@ obj_ReadOpenFile(FILE * pObjfile, char *tzObjectfile)
 			strlen(RGBDS_OBJECT_VERSION_STRING)) == 0) {
 		obj_ReadRGB(pObjfile, tzObjectfile);
 	} else {
-		for (int i = 0; i < strlen(RGBDS_OBJECT_VERSION_STRING); i++)
+		for (int32_t i = 0; i < strlen(RGBDS_OBJECT_VERSION_STRING); i++)
 			if (!isprint(tzHeader[i]))
 				tzHeader[i] = '?';
 		errx(1, "%s: Invalid file or object file version [%s]",

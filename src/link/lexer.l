@@ -19,6 +19,7 @@
 
 %{
 #include <stdarg.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "extern/err.h"
@@ -36,11 +37,11 @@ extern int yyparse();
 
 #define	MAX_INCLUDE_DEPTH 8
 
-static int include_stack_ptr = 0;
+static int32_t include_stack_ptr = 0;
 
 static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 static char include_path[MAX_INCLUDE_DEPTH][_MAX_PATH + 1];
-static int include_line[MAX_INCLUDE_DEPTH];
+static int32_t include_line[MAX_INCLUDE_DEPTH];
 
 static char linkerscript_path[_MAX_PATH + 1]; /* Base file */
 %}
@@ -151,7 +152,7 @@ void script_IncludeFile(const char * path)
 	unput('\n');
 }
 
-int script_IncludeDepthGet(void)
+int32_t script_IncludeDepthGet(void)
 {
 	return include_stack_ptr;
 }
@@ -169,7 +170,7 @@ void script_IncludePop(void)
 
 void script_PrintFileStack(void)
 {
-	int i = include_stack_ptr;
+	int32_t i = include_stack_ptr;
 
 	include_line[i] = yylineno;
 

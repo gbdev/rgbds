@@ -7,14 +7,14 @@
 #define CHARMAPLENGTH	16
 
 struct Charmap {
-	int  count;
+	int32_t count;
 	char input[MAXCHARMAPS][CHARMAPLENGTH + 1];
 	char output[MAXCHARMAPS];
 };
 
-int readUTF8Char(char *destination, char *source);
+int32_t readUTF8Char(char *destination, char *source);
 void charmap_Sort();
-int charmap_Add(char *input, uint8_t output);
-int charmap_Convert(char **input);
+int32_t charmap_Add(char *input, uint8_t output);
+int32_t charmap_Convert(char **input);
 
 #endif

@@ -653,7 +653,7 @@ sym_AddReloc(char *tzSym)
 			}
 			
 			struct sSymbol *parent = pScope->pScope ? pScope->pScope : pScope;
-			int parentLen = localPtr - tzSym;
+			int32_t parentLen = localPtr - tzSym;
 			
 			if (strchr(localPtr + 1, '.') != NULL) {
 				fatalerror("'%s' is a nonsensical reference to a nested local symbol", tzSym);
@@ -695,7 +695,7 @@ sym_AddReloc(char *tzSym)
  *
  * It returns 1 if the difference is defined, 0 if not.
  */
-int
+int32_t
 sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 {
 	/* Do nothing the first pass. */
@@ -710,8 +710,8 @@ sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 	if ((nsym2 = sym_FindSymbol(tzSym2)) == NULL)
 		fatalerror("Symbol \"%s\" isn't defined.", tzSym2);
 
-	int s1reloc = (nsym1->nType & SYMF_RELOC) != 0;
-	int s2reloc = (nsym2->nType & SYMF_RELOC) != 0;
+	int32_t s1reloc = (nsym1->nType & SYMF_RELOC) != 0;
+	int32_t s2reloc = (nsym2->nType & SYMF_RELOC) != 0;
 
 	/* Both are non-relocatable */
 	if (!s1reloc && !s2reloc) return 1;

@@ -142,7 +142,7 @@ area_AllocAbsAnyBank(int32_t org, int32_t size, enum eSectionType type)
 	int32_t startBank = SECT_ATTRIBUTES[type].bank;
 	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
 
-	for (int i = 0; i < bankCount; i++) {
+	for (int32_t i = 0; i < bankCount; i++) {
 		if (area_AllocAbs(&BankFree[startBank + i], org, size) != -1) {
 			return startBank + i;
 		}
@@ -185,7 +185,7 @@ area_AllocAnyBank(int32_t size, int32_t alignment, enum eSectionType type) {
 	int32_t startBank = SECT_ATTRIBUTES[type].bank;
 	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
 
-	for (int i = 0; i < bankCount; i++) {
+	for (int32_t i = 0; i < bankCount; i++) {
 		int32_t org = area_Alloc(&BankFree[startBank + i], size, alignment);
 		if (org != -1) {
 			return ((startBank + i) << 16) | org;
@@ -217,7 +217,7 @@ FindLargestSection(enum eSectionType type, bool bankFixed)
 	return r;
 }
 
-int
+int32_t
 IsSectionNameInUse(const char *name)
 {
 	struct sSection *pSection;
@@ -234,8 +234,8 @@ IsSectionNameInUse(const char *name)
 }
 
 
-int
-IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int bank)
+int32_t
+IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int32_t bank)
 {
 	struct sSection *pSection;
 
@@ -261,8 +261,8 @@ IsSectionSameTypeBankAndFloating(const char *name, enum eSectionType type, int b
 	errx(1, "Section \"%s\" not found (or already used).\n", name);
 }
 
-unsigned int
-AssignSectionAddressAndBankByName(const char *name, unsigned int address, int bank)
+uint32_t
+AssignSectionAddressAndBankByName(const char *name, uint32_t address, int32_t bank)
 {
 	struct sSection *pSection;
 

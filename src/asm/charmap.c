@@ -81,12 +81,12 @@ struct Charmap globalCharmap = {0};
 
 extern struct Section *pCurrentSection;
 
-int
+int32_t
 readUTF8Char(char *dest, char *src)
 {
 	uint32_t state;
 	uint32_t codep;
-	int i;
+	int32_t i;
 
 	for (i = 0, state = 0;; i++) {
 		if (decode(&state, &codep, (uint8_t)src[i]) == 1) {
@@ -104,10 +104,10 @@ readUTF8Char(char *dest, char *src)
 	}
 }
 
-int
+int32_t
 charmap_Add(char *input, uint8_t output)
 {
-	int i;
+	int32_t i;
 	size_t input_length;
 	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1], temp1o = 0,
 	    temp2o = 0;
@@ -170,14 +170,14 @@ charmap_Add(char *input, uint8_t output)
 	return ++charmap->count;
 }
 
-int
+int32_t
 charmap_Convert(char **input)
 {
 	struct Charmap *charmap;
 
 	char outchar[CHARMAPLENGTH + 1];
 	char *buffer;
-	int i, j, length;
+	int32_t i, j, length;
 
 	if (pCurrentSection && pCurrentSection->charmap) {
 		charmap = pCurrentSection->charmap;

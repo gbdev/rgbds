@@ -331,7 +331,7 @@ addsymbol(struct sSymbol * pSym)
 void
 addexports(void)
 {
-	int i;
+	int32_t i;
 
 	for (i = 0; i < HASHSIZE; i += 1) {
 		struct sSymbol *pSym;
@@ -667,7 +667,7 @@ out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment, int32_
  * Output an absolute byte (bypassing ROM/union checks)
  */
 void
-out_AbsByteBypassCheck(int b)
+out_AbsByteBypassCheck(int32_t b)
 {
 	checksectionoverflow(1);
 	b &= 0xFF;
@@ -683,14 +683,14 @@ out_AbsByteBypassCheck(int b)
  * Output an absolute byte
  */
 void
-out_AbsByte(int b)
+out_AbsByte(int32_t b)
 {
 	checkcodesection();
 	out_AbsByteBypassCheck(b);
 }
 
 void
-out_AbsByteGroup(char *s, int length)
+out_AbsByteGroup(char *s, int32_t length)
 {
 	checkcodesection();
 	checksectionoverflow(length);
@@ -702,7 +702,7 @@ out_AbsByteGroup(char *s, int length)
  * Skip this many bytes
  */
 void
-out_Skip(int skip)
+out_Skip(int32_t skip)
 {
 	checksection();
 	checksectionoverflow(skip);
@@ -761,7 +761,7 @@ out_RelByte(struct Expression * expr)
  * Output an absolute word
  */
 void
-out_AbsWord(int b)
+out_AbsWord(int32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(2);

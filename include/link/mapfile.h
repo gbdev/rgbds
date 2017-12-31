@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-extern void SetMapfileName(char *name);
-extern void SetSymfileName(char *name);
-extern void CloseMapfile(void);
-extern void MapfileWriteSection(struct sSection * pSect);
-extern void MapfileInitBank(int32_t bank);
-extern void MapfileCloseBank(int32_t slack);
+void SetMapfileName(char *name);
+void SetSymfileName(char *name);
+void CloseMapfile(void);
+void MapfileWriteSection(struct sSection * pSect);
+void MapfileInitBank(int32_t bank);
+void MapfileCloseBank(int32_t slack);
 
 #endif

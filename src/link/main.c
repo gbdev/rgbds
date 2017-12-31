@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	for (int i = 0; i < argc; ++i)
+	for (int32_t i = 0; i < argc; ++i)
 		obj_Readfile(argv[i]);
 
 	AddNeededModules();

@@ -15,6 +15,7 @@
  */
 
 %{
+#include <stdint.h>
 #include <stdio.h>
 
 #include "extern/err.h"
@@ -26,7 +27,7 @@ void yyerror(char *);
 extern int yylineno;
 %}
 
-%union { int i; char s[512]; }
+%union { int32_t i; char s[512]; }
 
 %token<i> INTEGER
 %token<s> STRING

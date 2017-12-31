@@ -82,7 +82,7 @@ yyunput(char c)
 void
 yyunputstr(char *s)
 {
-	int i, len;
+	int32_t i, len;
 
 	len = strlen(s);
 
@@ -293,7 +293,7 @@ lexgetfloat(uint32_t nFloatMask)
 		fatalerror("Internal error in lexgetfloat");
 	}
 
-	int i = 0;
+	int32_t i = 0;
 
 	while ((nFloatMask & 1) == 0) {
 		nFloatMask >>= 1;
@@ -384,17 +384,17 @@ yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 
 	char *s = pLexBuffer;
 	uint32_t nOldFloatMask = 0;
-	uint32_t nFloatMask = tFloatingFirstChar[(int)*s];
+	uint32_t nFloatMask = tFloatingFirstChar[(int32_t)*s];
 
 	if (nFloatMask != 0) {
 		s++;
 		nOldFloatMask = nFloatMask;
-		nFloatMask &= tFloatingSecondChar[(int)*s];
+		nFloatMask &= tFloatingSecondChar[(int32_t)*s];
 
 		while (nFloatMask != 0) {
 			s++;
 			nOldFloatMask = nFloatMask;
-			nFloatMask &= tFloatingChars[(int)*s];
+			nFloatMask &= tFloatingChars[(int32_t)*s];
 		}
 	}
 
@@ -438,7 +438,7 @@ CopyMacroArg(char *dest, size_t maxLength, char c)
 {
 	size_t i;
 	char *s;
-	int argNum;
+	int32_t argNum;
 
 	switch (c) {
 	case '1':
@@ -498,9 +498,9 @@ yylex_SymbolWriteChar(char *s, size_t index, char c)
  */
 void yylex_TrimEnd(char *s, size_t index)
 {
-	int i;
+	int32_t i;
 
-	for (i = (int)index - 1; i >= 0 && (s[i] == ' ' || s[i] == '\t'); i--)
+	for (i = (int32_t)index - 1; i >= 0 && (s[i] == ' ' || s[i] == '\t'); i--)
 		s[i] = 0;
 }
 
@@ -663,7 +663,7 @@ scanagain:
 		struct sLexFloat *token = lexgetfloat(nFloatMask);
 
 		if (token->Callback) {
-			int done = token->Callback(pLexBuffer, nFloatLen);
+			int32_t done = token->Callback(pLexBuffer, nFloatLen);
 			if (!done)
 				goto scanagain;
 		}

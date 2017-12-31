@@ -146,7 +146,7 @@ uint32_t
 ParseSymbol(char *src, uint32_t size)
 {
 	char dest[MAXSYMLEN + 1];
-	int copied = 0, size_backup = size;
+	int32_t copied = 0, size_backup = size;
 
 	while (size && copied < MAXSYMLEN) {
 		if (*src == '\\') {

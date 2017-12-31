@@ -18,8 +18,8 @@
 int yyparse(void);
 void setuplex(void);
 
-int cldefines_index;
-int cldefines_size;
+int32_t cldefines_index;
+int32_t cldefines_size;
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
@@ -140,7 +140,7 @@ opt_Parse(char *s)
 		break;
 	case 'z':
 		if (strlen(&s[1]) <= 2) {
-			int result;
+			int32_t result;
 
 			result = sscanf(&s[1], "%x", &newopt.fillchar);
 			if (!((result == EOF) || (result == 1))) {
@@ -217,7 +217,7 @@ opt_AddDefine(char *s)
 void
 opt_ParseDefines()
 {
-	int i;
+	int32_t i;
 
 	for(i = 0; i < cldefines_index; i += 2)
 	{
