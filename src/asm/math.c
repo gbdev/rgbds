@@ -11,8 +11,9 @@
 
 #define fix2double(i)	((double)(i/65536.0))
 #define double2fix(d)	((int32_t)(d*65536.0))
-#ifndef PI
-#define PI					(acos(-1))
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
 #endif
 
 /*
@@ -21,7 +22,7 @@
 void
 math_DefinePI(void)
 {
-	sym_AddEqu("_PI", double2fix(PI));
+	sym_AddEqu("_PI", double2fix(M_PI));
 }
 
 /*
@@ -44,7 +45,7 @@ math_Print(int32_t i)
 int32_t
 math_Sin(int32_t i)
 {
-	return (double2fix(sin(fix2double(i) * 2 * PI / 65536)));
+	return (double2fix(sin(fix2double(i) * 2 * M_PI / 65536)));
 }
 
 /*
@@ -53,7 +54,7 @@ math_Sin(int32_t i)
 int32_t
 math_Cos(int32_t i)
 {
-	return (double2fix(cos(fix2double(i) * 2 * PI / 65536)));
+	return (double2fix(cos(fix2double(i) * 2 * M_PI / 65536)));
 }
 
 /*
@@ -62,7 +63,7 @@ math_Cos(int32_t i)
 int32_t
 math_Tan(int32_t i)
 {
-	return (double2fix(tan(fix2double(i) * 2 * PI / 65536)));
+	return (double2fix(tan(fix2double(i) * 2 * M_PI / 65536)));
 }
 
 /*
@@ -71,7 +72,7 @@ math_Tan(int32_t i)
 int32_t
 math_ASin(int32_t i)
 {
-	return (double2fix(asin(fix2double(i)) / 2 / PI * 65536));
+	return (double2fix(asin(fix2double(i)) / 2 / M_PI * 65536));
 }
 
 /*
@@ -80,7 +81,7 @@ math_ASin(int32_t i)
 int32_t
 math_ACos(int32_t i)
 {
-	return (double2fix(acos(fix2double(i)) / 2 / PI * 65536));
+	return (double2fix(acos(fix2double(i)) / 2 / M_PI * 65536));
 }
 
 /*
@@ -89,7 +90,7 @@ math_ACos(int32_t i)
 int32_t
 math_ATan(int32_t i)
 {
-	return (double2fix(atan(fix2double(i)) / 2 / PI * 65536));
+	return (double2fix(atan(fix2double(i)) / 2 / M_PI * 65536));
 }
 
 /*
@@ -99,7 +100,7 @@ int32_t
 math_ATan2(int32_t i, int32_t j)
 {
 	return (double2fix
-	    (atan2(fix2double(i), fix2double(j)) / 2 / PI * 65536));
+	    (atan2(fix2double(i), fix2double(j)) / 2 / M_PI * 65536));
 }
 
 /*
