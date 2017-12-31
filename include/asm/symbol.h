@@ -10,14 +10,14 @@
 
 struct sSymbol {
 	char tzName[MAXSYMLEN + 1];
-	SLONG nValue;
+	int32_t nValue;
 	ULONG nType;
 	struct sSymbol *pScope;
 	struct sSymbol *pNext;
 	struct Section *pSection;
 	ULONG ulMacroSize;
 	char *pMacro;
-	SLONG(*Callback) (struct sSymbol *);
+	int32_t(*Callback) (struct sSymbol *);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	ULONG nFileLine; /* Line where the symbol was defined. */
 };
@@ -54,14 +54,14 @@ void sym_SaveCurrentMacroArgs(char *save[]);
 void sym_RestoreCurrentMacroArgs(char *save[]);
 void sym_UseNewMacroArgs(void);
 void sym_FreeCurrentMacroArgs(void);
-void sym_AddEqu(char *tzSym, SLONG value);
-void sym_AddSet(char *tzSym, SLONG value);
+void sym_AddEqu(char *tzSym, int32_t value);
+void sym_AddSet(char *tzSym, int32_t value);
 void sym_Init(void);
 ULONG sym_GetConstantValue(char *s);
 ULONG sym_isConstant(char *s);
 struct sSymbol *sym_FindSymbol(char *tzName);
 void sym_Global(char *tzSym);
-char *sym_FindMacroArg(SLONG i);
+char *sym_FindMacroArg(int32_t i);
 char *sym_GetStringValue(char *tzSym);
 void sym_UseCurrentMacroArgs(void);
 void sym_SetMacroArgID(ULONG nMacroCount);

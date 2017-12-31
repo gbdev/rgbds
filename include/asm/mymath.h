@@ -1,21 +1,21 @@
 #ifndef RGBDS_ASM_MATH_H
 #define RGBDS_ASM_MATH_H
 
-#include "types.h"
+#include <stdint.h>
 
 void math_DefinePI(void);
-void math_Print(SLONG i);
-SLONG math_Sin(SLONG i);
-SLONG math_Cos(SLONG i);
-SLONG math_Tan(SLONG i);
-SLONG math_ASin(SLONG i);
-SLONG math_ACos(SLONG i);
-SLONG math_ATan(SLONG i);
-SLONG math_ATan2(SLONG i, SLONG j);
-SLONG math_Mul(SLONG i, SLONG j);
-SLONG math_Div(SLONG i, SLONG j);
-SLONG math_Round(SLONG i);
-SLONG math_Ceil(SLONG i);
-SLONG math_Floor(SLONG i);
+void math_Print(int32_t i);
+int32_t math_Sin(int32_t i);
+int32_t math_Cos(int32_t i);
+int32_t math_Tan(int32_t i);
+int32_t math_ASin(int32_t i);
+int32_t math_ACos(int32_t i);
+int32_t math_ATan(int32_t i);
+int32_t math_ATan2(int32_t i, int32_t j);
+int32_t math_Mul(int32_t i, int32_t j);
+int32_t math_Div(int32_t i, int32_t j);
+int32_t math_Round(int32_t i);
+int32_t math_Ceil(int32_t i);
+int32_t math_Floor(int32_t i);
 
 #endif

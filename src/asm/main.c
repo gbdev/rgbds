@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -22,7 +23,7 @@ int cldefines_size;
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
-SLONG nLineNo;
+int32_t nLineNo;
 ULONG nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
 bool skipElif;
 ULONG unionStart[128], unionSize[128];
@@ -141,7 +142,7 @@ opt_Parse(char *s)
 		if (strlen(&s[1]) <= 2) {
 			int result;
 
-			result = sscanf(&s[1], "%lx", &newopt.fillchar);
+			result = sscanf(&s[1], "%x", &newopt.fillchar);
 			if (!((result == EOF) || (result == 1))) {
 				errx(1, "Invalid argument for option 'z'");
 			}

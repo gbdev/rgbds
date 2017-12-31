@@ -28,7 +28,7 @@ FILE *pCurrentFile;
 ULONG nCurrentStatus;
 char tzCurrentFileName[_MAX_PATH + 1];
 char IncludePaths[MAXINCPATHS][_MAX_PATH + 1];
-SLONG NextIncPath = 0;
+int32_t NextIncPath = 0;
 ULONG nMacroCount;
 
 char *pCurrentREPTBlock;
@@ -200,12 +200,12 @@ fstk_Dump(void)
 	pLastFile = pFileStack;
 
 	while (pLastFile) {
-		fprintf(stderr, "%s(%ld) -> ", pLastFile->tzFileName,
-		    pLastFile->nLine);
+		fprintf(stderr, "%s(%d) -> ", pLastFile->tzFileName,
+			pLastFile->nLine);
 		pLastFile = pLastFile->pNext;
 	}
 
-	fprintf(stderr, "%s(%ld)", tzCurrentFileName, nLineNo);
+	fprintf(stderr, "%s(%d)", tzCurrentFileName, nLineNo);
 }
 
 /*
@@ -320,7 +320,7 @@ fstk_RunMacro(char *s)
  * Set up a macroargument for parsing
  */
 void
-fstk_RunMacroArg(SLONG s)
+fstk_RunMacroArg(int32_t s)
 {
 	char *sym;
 

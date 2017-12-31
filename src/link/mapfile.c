@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,8 +11,8 @@
 
 FILE *mf = NULL;
 FILE *sf = NULL;
-SLONG currentbank = 0;
-SLONG sfbank;
+int32_t currentbank = 0;
+int32_t sfbank;
 
 void
 SetMapfileName(char *name)
@@ -49,26 +50,26 @@ CloseMapfile(void)
 }
 
 void
-MapfileInitBank(SLONG bank)
+MapfileInitBank(int32_t bank)
 {
 	if (mf) {
 		currentbank = bank;
 		if (bank == BANK_ROM0)
 			fprintf(mf, "ROM Bank #0 (HOME):\n");
 		else if (bank < BANK_WRAM0)
-			fprintf(mf, "ROM Bank #%ld:\n", bank);
+			fprintf(mf, "ROM Bank #%d:\n", bank);
 		else if (bank == BANK_WRAM0)
 			fprintf(mf, "WRAM Bank #0:\n");
 		else if (bank < BANK_VRAM)
-			fprintf(mf, "WRAM Bank #%ld:\n", bank - BANK_WRAMX + 1);
+			fprintf(mf, "WRAM Bank #%d:\n", bank - BANK_WRAMX + 1);
 		else if (bank == BANK_HRAM)
 			fprintf(mf, "HRAM:\n");
 		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)
-			fprintf(mf, "VRAM Bank #%ld:\n", bank - BANK_VRAM);
+			fprintf(mf, "VRAM Bank #%d:\n", bank - BANK_VRAM);
 		else if (bank == BANK_OAM)
 			fprintf(mf, "OAM:\n");
 		else if (bank < MAXBANKS)
-			fprintf(mf, "SRAM Bank #%ld:\n", bank - BANK_SRAM);
+			fprintf(mf, "SRAM Bank #%d:\n", bank - BANK_SRAM);
 	}
 	if (sf) {
 		if (bank < BANK_WRAM0)
@@ -93,15 +94,15 @@ MapfileInitBank(SLONG bank)
 void
 MapfileWriteSection(struct sSection * pSect)
 {
-	SLONG i;
+	int32_t i;
 
 	if (mf) {
 		if (pSect->nByteSize > 0) {
-			fprintf(mf, "  SECTION: $%04lX-$%04lX ($%04lX bytes) [\"%s\"]\n",
+			fprintf(mf, "  SECTION: $%04X-$%04X ($%04X bytes) [\"%s\"]\n",
 				pSect->nOrg, pSect->nOrg + pSect->nByteSize - 1,
 				pSect->nByteSize, pSect->pzName);
 		} else {
-			fprintf(mf, "  SECTION: $%04lX ($0 bytes) [\"%s\"]\n",
+			fprintf(mf, "  SECTION: $%04X ($0 bytes) [\"%s\"]\n",
 				pSect->nOrg, pSect->pzName);
 		}
 	}
@@ -112,12 +113,12 @@ MapfileWriteSection(struct sSection * pSect)
 		if ((pSym->pSection == pSect)
 		    && (pSym->Type != SYM_IMPORT)) {
 			if (mf) {
-				fprintf(mf, "           $%04lX = %s\n",
+				fprintf(mf, "           $%04X = %s\n",
 				    pSym->nOffset + pSect->nOrg,
 				    pSym->pzName);
 			}
 			if (sf) {
-				fprintf(sf, "%02lX:%04lX %s\n", sfbank,
+				fprintf(sf, "%02X:%04X %s\n", sfbank,
 				    pSym->nOffset + pSect->nOrg,
 				    pSym->pzName);
 			}
@@ -126,7 +127,7 @@ MapfileWriteSection(struct sSection * pSect)
 }
 
 void
-MapfileCloseBank(SLONG slack)
+MapfileCloseBank(int32_t slack)
 {
 	if (!mf)
 		return;
@@ -134,5 +135,5 @@ MapfileCloseBank(SLONG slack)
 	if (slack == MaxAvail[currentbank])
 		fprintf(mf, "  EMPTY\n\n");
 	else
-		fprintf(mf, "    SLACK: $%04lX bytes\n\n", slack);
+		fprintf(mf, "    SLACK: $%04X bytes\n\n", slack);
 }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct Expression {
-	SLONG nVal;
+	int32_t nVal;
 	uint8_t tRPN[256];
 	ULONG nRPNLength;
 	ULONG nRPNOut;

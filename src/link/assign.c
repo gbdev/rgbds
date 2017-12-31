@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,25 +12,25 @@
 #include "link/symbol.h"
 
 struct sFreeArea {
-	SLONG nOrg;
-	SLONG nSize;
+	int32_t nOrg;
+	int32_t nSize;
 	struct sFreeArea *pPrev, *pNext;
 };
 
 struct sSectionAttributes {
 	const char *name;
-	SLONG bank;
-	SLONG offset; // bank + offset = bank originally stored in a section struct
-	SLONG minBank;
-	SLONG bankCount;
+	int32_t bank;
+	int32_t offset; // bank + offset = bank originally stored in a section struct
+	int32_t minBank;
+	int32_t bankCount;
 };
 
 struct sFreeArea *BankFree[MAXBANKS];
-SLONG MaxAvail[MAXBANKS];
-SLONG MaxBankUsed;
-SLONG MaxWBankUsed;
-SLONG MaxSBankUsed;
-SLONG MaxVBankUsed;
+int32_t MaxAvail[MAXBANKS];
+int32_t MaxBankUsed;
+int32_t MaxWBankUsed;
+int32_t MaxSBankUsed;
+int32_t MaxVBankUsed;
 
 const enum eSectionType SECT_MIN = SECT_WRAM0;
 const enum eSectionType SECT_MAX = SECT_OAM;
@@ -63,10 +64,10 @@ ensureSectionTypeIsValid(enum eSectionType type)
 	}
 }
 
-SLONG
-area_Avail(SLONG bank)
+int32_t
+area_Avail(int32_t bank)
 {
-	SLONG r;
+	int32_t r;
 	struct sFreeArea *pArea;
 
 	r = 0;
@@ -80,8 +81,8 @@ area_Avail(SLONG bank)
 	return (r);
 }
 
-SLONG
-area_doAlloc(struct sFreeArea *pArea, SLONG org, SLONG size)
+int32_t
+area_doAlloc(struct sFreeArea *pArea, int32_t org, int32_t size)
 {
 	if (org >= pArea->nOrg && (org + size) <= (pArea->nOrg + pArea->nSize)) {
 		if (org == pArea->nOrg) {
@@ -114,14 +115,14 @@ area_doAlloc(struct sFreeArea *pArea, SLONG org, SLONG size)
 	return -1;
 }
 
-SLONG
-area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
+int32_t
+area_AllocAbs(struct sFreeArea ** ppArea, int32_t org, int32_t size)
 {
 	struct sFreeArea *pArea;
 
 	pArea = *ppArea;
 	while (pArea) {
-		SLONG result = area_doAlloc(pArea, org, size);
+		int32_t result = area_doAlloc(pArea, org, size);
 		if (result != -1) {
 			return result;
 		}
@@ -133,13 +134,13 @@ area_AllocAbs(struct sFreeArea ** ppArea, SLONG org, SLONG size)
 	return -1;
 }
 
-SLONG
-area_AllocAbsAnyBank(SLONG org, SLONG size, enum eSectionType type)
+int32_t
+area_AllocAbsAnyBank(int32_t org, int32_t size, enum eSectionType type)
 {
 	ensureSectionTypeIsValid(type);
 
-	SLONG startBank = SECT_ATTRIBUTES[type].bank;
-	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
+	int32_t startBank = SECT_ATTRIBUTES[type].bank;
+	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
 
 	for (int i = 0; i < bankCount; i++) {
 		if (area_AllocAbs(&BankFree[startBank + i], org, size) != -1) {
@@ -150,8 +151,8 @@ area_AllocAbsAnyBank(SLONG org, SLONG size, enum eSectionType type)
 	return -1;
 }
 
-SLONG
-area_Alloc(struct sFreeArea ** ppArea, SLONG size, SLONG alignment) {
+int32_t
+area_Alloc(struct sFreeArea ** ppArea, int32_t size, int32_t alignment) {
 	struct sFreeArea *pArea;
 	if (alignment < 1) {
 		alignment = 1;
@@ -159,13 +160,13 @@ area_Alloc(struct sFreeArea ** ppArea, SLONG size, SLONG alignment) {
 
 	pArea = *ppArea;
 	while (pArea) {
-		SLONG org = pArea->nOrg;
+		int32_t org = pArea->nOrg;
 		if (org % alignment) {
 			org += alignment;
 		}
 		org -= org % alignment;
 
-		SLONG result = area_doAlloc(pArea, org, size);
+		int32_t result = area_doAlloc(pArea, org, size);
 		if (result != -1) {
 			return result;
 		}
@@ -177,15 +178,15 @@ area_Alloc(struct sFreeArea ** ppArea, SLONG size, SLONG alignment) {
 	return -1;
 }
 
-SLONG
-area_AllocAnyBank(SLONG size, SLONG alignment, enum eSectionType type) {
+int32_t
+area_AllocAnyBank(int32_t size, int32_t alignment, enum eSectionType type) {
 	ensureSectionTypeIsValid(type);
 
-	SLONG startBank = SECT_ATTRIBUTES[type].bank;
-	SLONG bankCount = SECT_ATTRIBUTES[type].bankCount;
+	int32_t startBank = SECT_ATTRIBUTES[type].bank;
+	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
 
 	for (int i = 0; i < bankCount; i++) {
-		SLONG org = area_Alloc(&BankFree[startBank + i], size, alignment);
+		int32_t org = area_Alloc(&BankFree[startBank + i], size, alignment);
 		if (org != -1) {
 			return ((startBank + i) << 16) | org;
 		}
@@ -198,8 +199,8 @@ struct sSection *
 FindLargestSection(enum eSectionType type, bool bankFixed)
 {
 	struct sSection *pSection, *r = NULL;
-	SLONG nLargest = 0;
-	SLONG nLargestAlignment = 0;
+	int32_t nLargest = 0;
+	int32_t nLargestAlignment = 0;
 
 	pSection = pSections;
 	while (pSection) {
@@ -332,7 +333,7 @@ AssignFloatingBankSections(enum eSectionType type)
 	struct sSection *pSection;
 
 	while ((pSection = FindLargestSection(type, false))) {
-		SLONG org;
+		int32_t org;
 
 		if ((org = area_AllocAnyBank(pSection->nByteSize, pSection->nAlign, type)) != -1) {
 			if (options & OPT_OVERLAY) {
@@ -370,7 +371,7 @@ SetLinkerscriptName(char *tzLinkerscriptFile)
 void
 AssignSections(void)
 {
-	SLONG i;
+	int32_t i;
 	struct sSection *pSection;
 
 	MaxBankUsed = 0;
@@ -557,7 +558,7 @@ CreateSymbolTable(void)
 	pSect = pSections;
 
 	while (pSect) {
-		SLONG i;
+		int32_t i;
 
 		i = pSect->nNumberOfSymbols;
 

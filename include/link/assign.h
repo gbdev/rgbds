@@ -1,6 +1,8 @@
 #ifndef RGBDS_LINK_ASSIGN_H
 #define RGBDS_LINK_ASSIGN_H
 
+#include <stdint.h>
+
 #include "mylink.h"
 #include "types.h"
 
@@ -29,11 +31,11 @@ enum eBankDefine {
 #define MAXBANKS	(BANK_COUNT_ROM0 + BANK_COUNT_ROMX + BANK_COUNT_WRAM0 + BANK_COUNT_WRAMX \
 					+ BANK_COUNT_VRAM + BANK_COUNT_OAM + BANK_COUNT_HRAM + BANK_COUNT_SRAM)
 
-extern SLONG area_Avail(SLONG bank);
+extern int32_t area_Avail(int32_t bank);
 extern void AssignSections(void);
 extern void CreateSymbolTable(void);
-extern SLONG MaxBankUsed;
-extern SLONG MaxAvail[MAXBANKS];
+extern int32_t MaxBankUsed;
+extern int32_t MaxAvail[MAXBANKS];
 
 int
 IsSectionNameInUse(const char *name);

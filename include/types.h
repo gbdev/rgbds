@@ -6,6 +6,5 @@
 #endif
 
 typedef unsigned long ULONG;
-typedef signed long SLONG;
 
 #endif

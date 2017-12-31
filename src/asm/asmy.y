@@ -22,9 +22,9 @@ char	*tzNewMacro;
 ULONG	ulNewMacroSize;
 
 void
-bankrangecheck(char *name, ULONG secttype, SLONG org, SLONG bank)
+bankrangecheck(char *name, ULONG secttype, int32_t org, int32_t bank)
 {
-	SLONG minbank = 0, maxbank = 0;
+	int32_t minbank = 0, maxbank = 0;
 	char *stype = NULL;
 	switch (secttype) {
 	case SECT_ROMX:
@@ -140,7 +140,7 @@ ULONG	isEndr( char *s )
 
 void	copyrept( void )
 {
-	SLONG	level=1, len, instring=0;
+	int32_t	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
 	char	*bufferEnd = pCurrentBuffer->pBufferStart + pCurrentBuffer->nBufferSize;
 
@@ -220,7 +220,7 @@ ULONG	isEndm( char *s )
 
 void	copymacro( void )
 {
-	SLONG	level=1, len, instring=0;
+	int32_t	level=1, len, instring=0;
 	char	*src=pCurrentBuffer->pBuffer;
 	char	*bufferEnd = pCurrentBuffer->pBufferStart + pCurrentBuffer->nBufferSize;
 
@@ -312,7 +312,7 @@ ULONG	isEndc(char *s)
 
 void	if_skip_to_else()
 {
-	SLONG level = 1;
+	int32_t level = 1;
 	bool inString = false;
 	char *src=pCurrentBuffer->pBuffer;
 
@@ -367,7 +367,7 @@ void	if_skip_to_else()
 		fatalerror("Unterminated IF construct");
 	}
 
-	SLONG len = src - pCurrentBuffer->pBuffer;
+	int32_t len = src - pCurrentBuffer->pBuffer;
 
 	yyskipbytes(len);
 	yyunput('\n');
@@ -376,7 +376,7 @@ void	if_skip_to_else()
 
 void	if_skip_to_endc()
 {
-	SLONG level = 1;
+	int32_t level = 1;
 	bool inString = false;
 	char *src=pCurrentBuffer->pBuffer;
 
@@ -425,7 +425,7 @@ void	if_skip_to_endc()
 		fatalerror("Unterminated IF construct");
 	}
 
-	SLONG len = src - pCurrentBuffer->pBuffer;
+	int32_t len = src - pCurrentBuffer->pBuffer;
 
 	yyskipbytes(len);
 	yyunput('\n');
@@ -467,7 +467,7 @@ void updateUnion() {
     char tzSym[MAXSYMLEN + 1];
     char tzString[MAXSTRLEN + 1];
     struct Expression sVal;
-    SLONG nConstValue;
+    int32_t nConstValue;
 }
 
 %type	<sVal>	relocconst
@@ -922,7 +922,7 @@ printt			:	T_POP_PRINTT string
 printv			:	T_POP_PRINTV const
 					{
 						if( nPass==1 )
-							printf( "$%lX", $2 );
+							printf( "$%X", $2 );
 					}
 ;
 

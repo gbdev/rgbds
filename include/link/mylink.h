@@ -9,7 +9,7 @@
 
 #include "types.h"
 
-extern SLONG options;
+extern int32_t options;
 #define OPT_TINY		0x01
 #define OPT_SMART_C_LINK	0x02
 #define OPT_OVERLAY		0x04
@@ -63,16 +63,16 @@ enum eSectionType {
 };
 
 struct sSection {
-	SLONG nBank;
-	SLONG nOrg;
-	SLONG nAlign;
+	int32_t nBank;
+	int32_t nOrg;
+	int32_t nAlign;
 	uint8_t oAssigned;
 
 	char *pzName;
-	SLONG nByteSize;
+	int32_t nByteSize;
 	enum eSectionType Type;
 	uint8_t *pData;
-	SLONG nNumberOfSymbols;
+	int32_t nNumberOfSymbols;
 	struct sSymbol **tSymbols;
 	struct sPatch *pPatches;
 	struct sSection *pNext;
@@ -88,9 +88,9 @@ struct sSymbol {
 	char *pzName;
 	enum eSymbolType Type;
 	/* the following 3 items only valid when Type!=SYM_IMPORT */
-	SLONG nSectionID;	/* internal to object.c */
+	int32_t nSectionID;	/* internal to object.c */
 	struct sSection *pSection;
-	SLONG nOffset;
+	int32_t nOffset;
 	char *pzObjFileName; /* Object file where the symbol is located. */
 	char *pzFileName; /* Source file where the symbol was defined. */
 	ULONG nFileLine; /* Line where the symbol was defined. */
@@ -104,10 +104,10 @@ enum ePatchType {
 
 struct sPatch {
 	char *pzFilename;
-	SLONG nLineNo;
-	SLONG nOffset;
+	int32_t nLineNo;
+	int32_t nOffset;
 	enum ePatchType Type;
-	SLONG nRPNSize;
+	int32_t nRPNSize;
 	uint8_t *pRPN;
 	struct sPatch *pNext;
 	uint8_t oRelocPatch;

@@ -1,9 +1,9 @@
 #ifndef RGBDS_LINK_PATCH_H
 #define RGBDS_LINK_PATCH_H
 
-#include "types.h"
+#include <stdint.h>
 
 void Patch(void);
-extern SLONG nPC;
+extern int32_t nPC;
 
 #endif

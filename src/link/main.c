@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +22,8 @@ enum eBlockType {
 	BLOCK_OUTPUT
 };
 
-SLONG options = 0;
-SLONG fillchar = 0;
+int32_t options = 0;
+int32_t fillchar = 0;
 char *smartlinkstartsymbol;
 
 /*

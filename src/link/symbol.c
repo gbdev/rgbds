@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +12,8 @@
 
 struct ISymbol {
 	char *pzName;
-	SLONG nValue;
-	SLONG nBank; /* -1 = constant */
+	int32_t nValue;
+	int32_t nBank; /* -1 = constant */
 	char tzObjFileName[_MAX_PATH + 1]; /* Object file where the symbol was defined. */
 	char tzFileName[_MAX_PATH + 1]; /* Source file where the symbol was defined. */
 	ULONG nFileLine; /* Line where the symbol was defined. */
@@ -21,10 +22,10 @@ struct ISymbol {
 
 struct ISymbol *tHash[HASHSIZE];
 
-SLONG
+int32_t
 calchash(char *s)
 {
-	SLONG r = 0;
+	int32_t r = 0;
 	while (*s)
 		r += *s++;
 
@@ -34,12 +35,12 @@ calchash(char *s)
 void
 sym_Init(void)
 {
-	SLONG i;
+	int32_t i;
 	for (i = 0; i < HASHSIZE; i += 1)
 		tHash[i] = NULL;
 }
 
-SLONG
+int32_t
 sym_GetValue(char *tzName)
 {
 	if (strcmp(tzName, "@") == 0) {
@@ -60,7 +61,7 @@ sym_GetValue(char *tzName)
 	}
 }
 
-SLONG
+int32_t
 sym_GetBank(char *tzName)
 {
 	struct ISymbol **ppSym;
@@ -78,7 +79,7 @@ sym_GetBank(char *tzName)
 }
 
 void
-sym_CreateSymbol(char *tzName, SLONG nValue, SLONG nBank, char *tzObjFileName,
+sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank, char *tzObjFileName,
 		char *tzFileName, ULONG nFileLine)
 {
 	if (strcmp(tzName, "@") == 0)

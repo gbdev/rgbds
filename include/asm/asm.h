@@ -10,6 +10,7 @@
 #define RGBDS_ASM_ASM_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,7 +23,7 @@
 #define MAXMACROARGS	256
 #define MAXINCPATHS		128
 
-extern SLONG nLineNo;
+extern int32_t nLineNo;
 extern ULONG nTotalLines;
 extern ULONG nPC;
 extern ULONG nPass;

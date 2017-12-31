@@ -253,7 +253,7 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 	char symname[MAXSYMLEN * 2 + 1];
 	ULONG type;
 	ULONG offset;
-	SLONG sectid;
+	int32_t sectid;
 
 	if (pSym->nType & SYMF_IMPORT) {
 		/* Symbol should be imported */
@@ -564,7 +564,7 @@ out_SetFileName(char *s)
  * Find a section by name and type.  If it doesn't exist, create it
  */
 struct Section *
-out_FindSection(char *pzName, ULONG secttype, SLONG org, SLONG bank, SLONG alignment)
+out_FindSection(char *pzName, ULONG secttype, int32_t org, int32_t bank, int32_t alignment)
 {
 	struct Section *pSect, **ppSect;
 
@@ -646,7 +646,7 @@ out_NewSection(char *pzName, ULONG secttype)
  * Set the current section by name and type
  */
 void
-out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
+out_NewAbsSection(char *pzName, ULONG secttype, int32_t org, int32_t bank)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank, 1));
 }
@@ -655,7 +655,7 @@ out_NewAbsSection(char *pzName, ULONG secttype, SLONG org, SLONG bank)
  * Set the current section by name and type, using a given byte alignment
  */
 void
-out_NewAlignedSection(char *pzName, ULONG secttype, SLONG alignment, SLONG bank)
+out_NewAlignedSection(char *pzName, ULONG secttype, int32_t alignment, int32_t bank)
 {
 	if (alignment < 0 || alignment > 16) {
 		yyerror("Alignment must be between 0-16 bits.");
@@ -805,10 +805,10 @@ out_RelWord(struct Expression * expr)
  * Output an absolute longword
  */
 void
-out_AbsLong(SLONG b)
+out_AbsLong(int32_t b)
 {
 	checkcodesection();
-	checksectionoverflow(sizeof(SLONG));
+	checksectionoverflow(sizeof(int32_t));
 	if (nPass == 2) {
 		pCurrentSection->tData[nPC] = b & 0xFF;
 		pCurrentSection->tData[nPC + 1] = b >> 8;
@@ -827,7 +827,7 @@ out_AbsLong(SLONG b)
 void
 out_RelLong(struct Expression * expr)
 {
-	SLONG b;
+	int32_t b;
 
 	checkcodesection();
 	checksectionoverflow(4);
@@ -854,7 +854,7 @@ out_RelLong(struct Expression * expr)
 void
 out_PCRelByte(struct Expression * expr)
 {
-	SLONG b = expr->nVal;
+	int32_t b = expr->nVal;
 
 	checkcodesection();
 	checksectionoverflow(1);
@@ -879,7 +879,7 @@ out_BinaryFile(char *s)
 		err(1, "Unable to open incbin file '%s'", s);
 	}
 
-	SLONG fsize;
+	int32_t fsize;
 
 	fseek(f, 0, SEEK_END);
 	fsize = ftell(f);
@@ -889,8 +889,8 @@ out_BinaryFile(char *s)
 	checksectionoverflow(fsize);
 
 	if (nPass == 2) {
-		SLONG dest = nPC;
-		SLONG todo = fsize;
+		int32_t dest = nPC;
+		int32_t todo = fsize;
 
 		while (todo--)
 			pCurrentSection->tData[dest++] = fgetc(f);
@@ -902,7 +902,7 @@ out_BinaryFile(char *s)
 }
 
 void
-out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
+out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 {
 	FILE *f;
 
@@ -917,7 +917,7 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 		err(1, "Unable to open included file '%s'", s);
 	}
 
-	SLONG fsize;
+	int32_t fsize;
 
 	fseek(f, 0, SEEK_END);
 	fsize = ftell(f);
@@ -934,8 +934,8 @@ out_BinaryFileSlice(char *s, SLONG start_pos, SLONG length)
 	checksectionoverflow(length);
 
 	if (nPass == 2) {
-		SLONG dest = nPC;
-		SLONG todo = length;
+		int32_t dest = nPC;
+		int32_t todo = length;
 
 		while (todo--)
 			pCurrentSection->tData[dest++] = fgetc(f);

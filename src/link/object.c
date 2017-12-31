@@ -27,10 +27,10 @@ uint8_t oReadLib = 0;
  *
  */
 
-SLONG
+int32_t
 readlong(FILE * f)
 {
-	SLONG r;
+	int32_t r;
 
 	r = fgetc(f);
 	r |= fgetc(f) << 8;
@@ -55,7 +55,7 @@ readword(FILE * f)
  * Read a NULL terminated string from a file
  *
  */
-SLONG
+int32_t
 readasciiz(char **dest, FILE *f)
 {
 	size_t r = 0;
@@ -226,7 +226,7 @@ obj_ReadRGBSection(FILE * f)
 				err(1, NULL);
 			}
 
-			SLONG nNumberOfPatches;
+			int32_t nNumberOfPatches;
 			struct sPatch **ppPatch, *pPatch;
 
 			if (fread(pSection->pData, sizeof(uint8_t),
@@ -281,7 +281,7 @@ void
 obj_ReadRGB(FILE * pObjfile, char *tzObjectfile)
 {
 	struct sSection *pFirstSection;
-	SLONG nNumberOfSymbols, nNumberOfSections, i;
+	int32_t nNumberOfSymbols, nNumberOfSections, i;
 
 	nNumberOfSymbols = readlong(pObjfile);
 	nNumberOfSections = readlong(pObjfile);
@@ -322,7 +322,7 @@ obj_ReadRGB(FILE * pObjfile, char *tzObjectfile)
 
 		if (tSymbols[i]->Type != SYM_IMPORT
 		    && tSymbols[i]->nSectionID != -1) {
-			SLONG j = 0;
+			int32_t j = 0;
 			while (j != tSymbols[i]->nSectionID) {
 				j += 1;
 				pConvSect = pConvSect->pNext;
@@ -381,7 +381,7 @@ obj_Readfile(char *tzObjectfile)
 	oReadLib = 0;
 }
 
-SLONG
+int32_t
 file_Length(FILE * f)
 {
 	ULONG r, p;

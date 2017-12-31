@@ -9,6 +9,7 @@
 #ifndef RGBDS_ASM_FSTACK_H
 #define RGBDS_ASM_FSTACK_H
 
+#include <stdint.h>
 #include <stdio.h>
 
 #include "asm/asm.h"
@@ -21,7 +22,7 @@ struct sContext {
 	struct sContext *pNext;
 	char tzFileName[_MAX_PATH + 1];
 	char *tzMacroArgs[MAXMACROARGS + 1];
-	SLONG nLine;
+	int32_t nLine;
 	ULONG nStatus;
 	FILE *pFile;
 	char *pREPTBlock;
@@ -31,7 +32,7 @@ struct sContext {
 
 void
 fstk_RunInclude(char *);
-extern void fstk_RunMacroArg(SLONG s);
+extern void fstk_RunMacroArg(int32_t s);
 void
 fstk_Init(char *);
 extern void fstk_Dump(void);

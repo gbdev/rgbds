@@ -51,7 +51,7 @@ void helper_RemoveLeadingZeros(char * string){
 	memmove(string, new_beginning, strlen(new_beginning) + 1);
 }
 
-SLONG
+int32_t
 Callback_NARG(struct sSymbol * sym)
 {
 	ULONG i = 0;
@@ -62,7 +62,7 @@ Callback_NARG(struct sSymbol * sym)
 	return (i);
 }
 
-SLONG
+int32_t
 Callback__LINE__(struct sSymbol __attribute__((unused)) * sym)
 {
 	return (nLineNo);
@@ -71,7 +71,7 @@ Callback__LINE__(struct sSymbol __attribute__((unused)) * sym)
 /*
  * Get the nValue field of a symbol
  */
-SLONG
+int32_t
 getvaluefield(struct sSymbol * sym)
 {
 	if (sym->Callback) {
@@ -145,7 +145,7 @@ struct sSymbol **
 findpsymbol(char *s, struct sSymbol * scope)
 {
 	struct sSymbol **ppsym;
-	SLONG hash;
+	int32_t hash;
 	char fullname[MAXSYMLEN + 1];
 		
 	if (s[0] == '.' && scope) {
@@ -411,7 +411,7 @@ sym_GetDefinedValue(char *s)
 void
 sym_ShiftCurrentMacroArgs(void)
 {
-	SLONG i;
+	int32_t i;
 
 	free(currentmacroargs[0]);
 	for (i = 0; i < MAXMACROARGS - 1; i += 1) {
@@ -421,7 +421,7 @@ sym_ShiftCurrentMacroArgs(void)
 }
 
 char *
-sym_FindMacroArg(SLONG i)
+sym_FindMacroArg(int32_t i)
 {
 	if (i == -1)
 		i = MAXMACROARGS + 1;
@@ -435,7 +435,7 @@ sym_FindMacroArg(SLONG i)
 void
 sym_UseNewMacroArgs(void)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1) {
 		currentmacroargs[i] = newmacroargs[i];
@@ -446,7 +446,7 @@ sym_UseNewMacroArgs(void)
 void
 sym_SaveCurrentMacroArgs(char *save[])
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1)
 		save[i] = currentmacroargs[i];
@@ -455,7 +455,7 @@ sym_SaveCurrentMacroArgs(char *save[])
 void
 sym_RestoreCurrentMacroArgs(char *save[])
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1)
 		currentmacroargs[i] = save[i];
@@ -464,7 +464,7 @@ sym_RestoreCurrentMacroArgs(char *save[])
 void
 sym_FreeCurrentMacroArgs(void)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1) {
 		free(currentmacroargs[i]);
@@ -475,7 +475,7 @@ sym_FreeCurrentMacroArgs(void)
 void
 sym_AddNewMacroArg(char *s)
 {
-	SLONG i = 0;
+	int32_t i = 0;
 
 	while (i < MAXMACROARGS && newmacroargs[i] != NULL)
 		i += 1;
@@ -501,7 +501,7 @@ sym_SetMacroArgID(ULONG nMacroCount)
 void
 sym_UseCurrentMacroArgs(void)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 1; i <= MAXMACROARGS; i += 1)
 		sym_AddNewMacroArg(sym_FindMacroArg(i));
@@ -520,7 +520,7 @@ sym_FindMacro(char *s)
  * Add an equated symbol
  */
 void
-sym_AddEqu(char *tzSym, SLONG value)
+sym_AddEqu(char *tzSym, int32_t value)
 {
 	if ((nPass == 1)
 	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
@@ -598,7 +598,7 @@ sym_isString(char *tzSym)
  * Alter a SET symbols value
  */
 void
-sym_AddSet(char *tzSym, SLONG value)
+sym_AddSet(char *tzSym, int32_t value)
 {
 	struct sSymbol *nsym;
 
@@ -834,7 +834,7 @@ sym_PrepPass1(void)
 void
 sym_PrepPass2(void)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i < HASHSIZE; i += 1) {
 		struct sSymbol **ppSym = &(tHashedSymbols[i]);
@@ -885,7 +885,7 @@ sym_PrepPass2(void)
 void
 sym_Init(void)
 {
-	SLONG i;
+	int32_t i;
 	time_t now;
 
 	for (i = 0; i < MAXMACROARGS; i += 1) {

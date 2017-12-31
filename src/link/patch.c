@@ -10,24 +10,24 @@
 #include "link/main.h"
 
 struct sSection *pCurrentSection;
-SLONG rpnstack[256];
-SLONG rpnp;
-SLONG nPC;
+int32_t rpnstack[256];
+int32_t rpnp;
+int32_t nPC;
 
 void
-rpnpush(SLONG i)
+rpnpush(int32_t i)
 {
 	rpnstack[rpnp++] = i;
 }
 
-SLONG
+int32_t
 rpnpop(void)
 {
 	return (rpnstack[--rpnp]);
 }
 
-SLONG
-getsymvalue(SLONG symid)
+int32_t
+getsymvalue(int32_t symid)
 {
 	switch (pCurrentSection->tSymbols[symid]->Type) {
 		case SYM_IMPORT:
@@ -52,10 +52,10 @@ getsymvalue(SLONG symid)
 	errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
 }
 
-SLONG
-getsymbank(SLONG symid)
+int32_t
+getsymbank(int32_t symid)
 {
-	SLONG nBank;
+	int32_t nBank;
 
 	switch (pCurrentSection->tSymbols[symid]->Type) {
 	case SYM_IMPORT:
@@ -83,10 +83,10 @@ getsymbank(SLONG symid)
 	return nBank;
 }
 
-SLONG
+int32_t
 calcrpn(struct sPatch * pPatch)
 {
-	SLONG t, size;
+	int32_t t, size;
 	uint8_t *rpn;
 
 	rpnp = 0;
@@ -224,7 +224,7 @@ Patch(void)
 		pCurrentSection = pSect;
 		pPatch = pSect->pPatches;
 		while (pPatch) {
-			SLONG t;
+			int32_t t;
 
 			nPC = pSect->nOrg + pPatch->nOffset;
 			t = calcrpn(pPatch);

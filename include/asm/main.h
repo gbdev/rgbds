@@ -1,13 +1,14 @@
-#ifndef	RGBDS_MAIN_H
-#define	RGBDS_MAIN_H
+#ifndef RGBDS_MAIN_H
+#define RGBDS_MAIN_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include "extern/stdnoreturn.h"
 
 struct sOptions {
 	char gbgfx[4];
 	char binary[2];
-	SLONG fillchar;
+	int32_t fillchar;
 	bool verbose;
 	bool haltnop;
 	bool exportall;
@@ -17,8 +18,8 @@ struct sOptions {
 
 extern char *tzNewMacro;
 extern ULONG ulNewMacroSize;
-extern SLONG nGBGfxID;
-extern SLONG nBinaryID;
+extern int32_t nGBGfxID;
+extern int32_t nBinaryID;
 
 extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;

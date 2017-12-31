@@ -1,9 +1,9 @@
 #ifndef RGBDS_LINK_MAIN_H
 #define RGBDS_LINK_MAIN_H
 
-#include "types.h"
+#include <stdint.h>
 
-extern SLONG fillchar;
+extern int32_t fillchar;
 extern char *smartlinkstartsymbol;
 
 #endif

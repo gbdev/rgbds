@@ -8,19 +8,20 @@
 #include "asmy.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
 bool oDontExpandStrings = false;
-SLONG nGBGfxID = -1;
-SLONG nBinaryID = -1;
+int32_t nGBGfxID = -1;
+int32_t nBinaryID = -1;
 
-SLONG
+int32_t
 gbgfx2bin(char ch)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= 3; i += 1) {
 		if (CurrentOptions.gbgfx[i] == ch) {
@@ -31,10 +32,10 @@ gbgfx2bin(char ch)
 	return (0);
 }
 
-SLONG
+int32_t
 binary2bin(char ch)
 {
-	SLONG i;
+	int32_t i;
 
 	for (i = 0; i <= 1; i += 1) {
 		if (CurrentOptions.binary[i] == ch) {
@@ -45,7 +46,7 @@ binary2bin(char ch)
 	return (0);
 }
 
-SLONG
+int32_t
 char2bin(char ch)
 {
 	if (ch >= 'a' && ch <= 'f')
@@ -60,13 +61,13 @@ char2bin(char ch)
 	return (0);
 }
 
-typedef SLONG(*x2bin) (char ch);
+typedef int32_t(*x2bin) (char ch);
 
-SLONG
+int32_t
 ascii2bin(char *s)
 {
-	SLONG radix = 10;
-	SLONG result = 0;
+	int32_t radix = 10;
+	int32_t result = 0;
 	x2bin convertfunc = char2bin;
 
 	switch (*s) {
@@ -93,7 +94,7 @@ ascii2bin(char *s)
 	}
 
 	if (radix == 4) {
-		SLONG c;
+		int32_t c;
 
 		while (*s != '\0') {
 			c = convertfunc(*s++);
@@ -128,7 +129,7 @@ ParseFixedPoint(char *s, ULONG size)
 
 	yyunputbytes(size);
 
-	yylval.nConstValue = (SLONG) (atof(s) * 65536);
+	yylval.nConstValue = (int32_t) (atof(s) * 65536);
 
 	return (1);
 }
