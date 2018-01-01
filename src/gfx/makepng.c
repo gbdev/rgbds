@@ -16,10 +16,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "gfx/main.h"
 
-void
-input_png_file(struct Options opts, struct PNGImage *img)
+void input_png_file(const struct Options opts, struct PNGImage *img)
 {
 	FILE *f;
 	int i, y, num_trans;
@@ -30,24 +30,21 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	png_color *palette;
 
 	f = fopen(opts.infile, "rb");
-	if (!f) {
+	if (!f)
 		err(1, "Opening input png file '%s' failed", opts.infile);
-	}
 
-	img->png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (!img->png) {
+	img->png = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+					  NULL, NULL, NULL);
+	if (!img->png)
 		errx(1, "Creating png structure failed");
-	}
 
 	img->info = png_create_info_struct(img->png);
-	if (!img->info) {
+	if (!img->info)
 		errx(1, "Creating png info structure failed");
-	}
 
-	/* Better error handling here? */
-	if (setjmp(png_jmpbuf(img->png))) {
+	/* TODO: Better error handling here? */
+	if (setjmp(png_jmpbuf(img->png)))
 		exit(1);
-	}
 
 	png_init_io(img->png, f);
 
@@ -58,41 +55,39 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	img->depth  = png_get_bit_depth(img->png, img->info);
 	img->type   = png_get_color_type(img->png, img->info);
 
-	if (img->type & PNG_COLOR_MASK_ALPHA) {
+	if (img->type & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(img->png);
-	}
 
 	if (img->depth != depth) {
 		if (opts.verbose) {
 			warnx("Image bit depth is not %i (is %i).", depth,
-			    img->depth);
+			      img->depth);
 		}
 	}
 
 	if (img->type == PNG_COLOR_TYPE_GRAY) {
-		if (img->depth < 8) {
+		if (img->depth < 8)
 			png_set_expand_gray_1_2_4_to_8(img->png);
-		}
+
 		png_set_gray_to_rgb(img->png);
 	} else {
-		if (img->depth < 8) {
+		if (img->depth < 8)
 			png_set_expand_gray_1_2_4_to_8(img->png);
-		}
+
 		has_palette = png_get_PLTE(img->png, img->info, &palette,
-		    &colors);
+					   &colors);
 	}
 
 	if (png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans,
-	    &trans_values)) {
+			 &trans_values)) {
 		if (img->type == PNG_COLOR_TYPE_PALETTE) {
 			full_alpha = malloc(sizeof(bool) * num_trans);
 
 			for (i = 0; i < num_trans; i++) {
-				if (trans_alpha[i] > 0) {
+				if (trans_alpha[i] > 0)
 					full_alpha[i] = false;
-				} else {
+				else
 					full_alpha[i] = true;
-				}
 			}
 
 			for (i = 0; i < num_trans; i++) {
@@ -182,9 +177,8 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	png_read_update_info(img->png, img->info);
 
 	img->data = malloc(sizeof(png_byte *) * img->height);
-	for (y = 0; y < img->height; y++) {
+	for (y = 0; y < img->height; y++)
 		img->data[y] = malloc(png_get_rowbytes(img->png, img->info));
-	}
 
 	png_read_image(img->png, img->data);
 	png_read_end(img->png, img->info);
@@ -192,8 +186,7 @@ input_png_file(struct Options opts, struct PNGImage *img)
 	fclose(f);
 }
 
-void
-get_text(struct PNGImage *png)
+void get_text(struct PNGImage *png)
 {
 	png_text *text;
 	int i, numtxts, numremoved;
@@ -221,11 +214,14 @@ get_text(struct PNGImage *png)
 		}
 	}
 
-	/* TODO: Remove this and simply change the warning function not to warn instead. */
+	/*
+	 * TODO: Remove this and simply change the warning function not to warn
+	 * instead.
+	 */
 	for (i = 0, numremoved = 0; i < numtxts; i++) {
-		if (text[i].key == NULL) {
+		if (text[i].key == NULL)
 			numremoved++;
-		}
+
 		text[i].key = text[i + numremoved].key;
 		text[i].text = text[i + numremoved].text;
 		text[i].compression = text[i + numremoved].compression;
@@ -233,8 +229,7 @@ get_text(struct PNGImage *png)
 	png_set_text(png->png, png->info, text, numtxts - numremoved);
 }
 
-void
-set_text(struct PNGImage *png)
+void set_text(const struct PNGImage *png)
 {
 	png_text *text;
 	char buffer[3];
@@ -282,14 +277,16 @@ set_text(struct PNGImage *png)
 	free(text);
 }
 
-void
-output_png_file(struct Options opts, struct PNGImage *png)
+void output_png_file(const struct Options opts, const struct PNGImage *png)
 {
 	FILE *f;
 	char *outfile;
 	png_struct *img;
 
-	/* Variable outfile is for debugging purposes. Eventually, opts.infile will be used directly. */
+	/*
+	 * TODO: Variable outfile is for debugging purposes. Eventually,
+	 * opts.infile will be used directly.
+	 */
 	if (opts.debug) {
 		outfile = malloc(strlen(opts.infile) + 5);
 		strcpy(outfile, opts.infile);
@@ -299,19 +296,16 @@ output_png_file(struct Options opts, struct PNGImage *png)
 	}
 
 	f = fopen(outfile, "wb");
-	if (!f) {
+	if (!f)
 		err(1, "Opening output png file '%s' failed", outfile);
-	}
 
 	img = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (!img) {
+	if (!img)
 		errx(1, "Creating png structure failed");
-	}
 
-	/* Better error handling here? */
-	if (setjmp(png_jmpbuf(img))) {
+	/* TODO: Better error handling here? */
+	if (setjmp(png_jmpbuf(img)))
 		exit(1);
-	}
 
 	png_init_io(img, f);
 
@@ -322,18 +316,16 @@ output_png_file(struct Options opts, struct PNGImage *png)
 
 	fclose(f);
 
-	if (opts.debug) {
+	if (opts.debug)
 		free(outfile);
-	}
 }
 
-void
-free_png_data(struct PNGImage *png)
+void free_png_data(const struct PNGImage *png)
 {
 	int y;
 
-	for (y = 0; y < png->height; y++) {
+	for (y = 0; y < png->height; y++)
 		free(png->data[y]);
-	}
+
 	free(png->data);
 }

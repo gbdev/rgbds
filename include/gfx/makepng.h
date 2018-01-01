@@ -19,10 +19,10 @@
 
 #include "gfx/main.h"
 
-void input_png_file(struct Options opts, struct PNGImage *img);
+void input_png_file(const struct Options opts, struct PNGImage *img);
 void get_text(struct PNGImage *png);
-void set_text(struct PNGImage *png);
-void output_png_file(struct Options opts, struct PNGImage *png);
-void free_png_data(struct PNGImage *png);
+void set_text(const struct PNGImage *png);
+void output_png_file(const struct Options opts, const struct PNGImage *png);
+void free_png_data(const struct PNGImage *png);
 
-#endif
+#endif /* RGBDS_GFX_PNG_H */

@@ -14,8 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef EXTERN_VERSION_H
+#define EXTERN_VERSION_H
+
 #define PACKAGE_VERSION_MAJOR (0)
 #define PACKAGE_VERSION_MINOR (3)
 #define PACKAGE_VERSION_PATCH (3)
 
-const char * get_package_version_string(void);
+const char *get_package_version_string(void);
+
+#endif /* EXTERN_VERSION_H */

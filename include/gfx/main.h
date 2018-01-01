@@ -72,4 +72,4 @@ int depth, colors;
 #include "gfx/makepng.h"
 #include "gfx/gb.h"
 
-#endif
+#endif /* RGBDS_GFX_MAIN_H */

@@ -2,13 +2,14 @@
 #define EXTERN_REALLOCARRAY_H
 
 #ifdef REALLOCARRAY_IN_LIBC
+
 #include <stdlib.h>
-#else
+
+#else /* REALLOCARRAY_IN_LIBC */
 
 #define reallocarray rgbds_reallocarray
-
 void *reallocarray(void *, size_t, size_t);
 
-#endif
+#endif /* REALLOCARRAY_IN_LIBC */
 
-#endif
+#endif /* EXTERN_REALLOCARRAY_H */
