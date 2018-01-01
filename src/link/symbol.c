@@ -16,73 +16,70 @@ struct ISymbol {
 	char *pzName;
 	int32_t nValue;
 	int32_t nBank; /* -1 = constant */
-	char tzObjFileName[_MAX_PATH + 1]; /* Object file where the symbol was defined. */
-	char tzFileName[_MAX_PATH + 1]; /* Source file where the symbol was defined. */
-	uint32_t nFileLine; /* Line where the symbol was defined. */
+	 /* Object file where the symbol was defined. */
+	char tzObjFileName[_MAX_PATH + 1];
+	/* Source file where the symbol was defined. */
+	char tzFileName[_MAX_PATH + 1];
+	/* Line where the symbol was defined. */
+	uint32_t nFileLine;
 	struct ISymbol *pNext;
 };
 
 struct ISymbol *tHash[HASHSIZE];
 
-int32_t
-calchash(char *s)
+int32_t calchash(char *s)
 {
 	int32_t r = 0;
+
 	while (*s)
 		r += *s++;
 
-	return (r % HASHSIZE);
+	return r % HASHSIZE;
 }
 
-void
-sym_Init(void)
+void sym_Init(void)
 {
 	int32_t i;
+
 	for (i = 0; i < HASHSIZE; i += 1)
 		tHash[i] = NULL;
 }
 
-int32_t
-sym_GetValue(char *tzName)
+int32_t sym_GetValue(char *tzName)
 {
-	if (strcmp(tzName, "@") == 0) {
-		return (nPC);
-	} else {
-		struct ISymbol **ppSym;
+	if (strcmp(tzName, "@") == 0)
+		return nPC;
 
-		ppSym = &(tHash[calchash(tzName)]);
-		while (*ppSym) {
-			if (strcmp(tzName, (*ppSym)->pzName)) {
-				ppSym = &((*ppSym)->pNext);
-			} else {
-				return ((*ppSym)->nValue);
-			}
-		}
-
-		errx(1, "Unknown symbol '%s'", tzName);
-	}
-}
-
-int32_t
-sym_GetBank(char *tzName)
-{
 	struct ISymbol **ppSym;
 
 	ppSym = &(tHash[calchash(tzName)]);
 	while (*ppSym) {
-		if (strcmp(tzName, (*ppSym)->pzName)) {
+		if (strcmp(tzName, (*ppSym)->pzName))
 			ppSym = &((*ppSym)->pNext);
-		} else {
-			return ((*ppSym)->nBank);
-		}
+		else
+			return ((*ppSym)->nValue);
 	}
 
 	errx(1, "Unknown symbol '%s'", tzName);
 }
 
-void
-sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank, char *tzObjFileName,
-		char *tzFileName, uint32_t nFileLine)
+int32_t sym_GetBank(char *tzName)
+{
+	struct ISymbol **ppSym;
+
+	ppSym = &(tHash[calchash(tzName)]);
+	while (*ppSym) {
+		if (strcmp(tzName, (*ppSym)->pzName))
+			ppSym = &((*ppSym)->pNext);
+		else
+			return ((*ppSym)->nBank);
+	}
+
+	errx(1, "Unknown symbol '%s'", tzName);
+}
+
+void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,
+		      char *tzObjFileName, char *tzFileName, uint32_t nFileLine)
 {
 	if (strcmp(tzName, "@") == 0)
 		return;
@@ -99,14 +96,18 @@ sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank, char *tzObjFileNam
 				return;
 
 			errx(1, "'%s' in both %s : %s(%d) and %s : %s(%d)",
-				tzName, tzObjFileName, tzFileName, nFileLine,
-				(*ppSym)->tzObjFileName,
-				(*ppSym)->tzFileName, (*ppSym)->nFileLine);
+			     tzName, tzObjFileName, tzFileName, nFileLine,
+			     (*ppSym)->tzObjFileName,
+			     (*ppSym)->tzFileName, (*ppSym)->nFileLine);
 		}
 	}
 
-	if ((*ppSym = malloc(sizeof **ppSym))) {
-		if (((*ppSym)->pzName = malloc(strlen(tzName) + 1))) {
+	*ppSym = malloc(sizeof **ppSym);
+
+	if (*ppSym != NULL) {
+		(*ppSym)->pzName = malloc(strlen(tzName) + 1);
+
+		if ((*ppSym)->pzName != NULL) {
 			strcpy((*ppSym)->pzName, tzName);
 			(*ppSym)->nValue = nValue;
 			(*ppSym)->nBank = nBank;

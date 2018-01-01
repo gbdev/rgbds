@@ -4,13 +4,13 @@
 #include <string.h>
 
 #include "extern/err.h"
+
 #include "link/mylink.h"
 #include "link/main.h"
 
-static uint8_t
-symboldefined(char *name)
+static uint8_t symboldefined(char *name)
 {
-	struct sSection *pSect;
+	const struct sSection *pSect;
 
 	pSect = pSections;
 
@@ -18,56 +18,54 @@ symboldefined(char *name)
 		int32_t i;
 
 		for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
-			if ((pSect->tSymbols[i]->Type == SYM_EXPORT)
-			    || ((pSect->tSymbols[i]->Type == SYM_LOCAL)
-				&& (pSect == pSect->tSymbols[i]->pSection))) {
-				if (strcmp(pSect->tSymbols[i]->pzName, name) ==
-				    0)
-					return (1);
+			const struct sSymbol *tSymbol = pSect->tSymbols[i];
+
+			if ((tSymbol->Type == SYM_EXPORT)
+			    || ((tSymbol->Type == SYM_LOCAL)
+				&& (pSect == tSymbol->pSection))) {
+
+				if (strcmp(tSymbol->pzName, name) == 0)
+					return 1;
 			}
 		}
 		pSect = pSect->pNext;
 	}
-	return (0);
+	return 0;
 }
 
-static uint8_t
-addmodulecontaining(char *name)
+static uint8_t addmodulecontaining(char *name)
 {
-	struct sSection **ppLSect;
-
-	ppLSect = &pLibSections;
+	struct sSection **ppLSect = &pLibSections;
 
 	while (*ppLSect) {
 		int32_t i;
 
 		for (i = 0; i < (*ppLSect)->nNumberOfSymbols; i += 1) {
-			if (((*ppLSect)->tSymbols[i]->Type == SYM_EXPORT)
-			    || (((*ppLSect)->tSymbols[i]->Type == SYM_LOCAL)
-				&& ((*ppLSect) ==
-				    (*ppLSect)->tSymbols[i]->pSection))) {
-				if (strcmp
-				    ((*ppLSect)->tSymbols[i]->pzName,
-					name) == 0) {
-					struct sSection **ppSect;
-					ppSect = &pSections;
+			const struct sSymbol *tSymbol = (*ppLSect)->tSymbols[i];
+
+			if ((tSymbol->Type == SYM_EXPORT)
+			    || ((tSymbol->Type == SYM_LOCAL)
+				&& ((*ppLSect) == tSymbol->pSection))) {
+
+				if (strcmp(tSymbol->pzName, name) == 0) {
+					struct sSection **ppSect = &pSections;
+
 					while (*ppSect)
 						ppSect = &((*ppSect)->pNext);
 
 					*ppSect = *ppLSect;
 					*ppLSect = (*ppLSect)->pNext;
 					(*ppSect)->pNext = NULL;
-					return (1);
+					return 1;
 				}
 			}
 		}
 		ppLSect = &((*ppLSect)->pNext);
 	}
-	return (0);
+	return 0;
 }
 
-void
-AddNeededModules(void)
+void AddNeededModules(void)
 {
 	struct sSection *pSect;
 
@@ -77,8 +75,8 @@ AddNeededModules(void)
 		ppLSect = &pLibSections;
 
 		while (*ppLSect) {
-			struct sSection **ppSect;
-			ppSect = &pSections;
+			struct sSection **ppSect = &pSections;
+
 			while (*ppSect)
 				ppSect = &((*ppSect)->pNext);
 
@@ -93,10 +91,11 @@ AddNeededModules(void)
 	if (options & OPT_SMART_C_LINK) {
 		if (!addmodulecontaining(smartlinkstartsymbol)) {
 			errx(1, "Can't find start symbol '%s'",
-			    smartlinkstartsymbol);
-		} else
+			     smartlinkstartsymbol);
+		} else {
 			printf("Smart linking with symbol '%s'\n",
-			    smartlinkstartsymbol);
+			       smartlinkstartsymbol);
+		}
 	}
 	pSect = pSections;
 
@@ -106,10 +105,8 @@ AddNeededModules(void)
 		for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
 			if ((pSect->tSymbols[i]->Type == SYM_IMPORT)
 			    || (pSect->tSymbols[i]->Type == SYM_LOCAL)) {
-				if (!symboldefined(pSect->tSymbols[i]->pzName)) {
-					addmodulecontaining(pSect->tSymbols[i]->
-					    pzName);
-				}
+				if (!symboldefined(pSect->tSymbols[i]->pzName))
+					addmodulecontaining(pSect->tSymbols[i]->pzName);
 			}
 		}
 		pSect = pSect->pNext;

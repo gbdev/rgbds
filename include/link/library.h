@@ -3,4 +3,4 @@
 
 void AddNeededModules(void);
 
-#endif
+#endif /* RGBDS_LINK_LIBRARY_H */

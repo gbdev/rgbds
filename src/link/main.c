@@ -6,6 +6,7 @@
 
 #include "extern/err.h"
 #include "extern/version.h"
+
 #include "link/object.h"
 #include "link/output.h"
 #include "link/assign.h"
@@ -22,17 +23,15 @@ enum eBlockType {
 	BLOCK_OUTPUT
 };
 
-int32_t options = 0;
-int32_t fillchar = 0;
+int32_t options;
+int32_t fillchar;
 char *smartlinkstartsymbol;
 
 /*
  * Print the usagescreen
- *
  */
 
-static void
-usage(void)
+static void print_usage(void)
 {
 	printf(
 "usage: rgblink [-dtVw] [-l linkerscript] [-m mapfile] [-n symfile] [-O overlay]\n"
@@ -42,17 +41,15 @@ usage(void)
 
 /*
  * The main routine
- *
  */
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int ch;
 	char *ep;
 
 	if (argc == 1)
-		usage();
+		print_usage();
 
 	while ((ch = getopt(argc, argv, "dl:m:n:O:o:p:s:tVw")) != -1) {
 		switch (ch) {
@@ -74,12 +71,10 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			fillchar = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0') {
+			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'p'");
-			}
-			if (fillchar < 0 || fillchar > 0xFF) {
+			if (fillchar < 0 || fillchar > 0xFF)
 				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
-			}
 			break;
 		case 's':
 			options |= OPT_SMART_C_LINK;
@@ -101,17 +96,19 @@ main(int argc, char *argv[])
 			options |= OPT_DMG_MODE;
 			/* FALLTHROUGH */
 		case 'w':
-			/* Set to set WRAM as a single continuous block as on
+			/*
+			 * Set to set WRAM as a single continuous block as on
 			 * DMG. All WRAM sections must be WRAM0 as bankable WRAM
 			 * sections do not exist in this mode. A WRAMX section
-			 * will raise an error. */
+			 * will raise an error.
+			 */
 			options |= OPT_CONTWRAM;
 			break;
 		case 'V':
 			printf("rgblink %s\n", get_package_version_string());
 			exit(0);
 		default:
-			usage();
+			print_usage();
 			/* NOTREACHED */
 		}
 	}
@@ -119,7 +116,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc == 0)
-		usage();
+		print_usage();
 
 	for (int32_t i = 0; i < argc; ++i)
 		obj_Readfile(argv[i]);
@@ -131,5 +128,5 @@ main(int argc, char *argv[])
 	Output();
 	CloseMapfile();
 
-	return (0);
+	return 0;
 }

@@ -3,4 +3,4 @@
 
 void obj_Readfile(char *tzObjectfile);
 
-#endif
+#endif /* RGBDS_LINK_OBJECT_H */

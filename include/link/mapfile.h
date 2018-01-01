@@ -6,8 +6,8 @@
 void SetMapfileName(char *name);
 void SetSymfileName(char *name);
 void CloseMapfile(void);
-void MapfileWriteSection(struct sSection * pSect);
+void MapfileWriteSection(const struct sSection *pSect);
 void MapfileInitBank(int32_t bank);
 void MapfileCloseBank(int32_t slack);
 
-#endif
+#endif /* RGBDS_LINK_MAPFILE_H */

@@ -4,87 +4,83 @@
 #include <string.h>
 
 #include "extern/err.h"
+
 #include "link/assign.h"
+#include "link/main.h"
 #include "link/mylink.h"
 #include "link/symbol.h"
-#include "link/main.h"
 
-struct sSection *pCurrentSection;
-int32_t rpnstack[256];
-int32_t rpnp;
+static struct sSection *pCurrentSection;
+static int32_t rpnstack[256];
+static int32_t rpnp;
 int32_t nPC;
 
-void
-rpnpush(int32_t i)
+static void rpnpush(int32_t i)
 {
-	rpnstack[rpnp++] = i;
+	rpnstack[rpnp] = i;
+	rpnp++;
 }
 
-int32_t
-rpnpop(void)
+static int32_t rpnpop(void)
 {
-	return (rpnstack[--rpnp]);
+	rpnp--;
+	return rpnstack[rpnp];
 }
 
-int32_t
-getsymvalue(int32_t symid)
+int32_t getsymvalue(int32_t symid)
 {
-	switch (pCurrentSection->tSymbols[symid]->Type) {
-		case SYM_IMPORT:
-		return (sym_GetValue(pCurrentSection->tSymbols[symid]->pzName));
-		break;
-	case SYM_EXPORT:
-	case SYM_LOCAL:
-		{
-			if (strcmp
-			    (pCurrentSection->tSymbols[symid]->pzName,
-				"@") == 0) {
-				return (nPC);
-			} else
-				return (pCurrentSection->tSymbols[symid]->
-				    nOffset +
-				    pCurrentSection->tSymbols[symid]->
-				    pSection->nOrg);
-		}
-	default:
-		break;
-	}
-	errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
-}
+	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
 
-int32_t
-getsymbank(int32_t symid)
-{
-	int32_t nBank;
-
-	switch (pCurrentSection->tSymbols[symid]->Type) {
+	switch (tSymbol->Type) {
 	case SYM_IMPORT:
-		nBank = sym_GetBank(pCurrentSection->tSymbols[symid]->pzName);
+		return sym_GetValue(tSymbol->pzName);
+
+	case SYM_EXPORT:
+	case SYM_LOCAL:
+		if (strcmp(tSymbol->pzName, "@") == 0)
+			return nPC;
+
+		return tSymbol->nOffset + tSymbol->pSection->nOrg;
+
+	default:
+		break;
+	}
+
+	errx(1, "%s: Unknown symbol type", __func__);
+}
+
+int32_t getsymbank(int32_t symid)
+{
+	int32_t n;
+	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
+
+	switch (tSymbol->Type) {
+	case SYM_IMPORT:
+		n = sym_GetBank(tSymbol->pzName);
 		break;
 	case SYM_EXPORT:
 	case SYM_LOCAL:
-		nBank = pCurrentSection->tSymbols[symid]->pSection->nBank;
+		n = tSymbol->pSection->nBank;
 		break;
 	default:
-		errx(1, "*INTERNAL* UNKNOWN SYMBOL TYPE");
+		errx(1, "%s: Unknown symbol type", __func__);
 	}
 
-	if (nBank == BANK_WRAM0 || nBank == BANK_ROM0 || nBank == BANK_OAM ||
-			nBank == BANK_HRAM) {
+	if ((n == BANK_WRAM0) || (n == BANK_ROM0) || (n == BANK_OAM) ||
+	    (n == BANK_HRAM)) {
 		return 0;
-	} else if (nBank >= BANK_WRAMX && nBank < (BANK_WRAMX + BANK_COUNT_WRAMX)) {
-		return nBank - BANK_WRAMX + 1;
-	} else if (nBank >= BANK_VRAM && nBank < (BANK_VRAM + BANK_COUNT_VRAM)) {
-		return nBank - BANK_VRAM;
-	} else if (nBank >= BANK_SRAM && nBank < (BANK_SRAM + BANK_COUNT_SRAM)) {
-		return nBank - BANK_SRAM;
+	} else if ((n >= BANK_WRAMX) && (n < (BANK_WRAMX + BANK_COUNT_WRAMX))) {
+		return n - BANK_WRAMX + 1;
+	} else if ((n >= BANK_VRAM) && (n < (BANK_VRAM + BANK_COUNT_VRAM))) {
+		return n - BANK_VRAM;
+	} else if ((n >= BANK_SRAM) && (n < (BANK_SRAM + BANK_COUNT_SRAM))) {
+		return n - BANK_SRAM;
 	}
 
-	return nBank;
+	return n;
 }
 
-int32_t
-calcrpn(struct sPatch * pPatch)
+int32_t calcrpn(struct sPatch *pPatch)
 {
 	int32_t t, size;
 	uint8_t *rpn;
@@ -175,8 +171,8 @@ calcrpn(struct sPatch * pPatch)
 			rpnpush(t & 0xFF);
 			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
 				errx(1,
-				    "%s(%ld) : Value must be in the HRAM area",
-				    pPatch->pzFilename, pPatch->nLineNo);
+				     "%s(%ld) : Value must be in the HRAM area",
+				     pPatch->pzFilename, pPatch->nLineNo);
 			}
 			break;
 		case RPN_CONST:
@@ -209,11 +205,10 @@ calcrpn(struct sPatch * pPatch)
 			break;
 		}
 	}
-	return (rpnpop());
+	return rpnpop();
 }
 
-void
-Patch(void)
+void Patch(void)
 {
 	struct sSection *pSect;
 
@@ -233,12 +228,12 @@ Patch(void)
 				if (t >= -128 && t <= 255) {
 					t &= 0xFF;
 					pSect->pData[pPatch->nOffset] =
-					    (uint8_t) t;
+						(uint8_t)t;
 				} else {
 					errx(1,
-					    "%s(%ld) : Value must be 8-bit",
-					    pPatch->pzFilename,
-					    pPatch->nLineNo);
+					     "%s(%ld) : Value must be 8-bit",
+					     pPatch->pzFilename,
+					     pPatch->nLineNo);
 				}
 				break;
 			case PATCH_WORD_L:
@@ -250,19 +245,19 @@ Patch(void)
 						(t >> 8) & 0xFF;
 				} else {
 					errx(1,
-					    "%s(%ld) : Value must be 16-bit",
-					    pPatch->pzFilename,
-					    pPatch->nLineNo);
+					     "%s(%ld) : Value must be 16-bit",
+					     pPatch->pzFilename,
+					     pPatch->nLineNo);
 				}
 				break;
 			case PATCH_LONG_L:
 				pSect->pData[pPatch->nOffset + 0] = t & 0xFF;
 				pSect->pData[pPatch->nOffset + 1] =
-				    (t >> 8) & 0xFF;
+					(t >> 8) & 0xFF;
 				pSect->pData[pPatch->nOffset + 2] =
-				    (t >> 16) & 0xFF;
+					(t >> 16) & 0xFF;
 				pSect->pData[pPatch->nOffset + 3] =
-				    (t >> 24) & 0xFF;
+					(t >> 24) & 0xFF;
 				break;
 			}
 

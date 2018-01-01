@@ -5,4 +5,4 @@
 #define _MAX_PATH 512
 #endif
 
-#endif
+#endif /* RGBDS_TYPES_H */

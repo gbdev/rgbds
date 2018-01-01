@@ -82,10 +82,12 @@ enum eSymbolType {
 struct sSymbol {
 	char *pzName;
 	enum eSymbolType Type;
-	/* the following 3 items only valid when Type!=SYM_IMPORT */
-	int32_t nSectionID;	/* internal to object.c */
+
+	/* The following 3 items only valid when Type!=SYM_IMPORT */
+	int32_t nSectionID; /* Internal to object.c */
 	struct sSection *pSection;
 	int32_t nOffset;
+
 	char *pzObjFileName; /* Object file where the symbol is located. */
 	char *pzFileName; /* Source file where the symbol was defined. */
 	uint32_t nFileLine; /* Line where the symbol was defined. */
@@ -111,4 +113,4 @@ struct sPatch {
 extern struct sSection *pSections;
 extern struct sSection *pLibSections;
 
-#endif
+#endif /* RGBDS_LINK_LINK_H */

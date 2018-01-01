@@ -6,4 +6,4 @@
 extern int32_t fillchar;
 extern char *smartlinkstartsymbol;
 
-#endif
+#endif /* RGBDS_LINK_MAIN_H */

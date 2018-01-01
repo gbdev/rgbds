@@ -35,5 +35,4 @@ void script_SetAddress(uint32_t addr);
 void script_SetAlignment(uint32_t alignment);
 void script_OutputSection(const char *section_name);
 
-#endif
-
+#endif /* RGBDS_LINK_SCRIPT_H */

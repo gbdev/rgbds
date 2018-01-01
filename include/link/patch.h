@@ -6,4 +6,4 @@
 void Patch(void);
 extern int32_t nPC;
 
-#endif
+#endif /* RGBDS_LINK_PATCH_H */
