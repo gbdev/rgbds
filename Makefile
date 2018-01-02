@@ -7,6 +7,7 @@ mandir		:= ${PREFIX}/man
 STRIP		:= -s
 BINMODE		:= 555
 MANMODE		:= 444
+CHECKPATCH	:= ../linux/scripts/checkpatch.pl
 
 # Other variables
 
@@ -143,6 +144,25 @@ install: all
 	$Qinstall -m ${MANMODE} src/link/rgblink.1 ${DESTDIR}${mandir}/man1/rgblink.1
 	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${DESTDIR}${mandir}/man5/rgblink.5
 	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${DESTDIR}${mandir}/man1/rgbgfx.1
+
+# Target used to check the coding style of the whole codebase. '.y' and '.l'
+# files aren't checked, unfortunately...
+checkcodebase:
+	$Qfor file in `git ls-files | grep -E '\.c|\.h'`; do	\
+		${CHECKPATCH} -f "$$file";			\
+	done
+
+# Target used to check the coding style of the patches from the upstream branch
+# to the HEAD. Runs checkpatch once for each commit between the current HEAD and
+# the first common commit between the HEAD and origin/develop. '.y' and '.l'
+# files aren't checked, unfortunately...
+checkpatch:
+	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/develop);	\
+	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
+		echo "[*] Analyzing commit "$$commit"" &&		\
+		git format-patch --stdout "$$commit~..$$commit"		\
+			| ${CHECKPATCH} - || true;\
+	done
 
 # Target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv

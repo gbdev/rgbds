@@ -123,9 +123,11 @@ This is the complete list of user-defined variables:
 
 - `PREFIX`: Location where RGBDS will be installed. Defaults to `/usr/local`.
 
-- `bindir`: Location where the binaries will be installed. Defaults to `${PREFIX}/bin`.
+- `bindir`: Location where the binaries will be installed. Defaults to
+  `${PREFIX}/bin`.
 
-- `mandir`: Location where the manpages will be installed. Defaults to `${PREFIX}/man`.
+- `mandir`: Location where the manpages will be installed. Defaults to
+  `${PREFIX}/man`.
 
 - `DESTDIR`: This is prepended to all paths during the installation. It is
   mainly used for packaging.
@@ -139,6 +141,9 @@ This is the complete list of user-defined variables:
 - `BINMODE`: Permissions of the installed binaries. Defaults to `555`.
 
 - `MANMODE`: Permissions of the installed manpages. Defaults to `444`.
+
+- `CHECKPATCH`: Path of the script `checkpatch.pl` of the Linux kernel. Defaults
+  to `../linux/scripts/checkpatch.pl`.
 
 ## 3 History
 
