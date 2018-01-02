@@ -24,32 +24,46 @@
 #include <stdint.h>
 
 static const uint8_t utf8d[] = {
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-  8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-  0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-  0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-  0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-  1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-  1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-  1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 00..0f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 10..1f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 20..2f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 30..3f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 40..4f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 50..5f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 60..6f */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 70..7f */
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 80..8f */
+	9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, /* 90..9f */
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, /* a0..af */
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, /* b0..bf */
+	8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /* c0..cf */
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /* d0..df */
+	0xa, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, /* e0..e7 */
+	0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, /* e8..ef */
+	0xb, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, /* f0..f7 */
+	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, /* f8..ff */
+	0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, /* s0..   */
+	0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, /*   ..s0 */
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* s1 */
+	1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, /* s1 */
+	1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, /* s3 */
+	1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, /* s4 */
+	1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, /* s5 */
+	1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, /* s6 */
+	1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, /* s7 */
+	1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* s8 */
 };
 
-uint32_t
-decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
-  uint32_t type = utf8d[byte];
+uint32_t decode(uint32_t *state, uint32_t *codep, uint32_t byte)
+{
+	uint32_t type = utf8d[byte];
 
-  *codep = (*state != 0) ?
-    (byte & 0x3fu) | (*codep << 6) :
-    (0xff >> type) & (byte);
+	*codep = (*state != 0) ?
+			(byte & 0x3fu) | (*codep << 6) :
+			(0xff >> type) & (byte);
 
-  *state = utf8d[256 + *state*16 + type];
-  return *state;
+	*state = utf8d[256 + *state * 16 + type];
+	return *state;
 }
 
 /*
@@ -79,19 +93,15 @@ decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
 
 struct Charmap globalCharmap = {0};
 
-extern struct Section *pCurrentSection;
-
-int32_t
-readUTF8Char(char *dest, char *src)
+int32_t readUTF8Char(char *dest, char *src)
 {
 	uint32_t state;
 	uint32_t codep;
 	int32_t i;
 
 	for (i = 0, state = 0;; i++) {
-		if (decode(&state, &codep, (uint8_t)src[i]) == 1) {
+		if (decode(&state, &codep, (uint8_t)src[i]) == 1)
 			fatalerror("invalid UTF-8 character");
-		}
 
 		dest[i] = src[i];
 
@@ -104,13 +114,12 @@ readUTF8Char(char *dest, char *src)
 	}
 }
 
-int32_t
-charmap_Add(char *input, uint8_t output)
+int32_t charmap_Add(char *input, uint8_t output)
 {
 	int32_t i;
 	size_t input_length;
-	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1], temp1o = 0,
-	    temp2o = 0;
+	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1];
+	char temp1o = 0, temp2o = 0;
 
 	struct Charmap *charmap;
 
@@ -118,23 +127,21 @@ charmap_Add(char *input, uint8_t output)
 		if (pCurrentSection->charmap) {
 			charmap = pCurrentSection->charmap;
 		} else {
-			if ((charmap = calloc(1, sizeof(struct Charmap))) ==
-			    NULL) {
+			charmap = calloc(1, sizeof(struct Charmap));
+			if (charmap == NULL)
 				fatalerror("Not enough memory for charmap");
-			}
+
 			pCurrentSection->charmap = charmap;
 		}
 	} else {
 		charmap = &globalCharmap;
 	}
 
-	if (nPass == 2) {
+	if (nPass == 2)
 		return charmap->count;
-	}
 
-	if (charmap->count > MAXCHARMAPS || strlen(input) > CHARMAPLENGTH) {
+	if (charmap->count > MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
 		return -1;
-	}
 
 	input_length = strlen(input);
 	if (input_length > 1) {
@@ -142,7 +149,7 @@ charmap_Add(char *input, uint8_t output)
 		while (i < charmap->count + 1) {
 			if (input_length > strlen(charmap->input[i])) {
 				memcpy(temp1i, charmap->input[i],
-				    CHARMAPLENGTH + 1);
+				       CHARMAPLENGTH + 1);
 				memcpy(charmap->input[i], input, input_length);
 				temp1o = charmap->output[i];
 				charmap->output[i] = output;
@@ -161,7 +168,7 @@ charmap_Add(char *input, uint8_t output)
 			i++;
 		}
 		memcpy(charmap->input[charmap->count + 1], temp1i,
-		    CHARMAPLENGTH + 1);
+		       CHARMAPLENGTH + 1);
 		charmap->output[charmap->count + 1] = temp1o;
 	} else {
 		memcpy(charmap->input[charmap->count], input, input_length);
@@ -170,8 +177,7 @@ charmap_Add(char *input, uint8_t output)
 	return ++charmap->count;
 }
 
-int32_t
-charmap_Convert(char **input)
+int32_t charmap_Convert(char **input)
 {
 	struct Charmap *charmap;
 
@@ -179,15 +185,14 @@ charmap_Convert(char **input)
 	char *buffer;
 	int32_t i, j, length;
 
-	if (pCurrentSection && pCurrentSection->charmap) {
+	if (pCurrentSection && pCurrentSection->charmap)
 		charmap = pCurrentSection->charmap;
-	} else {
+	else
 		charmap = &globalCharmap;
-	}
 
-	if ((buffer = malloc(strlen(*input))) == NULL) {
+	buffer = malloc(strlen(*input));
+	if (buffer == NULL)
 		fatalerror("Not enough memory for buffer");
-	}
 
 	length = 0;
 	while (**input) {
@@ -201,15 +206,15 @@ charmap_Convert(char **input)
 			}
 			j = 0;
 		}
-		if (!j) {
+
+		if (!j)
 			j = readUTF8Char(outchar, *input);
-		}
+
 		if (!outchar[0]) {
 			buffer[length++] = 0;
 		} else {
-			for (i = 0; outchar[i]; i++) {
+			for (i = 0; outchar[i]; i++)
 				buffer[length++] = outchar[i];
-			}
 		}
 		*input += j;
 	}

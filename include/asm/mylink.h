@@ -58,4 +58,5 @@ enum {
 	PATCH_WORD_L,
 	PATCH_LONG_L
 };
-#endif
+
+#endif /* RGBDS_ASM_LINK_H */

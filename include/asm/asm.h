@@ -1,9 +1,9 @@
-/*	asm.h
+/*
+ * asm.h
  *
- *	Contains some assembler-wide defines and externs
+ * Contains some assembler-wide defines and externs
  *
- *	Copyright 1997 Carsten Sorensen
- *
+ * Copyright 1997 Carsten Sorensen
  */
 
 #ifndef RGBDS_ASM_ASM_H
@@ -17,9 +17,9 @@
 #include "asm/localasm.h"
 #include "asm/symbol.h"
 
-#define MAXUNIONS		128
+#define MAXUNIONS	128
 #define MAXMACROARGS	256
-#define MAXINCPATHS		128
+#define MAXINCPATHS	128
 
 extern int32_t nLineNo;
 extern uint32_t nTotalLines;
@@ -36,4 +36,4 @@ extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 
-#endif	/* //       ASM_H */
+#endif /* RGBDS_ASM_ASM_H */

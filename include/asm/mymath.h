@@ -18,4 +18,4 @@ int32_t math_Round(int32_t i);
 int32_t math_Ceil(int32_t i);
 int32_t math_Floor(int32_t i);
 
-#endif
+#endif /* RGBDS_ASM_MATH_H */

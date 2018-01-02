@@ -5,8 +5,8 @@
 
 #include "types.h"
 
-#define HASHSIZE (1 << 16)
-#define MAXSYMLEN 256
+#define HASHSIZE	(1 << 16)
+#define MAXSYMLEN	256
 
 struct sSymbol {
 	char tzName[MAXSYMLEN + 1];
@@ -17,27 +17,31 @@ struct sSymbol {
 	struct Section *pSection;
 	uint32_t ulMacroSize;
 	char *pMacro;
-	int32_t(*Callback) (struct sSymbol *);
+	int32_t (*Callback)(struct sSymbol *);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t nFileLine; /* Line where the symbol was defined. */
 };
-#define SYMF_RELOC		0x001	/* symbol will be reloc'ed during
-					 * linking, it's absolute value is
-					 * unknown */
-#define SYMF_EQU		0x002	/* symbol is defined using EQU, will
-					 * not be changed during linking */
-#define SYMF_SET		0x004	/* symbol is (re)defined using SET,
-					 * will not be changed during linking */
-#define SYMF_EXPORT		0x008	/* symbol should be exported */
-#define SYMF_IMPORT		0x010	/* symbol is imported, it's value is
-					 * unknown */
-#define SYMF_LOCAL		0x020	/* symbol is a local symbol */
-#define SYMF_DEFINED	0x040	/* symbol has been defined, not only
-				 * referenced */
-#define SYMF_MACRO		0x080	/* symbol is a macro */
-#define SYMF_STRING		0x100	/* symbol is a stringsymbol */
-#define SYMF_CONST		0x200	/* symbol has a constant value, will
-					 * not be changed during linking */
+
+/* Symbol will be relocated during linking, it's absolute value is unknown */
+#define SYMF_RELOC	0x001
+/* Symbol is defined using EQU, will not be changed during linking */
+#define SYMF_EQU	0x002
+/* Symbol is (re)defined using SET, will not be changed during linking */
+#define SYMF_SET	0x004
+/* Symbol should be exported */
+#define SYMF_EXPORT	0x008
+/* Symbol is imported, it's value is unknown */
+#define SYMF_IMPORT	0x010
+/* Symbol is a local symbol */
+#define SYMF_LOCAL	0x020
+/* Symbol has been defined, not only referenced */
+#define SYMF_DEFINED	0x040
+/* Symbol is a macro */
+#define SYMF_MACRO	0x080
+/* Symbol is a stringsymbol */
+#define SYMF_STRING	0x100
+/* Symbol has a constant value, will not be changed during linking */
+#define SYMF_CONST	0x200
 
 uint32_t calchash(char *s);
 void sym_SetExportAll(uint8_t set);
@@ -76,4 +80,4 @@ void sym_Purge(char *tzName);
 uint32_t sym_isConstDefined(char *tzName);
 int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
 
-#endif
+#endif /* RGBDS_SYMBOL_H */

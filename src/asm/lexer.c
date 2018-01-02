@@ -21,11 +21,12 @@ struct sLexString {
 	uint32_t nNameLength;
 	struct sLexString *pNext;
 };
-#define pLexBufferRealStart (pCurrentBuffer->pBufferRealStart)
-#define pLexBuffer		    (pCurrentBuffer->pBuffer)
-#define AtLineStart	        (pCurrentBuffer->oAtLineStart)
 
-#define SAFETYMARGIN	1024
+#define pLexBufferRealStart	(pCurrentBuffer->pBufferRealStart)
+#define pLexBuffer		(pCurrentBuffer->pBuffer)
+#define AtLineStart		(pCurrentBuffer->oAtLineStart)
+
+#define SAFETYMARGIN		1024
 
 extern size_t symvaluetostring(char *dest, size_t maxLength, char *sym);
 
@@ -40,8 +41,7 @@ uint32_t tFloatingChars[256];
 uint32_t nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
-void
-upperstring(char *s)
+void upperstring(char *s)
 {
 	while (*s) {
 		*s = toupper(*s);
@@ -49,8 +49,7 @@ upperstring(char *s)
 	}
 }
 
-void
-lowerstring(char *s)
+void lowerstring(char *s)
 {
 	while (*s) {
 		*s = tolower(*s);
@@ -58,20 +57,17 @@ lowerstring(char *s)
 	}
 }
 
-void
-yyskipbytes(uint32_t count)
+void yyskipbytes(uint32_t count)
 {
 	pLexBuffer += count;
 }
 
-void
-yyunputbytes(uint32_t count)
+void yyunputbytes(uint32_t count)
 {
 	pLexBuffer -= count;
 }
 
-void
-yyunput(char c)
+void yyunput(char c)
 {
 	if (pLexBuffer <= pLexBufferRealStart)
 		fatalerror("Buffer safety margin exceeded");
@@ -79,8 +75,7 @@ yyunput(char c)
 	*(--pLexBuffer) = c;
 }
 
-void
-yyunputstr(char *s)
+void yyunputstr(char *s)
 {
 	int32_t i, len;
 
@@ -93,114 +88,109 @@ yyunputstr(char *s)
 		*(--pLexBuffer) = s[i];
 }
 
-void
-yy_switch_to_buffer(YY_BUFFER_STATE buf)
+void yy_switch_to_buffer(YY_BUFFER_STATE buf)
 {
 	pCurrentBuffer = buf;
 }
 
-void
-yy_set_state(enum eLexerState i)
+void yy_set_state(enum eLexerState i)
 {
 	lexerstate = i;
 }
 
-void
-yy_delete_buffer(YY_BUFFER_STATE buf)
+void yy_delete_buffer(YY_BUFFER_STATE buf)
 {
 	free(buf->pBufferStart - SAFETYMARGIN);
 	free(buf);
 }
 
-YY_BUFFER_STATE
-yy_scan_bytes(char *mem, uint32_t size)
+YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 {
-	YY_BUFFER_STATE pBuffer;
+	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
 
-	if ((pBuffer = malloc(sizeof(struct yy_buffer_state))) != NULL) {
-		if ((pBuffer->pBufferRealStart =
-		    malloc(size + 1 + SAFETYMARGIN)) != NULL) {
-			pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
-			pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
-			memcpy(pBuffer->pBuffer, mem, size);
-			pBuffer->nBufferSize = size;
-			pBuffer->oAtLineStart = 1;
-			pBuffer->pBuffer[size] = 0;
-			return (pBuffer);
-		}
-	}
-	fatalerror("Out of memory!");
-	return (NULL);
+	if (pBuffer == NULL)
+		fatalerror("%s: Out of memory!", __func__);
+
+	pBuffer->pBufferRealStart = malloc(size + 1 + SAFETYMARGIN);
+
+	if (pBuffer->pBufferRealStart == NULL)
+		fatalerror("%s: Out of memory for buffer!", __func__);
+
+	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
+	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
+	memcpy(pBuffer->pBuffer, mem, size);
+	pBuffer->nBufferSize = size;
+	pBuffer->oAtLineStart = 1;
+	pBuffer->pBuffer[size] = 0;
+
+	return pBuffer;
 }
 
-YY_BUFFER_STATE
-yy_create_buffer(FILE * f)
+YY_BUFFER_STATE yy_create_buffer(FILE *f)
 {
-	YY_BUFFER_STATE pBuffer;
+	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
 
-	if ((pBuffer = malloc(sizeof(struct yy_buffer_state))) != NULL) {
-		uint32_t size;
+	if (pBuffer == NULL)
+		fatalerror("%s: Out of memory!", __func__);
 
-		fseek(f, 0, SEEK_END);
-		size = ftell(f);
-		fseek(f, 0, SEEK_SET);
+	uint32_t size;
 
-		if ((pBuffer->pBufferRealStart =
-			malloc(size + 2 + SAFETYMARGIN)) != NULL) {
-			char *mem;
-			uint32_t instring = 0;
+	fseek(f, 0, SEEK_END);
+	size = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-			pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
-			pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
+	pBuffer->pBufferRealStart = malloc(size + 2 + SAFETYMARGIN);
 
-			size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
+	if (pBuffer->pBufferRealStart == NULL)
+		fatalerror("%s: Out of memory for buffer!", __func__);
 
-			pBuffer->pBuffer[size] = '\n';
-			pBuffer->pBuffer[size + 1] = 0;
-			pBuffer->nBufferSize = size + 1;
+	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
+	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
 
-			mem = pBuffer->pBuffer;
+	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
-			while (*mem) {
-				if (*mem == '\"')
-					instring = 1 - instring;
+	pBuffer->pBuffer[size] = '\n';
+	pBuffer->pBuffer[size + 1] = 0;
+	pBuffer->nBufferSize = size + 1;
 
-				if (mem[0] == '\\' &&
-				    (mem[1] == '\"' || mem[1] == '\\')) {
-					mem += 2;
-				} else if (instring) {
-					mem += 1;
-				} else {
-					if ((mem[0] == 10 && mem[1] == 13)
-					 || (mem[0] == 13 && mem[1] == 10)) {
-						mem[0] = ' ';
-						mem[1] = '\n';
-						mem += 2;
-					} else if (mem[0] == 10 || mem[0] == 13) {
-						mem[0] = '\n';
-						mem += 1;
-					} else if (mem[0] == '\n' && mem[1] == '*') {
-						mem += 1;
-						while (!(*mem == '\n' || *mem == '\0'))
-							*mem++ = ' ';
-					} else if (*mem == ';') {
-						while (!(*mem == '\n' || *mem == '\0'))
-							*mem++ = ' ';
-					} else
-						mem += 1;
-				}
+	char *mem = pBuffer->pBuffer;
+	uint32_t instring = 0;
+
+	while (*mem) {
+		if (*mem == '\"')
+			instring = 1 - instring;
+
+		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
+			mem += 2;
+		} else if (instring) {
+			mem += 1;
+		} else {
+			if ((mem[0] == 10 && mem[1] == 13)
+				|| (mem[0] == 13 && mem[1] == 10)) {
+				mem[0] = ' ';
+				mem[1] = '\n';
+				mem += 2;
+			} else if (mem[0] == 10 || mem[0] == 13) {
+				mem[0] = '\n';
+				mem += 1;
+			} else if (mem[0] == '\n' && mem[1] == '*') {
+				mem += 1;
+				while (!(*mem == '\n' || *mem == '\0'))
+					*mem++ = ' ';
+			} else if (*mem == ';') {
+				while (!(*mem == '\n' || *mem == '\0'))
+					*mem++ = ' ';
+			} else {
+				mem += 1;
 			}
-
-			pBuffer->oAtLineStart = 1;
-			return (pBuffer);
 		}
 	}
-	fatalerror("Out of memory!");
-	return (NULL);
+
+	pBuffer->oAtLineStart = 1;
+	return pBuffer;
 }
 
-uint32_t
-lex_FloatAlloc(struct sLexFloat *token)
+uint32_t lex_FloatAlloc(const struct sLexFloat *token)
 {
 	tLexFloat[nFloating] = *token;
 
@@ -211,17 +201,15 @@ lex_FloatAlloc(struct sLexFloat *token)
  * Make sure that only non-zero ASCII characters are used. Also, check if the
  * start is greater than the end of the range.
  */
-void
-lex_CheckCharacterRange(uint16_t start, uint16_t end)
+void lex_CheckCharacterRange(uint16_t start, uint16_t end)
 {
 	if (start > end || start < 1 || end > 127) {
 		errx(1, "Invalid character range (start: %u, end: %u)",
-		        start, end);
+		     start, end);
 	}
 }
 
-void
-lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -231,8 +219,7 @@ lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-void
-lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -242,8 +229,7 @@ lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-void
-lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -253,8 +239,7 @@ lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-void
-lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -264,8 +249,7 @@ lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-void
-lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -275,8 +259,7 @@ lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-void
-lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
+void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
 	lex_CheckCharacterRange(start, end);
 
@@ -286,12 +269,10 @@ lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 	}
 }
 
-struct sLexFloat *
-lexgetfloat(uint32_t nFloatMask)
+static struct sLexFloat *lexgetfloat(uint32_t nFloatMask)
 {
-	if (nFloatMask == 0) {
-		fatalerror("Internal error in lexgetfloat");
-	}
+	if (nFloatMask == 0)
+		fatalerror("Internal error in %s", __func__);
 
 	int32_t i = 0;
 
@@ -300,29 +281,25 @@ lexgetfloat(uint32_t nFloatMask)
 		i++;
 	}
 
-	return (&tLexFloat[i]);
+	return &tLexFloat[i];
 }
 
-uint32_t
-lexcalchash(char *s)
+static uint32_t lexcalchash(char *s)
 {
 	uint32_t hash = 0;
 
-	while (*s) {
+	while (*s)
 		hash = (hash * 283) ^ toupper(*s++);
-	}
 
-	return (hash % LEXHASHSIZE);
+	return hash % LEXHASHSIZE;
 }
 
-void
-lex_Init(void)
+void lex_Init(void)
 {
 	uint32_t i;
 
-	for (i = 0; i < LEXHASHSIZE; i++) {
+	for (i = 0; i < LEXHASHSIZE; i++)
 		tLexHash[i] = NULL;
-	}
 
 	for (i = 0; i < 256; i++) {
 		tFloatingFirstChar[i] = 0;
@@ -334,8 +311,7 @@ lex_Init(void)
 	nFloating = 0;
 }
 
-void
-lex_AddStrings(struct sLexInitString * lex)
+void lex_AddStrings(const struct sLexInitString *lex)
 {
 	while (lex->tzName) {
 		struct sLexString **ppHash;
@@ -345,22 +321,22 @@ lex_AddStrings(struct sLexInitString * lex)
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
 
-		if (((*ppHash) = malloc(sizeof(struct sLexString))) != NULL) {
-			if (((*ppHash)->tzName =
-				(char *) strdup(lex->tzName)) != NULL) {
-				(*ppHash)->nNameLength = strlen(lex->tzName);
-				(*ppHash)->nToken = lex->nToken;
-				(*ppHash)->pNext = NULL;
-
-				upperstring((*ppHash)->tzName);
-
-				if ((*ppHash)->nNameLength > nLexMaxLength)
-					nLexMaxLength = (*ppHash)->nNameLength;
-
-			} else
-				fatalerror("Out of memory!");
-		} else
+		*ppHash = malloc(sizeof(struct sLexString));
+		if (*ppHash == NULL)
 			fatalerror("Out of memory!");
+
+		(*ppHash)->tzName = (char *)strdup(lex->tzName);
+		if ((*ppHash)->tzName == NULL)
+			fatalerror("Out of memory!");
+
+		(*ppHash)->nNameLength = strlen(lex->tzName);
+		(*ppHash)->nToken = lex->nToken;
+		(*ppHash)->pNext = NULL;
+
+		upperstring((*ppHash)->tzName);
+
+		if ((*ppHash)->nNameLength > nLexMaxLength)
+			nLexMaxLength = (*ppHash)->nNameLength;
 
 		lex += 1;
 	}
@@ -376,11 +352,12 @@ lex_AddStrings(struct sLexInitString * lex)
  * The token types with the longest match from the current position in the
  * buffer will have their bits set in the float mask.
  */
-void
-yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
+void yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 {
-	// Note that '\0' should always have a bit mask of 0 in the "floating"
-	// tables, so it doesn't need to be checked for separately.
+	/*
+	 * Note that '\0' should always have a bit mask of 0 in the "floating"
+	 * tables, so it doesn't need to be checked for separately.
+	 */
 
 	char *s = pLexBuffer;
 	uint32_t nOldFloatMask = 0;
@@ -405,8 +382,7 @@ yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 /*
  * Gets the longest keyword/operator from the current position in the buffer.
  */
-struct sLexString *
-yylex_GetLongestFixed()
+struct sLexString *yylex_GetLongestFixed()
 {
 	struct sLexString *pLongestFixed = NULL;
 	char *s = pLexBuffer;
@@ -433,8 +409,7 @@ yylex_GetLongestFixed()
 	return pLongestFixed;
 }
 
-size_t
-CopyMacroArg(char *dest, size_t maxLength, char c)
+size_t CopyMacroArg(char *dest, size_t maxLength, char c)
 {
 	size_t i;
 	char *s;
@@ -459,35 +434,33 @@ CopyMacroArg(char *dest, size_t maxLength, char c)
 		return 0;
 	}
 
-	if ((s = sym_FindMacroArg(argNum)) == NULL)
+	s = sym_FindMacroArg(argNum);
+
+	if (s == NULL)
 		fatalerror("Macro argument not defined");
 
 	for (i = 0; s[i] != 0; i++) {
-		if (i >= maxLength) {
+		if (i >= maxLength)
 			fatalerror("Macro argument too long to fit buffer");
-		}
+
 		dest[i] = s[i];
 	}
 
 	return i;
 }
 
-static inline void
-yylex_StringWriteChar(char *s, size_t index, char c)
+static inline void yylex_StringWriteChar(char *s, size_t index, char c)
 {
-	if (index >= MAXSTRLEN) {
+	if (index >= MAXSTRLEN)
 		fatalerror("String too long");
-	}
 
 	s[index] = c;
 }
 
-static inline void
-yylex_SymbolWriteChar(char *s, size_t index, char c)
+static inline void yylex_SymbolWriteChar(char *s, size_t index, char c)
 {
-	if (index >= MAXSYMLEN) {
+	if (index >= MAXSYMLEN)
 		fatalerror("Symbol too long");
-	}
 
 	s[index] = c;
 }
@@ -498,14 +471,15 @@ yylex_SymbolWriteChar(char *s, size_t index, char c)
  */
 void yylex_TrimEnd(char *s, size_t index)
 {
-	int32_t i;
+	int32_t i = (int32_t)index - 1;
 
-	for (i = (int32_t)index - 1; i >= 0 && (s[i] == ' ' || s[i] == '\t'); i--)
+	while ((i >= 0) && (s[i] == ' ' || s[i] == '\t')) {
 		s[i] = 0;
+		i--;
+	}
 }
 
-size_t
-yylex_ReadBracketedSymbol(char *dest, size_t index)
+size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 {
 	char sym[MAXSYMLEN + 1];
 	char ch;
@@ -524,13 +498,15 @@ yylex_ReadBracketedSymbol(char *dest, size_t index)
 				i += length;
 			else
 				fatalerror("Illegal character escape '%c'", ch);
-		} else
+		} else {
 			yylex_SymbolWriteChar(sym, i++, ch);
+		}
 	}
 
 	yylex_SymbolWriteChar(sym, i, 0);
 
-	maxLength = MAXSTRLEN - index; // it's assumed we're writing to a T_STRING
+	/* It's assumed we're writing to a T_STRING */
+	maxLength = MAXSTRLEN - index;
 	length = symvaluetostring(&dest[index], maxLength, sym);
 
 	if (*pLexBuffer == '}')
@@ -541,8 +517,7 @@ yylex_ReadBracketedSymbol(char *dest, size_t index)
 	return length;
 }
 
-void
-yylex_ReadQuotedString()
+static void yylex_ReadQuotedString(void)
 {
 	size_t index = 0;
 	size_t length, maxLength;
@@ -577,19 +552,22 @@ yylex_ReadQuotedString()
 				break;
 			default:
 				maxLength = MAXSTRLEN - index;
-				length = CopyMacroArg(&yylval.tzString[index], maxLength, ch);
+				length = CopyMacroArg(&yylval.tzString[index],
+						      maxLength, ch);
 
 				if (length != 0)
 					index += length;
 				else
-					fatalerror("Illegal character escape '%c'", ch);
+					fatalerror("Illegal character escape '%c'",
+						   ch);
 
 				ch = 0;
 				break;
 			}
 		} else if (ch == '{') {
 			// Get bracketed symbol within string.
-			index += yylex_ReadBracketedSymbol(yylval.tzString, index);
+			index += yylex_ReadBracketedSymbol(yylval.tzString,
+							   index);
 			ch = 0;
 		}
 
@@ -605,8 +583,7 @@ yylex_ReadQuotedString()
 		fatalerror("Unterminated string");
 }
 
-uint32_t
-yylex_NORMAL()
+static uint32_t yylex_NORMAL(void)
 {
 	struct sLexString *pLongestFixed = NULL;
 	uint32_t nFloatMask, nFloatLen;
@@ -629,15 +606,20 @@ scanagain:
 		}
 	}
 
-	// Try to match an identifier, macro argument (e.g. \1),
-	// or numeric literal.
+	/*
+	 * Try to match an identifier, macro argument (e.g. \1),
+	 * or numeric literal.
+	 */
 	yylex_GetFloatMaskAndFloatLen(&nFloatMask, &nFloatLen);
 
-	// Try to match a keyword or operator.
+	/* Try to match a keyword or operator. */
 	pLongestFixed = yylex_GetLongestFixed();
 
 	if (nFloatLen == 0 && pLongestFixed == NULL) {
-		// No keyword, identifier, operator, or numerical literal matches.
+		/*
+		 * No keyword, identifier, operator, or numerical literal
+		 * matches.
+		 */
 
 		if (*pLexBuffer == '"') {
 			pLexBuffer++;
@@ -647,52 +629,55 @@ scanagain:
 			pLexBuffer++;
 			yylex_ReadBracketedSymbol(yylval.tzString, 0);
 			return T_STRING;
-		} else {
-			// It's not a keyword, operator, identifier, macro argument,
-			// numeric literal, string, or bracketed symbol, so just return
-			// the ASCII character.
-			if (*pLexBuffer == '\n')
-				AtLineStart = 1;
-
-			return *pLexBuffer++;
 		}
+
+		/*
+		 * It's not a keyword, operator, identifier, macro argument,
+		 * numeric literal, string, or bracketed symbol, so just return
+		 * the ASCII character.
+		 */
+		if (*pLexBuffer == '\n')
+			AtLineStart = 1;
+
+		return *pLexBuffer++;
 	}
 
 	if (pLongestFixed == NULL || nFloatLen > pLongestFixed->nNameLength) {
-		// Longest match was an identifier, macro argument, or numeric literal.
+		/*
+		 * Longest match was an identifier, macro argument, or numeric
+		 * literal.
+		 */
 		struct sLexFloat *token = lexgetfloat(nFloatMask);
 
 		if (token->Callback) {
 			int32_t done = token->Callback(pLexBuffer, nFloatLen);
+
 			if (!done)
 				goto scanagain;
 		}
 
 		pLexBuffer += nFloatLen;
 
-		if (token->nToken == T_ID && linestart) {
+		if (token->nToken == T_ID && linestart)
 			return T_LABEL;
-		} else {
+		else
 			return token->nToken;
-		}
 	}
 
-	// Longest match was a keyword or operator.
+	/* Longest match was a keyword or operator. */
 	pLexBuffer += pLongestFixed->nNameLength;
 	return pLongestFixed->nToken;
 }
 
-uint32_t
-yylex_MACROARGS()
+static uint32_t yylex_MACROARGS(void)
 {
 	size_t index = 0;
 	size_t length, maxLength;
 
-	while (*pLexBuffer == ' ' || *pLexBuffer == '\t') {
+	while ((*pLexBuffer == ' ') || (*pLexBuffer == '\t'))
 		pLexBuffer++;
-	}
 
-	while (*pLexBuffer != ',' && (*pLexBuffer != '\n')) {
+	while ((*pLexBuffer != ',') && (*pLexBuffer != '\n')) {
 		char ch = *pLexBuffer++;
 
 		if (ch == '\\') {
@@ -719,18 +704,21 @@ yylex_MACROARGS()
 				break;
 			default:
 				maxLength = MAXSTRLEN - index;
-				length = CopyMacroArg(&yylval.tzString[index], maxLength, ch);
+				length = CopyMacroArg(&yylval.tzString[index],
+						      maxLength, ch);
 
 				if (length != 0)
 					index += length;
 				else
-					fatalerror("Illegal character escape '%c'", ch);
+					fatalerror("Illegal character escape '%c'",
+						   ch);
 
 				ch = 0;
 				break;
 			}
 		} else if (ch == '{') {
-			index += yylex_ReadBracketedSymbol(yylval.tzString, index);
+			index += yylex_ReadBracketedSymbol(yylval.tzString,
+							   index);
 			ch = 0;
 		}
 		if (ch)
@@ -740,7 +728,7 @@ yylex_MACROARGS()
 	if (index) {
 		yylex_StringWriteChar(yylval.tzString, index, 0);
 
-		// trim trailing white space at the end of the line
+		/* trim trailing white space at the end of the line */
 		if (*pLexBuffer == '\n')
 			yylex_TrimEnd(yylval.tzString, index);
 
@@ -754,12 +742,10 @@ yylex_MACROARGS()
 		return ',';
 	}
 
-	fatalerror("Internal error in yylex_MACROARGS");
-	return 0;
+	fatalerror("Internal error in %s", __func__);
 }
 
-uint32_t
-yylex(void)
+uint32_t yylex(void)
 {
 	switch (lexerstate) {
 	case LEX_STATE_NORMAL:
@@ -768,6 +754,5 @@ yylex(void)
 		return yylex_MACROARGS();
 	}
 
-	fatalerror("Internal error in yylex");
-	return 0;
+	fatalerror("Internal error in %s", __func__);
 }

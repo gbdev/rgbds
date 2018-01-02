@@ -13,8 +13,7 @@ struct Charmap {
 };
 
 int32_t readUTF8Char(char *destination, char *source);
-void charmap_Sort();
 int32_t charmap_Add(char *input, uint8_t output);
 int32_t charmap_Convert(char **input);
 
-#endif
+#endif /* RGBDS_ASM_CHARMAP_H */

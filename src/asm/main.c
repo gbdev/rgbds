@@ -11,6 +11,7 @@
 #include "asm/fstack.h"
 #include "asm/output.h"
 #include "asm/main.h"
+
 #include "extern/err.h"
 #include "extern/reallocarray.h"
 #include "extern/version.h"
@@ -28,7 +29,7 @@ uint32_t nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
-extern int yydebug;
+/* extern int yydebug; */
 
 FILE *dependfile;
 extern char *tzObjectname;
@@ -45,73 +46,71 @@ struct sOptionStackEntry {
 	struct sOptionStackEntry *pNext;
 };
 
-struct sOptionStackEntry *pOptionStack = NULL;
+struct sOptionStackEntry *pOptionStack;
 
-void
-opt_SetCurrentOptions(struct sOptions * pOpt)
+void opt_SetCurrentOptions(struct sOptions *pOpt)
 {
 	if (nGBGfxID != -1) {
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[0],
-		    CurrentOptions.gbgfx[0]);
+				     CurrentOptions.gbgfx[0]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[1],
-		    CurrentOptions.gbgfx[1]);
+				     CurrentOptions.gbgfx[1]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[2],
-		    CurrentOptions.gbgfx[2]);
+				     CurrentOptions.gbgfx[2]);
 		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[3],
-		    CurrentOptions.gbgfx[3]);
+				     CurrentOptions.gbgfx[3]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-		    CurrentOptions.gbgfx[0]);
+					   CurrentOptions.gbgfx[0]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-		    CurrentOptions.gbgfx[1]);
+					   CurrentOptions.gbgfx[1]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-		    CurrentOptions.gbgfx[2]);
+					   CurrentOptions.gbgfx[2]);
 		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-		    CurrentOptions.gbgfx[3]);
+					   CurrentOptions.gbgfx[3]);
 	}
 	if (nBinaryID != -1) {
 		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[0],
-		    CurrentOptions.binary[0]);
+				     CurrentOptions.binary[0]);
 		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[1],
-		    CurrentOptions.binary[1]);
+				     CurrentOptions.binary[1]);
 		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[0],
-		    CurrentOptions.binary[0]);
+					   CurrentOptions.binary[0]);
 		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[1],
-		    CurrentOptions.binary[1]);
+					   CurrentOptions.binary[1]);
 	}
 	CurrentOptions = *pOpt;
 
 	if (nGBGfxID != -1) {
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[0],
-		    CurrentOptions.gbgfx[0]);
+				  CurrentOptions.gbgfx[0]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[1],
-		    CurrentOptions.gbgfx[1]);
+				  CurrentOptions.gbgfx[1]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[2],
-		    CurrentOptions.gbgfx[2]);
+				  CurrentOptions.gbgfx[2]);
 		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[3],
-		    CurrentOptions.gbgfx[3]);
+				  CurrentOptions.gbgfx[3]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-		    CurrentOptions.gbgfx[0]);
+					CurrentOptions.gbgfx[0]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-		    CurrentOptions.gbgfx[1]);
+					CurrentOptions.gbgfx[1]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-		    CurrentOptions.gbgfx[2]);
+					CurrentOptions.gbgfx[2]);
 		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-		    CurrentOptions.gbgfx[3]);
+					CurrentOptions.gbgfx[3]);
 	}
 	if (nBinaryID != -1) {
 		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[0],
-		    CurrentOptions.binary[0]);
+				  CurrentOptions.binary[0]);
 		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[1],
-		    CurrentOptions.binary[1]);
+				  CurrentOptions.binary[1]);
 		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[0],
-		    CurrentOptions.binary[0]);
+					CurrentOptions.binary[0]);
 		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[1],
-		    CurrentOptions.binary[1]);
+					CurrentOptions.binary[1]);
 	}
 }
 
-void
-opt_Parse(char *s)
+void opt_Parse(char *s)
 {
 	struct sOptions newopt;
 
@@ -125,8 +124,7 @@ opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(1, "Must specify exactly 4 characters for "
-			    "option 'g'");
+			errx(1, "Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -134,8 +132,7 @@ opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			errx(1, "Must specify exactly 2 characters for option "
-			    "'b'");
+			errx(1, "Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 	case 'z':
@@ -143,12 +140,10 @@ opt_Parse(char *s)
 			int32_t result;
 
 			result = sscanf(&s[1], "%x", &newopt.fillchar);
-			if (!((result == EOF) || (result == 1))) {
+			if (!((result == EOF) || (result == 1)))
 				errx(1, "Invalid argument for option 'z'");
-			}
 		} else {
 			errx(1, "Invalid argument for option 'z'");
-			exit(1);
 		}
 		break;
 	default:
@@ -159,77 +154,67 @@ opt_Parse(char *s)
 	opt_SetCurrentOptions(&newopt);
 }
 
-void
-opt_Push(void)
+void opt_Push(void)
 {
 	struct sOptionStackEntry *pOpt;
 
-	if ((pOpt = malloc(sizeof(struct sOptionStackEntry))) != NULL) {
-		pOpt->Options = CurrentOptions;
-		pOpt->pNext = pOptionStack;
-		pOptionStack = pOpt;
-	} else
+	pOpt = malloc(sizeof(struct sOptionStackEntry));
+
+	if (pOpt == NULL)
 		fatalerror("No memory for option stack");
+
+	pOpt->Options = CurrentOptions;
+	pOpt->pNext = pOptionStack;
+	pOptionStack = pOpt;
 }
 
-void
-opt_Pop(void)
+void opt_Pop(void)
 {
-	if (pOptionStack) {
-		struct sOptionStackEntry *pOpt;
-
-		pOpt = pOptionStack;
-		opt_SetCurrentOptions(&(pOpt->Options));
-		pOptionStack = pOpt->pNext;
-		free(pOpt);
-	} else
+	if (pOptionStack == NULL)
 		fatalerror("No entries in the option stack");
+
+	struct sOptionStackEntry *pOpt;
+
+	pOpt = pOptionStack;
+	opt_SetCurrentOptions(&(pOpt->Options));
+	pOptionStack = pOpt->pNext;
+	free(pOpt);
 }
 
-void
-opt_AddDefine(char *s)
+void opt_AddDefine(char *s)
 {
 	char *value, *equals;
-	if(cldefines_index >= cldefines_size)
-	{
+
+	if (cldefines_index >= cldefines_size) {
 		cldefines_size *= 2;
 		cldefines = reallocarray(cldefines, cldefines_size,
-		                        2 * sizeof(void *));
-		if(!cldefines)
-		{
+					 2 * sizeof(void *));
+		if (!cldefines)
 			fatalerror("No memory for command line defines");
-		}
 	}
 	equals = strchr(s, '=');
-	if(equals)
-	{
+	if (equals) {
 		*equals = '\0';
 		value = equals + 1;
-	}
-	else
-	{
+	} else {
 		value = "1";
 	}
 	cldefines[cldefines_index++] = s;
 	cldefines[cldefines_index++] = value;
 }
 
-void
-opt_ParseDefines()
+static void opt_ParseDefines(void)
 {
 	int32_t i;
 
-	for(i = 0; i < cldefines_index; i += 2)
-	{
+	for (i = 0; i < cldefines_index; i += 2)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
-	}
 }
 
 /*
  * Error handling
  */
-void
-verror(const char *fmt, va_list args)
+void verror(const char *fmt, va_list args)
 {
 	fprintf(stderr, "ERROR: ");
 	fstk_Dump();
@@ -239,32 +224,33 @@ verror(const char *fmt, va_list args)
 	nErrors += 1;
 }
 
-void
-yyerror(const char *fmt, ...)
+void yyerror(const char *fmt, ...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	verror(fmt, args);
 	va_end(args);
 }
 
-void
-fatalerror(const char *fmt, ...)
+void fatalerror(const char *fmt, ...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	verror(fmt, args);
 	va_end(args);
+
 	exit(5);
 }
 
-void
-warning(const char *fmt, ...)
+void warning(const char *fmt, ...)
 {
 	if (!CurrentOptions.warnings)
 		return;
 
 	va_list args;
+
 	va_start(args, fmt);
 
 	fprintf(stderr, "warning: ");
@@ -276,17 +262,15 @@ warning(const char *fmt, ...)
 	va_end(args);
 }
 
-static void
-usage(void)
+static void print_usage(void)
 {
 	printf(
-"Usage: rgbasm [-EhVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
+"usage: rgbasm [-EhVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
 "              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int ch;
 	char *ep;
@@ -298,15 +282,12 @@ main(int argc, char *argv[])
 	dependfile = NULL;
 
 	cldefines_size = 32;
-	cldefines = reallocarray(cldefines, cldefines_size,
-	                        2 * sizeof(void *));
-	if(!cldefines)
-	{
+	cldefines = reallocarray(cldefines, cldefines_size, 2 * sizeof(void *));
+	if (!cldefines)
 		fatalerror("No memory for command line defines");
-	}
 
 	if (argc == 1)
-		usage();
+		print_usage();
 
 	/* yydebug=1; */
 
@@ -333,8 +314,7 @@ main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				errx(1, "Must specify exactly 2 characters for "
-				    "option 'b'");
+				errx(1, "Must specify exactly 2 characters for option 'b'");
 			}
 			break;
 		case 'D':
@@ -350,8 +330,7 @@ main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				errx(1, "Must specify exactly 4 characters for "
-				    "option 'g'");
+				errx(1, "Must specify exactly 4 characters for option 'g'");
 			}
 			break;
 		case 'h':
@@ -361,22 +340,23 @@ main(int argc, char *argv[])
 			fstk_AddIncludePath(optarg);
 			break;
 		case 'M':
-			if ((dependfile = fopen(optarg, "w")) == NULL) {
+			dependfile = fopen(optarg, "w");
+			if (dependfile == NULL)
 				err(1, "Could not open dependfile %s", optarg);
-			}
+
 			break;
 		case 'o':
 			out_SetFileName(optarg);
 			break;
 		case 'p':
 			newopt.fillchar = strtoul(optarg, &ep, 0);
-			if (optarg[0] == '\0' || *ep != '\0') {
+
+			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'p'");
-			}
-			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF) {
-				errx(1, "Argument for option 'p' must be "
-				    "between 0 and 0xFF");
-			}
+
+			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
+				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
+
 			break;
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
@@ -388,7 +368,7 @@ main(int argc, char *argv[])
 			newopt.warnings = false;
 			break;
 		default:
-			usage();
+			print_usage();
 			/* NOTREACHED */
 		}
 	}
@@ -400,15 +380,14 @@ main(int argc, char *argv[])
 	DefaultOptions = CurrentOptions;
 
 	if (argc == 0)
-		usage();
+		print_usage();
 
 	tzMainfile = argv[argc - 1];
 
 	setuplex();
 
-	if (CurrentOptions.verbose) {
+	if (CurrentOptions.verbose)
 		printf("Assembling %s\n", tzMainfile);
-	}
 
 	if (dependfile) {
 		if (!tzObjectname)
@@ -432,23 +411,21 @@ main(int argc, char *argv[])
 	fstk_Init(tzMainfile);
 	opt_ParseDefines();
 
-	if (CurrentOptions.verbose) {
+	if (CurrentOptions.verbose)
 		printf("Pass 1...\n");
-	}
 
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
-	if (yyparse() != 0 || nErrors != 0) {
+	if (yyparse() != 0 || nErrors != 0)
 		errx(1, "Assembly aborted in pass 1 (%ld errors)!", nErrors);
-	}
 
-	if (nIFDepth != 0) {
+	if (nIFDepth != 0)
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
-	}
-	
+
 	if (nUnionDepth != 0) {
-		errx(1, "Unterminated UNION construct (%ld levels)!", nUnionDepth);
+		errx(1, "Unterminated UNION construct (%ld levels)!",
+		     nUnionDepth);
 	}
 
 	nTotalLines = 0;
@@ -466,27 +443,25 @@ main(int argc, char *argv[])
 	opt_SetCurrentOptions(&DefaultOptions);
 	opt_ParseDefines();
 
-	if (CurrentOptions.verbose) {
+	if (CurrentOptions.verbose)
 		printf("Pass 2...\n");
-	}
 
-	if (yyparse() != 0 || nErrors != 0) {
+	if (yyparse() != 0 || nErrors != 0)
 		errx(1, "Assembly aborted in pass 2 (%ld errors)!", nErrors);
-	}
 
 	double timespent;
 
 	nEndClock = clock();
 	timespent = ((double)(nEndClock - nStartClock))
-	    / (double)CLOCKS_PER_SEC;
+		     / (double)CLOCKS_PER_SEC;
 	if (CurrentOptions.verbose) {
 		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
-		    (int) timespent, ((int) (timespent * 100.0)) % 100);
+		       (int)timespent, ((int)(timespent * 100.0)) % 100);
 		if (timespent == 0)
 			printf("(INFINITY lines/minute)\n");
 		else
 			printf("(%d lines/minute)\n",
-			    (int) (60 / timespent * nTotalLines));
+			       (int)(60 / timespent * nTotalLines));
 	}
 	out_WriteObject();
 	return 0;

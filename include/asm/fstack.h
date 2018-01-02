@@ -1,8 +1,8 @@
-/*	fstack.h
+/*  fstack.h
  *
- *	Contains some assembler-wide defines and externs
+ *  Contains some assembler-wide defines and externs
  *
- *	Copyright 1997 Carsten Sorensen
+ *  Copyright 1997 Carsten Sorensen
  *
  */
 
@@ -31,16 +31,16 @@ struct sContext {
 	uint32_t nREPTBlockSize;
 };
 
-void fstk_RunInclude(char *);
-extern void fstk_RunMacroArg(int32_t s);
-void fstk_Init(char *);
-extern void fstk_Dump(void);
-extern void fstk_AddIncludePath(char *s);
-extern uint32_t fstk_RunMacro(char *s);
-extern void fstk_RunRept(uint32_t count);
-FILE * fstk_FindFile(char *);
+void fstk_RunInclude(char *tzFileName);
+void fstk_RunMacroArg(int32_t s);
+void fstk_Init(char *s);
+void fstk_Dump(void);
+void fstk_AddIncludePath(char *s);
+uint32_t fstk_RunMacro(char *s);
+void fstk_RunRept(uint32_t count);
+FILE *fstk_FindFile(char *fname);
 int32_t fstk_GetLine(void);
 
 extern int yywrap(void);
 
-#endif
+#endif /* RGBDS_ASM_FSTACK_H */

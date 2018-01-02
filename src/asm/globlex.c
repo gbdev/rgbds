@@ -14,40 +14,35 @@
 #include <math.h>
 #include <string.h>
 
-bool oDontExpandStrings = false;
+bool oDontExpandStrings;
 int32_t nGBGfxID = -1;
 int32_t nBinaryID = -1;
 
-int32_t
-gbgfx2bin(char ch)
+static int32_t gbgfx2bin(char ch)
 {
 	int32_t i;
 
 	for (i = 0; i <= 3; i += 1) {
-		if (CurrentOptions.gbgfx[i] == ch) {
-			return (i);
-		}
+		if (CurrentOptions.gbgfx[i] == ch)
+			return i;
 	}
 
-	return (0);
+	return 0;
 }
 
-int32_t
-binary2bin(char ch)
+static int32_t binary2bin(char ch)
 {
 	int32_t i;
 
 	for (i = 0; i <= 1; i += 1) {
-		if (CurrentOptions.binary[i] == ch) {
-			return (i);
-		}
+		if (CurrentOptions.binary[i] == ch)
+			return i;
 	}
 
-	return (0);
+	return 0;
 }
 
-int32_t
-char2bin(char ch)
+static int32_t char2bin(char ch)
 {
 	if (ch >= 'a' && ch <= 'f')
 		return (ch - 'a' + 10);
@@ -58,13 +53,12 @@ char2bin(char ch)
 	if (ch >= '0' && ch <= '9')
 		return (ch - '0');
 
-	return (0);
+	return 0;
 }
 
 typedef int32_t(*x2bin) (char ch);
 
-int32_t
-ascii2bin(char *s)
+static int32_t ascii2bin(char *s)
 {
 	int32_t radix = 10;
 	int32_t result = 0;
@@ -105,11 +99,10 @@ ascii2bin(char *s)
 			result = result * radix + convertfunc(*s++);
 	}
 
-	return (result);
+	return result;
 }
 
-uint32_t
-ParseFixedPoint(char *s, uint32_t size)
+uint32_t ParseFixedPoint(char *s, uint32_t size)
 {
 	uint32_t i = 0, dot = 0;
 
@@ -125,13 +118,12 @@ ParseFixedPoint(char *s, uint32_t size)
 
 	yyunputbytes(size);
 
-	yylval.nConstValue = (int32_t) (atof(s) * 65536);
+	yylval.nConstValue = (int32_t)(atof(s) * 65536);
 
-	return (1);
+	return 1;
 }
 
-uint32_t
-ParseNumber(char *s, uint32_t size)
+uint32_t ParseNumber(char *s, uint32_t size)
 {
 	char dest[256];
 
@@ -139,11 +131,10 @@ ParseNumber(char *s, uint32_t size)
 	dest[size] = 0;
 	yylval.nConstValue = ascii2bin(dest);
 
-	return (1);
+	return 1;
 }
 
-uint32_t
-ParseSymbol(char *src, uint32_t size)
+uint32_t ParseSymbol(char *src, uint32_t size)
 {
 	char dest[MAXSYMLEN + 1];
 	int32_t copied = 0, size_backup = size;
@@ -155,13 +146,13 @@ ParseSymbol(char *src, uint32_t size)
 			src += 1;
 			size -= 1;
 
-			if (*src == '@')
+			if (*src == '@') {
 				marg = sym_FindMacroArg(-1);
-			else if (*src >= '0' && *src <= '9')
+			} else if (*src >= '0' && *src <= '9') {
 				marg = sym_FindMacroArg(*src - '0');
-			else {
+			} else {
 				fatalerror("Malformed ID");
-				return (0);
+				return 0;
 			}
 
 			src += 1;
@@ -189,47 +180,48 @@ ParseSymbol(char *src, uint32_t size)
 		yyunputstr(s = sym_GetStringValue(dest));
 
 		while (*s) {
-			if (*s++ == '\n') {
+			if (*s++ == '\n')
 				nLineNo -= 1;
-			}
 		}
-		return (0);
-	} else {
-		strcpy(yylval.tzString, dest);
-		return (1);
+		return 0;
 	}
+
+	strcpy(yylval.tzString, dest);
+	return 1;
 }
 
-uint32_t
-PutMacroArg(char *src, uint32_t size)
+uint32_t PutMacroArg(char *src, uint32_t size)
 {
 	char *s;
 
 	yyskipbytes(size);
 	if ((size == 2 && src[1] >= '1' && src[1] <= '9')) {
-		if ((s = sym_FindMacroArg(src[1] - '0')) != NULL) {
+		s = sym_FindMacroArg(src[1] - '0');
+
+		if (s != NULL)
 			yyunputstr(s);
-		} else {
+		else
 			yyerror("Macro argument not defined");
-		}
 	} else {
 		yyerror("Invalid macro argument");
 	}
-	return (0);
+	return 0;
 }
 
-uint32_t
-PutUniqueArg(char *src, uint32_t size)
+uint32_t PutUniqueArg(char *src, uint32_t size)
 {
 	char *s;
 
 	yyskipbytes(size);
-	if ((s = sym_FindMacroArg(-1)) != NULL) {
+
+	s = sym_FindMacroArg(-1);
+
+	if (s != NULL)
 		yyunputstr(s);
-	} else {
+	else
 		yyerror("Macro unique label string not defined");
-	}
-	return (0);
+
+	return 0;
 }
 
 enum {
@@ -237,9 +229,9 @@ enum {
 	T_LEX_MACROUNIQUE
 };
 
-extern struct sLexInitString localstrings[];
+extern const struct sLexInitString localstrings[];
 
-struct sLexInitString staticstrings[] = {
+const struct sLexInitString staticstrings[] = {
 	{"||", T_OP_LOGICOR},
 	{"&&", T_OP_LOGICAND},
 	{"==", T_OP_LOGICEQU},
@@ -329,7 +321,7 @@ struct sLexInitString staticstrings[] = {
 	{"else", T_POP_ELSE},
 	{"elif", T_POP_ELIF},
 	{"endc", T_POP_ENDC},
-	
+
 	{"union", T_POP_UNION},
 	{"nextu", T_POP_NEXTU},
 	{"endu", T_POP_ENDU},
@@ -367,27 +359,27 @@ struct sLexInitString staticstrings[] = {
 	{NULL, 0}
 };
 
-struct sLexFloat tNumberToken = {
+const struct sLexFloat tNumberToken = {
 	ParseNumber,
 	T_NUMBER
 };
 
-struct sLexFloat tFixedPointToken = {
+const struct sLexFloat tFixedPointToken = {
 	ParseFixedPoint,
 	T_NUMBER
 };
 
-struct sLexFloat tIDToken = {
+const struct sLexFloat tIDToken = {
 	ParseSymbol,
 	T_ID
 };
 
-struct sLexFloat tMacroArgToken = {
+const struct sLexFloat tMacroArgToken = {
 	PutMacroArg,
 	T_LEX_MACROARG
 };
 
-struct sLexFloat tMacroUniqueToken = {
+const struct sLexFloat tMacroUniqueToken = {
 	PutUniqueArg,
 	T_LEX_MACROUNIQUE
 };
@@ -403,7 +395,7 @@ setuplex(void)
 
 	//Macro arguments
 
-	    id = lex_FloatAlloc(&tMacroArgToken);
+	id = lex_FloatAlloc(&tMacroArgToken);
 	lex_FloatAddFirstRange(id, '\\', '\\');
 	lex_FloatAddSecondRange(id, '1', '9');
 	id = lex_FloatAlloc(&tMacroUniqueToken);
@@ -412,43 +404,45 @@ setuplex(void)
 
 	//Decimal constants
 
-	    id = lex_FloatAlloc(&tNumberToken);
+	id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, '0', '9');
 	lex_FloatAddRange(id, '0', '9');
 
 	//Binary constants
 
-	    nBinaryID = id = lex_FloatAlloc(&tNumberToken);
+	id = lex_FloatAlloc(&tNumberToken);
+	nBinaryID = id;
 	lex_FloatAddFirstRange(id, '%', '%');
 	lex_FloatAddSecondRange(id, CurrentOptions.binary[0],
-	    CurrentOptions.binary[0]);
+				CurrentOptions.binary[0]);
 	lex_FloatAddSecondRange(id, CurrentOptions.binary[1],
-	    CurrentOptions.binary[1]);
+				CurrentOptions.binary[1]);
 	lex_FloatAddRange(id, CurrentOptions.binary[0],
-	    CurrentOptions.binary[0]);
+			  CurrentOptions.binary[0]);
 	lex_FloatAddRange(id, CurrentOptions.binary[1],
-	    CurrentOptions.binary[1]);
+			  CurrentOptions.binary[1]);
 
 	//Octal constants
 
-	    id = lex_FloatAlloc(&tNumberToken);
+	id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '&', '&');
 	lex_FloatAddSecondRange(id, '0', '7');
 	lex_FloatAddRange(id, '0', '7');
 
 	//Gameboy gfx constants
 
-	    nGBGfxID = id = lex_FloatAlloc(&tNumberToken);
+	id = lex_FloatAlloc(&tNumberToken);
+	nGBGfxID = id;
 	lex_FloatAddFirstRange(id, '`', '`');
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[0],
-	    CurrentOptions.gbgfx[0]);
+				CurrentOptions.gbgfx[0]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[1],
-	    CurrentOptions.gbgfx[1]);
+				CurrentOptions.gbgfx[1]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[2],
-	    CurrentOptions.gbgfx[2]);
+				CurrentOptions.gbgfx[2]);
 	lex_FloatAddSecondRange(id, CurrentOptions.gbgfx[3],
-	    CurrentOptions.gbgfx[3]);
+				CurrentOptions.gbgfx[3]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[0], CurrentOptions.gbgfx[0]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[1], CurrentOptions.gbgfx[1]);
 	lex_FloatAddRange(id, CurrentOptions.gbgfx[2], CurrentOptions.gbgfx[2]);
@@ -456,7 +450,7 @@ setuplex(void)
 
 	//Hex constants
 
-	    id = lex_FloatAlloc(&tNumberToken);
+	id = lex_FloatAlloc(&tNumberToken);
 	lex_FloatAddFirstRange(id, '$', '$');
 	lex_FloatAddSecondRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, 'A', 'F');
@@ -467,7 +461,7 @@ setuplex(void)
 
 	//ID 's
 
-	    id = lex_FloatAlloc(&tIDToken);
+	id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, 'a', 'z');
 	lex_FloatAddFirstRange(id, 'A', 'Z');
 	lex_FloatAddFirstRange(id, '_', '_');
@@ -489,7 +483,7 @@ setuplex(void)
 
 	//Local ID
 
-	    id = lex_FloatAlloc(&tIDToken);
+	id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, '.', '.');
 	lex_FloatAddSecondRange(id, 'a', 'z');
 	lex_FloatAddSecondRange(id, 'A', 'Z');
@@ -504,17 +498,16 @@ setuplex(void)
 
 	//@ID
 
-	    id = lex_FloatAlloc(&tIDToken);
+	id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, '@', '@');
 
 	//Fixed point constants
 
-	    id = lex_FloatAlloc(&tFixedPointToken);
+	id = lex_FloatAlloc(&tFixedPointToken);
 	lex_FloatAddFirstRange(id, '.', '.');
 	lex_FloatAddFirstRange(id, '0', '9');
 	lex_FloatAddSecondRange(id, '.', '.');
 	lex_FloatAddSecondRange(id, '0', '9');
 	lex_FloatAddRange(id, '.', '.');
 	lex_FloatAddRange(id, '0', '9');
-
 }

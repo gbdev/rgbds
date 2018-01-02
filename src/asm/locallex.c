@@ -4,7 +4,7 @@
 
 #include "asmy.h"
 
-struct sLexInitString localstrings[] = {
+const struct sLexInitString localstrings[] = {
 	{"adc", T_Z80_ADC},
 	{"add", T_Z80_ADD},
 	{"and", T_Z80_AND},

@@ -10,16 +10,18 @@
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
-#include "asm/output.h"
-#include "asm/symbol.h"
-#include "asm/mylink.h"
-#include "asm/main.h"
-#include "asm/rpn.h"
 #include "asm/fstack.h"
+#include "asm/main.h"
+#include "asm/mylink.h"
+#include "asm/output.h"
+#include "asm/rpn.h"
+#include "asm/symbol.h"
+
 #include "common.h"
+
 #include "extern/err.h"
 
-void out_SetCurrentSection(struct Section * pSect);
+void out_SetCurrentSection(struct Section *pSect);
 
 struct Patch {
 	char tzFilename[_MAX_PATH + 1];
@@ -35,7 +37,7 @@ struct PatchSymbol {
 	uint32_t ID;
 	struct sSymbol *pSymbol;
 	struct PatchSymbol *pNext;
-	struct PatchSymbol *pBucketNext; // next symbol in hash table bucket
+	struct PatchSymbol *pBucketNext; /* next symbol in hash table bucket */
 };
 
 struct SectionStackEntry {
@@ -44,56 +46,62 @@ struct SectionStackEntry {
 };
 
 struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
-struct Section *pSectionList = NULL, *pCurrentSection = NULL;
-struct PatchSymbol *pPatchSymbols = NULL;
+struct Section *pSectionList, *pCurrentSection;
+struct PatchSymbol *pPatchSymbols;
 struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
 char *tzObjectname;
-struct SectionStackEntry *pSectionStack = NULL;
+struct SectionStackEntry *pSectionStack;
 
 /*
  * Section stack routines
  */
-void
-out_PushSection(void)
+void out_PushSection(void)
 {
 	struct SectionStackEntry *pSect;
 
-	if ((pSect = malloc(sizeof(struct SectionStackEntry))) != NULL) {
-		pSect->pSection = pCurrentSection;
-		pSect->pNext = pSectionStack;
-		pSectionStack = pSect;
-	} else
+	pSect = malloc(sizeof(struct SectionStackEntry));
+	if (pSect == NULL)
 		fatalerror("No memory for section stack");
+
+	pSect->pSection = pCurrentSection;
+	pSect->pNext = pSectionStack;
+	pSectionStack = pSect;
 }
 
-void
-out_PopSection(void)
+void out_PopSection(void)
 {
-	if (pSectionStack) {
-		struct SectionStackEntry *pSect;
-
-		pSect = pSectionStack;
-		out_SetCurrentSection(pSect->pSection);
-		pSectionStack = pSect->pNext;
-		free(pSect);
-	} else
+	if (pSectionStack == NULL)
 		fatalerror("No entries in the section stack");
+
+	struct SectionStackEntry *pSect;
+
+	pSect = pSectionStack;
+	out_SetCurrentSection(pSect->pSection);
+	pSectionStack = pSect->pNext;
+	free(pSect);
 }
 
-uint32_t
-getmaxsectionsize(uint32_t secttype, char * sectname)
+static uint32_t getmaxsectionsize(uint32_t secttype, char *sectname)
 {
-	switch (secttype)
-	{
-		case SECT_ROM0:  return 0x8000; /* If ROMX sections not used. */
-		case SECT_ROMX:  return 0x4000;
-		case SECT_VRAM:  return 0x2000;
-		case SECT_SRAM:  return 0x2000;
-		case SECT_WRAM0: return 0x2000; /* If WRAMX sections not used. */
-		case SECT_WRAMX: return 0x1000;
-		case SECT_OAM:   return 0xA0;
-		case SECT_HRAM:  return 0x7F;
-		default: break;
+	switch (secttype) {
+	case SECT_ROM0:
+		return 0x8000; /* If ROMX sections not used */
+	case SECT_ROMX:
+		return 0x4000;
+	case SECT_VRAM:
+		return 0x2000;
+	case SECT_SRAM:
+		return 0x2000;
+	case SECT_WRAM0:
+		return 0x2000; /* If WRAMX sections not used */
+	case SECT_WRAMX:
+		return 0x1000;
+	case SECT_OAM:
+		return 0xA0;
+	case SECT_HRAM:
+		return 0x7F;
+	default:
+		break;
 	}
 	errx(1, "Section \"%s\" has an invalid section type.", sectname);
 }
@@ -101,8 +109,7 @@ getmaxsectionsize(uint32_t secttype, char * sectname)
 /*
  * Count the number of symbols used in this object
  */
-uint32_t
-countsymbols(void)
+static uint32_t countsymbols(void)
 {
 	struct PatchSymbol *pSym;
 	uint32_t count = 0;
@@ -120,8 +127,7 @@ countsymbols(void)
 /*
  * Count the number of sections used in this object
  */
-uint32_t
-countsections(void)
+static uint32_t countsections(void)
 {
 	struct Section *pSect;
 	uint32_t count = 0;
@@ -139,8 +145,7 @@ countsections(void)
 /*
  * Count the number of patches used in this object
  */
-uint32_t
-countpatches(struct Section * pSect)
+static uint32_t countpatches(struct Section *pSect)
 {
 	struct Patch *pPatch;
 	uint32_t r = 0;
@@ -157,8 +162,7 @@ countpatches(struct Section * pSect)
 /*
  * Write a long to a file (little-endian)
  */
-void
-fputlong(uint32_t i, FILE * f)
+static void fputlong(uint32_t i, FILE *f)
 {
 	fputc(i, f);
 	fputc(i >> 8, f);
@@ -169,8 +173,7 @@ fputlong(uint32_t i, FILE * f)
 /*
  * Write a NULL-terminated string to a file
  */
-void
-fputstring(char *s, FILE * f)
+static void fputstring(char *s, FILE *f)
 {
 	while (*s)
 		fputc(*s++, f);
@@ -180,8 +183,7 @@ fputstring(char *s, FILE * f)
 /*
  * Return a section's ID
  */
-uint32_t
-getsectid(struct Section * pSect)
+static uint32_t getsectid(struct Section *pSect)
 {
 	struct Section *sec;
 	uint32_t ID = 0;
@@ -190,20 +192,19 @@ getsectid(struct Section * pSect)
 
 	while (sec) {
 		if (sec == pSect)
-			return (ID);
+			return ID;
 		ID += 1;
 		sec = sec->pNext;
 	}
 
 	fatalerror("INTERNAL: Unknown section");
-	return ((uint32_t) - 1);
+	return (uint32_t)(-1);
 }
 
 /*
  * Write a patch to a file
  */
-void
-writepatch(struct Patch * pPatch, FILE * f)
+static void writepatch(struct Patch *pPatch, FILE *f)
 {
 	fputstring(pPatch->tzFilename, f);
 	fputlong(pPatch->nLine, f);
@@ -216,8 +217,7 @@ writepatch(struct Patch * pPatch, FILE * f)
 /*
  * Write a section to a file
  */
-void
-writesection(struct Section * pSect, FILE * f)
+static void writesection(struct Section *pSect, FILE *f)
 {
 	fputstring(pSect->pzName, f);
 
@@ -229,8 +229,7 @@ writesection(struct Section * pSect, FILE * f)
 	fputlong(pSect->nBank, f);
 	fputlong(pSect->nAlign, f);
 
-	if ((pSect->nType == SECT_ROM0)
-	    || (pSect->nType == SECT_ROMX)) {
+	if ((pSect->nType == SECT_ROM0) || (pSect->nType == SECT_ROMX)) {
 		struct Patch *pPatch;
 
 		fwrite(pSect->tData, 1, pSect->nPC, f);
@@ -247,8 +246,7 @@ writesection(struct Section * pSect, FILE * f)
 /*
  * Write a symbol to a file
  */
-void
-writesymbol(struct sSymbol * pSym, FILE * f)
+static void writesymbol(struct sSymbol *pSym, FILE *f)
 {
 	char symname[MAXSYMLEN * 2 + 1];
 	uint32_t type;
@@ -295,11 +293,11 @@ writesymbol(struct sSymbol * pSym, FILE * f)
 /*
  * Add a symbol to the object
  */
-uint32_t
-addsymbol(struct sSymbol * pSym)
+static uint32_t nextID;
+
+static uint32_t addsymbol(struct sSymbol *pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
-	static uint32_t nextID = 0;
 	uint32_t hash;
 
 	hash = calchash(pSym->tzName);
@@ -311,13 +309,16 @@ addsymbol(struct sSymbol * pSym)
 		ppPSym = &((*ppPSym)->pBucketNext);
 	}
 
-	if ((*ppPSym = pPSym = malloc(sizeof(struct PatchSymbol))) != NULL) {
-		pPSym->pNext = NULL;
-		pPSym->pBucketNext = NULL;
-		pPSym->pSymbol = pSym;
-		pPSym->ID = nextID++;
-	} else
+	pPSym = malloc(sizeof(struct PatchSymbol));
+	*ppPSym = pPSym;
+
+	if (pPSym == NULL)
 		fatalerror("No memory for patchsymbol");
+
+	pPSym->pNext = NULL;
+	pPSym->pBucketNext = NULL;
+	pPSym->pSymbol = pSym;
+	pPSym->ID = nextID++;
 
 	*ppPatchSymbolsTail = pPSym;
 	ppPatchSymbolsTail = &(pPSym->pNext);
@@ -328,8 +329,7 @@ addsymbol(struct sSymbol * pSym)
 /*
  * Add all exported symbols to the object
  */
-void
-addexports(void)
+static void addexports(void)
 {
 	int32_t i;
 
@@ -348,28 +348,27 @@ addexports(void)
 /*
  * Allocate a new patchstructure and link it into the list
  */
-struct Patch *
-allocpatch(void)
+struct Patch *allocpatch(void)
 {
 	struct Patch *pPatch;
 
-	if ((pPatch = malloc(sizeof(struct Patch))) != NULL) {
-		pPatch->pNext = pCurrentSection->pPatches;
-		pPatch->nRPNSize = 0;
-		pPatch->pRPN = NULL;
-	} else
+	pPatch = malloc(sizeof(struct Patch));
+
+	if (pPatch == NULL)
 		fatalerror("No memory for patch");
 
+	pPatch->pNext = pCurrentSection->pPatches;
+	pPatch->nRPNSize = 0;
+	pPatch->pRPN = NULL;
 	pCurrentSection->pPatches = pPatch;
 
-	return (pPatch);
+	return pPatch;
 }
 
 /*
  * Create a new patch (includes the rpn expr)
  */
-void
-createpatch(uint32_t type, struct Expression * expr)
+void createpatch(uint32_t type, struct Expression *expr)
 {
 	struct Patch *pPatch;
 	uint16_t rpndata;
@@ -394,7 +393,9 @@ createpatch(uint32_t type, struct Expression * expr)
 			break;
 		case RPN_SYM:
 			symptr = 0;
-			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0);
+			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
+				;
+
 			if (sym_isConstant(tzSym)) {
 				uint32_t value;
 
@@ -405,9 +406,11 @@ createpatch(uint32_t type, struct Expression * expr)
 				rpnexpr[rpnptr++] = value >> 16;
 				rpnexpr[rpnptr++] = value >> 24;
 			} else {
-				struct sSymbol *sym;
-				if ((sym = sym_FindSymbol(tzSym)) == NULL)
+				struct sSymbol *sym = sym_FindSymbol(tzSym);
+
+				if (sym == NULL)
 					break;
+
 				symptr = addsymbol(sym);
 				rpnexpr[rpnptr++] = RPN_SYM;
 				rpnexpr[rpnptr++] = symptr & 0xFF;
@@ -416,26 +419,34 @@ createpatch(uint32_t type, struct Expression * expr)
 				rpnexpr[rpnptr++] = symptr >> 24;
 			}
 			break;
-		case RPN_BANK: {
+		case RPN_BANK:
+		{
 			struct sSymbol *sym;
+
 			symptr = 0;
-			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0);
-			if ((sym = sym_FindSymbol(tzSym)) == NULL)
+			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
+				;
+
+			sym = sym_FindSymbol(tzSym);
+			if (sym == NULL)
 				break;
+
 			symptr = addsymbol(sym);
 			rpnexpr[rpnptr++] = RPN_BANK;
 			rpnexpr[rpnptr++] = symptr & 0xFF;
 			rpnexpr[rpnptr++] = symptr >> 8;
 			rpnexpr[rpnptr++] = symptr >> 16;
 			rpnexpr[rpnptr++] = symptr >> 24;
-			}
 			break;
+		}
 		default:
 			rpnexpr[rpnptr++] = rpndata;
 			break;
 		}
 	}
-	if ((pPatch->pRPN = malloc(rpnptr)) != NULL) {
+
+	pPatch->pRPN = malloc(rpnptr);
+	if (pPatch->pRPN != NULL) {
 		memcpy(pPatch->pRPN, rpnexpr, rpnptr);
 		pPatch->nRPNSize = rpnptr;
 	}
@@ -444,12 +455,9 @@ createpatch(uint32_t type, struct Expression * expr)
 /*
  * A quick check to see if we have an initialized section
  */
-void
-checksection(void)
+static void checksection(void)
 {
-	if (pCurrentSection)
-		return;
-	else
+	if (pCurrentSection == NULL)
 		fatalerror("Code generation before SECTION directive");
 }
 
@@ -457,14 +465,13 @@ checksection(void)
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-void
-checkcodesection(void)
+static void checkcodesection(void)
 {
 	checksection();
 	if (pCurrentSection->nType != SECT_ROM0 &&
 	    pCurrentSection->nType != SECT_ROMX) {
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
-		     pCurrentSection->pzName);
+			   pCurrentSection->pzName);
 	} else if (nUnionDepth > 0) {
 		fatalerror("UNIONs cannot contain code or data");
 	}
@@ -473,8 +480,7 @@ checkcodesection(void)
 /*
  * Check if the section has grown too much.
  */
-void
-checksectionoverflow(uint32_t delta_size)
+static void checksectionoverflow(uint32_t delta_size)
 {
 	uint32_t maxsize = getmaxsectionsize(pCurrentSection->nType,
 					  pCurrentSection->pzName);
@@ -488,21 +494,21 @@ checksectionoverflow(uint32_t delta_size)
 		 * The real check must be done at the linking stage.
 		 */
 		fatalerror("Section '%s' is too big (max size = 0x%X bytes).",
-			pCurrentSection->pzName, maxsize);
+			   pCurrentSection->pzName, maxsize);
 	}
 }
 
 /*
  * Write an objectfile
  */
-void
-out_WriteObject(void)
+void out_WriteObject(void)
 {
 	FILE *f;
 
 	addexports();
 
-	if ((f = fopen(tzObjectname, "wb")) != NULL) {
+	f = fopen(tzObjectname, "wb");
+	if (f != NULL) {
 		struct PatchSymbol *pSym;
 		struct Section *pSect;
 
@@ -531,8 +537,7 @@ out_WriteObject(void)
 /*
  * Prepare for pass #2
  */
-void
-out_PrepPass2(void)
+void out_PrepPass2(void)
 {
 	struct Section *pSect;
 
@@ -548,13 +553,12 @@ out_PrepPass2(void)
 /*
  * Set the objectfilename
  */
-void
-out_SetFileName(char *s)
+void out_SetFileName(char *s)
 {
 	tzObjectname = s;
-	if (CurrentOptions.verbose) {
+	if (CurrentOptions.verbose)
 		printf("Output filename %s\n", s);
-	}
+
 	pSectionList = NULL;
 	pCurrentSection = NULL;
 	pPatchSymbols = NULL;
@@ -563,8 +567,8 @@ out_SetFileName(char *s)
 /*
  * Find a section by name and type.  If it doesn't exist, create it
  */
-struct Section *
-out_FindSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank, int32_t alignment)
+struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
+				int32_t bank, int32_t alignment)
 {
 	struct Section *pSect, **ppSect;
 
@@ -574,58 +578,61 @@ out_FindSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank, int3
 	while (pSect) {
 		if (strcmp(pzName, pSect->pzName) == 0) {
 			if (secttype == pSect->nType
-			    && ((uint32_t) org) == pSect->nOrg
-			    && ((uint32_t) bank) == pSect->nBank
-			    && ((uint32_t) alignment == pSect->nAlign)) {
-				return (pSect);
-			} else
-				fatalerror
-				    ("Section already exists but with a different type");
+			    && ((uint32_t)org) == pSect->nOrg
+			    && ((uint32_t)bank) == pSect->nBank
+			    && ((uint32_t)alignment == pSect->nAlign)) {
+				return pSect;
+			}
+
+			fatalerror("Section already exists but with a different type");
 		}
 		ppSect = &(pSect->pNext);
 		pSect = pSect->pNext;
 	}
 
-	if ((*ppSect = (pSect = malloc(sizeof(struct Section)))) != NULL) {
-		if ((pSect->pzName = malloc(strlen(pzName) + 1)) != NULL) {
-			strcpy(pSect->pzName, pzName);
-			pSect->nType = secttype;
-			pSect->nPC = 0;
-			pSect->nOrg = org;
-			pSect->nBank = bank;
-			pSect->nAlign = alignment;
-			pSect->pNext = NULL;
-			pSect->pPatches = NULL;
-			pSect->charmap = NULL;
-			pPatchSymbols = NULL;
-
-			pSect->tData = NULL;
-			if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
-				/* It is only needed to allocate memory for ROM
-				 * sections. */
-				uint32_t sectsize = getmaxsectionsize(secttype, pzName);
-				if ((pSect->tData = malloc(sectsize)) == NULL)
-					fatalerror("Not enough memory for section");
-			}
-			return (pSect);
-		} else
-			fatalerror("Not enough memory for sectionname");
-	} else
+	pSect = malloc(sizeof(struct Section));
+	*ppSect = pSect;
+	if (pSect == NULL)
 		fatalerror("Not enough memory for section");
 
-	return (NULL);
+	pSect->pzName = malloc(strlen(pzName) + 1);
+	if (pSect->pzName == NULL)
+		fatalerror("Not enough memory for sectionname");
+
+	strcpy(pSect->pzName, pzName);
+	pSect->nType = secttype;
+	pSect->nPC = 0;
+	pSect->nOrg = org;
+	pSect->nBank = bank;
+	pSect->nAlign = alignment;
+	pSect->pNext = NULL;
+	pSect->pPatches = NULL;
+	pSect->charmap = NULL;
+	pPatchSymbols = NULL;
+
+	/* It is only needed to allocate memory for ROM sections. */
+	if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
+		uint32_t sectsize;
+
+		sectsize = getmaxsectionsize(secttype, pzName);
+		pSect->tData = malloc(sectsize);
+		if (pSect->tData == NULL)
+			fatalerror("Not enough memory for section");
+	} else {
+		pSect->tData = NULL;
+	}
+
+	return (pSect);
 }
 
 /*
  * Set the current section
  */
-void
-out_SetCurrentSection(struct Section * pSect)
+void out_SetCurrentSection(struct Section *pSect)
 {
-	if (nUnionDepth > 0) {
+	if (nUnionDepth > 0)
 		fatalerror("Cannot change the section within a UNION");
-	}
-	
+
 	pCurrentSection = pSect;
 	nPC = pSect->nPC;
 
@@ -636,8 +643,7 @@ out_SetCurrentSection(struct Section * pSect)
 /*
  * Set the current section by name and type
  */
-void
-out_NewSection(char *pzName, uint32_t secttype)
+void out_NewSection(char *pzName, uint32_t secttype)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, -1, 1));
 }
@@ -645,8 +651,8 @@ out_NewSection(char *pzName, uint32_t secttype)
 /*
  * Set the current section by name and type
  */
-void
-out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank)
+void out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org,
+		       int32_t bank)
 {
 	out_SetCurrentSection(out_FindSection(pzName, secttype, org, bank, 1));
 }
@@ -654,20 +660,20 @@ out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org, int32_t bank)
 /*
  * Set the current section by name and type, using a given byte alignment
  */
-void
-out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment, int32_t bank)
+void out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment,
+			   int32_t bank)
 {
-	if (alignment < 0 || alignment > 16) {
+	if (alignment < 0 || alignment > 16)
 		yyerror("Alignment must be between 0-16 bits.");
-	}
-	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank, 1 << alignment));
+
+	out_SetCurrentSection(out_FindSection(pzName, secttype, -1, bank,
+					      1 << alignment));
 }
 
 /*
  * Output an absolute byte (bypassing ROM/union checks)
  */
-void
-out_AbsByteBypassCheck(int32_t b)
+void out_AbsByteBypassCheck(int32_t b)
 {
 	checksectionoverflow(1);
 	b &= 0xFF;
@@ -682,15 +688,13 @@ out_AbsByteBypassCheck(int32_t b)
 /*
  * Output an absolute byte
  */
-void
-out_AbsByte(int32_t b)
+void out_AbsByte(int32_t b)
 {
 	checkcodesection();
 	out_AbsByteBypassCheck(b);
 }
 
-void
-out_AbsByteGroup(char *s, int32_t length)
+void out_AbsByteGroup(char *s, int32_t length)
 {
 	checkcodesection();
 	checksectionoverflow(length);
@@ -701,8 +705,7 @@ out_AbsByteGroup(char *s, int32_t length)
 /*
  * Skip this many bytes
  */
-void
-out_Skip(int32_t skip)
+void out_Skip(int32_t skip)
 {
 	checksection();
 	checksectionoverflow(skip);
@@ -724,8 +727,7 @@ out_Skip(int32_t skip)
 /*
  * Output a NULL terminated string (excluding the NULL-character)
  */
-void
-out_String(char *s)
+void out_String(char *s)
 {
 	checkcodesection();
 	checksectionoverflow(strlen(s));
@@ -737,9 +739,7 @@ out_String(char *s)
  * Output a relocatable byte.  Checking will be done to see if it
  * is an absolute value in disguise.
  */
-
-void
-out_RelByte(struct Expression * expr)
+void out_RelByte(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(1);
@@ -751,17 +751,16 @@ out_RelByte(struct Expression * expr)
 		pCurrentSection->nPC += 1;
 		nPC += 1;
 		pPCSymbol->nValue += 1;
-	} else
+	} else {
 		out_AbsByte(expr->nVal);
-
+	}
 	rpn_Reset(expr);
 }
 
 /*
  * Output an absolute word
  */
-void
-out_AbsWord(int32_t b)
+void out_AbsWord(int32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(2);
@@ -779,8 +778,7 @@ out_AbsWord(int32_t b)
  * Output a relocatable word.  Checking will be done to see if
  * it's an absolute value in disguise.
  */
-void
-out_RelWord(struct Expression * expr)
+void out_RelWord(struct Expression *expr)
 {
 	uint32_t b;
 
@@ -796,16 +794,16 @@ out_RelWord(struct Expression * expr)
 		pCurrentSection->nPC += 2;
 		nPC += 2;
 		pPCSymbol->nValue += 2;
-	} else
+	} else {
 		out_AbsWord(expr->nVal);
+	}
 	rpn_Reset(expr);
 }
 
 /*
  * Output an absolute longword
  */
-void
-out_AbsLong(int32_t b)
+void out_AbsLong(int32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(sizeof(int32_t));
@@ -824,8 +822,7 @@ out_AbsLong(int32_t b)
  * Output a relocatable longword.  Checking will be done to see if
  * is an absolute value in disguise.
  */
-void
-out_RelLong(struct Expression * expr)
+void out_RelLong(struct Expression *expr)
 {
 	int32_t b;
 
@@ -843,16 +840,16 @@ out_RelLong(struct Expression * expr)
 		pCurrentSection->nPC += 4;
 		nPC += 4;
 		pPCSymbol->nValue += 4;
-	} else
+	} else {
 		out_AbsLong(expr->nVal);
+	}
 	rpn_Reset(expr);
 }
 
 /*
  * Output a PC-relative byte
  */
-void
-out_PCRelByte(struct Expression * expr)
+void out_PCRelByte(struct Expression *expr)
 {
 	int32_t b = expr->nVal;
 
@@ -869,15 +866,13 @@ out_PCRelByte(struct Expression * expr)
 /*
  * Output a binary file
  */
-void
-out_BinaryFile(char *s)
+void out_BinaryFile(char *s)
 {
 	FILE *f;
 
 	f = fstk_FindFile(s);
-	if (f == NULL) {
+	if (f == NULL)
 		err(1, "Unable to open incbin file '%s'", s);
-	}
 
 	int32_t fsize;
 
@@ -901,8 +896,7 @@ out_BinaryFile(char *s)
 	fclose(f);
 }
 
-void
-out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
+void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 {
 	FILE *f;
 
@@ -913,9 +907,8 @@ out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 		fatalerror("Number of bytes to read must be greater than zero");
 
 	f = fstk_FindFile(s);
-	if (f == NULL) {
+	if (f == NULL)
 		err(1, "Unable to open included file '%s'", s);
-	}
 
 	int32_t fsize;
 
