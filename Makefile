@@ -159,7 +159,7 @@ checkcodebase:
 checkpatch:
 	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/develop);	\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
-		echo "[*] Analyzing commit "$$commit"" &&		\
+		echo "[*] Analyzing commit '$$commit'" &&		\
 		git format-patch --stdout "$$commit~..$$commit"		\
 			| ${CHECKPATCH} - || true;\
 	done
