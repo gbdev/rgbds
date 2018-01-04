@@ -12,11 +12,12 @@
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
-#include "asm/mylink.h"
 #include "asm/mymath.h"
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+
+#include "linkdefs.h"
 
 char *tzNewMacro;
 uint32_t ulNewMacroSize;

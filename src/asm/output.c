@@ -12,14 +12,14 @@
 #include "asm/charmap.h"
 #include "asm/fstack.h"
 #include "asm/main.h"
-#include "asm/mylink.h"
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 
-#include "common.h"
-
 #include "extern/err.h"
+
+#include "common.h"
+#include "linkdefs.h"
 
 void out_SetCurrentSection(struct Section *pSect);
 

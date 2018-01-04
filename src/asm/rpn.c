@@ -8,9 +8,10 @@
 
 #include "asm/asm.h"
 #include "asm/main.h"
-#include "asm/mylink.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+
+#include "linkdefs.h"
 
 void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 			 const struct Expression *src2)

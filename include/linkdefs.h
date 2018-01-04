@@ -1,7 +1,7 @@
-#ifndef RGBDS_ASM_LINK_H
-#define RGBDS_ASM_LINK_H
+#ifndef RGBDS_LINKDEFS_H
+#define RGBDS_LINKDEFS_H
 
-enum {
+enum eRpnData {
 	RPN_ADD = 0,
 	RPN_SUB,
 	RPN_MUL,
@@ -36,7 +36,7 @@ enum {
 	RPN_SYM = 0x81
 };
 
-enum {
+enum eSectionType {
 	SECT_WRAM0 = 0,
 	SECT_VRAM,
 	SECT_ROMX,
@@ -47,16 +47,16 @@ enum {
 	SECT_OAM
 };
 
-enum {
+enum eSymbolType {
 	SYM_LOCAL = 0,
 	SYM_IMPORT,
 	SYM_EXPORT
 };
 
-enum {
+enum ePatchType {
 	PATCH_BYTE = 0,
 	PATCH_WORD_L,
 	PATCH_LONG_L
 };
 
-#endif /* RGBDS_ASM_LINK_H */
+#endif /* RGBDS_LINKDEFS_H */
