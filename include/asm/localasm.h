@@ -83,12 +83,6 @@
  * XOR  A,r         :   0xA8|r
  */
 
-#define NAME_DB "db"
-#define NAME_DW "dw"
-#define NAME_DL "dl"
-#define NAME_RB "rb"
-#define NAME_RW "rw"
-
 /* "r" defs */
 enum {
 	REG_B = 0,

@@ -48,7 +48,6 @@ rgbasm_obj := \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
-	src/asm/locallex.o \
 	src/extern/err.o \
 	src/extern/reallocarray.o \
 	src/extern/strlcpy.o \
