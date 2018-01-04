@@ -9,6 +9,7 @@
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
+#include "asm/lexer.h"
 #include "asm/output.h"
 #include "asm/main.h"
 
@@ -16,8 +17,7 @@
 #include "extern/reallocarray.h"
 #include "extern/version.h"
 
-int yyparse(void);
-void setuplex(void);
+extern int yyparse(void);
 
 int32_t cldefines_index;
 int32_t cldefines_size;
@@ -32,7 +32,6 @@ uint32_t unionStart[128], unionSize[128];
 /* extern int yydebug; */
 
 FILE *dependfile;
-extern char *tzObjectname;
 
 /*
  * Option stack
@@ -384,7 +383,7 @@ int main(int argc, char *argv[])
 
 	tzMainfile = argv[argc - 1];
 
-	setuplex();
+	setup_lexer();
 
 	if (CurrentOptions.verbose)
 		printf("Assembling %s\n", tzMainfile);

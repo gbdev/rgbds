@@ -41,6 +41,4 @@ void fstk_RunRept(uint32_t count);
 FILE *fstk_FindFile(char *fname);
 int32_t fstk_GetLine(void);
 
-extern int yywrap(void);
-
 #endif /* RGBDS_ASM_FSTACK_H */

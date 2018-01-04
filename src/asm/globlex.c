@@ -460,8 +460,7 @@ const struct sLexFloat tMacroUniqueToken = {
 	T_LEX_MACROUNIQUE
 };
 
-void
-setuplex(void)
+void setup_lexer(void)
 {
 	uint32_t id;
 

@@ -12,6 +12,7 @@
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
+#include "asm/output.h"
 #include "asm/symbol.h"
 
 #include "extern/err.h"
@@ -34,9 +35,6 @@ static uint32_t nCurrentREPTBlockSize;
 static uint32_t nCurrentREPTBlockCount;
 
 uint32_t ulMacroReturnValue;
-
-extern char *tzObjectname;
-extern FILE *dependfile;
 
 /*
  * defines for nCurrentStatus

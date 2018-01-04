@@ -28,8 +28,6 @@ struct sLexString {
 
 #define SAFETYMARGIN		1024
 
-extern size_t symvaluetostring(char *dest, size_t maxLength, char *sym);
-
 struct sLexFloat tLexFloat[32];
 struct sLexString *tLexHash[LEXHASHSIZE];
 YY_BUFFER_STATE pCurrentBuffer;

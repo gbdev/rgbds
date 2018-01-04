@@ -24,6 +24,8 @@ extern int32_t nBinaryID;
 extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;
 
+extern FILE *dependfile;
+
 void opt_Push(void);
 void opt_Pop(void);
 void opt_Parse(char *s);

@@ -18,6 +18,8 @@ struct Section {
 	uint8_t *tData;
 };
 
+extern char *tzObjectname;
+
 void out_PrepPass2(void);
 void out_SetFileName(char *s);
 void out_NewSection(char *pzName, uint32_t secttype);

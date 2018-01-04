@@ -37,6 +37,8 @@ enum eLexerState {
 
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
+void setup_lexer(void);
+
 void yy_set_state(enum eLexerState i);
 YY_BUFFER_STATE yy_create_buffer(FILE *f);
 YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size);
@@ -52,6 +54,7 @@ void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end);
 void lex_Init(void);
 void lex_AddStrings(const struct sLexInitString *lex);
 void lex_SetBuffer(char *buffer, uint32_t len);
+int yywrap(void);
 uint32_t yylex(void);
 void yyunput(char c);
 void yyunputstr(char *s);
