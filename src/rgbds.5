@@ -1,4 +1,4 @@
-.\" Copyright (c) 2017 Antonio Nino Diaz <antonio_nd@outlook.com>
+.\" Copyright (c) 2017-2018 Antonio Nino Diaz <antonio_nd@outlook.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 22, 2017
+.Dd January 7, 2018
 .Dt RGBDS 5
 .Os RGBDS Manual
 .Sh NAME
@@ -42,7 +42,7 @@ is a 0‐terminated string of
 .Bd -literal
 ; Header
 
-BYTE    ID[4]            ; "RGB5"
+BYTE    ID[4]            ; "RGB6"
 LONG    NumberOfSymbols  ; The number of symbols used in this file
 LONG    NumberOfSections ; The number of sections used in this file
 
@@ -155,25 +155,29 @@ special prefixes for integers and symbols.
 .It Li $03 Ta Li / operator
 .It Li $04 Ta Li % operator
 .It Li $05 Ta Li unary -
-.It Li $06 Ta Li | operator
-.It Li $07 Ta Li & operator
-.It Li $08 Ta Li ^ operator
-.It Li $09 Ta Li unary ~
-.It Li $0A Ta Li && comparison
-.It Li $0B Ta Li || comparison
-.It Li $0C Ta Li unary !
-.It Li $0D Ta Li == comparison
-.It Li $0E Ta Li != comparison
-.It Li $0F Ta Li > comparison
-.It Li $10 Ta Li < comparison
-.It Li $11 Ta Li >= comparison
-.It Li $12 Ta Li <= comparison
-.It Li $13 Ta Li << comparison
-.It Li $14 Ta Li >> comparison
-.It Li $15 Ta Li BANK()
-function.
-A symbol ID follows.
-.It Li $16 Ta Li HRAMCheck.
+.It Li $10 Ta Li | operator
+.It Li $11 Ta Li & operator
+.It Li $12 Ta Li ^ operator
+.It Li $13 Ta Li unary ~
+.It Li $21 Ta Li && comparison
+.It Li $22 Ta Li || comparison
+.It Li $23 Ta Li unary !
+.It Li $30 Ta Li == comparison
+.It Li $31 Ta Li != comparison
+.It Li $32 Ta Li > comparison
+.It Li $33 Ta Li < comparison
+.It Li $34 Ta Li >= comparison
+.It Li $35 Ta Li <= comparison
+.It Li $40 Ta Li << comparison
+.It Li $41 Ta Li >> comparison
+.It Li $50 Ta Li BANK(symbol),
+a
+.Ar LONG
+Symbol ID follows.
+.It Li $51 Ta Li BANK(section_name),
+a null-terminated string follows.
+.It Li $52 Ta Li Current BANK() .
+.It Li $60 Ta Li HRAMCheck.
 Check if the value is in HRAM, AND it with 0xFF.
 .It Li $80 Ta Ar LONG
 integer follows.

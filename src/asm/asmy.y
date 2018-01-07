@@ -1173,7 +1173,13 @@ relocconst	: T_ID
 		| T_OP_LOW '(' relocconst ')'		{ rpn_LOW(&$$, &$3); }
 		| T_OP_BANK '(' T_ID ')'
 		{
-			rpn_Bank(&$$, $3);
+			/* '@' is also a T_ID, it is handled here. */
+			rpn_BankSymbol(&$$, $3);
+			$$.nVal = 0;
+		}
+		| T_OP_BANK '(' string ')'
+		{
+			rpn_BankSection(&$$, $3);
 			$$.nVal = 0;
 		}
 		| T_OP_DEF {

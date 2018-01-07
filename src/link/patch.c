@@ -27,7 +27,7 @@ static int32_t rpnpop(void)
 	return rpnstack[rpnp];
 }
 
-int32_t getsymvalue(int32_t symid)
+static int32_t getsymvalue(int32_t symid)
 {
 	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
 
@@ -49,26 +49,14 @@ int32_t getsymvalue(int32_t symid)
 	errx(1, "%s: Unknown symbol type", __func__);
 }
 
-int32_t getsymbank(int32_t symid)
+
+static int32_t getrealbankfrominternalbank(int32_t n)
 {
-	int32_t n;
-	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
-
-	switch (tSymbol->Type) {
-	case SYM_IMPORT:
-		n = sym_GetBank(tSymbol->pzName);
-		break;
-	case SYM_EXPORT:
-	case SYM_LOCAL:
-		n = tSymbol->pSection->nBank;
-		break;
-	default:
-		errx(1, "%s: Unknown symbol type", __func__);
-	}
-
 	if ((n == BANK_WRAM0) || (n == BANK_ROM0) || (n == BANK_OAM) ||
 	    (n == BANK_HRAM)) {
 		return 0;
+	} else if ((n >= BANK_ROMX) && (n < (BANK_ROMX + BANK_COUNT_ROMX))) {
+		return n - BANK_ROMX + 1;
 	} else if ((n >= BANK_WRAMX) && (n < (BANK_WRAMX + BANK_COUNT_WRAMX))) {
 		return n - BANK_WRAMX + 1;
 	} else if ((n >= BANK_VRAM) && (n < (BANK_VRAM + BANK_COUNT_VRAM))) {
@@ -77,13 +65,37 @@ int32_t getsymbank(int32_t symid)
 		return n - BANK_SRAM;
 	}
 
+	errx(1, "%s: Unknown bank %d", __func__, n);
+
 	return n;
+}
+
+static int32_t getsymbank(int32_t symid)
+{
+	int32_t nBank;
+	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
+
+	switch (tSymbol->Type) {
+	case SYM_IMPORT:
+		nBank = sym_GetBank(tSymbol->pzName);
+		break;
+	case SYM_EXPORT:
+	case SYM_LOCAL:
+		nBank = tSymbol->pSection->nBank;
+		break;
+	default:
+		errx(1, "%s: Unknown symbol type", __func__);
+	}
+
+	return getrealbankfrominternalbank(nBank);
 }
 
 int32_t calcrpn(struct sPatch *pPatch)
 {
 	int32_t t, size;
 	uint8_t *rpn;
+	uint8_t rpn_cmd;
+	int32_t nBank;
 
 	rpnp = 0;
 
@@ -93,7 +105,9 @@ int32_t calcrpn(struct sPatch *pPatch)
 
 	while (size > 0) {
 		size -= 1;
-		switch (*rpn++) {
+		rpn_cmd = *rpn++;
+
+		switch (rpn_cmd) {
 		case RPN_ADD:
 			rpnpush(rpnpop() + rpnpop());
 			break;
@@ -194,7 +208,7 @@ int32_t calcrpn(struct sPatch *pPatch)
 			pPatch->oRelocPatch |= (getsymbank(t) != -1);
 			size -= 4;
 			break;
-		case RPN_BANK:
+		case RPN_BANK_SYM:
 			/* symbol */
 			t = (*rpn++);
 			t |= (*rpn++) << 8;
@@ -202,6 +216,34 @@ int32_t calcrpn(struct sPatch *pPatch)
 			t |= (*rpn++) << 24;
 			rpnpush(getsymbank(t));
 			size -= 4;
+			break;
+		case RPN_BANK_SECT:
+		{
+			char *name = (char *)rpn;
+
+			struct sSection *pSection = GetSectionByName(name);
+
+			if (pSection == NULL) {
+				errx(1, "Requested BANK() of section \"%s\", which was not found.\n",
+				     name);
+			}
+
+			nBank = pSection->nBank;
+			rpnpush(getrealbankfrominternalbank(nBank));
+
+			int len = strlen(name);
+
+			size -= len + 1;
+			rpn += len + 1;
+			break;
+		}
+		case RPN_BANK_SELF:
+			nBank = pCurrentSection->nBank;
+			rpnpush(getrealbankfrominternalbank(nBank));
+			break;
+		default:
+			errx(1, "%s: Invalid command %d\n", __func__,
+			     rpn_cmd);
 			break;
 		}
 	}

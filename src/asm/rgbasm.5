@@ -1,4 +1,4 @@
-.\" Copyright (c) 2017 Antonio Nino Diaz <antonio_nd@outlook.com>
+.\" Copyright (c) 2017-2018 Antonio Nino Diaz <antonio_nd@outlook.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 22, 2017
+.Dd January 7, 2018
 .Dt RGBASM 5
 .Os RGBDS Manual
 .Sh NAME
@@ -969,9 +969,15 @@ There are a few other functions that do various useful things:
 .Pp
 .Bl -column ".Sy String" ".Sy String"
 .It Sy Name Ta Ta Ta Sy Operation
-.It Li BANK(label) Ta Returns the bank number label is in.
-The linker will have to resolve this so it can't be used when the expression has
-to be constant.
+.It Li BANK(\@/str/lbl) Ta Returns a bank number.
+If the argument is the symbol
+.Ic \@,
+this function returns the bank of the current section.
+If the argument is a string, it returns the bank of the section that has that
+name.
+If the argument is a label, it returns the bank number the label is in.
+For labels, as the linker has to resolve this, it can't be used when the
+expression has to be constant.
 .It Li DEF(label) Ta Returns TRUE if label has been defined.
 .It Li HIGH(r16/cnst/lbl) Ta Returns the top 8 bits of the operand if it is a
 label or constant, or the top 8-bit register if it is a 16-bit register.

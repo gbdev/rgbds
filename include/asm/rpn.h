@@ -58,7 +58,9 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src);
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src);
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src);
 uint16_t rpn_PopByte(struct Expression *expr);
-void rpn_Bank(struct Expression *expr, char *tzSym);
+void rpn_BankSymbol(struct Expression *expr, char *tzSym);
+void rpn_BankSection(struct Expression *expr, char *tzSectionName);
+void rpn_BankSelf(struct Expression *expr);
 void rpn_Reset(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
 

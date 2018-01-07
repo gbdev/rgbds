@@ -247,6 +247,20 @@ int32_t IsSectionNameInUse(const char *name)
 	return 0;
 }
 
+struct sSection *GetSectionByName(const char *name)
+{
+	struct sSection *pSection = pSections;
+
+	while (pSection) {
+		if (strcmp(pSection->pzName, name) == 0)
+			return pSection;
+
+		pSection = pSection->pNext;
+	}
+
+	return NULL;
+}
+
 int32_t IsSectionSameTypeBankAndFloating(const char *name,
 					 enum eSectionType type, int32_t bank)
 {

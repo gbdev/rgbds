@@ -108,8 +108,27 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 	}
 }
 
-void rpn_Bank(struct Expression *expr, char *tzSym)
+void rpn_BankSelf(struct Expression *expr)
 {
+	rpn_Reset(expr);
+
+	/*
+	 * This symbol is not really relocatable, but this makes the assembler
+	 * write this expression as a RPN patch to the object file.
+	 */
+	expr->isReloc = 1;
+
+	pushbyte(expr, RPN_BANK_SELF);
+}
+
+void rpn_BankSymbol(struct Expression *expr, char *tzSym)
+{
+	/* The @ symbol is treated differently. */
+	if (sym_FindSymbol(tzSym) == pPCSymbol) {
+		rpn_BankSelf(expr);
+		return;
+	}
+
 	if (!sym_isConstant(tzSym)) {
 		rpn_Reset(expr);
 
@@ -120,13 +139,29 @@ void rpn_Bank(struct Expression *expr, char *tzSym)
 		sym_GetValue(tzSym);
 
 		expr->isReloc = 1;
-		pushbyte(expr, RPN_BANK);
+		pushbyte(expr, RPN_BANK_SYM);
 		while (*tzSym)
 			pushbyte(expr, *tzSym++);
 		pushbyte(expr, 0);
 	} else {
 		yyerror("BANK argument must be a relocatable identifier");
 	}
+}
+
+void rpn_BankSection(struct Expression *expr, char *tzSectionName)
+{
+	rpn_Reset(expr);
+
+	/*
+	 * This symbol is not really relocatable, but this makes the assembler
+	 * write this expression as a RPN patch to the object file.
+	 */
+	expr->isReloc = 1;
+
+	pushbyte(expr, RPN_BANK_SECT);
+	while (*tzSectionName)
+		pushbyte(expr, *tzSectionName++);
+	pushbyte(expr, 0);
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)

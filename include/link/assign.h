@@ -38,6 +38,7 @@ extern int32_t MaxAvail[MAXBANKS];
 int32_t area_Avail(int32_t bank);
 void AssignSections(void);
 void CreateSymbolTable(void);
+struct sSection *GetSectionByName(const char *name);
 int32_t IsSectionNameInUse(const char *name);
 void SetLinkerscriptName(char *tzLinkerscriptFile);
 int32_t IsSectionSameTypeBankAndFloating(const char *name,

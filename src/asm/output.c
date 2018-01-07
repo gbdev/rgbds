@@ -419,7 +419,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 				rpnexpr[rpnptr++] = symptr >> 24;
 			}
 			break;
-		case RPN_BANK:
+		case RPN_BANK_SYM:
 		{
 			struct sSymbol *sym;
 
@@ -432,11 +432,23 @@ void createpatch(uint32_t type, struct Expression *expr)
 				break;
 
 			symptr = addsymbol(sym);
-			rpnexpr[rpnptr++] = RPN_BANK;
+			rpnexpr[rpnptr++] = RPN_BANK_SYM;
 			rpnexpr[rpnptr++] = symptr & 0xFF;
 			rpnexpr[rpnptr++] = symptr >> 8;
 			rpnexpr[rpnptr++] = symptr >> 16;
 			rpnexpr[rpnptr++] = symptr >> 24;
+			break;
+		}
+		case RPN_BANK_SECT:
+		{
+			uint16_t b;
+
+			rpnexpr[rpnptr++] = RPN_BANK_SECT;
+
+			do {
+				b = rpn_PopByte(expr);
+				rpnexpr[rpnptr++] = b & 0xFF;
+			} while (b != 0);
 			break;
 		}
 		default:
