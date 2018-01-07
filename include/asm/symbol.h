@@ -80,4 +80,8 @@ void sym_Purge(char *tzName);
 uint32_t sym_isConstDefined(char *tzName);
 int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
 
+/* Functions to save and restore the current symbol scope. */
+struct sSymbol *sym_GetCurrentSymbolScope(void);
+void sym_SetCurrentSymbolScope(struct sSymbol *pNewScope);
+
 #endif /* RGBDS_SYMBOL_H */

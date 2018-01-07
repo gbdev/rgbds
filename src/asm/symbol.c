@@ -19,7 +19,7 @@
 #include "extern/version.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
-static struct sSymbol *pScope;
+static struct sSymbol *pScope; /* Current section symbol scope */
 struct sSymbol *pPCSymbol;
 static struct sSymbol *p_NARGSymbol;
 static struct sSymbol *p__LINE__Symbol;
@@ -404,6 +404,16 @@ uint32_t sym_GetDefinedValue(char *s)
 	yyerror("'%s' not defined", s);
 
 	return 0;
+}
+
+struct sSymbol *sym_GetCurrentSymbolScope(void)
+{
+	return pScope;
+}
+
+void sym_SetCurrentSymbolScope(struct sSymbol *pNewScope)
+{
+	pScope = pNewScope;
 }
 
 /*

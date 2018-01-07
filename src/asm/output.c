@@ -42,6 +42,7 @@ struct PatchSymbol {
 
 struct SectionStackEntry {
 	struct Section *pSection;
+	struct sSymbol *pScope; /* Section's symbol scope */
 	struct SectionStackEntry *pNext;
 };
 
@@ -64,6 +65,7 @@ void out_PushSection(void)
 		fatalerror("No memory for section stack");
 
 	pSect->pSection = pCurrentSection;
+	pSect->pScope = sym_GetCurrentSymbolScope();
 	pSect->pNext = pSectionStack;
 	pSectionStack = pSect;
 }
@@ -77,6 +79,7 @@ void out_PopSection(void)
 
 	pSect = pSectionStack;
 	out_SetCurrentSection(pSect->pSection);
+	sym_SetCurrentSymbolScope(pSect->pScope);
 	pSectionStack = pSect->pNext;
 	free(pSect);
 }
