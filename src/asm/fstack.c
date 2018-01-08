@@ -347,7 +347,7 @@ void fstk_RunMacroArg(int32_t s)
 
 	pushcontext();
 	nCurrentStatus = STAT_isMacroArg;
-	sprintf(tzCurrentFileName, "%c", (uint8_t)s);
+	snprintf(tzCurrentFileName, _MAX_PATH + 1, "%c", (uint8_t)s);
 	CurrentFlexHandle = yy_scan_bytes(sym, strlen(sym));
 	yy_switch_to_buffer(CurrentFlexHandle);
 }
@@ -410,7 +410,7 @@ void fstk_Init(char *s)
 
 	nMacroCount = 0;
 	nCurrentStatus = STAT_isInclude;
-	strcpy(tzCurrentFileName, tzFileName);
+	snprintf(tzCurrentFileName, _MAX_PATH + 1, "%s", tzFileName);
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
 	nLineNo = 1;

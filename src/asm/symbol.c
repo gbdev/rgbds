@@ -40,7 +40,7 @@ static char SavedTIMESTAMP_ISO8601_LOCAL[256];
 static char SavedTIMESTAMP_ISO8601_UTC[256];
 static char SavedDAY[3];
 static char SavedMONTH[3];
-static char SavedYEAR[5];
+static char SavedYEAR[20];
 static char SavedHOUR[3];
 static char SavedMINUTE[3];
 static char SavedSECOND[3];
@@ -122,7 +122,9 @@ struct sSymbol *createsymbol(char *s)
 		return NULL;
 	}
 
-	strcpy((*ppsym)->tzName, s);
+	if (snprintf((*ppsym)->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
+		warning("Symbol name is too long: '%s'", s);
+
 	(*ppsym)->nValue = 0;
 	(*ppsym)->nType = 0;
 	(*ppsym)->pScope = NULL;
@@ -130,7 +132,13 @@ struct sSymbol *createsymbol(char *s)
 	(*ppsym)->pMacro = NULL;
 	(*ppsym)->pSection = NULL;
 	(*ppsym)->Callback = NULL;
-	strcpy((*ppsym)->tzFileName, tzCurrentFileName);
+
+	if (snprintf((*ppsym)->tzFileName, _MAX_PATH + 1, "%s",
+		     tzCurrentFileName) > _MAX_PATH) {
+		fatalerror("%s: File name is too long: '%s'", __func__,
+			   tzCurrentFileName);
+	}
+
 	(*ppsym)->nFileLine = fstk_GetLine();
 	return *ppsym;
 }
@@ -509,7 +517,7 @@ void sym_SetMacroArgID(uint32_t nMacroCount)
 {
 	char s[256];
 
-	sprintf(s, "_%u", nMacroCount);
+	snprintf(s, sizeof(s), "_%u", nMacroCount);
 	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
@@ -560,7 +568,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
  *
  * If the desired symbol is a string it needs to be passed to this function with
  * quotes inside the string, like sym_AddString("name", "\"test\"), or the
- * assembler won't be able to use it with DB and similar. This is equivalent as
+ * assembler won't be able to use it with DB and similar. This is equivalent to
  * ``` name EQUS "\"test\"" ```
  *
  * If the desired symbol is a register or a number, just the terminator quotes
@@ -965,16 +973,22 @@ void sym_Init(void)
 		 * The '?' have to be escaped or they will be treated as
 		 * trigraphs...
 		 */
-		strcpy(SavedTIME, "\"\?\?:\?\?:\?\?\"");
-		strcpy(SavedDATE, "\"\?\? \?\?\? \?\?\?\?\"");
-		strcpy(SavedTIMESTAMP_ISO8601_LOCAL, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?+\?\?\?\?\"");
-		strcpy(SavedTIMESTAMP_ISO8601_UTC, "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?Z\"");
-		strcpy(SavedDAY, "1");
-		strcpy(SavedMONTH, "1");
-		strcpy(SavedYEAR, "1900");
-		strcpy(SavedHOUR, "0");
-		strcpy(SavedMINUTE, "0");
-		strcpy(SavedSECOND, "0");
+		snprintf(SavedTIME, sizeof(SavedTIME),
+			 "\"\?\?:\?\?:\?\?\"");
+		snprintf(SavedDATE, sizeof(SavedDATE),
+			 "\"\?\? \?\?\? \?\?\?\?\"");
+		snprintf(SavedTIMESTAMP_ISO8601_LOCAL,
+			 sizeof(SavedTIMESTAMP_ISO8601_LOCAL),
+			 "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?+\?\?\?\?\"");
+		snprintf(SavedTIMESTAMP_ISO8601_UTC,
+			 sizeof(SavedTIMESTAMP_ISO8601_UTC),
+			 "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?Z\"");
+		snprintf(SavedDAY, sizeof(SavedDAY), "1");
+		snprintf(SavedMONTH, sizeof(SavedMONTH), "1");
+		snprintf(SavedYEAR, sizeof(SavedYEAR), "1900");
+		snprintf(SavedHOUR, sizeof(SavedHOUR), "0");
+		snprintf(SavedMINUTE, sizeof(SavedMINUTE), "0");
+		snprintf(SavedSECOND, sizeof(SavedSECOND), "0");
 	}
 
 	sym_AddString("__TIME__", SavedTIME);

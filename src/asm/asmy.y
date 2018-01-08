@@ -1312,26 +1312,37 @@ const		: T_ID					{ $$ = sym_GetConstantValue($1); }
 
 string		: T_STRING
 		{
-			strcpy($$, $1);
+			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
+				warning("String is too long '%s'", $1);
 		}
 		| T_OP_STRSUB '(' string comma uconst comma uconst ')'
 		{
-			strncpy($$, $3 + $5 - 1, $7);
-			$$[$7] = 0;
+			uint32_t len = $7;
+			if (len > MAXSTRLEN) {
+				warning("STRSUB: Length too big: %u", len);
+				len = MAXSTRLEN;
+			}
+
+			if (snprintf($$, len + 1, "%s", $3 + $5 - 1) > MAXSTRLEN)
+				warning("STRSUB: String too long '%s'", $$);
 		}
 		| T_OP_STRCAT '(' string comma string ')'
 		{
-			strcpy($$, $3);
-			strcat($$, $5);
+			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
+				warning("STRCAT: String too long '%s%s'", $3, $5);
 		}
 		| T_OP_STRUPR '(' string ')'
 		{
-			strcpy($$, $3);
+			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
+				warning("STRUPR: String too long '%s'", $3);
+
 			upperstring($$);
 		}
 		| T_OP_STRLWR '(' string ')'
 		{
-			strcpy($$, $3);
+			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
+				warning("STRUPR: String too long '%s'", $3);
+
 			lowerstring($$);
 		}
 ;
