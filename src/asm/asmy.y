@@ -37,7 +37,7 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	case SECT_SRAM:
 		stype = "SRAM";
 		minbank = 0;
-		maxbank = 0x1ff;
+		maxbank = 15;
 		break;
 	case SECT_WRAMX:
 		stype = "WRAMX";
