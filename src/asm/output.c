@@ -522,31 +522,36 @@ void out_WriteObject(void)
 
 	addexports();
 
+	/* If no path specified, don't write file */
+	if (tzObjectname == NULL)
+		return;
+
 	f = fopen(tzObjectname, "wb");
-	if (f != NULL) {
-		struct PatchSymbol *pSym;
-		struct Section *pSect;
+	if (f == NULL)
+		fatalerror("Couldn't write file '%s'\n", tzObjectname);
 
-		fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
-		       strlen(RGBDS_OBJECT_VERSION_STRING), f);
+	struct PatchSymbol *pSym;
+	struct Section *pSect;
 
-		fputlong(countsymbols(), f);
-		fputlong(countsections(), f);
+	fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
+	       strlen(RGBDS_OBJECT_VERSION_STRING), f);
 
-		pSym = pPatchSymbols;
-		while (pSym) {
-			writesymbol(pSym->pSymbol, f);
-			pSym = pSym->pNext;
-		}
+	fputlong(countsymbols(), f);
+	fputlong(countsections(), f);
 
-		pSect = pSectionList;
-		while (pSect) {
-			writesection(pSect, f);
-			pSect = pSect->pNext;
-		}
-
-		fclose(f);
+	pSym = pPatchSymbols;
+	while (pSym) {
+		writesymbol(pSym->pSymbol, f);
+		pSym = pSym->pNext;
 	}
+
+	pSect = pSectionList;
+	while (pSect) {
+		writesection(pSect, f);
+		pSect = pSect->pNext;
+	}
+
+	fclose(f);
 }
 
 /*
