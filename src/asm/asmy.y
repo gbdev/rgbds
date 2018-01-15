@@ -59,9 +59,6 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 		        stype, bank, minbank, maxbank);
 	}
 
-	if (secttype == SECT_WRAMX)
-		bank -= minbank;
-
 	out_NewAbsSection(name, secttype, org, bank);
 }
 
