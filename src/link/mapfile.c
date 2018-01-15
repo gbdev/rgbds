@@ -6,9 +6,9 @@
 
 #include "extern/err.h"
 
+#include "link/assign.h"
 #include "link/main.h"
 #include "link/mylink.h"
-#include "link/assign.h"
 
 static int32_t currentbank;
 static int32_t sfbank;
@@ -47,40 +47,48 @@ void CloseMapfile(void)
 
 void MapfileInitBank(int32_t bank)
 {
+	if ((bank < 0) || (bank >= BANK_INDEX_MAX))
+		errx(1, "%s: Unknown bank %d\n", __func__, bank);
+
 	if (mf) {
 		currentbank = bank;
-		if (bank == BANK_ROM0)
+		if (BankIndexIsROM0(bank)) {
 			fprintf(mf, "ROM Bank #0 (HOME):\n");
-		else if (bank < BANK_WRAM0)
-			fprintf(mf, "ROM Bank #%d:\n", bank);
-		else if (bank == BANK_WRAM0)
+		} else if (BankIndexIsROMX(bank)) {
+			fprintf(mf, "ROM Bank #%d:\n",
+				bank - BANK_INDEX_ROMX + 1);
+		} else if (BankIndexIsWRAM0(bank)) {
 			fprintf(mf, "WRAM Bank #0:\n");
-		else if (bank < BANK_VRAM)
-			fprintf(mf, "WRAM Bank #%d:\n", bank - BANK_WRAMX + 1);
-		else if (bank == BANK_HRAM)
-			fprintf(mf, "HRAM:\n");
-		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)
-			fprintf(mf, "VRAM Bank #%d:\n", bank - BANK_VRAM);
-		else if (bank == BANK_OAM)
+		} else if (BankIndexIsWRAMX(bank)) {
+			fprintf(mf, "WRAM Bank #%d:\n",
+				bank - BANK_INDEX_WRAMX + 1);
+		} else if (BankIndexIsVRAM(bank)) {
+			fprintf(mf, "VRAM Bank #%d:\n", bank - BANK_INDEX_VRAM);
+		} else if (BankIndexIsOAM(bank)) {
 			fprintf(mf, "OAM:\n");
-		else if (bank < MAXBANKS)
-			fprintf(mf, "SRAM Bank #%d:\n", bank - BANK_SRAM);
+		} else if (BankIndexIsHRAM(bank)) {
+			fprintf(mf, "HRAM:\n");
+		} else if (BankIndexIsSRAM(bank)) {
+			fprintf(mf, "SRAM Bank #%d:\n", bank - BANK_INDEX_SRAM);
+		}
 	}
 	if (sf) {
-		if (bank < BANK_WRAM0)
-			sfbank = bank;
-		else if (bank == BANK_WRAM0)
+		if (BankIndexIsROM0(bank))
 			sfbank = 0;
-		else if (bank < BANK_VRAM)
-			sfbank = bank - BANK_WRAMX + 1;
-		else if (bank == BANK_HRAM)
+		else if (BankIndexIsROMX(bank))
+			sfbank = bank - BANK_INDEX_ROMX + 1;
+		else if (BankIndexIsWRAM0(bank))
 			sfbank = 0;
-		else if (bank == BANK_VRAM || bank == BANK_VRAM + 1)
-			sfbank = bank - BANK_VRAM;
-		else if (bank == BANK_OAM)
+		else if (BankIndexIsWRAMX(bank))
+			sfbank = bank - BANK_INDEX_WRAMX + 1;
+		else if (BankIndexIsVRAM(bank))
+			sfbank = bank - BANK_INDEX_VRAM;
+		else if (BankIndexIsOAM(bank))
 			sfbank = 0;
-		else if (bank < MAXBANKS)
-			sfbank = bank - BANK_SRAM;
+		else if (BankIndexIsHRAM(bank))
+			sfbank = 0;
+		else if (BankIndexIsSRAM(bank))
+			sfbank = bank - BANK_INDEX_SRAM;
 		else
 			sfbank = 0;
 	}

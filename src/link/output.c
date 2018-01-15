@@ -20,18 +20,18 @@ void writehome(FILE *f, FILE *f_overlay)
 	const struct sSection *pSect;
 	uint8_t *mem;
 
-	mem = malloc(MaxAvail[BANK_ROM0]);
+	mem = malloc(MaxAvail[BANK_INDEX_ROM0]);
 	if (!mem)
 		return;
 
 	if (f_overlay != NULL) {
 		fseek(f_overlay, 0L, SEEK_SET);
-		if (fread(mem, 1, MaxAvail[BANK_ROM0], f_overlay) !=
-		    MaxAvail[BANK_ROM0]) {
+		if (fread(mem, 1, MaxAvail[BANK_INDEX_ROM0], f_overlay) !=
+		    MaxAvail[BANK_INDEX_ROM0]) {
 			warnx("Failed to read data from overlay file.");
 		}
 	} else {
-		memset(mem, fillchar, MaxAvail[BANK_ROM0]);
+		memset(mem, fillchar, MaxAvail[BANK_INDEX_ROM0]);
 	}
 	MapfileInitBank(0);
 
@@ -47,7 +47,7 @@ void writehome(FILE *f, FILE *f_overlay)
 
 	MapfileCloseBank(area_Avail(0));
 
-	fwrite(mem, 1, MaxAvail[BANK_ROM0], f);
+	fwrite(mem, 1, MaxAvail[BANK_INDEX_ROM0], f);
 	free(mem);
 }
 
@@ -144,7 +144,7 @@ void Output(void)
 	 * Add regular sections
 	 */
 
-	for (i = BANK_WRAM0; i < MAXBANKS; i++) {
+	for (i = BANK_INDEX_WRAM0; i < BANK_INDEX_MAX; i++) {
 		const struct sSection *pSect;
 
 		MapfileInitBank(i);

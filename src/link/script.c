@@ -26,7 +26,7 @@ static struct {
 	uint32_t address; /* current address to write sections to */
 	uint32_t top_address; /* not inclusive */
 	enum eSectionType type;
-} bank[MAXBANKS];
+} bank[BANK_INDEX_MAX];
 
 static int32_t current_bank = -1; /* Bank as seen by the bank array */
 static int32_t current_real_bank = -1; /* bank as seen by the GB */
@@ -35,8 +35,8 @@ void script_InitSections(void)
 {
 	int32_t i;
 
-	for (i = 0; i < MAXBANKS; i++) {
-		if (i == BANK_ROM0) {
+	for (i = 0; i < BANK_INDEX_MAX; i++) {
+		if (BankIndexIsROM0(i)) {
 			/* ROM0 bank */
 			bank[i].address = 0x0000;
 			if (options & OPT_TINY)
@@ -44,12 +44,12 @@ void script_InitSections(void)
 			else
 				bank[i].top_address = 0x4000;
 			bank[i].type = SECT_ROM0;
-		} else if (i >= BANK_ROMX && i < BANK_ROMX + BANK_COUNT_ROMX) {
+		} else if (BankIndexIsROMX(i)) {
 			/* Swappable ROM bank */
 			bank[i].address = 0x4000;
 			bank[i].top_address = 0x8000;
 			bank[i].type = SECT_ROMX;
-		} else if (i == BANK_WRAM0) {
+		} else if (BankIndexIsWRAM0(i)) {
 			/* WRAM */
 			bank[i].address = 0xC000;
 			if (options & OPT_CONTWRAM)
@@ -57,38 +57,38 @@ void script_InitSections(void)
 			else
 				bank[i].top_address = 0xD000;
 			bank[i].type = SECT_WRAM0;
-		} else if (i >= BANK_SRAM && i < BANK_SRAM + BANK_COUNT_SRAM) {
+		} else if (BankIndexIsSRAM(i)) {
 			/* Swappable SRAM bank */
 			bank[i].address = 0xA000;
 			bank[i].top_address = 0xC000;
 			bank[i].type = SECT_SRAM;
-		} else if (i >= BANK_WRAMX && i < BANK_WRAMX + BANK_COUNT_WRAMX) {
+		} else if (BankIndexIsWRAMX(i)) {
 			/* Swappable WRAM bank */
 			bank[i].address = 0xD000;
 			bank[i].top_address = 0xE000;
 			bank[i].type = SECT_WRAMX;
-		} else if (i >= BANK_VRAM && i < BANK_VRAM + BANK_COUNT_VRAM) {
+		} else if (BankIndexIsVRAM(i)) {
 			/* Swappable VRAM bank */
 			bank[i].address = 0x8000;
 			bank[i].type = SECT_VRAM;
-			if (options & OPT_DMG_MODE && i != BANK_VRAM) {
+			if (options & OPT_DMG_MODE && i != BANK_INDEX_VRAM) {
 				/* In DMG the only available bank is bank 0. */
 				bank[i].top_address = 0x8000;
 			} else {
 				bank[i].top_address = 0xA000;
 			}
-		} else if (i == BANK_OAM) {
+		} else if (BankIndexIsOAM(i)) {
 			/* OAM */
 			bank[i].address = 0xFE00;
 			bank[i].top_address = 0xFEA0;
 			bank[i].type = SECT_OAM;
-		} else if (i == BANK_HRAM) {
+		} else if (BankIndexIsHRAM(i)) {
 			/* HRAM */
 			bank[i].address = 0xFF80;
 			bank[i].top_address = 0xFFFF;
 			bank[i].type = SECT_HRAM;
 		} else {
-			errx(1, "(INTERNAL) Unknown bank type!");
+			errx(1, "%s: Unknown bank type %d", __func__, i);
 		}
 	}
 }
@@ -98,7 +98,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 	if (strcmp(type, "ROM0") == 0) {
 		if (bank != 0)
 			errx(1, "(Internal) Trying to assign a bank number to ROM0.\n");
-		current_bank = BANK_ROM0;
+		current_bank = BANK_INDEX_ROM0;
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "ROMX") == 0) {
@@ -108,7 +108,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 			errx(1, "ROMX index too big (%d > %d).\n", bank,
 			     BANK_COUNT_ROMX);
 		}
-		current_bank = BANK_ROMX + bank - 1;
+		current_bank = BANK_INDEX_ROMX + bank - 1;
 		current_real_bank = bank;
 		return;
 	} else if (strcmp(type, "VRAM") == 0) {
@@ -116,13 +116,15 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 			errx(1, "VRAM index too big (%d >= %d).\n", bank,
 			     BANK_COUNT_VRAM);
 		}
-		current_bank = BANK_VRAM + bank;
+		current_bank = BANK_INDEX_VRAM + bank;
 		current_real_bank = bank;
 		return;
 	} else if (strcmp(type, "WRAM0") == 0) {
-		if (bank != 0)
-			errx(1, "(Internal) Trying to assign a bank number to WRAM0.\n");
-		current_bank = BANK_WRAM0;
+		if (bank != 0) {
+			errx(1, "%s: Trying to assign a bank number to WRAM0.\n",
+			     __func__);
+		}
+		current_bank = BANK_INDEX_WRAM0;
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "WRAMX") == 0) {
@@ -132,7 +134,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 			errx(1, "WRAMX index too big (%d > %d).\n", bank,
 			     BANK_COUNT_WRAMX);
 		}
-		current_bank = BANK_WRAMX + bank - 1;
+		current_bank = BANK_INDEX_WRAMX + bank - 1;
 		current_real_bank = bank - 1;
 		return;
 	} else if (strcmp(type, "SRAM") == 0) {
@@ -140,24 +142,28 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 			errx(1, "SRAM index too big (%d >= %d).\n", bank,
 			     BANK_COUNT_SRAM);
 		}
-		current_bank = BANK_SRAM + bank;
+		current_bank = BANK_INDEX_SRAM + bank;
 		current_real_bank = bank;
 		return;
 	} else if (strcmp(type, "OAM") == 0) {
-		if (bank != 0)
-			errx(1, "(Internal) Trying to assign a bank number to OAM.\n");
-		current_bank = BANK_OAM;
+		if (bank != 0) {
+			errx(1, "%s: Trying to assign a bank number to OAM.\n",
+			     __func__);
+		}
+		current_bank = BANK_INDEX_OAM;
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "HRAM") == 0) {
-		if (bank != 0)
-			errx(1, "(Internal) Trying to assign a bank number to HRAM.\n");
-		current_bank = BANK_HRAM;
+		if (bank != 0) {
+			errx(1, "%s: Trying to assign a bank number to HRAM.\n",
+			     __func__);
+		}
+		current_bank = BANK_INDEX_HRAM;
 		current_real_bank = 0;
 		return;
 	}
 
-	errx(1, "(Internal) Unknown section type \"%s\".\n", type);
+	errx(1, "%s: Unknown section type \"%s\".\n", __func__, type);
 }
 
 void script_SetAddress(uint32_t addr)

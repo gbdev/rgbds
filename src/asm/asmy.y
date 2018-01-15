@@ -17,6 +17,7 @@
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 
+#include "common.h"
 #include "linkdefs.h"
 
 char *tzNewMacro;
@@ -31,23 +32,23 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	switch (secttype) {
 	case SECT_ROMX:
 		stype = "ROMX";
-		minbank = 1;
-		maxbank = 0x1ff;
+		minbank = BANK_MIN_ROMX;
+		maxbank = BANK_MAX_ROMX;
 		break;
 	case SECT_SRAM:
 		stype = "SRAM";
-		minbank = 0;
-		maxbank = 15;
+		minbank = BANK_MIN_SRAM;
+		maxbank = BANK_MAX_SRAM;
 		break;
 	case SECT_WRAMX:
 		stype = "WRAMX";
-		minbank = 1;
-		maxbank = 7;
+		minbank = BANK_MIN_WRAMX;
+		maxbank = BANK_MAX_WRAMX;
 		break;
 	case SECT_VRAM:
 		stype = "VRAM";
-		minbank = 0;
-		maxbank = 1;
+		minbank = BANK_MIN_VRAM;
+		maxbank = BANK_MAX_VRAM;
 		break;
 	default:
 		yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");

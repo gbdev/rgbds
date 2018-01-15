@@ -27,8 +27,8 @@ struct sSectionAttributes {
 	int32_t bankCount;
 };
 
-struct sFreeArea *BankFree[MAXBANKS];
-int32_t MaxAvail[MAXBANKS];
+struct sFreeArea *BankFree[BANK_INDEX_MAX];
+int32_t MaxAvail[BANK_INDEX_MAX];
 int32_t MaxBankUsed;
 int32_t MaxWBankUsed;
 int32_t MaxSBankUsed;
@@ -37,14 +37,14 @@ int32_t MaxVBankUsed;
 const enum eSectionType SECT_MIN = SECT_WRAM0;
 const enum eSectionType SECT_MAX = SECT_OAM;
 const struct sSectionAttributes SECT_ATTRIBUTES[] = {
-	{"WRAM0", BANK_WRAM0, 0, 0, BANK_COUNT_WRAM0},
-	{"VRAM",  BANK_VRAM,  0, 0, BANK_COUNT_VRAM},
-	{"ROMX",  BANK_ROMX, -1, 1, BANK_COUNT_ROMX},
-	{"ROM0",  BANK_ROM0,  0, 0, BANK_COUNT_ROM0},
-	{"HRAM",  BANK_HRAM,  0, 0, BANK_COUNT_HRAM},
-	{"WRAMX", BANK_WRAMX, 0, 0, BANK_COUNT_WRAMX},
-	{"SRAM",  BANK_SRAM,  0, 0, BANK_COUNT_SRAM},
-	{"OAM",   BANK_OAM,   0, 0, BANK_COUNT_OAM}
+	{"WRAM0", BANK_INDEX_WRAM0, 0, 0, BANK_COUNT_WRAM0},
+	{"VRAM",  BANK_INDEX_VRAM,  0, 0, BANK_COUNT_VRAM},
+	{"ROMX",  BANK_INDEX_ROMX, -1, 1, BANK_COUNT_ROMX},
+	{"ROM0",  BANK_INDEX_ROM0,  0, 0, BANK_COUNT_ROM0},
+	{"HRAM",  BANK_INDEX_HRAM,  0, 0, BANK_COUNT_HRAM},
+	{"WRAMX", BANK_INDEX_WRAMX, 0, 0, BANK_COUNT_WRAMX},
+	{"SRAM",  BANK_INDEX_SRAM,  0, 0, BANK_COUNT_SRAM},
+	{"OAM",   BANK_INDEX_OAM,   0, 0, BANK_COUNT_OAM}
 };
 
 static void do_max_bank(enum eSectionType Type, int32_t nBank)
@@ -75,6 +75,54 @@ void ensureSectionTypeIsValid(enum eSectionType type)
 {
 	if (type < SECT_MIN || type > SECT_MAX)
 		errx(1, "(INTERNAL) Invalid section type found.");
+}
+
+int BankIndexIsROM0(int32_t bank)
+{
+	return (bank >= BANK_INDEX_ROM0) &&
+	       (bank < (BANK_INDEX_ROM0 + BANK_COUNT_ROM0));
+}
+
+int BankIndexIsROMX(int32_t bank)
+{
+	return (bank >= BANK_INDEX_ROMX) &&
+	       (bank < (BANK_INDEX_ROMX + BANK_COUNT_ROMX));
+}
+
+int BankIndexIsWRAM0(int32_t bank)
+{
+	return (bank >= BANK_INDEX_WRAM0) &&
+	       (bank < (BANK_INDEX_WRAM0 + BANK_COUNT_WRAM0));
+}
+
+int BankIndexIsWRAMX(int32_t bank)
+{
+	return (bank >= BANK_INDEX_WRAMX) &&
+	       (bank < (BANK_INDEX_WRAMX + BANK_COUNT_WRAMX));
+}
+
+int BankIndexIsVRAM(int32_t bank)
+{
+	return (bank >= BANK_INDEX_VRAM) &&
+	       (bank < (BANK_INDEX_VRAM + BANK_COUNT_VRAM));
+}
+
+int BankIndexIsOAM(int32_t bank)
+{
+	return (bank >= BANK_INDEX_OAM) &&
+	       (bank < (BANK_INDEX_OAM + BANK_COUNT_OAM));
+}
+
+int BankIndexIsHRAM(int32_t bank)
+{
+	return (bank >= BANK_INDEX_HRAM) &&
+	       (bank < (BANK_INDEX_HRAM + BANK_COUNT_HRAM));
+}
+
+int BankIndexIsSRAM(int32_t bank)
+{
+	return (bank >= BANK_INDEX_SRAM) &&
+	       (bank < (BANK_INDEX_SRAM + BANK_COUNT_SRAM));
 }
 
 int32_t area_Avail(int32_t bank)
@@ -447,54 +495,56 @@ void AssignSections(void)
 	 * Initialize the memory areas
 	 */
 
-	for (i = 0; i < MAXBANKS; i += 1) {
+	for (i = 0; i < BANK_INDEX_MAX; i += 1) {
 		BankFree[i] = malloc(sizeof(*BankFree[i]));
 
-		if (!BankFree[i])
-			err(1, NULL);
+		if (!BankFree[i]) {
+			errx(1, "%s: Couldn't allocate mem for bank %d",
+			     __func__, i);
+		}
 
-		if (i == BANK_ROM0) {
+		if (BankIndexIsROM0(i)) {
 			/* ROM0 bank */
 			BankFree[i]->nOrg = 0x0000;
 			if (options & OPT_TINY)
 				BankFree[i]->nSize = 0x8000;
 			else
 				BankFree[i]->nSize = 0x4000;
-		} else if (i >= BANK_ROMX && i < BANK_ROMX + BANK_COUNT_ROMX) {
+		} else if (BankIndexIsROMX(i)) {
 			/* Swappable ROM bank */
 			BankFree[i]->nOrg = 0x4000;
 			BankFree[i]->nSize = 0x4000;
-		} else if (i == BANK_WRAM0) {
+		} else if (BankIndexIsWRAM0(i)) {
 			/* WRAM */
 			BankFree[i]->nOrg = 0xC000;
 			if (options & OPT_CONTWRAM)
 				BankFree[i]->nSize = 0x2000;
 			else
 				BankFree[i]->nSize = 0x1000;
-		} else if (i >= BANK_SRAM && i < BANK_SRAM + BANK_COUNT_SRAM) {
+		} else if (BankIndexIsSRAM(i)) {
 			/* Swappable SRAM bank */
 			BankFree[i]->nOrg = 0xA000;
 			BankFree[i]->nSize = 0x2000;
-		} else if (i >= BANK_WRAMX && i < BANK_WRAMX + BANK_COUNT_WRAMX) {
+		} else if (BankIndexIsWRAMX(i)) {
 			/* Swappable WRAM bank */
 			BankFree[i]->nOrg = 0xD000;
 			BankFree[i]->nSize = 0x1000;
-		} else if (i >= BANK_VRAM && i < BANK_VRAM + BANK_COUNT_VRAM) {
+		} else if (BankIndexIsVRAM(i)) {
 			/* Swappable VRAM bank */
 			BankFree[i]->nOrg = 0x8000;
-			if (options & OPT_DMG_MODE && i != BANK_VRAM)
+			if (options & OPT_DMG_MODE && i != BANK_INDEX_VRAM)
 				BankFree[i]->nSize = 0;
 			else
 				BankFree[i]->nSize = 0x2000;
-		} else if (i == BANK_OAM) {
+		} else if (BankIndexIsOAM(i)) {
 			BankFree[i]->nOrg = 0xFE00;
 			BankFree[i]->nSize = 0x00A0;
-		} else if (i == BANK_HRAM) {
+		} else if (BankIndexIsHRAM(i)) {
 			/* HRAM */
 			BankFree[i]->nOrg = 0xFF80;
 			BankFree[i]->nSize = 0x007F;
 		} else {
-			errx(1, "(INTERNAL) Unknown bank type!");
+			errx(1, "%s: Unknown bank type %d", __func__, i);
 		}
 
 		MaxAvail[i] = BankFree[i]->nSize;

@@ -52,17 +52,17 @@ static int32_t getsymvalue(int32_t symid)
 
 static int32_t getrealbankfrominternalbank(int32_t n)
 {
-	if ((n == BANK_WRAM0) || (n == BANK_ROM0) || (n == BANK_OAM) ||
-	    (n == BANK_HRAM)) {
+	if (BankIndexIsWRAM0(n) || BankIndexIsROM0(n) ||
+	    BankIndexIsOAM(n)   || BankIndexIsHRAM(n)) {
 		return 0;
-	} else if ((n >= BANK_ROMX) && (n < (BANK_ROMX + BANK_COUNT_ROMX))) {
-		return n - BANK_ROMX + 1;
-	} else if ((n >= BANK_WRAMX) && (n < (BANK_WRAMX + BANK_COUNT_WRAMX))) {
-		return n - BANK_WRAMX + 1;
-	} else if ((n >= BANK_VRAM) && (n < (BANK_VRAM + BANK_COUNT_VRAM))) {
-		return n - BANK_VRAM;
-	} else if ((n >= BANK_SRAM) && (n < (BANK_SRAM + BANK_COUNT_SRAM))) {
-		return n - BANK_SRAM;
+	} else if (BankIndexIsROMX(n)) {
+		return n - BANK_INDEX_ROMX + 1;
+	} else if (BankIndexIsWRAMX(n)) {
+		return n - BANK_INDEX_WRAMX + 1;
+	} else if (BankIndexIsVRAM(n)) {
+		return n - BANK_INDEX_VRAM;
+	} else if (BankIndexIsSRAM(n)) {
+		return n - BANK_INDEX_SRAM;
 	}
 
 	errx(1, "%s: Unknown bank %d", __func__, n);
