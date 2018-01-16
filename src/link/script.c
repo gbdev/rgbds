@@ -97,7 +97,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 {
 	if (strcmp(type, "ROM0") == 0) {
 		if (bank != 0)
-			errx(1, "(Internal) Trying to assign a bank number to ROM0.\n");
+			errx(1, "Trying to assign a bank number to ROM0.\n");
 		current_bank = BANK_INDEX_ROM0;
 		current_real_bank = 0;
 		return;
@@ -121,8 +121,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 		return;
 	} else if (strcmp(type, "WRAM0") == 0) {
 		if (bank != 0) {
-			errx(1, "%s: Trying to assign a bank number to WRAM0.\n",
-			     __func__);
+			errx(1, "Trying to assign a bank number to WRAM0.\n");
 		}
 		current_bank = BANK_INDEX_WRAM0;
 		current_real_bank = 0;

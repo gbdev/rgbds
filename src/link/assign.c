@@ -74,7 +74,7 @@ static void do_max_bank(enum eSectionType Type, int32_t nBank)
 void ensureSectionTypeIsValid(enum eSectionType type)
 {
 	if (type < SECT_MIN || type > SECT_MAX)
-		errx(1, "(INTERNAL) Invalid section type found.");
+		errx(1, "%s: Invalid section type found: %d", __func__, type);
 }
 
 int BankIndexIsROM0(int32_t bank)
@@ -162,7 +162,7 @@ int32_t area_doAlloc(struct sFreeArea *pArea, int32_t org, int32_t size)
 		pNewArea = malloc(sizeof(struct sFreeArea));
 
 		if (pNewArea == NULL)
-			err(1, NULL);
+			err(1, "%s: Failed to allocate memory", __func__);
 
 		*pNewArea = *pArea;
 		pNewArea->pPrev = pArea;
@@ -627,8 +627,10 @@ void AssignSections(void)
 		    && pSection->nOrg != -1 && pSection->nBank == -1))
 			continue;
 
-		if (options & OPT_OVERLAY)
-			errx(1, "All sections must be fixed when using an overlay file.");
+		if (options & OPT_OVERLAY) {
+			errx(1, "All sections must be fixed when using an overlay file: '%s'",
+			     pSection->pzName);
+		}
 
 		switch (pSection->Type) {
 		case SECT_ROMX:

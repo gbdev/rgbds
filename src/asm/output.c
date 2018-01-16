@@ -200,7 +200,7 @@ static uint32_t getsectid(struct Section *pSect)
 		sec = sec->pNext;
 	}
 
-	fatalerror("INTERNAL: Unknown section");
+	fatalerror("%s: Unknown section", __func__);
 	return (uint32_t)(-1);
 }
 

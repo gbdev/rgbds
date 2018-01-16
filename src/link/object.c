@@ -50,7 +50,7 @@ int32_t readasciiz(char **dest, FILE *f)
 	char *s = start;
 
 	if (!s)
-		err(1, NULL);
+		err(1, "%s: Couldn't allocate memory", __func__);
 
 	while (((*s++) = fgetc(f)) != 0) {
 		r += 1;
@@ -58,8 +58,10 @@ int32_t readasciiz(char **dest, FILE *f)
 		if (r >= bufferLength) {
 			bufferLength *= 2;
 			start = realloc(start, bufferLength);
-			if (!start)
-				err(1, NULL);
+			if (!start) {
+				err(1, "%s: Couldn't allocate memory",
+				    __func__);
+			}
 			s = start + r;
 		}
 	}
@@ -85,7 +87,7 @@ struct sSection *AllocSection(void)
 
 	*ppSections = malloc(sizeof **ppSections);
 	if (!*ppSections)
-		err(1, NULL);
+		err(1, "%s: Couldn't allocate memory", __func__);
 
 	(*ppSections)->tSymbols = tSymbols;
 	(*ppSections)->pNext = NULL;
@@ -103,7 +105,7 @@ struct sSymbol *obj_ReadSymbol(FILE *f, char *tzObjectfile)
 
 	pSym = malloc(sizeof(*pSym));
 	if (!pSym)
-		err(1, NULL);
+		err(1, "%s: Couldn't allocate memory", __func__);
 
 	readasciiz(&pSym->pzName, f);
 	pSym->Type = (enum eSymbolType)fgetc(f);
@@ -205,14 +207,14 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 
 	pSection->pData = malloc(pSection->nByteSize);
 	if (!pSection->pData)
-		err(1, NULL);
+		err(1, "%s: Couldn't allocate memory", __func__);
 
 	int32_t nNumberOfPatches;
 	struct sPatch **ppPatch, *pPatch;
 
 	if (fread(pSection->pData, sizeof(uint8_t), pSection->nByteSize, f)
 	    != pSection->nByteSize) {
-		err(1, "Read error.");
+		err(1, "%s: Read error", __func__);
 	}
 
 	nNumberOfPatches = readlong(f);
@@ -224,7 +226,7 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 	while (nNumberOfPatches--) {
 		pPatch = malloc(sizeof(*pPatch));
 		if (!pPatch)
-			err(1, NULL);
+			err(1, "%s: Couldn't allocate memory", __func__);
 
 		*ppPatch = pPatch;
 		readasciiz(&pPatch->pzFilename, f);
@@ -235,12 +237,14 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 
 		if (pPatch->nRPNSize > 0) {
 			pPatch->pRPN = malloc(pPatch->nRPNSize);
-			if (!pPatch->pRPN)
-				err(1, NULL);
+			if (!pPatch->pRPN) {
+				err(1, "%s: Couldn't allocate memory",
+				    __func__);
+			}
 
 			if (fread(pPatch->pRPN, sizeof(uint8_t),
 				  pPatch->nRPNSize, f) != pPatch->nRPNSize) {
-				errx(1, "Read error.");
+				errx(1, "%s: Read error", __func__);
 			}
 		} else {
 			pPatch->pRPN = NULL;
@@ -266,7 +270,7 @@ void obj_ReadRGB(FILE *pObjfile, char *tzObjectfile)
 	if (nNumberOfSymbols) {
 		tSymbols = malloc(nNumberOfSymbols * sizeof(*tSymbols));
 		if (!tSymbols)
-			err(1, NULL);
+			err(1, "%s: Couldn't allocate memory", __func__);
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
@@ -318,7 +322,7 @@ void obj_ReadOpenFile(FILE *pObjfile, char *tzObjectfile)
 
 	if (fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
 		  pObjfile) != strlen(RGBDS_OBJECT_VERSION_STRING)) {
-		errx(1, "%s: Read error.", tzObjectfile);
+		errx(1, "%s: Read error", tzObjectfile);
 	}
 
 	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
