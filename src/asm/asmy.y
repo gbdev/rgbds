@@ -1231,11 +1231,11 @@ const		: T_ID					{ $$ = sym_GetConstantValue($1); }
 		| const T_OP_LOGICOR const		{ $$ = $1 || $3; }
 		| const T_OP_LOGICAND const		{ $$ = $1 && $3; }
 		| const T_OP_LOGICEQU const		{ $$ = $1 == $3; }
-		| const T_OP_LOGICGT const 		{ $$ = $1 > $3; }
+		| const T_OP_LOGICGT const		{ $$ = $1 > $3; }
 		| const T_OP_LOGICLT const		{ $$ = $1 < $3; }
-		| const T_OP_LOGICGE const 		{ $$ = $1 >= $3; }
-		| const T_OP_LOGICLE const 		{ $$ = $1 <= $3; }
-		| const T_OP_LOGICNE const 		{ $$ = $1 != $3; }
+		| const T_OP_LOGICGE const		{ $$ = $1 >= $3; }
+		| const T_OP_LOGICLE const		{ $$ = $1 <= $3; }
+		| const T_OP_LOGICNE const		{ $$ = $1 != $3; }
 		| const T_OP_ADD const			{ $$ = $1 + $3; }
 		| const T_OP_SUB const			{ $$ = $1 - $3; }
 		| T_ID  T_OP_SUB T_ID
@@ -1862,7 +1862,7 @@ z80_rlc		: T_Z80_RLC reg_r
 		}
 ;
 
-z80_rlca 	: T_Z80_RLCA
+z80_rlca	: T_Z80_RLCA
 		{
 			out_AbsByte(0x07);
 		}
@@ -1888,13 +1888,13 @@ z80_rrc		: T_Z80_RRC reg_r
 		}
 ;
 
-z80_rrca 	: T_Z80_RRCA
+z80_rrca	: T_Z80_RRCA
 		{
 			out_AbsByte(0x0F);
 		}
 ;
 
-z80_rst 	: T_Z80_RST const_8bit
+z80_rst		: T_Z80_RST const_8bit
 		{
 			if (rpn_isReloc(&$2))
 				yyerror("Address for RST must be absolute");
@@ -1989,7 +1989,7 @@ z80_xor		: T_Z80_XOR op_a_n
 op_mem_ind	: '[' const_16bit ']'		{ $$ = $2; }
 ;
 
-op_hl_ss 	: reg_ss			{ $$ = $1; }
+op_hl_ss	: reg_ss			{ $$ = $1; }
 		| T_MODE_HL comma reg_ss	{ $$ = $3; }
 ;
 
