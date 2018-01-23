@@ -12,12 +12,11 @@ for the Game Boy and Game Boy Color. It consists of:
 This is a fork of the original RGBDS which aims to make the programs more like
 other UNIX tools.
 
-This toolchain is maintained on `GitHub <https://github.com/rednex/rgbds>`__, as
-well as its `documentation <https://github.com/rednex/rednex.github.io>`__.
+This toolchain is maintained on `GitHub <https://github.com/rednex/rgbds>`__.
 
 The documentation of this toolchain can be viewed online
-`here <https://rednex.github.io/>`__, it is generated from the man pages found
-in this repository.
+`here <https://rednex.github.io/rgbds/>`__, it is generated from the man pages
+found in this repository.
 
 1. Installing RGBDS
 -------------------

@@ -169,15 +169,15 @@ checkpatch:
 MANDOC	:= -Thtml -Ios=General -Oman=%N.%S.html -Ostyle=manual.css
 
 wwwman:
-	$Qmandoc ${MANDOC} src/rgbds.7 > rgbds.7.html
-	$Qmandoc ${MANDOC} src/gbz80.7 > gbz80.7.html
-	$Qmandoc ${MANDOC} src/rgbds.5 > rgbds.5.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > rgbasm.1.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > rgbasm.5.html
-	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > rgbfix.1.html
-	$Qmandoc ${MANDOC} src/link/rgblink.1 > rgblink.1.html
-	$Qmandoc ${MANDOC} src/link/rgblink.5 > rgblink.5.html
-	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > rgbgfx.1.html
+	$Qmandoc ${MANDOC} src/rgbds.7 > docs/gbds.7.html
+	$Qmandoc ${MANDOC} src/gbz80.7 > docs/gbz80.7.html
+	$Qmandoc ${MANDOC} src/rgbds.5 > docs/rgbds.5.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > docs/rgbasm.1.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > docs/rgbasm.5.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > docs/rgbfix.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 > docs/rgblink.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.5 > docs/rgblink.5.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > docs/rgbgfx.1.html
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!

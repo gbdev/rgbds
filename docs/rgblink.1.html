@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <style>
+    table.head, table.foot { width: 100%; }
+    td.head-rtitle, td.foot-os { text-align: right; }
+    td.head-vol { text-align: center; }
+    div.Pp { margin: 1ex 0ex; }
+  </style>
+  <link rel="stylesheet" href="manual.css" type="text/css" media="all"/>
+  <title>RGBLINK(1)</title>
+</head>
+<body>
+<table class="head">
+  <tr>
+    <td class="head-ltitle">RGBLINK(1)</td>
+    <td class="head-vol">General Commands Manual</td>
+    <td class="head-rtitle">RGBLINK(1)</td>
+  </tr>
+</table>
+<div class="manual-text">
+<h1 class="Sh" title="Sh" id="NAME"><a class="selflink" href="#NAME">NAME</a></h1>
+<b class="Nm" title="Nm">rgblink</b> &#x2014; <span class="Nd" title="Nd">Game
+  Boy linker</span>
+<h1 class="Sh" title="Sh" id="SYNOPSIS"><a class="selflink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<table class="Nm">
+  <tr>
+    <td><b class="Nm" title="Nm">rgblink</b></td>
+    <td>[<span class="Op"><b class="Fl" title="Fl">-dtVw</b></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-m</b>
+      <var class="Ar" title="Ar">mapfile</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-n</b>
+      <var class="Ar" title="Ar">symfile</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-O</b>
+      <var class="Ar" title="Ar">overlayfile</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-o</b>
+      <var class="Ar" title="Ar">outfile</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-p</b>
+      <var class="Ar" title="Ar">pad_value</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-s</b>
+      <var class="Ar" title="Ar">symbol</var></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-l</b>
+      <var class="Ar" title="Ar">linkerscript</var></span>]
+      <var class="Ar" title="Ar">file ...</var></td>
+  </tr>
+</table>
+<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="selflink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+The <b class="Nm" title="Nm">rgblink</b> program links objects created by
+  <a class="Xr" title="Xr">rgbasm(1)</a> into a single Game Boy ROM file.
+<div class="Pp"></div>
+By default, ROM0 sections created by the assembler are placed in the 16KiB bank
+  0, and ROMX sections are placed in any bank except bank 0. If your ROM will
+  only be 32KiB, you can use the <b class="Fl" title="Fl">-t</b> option to
+  override this.
+<div class="Pp"></div>
+Similarly, WRAM0 sections are placed in the first 4KiB of WRAM bank 0 and WRAMX
+  sections are placed in any bank except bank 0. If your ROM doesn't use banked
+  WRAM you can use option <b class="Fl" title="Fl">-w</b> option to override
+  this.
+<div class="Pp"></div>
+Also, if your ROM is designed for DMG, you can make sure that you don't use any
+  prohibited section by using the option <b class="Fl" title="Fl">-d</b>, which
+  implies <b class="Fl" title="Fl">-w</b> but also prohibits the use of VRAM
+  bank 1.
+<div class="Pp"></div>
+The arguments are as follows:
+<dl class="Bl-tag">
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#m"><b class="Fl" title="Fl" id="m">-m</b></a>
+    <var class="Ar" title="Ar">mapfile</var></dt>
+  <dd class="It-tag">Write a mapfile to the given filename.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#n"><b class="Fl" title="Fl" id="n">-n</b></a>
+    <var class="Ar" title="Ar">symfile</var></dt>
+  <dd class="It-tag">Write a symbol file to the given filename.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#O"><b class="Fl" title="Fl" id="O">-O</b></a>
+    <var class="Ar" title="Ar">overlayfile</var></dt>
+  <dd class="It-tag">The ROM image to overlay sections over. When an overlay ROM
+      is provided, all sections must be fixed. This may be used to patch an
+      existing binray.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#o"><b class="Fl" title="Fl" id="o">-o</b></a>
+    <var class="Ar" title="Ar">outfile</var></dt>
+  <dd class="It-tag">Write ROM image to the given filename.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#p"><b class="Fl" title="Fl" id="p">-p</b></a>
+    <var class="Ar" title="Ar">pad_value</var></dt>
+  <dd class="It-tag">When padding an image, pad with this value. The default is
+      0x00.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#s"><b class="Fl" title="Fl" id="s">-s</b></a>
+    <var class="Ar" title="Ar">symbol</var></dt>
+  <dd class="It-tag">???</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#w"><b class="Fl" title="Fl" id="w">-w</b></a></dt>
+  <dd class="It-tag">Expand the WRAM0 section size from 4KiB to the full 8KiB
+      assigned to WRAM and prohibit the use of WRAMX sections.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#d"><b class="Fl" title="Fl" id="d">-d</b></a></dt>
+  <dd class="It-tag">Enable DMG mode. Prohibit the use of sections that doesn't
+      exist on a DMG, such as WRAMX and VRAM bank 1. This option automatically
+      enables <b class="Fl" title="Fl">-w</b>.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#t"><b class="Fl" title="Fl" id="t">-t</b></a></dt>
+  <dd class="It-tag">Expand the ROM0 section size from 16KiB to the full 32KiB
+      assigned to ROM and prohibit the use of ROMX sections. Useful for ROMs
+      that fit in 32 KiB.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#l"><b class="Fl" title="Fl" id="l">-l</b></a>
+    <var class="Ar" title="Ar">linkerscript</var></dt>
+  <dd class="It-tag">Specify a linkerscript file that tells the linker how
+      sections must be placed in the ROM. This file has priority over the
+      attributes assigned in the source code, but they have to be consistent.
+      See <a class="Xr" title="Xr">rgblink(5)</a> for more information about its
+      format.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#V"><b class="Fl" title="Fl" id="V">-V</b></a></dt>
+  <dd class="It-tag">Print the version of the program and exit.</dd>
+</dl>
+<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
+All you need for a basic ROM is an object file, which can be made into a ROM
+  image like so:
+<div class="Pp"></div>
+<div class="D1">$ rgblink -o bar.gb foo.o</div>
+<div class="Pp"></div>
+The resulting bar.gb will not have correct checksums (unless you put them in the
+  assembly source). You should use <a class="Xr" title="Xr">rgbfix(1)</a> to fix
+  these so that the program will actually run in a Game Boy:
+<div class="Pp"></div>
+<div class="D1">$ rgbfix -v bar.gb</div>
+<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="selflink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+<a class="Xr" title="Xr">rgbasm(1)</a>, <a class="Xr" title="Xr">rgblink(5)</a>,
+  <a class="Xr" title="Xr">rgbfix(1)</a>, <a class="Xr" title="Xr">rgbds(5)</a>,
+  <a class="Xr" title="Xr">rgbds(7)</a>
+<h1 class="Sh" title="Sh" id="HISTORY"><a class="selflink" href="#HISTORY">HISTORY</a></h1>
+<b class="Nm" title="Nm">rgblink</b> was originally written by Carsten
+  S&#x00F8;rensen as part of the ASMotor package, and was later packaged in
+  RGBDS by Justin Lloyd. It is now maintained by a number of contributors at
+  <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
+<table class="foot">
+  <tr>
+    <td class="foot-date">April 17, 2017</td>
+    <td class="foot-os">RGBDS Manual</td>
+  </tr>
+</table>
+</body>
+</html>

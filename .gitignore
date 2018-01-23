@@ -4,5 +4,4 @@ rgbfix
 rgbgfx
 *.o
 *.exe
-*.html
 .checkpatch-camelcase.*
