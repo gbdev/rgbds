@@ -169,7 +169,7 @@ checkpatch:
 MANDOC	:= -Thtml -Ios=General -Oman=%N.%S.html -Ostyle=manual.css
 
 wwwman:
-	$Qmandoc ${MANDOC} src/rgbds.7 > docs/gbds.7.html
+	$Qmandoc ${MANDOC} src/rgbds.7 > docs/rgbds.7.html
 	$Qmandoc ${MANDOC} src/gbz80.7 > docs/gbz80.7.html
 	$Qmandoc ${MANDOC} src/rgbds.5 > docs/rgbds.5.html
 	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > docs/rgbasm.1.html
