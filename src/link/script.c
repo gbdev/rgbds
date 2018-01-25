@@ -134,7 +134,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 			     BANK_COUNT_WRAMX);
 		}
 		current_bank = BANK_INDEX_WRAMX + bank - 1;
-		current_real_bank = bank - 1;
+		current_real_bank = bank;
 		return;
 	} else if (strcmp(type, "SRAM") == 0) {
 		if (bank >= BANK_COUNT_SRAM) {

@@ -65,8 +65,6 @@ static int32_t getrealbankfrominternalbank(int32_t n)
 		return n - BANK_INDEX_SRAM;
 	}
 
-	errx(1, "%s: Unknown bank %d", __func__, n);
-
 	return n;
 }
 
