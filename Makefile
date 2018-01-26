@@ -156,8 +156,8 @@ install: all
 # Target used to check the coding style of the whole codebase. '.y' and '.l'
 # files aren't checked, unfortunately...
 checkcodebase:
-	$Qfor file in `git ls-files | grep -E '\.c|\.h'`; do	\
-		${CHECKPATCH} -f "$$file";			\
+	$Qfor file in `git ls-files | grep -E '\.c|\.h' | grep -v '\.html'`; do	\
+		${CHECKPATCH} -f "$$file";					\
 	done
 
 # Target used to check the coding style of the patches from the upstream branch

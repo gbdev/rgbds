@@ -120,9 +120,9 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 		current_real_bank = bank;
 		return;
 	} else if (strcmp(type, "WRAM0") == 0) {
-		if (bank != 0) {
+		if (bank != 0)
 			errx(1, "Trying to assign a bank number to WRAM0.\n");
-		}
+
 		current_bank = BANK_INDEX_WRAM0;
 		current_real_bank = 0;
 		return;

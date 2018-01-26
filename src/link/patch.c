@@ -49,7 +49,6 @@ static int32_t getsymvalue(int32_t symid)
 	errx(1, "%s: Unknown symbol type", __func__);
 }
 
-
 static int32_t getrealbankfrominternalbank(int32_t n)
 {
 	if (BankIndexIsWRAM0(n) || BankIndexIsROM0(n) ||
