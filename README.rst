@@ -170,3 +170,5 @@ This is the complete list of user-defined variables:
   implementation of rgbds.
 
 - 2017, Bentley's repository is moved to a neutral name.
+
+- 2018, codebase relicensed under the MIT license.

@@ -1,3 +1,11 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2015-2018, RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef EXTERN_REALLOCARRAY_H
 #define EXTERN_REALLOCARRAY_H
 

@@ -1,4 +1,12 @@
 /*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
  * Here we have the routines that read an objectfile
  */
 

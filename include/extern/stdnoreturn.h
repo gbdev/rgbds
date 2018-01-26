@@ -1,3 +1,11 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2014-2018, RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef EXTERN_STDNORETURN_H
 #define EXTERN_STDNORETURN_H
 

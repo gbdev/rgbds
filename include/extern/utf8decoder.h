@@ -1,3 +1,11 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2018, Antonio Nino Diaz and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef EXTERN_UTF8DECODER_H
 #define EXTERN_UTF8DECODER_H
 

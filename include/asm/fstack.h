@@ -1,9 +1,13 @@
-/*  fstack.h
+/*
+ * This file is part of RGBDS.
  *
- *  Contains some assembler-wide defines and externs
+ * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
  *
- *  Copyright 1997 Carsten Sorensen
- *
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
+ * Contains some assembler-wide defines and externs
  */
 
 #ifndef RGBDS_ASM_FSTACK_H

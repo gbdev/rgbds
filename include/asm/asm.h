@@ -1,9 +1,13 @@
 /*
- * asm.h
+ * This file is part of RGBDS.
  *
+ * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
  * Contains some assembler-wide defines and externs
- *
- * Copyright 1997 Carsten Sorensen
  */
 
 #ifndef RGBDS_ASM_ASM_H
