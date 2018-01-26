@@ -52,6 +52,7 @@ rgbasm_obj := \
 	src/extern/reallocarray.o \
 	src/extern/strlcpy.o \
 	src/extern/strlcat.o \
+	src/extern/utf8decoder.o \
 	src/extern/version.o
 
 
