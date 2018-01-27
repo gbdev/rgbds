@@ -58,6 +58,11 @@ If you are going to work on a specific issue that involves a lot of work, it is
 always a good idea to leave a message, just in case someone else is interested
 but doesn't know that there's someone working on it.
 
+Note that you must contribute all your changes under the MIT License. If you are
+just modifying a file, you don't need to do anything (maybe update the copyright
+years). If you are adding new files, you need to use the correct header with the
+copyright and the reference to the MIT License.
+
 1. Fork this repository.
 
 2. Checkout the ``develop`` branch.
