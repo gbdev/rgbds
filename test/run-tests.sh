@@ -4,8 +4,6 @@
 
 set -e
 
-cd test
-
 # Tests included with the repository
 
 pushd asm

@@ -10,4 +10,5 @@ compiler:
   - clang
   - gcc
 script:
-  - ./test/run-tests.sh
+  - cd test
+  - ./run-tests.sh
