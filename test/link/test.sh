@@ -55,4 +55,9 @@ $RGBLINK -o $gbtemp2 $otemp
 diff $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
+$RGBASM -o $otemp all-instructions.asm
+$RGBLINK -o $gbtemp $otemp
+diff all-instructions.out.bin $gbtemp
+rc=$(($? || $rc))
+
 exit $rc
