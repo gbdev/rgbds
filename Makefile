@@ -57,10 +57,8 @@ rgbasm_obj := \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
 	src/extern/err.o \
-	src/extern/reallocarray.o \
 	src/extern/utf8decoder.o \
 	src/extern/version.o
-
 
 src/asm/asmy.h: src/asm/asmy.c
 src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h

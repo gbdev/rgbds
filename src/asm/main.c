@@ -22,13 +22,14 @@
 #include "asm/main.h"
 
 #include "extern/err.h"
-#include "extern/reallocarray.h"
 #include "extern/version.h"
 
 extern int yyparse(void);
 
-int32_t cldefines_index;
-int32_t cldefines_size;
+size_t cldefines_index;
+size_t cldefines_numindices;
+size_t cldefines_bufsize;
+const size_t cldefine_entrysize = 2 * sizeof(void *);
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
@@ -192,10 +193,18 @@ void opt_AddDefine(char *s)
 {
 	char *value, *equals;
 
-	if (cldefines_index >= cldefines_size) {
-		cldefines_size *= 2;
-		cldefines = reallocarray(cldefines, cldefines_size,
-					 2 * sizeof(void *));
+	if (cldefines_index >= cldefines_numindices) {
+		/* Check for overflows */
+		if ((cldefines_numindices * 2) < cldefines_numindices)
+			fatalerror("No memory for command line defines");
+
+		if ((cldefines_bufsize * 2) < cldefines_bufsize)
+			fatalerror("No memory for command line defines");
+
+		cldefines_numindices *= 2;
+		cldefines_bufsize *= 2;
+
+		cldefines = realloc(cldefines, cldefines_bufsize);
 		if (!cldefines)
 			fatalerror("No memory for command line defines");
 	}
@@ -288,8 +297,10 @@ int main(int argc, char *argv[])
 
 	dependfile = NULL;
 
-	cldefines_size = 32;
-	cldefines = reallocarray(cldefines, cldefines_size, 2 * sizeof(void *));
+	/* Initial number of allocated elements in array */
+	cldefines_numindices = 32;
+	cldefines_bufsize = cldefines_numindices * cldefine_entrysize;
+	cldefines = malloc(cldefines_bufsize);
 	if (!cldefines)
 		fatalerror("No memory for command line defines");
 

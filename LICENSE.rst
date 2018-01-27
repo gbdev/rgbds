@@ -1,5 +1,4 @@
-LICENSE
-=======
+The MIT License
 
 Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
 
@@ -20,9 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
-
-Other
------
-
-extern/reallocarray.c is derived from the OpenBSD Project,
-http://www.openbsd.org, and is released under the ISC license.
