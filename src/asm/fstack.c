@@ -225,12 +225,8 @@ void fstk_AddIncludePath(char *s)
 	if (NextIncPath == MAXINCPATHS)
 		fatalerror("Too many include directories passed from command line");
 
-	if (strlen(s) >= sizeof(IncludePaths[0]))
+	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s", s) >= _MAX_PATH)
 		fatalerror("Include path too long '%s'", s);
-
-	strncpy(IncludePaths[NextIncPath], s, sizeof(IncludePaths[0]));
-
-	NextIncPath++;
 }
 
 FILE *fstk_FindFile(char *fname)
