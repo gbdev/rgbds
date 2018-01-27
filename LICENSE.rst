@@ -26,6 +26,3 @@ Other
 
 extern/reallocarray.c is derived from the OpenBSD Project,
 http://www.openbsd.org, and is released under the ISC license.
-
-extern/strlcpy.c is derived from the OpenBSD Project, http://www.openbsd.org,
-and is released under the BSD license.

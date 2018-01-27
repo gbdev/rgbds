@@ -58,7 +58,6 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/extern/err.o \
 	src/extern/reallocarray.o \
-	src/extern/strlcpy.o \
 	src/extern/utf8decoder.o \
 	src/extern/version.o
 
