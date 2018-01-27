@@ -16,9 +16,7 @@
 #else /* STRL_IN_LIBC */
 
 #define strlcpy rgbds_strlcpy
-#define strlcat rgbds_strlcat
 size_t strlcpy(char *dst, const char *src, size_t dsize);
-size_t strlcat(char *dst, const char *src, size_t dsize);
 
 #endif /* STRL_IN_LIBC */
 

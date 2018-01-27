@@ -236,6 +236,9 @@ FILE *fstk_FindFile(char *fname)
 	int32_t i;
 	FILE *f;
 
+	if (fname == NULL)
+		return NULL;
+
 	f = fopen(fname, "rb");
 
 	if (f != NULL || errno != ENOENT) {
@@ -246,11 +249,17 @@ FILE *fstk_FindFile(char *fname)
 	}
 
 	for (i = 0; i < NextIncPath; ++i) {
-		if (strlcpy(path, IncludePaths[i], sizeof(path))
+		/*
+		 * The function snprintf() does not write more than `size` bytes
+		 * (including the terminating null byte ('\0')).  If the output
+		 * was truncated due to this limit, the return value is the
+		 * number of characters (excluding the terminating null byte)
+		 * which would have been written to the final string if enough
+		 * space had been available. Thus, a return value of `size` or
+		 * more means that the output was truncated.
+		 */
+		if (snprintf(path, sizeof(path), "%s%s", IncludePaths[i], fname)
 		    >= sizeof(path))
-			continue;
-
-		if (strlcat(path, fname, sizeof(path)) >= sizeof(path))
 			continue;
 
 		f = fopen(path, "rb");
