@@ -10,9 +10,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "extern/version.h"
-
 #include "gfx/main.h"
+
+#include "version.h"
 
 static void print_usage(void)
 {

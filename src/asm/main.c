@@ -22,7 +22,8 @@
 #include "asm/main.h"
 
 #include "extern/err.h"
-#include "extern/version.h"
+
+#include "version.h"
 
 extern int yyparse(void);
 

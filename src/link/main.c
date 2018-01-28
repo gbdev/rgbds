@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include "extern/err.h"
-#include "extern/version.h"
 
 #include "link/object.h"
 #include "link/output.h"
@@ -23,6 +22,8 @@
 #include "link/mapfile.h"
 #include "link/main.h"
 #include "link/library.h"
+
+#include "version.h"
 
 enum eBlockType {
 	BLOCK_COMMENT,

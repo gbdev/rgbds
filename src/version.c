@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "extern/version.h"
+#include "version.h"
 
 const char *get_package_version_string(void)
 {

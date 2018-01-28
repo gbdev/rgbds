@@ -14,7 +14,8 @@
 #include <unistd.h>
 
 #include "extern/err.h"
-#include "extern/version.h"
+
+#include "version.h"
 
 static void print_usage(void)
 {

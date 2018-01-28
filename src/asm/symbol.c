@@ -24,7 +24,8 @@
 #include "asm/output.h"
 
 #include "extern/err.h"
-#include "extern/version.h"
+
+#include "version.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
 static struct sSymbol *pScope; /* Current section symbol scope */
