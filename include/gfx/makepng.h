@@ -11,10 +11,11 @@
 
 #include "gfx/main.h"
 
-void input_png_file(const struct Options opts, struct PNGImage *img);
-void get_text(struct PNGImage *png);
-void set_text(const struct PNGImage *png);
-void output_png_file(const struct Options opts, const struct PNGImage *png);
-void free_png_data(const struct PNGImage *png);
+struct RawIndexedImage *input_png_file(const struct Options *opts,
+                                       struct ImageOptions *png_options);
+void output_png_file(const struct Options *opts,
+                     const struct ImageOptions *png_options,
+                     const struct RawIndexedImage *raw_image);
+void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr);
 
 #endif /* RGBDS_GFX_PNG_H */

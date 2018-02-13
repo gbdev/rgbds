@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,22 +32,22 @@ void transpose_tiles(struct GBImage *gb, int width)
 	gb->data = newdata;
 }
 
-void png_to_gb(const struct PNGImage png, struct GBImage *gb)
+void raw_to_gb(const struct RawIndexedImage *raw_image, struct GBImage *gb)
 {
 	int x, y, byte;
-	png_byte index;
+	uint8_t index;
 
-	for (y = 0; y < png.height; y++) {
-		for (x = 0; x < png.width; x++) {
-			index = png.data[y][x];
+	for (y = 0; y < raw_image->height; y++) {
+		for (x = 0; x < raw_image->width; x++) {
+			index = raw_image->data[y][x];
 			index &= (1 << depth) - 1;
 
 			if (!gb->horizontal) {
 				byte = y * depth
-				     + x / 8 * png.height / 8 * 8 * depth;
+				     + x / 8 * raw_image->height / 8 * 8 * depth;
 			} else {
 				byte = y * depth
-				     + x / 8 * png.height / 8 * 8 * depth;
+				     + x / 8 * raw_image->height / 8 * 8 * depth;
 			}
 			gb->data[byte] |= (index & 1) << (7 - x % 8);
 			if (depth == 2) {
@@ -57,18 +58,18 @@ void png_to_gb(const struct PNGImage png, struct GBImage *gb)
 	}
 
 	if (!gb->horizontal)
-		transpose_tiles(gb, png.width / 8);
+		transpose_tiles(gb, raw_image->width / 8);
 }
 
-void output_file(const struct Options opts, const struct GBImage gb)
+void output_file(const struct Options *opts, const struct GBImage *gb)
 {
 	FILE *f;
 
-	f = fopen(opts.outfile, "wb");
+	f = fopen(opts->outfile, "wb");
 	if (!f)
-		err(1, "Opening output file '%s' failed", opts.outfile);
+		err(1, "Opening output file '%s' failed", opts->outfile);
 
-	fwrite(gb.data, 1, gb.size - gb.trim * 8 * depth, f);
+	fwrite(gb->data, 1, gb->size - gb->trim * 8 * depth, f);
 
 	fclose(f);
 }
@@ -89,7 +90,7 @@ int get_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles, int tile_size)
 	return -1;
 }
 
-void create_tilemap(const struct Options opts, struct GBImage *gb,
+void create_tilemap(const struct Options *opts, struct GBImage *gb,
 		    struct Tilemap *tilemap)
 {
 	int i, j;
@@ -118,7 +119,7 @@ void create_tilemap(const struct Options opts, struct GBImage *gb,
 			tile[i] = gb->data[gb_i];
 			gb_i++;
 		}
-		if (opts.unique) {
+		if (opts->unique) {
 			index = get_tile_index(tile, tiles, num_tiles,
 					       tile_size);
 			if (index < 0) {
@@ -135,7 +136,7 @@ void create_tilemap(const struct Options opts, struct GBImage *gb,
 		tilemap->size++;
 	}
 
-	if (opts.unique) {
+	if (opts->unique) {
 		free(gb->data);
 		gb->data = malloc(tile_size * num_tiles);
 		for (i = 0; i < num_tiles; i++) {
@@ -152,43 +153,44 @@ void create_tilemap(const struct Options opts, struct GBImage *gb,
 	free(tiles);
 }
 
-void output_tilemap_file(const struct Options opts,
-			 const struct Tilemap tilemap)
+void output_tilemap_file(const struct Options *opts,
+			             const struct Tilemap *tilemap)
 {
 	FILE *f;
 
-	f = fopen(opts.mapfile, "wb");
+	f = fopen(opts->mapfile, "wb");
 	if (!f)
-		err(1, "Opening tilemap file '%s' failed", opts.mapfile);
+		err(1, "Opening tilemap file '%s' failed", opts->mapfile);
 
-	fwrite(tilemap.data, 1, tilemap.size, f);
+	fwrite(tilemap->data, 1, tilemap->size, f);
 	fclose(f);
 
-	if (opts.mapout)
-		free(opts.mapfile);
+	if (opts->mapout)
+		free(opts->mapfile);
 }
 
-void output_palette_file(const struct Options opts, const struct PNGImage png)
+void output_palette_file(const struct Options *opts,
+                         const struct RawIndexedImage *raw_image)
 {
 	FILE *f;
-	int i, colors, color;
-	png_color *palette;
+	int i, color;
+	uint8_t cur_bytes[2];
 
-	if (png_get_PLTE(png.png, png.info, &palette, &colors)) {
-		f = fopen(opts.palfile, "wb");
-		if (!f) {
-			err(1, "Opening palette file '%s' failed",
-			    opts.palfile);
-		}
-		for (i = 0; i < colors; i++) {
-			color = palette[i].blue >> 3 << 10
-			      | palette[i].green >> 3 << 5
-			      | palette[i].red >> 3;
-			fwrite(&color, 2, 1, f);
-		}
-		fclose(f);
+	f = fopen(opts->palfile, "wb");
+	if (!f) {
+		err(1, "Opening palette file '%s' failed",
+		    opts->palfile);
 	}
+	for (i = 0; i < raw_image->num_colors; i++) {
+		color = raw_image->palette[i].blue  >> 3 << 10 |
+		        raw_image->palette[i].green >> 3 <<  5 |
+				raw_image->palette[i].red   >> 3;
+		cur_bytes[0] = color & 0xFF;
+		cur_bytes[1] = color >> 8;
+		fwrite(cur_bytes, 2, 1, f);
+	}
+	fclose(f);
 
-	if (opts.palout)
-		free(opts.palfile);
+	if (opts->palout)
+		free(opts->palfile);
 }

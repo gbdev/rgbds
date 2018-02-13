@@ -12,14 +12,14 @@
 #include <stdint.h>
 #include "gfx/main.h"
 
-void png_to_gb(const struct PNGImage png, struct GBImage *gb);
-void output_file(const struct Options opts, const struct GBImage gb);
+void raw_to_gb(const struct RawIndexedImage *raw_image, struct GBImage *gb);
+void output_file(const struct Options *opts, const struct GBImage *gb);
 int get_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles,
-		   int tile_size);
-void create_tilemap(const struct Options opts, struct GBImage *gb,
-		    struct Tilemap *tilemap);
-void output_tilemap_file(const struct Options opts,
-			 const struct Tilemap tilemap);
-void output_palette_file(const struct Options opts, const struct PNGImage png);
-
+                   int tile_size);
+void create_tilemap(const struct Options *opts, struct GBImage *gb,
+		            struct Tilemap *tilemap);
+void output_tilemap_file(const struct Options *opts,
+			             const struct Tilemap *tilemap);
+void output_palette_file(const struct Options *opts,
+                         const struct RawIndexedImage *raw_image);
 #endif
