@@ -18,7 +18,7 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img);
 static struct RawIndexedImage *grayscale_png_to_raw(struct PNGImage *img);
 static struct RawIndexedImage *truecolor_png_to_raw(struct PNGImage *img);
 static void get_text(const struct PNGImage *img,
-                     struct ImageOptions* png_options);
+                     struct ImageOptions *png_options);
 static void set_text(const struct PNGImage *img,
                      const struct ImageOptions *png_options);
 static void free_png_data(const struct PNGImage *png);
@@ -333,18 +333,8 @@ static void rgba_PLTE_palette(struct PNGImage *img,
 	               PNG_USER_WILL_FREE_DATA, PNG_FREE_PLTE);
 }
 
-/* A combined struct is needed to sort colors in order of luminance. */
-struct ColorWithLuminance {
-	png_color color;
-	int luminance;
-};
-
-static int compare_luminance(const void *a,const void *b)
-{
-	struct ColorWithLuminance *x = (struct ColorWithLuminance *) a;
-	struct ColorWithLuminance *y = (struct ColorWithLuminance *) b;
-	return y->luminance - x->luminance;
-}
+static int fit_grayscale_palette(png_color *palette, int *num_colors);
+static void order_color_palette(png_color *palette, int num_colors);
 
 static void rgba_build_palette(struct PNGImage *img,
 							   png_color **palette_ptr_ptr, int *num_colors)
@@ -353,9 +343,9 @@ static void rgba_build_palette(struct PNGImage *img,
 	int y, value_index, i;
 	png_color cur_pixel_color;
 	png_byte cur_alpha;
+	bool only_grayscale = true;
 	bool color_exists;
 	png_color cur_palette_color;
-	struct ColorWithLuminance *palette_with_luminance;
 
 	/*
 	 * By filling the palette up with black by default, if the image
@@ -381,6 +371,12 @@ static void rgba_build_palette(struct PNGImage *img,
 				continue;
 			}
 
+			if (only_grayscale &&
+			    !(cur_pixel_color.red == cur_pixel_color.green &&
+				  cur_pixel_color.red == cur_pixel_color.blue)) {
+				only_grayscale = false;
+			}
+
 			color_exists = false;
 			for (i = 0; i < *num_colors; i++) {
 				cur_palette_color = palette[i];
@@ -402,9 +398,79 @@ static void rgba_build_palette(struct PNGImage *img,
 		}
 	}
 
-	palette_with_luminance =
-		malloc(sizeof(struct ColorWithLuminance) * colors);
+	/* In order not to count 100% transparent images as grayscale. */
+	only_grayscale = *num_colors ? only_grayscale : false;
+
+	if (!only_grayscale || !fit_grayscale_palette(palette, num_colors)) {
+		order_color_palette(palette, *num_colors);
+	}
+}
+
+static int fit_grayscale_palette(png_color *palette, int *num_colors)
+{
+	int i, shade_index;
+	int interval = 256 / colors;
+	png_color *fitted_palette = malloc(sizeof(png_color) * colors);
+	bool *set_indices = calloc(colors, sizeof(bool));
+
+	fitted_palette[0].red   = 0xFF;
+	fitted_palette[0].green = 0xFF;
+	fitted_palette[0].blue  = 0xFF;
+	fitted_palette[colors - 1].red   = 0;
+	fitted_palette[colors - 1].green = 0;
+	fitted_palette[colors - 1].blue  = 0;
+	if (colors == 4) {
+		fitted_palette[1].red   = 0xA9;
+		fitted_palette[1].green = 0xA9;
+		fitted_palette[1].blue  = 0xA9;
+		fitted_palette[2].red   = 0x55;
+		fitted_palette[2].green = 0x55;
+		fitted_palette[2].blue  = 0x55;
+	}
+
+	for (i = 0; i < *num_colors; i++) {
+		shade_index = colors - 1 - palette[i].red / interval;
+		if (set_indices[shade_index]) {
+			free(fitted_palette);
+			free(set_indices);
+			return false;
+		}
+		fitted_palette[shade_index] = palette[i];
+		set_indices[shade_index] = true;
+	}
+
 	for (i = 0; i < colors; i++) {
+		palette[i] = fitted_palette[i];
+	}
+
+	*num_colors = colors;
+
+	free(fitted_palette);
+	free(set_indices);
+	return true;
+}
+
+/* A combined struct is needed to sort csolors in order of luminance. */
+struct ColorWithLuminance {
+	png_color color;
+	int luminance;
+};
+
+static int compare_luminance(const void *a, const void *b)
+{
+	struct ColorWithLuminance *x = (struct ColorWithLuminance *) a;
+	struct ColorWithLuminance *y = (struct ColorWithLuminance *) b;
+	return y->luminance - x->luminance;
+}
+
+static void order_color_palette(png_color *palette, int num_colors)
+{
+	int i;
+	struct ColorWithLuminance *palette_with_luminance;
+
+	palette_with_luminance =
+		malloc(sizeof(struct ColorWithLuminance) * num_colors);
+	for (i = 0; i < num_colors; i++) {
 		/*
 		 * Normally this would be done with floats, but since it's only
 		 * used for comparison, we might as well use integer math.
@@ -414,9 +480,9 @@ static void rgba_build_palette(struct PNGImage *img,
 		                                      7152 * palette[i].green +
 											   722 * palette[i].blue;
 	}
-	qsort(palette_with_luminance, colors,
+	qsort(palette_with_luminance, num_colors,
 			sizeof(struct ColorWithLuminance), compare_luminance);
-	for (i = 0; i < colors; i++) {
+	for (i = 0; i < num_colors; i++) {
 		palette[i] = palette_with_luminance[i].color;
 	}
 	free(palette_with_luminance);
@@ -538,7 +604,7 @@ static void set_raw_image_palette(struct RawIndexedImage *raw_image,
 }
 
 static void get_text(const struct PNGImage *img,
-                     struct ImageOptions* png_options)
+                     struct ImageOptions *png_options)
 {
 	png_text *text;
 	int i, numtxts, numremoved;
