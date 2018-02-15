@@ -30,6 +30,8 @@ Other contributors
 
 - The Musl C library <http://www.musl-libc.org>
 
+- obskyr <powpowd@gmail.com>
+
 - The OpenBSD Project <http://www.openbsd.org>
 
 - Sanqui <gsanky@gmail.com>
