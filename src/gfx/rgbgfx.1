@@ -24,7 +24,28 @@
 The
 .Nm
 program converts PNG images into the Nintendo Game Boy's planar tile format.
-The arguments are as follows:
+
+The resulting colors and their palette indices are determined differently
+depending on the input PNG file:
+.Bl -dash -width Ds
+.It
+If the file has an embedded palette, that palette's color and order are used.
+.It
+If not, and the image only contains shades of gray, rgbgfx maps them to the
+indices appropriate for each shade. Any undetermined indices are set to
+respective default shades of gray. For example: if the bit depth is 2 and the
+image contains light gray and black, they become the second and fourth colors -
+and the first and third colors get set to default white and dark gray. If the
+image has multiple shades that map to the same index, the palette is instead
+determined as if the image had color.
+.It
+If the image has color (or the grayscale method failed), the colors are sorted
+from lightest to darkest.
+.El
+
+The input image may not contain more colors than the selected bit depth
+allows. Transparent pixels are set to palette index 0.
+.Sh ARGUMENTS
 .Bl -tag -width Ds
 .It Fl D
 Debug features are enabled.
@@ -33,24 +54,25 @@ Fix the input PNG file to be a correctly indexed image.
 .It Fl F
 Same as
 .Fl f ,
-but additionally, the input PNG file is fixed to have its parameters match the
-command line's parameters.
+but additionally, the supplied command line parameters are saved within the PNG
+and will be loaded and automatically used next time.
 .It Fl d Ar depth
-The bitdepth of the output image (either 1 or 2).
-By default, the bitdepth is 2 (two bits per pixel).
+The bit depth of the output image (either 1 or 2).
+By default, the bit depth is 2 (two bits per pixel).
 .It Fl h
 Lay out tiles horizontally rather than vertically.
 .It Fl o Ar outfile
 The name of the output file.
 .It Fl p Ar palfile
-Raw bytes (8 bytes for two bits per pixel, 4 bytes for one bit per pixel)
-containing the RGB15 values in the little-endian byte order and then ordered
-from lightest to darkest.
+Output the image's palette in standard GBC palette format - bytes (8 bytes for
+two bits per pixel, 4 bytes for one bit per pixel) containing the RGB15 values
+in little-endian byte order. If the palette contains too few colors, the
+remaining entries are set to black.
 .It Fl P
 Same as
 .Fl p ,
-but the pallete file output name is made by taking the input filename,
-removing the file extension, and appending
+but the palette file output name is made by taking the input PNG file's
+filename, removing the file extension, and appending
 .Pa .pal .
 .It Fl t Ar mapfile
 If any tiles are the same, don't place the repeat tiles in the output file, and
@@ -73,7 +95,7 @@ the PNG file don't match.
 Trim the end of the output file by this many tiles.
 .El
 .Sh EXAMPLES
-The following will take a PNG file with a bitdepth of 1, 2, or 8, and output
+The following will take a PNG file with a bit depth of 1, 2, or 8, and output
 planar 2bpp data:
 .Pp
 .D1 $ rgbgfx -o out.2bpp in.png
