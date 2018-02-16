@@ -132,16 +132,15 @@ int main(int argc, char *argv[])
 		opts.trim = png_options.trim;
 
 	if (raw_image->width % 8 || raw_image->height % 8) {
-		errx(1, "Input PNG file %s not sized correctly. "
-		     "The image's width and height must be multiples of 8.",
-			 opts.infile);
+		errx(1, "Input PNG file %s not sized correctly. The image's width and height must be multiples of 8.",
+		     opts.infile);
 	}
 
 	if (opts.trim &&
 	    opts.trim > (raw_image->width / 8) * (raw_image->height / 8) - 1) {
 		errx(1, "Trim (%i) for input raw_image file '%s' too large (max: %i)",
-			opts.trim, opts.infile,
-			(raw_image->width / 8) * (raw_image->height / 8) - 1);
+		     opts.trim, opts.infile,
+		     (raw_image->width / 8) * (raw_image->height / 8) - 1);
 	}
 
 	if (strcmp(png_options.mapfile, opts.mapfile) != 0) {

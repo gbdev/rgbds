@@ -42,13 +42,8 @@ void raw_to_gb(const struct RawIndexedImage *raw_image, struct GBImage *gb)
 			index = raw_image->data[y][x];
 			index &= (1 << depth) - 1;
 
-			if (!gb->horizontal) {
-				byte = y * depth
-				     + x / 8 * raw_image->height / 8 * 8 * depth;
-			} else {
-				byte = y * depth
-				     + x / 8 * raw_image->height / 8 * 8 * depth;
-			}
+			byte = y * depth
+				+ x / 8 * raw_image->height / 8 * 8 * depth;
 			gb->data[byte] |= (index & 1) << (7 - x % 8);
 			if (depth == 2) {
 				gb->data[byte + 1] |=
@@ -121,7 +116,7 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 		}
 		if (opts->unique) {
 			index = get_tile_index(tile, tiles, num_tiles,
-					       tile_size);
+				tile_size);
 			if (index < 0) {
 				index = num_tiles;
 				tiles[num_tiles] = tile;
@@ -154,7 +149,7 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 }
 
 void output_tilemap_file(const struct Options *opts,
-			             const struct Tilemap *tilemap)
+			 const struct Tilemap *tilemap)
 {
 	FILE *f;
 
@@ -170,7 +165,7 @@ void output_tilemap_file(const struct Options *opts,
 }
 
 void output_palette_file(const struct Options *opts,
-                         const struct RawIndexedImage *raw_image)
+			 const struct RawIndexedImage *raw_image)
 {
 	FILE *f;
 	int i, color;
@@ -178,13 +173,13 @@ void output_palette_file(const struct Options *opts,
 
 	f = fopen(opts->palfile, "wb");
 	if (!f) {
-		err(1, "Opening palette file '%s' failed",
-		    opts->palfile);
+		err(1, "Opening palette file '%s' failed", opts->palfile);
 	}
 	for (i = 0; i < raw_image->num_colors; i++) {
-		color = raw_image->palette[i].blue  >> 3 << 10 |
-		        raw_image->palette[i].green >> 3 <<  5 |
-				raw_image->palette[i].red   >> 3;
+		color =
+			raw_image->palette[i].blue  >> 3 << 10 |
+			raw_image->palette[i].green >> 3 <<  5 |
+			raw_image->palette[i].red   >> 3;
 		cur_bytes[0] = color & 0xFF;
 		cur_bytes[1] = color >> 8;
 		fwrite(cur_bytes, 2, 1, f);
