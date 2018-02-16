@@ -131,8 +131,12 @@ int main(int argc, char *argv[])
 	if (png_options.trim)
 		opts.trim = png_options.trim;
 
-	if (raw_image->width % 8 || raw_image->height % 8) {
-		errx(1, "Input PNG file %s not sized correctly. The image's width and height must be multiples of 8.",
+	if (raw_image->width % 8) {
+		errx(1, "Input PNG file %s not sized correctly. The image's width must be a multiple of 8.",
+		     opts.infile);
+	}
+	if (raw_image->width / 8 > 1 && raw_image->height % 8) {
+		errx(1, "Input PNG file %s not sized correctly. If the image is more than 1 tile wide, its height must be a multiple of 8.",
 		     opts.infile);
 	}
 
