@@ -763,6 +763,9 @@ static uint32_t yylex_MACROARGS(void)
 			case '\\':
 				ch = '\\';
 				break;
+			case '"':
+				ch = '\"';
+				break;
 			case ',':
 				ch = ',';
 				break;
