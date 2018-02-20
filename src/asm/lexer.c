@@ -775,6 +775,32 @@ static uint32_t yylex_MACROARGS(void)
 			case '}':
 				ch = '}';
 				break;
+			case ' ':
+				/*
+				 * Look for line continuation character after a
+				 * series of spaces. This is also useful for
+				 * files that use Windows line endings: "\r\n"
+				 * is replaced by " \n" before the lexer has the
+				 * opportunity to see it.
+				 */
+				while (1) {
+					if (*pLexBuffer == ' ') {
+						pLexBuffer++;
+					} else if (*pLexBuffer == '\n') {
+						pLexBuffer++;
+						nLineNo += 1;
+						ch = 0;
+						break;
+					} else {
+						errx(1, "Expected a new line after the continuation character.");
+					}
+				}
+				break;
+			case '\n':
+				/* Line continuation character */
+				nLineNo += 1;
+				ch = 0;
+				break;
 			default:
 				maxLength = MAXSTRLEN - index;
 				length = CopyMacroArg(&yylval.tzString[index],
