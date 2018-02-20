@@ -638,6 +638,44 @@ scanagain:
 		}
 	}
 
+	/* Check for line continuation character */
+	if (*pLexBuffer == '\\') {
+
+		/*
+		 * Look for line continuation character after a series of
+		 * spaces. This is also useful for files that use Windows line
+		 * endings: "\r\n" is replaced by " \n" before the lexer has the
+		 * opportunity to see it.
+		 */
+		if (pLexBuffer[1] == ' ') {
+			pLexBuffer += 2;
+			while (1) {
+				if (*pLexBuffer == ' ') {
+					pLexBuffer++;
+				} else if (*pLexBuffer == '\n') {
+					pLexBuffer++;
+					nLineNo += 1;
+					goto scanagain;
+				} else {
+					errx(1, "Expected a new line after the continuation character.");
+				}
+			}
+		}
+
+		/* Line continuation character */
+		if (pLexBuffer[1] == '\n') {
+			pLexBuffer += 2;
+			nLineNo += 1;
+			goto scanagain;
+		}
+
+		/*
+		 * If there isn't a newline character or a space, ignore the
+		 * character '\'. It will eventually be handled by other
+		 * functions like PutMacroArg().
+		 */
+	}
+
 	/*
 	 * Try to match an identifier, macro argument (e.g. \1),
 	 * or numeric literal.
