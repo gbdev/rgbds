@@ -31,6 +31,21 @@ struct Options {
 	char *infile;
 };
 
+struct RGBColor {
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
+};
+
+struct ImageOptions {
+	bool horizontal;
+	int trim;
+	char *mapfile;
+	bool mapout;
+	char *palfile;
+	bool palout;
+};
+
 struct PNGImage {
 	png_struct *png;
 	png_info *info;
@@ -39,12 +54,14 @@ struct PNGImage {
 	int height;
 	png_byte depth;
 	png_byte type;
-	bool horizontal;
-	int trim;
-	char *mapfile;
-	bool mapout;
-	char *palfile;
-	bool palout;
+};
+
+struct RawIndexedImage {
+	uint8_t **data;
+	struct RGBColor *palette;
+	int num_colors;
+	int width;
+	int height;
 };
 
 struct GBImage {

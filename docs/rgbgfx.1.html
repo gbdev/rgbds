@@ -43,7 +43,28 @@
 </table>
 <h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="selflink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 The <b class="Nm" title="Nm">rgbgfx</b> program converts PNG images into the
-  Nintendo Game Boy's planar tile format. The arguments are as follows:
+  Nintendo Game Boy's planar tile format.
+<div style="height: 1.00em;">&#x00A0;</div>
+The resulting colors and their palette indices are determined differently
+  depending on the input PNG file:
+<ul class="Bl-dash">
+  <li class="It-dash">If the file has an embedded palette, that palette's color
+      and order are used.</li>
+  <li class="It-dash">If not, and the image only contains shades of gray, rgbgfx
+      maps them to the indices appropriate for each shade. Any undetermined
+      indices are set to respective default shades of gray. For example: if the
+      bit depth is 2 and the image contains light gray and black, they become
+      the second and fourth colors - and the first and third colors get set to
+      default white and dark gray. If the image has multiple shades that map to
+      the same index, the palette is instead determined as if the image had
+      color.</li>
+  <li class="It-dash">If the image has color (or the grayscale method failed),
+      the colors are sorted from lightest to darkest.</li>
+</ul>
+<div style="height: 1.00em;">&#x00A0;</div>
+The input image may not contain more colors than the selected bit depth allows.
+  Transparent pixels are set to palette index 0.
+<h1 class="Sh" title="Sh" id="ARGUMENTS"><a class="selflink" href="#ARGUMENTS">ARGUMENTS</a></h1>
 <dl class="Bl-tag">
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
@@ -58,14 +79,14 @@ The <b class="Nm" title="Nm">rgbgfx</b> program converts PNG images into the
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#F"><b class="Fl" title="Fl" id="F">-F</b></a></dt>
   <dd class="It-tag">Same as <b class="Fl" title="Fl">-f</b>, but additionally,
-      the input PNG file is fixed to have its parameters match the command
-      line's parameters.</dd>
+      the supplied command line parameters are saved within the PNG and will be
+      loaded and automatically used next time.</dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#d"><b class="Fl" title="Fl" id="d">-d</b></a>
     <var class="Ar" title="Ar">depth</var></dt>
-  <dd class="It-tag">The bitdepth of the output image (either 1 or 2). By
-      default, the bitdepth is 2 (two bits per pixel).</dd>
+  <dd class="It-tag">The bit depth of the output image (either 1 or 2). By
+      default, the bit depth is 2 (two bits per pixel).</dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#h"><b class="Fl" title="Fl" id="h">-h</b></a></dt>
@@ -79,15 +100,16 @@ The <b class="Nm" title="Nm">rgbgfx</b> program converts PNG images into the
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#p"><b class="Fl" title="Fl" id="p">-p</b></a>
     <var class="Ar" title="Ar">palfile</var></dt>
-  <dd class="It-tag">Raw bytes (8 bytes for two bits per pixel, 4 bytes for one
-      bit per pixel) containing the RGB15 values in the little-endian byte order
-      and then ordered from lightest to darkest.</dd>
+  <dd class="It-tag">Output the image's palette in standard GBC palette format -
+      bytes (8 bytes for two bits per pixel, 4 bytes for one bit per pixel)
+      containing the RGB15 values in little-endian byte order. If the palette
+      contains too few colors, the remaining entries are set to black.</dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#P"><b class="Fl" title="Fl" id="P">-P</b></a></dt>
-  <dd class="It-tag">Same as <b class="Fl" title="Fl">-p</b>, but the pallete
-      file output name is made by taking the input filename, removing the file
-      extension, and appending <i class="Pa" title="Pa">.pal</i>.</dd>
+  <dd class="It-tag">Same as <b class="Fl" title="Fl">-p</b>, but the palette
+      file output name is made by taking the input PNG file's filename, removing
+      the file extension, and appending <i class="Pa" title="Pa">.pal</i>.</dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#t"><b class="Fl" title="Fl" id="t">-t</b></a>
@@ -120,7 +142,7 @@ The <b class="Nm" title="Nm">rgbgfx</b> program converts PNG images into the
   <dd class="It-tag">Trim the end of the output file by this many tiles.</dd>
 </dl>
 <h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
-The following will take a PNG file with a bitdepth of 1, 2, or 8, and output
+The following will take a PNG file with a bit depth of 1, 2, or 8, and output
   planar 2bpp data:
 <div class="Pp"></div>
 <div class="D1">$ rgbgfx -o out.2bpp in.png</div>
