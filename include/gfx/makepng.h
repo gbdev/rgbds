@@ -12,10 +12,10 @@
 #include "gfx/main.h"
 
 struct RawIndexedImage *input_png_file(const struct Options *opts,
-                                       struct ImageOptions *png_options);
+				       struct ImageOptions *png_options);
 void output_png_file(const struct Options *opts,
-                     const struct ImageOptions *png_options,
-                     const struct RawIndexedImage *raw_image);
+		     const struct ImageOptions *png_options,
+		     const struct RawIndexedImage *raw_image);
 void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr);
 
 #endif /* RGBDS_GFX_PNG_H */
