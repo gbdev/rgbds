@@ -30,6 +30,12 @@ Example:
 .Pp
 All pseudo‐ops, mnemonics and registers (reserved keywords) are case‐insensitive
 and all labels are case‐sensitive.
+.Pp
+There are two syntaxes for comments. In both cases, a comment ends at the end of
+the line. The most common one is: anything that follows a semicolon
+\[dq]\&;\[dq] (that isn't inside a string) is a comment. There is another
+format: anything that follows a \[dq]*\[dq] that is placed right at the start of
+a line is a comment.
 .Ss Sections
 Before you can start writing code, you must define a section.
 This tells the assembler what kind of information follows and, if it is code,
