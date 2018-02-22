@@ -593,7 +593,7 @@ void out_SetFileName(char *s)
 }
 
 /*
- * Find a section by name and type.  If it doesn't exist, create it
+ * Find a section by name and type. If it doesn't exist, create it
  */
 struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 				int32_t bank, int32_t alignment)
@@ -764,7 +764,7 @@ void out_String(char *s)
 }
 
 /*
- * Output a relocatable byte.  Checking will be done to see if it
+ * Output a relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
 void out_RelByte(struct Expression *expr)
@@ -803,7 +803,7 @@ void out_AbsWord(int32_t b)
 }
 
 /*
- * Output a relocatable word.  Checking will be done to see if
+ * Output a relocatable word. Checking will be done to see if
  * it's an absolute value in disguise.
  */
 void out_RelWord(struct Expression *expr)
@@ -847,7 +847,7 @@ void out_AbsLong(int32_t b)
 }
 
 /*
- * Output a relocatable longword.  Checking will be done to see if
+ * Output a relocatable longword. Checking will be done to see if
  * is an absolute value in disguise.
  */
 void out_RelLong(struct Expression *expr)
@@ -875,19 +875,31 @@ void out_RelLong(struct Expression *expr)
 }
 
 /*
- * Output a PC-relative byte
+ * Output a PC-relative relocatable byte. Checking will be done to see if it
+ * is an absolute value in disguise.
  */
 void out_PCRelByte(struct Expression *expr)
 {
-	int32_t b = expr->nVal;
-
 	checkcodesection();
 	checksectionoverflow(1);
-	b = (b & 0xFFFF) - (nPC + 1);
-	if (nPass == 2 && (b < -128 || b > 127))
-		yyerror("PC-relative value must be 8-bit");
+	if (rpn_isReloc(expr)) {
+		if (nPass == 2) {
+			pCurrentSection->tData[nPC] = 0;
+			createpatch(PATCH_BYTE_JR, expr);
+		}
+		pCurrentSection->nPC += 1;
+		nPC += 1;
+		pPCSymbol->nValue += 1;
+	} else {
+		int32_t b = expr->nVal;
 
-	out_AbsByte(b);
+		b = (int16_t)((b & 0xFFFF) - (nPC + 1));
+
+		if (nPass == 2 && ((b < -128) || (b > 127)))
+			yyerror("PC-relative value must be 8-bit");
+
+		out_AbsByte(b & 0xFF);
+	}
 	rpn_Reset(expr);
 }
 

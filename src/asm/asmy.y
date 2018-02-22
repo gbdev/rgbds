@@ -455,7 +455,6 @@ static void updateUnion(void)
 %type	<nConstValue>	const_3bit
 %type	<sVal>		const_8bit
 %type	<sVal>		const_16bit
-%type	<sVal>		const_PCrel
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
@@ -1108,14 +1107,6 @@ constlist_32bit_entry_single : /* empty */
 		}
 ;
 
-const_PCrel	: relocconst
-		{
-			if (!rpn_isPCRelative(&$1))
-				yyerror("Expression must be PC-relative");
-			$$ = $1;
-		}
-;
-
 const_8bit	: relocconst
 		{
 			if( (!rpn_isReloc(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
@@ -1602,12 +1593,12 @@ z80_jp		: T_Z80_JP const_16bit
 		}
 ;
 
-z80_jr		: T_Z80_JR const_PCrel
+z80_jr		: T_Z80_JR const_16bit
 		{
 			out_AbsByte(0x18);
 			out_PCRelByte(&$2);
 		}
-		| T_Z80_JR ccode comma const_PCrel
+		| T_Z80_JR ccode comma const_16bit
 		{
 			out_AbsByte(0x20 | ($2 << 3));
 			out_PCRelByte(&$4);

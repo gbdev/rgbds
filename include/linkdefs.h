@@ -66,7 +66,8 @@ enum eSymbolType {
 enum ePatchType {
 	PATCH_BYTE	= 0x00,
 	PATCH_WORD_L	= 0x01,
-	PATCH_LONG_L	= 0x02
+	PATCH_LONG_L	= 0x02,
+	PATCH_BYTE_JR	= 0x03
 };
 
 #endif /* RGBDS_LINKDEFS_H */
