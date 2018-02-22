@@ -267,6 +267,7 @@ void Patch(void)
 		pPatch = pSect->pPatches;
 		while (pPatch) {
 			int32_t t;
+			int32_t nPatchOrg;
 
 			nPC = pSect->nOrg + pPatch->nOffset;
 			t = calcrpn(pPatch);
@@ -305,6 +306,24 @@ void Patch(void)
 					(t >> 16) & 0xFF;
 				pSect->pData[pPatch->nOffset + 3] =
 					(t >> 24) & 0xFF;
+				break;
+			case PATCH_BYTE_JR:
+				/* Calculate absolute address of the patch */
+				nPatchOrg = pSect->nOrg + pPatch->nOffset;
+
+				/* t contains the destination of the jump */
+				t = (int16_t)((t & 0xFFFF) - (nPatchOrg + 1));
+
+				if (t >= -128 && t <= 255) {
+					t &= 0xFF;
+					pSect->pData[pPatch->nOffset] =
+						(uint8_t)t;
+				} else {
+					errx(1,
+					     "%s(%ld) : Value must be 8-bit",
+					     pPatch->pzFilename,
+					     pPatch->nLineNo);
+				}
 				break;
 			}
 
