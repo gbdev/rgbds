@@ -1234,6 +1234,8 @@ uconst		: const
 
 const		: T_ID					{ $$ = sym_GetConstantValue($1); }
 		| T_NUMBER				{ $$ = $1; }
+		| T_OP_HIGH '(' const ')'		{ $$ = ($3 >> 8) & 0xFF; }
+		| T_OP_LOW '(' const ')'		{ $$ = $3 & 0xFF; }
 		| string				{ $$ = str2int($1); }
 		| T_OP_LOGICNOT const %prec NEG		{ $$ = !$2; }
 		| const T_OP_LOGICOR const		{ $$ = $1 || $3; }
