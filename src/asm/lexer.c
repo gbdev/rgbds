@@ -159,6 +159,8 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	pBuffer->pBuffer[size + 1] = 0;
 	pBuffer->nBufferSize = size + 1;
 
+	/* Convert all line endings to LF and spaces */
+
 	char *mem = pBuffer->pBuffer;
 	uint32_t instring = 0;
 
@@ -171,20 +173,44 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		} else if (instring) {
 			mem += 1;
 		} else {
-			if ((mem[0] == 10 && mem[1] == 13)
-				|| (mem[0] == 13 && mem[1] == 10)) {
+			/* LF CR and CR LF */
+			if (((mem[0] == 10) && (mem[1] == 13))
+			 || ((mem[0] == 13) && (mem[1] == 10))) {
 				mem[0] = ' ';
 				mem[1] = '\n';
 				mem += 2;
-			} else if (mem[0] == 10 || mem[0] == 13) {
+			/* LF and CR */
+			} else if ((mem[0] == 10) || (mem[0] == 13)) {
 				mem[0] = '\n';
 				mem += 1;
-			} else if (mem[0] == '\n' && mem[1] == '*') {
+			} else {
 				mem += 1;
-				while (!(*mem == '\n' || *mem == '\0'))
+			}
+		}
+	}
+
+	/* Remove comments */
+
+	mem = pBuffer->pBuffer;
+	instring = 0;
+
+	while (*mem) {
+		if (*mem == '\"')
+			instring = 1 - instring;
+
+		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
+			mem += 2;
+		} else if (instring) {
+			mem += 1;
+		} else {
+			/* Comments that start with ; anywhere in a line */
+			if (*mem == ';') {
+				while (!((*mem == '\n') || (*mem == '\0')))
 					*mem++ = ' ';
-			} else if (*mem == ';') {
-				while (!(*mem == '\n' || *mem == '\0'))
+			/* Comments that start with * at the start of a line */
+			} else if ((mem[0] == '\n') && (mem[1] == '*')) {
+				mem += 1;
+				while (!((*mem == '\n') || (*mem == '\0')))
 					*mem++ = ' ';
 			} else {
 				mem += 1;
