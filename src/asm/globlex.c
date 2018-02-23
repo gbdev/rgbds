@@ -368,6 +368,7 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"include", T_POP_INCLUDE},
 	{"printt", T_POP_PRINTT},
+	{"printi", T_POP_PRINTI},
 	{"printv", T_POP_PRINTV},
 	{"printf", T_POP_PRINTF},
 	{"export", T_POP_EXPORT},

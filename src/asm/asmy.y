@@ -504,7 +504,7 @@ static void updateUnion(void)
 %token	<tzSym> T_POP_SET
 %token	<tzSym> T_POP_EQUS
 
-%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV
+%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
 %token	T_POP_IMPORT T_POP_EXPORT T_POP_GLOBAL
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
@@ -648,6 +648,7 @@ simple_pseudoop : include
 		| printf
 		| printt
 		| printv
+		| printi
 		| if
 		| elif
 		| else
@@ -930,6 +931,13 @@ printv		: T_POP_PRINTV const
 		{
 			if (nPass == 1)
 				printf("$%X", $2);
+		}
+;
+
+printi		: T_POP_PRINTI const
+		{
+			if (nPass == 1)
+				printf("%d", $2);
 		}
 ;
 

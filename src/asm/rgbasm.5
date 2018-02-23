@@ -660,16 +660,19 @@ some important information.
 .Pp
 .Bd -literal -offset indent
 PRINTT \[dq]I'm the greatest programmer in the whole wide world\[rs]n\[dq]
-PRINTV (2+3)/5
-PRINTF MUL(3.14,3987.0)
+PRINTI (2 + 3) / 5
+PRINTV $FF00 + $F0
+PRINTF MUL(3.14, 3987.0)
 .Ed
 .Pp
 .Bl -inset
 .It Ic PRINTT
 prints out a string.
 .It Ic PRINTV
-prints out an integer value or, as in the example, the result of a calculation.
-Unsurprisingly, you can also print out a constant symbols value.
+prints out an integer value in hexadecimal or, as in the example, the result of
+a calculation. Unsurprisingly, you can also print out a constant symbols value.
+.It Ic PRINTI
+prints out a signed integer value.
 .It Ic PRINTF
 prints out a fixed point value.
 .El
@@ -1068,6 +1071,7 @@ machine.
 .It Sx POPO
 .It Sx POPS
 .It Sx PRINTF
+.It Sx PRINTI
 .It Sx PRINTT
 .It Sx PRINTV
 .It Sx PURGE
