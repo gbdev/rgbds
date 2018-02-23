@@ -37,7 +37,27 @@ There are two syntaxes for comments. In both cases, a comment ends at the end of
 the line. The most common one is: anything that follows a semicolon
 \[dq]\&;\[dq] (that isn't inside a string) is a comment. There is another
 format: anything that follows a \[dq]*\[dq] that is placed right at the start of
-a line is a comment.
+a line is a comment. The assembler removes all comments from the code before
+doing anything else.
+.Pp
+Sometimes lines can be too long and it may be necessary to split them. The
+syntax to do so is the following one:
+.Pp
+.Bd -literal -offset indent
+    DB 1, 2, 3, 4 \[rs]
+       5, 6, 7, 8
+.Ed
+.Pp
+This works anywhere in the code except inside of strings. To split strings it is
+needed to use
+.It STRCAT
+like this:
+.Pp
+.Bd -literal -offset indent
+    DB STRCAT("Hello ", \[rs]
+              "world!")
+.Ed
+.Pp
 .Ss Sections
 Before you can start writing code, you must define a section.
 This tells the assembler what kind of information follows and, if it is code,
@@ -502,6 +522,19 @@ you will get the value 5 on screen and not 6 as you might have expected.
 In reality, up to 256 arguments can be passed to a macro, but you can only use
 the first 9 like this. If you want to use the rest, you need to use the keyword
 .Ic SHIFT .
+.Pp
+Line continuations work as usual inside macros or lists of arguments of macros.
+Strings, however, are a bit trickier. The following example shows how to use
+strings as arguments for a macro:
+.Pp
+.Bd -literal -offset indent
+PrintMacro : MACRO
+    PRINTT \[rs]1
+ENDM
+
+    PrintMacro STRCAT(\[rs]\[dq]Hello\[rs]\[dq]\[rs],  \[rs]
+                      \[rs]\[dq] world\[rs]\[rs]n\[rs]\[dq])
+.Ed
 .Pp
 .Ic SHIFT
 is a special command only available in macros.
