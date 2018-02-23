@@ -791,17 +791,20 @@ These three instructions type text and values to stdout. Useful for debugging
 <div class="Bd" style="margin-left: 5.00ex;">
 <pre class="Li">
 PRINTT &quot;I'm the greatest programmer in the whole wide world\n&quot; 
-PRINTV (2+3)/5 
-PRINTF MUL(3.14,3987.0)
+PRINTI (2 + 3) / 5 
+PRINTV $FF00 + $F0 
+PRINTF MUL(3.14, 3987.0)
 </pre>
 </div>
 <dl class="Bl-inset">
   <dt class="It-inset"><a class="selflink" href="#PRINTT"><b class="Ic" title="Ic" id="PRINTT">PRINTT</b></a></dt>
   <dd class="It-inset">prints out a string.</dd>
   <dt class="It-inset"><a class="selflink" href="#PRINTV"><b class="Ic" title="Ic" id="PRINTV">PRINTV</b></a></dt>
-  <dd class="It-inset">prints out an integer value or, as in the example, the
-      result of a calculation. Unsurprisingly, you can also print out a constant
-      symbols value.</dd>
+  <dd class="It-inset">prints out an integer value in hexadecimal or, as in the
+      example, the result of a calculation. Unsurprisingly, you can also print
+      out a constant symbols value.</dd>
+  <dt class="It-inset"><a class="selflink" href="#PRINTI"><b class="Ic" title="Ic" id="PRINTI">PRINTI</b></a></dt>
+  <dd class="It-inset">prints out a signed integer value.</dd>
   <dt class="It-inset"><a class="selflink" href="#PRINTF"><b class="Ic" title="Ic" id="PRINTF">PRINTF</b></a></dt>
   <dd class="It-inset">prints out a fixed point value.</dd>
 </dl>
@@ -1376,6 +1379,8 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dt class="It-inset"><a class="Sx" title="Sx" href="#POPS">POPS</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#PRINTF">PRINTF</a></dt>
+  <dd class="It-inset"></dd>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#PRINTI">PRINTI</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#PRINTT">PRINTT</a></dt>
   <dd class="It-inset"></dd>
