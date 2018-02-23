@@ -5,7 +5,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd February 24, 2018
+.Dd February 26, 2018
 .Dt RGBASM 5
 .Os RGBDS Manual
 .Sh NAME
@@ -26,7 +26,9 @@ one instruction or pseudo‐op per line:
 .Pp
 Example:
 .Pp
-.Dl John: ld a,87 ;Weee
+.Bd -literal -offset indent
+John: ld a,87 ;Weee
+.Ed
 .Pp
 All pseudo‐ops, mnemonics and registers (reserved keywords) are case‐insensitive
 and all labels are case‐sensitive.
@@ -41,7 +43,9 @@ Before you can start writing code, you must define a section.
 This tells the assembler what kind of information follows and, if it is code,
 where to put it.
 .Pp
-.Dl SECTION \[dq]CoolStuff\[dq],ROMX
+.Bd -literal -offset indent
+    SECTION \[dq]CoolStuff\[dq],ROMX
+.Ed
 .Pp
 This switches to the section called "CoolStuff" (or creates it if it doesn't
 already exist) and it defines it as a code section.
@@ -128,22 +132,30 @@ obligation to follow any specific rules.
 The following example defines a section that can be placed anywhere in any ROMX
 bank:
 .Pp
-.Dl SECTION \[dq]CoolStuff\[dq],ROMX
+.Bd -literal -offset indent
+    SECTION \[dq]CoolStuff\[dq],ROMX
+.Ed
 .Pp
 If it is needed, the following syntax can be used to fix the base address of the
 section:
 .Pp
-.Dl SECTION \[dq]CoolStuff\[dq],ROMX[$4567]
+.Bd -literal -offset indent
+    SECTION \[dq]CoolStuff\[dq],ROMX[$4567]
+.Ed
 .Pp
 It won't, however, fix the bank number, which is left to the linker.
 If you also want to specify the bank you can do:
 .Pp
-.Dl SECTION \[dq]CoolStuff\[dq],ROMX[$4567],BANK[3]
+.Bd -literal -offset indent
+    SECTION \[dq]CoolStuff\[dq],ROMX[$4567],BANK[3]
+.Ed
 .Pp
 And if you only want to force the section into a certain bank, and not it's
 position within the bank, that's also possible:
 .Pp
-.Dl SECTION \[dq]CoolStuff\[dq],ROMX,BANK[7]
+.Bd -literal -offset indent
+    SECTION \[dq]CoolStuff\[dq],ROMX,BANK[7]
+.Ed
 .Pp
 In addition, you can specify byte alignment for a section.
 This ensures that the section starts at a memory address where the given number
@@ -155,9 +167,11 @@ However, if an alignment is specified, the base address must be left unassigned.
 This can be useful when using DMA to copy data or when it is needed to align the
 start of an array to 256 bytes to optimize the code that accesses it.
 .Pp
-.Dl SECTION \[dq]OAM Data\[dq],WRAM0,ALIGN[8] ; align to 256 bytes
-.Pp
-.Dl SECTION \[dq]VRAM Data\[dq],ROMX,BANK[2],ALIGN[4] ; align to 16 bytes
+.Bd -literal -offset indent
+    SECTION \[dq]OAM Data\[dq],WRAM0,ALIGN[8] ; align to 256 bytes
+
+    SECTION \[dq]VRAM Data\[dq],ROMX,BANK[2],ALIGN[4] ; align to 16 bytes
+.Ed
 .Pp
 HINT: If you think this is a lot of typing for doing a simple
 .Ic ORG
@@ -255,8 +269,10 @@ EQUates are constant symbols.
 They can, for example, be used for things such as bit-definitions of hardware
 registers.
 .Pp
-.Dl EXIT_OK      EQU $00
-.Dl EXIT_FAILURE EQU $01
+.Bd -literal -offset indent
+EXIT_OK      EQU $00
+EXIT_FAILURE EQU $01
+.Ed
 .Pp
 Note that a colon (:) following the label-name is not allowed.
 EQUates cannot be exported and imported.
@@ -278,7 +294,9 @@ Note that a colon (:) following the label-name is not allowed.
 SETs cannot be exported and imported.
 Alternatively you can use = as a synonym for SET.
 .Pp
-.Dl COUNT = 2
+.Bd -literal -offset indent
+COUNT = 2
+.Ed
 .Pp
 .It Sy RSSET , RSRESET , RB , RW
 .Pp
@@ -330,10 +348,10 @@ If you are familiar with C you can think of it as the same as #define.
 .Pp
 .Bd -literal -offset indent
 COUNTREG EQUS "[hl+]"
-ld a,COUNTREG
+    ld a,COUNTREG
 
 PLAYER_NAME EQUS \[dq]\[rs]\[dq]John\[rs]\[dq]\[dq]
-db PLAYER_NAME
+    db PLAYER_NAME
 .Ed
 .Pp
 Note that : following the label-name is not allowed, and that strings must be
@@ -341,12 +359,16 @@ quoted to be useful.
 .Pp
 This will be interpreted as:
 .Pp
-.Dl ld a,[hl+]
-.Dl db \[dq]John\[dq]
+.Bd -literal -offset indent
+    ld a,[hl+]
+    db \[dq]John\[dq]
+.Ed
 .Pp
 String-symbols can also be used to define small one-line macros:
 .Pp
-.Dl PUSHA EQUS \[dq]push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n\[dq]
+.Bd -literal -offset indent
+PUSHA EQUS \[dq]push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n\[dq]
+.Ed
 .Pp
 Note that a colon (:) following the label-name is not allowed.
 String equates can't be exported or imported.
@@ -459,7 +481,9 @@ Now I can call the macro specifying two arguments.
 The first being the address and the second being a bytecount.
 The macro will then reset all bytes in this range.
 .Pp
-.Dl LoopyMacro MyVars,54
+.Bd -literal -offset indent
+LoopyMacro MyVars,54
+.Ed
 .Pp
 Arguments are passed as string equates.
 There's no need to enclose them in quotes.
@@ -565,7 +589,9 @@ The following symbols are defined by the assembler:
 defines a list of bytes that will be stored in the final image.
 Ideal for tables and text (which is not zero-terminated).
 .Pp
-.Dl DB 1,2,3,4,\[dq]This is a string\[dq]
+.Bd -literal -offset indent
+DB 1,2,3,4,\[dq]This is a string\[dq]
+.Ed
 .Pp
 Alternatively, you can use
 .Ic DW
@@ -609,7 +635,9 @@ and
 .Ic DL
 without any arguments instead.
 .Pp
-.Dl DS str_SIZEOF ;allocate str_SIZEOF bytes
+.Bd -literal -offset indent
+DS str_SIZEOF ;allocate str_SIZEOF bytes
+.Ed
 .Pp
 .Ss Including binary files
 You probably have some graphics you'd like to include.
@@ -619,15 +647,19 @@ to include a raw binary file as it is.
 If the file isn't found in the current directory, the include-path list passed
 to the linker on the command line will be searched.
 .Pp
-.Dl INCBIN \[dq]titlepic.bin\[dq]
-.Dl INCBIN \[dq]sprites/hero.bin\[dq]\ ; UNIX
-.Dl INCBIN \[dq]sprites\[rs]\[rs]hero.bin\[dq]\ ; Windows
+.Bd -literal -offset indent
+INCBIN \[dq]titlepic.bin\[dq]
+INCBIN \[dq]sprites/hero.bin\[dq]\ ; UNIX
+INCBIN \[dq]sprites\[rs]\[rs]hero.bin\[dq]\ ; Windows
+.Ed
 .Pp
 You can also include only part of a file with
 .Ic INCBIN .
 The example below includes 256 bytes from data.bin starting from byte 78.
 .Pp
-.Dl INCBIN \[dq]data.bin\[dq],78,256
+.Bd -literal -offset indent
+INCBIN \[dq]data.bin\[dq],78,256
+.Ed
 .Ss Unions
 Unions allow multiple memory allocations to share the same space in memory,
 like unions in C.
@@ -755,7 +787,9 @@ You may nest
 .Ic INCLUDE
 calls infinitely (or until you run out of memory, whichever comes first).
 .Pp
-.Dl INCLUDE \[dq]irq.inc\[dq]
+.Bd -literal -offset indent
+    INCLUDE \[dq]irq.inc\[dq]
+.Ed
 .Pp
 .Ss Conditional assembling
 The four commands
@@ -831,7 +865,9 @@ The last one, Gameboy graphics, is quite interesting and useful.
 The values are actually pixel values and it converts the
 .Do chunky Dc data to Do planar Dc data as used in the Gameboy.
 .Pp
-.Dl DW \`01012323
+.Bd -literal -offset indent
+    DW \`01012323
+.Ed
 .Pp
 Admittedly, an expression with just a single number is quite boring.
 To spice things up a bit there are a few operators you can use to perform
