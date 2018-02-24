@@ -180,7 +180,7 @@ checkpatch:
 # Target for the project maintainer to easily create web manuals.
 # It relies on mandoc: http://mdocml.bsd.lv
 
-MANDOC	:= -Thtml -Ios=General -Oman=%N.%S.html -Ostyle=manual.css
+MANDOC	:= -Thtml -Ios=General -Oman=%N.%S.html -Ostyle=mandoc.css
 
 wwwman:
 	$Qmandoc ${MANDOC} src/rgbds.7 > docs/rgbds.7.html
