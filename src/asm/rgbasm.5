@@ -5,7 +5,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd January 27, 2018
+.Dd February 24, 2018
 .Dt RGBASM 5
 .Os RGBDS Manual
 .Sh NAME
@@ -110,7 +110,13 @@ and
 .Sy LDH A,[$FF00+n8]
 syntax instead.
 This forces the assembler to emit the correct instruction and the linker to
-check if the value is in the correct range.
+check if the value is in the correct range. This optimization can be disabled
+by passing the
+.Fl L
+flag to
+.Sy rgbasm
+as explained in
+.Xr rgbasm 1 .
 .El
 .Pp
 A section is usually defined as a floating one, but the code can restrict where

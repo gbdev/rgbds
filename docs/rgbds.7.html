@@ -26,9 +26,13 @@
 <h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
 To get a working ROM image from a single assembly source file:
 <div class="Pp"></div>
-<div class="D1">$ rgbasm -o bar.o foo.asm</div>
-<div class="D1">$ rgblink -o baz.gb bar.o</div>
-<div class="D1">$ rgbfix -v -p 0 baz.gb</div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+$ rgbasm -o bar.o foo.asm 
+$ rgblink -o baz.gb bar.o 
+$ rgbfix -v -p 0 baz.gb
+</pre>
+</div>
 <h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="selflink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
 <a class="Xr" title="Xr">rgbasm(1)</a>, <a class="Xr" title="Xr">rgbfix(1)</a>,
@@ -58,7 +62,7 @@ To get a working ROM image from a single assembly source file:
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">January 26, 2018</td>
+    <td class="foot-date">February 24, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>

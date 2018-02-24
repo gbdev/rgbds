@@ -1728,7 +1728,8 @@ z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP
 		}
 		| T_Z80_LD op_mem_ind comma T_MODE_A
 		{
-			if ((!rpn_isReloc(&$2)) && ($2.nVal >= 0xFF00)) {
+			if (CurrentOptions.optimizeloads &&
+			    (!rpn_isReloc(&$2)) && ($2.nVal >= 0xFF00)) {
 				out_AbsByte(0xE0);
 				out_AbsByte($2.nVal & 0xFF);
 			} else {
@@ -1781,7 +1782,8 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
 		| T_Z80_LD reg_r comma op_mem_ind
 		{
 			if ($2 == REG_A) {
-				if ((!rpn_isReloc(&$4)) && ($4.nVal >= 0xFF00)) {
+				if (CurrentOptions.optimizeloads &&
+				    (!rpn_isReloc(&$4)) && ($4.nVal >= 0xFF00)) {
 					out_AbsByte(0xF0);
 					out_AbsByte($4.nVal & 0xFF);
 				} else {

@@ -5,7 +5,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd January 26, 2018
+.Dd February 24, 2018
 .Dt RGBASM 1
 .Os RGBDS Manual
 .Sh NAME
@@ -13,7 +13,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm rgbasm
-.Op Fl EhVvw
+.Op Fl EhLVvw
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
@@ -55,6 +55,12 @@ The
 option disables this behavior.
 .It Fl i Ar path
 Add an include path.
+.It Fl L
+Disable the optimization that turns loads of the form
+.Sy LD [$FF00+n8],A
+into the opcode
+.Sy LDH [$FF00+n8],A
+in order to have full control of the result in the final ROM.
 .It Fl M Ar dependfile
 Print
 .Xr make 1
@@ -75,7 +81,9 @@ Disable warning output.
 .Sh EXAMPLES
 Assembling a basic source file is simple:
 .Pp
-.D1 $ rgbasm -o bar.o foo.asm
+.Bd -literal -offset indent
+$ rgbasm -o bar.o foo.asm
+.Ed
 .Pp
 The resulting object file is not yet a usable ROM image \(em it must first be
 run through

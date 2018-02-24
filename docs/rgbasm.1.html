@@ -27,7 +27,7 @@
 <table class="Nm">
   <tr>
     <td><b class="Nm" title="Nm">rgbasm</b></td>
-    <td>[<span class="Op"><b class="Fl" title="Fl">-EhVvw</b></span>]
+    <td>[<span class="Op"><b class="Fl" title="Fl">-EhLVvw</b></span>]
       [<span class="Op"><b class="Fl" title="Fl">-b</b>
       <var class="Ar" title="Ar">chars</var></span>]
       [<span class="Op"><b class="Fl" title="Fl">-D</b>
@@ -89,6 +89,13 @@ The <b class="Nm" title="Nm">rgbasm</b> program creates an object file from an
   <dd class="It-tag">Add an include path.</dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#L"><b class="Fl" title="Fl" id="L">-L</b></a></dt>
+  <dd class="It-tag">Disable the optimization that turns loads of the form
+      <b class="Sy" title="Sy">LD [$FF00+n8],A</b> into the opcode
+      <b class="Sy" title="Sy">LDH [$FF00+n8],A</b> in order to have full
+      control of the result in the final ROM.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#M"><b class="Fl" title="Fl" id="M">-M</b></a>
     <var class="Ar" title="Ar">dependfile</var></dt>
   <dd class="It-tag">Print <a class="Xr" title="Xr">make(1)</a> dependencies to
@@ -120,7 +127,11 @@ The <b class="Nm" title="Nm">rgbasm</b> program creates an object file from an
 <h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
 Assembling a basic source file is simple:
 <div class="Pp"></div>
-<div class="D1">$ rgbasm -o bar.o foo.asm</div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+$ rgbasm -o bar.o foo.asm
+</pre>
+</div>
 <div class="Pp"></div>
 The resulting object file is not yet a usable ROM image &#x2014; it must first
   be run through <a class="Xr" title="Xr">rgblink(1)</a> and
@@ -138,7 +149,7 @@ The resulting object file is not yet a usable ROM image &#x2014; it must first
   <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">January 26, 2018</td>
+    <td class="foot-date">February 24, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>

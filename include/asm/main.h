@@ -15,12 +15,13 @@
 #include "extern/stdnoreturn.h"
 
 struct sOptions {
-	char gbgfx[4];
 	char binary[2];
-	int32_t fillchar;
-	bool verbose;
-	bool haltnop;
+	char gbgfx[4];
 	bool exportall;
+	int32_t fillchar;
+	bool haltnop;
+	bool optimizeloads;
+	bool verbose;
 	bool warnings; /* True to enable warnings, false to disable them. */
 };
 

@@ -125,7 +125,10 @@ Possible section types are as follows:
       <b class="Sy" title="Sy">LDH [$FF00+n8],A</b> and
       <b class="Sy" title="Sy">LDH A,[$FF00+n8]</b> syntax instead. This forces
       the assembler to emit the correct instruction and the linker to check if
-      the value is in the correct range.</dd>
+      the value is in the correct range. This optimization can be disabled by
+      passing the <b class="Fl" title="Fl">-L</b> flag to
+      <b class="Sy" title="Sy">rgbasm</b> as explained in
+      <a class="Xr" title="Xr">rgbasm(1)</a>.</dd>
 </dl>
 <div class="Pp"></div>
 A section is usually defined as a floating one, but the code can restrict where
@@ -1462,7 +1465,7 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">January 27, 2018</td>
+    <td class="foot-date">February 24, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>

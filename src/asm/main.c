@@ -282,7 +282,7 @@ void warning(const char *fmt, ...)
 static void print_usage(void)
 {
 	printf(
-"usage: rgbasm [-EhVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
+"usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
 "              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
 	exit(1);
 }
@@ -316,17 +316,18 @@ int main(int argc, char *argv[])
 	DefaultOptions.gbgfx[3] = '3';
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
-	DefaultOptions.fillchar = 0;
-	DefaultOptions.verbose = false;
-	DefaultOptions.haltnop = true;
 	DefaultOptions.exportall = false;
+	DefaultOptions.fillchar = 0;
+	DefaultOptions.optimizeloads = true;
+	DefaultOptions.haltnop = true;
+	DefaultOptions.verbose = false;
 	DefaultOptions.warnings = true;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:g:hi:M:o:p:EVvw")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:Eg:hi:LM:o:p:Vvw")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -357,6 +358,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);
+			break;
+		case 'L':
+			newopt.optimizeloads = false;
 			break;
 		case 'M':
 			dependfile = fopen(optarg, "w");

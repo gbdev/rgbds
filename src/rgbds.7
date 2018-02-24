@@ -5,7 +5,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd January 26, 2018
+.Dd February 24, 2018
 .Dt RGBDS 7
 .Os RGBDS Manual
 .Sh NAME
@@ -14,9 +14,11 @@
 .Sh EXAMPLES
 To get a working ROM image from a single assembly source file:
 .Pp
-.D1 $ rgbasm \-o bar.o foo.asm
-.D1 $ rgblink \-o baz.gb bar.o
-.D1 $ rgbfix \-v \-p 0 baz.gb
+.Bd -literal -offset indent
+$ rgbasm \-o bar.o foo.asm
+$ rgblink \-o baz.gb bar.o
+$ rgbfix \-v \-p 0 baz.gb
+.Ed
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgbfix 1 ,
