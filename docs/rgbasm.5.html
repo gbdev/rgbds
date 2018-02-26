@@ -38,7 +38,11 @@ The syntax is line&#x2010;based, just as in any other assembler, meaning that
 <div class="Pp"></div>
 Example:
 <div class="Pp"></div>
-<div class="D1"><code class="Li">John: ld a,87 ;Weee</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+John: ld a,87 ;Weee
+</pre>
+</div>
 <div class="Pp"></div>
 All pseudo&#x2010;ops, mnemonics and registers (reserved keywords) are
   case&#x2010;insensitive and all labels are case&#x2010;sensitive.
@@ -47,13 +51,40 @@ There are two syntaxes for comments. In both cases, a comment ends at the end of
   the line. The most common one is: anything that follows a semicolon
   &quot;;&quot; (that isn't inside a string) is a comment. There is another
   format: anything that follows a &quot;*&quot; that is placed right at the
-  start of a line is a comment.
+  start of a line is a comment. The assembler removes all comments from the code
+  before doing anything else.
+<div class="Pp"></div>
+Sometimes lines can be too long and it may be necessary to split them. The
+  syntax to do so is the following one:
+<div class="Pp"></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    DB 1, 2, 3, 4 \ 
+       5, 6, 7, 8
+</pre>
+</div>
+<div class="Pp"></div>
+This works anywhere in the code except inside of strings. To split strings it is
+  needed to use
+<div>&#x00A0;</div>
+like this:
+<div class="Pp"></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    DB STRCAT(&quot;Hello &quot;, \ 
+              &quot;world!&quot;)
+</pre>
+</div>
 <h2 class="Ss" title="Ss" id="Sections"><a class="selflink" href="#Sections">Sections</a></h2>
 Before you can start writing code, you must define a section. This tells the
   assembler what kind of information follows and, if it is code, where to put
   it.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION &quot;CoolStuff&quot;,ROMX</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;CoolStuff&quot;,ROMX
+</pre>
+</div>
 <div class="Pp"></div>
 This switches to the section called &quot;CoolStuff&quot; (or creates it if it
   doesn't already exist) and it defines it as a code section. All sections
@@ -139,25 +170,38 @@ If a section is defined with no indications, it is a floating section. The
   obligation to follow any specific rules. The following example defines a
   section that can be placed anywhere in any ROMX bank:
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION &quot;CoolStuff&quot;,ROMX</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;CoolStuff&quot;,ROMX
+</pre>
+</div>
 <div class="Pp"></div>
 If it is needed, the following syntax can be used to fix the base address of the
   section:
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION
-  &quot;CoolStuff&quot;,ROMX[$4567]</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;CoolStuff&quot;,ROMX[$4567]
+</pre>
+</div>
 <div class="Pp"></div>
 It won't, however, fix the bank number, which is left to the linker. If you also
   want to specify the bank you can do:
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION
-  &quot;CoolStuff&quot;,ROMX[$4567],BANK[3]</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;CoolStuff&quot;,ROMX[$4567],BANK[3]
+</pre>
+</div>
 <div class="Pp"></div>
 And if you only want to force the section into a certain bank, and not it's
   position within the bank, that's also possible:
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION
-  &quot;CoolStuff&quot;,ROMX,BANK[7]</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;CoolStuff&quot;,ROMX,BANK[7]
+</pre>
+</div>
 <div class="Pp"></div>
 In addition, you can specify byte alignment for a section. This ensures that the
   section starts at a memory address where the given number of least-significant
@@ -167,11 +211,13 @@ In addition, you can specify byte alignment for a section. This ensures that the
   needed to align the start of an array to 256 bytes to optimize the code that
   accesses it.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION &quot;OAM Data&quot;,WRAM0,ALIGN[8];
-  align to 256 bytes</code></div>
-<div class="Pp"></div>
-<div class="D1"><code class="Li">SECTION &quot;VRAM
-  Data&quot;,ROMX,BANK[2],ALIGN[4]; align to 16 bytes</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    SECTION &quot;OAM Data&quot;,WRAM0,ALIGN[8] ; align to 256 bytes 
+ 
+    SECTION &quot;VRAM Data&quot;,ROMX,BANK[2],ALIGN[4] ; align to 16 bytes
+</pre>
+</div>
 <div class="Pp"></div>
 HINT: If you think this is a lot of typing for doing a simple
   <b class="Ic" title="Ic">ORG</b> type thing you can quite easily write an
@@ -260,8 +306,12 @@ ThisWillBeExported.too::
     EQUates are constant symbols. They can, for example, be used for things such
       as bit-definitions of hardware registers.
     <div class="Pp"></div>
-    <div class="D1"><code class="Li">EXIT_OK EQU $00</code></div>
-    <div class="D1"><code class="Li">EXIT_FAILURE EQU $01</code></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+EXIT_OK      EQU $00 
+EXIT_FAILURE EQU $01
+    </pre>
+    </div>
     <div class="Pp"></div>
     Note that a colon (:) following the label-name is not allowed. EQUates
       cannot be exported and imported. They don't change their value during the
@@ -285,7 +335,11 @@ COUNT      SET ARRAY_SIZE+COUNT
       be exported and imported. Alternatively you can use = as a synonym for
       SET.
     <div class="Pp"></div>
-    <div class="D1"><code class="Li">COUNT = 2</code></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+COUNT = 2
+    </pre>
+    </div>
   </dd>
   <dt class="It-hang"><b class="Sy" title="Sy">RSSET</b>,
     <b class="Sy" title="Sy">RSRESET</b>, <b class="Sy" title="Sy">RB</b>,
@@ -378,10 +432,10 @@ str_SIZEOF = 259
     <div class="Bd" style="margin-left: 5.00ex;">
     <pre class="Li">
 COUNTREG EQUS &quot;[hl+]&quot; 
-ld a,COUNTREG 
+    ld a,COUNTREG 
  
 PLAYER_NAME EQUS &quot;\&quot;John\&quot;&quot; 
-db PLAYER_NAME
+    db PLAYER_NAME
     </pre>
     </div>
     <div class="Pp"></div>
@@ -390,13 +444,20 @@ db PLAYER_NAME
     <div class="Pp"></div>
     This will be interpreted as:
     <div class="Pp"></div>
-    <div class="D1"><code class="Li">ld a,[hl+]</code></div>
-    <div class="D1"><code class="Li">db &quot;John&quot;</code></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+    ld a,[hl+] 
+    db &quot;John&quot;
+    </pre>
+    </div>
     <div class="Pp"></div>
     String-symbols can also be used to define small one-line macros:
     <div class="Pp"></div>
-    <div class="D1"><code class="Li">PUSHA EQUS &quot;push af\npush bc\npush
-      de\npush hl\n&quot;</code></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+PUSHA EQUS &quot;push af\npush bc\npush de\npush hl\n&quot;
+    </pre>
+    </div>
     <div class="Pp"></div>
     Note that a colon (:) following the label-name is not allowed. String
       equates can't be exported or imported.
@@ -510,7 +571,11 @@ LoopyMacro: MACRO
       address and the second being a bytecount. The macro will then reset all
       bytes in this range.
     <div class="Pp"></div>
-    <div class="D1"><code class="Li">LoopyMacro MyVars,54</code></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+LoopyMacro MyVars,54
+    </pre>
+    </div>
     <div class="Pp"></div>
     Arguments are passed as string equates. There's no need to enclose them in
       quotes. An expression will not be evaluated first but passed directly.
@@ -524,6 +589,21 @@ LoopyMacro: MACRO
     In reality, up to 256 arguments can be passed to a macro, but you can only
       use the first 9 like this. If you want to use the rest, you need to use
       the keyword <b class="Ic" title="Ic">SHIFT</b>.
+    <div class="Pp"></div>
+    Line continuations work as usual inside macros or lists of arguments of
+      macros. Strings, however, are a bit trickier. The following example shows
+      how to use strings as arguments for a macro:
+    <div class="Pp"></div>
+    <div class="Bd" style="margin-left: 5.00ex;">
+    <pre class="Li">
+PrintMacro : MACRO 
+    PRINTT \1 
+ENDM 
+ 
+    PrintMacro STRCAT(\&quot;Hello\&quot;\,  \ 
+                      \&quot; world\\n\&quot;)
+    </pre>
+    </div>
     <div class="Pp"></div>
     <b class="Ic" title="Ic">SHIFT</b> is a special command only available in
       macros. Very useful in REPT-blocks. It will &quot;shift&quot; the
@@ -710,8 +790,11 @@ The following symbols are defined by the assembler:
 <b class="Ic" title="Ic">DB</b> defines a list of bytes that will be stored in
   the final image. Ideal for tables and text (which is not zero-terminated).
 <div class="Pp"></div>
-<div class="D1"><code class="Li">DB 1,2,3,4,&quot;This is a
-  string&quot;</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+DB 1,2,3,4,&quot;This is a string&quot;
+</pre>
+</div>
 <div class="Pp"></div>
 Alternatively, you can use <b class="Ic" title="Ic">DW</b> to store a list of
   words (16-bits) or <b class="Ic" title="Ic">DL</b> to store a list of
@@ -738,8 +821,11 @@ You can also use <b class="Ic" title="Ic">DB</b>,
   <b class="Ic" title="Ic">DW</b> and <b class="Ic" title="Ic">DL</b> without
   any arguments instead.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">DS str_SIZEOF ;allocate str_SIZEOF
-  bytes</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+DS str_SIZEOF ;allocate str_SIZEOF bytes
+</pre>
+</div>
 <h2 class="Ss" title="Ss" id="Including_binary_files"><a class="selflink" href="#Including_binary_files">Including
   binary files</a></h2>
 You probably have some graphics you'd like to include. Use
@@ -747,17 +833,23 @@ You probably have some graphics you'd like to include. Use
   the file isn't found in the current directory, the include-path list passed to
   the linker on the command line will be searched.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">INCBIN &quot;titlepic.bin&quot;</code></div>
-<div class="D1"><code class="Li">INCBIN &quot;sprites/hero.bin&quot;&#x00A0;;
-  UNIX</code></div>
-<div class="D1"><code class="Li">INCBIN &quot;sprites\\hero.bin&quot;&#x00A0;;
-  Windows</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+INCBIN &quot;titlepic.bin&quot; 
+INCBIN &quot;sprites/hero.bin&quot;&#x00A0;; UNIX 
+INCBIN &quot;sprites\\hero.bin&quot;&#x00A0;; Windows
+</pre>
+</div>
 <div class="Pp"></div>
 You can also include only part of a file with
   <b class="Ic" title="Ic">INCBIN</b>. The example below includes 256 bytes from
   data.bin starting from byte 78.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">INCBIN &quot;data.bin&quot;,78,256</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+INCBIN &quot;data.bin&quot;,78,256
+</pre>
+</div>
 <h2 class="Ss" title="Ss" id="Unions"><a class="selflink" href="#Unions">Unions</a></h2>
 Unions allow multiple memory allocations to share the same space in memory, like
   unions in C. This allows you to easily reuse memory for different purposes,
@@ -872,7 +964,11 @@ Use <b class="Ic" title="Ic">INCLUDE</b> to process another assembler-file and
   <b class="Ic" title="Ic">INCLUDE</b> calls infinitely (or until you run out of
   memory, whichever comes first).
 <div class="Pp"></div>
-<div class="D1"><code class="Li">INCLUDE &quot;irq.inc&quot;</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    INCLUDE &quot;irq.inc&quot;
+</pre>
+</div>
 <h2 class="Ss" title="Ss" id="Conditional_assembling"><a class="selflink" href="#Conditional_assembling">Conditional
   assembling</a></h2>
 The four commands <b class="Ic" title="Ic">IF</b>,
@@ -929,7 +1025,11 @@ The last one, Gameboy graphics, is quite interesting and useful. The values are
   actually pixel values and it converts the &#x201C;chunky&#x201D; data to
   &#x201C;planar&#x201D; data as used in the Gameboy.
 <div class="Pp"></div>
-<div class="D1"><code class="Li">DW `01012323</code></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+    DW `01012323
+</pre>
+</div>
 <div class="Pp"></div>
 Admittedly, an expression with just a single number is quite boring. To spice
   things up a bit there are a few operators you can use to perform calculations
@@ -1465,7 +1565,7 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">February 24, 2018</td>
+    <td class="foot-date">February 26, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>
