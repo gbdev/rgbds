@@ -14,6 +14,7 @@
 .Sh SYNOPSIS
 .Nm rgbfix
 .Op Fl CcjsVv
+.Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
 .Op Fl k Ar licensee_str
 .Op Fl l Ar licensee_id
@@ -46,6 +47,30 @@ If both this and the
 flag are set,
 .Fl C
 takes precedence.
+.It Fl f Ar fix_spec
+Fix certain header values that the Game Boy checks for correctness.
+Alternatively, intentionally trash these values by writing their binary inverse
+instead.
+.Ar fix_spec
+is a string containing any combination of the following characters:
+.Pp
+.Bl -tag -compact -width xx
+.It Cm l
+Fix the Nintendo logo
+.Pq Ad 0x104 Ns \(en Ns Ad 0x133 .
+.It Cm L
+Trash the Nintendo logo.
+.It Cm h
+Fix the header checksum
+.Pq Ad 0x14D .
+.It Cm H
+Trash the header checksum.
+.It Cm g
+Fix the global checksum
+.Pq Ad 0x14E Ns \(en Ns Ad 0x14F .
+.It Cm G
+Trash the global checksum.
+.El
 .It Fl i Ar game_id
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142
@@ -104,12 +129,8 @@ overlapping portion of the title.
 .It Fl V
 Print the version of the program and exit.
 .It Fl v
-Validate the header and fix checksums: the Nintendo character area
-.Pq Ad 0x104 Ns \(en Ns Ad 0x133 ,
-the header checksum
-.Pq Ad 0x14D ,
-and the global checksum
-.Pq Ad 0x14E Ns \(en Ns Ad 0x14F .
+Equivalent to
+.Fl f Cm lhg .
 .El
 .Sh EXAMPLES
 Most values in the ROM header are only cosmetic.

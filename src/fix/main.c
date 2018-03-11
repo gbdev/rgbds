@@ -20,9 +20,9 @@
 static void print_usage(void)
 {
 	printf(
-"usage: rgbfix [-CcjsVv] [-i game_id] [-k licensee_str] [-l licensee_id]\n"
-"              [-m mbc_type] [-n rom_version] [-p pad_value] [-r ram_size]\n"
-"              [-t title_str] file\n");
+"usage: rgbfix [-CcjsVv] [-f fix_spec] [-i game_id] [-k licensee_str]\n"
+"              [-l licensee_id] [-m mbc_type] [-n rom_version] [-p pad_value]\n"
+"              [-r ram_size] [-t title_str] file\n");
 	exit(1);
 }
 
@@ -37,7 +37,12 @@ int main(int argc, char *argv[])
 	 */
 
 	/* all flags default to false unless options specify otherwise */
-	bool validate = false;
+	bool fixlogo = false;
+	bool fixheadsum = false;
+	bool fixglobalsum = false;
+	bool trashlogo = false;
+	bool trashheadsum = false;
+	bool trashglobalsum = false;
 	bool settitle = false;
 	bool setid = false;
 	bool colorcompatible = false;
@@ -61,13 +66,21 @@ int main(int argc, char *argv[])
 	int version = 0;   /* mask ROM version number */
 	int padvalue = 0;  /* to pad the rom with if it changes size */
 
-	while ((ch = getopt(argc, argv, "Cci:jk:l:m:n:p:sr:t:Vv")) != -1) {
+	while ((ch = getopt(argc, argv, "Ccf:i:jk:l:m:n:p:sr:t:Vv")) != -1) {
 		switch (ch) {
 		case 'C':
 			coloronly = true;
 			/* FALLTHROUGH */
 		case 'c':
 			colorcompatible = true;
+			break;
+		case 'f':
+			fixlogo = strchr(optarg, 'l');
+			fixheadsum = strchr(optarg, 'h');
+			fixglobalsum = strchr(optarg, 'g');
+			trashlogo = strchr(optarg, 'L');
+			trashheadsum = strchr(optarg, 'H');
+			trashglobalsum = strchr(optarg, 'G');
 			break;
 		case 'i':
 			setid = true;
@@ -168,7 +181,9 @@ int main(int argc, char *argv[])
 			printf("rgbfix %s\n", get_package_version_string());
 			exit(0);
 		case 'v':
-			validate = true;
+			fixlogo = true;
+			fixheadsum = true;
+			fixglobalsum = true;
 			break;
 		default:
 			print_usage();
@@ -195,7 +210,7 @@ int main(int argc, char *argv[])
 	 * Write changes to ROM
 	 */
 
-	if (validate) {
+	if (fixlogo || trashlogo) {
 		/*
 		 * Offset 0x104–0x133: Nintendo Logo
 		 * This is a bitmap image that displays when the Game Boy is
@@ -205,7 +220,7 @@ int main(int argc, char *argv[])
 		/*
 		 * See also: global checksums at 0x14D–0x14F, They must
 		 * also be correct for the game to boot, so we fix them
-		 * as well when the -v flag is set.
+		 * as well when requested with the -f flag.
 		 */
 
 		uint8_t ninlogo[48] = {
@@ -216,6 +231,10 @@ int main(int argc, char *argv[])
 			0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC,
 			0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
 		};
+
+		if (trashlogo)
+			for (int i = 0; i < sizeof(ninlogo); i++)
+				ninlogo[i] = ~ninlogo[i];
 
 		fseek(rom, 0x104, SEEK_SET);
 		fwrite(ninlogo, 1, 48, rom);
@@ -415,7 +434,7 @@ int main(int argc, char *argv[])
 		fputc(version, rom);
 	}
 
-	if (validate) {
+	if (fixheadsum || trashheadsum) {
 		/*
 		 * Offset 0x14D: Header Checksum
 		 */
@@ -426,9 +445,14 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < (0x14D - 0x134); ++i)
 			headcksum = headcksum - fgetc(rom) - 1;
 
+		if (trashheadsum)
+			headcksum = ~headcksum;
+
 		fseek(rom, 0x14D, SEEK_SET);
 		fputc(headcksum, rom);
+	}
 
+	if (fixglobalsum || trashglobalsum) {
 		/*
 		 * Offset 0x14E–0x14F: Global Checksum
 		 */
@@ -444,6 +468,9 @@ int main(int argc, char *argv[])
 		fseek(rom, 0x150, SEEK_SET);
 		while ((byte = fgetc(rom)) != EOF)
 			globalcksum += byte;
+
+		if (trashglobalsum)
+			globalcksum = ~globalcksum;
 
 		fseek(rom, 0x14E, SEEK_SET);
 		fputc(globalcksum >> 8, rom);
