@@ -1309,6 +1309,32 @@ Whenever the macro-language expects a string you can actually use a string
       returns the new string.</td>
   </tr>
 </table>
+<h2 class="Ss" title="Ss" id="Character_maps"><a class="selflink" href="#Character_maps">Character
+  maps</a></h2>
+When writing text that is meant to be displayed in the Game Boy, the ASCII
+  characters used in the source code may not be the same ones used in the
+  tileset used in the ROM. For example, the tiles used for uppercase letters may
+  be placed starting at tile index 128, which makes it difficult to add text
+  strings to the ROM.
+<div class="Pp"></div>
+Character maps allow the code to map strings up to 16 characters long to an
+  abitrary 8-bit value:
+<div class="Pp"></div>
+<div class="Bd" style="margin-left: 5.00ex;">
+<pre class="Li">
+CHARMAP &quot;&lt;LF&gt;&quot;, 10 
+CHARMAP &quot;&amp;iacute&quot;, 20 
+CHARMAP &quot;A&quot;, 128
+</pre>
+</div>
+<div class="Pp"></div>
+<b class="Sy" title="Sy">Note:</b> Character maps affect all strings in the file
+  from the point in which they are defined. This means that any string that the
+  code may want to print as debug information will also be affected by it.
+<div class="Pp"></div>
+<b class="Sy" title="Sy">Note:</b> The output value of a mapping can be 0. If
+  this happens, the assembler will treat this as the end of the string and the
+  rest of it will be trimmed.
 <h2 class="Ss" title="Ss" id="Other_functions"><a class="selflink" href="#Other_functions">Other
   functions</a></h2>
 There are a few other functions that do various useful things:
@@ -1428,6 +1454,8 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN2">ATAN2</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#BANK">BANK</a></dt>
+  <dd class="It-inset"></dd>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#CHARMAP">CHARMAP</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#COS">COS</a></dt>
   <dd class="It-inset"></dd>
@@ -1563,7 +1591,7 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">February 26, 2018</td>
+    <td class="foot-date">March 13, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>

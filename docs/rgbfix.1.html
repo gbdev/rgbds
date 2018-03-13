@@ -28,6 +28,8 @@
   <tr>
     <td><b class="Nm" title="Nm">rgbfix</b></td>
     <td>[<span class="Op"><b class="Fl" title="Fl">-CcjsVv</b></span>]
+      [<span class="Op"><b class="Fl" title="Fl">-f</b>
+      <var class="Ar" title="Ar">fix_spec</var></span>]
       [<span class="Op"><b class="Fl" title="Fl">-i</b>
       <var class="Ar" title="Ar">game_id</var></span>]
       [<span class="Op"><b class="Fl" title="Fl">-k</b>
@@ -65,6 +67,32 @@ The <b class="Nm" title="Nm">rgbfix</b> program changes headers of Game Boy ROM
       <i class="Ad">0x143</i> = 0x80. If both this and the
       <b class="Fl" title="Fl">-C</b> flag are set,
       <b class="Fl" title="Fl">-C</b> takes precedence.</dd>
+  <dt class="It-tag">&#x00A0;</dt>
+  <dd class="It-tag">&#x00A0;</dd>
+  <dt class="It-tag"><a class="selflink" href="#f"><b class="Fl" title="Fl" id="f">-f</b></a>
+    <var class="Ar" title="Ar">fix_spec</var></dt>
+  <dd class="It-tag">Fix certain header values that the Game Boy checks for
+      correctness. Alternatively, intentionally trash these values by writing
+      their binary inverse instead. <var class="Ar" title="Ar">fix_spec</var> is
+      a string containing any combination of the following characters:
+    <div class="Pp"></div>
+    <dl class="Bl-tag Bl-compact" style="margin-left: 5.40ex;">
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#l"><b class="Cm" title="Cm" id="l">l</b></a></dt>
+      <dd class="It-tag">Fix the Nintendo logo
+          (<i class="Ad">0x104</i>&#x2013;<i class="Ad">0x133</i>).</dd>
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#L"><b class="Cm" title="Cm" id="L">L</b></a></dt>
+      <dd class="It-tag">Trash the Nintendo logo.</dd>
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#h"><b class="Cm" title="Cm" id="h">h</b></a></dt>
+      <dd class="It-tag">Fix the header checksum (<i class="Ad">0x14D</i>).</dd>
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#H"><b class="Cm" title="Cm" id="H">H</b></a></dt>
+      <dd class="It-tag">Trash the header checksum.</dd>
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#g"><b class="Cm" title="Cm" id="g">g</b></a></dt>
+      <dd class="It-tag">Fix the global checksum
+          (<i class="Ad">0x14E</i>&#x2013;<i class="Ad">0x14F</i>).</dd>
+      <dt class="It-tag" style="margin-left: -5.40ex;"><a class="selflink" href="#G"><b class="Cm" title="Cm" id="G">G</b></a></dt>
+      <dd class="It-tag">Trash the global checksum.</dd>
+    </dl>
+  </dd>
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#i"><b class="Fl" title="Fl" id="i">-i</b></a>
@@ -141,10 +169,8 @@ The <b class="Nm" title="Nm">rgbfix</b> program changes headers of Game Boy ROM
   <dt class="It-tag">&#x00A0;</dt>
   <dd class="It-tag">&#x00A0;</dd>
   <dt class="It-tag"><a class="selflink" href="#v"><b class="Fl" title="Fl" id="v">-v</b></a></dt>
-  <dd class="It-tag">Validate the header and fix checksums: the Nintendo
-      character area (<i class="Ad">0x104</i>&#x2013;<i class="Ad">0x133</i>),
-      the header checksum (<i class="Ad">0x14D</i>), and the global checksum
-      (<i class="Ad">0x14E</i>&#x2013;<i class="Ad">0x14F</i>).</dd>
+  <dd class="It-tag">Equivalent to <b class="Fl" title="Fl">-f</b>
+      <b class="Cm" title="Cm">lhg</b>.</dd>
 </dl>
 <h1 class="Sh" title="Sh" id="EXAMPLES"><a class="selflink" href="#EXAMPLES">EXAMPLES</a></h1>
 Most values in the ROM header are only cosmetic. The bare minimum requirements
@@ -179,7 +205,7 @@ The following will duplicate the header (sans global checksum) of the game
   <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
 <table class="foot">
   <tr>
-    <td class="foot-date">January 26, 2018</td>
+    <td class="foot-date">March 11, 2018</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>
