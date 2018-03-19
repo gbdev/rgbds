@@ -101,10 +101,15 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	tile_size = sizeof(uint8_t) * depth * 8;
 	gb_size = gb->size - (gb->trim * tile_size);
 	max_tiles = gb_size / tile_size;
-	tiles = malloc(sizeof(uint8_t *) * max_tiles);
+
+	/* If the input image doesn't fill the last tile, increase the count. */
+	if (gb_size > max_tiles * tile_size)
+		max_tiles++;
+
+	tiles = calloc(max_tiles, sizeof(uint8_t *));
 	num_tiles = 0;
 
-	tilemap->data = malloc(sizeof(uint8_t) * max_tiles);
+	tilemap->data = calloc(max_tiles, sizeof(uint8_t));
 	tilemap->size = 0;
 
 	gb_i = 0;
