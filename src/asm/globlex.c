@@ -579,7 +579,7 @@ void setup_lexer(void)
 	lex_FloatAddRange(id, '@', '@');
 	lex_FloatAddRange(id, '#', '#');
 
-	//@ID
+	// "@"
 
 	id = lex_FloatAlloc(&tIDToken);
 	lex_FloatAddFirstRange(id, '@', '@');

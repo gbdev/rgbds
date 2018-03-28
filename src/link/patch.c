@@ -314,7 +314,7 @@ void Patch(void)
 				/* t contains the destination of the jump */
 				t = (int16_t)((t & 0xFFFF) - (nPatchOrg + 1));
 
-				if (t >= -128 && t <= 255) {
+				if (t >= -128 && t <= 127) {
 					t &= 0xFF;
 					pSect->pData[pPatch->nOffset] =
 						(uint8_t)t;

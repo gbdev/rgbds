@@ -882,24 +882,16 @@ void out_PCRelByte(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(1);
-	if (rpn_isReloc(expr)) {
-		if (nPass == 2) {
-			pCurrentSection->tData[nPC] = 0;
-			createpatch(PATCH_BYTE_JR, expr);
-		}
-		pCurrentSection->nPC += 1;
-		nPC += 1;
-		pPCSymbol->nValue += 1;
-	} else {
-		int32_t b = expr->nVal;
 
-		b = (int16_t)((b & 0xFFFF) - (nPC + 1));
-
-		if (nPass == 2 && ((b < -128) || (b > 127)))
-			yyerror("PC-relative value must be 8-bit");
-
-		out_AbsByte(b & 0xFF);
+	/* Always let the linker calculate the offset. */
+	if (nPass == 2) {
+		pCurrentSection->tData[nPC] = 0;
+		createpatch(PATCH_BYTE_JR, expr);
 	}
+	pCurrentSection->nPC += 1;
+	nPC += 1;
+	pPCSymbol->nValue += 1;
+
 	rpn_Reset(expr);
 }
 
