@@ -28,6 +28,7 @@
 #include "common.h"
 #include "linkdefs.h"
 
+uint32_t nListCountEmpty;
 char *tzNewMacro;
 uint32_t ulNewMacroSize;
 
@@ -579,10 +580,12 @@ asmfile		: lines;
 
 /* Note: The lexer adds '\n' at the end of the input */
 lines		: /* empty */
-		| lines line '\n' {
-			nLineNo += 1;
-			nTotalLines += 1;
-		}
+		| lines {
+				nListCountEmpty = 0;
+			} line '\n' {
+				nLineNo += 1;
+				nTotalLines += 1;
+			}
 ;
 
 line		: label
@@ -802,16 +805,28 @@ ds		: T_POP_DS uconst
 		}
 ;
 
-db		: T_POP_DB constlist_8bit_entry comma constlist_8bit
-		| T_POP_DB constlist_8bit_entry_single
+db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
+			if ((nPass == 1) && (nListCountEmpty > 0)) {
+				warning("Empty entry in list of 8-bit elements (treated as 0).");
+			}
+		}
+		| T_POP_DB constlist_8bit_entry
 ;
 
-dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit
-		| T_POP_DW constlist_16bit_entry_single
+dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
+			if ((nPass == 1) && (nListCountEmpty > 0)) {
+				warning("Empty entry in list of 16-bit elements (treated as 0).");
+			}
+		}
+		| T_POP_DW constlist_16bit_entry
 ;
 
-dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit
-		| T_POP_DL constlist_32bit_entry_single
+dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
+			if ((nPass == 1) && (nListCountEmpty > 0)) {
+				warning("Empty entry in list of 32-bit elements (treated as 0).");
+			}
+		}
+		| T_POP_DL constlist_32bit_entry
 ;
 
 purge		: T_POP_PURGE {
@@ -1028,26 +1043,7 @@ constlist_8bit	: constlist_8bit_entry
 constlist_8bit_entry : /* empty */
 		{
 			out_Skip(1);
-			if (nPass == 1)
-				warning("Empty entry in list of 8-bit elements (treated as 0).");
-		}
-		| const_8bit
-		{
-			out_RelByte(&$1);
-		}
-		| string
-		{
-			char *s = $1;
-			int32_t length = charmap_Convert(&s);
-
-			out_AbsByteGroup(s, length);
-			free(s);
-		}
-;
-
-constlist_8bit_entry_single : /* empty */
-		{
-			out_Skip(1);
+			nListCountEmpty++;
 		}
 		| const_8bit
 		{
@@ -1070,18 +1066,7 @@ constlist_16bit : constlist_16bit_entry
 constlist_16bit_entry : /* empty */
 		{
 			out_Skip(2);
-			if (nPass == 1)
-				warning("Empty entry in list of 16-bit elements (treated as 0).");
-		}
-		| const_16bit
-		{
-			out_RelWord(&$1);
-		}
-;
-
-constlist_16bit_entry_single : /* empty */
-		{
-			out_Skip(2);
+			nListCountEmpty++;
 		}
 		| const_16bit
 		{
@@ -1096,18 +1081,7 @@ constlist_32bit : constlist_32bit_entry
 constlist_32bit_entry : /* empty */
 		{
 			out_Skip(4);
-			if (nPass == 1)
-				warning("Empty entry in list of 32-bit elements (treated as 0).");
-		}
-		| relocconst
-		{
-			out_RelLong(&$1);
-		}
-;
-
-constlist_32bit_entry_single : /* empty */
-		{
-			out_Skip(4);
+			nListCountEmpty++;
 		}
 		| relocconst
 		{
