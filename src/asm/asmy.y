@@ -31,6 +31,7 @@
 uint32_t nListCountEmpty;
 char *tzNewMacro;
 uint32_t ulNewMacroSize;
+int32_t nPCOffset;
 
 static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 			   int32_t bank)
@@ -582,6 +583,7 @@ asmfile		: lines;
 lines		: /* empty */
 		| lines {
 				nListCountEmpty = 0;
+				nPCOffset = 1;
 			} line '\n' {
 				nLineNo += 1;
 				nTotalLines += 1;
@@ -658,9 +660,9 @@ simple_pseudoop : include
 		| import
 		| export
 		| global
-		| db
-		| dw
-		| dl
+		| { nPCOffset = 0; } db
+		| { nPCOffset = 0; } dw
+		| { nPCOffset = 0; } dl
 		| ds
 		| section
 		| rsreset
@@ -1108,8 +1110,39 @@ const_16bit	: relocconst
 
 relocconst	: T_ID
 		{
-			rpn_Symbol(&$$, $1);
-			$$.nVal = sym_GetValue($1);
+			/*
+			 * The value of @ needs to be evaluated by the linker,
+			 * it can only be calculated by the assembler in very
+			 * few cases (when the base address of a section is
+			 * known).
+			 *
+			 * '@' is a bit special in that it means different
+			 * things depending on when it is used:
+			 *
+			 * - JR/LD/ADD/etc: It refers to the first byte of the
+			 *   instruction (1 byte offset relative to the value
+			 *   stored in the ROM).
+			 * - DB/DW/DL: It refers to the address of the value
+			 *   that is being saved (0 byte offset relative to the
+			 *   value stored in the ROM.
+			 *
+			 * This offset must be added whenever '@' is added to a
+			 * RPN expression so that the linker can calculate the
+			 * correct result of any expression that uses '@'.
+			 */
+			if ((strcmp($1, "@") == 0) && (nPCOffset != 0)) {
+				struct Expression sTemp, sOffset;
+
+				rpn_Symbol(&sTemp, $1);
+				sTemp.nVal = sym_GetValue($1);
+
+				rpn_Number(&sOffset, nPCOffset);
+
+				rpn_SUB(&$$, &sTemp, &sOffset);
+			} else {
+				rpn_Symbol(&$$, $1);
+				$$.nVal = sym_GetValue($1);
+			}
 		}
 		| T_NUMBER
 		{
