@@ -120,6 +120,10 @@ void MapfileWriteSection(const struct sSection *pSect)
 	for (i = 0; i < pSect->nNumberOfSymbols; i += 1) {
 		const struct sSymbol *pSym = pSect->tSymbols[i];
 
+		/* Don't print '@' */
+		if (strcmp(pSym->pzName, "@") == 0)
+			continue;
+
 		if ((pSym->pSection == pSect) && (pSym->Type != SYM_IMPORT)) {
 			if (mf) {
 				fprintf(mf, "           $%04X = %s\n",
