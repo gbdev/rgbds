@@ -317,9 +317,9 @@ static void rgba_png_palette(struct PNGImage *img,
 			     png_color **palette_ptr_ptr, int *num_colors)
 {
 	if (png_get_valid(img->png, img->info, PNG_INFO_PLTE))
-		return rgba_PLTE_palette(img, palette_ptr_ptr, num_colors);
+		rgba_PLTE_palette(img, palette_ptr_ptr, num_colors);
 	else
-		return rgba_build_palette(img, palette_ptr_ptr, num_colors);
+		rgba_build_palette(img, palette_ptr_ptr, num_colors);
 }
 
 static void rgba_PLTE_palette(struct PNGImage *img,

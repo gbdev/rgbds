@@ -640,7 +640,6 @@ scanagain:
 
 	/* Check for line continuation character */
 	if (*pLexBuffer == '\\') {
-
 		/*
 		 * Look for line continuation character after a series of
 		 * spaces. This is also useful for files that use Windows line
