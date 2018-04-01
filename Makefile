@@ -26,7 +26,9 @@ PNGLDLIBS	:= `${PKG_CONFIG} --static --libs-only-l libpng`
 
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Werror -Wall -Wextra -Wpedantic -Wno-sign-compare
+WARNFLAGS	:= -Werror -Wall -Wextra -Wpedantic -Wno-sign-compare -Wchkp \
+		   -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
+		   -Wformat-y2k
 
 # Overridable CFLAGS
 CFLAGS		:= -g
