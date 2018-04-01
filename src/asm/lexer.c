@@ -850,7 +850,7 @@ uint32_t yylex(void)
 		return yylex_NORMAL();
 	case LEX_STATE_MACROARGS:
 		return yylex_MACROARGS();
+	default:
+		fatalerror("%s: Internal error.", __func__);
 	}
-
-	fatalerror("Internal error in %s", __func__);
 }

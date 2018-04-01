@@ -617,6 +617,9 @@ void AssignSections(void)
 				     pSection->nOrg, pSection->nBank);
 			}
 			break;
+		default:
+			errx(1, "%s: Internal error: Type %d", __func__,
+			     pSection->Type);
 		}
 	}
 

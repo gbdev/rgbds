@@ -93,6 +93,9 @@ static int32_t ascii2bin(char *s)
 		s += 1;
 		convertfunc = binary2bin;
 		break;
+	default:
+		/* Handle below */
+		break;
 	}
 
 	if (radix == 4) {

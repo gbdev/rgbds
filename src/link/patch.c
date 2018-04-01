@@ -325,6 +325,8 @@ void Patch(void)
 					     pPatch->nLineNo);
 				}
 				break;
+			default:
+				errx(1, "%s: Internal error.", __func__);
 			}
 
 			pPatch = pPatch->pNext;
