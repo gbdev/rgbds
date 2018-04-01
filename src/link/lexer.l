@@ -23,7 +23,7 @@
 
 #include "types.h"
 
-extern int yyparse();
+extern int yyparse(void);
 
 /* File include stack. */
 

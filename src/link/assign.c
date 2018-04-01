@@ -74,6 +74,10 @@ static void do_max_bank(enum eSectionType Type, int32_t nBank)
 		if (nBank > MaxVBankUsed)
 			MaxVBankUsed = nBank;
 		break;
+	case SECT_ROM0:
+	case SECT_WRAM0:
+	case SECT_OAM:
+	case SECT_HRAM:
 	default:
 		break;
 	}
@@ -494,7 +498,6 @@ void SetLinkerscriptName(char *tzLinkerscriptFile)
 
 void AssignSections(void)
 {
-	int32_t i;
 	struct sSection *pSection;
 
 	MaxBankUsed = 0;
@@ -503,7 +506,7 @@ void AssignSections(void)
 	 * Initialize the memory areas
 	 */
 
-	for (i = 0; i < BANK_INDEX_MAX; i += 1) {
+	for (int32_t i = 0; i < BANK_INDEX_MAX; i += 1) {
 		BankFree[i] = malloc(sizeof(*BankFree[i]));
 
 		if (!BankFree[i]) {
@@ -663,6 +666,10 @@ void AssignSections(void)
 			do_max_bank(pSection->Type, pSection->nBank);
 			break;
 
+		case SECT_ROM0:
+		case SECT_WRAM0:
+		case SECT_OAM:
+		case SECT_HRAM:
 		default: /* Handle other sections later */
 			break;
 		}

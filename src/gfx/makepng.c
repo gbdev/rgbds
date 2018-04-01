@@ -469,8 +469,10 @@ struct ColorWithLuminance {
 
 static int compare_luminance(const void *a, const void *b)
 {
-	struct ColorWithLuminance *x = (struct ColorWithLuminance *)a;
-	struct ColorWithLuminance *y = (struct ColorWithLuminance *)b;
+	const struct ColorWithLuminance *x, *y;
+
+	x = (const struct ColorWithLuminance *)a;
+	y = (const struct ColorWithLuminance *)b;
 
 	return y->luminance - x->luminance;
 }

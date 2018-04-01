@@ -14,7 +14,7 @@
 
 #include "link/script.h"
 
-int yylex();
+int yylex(void);
 void yyerror(char *);
 
 extern int yylineno;
@@ -107,8 +107,8 @@ statement:
 
 %%
 
-extern int yylex();
-extern int yyparse();
+extern int yylex(void);
+extern int yyparse(void);
 
 int yywrap(void)
 {

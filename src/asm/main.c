@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <float.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -483,7 +484,7 @@ int main(int argc, char *argv[])
 	if (CurrentOptions.verbose) {
 		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
 		       (int)timespent, ((int)(timespent * 100.0)) % 100);
-		if (timespent == 0)
+		if (timespent < FLT_MIN_EXP)
 			printf("(INFINITY lines/minute)\n");
 		else
 			printf("(%d lines/minute)\n",

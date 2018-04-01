@@ -414,7 +414,7 @@ void yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 /*
  * Gets the longest keyword/operator from the current position in the buffer.
  */
-struct sLexString *yylex_GetLongestFixed()
+struct sLexString *yylex_GetLongestFixed(void)
 {
 	struct sLexString *pLongestFixed = NULL;
 	char *s = pLexBuffer;

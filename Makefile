@@ -28,7 +28,12 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
 WARNFLAGS	:= -Werror -Wall -Wextra -Wpedantic -Wno-sign-compare -Wchkp \
 		   -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
-		   -Wformat-y2k
+		   -Wformat-y2k -Wswitch-enum -Wunused -Wuninitialized \
+		   -Wunknown-pragmas -Wstrict-overflow=5 -Wstringop-overflow=4 \
+		   -Walloc-zero -Wduplicated-cond -Wfloat-equal -Wshadow \
+		   -Wcast-qual -Wcast-align -Wlogical-op -Wnested-externs \
+		   -Wno-aggressive-loop-optimizations -Winline \
+		   -Wstrict-prototypes -Wold-style-definition
 
 # Overridable CFLAGS
 CFLAGS		:= -g
