@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 
-#include "extern/stdnoreturn.h"
+#include "helpers.h"
 
 noreturn void script_fatalerror(const char *fmt, ...);
 

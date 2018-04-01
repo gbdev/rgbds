@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "extern/stdnoreturn.h"
+#include "helpers.h"
 
 struct sOptions {
 	char binary[2];

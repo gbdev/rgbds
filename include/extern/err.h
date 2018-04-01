@@ -17,7 +17,7 @@
 
 #include <stdarg.h>
 
-#include "extern/stdnoreturn.h"
+#include "helpers.h"
 
 #define warn rgbds_warn
 #define vwarn rgbds_vwarn

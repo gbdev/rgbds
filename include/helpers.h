@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef EXTERN_STDNORETURN_H
-#define EXTERN_STDNORETURN_H
+#ifndef HELPERS_H
+#define HELPERS_H
 
 #if defined(__STDC_VERSION__)
 	#if __STDC_VERSION__ >= 201112L
@@ -35,4 +35,4 @@
 	#define noreturn
 #endif
 
-#endif /* EXTERN_STDNORETURN_H */
+#endif /* HELPERS_H */
