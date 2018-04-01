@@ -32,7 +32,7 @@ WARNFLAGS	:= -Werror -Wall -Wextra -Wpedantic -Wno-sign-compare -Wchkp \
 		   -Wunknown-pragmas -Wstrict-overflow=5 -Wstringop-overflow=4 \
 		   -Walloc-zero -Wduplicated-cond -Wfloat-equal -Wshadow \
 		   -Wcast-qual -Wcast-align -Wlogical-op -Wnested-externs \
-		   -Wno-aggressive-loop-optimizations -Winline \
+		   -Wno-aggressive-loop-optimizations -Winline -Wundef \
 		   -Wstrict-prototypes -Wold-style-definition
 
 # Overridable CFLAGS
