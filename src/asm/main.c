@@ -225,7 +225,7 @@ void opt_AddDefine(char *s)
 
 static void opt_ParseDefines(void)
 {
-	int32_t i;
+	uint32_t i;
 
 	for (i = 0; i < cldefines_index; i += 2)
 		sym_AddString(cldefines[i], cldefines[i + 1]);

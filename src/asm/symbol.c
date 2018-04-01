@@ -62,7 +62,7 @@ void helper_RemoveLeadingZeros(char *string)
 	memmove(string, new_beginning, strlen(new_beginning) + 1);
 }
 
-int32_t Callback_NARG(struct sSymbol *sym)
+int32_t Callback_NARG(__attribute__ ((unused)) struct sSymbol *sym)
 {
 	uint32_t i = 0;
 
@@ -673,7 +673,7 @@ void sym_AddReloc(char *tzSym)
 
 			struct sSymbol *parent = pScope->pScope ?
 						 pScope->pScope : pScope;
-			int32_t parentLen = localPtr - tzSym;
+			uint32_t parentLen = localPtr - tzSym;
 
 			if (strchr(localPtr + 1, '.') != NULL) {
 				fatalerror("'%s' is a nonsensical reference to a nested local symbol",

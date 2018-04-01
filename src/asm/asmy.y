@@ -341,8 +341,9 @@ static void if_skip_to_else(void)
 				break;
 
 			case '\"':
-				src++;
+				src += 2;
 				inString = false;
+				break;
 
 			default:
 				src++;

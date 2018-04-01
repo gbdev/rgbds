@@ -216,7 +216,7 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 	return 0;
 }
 
-uint32_t PutUniqueArg(char *src, uint32_t size)
+uint32_t PutUniqueArg(__attribute ((unused)) char *src, uint32_t size)
 {
 	char *s;
 

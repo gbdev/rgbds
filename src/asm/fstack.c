@@ -257,8 +257,10 @@ FILE *fstk_FindFile(char *fname)
 		 * space had been available. Thus, a return value of `size` or
 		 * more means that the output was truncated.
 		 */
-		if (snprintf(path, sizeof(path), "%s%s", IncludePaths[i], fname)
-		    >= sizeof(path))
+		int fullpathlen = snprintf(path, sizeof(path), "%s%s",
+					   IncludePaths[i], fname);
+
+		if (fullpathlen >= (int)sizeof(path))
 			continue;
 
 		f = fopen(path, "rb");

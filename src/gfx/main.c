@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'F':
 			opts.hardfix = true;
+			/* fallthrough */
 		case 'f':
 			opts.fix = true;
 			break;
