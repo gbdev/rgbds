@@ -70,24 +70,29 @@ copyright and the reference to the MIT License.
 3. Create a new branch to work on. You could still work on ``develop``, but it's
    easier that way.
 
-4. Sign off your commits: ``git commit -s``
+4. Compile your changes with ``make develop`` instead of just ``make``. This
+   target checks for additional warnings. Your patches shouldn't introduce any
+   new warning (but it may be possible to remove some warning checks if it makes
+   the code much easier).
 
-5. Follow the Linux kernel coding style, which can be found in the file
+5. Sign off your commits: ``git commit -s``
+
+6. Follow the Linux kernel coding style, which can be found in the file
    ``Documentation/process/coding-style.rst`` in the Linux kernel repository.
    Note that the coding style isn't writen on stone, if there is a good reason
    to deviate from it, it should be fine.
 
-6. Download the files ``checkpatch.pl``, ``const_structs.checkpatch`` and
+7. Download the files ``checkpatch.pl``, ``const_structs.checkpatch`` and
    ``spelling.txt`` from the folder ``scripts`` in the Linux kernel repository.
 
-7. To use ``checkpatch.pl`` you can use ``make checkpatch``, which will check
+8. To use ``checkpatch.pl`` you can use ``make checkpatch``, which will check
    the coding style of all patches between the current one and the upstream
    code. By default, the Makefile expects the script (and associate files) to be
    located in ``../linux/scripts/``, but you can place them anywhere you like as
    long as you specify it when executing the command:
    ``CHECKPATCH=../path/to/folder make checkpatch``.
 
-8. Create a pull request against the branch ``develop``.
+9. Create a pull request against the branch ``develop``.
 
-9. Be prepared to get some comments about your code and to modify it. Tip: Use
-   ``git rebase -i origin/develop`` to modify chains of commits.
+10. Be prepared to get some comments about your code and to modify it. Tip: Use
+    ``git rebase -i origin/develop`` to modify chains of commits.
