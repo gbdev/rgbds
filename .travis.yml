@@ -10,5 +10,6 @@ compiler:
   - clang
   - gcc
 script:
+  - ./.travis-checkpatch.sh
   - cd test
   - ./run-tests.sh
