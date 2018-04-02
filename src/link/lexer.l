@@ -179,7 +179,7 @@ void script_PrintFileStack(void)
 	fprintf(stderr, "%s(%d)", linkerscript_path, include_line[i]);
 }
 
-noreturn void script_fatalerror(const char *fmt, ...)
+noreturn_ void script_fatalerror(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

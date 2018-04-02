@@ -11,10 +11,12 @@
 
 #ifdef __GNUC__
 	/* GCC or compatible */
-	#define noreturn __attribute__ ((noreturn))
+	#define noreturn_	__attribute__ ((noreturn))
+	#define unused_		__attribute__ ((unused))
 #else
 	/* Unsupported, but no need to throw a fit */
-	#define noreturn
+	#define noreturn_
+	#define unused_
 #endif
 
 #endif /* HELPERS_H */

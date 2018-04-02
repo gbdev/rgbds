@@ -13,7 +13,7 @@
 
 #include "helpers.h"
 
-noreturn void script_fatalerror(const char *fmt, ...);
+noreturn_ void script_fatalerror(const char *fmt, ...);
 
 void script_Parse(const char *path);
 
