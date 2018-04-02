@@ -9,14 +9,7 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#if defined(__STDC_VERSION__)
-	#if __STDC_VERSION__ >= 201112L
-		/* C11 or newer */
-		#define noreturn _Noreturn
-	#endif
-#endif
-
-#if defined(__GNUC__) && !defined(noreturn)
+#if defined(__GNUC__)
 	#if __GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ >= 5))
 		/* GCC 2.5 or newer */
 		#define noreturn __attribute__ ((noreturn))
