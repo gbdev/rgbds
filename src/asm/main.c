@@ -240,7 +240,7 @@ void verror(const char *fmt, va_list args)
 {
 	fprintf(stderr, "ERROR: ");
 	fstk_Dump();
-	fprintf(stderr, ":\n\t");
+	fprintf(stderr, ":\n    ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 	nErrors += 1;
@@ -277,7 +277,7 @@ void warning(const char *fmt, ...)
 
 	fprintf(stderr, "warning: ");
 	fstk_Dump();
-	fprintf(stderr, ":\n\t");
+	fprintf(stderr, ":\n    ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 

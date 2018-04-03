@@ -185,7 +185,7 @@ noreturn_ void script_fatalerror(const char *fmt, ...)
 	va_start(args, fmt);
 	fprintf(stderr, "error: ");
 	script_PrintFileStack();
-	fprintf(stderr, ":\n\t");
+	fprintf(stderr, ":\n    ");
 	vfprintf(stderr, fmt, args);
 	fprintf(stderr, "\n");
 	va_end(args);
