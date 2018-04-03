@@ -15,6 +15,7 @@
 
 #include "extern/err.h"
 
+#include "safelibc.h"
 #include "version.h"
 
 static void print_usage(void)
@@ -236,8 +237,8 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < sizeof(ninlogo); i++)
 				ninlogo[i] = ~ninlogo[i];
 
-		fseek(rom, 0x104, SEEK_SET);
-		fwrite(ninlogo, 1, 48, rom);
+		zfseek(rom, 0x104, SEEK_SET);
+		zfwrite(ninlogo, 1, 48, rom);
 	}
 
 	if (settitle) {
@@ -258,11 +259,11 @@ int main(int argc, char *argv[])
 		 * characters may conflict with the title.
 		 */
 
-		fseek(rom, 0x134, SEEK_SET);
-		fwrite(title, 1, strlen(title) + 1, rom);
+		zfseek(rom, 0x134, SEEK_SET);
+		zfwrite(title, 1, strlen(title) + 1, rom);
 
-		while (ftell(rom) < 0x143)
-			fputc(0, rom);
+		while (zftell(rom) < 0x143)
+			zfputc(0, rom);
 	}
 
 	if (setid) {
@@ -272,8 +273,8 @@ int main(int argc, char *argv[])
 		 * characters).
 		 */
 
-		fseek(rom, 0x13F, SEEK_SET);
-		fwrite(id, 1, 4, rom);
+		zfseek(rom, 0x13F, SEEK_SET);
+		zfwrite(id, 1, 4, rom);
 	}
 
 	if (colorcompatible) {
@@ -293,8 +294,8 @@ int main(int argc, char *argv[])
 
 		uint8_t byte;
 
-		fseek(rom, 0x143, SEEK_SET);
-		byte = fgetc(rom);
+		zfseek(rom, 0x143, SEEK_SET);
+		byte = zfgetc(rom);
 
 		byte |= 1 << 7;
 		if (coloronly)
@@ -303,8 +304,8 @@ int main(int argc, char *argv[])
 		if (byte & 0x3F)
 			warnx("Color flag conflicts with game title");
 
-		fseek(rom, 0x143, SEEK_SET);
-		fputc(byte, rom);
+		zfseek(rom, 0x143, SEEK_SET);
+		zfputc(byte, rom);
 	}
 
 	if (setnewlicensee) {
@@ -320,8 +321,8 @@ int main(int argc, char *argv[])
 		 * as a Super Game Boy flag.
 		 */
 
-		fseek(rom, 0x144, SEEK_SET);
-		fwrite(newlicensee, 1, 2, rom);
+		zfseek(rom, 0x144, SEEK_SET);
+		zfwrite(newlicensee, 1, 2, rom);
 	}
 
 	if (super) {
@@ -340,8 +341,8 @@ int main(int argc, char *argv[])
 		if (!setlicensee)
 			warnx("You should probably set both '-s' and '-l 0x33'");
 
-		fseek(rom, 0x146, SEEK_SET);
-		fputc(3, rom);
+		zfseek(rom, 0x146, SEEK_SET);
+		zfputc(3, rom);
 	}
 
 	if (setcartridge) {
@@ -351,8 +352,8 @@ int main(int argc, char *argv[])
 		 * external RAM, timer, rumble, or battery.
 		 */
 
-		fseek(rom, 0x147, SEEK_SET);
-		fputc(cartridge, rom);
+		zfseek(rom, 0x147, SEEK_SET);
+		zfputc(cartridge, rom);
 	}
 
 	if (resize) {
@@ -366,8 +367,8 @@ int main(int argc, char *argv[])
 		int headbyte;
 		uint8_t *buf;
 
-		fseek(rom, 0, SEEK_END);
-		romsize = ftell(rom);
+		zfseek(rom, 0, SEEK_END);
+		romsize = zftell(rom);
 		newsize = 0x8000;
 
 		headbyte = 0;
@@ -382,11 +383,12 @@ int main(int argc, char *argv[])
 		buf = malloc(newsize - romsize);
 		if (buf == NULL)
 			errx(1, "Couldn't allocate memory for padded ROM.");
-		memset(buf, padvalue, newsize - romsize);
-		fwrite(buf, 1, newsize - romsize, rom);
 
-		fseek(rom, 0x148, SEEK_SET);
-		fputc(headbyte, rom);
+		memset(buf, padvalue, newsize - romsize);
+		zfwrite(buf, 1, newsize - romsize, rom);
+
+		zfseek(rom, 0x148, SEEK_SET);
+		zfputc(headbyte, rom);
 
 		free(buf);
 	}
@@ -396,8 +398,8 @@ int main(int argc, char *argv[])
 		 * Offset 0x149: RAM Size
 		 */
 
-		fseek(rom, 0x149, SEEK_SET);
-		fputc(ramsize, rom);
+		zfseek(rom, 0x149, SEEK_SET);
+		zfputc(ramsize, rom);
 	}
 
 	if (nonjapan) {
@@ -405,8 +407,8 @@ int main(int argc, char *argv[])
 		 * Offset 0x14A: Non-Japanese Region Flag
 		 */
 
-		fseek(rom, 0x14A, SEEK_SET);
-		fputc(1, rom);
+		zfseek(rom, 0x14A, SEEK_SET);
+		zfputc(1, rom);
 	}
 
 	if (setlicensee) {
@@ -422,8 +424,8 @@ int main(int argc, char *argv[])
 		 * See also: the New Licensee ID at 0x144–0x145.
 		 */
 
-		fseek(rom, 0x14B, SEEK_SET);
-		fputc(licensee, rom);
+		zfseek(rom, 0x14B, SEEK_SET);
+		zfputc(licensee, rom);
 	}
 
 	if (setversion) {
@@ -432,8 +434,8 @@ int main(int argc, char *argv[])
 		 * Which version of the ROM this is.
 		 */
 
-		fseek(rom, 0x14C, SEEK_SET);
-		fputc(version, rom);
+		zfseek(rom, 0x14C, SEEK_SET);
+		zfputc(version, rom);
 	}
 
 	if (fixheadsum || trashheadsum) {
@@ -443,15 +445,15 @@ int main(int argc, char *argv[])
 
 		uint8_t headcksum = 0;
 
-		fseek(rom, 0x134, SEEK_SET);
+		zfseek(rom, 0x134, SEEK_SET);
 		for (int i = 0; i < (0x14D - 0x134); ++i)
-			headcksum = headcksum - fgetc(rom) - 1;
+			headcksum = headcksum - zfgetc(rom) - 1;
 
 		if (trashheadsum)
 			headcksum = ~headcksum;
 
-		fseek(rom, 0x14D, SEEK_SET);
-		fputc(headcksum, rom);
+		zfseek(rom, 0x14D, SEEK_SET);
+		zfputc(headcksum, rom);
 	}
 
 	if (fixglobalsum || trashglobalsum) {
@@ -461,25 +463,25 @@ int main(int argc, char *argv[])
 
 		uint16_t globalcksum = 0;
 
-		rewind(rom);
+		zrewind(rom);
 		for (int i = 0; i < 0x14E; ++i)
-			globalcksum += fgetc(rom);
+			globalcksum += zfgetc(rom);
 
 		int byte;
 
-		fseek(rom, 0x150, SEEK_SET);
+		zfseek(rom, 0x150, SEEK_SET);
 		while ((byte = fgetc(rom)) != EOF)
 			globalcksum += byte;
 
 		if (trashglobalsum)
 			globalcksum = ~globalcksum;
 
-		fseek(rom, 0x14E, SEEK_SET);
-		fputc(globalcksum >> 8, rom);
-		fputc(globalcksum & 0xFF, rom);
+		zfseek(rom, 0x14E, SEEK_SET);
+		zfputc(globalcksum >> 8, rom);
+		zfputc(globalcksum & 0xFF, rom);
 	}
 
-	fclose(rom);
+	zfclose(rom);
 
 	return 0;
 }

@@ -84,6 +84,7 @@ src/link/lexer.o: src/link/parser.h
 rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 rgbgfx_obj := \
