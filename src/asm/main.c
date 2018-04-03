@@ -24,6 +24,7 @@
 
 #include "extern/err.h"
 
+#include "helpers.h"
 #include "version.h"
 
 extern int yyparse(void);
@@ -254,7 +255,7 @@ void yyerror(const char *fmt, ...)
 	va_end(args);
 }
 
-void fatalerror(const char *fmt, ...)
+noreturn_ void fatalerror(const char *fmt, ...)
 {
 	va_list args;
 
