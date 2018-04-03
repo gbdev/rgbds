@@ -92,6 +92,7 @@ rgbgfx_obj := \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 rgbasm: ${rgbasm_obj}

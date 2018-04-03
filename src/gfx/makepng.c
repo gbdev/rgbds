@@ -13,6 +13,8 @@
 
 #include "gfx/main.h"
 
+#include "safelibc.h"
+
 static void initialize_png(struct PNGImage *img, FILE *f);
 static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img);
 static struct RawIndexedImage *grayscale_png_to_raw(struct PNGImage *img);
@@ -60,7 +62,7 @@ struct RawIndexedImage *input_png_file(const struct Options *opts,
 	get_text(&img, png_options);
 
 	png_destroy_read_struct(&img.png, &img.info, NULL);
-	fclose(f);
+	zfclose(f);
 	free_png_data(&img);
 
 	return raw_image;
@@ -81,7 +83,7 @@ void output_png_file(const struct Options *opts,
 	 * opts.infile will be used directly.
 	 */
 	if (opts->debug) {
-		outfile = malloc(strlen(opts->infile) + 5);
+		outfile = zmalloc(strlen(opts->infile) + 5);
 		strcpy(outfile, opts->infile);
 		strcat(outfile, ".out");
 	} else {
@@ -110,14 +112,14 @@ void output_png_file(const struct Options *opts,
 		     8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 		     PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-	png_palette = malloc(sizeof(png_color *) * raw_image->num_colors);
+	png_palette = zmalloc(sizeof(png_color *) * raw_image->num_colors);
 	for (i = 0; i < raw_image->num_colors; i++) {
 		png_palette[i].red   = raw_image->palette[i].red;
 		png_palette[i].green = raw_image->palette[i].green;
 		png_palette[i].blue  = raw_image->palette[i].blue;
 	}
 	png_set_PLTE(img.png, img.info, png_palette, raw_image->num_colors);
-	free(png_palette);
+	zfree(png_palette);
 
 	if (opts->fix)
 		set_text(&img, png_options);
@@ -128,10 +130,10 @@ void output_png_file(const struct Options *opts,
 	png_write_end(img.png, NULL);
 
 	png_destroy_write_struct(&img.png, &img.info);
-	fclose(f);
+	zfclose(f);
 
 	if (opts->debug)
-		free(outfile);
+		zfree(outfile);
 }
 
 void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr)
@@ -140,11 +142,11 @@ void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr)
 	struct RawIndexedImage *raw_image = *raw_image_ptr_ptr;
 
 	for (y = 0; y < raw_image->height; y++)
-		free(raw_image->data[y]);
+		zfree(raw_image->data[y]);
 
-	free(raw_image->data);
-	free(raw_image->palette);
-	free(raw_image);
+	zfree(raw_image->data);
+	zfree(raw_image->palette);
+	zfree(raw_image);
 	*raw_image_ptr_ptr = NULL;
 }
 
@@ -207,9 +209,9 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 	if (png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans,
 			 &trans_color)) {
 		original_palette = palette;
-		palette = malloc(sizeof(png_color) * colors_in_PLTE);
+		palette = zmalloc(sizeof(png_color) * colors_in_PLTE);
 		colors_in_new_palette = 0;
-		old_to_new_palette = malloc(sizeof(uint8_t) * colors_in_PLTE);
+		old_to_new_palette = zmalloc(sizeof(uint8_t) * colors_in_PLTE);
 
 		for (i = 0; i < num_trans; i++) {
 			if (trans_alpha[i] == 0) {
@@ -226,9 +228,10 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 		}
 
 		if (colors_in_new_palette != colors_in_PLTE) {
-			palette = realloc(palette,
-					  sizeof(png_color) *
-					  colors_in_new_palette);
+			size_t newsize = sizeof(png_color) *
+					 colors_in_new_palette;
+
+			palette = zrealloc(palette, newsize);
 		}
 
 		/*
@@ -247,7 +250,7 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 			}
 		}
 
-		free(old_to_new_palette);
+		zfree(old_to_new_palette);
 	} else {
 		set_raw_image_palette(raw_image, palette, colors_in_PLTE);
 		read_png(img);
@@ -267,6 +270,7 @@ static struct RawIndexedImage *grayscale_png_to_raw(struct PNGImage *img)
 		png_set_expand_gray_1_2_4_to_8(img->png);
 
 	png_set_gray_to_rgb(img->png);
+
 	return truecolor_png_to_raw(img);
 }
 
@@ -303,7 +307,7 @@ static struct RawIndexedImage *truecolor_png_to_raw(struct PNGImage *img)
 	rgba_png_palette(img, &palette, &colors_in_palette);
 	raw_image = processed_rgba_png_to_raw(img, palette, colors_in_palette);
 
-	free(palette);
+	zfree(palette);
 
 	return raw_image;
 }
@@ -353,7 +357,7 @@ static void rgba_build_palette(struct PNGImage *img,
 	 * By filling the palette up with black by default, if the image
 	 * doesn't have enough colors, the palette gets padded with black.
 	 */
-	*palette_ptr_ptr = calloc(colors, sizeof(png_color));
+	*palette_ptr_ptr = zcalloc(colors, sizeof(png_color));
 	palette = *palette_ptr_ptr;
 	*num_colors = 0;
 
@@ -421,8 +425,8 @@ static void update_built_palette(png_color *palette,
 static int fit_grayscale_palette(png_color *palette, int *num_colors)
 {
 	int interval = 256 / colors;
-	png_color *fitted_palette = malloc(sizeof(png_color) * colors);
-	bool *set_indices = calloc(colors, sizeof(bool));
+	png_color *fitted_palette = zmalloc(sizeof(png_color) * colors);
+	bool *set_indices = zcalloc(colors, sizeof(bool));
 	int i, shade_index;
 
 	fitted_palette[0].red   = 0xFF;
@@ -443,8 +447,8 @@ static int fit_grayscale_palette(png_color *palette, int *num_colors)
 	for (i = 0; i < *num_colors; i++) {
 		shade_index = colors - 1 - palette[i].red / interval;
 		if (set_indices[shade_index]) {
-			free(fitted_palette);
-			free(set_indices);
+			zfree(fitted_palette);
+			zfree(set_indices);
 			return false;
 		}
 		fitted_palette[shade_index] = palette[i];
@@ -456,8 +460,8 @@ static int fit_grayscale_palette(png_color *palette, int *num_colors)
 
 	*num_colors = colors;
 
-	free(fitted_palette);
-	free(set_indices);
+	zfree(fitted_palette);
+	zfree(set_indices);
 	return true;
 }
 
@@ -481,7 +485,7 @@ static void order_color_palette(png_color *palette, int num_colors)
 {
 	int i;
 	struct ColorWithLuminance *palette_with_luminance =
-		malloc(sizeof(struct ColorWithLuminance) * num_colors);
+		zmalloc(sizeof(struct ColorWithLuminance) * num_colors);
 
 	for (i = 0; i < num_colors; i++) {
 		/*
@@ -495,10 +499,11 @@ static void order_color_palette(png_color *palette, int num_colors)
 	}
 	qsort(palette_with_luminance, num_colors,
 	      sizeof(struct ColorWithLuminance), compare_luminance);
+
 	for (i = 0; i < num_colors; i++)
 		palette[i] = palette_with_luminance[i].color;
 
-	free(palette_with_luminance);
+	zfree(palette_with_luminance);
 }
 
 static void put_raw_image_pixel(struct RawIndexedImage *raw_image,
@@ -582,9 +587,9 @@ static void read_png(struct PNGImage *img)
 
 	png_read_update_info(img->png, img->info);
 
-	img->data = malloc(sizeof(png_byte *) * img->height);
+	img->data = zmalloc(sizeof(png_byte *) * img->height);
 	for (y = 0; y < img->height; y++)
-		img->data[y] = malloc(png_get_rowbytes(img->png, img->info));
+		img->data[y] = zmalloc(png_get_rowbytes(img->png, img->info));
 
 	png_read_image(img->png, img->data);
 	png_read_end(img->png, img->info);
@@ -596,17 +601,17 @@ static struct RawIndexedImage *create_raw_image(int width, int height,
 	struct RawIndexedImage *raw_image;
 	int y;
 
-	raw_image = malloc(sizeof(struct RawIndexedImage));
+	raw_image = zmalloc(sizeof(struct RawIndexedImage));
 
 	raw_image->width = width;
 	raw_image->height = height;
 	raw_image->num_colors = num_colors;
 
-	raw_image->palette = malloc(sizeof(struct RGBColor) * num_colors);
+	raw_image->palette = zmalloc(sizeof(struct RGBColor) * num_colors);
 
-	raw_image->data = malloc(sizeof(uint8_t *) * height);
+	raw_image->data = zmalloc(sizeof(uint8_t *) * height);
 	for (y = 0; y < height; y++)
-		raw_image->data[y] = malloc(sizeof(uint8_t) * width);
+		raw_image->data[y] = zmalloc(sizeof(uint8_t) * width);
 
 	return raw_image;
 }
@@ -684,7 +689,7 @@ static void set_text(const struct PNGImage *img,
 	png_text *text;
 	char buffer[3];
 
-	text = malloc(sizeof(png_text));
+	text = zmalloc(sizeof(png_text));
 
 	if (png_options->horizontal) {
 		text[0].key = "h";
@@ -724,7 +729,7 @@ static void set_text(const struct PNGImage *img,
 		png_set_text(img->png, img->info, text, 1);
 	}
 
-	free(text);
+	zfree(text);
 }
 
 static void free_png_data(const struct PNGImage *img)
@@ -732,7 +737,7 @@ static void free_png_data(const struct PNGImage *img)
 	int y;
 
 	for (y = 0; y < img->height; y++)
-		free(img->data[y]);
+		zfree(img->data[y]);
 
-	free(img->data);
+	zfree(img->data);
 }

@@ -12,13 +12,16 @@
 
 #include "gfx/main.h"
 
+#include "safelibc.h"
+
 void transpose_tiles(struct GBImage *gb, int width)
 {
 	uint8_t *newdata;
 	int i;
 	int newbyte;
 
-	newdata = calloc(gb->size, 1);
+	newdata = zcalloc(gb->size, 1);
+
 	for (i = 0; i < gb->size; i++) {
 		newbyte = i / (8 * depth) * width * 8 * depth;
 		newbyte = newbyte % gb->size
@@ -27,7 +30,7 @@ void transpose_tiles(struct GBImage *gb, int width)
 		newdata[newbyte] = gb->data[i];
 	}
 
-	free(gb->data);
+	zfree(gb->data);
 
 	gb->data = newdata;
 }
@@ -64,9 +67,9 @@ void output_file(const struct Options *opts, const struct GBImage *gb)
 	if (!f)
 		err(1, "Opening output file '%s' failed", opts->outfile);
 
-	fwrite(gb->data, 1, gb->size - gb->trim * 8 * depth, f);
+	zfwrite(gb->data, 1, gb->size - gb->trim * 8 * depth, f);
 
-	fclose(f);
+	zfclose(f);
 }
 
 int get_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles, int tile_size)
@@ -106,19 +109,20 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	if (gb_size > max_tiles * tile_size)
 		max_tiles++;
 
-	tiles = calloc(max_tiles, sizeof(uint8_t *));
+	tiles = zcalloc(max_tiles, sizeof(uint8_t *));
 	num_tiles = 0;
 
-	tilemap->data = calloc(max_tiles, sizeof(uint8_t));
+	tilemap->data = zcalloc(max_tiles, sizeof(uint8_t));
 	tilemap->size = 0;
 
 	gb_i = 0;
 	while (gb_i < gb_size) {
-		tile = malloc(tile_size);
+		tile = zmalloc(tile_size);
 		for (i = 0; i < tile_size; i++) {
 			tile[i] = gb->data[gb_i];
 			gb_i++;
 		}
+
 		if (opts->unique) {
 			index = get_tile_index(tile, tiles, num_tiles,
 					       tile_size);
@@ -137,8 +141,8 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	}
 
 	if (opts->unique) {
-		free(gb->data);
-		gb->data = malloc(tile_size * num_tiles);
+		zfree(gb->data);
+		gb->data = zmalloc(tile_size * num_tiles);
 		for (i = 0; i < num_tiles; i++) {
 			tile = tiles[i];
 			for (j = 0; j < tile_size; j++)
@@ -148,9 +152,9 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	}
 
 	for (i = 0; i < num_tiles; i++)
-		free(tiles[i]);
+		zfree(tiles[i]);
 
-	free(tiles);
+	zfree(tiles);
 }
 
 void output_tilemap_file(const struct Options *opts,
@@ -161,12 +165,11 @@ void output_tilemap_file(const struct Options *opts,
 	f = fopen(opts->mapfile, "wb");
 	if (!f)
 		err(1, "Opening tilemap file '%s' failed", opts->mapfile);
-
-	fwrite(tilemap->data, 1, tilemap->size, f);
-	fclose(f);
+	zfwrite(tilemap->data, 1, tilemap->size, f);
+	zfclose(f);
 
 	if (opts->mapout)
-		free(opts->mapfile);
+		zfree(opts->mapfile);
 }
 
 void output_palette_file(const struct Options *opts,
@@ -181,16 +184,15 @@ void output_palette_file(const struct Options *opts,
 		err(1, "Opening palette file '%s' failed", opts->palfile);
 
 	for (i = 0; i < raw_image->num_colors; i++) {
-		color =
-			raw_image->palette[i].blue  >> 3 << 10 |
-			raw_image->palette[i].green >> 3 <<  5 |
-			raw_image->palette[i].red   >> 3;
+		color = ((raw_image->palette[i].blue  >> 3) << 10) |
+			((raw_image->palette[i].green >> 3) <<  5) |
+			 (raw_image->palette[i].red   >> 3);
 		cur_bytes[0] = color & 0xFF;
 		cur_bytes[1] = color >> 8;
-		fwrite(cur_bytes, 2, 1, f);
+		zfwrite(cur_bytes, 2, 1, f);
 	}
-	fclose(f);
+	zfclose(f);
 
 	if (opts->palout)
-		free(opts->palfile);
+		zfree(opts->palfile);
 }
