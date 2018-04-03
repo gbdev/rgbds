@@ -380,6 +380,8 @@ int main(int argc, char *argv[])
 			warnx("ROM size is bigger than 8MiB");
 
 		buf = malloc(newsize - romsize);
+		if (buf == NULL)
+			errx(1, "Couldn't allocate memory for padded ROM.");
 		memset(buf, padvalue, newsize - romsize);
 		fwrite(buf, 1, newsize - romsize, rom);
 
