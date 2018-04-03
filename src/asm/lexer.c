@@ -414,7 +414,7 @@ void yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 /*
  * Gets the longest keyword/operator from the current position in the buffer.
  */
-struct sLexString *yylex_GetLongestFixed()
+struct sLexString *yylex_GetLongestFixed(void)
 {
 	struct sLexString *pLongestFixed = NULL;
 	char *s = pLexBuffer;
@@ -640,7 +640,6 @@ scanagain:
 
 	/* Check for line continuation character */
 	if (*pLexBuffer == '\\') {
-
 		/*
 		 * Look for line continuation character after a series of
 		 * spaces. This is also useful for files that use Windows line
@@ -851,7 +850,7 @@ uint32_t yylex(void)
 		return yylex_NORMAL();
 	case LEX_STATE_MACROARGS:
 		return yylex_MACROARGS();
+	default:
+		fatalerror("%s: Internal error.", __func__);
 	}
-
-	fatalerror("Internal error in %s", __func__);
 }

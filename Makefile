@@ -26,7 +26,7 @@ PNGLDLIBS	:= `${PKG_CONFIG} --static --libs-only-l libpng`
 
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Wall -Werror
+WARNFLAGS	:= -Wall
 
 # Overridable CFLAGS
 CFLAGS		:= -g
@@ -160,6 +160,7 @@ install: all
 
 # Target used to check the coding style of the whole codebase. '.y' and '.l'
 # files aren't checked, unfortunately...
+
 checkcodebase:
 	$Qfor file in `git ls-files | grep -E '\.c|\.h' | grep -v '\.html'`; do	\
 		${CHECKPATCH} -f "$$file";					\
@@ -169,6 +170,7 @@ checkcodebase:
 # to the HEAD. Runs checkpatch once for each commit between the current HEAD and
 # the first common commit between the HEAD and origin/develop. '.y' and '.l'
 # files aren't checked, unfortunately...
+
 checkpatch:
 	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/develop);	\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
@@ -193,6 +195,20 @@ wwwman:
 	$Qmandoc ${MANDOC} src/link/rgblink.5 > docs/rgblink.5.html
 	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > docs/rgbgfx.1.html
 
+# This target is used during development in order to prevent adding new issues
+# to the source code. All warnings are treated as errors in order to block the
+# compilation and make the continous integration infrastructure return failure.
+
+develop:
+	$Qenv make -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic \
+		-Wno-sign-compare -Wchkp -Wformat=2 -Wformat-overflow=2 \
+		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
+		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5 \
+		-Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond \
+		-Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op \
+		-Wnested-externs -Wno-aggressive-loop-optimizations -Winline \
+		-Wundef -Wstrict-prototypes -Wold-style-definition"
+
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
 # If you're building on Windows with Cygwin or Mingw, just follow the Unix
@@ -200,7 +216,7 @@ wwwman:
 
 mingw32:
 	$Qenv PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
-		make CC=i686-w64-mingw32-gcc YACC=bison WARNFLAGS= -j
+		make CC=i686-w64-mingw32-gcc YACC=bison -j
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
 	$Qmv rgbfix rgbfix.exe
@@ -208,7 +224,7 @@ mingw32:
 
 mingw64:
 	$Qenv PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
-		make CC=x86_64-w64-mingw32-gcc YACC=bison WARNFLAGS= -j
+		make CC=x86_64-w64-mingw32-gcc YACC=bison -j
 	$Qmv rgbasm rgbasm.exe
 	$Qmv rgblink rgblink.exe
 	$Qmv rgbfix rgbfix.exe

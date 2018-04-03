@@ -20,6 +20,8 @@
 #include "asm/symbol.h"
 #include "asm/symbol.h"
 
+#include "helpers.h"
+
 #include "asmy.h"
 
 bool oDontExpandStrings;
@@ -92,6 +94,9 @@ static int32_t ascii2bin(char *s)
 		radix = 2;
 		s += 1;
 		convertfunc = binary2bin;
+		break;
+	default:
+		/* Handle below */
 		break;
 	}
 
@@ -216,7 +221,7 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 	return 0;
 }
 
-uint32_t PutUniqueArg(char *src, uint32_t size)
+uint32_t PutUniqueArg(unused_ char *src, uint32_t size)
 {
 	char *s;
 

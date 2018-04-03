@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "extern/stdnoreturn.h"
+#include "helpers.h"
 
 struct sOptions {
 	char binary[2];
@@ -46,7 +46,7 @@ void opt_Parse(char *s);
  * It is also used when the assembler goes into an invalid state (for example,
  * when it fails to allocate memory).
  */
-noreturn void fatalerror(const char *fmt, ...);
+noreturn_ void fatalerror(const char *fmt, ...);
 
 /*
  * Used for errors that make it impossible to assemble correctly, but don't

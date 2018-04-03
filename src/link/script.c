@@ -85,59 +85,59 @@ void script_InitSections(void)
 	}
 }
 
-void script_SetCurrentSectionType(const char *type, uint32_t bank)
+void script_SetCurrentSectionType(const char *type, uint32_t bank_num)
 {
 	if (strcmp(type, "ROM0") == 0) {
-		if (bank != 0)
+		if (bank_num != 0)
 			errx(1, "Trying to assign a bank number to ROM0.\n");
 		current_bank = BANK_INDEX_ROM0;
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "ROMX") == 0) {
-		if (bank == 0)
+		if (bank_num == 0)
 			errx(1, "ROMX index can't be 0.\n");
-		if (bank > BANK_COUNT_ROMX) {
-			errx(1, "ROMX index too big (%d > %d).\n", bank,
+		if (bank_num > BANK_COUNT_ROMX) {
+			errx(1, "ROMX index too big (%d > %d).\n", bank_num,
 			     BANK_COUNT_ROMX);
 		}
-		current_bank = BANK_INDEX_ROMX + bank - 1;
-		current_real_bank = bank;
+		current_bank = BANK_INDEX_ROMX + bank_num - 1;
+		current_real_bank = bank_num;
 		return;
 	} else if (strcmp(type, "VRAM") == 0) {
-		if (bank >= BANK_COUNT_VRAM) {
-			errx(1, "VRAM index too big (%d >= %d).\n", bank,
+		if (bank_num >= BANK_COUNT_VRAM) {
+			errx(1, "VRAM index too big (%d >= %d).\n", bank_num,
 			     BANK_COUNT_VRAM);
 		}
-		current_bank = BANK_INDEX_VRAM + bank;
-		current_real_bank = bank;
+		current_bank = BANK_INDEX_VRAM + bank_num;
+		current_real_bank = bank_num;
 		return;
 	} else if (strcmp(type, "WRAM0") == 0) {
-		if (bank != 0)
+		if (bank_num != 0)
 			errx(1, "Trying to assign a bank number to WRAM0.\n");
 
 		current_bank = BANK_INDEX_WRAM0;
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "WRAMX") == 0) {
-		if (bank == 0)
+		if (bank_num == 0)
 			errx(1, "WRAMX index can't be 0.\n");
-		if (bank > BANK_COUNT_WRAMX) {
-			errx(1, "WRAMX index too big (%d > %d).\n", bank,
+		if (bank_num > BANK_COUNT_WRAMX) {
+			errx(1, "WRAMX index too big (%d > %d).\n", bank_num,
 			     BANK_COUNT_WRAMX);
 		}
-		current_bank = BANK_INDEX_WRAMX + bank - 1;
-		current_real_bank = bank;
+		current_bank = BANK_INDEX_WRAMX + bank_num - 1;
+		current_real_bank = bank_num;
 		return;
 	} else if (strcmp(type, "SRAM") == 0) {
-		if (bank >= BANK_COUNT_SRAM) {
-			errx(1, "SRAM index too big (%d >= %d).\n", bank,
+		if (bank_num >= BANK_COUNT_SRAM) {
+			errx(1, "SRAM index too big (%d >= %d).\n", bank_num,
 			     BANK_COUNT_SRAM);
 		}
-		current_bank = BANK_INDEX_SRAM + bank;
-		current_real_bank = bank;
+		current_bank = BANK_INDEX_SRAM + bank_num;
+		current_real_bank = bank_num;
 		return;
 	} else if (strcmp(type, "OAM") == 0) {
-		if (bank != 0) {
+		if (bank_num != 0) {
 			errx(1, "%s: Trying to assign a bank number to OAM.\n",
 			     __func__);
 		}
@@ -145,7 +145,7 @@ void script_SetCurrentSectionType(const char *type, uint32_t bank)
 		current_real_bank = 0;
 		return;
 	} else if (strcmp(type, "HRAM") == 0) {
-		if (bank != 0) {
+		if (bank_num != 0) {
 			errx(1, "%s: Trying to assign a bank number to HRAM.\n",
 			     __func__);
 		}

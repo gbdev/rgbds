@@ -87,6 +87,8 @@ static void pushcontext(void)
 		(*ppFileStack)->nREPTBlockSize = nCurrentREPTBlockSize;
 		(*ppFileStack)->nREPTBlockCount = nCurrentREPTBlockCount;
 		break;
+	default:
+		fatalerror("%s: Internal error.", __func__);
 	}
 
 	nLineNo = 0;
@@ -152,6 +154,8 @@ static int32_t popcontext(void)
 		nCurrentREPTBlockSize = pLastFile->nREPTBlockSize;
 		nCurrentREPTBlockCount = pLastFile->nREPTBlockCount;
 		break;
+	default:
+		fatalerror("%s: Internal error.", __func__);
 	}
 
 	free(*ppLastFile);
@@ -174,6 +178,8 @@ int32_t fstk_GetLine(void)
 		return nLineNo; /* ??? */
 	case STAT_isREPTBlock:
 		break; /* Peek top file of the stack */
+	default:
+		fatalerror("%s: Internal error.", __func__);
 	}
 
 	pLastFile = pFileStack;
@@ -257,8 +263,10 @@ FILE *fstk_FindFile(char *fname)
 		 * space had been available. Thus, a return value of `size` or
 		 * more means that the output was truncated.
 		 */
-		if (snprintf(path, sizeof(path), "%s%s", IncludePaths[i], fname)
-		    >= sizeof(path))
+		int fullpathlen = snprintf(path, sizeof(path), "%s%s",
+					   IncludePaths[i], fname);
+
+		if (fullpathlen >= (int)sizeof(path))
 			continue;
 
 		f = fopen(path, "rb");

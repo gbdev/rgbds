@@ -25,6 +25,7 @@
 
 #include "extern/err.h"
 
+#include "helpers.h"
 #include "version.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
@@ -62,7 +63,7 @@ void helper_RemoveLeadingZeros(char *string)
 	memmove(string, new_beginning, strlen(new_beginning) + 1);
 }
 
-int32_t Callback_NARG(struct sSymbol *sym)
+int32_t Callback_NARG(unused_ struct sSymbol *sym)
 {
 	uint32_t i = 0;
 
@@ -72,7 +73,7 @@ int32_t Callback_NARG(struct sSymbol *sym)
 	return i;
 }
 
-int32_t Callback__LINE__(struct sSymbol __attribute__((unused)) *sym)
+int32_t Callback__LINE__(unused_ struct sSymbol *sym)
 {
 	return nLineNo;
 }
@@ -673,7 +674,7 @@ void sym_AddReloc(char *tzSym)
 
 			struct sSymbol *parent = pScope->pScope ?
 						 pScope->pScope : pScope;
-			int32_t parentLen = localPtr - tzSym;
+			uint32_t parentLen = localPtr - tzSym;
 
 			if (strchr(localPtr + 1, '.') != NULL) {
 				fatalerror("'%s' is a nonsensical reference to a nested local symbol",

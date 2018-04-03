@@ -317,9 +317,9 @@ static void rgba_png_palette(struct PNGImage *img,
 			     png_color **palette_ptr_ptr, int *num_colors)
 {
 	if (png_get_valid(img->png, img->info, PNG_INFO_PLTE))
-		return rgba_PLTE_palette(img, palette_ptr_ptr, num_colors);
+		rgba_PLTE_palette(img, palette_ptr_ptr, num_colors);
 	else
-		return rgba_build_palette(img, palette_ptr_ptr, num_colors);
+		rgba_build_palette(img, palette_ptr_ptr, num_colors);
 }
 
 static void rgba_PLTE_palette(struct PNGImage *img,
@@ -469,8 +469,10 @@ struct ColorWithLuminance {
 
 static int compare_luminance(const void *a, const void *b)
 {
-	struct ColorWithLuminance *x = (struct ColorWithLuminance *)a;
-	struct ColorWithLuminance *y = (struct ColorWithLuminance *)b;
+	const struct ColorWithLuminance *x, *y;
+
+	x = (const struct ColorWithLuminance *)a;
+	y = (const struct ColorWithLuminance *)b;
 
 	return y->luminance - x->luminance;
 }

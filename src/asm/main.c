@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <float.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -147,10 +148,13 @@ void opt_Parse(char *s)
 	case 'z':
 		if (strlen(&s[1]) <= 2) {
 			int32_t result;
+			unsigned int fillchar;
 
-			result = sscanf(&s[1], "%x", &newopt.fillchar);
+			result = sscanf(&s[1], "%x", &fillchar);
 			if (!((result == EOF) || (result == 1)))
 				errx(1, "Invalid argument for option 'z'");
+
+			newopt.fillchar = fillchar;
 		} else {
 			errx(1, "Invalid argument for option 'z'");
 		}
@@ -222,7 +226,7 @@ void opt_AddDefine(char *s)
 
 static void opt_ParseDefines(void)
 {
-	int32_t i;
+	uint32_t i;
 
 	for (i = 0; i < cldefines_index; i += 2)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
@@ -480,7 +484,7 @@ int main(int argc, char *argv[])
 	if (CurrentOptions.verbose) {
 		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
 		       (int)timespent, ((int)(timespent * 100.0)) % 100);
-		if (timespent == 0)
+		if (timespent < FLT_MIN_EXP)
 			printf("(INFINITY lines/minute)\n");
 		else
 			printf("(%d lines/minute)\n",
