@@ -10,7 +10,6 @@
  * Symboltable and macroargs stuff
  */
 
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +25,7 @@
 #include "extern/err.h"
 
 #include "helpers.h"
+#include "safelibc.h"
 #include "version.h"
 
 struct sSymbol *tHashedSymbols[HASHSIZE];
@@ -116,12 +116,7 @@ struct sSymbol *createsymbol(char *s)
 	while ((*ppsym) != NULL)
 		ppsym = &((*ppsym)->pNext);
 
-	(*ppsym) = malloc(sizeof(struct sSymbol));
-
-	if ((*ppsym) == NULL) {
-		fatalerror("No memory for symbol");
-		return NULL;
-	}
+	(*ppsym) = zmalloc(sizeof(struct sSymbol));
 
 	if (snprintf((*ppsym)->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
 		warning("Symbol name is too long: '%s'", s);
@@ -141,6 +136,7 @@ struct sSymbol *createsymbol(char *s)
 	}
 
 	(*ppsym)->nFileLine = fstk_GetLine();
+
 	return *ppsym;
 }
 
@@ -187,6 +183,7 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 
 		ppsym = &((*ppsym)->pNext);
 	}
+
 	return NULL;
 }
 
@@ -237,9 +234,9 @@ void sym_Purge(char *tzName)
 		*ppSym = pSym->pNext;
 
 		if (pSym->pMacro)
-			free(pSym->pMacro);
+			zfree(pSym->pMacro);
 
-		free(pSym);
+		zfree(pSym);
 	} else {
 		yyerror("'%s' not defined", tzName);
 	}
@@ -453,10 +450,12 @@ char *sym_FindMacroArg(int32_t i)
 	if (i == -1)
 		i = MAXMACROARGS + 1;
 
-	assert(i - 1 >= 0);
+	if (i < 1)
+		fatalerror("Macro argument invalid: %d", i);
 
-	assert((size_t)(i - 1)
-	       < sizeof(currentmacroargs) / sizeof(*currentmacroargs));
+	if ((size_t)(i - 1)
+	       >= sizeof(currentmacroargs) / sizeof(*currentmacroargs))
+		fatalerror("Macro argument index too big: %d", i);
 
 	return currentmacroargs[i - 1];
 }
@@ -492,8 +491,10 @@ void sym_FreeCurrentMacroArgs(void)
 	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = NULL;
+		if (currentmacroargs[i] != NULL) {
+			zfree(currentmacroargs[i]);
+			currentmacroargs[i] = NULL;
+		}
 	}
 }
 

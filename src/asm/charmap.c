@@ -18,6 +18,8 @@
 
 #include "extern/utf8decoder.h"
 
+#include "safelibc.h"
+
 struct Charmap globalCharmap = {0};
 
 int32_t readUTF8Char(char *dest, char *src)
@@ -54,9 +56,7 @@ int32_t charmap_Add(char *input, uint8_t output)
 		if (pCurrentSection->charmap) {
 			charmap = pCurrentSection->charmap;
 		} else {
-			charmap = calloc(1, sizeof(struct Charmap));
-			if (charmap == NULL)
-				fatalerror("Not enough memory for charmap");
+			charmap = zcalloc(1, sizeof(struct Charmap));
 
 			pCurrentSection->charmap = charmap;
 		}
@@ -101,7 +101,10 @@ int32_t charmap_Add(char *input, uint8_t output)
 		memcpy(charmap->input[charmap->count], input, input_length);
 		charmap->output[charmap->count] = output;
 	}
-	return ++charmap->count;
+
+	charmap->count++;
+
+	return charmap->count;
 }
 
 int32_t charmap_Convert(char **input)
@@ -117,9 +120,7 @@ int32_t charmap_Convert(char **input)
 	else
 		charmap = &globalCharmap;
 
-	buffer = malloc(strlen(*input));
-	if (buffer == NULL)
-		fatalerror("Not enough memory for buffer");
+	buffer = zmalloc(strlen(*input));
 
 	length = 0;
 	while (**input) {

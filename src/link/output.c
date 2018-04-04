@@ -18,6 +18,8 @@
 #include "link/main.h"
 #include "link/assign.h"
 
+#include "safelibc.h"
+
 char *tzOutname;
 char *tzOverlayname;
 
@@ -28,16 +30,11 @@ void writehome(FILE *f, FILE *f_overlay)
 	const struct sSection *pSect;
 	uint8_t *mem;
 
-	mem = malloc(MaxAvail[BANK_INDEX_ROM0]);
-	if (!mem)
-		return;
+	mem = zmalloc(MaxAvail[BANK_INDEX_ROM0]);
 
 	if (f_overlay != NULL) {
-		fseek(f_overlay, 0L, SEEK_SET);
-		if (fread(mem, 1, MaxAvail[BANK_INDEX_ROM0], f_overlay) !=
-		    MaxAvail[BANK_INDEX_ROM0]) {
-			warnx("Failed to read data from overlay file.");
-		}
+		zfseek(f_overlay, 0L, SEEK_SET);
+		zfread(mem, 1, MaxAvail[BANK_INDEX_ROM0], f_overlay);
 	} else {
 		memset(mem, fillchar, MaxAvail[BANK_INDEX_ROM0]);
 	}
@@ -55,8 +52,8 @@ void writehome(FILE *f, FILE *f_overlay)
 
 	MapfileCloseBank(area_Avail(0));
 
-	fwrite(mem, 1, MaxAvail[BANK_INDEX_ROM0], f);
-	free(mem);
+	zfwrite(mem, 1, MaxAvail[BANK_INDEX_ROM0], f);
+	zfree(mem);
 }
 
 void writebank(FILE *f, FILE *f_overlay, int32_t bank)
@@ -64,14 +61,11 @@ void writebank(FILE *f, FILE *f_overlay, int32_t bank)
 	const struct sSection *pSect;
 	uint8_t *mem;
 
-	mem = malloc(MaxAvail[bank]);
-	if (!mem)
-		return;
+	mem = zmalloc(MaxAvail[bank]);
 
 	if (f_overlay != NULL && bank <= MaxOverlayBank) {
-		fseek(f_overlay, bank * 0x4000, SEEK_SET);
-		if (fread(mem, 1, MaxAvail[bank], f_overlay) != MaxAvail[bank])
-			warnx("Failed to read data from overlay file.");
+		zfseek(f_overlay, bank * 0x4000, SEEK_SET);
+		zfread(mem, 1, MaxAvail[bank], f_overlay);
 	} else {
 		memset(mem, fillchar, MaxAvail[bank]);
 	}
@@ -89,8 +83,8 @@ void writebank(FILE *f, FILE *f_overlay, int32_t bank)
 
 	MapfileCloseBank(area_Avail(bank));
 
-	fwrite(mem, 1, MaxAvail[bank], f);
-	free(mem);
+	zfwrite(mem, 1, MaxAvail[bank], f);
+	zfree(mem);
 }
 
 void out_Setname(char *tzOutputfile)
@@ -113,43 +107,41 @@ void Output(void)
 	 * Apply overlay
 	 */
 
-	f = fopen(tzOutname, "wb");
+	f = zfopen(tzOutname, "wb");
 
-	if (f != NULL) {
-		if (tzOverlayname) {
-			f_overlay = fopen(tzOverlayname, "rb");
+	if (tzOverlayname) {
+		f_overlay = zfopen(tzOverlayname, "rb");
 
-			if (!f_overlay) {
-				errx(1, "Failed to open overlay file %s\n",
-				     tzOverlayname);
-			}
+		zfseek(f_overlay, 0, SEEK_END);
 
-			fseek(f_overlay, 0, SEEK_END);
+		if (zftell(f_overlay) % 0x4000 != 0)
+			errx(1, "Overlay file must be aligned to 0x4000 bytes.");
 
-			if (ftell(f_overlay) % 0x4000 != 0)
-				errx(1, "Overlay file must be aligned to 0x4000 bytes.");
+		MaxOverlayBank = (zftell(f_overlay) / 0x4000) - 1;
 
-			MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
+		if (MaxOverlayBank < 1)
+			errx(1, "Overlay file must be at least 0x8000 bytes.");
 
-			if (MaxOverlayBank < 1)
-				errx(1, "Overlay file must be at least 0x8000 bytes.");
+		if (MaxOverlayBank > MaxBankUsed)
+			MaxBankUsed = MaxOverlayBank;
 
-			if (MaxOverlayBank > MaxBankUsed)
-				MaxBankUsed = MaxOverlayBank;
-		}
-
+		/* Write data to ROM */
 		writehome(f, f_overlay);
 		for (i = 1; i <= MaxBankUsed; i += 1)
 			writebank(f, f_overlay, i);
 
-		fclose(f);
-
-		if (tzOverlayname)
-			fclose(f_overlay);
+		zfclose(f_overlay);
+	} else {
+		/* Write data to ROM */
+		writehome(f, NULL);
+		for (i = 1; i <= MaxBankUsed; i += 1)
+			writebank(f, NULL, i);
 	}
 
+	zfclose(f);
+
 	/*
-	 * Add regular sections
+	 * Write map and sym files
 	 */
 
 	for (i = BANK_INDEX_WRAM0; i < BANK_INDEX_MAX; i++) {

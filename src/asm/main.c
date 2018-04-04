@@ -25,6 +25,7 @@
 #include "extern/err.h"
 
 #include "helpers.h"
+#include "safelibc.h"
 #include "version.h"
 
 extern int yyparse(void);
@@ -161,7 +162,7 @@ void opt_Parse(char *s)
 		}
 		break;
 	default:
-		fatalerror("Unknown option");
+		fatalerror("Unknown option %d", s[0]);
 		break;
 	}
 
@@ -172,10 +173,7 @@ void opt_Push(void)
 {
 	struct sOptionStackEntry *pOpt;
 
-	pOpt = malloc(sizeof(struct sOptionStackEntry));
-
-	if (pOpt == NULL)
-		fatalerror("No memory for option stack");
+	pOpt = zmalloc(sizeof(struct sOptionStackEntry));
 
 	pOpt->Options = CurrentOptions;
 	pOpt->pNext = pOptionStack;
@@ -192,7 +190,7 @@ void opt_Pop(void)
 	pOpt = pOptionStack;
 	opt_SetCurrentOptions(&(pOpt->Options));
 	pOptionStack = pOpt->pNext;
-	free(pOpt);
+	zfree(pOpt);
 }
 
 void opt_AddDefine(char *s)
@@ -210,9 +208,7 @@ void opt_AddDefine(char *s)
 		cldefines_numindices *= 2;
 		cldefines_bufsize *= 2;
 
-		cldefines = realloc(cldefines, cldefines_bufsize);
-		if (!cldefines)
-			fatalerror("No memory for command line defines");
+		cldefines = zrealloc(cldefines, cldefines_bufsize);
 	}
 	equals = strchr(s, '=');
 	if (equals) {
@@ -306,9 +302,7 @@ int main(int argc, char *argv[])
 	/* Initial number of allocated elements in array */
 	cldefines_numindices = 32;
 	cldefines_bufsize = cldefines_numindices * cldefine_entrysize;
-	cldefines = malloc(cldefines_bufsize);
-	if (!cldefines)
-		fatalerror("No memory for command line defines");
+	cldefines = zmalloc(cldefines_bufsize);
 
 	if (argc == 1)
 		print_usage();
@@ -421,7 +415,7 @@ int main(int argc, char *argv[])
 		if (!tzObjectname)
 			errx(1, "Dependency files can only be created if an output object file is specified.\n");
 
-		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
+		zfprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
 	}
 
 	nStartClock = clock();
@@ -492,5 +486,6 @@ int main(int argc, char *argv[])
 			       (int)(60 / timespent * nTotalLines));
 	}
 	out_WriteObject();
+
 	return 0;
 }

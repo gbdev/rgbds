@@ -16,6 +16,7 @@
 #include "link/main.h"
 #include "link/patch.h"
 
+#include "safelibc.h"
 #include "types.h"
 
 #define HASHSIZE 73
@@ -110,21 +111,16 @@ void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,
 		}
 	}
 
-	*ppSym = malloc(sizeof **ppSym);
+	*ppSym = zmalloc(sizeof **ppSym);
 
-	if (*ppSym != NULL) {
-		(*ppSym)->pzName = malloc(strlen(tzName) + 1);
+	(*ppSym)->pzName = zmalloc(strlen(tzName) + 1);
 
-		if ((*ppSym)->pzName != NULL) {
-			strcpy((*ppSym)->pzName, tzName);
-			(*ppSym)->nValue = nValue;
-			(*ppSym)->nBank = nBank;
-			(*ppSym)->pNext = NULL;
-			strncpy((*ppSym)->tzObjFileName, tzObjFileName,
-				sizeof((*ppSym)->tzObjFileName));
-			strncpy((*ppSym)->tzFileName, tzFileName,
-				sizeof((*ppSym)->tzFileName));
-			(*ppSym)->nFileLine = nFileLine;
-		}
-	}
+	strcpy((*ppSym)->pzName, tzName);
+	(*ppSym)->nValue = nValue;
+	(*ppSym)->nBank = nBank;
+	(*ppSym)->pNext = NULL;
+	strncpy((*ppSym)->tzObjFileName, tzObjFileName,
+		sizeof((*ppSym)->tzObjFileName));
+	strncpy((*ppSym)->tzFileName, tzFileName, sizeof((*ppSym)->tzFileName));
+	(*ppSym)->nFileLine = nFileLine;
 }

@@ -21,7 +21,10 @@
 
 #include "extern/err.h"
 
+/* Generated from asmy.y */
 #include "asmy.h"
+
+#include "safelibc.h"
 
 struct sLexString {
 	char *tzName;
@@ -106,21 +109,15 @@ void yy_set_state(enum eLexerState i)
 
 void yy_delete_buffer(YY_BUFFER_STATE buf)
 {
-	free(buf->pBufferStart - SAFETYMARGIN);
-	free(buf);
+	zfree(buf->pBufferStart - SAFETYMARGIN);
+	zfree(buf);
 }
 
 YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 {
-	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
+	YY_BUFFER_STATE pBuffer = zmalloc(sizeof(struct yy_buffer_state));
 
-	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!", __func__);
-
-	pBuffer->pBufferRealStart = malloc(size + 1 + SAFETYMARGIN);
-
-	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!", __func__);
+	pBuffer->pBufferRealStart = zmalloc(size + 1 + SAFETYMARGIN);
 
 	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
@@ -134,26 +131,20 @@ YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 
 YY_BUFFER_STATE yy_create_buffer(FILE *f)
 {
-	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
-
-	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!", __func__);
+	YY_BUFFER_STATE pBuffer = zmalloc(sizeof(struct yy_buffer_state));
 
 	uint32_t size;
 
-	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	zfseek(f, 0, SEEK_END);
+	size = zftell(f);
+	zfseek(f, 0, SEEK_SET);
 
-	pBuffer->pBufferRealStart = malloc(size + 2 + SAFETYMARGIN);
-
-	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!", __func__);
+	pBuffer->pBufferRealStart = zmalloc(size + 2 + SAFETYMARGIN);
 
 	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
 
-	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
+	zfread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
 	pBuffer->pBuffer[size] = '\n';
 	pBuffer->pBuffer[size + 1] = 0;
@@ -219,6 +210,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	}
 
 	pBuffer->oAtLineStart = 1;
+
 	return pBuffer;
 }
 
@@ -353,9 +345,7 @@ void lex_AddStrings(const struct sLexInitString *lex)
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
 
-		*ppHash = malloc(sizeof(struct sLexString));
-		if (*ppHash == NULL)
-			fatalerror("Out of memory!");
+		*ppHash = zmalloc(sizeof(struct sLexString));
 
 		(*ppHash)->tzName = (char *)strdup(lex->tzName);
 		if ((*ppHash)->tzName == NULL)
@@ -597,7 +587,7 @@ static void yylex_ReadQuotedString(void)
 				break;
 			}
 		} else if (ch == '{') {
-			// Get bracketed symbol within string.
+			/* Get bracketed symbol within string. */
 			index += yylex_ReadBracketedSymbol(yylval.tzString,
 							   index);
 			ch = 0;
@@ -630,7 +620,7 @@ scanagain:
 	}
 
 	if (*pLexBuffer == 0) {
-		// Reached the end of a file, macro, or rept.
+		/* Reached the end of a file, macro, or rept. */
 		if (yywrap() == 0) {
 			linestart = AtLineStart;
 			AtLineStart = 0;

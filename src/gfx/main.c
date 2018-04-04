@@ -13,6 +13,7 @@
 
 #include "gfx/main.h"
 
+#include "safelibc.h"
 #include "version.h"
 
 static void print_usage(void)
@@ -194,12 +195,12 @@ int main(int argc, char *argv[])
 
 		if (ext != NULL) {
 			size = ext - opts.infile + 9;
-			opts.mapfile = malloc(size);
+			opts.mapfile = zmalloc(size);
 			strncpy(opts.mapfile, opts.infile, size);
 			*strrchr(opts.mapfile, '.') = '\0';
 			strcat(opts.mapfile, ".tilemap");
 		} else {
-			opts.mapfile = malloc(strlen(opts.infile) + 9);
+			opts.mapfile = zmalloc(strlen(opts.infile) + 9);
 			strcpy(opts.mapfile, opts.infile);
 			strcat(opts.mapfile, ".tilemap");
 		}
@@ -210,19 +211,19 @@ int main(int argc, char *argv[])
 
 		if (ext != NULL) {
 			size = ext - opts.infile + 5;
-			opts.palfile = malloc(size);
+			opts.palfile = zmalloc(size);
 			strncpy(opts.palfile, opts.infile, size);
 			*strrchr(opts.palfile, '.') = '\0';
 			strcat(opts.palfile, ".pal");
 		} else {
-			opts.palfile = malloc(strlen(opts.infile) + 5);
+			opts.palfile = zmalloc(strlen(opts.infile) + 5);
 			strcpy(opts.palfile, opts.infile);
 			strcat(opts.palfile, ".pal");
 		}
 	}
 
 	gb.size = raw_image->width * raw_image->height * depth / 8;
-	gb.data = calloc(gb.size, 1);
+	gb.data = zcalloc(gb.size, 1);
 	gb.trim = opts.trim;
 	gb.horizontal = opts.horizontal;
 
@@ -244,7 +245,7 @@ int main(int argc, char *argv[])
 		output_png_file(&opts, &png_options, raw_image);
 
 	destroy_raw_image(&raw_image);
-	free(gb.data);
+	zfree(gb.data);
 
 	return 0;
 }

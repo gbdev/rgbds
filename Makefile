@@ -58,6 +58,7 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/extern/err.o \
 	src/extern/utf8decoder.o \
+	src/safelibc.o \
 	src/version.o
 
 src/asm/asmy.h: src/asm/asmy.c
@@ -76,6 +77,7 @@ rgblink_obj := \
 	src/link/script.o \
 	src/link/symbol.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 src/link/parser.h: src/link/parser.c
@@ -84,6 +86,7 @@ src/link/lexer.o: src/link/parser.h
 rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 rgbgfx_obj := \
@@ -91,6 +94,7 @@ rgbgfx_obj := \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 rgbasm: ${rgbasm_obj}

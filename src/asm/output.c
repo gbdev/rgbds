@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "linkdefs.h"
+#include "safelibc.h"
 
 void out_SetCurrentSection(struct Section *pSect);
 
@@ -68,9 +69,7 @@ void out_PushSection(void)
 {
 	struct SectionStackEntry *pSect;
 
-	pSect = malloc(sizeof(struct SectionStackEntry));
-	if (pSect == NULL)
-		fatalerror("No memory for section stack");
+	pSect = zmalloc(sizeof(struct SectionStackEntry));
 
 	pSect->pSection = pCurrentSection;
 	pSect->pScope = sym_GetCurrentSymbolScope();
@@ -89,7 +88,8 @@ void out_PopSection(void)
 	out_SetCurrentSection(pSect->pSection);
 	sym_SetCurrentSymbolScope(pSect->pScope);
 	pSectionStack = pSect->pNext;
-	free(pSect);
+
+	zfree(pSect);
 }
 
 static uint32_t getmaxsectionsize(uint32_t secttype, char *sectname)
@@ -175,10 +175,10 @@ static uint32_t countpatches(struct Section *pSect)
  */
 static void fputlong(uint32_t i, FILE *f)
 {
-	fputc(i, f);
-	fputc(i >> 8, f);
-	fputc(i >> 16, f);
-	fputc(i >> 24, f);
+	zfputc(i, f);
+	zfputc(i >> 8, f);
+	zfputc(i >> 16, f);
+	zfputc(i >> 24, f);
 }
 
 /*
@@ -187,8 +187,8 @@ static void fputlong(uint32_t i, FILE *f)
 static void fputstring(char *s, FILE *f)
 {
 	while (*s)
-		fputc(*s++, f);
-	fputc(0, f);
+		zfputc(*s++, f);
+	zfputc(0, f);
 }
 
 /*
@@ -234,7 +234,7 @@ static void writesection(struct Section *pSect, FILE *f)
 
 	fputlong(pSect->nPC, f);
 
-	fputc(pSect->nType, f);
+	zfputc(pSect->nType, f);
 
 	fputlong(pSect->nOrg, f);
 	fputlong(pSect->nBank, f);
@@ -243,7 +243,7 @@ static void writesection(struct Section *pSect, FILE *f)
 	if ((pSect->nType == SECT_ROM0) || (pSect->nType == SECT_ROMX)) {
 		struct Patch *pPatch;
 
-		fwrite(pSect->tData, 1, pSect->nPC, f);
+		zfwrite(pSect->tData, 1, pSect->nPC, f);
 		fputlong(countpatches(pSect), f);
 
 		pPatch = pSect->pPatches;
@@ -290,7 +290,7 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 	}
 
 	fputstring(symname, f);
-	fputc(type, f);
+	zfputc(type, f);
 
 	if (type != SYM_IMPORT) {
 		fputstring(pSym->tzFileName, f);
@@ -320,11 +320,8 @@ static uint32_t addsymbol(struct sSymbol *pSym)
 		ppPSym = &((*ppPSym)->pBucketNext);
 	}
 
-	pPSym = malloc(sizeof(struct PatchSymbol));
+	pPSym = zmalloc(sizeof(struct PatchSymbol));
 	*ppPSym = pPSym;
-
-	if (pPSym == NULL)
-		fatalerror("No memory for patchsymbol");
 
 	pPSym->pNext = NULL;
 	pPSym->pBucketNext = NULL;
@@ -363,10 +360,7 @@ struct Patch *allocpatch(void)
 {
 	struct Patch *pPatch;
 
-	pPatch = malloc(sizeof(struct Patch));
-
-	if (pPatch == NULL)
-		fatalerror("No memory for patch");
+	pPatch = zmalloc(sizeof(struct Patch));
 
 	pPatch->pNext = pCurrentSection->pPatches;
 	pPatch->nRPNSize = 0;
@@ -541,8 +535,8 @@ void out_WriteObject(void)
 	struct PatchSymbol *pSym;
 	struct Section *pSect;
 
-	fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
-	       strlen(RGBDS_OBJECT_VERSION_STRING), f);
+	zfwrite(RGBDS_OBJECT_VERSION_STRING, 1,
+		strlen(RGBDS_OBJECT_VERSION_STRING), f);
 
 	fputlong(countsymbols(), f);
 	fputlong(countsections(), f);
@@ -559,7 +553,7 @@ void out_WriteObject(void)
 		pSect = pSect->pNext;
 	}
 
-	fclose(f);
+	zfclose(f);
 }
 
 /*
@@ -618,14 +612,10 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 		pSect = pSect->pNext;
 	}
 
-	pSect = malloc(sizeof(struct Section));
+	pSect = zmalloc(sizeof(struct Section));
 	*ppSect = pSect;
-	if (pSect == NULL)
-		fatalerror("Not enough memory for section");
 
-	pSect->pzName = malloc(strlen(pzName) + 1);
-	if (pSect->pzName == NULL)
-		fatalerror("Not enough memory for sectionname");
+	pSect->pzName = zmalloc(strlen(pzName) + 1);
 
 	strcpy(pSect->pzName, pzName);
 	pSect->nType = secttype;
@@ -908,9 +898,9 @@ void out_BinaryFile(char *s)
 
 	int32_t fsize;
 
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	zfseek(f, 0, SEEK_END);
+	fsize = zftell(f);
+	zfseek(f, 0, SEEK_SET);
 
 	checkcodesection();
 	checksectionoverflow(fsize);
@@ -925,7 +915,7 @@ void out_BinaryFile(char *s)
 	pCurrentSection->nPC += fsize;
 	nPC += fsize;
 	pPCSymbol->nValue += fsize;
-	fclose(f);
+	zfclose(f);
 }
 
 void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
@@ -944,8 +934,8 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 
 	int32_t fsize;
 
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
+	zfseek(f, 0, SEEK_END);
+	fsize = zftell(f);
 
 	if (start_pos >= fsize)
 		fatalerror("Specified start position is greater than length of file");
@@ -953,7 +943,7 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	if ((start_pos + length) > fsize)
 		fatalerror("Specified range in INCBIN is out of bounds");
 
-	fseek(f, start_pos, SEEK_SET);
+	zfseek(f, start_pos, SEEK_SET);
 
 	checkcodesection();
 	checksectionoverflow(length);
@@ -969,5 +959,5 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	nPC += length;
 	pPCSymbol->nValue += length;
 
-	fclose(f);
+	zfclose(f);
 }

@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include "linkdefs.h"
+#include "safelibc.h"
 
 uint32_t nListCountEmpty;
 char *tzNewMacro;
@@ -190,22 +191,17 @@ static void copyrept(void)
 	src = pCurrentBuffer->pBuffer;
 	ulNewMacroSize = len;
 
-	tzNewMacro = malloc(ulNewMacroSize + 1);
-
-	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for REPT block.");
-
-	uint32_t i;
+	tzNewMacro = zmalloc(ulNewMacroSize + 1);
 
 	tzNewMacro[ulNewMacroSize] = 0;
-	for (i = 0; i < ulNewMacroSize; i += 1) {
+
+	for (uint32_t i = 0; i < ulNewMacroSize; i += 1) {
 		tzNewMacro[i] = src[i];
 		if (src[i] == '\n')
 			nLineNo+=1;
 	}
 
 	yyskipbytes(ulNewMacroSize + 4);
-
 }
 
 static uint32_t isMacro(char *s)
@@ -260,15 +256,12 @@ static void copymacro(void)
 	src = pCurrentBuffer->pBuffer;
 	ulNewMacroSize = len;
 
-	tzNewMacro = (char *)malloc(ulNewMacroSize+2);
-	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for MACRO definition.");
-
-	uint32_t i;
+	tzNewMacro = (char *)zmalloc(ulNewMacroSize+2);
 
 	tzNewMacro[ulNewMacroSize] = '\n';
 	tzNewMacro[ulNewMacroSize+1] = 0;
-	for (i = 0; i < ulNewMacroSize; i += 1) {
+
+	for (uint32_t i = 0; i < ulNewMacroSize; i += 1) {
 		tzNewMacro[i] = src[i];
 		if (src[i] == '\n')
 			nLineNo += 1;
@@ -1378,6 +1371,7 @@ section		: T_POP_SECTION string comma sectiontype
 		{
 			if (($6 < 0) || ($6 > 0x10000))
 				yyerror("Address $%x not 16-bit", $6);
+
 			bankrangecheck($2, $4, $6, $11);
 		}
 		| T_POP_SECTION string comma sectiontype comma T_OP_ALIGN '[' uconst ']' comma T_OP_BANK '[' uconst ']'
