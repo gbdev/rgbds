@@ -25,6 +25,7 @@
 
 #include "extern/err.h"
 
+#include "safelibc.h"
 #include "types.h"
 
 static struct sContext *pFileStack;
@@ -62,10 +63,7 @@ static void pushcontext(void)
 	while (*ppFileStack)
 		ppFileStack = &((*ppFileStack)->pNext);
 
-	*ppFileStack = malloc(sizeof(struct sContext));
-
-	if (*ppFileStack == NULL)
-		fatalerror("No memory for context");
+	*ppFileStack = zmalloc(sizeof(struct sContext));
 
 	(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 	(*ppFileStack)->pNext = NULL;
@@ -126,7 +124,7 @@ static int32_t popcontext(void)
 	nLineNo = pLastFile->nLine;
 
 	if (nCurrentStatus == STAT_isInclude)
-		fclose(pCurrentFile);
+		zfclose(pCurrentFile);
 
 	if (nCurrentStatus == STAT_isMacro) {
 		sym_FreeCurrentMacroArgs();
@@ -158,9 +156,10 @@ static int32_t popcontext(void)
 		fatalerror("%s: Internal error.", __func__);
 	}
 
-	free(*ppLastFile);
+	zfree(*ppLastFile);
 	*ppLastFile = NULL;
 	yy_switch_to_buffer(CurrentFlexHandle);
+
 	return 0;
 }
 
@@ -231,7 +230,8 @@ void fstk_AddIncludePath(char *s)
 	if (NextIncPath == MAXINCPATHS)
 		fatalerror("Too many include directories passed from command line");
 
-	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s", s) >= _MAX_PATH)
+	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s", s) >=
+	    _MAX_PATH)
 		fatalerror("Include path too long '%s'", s);
 }
 
@@ -244,7 +244,10 @@ FILE *fstk_FindFile(char *fname)
 	if (fname == NULL)
 		return NULL;
 
-	f = fopen(fname, "rb");
+	/*
+	 * Try relative path first.
+	 */
+	f = fopen(fname, "rb"); /* Don't crash if not found */
 
 	if (f != NULL || errno != ENOENT) {
 		if (dependfile)
@@ -253,6 +256,9 @@ FILE *fstk_FindFile(char *fname)
 		return f;
 	}
 
+	/*
+	 * Try all include paths if the relative path failed.
+	 */
 	for (i = 0; i < NextIncPath; ++i) {
 		/*
 		 * The function snprintf() does not write more than `size` bytes
@@ -269,7 +275,7 @@ FILE *fstk_FindFile(char *fname)
 		if (fullpathlen >= (int)sizeof(path))
 			continue;
 
-		f = fopen(path, "rb");
+		f = fopen(path, "rb"); /* Don't crash if not found */
 
 		if (f != NULL || errno != ENOENT) {
 			if (dependfile) {

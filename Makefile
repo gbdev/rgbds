@@ -58,6 +58,7 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/extern/err.o \
 	src/extern/utf8decoder.o \
+	src/safelibc.o \
 	src/version.o
 
 src/asm/asmy.h: src/asm/asmy.c
