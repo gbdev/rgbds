@@ -450,10 +450,12 @@ char *sym_FindMacroArg(int32_t i)
 	if (i == -1)
 		i = MAXMACROARGS + 1;
 
-	assert(i - 1 >= 0);
+	if (i < 1)
+		fatalerror("Macro argument invalid: %d", i);
 
-	assert((size_t)(i - 1)
-	       < sizeof(currentmacroargs) / sizeof(*currentmacroargs));
+	if ((size_t)(i - 1)
+	       >= sizeof(currentmacroargs) / sizeof(*currentmacroargs))
+		fatalerror("Macro argument index too big: %d", i);
 
 	return currentmacroargs[i - 1];
 }
@@ -489,8 +491,10 @@ void sym_FreeCurrentMacroArgs(void)
 	int32_t i;
 
 	for (i = 0; i <= MAXMACROARGS; i += 1) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = NULL;
+		if (currentmacroargs[i] != NULL) {
+			zfree(currentmacroargs[i]);
+			currentmacroargs[i] = NULL;
+		}
 	}
 }
 
