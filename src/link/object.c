@@ -17,13 +17,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
-
 #include "extern/err.h"
 
 #include "link/assign.h"
 #include "link/mylink.h"
 #include "link/main.h"
+
+#include "common.h"
+#include "safelibc.h"
 
 struct sSymbol **tSymbols;
 struct sSection *pSections;
@@ -38,10 +39,10 @@ static int32_t readlong(FILE *f)
 {
 	int32_t r;
 
-	r = fgetc(f);
-	r |= fgetc(f) << 8;
-	r |= fgetc(f) << 16;
-	r |= fgetc(f) << 24;
+	r = zfgetc(f);
+	r |= zfgetc(f) << 8;
+	r |= zfgetc(f) << 16;
+	r |= zfgetc(f) << 24;
 
 	return r;
 }
@@ -54,28 +55,21 @@ int32_t readasciiz(char **dest, FILE *f)
 	size_t r = 0;
 
 	size_t bufferLength = 16;
-	char *start = malloc(bufferLength);
+	char *start = zmalloc(bufferLength);
 	char *s = start;
-
-	if (!s)
-		err(1, "%s: Couldn't allocate memory", __func__);
 
 	while (((*s++) = fgetc(f)) != 0) {
 		r += 1;
 
 		if (r >= bufferLength) {
 			bufferLength *= 2;
-			start = realloc(start, bufferLength);
-			if (!start) {
-				err(1, "%s: Couldn't allocate memory",
-				    __func__);
-			}
+			start = zrealloc(start, bufferLength);
 			s = start + r;
 		}
 	}
 
 	*dest = start;
-	return (r + 1);
+	return r + 1;
 }
 
 /*
@@ -93,14 +87,13 @@ struct sSection *AllocSection(void)
 	while (*ppSections)
 		ppSections = &((*ppSections)->pNext);
 
-	*ppSections = malloc(sizeof **ppSections);
-	if (!*ppSections)
-		err(1, "%s: Couldn't allocate memory", __func__);
+	*ppSections = zmalloc(sizeof **ppSections);
 
 	(*ppSections)->tSymbols = tSymbols;
 	(*ppSections)->pNext = NULL;
 	(*ppSections)->pPatches = NULL;
 	(*ppSections)->oAssigned = 0;
+
 	return *ppSections;
 }
 
@@ -111,12 +104,10 @@ struct sSymbol *obj_ReadSymbol(FILE *f, char *tzObjectfile)
 {
 	struct sSymbol *pSym;
 
-	pSym = malloc(sizeof(*pSym));
-	if (!pSym)
-		err(1, "%s: Couldn't allocate memory", __func__);
+	pSym = zmalloc(sizeof(*pSym));
 
 	readasciiz(&pSym->pzName, f);
-	pSym->Type = (enum eSymbolType)fgetc(f);
+	pSym->Type = (enum eSymbolType)zfgetc(f);
 
 	pSym->pzObjFileName = tzObjectfile;
 
@@ -147,7 +138,7 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 	pSection->pzName = pzName;
 
 	pSection->nByteSize = readlong(f);
-	pSection->Type = (enum eSectionType)fgetc(f);
+	pSection->Type = (enum eSectionType)zfgetc(f);
 	pSection->nOrg = readlong(f);
 	pSection->nBank = readlong(f);
 	pSection->nAlign = readlong(f);
@@ -213,17 +204,12 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 		return pSection;
 	}
 
-	pSection->pData = malloc(pSection->nByteSize);
-	if (!pSection->pData)
-		err(1, "%s: Couldn't allocate memory", __func__);
+	pSection->pData = zmalloc(pSection->nByteSize);
 
 	int32_t nNumberOfPatches;
 	struct sPatch **ppPatch, *pPatch;
 
-	if (fread(pSection->pData, sizeof(uint8_t), pSection->nByteSize, f)
-	    != pSection->nByteSize) {
-		err(1, "%s: Read error", __func__);
-	}
+	zfread(pSection->pData, sizeof(uint8_t), pSection->nByteSize, f);
 
 	nNumberOfPatches = readlong(f);
 	ppPatch = &pSection->pPatches;
@@ -232,28 +218,19 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 	 * And patches...
 	 */
 	while (nNumberOfPatches--) {
-		pPatch = malloc(sizeof(*pPatch));
-		if (!pPatch)
-			err(1, "%s: Couldn't allocate memory", __func__);
+		pPatch = zmalloc(sizeof(*pPatch));
 
 		*ppPatch = pPatch;
 		readasciiz(&pPatch->pzFilename, f);
 		pPatch->nLineNo = readlong(f);
 		pPatch->nOffset = readlong(f);
-		pPatch->Type = (enum ePatchType)fgetc(f);
+		pPatch->Type = (enum ePatchType)zfgetc(f);
 		pPatch->nRPNSize = readlong(f);
 
 		if (pPatch->nRPNSize > 0) {
-			pPatch->pRPN = malloc(pPatch->nRPNSize);
-			if (!pPatch->pRPN) {
-				err(1, "%s: Couldn't allocate memory",
-				    __func__);
-			}
-
-			if (fread(pPatch->pRPN, sizeof(uint8_t),
-				  pPatch->nRPNSize, f) != pPatch->nRPNSize) {
-				errx(1, "%s: Read error", __func__);
-			}
+			pPatch->pRPN = zmalloc(pPatch->nRPNSize);
+			zfread(pPatch->pRPN, sizeof(uint8_t),
+			       pPatch->nRPNSize, f);
 		} else {
 			pPatch->pRPN = NULL;
 		}
@@ -276,9 +253,7 @@ void obj_ReadRGB(FILE *pObjfile, char *tzObjectfile)
 	/* First comes the symbols */
 
 	if (nNumberOfSymbols) {
-		tSymbols = malloc(nNumberOfSymbols * sizeof(*tSymbols));
-		if (!tSymbols)
-			err(1, "%s: Couldn't allocate memory", __func__);
+		tSymbols = zmalloc(nNumberOfSymbols * sizeof(*tSymbols));
 
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
@@ -328,10 +303,8 @@ void obj_ReadOpenFile(FILE *pObjfile, char *tzObjectfile)
 {
 	char tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING) + 1];
 
-	if (fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
-		  pObjfile) != strlen(RGBDS_OBJECT_VERSION_STRING)) {
-		errx(1, "%s: Read error", tzObjectfile);
-	}
+	zfread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
+	       pObjfile);
 
 	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
 
@@ -364,7 +337,7 @@ void obj_Readfile(char *tzObjectfile)
 		err(1, "Unable to open object '%s'", tzObjectfile);
 
 	obj_ReadOpenFile(pObjfile, tzObjectfile);
-	fclose(pObjfile);
+	zfclose(pObjfile);
 
 	oReadLib = 0;
 }
@@ -373,10 +346,10 @@ int32_t file_Length(FILE *f)
 {
 	uint32_t r, p;
 
-	p = ftell(f);
-	fseek(f, 0, SEEK_END);
-	r = ftell(f);
-	fseek(f, p, SEEK_SET);
+	p = zftell(f);
+	zfseek(f, 0, SEEK_END);
+	r = zftell(f);
+	zfseek(f, p, SEEK_SET);
 
 	return r;
 }

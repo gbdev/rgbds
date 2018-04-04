@@ -76,6 +76,7 @@ rgblink_obj := \
 	src/link/script.o \
 	src/link/symbol.o \
 	src/extern/err.o \
+	src/safelibc.o \
 	src/version.o
 
 src/link/parser.h: src/link/parser.c

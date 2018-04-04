@@ -20,6 +20,8 @@
 #include "link/script.h"
 #include "link/symbol.h"
 
+#include "safelibc.h"
+
 struct sFreeArea {
 	int32_t nOrg;
 	int32_t nSize;
@@ -171,10 +173,7 @@ int32_t area_doAlloc(struct sFreeArea *pArea, int32_t org, int32_t size)
 
 		struct sFreeArea *pNewArea;
 
-		pNewArea = malloc(sizeof(struct sFreeArea));
-
-		if (pNewArea == NULL)
-			err(1, "%s: Failed to allocate memory", __func__);
+		pNewArea = zmalloc(sizeof(struct sFreeArea));
 
 		*pNewArea = *pArea;
 		pNewArea->pPrev = pArea;
@@ -507,12 +506,7 @@ void AssignSections(void)
 	 */
 
 	for (int32_t i = 0; i < BANK_INDEX_MAX; i += 1) {
-		BankFree[i] = malloc(sizeof(*BankFree[i]));
-
-		if (!BankFree[i]) {
-			errx(1, "%s: Couldn't allocate mem for bank %d",
-			     __func__, i);
-		}
+		BankFree[i] = zmalloc(sizeof(*BankFree[i]));
 
 		if (BankIndexIsROM0(i)) {
 			/* ROM0 bank */

@@ -21,6 +21,7 @@
 
 #include "parser.h"
 
+#include "safelibc.h"
 #include "types.h"
 
 extern int yyparse(void);
@@ -110,7 +111,7 @@ void script_Parse(const char * path)
 		yyparse();
 	} while (!feof(yyin));
 
-	fclose(yyin);
+	zfclose(yyin);
 }
 
 void script_IncludeFile(const char * path)
@@ -157,7 +158,7 @@ int32_t script_IncludeDepthGet(void)
 
 void script_IncludePop(void)
 {
-	fclose(yyin);
+	zfclose(yyin);
 
 	include_stack_ptr--;
 
