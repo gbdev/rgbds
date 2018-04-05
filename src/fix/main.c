@@ -207,8 +207,16 @@ int main(int argc, char *argv[])
 		err(1, "Error opening file %s", argv[argc - 1]);
 
 	/*
-	 * Write changes to ROM
+	 * Read ROM header
+	 *
+	 * Offsets in the buffer are 0x100 less than the equivalent in ROM.
 	 */
+
+	uint8_t header[0x50];
+	if (fseek(rom, 0x100, SEEK_SET) != 0)
+		err(1, "Could not locate ROM header");
+	if (fread(header, sizeof(uint8_t), sizeof header, rom) != sizeof header)
+		err(1, "Could not read ROM header");
 
 	if (fixlogo || trashlogo) {
 		/*
@@ -236,8 +244,7 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < sizeof(ninlogo); i++)
 				ninlogo[i] = ~ninlogo[i];
 
-		fseek(rom, 0x104, SEEK_SET);
-		fwrite(ninlogo, 1, 48, rom);
+		memcpy(header + 0x04, ninlogo, sizeof ninlogo);
 	}
 
 	if (settitle) {
@@ -258,11 +265,10 @@ int main(int argc, char *argv[])
 		 * characters may conflict with the title.
 		 */
 
-		fseek(rom, 0x134, SEEK_SET);
-		fwrite(title, 1, strlen(title) + 1, rom);
+		int n = snprintf((char *)header + 0x34, 16, "%s", title);
 
-		while (ftell(rom) < 0x143)
-			fputc(0, rom);
+		for (int i = 16; i > n; i--)
+			header[0x34 + i] = '\0';
 	}
 
 	if (setid) {
@@ -272,8 +278,7 @@ int main(int argc, char *argv[])
 		 * characters).
 		 */
 
-		fseek(rom, 0x13F, SEEK_SET);
-		fwrite(id, 1, 4, rom);
+		memcpy(header + 0x3F, id, 4);
 	}
 
 	if (colorcompatible) {
@@ -291,20 +296,12 @@ int main(int argc, char *argv[])
 		 * may conflict.
 		 */
 
-		uint8_t byte;
-
-		fseek(rom, 0x143, SEEK_SET);
-		byte = fgetc(rom);
-
-		byte |= 1 << 7;
+		header[0x43] |= 1 << 7;
 		if (coloronly)
-			byte |= 1 << 6;
+			header[0x43] |= 1 << 6;
 
-		if (byte & 0x3F)
+		if (header[0x43] & 0x3F)
 			warnx("Color flag conflicts with game title");
-
-		fseek(rom, 0x143, SEEK_SET);
-		fputc(byte, rom);
 	}
 
 	if (setnewlicensee) {
@@ -320,8 +317,8 @@ int main(int argc, char *argv[])
 		 * as a Super Game Boy flag.
 		 */
 
-		fseek(rom, 0x144, SEEK_SET);
-		fwrite(newlicensee, 1, 2, rom);
+		header[0x44] = newlicensee[0];
+		header[0x45] = newlicensee[1];
 	}
 
 	if (super) {
@@ -340,8 +337,7 @@ int main(int argc, char *argv[])
 		if (!setlicensee)
 			warnx("You should probably set both '-s' and '-l 0x33'");
 
-		fseek(rom, 0x146, SEEK_SET);
-		fputc(3, rom);
+		header[0x46] = 3;
 	}
 
 	if (setcartridge) {
@@ -351,8 +347,7 @@ int main(int argc, char *argv[])
 		 * external RAM, timer, rumble, or battery.
 		 */
 
-		fseek(rom, 0x147, SEEK_SET);
-		fputc(cartridge, rom);
+		header[0x47] = cartridge;
 	}
 
 	if (resize) {
@@ -366,8 +361,10 @@ int main(int argc, char *argv[])
 		int headbyte;
 		uint8_t *buf;
 
-		fseek(rom, 0, SEEK_END);
-		romsize = ftell(rom);
+		if (fseek(rom, 0, SEEK_END) != 0)
+			err(1, "Could not pad ROM file");
+		if ((romsize = ftell(rom)) == -1)
+			err(1, "Could not pad ROM file");
 		newsize = 0x8000;
 
 		headbyte = 0;
@@ -379,12 +376,13 @@ int main(int argc, char *argv[])
 		if (newsize > 0x800000) /* ROM is bigger than 8MiB */
 			warnx("ROM size is bigger than 8MiB");
 
-		buf = malloc(newsize - romsize);
+		if ((buf = malloc(newsize - romsize)) == NULL)
+			err(1, "Could not pad ROM file");
 		memset(buf, padvalue, newsize - romsize);
-		fwrite(buf, 1, newsize - romsize, rom);
+		if (fwrite(buf, 1, newsize - romsize, rom) != newsize - romsize)
+			err(1, "Could not pad ROM file");
 
-		fseek(rom, 0x148, SEEK_SET);
-		fputc(headbyte, rom);
+		header[0x48] = headbyte;
 
 		free(buf);
 	}
@@ -394,8 +392,7 @@ int main(int argc, char *argv[])
 		 * Offset 0x149: RAM Size
 		 */
 
-		fseek(rom, 0x149, SEEK_SET);
-		fputc(ramsize, rom);
+		header[0x49] = ramsize;
 	}
 
 	if (nonjapan) {
@@ -403,8 +400,7 @@ int main(int argc, char *argv[])
 		 * Offset 0x14A: Non-Japanese Region Flag
 		 */
 
-		fseek(rom, 0x14A, SEEK_SET);
-		fputc(1, rom);
+		header[0x4A] = 1;
 	}
 
 	if (setlicensee) {
@@ -420,8 +416,7 @@ int main(int argc, char *argv[])
 		 * See also: the New Licensee ID at 0x144–0x145.
 		 */
 
-		fseek(rom, 0x14B, SEEK_SET);
-		fputc(licensee, rom);
+		header[0x4B] = licensee;
 	}
 
 	if (setversion) {
@@ -430,8 +425,7 @@ int main(int argc, char *argv[])
 		 * Which version of the ROM this is.
 		 */
 
-		fseek(rom, 0x14C, SEEK_SET);
-		fputc(version, rom);
+		header[0x4C] = version;
 	}
 
 	if (fixheadsum || trashheadsum) {
@@ -441,16 +435,25 @@ int main(int argc, char *argv[])
 
 		uint8_t headcksum = 0;
 
-		fseek(rom, 0x134, SEEK_SET);
-		for (int i = 0; i < (0x14D - 0x134); ++i)
-			headcksum = headcksum - fgetc(rom) - 1;
+		for (int i = 0x34; i < 0x4D; ++i)
+			headcksum = headcksum - header[i] - 1;
 
 		if (trashheadsum)
 			headcksum = ~headcksum;
 
-		fseek(rom, 0x14D, SEEK_SET);
-		fputc(headcksum, rom);
+		header[0x4D] = headcksum;
 	}
+
+	/*
+	 * Before calculating the global checksum, we must write the modified
+	 * header to the ROM.
+	 */
+
+	if (fseek(rom, 0x100, SEEK_SET) != 0)
+		err(1, "Could not locate header for writing");
+
+	if (fwrite(header, sizeof(uint8_t), sizeof header, rom) != sizeof header)
+		err(1, "Could not write modified ROM header");
 
 	if (fixglobalsum || trashglobalsum) {
 		/*
@@ -459,15 +462,19 @@ int main(int argc, char *argv[])
 
 		uint16_t globalcksum = 0;
 
-		rewind(rom);
-		for (int i = 0; i < 0x14E; ++i)
-			globalcksum += fgetc(rom);
+		if (fseek(rom, 0, SEEK_SET) != 0)
+			err(1, "Could not start calculating global checksum");
 
+		int i = 0;
 		int byte;
+		while ((byte = fgetc(rom)) != EOF) {
+			i++;
+			if (i != 0x150)
+				globalcksum += byte;
+		}
 
-		fseek(rom, 0x150, SEEK_SET);
-		while ((byte = fgetc(rom)) != EOF)
-			globalcksum += byte;
+		if (ferror(rom))
+			err(1, "Could not calculate global checksum");
 
 		if (trashglobalsum)
 			globalcksum = ~globalcksum;
@@ -475,9 +482,12 @@ int main(int argc, char *argv[])
 		fseek(rom, 0x14E, SEEK_SET);
 		fputc(globalcksum >> 8, rom);
 		fputc(globalcksum & 0xFF, rom);
+		if (ferror(rom))
+			err(1, "Could not write global checksum");
 	}
 
-	fclose(rom);
+	if (fclose(rom) != 0)
+		err(1, "Could not complete ROM write");
 
 	return 0;
 }
