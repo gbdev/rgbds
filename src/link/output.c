@@ -110,46 +110,53 @@ void Output(void)
 	FILE *f_overlay = NULL;
 
 	/*
-	 * Apply overlay
+	 * Load overlay
+	 */
+
+	if (tzOverlayname) {
+		f_overlay = fopen(tzOverlayname, "rb");
+
+		if (!f_overlay) {
+			errx(1, "Failed to open overlay file %s\n",
+			     tzOverlayname);
+		}
+
+		fseek(f_overlay, 0, SEEK_END);
+
+		if (ftell(f_overlay) % 0x4000 != 0)
+			errx(1, "Overlay file must be aligned to 0x4000 bytes.");
+
+		MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
+
+		if (MaxOverlayBank < 1)
+			errx(1, "Overlay file must be at least 0x8000 bytes.");
+
+		if (MaxOverlayBank > MaxBankUsed)
+			MaxBankUsed = MaxOverlayBank;
+	}
+
+	/*
+	 * Write ROM.
 	 */
 
 	f = fopen(tzOutname, "wb");
-
 	if (f != NULL) {
-		if (tzOverlayname) {
-			f_overlay = fopen(tzOverlayname, "rb");
-
-			if (!f_overlay) {
-				errx(1, "Failed to open overlay file %s\n",
-				     tzOverlayname);
-			}
-
-			fseek(f_overlay, 0, SEEK_END);
-
-			if (ftell(f_overlay) % 0x4000 != 0)
-				errx(1, "Overlay file must be aligned to 0x4000 bytes.");
-
-			MaxOverlayBank = (ftell(f_overlay) / 0x4000) - 1;
-
-			if (MaxOverlayBank < 1)
-				errx(1, "Overlay file must be at least 0x8000 bytes.");
-
-			if (MaxOverlayBank > MaxBankUsed)
-				MaxBankUsed = MaxOverlayBank;
-		}
-
 		writehome(f, f_overlay);
 		for (i = 1; i <= MaxBankUsed; i += 1)
 			writebank(f, f_overlay, i);
 
 		fclose(f);
-
-		if (tzOverlayname)
-			fclose(f_overlay);
 	}
 
 	/*
-	 * Add regular sections
+	 * Close overlay
+	 */
+
+	if (tzOverlayname)
+		fclose(f_overlay);
+
+	/*
+	 * Add regular sections to map and sym files.
 	 */
 
 	for (i = BANK_INDEX_WRAM0; i < BANK_INDEX_MAX; i++) {
