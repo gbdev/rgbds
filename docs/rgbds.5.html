@@ -65,7 +65,9 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
         LONG    LineNum   ; Line number in the file where the symbol is defined. 
  
         LONG    SectionID ; The section number (of this object file) in which 
-                          ; this symbol is defined. 
+                          ; this symbol is defined. If it doesn't belong to any 
+                          ; specific section (like a constant), this field has 
+                          ; the value -1. 
  
         LONG    Value     ; The symbols value. It's the offset into that 
                           ; symbol's section. 
