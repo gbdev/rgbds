@@ -213,9 +213,11 @@ int main(int argc, char *argv[])
 	 */
 
 	uint8_t header[0x50];
+
 	if (fseek(rom, 0x100, SEEK_SET) != 0)
 		err(1, "Could not locate ROM header");
-	if (fread(header, sizeof(uint8_t), sizeof header, rom) != sizeof header)
+	if (fread(header, sizeof(uint8_t), sizeof(header), rom)
+	    != sizeof(header))
 		err(1, "Could not read ROM header");
 
 	if (fixlogo || trashlogo) {
@@ -240,11 +242,12 @@ int main(int argc, char *argv[])
 			0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
 		};
 
-		if (trashlogo)
+		if (trashlogo) {
 			for (int i = 0; i < sizeof(ninlogo); i++)
 				ninlogo[i] = ~ninlogo[i];
+		}
 
-		memcpy(header + 0x04, ninlogo, sizeof ninlogo);
+		memcpy(header + 0x04, ninlogo, sizeof(ninlogo));
 	}
 
 	if (settitle) {
@@ -363,8 +366,11 @@ int main(int argc, char *argv[])
 
 		if (fseek(rom, 0, SEEK_END) != 0)
 			err(1, "Could not pad ROM file");
-		if ((romsize = ftell(rom)) == -1)
+
+		romsize = ftell(rom);
+		if (romsize == -1)
 			err(1, "Could not pad ROM file");
+
 		newsize = 0x8000;
 
 		headbyte = 0;
@@ -454,7 +460,8 @@ int main(int argc, char *argv[])
 	if (fseek(rom, 0x100, SEEK_SET) != 0)
 		err(1, "Could not locate header for writing");
 
-	if (fwrite(header, sizeof(uint8_t), sizeof header, rom) != sizeof header)
+	if (fwrite(header, sizeof(uint8_t), sizeof(header), rom)
+	    != sizeof(header))
 		err(1, "Could not write modified ROM header");
 
 	if (fixglobalsum || trashglobalsum) {
@@ -469,6 +476,7 @@ int main(int argc, char *argv[])
 
 		int i = 0;
 		int byte;
+
 		while ((byte = fgetc(rom)) != EOF) {
 			i++;
 			if (i != 0x150)
