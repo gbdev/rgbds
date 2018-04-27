@@ -36,14 +36,14 @@ uint8_t oReadLib;
  */
 static int32_t readlong(FILE *f)
 {
-	int32_t r;
+	uint32_t r;
 
-	r = fgetc(f);
-	r |= fgetc(f) << 8;
-	r |= fgetc(f) << 16;
-	r |= fgetc(f) << 24;
+	r = ((uint32_t)(uint8_t)fgetc(f));
+	r |= ((uint32_t)(uint8_t)fgetc(f)) << 8;
+	r |= ((uint32_t)(uint8_t)fgetc(f)) << 16;
+	r |= ((uint32_t)(uint8_t)fgetc(f)) << 24;
 
-	return r;
+	return (int32_t)r;
 }
 
 /*

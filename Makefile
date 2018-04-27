@@ -207,7 +207,12 @@ develop:
 		-Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond \
 		-Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op \
 		-Wnested-externs -Wno-aggressive-loop-optimizations -Winline \
-		-Wundef -Wstrict-prototypes -Wold-style-definition"
+		-Wundef -Wstrict-prototypes -Wold-style-definition \
+		-fsanitize=shift -fsanitize=integer-divide-by-zero \
+		-fsanitize=unreachable -fsanitize=vla-bound \
+		-fsanitize=signed-integer-overflow -fsanitize=bounds \
+		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
+		-fsanitize=alignment -fsanitize=null"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
