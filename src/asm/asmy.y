@@ -1264,19 +1264,38 @@ const		: T_ID					{ $$ = sym_GetConstantValue($1); }
 		| const T_OP_XOR const			{ $$ = $1 ^ $3; }
 		| const T_OP_OR const			{ $$ = $1 | $3; }
 		| const T_OP_AND const			{ $$ = $1 & $3; }
-		| const T_OP_SHL const			{ $$ = $1 << $3; }
-		| const T_OP_SHR const			{ $$ = $1 >> $3; }
+		| const T_OP_SHL const
+		{
+			if ($1 < 0)
+				warning("Left shift of negative value: %d", $1);
+
+			if ($3 < 0)
+				fatalerror("Shift by negative value: %d", $3);
+			else if ($3 >= 32)
+				fatalerror("Shift by too big value: %d", $3);
+
+			$$ = $1 << $3;
+		}
+		| const T_OP_SHR const
+		{
+			if ($3 < 0)
+				fatalerror("Shift by negative value: %d", $3);
+			else if ($3 >= 32)
+				fatalerror("Shift by too big value: %d", $3);
+
+			$$ = $1 >> $3;
+		}
 		| const T_OP_MUL const			{ $$ = $1 * $3; }
 		| const T_OP_DIV const
 		{
 			if ($3 == 0)
-				fatalerror("division by zero");
+				fatalerror("Division by zero");
 			$$ = $1 / $3;
 		}
 		| const T_OP_MOD const
 		{
 			if ($3 == 0)
-				fatalerror("division by zero");
+				fatalerror("Division by zero");
 			$$ = $1 % $3;
 		}
 		| T_OP_ADD const %prec NEG		{ $$ = +$2; }

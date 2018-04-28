@@ -330,6 +330,15 @@ void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
+
+	if (src1->nVal < 0)
+		warning("Left shift of negative value: %d", src1->nVal);
+
+	if (src2->nVal < 0)
+		fatalerror("Shift by negative value: %d", src2->nVal);
+	else if (src2->nVal >= 32)
+		fatalerror("Shift by too big value: %d", src2->nVal);
+
 	expr->nVal = (expr->nVal << src2->nVal);
 	pushbyte(expr, RPN_SHL);
 }
@@ -338,6 +347,11 @@ void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
+	if (src2->nVal < 0)
+		fatalerror("Shift by negative value: %d", src2->nVal);
+	else if (src2->nVal >= 32)
+		fatalerror("Shift by too big value: %d", src2->nVal);
+
 	expr->nVal = (expr->nVal >> src2->nVal);
 	pushbyte(expr, RPN_SHR);
 }
@@ -355,7 +369,7 @@ void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 {
 	joinexpr();
 	if (src2->nVal == 0)
-		fatalerror("division by zero");
+		fatalerror("Division by zero");
 
 	expr->nVal = (expr->nVal / src2->nVal);
 	pushbyte(expr, RPN_DIV);
@@ -366,7 +380,7 @@ void rpn_MOD(struct Expression *expr, const struct Expression *src1,
 {
 	joinexpr();
 	if (src2->nVal == 0)
-		fatalerror("division by zero");
+		fatalerror("Division by zero");
 
 	expr->nVal = (expr->nVal % src2->nVal);
 	pushbyte(expr, RPN_MOD);
