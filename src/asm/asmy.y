@@ -1707,6 +1707,14 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
 			$2.nVal &= 0xFF;
 			out_RelByte(&$2);
 		}
+		| T_Z80_LDIO T_MODE_A comma T_MODE_C_IND
+		{
+			out_AbsByte(0xF2);
+		}
+		| T_Z80_LDIO T_MODE_C_IND comma T_MODE_A
+		{
+			out_AbsByte(0xE2);
+		}
 ;
 
 z80_ld		: z80_ld_mem

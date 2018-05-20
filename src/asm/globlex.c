@@ -312,6 +312,7 @@ const struct sLexInitString lexer_strings[] = {
 	{"sp", T_MODE_SP},
 	{"[c]", T_MODE_C_IND},
 	{"[$ff00+c]", T_MODE_C_IND},
+	{"[$ff00 + c]", T_MODE_C_IND},
 
 	{"a", T_TOKEN_A},
 	{"b", T_TOKEN_B},
