@@ -15,20 +15,30 @@ pushd link
 popd
 
 # Test some significant external projects that use RGBDS
+# When adding new ones, don't forget to add them to the .gitignore!
 
-git clone https://github.com/pret/pokecrystal.git --depth=1
+if [ ! -d pokecrystal ]; then
+	git clone https://github.com/pret/pokecrystal.git --depth=1
+fi
 pushd pokecrystal
+git pull
 make -j
 make compare
 popd
 
-git clone --recursive https://github.com/pret/pokered.git --depth=1
+if [ ! -d pokered ]; then
+	git clone --recursive https://github.com/pret/pokered.git --depth=1
+fi
 pushd pokered
+git pull
 make -j
 make compare
 popd
 
-git clone https://github.com/AntonioND/ucity.git --depth=1
+if [ ! -d ucity ]; then
+	git clone https://github.com/AntonioND/ucity.git --depth=1
+fi
 pushd ucity
+git pull
 make -j
 popd
