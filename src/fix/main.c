@@ -478,9 +478,9 @@ int main(int argc, char *argv[])
 		int byte;
 
 		while ((byte = fgetc(rom)) != EOF) {
-			i++;
-			if (i != 0x150)
+			if (i != 0x14E && i != 0x14F)
 				globalcksum += byte;
+			i++;
 		}
 
 		if (ferror(rom))
