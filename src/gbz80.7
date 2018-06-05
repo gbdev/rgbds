@@ -1105,7 +1105,21 @@ Cycles: 3
 .Pp
 Bytes: 1
 .Pp
-Flags: None affected.
+Flags:
+.Bl -bullet -compact
+.It
+.Sy Z :
+Set from bit 7 of the popped low byte.
+.It
+.Sy N :
+Set from bit 6 of the popped low byte.
+.It
+.Sy H :
+Set from bit 5 of the popped low byte.
+.It
+.Sy C :
+Set from bit 4 of the popped low byte.
+.El
 .Ss POP r16
 Pop register
 .Ar r16
@@ -1119,7 +1133,15 @@ Flags: None affected.
 .Ss PUSH AF
 Push register
 .Sy AF
-into the stack.
+into the stack. The low byte's bit 7 corresponds to the
+.Sy Z
+flag, its bit 6 to the
+.Sy N
+flag, bit 5 to the
+.Sy H
+flag, and bit 4 to the
+.Sy C
+flag. Bits 3 to 0 are reset.
 .Pp
 Cycles: 4
 .Pp
