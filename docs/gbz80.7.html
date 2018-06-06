@@ -1148,7 +1148,17 @@ Cycles: 3
 <div class="Pp"></div>
 Bytes: 1
 <div class="Pp"></div>
-Flags: None affected.
+Flags:
+<ul class="Bl-bullet Bl-compact">
+  <li class="It-bullet"><b class="Sy" title="Sy">Z</b>: Set from bit 7 of the
+      popped low byte.</li>
+  <li class="It-bullet"><b class="Sy" title="Sy">N</b>: Set from bit 6 of the
+      popped low byte.</li>
+  <li class="It-bullet"><b class="Sy" title="Sy">H</b>: Set from bit 5 of the
+      popped low byte.</li>
+  <li class="It-bullet"><b class="Sy" title="Sy">C</b>: Set from bit 4 of the
+      popped low byte.</li>
+</ul>
 <h2 class="Ss" title="Ss" id="POP_r16"><a class="selflink" href="#POP_r16">POP
   r16</a></h2>
 Pop register <var class="Ar" title="Ar">r16</var> from the stack.
@@ -1160,7 +1170,11 @@ Bytes: 1
 Flags: None affected.
 <h2 class="Ss" title="Ss" id="PUSH_AF"><a class="selflink" href="#PUSH_AF">PUSH
   AF</a></h2>
-Push register <b class="Sy" title="Sy">AF</b> into the stack.
+Push register <b class="Sy" title="Sy">AF</b> into the stack. The low byte's bit
+  7 corresponds to the <b class="Sy" title="Sy">Z</b> flag, its bit 6 to the
+  <b class="Sy" title="Sy">N</b> flag, bit 5 to the
+  <b class="Sy" title="Sy">H</b> flag, and bit 4 to the
+  <b class="Sy" title="Sy">C</b> flag. Bits 3 to 0 are reset.
 <div class="Pp"></div>
 Cycles: 4
 <div class="Pp"></div>
