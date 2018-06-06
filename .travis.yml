@@ -6,6 +6,7 @@ install:
   - sudo make install
 os:
   - linux
+  - osx
 compiler:
   - clang
   - gcc
