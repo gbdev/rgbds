@@ -28,7 +28,6 @@
 struct sSymbol **tSymbols;
 struct sSection *pSections;
 struct sSection *pLibSections;
-uint8_t dummymem;
 uint8_t oReadLib;
 
 /*
@@ -209,7 +208,7 @@ struct sSection *obj_ReadRGBSection(FILE *f)
 	if (pSection->nByteSize == 0) {
 		/* Skip number of patches */
 		readlong(f);
-		pSection->pData = &dummymem;
+		pSection->pData = NULL;
 		return pSection;
 	}
 
@@ -283,7 +282,7 @@ void obj_ReadRGB(FILE *pObjfile, char *tzObjectfile)
 		for (i = 0; i < nNumberOfSymbols; i += 1)
 			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
 	} else {
-		tSymbols = (struct sSymbol **)&dummymem;
+		tSymbols = NULL;
 	}
 
 	/* Next we have the sections */
