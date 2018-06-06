@@ -2,7 +2,7 @@
 
 if [ $TRAVIS_OS_NAME = "osx" ]; then
     brew update
-    brew install libpng pkg-config
+    brew install libpng pkg-config md5sha1sum
 else # linux
     sudo apt-get -qq update
     sudo apt-get install -y -q bison flex libpng-dev pkg-config
