@@ -32,12 +32,10 @@ int32_t readUTF8Char(char *dest, char *src)
 
 		dest[i] = src[i];
 
-		i++;
 		if (state == 0) {
-			dest[i] = '\0';
+			dest[++i] = '\0';
 			return i;
 		}
-		dest[i] = src[i];
 	}
 }
 
