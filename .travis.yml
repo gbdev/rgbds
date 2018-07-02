@@ -11,6 +11,9 @@ compiler:
   - clang
   - gcc
 script:
-  - ./.travis-checkpatch.sh
-  - cd test
-  - ./run-tests.sh
+  - cd test && ./run-tests.sh
+matrix:
+  include:
+    - env: _="checkpatch"
+      script:
+        - ./.travis-checkpatch.sh
