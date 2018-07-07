@@ -1243,7 +1243,13 @@ const		: T_ID					{ $$ = sym_GetConstantValue($1); }
 		| T_NUMBER				{ $$ = $1; }
 		| T_OP_HIGH '(' const ')'		{ $$ = ($3 >> 8) & 0xFF; }
 		| T_OP_LOW '(' const ')'		{ $$ = $3 & 0xFF; }
-		| string				{ $$ = str2int($1); }
+		| string
+		{
+			char *s = $1;
+			int32_t length = charmap_Convert(&s);
+			$$ = str2int2(s, length);
+			free(s);
+		}
 		| T_OP_LOGICNOT const %prec NEG		{ $$ = !$2; }
 		| const T_OP_LOGICOR const		{ $$ = $1 || $3; }
 		| const T_OP_LOGICAND const		{ $$ = $1 && $3; }
