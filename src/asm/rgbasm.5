@@ -967,7 +967,7 @@ the following functions to use:
 .It Li ASIN(x) Ta Ta arcsin(x)
 .It Li ACOS(x) Ta Ta arccos(x)
 .It Li ATAN(x) Ta Ta arctan(x)
-.It Li ATAN2(x,y) Ta Angle between (x,y) and (1,0)
+.It Li ATAN2(x,y) Ta Ta Angle between (x,y) and (1,0)
 .El
 .Pp
 These functions are extremely useful for automatic generation of various tables.
@@ -1146,72 +1146,72 @@ machine.
 .It Sx _NARG
 .It Sx _PI
 .It Sx _RS
-.It Sx ACOS
-.It Sx ASIN
-.It Sx ATAN
-.It Sx ATAN2
-.It Sx BANK
-.It Sx CHARMAP
-.It Sx COS
-.It Sx DB
-.It Sx DEF
-.It Sx DIV
-.It Sx DL
-.It Sx DS
-.It Sx DW
-.It Sx ELIF
-.It Sx ELSE
-.It Sx ENDC
-.It Sx ENDM
-.It Sx ENDR
+.It Sx ACOS(x)
+.It Sx ASIN(x)
+.It Sx ATAN(x)
+.It Sx ATAN2(x,y)
+.It Sx BANK(@/str/lbl)
+.It Sx CHARMAP \" Broken
+.It Sx COS(x)
+.It Sx DB \" Broken
+.It Sx DEF(label)
+.It Sx DIV(x,y)
+.It Sx DL \" Broken
+.It Sx DS \" Broken
+.It Sx DW \" Broken
+.It Sx ELIF \" Broken
+.It Sx ELSE \" Broken
+.It Sx ENDC \" Broken
+.It Sx ENDM \" Broken
+.It Sx ENDR \" Broken
 .It Sx EQU
 .It Sx EQUS
-.It Sx EXPORT
-.It Sx FAIL
-.It Sx GLOBAL
-.It Sx HIGH
-.It Sx HRAM
-.It Sx IF
-.It Sx INCBIN
-.It Sx INCLUDE
-.It Sx LOW
-.It Sx MACRO
-.It Sx MUL
-.It Sx OPT
-.It Sx POPO
-.It Sx POPS
+.It Sx EXPORT \" Broken
+.It Sx FAIL \" Broken
+.It Sx GLOBAL \" Broken
+.It Sx  HIGH(r16/cnst/lbl)
+.It Sx HRAM \" Broken
+.It Sx IF \" Broken
+.It Sx INCBIN \" Broken
+.It Sx INCLUDE \" Broken
+.It Sx LOW(r16/cnst/lbl)
+.It Sx MACRO \" Broken
+.It Sx MUL(x,y)
+.It Sx OPT \" Broken
+.It Sx POPO \" Broken
+.It Sx POPS \" Broken
 .It Sx PRINTF
 .It Sx PRINTI
 .It Sx PRINTT
 .It Sx PRINTV
-.It Sx PURGE
-.It Sx PUSHO
-.It Sx PUSHS
-.It Sx REPT
+.It Sx PURGE \" Broken
+.It Sx PUSHO \" Broken
+.It Sx PUSHS \" Broken
+.It Sx REPT \" Broken
 .It Sx RB
 .It Sx RL
-.It Sx ROM0
+.It Sx ROM0 \" Broken
 .It Sx ROMX
 .It Sx RSRESET
 .It Sx RSSET
 .It Sx RW
-.It Sx SECTION
+.It Sx Sections
 .It Sx SET
-.It Sx SHIFT
-.It Sx SIN
-.It Sx SRAM
-.It Sx STRCAT
-.It Sx STRCMP
-.It Sx STRIN
-.It Sx STRLEN
-.It Sx STRLWR
-.It Sx STRSUB
-.It Sx STRUPR
-.It Sx TAN
-.It Sx VRAM
-.It Sx WRAM0
-.It Sx WRAMX
-.It Sx WARN
+.It Sx SHIFT \" Broken
+.It Sx SIN(x)
+.It Sx SRAM \" Broken
+.It Sx STRCAT(str1,str2)
+.It Sx STRCMP(str1,str2)
+.It Sx STRIN(str1,str2)
+.It Sx STRLEN(string)
+.It Sx STRLWR(str)
+.It Sx STRSUB(str,pos,len)
+.It Sx STRUPR(str)
+.It Sx TAN(x)
+.It Sx VRAM \" Broken
+.It Sx WRAM0 \" Broken
+.It Sx WRAMX \" Broken
+.It Sx WARN \" Broken
 .El
 .Sh SEE ALSO
 .Xr rgbasm 1 ,

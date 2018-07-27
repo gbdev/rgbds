@@ -1177,6 +1177,7 @@ Some things are different for fixed-point math, though, which is why you have
   </tr>
   <tr class="It-column">
     <td class="It-column"><a class="selflink" href="#ATAN2(x,y)"><code class="Li" id="ATAN2(x,y)">ATAN2(x,y)</code></a></td>
+    <td class="It-column"></td>
     <td class="It-column">Angle between (x,y) and (1,0)</td>
   </tr>
 </table>
@@ -1445,25 +1446,25 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#_RS">_RS</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ACOS">ACOS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ACOS(x)">ACOS(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ASIN">ASIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ASIN(x)">ASIN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN">ATAN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN(x)">ATAN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN2">ATAN2</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN2(x,y)">ATAN2(x,y)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#BANK">BANK</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#BANK(@/str/lbl)">BANK(@/str/lbl)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#CHARMAP">CHARMAP</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#COS">COS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#COS(x)">COS(x)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#DB">DB</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#DEF">DEF</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DEF(label)">DEF(label)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#DIV">DIV</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DIV(x,y)">DIV(x,y)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#DL">DL</a></dt>
   <dd class="It-inset"></dd>
@@ -1491,7 +1492,7 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#GLOBAL">GLOBAL</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#HIGH">HIGH</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#HIGH(r16/cnst/lbl)">HIGH(r16/cnst/lbl)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#HRAM">HRAM</a></dt>
   <dd class="It-inset"></dd>
@@ -1501,11 +1502,11 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#INCLUDE">INCLUDE</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#LOW">LOW</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#LOW(r16/cnst/lbl)">LOW(r16/cnst/lbl)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#MACRO">MACRO</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#MUL">MUL</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#MUL(x,y)">MUL(x,y)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#OPT">OPT</a></dt>
   <dd class="It-inset"></dd>
@@ -1543,31 +1544,31 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#RW">RW</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#SECTION">SECTION</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">Sections</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#SET">SET</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#SHIFT">SHIFT</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#SIN">SIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#SIN(x)">SIN(x)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#SRAM">SRAM</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCAT">STRCAT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCAT(str1,str2)">STRCAT(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCMP">STRCMP</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCMP(str1,str2)">STRCMP(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRIN">STRIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRIN(str1,str2)">STRIN(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLEN">STRLEN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLEN(string)">STRLEN(string)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLWR">STRLWR</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLWR(str)">STRLWR(str)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRSUB">STRSUB</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRSUB(str,pos,len)">STRSUB(str,pos,len)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRUPR">STRUPR</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRUPR(str)">STRUPR(str)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#TAN">TAN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#TAN(x)">TAN(x)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#VRAM">VRAM</a></dt>
   <dd class="It-inset"></dd>
