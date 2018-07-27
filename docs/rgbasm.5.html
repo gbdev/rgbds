@@ -466,7 +466,7 @@ PUSHA EQUS &quot;push af\npush bc\npush de\npush hl\n&quot;
       infinite loop if there's a circular dependency in the expansions. Also, a
       MACRO can have inside an EQUS which references the same MACRO, which has
       the same problem.</dd>
-  <dt class="It-hang"><b class="Sy" title="Sy" id="MACRO">MACRO</b></dt>
+  <dt class="It-hang"><b class="Sy" title="Sy">MACRO</b></dt>
   <dd class="It-hang">
     <div class="Pp"></div>
     One of the best features of an assembler is the ability to write macros for
@@ -1136,47 +1136,48 @@ Some things are different for fixed-point math, though, which is why you have
     <td class="It-column"><b class="Sy" title="Sy">Operation</b></td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#DIV"><code class="Li" id="DIV">DIV(x,y)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#DIV(x,y)"><code class="Li" id="DIV(x,y)">DIV(x,y)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">x/y</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#MUL"><code class="Li" id="MUL">MUL(x,y)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#MUL(x,y)"><code class="Li" id="MUL(x,y)">MUL(x,y)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">x*y</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#SIN"><code class="Li" id="SIN">SIN(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#SIN(x)"><code class="Li" id="SIN(x)">SIN(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">sin(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#COS"><code class="Li" id="COS">COS(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#COS(x)"><code class="Li" id="COS(x)">COS(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">cos(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#TAN"><code class="Li" id="TAN">TAN(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#TAN(x)"><code class="Li" id="TAN(x)">TAN(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">tan(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#ASIN"><code class="Li" id="ASIN">ASIN(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#ASIN(x)"><code class="Li" id="ASIN(x)">ASIN(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">arcsin(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#ACOS"><code class="Li" id="ACOS">ACOS(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#ACOS(x)"><code class="Li" id="ACOS(x)">ACOS(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">arccos(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#ATAN"><code class="Li" id="ATAN">ATAN(x)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#ATAN(x)"><code class="Li" id="ATAN(x)">ATAN(x)</code></a></td>
     <td class="It-column"></td>
     <td class="It-column">arctan(x)</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#ATAN2"><code class="Li" id="ATAN2">ATAN2(x,y)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#ATAN2(x,y)"><code class="Li" id="ATAN2(x,y)">ATAN2(x,y)</code></a></td>
+    <td class="It-column"></td>
     <td class="It-column">Angle between (x,y) and (1,0)</td>
   </tr>
 </table>
@@ -1276,35 +1277,35 @@ Whenever the macro-language expects a string you can actually use a string
     <td class="It-column"><b class="Sy" title="Sy">Operation</b></td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRLEN"><code class="Li" id="STRLEN">STRLEN(string)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRLEN(string)"><code class="Li" id="STRLEN(string)">STRLEN(string)</code></a></td>
     <td class="It-column">Returns the number of characters in string</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRCAT"><code class="Li" id="STRCAT">STRCAT(str1,str2)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRCAT(str1,str2)"><code class="Li" id="STRCAT(str1,str2)">STRCAT(str1,str2)</code></a></td>
     <td class="It-column">Appends str2 to str1.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRCMP"><code class="Li" id="STRCMP">STRCMP(str1,str2)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRCMP(str1,str2)"><code class="Li" id="STRCMP(str1,str2)">STRCMP(str1,str2)</code></a></td>
     <td class="It-column">Returns negative if str1 is alphabetically lower than
       str2, zero if they match, positive if str1 is greater than str2.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRIN"><code class="Li" id="STRIN">STRIN(str1,str2)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRIN(str1,str2)"><code class="Li" id="STRIN(str1,str2)">STRIN(str1,str2)</code></a></td>
     <td class="It-column">Returns the position of str2 in str1 or zero if it's
       not present (first character is position 1).</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRSUB"><code class="Li" id="STRSUB">STRSUB(str,pos,len)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRSUB(str,pos,len)"><code class="Li" id="STRSUB(str,pos,len)">STRSUB(str,pos,len)</code></a></td>
     <td class="It-column">Returns a substring from str starting at pos (first
       character is position 1) and with len characters.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRUPR"><code class="Li" id="STRUPR">STRUPR(str)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRUPR(str)"><code class="Li" id="STRUPR(str)">STRUPR(str)</code></a></td>
     <td class="It-column">Converts all characters in str to capitals and returns
       the new string.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#STRLWR"><code class="Li" id="STRLWR">STRLWR(str)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#STRLWR(str)"><code class="Li" id="STRLWR(str)">STRLWR(str)</code></a></td>
     <td class="It-column">Converts all characters in str to lower case and
       returns the new string.</td>
   </tr>
@@ -1350,7 +1351,7 @@ There are a few other functions that do various useful things:
     <td class="It-column"><b class="Sy" title="Sy">Operation</b></td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#BANK"><code class="Li" id="BANK">BANK(@/str/lbl)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#BANK(@/str/lbl)"><code class="Li" id="BANK(@/str/lbl)">BANK(@/str/lbl)</code></a></td>
     <td class="It-column">Returns a bank number. If the argument is the symbol
       <b class="Ic" title="Ic">@,</b> this function returns the bank of the
       current section. If the argument is a string, it returns the bank of the
@@ -1359,16 +1360,16 @@ There are a few other functions that do various useful things:
       this, it can't be used when the expression has to be constant.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#DEF"><code class="Li" id="DEF">DEF(label)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#DEF(label)"><code class="Li" id="DEF(label)">DEF(label)</code></a></td>
     <td class="It-column">Returns TRUE if label has been defined.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#HIGH"><code class="Li" id="HIGH">HIGH(r16/cnst/lbl)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#HIGH(r16/cnst/lbl)"><code class="Li" id="HIGH(r16/cnst/lbl)">HIGH(r16/cnst/lbl)</code></a></td>
     <td class="It-column">Returns the top 8 bits of the operand if it is a label
       or constant, or the top 8-bit register if it is a 16-bit register.</td>
   </tr>
   <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#LOW"><code class="Li" id="LOW">LOW(r16/cnst/lbl)</code></a></td>
+    <td class="It-column"><a class="selflink" href="#LOW(r16/cnst/lbl)"><code class="Li" id="LOW(r16/cnst/lbl)">LOW(r16/cnst/lbl)</code></a></td>
     <td class="It-column">Returns the bottom 8 bits of the operand if it is a
       label or constant, or the bottom 8-bit register if it is a 16-bit register
       (AF isn't a valid register for this function).</td>
@@ -1445,73 +1446,73 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#_RS">_RS</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ACOS">ACOS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ACOS(x)">ACOS(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ASIN">ASIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ASIN(x)">ASIN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN">ATAN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN(x)">ATAN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN2">ATAN2</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ATAN2(x,y)">ATAN2(x,y)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#BANK">BANK</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#BANK(@/str/lbl)">BANK(@/str/lbl)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Character_maps">CHARMAP</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#CHARMAP">CHARMAP</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#COS">COS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#COS(x)">COS(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Defining_constant_data">DB</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DB">DB</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#DEF">DEF</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DEF(label)">DEF(label)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#DIV">DIV</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DIV(x,y)">DIV(x,y)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Defining_constant_data">DL</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DL">DL</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Declaring_variables_in_a_RAM_section">DS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DS">DS</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Defining_constant_data">DW</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#DW">DW</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Conditional_assembling">ELIF</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ELIF">ELIF</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Conditional_assembling">ELSE</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ELSE">ELSE</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Conditional_assembling">ENDC</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ENDC">ENDC</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#MACRO">ENDM</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ENDM">ENDM</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Automatically_repeating_blocks_of_code">ENDR</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ENDR">ENDR</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#EQU">EQU</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#EQUS">EQUS</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Exporting_and_importing_symbols">EXPORT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#EXPORT">EXPORT</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Aborting_the_assembly_process">FAIL</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#FAIL">FAIL</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Exporting_and_importing_symbols">GLOBAL</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#GLOBAL">GLOBAL</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#HIGH">HIGH</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#HIGH(r16/cnst/lbl)">HIGH(r16/cnst/lbl)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">HRAM</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#HRAM">HRAM</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Conditional_assembling">IF</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#IF">IF</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Including_binary_files">INCBIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#INCBIN">INCBIN</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Including_other_source_files">INCLUDE</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#INCLUDE">INCLUDE</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#LOW">LOW</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#LOW(r16/cnst/lbl)">LOW(r16/cnst/lbl)</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#MACRO">MACRO</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#MUL">MUL</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#MUL(x,y)">MUL(x,y)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Changing_options_while_assembling">OPT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#OPT">OPT</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Changing_options_while_assembling">POPO</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#POPO">POPO</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">POPS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#POPS">POPS</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#PRINTF">PRINTF</a></dt>
   <dd class="It-inset"></dd>
@@ -1521,21 +1522,21 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#PRINTV">PRINTV</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Purging_symbols">PURGE</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#PURGE">PURGE</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Changing_options_while_assembling">PUSHO</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#PUSHO">PUSHO</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">PUSHS</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#PUSHS">PUSHS</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Automatically_repeating_blocks_of_code">REPT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#REPT">REPT</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#RB">RB</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#RL">RL</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">ROM0</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ROM0">ROM0</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">ROMX</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#ROMX">ROMX</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#RSRESET">RSRESET</a></dt>
   <dd class="It-inset"></dd>
@@ -1543,39 +1544,39 @@ The options that OPT can modify are currently: <b class="Sy" title="Sy">b</b>,
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#RW">RW</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">SECTION</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">Sections</a></dt>
   <dd class="It-inset"></dd>
   <dt class="It-inset"><a class="Sx" title="Sx" href="#SET">SET</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#MACRO">SHIFT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#SHIFT">SHIFT</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#SIN">SIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#SIN(x)">SIN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">SRAM</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#SRAM">SRAM</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCAT">STRCAT</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCAT(str1,str2)">STRCAT(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCMP">STRCMP</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRCMP(str1,str2)">STRCMP(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRIN">STRIN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRIN(str1,str2)">STRIN(str1,str2)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLEN">STRLEN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLEN(string)">STRLEN(string)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLWR">STRLWR</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRLWR(str)">STRLWR(str)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRSUB">STRSUB</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRSUB(str,pos,len)">STRSUB(str,pos,len)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRUPR">STRUPR</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#STRUPR(str)">STRUPR(str)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#TAN">TAN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#TAN(x)">TAN(x)</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">VRAM</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#VRAM">VRAM</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">WRAM0</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#WRAM0">WRAM0</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Sections">WRAMX</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#WRAMX">WRAMX</a></dt>
   <dd class="It-inset"></dd>
-  <dt class="It-inset"><a class="Sx" title="Sx" href="#Aborting_the_assembly_process">WARN</a></dt>
+  <dt class="It-inset"><a class="Sx" title="Sx" href="#WARN">WARN</a></dt>
   <dd class="It-inset"></dd>
 </dl>
 <h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="selflink" href="#SEE_ALSO">SEE
