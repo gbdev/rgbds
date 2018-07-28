@@ -33,26 +33,27 @@ John: ld a,87 ;Weee
 All pseudo‐ops, mnemonics and registers (reserved keywords) are case‐insensitive
 and all labels are case‐sensitive.
 .Pp
-There are two syntaxes for comments. In both cases, a comment ends at the end of
-the line. The most common one is: anything that follows a semicolon
+There are two syntaxes for comments.
+In both cases, a comment ends at the end of the line.
+The most common one is: anything that follows a semicolon
 .Ql \&;
-(that isn't inside a string) is a comment. There is another
-format: anything that follows a
+(that isn't inside a string) is a comment.
+There is another format: anything that follows a
 .Ql *
 that is placed right at the start of
-a line is a comment. The assembler removes all comments from the code before
-doing anything else.
+a line is a comment.
+The assembler removes all comments from the code before doing anything else.
 .Pp
-Sometimes lines can be too long and it may be necessary to split them. The
-syntax to do so is the following one:
+Sometimes lines can be too long and it may be necessary to split them.
+The syntax to do so is the following one:
 .Pp
 .Bd -literal -offset indent
     DB 1, 2, 3, 4 \[rs]
        5, 6, 7, 8
 .Ed
 .Pp
-This works anywhere in the code except inside of strings. To split strings it is
-needed to use
+This works anywhere in the code except inside of strings.
+To split strings it is needed to use
 .Sy STRCAT
 like this:
 .Pp
@@ -138,8 +139,8 @@ and
 .Sy LDH A,[$FF00+n8]
 syntax instead.
 This forces the assembler to emit the correct instruction and the linker to
-check if the value is in the correct range. This optimization can be disabled
-by passing the
+check if the value is in the correct range.
+This optimization can be disabled by passing the
 .Fl L
 flag to
 .Sy rgbasm
@@ -524,12 +525,13 @@ For instance, if you pass 1 + 2 as the first argument and then do
 you will get the value 5 on screen and not 6 as you might have expected.
 .Pp
 In reality, up to 256 arguments can be passed to a macro, but you can only use
-the first 9 like this. If you want to use the rest, you need to use the keyword
+the first 9 like this.
+If you want to use the rest, you need to use the keyword
 .Ic SHIFT .
 .Pp
 Line continuations work as usual inside macros or lists of arguments of macros.
-Strings, however, are a bit trickier. The following example shows how to use
-strings as arguments for a macro:
+Strings, however, are a bit trickier.
+The following example shows how to use strings as arguments for a macro:
 .Pp
 .Bd -literal -offset indent
 PrintMacro : MACRO
@@ -751,7 +753,8 @@ PRINTF MUL(3.14, 3987.0)
 prints out a string.
 .It Ic PRINTV
 prints out an integer value in hexadecimal or, as in the example, the result of
-a calculation. Unsurprisingly, you can also print out a constant symbols value.
+a calculation.
+Unsurprisingly, you can also print out a constant symbols value.
 .It Ic PRINTI
 prints out a signed integer value.
 .It Ic PRINTF
@@ -883,7 +886,8 @@ There are a number of numeric formats.
 .Pp
 .Bl -dash -compact
 .It
-Hexadecimal: $0123456789ABCDEF. Case-insensitive
+Hexadecimal: $0123456789ABCDEF.
+Case-insensitive
 .It
 Decimal: 0123456789
 .It
