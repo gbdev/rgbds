@@ -297,7 +297,9 @@ assembling.
 Define a structure easily.
 .It Sy String equate Pq Sy EQUS
 Give a frequently used string a name.
-Can also be used as a mini-macro, like #define in C.
+Can also be used as a mini-macro, like
+.Fd #define
+in C.
 .It Sy MACRO
 A block of code or pseudo instructions that you invoke like any other mnemonic.
 You can give them arguments too.
@@ -420,7 +422,8 @@ They don't change their value during the link process.
 EQUS is used to define string-symbols.
 Wherever the assembler meets a string symbol its name is replaced with its
 value.
-If you are familiar with C you can think of it as the same as #define.
+If you are familiar with C you can think of it as the same as
+.Fd #define .
 .Pp
 .Bd -literal -offset indent
 COUNTREG EQUS "[hl+]"
