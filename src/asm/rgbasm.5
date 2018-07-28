@@ -975,17 +975,17 @@ order of precedence):
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String"
 .It Sy Operator Ta Sy Meaning
-.It Li ( ) Ta Precedence override
+.It Li \&( \&) Ta Precedence override
 .It Li FUNC() Ta Function call
 .It Li ~ + - Ta Unary not/plus/minus
 .It Li * / % Ta Multiply/divide/modulo
 .It Li << >> Ta Shift left/right
-.It Li & | ^ Ta Binary and/or/xor
+.It Li & \&| ^ Ta Binary and/or/xor
 .It Li + - Ta Add/subtract
 .It Li != == <= Ta Boolean comparison
 .It Li >= < > Ta Boolean comparison (Same precedence as the others)
 .It Li && || Ta Boolean and/or
-.It Li ! Ta Unary Boolean not
+.It Li \&! Ta Unary Boolean not
 .El
 .Pp
 The result of the boolean operators is zero if when FALSE and non-zero when
