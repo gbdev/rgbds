@@ -651,26 +651,26 @@ command WILL NOT BE EXPANDED as the ONLY exception to this rule.
 The following symbols are defined by the assembler:
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String" ".Sy String"
-.It Sy Type Ta Sy Name Ta Ta Sy Contents
-.It Ic EQU Ta Ic @ Ta Ta PC value
-.It Ic EQU Ta Ic _PI Ta Ta Fixed point \[*p]
-.It Ic SET Ta Ic _RS Ta Ta _RS Counter
-.It Ic EQU Ta Ic _NARG Ta Ta Number of arguments passed to macro
-.It Ic EQU Ta Ic __LINE__ Ta Ta The current line number
-.It Ic EQUS Ta Ic __FILE__ Ta Ta The current filename
-.It Ic EQUS Ta Ic __DATE__ Ta Ta Today's date
-.It Ic EQUS Ta Ic __TIME__ Ta Ta The current time
+.It Sy Type Ta Sy Name Ta Sy Contents
+.It Ic EQU Ta Ic @ Ta PC value
+.It Ic EQU Ta Ic _PI Ta Fixed point \[*p]
+.It Ic SET Ta Ic _RS Ta _RS Counter
+.It Ic EQU Ta Ic _NARG Ta Number of arguments passed to macro
+.It Ic EQU Ta Ic __LINE__ Ta The current line number
+.It Ic EQUS Ta Ic __FILE__ Ta The current filename
+.It Ic EQUS Ta Ic __DATE__ Ta Today's date
+.It Ic EQUS Ta Ic __TIME__ Ta The current time
 .It Ic EQUS Ta Ic __ISO_8601_LOCAL__ Ta ISO 8601 timestamp (local)
 .It Ic EQUS Ta Ic __ISO_8601_UTC__ Ta ISO 8601 timestamp (UTC)
-.It Ic EQU Ta Ic __UTC_YEAR__ Ta Ta Today's year
-.It Ic EQU Ta Ic __UTC_MONTH__ Ta Ta Today's month number, 1-12
-.It Ic EQU Ta Ic __UTC_DAY__ Ta Ta Today's day of the month, 1-31
-.It Ic EQU Ta Ic __UTC_HOUR__ Ta Ta Current hour, 0-23
-.It Ic EQU Ta Ic __UTC_MINUTE__ Ta Ta Current minute, 0-59
-.It Ic EQU Ta Ic __UTC_SECOND__ Ta Ta Current second, 0-59
-.It Ic EQU Ta Ic __RGBDS_MAJOR__ Ta Ta Major version number of RGBDS.
-.It Ic EQU Ta Ic __RGBDS_MINOR__ Ta Ta Minor version number of RGBDS.
-.It Ic EQU Ta Ic __RGBDS_PATCH__ Ta Ta Patch version number of RGBDS.
+.It Ic EQU Ta Ic __UTC_YEAR__ Ta Today's year
+.It Ic EQU Ta Ic __UTC_MONTH__ Ta Today's month number, 1-12
+.It Ic EQU Ta Ic __UTC_DAY__ Ta Today's day of the month, 1-31
+.It Ic EQU Ta Ic __UTC_HOUR__ Ta Current hour, 0-23
+.It Ic EQU Ta Ic __UTC_MINUTE__ Ta Current minute, 0-59
+.It Ic EQU Ta Ic __UTC_SECOND__ Ta Current second, 0-59
+.It Ic EQU Ta Ic __RGBDS_MAJOR__ Ta Major version number of RGBDS.
+.It Ic EQU Ta Ic __RGBDS_MINOR__ Ta Minor version number of RGBDS.
+.It Ic EQU Ta Ic __RGBDS_PATCH__ Ta Patch version number of RGBDS.
 .El
 .Pp
 .Sh DEFINING DATA
@@ -1017,15 +1017,15 @@ Some things are different for fixed-point math, though, which is why you have
 the following functions to use:
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String"
-.It Sy Name Ta Ta Sy Operation
-.It Li DIV(x,y) Ta Ta x/y
-.It Li MUL(x,y) Ta Ta x*y
-.It Li SIN(x) Ta Ta sin(x)
-.It Li COS(x) Ta Ta cos(x)
-.It Li TAN(x) Ta Ta tan(x)
-.It Li ASIN(x) Ta Ta arcsin(x)
-.It Li ACOS(x) Ta Ta arccos(x)
-.It Li ATAN(x) Ta Ta arctan(x)
+.It Sy Name Ta Sy Operation
+.It Li DIV(x,y) Ta x/y
+.It Li MUL(x,y) Ta x*y
+.It Li SIN(x) Ta sin(x)
+.It Li COS(x) Ta cos(x)
+.It Li TAN(x) Ta tan(x)
+.It Li ASIN(x) Ta arcsin(x)
+.It Li ACOS(x) Ta arccos(x)
+.It Li ATAN(x) Ta arctan(x)
 .It Li ATAN2(x,y) Ta Angle between (x,y) and (1,0)
 .El
 .Pp
