@@ -399,9 +399,9 @@ str_SIZEOF = 259
 .Pp
 There are four commands in the RS group of commands:
 .Pp
-.Bl -column ".Sy String" ".Sy String"
-.It Sy Command Ta Ta Ta Sy Meaning
-.It Ic RSRESET Ta Ta Resets the _RS counter to zero.
+.Bl -column "RSSET constexpr"
+.It Sy Command Ta Sy Meaning
+.It Ic RSRESET Ta Resets the _RS counter to zero.
 .It Ic RSSET Ar constexpr Ta Sets the
 .Ic _RS No counter to Ar constexpr .
 .It Ic RB Ar constexpr Ta Sets the preceding symbol to
@@ -653,7 +653,7 @@ command WILL NOT BE EXPANDED as the ONLY exception to this rule.
 .Ss Predeclared Symbols
 The following symbols are defined by the assembler:
 .Pp
-.Bl -column -offset indent ".Sy String" ".Sy String" ".Sy String"
+.Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
 .It Sy Type Ta Sy Name Ta Sy Contents
 .It Ic EQU Ta Ic @ Ta PC value
 .It Ic EQU Ta Ic _PI Ta Fixed point \[*p]
@@ -973,7 +973,7 @@ calculations between numbers.
 A great number of operators you can use in expressions are available (listed in
 order of precedence):
 .Pp
-.Bl -column -offset indent ".Sy String" ".Sy String"
+.Bl -column -offset indent "Operator"
 .It Sy Operator Ta Sy Meaning
 .It Li \&( \&) Ta Precedence override
 .It Li FUNC() Ta Function call
@@ -1022,7 +1022,7 @@ the following functions to use:
 delim $$
 .EN
 .Pp
-.Bl -column -offset indent ".Sy String" ".Sy String"
+.Bl -column -offset indent "ATAN2(x, y)"
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta $x \[di] y$
 .It Fn MUL x y Ta $x \[mu] y$
@@ -1060,7 +1060,7 @@ quotes ("for instance").
 Like in C, the escape character is \[rs], and there are a number of commands you
 can use within a string:
 .Pp
-.Bl -column -offset indent ".Sy String" ".Sy String"
+.Bl -column -offset indent "String"
 .It Sy String Ta Sy Meaning
 .It Li \[rs]\[rs] Ta Backslash
 .It Li \[rs]" Ta Double quote
@@ -1094,7 +1094,7 @@ This consists of one or more of these function (yes, you can nest them).
 Note that some of these functions actually return an integer and can be used as
 part of an integer expression!
 .Pp
-.Bl -column "STRSUB_str,_pos,_len" ".Sy String"
+.Bl -column "STRSUB_str,_pos,_len"
 .It Sy Name Ta Sy Operation
 .It Fn STRLEN string  Ta Returns the number of characters in string
 .It Fn STRCAT str1 str2  Ta Appends str2 to str1.
@@ -1141,8 +1141,8 @@ rest of it will be trimmed.
 .Ss Other functions
 There are a few other functions that do various useful things:
 .Pp
-.Bl -column ".Sy String" ".Sy String"
-.It Sy Name Ta Ta Ta Sy Operation
+.Bl -column "BANK(arg)"
+.It Sy Name Ta Sy Operation
 .It Fn BANK arg Ta Returns a bank number.
 If
 .Ar arg
