@@ -54,7 +54,7 @@ The syntax to do so is the following one:
 .Pp
 This works anywhere in the code except inside of strings.
 To split strings it is needed to use
-.Sy STRCAT
+.Fn STRCAT
 like this:
 .Pp
 .Bd -literal -offset indent
@@ -1015,19 +1015,25 @@ it left.
 .Pp
 Some things are different for fixed-point math, though, which is why you have
 the following functions to use:
+.EQ
+delim $$
+.EN
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String"
 .It Sy Name Ta Sy Operation
-.It Li DIV(x,y) Ta x/y
-.It Li MUL(x,y) Ta x*y
-.It Li SIN(x) Ta sin(x)
-.It Li COS(x) Ta cos(x)
-.It Li TAN(x) Ta tan(x)
-.It Li ASIN(x) Ta arcsin(x)
-.It Li ACOS(x) Ta arccos(x)
-.It Li ATAN(x) Ta arctan(x)
-.It Li ATAN2(x,y) Ta Angle between (x,y) and (1,0)
+.It Fn DIV x y Ta $x \[di] y$
+.It Fn MUL x y Ta $x \[mu] y$
+.It Fn SIN x Ta $sin ( x )$
+.It Fn COS x Ta $cos ( x )$
+.It Fn TAN x Ta $tan ( x )$
+.It Fn ASIN x Ta $asin ( x )$
+.It Fn ACOS x Ta $acos ( x )$
+.It Fn ATAN x Ta $atan ( x )$
+.It Fn ATAN2 x y Ta Angle between $( x , y )$ and $( 1 , 0 )$
 .El
+.EQ
+delim off
+.EN
 .Pp
 These functions are extremely useful for automatic generation of various tables.
 A circle has 65536.0 degrees.
@@ -1085,19 +1091,19 @@ This consists of one or more of these function (yes, you can nest them).
 Note that some of these functions actually return an integer and can be used as
 part of an integer expression!
 .Pp
-.Bl -column ".Sy String" ".Sy String"
-.It Sy Name Ta Ta Ta Sy Operation
-.It Li STRLEN(string) Ta Returns the number of characters in string
-.It Li STRCAT(str1,str2) Ta Appends str2 to str1.
-.It Li STRCMP(str1,str2) Ta Returns negative if str1 is alphabetically lower
+.Bl -column "STRSUB_str,_pos,_len" ".Sy String"
+.It Sy Name Ta Sy Operation
+.It Fn STRLEN string  Ta Returns the number of characters in string
+.It Fn STRCAT str1 str2  Ta Appends str2 to str1.
+.It Fn STRCMP str1 str2  Ta Returns negative if str1 is alphabetically lower
 than str2, zero if they match, positive if str1 is greater than str2.
-.It Li STRIN(str1,str2) Ta Returns the position of str2 in str1 or zero if it's
+.It Fn STRIN str1 str2  Ta Returns the position of str2 in str1 or zero if it's
 not present (first character is position 1).
-.It Li STRSUB(str,pos,len) Ta Returns a substring from str starting at pos
+.It Fn STRSUB str pos len  Ta Returns a substring from str starting at pos
 (first character is position 1) and with len characters.
-.It Li STRUPR(str) Ta Converts all characters in str to capitals and returns the
+.It Fn STRUPR str  Ta Converts all characters in str to capitals and returns the
 new string.
-.It Li STRLWR(str) Ta Converts all characters in str to lower case and returns
+.It Fn STRLWR str  Ta Converts all characters in str to lower case and returns
 the new string.
 .El
 .Pp
@@ -1134,21 +1140,30 @@ There are a few other functions that do various useful things:
 .Pp
 .Bl -column ".Sy String" ".Sy String"
 .It Sy Name Ta Ta Ta Sy Operation
-.It Li BANK(@/str/lbl) Ta Returns a bank number.
-If the argument is the symbol
+.It Fn BANK arg Ta Returns a bank number.
+If
+.Ar arg
+is the symbol
 .Ic @ ,
 this function returns the bank of the current section.
-If the argument is a string, it returns the bank of the section that has that
-name.
-If the argument is a label, it returns the bank number the label is in.
+If
+.Ar arg
+is a string, it returns the bank of the section that has that name.
+If
+.Ar arg
+is a label, it returns the bank number the label is in.
 For labels, as the linker has to resolve this, it can't be used when the
 expression has to be constant.
-.It Li DEF(label) Ta Returns TRUE if label has been defined.
-.It Li HIGH(r16/cnst/lbl) Ta Returns the top 8 bits of the operand if it is a
-label or constant, or the top 8-bit register if it is a 16-bit register.
-.It Li LOW(r16/cnst/lbl) Ta Returns the bottom 8 bits of the operand if it is a
-label or constant, or the bottom 8-bit register if it is a 16-bit register (AF
-isn't a valid register for this function).
+.It Fn DEF label  Ta Returns TRUE if
+.Ar label
+has been defined.
+.It Fn HIGH arg Ta Returns the top 8 bits of the operand if
+.Ar arg
+is a label or constant, or the top 8-bit register if it is a 16-bit register.
+.It Fn LOW arg Ta Returns the bottom 8 bits of the operand if
+.Ar arg
+is a label or constant, or the bottom 8-bit register if it is a 16-bit register
+(AF isn't a valid register for this function).
 .El
 .Pp
 .Sh MISCELLANEOUS
