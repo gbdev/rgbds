@@ -202,7 +202,7 @@ HINT: If you think this is a lot of typing for doing a simple
 type thing you can quite easily write an intelligent macro (called
 .Ic ORG
 for example) that uses
-.Ic \@
+.Ic @
 for the section name and determines
 correct section type etc as arguments for
 .Ic SECTION .
@@ -452,17 +452,17 @@ LoopyMacro: MACRO
 This is fine.
 That is, if you only use the macro once per scope.
 To get around this problem there is a special label string equate called
-.Ic \[rs]\@
+.Ic \[rs]@
 that you can append to your labels and it will then expand to a unique string.
 .Pp
-.Ic \[rs]\@
+.Ic \[rs]@
 also works in REPT-blocks should you have any loops there.
 .Bd -literal -offset indent
 LoopyMacro: MACRO
             xor  a,a
-\&.loop\[rs]\@     ld   [hl+],a
+\&.loop\[rs]@     ld   [hl+],a
             dec  c
-            jr   nz,.loop\[rs]\@
+            jr   nz,.loop\[rs]@
             ENDM
 .Ed
 .Pp
@@ -495,9 +495,9 @@ LoopyMacro: MACRO
             ld   hl,\[rs]1
             ld   c,\[rs]2
             xor  a,a
-\&.loop\[rs]\@     ld   [hl+],a
+\&.loop\[rs]@     ld   [hl+],a
             dec  c
-            jr   nz,.loop\[rs]\@
+            jr   nz,.loop\[rs]@
             ENDM
 .Ed
 .Pp
@@ -599,7 +599,7 @@ The following symbols are defined by the assembler:
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String" ".Sy String"
 .It Sy Type Ta Sy Name Ta Ta Sy Contents
-.It Ic EQU Ta Ic \@ Ta Ta PC value
+.It Ic EQU Ta Ic @ Ta Ta PC value
 .It Ic EQU Ta Ic _PI Ta Ta Fixed point \[*p]
 .It Ic SET Ta Ic _RS Ta Ta _RS Counter
 .It Ic EQU Ta Ic _NARG Ta Ta Number of arguments passed to macro
@@ -795,7 +795,7 @@ ANGLE SET ANGLE+256.0
 .Ic REPT
 is also very useful in recursive macros and, as in macros, you can also use the
 special label operator
-.Ic \[rs]\@ .
+.Ic \[rs]@ .
 REPT-blocks can be nested.
 .Ss Aborting the assembly process
 .Ic FAIL
@@ -883,11 +883,11 @@ There are a number of numeric formats.
 .Pp
 .Bl -dash -compact
 .It
-Hexadecimal: \(Do0123456789ABCDEF. Case-insensitive
+Hexadecimal: $0123456789ABCDEF. Case-insensitive
 .It
 Decimal: 0123456789
 .It
-Octal: \*(Am01234567
+Octal: &01234567
 .It
 Binary: %01
 .It
@@ -1001,16 +1001,16 @@ can use within a string:
 .It Li \[rs]\[rs] Ta Backslash
 .It Li \[rs]" Ta Double quote
 .It Li \[rs], Ta Comma
-.It Li \[rs]\[lC] Ta Curly bracket left
-.It Li \[rs]\[rC] Ta Curly bracket right
+.It Li \[rs]{ Ta Curly bracket left
+.It Li \[rs]} Ta Curly bracket right
 .It Li \[rs]n Ta Newline ($0A)
 .It Li \[rs]t Ta Tab ($09)
 .It Li \[rs]1 - \[rs]9 Ta Macro argument (Only the body of a macros)
-.It Li \[rs]\@ Ta Label name suffix (Only in the body of macros and repts)
+.It Li \[rs]@ Ta Label name suffix (Only in the body of macros and repts)
 .El
 .Pp
 A funky feature is
-.Sy \[lC]symbol\[rC]
+.Sy {symbol}
 withing a string.
 This will examine the type of the symbol and insert its value accordingly.
 If symbol is a string symbol, the symbols value is simply copied.
@@ -1018,11 +1018,11 @@ If it's a numeric symbol, the value is converted to hexadecimal notation and
 inserted as a string.
 .Pp
 HINT: The
-.Sy \[lC]symbol\[rC]
+.Sy {symbol}
 construct can also be used outside strings.
 The symbol's value is again inserted as a string.
 This is just a short way of doing
-.Dq \[lC]symbol\[rC] .
+.Dq {symbol} .
 .Pp
 Whenever the macro-language expects a string you can actually use a string
 expression.
@@ -1079,9 +1079,9 @@ There are a few other functions that do various useful things:
 .Pp
 .Bl -column ".Sy String" ".Sy String"
 .It Sy Name Ta Ta Ta Sy Operation
-.It Li BANK(\@/str/lbl) Ta Returns a bank number.
+.It Li BANK(@/str/lbl) Ta Returns a bank number.
 If the argument is the symbol
-.Ic \@,
+.Ic @ ,
 this function returns the bank of the current section.
 If the argument is a string, it returns the bank of the section that has that
 name.
