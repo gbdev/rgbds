@@ -185,7 +185,6 @@ int32_t fstk_GetLine(void)
 	pLastFile = pFileStack;
 
 	if (pLastFile != NULL) {
-		ppLastFile = &pFileStack;
 		while (pLastFile->pNext) {
 			ppLastFile = &(pLastFile->pNext);
 			pLastFile = *ppLastFile;
