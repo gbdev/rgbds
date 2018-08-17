@@ -106,18 +106,6 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 	return length;
 }
 
-static uint32_t str2int(char *s)
-{
-	uint32_t r = 0;
-
-	while (*s) {
-		r <<= 8;
-		r |= (uint8_t)(*s++);
-	}
-
-	return r;
-}
-
 static uint32_t str2int2(char *s, int32_t length)
 {
 	int32_t i;
