@@ -77,7 +77,7 @@ copyright and the reference to the MIT License.
 
 5. Follow the Linux kernel coding style, which can be found in the file
    ``Documentation/process/coding-style.rst`` in the Linux kernel repository.
-   Note that the coding style isn't writen on stone, if there is a good reason
+   Note that the coding style isn't written in stone, if there is a good reason
    to deviate from it, it should be fine.
 
 6. Download the files ``checkpatch.pl``, ``const_structs.checkpatch`` and
