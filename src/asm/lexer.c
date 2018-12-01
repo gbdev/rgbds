@@ -145,7 +145,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	pBuffer->pBufferRealStart = malloc(size + 2 + SAFETYMARGIN);
+	pBuffer->pBufferRealStart = malloc(size + 3 + SAFETYMARGIN);
 
 	if (pBuffer->pBufferRealStart == NULL)
 		fatalerror("%s: Out of memory for buffer!", __func__);
@@ -156,8 +156,9 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
 	pBuffer->pBuffer[size] = '\n';
-	pBuffer->pBuffer[size + 1] = 0;
-	pBuffer->nBufferSize = size + 1;
+	pBuffer->pBuffer[size + 1] = '\n'; /* in case the file ends with \ */
+	pBuffer->pBuffer[size + 2] = 0;
+	pBuffer->nBufferSize = size + 2;
 
 	/* Convert all line endings to LF and spaces */
 
