@@ -38,10 +38,10 @@ make compare
 popd
 
 if [ ! -d ucity ]; then
-	git clone https://github.com/AntonioND/ucity.git --shallow-since=2018-06-05 --single-branch
+	git clone https://github.com/AntonioND/ucity.git --shallow-since=2017-07-13 --single-branch
 fi
 pushd ucity
 git fetch
-git checkout 9fc8f27
+git checkout 3315601
 make -j
 popd
