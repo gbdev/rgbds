@@ -48,6 +48,7 @@ all: rgbasm rgblink rgbfix rgbgfx
 rgbasm_obj := \
 	src/asm/asmy.o \
 	src/asm/charmap.o \
+	src/asm/constexpr.o \
 	src/asm/fstack.o \
 	src/asm/globlex.o \
 	src/asm/lexer.o \
@@ -61,7 +62,7 @@ rgbasm_obj := \
 	src/version.o
 
 src/asm/asmy.h: src/asm/asmy.c
-src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o: src/asm/asmy.h
+src/asm/locallex.o src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
 
 rgblink_obj := \
 	src/link/assign.o \
