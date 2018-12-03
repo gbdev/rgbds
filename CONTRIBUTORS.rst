@@ -28,6 +28,8 @@ Other contributors
 
 - Christophe Staïesse <chastai@skynet.be>
 
+- David Brotz <dbrotz007@gmail.com>
+
 - The Musl C library <http://www.musl-libc.org>
 
 - obskyr <powpowd@gmail.com>
