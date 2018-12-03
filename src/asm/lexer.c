@@ -155,10 +155,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 
 	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
-	pBuffer->pBuffer[size] = '\n';
-	pBuffer->pBuffer[size + 1] = '\n'; /* in case the file ends with \ */
-	pBuffer->pBuffer[size + 2] = 0;
-	pBuffer->nBufferSize = size + 2;
+	pBuffer->pBuffer[size] = 0;
 
 	/* Convert all line endings to LF and spaces */
 
@@ -218,6 +215,30 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 			}
 		}
 	}
+
+	pBuffer->nBufferSize = size;
+
+	/* Add newline if file doesn't end with one */
+	if (size == 0 || pBuffer->pBuffer[size - 1] != '\n') {
+		pBuffer->pBuffer[pBuffer->nBufferSize] = '\n';
+		pBuffer->nBufferSize++;
+	}
+
+	/* Add newline if \ will eat the last newline */
+	if (pBuffer->nBufferSize >= 2) {
+		size_t pos = pBuffer->nBufferSize - 2;
+
+		/* Skip spaces */
+		while (pos > 0 && pBuffer->pBuffer[pos] == ' ')
+			pos--;
+
+		if (pBuffer->pBuffer[pos] == '\\') {
+			pBuffer->pBuffer[pBuffer->nBufferSize] = '\n';
+			pBuffer->nBufferSize++;
+		}
+	}
+
+	pBuffer->pBuffer[pBuffer->nBufferSize] = 0;
 
 	pBuffer->oAtLineStart = 1;
 	return pBuffer;
