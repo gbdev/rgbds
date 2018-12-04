@@ -100,7 +100,13 @@ static int32_t ascii2bin(char *s)
 		break;
 	}
 
-	if (radix == 4) {
+	if (*s == '\0') {
+		/*
+		 * There are no digits after the radix prefix
+		 * (or the string is empty, which shouldn't happen).
+		 */
+		yyerror("Invalid integer constant");
+	} else if (radix == 4) {
 		int32_t c;
 
 		while (*s != '\0') {
