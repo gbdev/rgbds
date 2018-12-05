@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -110,6 +111,21 @@ void yy_delete_buffer(YY_BUFFER_STATE buf)
 	free(buf);
 }
 
+/*
+ * Maintains the following invariants:
+ * 1. nBufferSize < capacity
+ * 2. The buffer is terminated with 0
+ * 3. nBufferSize is the size without the terminator
+ */
+static void yy_buffer_append(YY_BUFFER_STATE buf, uint32_t capacity, char c)
+{
+	assert(buf->pBuffer[buf->nBufferSize] == 0);
+	assert(buf->nBufferSize + 1 < capacity);
+
+	buf->pBuffer[buf->nBufferSize++] = c;
+	buf->pBuffer[buf->nBufferSize] = 0;
+}
+
 YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 {
 	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
@@ -145,7 +161,10 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	pBuffer->pBufferRealStart = malloc(size + 3 + SAFETYMARGIN);
+	/* Give extra room for 2 newlines and terminator */
+	uint32_t capacity = size + 3;
+
+	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
 
 	if (pBuffer->pBufferRealStart == NULL)
 		fatalerror("%s: Out of memory for buffer!", __func__);
@@ -156,6 +175,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
 
 	pBuffer->pBuffer[size] = 0;
+	pBuffer->nBufferSize = size;
 
 	/* Convert all line endings to LF and spaces */
 
@@ -216,13 +236,9 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		}
 	}
 
-	pBuffer->nBufferSize = size;
-
 	/* Add newline if file doesn't end with one */
-	if (size == 0 || pBuffer->pBuffer[size - 1] != '\n') {
-		pBuffer->pBuffer[pBuffer->nBufferSize] = '\n';
-		pBuffer->nBufferSize++;
-	}
+	if (size == 0 || pBuffer->pBuffer[size - 1] != '\n')
+		yy_buffer_append(pBuffer, capacity, '\n');
 
 	/* Add newline if \ will eat the last newline */
 	if (pBuffer->nBufferSize >= 2) {
@@ -232,13 +248,9 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		while (pos > 0 && pBuffer->pBuffer[pos] == ' ')
 			pos--;
 
-		if (pBuffer->pBuffer[pos] == '\\') {
-			pBuffer->pBuffer[pBuffer->nBufferSize] = '\n';
-			pBuffer->nBufferSize++;
-		}
+		if (pBuffer->pBuffer[pos] == '\\')
+			yy_buffer_append(pBuffer, capacity, '\n');
 	}
-
-	pBuffer->pBuffer[pBuffer->nBufferSize] = 0;
 
 	pBuffer->oAtLineStart = 1;
 	return pBuffer;
