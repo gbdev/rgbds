@@ -902,7 +902,7 @@ void out_BinaryFile(char *s)
 {
 	FILE *f;
 
-	f = fstk_FindFile(s);
+	f = fstk_FindFile(s, NULL);
 	if (f == NULL)
 		err(1, "Unable to open incbin file '%s'", s);
 
@@ -938,7 +938,7 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	if (length < 0)
 		fatalerror("Number of bytes to read must be greater than zero");
 
-	f = fstk_FindFile(s);
+	f = fstk_FindFile(s, NULL);
 	if (f == NULL)
 		err(1, "Unable to open included file '%s'", s);
 

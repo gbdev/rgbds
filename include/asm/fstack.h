@@ -42,7 +42,7 @@ void fstk_Dump(void);
 void fstk_AddIncludePath(char *s);
 uint32_t fstk_RunMacro(char *s);
 void fstk_RunRept(uint32_t count);
-FILE *fstk_FindFile(char *fname);
+FILE *fstk_FindFile(char *fname, char **incPathUsed);
 int32_t fstk_GetLine(void);
 
 #endif /* RGBDS_ASM_FSTACK_H */
