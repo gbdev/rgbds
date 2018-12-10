@@ -234,7 +234,7 @@ void fstk_AddIncludePath(char *s)
 		fatalerror("Include path too long '%s'", s);
 }
 
-FILE *fstk_FindFile(char *fname)
+FILE *fstk_FindFile(char *fname, char **incPathUsed)
 {
 	char path[_MAX_PATH];
 	int32_t i;
@@ -275,6 +275,8 @@ FILE *fstk_FindFile(char *fname)
 				fprintf(dependfile, "%s: %s\n", tzObjectname,
 					path);
 			}
+			if (incPathUsed)
+				*incPathUsed = IncludePaths[i];
 			return f;
 		}
 	}
@@ -288,7 +290,8 @@ FILE *fstk_FindFile(char *fname)
  */
 void fstk_RunInclude(char *tzFileName)
 {
-	FILE *f = fstk_FindFile(tzFileName);
+	char *incPathUsed = "";
+	FILE *f = fstk_FindFile(tzFileName, &incPathUsed);
 
 	if (f == NULL)
 		err(1, "Unable to open included file '%s'", tzFileName);
@@ -296,7 +299,8 @@ void fstk_RunInclude(char *tzFileName)
 	pushcontext();
 	nLineNo = 1;
 	nCurrentStatus = STAT_isInclude;
-	strcpy(tzCurrentFileName, tzFileName);
+	snprintf(tzCurrentFileName, sizeof(tzCurrentFileName), "%s%s",
+		 incPathUsed, tzFileName);
 	pCurrentFile = f;
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
