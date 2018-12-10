@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "asm/asm.h"
+#include "asm/constexpr.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/rpn.h"

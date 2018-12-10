@@ -15,6 +15,7 @@
 #include <ctype.h>
 
 #include "asm/asm.h"
+#include "asm/constexpr.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
@@ -769,6 +770,7 @@ scanagain:
 
 	/* Longest match was a keyword or operator. */
 	pLexBuffer += pLongestFixed->nNameLength;
+	yylval.nConstValue = pLongestFixed->nToken;
 	return pLongestFixed->nToken;
 }
 
