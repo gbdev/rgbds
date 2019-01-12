@@ -36,8 +36,9 @@ void CreateSymbolTable(void);
 struct sSection *GetSectionByName(const char *name);
 int32_t IsSectionNameInUse(const char *name);
 void SetLinkerscriptName(char *tzLinkerscriptFile);
-int32_t IsSectionSameTypeBankAndFloating(const char *name,
-					 enum eSectionType type, int32_t bank);
+int32_t IsSectionSameTypeBankAndAttrs(const char *name,
+				      enum eSectionType type, int32_t bank,
+				      int32_t org, int32_t align);
 uint32_t AssignSectionAddressAndBankByName(const char *name, uint32_t address,
 					   int32_t bank);
 

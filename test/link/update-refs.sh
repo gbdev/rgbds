@@ -9,6 +9,12 @@ $RGBASM -o $otemp bank-numbers.asm
 $RGBLINK -o $gbtemp $otemp > bank-numbers.out 2>&1
 head -c 20 $gbtemp > bank-numbers.out.bin 2>&1
 
+$RGBASM -o $otemp section-attributes.asm
+$RGBLINK -l section-attributes.link \
+	-o $gbtemp $otemp > section-attributes.out 2>&1
+$RGBLINK -l section-attributes-mismatch.link \
+	-o $gbtemp $otemp > section-attributes-mismatch.out 2>&1
+
 $RGBASM -o $otemp wramx-dmg-mode.asm
 $RGBLINK -o $gbtemp $otemp > wramx-dmg-mode-no-d.out 2>&1
 $RGBLINK -d -o $gbtemp $otemp > wramx-dmg-mode-d.out 2>&1
@@ -28,4 +34,5 @@ $RGBLINK -t -o $gbtemp $otemp > romx-tiny-t.out 2>&1
 $RGBASM -o $otemp all-instructions.asm
 $RGBLINK -o all-instructions.out.bin $otemp 2>&1
 
+rm -f $otemp $gbtemp
 exit 0

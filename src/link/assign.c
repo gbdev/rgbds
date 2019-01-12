@@ -321,8 +321,9 @@ struct sSection *GetSectionByName(const char *name)
 	return NULL;
 }
 
-int32_t IsSectionSameTypeBankAndFloating(const char *name,
-					 enum eSectionType type, int32_t bank)
+int32_t IsSectionSameTypeBankAndAttrs(const char *name,
+				      enum eSectionType type, int32_t bank,
+				      int32_t org, int32_t align)
 {
 	const struct sSection *pSection;
 
@@ -340,8 +341,9 @@ int32_t IsSectionSameTypeBankAndFloating(const char *name,
 		 * mismatch or not.
 		 */
 
-		/* Section must be floating in source */
-		if (pSection->nOrg != -1 || pSection->nAlign != 1)
+		/* Section must have the same attributes or float */
+		if ((pSection->nOrg != -1 && pSection->nOrg != org) ||
+		    (pSection->nAlign != 1 && pSection->nAlign != align))
 			return 0;
 
 		/* It must have the same type in source and linkerscript */
@@ -373,15 +375,6 @@ uint32_t AssignSectionAddressAndBankByName(const char *name, uint32_t address,
 			continue;
 
 		/* Section has been found. */
-
-		/*
-		 * A section can be left as floating in the code if the location
-		 * is assigned in the linkerscript.
-		 */
-		if (pSection->nOrg != -1 || pSection->nAlign != 1) {
-			errx(1, "Section \"%s\" from linkerscript isn't floating.\n",
-			     name);
-		}
 
 		/* The bank can be left as unassigned or be the same */
 		if (pSection->nBank != -1 && pSection->nBank != bank) {

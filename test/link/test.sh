@@ -16,6 +16,14 @@ head -c 20 $gbtemp > $otemp 2>&1
 diff bank-numbers.out.bin $otemp
 rc=$(($? || $rc))
 
+$RGBASM -o $otemp section-attributes.asm
+$RGBLINK -l section-attributes.link -o $gbtemp $otemp > $outtemp 2>&1
+diff section-attributes.out $outtemp
+rc=$(($? || $rc))
+$RGBLINK -l section-attributes-mismatch.link -o $gbtemp $otemp > $outtemp 2>&1
+diff section-attributes-mismatch.out $outtemp
+rc=$(($? || $rc))
+
 $RGBASM -o $otemp wramx-dmg-mode.asm
 $RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
 diff wramx-dmg-mode-no-d.out $outtemp
@@ -60,4 +68,5 @@ $RGBLINK -o $gbtemp $otemp
 diff all-instructions.out.bin $gbtemp
 rc=$(($? || $rc))
 
+rm -f $otemp $gbtemp $gbtemp2 $outtemp
 exit $rc
