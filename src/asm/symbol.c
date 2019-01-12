@@ -103,6 +103,19 @@ uint32_t calchash(char *s)
 }
 
 /*
+ * Update a symbol's definition filename and line
+ */
+void updateSymbolFilename(struct sSymbol *nsym)
+{
+	if (snprintf(nsym->tzFileName, _MAX_PATH + 1, "%s",
+		     tzCurrentFileName) > _MAX_PATH) {
+		fatalerror("%s: File name is too long: '%s'", __func__,
+			   tzCurrentFileName);
+	}
+	nsym->nFileLine = fstk_GetLine();
+}
+
+/*
  * Create a new symbol by name
  */
 struct sSymbol *createsymbol(char *s)
@@ -133,14 +146,7 @@ struct sSymbol *createsymbol(char *s)
 	(*ppsym)->pMacro = NULL;
 	(*ppsym)->pSection = NULL;
 	(*ppsym)->Callback = NULL;
-
-	if (snprintf((*ppsym)->tzFileName, _MAX_PATH + 1, "%s",
-		     tzCurrentFileName) > _MAX_PATH) {
-		fatalerror("%s: File name is too long: '%s'", __func__,
-			   tzCurrentFileName);
-	}
-
-	(*ppsym)->nFileLine = fstk_GetLine();
+	updateSymbolFilename(*ppsym);
 	return *ppsym;
 }
 
@@ -560,6 +566,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
 			nsym->nValue = value;
 			nsym->nType |= SYMF_EQU | SYMF_DEFINED | SYMF_CONST;
 			nsym->pScope = NULL;
+			updateSymbolFilename(nsym);
 		}
 	}
 }
@@ -633,6 +640,7 @@ void sym_AddSet(char *tzSym, int32_t value)
 		nsym->nValue = value;
 		nsym->nType |= SYMF_SET | SYMF_DEFINED | SYMF_CONST;
 		nsym->pScope = NULL;
+		updateSymbolFilename(nsym);
 	}
 }
 
@@ -710,6 +718,8 @@ void sym_AddReloc(char *tzSym)
 
 			nsym->pScope = scope;
 			nsym->pSection = pCurrentSection;
+
+			updateSymbolFilename(nsym);
 		}
 	}
 	pScope = findsymbol(tzSym, scope);
@@ -840,6 +850,7 @@ void sym_AddMacro(char *tzSym)
 			nsym->pScope = NULL;
 			nsym->ulMacroSize = ulNewMacroSize;
 			nsym->pMacro = tzNewMacro;
+			updateSymbolFilename(nsym);
 		}
 	}
 }
