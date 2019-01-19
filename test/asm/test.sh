@@ -20,4 +20,5 @@ for i in *.asm; do
 	fi
 done
 
+rm -f $o $gb $before $after
 exit $rc

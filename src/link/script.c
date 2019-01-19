@@ -23,6 +23,10 @@ static struct {
 static int32_t current_bank = -1; /* Bank as seen by the bank array */
 static int32_t current_real_bank = -1; /* bank as seen by the GB */
 
+/* Current section attributes */
+static int32_t fix_org = -1;
+static int32_t fix_align = 1;
+
 void script_InitSections(void)
 {
 	int32_t i;
@@ -176,6 +180,8 @@ void script_SetAddress(uint32_t addr)
 		     bank[current_bank].address,
 		     bank[current_bank].top_address);
 	}
+
+	fix_org = addr;
 }
 
 void script_SetAlignment(uint32_t alignment)
@@ -200,6 +206,8 @@ void script_SetAlignment(uint32_t alignment)
 		     bank[current_bank].address,
 		     bank[current_bank].top_address);
 	}
+
+	fix_align = size;
 }
 
 void script_OutputSection(const char *section_name)
@@ -209,9 +217,11 @@ void script_OutputSection(const char *section_name)
 		     section_name);
 	}
 
-	if (!IsSectionSameTypeBankAndFloating(section_name,
-					      bank[current_bank].type,
-					      current_real_bank)) {
+	if (!IsSectionSameTypeBankAndAttrs(section_name,
+					   bank[current_bank].type,
+					   current_real_bank,
+					   fix_org,
+					   fix_align)) {
 		errx(1, "Different attributes for \"%s\" in source and linkerscript\n",
 		     section_name);
 	}
@@ -221,5 +231,7 @@ void script_OutputSection(const char *section_name)
 		AssignSectionAddressAndBankByName(section_name,
 						  bank[current_bank].address,
 						  current_real_bank);
-}
 
+	fix_org = -1;
+	fix_align = 1;
+}

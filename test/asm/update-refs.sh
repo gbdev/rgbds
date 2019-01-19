@@ -6,4 +6,5 @@ for i in *.asm; do
 	mv -f $fname ${i%.asm}.out
 done
 
+rm -f $fname
 exit 0
