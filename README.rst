@@ -55,8 +55,17 @@ To install RGBDS with all of the current changes in development (as seen on the
 .. code:: sh
 
     brew install rgbds --HEAD
+    
+1.3 Arch Linux
+~~~~~~~~~~~~~~
 
-1.3 Other UNIX-like systems
+To install RGBDS through the AUR run
+
+.. code:: sh
+
+    yaourt -S rgbds
+
+1.4 Other UNIX-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 No official binaries of RGBDS are distributed for these systems, you must follow
