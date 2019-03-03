@@ -405,23 +405,25 @@ void fstk_RunRept(uint32_t count)
 /*
  * Initialize the filestack routines
  */
-void fstk_Init(char *s)
+void fstk_Init(char *pFileName)
 {
-	char tzFileName[_MAX_PATH + 1];
 	char tzSymFileName[_MAX_PATH + 1 + 2];
 
-	snprintf(tzSymFileName, sizeof(tzSymFileName), "\"%s\"", s);
+	snprintf(tzSymFileName, sizeof(tzSymFileName), "\"%s\"", pFileName);
 	sym_AddString("__FILE__", tzSymFileName);
 
-	strcpy(tzFileName, s);
 	pFileStack = NULL;
-	pCurrentFile = fopen(tzFileName, "rb");
-	if (pCurrentFile == NULL)
-		err(1, "Unable to open file '%s'", tzFileName);
+	if (strcmp(pFileName, "-") == 0) {
+		pCurrentFile = stdin;
+	} else {
+		pCurrentFile = fopen(pFileName, "rb");
+		if (pCurrentFile == NULL)
+			err(1, "Unable to open file '%s'", pFileName);
+	}
 
 	nMacroCount = 0;
 	nCurrentStatus = STAT_isInclude;
-	snprintf(tzCurrentFileName, _MAX_PATH + 1, "%s", tzFileName);
+	snprintf(tzCurrentFileName, _MAX_PATH + 1, "%s", pFileName);
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
 	nLineNo = 1;
