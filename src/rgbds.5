@@ -47,7 +47,7 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
                           ; as "Scope.Symbol".
 
     BYTE    Type          ; 0 = LOCAL symbol only used in this file.
-                          ; 1 = IMPORT this symbol from elsewhere (unused).
+                          ; 1 = IMPORT this symbol from elsewhere
                           ; 2 = EXPORT this symbol to other objects.
 
     IF      Type != 1     ; If symbol is defined in this object file.
@@ -164,8 +164,8 @@ special prefixes for integers and symbols.
 .It Li $33 Ta Li < comparison
 .It Li $34 Ta Li >= comparison
 .It Li $35 Ta Li <= comparison
-.It Li $40 Ta Li << comparison
-.It Li $41 Ta Li >> comparison
+.It Li $40 Ta Li << operator
+.It Li $41 Ta Li >> operator
 .It Li $50 Ta Li BANK(symbol),
 a
 .Ar LONG
