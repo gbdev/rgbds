@@ -188,7 +188,7 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 		}
 	}
 
-	if (copied > MAXSYMLEN)
+	if (copied >= MAXSYMLEN)
 		fatalerror("Symbol too long");
 
 	dest[copied] = 0;
@@ -206,7 +206,7 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 		return 0;
 	}
 
-	strcpy(yylval.tzString, dest);
+	strcpy(yylval.tzSym, dest);
 	return 1;
 }
 
