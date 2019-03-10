@@ -15,6 +15,7 @@
 
 #include "link/main.h"
 #include "link/patch.h"
+#include "link/mylink.h"
 
 #include "types.h"
 
@@ -53,7 +54,7 @@ void sym_Init(void)
 		tHash[i] = NULL;
 }
 
-int32_t sym_GetValue(char *tzName)
+int32_t sym_GetValue(struct sPatch *pPatch, char *tzName)
 {
 	if (strcmp(tzName, "@") == 0)
 		return nPC;
@@ -68,10 +69,13 @@ int32_t sym_GetValue(char *tzName)
 			return ((*ppSym)->nValue);
 	}
 
-	errx(1, "Unknown symbol '%s'", tzName);
+	errx(1,
+	     "%s(%ld) : Unknown symbol '%s'",
+	     pPatch->pzFilename, pPatch->nLineNo,
+	     tzName);
 }
 
-int32_t sym_GetBank(char *tzName)
+int32_t sym_GetBank(struct sPatch *pPatch, char *tzName)
 {
 	struct ISymbol **ppSym;
 
@@ -83,7 +87,10 @@ int32_t sym_GetBank(char *tzName)
 			return ((*ppSym)->nBank);
 	}
 
-	errx(1, "Unknown symbol '%s'", tzName);
+	errx(1,
+	     "%s(%ld) : Unknown symbol '%s'",
+	     pPatch->pzFilename, pPatch->nLineNo,
+	     tzName);
 }
 
 void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,

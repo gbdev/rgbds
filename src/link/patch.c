@@ -35,13 +35,13 @@ static int32_t rpnpop(void)
 	return rpnstack[rpnp];
 }
 
-static int32_t getsymvalue(int32_t symid)
+static int32_t getsymvalue(struct sPatch *pPatch, int32_t symid)
 {
 	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
 
 	switch (tSymbol->Type) {
 	case SYM_IMPORT:
-		return sym_GetValue(tSymbol->pzName);
+		return sym_GetValue(pPatch, tSymbol->pzName);
 
 	case SYM_EXPORT:
 	case SYM_LOCAL:
@@ -75,14 +75,14 @@ static int32_t getrealbankfrominternalbank(int32_t n)
 	return n;
 }
 
-static int32_t getsymbank(int32_t symid)
+static int32_t getsymbank(struct sPatch *pPatch, int32_t symid)
 {
 	int32_t nBank;
 	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
 
 	switch (tSymbol->Type) {
 	case SYM_IMPORT:
-		nBank = sym_GetBank(tSymbol->pzName);
+		nBank = sym_GetBank(pPatch, tSymbol->pzName);
 		break;
 	case SYM_EXPORT:
 	case SYM_LOCAL:
@@ -209,8 +209,8 @@ int32_t calcrpn(struct sPatch *pPatch)
 			t |= (*rpn++) << 8;
 			t |= (*rpn++) << 16;
 			t |= (*rpn++) << 24;
-			rpnpush(getsymvalue(t));
-			pPatch->oRelocPatch |= (getsymbank(t) != -1);
+			rpnpush(getsymvalue(pPatch, t));
+			pPatch->oRelocPatch |= (getsymbank(pPatch, t) != -1);
 			size -= 4;
 			break;
 		case RPN_BANK_SYM:
@@ -219,7 +219,7 @@ int32_t calcrpn(struct sPatch *pPatch)
 			t |= (*rpn++) << 8;
 			t |= (*rpn++) << 16;
 			t |= (*rpn++) << 24;
-			rpnpush(getsymbank(t));
+			rpnpush(getsymbank(pPatch, t));
 			size -= 4;
 			break;
 		case RPN_BANK_SECT:
@@ -229,7 +229,9 @@ int32_t calcrpn(struct sPatch *pPatch)
 			struct sSection *pSection = GetSectionByName(name);
 
 			if (pSection == NULL) {
-				errx(1, "Requested BANK() of section \"%s\", which was not found.\n",
+				errx(1,
+				     "%s(%ld) : Requested BANK() of section \"%s\", which was not found.\n",
+				     pPatch->pzFilename, pPatch->nLineNo,
 				     name);
 			}
 
