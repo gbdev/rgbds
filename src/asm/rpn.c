@@ -10,6 +10,7 @@
  * Controls RPN expressions for objectfiles
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,12 +25,37 @@
 void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 			 const struct Expression *src2)
 {
-	*expr = *src1;
-	memcpy(&(expr->tRPN[expr->nRPNLength]), src2->tRPN, src2->nRPNLength);
+	assert(src1->tRPN != NULL && src2->tRPN != NULL);
 
-	expr->nRPNLength += src2->nRPNLength;
-	expr->isReloc |= src2->isReloc;
-	expr->isPCRel |= src2->isPCRel;
+	if (src1->nRPNLength > UINT32_MAX - src2->nRPNLength)
+		fatalerror("RPN expression is too large");
+
+	uint32_t len = src1->nRPNLength + src2->nRPNLength;
+
+	expr->tRPN = src1->tRPN;
+
+	if (src1->nRPNCapacity >= len) {
+		expr->nRPNCapacity = src1->nRPNCapacity;
+	} else {
+		uint32_t cap1 = src1->nRPNCapacity;
+		uint32_t cap2 = src2->nRPNCapacity;
+		uint32_t cap = (cap1 > cap2) ? cap1 : cap2;
+
+		if (len > cap)
+			cap = (cap <= UINT32_MAX / 2) ? cap * 2 : len;
+
+		expr->nRPNCapacity = cap;
+		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
+		if (expr->tRPN == NULL)
+			fatalerror("No memory for RPN expression");
+	}
+
+	memcpy(expr->tRPN + src1->nRPNLength, src2->tRPN, src2->nRPNLength);
+	free(src2->tRPN);
+
+	expr->nRPNLength = len;
+	expr->isReloc = src1->isReloc || src2->isReloc;
+	expr->isPCRel = src1->isPCRel || src2->isPCRel;
 }
 
 #define joinexpr() mergetwoexpressions(expr, src1, src2)
@@ -39,18 +65,42 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
  */
 void pushbyte(struct Expression *expr, int b)
 {
+	if (expr->nRPNLength == expr->nRPNCapacity) {
+		if (expr->nRPNCapacity == 0)
+			expr->nRPNCapacity = 256;
+		else if (expr->nRPNCapacity > UINT32_MAX / 2)
+			fatalerror("RPN expression is too large");
+		else
+			expr->nRPNCapacity *= 2;
+		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
+
+		if (expr->tRPN == NULL)
+			fatalerror("No memory for RPN expression");
+	}
+
 	expr->tRPN[expr->nRPNLength++] = b & 0xFF;
 }
 
 /*
- * Reset the RPN module
+ * Init the RPN expression
  */
-void rpn_Reset(struct Expression *expr)
+void rpn_Init(struct Expression *expr)
 {
+	expr->tRPN = NULL;
+	expr->nRPNCapacity = 0;
 	expr->nRPNLength = 0;
 	expr->nRPNOut = 0;
 	expr->isReloc = 0;
 	expr->isPCRel = 0;
+}
+
+/*
+ * Free the RPN expression
+ */
+void rpn_Free(struct Expression *expr)
+{
+	free(expr->tRPN);
+	rpn_Init(expr);
 }
 
 /*
@@ -85,7 +135,7 @@ uint32_t rpn_isPCRelative(const struct Expression *expr)
  */
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
-	rpn_Reset(expr);
+	rpn_Init(expr);
 	pushbyte(expr, RPN_CONST);
 	pushbyte(expr, i);
 	pushbyte(expr, i >> 8);
@@ -99,7 +149,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 	if (!sym_isConstant(tzSym)) {
 		const struct sSymbol *psym;
 
-		rpn_Reset(expr);
+		rpn_Init(expr);
 
 		psym = sym_FindSymbol(tzSym);
 
@@ -118,7 +168,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 
 void rpn_BankSelf(struct Expression *expr)
 {
-	rpn_Reset(expr);
+	rpn_Init(expr);
 
 	/*
 	 * This symbol is not really relocatable, but this makes the assembler
@@ -138,7 +188,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 	}
 
 	if (!sym_isConstant(tzSym)) {
-		rpn_Reset(expr);
+		rpn_Init(expr);
 
 		/*
 		 * Check that the symbol exists by evaluating and discarding the
@@ -158,7 +208,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 
 void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 {
-	rpn_Reset(expr);
+	rpn_Init(expr);
 
 	/*
 	 * This symbol is not really relocatable, but this makes the assembler

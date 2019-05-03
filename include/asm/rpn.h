@@ -13,7 +13,8 @@
 
 struct Expression {
 	int32_t  nVal;
-	uint8_t  tRPN[256];
+	uint8_t  *tRPN;
+	uint32_t nRPNCapacity;
 	uint32_t nRPNLength;
 	uint32_t nRPNOut;
 	uint32_t isReloc;
@@ -69,7 +70,8 @@ uint16_t rpn_PopByte(struct Expression *expr);
 void rpn_BankSymbol(struct Expression *expr, char *tzSym);
 void rpn_BankSection(struct Expression *expr, char *tzSectionName);
 void rpn_BankSelf(struct Expression *expr);
-void rpn_Reset(struct Expression *expr);
+void rpn_Init(struct Expression *expr);
+void rpn_Free(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
 
 #endif /* RGBDS_ASM_RPN_H */

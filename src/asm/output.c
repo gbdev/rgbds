@@ -782,7 +782,7 @@ void out_RelByte(struct Expression *expr)
 	} else {
 		out_AbsByte(expr->nVal);
 	}
-	rpn_Reset(expr);
+	rpn_Free(expr);
 }
 
 /*
@@ -825,7 +825,7 @@ void out_RelWord(struct Expression *expr)
 	} else {
 		out_AbsWord(expr->nVal);
 	}
-	rpn_Reset(expr);
+	rpn_Free(expr);
 }
 
 /*
@@ -871,7 +871,7 @@ void out_RelLong(struct Expression *expr)
 	} else {
 		out_AbsLong(expr->nVal);
 	}
-	rpn_Reset(expr);
+	rpn_Free(expr);
 }
 
 /*
@@ -892,7 +892,7 @@ void out_PCRelByte(struct Expression *expr)
 	nPC += 1;
 	pPCSymbol->nValue += 1;
 
-	rpn_Reset(expr);
+	rpn_Free(expr);
 }
 
 /*
