@@ -879,7 +879,7 @@ static uint32_t yylex_MACROARGS(void)
 	fatalerror("Internal error in %s", __func__);
 }
 
-uint32_t yylex(void)
+int yylex(void)
 {
 	switch (lexerstate) {
 	case LEX_STATE_NORMAL:
