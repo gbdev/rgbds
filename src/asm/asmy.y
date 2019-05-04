@@ -799,7 +799,7 @@ ds		: T_POP_DS uconst
 ;
 
 db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
-			if ((nPass == 1) && (nListCountEmpty > 0)) {
+			if (nListCountEmpty > 0) {
 				warning("Empty entry in list of 8-bit elements (treated as 0).");
 			}
 		}
@@ -807,7 +807,7 @@ db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
 ;
 
 dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
-			if ((nPass == 1) && (nListCountEmpty > 0)) {
+			if (nListCountEmpty > 0) {
 				warning("Empty entry in list of 16-bit elements (treated as 0).");
 			}
 		}
@@ -815,7 +815,7 @@ dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
 ;
 
 dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
-			if ((nPass == 1) && (nListCountEmpty > 0)) {
+			if (nListCountEmpty > 0) {
 				warning("Empty entry in list of 32-bit elements (treated as 0).");
 			}
 		}
@@ -852,8 +852,7 @@ import_list_entry : T_ID
 			 * This is done automatically if the label isn't found
 			 * in the list of defined symbols.
 			 */
-			if (nPass == 1)
-				warning("IMPORT is a deprecated keyword with no effect: %s", $1);
+			warning("IMPORT is a deprecated keyword with no effect: %s", $1);
 		}
 ;
 
@@ -879,7 +878,7 @@ global_list	: global_list_entry
 
 global_list_entry : T_ID
 		{
-			sym_Global($1);
+			sym_Export($1);
 		}
 ;
 
@@ -929,29 +928,25 @@ charmap		: T_POP_CHARMAP string comma string
 
 printt		: T_POP_PRINTT string
 		{
-			if (nPass == 1)
-				printf("%s", $2);
+			printf("%s", $2);
 		}
 ;
 
 printv		: T_POP_PRINTV const
 		{
-			if (nPass == 1)
-				printf("$%X", constexpr_GetConstantValue(&$2));
+			printf("$%X", constexpr_GetConstantValue(&$2));
 		}
 ;
 
 printi		: T_POP_PRINTI const
 		{
-			if (nPass == 1)
-				printf("%d", constexpr_GetConstantValue(&$2));
+			printf("%d", constexpr_GetConstantValue(&$2));
 		}
 ;
 
 printf		: T_POP_PRINTF const
 		{
-			if (nPass == 1)
-				math_Print(constexpr_GetConstantValue(&$2));
+			math_Print(constexpr_GetConstantValue(&$2));
 		}
 ;
 
@@ -1126,20 +1121,17 @@ relocconst	: T_ID
 				struct Expression sTemp, sOffset;
 
 				rpn_Symbol(&sTemp, $1);
-				sTemp.nVal = sym_GetValue($1);
 
 				rpn_Number(&sOffset, nPCOffset);
 
 				rpn_SUB(&$$, &sTemp, &sOffset);
 			} else {
 				rpn_Symbol(&$$, $1);
-				$$.nVal = sym_GetValue($1);
 			}
 		}
 		| T_NUMBER
 		{
 			rpn_Number(&$$, $1);
-			$$.nVal = $1;
 		}
 		| string
 		{
@@ -1149,7 +1141,6 @@ relocconst	: T_ID
 
 			free(s);
 			rpn_Number(&$$, r);
-			$$.nVal = r;
 		}
 		| T_OP_LOGICNOT relocconst %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
 		| relocconst T_OP_LOGICOR relocconst	{ rpn_LOGOR(&$$, &$1, &$3); }
@@ -1179,12 +1170,10 @@ relocconst	: T_ID
 		{
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
-			$$.nVal = 0;
 		}
 		| T_OP_BANK '(' string ')'
 		{
 			rpn_BankSection(&$$, $3);
-			$$.nVal = 0;
 		}
 		| T_OP_DEF {
 				oDontExpandStrings = true;
@@ -1637,8 +1626,7 @@ z80_jp		: T_Z80_JP const_16bit
 		| T_Z80_JP T_MODE_HL_IND
 		{
 			out_AbsByte(0xE9);
-			if (nPass == 1)
-				warning("'JP [HL]' is obsolete, use 'JP HL' instead.");
+			warning("'JP [HL]' is obsolete, use 'JP HL' instead.");
 		}
 		| T_Z80_JP T_MODE_HL
 		{
@@ -1665,8 +1653,7 @@ z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
 		| T_Z80_LDI T_MODE_A comma T_MODE_HL
 		{
 			out_AbsByte(0x0A | (2 << 4));
-			if (nPass == 1)
-				warning("'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.");
+			warning("'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.");
 		}
 		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND
 		{
@@ -1681,8 +1668,7 @@ z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A
 		| T_Z80_LDD T_MODE_A comma T_MODE_HL
 		{
 			out_AbsByte(0x0A | (3 << 4));
-			if (nPass == 1)
-				warning("'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.");
+			warning("'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.");
 		}
 		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND
 		{

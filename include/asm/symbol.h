@@ -38,8 +38,6 @@ struct sSymbol {
 #define SYMF_SET	0x004
 /* Symbol should be exported */
 #define SYMF_EXPORT	0x008
-/* Symbol is imported, it's value is unknown */
-#define SYMF_IMPORT	0x010
 /* Symbol is a local symbol */
 #define SYMF_LOCAL	0x020
 /* Symbol has been defined, not only referenced */
@@ -53,8 +51,6 @@ struct sSymbol {
 
 uint32_t calchash(char *s);
 void sym_SetExportAll(uint8_t set);
-void sym_PrepPass1(void);
-void sym_PrepPass2(void);
 void sym_AddLocalReloc(char *tzSym);
 void sym_AddReloc(char *tzSym);
 void sym_Export(char *tzSym);
@@ -72,16 +68,15 @@ void sym_Init(void);
 uint32_t sym_GetConstantValue(char *s);
 uint32_t sym_isConstant(char *s);
 struct sSymbol *sym_FindSymbol(char *tzName);
-void sym_Global(char *tzSym);
 char *sym_FindMacroArg(int32_t i);
 char *sym_GetStringValue(char *tzSym);
 void sym_UseCurrentMacroArgs(void);
 void sym_SetMacroArgID(uint32_t nMacroCount);
 uint32_t sym_isString(char *tzSym);
 void sym_AddMacro(char *tzSym);
+void sym_AddForwardRef(char *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
 void sym_AddString(char *tzSym, char *tzValue);
-uint32_t sym_GetValue(char *s);
 uint32_t sym_GetDefinedValue(char *s);
 uint32_t sym_isDefined(char *tzName);
 void sym_Purge(char *tzName);

@@ -259,37 +259,46 @@ static void writesection(struct Section *pSect, FILE *f)
  */
 static void writesymbol(struct sSymbol *pSym, FILE *f)
 {
-	char symname[MAXSYMLEN * 2 + 1];
 	uint32_t type;
 	uint32_t offset;
 	int32_t sectid;
 
-	if (pSym->nType & SYMF_IMPORT) {
-		/* Symbol should be imported */
-		strcpy(symname, pSym->tzName);
-		offset = 0;
-		sectid = -1;
-		type = SYM_IMPORT;
-	} else {
-		strcpy(symname, pSym->tzName);
+	if (!(pSym->nType & SYMF_DEFINED)) {
+		if (pSym->nType & SYMF_LOCAL) {
+			char *name = pSym->tzName;
+			char *localPtr = strchr(name, '.');
 
-		if (pSym->nType & SYMF_EXPORT) {
-			/* Symbol should be exported */
-			type = SYM_EXPORT;
-			offset = pSym->nValue;
-			if (pSym->nType & SYMF_CONST)
-				sectid = -1;
-			else
-				sectid = getsectid(pSym->pSection);
-		} else {
-			/* Symbol is local to this file */
-			type = SYM_LOCAL;
-			offset = pSym->nValue;
-			sectid = getsectid(pSym->pSection);
+			if (localPtr)
+				name = localPtr;
+			errx(1, "%s(%u) : '%s' not defined",
+			     pSym->tzFileName, pSym->nFileLine, name);
 		}
+		type = SYM_IMPORT;
+	} else if (pSym->nType & SYMF_EXPORT) {
+		type = SYM_EXPORT;
+	} else {
+		type = SYM_LOCAL;
 	}
 
-	fputstring(symname, f);
+	switch (type) {
+	case SYM_LOCAL:
+		offset = pSym->nValue;
+		sectid = getsectid(pSym->pSection);
+		break;
+	case SYM_IMPORT:
+		offset = 0;
+		sectid = -1;
+		break;
+	case SYM_EXPORT:
+		offset = pSym->nValue;
+		if (pSym->nType & SYMF_CONST)
+			sectid = -1;
+		else
+			sectid = getsectid(pSym->pSection);
+		break;
+	}
+
+	fputstring(pSym->tzName, f);
 	fputc(type, f);
 
 	if (type != SYM_IMPORT) {
@@ -563,22 +572,6 @@ void out_WriteObject(void)
 }
 
 /*
- * Prepare for pass #2
- */
-void out_PrepPass2(void)
-{
-	struct Section *pSect;
-
-	pSect = pSectionList;
-	while (pSect) {
-		pSect->nPC = 0;
-		pSect = pSect->pNext;
-	}
-	pCurrentSection = NULL;
-	pSectionStack = NULL;
-}
-
-/*
  * Set the objectfilename
  */
 void out_SetFileName(char *s)
@@ -586,10 +579,6 @@ void out_SetFileName(char *s)
 	tzObjectname = s;
 	if (CurrentOptions.verbose)
 		printf("Output filename %s\n", s);
-
-	pSectionList = NULL;
-	pCurrentSection = NULL;
-	pPatchSymbols = NULL;
 }
 
 /*
@@ -636,7 +625,6 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	pSect->pNext = NULL;
 	pSect->pPatches = NULL;
 	pSect->charmap = NULL;
-	pPatchSymbols = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
 	if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
@@ -705,9 +693,7 @@ void out_AbsByteBypassCheck(int32_t b)
 {
 	checksectionoverflow(1);
 	b &= 0xFF;
-	if (nPass == 2)
-		pCurrentSection->tData[nPC] = b;
-
+	pCurrentSection->tData[nPC] = b;
 	pCurrentSection->nPC += 1;
 	nPC += 1;
 	pPCSymbol->nValue += 1;
@@ -772,10 +758,8 @@ void out_RelByte(struct Expression *expr)
 	checkcodesection();
 	checksectionoverflow(1);
 	if (rpn_isReloc(expr)) {
-		if (nPass == 2) {
-			pCurrentSection->tData[nPC] = 0;
-			createpatch(PATCH_BYTE, expr);
-		}
+		pCurrentSection->tData[nPC] = 0;
+		createpatch(PATCH_BYTE, expr);
 		pCurrentSection->nPC += 1;
 		nPC += 1;
 		pPCSymbol->nValue += 1;
@@ -793,10 +777,8 @@ void out_AbsWord(int32_t b)
 	checkcodesection();
 	checksectionoverflow(2);
 	b &= 0xFFFF;
-	if (nPass == 2) {
-		pCurrentSection->tData[nPC] = b & 0xFF;
-		pCurrentSection->tData[nPC + 1] = b >> 8;
-	}
+	pCurrentSection->tData[nPC] = b & 0xFF;
+	pCurrentSection->tData[nPC + 1] = b >> 8;
 	pCurrentSection->nPC += 2;
 	nPC += 2;
 	pPCSymbol->nValue += 2;
@@ -808,17 +790,12 @@ void out_AbsWord(int32_t b)
  */
 void out_RelWord(struct Expression *expr)
 {
-	uint32_t b;
-
 	checkcodesection();
 	checksectionoverflow(2);
-	b = expr->nVal & 0xFFFF;
 	if (rpn_isReloc(expr)) {
-		if (nPass == 2) {
-			pCurrentSection->tData[nPC] = b & 0xFF;
-			pCurrentSection->tData[nPC + 1] = b >> 8;
-			createpatch(PATCH_WORD_L, expr);
-		}
+		pCurrentSection->tData[nPC] = 0;
+		pCurrentSection->tData[nPC + 1] = 0;
+		createpatch(PATCH_WORD_L, expr);
 		pCurrentSection->nPC += 2;
 		nPC += 2;
 		pPCSymbol->nValue += 2;
@@ -835,12 +812,10 @@ void out_AbsLong(int32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(sizeof(int32_t));
-	if (nPass == 2) {
-		pCurrentSection->tData[nPC] = b & 0xFF;
-		pCurrentSection->tData[nPC + 1] = b >> 8;
-		pCurrentSection->tData[nPC + 2] = b >> 16;
-		pCurrentSection->tData[nPC + 3] = b >> 24;
-	}
+	pCurrentSection->tData[nPC] = b & 0xFF;
+	pCurrentSection->tData[nPC + 1] = b >> 8;
+	pCurrentSection->tData[nPC + 2] = b >> 16;
+	pCurrentSection->tData[nPC + 3] = b >> 24;
 	pCurrentSection->nPC += 4;
 	nPC += 4;
 	pPCSymbol->nValue += 4;
@@ -852,19 +827,14 @@ void out_AbsLong(int32_t b)
  */
 void out_RelLong(struct Expression *expr)
 {
-	int32_t b;
-
 	checkcodesection();
 	checksectionoverflow(4);
-	b = expr->nVal;
 	if (rpn_isReloc(expr)) {
-		if (nPass == 2) {
-			pCurrentSection->tData[nPC] = b & 0xFF;
-			pCurrentSection->tData[nPC + 1] = b >> 8;
-			pCurrentSection->tData[nPC + 2] = b >> 16;
-			pCurrentSection->tData[nPC + 3] = b >> 24;
-			createpatch(PATCH_LONG_L, expr);
-		}
+		pCurrentSection->tData[nPC] = 0;
+		pCurrentSection->tData[nPC + 1] = 0;
+		pCurrentSection->tData[nPC + 2] = 0;
+		pCurrentSection->tData[nPC + 3] = 0;
+		createpatch(PATCH_LONG_L, expr);
 		pCurrentSection->nPC += 4;
 		nPC += 4;
 		pPCSymbol->nValue += 4;
@@ -884,10 +854,8 @@ void out_PCRelByte(struct Expression *expr)
 	checksectionoverflow(1);
 
 	/* Always let the linker calculate the offset. */
-	if (nPass == 2) {
-		pCurrentSection->tData[nPC] = 0;
-		createpatch(PATCH_BYTE_JR, expr);
-	}
+	pCurrentSection->tData[nPC] = 0;
+	createpatch(PATCH_BYTE_JR, expr);
 	pCurrentSection->nPC += 1;
 	nPC += 1;
 	pPCSymbol->nValue += 1;
@@ -915,13 +883,12 @@ void out_BinaryFile(char *s)
 	checkcodesection();
 	checksectionoverflow(fsize);
 
-	if (nPass == 2) {
-		int32_t dest = nPC;
-		int32_t todo = fsize;
+	int32_t dest = nPC;
+	int32_t todo = fsize;
 
-		while (todo--)
-			pCurrentSection->tData[dest++] = fgetc(f);
-	}
+	while (todo--)
+		pCurrentSection->tData[dest++] = fgetc(f);
+
 	pCurrentSection->nPC += fsize;
 	nPC += fsize;
 	pPCSymbol->nValue += fsize;
@@ -958,13 +925,12 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	checkcodesection();
 	checksectionoverflow(length);
 
-	if (nPass == 2) {
-		int32_t dest = nPC;
-		int32_t todo = length;
+	int32_t dest = nPC;
+	int32_t todo = length;
 
-		while (todo--)
-			pCurrentSection->tData[dest++] = fgetc(f);
-	}
+	while (todo--)
+		pCurrentSection->tData[dest++] = fgetc(f);
+
 	pCurrentSection->nPC += length;
 	nPC += length;
 	pPCSymbol->nValue += length;

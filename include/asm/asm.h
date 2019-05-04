@@ -28,7 +28,6 @@
 extern int32_t nLineNo;
 extern uint32_t nTotalLines;
 extern uint32_t nPC;
-extern uint32_t nPass;
 extern uint32_t nIFDepth;
 extern bool skipElif;
 extern uint32_t nUnionDepth;
