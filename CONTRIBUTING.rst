@@ -65,9 +65,9 @@ copyright and the reference to the MIT License.
 
 1. Fork this repository.
 
-2. Checkout the ``develop`` branch.
+2. Checkout the ``master`` branch.
 
-3. Create a new branch to work on. You could still work on ``develop``, but it's
+3. Create a new branch to work on. You could still work on ``master``, but it's
    easier that way.
 
 4. Compile your changes with ``make develop`` instead of just ``make``. This
@@ -90,7 +90,7 @@ copyright and the reference to the MIT License.
    long as you specify it when executing the command:
    ``CHECKPATCH=../path/to/folder make checkpatch``.
 
-8. Create a pull request against the branch ``develop``.
+8. Create a pull request against the branch ``master``.
 
 9. Be prepared to get some comments about your code and to modify it. Tip: Use
-    ``git rebase -i origin/develop`` to modify chains of commits.
+    ``git rebase -i origin/master`` to modify chains of commits.
