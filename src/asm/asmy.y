@@ -1772,6 +1772,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP
 			    (!rpn_isReloc(&$2)) && ($2.nVal >= 0xFF00)) {
 				out_AbsByte(0xE0);
 				out_AbsByte($2.nVal & 0xFF);
+				rpn_Free(&$2);
 			} else {
 				out_AbsByte(0xEA);
 				out_RelWord(&$2);
@@ -1826,12 +1827,14 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
 				    (!rpn_isReloc(&$4)) && ($4.nVal >= 0xFF00)) {
 					out_AbsByte(0xF0);
 					out_AbsByte($4.nVal & 0xFF);
+					rpn_Free(&$4);
 				} else {
 					out_AbsByte(0xFA);
 					out_RelWord(&$4);
 				}
 			} else {
 				yyerror("Destination operand must be A");
+				rpn_Free(&$4);
 			}
 		}
 ;
@@ -1964,6 +1967,7 @@ z80_rst		: T_Z80_RST const_8bit
 				yyerror("Invalid address $%x for RST", $2.nVal);
 			else
 				out_AbsByte(0xC7 | $2.nVal);
+			rpn_Free(&$2);
 		}
 ;
 
