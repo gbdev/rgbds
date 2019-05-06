@@ -298,7 +298,7 @@ char *sym_GetStringValue(char *tzSym)
 	if (pSym != NULL)
 		return pSym->pMacro;
 
-	yyerror("Stringsymbol '%s' not defined", tzSym);
+	yyerror("String symbol '%s' not defined", tzSym);
 
 	return NULL;
 }
