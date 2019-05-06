@@ -154,12 +154,14 @@ struct sSymbol *createsymbol(char *s)
  * Creates the full name of a local symbol in a given scope, by prepending
  * the name with the parent symbol's name.
  */
-static size_t fullSymbolName(char *output, size_t outputSize, char *localName,
-			     const struct sSymbol *scope)
+static void fullSymbolName(char *output, size_t outputSize, char *localName,
+			   const struct sSymbol *scope)
 {
 	const struct sSymbol *parent = scope->pScope ? scope->pScope : scope;
+	int n = snprintf(output, outputSize, "%s%s", parent->tzName, localName);
 
-	return snprintf(output, outputSize, "%s%s", parent->tzName, localName);
+	if (n >= (int)outputSize)
+		fatalerror("Symbol too long");
 }
 
 /*
@@ -561,9 +563,6 @@ void sym_AddSet(char *tzSym, int32_t value)
 void sym_AddLocalReloc(char *tzSym)
 {
 	if (pScope) {
-		if (strlen(tzSym) + strlen(pScope->tzName) > MAXSYMLEN)
-			fatalerror("Symbol too long");
-
 		char fullname[MAXSYMLEN + 1];
 
 		fullSymbolName(fullname, sizeof(fullname), tzSym, pScope);
