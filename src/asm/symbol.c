@@ -207,7 +207,7 @@ struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
 }
 
 /*
- * Find a symbol by name and scope
+ * Find a symbol by name, with automatically determined scope
  */
 struct sSymbol *sym_FindSymbol(char *tzName)
 {
@@ -256,14 +256,7 @@ void sym_Purge(char *tzName)
  */
 uint32_t sym_isConstDefined(char *tzName)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*tzName == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(tzName, pscope);
+	struct sSymbol *psym = sym_FindSymbol(tzName);
 
 	if (psym && (psym->nType & SYMF_DEFINED)) {
 		uint32_t mask = SYMF_EQU | SYMF_SET | SYMF_MACRO | SYMF_STRING;
@@ -280,19 +273,9 @@ uint32_t sym_isConstDefined(char *tzName)
 
 uint32_t sym_isDefined(char *tzName)
 {
-	struct sSymbol *psym, *pscope;
+	struct sSymbol *psym = sym_FindSymbol(tzName);
 
-	if (*tzName == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(tzName, pscope);
-
-	if (psym && (psym->nType & SYMF_DEFINED))
-		return 1;
-	else
-		return 0;
+	return (psym && (psym->nType & SYMF_DEFINED));
 }
 
 /*
@@ -300,21 +283,9 @@ uint32_t sym_isDefined(char *tzName)
  */
 uint32_t sym_isConstant(char *s)
 {
-	struct sSymbol *psym, *pscope;
+	struct sSymbol *psym = sym_FindSymbol(s);
 
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
-
-	if (psym != NULL) {
-		if (psym->nType & SYMF_CONST)
-			return 1;
-	}
-
-	return 0;
+	return (psym && (psym->nType & SYMF_CONST));
 }
 
 /*
@@ -337,14 +308,7 @@ char *sym_GetStringValue(char *tzSym)
  */
 uint32_t sym_GetConstantValue(char *s)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
+	struct sSymbol *psym = sym_FindSymbol(s);
 
 	if (psym != NULL) {
 		if (psym->nType & SYMF_CONST)
@@ -363,14 +327,7 @@ uint32_t sym_GetConstantValue(char *s)
  */
 uint32_t sym_GetDefinedValue(char *s)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
+	struct sSymbol *psym = sym_FindSymbol(s);
 
 	if (psym != NULL) {
 		if ((psym->nType & SYMF_DEFINED)) {
