@@ -26,9 +26,6 @@ echo "Running checkpatch.pl..."
 fname=$(mktemp)
 rc=0
 
-git remote set-branches --add origin develop
-git fetch
-
 make CHECKPATCH=checkpatchdir/checkpatch.pl checkpatch > $fname
 
 cat $fname

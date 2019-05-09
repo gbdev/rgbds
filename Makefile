@@ -169,11 +169,11 @@ checkcodebase:
 
 # Target used to check the coding style of the patches from the upstream branch
 # to the HEAD. Runs checkpatch once for each commit between the current HEAD and
-# the first common commit between the HEAD and origin/develop. '.y' and '.l'
+# the first common commit between the HEAD and origin/master. '.y' and '.l'
 # files aren't checked, unfortunately...
 
 checkpatch:
-	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/develop);	\
+	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/master);	\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
 		echo "[*] Analyzing commit '$$commit'";			\
 		git format-patch --stdout "$$commit~..$$commit"		\
