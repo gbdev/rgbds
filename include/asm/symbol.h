@@ -38,6 +38,8 @@ struct sSymbol {
 #define SYMF_SET	0x004
 /* Symbol should be exported */
 #define SYMF_EXPORT	0x008
+/* Symbol referenced in RPN expression */
+#define SYMF_REF	0x010
 /* Symbol is a local symbol */
 #define SYMF_LOCAL	0x020
 /* Symbol has been defined, not only referenced */
@@ -74,7 +76,7 @@ void sym_UseCurrentMacroArgs(void);
 void sym_SetMacroArgID(uint32_t nMacroCount);
 uint32_t sym_isString(char *tzSym);
 void sym_AddMacro(char *tzSym);
-void sym_AddForwardRef(char *tzSym);
+void sym_Ref(char *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
 void sym_AddString(char *tzSym, char *tzValue);
 uint32_t sym_GetDefinedValue(char *s);

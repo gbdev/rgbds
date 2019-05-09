@@ -460,20 +460,35 @@ struct sSymbol *sym_FindMacro(char *s)
 }
 
 /*
- * Add an equated symbol
+ * Create a symbol that will be non-relocatable and ensure that it
+ * hasn't already been defined or referenced in a context that would
+ * require that it be relocatable
  */
-void sym_AddEqu(char *tzSym, int32_t value)
+static struct sSymbol *createNonrelocSymbol(char *tzSym)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
 	if (nsym != NULL) {
 		if (nsym->nType & SYMF_DEFINED) {
-			yyerror("'%s' already defined in %s(%d)", tzSym,
-				nsym->tzFileName, nsym->nFileLine);
+			yyerror("'%s' already defined at %s(%u)",
+				tzSym, nsym->tzFileName, nsym->nFileLine);
+		} else if (nsym->nType & SYMF_REF) {
+			yyerror("'%s' already referenced at %s(%u)",
+				tzSym, nsym->tzFileName, nsym->nFileLine);
 		}
 	} else {
 		nsym = createsymbol(tzSym);
 	}
+
+	return nsym;
+}
+
+/*
+ * Add an equated symbol
+ */
+void sym_AddEqu(char *tzSym, int32_t value)
+{
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
 	if (nsym) {
 		nsym->nValue = value;
@@ -498,16 +513,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
  */
 void sym_AddString(char *tzSym, char *tzValue)
 {
-	struct sSymbol *nsym = findsymbol(tzSym, NULL);
-
-	if (nsym != NULL) {
-		if (nsym->nType & SYMF_DEFINED) {
-			yyerror("'%s' already defined in %s(%d)",
-				tzSym, nsym->tzFileName, nsym->nFileLine);
-		}
-	} else {
-		nsym = createsymbol(tzSym);
-	}
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
 	if (nsym) {
 		nsym->pMacro = malloc(strlen(tzValue) + 1);
@@ -515,7 +521,7 @@ void sym_AddString(char *tzSym, char *tzValue)
 		if (nsym->pMacro != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
-			fatalerror("No memory for stringequate");
+			fatalerror("No memory for string equate");
 
 		nsym->nType |= SYMF_STRING | SYMF_DEFINED;
 		nsym->ulMacroSize = strlen(tzValue);
@@ -530,11 +536,7 @@ uint32_t sym_isString(char *tzSym)
 {
 	const struct sSymbol *pSym = findsymbol(tzSym, NULL);
 
-	if (pSym != NULL) {
-		if (pSym->nType & SYMF_STRING)
-			return 1;
-	}
-	return 0;
+	return (pSym && (pSym->nType & SYMF_STRING));
 }
 
 /*
@@ -544,8 +546,20 @@ void sym_AddSet(char *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
-	if (nsym == NULL) {
-		/* Symbol hasn been found, create */
+	if (nsym != NULL) {
+		if (nsym->nType & SYMF_DEFINED) {
+			if (!(nsym->nType & SYMF_CONST))
+				yyerror("'%s' already defined as non-constant at %s(%u)",
+					tzSym,
+					nsym->tzFileName,
+					nsym->nFileLine);
+		} else if (nsym->nType & SYMF_REF) {
+			yyerror("'%s' already referenced at %s(%u)",
+				tzSym,
+				nsym->tzFileName,
+				nsym->nFileLine);
+		}
+	} else {
 		nsym = createsymbol(tzSym);
 	}
 
@@ -697,19 +711,7 @@ void sym_Export(char *tzSym)
  */
 void sym_AddMacro(char *tzSym)
 {
-	struct sSymbol *nsym;
-
-	nsym = findsymbol(tzSym, NULL);
-
-	if (nsym != NULL) {
-		if (nsym->nType & SYMF_DEFINED) {
-			yyerror("'%s' already defined in %s(%d)",
-				tzSym, nsym->tzFileName,
-				nsym->nFileLine);
-		}
-	} else {
-		nsym = createsymbol(tzSym);
-	}
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
 	if (nsym) {
 		nsym->nValue = nPC;
@@ -722,11 +724,14 @@ void sym_AddMacro(char *tzSym)
 }
 
 /*
- * Add a symbol that is being referenced ahead of its definition
+ * Flag that a symbol is referenced in an RPN expression
+ * and create it if it doesn't exist yet
  */
-void sym_AddForwardRef(char *tzSym)
+void sym_Ref(char *tzSym)
 {
-	if (sym_FindSymbol(tzSym) == NULL) {
+	struct sSymbol *nsym = sym_FindSymbol(tzSym);
+
+	if (nsym == NULL) {
 		char fullname[MAXSYMLEN + 1];
 		int isLocal = 0;
 
@@ -737,15 +742,18 @@ void sym_AddForwardRef(char *tzSym)
 			isLocal = 1;
 		}
 
-		struct sSymbol *nsym = createsymbol(tzSym);
+		nsym = createsymbol(tzSym);
 
 		if (nsym && isLocal)
 			nsym->nType |= SYMF_LOCAL;
 	}
+
+	if (nsym)
+		nsym->nType |= SYMF_REF;
 }
 
 /*
- * Set whether to export all relocable symbols by default
+ * Set whether to export all relocatable symbols by default
  */
 void sym_SetExportAll(uint8_t set)
 {

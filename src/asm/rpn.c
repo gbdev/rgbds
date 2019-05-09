@@ -138,7 +138,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
 		rpn_Init(expr);
-		sym_AddForwardRef(tzSym);
+		sym_Ref(tzSym);
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_SYM);
 		while (*tzSym)
@@ -172,7 +172,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 
 	if (!sym_isConstant(tzSym)) {
 		rpn_Init(expr);
-		sym_AddForwardRef(tzSym);
+		sym_Ref(tzSym);
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK_SYM);
 		while (*tzSym)
