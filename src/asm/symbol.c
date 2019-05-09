@@ -714,7 +714,6 @@ void sym_AddMacro(char *tzSym)
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
 	if (nsym) {
-		nsym->nValue = nPC;
 		nsym->nType |= SYMF_MACRO | SYMF_DEFINED;
 		nsym->pScope = NULL;
 		nsym->ulMacroSize = ulNewMacroSize;
