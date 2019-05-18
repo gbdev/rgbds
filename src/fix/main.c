@@ -268,10 +268,7 @@ int main(int argc, char *argv[])
 		 * characters may conflict with the title.
 		 */
 
-		int n = snprintf((char *)header + 0x34, 16, "%s", title);
-
-		for (int i = 16; i > n; i--)
-			header[0x34 + i] = '\0';
+		strncpy((char *)header + 0x34, title, 16);
 	}
 
 	if (setid) {
