@@ -15,7 +15,7 @@ mandir		:= ${PREFIX}/man
 STRIP		:= -s
 BINMODE		:= 555
 MANMODE		:= 444
-CHECKPATCH	:= ../linux/scripts/checkpatch.pl
+CHECKPATCH	?= ../linux/scripts/checkpatch.pl
 
 # Other variables
 
