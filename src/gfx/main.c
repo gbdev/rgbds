@@ -18,8 +18,8 @@
 static void print_usage(void)
 {
 	printf(
-"usage: rgbgfx [-DFfhPTuVv] [-d #] [-o outfile] [-p palfile] [-t mapfile]\n"
-"              [-x #] infile\n");
+"usage: rgbgfx [-ADFfhmPTuVv] [-o outfile] [-a attrmap] [-d #] [-p palfile]\n"
+"              [-t tilemap] [-x #] infile\n");
 	exit(1);
 }
 
@@ -30,21 +30,29 @@ int main(int argc, char *argv[])
 	struct ImageOptions png_options = {0};
 	struct RawIndexedImage *raw_image;
 	struct GBImage gb = {0};
-	struct Tilemap tilemap = {0};
+	struct Mapfile tilemap = {0};
+	struct Mapfile attrmap = {0};
 	char *ext;
 	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
 
 	if (argc == 1)
 		print_usage();
 
-	opts.mapfile = "";
+	opts.tilemapfile = "";
+	opts.attrmapfile = "";
 	opts.palfile = "";
 	opts.outfile = "";
 
 	depth = 2;
 
-	while ((ch = getopt(argc, argv, "Dd:Ffho:Tt:uPp:Vvx:")) != -1) {
+	while ((ch = getopt(argc, argv, "Aa:Dd:Ffhmo:Tt:uPp:Vvx:")) != -1) {
 		switch (ch) {
+		case 'A':
+			opts.attrmapout = true;
+			break;
+		case 'a':
+			opts.attrmapfile = optarg;
+			break;
 		case 'D':
 			opts.debug = true;
 			break;
@@ -60,6 +68,10 @@ int main(int argc, char *argv[])
 		case 'h':
 			opts.horizontal = true;
 			break;
+		case 'm':
+			opts.mirror = true;
+			opts.unique = true;
+			break;
 		case 'o':
 			opts.outfile = optarg;
 			break;
@@ -70,10 +82,10 @@ int main(int argc, char *argv[])
 			opts.palfile = optarg;
 			break;
 		case 'T':
-			opts.mapout = true;
+			opts.tilemapout = true;
 			break;
 		case 't':
-			opts.mapfile = optarg;
+			opts.tilemapfile = optarg;
 			break;
 		case 'u':
 			opts.unique = true;
@@ -107,7 +119,8 @@ int main(int argc, char *argv[])
 
 	raw_image = input_png_file(&opts, &png_options);
 
-	png_options.mapfile = "";
+	png_options.tilemapfile = "";
+	png_options.attrmapfile = "";
 	png_options.palfile = "";
 
 	if (png_options.horizontal != opts.horizontal) {
@@ -148,25 +161,45 @@ int main(int argc, char *argv[])
 		     (raw_image->width / 8) * (raw_image->height / 8) - 1);
 	}
 
-	if (strcmp(png_options.mapfile, opts.mapfile) != 0) {
+	if (strcmp(png_options.tilemapfile, opts.tilemapfile) != 0) {
 		if (opts.verbose)
 			warnx(errmsg, "tilemap file");
 
 		if (opts.hardfix)
-			png_options.mapfile = opts.mapfile;
+			png_options.tilemapfile = opts.tilemapfile;
 	}
-	if (!*opts.mapfile)
-		opts.mapfile = png_options.mapfile;
+	if (!*opts.tilemapfile)
+		opts.tilemapfile = png_options.tilemapfile;
 
-	if (png_options.mapout != opts.mapout) {
+	if (png_options.tilemapout != opts.tilemapout) {
 		if (opts.verbose)
 			warnx(errmsg, "tilemap file");
 
 		if (opts.hardfix)
-			png_options.mapout = opts.mapout;
+			png_options.tilemapout = opts.tilemapout;
 	}
-	if (png_options.mapout)
-		opts.mapout = png_options.mapout;
+	if (png_options.tilemapout)
+		opts.tilemapout = png_options.tilemapout;
+
+	if (strcmp(png_options.attrmapfile, opts.attrmapfile) != 0) {
+		if (opts.verbose)
+			warnx(errmsg, "attrmap file");
+
+		if (opts.hardfix)
+			png_options.attrmapfile = opts.attrmapfile;
+	}
+	if (!*opts.attrmapfile)
+		opts.attrmapfile = png_options.attrmapfile;
+
+	if (png_options.attrmapout != opts.attrmapout) {
+		if (opts.verbose)
+			warnx(errmsg, "attrmap file");
+
+		if (opts.hardfix)
+			png_options.attrmapout = opts.attrmapout;
+	}
+	if (png_options.attrmapout)
+		opts.attrmapout = png_options.attrmapout;
 
 	if (strcmp(png_options.palfile, opts.palfile) != 0) {
 		if (opts.verbose)
@@ -189,19 +222,35 @@ int main(int argc, char *argv[])
 	if (png_options.palout)
 		opts.palout = png_options.palout;
 
-	if (!*opts.mapfile && opts.mapout) {
+	if (!*opts.tilemapfile && opts.tilemapout) {
 		ext = strrchr(opts.infile, '.');
 
 		if (ext != NULL) {
 			size = ext - opts.infile + 9;
-			opts.mapfile = malloc(size);
-			strncpy(opts.mapfile, opts.infile, size);
-			*strrchr(opts.mapfile, '.') = '\0';
-			strcat(opts.mapfile, ".tilemap");
+			opts.tilemapfile = malloc(size);
+			strncpy(opts.tilemapfile, opts.infile, size);
+			*strrchr(opts.tilemapfile, '.') = '\0';
+			strcat(opts.tilemapfile, ".tilemap");
 		} else {
-			opts.mapfile = malloc(strlen(opts.infile) + 9);
-			strcpy(opts.mapfile, opts.infile);
-			strcat(opts.mapfile, ".tilemap");
+			opts.tilemapfile = malloc(strlen(opts.infile) + 9);
+			strcpy(opts.tilemapfile, opts.infile);
+			strcat(opts.tilemapfile, ".tilemap");
+		}
+	}
+
+	if (!*opts.attrmapfile && opts.attrmapout) {
+		ext = strrchr(opts.infile, '.');
+
+		if (ext != NULL) {
+			size = ext - opts.infile + 9;
+			opts.attrmapfile = malloc(size);
+			strncpy(opts.attrmapfile, opts.infile, size);
+			*strrchr(opts.attrmapfile, '.') = '\0';
+			strcat(opts.attrmapfile, ".attrmap");
+		} else {
+			opts.attrmapfile = malloc(strlen(opts.infile) + 9);
+			strcpy(opts.attrmapfile, opts.infile);
+			strcat(opts.attrmapfile, ".attrmap");
 		}
 	}
 
@@ -226,16 +275,19 @@ int main(int argc, char *argv[])
 	gb.trim = opts.trim;
 	gb.horizontal = opts.horizontal;
 
-	if (*opts.outfile || *opts.mapfile) {
+	if (*opts.outfile || *opts.tilemapfile || *opts.attrmapfile) {
 		raw_to_gb(raw_image, &gb);
-		create_tilemap(&opts, &gb, &tilemap);
+		create_mapfiles(&opts, &gb, &tilemap, &attrmap);
 	}
 
 	if (*opts.outfile)
 		output_file(&opts, &gb);
 
-	if (*opts.mapfile)
+	if (*opts.tilemapfile)
 		output_tilemap_file(&opts, &tilemap);
+
+	if (*opts.attrmapfile)
+		output_attrmap_file(&opts, &attrmap);
 
 	if (*opts.palfile)
 		output_palette_file(&opts, raw_image);

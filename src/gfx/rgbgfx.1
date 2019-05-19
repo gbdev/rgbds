@@ -13,11 +13,12 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm rgbgfx
-.Op Fl DfFhPTVv
+.Op Fl ADfFhmPTuVv
 .Op Fl o Ar outfile
+.Op Fl a Ar attrmap
 .Op Fl d Ar depth
 .Op Fl p Ar palfile
-.Op Fl t Ar mapfile
+.Op Fl t Ar tilemap
 .Op Fl x Ar tiles
 .Ar file
 .Sh DESCRIPTION
@@ -47,6 +48,19 @@ The input image may not contain more colors than the selected bit depth
 allows. Transparent pixels are set to palette index 0.
 .Sh ARGUMENTS
 .Bl -tag -width Ds
+.It Fl a Ar attrmap
+Generate a file of tile mirroring attributes for OAM or (CGB-only) background
+tiles. For each tile in the input file, a byte is written representing the
+dimensions that the associated tile in the output file should be mirrored.
+Useful in combination with
+.Fl m
+to keep track the mirror direction of mirrored duplicate tiles.
+.It Fl A
+Same as
+.Fl a ,
+but the attrmap file output name is made by taking the input filename, removing
+the file extension, and appending
+.Pa .attrmap .
 .It Fl D
 Debug features are enabled.
 .It Fl f
@@ -61,6 +75,12 @@ The bit depth of the output image (either 1 or 2).
 By default, the bit depth is 2 (two bits per pixel).
 .It Fl h
 Lay out tiles horizontally rather than vertically.
+.It Fl m
+Truncate tiles by checking for tiles that are mirrored versions of others and
+omitting these from the output file. Useful with tilemaps and attrmaps together
+to keep track of the duplicated tiles and the dimension mirrored. Tiles are
+checked for horizontal, vertical, and horizontal-vertical mirroring. Implies
+.Fl u .
 .It Fl o Ar outfile
 The name of the output file.
 .It Fl p Ar palfile
@@ -74,17 +94,24 @@ Same as
 but the palette file output name is made by taking the input PNG file's
 filename, removing the file extension, and appending
 .Pa .pal .
-.It Fl t Ar mapfile
-If any tiles are the same, don't place the repeat tiles in the output file, and
-make a tilemap file.
+.It Fl t Ar tilemap
+Generate a file of tile indices. For each tile in the input file, a byte is
+written representing the index of the associated tile in the output file.
+Useful in combination with
+.Fl u
+or
+.Fl m
+to keep track of duplicate tiles.
 .It Fl T
 Same as
 .Fl t ,
-but the tilemap file output name is made by taking the input filename,
-removing the file extension, and appending
+but the tilemap file output name is made by taking the input filename, removing
+the file extension, and appending
 .Pa .tilemap .
 .It Fl u
-Truncate repeated tiles. Useful with tilemaps.
+Truncate tiles by checking for tiles that are exact duplicates of others and
+omitting these from the output file. Useful with tilemaps to keep track of the
+duplicated tiles.
 .It Fl V
 Print the version of the program and exit.
 .It Fl v
@@ -104,6 +131,14 @@ The following creates a planar 2bpp file with only unique tiles, and its tilemap
 .Pa out.tilemap :
 .Pp
 .D1 $ rgbgfx -T -u -o out.2bpp in.png
+.Pp
+The following creates a planar 2bpp file with only unique tiles (accounting for
+tile mirroring) and its associated tilemap
+.Pa out.tilemap
+and attrmap
+.Pa out.attrmap :
+.Pp
+.D1 $ rgbgfx -A -T -m -o out.2bpp in.png
 .Pp
 The following will do nothing:
 .Pp
