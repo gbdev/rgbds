@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
+<!-- This is an automatically generated file.  Do not edit.
+   This file is part of RGBDS.
+
+   Copyright (c) 2017-2018, Antonio Nino Diaz and RGBDS contributors.
+
+   SPDX-License-Identifier: MIT
+   -->
 <head>
   <meta charset="utf-8"/>
-  <style>
-    table.head, table.foot { width: 100%; }
-    td.head-rtitle, td.foot-os { text-align: right; }
-    td.head-vol { text-align: center; }
-    div.Pp { margin: 1ex 0ex; }
-  </style>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
   <title>RGBDS(5)</title>
 </head>
@@ -20,124 +21,127 @@
   </tr>
 </table>
 <div class="manual-text">
-<h1 class="Sh" title="Sh" id="NAME"><a class="selflink" href="#NAME">NAME</a></h1>
-<b class="Nm" title="Nm">rgbds</b> &#x2014; <span class="Nd" title="Nd">object
-  file format documentation</span>
-<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="selflink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-This is the description of the object files used by
-  <a class="Xr" title="Xr">rgbasm(1)</a> and
-  <a class="Xr" title="Xr">rgblink(1)</a>. Please, note that the specifications
-  may change. This toolchain is in development and new features may require
-  adding more information to the current format, or modifying some fields, which
-  would break compatibility with older versions.
-<h1 class="Sh" title="Sh" id="FILE_STRUCTURE"><a class="selflink" href="#FILE_STRUCTURE">FILE
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<code class="Nm">rgbds</code> &#x2014;
+<div class="Nd">object file format documentation</div>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+This is the description of the object files used by <a class="Xr">rgbasm(1)</a>
+  and <a class="Xr">rgblink(1)</a>. Please, note that the specifications may
+  change. This toolchain is in development and new features may require adding
+  more information to the current format, or modifying some fields, which would
+  break compatibility with older versions.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="FILE_STRUCTURE"><a class="permalink" href="#FILE_STRUCTURE">FILE
   STRUCTURE</a></h1>
 The following types are used:
-<div class="Pp"></div>
-<var class="Ar" title="Ar">LONG</var> is a 32&#x2010;bit integer stored in
-  little&#x2010;endian format (Intel). <var class="Ar" title="Ar">BYTE</var> is
-  an 8&#x2010;bit integer. <var class="Ar" title="Ar">STRING</var> is a
-  0&#x2010;terminated string of <var class="Ar" title="Ar">BYTE</var>.
-<div class="Pp"></div>
-<div class="Bd" style="margin-left: 0.00ex;">
-<pre class="Li">
-; Header 
- 
-BYTE    ID[4]            ; &quot;RGB6&quot; 
-LONG    NumberOfSymbols  ; The number of symbols used in this file 
-LONG    NumberOfSections ; The number of sections used in this file 
- 
-; Symbols 
- 
-REPT    NumberOfSymbols   ; Number of symbols defined in this object file. 
- 
-    STRING  Name          ; The name of this symbol. Local symbols are stored 
-                          ; as &quot;Scope.Symbol&quot;. 
- 
-    BYTE    Type          ; 0 = LOCAL symbol only used in this file. 
-                          ; 1 = IMPORT this symbol from elsewhere (unused). 
-                          ; 2 = EXPORT this symbol to other objects. 
- 
-    IF      Type != 1     ; If symbol is defined in this object file. 
- 
-        STRING  FileName  ; File where the symbol is defined. 
- 
-        LONG    LineNum   ; Line number in the file where the symbol is defined. 
- 
-        LONG    SectionID ; The section number (of this object file) in which 
-                          ; this symbol is defined. If it doesn't belong to any 
-                          ; specific section (like a constant), this field has 
-                          ; the value -1. 
- 
-        LONG    Value     ; The symbols value. It's the offset into that 
-                          ; symbol's section. 
- 
-    ENDC 
- 
-ENDR 
- 
-; Sections 
- 
-REPT NumberOfSections 
-    STRING  Name  ; Name of the section 
- 
-    LONG    Size  ; Size in bytes of this section 
- 
-    BYTE    Type  ; 0 = WRAM0 
-                  ; 1 = VRAM 
-                  ; 2 = ROMX 
-                  ; 3 = ROM0 
-                  ; 4 = HRAM 
-                  ; 5 = WRAMX 
-                  ; 6 = SRAM 
-                  ; 7 = OAM 
- 
-    LONG    Org   ; Address to fix this section at. -1 if the linker should 
-                  ; decide (floating address). 
- 
-    LONG    Bank  ; Bank to load this section into. -1 if the linker should 
-                  ; decide (floating bank). This field is only valid for ROMX, 
-                  ; VRAM, WRAMX and SRAM sections. 
- 
-    LONG    Align ; Alignment of this section (expressed as number of low bits 
-                  ; to leave as 0). -1 if not defined. 
- 
-    IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data. 
- 
-        BYTE    Data[Size]      ; Raw data of the section. 
- 
-        LONG    NumberOfPatches ; Number of patches to apply. 
- 
-        ; These types of sections may have patches 
- 
-        REPT    NumberOfPatches 
- 
-            STRING  SourceFile   ; Name of the source file (for printing error 
-                                 ; messages). 
- 
-            LONG    Line         ; The line of the source file. 
- 
-            LONG    Offset       ; Offset into the section where patch should 
-                                 ; be applied (in bytes). 
- 
-            BYTE    Type         ; 0 = BYTE patch. 
-                                 ; 1 = little endian WORD patch. 
-                                 ; 2 = little endian LONG patch. 
-                                 ; 3 = JR offset value BYTE patch. 
- 
-            LONG    RPNSize      ; Size of the buffer with the RPN. 
-                                 ; expression. 
- 
-            BYTE    RPN[RPNSize] ; RPN expression. Definition below. 
- 
-        ENDR 
- 
-    ENDC 
- 
+<p class="Pp"><var class="Ar">LONG</var> is a 32&#x2010;bit integer stored in
+    little&#x2010;endian format (Intel). <var class="Ar">BYTE</var> is an
+    8&#x2010;bit integer. <var class="Ar">STRING</var> is a 0&#x2010;terminated
+    string of <var class="Ar">BYTE</var>.</p>
+<div class="Bd Pp">
+<pre>
+; Header
+
+BYTE    ID[4]            ; &quot;RGB6&quot;
+LONG    NumberOfSymbols  ; The number of symbols used in this file
+LONG    NumberOfSections ; The number of sections used in this file
+
+; Symbols
+
+REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
+
+    STRING  Name          ; The name of this symbol. Local symbols are stored
+                          ; as &quot;Scope.Symbol&quot;.
+
+    BYTE    Type          ; 0 = LOCAL symbol only used in this file.
+                          ; 1 = IMPORT this symbol from elsewhere
+                          ; 2 = EXPORT this symbol to other objects.
+
+    IF      Type != 1     ; If symbol is defined in this object file.
+
+        STRING  FileName  ; File where the symbol is defined.
+
+        LONG    LineNum   ; Line number in the file where the symbol is defined.
+
+        LONG    SectionID ; The section number (of this object file) in which
+                          ; this symbol is defined. If it doesn't belong to any
+                          ; specific section (like a constant), this field has
+                          ; the value -1.
+
+        LONG    Value     ; The symbols value. It's the offset into that
+                          ; symbol's section.
+
+    ENDC
+
+ENDR
+
+; Sections
+
+REPT NumberOfSections
+    STRING  Name  ; Name of the section
+
+    LONG    Size  ; Size in bytes of this section
+
+    BYTE    Type  ; 0 = WRAM0
+                  ; 1 = VRAM
+                  ; 2 = ROMX
+                  ; 3 = ROM0
+                  ; 4 = HRAM
+                  ; 5 = WRAMX
+                  ; 6 = SRAM
+                  ; 7 = OAM
+
+    LONG    Org   ; Address to fix this section at. -1 if the linker should
+                  ; decide (floating address).
+
+    LONG    Bank  ; Bank to load this section into. -1 if the linker should
+                  ; decide (floating bank). This field is only valid for ROMX,
+                  ; VRAM, WRAMX and SRAM sections.
+
+    LONG    Align ; Alignment of this section (expressed as number of low bits
+                  ; to leave as 0). -1 if not defined.
+
+    IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data.
+
+        BYTE    Data[Size]      ; Raw data of the section.
+
+        LONG    NumberOfPatches ; Number of patches to apply.
+
+        ; These types of sections may have patches
+
+        REPT    NumberOfPatches
+
+            STRING  SourceFile   ; Name of the source file (for printing error
+                                 ; messages).
+
+            LONG    Line         ; The line of the source file.
+
+            LONG    Offset       ; Offset into the section where patch should
+                                 ; be applied (in bytes).
+
+            BYTE    Type         ; 0 = BYTE patch.
+                                 ; 1 = little endian WORD patch.
+                                 ; 2 = little endian LONG patch.
+                                 ; 3 = JR offset value BYTE patch.
+
+            LONG    RPNSize      ; Size of the buffer with the RPN.
+                                 ; expression.
+
+            BYTE    RPN[RPNSize] ; RPN expression. Definition below.
+
+        ENDR
+
+    ENDC
+
 ENDR
 </pre>
 </div>
-<h2 class="Ss" title="Ss" id="RPN_DATA"><a class="selflink" href="#RPN_DATA">RPN
+<section class="Ss">
+<h2 class="Ss" id="RPN_DATA"><a class="permalink" href="#RPN_DATA">RPN
   DATA</a></h2>
 Expressions in the object file are stored as RPN. This is an expression of the
   form &#x201C;2 5 +&#x201D;. This will first push the value &#x201C;2&#x201D;
@@ -146,159 +150,160 @@ Expressions in the object file are stored as RPN. This is an expression of the
   effectively replacing the two top arguments with their sum. In the RGB format,
   RPN expressions are stored as BYTEs with some bytes being special prefixes for
   integers and symbols.
-<table class="Bl-column" style="margin-left: 6.00ex;">
-  <colgroup>
-    <col style="width: 15.00ex;"/>
-    <col style="min-width: 10.00ex;"/>
-  </colgroup>
-  <tr class="It-column">
-    <td class="It-column"><b class="Sy" title="Sy">Value</b></td>
-    <td class="It-column"><b class="Sy" title="Sy">Meaning</b></td>
+<table class="Bl-column Bd-indent">
+  <tr>
+    <td><b class="Sy">Value</b></td>
+    <td><b class="Sy">Meaning</b></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$00"><code class="Li" id="$00">$00</code></a></td>
-    <td class="It-column"><a class="selflink" href="#+_operator"><code class="Li" id="+_operator">+
+  <tr>
+    <td><a class="permalink" href="#$00"><code class="Li" id="$00">$00</code></a></td>
+    <td><a class="permalink" href="#+_operator"><code class="Li" id="+_operator">+
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$01"><code class="Li" id="$01">$01</code></a></td>
-    <td class="It-column"><a class="selflink" href="#-_operator"><code class="Li" id="-_operator">-
+  <tr>
+    <td><a class="permalink" href="#$01"><code class="Li" id="$01">$01</code></a></td>
+    <td><a class="permalink" href="#-_operator"><code class="Li" id="-_operator">-
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$02"><code class="Li" id="$02">$02</code></a></td>
-    <td class="It-column"><a class="selflink" href="#*_operator"><code class="Li" id="*_operator">*
+  <tr>
+    <td><a class="permalink" href="#$02"><code class="Li" id="$02">$02</code></a></td>
+    <td><a class="permalink" href="#*_operator"><code class="Li" id="*_operator">*
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$03"><code class="Li" id="$03">$03</code></a></td>
-    <td class="It-column"><a class="selflink" href="#/_operator"><code class="Li" id="/_operator">/
+  <tr>
+    <td><a class="permalink" href="#$03"><code class="Li" id="$03">$03</code></a></td>
+    <td><a class="permalink" href="#/_operator"><code class="Li" id="/_operator">/
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$04"><code class="Li" id="$04">$04</code></a></td>
-    <td class="It-column"><a class="selflink" href="#%_operator"><code class="Li" id="%_operator">%
+  <tr>
+    <td><a class="permalink" href="#$04"><code class="Li" id="$04">$04</code></a></td>
+    <td><a class="permalink" href="#__operator"><code class="Li" id="__operator">%
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$05"><code class="Li" id="$05">$05</code></a></td>
-    <td class="It-column"><a class="selflink" href="#unary_-"><code class="Li" id="unary_-">unary
+  <tr>
+    <td><a class="permalink" href="#$05"><code class="Li" id="$05">$05</code></a></td>
+    <td><a class="permalink" href="#unary_-"><code class="Li" id="unary_-">unary
       -</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$10"><code class="Li" id="$10">$10</code></a></td>
-    <td class="It-column">|
-      <a class="selflink" href="#operator"><code class="Li" id="operator">operator</code></a></td>
+  <tr>
+    <td><a class="permalink" href="#$10"><code class="Li" id="$10">$10</code></a></td>
+    <td>|
+      <a class="permalink" href="#operator"><code class="Li" id="operator">operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$11"><code class="Li" id="$11">$11</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&amp;_operator"><code class="Li" id="&amp;_operator">&amp;
+  <tr>
+    <td><a class="permalink" href="#$11"><code class="Li" id="$11">$11</code></a></td>
+    <td><a class="permalink" href="#&amp;_operator"><code class="Li" id="&amp;_operator">&amp;
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$12"><code class="Li" id="$12">$12</code></a></td>
-    <td class="It-column"><a class="selflink" href="#^_operator"><code class="Li" id="^_operator">^
+  <tr>
+    <td><a class="permalink" href="#$12"><code class="Li" id="$12">$12</code></a></td>
+    <td><a class="permalink" href="#__operator_2"><code class="Li" id="__operator_2">^
       operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$13"><code class="Li" id="$13">$13</code></a></td>
-    <td class="It-column"><a class="selflink" href="#unary_~"><code class="Li" id="unary_~">unary
+  <tr>
+    <td><a class="permalink" href="#$13"><code class="Li" id="$13">$13</code></a></td>
+    <td><a class="permalink" href="#unary_~"><code class="Li" id="unary_~">unary
       ~</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$21"><code class="Li" id="$21">$21</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&amp;&amp;_comparison"><code class="Li" id="&amp;&amp;_comparison">&amp;&amp;
+  <tr>
+    <td><a class="permalink" href="#$21"><code class="Li" id="$21">$21</code></a></td>
+    <td><a class="permalink" href="#&amp;&amp;_comparison"><code class="Li" id="&amp;&amp;_comparison">&amp;&amp;
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$22"><code class="Li" id="$22">$22</code></a></td>
-    <td class="It-column"><a class="selflink" href="#||_comparison"><code class="Li" id="||_comparison">||
+  <tr>
+    <td><a class="permalink" href="#$22"><code class="Li" id="$22">$22</code></a></td>
+    <td><a class="permalink" href="#___comparison"><code class="Li" id="___comparison">||
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$23"><code class="Li" id="$23">$23</code></a></td>
-    <td class="It-column"><a class="selflink" href="#unary"><code class="Li" id="unary">unary</code></a>!</td>
+  <tr>
+    <td><a class="permalink" href="#$23"><code class="Li" id="$23">$23</code></a></td>
+    <td><a class="permalink" href="#unary"><code class="Li" id="unary">unary</code></a>!</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$30"><code class="Li" id="$30">$30</code></a></td>
-    <td class="It-column"><a class="selflink" href="#==_comparison"><code class="Li" id="==_comparison">==
+  <tr>
+    <td><a class="permalink" href="#$30"><code class="Li" id="$30">$30</code></a></td>
+    <td><a class="permalink" href="#==_comparison"><code class="Li" id="==_comparison">==
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$31"><code class="Li" id="$31">$31</code></a></td>
-    <td class="It-column"><a class="selflink" href="#!=_comparison"><code class="Li" id="!=_comparison">!=
+  <tr>
+    <td><a class="permalink" href="#$31"><code class="Li" id="$31">$31</code></a></td>
+    <td><a class="permalink" href="#!=_comparison"><code class="Li" id="!=_comparison">!=
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$32"><code class="Li" id="$32">$32</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&gt;_comparison"><code class="Li" id="&gt;_comparison">&gt;
+  <tr>
+    <td><a class="permalink" href="#$32"><code class="Li" id="$32">$32</code></a></td>
+    <td><a class="permalink" href="#__comparison"><code class="Li" id="__comparison">&gt;
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$33"><code class="Li" id="$33">$33</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&lt;_comparison"><code class="Li" id="&lt;_comparison">&lt;
+  <tr>
+    <td><a class="permalink" href="#$33"><code class="Li" id="$33">$33</code></a></td>
+    <td><a class="permalink" href="#__comparison_2"><code class="Li" id="__comparison_2">&lt;
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$34"><code class="Li" id="$34">$34</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&gt;=_comparison"><code class="Li" id="&gt;=_comparison">&gt;=
+  <tr>
+    <td><a class="permalink" href="#$34"><code class="Li" id="$34">$34</code></a></td>
+    <td><a class="permalink" href="#_=_comparison"><code class="Li" id="_=_comparison">&gt;=
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$35"><code class="Li" id="$35">$35</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&lt;=_comparison"><code class="Li" id="&lt;=_comparison">&lt;=
+  <tr>
+    <td><a class="permalink" href="#$35"><code class="Li" id="$35">$35</code></a></td>
+    <td><a class="permalink" href="#_=_comparison_2"><code class="Li" id="_=_comparison_2">&lt;=
       comparison</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$40"><code class="Li" id="$40">$40</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&lt;&lt;_comparison"><code class="Li" id="&lt;&lt;_comparison">&lt;&lt;
-      comparison</code></a></td>
+  <tr>
+    <td><a class="permalink" href="#$40"><code class="Li" id="$40">$40</code></a></td>
+    <td><a class="permalink" href="#___operator"><code class="Li" id="___operator">&lt;&lt;
+      operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$41"><code class="Li" id="$41">$41</code></a></td>
-    <td class="It-column"><a class="selflink" href="#&gt;&gt;_comparison"><code class="Li" id="&gt;&gt;_comparison">&gt;&gt;
-      comparison</code></a></td>
+  <tr>
+    <td><a class="permalink" href="#$41"><code class="Li" id="$41">$41</code></a></td>
+    <td><a class="permalink" href="#___operator_2"><code class="Li" id="___operator_2">&gt;&gt;
+      operator</code></a></td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$50"><code class="Li" id="$50">$50</code></a></td>
-    <td class="It-column"><a class="selflink" href="#BANK(symbol),"><code class="Li" id="BANK(symbol),">BANK(symbol),</code></a>
-      a <var class="Ar" title="Ar">LONG</var> Symbol ID follows.</td>
+  <tr>
+    <td><a class="permalink" href="#$50"><code class="Li" id="$50">$50</code></a></td>
+    <td><a class="permalink" href="#BANK(symbol),"><code class="Li" id="BANK(symbol),">BANK(symbol),</code></a>
+      a <var class="Ar">LONG</var> Symbol ID follows.</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$51"><code class="Li" id="$51">$51</code></a></td>
-    <td class="It-column"><a class="selflink" href="#BANK(section_name),"><code class="Li" id="BANK(section_name),">BANK(section_name),</code></a>
+  <tr>
+    <td><a class="permalink" href="#$51"><code class="Li" id="$51">$51</code></a></td>
+    <td><a class="permalink" href="#BANK(section_name),"><code class="Li" id="BANK(section_name),">BANK(section_name),</code></a>
       a null-terminated string follows.</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$52"><code class="Li" id="$52">$52</code></a></td>
-    <td class="It-column"><a class="selflink" href="#Current_BANK()"><code class="Li" id="Current_BANK()">Current
+  <tr>
+    <td><a class="permalink" href="#$52"><code class="Li" id="$52">$52</code></a></td>
+    <td><a class="permalink" href="#Current_BANK()"><code class="Li" id="Current_BANK()">Current
       BANK()</code></a>.</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$60"><code class="Li" id="$60">$60</code></a></td>
-    <td class="It-column"><a class="selflink" href="#HRAMCheck."><code class="Li" id="HRAMCheck.">HRAMCheck.</code></a>
+  <tr>
+    <td><a class="permalink" href="#$60"><code class="Li" id="$60">$60</code></a></td>
+    <td><a class="permalink" href="#HRAMCheck."><code class="Li" id="HRAMCheck.">HRAMCheck.</code></a>
       Check if the value is in HRAM, AND it with 0xFF.</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$80"><code class="Li" id="$80">$80</code></a></td>
-    <td class="It-column"><var class="Ar" title="Ar">LONG</var> integer
-      follows.</td>
+  <tr>
+    <td><a class="permalink" href="#$80"><code class="Li" id="$80">$80</code></a></td>
+    <td><var class="Ar">LONG</var> integer follows.</td>
   </tr>
-  <tr class="It-column">
-    <td class="It-column"><a class="selflink" href="#$81"><code class="Li" id="$81">$81</code></a></td>
-    <td class="It-column"><var class="Ar" title="Ar">LONG</var> Symbol ID
-      follows.</td>
+  <tr>
+    <td><a class="permalink" href="#$81"><code class="Li" id="$81">$81</code></a></td>
+    <td><var class="Ar">LONG</var> Symbol ID follows.</td>
   </tr>
 </table>
-<h1 class="Sh" title="Sh" id="SEE_ALSO"><a class="selflink" href="#SEE_ALSO">SEE
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr" title="Xr">rgbasm(1)</a>, <a class="Xr" title="Xr">rgblink(1)</a>,
-  <a class="Xr" title="Xr">rgbds(7)</a>, <a class="Xr" title="Xr">gbz80(7)</a>
-<h1 class="Sh" title="Sh" id="HISTORY"><a class="selflink" href="#HISTORY">HISTORY</a></h1>
-<b class="Nm" title="Nm">rgbds</b> was originally written by Carsten
-  S&#x00F8;rensen as part of the ASMotor package, and was later packaged in
-  RGBDS by Justin Lloyd. It is now maintained by a number of contributors at
-  <a class="Lk" title="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.</div>
+<a class="Xr">rgbasm(1)</a>, <a class="Xr">rgblink(1)</a>,
+  <a class="Xr">rgbds(7)</a>, <a class="Xr">gbz80(7)</a>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
+<code class="Nm">rgbds</code> was originally written by Carsten S&#x00F8;rensen
+  as part of the ASMotor package, and was later packaged in RGBDS by Justin
+  Lloyd. It is now maintained by a number of contributors at
+  <a class="Lk" href="https://github.com/rednex/rgbds">https://github.com/rednex/rgbds</a>.
+</section>
+</div>
 <table class="foot">
   <tr>
     <td class="foot-date">January 26, 2018</td>
