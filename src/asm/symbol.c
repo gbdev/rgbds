@@ -161,7 +161,8 @@ static void fullSymbolName(char *output, size_t outputSize, char *localName,
 	int n = snprintf(output, outputSize, "%s%s", parent->tzName, localName);
 
 	if (n >= (int)outputSize)
-		fatalerror("Symbol too long");
+		fatalerror("Symbol name is too long: '%s%s'",
+			   parent->tzName, localName);
 }
 
 /*
