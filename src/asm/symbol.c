@@ -497,7 +497,6 @@ void sym_AddEqu(char *tzSym, int32_t value)
 		nsym->pScope = NULL;
 		updateSymbolFilename(nsym);
 	}
-
 }
 
 /*

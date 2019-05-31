@@ -199,8 +199,8 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 	raw_image = create_raw_image(img->width, img->height, colors);
 
 	/*
-	 * Transparent palette entries are removed, and the palette is collapsed.
-	 * Transparent pixels are then replaced with palette index 0.
+	 * Transparent palette entries are removed, and the palette is
+	 * collapsed. Transparent pixels are then replaced with palette index 0.
 	 * This way, an indexed PNG can contain transparent pixels in *addition*
 	 * to 4 normal colors.
 	 */

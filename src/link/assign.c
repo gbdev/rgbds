@@ -695,22 +695,22 @@ void CreateSymbolTable(void)
 			if ((tSymbol->Type == SYM_EXPORT) &&
 			    ((tSymbol->pSection == pSect) ||
 				(tSymbol->pSection == NULL))) {
-				if (tSymbol->pSection == NULL)
-					sym_CreateSymbol(
-						tSymbol->pzName,
-						tSymbol->nOffset,
-						-1,
-						tSymbol->pzObjFileName,
-						tSymbol->pzFileName,
-						tSymbol->nFileLine);
-				else
-					sym_CreateSymbol(
-						tSymbol->pzName,
-						pSect->nOrg + tSymbol->nOffset,
-						pSect->nBank,
-						tSymbol->pzObjFileName,
-						tSymbol->pzFileName,
-						tSymbol->nFileLine);
+				if (tSymbol->pSection == NULL) {
+					sym_CreateSymbol(tSymbol->pzName,
+							 tSymbol->nOffset,
+							 -1,
+							 tSymbol->pzObjFileName,
+							 tSymbol->pzFileName,
+							 tSymbol->nFileLine);
+				} else {
+					sym_CreateSymbol(tSymbol->pzName,
+							 pSect->nOrg +
+							   tSymbol->nOffset,
+							 pSect->nBank,
+							 tSymbol->pzObjFileName,
+							 tSymbol->pzFileName,
+							 tSymbol->nFileLine);
+				}
 			}
 		}
 		pSect = pSect->pNext;
