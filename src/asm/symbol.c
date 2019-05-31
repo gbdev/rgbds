@@ -154,12 +154,15 @@ struct sSymbol *createsymbol(char *s)
  * Creates the full name of a local symbol in a given scope, by prepending
  * the name with the parent symbol's name.
  */
-static size_t fullSymbolName(char *output, size_t outputSize, char *localName,
-			     const struct sSymbol *scope)
+static void fullSymbolName(char *output, size_t outputSize, char *localName,
+			   const struct sSymbol *scope)
 {
 	const struct sSymbol *parent = scope->pScope ? scope->pScope : scope;
+	int n = snprintf(output, outputSize, "%s%s", parent->tzName, localName);
 
-	return snprintf(output, outputSize, "%s%s", parent->tzName, localName);
+	if (n >= (int)outputSize)
+		fatalerror("Symbol name is too long: '%s%s'",
+			   parent->tzName, localName);
 }
 
 /*
@@ -207,7 +210,7 @@ struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
 }
 
 /*
- * Find a symbol by name and scope
+ * Find a symbol by name, with automatically determined scope
  */
 struct sSymbol *sym_FindSymbol(char *tzName)
 {
@@ -256,14 +259,7 @@ void sym_Purge(char *tzName)
  */
 uint32_t sym_isConstDefined(char *tzName)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*tzName == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(tzName, pscope);
+	struct sSymbol *psym = sym_FindSymbol(tzName);
 
 	if (psym && (psym->nType & SYMF_DEFINED)) {
 		uint32_t mask = SYMF_EQU | SYMF_SET | SYMF_MACRO | SYMF_STRING;
@@ -280,19 +276,9 @@ uint32_t sym_isConstDefined(char *tzName)
 
 uint32_t sym_isDefined(char *tzName)
 {
-	struct sSymbol *psym, *pscope;
+	struct sSymbol *psym = sym_FindSymbol(tzName);
 
-	if (*tzName == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(tzName, pscope);
-
-	if (psym && (psym->nType & SYMF_DEFINED))
-		return 1;
-	else
-		return 0;
+	return (psym && (psym->nType & SYMF_DEFINED));
 }
 
 /*
@@ -300,21 +286,9 @@ uint32_t sym_isDefined(char *tzName)
  */
 uint32_t sym_isConstant(char *s)
 {
-	struct sSymbol *psym, *pscope;
+	struct sSymbol *psym = sym_FindSymbol(s);
 
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
-
-	if (psym != NULL) {
-		if (psym->nType & SYMF_CONST)
-			return 1;
-	}
-
-	return 0;
+	return (psym && (psym->nType & SYMF_CONST));
 }
 
 /*
@@ -327,7 +301,7 @@ char *sym_GetStringValue(char *tzSym)
 	if (pSym != NULL)
 		return pSym->pMacro;
 
-	yyerror("Stringsymbol '%s' not defined", tzSym);
+	yyerror("String symbol '%s' not defined", tzSym);
 
 	return NULL;
 }
@@ -337,14 +311,7 @@ char *sym_GetStringValue(char *tzSym)
  */
 uint32_t sym_GetConstantValue(char *s)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
+	struct sSymbol *psym = sym_FindSymbol(s);
 
 	if (psym != NULL) {
 		if (psym->nType & SYMF_CONST)
@@ -359,62 +326,11 @@ uint32_t sym_GetConstantValue(char *s)
 }
 
 /*
- * Return a symbols value... "estimated" if not defined yet
- */
-uint32_t sym_GetValue(char *s)
-{
-	struct sSymbol *psym, *pscope;
-
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
-
-	if (psym != NULL) {
-		if (psym->nType & SYMF_DEFINED) {
-			if (psym->nType & (SYMF_MACRO | SYMF_STRING))
-				yyerror("'%s' is a macro or string symbol", s);
-
-			return getvaluefield(psym);
-		}
-
-		if (nPass == 2) {
-			/*
-			 * Assume undefined symbols are imported from
-			 * somwehere else
-			 */
-			psym->nType |= SYMF_IMPORT;
-		}
-
-		/* 0x80 seems like a good default value... */
-		return 0x80;
-	}
-
-	if (nPass == 1) {
-		createsymbol(s);
-		return 0x80;
-	}
-
-	yyerror("'%s' not defined", s);
-
-	return 0;
-}
-
-/*
  * Return a defined symbols value... aborts if not defined yet
  */
 uint32_t sym_GetDefinedValue(char *s)
 {
-	struct sSymbol *psym, *pscope;
-
-	if (*s == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	psym = findsymbol(s, pscope);
+	struct sSymbol *psym = sym_FindSymbol(s);
 
 	if (psym != NULL) {
 		if ((psym->nType & SYMF_DEFINED)) {
@@ -545,30 +461,43 @@ struct sSymbol *sym_FindMacro(char *s)
 }
 
 /*
+ * Create a symbol that will be non-relocatable and ensure that it
+ * hasn't already been defined or referenced in a context that would
+ * require that it be relocatable
+ */
+static struct sSymbol *createNonrelocSymbol(char *tzSym)
+{
+	struct sSymbol *nsym = findsymbol(tzSym, NULL);
+
+	if (nsym != NULL) {
+		if (nsym->nType & SYMF_DEFINED) {
+			yyerror("'%s' already defined at %s(%u)",
+				tzSym, nsym->tzFileName, nsym->nFileLine);
+		} else if (nsym->nType & SYMF_REF) {
+			yyerror("'%s' already referenced at %s(%u)",
+				tzSym, nsym->tzFileName, nsym->nFileLine);
+		}
+	} else {
+		nsym = createsymbol(tzSym);
+	}
+
+	return nsym;
+}
+
+/*
  * Add an equated symbol
  */
 void sym_AddEqu(char *tzSym, int32_t value)
 {
-	if ((nPass == 1) || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
-		/* only add equated symbols in pass 1 */
-		struct sSymbol *nsym = findsymbol(tzSym, NULL);
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
-		if (nsym != NULL) {
-			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined in %s(%d)", tzSym,
-					nsym->tzFileName, nsym->nFileLine);
-			}
-		} else {
-			nsym = createsymbol(tzSym);
-		}
-
-		if (nsym) {
-			nsym->nValue = value;
-			nsym->nType |= SYMF_EQU | SYMF_DEFINED | SYMF_CONST;
-			nsym->pScope = NULL;
-			updateSymbolFilename(nsym);
-		}
+	if (nsym) {
+		nsym->nValue = value;
+		nsym->nType |= SYMF_EQU | SYMF_DEFINED | SYMF_CONST;
+		nsym->pScope = NULL;
+		updateSymbolFilename(nsym);
 	}
+
 }
 
 /*
@@ -585,16 +514,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
  */
 void sym_AddString(char *tzSym, char *tzValue)
 {
-	struct sSymbol *nsym = findsymbol(tzSym, NULL);
-
-	if (nsym != NULL) {
-		if (nsym->nType & SYMF_DEFINED) {
-			yyerror("'%s' already defined in %s(%d)",
-				tzSym, nsym->tzFileName, nsym->nFileLine);
-		}
-	} else {
-		nsym = createsymbol(tzSym);
-	}
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
 	if (nsym) {
 		nsym->pMacro = malloc(strlen(tzValue) + 1);
@@ -602,7 +522,7 @@ void sym_AddString(char *tzSym, char *tzValue)
 		if (nsym->pMacro != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
-			fatalerror("No memory for stringequate");
+			fatalerror("No memory for string equate");
 
 		nsym->nType |= SYMF_STRING | SYMF_DEFINED;
 		nsym->ulMacroSize = strlen(tzValue);
@@ -617,11 +537,7 @@ uint32_t sym_isString(char *tzSym)
 {
 	const struct sSymbol *pSym = findsymbol(tzSym, NULL);
 
-	if (pSym != NULL) {
-		if (pSym->nType & SYMF_STRING)
-			return 1;
-	}
-	return 0;
+	return (pSym && (pSym->nType & SYMF_STRING));
 }
 
 /*
@@ -631,8 +547,20 @@ void sym_AddSet(char *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
-	if (nsym == NULL) {
-		/* Symbol hasn been found, create */
+	if (nsym != NULL) {
+		if (nsym->nType & SYMF_DEFINED) {
+			if (!(nsym->nType & SYMF_CONST))
+				yyerror("'%s' already defined as non-constant at %s(%u)",
+					tzSym,
+					nsym->tzFileName,
+					nsym->nFileLine);
+		} else if (nsym->nType & SYMF_REF) {
+			yyerror("'%s' already referenced at %s(%u)",
+				tzSym,
+				nsym->tzFileName,
+				nsym->nFileLine);
+		}
+	} else {
 		nsym = createsymbol(tzSym);
 	}
 
@@ -650,9 +578,6 @@ void sym_AddSet(char *tzSym, int32_t value)
 void sym_AddLocalReloc(char *tzSym)
 {
 	if (pScope) {
-		if (strlen(tzSym) + strlen(pScope->tzName) > MAXSYMLEN)
-			fatalerror("Symbol too long");
-
 		char fullname[MAXSYMLEN + 1];
 
 		fullSymbolName(fullname, sizeof(fullname), tzSym, pScope);
@@ -669,59 +594,55 @@ void sym_AddLocalReloc(char *tzSym)
 void sym_AddReloc(char *tzSym)
 {
 	struct sSymbol *scope = NULL;
+	struct sSymbol *nsym;
+	char *localPtr = strchr(tzSym, '.');
 
-	if ((nPass == 1)
-	    || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
-		/* only add reloc symbols in pass 1 */
-		struct sSymbol *nsym;
-		char *localPtr = strchr(tzSym, '.');
+	if (localPtr != NULL) {
+		if (!pScope)
+			fatalerror("Local label in main scope");
 
-		if (localPtr != NULL) {
-			if (!pScope)
-				fatalerror("Local label in main scope");
+		struct sSymbol *parent = pScope->pScope ?
+					 pScope->pScope : pScope;
+		uint32_t parentLen = localPtr - tzSym;
 
-			struct sSymbol *parent = pScope->pScope ?
-						 pScope->pScope : pScope;
-			uint32_t parentLen = localPtr - tzSym;
-
-			if (strchr(localPtr + 1, '.') != NULL) {
-				fatalerror("'%s' is a nonsensical reference to a nested local symbol",
-					   tzSym);
-			} else if (strlen(parent->tzName) != parentLen
-				   || strncmp(tzSym, parent->tzName, parentLen) != 0) {
-				yyerror("Not currently in the scope of '%.*s'",
-					parentLen, tzSym);
-			}
-
-			scope = parent;
+		if (strchr(localPtr + 1, '.') != NULL) {
+			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
+				   tzSym);
+		} else if (strlen(parent->tzName) != parentLen
+			   || strncmp(tzSym, parent->tzName, parentLen) != 0) {
+			yyerror("Not currently in the scope of '%.*s'",
+				parentLen, tzSym);
 		}
 
-		nsym = findsymbol(tzSym, scope);
-
-		if (nsym != NULL) {
-			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined in %s(%d)", tzSym,
-					nsym->tzFileName, nsym->nFileLine);
-			}
-		} else {
-			nsym = createsymbol(tzSym);
-		}
-
-		if (nsym) {
-			nsym->nValue = nPC;
-			nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
-			if (localPtr)
-				nsym->nType |= SYMF_LOCAL;
-
-			if (exportall)
-				nsym->nType |= SYMF_EXPORT;
-
-			nsym->pScope = scope;
-			nsym->pSection = pCurrentSection;
-
-			updateSymbolFilename(nsym);
-		}
+		scope = parent;
 	}
+
+	nsym = findsymbol(tzSym, scope);
+
+	if (nsym != NULL) {
+		if (nsym->nType & SYMF_DEFINED) {
+			yyerror("'%s' already defined in %s(%d)", tzSym,
+				nsym->tzFileName, nsym->nFileLine);
+		}
+	} else {
+		nsym = createsymbol(tzSym);
+	}
+
+	if (nsym) {
+		nsym->nValue = nPC;
+		nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
+		if (localPtr)
+			nsym->nType |= SYMF_LOCAL;
+
+		if (exportall)
+			nsym->nType |= SYMF_EXPORT;
+
+		nsym->pScope = scope;
+		nsym->pSection = pCurrentSection;
+
+		updateSymbolFilename(nsym);
+	}
+
 	pScope = findsymbol(tzSym, scope);
 }
 
@@ -734,10 +655,6 @@ void sym_AddReloc(char *tzSym)
  */
 int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 {
-	/* Do nothing the first pass. */
-	if (nPass != 2)
-		return 1;
-
 	const struct sSymbol *nsym1 = sym_FindSymbol(tzSym1);
 	const struct sSymbol *nsym2 = sym_FindSymbol(tzSym2);
 
@@ -781,46 +698,13 @@ int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
  */
 void sym_Export(char *tzSym)
 {
-	if (nPass == 1) {
-		/* only export symbols in pass 1 */
-		struct sSymbol *nsym = sym_FindSymbol(tzSym);
+	struct sSymbol *nsym = sym_FindSymbol(tzSym);
 
-		if (nsym == NULL)
-			nsym = createsymbol(tzSym);
+	if (nsym == NULL)
+		nsym = createsymbol(tzSym);
 
-		if (nsym)
-			nsym->nType |= SYMF_EXPORT;
-	} else {
-		const struct sSymbol *nsym = sym_FindSymbol(tzSym);
-
-		if (nsym != NULL) {
-			if (nsym->nType & SYMF_DEFINED)
-				return;
-		}
-		yyerror("'%s' not defined", tzSym);
-	}
-}
-
-/*
- * Globalize a symbol (export if defined, import if not)
- */
-void sym_Global(char *tzSym)
-{
-	if (nPass == 2) {
-		/* only globalize symbols in pass 2 */
-		struct sSymbol *nsym = sym_FindSymbol(tzSym);
-
-		if ((nsym == NULL) || ((nsym->nType & SYMF_DEFINED) == 0)) {
-			if (nsym == NULL)
-				nsym = createsymbol(tzSym);
-
-			if (nsym)
-				nsym->nType |= SYMF_IMPORT;
-		} else {
-			if (nsym)
-				nsym->nType |= SYMF_EXPORT;
-		}
-	}
+	if (nsym)
+		nsym->nType |= SYMF_EXPORT;
 }
 
 /*
@@ -828,99 +712,52 @@ void sym_Global(char *tzSym)
  */
 void sym_AddMacro(char *tzSym)
 {
-	if ((nPass == 1) || ((nPass == 2) && (sym_isDefined(tzSym) == 0))) {
-		/* only add macros in pass 1 */
-		struct sSymbol *nsym;
+	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
-		nsym = findsymbol(tzSym, NULL);
-
-		if (nsym != NULL) {
-			if (nsym->nType & SYMF_DEFINED) {
-				yyerror("'%s' already defined in %s(%d)",
-					tzSym, nsym->tzFileName,
-					nsym->nFileLine);
-			}
-		} else {
-			nsym = createsymbol(tzSym);
-		}
-
-		if (nsym) {
-			nsym->nValue = nPC;
-			nsym->nType |= SYMF_MACRO | SYMF_DEFINED;
-			nsym->pScope = NULL;
-			nsym->ulMacroSize = ulNewMacroSize;
-			nsym->pMacro = tzNewMacro;
-			updateSymbolFilename(nsym);
-		}
+	if (nsym) {
+		nsym->nType |= SYMF_MACRO | SYMF_DEFINED;
+		nsym->pScope = NULL;
+		nsym->ulMacroSize = ulNewMacroSize;
+		nsym->pMacro = tzNewMacro;
+		updateSymbolFilename(nsym);
 	}
 }
 
 /*
- * Set whether to export all relocable symbols by default
+ * Flag that a symbol is referenced in an RPN expression
+ * and create it if it doesn't exist yet
+ */
+void sym_Ref(char *tzSym)
+{
+	struct sSymbol *nsym = sym_FindSymbol(tzSym);
+
+	if (nsym == NULL) {
+		char fullname[MAXSYMLEN + 1];
+		int isLocal = 0;
+
+		if (*tzSym == '.') {
+			fullSymbolName(fullname, sizeof(fullname), tzSym,
+				       pScope);
+			tzSym = fullname;
+			isLocal = 1;
+		}
+
+		nsym = createsymbol(tzSym);
+
+		if (nsym && isLocal)
+			nsym->nType |= SYMF_LOCAL;
+	}
+
+	if (nsym)
+		nsym->nType |= SYMF_REF;
+}
+
+/*
+ * Set whether to export all relocatable symbols by default
  */
 void sym_SetExportAll(uint8_t set)
 {
 	exportall = set;
-}
-
-/*
- * Prepare for pass #1
- */
-void sym_PrepPass1(void)
-{
-	sym_Init();
-}
-
-/*
- * Prepare for pass #2
- */
-void sym_PrepPass2(void)
-{
-	int32_t i;
-
-	for (i = 0; i < HASHSIZE; i += 1) {
-		struct sSymbol **ppSym = &(tHashedSymbols[i]);
-
-		while (*ppSym) {
-			uint32_t mask = SYMF_SET | SYMF_STRING | SYMF_EQU;
-
-			if ((*ppSym)->nType & mask) {
-				struct sSymbol *pTemp;
-
-				pTemp = (*ppSym)->pNext;
-				free(*ppSym);
-				*ppSym = pTemp;
-			} else {
-				ppSym = &((*ppSym)->pNext);
-			}
-		}
-	}
-	pScope = NULL;
-	pPCSymbol->nValue = 0;
-
-	sym_AddString("__TIME__", SavedTIME);
-	sym_AddString("__DATE__", SavedDATE);
-	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
-	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
-	sym_AddString("__UTC_DAY__", SavedDAY);
-	sym_AddString("__UTC_MONTH__", SavedMONTH);
-	sym_AddString("__UTC_YEAR__", SavedYEAR);
-	sym_AddString("__UTC_HOUR__", SavedHOUR);
-	sym_AddString("__UTC_MINUTE__", SavedMINUTE);
-	sym_AddString("__UTC_SECOND__", SavedSECOND);
-	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
-	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
-	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
-	sym_AddSet("_RS", 0);
-
-	sym_AddEqu("_NARG", 0);
-	p_NARGSymbol = findsymbol("_NARG", NULL);
-	p_NARGSymbol->Callback = Callback_NARG;
-	sym_AddEqu("__LINE__", 0);
-	p__LINE__Symbol = findsymbol("__LINE__", NULL);
-	p__LINE__Symbol->Callback = Callback__LINE__;
-
-	math_DefinePI();
 }
 
 /*

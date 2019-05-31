@@ -37,7 +37,7 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 int32_t nLineNo;
-uint32_t nTotalLines, nPass, nPC, nIFDepth, nUnionDepth, nErrors;
+uint32_t nTotalLines, nPC, nIFDepth, nUnionDepth, nErrors;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
@@ -432,21 +432,17 @@ int main(int argc, char *argv[])
 	skipElif = true;
 	nUnionDepth = 0;
 	nPC = 0;
-	nPass = 1;
 	nErrors = 0;
-	sym_PrepPass1();
+	sym_Init();
 	sym_SetExportAll(CurrentOptions.exportall);
 	fstk_Init(tzMainfile);
 	opt_ParseDefines();
-
-	if (CurrentOptions.verbose)
-		printf("Pass 1...\n");
 
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nErrors != 0)
-		errx(1, "Assembly aborted in pass 1 (%ld errors)!", nErrors);
+		errx(1, "Assembly aborted (%ld errors)!", nErrors);
 
 	if (nIFDepth != 0)
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
@@ -455,27 +451,6 @@ int main(int argc, char *argv[])
 		errx(1, "Unterminated UNION construct (%ld levels)!",
 		     nUnionDepth);
 	}
-
-	nTotalLines = 0;
-	nLineNo = 1;
-	nIFDepth = 0;
-	skipElif = true;
-	nUnionDepth = 0;
-	nPC = 0;
-	nPass = 2;
-	nErrors = 0;
-	sym_PrepPass2();
-	out_PrepPass2();
-	fstk_Init(tzMainfile);
-	yy_set_state(LEX_STATE_NORMAL);
-	opt_SetCurrentOptions(&DefaultOptions);
-	opt_ParseDefines();
-
-	if (CurrentOptions.verbose)
-		printf("Pass 2...\n");
-
-	if (yyparse() != 0 || nErrors != 0)
-		errx(1, "Assembly aborted in pass 2 (%ld errors)!", nErrors);
 
 	double timespent;
 

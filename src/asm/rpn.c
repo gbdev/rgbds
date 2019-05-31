@@ -55,7 +55,6 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 
 	expr->nRPNLength = len;
 	expr->isReloc = src1->isReloc || src2->isReloc;
-	expr->isPCRel = src1->isPCRel || src2->isPCRel;
 }
 
 #define joinexpr() mergetwoexpressions(expr, src1, src2)
@@ -91,7 +90,6 @@ void rpn_Init(struct Expression *expr)
 	expr->nRPNLength = 0;
 	expr->nRPNOut = 0;
 	expr->isReloc = 0;
-	expr->isPCRel = 0;
 }
 
 /*
@@ -123,14 +121,6 @@ uint32_t rpn_isReloc(const struct Expression *expr)
 }
 
 /*
- * Determine if the current expression can be pc-relative
- */
-uint32_t rpn_isPCRelative(const struct Expression *expr)
-{
-	return expr->isPCRel;
-}
-
-/*
  * Add symbols, constants and operators to expression
  */
 void rpn_Number(struct Expression *expr, uint32_t i)
@@ -147,15 +137,8 @@ void rpn_Number(struct Expression *expr, uint32_t i)
 void rpn_Symbol(struct Expression *expr, char *tzSym)
 {
 	if (!sym_isConstant(tzSym)) {
-		const struct sSymbol *psym;
-
 		rpn_Init(expr);
-
-		psym = sym_FindSymbol(tzSym);
-
-		if (psym == NULL || psym->pSection == pCurrentSection
-		    || psym->pSection == NULL)
-			expr->isPCRel = 1;
+		sym_Ref(tzSym);
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_SYM);
 		while (*tzSym)
@@ -189,13 +172,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 
 	if (!sym_isConstant(tzSym)) {
 		rpn_Init(expr);
-
-		/*
-		 * Check that the symbol exists by evaluating and discarding the
-		 * value.
-		 */
-		sym_GetValue(tzSym);
-
+		sym_Ref(tzSym);
 		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK_SYM);
 		while (*tzSym)

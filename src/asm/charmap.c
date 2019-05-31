@@ -62,9 +62,6 @@ int32_t charmap_Add(char *input, uint8_t output)
 		charmap = &globalCharmap;
 	}
 
-	if (nPass == 2)
-		return charmap->count;
-
 	if (charmap->count > MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
 		return -1;
 

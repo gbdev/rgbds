@@ -18,11 +18,9 @@ struct Expression {
 	uint32_t nRPNLength;
 	uint32_t nRPNOut;
 	uint32_t isReloc;
-	uint32_t isPCRel;
 };
 
 uint32_t rpn_isReloc(const struct Expression *expr);
-uint32_t rpn_isPCRelative(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
