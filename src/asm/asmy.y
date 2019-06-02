@@ -26,6 +26,8 @@
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 
+#include "extern/utf8decoder.h"
+
 #include "common.h"
 #include "linkdefs.h"
 
@@ -429,6 +431,85 @@ static void updateUnion(void)
 	nPC = unionStart[unionIndex];
 	pCurrentSection->nPC = unionStart[unionIndex];
 	pPCSymbol->nValue = unionStart[unionIndex];
+}
+
+static size_t strlenUTF8(const char *s)
+{
+	size_t len = 0;
+	uint32_t state = 0;
+	uint32_t codep = 0;
+
+	while (*s) {
+		switch (decode(&state, &codep, (uint8_t)*s)) {
+		case 1:
+			fatalerror("STRLEN: Invalid UTF-8 character");
+			break;
+		case 0:
+			len++;
+			break;
+		}
+		s++;
+	}
+
+	/* Check for partial code point. */
+	if (state != 0)
+		fatalerror("STRLEN: Invalid UTF-8 character");
+
+	return len;
+}
+
+static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
+{
+	size_t srcIndex = 0;
+	size_t destIndex = 0;
+	uint32_t state = 0;
+	uint32_t codep = 0;
+	uint32_t curPos = 1;
+	uint32_t curLen = 0;
+
+	if (pos < 1) {
+		warning("STRSUB: Position starts at 1");
+		pos = 1;
+	}
+
+	/* Advance to starting position in source string. */
+	while (src[srcIndex] && curPos < pos) {
+		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
+		case 1:
+			fatalerror("STRSUB: Invalid UTF-8 character");
+			break;
+		case 0:
+			curPos++;
+			break;
+		}
+		srcIndex++;
+	}
+
+	if (!src[srcIndex])
+		warning("STRSUB: Position %lu is past the end of the string",
+			(unsigned long)pos);
+
+	/* Copy from source to destination. */
+	while (src[srcIndex] && destIndex < MAXSTRLEN && curLen < len) {
+		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
+		case 1:
+			fatalerror("STRSUB: Invalid UTF-8 character");
+			break;
+		case 0:
+			curLen++;
+			break;
+		}
+		dest[destIndex++] = src[srcIndex++];
+	}
+
+	if (curLen < len)
+		warning("STRSUB: Length too big: %lu", (unsigned long)len);
+
+	/* Check for partial code point. */
+	if (state != 0)
+		fatalerror("STRSUB: Invalid UTF-8 character");
+
+	dest[destIndex] = 0;
 }
 
 %}
@@ -1249,7 +1330,7 @@ relocconst	: T_ID
 			else
 				rpn_Number(&$$, 0);
 		}
-		| T_OP_STRLEN '(' string ')'		{ rpn_Number(&$$, strlen($3)); }
+		| T_OP_STRLEN '(' string ')'		{ rpn_Number(&$$, strlenUTF8($3)); }
 		| '(' relocconst ')'			{ $$ = $2; }
 ;
 
@@ -1327,7 +1408,7 @@ const		: T_ID					{ constexpr_Symbol(&$$, $1); }
 			else
 				constexpr_Number(&$$, 0);
 		}
-		| T_OP_STRLEN '(' string ')'		{ constexpr_Number(&$$, strlen($3)); }
+		| T_OP_STRLEN '(' string ')'		{ constexpr_Number(&$$, strlenUTF8($3)); }
 		| '(' const ')'				{ $$ = $2; }
 ;
 
@@ -1338,14 +1419,7 @@ string		: T_STRING
 		}
 		| T_OP_STRSUB '(' string comma uconst comma uconst ')'
 		{
-			uint32_t len = $7;
-			if (len > MAXSTRLEN) {
-				warning("STRSUB: Length too big: %u", len);
-				len = MAXSTRLEN;
-			}
-
-			if (snprintf($$, len + 1, "%s", $3 + $5 - 1) > MAXSTRLEN)
-				warning("STRSUB: String too long '%s'", $$);
+			strsubUTF8($$, $3, $5, $7);
 		}
 		| T_OP_STRCAT '(' string comma string ')'
 		{
