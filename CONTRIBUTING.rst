@@ -88,7 +88,7 @@ copyright and the reference to the MIT License.
    code. By default, the Makefile expects the script (and associate files) to be
    located in ``../linux/scripts/``, but you can place them anywhere you like as
    long as you specify it when executing the command:
-   ``CHECKPATCH=../path/to/folder make checkpatch``.
+   ``make checkpatch CHECKPATCH=../path/to/folder``.
 
 8. Create a pull request against the branch ``master``.
 
