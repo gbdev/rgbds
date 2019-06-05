@@ -4,6 +4,8 @@
 
 set -e
 
+cd "$(dirname "$0")"
+
 # Tests included with the repository
 
 pushd asm
@@ -23,6 +25,7 @@ fi
 pushd pokecrystal
 git fetch
 git checkout 06e169d
+make clean
 make -j
 make compare
 popd
@@ -33,6 +36,7 @@ fi
 pushd pokered
 git fetch
 git checkout 98f09b6
+make clean
 make -j
 make compare
 popd
@@ -43,5 +47,6 @@ fi
 pushd ucity
 git fetch
 git checkout 3315601
+make clean
 make -j
 popd
