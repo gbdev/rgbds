@@ -31,7 +31,7 @@ struct yy_buffer_state {
 	/* Address where the data is initially written after a safety margin */
 	char *pBufferStart;
 	char *pBuffer;
-	uint32_t nBufferSize;
+	size_t nBufferSize;
 	uint32_t oAtLineStart;
 };
 

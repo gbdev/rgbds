@@ -156,25 +156,39 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	if (pBuffer == NULL)
 		fatalerror("%s: Out of memory!", __func__);
 
-	uint32_t size;
+	size_t size = 0, capacity;
+	char *buf = NULL;
 
 	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	capacity = ftell(f);
+	rewind(f);
 
-	/* Give extra room for 2 newlines and terminator */
-	uint32_t capacity = size + 3;
+	if (capacity == -1)
+		capacity = 4096;
 
-	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
+	while (!feof(f)) {
+		if (buf == NULL || size >= capacity) {
+			capacity *= 2;
+			/* Give extra room for 2 newlines and terminator */
+			buf = realloc(buf, capacity + SAFETYMARGIN + 3);
 
-	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!", __func__);
+			if (buf == NULL)
+				fatalerror("%s: Out of memory for buffer!",
+					   __func__);
+		}
 
-	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
-	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
+		char *bufpos = buf + SAFETYMARGIN + size;
+		size_t read_count = fread(bufpos, 1, capacity - size, f);
 
-	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
+		if (read_count == 0)
+			fatalerror("%s: fread error", __func__);
 
+		size += read_count;
+	}
+
+	pBuffer->pBufferRealStart = buf;
+	pBuffer->pBufferStart = buf + SAFETYMARGIN;
+	pBuffer->pBuffer = buf + SAFETYMARGIN;
 	pBuffer->pBuffer[size] = 0;
 	pBuffer->nBufferSize = size;
 
