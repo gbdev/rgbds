@@ -4,6 +4,8 @@
 
 set -e
 
+cd "$(dirname "$0")"
+
 # Tests included with the repository
 
 pushd asm
