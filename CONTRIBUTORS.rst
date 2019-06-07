@@ -36,6 +36,8 @@ Other contributors
 
 - The OpenBSD Project <http://www.openbsd.org>
 
+- Quint Guvernator <quint@guvernator.net>
+
 - Sanqui <gsanky@gmail.com>
 
 - YamaArashi <shadow962@live.com>

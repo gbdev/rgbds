@@ -649,10 +649,16 @@ static void get_text(const struct PNGImage *img,
 			png_options->trim = strtoul(text[i].text, NULL, 0);
 			png_free_data(img->png, img->info, PNG_FREE_TEXT, i);
 		} else if (strcmp(text[i].key, "t") == 0) {
-			png_options->mapfile = text[i].text;
+			png_options->tilemapfile = text[i].text;
 			png_free_data(img->png, img->info, PNG_FREE_TEXT, i);
 		} else if (strcmp(text[i].key, "T") == 0 && !*text[i].text) {
-			png_options->mapout = true;
+			png_options->tilemapout = true;
+			png_free_data(img->png, img->info, PNG_FREE_TEXT, i);
+		} else if (strcmp(text[i].key, "a") == 0) {
+			png_options->attrmapfile = text[i].text;
+			png_free_data(img->png, img->info, PNG_FREE_TEXT, i);
+		} else if (strcmp(text[i].key, "A") == 0 && !*text[i].text) {
+			png_options->attrmapout = true;
 			png_free_data(img->png, img->info, PNG_FREE_TEXT, i);
 		} else if (strcmp(text[i].key, "p") == 0) {
 			png_options->palfile = text[i].text;
@@ -699,14 +705,26 @@ static void set_text(const struct PNGImage *img,
 		text[0].compression = PNG_TEXT_COMPRESSION_NONE;
 		png_set_text(img->png, img->info, text, 1);
 	}
-	if (*png_options->mapfile) {
+	if (*png_options->tilemapfile) {
 		text[0].key = "t";
 		text[0].text = "";
 		text[0].compression = PNG_TEXT_COMPRESSION_NONE;
 		png_set_text(img->png, img->info, text, 1);
 	}
-	if (png_options->mapout) {
+	if (png_options->tilemapout) {
 		text[0].key = "T";
+		text[0].text = "";
+		text[0].compression = PNG_TEXT_COMPRESSION_NONE;
+		png_set_text(img->png, img->info, text, 1);
+	}
+	if (*png_options->attrmapfile) {
+		text[0].key = "a";
+		text[0].text = "";
+		text[0].compression = PNG_TEXT_COMPRESSION_NONE;
+		png_set_text(img->png, img->info, text, 1);
+	}
+	if (png_options->attrmapout) {
+		text[0].key = "A";
 		text[0].text = "";
 		text[0].compression = PNG_TEXT_COMPRESSION_NONE;
 		png_set_text(img->png, img->info, text, 1);

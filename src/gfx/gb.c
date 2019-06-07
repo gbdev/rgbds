@@ -85,8 +85,87 @@ int get_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles, int tile_size)
 	return -1;
 }
 
-void create_tilemap(const struct Options *opts, struct GBImage *gb,
-		    struct Tilemap *tilemap)
+uint8_t reverse_bits(uint8_t b)
+{
+	uint8_t rev = 0;
+
+	rev |= (b & 0x80) >> 7;
+	rev |= (b & 0x40) >> 5;
+	rev |= (b & 0x20) >> 3;
+	rev |= (b & 0x10) >> 1;
+	rev |= (b & 0x08) << 1;
+	rev |= (b & 0x04) << 3;
+	rev |= (b & 0x02) << 5;
+	rev |= (b & 0x01) << 7;
+	return rev;
+}
+
+void xflip(uint8_t *tile, uint8_t *tile_xflip, int tile_size)
+{
+	int i;
+
+	for (i = 0; i < tile_size; i++)
+		tile_xflip[i] = reverse_bits(tile[i]);
+}
+
+void yflip(uint8_t *tile, uint8_t *tile_yflip, int tile_size)
+{
+	int i;
+
+	for (i = 0; i < tile_size; i++)
+		tile_yflip[i] = tile[(tile_size - i - 1) ^ (depth - 1)];
+}
+
+/*
+ * get_mirrored_tile_index looks for `tile` in tile array `tiles`, also
+ * checking x-, y-, and xy-mirrored versions of `tile`. If one is found,
+ * `*flags` is set according to the type of mirroring and the index of the
+ * matched tile is returned. If no match is found, -1 is returned.
+ */
+int get_mirrored_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles,
+			    int tile_size, int *flags)
+{
+	int index;
+	uint8_t *tile_xflip;
+	uint8_t *tile_yflip;
+
+	index = get_tile_index(tile, tiles, num_tiles, tile_size);
+	if (index >= 0) {
+		*flags = 0;
+		return index;
+	}
+
+	tile_yflip = malloc(tile_size);
+	yflip(tile, tile_yflip, tile_size);
+	index = get_tile_index(tile_yflip, tiles, num_tiles, tile_size);
+	if (index >= 0) {
+		*flags = YFLIP;
+		free(tile_yflip);
+		return index;
+	}
+
+	tile_xflip = malloc(tile_size);
+	xflip(tile, tile_xflip, tile_size);
+	index = get_tile_index(tile_xflip, tiles, num_tiles, tile_size);
+	if (index >= 0) {
+		*flags = XFLIP;
+		free(tile_yflip);
+		free(tile_xflip);
+		return index;
+	}
+
+	yflip(tile_xflip, tile_yflip, tile_size);
+	index = get_tile_index(tile_yflip, tiles, num_tiles, tile_size);
+	if (index >= 0)
+		*flags = XFLIP | YFLIP;
+
+	free(tile_yflip);
+	free(tile_xflip);
+	return index;
+}
+
+void create_mapfiles(const struct Options *opts, struct GBImage *gb,
+		     struct Mapfile *tilemap, struct Mapfile *attrmap)
 {
 	int i, j;
 	int gb_i;
@@ -94,6 +173,7 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	int max_tiles;
 	int num_tiles;
 	int index;
+	int flags;
 	int gb_size;
 	uint8_t *tile;
 	uint8_t **tiles;
@@ -109,19 +189,33 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 	tiles = calloc(max_tiles, sizeof(uint8_t *));
 	num_tiles = 0;
 
-	tilemap->data = calloc(max_tiles, sizeof(uint8_t));
-	tilemap->size = 0;
+	if (*opts->tilemapfile) {
+		tilemap->data = calloc(max_tiles, sizeof(uint8_t));
+		tilemap->size = 0;
+	}
+
+	if (*opts->attrmapfile) {
+		attrmap->data = calloc(max_tiles, sizeof(uint8_t));
+		attrmap->size = 0;
+	}
+
 
 	gb_i = 0;
 	while (gb_i < gb_size) {
+		flags = 0;
 		tile = malloc(tile_size);
 		for (i = 0; i < tile_size; i++) {
 			tile[i] = gb->data[gb_i];
 			gb_i++;
 		}
 		if (opts->unique) {
-			index = get_tile_index(tile, tiles, num_tiles,
-					       tile_size);
+			if (opts->mirror) {
+				index = get_mirrored_tile_index(tile, tiles, num_tiles,
+								tile_size, &flags);
+			} else {
+				index = get_tile_index(tile, tiles, num_tiles,
+						       tile_size);
+			}
 			if (index < 0) {
 				index = num_tiles;
 				tiles[num_tiles] = tile;
@@ -132,8 +226,14 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 			tiles[num_tiles] = tile;
 			num_tiles++;
 		}
-		tilemap->data[tilemap->size] = index;
-		tilemap->size++;
+		if (*opts->tilemapfile) {
+			tilemap->data[tilemap->size] = index;
+			tilemap->size++;
+		}
+		if (*opts->attrmapfile) {
+			attrmap->data[attrmap->size] = flags;
+			attrmap->size++;
+		}
 	}
 
 	if (opts->unique) {
@@ -154,19 +254,35 @@ void create_tilemap(const struct Options *opts, struct GBImage *gb,
 }
 
 void output_tilemap_file(const struct Options *opts,
-			 const struct Tilemap *tilemap)
+			 const struct Mapfile *tilemap)
 {
 	FILE *f;
 
-	f = fopen(opts->mapfile, "wb");
+	f = fopen(opts->tilemapfile, "wb");
 	if (!f)
-		err(1, "Opening tilemap file '%s' failed", opts->mapfile);
+		err(1, "Opening tilemap file '%s' failed", opts->tilemapfile);
 
 	fwrite(tilemap->data, 1, tilemap->size, f);
 	fclose(f);
 
-	if (opts->mapout)
-		free(opts->mapfile);
+	if (opts->tilemapout)
+		free(opts->tilemapfile);
+}
+
+void output_attrmap_file(const struct Options *opts,
+			 const struct Mapfile *attrmap)
+{
+	FILE *f;
+
+	f = fopen(opts->attrmapfile, "wb");
+	if (!f)
+		err(1, "Opening attrmap file '%s' failed", opts->attrmapfile);
+
+	fwrite(attrmap->data, 1, attrmap->size, f);
+	fclose(f);
+
+	if (opts->attrmapout)
+		free(opts->attrmapfile);
 }
 
 void output_palette_file(const struct Options *opts,
