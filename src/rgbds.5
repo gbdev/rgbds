@@ -35,9 +35,10 @@ is a 0‐terminated string of
 .Bd -literal
 ; Header
 
-BYTE    ID[4]            ; "RGB6"
-LONG    NumberOfSymbols  ; The number of symbols used in this file
-LONG    NumberOfSections ; The number of sections used in this file
+BYTE    ID[4]                 ; "RGB7"
+LONG    NumberOfSymbols       ; The number of symbols used in this file
+LONG    NumberOfSections      ; The number of sections used in this file
+LONG    NumberOfAssertions    ; The number of assertions used in this file
 
 ; Symbols
 
@@ -126,6 +127,18 @@ REPT NumberOfSections
 
     ENDC
 
+ENDR
+
+; Assertions
+
+REPT NumberOfAssertions
+    STRING  ErrorMessage
+    STRING  SourceFile
+    LONG    Line
+    BYTE    Type ; 0 = assert
+                 ; 1 = warnif
+    LONG    RPNSize
+    BYTE    RPN[RPNSize]
 ENDR
 .Ed
 .Ss RPN DATA
