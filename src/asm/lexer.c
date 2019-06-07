@@ -15,6 +15,7 @@
 #include <ctype.h>
 
 #include "asm/asm.h"
+#include "asm/assertions.h"
 #include "asm/constexpr.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "asm/asm.h"
+#include "asm/assertions.h"
 #include "asm/constexpr.h"
 #include "asm/lexer.h"
 #include "asm/main.h"

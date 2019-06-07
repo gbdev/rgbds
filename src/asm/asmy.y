@@ -25,6 +25,7 @@
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/assertions.h"
 
 #include "common.h"
 #include "linkdefs.h"
@@ -440,6 +441,7 @@ static void updateUnion(void)
 	struct Expression sVal;
 	int32_t nConstValue;
 	struct ConstExpression sConstExpr;
+	enum AssertSeverity eSeverity;
 }
 
 %type	<sVal>		relocconst
@@ -451,6 +453,8 @@ static void updateUnion(void)
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
+
+%type	<eSeverity>	assert_severity
 
 %token	<nConstValue>	T_NUMBER
 %token	<tzString>	T_STRING
@@ -514,6 +518,7 @@ static void updateUnion(void)
 %token	T_POP_ENDR
 %token	T_POP_FAIL
 %token	T_POP_WARN
+%token	T_POP_ASSERT
 %token	T_POP_PURGE
 %token	T_POP_POPS
 %token	T_POP_PUSHS
@@ -667,6 +672,7 @@ simple_pseudoop : include
 		| shift
 		| fail
 		| warn
+		| assert
 		| purge
 		| pops
 		| pushs
@@ -705,6 +711,20 @@ fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
 ;
 
 warn		: T_POP_WARN string	{ warning("%s", $2); }
+;
+
+assert		: T_POP_ASSERT relocconst comma assert_severity
+		{
+			out_Assert(&$2, $4, "TODO: stringify expression");
+		}
+		| T_POP_ASSERT relocconst comma assert_severity comma string
+		{
+			out_Assert(&$2, $4, $6);
+		}
+;
+
+assert_severity : T_POP_FAIL		{ $$ = 1; }
+		| T_POP_WARN		{ $$ = 0; }
 ;
 
 shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }

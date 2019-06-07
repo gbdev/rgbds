@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "asm/asm.h"
+#include "asm/assertions.h"
 #include "asm/constexpr.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
@@ -404,6 +405,7 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"fail", T_POP_FAIL},
 	{"warn", T_POP_WARN},
+	{"assert", T_POP_ASSERT},
 
 	{"macro", T_POP_MACRO},
 	/* Not needed but we have it here just to protect the name */

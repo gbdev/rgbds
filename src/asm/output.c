@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "asm/asm.h"
+#include "asm/assertions.h"
 #include "asm/charmap.h"
 #include "asm/fstack.h"
 #include "asm/main.h"
@@ -154,7 +155,7 @@ static uint32_t countsections(void)
 }
 
 /*
- * Count the number of patches used in this object
+ * Count the number of patches used in this section
  */
 static uint32_t countpatches(struct Section *pSect)
 {
@@ -936,4 +937,19 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	pPCSymbol->nValue += length;
 
 	fclose(f);
+}
+
+void out_Assert(struct Expression *expr, enum AssertSeverity severity, char * message)
+{
+	if (rpn_isReloc(expr)) {
+		fatalerror("Link-time assertions unimplemented");
+	} else {
+		if (!expr->nVal) {
+			if (severity == SEV_WARN) {
+				warning("Assertion failed: %s", message);
+			} else {
+				fatalerror("Assertion failed: %s", message);
+			}
+		}
+	}
 }

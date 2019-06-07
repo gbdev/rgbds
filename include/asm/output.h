@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "asm/assertions.h"
 #include "asm/rpn.h"
 
 struct Section {
@@ -49,5 +50,6 @@ void out_AbsLong(int32_t b);
 void out_RelLong(struct Expression *expr);
 void out_PushSection(void);
 void out_PopSection(void);
+void out_Assert(struct Expression *expr, enum AssertSeverity severity, char * message);
 
 #endif /* RGBDS_ASM_OUTPUT_H */
