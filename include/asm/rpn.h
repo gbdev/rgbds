@@ -11,11 +11,14 @@
 
 #include <stdint.h>
 
+#define MAXRPNLEN 1048576
+
 struct Expression {
 	int32_t  nVal;
 	uint8_t  *tRPN;
 	uint32_t nRPNCapacity;
 	uint32_t nRPNLength;
+	uint32_t nRPNPatchSize;
 	uint32_t nRPNOut;
 	uint32_t isReloc;
 };
