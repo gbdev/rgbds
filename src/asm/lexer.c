@@ -471,17 +471,17 @@ void yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
 
 	char *s = pLexBuffer;
 	uint32_t nOldFloatMask = 0;
-	uint32_t nFloatMask = tFloatingFirstChar[(int32_t)*s];
+	uint32_t nFloatMask = tFloatingFirstChar[(uint8_t)*s];
 
 	if (nFloatMask != 0) {
 		s++;
 		nOldFloatMask = nFloatMask;
-		nFloatMask &= tFloatingSecondChar[(int32_t)*s];
+		nFloatMask &= tFloatingSecondChar[(uint8_t)*s];
 
 		while (nFloatMask != 0) {
 			s++;
 			nOldFloatMask = nFloatMask;
-			nFloatMask &= tFloatingChars[(int32_t)*s];
+			nFloatMask &= tFloatingChars[(uint8_t)*s];
 		}
 	}
 
