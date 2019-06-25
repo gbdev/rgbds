@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -516,8 +516,9 @@ static void checksectionoverflow(uint32_t delta_size)
 {
 	uint32_t maxsize = getmaxsectionsize(pCurrentSection->nType,
 					  pCurrentSection->pzName);
+	uint32_t new_size = pCurrentSection->nPC + delta_size;
 
-	if (pCurrentSection->nPC + delta_size > maxsize) {
+	if (new_size > maxsize) {
 		/*
 		 * This check is here to trap broken code that generates
 		 * sections that are too big and to prevent the assembler from
@@ -525,8 +526,8 @@ static void checksectionoverflow(uint32_t delta_size)
 		 * memory.
 		 * The real check must be done at the linking stage.
 		 */
-		fatalerror("Section '%s' is too big (max size = 0x%X bytes).",
-			   pCurrentSection->pzName, maxsize);
+		fatalerror("Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
+			   pCurrentSection->pzName, maxsize, new_size);
 	}
 }
 
