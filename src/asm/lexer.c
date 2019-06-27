@@ -803,8 +803,6 @@ scanagain:
 				goto scanagain;
 		}
 
-		pLexBuffer += nFloatLen;
-
 		if (token->nToken == T_ID && linestart)
 			return T_LABEL;
 		else
