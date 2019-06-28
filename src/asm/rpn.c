@@ -319,7 +319,7 @@ void rpn_ADD(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	expr->nVal = (src1->nVal + src2->nVal);
+	expr->nVal = ((uint32_t)src1->nVal + (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_ADD);
 }
 
@@ -327,7 +327,7 @@ void rpn_SUB(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	expr->nVal = (src1->nVal - src2->nVal);
+	expr->nVal = ((uint32_t)src1->nVal - (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_SUB);
 }
 
@@ -360,15 +360,18 @@ void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 {
 	joinexpr();
 
-	if (src1->nVal < 0)
-		warning("Left shift of negative value: %d", src1->nVal);
+	if (!expr->isReloc) {
+		if (src1->nVal < 0)
+			warning("Left shift of negative value: %d", src1->nVal);
 
-	if (src2->nVal < 0)
-		fatalerror("Shift by negative value: %d", src2->nVal);
-	else if (src2->nVal >= 32)
-		fatalerror("Shift by too big value: %d", src2->nVal);
+		if (src2->nVal < 0)
+			fatalerror("Shift by negative value: %d", src2->nVal);
+		else if (src2->nVal >= 32)
+			fatalerror("Shift by too big value: %d", src2->nVal);
 
-	expr->nVal = (src1->nVal << src2->nVal);
+		expr->nVal = ((uint32_t)src1->nVal << src2->nVal);
+	}
+
 	pushbyte(expr, RPN_SHL);
 }
 
@@ -376,12 +379,16 @@ void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	if (src2->nVal < 0)
-		fatalerror("Shift by negative value: %d", src2->nVal);
-	else if (src2->nVal >= 32)
-		fatalerror("Shift by too big value: %d", src2->nVal);
 
-	expr->nVal = (src1->nVal >> src2->nVal);
+	if (!expr->isReloc) {
+		if (src2->nVal < 0)
+			fatalerror("Shift by negative value: %d", src2->nVal);
+		else if (src2->nVal >= 32)
+			fatalerror("Shift by too big value: %d", src2->nVal);
+
+		expr->nVal = (src1->nVal >> src2->nVal);
+	}
+
 	pushbyte(expr, RPN_SHR);
 }
 
@@ -389,7 +396,7 @@ void rpn_MUL(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	expr->nVal = (src1->nVal * src2->nVal);
+	expr->nVal = ((uint32_t)src1->nVal * (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_MUL);
 }
 
@@ -397,10 +404,19 @@ void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	if (src2->nVal == 0)
-		fatalerror("Division by zero");
 
-	expr->nVal = (src1->nVal / src2->nVal);
+	if (!expr->isReloc) {
+		if (src2->nVal == 0)
+			fatalerror("Division by zero");
+
+		if (src1->nVal == INT32_MIN && src2->nVal == -1) {
+			warning("Division of min value by -1");
+			expr->nVal = INT32_MIN;
+		} else {
+			expr->nVal = (src1->nVal / src2->nVal);
+		}
+	}
+
 	pushbyte(expr, RPN_DIV);
 }
 
@@ -408,17 +424,24 @@ void rpn_MOD(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	joinexpr();
-	if (src2->nVal == 0)
-		fatalerror("Division by zero");
 
-	expr->nVal = (src1->nVal % src2->nVal);
+	if (!expr->isReloc) {
+		if (src2->nVal == 0)
+			fatalerror("Division by zero");
+
+		if (src1->nVal == INT32_MIN && src2->nVal == -1)
+			expr->nVal = 0;
+		else
+			expr->nVal = (src1->nVal % src2->nVal);
+	}
+
 	pushbyte(expr, RPN_MOD);
 }
 
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = -expr->nVal;
+	expr->nVal = -(uint32_t)expr->nVal;
 	pushbyte(expr, RPN_UNSUB);
 }
 

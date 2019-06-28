@@ -71,8 +71,9 @@ typedef int32_t(*x2bin) (char ch);
 
 static int32_t ascii2bin(char *s)
 {
-	int32_t radix = 10;
-	int32_t result = 0;
+	char *start = s;
+	uint32_t radix = 10;
+	uint32_t result = 0;
 	x2bin convertfunc = char2bin;
 
 	switch (*s) {
@@ -101,6 +102,9 @@ static int32_t ascii2bin(char *s)
 		break;
 	}
 
+	const uint32_t max_q = UINT32_MAX / radix;
+	const uint32_t max_r = UINT32_MAX % radix;
+
 	if (*s == '\0') {
 		/*
 		 * There are no digits after the radix prefix
@@ -108,15 +112,39 @@ static int32_t ascii2bin(char *s)
 		 */
 		yyerror("Invalid integer constant");
 	} else if (radix == 4) {
+		int32_t size = 0;
 		int32_t c;
 
 		while (*s != '\0') {
 			c = convertfunc(*s++);
 			result = result * 2 + ((c & 2) << 7) + (c & 1);
+			size++;
+		}
+
+		/*
+		 * Extending a graphics constant longer than 8 pixels,
+		 * the Game Boy tile width, produces a nonsensical result.
+		 */
+		if (size > 8) {
+			warning("Graphics constant '%s' is too long",
+				start);
 		}
 	} else {
-		while (*s != '\0')
-			result = result * radix + convertfunc(*s++);
+		bool overflow = false;
+
+		while (*s != '\0') {
+			int32_t digit = convertfunc(*s++);
+
+			if (result > max_q
+			 || (result == max_q && digit > max_r)) {
+				overflow = true;
+			}
+			result = result * radix + digit;
+		}
+
+		if (overflow)
+			warning("Integer constant '%s' is too large",
+				start);
 	}
 
 	return result;
