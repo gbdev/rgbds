@@ -38,6 +38,8 @@ struct sLexString {
 
 #define SAFETYMARGIN		1024
 
+#define BOM_SIZE 3
+
 struct sLexFloat tLexFloat[32];
 struct sLexString *tLexHash[LEXHASHSIZE];
 YY_BUFFER_STATE pCurrentBuffer;
@@ -48,6 +50,9 @@ uint32_t tFloatingFirstChar[256];
 uint32_t tFloatingChars[256];
 uint32_t nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
+
+/* UTF-8 byte order mark */
+static const unsigned char bom[BOM_SIZE] = { 0xEF, 0xBB, 0xBF };
 
 void upperstring(char *s)
 {
@@ -120,11 +125,11 @@ void yy_delete_buffer(YY_BUFFER_STATE buf)
  */
 static void yy_buffer_append(YY_BUFFER_STATE buf, uint32_t capacity, char c)
 {
-	assert(buf->pBuffer[buf->nBufferSize] == 0);
+	assert(buf->pBufferStart[buf->nBufferSize] == 0);
 	assert(buf->nBufferSize + 1 < capacity);
 
-	buf->pBuffer[buf->nBufferSize++] = c;
-	buf->pBuffer[buf->nBufferSize] = 0;
+	buf->pBufferStart[buf->nBufferSize++] = c;
+	buf->pBufferStart[buf->nBufferSize] = 0;
 }
 
 YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
@@ -221,6 +226,11 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	 */
 	capacity += 3;
 
+	/* Skip UTF-8 byte order mark. */
+	if (pBuffer->nBufferSize >= BOM_SIZE
+	 && !memcmp(pBuffer->pBuffer, bom, BOM_SIZE))
+		pBuffer->pBuffer += BOM_SIZE;
+
 	/* Convert all line endings to LF and spaces */
 
 	char *mem = pBuffer->pBuffer;
@@ -281,7 +291,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	}
 
 	/* Add newline if file doesn't end with one */
-	if (size == 0 || pBuffer->pBuffer[size - 1] != '\n')
+	if (size == 0 || pBuffer->pBufferStart[size - 1] != '\n')
 		yy_buffer_append(pBuffer, capacity, '\n');
 
 	/* Add newline if \ will eat the last newline */
@@ -289,10 +299,10 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		size_t pos = pBuffer->nBufferSize - 2;
 
 		/* Skip spaces */
-		while (pos > 0 && pBuffer->pBuffer[pos] == ' ')
+		while (pos > 0 && pBuffer->pBufferStart[pos] == ' ')
 			pos--;
 
-		if (pBuffer->pBuffer[pos] == '\\')
+		if (pBuffer->pBufferStart[pos] == '\\')
 			yy_buffer_append(pBuffer, capacity, '\n');
 	}
 
@@ -783,10 +793,22 @@ scanagain:
 		 * numeric literal, string, or bracketed symbol, so just return
 		 * the ASCII character.
 		 */
-		if (*pLexBuffer == '\n')
+		unsigned char ch = *pLexBuffer++;
+
+		if (ch == '\n')
 			AtLineStart = 1;
 
-		return *pLexBuffer++;
+		/*
+		 * Check for invalid unprintable characters.
+		 * They may not be readily apparent in a text editor,
+		 * so this is useful for identifying encoding problems.
+		 */
+		if (ch != 0
+		 && ch != '\n'
+		 && !(ch >= 0x20 && ch <= 0x7E))
+			fatalerror("Found garbage character: 0x%02X", ch);
+
+		return ch;
 	}
 
 	if (pLongestFixed == NULL || nFloatLen > pLongestFixed->nNameLength) {

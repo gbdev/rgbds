@@ -1,3 +1,2 @@
 ERROR: garbage_char.asm(1):
-    syntax error
-error: Assembly aborted (1 errors)!
+    Found garbage character: 0xFF
