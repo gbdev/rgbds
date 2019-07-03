@@ -156,13 +156,32 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	if (pBuffer == NULL)
 		fatalerror("%s: Out of memory!", __func__);
 
-	size_t size = 0, capacity;
+	size_t size = 0, capacity = -1;
 	char *buf = NULL;
 
-	fseek(f, 0, SEEK_END);
-	capacity = ftell(f);
-	rewind(f);
+	/*
+	 * Check if we can get the file size without implementation-defined
+	 * behavior:
+	 *
+	 * From ftell(3p):
+	 * [On error], ftell() and ftello() shall return −1, and set errno to
+	 * indicate the error.
+	 *
+	 * The ftell() and ftello() functions shall fail if: [...]
+	 * ESPIPE The file descriptor underlying stream is associated with a
+	 * pipe, FIFO, or socket.
+	 *
+	 * From fseek(3p):
+	 * The behavior of fseek() on devices which are incapable of seeking
+	 * is implementation-defined.
+	 */
+	if (ftell(f) != -1) {
+		fseek(f, 0, SEEK_END);
+		capacity = ftell(f);
+		rewind(f);
+	}
 
+	// If ftell errored or the block above wasn't executed
 	if (capacity == -1)
 		capacity = 4096;
 
