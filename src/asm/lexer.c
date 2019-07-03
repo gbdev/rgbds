@@ -184,10 +184,14 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	// If ftell errored or the block above wasn't executed
 	if (capacity == -1)
 		capacity = 4096;
+	// Handle 0-byte files gracefully
+	else if (capacity == 0)
+		capacity = 1;
 
 	while (!feof(f)) {
 		if (buf == NULL || size >= capacity) {
-			capacity *= 2;
+			if (buf)
+				capacity *= 2;
 			/* Give extra room for 2 newlines and terminator */
 			buf = realloc(buf, capacity + SAFETYMARGIN + 3);
 
@@ -199,7 +203,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		char *bufpos = buf + SAFETYMARGIN + size;
 		size_t read_count = fread(bufpos, 1, capacity - size, f);
 
-		if (read_count == 0)
+		if (read_count == 0 && !feof(f))
 			fatalerror("%s: fread error", __func__);
 
 		size += read_count;
@@ -210,6 +214,12 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	pBuffer->pBuffer = buf + SAFETYMARGIN;
 	pBuffer->pBuffer[size] = 0;
 	pBuffer->nBufferSize = size;
+
+	/* This is added here to make the buffer scaling above easy to express,
+	 * while taking the newline space into account
+	 * for the `yy_buffer_append`s below.
+	 */
+	capacity += 3;
 
 	/* Convert all line endings to LF and spaces */
 
