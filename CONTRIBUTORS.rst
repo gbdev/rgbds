@@ -43,3 +43,5 @@ Other contributors
 - YamaArashi <shadow962@live.com>
 
 - yenatch <yenatch@gmail.com>
+
+- phs <phil@philhsmith.com>
