@@ -156,27 +156,70 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	if (pBuffer == NULL)
 		fatalerror("%s: Out of memory!", __func__);
 
-	uint32_t size;
+	size_t size = 0, capacity = -1;
+	char *buf = NULL;
 
-	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	/*
+	 * Check if we can get the file size without implementation-defined
+	 * behavior:
+	 *
+	 * From ftell(3p):
+	 * [On error], ftell() and ftello() shall return −1, and set errno to
+	 * indicate the error.
+	 *
+	 * The ftell() and ftello() functions shall fail if: [...]
+	 * ESPIPE The file descriptor underlying stream is associated with a
+	 * pipe, FIFO, or socket.
+	 *
+	 * From fseek(3p):
+	 * The behavior of fseek() on devices which are incapable of seeking
+	 * is implementation-defined.
+	 */
+	if (ftell(f) != -1) {
+		fseek(f, 0, SEEK_END);
+		capacity = ftell(f);
+		rewind(f);
+	}
 
-	/* Give extra room for 2 newlines and terminator */
-	uint32_t capacity = size + 3;
+	// If ftell errored or the block above wasn't executed
+	if (capacity == -1)
+		capacity = 4096;
+	// Handle 0-byte files gracefully
+	else if (capacity == 0)
+		capacity = 1;
 
-	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
+	while (!feof(f)) {
+		if (buf == NULL || size >= capacity) {
+			if (buf)
+				capacity *= 2;
+			/* Give extra room for 2 newlines and terminator */
+			buf = realloc(buf, capacity + SAFETYMARGIN + 3);
 
-	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!", __func__);
+			if (buf == NULL)
+				fatalerror("%s: Out of memory for buffer!",
+					   __func__);
+		}
 
-	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
-	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
+		char *bufpos = buf + SAFETYMARGIN + size;
+		size_t read_count = fread(bufpos, 1, capacity - size, f);
 
-	size = fread(pBuffer->pBuffer, sizeof(uint8_t), size, f);
+		if (read_count == 0 && !feof(f))
+			fatalerror("%s: fread error", __func__);
 
+		size += read_count;
+	}
+
+	pBuffer->pBufferRealStart = buf;
+	pBuffer->pBufferStart = buf + SAFETYMARGIN;
+	pBuffer->pBuffer = buf + SAFETYMARGIN;
 	pBuffer->pBuffer[size] = 0;
 	pBuffer->nBufferSize = size;
+
+	/* This is added here to make the buffer scaling above easy to express,
+	 * while taking the newline space into account
+	 * for the `yy_buffer_append`s below.
+	 */
+	capacity += 3;
 
 	/* Convert all line endings to LF and spaces */
 
