@@ -234,16 +234,10 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	/* Convert all line endings to LF and spaces */
 
 	char *mem = pBuffer->pBuffer;
-	uint32_t instring = 0;
 
 	while (*mem) {
-		if (*mem == '\"')
-			instring = 1 - instring;
-
 		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
 			mem += 2;
-		} else if (instring) {
-			mem += 1;
 		} else {
 			/* LF CR and CR LF */
 			if (((mem[0] == 10) && (mem[1] == 13))
@@ -264,7 +258,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	/* Remove comments */
 
 	mem = pBuffer->pBuffer;
-	instring = 0;
+	uint32_t instring = 0;
 
 	while (*mem) {
 		if (*mem == '\"')
