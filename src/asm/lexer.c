@@ -778,7 +778,9 @@ scanagain:
 			return T_STRING;
 		} else if (*pLexBuffer == '{') {
 			pLexBuffer++;
-			yylex_ReadBracketedSymbol(yylval.tzString, 0);
+			size_t len = yylex_ReadBracketedSymbol(yylval.tzString,
+							       0);
+			yylval.tzString[len] = 0;
 			return T_STRING;
 		}
 
