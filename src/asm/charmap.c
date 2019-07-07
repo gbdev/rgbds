@@ -42,11 +42,10 @@ int32_t readUTF8Char(char *dest, char *src)
 int32_t charmap_Add(char *input, uint8_t output)
 {
 	int32_t i;
-	size_t input_length;
-	char temp1i[CHARMAPLENGTH + 1], temp2i[CHARMAPLENGTH + 1];
-	char temp1o = 0, temp2o = 0;
+	uint8_t v;
 
-	struct Charmap *charmap;
+	struct Charmap 	*charmap;
+	struct Charnode	*curr_node, *temp_node;
 
 	if (pCurrentSection) {
 		if (pCurrentSection->charmap) {
@@ -55,91 +54,109 @@ int32_t charmap_Add(char *input, uint8_t output)
 			charmap = calloc(1, sizeof(struct Charmap));
 			if (charmap == NULL)
 				fatalerror("Not enough memory for charmap");
-
 			pCurrentSection->charmap = charmap;
 		}
 	} else {
 		charmap = &globalCharmap;
 	}
 
-	if (charmap->count > MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
+	if (charmap->charCount >= MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
 		return -1;
 
-	input_length = strlen(input);
-	if (input_length > 1) {
-		i = 0;
-		while (i < charmap->count + 1) {
-			if (input_length > strlen(charmap->input[i])) {
-				memcpy(temp1i, charmap->input[i],
-				       CHARMAPLENGTH + 1);
-				memcpy(charmap->input[i], input, input_length);
-				temp1o = charmap->output[i];
-				charmap->output[i] = output;
-				i++;
-				break;
-			}
-			i++;
+	curr_node = &charmap->nodes[0];
+
+	for (i = 0; (v = (uint8_t)input[i]); i++) {
+		if (curr_node->next[v]) {
+			curr_node = curr_node->next[v];
+		} else {
+			temp_node = &charmap->nodes[charmap->nodeCount + 1];
+
+			curr_node->next[v] = temp_node;
+			curr_node = temp_node;
+
+			++charmap->nodeCount;
 		}
-		while (i < charmap->count + 1) {
-			memcpy(temp2i, charmap->input[i], CHARMAPLENGTH + 1);
-			memcpy(charmap->input[i], temp1i, CHARMAPLENGTH + 1);
-			memcpy(temp1i, temp2i, CHARMAPLENGTH + 1);
-			temp2o = charmap->output[i];
-			charmap->output[i] = temp1o;
-			temp1o = temp2o;
-			i++;
-		}
-		memcpy(charmap->input[charmap->count + 1], temp1i,
-		       CHARMAPLENGTH + 1);
-		charmap->output[charmap->count + 1] = temp1o;
-	} else {
-		memcpy(charmap->input[charmap->count], input, input_length);
-		charmap->output[charmap->count] = output;
 	}
-	return ++charmap->count;
+
+	/* prevent duplicated keys by accepting only first key-value pair.  */
+	if (curr_node->isCode)
+		return charmap->charCount;
+
+	curr_node->code = output;
+	curr_node->isCode = 1;
+
+	return ++charmap->charCount;
 }
 
 int32_t charmap_Convert(char **input)
 {
-	struct Charmap *charmap;
+	struct Charmap 	*charmap;
+	struct Charnode	*charnode;
 
-	char outchar[CHARMAPLENGTH + 1];
-	char *buffer;
-	int32_t i, j, length;
+	char *output;
+	char outchar[8];
+
+	int32_t i, match, length;
+	uint8_t v, foundCode;
 
 	if (pCurrentSection && pCurrentSection->charmap)
 		charmap = pCurrentSection->charmap;
 	else
 		charmap = &globalCharmap;
 
-	buffer = malloc(strlen(*input));
-	if (buffer == NULL)
+	output = malloc(strlen(*input));
+	if (output == NULL)
 		fatalerror("Not enough memory for buffer");
 
 	length = 0;
+
 	while (**input) {
-		j = 0;
-		for (i = 0; i < charmap->count; i++) {
-			j = strlen(charmap->input[i]);
-			if (memcmp(*input, charmap->input[i], j) == 0) {
-				outchar[0] = charmap->output[i];
-				outchar[1] = 0;
+		charnode = &charmap->nodes[0];
+
+		/*
+		 * find the longest valid match which has been registered in charmap.
+		 * note that there could be either multiple matches or no match.
+		 * and it possibly takes the longest match between them,
+		 * which means that it ignores partial matches shorter than the longest one.
+		*/
+		for (i = match = 0; (v = (*input)[i]);) {
+			if (!charnode->next[v])
 				break;
+
+			charnode = charnode->next[v];
+			i++;
+
+			if (charnode->isCode) {
+				match = i;
+				foundCode = charnode->code;
 			}
-			j = 0;
 		}
 
-		if (!j)
-			j = readUTF8Char(outchar, *input);
+		if (match) {
+			output[length] = foundCode;
 
-		if (!outchar[0]) {
-			buffer[length++] = 0;
+			length += 1;
 		} else {
-			for (i = 0; outchar[i]; i++)
-				buffer[length++] = outchar[i];
+			/*
+			 * put a utf-8 character
+			 * if failed to find a match.
+			 */
+			match = readUTF8Char(outchar, *input);
+
+			if (match) {
+				memcpy(output + length, *input, match);
+			} else {
+				output[length] = 0;
+				match = 1;
+			}
+
+			length += match;
 		}
-		*input += j;
+
+		*input += match;
 	}
-	*input = buffer;
+
+	*input = output;
+
 	return length;
 }
