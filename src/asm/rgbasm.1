@@ -1,11 +1,11 @@
 .\"
 .\" This file is part of RGBDS.
 .\"
-.\" Copyright (c) 2010-2018, Anthony J. Bentley and RGBDS contributors.
+.\" Copyright (c) 2010-2019, Anthony J. Bentley and RGBDS contributors.
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd February 24, 2018
+.Dd July 8, 2019
 .Dt RGBASM 1
 .Os RGBDS Manual
 .Sh NAME
@@ -26,6 +26,12 @@
 The
 .Nm
 program creates an object file from an assembly source file.
+The input
+.Ar file
+can be a file path, or
+.Cm \-
+denoting
+.Cm stdin .
 Its arguments are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar chars
@@ -79,10 +85,18 @@ Be verbose.
 Disable warning output.
 .El
 .Sh EXAMPLES
-Assembling a basic source file is simple:
+You can assemble a source file in two ways.
+Straight forward way:
 .Pp
 .Bd -literal -offset indent
 $ rgbasm -o bar.o foo.asm
+.Ed
+.Pp
+Pipes way:
+.Pp
+.Bd -literal -offset indent
+$ cat foo.asm | rgbasm -o bar.o -
+$ rgbasm -o bar.o - < foo.asm
 .Ed
 .Pp
 The resulting object file is not yet a usable ROM image \(em it must first be

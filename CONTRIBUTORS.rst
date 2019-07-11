@@ -45,3 +45,5 @@ Other contributors
 - yenatch <yenatch@gmail.com>
 
 - phs <phil@philhsmith.com>
+
+- jidoc01 <jidoc01@naver.com>
