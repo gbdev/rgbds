@@ -18,13 +18,18 @@
 #include "link/mylink.h"
 #include "link/symbol.h"
 
+#define RPN_STACK_SIZE 256
+
 static struct sSection *pCurrentSection;
-static int32_t rpnstack[256];
+static int32_t rpnstack[RPN_STACK_SIZE];
 static int32_t rpnp;
 int32_t nPC;
 
 static void rpnpush(int32_t i)
 {
+	if (rpnp >= RPN_STACK_SIZE)
+		errx(1, "RPN stack overflow");
+
 	rpnstack[rpnp] = i;
 	rpnp++;
 }

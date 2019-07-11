@@ -10,6 +10,7 @@
  * Outputs an objectfile
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -392,9 +393,14 @@ void createpatch(uint32_t type, struct Expression *expr)
 {
 	struct Patch *pPatch;
 	uint16_t rpndata;
-	uint8_t rpnexpr[2048];
+	uint8_t *rpnexpr;
 	char tzSym[512];
 	uint32_t rpnptr = 0, symptr;
+
+	rpnexpr = malloc(expr->nRPNPatchSize);
+
+	if (rpnexpr == NULL)
+		fatalerror("No memory for patch RPN expression");
 
 	pPatch = allocpatch();
 	pPatch->nType = type;
@@ -477,11 +483,10 @@ void createpatch(uint32_t type, struct Expression *expr)
 		}
 	}
 
-	pPatch->pRPN = malloc(rpnptr);
-	if (pPatch->pRPN != NULL) {
-		memcpy(pPatch->pRPN, rpnexpr, rpnptr);
-		pPatch->nRPNSize = rpnptr;
-	}
+	assert(rpnptr == expr->nRPNPatchSize);
+
+	pPatch->pRPN = rpnexpr;
+	pPatch->nRPNSize = rpnptr;
 }
 
 /*
