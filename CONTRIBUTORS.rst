@@ -22,7 +22,7 @@ Main contributors
 Other contributors
 ------------------
 
-- Ben10do
+- Ben Hetherington <dev@ben-h.uk>
 
 - Björn Höhrmann <bjoern@hoehrmann.de>
 
