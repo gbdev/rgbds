@@ -124,19 +124,19 @@ static int32_t ascii2bin(char *s)
 
 uint32_t ParseFixedPoint(char *s, uint32_t size)
 {
-	uint32_t i = 0, dot = 0;
+	uint32_t i;
+	uint32_t dot = 0;
 
-	while (size && dot != 2) {
-		if (s[i] == '.')
-			dot += 1;
+	for (i = 0; i < size; i++) {
+		if (s[i] == '.') {
+			dot++;
 
-		if (dot < 2) {
-			size -= 1;
-			i += 1;
+			if (dot == 2)
+				break;
 		}
 	}
 
-	yyunputbytes(size);
+	yyskipbytes(i);
 
 	yylval.nConstValue = (int32_t)(atof(s) * 65536);
 
@@ -147,56 +147,100 @@ uint32_t ParseNumber(char *s, uint32_t size)
 {
 	char dest[256];
 
+	if (size > 255)
+		fatalerror("Number token too long");
+
 	strncpy(dest, s, size);
 	dest[size] = 0;
 	yylval.nConstValue = ascii2bin(dest);
 
+	yyskipbytes(size);
+
 	return 1;
+}
+
+/*
+ * If the symbol name ends before the end of the macro arg, return true
+ * and point "rest" to the rest of the macro arg.
+ * Otherwise, return false.
+ */
+bool AppendMacroArg(char whichArg, char *dest, size_t *destIndex, char **rest)
+{
+	char *marg;
+
+	if (whichArg == '@')
+		marg = sym_FindMacroArg(-1);
+	else if (whichArg >= '0' && whichArg <= '9')
+		marg = sym_FindMacroArg(whichArg - '0');
+	else
+		fatalerror("Malformed ID");
+
+	if (!marg)
+		fatalerror("Macro argument '\\%c' not defined", whichArg);
+
+	char ch;
+
+	while ((ch = *marg) != 0) {
+		if ((ch >= 'a' && ch <= 'z')
+		 || (ch >= 'A' && ch <= 'Z')
+		 || (ch >= '0' && ch <= '9')
+		 || ch == '_'
+		 || ch == '@'
+		 || ch == '#') {
+			if (*destIndex >= MAXSYMLEN)
+				fatalerror("Symbol too long");
+
+			dest[*destIndex] = ch;
+			(*destIndex)++;
+		} else {
+			*rest = marg;
+			return true;
+		}
+
+		marg++;
+	}
+
+	return false;
 }
 
 uint32_t ParseSymbol(char *src, uint32_t size)
 {
 	char dest[MAXSYMLEN + 1];
-	int32_t copied = 0, size_backup = size;
+	size_t srcIndex = 0;
+	size_t destIndex = 0;
+	char *rest = NULL;
 
-	while (size && copied < MAXSYMLEN) {
-		if (*src == '\\') {
-			char *marg;
+	while (srcIndex < size) {
+		char ch = src[srcIndex++];
 
-			src += 1;
-			size -= 1;
+		if (ch == '\\') {
+			/*
+			 * We don't check if srcIndex is still less than size,
+			 * but that can only fail to be true when the
+			 * following char is neither '@' nor a digit.
+			 * In that case, AppendMacroArg() will catch the error.
+			 */
+			ch = src[srcIndex++];
 
-			if (*src == '@') {
-				marg = sym_FindMacroArg(-1);
-			} else if (*src >= '0' && *src <= '9') {
-				marg = sym_FindMacroArg(*src - '0');
-			} else {
-				fatalerror("Malformed ID");
-				return 0;
-			}
-
-			src += 1;
-			size -= 1;
-
-			if (marg) {
-				while (*marg)
-					dest[copied++] = *marg++;
-			}
+			if (AppendMacroArg(ch, dest, &destIndex, &rest))
+				break;
 		} else {
-			dest[copied++] = *src++;
-			size -= 1;
+			if (destIndex >= MAXSYMLEN)
+				fatalerror("Symbol too long");
+			dest[destIndex++] = ch;
 		}
 	}
 
-	if (copied >= MAXSYMLEN)
-		fatalerror("Symbol too long");
-
-	dest[copied] = 0;
+	dest[destIndex] = 0;
 
 	if (!oDontExpandStrings && sym_isString(dest)) {
 		char *s;
 
-		yyskipbytes(size_backup);
+		yyskipbytes(srcIndex);
+
+		if (rest)
+			yyunputstr(rest);
+
 		yyunputstr(s = sym_GetStringValue(dest));
 
 		while (*s) {
@@ -205,6 +249,11 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 		}
 		return 0;
 	}
+
+	yyskipbytes(srcIndex);
+
+	if (rest)
+		yyunputstr(rest);
 
 	strcpy(yylval.tzSym, dest);
 	return 1;
