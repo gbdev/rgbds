@@ -66,7 +66,7 @@ void constexpr_UnaryOp(struct ConstExpression *expr,
 		result = value;
 		break;
 	case T_OP_SUB:
-		result = -value;
+		result = -(uint32_t)value;
 		break;
 	case T_OP_NOT:
 		result = ~value;
@@ -155,10 +155,10 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			result = value1 != value2;
 			break;
 		case T_OP_ADD:
-			result = value1 + value2;
+			result = (uint32_t)value1 + (uint32_t)value2;
 			break;
 		case T_OP_SUB:
-			result = value1 - value2;
+			result = (uint32_t)value1 - (uint32_t)value2;
 			break;
 		case T_OP_XOR:
 			result = value1 ^ value2;
@@ -181,7 +181,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 				fatalerror("Shift by too big value: %d",
 					   value2);
 
-			result = value1 << value2;
+			result = (uint32_t)value1 << value2;
 			break;
 		case T_OP_SHR:
 			if (value2 < 0)
@@ -194,17 +194,25 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			result = value1 >> value2;
 			break;
 		case T_OP_MUL:
-			result = value1 * value2;
+			result = (uint32_t)value1 * (uint32_t)value2;
 			break;
 		case T_OP_DIV:
 			if (value2 == 0)
 				fatalerror("Division by zero");
-			result = value1 / value2;
+			if (value1 == INT32_MIN && value2 == -1) {
+				warning("Division of min value by -1");
+				result = INT32_MIN;
+			} else {
+				result = value1 / value2;
+			}
 			break;
 		case T_OP_MOD:
 			if (value2 == 0)
 				fatalerror("Division by zero");
-			result = value1 % value2;
+			if (value1 == INT32_MIN && value2 == -1)
+				result = 0;
+			else
+				result = value1 % value2;
 			break;
 		case T_OP_FDIV:
 			result = math_Div(value1, value2);

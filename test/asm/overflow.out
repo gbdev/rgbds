@@ -1,0 +1,18 @@
+warning: overflow.asm(24):
+    Division of min value by -1
+warning: overflow.asm(25):
+    Division of min value by -1
+warning: overflow.asm(34):
+    Left shift of negative value: -1
+warning: overflow.asm(35):
+    Left shift of negative value: -1
+warning: overflow.asm(39):
+    Integer constant '4294967296' is too large
+warning: overflow.asm(42):
+    Graphics constant '`333333333' is too long
+$80000000
+$7FFFFFFF
+$80000000
+$80000000
+$0
+$FFFFFFFE
