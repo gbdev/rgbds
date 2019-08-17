@@ -1,0 +1,2 @@
+ERROR: pops-restore-no-section.asm(10):
+    Code generation before SECTION directive

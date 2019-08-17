@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -655,7 +655,7 @@ void out_SetCurrentSection(struct Section *pSect)
 		fatalerror("Cannot change the section within a UNION");
 
 	pCurrentSection = pSect;
-	nPC = pSect->nPC;
+	nPC = (pSect != NULL) ? pSect->nPC : 0;
 
 	pPCSymbol->nValue = nPC;
 	pPCSymbol->pSection = pCurrentSection;
