@@ -1,0 +1,2 @@
+ERROR: local-ref-without-parent.asm(3):
+    Local label reference '.test' in main scope
