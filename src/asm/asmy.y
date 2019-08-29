@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -75,13 +75,17 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	out_NewAbsSection(name, secttype, org, bank);
 }
 
-size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
+size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
+			const char *mode)
 {
 	size_t length;
 
 	if (sym_isString(sym)) {
 		char *src = sym_GetStringValue(sym);
 		size_t i;
+
+		if (mode)
+			yyerror("Print types are only allowed for numbers");
 
 		for (i = 0; src[i] != 0; i++) {
 			if (i >= maxLength)
@@ -94,8 +98,25 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 
 	} else {
 		uint32_t value = sym_GetConstantValue(sym);
-		int32_t fullLength = snprintf(dest, maxLength + 1, "$%X",
-					      value);
+		int32_t fullLength;
+
+		/* Special cheat for binary */
+		if (mode && !mode[0]) {
+			char binary[33]; /* 32 bits + 1 terminator */
+			char *write_ptr = binary + 32;
+			fullLength = 0;
+			binary[32] = 0;
+			do {
+				*(--write_ptr) = (value & 1) + '0';
+				value >>= 1;
+				fullLength++;
+			} while(value);
+			strncpy(dest, write_ptr, maxLength + 1);
+		} else {
+			fullLength = snprintf(dest, maxLength + 1,
+							  mode ? : "$%X",
+						      value);
+		}
 
 		if (fullLength < 0) {
 			fatalerror("snprintf encoding error");
