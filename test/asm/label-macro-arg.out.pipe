@@ -1,4 +1,4 @@
-ERROR: -(45) -> test_char(2):
+ERROR: -(45) -> -::test_char(31):
     Macro 'something' not defined
 $5
 $6

@@ -42,6 +42,8 @@ static uint32_t nMacroCount;
 static char *pCurrentREPTBlock;
 static uint32_t nCurrentREPTBlockSize;
 static uint32_t nCurrentREPTBlockCount;
+static int32_t nCurrentREPTBodyFirstLine;
+static int32_t nCurrentREPTBodyLastLine;
 
 uint32_t ulMacroReturnValue;
 
@@ -93,6 +95,8 @@ static void pushcontext(void)
 		(*ppFileStack)->pREPTBlock = pCurrentREPTBlock;
 		(*ppFileStack)->nREPTBlockSize = nCurrentREPTBlockSize;
 		(*ppFileStack)->nREPTBlockCount = nCurrentREPTBlockCount;
+		(*ppFileStack)->nREPTBodyFirstLine = nCurrentREPTBodyFirstLine;
+		(*ppFileStack)->nREPTBodyLastLine = nCurrentREPTBodyLastLine;
 		break;
 	default:
 		fatalerror("%s: Internal error.", __func__);
@@ -107,6 +111,11 @@ static int32_t popcontext(void)
 
 	if (nCurrentStatus == STAT_isREPTBlock) {
 		if (--nCurrentREPTBlockCount) {
+			char *pREPTIterationWritePtr;
+			unsigned long nREPTIterationNo;
+			int nNbCharsWritten;
+			int nNbCharsLeft;
+
 			yy_delete_buffer(CurrentFlexHandle);
 			CurrentFlexHandle =
 				yy_scan_bytes(pCurrentREPTBlock,
@@ -115,6 +124,29 @@ static int32_t popcontext(void)
 			sym_UseCurrentMacroArgs();
 			sym_SetMacroArgID(nMacroCount++);
 			sym_UseNewMacroArgs();
+
+			/* Increment REPT count in file path */
+			pREPTIterationWritePtr =
+				strrchr(tzCurrentFileName, '~') + 1;
+			nREPTIterationNo =
+				strtoul(pREPTIterationWritePtr, NULL, 10);
+			nNbCharsLeft = sizeof(tzCurrentFileName)
+				- (pREPTIterationWritePtr - tzCurrentFileName);
+			nNbCharsWritten = snprintf(pREPTIterationWritePtr,
+						   nNbCharsLeft, "%lu",
+						   nREPTIterationNo + 1);
+			if (nNbCharsWritten >= nNbCharsLeft) {
+				/*
+				 * The string is probably corrupted somehow,
+				 * revert the change to avoid a bad error
+				 * output.
+				 */
+				sprintf(pREPTIterationWritePtr, "%lu",
+					nREPTIterationNo);
+				fatalerror("Cannot write REPT count to file path");
+			}
+
+			nLineNo = nCurrentREPTBodyFirstLine;
 			return 0;
 		}
 	}
@@ -156,6 +188,9 @@ static int32_t popcontext(void)
 		pCurrentREPTBlock = pLastFile->pREPTBlock;
 		nCurrentREPTBlockSize = pLastFile->nREPTBlockSize;
 		nCurrentREPTBlockCount = pLastFile->nREPTBlockCount;
+		nCurrentREPTBodyFirstLine = pLastFile->nREPTBodyFirstLine;
+		/* + 1 to account for the `ENDR` line */
+		nLineNo = pLastFile->nREPTBodyLastLine + 1;
 		break;
 	default:
 		fatalerror("%s: Internal error.", __func__);
@@ -322,16 +357,23 @@ void fstk_RunInclude(char *tzFileName)
 uint32_t fstk_RunMacro(char *s)
 {
 	struct sSymbol *sym = sym_FindMacro(s);
+	int nPrintedChars;
 
 	if (sym == NULL || sym->pMacro == NULL)
 		return 0;
 
 	pushcontext();
 	sym_SetMacroArgID(nMacroCount++);
-	nLineNo = -1;
+	/* Minus 1 because there is a newline at the beginning of the buffer */
+	nLineNo = sym->nFileLine - 1;
 	sym_UseNewMacroArgs();
 	nCurrentStatus = STAT_isMacro;
-	strcpy(tzCurrentFileName, s);
+	nPrintedChars = snprintf(tzCurrentFileName, _MAX_PATH + 1,
+				 "%s::%s", sym->tzFileName, s);
+	if (nPrintedChars > _MAX_PATH) {
+		popcontext();
+		fatalerror("File name + macro name is too large to fit into buffer");
+	}
 
 	pCurrentMacro = sym;
 	CurrentFlexHandle = yy_scan_bytes(pCurrentMacro->pMacro,
@@ -387,9 +429,14 @@ void fstk_RunString(char *s)
 /*
  * Set up a repeat block for parsing
  */
-void fstk_RunRept(uint32_t count)
+void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
 {
 	if (count) {
+		static const char *tzReptStr = "::REPT~1";
+
+		/* For error printing to make sense, fake nLineNo */
+		nCurrentREPTBodyLastLine = nLineNo;
+		nLineNo = nReptLineNo;
 		sym_UseCurrentMacroArgs();
 		pushcontext();
 		sym_SetMacroArgID(nMacroCount++);
@@ -398,6 +445,14 @@ void fstk_RunRept(uint32_t count)
 		nCurrentStatus = STAT_isREPTBlock;
 		nCurrentREPTBlockSize = ulNewMacroSize;
 		pCurrentREPTBlock = tzNewMacro;
+		nCurrentREPTBodyFirstLine = nReptLineNo + 1;
+		nLineNo = nReptLineNo;
+
+		if (strlen(tzCurrentFileName) + strlen(tzReptStr) > _MAX_PATH)
+			fatalerror("Cannot append \"%s\" to file path",
+				   tzReptStr);
+		strcat(tzCurrentFileName, tzReptStr);
+
 		CurrentFlexHandle =
 			yy_scan_bytes(pCurrentREPTBlock, nCurrentREPTBlockSize);
 		yy_switch_to_buffer(CurrentFlexHandle);

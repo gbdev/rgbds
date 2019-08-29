@@ -1,18 +1,18 @@
-warning: strsub.asm(13) -> xstrsub(1):
+warning: strsub.asm(13) -> strsub.asm::xstrsub(4):
     STRSUB: Length too big: 32
-warning: strsub.asm(14) -> xstrsub(1):
+warning: strsub.asm(14) -> strsub.asm::xstrsub(4):
     STRSUB: Length too big: 300
-warning: strsub.asm(15) -> xstrsub(1):
+warning: strsub.asm(15) -> strsub.asm::xstrsub(4):
     STRSUB: Position starts at 1
-warning: strsub.asm(15) -> xstrsub(1):
+warning: strsub.asm(15) -> strsub.asm::xstrsub(4):
     STRSUB: Length too big: 300
-warning: strsub.asm(16) -> xstrsub(1):
+warning: strsub.asm(16) -> strsub.asm::xstrsub(4):
     STRSUB: Position 4 is past the end of the string
-warning: strsub.asm(17) -> xstrsub(1):
+warning: strsub.asm(17) -> strsub.asm::xstrsub(4):
     STRSUB: Position 4 is past the end of the string
-warning: strsub.asm(17) -> xstrsub(1):
+warning: strsub.asm(17) -> strsub.asm::xstrsub(4):
     STRSUB: Length too big: 1
-warning: strsub.asm(20) -> xstrsub(1):
+warning: strsub.asm(20) -> strsub.asm::xstrsub(4):
     STRSUB: Length too big: 10
 A
 B

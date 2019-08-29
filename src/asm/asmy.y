@@ -816,15 +816,17 @@ shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
 
 rept		: T_POP_REPT uconst
 		{
+			uint32_t nDefinitionLineNo = nLineNo;
 			copyrept();
-			fstk_RunRept($2);
+			fstk_RunRept($2, nDefinitionLineNo);
 		}
 ;
 
 macrodef	: T_LABEL ':' T_POP_MACRO
 		{
+			int32_t nDefinitionLineNo = nLineNo;
 			copymacro();
-			sym_AddMacro($1);
+			sym_AddMacro($1, nDefinitionLineNo);
 		}
 ;
 

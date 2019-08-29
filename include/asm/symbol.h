@@ -74,7 +74,7 @@ char *sym_GetStringValue(char *tzSym);
 void sym_UseCurrentMacroArgs(void);
 void sym_SetMacroArgID(uint32_t nMacroCount);
 uint32_t sym_isString(char *tzSym);
-void sym_AddMacro(char *tzSym);
+void sym_AddMacro(char *tzSym, int32_t nDefLineNo);
 void sym_Ref(char *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
 void sym_AddString(char *tzSym, char *tzValue);

@@ -1,10 +1,10 @@
 warning: -(75):
     Using 'charmap' within a section when the current charmap is 'main' is deprecated
-ERROR: -(100) -> new_(6):
+ERROR: -(100) -> -::new_(7):
     Charmap 'map1' already exists
-ERROR: -(102) -> set_(2):
+ERROR: -(102) -> -::set_(13):
     Charmap 'map5' doesn't exist
-ERROR: -(104) -> pop_(2):
+ERROR: -(104) -> -::pop_(23):
     No entries in the charmap stack
 main charmap
 $0

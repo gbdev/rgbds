@@ -1,4 +1,4 @@
-ERROR: label-macro-arg.asm(45) -> test_char(2):
+ERROR: label-macro-arg.asm(45) -> label-macro-arg.asm::test_char(31):
     Macro 'something' not defined
 $5
 $6
