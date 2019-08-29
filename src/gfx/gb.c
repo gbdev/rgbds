@@ -285,6 +285,30 @@ void output_attrmap_file(const struct Options *opts,
 		free(opts->attrmapfile);
 }
 
+/*
+ * based on the Gaussian-like curve used by SameBoy since commit
+ * 65dd02cc52f531dbbd3a7e6014e99d5b24e71a4c (Oct 2017)
+ * with ties resolved by comparing the difference of the squares.
+ */
+static int reverse_curve[] = {
+	0,  0,  1,  1,  2,  2,  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,
+	5,  5,  5,  5,  5,  5,  6,  6,  6,  6,  6,  6,  6,  6,  7,  7,
+	7,  7,  7,  7,  7,  7,  7,  8,  8,  8,  8,  8,  8,  8,  8,  8,
+	9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  10, 10, 10, 10, 10, 10,
+	10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+	12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13,
+	13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 14, 14, 14,
+	14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17,
+	17, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18,
+	18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+	19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21, 21, 21, 21,
+	21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22,
+	22, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24,
+	24, 24, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26, 26, 26, 26,
+	26, 27, 27, 27, 27, 27, 28, 28, 28, 28, 29, 29, 29, 30, 30, 31,
+};
+
 void output_palette_file(const struct Options *opts,
 			 const struct RawIndexedImage *raw_image)
 {
@@ -297,10 +321,25 @@ void output_palette_file(const struct Options *opts,
 		err(1, "Opening palette file '%s' failed", opts->palfile);
 
 	for (i = 0; i < raw_image->num_colors; i++) {
-		color =
-			raw_image->palette[i].blue  >> 3 << 10 |
-			raw_image->palette[i].green >> 3 <<  5 |
-			raw_image->palette[i].red   >> 3;
+		int r = raw_image->palette[i].red;
+		int g = raw_image->palette[i].green;
+		int b = raw_image->palette[i].blue;
+
+		if (opts->colorcurve) {
+			g = (g * 4 - b) / 3;
+			if (g < 0)
+				g = 0;
+
+			r = reverse_curve[r];
+			g = reverse_curve[g];
+			b = reverse_curve[b];
+		} else {
+			r >>= 3;
+			g >>= 3;
+			b >>= 3;
+		}
+
+		color = b << 10 | g << 5 | r;
 		cur_bytes[0] = color & 0xFF;
 		cur_bytes[1] = color >> 8;
 		fwrite(cur_bytes, 2, 1, f);
