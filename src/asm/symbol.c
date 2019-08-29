@@ -735,6 +735,9 @@ void sym_Ref(char *tzSym)
 		int isLocal = 0;
 
 		if (*tzSym == '.') {
+			if (!pScope)
+				fatalerror("Local label reference '%s' in main scope",
+					   tzSym);
 			fullSymbolName(fullname, sizeof(fullname), tzSym,
 				       pScope);
 			tzSym = fullname;
