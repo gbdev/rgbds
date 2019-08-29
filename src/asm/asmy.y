@@ -9,6 +9,7 @@
 %{
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -289,16 +290,21 @@ static void copymacro(void)
 	yyskipbytes(ulNewMacroSize + 4);
 }
 
+static bool endsIf(char c)
+{
+	return isWhiteSpace(c) || c == '(' || c == '{';
+}
+
 static uint32_t isIf(char *s)
 {
 	return (strncasecmp(s, "IF", 2) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[2]);
+		&& isWhiteSpace(s[-1]) && endsIf(s[2]);
 }
 
 static uint32_t isElif(char *s)
 {
 	return (strncasecmp(s, "ELIF", 4) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[4]);
+		&& isWhiteSpace(s[-1]) && endsIf(s[4]);
 }
 
 static uint32_t isElse(char *s)
