@@ -9,11 +9,21 @@ for i in *.asm; do
 	for variant in '' '.pipe'; do
 		if [ -z "$variant" ]; then
 			../../rgbasm -o $o $i > $after 2>&1
+			desired_output=${i%.asm}.out
 		else
+			# Stop! This is not a Useless Use Of Cat. Using cat instead of
+			# stdin redirection makes the input an unseekable pipe - a scenario
+			# that's harder to deal with and was broken when the feature was
+			# first implemented.
 			cat $i | ../../rgbasm -o $o - > $after 2>&1
+
+			# Escape regex metacharacters
+			desired_output=$before
+			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
+			sed "s/$subst/-/g" ${i%.asm}.out > $desired_output
 		fi
 
-		diff -u ${i%.asm}.out$variant $after
+		diff -u $desired_output $after
 		rc=$(($? || $rc))
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
