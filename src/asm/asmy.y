@@ -537,8 +537,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	<tzString>	T_STRING
 
 %left	<nConstValue>	T_OP_LOGICNOT
-%left	<nConstValue>	T_OP_LOGICOR T_OP_LOGICAND T_OP_LOGICEQU
-%left	<nConstValue>	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE
+%left	<nConstValue>	T_OP_LOGICOR T_OP_LOGICAND
+%left	<nConstValue>	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
 %left	<nConstValue>	T_OP_ADD T_OP_SUB
 %left	<nConstValue>	T_OP_OR T_OP_XOR T_OP_AND
 %left	<nConstValue>	T_OP_SHL T_OP_SHR
