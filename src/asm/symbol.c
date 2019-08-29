@@ -553,6 +553,11 @@ void sym_AddSet(char *tzSym, int32_t value)
 					tzSym,
 					nsym->tzFileName,
 					nsym->nFileLine);
+			else if (!(nsym->nType & SYMF_SET))
+				yyerror("'%s' already defined as constant at %s(%u)",
+					tzSym,
+					nsym->tzFileName,
+					nsym->nFileLine);
 		} else if (nsym->nType & SYMF_REF) {
 			yyerror("'%s' already referenced at %s(%u)",
 				tzSym,
@@ -735,6 +740,9 @@ void sym_Ref(char *tzSym)
 		int isLocal = 0;
 
 		if (*tzSym == '.') {
+			if (!pScope)
+				fatalerror("Local label reference '%s' in main scope",
+					   tzSym);
 			fullSymbolName(fullname, sizeof(fullname), tzSym,
 				       pScope);
 			tzSym = fullname;

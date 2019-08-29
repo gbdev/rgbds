@@ -39,6 +39,7 @@ extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 
-size_t symvaluetostring(char *dest, size_t maxLength, char *sym);
+size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
+			const char *mode);
 
 #endif /* RGBDS_ASM_ASM_H */

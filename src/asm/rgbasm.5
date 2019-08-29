@@ -1079,7 +1079,20 @@ within a string.
 This will examine the type of the symbol and insert its value accordingly.
 If symbol is a string symbol, the symbols value is simply copied.
 If it's a numeric symbol, the value is converted to hexadecimal notation and
-inserted as a string.
+inserted as a string with a dollar prepended.
+.Pp
+It's possible to change the way numeric symbols are converted by specifying
+a print type like so:
+.Sy {d:symbol}
+Valid print types are:
+.Bl -column -offset indent
+.It Sy Print type Ta Sy Format Ta Sy Example
+.It Li d Ta Decimal Ta 42
+.It Li x Ta Lowercase hexadecimal Ta 2a
+.It Li X Ta Uppercase hexadecimal Ta 2A
+.It Li b Ta Binary Ta 101010
+.Pp
+Note that print types should only be used with numeric values, not strings.
 .Pp
 HINT: The
 .Sy {symbol}

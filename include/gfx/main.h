@@ -23,6 +23,7 @@ struct Options {
 	bool horizontal;
 	bool mirror;
 	bool unique;
+	bool colorcurve;
 	int trim;
 	char *tilemapfile;
 	bool tilemapout;

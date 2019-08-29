@@ -214,7 +214,8 @@ bool AppendMacroArg(char whichArg, char *dest, size_t *destIndex, char **rest)
 		 || (ch >= '0' && ch <= '9')
 		 || ch == '_'
 		 || ch == '@'
-		 || ch == '#') {
+		 || ch == '#'
+		 || ch == '.') {
 			if (*destIndex >= MAXSYMLEN)
 				fatalerror("Symbol too long");
 

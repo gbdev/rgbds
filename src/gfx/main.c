@@ -45,13 +45,16 @@ int main(int argc, char *argv[])
 
 	depth = 2;
 
-	while ((ch = getopt(argc, argv, "Aa:Dd:Ffhmo:Tt:uPp:Vvx:")) != -1) {
+	while ((ch = getopt(argc, argv, "Aa:CDd:Ffhmo:Tt:uPp:Vvx:")) != -1) {
 		switch (ch) {
 		case 'A':
 			opts.attrmapout = true;
 			break;
 		case 'a':
 			opts.attrmapfile = optarg;
+			break;
+		case 'C':
+			opts.colorcurve = true;
 			break;
 		case 'D':
 			opts.debug = true;

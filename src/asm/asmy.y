@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -9,6 +9,7 @@
 %{
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,13 +76,17 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	out_NewAbsSection(name, secttype, org, bank);
 }
 
-size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
+size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
+			const char *mode)
 {
 	size_t length;
 
 	if (sym_isString(sym)) {
 		char *src = sym_GetStringValue(sym);
 		size_t i;
+
+		if (mode)
+			yyerror("Print types are only allowed for numbers");
 
 		for (i = 0; src[i] != 0; i++) {
 			if (i >= maxLength)
@@ -94,8 +99,25 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym)
 
 	} else {
 		uint32_t value = sym_GetConstantValue(sym);
-		int32_t fullLength = snprintf(dest, maxLength + 1, "$%X",
-					      value);
+		int32_t fullLength;
+
+		/* Special cheat for binary */
+		if (mode && !mode[0]) {
+			char binary[33]; /* 32 bits + 1 terminator */
+			char *write_ptr = binary + 32;
+			fullLength = 0;
+			binary[32] = 0;
+			do {
+				*(--write_ptr) = (value & 1) + '0';
+				value >>= 1;
+				fullLength++;
+			} while(value);
+			strncpy(dest, write_ptr, maxLength + 1);
+		} else {
+			fullLength = snprintf(dest, maxLength + 1,
+							  mode ? : "$%X",
+						      value);
+		}
 
 		if (fullLength < 0) {
 			fatalerror("snprintf encoding error");
@@ -268,16 +290,21 @@ static void copymacro(void)
 	yyskipbytes(ulNewMacroSize + 4);
 }
 
+static bool endsIf(char c)
+{
+	return isWhiteSpace(c) || c == '(' || c == '{';
+}
+
 static uint32_t isIf(char *s)
 {
 	return (strncasecmp(s, "IF", 2) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[2]);
+		&& isWhiteSpace(s[-1]) && endsIf(s[2]);
 }
 
 static uint32_t isElif(char *s)
 {
 	return (strncasecmp(s, "ELIF", 4) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[4]);
+		&& isWhiteSpace(s[-1]) && endsIf(s[4]);
 }
 
 static uint32_t isElse(char *s)
@@ -537,8 +564,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	<tzString>	T_STRING
 
 %left	<nConstValue>	T_OP_LOGICNOT
-%left	<nConstValue>	T_OP_LOGICOR T_OP_LOGICAND T_OP_LOGICEQU
-%left	<nConstValue>	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE
+%left	<nConstValue>	T_OP_LOGICOR T_OP_LOGICAND
+%left	<nConstValue>	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
 %left	<nConstValue>	T_OP_ADD T_OP_SUB
 %left	<nConstValue>	T_OP_OR T_OP_XOR T_OP_AND
 %left	<nConstValue>	T_OP_SHL T_OP_SHR

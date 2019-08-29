@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -599,6 +599,7 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 	char ch;
 	size_t i = 0;
 	size_t length, maxLength;
+	const char *mode = NULL;
 
 	for (ch = *pLexBuffer;
 	     ch != '}' && ch != '"' && ch != '\n';
@@ -612,16 +613,42 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 				i += length;
 			else
 				fatalerror("Illegal character escape '%c'", ch);
+		} else if (ch == ':' && !mode) { /* Only grab 1st colon */
+			/* Use a whitelist of modes, which does prevent the
+			 * use of some features such as precision,
+			 * but also avoids a security flaw
+			 */
+			const char *acceptedModes = "bxXd";
+			/* Binary isn't natively supported,
+			 * so it's handled differently
+			 */
+			static const char * const formatSpecifiers[] = {
+				"", "%x", "%X", "%d"
+			};
+			/* Prevent reading out of bounds! */
+			const char *designatedMode;
+
+			if (i != 1)
+				fatalerror("Print types are exactly 1 character long");
+
+			designatedMode = strchr(acceptedModes, sym[i - 1]);
+			if (!designatedMode)
+				fatalerror("Illegal print type '%c'",
+					   sym[i - 1]);
+			mode = formatSpecifiers[designatedMode - acceptedModes];
+			/* Begin writing the symbol again */
+			i = 0;
 		} else {
 			yylex_SymbolWriteChar(sym, i++, ch);
 		}
 	}
 
+	/* Properly terminate the string */
 	yylex_SymbolWriteChar(sym, i, 0);
 
 	/* It's assumed we're writing to a T_STRING */
 	maxLength = MAXSTRLEN - index;
-	length = symvaluetostring(&dest[index], maxLength, sym);
+	length = symvaluetostring(&dest[index], maxLength, sym, mode);
 
 	if (*pLexBuffer == '}')
 		pLexBuffer++;
