@@ -30,6 +30,8 @@ Other contributors
 
 - David Brotz <dbrotz007@gmail.com>
 
+- Eldred Habert <eldredhabert0@gmail.com>
+
 - The Musl C library <http://www.musl-libc.org>
 
 - obskyr <powpowd@gmail.com>
