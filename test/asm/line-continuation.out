@@ -1,2 +1,2 @@
-ERROR: line-continuation.asm(2) -> @(-1):
+ERROR: line-continuation.asm(2):
     Macro '@' not defined
