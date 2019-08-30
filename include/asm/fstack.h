@@ -35,6 +35,8 @@ struct sContext {
 	uint32_t nREPTBlockSize;
 };
 
+extern unsigned int nMaxFileStackDepth;
+
 void fstk_RunInclude(char *tzFileName);
 void fstk_RunMacroArg(int32_t s);
 void fstk_Init(char *s);
