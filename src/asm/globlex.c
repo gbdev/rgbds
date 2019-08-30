@@ -299,9 +299,9 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 		if (s != NULL)
 			yyunputstr(s);
 		else
-			yyerror("Macro argument not defined");
+			yyerror("Macro argument '\\%c' not defined", src[1]);
 	} else {
-		yyerror("Invalid macro argument");
+		yyerror("Invalid macro argument '\\%c'", src[1]);
 	}
 	return 0;
 }
