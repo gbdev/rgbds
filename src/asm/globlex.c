@@ -479,6 +479,8 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"incbin", T_POP_INCBIN},
 	{"charmap", T_POP_CHARMAP},
+	{"newcharmap", T_POP_NEWCHARMAP},
+	{"setcharmap", T_POP_SETCHARMAP},
 
 	{"fail", T_POP_FAIL},
 	{"warn", T_POP_WARN},

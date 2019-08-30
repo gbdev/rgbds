@@ -26,6 +26,7 @@
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/util.h"
 
 #include "extern/utf8decoder.h"
 
@@ -618,6 +619,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_UNION T_POP_NEXTU T_POP_ENDU
 %token	T_POP_INCBIN T_POP_REPT
 %token	T_POP_CHARMAP
+%token	T_POP_NEWCHARMAP
+%token	T_POP_SETCHARMAP
 %token	T_POP_SHIFT
 %token	T_POP_ENDR
 %token	T_POP_FAIL
@@ -771,6 +774,8 @@ simple_pseudoop : include
 		| endu
 		| incbin
 		| charmap
+		| newcharmap
+		| setcharmap
 		| rept
 		| shift
 		| fail
@@ -1033,6 +1038,20 @@ charmap		: T_POP_CHARMAP string comma string
 			}
 		}
 ;
+
+newcharmap	: T_POP_NEWCHARMAP T_ID
+		{
+			charmap_New($2, NULL);
+		}
+		| T_POP_NEWCHARMAP T_ID comma T_ID
+		{
+			charmap_New($2, $4);
+		}
+
+setcharmap	: T_POP_SETCHARMAP T_ID
+		{
+			charmap_Set($2);
+		}
 
 printt		: T_POP_PRINTT string
 		{

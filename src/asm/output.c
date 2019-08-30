@@ -321,7 +321,7 @@ static uint32_t addsymbol(struct sSymbol *pSym)
 	struct PatchSymbol *pPSym, **ppPSym;
 	uint32_t hash;
 
-	hash = calchash(pSym->tzName);
+	hash = sym_CalcHash(pSym->tzName);
 	ppPSym = &(tHashedPatchSymbols[hash]);
 
 	while ((*ppPSym) != NULL) {

@@ -21,6 +21,7 @@
 #include "asm/lexer.h"
 #include "asm/output.h"
 #include "asm/main.h"
+#include "asm/charmap.h"
 
 #include "extern/err.h"
 
@@ -437,6 +438,7 @@ int main(int argc, char *argv[])
 	sym_SetExportAll(CurrentOptions.exportall);
 	fstk_Init(tzMainfile);
 	opt_ParseDefines();
+	charmap_InitMain();
 
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);

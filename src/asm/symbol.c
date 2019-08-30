@@ -22,6 +22,7 @@
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/output.h"
+#include "asm/util.h"
 
 #include "extern/err.h"
 
@@ -90,16 +91,11 @@ static int32_t getvaluefield(struct sSymbol *sym)
 }
 
 /*
- * Calculate the hash value for a string
+ * Calculate the hash value for a symbol name
  */
-uint32_t calchash(char *s)
+uint32_t sym_CalcHash(const char *s)
 {
-	uint32_t hash = 5381;
-
-	while (*s != 0)
-		hash = (hash * 33) ^ (*s++);
-
-	return hash % HASHSIZE;
+	return calchash(s) % HASHSIZE;
 }
 
 /*
@@ -123,7 +119,7 @@ struct sSymbol *createsymbol(char *s)
 	struct sSymbol **ppsym;
 	uint32_t hash;
 
-	hash = calchash(s);
+	hash = sym_CalcHash(s);
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL)
@@ -187,7 +183,7 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 				   s);
 	}
 
-	hash = calchash(s);
+	hash = sym_CalcHash(s);
 	ppsym = &(tHashedSymbols[hash]);
 
 	while ((*ppsym) != NULL) {

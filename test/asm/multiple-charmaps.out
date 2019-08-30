@@ -1,0 +1,34 @@
+warning: multiple-charmaps.asm(64):
+    Using 'charmap' within a section when the current charmap is 'main' is deprecated
+ERROR: multiple-charmaps.asm(85):
+    Charmap 'map1' already exists
+ERROR: multiple-charmaps.asm(88):
+    Charmap 'map5' doesn't exist
+error: Assembly aborted (2 errors)!
+main charmap
+$0
+newcharmap map1
+$6162
+newcharmap map2, main
+$0
+setcharmap map1
+$6162
+newcharmap map3
+$1
+newcharmap map4, map3
+$1
+$2
+setcharmap map3
+$1
+$6364
+setcharmap main
+$0
+override main charmap
+$6162
+$3
+setcharmap map3
+$1
+$6364
+$6566
+newcharmap map1
+setcharmap map5

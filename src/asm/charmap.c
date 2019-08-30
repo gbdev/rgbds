@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,28 +16,112 @@
 #include "asm/charmap.h"
 #include "asm/main.h"
 #include "asm/output.h"
+#include "asm/util.h"
 
-#include "extern/utf8decoder.h"
+#define CHARMAP_HASH_SIZE (1 << 9)
 
-struct Charmap globalCharmap = {0};
+static struct Charmap *tHashedCharmaps[CHARMAP_HASH_SIZE];
 
-int32_t readUTF8Char(char *dest, char *src)
+static struct Charmap *mainCharmap;
+static struct Charmap *currentCharmap;
+
+static void warnSectionCharmap(void)
 {
-	uint32_t state;
-	uint32_t codep;
-	int32_t i;
+	static bool warned = false;
 
-	for (i = 0, state = 0;; i++) {
-		if (decode(&state, &codep, (uint8_t)src[i]) == 1)
-			fatalerror("invalid UTF-8 character");
+	if (warned)
+		return;
 
-		dest[i] = src[i];
+	warning("Using 'charmap' within a section when the current charmap is 'main' is deprecated");
+	warned = true;
+}
 
-		if (state == 0) {
-			dest[++i] = '\0';
-			return i;
+static uint32_t charmap_CalcHash(const char *s)
+{
+	return calchash(s) % CHARMAP_HASH_SIZE;
+}
+
+static struct Charmap **charmap_Get(const char *name)
+{
+	struct Charmap **ppCharmap = &tHashedCharmaps[charmap_CalcHash(name)];
+
+	while (*ppCharmap != NULL && strcmp((*ppCharmap)->name, name))
+		ppCharmap = &(*ppCharmap)->next;
+
+	return ppCharmap;
+}
+
+static void CopyNode(struct Charmap *dest,
+		     const struct Charmap *src,
+		     int nodeIdx)
+{
+	dest->nodes[nodeIdx].code = src->nodes[nodeIdx].code;
+	dest->nodes[nodeIdx].isCode = src->nodes[nodeIdx].isCode;
+	for (int i = 0; i < 256; i++)
+		if (src->nodes[nodeIdx].next[i])
+			dest->nodes[nodeIdx].next[i] = dest->nodes +
+				(src->nodes[nodeIdx].next[i] - src->nodes);
+}
+
+struct Charmap *charmap_New(const char *name, const char *baseName)
+{
+	struct Charmap *pBase = NULL;
+
+	if (baseName != NULL) {
+		struct Charmap **ppBase = charmap_Get(baseName);
+
+		if (*ppBase == NULL) {
+			yyerror("Base charmap '%s' doesn't exist", baseName);
+			return NULL;
 		}
+
+		pBase = *ppBase;
 	}
+
+	struct Charmap **ppCharmap = charmap_Get(name);
+
+	if (*ppCharmap != NULL) {
+		yyerror("Charmap '%s' already exists", name);
+		return NULL;
+	}
+
+	*ppCharmap = calloc(1, sizeof(struct Charmap));
+
+	if (*ppCharmap == NULL)
+		fatalerror("Not enough memory for charmap");
+
+	struct Charmap *pCharmap = *ppCharmap;
+
+	snprintf(pCharmap->name, sizeof(pCharmap->name), "%s", name);
+
+	if (pBase != NULL) {
+		pCharmap->charCount = pBase->charCount;
+		pCharmap->nodeCount = pBase->nodeCount;
+
+		for (int i = 0; i < MAXCHARNODES; i++)
+			CopyNode(pCharmap, pBase, i);
+	}
+
+	currentCharmap = pCharmap;
+
+	return pCharmap;
+}
+
+void charmap_Set(const char *name)
+{
+	struct Charmap **ppCharmap = charmap_Get(name);
+
+	if (*ppCharmap == NULL) {
+		yyerror("Charmap '%s' doesn't exist", name);
+		return;
+	}
+
+	currentCharmap = *ppCharmap;
+}
+
+void charmap_InitMain(void)
+{
+	mainCharmap = charmap_New("main", NULL);
 }
 
 int32_t charmap_Add(char *input, uint8_t output)
@@ -47,7 +132,15 @@ int32_t charmap_Add(char *input, uint8_t output)
 	struct Charmap 	*charmap;
 	struct Charnode	*curr_node, *temp_node;
 
-	if (pCurrentSection) {
+	/*
+	 * If the user tries to define a character mapping inside a section
+	 * and the current global charmap is the "main" one, then a local
+	 * section charmap will be created or modified instead of the global
+	 * one. In other words, the local section charmap can override the
+	 * main global one, but not the others.
+	 */
+	if (pCurrentSection && currentCharmap == mainCharmap) {
+		warnSectionCharmap();
 		if (pCurrentSection->charmap) {
 			charmap = pCurrentSection->charmap;
 		} else {
@@ -57,7 +150,7 @@ int32_t charmap_Add(char *input, uint8_t output)
 			pCurrentSection->charmap = charmap;
 		}
 	} else {
-		charmap = &globalCharmap;
+		charmap = currentCharmap;
 	}
 
 	if (charmap->charCount >= MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
@@ -99,10 +192,18 @@ int32_t charmap_Convert(char **input)
 	int32_t i, match, length;
 	uint8_t v, foundCode;
 
-	if (pCurrentSection && pCurrentSection->charmap)
+	/*
+	 * If there is a local section charmap and the current global charmap
+	 * is the "main" one, the local one is used. Otherwise, the global
+	 * one is used. In other words, the local section charmap can override
+	 * the main global one, but not the others.
+	 */
+	if (pCurrentSection &&
+	    pCurrentSection->charmap &&
+	    currentCharmap == mainCharmap)
 		charmap = pCurrentSection->charmap;
 	else
-		charmap = &globalCharmap;
+		charmap = currentCharmap;
 
 	output = malloc(strlen(*input));
 	if (output == NULL)

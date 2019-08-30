@@ -57,6 +57,7 @@ rgbasm_obj := \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/symbol.o \
+	src/asm/util.o \
 	src/extern/err.o \
 	src/extern/utf8decoder.o \
 	src/version.o
