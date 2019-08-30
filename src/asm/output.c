@@ -265,15 +265,6 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 	int32_t sectid;
 
 	if (!(pSym->nType & SYMF_DEFINED)) {
-		if (pSym->nType & SYMF_LOCAL) {
-			char *name = pSym->tzName;
-			char *localPtr = strchr(name, '.');
-
-			if (localPtr)
-				name = localPtr;
-			errx(1, "%s(%u) : '%s' not defined",
-			     pSym->tzFileName, pSym->nFileLine, name);
-		}
 		type = SYM_IMPORT;
 	} else if (pSym->nType & SYMF_EXPORT) {
 		type = SYM_EXPORT;
@@ -537,24 +528,47 @@ static void checksectionoverflow(uint32_t delta_size)
 }
 
 /*
+ * Check for errors that could happen while writing an object file
+ * This is important as out_WriteObject is skipped entirely when `-o` is omitted
+ * Therefore, errors such as memory allocations still should be handled in
+ * out_WriteObject and not here
+ */
+void out_CheckErrors(void)
+{
+	/* Local symbols cannot be imported from elsewhere */
+	struct PatchSymbol *pSym = pPatchSymbols;
+
+	while (pSym) {
+		struct sSymbol *pSymbol = pSym->pSymbol;
+
+		if (!(pSymbol->nType & SYMF_DEFINED)
+		   && pSymbol->nType & SYMF_LOCAL) {
+			char *name = pSymbol->tzName;
+			char *localPtr = strchr(name, '.');
+
+			if (localPtr)
+				name = localPtr;
+			errx(1, "%s(%u) : '%s' not defined",
+			     pSymbol->tzFileName, pSymbol->nFileLine, name);
+		}
+		pSym = pSym->pNext;
+	}
+}
+
+/*
  * Write an objectfile
  */
 void out_WriteObject(void)
 {
 	FILE *f;
+	struct PatchSymbol *pSym;
+	struct Section *pSect;
 
 	addexports();
-
-	/* If no path specified, don't write file */
-	if (tzObjectname == NULL)
-		return;
 
 	f = fopen(tzObjectname, "wb");
 	if (f == NULL)
 		fatalerror("Couldn't write file '%s'\n", tzObjectname);
-
-	struct PatchSymbol *pSym;
-	struct Section *pSect;
 
 	fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
 	       strlen(RGBDS_OBJECT_VERSION_STRING), f);
