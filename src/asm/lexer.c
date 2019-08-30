@@ -88,17 +88,18 @@ void yyunput(char c)
 	*(--pLexBuffer) = c;
 }
 
-void yyunputstr(char *s)
+void yyunputstr(const char *s)
 {
-	int32_t i, len;
+	int32_t len;
 
 	len = strlen(s);
 
-	if (pLexBuffer - len < pLexBufferRealStart)
+	pLexBuffer -= len;
+
+	if (pLexBuffer < pLexBufferRealStart)
 		fatalerror("Buffer safety margin exceeded");
 
-	for (i = len - 1; i >= 0; i--)
-		*(--pLexBuffer) = s[i];
+	memcpy(pLexBuffer, s, len);
 }
 
 void yy_switch_to_buffer(YY_BUFFER_STATE buf)

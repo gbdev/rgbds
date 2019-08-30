@@ -188,11 +188,11 @@ uint32_t ParseNumber(char *s, uint32_t size)
 }
 
 /*
- * If the symbol name ends before the end of the macro arg, return true
- * and point "rest" to the rest of the macro arg.
- * Otherwise, return false.
+ * If the symbol name ends before the end of the macro arg,
+ * return a pointer to the rest of the macro arg.
+ * Otherwise, return NULL.
  */
-bool AppendMacroArg(char whichArg, char *dest, size_t *destIndex, char **rest)
+char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 {
 	char *marg;
 
@@ -222,14 +222,13 @@ bool AppendMacroArg(char whichArg, char *dest, size_t *destIndex, char **rest)
 			dest[*destIndex] = ch;
 			(*destIndex)++;
 		} else {
-			*rest = marg;
-			return true;
+			return marg;
 		}
 
 		marg++;
 	}
 
-	return false;
+	return NULL;
 }
 
 uint32_t ParseSymbol(char *src, uint32_t size)
@@ -251,7 +250,9 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 			 */
 			ch = src[srcIndex++];
 
-			if (AppendMacroArg(ch, dest, &destIndex, &rest))
+			rest = AppendMacroArg(ch, dest, &destIndex);
+			/* If the symbol's end was in the middle of the token */
+			if (rest)
 				break;
 		} else {
 			if (destIndex >= MAXSYMLEN)
@@ -262,27 +263,32 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 
 	dest[destIndex] = 0;
 
+	/* Tell the lexer we read all bytes that we did */
+	yyskipbytes(srcIndex);
+
+	/*
+	 * If an escape's expansion left some chars after the symbol's end,
+	 * such as the `::` in a `Backup\1` expanded to `BackupCamX::`,
+	 * put those into the buffer.
+	 * Note that this NEEDS to be done after the `yyskipbytes` above.
+	 */
+	if (rest)
+		yyunputstr(rest);
+
+	/* If the symbol is an EQUS, expand it */
 	if (!oDontExpandStrings && sym_isString(dest)) {
 		char *s;
 
-		yyskipbytes(srcIndex);
-
-		if (rest)
-			yyunputstr(rest);
-
+		/* Feed the symbol's contents into the buffer */
 		yyunputstr(s = sym_GetStringValue(dest));
 
+		/* Lines inserted this way shall not increase nLineNo */
 		while (*s) {
 			if (*s++ == '\n')
-				nLineNo -= 1;
+				nLineNo--;
 		}
 		return 0;
 	}
-
-	yyskipbytes(srcIndex);
-
-	if (rest)
-		yyunputstr(rest);
 
 	strcpy(yylval.tzSym, dest);
 	return 1;

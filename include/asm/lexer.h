@@ -65,7 +65,7 @@ void lex_SetBuffer(char *buffer, uint32_t len);
 int yywrap(void);
 int yylex(void);
 void yyunput(char c);
-void yyunputstr(char *s);
+void yyunputstr(const char *s);
 void yyskipbytes(uint32_t count);
 void yyunputbytes(uint32_t count);
 
