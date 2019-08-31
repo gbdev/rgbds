@@ -18,7 +18,7 @@ for i in *.asm; do
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
 			../../rgblink -o $gb $o > $after 2>&1
-			head -c $(wc -c < $bin) $gb > $after 2>&1
+			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $after 2>/dev/null
 			hexdump -C $after > $before && mv $before $after
 			hexdump -C $bin > $before
 			diff -u $before $after

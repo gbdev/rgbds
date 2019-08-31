@@ -7,7 +7,7 @@ RGBLINK=../../rgblink
 
 $RGBASM -o $otemp bank-numbers.asm
 $RGBLINK -o $gbtemp $otemp > bank-numbers.out 2>&1
-head -c 20 $gbtemp > bank-numbers.out.bin 2>&1
+dd if=$gbtemp count=1 bs=20 > bank-numbers.out.bin 2>/dev/null
 
 $RGBASM -o $otemp section-attributes.asm
 $RGBLINK -l section-attributes.link \
