@@ -40,6 +40,13 @@ enum eLexerState {
 	LEX_STATE_MACROARGS
 };
 
+struct sStringExpansionPos {
+	char *tzName;
+	char *pBuffer;
+	char *pBufferPos;
+	struct sStringExpansionPos *pParent;
+};
+
 #define INITIAL		0
 #define macroarg	3
 
@@ -62,6 +69,7 @@ void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end);
 void lex_Init(void);
 void lex_AddStrings(const struct sLexInitString *lex);
 void lex_SetBuffer(char *buffer, uint32_t len);
+void lex_BeginStringExpansion(const char *tzName);
 int yywrap(void);
 int yylex(void);
 void yyunput(char c);
@@ -70,6 +78,7 @@ void yyskipbytes(uint32_t count);
 void yyunputbytes(uint32_t count);
 
 extern YY_BUFFER_STATE pCurrentBuffer;
+extern struct sStringExpansionPos *pCurrentStringExpansion;
 
 void upperstring(char *s);
 void lowerstring(char *s);

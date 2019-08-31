@@ -51,6 +51,9 @@ uint32_t tFloatingChars[256];
 uint32_t nFloating;
 enum eLexerState lexerstate = LEX_STATE_NORMAL;
 
+struct sStringExpansionPos *pCurrentStringExpansion;
+static unsigned int nNbStringExpansions;
+
 /* UTF-8 byte order mark */
 static const unsigned char bom[BOM_SIZE] = { 0xEF, 0xBB, 0xBF };
 
@@ -100,6 +103,31 @@ void yyunputstr(const char *s)
 		fatalerror("Buffer safety margin exceeded");
 
 	memcpy(pLexBuffer, s, len);
+}
+
+/*
+ * Marks that a new string expansion with name `tzName` ends here
+ * Enforces recursion depth
+ */
+void lex_BeginStringExpansion(const char *tzName)
+{
+	if (++nNbStringExpansions > nMaxRecursionDepth)
+		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
+
+	struct sStringExpansionPos *pNewStringExpansion =
+		malloc(sizeof(*pNewStringExpansion));
+	char *tzNewExpansionName = strdup(tzName);
+
+	if (!pNewStringExpansion || !tzNewExpansionName)
+		fatalerror("Could not allocate memory to expand '%s'",
+			   tzName);
+
+	pNewStringExpansion->tzName = tzNewExpansionName;
+	pNewStringExpansion->pBuffer = pLexBufferRealStart;
+	pNewStringExpansion->pBufferPos = pLexBuffer;
+	pNewStringExpansion->pParent = pCurrentStringExpansion;
+
+	pCurrentStringExpansion = pNewStringExpansion;
 }
 
 void yy_switch_to_buffer(YY_BUFFER_STATE buf)
@@ -424,6 +452,9 @@ void lex_Init(void)
 
 	nLexMaxLength = 0;
 	nFloating = 0;
+
+	pCurrentStringExpansion = NULL;
+	nNbStringExpansions = 0;
 }
 
 void lex_AddStrings(const struct sLexInitString *lex)
@@ -968,12 +999,30 @@ static uint32_t yylex_MACROARGS(void)
 
 int yylex(void)
 {
+	int returnedChar;
 	switch (lexerstate) {
 	case LEX_STATE_NORMAL:
-		return yylex_NORMAL();
+		returnedChar = yylex_NORMAL();
+		break;
 	case LEX_STATE_MACROARGS:
-		return yylex_MACROARGS();
+		returnedChar = yylex_MACROARGS();
+		break;
 	default:
 		fatalerror("%s: Internal error.", __func__);
 	}
+
+	/* Check if string expansions were fully read */
+	while (pCurrentStringExpansion
+	    && pCurrentStringExpansion->pBuffer == pLexBufferRealStart
+	    && pCurrentStringExpansion->pBufferPos <= pLexBuffer) {
+		struct sStringExpansionPos *pParent =
+			pCurrentStringExpansion->pParent;
+		free(pCurrentStringExpansion->tzName);
+		free(pCurrentStringExpansion);
+
+		pCurrentStringExpansion = pParent;
+		nNbStringExpansions--;
+	}
+
+	return returnedChar;
 }

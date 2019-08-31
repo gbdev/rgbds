@@ -29,7 +29,7 @@
 
 static struct sContext *pFileStack;
 static unsigned int nFileStackDepth;
-unsigned int nMaxFileStackDepth;
+unsigned int nMaxRecursionDepth;
 static struct sSymbol *pCurrentMacro;
 static YY_BUFFER_STATE CurrentFlexHandle;
 static FILE *pCurrentFile;
@@ -62,8 +62,8 @@ static void pushcontext(void)
 {
 	struct sContext **ppFileStack;
 
-	if (++nFileStackDepth > nMaxFileStackDepth)
-		fatalerror("Recursion limit (%d) exceeded", nMaxFileStackDepth);
+	if (++nFileStackDepth > nMaxRecursionDepth)
+		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)

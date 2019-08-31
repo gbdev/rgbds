@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
 
 	/* yydebug=1; */
 
-	nMaxFileStackDepth = 64;
+	nMaxRecursionDepth = 64;
 
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
 
 			break;
 		case 'r':
-			nMaxFileStackDepth = strtoul(optarg, &ep, 0);
+			nMaxRecursionDepth = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");

@@ -279,6 +279,8 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 	if (!oDontExpandStrings && sym_isString(dest)) {
 		char *s;
 
+		lex_BeginStringExpansion(dest);
+
 		/* Feed the symbol's contents into the buffer */
 		yyunputstr(s = sym_GetStringValue(dest));
 
