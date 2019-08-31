@@ -440,7 +440,7 @@ void sym_SetMacroArgID(uint32_t nMacroCount)
 {
 	char s[256];
 
-	snprintf(s, sizeof(s), "_%u", nMacroCount);
+	snprintf(s, sizeof(s) - 1, "_%u", nMacroCount);
 	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
