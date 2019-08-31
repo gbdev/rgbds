@@ -68,7 +68,7 @@ int32_t Callback_NARG(unused_ struct sSymbol *sym)
 	uint32_t i = 0;
 
 	while (currentmacroargs[i] && i < MAXMACROARGS)
-		i += 1;
+		i++;
 
 	return i;
 }
@@ -364,7 +364,7 @@ void sym_ShiftCurrentMacroArgs(void)
 	int32_t i;
 
 	free(currentmacroargs[0]);
-	for (i = 0; i < MAXMACROARGS - 1; i += 1)
+	for (i = 0; i < MAXMACROARGS - 1; i++)
 		currentmacroargs[i] = currentmacroargs[i + 1];
 
 	currentmacroargs[MAXMACROARGS - 1] = NULL;
@@ -387,7 +387,8 @@ void sym_UseNewMacroArgs(void)
 {
 	int32_t i;
 
-	for (i = 0; i <= MAXMACROARGS; i += 1) {
+	for (i = 0; i <= MAXMACROARGS; i++) {
+		free(currentmacroargs[i]);
 		currentmacroargs[i] = newmacroargs[i];
 		newmacroargs[i] = NULL;
 	}
@@ -397,25 +398,19 @@ void sym_SaveCurrentMacroArgs(char *save[])
 {
 	int32_t i;
 
-	for (i = 0; i <= MAXMACROARGS; i += 1)
+	for (i = 0; i <= MAXMACROARGS; i++) {
 		save[i] = currentmacroargs[i];
+		currentmacroargs[i] = NULL;
+	}
 }
 
 void sym_RestoreCurrentMacroArgs(char *save[])
 {
 	int32_t i;
 
-	for (i = 0; i <= MAXMACROARGS; i += 1)
-		currentmacroargs[i] = save[i];
-}
-
-void sym_FreeCurrentMacroArgs(void)
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i += 1) {
+	for (i = 0; i <= MAXMACROARGS; i++) {
 		free(currentmacroargs[i]);
-		currentmacroargs[i] = NULL;
+		currentmacroargs[i] = save[i];
 	}
 }
 
@@ -424,7 +419,7 @@ void sym_AddNewMacroArg(char *s)
 	int32_t i = 0;
 
 	while (i < MAXMACROARGS && newmacroargs[i] != NULL)
-		i += 1;
+		i++;
 
 	if (i < MAXMACROARGS) {
 		if (s)
@@ -448,7 +443,7 @@ void sym_UseCurrentMacroArgs(void)
 {
 	int32_t i;
 
-	for (i = 1; i <= MAXMACROARGS; i += 1)
+	for (i = 1; i <= MAXMACROARGS; i++)
 		sym_AddNewMacroArg(sym_FindMacroArg(i));
 }
 
@@ -775,12 +770,12 @@ void sym_Init(void)
 	int32_t i;
 	time_t now;
 
-	for (i = 0; i < MAXMACROARGS; i += 1) {
+	for (i = 0; i < MAXMACROARGS; i++) {
 		currentmacroargs[i] = NULL;
 		newmacroargs[i] = NULL;
 	}
 
-	for (i = 0; i < HASHSIZE; i += 1)
+	for (i = 0; i < HASHSIZE; i++)
 		tHashedSymbols[i] = NULL;
 
 	sym_AddReloc("@");

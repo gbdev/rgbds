@@ -63,7 +63,6 @@ void sym_AddNewMacroArg(char *s);
 void sym_SaveCurrentMacroArgs(char *save[]);
 void sym_RestoreCurrentMacroArgs(char *save[]);
 void sym_UseNewMacroArgs(void);
-void sym_FreeCurrentMacroArgs(void);
 void sym_AddEqu(char *tzSym, int32_t value);
 void sym_AddSet(char *tzSym, int32_t value);
 void sym_Init(void);
