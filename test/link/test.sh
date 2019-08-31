@@ -12,7 +12,7 @@ $RGBASM -o $otemp bank-numbers.asm
 $RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
 diff bank-numbers.out $outtemp
 rc=$(($? || $rc))
-head -c 20 $gbtemp > $otemp 2>&1
+dd if=$gbtemp count=1 bs=20 > $otemp 2>/dev/null
 diff bank-numbers.out.bin $otemp
 rc=$(($? || $rc))
 
