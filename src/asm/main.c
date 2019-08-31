@@ -288,7 +288,8 @@ static void print_usage(void)
 {
 	printf(
 "usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
-"              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
+"              [-M dependfile] [-o outfile] [-p pad_value]\n"
+"              [-r recursion_depth] file.asm\n");
 	exit(1);
 }
 
