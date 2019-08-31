@@ -19,6 +19,8 @@ popd
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
 
+export PATH="$PWD/..:$PATH"
+
 if [ ! -d pokecrystal ]; then
 	git clone https://github.com/pret/pokecrystal.git --shallow-since=2018-06-04 --single-branch
 fi
