@@ -621,6 +621,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_CHARMAP
 %token	T_POP_NEWCHARMAP
 %token	T_POP_SETCHARMAP
+%token	T_POP_PUSHC
+%token	T_POP_POPC
 %token	T_POP_SHIFT
 %token	T_POP_ENDR
 %token	T_POP_FAIL
@@ -776,6 +778,8 @@ simple_pseudoop : include
 		| charmap
 		| newcharmap
 		| setcharmap
+		| pushc
+		| popc
 		| rept
 		| shift
 		| fail
@@ -1047,11 +1051,19 @@ newcharmap	: T_POP_NEWCHARMAP T_ID
 		{
 			charmap_New($2, $4);
 		}
+;
 
 setcharmap	: T_POP_SETCHARMAP T_ID
 		{
 			charmap_Set($2);
 		}
+;
+
+pushc		: T_POP_PUSHC	{ charmap_Push(); }
+;
+
+popc		: T_POP_POPC	{ charmap_Pop(); }
+;
 
 printt		: T_POP_PRINTT string
 		{

@@ -1,88 +1,104 @@
+new_: MACRO
+	IF _NARG > 1
+	printt "newcharmap \1, \2\n"
+	newcharmap \1, \2
+	ELSE
+	printt "newcharmap \1\n"
+	newcharmap \1
+	ENDC
+ENDM
+
+set_: MACRO
+	printt "setcharmap \1\n"
+	setcharmap \1
+ENDM
+
+push_: MACRO
+	printt "pushc\n"
+	pushc
+ENDM
+
+pop_: MACRO
+	printt "popc\n"
+	popc
+ENDM
+
+print: MACRO
+x = \1
+printt "{x}\n"
+ENDM
+
 printt "main charmap\n"
 
 charmap "ab", $0
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
-printt "newcharmap map1\n"
-newcharmap map1
+	new_ map1
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
-printt "newcharmap map2, main\n"
-newcharmap map2, main
+	new_ map2, main
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
-printt "setcharmap map1\n"
-setcharmap map1
+	set_ map1
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
-printt "newcharmap map3\n"
-newcharmap map3
+	new_ map3
 
 charmap "ab", $1
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
-printt "newcharmap map4, map3\n"
-newcharmap map4, map3
+	new_ map4, map3
 
 charmap "ab", $1
 charmap "cd", $2
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
+	print "cd"
 
-x = "cd"
-printt "{x}\n"
+	set_ map3
 
-printt "setcharmap map3\n"
-setcharmap map3
+	print "ab"
+	print "cd"
 
-x = "ab"
-printt "{x}\n"
-
-x = "cd"
-printt "{x}\n"
-
-printt "setcharmap main\n"
-setcharmap main
+	set_ main
 
 SECTION "sec0", ROM0
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
 
 printt "override main charmap\n"
 charmap "ef", $3
 
-x = "ab"
-printt "{x}\n"
+	print "ab"
+	print "ef"
 
-x = "ef"
-printt "{x}\n"
+	set_ map1
 
-printt "setcharmap map3\n"
-setcharmap map3
+	push_
+	set_ map2
+	push_
 
-x = "ab"
-printt "{x}\n"
+	set_ map3
 
-x = "cd"
-printt "{x}\n"
+	print "ab"
+	print "cd"
+	print "ef"
 
-x = "ef"
-printt "{x}\n"
+	pop_
 
-printt "newcharmap map1\n"
-newcharmap map1
+	print "ab"
 
-printt "setcharmap map5\n"
-setcharmap map5
+	pop_
+
+	print "ab"
+
+	new_ map1
+
+	set_ map5
+
+	pop_

@@ -35,6 +35,8 @@ struct Charmap {
 void charmap_InitMain(void);
 struct Charmap *charmap_New(const char *name, const char *baseName);
 void charmap_Set(const char *name);
+void charmap_Push(void);
+void charmap_Pop(void);
 int32_t charmap_Add(char *input, uint8_t output);
 int32_t charmap_Convert(char **input);
 

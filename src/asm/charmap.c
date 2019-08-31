@@ -20,10 +20,17 @@
 
 #define CHARMAP_HASH_SIZE (1 << 9)
 
+struct CharmapStackEntry {
+	struct Charmap *charmap;
+	struct CharmapStackEntry *next;
+};
+
 static struct Charmap *tHashedCharmaps[CHARMAP_HASH_SIZE];
 
 static struct Charmap *mainCharmap;
 static struct Charmap *currentCharmap;
+
+struct CharmapStackEntry *charmapStack;
 
 static void warnSectionCharmap(void)
 {
@@ -117,6 +124,32 @@ void charmap_Set(const char *name)
 	}
 
 	currentCharmap = *ppCharmap;
+}
+
+void charmap_Push(void)
+{
+	struct CharmapStackEntry *stackEntry;
+
+	stackEntry = malloc(sizeof(struct CharmapStackEntry));
+	if (stackEntry == NULL)
+		fatalerror("No memory for charmap stack");
+
+	stackEntry->charmap = currentCharmap;
+	stackEntry->next = charmapStack;
+
+	charmapStack = stackEntry;
+}
+
+void charmap_Pop(void)
+{
+	if (charmapStack == NULL)
+		fatalerror("No entries in the charmap stack");
+
+	struct CharmapStackEntry *top = charmapStack;
+
+	currentCharmap = top->charmap;
+	charmapStack = top->next;
+	free(top);
 }
 
 void charmap_InitMain(void)

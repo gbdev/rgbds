@@ -481,6 +481,8 @@ const struct sLexInitString lexer_strings[] = {
 	{"charmap", T_POP_CHARMAP},
 	{"newcharmap", T_POP_NEWCHARMAP},
 	{"setcharmap", T_POP_SETCHARMAP},
+	{"pushc", T_POP_PUSHC},
+	{"popc", T_POP_POPC},
 
 	{"fail", T_POP_FAIL},
 	{"warn", T_POP_WARN},

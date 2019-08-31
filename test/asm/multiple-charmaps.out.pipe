@@ -1,10 +1,11 @@
-warning: -(64):
+warning: -(75):
     Using 'charmap' within a section when the current charmap is 'main' is deprecated
-ERROR: -(85):
+ERROR: -(100) -> new_(5):
     Charmap 'map1' already exists
-ERROR: -(88):
+ERROR: -(102) -> set_(2):
     Charmap 'map5' doesn't exist
-error: Assembly aborted (2 errors)!
+ERROR: -(104) -> pop_(2):
+    No entries in the charmap stack
 main charmap
 $0
 newcharmap map1
@@ -26,9 +27,18 @@ $0
 override main charmap
 $6162
 $3
+setcharmap map1
+pushc
+setcharmap map2
+pushc
 setcharmap map3
 $1
 $6364
 $6566
+popc
+$0
+popc
+$6162
 newcharmap map1
 setcharmap map5
+popc

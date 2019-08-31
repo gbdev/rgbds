@@ -1146,7 +1146,8 @@ a different encoding for other purposes, for example. Initially, there is
 one character map called
 .Sy main
 and it is automatically selected as the current character map from the
-beginning.
+beginning. There is also a character map stack that can be used to save and
+restore which character map is currently active.
 .Bl -column "NEWCHARMAP name, basename"
 .It Sy Command Ta Sy Meaning
 .It Ic NEWCHARMAP Ar name Ta Creates a new, empty character map called
@@ -1156,6 +1157,8 @@ beginning.
 copied from character map
 .Ic basename .
 .It Ic SETCHARMAP Ar name Ta Switch to character map Ic name .
+.It Ic PUSHC Ta Push the current character map onto the stack.
+.It Ic POPC Ta Pop a character map off the stack and switch to it.
 .El
 .Pp
 .Sy Note:
