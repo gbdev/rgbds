@@ -51,7 +51,7 @@ struct sSymbol {
 /* Symbol has a constant value, will not be changed during linking */
 #define SYMF_CONST	0x200
 
-uint32_t calchash(char *s);
+uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(uint8_t set);
 void sym_AddLocalReloc(char *tzSym);
 void sym_AddReloc(char *tzSym);

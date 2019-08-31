@@ -25,13 +25,18 @@ struct Charnode {
 };
 
 struct Charmap {
+	char name[MAXSYMLEN + 1];
 	int32_t charCount; /* user-side count. */
 	int32_t nodeCount; /* node-side count. */
 	struct Charnode nodes[MAXCHARNODES]; /* first node is reserved for the root node in charmap. */
+	struct Charmap *next; /* next charmap in hash table bucket */
 };
 
-int32_t readUTF8Char(char *destination, char *source);
-
+void charmap_InitMain(void);
+struct Charmap *charmap_New(const char *name, const char *baseName);
+void charmap_Set(const char *name);
+void charmap_Push(void);
+void charmap_Pop(void);
 int32_t charmap_Add(char *input, uint8_t output);
 int32_t charmap_Convert(char **input);
 

@@ -1140,9 +1140,30 @@ CHARMAP "&iacute", 20
 CHARMAP "A", 128
 .Ed
 .Pp
+It is possible to create multiple character maps and then switch between them
+as desired. This can be used to encode debug information in ASCII and use
+a different encoding for other purposes, for example. Initially, there is
+one character map called
+.Sy main
+and it is automatically selected as the current character map from the
+beginning. There is also a character map stack that can be used to save and
+restore which character map is currently active.
+.Bl -column "NEWCHARMAP name, basename"
+.It Sy Command Ta Sy Meaning
+.It Ic NEWCHARMAP Ar name Ta Creates a new, empty character map called
+.Ic name .
+.It Ic NEWCHARMAP Ar name , basename Ta Creates a new character map called
+. Ic name ,
+copied from character map
+.Ic basename .
+.It Ic SETCHARMAP Ar name Ta Switch to character map Ic name .
+.It Ic PUSHC Ta Push the current character map onto the stack.
+.It Ic POPC Ta Pop a character map off the stack and switch to it.
+.El
+.Pp
 .Sy Note:
 Character maps affect all strings in the file from the point in which they are
-defined.
+defined, until switching to a different character map.
 This means that any string that the code may want to print as debug information
 will also be affected by it.
 .Pp
