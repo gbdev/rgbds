@@ -1,6 +1,6 @@
 warning: multiple-charmaps.asm(75):
     Using 'charmap' within a section when the current charmap is 'main' is deprecated
-ERROR: multiple-charmaps.asm(100) -> new_(5):
+ERROR: multiple-charmaps.asm(100) -> new_(6):
     Charmap 'map1' already exists
 ERROR: multiple-charmaps.asm(102) -> set_(2):
     Charmap 'map5' doesn't exist

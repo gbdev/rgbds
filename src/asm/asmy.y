@@ -354,20 +354,14 @@ static void if_skip_to_else(void)
 				src++;
 			}
 		} else {
-			switch (*src) {
-			case '\\':
-				src += 2;
-				break;
-
-			case '\"':
-				src += 2;
+			if (*src == '\"') {
 				inString = false;
-				break;
-
-			default:
-				src++;
-				break;
+			} else if (*src == '\\') {
+				/* Escaped quotes don't end the string */
+				if (*++src != '\"')
+					src--;
 			}
+			src++;
 		}
 	}
 
@@ -405,21 +399,14 @@ static void if_skip_to_endc(void)
 				src++;
 			}
 		} else {
-			switch (*src) {
-
-			case '\\':
-				src += 2;
-				break;
-
-			case '\"':
-				src++;
+			if (*src == '\"') {
 				inString = false;
-				break;
-
-			default:
-				src++;
-				break;
+			} else if (*src == '\\') {
+				/* Escaped quotes don't end the string */
+				if (*++src != '\"')
+					src--;
 			}
+			src++;
 		}
 	}
 
