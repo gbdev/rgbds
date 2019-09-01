@@ -30,7 +30,11 @@ Windows builds are available in the releases page on GitHub:
 
     https://github.com/rednex/rgbds/releases
 
-Copy the ``.exe`` files to ``C:\Windows\`` or similar.
+Extract the zip and then add the executable directory to the path. For example:
+
+::
+
+    path %PATH%;C:\Programs\rgbds-0.3.8-win64\win64
 
 If you require the latest version in development, it should be possible to
 compile RGBDS with MinGW or Cygwin by following the instructions to build it on
