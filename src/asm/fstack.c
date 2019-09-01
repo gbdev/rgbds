@@ -128,13 +128,9 @@ static int32_t popcontext(void)
 	if (nCurrentStatus == STAT_isInclude)
 		fclose(pCurrentFile);
 
-	if (nCurrentStatus == STAT_isMacro) {
-		sym_FreeCurrentMacroArgs();
-		nLineNo += 1;
-	}
-
-	if (nCurrentStatus == STAT_isREPTBlock)
-		nLineNo += 1;
+	if (nCurrentStatus == STAT_isMacro
+	 || nCurrentStatus == STAT_isREPTBlock)
+		nLineNo++;
 
 	CurrentFlexHandle = pLastFile->FlexHandle;
 	strcpy((char *)tzCurrentFileName, (char *)pLastFile->tzFileName);
@@ -385,8 +381,8 @@ void fstk_RunString(char *s)
 void fstk_RunRept(uint32_t count)
 {
 	if (count) {
-		pushcontext();
 		sym_UseCurrentMacroArgs();
+		pushcontext();
 		sym_SetMacroArgID(nMacroCount++);
 		sym_UseNewMacroArgs();
 		nCurrentREPTBlockCount = count;
