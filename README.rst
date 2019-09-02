@@ -24,11 +24,8 @@ found in this repository.
 1.1 Windows
 ~~~~~~~~~~~
 
-Windows builds are available in the releases page on GitHub:
-
-::
-
-    https://github.com/rednex/rgbds/releases
+Windows builds are available in the releases page on GitHub
+`here <https://github.com/rednex/rgbds/releases>`__.
 
 Extract the zip and then add the executable directory to the path. For example:
 
