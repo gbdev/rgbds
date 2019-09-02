@@ -24,7 +24,8 @@ found in this repository.
 1.1 Windows
 ~~~~~~~~~~~
 
-Windows builds are available in the releases page on GitHub [here](https://github.com/rednex/rgbds/releases).
+Windows builds are available in the releases page on GitHub (here)[].
+`here <https://github.com/rednex/rgbds/releases>`_.
 
 Copy the ``.exe`` files to ``C:\Windows\`` or similar.
 
