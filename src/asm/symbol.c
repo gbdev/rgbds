@@ -705,7 +705,7 @@ void sym_Export(char *tzSym)
 /*
  * Add a macro definition
  */
-void sym_AddMacro(char *tzSym)
+void sym_AddMacro(char *tzSym, int32_t nDefLineNo)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -715,6 +715,11 @@ void sym_AddMacro(char *tzSym)
 		nsym->ulMacroSize = ulNewMacroSize;
 		nsym->pMacro = tzNewMacro;
 		updateSymbolFilename(nsym);
+		/*
+		 * The symbol is created at the line after the `endm`,
+		 * override this with the actual definition line
+		 */
+		nsym->nFileLine = nDefLineNo;
 	}
 }
 

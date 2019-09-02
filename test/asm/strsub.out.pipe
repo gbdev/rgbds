@@ -1,18 +1,18 @@
-warning: -(13) -> xstrsub(1):
+warning: -(13) -> -::xstrsub(4):
     STRSUB: Length too big: 32
-warning: -(14) -> xstrsub(1):
+warning: -(14) -> -::xstrsub(4):
     STRSUB: Length too big: 300
-warning: -(15) -> xstrsub(1):
+warning: -(15) -> -::xstrsub(4):
     STRSUB: Position starts at 1
-warning: -(15) -> xstrsub(1):
+warning: -(15) -> -::xstrsub(4):
     STRSUB: Length too big: 300
-warning: -(16) -> xstrsub(1):
+warning: -(16) -> -::xstrsub(4):
     STRSUB: Position 4 is past the end of the string
-warning: -(17) -> xstrsub(1):
+warning: -(17) -> -::xstrsub(4):
     STRSUB: Position 4 is past the end of the string
-warning: -(17) -> xstrsub(1):
+warning: -(17) -> -::xstrsub(4):
     STRSUB: Length too big: 1
-warning: -(20) -> xstrsub(1):
+warning: -(20) -> -::xstrsub(4):
     STRSUB: Length too big: 10
 A
 B
