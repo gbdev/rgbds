@@ -97,10 +97,16 @@ void yyunputstr(const char *s)
 
 	len = strlen(s);
 
-	pLexBuffer -= len;
-
-	if (pLexBuffer < pLexBufferRealStart)
+	/*
+	 * It would be undefined behavior to subtract `len` from pLexBuffer and
+	 * potentially have it point outside of pLexBufferRealStart's buffer,
+	 * this is why the check is done this way.
+	 * Refer to https://github.com/rednex/rgbds/pull/411#discussion_r319779797
+	 */
+	if (pLexBuffer - pLexBufferRealStart < len)
 		fatalerror("Buffer safety margin exceeded");
+
+	pLexBuffer -= len;
 
 	memcpy(pLexBuffer, s, len);
 }
