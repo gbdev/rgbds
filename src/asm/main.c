@@ -289,7 +289,8 @@ static void print_usage(void)
 {
 	printf(
 "usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
-"              [-M dependfile] [-o outfile] [-p pad_value] file.asm\n");
+"              [-M dependfile] [-o outfile] [-p pad_value]\n"
+"              [-r recursion_depth] file.asm\n");
 	exit(1);
 }
 
@@ -316,6 +317,8 @@ int main(int argc, char *argv[])
 
 	/* yydebug=1; */
 
+	nMaxRecursionDepth = 64;
+
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
 	DefaultOptions.gbgfx[2] = '2';
@@ -333,7 +336,7 @@ int main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:Eg:hi:LM:o:p:Vvw")) != -1) {
+	while ((ch = getopt(argc, argv, "b:D:Eg:hi:LM:o:p:r:Vvw")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {
@@ -386,6 +389,12 @@ int main(int argc, char *argv[])
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
 				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
 
+			break;
+		case 'r':
+			nMaxRecursionDepth = strtoul(optarg, &ep, 0);
+
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(1, "Invalid argument for option 'r'");
 			break;
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());

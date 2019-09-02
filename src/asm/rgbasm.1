@@ -21,6 +21,7 @@
 .Op Fl M Ar dependfile
 .Op Fl o Ar outfile
 .Op Fl p Ar pad_value
+.Op Fl r Ar recursion_depth
 .Ar file
 .Sh DESCRIPTION
 The
@@ -77,6 +78,8 @@ Write an object file to the given filename.
 .It Fl p Ar pad_value
 When padding an image, pad with this value.
 The default is 0x00.
+.It Fl r Ar recursion_depth
+Specifies the recursion depth at which RGBASM will assume being in an infinite loop.
 .It Fl V
 Print the version of the program and exit.
 .It Fl v

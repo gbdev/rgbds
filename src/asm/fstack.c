@@ -28,6 +28,8 @@
 #include "types.h"
 
 static struct sContext *pFileStack;
+static unsigned int nFileStackDepth;
+unsigned int nMaxRecursionDepth;
 static struct sSymbol *pCurrentMacro;
 static YY_BUFFER_STATE CurrentFlexHandle;
 static FILE *pCurrentFile;
@@ -51,12 +53,17 @@ uint32_t ulMacroReturnValue;
 #define STAT_isMacroArg		2
 #define STAT_isREPTBlock	3
 
+/* Max context stack size */
+
 /*
  * Context push and pop
  */
 static void pushcontext(void)
 {
 	struct sContext **ppFileStack;
+
+	if (++nFileStackDepth > nMaxRecursionDepth)
+		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)
@@ -153,6 +160,8 @@ static int32_t popcontext(void)
 	default:
 		fatalerror("%s: Internal error.", __func__);
 	}
+
+	nFileStackDepth--;
 
 	free(*ppLastFile);
 	*ppLastFile = NULL;
@@ -413,6 +422,7 @@ void fstk_Init(char *pFileName)
 		if (pCurrentFile == NULL)
 			err(1, "Unable to open file '%s'", pFileName);
 	}
+	nFileStackDepth = 0;
 
 	nMacroCount = 0;
 	nCurrentStatus = STAT_isInclude;

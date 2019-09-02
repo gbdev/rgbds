@@ -455,8 +455,7 @@ String equates can't be exported or imported.
 .Sy Important note :
 An EQUS can be expanded to a string that contains another EQUS
 and it will be expanded as well.
-This means that, if you aren't careful, you may trap the assembler into an
-infinite loop if there's a circular dependency in the expansions.
+If this creates an infinite loop, RGBASM will error out once a certain depth is reached. See the -r command-line option.
 Also, a MACRO can have inside an EQUS which references the same MACRO, which has
 the same problem.
 .Pp
