@@ -11,6 +11,12 @@ for i in *.asm; do
 			../../rgbasm -o $o $i > $after 2>&1
 			desired_output=${i%.asm}.out
 		else
+			# `include-recursion.asm` refers to its own name inside the test code.
+			# Skip testing with stdin input for that file.
+			if [ "$i" = "include-recursion.asm" ]; then
+				continue
+			fi
+
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with and was broken when the feature was
