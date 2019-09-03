@@ -477,6 +477,10 @@ int main(int argc, char *argv[])
 			printf("(%d lines/minute)\n",
 			       (int)(60 / timespent * nTotalLines));
 	}
-	out_WriteObject();
+
+	out_CheckErrors();
+	/* If no path specified, don't write file */
+	if (tzObjectname != NULL)
+		out_WriteObject();
 	return 0;
 }

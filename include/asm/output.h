@@ -40,6 +40,7 @@ void out_AbsByteGroup(char *s, int32_t length);
 void out_RelByte(struct Expression *expr);
 void out_RelWord(struct Expression *expr);
 void out_PCRelByte(struct Expression *expr);
+void out_CheckErrors(void);
 void out_WriteObject(void);
 void out_Skip(int32_t skip);
 void out_BinaryFile(char *s);
