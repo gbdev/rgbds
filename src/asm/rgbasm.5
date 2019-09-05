@@ -583,16 +583,15 @@ If you want to use the rest, you need to use the keyword
 .Ic SHIFT .
 .Pp
 Line continuations work as usual inside macros or lists of arguments of macros.
-Strings, however, are a bit trickier.
-The following example shows how to use strings as arguments for a macro:
+However, some characters need to be escaped, as in the following example:
 .Pp
 .Bd -literal -offset indent
 PrintMacro : MACRO
     PRINTT \[rs]1
 ENDM
 
-    PrintMacro STRCAT(\[rs]"Hello\[rs]"\[rs],  \[rs]
-                      \[rs]" world\[rs]\[rs]n\[rs]")
+    PrintMacro STRCAT("Hello"\[rs],  \[rs]
+                      " world\[rs]\[rs]n")
 .Ed
 .Pp
 .Ic SHIFT
