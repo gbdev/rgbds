@@ -203,7 +203,7 @@ wwwman:
 
 develop:
 	$Qenv make -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic \
-		-Wno-sign-compare -Wchkp -Wformat=2 -Wformat-overflow=2 \
+		-Wno-sign-compare -Wformat=2 -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
 		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5 \
 		-Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond \
