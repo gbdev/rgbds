@@ -275,17 +275,15 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 			mem += 2;
 		} else {
 			/* LF CR and CR LF */
-			if (((mem[0] == 10) && (mem[1] == 13))
-			 || ((mem[0] == 13) && (mem[1] == 10))) {
-				mem[0] = ' ';
-				mem[1] = '\n';
-				mem += 2;
+			if (((mem[0] == '\n') && (mem[1] == '\r'))
+			 || ((mem[0] == '\r') && (mem[1] == '\n'))) {
+				*mem++ = ' ';
+				*mem++ = '\n';
 			/* LF and CR */
-			} else if ((mem[0] == 10) || (mem[0] == 13)) {
-				mem[0] = '\n';
-				mem += 1;
+			} else if ((mem[0] == '\n') || (mem[0] == '\r')) {
+				*mem++ = '\n';
 			} else {
-				mem += 1;
+				mem++;
 			}
 		}
 	}
@@ -293,16 +291,16 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	/* Remove comments */
 
 	mem = pBuffer->pBuffer;
-	uint32_t instring = 0;
+	bool instring = false;
 
 	while (*mem) {
 		if (*mem == '\"')
-			instring = 1 - instring;
+			instring = !instring;
 
 		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
 			mem += 2;
 		} else if (instring) {
-			mem += 1;
+			mem++;
 		} else {
 			/* Comments that start with ; anywhere in a line */
 			if (*mem == ';') {
@@ -310,11 +308,11 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 					*mem++ = ' ';
 			/* Comments that start with * at the start of a line */
 			} else if ((mem[0] == '\n') && (mem[1] == '*')) {
-				mem += 1;
+				mem++;
 				while (!((*mem == '\n') || (*mem == '\0')))
 					*mem++ = ' ';
 			} else {
-				mem += 1;
+				mem++;
 			}
 		}
 	}
@@ -793,10 +791,10 @@ scanagain:
 		 * endings: "\r\n" is replaced by " \n" before the lexer has the
 		 * opportunity to see it.
 		 */
-		if (pLexBuffer[1] == ' ') {
+		if (pLexBuffer[1] == ' ' || pLexBuffer[1] == '\t') {
 			pLexBuffer += 2;
 			while (1) {
-				if (*pLexBuffer == ' ') {
+				if (*pLexBuffer == ' ' || *pLexBuffer == '\t') {
 					pLexBuffer++;
 				} else if (*pLexBuffer == '\n') {
 					pLexBuffer++;
@@ -935,6 +933,7 @@ static uint32_t yylex_MACROARGS(void)
 				ch = '}';
 				break;
 			case ' ':
+			case '\t':
 				/*
 				 * Look for line continuation character after a
 				 * series of spaces. This is also useful for
@@ -943,7 +942,8 @@ static uint32_t yylex_MACROARGS(void)
 				 * opportunity to see it.
 				 */
 				while (1) {
-					if (*pLexBuffer == ' ') {
+					if (*pLexBuffer == ' '
+					 || *pLexBuffer == '\t') {
 						pLexBuffer++;
 					} else if (*pLexBuffer == '\n') {
 						pLexBuffer++;
