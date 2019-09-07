@@ -33,6 +33,10 @@ CFLAGS		:= -g
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
 		   -Iinclude -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+# Overridable LDFLAGS
+LDFLAGS		:=
+# Non-overridable LDFLAGS
+REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS}
 
 YFLAGS		:=
 LFLAGS		:= --nounistd
@@ -96,16 +100,16 @@ rgbgfx_obj := \
 	src/version.o
 
 rgbasm: ${rgbasm_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgbasm_obj} -lm
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbasm_obj} -lm
 
 rgblink: ${rgblink_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgblink_obj}
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgblink_obj}
 
 rgbfix: ${rgbfix_obj}
-	$Q${CC} ${REALCFLAGS} -o $@ ${rgbfix_obj}
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj}
 
-rgbgfx: ${rgbgfx_obj}
-	$Q${CC} ${REALCFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${PNGLDLIBS}
+rgbgfx: ${rgblink_obj}
+	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgblink_obj} ${PNGLDLIBS}
 
 # Rules to process files
 
