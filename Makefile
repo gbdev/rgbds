@@ -6,6 +6,9 @@
 # SPDX-License-Identifier: MIT
 #
 
+.SUFFIXES:
+.SUFFIXES: .h .l .y .c .o
+
 # User-defined variables
 
 Q		:= @
@@ -66,7 +69,6 @@ rgbasm_obj := \
 	src/extern/utf8decoder.o \
 	src/version.o
 
-src/asm/asmy.h: src/asm/asmy.c
 src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
 
 rgblink_obj := \
@@ -84,7 +86,6 @@ rgblink_obj := \
 	src/extern/err.o \
 	src/version.o
 
-src/link/parser.h: src/link/parser.c
 src/link/lexer.o: src/link/parser.h
 
 rgbfix_obj := \
@@ -108,19 +109,24 @@ rgblink: ${rgblink_obj}
 rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj}
 
-rgbgfx: ${rgblink_obj}
-	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgblink_obj} ${PNGLDLIBS}
+rgbgfx: ${rgbgfx_obj}
+	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${PNGLDLIBS}
 
 # Rules to process files
+
+# We want the yacc and lex invocations to pass through our rules
+.y.o:
+.l.o:
+
+# yacc- and lex-generated C files have an accompanying header
+.c.h:
+	$Qtouch $@
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
 
-.l.o:
-	$Q${RM} $*.c
-	$Q${LEX} ${LFLAGS} -o $*.c $<
-	$Q${CC} ${REALCFLAGS} -c -o $@ $*.c
-	$Q${RM} $*.c
+.l.c:
+	$Q${LEX} ${LFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} ${PNGCFLAGS} -c -o $@ $<
