@@ -2,8 +2,8 @@ language: c
 sudo: required
 install:
   - ./.travis-deps.sh
-  - make
-  - sudo make install
+  - make Q=
+  - sudo make install Q=
 os:
   - linux
   - osx
