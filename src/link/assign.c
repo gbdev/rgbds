@@ -155,6 +155,11 @@ int32_t area_Avail(int32_t bank)
 
 int32_t area_doAlloc(struct sFreeArea *pArea, int32_t org, int32_t size)
 {
+	if (size == 0) {
+		/* 0-byte SECTIONs don't take any room, they can go anywhere */
+		return org;
+	}
+
 	if ((org >= pArea->nOrg)
 	    && ((org + size) <= (pArea->nOrg + pArea->nSize))) {
 
