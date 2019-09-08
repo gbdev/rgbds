@@ -233,7 +233,7 @@ void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
 	joinexpr();
-	expr->nVal = (expr->nVal || src2->nVal);
+	expr->nVal = (src1->nVal || src2->nVal);
 	pushbyte(expr, RPN_LOGOR);
 	expr->nRPNPatchSize++;
 }
@@ -242,7 +242,7 @@ void rpn_LOGAND(struct Expression *expr, const struct Expression *src1,
 		const struct Expression *src2)
 {
 	joinexpr();
-	expr->nVal = (expr->nVal && src2->nVal);
+	expr->nVal = (src1->nVal && src2->nVal);
 	pushbyte(expr, RPN_LOGAND);
 	expr->nRPNPatchSize++;
 }
