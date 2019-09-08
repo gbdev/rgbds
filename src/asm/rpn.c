@@ -65,7 +65,7 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 /*
  * Add a byte to the RPN expression
  */
-void pushbyte(struct Expression *expr, int b)
+void pushbyte(struct Expression *expr, uint8_t b)
 {
 	if (expr->nRPNLength == expr->nRPNCapacity) {
 		if (expr->nRPNCapacity == 0)
@@ -82,7 +82,7 @@ void pushbyte(struct Expression *expr, int b)
 			fatalerror("No memory for RPN expression");
 	}
 
-	expr->tRPN[expr->nRPNLength++] = b & 0xFF;
+	expr->tRPN[expr->nRPNLength++] = b;
 }
 
 /*
@@ -225,6 +225,7 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->nVal = !expr->nVal;
 	pushbyte(expr, RPN_LOGUNNOT);
 	expr->nRPNPatchSize++;
 }
