@@ -19,6 +19,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/output.h"
 #include "asm/warning.h"
 
 #include "linkdefs.h"
@@ -160,11 +161,14 @@ void rpn_BankSelf(struct Expression *expr)
 {
 	rpn_Init(expr);
 
-	/*
-	 * This symbol is not really relocatable, but this makes the assembler
-	 * write this expression as a RPN patch to the object file.
-	 */
-	expr->isReloc = 1;
+	if (pCurrentSection->nBank == -1)
+		/*
+		 * This is not really relocatable, but this makes the assembler
+		 * write this expression as a RPN patch to the object file.
+		 */
+		expr->isReloc = 1;
+	else
+		expr->nVal = pCurrentSection->nBank;
 
 	pushbyte(expr, RPN_BANK_SELF);
 	expr->nRPNPatchSize++;
