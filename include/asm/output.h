@@ -29,6 +29,7 @@ extern char *tzObjectname;
 
 void out_PrepPass2(void);
 void out_SetFileName(char *s);
+struct Section *out_FindSectionByName(const char *pzName);
 void out_NewSection(char *pzName, uint32_t secttype);
 void out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org,
 		       int32_t bank);
