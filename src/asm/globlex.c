@@ -198,10 +198,10 @@ char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 
 	if (whichArg == '@')
 		marg = sym_FindMacroArg(-1);
-	else if (whichArg >= '0' && whichArg <= '9')
+	else if (whichArg >= '1' && whichArg <= '9')
 		marg = sym_FindMacroArg(whichArg - '0');
 	else
-		fatalerror("Malformed ID");
+		fatalerror("Invalid macro argument '\\%c' in symbol", whichArg);
 
 	if (!marg)
 		fatalerror("Macro argument '\\%c' not defined", whichArg);

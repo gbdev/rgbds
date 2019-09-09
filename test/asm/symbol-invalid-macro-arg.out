@@ -1,0 +1,2 @@
+ERROR: symbol-invalid-macro-arg.asm(1):
+    Invalid macro argument '\0' in symbol
