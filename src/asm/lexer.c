@@ -325,8 +325,9 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	if (pBuffer->nBufferSize >= 2) {
 		size_t pos = pBuffer->nBufferSize - 2;
 
-		/* Skip spaces */
-		while (pos > 0 && pBuffer->pBufferStart[pos] == ' ')
+		/* Skip spaces and tabs */
+		while (pos > 0 && (pBuffer->pBufferStart[pos] == ' '
+				|| pBuffer->pBufferStart[pos] == '\t'))
 			pos--;
 
 		if (pBuffer->pBufferStart[pos] == '\\')
