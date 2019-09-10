@@ -246,8 +246,7 @@ static char *make_escape(const char *str)
 	char *dest = escaped_str;
 
 	if (escaped_str == NULL)
-		errx(1, "%s: Failed to allocate memory: %s", __func__,
-		     strerror(errno));
+		err(1, "%s: Failed to allocate memory", __func__);
 
 	while (*str) {
 		/* All dollars needs to be doubled */
@@ -295,8 +294,8 @@ static void print_usage(void)
 {
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
-"              [-M depend_file] [-MP] [-MT target_file] [-o out_file]\n"
-"              [-p pad_value] [-r depth] [-W warning] <file> ...\n"
+"              [-M depend_file] [-MP] [-MT target_file] [-MQ target_file]\n"
+"              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file> ...\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -333,6 +332,7 @@ int main(int argc, char *argv[])
 	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
 	tzTargetFileName = NULL;
+	size_t nTargetFileNameLen = 0;
 
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
@@ -400,17 +400,28 @@ int main(int argc, char *argv[])
 					oGeneratePhonyDeps = true;
 					break;
 				case 'Q':
-					if (optind == argc)
-						errx(1, "-MQ takes a target file name argument");
-					tzTargetFileName =
-						make_escape(argv[optind]);
-					optind++;
-					break;
 				case 'T':
 					if (optind == argc)
-						errx(1, "-MT takes a target file name argument");
-					tzTargetFileName = argv[optind];
+						errx(1, "-M%c takes a target file name argument",
+						     optarg[0]);
+					ep = argv[optind];
 					optind++;
+					if (optarg[0] == 'Q')
+						ep = make_escape(ep);
+
+					nTargetFileNameLen += strlen(ep) + 1;
+					tzTargetFileName =
+						realloc(tzTargetFileName,
+							nTargetFileNameLen + 1);
+					if (tzTargetFileName == NULL)
+						err(1, "Cannot append new file to target file list");
+					strcat(tzTargetFileName, ep);
+					if (optarg[0] == 'Q')
+						free(ep);
+					char *ptr = tzTargetFileName +
+						strlen(tzTargetFileName);
+					*ptr++ = ' ';
+					*ptr = '\0';
 					break;
 				}
 			}
