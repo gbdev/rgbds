@@ -47,7 +47,8 @@ uint32_t unionStart[128], unionSize[128];
 /* extern int yydebug; */
 
 FILE *dependfile;
-
+bool oGeneratedMissingIncludes;
+bool oFailedOnMissingInclude;
 bool oGeneratePhonyDeps;
 char *tzTargetFileName;
 
@@ -294,7 +295,7 @@ static void print_usage(void)
 {
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
-"              [-M depend_file] [-MP] [-MT target_file] [-MQ target_file]\n"
+"              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 "              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file> ...\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
@@ -331,6 +332,8 @@ int main(int argc, char *argv[])
 
 	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
+	oGeneratedMissingIncludes = true;
+	oFailedOnMissingInclude = false;
 	tzTargetFileName = NULL;
 	size_t nTargetFileNameLen = 0;
 
@@ -388,7 +391,7 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			ep = strchr("PQT", optarg[0]);
+			ep = strchr("GPQT", optarg[0]);
 			if (!ep || !*ep || optarg[1]) {
 				dependfile = fopen(optarg, "w");
 				if (dependfile == NULL)
@@ -396,6 +399,9 @@ int main(int argc, char *argv[])
 					    optarg);
 			} else {
 				switch (optarg[0]) {
+				case 'G':
+					oGeneratedMissingIncludes = true;
+					break;
 				case 'P':
 					oGeneratePhonyDeps = true;
 					break;
@@ -511,6 +517,8 @@ int main(int argc, char *argv[])
 
 	if (yyparse() != 0 || nbErrors != 0)
 		errx(1, "Assembly aborted (%ld errors)!", nbErrors);
+	if (dependfile)
+		fclose(dependfile);
 
 	if (nIFDepth != 0)
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
@@ -534,6 +542,9 @@ int main(int argc, char *argv[])
 			printf("(%d lines/minute)\n",
 			       (int)(60 / timespent * nTotalLines));
 	}
+
+	if (oFailedOnMissingInclude)
+		return 0;
 
 	/* If no path specified, don't write file */
 	if (tzObjectname != NULL)

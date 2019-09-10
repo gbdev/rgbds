@@ -325,6 +325,15 @@ void fstk_AddIncludePath(char *s)
 		fatalerror("Include path too long '%s'", s);
 }
 
+static void printdep(const char *fileName)
+{
+	if (dependfile) {
+		fprintf(dependfile, "%s: %s\n", tzTargetFileName, fileName);
+		if (oGeneratePhonyDeps)
+			fprintf(dependfile, "%s:\n", fileName);
+	}
+}
+
 FILE *fstk_FindFile(char *fname, char **incPathUsed)
 {
 	char path[_MAX_PATH];
@@ -337,13 +346,7 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 	f = fopen(fname, "rb");
 
 	if (f != NULL || errno != ENOENT) {
-		if (dependfile) {
-			fprintf(dependfile, "%s: %s\n", tzTargetFileName,
-				fname);
-			if (oGeneratePhonyDeps)
-				fprintf(dependfile, "%s:\n", fname);
-		}
-
+		printdep(fname);
 		return f;
 	}
 
@@ -366,12 +369,7 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 		f = fopen(path, "rb");
 
 		if (f != NULL || errno != ENOENT) {
-			if (dependfile) {
-				fprintf(dependfile, "%s: %s\n",
-					tzTargetFileName, fname);
-				if (oGeneratePhonyDeps)
-					fprintf(dependfile, "%s:\n", fname);
-			}
+			printdep(fname);
 
 			if (incPathUsed)
 				*incPathUsed = IncludePaths[i];
@@ -380,6 +378,8 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 	}
 
 	errno = ENOENT;
+	if (oGeneratedMissingIncludes)
+		printdep(fname);
 	return NULL;
 }
 
@@ -391,8 +391,13 @@ void fstk_RunInclude(char *tzFileName)
 	char *incPathUsed = "";
 	FILE *f = fstk_FindFile(tzFileName, &incPathUsed);
 
-	if (f == NULL)
+	if (f == NULL) {
+		if (oGeneratedMissingIncludes) {
+			oFailedOnMissingInclude = true;
+			return;
+		}
 		err(1, "Unable to open included file '%s'", tzFileName);
+	}
 
 	pushcontext();
 	nLineNo = 1;

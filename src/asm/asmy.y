@@ -1004,16 +1004,22 @@ set		: T_LABEL T_POP_SET const
 include		: T_POP_INCLUDE string
 		{
 			fstk_RunInclude($2);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
 		}
 ;
 
 incbin		: T_POP_INCBIN string
 		{
 			out_BinaryFile($2);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
 		}
 		| T_POP_INCBIN string comma uconst comma uconst
 		{
 			out_BinaryFileSlice($2, $4, $6);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
 		}
 ;
 
