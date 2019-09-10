@@ -393,7 +393,10 @@ int main(int argc, char *argv[])
 		case 'M':
 			ep = strchr("GPQT", optarg[0]);
 			if (!ep || !*ep || optarg[1]) {
-				dependfile = fopen(optarg, "w");
+				if (!strcmp("-", optarg))
+					dependfile = stdout;
+				else
+					dependfile = fopen(optarg, "w");
 				if (dependfile == NULL)
 					err(1, "Could not open dependfile %s",
 					    optarg);
