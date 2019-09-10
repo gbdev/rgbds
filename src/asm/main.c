@@ -47,6 +47,8 @@ uint32_t unionStart[128], unionSize[128];
 
 FILE *dependfile;
 
+bool oGeneratePhonyDeps;
+
 /*
  * Option stack
  */
@@ -270,7 +272,7 @@ static void print_usage(void)
 {
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
-"              [-M depend_file] [-o out_file] [-p pad_value] [-r depth]\n"
+"              [-M depend_file] [-MP] [-o out_file] [-p pad_value] [-r depth]\n"
 "              [-W warning] <file> ...\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
@@ -306,6 +308,7 @@ int main(int argc, char *argv[])
 	/* yydebug=1; */
 
 	nMaxRecursionDepth = 64;
+	oGeneratePhonyDeps = false;
 
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
@@ -361,9 +364,19 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			dependfile = fopen(optarg, "w");
-			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s", optarg);
+			ep = strchr("P", optarg[0]);
+			if (!ep || !*ep || optarg[1]) {
+				dependfile = fopen(optarg, "w");
+				if (dependfile == NULL)
+					err(1, "Could not open dependfile %s",
+					    optarg);
+			} else {
+				switch (optarg[0]) {
+				case 'P':
+					oGeneratePhonyDeps = true;
+					break;
+				}
+			}
 
 			break;
 		case 'o':

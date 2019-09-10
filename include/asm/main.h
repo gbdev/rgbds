@@ -36,6 +36,8 @@ extern struct sOptions CurrentOptions;
 
 extern FILE *dependfile;
 
+extern bool oGeneratePhonyDeps;
+
 void opt_Push(void);
 void opt_Pop(void);
 void opt_Parse(char *s);

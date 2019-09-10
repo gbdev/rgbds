@@ -337,8 +337,11 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 	f = fopen(fname, "rb");
 
 	if (f != NULL || errno != ENOENT) {
-		if (dependfile)
+		if (dependfile) {
 			fprintf(dependfile, "%s: %s\n", tzObjectname, fname);
+			if (oGeneratePhonyDeps)
+				fprintf(dependfile, "%s:\n", fname);
+		}
 
 		return f;
 	}
@@ -364,8 +367,11 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 		if (f != NULL || errno != ENOENT) {
 			if (dependfile) {
 				fprintf(dependfile, "%s: %s\n", tzObjectname,
-					path);
+					fname);
+				if (oGeneratePhonyDeps)
+					fprintf(dependfile, "%s:\n", fname);
 			}
+
 			if (incPathUsed)
 				*incPathUsed = IncludePaths[i];
 			return f;
