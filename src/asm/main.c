@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -238,6 +239,27 @@ static void opt_ParseDefines(void)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
 }
 
+/* Escapes Make-special chars from a string */
+static char *make_escape(const char *str)
+{
+	char * const escaped_str = malloc(strlen(str) * 2 + 1);
+	char *dest = escaped_str;
+
+	if (escaped_str == NULL)
+		errx(1, "%s: Failed to allocate memory: %s", __func__,
+		     strerror(errno));
+
+	while (*str) {
+		/* All dollars needs to be doubled */
+		if (*str == '$')
+			*dest++ = '$';
+		*dest++ = *str++;
+	}
+	*dest = '\0';
+
+	return escaped_str;
+}
+
 /* Short options */
 static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
 
@@ -366,7 +388,7 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			ep = strchr("PT", optarg[0]);
+			ep = strchr("PQT", optarg[0]);
 			if (!ep || !*ep || optarg[1]) {
 				dependfile = fopen(optarg, "w");
 				if (dependfile == NULL)
@@ -377,13 +399,20 @@ int main(int argc, char *argv[])
 				case 'P':
 					oGeneratePhonyDeps = true;
 					break;
-				}
+				case 'Q':
+					if (optind == argc)
+						errx(1, "-MQ takes a target file name argument");
+					tzTargetFileName =
+						make_escape(argv[optind]);
+					optind++;
+					break;
 				case 'T':
 					if (optind == argc)
 						errx(1, "-MT takes a target file name argument");
 					tzTargetFileName = argv[optind];
 					optind++;
 					break;
+				}
 			}
 
 			break;
@@ -447,7 +476,7 @@ int main(int argc, char *argv[])
 
 	if (dependfile) {
 		if (!tzTargetFileName)
-			errx(1, "Dependency files can only be created if a target file is specified with either -o or -MT.\n");
+			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT.\n");
 
 		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
