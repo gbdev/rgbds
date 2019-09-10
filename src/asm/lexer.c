@@ -158,13 +158,34 @@ void yy_delete_buffer(YY_BUFFER_STATE buf)
  * 2. The buffer is terminated with 0
  * 3. nBufferSize is the size without the terminator
  */
-static void yy_buffer_append(YY_BUFFER_STATE buf, uint32_t capacity, char c)
+static void yy_buffer_append(YY_BUFFER_STATE buf, size_t capacity, char c)
 {
 	assert(buf->pBufferStart[buf->nBufferSize] == 0);
 	assert(buf->nBufferSize + 1 < capacity);
 
 	buf->pBufferStart[buf->nBufferSize++] = c;
 	buf->pBufferStart[buf->nBufferSize] = 0;
+}
+
+static void yy_buffer_append_newlines(YY_BUFFER_STATE buf, size_t capacity)
+{
+	/* Add newline if file doesn't end with one */
+	if (buf->nBufferSize == 0
+	 || buf->pBufferStart[buf->nBufferSize - 1] != '\n')
+		yy_buffer_append(buf, capacity, '\n');
+
+	/* Add newline if \ will eat the last newline */
+	if (buf->nBufferSize >= 2) {
+		size_t pos = buf->nBufferSize - 2;
+
+		/* Skip spaces and tabs */
+		while (pos > 0 && (buf->pBufferStart[pos] == ' '
+				|| buf->pBufferStart[pos] == '\t'))
+			pos--;
+
+		if (buf->pBufferStart[pos] == '\\')
+			yy_buffer_append(buf, capacity, '\n');
+	}
 }
 
 YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
@@ -174,7 +195,9 @@ YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 	if (pBuffer == NULL)
 		fatalerror("%s: Out of memory!", __func__);
 
-	pBuffer->pBufferRealStart = malloc(size + 1 + SAFETYMARGIN);
+	size_t capacity = size + 3; /* space for 2 newlines and terminator */
+
+	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
 
 	if (pBuffer->pBufferRealStart == NULL)
 		fatalerror("%s: Out of memory for buffer!", __func__);
@@ -182,9 +205,10 @@ YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
 	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
 	memcpy(pBuffer->pBuffer, mem, size);
-	pBuffer->nBufferSize = size;
-	pBuffer->oAtLineStart = 1;
 	pBuffer->pBuffer[size] = 0;
+	pBuffer->nBufferSize = size;
+	yy_buffer_append_newlines(pBuffer, capacity);
+	pBuffer->oAtLineStart = 1;
 
 	return pBuffer;
 }
@@ -257,7 +281,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 
 	/* This is added here to make the buffer scaling above easy to express,
 	 * while taking the newline space into account
-	 * for the `yy_buffer_append`s below.
+	 * for the yy_buffer_append_newlines() call below.
 	 */
 	capacity += 3;
 
@@ -317,23 +341,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		}
 	}
 
-	/* Add newline if file doesn't end with one */
-	if (size == 0 || pBuffer->pBufferStart[size - 1] != '\n')
-		yy_buffer_append(pBuffer, capacity, '\n');
-
-	/* Add newline if \ will eat the last newline */
-	if (pBuffer->nBufferSize >= 2) {
-		size_t pos = pBuffer->nBufferSize - 2;
-
-		/* Skip spaces and tabs */
-		while (pos > 0 && (pBuffer->pBufferStart[pos] == ' '
-				|| pBuffer->pBufferStart[pos] == '\t'))
-			pos--;
-
-		if (pBuffer->pBufferStart[pos] == '\\')
-			yy_buffer_append(pBuffer, capacity, '\n');
-	}
-
+	yy_buffer_append_newlines(pBuffer, capacity);
 	pBuffer->oAtLineStart = 1;
 	return pBuffer;
 }
