@@ -35,6 +35,7 @@ extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;
 
 extern FILE *dependfile;
+extern char *tzTargetFileName;
 
 extern bool oGeneratePhonyDeps;
 

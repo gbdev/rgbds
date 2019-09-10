@@ -48,6 +48,7 @@ uint32_t unionStart[128], unionSize[128];
 FILE *dependfile;
 
 bool oGeneratePhonyDeps;
+char *tzTargetFileName;
 
 /*
  * Option stack
@@ -272,8 +273,8 @@ static void print_usage(void)
 {
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
-"              [-M depend_file] [-MP] [-o out_file] [-p pad_value] [-r depth]\n"
-"              [-W warning] <file> ...\n"
+"              [-M depend_file] [-MP] [-MT target_file] [-o out_file]\n"
+"              [-p pad_value] [-r depth] [-W warning] <file> ...\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -309,6 +310,7 @@ int main(int argc, char *argv[])
 
 	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
+	tzTargetFileName = NULL;
 
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
@@ -364,7 +366,7 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			ep = strchr("P", optarg[0]);
+			ep = strchr("PT", optarg[0]);
 			if (!ep || !*ep || optarg[1]) {
 				dependfile = fopen(optarg, "w");
 				if (dependfile == NULL)
@@ -376,6 +378,12 @@ int main(int argc, char *argv[])
 					oGeneratePhonyDeps = true;
 					break;
 				}
+				case 'T':
+					if (optind == argc)
+						errx(1, "-MT takes a target file name argument");
+					tzTargetFileName = argv[optind];
+					optind++;
+					break;
 			}
 
 			break;
@@ -418,6 +426,9 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (tzTargetFileName == NULL)
+		tzTargetFileName = tzObjectname;
+
 	opt_SetCurrentOptions(&newopt);
 
 	DefaultOptions = CurrentOptions;
@@ -435,10 +446,10 @@ int main(int argc, char *argv[])
 		printf("Assembling %s\n", tzMainfile);
 
 	if (dependfile) {
-		if (!tzObjectname)
-			errx(1, "Dependency files can only be created if an output object file is specified.\n");
+		if (!tzTargetFileName)
+			errx(1, "Dependency files can only be created if a target file is specified with either -o or -MT.\n");
 
-		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
+		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
 
 	nStartClock = clock();
