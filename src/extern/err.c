@@ -14,13 +14,12 @@
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf(stderr, "warning");
+	fprintf(stderr, "warning: ");
 	if (fmt) {
-		fputs(": ", stderr);
 		vfprintf(stderr, fmt, ap);
+		fputs(": ", stderr);
 	}
-	putc('\n', stderr);
-	perror(0);
+	perror(NULL);
 }
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
@@ -35,12 +34,12 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 
 noreturn_ void rgbds_verr(int status, const char *fmt, va_list ap)
 {
-	fprintf(stderr, "error");
+	fprintf(stderr, "error: ");
 	if (fmt) {
-		fputs(": ", stderr);
 		vfprintf(stderr, fmt, ap);
+		fputs(": ", stderr);
 	}
-	putc('\n', stderr);
+	perror(NULL);
 	exit(status);
 }
 
