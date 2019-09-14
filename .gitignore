@@ -3,6 +3,7 @@ rgblink
 rgbfix
 rgbgfx
 *.o
+*.d
 *.exe
 .checkpatch-camelcase.*
 
