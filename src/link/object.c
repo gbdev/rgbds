@@ -1,381 +1,461 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
 
-/*
- * Here we have the routines that read an objectfile
- */
-
-#include <ctype.h>
-#include <errno.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
 
-#include "common.h"
+#include "link/object.h"
+#include "link/main.h"
+#include "link/symbol.h"
+#include "link/section.h"
+#include "link/assign.h"
 
 #include "extern/err.h"
+#include "linkdefs.h"
+#include "common.h"
 
-#include "link/assign.h"
-#include "link/mylink.h"
-#include "link/main.h"
+static struct SymbolList {
+	size_t nbSymbols;
+	struct Symbol **symbolList;
+	struct SymbolList *next;
+} *symbolLists;
 
-struct sSymbol **tSymbols;
-struct sSection *pSections;
-struct sSection *pLibSections;
-uint8_t oReadLib;
+/***** Helper functions for reading object files *****/
 
 /*
- * Read 32-bit values with the correct endianness
+ * Internal, DO NOT USE.
+ * For helper wrapper macros defined below, such as `tryReadlong`
  */
-static int32_t readlong(FILE *f)
+#define tryRead(func, type, errval, var, file, ...) \
+	do { \
+		FILE *tmpFile = file; \
+		type tmpVal = func(tmpFile); \
+		if (tmpVal == (errval)) { \
+			errx(1, __VA_ARGS__, feof(tmpFile) \
+						? "Unexpected end of file" \
+						: strerror(errno)); \
+		} \
+		var = tmpVal; \
+	} while (0)
+
+/**
+ * Reads an unsigned long (32-bit) value from a file.
+ * @param file The file to read from. This will read 4 bytes from the file.
+ * @return The value read, cast to a int64_t, or -1 on failure.
+ */
+static int64_t readlong(FILE *file)
 {
-	uint32_t r;
+	uint32_t value = 0;
 
-	r = ((uint32_t)(uint8_t)fgetc(f));
-	r |= ((uint32_t)(uint8_t)fgetc(f)) << 8;
-	r |= ((uint32_t)(uint8_t)fgetc(f)) << 16;
-	r |= ((uint32_t)(uint8_t)fgetc(f)) << 24;
+	/* Read the little-endian value byte by byte */
+	for (uint8_t shift = 0; shift < sizeof(value) * CHAR_BIT; shift += 8) {
+		int byte = getc(file);
 
-	return (int32_t)r;
+		if (byte == EOF)
+			return INT64_MAX;
+		value |= (uint8_t)byte << shift;
+	}
+	return value;
 }
 
-/*
- * Read a NULL terminated string from a file
+/**
+ * Helper macro for reading longs from a file, and errors out if it fails to.
+ * Not as a function to avoid overhead in the general case.
+ * TODO: maybe mark the condition as `unlikely`; how to do that portably?
+ * @param var The variable to stash the number into
+ * @param file The file to read from. Its position will be advanced
+ * @param ... A format string and related arguments; note that an extra string
+ *            argument is provided, the reason for failure
  */
-int32_t readasciiz(char **dest, FILE *f)
+#define tryReadlong(var, file, ...) \
+	tryRead(readlong, int64_t, INT64_MAX, var, file, __VA_ARGS__)
+
+/* There is no `readbyte`, just use `fgetc` or `getc`. */
+
+/**
+ * Helper macro for reading bytes from a file, and errors out if it fails to.
+ * Differs from `tryGetc` in that the backing function is fgetc(1).
+ * Not as a function to avoid overhead in the general case.
+ * TODO: maybe mark the condition as `unlikely`; how to do that portably?
+ * @param var The variable to stash the number into
+ * @param file The file to read from. Its position will be advanced
+ * @param ... A format string and related arguments; note that an extra string
+ *            argument is provided, the reason for failure
+ */
+#define tryFgetc(var, file, ...) \
+	tryRead(fgetc, int, EOF, var, file, __VA_ARGS__)
+
+/**
+ * Helper macro for reading bytes from a file, and errors out if it fails to.
+ * Differs from `tryGetc` in that the backing function is fgetc(1).
+ * Not as a function to avoid overhead in the general case.
+ * TODO: maybe mark the condition as `unlikely`; how to do that portably?
+ * @param var The variable to stash the number into
+ * @param file The file to read from. Its position will be advanced
+ * @param ... A format string and related arguments; note that an extra string
+ *            argument is provided, the reason for failure
+ */
+#define tryGetc(var, file, ...) \
+	tryRead(getc, int, EOF, var, file, __VA_ARGS__)
+
+/**
+ * Reads a '\0'-terminated string from a file.
+ * @param file The file to read from. The file position will be advanced.
+ * @return The string read, or NULL on failure.
+ *         If a non-NULL pointer is returned, make sure to `free` it when done!
+ */
+static char *readstr(FILE *file)
 {
-	size_t r = 0;
+	/* Default buffer size, have it close to the average string length */
+	size_t capacity = 32 / 2;
+	size_t index = -1;
+	/* Force the first iteration to allocate */
+	char *str = NULL;
 
-	size_t bufferLength = 16;
-	char *start = malloc(bufferLength);
-	char *s = start;
-
-	if (!s)
-		err(1, "%s: Couldn't allocate memory", __func__);
-
-	while (((*s++) = fgetc(f)) != 0) {
-		r += 1;
-
-		if (r >= bufferLength) {
-			bufferLength *= 2;
-			start = realloc(start, bufferLength);
-			if (!start) {
-				err(1, "%s: Couldn't allocate memory",
-				    __func__);
-			}
-			s = start + r;
+	do {
+		/* Prepare going to next char */
+		index++;
+		/* If the buffer isn't suitable to write the next char... */
+		if (index >= capacity || !str) {
+			capacity *= 2;
+			str = realloc(str, capacity);
+			/* End now in case of error */
+			if (!str)
+				return NULL;
 		}
-	}
-
-	*dest = start;
-	return (r + 1);
+		/* Read char */
+		str[index] = getc(file);
+	} while (str[index]);
+	return str;
 }
 
-/*
- * Allocate a new section and link it into the list
+/**
+ * Helper macro for reading bytes from a file, and errors out if it fails to.
+ * Not as a function to avoid overhead in the general case.
+ * TODO: maybe mark the condition as `unlikely`; how to do that portably?
+ * @param var The variable to stash the string into
+ * @param file The file to read from. Its position will be advanced
+ * @param ... A format string and related arguments; note that an extra string
+ *            argument is provided, the reason for failure
  */
-struct sSection *AllocSection(void)
+#define tryReadstr(var, file, ...) \
+	tryRead(readstr, char*, NULL, var, file, __VA_ARGS__)
+
+/***** Functions to parse object files *****/
+
+static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
 {
-	struct sSection **ppSections;
-
-	if (oReadLib == 1)
-		ppSections = &pLibSections;
-	else
-		ppSections = &pSections;
-
-	while (*ppSections)
-		ppSections = &((*ppSections)->pNext);
-
-	*ppSections = malloc(sizeof **ppSections);
-	if (!*ppSections)
-		err(1, "%s: Couldn't allocate memory", __func__);
-
-	(*ppSections)->tSymbols = tSymbols;
-	(*ppSections)->pNext = NULL;
-	(*ppSections)->pPatches = NULL;
-	(*ppSections)->oAssigned = 0;
-	return *ppSections;
-}
-
-/*
- * Read a symbol from a file
- */
-struct sSymbol *obj_ReadSymbol(FILE *f, char *tzObjectfile)
-{
-	struct sSymbol *pSym;
-
-	pSym = malloc(sizeof(*pSym));
-	if (!pSym)
-		err(1, "%s: Couldn't allocate memory", __func__);
-
-	readasciiz(&pSym->pzName, f);
-	pSym->Type = (enum eSymbolType)fgetc(f);
-
-	pSym->pzObjFileName = tzObjectfile;
-
-	if (pSym->Type != SYM_IMPORT) {
-		readasciiz(&pSym->pzFileName, f);
-		pSym->nFileLine = readlong(f);
-
-		pSym->nSectionID = readlong(f);
-		pSym->nOffset = readlong(f);
-	}
-
-	return pSym;
-}
-
-/*
- * RGB object reader routines
- */
-struct sSection *obj_ReadRGBSection(FILE *f)
-{
-	struct sSection *pSection;
-	char *pzName;
-
-	readasciiz(&pzName, f);
-	if (IsSectionNameInUse(pzName))
-		errx(1, "Section name \"%s\" is already in use.", pzName);
-
-	pSection = AllocSection();
-	pSection->pzName = pzName;
-
-	pSection->nByteSize = readlong(f);
-	pSection->Type = (enum eSectionType)fgetc(f);
-	pSection->nOrg = readlong(f);
-	pSection->nBank = readlong(f);
-	pSection->nAlign = readlong(f);
-
-	if ((options & OPT_TINY) && (pSection->Type == SECT_ROMX))
-		errx(1,  "ROMX sections can't be used with option -t.");
-
-	if ((options & OPT_CONTWRAM) && (pSection->Type == SECT_WRAMX))
-		errx(1, "WRAMX sections can't be used with options -w or -d.");
-
-	if (options & OPT_DMG_MODE) {
-		/* WRAMX sections are checked for OPT_CONTWRAM */
-		if (pSection->Type == SECT_VRAM && pSection->nBank == 1)
-			errx(1, "VRAM bank 1 can't be used with option -d.");
-	}
-
-	uint32_t maxsize = 0;
-
-	/* Verify that the section isn't too big */
-	switch (pSection->Type) {
-	case SECT_ROM0:
-		maxsize = (options & OPT_TINY) ? 0x8000 : 0x4000;
-		break;
-	case SECT_ROMX:
-		maxsize = 0x4000;
-		break;
-	case SECT_VRAM:
-	case SECT_SRAM:
-		maxsize = 0x2000;
-		break;
-	case SECT_WRAM0:
-		maxsize = (options & OPT_CONTWRAM) ? 0x2000 : 0x1000;
-		break;
-	case SECT_WRAMX:
-		maxsize = 0x1000;
-		break;
-	case SECT_OAM:
-		maxsize = 0xA0;
-		break;
-	case SECT_HRAM:
-		maxsize = 0x7F;
-		break;
-	default:
-		errx(1, "Section \"%s\" has an invalid section type.", pzName);
-		break;
-	}
-	if (pSection->nByteSize > maxsize) {
-		errx(1, "Section \"%s\" is bigger than the max size for that type: 0x%X > 0x%X",
-		     pzName, pSection->nByteSize, maxsize);
-	}
-
-	/*
-	 * If the section doesn't contain data, it is ready
-	 */
-	if ((pSection->Type != SECT_ROMX) && (pSection->Type != SECT_ROM0))
-		return pSection;
-
-	/* If there is no data to read, exit */
-	if (pSection->nByteSize == 0) {
-		/* Skip number of patches */
-		readlong(f);
-		pSection->pData = NULL;
-		return pSection;
-	}
-
-	pSection->pData = malloc(pSection->nByteSize);
-	if (!pSection->pData)
-		err(1, "%s: Couldn't allocate memory", __func__);
-
-	int32_t nNumberOfPatches;
-	struct sPatch **ppPatch, *pPatch;
-
-	if (fread(pSection->pData, sizeof(uint8_t), pSection->nByteSize, f)
-	    != pSection->nByteSize) {
-		err(1, "%s: Read error", __func__);
-	}
-
-	nNumberOfPatches = readlong(f);
-	ppPatch = &pSection->pPatches;
-
-	/*
-	 * And patches...
-	 */
-	while (nNumberOfPatches--) {
-		pPatch = malloc(sizeof(*pPatch));
-		if (!pPatch)
-			err(1, "%s: Couldn't allocate memory", __func__);
-
-		*ppPatch = pPatch;
-		readasciiz(&pPatch->pzFilename, f);
-		pPatch->nLineNo = readlong(f);
-		pPatch->nOffset = readlong(f);
-		pPatch->Type = (enum ePatchType)fgetc(f);
-		pPatch->nRPNSize = readlong(f);
-
-		if (pPatch->nRPNSize > 0) {
-			pPatch->pRPN = malloc(pPatch->nRPNSize);
-			if (!pPatch->pRPN) {
-				err(1, "%s: Couldn't allocate memory",
-				    __func__);
-			}
-
-			if (fread(pPatch->pRPN, sizeof(uint8_t),
-				  pPatch->nRPNSize, f) != pPatch->nRPNSize) {
-				errx(1, "%s: Read error", __func__);
-			}
-		} else {
-			pPatch->pRPN = NULL;
-		}
-
-		pPatch->pNext = NULL;
-		ppPatch = &(pPatch->pNext);
-	}
-
-	return pSection;
-}
-
-void obj_ReadRGB(FILE *pObjfile, char *tzObjectfile)
-{
-	struct sSection *pFirstSection;
-	int32_t nNumberOfSymbols, nNumberOfSections, i;
-
-	nNumberOfSymbols = readlong(pObjfile);
-	nNumberOfSections = readlong(pObjfile);
-
-	/* First comes the symbols */
-
-	if (nNumberOfSymbols) {
-		tSymbols = malloc(nNumberOfSymbols * sizeof(*tSymbols));
-		if (!tSymbols)
-			err(1, "%s: Couldn't allocate memory", __func__);
-
-		for (i = 0; i < nNumberOfSymbols; i += 1)
-			tSymbols[i] = obj_ReadSymbol(pObjfile, tzObjectfile);
+	tryReadstr(symbol->name, file, "%s: Cannot read symbol name: %s",
+		   fileName);
+	tryGetc(symbol->type, file, "%s: Cannot read \"%s\"'s type: %s",
+		fileName, symbol->name);
+	/* If the symbol is defined in this file, read its definition */
+	if (symbol->type != SYMTYPE_IMPORT) {
+		symbol->objFileName = fileName;
+		tryReadstr(symbol->fileName, file,
+			   "%s: Cannot read \"%s\"'s file name: %s",
+			   fileName, symbol->name);
+		tryReadlong(symbol->lineNo, file,
+			    "%s: Cannot read \"%s\"'s line number: %s",
+			    fileName, symbol->name);
+		tryReadlong(symbol->sectionID, file,
+			    "%s: Cannot read \"%s\"'s section ID: %s",
+			    fileName, symbol->name);
+		tryReadlong(symbol->offset, file,
+			    "%s: Cannot read \"%s\"'s value: %s",
+			    fileName, symbol->name);
 	} else {
-		tSymbols = NULL;
+		symbol->sectionID = -1;
+	}
+}
+
+static void readPatch(FILE *file, struct Patch *patch,
+		      char const *fileName, char const *sectName, uint32_t i)
+{
+	tryReadstr(patch->fileName, file,
+		   "%s: Unable to read \"%s\"'s patch #%u's name: %s",
+		   fileName, sectName, i);
+	tryReadlong(patch->lineNo, file,
+		    "%s: Unable to read \"%s\"'s patch #%u's line number: %s",
+		    fileName, sectName, i);
+	tryReadlong(patch->offset, file,
+		    "%s: Unable to read \"%s\"'s patch #%u's offset: %s",
+		    fileName, sectName, i);
+	tryGetc(patch->type, file,
+		"%s: Unable to read \"%s\"'s patch #%u's type: %s",
+		fileName, sectName, i);
+	tryReadlong(patch->rpnSize, file,
+		    "%s: Unable to read \"%s\"'s patch #%u's RPN size: %s",
+		    fileName, sectName, i);
+
+	uint8_t *rpnExpression =
+		malloc(sizeof(*rpnExpression) * patch->rpnSize);
+	size_t nbElementsRead = fread(rpnExpression, sizeof(*rpnExpression),
+				      patch->rpnSize, file);
+
+	if (nbElementsRead != patch->rpnSize)
+		errx(1, "%s: Cannot read \"%s\"'s patch #%u's RPN expression: %s",
+		     fileName, sectName, i);
+	patch->rpnExpression = rpnExpression;
+}
+
+static void readSection(FILE *file, struct Section *section,
+			char const *fileName)
+{
+	int32_t tmp;
+
+	tryReadstr(section->name, file, "%s: Cannot read section name: %s",
+		   fileName);
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s",
+		    fileName, section->name);
+	if (tmp < 0 || tmp > UINT16_MAX)
+		errx(1, "\"%s\"'s section size (%d) is invalid", section->name,
+		     tmp);
+	section->size = tmp;
+	tryGetc(section->type, file, "%s: Cannot read \"%s\"'s type: %s",
+		fileName, section->name);
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s",
+		    fileName, section->name);
+	section->isAddressFixed = tmp >= 0;
+	if (tmp > UINT16_MAX)
+		errx(1, "\"%s\" is too large (%d)", tmp);
+	section->org = tmp;
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s",
+		    fileName, section->name);
+	section->isBankFixed = tmp >= 0;
+	section->bank = tmp;
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment: %s",
+		    fileName, section->name);
+	section->isAlignFixed = tmp != 1;
+	section->alignMask = tmp - 1;
+
+	if (sect_HasData(section->type)) {
+		/* Ensure we never allocate 0 bytes */
+		uint8_t *data = malloc(sizeof(*data) * section->size + 1);
+
+		if (!data)
+			err(1, "%s: Unable to read \"%s\"'s data", fileName,
+			    section->name);
+		if (section->size) {
+			size_t nbElementsRead = fread(data, sizeof(*data),
+						      section->size, file);
+			if (nbElementsRead != section->size)
+				errx(1, "%s: Cannot read \"%s\"'s data: %s",
+				     fileName, section->name,
+				     feof(file) ? "Unexpected end of file"
+						: strerror(errno));
+		}
+		section->data = data;
+
+		tryReadlong(section->nbPatches, file,
+			    "%s: Cannot read \"%s\"'s number of patches: %s",
+			    fileName, section->name);
+
+		struct Patch *patches =
+			malloc(sizeof(*patches) * section->nbPatches + 1);
+
+		if (!patches)
+			err(1, "%s: Unable to read \"%s\"'s patches", fileName,
+			    section->name);
+		for (uint32_t i = 0; i < section->nbPatches; i++)
+			readPatch(file, &patches[i], fileName, section->name,
+				  i);
+		section->patches = patches;
+	}
+}
+
+static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
+{
+	uint32_t a = 0, b = section->nbSymbols;
+
+	while (a != b) {
+		uint32_t c = (a + b) / 2;
+
+		if (section->symbols[c]->offset > symbol->offset)
+			b = c;
+		else
+			a = c + 1;
 	}
 
-	/* Next we have the sections */
+	struct Symbol const *tmp = symbol;
 
-	pFirstSection = NULL;
-	while (nNumberOfSections--) {
-		struct sSection *pNewSection;
-
-		pNewSection = obj_ReadRGBSection(pObjfile);
-		pNewSection->nNumberOfSymbols = nNumberOfSymbols;
-		if (pFirstSection == NULL)
-			pFirstSection = pNewSection;
+	for (uint32_t i = a; i <= section->nbSymbols; i++) {
+		symbol = tmp;
+		tmp = section->symbols[i];
+		section->symbols[i] = symbol;
 	}
 
-	/*
-	 * Fill in the pSection entry in the symbolstructure.
-	 * This REALLY needs some cleaning up... but, hey, it works
-	 */
+	section->nbSymbols++;
+}
 
-	for (i = 0; i < nNumberOfSymbols; i += 1) {
-		struct sSection *pConvSect = pFirstSection;
+static void readRGB6File(FILE *file, char const *fileName)
+{
+	uint32_t nbSymbols;
+	uint32_t nbSections;
 
-		if ((tSymbols[i]->Type != SYM_IMPORT) &&
-		    (tSymbols[i]->nSectionID != -1)) {
-			int32_t j = 0;
+	tryReadlong(nbSymbols, file, "%s: Cannot read number of symbols: %s",
+		    fileName);
+	tryReadlong(nbSections, file, "%s: Cannot read number of sections: %s",
+		    fileName);
 
-			while (j != tSymbols[i]->nSectionID) {
-				j += 1;
-				pConvSect = pConvSect->pNext;
-			}
-			tSymbols[i]->pSection = pConvSect;
+	nbSectionsToAssign += nbSections;
+
+	/* This file's symbols, kept to link sections to them */
+	struct Symbol **fileSymbols =
+		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
+
+	if (!fileSymbols)
+		err(1, "Failed to get memory for %s's symbols", fileName);
+
+	struct SymbolList *symbolList = malloc(sizeof(*symbolList));
+
+	if (!symbolList)
+		err(1, "Failed to register %s's symbol list", fileName);
+	symbolList->symbolList = fileSymbols;
+	symbolList->nbSymbols = nbSymbols;
+	symbolList->next = symbolLists;
+	symbolLists = symbolList;
+
+	uint32_t nbSymPerSect[nbSections];
+
+	memset(nbSymPerSect, 0, sizeof(nbSymPerSect));
+
+	verbosePrint("Reading %u symbols...\n", nbSymbols);
+	for (uint32_t i = 0; i < nbSymbols; i++) {
+		/* Read symbol */
+		struct Symbol *symbol = malloc(sizeof(*symbol));
+
+		if (!symbol)
+			err(1, "%s: Couldn't create new symbol", fileName);
+		readSymbol(file, symbol, fileName);
+
+		fileSymbols[i] = symbol;
+		if (symbol->type == SYMTYPE_EXPORT)
+			sym_AddSymbol(symbol);
+		if (symbol->sectionID != -1)
+			nbSymPerSect[symbol->sectionID]++;
+	}
+
+	/* This file's sections, stored in a table to link symbols to them */
+	struct Section *fileSections[nbSections ? nbSections : 1];
+
+	verbosePrint("Reading %u sections...\n", nbSections);
+	for (uint32_t i = 0; i < nbSections; i++) {
+		/* Read section */
+		struct Section *section = malloc(sizeof(*section));
+
+		if (!section)
+			err(1, "%s: Couldn't create new section", fileName);
+		readSection(file, section, fileName);
+		section->fileSymbols = fileSymbols;
+
+		sect_AddSection(section);
+		fileSections[i] = section;
+		if (nbSymPerSect[i]) {
+			section->symbols = malloc(sizeof(*section->symbols)
+							* nbSymPerSect[i]);
+			if (!section->symbols)
+				err(1, "%s: Couldn't link to symbols");
 		} else {
-			tSymbols[i]->pSection = NULL;
+			section->symbols = NULL;
+		}
+		section->nbSymbols = 0;
+	}
+
+	/* Give symbols pointers to their sections */
+	for (uint32_t i = 0; i < nbSymbols; i++) {
+		int32_t sectionID = fileSymbols[i]->sectionID;
+
+		if (sectionID == -1) {
+			fileSymbols[i]->section = NULL;
+		} else {
+			fileSymbols[i]->section = fileSections[sectionID];
+			/* Give the section a pointer to the symbol as well */
+			linkSymToSect(fileSymbols[i], fileSections[sectionID]);
 		}
 	}
 }
 
-/*
- * The main objectfileloadroutine (phew)
- */
-void obj_ReadOpenFile(FILE *pObjfile, char *tzObjectfile)
+void obj_ReadFile(char const *fileName)
 {
-	char tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING) + 1];
+	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
 
-	if (fread(tzHeader, sizeof(char), strlen(RGBDS_OBJECT_VERSION_STRING),
-		  pObjfile) != strlen(RGBDS_OBJECT_VERSION_STRING)) {
-		errx(1, "%s: Read error", tzObjectfile);
+	if (!file) {
+		err(1, "Could not open file %s", fileName);
+		return;
 	}
 
-	tzHeader[strlen(RGBDS_OBJECT_VERSION_STRING)] = 0;
+	/* Begin by reading the magic bytes and version number */
+	uint8_t versionNumber;
+	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
+				  &versionNumber);
 
-	if (strncmp(tzHeader, RGBDS_OBJECT_VERSION_STRING,
-		    strlen(RGBDS_OBJECT_VERSION_STRING)) == 0) {
-		obj_ReadRGB(pObjfile, tzObjectfile);
-	} else {
-		int32_t i;
+	if (matchedElems != 1)
+		errx(1, "\"%s\" is not a RGBDS object file", fileName);
+	/* TODO: support other versions? */
+	if (versionNumber != 6)
+		errx(1, "\"%s\" is an incompatible version %hhu object file",
+		     fileName, versionNumber);
 
-		for (i = 0; i < strlen(RGBDS_OBJECT_VERSION_STRING); i++)
-			if (!isprint(tzHeader[i]))
-				tzHeader[i] = '?';
+	verbosePrint("Reading object file %s, version %hhu\n",
+		     fileName, versionNumber);
 
-		errx(1, "%s: Invalid file or object file version [%s]",
-		     tzObjectfile, tzHeader);
+	readRGB6File(file, fileName);
+
+	fclose(file);
+}
+
+void obj_DoSanityChecks(void)
+{
+	sect_DoSanityChecks();
+}
+
+static void freeSection(struct Section *section, void *arg)
+{
+	(void)arg;
+
+	free(section->name);
+	if (sect_HasData(section->type)) {
+		free(section->data);
+		for (int32_t i = 0; i < section->nbPatches; i++) {
+			struct Patch *patch = &section->patches[i];
+
+			free(patch->fileName);
+			free(patch->rpnExpression);
+		}
+		free(section->patches);
 	}
+	free(section->symbols);
+	free(section);
 }
 
-void obj_Readfile(char *tzObjectfile)
+static void freeSymbol(struct Symbol *symbol)
 {
-	FILE *pObjfile;
-
-	if (options & OPT_SMART_C_LINK)
-		oReadLib = 1;
-	else
-		oReadLib = 0;
-
-	pObjfile = fopen(tzObjectfile, "rb");
-	if (pObjfile == NULL)
-		err(1, "Unable to open object '%s'", tzObjectfile);
-
-	obj_ReadOpenFile(pObjfile, tzObjectfile);
-	fclose(pObjfile);
-
-	oReadLib = 0;
+	free(symbol->name);
+	if (symbol->type != SYMTYPE_IMPORT)
+		free(symbol->fileName);
+	free(symbol);
 }
 
-int32_t file_Length(FILE *f)
+void obj_Cleanup(void)
 {
-	uint32_t r, p;
+	sym_CleanupSymbols();
 
-	p = ftell(f);
-	fseek(f, 0, SEEK_END);
-	r = ftell(f);
-	fseek(f, p, SEEK_SET);
+	sect_ForEach(freeSection, NULL);
+	sect_CleanupSections();
 
-	return r;
+	struct SymbolList *list = symbolLists;
+
+	while (list) {
+		for (size_t i = 0; i < list->nbSymbols; i++)
+			freeSymbol(list->symbolList[i]);
+		free(list->symbolList);
+
+		struct SymbolList *next = list->next;
+
+		free(list);
+		list = next;
+	}
 }

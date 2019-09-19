@@ -1,344 +1,328 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
 
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
+
+#include "link/patch.h"
+#include "link/section.h"
+#include "link/symbol.h"
+
+#include "linkdefs.h"
 
 #include "extern/err.h"
 
-#include "link/assign.h"
-#include "link/main.h"
-#include "link/mylink.h"
-#include "link/symbol.h"
+/* This is an "empty"-type stack */
+struct RPNStack {
+	int32_t *buf;
+	size_t size;
+	size_t capacity;
+} stack;
 
-#define RPN_STACK_SIZE 256
-
-static struct sSection *pCurrentSection;
-static int32_t rpnstack[RPN_STACK_SIZE];
-static int32_t rpnp;
-int32_t nPC;
-
-static void rpnpush(int32_t i)
+static inline void initRPNStack(void)
 {
-	if (rpnp >= RPN_STACK_SIZE)
-		errx(1, "RPN stack overflow");
-
-	rpnstack[rpnp] = i;
-	rpnp++;
+	stack.capacity = 64;
+	stack.buf = malloc(sizeof(*stack.buf) * stack.capacity);
+	if (!stack.buf)
+		err(1, "Failed to init RPN stack");
 }
 
-static int32_t rpnpop(void)
+static inline void clearRPNStack(void)
 {
-	rpnp--;
-	return rpnstack[rpnp];
+	stack.size = 0;
 }
 
-static int32_t getsymvalue(struct sPatch *pPatch, int32_t symid)
+static void pushRPN(int32_t value)
 {
-	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
-
-	switch (tSymbol->Type) {
-	case SYM_IMPORT:
-		return sym_GetValue(pPatch, tSymbol->pzName);
-
-	case SYM_EXPORT:
-	case SYM_LOCAL:
-		if (strcmp(tSymbol->pzName, "@") == 0)
-			return nPC;
-
-		return tSymbol->nOffset + tSymbol->pSection->nOrg;
-
-	default:
-		break;
+	if (stack.size >= stack.capacity) {
+		stack.capacity *= 2;
+		stack.buf =
+			realloc(stack.buf, sizeof(*stack.buf) * stack.capacity);
+		if (!stack.buf)
+			err(1, "Failed to resize RPN stack");
 	}
 
-	errx(1, "%s: Unknown symbol type", __func__);
+	stack.buf[stack.size] = value;
+	stack.size++;
 }
 
-static int32_t getrealbankfrominternalbank(int32_t n)
+static int32_t popRPN(void)
 {
-	if (BankIndexIsWRAM0(n) || BankIndexIsROM0(n) ||
-	    BankIndexIsOAM(n)   || BankIndexIsHRAM(n)) {
-		return 0;
-	} else if (BankIndexIsROMX(n)) {
-		return n - BANK_INDEX_ROMX + 1;
-	} else if (BankIndexIsWRAMX(n)) {
-		return n - BANK_INDEX_WRAMX + 1;
-	} else if (BankIndexIsVRAM(n)) {
-		return n - BANK_INDEX_VRAM;
-	} else if (BankIndexIsSRAM(n)) {
-		return n - BANK_INDEX_SRAM;
-	}
+	if (stack.size == 0)
+		errx(1, "Internal error, RPN stack empty");
 
-	return n;
+	stack.size--;
+	return stack.buf[stack.size];
 }
 
-static int32_t getsymbank(struct sPatch *pPatch, int32_t symid)
+static inline void freeRPNStack(void)
 {
-	int32_t nBank;
-	const struct sSymbol *tSymbol = pCurrentSection->tSymbols[symid];
-
-	switch (tSymbol->Type) {
-	case SYM_IMPORT:
-		nBank = sym_GetBank(pPatch, tSymbol->pzName);
-		break;
-	case SYM_EXPORT:
-	case SYM_LOCAL:
-		nBank = tSymbol->pSection->nBank;
-		break;
-	default:
-		errx(1, "%s: Unknown symbol type", __func__);
-	}
-
-	return getrealbankfrominternalbank(nBank);
+	free(stack.buf);
 }
 
-int32_t calcrpn(struct sPatch *pPatch)
+/* RPN operators */
+
+static uint8_t getRPNByte(uint8_t const **expression, int32_t *size,
+			  char const *fileName, int32_t lineNo)
 {
-	int32_t t, size;
-	uint8_t *rpn;
-	uint8_t rpn_cmd;
-	int32_t nBank;
+	if (!(*size)--)
+		errx(1, "%s(%d): RPN expression overread", fileName, lineNo);
+	return *(*expression)++;
+}
 
-	rpnp = 0;
+static int32_t computeRPNExpr(struct Patch const *patch,
+			      struct Section const *section)
+{
+	uint8_t const *expression = patch->rpnExpression;
+	int32_t size = patch->rpnSize;
 
-	size = pPatch->nRPNSize;
-	rpn = pPatch->pRPN;
-	pPatch->oRelocPatch = 0;
+	clearRPNStack();
 
 	while (size > 0) {
-		size -= 1;
-		rpn_cmd = *rpn++;
+		enum RPNCommand command = getRPNByte(&expression, &size,
+						     patch->fileName,
+						     patch->lineNo);
+		int32_t value;
 
-		switch (rpn_cmd) {
+		/*
+		 * Friendly reminder:
+		 * Be VERY careful with two `popRPN` in the same expression.
+		 * C does not guarantee order of evaluation of operands!!
+		 * So, if there are two `popRPN` in the same expression, make
+		 * sure the operation is commutative.
+		 */
+		switch (command) {
+			struct Symbol const *symbol;
+			char const *name;
+			struct Section const *sect;
+
 		case RPN_ADD:
-			rpnpush(rpnpop() + rpnpop());
+			value = popRPN() + popRPN();
 			break;
 		case RPN_SUB:
-			t = rpnpop();
-			rpnpush(rpnpop() - t);
+			value = popRPN();
+			value = popRPN() - value;
 			break;
 		case RPN_MUL:
-			rpnpush(rpnpop() * rpnpop());
+			value = popRPN() * popRPN();
 			break;
 		case RPN_DIV:
-			t = rpnpop();
-			rpnpush(rpnpop() / t);
+			value = popRPN();
+			value = popRPN() / value;
 			break;
 		case RPN_MOD:
-			t = rpnpop();
-			rpnpush(rpnpop() % t);
+			value = popRPN();
+			value = popRPN() % value;
 			break;
 		case RPN_UNSUB:
-			rpnpush(-rpnpop());
+			value = -popRPN();
 			break;
+
 		case RPN_OR:
-			rpnpush(rpnpop() | rpnpop());
+			value = popRPN() | popRPN();
 			break;
 		case RPN_AND:
-			rpnpush(rpnpop() & rpnpop());
+			value = popRPN() & popRPN();
 			break;
 		case RPN_XOR:
-			rpnpush(rpnpop() ^ rpnpop());
+			value = popRPN() ^ popRPN();
 			break;
 		case RPN_UNNOT:
-			rpnpush(~rpnpop());
+			value = ~popRPN();
 			break;
+
 		case RPN_LOGAND:
-			rpnpush(rpnpop() && rpnpop());
+			value = popRPN();
+			value = popRPN() && value;
 			break;
 		case RPN_LOGOR:
-			rpnpush(rpnpop() || rpnpop());
+			value = popRPN();
+			value = popRPN() || value;
 			break;
 		case RPN_LOGUNNOT:
-			rpnpush(!rpnpop());
+			value = !popRPN();
 			break;
+
 		case RPN_LOGEQ:
-			rpnpush(rpnpop() == rpnpop());
+			value = popRPN() == popRPN();
 			break;
 		case RPN_LOGNE:
-			rpnpush(rpnpop() != rpnpop());
+			value = popRPN() != popRPN();
 			break;
 		case RPN_LOGGT:
-			t = rpnpop();
-			rpnpush(rpnpop() > t);
+			value = popRPN();
+			value = popRPN() > value;
 			break;
 		case RPN_LOGLT:
-			t = rpnpop();
-			rpnpush(rpnpop() < t);
+			value = popRPN();
+			value = popRPN() < value;
 			break;
 		case RPN_LOGGE:
-			t = rpnpop();
-			rpnpush(rpnpop() >= t);
+			value = popRPN();
+			value = popRPN() >= value;
 			break;
 		case RPN_LOGLE:
-			t = rpnpop();
-			rpnpush(rpnpop() <= t);
+			value = popRPN();
+			value = popRPN() <= value;
 			break;
+
+		/* FIXME: sanitize shifts */
 		case RPN_SHL:
-			t = rpnpop();
-			rpnpush(rpnpop() << t);
+			value = popRPN();
+			value = popRPN() << value;
 			break;
 		case RPN_SHR:
-			t = rpnpop();
-			rpnpush(rpnpop() >> t);
+			value = popRPN();
+			value = popRPN() >> value;
 			break;
-		case RPN_HRAM:
-			t = rpnpop();
-			rpnpush(t & 0xFF);
-			if (t < 0 || (t > 0xFF && t < 0xFF00) || t > 0xFFFF) {
-				errx(1,
-				     "%s(%ld) : Value must be in the HRAM area",
-				     pPatch->pzFilename, pPatch->nLineNo);
-			}
-			break;
-		case RPN_CONST:
-			/* constant */
-			t = (*rpn++);
-			t |= (*rpn++) << 8;
-			t |= (*rpn++) << 16;
-			t |= (*rpn++) << 24;
-			rpnpush(t);
-			size -= 4;
-			break;
-		case RPN_SYM:
-			/* symbol */
-			t = (*rpn++);
-			t |= (*rpn++) << 8;
-			t |= (*rpn++) << 16;
-			t |= (*rpn++) << 24;
-			rpnpush(getsymvalue(pPatch, t));
-			pPatch->oRelocPatch |= (getsymbank(pPatch, t) != -1);
-			size -= 4;
-			break;
+
 		case RPN_BANK_SYM:
-			/* symbol */
-			t = (*rpn++);
-			t |= (*rpn++) << 8;
-			t |= (*rpn++) << 16;
-			t |= (*rpn++) << 24;
-			rpnpush(getsymbank(pPatch, t));
-			size -= 4;
-			break;
-		case RPN_BANK_SECT:
-		{
-			char *name = (char *)rpn;
+			value = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				value |= getRPNByte(&expression, &size,
+						    patch->fileName,
+						    patch->lineNo) << shift;
 
-			struct sSection *pSection = GetSectionByName(name);
+			symbol = section->fileSymbols[value];
 
-			if (pSection == NULL) {
-				errx(1,
-				     "%s(%ld) : Requested BANK() of section \"%s\", which was not found.\n",
-				     pPatch->pzFilename, pPatch->nLineNo,
-				     name);
+			/* If the symbol is defined elsewhere... */
+			if (symbol->type == SYMTYPE_IMPORT) {
+				symbol = sym_GetSymbol(symbol->name);
+				if (!symbol)
+					errx(1, "%s(%d): Unknown symbol \"%s\"",
+					     patch->fileName, patch->lineNo,
+					     symbol->name);
 			}
 
-			nBank = pSection->nBank;
-			rpnpush(getrealbankfrominternalbank(nBank));
-
-			int len = strlen(name);
-
-			size -= len + 1;
-			rpn += len + 1;
+			value = symbol->section->bank;
 			break;
-		}
+
+		case RPN_BANK_SECT:
+			name = (char const *)expression;
+			while (getRPNByte(&expression, &size, patch->fileName,
+					  patch->lineNo))
+				;
+
+			sect = sect_GetSection(name);
+
+			if (!sect)
+				errx(1, "%s(%d): Requested BANK() of section \"%s\", which was not found",
+				     patch->fileName, patch->lineNo, name);
+
+			value = sect->bank;
+			break;
+
 		case RPN_BANK_SELF:
-			nBank = pCurrentSection->nBank;
-			rpnpush(getrealbankfrominternalbank(nBank));
+			value = section->bank;
 			break;
-		default:
-			errx(1, "%s: Invalid command %d\n", __func__,
-			     rpn_cmd);
+
+		case RPN_HRAM:
+			value = popRPN();
+			if (value < 0
+			 || (value > 0xFF && value < 0xFF00)
+			 || value > 0xFFFF)
+				errx(1, "%s(%d): Value %d is not in HRAM range",
+				     patch->fileName, patch->lineNo, value);
+			value &= 0xFF;
+			break;
+
+		case RPN_CONST:
+			value = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				value |= getRPNByte(&expression, &size,
+						    patch->fileName,
+						    patch->lineNo) << shift;
+			break;
+
+		case RPN_SYM:
+			value = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				value |= getRPNByte(&expression, &size,
+						    patch->fileName,
+						    patch->lineNo) << shift;
+
+			symbol = section->fileSymbols[value];
+
+			/* If the symbol is defined elsewhere... */
+			if (symbol->type == SYMTYPE_IMPORT) {
+				symbol = sym_GetSymbol(symbol->name);
+				if (!symbol)
+					errx(1, "%s(%d): Unknown symbol \"%s\"",
+					     patch->fileName, patch->lineNo,
+					     symbol->name);
+			}
+
+			if (!strcmp(symbol->name, "@")) {
+				value = section->org + patch->offset;
+			} else {
+				value = symbol->value;
+				/* Symbols attached to sections have offsets */
+				if (symbol->section)
+					value += symbol->section->org;
+			}
 			break;
 		}
+
+		pushRPN(value);
 	}
-	return rpnpop();
+
+	if (stack.size > 1)
+		warnx("%s(%d): RPN stack has %lu entries on exit, not 1",
+		      patch->fileName, patch->lineNo, stack.size);
+
+	return popRPN();
 }
 
-void Patch(void)
+static void applyPatches(struct Section *section, void *arg)
 {
-	struct sSection *pSect;
+	(void)arg;
 
-	pSect = pSections;
-	while (pSect) {
-		struct sPatch *pPatch;
+	if (!sect_HasData(section->type))
+		return;
 
-		pCurrentSection = pSect;
-		pPatch = pSect->pPatches;
-		while (pPatch) {
-			int32_t t;
-			int32_t nPatchOrg;
+	verbosePrint("Patching section \"%s\"...\n", section->name);
+	for (uint32_t patchID = 0; patchID < section->nbPatches; patchID++) {
+		struct Patch *patch = &section->patches[patchID];
+		int32_t value = computeRPNExpr(patch, section);
 
-			nPC = pSect->nOrg + pPatch->nOffset;
-			t = calcrpn(pPatch);
-			switch (pPatch->Type) {
-			case PATCH_BYTE:
-				if (t >= -128 && t <= 255) {
-					t &= 0xFF;
-					pSect->pData[pPatch->nOffset] =
-						(uint8_t)t;
-				} else {
-					errx(1,
-					     "%s(%ld) : Value must be 8-bit",
-					     pPatch->pzFilename,
-					     pPatch->nLineNo);
-				}
-				break;
-			case PATCH_WORD_L:
-				if (t >= -32768 && t <= 65535) {
-					t &= 0xFFFF;
-					pSect->pData[pPatch->nOffset] =
-						t & 0xFF;
-					pSect->pData[pPatch->nOffset + 1] =
-						(t >> 8) & 0xFF;
-				} else {
-					errx(1,
-					     "%s(%ld) : Value must be 16-bit",
-					     pPatch->pzFilename,
-					     pPatch->nLineNo);
-				}
-				break;
-			case PATCH_LONG_L:
-				pSect->pData[pPatch->nOffset + 0] = t & 0xFF;
-				pSect->pData[pPatch->nOffset + 1] =
-					(t >> 8) & 0xFF;
-				pSect->pData[pPatch->nOffset + 2] =
-					(t >> 16) & 0xFF;
-				pSect->pData[pPatch->nOffset + 3] =
-					(t >> 24) & 0xFF;
-				break;
-			case PATCH_BYTE_JR:
-				/* Calculate absolute address of the patch */
-				nPatchOrg = pSect->nOrg + pPatch->nOffset;
+		if (patch->type == PATCHTYPE_JR) {
+			/* `jr` is quite unlike the others... */
+			uint16_t address = section->org + patch->offset;
+			/* Target is relative to the byte *after* the operand */
+			int32_t offset = value - (address + 1);
 
-				/* t contains the destination of the jump */
-				t = (int16_t)((t & 0xFFFF) - (nPatchOrg + 1));
+			if (offset < -128 || offset > 127)
+				errx(1, "%s(%d): jr target out of reach (%d)",
+				     patch->fileName, patch->lineNo, offset);
+			section->data[patch->offset] = offset & 0xFF;
+		} else {
+			/* Patch a certain number of bytes */
+			struct {
+				uint8_t size;
+				int32_t min;
+				int32_t max;
+			} const types[] = {
+				[PATCHTYPE_BYTE] = {1,      -128,       255},
+				[PATCHTYPE_WORD] = {2,    -32768,     65536},
+				[PATCHTYPE_LONG] = {4, INT32_MIN, INT32_MAX}
+			};
 
-				if (t >= -128 && t <= 127) {
-					t &= 0xFF;
-					pSect->pData[pPatch->nOffset] =
-						(uint8_t)t;
-				} else {
-					errx(1,
-					     "%s(%ld) : Value must be 8-bit",
-					     pPatch->pzFilename,
-					     pPatch->nLineNo);
-				}
-				break;
-			default:
-				errx(1, "%s: Internal error.", __func__);
+			if (value < types[patch->type].min
+			 || value > types[patch->type].max)
+				errx(1, "%s(%d): Value %#x%s is not %u-bit",
+				     patch->fileName, patch->lineNo, value,
+				     value < 0 ? " (maybe negative?)" : "",
+				     types[patch->type].size * 8);
+			for (uint8_t i = 0; i < types[patch->type].size; i++) {
+				section->data[patch->offset + i] = value & 0xFF;
+				value >>= 8;
 			}
-
-			pPatch = pPatch->pNext;
 		}
-
-		pSect = pSect->pNext;
 	}
+}
+
+void patch_ApplyPatches(void)
+{
+	initRPNStack();
+	sect_ForEach(applyPatches, NULL);
+	freeRPNStack();
 }

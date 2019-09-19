@@ -9,7 +9,7 @@
 #ifndef RGBDS_LINKDEFS_H
 #define RGBDS_LINKDEFS_H
 
-enum eRpnData {
+enum RPNCommand {
 	RPN_ADD		= 0x00,
 	RPN_SUB		= 0x01,
 	RPN_MUL		= 0x02,
@@ -46,28 +46,43 @@ enum eRpnData {
 	RPN_SYM		= 0x81
 };
 
-enum eSectionType {
-	SECT_WRAM0	= 0x00,
-	SECT_VRAM	= 0x01,
-	SECT_ROMX	= 0x02,
-	SECT_ROM0	= 0x03,
-	SECT_HRAM	= 0x04,
-	SECT_WRAMX	= 0x05,
-	SECT_SRAM	= 0x06,
-	SECT_OAM	= 0x07
+enum SectionType {
+	SECTTYPE_WRAM0,
+	SECTTYPE_VRAM,
+	SECTTYPE_ROMX,
+	SECTTYPE_ROM0,
+	SECTTYPE_HRAM,
+	SECTTYPE_WRAMX,
+	SECTTYPE_SRAM,
+	SECTTYPE_OAM,
+
+	SECTTYPE_INVALID
 };
 
-enum eSymbolType {
-	SYM_LOCAL	= 0x00,
-	SYM_IMPORT	= 0x01,
-	SYM_EXPORT	= 0x02
+enum SymbolType {
+	SYMTYPE_LOCAL,
+	SYMTYPE_IMPORT,
+	SYMTYPE_EXPORT
 };
 
-enum ePatchType {
-	PATCH_BYTE	= 0x00,
-	PATCH_WORD_L	= 0x01,
-	PATCH_LONG_L	= 0x02,
-	PATCH_BYTE_JR	= 0x03
+enum PatchType {
+	PATCHTYPE_BYTE,
+	PATCHTYPE_WORD,
+	PATCHTYPE_LONG,
+	PATCHTYPE_JR,
+
+	PATCHTYPE_INVALID
 };
+
+/**
+ * Tells whether a section has data in its object file definition,
+ * depending on type.
+ * @param type The section's type
+ * @return `true` if the section's definition includes data
+ */
+static inline bool sect_HasData(enum SectionType type)
+{
+	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
+}
 
 #endif /* RGBDS_LINKDEFS_H */

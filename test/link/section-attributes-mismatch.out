@@ -1,2 +1,1 @@
-error: Different attributes for "sec" in source and linkerscript
-
+error: Linker script contradicts "sec"'s alignment

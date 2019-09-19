@@ -32,10 +32,11 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 WARNFLAGS	:= -Wall
 
 # Overridable CFLAGS
-CFLAGS		:= -g
+CFLAGS		:= -g -O0
 # Non-overridable CFLAGS
-REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
-		   -Iinclude -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c11 -D_POSIX_C_SOURCE=200809L \
+		   -D_DEFAULT_SOURCE -Iinclude \
+		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 # Overridable LDFLAGS
 LDFLAGS		:=
 # Non-overridable LDFLAGS
@@ -73,20 +74,16 @@ src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
 
 rgblink_obj := \
 	src/link/assign.o \
-	src/link/lexer.o \
-	src/link/library.o \
 	src/link/main.o \
-	src/link/mapfile.o \
 	src/link/object.o \
 	src/link/output.o \
 	src/link/patch.o \
-	src/link/parser.o \
 	src/link/script.o \
+	src/link/section.o \
 	src/link/symbol.o \
 	src/extern/err.o \
+	src/hashmap.o \
 	src/version.o
-
-src/link/lexer.o: src/link/parser.h
 
 rgbfix_obj := \
 	src/fix/main.o \
