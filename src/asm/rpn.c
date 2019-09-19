@@ -182,17 +182,25 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 		return;
 	}
 
-	if (!sym_isConstant(tzSym)) {
+	if (sym_isConstant(tzSym)) {
+		yyerror("BANK argument must be a relocatable identifier");
+	} else {
 		rpn_Init(expr);
 		sym_Ref(tzSym);
-		expr->isReloc = 1;
 		pushbyte(expr, RPN_BANK_SYM);
-		while (*tzSym)
-			pushbyte(expr, *tzSym++);
+		for (unsigned int i = 0; tzSym[i]; i++)
+			pushbyte(expr, tzSym[i]);
 		pushbyte(expr, 0);
 		expr->nRPNPatchSize += 5;
-	} else {
-		yyerror("BANK argument must be a relocatable identifier");
+
+		/* If the symbol didn't exist, `sym_Ref` created it */
+		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
+
+		if (pSymbol->pSection && pSymbol->pSection->nBank != -1)
+			/* Symbol's section is known and bank's fixed */
+			expr->nVal = pSymbol->pSection->nBank;
+		else
+			expr->isReloc = 1;
 	}
 }
 
@@ -200,11 +208,16 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 {
 	rpn_Init(expr);
 
-	/*
-	 * This symbol is not really relocatable, but this makes the assembler
-	 * write this expression as a RPN patch to the object file.
-	 */
-	expr->isReloc = 1;
+	struct Section *pSection = out_FindSectionByName(tzSectionName);
+
+	if (pSection && pSection->nBank != -1)
+		expr->nVal = pSection->nBank;
+	else
+		/*
+		 * This is not really relocatable, but this makes the assembler
+		 * write this expression as a RPN patch to the object file.
+		 */
+		expr->isReloc = 1;
 
 	pushbyte(expr, RPN_BANK_SECT);
 	expr->nRPNPatchSize++;
