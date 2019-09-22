@@ -1,4 +1,4 @@
-SECTION "All instructions", ROM0
+SECTION "All instructions", ROM0[0]
 
     ; 8-bit Arithmetic and Logic Instructions
 
