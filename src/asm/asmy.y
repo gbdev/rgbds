@@ -274,14 +274,13 @@ static void copymacro(void)
 	src = pCurrentBuffer->pBuffer;
 	ulNewMacroSize = len;
 
-	tzNewMacro = (char *)malloc(ulNewMacroSize+2);
+	tzNewMacro = (char *)malloc(ulNewMacroSize + 1);
 	if (tzNewMacro == NULL)
 		fatalerror("Not enough memory for MACRO definition.");
 
 	uint32_t i;
 
-	tzNewMacro[ulNewMacroSize] = '\n';
-	tzNewMacro[ulNewMacroSize+1] = 0;
+	tzNewMacro[ulNewMacroSize] = 0;
 	for (i = 0; i < ulNewMacroSize; i += 1) {
 		tzNewMacro[i] = src[i];
 		if (src[i] == '\n')
