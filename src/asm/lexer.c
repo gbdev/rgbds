@@ -269,6 +269,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	/* Convert all line endings to LF and spaces */
 
 	char *mem = pBuffer->pBuffer;
+	int32_t lineCount = 0;
 
 	while (*mem) {
 		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
@@ -279,13 +280,20 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 			 || ((mem[0] == '\r') && (mem[1] == '\n'))) {
 				*mem++ = ' ';
 				*mem++ = '\n';
+				lineCount++;
 			/* LF and CR */
 			} else if ((mem[0] == '\n') || (mem[0] == '\r')) {
 				*mem++ = '\n';
+				lineCount++;
 			} else {
 				mem++;
 			}
 		}
+	}
+
+	if (mem != pBuffer->pBuffer + size) {
+		nLineNo = lineCount + 1;
+		fatalerror("Found null character");
 	}
 
 	/* Remove comments */
