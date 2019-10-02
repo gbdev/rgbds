@@ -240,7 +240,7 @@ static void writeSymBank(struct SortedSections const *bankSections)
 			minSectList = sectList.addr < zlSectList.addr
 								? &sectList
 								: &zlSectList;
-		} else if (sectList.sect) {
+		} else if (sectList.sections) {
 			sectList.sym   = sectList.sect->symbols[sectList.i];
 			sectList.addr   =
 				sectList.sym->offset   + sectList.sect->org;
