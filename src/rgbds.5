@@ -91,8 +91,8 @@ REPT NumberOfSections
                   ; decide (floating bank). This field is only valid for ROMX,
                   ; VRAM, WRAMX and SRAM sections.
 
-    LONG    Align ; Alignment of this section (expressed as number of low bits
-                  ; to leave as 0). -1 if not defined.
+    LONG    Align ; Alignment of this section, expressed as 1 << align. 1 if
+                  ; not specified.
 
     IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data.
 
