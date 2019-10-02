@@ -104,6 +104,15 @@ static inline void assignSection(struct Section *section,
 	out_AddSection(section);
 }
 
+/**
+ * Checks whether a given location is suitable for placing a given section
+ * This checks not only that the location has enough room for the section, but
+ * also that the constraints (alignment...) are respected.
+ * @param section The section to be placed
+ * @param freeSpace The candidate free space to place the section into
+ * @param location The location to attempt placing the section at
+ * @return True if the location is suitable, false otherwise.
+ */
 static bool isLocationSuitable(struct Section const *section,
 			       struct FreeSpace const *freeSpace,
 			       struct MemoryLocation const *location)
@@ -118,6 +127,13 @@ static bool isLocationSuitable(struct Section const *section,
 					<= freeSpace->address + freeSpace->size;
 }
 
+/**
+ * Finds a suitable location to place a section at.
+ * @param section The section to be placed
+ * @param location A pointer to a location struct that will be filled
+ * @return A pointer to the free space encompassing the location, or NULL if
+ *         none was found
+ */
 static struct FreeSpace *getPlacement(struct Section const *section,
 				      struct MemoryLocation *location)
 {
@@ -177,9 +193,16 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 		location->bank++;
 		if (location->bank > bankranges[section->type][1])
 			return NULL;
+#undef BANK_INDEX
 	}
 }
 
+/**
+ * Places a section in a suitable location, or error out if it fails to.
+ * @warning Due to the implemented algorithm, this should be called with
+ *          sections of decreasing size.
+ * @param section The section to place
+ */
 static void placeSection(struct Section *section)
 {
 	struct MemoryLocation location;
@@ -293,6 +316,12 @@ struct UnassignedSection {
 static struct UnassignedSection *unassignedSections[1 << 3] = {0};
 static struct UnassignedSection *sections;
 
+/**
+ * Categorize a section depending on how constrained it is
+ * This is so the most-constrained sections are placed first
+ * @param section The section to categorize
+ * @param arg Callback arg, unused
+ */
 static void categorizeSection(struct Section *section, void *arg)
 {
 	(void)arg;

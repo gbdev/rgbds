@@ -14,8 +14,15 @@
 
 #include "link/section.h"
 
+/**
+ * Registers a section for output.
+ * @param section The section to add
+ */
 void out_AddSection(struct Section const *section);
 
+/**
+ * Writes all output (bin, sym, map) files.
+ */
 void out_WriteFiles(void);
 
 #endif /* RGBDS_LINK_OUTPUT_H */

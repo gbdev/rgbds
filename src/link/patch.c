@@ -69,6 +69,12 @@ static uint8_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
+/**
+ * Compute a patch's value from its RPN string.
+ * @param patch The patch to compute the value of
+ * @param section The section the patch is contained in
+ * @return The patch's value
+ */
 static int32_t computeRPNExpr(struct Patch const *patch,
 			      struct Section const *section)
 {
@@ -272,6 +278,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 	return popRPN();
 }
 
+/**
+ * Applies all of a section's patches
+ * @param section The section to patch
+ * @param arg Ignored callback arg
+ */
 static void applyPatches(struct Section *section, void *arg)
 {
 	(void)arg;

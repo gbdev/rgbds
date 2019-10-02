@@ -73,6 +73,9 @@ void out_AddSection(struct Section const *section)
 	*ptr = newSection;
 }
 
+/**
+ * Performs sanity checks on the overlay file.
+ */
 static void checkOverlay(void)
 {
 	if (!overlayFile)
@@ -87,6 +90,9 @@ static void checkOverlay(void)
 
 	if (overlaySize % 0x4000)
 		errx(1, "Overlay file must have a size multiple of 0x4000");
+
+	/* Reset back to beginning */
+	fseek(overlayFile, 0, SEEK_SET);
 
 	uint32_t nbOverlayBanks = overlaySize / 0x4000 - 1;
 
@@ -104,6 +110,12 @@ static void checkOverlay(void)
 	}
 }
 
+/**
+ * Write a ROM bank's sections to the output file.
+ * @param bankSections The bank's sections, ordered by increasing address
+ * @param baseOffset The address of the bank's first byte in GB address space
+ * @param size The size of the bank
+ */
 static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		      uint16_t size)
 {
@@ -141,6 +153,9 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 	}
 }
 
+/**
+ * Writes a ROM file to the output.
+ */
 static void writeROM(void)
 {
 	checkOverlay();
@@ -164,6 +179,12 @@ static void writeROM(void)
 	}
 }
 
+/**
+ * Get the lowest section by address out of the two
+ * @param s1 One choice
+ * @param s2 The other
+ * @return The lowest section of the two, or the non-NULL one if applicable
+ */
 static struct SortedSection const **nextSection(struct SortedSection const **s1,
 						struct SortedSection const **s2)
 {
@@ -175,6 +196,10 @@ static struct SortedSection const **nextSection(struct SortedSection const **s1,
 	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
+/**
+ * Write a bank's contents to the sym file
+ * @param bankSections The bank's sections
+ */
 static void writeSymBank(struct SortedSections const *bankSections)
 {
 	if (!symFile)
@@ -236,6 +261,10 @@ static void writeSymBank(struct SortedSections const *bankSections)
 #undef sect
 }
 
+/**
+ * Write a bank's contents to the map file
+ * @param bankSections The bank's sections
+ */
 static void writeMapBank(struct SortedSections const *sectList,
 			 enum SectionType type, uint32_t bank)
 {
@@ -276,6 +305,9 @@ static void writeMapBank(struct SortedSections const *sectList,
 			slack == 1 ? "" : "s");
 }
 
+/**
+ * Writes the sym and/or map files, if applicable.
+ */
 static void writeSymAndMap(void)
 {
 	if (!symFile && !mapFile)

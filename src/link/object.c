@@ -145,6 +145,12 @@ static char *readstr(FILE *file)
 
 /***** Functions to parse object files *****/
 
+/**
+ * Reads a RGB6 symbol from a file.
+ * @param file The file to read from
+ * @param symbol The struct to fill
+ * @param fileName The filename to report in errors
+ */
 static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
 {
 	tryReadstr(symbol->name, file, "%s: Cannot read symbol name: %s",
@@ -171,6 +177,13 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
 	}
 }
 
+/**
+ * Reads a RGB6 patch from a file.
+ * @param file The file to read from
+ * @param patch The struct to fill
+ * @param fileName The filename to report in errors
+ * @param i The number of the patch to report in errors
+ */
 static void readPatch(FILE *file, struct Patch *patch,
 		      char const *fileName, char const *sectName, uint32_t i)
 {
@@ -201,6 +214,12 @@ static void readPatch(FILE *file, struct Patch *patch,
 	patch->rpnExpression = rpnExpression;
 }
 
+/**
+ * Reads a RGB6 section from a file.
+ * @param file The file to read from
+ * @param section The struct to fill
+ * @param fileName The filename to report in errors
+ */
 static void readSection(FILE *file, struct Section *section,
 			char const *fileName)
 {
@@ -266,6 +285,11 @@ static void readSection(FILE *file, struct Section *section,
 	}
 }
 
+/**
+ * Links a symbol to a section, keeping the section's symbol list sorted.
+ * @param symbol The symbol to link
+ * @param section The section to link
+ */
 static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 {
 	uint32_t a = 0, b = section->nbSymbols;
@@ -290,6 +314,11 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 	section->nbSymbols++;
 }
 
+/**
+ * Reads a RGB6 object file.
+ * @param file The file to read from
+ * @param fileName The filename to report in errors
+ */
 static void readRGB6File(FILE *file, char const *fileName)
 {
 	uint32_t nbSymbols;
@@ -378,6 +407,10 @@ static void readRGB6File(FILE *file, char const *fileName)
 	}
 }
 
+/**
+ * Reads an object file of any supported format
+ * @param fileName The filename to report for errors
+ */
 void obj_ReadFile(char const *fileName)
 {
 	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;

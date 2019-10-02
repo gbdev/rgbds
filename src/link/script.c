@@ -21,6 +21,13 @@ static inline bool isNewline(int c)
 	return c == '\r' || c == '\n';
 }
 
+/**
+ * Try parsing a number, in base 16 if it begins with a dollar,
+ * in base 10 otherwise
+ * @param str The number to parse
+ * @param number A pointer where the number will be written to
+ * @return True if parsing was successful, false otherwise
+ */
 static bool tryParseNumber(char const *str, uint32_t *number)
 {
 	static char const digits[] = {
