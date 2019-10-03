@@ -239,12 +239,13 @@ static void opt_ParseDefines(void)
  */
 void verror(const char *fmt, va_list args)
 {
-	fprintf(stderr, "ERROR: ");
+	fputs("ERROR: ", stderr);
 	fstk_Dump();
-	fprintf(stderr, ":\n    ");
+	fputs(":\n    ", stderr);
 	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-	nErrors += 1;
+	fputc('\n', stderr);
+	fstk_DumpStringExpansions();
+	nErrors++;
 }
 
 void yyerror(const char *fmt, ...)
@@ -276,11 +277,12 @@ void warning(const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	fprintf(stderr, "warning: ");
+	fputs("warning: ", stderr);
 	fstk_Dump();
-	fprintf(stderr, ":\n    ");
+	fputs(":\n    ", stderr);
 	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
+	fputc('\n', stderr);
+	fstk_DumpStringExpansions();
 
 	va_end(args);
 }

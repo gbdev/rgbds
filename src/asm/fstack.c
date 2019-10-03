@@ -263,6 +263,20 @@ void fstk_Dump(void)
 }
 
 /*
+ * Dump the string expansion stack to stderr
+ */
+void fstk_DumpStringExpansions(void)
+{
+	const struct sStringExpansionPos *pExpansion = pCurrentStringExpansion;
+
+	while (pExpansion) {
+		fprintf(stderr, "while expanding symbol \"%s\"\n",
+			pExpansion->tzName);
+		pExpansion = pExpansion->pParent;
+	}
+}
+
+/*
  * Extra includepath stuff
  */
 void fstk_AddIncludePath(char *s)
