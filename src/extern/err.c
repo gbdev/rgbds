@@ -14,7 +14,7 @@
 
 void rgbds_vwarn(const char *fmt, va_list ap)
 {
-	fprintf(stderr, "warning: ");
+	fputs("warning: ", stderr);
 	if (fmt) {
 		vfprintf(stderr, fmt, ap);
 		fputs(": ", stderr);
@@ -24,7 +24,7 @@ void rgbds_vwarn(const char *fmt, va_list ap)
 
 void rgbds_vwarnx(const char *fmt, va_list ap)
 {
-	fprintf(stderr, "warning");
+	fputs("warning", stderr);
 	if (fmt) {
 		fputs(": ", stderr);
 		vfprintf(stderr, fmt, ap);
@@ -34,7 +34,7 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 
 noreturn_ void rgbds_verr(int status, const char *fmt, va_list ap)
 {
-	fprintf(stderr, "error: ");
+	fputs("error: ", stderr);
 	if (fmt) {
 		vfprintf(stderr, fmt, ap);
 		fputs(": ", stderr);
@@ -45,7 +45,7 @@ noreturn_ void rgbds_verr(int status, const char *fmt, va_list ap)
 
 noreturn_ void rgbds_verrx(int status, const char *fmt, va_list ap)
 {
-	fprintf(stderr, "error");
+	fputs("error", stderr);
 	if (fmt) {
 		fputs(": ", stderr);
 		vfprintf(stderr, fmt, ap);
