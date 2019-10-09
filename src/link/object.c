@@ -127,6 +127,8 @@ static char *readstr(FILE *file)
 		}
 		/* Read char */
 		str[index] = getc(file);
+		if (str[index] == EOF)
+			return NULL;
 	} while (str[index]);
 	return str;
 }
