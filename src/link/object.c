@@ -117,6 +117,7 @@ static char *readstr(FILE *file)
 	do {
 		/* Prepare going to next char */
 		index++;
+
 		/* If the buffer isn't suitable to write the next char... */
 		if (index >= capacity || !str) {
 			capacity *= 2;
@@ -125,10 +126,13 @@ static char *readstr(FILE *file)
 			if (!str)
 				return NULL;
 		}
+
 		/* Read char */
-		str[index] = getc(file);
-		if (str[index] == EOF)
+		int byte = getc(file);
+
+		if (byte == EOF)
 			return NULL;
+		str[index] = byte;
 	} while (str[index]);
 	return str;
 }
