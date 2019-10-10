@@ -1,4 +1,6 @@
 #!/bin/sh
+export LC_ALL=C
+
 otemp=$(mktemp)
 gbtemp=$(mktemp)
 gbtemp2=$(mktemp)
