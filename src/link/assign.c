@@ -193,6 +193,9 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 			/* Try again with the new location/free space combo */
 		}
 
+		if (section->isBankFixed)
+			return NULL;
+
 		/* Try again in the next bank */
 		location->bank++;
 		if (location->bank > bankranges[section->type][1])
