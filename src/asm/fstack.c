@@ -262,6 +262,38 @@ void fstk_Dump(void)
 	fprintf(stderr, "%s(%d)", tzCurrentFileName, nLineNo);
 }
 
+void fstk_DumpToStr(char *buf, size_t buflen)
+{
+	const struct sContext *pLastFile = pFileStack;
+	int retcode;
+	size_t len = buflen;
+
+	while (pLastFile) {
+		retcode = snprintf(&buf[buflen - len], len, "%s(%d) -> ",
+				   pLastFile->tzFileName, pLastFile->nLine);
+		if (retcode < 0)
+			fatalerror("Failed to dump file stack to string: %s",
+				   strerror(errno));
+		else if (retcode >= len)
+			len = 0;
+		else
+			len -= retcode;
+		pLastFile = pLastFile->pNext;
+	}
+
+	retcode = snprintf(&buf[buflen - len], len, "%s", tzCurrentFileName);
+	if (retcode < 0)
+		fatalerror("Failed to dump file stack to string: %s",
+			   strerror(errno));
+	else if (retcode >= len)
+		len = 0;
+	else
+		len -= retcode;
+
+	if (!len)
+		warning("File stack dump too long, got truncated");
+}
+
 /*
  * Dump the string expansion stack to stderr
  */
