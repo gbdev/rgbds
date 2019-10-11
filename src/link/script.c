@@ -11,6 +11,8 @@
 
 #include "extern/err.h"
 
+FILE *linkerScript;
+
 static inline bool isWhiteSpace(int c)
 {
 	return c == ' ' || c == '\t';

@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -22,16 +24,29 @@
 #include "extern/err.h"
 #include "version.h"
 
-bool isDmgMode;     /* -d */
-FILE *linkerScript; /* -l */
-FILE *mapFile;      /* -m */
-FILE *symFile;      /* -n */
-FILE *overlayFile;  /* -O */
-FILE *outputFile;   /* -o */
-uint8_t padValue;   /* -p */
-bool is32kMode;     /* -t */
-bool beVerbose;     /* -v */
-bool isWRA0Mode;    /* -w */
+bool isDmgMode;               /* -d */
+char const *linkerScriptName; /* -l */
+char const *mapFileName;      /* -m */
+char const *symFileName;      /* -n */
+char const *overlayFileName;  /* -O */
+char const *outputFileName;   /* -o */
+uint8_t padValue;             /* -p */
+bool is32kMode;               /* -t */
+bool beVerbose;               /* -v */
+bool isWRA0Mode;              /* -w */
+
+FILE *openFile(char const *fileName, char const *mode)
+{
+	if (!fileName)
+		return NULL;
+
+	FILE *file = fopen(fileName, mode);
+
+	if (!file)
+		err(1, "Could not open file \"%s\"", fileName);
+
+	return file;
+}
 
 /**
  * Prints the program's usage to stdout.
@@ -43,41 +58,11 @@ static void printUsage(void)
 }
 
 /**
- * Helper function for `main`'s argument parsing.
- * For use with options which take a file name to operate on
- * If the file fails to be opened, an error message will be printed,
- * and the function `exit`s.
- * @param mode The mode to open the file in
- * @param failureMessage A format string that will be printed on failure.
- *                       A single (string) argument is given, the file name.
- * @return What `fopen` returned; this cannot be NULL.
- */
-static FILE *openArgFile(char const *mode, char const *failureMessage)
-{
-	FILE *file = fopen(optarg, mode);
-
-	if (!file)
-		err(1, failureMessage, optarg);
-	return file;
-}
-
-/**
  * Cleans up what has been done
  * Mostly here to please tools such as `valgrind` so actual errors can be seen
  */
 static void cleanup(void)
 {
-	if (linkerScript)
-		fclose(linkerScript);
-	if (mapFile)
-		fclose(mapFile);
-	if (symFile)
-		fclose(symFile);
-	if (overlayFile)
-		fclose(overlayFile);
-	if (outputFile)
-		fclose(outputFile);
-
 	obj_Cleanup();
 }
 
@@ -95,19 +80,19 @@ int main(int argc, char *argv[])
 			isWRA0Mode = true;
 			break;
 		case 'l':
-			linkerScript = openArgFile("r", "Could not open linker script file \"%s\"");
+			linkerScriptName = optarg;
 			break;
 		case 'm':
-			mapFile = openArgFile("w", "Could not open map file \"%s\"");
+			mapFileName = optarg;
 			break;
 		case 'n':
-			symFile = openArgFile("w", "Could not open sym file \"%s\"");
+			symFileName = optarg;
 			break;
 		case 'O':
-			overlayFile = openArgFile("r+b", "Could not open overlay file \"%s\"");
+			overlayFileName = optarg;
 			break;
 		case 'o':
-			outputFile = openArgFile("wb", "Could not open output file \"%s\"");
+			outputFileName = optarg;
 			break;
 		case 'p':
 			value = strtoul(optarg, &endptr, 0);

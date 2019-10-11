@@ -16,11 +16,11 @@
 
 /* Variables related to CLI options */
 extern bool isDmgMode;
-extern FILE *linkerScript;
-extern FILE *mapFile;
-extern FILE *symFile;
-extern FILE *overlayFile;
-extern FILE *outputFile;
+extern char const *linkerScriptName;
+extern char const *mapFileName;
+extern char const *symFileName;
+extern char const *overlayFileName;
+extern char const *outputFileName;
 extern uint8_t padValue;
 extern bool is32kMode;
 extern bool beVerbose;
@@ -31,5 +31,19 @@ extern bool isWRA0Mode;
 					if (beVerbose) \
 						fprintf(stderr, __VA_ARGS__); \
 				} while (0)
+
+/**
+ * Opens a file if specified, and aborts on error.
+ * @param fileName The name of the file to open; if NULL, no file will be opened
+ * @param mode The mode to open the file with
+ * @return A pointer to a valid FILE structure, or NULL if fileName was NULL
+ */
+FILE *openFile(char const *fileName, char const *mode);
+
+#define closeFile(file) do { \
+				FILE *tmp = file; \
+				if (tmp) \
+					fclose(tmp); \
+			} while (0)
 
 #endif /* RGBDS_LINK_MAIN_H */

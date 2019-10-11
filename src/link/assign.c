@@ -58,9 +58,11 @@ static void initFreeSpace(void)
  */
 static void processLinkerScript(void)
 {
-	if (!linkerScript)
+	if (!linkerScriptName)
 		return;
 	verbosePrint("Reading linker script...\n");
+
+	linkerScript = openFile(linkerScriptName, "r");
 
 	/* Modify all sections according to the linker script */
 	struct SectionPlacement *placement;
@@ -86,6 +88,8 @@ static void processLinkerScript(void)
 		section->bank = placement->bank;
 		section->isAlignFixed = false; /* The alignment is satisfied */
 	}
+
+	fclose(linkerScript);
 }
 
 /**
@@ -385,7 +389,7 @@ void assign_AssignSections(void)
 
 	/* Overlaying requires only fully-constrained sections */
 	verbosePrint("Assigning other sections...\n");
-	if (overlayFile)
+	if (overlayFileName)
 		errx(1, "All sections must be fixed when using an overlay file; %u, %sn't",
 		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
 

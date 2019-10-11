@@ -12,6 +12,8 @@
 
 #include <stdint.h>
 
+extern FILE *linkerScript;
+
 struct SectionPlacement {
 	struct Section *section;
 	uint16_t org;
