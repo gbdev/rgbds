@@ -195,6 +195,8 @@ static struct LinkerScriptToken const *nextToken(void)
 		}
 
 		token.type = TOKEN_INVALID;
+
+		/* Try to match a command */
 		for (enum LinkerScriptCommand i = 0; i < COMMAND_INVALID; i++) {
 			if (!strcmp(commands[i], str)) {
 				token.type = TOKEN_COMMAND;
@@ -204,6 +206,7 @@ static struct LinkerScriptToken const *nextToken(void)
 		}
 
 		if (token.type == TOKEN_INVALID) {
+			/* Try to match a bank specifier */
 			for (enum SectionType type = 0; type < SECTTYPE_INVALID;
 			     type++) {
 				if (!strcmp(typeNames[type], str)) {
@@ -248,8 +251,8 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 	}
 
 	if (arg < *pc)
-		errx(1, "Linkerscript line %u: `%s` cannot be used to go backwards",
-		     lineNo, commands[command]);
+		errx(1, "%s(%u): `%s` cannot be used to go backwards",
+		     linkerScriptName, lineNo, commands[command]);
 	*pc = arg;
 }
 
@@ -296,13 +299,13 @@ struct SectionPlacement *script_NextSection(void)
 
 		if (type != SECTTYPE_INVALID) {
 			if (curaddr[type][bankID] > endaddr(type) + 1)
-				errx(1, "Linkerscript line %u: PC overflowed (%u > %u)",
-				     lineNo, curaddr[type][bankID],
-				     endaddr(type));
+				errx(1, "%s(%u): PC overflowed (%u > %u)",
+				     linkerScriptName, lineNo,
+				     curaddr[type][bankID], endaddr(type));
 			if (curaddr[type][bankID] < startaddr[type])
-				errx(1, "Linkerscript line %u: PC underflowed (%u < %u)",
-				     lineNo, curaddr[type][bankID],
-				     startaddr[type]);
+				errx(1, "%s(%u): PC underflowed (%u < %u)",
+				     linkerScriptName, lineNo,
+				     curaddr[type][bankID], startaddr[type]);
 		}
 
 		switch (parserState) {
@@ -318,8 +321,8 @@ struct SectionPlacement *script_NextSection(void)
 				return NULL;
 
 			case TOKEN_NUMBER:
-				errx(1, "Linkerscript line %u: stray number",
-				     lineNo);
+				errx(1, "%s(%u): stray number",
+				     linkerScriptName, lineNo);
 
 			case TOKEN_NEWLINE:
 				lineNo++;
@@ -329,8 +332,8 @@ struct SectionPlacement *script_NextSection(void)
 				parserState = PARSER_LINEEND;
 
 				if (type == SECTTYPE_INVALID)
-					errx(1, "Linkerscript line %u: Didn't specify a location before the section",
-					     lineNo);
+					errx(1, "%s(%u): Didn't specify a location before the section",
+					     linkerScriptName, lineNo);
 
 				section.section =
 					sect_GetSection(token->attr.string);
@@ -360,11 +363,11 @@ struct SectionPlacement *script_NextSection(void)
 
 				if (tokType == TOKEN_COMMAND) {
 					if (type == SECTTYPE_INVALID)
-						errx(1, "Linkerscript line %u: Didn't specify a location before the command",
-						     lineNo);
+						errx(1, "%s(%u): Didn't specify a location before the command",
+						     linkerScriptName, lineNo);
 					if (!hasArg)
-						errx(1, "Linkerscript line %u: Command specified without an argument",
-						     lineNo);
+						errx(1, "%s(%u): Command specified without an argument",
+						     linkerScriptName, lineNo);
 
 					processCommand(attr.command, arg,
 						       &curaddr[type][bankID]);
@@ -375,18 +378,18 @@ struct SectionPlacement *script_NextSection(void)
 					 * specifying the number is optional.
 					 */
 					if (!hasArg && nbbanks(type) != 1)
-						errx(1, "Linkerscript line %u: Didn't specify a bank number",
-						     lineNo);
+						errx(1, "%s(%u): Didn't specify a bank number",
+						     linkerScriptName, lineNo);
 					else if (!hasArg)
 						arg = bankranges[type][0];
 					else if (arg < bankranges[type][0])
-						errx(1, "Linkerscript line %u: specified bank number is too low (%u < %u)",
-						     lineNo, arg,
-						     bankranges[type][0]);
+						errx(1, "%s(%u): specified bank number is too low (%u < %u)",
+						     linkerScriptName, lineNo,
+						     arg, bankranges[type][0]);
 					else if (arg > bankranges[type][1])
-						errx(1, "Linkerscript line %u: specified bank number is too high (%u > %u)",
-						     lineNo, arg,
-						     bankranges[type][1]);
+						errx(1, "%s(%u): specified bank number is too high (%u > %u)",
+						     linkerScriptName, lineNo,
+						     arg, bankranges[type][1]);
 					bank = arg;
 					bankID = arg - bankranges[type][0];
 				}
