@@ -13,6 +13,60 @@
 
 FILE *linkerScript;
 
+static uint32_t lineNo;
+
+static struct {
+	FILE *file;
+	uint32_t lineNo;
+	char const *name;
+} *fileStack;
+
+static uint32_t fileStackSize;
+static uint32_t fileStackIndex;
+
+static void pushFile(char const *newFileName)
+{
+	if (fileStackIndex == UINT32_MAX)
+		errx(1, "%s(%u): INCLUDE recursion limit reached",
+		     linkerScriptName, lineNo);
+
+	if (fileStackIndex == fileStackSize) {
+		if (!fileStackSize) /* Init file stack */
+			fileStackSize = 4;
+		fileStackSize *= 2;
+		fileStack = realloc(fileStack,
+				    sizeof(*fileStack) * fileStackSize);
+		if (!fileStack)
+			err(1, "%s(%u): Internal INCLUDE error",
+			    linkerScriptName, lineNo);
+	}
+
+	fileStack[fileStackIndex].file = linkerScript;
+	fileStack[fileStackIndex].lineNo = lineNo;
+	fileStack[fileStackIndex].name = linkerScriptName;
+	fileStackIndex++;
+
+	linkerScript = fopen(newFileName, "r");
+	if (!linkerScript)
+		err(1, "%s(%u): Could not open \"%s\"",
+		    linkerScriptName, lineNo, newFileName);
+	lineNo = 1;
+	linkerScriptName = newFileName;
+}
+
+static bool popFile(void)
+{
+	if (!fileStackIndex)
+		return false;
+
+	fileStackIndex--;
+	linkerScript = fileStack[fileStackIndex].file;
+	lineNo = fileStack[fileStackIndex].lineNo;
+	linkerScriptName = fileStack[fileStackIndex].name;
+
+	return true;
+}
+
 static inline bool isWhiteSpace(int c)
 {
 	return c == ' ' || c == '\t';
@@ -69,11 +123,21 @@ enum LinkerScriptTokenType {
 	TOKEN_NEWLINE,
 	TOKEN_COMMAND,
 	TOKEN_BANK,
+	TOKEN_INCLUDE,
 	TOKEN_NUMBER,
-	TOKEN_SECTION,
+	TOKEN_STRING,
 	TOKEN_EOF,
 
 	TOKEN_INVALID
+};
+
+char const *tokenTypes[] = {
+	[TOKEN_NEWLINE] = "newline",
+	[TOKEN_COMMAND] = "command",
+	[TOKEN_BANK]    = "bank command",
+	[TOKEN_NUMBER]  = "number",
+	[TOKEN_STRING]  = "string",
+	[TOKEN_EOF]     = "end of file"
 };
 
 enum LinkerScriptCommand {
@@ -98,8 +162,6 @@ static char const * const commands[] = {
 	[COMMAND_ALIGN] = "ALIGN"
 };
 
-static uint32_t lineNo;
-
 static int readChar(FILE *file)
 {
 	int curchar = getc_unlocked(file);
@@ -115,7 +177,7 @@ static struct LinkerScriptToken const *nextToken(void)
 	int curchar;
 
 	/* If the token has a string, make sure to avoid leaking it */
-	if (token.type == TOKEN_SECTION)
+	if (token.type == TOKEN_STRING)
 		free(token.attr.string);
 
 	/* Skip initial whitespace... */
@@ -140,8 +202,8 @@ static struct LinkerScriptToken const *nextToken(void)
 		if (curchar == '\r')
 			readChar(linkerScript); /* Read and discard LF */
 	} else if (curchar == '"') {
-		/* If we have a string start, this is a section name */
-		token.type = TOKEN_SECTION;
+		/* If we have a string start, this is a string */
+		token.type = TOKEN_STRING;
 		token.attr.string = NULL; /* Force initial alloc */
 
 		size_t size = 0;
@@ -160,7 +222,7 @@ static struct LinkerScriptToken const *nextToken(void)
 				token.attr.string = realloc(token.attr.string,
 							    capacity);
 				if (!token.attr.string)
-					err(1, "%s: Failed to allocate memory for section name",
+					err(1, "%s: Failed to allocate memory for string",
 					    __func__);
 			}
 			token.attr.string[size++] = curchar;
@@ -218,6 +280,12 @@ static struct LinkerScriptToken const *nextToken(void)
 		}
 
 		if (token.type == TOKEN_INVALID) {
+			/* Try to match an include token */
+			if (!strcmp("INCLUDE", str))
+				token.type = TOKEN_INCLUDE;
+		}
+
+		if (token.type == TOKEN_INVALID) {
 			/* None of the strings matched, do we have a number? */
 			if (tryParseNumber(str, &token.attr.number))
 				token.type = TOKEN_NUMBER;
@@ -259,6 +327,7 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 enum LinkerScriptParserState {
 	PARSER_FIRSTTIME,
 	PARSER_LINESTART,
+	PARSER_INCLUDE, /* After an INCLUDE token */
 	PARSER_LINEEND
 };
 
@@ -318,17 +387,22 @@ struct SectionPlacement *script_NextSection(void)
 				trap_;
 
 			case TOKEN_EOF:
-				return NULL;
+				if (!popFile())
+					return NULL;
+				parserState = PARSER_LINEEND;
+				break;
 
 			case TOKEN_NUMBER:
-				errx(1, "%s(%u): stray number",
-				     linkerScriptName, lineNo);
+				errx(1, "%s(%u): stray number \"%u\"",
+				     linkerScriptName, lineNo,
+				     token->attr.number);
 
 			case TOKEN_NEWLINE:
 				lineNo++;
 				break;
 
-			case TOKEN_SECTION:
+			/* A stray string is a section name */
+			case TOKEN_STRING:
 				parserState = PARSER_LINEEND;
 
 				if (type == SECTTYPE_INVALID)
@@ -398,18 +472,36 @@ struct SectionPlacement *script_NextSection(void)
 				if (token->type != TOKEN_NUMBER)
 					goto lineend;
 				break;
+
+			case TOKEN_INCLUDE:
+				parserState = PARSER_INCLUDE;
+				break;
 			}
+			break;
+
+		case PARSER_INCLUDE:
+			if (token->type != TOKEN_STRING)
+				errx(1, "%s(%u): Expected a file name after INCLUDE",
+				     linkerScriptName, lineNo);
+
+			/* Switch to that file */
+			pushFile(token->attr.string);
+
+			parserState = PARSER_LINESTART;
 			break;
 
 		case PARSER_LINEEND:
 lineend:
-			if (token->type == TOKEN_EOF)
-				return NULL;
-			else if (token->type != TOKEN_NEWLINE)
-				errx(1, "Linkerscript line %u: Unexpected token at the end",
-				     lineNo);
 			lineNo++;
 			parserState = PARSER_LINESTART;
+			if (token->type == TOKEN_EOF) {
+				if (!popFile())
+					return NULL;
+				parserState = PARSER_LINEEND;
+			} else if (token->type != TOKEN_NEWLINE)
+				errx(1, "%s(%u): Unexpected %s at the end of the line",
+				     linkerScriptName, lineNo,
+				     tokenTypes[token->type]);
 			break;
 		}
 	}
