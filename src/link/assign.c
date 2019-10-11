@@ -166,11 +166,11 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 				 * one candidate block per bank; if we already
 				 * reached it, give up.
 				 */
-				if (location->address == section->org)
+				if (location->address < section->org)
+					location->address = section->org;
+				else
 					/* Try again in next bank */
 					space = NULL;
-				else
-					location->address = section->org;
 			} else if (section->isAlignFixed) {
 				/* Move to next aligned location */
 				location->address &= ~section->alignMask;
