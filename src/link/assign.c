@@ -366,13 +366,13 @@ void assign_AssignSections(void)
 	if (!sections)
 		err(1, "Failed to allocate memory for section assignment");
 
-	nbSectionsToAssign = 0;
-	sect_ForEach(categorizeSection, NULL);
-
 	initFreeSpace();
 
 	/* Process linker script, if any */
 	processLinkerScript();
+
+	nbSectionsToAssign = 0;
+	sect_ForEach(categorizeSection, NULL);
 
 	/** Place sections, starting with the most constrained **/
 
