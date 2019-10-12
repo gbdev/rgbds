@@ -167,7 +167,8 @@ static int readChar(FILE *file)
 	int curchar = getc_unlocked(file);
 
 	if (curchar == EOF && ferror(file))
-		err(1, "%s: Unexpected error reading linker script", __func__);
+		err(1, "%s(%u): Unexpected error in %s", linkerScriptName,
+		    lineNo, __func__);
 	return curchar;
 }
 
@@ -212,7 +213,8 @@ static struct LinkerScriptToken const *nextToken(void)
 		do {
 			curchar = readChar(linkerScript);
 			if (curchar == EOF || isNewline(curchar))
-				errx(1, "Line %u: Unterminated string", lineNo);
+				errx(1, "%s(%u): Unterminated string",
+				     linkerScriptName, lineNo);
 			else if (curchar == '"')
 				/* Quotes force a string termination */
 				curchar = '\0';
@@ -290,8 +292,8 @@ static struct LinkerScriptToken const *nextToken(void)
 			if (tryParseNumber(str, &token.attr.number))
 				token.type = TOKEN_NUMBER;
 			else
-				errx(1, "Unknown token \"%s\" on linker script line %u",
-				     str, lineNo);
+				errx(1, "%s(%u): Unknown token \"%s\"",
+				     linkerScriptName, lineNo, str);
 		}
 
 		free(str);
@@ -368,11 +370,11 @@ struct SectionPlacement *script_NextSection(void)
 
 		if (type != SECTTYPE_INVALID) {
 			if (curaddr[type][bankID] > endaddr(type) + 1)
-				errx(1, "%s(%u): PC overflowed (%u > %u)",
+				errx(1, "%s(%u): PC overflowed ($%x > $%x)",
 				     linkerScriptName, lineNo,
 				     curaddr[type][bankID], endaddr(type));
 			if (curaddr[type][bankID] < startaddr[type])
-				errx(1, "%s(%u): PC underflowed (%u < %u)",
+				errx(1, "%s(%u): PC underflowed ($%x < $%x)",
 				     linkerScriptName, lineNo,
 				     curaddr[type][bankID], startaddr[type]);
 		}
