@@ -192,11 +192,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 			/* If the symbol is defined elsewhere... */
 			if (symbol->type == SYMTYPE_IMPORT) {
-				symbol = sym_GetSymbol(symbol->name);
-				if (!symbol)
+				struct Symbol const *symbolDefinition =
+						sym_GetSymbol(symbol->name);
+				if (!symbolDefinition)
 					errx(1, "%s(%d): Unknown symbol \"%s\"",
 					     patch->fileName, patch->lineNo,
 					     symbol->name);
+				symbol = symbolDefinition;
 			}
 
 			value = symbol->section->bank;
@@ -250,11 +252,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 			/* If the symbol is defined elsewhere... */
 			if (symbol->type == SYMTYPE_IMPORT) {
-				symbol = sym_GetSymbol(symbol->name);
-				if (!symbol)
+				struct Symbol const *symbolDefinition =
+						sym_GetSymbol(symbol->name);
+				if (!symbolDefinition)
 					errx(1, "%s(%d): Unknown symbol \"%s\"",
 					     patch->fileName, patch->lineNo,
 					     symbol->name);
+				symbol = symbolDefinition;
 			}
 
 			if (!strcmp(symbol->name, "@")) {
