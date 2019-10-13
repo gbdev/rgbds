@@ -370,11 +370,11 @@ struct SectionPlacement *script_NextSection(void)
 
 		if (type != SECTTYPE_INVALID) {
 			if (curaddr[type][bankID] > endaddr(type) + 1)
-				errx(1, "%s(%u): PC overflowed ($%x > $%x)",
-				     linkerScriptName, lineNo,
+				errx(1, "%s(%u): Sections would extend past the end of %s ($%04hx > $%04hx)",
+				     linkerScriptName, lineNo, typeNames[type],
 				     curaddr[type][bankID], endaddr(type));
 			if (curaddr[type][bankID] < startaddr[type])
-				errx(1, "%s(%u): PC underflowed ($%x < $%x)",
+				errx(1, "%s(%u): PC underflowed ($%04hx < $%04hx)",
 				     linkerScriptName, lineNo,
 				     curaddr[type][bankID], startaddr[type]);
 		}
