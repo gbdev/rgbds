@@ -37,9 +37,9 @@ for i in *.asm; do
 			sed "s/$subst/-/g" ${i%.asm}.err > $desired_errput
 		fi
 
-		diff -u $desired_output $output
+		diff -u --strip-trailing-cr $desired_output $output
 		rc=$(($? || $rc))
-		diff -u $desired_errput $errput
+		diff -u --strip-trailing-cr $desired_errput $errput
 		rc=$(($? || $rc))
 
 		bin=${i%.asm}.out.bin
@@ -48,7 +48,7 @@ for i in *.asm; do
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
 			hexdump -C $output > $input && mv $input $output
 			hexdump -C $bin > $input
-			diff -u $input $output
+			diff -u --strip-trailing-cr $input $output
 			rc=$(($? || $rc))
 		fi
 	done
