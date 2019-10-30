@@ -66,8 +66,8 @@ struct RawIndexedImage {
 	uint8_t **data;
 	struct RGBColor *palette;
 	int num_colors;
-	int width;
-	int height;
+	unsigned int width;
+	unsigned int height;
 };
 
 struct GBImage {
