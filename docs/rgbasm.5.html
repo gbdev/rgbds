@@ -2,9 +2,9 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    This file is part of RGBDS.
-
+  
    Copyright (c) 2017-2018, Antonio Nino Diaz and RGBDS contributors.
-
+  
    SPDX-License-Identifier: MIT
    -->
 <head>
@@ -426,11 +426,11 @@ PUSHA EQUS &quot;push af\npush bc\npush de\npush hl\n&quot;
     <p class="Pp">Note that a colon (:) following the label-name is not allowed.
         String equates can't be exported or imported.</p>
     <p class="Pp"><b class="Sy">Important note</b>: An EQUS can be expanded to a
-        string that contains another EQUS and it will be expanded as well. This
-        means that, if you aren't careful, you may trap the assembler into an
-        infinite loop if there's a circular dependency in the expansions. Also,
-        a MACRO can have inside an EQUS which references the same MACRO, which
-        has the same problem.</p>
+        string that contains another EQUS and it will be expanded as well. If
+        this creates an infinite loop, RGBASM will error out once a certain
+        depth is reached. See the -r command-line option. Also, a MACRO can have
+        inside an EQUS which references the same MACRO, which has the same
+        problem.</p>
   </dd>
   <dt><b class="Sy">MACRO</b></dt>
   <dd>
@@ -534,16 +534,16 @@ LoopyMacro MyVars,54
         you can only use the first 9 like this. If you want to use the rest, you
         need to use the keyword <code class="Ic">SHIFT</code>.</p>
     <p class="Pp">Line continuations work as usual inside macros or lists of
-        arguments of macros. Strings, however, are a bit trickier. The following
-        example shows how to use strings as arguments for a macro:</p>
+        arguments of macros. However, some characters need to be escaped, as in
+        the following example:</p>
     <div class="Bd Pp Bd-indent">
     <pre>
 PrintMacro : MACRO
     PRINTT \1
 ENDM
 
-    PrintMacro STRCAT(\&quot;Hello\&quot;\,  \
-                      \&quot; world\\n\&quot;)
+    PrintMacro STRCAT(&quot;Hello&quot;\,  \
+                      &quot; world\\n&quot;)
     </pre>
     </div>
     <p class="Pp"><code class="Ic">SHIFT</code> is a special command only
@@ -1189,55 +1189,88 @@ The most basic string expression is any number of characters contained in double
     This will examine the type of the symbol and insert its value accordingly.
     If symbol is a string symbol, the symbols value is simply copied. If it's a
     numeric symbol, the value is converted to hexadecimal notation and inserted
-    as a string.</p>
-<p class="Pp">HINT: The <b class="Sy">{symbol}</b> construct can also be used
-    outside strings. The symbol's value is again inserted as a string. This is
-    just a short way of doing &#x201C;{symbol}&#x201D;.</p>
-<p class="Pp">Whenever the macro-language expects a string you can actually use
-    a string expression. This consists of one or more of these function (yes,
-    you can nest them). Note that some of these functions actually return an
-    integer and can be used as part of an integer expression!</p>
-<table class="Bl-column">
+    as a string with a dollar prepended.</p>
+<p class="Pp">It's possible to change the way numeric symbols are converted by
+    specifying a print type like so: <b class="Sy">{d:symbol}</b> Valid print
+    types are:</p>
+<table class="Bl-column Bd-indent">
   <tr>
-    <td><b class="Sy">Name</b></td>
-    <td><b class="Sy">Operation</b></td>
+    <td><b class="Sy">Print type</b></td>
+    <td><b class="Sy">Format</b></td>
+    <td><b class="Sy">Example</b></td>
   </tr>
   <tr>
-    <td><code class="Fn">STRLEN</code>(<var class="Fa">string</var>)</td>
-    <td>Returns the number of characters in string</td>
+    <td><a class="permalink" href="#d"><code class="Li" id="d">d</code></a></td>
+    <td>Decimal</td>
+    <td>42</td>
   </tr>
   <tr>
-    <td><code class="Fn">STRCAT</code>(<var class="Fa">str1</var>,
-      <var class="Fa">str2</var>)</td>
-    <td>Appends str2 to str1.</td>
+    <td><a class="permalink" href="#x"><code class="Li" id="x">x</code></a></td>
+    <td>Lowercase hexadecimal</td>
+    <td>2a</td>
   </tr>
   <tr>
-    <td><code class="Fn">STRCMP</code>(<var class="Fa">str1</var>,
-      <var class="Fa">str2</var>)</td>
-    <td>Returns negative if str1 is alphabetically lower than str2, zero if they
-      match, positive if str1 is greater than str2.</td>
+    <td><a class="permalink" href="#X"><code class="Li" id="X">X</code></a></td>
+    <td>Uppercase hexadecimal</td>
+    <td>2A</td>
   </tr>
   <tr>
-    <td><code class="Fn">STRIN</code>(<var class="Fa">str1</var>,
-      <var class="Fa">str2</var>)</td>
-    <td>Returns the position of str2 in str1 or zero if it's not present (first
-      character is position 1).</td>
-  </tr>
-  <tr>
-    <td><code class="Fn">STRSUB</code>(<var class="Fa">str</var>,
-      <var class="Fa">pos</var>, <var class="Fa">len</var>)</td>
-    <td>Returns a substring from str starting at pos (first character is
-      position 1) and with len characters.</td>
-  </tr>
-  <tr>
-    <td><code class="Fn">STRUPR</code>(<var class="Fa">str</var>)</td>
-    <td>Converts all characters in str to capitals and returns the new
-      string.</td>
-  </tr>
-  <tr>
-    <td><code class="Fn">STRLWR</code>(<var class="Fa">str</var>)</td>
-    <td>Converts all characters in str to lower case and returns the new
-      string.</td>
+    <td><a class="permalink" href="#b"><code class="Li" id="b">b</code></a></td>
+    <td>Binary</td>
+    <td>101010
+    <p class="Pp">Note that print types should only be used with numeric values,
+        not strings.</p>
+    <p class="Pp">HINT: The <b class="Sy">{symbol}</b> construct can also be
+        used outside strings. The symbol's value is again inserted as a string.
+        This is just a short way of doing &#x201C;{symbol}&#x201D;.</p>
+    <p class="Pp">Whenever the macro-language expects a string you can actually
+        use a string expression. This consists of one or more of these function
+        (yes, you can nest them). Note that some of these functions actually
+        return an integer and can be used as part of an integer expression!</p>
+    <table class="Bl-column">
+      <tr>
+        <td><b class="Sy">Name</b></td>
+        <td><b class="Sy">Operation</b></td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRLEN</code>(<var class="Fa">string</var>)</td>
+        <td>Returns the number of characters in string</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRCAT</code>(<var class="Fa">str1</var>,
+          <var class="Fa">str2</var>)</td>
+        <td>Appends str2 to str1.</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRCMP</code>(<var class="Fa">str1</var>,
+          <var class="Fa">str2</var>)</td>
+        <td>Returns negative if str1 is alphabetically lower than str2, zero if
+          they match, positive if str1 is greater than str2.</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRIN</code>(<var class="Fa">str1</var>,
+          <var class="Fa">str2</var>)</td>
+        <td>Returns the position of str2 in str1 or zero if it's not present
+          (first character is position 1).</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRSUB</code>(<var class="Fa">str</var>,
+          <var class="Fa">pos</var>, <var class="Fa">len</var>)</td>
+        <td>Returns a substring from str starting at pos (first character is
+          position 1) and with len characters.</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRUPR</code>(<var class="Fa">str</var>)</td>
+        <td>Converts all characters in str to capitals and returns the new
+          string.</td>
+      </tr>
+      <tr>
+        <td><code class="Fn">STRLWR</code>(<var class="Fa">str</var>)</td>
+        <td>Converts all characters in str to lower case and returns the new
+          string.</td>
+      </tr>
+    </table>
+    </td>
   </tr>
 </table>
 </section>
@@ -1258,10 +1291,48 @@ CHARMAP &quot;&amp;iacute&quot;, 20
 CHARMAP &quot;A&quot;, 128
 </pre>
 </div>
+<p class="Pp">It is possible to create multiple character maps and then switch
+    between them as desired. This can be used to encode debug information in
+    ASCII and use a different encoding for other purposes, for example.
+    Initially, there is one character map called <b class="Sy">main</b> and it
+    is automatically selected as the current character map from the beginning.
+    There is also a character map stack that can be used to save and restore
+    which character map is currently active.</p>
+<table class="Bl-column">
+  <tr>
+    <td><b class="Sy">Command</b></td>
+    <td><b class="Sy">Meaning</b></td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#NEWCHARMAP"><code class="Ic" id="NEWCHARMAP">NEWCHARMAP</code></a>
+      <var class="Ar">name</var></td>
+    <td>Creates a new, empty character map called
+      <code class="Ic">name</code>.</td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#NEWCHARMAP_2"><code class="Ic" id="NEWCHARMAP_2">NEWCHARMAP</code></a>
+      <var class="Ar">name</var>, <var class="Ar">basename</var></td>
+    <td>Creates a new character map called <code class="Ic">name</code>, copied
+      from character map <code class="Ic">basename</code>.</td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#SETCHARMAP"><code class="Ic" id="SETCHARMAP">SETCHARMAP</code></a>
+      <var class="Ar">name</var></td>
+    <td>Switch to character map <code class="Ic">name</code>.</td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#PUSHC"><code class="Ic" id="PUSHC">PUSHC</code></a></td>
+    <td>Push the current character map onto the stack.</td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#POPC"><code class="Ic" id="POPC">POPC</code></a></td>
+    <td>Pop a character map off the stack and switch to it.</td>
+  </tr>
+</table>
 <p class="Pp"><b class="Sy">Note:</b> Character maps affect all strings in the
-    file from the point in which they are defined. This means that any string
-    that the code may want to print as debug information will also be affected
-    by it.</p>
+    file from the point in which they are defined, until switching to a
+    different character map. This means that any string that the code may want
+    to print as debug information will also be affected by it.</p>
 <p class="Pp"><b class="Sy">Note:</b> The output value of a mapping can be 0. If
     this happens, the assembler will treat this as the end of the string and the
     rest of it will be trimmed.</p>

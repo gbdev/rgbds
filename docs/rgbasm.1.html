@@ -2,9 +2,9 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    This file is part of RGBDS.
-
-   Copyright (c) 2010-2018, Anthony J. Bentley and RGBDS contributors.
-
+  
+   Copyright (c) 2010-2019, Anthony J. Bentley and RGBDS contributors.
+  
    SPDX-License-Identifier: MIT
    -->
 <head>
@@ -39,6 +39,7 @@
       [<code class="Fl">-M</code> <var class="Ar">dependfile</var>]
       [<code class="Fl">-o</code> <var class="Ar">outfile</var>]
       [<code class="Fl">-p</code> <var class="Ar">pad_value</var>]
+      [<code class="Fl">-r</code> <var class="Ar">recursion_depth</var>]
       <var class="Ar">file</var></td>
   </tr>
 </table>
@@ -46,7 +47,9 @@
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 The <code class="Nm">rgbasm</code> program creates an object file from an
-  assembly source file. Its arguments are as follows:
+  assembly source file. The input <var class="Ar">file</var> can be a file path,
+  or <code class="Cm">-</code> denoting <code class="Cm">stdin</code>. Its
+  arguments are as follows:
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#b"><code class="Fl" id="b">-b</code></a>
     <var class="Ar">chars</var></dt>
@@ -85,6 +88,10 @@ The <code class="Nm">rgbasm</code> program creates an object file from an
   <dt><a class="permalink" href="#p"><code class="Fl" id="p">-p</code></a>
     <var class="Ar">pad_value</var></dt>
   <dd>When padding an image, pad with this value. The default is 0x00.</dd>
+  <dt><a class="permalink" href="#r"><code class="Fl" id="r">-r</code></a>
+    <var class="Ar">recursion_depth</var></dt>
+  <dd>Specifies the recursion depth at which RGBASM will assume being in an
+      infinite loop.</dd>
   <dt><a class="permalink" href="#V"><code class="Fl" id="V">-V</code></a></dt>
   <dd>Print the version of the program and exit.</dd>
   <dt><a class="permalink" href="#v"><code class="Fl" id="v">-v</code></a></dt>
@@ -95,10 +102,17 @@ The <code class="Nm">rgbasm</code> program creates an object file from an
 </section>
 <section class="Sh">
 <h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-Assembling a basic source file is simple:
+You can assemble a source file in two ways. Straight forward way:
 <div class="Bd Pp Bd-indent">
 <pre>
 $ rgbasm -o bar.o foo.asm
+</pre>
+</div>
+<p class="Pp">Pipes way:</p>
+<div class="Bd Pp Bd-indent">
+<pre>
+$ cat foo.asm | rgbasm -o bar.o -
+$ rgbasm -o bar.o - &lt; foo.asm
 </pre>
 </div>
 <p class="Pp">The resulting object file is not yet a usable ROM image &#x2014;
@@ -122,7 +136,7 @@ $ rgbasm -o bar.o foo.asm
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">February 24, 2018</td>
+    <td class="foot-date">July 8, 2019</td>
     <td class="foot-os">RGBDS Manual</td>
   </tr>
 </table>
