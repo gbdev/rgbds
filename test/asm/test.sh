@@ -1,4 +1,6 @@
 #!/bin/sh
+export LC_ALL=C
+
 o=$(mktemp)
 gb=$(mktemp)
 before=$(mktemp)
