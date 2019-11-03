@@ -13,7 +13,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm rgbgfx
-.Op Fl ADfFhmPTuVv
+.Op Fl ACDfFhmPTuVv
 .Op Fl o Ar outfile
 .Op Fl a Ar attrmap
 .Op Fl d Ar depth
@@ -65,6 +65,9 @@ the file extension, and appending
 Use the color curve of the Game Boy Color when generating palettes.
 .It Fl D
 Debug features are enabled.
+.It Fl d Ar depth
+The bit depth of the output image (either 1 or 2).
+By default, the bit depth is 2 (two bits per pixel).
 .It Fl f
 Fix the input PNG file to be a correctly indexed image.
 .It Fl F
@@ -72,9 +75,6 @@ Same as
 .Fl f ,
 but additionally, the supplied command line parameters are saved within the PNG
 and will be loaded and automatically used next time.
-.It Fl d Ar depth
-The bit depth of the output image (either 1 or 2).
-By default, the bit depth is 2 (two bits per pixel).
 .It Fl h
 Lay out tiles horizontally rather than vertically.
 .It Fl m
