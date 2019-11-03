@@ -395,7 +395,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 
 	pPatch = allocpatch();
 	pPatch->nType = type;
-	strcpy(pPatch->tzFilename, tzCurrentFileName);
+	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nLine = nLineNo;
 	pPatch->nOffset = nPC;
 
