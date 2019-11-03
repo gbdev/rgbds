@@ -666,6 +666,11 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 				i += length;
 			else
 				fatalerror("Illegal character escape '%c'", ch);
+		} else if (ch == '{') {
+			/* Handle nested symbols */
+			++pLexBuffer;
+			i += yylex_ReadBracketedSymbol(sym, i);
+			--pLexBuffer;
 		} else if (ch == ':' && !mode) { /* Only grab 1st colon */
 			/* Use a whitelist of modes, which does prevent the
 			 * use of some features such as precision,
