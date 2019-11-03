@@ -1,1 +1,1 @@
-error: WRAMX sections can't be used with options -w or -d.
+error: wx: WRAMX sections cannot be used with options -w or -d.

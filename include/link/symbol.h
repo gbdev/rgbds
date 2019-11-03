@@ -1,21 +1,59 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
 
+/* Declarations manipulating symbols */
 #ifndef RGBDS_LINK_SYMBOL_H
 #define RGBDS_LINK_SYMBOL_H
 
+/* GUIDELINE: external code MUST NOT BE AWARE of the data structure used!! */
+
 #include <stdint.h>
 
-void sym_Init(void);
-void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,
-		      char *tzObjFileName, char *tzFileName,
-		      uint32_t nFileLine);
-int32_t sym_GetValue(struct sPatch *pPatch, char *tzName);
-int32_t sym_GetBank(struct sPatch *pPatch, char *tzName);
+#include "linkdefs.h"
+
+struct Symbol {
+	/* Info contained in the object files */
+	char *name;
+	enum SymbolType type;
+	char const *objFileName;
+	char *fileName;
+	int32_t lineNo;
+	int32_t sectionID;
+	union {
+		int32_t offset;
+		int32_t value;
+	};
+	/* Extra info computed during linking */
+	struct Section *section;
+};
+
+/*
+ * Execute a callback for each symbol currently registered.
+ * This is done to avoid exposing the data structure in which symbol are stored.
+ * @param callback The function to call for each symbol;
+ *                 the first argument will be a pointer to the symbol,
+ *                 the second argument will be the pointer `arg`.
+ * @param arg A pointer which will be passed to all calls to `callback`.
+ */
+void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg);
+
+void sym_AddSymbol(struct Symbol *symbol);
+
+/**
+ * Finds a symbol in all the defined symbols.
+ * @param name The name of the symbol to look for
+ * @return A pointer to the symbol, or NULL if not found.
+ */
+struct Symbol *sym_GetSymbol(char const *name);
+
+/**
+ * `free`s all symbol memory that was allocated.
+ */
+void sym_CleanupSymbols(void);
 
 #endif /* RGBDS_LINK_SYMBOL_H */

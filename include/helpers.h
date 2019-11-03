@@ -13,10 +13,12 @@
 	/* GCC or compatible */
 	#define noreturn_	__attribute__ ((noreturn))
 	#define unused_		__attribute__ ((unused))
+	#define trap_		__builtin_trap()
 #else
 	/* Unsupported, but no need to throw a fit */
 	#define noreturn_
 	#define unused_
+	#define trap_
 #endif
 
 #endif /* HELPERS_H */

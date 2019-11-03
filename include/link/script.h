@@ -1,30 +1,36 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 2017-2018, Antonio Nino Diaz and RGBDS contributors.
+ * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
 
+/* Parsing a linker script */
 #ifndef RGBDS_LINK_SCRIPT_H
 #define RGBDS_LINK_SCRIPT_H
 
 #include <stdint.h>
 
-#include "helpers.h"
+extern FILE *linkerScript;
 
-noreturn_ void script_fatalerror(const char *fmt, ...);
+struct SectionPlacement {
+	struct Section *section;
+	uint16_t org;
+	uint32_t bank;
+};
 
-void script_Parse(const char *path);
+extern uint64_t script_lineNo;
 
-void script_IncludeFile(const char *path);
-int32_t script_IncludeDepthGet(void);
-void script_IncludePop(void);
+/**
+ * Parses the linker script to return the next section constraint
+ * @return A pointer to a struct, or NULL on EOF. The pointer shouldn't be freed
+ */
+struct SectionPlacement *script_NextSection(void);
 
-void script_InitSections(void);
-void script_SetCurrentSectionType(const char *type, uint32_t bank);
-void script_SetAddress(uint32_t addr);
-void script_SetAlignment(uint32_t alignment);
-void script_OutputSection(const char *section_name);
+/**
+ * `free`s all assignment memory that was allocated.
+ */
+void script_Cleanup(void);
 
 #endif /* RGBDS_LINK_SCRIPT_H */

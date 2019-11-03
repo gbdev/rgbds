@@ -1,137 +1,56 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdbool.h>
 
-#include "extern/err.h"
-
+#include "link/symbol.h"
 #include "link/main.h"
-#include "link/patch.h"
-#include "link/mylink.h"
+#include "extern/err.h"
+#include "hashmap.h"
 
-#include "types.h"
+HashMap symbols;
 
-#define HASHSIZE 73
-
-struct ISymbol {
-	char *pzName;
-	int32_t nValue;
-	int32_t nBank; /* -1 = constant */
-	 /* Object file where the symbol was defined. */
-	char tzObjFileName[_MAX_PATH + 1];
-	/* Source file where the symbol was defined. */
-	char tzFileName[_MAX_PATH + 1];
-	/* Line where the symbol was defined. */
-	uint32_t nFileLine;
-	struct ISymbol *pNext;
+struct ForEachArg {
+	void (*callback)(struct Symbol *symbol, void *arg);
+	void *arg;
 };
 
-struct ISymbol *tHash[HASHSIZE];
-
-int32_t calchash(char *s)
+static void forEach(void *symbol, void *arg)
 {
-	int32_t r = 0;
+	struct ForEachArg *callbackArg = (struct ForEachArg *)arg;
 
-	while (*s)
-		r += *s++;
-
-	return r % HASHSIZE;
+	callbackArg->callback((struct Symbol *)symbol, callbackArg->arg);
 }
 
-void sym_Init(void)
+void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg)
 {
-	int32_t i;
+	struct ForEachArg callbackArg = { .callback = callback, .arg = arg};
 
-	for (i = 0; i < HASHSIZE; i += 1)
-		tHash[i] = NULL;
+	hash_ForEach(symbols, forEach, &callbackArg);
 }
 
-int32_t sym_GetValue(struct sPatch *pPatch, char *tzName)
+void sym_AddSymbol(struct Symbol *symbol)
 {
-	if (strcmp(tzName, "@") == 0)
-		return nPC;
+	/* Check if the symbol already exists */
+	struct Symbol *other = hash_GetElement(symbols, symbol->name);
 
-	struct ISymbol **ppSym;
+	if (other)
+		errx(1, "\"%s\" both in %s from %s(%d) and in %s from %s(%d)",
+		     symbol->name,
+		     symbol->objFileName, symbol->fileName, symbol->lineNo,
+		      other->objFileName,  other->fileName,  other->lineNo);
 
-	ppSym = &(tHash[calchash(tzName)]);
-	while (*ppSym) {
-		if (strcmp(tzName, (*ppSym)->pzName))
-			ppSym = &((*ppSym)->pNext);
-		else
-			return ((*ppSym)->nValue);
-	}
+	/* If not, add it */
+	bool collided = hash_AddElement(symbols, symbol->name, symbol);
 
-	errx(1,
-	     "%s(%ld) : Unknown symbol '%s'",
-	     pPatch->pzFilename, pPatch->nLineNo,
-	     tzName);
+	if (beVerbose && collided)
+		warnx("Symbol hashmap collision occurred!");
 }
 
-int32_t sym_GetBank(struct sPatch *pPatch, char *tzName)
+struct Symbol *sym_GetSymbol(char const *name)
 {
-	struct ISymbol **ppSym;
-
-	ppSym = &(tHash[calchash(tzName)]);
-	while (*ppSym) {
-		if (strcmp(tzName, (*ppSym)->pzName))
-			ppSym = &((*ppSym)->pNext);
-		else
-			return ((*ppSym)->nBank);
-	}
-
-	errx(1,
-	     "%s(%ld) : Unknown symbol '%s'",
-	     pPatch->pzFilename, pPatch->nLineNo,
-	     tzName);
+	return (struct Symbol *)hash_GetElement(symbols, name);
 }
 
-void sym_CreateSymbol(char *tzName, int32_t nValue, int32_t nBank,
-		      char *tzObjFileName, char *tzFileName, uint32_t nFileLine)
+void sym_CleanupSymbols(void)
 {
-	if (strcmp(tzName, "@") == 0)
-		return;
-
-	struct ISymbol **ppSym;
-
-	ppSym = &(tHash[calchash(tzName)]);
-
-	while (*ppSym) {
-		if (strcmp(tzName, (*ppSym)->pzName)) {
-			ppSym = &((*ppSym)->pNext);
-		} else {
-			if (nBank == -1)
-				return;
-
-			errx(1, "'%s' in both %s : %s(%d) and %s : %s(%d)",
-			     tzName, tzObjFileName, tzFileName, nFileLine,
-			     (*ppSym)->tzObjFileName,
-			     (*ppSym)->tzFileName, (*ppSym)->nFileLine);
-		}
-	}
-
-	*ppSym = malloc(sizeof **ppSym);
-
-	if (*ppSym != NULL) {
-		(*ppSym)->pzName = malloc(strlen(tzName) + 1);
-
-		if ((*ppSym)->pzName != NULL) {
-			strcpy((*ppSym)->pzName, tzName);
-			(*ppSym)->nValue = nValue;
-			(*ppSym)->nBank = nBank;
-			(*ppSym)->pNext = NULL;
-			strncpy((*ppSym)->tzObjFileName, tzObjFileName,
-				sizeof((*ppSym)->tzObjFileName));
-			strncpy((*ppSym)->tzFileName, tzFileName,
-				sizeof((*ppSym)->tzFileName));
-			(*ppSym)->nFileLine = nFileLine;
-		}
-	}
+	hash_EmptyMap(symbols);
 }

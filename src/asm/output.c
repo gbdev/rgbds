@@ -96,21 +96,21 @@ void out_PopSection(void)
 static uint32_t getmaxsectionsize(uint32_t secttype, char *sectname)
 {
 	switch (secttype) {
-	case SECT_ROM0:
+	case SECTTYPE_ROM0:
 		return 0x8000; /* If ROMX sections not used */
-	case SECT_ROMX:
+	case SECTTYPE_ROMX:
 		return 0x4000;
-	case SECT_VRAM:
+	case SECTTYPE_VRAM:
 		return 0x2000;
-	case SECT_SRAM:
+	case SECTTYPE_SRAM:
 		return 0x2000;
-	case SECT_WRAM0:
+	case SECTTYPE_WRAM0:
 		return 0x2000; /* If WRAMX sections not used */
-	case SECT_WRAMX:
+	case SECTTYPE_WRAMX:
 		return 0x1000;
-	case SECT_OAM:
+	case SECTTYPE_OAM:
 		return 0xA0;
-	case SECT_HRAM:
+	case SECTTYPE_HRAM:
 		return 0x7F;
 	default:
 		break;
@@ -241,7 +241,7 @@ static void writesection(struct Section *pSect, FILE *f)
 	fputlong(pSect->nBank, f);
 	fputlong(pSect->nAlign, f);
 
-	if ((pSect->nType == SECT_ROM0) || (pSect->nType == SECT_ROMX)) {
+	if (sect_HasData(pSect->nType)) {
 		struct Patch *pPatch;
 
 		fwrite(pSect->tData, 1, pSect->nPC, f);
@@ -265,23 +265,23 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 	int32_t sectid;
 
 	if (!(pSym->nType & SYMF_DEFINED)) {
-		type = SYM_IMPORT;
+		type = SYMTYPE_IMPORT;
 	} else if (pSym->nType & SYMF_EXPORT) {
-		type = SYM_EXPORT;
+		type = SYMTYPE_EXPORT;
 	} else {
-		type = SYM_LOCAL;
+		type = SYMTYPE_LOCAL;
 	}
 
 	switch (type) {
-	case SYM_LOCAL:
+	case SYMTYPE_LOCAL:
 		offset = pSym->nValue;
 		sectid = getsectid(pSym->pSection);
 		break;
-	case SYM_IMPORT:
+	case SYMTYPE_IMPORT:
 		offset = 0;
 		sectid = -1;
 		break;
-	case SYM_EXPORT:
+	case SYMTYPE_EXPORT:
 		offset = pSym->nValue;
 		if (pSym->nType & SYMF_CONST)
 			sectid = -1;
@@ -293,7 +293,7 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 	fputstring(pSym->tzName, f);
 	fputc(type, f);
 
-	if (type != SYM_IMPORT) {
+	if (type != SYMTYPE_IMPORT) {
 		fputstring(pSym->tzFileName, f);
 		fputlong(pSym->nFileLine, f);
 
@@ -496,8 +496,7 @@ static void checksection(void)
 static void checkcodesection(void)
 {
 	checksection();
-	if (pCurrentSection->nType != SECT_ROM0 &&
-	    pCurrentSection->nType != SECT_ROMX) {
+	if (!sect_HasData(pCurrentSection->nType)) {
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 			   pCurrentSection->pzName);
 	} else if (nUnionDepth > 0) {
@@ -570,8 +569,7 @@ void out_WriteObject(void)
 	if (f == NULL)
 		fatalerror("Couldn't write file '%s'\n", tzObjectname);
 
-	fwrite(RGBDS_OBJECT_VERSION_STRING, 1,
-	       strlen(RGBDS_OBJECT_VERSION_STRING), f);
+	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
 
 	fputlong(countsymbols(), f);
 	fputlong(countsections(), f);
@@ -647,7 +645,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	pSect->charmap = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
-	if (secttype == SECT_ROM0 || secttype == SECT_ROMX) {
+	if (sect_HasData(secttype)) {
 		uint32_t sectsize;
 
 		sectsize = getmaxsectionsize(secttype, pzName);
@@ -743,8 +741,7 @@ void out_Skip(int32_t skip)
 {
 	checksection();
 	checksectionoverflow(skip);
-	if (!((pCurrentSection->nType == SECT_ROM0)
-		|| (pCurrentSection->nType == SECT_ROMX))) {
+	if (!sect_HasData(pCurrentSection->nType)) {
 		pCurrentSection->nPC += skip;
 		nPC += skip;
 		pPCSymbol->nValue += skip;
@@ -779,7 +776,7 @@ void out_RelByte(struct Expression *expr)
 	checksectionoverflow(1);
 	if (rpn_isReloc(expr)) {
 		pCurrentSection->tData[nPC] = 0;
-		createpatch(PATCH_BYTE, expr);
+		createpatch(PATCHTYPE_BYTE, expr);
 		pCurrentSection->nPC += 1;
 		nPC += 1;
 		pPCSymbol->nValue += 1;
@@ -815,7 +812,7 @@ void out_RelWord(struct Expression *expr)
 	if (rpn_isReloc(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		pCurrentSection->tData[nPC + 1] = 0;
-		createpatch(PATCH_WORD_L, expr);
+		createpatch(PATCHTYPE_WORD, expr);
 		pCurrentSection->nPC += 2;
 		nPC += 2;
 		pPCSymbol->nValue += 2;
@@ -854,7 +851,7 @@ void out_RelLong(struct Expression *expr)
 		pCurrentSection->tData[nPC + 1] = 0;
 		pCurrentSection->tData[nPC + 2] = 0;
 		pCurrentSection->tData[nPC + 3] = 0;
-		createpatch(PATCH_LONG_L, expr);
+		createpatch(PATCHTYPE_LONG, expr);
 		pCurrentSection->nPC += 4;
 		nPC += 4;
 		pPCSymbol->nValue += 4;
@@ -875,7 +872,7 @@ void out_PCRelByte(struct Expression *expr)
 
 	/* Always let the linker calculate the offset. */
 	pCurrentSection->tData[nPC] = 0;
-	createpatch(PATCH_BYTE_JR, expr);
+	createpatch(PATCHTYPE_JR, expr);
 	pCurrentSection->nPC += 1;
 	nPC += 1;
 	pPCSymbol->nValue += 1;

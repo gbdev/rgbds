@@ -1,723 +1,437 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-
-#include "extern/err.h"
+#include <stdlib.h>
 
 #include "link/assign.h"
-#include "link/mylink.h"
+#include "link/section.h"
+#include "link/symbol.h"
+#include "link/object.h"
 #include "link/main.h"
 #include "link/script.h"
-#include "link/symbol.h"
+#include "link/output.h"
 
-struct sFreeArea {
-	int32_t nOrg;
-	int32_t nSize;
-	struct sFreeArea *pPrev, *pNext;
+#include "extern/err.h"
+#include "helpers.h"
+
+struct MemoryLocation {
+	uint16_t address;
+	uint32_t bank;
 };
 
-struct sSectionAttributes {
-	const char *name;
-	/* bank + offset = bank originally stored in a section struct */
-	int32_t bank;
-	int32_t offset;
-	int32_t minBank;
-	int32_t bankCount;
+struct FreeSpace {
+	uint16_t address;
+	uint16_t size;
+	struct FreeSpace *next, *prev;
 };
 
-struct sFreeArea *BankFree[BANK_INDEX_MAX];
-int32_t MaxAvail[BANK_INDEX_MAX];
-int32_t MaxBankUsed;
-int32_t MaxWBankUsed;
-int32_t MaxSBankUsed;
-int32_t MaxVBankUsed;
+/* Table of free space for each bank */
+struct FreeSpace *memory[SECTTYPE_INVALID];
 
-const enum eSectionType SECT_MIN = SECT_WRAM0;
-const enum eSectionType SECT_MAX = SECT_OAM;
-const struct sSectionAttributes SECT_ATTRIBUTES[] = {
-	{"WRAM0", BANK_INDEX_WRAM0, 0, 0, BANK_COUNT_WRAM0},
-	{"VRAM",  BANK_INDEX_VRAM,  0, 0, BANK_COUNT_VRAM},
-	{"ROMX",  BANK_INDEX_ROMX, -BANK_MIN_ROMX, BANK_MIN_ROMX, BANK_COUNT_ROMX},
-	{"ROM0",  BANK_INDEX_ROM0,  0, 0, BANK_COUNT_ROM0},
-	{"HRAM",  BANK_INDEX_HRAM,  0, 0, BANK_COUNT_HRAM},
-	{"WRAMX", BANK_INDEX_WRAMX, -BANK_MIN_WRAMX, BANK_MIN_WRAMX, BANK_COUNT_WRAMX},
-	{"SRAM",  BANK_INDEX_SRAM,  0, 0, BANK_COUNT_SRAM},
-	{"OAM",   BANK_INDEX_OAM,   0, 0, BANK_COUNT_OAM}
-};
+uint64_t nbSectionsToAssign;
 
-static void do_max_bank(enum eSectionType Type, int32_t nBank)
+/**
+ * Init the free space-modelling structs
+ */
+static void initFreeSpace(void)
 {
-	switch (Type) {
-	case SECT_ROMX:
-		if (nBank > MaxBankUsed)
-			MaxBankUsed = nBank;
-		break;
-	case SECT_WRAMX:
-		if (nBank > MaxWBankUsed)
-			MaxWBankUsed = nBank;
-		break;
-	case SECT_SRAM:
-		if (nBank > MaxSBankUsed)
-			MaxSBankUsed = nBank;
-		break;
-	case SECT_VRAM:
-		if (nBank > MaxVBankUsed)
-			MaxVBankUsed = nBank;
-		break;
-	case SECT_ROM0:
-	case SECT_WRAM0:
-	case SECT_OAM:
-	case SECT_HRAM:
-	default:
-		break;
-	}
-}
+	for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
+		memory[type] = malloc(sizeof(*memory[type]) * nbbanks(type));
+		if (!memory[type])
+			err(1, "Failed to init free space for region %d", type);
 
-void ensureSectionTypeIsValid(enum eSectionType type)
-{
-	if (type < SECT_MIN || type > SECT_MAX)
-		errx(1, "%s: Invalid section type found: %d", __func__, type);
-}
-
-int BankIndexIsROM0(int32_t bank)
-{
-	return (bank >= BANK_INDEX_ROM0) &&
-	       (bank < (BANK_INDEX_ROM0 + BANK_COUNT_ROM0));
-}
-
-int BankIndexIsROMX(int32_t bank)
-{
-	return (bank >= BANK_INDEX_ROMX) &&
-	       (bank < (BANK_INDEX_ROMX + BANK_COUNT_ROMX));
-}
-
-int BankIndexIsWRAM0(int32_t bank)
-{
-	return (bank >= BANK_INDEX_WRAM0) &&
-	       (bank < (BANK_INDEX_WRAM0 + BANK_COUNT_WRAM0));
-}
-
-int BankIndexIsWRAMX(int32_t bank)
-{
-	return (bank >= BANK_INDEX_WRAMX) &&
-	       (bank < (BANK_INDEX_WRAMX + BANK_COUNT_WRAMX));
-}
-
-int BankIndexIsVRAM(int32_t bank)
-{
-	return (bank >= BANK_INDEX_VRAM) &&
-	       (bank < (BANK_INDEX_VRAM + BANK_COUNT_VRAM));
-}
-
-int BankIndexIsOAM(int32_t bank)
-{
-	return (bank >= BANK_INDEX_OAM) &&
-	       (bank < (BANK_INDEX_OAM + BANK_COUNT_OAM));
-}
-
-int BankIndexIsHRAM(int32_t bank)
-{
-	return (bank >= BANK_INDEX_HRAM) &&
-	       (bank < (BANK_INDEX_HRAM + BANK_COUNT_HRAM));
-}
-
-int BankIndexIsSRAM(int32_t bank)
-{
-	return (bank >= BANK_INDEX_SRAM) &&
-	       (bank < (BANK_INDEX_SRAM + BANK_COUNT_SRAM));
-}
-
-int32_t area_Avail(int32_t bank)
-{
-	int32_t r;
-	struct sFreeArea *pArea;
-
-	r = 0;
-	pArea = BankFree[bank];
-
-	while (pArea) {
-		r += pArea->nSize;
-		pArea = pArea->pNext;
-	}
-
-	return r;
-}
-
-int32_t area_doAlloc(struct sFreeArea *pArea, int32_t org, int32_t size)
-{
-	if (size == 0) {
-		/* 0-byte SECTIONs don't take any room, they can go anywhere */
-		return org;
-	}
-
-	if ((org >= pArea->nOrg)
-	    && ((org + size) <= (pArea->nOrg + pArea->nSize))) {
-
-		if (org == pArea->nOrg) {
-			pArea->nOrg += size;
-			pArea->nSize -= size;
-			return org;
+		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
+			memory[type][bank].next =
+				malloc(sizeof(*memory[type][0].next));
+			if (!memory[type][bank].next)
+				err(1, "Failed to init free space for region %d bank %u",
+				    type, bank);
+			memory[type][bank].next->address = startaddr[type];
+			memory[type][bank].next->size    = maxsize[type];
+			memory[type][bank].next->next    = NULL;
+			memory[type][bank].next->prev    = &memory[type][bank];
 		}
-
-		if ((org + size) == (pArea->nOrg + pArea->nSize)) {
-			pArea->nSize -= size;
-			return org;
-		}
-
-		struct sFreeArea *pNewArea;
-
-		pNewArea = malloc(sizeof(struct sFreeArea));
-
-		if (pNewArea == NULL)
-			err(1, "%s: Failed to allocate memory", __func__);
-
-		*pNewArea = *pArea;
-		pNewArea->pPrev = pArea;
-		pArea->pNext = pNewArea;
-		pArea->nSize = org - pArea->nOrg;
-		pNewArea->nOrg = org + size;
-		pNewArea->nSize -= size + pArea->nSize;
-
-		return org;
 	}
-
-	return -1;
 }
 
-int32_t area_AllocAbs(struct sFreeArea **ppArea, int32_t org, int32_t size)
+/**
+ * Alter sections' attributes based on the linker script
+ */
+static void processLinkerScript(void)
 {
-	struct sFreeArea *pArea;
+	if (!linkerScriptName)
+		return;
+	verbosePrint("Reading linker script...\n");
 
-	pArea = *ppArea;
-	while (pArea) {
-		int32_t result = area_doAlloc(pArea, org, size);
+	linkerScript = openFile(linkerScriptName, "r");
 
-		if (result != -1)
-			return result;
+	/* Modify all sections according to the linker script */
+	struct SectionPlacement *placement;
 
-		ppArea = &(pArea->pNext);
-		pArea = *ppArea;
+	while ((placement = script_NextSection())) {
+		struct Section *section = placement->section;
+
+		/* Check if this doesn't conflict with what the code says */
+		if (section->isBankFixed && placement->bank != section->bank)
+			errx(1, "Linker script contradicts \"%s\"'s bank placement",
+			     section->name);
+		if (section->isAddressFixed && placement->org != section->org)
+			errx(1, "Linker script contradicts \"%s\"'s address placement",
+			     section->name);
+		if (section->isAlignFixed
+		 && (placement->org & section->alignMask) != 0)
+			errx(1, "Linker script contradicts \"%s\"'s alignment",
+			     section->name);
+
+		section->isAddressFixed = true;
+		section->org = placement->org;
+		section->isBankFixed = true;
+		section->bank = placement->bank;
+		section->isAlignFixed = false; /* The alignment is satisfied */
 	}
 
-	return -1;
+	fclose(linkerScript);
 }
 
-int32_t area_AllocAbsAnyBank(int32_t org, int32_t size, enum eSectionType type)
+/**
+ * Assigns a section to a given memory location
+ * @param section The section to assign
+ * @param location The location to assign the section to
+ */
+static inline void assignSection(struct Section *section,
+				 struct MemoryLocation const *location)
 {
-	ensureSectionTypeIsValid(type);
+	section->org = location->address;
+	section->bank = location->bank;
 
-	int32_t startBank = SECT_ATTRIBUTES[type].bank;
-	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
+	nbSectionsToAssign--;
 
-	for (int32_t i = 0; i < bankCount; i++) {
-		if (area_AllocAbs(&BankFree[startBank + i], org, size) != -1)
-			return startBank + i;
-	}
-
-	return -1;
+	out_AddSection(section);
 }
 
-int32_t area_Alloc(struct sFreeArea **ppArea, int32_t size, int32_t alignment)
+/**
+ * Checks whether a given location is suitable for placing a given section
+ * This checks not only that the location has enough room for the section, but
+ * also that the constraints (alignment...) are respected.
+ * @param section The section to be placed
+ * @param freeSpace The candidate free space to place the section into
+ * @param location The location to attempt placing the section at
+ * @return True if the location is suitable, false otherwise.
+ */
+static bool isLocationSuitable(struct Section const *section,
+			       struct FreeSpace const *freeSpace,
+			       struct MemoryLocation const *location)
 {
-	struct sFreeArea *pArea;
+	if (section->isAddressFixed && section->org != location->address)
+		return false;
 
-	if (alignment < 1)
-		alignment = 1;
+	if (section->isAlignFixed && location->address & section->alignMask)
+		return false;
 
-	pArea = *ppArea;
-	while (pArea) {
-		int32_t org = pArea->nOrg;
-
-		if (org % alignment)
-			org += alignment;
-
-		org -= org % alignment;
-
-		int32_t result = area_doAlloc(pArea, org, size);
-
-		if (result != -1)
-			return result;
-
-		ppArea = &(pArea->pNext);
-		pArea = *ppArea;
-	}
-
-	return -1;
+	return location->address + section->size
+					<= freeSpace->address + freeSpace->size;
 }
 
-int32_t area_AllocAnyBank(int32_t size, int32_t alignment,
-			  enum eSectionType type)
+/**
+ * Finds a suitable location to place a section at.
+ * @param section The section to be placed
+ * @param location A pointer to a location struct that will be filled
+ * @return A pointer to the free space encompassing the location, or NULL if
+ *         none was found
+ */
+static struct FreeSpace *getPlacement(struct Section const *section,
+				      struct MemoryLocation *location)
 {
-	ensureSectionTypeIsValid(type);
+	location->bank = section->isBankFixed
+				? section->bank
+				: bankranges[section->type][0];
+	struct FreeSpace *space;
 
-	int32_t i, org;
-	int32_t startBank = SECT_ATTRIBUTES[type].bank;
-	int32_t bankCount = SECT_ATTRIBUTES[type].bankCount;
+	for (;;) {
+		/* Switch to the beginning of the next bank */
+#define BANK_INDEX (location->bank - bankranges[section->type][0])
+		space = memory[section->type][BANK_INDEX].next;
+		if (space)
+			location->address = space->address;
 
-	for (i = 0; i < bankCount; i++) {
-		org = area_Alloc(&BankFree[startBank + i], size, alignment);
-		if (org != -1)
-			return ((startBank + i) << 16) | org;
-	}
+		/* Process locations in that bank */
+		while (space) {
+			/* If that location is OK, return it */
+			if (isLocationSuitable(section, space, location))
+				return space;
 
-	return -1;
-}
-
-struct sSection *FindLargestSection(enum eSectionType type, bool bankFixed)
-{
-	struct sSection *pSection, *r = NULL;
-	int32_t nLargest = 0;
-	int32_t nLargestAlignment = 0;
-
-	pSection = pSections;
-	while (pSection) {
-		if (pSection->oAssigned == 0 && pSection->Type == type
-		    && (bankFixed ^ (pSection->nBank == -1))) {
-			if (pSection->nAlign > nLargestAlignment
-			    || (pSection->nAlign == nLargestAlignment
-				&& pSection->nByteSize > nLargest)) {
-
-				nLargest = pSection->nByteSize;
-				nLargestAlignment = pSection->nAlign;
-				r = pSection;
+			/* Go to the next *possible* location */
+			if (section->isAddressFixed) {
+				/*
+				 * If the address is fixed, there can be only
+				 * one candidate block per bank; if we already
+				 * reached it, give up.
+				 */
+				if (location->address < section->org)
+					location->address = section->org;
+				else
+					/* Try again in next bank */
+					space = NULL;
+			} else if (section->isAlignFixed) {
+				/* Move to next aligned location */
+				location->address &= ~section->alignMask;
+				location->address += section->alignMask + 1;
+			} else {
+				/* Any location is fine, so, next free block */
+				space = space->next;
+				if (space)
+					location->address = space->address;
 			}
+
+			/*
+			 * If that location is past the current block's end,
+			 * go forwards until that is no longer the case.
+			 */
+			while (space && location->address >=
+						space->address + space->size)
+				space = space->next;
+
+			/* Try again with the new location/free space combo */
 		}
-		pSection = pSection->pNext;
-	}
 
-	return r;
+		if (section->isBankFixed)
+			return NULL;
+
+		/* Try again in the next bank */
+		location->bank++;
+		if (location->bank > bankranges[section->type][1])
+			return NULL;
+#undef BANK_INDEX
+	}
 }
 
-int32_t IsSectionNameInUse(const char *name)
+/**
+ * Places a section in a suitable location, or error out if it fails to.
+ * @warning Due to the implemented algorithm, this should be called with
+ *          sections of decreasing size.
+ * @param section The section to place
+ */
+static void placeSection(struct Section *section)
 {
-	const struct sSection *pSection = pSections;
+	struct MemoryLocation location;
 
-	while (pSection) {
-		if (strcmp(pSection->pzName, name) == 0)
-			return 1;
-
-		pSection = pSection->pNext;
-	}
-
-	return 0;
-}
-
-struct sSection *GetSectionByName(const char *name)
-{
-	struct sSection *pSection = pSections;
-
-	while (pSection) {
-		if (strcmp(pSection->pzName, name) == 0)
-			return pSection;
-
-		pSection = pSection->pNext;
-	}
-
-	return NULL;
-}
-
-int32_t IsSectionSameTypeBankAndAttrs(const char *name,
-				      enum eSectionType type, int32_t bank,
-				      int32_t org, int32_t align)
-{
-	const struct sSection *pSection;
-
-	for (pSection = pSections; pSection; pSection = pSection->pNext) {
-		/* Skip if it has already been assigned */
-		if (pSection->oAssigned == 1)
-			continue;
-
-		/* Check if it has the same name */
-		if (strcmp(pSection->pzName, name) != 0)
-			continue;
-
+	/* Specially handle 0-byte SECTIONs, as they can't overlap anything */
+	if (section->size == 0) {
 		/*
-		 * The section has the same name, now check if there is a
-		 * mismatch or not.
+		 * Unless the SECTION's address was fixed, the starting address
+		 * is fine for any alignment, as checked in sect_DoSanityChecks.
 		 */
-
-		/* Section must have the same attributes or float */
-		if ((pSection->nOrg != -1 && pSection->nOrg != org) ||
-		    (pSection->nAlign != 1 && pSection->nAlign != align))
-			return 0;
-
-		/* It must have the same type in source and linkerscript */
-		if (pSection->Type != type)
-			return 0;
-
-		/* Bank number must be unassigned in source or equal */
-		if (pSection->nBank != -1 && pSection->nBank != bank)
-			return 0;
-
-		return 1;
+		location.address = section->isAddressFixed
+						? section->org
+						: startaddr[section->type];
+		location.bank = section->isBankFixed
+						? section->bank
+						: bankranges[section->type][0];
+		assignSection(section, &location);
+		return;
 	}
 
-	errx(1, "Section \"%s\" not found (or already used).\n", name);
-}
+	/*
+	 * Place section using first-fit decreasing algorithm
+	 * https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
+	 */
+	struct FreeSpace *freeSpace = getPlacement(section, &location);
 
-uint32_t AssignSectionAddressAndBankByName(const char *name, uint32_t address,
-					   int32_t bank)
-{
-	struct sSection *pSection;
+	if (freeSpace) {
+		assignSection(section, &location);
 
-	for (pSection = pSections; pSection; pSection = pSection->pNext) {
-		/* Skip if it has already been assigned */
-		if (pSection->oAssigned == 1)
-			continue;
+		/* Split the free space */
+		bool noLeftSpace  = freeSpace->address == section->org;
+		bool noRightSpace = freeSpace->address + freeSpace->size
+					== section->org + section->size;
+		if (noLeftSpace && noRightSpace) {
+			/* The free space is entirely deleted */
+			freeSpace->prev->next = freeSpace->next;
+			if (freeSpace->next)
+				freeSpace->next->prev = freeSpace->prev;
+			/*
+			 * If the space is the last one on the list, set its
+			 * size to 0 so it doesn't get picked, but don't free()
+			 * it as it will be freed when cleaning up
+			 */
+			free(freeSpace);
+		} else if (!noLeftSpace && !noRightSpace) {
+			/* The free space is split in two */
+			struct FreeSpace *newSpace = malloc(sizeof(*newSpace));
 
-		/* Check if it has the same name */
-		if (strcmp(pSection->pzName, name) != 0)
-			continue;
-
-		/* Section has been found. */
-
-		/* The bank can be left as unassigned or be the same */
-		if (pSection->nBank != -1 && pSection->nBank != bank) {
-			errx(1, "Section \"%s\" from linkerscript has different bank number than in the source.\n",
-			     name);
-		}
-
-		pSection->nOrg = address;
-		pSection->nBank = bank;
-		pSection->nAlign = -1;
-
-		return pSection->nByteSize;
-	}
-
-	errx(1, "Section \"%s\" not found (or already used).\n", name);
-}
-
-bool VerifyAndSetBank(struct sSection *pSection)
-{
-	enum eSectionType Type = pSection->Type;
-
-	ensureSectionTypeIsValid(Type);
-
-	if (pSection->nBank >= SECT_ATTRIBUTES[Type].minBank) {
-		if (pSection->nBank < SECT_ATTRIBUTES[Type].minBank
-				    + SECT_ATTRIBUTES[Type].bankCount) {
-			pSection->nBank += SECT_ATTRIBUTES[Type].bank
-					 + SECT_ATTRIBUTES[Type].offset;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void AssignFixedBankSections(enum eSectionType type)
-{
-	ensureSectionTypeIsValid(type);
-
-	struct sSection *pSection;
-
-	while ((pSection = FindLargestSection(type, true))) {
-		if (VerifyAndSetBank(pSection)) {
-			pSection->nOrg = area_Alloc(&BankFree[pSection->nBank],
-						    pSection->nByteSize,
-						    pSection->nAlign);
-			if (pSection->nOrg != -1) {
-				pSection->oAssigned = 1;
-				do_max_bank(pSection->Type, pSection->nBank);
-				continue;
-			}
-		}
-
-		if (pSection->nAlign <= 1) {
-			errx(1, "Unable to place '%s' (%s section) in bank $%02lX",
-			     pSection->pzName,
-			     SECT_ATTRIBUTES[pSection->Type].name,
-			     pSection->nBank);
+			if (!newSpace)
+				err(1, "Failed to split new free space");
+			/* Append the new space after the chosen one */
+			newSpace->prev = freeSpace;
+			newSpace->next = freeSpace->next;
+			if (freeSpace->next)
+				freeSpace->next->prev = newSpace;
+			freeSpace->next = newSpace;
+			/* Set its parameters */
+			newSpace->address = section->org + section->size;
+			newSpace->size = freeSpace->address + freeSpace->size -
+				newSpace->address;
+			/* Set the original space's new parameters */
+			freeSpace->size = section->org - freeSpace->address;
+			/* address is unmodified */
+		} else if (noLeftSpace) {
+			/* The free space is only moved and resized */
+			freeSpace->address += section->size;
+			freeSpace->size -= section->size;
 		} else {
-			errx(1, "Unable to place '%s' (%s section) in bank $%02lX (with $%lX-byte alignment)",
-			     pSection->pzName,
-			     SECT_ATTRIBUTES[pSection->Type].name,
-			     pSection->nBank, pSection->nAlign);
+			/* The free space is only resized */
+			freeSpace->size -= section->size;
 		}
+		return;
+	}
+
+	if (section->isBankFixed && nbbanks(section->type) != 1) {
+		if (section->isAddressFixed)
+			errx(1, "Unable to place \"%s\" (%s section) at $%02x:%04x",
+			     section->name, typeNames[section->type],
+			     section->bank, section->org);
+		else if (section->isAlignFixed)
+			errx(1, "Unable to place \"%s\" (%s section) in bank %u with align mask %x",
+			     section->name, typeNames[section->type],
+			     section->bank, ~section->alignMask);
+		else
+			errx(1, "Unable to place \"%s\" (%s section) in bank %u",
+			     section->name, typeNames[section->type],
+			     section->bank);
+	} else {
+		if (section->isAddressFixed)
+			errx(1, "Unable to place \"%s\" (%s section) at address $%x",
+			     section->name, typeNames[section->type],
+			     section->org);
+		else if (section->isAlignFixed)
+			errx(1, "Unable to place \"%s\" (%s section) with align mask %x",
+			     section->name, typeNames[section->type],
+			     ~section->alignMask);
+		else
+			errx(1, "Unable to place \"%s\" (%s section) anywhere",
+			     section->name, typeNames[section->type]);
 	}
 }
 
-void AssignFloatingBankSections(enum eSectionType type)
+struct UnassignedSection {
+	struct Section *section;
+	struct UnassignedSection *next;
+};
+
+#define  BANK_CONSTRAINED (1 << 2)
+#define   ORG_CONSTRAINED (1 << 1)
+#define ALIGN_CONSTRAINED (1 << 0)
+static struct UnassignedSection *unassignedSections[1 << 3] = {0};
+static struct UnassignedSection *sections;
+
+/**
+ * Categorize a section depending on how constrained it is
+ * This is so the most-constrained sections are placed first
+ * @param section The section to categorize
+ * @param arg Callback arg, unused
+ */
+static void categorizeSection(struct Section *section, void *arg)
 {
-	ensureSectionTypeIsValid(type);
+	(void)arg;
+	uint8_t constraints = 0;
 
-	struct sSection *pSection;
+	if (section->isBankFixed)
+		constraints |= BANK_CONSTRAINED;
+	if (section->isAddressFixed)
+		constraints |= ORG_CONSTRAINED;
+	/* Can't have both! */
+	else if (section->isAlignFixed)
+		constraints |= ALIGN_CONSTRAINED;
 
-	while ((pSection = FindLargestSection(type, false))) {
-		int32_t org;
+	struct UnassignedSection **ptr = &unassignedSections[constraints];
 
-		org = area_AllocAnyBank(pSection->nByteSize, pSection->nAlign,
-					type);
+	/* Insert section while keeping the list sorted by decreasing size */
+	while (*ptr && (*ptr)->section->size > section->size)
+		ptr = &(*ptr)->next;
 
-		if (org != -1) {
-			if (options & OPT_OVERLAY)
-				errx(1, "All sections must be fixed when using an overlay file.");
+	sections[nbSectionsToAssign].section = section;
+	sections[nbSectionsToAssign].next = *ptr;
+	*ptr = &sections[nbSectionsToAssign];
 
-			pSection->nOrg = org & 0xFFFF;
-			pSection->nBank = org >> 16;
-			pSection->oAssigned = 1;
-			do_max_bank(pSection->Type, pSection->nBank);
-		} else {
-			const char *locality = "anywhere";
-
-			if (SECT_ATTRIBUTES[pSection->Type].bankCount > 1)
-				locality = "in any bank";
-
-			if (pSection->nAlign <= 1) {
-				errx(1, "Unable to place '%s' (%s section) %s",
-				     pSection->pzName,
-				     SECT_ATTRIBUTES[type].name, locality);
-			} else {
-				errx(1, "Unable to place '%s' (%s section) %s (with $%lX-byte alignment)",
-				     pSection->pzName,
-				     SECT_ATTRIBUTES[type].name, locality,
-				     pSection->nAlign);
-			}
-		}
-	}
+	nbSectionsToAssign++;
 }
 
-char *tzLinkerscriptName;
-
-void SetLinkerscriptName(char *tzLinkerscriptFile)
+void assign_AssignSections(void)
 {
-	tzLinkerscriptName = tzLinkerscriptFile;
+	verbosePrint("Beginning assignment...\n");
+
+	/** Initialize assignment **/
+
+	/* Generate linked lists of sections to assign */
+	sections = malloc(sizeof(*sections) * nbSectionsToAssign + 1);
+	if (!sections)
+		err(1, "Failed to allocate memory for section assignment");
+
+	initFreeSpace();
+
+	/* Process linker script, if any */
+	processLinkerScript();
+
+	nbSectionsToAssign = 0;
+	sect_ForEach(categorizeSection, NULL);
+
+	/** Place sections, starting with the most constrained **/
+
+	/* Specially process fully-constrained sections because of overlaying */
+	struct UnassignedSection *sectionPtr =
+		unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED];
+
+	verbosePrint("Assigning bank+org-constrained...\n");
+	while (sectionPtr) {
+		placeSection(sectionPtr->section);
+		sectionPtr = sectionPtr->next;
+	}
+
+	/* If all sections were fully constrained, we have nothing left to do */
+	if (!nbSectionsToAssign)
+		return;
+
+	/* Overlaying requires only fully-constrained sections */
+	verbosePrint("Assigning other sections...\n");
+	if (overlayFileName)
+		errx(1, "All sections must be fixed when using an overlay file; %u, %sn't",
+		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
+
+	/* Assign all remaining sections by decreasing constraint order */
+	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
+	     constraints >= 0; constraints--) {
+		sectionPtr = unassignedSections[constraints];
+
+		while (sectionPtr) {
+			placeSection(sectionPtr->section);
+			sectionPtr = sectionPtr->next;
+		}
+
+		if (!nbSectionsToAssign)
+			return;
+	}
+
+	trap_;
 }
 
-void AssignSections(void)
+void assign_Cleanup(void)
 {
-	struct sSection *pSection;
+	for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
+		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
+			struct FreeSpace *ptr =
+				memory[type][bank].next;
 
-	MaxBankUsed = 0;
+			while (ptr) {
+				struct FreeSpace *next = ptr->next;
 
-	/*
-	 * Initialize the memory areas
-	 */
-
-	for (int32_t i = 0; i < BANK_INDEX_MAX; i += 1) {
-		BankFree[i] = malloc(sizeof(*BankFree[i]));
-
-		if (!BankFree[i]) {
-			errx(1, "%s: Couldn't allocate mem for bank %d",
-			     __func__, i);
-		}
-
-		if (BankIndexIsROM0(i)) {
-			/* ROM0 bank */
-			BankFree[i]->nOrg = 0x0000;
-			if (options & OPT_TINY)
-				BankFree[i]->nSize = 0x8000;
-			else
-				BankFree[i]->nSize = 0x4000;
-		} else if (BankIndexIsROMX(i)) {
-			/* Swappable ROM bank */
-			BankFree[i]->nOrg = 0x4000;
-			BankFree[i]->nSize = 0x4000;
-		} else if (BankIndexIsWRAM0(i)) {
-			/* WRAM */
-			BankFree[i]->nOrg = 0xC000;
-			if (options & OPT_CONTWRAM)
-				BankFree[i]->nSize = 0x2000;
-			else
-				BankFree[i]->nSize = 0x1000;
-		} else if (BankIndexIsSRAM(i)) {
-			/* Swappable SRAM bank */
-			BankFree[i]->nOrg = 0xA000;
-			BankFree[i]->nSize = 0x2000;
-		} else if (BankIndexIsWRAMX(i)) {
-			/* Swappable WRAM bank */
-			BankFree[i]->nOrg = 0xD000;
-			BankFree[i]->nSize = 0x1000;
-		} else if (BankIndexIsVRAM(i)) {
-			/* Swappable VRAM bank */
-			BankFree[i]->nOrg = 0x8000;
-			if (options & OPT_DMG_MODE && i != BANK_INDEX_VRAM)
-				BankFree[i]->nSize = 0;
-			else
-				BankFree[i]->nSize = 0x2000;
-		} else if (BankIndexIsOAM(i)) {
-			BankFree[i]->nOrg = 0xFE00;
-			BankFree[i]->nSize = 0x00A0;
-		} else if (BankIndexIsHRAM(i)) {
-			/* HRAM */
-			BankFree[i]->nOrg = 0xFF80;
-			BankFree[i]->nSize = 0x007F;
-		} else {
-			errx(1, "%s: Unknown bank type %d", __func__, i);
-		}
-
-		MaxAvail[i] = BankFree[i]->nSize;
-		BankFree[i]->pPrev = NULL;
-		BankFree[i]->pNext = NULL;
-	}
-
-	/*
-	 * First, let's parse the linkerscript.
-	 */
-
-	if (tzLinkerscriptName) {
-		script_InitSections();
-		script_Parse(tzLinkerscriptName);
-	}
-
-	/*
-	 * Second, let's assign all the fixed sections...
-	 */
-
-	for (pSection = pSections ; pSection; pSection = pSection->pNext) {
-		if (!((pSection->nOrg != -1 || pSection->nBank != -1)
-		    && pSection->oAssigned == 0))
-			continue;
-
-		/* User wants to have a say... */
-
-		switch (pSection->Type) {
-		case SECT_WRAM0:
-		case SECT_HRAM:
-		case SECT_ROM0:
-		case SECT_OAM:
-			pSection->nBank = SECT_ATTRIBUTES[pSection->Type].bank;
-			if (area_AllocAbs(&BankFree[pSection->nBank],
-					  pSection->nOrg,
-					  pSection->nByteSize) == -1) {
-				errx(1, "Unable to place '%s' (%s section) at $%X",
-				     pSection->pzName,
-				     SECT_ATTRIBUTES[pSection->Type].name,
-				     pSection->nOrg);
-			}
-			pSection->oAssigned = 1;
-			break;
-
-		case SECT_SRAM:
-		case SECT_WRAMX:
-		case SECT_VRAM:
-		case SECT_ROMX:
-			if (!(pSection->nBank != -1 && pSection->nOrg != -1))
-				break;
-
-			if (VerifyAndSetBank(pSection) &&
-			    area_AllocAbs(&BankFree[pSection->nBank],
-					  pSection->nOrg,
-					  pSection->nByteSize) != -1) {
-				do_max_bank(pSection->Type, pSection->nBank);
-				pSection->oAssigned = 1;
-			} else {
-				errx(1, "Unable to place '%s' (%s section) at $%X in bank $%02X",
-				     pSection->pzName,
-				     SECT_ATTRIBUTES[pSection->Type].name,
-				     pSection->nOrg, pSection->nBank);
-			}
-			break;
-		default:
-			errx(1, "%s: Internal error: Type %d", __func__,
-			     pSection->Type);
-		}
-	}
-
-	/*
-	 * Next, let's assign all the bankfixed ONLY sections...
-	 */
-	for (enum eSectionType i = SECT_MIN; i <= SECT_MAX; i++)
-		AssignFixedBankSections(i);
-
-	/*
-	 * Now, let's assign all the floating bank but fixed ROMX sections...
-	 */
-
-	for (pSection = pSections ; pSection; pSection = pSection->pNext) {
-		if (!(pSection->oAssigned == 0
-		    && pSection->nOrg != -1 && pSection->nBank == -1))
-			continue;
-
-		if (options & OPT_OVERLAY) {
-			errx(1, "All sections must be fixed when using an overlay file: '%s'",
-			     pSection->pzName);
-		}
-
-		switch (pSection->Type) {
-		case SECT_ROMX:
-		case SECT_VRAM:
-		case SECT_SRAM:
-		case SECT_WRAMX:
-			pSection->nBank =
-				area_AllocAbsAnyBank(pSection->nOrg,
-						     pSection->nByteSize,
-						     pSection->Type);
-
-			if (pSection->nBank == -1) {
-				errx(1, "Unable to place '%s' (%s section) at $%X in any bank",
-				     pSection->pzName,
-				     SECT_ATTRIBUTES[pSection->Type].name,
-				     pSection->nOrg);
-			}
-			pSection->oAssigned = 1;
-			do_max_bank(pSection->Type, pSection->nBank);
-			break;
-
-		case SECT_ROM0:
-		case SECT_WRAM0:
-		case SECT_OAM:
-		case SECT_HRAM:
-		default: /* Handle other sections later */
-			break;
-		}
-	}
-
-	/*
-	 * OK, all that nasty stuff is done so let's assign all the other
-	 * sections
-	 */
-	for (enum eSectionType i = SECT_MIN; i <= SECT_MAX; i++)
-		AssignFloatingBankSections(i);
-}
-
-void CreateSymbolTable(void)
-{
-	const struct sSection *pSect;
-
-	sym_Init();
-
-	pSect = pSections;
-
-	while (pSect) {
-		int32_t i;
-
-		i = pSect->nNumberOfSymbols;
-
-		while (i--) {
-			const struct sSymbol *tSymbol = pSect->tSymbols[i];
-
-			if ((tSymbol->Type == SYM_EXPORT) &&
-			    ((tSymbol->pSection == pSect) ||
-				(tSymbol->pSection == NULL))) {
-				if (tSymbol->pSection == NULL) {
-					sym_CreateSymbol(tSymbol->pzName,
-							 tSymbol->nOffset,
-							 -1,
-							 tSymbol->pzObjFileName,
-							 tSymbol->pzFileName,
-							 tSymbol->nFileLine);
-				} else {
-					sym_CreateSymbol(tSymbol->pzName,
-							 pSect->nOrg +
-							   tSymbol->nOffset,
-							 pSect->nBank,
-							 tSymbol->pzObjFileName,
-							 tSymbol->pzFileName,
-							 tSymbol->nFileLine);
-				}
+				free(ptr);
+				ptr = next;
 			}
 		}
-		pSect = pSect->pNext;
+
+		free(memory[type]);
 	}
+
+	free(sections);
+
+	script_Cleanup();
 }

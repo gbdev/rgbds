@@ -45,22 +45,22 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	char *stype = NULL;
 
 	switch (secttype) {
-	case SECT_ROMX:
+	case SECTTYPE_ROMX:
 		stype = "ROMX";
 		minbank = BANK_MIN_ROMX;
 		maxbank = BANK_MAX_ROMX;
 		break;
-	case SECT_SRAM:
+	case SECTTYPE_SRAM:
 		stype = "SRAM";
 		minbank = BANK_MIN_SRAM;
 		maxbank = BANK_MAX_SRAM;
 		break;
-	case SECT_WRAMX:
+	case SECTTYPE_WRAMX:
 		stype = "WRAMX";
 		minbank = BANK_MIN_WRAMX;
 		maxbank = BANK_MAX_WRAMX;
 		break;
-	case SECT_VRAM:
+	case SECTTYPE_VRAM:
 		stype = "VRAM";
 		minbank = BANK_MIN_VRAM;
 		maxbank = BANK_MAX_VRAM;
@@ -1523,33 +1523,33 @@ section		: T_POP_SECTION string comma sectiontype
 		}
 ;
 
-sectiontype	: T_SECT_WRAM0	{ $$ = SECT_WRAM0; }
-		| T_SECT_VRAM	{ $$ = SECT_VRAM; }
-		| T_SECT_ROMX	{ $$ = SECT_ROMX; }
-		| T_SECT_ROM0	{ $$ = SECT_ROM0; }
-		| T_SECT_HRAM	{ $$ = SECT_HRAM; }
-		| T_SECT_WRAMX	{ $$ = SECT_WRAMX; }
-		| T_SECT_SRAM	{ $$ = SECT_SRAM; }
-		| T_SECT_OAM	{ $$ = SECT_OAM; }
+sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
+		| T_SECT_VRAM	{ $$ = SECTTYPE_VRAM; }
+		| T_SECT_ROMX	{ $$ = SECTTYPE_ROMX; }
+		| T_SECT_ROM0	{ $$ = SECTTYPE_ROM0; }
+		| T_SECT_HRAM	{ $$ = SECTTYPE_HRAM; }
+		| T_SECT_WRAMX	{ $$ = SECTTYPE_WRAMX; }
+		| T_SECT_SRAM	{ $$ = SECTTYPE_SRAM; }
+		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
 		| T_SECT_HOME
 		{
 			warning("HOME section name is deprecated, use ROM0 instead.");
-			$$ = SECT_ROM0;
+			$$ = SECTTYPE_ROM0;
 		}
 		| T_SECT_DATA
 		{
 			warning("DATA section name is deprecated, use ROMX instead.");
-			$$ = SECT_ROMX;
+			$$ = SECTTYPE_ROMX;
 		}
 		| T_SECT_CODE
 		{
 			warning("CODE section name is deprecated, use ROMX instead.");
-			$$ = SECT_ROMX;
+			$$ = SECTTYPE_ROMX;
 		}
 		| T_SECT_BSS
 		{
 			warning("BSS section name is deprecated, use WRAM0 instead.");
-			$$ = SECT_WRAM0;
+			$$ = SECTTYPE_WRAM0;
 		}
 ;
 
