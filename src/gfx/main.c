@@ -9,11 +9,46 @@
 #include <png.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "gfx/main.h"
 
+#include "extern/getopt.h"
 #include "version.h"
+
+/* Short options */
+static char const *optstring = "Aa:CDd:Ffhmo:Pp:Tt:uVvx:";
+
+/*
+ * Equivalent long options
+ * Please keep in the same order as short opts
+ *
+ * Also, make sure long opts don't create ambiguity:
+ * A long opt's name should start with the same letter as its short opt,
+ * except if it doesn't create any ambiguity (`verbose` versus `version`).
+ * This is because long opt matching, even to a single char, is prioritized
+ * over short opt matching
+ */
+static struct option const longopts[] = {
+	{ "output-attr-map", no_argument,       NULL, 'A' },
+	{ "attr-map",        required_argument, NULL, 'a' },
+	{ "color-curve",     no_argument,       NULL, 'C' },
+	{ "debug",           no_argument,       NULL, 'D' },
+	{ "depth",           required_argument, NULL, 'd' },
+	{ "fix",             no_argument,       NULL, 'f' },
+	{ "fix-and-save",    no_argument,       NULL, 'F' },
+	{ "horizontal",      no_argument,       NULL, 'h' },
+	{ "mirror-tiles",    no_argument,       NULL, 'm' },
+	{ "output",          required_argument, NULL, 'o' },
+	{ "output-palette",  no_argument,       NULL, 'P' },
+	{ "palette",         required_argument, NULL, 'p' },
+	{ "output-tilemap",  no_argument,       NULL, 'T' },
+	{ "tilemap",         required_argument, NULL, 't' },
+	{ "unique-tiles",    no_argument,       NULL, 'u' },
+	{ "version",         no_argument,       NULL, 'V' },
+	{ "verbose",         no_argument,       NULL, 'v' },
+	{ "trim-end",        required_argument, NULL, 'x' },
+	{ NULL,              no_argument,       NULL, 0   }
+};
 
 static void print_usage(void)
 {
@@ -45,7 +80,8 @@ int main(int argc, char *argv[])
 
 	depth = 2;
 
-	while ((ch = getopt(argc, argv, "Aa:CDd:Ffhmo:Tt:uPp:Vvx:")) != -1) {
+	while ((ch = getopt_long_only(argc, argv, optstring, longopts,
+				      NULL)) != -1) {
 		switch (ch) {
 		case 'A':
 			opts.attrmapout = true;

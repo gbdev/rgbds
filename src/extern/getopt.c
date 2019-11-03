@@ -1,13 +1,46 @@
-#define _GNU_SOURCE
+/*
+ * Copyright © 2005-2019 Rich Felker, et al.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* This implementation was taken from musl and modified for RGBDS */
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <getopt.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include "stdio_impl.h"
+#include "extern/getopt.h"
 
-extern int __optpos, __optreset;
+int __optpos, __optreset;
+
+void __getopt_msg(const char *a, const char *b, const char *c, size_t l)
+{
+	FILE *f = stderr;
+	(void)(fputs(a, f)>=0
+	&& fwrite(b, strlen(b), 1, f)
+	&& fwrite(c, 1, l, f)==l
+	&& putc('\n', f));
+}
 
 static void permute(char *const *argv, int dest, int src)
 {
@@ -135,11 +168,6 @@ static int __getopt_long_core(int argc, char *const *argv, const char *optstring
 		}
 	}
 	return getopt(argc, argv, optstring);
-}
-
-int getopt_long(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx)
-{
-	return __getopt_long(argc, argv, optstring, longopts, idx, 0);
 }
 
 int getopt_long_only(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx)
