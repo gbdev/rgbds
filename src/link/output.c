@@ -78,6 +78,20 @@ void out_AddSection(struct Section const *section)
 	*ptr = newSection;
 }
 
+struct Section const *out_OverlappingSection(struct Section const *section)
+{
+	struct SortedSection *ptr =
+		sections[section->type].banks[section->bank].sections;
+
+	while (ptr) {
+		if (ptr->section->org < section->org + section->size
+		 && section->org < ptr->section->org + ptr->section->size)
+			return ptr->section;
+		ptr = ptr->next;
+	}
+	return NULL;
+}
+
 /**
  * Performs sanity checks on the overlay file.
  */

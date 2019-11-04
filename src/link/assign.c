@@ -1,6 +1,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "link/assign.h"
 #include "link/section.h"
@@ -284,32 +285,41 @@ static void placeSection(struct Section *section)
 		return;
 	}
 
+	/* Please adjust depending on longest message below */
+	char where[64];
+
 	if (section->isBankFixed && nbbanks(section->type) != 1) {
 		if (section->isAddressFixed)
-			errx(1, "Unable to place \"%s\" (%s section) at $%02x:%04x",
-			     section->name, typeNames[section->type],
-			     section->bank, section->org);
+			snprintf(where, 64, "at $%02x:%04x",
+				 section->bank, section->org);
 		else if (section->isAlignFixed)
-			errx(1, "Unable to place \"%s\" (%s section) in bank %u with align mask %x",
-			     section->name, typeNames[section->type],
-			     section->bank, ~section->alignMask);
+			snprintf(where, 64, "in bank %02x with align mask %x",
+				 section->bank, ~section->alignMask);
 		else
-			errx(1, "Unable to place \"%s\" (%s section) in bank %u",
-			     section->name, typeNames[section->type],
-			     section->bank);
+			snprintf(where, 64, "in bank %02x", section->bank);
 	} else {
 		if (section->isAddressFixed)
-			errx(1, "Unable to place \"%s\" (%s section) at address $%x",
-			     section->name, typeNames[section->type],
-			     section->org);
+			snprintf(where, 64, "at address $%04x", section->org);
 		else if (section->isAlignFixed)
-			errx(1, "Unable to place \"%s\" (%s section) with align mask %x",
-			     section->name, typeNames[section->type],
-			     ~section->alignMask);
+			snprintf(where, 64, "with align mask %x",
+				 ~section->alignMask);
 		else
-			errx(1, "Unable to place \"%s\" (%s section) anywhere",
-			     section->name, typeNames[section->type]);
+			strcpy(where, "anywhere");
 	}
+
+	/* If a section failed to go to several places, nothing we can report */
+	if (!section->isBankFixed || !section->isAddressFixed)
+		errx(1, "Unable to place \"%s\" (%s section) %s",
+		     section->name, typeNames[section->type], where);
+	/* If the section just can't fit the bank, report that */
+	else if (section->org + section->size > endaddr(section->type) + 1)
+		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region",
+		     section->name, typeNames[section->type], where);
+	/* Otherwise there is overlap with another section */
+	else
+		errx(1, "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
+		     section->name, typeNames[section->type], where,
+		     out_OverlappingSection(section)->name);
 }
 
 struct UnassignedSection {
