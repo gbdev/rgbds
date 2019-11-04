@@ -111,6 +111,11 @@ static void checkOverlay(void)
 					nbOverlayBanks);
 		if (!sections[SECTTYPE_ROMX].banks)
 			err(1, "Failed to realloc banks for overlay");
+		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks;
+		     i < nbOverlayBanks; i++) {
+			sections[SECTTYPE_ROMX].banks[i].sections = NULL;
+			sections[SECTTYPE_ROMX].banks[i].zeroLenSections = NULL;
+		}
 		sections[SECTTYPE_ROMX].nbBanks = nbOverlayBanks;
 	}
 }
