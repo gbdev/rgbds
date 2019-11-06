@@ -634,6 +634,10 @@ void sym_AddReloc(char *tzSym)
 
 		nsym->pScope = scope;
 		nsym->pSection = pCurrentSection;
+		/* Labels need to be assigned a section, except PC */
+		if (!pCurrentSection && strcmp(tzSym, "@"))
+			yyerror("Label \"%s\" created outside of a SECTION",
+				tzSym);
 
 		updateSymbolFilename(nsym);
 	}
