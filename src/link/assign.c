@@ -293,10 +293,10 @@ static void placeSection(struct Section *section)
 			snprintf(where, 64, "at $%02x:%04x",
 				 section->bank, section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "in bank %02x with align mask %x",
+			snprintf(where, 64, "in bank $%02x with align mask %x",
 				 section->bank, ~section->alignMask);
 		else
-			snprintf(where, 64, "in bank %02x", section->bank);
+			snprintf(where, 64, "in bank $%02x", section->bank);
 	} else {
 		if (section->isAddressFixed)
 			snprintf(where, 64, "at address $%04x", section->org);
@@ -313,8 +313,9 @@ static void placeSection(struct Section *section)
 		     section->name, typeNames[section->type], where);
 	/* If the section just can't fit the bank, report that */
 	else if (section->org + section->size > endaddr(section->type) + 1)
-		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region",
-		     section->name, typeNames[section->type], where);
+		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
+		     section->name, typeNames[section->type], where,
+		     section->org + section->size, endaddr(section->type) + 1);
 	/* Otherwise there is overlap with another section */
 	else
 		errx(1, "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
