@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 
 	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
-	oGeneratedMissingIncludes = true;
+	oGeneratedMissingIncludes = false;
 	oFailedOnMissingInclude = false;
 	tzTargetFileName = NULL;
 	size_t nTargetFileNameLen = 0;
