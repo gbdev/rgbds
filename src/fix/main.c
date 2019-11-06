@@ -11,11 +11,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "extern/err.h"
+#include "extern/getopt.h"
 
 #include "version.h"
+
+/* Shoft options */
+static char const *optstring = "Ccf:i:jk:l:m:n:p:sr:t:Vv";
+
+/*
+ * Equivalent long options
+ * Please keep in the same order as short opts
+ *
+ * Also, make sure long opts don't create ambiguity:
+ * A long opt's name should start with the same letter as its short opt,
+ * except if it doesn't create any ambiguity (`verbose` versus `version`).
+ * This is because long opt matching, even to a single char, is prioritized
+ * over short opt matching
+ */
+static struct option const longopts[] = {
+	{ "color-only",       no_argument,       NULL, 'C' },
+	{ "color-compatible", no_argument,       NULL, 'c' },
+	{ "fix-spec",         required_argument, NULL, 'f' },
+	{ "game-id",          required_argument, NULL, 'i' },
+	{ "non-japanese",     no_argument,       NULL, 'j' },
+	{ "new-licensee",     required_argument, NULL, 'k' },
+	{ "old-licensee",     required_argument, NULL, 'l' },
+	{ "mbc-type",         required_argument, NULL, 'm' },
+	{ "rom-version",      required_argument, NULL, 'n' },
+	{ "pad-value",        required_argument, NULL, 'p' },
+	{ "ram-size",         required_argument, NULL, 'r' },
+	{ "sgb-compatible",   no_argument,       NULL, 's' },
+	{ "title",            required_argument, NULL, 't' },
+	{ "version",          no_argument,       NULL, 'V' },
+	{ "verbose",          no_argument,       NULL, 'v' },
+	{ NULL,               no_argument,       NULL, 0   }
+};
 
 static void print_usage(void)
 {
@@ -66,7 +98,8 @@ int main(int argc, char *argv[])
 	int version = 0;   /* mask ROM version number */
 	int padvalue = 0;  /* to pad the rom with if it changes size */
 
-	while ((ch = getopt(argc, argv, "Ccf:i:jk:l:m:n:p:sr:t:Vv")) != -1) {
+	while ((ch = getopt_long_only(argc, argv, optstring, longopts,
+				      NULL)) != -1) {
 		switch (ch) {
 		case 'C':
 			coloronly = true;

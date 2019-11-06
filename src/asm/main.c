@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -24,6 +23,7 @@
 #include "asm/charmap.h"
 
 #include "extern/err.h"
+#include "extern/getopt.h"
 
 #include "helpers.h"
 #include "version.h"
@@ -287,6 +287,37 @@ void warning(const char *fmt, ...)
 	va_end(args);
 }
 
+/* Short options */
+static char const *optstring = "b:D:Eg:hi:LM:o:p:r:Vvw";
+
+/*
+ * Equivalent long options
+ * Please keep in the same order as short opts
+ *
+ * Also, make sure long opts don't create ambiguity:
+ * A long opt's name should start with the same letter as its short opt,
+ * except if it doesn't create any ambiguity (`verbose` versus `version`).
+ * This is because long opt matching, even to a single char, is prioritized
+ * over short opt matching
+ */
+static struct option const longopts[] = {
+	{ "binary-digits",    required_argument, NULL, 'b' },
+	{ "define",           required_argument, NULL, 'D' },
+	{ "export-all",       no_argument,       NULL, 'E' },
+	{ "gfx-chars",        required_argument, NULL, 'g' },
+	{ "halt-without-nop", no_argument,       NULL, 'h' },
+	{ "include",          required_argument, NULL, 'i' },
+	{ "preserve-ld",      no_argument,       NULL, 'L' },
+	{ "dependfile",       required_argument, NULL, 'M' },
+	{ "output",           required_argument, NULL, 'o' },
+	{ "pad-value",        required_argument, NULL, 'p' },
+	{ "recursion-depth",  required_argument, NULL, 'r' },
+	{ "version",          no_argument,       NULL, 'V' },
+	{ "verbose",          no_argument,       NULL, 'v' },
+	{ "warning",          no_argument,       NULL, 'w' },
+	{ NULL,               no_argument,       NULL, 0   }
+};
+
 static void print_usage(void)
 {
 	printf(
@@ -338,7 +369,8 @@ int main(int argc, char *argv[])
 
 	newopt = CurrentOptions;
 
-	while ((ch = getopt(argc, argv, "b:D:Eg:hi:LM:o:p:r:Vvw")) != -1) {
+	while ((ch = getopt_long_only(argc, argv, optstring, longopts,
+				      NULL)) != -1) {
 		switch (ch) {
 		case 'b':
 			if (strlen(optarg) == 2) {

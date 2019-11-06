@@ -67,6 +67,7 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/asm/util.o \
 	src/extern/err.o \
+	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/version.o
 
@@ -82,12 +83,14 @@ rgblink_obj := \
 	src/link/section.o \
 	src/link/symbol.o \
 	src/extern/err.o \
+	src/extern/getopt.o \
 	src/hashmap.o \
 	src/version.o
 
 rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/err.o \
+	src/extern/getopt.o \
 	src/version.o
 
 rgbgfx_obj := \
@@ -95,6 +98,7 @@ rgbgfx_obj := \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
 	src/extern/err.o \
+	src/extern/getopt.o \
 	src/version.o
 
 rgbasm: ${rgbasm_obj}

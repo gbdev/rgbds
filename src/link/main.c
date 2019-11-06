@@ -8,7 +8,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -22,6 +21,7 @@
 #include "link/output.h"
 
 #include "extern/err.h"
+#include "extern/getopt.h"
 #include "version.h"
 
 bool isDmgMode;               /* -d */
@@ -48,6 +48,35 @@ FILE *openFile(char const *fileName, char const *mode)
 	return file;
 }
 
+/* Short options */
+static char const *optstring = "dl:m:n:O:o:p:s:tVvw";
+
+/*
+ * Equivalent long options
+ * Please keep in the same order as short opts
+ *
+ * Also, make sure long opts don't create ambiguity:
+ * A long opt's name should start with the same letter as its short opt,
+ * except if it doesn't create any ambiguity (`verbose` versus `version`).
+ * This is because long opt matching, even to a single char, is prioritized
+ * over short opt matching
+ */
+static struct option const longopts[] = {
+	{ "dmg",          no_argument,       NULL, 'd' },
+	{ "linkerscript", required_argument, NULL, 'l' },
+	{ "map",          required_argument, NULL, 'm' },
+	{ "sym",          required_argument, NULL, 'n' },
+	{ "overlay",      required_argument, NULL, 'O' },
+	{ "output",       required_argument, NULL, 'o' },
+	{ "pad",          required_argument, NULL, 'p' },
+	{ "smart",        required_argument, NULL, 's' },
+	{ "tiny",         no_argument,       NULL, 't' },
+	{ "version",      no_argument,       NULL, 'V' },
+	{ "verbose",      no_argument,       NULL, 'v' },
+	{ "wramx",        no_argument,       NULL, 'w' },
+	{ NULL,           no_argument,       NULL, 0   }
+};
+
 /**
  * Prints the program's usage to stdout.
  */
@@ -73,7 +102,8 @@ int main(int argc, char *argv[])
 	unsigned long value; /* For storing `strtoul`'s return value */
 
 	/* Parse options */
-	while ((optionChar = getopt(argc, argv, "dl:m:n:O:o:p:s:tVvw")) != -1) {
+	while ((optionChar = getopt_long_only(argc, argv, optstring, longopts,
+					      NULL)) != -1) {
 		switch (optionChar) {
 		case 'd':
 			isDmgMode = true;
