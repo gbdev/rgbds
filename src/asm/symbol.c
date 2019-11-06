@@ -371,7 +371,7 @@ char *sym_FindMacroArg(int32_t i)
 	if (i == -1)
 		i = MAXMACROARGS + 1;
 
-	assert(i - 1 >= 0);
+	assert(i >= 1);
 
 	assert((size_t)(i - 1)
 	       < sizeof(currentmacroargs) / sizeof(*currentmacroargs));

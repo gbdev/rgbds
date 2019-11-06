@@ -116,7 +116,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
 			strncpy(dest, write_ptr, maxLength + 1);
 		} else {
 			fullLength = snprintf(dest, maxLength + 1,
-							  mode ? : "$%X",
+							  mode ? mode : "$%X",
 						      value);
 		}
 
@@ -137,7 +137,7 @@ static uint32_t str2int2(char *s, int32_t length)
 	int32_t i;
 	uint32_t r = 0;
 
-	i = ((length - 4) < 0) ? 0 : length - 4;
+	i = length < 4 ? 0 : length - 4;
 	while (i < length) {
 		r <<= 8;
 		r |= (uint8_t)s[i];
