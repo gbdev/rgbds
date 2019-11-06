@@ -263,6 +263,9 @@ static char *make_escape(const char *str)
 /* Short options */
 static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
 
+/* Variables for the long-only options */
+static int depType; /* Variants of `-M` */
+
 /*
  * Equivalent long options
  * Please keep in the same order as short opts
@@ -274,21 +277,25 @@ static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
  * over short opt matching
  */
 static struct option const longopts[] = {
-	{ "binary-digits",    required_argument, NULL, 'b' },
-	{ "define",           required_argument, NULL, 'D' },
-	{ "export-all",       no_argument,       NULL, 'E' },
-	{ "gfx-chars",        required_argument, NULL, 'g' },
-	{ "halt-without-nop", no_argument,       NULL, 'h' },
-	{ "include",          required_argument, NULL, 'i' },
-	{ "preserve-ld",      no_argument,       NULL, 'L' },
-	{ "dependfile",       required_argument, NULL, 'M' },
-	{ "output",           required_argument, NULL, 'o' },
-	{ "pad-value",        required_argument, NULL, 'p' },
-	{ "recursion-depth",  required_argument, NULL, 'r' },
-	{ "version",          no_argument,       NULL, 'V' },
-	{ "verbose",          no_argument,       NULL, 'v' },
-	{ "warning",          required_argument, NULL, 'W' },
-	{ NULL,               no_argument,       NULL, 0   }
+	{ "binary-digits",    required_argument, NULL,     'b' },
+	{ "define",           required_argument, NULL,     'D' },
+	{ "export-all",       no_argument,       NULL,     'E' },
+	{ "gfx-chars",        required_argument, NULL,     'g' },
+	{ "halt-without-nop", no_argument,       NULL,     'h' },
+	{ "include",          required_argument, NULL,     'i' },
+	{ "preserve-ld",      no_argument,       NULL,     'L' },
+	{ "dependfile",       required_argument, NULL,     'M' },
+	{ "MG",               no_argument,       &depType, 'G' },
+	{ "MP",               no_argument,       &depType, 'P' },
+	{ "MT",               required_argument, &depType, 'T' },
+	{ "MQ",               required_argument, &depType, 'Q' },
+	{ "output",           required_argument, NULL,     'o' },
+	{ "pad-value",        required_argument, NULL,     'p' },
+	{ "recursion-depth",  required_argument, NULL,     'r' },
+	{ "version",          no_argument,       NULL,     'V' },
+	{ "verbose",          no_argument,       NULL,     'v' },
+	{ "warning",          required_argument, NULL,     'W' },
+	{ NULL,               no_argument,       NULL,     0   }
 };
 
 static void print_usage(void)
@@ -391,50 +398,13 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			ep = strchr("GPQT", optarg[0]);
-			if (!ep || !*ep || optarg[1]) {
-				if (!strcmp("-", optarg))
-					dependfile = stdout;
-				else
-					dependfile = fopen(optarg, "w");
-				if (dependfile == NULL)
-					err(1, "Could not open dependfile %s",
-					    optarg);
-			} else {
-				switch (optarg[0]) {
-				case 'G':
-					oGeneratedMissingIncludes = true;
-					break;
-				case 'P':
-					oGeneratePhonyDeps = true;
-					break;
-				case 'Q':
-				case 'T':
-					if (optind == argc)
-						errx(1, "-M%c takes a target file name argument",
-						     optarg[0]);
-					ep = argv[optind];
-					optind++;
-					if (optarg[0] == 'Q')
-						ep = make_escape(ep);
-
-					nTargetFileNameLen += strlen(ep) + 1;
-					tzTargetFileName =
-						realloc(tzTargetFileName,
-							nTargetFileNameLen + 1);
-					if (tzTargetFileName == NULL)
-						err(1, "Cannot append new file to target file list");
-					strcat(tzTargetFileName, ep);
-					if (optarg[0] == 'Q')
-						free(ep);
-					char *ptr = tzTargetFileName +
-						strlen(tzTargetFileName);
-					*ptr++ = ' ';
-					*ptr = '\0';
-					break;
-				}
-			}
-
+			if (!strcmp("-", optarg))
+				dependfile = stdout;
+			else
+				dependfile = fopen(optarg, "w");
+			if (dependfile == NULL)
+				err(1, "Could not open dependfile %s",
+				    optarg);
 			break;
 		case 'o':
 			out_SetFileName(optarg);
@@ -467,6 +437,45 @@ int main(int argc, char *argv[])
 		case 'w':
 			newopt.warnings = false;
 			break;
+
+		/* Long-only options */
+		case 0:
+			if (depType) {
+				switch (depType) {
+				case 'G':
+					oGeneratedMissingIncludes = true;
+					break;
+				case 'P':
+					oGeneratePhonyDeps = true;
+					break;
+				case 'Q':
+				case 'T':
+					if (optind == argc)
+						errx(1, "-M%c takes a target file name argument",
+						     depType);
+					ep = optarg;
+					if (depType == 'Q')
+						ep = make_escape(ep);
+
+					nTargetFileNameLen += strlen(ep) + 1;
+					tzTargetFileName =
+						realloc(tzTargetFileName,
+							nTargetFileNameLen + 1);
+					if (tzTargetFileName == NULL)
+						err(1, "Cannot append new file to target file list");
+					strcat(tzTargetFileName, ep);
+					if (depType == 'Q')
+						free(ep);
+					char *ptr = tzTargetFileName +
+						strlen(tzTargetFileName);
+					*ptr++ = ' ';
+					*ptr = '\0';
+					break;
+				}
+			}
+			break;
+
+		/* Unrecognized options */
 		default:
 			print_usage();
 			/* NOTREACHED */
