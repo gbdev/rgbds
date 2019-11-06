@@ -21,6 +21,13 @@
 void out_AddSection(struct Section const *section);
 
 /**
+ * Finds an assigned section overlapping another one.
+ * @param section The section that is being overlapped
+ * @return A section overlapping it
+ */
+struct Section const *out_OverlappingSection(struct Section const *section);
+
+/**
  * Writes all output (bin, sym, map) files.
  */
 void out_WriteFiles(void);
