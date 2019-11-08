@@ -36,7 +36,7 @@ struct option {
 	int val;
 };
 
-int getopt_long_only(int, char *const *, const char *, const struct option *, int *);
+int getopt_long_only(int, char **, const char *, const struct option *, int *);
 
 #define no_argument        0
 #define required_argument  1

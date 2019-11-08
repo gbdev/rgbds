@@ -42,7 +42,7 @@ void __getopt_msg(const char *a, const char *b, const char *c, size_t l)
 	&& putc('\n', f));
 }
 
-static void permute(char *const *argv, int dest, int src)
+static void permute(char **argv, int dest, int src)
 {
 	char **av = (char **)argv;
 	char *tmp = av[src];
@@ -52,9 +52,9 @@ static void permute(char *const *argv, int dest, int src)
 	av[dest] = tmp;
 }
 
-static int __getopt_long_core(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx, int longonly);
+static int __getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly);
 
-static int __getopt_long(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int __getopt_long(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
 {
 	int ret, skipped, resumed;
 	if (!optind || __optreset) {
@@ -83,7 +83,7 @@ static int __getopt_long(int argc, char *const *argv, const char *optstring, con
 	return ret;
 }
 
-static int __getopt_long_core(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int __getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
 {
 	optarg = 0;
 	if (longopts && argv[optind][0] == '-' &&
@@ -170,7 +170,7 @@ static int __getopt_long_core(int argc, char *const *argv, const char *optstring
 	return getopt(argc, argv, optstring);
 }
 
-int getopt_long_only(int argc, char *const *argv, const char *optstring, const struct option *longopts, int *idx)
+int getopt_long_only(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx)
 {
 	return __getopt_long(argc, argv, optstring, longopts, idx, 1);
 }
