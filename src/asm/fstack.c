@@ -369,7 +369,7 @@ FILE *fstk_FindFile(char *fname, char **incPathUsed)
 		f = fopen(path, "rb");
 
 		if (f != NULL || errno != ENOENT) {
-			printdep(fname);
+			printdep(path);
 
 			if (incPathUsed)
 				*incPathUsed = IncludePaths[i];
