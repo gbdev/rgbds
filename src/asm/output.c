@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <libgen.h>
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
@@ -532,13 +534,25 @@ static void checksectionoverflow(uint32_t delta_size)
  */
 void out_WriteObject(void)
 {
+	/* Write to a temporary file in the target's folder */
+	char *objectNameCopy = strdup(tzObjectname);
+	char const *dirPath = dirname(objectNameCopy);
+	char tmpFileName[strlen(dirPath) + 1 + 16 + 1];
+
+	sprintf(tmpFileName, "%s/rgbasm_tmpXXXXXX", dirPath);
+	free(objectNameCopy);
+	int fd = mkstemp(tmpFileName);
+
 	FILE *f;
 	struct PatchSymbol *pSym;
 	struct Section *pSect;
 
+	if (fd == -1)
+		err(1, "Couldn't create temporary file");
+
 	addexports();
 
-	f = fopen(tzObjectname, "wb");
+	f = fdopen(fd, "wb");
 	if (f == NULL)
 		fatalerror("Couldn't write file '%s'\n", tzObjectname);
 
@@ -560,6 +574,11 @@ void out_WriteObject(void)
 	}
 
 	fclose(f);
+	close(fd);
+
+	if (rename(tmpFileName, tzObjectname) != 0)
+		err(1, "Couldn't create object file (temp file kept as %s)",
+		    tmpFileName);
 }
 
 /*
