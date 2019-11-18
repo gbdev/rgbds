@@ -24,6 +24,7 @@
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #include "extern/err.h"
 

@@ -21,6 +21,7 @@
 #include "asm/output.h"
 #include "asm/main.h"
 #include "asm/charmap.h"
+#include "asm/warning.h"
 
 #include "extern/err.h"
 #include "extern/getopt.h"
@@ -38,7 +39,7 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 int32_t nLineNo;
-uint32_t nTotalLines, nPC, nIFDepth, nUnionDepth, nErrors;
+uint32_t nTotalLines, nPC, nIFDepth, nUnionDepth;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
@@ -234,61 +235,8 @@ static void opt_ParseDefines(void)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
 }
 
-/*
- * Error handling
- */
-void verror(const char *fmt, va_list args)
-{
-	fputs("ERROR: ", stderr);
-	fstk_Dump();
-	fputs(":\n    ", stderr);
-	vfprintf(stderr, fmt, args);
-	fputc('\n', stderr);
-	fstk_DumpStringExpansions();
-	nErrors++;
-}
-
-void yyerror(const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	verror(fmt, args);
-	va_end(args);
-}
-
-noreturn_ void fatalerror(const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	verror(fmt, args);
-	va_end(args);
-
-	exit(5);
-}
-
-void warning(const char *fmt, ...)
-{
-	if (!CurrentOptions.warnings)
-		return;
-
-	va_list args;
-
-	va_start(args, fmt);
-
-	fputs("warning: ", stderr);
-	fstk_Dump();
-	fputs(":\n    ", stderr);
-	vfprintf(stderr, fmt, args);
-	fputc('\n', stderr);
-	fstk_DumpStringExpansions();
-
-	va_end(args);
-}
-
 /* Short options */
-static char const *optstring = "b:D:Eg:hi:LM:o:p:r:Vvw";
+static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
 
 /*
  * Equivalent long options
@@ -314,7 +262,7 @@ static struct option const longopts[] = {
 	{ "recursion-depth",  required_argument, NULL, 'r' },
 	{ "version",          no_argument,       NULL, 'V' },
 	{ "verbose",          no_argument,       NULL, 'v' },
-	{ "warning",          no_argument,       NULL, 'w' },
+	{ "warning",          required_argument, NULL, 'W' },
 	{ NULL,               no_argument,       NULL, 0   }
 };
 
@@ -323,7 +271,7 @@ static void print_usage(void)
 	printf(
 "usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
 "              [-M dependfile] [-o outfile] [-p pad_value]\n"
-"              [-r recursion_depth] file.asm\n");
+"              [-r recursion_depth] [-W warning] [-w] file.asm\n");
 	exit(1);
 }
 
@@ -436,6 +384,9 @@ int main(int argc, char *argv[])
 		case 'v':
 			newopt.verbose = true;
 			break;
+		case 'W':
+			processWarningFlag(optarg);
+			break;
 		case 'w':
 			newopt.warnings = false;
 			break;
@@ -476,7 +427,6 @@ int main(int argc, char *argv[])
 	skipElif = true;
 	nUnionDepth = 0;
 	nPC = 0;
-	nErrors = 0;
 	sym_Init();
 	sym_SetExportAll(CurrentOptions.exportall);
 	fstk_Init(tzMainfile);
@@ -486,8 +436,8 @@ int main(int argc, char *argv[])
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
-	if (yyparse() != 0 || nErrors != 0)
-		errx(1, "Assembly aborted (%ld errors)!", nErrors);
+	if (yyparse() != 0 || nbErrors != 0)
+		errx(1, "Assembly aborted (%ld errors)!", nbErrors);
 
 	if (nIFDepth != 0)
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);

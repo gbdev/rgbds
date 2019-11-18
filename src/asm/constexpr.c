@@ -17,6 +17,7 @@
 #include "asm/mymath.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #include "asmy.h"
 
@@ -171,7 +172,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			break;
 		case T_OP_SHL:
 			if (value1 < 0)
-				warning("Left shift of negative value: %d",
+				warning(WARNING_SHIFT, "Left shift of negative value: %d",
 					value1);
 
 			if (value2 < 0)
@@ -200,7 +201,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			if (value2 == 0)
 				fatalerror("Division by zero");
 			if (value1 == INT32_MIN && value2 == -1) {
-				warning("Division of min value by -1");
+				warning(WARNING_DIV, "Division of min value by -1");
 				result = INT32_MIN;
 			} else {
 				result = value1 / value2;

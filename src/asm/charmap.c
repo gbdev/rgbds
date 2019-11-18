@@ -17,6 +17,7 @@
 #include "asm/main.h"
 #include "asm/output.h"
 #include "asm/util.h"
+#include "asm/warning.h"
 
 #define CHARMAP_HASH_SIZE (1 << 9)
 
@@ -39,7 +40,7 @@ static void warnSectionCharmap(void)
 	if (warned)
 		return;
 
-	warning("Using 'charmap' within a section when the current charmap is 'main' is deprecated");
+	warning(WARNING_OBSOLETE, "Using 'charmap' within a section when the current charmap is 'main' is deprecated");
 	warned = true;
 }
 

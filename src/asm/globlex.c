@@ -20,6 +20,7 @@
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #include "helpers.h"
 
@@ -126,7 +127,7 @@ static int32_t ascii2bin(char *s)
 		 * the Game Boy tile width, produces a nonsensical result.
 		 */
 		if (size > 8) {
-			warning("Graphics constant '%s' is too long",
+			warning(WARNING_LARGE_CONSTANT, "Graphics constant '%s' is too long",
 				start);
 		}
 	} else {
@@ -143,7 +144,7 @@ static int32_t ascii2bin(char *s)
 		}
 
 		if (overflow)
-			warning("Integer constant '%s' is too large",
+			warning(WARNING_LARGE_CONSTANT, "Integer constant '%s' is too large",
 				start);
 	}
 

@@ -20,6 +20,7 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
+#include "asm/warning.h"
 
 #include "extern/err.h"
 

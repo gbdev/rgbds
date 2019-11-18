@@ -10,6 +10,7 @@
 
 #include "asm/main.h"
 #include "asm/util.h"
+#include "asm/warning.h"
 
 #include "extern/utf8decoder.h"
 
