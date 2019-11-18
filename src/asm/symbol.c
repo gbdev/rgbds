@@ -23,6 +23,7 @@
 #include "asm/mymath.h"
 #include "asm/output.h"
 #include "asm/util.h"
+#include "asm/warning.h"
 
 #include "extern/err.h"
 
@@ -133,7 +134,7 @@ struct sSymbol *createsymbol(char *s)
 	}
 
 	if (snprintf((*ppsym)->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
-		warning("Symbol name is too long: '%s'", s);
+		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'", s);
 
 	(*ppsym)->nValue = 0;
 	(*ppsym)->nType = 0;

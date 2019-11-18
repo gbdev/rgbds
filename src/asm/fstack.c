@@ -22,6 +22,7 @@
 #include "asm/main.h"
 #include "asm/output.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #include "extern/err.h"
 
@@ -291,7 +292,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 		len -= retcode;
 
 	if (!len)
-		warning("File stack dump too long, got truncated");
+		warning(WARNING_LONG_STR, "File stack dump too long, got truncated");
 }
 
 /*

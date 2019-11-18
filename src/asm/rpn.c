@@ -19,6 +19,7 @@
 #include "asm/main.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #include "linkdefs.h"
 
@@ -396,7 +397,8 @@ void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 
 	if (!expr->isReloc) {
 		if (src1->nVal < 0)
-			warning("Left shift of negative value: %d", src1->nVal);
+			warning(WARNING_SHIFT, "Left shift of negative value: %d",
+				src1->nVal);
 
 		if (src2->nVal < 0)
 			fatalerror("Shift by negative value: %d", src2->nVal);
@@ -447,7 +449,7 @@ void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 			fatalerror("Division by zero");
 
 		if (src1->nVal == INT32_MIN && src2->nVal == -1) {
-			warning("Division of min value by -1");
+			warning(WARNING_DIV, "Division of min value by -1");
 			expr->nVal = INT32_MIN;
 		} else {
 			expr->nVal = (src1->nVal / src2->nVal);

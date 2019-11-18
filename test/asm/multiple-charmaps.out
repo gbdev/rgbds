@@ -1,4 +1,4 @@
-warning: multiple-charmaps.asm(75):
+warning: multiple-charmaps.asm(75): [-Wobsolete]
     Using 'charmap' within a section when the current charmap is 'main' is deprecated
 ERROR: multiple-charmaps.asm(100) -> multiple-charmaps.asm::new_(7):
     Charmap 'map1' already exists

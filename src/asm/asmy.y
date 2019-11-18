@@ -27,6 +27,7 @@
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/util.h"
+#include "asm/warning.h"
 
 #include "extern/utf8decoder.h"
 
@@ -482,7 +483,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	uint32_t curLen = 0;
 
 	if (pos < 1) {
-		warning("STRSUB: Position starts at 1");
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Position starts at 1");
 		pos = 1;
 	}
 
@@ -500,7 +501,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	}
 
 	if (!src[srcIndex])
-		warning("STRSUB: Position %lu is past the end of the string",
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Position %lu is past the end of the string",
 			(unsigned long)pos);
 
 	/* Copy from source to destination. */
@@ -517,7 +518,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	}
 
 	if (curLen < len)
-		warning("STRSUB: Length too big: %lu", (unsigned long)len);
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %lu", (unsigned long)len);
 
 	/* Check for partial code point. */
 	if (state != 0)
@@ -807,7 +808,7 @@ pushs		: T_POP_PUSHS		{ out_PushSection(); }
 fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
 ;
 
-warn		: T_POP_WARN string	{ warning("%s", $2); }
+warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 ;
 
 shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
@@ -905,7 +906,7 @@ ds		: T_POP_DS uconst
 
 db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
 			if (nListCountEmpty > 0) {
-				warning("Empty entry in list of 8-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as 0).");
 			}
 		}
 		| T_POP_DB constlist_8bit_entry
@@ -913,7 +914,7 @@ db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
 
 dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
 			if (nListCountEmpty > 0) {
-				warning("Empty entry in list of 16-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as 0).");
 			}
 		}
 		| T_POP_DW constlist_16bit_entry
@@ -921,7 +922,7 @@ dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
 
 dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
 			if (nListCountEmpty > 0) {
-				warning("Empty entry in list of 32-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as 0).");
 			}
 		}
 		| T_POP_DL constlist_32bit_entry
@@ -957,7 +958,7 @@ import_list_entry : T_ID
 			 * This is done automatically if the label isn't found
 			 * in the list of defined symbols.
 			 */
-			warning("IMPORT is a deprecated keyword with no effect: %s", $1);
+			warning(WARNING_OBSOLETE, "IMPORT is a deprecated keyword with no effect: %s", $1);
 		}
 ;
 
@@ -1461,7 +1462,7 @@ const		: T_ID					{ constexpr_Symbol(&$$, $1); }
 string		: T_STRING
 		{
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
-				warning("String is too long '%s'", $1);
+				warning(WARNING_LONG_STR, "String is too long '%s'", $1);
 		}
 		| T_OP_STRSUB '(' string comma uconst comma uconst ')'
 		{
@@ -1470,19 +1471,19 @@ string		: T_STRING
 		| T_OP_STRCAT '(' string comma string ')'
 		{
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
-				warning("STRCAT: String too long '%s%s'", $3, $5);
+				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'", $3, $5);
 		}
 		| T_OP_STRUPR '(' string ')'
 		{
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning("STRUPR: String too long '%s'", $3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'", $3);
 
 			upperstring($$);
 		}
 		| T_OP_STRLWR '(' string ')'
 		{
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning("STRUPR: String too long '%s'", $3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'", $3);
 
 			lowerstring($$);
 		}
@@ -1533,22 +1534,22 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
 		| T_SECT_HOME
 		{
-			warning("HOME section name is deprecated, use ROM0 instead.");
+			warning(WARNING_OBSOLETE, "HOME section name is deprecated, use ROM0 instead.");
 			$$ = SECTTYPE_ROM0;
 		}
 		| T_SECT_DATA
 		{
-			warning("DATA section name is deprecated, use ROMX instead.");
+			warning(WARNING_OBSOLETE, "DATA section name is deprecated, use ROMX instead.");
 			$$ = SECTTYPE_ROMX;
 		}
 		| T_SECT_CODE
 		{
-			warning("CODE section name is deprecated, use ROMX instead.");
+			warning(WARNING_OBSOLETE, "CODE section name is deprecated, use ROMX instead.");
 			$$ = SECTTYPE_ROMX;
 		}
 		| T_SECT_BSS
 		{
-			warning("BSS section name is deprecated, use WRAM0 instead.");
+			warning(WARNING_OBSOLETE, "BSS section name is deprecated, use WRAM0 instead.");
 			$$ = SECTTYPE_WRAM0;
 		}
 ;
@@ -1746,7 +1747,7 @@ z80_jp		: T_Z80_JP const_16bit
 		| T_Z80_JP T_MODE_HL_IND
 		{
 			out_AbsByte(0xE9);
-			warning("'JP [HL]' is obsolete, use 'JP HL' instead.");
+			warning(WARNING_OBSOLETE, "'JP [HL]' is obsolete, use 'JP HL' instead.");
 		}
 		| T_Z80_JP T_MODE_HL
 		{
@@ -1773,7 +1774,7 @@ z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
 		| T_Z80_LDI T_MODE_A comma T_MODE_HL
 		{
 			out_AbsByte(0x0A | (2 << 4));
-			warning("'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.");
+			warning(WARNING_OBSOLETE, "'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.");
 		}
 		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND
 		{
@@ -1788,7 +1789,7 @@ z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A
 		| T_Z80_LDD T_MODE_A comma T_MODE_HL
 		{
 			out_AbsByte(0x0A | (3 << 4));
-			warning("'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.");
+			warning(WARNING_OBSOLETE, "'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.");
 		}
 		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND
 		{
@@ -1842,7 +1843,7 @@ z80_ld_hl	: T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
 		{
 			out_AbsByte(0xF8);
 			out_RelByte(&$6);
-			warning("'LD HL,[SP+e8]' is obsolete, use 'LD HL,SP+e8' instead.");
+			warning(WARNING_OBSOLETE, "'LD HL,[SP+e8]' is obsolete, use 'LD HL,SP+e8' instead.");
 		}
 		| T_Z80_LD T_MODE_HL comma T_MODE_SP const_8bit
 		{

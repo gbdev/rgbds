@@ -10,7 +10,7 @@ rc=0
 for i in *.asm; do
 	for variant in '' '.pipe'; do
 		if [ -z "$variant" ]; then
-			../../rgbasm -o $o $i > $after 2>&1
+			../../rgbasm -Weverything -o $o $i > $after 2>&1
 			desired_output=${i%.asm}.out
 		else
 			# `include-recursion.asm` refers to its own name inside the test code.
@@ -23,7 +23,7 @@ for i in *.asm; do
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with and was broken when the feature was
 			# first implemented.
-			cat $i | ../../rgbasm -o $o - > $after 2>&1
+			cat $i | ../../rgbasm -Weverything -o $o - > $after 2>&1
 
 			# Escape regex metacharacters
 			desired_output=$before
