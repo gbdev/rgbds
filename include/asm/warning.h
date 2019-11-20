@@ -39,7 +39,7 @@ void warning(enum WarningID id, const char *fmt, ...);
  * It is also used when the assembler goes into an invalid state (for example,
  * when it fails to allocate memory).
  */
-noreturn_ void fatalerror(const char *fmt, ...);
+noreturn_ void fatalerror(int retcode, const char *fmt, ...);
 
 /*
  * Used for errors that make it impossible to assemble correctly, but don't

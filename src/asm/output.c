@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
@@ -72,7 +73,7 @@ void out_PushSection(void)
 
 	pSect = malloc(sizeof(struct SectionStackEntry));
 	if (pSect == NULL)
-		fatalerror("No memory for section stack");
+		fatalerror(EX_OSERR, "No memory for section stack");
 
 	pSect->pSection = pCurrentSection;
 	pSect->pScope = sym_GetCurrentSymbolScope();
@@ -83,7 +84,7 @@ void out_PushSection(void)
 void out_PopSection(void)
 {
 	if (pSectionStack == NULL)
-		fatalerror("No entries in the section stack");
+		fatalerror(EX_DATAERR, "No entries in the section stack");
 
 	struct SectionStackEntry *pSect;
 
@@ -116,7 +117,8 @@ static uint32_t getmaxsectionsize(uint32_t secttype, char *sectname)
 	default:
 		break;
 	}
-	errx(1, "Section \"%s\" has an invalid section type.", sectname);
+	errx(EX_DATAERR, "Section \"%s\" has an invalid section type.",
+	     sectname);
 }
 
 /*
@@ -210,7 +212,7 @@ static uint32_t getsectid(struct Section *pSect)
 		sec = sec->pNext;
 	}
 
-	fatalerror("%s: Unknown section", __func__);
+	fatalerror(EX_DATAERR, "%s: Unknown section", __func__);
 	return (uint32_t)(-1);
 }
 
@@ -325,7 +327,7 @@ static uint32_t addsymbol(struct sSymbol *pSym)
 	*ppPSym = pPSym;
 
 	if (pPSym == NULL)
-		fatalerror("No memory for patchsymbol");
+		fatalerror(EX_OSERR, "No memory for patchsymbol");
 
 	pPSym->pNext = NULL;
 	pPSym->pBucketNext = NULL;
@@ -367,7 +369,7 @@ struct Patch *allocpatch(void)
 	pPatch = malloc(sizeof(struct Patch));
 
 	if (pPatch == NULL)
-		fatalerror("No memory for patch");
+		fatalerror(EX_OSERR, "No memory for patch");
 
 	pPatch->pNext = pCurrentSection->pPatches;
 	pPatch->nRPNSize = 0;
@@ -391,7 +393,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 	rpnexpr = malloc(expr->nRPNPatchSize);
 
 	if (rpnexpr == NULL)
-		fatalerror("No memory for patch RPN expression");
+		fatalerror(EX_OSERR, "No memory for patch RPN expression");
 
 	pPatch = allocpatch();
 	pPatch->nType = type;
@@ -486,7 +488,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 static void checksection(void)
 {
 	if (pCurrentSection == NULL)
-		fatalerror("Code generation before SECTION directive");
+		fatalerror(EX_DATAERR, "Code generation before SECTION directive");
 }
 
 /*
@@ -497,10 +499,10 @@ static void checkcodesection(void)
 {
 	checksection();
 	if (!sect_HasData(pCurrentSection->nType)) {
-		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
+		fatalerror(EX_DATAERR, "Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 			   pCurrentSection->pzName);
 	} else if (nUnionDepth > 0) {
-		fatalerror("UNIONs cannot contain code or data");
+		fatalerror(EX_DATAERR, "UNIONs cannot contain code or data");
 	}
 }
 
@@ -521,7 +523,7 @@ static void checksectionoverflow(uint32_t delta_size)
 		 * memory.
 		 * The real check must be done at the linking stage.
 		 */
-		fatalerror("Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
+		fatalerror(EX_DATAERR, "Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
 			   pCurrentSection->pzName, maxsize, new_size);
 	}
 }
@@ -547,7 +549,7 @@ void out_CheckErrors(void)
 
 			if (localPtr)
 				name = localPtr;
-			errx(1, "%s(%u) : '%s' not defined",
+			errx(EX_DATAERR, "%s(%u) : '%s' not defined",
 			     pSymbol->tzFileName, pSymbol->nFileLine, name);
 		}
 		pSym = pSym->pNext;
@@ -567,7 +569,8 @@ void out_WriteObject(void)
 
 	f = fopen(tzObjectname, "wb");
 	if (f == NULL)
-		fatalerror("Couldn't write file '%s'\n", tzObjectname);
+		fatalerror(EX_IOERR, "Couldn't write file '%s'\n",
+			   tzObjectname);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
 
@@ -619,7 +622,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 				return pSect;
 			}
 
-			fatalerror("Section already exists but with a different type");
+			fatalerror(EX_DATAERR, "Section already exists but with a different type");
 		}
 		ppSect = &(pSect->pNext);
 		pSect = pSect->pNext;
@@ -628,11 +631,11 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	pSect = malloc(sizeof(struct Section));
 	*ppSect = pSect;
 	if (pSect == NULL)
-		fatalerror("Not enough memory for section");
+		fatalerror(EX_OSERR, "Not enough memory for section");
 
 	pSect->pzName = malloc(strlen(pzName) + 1);
 	if (pSect->pzName == NULL)
-		fatalerror("Not enough memory for sectionname");
+		fatalerror(EX_OSERR, "Not enough memory for sectionname");
 
 	strcpy(pSect->pzName, pzName);
 	pSect->nType = secttype;
@@ -650,7 +653,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 		sectsize = getmaxsectionsize(secttype, pzName);
 		pSect->tData = malloc(sectsize);
 		if (pSect->tData == NULL)
-			fatalerror("Not enough memory for section");
+			fatalerror(EX_OSERR, "Not enough memory for section");
 	} else {
 		pSect->tData = NULL;
 	}
@@ -664,7 +667,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 void out_SetCurrentSection(struct Section *pSect)
 {
 	if (nUnionDepth > 0)
-		fatalerror("Cannot change the section within a UNION");
+		fatalerror(EX_DATAERR, "Cannot change the section within a UNION");
 
 	pCurrentSection = pSect;
 	nPC = (pSect != NULL) ? pSect->nPC : 0;
@@ -888,7 +891,7 @@ void out_BinaryFile(char *s)
 
 	f = fstk_FindFile(s, NULL);
 	if (f == NULL)
-		err(1, "Unable to open incbin file '%s'", s);
+		err(EX_NOINPUT, "Unable to open incbin file '%s'", s);
 
 	int32_t fsize;
 
@@ -916,14 +919,14 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	FILE *f;
 
 	if (start_pos < 0)
-		fatalerror("Start position cannot be negative");
+		fatalerror(EX_DATAERR, "Start position cannot be negative");
 
 	if (length < 0)
-		fatalerror("Number of bytes to read must be greater than zero");
+		fatalerror(EX_DATAERR, "Number of bytes to read must be greater than zero");
 
 	f = fstk_FindFile(s, NULL);
 	if (f == NULL)
-		err(1, "Unable to open included file '%s'", s);
+		err(EX_NOINPUT, "Unable to open included file '%s'", s);
 
 	int32_t fsize;
 
@@ -931,10 +934,10 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 	fsize = ftell(f);
 
 	if (start_pos >= fsize)
-		fatalerror("Specified start position is greater than length of file");
+		fatalerror(EX_DATAERR, "Specified start position is greater than length of file");
 
 	if ((start_pos + length) > fsize)
-		fatalerror("Specified range in INCBIN is out of bounds");
+		fatalerror(EX_DATAERR, "Specified range in INCBIN is out of bounds");
 
 	fseek(f, start_pos, SEEK_SET);
 

@@ -1,6 +1,7 @@
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <sysexits.h>
 
 #include "link/output.h"
 #include "link/main.h"
@@ -44,7 +45,7 @@ void out_AddSection(struct Section const *section)
 	uint32_t minNbBanks = targetBank + 1;
 
 	if (minNbBanks > maxNbBanks[section->type])
-		errx(1, "Section \"%s\" has invalid bank range (%u > %u)",
+		errx(EX_DATAERR, "Section \"%s\" has invalid bank range (%u > %u)",
 		     section->name, section->bank,
 		     maxNbBanks[section->type] - 1);
 
@@ -60,7 +61,7 @@ void out_AddSection(struct Section const *section)
 		sections[section->type].nbBanks = minNbBanks;
 	}
 	if (!sections[section->type].banks)
-		err(1, "Failed to realloc banks");
+		err(EX_OSERR, "Failed to realloc banks");
 
 	struct SortedSection *newSection = malloc(sizeof(*newSection));
 	struct SortedSection **ptr = section->size
@@ -68,7 +69,8 @@ void out_AddSection(struct Section const *section)
 		: &sections[section->type].banks[targetBank].zeroLenSections;
 
 	if (!newSection)
-		err(1, "Failed to add new section \"%s\"", section->name);
+		err(EX_OSERR, "Failed to add new section \"%s\"",
+		    section->name);
 	newSection->section = section;
 
 	while (*ptr && (*ptr)->section->org < section->org)
@@ -108,7 +110,7 @@ static void checkOverlay(void)
 	long overlaySize = ftell(overlayFile);
 
 	if (overlaySize % 0x4000)
-		errx(1, "Overlay file must have a size multiple of 0x4000");
+		errx(EX_DATAERR, "Overlay file must have a size multiple of 0x4000");
 
 	/* Reset back to beginning */
 	fseek(overlayFile, 0, SEEK_SET);
@@ -116,7 +118,7 @@ static void checkOverlay(void)
 	uint32_t nbOverlayBanks = overlaySize / 0x4000 - 1;
 
 	if (nbOverlayBanks < 1)
-		errx(1, "Overlay must be at least 0x8000 bytes large");
+		errx(EX_DATAERR, "Overlay must be at least 0x8000 bytes large");
 
 	if (nbOverlayBanks > sections[SECTTYPE_ROMX].nbBanks) {
 		sections[SECTTYPE_ROMX].banks =
@@ -124,7 +126,7 @@ static void checkOverlay(void)
 				sizeof(*sections[SECTTYPE_ROMX].banks) *
 					nbOverlayBanks);
 		if (!sections[SECTTYPE_ROMX].banks)
-			err(1, "Failed to realloc banks for overlay");
+			err(EX_OSERR, "Failed to realloc banks for overlay");
 		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks;
 		     i < nbOverlayBanks; i++) {
 			sections[SECTTYPE_ROMX].banks[i].sections = NULL;

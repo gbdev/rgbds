@@ -9,6 +9,7 @@
 #include <png.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "gfx/main.h"
 
@@ -55,7 +56,7 @@ static void print_usage(void)
 	printf(
 "usage: rgbgfx [-ADFfhmPTuVv] [-o outfile] [-a attrmap] [-d #] [-p palfile]\n"
 "              [-t tilemap] [-x #] infile\n");
-	exit(1);
+	exit(EX_USAGE);
 }
 
 int main(int argc, char *argv[])
@@ -155,7 +156,7 @@ int main(int argc, char *argv[])
 	opts.infile = argv[argc - 1];
 
 	if (depth != 1 && depth != 2)
-		errx(1, "Depth option must be either 1 or 2.");
+		errx(EX_USAGE, "Depth option must be either 1 or 2.");
 
 	colors = 1 << depth;
 
@@ -188,17 +189,17 @@ int main(int argc, char *argv[])
 		opts.trim = png_options.trim;
 
 	if (raw_image->width % 8) {
-		errx(1, "Input PNG file %s not sized correctly. The image's width must be a multiple of 8.",
+		errx(EX_DATAERR, "Input PNG file %s not sized correctly. The image's width must be a multiple of 8.",
 		     opts.infile);
 	}
 	if (raw_image->width / 8 > 1 && raw_image->height % 8) {
-		errx(1, "Input PNG file %s not sized correctly. If the image is more than 1 tile wide, its height must be a multiple of 8.",
+		errx(EX_DATAERR, "Input PNG file %s not sized correctly. If the image is more than 1 tile wide, its height must be a multiple of 8.",
 		     opts.infile);
 	}
 
 	if (opts.trim &&
 	    opts.trim > (raw_image->width / 8) * (raw_image->height / 8) - 1) {
-		errx(1, "Trim (%i) for input raw_image file '%s' too large (max: %i)",
+		errx(EX_DATAERR, "Trim (%i) for input raw_image file '%s' too large (max: %i)",
 		     opts.trim, opts.infile,
 		     (raw_image->width / 8) * (raw_image->height / 8) - 1);
 	}

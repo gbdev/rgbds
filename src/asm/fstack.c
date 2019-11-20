@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/fstack.h"
 #include "asm/lexer.h"
@@ -66,7 +67,8 @@ static void pushcontext(void)
 	struct sContext **ppFileStack;
 
 	if (++nFileStackDepth > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
+		fatalerror(EX_DATAERR, "Recursion limit (%d) exceeded",
+			   nMaxRecursionDepth);
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)
@@ -75,7 +77,7 @@ static void pushcontext(void)
 	*ppFileStack = malloc(sizeof(struct sContext));
 
 	if (*ppFileStack == NULL)
-		fatalerror("No memory for context");
+		fatalerror(EX_OSERR, "No memory for context");
 
 	(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 	(*ppFileStack)->pNext = NULL;
@@ -100,7 +102,7 @@ static void pushcontext(void)
 		(*ppFileStack)->nREPTBodyLastLine = nCurrentREPTBodyLastLine;
 		break;
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror(EX_SOFTWARE, "%s: Internal error.", __func__);
 	}
 
 	nLineNo = 0;
@@ -144,7 +146,7 @@ static int32_t popcontext(void)
 				 */
 				sprintf(pREPTIterationWritePtr, "%lu",
 					nREPTIterationNo);
-				fatalerror("Cannot write REPT count to file path");
+				fatalerror(EX_OSERR, "Cannot write REPT count to file path");
 			}
 
 			nLineNo = nCurrentREPTBodyFirstLine;
@@ -194,7 +196,7 @@ static int32_t popcontext(void)
 		nLineNo = pLastFile->nREPTBodyLastLine + 1;
 		break;
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror(EX_SOFTWARE, "%s: Internal error.", __func__);
 	}
 
 	nFileStackDepth--;
@@ -220,7 +222,7 @@ int32_t fstk_GetLine(void)
 	case STAT_isREPTBlock:
 		break; /* Peek top file of the stack */
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror(EX_SOFTWARE, "%s: Internal error.", __func__);
 	}
 
 	pLastFile = pFileStack;
@@ -237,7 +239,7 @@ int32_t fstk_GetLine(void)
 	 * This is only reached if the lexer is in REPT or MACRO mode but there
 	 * are no saved contexts with the origin of said REPT or MACRO.
 	 */
-	fatalerror("%s: Internal error.", __func__);
+	fatalerror(EX_SOFTWARE, "%s: Internal error.", __func__);
 }
 
 int yywrap(void)
@@ -273,7 +275,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 		retcode = snprintf(&buf[buflen - len], len, "%s(%d) -> ",
 				   pLastFile->tzFileName, pLastFile->nLine);
 		if (retcode < 0)
-			fatalerror("Failed to dump file stack to string: %s",
+			fatalerror(EX_OSERR, "Failed to dump file stack to string: %s",
 				   strerror(errno));
 		else if (retcode >= len)
 			len = 0;
@@ -284,7 +286,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 
 	retcode = snprintf(&buf[buflen - len], len, "%s", tzCurrentFileName);
 	if (retcode < 0)
-		fatalerror("Failed to dump file stack to string: %s",
+		fatalerror(EX_OSERR, "Failed to dump file stack to string: %s",
 			   strerror(errno));
 	else if (retcode >= len)
 		len = 0;
@@ -315,11 +317,11 @@ void fstk_DumpStringExpansions(void)
 void fstk_AddIncludePath(char *s)
 {
 	if (NextIncPath == MAXINCPATHS)
-		fatalerror("Too many include directories passed from command line");
+		fatalerror(EX_SOFTWARE, "Too many include directories passed from command line");
 
 	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s",
 		     s) >= _MAX_PATH)
-		fatalerror("Include path too long '%s'", s);
+		fatalerror(EX_SOFTWARE, "Include path too long '%s'", s);
 }
 
 FILE *fstk_FindFile(char *fname, char **incPathUsed)
@@ -382,7 +384,7 @@ void fstk_RunInclude(char *tzFileName)
 	FILE *f = fstk_FindFile(tzFileName, &incPathUsed);
 
 	if (f == NULL)
-		err(1, "Unable to open included file '%s'", tzFileName);
+		err(EX_OSERR, "Unable to open included file '%s'", tzFileName);
 
 	pushcontext();
 	nLineNo = 1;
@@ -422,7 +424,7 @@ uint32_t fstk_RunMacro(char *s)
 				 "%s::%s", sym->tzFileName, s);
 	if (nPrintedChars > _MAX_PATH) {
 		popcontext();
-		fatalerror("File name + macro name is too large to fit into buffer");
+		fatalerror(EX_SOFTWARE, "File name + macro name is too large to fit into buffer");
 	}
 
 	pCurrentMacro = sym;
@@ -434,7 +436,7 @@ uint32_t fstk_RunMacro(char *s)
 }
 
 /*
- * Set up a macroargument for parsing
+ * Set up a macro argument for parsing
  */
 void fstk_RunMacroArg(int32_t s)
 {
@@ -448,7 +450,7 @@ void fstk_RunMacroArg(int32_t s)
 	sym = sym_FindMacroArg(s);
 
 	if (sym == NULL)
-		fatalerror("No such macroargument");
+		fatalerror(EX_DATAERR, "No such macro argument");
 
 	pushcontext();
 	nCurrentStatus = STAT_isMacroArg;
@@ -499,7 +501,7 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
 		nLineNo = nReptLineNo;
 
 		if (strlen(tzCurrentFileName) + strlen(tzReptStr) > _MAX_PATH)
-			fatalerror("Cannot append \"%s\" to file path",
+			fatalerror(EX_SOFTWARE, "Cannot append \"%s\" to file path",
 				   tzReptStr);
 		strcat(tzCurrentFileName, tzReptStr);
 
@@ -525,7 +527,7 @@ void fstk_Init(char *pFileName)
 	} else {
 		pCurrentFile = fopen(pFileName, "rb");
 		if (pCurrentFile == NULL)
-			err(1, "Unable to open file '%s'", pFileName);
+			err(EX_OSERR, "Unable to open file '%s'", pFileName);
 	}
 	nFileStackDepth = 0;
 

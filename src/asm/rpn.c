@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/main.h"
@@ -29,7 +30,7 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 	assert(src1->tRPN != NULL && src2->tRPN != NULL);
 
 	if (src1->nRPNLength + src2->nRPNLength > MAXRPNLEN)
-		fatalerror("RPN expression is too large");
+		fatalerror(EX_SOFTWARE, "RPN expression is too large");
 
 	uint32_t len = src1->nRPNLength + src2->nRPNLength;
 
@@ -49,7 +50,7 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 		expr->nRPNCapacity = cap;
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
+			fatalerror(EX_OSERR, "No memory for RPN expression");
 	}
 
 	memcpy(expr->tRPN + src1->nRPNLength, src2->tRPN, src2->nRPNLength);
@@ -70,7 +71,7 @@ void pushbyte(struct Expression *expr, uint8_t b)
 		if (expr->nRPNCapacity == 0)
 			expr->nRPNCapacity = 256;
 		else if (expr->nRPNCapacity == MAXRPNLEN)
-			fatalerror("RPN expression is too large");
+			fatalerror(EX_SOFTWARE, "RPN expression is too large");
 		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
 			expr->nRPNCapacity = MAXRPNLEN;
 		else
@@ -78,7 +79,7 @@ void pushbyte(struct Expression *expr, uint8_t b)
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 
 		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
+			fatalerror(EX_OSERR, "No memory for RPN expression");
 	}
 
 	expr->tRPN[expr->nRPNLength++] = b;
@@ -399,9 +400,11 @@ void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 				src1->nVal);
 
 		if (src2->nVal < 0)
-			fatalerror("Shift by negative value: %d", src2->nVal);
+			fatalerror(EX_DATAERR, "Shift by negative value: %d",
+				   src2->nVal);
 		else if (src2->nVal >= 32)
-			fatalerror("Shift by too big value: %d", src2->nVal);
+			fatalerror(EX_DATAERR, "Shift by too big value: %d",
+				   src2->nVal);
 
 		expr->nVal = ((uint32_t)src1->nVal << src2->nVal);
 	}
@@ -417,9 +420,11 @@ void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 
 	if (!expr->isReloc) {
 		if (src2->nVal < 0)
-			fatalerror("Shift by negative value: %d", src2->nVal);
+			fatalerror(EX_DATAERR, "Shift by negative value: %d",
+				   src2->nVal);
 		else if (src2->nVal >= 32)
-			fatalerror("Shift by too big value: %d", src2->nVal);
+			fatalerror(EX_DATAERR, "Shift by too big value: %d",
+				   src2->nVal);
 
 		expr->nVal = (src1->nVal >> src2->nVal);
 	}
@@ -444,7 +449,7 @@ void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 
 	if (!expr->isReloc) {
 		if (src2->nVal == 0)
-			fatalerror("Division by zero");
+			fatalerror(EX_DATAERR, "Division by zero");
 
 		if (src1->nVal == INT32_MIN && src2->nVal == -1) {
 			warning(WARNING_DIV, "Division of min value by -1");
@@ -465,7 +470,7 @@ void rpn_MOD(struct Expression *expr, const struct Expression *src1,
 
 	if (!expr->isReloc) {
 		if (src2->nVal == 0)
-			fatalerror("Division by zero");
+			fatalerror(EX_DATAERR, "Division by zero");
 
 		if (src1->nVal == INT32_MIN && src2->nVal == -1)
 			expr->nVal = 0;

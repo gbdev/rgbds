@@ -8,9 +8,10 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
@@ -85,7 +86,7 @@ struct Charmap *charmap_New(const char *name, const char *baseName)
 	*ppCharmap = calloc(1, sizeof(struct Charmap));
 
 	if (*ppCharmap == NULL)
-		fatalerror("Not enough memory for charmap");
+		fatalerror(EX_OSERR, "Not enough memory for charmap");
 
 	struct Charmap *pCharmap = *ppCharmap;
 
@@ -122,7 +123,7 @@ void charmap_Push(void)
 
 	stackEntry = malloc(sizeof(struct CharmapStackEntry));
 	if (stackEntry == NULL)
-		fatalerror("No memory for charmap stack");
+		fatalerror(EX_OSERR, "No memory for charmap stack");
 
 	stackEntry->charmap = currentCharmap;
 	stackEntry->next = charmapStack;
@@ -133,7 +134,7 @@ void charmap_Push(void)
 void charmap_Pop(void)
 {
 	if (charmapStack == NULL)
-		fatalerror("No entries in the charmap stack");
+		fatalerror(EX_DATAERR, "No entries in the charmap stack");
 
 	struct CharmapStackEntry *top = charmapStack;
 
@@ -196,7 +197,7 @@ int32_t charmap_Convert(char **input)
 
 	output = malloc(strlen(*input));
 	if (output == NULL)
-		fatalerror("Not enough memory for buffer");
+		fatalerror(EX_OSERR, "Not enough memory for buffer");
 
 	length = 0;
 

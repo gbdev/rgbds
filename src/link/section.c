@@ -1,5 +1,6 @@
 
 #include <stdbool.h>
+#include <sysexits.h>
 
 #include "link/main.h"
 #include "link/section.h"
@@ -78,7 +79,8 @@ void sect_AddSection(struct Section *section)
 {
 	/* Check if the section already exists */
 	if (hash_GetElement(sections, section->name))
-		errx(1, "Section name \"%s\" is already in use", section->name);
+		errx(EX_DATAERR, "Section name \"%s\" is already in use",
+		     section->name);
 
 	/* If not, add it */
 	bool collided = hash_AddElement(sections, section->name, section);
@@ -104,15 +106,16 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	/* Sanity check the section's type */
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID)
-		errx(1, "Section \"%s\" has an invalid type.", section->name);
+		errx(EX_DATAERR, "Section \"%s\" has an invalid type.",
+		     section->name);
 	if (is32kMode && section->type == SECTTYPE_ROMX)
-		errx(1, "%s: ROMX sections cannot be used with option -t.",
+		errx(EX_DATAERR, "%s: ROMX sections cannot be used with option -t.",
 		     section->name);
 	if (isWRA0Mode && section->type == SECTTYPE_WRAMX)
-		errx(1, "%s: WRAMX sections cannot be used with options -w or -d.",
+		errx(EX_DATAERR, "%s: WRAMX sections cannot be used with options -w or -d.",
 		     section->name);
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
-		errx(1, "%s: VRAM bank 1 can't be used with option -d.",
+		errx(EX_DATAERR, "%s: VRAM bank 1 can't be used with option -d.",
 		     section->name);
 
 	/*
@@ -127,14 +130,14 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	if (section->isBankFixed && section->bank < minbank
 				 && section->bank > maxbank)
-		errx(1, minbank == maxbank
+		errx(EX_DATAERR, minbank == maxbank
 			? "Cannot place section \"%s\" in bank %d, it must be %d"
 			: "Cannot place section \"%s\" in bank %d, it must be between %d and %d",
 		     section->name, section->bank, minbank, maxbank);
 
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
-		errx(1, "Section \"%s\" is bigger than the max size for that type: %#X > %#X",
+		errx(EX_DATAERR, "Section \"%s\" is bigger than the max size for that type: %#X > %#X",
 		     section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
@@ -150,7 +153,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* It doesn't make sense to have both org and alignment set */
 		if (section->isAddressFixed) {
 			if (section->org & section->alignMask)
-				errx(1, "Section \"%s\"'s fixed address doesn't match its alignment",
+				errx(EX_DATAERR, "Section \"%s\"'s fixed address doesn't match its alignment",
 				     section->name);
 			section->isAlignFixed = false;
 		} else if ((endaddr(type) & section->alignMask)

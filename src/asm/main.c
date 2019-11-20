@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <time.h>
 
 #include "asm/symbol.h"
@@ -137,7 +138,7 @@ void opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(1, "Must specify exactly 4 characters for option 'g'");
+			errx(EX_DATAERR, "Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -145,7 +146,7 @@ void opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			errx(1, "Must specify exactly 2 characters for option 'b'");
+			errx(EX_DATAERR, "Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 	case 'z':
@@ -155,15 +156,15 @@ void opt_Parse(char *s)
 
 			result = sscanf(&s[1], "%x", &fillchar);
 			if (!((result == EOF) || (result == 1)))
-				errx(1, "Invalid argument for option 'z'");
+				errx(EX_DATAERR, "Invalid argument for option 'z'");
 
 			newopt.fillchar = fillchar;
 		} else {
-			errx(1, "Invalid argument for option 'z'");
+			errx(EX_DATAERR, "Invalid argument for option 'z'");
 		}
 		break;
 	default:
-		fatalerror("Unknown option");
+		fatalerror(EX_USAGE, "Unknown option");
 		break;
 	}
 
@@ -177,7 +178,7 @@ void opt_Push(void)
 	pOpt = malloc(sizeof(struct sOptionStackEntry));
 
 	if (pOpt == NULL)
-		fatalerror("No memory for option stack");
+		fatalerror(EX_OSERR, "No memory for option stack");
 
 	pOpt->Options = CurrentOptions;
 	pOpt->pNext = pOptionStack;
@@ -187,7 +188,7 @@ void opt_Push(void)
 void opt_Pop(void)
 {
 	if (pOptionStack == NULL)
-		fatalerror("No entries in the option stack");
+		fatalerror(EX_DATAERR, "No entries in the option stack");
 
 	struct sOptionStackEntry *pOpt;
 
@@ -204,17 +205,17 @@ void opt_AddDefine(char *s)
 	if (cldefines_index >= cldefines_numindices) {
 		/* Check for overflows */
 		if ((cldefines_numindices * 2) < cldefines_numindices)
-			fatalerror("No memory for command line defines");
+			fatalerror(EX_OSERR, "No memory for command line defines");
 
 		if ((cldefines_bufsize * 2) < cldefines_bufsize)
-			fatalerror("No memory for command line defines");
+			fatalerror(EX_OSERR, "No memory for command line defines");
 
 		cldefines_numindices *= 2;
 		cldefines_bufsize *= 2;
 
 		cldefines = realloc(cldefines, cldefines_bufsize);
 		if (!cldefines)
-			fatalerror("No memory for command line defines");
+			fatalerror(EX_OSERR, "No memory for command line defines");
 	}
 	equals = strchr(s, '=');
 	if (equals) {
@@ -272,7 +273,7 @@ static void print_usage(void)
 "usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
 "              [-M dependfile] [-o outfile] [-p pad_value]\n"
 "              [-r recursion_depth] [-W warning] [-w] file.asm\n");
-	exit(1);
+	exit(EX_USAGE);
 }
 
 int main(int argc, char *argv[])
@@ -291,7 +292,7 @@ int main(int argc, char *argv[])
 	cldefines_bufsize = cldefines_numindices * cldefine_entrysize;
 	cldefines = malloc(cldefines_bufsize);
 	if (!cldefines)
-		fatalerror("No memory for command line defines");
+		fatalerror(EX_OSERR, "No memory for command line defines");
 
 	if (argc == 1)
 		print_usage();
@@ -325,7 +326,7 @@ int main(int argc, char *argv[])
 				newopt.binary[0] = optarg[1];
 				newopt.binary[1] = optarg[2];
 			} else {
-				errx(1, "Must specify exactly 2 characters for option 'b'");
+				errx(EX_USAGE, "Must specify exactly 2 characters for option 'b'");
 			}
 			break;
 		case 'D':
@@ -341,7 +342,7 @@ int main(int argc, char *argv[])
 				newopt.gbgfx[2] = optarg[3];
 				newopt.gbgfx[3] = optarg[4];
 			} else {
-				errx(1, "Must specify exactly 4 characters for option 'g'");
+				errx(EX_USAGE, "Must specify exactly 4 characters for option 'g'");
 			}
 			break;
 		case 'h':
@@ -356,7 +357,8 @@ int main(int argc, char *argv[])
 		case 'M':
 			dependfile = fopen(optarg, "w");
 			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s", optarg);
+				err(EX_CANTCREAT, "Could not open dependfile %s",
+				    optarg);
 
 			break;
 		case 'o':
@@ -366,17 +368,17 @@ int main(int argc, char *argv[])
 			newopt.fillchar = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'p'");
+				errx(EX_USAGE, "Invalid argument for option 'p'");
 
 			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
-				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
+				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 0xFF");
 
 			break;
 		case 'r':
 			nMaxRecursionDepth = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'r'");
+				errx(EX_USAGE, "Invalid argument for option 'r'");
 			break;
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
@@ -414,7 +416,7 @@ int main(int argc, char *argv[])
 
 	if (dependfile) {
 		if (!tzObjectname)
-			errx(1, "Dependency files can only be created if an output object file is specified.\n");
+			errx(EX_USAGE, "Dependency files can only be created if an output object file is specified.\n");
 
 		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
 	}
@@ -437,13 +439,14 @@ int main(int argc, char *argv[])
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nbErrors != 0)
-		errx(1, "Assembly aborted (%ld errors)!", nbErrors);
+		errx(EX_DATAERR, "Assembly aborted (%ld errors)!", nbErrors);
 
 	if (nIFDepth != 0)
-		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
+		errx(EX_DATAERR, "Unterminated IF construct (%ld levels)!",
+		     nIFDepth);
 
 	if (nUnionDepth != 0) {
-		errx(1, "Unterminated UNION construct (%ld levels)!",
+		errx(EX_DATAERR, "Unterminated UNION construct (%ld levels)!",
 		     nUnionDepth);
 	}
 

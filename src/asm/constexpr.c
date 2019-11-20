@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/constexpr.h"
@@ -30,7 +31,7 @@ void constexpr_Symbol(struct ConstExpression *expr, char *tzSym)
 			expr->u.pSym = pSym;
 			expr->isSym = 1;
 		} else {
-			fatalerror("'%s' not defined", tzSym);
+			fatalerror(EX_DATAERR, "'%s' not defined", tzSym);
 		}
 	} else {
 		constexpr_Number(expr, sym_GetConstantValue(tzSym));
@@ -48,7 +49,7 @@ void constexpr_UnaryOp(struct ConstExpression *expr,
 		       const struct ConstExpression *src)
 {
 	if (src->isSym)
-		fatalerror("Non-constant operand in constant expression");
+		fatalerror(EX_DATAERR, "Non-constant operand in constant expression");
 
 	int32_t value = src->u.nVal;
 	int32_t result = 0;
@@ -100,7 +101,7 @@ void constexpr_UnaryOp(struct ConstExpression *expr,
 		result = math_ATan(value);
 		break;
 	default:
-		fatalerror("Unknown unary op");
+		fatalerror(EX_SOFTWARE, "Unknown unary op");
 	}
 
 	constexpr_Number(expr, result);
@@ -120,12 +121,13 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 		char *symName2 = src2->u.pSym->tzName;
 
 		if (!sym_IsRelocDiffDefined(symName1, symName2))
-			fatalerror("'%s - %s' not defined", symName1, symName2);
+			fatalerror(EX_DATAERR, "'%s - %s' not defined",
+				   symName1, symName2);
 		value1 = sym_GetDefinedValue(symName1);
 		value2 = sym_GetDefinedValue(symName2);
 		result = value1 - value2;
 	} else if (src1->isSym || src2->isSym) {
-		fatalerror("Non-constant operand in constant expression");
+		fatalerror(EX_DATAERR, "Non-constant operand in constant expression");
 	} else {
 		value1 = src1->u.nVal;
 		value2 = src2->u.nVal;
@@ -176,20 +178,20 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 					value1);
 
 			if (value2 < 0)
-				fatalerror("Shift by negative value: %d",
+				fatalerror(EX_DATAERR, "Shift by negative value: %d",
 					   value2);
 			else if (value2 >= 32)
-				fatalerror("Shift by too big value: %d",
+				fatalerror(EX_DATAERR, "Shift by too big value: %d",
 					   value2);
 
 			result = (uint32_t)value1 << value2;
 			break;
 		case T_OP_SHR:
 			if (value2 < 0)
-				fatalerror("Shift by negative value: %d",
+				fatalerror(EX_DATAERR, "Shift by negative value: %d",
 					   value2);
 			else if (value2 >= 32)
-				fatalerror("Shift by too big value: %d",
+				fatalerror(EX_DATAERR, "Shift by too big value: %d",
 					   value2);
 
 			result = value1 >> value2;
@@ -199,7 +201,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			break;
 		case T_OP_DIV:
 			if (value2 == 0)
-				fatalerror("Division by zero");
+				fatalerror(EX_DATAERR, "Division by zero");
 			if (value1 == INT32_MIN && value2 == -1) {
 				warning(WARNING_DIV, "Division of min value by -1");
 				result = INT32_MIN;
@@ -209,7 +211,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			break;
 		case T_OP_MOD:
 			if (value2 == 0)
-				fatalerror("Division by zero");
+				fatalerror(EX_DATAERR, "Division by zero");
 			if (value1 == INT32_MIN && value2 == -1)
 				result = 0;
 			else
@@ -225,7 +227,7 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			result = math_ATan2(value1, value2);
 			break;
 		default:
-			fatalerror("Unknown binary op");
+			fatalerror(EX_SOFTWARE, "Unknown binary op");
 		}
 	}
 
@@ -235,6 +237,6 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 int32_t constexpr_GetConstantValue(struct ConstExpression *expr)
 {
 	if (expr->isSym)
-		fatalerror("Non-constant expression");
+		fatalerror(EX_DATAERR, "Non-constant expression");
 	return expr->u.nVal;
 }

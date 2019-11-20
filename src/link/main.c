@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sysexits.h>
 
 #include "link/object.h"
 #include "link/symbol.h"
@@ -43,7 +44,7 @@ FILE *openFile(char const *fileName, char const *mode)
 	FILE *file = fopen(fileName, mode);
 
 	if (!file)
-		err(1, "Could not open file \"%s\"", fileName);
+		err(EX_IOERR, "Could not open file \"%s\"", fileName);
 
 	return file;
 }
@@ -127,9 +128,9 @@ int main(int argc, char *argv[])
 		case 'p':
 			value = strtoul(optarg, &endptr, 0);
 			if (optarg[0] == '\0' || *endptr != '\0')
-				errx(1, "Invalid argument for option 'p'");
+				errx(EX_USAGE, "Invalid argument for option 'p'");
 			if (value > 0xFF)
-				errx(1, "Argument for 'p' must be a byte (between 0 and 0xFF)");
+				errx(EX_USAGE, "Argument for 'p' must be a byte (between 0 and 0xFF)");
 			padValue = value;
 			break;
 		case 's':
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
 			break;
 		default:
 			printUsage();
-			exit(1);
+			exit(EX_USAGE);
 		}
 	}
 
@@ -161,7 +162,7 @@ int main(int argc, char *argv[])
 	if (curArgIndex == argc) {
 		fprintf(stderr, "No input files");
 		printUsage();
-		exit(1);
+		exit(EX_USAGE);
 	}
 
 	/* Patch the size array depending on command-line options */

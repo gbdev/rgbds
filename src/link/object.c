@@ -1,10 +1,11 @@
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <limits.h>
+#include <sysexits.h>
 
 #include "link/object.h"
 #include "link/main.h"
@@ -33,7 +34,7 @@ static struct SymbolList {
 		FILE *tmpFile = file; \
 		type tmpVal = func(tmpFile); \
 		if (tmpVal == (errval)) { \
-			errx(1, __VA_ARGS__, feof(tmpFile) \
+			errx(EX_IOERR, __VA_ARGS__, feof(tmpFile) \
 						? "Unexpected end of file" \
 						: strerror(errno)); \
 		} \
@@ -215,7 +216,7 @@ static void readPatch(FILE *file, struct Patch *patch,
 				      patch->rpnSize, file);
 
 	if (nbElementsRead != patch->rpnSize)
-		errx(1, "%s: Cannot read \"%s\"'s patch #%u's RPN expression: %s",
+		errx(EX_IOERR, "%s: Cannot read \"%s\"'s patch #%u's RPN expression: %s",
 		     fileName, sectName, i);
 	patch->rpnExpression = rpnExpression;
 }
@@ -236,8 +237,8 @@ static void readSection(FILE *file, struct Section *section,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s",
 		    fileName, section->name);
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx(1, "\"%s\"'s section size (%d) is invalid", section->name,
-		     tmp);
+		errx(EX_DATAERR, "\"%s\"'s section size (%d) is invalid",
+		     section->name, tmp);
 	section->size = tmp;
 	tryGetc(section->type, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, section->name);
@@ -245,7 +246,7 @@ static void readSection(FILE *file, struct Section *section,
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX)
-		errx(1, "\"%s\" is too large (%d)", tmp);
+		errx(EX_DATAERR, "\"%s\" is too large (%d)", tmp);
 	section->org = tmp;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s",
 		    fileName, section->name);
@@ -261,13 +262,13 @@ static void readSection(FILE *file, struct Section *section,
 		uint8_t *data = malloc(sizeof(*data) * section->size + 1);
 
 		if (!data)
-			err(1, "%s: Unable to read \"%s\"'s data", fileName,
-			    section->name);
+			err(EX_IOERR, "%s: Unable to read \"%s\"'s data",
+			    fileName, section->name);
 		if (section->size) {
 			size_t nbElementsRead = fread(data, sizeof(*data),
 						      section->size, file);
 			if (nbElementsRead != section->size)
-				errx(1, "%s: Cannot read \"%s\"'s data: %s",
+				errx(EX_IOERR, "%s: Cannot read \"%s\"'s data: %s",
 				     fileName, section->name,
 				     feof(file) ? "Unexpected end of file"
 						: strerror(errno));
@@ -282,8 +283,8 @@ static void readSection(FILE *file, struct Section *section,
 			malloc(sizeof(*patches) * section->nbPatches + 1);
 
 		if (!patches)
-			err(1, "%s: Unable to read \"%s\"'s patches", fileName,
-			    section->name);
+			err(EX_IOERR, "%s: Unable to read \"%s\"'s patches",
+			    fileName, section->name);
 		for (uint32_t i = 0; i < section->nbPatches; i++)
 			readPatch(file, &patches[i], fileName, section->name,
 				  i);
@@ -342,12 +343,13 @@ static void readRGB6File(FILE *file, char const *fileName)
 		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
 
 	if (!fileSymbols)
-		err(1, "Failed to get memory for %s's symbols", fileName);
+		err(EX_OSERR, "Failed to get memory for %s's symbols",
+		    fileName);
 
 	struct SymbolList *symbolList = malloc(sizeof(*symbolList));
 
 	if (!symbolList)
-		err(1, "Failed to register %s's symbol list", fileName);
+		err(EX_OSERR, "Failed to register %s's symbol list", fileName);
 	symbolList->symbolList = fileSymbols;
 	symbolList->nbSymbols = nbSymbols;
 	symbolList->next = symbolLists;
@@ -363,7 +365,8 @@ static void readRGB6File(FILE *file, char const *fileName)
 		struct Symbol *symbol = malloc(sizeof(*symbol));
 
 		if (!symbol)
-			err(1, "%s: Couldn't create new symbol", fileName);
+			err(EX_OSERR, "%s: Couldn't create new symbol",
+			    fileName);
 		readSymbol(file, symbol, fileName);
 
 		fileSymbols[i] = symbol;
@@ -382,7 +385,8 @@ static void readRGB6File(FILE *file, char const *fileName)
 		struct Section *section = malloc(sizeof(*section));
 
 		if (!section)
-			err(1, "%s: Couldn't create new section", fileName);
+			err(EX_OSERR, "%s: Couldn't create new section",
+			    fileName);
 		readSection(file, section, fileName);
 		section->fileSymbols = fileSymbols;
 
@@ -392,7 +396,7 @@ static void readRGB6File(FILE *file, char const *fileName)
 			section->symbols = malloc(sizeof(*section->symbols)
 							* nbSymPerSect[i]);
 			if (!section->symbols)
-				err(1, "%s: Couldn't link to symbols");
+				err(EX_OSERR, "%s: Couldn't link to symbols");
 		} else {
 			section->symbols = NULL;
 		}
@@ -422,7 +426,7 @@ void obj_ReadFile(char const *fileName)
 	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
 
 	if (!file) {
-		err(1, "Could not open file %s", fileName);
+		err(EX_NOINPUT, "Could not open file %s", fileName);
 		return;
 	}
 
@@ -432,10 +436,10 @@ void obj_ReadFile(char const *fileName)
 				  &versionNumber);
 
 	if (matchedElems != 1)
-		errx(1, "\"%s\" is not a RGBDS object file", fileName);
+		errx(EX_DATAERR, "\"%s\" is not a RGBDS object file", fileName);
 	/* TODO: support other versions? */
 	if (versionNumber != 6)
-		errx(1, "\"%s\" is an incompatible version %hhu object file",
+		errx(EX_DATAERR, "\"%s\" is an incompatible version %hhu object file",
 		     fileName, versionNumber);
 
 	verbosePrint("Reading object file %s, version %hhu\n",

@@ -1,9 +1,10 @@
 
-#include <stdlib.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <sysexits.h>
 
 #include "link/main.h"
 #include "link/script.h"
@@ -27,7 +28,7 @@ static uint32_t fileStackIndex;
 static void pushFile(char const *newFileName)
 {
 	if (fileStackIndex == UINT32_MAX)
-		errx(1, "%s(%u): INCLUDE recursion limit reached",
+		errx(EX_SOFTWARE, "%s(%u): INCLUDE recursion limit reached",
 		     linkerScriptName, lineNo);
 
 	if (fileStackIndex == fileStackSize) {
@@ -37,7 +38,7 @@ static void pushFile(char const *newFileName)
 		fileStack = realloc(fileStack,
 				    sizeof(*fileStack) * fileStackSize);
 		if (!fileStack)
-			err(1, "%s(%u): Internal INCLUDE error",
+			err(EX_OSERR, "%s(%u): Internal INCLUDE error",
 			    linkerScriptName, lineNo);
 	}
 
@@ -48,7 +49,7 @@ static void pushFile(char const *newFileName)
 
 	linkerScript = fopen(newFileName, "r");
 	if (!linkerScript)
-		err(1, "%s(%u): Could not open \"%s\"",
+		err(EX_IOERR, "%s(%u): Could not open \"%s\"",
 		    linkerScriptName, lineNo, newFileName);
 	lineNo = 1;
 	linkerScriptName = newFileName;
@@ -167,8 +168,8 @@ static int readChar(FILE *file)
 	int curchar = getc_unlocked(file);
 
 	if (curchar == EOF && ferror(file))
-		err(1, "%s(%u): Unexpected error in %s", linkerScriptName,
-		    lineNo, __func__);
+		err(EX_IOERR, "%s(%u): Unexpected error in %s",
+		    linkerScriptName, lineNo, __func__);
 	return curchar;
 }
 
@@ -213,7 +214,7 @@ static struct LinkerScriptToken const *nextToken(void)
 		do {
 			curchar = readChar(linkerScript);
 			if (curchar == EOF || isNewline(curchar))
-				errx(1, "%s(%u): Unterminated string",
+				errx(EX_DATAERR, "%s(%u): Unterminated string",
 				     linkerScriptName, lineNo);
 			else if (curchar == '"')
 				/* Quotes force a string termination */
@@ -224,7 +225,7 @@ static struct LinkerScriptToken const *nextToken(void)
 				token.attr.string = realloc(token.attr.string,
 							    capacity);
 				if (!token.attr.string)
-					err(1, "%s: Failed to allocate memory for string",
+					err(EX_OSERR, "%s: Failed to allocate memory for string",
 					    __func__);
 			}
 			token.attr.string[size++] = curchar;
@@ -240,7 +241,7 @@ static struct LinkerScriptToken const *nextToken(void)
 				capacity *= 2;
 				str = realloc(str, capacity);
 				if (!str)
-					err(1, "%s: Failed to allocate memory for token",
+					err(EX_OSERR, "%s: Failed to allocate memory for token",
 					    __func__);
 			}
 			str[size] = toupper(curchar);
@@ -292,7 +293,7 @@ static struct LinkerScriptToken const *nextToken(void)
 			if (tryParseNumber(str, &token.attr.number))
 				token.type = TOKEN_NUMBER;
 			else
-				errx(1, "%s(%u): Unknown token \"%s\"",
+				errx(EX_DATAERR, "%s(%u): Unknown token \"%s\"",
 				     linkerScriptName, lineNo, str);
 		}
 
@@ -320,7 +321,7 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 	}
 
 	if (arg < *pc)
-		errx(1, "%s(%u): `%s` cannot be used to go backwards",
+		errx(EX_DATAERR, "%s(%u): `%s` cannot be used to go backwards",
 		     linkerScriptName, lineNo, commands[command]);
 	*pc = arg;
 }
@@ -369,11 +370,11 @@ struct SectionPlacement *script_NextSection(void)
 
 		if (type != SECTTYPE_INVALID) {
 			if (curaddr[type][bankID] > endaddr(type) + 1)
-				errx(1, "%s(%u): Sections would extend past the end of %s ($%04hx > $%04hx)",
+				errx(EX_DATAERR, "%s(%u): Sections would extend past the end of %s ($%04hx > $%04hx)",
 				     linkerScriptName, lineNo, typeNames[type],
 				     curaddr[type][bankID], endaddr(type));
 			if (curaddr[type][bankID] < startaddr[type])
-				errx(1, "%s(%u): PC underflowed ($%04hx < $%04hx)",
+				errx(EX_DATAERR, "%s(%u): PC underflowed ($%04hx < $%04hx)",
 				     linkerScriptName, lineNo,
 				     curaddr[type][bankID], startaddr[type]);
 		}
@@ -394,7 +395,7 @@ struct SectionPlacement *script_NextSection(void)
 				break;
 
 			case TOKEN_NUMBER:
-				errx(1, "%s(%u): stray number \"%u\"",
+				errx(EX_DATAERR, "%s(%u): stray number \"%u\"",
 				     linkerScriptName, lineNo,
 				     token->attr.number);
 
@@ -407,7 +408,7 @@ struct SectionPlacement *script_NextSection(void)
 				parserState = PARSER_LINEEND;
 
 				if (type == SECTTYPE_INVALID)
-					errx(1, "%s(%u): Didn't specify a location before the section",
+					errx(EX_DATAERR, "%s(%u): Didn't specify a location before the section",
 					     linkerScriptName, lineNo);
 
 				section.section =
@@ -438,10 +439,10 @@ struct SectionPlacement *script_NextSection(void)
 
 				if (tokType == TOKEN_COMMAND) {
 					if (type == SECTTYPE_INVALID)
-						errx(1, "%s(%u): Didn't specify a location before the command",
+						errx(EX_DATAERR, "%s(%u): Didn't specify a location before the command",
 						     linkerScriptName, lineNo);
 					if (!hasArg)
-						errx(1, "%s(%u): Command specified without an argument",
+						errx(EX_DATAERR, "%s(%u): Command specified without an argument",
 						     linkerScriptName, lineNo);
 
 					processCommand(attr.command, arg,
@@ -453,16 +454,16 @@ struct SectionPlacement *script_NextSection(void)
 					 * specifying the number is optional.
 					 */
 					if (!hasArg && nbbanks(type) != 1)
-						errx(1, "%s(%u): Didn't specify a bank number",
+						errx(EX_DATAERR, "%s(%u): Didn't specify a bank number",
 						     linkerScriptName, lineNo);
 					else if (!hasArg)
 						arg = bankranges[type][0];
 					else if (arg < bankranges[type][0])
-						errx(1, "%s(%u): specified bank number is too low (%u < %u)",
+						errx(EX_DATAERR, "%s(%u): specified bank number is too low (%u < %u)",
 						     linkerScriptName, lineNo,
 						     arg, bankranges[type][0]);
 					else if (arg > bankranges[type][1])
-						errx(1, "%s(%u): specified bank number is too high (%u > %u)",
+						errx(EX_DATAERR, "%s(%u): specified bank number is too high (%u > %u)",
 						     linkerScriptName, lineNo,
 						     arg, bankranges[type][1]);
 					bank = arg;
@@ -482,7 +483,7 @@ struct SectionPlacement *script_NextSection(void)
 
 		case PARSER_INCLUDE:
 			if (token->type != TOKEN_STRING)
-				errx(1, "%s(%u): Expected a file name after INCLUDE",
+				errx(EX_DATAERR, "%s(%u): Expected a file name after INCLUDE",
 				     linkerScriptName, lineNo);
 
 			/* Switch to that file */
@@ -500,7 +501,7 @@ lineend:
 					return NULL;
 				parserState = PARSER_LINEEND;
 			} else if (token->type != TOKEN_NEWLINE)
-				errx(1, "%s(%u): Unexpected %s at the end of the line",
+				errx(EX_DATAERR, "%s(%u): Unexpected %s at the end of the line",
 				     linkerScriptName, lineNo,
 				     tokenTypes[token->type]);
 			break;

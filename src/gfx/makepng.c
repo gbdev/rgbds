@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "gfx/main.h"
 
@@ -32,7 +33,8 @@ struct RawIndexedImage *input_png_file(const struct Options *opts,
 
 	f = fopen(opts->infile, "rb");
 	if (!f)
-		err(1, "Opening input png file '%s' failed", opts->infile);
+		err(EX_NOINPUT, "Opening input png file '%s' failed",
+		    opts->infile);
 
 	initialize_png(&img, f);
 
@@ -54,7 +56,7 @@ struct RawIndexedImage *input_png_file(const struct Options *opts,
 		raw_image = truecolor_png_to_raw(&img); break;
 	default:
 		/* Shouldn't happen, but might as well handle just in case. */
-		errx(1, "Input PNG file is of invalid color type.");
+		errx(EX_DATAERR, "Input PNG file is of invalid color type.");
 	}
 
 	get_text(&img, png_options);
@@ -90,19 +92,19 @@ void output_png_file(const struct Options *opts,
 
 	f = fopen(outfile, "wb");
 	if (!f)
-		err(1, "Opening output png file '%s' failed", outfile);
+		err(EX_IOERR, "Opening output png file '%s' failed", outfile);
 
 	img.png = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 					  NULL, NULL, NULL);
 	if (!img.png)
-		errx(1, "Creating png structure failed");
+		errx(EX_OSERR, "Creating png structure failed");
 
 	img.info = png_create_info_struct(img.png);
 	if (!img.info)
-		errx(1, "Creating png info structure failed");
+		errx(EX_OSERR, "Creating png info structure failed");
 
 	if (setjmp(png_jmpbuf(img.png)))
-		exit(1);
+		exit(EX_OSERR);
 
 	png_init_io(img.png, f);
 
@@ -153,11 +155,11 @@ static void initialize_png(struct PNGImage *img, FILE *f)
 	img->png = png_create_read_struct(PNG_LIBPNG_VER_STRING,
 					  NULL, NULL, NULL);
 	if (!img->png)
-		errx(1, "Creating png structure failed");
+		errx(EX_OSERR, "Creating png structure failed");
 
 	img->info = png_create_info_struct(img->png);
 	if (!img->info)
-		errx(1, "Creating png info structure failed");
+		errx(EX_OSERR, "Creating png info structure failed");
 
 	if (setjmp(png_jmpbuf(img->png)))
 		exit(1);
@@ -410,7 +412,7 @@ static void update_built_palette(png_color *palette,
 	}
 	if (!color_exists) {
 		if (*num_colors == colors) {
-			err(1, "Too many colors in input PNG file to fit into a %d-bit palette (max %d).",
+			err(EX_DATAERR, "Too many colors in input PNG file to fit into a %d-bit palette (max %d).",
 			    depth, colors);
 		}
 		palette[*num_colors] = *pixel_color;
@@ -573,7 +575,7 @@ static uint8_t palette_index_of(const png_color *palette,
 			return i;
 		}
 	}
-	errx(1, "The input PNG file contains colors that don't appear in its embedded palette.");
+	errx(EX_DATAERR, "The input PNG file contains colors that don't appear in its embedded palette.");
 }
 
 static void read_png(struct PNGImage *img)
@@ -617,7 +619,7 @@ static void set_raw_image_palette(struct RawIndexedImage *raw_image,
 	int i;
 
 	if (num_colors > raw_image->num_colors) {
-		errx(1, "Too many colors in input PNG file's palette to fit into a %d-bit palette (%d in input palette, max %d).",
+		errx(EX_DATAERR, "Too many colors in input PNG file's palette to fit into a %d-bit palette (%d in input palette, max %d).",
 		     raw_image->num_colors >> 1,
 		     num_colors, raw_image->num_colors);
 	}

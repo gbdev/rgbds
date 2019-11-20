@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sysexits.h>
 
 #include "gfx/main.h"
 
@@ -62,7 +63,7 @@ void output_file(const struct Options *opts, const struct GBImage *gb)
 
 	f = fopen(opts->outfile, "wb");
 	if (!f)
-		err(1, "Opening output file '%s' failed", opts->outfile);
+		err(EX_IOERR, "Opening output file '%s' failed", opts->outfile);
 
 	fwrite(gb->data, 1, gb->size - gb->trim * 8 * depth, f);
 
@@ -261,7 +262,8 @@ void output_tilemap_file(const struct Options *opts,
 
 	f = fopen(opts->tilemapfile, "wb");
 	if (!f)
-		err(1, "Opening tilemap file '%s' failed", opts->tilemapfile);
+		err(EX_IOERR, "Opening tilemap file '%s' failed",
+		    opts->tilemapfile);
 
 	fwrite(tilemap->data, 1, tilemap->size, f);
 	fclose(f);
@@ -277,7 +279,8 @@ void output_attrmap_file(const struct Options *opts,
 
 	f = fopen(opts->attrmapfile, "wb");
 	if (!f)
-		err(1, "Opening attrmap file '%s' failed", opts->attrmapfile);
+		err(EX_IOERR, "Opening attrmap file '%s' failed",
+		    opts->attrmapfile);
 
 	fwrite(attrmap->data, 1, attrmap->size, f);
 	fclose(f);
@@ -319,7 +322,8 @@ void output_palette_file(const struct Options *opts,
 
 	f = fopen(opts->palfile, "wb");
 	if (!f)
-		err(1, "Opening palette file '%s' failed", opts->palfile);
+		err(EX_IOERR, "Opening palette file '%s' failed",
+		    opts->palfile);
 
 	for (i = 0; i < raw_image->num_colors; i++) {
 		int r = raw_image->palette[i].red;

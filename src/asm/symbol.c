@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sysexits.h>
 #include <time.h>
 
 #include "asm/asm.h"
@@ -106,8 +107,8 @@ void updateSymbolFilename(struct sSymbol *nsym)
 {
 	if (snprintf(nsym->tzFileName, _MAX_PATH + 1, "%s",
 		     tzCurrentFileName) > _MAX_PATH) {
-		fatalerror("%s: File name is too long: '%s'", __func__,
-			   tzCurrentFileName);
+		fatalerror(EX_DATAERR, "%s: File name is too long: '%s'",
+			   __func__, tzCurrentFileName);
 	}
 	nsym->nFileLine = fstk_GetLine();
 }
@@ -129,7 +130,7 @@ struct sSymbol *createsymbol(char *s)
 	(*ppsym) = malloc(sizeof(struct sSymbol));
 
 	if ((*ppsym) == NULL) {
-		fatalerror("No memory for symbol");
+		fatalerror(EX_OSERR, "No memory for symbol");
 		return NULL;
 	}
 
@@ -158,7 +159,7 @@ static void fullSymbolName(char *output, size_t outputSize, char *localName,
 	int n = snprintf(output, outputSize, "%s%s", parent->tzName, localName);
 
 	if (n >= (int)outputSize)
-		fatalerror("Symbol name is too long: '%s%s'",
+		fatalerror(EX_SOFTWARE, "Symbol name is too long: '%s%s'",
 			   parent->tzName, localName);
 }
 
@@ -180,7 +181,7 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 
 	if (separator) {
 		if (strchr(separator + 1, '.'))
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
+			fatalerror(EX_DATAERR, "'%s' is a nonsensical reference to a nested local symbol",
 				   s);
 	}
 
@@ -264,7 +265,7 @@ uint32_t sym_isConstDefined(char *tzName)
 		if (psym->nType & mask)
 			return 1;
 
-		fatalerror("'%s' is not allowed as argument to the DEF function",
+		fatalerror(EX_DATAERR, "'%s' is not allowed as argument to the DEF function",
 			   tzName);
 	}
 
@@ -314,7 +315,7 @@ uint32_t sym_GetConstantValue(char *s)
 		if (psym->nType & SYMF_CONST)
 			return getvaluefield(psym);
 
-		fatalerror("Expression must have a constant value");
+		fatalerror(EX_DATAERR, "Expression must have a constant value");
 	}
 
 	yyerror("'%s' not defined", s);
@@ -513,7 +514,7 @@ void sym_AddString(char *tzSym, char *tzValue)
 		if (nsym->pMacro != NULL)
 			strcpy(nsym->pMacro, tzValue);
 		else
-			fatalerror("No memory for string equate");
+			fatalerror(EX_OSERR, "No memory for string equate");
 
 		nsym->nType |= SYMF_STRING | SYMF_DEFINED;
 		nsym->ulMacroSize = strlen(tzValue);
@@ -580,7 +581,7 @@ void sym_AddLocalReloc(char *tzSym)
 		sym_AddReloc(fullname);
 
 	} else {
-		fatalerror("Local label in main scope");
+		fatalerror(EX_DATAERR, "Local label in main scope");
 	}
 }
 
@@ -595,14 +596,14 @@ void sym_AddReloc(char *tzSym)
 
 	if (localPtr != NULL) {
 		if (!pScope)
-			fatalerror("Local label in main scope");
+			fatalerror(EX_DATAERR, "Local label in main scope");
 
 		struct sSymbol *parent = pScope->pScope ?
 					 pScope->pScope : pScope;
 		uint32_t parentLen = localPtr - tzSym;
 
 		if (strchr(localPtr + 1, '.') != NULL) {
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
+			fatalerror(EX_DATAERR, "'%s' is a nonsensical reference to a nested local symbol",
 				   tzSym);
 		} else if (strlen(parent->tzName) != parentLen
 			   || strncmp(tzSym, parent->tzName, parentLen) != 0) {
@@ -660,10 +661,10 @@ int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 
 	/* Do the symbols exist? */
 	if (nsym1 == NULL)
-		fatalerror("Symbol \"%s\" isn't defined.", tzSym1);
+		fatalerror(EX_DATAERR, "Symbol \"%s\" isn't defined.", tzSym1);
 
 	if (nsym2 == NULL)
-		fatalerror("Symbol \"%s\" isn't defined.", tzSym2);
+		fatalerror(EX_DATAERR, "Symbol \"%s\" isn't defined.", tzSym2);
 
 	int32_t s1reloc = (nsym1->nType & SYMF_RELOC) != 0;
 	int32_t s2reloc = (nsym2->nType & SYMF_RELOC) != 0;
@@ -681,10 +682,12 @@ int32_t sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 	 * coherency with sym_AddReloc and sym_AddLocalReloc).
 	 */
 	if (!(nsym1->nType & SYMF_DEFINED))
-		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym1);
+		fatalerror(EX_DATAERR, "Relocatable symbol \"%s\" isn't defined.",
+			   tzSym1);
 
 	if (!(nsym2->nType & SYMF_DEFINED))
-		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym2);
+		fatalerror(EX_DATAERR, "Relocatable symbol \"%s\" isn't defined.",
+			   tzSym2);
 
 	/*
 	 * Both of them must be in the same section for the difference to be
@@ -742,7 +745,7 @@ void sym_Ref(char *tzSym)
 
 		if (*tzSym == '.') {
 			if (!pScope)
-				fatalerror("Local label reference '%s' in main scope",
+				fatalerror(EX_DATAERR, "Local label reference '%s' in main scope",
 					   tzSym);
 			fullSymbolName(fullname, sizeof(fullname), tzSym,
 				       pScope);

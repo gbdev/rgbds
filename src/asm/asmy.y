@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
@@ -92,7 +93,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
 
 		for (i = 0; src[i] != 0; i++) {
 			if (i >= maxLength)
-				fatalerror("Symbol value too long to fit buffer");
+				fatalerror(EX_SOFTWARE, "Symbol value too long to fit buffer");
 
 			dest[i] = src[i];
 		}
@@ -122,11 +123,11 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
 		}
 
 		if (fullLength < 0) {
-			fatalerror("snprintf encoding error");
+			fatalerror(EX_SOFTWARE, "snprintf encoding error");
 		} else {
 			length = (size_t)fullLength;
 			if (length > maxLength)
-				fatalerror("Symbol value too long to fit buffer");
+				fatalerror(EX_SOFTWARE, "Symbol value too long to fit buffer");
 		}
 	}
 
@@ -198,7 +199,7 @@ static void copyrept(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated REPT block");
+		fatalerror(EX_DATAERR, "Unterminated REPT block");
 
 	len = src - pCurrentBuffer->pBuffer - 4;
 
@@ -208,7 +209,7 @@ static void copyrept(void)
 	tzNewMacro = malloc(ulNewMacroSize + 1);
 
 	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for REPT block.");
+		fatalerror(EX_OSERR, "Not enough memory for REPT block.");
 
 	uint32_t i;
 
@@ -268,7 +269,7 @@ static void copymacro(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated MACRO definition.");
+		fatalerror(EX_DATAERR, "Unterminated MACRO definition.");
 
 	len = src - pCurrentBuffer->pBuffer - 4;
 
@@ -277,7 +278,7 @@ static void copymacro(void)
 
 	tzNewMacro = (char *)malloc(ulNewMacroSize + 1);
 	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for MACRO definition.");
+		fatalerror(EX_OSERR, "Not enough memory for MACRO definition.");
 
 	uint32_t i;
 
@@ -366,7 +367,7 @@ static void if_skip_to_else(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated IF construct");
+		fatalerror(EX_DATAERR, "Unterminated IF construct");
 
 	int32_t len = src - pCurrentBuffer->pBuffer;
 
@@ -411,7 +412,7 @@ static void if_skip_to_endc(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated IF construct");
+		fatalerror(EX_DATAERR, "Unterminated IF construct");
 
 	int32_t len = src - pCurrentBuffer->pBuffer;
 
@@ -423,13 +424,13 @@ static void if_skip_to_endc(void)
 static void startUnion(void)
 {
 	if (!pCurrentSection)
-		fatalerror("UNIONs must be inside a SECTION");
+		fatalerror(EX_DATAERR, "UNIONs must be inside a SECTION");
 
 	uint32_t unionIndex = nUnionDepth;
 
 	nUnionDepth++;
 	if (nUnionDepth > MAXUNIONS)
-		fatalerror("Too many nested UNIONs");
+		fatalerror(EX_SOFTWARE, "Too many nested UNIONs");
 
 	unionStart[unionIndex] = nPC;
 	unionSize[unionIndex] = 0;
@@ -457,7 +458,7 @@ static size_t strlenUTF8(const char *s)
 	while (*s) {
 		switch (decode(&state, &codep, (uint8_t)*s)) {
 		case 1:
-			fatalerror("STRLEN: Invalid UTF-8 character");
+			fatalerror(EX_DATAERR, "STRLEN: Invalid UTF-8 character");
 			break;
 		case 0:
 			len++;
@@ -468,7 +469,7 @@ static size_t strlenUTF8(const char *s)
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRLEN: Invalid UTF-8 character");
+		fatalerror(EX_DATAERR, "STRLEN: Invalid UTF-8 character");
 
 	return len;
 }
@@ -491,7 +492,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	while (src[srcIndex] && curPos < pos) {
 		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character");
+			fatalerror(EX_DATAERR, "STRSUB: Invalid UTF-8 character");
 			break;
 		case 0:
 			curPos++;
@@ -508,7 +509,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	while (src[srcIndex] && destIndex < MAXSTRLEN && curLen < len) {
 		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character");
+			fatalerror(EX_DATAERR, "STRSUB: Invalid UTF-8 character");
 			break;
 		case 0:
 			curLen++;
@@ -522,7 +523,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRSUB: Invalid UTF-8 character");
+		fatalerror(EX_DATAERR, "STRSUB: Invalid UTF-8 character");
 
 	dest[destIndex] = 0;
 }
@@ -718,7 +719,7 @@ macro		: T_ID {
 			} macroargs {
 				yy_set_state(LEX_STATE_NORMAL);
 				if (!fstk_RunMacro($1))
-					fatalerror("Macro '%s' not defined", $1);
+					fatalerror(EX_DATAERR, "Macro '%s' not defined", $1);
 			}
 ;
 
@@ -805,7 +806,7 @@ pops		: T_POP_POPS		{ out_PopSection(); }
 pushs		: T_POP_PUSHS		{ out_PushSection(); }
 ;
 
-fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
+fail		: T_POP_FAIL string	{ fatalerror(EX_DATAERR, "%s", $2); }
 ;
 
 warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
@@ -878,7 +879,7 @@ union		: T_POP_UNION
 nextu		: T_POP_NEXTU
 		{
 			if (nUnionDepth <= 0)
-				fatalerror("Found NEXTU outside of a UNION construct");
+				fatalerror(EX_DATAERR, "Found NEXTU outside of a UNION construct");
 
 			updateUnion();
 		}
@@ -887,7 +888,7 @@ nextu		: T_POP_NEXTU
 endu		: T_POP_ENDU
 		{
 			if (nUnionDepth <= 0)
-				fatalerror("Found ENDU outside of a UNION construct");
+				fatalerror(EX_DATAERR, "Found ENDU outside of a UNION construct");
 
 			updateUnion();
 
@@ -1094,7 +1095,7 @@ if		: T_POP_IF const
 elif		: T_POP_ELIF const
 		{
 			if (nIFDepth <= 0)
-				fatalerror("Found ELIF outside an IF construct");
+				fatalerror(EX_DATAERR, "Found ELIF outside an IF construct");
 
 			if (skipElif) {
 				/*
@@ -1127,7 +1128,7 @@ elif		: T_POP_ELIF const
 else		: T_POP_ELSE
 		{
 			if (nIFDepth <= 0)
-				fatalerror("Found ELSE outside an IF construct");
+				fatalerror(EX_DATAERR, "Found ELSE outside an IF construct");
 
 			/* Continue parsing at ENDC keyword */
 			if_skip_to_endc();
@@ -1137,7 +1138,7 @@ else		: T_POP_ELSE
 endc		: T_POP_ENDC
 		{
 			if (nIFDepth <= 0)
-				fatalerror("Found ENDC outside an IF construct");
+				fatalerror(EX_DATAERR, "Found ENDC outside an IF construct");
 
 			nIFDepth--;
 		}
@@ -1385,7 +1386,7 @@ uconst		: const
 		{
 			int32_t value = constexpr_GetConstantValue(&$1);
 			if (value < 0)
-				fatalerror("Constant mustn't be negative: %d", value);
+				fatalerror(EX_DATAERR, "Constant mustn't be negative: %d", value);
 			$$ = value;
 		}
 ;

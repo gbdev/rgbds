@@ -1,7 +1,8 @@
 
-#include <stdlib.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "link/patch.h"
 #include "link/section.h"
@@ -23,7 +24,7 @@ static inline void initRPNStack(void)
 	stack.capacity = 64;
 	stack.buf = malloc(sizeof(*stack.buf) * stack.capacity);
 	if (!stack.buf)
-		err(1, "Failed to init RPN stack");
+		err(EX_OSERR, "Failed to init RPN stack");
 }
 
 static inline void clearRPNStack(void)
@@ -38,7 +39,7 @@ static void pushRPN(int32_t value)
 		stack.buf =
 			realloc(stack.buf, sizeof(*stack.buf) * stack.capacity);
 		if (!stack.buf)
-			err(1, "Failed to resize RPN stack");
+			err(EX_OSERR, "Failed to resize RPN stack");
 	}
 
 	stack.buf[stack.size] = value;
@@ -48,7 +49,7 @@ static void pushRPN(int32_t value)
 static int32_t popRPN(void)
 {
 	if (stack.size == 0)
-		errx(1, "Internal error, RPN stack empty");
+		errx(EX_SOFTWARE, "Internal error, RPN stack empty");
 
 	stack.size--;
 	return stack.buf[stack.size];
@@ -65,7 +66,8 @@ static uint8_t getRPNByte(uint8_t const **expression, int32_t *size,
 			  char const *fileName, int32_t lineNo)
 {
 	if (!(*size)--)
-		errx(1, "%s(%d): RPN expression overread", fileName, lineNo);
+		errx(EX_DATAERR, "%s(%d): RPN expression overread", fileName,
+		     lineNo);
 	return *(*expression)++;
 }
 
@@ -195,7 +197,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				struct Symbol const *symbolDefinition =
 						sym_GetSymbol(symbol->name);
 				if (!symbolDefinition)
-					errx(1, "%s(%d): Unknown symbol \"%s\"",
+					errx(EX_DATAERR, "%s(%d): Unknown symbol \"%s\"",
 					     patch->fileName, patch->lineNo,
 					     symbol->name);
 				symbol = symbolDefinition;
@@ -213,7 +215,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			sect = sect_GetSection(name);
 
 			if (!sect)
-				errx(1, "%s(%d): Requested BANK() of section \"%s\", which was not found",
+				errx(EX_DATAERR, "%s(%d): Requested BANK() of section \"%s\", which was not found",
 				     patch->fileName, patch->lineNo, name);
 
 			value = sect->bank;
@@ -228,7 +230,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (value < 0
 			 || (value > 0xFF && value < 0xFF00)
 			 || value > 0xFFFF)
-				errx(1, "%s(%d): Value %d is not in HRAM range",
+				errx(EX_DATAERR, "%s(%d): Value %d is not in HRAM range",
 				     patch->fileName, patch->lineNo, value);
 			value &= 0xFF;
 			break;
@@ -255,7 +257,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				struct Symbol const *symbolDefinition =
 						sym_GetSymbol(symbol->name);
 				if (!symbolDefinition)
-					errx(1, "%s(%d): Unknown symbol \"%s\"",
+					errx(EX_DATAERR, "%s(%d): Unknown symbol \"%s\"",
 					     patch->fileName, patch->lineNo,
 					     symbol->name);
 				symbol = symbolDefinition;
@@ -306,7 +308,7 @@ static void applyPatches(struct Section *section, void *arg)
 			int32_t offset = value - (address + 1);
 
 			if (offset < -128 || offset > 127)
-				errx(1, "%s(%d): jr target out of reach (%d)",
+				errx(EX_DATAERR, "%s(%d): jr target out of reach (offset %d too large)",
 				     patch->fileName, patch->lineNo, offset);
 			section->data[patch->offset] = offset & 0xFF;
 		} else {
@@ -323,7 +325,7 @@ static void applyPatches(struct Section *section, void *arg)
 
 			if (value < types[patch->type].min
 			 || value > types[patch->type].max)
-				errx(1, "%s(%d): Value %#x%s is not %u-bit",
+				errx(EX_DATAERR, "%s(%d): Value %#x%s is not %u-bit",
 				     patch->fileName, patch->lineNo, value,
 				     value < 0 ? " (maybe negative?)" : "",
 				     types[patch->type].size * 8);

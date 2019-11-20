@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "extern/err.h"
 #include "extern/getopt.h"
@@ -55,7 +56,7 @@ static void print_usage(void)
 "usage: rgbfix [-CcjsVv] [-f fix_spec] [-i game_id] [-k licensee_str]\n"
 "              [-l licensee_id] [-m mbc_type] [-n rom_version] [-p pad_value]\n"
 "              [-r ram_size] [-t title_str] file\n");
-	exit(1);
+	exit(EX_USAGE);
 }
 
 int main(int argc, char *argv[])
@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
 			setid = true;
 
 			if (strlen(optarg) != 4)
-				errx(1, "Game ID %s must be exactly 4 characters",
+				errx(EX_USAGE, "Game ID %s must be exactly 4 characters",
 				     optarg);
 
 			id = optarg;
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
 			setnewlicensee = true;
 
 			if (strlen(optarg) != 2)
-				errx(1, "New licensee code %s is not the correct length of 2 characters",
+				errx(EX_USAGE, "New licensee code %s is not the correct length of 2 characters",
 				     optarg);
 
 			newlicensee = optarg;
@@ -141,10 +142,10 @@ int main(int argc, char *argv[])
 
 			licensee = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'l'");
+				errx(EX_USAGE, "Invalid argument for option 'l'");
 
 			if (licensee < 0 || licensee > 0xFF)
-				errx(1, "Argument for option 'l' must be between 0 and 255");
+				errx(EX_USAGE, "Argument for option 'l' must be between 0 and 255");
 
 			break;
 		case 'm':
@@ -152,10 +153,10 @@ int main(int argc, char *argv[])
 
 			cartridge = strtoul(optarg, &ep, 0);
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'm'");
+				errx(EX_USAGE, "Invalid argument for option 'm'");
 
 			if (cartridge < 0 || cartridge > 0xFF)
-				errx(1, "Argument for option 'm' must be between 0 and 255");
+				errx(EX_USAGE, "Argument for option 'm' must be between 0 and 255");
 
 			break;
 		case 'n':
@@ -164,10 +165,10 @@ int main(int argc, char *argv[])
 			version = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'n'");
+				errx(EX_USAGE, "Invalid argument for option 'n'");
 
 			if (version < 0 || version > 0xFF)
-				errx(1, "Argument for option 'n' must be between 0 and 255");
+				errx(EX_USAGE, "Argument for option 'n' must be between 0 and 255");
 
 			break;
 		case 'p':
@@ -176,10 +177,10 @@ int main(int argc, char *argv[])
 			padvalue = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'p'");
+				errx(EX_USAGE, "Invalid argument for option 'p'");
 
 			if (padvalue < 0 || padvalue > 0xFF)
-				errx(1, "Argument for option 'p' must be between 0 and 255");
+				errx(EX_USAGE, "Argument for option 'p' must be between 0 and 255");
 
 			break;
 		case 'r':
@@ -188,10 +189,10 @@ int main(int argc, char *argv[])
 			ramsize = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'r'");
+				errx(EX_USAGE, "Invalid argument for option 'r'");
 
 			if (ramsize < 0 || ramsize > 0xFF)
-				errx(1, "Argument for option 'r' must be between 0 and 255");
+				errx(EX_USAGE, "Argument for option 'r' must be between 0 and 255");
 
 			break;
 		case 's':
@@ -201,7 +202,7 @@ int main(int argc, char *argv[])
 			settitle = true;
 
 			if (strlen(optarg) > 16)
-				errx(1, "Title \"%s\" is greater than the maximum of 16 characters",
+				errx(EX_USAGE, "Title \"%s\" is greater than the maximum of 16 characters",
 				     optarg);
 
 			if (strlen(optarg) == 16)
@@ -237,7 +238,7 @@ int main(int argc, char *argv[])
 	rom = fopen(argv[argc - 1], "rb+");
 
 	if (rom == NULL)
-		err(1, "Error opening file %s", argv[argc - 1]);
+		err(EX_NOINPUT, "Error opening file %s", argv[argc - 1]);
 
 	/*
 	 * Read ROM header
@@ -248,10 +249,10 @@ int main(int argc, char *argv[])
 	uint8_t header[0x50];
 
 	if (fseek(rom, 0x100, SEEK_SET) != 0)
-		err(1, "Could not locate ROM header");
+		err(EX_NOINPUT, "Could not locate ROM header");
 	if (fread(header, sizeof(uint8_t), sizeof(header), rom)
 	    != sizeof(header))
-		err(1, "Could not read ROM header");
+		err(EX_NOINPUT, "Could not read ROM header");
 
 	if (fixlogo || trashlogo) {
 		/*
@@ -395,11 +396,11 @@ int main(int argc, char *argv[])
 		uint8_t *buf;
 
 		if (fseek(rom, 0, SEEK_END) != 0)
-			err(1, "Could not pad ROM file");
+			err(EX_IOERR, "Could not pad ROM file");
 
 		romsize = ftell(rom);
 		if (romsize == -1)
-			err(1, "Could not pad ROM file");
+			err(EX_IOERR, "Could not pad ROM file");
 
 		newsize = 0x8000;
 
@@ -414,11 +415,11 @@ int main(int argc, char *argv[])
 
 		buf = malloc(newsize - romsize);
 		if (buf == NULL)
-			errx(1, "Couldn't allocate memory for padded ROM.");
+			errx(EX_OSERR, "Couldn't allocate memory for padded ROM.");
 
 		memset(buf, padvalue, newsize - romsize);
 		if (fwrite(buf, 1, newsize - romsize, rom) != newsize - romsize)
-			err(1, "Could not pad ROM file");
+			err(EX_IOERR, "Could not pad ROM file");
 
 		header[0x48] = headbyte;
 
@@ -488,11 +489,11 @@ int main(int argc, char *argv[])
 	 */
 
 	if (fseek(rom, 0x100, SEEK_SET) != 0)
-		err(1, "Could not locate header for writing");
+		err(EX_IOERR, "Could not locate header for writing");
 
 	if (fwrite(header, sizeof(uint8_t), sizeof(header), rom)
 	    != sizeof(header))
-		err(1, "Could not write modified ROM header");
+		err(EX_IOERR, "Could not write modified ROM header");
 
 	if (fixglobalsum || trashglobalsum) {
 		/*
@@ -502,7 +503,7 @@ int main(int argc, char *argv[])
 		uint16_t globalcksum = 0;
 
 		if (fseek(rom, 0, SEEK_SET) != 0)
-			err(1, "Could not start calculating global checksum");
+			err(EX_IOERR, "Could not start calculating global checksum");
 
 		int i = 0;
 		int byte;
@@ -514,7 +515,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (ferror(rom))
-			err(1, "Could not calculate global checksum");
+			err(EX_IOERR, "Could not calculate global checksum");
 
 		if (trashglobalsum)
 			globalcksum = ~globalcksum;
@@ -523,11 +524,11 @@ int main(int argc, char *argv[])
 		fputc(globalcksum >> 8, rom);
 		fputc(globalcksum & 0xFF, rom);
 		if (ferror(rom))
-			err(1, "Could not write global checksum");
+			err(EX_IOERR, "Could not write global checksum");
 	}
 
 	if (fclose(rom) != 0)
-		err(1, "Could not complete ROM write");
+		err(EX_IOERR, "Could not complete ROM write");
 
 	return 0;
 }

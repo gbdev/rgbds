@@ -1,5 +1,6 @@
 
 #include <stdbool.h>
+#include <sysexits.h>
 
 #include "link/symbol.h"
 #include "link/main.h"
@@ -33,7 +34,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 	struct Symbol *other = hash_GetElement(symbols, symbol->name);
 
 	if (other)
-		errx(1, "\"%s\" both in %s from %s(%d) and in %s from %s(%d)",
+		errx(EX_DATAERR, "\"%s\" both in %s from %s(%d) and in %s from %s(%d)",
 		     symbol->name,
 		     symbol->objFileName, symbol->fileName, symbol->lineNo,
 		      other->objFileName,  other->fileName,  other->lineNo);

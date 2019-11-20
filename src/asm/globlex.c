@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 
 #include "asm/asm.h"
 #include "asm/constexpr.h"
@@ -177,7 +178,7 @@ uint32_t ParseNumber(char *s, uint32_t size)
 	char dest[256];
 
 	if (size > 255)
-		fatalerror("Number token too long");
+		fatalerror(EX_SOFTWARE, "Number token too long");
 
 	strncpy(dest, s, size);
 	dest[size] = 0;
@@ -202,10 +203,12 @@ char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 	else if (whichArg >= '1' && whichArg <= '9')
 		marg = sym_FindMacroArg(whichArg - '0');
 	else
-		fatalerror("Invalid macro argument '\\%c' in symbol", whichArg);
+		fatalerror(EX_DATAERR, "Invalid macro argument '\\%c' in symbol",
+			   whichArg);
 
 	if (!marg)
-		fatalerror("Macro argument '\\%c' not defined", whichArg);
+		fatalerror(EX_DATAERR, "Macro argument '\\%c' not defined",
+			   whichArg);
 
 	char ch;
 
@@ -218,7 +221,7 @@ char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 		 || ch == '#'
 		 || ch == '.') {
 			if (*destIndex >= MAXSYMLEN)
-				fatalerror("Symbol too long");
+				fatalerror(EX_SOFTWARE, "Symbol too long");
 
 			dest[*destIndex] = ch;
 			(*destIndex)++;
@@ -257,7 +260,7 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 				break;
 		} else {
 			if (destIndex >= MAXSYMLEN)
-				fatalerror("Symbol too long");
+				fatalerror(EX_SOFTWARE, "Symbol too long");
 			dest[destIndex++] = ch;
 		}
 	}

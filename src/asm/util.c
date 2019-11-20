@@ -7,6 +7,7 @@
  */
 
 #include <stdint.h>
+#include <sysexits.h>
 
 #include "asm/main.h"
 #include "asm/util.h"
@@ -35,7 +36,7 @@ int32_t readUTF8Char(char *dest, char *src)
 
 	for (i = 0, state = 0;; i++) {
 		if (decode(&state, &codep, (uint8_t)src[i]) == 1)
-			fatalerror("invalid UTF-8 character");
+			fatalerror(EX_DATAERR, "Invalid UTF-8 character");
 
 		dest[i] = src[i];
 

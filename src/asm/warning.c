@@ -196,7 +196,7 @@ void yyerror(const char *fmt, ...)
 	va_end(args);
 }
 
-noreturn_ void fatalerror(const char *fmt, ...)
+noreturn_ void fatalerror(int retcode, const char *fmt, ...)
 {
 	va_list args;
 
@@ -204,7 +204,7 @@ noreturn_ void fatalerror(const char *fmt, ...)
 	verror(fmt, args, NULL);
 	va_end(args);
 
-	exit(5);
+	exit(retcode);
 }
 
 void warning(enum WarningID id, char const *fmt, ...)

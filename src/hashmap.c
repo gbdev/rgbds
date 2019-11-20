@@ -1,9 +1,10 @@
 
-#include <stdint.h>
+#include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <sysexits.h>
 
 #include "hashmap.h"
 #include "extern/err.h"
@@ -46,7 +47,7 @@ bool hash_AddElement(HashMap map, char const *key, void *element)
 	struct HashMapEntry *newEntry = malloc(sizeof(*newEntry));
 
 	if (!newEntry)
-		err(1, "%s: Failed to allocate new entry", __func__);
+		err(EX_OSERR, "%s: Failed to allocate new entry", __func__);
 
 	newEntry->hash = hashedKey >> HALF_HASH_NB_BITS;
 	newEntry->key = key;
