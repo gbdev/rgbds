@@ -150,9 +150,8 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 
 		/* Output padding up to the next SECTION */
 		while (offset + baseOffset < section->org) {
-			putc_unlocked(overlayFile ? getc_unlocked(overlayFile)
-						  : padValue,
-				      outputFile);
+			putc(overlayFile ? getc(overlayFile) : padValue,
+			     outputFile);
 			offset++;
 		}
 
@@ -162,7 +161,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		if (overlayFile) {
 			/* Skip bytes even with pipes */
 			for (uint16_t i = 0; i < section->size; i++)
-				getc_unlocked(overlayFile);
+				getc(overlayFile);
 		}
 		offset += section->size;
 
@@ -170,9 +169,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 	}
 
 	while (offset < size) {
-		putc_unlocked(overlayFile ? getc_unlocked(overlayFile)
-					  : padValue,
-			      outputFile);
+		putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
 		offset++;
 	}
 }

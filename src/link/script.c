@@ -164,7 +164,7 @@ static char const * const commands[] = {
 
 static int readChar(FILE *file)
 {
-	int curchar = getc_unlocked(file);
+	int curchar = getc(file);
 
 	if (curchar == EOF && ferror(file))
 		err(1, "%s(%u): Unexpected error in %s", linkerScriptName,
