@@ -188,10 +188,6 @@ static void writeROM(void)
 	checkOverlay();
 
 	if (outputFile) {
-		flockfile(outputFile);
-		if (overlayFile)
-			flockfile(overlayFile);
-
 		if (sections[SECTTYPE_ROM0].nbBanks > 0)
 			writeBank(sections[SECTTYPE_ROM0].banks[0].sections,
 				  0x0000, 0x4000);
@@ -199,10 +195,6 @@ static void writeROM(void)
 		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
 			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
 				  0x4000, 0x4000);
-
-		if (overlayFile)
-			funlockfile(overlayFile);
-		funlockfile(outputFile);
 	}
 
 	closeFile(outputFile);
