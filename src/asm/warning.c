@@ -222,7 +222,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		return;
 
 	case WARNING_DEFAULT:
-		abort();
+		trap_;
 		/* Not reached */
 
 	case WARNING_ENABLED:
