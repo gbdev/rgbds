@@ -310,7 +310,6 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 		trap_;
 
 	case COMMAND_ORG:
-		*pc = arg;
 		break;
 
 	case COMMAND_ALIGN:
