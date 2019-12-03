@@ -168,10 +168,12 @@ install: all
 	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${DESTDIR}${mandir}/man1/rgbgfx.1
 
 # Target used to check the coding style of the whole codebase.
+# `extern/` is excluded, as it contains external code that should not be patched
+# to meet our coding style, so applying upstream patches is easier.
 # `.y` files aren't checked, unfortunately...
 
 checkcodebase:
-	$Qfor file in `git ls-files | grep -E '\.c|\.h' | grep -v '\.html'`; do	\
+	$Qfor file in `git ls-files | grep -E '(\.c|\.h)$$' | grep -Ev '(src|include)/extern/'`; do	\
 		${CHECKPATCH} -f "$$file";					\
 	done
 
