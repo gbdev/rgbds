@@ -7,7 +7,7 @@
 #
 
 .SUFFIXES:
-.SUFFIXES: .h .l .y .c .o
+.SUFFIXES: .h .y .c .o
 
 # User-defined variables
 
@@ -43,10 +43,8 @@ LDFLAGS		:=
 REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS}
 
 YFLAGS		:=
-LFLAGS		:= --nounistd
 
 YACC		:= yacc
-LEX		:= flex
 RM		:= rm -rf
 
 # Rules to build the RGBDS binaries
@@ -116,19 +114,15 @@ rgbgfx: ${rgbgfx_obj}
 
 # Rules to process files
 
-# We want the yacc and lex invocations to pass through our rules
+# We want the yacc invocations to pass through our rules, not default ones
 .y.o:
-.l.o:
 
-# yacc- and lex-generated C files have an accompanying header
+# yacc-generated C files have an accompanying header
 .c.h:
 	$Qtouch $@
 
 .y.c:
 	$Q${YACC} -d ${YFLAGS} -o $@ $<
-
-.l.c:
-	$Q${LEX} ${LFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} ${PNGCFLAGS} -c -o $@ $<
@@ -173,8 +167,8 @@ install: all
 	$Qinstall -m ${MANMODE} src/link/rgblink.5 ${DESTDIR}${mandir}/man5/rgblink.5
 	$Qinstall -m ${MANMODE} src/gfx/rgbgfx.1 ${DESTDIR}${mandir}/man1/rgbgfx.1
 
-# Target used to check the coding style of the whole codebase. '.y' and '.l'
-# files aren't checked, unfortunately...
+# Target used to check the coding style of the whole codebase.
+# `.y` files aren't checked, unfortunately...
 
 checkcodebase:
 	$Qfor file in `git ls-files | grep -E '\.c|\.h' | grep -v '\.html'`; do	\
@@ -183,8 +177,8 @@ checkcodebase:
 
 # Target used to check the coding style of the patches from the upstream branch
 # to the HEAD. Runs checkpatch once for each commit between the current HEAD and
-# the first common commit between the HEAD and origin/master. '.y' and '.l'
-# files aren't checked, unfortunately...
+# the first common commit between the HEAD and origin/master.
+# `.y` files aren't checked, unfortunately...
 
 checkpatch:
 	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/master);	\
