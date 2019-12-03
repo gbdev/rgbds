@@ -163,8 +163,8 @@ int32_t charmap_Add(char *input, uint8_t output)
 	int32_t i;
 	uint8_t v;
 
-	struct Charmap 	*charmap;
-	struct Charnode	*curr_node, *temp_node;
+	struct Charmap  *charmap;
+	struct Charnode *curr_node, *temp_node;
 
 	/*
 	 * If the user tries to define a character mapping inside a section
@@ -217,8 +217,8 @@ int32_t charmap_Add(char *input, uint8_t output)
 
 int32_t charmap_Convert(char **input)
 {
-	struct Charmap 	*charmap;
-	struct Charnode	*charnode;
+	struct Charmap  *charmap;
+	struct Charnode *charnode;
 
 	char *output;
 	char outchar[8];
@@ -249,11 +249,11 @@ int32_t charmap_Convert(char **input)
 		charnode = &charmap->nodes[0];
 
 		/*
-		 * find the longest valid match which has been registered in charmap.
-		 * note that there could be either multiple matches or no match.
-		 * and it possibly takes the longest match between them,
-		 * which means that it ignores partial matches shorter than the longest one.
-		*/
+		 * Find the longest valid match which has been registered in
+		 * charmap, possibly yielding multiple or no matches.
+		 * The longest match is taken, meaning partial matches shorter
+		 * than the longest one are ignored.
+		 */
 		for (i = match = 0; (v = (*input)[i]);) {
 			if (!charnode->next[v])
 				break;

@@ -38,7 +38,7 @@ extern bool isWRA0Mode;
  * @param mode The mode to open the file with
  * @return A pointer to a valid FILE structure, or NULL if fileName was NULL
  */
-FILE *openFile(char const *fileName, char const *mode);
+FILE * openFile(char const *fileName, char const *mode);
 
 #define closeFile(file) do { \
 				FILE *tmp = file; \

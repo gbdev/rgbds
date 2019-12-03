@@ -265,13 +265,12 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 	uint32_t offset;
 	int32_t sectid;
 
-	if (!(pSym->nType & SYMF_DEFINED)) {
+	if (!(pSym->nType & SYMF_DEFINED))
 		type = SYMTYPE_IMPORT;
-	} else if (pSym->nType & SYMF_EXPORT) {
+	else if (pSym->nType & SYMF_EXPORT)
 		type = SYMTYPE_EXPORT;
-	} else {
+	else
 		type = SYMTYPE_LOCAL;
-	}
 
 	switch (type) {
 	case SYMTYPE_LOCAL:

@@ -317,7 +317,8 @@ void fstk_AddIncludePath(char *s)
 	if (NextIncPath == MAXINCPATHS)
 		fatalerror("Too many include directories passed from command line");
 
-	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s", s) >= _MAX_PATH)
+	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s",
+		     s) >= _MAX_PATH)
 		fatalerror("Include path too long '%s'", s);
 }
 

@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-extern FILE *linkerScript;
+extern FILE * linkerScript;
 
 struct SectionPlacement {
 	struct Section *section;

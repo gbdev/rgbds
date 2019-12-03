@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 	struct Mapfile tilemap = {0};
 	struct Mapfile attrmap = {0};
 	char *ext;
-	const char *errmsg = "Warning: The PNG's %s setting is not the same as the setting defined on the command line.";
 
 	if (argc == 1)
 		print_usage();
@@ -149,6 +148,10 @@ int main(int argc, char *argv[])
 	if (argc == 0)
 		print_usage();
 
+#define WARN_MISMATCH(property) \
+	warnx("The PNG's " property \
+	      " setting doesn't match the one defined on the command line")
+
 	opts.infile = argv[argc - 1];
 
 	if (depth != 1 && depth != 2)
@@ -164,7 +167,7 @@ int main(int argc, char *argv[])
 
 	if (png_options.horizontal != opts.horizontal) {
 		if (opts.verbose)
-			warnx(errmsg, "horizontal");
+			WARN_MISMATCH("horizontal");
 
 		if (opts.hardfix)
 			png_options.horizontal = opts.horizontal;
@@ -175,7 +178,7 @@ int main(int argc, char *argv[])
 
 	if (png_options.trim != opts.trim) {
 		if (opts.verbose)
-			warnx(errmsg, "trim");
+			WARN_MISMATCH("trim");
 
 		if (opts.hardfix)
 			png_options.trim = opts.trim;
@@ -202,7 +205,7 @@ int main(int argc, char *argv[])
 
 	if (strcmp(png_options.tilemapfile, opts.tilemapfile) != 0) {
 		if (opts.verbose)
-			warnx(errmsg, "tilemap file");
+			WARN_MISMATCH("tilemap file");
 
 		if (opts.hardfix)
 			png_options.tilemapfile = opts.tilemapfile;
@@ -212,7 +215,7 @@ int main(int argc, char *argv[])
 
 	if (png_options.tilemapout != opts.tilemapout) {
 		if (opts.verbose)
-			warnx(errmsg, "tilemap file");
+			WARN_MISMATCH("tilemap file");
 
 		if (opts.hardfix)
 			png_options.tilemapout = opts.tilemapout;
@@ -222,7 +225,7 @@ int main(int argc, char *argv[])
 
 	if (strcmp(png_options.attrmapfile, opts.attrmapfile) != 0) {
 		if (opts.verbose)
-			warnx(errmsg, "attrmap file");
+			WARN_MISMATCH("attrmap file");
 
 		if (opts.hardfix)
 			png_options.attrmapfile = opts.attrmapfile;
@@ -232,7 +235,7 @@ int main(int argc, char *argv[])
 
 	if (png_options.attrmapout != opts.attrmapout) {
 		if (opts.verbose)
-			warnx(errmsg, "attrmap file");
+			WARN_MISMATCH("attrmap file");
 
 		if (opts.hardfix)
 			png_options.attrmapout = opts.attrmapout;
@@ -242,7 +245,7 @@ int main(int argc, char *argv[])
 
 	if (strcmp(png_options.palfile, opts.palfile) != 0) {
 		if (opts.verbose)
-			warnx(errmsg, "palette file");
+			WARN_MISMATCH("palette file");
 
 		if (opts.hardfix)
 			png_options.palfile = opts.palfile;
@@ -252,11 +255,13 @@ int main(int argc, char *argv[])
 
 	if (png_options.palout != opts.palout) {
 		if (opts.verbose)
-			warnx(errmsg, "palette file");
+			WARN_MISMATCH("palette file");
 
 		if (opts.hardfix)
 			png_options.palout = opts.palout;
 	}
+
+#undef WARN_MISMATCH
 
 	if (png_options.palout)
 		opts.palout = png_options.palout;

@@ -25,7 +25,7 @@ struct sSymbol {
 	struct Section *pSection;
 	uint32_t ulMacroSize;
 	char *pMacro;
-	int32_t (*Callback)(struct sSymbol *);
+	int32_t (*Callback)(struct sSymbol *self);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t nFileLine; /* Line where the symbol was defined. */
 };

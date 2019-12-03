@@ -13,7 +13,7 @@
 
 #include "gfx/main.h"
 
-static void initialize_png(struct PNGImage *img, FILE *f);
+static void initialize_png(struct PNGImage *img, FILE * f);
 static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img);
 static struct RawIndexedImage *grayscale_png_to_raw(struct PNGImage *img);
 static struct RawIndexedImage *truecolor_png_to_raw(struct PNGImage *img);

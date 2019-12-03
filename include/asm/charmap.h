@@ -20,15 +20,19 @@
  */
 struct Charnode {
 	uint8_t code; /* the value in a key-value pair. */
-	uint8_t isCode; /* has one if it's a code node, not just a bridge node. */
-	struct Charnode *next[256]; /* each index representing the next possible character from its current state. */
+	uint8_t isCode; /* has 1 if it's a code node, not just a bridge node. */
+	struct Charnode *next[256]; /* each index representing the next possible
+				     * character from its current state.
+				     */
 };
 
 struct Charmap {
 	char name[MAXSYMLEN + 1];
 	int32_t charCount; /* user-side count. */
 	int32_t nodeCount; /* node-side count. */
-	struct Charnode nodes[MAXCHARNODES]; /* first node is reserved for the root node in charmap. */
+	struct Charnode nodes[MAXCHARNODES]; /* first node is reserved for the
+					      * root node in charmap.
+					      */
 	struct Charmap *next; /* next charmap in hash table bucket */
 };
 

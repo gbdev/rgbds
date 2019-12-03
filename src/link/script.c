@@ -11,7 +11,7 @@
 
 #include "extern/err.h"
 
-FILE *linkerScript;
+FILE * linkerScript;
 
 static uint32_t lineNo;
 

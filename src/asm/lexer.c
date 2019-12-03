@@ -1029,6 +1029,7 @@ static uint32_t yylex_MACROARGS(void)
 int yylex(void)
 {
 	int returnedChar;
+
 	switch (lexerstate) {
 	case LEX_STATE_NORMAL:
 		returnedChar = yylex_NORMAL();

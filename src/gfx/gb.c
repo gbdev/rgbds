@@ -199,7 +199,6 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 		attrmap->size = 0;
 	}
 
-
 	gb_i = 0;
 	while (gb_i < gb_size) {
 		flags = 0;
@@ -210,8 +209,10 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 		}
 		if (opts->unique) {
 			if (opts->mirror) {
-				index = get_mirrored_tile_index(tile, tiles, num_tiles,
-								tile_size, &flags);
+				index = get_mirrored_tile_index(tile, tiles,
+								num_tiles,
+								tile_size,
+								&flags);
 			} else {
 				index = get_tile_index(tile, tiles, num_tiles,
 						       tile_size);
