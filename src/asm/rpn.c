@@ -61,8 +61,6 @@ void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
 	expr->isReloc = src1->isReloc || src2->isReloc;
 }
 
-#define joinexpr() mergetwoexpressions(expr, src1, src2)
-
 /*
  * Add a byte to the RPN expression
  */
@@ -234,7 +232,7 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal || src2->nVal);
 	pushbyte(expr, RPN_LOGOR);
 	expr->nRPNPatchSize++;
@@ -243,7 +241,7 @@ void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGAND(struct Expression *expr, const struct Expression *src1,
 		const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal && src2->nVal);
 	pushbyte(expr, RPN_LOGAND);
 	expr->nRPNPatchSize++;
@@ -294,7 +292,7 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 void rpn_LOGEQU(struct Expression *expr, const struct Expression *src1,
 		const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal == src2->nVal);
 	pushbyte(expr, RPN_LOGEQ);
 	expr->nRPNPatchSize++;
@@ -303,7 +301,7 @@ void rpn_LOGEQU(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGGT(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal > src2->nVal);
 	pushbyte(expr, RPN_LOGGT);
 	expr->nRPNPatchSize++;
@@ -312,7 +310,7 @@ void rpn_LOGGT(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGLT(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal < src2->nVal);
 	pushbyte(expr, RPN_LOGLT);
 	expr->nRPNPatchSize++;
@@ -321,7 +319,7 @@ void rpn_LOGLT(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGGE(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal >= src2->nVal);
 	pushbyte(expr, RPN_LOGGE);
 	expr->nRPNPatchSize++;
@@ -330,7 +328,7 @@ void rpn_LOGGE(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGLE(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal <= src2->nVal);
 	pushbyte(expr, RPN_LOGLE);
 	expr->nRPNPatchSize++;
@@ -339,7 +337,7 @@ void rpn_LOGLE(struct Expression *expr, const struct Expression *src1,
 void rpn_LOGNE(struct Expression *expr, const struct Expression *src1,
 	       const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal != src2->nVal);
 	pushbyte(expr, RPN_LOGNE);
 	expr->nRPNPatchSize++;
@@ -348,7 +346,7 @@ void rpn_LOGNE(struct Expression *expr, const struct Expression *src1,
 void rpn_ADD(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = ((uint32_t)src1->nVal + (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_ADD);
 	expr->nRPNPatchSize++;
@@ -357,7 +355,7 @@ void rpn_ADD(struct Expression *expr, const struct Expression *src1,
 void rpn_SUB(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = ((uint32_t)src1->nVal - (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_SUB);
 	expr->nRPNPatchSize++;
@@ -366,7 +364,7 @@ void rpn_SUB(struct Expression *expr, const struct Expression *src1,
 void rpn_XOR(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal ^ src2->nVal);
 	pushbyte(expr, RPN_XOR);
 	expr->nRPNPatchSize++;
@@ -375,7 +373,7 @@ void rpn_XOR(struct Expression *expr, const struct Expression *src1,
 void rpn_OR(struct Expression *expr, const struct Expression *src1,
 	    const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal | src2->nVal);
 	pushbyte(expr, RPN_OR);
 	expr->nRPNPatchSize++;
@@ -384,7 +382,7 @@ void rpn_OR(struct Expression *expr, const struct Expression *src1,
 void rpn_AND(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = (src1->nVal & src2->nVal);
 	pushbyte(expr, RPN_AND);
 	expr->nRPNPatchSize++;
@@ -393,7 +391,7 @@ void rpn_AND(struct Expression *expr, const struct Expression *src1,
 void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 
 	if (!expr->isReloc) {
 		if (src1->nVal < 0)
@@ -415,7 +413,7 @@ void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 
 	if (!expr->isReloc) {
 		if (src2->nVal < 0)
@@ -433,7 +431,7 @@ void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 void rpn_MUL(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 	expr->nVal = ((uint32_t)src1->nVal * (uint32_t)src2->nVal);
 	pushbyte(expr, RPN_MUL);
 	expr->nRPNPatchSize++;
@@ -442,7 +440,7 @@ void rpn_MUL(struct Expression *expr, const struct Expression *src1,
 void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 
 	if (!expr->isReloc) {
 		if (src2->nVal == 0)
@@ -463,7 +461,7 @@ void rpn_DIV(struct Expression *expr, const struct Expression *src1,
 void rpn_MOD(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
-	joinexpr();
+	mergetwoexpressions(expr, src1, src2);
 
 	if (!expr->isReloc) {
 		if (src2->nVal == 0)
