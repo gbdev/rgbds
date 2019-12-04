@@ -33,17 +33,6 @@ static struct Charmap *currentCharmap;
 
 struct CharmapStackEntry *charmapStack;
 
-static void warnSectionCharmap(void)
-{
-	static bool warned = false;
-
-	if (warned)
-		return;
-
-	warning(WARNING_OBSOLETE, "Using 'charmap' within a section when the current charmap is 'main' is deprecated");
-	warned = true;
-}
-
 static uint32_t charmap_CalcHash(const char *s)
 {
 	return calchash(s) % CHARMAP_HASH_SIZE;
@@ -163,29 +152,8 @@ int32_t charmap_Add(char *input, uint8_t output)
 	int32_t i;
 	uint8_t v;
 
-	struct Charmap  *charmap;
+	struct Charmap  *charmap = currentCharmap;
 	struct Charnode *curr_node, *temp_node;
-
-	/*
-	 * If the user tries to define a character mapping inside a section
-	 * and the current global charmap is the "main" one, then a local
-	 * section charmap will be created or modified instead of the global
-	 * one. In other words, the local section charmap can override the
-	 * main global one, but not the others.
-	 */
-	if (pCurrentSection && currentCharmap == mainCharmap) {
-		warnSectionCharmap();
-		if (pCurrentSection->charmap) {
-			charmap = pCurrentSection->charmap;
-		} else {
-			charmap = calloc(1, sizeof(struct Charmap));
-			if (charmap == NULL)
-				fatalerror("Not enough memory for charmap");
-			pCurrentSection->charmap = charmap;
-		}
-	} else {
-		charmap = currentCharmap;
-	}
 
 	if (charmap->charCount >= MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
 		return -1;
@@ -217,7 +185,7 @@ int32_t charmap_Add(char *input, uint8_t output)
 
 int32_t charmap_Convert(char **input)
 {
-	struct Charmap  *charmap;
+	struct Charmap  *charmap = currentCharmap;
 	struct Charnode *charnode;
 
 	char *output;
@@ -225,19 +193,6 @@ int32_t charmap_Convert(char **input)
 
 	int32_t i, match, length;
 	uint8_t v, foundCode;
-
-	/*
-	 * If there is a local section charmap and the current global charmap
-	 * is the "main" one, the local one is used. Otherwise, the global
-	 * one is used. In other words, the local section charmap can override
-	 * the main global one, but not the others.
-	 */
-	if (pCurrentSection &&
-	    pCurrentSection->charmap &&
-	    currentCharmap == mainCharmap)
-		charmap = pCurrentSection->charmap;
-	else
-		charmap = currentCharmap;
 
 	output = malloc(strlen(*input));
 	if (output == NULL)

@@ -642,7 +642,6 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	pSect->nAlign = alignment;
 	pSect->pNext = NULL;
 	pSect->pPatches = NULL;
-	pSect->charmap = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
 	if (sect_HasData(secttype)) {

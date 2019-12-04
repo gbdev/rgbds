@@ -71,7 +71,7 @@ SECTION "sec0", ROM0
 
 	print "ab"
 
-printt "override main charmap\n"
+printt "modify main charmap\n"
 charmap "ef", $3
 
 	print "ab"

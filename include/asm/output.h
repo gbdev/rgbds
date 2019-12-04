@@ -22,7 +22,6 @@ struct Section {
 	uint32_t nAlign;
 	struct Section *pNext;
 	struct Patch *pPatches;
-	struct Charmap *charmap;
 	uint8_t *tData;
 };
 

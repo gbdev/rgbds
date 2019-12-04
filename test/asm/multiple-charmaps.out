@@ -1,5 +1,3 @@
-warning: multiple-charmaps.asm(75): [-Wobsolete]
-    Using 'charmap' within a section when the current charmap is 'main' is deprecated
 ERROR: multiple-charmaps.asm(100) -> multiple-charmaps.asm::new_(7):
     Charmap 'map1' already exists
 ERROR: multiple-charmaps.asm(102) -> multiple-charmaps.asm::set_(13):
@@ -24,8 +22,8 @@ $1
 $6364
 setcharmap main
 $0
-override main charmap
-$6162
+modify main charmap
+$0
 $3
 setcharmap map1
 pushc
