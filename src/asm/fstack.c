@@ -389,6 +389,8 @@ void fstk_RunInclude(char *tzFileName)
 	nCurrentStatus = STAT_isInclude;
 	snprintf(tzCurrentFileName, sizeof(tzCurrentFileName), "%s%s",
 		 incPathUsed, tzFileName);
+	if (CurrentOptions.verbose)
+		printf("Assembling %s\n", tzCurrentFileName);
 	pCurrentFile = f;
 	CurrentFlexHandle = yy_create_buffer(pCurrentFile);
 	yy_switch_to_buffer(CurrentFlexHandle);
