@@ -76,7 +76,6 @@ enum MetaWarningCommand {
 
 /* Warnings that probably indicate an error */
 static uint8_t const _wallCommands[] = {
-	WARNING_USER,
 	WARNING_BUILTIN_ARG,
 	WARNING_LARGE_CONSTANT,
 	WARNING_EMPTY_ENTRY,
