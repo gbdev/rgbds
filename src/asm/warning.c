@@ -55,14 +55,14 @@ static enum WarningState warningState(enum WarningID id)
 }
 
 static char const *warningFlags[NB_WARNINGS_ALL] = {
-	"user",
-	"obsolete",
 	"builtin-args",
-	"large-constant",
-	"shift",
 	"div",
 	"empty-entry",
+	"large-constant",
 	"long-string",
+	"obsolete",
+	"shift",
+	"user",
 
 	/* Meta warnings */
 	"all",
@@ -77,8 +77,8 @@ enum MetaWarningCommand {
 /* Warnings that probably indicate an error */
 static uint8_t const _wallCommands[] = {
 	WARNING_BUILTIN_ARG,
-	WARNING_LARGE_CONSTANT,
 	WARNING_EMPTY_ENTRY,
+	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
 	META_WARNING_DONE
 };
@@ -91,14 +91,14 @@ static uint8_t const _wextraCommands[] = {
 
 /* Literally everything. Notably useful for testing */
 static uint8_t const _weverythingCommands[] = {
-	WARNING_USER,
-	WARNING_OBSOLETE,
 	WARNING_BUILTIN_ARG,
-	WARNING_LARGE_CONSTANT,
-	WARNING_SHIFT,
 	WARNING_DIV,
 	WARNING_EMPTY_ENTRY,
+	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
+	WARNING_OBSOLETE,
+	WARNING_SHIFT,
+	WARNING_USER,
 	META_WARNING_DONE
 };
 
