@@ -118,6 +118,9 @@ void processWarningFlag(char const *flag)
 		/* TODO: improve the matching performance? */
 		if (!strcmp(flag, warningFlags[id])) {
 			/* We got a match! */
+			if (setError)
+				errx(1, "Cannot make meta warning \"%s\" into an error", flag);
+
 			uint8_t const *ptr =
 					metaWarningCommands[id - NB_WARNINGS];
 
