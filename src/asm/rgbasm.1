@@ -7,89 +7,187 @@
 .\"
 .Dd July 8, 2019
 .Dt RGBASM 1
-.Os RGBDS Manual
+.Os
 .Sh NAME
 .Nm rgbasm
 .Nd Game Boy assembler
 .Sh SYNOPSIS
-.Nm rgbasm
+.Nm
 .Op Fl EhLVvw
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
 .Op Fl i Ar path
-.Op Fl M Ar dependfile
-.Op Fl o Ar outfile
+.Op Fl M Ar depend_file
+.Op Fl o Ar out_file
 .Op Fl p Ar pad_value
 .Op Fl r Ar recursion_depth
-.Ar file
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
-program creates an object file from an assembly source file.
+program creates an RGB object file from an assembly source file.
 The input
 .Ar file
 can be a file path, or
 .Cm \-
 denoting
 .Cm stdin .
-Its arguments are as follows:
+.Pp
+Note that options can be abbreviated as long as the abbreviation is unambiguous:
+.Fl Fl verb
+is
+.Fl Fl verbose ,
+but
+.Fl Fl ver
+is invalid because it could also be
+.Fl Fl version .
+The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl b Ar chars
+.It Fl b Ar chars , Fl Fl binary-digits Ar chars
 Change the two characters used for binary constants.
 The defaults are 01.
-.It Fl D Ar name Ns Op = Ns Ar value
-Add string symbol to the compiled source code. This is equivalent to
-.Ar name
-.Cm EQUS
-.Qq Ar "value"
-in code. If a value is not specified, a value of 1 is given.
-.It Fl E
+.It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl Fl define Ar name Ns Oo = Ns Ar value Oc
+Add a string symbol to the compiled source code.
+This is equivalent to
+.Ql Ar name Ic EQUS Qq Ar value
+in code, or
+.Ql Ar name Ic EQUS Qq 1
+if
+.Ar value
+is not specified.
+.It Fl E , Fl Fl export-all
 Export all labels, including unreferenced and local labels.
-.It Fl g Ar chars
-Change the four characters used for binary constants.
+.It Fl g Ar chars , Fl Fl gfx-chars Ar chars
+Change the four characters used for gfx constants.
 The defaults are 0123.
-.It Fl h
+.It Fl h , Fl Fl halt-without-nop
 By default,
 .Nm
 inserts a
-.Sq nop
+.Ic nop
 instruction immediately after any
-.Sq halt
+.Ic halt
 instruction.
 The
 .Fl h
 option disables this behavior.
-.It Fl i Ar path
+.It Fl i Ar path , Fl Fl include Ar path
 Add an include path.
-.It Fl L
+.It Fl L , Fl Fl preserve-ld
 Disable the optimization that turns loads of the form
-.Sy LD [$FF00+n8],A
+.Ic LD [$FF00+n8],A
 into the opcode
-.Sy LDH [$FF00+n8],A
+.Ic LDH [$FF00+n8],A
 in order to have full control of the result in the final ROM.
-.It Fl M Ar dependfile
+.It Fl M Ar depend_file , Fl Fl dependfile Ar depend_file
 Print
 .Xr make 1
 dependencies to
-.Ar dependfile .
-.It Fl o Ar outfile
+.Ar depend_file .
+.It Fl o Ar out_file , Fl Fl output Ar out_file
 Write an object file to the given filename.
-.It Fl p Ar pad_value
+.It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
 When padding an image, pad with this value.
 The default is 0x00.
-.It Fl r Ar recursion_depth
+.It Fl r Ar recursion_depth , Fl Fl recursion-depth Ar recursion_depth
 Specifies the recursion depth at which RGBASM will assume being in an infinite loop.
-.It Fl V
+.It Fl V , Fl Fl version
 Print the version of the program and exit.
-.It Fl v
+.It Fl v , Fl Fl verbose
 Be verbose.
+.It Fl W Ar warning , Fl Fl warning Ar warning
+Set warning flag
+.Ar warning .
+A warning message will be printed if
+.Ar warning
+is an unknown warning flag.
+See the
+.Sx DIAGNOSTICS
+section for a list of warnings.
 .It Fl w
-Disable warning output.
+Disable all warning output, even when turned into errors.
+.El
+.Sh DIAGNOSTICS
+Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the assembling process.
+The following options alter the way warnings are processed.
+.Bl -tag -width Ds
+.It Fl Werror
+Make all warnings into errors.
+.It Fl Werror=
+Make the specified warning into an error.
+A warning's name is appended
+.Pq example: Fl Werror=obsolete ,
+and this warning is implicitly enabled and turned into an error.
+This is an error if used with a meta warning, such as
+.Fl Werror=all .
+.El
+.Pp
+The following warnings are
+.Dq meta
+warnings, that enable a collection of other warnings.
+If a specific warning is toggled via a meta flag and a specific one, the more specific one takes priority.
+The position on the command-line acts as a tie breaker, the last one taking effect.
+.Bl -tag -width Ds
+.It Fl Wall
+This enables warnings that are likely to indicate an error or undesired behavior, and that can easily be fixed.
+.It Fl Wextra
+This enables extra warnings that are less likely to pose a problem, but that may still be wanted.
+.It Fl Weverything
+Enables literally every warning.
+.El
+.Pp
+The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
+Note that each of these flag also has a negation (for example,
+.Fl Wempty-entry
+enables the warning that Fl Wno-empty-entry
+disables).
+Only the non-default flag is listed here.
+Ignoring the
+.Dq no-
+prefix, entries are listed alphabetically.
+.Bl -tag -width Ds
+.It Fl Wbuiltin-args
+Warn about incorrect arguments to built-in functions, such as
+.Fn STRSUB
+with indexes outside of the string's bounds.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wdiv
+Warn when dividing the smallest negative integer by -1, which yields itself due to integer overflow.
+.It Fl Wempty-entry
+Warn when an empty entry is encountered in a
+.Ic db , dw , dl
+list.
+This warning is enabled by
+.Fl Wextra .
+.It Fl Wlarge-constant
+Warn when a constant too large to fit in a signed 32-bit integer is encountered.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wlong-string
+Warn when a string too long to fit in internal buffers is encountered.
+This warning is enabled by
+.Fl Wall .
+.It Fl Wobsolete
+Warn when obsolete constructs such as the
+.Ic jp [hl]
+instruction or
+.Cm HOME
+section type are encountered.
+This warning is enabled by
+.Fl Wextra .
+.It Fl Wshift
+Warn when shifting triggers C undefined behavior, potentially causing unpredictable behavior.
+Shfting behavior will be changed and this warning removed before next release.
+.It Fl Wno-user
+Warns when the built-in function
+.Fn WARN
+is executed.
 .El
 .Sh EXAMPLES
 You can assemble a source file in two ways.
-Straight forward way:
+Straightforward way:
 .Pp
 .Bd -literal -offset indent
 $ rgbasm -o bar.o foo.asm
@@ -102,11 +200,13 @@ $ cat foo.asm | rgbasm -o bar.o -
 $ rgbasm -o bar.o - < foo.asm
 .Ed
 .Pp
-The resulting object file is not yet a usable ROM image \(em it must first be
-run through
+The resulting object file is not yet a usable ROM image \(em it must first be run through
 .Xr rgblink 1
-and
+and then
 .Xr rgbfix 1 .
+.Sh BUGS
+Please report bugs on
+.Lk https://github.com/rednex/rgbds/issues GitHub .
 .Sh SEE ALSO
 .Xr rgbasm 5 ,
 .Xr rgbfix 1 ,
@@ -116,7 +216,6 @@ and
 .Xr gbz80 7
 .Sh HISTORY
 .Nm
-was originally written by Carsten S\(/orensen as part of the ASMotor package,
-and was later packaged in RGBDS by Justin Lloyd. It is now maintained by a
-number of contributors at
+was originally written by Carsten S\(/orensen as part of the ASMotor package, and was later packaged in RGBDS by Justin Lloyd.
+It is now maintained by a number of contributors at
 .Lk https://github.com/rednex/rgbds .

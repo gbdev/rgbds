@@ -17,8 +17,8 @@
 
 #include "version.h"
 
-/* Shoft options */
-static char const *optstring = "Ccf:i:jk:l:m:n:p:sr:t:Vv";
+/* Short options */
+static char const *optstring = "Ccf:i:jk:l:m:n:p:r:st:Vv";
 
 /*
  * Equivalent long options
@@ -51,10 +51,24 @@ static struct option const longopts[] = {
 
 static void print_usage(void)
 {
-	printf(
-"usage: rgbfix [-CcjsVv] [-f fix_spec] [-i game_id] [-k licensee_str]\n"
-"              [-l licensee_id] [-m mbc_type] [-n rom_version] [-p pad_value]\n"
-"              [-r ram_size] [-t title_str] file\n");
+	fputs(
+"usage: rgbfix [<options>] <file>\n"
+"    -C, --color-only             flag the ROM as Color-only\n"
+"    -c, --color-compatible       flag the ROM as color-compatible\n"
+"    -f, --fix-spec <flags>       specify how to fix or trash the header\n"
+"    -i, --game-id <ID>           set the 4 characters at 0x13F-0x142\n"
+"    -j, --non-japanese           flag the ROM as exclusively overseas\n"
+"    -k, --new-licensee <code>    set the new licensee str to at most two chars\n"
+"    -l, --old-licensee <value>   set the old licensee code to this byte\n"
+"    -m, --mbc-type <value>       set the MBC type byte to this value; refer\n"
+"                                   to the man page for a list of values\n"
+"    -n, --rom-version <version>  set the ROM's revision byte\n"
+"    -p, --pad-value <value>      pad to the next valid size using this value\n"
+"    -r, --ram-size <code>        set the cart RAM size byte to this value\n"
+"    -s, --sgb-compatible         set the SGB compatibility flag\n"
+"    -t, --title <string>         set the ROM's title (16 chars max, 15 is best)\n"
+"    -V, --version                print RGBFIX version and exit\n"
+"    -v, --verbose                report more information\n", stderr);
 	exit(1);
 }
 
@@ -227,8 +241,10 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
+	if (argc == 0) {
+		fputs("FATAL: no input files\n", stderr);
 		print_usage();
+	}
 
 	/*
 	 * Open the ROM file

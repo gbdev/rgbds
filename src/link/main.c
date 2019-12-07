@@ -82,8 +82,21 @@ static struct option const longopts[] = {
  */
 static void printUsage(void)
 {
-	puts("usage: rgblink [-dtVvw] [-l linkerscript] [-m mapfile] [-n symfile] [-O overlay]\n"
-	     "               [-o outfile] [-p pad_value] [-s symbol] file [...]");
+	fputs(
+"usage: rgblink [<options>] <file>...\n"
+"    -d, --dmg                  enable DMG mode, disabling VRAM & VRAM banks\n"
+"    -l, --linkerscript <path>  set the input linker script\n"
+"    -m, --map <path>           set the output map file\n"
+"    -n, --sym <path>           set the output symbol list file\n"
+"    -O, --overlay <path>       set the input overlay file\n"
+"    -o, --output <path>        set the output file\n"
+"    -p, --pad <value>          set the value to pad between sections with\n"
+"    -s, --smart <symbol?>      does nothing, nobody knows what it's supposed to\n"
+"    -t, --tiny                 enable 32k mode, replacing ROMX with ROM0\n"
+"    -V, --version              print RGBLINK version and exits\n"
+"    -v, --verbose              report more information\n"
+"    -w, --wramx                replace WRAMX with WRAM0 and disable WRAM banks\n",
+	      stderr);
 }
 
 /**
@@ -159,7 +172,7 @@ int main(int argc, char *argv[])
 
 	/* If no input files were specified, the user must have screwed up */
 	if (curArgIndex == argc) {
-		fputs("No input files\n", stderr);
+		fputs("FATAL: no input files\n", stderr);
 		printUsage();
 		exit(1);
 	}

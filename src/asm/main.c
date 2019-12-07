@@ -268,10 +268,23 @@ static struct option const longopts[] = {
 
 static void print_usage(void)
 {
-	printf(
-"usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
-"              [-M dependfile] [-o outfile] [-p pad_value]\n"
-"              [-r recursion_depth] [-W warning] [-w] file.asm\n");
+	fputs(
+"usage: rgbasm [<options>] <file>...\n"
+"    -b, --binary-digits <digits>   change the chars used for binary constants\n"
+"    -D, --define <name>[=<value>]  add a string define (`EQUS')\n"
+"    -E, --export-all               export all labels\n"
+"    -g, --gfx-chars <chars>        change the chars used for gfx constants\n"
+"    -h, --halt-without-nop         do not automatically add `nop' after `halt'\n"
+"    -i, --include <path>           add the directory to the include search list\n"
+"    -L, --preserve-ld              prevent auto-optimizing `ld' to `ldh'\n"
+"    -M, --dependfile <path>        set the output dependency file\n"
+"    -o, --output <path>            set the output object file\n"
+"    -p, --pad-value <value>        set the value to use for `ds'\n"
+"    -r, --recursion-depth <depth>  set max recursion depth before aborting\n"
+"    -V, --version                  print RGBASM version and exit\n"
+"    -v, --verbose                  report more information\n"
+"    -W, --warning                  enable or disable warnings\n"
+"    -w                             disable all warnings\n", stderr);
 	exit(1);
 }
 
@@ -292,9 +305,6 @@ int main(int argc, char *argv[])
 	cldefines = malloc(cldefines_bufsize);
 	if (!cldefines)
 		fatalerror("No memory for command line defines");
-
-	if (argc == 1)
-		print_usage();
 
 	/* yydebug=1; */
 
@@ -402,8 +412,10 @@ int main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	if (argc == 0)
+	if (argc == 0) {
+		fputs("FATAL: no input files\n", stderr);
 		print_usage();
+	}
 
 	tzMainfile = argv[argc - 1];
 
