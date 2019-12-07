@@ -58,7 +58,7 @@ To install RGBDS with all of the current changes in development (as seen on the
 .. code:: sh
 
     brew install rgbds --HEAD
-    
+
 1.3 Arch Linux
 ~~~~~~~~~~~~~~
 
@@ -82,7 +82,7 @@ RGBDS can be built in UNIX-like systems by following the instructions below.
 2.1 Dependencies
 ~~~~~~~~~~~~~~~~
 
-RGBDS requires yacc, flex, libpng and pkg-config to be installed.
+RGBDS requires yacc, libpng and pkg-config to be installed.
 
 On macOS, install the latter two with `Homebrew <http://brew.sh/>`__:
 
