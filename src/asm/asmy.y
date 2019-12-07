@@ -906,7 +906,7 @@ ds		: T_POP_DS uconst
 
 db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
 			if (nListCountEmpty > 0) {
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as padding).");
 			}
 		}
 		| T_POP_DB constlist_8bit_entry
@@ -914,7 +914,7 @@ db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
 
 dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
 			if (nListCountEmpty > 0) {
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as padding).");
 			}
 		}
 		| T_POP_DW constlist_16bit_entry
@@ -922,7 +922,7 @@ dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
 
 dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
 			if (nListCountEmpty > 0) {
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as 0).");
+				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as padding).");
 			}
 		}
 		| T_POP_DL constlist_32bit_entry
