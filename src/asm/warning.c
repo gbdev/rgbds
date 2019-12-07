@@ -204,7 +204,7 @@ noreturn_ void fatalerror(const char *fmt, ...)
 	verror(fmt, args, NULL);
 	va_end(args);
 
-	exit(5);
+	exit(1);
 }
 
 void warning(enum WarningID id, char const *fmt, ...)
