@@ -15,6 +15,7 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
+#include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
@@ -35,6 +36,42 @@ void constexpr_Symbol(struct ConstExpression *expr, char *tzSym)
 	} else {
 		constexpr_Number(expr, sym_GetConstantValue(tzSym));
 	}
+}
+
+void constexpr_BankSymbol(struct ConstExpression *expr, char *tzSym)
+{
+	if (sym_FindSymbol(tzSym) == pPCSymbol) {
+		if (pCurrentSection->nBank == -1)
+			yyerror("%s's bank is not known yet", tzSym);
+		else
+			constexpr_Number(expr, pCurrentSection->nBank);
+		return;
+	}
+
+	if (sym_isConstant(tzSym)) {
+		yyerror("BANK argument must be a relocatable identifier");
+	} else {
+		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
+
+		if (!pSymbol)
+			yyerror("BANK argument doesn't exist");
+		else if (!pSymbol->pSection || pSymbol->pSection->nBank == -1)
+			yyerror("BANK argument must be a relocatable identifier");
+		else
+			constexpr_Number(expr, pSymbol->pSection->nBank);
+	}
+}
+
+void constexpr_BankSection(struct ConstExpression *expr, char *tzSectionName)
+{
+	struct Section *pSection = out_FindSectionByName(tzSectionName);
+
+	if (!pSection)
+		yyerror("Section \"%s\" doesn't exist");
+	else if (pSection->nBank == -1)
+		yyerror("Section \"%s\"'s bank is not known yet");
+	else
+		constexpr_Number(expr, pSection->nBank);
 }
 
 void constexpr_Number(struct ConstExpression *expr, int32_t i)
