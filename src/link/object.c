@@ -55,7 +55,14 @@ static int64_t readlong(FILE *file)
 
 		if (byte == EOF)
 			return INT64_MAX;
-		value |= (uint8_t)byte << shift;
+		/* This must be casted to `unsigned`, not `uint8_t`. Rationale:
+		 * the type of the shift is the type of `byte` after undergoing
+		 * integer promotion, which would be `int` if this was casted to
+		 * `uint8_t`, because int is large enough to hold a byte. This
+		 * however causes values larger than 127 to be too large when
+		 * shifted, potentially triggering undefined behavior.
+		 */
+		value |= (unsigned)byte << shift;
 	}
 	return value;
 }
