@@ -353,7 +353,7 @@ static void readRGB6File(FILE *file, char const *fileName)
 	symbolList->next = symbolLists;
 	symbolLists = symbolList;
 
-	uint32_t nbSymPerSect[nbSections];
+	uint32_t nbSymPerSect[nbSections ? nbSections : 1];
 
 	memset(nbSymPerSect, 0, sizeof(nbSymPerSect));
 
