@@ -1,0 +1,8 @@
+ERROR: pc-bank.asm(2):
+    Source address $2a00 not in $FF00 to $FFFF
+ERROR: pc-bank.asm(11):
+    @'s bank is not known yet
+ERROR: pc-bank.asm(11):
+    Non-constant expression
+@: $2A
+Str: $2A
