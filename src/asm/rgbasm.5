@@ -710,12 +710,10 @@ The following symbols are defined by the assembler:
 .Sh DEFINING DATA
 .Ss Declaring variables in a RAM section
 .Ic DS
-allocates a number of bytes.
-The content is undefined.
-This is the preferred method of allocationg space in a RAM section.
-You can, however, use
-.Ic DB ,
-.Ic DW
+allocates a number of empty bytes.
+This is the preferred method of allocating space in a RAM section.
+You can also use
+.Ic DB , DW
 and
 .Ic DL
 without any arguments instead (see
@@ -726,9 +724,8 @@ below).
 DS 42 ; Allocates 42 bytes
 .Ed
 .Pp
-Note that in ROM sections, the bytes in the empty space left by
-.Ic DS
-will be filled with the value passed to the
+Empty space in RAM sections will not be initialized.
+In ROM sections, it will be filled with the value passed to the
 .Fl p
 command-line option, except when using overlays with
 .Fl O .
