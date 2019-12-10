@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
 	/* If no input files were specified, the user must have screwed up */
 	if (curArgIndex == argc) {
-		fprintf(stderr, "No input files");
+		fputs("No input files\n", stderr);
 		printUsage();
 		exit(1);
 	}
