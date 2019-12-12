@@ -163,7 +163,8 @@ static int32_t popcontext(void)
 	}
 
 	yy_delete_buffer(CurrentFlexHandle);
-	nLineNo = pLastFile->nLine;
+	nLineNo = nCurrentStatus == STAT_isREPTBlock ? nCurrentREPTBodyLastLine
+						     : pLastFile->nLine;
 
 	if (nCurrentStatus == STAT_isInclude)
 		fclose(pCurrentFile);
@@ -190,8 +191,6 @@ static int32_t popcontext(void)
 		nCurrentREPTBlockSize = pLastFile->nREPTBlockSize;
 		nCurrentREPTBlockCount = pLastFile->nREPTBlockCount;
 		nCurrentREPTBodyFirstLine = pLastFile->nREPTBodyFirstLine;
-		/* + 1 to account for the `ENDR` line */
-		nLineNo = pLastFile->nREPTBodyLastLine + 1;
 		break;
 	default:
 		fatalerror("%s: Internal error.", __func__);
