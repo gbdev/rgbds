@@ -45,7 +45,7 @@ static struct option const longopts[] = {
 	{ "sgb-compatible",   no_argument,       NULL, 's' },
 	{ "title",            required_argument, NULL, 't' },
 	{ "version",          no_argument,       NULL, 'V' },
-	{ "verbose",          no_argument,       NULL, 'v' },
+	{ "validate",         no_argument,       NULL, 'v' },
 	{ NULL,               no_argument,       NULL, 0   }
 };
 
@@ -61,7 +61,7 @@ static void print_usage(void)
 "    -p, --pad-value <value>     pad to the next valid size using this value\n"
 "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
 "    -V, --version               print RGBFIX version and exit\n"
-"    -v, --verbose               fix the header logo and both checksums (-f lhg)\n"
+"    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
 "\n"
 "For help, use `man rgbfix' or go to https://rednex.github.io/rgbds/\n",
 	      stderr);
