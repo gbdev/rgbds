@@ -53,25 +53,18 @@ static struct option const longopts[] = {
 static void print_usage(void)
 {
 	fputs(
-"usage: rgbgfx [<options>] <file>\n"
-"    -a, --attr-map <path>     set the output attribute map file\n"
-"    -A, --output-attr-map     output the attribute map to <input>.attrmap\n"
-"    -C, --color-curve         use the GBC's color curve (color profile)\n"
-"    -D, --debug               output debug info\n"
-"    -d, --depth <bpp>         set the output image's depth to <bpp>bpp\n"
+"Usage: rgbgfx [-CDhmuVv] [-f | -F] [-a <attr_map> | -A] [-d <depth>]\n"
+"              [-o <out_file>] [-p <pal_file> | -P] [-t <tile_map> | -T]\n"
+"              [-x <tiles>] <file>\n"
+"Useful options:\n"
 "    -f, --fix                 make the input image an indexed PNG\n"
-"    -F, --fix-and-save        same, but also save parameters inside the PNG\n"
-"    -h, --horizontal          lay out tiles horizontally instead of vertically\n"
 "    -m, --mirror-tiles        optimize out mirrored tiles\n"
 "    -o, --output <path>       set the output binary file\n"
-"    -p, --palette <path>      set the output palette file\n"
-"    -P, --output-palette      output the palette file to <input>.pal\n"
 "    -t, --tilemap <path>      set the output tilemap file\n"
-"    -T, --output-tilemap      output the tilemap file to <input>.tilemap\n"
 "    -u, --unique-tiles        optimize out identical tiles\n"
 "    -V, --version             print RGBGFX version and exit\n"
-"    -v, --verbose             print errors when parameters conflict with the PNG\n"
-"    -x, --trim-end <nbtiles>  trim the end of the binary output by N tiles\n",
+"\n"
+"For help, use `man rgbgfx' or go to https://rednex.github.io/rgbds/\n",
 	      stderr);
 	exit(1);
 }

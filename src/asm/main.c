@@ -269,22 +269,19 @@ static struct option const longopts[] = {
 static void print_usage(void)
 {
 	fputs(
-"usage: rgbasm [<options>] <file>...\n"
-"    -b, --binary-digits <digits>   change the chars used for binary constants\n"
-"    -D, --define <name>[=<value>]  add a string define (`EQUS')\n"
-"    -E, --export-all               export all labels\n"
-"    -g, --gfx-chars <chars>        change the chars used for gfx constants\n"
-"    -h, --halt-without-nop         do not automatically add `nop' after `halt'\n"
-"    -i, --include <path>           add the directory to the include search list\n"
-"    -L, --preserve-ld              prevent auto-optimizing `ld' to `ldh'\n"
-"    -M, --dependfile <path>        set the output dependency file\n"
-"    -o, --output <path>            set the output object file\n"
-"    -p, --pad-value <value>        set the value to use for `ds'\n"
-"    -r, --recursion-depth <depth>  set max recursion depth before aborting\n"
-"    -V, --version                  print RGBASM version and exit\n"
-"    -v, --verbose                  report more information\n"
-"    -W, --warning                  enable or disable warnings\n"
-"    -w                             disable all warnings\n", stderr);
+"Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
+"              [-M depend_file] [-o out_file] [-p pad_value] [-r depth]\n"
+"              [-W warning] <file> ...\n"
+"Useful options:\n"
+"    -E, --export-all         export all labels\n"
+"    -M, --dependfile <path>  set the output dependency file\n"
+"    -o, --output <path>      set the output object file\n"
+"    -p, --pad-value <value>  set the value to use for `ds'\n"
+"    -V, --version            print RGBASM version and exit\n"
+"    -W, --warning <warning>  enable or disable warnings\n"
+"\n"
+"For help, use `man rgbasm' or go to https://rednex.github.io/rgbds/\n",
+	      stderr);
 	exit(1);
 }
 
