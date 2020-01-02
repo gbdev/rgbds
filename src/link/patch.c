@@ -306,7 +306,7 @@ static void applyPatches(struct Section *section, void *arg)
 			int16_t offset = value - address;
 
 			if (offset < -128 || offset > 127)
-				errx(1, "%s(%d): jr target out of reach (%d)",
+				errx(1, "%s(%d): jr target out of reach (expected -129 < %d < 128)",
 				     patch->fileName, patch->lineNo, offset);
 			section->data[patch->offset] = offset & 0xFF;
 		} else {
