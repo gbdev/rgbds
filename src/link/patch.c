@@ -299,11 +299,11 @@ static void applyPatches(struct Section *section, void *arg)
 		struct Patch *patch = &section->patches[patchID];
 		int32_t value = computeRPNExpr(patch, section);
 
+		/* `jr` is quite unlike the others... */
 		if (patch->type == PATCHTYPE_JR) {
-			/* `jr` is quite unlike the others... */
-			uint16_t address = section->org + patch->offset;
 			/* Target is relative to the byte *after* the operand */
-			int32_t offset = value - (address + 1);
+			uint16_t address = section->org + patch->offset + 1;
+			int16_t offset = value - address;
 
 			if (offset < -128 || offset > 127)
 				errx(1, "%s(%d): jr target out of reach (%d)",
