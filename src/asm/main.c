@@ -268,10 +268,20 @@ static struct option const longopts[] = {
 
 static void print_usage(void)
 {
-	printf(
-"usage: rgbasm [-EhLVvw] [-b chars] [-Dname[=value]] [-g chars] [-i path]\n"
-"              [-M dependfile] [-o outfile] [-p pad_value]\n"
-"              [-r recursion_depth] [-W warning] [-w] file.asm\n");
+	fputs(
+"Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
+"              [-M depend_file] [-o out_file] [-p pad_value] [-r depth]\n"
+"              [-W warning] <file> ...\n"
+"Useful options:\n"
+"    -E, --export-all         export all labels\n"
+"    -M, --dependfile <path>  set the output dependency file\n"
+"    -o, --output <path>      set the output object file\n"
+"    -p, --pad-value <value>  set the value to use for `ds'\n"
+"    -V, --version            print RGBASM version and exit\n"
+"    -W, --warning <warning>  enable or disable warnings\n"
+"\n"
+"For help, use `man rgbasm' or go to https://rednex.github.io/rgbds/\n",
+	      stderr);
 	exit(1);
 }
 
@@ -292,9 +302,6 @@ int main(int argc, char *argv[])
 	cldefines = malloc(cldefines_bufsize);
 	if (!cldefines)
 		fatalerror("No memory for command line defines");
-
-	if (argc == 1)
-		print_usage();
 
 	/* yydebug=1; */
 
@@ -402,8 +409,10 @@ int main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	if (argc == 0)
+	if (argc == 0) {
+		fputs("FATAL: no input files\n", stderr);
 		print_usage();
+	}
 
 	tzMainfile = argv[argc - 1];
 

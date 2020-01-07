@@ -5,20 +5,21 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd January 26, 2018
+.Dd December 5, 2019
 .Dt RGBGFX 1
-.Os RGBDS Manual
+.Os
 .Sh NAME
 .Nm rgbgfx
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
-.Nm rgbgfx
-.Op Fl ACDfFhmPTuVv
-.Op Fl o Ar outfile
-.Op Fl a Ar attrmap
+.Nm
+.Op Fl CDhmuVv
+.Op Fl f | Fl F
+.Op Fl a Ar attrmap | Fl A
 .Op Fl d Ar depth
-.Op Fl p Ar palfile
-.Op Fl t Ar tilemap
+.Op Fl o Ar out_file
+.Op Fl p Ar pal_file | Fl P
+.Op Fl t Ar tilemap | Fl T
 .Op Fl x Ar tiles
 .Ar file
 .Sh DESCRIPTION
@@ -26,106 +27,100 @@ The
 .Nm
 program converts PNG images into the Nintendo Game Boy's planar tile format.
 
-The resulting colors and their palette indices are determined differently
-depending on the input PNG file:
+The resulting colors and their palette indices are determined differently depending on the input PNG file:
 .Bl -dash -width Ds
 .It
 If the file has an embedded palette, that palette's color and order are used.
 .It
-If not, and the image only contains shades of gray, rgbgfx maps them to the
-indices appropriate for each shade. Any undetermined indices are set to
-respective default shades of gray. For example: if the bit depth is 2 and the
-image contains light gray and black, they become the second and fourth colors -
-and the first and third colors get set to default white and dark gray. If the
-image has multiple shades that map to the same index, the palette is instead
-determined as if the image had color.
+If not, and the image only contains shades of gray, rgbgfx maps them to the indices appropriate for each shade.
+Any undetermined indices are set to respective default shades of gray.
+For example: if the bit depth is 2 and the image contains light gray and black, they become the second and fourth colors, and the first and third colors get set to default white and dark gray.
+If the image has multiple shades that map to the same index, the palette is instead determined as if the image had color.
 .It
-If the image has color (or the grayscale method failed), the colors are sorted
-from lightest to darkest.
+If the image has color (or the grayscale method failed), the colors are sorted from lightest to darkest.
 .El
 
-The input image may not contain more colors than the selected bit depth
-allows. Transparent pixels are set to palette index 0.
+The input image may not contain more colors than the selected bit depth allows.
+Transparent pixels are set to palette index 0.
 .Sh ARGUMENTS
+Note that options can be abbreviated as long as the abbreviation is unambiguous:
+.Fl Fl verb
+is
+.Fl Fl verbose ,
+but
+.Fl Fl ver
+is invalid because it could also be
+.Fl Fl version .
+The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar attrmap
-Generate a file of tile mirroring attributes for OAM or (CGB-only) background
-tiles. For each tile in the input file, a byte is written representing the
-dimensions that the associated tile in the output file should be mirrored.
+.It Fl a Ar attrmap, Fl Fl attr-map Ar attrmap
+Generate a file of tile mirroring attributes for OAM or (CGB-only) background tiles.
+For each tile in the input file, a byte is written representing the dimensions that the associated tile in the output file should be mirrored.
 Useful in combination with
 .Fl m
 to keep track the mirror direction of mirrored duplicate tiles.
-.It Fl A
+.It Fl A , Fl Fl output-attr-map
 Same as
 .Fl a ,
-but the attrmap file output name is made by taking the input filename, removing
-the file extension, and appending
+but the attrmap file output name is made by taking the input filename, removing the file extension, and appending
 .Pa .attrmap .
-.It Fl C
+.It Fl C , Fl Fl color-curve
 Use the color curve of the Game Boy Color when generating palettes.
-.It Fl D
+.It Fl D , Fl Fl debug
 Debug features are enabled.
-.It Fl d Ar depth
+.It Fl d Ar depth , Fl Fl depth Ar depth
 The bit depth of the output image (either 1 or 2).
 By default, the bit depth is 2 (two bits per pixel).
-.It Fl f
+.It Fl f , Fl Fl fix
 Fix the input PNG file to be a correctly indexed image.
-.It Fl F
+.It Fl F , Fl Fl fix-and-save
 Same as
 .Fl f ,
-but additionally, the supplied command line parameters are saved within the PNG
-and will be loaded and automatically used next time.
-.It Fl h
+but additionally, the supplied command line parameters are saved within the PNG and will be loaded and automatically used next time.
+.It Fl h , Fl Fl horizontal
 Lay out tiles horizontally rather than vertically.
-.It Fl m
-Truncate tiles by checking for tiles that are mirrored versions of others and
-omitting these from the output file. Useful with tilemaps and attrmaps together
-to keep track of the duplicated tiles and the dimension mirrored. Tiles are
-checked for horizontal, vertical, and horizontal-vertical mirroring. Implies
+.It Fl m , Fl Fl mirror-tiles
+Truncate tiles by checking for tiles that are mirrored versions of others and omitting these from the output file.
+Useful with tilemaps and attrmaps together to keep track of the duplicated tiles and the dimension mirrored.
+Tiles are checked for horizontal, vertical, and horizontal-vertical mirroring.
+Implies
 .Fl u .
-.It Fl o Ar outfile
+.It Fl o Ar out_file , Fl Fl output Ar out_file
 The name of the output file.
-.It Fl p Ar palfile
-Output the image's palette in standard GBC palette format - bytes (8 bytes for
-two bits per pixel, 4 bytes for one bit per pixel) containing the RGB15 values
-in little-endian byte order. If the palette contains too few colors, the
-remaining entries are set to black.
-.It Fl P
+.It Fl p Ar pal_file , Fl Fl palette Ar pal_file
+Output the image's palette in standard GBC palette format: bytes (8 bytes for two bits per pixel, 4 bytes for one bit per pixel) containing the RGB15 values in little-endian byte order.
+If the palette contains too few colors, the remaining entries are set to black.
+.It Fl P , Fl Fl output-palette
 Same as
 .Fl p ,
-but the palette file output name is made by taking the input PNG file's
-filename, removing the file extension, and appending
+but the palette file output name is made by taking the input PNG file's filename, removing the file extension, and appending
 .Pa .pal .
-.It Fl t Ar tilemap
-Generate a file of tile indices. For each tile in the input file, a byte is
-written representing the index of the associated tile in the output file.
+.It Fl t Ar tilemap , Fl Fl tilemap Ar tilemap
+Generate a file of tile indices.
+For each tile in the input file, a byte is written representing the index of the associated tile in the output file.
 Useful in combination with
 .Fl u
 or
 .Fl m
 to keep track of duplicate tiles.
-.It Fl T
+.It Fl T , Fl Fl output-tilemap
 Same as
 .Fl t ,
-but the tilemap file output name is made by taking the input filename, removing
-the file extension, and appending
+but the tilemap file output name is made by taking the input filename, removing the file extension, and appending
 .Pa .tilemap .
-.It Fl u
-Truncate tiles by checking for tiles that are exact duplicates of others and
-omitting these from the output file. Useful with tilemaps to keep track of the
-duplicated tiles.
-.It Fl V
+.It Fl u , Fl Fl unique-tiles
+Truncate tiles by checking for tiles that are exact duplicates of others and omitting these from the output file.
+Useful with tilemaps to keep track of the duplicated tiles.
+.It Fl V , Fl Fl version
 Print the version of the program and exit.
-.It Fl v
+.It Fl v , Fl Fl verbose
 Verbose.
-Print errors when the command line parameters and the parameters in
-the PNG file don't match.
-.It Fl x Ar tiles
+Print errors when the command line parameters and the parameters in the PNG file don't match.
+.It Fl x Ar tiles , Fl Fl trim-end Ar tiles
 Trim the end of the output file by this many tiles.
 .El
 .Sh EXAMPLES
-The following will take a PNG file with a bit depth of 1, 2, or 8, and output
-planar 2bpp data:
+The following will take a PNG file with a bit depth of 1, 2, or 8, and output planar 2bpp data:
 .Pp
 .D1 $ rgbgfx -o out.2bpp in.png
 .Pp
@@ -134,8 +129,9 @@ The following creates a planar 2bpp file with only unique tiles, and its tilemap
 .Pp
 .D1 $ rgbgfx -T -u -o out.2bpp in.png
 .Pp
-The following creates a planar 2bpp file with only unique tiles (accounting for
-tile mirroring) and its associated tilemap
+The following creates a planar 2bpp file with only unique tiles
+.Pa accounting for tile mirroring
+and its associated tilemap
 .Pa out.tilemap
 and attrmap
 .Pa out.attrmap :
@@ -145,6 +141,9 @@ and attrmap
 The following will do nothing:
 .Pp
 .D1 $ rgbgfx in.png
+.Sh BUGS
+Please report bugs on
+.Lk https://github.com/rednex/rgbds/issues GitHub .
 .Sh SEE ALSO
 .Xr rgbds 7 ,
 .Xr rgbasm 1 ,

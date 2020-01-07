@@ -5,22 +5,16 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd January 27, 2018
+.Dd November 26, 2019
 .Dt RGBLINK 5
-.Os RGBDS Manual
+.Os
 .Sh NAME
 .Nm rgblink
-.Nd linkerscript file format
+.Nd linker script file format
 .Sh DESCRIPTION
-The linkerscript is an external file that allows the user to specify the
-order of sections without the need for doing so before assembling each object
-file.
+The linker script is an external file that allows the user to specify the order of sections at link time and in a centralized manner.
 .Pp
-The placement of sections specified in the linkerscript is done before the
-sections whose placement is defined in the source code.
-.Pp
-A linkerscript consists on a series of banks followed by a list of sections
-and, optionally, commands.
+A linker script consists on a series of banks followed by a list of sections and, optionally, commands.
 They can be lowercase or uppercase, it is ignored.
 Any line can contain a comment starting with
 .Ql \&;
@@ -36,51 +30,53 @@ WRAMX 2
   "Some variables"
 .Ed
 .Pp
-Numbers can be in decimal or hexadecimal format (the prefix is
-.Ql $ ) .
-It is an error if any section name or command are found before setting a bank.
+Numbers can be in decimal or hexadecimal format
+.Pq the prefix is Ql $ .
+It is an error if any section name or command is found before setting a bank.
 .Pp
 Files can be included by using the
-.Ar INCLUDE
-keyword followed by a string with the path of the file that has to be included.
+.Ic INCLUDE
+keyword, followed by a string with the path of the file that has to be included.
 .Pp
 The possible bank types are:
-.Sy ROM0 , ROMX , VRAM , WRAM0 , WRAMX , OAM
+.Cm ROM0 , ROMX , VRAM , SRAM , WRAM0 , WRAMX , OAM
 and
-.Sy HRAM .
-Types
-.Sy ROMX , VRAM , WRAMX
+.Cm HRAM .
+Unless there is a single bank, which can occur with types
+.Cm ROMX , VRAM , SRAM
 and
-.Sy SRAM
-are banked, which means that it is needed to specify a bank after the type.
+.Cm WRAMX ,
+it is needed to specify a bank number after the type.
 .Pp
-When a new bank statement is found, sections found after it will be placed
-right from the beginning of that bank.
-If the linkerscript switches to a different bank and then it comes back to the
-previous one it will continue from the last address that was used.
+When a new bank statement is found, sections found after it will be placed right from the beginning of that bank.
+If the linker script switches to a different bank and then comes back to a previous one, it will continue from the last address that was used.
 .Pp
 The only two commands are
-.Ar ORG
+.Ic ORG
 and
-.Ar ALIGN :
+.Ic ALIGN :
 .Bl -bullet
 .It
-.Ar ORG
+.Ic ORG
 sets the address in which new sections will be placed.
 It can not be lower than the current address.
 .It
-.Ar ALIGN
-will increase the address until it is aligned to the specified boundary (it
-tries to set to 0 the number of bits specified after the command:
-.Sy ALIGN 8
-will align to $100).
+.Ic ALIGN
+will increase the address until it is aligned to the specified boundary
+.Po it tries to set to 0 the number of bits specified after the command:
+.Ql ALIGN 8
+will align to $100
+.Pc .
 .El
 .Pp
-Note: The bank, alignment, address and type of sections can be specified both
-in the source code and in the linkerscript.
-For a section to be able to be placed with the linkerscript the bank must be
-left unassigned in the source code or be the same as the one specified in the
-linkerscript. The address and alignment musn't be set.
+.Sy Note:
+The bank, alignment, address and type of sections can be specified both in the source code and in the linker script.
+For a section to be able to be placed with the linker script, the bank, address and alignment must be left unassigned in the source code or be compatible with what is specified in the linker script.
+For example,
+.Ql ALIGN[8]
+in the source code is compatible with
+.Ql ORG $F00
+in the linker script.
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,

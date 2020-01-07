@@ -7,7 +7,7 @@
 .\"
 .Dd January 26, 2018
 .Dt RGBDS 5
-.Os RGBDS Manual
+.Os
 .Sh NAME
 .Nm rgbds
 .Nd object file format documentation
@@ -16,16 +16,14 @@ This is the description of the object files used by
 .Xr rgbasm 1
 and
 .Xr rgblink 1 .
-Please, note that the specifications may change.
-This toolchain is in development and new features may require adding more
-information to the current format, or modifying some fields, which would break
-compatibility with older versions.
+.Em Please note that the specifications may change.
+This toolchain is in development and new features may require adding more information to the current format, or modifying some fields, which would break compatibility with older versions.
 .Pp
 .Sh FILE STRUCTURE
 The following types are used:
 .Pp
 .Ar LONG
-is a 32‐bit integer stored in little‐endian format (Intel).
+is a 32‐bit integer stored in little‐endian format.
 .Ar BYTE
 is an 8‐bit integer.
 .Ar STRING
@@ -131,17 +129,15 @@ ENDR
 .Ss RPN DATA
 Expressions in the object file are stored as RPN.
 This is an expression of the form
-.Do 2 5 + Dc .
+.Dq 2 5 + .
 This will first push the value
-.Do 2 Dc to the stack.
-Then
-.Do 5 Dc .
+.Do 2 Dc to the stack, then
+.Dq 5 .
 The
-.Do + Dc operator pops two arguments from the stack, adds them, and then pushes
-the result on the stack, effectively replacing the two top arguments with their
-sum.
-In the RGB format, RPN expressions are stored as BYTEs with some bytes being
-special prefixes for integers and symbols.
+.Do + Dc operator pops two arguments from the stack, adds them, and then pushes the result on the stack, effectively replacing the two top arguments with their sum.
+In the RGB format, RPN expressions are stored as
+.Ar BYTE Ns s
+with some bytes being special prefixes for integers and symbols.
 .Pp
 .Bl -column -offset indent ".Sy String" ".Sy String"
 .It Sy Value Ta Sy Meaning
@@ -166,19 +162,19 @@ special prefixes for integers and symbols.
 .It Li $35 Ta Li <= comparison
 .It Li $40 Ta Li << operator
 .It Li $41 Ta Li >> operator
-.It Li $50 Ta Li BANK(symbol),
+.It Li $50 Ta Li BANK(symbol) ,
 a
 .Ar LONG
 Symbol ID follows.
-.It Li $51 Ta Li BANK(section_name),
+.It Li $51 Ta Li BANK(section_name) ,
 a null-terminated string follows.
-.It Li $52 Ta Li Current BANK() .
-.It Li $60 Ta Li HRAMCheck.
-Check if the value is in HRAM, AND it with 0xFF.
+.It Li $52 Ta Li Current BANK()
+.It Li $60 Ta Li HRAMCheck .
+Checks if the value is in HRAM, AND it with 0xFF.
 .It Li $80 Ta Ar LONG
 integer follows.
 .It Li $81 Ta Ar LONG
-Symbol ID follows.
+symbol ID follows.
 .El
 .Pp
 .Sh SEE ALSO
@@ -187,7 +183,7 @@ Symbol ID follows.
 .Xr rgbds 7 ,
 .Xr gbz80 7
 .Sh HISTORY
-.Nm rgbds
+.Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,
 and was later packaged in RGBDS by Justin Lloyd.
 It is now maintained by a number of contributors at

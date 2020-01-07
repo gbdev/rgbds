@@ -52,9 +52,20 @@ static struct option const longopts[] = {
 
 static void print_usage(void)
 {
-	printf(
-"usage: rgbgfx [-ADFfhmPTuVv] [-o outfile] [-a attrmap] [-d #] [-p palfile]\n"
-"              [-t tilemap] [-x #] infile\n");
+	fputs(
+"Usage: rgbgfx [-CDhmuVv] [-f | -F] [-a <attr_map> | -A] [-d <depth>]\n"
+"              [-o <out_file>] [-p <pal_file> | -P] [-t <tile_map> | -T]\n"
+"              [-x <tiles>] <file>\n"
+"Useful options:\n"
+"    -f, --fix                 make the input image an indexed PNG\n"
+"    -m, --mirror-tiles        optimize out mirrored tiles\n"
+"    -o, --output <path>       set the output binary file\n"
+"    -t, --tilemap <path>      set the output tilemap file\n"
+"    -u, --unique-tiles        optimize out identical tiles\n"
+"    -V, --version             print RGBGFX version and exit\n"
+"\n"
+"For help, use `man rgbgfx' or go to https://rednex.github.io/rgbds/\n",
+	      stderr);
 	exit(1);
 }
 
@@ -68,9 +79,6 @@ int main(int argc, char *argv[])
 	struct Mapfile tilemap = {0};
 	struct Mapfile attrmap = {0};
 	char *ext;
-
-	if (argc == 1)
-		print_usage();
 
 	opts.tilemapfile = "";
 	opts.attrmapfile = "";
@@ -145,8 +153,10 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
+	if (argc == 0) {
+		fputs("FATAL: no input files\n", stderr);
 		print_usage();
+	}
 
 #define WARN_MISMATCH(property) \
 	warnx("The PNG's " property \
