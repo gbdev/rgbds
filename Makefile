@@ -35,7 +35,7 @@ WARNFLAGS	:= -Wall
 CFLAGS		:= -g -O0
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c11 -D_POSIX_C_SOURCE=200809L \
-		   -D_DEFAULT_SOURCE -Iinclude \
+		   -D_DEFAULT_SOURCE -Iinclude -MMD -MP \
 		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 # Overridable LDFLAGS
 LDFLAGS		:=
@@ -112,6 +112,15 @@ rgbfix: ${rgbfix_obj}
 rgbgfx: ${rgbgfx_obj}
 	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${PNGLDLIBS}
 
+# Dependencies
+rgbasm_deps	:= ${rgbasm_obj:.o=.d}
+rgblink_deps	:= ${rgblink_obj:.o=.d}
+rgbgfx_deps	:= ${rgbgfx_obj:.o=.d}
+rgbfix_deps	:= ${rgbfix_obj:.o=.d}
+
+# Include dependencies
+-include ${rgbasm_deps} ${rgblink_deps} ${rgbgfx_deps} ${rgbfix_deps}
+
 # Rules to process files
 
 # We want the yacc invocations to pass through our rules, not default ones
@@ -136,6 +145,7 @@ clean:
 	$Q${RM} rgbfix rgbfix.exe
 	$Q${RM} rgbgfx rgbgfx.exe
 	$Qfind src/ -name "*.o" -exec rm {} \;
+	$Qfind src/ -name "*.d" -exec rm {} \;
 	$Q${RM} src/asm/asmy.c src/asm/asmy.h
 	$Q${RM} src/link/lexer.c src/link/parser.c src/link/parser.h
 
