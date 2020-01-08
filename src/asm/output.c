@@ -599,48 +599,52 @@ void out_SetFileName(char *s)
 		printf("Output filename %s\n", s);
 }
 
+struct Section *out_FindSectionByName(const char *pzName)
+{
+	struct Section *pSect = pSectionList;
+
+	while (pSect) {
+		if (strcmp(pzName, pSect->pzName) == 0)
+			return pSect;
+
+		pSect = pSect->pNext;
+	}
+
+	return NULL;
+}
+
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
 struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 				int32_t bank, int32_t alignment)
 {
-	struct Section *pSect, **ppSect;
+	struct Section *pSect = out_FindSectionByName(pzName);
 
-	ppSect = &pSectionList;
-	pSect = pSectionList;
-
-	while (pSect) {
-		if (strcmp(pzName, pSect->pzName) == 0) {
-			if (secttype == pSect->nType
-			    && ((uint32_t)org) == pSect->nOrg
-			    && ((uint32_t)bank) == pSect->nBank
-			    && ((uint32_t)alignment == pSect->nAlign)) {
-				return pSect;
-			}
-
-			fatalerror("Section already exists but with a different type");
+	if (pSect) {
+		if (secttype == pSect->nType
+			&& ((uint32_t)org) == pSect->nOrg
+			&& ((uint32_t)bank) == pSect->nBank
+			&& ((uint32_t)alignment == pSect->nAlign)) {
+			return pSect;
 		}
-		ppSect = &(pSect->pNext);
-		pSect = pSect->pNext;
+		fatalerror("Section already exists but with a different type");
 	}
 
 	pSect = malloc(sizeof(struct Section));
-	*ppSect = pSect;
 	if (pSect == NULL)
 		fatalerror("Not enough memory for section");
 
-	pSect->pzName = malloc(strlen(pzName) + 1);
+	pSect->pzName = strdup(pzName);
 	if (pSect->pzName == NULL)
 		fatalerror("Not enough memory for sectionname");
 
-	strcpy(pSect->pzName, pzName);
 	pSect->nType = secttype;
 	pSect->nPC = 0;
 	pSect->nOrg = org;
 	pSect->nBank = bank;
 	pSect->nAlign = alignment;
-	pSect->pNext = NULL;
+	pSect->pNext = pSectionList;
 	pSect->pPatches = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
@@ -655,7 +659,13 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 		pSect->tData = NULL;
 	}
 
-	return (pSect);
+	/*
+	 * Add the new section to the list
+	 * at the beginning because order doesn't matter
+	 */
+	pSectionList = pSect;
+
+	return pSect;
 }
 
 /*

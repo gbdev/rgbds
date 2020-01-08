@@ -1394,6 +1394,14 @@ const		: T_ID					{ constexpr_Symbol(&$$, $1); }
 		| T_NUMBER				{ constexpr_Number(&$$, $1); }
 		| T_OP_HIGH '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
 		| T_OP_LOW '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
+		| T_OP_BANK '(' T_ID ')'
+		{
+			constexpr_BankSymbol(&$$, $3);
+		}
+		| T_OP_BANK '(' string ')'
+		{
+			constexpr_BankSection(&$$, $3);
+		}
 		| string
 		{
 			char *s = $1;
