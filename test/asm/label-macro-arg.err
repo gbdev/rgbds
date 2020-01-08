@@ -1,0 +1,5 @@
+ERROR: label-macro-arg.asm(45) -> label-macro-arg.asm::test_char(31):
+    Label "sizeof_" created outside of a SECTION
+while expanding symbol "VAR_DEF"
+ERROR: label-macro-arg.asm(45) -> label-macro-arg.asm::test_char(31):
+    Macro 'something' not defined

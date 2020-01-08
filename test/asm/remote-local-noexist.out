@@ -1,2 +1,0 @@
-ERROR: remote-local-noexist.asm(7):
-    'Parent.child.fail' is a nonsensical reference to a nested local symbol

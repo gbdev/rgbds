@@ -1,0 +1,4 @@
+ERROR: macro-@.asm(1):
+    Label "foo" created outside of a SECTION
+ERROR: macro-@.asm(1):
+    Macro '@' not defined

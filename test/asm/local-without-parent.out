@@ -1,2 +1,0 @@
-ERROR: local-without-parent.asm(2):
-    Local label in main scope

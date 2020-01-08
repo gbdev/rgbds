@@ -1,0 +1,2 @@
+ERROR: garbage_char.asm(1):
+    Found garbage character: 0xFF

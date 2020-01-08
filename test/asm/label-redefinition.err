@@ -1,0 +1,3 @@
+ERROR: label-redefinition.asm(7):
+    'Sym' already defined in label-redefinition.asm::m(6)
+error: Assembly aborted (1 errors)!
