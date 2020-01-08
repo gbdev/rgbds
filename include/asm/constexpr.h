@@ -20,7 +20,7 @@ struct ConstExpression {
 };
 
 void constexpr_Symbol(struct ConstExpression *expr, char *tzSym);
-void constexpr_BanksSymbol(struct ConstExpression *expr, char *tzSym);
+void constexpr_BankSymbol(struct ConstExpression *expr, char *tzSym);
 void constexpr_BankSection(struct ConstExpression *expr, char *tzSym);
 void constexpr_Number(struct ConstExpression *expr, int32_t i);
 void constexpr_UnaryOp(struct ConstExpression *expr,
