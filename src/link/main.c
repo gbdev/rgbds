@@ -114,8 +114,8 @@ int main(int argc, char *argv[])
 	unsigned long value; /* For storing `strtoul`'s return value */
 
 	/* Parse options */
-	while ((optionChar = getopt_long_only(argc, argv, optstring, longopts,
-					      NULL)) != -1) {
+	while ((optionChar = musl_getopt_long_only(argc, argv, optstring,
+						   longopts, NULL)) != -1) {
 		switch (optionChar) {
 		case 'd':
 			isDmgMode = true;

@@ -87,8 +87,8 @@ int main(int argc, char *argv[])
 
 	depth = 2;
 
-	while ((ch = getopt_long_only(argc, argv, optstring, longopts,
-				      NULL)) != -1) {
+	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts,
+					   NULL)) != -1) {
 		switch (ch) {
 		case 'A':
 			opts.attrmapout = true;

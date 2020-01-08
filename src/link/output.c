@@ -150,9 +150,8 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 
 		/* Output padding up to the next SECTION */
 		while (offset + baseOffset < section->org) {
-			putc_unlocked(overlayFile ? getc_unlocked(overlayFile)
-						  : padValue,
-				      outputFile);
+			putc(overlayFile ? getc(overlayFile) : padValue,
+			     outputFile);
 			offset++;
 		}
 
@@ -162,7 +161,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		if (overlayFile) {
 			/* Skip bytes even with pipes */
 			for (uint16_t i = 0; i < section->size; i++)
-				getc_unlocked(overlayFile);
+				getc(overlayFile);
 		}
 		offset += section->size;
 
@@ -170,9 +169,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 	}
 
 	while (offset < size) {
-		putc_unlocked(overlayFile ? getc_unlocked(overlayFile)
-					  : padValue,
-			      outputFile);
+		putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
 		offset++;
 	}
 }
@@ -188,10 +185,6 @@ static void writeROM(void)
 	checkOverlay();
 
 	if (outputFile) {
-		flockfile(outputFile);
-		if (overlayFile)
-			flockfile(overlayFile);
-
 		if (sections[SECTTYPE_ROM0].nbBanks > 0)
 			writeBank(sections[SECTTYPE_ROM0].banks[0].sections,
 				  0x0000, 0x4000);
@@ -199,10 +192,6 @@ static void writeROM(void)
 		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
 			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
 				  0x4000, 0x4000);
-
-		if (overlayFile)
-			funlockfile(overlayFile);
-		funlockfile(outputFile);
 	}
 
 	closeFile(outputFile);

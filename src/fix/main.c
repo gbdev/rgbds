@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 	int version = 0;   /* mask ROM version number */
 	int padvalue = 0;  /* to pad the rom with if it changes size */
 
-	while ((ch = getopt_long_only(argc, argv, optstring, longopts,
-				      NULL)) != -1) {
+	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts,
+					   NULL)) != -1) {
 		switch (ch) {
 		case 'C':
 			coloronly = true;
