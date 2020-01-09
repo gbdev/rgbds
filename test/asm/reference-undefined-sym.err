@@ -1,0 +1,3 @@
+ERROR: reference-undefined-sym.asm(4):
+    'X' already referenced at reference-undefined-sym.asm(2)
+error: Assembly aborted (1 errors)!

@@ -3,15 +3,17 @@ export LC_ALL=C
 
 o=$(mktemp)
 gb=$(mktemp)
-before=$(mktemp)
-after=$(mktemp)
+input=$(mktemp)
+output=$(mktemp)
+errput=$(mktemp)
 rc=0
 
 for i in *.asm; do
 	for variant in '' '.pipe'; do
 		if [ -z "$variant" ]; then
-			../../rgbasm -Weverything -o $o $i > $after 2>&1
+			../../rgbasm -Weverything -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
+			desired_errput=${i%.asm}.err
 		else
 			# `include-recursion.asm` refers to its own name inside the test code.
 			# Skip testing with stdin input for that file.
@@ -23,27 +25,34 @@ for i in *.asm; do
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with and was broken when the feature was
 			# first implemented.
-			cat $i | ../../rgbasm -Weverything -o $o - > $after 2>&1
+			cat $i | ../../rgbasm -Weverything -o $o - > $output 2> $errput
 
+			# Use two otherwise unused files for temp storage
+			desired_output=$input
+			desired_errput=$gb
 			# Escape regex metacharacters
-			desired_output=$before
 			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
+			# Replace the file name with a dash to match changed output
 			sed "s/$subst/-/g" ${i%.asm}.out > $desired_output
+			sed "s/$subst/-/g" ${i%.asm}.err > $desired_errput
 		fi
 
-		diff -u $desired_output $after
+		diff -u --strip-trailing-cr $desired_output $output
 		rc=$(($? || $rc))
+		diff -u --strip-trailing-cr $desired_errput $errput
+		rc=$(($? || $rc))
+
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
-			../../rgblink -o $gb $o > $after 2>&1
-			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $after 2>/dev/null
-			hexdump -C $after > $before && mv $before $after
-			hexdump -C $bin > $before
-			diff -u $before $after
+			../../rgblink -o $gb $o > $output 2>&1
+			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
+			hexdump -C $output > $input && mv $input $output
+			hexdump -C $bin > $input
+			diff -u --strip-trailing-cr $input $output
 			rc=$(($? || $rc))
 		fi
 	done
 done
 
-rm -f $o $gb $before $after
+rm -f $o $gb $input $output
 exit $rc

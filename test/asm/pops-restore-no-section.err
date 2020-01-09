@@ -1,0 +1,4 @@
+ERROR: pops-restore-no-section.asm(9):
+    Label "DisallowedContent" created outside of a SECTION
+ERROR: pops-restore-no-section.asm(10):
+    Code generation before SECTION directive

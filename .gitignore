@@ -2,6 +2,7 @@ rgbasm
 rgblink
 rgbfix
 rgbgfx
+rgbshim.sh
 *.o
 *.exe
 .checkpatch-camelcase.*

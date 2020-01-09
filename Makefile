@@ -132,6 +132,7 @@ clean:
 	$Q${RM} rgbfix rgbfix.exe
 	$Q${RM} rgbgfx rgbgfx.exe
 	$Qfind src/ -name "*.o" -exec rm {} \;
+	$Q${RM} rgbshim.sh
 	$Q${RM} src/asm/asmy.c src/asm/asmy.h
 	$Q${RM} src/link/lexer.c src/link/parser.c src/link/parser.h
 
@@ -227,17 +228,21 @@ develop:
 # install instructions instead.
 
 mingw32:
-	$Qenv PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
-		make CC=i686-w64-mingw32-gcc YACC=bison -j
-	$Qmv rgbasm rgbasm.exe
-	$Qmv rgblink rgblink.exe
-	$Qmv rgbfix rgbfix.exe
-	$Qmv rgbgfx rgbgfx.exe
+	$Qmake CC=i686-w64-mingw32-gcc YACC=bison \
+		PKG_CONFIG=i686-w64-mingw32-pkg-config -j
+	$Qecho -e '#!/bin/sh\nWINEDEBUG=-all wine $$0.exe "$${@:1}"' > rgbshim.sh
+	$Qchmod +x rgbshim.sh
+	$Qln -s rgbshim.sh rgbasm
+	$Qln -s rgbshim.sh rgblink
+	$Qln -s rgbshim.sh rgbfix
+	$Qln -s rgbshim.sh rgbgfx
 
 mingw64:
-	$Qenv PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig/ \
-		make CC=x86_64-w64-mingw32-gcc YACC=bison -j
-	$Qmv rgbasm rgbasm.exe
-	$Qmv rgblink rgblink.exe
-	$Qmv rgbfix rgbfix.exe
-	$Qmv rgbgfx rgbgfx.exe
+	$Qmake CC=x86_64-w64-mingw32-gcc YACC=bison \
+		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
+	$Qecho -e '#!/bin/sh\nWINEDEBUG=-all wine $$0.exe "$${@:1}"' > rgbshim.sh
+	$Qchmod +x rgbshim.sh
+	$Qln -s rgbshim.sh rgbasm
+	$Qln -s rgbshim.sh rgblink
+	$Qln -s rgbshim.sh rgbfix
+	$Qln -s rgbshim.sh rgbgfx

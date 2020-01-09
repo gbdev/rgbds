@@ -1,0 +1,3 @@
+ERROR: local-wrong-parent.asm(5):
+    Not currently in the scope of 'WrongParent'
+error: Assembly aborted (1 errors)!

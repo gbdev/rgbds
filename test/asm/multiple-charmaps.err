@@ -1,0 +1,6 @@
+ERROR: multiple-charmaps.asm(100) -> multiple-charmaps.asm::new_(7):
+    Charmap 'map1' already exists
+ERROR: multiple-charmaps.asm(102) -> multiple-charmaps.asm::set_(13):
+    Charmap 'map5' doesn't exist
+ERROR: multiple-charmaps.asm(104) -> multiple-charmaps.asm::pop_(23):
+    No entries in the charmap stack
