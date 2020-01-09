@@ -285,6 +285,10 @@ uint32_t sym_isConstant(char *s)
 {
 	struct sSymbol *psym = sym_FindSymbol(s);
 
+	/* The @ symbol is handled differently */
+	if (psym == pPCSymbol)
+		return pCurrentSection->nOrg != -1;
+
 	return (psym && (psym->nType & SYMF_CONST));
 }
 
