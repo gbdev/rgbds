@@ -314,7 +314,13 @@ uint32_t sym_GetConstantValue(char *s)
 {
 	struct sSymbol *psym = sym_FindSymbol(s);
 
-	if (psym != NULL) {
+	if (psym == pPCSymbol) {
+		if (pCurrentSection->nOrg == -1)
+			yyerror("Expected constant PC but section is not fixed");
+		else
+			return pPCSymbol->nValue;
+
+	} else if (psym != NULL) {
 		if (psym->nType & SYMF_CONST)
 			return getvaluefield(psym);
 

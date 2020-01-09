@@ -1,0 +1,2 @@
+ERROR: pc-def.asm(1):
+    '@' is not allowed as argument to the DEF function
