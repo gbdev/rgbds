@@ -35,12 +35,12 @@ WARNFLAGS	:= -Wall
 CFLAGS		:= -g -O0
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c11 -D_POSIX_C_SOURCE=200809L \
-		   -D_DEFAULT_SOURCE -Iinclude \
-		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+		   -D_DEFAULT_SOURCE -Iinclude
 # Overridable LDFLAGS
 LDFLAGS		:=
 # Non-overridable LDFLAGS
-REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS}
+REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
+		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
 YFLAGS		:=
 
@@ -67,8 +67,7 @@ rgbasm_obj := \
 	src/asm/warning.o \
 	src/extern/err.o \
 	src/extern/getopt.o \
-	src/extern/utf8decoder.o \
-	src/version.o
+	src/extern/utf8decoder.o
 
 src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
 
@@ -83,34 +82,31 @@ rgblink_obj := \
 	src/link/symbol.o \
 	src/extern/err.o \
 	src/extern/getopt.o \
-	src/hashmap.o \
-	src/version.o
+	src/hashmap.o
 
 rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/err.o \
-	src/extern/getopt.o \
-	src/version.o
+	src/extern/getopt.o
 
 rgbgfx_obj := \
 	src/gfx/gb.o \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
 	src/extern/err.o \
-	src/extern/getopt.o \
-	src/version.o
+	src/extern/getopt.o
 
 rgbasm: ${rgbasm_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbasm_obj} -lm
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCFLAGS} src/version.c -lm
 
 rgblink: ${rgblink_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgblink_obj}
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCFLAGS} src/version.c
 
 rgbfix: ${rgbfix_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj}
+	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCFLAGS} src/version.c
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${PNGLDLIBS}
+	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCFLAGS} src/version.c ${PNGLDLIBS}
 
 # Rules to process files
 
