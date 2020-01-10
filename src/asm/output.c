@@ -639,6 +639,15 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	if (pSect->pzName == NULL)
 		fatalerror("Not enough memory for sectionname");
 
+	// Force the bank to be 0 if that's the only possibility
+	switch (secttype) {
+	case SECTTYPE_ROM0:
+	case SECTTYPE_WRAM0:
+	case SECTTYPE_OAM:
+	case SECTTYPE_HRAM:
+		bank = 0;
+	}
+
 	pSect->nType = secttype;
 	pSect->nPC = 0;
 	pSect->nOrg = org;
