@@ -40,15 +40,14 @@ void constexpr_Symbol(struct ConstExpression *expr, char *tzSym)
 
 void constexpr_BankSymbol(struct ConstExpression *expr, char *tzSym)
 {
+	constexpr_Number(expr, 0);
+
 	if (sym_FindSymbol(tzSym) == pPCSymbol) {
 		if (pCurrentSection->nBank == -1)
 			yyerror("%s's bank is not known yet", tzSym);
 		else
 			constexpr_Number(expr, pCurrentSection->nBank);
-		return;
-	}
-
-	if (sym_isConstant(tzSym)) {
+	} else if (sym_isConstant(tzSym)) {
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
 		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
@@ -64,6 +63,7 @@ void constexpr_BankSymbol(struct ConstExpression *expr, char *tzSym)
 
 void constexpr_BankSection(struct ConstExpression *expr, char *tzSectionName)
 {
+	constexpr_Number(expr, 0);
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
 
 	if (!pSection)
