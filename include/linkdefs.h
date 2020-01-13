@@ -47,6 +47,7 @@ enum RPNCommand {
 	RPN_BANK_SELF	= 0x52,
 
 	RPN_HRAM	= 0x60,
+	RPN_RST         = 0x61,
 
 	RPN_CONST	= 0x80,
 	RPN_SYM		= 0x81

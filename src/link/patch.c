@@ -284,6 +284,17 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			value &= 0xFF;
 			break;
 
+		case RPN_RST:
+			value = popRPN();
+			/* Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
+			 * They can be easily checked with a bitmask
+			 */
+			if (value & ~0x38)
+				errx(1, "%s(%d): Value %d is not a RST vector",
+				     patch->fileName, patch->lineNo, value);
+			value |= 0xC7;
+			break;
+
 		case RPN_CONST:
 			value = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)

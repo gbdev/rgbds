@@ -170,7 +170,9 @@ Symbol ID follows.
 a null-terminated string follows.
 .It Li $52 Ta Li Current BANK()
 .It Li $60 Ta Li HRAMCheck .
-Checks if the value is in HRAM, AND it with 0xFF.
+Checks if the value is in HRAM, ANDs it with 0xFF.
+.It Li $61 Ta Li RSTCheck .
+Checks if the value is a RST vector, ORs it with 0xC7.
 .It Li $80 Ta Ar LONG
 integer follows.
 .It Li $81 Ta Ar LONG

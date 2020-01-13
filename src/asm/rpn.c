@@ -242,6 +242,13 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 	expr->nRPNPatchSize++;
 }
 
+void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
+{
+	*expr = *src;
+	pushbyte(expr, RPN_RST);
+	expr->nRPNPatchSize++;
+}
+
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
