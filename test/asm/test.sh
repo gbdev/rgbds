@@ -8,6 +8,14 @@ output=$(mktemp)
 errput=$(mktemp)
 rc=0
 
+tryDiff () {
+	diff -u --strip-trailing-cr $1 $2 || (echo -e "\033[1;31m${i%.asm}.$3$variant mismatch!\033[0;0m"; false)
+}
+
+tryCmp () {
+	cmp $1 $2 || (echo -e "\033[1;31m${i%.asm}.bin$variant mismatch!\033[0;0m"; false)
+}
+
 for i in *.asm; do
 	for variant in '' '.pipe'; do
 		if [ -z "$variant" ]; then
@@ -37,9 +45,9 @@ for i in *.asm; do
 			sed "s/$subst/-/g" ${i%.asm}.err > $desired_errput
 		fi
 
-		diff -u --strip-trailing-cr $desired_output $output
+		tryDiff $desired_output $output out
 		our_rc=$?
-		diff -u --strip-trailing-cr $desired_errput $errput
+		tryDiff $desired_errput $errput err
 		our_rc=$(($? || $our_rc))
 
 		bin=${i%.asm}.out.bin
@@ -48,7 +56,7 @@ for i in *.asm; do
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
 			hexdump -C $output > $input && mv $input $output
 			hexdump -C $bin > $input
-			cmp $input $output
+			tryCmp $input $output
 			our_rc=$(($? || $our_rc))
 		fi
 
