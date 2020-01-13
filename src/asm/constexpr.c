@@ -67,9 +67,9 @@ void constexpr_BankSection(struct ConstExpression *expr, char *tzSectionName)
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
 
 	if (!pSection)
-		yyerror("Section \"%s\" doesn't exist");
+		yyerror("Section \"%s\" doesn't exist", tzSectionName);
 	else if (pSection->nBank == -1)
-		yyerror("Section \"%s\"'s bank is not known yet");
+		yyerror("Section \"%s\"'s bank is not known yet", tzSectionName);
 	else
 		constexpr_Number(expr, pSection->nBank);
 }
