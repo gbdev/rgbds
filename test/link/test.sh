@@ -18,6 +18,11 @@ dd if=$gbtemp count=1 bs=20 > $otemp 2>/dev/null
 diff --strip-trailing-cr bank-numbers.out.bin $otemp
 rc=$(($? || $rc))
 
+$RGBASM -o $otemp fixed-oob.asm
+$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
+diff --strip-trailing-cr fixed-oob.out $outtemp
+rc=$(($? || $rc))
+
 $RGBASM -o $otemp section-attributes.asm
 $RGBLINK -l section-attributes.link -o $gbtemp $otemp > $outtemp 2>&1
 diff --strip-trailing-cr section-attributes.out $outtemp
