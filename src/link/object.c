@@ -62,7 +62,7 @@ static int64_t readlong(FILE *file)
 		 * however causes values larger than 127 to be too large when
 		 * shifted, potentially triggering undefined behavior.
 		 */
-		value |= (unsigned)byte << shift;
+		value |= (unsigned int)byte << shift;
 	}
 	return value;
 }
