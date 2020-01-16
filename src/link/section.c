@@ -97,22 +97,28 @@ void sect_CleanupSections(void)
 	hash_EmptyMap(sections);
 }
 
+static bool sanityChecksFailed;
+
 static void doSanityChecks(struct Section *section, void *ptr)
 {
 	(void)ptr;
+#define fail(...) do { \
+	warnx(__VA_ARGS__); \
+	sanityChecksFailed = true; \
+} while (0)
 
 	/* Sanity check the section's type */
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID)
-		errx(1, "Section \"%s\" has an invalid type.", section->name);
+		fail("Section \"%s\" has an invalid type.", section->name);
 	if (is32kMode && section->type == SECTTYPE_ROMX)
-		errx(1, "%s: ROMX sections cannot be used with option -t.",
+		fail("%s: ROMX sections cannot be used with option -t.",
 		     section->name);
 	if (isWRA0Mode && section->type == SECTTYPE_WRAMX)
-		errx(1, "%s: WRAMX sections cannot be used with options -w or -d.",
+		fail("%s: WRAMX sections cannot be used with options -w or -d.",
 		     section->name);
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
-		errx(1, "%s: VRAM bank 1 can't be used with option -d.",
+		fail("%s: VRAM bank 1 can't be used with option -d.",
 		     section->name);
 
 	/*
@@ -127,14 +133,14 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	if (section->isBankFixed && section->bank < minbank
 				 && section->bank > maxbank)
-		errx(1, minbank == maxbank
+		fail(minbank == maxbank
 			? "Cannot place section \"%s\" in bank %d, it must be %d"
 			: "Cannot place section \"%s\" in bank %d, it must be between %d and %d",
 		     section->name, section->bank, minbank, maxbank);
 
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
-		errx(1, "Section \"%s\" is bigger than the max size for that type: %#x > %#x",
+		fail("Section \"%s\" is bigger than the max size for that type: %#x > %#x",
 		     section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
@@ -150,7 +156,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* It doesn't make sense to have both org and alignment set */
 		if (section->isAddressFixed) {
 			if (section->org & section->alignMask)
-				errx(1, "Section \"%s\"'s fixed address doesn't match its alignment",
+				fail("Section \"%s\"'s fixed address doesn't match its alignment",
 				     section->name);
 			section->isAlignFixed = false;
 		} else if ((endaddr(type) & section->alignMask)
@@ -165,18 +171,22 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* Ensure the target address is valid */
 		if (section->org < startaddr[section->type]
 		 || section->org > endaddr(section->type))
-			errx(1, "Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+			fail("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
 			     section->name, section->org,
 			     startaddr[section->type], endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			errx(1, "Section \"%s\"'s end address %#x is greater than last address %#x",
+			fail("Section \"%s\"'s end address %#x is greater than last address %#x",
 			     section->name, section->org + section->size,
 			     endaddr(section->type) + 1);
 	}
+
+#undef fail
 }
 
 void sect_DoSanityChecks(void)
 {
 	sect_ForEach(doSanityChecks, NULL);
+	if (sanityChecksFailed)
+		errx(1, "Sanity checks failed");
 }

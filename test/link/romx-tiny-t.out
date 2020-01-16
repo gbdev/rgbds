@@ -1,1 +1,2 @@
-error: rx: ROMX sections cannot be used with option -t.
+warning: rx: ROMX sections cannot be used with option -t.
+error: Sanity checks failed

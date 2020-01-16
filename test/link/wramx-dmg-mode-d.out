@@ -1,1 +1,2 @@
-error: wx: WRAMX sections cannot be used with options -w or -d.
+warning: wx: WRAMX sections cannot be used with options -w or -d.
+error: Sanity checks failed
