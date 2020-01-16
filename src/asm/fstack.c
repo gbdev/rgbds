@@ -316,7 +316,11 @@ void fstk_AddIncludePath(char *s)
 	if (NextIncPath == MAXINCPATHS)
 		fatalerror("Too many include directories passed from command line");
 
-	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, "%s",
+	// Find last occurrence of slash; is it at the end of the string?
+	char const *lastSlash = strrchr(s, '/');
+	char const *pattern = lastSlash && *(lastSlash + 1) == 0 ? "%s" : "%s/";
+
+	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, pattern,
 		     s) >= _MAX_PATH)
 		fatalerror("Include path too long '%s'", s);
 }
