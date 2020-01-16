@@ -134,7 +134,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
-		errx(1, "Section \"%s\" is bigger than the max size for that type: %#X > %#X",
+		errx(1, "Section \"%s\" is bigger than the max size for that type: %#x > %#x",
 		     section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
@@ -159,6 +159,20 @@ static void doSanityChecks(struct Section *section, void *ptr)
 			section->isAlignFixed = false;
 			section->isAddressFixed = true;
 		}
+	}
+
+	if (section->isAddressFixed) {
+		/* Ensure the target address is valid */
+		if (section->org < startaddr[section->type]
+		 || section->org > endaddr(section->type))
+			errx(1, "Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+			     section->name, section->org,
+			     startaddr[section->type], endaddr(section->type));
+
+		if (section->org + section->size > endaddr(section->type) + 1)
+			errx(1, "Section \"%s\"'s end address %#x is greater than last address %#x",
+			     section->name, section->org + section->size,
+			     endaddr(section->type) + 1);
 	}
 }
 
