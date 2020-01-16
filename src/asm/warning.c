@@ -21,14 +21,14 @@ enum WarningState {
 };
 
 static enum WarningState const defaultWarnings[NB_WARNINGS] = {
-	WARNING_ENABLED,  /* User warnings */
-	WARNING_DISABLED, /* Obsolete things */
 	WARNING_DISABLED, /* Invalid args to builtins */
-	WARNING_DISABLED, /* Constants too large */
-	WARNING_DISABLED, /* Shifting undefined behavior */
 	WARNING_DISABLED, /* Division undefined behavior */
 	WARNING_DISABLED, /* Empty entry in `db`, `dw` or `dl` */
+	WARNING_DISABLED, /* Constants too large */
 	WARNING_DISABLED, /* String too long for internal buffers */
+	WARNING_DISABLED, /* Obsolete things */
+	WARNING_DISABLED, /* Shifting undefined behavior */
+	WARNING_ENABLED,  /* User warnings */
 };
 
 static enum WarningState warningStates[NB_WARNINGS];
