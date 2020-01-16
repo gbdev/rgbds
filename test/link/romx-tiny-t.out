@@ -1,2 +1,1 @@
-warning: rx: ROMX sections cannot be used with option -t.
-error: Sanity checks failed
+error: Unable to place "r0a" (ROM0 section) anywhere
