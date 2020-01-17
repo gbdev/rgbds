@@ -205,28 +205,52 @@ void constexpr_BinaryOp(struct ConstExpression *expr,
 			result = value1 & value2;
 			break;
 		case T_OP_SHL:
-			if (value1 < 0)
-				warning(WARNING_SHIFT, "Left shift of negative value: %d",
-					value1);
-
-			if (value2 < 0)
-				fatalerror("Shift by negative value: %d",
-					   value2);
-			else if (value2 >= 32)
-				fatalerror("Shift by too big value: %d",
-					   value2);
-
-			result = (uint32_t)value1 << value2;
-			break;
 		case T_OP_SHR:
 			if (value2 < 0)
-				fatalerror("Shift by negative value: %d",
-					   value2);
-			else if (value2 >= 32)
-				fatalerror("Shift by too big value: %d",
-					   value2);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting %s by negative amount %d",
+					op == T_OP_SHL ? "left" : "right",
+					value2);
+			if (op == T_OP_SHR) {
+				value2 = -value2; /* Right shift == neg left */
 
-			result = value1 >> value2;
+				if (value1 < 0)
+					warning(WARNING_SHIFT, "Shifting negative value %d",
+						value1);
+			}
+
+			if (value2 >= 0) {
+				// Shift left
+				if (value2 >= 32) {
+					warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %d",
+						value2);
+					result = 0;
+				} else {
+					/*
+					 * Use unsigned to force a bitwise shift
+					 * Casting back is OK because the types
+					 * implement two's complement behavior
+					 */
+					result = (uint32_t)value1 << value2;
+				}
+			} else {
+				// Shift right
+				value2 = -value2;
+				if (value2 >= 32) {
+					warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %d",
+						value2);
+					result = value1 < 0 ? -1 : 0;
+				} else if (value1 >= 0) {
+					result = value1 >> value2;
+				} else {
+					/*
+					 * The C standard leaves shifting right
+					 * negative values undefined, so use a
+					 * left shift manually sign-extended
+					 */
+					result = (uint32_t)value1 >> value2 |
+						-((uint32_t)1 << (32 - value2));
+				}
+			}
 			break;
 		case T_OP_MUL:
 			result = (uint32_t)value1 * (uint32_t)value2;

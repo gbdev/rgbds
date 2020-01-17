@@ -18,6 +18,47 @@
 
 #include "extern/err.h"
 
+static int32_t asl(int32_t value, int32_t shiftamt); // Forward decl for below
+static int32_t asr(int32_t value, int32_t shiftamt)
+{
+	uint32_t uvalue = value;
+
+	// Get the easy cases out of the way
+	if (shiftamt == 0)
+		return value;
+	if (value == 0 || shiftamt <= -32)
+		return 0;
+	if (shiftamt > 31)
+		return (value < 0) ? -1 : 0;
+	if (shiftamt < 0)
+		return asl(value, -shiftamt);
+	if (value > 0)
+		return uvalue >> shiftamt;
+
+	{
+		// Calculate an OR mask for sign extension
+		// 1->0x80000000, 2->0xC0000000, ..., 31->0xFFFFFFFE
+		uint32_t shiftamt_high_bits = -((uint32_t)1 << (32 - shiftamt));
+
+		return (uvalue >> shiftamt) | shiftamt_high_bits;
+	}
+}
+
+static int32_t asl(int32_t value, int32_t shiftamt)
+{
+	// Repeat the easy cases here to avoid INT_MIN funny business
+	if (shiftamt == 0)
+		return value;
+	if (value == 0 || shiftamt >= 32)
+		return 0;
+	if (shiftamt < -31)
+		return (value < 0) ? -1 : 0;
+	if (shiftamt < 0)
+		return asr(value, -shiftamt);
+
+	return (uint32_t)value << shiftamt;
+}
+
 /* This is an "empty"-type stack */
 struct RPNStack {
 	int32_t *buf;
@@ -182,14 +223,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			value = popRPN() <= value;
 			break;
 
-		/* FIXME: sanitize shifts */
 		case RPN_SHL:
 			value = popRPN();
-			value = popRPN() << value;
+			value = asl(popRPN(), value);
 			break;
 		case RPN_SHR:
 			value = popRPN();
-			value = popRPN() >> value;
+			value = asr(popRPN(), value);
 			break;
 
 		case RPN_BANK_SYM:
