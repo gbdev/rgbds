@@ -476,7 +476,7 @@ static struct sSymbol *createNonrelocSymbol(char *tzSym)
 			yyerror("'%s' already defined at %s(%u)",
 				tzSym, nsym->tzFileName, nsym->nFileLine);
 		} else if (nsym->nType & SYMF_REF) {
-			yyerror("'%s' already referenced at %s(%u)",
+			yyerror("'%s' referenced as label at %s(%u)",
 				tzSym, nsym->tzFileName, nsym->nFileLine);
 		}
 	} else {
