@@ -109,7 +109,7 @@ static void cleanup(void)
 
 int main(int argc, char *argv[])
 {
-	char optionChar;
+	int optionChar;
 	char *endptr; /* For error checking with `strtol` */
 	unsigned long value; /* For storing `strtoul`'s return value */
 
