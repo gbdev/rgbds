@@ -1,3 +1,10 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2019, Eldred Habert and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #include <stdlib.h>
 #include <stdbool.h>
