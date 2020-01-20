@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#include "linkdefs.h"
+
 #define MAXRPNLEN 1048576
 
 struct Expression {
@@ -30,42 +32,9 @@ uint32_t rpn_isReloc(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
-void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGAND(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2);
-void rpn_LOGEQU(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2);
-void rpn_LOGGT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGLT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGGE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGLE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGNE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_ADD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SUB(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_XOR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_OR(struct Expression *expr, const struct Expression *src1,
-	    const struct Expression *src2);
-void rpn_AND(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SHL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SHR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_MUL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_DIV(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_MOD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
+void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
+		  const struct Expression *src1,
+		  const struct Expression *src2);
 void rpn_HIGH(struct Expression *expr, const struct Expression *src);
 void rpn_LOW(struct Expression *expr, const struct Expression *src);
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src);

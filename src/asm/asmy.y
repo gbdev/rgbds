@@ -1223,24 +1223,24 @@ relocconst	: T_ID
 			rpn_Number(&$$, r);
 		}
 		| T_OP_LOGICNOT relocconst %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
-		| relocconst T_OP_LOGICOR relocconst	{ rpn_LOGOR(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICAND relocconst	{ rpn_LOGAND(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICEQU relocconst	{ rpn_LOGEQU(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICGT relocconst	{ rpn_LOGGT(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICLT relocconst	{ rpn_LOGLT(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICGE relocconst	{ rpn_LOGGE(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICLE relocconst	{ rpn_LOGLE(&$$, &$1, &$3); }
-		| relocconst T_OP_LOGICNE relocconst	{ rpn_LOGNE(&$$, &$1, &$3); }
-		| relocconst T_OP_ADD relocconst	{ rpn_ADD(&$$, &$1, &$3); }
-		| relocconst T_OP_SUB relocconst	{ rpn_SUB(&$$, &$1, &$3); }
-		| relocconst T_OP_XOR relocconst	{ rpn_XOR(&$$, &$1, &$3); }
-		| relocconst T_OP_OR relocconst		{ rpn_OR(&$$, &$1, &$3); }
-		| relocconst T_OP_AND relocconst	{ rpn_AND(&$$, &$1, &$3); }
-		| relocconst T_OP_SHL relocconst	{ rpn_SHL(&$$, &$1, &$3); }
-		| relocconst T_OP_SHR relocconst	{ rpn_SHR(&$$, &$1, &$3); }
-		| relocconst T_OP_MUL relocconst	{ rpn_MUL(&$$, &$1, &$3); }
-		| relocconst T_OP_DIV relocconst	{ rpn_DIV(&$$, &$1, &$3); }
-		| relocconst T_OP_MOD relocconst	{ rpn_MOD(&$$, &$1, &$3); }
+		| relocconst T_OP_LOGICOR relocconst	{ rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICAND relocconst	{ rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICEQU relocconst	{ rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICGT relocconst	{ rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICLT relocconst	{ rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICGE relocconst	{ rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICLE relocconst	{ rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3); }
+		| relocconst T_OP_LOGICNE relocconst	{ rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3); }
+		| relocconst T_OP_ADD relocconst	{ rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3); }
+		| relocconst T_OP_SUB relocconst	{ rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3); }
+		| relocconst T_OP_XOR relocconst	{ rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3); }
+		| relocconst T_OP_OR relocconst		{ rpn_BinaryOp(RPN_OR, &$$, &$1, &$3); }
+		| relocconst T_OP_AND relocconst	{ rpn_BinaryOp(RPN_AND, &$$, &$1, &$3); }
+		| relocconst T_OP_SHL relocconst	{ rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3); }
+		| relocconst T_OP_SHR relocconst	{ rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3); }
+		| relocconst T_OP_MUL relocconst	{ rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3); }
+		| relocconst T_OP_DIV relocconst	{ rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3); }
+		| relocconst T_OP_MOD relocconst	{ rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3); }
 		| T_OP_ADD relocconst %prec NEG		{ $$ = $2; }
 		| T_OP_SUB relocconst %prec NEG		{ rpn_UNNEG(&$$, &$2); }
 		| T_OP_NOT relocconst %prec NEG		{ rpn_UNNOT(&$$, &$2); }
