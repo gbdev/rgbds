@@ -18,7 +18,6 @@
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
-#include "asm/constexpr.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
@@ -510,11 +509,10 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	char tzString[MAXSTRLEN + 1];
 	struct Expression sVal;
 	int32_t nConstValue;
-	struct ConstExpression sConstExpr;
 }
 
 %type	<sVal>		relocconst
-%type	<sConstExpr>	const
+%type	<nConstValue>	const
 %type	<nConstValue>	uconst
 %type	<nConstValue>	const_3bit
 %type	<sVal>		const_8bit
@@ -966,17 +964,17 @@ global_list_entry : T_ID
 
 equ		: T_LABEL T_POP_EQU const
 		{
-			sym_AddEqu($1, constexpr_GetConstantValue(&$3));
+			sym_AddEqu($1, $3);
 		}
 ;
 
 set		: T_LABEL T_POP_SET const
 		{
-			sym_AddSet($1, constexpr_GetConstantValue(&$3));
+			sym_AddSet($1, $3);
 		}
 		| T_LABEL T_POP_EQUAL const
 		{
-			sym_AddSet($1, constexpr_GetConstantValue(&$3));
+			sym_AddSet($1, $3);
 		}
 ;
 
@@ -1004,12 +1002,10 @@ incbin		: T_POP_INCBIN string
 
 charmap		: T_POP_CHARMAP string comma const
 		{
-			int32_t value = constexpr_GetConstantValue(&$4);
-
-			if ((value & 0xFF) != value)
+			if (($4 & 0xFF) != $4)
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 
-			if (charmap_Add($2, value & 0xFF) == -1)
+			if (charmap_Add($2, $4 & 0xFF) == -1)
 				yyerror("Error parsing charmap. Either you've added too many (%i), or the input character length is too long (%i)' : %s\n", MAXCHARMAPS, CHARMAPLENGTH, strerror(errno));
 		}
 ;
@@ -1044,26 +1040,26 @@ printt		: T_POP_PRINTT string
 
 printv		: T_POP_PRINTV const
 		{
-			printf("$%X", constexpr_GetConstantValue(&$2));
+			printf("$%X", $2);
 		}
 ;
 
 printi		: T_POP_PRINTI const
 		{
-			printf("%d", constexpr_GetConstantValue(&$2));
+			printf("%d", $2);
 		}
 ;
 
 printf		: T_POP_PRINTF const
 		{
-			math_Print(constexpr_GetConstantValue(&$2));
+			math_Print($2);
 		}
 ;
 
 if		: T_POP_IF const
 		{
 			nIFDepth++;
-			if (!constexpr_GetConstantValue(&$2)) {
+			if (!$2) {
 				/*
 				 * Continue parsing after ELSE, or at ELIF or
 				 * ENDC keyword.
@@ -1095,7 +1091,7 @@ elif		: T_POP_ELIF const
 				 */
 				skipElif = true;
 
-				if (!constexpr_GetConstantValue(&$2)) {
+				if (!$2) {
 					/*
 					 * Continue parsing after ELSE, or at
 					 * ELIF or ENDC keyword.
@@ -1127,7 +1123,7 @@ endc		: T_POP_ENDC
 
 const_3bit	: const
 		{
-			int32_t value = constexpr_GetConstantValue(&$1);
+			int32_t value = $1;
 			if ((value < 0) || (value > 7))
 				yyerror("Immediate value must be 3-bit");
 			else
@@ -1268,57 +1264,57 @@ relocconst	: T_ID
 		}
 		| T_OP_ROUND '(' const ')'
 		{
-			rpn_Number(&$$, math_Round(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Round($3));
 		}
 		| T_OP_CEIL '(' const ')'
 		{
-			rpn_Number(&$$, math_Ceil(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Ceil($3));
 		}
 		| T_OP_FLOOR '(' const ')'
 		{
-			rpn_Number(&$$, math_Floor(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Floor($3));
 		}
 		| T_OP_FDIV '(' const comma const ')'
 		{
 			rpn_Number(&$$,
-				   math_Div(constexpr_GetConstantValue(&$3),
-					    constexpr_GetConstantValue(&$5)));
+				   math_Div($3,
+					    $5));
 		}
 		| T_OP_FMUL '(' const comma const ')'
 		{
 			rpn_Number(&$$,
-				   math_Mul(constexpr_GetConstantValue(&$3),
-					    constexpr_GetConstantValue(&$5)));
+				   math_Mul($3,
+					    $5));
 		}
 		| T_OP_SIN '(' const ')'
 		{
-			rpn_Number(&$$, math_Sin(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Sin($3));
 		}
 		| T_OP_COS '(' const ')'
 		{
-			rpn_Number(&$$, math_Cos(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Cos($3));
 		}
 		| T_OP_TAN '(' const ')'
 		{
-			rpn_Number(&$$, math_Tan(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_Tan($3));
 		}
 		| T_OP_ASIN '(' const ')'
 		{
-			rpn_Number(&$$, math_ASin(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_ASin($3));
 		}
 		| T_OP_ACOS '(' const ')'
 		{
-			rpn_Number(&$$, math_ACos(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_ACos($3));
 		}
 		| T_OP_ATAN '(' const ')'
 		{
-			rpn_Number(&$$, math_ATan(constexpr_GetConstantValue(&$3)));
+			rpn_Number(&$$, math_ATan($3));
 		}
 		| T_OP_ATAN2 '(' const comma const ')'
 		{
 			rpn_Number(&$$,
-				   math_ATan2(constexpr_GetConstantValue(&$3),
-					      constexpr_GetConstantValue(&$5)));
+				   math_ATan2($3,
+					      $5));
 		}
 		| T_OP_STRCMP '(' string comma string ')'
 		{
@@ -1339,92 +1335,23 @@ relocconst	: T_ID
 
 uconst		: const
 		{
-			int32_t value = constexpr_GetConstantValue(&$1);
+			int32_t value = $1;
 			if (value < 0)
 				fatalerror("Constant mustn't be negative: %d", value);
 			$$ = value;
 		}
 ;
 
-const		: T_ID					{ constexpr_Symbol(&$$, $1); }
-		| T_NUMBER				{ constexpr_Number(&$$, $1); }
-		| T_OP_HIGH '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_LOW '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_BANK '(' T_ID ')'
+const		: relocconst
 		{
-			constexpr_BankSymbol(&$$, $3);
+			if (!rpn_isKnown(&$1)) {
+				yyerror("Expected constant expression: %s",
+					$1.reason);
+				$$ = 0;
+			} else {
+				$$ = $1.nVal;
+			}
 		}
-		| T_OP_BANK '(' string ')'
-		{
-			constexpr_BankSection(&$$, $3);
-		}
-		| string
-		{
-			char *s = $1;
-			int32_t length = charmap_Convert(&s);
-			constexpr_Number(&$$, str2int2(s, length));
-			free(s);
-		}
-		| T_OP_LOGICNOT const %prec NEG		{ constexpr_UnaryOp(&$$, $1, &$2); }
-		| const T_OP_LOGICOR const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICAND const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICEQU const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICGT const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICLT const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICGE const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICLE const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_LOGICNE const		{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_ADD const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_SUB const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_XOR const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_OR const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_AND const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_SHL const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_SHR const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_MUL const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_DIV const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| const T_OP_MOD const			{ constexpr_BinaryOp(&$$, $2, &$1, &$3); }
-		| T_OP_ADD const %prec NEG		{ constexpr_UnaryOp(&$$, $1, &$2); }
-		| T_OP_SUB const %prec NEG		{ constexpr_UnaryOp(&$$, $1, &$2); }
-		| T_OP_NOT const %prec NEG		{ constexpr_UnaryOp(&$$, $1, &$2); }
-		| T_OP_ROUND '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_CEIL '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_FLOOR '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_FDIV '(' const comma const ')'	{ constexpr_BinaryOp(&$$, $1, &$3, &$5); }
-		| T_OP_FMUL '(' const comma const ')'	{ constexpr_BinaryOp(&$$, $1, &$3, &$5); }
-		| T_OP_SIN '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_COS '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_TAN '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_ASIN '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_ACOS '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_ATAN '(' const ')'		{ constexpr_UnaryOp(&$$, $1, &$3); }
-		| T_OP_ATAN2 '(' const comma const ')'	{ constexpr_BinaryOp(&$$, $1, &$3, &$5); }
-		| T_OP_DEF {
-				oDontExpandStrings = true;
-			} '(' T_ID ')'
-		{
-			struct sSymbol const *sym = sym_FindSymbol($4);
-			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))
-				yyerror("Label \"%s\" is not a valid argument to DEF",
-					$4);
-			constexpr_Number(&$$, !!sym);
-			oDontExpandStrings = false;
-		}
-		| T_OP_STRCMP '(' string comma string ')'
-		{
-			constexpr_Number(&$$, strcmp($3, $5));
-		}
-		| T_OP_STRIN '(' string comma string ')'
-		{
-			char *p = strstr($3, $5);
-
-			if (p != NULL)
-				constexpr_Number(&$$, p - $3 + 1);
-			else
-				constexpr_Number(&$$, 0);
-		}
-		| T_OP_STRLEN '(' string ')'		{ constexpr_Number(&$$, strlenUTF8($3)); }
-		| '(' const ')'				{ $$ = $2; }
 ;
 
 string		: T_STRING

@@ -23,6 +23,21 @@
 #include "asm/output.h"
 #include "asm/warning.h"
 
+/* Makes an expression "not known", also setting its error message */
+#define makeUnknown(expr_, ...) do { \
+	struct Expression *_expr = expr_; \
+	_expr->isKnown = false; \
+	/* If we had `asprintf` this would be great, but alas. */ \
+	_expr->reason = malloc(128); /* Use an initial reasonable size */ \
+	if (!_expr->reason) \
+		fatalerror("Can't allocate err string: %s", strerror(errno)); \
+	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
+	if (size >= 128) { /* If this wasn't enough, try again */ \
+		_expr->reason = realloc(_expr->reason, size + 1); \
+		sprintf(_expr->reason, __VA_ARGS__); \
+	} \
+} while (0)
+
 static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
 	/* This assumes the RPN length is always less than the capacity */
@@ -65,6 +80,7 @@ void rpn_Init(struct Expression *expr)
 	expr->nRPNPatchSize = 0;
 	expr->nRPNOut = 0;
 	expr->isKnown = true;
+	expr->reason = NULL;
 }
 
 /*
@@ -73,6 +89,7 @@ void rpn_Init(struct Expression *expr)
 void rpn_Free(struct Expression *expr)
 {
 	free(expr->tRPN);
+	free(expr->reason);
 	rpn_Init(expr);
 }
 
@@ -111,7 +128,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 	if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
 		sym_Ref(tzSym);
-		expr->isKnown = false;
+		makeUnknown(expr, "'%s' is not defined", tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
 		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
@@ -136,7 +153,7 @@ void rpn_BankSelf(struct Expression *expr)
 	rpn_Init(expr);
 
 	if (pCurrentSection->nBank == -1)
-		expr->isKnown = false;
+		makeUnknown(expr, "Current section's bank is not known");
 	else
 		expr->nVal = pCurrentSection->nBank;
 
@@ -173,7 +190,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 			/* Symbol's section is known and bank is fixed */
 			expr->nVal = pSymbol->pSection->nBank;
 		else
-			expr->isKnown = false;
+			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
 	}
 }
 
@@ -186,7 +203,8 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 	if (pSection && pSection->nBank != -1)
 		expr->nVal = pSection->nBank;
 	else
-		expr->isKnown = false;
+		makeUnknown(expr, "Section \"%s\"'s bank is not known",
+			    tzSectionName);
 
 	size_t nameLen = strlen(tzSectionName) + 1; /* Don't forget NUL! */
 	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -234,9 +252,6 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 
 static int32_t shift(int32_t shiftee, int32_t amount)
 {
-	if (shiftee < 0)
-		warning(WARNING_SHIFT, "Shifting negative value %d", shiftee);
-
 	if (amount >= 0) {
 		// Left shift
 		if (amount >= 32) {
@@ -346,50 +361,46 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			expr->nVal = src1->nVal & src2->nVal;
 			break;
 		case RPN_SHL:
-			if (expr->isKnown) {
-				if (src2->nVal < 0)
-					warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
-						src2->nVal);
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %d",
+					src2->nVal);
 
-				expr->nVal = shift(src1->nVal, src2->nVal);
-			}
+			expr->nVal = shift(src1->nVal, src2->nVal);
 			break;
 		case RPN_SHR:
-			if (expr->isKnown) {
-				if (src2->nVal < 0)
-					warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
-						src2->nVal);
+			if (src1->nVal < 0)
+				warning(WARNING_SHIFT, "Shifting negative value %d",
+					src1->nVal);
 
-				expr->nVal = shift(src1->nVal, -src2->nVal);
-			}
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %d",
+					src2->nVal);
+
+			expr->nVal = shift(src1->nVal, -src2->nVal);
 			break;
 		case RPN_MUL:
 			expr->nVal = uleft * uright;
 			break;
 		case RPN_DIV:
-			if (expr->isKnown) {
-				if (src2->nVal == 0)
-					fatalerror("Division by zero");
+			if (src2->nVal == 0)
+				fatalerror("Division by zero");
 
-				if (src1->nVal == INT32_MIN
-				 && src2->nVal == -1) {
-					warning(WARNING_DIV, "Division of min value by -1");
-					expr->nVal = INT32_MIN;
-				} else {
-					expr->nVal = src1->nVal / src2->nVal;
-				}
+			if (src1->nVal == INT32_MIN
+			 && src2->nVal == -1) {
+				warning(WARNING_DIV, "Division of min value by -1");
+				expr->nVal = INT32_MIN;
+			} else {
+				expr->nVal = src1->nVal / src2->nVal;
 			}
 			break;
 		case RPN_MOD:
-			if (expr->isKnown) {
-				if (src2->nVal == 0)
-					fatalerror("Division by zero");
+			if (src2->nVal == 0)
+				fatalerror("Division by zero");
 
-				if (src1->nVal == INT32_MIN && src2->nVal == -1)
-					expr->nVal = 0;
-				else
-					expr->nVal = src1->nVal % src2->nVal;
-			}
+			if (src1->nVal == INT32_MIN && src2->nVal == -1)
+				expr->nVal = 0;
+			else
+				expr->nVal = src1->nVal % src2->nVal;
 			break;
 
 		case RPN_UNSUB:
@@ -425,12 +436,18 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			expr->nRPNLength = 0;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
 			       sizeof(bytes));
+
+			/* Use the other expression's un-const reason */
+			expr->reason = src2->reason;
+			free(src1->reason);
 		} else {
 			/* Otherwise just reuse its RPN buffer */
 			expr->nRPNPatchSize = src1->nRPNPatchSize;
 			expr->tRPN = src1->tRPN;
 			expr->nRPNCapacity = src1->nRPNCapacity;
 			expr->nRPNLength = src1->nRPNLength;
+			expr->reason = src1->reason;
+			free(src2->reason);
 		}
 
 		/* Now, merge the right expression into the left one */

@@ -19,6 +19,7 @@
 struct Expression {
 	bool     isKnown;       // Whether the expression's value is known
 	int32_t  nVal;          // If the expression's value is known, it's here
+	char     *reason;       // Why the expression is not known, if it isn't
 	uint8_t  *tRPN;         // Array of bytes serializing the RPN expression
 	uint32_t nRPNCapacity;  // Size of the `tRPN` buffer
 	uint32_t nRPNLength;    // Used size of the `tRPN` buffer
