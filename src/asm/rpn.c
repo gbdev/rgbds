@@ -139,7 +139,8 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		expr->isSymbol = true;
 
 		sym_Ref(tzSym);
-		makeUnknown(expr, "'%s' is not defined", tzSym);
+		makeUnknown(expr, "'%s' is not constant at assembly time",
+			    tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
 		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
