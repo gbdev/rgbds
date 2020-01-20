@@ -333,6 +333,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	/* First, check if the expression is known */
 	expr->isKnown = src1->isKnown && src2->isKnown;
 	if (expr->isKnown) {
+		rpn_Init(expr); /* Init the expression to something sane */
+
 		/* If both expressions are known, just compute the value */
 		uint32_t uleft = src1->nVal, uright = src2->nVal;
 
