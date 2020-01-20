@@ -274,6 +274,28 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
+static struct sSymbol const *symbolOf(struct Expression const *expr)
+{
+	/* If an expression starts with a symbol ref... */
+	if (!expr->tRPN || expr->tRPN[0] != RPN_SYM || expr->nRPNPatchSize != 5)
+		return NULL;
+	return sym_FindSymbol((char *)expr->tRPN + 1);
+}
+
+static bool isDiffConstant(struct Expression const *src1,
+			   struct Expression const *src2)
+{
+	/* Check if both expressions only refer to a single symbol */
+	struct sSymbol const *symbol1 = symbolOf(src1);
+	struct sSymbol const *symbol2 = symbolOf(src2);
+
+	if (!symbol1 || !symbol2
+	 || symbol1->type != SYM_LABEL || symbol2->type != SYM_LABEL)
+		return false;
+
+	return symbol1->pSection == symbol2->pSection;
+}
+
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
@@ -383,8 +405,12 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			fatalerror("%d is no binary operator", op);
 		}
 
-	/* TODO: under some conditions, the expression will still be known */
+	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
+		struct sSymbol const *symbol1 = symbolOf(src1);
+		struct sSymbol const *symbol2 = symbolOf(src2);
 
+		expr->nVal = symbol1->nValue - symbol2->nValue;
+		expr->isKnown = true;
 	} else {
 		/* If it's not known, start computing the RPN expression */
 
