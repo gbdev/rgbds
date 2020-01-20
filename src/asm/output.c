@@ -766,7 +766,7 @@ void out_RelByte(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(1);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		createpatch(PATCHTYPE_BYTE, expr);
 		pCurrentSection->nPC++;
@@ -801,7 +801,7 @@ void out_RelWord(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(2);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		pCurrentSection->tData[nPC + 1] = 0;
 		createpatch(PATCHTYPE_WORD, expr);
@@ -838,7 +838,7 @@ void out_RelLong(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(4);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		pCurrentSection->tData[nPC + 1] = 0;
 		pCurrentSection->tData[nPC + 2] = 0;

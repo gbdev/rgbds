@@ -25,7 +25,7 @@
 /*
  * Add a byte to the RPN expression
  */
-void pushbyte(struct Expression *expr, uint8_t b)
+static void pushbyte(struct Expression *expr, uint8_t b)
 {
 	if (expr->nRPNLength == expr->nRPNCapacity) {
 		if (expr->nRPNCapacity == 0)
@@ -55,7 +55,7 @@ void rpn_Init(struct Expression *expr)
 	expr->nRPNLength = 0;
 	expr->nRPNPatchSize = 0;
 	expr->nRPNOut = 0;
-	expr->isReloc = 0;
+	expr->isKnown = true;
 }
 
 /*
@@ -79,11 +79,11 @@ uint16_t rpn_PopByte(struct Expression *expr)
 }
 
 /*
- * Determine if the current expression is relocatable
+ * Determine if the current expression is known at assembly time
  */
-uint32_t rpn_isReloc(const struct Expression *expr)
+bool rpn_isKnown(const struct Expression *expr)
 {
-	return expr->isReloc;
+	return expr->isKnown;
 }
 
 /*
@@ -108,7 +108,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 	if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
 		sym_Ref(tzSym);
-		expr->isReloc = 1;
+		expr->isKnown = false;
 		pushbyte(expr, RPN_SYM);
 		while (*tzSym)
 			pushbyte(expr, *tzSym++);
@@ -132,11 +132,7 @@ void rpn_BankSelf(struct Expression *expr)
 	rpn_Init(expr);
 
 	if (pCurrentSection->nBank == -1)
-		/*
-		 * This is not really relocatable, but this makes the assembler
-		 * write this expression as a RPN patch to the object file.
-		 */
-		expr->isReloc = 1;
+		expr->isKnown = false;
 	else
 		expr->nVal = pCurrentSection->nBank;
 
@@ -154,10 +150,10 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 		return;
 	}
 
+	rpn_Init(expr);
 	if (sym && sym_IsConstant(sym)) {
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
-		rpn_Init(expr);
 		sym_Ref(tzSym);
 		pushbyte(expr, RPN_BANK_SYM);
 		for (unsigned int i = 0; tzSym[i]; i++)
@@ -172,7 +168,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 			/* Symbol's section is known and bank's fixed */
 			expr->nVal = pSymbol->pSection->nBank;
 		else
-			expr->isReloc = 1;
+			expr->isKnown = false;
 	}
 }
 
@@ -185,11 +181,7 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 	if (pSection && pSection->nBank != -1)
 		expr->nVal = pSection->nBank;
 	else
-		/*
-		 * This is not really relocatable, but this makes the assembler
-		 * write this expression as a RPN patch to the object file.
-		 */
-		expr->isReloc = 1;
+		expr->isKnown = false;
 
 	pushbyte(expr, RPN_BANK_SECT);
 	expr->nRPNPatchSize++;
@@ -272,10 +264,10 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 {
 	assert(src1->tRPN != NULL && src2->tRPN != NULL);
 
-	if (src1->nRPNLength + src2->nRPNLength > MAXRPNLEN)
-		fatalerror("RPN expression is too large");
-
 	uint32_t len = src1->nRPNLength + src2->nRPNLength;
+
+	if (len > MAXRPNLEN)
+		fatalerror("RPN expression is too large");
 
 	expr->nVal = 0;
 	expr->tRPN = src1->tRPN;
@@ -302,7 +294,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	expr->nRPNLength = len;
 	expr->nRPNPatchSize = src1->nRPNPatchSize + src2->nRPNPatchSize;
 	expr->nRPNOut = 0;
-	expr->isReloc = src1->isReloc || src2->isReloc;
+	expr->isKnown = src1->isKnown && src2->isKnown;
 
 	switch (op) {
 	case RPN_LOGOR:
@@ -345,24 +337,28 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		expr->nVal = src1->nVal & src2->nVal;
 		break;
 	case RPN_SHL:
-		if (src2->nVal < 0)
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
-				src2->nVal);
+		if (expr->isKnown) {
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
+					src2->nVal);
 
-		expr->nVal = shift(src1->nVal, src2->nVal);
+			expr->nVal = shift(src1->nVal, src2->nVal);
+		}
 		break;
 	case RPN_SHR:
-		if (src2->nVal < 0)
-			warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
-				src2->nVal);
+		if (expr->isKnown) {
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
+					src2->nVal);
 
-		expr->nVal = shift(src1->nVal, -src2->nVal);
+			expr->nVal = shift(src1->nVal, -src2->nVal);
+		}
 		break;
 	case RPN_MUL:
 		expr->nVal = (uint32_t)src1->nVal * (uint32_t)src2->nVal;
 		break;
 	case RPN_DIV:
-		if (!expr->isReloc) {
+		if (expr->isKnown) {
 			if (src2->nVal == 0)
 				fatalerror("Division by zero");
 
@@ -375,7 +371,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		}
 		break;
 	case RPN_MOD:
-		if (!expr->isReloc) {
+		if (expr->isKnown) {
 			if (src2->nVal == 0)
 				fatalerror("Division by zero");
 

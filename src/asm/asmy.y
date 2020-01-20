@@ -1190,7 +1190,7 @@ constlist_32bit_entry : /* empty */
 
 const_8bit	: relocconst
 		{
-			if( (!rpn_isReloc(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
+			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 			$$ = $1;
 		}
@@ -1198,7 +1198,7 @@ const_8bit	: relocconst
 
 const_16bit	: relocconst
 		{
-			if ((!rpn_isReloc(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
+			if ((rpn_isKnown(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit");
 			$$ = $1;
 		}
@@ -1769,7 +1769,7 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
 		{
 			rpn_CheckHRAM(&$4, &$4);
 
-			if ((!rpn_isReloc(&$4)) && ($4.nVal < 0 || ($4.nVal > 0xFF && $4.nVal < 0xFF00) || $4.nVal > 0xFFFF))
+			if ((rpn_isKnown(&$4)) && ($4.nVal < 0 || ($4.nVal > 0xFF && $4.nVal < 0xFF00) || $4.nVal > 0xFFFF))
 				yyerror("Source address $%x not in $FF00 to $FFFF", $4.nVal);
 
 			out_AbsByte(0xF0);
@@ -1780,7 +1780,7 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
 		{
 			rpn_CheckHRAM(&$2, &$2);
 
-			if ((!rpn_isReloc(&$2)) && ($2.nVal < 0 || ($2.nVal > 0xFF && $2.nVal < 0xFF00) || $2.nVal > 0xFFFF))
+			if ((rpn_isKnown(&$2)) && ($2.nVal < 0 || ($2.nVal > 0xFF && $2.nVal < 0xFF00) || $2.nVal > 0xFFFF))
 				yyerror("Destination address $%x not in $FF00 to $FFFF", $2.nVal);
 
 			out_AbsByte(0xE0);
@@ -1844,7 +1844,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP
 		| T_Z80_LD op_mem_ind comma T_MODE_A
 		{
 			if (CurrentOptions.optimizeloads &&
-			    (!rpn_isReloc(&$2)) && ($2.nVal >= 0xFF00)) {
+			    (rpn_isKnown(&$2)) && ($2.nVal >= 0xFF00)) {
 				out_AbsByte(0xE0);
 				out_AbsByte($2.nVal & 0xFF);
 				rpn_Free(&$2);
@@ -1899,7 +1899,7 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
 		{
 			if ($2 == REG_A) {
 				if (CurrentOptions.optimizeloads &&
-				    (!rpn_isReloc(&$4)) && ($4.nVal >= 0xFF00)) {
+				    (rpn_isKnown(&$4)) && ($4.nVal >= 0xFF00)) {
 					out_AbsByte(0xF0);
 					out_AbsByte($4.nVal & 0xFF);
 					rpn_Free(&$4);
@@ -2036,13 +2036,14 @@ z80_rrca	: T_Z80_RRCA
 
 z80_rst		: T_Z80_RST const_8bit
 		{
-			if (rpn_isReloc(&$2)) {
+			if (!rpn_isKnown(&$2)) {
 				rpn_CheckRST(&$2, &$2);
 				out_RelByte(&$2);
-			} else if (($2.nVal & 0x38) != $2.nVal)
+			} else if (($2.nVal & 0x38) != $2.nVal) {
 				yyerror("Invalid address $%x for RST", $2.nVal);
-			else
+			} else {
 				out_AbsByte(0xC7 | $2.nVal);
+			}
 			rpn_Free(&$2);
 		}
 ;

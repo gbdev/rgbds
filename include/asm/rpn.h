@@ -10,6 +10,7 @@
 #define RGBDS_ASM_RPN_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "linkdefs.h"
 
@@ -22,13 +23,13 @@ struct Expression {
 	uint32_t nRPNLength;
 	uint32_t nRPNPatchSize;
 	uint32_t nRPNOut;
-	uint32_t isReloc;
+	bool isKnown;
 };
 
 /* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
 extern int32_t nPCOffset;
 
-uint32_t rpn_isReloc(const struct Expression *expr);
+bool rpn_isKnown(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
