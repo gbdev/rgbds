@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,27 +23,35 @@
 #include "asm/output.h"
 #include "asm/warning.h"
 
-/*
- * Add a byte to the RPN expression
- */
-static void pushbyte(struct Expression *expr, uint8_t b)
+static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
-	if (expr->nRPNLength == expr->nRPNCapacity) {
-		if (expr->nRPNCapacity == 0)
-			expr->nRPNCapacity = 256;
-		else if (expr->nRPNCapacity == MAXRPNLEN)
-			fatalerror("RPN expression is too large");
+	/* This assumes the RPN length is always less than the capacity */
+	if (expr->nRPNCapacity - expr->nRPNLength < size) {
+		/* If there isn't enough room to reserve the space, realloc */
+		if (!expr->tRPN)
+			expr->nRPNCapacity = 256; /* Initial size */
+		else if (expr->nRPNCapacity >= MAXRPNLEN)
+			/*
+			 * To avoid generating humongous object files, cap the
+			 * size of RPN expressions
+			 */
+			fatalerror("RPN expression cannot grow larger than %d bytes",
+				   MAXRPNLEN);
 		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
 			expr->nRPNCapacity = MAXRPNLEN;
 		else
 			expr->nRPNCapacity *= 2;
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 
-		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
+		if (!expr->tRPN)
+			fatalerror("Failed to grow RPN expression: %s",
+				   strerror(errno));
 	}
 
-	expr->tRPN[expr->nRPNLength++] = b;
+	uint8_t *ptr = expr->tRPN + expr->nRPNLength;
+
+	expr->nRPNLength += size;
+	return ptr;
 }
 
 /*
@@ -91,14 +100,12 @@ bool rpn_isKnown(const struct Expression *expr)
  */
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
+	uint8_t bytes[] = {RPN_CONST, i, i >> 8, i >> 16, i >> 24};
+
 	rpn_Init(expr);
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, i);
-	pushbyte(expr, i >> 8);
-	pushbyte(expr, i >> 16);
-	pushbyte(expr, i >> 24);
+	expr->nRPNPatchSize += sizeof(bytes);
+	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	expr->nVal = i;
-	expr->nRPNPatchSize += 5;
 }
 
 void rpn_Symbol(struct Expression *expr, char *tzSym)
@@ -109,11 +116,12 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		rpn_Init(expr);
 		sym_Ref(tzSym);
 		expr->isKnown = false;
-		pushbyte(expr, RPN_SYM);
-		while (*tzSym)
-			pushbyte(expr, *tzSym++);
-		pushbyte(expr, 0);
-		expr->nRPNPatchSize += 5;
+		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
+
+		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+		*ptr++ = RPN_SYM;
+		memcpy(ptr, tzSym, nameLen);
 
 		/* RGBLINK assumes PC is at the byte being computed... */
 		if (sym == pPCSymbol && nPCOffset) {
@@ -136,7 +144,7 @@ void rpn_BankSelf(struct Expression *expr)
 	else
 		expr->nVal = pCurrentSection->nBank;
 
-	pushbyte(expr, RPN_BANK_SELF);
+	*reserveSpace(expr, 1) = RPN_BANK_SELF;
 	expr->nRPNPatchSize++;
 }
 
@@ -155,17 +163,18 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
 		sym_Ref(tzSym);
-		pushbyte(expr, RPN_BANK_SYM);
-		for (unsigned int i = 0; tzSym[i]; i++)
-			pushbyte(expr, tzSym[i]);
-		pushbyte(expr, 0);
-		expr->nRPNPatchSize += 5;
+		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte sect ID */
+
+		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+		*ptr++ = RPN_BANK_SYM;
+		memcpy(ptr, tzSym, nameLen);
 
 		/* If the symbol didn't exist, `sym_Ref` created it */
 		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
 
 		if (pSymbol->pSection && pSymbol->pSection->nBank != -1)
-			/* Symbol's section is known and bank's fixed */
+			/* Symbol's section is known and bank is fixed */
 			expr->nVal = pSymbol->pSection->nBank;
 		else
 			expr->isKnown = false;
@@ -183,29 +192,25 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 	else
 		expr->isKnown = false;
 
-	pushbyte(expr, RPN_BANK_SECT);
-	expr->nRPNPatchSize++;
+	size_t nameLen = strlen(tzSectionName) + 1; /* Don't forget NUL! */
+	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-	while (*tzSectionName) {
-		pushbyte(expr, *tzSectionName++);
-		expr->nRPNPatchSize++;
-	}
-
-	pushbyte(expr, 0);
-	expr->nRPNPatchSize++;
+	expr->nRPNPatchSize += nameLen + 1;
+	*ptr++ = RPN_BANK_SECT;
+	memcpy(ptr, tzSectionName, nameLen);
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	pushbyte(expr, RPN_HRAM);
 	expr->nRPNPatchSize++;
+	*reserveSpace(expr, 1) = RPN_HRAM;
 }
 
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	pushbyte(expr, RPN_RST);
+	*reserveSpace(expr, 1) = RPN_RST;
 	expr->nRPNPatchSize++;
 }
 
@@ -213,8 +218,8 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 	expr->nVal = !expr->nVal;
-	pushbyte(expr, RPN_LOGUNNOT);
 	expr->nRPNPatchSize++;
+	*reserveSpace(expr, 1) = RPN_LOGUNNOT;
 }
 
 static int32_t shift(int32_t shiftee, int32_t amount)
@@ -291,10 +296,11 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	memcpy(expr->tRPN + src1->nRPNLength, src2->tRPN, src2->nRPNLength);
 	free(src2->tRPN);
 
-	expr->nRPNLength = len;
-	expr->nRPNPatchSize = src1->nRPNPatchSize + src2->nRPNPatchSize;
-	expr->nRPNOut = 0;
+	expr->nRPNOut = 0; // FIXME: is this necessary?
 	expr->isKnown = src1->isKnown && src2->isKnown;
+	expr->nRPNLength = len;
+	expr->nRPNPatchSize = src1->nRPNPatchSize + src2->nRPNPatchSize + 1;
+	*reserveSpace(expr, 1) = op;
 
 	switch (op) {
 	case RPN_LOGOR:
@@ -325,6 +331,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		expr->nVal = (uint32_t)src1->nVal + (uint32_t)src2->nVal;
 		break;
 	case RPN_SUB:
+		// FIXME: under certain conditions, this might be actually known
 		expr->nVal = (uint32_t)src1->nVal - (uint32_t)src2->nVal;
 		break;
 	case RPN_XOR:
@@ -394,9 +401,6 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	case RPN_SYM:
 		fatalerror("%d is no binary operator", op);
 	}
-
-	pushbyte(expr, op);
-	expr->nRPNPatchSize++;
 }
 
 void rpn_HIGH(struct Expression *expr, const struct Expression *src)
@@ -405,23 +409,11 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 
 	expr->nVal = (expr->nVal >> 8) & 0xFF;
 
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 8);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
+	uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
+			   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+	expr->nRPNPatchSize += sizeof(bytes);
 
-	pushbyte(expr, RPN_SHR);
-
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 0xFF);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-
-	pushbyte(expr, RPN_AND);
-
-	expr->nRPNPatchSize += 12;
+	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 }
 
 void rpn_LOW(struct Expression *expr, const struct Expression *src)
@@ -430,29 +422,24 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 
 	expr->nVal = expr->nVal & 0xFF;
 
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 0xFF);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
+	uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
-	pushbyte(expr, RPN_AND);
-
-	expr->nRPNPatchSize += 6;
+	expr->nRPNPatchSize += sizeof(bytes);
+	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 }
 
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 	expr->nVal = -(uint32_t)expr->nVal;
-	pushbyte(expr, RPN_UNSUB);
 	expr->nRPNPatchSize++;
+	*reserveSpace(expr, 1) = RPN_UNSUB;
 }
 
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 	expr->nVal = ~expr->nVal;
-	pushbyte(expr, RPN_UNNOT);
 	expr->nRPNPatchSize++;
+	*reserveSpace(expr, 1) = RPN_UNNOT;
 }
