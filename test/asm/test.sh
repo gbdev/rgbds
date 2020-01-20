@@ -38,9 +38,9 @@ for i in *.asm; do
 		fi
 
 		diff -u --strip-trailing-cr $desired_output $output
-		rc=$(($? || $rc))
+		our_rc=$?
 		diff -u --strip-trailing-cr $desired_errput $errput
-		rc=$(($? || $rc))
+		our_rc=$(($? || $our_rc))
 
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
@@ -49,8 +49,11 @@ for i in *.asm; do
 			hexdump -C $output > $input && mv $input $output
 			hexdump -C $bin > $input
 			diff -u --strip-trailing-cr $input $output
-			rc=$(($? || $rc))
+			our_rc=$(($? || $our_rc))
 		fi
+
+		rc=$(($rc || $our_rc))
+		if [ $our_rc -ne 0 ]; then break; fi
 	done
 done
 
