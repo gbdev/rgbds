@@ -166,13 +166,13 @@ void rpn_BankSelf(struct Expression *expr)
 {
 	rpn_Init(expr);
 
-	if (pCurrentSection->nBank == -1)
+	if (pCurrentSection->nBank == -1) {
 		makeUnknown(expr, "Current section's bank is not known");
-	else
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_BANK_SELF;
+	} else {
 		expr->nVal = pCurrentSection->nBank;
-
-	*reserveSpace(expr, 1) = RPN_BANK_SELF;
-	expr->nRPNPatchSize++;
+	}
 }
 
 void rpn_BankSymbol(struct Expression *expr, char *tzSym)
@@ -190,21 +190,21 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
 		sym_Ref(tzSym);
-		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte sect ID */
-
-		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
-		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
-		*ptr++ = RPN_BANK_SYM;
-		memcpy(ptr, tzSym, nameLen);
-
 		/* If the symbol didn't exist, `sym_Ref` created it */
 		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
 
-		if (pSymbol->pSection && pSymbol->pSection->nBank != -1)
+		if (pSymbol->pSection && pSymbol->pSection->nBank != -1) {
 			/* Symbol's section is known and bank is fixed */
 			expr->nVal = pSymbol->pSection->nBank;
-		else
+		} else {
 			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
+			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
+
+			size_t nameLen = strlen(tzSym) + 1; /* Room for NUL! */
+			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+			*ptr++ = RPN_BANK_SYM;
+			memcpy(ptr, tzSym, nameLen);
+		}
 	}
 }
 
@@ -214,18 +214,19 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
 
-	if (pSection && pSection->nBank != -1)
+	if (pSection && pSection->nBank != -1) {
 		expr->nVal = pSection->nBank;
-	else
+	} else {
 		makeUnknown(expr, "Section \"%s\"'s bank is not known",
 			    tzSectionName);
 
-	size_t nameLen = strlen(tzSectionName) + 1; /* Don't forget NUL! */
-	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+		size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-	expr->nRPNPatchSize += nameLen + 1;
-	*ptr++ = RPN_BANK_SECT;
-	memcpy(ptr, tzSectionName, nameLen);
+		expr->nRPNPatchSize += nameLen + 1;
+		*ptr++ = RPN_BANK_SECT;
+		memcpy(ptr, tzSectionName, nameLen);
+	}
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
