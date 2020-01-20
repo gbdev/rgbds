@@ -100,11 +100,7 @@ bool rpn_isKnown(const struct Expression *expr)
  */
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
-	uint8_t bytes[] = {RPN_CONST, i, i >> 8, i >> 16, i >> 24};
-
 	rpn_Init(expr);
-	expr->nRPNPatchSize += sizeof(bytes);
-	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	expr->nVal = i;
 }
 
@@ -203,23 +199,37 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nRPNPatchSize++;
-	*reserveSpace(expr, 1) = RPN_HRAM;
+
+	if (rpn_isKnown(expr)) {
+		/* TODO */
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_HRAM;
+	}
 }
 
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	*reserveSpace(expr, 1) = RPN_RST;
-	expr->nRPNPatchSize++;
+
+	if (rpn_isKnown(expr)) {
+		/* TODO */
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_RST;
+	}
 }
 
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = !expr->nVal;
-	expr->nRPNPatchSize++;
-	*reserveSpace(expr, 1) = RPN_LOGUNNOT;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = !expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_LOGUNNOT;
+	}
 }
 
 static int32_t shift(int32_t shiftee, int32_t amount)
@@ -267,139 +277,157 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
-	assert(src1->tRPN != NULL && src2->tRPN != NULL);
-
-	uint32_t len = src1->nRPNLength + src2->nRPNLength;
-
-	if (len > MAXRPNLEN)
-		fatalerror("RPN expression is too large");
-
-	expr->nVal = 0;
-	expr->tRPN = src1->tRPN;
-
-	if (src1->nRPNCapacity >= len) {
-		expr->nRPNCapacity = src1->nRPNCapacity;
-	} else {
-		uint32_t cap1 = src1->nRPNCapacity;
-		uint32_t cap2 = src2->nRPNCapacity;
-		uint32_t cap = (cap1 > cap2) ? cap1 : cap2;
-
-		if (len > cap)
-			cap = (cap <= MAXRPNLEN / 2) ? cap * 2 : MAXRPNLEN;
-
-		expr->nRPNCapacity = cap;
-		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
-		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
-	}
-
-	memcpy(expr->tRPN + src1->nRPNLength, src2->tRPN, src2->nRPNLength);
-	free(src2->tRPN);
-
-	expr->nRPNOut = 0; // FIXME: is this necessary?
+	/* First, check if the expression is known */
 	expr->isKnown = src1->isKnown && src2->isKnown;
-	expr->nRPNLength = len;
-	expr->nRPNPatchSize = src1->nRPNPatchSize + src2->nRPNPatchSize + 1;
-	*reserveSpace(expr, 1) = op;
+	if (expr->isKnown) {
+		/* If both expressions are known, just compute the value */
+		uint32_t uleft = src1->nVal, uright = src2->nVal;
 
-	switch (op) {
-	case RPN_LOGOR:
-		expr->nVal = src1->nVal || src2->nVal;
-		break;
-	case RPN_LOGAND:
-		expr->nVal = src1->nVal && src2->nVal;
-		break;
-	case RPN_LOGEQ:
-		expr->nVal = src1->nVal == src2->nVal;
-		break;
-	case RPN_LOGGT:
-		expr->nVal = src1->nVal > src2->nVal;
-		break;
-	case RPN_LOGLT:
-		expr->nVal = src1->nVal < src2->nVal;
-		break;
-	case RPN_LOGGE:
-		expr->nVal = src1->nVal >= src2->nVal;
-		break;
-	case RPN_LOGLE:
-		expr->nVal = src1->nVal <= src2->nVal;
-		break;
-	case RPN_LOGNE:
-		expr->nVal = src1->nVal != src2->nVal;
-		break;
-	case RPN_ADD:
-		expr->nVal = (uint32_t)src1->nVal + (uint32_t)src2->nVal;
-		break;
-	case RPN_SUB:
-		// FIXME: under certain conditions, this might be actually known
-		expr->nVal = (uint32_t)src1->nVal - (uint32_t)src2->nVal;
-		break;
-	case RPN_XOR:
-		expr->nVal = src1->nVal ^ src2->nVal;
-		break;
-	case RPN_OR:
-		expr->nVal = src1->nVal | src2->nVal;
-		break;
-	case RPN_AND:
-		expr->nVal = src1->nVal & src2->nVal;
-		break;
-	case RPN_SHL:
-		if (expr->isKnown) {
-			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
-					src2->nVal);
+		switch (op) {
+		case RPN_LOGOR:
+			expr->nVal = src1->nVal || src2->nVal;
+			break;
+		case RPN_LOGAND:
+			expr->nVal = src1->nVal && src2->nVal;
+			break;
+		case RPN_LOGEQ:
+			expr->nVal = src1->nVal == src2->nVal;
+			break;
+		case RPN_LOGGT:
+			expr->nVal = src1->nVal > src2->nVal;
+			break;
+		case RPN_LOGLT:
+			expr->nVal = src1->nVal < src2->nVal;
+			break;
+		case RPN_LOGGE:
+			expr->nVal = src1->nVal >= src2->nVal;
+			break;
+		case RPN_LOGLE:
+			expr->nVal = src1->nVal <= src2->nVal;
+			break;
+		case RPN_LOGNE:
+			expr->nVal = src1->nVal != src2->nVal;
+			break;
+		case RPN_ADD:
+			expr->nVal = uleft + uright;
+			break;
+		case RPN_SUB:
+			expr->nVal = uleft - uright;
+			break;
+		case RPN_XOR:
+			expr->nVal = src1->nVal ^ src2->nVal;
+			break;
+		case RPN_OR:
+			expr->nVal = src1->nVal | src2->nVal;
+			break;
+		case RPN_AND:
+			expr->nVal = src1->nVal & src2->nVal;
+			break;
+		case RPN_SHL:
+			if (expr->isKnown) {
+				if (src2->nVal < 0)
+					warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
+						src2->nVal);
 
-			expr->nVal = shift(src1->nVal, src2->nVal);
-		}
-		break;
-	case RPN_SHR:
-		if (expr->isKnown) {
-			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
-					src2->nVal);
-
-			expr->nVal = shift(src1->nVal, -src2->nVal);
-		}
-		break;
-	case RPN_MUL:
-		expr->nVal = (uint32_t)src1->nVal * (uint32_t)src2->nVal;
-		break;
-	case RPN_DIV:
-		if (expr->isKnown) {
-			if (src2->nVal == 0)
-				fatalerror("Division by zero");
-
-			if (src1->nVal == INT32_MIN && src2->nVal == -1) {
-				warning(WARNING_DIV, "Division of min value by -1");
-				expr->nVal = INT32_MIN;
-			} else {
-				expr->nVal = src1->nVal / src2->nVal;
+				expr->nVal = shift(src1->nVal, src2->nVal);
 			}
-		}
-		break;
-	case RPN_MOD:
-		if (expr->isKnown) {
-			if (src2->nVal == 0)
-				fatalerror("Division by zero");
+			break;
+		case RPN_SHR:
+			if (expr->isKnown) {
+				if (src2->nVal < 0)
+					warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
+						src2->nVal);
 
-			if (src1->nVal == INT32_MIN && src2->nVal == -1)
-				expr->nVal = 0;
-			else
-				expr->nVal = src1->nVal % src2->nVal;
-		}
-		break;
+				expr->nVal = shift(src1->nVal, -src2->nVal);
+			}
+			break;
+		case RPN_MUL:
+			expr->nVal = uleft * uright;
+			break;
+		case RPN_DIV:
+			if (expr->isKnown) {
+				if (src2->nVal == 0)
+					fatalerror("Division by zero");
 
-	case RPN_UNSUB:
-	case RPN_UNNOT:
-	case RPN_LOGUNNOT:
-	case RPN_BANK_SYM:
-	case RPN_BANK_SECT:
-	case RPN_BANK_SELF:
-	case RPN_HRAM:
-	case RPN_RST:
-	case RPN_CONST:
-	case RPN_SYM:
-		fatalerror("%d is no binary operator", op);
+				if (src1->nVal == INT32_MIN
+				 && src2->nVal == -1) {
+					warning(WARNING_DIV, "Division of min value by -1");
+					expr->nVal = INT32_MIN;
+				} else {
+					expr->nVal = src1->nVal / src2->nVal;
+				}
+			}
+			break;
+		case RPN_MOD:
+			if (expr->isKnown) {
+				if (src2->nVal == 0)
+					fatalerror("Division by zero");
+
+				if (src1->nVal == INT32_MIN && src2->nVal == -1)
+					expr->nVal = 0;
+				else
+					expr->nVal = src1->nVal % src2->nVal;
+			}
+			break;
+
+		case RPN_UNSUB:
+		case RPN_UNNOT:
+		case RPN_LOGUNNOT:
+		case RPN_BANK_SYM:
+		case RPN_BANK_SECT:
+		case RPN_BANK_SELF:
+		case RPN_HRAM:
+		case RPN_RST:
+		case RPN_CONST:
+		case RPN_SYM:
+			fatalerror("%d is no binary operator", op);
+		}
+
+	/* TODO: under some conditions, the expression will still be known */
+
+	} else {
+		/* If it's not known, start computing the RPN expression */
+
+		/* Convert the left-hand expression if it's constant */
+		if (src1->isKnown) {
+			uint8_t bytes[] = {RPN_CONST, src1->nVal,
+					   src1->nVal >> 8, src1->nVal >> 16,
+					   src1->nVal >> 24};
+			expr->nRPNPatchSize = sizeof(bytes);
+			expr->tRPN = NULL;
+			expr->nRPNCapacity = 0;
+			expr->nRPNLength = 0;
+			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
+			       sizeof(bytes));
+		} else {
+			/* Otherwise just reuse its RPN buffer */
+			expr->nRPNPatchSize = src1->nRPNPatchSize;
+			expr->tRPN = src1->tRPN;
+			expr->nRPNCapacity = src1->nRPNCapacity;
+			expr->nRPNLength = src1->nRPNLength;
+		}
+
+		/* Now, merge the right expression into the left one */
+		uint8_t *ptr = src2->tRPN; /* Pointer to the right RPN */
+		uint32_t len = src2->nRPNLength; /* Size of the right RPN */
+		uint32_t patchSize = src2->nRPNPatchSize;
+
+		/* If the right expression is constant, merge a shim instead */
+		uint8_t bytes[] = {RPN_CONST, src2->nVal, src2->nVal >> 8,
+				   src2->nVal >> 16, src2->nVal >> 24};
+		if (src2->isKnown) {
+			ptr = bytes;
+			len = sizeof(bytes);
+			patchSize = sizeof(bytes);
+		}
+		/* Copy the right RPN and append the operator */
+		uint8_t *buf = reserveSpace(expr, len + 1);
+
+		memcpy(buf, ptr, len);
+		buf[len] = op;
+
+		free(src2->tRPN); /* If there was none, this is `free(NULL)` */
+		expr->nRPNPatchSize += patchSize + 1;
 	}
 }
 
@@ -407,39 +435,50 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 
-	expr->nVal = (expr->nVal >> 8) & 0xFF;
-
-	uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
-			   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
-	expr->nRPNPatchSize += sizeof(bytes);
-
-	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	if (rpn_isKnown(expr)) {
+		expr->nVal = expr->nVal >> 8 & 0xFF;
+	} else {
+		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
+				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+		expr->nRPNPatchSize += sizeof(bytes);
+		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	}
 }
 
 void rpn_LOW(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 
-	expr->nVal = expr->nVal & 0xFF;
+	if (rpn_isKnown(expr)) {
+		expr->nVal = expr->nVal & 0xFF;
+	} else {
+		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
-	uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
-
-	expr->nRPNPatchSize += sizeof(bytes);
-	memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+		expr->nRPNPatchSize += sizeof(bytes);
+		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	}
 }
 
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = -(uint32_t)expr->nVal;
-	expr->nRPNPatchSize++;
-	*reserveSpace(expr, 1) = RPN_UNSUB;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = -(uint32_t)expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_UNSUB;
+	}
 }
 
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = ~expr->nVal;
-	expr->nRPNPatchSize++;
-	*reserveSpace(expr, 1) = RPN_UNNOT;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = ~expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_UNNOT;
+	}
 }
