@@ -17,13 +17,14 @@
 #define MAXRPNLEN 1048576
 
 struct Expression {
-	int32_t  nVal;
-	uint8_t  *tRPN;
-	uint32_t nRPNCapacity;
-	uint32_t nRPNLength;
-	uint32_t nRPNPatchSize;
-	uint32_t nRPNOut;
-	bool isKnown;
+	bool     isKnown;       // Whether the expression's value is known
+	int32_t  nVal;          // If the expression's value is known, it's here
+	uint8_t  *tRPN;         // Array of bytes serializing the RPN expression
+	uint32_t nRPNCapacity;  // Size of the `tRPN` buffer
+	uint32_t nRPNLength;    // Used size of the `tRPN` buffer
+	uint32_t nRPNPatchSize; // Size the expression will take in the obj file
+	// FIXME: does this need to be part of the struct?
+	uint32_t nRPNOut;       // How many bytes have been written
 };
 
 /* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
