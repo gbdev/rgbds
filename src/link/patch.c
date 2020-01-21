@@ -52,10 +52,11 @@ static void pushRPN(int32_t value)
 	stack.size++;
 }
 
-static int32_t popRPN(void)
+static int32_t popRPN(char const *fileName, int32_t lineNo)
 {
 	if (stack.size == 0)
-		errx(1, "Internal error, RPN stack empty");
+		errx(1, "%s(%d): Internal error, RPN stack empty", fileName,
+		     lineNo);
 
 	stack.size--;
 	return stack.buf[stack.size];
@@ -85,6 +86,9 @@ static uint8_t getRPNByte(uint8_t const **expression, int32_t *size,
 static int32_t computeRPNExpr(struct Patch const *patch,
 			      struct Section const *section)
 {
+/* Small shortcut to avoid a lot of repetition */
+#define popRPN() popRPN(patch->fileName, patch->lineNo)
+
 	uint8_t const *expression = patch->rpnExpression;
 	int32_t size = patch->rpnSize;
 
@@ -287,6 +291,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		      patch->fileName, patch->lineNo, stack.size);
 
 	return popRPN();
+
+#undef popRPN
 }
 
 /**
