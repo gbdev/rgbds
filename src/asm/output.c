@@ -45,7 +45,7 @@ struct Patch {
 
 struct PatchSymbol {
 	uint32_t ID;
-	struct sSymbol *pSymbol;
+	struct sSymbol const *pSymbol;
 	struct PatchSymbol *pNext;
 	struct PatchSymbol *pBucketNext; /* next symbol in hash table bucket */
 };
@@ -186,7 +186,7 @@ static void fputlong(uint32_t i, FILE *f)
 /*
  * Write a NULL-terminated string to a file
  */
-static void fputstring(char *s, FILE *f)
+static void fputstring(char const *s, FILE *f)
 {
 	while (*s)
 		fputc(*s++, f);
@@ -259,7 +259,7 @@ static void writesection(struct Section *pSect, FILE *f)
 /*
  * Write a symbol to a file
  */
-static void writesymbol(struct sSymbol *pSym, FILE *f)
+static void writesymbol(struct sSymbol const *pSym, FILE *f)
 {
 	uint32_t type;
 	uint32_t offset;
@@ -538,12 +538,12 @@ void out_CheckErrors(void)
 	struct PatchSymbol *pSym = pPatchSymbols;
 
 	while (pSym) {
-		struct sSymbol *pSymbol = pSym->pSymbol;
+		struct sSymbol const *pSymbol = pSym->pSymbol;
 
 		if (!(pSymbol->nType & SYMF_DEFINED)
 		   && pSymbol->nType & SYMF_LOCAL) {
-			char *name = pSymbol->tzName;
-			char *localPtr = strchr(name, '.');
+			char const *name = pSymbol->tzName;
+			char const *localPtr = strchr(name, '.');
 
 			if (localPtr)
 				name = localPtr;
