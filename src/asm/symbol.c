@@ -493,12 +493,10 @@ void sym_AddEqu(char *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
-	if (nsym) {
-		nsym->nValue = value;
-		nsym->nType |= SYMF_EQU | SYMF_DEFINED | SYMF_CONST;
-		nsym->pScope = NULL;
-		updateSymbolFilename(nsym);
-	}
+	nsym->nValue = value;
+	nsym->nType |= SYMF_EQU | SYMF_DEFINED | SYMF_CONST;
+	nsym->pScope = NULL;
+	updateSymbolFilename(nsym);
 }
 
 /*
@@ -517,18 +515,16 @@ void sym_AddString(char *tzSym, char *tzValue)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
-	if (nsym) {
-		nsym->pMacro = malloc(strlen(tzValue) + 1);
+	nsym->pMacro = malloc(strlen(tzValue) + 1);
 
-		if (nsym->pMacro != NULL)
-			strcpy(nsym->pMacro, tzValue);
-		else
-			fatalerror("No memory for string equate");
+	if (nsym->pMacro != NULL)
+		strcpy(nsym->pMacro, tzValue);
+	else
+		fatalerror("No memory for string equate");
 
-		nsym->nType |= SYMF_STRING | SYMF_DEFINED;
-		nsym->ulMacroSize = strlen(tzValue);
-		nsym->pScope = NULL;
-	}
+	nsym->nType |= SYMF_STRING | SYMF_DEFINED;
+	nsym->ulMacroSize = strlen(tzValue);
+	nsym->pScope = NULL;
 }
 
 /*
@@ -570,12 +566,10 @@ void sym_AddSet(char *tzSym, int32_t value)
 		nsym = createsymbol(tzSym);
 	}
 
-	if (nsym) {
-		nsym->nValue = value;
-		nsym->nType |= SYMF_SET | SYMF_DEFINED | SYMF_CONST;
-		nsym->pScope = NULL;
-		updateSymbolFilename(nsym);
-	}
+	nsym->nValue = value;
+	nsym->nType |= SYMF_SET | SYMF_DEFINED | SYMF_CONST;
+	nsym->pScope = NULL;
+	updateSymbolFilename(nsym);
 }
 
 /*
@@ -634,24 +628,22 @@ void sym_AddReloc(char *tzSym)
 		nsym = createsymbol(tzSym);
 	}
 
-	if (nsym) {
-		nsym->nValue = nPC;
-		nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
-		if (localPtr)
-			nsym->nType |= SYMF_LOCAL;
+	nsym->nValue = nPC;
+	nsym->nType |= SYMF_RELOC | SYMF_DEFINED;
+	if (localPtr)
+		nsym->nType |= SYMF_LOCAL;
 
-		if (exportall)
-			nsym->nType |= SYMF_EXPORT;
+	if (exportall)
+		nsym->nType |= SYMF_EXPORT;
 
-		nsym->pScope = scope;
-		nsym->pSection = pCurrentSection;
-		/* Labels need to be assigned a section, except PC */
-		if (!pCurrentSection && strcmp(tzSym, "@"))
-			yyerror("Label \"%s\" created outside of a SECTION",
-				tzSym);
+	nsym->pScope = scope;
+	nsym->pSection = pCurrentSection;
+	/* Labels need to be assigned a section, except PC */
+	if (!pCurrentSection && strcmp(tzSym, "@"))
+		yyerror("Label \"%s\" created outside of a SECTION",
+			tzSym);
 
-		updateSymbolFilename(nsym);
-	}
+	updateSymbolFilename(nsym);
 
 	pScope = findsymbol(tzSym, scope);
 }
@@ -713,8 +705,7 @@ void sym_Export(char *tzSym)
 	if (nsym == NULL)
 		nsym = createsymbol(tzSym);
 
-	if (nsym)
-		nsym->nType |= SYMF_EXPORT;
+	nsym->nType |= SYMF_EXPORT;
 }
 
 /*
@@ -724,18 +715,16 @@ void sym_AddMacro(char *tzSym, int32_t nDefLineNo)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
-	if (nsym) {
-		nsym->nType |= SYMF_MACRO | SYMF_DEFINED;
-		nsym->pScope = NULL;
-		nsym->ulMacroSize = ulNewMacroSize;
-		nsym->pMacro = tzNewMacro;
-		updateSymbolFilename(nsym);
-		/*
-		 * The symbol is created at the line after the `endm`,
-		 * override this with the actual definition line
-		 */
-		nsym->nFileLine = nDefLineNo;
-	}
+	nsym->nType |= SYMF_MACRO | SYMF_DEFINED;
+	nsym->pScope = NULL;
+	nsym->ulMacroSize = ulNewMacroSize;
+	nsym->pMacro = tzNewMacro;
+	updateSymbolFilename(nsym);
+	/*
+	 * The symbol is created at the line after the `endm`,
+	 * override this with the actual definition line
+	 */
+	nsym->nFileLine = nDefLineNo;
 }
 
 /*
@@ -762,12 +751,11 @@ void sym_Ref(char *tzSym)
 
 		nsym = createsymbol(tzSym);
 
-		if (nsym && isLocal)
+		if (isLocal)
 			nsym->nType |= SYMF_LOCAL;
 	}
 
-	if (nsym)
-		nsym->nType |= SYMF_REF;
+	nsym->nType |= SYMF_REF;
 }
 
 /*
