@@ -74,13 +74,14 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
  */
 void rpn_Init(struct Expression *expr)
 {
+	expr->reason = NULL;
+	expr->isKnown = true;
+	expr->isSymbol = false;
 	expr->tRPN = NULL;
 	expr->nRPNCapacity = 0;
 	expr->nRPNLength = 0;
 	expr->nRPNPatchSize = 0;
 	expr->nRPNOut = 0;
-	expr->isKnown = true;
-	expr->reason = NULL;
 }
 
 /*
@@ -113,6 +114,14 @@ bool rpn_isKnown(const struct Expression *expr)
 }
 
 /*
+ * Determine if the current expression is a symbol suitable for const diffing
+ */
+bool rpn_isSymbol(const struct Expression *expr)
+{
+	return expr->isSymbol;
+}
+
+/*
  * Add symbols, constants and operators to expression
  */
 void rpn_Number(struct Expression *expr, uint32_t i)
@@ -127,6 +136,8 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 
 	if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
+		expr->isSymbol = true;
+
 		sym_Ref(tzSym);
 		makeUnknown(expr, "'%s' is not defined", tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
@@ -142,6 +153,8 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 
 			rpn_Number(&offset, nPCOffset);
 			rpn_BinaryOp(RPN_SUB, expr, &pc, &offset);
+			if (!rpn_isKnown(expr))
+				expr->isSymbol = true;
 		}
 	} else {
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
@@ -217,6 +230,7 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		/* TODO */
@@ -241,6 +255,7 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		expr->nVal = !expr->nVal;
@@ -291,8 +306,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 
 static struct sSymbol const *symbolOf(struct Expression const *expr)
 {
-	/* If an expression starts with a symbol ref... */
-	if (!expr->tRPN || expr->tRPN[0] != RPN_SYM || expr->nRPNPatchSize != 5)
+	if (!rpn_isSymbol(expr))
 		return NULL;
 	return sym_FindSymbol((char *)expr->tRPN + 1);
 }
@@ -314,6 +328,8 @@ static bool isDiffConstant(struct Expression const *src1,
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
+	expr->isSymbol = false;
+
 	/* First, check if the expression is known */
 	expr->isKnown = src1->isKnown && src2->isKnown;
 	if (expr->isKnown) {
@@ -478,6 +494,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		expr->nVal = (uint32_t)expr->nVal >> 8 & 0xFF;
@@ -492,6 +509,7 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 void rpn_LOW(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		expr->nVal = expr->nVal & 0xFF;
@@ -506,6 +524,7 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		expr->nVal = -(uint32_t)expr->nVal;
@@ -518,6 +537,7 @@ void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
+	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
 		expr->nVal = ~expr->nVal;

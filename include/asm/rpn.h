@@ -17,9 +17,10 @@
 #define MAXRPNLEN 1048576
 
 struct Expression {
-	bool     isKnown;       // Whether the expression's value is known
 	int32_t  nVal;          // If the expression's value is known, it's here
 	char     *reason;       // Why the expression is not known, if it isn't
+	bool     isKnown;       // Whether the expression's value is known
+	bool     isSymbol;      // Whether the expression represents a symbol
 	uint8_t  *tRPN;         // Array of bytes serializing the RPN expression
 	uint32_t nRPNCapacity;  // Size of the `tRPN` buffer
 	uint32_t nRPNLength;    // Used size of the `tRPN` buffer
@@ -32,6 +33,7 @@ struct Expression {
 extern int32_t nPCOffset;
 
 bool rpn_isKnown(const struct Expression *expr);
+bool rpn_isSymbol(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
