@@ -19,7 +19,7 @@
 struct Symbol {
 	/* Info contained in the object files */
 	char *name;
-	enum SymbolType type;
+	enum ExportLevel type;
 	char const *objFileName;
 	char *fileName;
 	int32_t lineNo;
