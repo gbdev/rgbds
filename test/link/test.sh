@@ -10,69 +10,61 @@ rc=0
 RGBASM=../../rgbasm
 RGBLINK=../../rgblink
 
-$RGBASM -o $otemp bank-numbers.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr bank-numbers.out $outtemp
-rc=$(($? || $rc))
-dd if=$gbtemp count=1 bs=20 > $otemp 2>/dev/null
-diff --strip-trailing-cr bank-numbers.out.bin $otemp
-rc=$(($? || $rc))
+for i in *.asm; do
+	$RGBASM -o $otemp $i
 
-$RGBASM -o $otemp fixed-oob.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr fixed-oob.out $outtemp
-rc=$(($? || $rc))
+	# Some tests have variants depending on flags
+	ran_flag=
+	for flag in '-d' '-t' '-w'; do
+		if [ -f ${i%.asm}-no${flag}.out ]; then
+			$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
+			diff --strip-trailing-cr ${i%.asm}-no${flag}.out $outtemp
+			rc=$(($? || $rc))
+			ran_flag=1
+		fi
+		if [ -f ${i%.asm}${flag}.out ]; then
+			$RGBLINK ${flag} -o $gbtemp $otemp > $outtemp 2>&1
+			diff --strip-trailing-cr ${i%.asm}${flag}.out $outtemp
+			rc=$(($? || $rc))
+			ran_flag=1
+		fi
+	done
+	if [ -n "$ran_flag" ]; then
+		continue
+	fi
 
-$RGBASM -o $otemp section-attributes.asm
-$RGBLINK -l section-attributes.link -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr section-attributes.out $outtemp
-rc=$(($? || $rc))
-$RGBLINK -l section-attributes-mismatch.link -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr section-attributes-mismatch.out $outtemp
-rc=$(($? || $rc))
+	# Other tests have several linker scripts
+	for script in `find . -name "${i%.asm}*.link"`; do
+		$RGBLINK -l $script -o $gbtemp $otemp > $outtemp 2>&1
+		diff --strip-trailing-cr ${script%.link}.out $outtemp
+		rc=$(($? || $rc))
+		ran_flag=1
+	done
+	if [ -n "$ran_flag" ]; then
+		continue
+	fi
 
-$RGBASM -o $otemp wramx-dmg-mode.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr wramx-dmg-mode-no-d.out $outtemp
-rc=$(($? || $rc))
-$RGBLINK -d -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr wramx-dmg-mode-d.out $outtemp
-rc=$(($? || $rc))
+	# The rest of the tests just links a file, and maybe checks the binary
+	$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
+	if [ -f ${i%.asm}.out ]; then
+		diff --strip-trailing-cr ${i%.asm}.out $outtemp
+		rc=$(($? || $rc))
+	fi
 
-$RGBASM -o $otemp vram-fixed-dmg-mode.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr vram-fixed-dmg-mode-no-d.out $outtemp
-rc=$(($? || $rc))
-$RGBLINK -d -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr vram-fixed-dmg-mode-d.out $outtemp
-rc=$(($? || $rc))
+	bin=${i%.asm}.out.bin
+	if [ -f $bin ]; then
+		dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < $bin)) > $otemp 2>/dev/null
+		diff --strip-trailing-cr $bin $otemp
+		rc=$(($? || $rc))
+	fi
+done
 
-$RGBASM -o $otemp vram-floating-dmg-mode.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr vram-floating-dmg-mode-no-d.out $outtemp
-rc=$(($? || $rc))
-$RGBLINK -d -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr vram-floating-dmg-mode-d.out $outtemp
-rc=$(($? || $rc))
-
-$RGBASM -o $otemp romx-tiny.asm
-$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr romx-tiny-no-t.out $outtemp
-rc=$(($? || $rc))
-$RGBLINK -t -o $gbtemp $otemp > $outtemp 2>&1
-diff --strip-trailing-cr romx-tiny-t.out $outtemp
-rc=$(($? || $rc))
-
-$RGBASM -o $otemp high-low-a.asm
+# This test does its own thing
+$RGBASM -o $otemp high-low/a.asm
 $RGBLINK -o $gbtemp $otemp
-$RGBASM -o $otemp high-low-b.asm
+$RGBASM -o $otemp high-low/b.asm
 $RGBLINK -o $gbtemp2 $otemp
 diff --strip-trailing-cr $gbtemp $gbtemp2
-rc=$(($? || $rc))
-
-$RGBASM -o $otemp all-instructions.asm
-$RGBLINK -o $gbtemp $otemp
-diff --strip-trailing-cr all-instructions.out.bin $gbtemp
 rc=$(($? || $rc))
 
 rm -f $otemp $gbtemp $gbtemp2 $outtemp
