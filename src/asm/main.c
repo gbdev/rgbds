@@ -471,7 +471,6 @@ int main(int argc, char *argv[])
 			       (int)(60 / timespent * nTotalLines));
 	}
 
-	out_CheckErrors();
 	/* If no path specified, don't write file */
 	if (tzObjectname != NULL)
 		out_WriteObject();
