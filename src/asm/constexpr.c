@@ -24,15 +24,13 @@
 
 void constexpr_Symbol(struct ConstExpression *expr, char *tzSym)
 {
-	if (!sym_isConstant(tzSym)) {
-		struct sSymbol *pSym = sym_FindSymbol(tzSym);
+	struct sSymbol *sym = sym_FindSymbol(tzSym);
 
-		if (pSym != NULL) {
-			expr->u.pSym = pSym;
-			expr->isSym = 1;
-		} else {
-			fatalerror("'%s' not defined", tzSym);
-		}
+	if (!sym) {
+		fatalerror("'%s' not defined", tzSym);
+	} else if (!sym_IsConstant(sym)) {
+		expr->u.pSym = sym;
+		expr->isSym = 1;
 	} else {
 		constexpr_Number(expr, sym_GetConstantValue(tzSym));
 	}
@@ -41,23 +39,21 @@ void constexpr_Symbol(struct ConstExpression *expr, char *tzSym)
 void constexpr_BankSymbol(struct ConstExpression *expr, char *tzSym)
 {
 	constexpr_Number(expr, 0);
+	struct sSymbol *sym = sym_FindSymbol(tzSym);
 
-	if (sym_FindSymbol(tzSym) == pPCSymbol) {
+	if (!sym) {
+		yyerror("BANK argument doesn't exist");
+	} else if (sym == pPCSymbol) {
 		if (pCurrentSection->nBank == -1)
-			yyerror("%s's bank is not known yet", tzSym);
+			yyerror("Current bank is not known yet");
 		else
 			constexpr_Number(expr, pCurrentSection->nBank);
-	} else if (sym_isConstant(tzSym)) {
-		yyerror("BANK argument must be a relocatable identifier");
+	} else if (sym->type != SYM_LABEL) {
+		yyerror("BANK argument must be a label");
+	} else if (sym->pSection->nBank == -1) {
+		yyerror("BANK argument's bank is not known yet'");
 	} else {
-		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
-
-		if (!pSymbol)
-			yyerror("BANK argument doesn't exist");
-		else if (!pSymbol->pSection || pSymbol->pSection->nBank == -1)
-			yyerror("BANK argument must be a relocatable identifier");
-		else
-			constexpr_Number(expr, pSymbol->pSection->nBank);
+		constexpr_Number(expr, sym->pSection->nBank);
 	}
 }
 

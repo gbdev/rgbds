@@ -78,13 +78,14 @@ static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 	out_NewAbsSection(name, secttype, org, bank);
 }
 
-size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
+size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 			const char *mode)
 {
 	size_t length;
+	struct sSymbol *sym = sym_FindSymbol(symName);
 
-	if (sym_isString(sym)) {
-		char *src = sym_GetStringValue(sym);
+	if (sym && sym->type == SYM_EQUS) {
+		char const *src = sym_GetStringValue(sym);
 		size_t i;
 
 		if (mode)
@@ -100,7 +101,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
 		length = i;
 
 	} else {
-		uint32_t value = sym_GetConstantValue(sym);
+		uint32_t value = sym_GetConstantValue(symName);
 		int32_t fullLength;
 
 		/* Special cheat for binary */
@@ -1307,7 +1308,11 @@ relocconst	: T_ID
 				oDontExpandStrings = true;
 			} '(' T_ID ')'
 		{
-			rpn_Number(&$$, sym_isConstDefined($4));
+			struct sSymbol const *sym = sym_FindSymbol($4);
+			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))
+				yyerror("Label \"%s\" is not a valid argument to DEF",
+					$4);
+			rpn_Number(&$$, !!sym);
 			oDontExpandStrings = false;
 		}
 		| T_OP_ROUND '(' const ')'
@@ -1447,7 +1452,11 @@ const		: T_ID					{ constexpr_Symbol(&$$, $1); }
 				oDontExpandStrings = true;
 			} '(' T_ID ')'
 		{
-			constexpr_Number(&$$, sym_isConstDefined($4));
+			struct sSymbol const *sym = sym_FindSymbol($4);
+			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))
+				yyerror("Label \"%s\" is not a valid argument to DEF",
+					$4);
+			constexpr_Number(&$$, !!sym);
 			oDontExpandStrings = false;
 		}
 		| T_OP_STRCMP '(' string comma string ')'

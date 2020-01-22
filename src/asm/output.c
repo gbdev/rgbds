@@ -265,9 +265,9 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
 	uint32_t offset;
 	int32_t sectid;
 
-	if (!(pSym->nType & SYMF_DEFINED))
+	if (!sym_IsDefined(pSym))
 		type = SYMTYPE_IMPORT;
-	else if (pSym->nType & SYMF_EXPORT)
+	else if (pSym->isExported)
 		type = SYMTYPE_EXPORT;
 	else
 		type = SYMTYPE_LOCAL;
@@ -283,7 +283,7 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
 		break;
 	case SYMTYPE_EXPORT:
 		offset = pSym->nValue;
-		if (pSym->nType & SYMF_CONST)
+		if (pSym->type != SYM_LABEL)
 			sectid = -1;
 		else
 			sectid = getsectid(pSym->pSection);
@@ -307,7 +307,7 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
  */
 static uint32_t nextID;
 
-static uint32_t addsymbol(struct sSymbol *pSym)
+static uint32_t addsymbol(struct sSymbol const *pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
 	uint32_t hash;
@@ -350,7 +350,7 @@ static void addexports(void)
 
 		pSym = tHashedSymbols[i];
 		while (pSym) {
-			if (pSym->nType & SYMF_EXPORT)
+			if (pSym->isExported)
 				addsymbol(pSym);
 			pSym = pSym->pNext;
 		}
@@ -409,11 +409,16 @@ void createpatch(uint32_t type, struct Expression *expr)
 			rpnexpr[rpnptr++] = rpn_PopByte(expr);
 			break;
 		case RPN_SYM:
+		{
 			symptr = 0;
 			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
 				;
 
-			if (sym_isConstant(tzSym)) {
+			struct sSymbol const *sym = sym_FindSymbol(tzSym);
+
+			if (!sym) {
+				break; // TODO: wtf?
+			} else if (sym_IsConstant(sym)) {
 				uint32_t value;
 
 				value = sym_GetConstantValue(tzSym);
@@ -423,11 +428,6 @@ void createpatch(uint32_t type, struct Expression *expr)
 				rpnexpr[rpnptr++] = value >> 16;
 				rpnexpr[rpnptr++] = value >> 24;
 			} else {
-				struct sSymbol *sym = sym_FindSymbol(tzSym);
-
-				if (sym == NULL)
-					break;
-
 				symptr = addsymbol(sym);
 				rpnexpr[rpnptr++] = RPN_SYM;
 				rpnexpr[rpnptr++] = symptr & 0xFF;
@@ -436,6 +436,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 				rpnexpr[rpnptr++] = symptr >> 24;
 			}
 			break;
+		}
 		case RPN_BANK_SYM:
 		{
 			struct sSymbol *sym;
@@ -662,6 +663,7 @@ void out_SetCurrentSection(struct Section *pSect)
 
 	pPCSymbol->nValue = nPC;
 	pPCSymbol->pSection = pCurrentSection;
+	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
 }
 
 /*

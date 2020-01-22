@@ -277,20 +277,24 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 		yyunputstr(rest);
 
 	/* If the symbol is an EQUS, expand it */
-	if (!oDontExpandStrings && sym_isString(dest)) {
-		char *s;
+	if (!oDontExpandStrings) {
+		struct sSymbol const *sym = sym_FindSymbol(dest);
 
-		lex_BeginStringExpansion(dest);
+		if (sym && sym->type == SYM_EQUS) {
+			char *s;
 
-		/* Feed the symbol's contents into the buffer */
-		yyunputstr(s = sym_GetStringValue(dest));
+			lex_BeginStringExpansion(dest);
 
-		/* Lines inserted this way shall not increase nLineNo */
-		while (*s) {
-			if (*s++ == '\n')
-				nLineNo--;
+			/* Feed the symbol's contents into the buffer */
+			yyunputstr(s = sym_GetStringValue(sym));
+
+			/* Lines inserted this way shall not increase nLineNo */
+			while (*s) {
+				if (*s++ == '\n')
+					nLineNo--;
+			}
+			return 0;
 		}
-		return 0;
 	}
 
 	strcpy(yylval.tzSym, dest);

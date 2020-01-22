@@ -143,7 +143,9 @@ void rpn_Number(struct Expression *expr, uint32_t i)
 
 void rpn_Symbol(struct Expression *expr, char *tzSym)
 {
-	if (!sym_isConstant(tzSym)) {
+	struct sSymbol *sym = sym_FindSymbol(tzSym);
+
+	if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
 		sym_Ref(tzSym);
 		expr->isReloc = 1;
@@ -176,13 +178,15 @@ void rpn_BankSelf(struct Expression *expr)
 
 void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 {
+	struct sSymbol const *sym = sym_FindSymbol(tzSym);
+
 	/* The @ symbol is treated differently. */
-	if (sym_FindSymbol(tzSym) == pPCSymbol) {
+	if (sym == pPCSymbol) {
 		rpn_BankSelf(expr);
 		return;
 	}
 
-	if (sym_isConstant(tzSym)) {
+	if (sym && sym_IsConstant(sym)) {
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
 		rpn_Init(expr);
