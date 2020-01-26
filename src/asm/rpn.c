@@ -390,9 +390,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 
 		/* Convert the left-hand expression if it's constant */
 		if (src1->isKnown) {
-			uint8_t bytes[] = {RPN_CONST, src1->nVal,
-					   src1->nVal >> 8, src1->nVal >> 16,
-					   src1->nVal >> 24};
+			uint32_t lval = src1->nVal;
+			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
+					   lval >> 16, lval >> 24};
 			expr->nRPNPatchSize = sizeof(bytes);
 			expr->tRPN = NULL;
 			expr->nRPNCapacity = 0;
@@ -413,8 +413,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		uint32_t patchSize = src2->nRPNPatchSize;
 
 		/* If the right expression is constant, merge a shim instead */
-		uint8_t bytes[] = {RPN_CONST, src2->nVal, src2->nVal >> 8,
-				   src2->nVal >> 16, src2->nVal >> 24};
+		uint32_t rval = src2->nVal;
+		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
+				   rval >> 24};
 		if (src2->isKnown) {
 			ptr = bytes;
 			len = sizeof(bytes);
@@ -436,7 +437,7 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 	*expr = *src;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = expr->nVal >> 8 & 0xFF;
+		expr->nVal = (uint32_t)expr->nVal >> 8 & 0xFF;
 	} else {
 		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
 				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
