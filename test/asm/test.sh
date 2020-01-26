@@ -48,7 +48,7 @@ for i in *.asm; do
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
 			hexdump -C $output > $input && mv $input $output
 			hexdump -C $bin > $input
-			diff -u --strip-trailing-cr $input $output
+			cmp $input $output
 			our_rc=$(($? || $our_rc))
 		fi
 

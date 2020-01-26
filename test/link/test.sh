@@ -54,7 +54,7 @@ for i in *.asm; do
 	bin=${i%.asm}.out.bin
 	if [ -f $bin ]; then
 		dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < $bin)) > $otemp 2>/dev/null
-		diff --strip-trailing-cr $bin $otemp
+		cmp $bin $otemp
 		rc=$(($? || $rc))
 	fi
 done
