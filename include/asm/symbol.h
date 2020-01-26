@@ -47,45 +47,28 @@ static inline bool sym_IsDefined(struct sSymbol const *sym)
 {
 	return sym->type != SYM_REF;
 }
+
 static inline bool sym_IsConstant(struct sSymbol const *sym)
 {
 	return sym->isConstant;
 }
+
 static inline bool sym_IsNumeric(struct sSymbol const *sym)
 {
 	return sym->type == SYM_LABEL || sym->type == SYM_EQU
 	    || sym->type == SYM_SET;
 }
+
 static inline bool sym_IsLocal(struct sSymbol const *sym)
 {
 	return (sym->type == SYM_LABEL || sym->type == SYM_REF)
 		&& strchr(sym->tzName, '.');
 }
+
 static inline bool sym_IsExported(struct sSymbol const *sym)
 {
 	return sym->isExported;
 }
-/* Symbol will be relocated during linking, it's absolute value is unknown
-#define SYMF_RELOC	0x001
-Symbol is defined using EQU, will not be changed during linking
-#define SYMF_EQU	0x002
-Symbol is (re)defined using SET, will not be changed during linking
-#define SYMF_SET	0x004
-Symbol should be exported
-#define SYMF_EXPORT	0x008
-Symbol referenced in RPN expression
-#define SYMF_REF	0x010
-Symbol is a local symbol
-#define SYMF_LOCAL	0x020
-Symbol has been defined, not only referenced
-#define SYMF_DEFINED	0x040
-Symbol is a macro
-#define SYMF_MACRO	0x080
-Symbol is a stringsymbol
-#define SYMF_STRING	0x100
-Symbol has a constant value, will not be changed during linking
-#define SYMF_CONST	0x200
-*/
 
 uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(uint8_t set);
