@@ -118,12 +118,20 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID)
 		fail("Section \"%s\" has an invalid type.", section->name);
-	if (is32kMode && section->type == SECTTYPE_ROMX)
-		fail("%s: ROMX sections cannot be used with option -t.",
-		     section->name);
-	if (isWRA0Mode && section->type == SECTTYPE_WRAMX)
-		fail("%s: WRAMX sections cannot be used with options -w or -d.",
-		     section->name);
+	if (is32kMode && section->type == SECTTYPE_ROMX) {
+		if (section->isBankFixed && section->bank != 1)
+			fail("%s: ROMX sections must be in bank 1 with option -t.",
+			     section->name);
+		else
+			section->type = SECTTYPE_ROM0;
+	}
+	if (isWRA0Mode && section->type == SECTTYPE_WRAMX) {
+		if (section->isBankFixed && section->bank != 1)
+			fail("%s: WRAMX sections must be in bank 1 with options -w or -d.",
+			     section->name);
+		else
+			section->type = SECTTYPE_WRAMX;
+	}
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
 		fail("%s: VRAM bank 1 can't be used with option -d.",
 		     section->name);
