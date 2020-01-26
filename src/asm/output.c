@@ -45,7 +45,7 @@ struct Patch {
 
 struct PatchSymbol {
 	uint32_t ID;
-	struct sSymbol *pSymbol;
+	struct sSymbol const *pSymbol;
 	struct PatchSymbol *pNext;
 	struct PatchSymbol *pBucketNext; /* next symbol in hash table bucket */
 };
@@ -186,7 +186,7 @@ static void fputlong(uint32_t i, FILE *f)
 /*
  * Write a NULL-terminated string to a file
  */
-static void fputstring(char *s, FILE *f)
+static void fputstring(char const *s, FILE *f)
 {
 	while (*s)
 		fputc(*s++, f);
@@ -259,15 +259,15 @@ static void writesection(struct Section *pSect, FILE *f)
 /*
  * Write a symbol to a file
  */
-static void writesymbol(struct sSymbol *pSym, FILE *f)
+static void writesymbol(struct sSymbol const *pSym, FILE *f)
 {
 	uint32_t type;
 	uint32_t offset;
 	int32_t sectid;
 
-	if (!(pSym->nType & SYMF_DEFINED))
+	if (!sym_IsDefined(pSym))
 		type = SYMTYPE_IMPORT;
-	else if (pSym->nType & SYMF_EXPORT)
+	else if (pSym->isExported)
 		type = SYMTYPE_EXPORT;
 	else
 		type = SYMTYPE_LOCAL;
@@ -283,7 +283,7 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
 		break;
 	case SYMTYPE_EXPORT:
 		offset = pSym->nValue;
-		if (pSym->nType & SYMF_CONST)
+		if (pSym->type != SYM_LABEL)
 			sectid = -1;
 		else
 			sectid = getsectid(pSym->pSection);
@@ -307,7 +307,7 @@ static void writesymbol(struct sSymbol *pSym, FILE *f)
  */
 static uint32_t nextID;
 
-static uint32_t addsymbol(struct sSymbol *pSym)
+static uint32_t addsymbol(struct sSymbol const *pSym)
 {
 	struct PatchSymbol *pPSym, **ppPSym;
 	uint32_t hash;
@@ -350,7 +350,7 @@ static void addexports(void)
 
 		pSym = tHashedSymbols[i];
 		while (pSym) {
-			if (pSym->nType & SYMF_EXPORT)
+			if (pSym->isExported)
 				addsymbol(pSym);
 			pSym = pSym->pNext;
 		}
@@ -409,11 +409,16 @@ void createpatch(uint32_t type, struct Expression *expr)
 			rpnexpr[rpnptr++] = rpn_PopByte(expr);
 			break;
 		case RPN_SYM:
+		{
 			symptr = 0;
 			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
 				;
 
-			if (sym_isConstant(tzSym)) {
+			struct sSymbol const *sym = sym_FindSymbol(tzSym);
+
+			if (!sym) {
+				break; // TODO: wtf?
+			} else if (sym_IsConstant(sym)) {
 				uint32_t value;
 
 				value = sym_GetConstantValue(tzSym);
@@ -423,11 +428,6 @@ void createpatch(uint32_t type, struct Expression *expr)
 				rpnexpr[rpnptr++] = value >> 16;
 				rpnexpr[rpnptr++] = value >> 24;
 			} else {
-				struct sSymbol *sym = sym_FindSymbol(tzSym);
-
-				if (sym == NULL)
-					break;
-
 				symptr = addsymbol(sym);
 				rpnexpr[rpnptr++] = RPN_SYM;
 				rpnexpr[rpnptr++] = symptr & 0xFF;
@@ -436,6 +436,7 @@ void createpatch(uint32_t type, struct Expression *expr)
 				rpnexpr[rpnptr++] = symptr >> 24;
 			}
 			break;
+		}
 		case RPN_BANK_SYM:
 		{
 			struct sSymbol *sym;
@@ -523,34 +524,6 @@ static void checksectionoverflow(uint32_t delta_size)
 		 */
 		fatalerror("Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
 			   pCurrentSection->pzName, maxsize, new_size);
-	}
-}
-
-/*
- * Check for errors that could happen while writing an object file
- * This is important as out_WriteObject is skipped entirely when `-o` is omitted
- * Therefore, errors such as memory allocations still should be handled in
- * out_WriteObject and not here
- */
-void out_CheckErrors(void)
-{
-	/* Local symbols cannot be imported from elsewhere */
-	struct PatchSymbol *pSym = pPatchSymbols;
-
-	while (pSym) {
-		struct sSymbol *pSymbol = pSym->pSymbol;
-
-		if (!(pSymbol->nType & SYMF_DEFINED)
-		   && pSymbol->nType & SYMF_LOCAL) {
-			char *name = pSymbol->tzName;
-			char *localPtr = strchr(name, '.');
-
-			if (localPtr)
-				name = localPtr;
-			errx(1, "%s(%u) : '%s' not defined",
-			     pSymbol->tzFileName, pSymbol->nFileLine, name);
-		}
-		pSym = pSym->pNext;
 	}
 }
 
@@ -690,6 +663,7 @@ void out_SetCurrentSection(struct Section *pSect)
 
 	pPCSymbol->nValue = nPC;
 	pPCSymbol->pSection = pCurrentSection;
+	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
 }
 
 /*

@@ -27,7 +27,7 @@ POPS ; Ensure we are in neither section
 
 ; TODO: uncomment all that can be, there is seriously room for improvement here
 	; Diffing two constants should work
-; But it doesn't yet	print_diff Constant, Constant2
+	print_diff Constant, Constant2
 	; Diffing two labels in the same SECTION as well
 	print_diff Known2, Known
 	; Diffing a constant and a "floating" label cannot work
@@ -40,7 +40,7 @@ POPS ; Ensure we are in neither section
 	; Now let's fiddle with PC
 SECTION "fixed PC", ROM0[420]
 	; Diffing a constant and PC should work
-; But it doesn't yet	print_diff Constant, @
+	print_diff Constant, @
 	; Diffing a floating label and PC cannot work
 ; ...And that causes a fatal error	print_diff Known, @
 	; Diffinf a ref and PC cannot work
@@ -49,7 +49,7 @@ SECTION "fixed PC", ROM0[420]
 	print_diff @, @
 	; Diffing PC and a label from here should work
 LocalFixed:
-; But it doesn't yet	print_diff LocalFixed, @
+	print_diff LocalFixed, @
 
 SECTION "Floating PC", ROM0
 	; Diffing a constant and PC cannot work

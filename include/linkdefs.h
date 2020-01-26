@@ -59,7 +59,7 @@ enum SectionType {
 	SECTTYPE_INVALID
 };
 
-enum SymbolType {
+enum ExportLevel {
 	SYMTYPE_LOCAL,
 	SYMTYPE_IMPORT,
 	SYMTYPE_EXPORT

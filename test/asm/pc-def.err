@@ -1,2 +1,3 @@
 ERROR: pc-def.asm(1):
-    '@' is not allowed as argument to the DEF function
+    Label "@" is not a valid argument to DEF
+error: Assembly aborted (1 errors)!
