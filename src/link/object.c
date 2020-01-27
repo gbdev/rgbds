@@ -340,6 +340,14 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
  */
 static void readRGB7File(FILE *file, char const *fileName)
 {
+	uint32_t revNum;
+
+	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
+		    fileName);
+	if (revNum != RGBDS_OBJECT_REV)
+		errx(1, "%s is a revision 0x%04x object file, only 0x%04x is supported",
+		     fileName, revNum, RGBDS_OBJECT_REV);
+
 	uint32_t nbSymbols;
 	uint32_t nbSections;
 
@@ -434,10 +442,8 @@ void obj_ReadFile(char const *fileName)
 {
 	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
 
-	if (!file) {
+	if (!file)
 		err(1, "Could not open file %s", fileName);
-		return;
-	}
 
 	/* Begin by reading the magic bytes and version number */
 	uint8_t versionNumber;
@@ -450,7 +456,7 @@ void obj_ReadFile(char const *fileName)
 	verbosePrint("Reading object file %s, version %hhu\n",
 		     fileName, versionNumber);
 
-	if (versionNumber != 7)
+	if (versionNumber != RGBDS_OBJECT_VERSION_NUMBER)
 		errx(1, "\"%s\" is an incompatible version %hhu object file",
 		     fileName, versionNumber);
 
