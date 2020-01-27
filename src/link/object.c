@@ -334,99 +334,6 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 }
 
 /**
- * Reads a RGB6 object file.
- * @param file The file to read from
- * @param fileName The filename to report in errors
- */
-static void readRGB6File(FILE *file, char const *fileName)
-{
-	uint32_t nbSymbols;
-	uint32_t nbSections;
-
-	tryReadlong(nbSymbols, file, "%s: Cannot read number of symbols: %s",
-		    fileName);
-	tryReadlong(nbSections, file, "%s: Cannot read number of sections: %s",
-		    fileName);
-
-	nbSectionsToAssign += nbSections;
-
-	/* This file's symbols, kept to link sections to them */
-	struct Symbol **fileSymbols =
-		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
-
-	if (!fileSymbols)
-		err(1, "Failed to get memory for %s's symbols", fileName);
-
-	struct SymbolList *symbolList = malloc(sizeof(*symbolList));
-
-	if (!symbolList)
-		err(1, "Failed to register %s's symbol list", fileName);
-	symbolList->symbolList = fileSymbols;
-	symbolList->nbSymbols = nbSymbols;
-	symbolList->next = symbolLists;
-	symbolLists = symbolList;
-
-	uint32_t nbSymPerSect[nbSections ? nbSections : 1];
-
-	memset(nbSymPerSect, 0, sizeof(nbSymPerSect));
-
-	verbosePrint("Reading %u symbols...\n", nbSymbols);
-	for (uint32_t i = 0; i < nbSymbols; i++) {
-		/* Read symbol */
-		struct Symbol *symbol = malloc(sizeof(*symbol));
-
-		if (!symbol)
-			err(1, "%s: Couldn't create new symbol", fileName);
-		readSymbol(file, symbol, fileName);
-
-		fileSymbols[i] = symbol;
-		if (symbol->type == SYMTYPE_EXPORT)
-			sym_AddSymbol(symbol);
-		if (symbol->sectionID != -1)
-			nbSymPerSect[symbol->sectionID]++;
-	}
-
-	/* This file's sections, stored in a table to link symbols to them */
-	struct Section *fileSections[nbSections ? nbSections : 1];
-
-	verbosePrint("Reading %u sections...\n", nbSections);
-	for (uint32_t i = 0; i < nbSections; i++) {
-		/* Read section */
-		struct Section *section = malloc(sizeof(*section));
-
-		if (!section)
-			err(1, "%s: Couldn't create new section", fileName);
-		readSection(file, section, fileName);
-		section->fileSymbols = fileSymbols;
-
-		sect_AddSection(section);
-		fileSections[i] = section;
-		if (nbSymPerSect[i]) {
-			section->symbols = malloc(sizeof(*section->symbols)
-							* nbSymPerSect[i]);
-			if (!section->symbols)
-				err(1, "%s: Couldn't link to symbols");
-		} else {
-			section->symbols = NULL;
-		}
-		section->nbSymbols = 0;
-	}
-
-	/* Give symbols pointers to their sections */
-	for (uint32_t i = 0; i < nbSymbols; i++) {
-		int32_t sectionID = fileSymbols[i]->sectionID;
-
-		if (sectionID == -1) {
-			fileSymbols[i]->section = NULL;
-		} else {
-			fileSymbols[i]->section = fileSections[sectionID];
-			/* Give the section a pointer to the symbol as well */
-			linkSymToSect(fileSymbols[i], fileSections[sectionID]);
-		}
-	}
-}
-
-/**
  * Reads a RGB7 object file.
  * @param file The file to read from
  * @param fileName The filename to report in errors
@@ -543,20 +450,12 @@ void obj_ReadFile(char const *fileName)
 	verbosePrint("Reading object file %s, version %hhu\n",
 		     fileName, versionNumber);
 
-	switch (versionNumber) {
-	case 6:
-		readRGB6File(file, fileName);
-		break;
-
-	case 7:
-		readRGB7File(file, fileName);
-		break;
-
-	/* TODO: support older versions? */
-	default:
+	if (versionNumber != 7)
 		errx(1, "\"%s\" is an incompatible version %hhu object file",
 		     fileName, versionNumber);
-	}
+
+	readRGB7File(file, fileName);
+
 	fclose(file);
 }
 
