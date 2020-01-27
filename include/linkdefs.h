@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1hhu"
-#define RGBDS_OBJECT_VERSION_NUMBER (uint8_t)6
+#define RGBDS_OBJECT_VERSION_NUMBER (uint8_t)9
 
 enum RPNCommand {
 	RPN_ADD		= 0x00,
