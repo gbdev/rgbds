@@ -8,12 +8,16 @@ output=$(mktemp)
 errput=$(mktemp)
 rc=0
 
+bold=$(tput bold)
+resbold=$(tput sgr0)
+red=$(tput setaf 1)
+rescolors=$(tput op)
 tryDiff () {
-	diff -u --strip-trailing-cr $1 $2 || (echo -e "\033[1;31m${i%.asm}.$3$variant mismatch!\033[0;0m"; false)
+	diff -u --strip-trailing-cr $1 $2 || (echo -e "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"; false)
 }
 
 tryCmp () {
-	cmp $1 $2 || (echo -e "\033[1;31m${i%.asm}.bin$variant mismatch!\033[0;0m"; false)
+	cmp $1 $2 || (echo -e "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
 }
 
 for i in *.asm; do
