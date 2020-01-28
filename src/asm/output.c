@@ -19,6 +19,21 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winbase.h>
+/*
+ * The semantics of `rename` on Windows differ from POSIX in that it errors out
+ * when the target file exists, instead of overwriting it.
+ * Thus, shim `rename` with similar semantics (note that the return value of
+ * `MoveFileExA` is inverted, and it uses `GetLastError` instead of `errno`)
+ */
+#define rename(oldname, newname) \
+	MoveFileExA(oldname, newname, MOVEFILE_WRITE_THROUGH | \
+				      MOVEFILE_REPLACE_EXISTING) \
+	? 0 : (errno = GetLastError(), -1)
+#endif
+
 #include "asm/asm.h"
 #include "asm/charmap.h"
 #include "asm/fstack.h"
