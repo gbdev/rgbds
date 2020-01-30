@@ -716,7 +716,6 @@ void sym_SetExportAll(uint8_t set)
 void sym_Init(void)
 {
 	int32_t i;
-	time_t now;
 
 	for (i = 0; i < MAXMACROARGS; i++) {
 		currentmacroargs[i] = NULL;
@@ -737,59 +736,41 @@ void sym_Init(void)
 
 	sym_AddSet("_RS", 0);
 
-	now = time(NULL);
-	if (now != (time_t)-1) {
-		const struct tm *time_local = localtime(&now);
+	time_t now = time(NULL);
 
-		strftime(SavedTIME, sizeof(SavedTIME), "\"%H:%M:%S\"",
-			 time_local);
-		strftime(SavedDATE, sizeof(SavedDATE), "\"%d %B %Y\"",
-			 time_local);
-		strftime(SavedTIMESTAMP_ISO8601_LOCAL,
-			 sizeof(SavedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H-%M-%S%z\"",
-			 time_local);
-
-		const struct tm *time_utc = gmtime(&now);
-
-		strftime(SavedTIMESTAMP_ISO8601_UTC,
-			 sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H-%M-%SZ\"",
-			 time_utc);
-
-		strftime(SavedDAY, sizeof(SavedDAY), "%d", time_utc);
-		strftime(SavedMONTH, sizeof(SavedMONTH), "%m", time_utc);
-		strftime(SavedYEAR, sizeof(SavedYEAR), "%Y", time_utc);
-		strftime(SavedHOUR, sizeof(SavedHOUR), "%H", time_utc);
-		strftime(SavedMINUTE, sizeof(SavedMINUTE), "%M", time_utc);
-		strftime(SavedSECOND, sizeof(SavedSECOND), "%S", time_utc);
-
-		helper_RemoveLeadingZeros(SavedDAY);
-		helper_RemoveLeadingZeros(SavedMONTH);
-		helper_RemoveLeadingZeros(SavedHOUR);
-		helper_RemoveLeadingZeros(SavedMINUTE);
-		helper_RemoveLeadingZeros(SavedSECOND);
-	} else {
-		warnx("Couldn't determine current time.");
-		/*
-		 * The '?' have to be escaped or they will be treated as
-		 * trigraphs...
-		 */
-		snprintf(SavedTIME, sizeof(SavedTIME),
-			 "\"\?\?:\?\?:\?\?\"");
-		snprintf(SavedDATE, sizeof(SavedDATE),
-			 "\"\?\? \?\?\? \?\?\?\?\"");
-		snprintf(SavedTIMESTAMP_ISO8601_LOCAL,
-			 sizeof(SavedTIMESTAMP_ISO8601_LOCAL),
-			 "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?+\?\?\?\?\"");
-		snprintf(SavedTIMESTAMP_ISO8601_UTC,
-			 sizeof(SavedTIMESTAMP_ISO8601_UTC),
-			 "\"\?\?\?\?-\?\?-\?\?T\?\?:\?\?:\?\?Z\"");
-		snprintf(SavedDAY, sizeof(SavedDAY), "1");
-		snprintf(SavedMONTH, sizeof(SavedMONTH), "1");
-		snprintf(SavedYEAR, sizeof(SavedYEAR), "1900");
-		snprintf(SavedHOUR, sizeof(SavedHOUR), "0");
-		snprintf(SavedMINUTE, sizeof(SavedMINUTE), "0");
-		snprintf(SavedSECOND, sizeof(SavedSECOND), "0");
+	if (now == (time_t)-1) {
+		warn("Couldn't determine current time");
+		/* Fall back by pretending we are at the Epoch */
+		now = 0;
 	}
+
+	const struct tm *time_utc = gmtime(&now);
+	const struct tm *time_local = localtime(&now);
+
+	strftime(SavedTIME, sizeof(SavedTIME), "\"%H:%M:%S\"",
+		 time_local);
+	strftime(SavedDATE, sizeof(SavedDATE), "\"%d %B %Y\"",
+		 time_local);
+	strftime(SavedTIMESTAMP_ISO8601_LOCAL,
+		 sizeof(SavedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H-%M-%S%z\"",
+		 time_local);
+
+	strftime(SavedTIMESTAMP_ISO8601_UTC,
+		 sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H-%M-%SZ\"",
+		 time_utc);
+
+	strftime(SavedYEAR, sizeof(SavedYEAR), "%Y", time_utc);
+	/* This cannot start with zeros */
+	strftime(SavedMONTH, sizeof(SavedMONTH), "%m", time_utc);
+	helper_RemoveLeadingZeros(SavedMONTH);
+	strftime(SavedDAY, sizeof(SavedDAY), "%d", time_utc);
+	helper_RemoveLeadingZeros(SavedDAY);
+	strftime(SavedHOUR, sizeof(SavedHOUR), "%H", time_utc);
+	helper_RemoveLeadingZeros(SavedHOUR);
+	strftime(SavedMINUTE, sizeof(SavedMINUTE), "%M", time_utc);
+	helper_RemoveLeadingZeros(SavedMINUTE);
+	strftime(SavedSECOND, sizeof(SavedSECOND), "%S", time_utc);
+	helper_RemoveLeadingZeros(SavedSECOND);
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
