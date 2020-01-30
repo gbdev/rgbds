@@ -49,7 +49,7 @@ static char SavedMINUTE[3];
 static char SavedSECOND[3];
 static bool exportall;
 
-int32_t Callback_NARG(unused_ struct sSymbol *sym)
+static int32_t Callback_NARG(unused_ struct sSymbol *sym)
 {
 	uint32_t i = 0;
 
@@ -59,7 +59,7 @@ int32_t Callback_NARG(unused_ struct sSymbol *sym)
 	return i;
 }
 
-int32_t Callback__LINE__(unused_ struct sSymbol *sym)
+static int32_t Callback__LINE__(unused_ struct sSymbol *sym)
 {
 	return nLineNo;
 }
@@ -89,7 +89,7 @@ uint32_t sym_CalcHash(const char *s)
 /*
  * Update a symbol's definition filename and line
  */
-void updateSymbolFilename(struct sSymbol *nsym)
+static void updateSymbolFilename(struct sSymbol *nsym)
 {
 	if (snprintf(nsym->tzFileName, _MAX_PATH + 1, "%s",
 		     tzCurrentFileName) > _MAX_PATH) {
@@ -102,7 +102,7 @@ void updateSymbolFilename(struct sSymbol *nsym)
 /*
  * Create a new symbol by name
  */
-struct sSymbol *createsymbol(char *s)
+static struct sSymbol *createsymbol(char *s)
 {
 	struct sSymbol **ppsym;
 	uint32_t hash;
@@ -153,7 +153,7 @@ static void fullSymbolName(char *output, size_t outputSize, char *localName,
 /*
  * Find the pointer to a symbol by name and scope
  */
-struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
+static struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 {
 	struct sSymbol **ppsym;
 	int32_t hash;
@@ -187,7 +187,7 @@ struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 /*
  * Find a symbol by name and scope
  */
-struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
+static struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
 {
 	struct sSymbol **ppsym = findpsymbol(s, scope);
 
