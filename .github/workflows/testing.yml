@@ -1,0 +1,26 @@
+name: "Regression testing"
+on: push
+
+jobs:
+  testing:
+    strategy:
+      matrix:
+        os: [ubuntu-16.04, ubuntu-18.04, macos-10.15]
+        cc: [gcc, clang]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/actions/install_deps.sh ${{ matrix.os }}
+      - name: Build
+        run: |
+          make -j Q= CC=${{ matrix.cc }}
+      - name: Install
+        run: |
+          sudo make install -j Q=
+      - name: Test
+        shell: bash
+        run: |
+          test/run-tests.sh
