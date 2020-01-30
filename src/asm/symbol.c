@@ -49,22 +49,6 @@ static char SavedMINUTE[3];
 static char SavedSECOND[3];
 static bool exportall;
 
-void helper_RemoveLeadingZeros(char *string)
-{
-	char *new_beginning = string;
-
-	while (*new_beginning == '0')
-		new_beginning++;
-
-	if (new_beginning == string)
-		return;
-
-	if (*new_beginning == '\0')
-		new_beginning--;
-
-	memmove(string, new_beginning, strlen(new_beginning) + 1);
-}
-
 int32_t Callback_NARG(unused_ struct sSymbol *sym)
 {
 	uint32_t i = 0;
@@ -473,7 +457,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
  * of the string are enough: sym_AddString("M_PI", "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-void sym_AddString(char *tzSym, char *tzValue)
+void sym_AddString(char *tzSym, char const *tzValue)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -710,6 +694,17 @@ void sym_SetExportAll(uint8_t set)
 	exportall = set;
 }
 
+/**
+ * Returns a pointer to the first non-zero character in a string
+ * Non-'0', not non-'\0'.
+ */
+static inline char const *removeLeadingZeros(char const *ptr)
+{
+	while (*ptr == '0')
+		ptr++;
+	return ptr;
+}
+
 /*
  * Initialize the symboltable
  */
@@ -760,28 +755,23 @@ void sym_Init(void)
 		 time_utc);
 
 	strftime(SavedYEAR, sizeof(SavedYEAR), "%Y", time_utc);
-	/* This cannot start with zeros */
 	strftime(SavedMONTH, sizeof(SavedMONTH), "%m", time_utc);
-	helper_RemoveLeadingZeros(SavedMONTH);
 	strftime(SavedDAY, sizeof(SavedDAY), "%d", time_utc);
-	helper_RemoveLeadingZeros(SavedDAY);
 	strftime(SavedHOUR, sizeof(SavedHOUR), "%H", time_utc);
-	helper_RemoveLeadingZeros(SavedHOUR);
 	strftime(SavedMINUTE, sizeof(SavedMINUTE), "%M", time_utc);
-	helper_RemoveLeadingZeros(SavedMINUTE);
 	strftime(SavedSECOND, sizeof(SavedSECOND), "%S", time_utc);
-	helper_RemoveLeadingZeros(SavedSECOND);
 
 	sym_AddString("__TIME__", SavedTIME);
 	sym_AddString("__DATE__", SavedDATE);
 	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
 	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
-	sym_AddString("__UTC_DAY__", SavedDAY);
-	sym_AddString("__UTC_MONTH__", SavedMONTH);
+	/* This cannot start with zeros */
 	sym_AddString("__UTC_YEAR__", SavedYEAR);
-	sym_AddString("__UTC_HOUR__", SavedHOUR);
-	sym_AddString("__UTC_MINUTE__", SavedMINUTE);
-	sym_AddString("__UTC_SECOND__", SavedSECOND);
+	sym_AddString("__UTC_MONTH__", removeLeadingZeros(SavedMONTH));
+	sym_AddString("__UTC_DAY__", removeLeadingZeros(SavedDAY));
+	sym_AddString("__UTC_HOUR__", removeLeadingZeros(SavedHOUR));
+	sym_AddString("__UTC_MINUTE__", removeLeadingZeros(SavedMINUTE));
+	sym_AddString("__UTC_SECOND__", removeLeadingZeros(SavedSECOND));
 
 	pScope = NULL;
 

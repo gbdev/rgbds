@@ -94,7 +94,7 @@ void sym_SetMacroArgID(uint32_t nMacroCount);
 void sym_AddMacro(char *tzSym, int32_t nDefLineNo);
 void sym_Ref(char *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
-void sym_AddString(char *tzSym, char *tzValue);
+void sym_AddString(char *tzSym, char const *tzValue);
 uint32_t sym_GetDefinedValue(char *s);
 void sym_Purge(char *tzName);
 bool sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
