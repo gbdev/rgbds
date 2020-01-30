@@ -49,7 +49,7 @@ static char SavedMINUTE[3];
 static char SavedSECOND[3];
 static bool exportall;
 
-static int32_t Callback_NARG(unused_ struct sSymbol *sym)
+static int32_t Callback_NARG(unused_ struct sSymbol const *sym)
 {
 	uint32_t i = 0;
 
@@ -59,7 +59,7 @@ static int32_t Callback_NARG(unused_ struct sSymbol *sym)
 	return i;
 }
 
-static int32_t Callback__LINE__(unused_ struct sSymbol *sym)
+static int32_t Callback__LINE__(unused_ struct sSymbol const *sym)
 {
 	return nLineNo;
 }
@@ -67,7 +67,7 @@ static int32_t Callback__LINE__(unused_ struct sSymbol *sym)
 /*
  * Get the nValue field of a symbol
  */
-static int32_t getvaluefield(struct sSymbol *sym)
+static int32_t getvaluefield(struct sSymbol const *sym)
 {
 	if (sym->Callback)
 		return sym->Callback(sym);
@@ -102,7 +102,7 @@ static void updateSymbolFilename(struct sSymbol *nsym)
 /*
  * Create a new symbol by name
  */
-static struct sSymbol *createsymbol(char *s)
+static struct sSymbol *createsymbol(char const *s)
 {
 	struct sSymbol **ppsym;
 	uint32_t hash;
@@ -139,8 +139,8 @@ static struct sSymbol *createsymbol(char *s)
  * Creates the full name of a local symbol in a given scope, by prepending
  * the name with the parent symbol's name.
  */
-static void fullSymbolName(char *output, size_t outputSize, char *localName,
-			   const struct sSymbol *scope)
+static void fullSymbolName(char *output, size_t outputSize,
+			   char const *localName, const struct sSymbol *scope)
 {
 	const struct sSymbol *parent = scope->pScope ? scope->pScope : scope;
 	int n = snprintf(output, outputSize, "%s%s", parent->tzName, localName);
@@ -153,7 +153,7 @@ static void fullSymbolName(char *output, size_t outputSize, char *localName,
 /*
  * Find the pointer to a symbol by name and scope
  */
-static struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
+static struct sSymbol **findpsymbol(char const *s, struct sSymbol const *scope)
 {
 	struct sSymbol **ppsym;
 	int32_t hash;
@@ -164,7 +164,7 @@ static struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 		s = fullname;
 	}
 
-	char *separator = strchr(s, '.');
+	char const *separator = strchr(s, '.');
 
 	if (separator) {
 		if (strchr(separator + 1, '.'))
@@ -187,7 +187,7 @@ static struct sSymbol **findpsymbol(char *s, struct sSymbol *scope)
 /*
  * Find a symbol by name and scope
  */
-static struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
+static struct sSymbol *findsymbol(char const *s, struct sSymbol const *scope)
 {
 	struct sSymbol **ppsym = findpsymbol(s, scope);
 
@@ -197,7 +197,7 @@ static struct sSymbol *findsymbol(char *s, struct sSymbol *scope)
 /*
  * Find a symbol by name, with automatically determined scope
  */
-struct sSymbol *sym_FindSymbol(char *tzName)
+struct sSymbol *sym_FindSymbol(char const *tzName)
 {
 	struct sSymbol *pscope;
 
@@ -212,7 +212,7 @@ struct sSymbol *sym_FindSymbol(char *tzName)
 /*
  * Purge a symbol
  */
-void sym_Purge(char *tzName)
+void sym_Purge(char const *tzName)
 {
 	struct sSymbol **ppSym;
 	struct sSymbol *pscope;
@@ -255,9 +255,9 @@ char *sym_GetStringValue(struct sSymbol const *sym)
 /*
  * Return a constant symbols value
  */
-uint32_t sym_GetConstantValue(char *s)
+uint32_t sym_GetConstantValue(char const *s)
 {
-	struct sSymbol *psym = sym_FindSymbol(s);
+	struct sSymbol const *psym = sym_FindSymbol(s);
 
 	if (psym == pPCSymbol) {
 		if (pCurrentSection->nOrg == -1)
@@ -280,9 +280,9 @@ uint32_t sym_GetConstantValue(char *s)
 /*
  * Return a defined symbols value... aborts if not defined yet
  */
-uint32_t sym_GetDefinedValue(char *s)
+uint32_t sym_GetDefinedValue(char const *s)
 {
-	struct sSymbol *psym = sym_FindSymbol(s);
+	struct sSymbol const *psym = sym_FindSymbol(s);
 
 	if (psym != NULL) {
 		if (sym_IsDefined(psym)) {
@@ -366,7 +366,7 @@ void sym_RestoreCurrentMacroArgs(char *save[])
 	}
 }
 
-void sym_AddNewMacroArg(char *s)
+void sym_AddNewMacroArg(char const *s)
 {
 	int32_t i = 0;
 
@@ -402,7 +402,7 @@ void sym_UseCurrentMacroArgs(void)
 /*
  * Find a macro by name
  */
-struct sSymbol *sym_FindMacro(char *s)
+struct sSymbol *sym_FindMacro(char const *s)
 {
 	return findsymbol(s, NULL);
 }
@@ -412,7 +412,7 @@ struct sSymbol *sym_FindMacro(char *s)
  * hasn't already been defined or referenced in a context that would
  * require that it be relocatable
  */
-static struct sSymbol *createNonrelocSymbol(char *tzSym)
+static struct sSymbol *createNonrelocSymbol(char const *tzSym)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
@@ -434,7 +434,7 @@ static struct sSymbol *createNonrelocSymbol(char *tzSym)
 /*
  * Add an equated symbol
  */
-void sym_AddEqu(char *tzSym, int32_t value)
+void sym_AddEqu(char const *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -457,7 +457,7 @@ void sym_AddEqu(char *tzSym, int32_t value)
  * of the string are enough: sym_AddString("M_PI", "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-void sym_AddString(char *tzSym, char const *tzValue)
+void sym_AddString(char const *tzSym, char const *tzValue)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -476,7 +476,7 @@ void sym_AddString(char *tzSym, char const *tzValue)
 /*
  * Alter a SET symbols value
  */
-void sym_AddSet(char *tzSym, int32_t value)
+void sym_AddSet(char const *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
@@ -512,7 +512,7 @@ void sym_AddSet(char *tzSym, int32_t value)
 /*
  * Add a local (.name) relocatable symbol
  */
-void sym_AddLocalReloc(char *tzSym)
+void sym_AddLocalReloc(char const *tzSym)
 {
 	if (pScope) {
 		char fullname[MAXSYMLEN + 1];
@@ -528,7 +528,7 @@ void sym_AddLocalReloc(char *tzSym)
 /*
  * Add a relocatable symbol
  */
-void sym_AddReloc(char *tzSym)
+void sym_AddReloc(char const *tzSym)
 {
 	struct sSymbol *scope = NULL;
 	struct sSymbol *nsym;
@@ -591,7 +591,7 @@ void sym_AddReloc(char *tzSym)
  *
  * It returns 1 if the difference is defined, 0 if not.
  */
-bool sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
+bool sym_IsRelocDiffDefined(char const *tzSym1, char const *tzSym2)
 {
 	const struct sSymbol *nsym1 = sym_FindSymbol(tzSym1);
 	const struct sSymbol *nsym2 = sym_FindSymbol(tzSym2);
@@ -634,7 +634,7 @@ bool sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2)
 /*
  * Export a symbol
  */
-void sym_Export(char *tzSym)
+void sym_Export(char const *tzSym)
 {
 	sym_Ref(tzSym);
 	struct sSymbol *nsym = sym_FindSymbol(tzSym);
@@ -645,7 +645,7 @@ void sym_Export(char *tzSym)
 /*
  * Add a macro definition
  */
-void sym_AddMacro(char *tzSym, int32_t nDefLineNo)
+void sym_AddMacro(char const *tzSym, int32_t nDefLineNo)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -665,7 +665,7 @@ void sym_AddMacro(char *tzSym, int32_t nDefLineNo)
  * Flag that a symbol is referenced in an RPN expression
  * and create it if it doesn't exist yet
  */
-void sym_Ref(char *tzSym)
+void sym_Ref(char const *tzSym)
 {
 	struct sSymbol *nsym = sym_FindSymbol(tzSym);
 

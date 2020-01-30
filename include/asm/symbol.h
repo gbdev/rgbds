@@ -38,7 +38,7 @@ struct sSymbol {
 	int32_t nValue;
 	uint32_t ulMacroSize;
 	char *pMacro;
-	int32_t (*Callback)(struct sSymbol *self);
+	int32_t (*Callback)(struct sSymbol const *self);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t nFileLine; /* Line where the symbol was defined. */
 };
@@ -72,32 +72,32 @@ static inline bool sym_IsExported(struct sSymbol const *sym)
 
 uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(uint8_t set);
-void sym_AddLocalReloc(char *tzSym);
-void sym_AddReloc(char *tzSym);
-void sym_Export(char *tzSym);
+void sym_AddLocalReloc(char const *tzSym);
+void sym_AddReloc(char const *tzSym);
+void sym_Export(char const *tzSym);
 void sym_PrintSymbolTable(void);
-struct sSymbol *sym_FindMacro(char *s);
+struct sSymbol *sym_FindMacro(char const *s);
 void sym_InitNewMacroArgs(void);
-void sym_AddNewMacroArg(char *s);
+void sym_AddNewMacroArg(char const *s);
 void sym_SaveCurrentMacroArgs(char *save[]);
 void sym_RestoreCurrentMacroArgs(char *save[]);
 void sym_UseNewMacroArgs(void);
-void sym_AddEqu(char *tzSym, int32_t value);
-void sym_AddSet(char *tzSym, int32_t value);
+void sym_AddEqu(char const *tzSym, int32_t value);
+void sym_AddSet(char const *tzSym, int32_t value);
 void sym_Init(void);
-uint32_t sym_GetConstantValue(char *s);
-struct sSymbol *sym_FindSymbol(char *tzName);
+uint32_t sym_GetConstantValue(char const *s);
+struct sSymbol *sym_FindSymbol(char const *tzName);
 char *sym_FindMacroArg(int32_t i);
 char *sym_GetStringValue(struct sSymbol const *sym);
 void sym_UseCurrentMacroArgs(void);
 void sym_SetMacroArgID(uint32_t nMacroCount);
-void sym_AddMacro(char *tzSym, int32_t nDefLineNo);
-void sym_Ref(char *tzSym);
+void sym_AddMacro(char const *tzSym, int32_t nDefLineNo);
+void sym_Ref(char const *tzSym);
 void sym_ShiftCurrentMacroArgs(void);
-void sym_AddString(char *tzSym, char const *tzValue);
-uint32_t sym_GetDefinedValue(char *s);
-void sym_Purge(char *tzName);
-bool sym_IsRelocDiffDefined(char *tzSym1, char *tzSym2);
+void sym_AddString(char const *tzSym, char const *tzValue);
+uint32_t sym_GetDefinedValue(char const *s);
+void sym_Purge(char const *tzName);
+bool sym_IsRelocDiffDefined(char const *tzSym1, char const *tzSym2);
 
 /* Functions to save and restore the current symbol scope. */
 struct sSymbol *sym_GetCurrentSymbolScope(void);
