@@ -737,7 +737,8 @@ void sym_Init(void)
 
 	sym_AddSet("_RS", 0);
 
-	if (time(&now) != -1) {
+	now = time(NULL);
+	if (now != (time_t)-1) {
 		const struct tm *time_local = localtime(&now);
 
 		strftime(SavedTIME, sizeof(SavedTIME), "\"%H:%M:%S\"",
@@ -745,13 +746,13 @@ void sym_Init(void)
 		strftime(SavedDATE, sizeof(SavedDATE), "\"%d %B %Y\"",
 			 time_local);
 		strftime(SavedTIMESTAMP_ISO8601_LOCAL,
-			 sizeof(SavedTIMESTAMP_ISO8601_LOCAL), "\"%FT%T%z\"",
+			 sizeof(SavedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H-%M-%S%z\"",
 			 time_local);
 
 		const struct tm *time_utc = gmtime(&now);
 
 		strftime(SavedTIMESTAMP_ISO8601_UTC,
-			 sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%FT%TZ\"",
+			 sizeof(SavedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H-%M-%SZ\"",
 			 time_utc);
 
 		strftime(SavedDAY, sizeof(SavedDAY), "%d", time_utc);
