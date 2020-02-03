@@ -36,6 +36,7 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	WARNING_DISABLED, /* Obsolete things */
 	WARNING_DISABLED, /* Shifting undefined behavior */
 	WARNING_ENABLED,  /* User warnings */
+	WARNING_DISABLED, /* Strange shift amount */
 };
 
 static enum WarningState warningStates[NB_WARNINGS];
@@ -70,6 +71,7 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"obsolete",
 	"shift",
 	"user",
+	"shift-amount",
 
 	/* Meta warnings */
 	"all",
@@ -106,6 +108,7 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_USER,
+	WARNING_SHIFT_AMOUNT,
 	META_WARNING_DONE
 };
 

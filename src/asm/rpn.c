@@ -409,22 +409,59 @@ void rpn_AND(struct Expression *expr, const struct Expression *src1,
 	expr->nRPNPatchSize++;
 }
 
+static int32_t shift(int32_t shiftee, int32_t amount)
+{
+	if (shiftee < 0)
+		warning(WARNING_SHIFT, "Shifting negative value %d", shiftee);
+
+	if (amount >= 0) {
+		// Left shift
+		if (amount >= 32) {
+			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %d",
+				amount);
+			return 0;
+
+		} else {
+			/*
+			 * Use unsigned to force a bitwise shift
+			 * Casting back is OK because the types implement two's
+			 * complement behavior
+			 */
+			return (uint32_t)shiftee << amount;
+		}
+	} else {
+		// Right shift
+		amount = -amount;
+		if (amount >= 32) {
+			warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %d",
+				amount);
+			return shiftee < 0 ? -1 : 0;
+
+		} else if (shiftee >= 0) {
+			return shiftee >> amount;
+
+		} else {
+			/*
+			 * The C standard leaves shifting right negative values
+			 * undefined, so use a left shift manually sign-extended
+			 */
+			return (uint32_t)shiftee >> amount
+				| -((uint32_t)1 << (32 - amount));
+		}
+	}
+}
+
 void rpn_SHL(struct Expression *expr, const struct Expression *src1,
 	     const struct Expression *src2)
 {
 	mergetwoexpressions(expr, src1, src2);
 
 	if (!expr->isReloc) {
-		if (src1->nVal < 0)
-			warning(WARNING_SHIFT, "Left shift of negative value: %d",
-				src1->nVal);
-
 		if (src2->nVal < 0)
-			fatalerror("Shift by negative value: %d", src2->nVal);
-		else if (src2->nVal >= 32)
-			fatalerror("Shift by too big value: %d", src2->nVal);
+			warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
+				src2->nVal);
 
-		expr->nVal = ((uint32_t)src1->nVal << src2->nVal);
+		expr->nVal = shift(src1->nVal, src2->nVal);
 	}
 
 	pushbyte(expr, RPN_SHL);
@@ -438,11 +475,10 @@ void rpn_SHR(struct Expression *expr, const struct Expression *src1,
 
 	if (!expr->isReloc) {
 		if (src2->nVal < 0)
-			fatalerror("Shift by negative value: %d", src2->nVal);
-		else if (src2->nVal >= 32)
-			fatalerror("Shift by too big value: %d", src2->nVal);
+			warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
+				src2->nVal);
 
-		expr->nVal = (src1->nVal >> src2->nVal);
+		expr->nVal = shift(src1->nVal, -src2->nVal);
 	}
 
 	pushbyte(expr, RPN_SHR);
