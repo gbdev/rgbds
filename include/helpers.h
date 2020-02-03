@@ -21,4 +21,8 @@
 	#define trap_
 #endif
 
+#ifndef DEVELOP
+	#define DEVELOP 0
+#endif
+
 #endif /* HELPERS_H */

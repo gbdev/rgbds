@@ -221,7 +221,7 @@ develop:
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
-		-fsanitize=alignment -fsanitize=null"
+		-fsanitize=alignment -fsanitize=null -DDEVELOP=1"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
