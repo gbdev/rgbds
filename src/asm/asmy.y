@@ -31,7 +31,6 @@
 
 #include "extern/utf8decoder.h"
 
-#include "common.h"
 #include "linkdefs.h"
 
 uint32_t nListCountEmpty;

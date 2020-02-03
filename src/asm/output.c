@@ -28,7 +28,6 @@
 
 #include "extern/err.h"
 
-#include "common.h"
 #include "linkdefs.h"
 
 void out_SetCurrentSection(struct Section *pSect);

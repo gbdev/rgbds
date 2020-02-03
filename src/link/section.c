@@ -14,7 +14,6 @@
 #include "extern/err.h"
 
 #include "hashmap.h"
-#include "common.h"
 
 uint16_t startaddr[] = {
 	[SECTTYPE_ROM0]  = 0x0000,

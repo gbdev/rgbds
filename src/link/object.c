@@ -21,7 +21,6 @@
 
 #include "extern/err.h"
 #include "linkdefs.h"
-#include "common.h"
 
 static struct SymbolList {
 	size_t nbSymbols;

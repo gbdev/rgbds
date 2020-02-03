@@ -12,8 +12,6 @@
 
 #include <stdint.h>
 
-#include "common.h"
-
 extern uint64_t nbSectionsToAssign;
 
 /**
