@@ -67,7 +67,8 @@ rgbasm_obj := \
 	src/asm/warning.o \
 	src/extern/err.o \
 	src/extern/getopt.o \
-	src/extern/utf8decoder.o
+	src/extern/utf8decoder.o \
+	src/linkdefs.o
 
 src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
 
@@ -82,7 +83,8 @@ rgblink_obj := \
 	src/link/symbol.o \
 	src/extern/err.o \
 	src/extern/getopt.o \
-	src/hashmap.o
+	src/hashmap.o \
+	src/linkdefs.o
 
 rgbfix_obj := \
 	src/fix/main.o \

@@ -53,29 +53,6 @@ struct Section {
 	struct Symbol const **symbols;
 };
 
-extern uint16_t startaddr[];
-extern uint16_t maxsize[];
-extern uint32_t bankranges[][2];
-extern char const * const typeNames[SECTTYPE_INVALID];
-
-/**
- * Computes a memory region's end address (last byte), eg. 0x7FFF
- * @return The address of the last byte in that memory region
- */
-static inline uint16_t endaddr(enum SectionType type)
-{
-	return startaddr[type] + maxsize[type] - 1;
-}
-
-/**
- * Computes a memory region's number of banks
- * @return The number of banks, 1 for regions without banking
- */
-static inline uint32_t nbbanks(enum SectionType type)
-{
-	return bankranges[type][1] - bankranges[type][0] + 1;
-}
-
 /*
  * Execute a callback for each section currently registered.
  * This is to avoid exposing the data structure in which sections are stored.
