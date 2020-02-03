@@ -41,38 +41,13 @@ int32_t nPCOffset;
 static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
 			   int32_t bank)
 {
-	int32_t minbank = 0, maxbank = 0;
-	char *stype = NULL;
-
-	switch (secttype) {
-	case SECTTYPE_ROMX:
-		stype = "ROMX";
-		minbank = BANK_MIN_ROMX;
-		maxbank = BANK_MAX_ROMX;
-		break;
-	case SECTTYPE_SRAM:
-		stype = "SRAM";
-		minbank = BANK_MIN_SRAM;
-		maxbank = BANK_MAX_SRAM;
-		break;
-	case SECTTYPE_WRAMX:
-		stype = "WRAMX";
-		minbank = BANK_MIN_WRAMX;
-		maxbank = BANK_MAX_WRAMX;
-		break;
-	case SECTTYPE_VRAM:
-		stype = "VRAM";
-		minbank = BANK_MIN_VRAM;
-		maxbank = BANK_MAX_VRAM;
-		break;
-	default:
+	if (secttype != SECTTYPE_ROMX && secttype != SECTTYPE_VRAM
+	 && secttype != SECTTYPE_SRAM && secttype != SECTTYPE_WRAMX)
 		yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
-	}
-
-	if (stype && (bank < minbank || bank > maxbank)) {
+	else if (bank < bankranges[secttype][0] || bank > bankranges[secttype][1])
 		yyerror("%s bank value $%x out of range ($%x to $%x)",
-		        stype, bank, minbank, maxbank);
-	}
+		        typeNames[secttype], bank, bankranges[secttype][0],
+		        bankranges[secttype][1]);
 
 	out_NewAbsSection(name, secttype, org, bank);
 }
