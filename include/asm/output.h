@@ -18,7 +18,6 @@ struct Expression;
 extern char *tzObjectname;
 extern struct Section *pSectionList, *pCurrentSection;
 
-void out_PrepPass2(void);
 void out_SetFileName(char *s);
 void out_CreatePatch(uint32_t type, struct Expression *expr);
 void out_WriteObject(void);
