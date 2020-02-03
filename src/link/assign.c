@@ -135,6 +135,8 @@ static bool isLocationSuitable(struct Section const *section,
 	if (section->isAlignFixed && location->address & section->alignMask)
 		return false;
 
+	if (location->address < freeSpace->address)
+		return false;
 	return location->address + section->size
 					<= freeSpace->address + freeSpace->size;
 }
