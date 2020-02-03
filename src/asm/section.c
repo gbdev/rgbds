@@ -82,13 +82,13 @@ struct Section *out_FindSectionByName(const char *pzName)
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
-static struct Section *findSection(char *pzName, enum SectionType secttype,
+static struct Section *findSection(char const *pzName, enum SectionType type,
 				   int32_t org, int32_t bank, int32_t alignment)
 {
 	struct Section *pSect = out_FindSectionByName(pzName);
 
 	if (pSect) {
-		if (secttype == pSect->nType
+		if (type == pSect->nType
 			&& ((uint32_t)org) == pSect->nOrg
 			&& ((uint32_t)bank) == pSect->nBank
 			&& ((uint32_t)alignment == pSect->nAlign)) {
@@ -105,10 +105,10 @@ static struct Section *findSection(char *pzName, enum SectionType secttype,
 	if (pSect->pzName == NULL)
 		fatalerror("Not enough memory for sectionname");
 
-	if (nbbanks(secttype) == 1)
-		bank = bankranges[secttype][0];
+	if (nbbanks(type) == 1)
+		bank = bankranges[type][0];
 
-	pSect->nType = secttype;
+	pSect->nType = type;
 	pSect->nPC = 0;
 	pSect->nOrg = org;
 	pSect->nBank = bank;
@@ -117,10 +117,10 @@ static struct Section *findSection(char *pzName, enum SectionType secttype,
 	pSect->pPatches = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
-	if (sect_HasData(secttype)) {
+	if (sect_HasData(type)) {
 		uint32_t sectsize;
 
-		sectsize = maxsize[secttype];
+		sectsize = maxsize[type];
 		pSect->tData = malloc(sectsize);
 		if (pSect->tData == NULL)
 			fatalerror("Not enough memory for section");
@@ -156,7 +156,7 @@ static void setCurrentSection(struct Section *pSect)
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char *pzName, uint32_t secttype)
+void out_NewSection(char const *pzName, uint32_t secttype)
 {
 	setCurrentSection(findSection(pzName, secttype, -1, -1, 1));
 }
@@ -164,7 +164,7 @@ void out_NewSection(char *pzName, uint32_t secttype)
 /*
  * Set the current section by name and type
  */
-void out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org,
+void out_NewAbsSection(char const *pzName, uint32_t secttype, int32_t org,
 		       int32_t bank)
 {
 	setCurrentSection(findSection(pzName, secttype, org, bank, 1));
@@ -173,8 +173,8 @@ void out_NewAbsSection(char *pzName, uint32_t secttype, int32_t org,
 /*
  * Set the current section by name and type, using a given byte alignment
  */
-void out_NewAlignedSection(char *pzName, uint32_t secttype, int32_t alignment,
-			   int32_t bank)
+void out_NewAlignedSection(char const *pzName, uint32_t secttype,
+			   int32_t alignment, int32_t bank)
 {
 	if (alignment < 0 || alignment > 16)
 		yyerror("Alignment must be between 0-16 bits.");
@@ -205,7 +205,7 @@ void out_AbsByte(int32_t b)
 	absByteBypassCheck(b);
 }
 
-void out_AbsByteGroup(char *s, int32_t length)
+void out_AbsByteGroup(char const *s, int32_t length)
 {
 	checkcodesection();
 	checksectionoverflow(length);
@@ -237,7 +237,7 @@ void out_Skip(int32_t skip)
 /*
  * Output a NULL terminated string (excluding the NULL-character)
  */
-void out_String(char *s)
+void out_String(char const *s)
 {
 	checkcodesection();
 	checksectionoverflow(strlen(s));
@@ -373,7 +373,7 @@ void out_PCRelByte(struct Expression *expr)
 /*
  * Output a binary file
  */
-void out_BinaryFile(char *s)
+void out_BinaryFile(char const *s)
 {
 	FILE *f;
 
@@ -407,7 +407,7 @@ void out_BinaryFile(char *s)
 	fclose(f);
 }
 
-void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
+void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 {
 	FILE *f;
 
