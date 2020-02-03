@@ -13,9 +13,11 @@
 
 #include "asm/rpn.h"
 
+#include "linkdefs.h"
+
 struct Section {
 	char *pzName;
-	uint8_t nType;
+	enum SectionType nType;
 	uint32_t nPC;
 	uint32_t nOrg;
 	uint32_t nBank;

@@ -110,31 +110,6 @@ void out_PopSection(void)
 	free(pSect);
 }
 
-static uint32_t getmaxsectionsize(uint32_t secttype, char *sectname)
-{
-	switch (secttype) {
-	case SECTTYPE_ROM0:
-		return 0x8000; /* If ROMX sections not used */
-	case SECTTYPE_ROMX:
-		return 0x4000;
-	case SECTTYPE_VRAM:
-		return 0x2000;
-	case SECTTYPE_SRAM:
-		return 0x2000;
-	case SECTTYPE_WRAM0:
-		return 0x2000; /* If WRAMX sections not used */
-	case SECTTYPE_WRAMX:
-		return 0x1000;
-	case SECTTYPE_OAM:
-		return 0xA0;
-	case SECTTYPE_HRAM:
-		return 0x7F;
-	default:
-		break;
-	}
-	errx(1, "Section \"%s\" has an invalid section type.", sectname);
-}
-
 /*
  * Count the number of symbols used in this object
  */
@@ -144,13 +119,12 @@ static uint32_t countsymbols(void)
 	uint32_t count = 0;
 
 	pSym = pPatchSymbols;
-
 	while (pSym) {
 		count++;
 		pSym = pSym->pNext;
 	}
 
-	return (count);
+	return count;
 }
 
 /*
@@ -162,13 +136,12 @@ static uint32_t countsections(void)
 	uint32_t count = 0;
 
 	pSect = pSectionList;
-
 	while (pSect) {
 		count++;
 		pSect = pSect->pNext;
 	}
 
-	return (count);
+	return count;
 }
 
 /*
@@ -185,7 +158,7 @@ static uint32_t countpatches(struct Section *pSect)
 		pPatch = pPatch->pNext;
 	}
 
-	return (r);
+	return r;
 }
 
 /*
@@ -226,8 +199,7 @@ static uint32_t getsectid(struct Section *pSect)
 		sec = sec->pNext;
 	}
 
-	fatalerror("%s: Unknown section", __func__);
-	return (uint32_t)(-1);
+	fatalerror("Unknown section '%s'", pSect->pzName);
 }
 
 /*
@@ -513,12 +485,12 @@ static void checksection(void)
 static void checkcodesection(void)
 {
 	checksection();
-	if (!sect_HasData(pCurrentSection->nType)) {
+
+	if (!sect_HasData(pCurrentSection->nType))
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 			   pCurrentSection->pzName);
-	} else if (nUnionDepth > 0) {
+	else if (nUnionDepth > 0)
 		fatalerror("UNIONs cannot contain code or data");
-	}
 }
 
 /*
@@ -526,8 +498,7 @@ static void checkcodesection(void)
  */
 static void checksectionoverflow(uint32_t delta_size)
 {
-	uint32_t maxSize = getmaxsectionsize(pCurrentSection->nType,
-					     pCurrentSection->pzName);
+	uint32_t maxSize = maxsize[pCurrentSection->nType];
 	uint32_t newSize = pCurrentSection->nPC + delta_size;
 
 	if (newSize > maxSize) {
@@ -623,8 +594,8 @@ struct Section *out_FindSectionByName(const char *pzName)
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
-struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
-				int32_t bank, int32_t alignment)
+struct Section *out_FindSection(char *pzName, enum SectionType secttype,
+				int32_t org, int32_t bank, int32_t alignment)
 {
 	struct Section *pSect = out_FindSectionByName(pzName);
 
@@ -638,7 +609,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 		fatalerror("Section already exists but with a different type");
 	}
 
-	pSect = malloc(sizeof(struct Section));
+	pSect = malloc(sizeof(*pSect));
 	if (pSect == NULL)
 		fatalerror("Not enough memory for section");
 
@@ -646,14 +617,8 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	if (pSect->pzName == NULL)
 		fatalerror("Not enough memory for sectionname");
 
-	// Force the bank to be 0 if that's the only possibility
-	switch (secttype) {
-	case SECTTYPE_ROM0:
-	case SECTTYPE_WRAM0:
-	case SECTTYPE_OAM:
-	case SECTTYPE_HRAM:
-		bank = 0;
-	}
+	if (nbbanks(secttype) == 1)
+		bank = bankranges[secttype][0];
 
 	pSect->nType = secttype;
 	pSect->nPC = 0;
@@ -667,7 +632,7 @@ struct Section *out_FindSection(char *pzName, uint32_t secttype, int32_t org,
 	if (sect_HasData(secttype)) {
 		uint32_t sectsize;
 
-		sectsize = getmaxsectionsize(secttype, pzName);
+		sectsize = maxsize[secttype];
 		pSect->tData = malloc(sectsize);
 		if (pSect->tData == NULL)
 			fatalerror("Not enough memory for section");
