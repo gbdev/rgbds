@@ -21,7 +21,7 @@
 #include "asm/symbol.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
-#include "asm/output.h"
+#include "asm/section.h"
 #include "asm/util.h"
 #include "asm/warning.h"
 
