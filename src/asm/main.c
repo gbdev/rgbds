@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -46,6 +47,10 @@ uint32_t unionStart[128], unionSize[128];
 /* extern int yydebug; */
 
 FILE *dependfile;
+bool oGeneratedMissingIncludes;
+bool oFailedOnMissingInclude;
+bool oGeneratePhonyDeps;
+char *tzTargetFileName;
 
 /*
  * Option stack
@@ -235,8 +240,31 @@ static void opt_ParseDefines(void)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
 }
 
+/* Escapes Make-special chars from a string */
+static char *make_escape(const char *str)
+{
+	char * const escaped_str = malloc(strlen(str) * 2 + 1);
+	char *dest = escaped_str;
+
+	if (escaped_str == NULL)
+		err(1, "%s: Failed to allocate memory", __func__);
+
+	while (*str) {
+		/* All dollars needs to be doubled */
+		if (*str == '$')
+			*dest++ = '$';
+		*dest++ = *str++;
+	}
+	*dest = '\0';
+
+	return escaped_str;
+}
+
 /* Short options */
 static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
+
+/* Variables for the long-only options */
+static int depType; /* Variants of `-M` */
 
 /*
  * Equivalent long options
@@ -249,29 +277,33 @@ static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
  * over short opt matching
  */
 static struct option const longopts[] = {
-	{ "binary-digits",    required_argument, NULL, 'b' },
-	{ "define",           required_argument, NULL, 'D' },
-	{ "export-all",       no_argument,       NULL, 'E' },
-	{ "gfx-chars",        required_argument, NULL, 'g' },
-	{ "halt-without-nop", no_argument,       NULL, 'h' },
-	{ "include",          required_argument, NULL, 'i' },
-	{ "preserve-ld",      no_argument,       NULL, 'L' },
-	{ "dependfile",       required_argument, NULL, 'M' },
-	{ "output",           required_argument, NULL, 'o' },
-	{ "pad-value",        required_argument, NULL, 'p' },
-	{ "recursion-depth",  required_argument, NULL, 'r' },
-	{ "version",          no_argument,       NULL, 'V' },
-	{ "verbose",          no_argument,       NULL, 'v' },
-	{ "warning",          required_argument, NULL, 'W' },
-	{ NULL,               no_argument,       NULL, 0   }
+	{ "binary-digits",    required_argument, NULL,     'b' },
+	{ "define",           required_argument, NULL,     'D' },
+	{ "export-all",       no_argument,       NULL,     'E' },
+	{ "gfx-chars",        required_argument, NULL,     'g' },
+	{ "halt-without-nop", no_argument,       NULL,     'h' },
+	{ "include",          required_argument, NULL,     'i' },
+	{ "preserve-ld",      no_argument,       NULL,     'L' },
+	{ "dependfile",       required_argument, NULL,     'M' },
+	{ "MG",               no_argument,       &depType, 'G' },
+	{ "MP",               no_argument,       &depType, 'P' },
+	{ "MT",               required_argument, &depType, 'T' },
+	{ "MQ",               required_argument, &depType, 'Q' },
+	{ "output",           required_argument, NULL,     'o' },
+	{ "pad-value",        required_argument, NULL,     'p' },
+	{ "recursion-depth",  required_argument, NULL,     'r' },
+	{ "version",          no_argument,       NULL,     'V' },
+	{ "verbose",          no_argument,       NULL,     'v' },
+	{ "warning",          required_argument, NULL,     'W' },
+	{ NULL,               no_argument,       NULL,     0   }
 };
 
 static void print_usage(void)
 {
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
-"              [-M depend_file] [-o out_file] [-p pad_value] [-r depth]\n"
-"              [-W warning] <file> ...\n"
+"              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
+"              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file> ...\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -306,6 +338,11 @@ int main(int argc, char *argv[])
 	/* yydebug=1; */
 
 	nMaxRecursionDepth = 64;
+	oGeneratePhonyDeps = false;
+	oGeneratedMissingIncludes = false;
+	oFailedOnMissingInclude = false;
+	tzTargetFileName = NULL;
+	size_t nTargetFileNameLen = 0;
 
 	DefaultOptions.gbgfx[0] = '0';
 	DefaultOptions.gbgfx[1] = '1';
@@ -361,10 +398,13 @@ int main(int argc, char *argv[])
 			newopt.optimizeloads = false;
 			break;
 		case 'M':
-			dependfile = fopen(optarg, "w");
+			if (!strcmp("-", optarg))
+				dependfile = stdout;
+			else
+				dependfile = fopen(optarg, "w");
 			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s", optarg);
-
+				err(1, "Could not open dependfile %s",
+				    optarg);
 			break;
 		case 'o':
 			out_SetFileName(optarg);
@@ -397,6 +437,45 @@ int main(int argc, char *argv[])
 		case 'w':
 			newopt.warnings = false;
 			break;
+
+		/* Long-only options */
+		case 0:
+			if (depType) {
+				switch (depType) {
+				case 'G':
+					oGeneratedMissingIncludes = true;
+					break;
+				case 'P':
+					oGeneratePhonyDeps = true;
+					break;
+				case 'Q':
+				case 'T':
+					if (optind == argc)
+						errx(1, "-M%c takes a target file name argument",
+						     depType);
+					ep = optarg;
+					if (depType == 'Q')
+						ep = make_escape(ep);
+
+					nTargetFileNameLen += strlen(ep) + 1;
+					tzTargetFileName =
+						realloc(tzTargetFileName,
+							nTargetFileNameLen + 1);
+					if (tzTargetFileName == NULL)
+						err(1, "Cannot append new file to target file list");
+					strcat(tzTargetFileName, ep);
+					if (depType == 'Q')
+						free(ep);
+					char *ptr = tzTargetFileName +
+						strlen(tzTargetFileName);
+					*ptr++ = ' ';
+					*ptr = '\0';
+					break;
+				}
+			}
+			break;
+
+		/* Unrecognized options */
 		default:
 			print_usage();
 			/* NOTREACHED */
@@ -404,6 +483,9 @@ int main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (tzTargetFileName == NULL)
+		tzTargetFileName = tzObjectname;
 
 	opt_SetCurrentOptions(&newopt);
 
@@ -422,10 +504,10 @@ int main(int argc, char *argv[])
 		printf("Assembling %s\n", tzMainfile);
 
 	if (dependfile) {
-		if (!tzObjectname)
-			errx(1, "Dependency files can only be created if an output object file is specified.\n");
+		if (!tzTargetFileName)
+			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT.\n");
 
-		fprintf(dependfile, "%s: %s\n", tzObjectname, tzMainfile);
+		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
 
 	nStartClock = clock();
@@ -447,6 +529,8 @@ int main(int argc, char *argv[])
 
 	if (yyparse() != 0 || nbErrors != 0)
 		errx(1, "Assembly aborted (%ld errors)!", nbErrors);
+	if (dependfile)
+		fclose(dependfile);
 
 	if (nIFDepth != 0)
 		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
@@ -470,6 +554,9 @@ int main(int argc, char *argv[])
 			printf("(%d lines/minute)\n",
 			       (int)(60 / timespent * nTotalLines));
 	}
+
+	if (oFailedOnMissingInclude)
+		return 0;
 
 	/* If no path specified, don't write file */
 	if (tzObjectname != NULL)

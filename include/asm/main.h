@@ -35,6 +35,10 @@ extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;
 
 extern FILE *dependfile;
+extern char *tzTargetFileName;
+extern bool oGeneratedMissingIncludes;
+extern bool oFailedOnMissingInclude;
+extern bool oGeneratePhonyDeps;
 
 void opt_Push(void);
 void opt_Pop(void);

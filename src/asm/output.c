@@ -880,8 +880,13 @@ void out_BinaryFile(char *s)
 	FILE *f;
 
 	f = fstk_FindFile(s, NULL);
-	if (f == NULL)
+	if (f == NULL) {
+		if (oGeneratedMissingIncludes) {
+			oFailedOnMissingInclude = true;
+			return;
+		}
 		err(1, "Unable to open incbin file '%s'", s);
+	}
 
 	int32_t fsize;
 
@@ -915,8 +920,13 @@ void out_BinaryFileSlice(char *s, int32_t start_pos, int32_t length)
 		fatalerror("Number of bytes to read must be greater than zero");
 
 	f = fstk_FindFile(s, NULL);
-	if (f == NULL)
+	if (f == NULL) {
+		if (oGeneratedMissingIncludes) {
+			oFailedOnMissingInclude = true;
+			return;
+		}
 		err(1, "Unable to open included file '%s'", s);
+	}
 
 	int32_t fsize;
 
