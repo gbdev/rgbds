@@ -281,13 +281,12 @@ static void placeSection(struct Section *section)
 			/* Set the original space's new parameters */
 			freeSpace->size = section->org - freeSpace->address;
 			/* address is unmodified */
-		} else if (noLeftSpace) {
-			/* The free space is only moved and resized */
-			freeSpace->address += section->size;
-			freeSpace->size -= section->size;
 		} else {
-			/* The free space is only resized */
+			/* The amount of free spaces doesn't change: resize! */
 			freeSpace->size -= section->size;
+			if (noLeftSpace)
+				/* The free space is moved *and* resized */
+				freeSpace->address += section->size;
 		}
 		return;
 	}
