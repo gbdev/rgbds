@@ -2065,9 +2065,10 @@ z80_rrca	: T_Z80_RRCA
 
 z80_rst		: T_Z80_RST const_8bit
 		{
-			if (rpn_isReloc(&$2))
-				yyerror("Address for RST must be absolute");
-			else if (($2.nVal & 0x38) != $2.nVal)
+			if (rpn_isReloc(&$2)) {
+				rpn_CheckRST(&$2, &$2);
+				out_RelByte(&$2);
+			} else if (($2.nVal & 0x38) != $2.nVal)
 				yyerror("Invalid address $%x for RST", $2.nVal);
 			else
 				out_AbsByte(0xC7 | $2.nVal);

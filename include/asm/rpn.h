@@ -74,5 +74,6 @@ void rpn_BankSelf(struct Expression *expr);
 void rpn_Init(struct Expression *expr);
 void rpn_Free(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
+void rpn_CheckRST(struct Expression *expr, const struct Expression *src);
 
 #endif /* RGBDS_ASM_RPN_H */

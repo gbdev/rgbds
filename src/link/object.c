@@ -334,12 +334,39 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 }
 
 /**
- * Reads a RGB6 object file.
- * @param file The file to read from
- * @param fileName The filename to report in errors
+ * Reads an object file of any supported format
+ * @param fileName The filename to report for errors
  */
-static void readRGB6File(FILE *file, char const *fileName)
+void obj_ReadFile(char const *fileName)
 {
+	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
+
+	if (!file)
+		err(1, "Could not open file %s", fileName);
+
+	/* Begin by reading the magic bytes and version number */
+	uint8_t versionNumber;
+	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
+				  &versionNumber);
+
+	if (matchedElems != 1)
+		errx(1, "\"%s\" is not a RGBDS object file", fileName);
+
+	verbosePrint("Reading object file %s, version %hhu\n",
+		     fileName, versionNumber);
+
+	if (versionNumber != RGBDS_OBJECT_VERSION_NUMBER)
+		errx(1, "\"%s\" is an incompatible version %hhu object file",
+		     fileName, versionNumber);
+
+	uint32_t revNum;
+
+	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
+		    fileName);
+	if (revNum != RGBDS_OBJECT_REV)
+		errx(1, "%s is a revision 0x%04x object file, only 0x%04x is supported",
+		     fileName, revNum, RGBDS_OBJECT_REV);
+
 	uint32_t nbSymbols;
 	uint32_t nbSections;
 
@@ -424,37 +451,6 @@ static void readRGB6File(FILE *file, char const *fileName)
 			linkSymToSect(fileSymbols[i], fileSections[sectionID]);
 		}
 	}
-}
-
-/**
- * Reads an object file of any supported format
- * @param fileName The filename to report for errors
- */
-void obj_ReadFile(char const *fileName)
-{
-	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
-
-	if (!file) {
-		err(1, "Could not open file %s", fileName);
-		return;
-	}
-
-	/* Begin by reading the magic bytes and version number */
-	uint8_t versionNumber;
-	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
-				  &versionNumber);
-
-	if (matchedElems != 1)
-		errx(1, "\"%s\" is not a RGBDS object file", fileName);
-	/* TODO: support other versions? */
-	if (versionNumber != 6)
-		errx(1, "\"%s\" is an incompatible version %hhu object file",
-		     fileName, versionNumber);
-
-	verbosePrint("Reading object file %s, version %hhu\n",
-		     fileName, versionNumber);
-
-	readRGB6File(file, fileName);
 
 	fclose(file);
 }

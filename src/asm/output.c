@@ -542,6 +542,7 @@ void out_WriteObject(void)
 		fatalerror("Couldn't write file '%s'\n", tzObjectname);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
+	fputlong(RGBDS_OBJECT_REV, f);
 
 	fputlong(countsymbols(), f);
 	fputlong(countsections(), f);

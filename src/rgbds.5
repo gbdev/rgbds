@@ -33,7 +33,8 @@ is a 0‐terminated string of
 .Bd -literal
 ; Header
 
-BYTE    ID[4]            ; "RGB6"
+BYTE    ID[4]            ; "RGB9"
+LONG    RevisionNumber   ; The format's revision number this file uses
 LONG    NumberOfSymbols  ; The number of symbols used in this file
 LONG    NumberOfSections ; The number of sections used in this file
 
@@ -170,7 +171,9 @@ Symbol ID follows.
 a null-terminated string follows.
 .It Li $52 Ta Li Current BANK()
 .It Li $60 Ta Li HRAMCheck .
-Checks if the value is in HRAM, AND it with 0xFF.
+Checks if the value is in HRAM, ANDs it with 0xFF.
+.It Li $61 Ta Li RSTCheck .
+Checks if the value is a RST vector, ORs it with 0xC7.
 .It Li $80 Ta Ar LONG
 integer follows.
 .It Li $81 Ta Ar LONG
