@@ -159,6 +159,8 @@ static void setCurrentSection(struct Section *pSect)
 void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
 		    struct SectionSpec const *attributes)
 {
+	uint32_t align = 1 << attributes->alignment;
+
 	if (attributes->bank != -1) {
 		if (secttype != SECTTYPE_ROMX && secttype != SECTTYPE_VRAM
 		 && secttype != SECTTYPE_SRAM && secttype != SECTTYPE_WRAMX)
@@ -169,6 +171,26 @@ void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
 				typeNames[secttype], attributes->bank,
 				bankranges[secttype][0],
 				bankranges[secttype][1]);
+	}
+
+	if (align != 1) {
+		/* It doesn't make sense to have both set */
+		uint32_t mask = align - 1;
+
+		if (org != -1) {
+			if (org & mask)
+				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
+					pzName);
+			else
+				align = 1; /* Ignore it if it's satisfied */
+		}
+	}
+
+	if (org != -1) {
+		if (org < startaddr[secttype] || org > endaddr(secttype))
+			yyerror("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+				pzName, org, startaddr[secttype],
+				endaddr(secttype));
 	}
 
 	setCurrentSection(findSection(pzName, secttype, org, attributes->bank,
