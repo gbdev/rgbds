@@ -17,12 +17,14 @@ struct Section {
 	uint8_t *tData;
 };
 
+struct SectionSpec {
+	int32_t bank;
+	int32_t alignment;
+};
+
 struct Section *out_FindSectionByName(const char *pzName);
-void out_NewSection(char const *pzName, uint32_t secttype);
-void out_NewAbsSection(char const *pzName, uint32_t secttype, int32_t org,
-		       int32_t bank);
-void out_NewAlignedSection(char const *pzName, uint32_t secttype,
-			   int32_t alignment, int32_t bank);
+void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
+		    struct SectionSpec const *attributes);
 
 void out_AbsByte(int32_t b);
 void out_AbsByteGroup(char const *s, int32_t length);

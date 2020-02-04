@@ -156,31 +156,23 @@ static void setCurrentSection(struct Section *pSect)
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char const *pzName, uint32_t secttype)
+void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
+		    struct SectionSpec const *attributes)
 {
-	setCurrentSection(findSection(pzName, secttype, -1, -1, 1));
-}
+	if (attributes->bank != -1) {
+		if (secttype != SECTTYPE_ROMX && secttype != SECTTYPE_VRAM
+		 && secttype != SECTTYPE_SRAM && secttype != SECTTYPE_WRAMX)
+			yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
+		else if (attributes->bank < bankranges[secttype][0]
+		      || attributes->bank > bankranges[secttype][1])
+			yyerror("%s bank value $%x out of range ($%x to $%x)",
+				typeNames[secttype], attributes->bank,
+				bankranges[secttype][0],
+				bankranges[secttype][1]);
+	}
 
-/*
- * Set the current section by name and type
- */
-void out_NewAbsSection(char const *pzName, uint32_t secttype, int32_t org,
-		       int32_t bank)
-{
-	setCurrentSection(findSection(pzName, secttype, org, bank, 1));
-}
-
-/*
- * Set the current section by name and type, using a given byte alignment
- */
-void out_NewAlignedSection(char const *pzName, uint32_t secttype,
-			   int32_t alignment, int32_t bank)
-{
-	if (alignment < 0 || alignment > 16)
-		yyerror("Alignment must be between 0-16 bits.");
-
-	setCurrentSection(findSection(pzName, secttype, -1, bank,
-				      1 << alignment));
+	setCurrentSection(findSection(pzName, secttype, org, attributes->bank,
+				      1 << attributes->alignment));
 }
 
 /*

@@ -37,20 +37,6 @@ char *tzNewMacro;
 uint32_t ulNewMacroSize;
 int32_t nPCOffset;
 
-static void bankrangecheck(char *name, uint32_t secttype, int32_t org,
-			   int32_t bank)
-{
-	if (secttype != SECTTYPE_ROMX && secttype != SECTTYPE_VRAM
-	 && secttype != SECTTYPE_SRAM && secttype != SECTTYPE_WRAMX)
-		yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
-	else if (bank < bankranges[secttype][0] || bank > bankranges[secttype][1])
-		yyerror("%s bank value $%x out of range ($%x to $%x)",
-		        typeNames[secttype], bank, bankranges[secttype][0],
-		        bankranges[secttype][1]);
-
-	out_NewAbsSection(name, secttype, org, bank);
-}
-
 size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 			const char *mode)
 {
@@ -509,6 +495,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	char tzString[MAXSTRLEN + 1];
 	struct Expression sVal;
 	int32_t nConstValue;
+	struct SectionSpec sectSpec;
 }
 
 %type	<sVal>		relocconst
@@ -520,6 +507,9 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
+
+%type	<nConstValue>	sectorg
+%type	<sectSpec>	sectattrs
 
 %token	<nConstValue>	T_NUMBER
 %token	<tzString>	T_STRING
@@ -1384,38 +1374,9 @@ string		: T_STRING
 		}
 ;
 
-section		: T_POP_SECTION string comma sectiontype
+section		: T_POP_SECTION string comma sectiontype sectorg sectattrs
 		{
-			out_NewSection($2, $4);
-		}
-		| T_POP_SECTION string comma sectiontype '[' uconst ']'
-		{
-			if (($6 >= 0) && ($6 < 0x10000))
-				out_NewAbsSection($2, $4, $6, -1);
-			else
-				yyerror("Address $%x not 16-bit", $6);
-		}
-		| T_POP_SECTION string comma sectiontype comma T_OP_ALIGN '[' uconst ']'
-		{
-			out_NewAlignedSection($2, $4, $8, -1);
-		}
-		| T_POP_SECTION string comma sectiontype comma T_OP_BANK '[' uconst ']'
-		{
-			bankrangecheck($2, $4, -1, $8);
-		}
-		| T_POP_SECTION string comma sectiontype '[' uconst ']' comma T_OP_BANK '[' uconst ']'
-		{
-			if (($6 < 0) || ($6 > 0x10000))
-				yyerror("Address $%x not 16-bit", $6);
-			bankrangecheck($2, $4, $6, $11);
-		}
-		| T_POP_SECTION string comma sectiontype comma T_OP_ALIGN '[' uconst ']' comma T_OP_BANK '[' uconst ']'
-		{
-			out_NewAlignedSection($2, $4, $8, $13);
-		}
-		| T_POP_SECTION string comma sectiontype comma T_OP_BANK '[' uconst ']' comma T_OP_ALIGN '[' uconst ']'
-		{
-			out_NewAlignedSection($2, $4, $13, $8);
+			out_NewSection($2, $4, $5, &$6);
 		}
 ;
 
@@ -1446,6 +1407,36 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		{
 			warning(WARNING_OBSOLETE, "BSS section name is deprecated, use WRAM0 instead.");
 			$$ = SECTTYPE_WRAM0;
+		}
+;
+
+sectorg		: { $$ = -1; }
+		| '[' uconst ']'
+		{
+			if ($2 < 0 || $2 >= 0x10000)
+				yyerror("Address $%x is not 16-bit", $2);
+			else
+				$$ = $2;
+		}
+;
+
+sectattrs	:
+		{
+			$$.alignment = 0;
+			$$.bank = -1;
+		}
+		| sectattrs comma T_OP_ALIGN '[' uconst ']'
+		{
+			if ($5 < 0 || $5 > 16)
+				yyerror("Alignment must be between 0 and 16 bits, not %u",
+					$5);
+			else
+				$$.alignment = $5;
+		}
+		| sectattrs comma T_OP_BANK '[' uconst ']'
+		{
+			/* We cannot check the validity of this now */
+			$$.bank = $5;
 		}
 ;
 

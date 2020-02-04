@@ -17,7 +17,7 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
-#include "asm/symbol.h"
+#include "asm/section.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
