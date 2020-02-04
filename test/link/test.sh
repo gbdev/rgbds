@@ -7,6 +7,18 @@ gbtemp2=$(mktemp)
 outtemp=$(mktemp)
 rc=0
 
+bold=$(tput bold)
+resbold=$(tput sgr0)
+red=$(tput setaf 1)
+rescolors=$(tput op)
+tryDiff () {
+	diff -u --strip-trailing-cr $1 $2 || (echo -e "${bold}${red}${i%.asm}.out mismatch!${rescolors}${resbold}"; false)
+}
+
+tryCmp () {
+	cmp $1 $2 || (echo -e "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
+}
+
 RGBASM=../../rgbasm
 RGBLINK=../../rgblink
 
@@ -18,13 +30,13 @@ for i in *.asm; do
 	for flag in '-d' '-t' '-w'; do
 		if [ -f ${i%.asm}-no${flag}.out ]; then
 			$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
-			diff --strip-trailing-cr ${i%.asm}-no${flag}.out $outtemp
+			tryDiff ${i%.asm}-no${flag}.out $outtemp
 			rc=$(($? || $rc))
 			ran_flag=1
 		fi
 		if [ -f ${i%.asm}${flag}.out ]; then
 			$RGBLINK ${flag} -o $gbtemp $otemp > $outtemp 2>&1
-			diff --strip-trailing-cr ${i%.asm}${flag}.out $outtemp
+			tryDiff ${i%.asm}${flag}.out $outtemp
 			rc=$(($? || $rc))
 			ran_flag=1
 		fi
@@ -36,7 +48,7 @@ for i in *.asm; do
 	# Other tests have several linker scripts
 	for script in `find . -name "${i%.asm}*.link"`; do
 		$RGBLINK -l $script -o $gbtemp $otemp > $outtemp 2>&1
-		diff --strip-trailing-cr ${script%.link}.out $outtemp
+		tryDiff ${script%.link}.out $outtemp
 		rc=$(($? || $rc))
 		ran_flag=1
 	done
@@ -47,14 +59,14 @@ for i in *.asm; do
 	# The rest of the tests just links a file, and maybe checks the binary
 	$RGBLINK -o $gbtemp $otemp > $outtemp 2>&1
 	if [ -f ${i%.asm}.out ]; then
-		diff --strip-trailing-cr ${i%.asm}.out $outtemp
+		tryDiff ${i%.asm}.out $outtemp
 		rc=$(($? || $rc))
 	fi
 
 	bin=${i%.asm}.out.bin
 	if [ -f $bin ]; then
 		dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < $bin)) > $otemp 2>/dev/null
-		cmp $bin $otemp
+		tryCmp $bin $otemp
 		rc=$(($? || $rc))
 	fi
 done
@@ -64,7 +76,7 @@ $RGBASM -o $otemp high-low/a.asm
 $RGBLINK -o $gbtemp $otemp
 $RGBASM -o $otemp high-low/b.asm
 $RGBLINK -o $gbtemp2 $otemp
-diff --strip-trailing-cr $gbtemp $gbtemp2
+i="high-low.asm" tryDiff $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
 rm -f $otemp $gbtemp $gbtemp2 $outtemp
