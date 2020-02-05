@@ -1190,7 +1190,7 @@ constlist_32bit_entry : /* empty */
 const_8bit	: relocconst
 		{
 			if( (!rpn_isReloc(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
-				yyerror("Expression must be 8-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 			$$ = $1;
 		}
 ;
@@ -1198,7 +1198,7 @@ const_8bit	: relocconst
 const_16bit	: relocconst
 		{
 			if ((!rpn_isReloc(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
-				yyerror("Expression must be 16-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 16-bit");
 			$$ = $1;
 		}
 ;
