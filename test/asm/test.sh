@@ -17,7 +17,7 @@ tryDiff () {
 }
 
 tryCmp () {
-	cmp $1 $2 || (echo -e "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
+	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo -e "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
 }
 
 for i in *.asm; do
