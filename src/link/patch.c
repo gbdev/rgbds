@@ -110,8 +110,8 @@ static inline void freeRPNStack(void)
 
 /* RPN operators */
 
-static uint8_t getRPNByte(uint8_t const **expression, int32_t *size,
-			  char const *fileName, int32_t lineNo)
+static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
+			   char const *fileName, int32_t lineNo)
 {
 	if (!(*size)--)
 		errx(1, "%s(%d): RPN expression overread", fileName, lineNo);
