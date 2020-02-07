@@ -23,6 +23,9 @@ struct Expression {
 	uint32_t isReloc;
 };
 
+/* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
+extern int32_t nPCOffset;
+
 uint32_t rpn_isReloc(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);

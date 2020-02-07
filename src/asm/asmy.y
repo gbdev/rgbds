@@ -1206,37 +1206,7 @@ const_16bit	: relocconst
 
 relocconst	: T_ID
 		{
-			/*
-			 * The value of @ needs to be evaluated by the linker,
-			 * it can only be calculated by the assembler in very
-			 * few cases (when the base address of a section is
-			 * known).
-			 *
-			 * '@' is a bit special in that it means different
-			 * things depending on when it is used:
-			 *
-			 * - JR/LD/ADD/etc: It refers to the first byte of the
-			 *   instruction (1 byte offset relative to the value
-			 *   stored in the ROM).
-			 * - DB/DW/DL: It refers to the address of the value
-			 *   that is being saved (0 byte offset relative to the
-			 *   value stored in the ROM.
-			 *
-			 * This offset must be added whenever '@' is added to a
-			 * RPN expression so that the linker can calculate the
-			 * correct result of any expression that uses '@'.
-			 */
-			if ((strcmp($1, "@") == 0) && (nPCOffset != 0)) {
-				struct Expression sTemp, sOffset;
-
-				rpn_Symbol(&sTemp, $1);
-
-				rpn_Number(&sOffset, nPCOffset);
-
-				rpn_SUB(&$$, &sTemp, &sOffset);
-			} else {
-				rpn_Symbol(&$$, $1);
-			}
+			rpn_Symbol(&$$, $1);
 		}
 		| T_NUMBER
 		{

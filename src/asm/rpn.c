@@ -154,6 +154,14 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 			pushbyte(expr, *tzSym++);
 		pushbyte(expr, 0);
 		expr->nRPNPatchSize += 5;
+
+		/* RGBLINK assumes PC is at the byte being computed... */
+		if (sym == pPCSymbol && nPCOffset) {
+			struct Expression pc = *expr, offset;
+
+			rpn_Number(&offset, nPCOffset);
+			rpn_SUB(expr, &pc, &offset);
+		}
 	} else {
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
 	}
