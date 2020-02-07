@@ -235,3 +235,8 @@ jrlabel:
     nop
     scf
     stop
+BYTE = 0
+REPT 256
+    stop BYTE
+BYTE = BYTE + 1
+ENDR

@@ -2126,6 +2126,11 @@ z80_stop	: T_Z80_STOP
 			out_AbsByte(0x10);
 			out_AbsByte(0x00);
 		}
+		| T_Z80_STOP const_8bit
+		{
+			out_AbsByte(0x10);
+			out_RelByte(&$2);
+		}
 ;
 
 z80_sub		: T_Z80_SUB op_a_n
