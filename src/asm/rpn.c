@@ -139,7 +139,9 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		expr->isSymbol = true;
 
 		sym_Ref(tzSym);
-		makeUnknown(expr, "'%s' is not constant at assembly time",
+		makeUnknown(expr, strcmp(tzSym, "@")
+				      ? "'%s' is not constant at assembly time"
+				      : "PC is not constant at assembly time",
 			    tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
