@@ -148,7 +148,6 @@ static void setCurrentSection(struct Section *pSect)
 	pCurrentSection = pSect;
 	nPC = (pSect != NULL) ? pSect->nPC : 0;
 
-	pPCSymbol->nValue = nPC;
 	pPCSymbol->pSection = pCurrentSection;
 	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
 }
@@ -207,7 +206,6 @@ static void absByteBypassCheck(int32_t b)
 	pCurrentSection->tData[nPC] = b;
 	pCurrentSection->nPC++;
 	nPC++;
-	pPCSymbol->nValue++;
 }
 
 /*
@@ -237,7 +235,6 @@ void out_Skip(int32_t skip)
 	if (!sect_HasData(pCurrentSection->nType)) {
 		pCurrentSection->nPC += skip;
 		nPC += skip;
-		pPCSymbol->nValue += skip;
 	} else if (nUnionDepth > 0) {
 		while (skip--)
 			absByteBypassCheck(CurrentOptions.fillchar);
@@ -272,7 +269,6 @@ void out_RelByte(struct Expression *expr)
 		out_CreatePatch(PATCHTYPE_BYTE, expr);
 		pCurrentSection->nPC++;
 		nPC++;
-		pPCSymbol->nValue++;
 	} else {
 		out_AbsByte(expr->nVal);
 	}
@@ -291,7 +287,6 @@ static void absWord(int32_t b)
 	pCurrentSection->tData[nPC + 1] = b >> 8;
 	pCurrentSection->nPC += 2;
 	nPC += 2;
-	pPCSymbol->nValue += 2;
 }
 
 /*
@@ -308,7 +303,6 @@ void out_RelWord(struct Expression *expr)
 		out_CreatePatch(PATCHTYPE_WORD, expr);
 		pCurrentSection->nPC += 2;
 		nPC += 2;
-		pPCSymbol->nValue += 2;
 	} else {
 		absWord(expr->nVal);
 	}
@@ -328,7 +322,6 @@ static void absLong(int32_t b)
 	pCurrentSection->tData[nPC + 3] = b >> 24;
 	pCurrentSection->nPC += 4;
 	nPC += 4;
-	pPCSymbol->nValue += 4;
 }
 
 /*
@@ -347,7 +340,6 @@ void out_RelLong(struct Expression *expr)
 		out_CreatePatch(PATCHTYPE_LONG, expr);
 		pCurrentSection->nPC += 4;
 		nPC += 4;
-		pPCSymbol->nValue += 4;
 	} else {
 		absLong(expr->nVal);
 	}
@@ -367,7 +359,6 @@ void out_PCRelByte(struct Expression *expr)
 		out_CreatePatch(PATCHTYPE_JR, expr);
 		pCurrentSection->nPC++;
 		nPC++;
-		pPCSymbol->nValue++;
 	} else {
 		/* Target is relative to the byte *after* the operand */
 		uint16_t address = pCurrentSection->nOrg + nPC + 1;
@@ -417,7 +408,6 @@ void out_BinaryFile(char const *s)
 
 	pCurrentSection->nPC += fsize;
 	nPC += fsize;
-	pPCSymbol->nValue += fsize;
 	fclose(f);
 }
 
@@ -464,7 +454,6 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 
 	pCurrentSection->nPC += length;
 	nPC += length;
-	pPCSymbol->nValue += length;
 
 	fclose(f);
 }

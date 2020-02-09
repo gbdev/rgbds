@@ -64,6 +64,11 @@ static int32_t Callback__LINE__(unused_ struct sSymbol const *sym)
 	return nLineNo;
 }
 
+static int32_t CallbackPC(struct sSymbol const *self)
+{
+	return self->pSection ? self->pSection->nOrg + self->pSection->nPC : 0;
+}
+
 /*
  * Get the nValue field of a symbol
  */
@@ -722,6 +727,7 @@ void sym_Init(void)
 
 	sym_AddReloc("@");
 	pPCSymbol = findsymbol("@", NULL);
+	pPCSymbol->Callback = CallbackPC;
 	sym_AddEqu("_NARG", 0);
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;

@@ -405,7 +405,6 @@ static void updateUnion(void)
 
 	nPC = unionStart[unionIndex];
 	pCurrentSection->nPC = unionStart[unionIndex];
-	pPCSymbol->nValue = unionStart[unionIndex];
 }
 
 static size_t strlenUTF8(const char *s)
@@ -858,7 +857,6 @@ endu		: T_POP_ENDU
 			nUnionDepth--;
 			nPC = unionStart[nUnionDepth] + unionSize[nUnionDepth];
 			pCurrentSection->nPC = nPC;
-			pPCSymbol->nValue = nPC;
 		}
 ;
 
