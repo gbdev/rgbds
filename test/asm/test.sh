@@ -58,9 +58,7 @@ for i in *.asm; do
 		if [ -f $bin ]; then
 			../../rgblink -o $gb $o > $output 2>&1
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
-			hexdump -C $output > $input && mv $input $output
-			hexdump -C $bin > $input
-			tryCmp $input $output
+			tryCmp $bin $output
 			our_rc=$(($? || $our_rc))
 		fi
 
