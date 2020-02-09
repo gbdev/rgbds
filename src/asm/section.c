@@ -201,7 +201,6 @@ void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
  */
 static void absByteBypassCheck(int32_t b)
 {
-	checksectionoverflow(1);
 	b &= 0xFF;
 	pCurrentSection->tData[nPC] = b;
 	pCurrentSection->nPC++;
@@ -214,6 +213,7 @@ static void absByteBypassCheck(int32_t b)
 void out_AbsByte(int32_t b)
 {
 	checkcodesection();
+	checksectionoverflow(1);
 	absByteBypassCheck(b);
 }
 
