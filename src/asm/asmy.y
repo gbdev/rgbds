@@ -999,7 +999,12 @@ incbin		: T_POP_INCBIN string
 
 charmap		: T_POP_CHARMAP string comma const
 		{
-			if (charmap_Add($2, constexpr_GetConstantValue(&$4) & 0xFF) == -1) {
+			int32_t value = constexpr_GetConstantValue(&$4);
+
+			if ((value & 0xFF) != value)
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
+
+			if (charmap_Add($2, value & 0xFF) == -1) {
 				fprintf(stderr, "Error parsing charmap. Either you've added too many (%i), or the input character length is too long (%i)' : %s\n", MAXCHARMAPS, CHARMAPLENGTH, strerror(errno));
 				yyerror("Error parsing charmap.");
 			}
