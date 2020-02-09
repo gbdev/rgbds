@@ -261,15 +261,11 @@ void out_String(char const *s)
  */
 void out_RelByte(struct Expression *expr)
 {
-	checkcodesection();
-	checksectionoverflow(1);
 	if (!rpn_isKnown(expr)) {
-		pCurrentSection->tData[nPC] = 0;
 		out_CreatePatch(PATCHTYPE_BYTE, expr);
-		pCurrentSection->nPC++;
-		nPC++;
+		out_AbsByte(0);
 	} else {
-		absByteBypassCheck(expr->nVal);
+		out_AbsByte(expr->nVal);
 	}
 	rpn_Free(expr);
 }
@@ -293,14 +289,9 @@ static void absWord(uint16_t b)
  */
 void out_RelWord(struct Expression *expr)
 {
-	checkcodesection();
-	checksectionoverflow(2);
 	if (!rpn_isKnown(expr)) {
-		pCurrentSection->tData[nPC] = 0;
-		pCurrentSection->tData[nPC + 1] = 0;
 		out_CreatePatch(PATCHTYPE_WORD, expr);
-		pCurrentSection->nPC += 2;
-		nPC += 2;
+		absWord(0);
 	} else {
 		absWord(expr->nVal);
 	}
@@ -313,7 +304,7 @@ void out_RelWord(struct Expression *expr)
 static void absLong(uint32_t b)
 {
 	checkcodesection();
-	checksectionoverflow(sizeof(int32_t));
+	checksectionoverflow(4);
 	pCurrentSection->tData[nPC] = b & 0xFF;
 	pCurrentSection->tData[nPC + 1] = b >> 8;
 	pCurrentSection->tData[nPC + 2] = b >> 16;
@@ -328,16 +319,9 @@ static void absLong(uint32_t b)
  */
 void out_RelLong(struct Expression *expr)
 {
-	checkcodesection();
-	checksectionoverflow(4);
 	if (!rpn_isKnown(expr)) {
-		pCurrentSection->tData[nPC] = 0;
-		pCurrentSection->tData[nPC + 1] = 0;
-		pCurrentSection->tData[nPC + 2] = 0;
-		pCurrentSection->tData[nPC + 3] = 0;
 		out_CreatePatch(PATCHTYPE_LONG, expr);
-		pCurrentSection->nPC += 4;
-		nPC += 4;
+		absLong(0);
 	} else {
 		absLong(expr->nVal);
 	}
