@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -404,80 +405,117 @@ void out_PCRelByte(struct Expression *expr)
  */
 void out_BinaryFile(char const *s)
 {
-	FILE *f;
+	FILE *f = fstk_FindFile(s, NULL);
 
-	f = fstk_FindFile(s, NULL);
-	if (f == NULL) {
+	if (!f) {
 		if (oGeneratedMissingIncludes) {
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		err(1, "Unable to open incbin file '%s'", s);
+		fatalerror("Error opening INCBIN file '%s': %s", s,
+			   strerror(errno));
 	}
 
-	int32_t fsize;
-
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
-	fseek(f, 0, SEEK_SET);
+	int32_t fsize = -1;
+	int byte;
 
 	checkcodesection();
-	checksectionoverflow(fsize);
+	if (fseek(f, 0, SEEK_END) != -1) {
+		fsize = ftell(f);
+		rewind(f);
 
-	int32_t todo = fsize;
+		checksectionoverflow(fsize);
+	} else if (errno != ESPIPE) {
+		yyerror("Error determining size of INCBIN file '%s': %s", s,
+			strerror(errno));
+	}
 
-	while (todo--)
-		pCurrentSection->tData[pCurrentSection->nPC++] = fgetc(f);
+	while ((byte = fgetc(f)) != EOF) {
+		if (fsize == -1)
+			checksectionoverflow(1);
+		pCurrentSection->tData[pCurrentSection->nPC++] = byte;
+		if (currentLoadSection)
+			currentLoadSection->nPC++;
+		nPC++;
+	}
 
-	if (currentLoadSection)
-		currentLoadSection->nPC += fsize;
-	nPC += fsize;
+	if (ferror(f))
+		yyerror("Error reading INCBIN file '%s': %s", s,
+			strerror(errno));
+
 	fclose(f);
 }
 
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 {
-	FILE *f;
+	if (start_pos < 0) {
+		yyerror("Start position cannot be negative (%d)", start_pos);
+		start_pos = 0;
+	}
 
-	if (start_pos < 0)
-		fatalerror("Start position cannot be negative");
+	if (length < 0) {
+		yyerror("Number of bytes to read cannot be negative (%d)",
+			length);
+		length = 0;
+	}
+	if (length == 0) /* Don't even bother with 0-byte slices */
+		return;
 
-	if (length < 0)
-		fatalerror("Number of bytes to read must be greater than zero");
+	FILE *f = fstk_FindFile(s, NULL);
 
-	f = fstk_FindFile(s, NULL);
-	if (f == NULL) {
+	if (!f) {
 		if (oGeneratedMissingIncludes) {
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		err(1, "Unable to open included file '%s'", s);
+		fatalerror("Error opening INCBIN file '%s': %s", s,
+			   strerror(errno));
 	}
-
-	int32_t fsize;
-
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
-
-	if (start_pos >= fsize)
-		fatalerror("Specified start position is greater than length of file");
-
-	if ((start_pos + length) > fsize)
-		fatalerror("Specified range in INCBIN is out of bounds");
-
-	fseek(f, start_pos, SEEK_SET);
 
 	checkcodesection();
 	checksectionoverflow(length);
 
+	int32_t fsize;
+
+	if (fseek(f, 0, SEEK_END) != -1) {
+		fsize = ftell(f);
+
+		if (start_pos >= fsize) {
+			yyerror("Specified start position is greater than length of file");
+			return;
+		}
+
+		if ((start_pos + length) > fsize)
+			fatalerror("Specified range in INCBIN is out of bounds");
+
+		fseek(f, start_pos, SEEK_SET);
+	} else {
+		if (errno != ESPIPE)
+			yyerror("Error determining size of INCBIN file '%s': %s",
+				s, strerror(errno));
+		/* The file isn't seekable, so we'll just skip bytes */
+		while (start_pos--)
+			(void)fgetc(f);
+	}
+
 	int32_t todo = length;
 
-	while (todo--)
-		pCurrentSection->tData[pCurrentSection->nPC++] = fgetc(f);
+	while (todo--) {
+		int byte = fgetc(f);
 
-	if (currentLoadSection)
-		currentLoadSection->nPC += length;
-	nPC += length;
+		if (byte != EOF) {
+			pCurrentSection->tData[pCurrentSection->nPC++] = byte;
+			if (currentLoadSection)
+				currentLoadSection->nPC++;
+			nPC++;
+		} else if (ferror(f)) {
+			yyerror("Error reading INCBIN file '%s': %s", s,
+				strerror(errno));
+		} else {
+			yyerror("Premature end of file (%d bytes left to read)",
+				todo + 1);
+		}
+	}
 
 	fclose(f);
 }
