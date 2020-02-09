@@ -199,9 +199,8 @@ void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
 /*
  * Output an absolute byte (bypassing ROM/union checks)
  */
-static void absByteBypassCheck(int32_t b)
+static void absByteBypassCheck(uint8_t b)
 {
-	b &= 0xFF;
 	pCurrentSection->tData[nPC] = b;
 	pCurrentSection->nPC++;
 	nPC++;
@@ -210,14 +209,14 @@ static void absByteBypassCheck(int32_t b)
 /*
  * Output an absolute byte
  */
-void out_AbsByte(int32_t b)
+void out_AbsByte(uint8_t b)
 {
 	checkcodesection();
 	checksectionoverflow(1);
 	absByteBypassCheck(b);
 }
 
-void out_AbsByteGroup(char const *s, int32_t length)
+void out_AbsByteGroup(uint8_t const *s, int32_t length)
 {
 	checkcodesection();
 	checksectionoverflow(length);
@@ -278,11 +277,10 @@ void out_RelByte(struct Expression *expr)
 /*
  * Output an absolute word
  */
-static void absWord(int32_t b)
+static void absWord(uint16_t b)
 {
 	checkcodesection();
 	checksectionoverflow(2);
-	b &= 0xFFFF;
 	pCurrentSection->tData[nPC] = b & 0xFF;
 	pCurrentSection->tData[nPC + 1] = b >> 8;
 	pCurrentSection->nPC += 2;
@@ -312,7 +310,7 @@ void out_RelWord(struct Expression *expr)
 /*
  * Output an absolute longword
  */
-static void absLong(int32_t b)
+static void absLong(uint32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(sizeof(int32_t));

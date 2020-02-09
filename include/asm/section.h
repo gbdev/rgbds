@@ -26,8 +26,8 @@ struct Section *out_FindSectionByName(const char *pzName);
 void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
 		    struct SectionSpec const *attributes);
 
-void out_AbsByte(int32_t b);
-void out_AbsByteGroup(char const *s, int32_t length);
+void out_AbsByte(uint8_t b);
+void out_AbsByteGroup(uint8_t const *s, int32_t length);
 void out_Skip(int32_t skip);
 void out_String(char const *s);
 void out_RelByte(struct Expression *expr);

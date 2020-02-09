@@ -1137,7 +1137,7 @@ constlist_8bit_entry : /* empty */
 			char *s = $1;
 			int32_t length = charmap_Convert(&s);
 
-			out_AbsByteGroup(s, length);
+			out_AbsByteGroup((uint8_t*)s, length);
 			free(s);
 		}
 ;
