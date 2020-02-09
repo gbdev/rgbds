@@ -222,7 +222,7 @@ void out_AbsByteGroup(char const *s, int32_t length)
 	checkcodesection();
 	checksectionoverflow(length);
 	while (length--)
-		out_AbsByte(*s++);
+		absByteBypassCheck(*s++);
 }
 
 /*
@@ -241,7 +241,7 @@ void out_Skip(int32_t skip)
 	} else {
 		checkcodesection();
 		while (skip--)
-			out_AbsByte(CurrentOptions.fillchar);
+			absByteBypassCheck(CurrentOptions.fillchar);
 	}
 }
 
@@ -253,7 +253,7 @@ void out_String(char const *s)
 	checkcodesection();
 	checksectionoverflow(strlen(s));
 	while (*s)
-		out_AbsByte(*s++);
+		absByteBypassCheck(*s++);
 }
 
 /*
@@ -270,7 +270,7 @@ void out_RelByte(struct Expression *expr)
 		pCurrentSection->nPC++;
 		nPC++;
 	} else {
-		out_AbsByte(expr->nVal);
+		absByteBypassCheck(expr->nVal);
 	}
 	rpn_Free(expr);
 }
