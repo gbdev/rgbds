@@ -575,6 +575,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_POPC
 %token	T_POP_SHIFT
 %token	T_POP_ENDR
+%token	T_POP_LOAD T_POP_ENDL
 %token	T_POP_FAIL
 %token	T_POP_WARN
 %token	T_POP_PURGE
@@ -730,6 +731,7 @@ simple_pseudoop : include
 		| setcharmap
 		| pushc
 		| popc
+		| load
 		| rept
 		| shift
 		| fail
@@ -776,6 +778,15 @@ warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 
 shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
 ;
+
+load		: T_POP_LOAD string comma sectiontype sectorg sectattrs
+		{
+			out_SetLoadSection($2, $4, $5, &$6);
+		}
+		| T_POP_ENDL
+		{
+			out_EndLoadSection();
+		}
 
 rept		: T_POP_REPT uconst
 		{

@@ -508,6 +508,9 @@ const struct sLexInitString lexer_strings[] = {
 	/* Not needed but we have it here just to protect the name */
 	{"endr", T_POP_ENDR},
 
+	{"load", T_POP_LOAD},
+	{"endl", T_POP_ENDL},
+
 	{"if", T_POP_IF},
 	{"else", T_POP_ELSE},
 	{"elif", T_POP_ELIF},

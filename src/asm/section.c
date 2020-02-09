@@ -19,6 +19,7 @@ struct SectionStackEntry {
 };
 
 struct SectionStackEntry *pSectionStack;
+static struct Section *currentLoadSection = NULL;
 
 /*
  * A quick check to see if we have an initialized section
@@ -82,9 +83,39 @@ struct Section *out_FindSectionByName(const char *pzName)
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
-static struct Section *findSection(char const *pzName, enum SectionType type,
-				   int32_t org, int32_t bank, int32_t alignment)
+static struct Section *getSection(char const *pzName, enum SectionType type,
+				  int32_t org, int32_t bank, int32_t alignment)
 {
+	if (bank != -1) {
+		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
+		 && type != SECTTYPE_SRAM && type != SECTTYPE_WRAMX)
+			yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
+		else if (bank < bankranges[type][0]
+		      || bank > bankranges[type][1])
+			yyerror("%s bank value $%x out of range ($%x to $%x)",
+				typeNames[type], bank,
+				bankranges[type][0], bankranges[type][1]);
+	}
+
+	if (alignment != 1) {
+		/* It doesn't make sense to have both set */
+		uint32_t mask = alignment - 1;
+
+		if (org != -1) {
+			if (org & mask)
+				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
+					pzName);
+			else
+				alignment = 1; /* Ignore it if it's satisfied */
+		}
+	}
+
+	if (org != -1) {
+		if (org < startaddr[type] || org > endaddr(type))
+			yyerror("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+				pzName, org, startaddr[type], endaddr(type));
+	}
+
 	struct Section *pSect = out_FindSectionByName(pzName);
 
 	if (pSect) {
@@ -140,60 +171,65 @@ static struct Section *findSection(char const *pzName, enum SectionType type,
 /*
  * Set the current section
  */
-static void setCurrentSection(struct Section *pSect)
+static void setSection(struct Section *pSect)
 {
 	if (nUnionDepth > 0)
 		fatalerror("Cannot change the section within a UNION");
 
-	pCurrentSection = pSect;
 	nPC = (pSect != NULL) ? pSect->nPC : 0;
 
-	pPCSymbol->pSection = pCurrentSection;
+	pPCSymbol->pSection = pSect;
 	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
 }
 
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
+void out_NewSection(char const *pzName, uint32_t type, int32_t org,
 		    struct SectionSpec const *attributes)
 {
-	uint32_t align = 1 << attributes->alignment;
+	if (currentLoadSection)
+		fatalerror("Cannot change the section within a `LOAD` block");
 
-	if (attributes->bank != -1) {
-		if (secttype != SECTTYPE_ROMX && secttype != SECTTYPE_VRAM
-		 && secttype != SECTTYPE_SRAM && secttype != SECTTYPE_WRAMX)
-			yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
-		else if (attributes->bank < bankranges[secttype][0]
-		      || attributes->bank > bankranges[secttype][1])
-			yyerror("%s bank value $%x out of range ($%x to $%x)",
-				typeNames[secttype], attributes->bank,
-				bankranges[secttype][0],
-				bankranges[secttype][1]);
-	}
+	struct Section *pSect = getSection(pzName, type, org, attributes->bank,
+					   1 << attributes->alignment);
 
-	if (align != 1) {
-		/* It doesn't make sense to have both set */
-		uint32_t mask = align - 1;
+	nPC = pSect->nPC;
+	setSection(pSect);
+	pCurrentSection = pSect;
+}
 
-		if (org != -1) {
-			if (org & mask)
-				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
-					pzName);
-			else
-				align = 1; /* Ignore it if it's satisfied */
-		}
-	}
+/*
+ * Set the current section by name and type
+ */
+void out_SetLoadSection(char const *name, uint32_t type, int32_t org,
+			struct SectionSpec const *attributes)
+{
+	if (currentLoadSection)
+		fatalerror("`LOAD` blocks cannot be nested");
 
-	if (org != -1) {
-		if (org < startaddr[secttype] || org > endaddr(secttype))
-			yyerror("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
-				pzName, org, startaddr[secttype],
-				endaddr(secttype));
-	}
+	struct Section *pSect = getSection(name, type, org, attributes->bank,
+					   1 << attributes->alignment);
 
-	setCurrentSection(findSection(pzName, secttype, org, attributes->bank,
-				      1 << attributes->alignment));
+	nPC = pSect->nPC;
+	setSection(pSect);
+	currentLoadSection = pSect;
+}
+
+void out_EndLoadSection(void)
+{
+	if (!currentLoadSection)
+		yyerror("Found `ENDL` outside of a `LOAD` block");
+	currentLoadSection = NULL;
+	sym_SetCurrentSymbolScope(NULL);
+
+	nPC = pCurrentSection->nPC;
+	setSection(pCurrentSection);
+}
+
+struct Section *sect_GetSymbolSection(void)
+{
+	return currentLoadSection ? currentLoadSection : pCurrentSection;
 }
 
 /*
@@ -201,8 +237,9 @@ void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
  */
 static void absByteBypassCheck(uint8_t b)
 {
-	pCurrentSection->tData[nPC] = b;
-	pCurrentSection->nPC++;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b;
+	if (currentLoadSection)
+		currentLoadSection->nPC++;
 	nPC++;
 }
 
@@ -233,6 +270,8 @@ void out_Skip(int32_t skip)
 	checksectionoverflow(skip);
 	if (!sect_HasData(pCurrentSection->nType)) {
 		pCurrentSection->nPC += skip;
+		if (currentLoadSection)
+			currentLoadSection->nPC += skip;
 		nPC += skip;
 	} else if (nUnionDepth > 0) {
 		while (skip--)
@@ -277,9 +316,10 @@ static void absWord(uint16_t b)
 {
 	checkcodesection();
 	checksectionoverflow(2);
-	pCurrentSection->tData[nPC] = b & 0xFF;
-	pCurrentSection->tData[nPC + 1] = b >> 8;
-	pCurrentSection->nPC += 2;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b & 0xFF;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 8;
+	if (currentLoadSection)
+		currentLoadSection->nPC += 2;
 	nPC += 2;
 }
 
@@ -305,11 +345,12 @@ static void absLong(uint32_t b)
 {
 	checkcodesection();
 	checksectionoverflow(4);
-	pCurrentSection->tData[nPC] = b & 0xFF;
-	pCurrentSection->tData[nPC + 1] = b >> 8;
-	pCurrentSection->tData[nPC + 2] = b >> 16;
-	pCurrentSection->tData[nPC + 3] = b >> 24;
-	pCurrentSection->nPC += 4;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b & 0xFF;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 8;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 16;
+	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 24;
+	if (currentLoadSection)
+		currentLoadSection->nPC += 4;
 	nPC += 4;
 }
 
@@ -337,9 +378,10 @@ void out_PCRelByte(struct Expression *expr)
 	checkcodesection();
 	checksectionoverflow(1);
 	if (!rpn_isKnown(expr) || pCurrentSection->nOrg == -1) {
-		pCurrentSection->tData[nPC] = 0;
 		out_CreatePatch(PATCHTYPE_JR, expr);
-		pCurrentSection->nPC++;
+		pCurrentSection->tData[pCurrentSection->nPC++] = 0;
+		if (currentLoadSection)
+			currentLoadSection->nPC++;
 		nPC++;
 	} else {
 		/* Target is relative to the byte *after* the operand */
@@ -382,13 +424,13 @@ void out_BinaryFile(char const *s)
 	checkcodesection();
 	checksectionoverflow(fsize);
 
-	int32_t dest = nPC;
 	int32_t todo = fsize;
 
 	while (todo--)
-		pCurrentSection->tData[dest++] = fgetc(f);
+		pCurrentSection->tData[pCurrentSection->nPC++] = fgetc(f);
 
-	pCurrentSection->nPC += fsize;
+	if (currentLoadSection)
+		currentLoadSection->nPC += fsize;
 	nPC += fsize;
 	fclose(f);
 }
@@ -428,13 +470,13 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	checkcodesection();
 	checksectionoverflow(length);
 
-	int32_t dest = nPC;
 	int32_t todo = length;
 
 	while (todo--)
-		pCurrentSection->tData[dest++] = fgetc(f);
+		pCurrentSection->tData[pCurrentSection->nPC++] = fgetc(f);
 
-	pCurrentSection->nPC += length;
+	if (currentLoadSection)
+		currentLoadSection->nPC += length;
 	nPC += length;
 
 	fclose(f);
@@ -465,7 +507,8 @@ void out_PopSection(void)
 	struct SectionStackEntry *pSect;
 
 	pSect = pSectionStack;
-	setCurrentSection(pSect->pSection);
+	setSection(pSect->pSection);
+	pCurrentSection = pSect->pSection;
 	sym_SetCurrentSymbolScope(pSect->pScope);
 	pSectionStack = pSect->pNext;
 	free(pSect);

@@ -25,6 +25,11 @@ struct SectionSpec {
 struct Section *out_FindSectionByName(const char *pzName);
 void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
 		    struct SectionSpec const *attributes);
+void out_SetLoadSection(char const *name, uint32_t secttype, int32_t org,
+			struct SectionSpec const *attributes);
+void out_EndLoadSection(void);
+
+struct Section *sect_GetSymbolSection(void);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);
