@@ -540,7 +540,7 @@ const struct sLexInitString lexer_strings[] = {
 
 	/*  Handled before in list of CPU instructions */
 	/* {"set", T_POP_SET}, */
-	{"=", T_POP_SET},
+	{"=", T_POP_EQUAL},
 
 	{"pushs", T_POP_PUSHS},
 	{"pops", T_POP_POPS},

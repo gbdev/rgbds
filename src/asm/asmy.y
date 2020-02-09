@@ -565,6 +565,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	<tzSym> T_ID
 %token	<tzSym> T_POP_EQU
 %token	<tzSym> T_POP_SET
+%token	<tzSym> T_POP_EQUAL
 %token	<tzSym> T_POP_EQUS
 
 %token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
@@ -970,6 +971,10 @@ equ		: T_LABEL T_POP_EQU const
 ;
 
 set		: T_LABEL T_POP_SET const
+		{
+			sym_AddSet($1, constexpr_GetConstantValue(&$3));
+		}
+		| T_LABEL T_POP_EQUAL const
 		{
 			sym_AddSet($1, constexpr_GetConstantValue(&$3));
 		}
