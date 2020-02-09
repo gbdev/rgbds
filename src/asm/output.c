@@ -346,7 +346,7 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 	pPatch->nType = type;
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nLine = nLineNo;
-	pPatch->nOffset = nPC;
+	pPatch->nOffset = pCurrentSection->nPC;
 
 	while ((rpndata = rpn_PopByte(expr)) != 0xDEAD) {
 		switch (rpndata) {
