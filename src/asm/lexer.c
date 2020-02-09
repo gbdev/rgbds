@@ -62,7 +62,7 @@ void upperstring(char *s)
 {
 	while (*s) {
 		*s = toupper(*s);
-		s += 1;
+		s++;
 	}
 }
 
@@ -70,7 +70,7 @@ void lowerstring(char *s)
 {
 	while (*s) {
 		*s = tolower(*s);
-		s += 1;
+		s++;
 	}
 }
 
@@ -380,7 +380,7 @@ void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingChars[start] &= ~id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -390,7 +390,7 @@ void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingChars[start] |= id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -400,7 +400,7 @@ void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingFirstChar[start] &= ~id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -410,7 +410,7 @@ void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingFirstChar[start] |= id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -420,7 +420,7 @@ void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingSecondChar[start] &= ~id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -430,7 +430,7 @@ void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 
 	while (start <= end) {
 		tFloatingSecondChar[start] |= id;
-		start += 1;
+		start++;
 	}
 }
 
@@ -506,7 +506,7 @@ void lex_AddStrings(const struct sLexInitString *lex)
 		if ((*ppHash)->nNameLength > nLexMaxLength)
 			nLexMaxLength = (*ppHash)->nNameLength;
 
-		lex += 1;
+		lex++;
 	}
 }
 
@@ -821,7 +821,7 @@ scanagain:
 					pLexBuffer++;
 				} else if (*pLexBuffer == '\n') {
 					pLexBuffer++;
-					nLineNo += 1;
+					nLineNo++;
 					goto scanagain;
 				} else {
 					errx(1, "Expected a new line after the continuation character.");
@@ -832,7 +832,7 @@ scanagain:
 		/* Line continuation character */
 		if (pLexBuffer[1] == '\n') {
 			pLexBuffer += 2;
-			nLineNo += 1;
+			nLineNo++;
 			goto scanagain;
 		}
 
@@ -970,7 +970,7 @@ static uint32_t yylex_MACROARGS(void)
 						pLexBuffer++;
 					} else if (*pLexBuffer == '\n') {
 						pLexBuffer++;
-						nLineNo += 1;
+						nLineNo++;
 						ch = 0;
 						break;
 					} else {
@@ -980,7 +980,7 @@ static uint32_t yylex_MACROARGS(void)
 				break;
 			case '\n':
 				/* Line continuation character */
-				nLineNo += 1;
+				nLineNo++;
 				ch = 0;
 				break;
 			default:

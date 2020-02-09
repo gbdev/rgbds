@@ -150,24 +150,24 @@ static void copyrept(void)
 	while (src < bufferEnd && level) {
 		if (instring == 0) {
 			if (isRept(src)) {
-				level += 1;
+				level++;
 				src += 4;
 			} else if (isEndr(src)) {
-				level -= 1;
+				level--;
 				src += 4;
 			} else {
 				if (*src == '\"')
 					instring = 1;
-				src += 1;
+				src++;
 			}
 		} else {
 			if (*src == '\\') {
 				src += 2;
 			} else if (*src == '\"') {
-				src += 1;
+				src++;
 				instring = 0;
 			} else {
-				src += 1;
+				src++;
 			}
 		}
 	}
@@ -188,10 +188,10 @@ static void copyrept(void)
 	uint32_t i;
 
 	tzNewMacro[ulNewMacroSize] = 0;
-	for (i = 0; i < ulNewMacroSize; i += 1) {
+	for (i = 0; i < ulNewMacroSize; i++) {
 		tzNewMacro[i] = src[i];
 		if (src[i] == '\n')
-			nLineNo+=1;
+			nLineNo++;
 	}
 
 	yyskipbytes(ulNewMacroSize + 4);
@@ -220,24 +220,24 @@ static void copymacro(void)
 	while (src < bufferEnd && level) {
 		if (instring == 0) {
 			if (isMacro(src)) {
-				level += 1;
+				level++;
 				src += 4;
 			} else if (isEndm(src)) {
-				level -= 1;
+				level--;
 				src += 4;
 			} else {
 				if(*src == '\"')
 					instring = 1;
-				src += 1;
+				src++;
 			}
 		} else {
 			if (*src == '\\') {
 				src += 2;
 			} else if (*src == '\"') {
-				src += 1;
+				src++;
 				instring = 0;
 			} else {
-				src += 1;
+				src++;
 			}
 		}
 	}
@@ -257,10 +257,10 @@ static void copymacro(void)
 	uint32_t i;
 
 	tzNewMacro[ulNewMacroSize] = 0;
-	for (i = 0; i < ulNewMacroSize; i += 1) {
+	for (i = 0; i < ulNewMacroSize; i++) {
 		tzNewMacro[i] = src[i];
 		if (src[i] == '\n')
-			nLineNo += 1;
+			nLineNo++;
 	}
 
 	yyskipbytes(ulNewMacroSize + 4);
@@ -651,8 +651,8 @@ lines		: /* empty */
 				nListCountEmpty = 0;
 				nPCOffset = 1;
 			} line '\n' {
-				nLineNo += 1;
-				nTotalLines += 1;
+				nLineNo++;
+				nTotalLines++;
 			}
 ;
 

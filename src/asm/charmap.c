@@ -225,7 +225,7 @@ int32_t charmap_Convert(char **input)
 		if (match) {
 			output[length] = foundCode;
 
-			length += 1;
+			length++;
 		} else {
 			/*
 			 * put a utf-8 character

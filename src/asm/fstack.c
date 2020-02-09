@@ -413,7 +413,7 @@ void fstk_RunInclude(char *tzFileName)
 	/* Dirty hack to give the INCLUDE directive a linefeed */
 
 	yyunput('\n');
-	nLineNo -= 1;
+	nLineNo--;
 }
 
 /*

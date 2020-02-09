@@ -34,7 +34,7 @@ static int32_t gbgfx2bin(char ch)
 {
 	int32_t i;
 
-	for (i = 0; i <= 3; i += 1) {
+	for (i = 0; i <= 3; i++) {
 		if (CurrentOptions.gbgfx[i] == ch)
 			return i;
 	}
@@ -46,7 +46,7 @@ static int32_t binary2bin(char ch)
 {
 	int32_t i;
 
-	for (i = 0; i <= 1; i += 1) {
+	for (i = 0; i <= 1; i++) {
 		if (CurrentOptions.binary[i] == ch)
 			return i;
 	}
@@ -80,22 +80,22 @@ static int32_t ascii2bin(char *s)
 	switch (*s) {
 	case '$':
 		radix = 16;
-		s += 1;
+		s++;
 		convertfunc = char2bin;
 		break;
 	case '&':
 		radix = 8;
-		s += 1;
+		s++;
 		convertfunc = char2bin;
 		break;
 	case '`':
 		radix = 4;
-		s += 1;
+		s++;
 		convertfunc = gbgfx2bin;
 		break;
 	case '%':
 		radix = 2;
-		s += 1;
+		s++;
 		convertfunc = binary2bin;
 		break;
 	default:

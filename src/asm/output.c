@@ -129,7 +129,7 @@ static uint32_t countsymbols(void)
 	pSym = pPatchSymbols;
 
 	while (pSym) {
-		count += 1;
+		count++;
 		pSym = pSym->pNext;
 	}
 
@@ -147,7 +147,7 @@ static uint32_t countsections(void)
 	pSect = pSectionList;
 
 	while (pSect) {
-		count += 1;
+		count++;
 		pSect = pSect->pNext;
 	}
 
@@ -164,7 +164,7 @@ static uint32_t countpatches(struct Section *pSect)
 
 	pPatch = pSect->pPatches;
 	while (pPatch) {
-		r += 1;
+		r++;
 		pPatch = pPatch->pNext;
 	}
 
@@ -205,7 +205,7 @@ static uint32_t getsectid(struct Section *pSect)
 	while (sec) {
 		if (sec == pSect)
 			return ID;
-		ID += 1;
+		ID++;
 		sec = sec->pNext;
 	}
 
@@ -344,7 +344,7 @@ static void addexports(void)
 {
 	int32_t i;
 
-	for (i = 0; i < HASHSIZE; i += 1) {
+	for (i = 0; i < HASHSIZE; i++) {
 		struct sSymbol *pSym;
 
 		pSym = tHashedSymbols[i];
@@ -704,9 +704,9 @@ void out_AbsByteBypassCheck(int32_t b)
 	checksectionoverflow(1);
 	b &= 0xFF;
 	pCurrentSection->tData[nPC] = b;
-	pCurrentSection->nPC += 1;
-	nPC += 1;
-	pPCSymbol->nValue += 1;
+	pCurrentSection->nPC++;
+	nPC++;
+	pPCSymbol->nValue++;
 }
 
 /*
@@ -769,9 +769,9 @@ void out_RelByte(struct Expression *expr)
 	if (rpn_isReloc(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		createpatch(PATCHTYPE_BYTE, expr);
-		pCurrentSection->nPC += 1;
-		nPC += 1;
-		pPCSymbol->nValue += 1;
+		pCurrentSection->nPC++;
+		nPC++;
+		pPCSymbol->nValue++;
 	} else {
 		out_AbsByte(expr->nVal);
 	}
@@ -865,9 +865,9 @@ void out_PCRelByte(struct Expression *expr)
 	/* Always let the linker calculate the offset. */
 	pCurrentSection->tData[nPC] = 0;
 	createpatch(PATCHTYPE_JR, expr);
-	pCurrentSection->nPC += 1;
-	nPC += 1;
-	pPCSymbol->nValue += 1;
+	pCurrentSection->nPC++;
+	nPC++;
+	pPCSymbol->nValue++;
 
 	rpn_Free(expr);
 }
