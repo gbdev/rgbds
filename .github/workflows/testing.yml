@@ -2,7 +2,7 @@ name: "Regression testing"
 on: push
 
 jobs:
-  testing:
+  unix-testing:
     strategy:
       matrix:
         os: [ubuntu-16.04, ubuntu-18.04, macos-10.15]
@@ -20,7 +20,155 @@ jobs:
       - name: Install
         run: |
           sudo make install -j Q=
+      - name: Package binaries
+        run: |
+          tar -Jcf rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins.tar.xz rgb{asm,link,fix,gfx}
+      - name: Upload binaries
+        uses: actions/upload-artifact@v1
+        with:
+          name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins
+          path: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins.tar.xz
       - name: Test
+        shell: bash
+        run: |
+          test/run-tests.sh
+
+  windows-build:
+    strategy:
+      matrix:
+        bits: [32, 64]
+        os: [ubuntu-latest]
+        include:
+          - bits: 32
+            arch: i686
+          - bits: 64
+            arch: x86-64
+    runs-on: ${{ matrix.os }}
+    env:
+      DIST_DIR: win${{ matrix.bits }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/actions/install_deps.sh ${{ matrix.os }}
+      - name: Install MinGW
+        run: |
+          sudo apt-get install gcc-mingw-w64-${{ matrix.arch }} mingw-w64-tools libz-mingw-w64-dev
+      - name: Install libpng dev headers for MinGW
+        run: |
+          sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.arch }}
+      - name: Build Windows binaries
+        run: |
+          make mingw${{ matrix.bits }} -j Q=
+          mv rgbasm rgbasm.exe
+          mv rgblink rgblink.exe
+          mv rgbfix rgbfix.exe
+          mv rgbgfx rgbgfx.exe
+      - name: Package binaries
+        run: |
+          mkdir $DIST_DIR
+          mv *.exe $DIST_DIR
+          zip -r ${DIST_DIR}-bins.zip $DIST_DIR
+      - name: Upload binaries
+        uses: actions/upload-artifact@v1
+        with:
+          name: win${{ matrix.bits }}-bins
+          path: win${{ matrix.bits }}-bins.zip
+
+  dll-build:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        bits: [32, 64]
+        include:
+          - bits: 32
+            vcvars: x86
+          - bits: 64
+            vcvars: x86_amd64
+    steps:
+      - name: Download and validate sources
+        shell: pwsh
+        run: |
+          $files = @(
+            @{
+              Name = "zlib1211.zip"
+              Hash = "d7510a8ee1918b7d0cad197a089c0a2cd4d6df05fee22389f67f115e738b178d"
+              URI = "http://www.zlib.net/zlib1211.zip"
+            }
+            @{
+              Name = "lpng1637.zip"
+              Hash = "3b4b1cbd0bae6822f749d39b1ccadd6297f05e2b85a83dd2ce6ecd7d09eabdf2"
+              URI = "https://download.sourceforge.net/libpng/lpng1637.zip"
+            }
+          )
+
+          $client = New-Object Net.WebClient
+          foreach ($file in $files) {
+            $client.DownloadFile($file.URI, $file.Name)
+            $hash = Get-FileHash -Algorithm SHA256 -Path $file.Name
+            if ($hash.Hash.ToLowerInvariant() -ne $file.Hash) {throw $($file.Name + " mismatch: " + $hash.Hash.ToLowerInvariant() + " != " + $file.Hash)}
+          }
+      - name: Build zlib
+        shell: cmd
+        run: |
+          7z x zlib1211.zip
+          move zlib-1.2.11 zlib
+          cd zlib
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.vcvars }}
+          nmake -f win32/Makefile.msc all testdll
+          copy zlib1.dll ../zlib1.dll
+      - name: Build libpng
+        shell: cmd
+        run: |
+          mingw-get install mingw-get
+          7z x lpng1637.zip
+          move lpng1637 libpng
+          cd libpng
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.vcvars }}
+          cp scripts/pnglibconf.h.prebuilt pnglibconf.h
+          cp scripts/makefile.vcwin32 makefile
+          nmake test ZLIBLIB=.. ZLIBINC=../zlib CPPFLAGS=-I../zlib LDFLAGS=-L..
+          nmake install
+          copy libpng16.dll ../libpng16.dll
+      - name: Package DLLs
+        run: |
+          7z a dlls.zip *.dll
+      - name: Upload DLLs
+        uses: actions/upload-artifact@v1
+        with:
+          name: dlls${{ matrix.bits }}
+          path: dlls${{ matrix.bits }}.zip
+
+  windows-testing:
+    needs: [windows-build, dll-build]
+    strategy:
+      matrix:
+        bits: [32, 64]
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve binaries
+        uses: actions/download-artifact@v1
+        with:
+          name: win${{ matrix.bits }}-bins
+      - name: Retrieve DLLs
+        uses: actions/download-artifact@v1
+        with:
+          name: dlls${{ matrix.bits }}
+      - name: Extract
+        run: |
+          7z e win${{ matrix.bits }}-bins.zip
+          7z e dlls${{ matrix.bits }}.zip
+      - name: Package Windows release
+        run: |
+          7z a rgbds-canary-win${{ matrix.bits }}.zip *.exe *.dll
+      - name: Upload Windows release
+        uses: actions/upload-artifact@v1
+        with:
+          name: rgbds-canary-win${{ matrix.bits }}
+          path: rgbds-canary-win${{ matrix.bits }}.zip
+      - name: Run tests
         shell: bash
         run: |
           test/run-tests.sh
