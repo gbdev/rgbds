@@ -36,6 +36,8 @@ POPS ; Ensure we are in neither section
 	print_diff Constant, Unknown
 	; Diffing a floating label and a ref cannot work
 	print_diff Known, Unknown
+	; Diffing two refs cannot work
+	print_diff Unknown, Unknown2
 
 	; Now let's fiddle with PC
 SECTION "fixed PC", ROM0[420]
