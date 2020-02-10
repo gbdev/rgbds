@@ -800,7 +800,7 @@ void out_RelByte(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(1);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		createpatch(PATCHTYPE_BYTE, expr);
 		pCurrentSection->nPC++;
@@ -835,7 +835,7 @@ void out_RelWord(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(2);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		pCurrentSection->tData[nPC + 1] = 0;
 		createpatch(PATCHTYPE_WORD, expr);
@@ -872,7 +872,7 @@ void out_RelLong(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(4);
-	if (rpn_isReloc(expr)) {
+	if (!rpn_isKnown(expr)) {
 		pCurrentSection->tData[nPC] = 0;
 		pCurrentSection->tData[nPC + 1] = 0;
 		pCurrentSection->tData[nPC + 2] = 0;
@@ -895,14 +895,25 @@ void out_PCRelByte(struct Expression *expr)
 {
 	checkcodesection();
 	checksectionoverflow(1);
+	if (!rpn_isKnown(expr) || pCurrentSection->nOrg == -1) {
+		pCurrentSection->tData[nPC] = 0;
+		createpatch(PATCHTYPE_JR, expr);
+		pCurrentSection->nPC++;
+		nPC++;
+		pPCSymbol->nValue++;
+	} else {
+		/* Target is relative to the byte *after* the operand */
+		uint16_t address = pCurrentSection->nOrg + nPC + 1;
+		/* The offset wraps (jump from ROM to HRAM, for loopexample) */
+		int16_t offset = expr->nVal - address;
 
-	/* Always let the linker calculate the offset. */
-	pCurrentSection->tData[nPC] = 0;
-	createpatch(PATCHTYPE_JR, expr);
-	pCurrentSection->nPC++;
-	nPC++;
-	pPCSymbol->nValue++;
-
+		if (offset < -128 || offset > 127) {
+			yyerror("jr target out of reach (expected -129 < %d < 128)", offset);
+			out_AbsByte(0);
+		} else {
+			out_AbsByte(offset);
+		}
+	}
 	rpn_Free(expr);
 }
 

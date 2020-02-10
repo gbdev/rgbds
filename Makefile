@@ -54,7 +54,6 @@ all: rgbasm rgblink rgbfix rgbgfx
 rgbasm_obj := \
 	src/asm/asmy.o \
 	src/asm/charmap.o \
-	src/asm/constexpr.o \
 	src/asm/fstack.o \
 	src/asm/globlex.o \
 	src/asm/lexer.o \

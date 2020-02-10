@@ -31,20 +31,22 @@ POPS ; Ensure we are in neither section
 	; Diffing two labels in the same SECTION as well
 	print_diff Known2, Known
 	; Diffing a constant and a "floating" label cannot work
-; ...And that causes a fatal error	print_diff Constant, Known
+	print_diff Constant, Known
 	; Diffing a constant and a ref cannot work
-; ...And that causes a fatal error	print_diff Constant, Unknown
+	print_diff Constant, Unknown
 	; Diffing a floating label and a ref cannot work
-; ...And that causes a fatal error	print_diff Known, Unknown
+	print_diff Known, Unknown
+	; Diffing two refs cannot work
+	print_diff Unknown, Unknown2
 
 	; Now let's fiddle with PC
 SECTION "fixed PC", ROM0[420]
 	; Diffing a constant and PC should work
 	print_diff Constant, @
 	; Diffing a floating label and PC cannot work
-; ...And that causes a fatal error	print_diff Known, @
+	print_diff Known, @
 	; Diffinf a ref and PC cannot work
-; ...And that causes a fatal error	print_diff Unknown, @
+	print_diff Unknown, @
 	; Diffing PC and PC should work
 	print_diff @, @
 	; Diffing PC and a label from here should work
@@ -53,11 +55,11 @@ LocalFixed:
 
 SECTION "Floating PC", ROM0
 	; Diffing a constant and PC cannot work
-; ...And that causes a fatal error	print_diff Constant, @
+	print_diff Constant, @
 	; Diffing a floating label and PC cannot work
-; ...And that causes a fatal error	print_diff Known, @
+	print_diff Known, @
 	; Diffinf a ref and PC cannot work
-; ...And that causes a fatal error	print_diff Unknown, @
+	print_diff Unknown, @
 	; Diffing PC and PC should work
 	print_diff @, @
 	; Diffing PC and a label from here should work

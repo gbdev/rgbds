@@ -1,5 +1,5 @@
 ERROR: pc-bank.asm(2):
     Source address $2a00 not in $FF00 to $FFFF
 ERROR: pc-bank.asm(11):
-    Current bank is not known yet
+    Expected constant expression: Current section's bank is not known
 error: Assembly aborted (2 errors)!

@@ -1,4 +1,4 @@
 ERROR: bracketed-symbols.asm(16):
     Print types are only allowed for numbers
 ERROR: bracketed-symbols.asm(20):
-    Expression must have a constant value
+    "Label" does not have a constant value

@@ -10,62 +10,36 @@
 #define RGBDS_ASM_RPN_H
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#include "linkdefs.h"
 
 #define MAXRPNLEN 1048576
 
 struct Expression {
-	int32_t  nVal;
-	uint8_t  *tRPN;
-	uint32_t nRPNCapacity;
-	uint32_t nRPNLength;
-	uint32_t nRPNPatchSize;
-	uint32_t nRPNOut;
-	uint32_t isReloc;
+	int32_t  nVal;          // If the expression's value is known, it's here
+	char     *reason;       // Why the expression is not known, if it isn't
+	bool     isKnown;       // Whether the expression's value is known
+	bool     isSymbol;      // Whether the expression represents a symbol
+	uint8_t  *tRPN;         // Array of bytes serializing the RPN expression
+	uint32_t nRPNCapacity;  // Size of the `tRPN` buffer
+	uint32_t nRPNLength;    // Used size of the `tRPN` buffer
+	uint32_t nRPNPatchSize; // Size the expression will take in the obj file
+	// FIXME: does this need to be part of the struct?
+	uint32_t nRPNOut;       // How many bytes have been written
 };
 
 /* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
 extern int32_t nPCOffset;
 
-uint32_t rpn_isReloc(const struct Expression *expr);
+bool rpn_isKnown(const struct Expression *expr);
+bool rpn_isSymbol(const struct Expression *expr);
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
-void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGAND(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2);
-void rpn_LOGEQU(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2);
-void rpn_LOGGT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGLT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGGE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGLE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_LOGNE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2);
-void rpn_ADD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SUB(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_XOR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_OR(struct Expression *expr, const struct Expression *src1,
-	    const struct Expression *src2);
-void rpn_AND(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SHL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_SHR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_MUL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_DIV(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
-void rpn_MOD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2);
+void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
+		  const struct Expression *src1,
+		  const struct Expression *src2);
 void rpn_HIGH(struct Expression *expr, const struct Expression *src);
 void rpn_LOW(struct Expression *expr, const struct Expression *src);
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src);

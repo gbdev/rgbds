@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,67 +23,50 @@
 #include "asm/output.h"
 #include "asm/warning.h"
 
-#include "linkdefs.h"
+/* Makes an expression "not known", also setting its error message */
+#define makeUnknown(expr_, ...) do { \
+	struct Expression *_expr = expr_; \
+	_expr->isKnown = false; \
+	/* If we had `asprintf` this would be great, but alas. */ \
+	_expr->reason = malloc(128); /* Use an initial reasonable size */ \
+	if (!_expr->reason) \
+		fatalerror("Can't allocate err string: %s", strerror(errno)); \
+	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
+	if (size >= 128) { /* If this wasn't enough, try again */ \
+		_expr->reason = realloc(_expr->reason, size + 1); \
+		sprintf(_expr->reason, __VA_ARGS__); \
+	} \
+} while (0)
 
-void mergetwoexpressions(struct Expression *expr, const struct Expression *src1,
-			 const struct Expression *src2)
+static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
-	assert(src1->tRPN != NULL && src2->tRPN != NULL);
-
-	if (src1->nRPNLength + src2->nRPNLength > MAXRPNLEN)
-		fatalerror("RPN expression is too large");
-
-	uint32_t len = src1->nRPNLength + src2->nRPNLength;
-
-	expr->nVal = 0;
-	expr->tRPN = src1->tRPN;
-
-	if (src1->nRPNCapacity >= len) {
-		expr->nRPNCapacity = src1->nRPNCapacity;
-	} else {
-		uint32_t cap1 = src1->nRPNCapacity;
-		uint32_t cap2 = src2->nRPNCapacity;
-		uint32_t cap = (cap1 > cap2) ? cap1 : cap2;
-
-		if (len > cap)
-			cap = (cap <= MAXRPNLEN / 2) ? cap * 2 : MAXRPNLEN;
-
-		expr->nRPNCapacity = cap;
-		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
-		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
-	}
-
-	memcpy(expr->tRPN + src1->nRPNLength, src2->tRPN, src2->nRPNLength);
-	free(src2->tRPN);
-
-	expr->nRPNLength = len;
-	expr->nRPNPatchSize = src1->nRPNPatchSize + src2->nRPNPatchSize;
-	expr->nRPNOut = 0;
-	expr->isReloc = src1->isReloc || src2->isReloc;
-}
-
-/*
- * Add a byte to the RPN expression
- */
-void pushbyte(struct Expression *expr, uint8_t b)
-{
-	if (expr->nRPNLength == expr->nRPNCapacity) {
-		if (expr->nRPNCapacity == 0)
-			expr->nRPNCapacity = 256;
-		else if (expr->nRPNCapacity == MAXRPNLEN)
-			fatalerror("RPN expression is too large");
+	/* This assumes the RPN length is always less than the capacity */
+	if (expr->nRPNCapacity - expr->nRPNLength < size) {
+		/* If there isn't enough room to reserve the space, realloc */
+		if (!expr->tRPN)
+			expr->nRPNCapacity = 256; /* Initial size */
+		else if (expr->nRPNCapacity >= MAXRPNLEN)
+			/*
+			 * To avoid generating humongous object files, cap the
+			 * size of RPN expressions
+			 */
+			fatalerror("RPN expression cannot grow larger than %d bytes",
+				   MAXRPNLEN);
 		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
 			expr->nRPNCapacity = MAXRPNLEN;
 		else
 			expr->nRPNCapacity *= 2;
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 
-		if (expr->tRPN == NULL)
-			fatalerror("No memory for RPN expression");
+		if (!expr->tRPN)
+			fatalerror("Failed to grow RPN expression: %s",
+				   strerror(errno));
 	}
 
-	expr->tRPN[expr->nRPNLength++] = b;
+	uint8_t *ptr = expr->tRPN + expr->nRPNLength;
+
+	expr->nRPNLength += size;
+	return ptr;
 }
 
 /*
@@ -90,12 +74,14 @@ void pushbyte(struct Expression *expr, uint8_t b)
  */
 void rpn_Init(struct Expression *expr)
 {
+	expr->reason = NULL;
+	expr->isKnown = true;
+	expr->isSymbol = false;
 	expr->tRPN = NULL;
 	expr->nRPNCapacity = 0;
 	expr->nRPNLength = 0;
 	expr->nRPNPatchSize = 0;
 	expr->nRPNOut = 0;
-	expr->isReloc = 0;
 }
 
 /*
@@ -104,6 +90,7 @@ void rpn_Init(struct Expression *expr)
 void rpn_Free(struct Expression *expr)
 {
 	free(expr->tRPN);
+	free(expr->reason);
 	rpn_Init(expr);
 }
 
@@ -119,11 +106,19 @@ uint16_t rpn_PopByte(struct Expression *expr)
 }
 
 /*
- * Determine if the current expression is relocatable
+ * Determine if the current expression is known at assembly time
  */
-uint32_t rpn_isReloc(const struct Expression *expr)
+bool rpn_isKnown(const struct Expression *expr)
 {
-	return expr->isReloc;
+	return expr->isKnown;
+}
+
+/*
+ * Determine if the current expression is a symbol suitable for const diffing
+ */
+bool rpn_isSymbol(const struct Expression *expr)
+{
+	return expr->isSymbol;
 }
 
 /*
@@ -132,13 +127,7 @@ uint32_t rpn_isReloc(const struct Expression *expr)
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
 	rpn_Init(expr);
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, i);
-	pushbyte(expr, i >> 8);
-	pushbyte(expr, i >> 16);
-	pushbyte(expr, i >> 24);
 	expr->nVal = i;
-	expr->nRPNPatchSize += 5;
 }
 
 void rpn_Symbol(struct Expression *expr, char *tzSym)
@@ -147,20 +136,28 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 
 	if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
+		expr->isSymbol = true;
+
 		sym_Ref(tzSym);
-		expr->isReloc = 1;
-		pushbyte(expr, RPN_SYM);
-		while (*tzSym)
-			pushbyte(expr, *tzSym++);
-		pushbyte(expr, 0);
-		expr->nRPNPatchSize += 5;
+		makeUnknown(expr, strcmp(tzSym, "@")
+				      ? "'%s' is not constant at assembly time"
+				      : "PC is not constant at assembly time",
+			    tzSym);
+		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
+
+		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+		*ptr++ = RPN_SYM;
+		memcpy(ptr, tzSym, nameLen);
 
 		/* RGBLINK assumes PC is at the byte being computed... */
 		if (sym == pPCSymbol && nPCOffset) {
 			struct Expression pc = *expr, offset;
 
 			rpn_Number(&offset, nPCOffset);
-			rpn_SUB(expr, &pc, &offset);
+			rpn_BinaryOp(RPN_SUB, expr, &pc, &offset);
+			if (!rpn_isKnown(expr))
+				expr->isSymbol = true;
 		}
 	} else {
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
@@ -171,17 +168,13 @@ void rpn_BankSelf(struct Expression *expr)
 {
 	rpn_Init(expr);
 
-	if (pCurrentSection->nBank == -1)
-		/*
-		 * This is not really relocatable, but this makes the assembler
-		 * write this expression as a RPN patch to the object file.
-		 */
-		expr->isReloc = 1;
-	else
+	if (pCurrentSection->nBank == -1) {
+		makeUnknown(expr, "Current section's bank is not known");
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_BANK_SELF;
+	} else {
 		expr->nVal = pCurrentSection->nBank;
-
-	pushbyte(expr, RPN_BANK_SELF);
-	expr->nRPNPatchSize++;
+	}
 }
 
 void rpn_BankSymbol(struct Expression *expr, char *tzSym)
@@ -194,25 +187,26 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 		return;
 	}
 
+	rpn_Init(expr);
 	if (sym && sym_IsConstant(sym)) {
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
-		rpn_Init(expr);
 		sym_Ref(tzSym);
-		pushbyte(expr, RPN_BANK_SYM);
-		for (unsigned int i = 0; tzSym[i]; i++)
-			pushbyte(expr, tzSym[i]);
-		pushbyte(expr, 0);
-		expr->nRPNPatchSize += 5;
-
 		/* If the symbol didn't exist, `sym_Ref` created it */
 		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
 
-		if (pSymbol->pSection && pSymbol->pSection->nBank != -1)
-			/* Symbol's section is known and bank's fixed */
+		if (pSymbol->pSection && pSymbol->pSection->nBank != -1) {
+			/* Symbol's section is known and bank is fixed */
 			expr->nVal = pSymbol->pSection->nBank;
-		else
-			expr->isReloc = 1;
+		} else {
+			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
+			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
+
+			size_t nameLen = strlen(tzSym) + 1; /* Room for NUL! */
+			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+			*ptr++ = RPN_BANK_SYM;
+			memcpy(ptr, tzSym, nameLen);
+		}
 	}
 }
 
@@ -222,213 +216,61 @@ void rpn_BankSection(struct Expression *expr, char *tzSectionName)
 
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
 
-	if (pSection && pSection->nBank != -1)
+	if (pSection && pSection->nBank != -1) {
 		expr->nVal = pSection->nBank;
-	else
-		/*
-		 * This is not really relocatable, but this makes the assembler
-		 * write this expression as a RPN patch to the object file.
-		 */
-		expr->isReloc = 1;
+	} else {
+		makeUnknown(expr, "Section \"%s\"'s bank is not known",
+			    tzSectionName);
 
-	pushbyte(expr, RPN_BANK_SECT);
-	expr->nRPNPatchSize++;
+		size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-	while (*tzSectionName) {
-		pushbyte(expr, *tzSectionName++);
-		expr->nRPNPatchSize++;
+		expr->nRPNPatchSize += nameLen + 1;
+		*ptr++ = RPN_BANK_SECT;
+		memcpy(ptr, tzSectionName, nameLen);
 	}
-
-	pushbyte(expr, 0);
-	expr->nRPNPatchSize++;
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	pushbyte(expr, RPN_HRAM);
-	expr->nRPNPatchSize++;
+	expr->isSymbol = false;
+
+	if (rpn_isKnown(expr)) {
+		/* TODO */
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_HRAM;
+	}
 }
 
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	pushbyte(expr, RPN_RST);
-	expr->nRPNPatchSize++;
+
+	if (rpn_isKnown(expr)) {
+		/* TODO */
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_RST;
+	}
 }
 
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = !expr->nVal;
-	pushbyte(expr, RPN_LOGUNNOT);
-	expr->nRPNPatchSize++;
-}
+	expr->isSymbol = false;
 
-void rpn_LOGOR(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal || src2->nVal);
-	pushbyte(expr, RPN_LOGOR);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGAND(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal && src2->nVal);
-	pushbyte(expr, RPN_LOGAND);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_HIGH(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-
-	expr->nVal = (expr->nVal >> 8) & 0xFF;
-
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 8);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-
-	pushbyte(expr, RPN_SHR);
-
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 0xFF);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-
-	pushbyte(expr, RPN_AND);
-
-	expr->nRPNPatchSize += 12;
-}
-
-void rpn_LOW(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-
-	expr->nVal = expr->nVal & 0xFF;
-
-	pushbyte(expr, RPN_CONST);
-	pushbyte(expr, 0xFF);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-	pushbyte(expr, 0);
-
-	pushbyte(expr, RPN_AND);
-
-	expr->nRPNPatchSize += 6;
-}
-
-void rpn_LOGEQU(struct Expression *expr, const struct Expression *src1,
-		const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal == src2->nVal);
-	pushbyte(expr, RPN_LOGEQ);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGGT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal > src2->nVal);
-	pushbyte(expr, RPN_LOGGT);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGLT(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal < src2->nVal);
-	pushbyte(expr, RPN_LOGLT);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGGE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal >= src2->nVal);
-	pushbyte(expr, RPN_LOGGE);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGLE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal <= src2->nVal);
-	pushbyte(expr, RPN_LOGLE);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_LOGNE(struct Expression *expr, const struct Expression *src1,
-	       const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal != src2->nVal);
-	pushbyte(expr, RPN_LOGNE);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_ADD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = ((uint32_t)src1->nVal + (uint32_t)src2->nVal);
-	pushbyte(expr, RPN_ADD);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_SUB(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = ((uint32_t)src1->nVal - (uint32_t)src2->nVal);
-	pushbyte(expr, RPN_SUB);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_XOR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal ^ src2->nVal);
-	pushbyte(expr, RPN_XOR);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_OR(struct Expression *expr, const struct Expression *src1,
-	    const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal | src2->nVal);
-	pushbyte(expr, RPN_OR);
-	expr->nRPNPatchSize++;
-}
-
-void rpn_AND(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = (src1->nVal & src2->nVal);
-	pushbyte(expr, RPN_AND);
-	expr->nRPNPatchSize++;
+	if (rpn_isKnown(expr)) {
+		expr->nVal = !expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_LOGUNNOT;
+	}
 }
 
 static int32_t shift(int32_t shiftee, int32_t amount)
 {
-	if (shiftee < 0)
-		warning(WARNING_SHIFT, "Shifting negative value %d", shiftee);
-
 	if (amount >= 0) {
 		// Left shift
 		if (amount >= 32) {
@@ -466,101 +308,247 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
-void rpn_SHL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
+static struct sSymbol const *symbolOf(struct Expression const *expr)
 {
-	mergetwoexpressions(expr, src1, src2);
-
-	if (!expr->isReloc) {
-		if (src2->nVal < 0)
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative value: %d",
-				src2->nVal);
-
-		expr->nVal = shift(src1->nVal, src2->nVal);
-	}
-
-	pushbyte(expr, RPN_SHL);
-	expr->nRPNPatchSize++;
+	if (!rpn_isSymbol(expr))
+		return NULL;
+	return sym_FindSymbol((char *)expr->tRPN + 1);
 }
 
-void rpn_SHR(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
+static bool isDiffConstant(struct Expression const *src1,
+			   struct Expression const *src2)
 {
-	mergetwoexpressions(expr, src1, src2);
+	/* Check if both expressions only refer to a single symbol */
+	struct sSymbol const *symbol1 = symbolOf(src1);
+	struct sSymbol const *symbol2 = symbolOf(src2);
 
-	if (!expr->isReloc) {
-		if (src2->nVal < 0)
-			warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative value: %d",
-				src2->nVal);
+	if (!symbol1 || !symbol2
+	 || symbol1->type != SYM_LABEL || symbol2->type != SYM_LABEL)
+		return false;
 
-		expr->nVal = shift(src1->nVal, -src2->nVal);
-	}
-
-	pushbyte(expr, RPN_SHR);
-	expr->nRPNPatchSize++;
+	return symbol1->pSection == symbol2->pSection;
 }
 
-void rpn_MUL(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
+void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
+		  const struct Expression *src1, const struct Expression *src2)
 {
-	mergetwoexpressions(expr, src1, src2);
-	expr->nVal = ((uint32_t)src1->nVal * (uint32_t)src2->nVal);
-	pushbyte(expr, RPN_MUL);
-	expr->nRPNPatchSize++;
-}
+	expr->isSymbol = false;
 
-void rpn_DIV(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
-{
-	mergetwoexpressions(expr, src1, src2);
+	/* First, check if the expression is known */
+	expr->isKnown = src1->isKnown && src2->isKnown;
+	if (expr->isKnown) {
+		rpn_Init(expr); /* Init the expression to something sane */
 
-	if (!expr->isReloc) {
-		if (src2->nVal == 0)
-			fatalerror("Division by zero");
+		/* If both expressions are known, just compute the value */
+		uint32_t uleft = src1->nVal, uright = src2->nVal;
 
-		if (src1->nVal == INT32_MIN && src2->nVal == -1) {
-			warning(WARNING_DIV, "Division of min value by -1");
-			expr->nVal = INT32_MIN;
-		} else {
-			expr->nVal = (src1->nVal / src2->nVal);
+		switch (op) {
+		case RPN_LOGOR:
+			expr->nVal = src1->nVal || src2->nVal;
+			break;
+		case RPN_LOGAND:
+			expr->nVal = src1->nVal && src2->nVal;
+			break;
+		case RPN_LOGEQ:
+			expr->nVal = src1->nVal == src2->nVal;
+			break;
+		case RPN_LOGGT:
+			expr->nVal = src1->nVal > src2->nVal;
+			break;
+		case RPN_LOGLT:
+			expr->nVal = src1->nVal < src2->nVal;
+			break;
+		case RPN_LOGGE:
+			expr->nVal = src1->nVal >= src2->nVal;
+			break;
+		case RPN_LOGLE:
+			expr->nVal = src1->nVal <= src2->nVal;
+			break;
+		case RPN_LOGNE:
+			expr->nVal = src1->nVal != src2->nVal;
+			break;
+		case RPN_ADD:
+			expr->nVal = uleft + uright;
+			break;
+		case RPN_SUB:
+			expr->nVal = uleft - uright;
+			break;
+		case RPN_XOR:
+			expr->nVal = src1->nVal ^ src2->nVal;
+			break;
+		case RPN_OR:
+			expr->nVal = src1->nVal | src2->nVal;
+			break;
+		case RPN_AND:
+			expr->nVal = src1->nVal & src2->nVal;
+			break;
+		case RPN_SHL:
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %d",
+					src2->nVal);
+
+			expr->nVal = shift(src1->nVal, src2->nVal);
+			break;
+		case RPN_SHR:
+			if (src1->nVal < 0)
+				warning(WARNING_SHIFT, "Shifting negative value %d",
+					src1->nVal);
+
+			if (src2->nVal < 0)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %d",
+					src2->nVal);
+
+			expr->nVal = shift(src1->nVal, -src2->nVal);
+			break;
+		case RPN_MUL:
+			expr->nVal = uleft * uright;
+			break;
+		case RPN_DIV:
+			if (src2->nVal == 0)
+				fatalerror("Division by zero");
+
+			if (src1->nVal == INT32_MIN
+			 && src2->nVal == -1) {
+				warning(WARNING_DIV, "Division of min value by -1");
+				expr->nVal = INT32_MIN;
+			} else {
+				expr->nVal = src1->nVal / src2->nVal;
+			}
+			break;
+		case RPN_MOD:
+			if (src2->nVal == 0)
+				fatalerror("Division by zero");
+
+			if (src1->nVal == INT32_MIN && src2->nVal == -1)
+				expr->nVal = 0;
+			else
+				expr->nVal = src1->nVal % src2->nVal;
+			break;
+
+		case RPN_UNSUB:
+		case RPN_UNNOT:
+		case RPN_LOGUNNOT:
+		case RPN_BANK_SYM:
+		case RPN_BANK_SECT:
+		case RPN_BANK_SELF:
+		case RPN_HRAM:
+		case RPN_RST:
+		case RPN_CONST:
+		case RPN_SYM:
+			fatalerror("%d is no binary operator", op);
 		}
-	}
 
-	pushbyte(expr, RPN_DIV);
-	expr->nRPNPatchSize++;
+	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
+		struct sSymbol const *symbol1 = symbolOf(src1);
+		struct sSymbol const *symbol2 = symbolOf(src2);
+
+		expr->nVal = symbol1->nValue - symbol2->nValue;
+		expr->isKnown = true;
+	} else {
+		/* If it's not known, start computing the RPN expression */
+
+		/* Convert the left-hand expression if it's constant */
+		if (src1->isKnown) {
+			uint32_t lval = src1->nVal;
+			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
+					   lval >> 16, lval >> 24};
+			expr->nRPNPatchSize = sizeof(bytes);
+			expr->tRPN = NULL;
+			expr->nRPNCapacity = 0;
+			expr->nRPNLength = 0;
+			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
+			       sizeof(bytes));
+
+			/* Use the other expression's un-const reason */
+			expr->reason = src2->reason;
+			free(src1->reason);
+		} else {
+			/* Otherwise just reuse its RPN buffer */
+			expr->nRPNPatchSize = src1->nRPNPatchSize;
+			expr->tRPN = src1->tRPN;
+			expr->nRPNCapacity = src1->nRPNCapacity;
+			expr->nRPNLength = src1->nRPNLength;
+			expr->reason = src1->reason;
+			free(src2->reason);
+		}
+
+		/* Now, merge the right expression into the left one */
+		uint8_t *ptr = src2->tRPN; /* Pointer to the right RPN */
+		uint32_t len = src2->nRPNLength; /* Size of the right RPN */
+		uint32_t patchSize = src2->nRPNPatchSize;
+
+		/* If the right expression is constant, merge a shim instead */
+		uint32_t rval = src2->nVal;
+		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
+				   rval >> 24};
+		if (src2->isKnown) {
+			ptr = bytes;
+			len = sizeof(bytes);
+			patchSize = sizeof(bytes);
+		}
+		/* Copy the right RPN and append the operator */
+		uint8_t *buf = reserveSpace(expr, len + 1);
+
+		memcpy(buf, ptr, len);
+		buf[len] = op;
+
+		free(src2->tRPN); /* If there was none, this is `free(NULL)` */
+		expr->nRPNPatchSize += patchSize + 1;
+	}
 }
 
-void rpn_MOD(struct Expression *expr, const struct Expression *src1,
-	     const struct Expression *src2)
+void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 {
-	mergetwoexpressions(expr, src1, src2);
+	*expr = *src;
+	expr->isSymbol = false;
 
-	if (!expr->isReloc) {
-		if (src2->nVal == 0)
-			fatalerror("Division by zero");
-
-		if (src1->nVal == INT32_MIN && src2->nVal == -1)
-			expr->nVal = 0;
-		else
-			expr->nVal = (src1->nVal % src2->nVal);
+	if (rpn_isKnown(expr)) {
+		expr->nVal = (uint32_t)expr->nVal >> 8 & 0xFF;
+	} else {
+		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
+				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+		expr->nRPNPatchSize += sizeof(bytes);
+		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	}
+}
 
-	pushbyte(expr, RPN_MOD);
-	expr->nRPNPatchSize++;
+void rpn_LOW(struct Expression *expr, const struct Expression *src)
+{
+	*expr = *src;
+	expr->isSymbol = false;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = expr->nVal & 0xFF;
+	} else {
+		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+
+		expr->nRPNPatchSize += sizeof(bytes);
+		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	}
 }
 
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = -(uint32_t)expr->nVal;
-	pushbyte(expr, RPN_UNSUB);
-	expr->nRPNPatchSize++;
+	expr->isSymbol = false;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = -(uint32_t)expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_UNSUB;
+	}
 }
 
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
-	expr->nVal = ~expr->nVal;
-	pushbyte(expr, RPN_UNNOT);
-	expr->nRPNPatchSize++;
+	expr->isSymbol = false;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = ~expr->nVal;
+	} else {
+		expr->nRPNPatchSize++;
+		*reserveSpace(expr, 1) = RPN_UNNOT;
+	}
 }

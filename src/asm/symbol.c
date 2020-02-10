@@ -269,7 +269,7 @@ uint32_t sym_GetConstantValue(char const *s)
 		if (sym_IsConstant(psym))
 			return getvaluefield(psym);
 
-		fatalerror("Expression must have a constant value");
+		fatalerror("\"%s\" does not have a constant value", s);
 	}
 
 	yyerror("'%s' not defined", s);
