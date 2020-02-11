@@ -48,7 +48,7 @@ void fstk_DumpStringExpansions(void);
 void fstk_AddIncludePath(char *s);
 uint32_t fstk_RunMacro(char *s);
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo);
-FILE *fstk_FindFile(char *fname, char **incPathUsed);
+FILE *fstk_FindFile(char const *fname, char **incPathUsed);
 int32_t fstk_GetLine(void);
 
 #endif /* RGBDS_ASM_FSTACK_H */

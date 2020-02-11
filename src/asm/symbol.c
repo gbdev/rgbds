@@ -21,7 +21,7 @@
 #include "asm/symbol.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
-#include "asm/output.h"
+#include "asm/section.h"
 #include "asm/util.h"
 #include "asm/warning.h"
 
@@ -62,6 +62,11 @@ static int32_t Callback_NARG(unused_ struct sSymbol const *sym)
 static int32_t Callback__LINE__(unused_ struct sSymbol const *sym)
 {
 	return nLineNo;
+}
+
+static int32_t CallbackPC(struct sSymbol const *self)
+{
+	return self->pSection ? self->pSection->nOrg + self->pSection->nPC : 0;
 }
 
 /*
@@ -573,7 +578,7 @@ void sym_AddReloc(char const *tzSym)
 		nsym->isExported = true;
 
 	nsym->pScope = scope;
-	nsym->pSection = pCurrentSection;
+	nsym->pSection = sect_GetSymbolSection();
 	/* Labels need to be assigned a section, except PC */
 	if (!pCurrentSection && strcmp(tzSym, "@"))
 		yyerror("Label \"%s\" created outside of a SECTION",
@@ -722,6 +727,7 @@ void sym_Init(void)
 
 	sym_AddReloc("@");
 	pPCSymbol = findsymbol("@", NULL);
+	pPCSymbol->Callback = CallbackPC;
 	sym_AddEqu("_NARG", 0);
 	p_NARGSymbol = findsymbol("_NARG", NULL);
 	p_NARGSymbol->Callback = Callback_NARG;

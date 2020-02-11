@@ -19,8 +19,8 @@
 #include "asm/asm.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
+#include "asm/section.h"
 #include "asm/symbol.h"
-#include "asm/output.h"
 #include "asm/warning.h"
 
 /* Makes an expression "not known", also setting its error message */

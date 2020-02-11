@@ -177,10 +177,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* Patch the size array depending on command-line options */
-	if (is32kMode)
-		maxsize[SECTTYPE_ROM0] = 0x8000;
-	if (isWRA0Mode)
-		maxsize[SECTTYPE_WRAM0] = 0x2000;
+	if (!is32kMode)
+		maxsize[SECTTYPE_ROM0] = 0x4000;
+	if (!isWRA0Mode)
+		maxsize[SECTTYPE_WRAM0] = 0x1000;
 
 	/* Patch the bank ranges array depending on command-line options */
 	if (isDmgMode)

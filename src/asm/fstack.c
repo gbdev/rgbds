@@ -334,7 +334,7 @@ static void printdep(const char *fileName)
 	}
 }
 
-FILE *fstk_FindFile(char *fname, char **incPathUsed)
+FILE *fstk_FindFile(char const *fname, char **incPathUsed)
 {
 	char path[_MAX_PATH];
 	int32_t i;

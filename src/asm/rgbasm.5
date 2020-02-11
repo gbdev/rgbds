@@ -296,6 +296,66 @@ will push the current section context on the section stack.
 can then later be used to restore it.
 Useful for defining sections in included files when you don't want to destroy the section context for the program that included your file.
 The number of entries in the stack is limited only by the amount of memory in your machine.
+.Ss RAM Code
+Sometimes you want to have some code in RAM.
+But then you can't simply put it in a RAM section, you have to store it in ROM and copy it to RAM at some time.
+.Pp
+This means the code (or data) will not be stored in the place it gets executed.
+Luckily,
+.Ic LOAD
+blocks are the perfect solution to that.
+Here's an example of how to use them:
+.Bd -literal -offset indent
+    SECTION "LOAD example", ROMX
+    CopyCode:
+        ld de, RAMCode
+        ld hl, RAMLocation
+        ld c, RAMLocation.end - RAMLocation
+    .loop
+        ld a, [de]
+        inc de
+        ld [hli], a
+        dec c
+        jr nz, .loop
+        ret
+
+    RAMCode:
+      LOAD "RAM code", WRAM0
+    RAMLocation:
+        ld hl, .string
+        ld de, $9864
+    .copy
+        ld a, [hli]
+        ld [de], a
+        inc de
+        and a
+        jr nz, .copy
+        ret
+
+    .string
+        db "Hello World!", 0
+    .end
+      ENDL
+.Ed
+.Pp
+A
+.Ic LOAD
+block feels similar to a
+.Ic SECTION
+declaration because it creates a new one.
+All data and code generated within such a block is placed in the current section like usual, but all labels are created as if the it was placed in this newly-created section.
+.Pp
+In the example above, all of the code and data will end up in the "LOAD example" section.
+You will notice the
+.Ic RAMCode
+and
+.Ic RAMLocation
+labels.
+The former is situated in ROM, where the code is stored, the latter in RAM, where the code will be loaded.
+.Pp
+You cannot nest
+.Ic LOAD
+blocks, nor can you change the current section within them.
 .Sh SYMBOLS
 .Pp
 .Ss Symbols

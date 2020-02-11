@@ -17,7 +17,7 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
-#include "asm/symbol.h"
+#include "asm/section.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
@@ -507,6 +507,9 @@ const struct sLexInitString lexer_strings[] = {
 	{"rept", T_POP_REPT},
 	/* Not needed but we have it here just to protect the name */
 	{"endr", T_POP_ENDR},
+
+	{"load", T_POP_LOAD},
+	{"endl", T_POP_ENDL},
 
 	{"if", T_POP_IF},
 	{"else", T_POP_ELSE},
