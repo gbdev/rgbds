@@ -142,7 +142,7 @@ void opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			errx(1, "Must specify exactly 4 characters for option 'g'");
+			yyerror("Must specify exactly 4 characters for option 'g'");
 		}
 		break;
 	case 'b':
@@ -150,7 +150,7 @@ void opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			errx(1, "Must specify exactly 2 characters for option 'b'");
+			yyerror("Must specify exactly 2 characters for option 'b'");
 		}
 		break;
 	case 'z':
@@ -159,16 +159,16 @@ void opt_Parse(char *s)
 			unsigned int fillchar;
 
 			result = sscanf(&s[1], "%x", &fillchar);
-			if (!((result == EOF) || (result == 1)))
-				errx(1, "Invalid argument for option 'z'");
-
-			newopt.fillchar = fillchar;
+			if (result != EOF && result != 1)
+				yyerror("Invalid argument for option 'z'");
+			else
+				newopt.fillchar = fillchar;
 		} else {
-			errx(1, "Invalid argument for option 'z'");
+			yyerror("Invalid argument for option 'z'");
 		}
 		break;
 	default:
-		fatalerror("Unknown option");
+		yyerror("Unknown option");
 		break;
 	}
 

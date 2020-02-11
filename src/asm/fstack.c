@@ -396,7 +396,9 @@ void fstk_RunInclude(char *tzFileName)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		err(1, "Unable to open included file '%s'", tzFileName);
+		yyerror("Unable to open included file '%s': %s", tzFileName,
+			strerror(errno));
+		return;
 	}
 
 	pushcontext();
@@ -540,7 +542,8 @@ void fstk_Init(char *pFileName)
 	} else {
 		pCurrentFile = fopen(pFileName, "rb");
 		if (pCurrentFile == NULL)
-			err(1, "Unable to open file '%s'", pFileName);
+			yyerror("Unable to open file '%s': %s", pFileName,
+				strerror(errno));
 	}
 	nFileStackDepth = 0;
 

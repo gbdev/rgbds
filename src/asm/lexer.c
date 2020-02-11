@@ -366,71 +366,73 @@ uint32_t lex_FloatAlloc(const struct sLexFloat *token)
  * Make sure that only non-zero ASCII characters are used. Also, check if the
  * start is greater than the end of the range.
  */
-void lex_CheckCharacterRange(uint16_t start, uint16_t end)
+bool lex_CheckCharacterRange(uint16_t start, uint16_t end)
 {
 	if (start > end || start < 1 || end > 127) {
-		errx(1, "Invalid character range (start: %u, end: %u)",
-		     start, end);
+		yyerror("Invalid character range (start: %u, end: %u)",
+			start, end);
+		return false;
 	}
+	return true;
 }
 
 void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingChars[start] &= ~id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingChars[start] &= ~id;
+			start++;
+		}
 	}
 }
 
 void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingChars[start] |= id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingChars[start] |= id;
+			start++;
+		}
 	}
 }
 
 void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingFirstChar[start] &= ~id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingFirstChar[start] &= ~id;
+			start++;
+		}
 	}
 }
 
 void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingFirstChar[start] |= id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingFirstChar[start] |= id;
+			start++;
+		}
 	}
 }
 
 void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingSecondChar[start] &= ~id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingSecondChar[start] &= ~id;
+			start++;
+		}
 	}
 }
 
 void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 {
-	lex_CheckCharacterRange(start, end);
-
-	while (start <= end) {
-		tFloatingSecondChar[start] |= id;
-		start++;
+	if (lex_CheckCharacterRange(start, end)) {
+		while (start <= end) {
+			tFloatingSecondChar[start] |= id;
+			start++;
+		}
 	}
 }
 
@@ -824,7 +826,7 @@ scanagain:
 					nLineNo++;
 					goto scanagain;
 				} else {
-					errx(1, "Expected a new line after the continuation character.");
+					yyerror("Expected a new line after the continuation character.");
 				}
 			}
 		}
@@ -974,7 +976,7 @@ static uint32_t yylex_MACROARGS(void)
 						ch = 0;
 						break;
 					} else {
-						errx(1, "Expected a new line after the continuation character.");
+						yyerror("Expected a new line after the continuation character.");
 					}
 				}
 				break;
