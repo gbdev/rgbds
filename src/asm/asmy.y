@@ -497,14 +497,14 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	struct SectionSpec sectSpec;
 }
 
-%type	<sVal>		relocconst
-%type	<sVal>		relocconst_no_str
+%type	<sVal>		relocexpr
+%type	<sVal>		relocexpr_no_str
 %type	<nConstValue>	const
 %type	<nConstValue>	uconst
 %type	<nConstValue>	const_3bit
-%type	<sVal>		const_8bit
-%type	<sVal>		const_8bit_no_str
-%type	<sVal>		const_16bit
+%type	<sVal>		reloc_8bit
+%type	<sVal>		reloc_8bit_no_str
+%type	<sVal>		reloc_16bit
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
@@ -1148,7 +1148,7 @@ constlist_8bit_entry : /* empty */
 			out_Skip(1);
 			nListCountEmpty++;
 		}
-		| const_8bit_no_str
+		| reloc_8bit_no_str
 		{
 			out_RelByte(&$1);
 		}
@@ -1171,7 +1171,7 @@ constlist_16bit_entry : /* empty */
 			out_Skip(2);
 			nListCountEmpty++;
 		}
-		| const_16bit
+		| reloc_16bit
 		{
 			out_RelWord(&$1);
 		}
@@ -1186,13 +1186,13 @@ constlist_32bit_entry : /* empty */
 			out_Skip(4);
 			nListCountEmpty++;
 		}
-		| relocconst
+		| relocexpr
 		{
 			out_RelLong(&$1);
 		}
 ;
 
-const_8bit	: relocconst
+reloc_8bit	: relocexpr
 		{
 			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
@@ -1200,7 +1200,7 @@ const_8bit	: relocconst
 		}
 ;
 
-const_8bit_no_str	: relocconst_no_str
+reloc_8bit_no_str	: relocexpr_no_str
 		{
 			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
@@ -1208,7 +1208,7 @@ const_8bit_no_str	: relocconst_no_str
 		}
 ;
 
-const_16bit	: relocconst
+reloc_16bit	: relocexpr
 		{
 			if ((rpn_isKnown(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit");
@@ -1217,7 +1217,7 @@ const_16bit	: relocconst
 ;
 
 
-relocconst	: relocconst_no_str
+relocexpr	: relocexpr_no_str
 		| string
 		{
 			char *s = $1;
@@ -1229,7 +1229,7 @@ relocconst	: relocconst_no_str
 		}
 ;
 
-relocconst_no_str	: T_ID
+relocexpr_no_str	: T_ID
 		{
 			rpn_Symbol(&$$, $1);
 		}
@@ -1237,30 +1237,30 @@ relocconst_no_str	: T_ID
 		{
 			rpn_Number(&$$, $1);
 		}
-		| T_OP_LOGICNOT relocconst %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
-		| relocconst T_OP_LOGICOR relocconst	{ rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICAND relocconst	{ rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICEQU relocconst	{ rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICGT relocconst	{ rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICLT relocconst	{ rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICGE relocconst	{ rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICLE relocconst	{ rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3); }
-		| relocconst T_OP_LOGICNE relocconst	{ rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3); }
-		| relocconst T_OP_ADD relocconst	{ rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3); }
-		| relocconst T_OP_SUB relocconst	{ rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3); }
-		| relocconst T_OP_XOR relocconst	{ rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3); }
-		| relocconst T_OP_OR relocconst		{ rpn_BinaryOp(RPN_OR, &$$, &$1, &$3); }
-		| relocconst T_OP_AND relocconst	{ rpn_BinaryOp(RPN_AND, &$$, &$1, &$3); }
-		| relocconst T_OP_SHL relocconst	{ rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3); }
-		| relocconst T_OP_SHR relocconst	{ rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3); }
-		| relocconst T_OP_MUL relocconst	{ rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3); }
-		| relocconst T_OP_DIV relocconst	{ rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3); }
-		| relocconst T_OP_MOD relocconst	{ rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3); }
-		| T_OP_ADD relocconst %prec NEG		{ $$ = $2; }
-		| T_OP_SUB relocconst %prec NEG		{ rpn_UNNEG(&$$, &$2); }
-		| T_OP_NOT relocconst %prec NEG		{ rpn_UNNOT(&$$, &$2); }
-		| T_OP_HIGH '(' relocconst ')'		{ rpn_HIGH(&$$, &$3); }
-		| T_OP_LOW '(' relocconst ')'		{ rpn_LOW(&$$, &$3); }
+		| T_OP_LOGICNOT relocexpr %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
+		| relocexpr T_OP_LOGICOR relocexpr	{ rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICAND relocexpr	{ rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICEQU relocexpr	{ rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICGT relocexpr	{ rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICLT relocexpr	{ rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICGE relocexpr	{ rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICLE relocexpr	{ rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3); }
+		| relocexpr T_OP_LOGICNE relocexpr	{ rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3); }
+		| relocexpr T_OP_ADD relocexpr	{ rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3); }
+		| relocexpr T_OP_SUB relocexpr	{ rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3); }
+		| relocexpr T_OP_XOR relocexpr	{ rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3); }
+		| relocexpr T_OP_OR relocexpr		{ rpn_BinaryOp(RPN_OR, &$$, &$1, &$3); }
+		| relocexpr T_OP_AND relocexpr	{ rpn_BinaryOp(RPN_AND, &$$, &$1, &$3); }
+		| relocexpr T_OP_SHL relocexpr	{ rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3); }
+		| relocexpr T_OP_SHR relocexpr	{ rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3); }
+		| relocexpr T_OP_MUL relocexpr	{ rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3); }
+		| relocexpr T_OP_DIV relocexpr	{ rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3); }
+		| relocexpr T_OP_MOD relocexpr	{ rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3); }
+		| T_OP_ADD relocexpr %prec NEG		{ $$ = $2; }
+		| T_OP_SUB relocexpr %prec NEG		{ rpn_UNNEG(&$$, &$2); }
+		| T_OP_NOT relocexpr %prec NEG		{ rpn_UNNOT(&$$, &$2); }
+		| T_OP_HIGH '(' relocexpr ')'		{ rpn_HIGH(&$$, &$3); }
+		| T_OP_LOW '(' relocexpr ')'		{ rpn_LOW(&$$, &$3); }
 		| T_OP_BANK '(' T_ID ')'
 		{
 			/* '@' is also a T_ID, it is handled here. */
@@ -1349,7 +1349,7 @@ relocconst_no_str	: T_ID
 				rpn_Number(&$$, 0);
 		}
 		| T_OP_STRLEN '(' string ')'		{ rpn_Number(&$$, strlenUTF8($3)); }
-		| '(' relocconst ')'			{ $$ = $2; }
+		| '(' relocexpr ')'			{ $$ = $2; }
 ;
 
 uconst		: const
@@ -1361,7 +1361,7 @@ uconst		: const
 		}
 ;
 
-const		: relocconst
+const		: relocexpr
 		{
 			if (!rpn_isKnown(&$1)) {
 				yyerror("Expected constant expression: %s",
@@ -1542,7 +1542,7 @@ z80_add		: T_Z80_ADD op_a_n
 		{
 			out_AbsByte(0x09 | ($2 << 4));
 		}
-		| T_Z80_ADD T_MODE_SP comma const_8bit
+		| T_Z80_ADD T_MODE_SP comma reloc_8bit
 		{
 			out_AbsByte(0xE8);
 			out_RelByte(&$4);
@@ -1568,12 +1568,12 @@ z80_bit		: T_Z80_BIT const_3bit comma reg_r
 		}
 ;
 
-z80_call	: T_Z80_CALL const_16bit
+z80_call	: T_Z80_CALL reloc_16bit
 		{
 			out_AbsByte(0xCD);
 			out_RelWord(&$2);
 		}
-		| T_Z80_CALL ccode comma const_16bit
+		| T_Z80_CALL ccode comma reloc_16bit
 		{
 			out_AbsByte(0xC4 | ($2 << 3));
 			out_RelWord(&$4);
@@ -1649,12 +1649,12 @@ z80_inc		: T_Z80_INC reg_r
 		}
 ;
 
-z80_jp		: T_Z80_JP const_16bit
+z80_jp		: T_Z80_JP reloc_16bit
 		{
 			out_AbsByte(0xC3);
 			out_RelWord(&$2);
 		}
-		| T_Z80_JP ccode comma const_16bit
+		| T_Z80_JP ccode comma reloc_16bit
 		{
 			out_AbsByte(0xC2 | ($2 << 3));
 			out_RelWord(&$4);
@@ -1670,12 +1670,12 @@ z80_jp		: T_Z80_JP const_16bit
 		}
 ;
 
-z80_jr		: T_Z80_JR const_16bit
+z80_jr		: T_Z80_JR reloc_16bit
 		{
 			out_AbsByte(0x18);
 			out_PCRelByte(&$2);
 		}
-		| T_Z80_JR ccode comma const_16bit
+		| T_Z80_JR ccode comma reloc_16bit
 		{
 			out_AbsByte(0x20 | ($2 << 3));
 			out_PCRelByte(&$4);
@@ -1754,18 +1754,18 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL comma '[' T_MODE_SP const_8bit ']'
+z80_ld_hl	: T_Z80_LD T_MODE_HL comma '[' T_MODE_SP reloc_8bit ']'
 		{
 			out_AbsByte(0xF8);
 			out_RelByte(&$6);
 			warning(WARNING_OBSOLETE, "'LD HL,[SP+e8]' is obsolete, use 'LD HL,SP+e8' instead.");
 		}
-		| T_Z80_LD T_MODE_HL comma T_MODE_SP const_8bit
+		| T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit
 		{
 			out_AbsByte(0xF8);
 			out_RelByte(&$5);
 		}
-		| T_Z80_LD T_MODE_HL comma const_16bit
+		| T_Z80_LD T_MODE_HL comma reloc_16bit
 		{
 			out_AbsByte(0x01 | (REG_HL << 4));
 			out_RelWord(&$4);
@@ -1776,7 +1776,7 @@ z80_ld_sp	: T_Z80_LD T_MODE_SP comma T_MODE_HL
 		{
 			out_AbsByte(0xF9);
 		}
-		| T_Z80_LD T_MODE_SP comma const_16bit
+		| T_Z80_LD T_MODE_SP comma reloc_16bit
 		{
 			out_AbsByte(0x01 | (REG_SP << 4));
 			out_RelWord(&$4);
@@ -1814,7 +1814,7 @@ z80_ld_rr	: T_Z80_LD reg_rr comma T_MODE_A
 		}
 ;
 
-z80_ld_r	: T_Z80_LD reg_r comma const_8bit
+z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit
 		{
 			out_AbsByte(0x06 | ($2 << 3));
 			out_RelByte(&$4);
@@ -1861,12 +1861,12 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
 		}
 ;
 
-z80_ld_ss	: T_Z80_LD T_MODE_BC comma const_16bit
+z80_ld_ss	: T_Z80_LD T_MODE_BC comma reloc_16bit
 		{
 			out_AbsByte(0x01 | (REG_BC << 4));
 			out_RelWord(&$4);
 		}
-		| T_Z80_LD T_MODE_DE comma const_16bit
+		| T_Z80_LD T_MODE_DE comma reloc_16bit
 		{
 			out_AbsByte(0x01 | (REG_DE << 4));
 			out_RelWord(&$4);
@@ -1981,7 +1981,7 @@ z80_rrca	: T_Z80_RRCA
 		}
 ;
 
-z80_rst		: T_Z80_RST const_8bit
+z80_rst		: T_Z80_RST reloc_8bit
 		{
 			if (!rpn_isKnown(&$2)) {
 				rpn_CheckRST(&$2, &$2);
@@ -2045,7 +2045,7 @@ z80_stop	: T_Z80_STOP
 			out_AbsByte(0x10);
 			out_AbsByte(0x00);
 		}
-		| T_Z80_STOP const_8bit
+		| T_Z80_STOP reloc_8bit
 		{
 			out_AbsByte(0x10);
 			out_RelByte(&$2);
@@ -2081,7 +2081,7 @@ z80_xor		: T_Z80_XOR op_a_n
 		}
 ;
 
-op_mem_ind	: '[' const_16bit ']'		{ $$ = $2; }
+op_mem_ind	: '[' reloc_16bit ']'		{ $$ = $2; }
 ;
 
 op_hl_ss	: reg_ss			{ $$ = $1; }
@@ -2092,8 +2092,8 @@ op_a_r		: reg_r				{ $$ = $1; }
 		| T_MODE_A comma reg_r		{ $$ = $3; }
 ;
 
-op_a_n		: const_8bit			{ $$ = $1; }
-		| T_MODE_A comma const_8bit	{ $$ = $3; }
+op_a_n		: reloc_8bit			{ $$ = $1; }
+		| T_MODE_A comma reloc_8bit	{ $$ = $3; }
 ;
 
 comma		: ','
