@@ -793,6 +793,7 @@ load		: T_POP_LOAD string comma sectiontype sectorg sectattrs
 		{
 			out_EndLoadSection();
 		}
+;
 
 rept		: T_POP_REPT uconst
 		{
