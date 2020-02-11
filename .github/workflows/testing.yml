@@ -26,16 +26,97 @@ jobs:
           sudo make install -j Q=
       - name: Package binaries
         run: |
-          mkdir $DIST_DIR
-          cp rgb{asm,link,fix,gfx} $DIST_DIR
-        env:
-          DIST_DIR: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins
+          mkdir bins
+          cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
         uses: actions/upload-artifact@v1
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins
-          path: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins
+          path: bins
       - name: Test
         shell: bash
         run: |
           test/run-tests.sh
+
+  windows-build:
+    strategy:
+      matrix:
+        bits: [32, 64]
+        os: [ubuntu-latest]
+        include:
+          - bits: 32
+            arch: i686
+            triplet: i686-w64-mingw32
+          - bits: 64
+            arch: x86-64
+            triplet: x86_64-w64-mingw32
+    runs-on: ${{ matrix.os }}
+    env:
+      DIST_DIR: win${{ matrix.bits }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/actions/install_deps.sh ${{ matrix.os }}
+      - name: Install MinGW
+        run: |
+          sudo apt-get install gcc-mingw-w64-${{ matrix.arch }} mingw-w64-tools libz-mingw-w64-dev
+      - name: Install libpng dev headers for MinGW
+        run: |
+          sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
+      - name: Build Windows binaries
+        run: |
+          make mingw${{ matrix.bits }} -j Q=
+      - name: Package binaries
+        run: |
+          mkdir bins
+          mv rgbasm bins/rgbasm.exe
+          mv rgblink bins/rgblink.exe
+          mv rgbfix bins/rgbfix.exe
+          mv rgbgfx bins/rgbgfx.exe
+          cp /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
+          cp /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
+      - name: Upload Windows binaries
+        uses: actions/upload-artifact@v1
+        with:
+          name: bins${{ matrix.bits }}
+          path: bins
+
+  windows-testing:
+    needs: windows-build
+    strategy:
+      matrix:
+        bits: [32, 64]
+        include:
+          - bits: 32
+            rgbgfx_fail: true
+          - bits: 64
+            rgbgfx_fail: false
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve binaries
+        uses: actions/download-artifact@v1
+        with:
+          name: bins${{ matrix.bits }}
+          path: bins
+      - name: Extract binaries
+        shell: bash
+        run: |
+          cp bins/* .
+      - name: Run tests
+        shell: bash
+        run: |
+          test/run-tests.sh
+        if: matrix.rgbgfx_fail == false
+      - name: Run tests (without RGBGFX)
+        shell: bash
+        run: |
+          pushd test/asm
+          ./test.sh
+          popd
+          pushd test/link
+          ./test.sh
+          popd
+        if: matrix.rgbgfx_fail == true
