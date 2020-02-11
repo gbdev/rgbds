@@ -777,6 +777,12 @@ warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 ;
 
 shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
+		| T_POP_SHIFT uconst
+		{
+			int32_t i = $2;
+			while (i--)
+				sym_ShiftCurrentMacroArgs();
+		}
 ;
 
 load		: T_POP_LOAD string comma sectiontype sectorg sectattrs
