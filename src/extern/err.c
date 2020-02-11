@@ -6,9 +6,11 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "extern/err.h"
 
@@ -39,7 +41,8 @@ noreturn_ void rgbds_verr(int status, const char *fmt, va_list ap)
 		vfprintf(stderr, fmt, ap);
 		fputs(": ", stderr);
 	}
-	perror(NULL);
+	fputs(strerror(errno), stderr);
+	putc('\n', stderr);
 	exit(status);
 }
 
