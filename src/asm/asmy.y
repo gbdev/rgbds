@@ -498,10 +498,12 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 }
 
 %type	<sVal>		relocconst
+%type	<sVal>		relocconst_no_str
 %type	<nConstValue>	const
 %type	<nConstValue>	uconst
 %type	<nConstValue>	const_3bit
 %type	<sVal>		const_8bit
+%type	<sVal>		const_8bit_no_str
 %type	<sVal>		const_16bit
 %type	<nConstValue>	sectiontype
 
@@ -1146,7 +1148,7 @@ constlist_8bit_entry : /* empty */
 			out_Skip(1);
 			nListCountEmpty++;
 		}
-		| const_8bit
+		| const_8bit_no_str
 		{
 			out_RelByte(&$1);
 		}
@@ -1198,6 +1200,14 @@ const_8bit	: relocconst
 		}
 ;
 
+const_8bit_no_str	: relocconst_no_str
+		{
+			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
+			$$ = $1;
+		}
+;
+
 const_16bit	: relocconst
 		{
 			if ((rpn_isKnown(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
@@ -1207,14 +1217,7 @@ const_16bit	: relocconst
 ;
 
 
-relocconst	: T_ID
-		{
-			rpn_Symbol(&$$, $1);
-		}
-		| T_NUMBER
-		{
-			rpn_Number(&$$, $1);
-		}
+relocconst	: relocconst_no_str
 		| string
 		{
 			char *s = $1;
@@ -1223,6 +1226,16 @@ relocconst	: T_ID
 
 			free(s);
 			rpn_Number(&$$, r);
+		}
+;
+
+relocconst_no_str	: T_ID
+		{
+			rpn_Symbol(&$$, $1);
+		}
+		| T_NUMBER
+		{
+			rpn_Number(&$$, $1);
 		}
 		| T_OP_LOGICNOT relocconst %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
 		| relocconst T_OP_LOGICOR relocconst	{ rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3); }
