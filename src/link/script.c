@@ -419,6 +419,10 @@ struct SectionPlacement *script_NextSection(void)
 
 				section.section =
 					sect_GetSection(token->attr.string);
+				if (!section.section)
+					errx(1, "%s(%u): Unknown section \"%s\"",
+					     linkerScriptName, lineNo,
+					     token->attr.string);
 				section.org = curaddr[type][bankID];
 				section.bank = bank;
 
