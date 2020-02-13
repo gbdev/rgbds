@@ -231,16 +231,12 @@ develop:
 mingw32:
 	$Qmake CC=i686-w64-mingw32-gcc YACC=bison \
 		PKG_CONFIG=i686-w64-mingw32-pkg-config -j
-	$Qecho -e '#!/bin/sh\nWINEDEBUG=-all wine $$0.exe "$${@:1}"' > rgbshim.sh
-	$Qchmod +x rgbshim.sh
-	$Qln -s rgbshim.sh rgbasm
-	$Qln -s rgbshim.sh rgblink
-	$Qln -s rgbshim.sh rgbfix
-	$Qln -s rgbshim.sh rgbgfx
 
 mingw64:
 	$Qmake CC=x86_64-w64-mingw32-gcc YACC=bison \
 		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
+
+wine-shim:
 	$Qecho -e '#!/bin/sh\nWINEDEBUG=-all wine $$0.exe "$${@:1}"' > rgbshim.sh
 	$Qchmod +x rgbshim.sh
 	$Qln -s rgbshim.sh rgbasm
