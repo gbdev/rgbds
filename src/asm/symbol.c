@@ -547,28 +547,24 @@ void sym_AddReloc(char const *tzSym)
 					 pScope->pScope : pScope;
 		uint32_t parentLen = localPtr - tzSym;
 
-		if (strchr(localPtr + 1, '.') != NULL) {
+		if (strchr(localPtr + 1, '.') != NULL)
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
 				   tzSym);
-		} else if (strlen(parent->tzName) != parentLen
-			   || strncmp(tzSym, parent->tzName, parentLen) != 0) {
+		else if (strlen(parent->tzName) != parentLen
+			|| strncmp(tzSym, parent->tzName, parentLen) != 0)
 			yyerror("Not currently in the scope of '%.*s'",
 				parentLen, tzSym);
-		}
 
 		scope = parent;
 	}
 
 	nsym = findsymbol(tzSym, scope);
 
-	if (nsym != NULL) {
-		if (sym_IsDefined(nsym)) {
-			yyerror("'%s' already defined in %s(%d)", tzSym,
-				nsym->tzFileName, nsym->nFileLine);
-		}
-	} else {
+	if (!nsym)
 		nsym = createsymbol(tzSym);
-	}
+	else if (sym_IsDefined(nsym))
+		yyerror("'%s' already defined in %s(%d)", tzSym,
+			nsym->tzFileName, nsym->nFileLine);
 
 	nsym->nValue = nPC;
 	nsym->type = SYM_LABEL;
