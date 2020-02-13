@@ -52,6 +52,8 @@ SECTION "fixed PC", ROM0[420]
 	; Diffing PC and a label from here should work
 LocalFixed:
 	print_diff LocalFixed, @
+	ds 69
+	print_diff LocalFixed, @
 
 SECTION "Floating PC", ROM0
 	; Diffing a constant and PC cannot work
@@ -64,4 +66,6 @@ SECTION "Floating PC", ROM0
 	print_diff @, @
 	; Diffing PC and a label from here should work
 LocalFloating:
+	print_diff LocalFloating, @
+	ds 42
 	print_diff LocalFloating, @
