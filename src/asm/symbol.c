@@ -72,7 +72,7 @@ static int32_t CallbackPC(struct sSymbol const *self)
 /*
  * Get the nValue field of a symbol
  */
-static int32_t getvaluefield(struct sSymbol const *sym)
+int32_t sym_GetValue(struct sSymbol const *sym)
 {
 	if (sym->Callback)
 		return sym->Callback(sym);
@@ -268,11 +268,11 @@ uint32_t sym_GetConstantValue(char const *s)
 		if (pCurrentSection->nOrg == -1)
 			yyerror("Expected constant PC but section is not fixed");
 		else
-			return getvaluefield(psym);
+			return sym_GetValue(psym);
 
 	} else if (psym != NULL) {
 		if (sym_IsConstant(psym))
-			return getvaluefield(psym);
+			return sym_GetValue(psym);
 
 		fatalerror("\"%s\" does not have a constant value", s);
 	}
@@ -294,7 +294,7 @@ uint32_t sym_GetDefinedValue(char const *s)
 			if (!sym_IsNumeric(psym))
 				yyerror("'%s' is a macro or string symbol", s);
 
-			return getvaluefield(psym);
+			return sym_GetValue(psym);
 		}
 	}
 

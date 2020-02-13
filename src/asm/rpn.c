@@ -442,7 +442,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		struct sSymbol const *symbol1 = symbolOf(src1);
 		struct sSymbol const *symbol2 = symbolOf(src2);
 
-		expr->nVal = symbol1->nValue - symbol2->nValue;
+		expr->nVal = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;
 	} else {
 		/* If it's not known, start computing the RPN expression */

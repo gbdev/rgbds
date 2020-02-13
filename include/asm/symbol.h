@@ -70,6 +70,7 @@ static inline bool sym_IsExported(struct sSymbol const *sym)
 	return sym->isExported;
 }
 
+int32_t sym_GetValue(struct sSymbol const *sym);
 uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(uint8_t set);
 void sym_AddLocalReloc(char const *tzSym);
