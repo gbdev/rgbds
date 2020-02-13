@@ -1,3 +1,13 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2020, Carsten Sorensen and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#ifndef RGBDS_SECTION_H
+#define RGBDS_SECTION_H
 
 #include <stdint.h>
 
@@ -44,3 +54,5 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 
 void out_PushSection(void);
 void out_PopSection(void);
+
+#endif
