@@ -425,8 +425,8 @@ void out_WriteObject(void)
 	addexports();
 
 	f = fopen(tzObjectname, "wb");
-	if (f == NULL)
-		fatalerror("Couldn't write file '%s'\n", tzObjectname);
+	if (!f)
+		err(1, "Couldn't write file '%s'", tzObjectname);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
 	fputlong(RGBDS_OBJECT_REV, f);
