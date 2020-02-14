@@ -23,9 +23,9 @@ CHECKPATCH	:= ../linux/scripts/checkpatch.pl
 # Other variables
 
 PKG_CONFIG	:= pkg-config
-PNGCFLAGS	:= `${PKG_CONFIG} --static --cflags libpng`
-PNGLDFLAGS	:= `${PKG_CONFIG} --static --libs-only-L libpng`
-PNGLDLIBS	:= `${PKG_CONFIG} --static --libs-only-l libpng`
+PNGCFLAGS	:= `${PKG_CONFIG} --cflags libpng`
+PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
+PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
