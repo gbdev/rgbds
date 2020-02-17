@@ -237,7 +237,7 @@ mingw64:
 		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
 
 wine-shim:
-	$Qecho '#!/bin/sh' > rgbshim.sh
+	$Qecho '#!/bin/bash' > rgbshim.sh
 	$Qecho 'WINEDEBUG=-all wine $$0.exe "$${@:1}"' >> rgbshim.sh
 	$Qchmod +x rgbshim.sh
 	$Qln -s rgbshim.sh rgbasm
