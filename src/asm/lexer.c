@@ -734,6 +734,9 @@ static void yylex_ReadQuotedString(void)
 			case 'n':
 				ch = '\n';
 				break;
+			case 'r':
+				ch = '\r';
+				break;
 			case 't':
 				ch = '\t';
 				break;
