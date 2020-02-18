@@ -1,0 +1,17 @@
+name: "Code style checking"
+on: pull_request
+
+jobs:
+  checkpatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up checkpatch
+        run: |
+          wget 'https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl'
+          chmod +x checkpatch.pl
+          touch const_structs.checkpatch
+          touch spelling.txt
+      - name: Checkpatch
+        run: |
+          make checkpatch CHECKPATCH=./checkpatch.pl
