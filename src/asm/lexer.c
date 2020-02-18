@@ -830,6 +830,7 @@ scanagain:
 					goto scanagain;
 				} else {
 					yyerror("Expected a new line after the continuation character.");
+					pLexBuffer++;
 				}
 			}
 		}
