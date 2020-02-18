@@ -44,7 +44,9 @@ uint32_t nTotalLines, nPC, nIFDepth, nUnionDepth;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
-/* extern int yydebug; */
+#if defined(YYDEBUG) && YYDEBUG
+extern int yydebug;
+#endif
 
 FILE *dependfile;
 bool oGeneratedMissingIncludes;
@@ -335,7 +337,9 @@ int main(int argc, char *argv[])
 	if (!cldefines)
 		fatalerror("No memory for command line defines");
 
-	/* yydebug=1; */
+#if defined(YYDEBUG) && YYDEBUG
+	yydebug = 1;
+#endif
 
 	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
