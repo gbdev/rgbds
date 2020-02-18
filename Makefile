@@ -180,8 +180,9 @@ checkcodebase:
 # the first common commit between the HEAD and origin/master.
 # `.y` files aren't checked, unfortunately...
 
+BASE_REF:= origin/master
 checkpatch:
-	$Qeval COMMON_COMMIT=$$(git merge-base HEAD origin/master);	\
+	$Qeval COMMON_COMMIT=$$(git merge-base HEAD ${BASE_REF});	\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
 		echo "[*] Analyzing commit '$$commit'";			\
 		git format-patch --stdout "$$commit~..$$commit"		\
