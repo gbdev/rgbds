@@ -526,7 +526,7 @@ void sym_AddLocalReloc(char const *tzSym)
 		sym_AddReloc(fullname);
 
 	} else {
-		fatalerror("Local label in main scope");
+		yyerror("Local label '%s' in main scope", tzSym);
 	}
 }
 
