@@ -40,6 +40,6 @@ ENDM
 	test_char _
 	test_char @
 	test_char #
-	test_char .
 
+	test_char .
 	test_char :
