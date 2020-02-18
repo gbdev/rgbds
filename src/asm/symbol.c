@@ -540,8 +540,10 @@ void sym_AddReloc(char const *tzSym)
 	char *localPtr = strchr(tzSym, '.');
 
 	if (localPtr != NULL) {
-		if (!pScope)
-			fatalerror("Local label in main scope");
+		if (!pScope) {
+			yyerror("Local label in main scope");
+			return;
+		}
 
 		struct sSymbol *parent = pScope->pScope ?
 					 pScope->pScope : pScope;
