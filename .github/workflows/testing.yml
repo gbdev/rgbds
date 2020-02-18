@@ -31,7 +31,7 @@ jobs:
       - name: Upload binaries
         uses: actions/upload-artifact@v1
         with:
-          name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-bins
+          name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}
           path: bins
       - name: Test
         shell: bash
@@ -80,7 +80,7 @@ jobs:
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v1
         with:
-          name: bins${{ matrix.bits }}
+          name: rgbds-canary-win${{ matrix.bits }}
           path: bins
 
   windows-testing:
@@ -99,7 +99,7 @@ jobs:
       - name: Retrieve binaries
         uses: actions/download-artifact@v1
         with:
-          name: bins${{ matrix.bits }}
+          name: rgbds-canary-win${{ matrix.bits }}
           path: bins
       - name: Extract binaries
         shell: bash
