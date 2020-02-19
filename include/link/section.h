@@ -26,7 +26,6 @@ struct AttachedSymbol {
 
 struct Patch {
 	char *fileName;
-	int32_t lineNo;
 	int32_t offset;
 	enum PatchType type;
 	int32_t rpnSize;

@@ -33,7 +33,6 @@
 
 struct Patch {
 	char tzFilename[_MAX_PATH + 1];
-	uint32_t nLine;
 	uint32_t nOffset;
 	uint8_t nType;
 	uint32_t nRPNSize;
@@ -152,7 +151,6 @@ static uint32_t getsectid(struct Section *pSect)
 static void writepatch(struct Patch *pPatch, FILE *f)
 {
 	fputstring(pPatch->tzFilename, f);
-	fputlong(pPatch->nLine, f);
 	fputlong(pPatch->nOffset, f);
 	fputc(pPatch->nType, f);
 	fputlong(pPatch->nRPNSize, f);
@@ -328,7 +326,6 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 	pPatch = allocpatch();
 	pPatch->nType = type;
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
-	pPatch->nLine = nLineNo;
 	pPatch->nOffset = pCurrentSection->nPC;
 
 	while ((rpndata = rpn_PopByte(expr)) != 0xDEAD) {

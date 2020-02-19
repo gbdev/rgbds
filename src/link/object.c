@@ -209,9 +209,6 @@ static void readPatch(FILE *file, struct Patch *patch,
 	tryReadstr(patch->fileName, file,
 		   "%s: Unable to read \"%s\"'s patch #%u's name: %s",
 		   fileName, sectName, i);
-	tryReadlong(patch->lineNo, file,
-		    "%s: Unable to read \"%s\"'s patch #%u's line number: %s",
-		    fileName, sectName, i);
 	tryReadlong(patch->offset, file,
 		    "%s: Unable to read \"%s\"'s patch #%u's offset: %s",
 		    fileName, sectName, i);

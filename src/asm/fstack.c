@@ -281,7 +281,8 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 		pLastFile = pLastFile->pNext;
 	}
 
-	retcode = snprintf(&buf[buflen - len], len, "%s", tzCurrentFileName);
+	retcode = snprintf(&buf[buflen - len], len, "%s(%d)", tzCurrentFileName,
+			   nLineNo);
 	if (retcode < 0)
 		fatalerror("Failed to dump file stack to string: %s",
 			   strerror(errno));
