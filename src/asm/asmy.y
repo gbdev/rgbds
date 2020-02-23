@@ -884,6 +884,10 @@ ds		: T_POP_DS uconst
 		{
 			out_Skip($2);
 		}
+		| T_POP_DS uconst comma reloc_8bit
+		{
+			out_RelBytes(&$4, $2);
+		}
 ;
 
 db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {

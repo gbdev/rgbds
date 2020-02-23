@@ -295,11 +295,7 @@ void out_String(char const *s)
 		absByteBypassCheck(*s++);
 }
 
-/*
- * Output a relocatable byte. Checking will be done to see if it
- * is an absolute value in disguise.
- */
-void out_RelByte(struct Expression *expr)
+static void outputExpression(struct Expression const *expr)
 {
 	if (!rpn_isKnown(expr)) {
 		out_CreatePatch(PATCHTYPE_BYTE, expr);
@@ -307,6 +303,26 @@ void out_RelByte(struct Expression *expr)
 	} else {
 		out_AbsByte(expr->nVal);
 	}
+}
+
+/*
+ * Output a relocatable byte. Checking will be done to see if it
+ * is an absolute value in disguise.
+ */
+void out_RelByte(struct Expression *expr)
+{
+	outputExpression(expr);
+	rpn_Free(expr);
+}
+
+/*
+ * Output several copies of a relocatable byte. Checking will be done to see if
+ * it is an absolute value in disguise.
+ */
+void out_RelBytes(struct Expression *expr, int32_t n)
+{
+	while (n--)
+		outputExpression(expr);
 	rpn_Free(expr);
 }
 

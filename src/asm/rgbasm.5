@@ -799,6 +799,14 @@ Note that strings are not zero-terminated!
 DB 1,2,3,4,"This is a string"
 .Ed
 .Pp
+.Ic DS
+can also be used to fill a region of memory with some value.
+The following produces 42 times the byte $FF:
+.Pp
+.Bd -literal -offset indent
+DS 42, $FF
+.Ed
+.Pp
 Alternatively, you can use
 .Ic DW
 to store a list of words (16-bit) or

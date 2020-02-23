@@ -46,6 +46,7 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length);
 void out_Skip(int32_t skip);
 void out_String(char const *s);
 void out_RelByte(struct Expression *expr);
+void out_RelBytes(struct Expression *expr, int32_t n);
 void out_RelWord(struct Expression *expr);
 void out_RelLong(struct Expression *expr);
 void out_PCRelByte(struct Expression *expr);
