@@ -310,10 +310,9 @@ struct Patch *allocpatch(void)
 /*
  * Create a new patch (includes the rpn expr)
  */
-void out_CreatePatch(uint32_t type, struct Expression *expr)
+void out_CreatePatch(uint32_t type, struct Expression const *expr)
 {
 	struct Patch *pPatch;
-	uint16_t rpndata;
 	uint8_t *rpnexpr;
 	char tzSym[512];
 	uint32_t rpnptr = 0, symptr;
@@ -328,19 +327,22 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nOffset = pCurrentSection->nPC;
 
-	while ((rpndata = rpn_PopByte(expr)) != 0xDEAD) {
+	for (size_t offset = 0; offset < expr->nRPNLength; ) {
+#define popbyte(expr) (expr)->tRPN[offset++]
+		uint8_t rpndata = popbyte(expr);
+
 		switch (rpndata) {
 		case RPN_CONST:
 			rpnexpr[rpnptr++] = RPN_CONST;
-			rpnexpr[rpnptr++] = rpn_PopByte(expr);
-			rpnexpr[rpnptr++] = rpn_PopByte(expr);
-			rpnexpr[rpnptr++] = rpn_PopByte(expr);
-			rpnexpr[rpnptr++] = rpn_PopByte(expr);
+			rpnexpr[rpnptr++] = popbyte(expr);
+			rpnexpr[rpnptr++] = popbyte(expr);
+			rpnexpr[rpnptr++] = popbyte(expr);
+			rpnexpr[rpnptr++] = popbyte(expr);
 			break;
 		case RPN_SYM:
 		{
 			symptr = 0;
-			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
+			while ((tzSym[symptr++] = popbyte(expr)) != 0)
 				;
 
 			struct sSymbol const *sym = sym_FindSymbol(tzSym);
@@ -371,7 +373,7 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 			struct sSymbol *sym;
 
 			symptr = 0;
-			while ((tzSym[symptr++] = rpn_PopByte(expr)) != 0)
+			while ((tzSym[symptr++] = popbyte(expr)) != 0)
 				;
 
 			sym = sym_FindSymbol(tzSym);
@@ -393,7 +395,7 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 			rpnexpr[rpnptr++] = RPN_BANK_SECT;
 
 			do {
-				b = rpn_PopByte(expr);
+				b = popbyte(expr);
 				rpnexpr[rpnptr++] = b & 0xFF;
 			} while (b != 0);
 			break;
@@ -402,6 +404,7 @@ void out_CreatePatch(uint32_t type, struct Expression *expr)
 			rpnexpr[rpnptr++] = rpndata;
 			break;
 		}
+#undef popbyte
 	}
 
 	assert(rpnptr == expr->nRPNPatchSize);

@@ -19,7 +19,7 @@ extern char *tzObjectname;
 extern struct Section *pSectionList, *pCurrentSection;
 
 void out_SetFileName(char *s);
-void out_CreatePatch(uint32_t type, struct Expression *expr);
+void out_CreatePatch(uint32_t type, struct Expression const *expr);
 void out_WriteObject(void);
 
 #endif /* RGBDS_ASM_OUTPUT_H */

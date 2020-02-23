@@ -81,7 +81,6 @@ void rpn_Init(struct Expression *expr)
 	expr->nRPNCapacity = 0;
 	expr->nRPNLength = 0;
 	expr->nRPNPatchSize = 0;
-	expr->nRPNOut = 0;
 }
 
 /*
@@ -92,17 +91,6 @@ void rpn_Free(struct Expression *expr)
 	free(expr->tRPN);
 	free(expr->reason);
 	rpn_Init(expr);
-}
-
-/*
- * Returns the next rpn byte in expression
- */
-uint16_t rpn_PopByte(struct Expression *expr)
-{
-	if (expr->nRPNOut == expr->nRPNLength)
-		return 0xDEAD;
-
-	return expr->tRPN[expr->nRPNOut++];
 }
 
 /*
