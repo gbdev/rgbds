@@ -111,7 +111,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
 		fail("Section \"%s\" is bigger than the max size for that type: %#x > %#x",
-		     section->size, maxsize[section->type]);
+		     section->name, section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
 

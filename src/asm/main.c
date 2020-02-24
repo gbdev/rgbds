@@ -6,7 +6,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <errno.h>
 #include <float.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
 
 #include "asm/symbol.h"
 #include "asm/fstack.h"
@@ -532,15 +533,15 @@ int main(int argc, char *argv[])
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nbErrors != 0)
-		errx(1, "Assembly aborted (%ld errors)!", nbErrors);
+		errx(1, "Assembly aborted (%u errors)!", nbErrors);
 	if (dependfile)
 		fclose(dependfile);
 
 	if (nIFDepth != 0)
-		errx(1, "Unterminated IF construct (%ld levels)!", nIFDepth);
+		errx(1, "Unterminated IF construct (%u levels)!", nIFDepth);
 
 	if (nUnionDepth != 0) {
-		errx(1, "Unterminated UNION construct (%ld levels)!",
+		errx(1, "Unterminated UNION construct (%u levels)!",
 		     nUnionDepth);
 	}
 

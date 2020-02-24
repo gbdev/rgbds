@@ -243,7 +243,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				struct Symbol const *symbolDefinition =
 						sym_GetSymbol(symbol->name);
 				if (!symbolDefinition)
-					errx(1, "%s(%d): Unknown symbol \"%s\"",
+					errx(1, "%s: Unknown symbol \"%s\"",
 					     patch->fileName, symbol->name);
 				symbol = symbolDefinition;
 			}

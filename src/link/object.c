@@ -226,7 +226,8 @@ static void readPatch(FILE *file, struct Patch *patch,
 
 	if (nbElementsRead != patch->rpnSize)
 		errx(1, "%s: Cannot read \"%s\"'s patch #%u's RPN expression: %s",
-		     fileName, sectName, i);
+		     fileName, sectName, i,
+		     feof(file) ? "Unexpected end of file" : strerror(errno));
 	patch->rpnExpression = rpnExpression;
 }
 
@@ -255,7 +256,7 @@ static void readSection(FILE *file, struct Section *section,
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX)
-		errx(1, "\"%s\" is too large (%d)", tmp);
+		errx(1, "\"%s\"'s org' is too large (%d)", section->name, tmp);
 	section->org = tmp;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s",
 		    fileName, section->name);

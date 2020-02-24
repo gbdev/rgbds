@@ -29,15 +29,15 @@
 #define errx rgbds_errx
 #define verrx rgbds_verrx
 
-void warn(const char *fmt, ...);
-void vwarn(const char *fmt, va_list ap);
-void warnx(const char *fmt, ...);
-void vwarnx(const char *fmt, va_list ap);
+void warn(const char *fmt, ...) format_(printf, 1, 2);
+void vwarn(const char *fmt, va_list ap) format_(printf, 1, 0);
+void warnx(const char *fmt, ...) format_(printf, 1, 2);
+void vwarnx(const char *fmt, va_list ap) format_(printf, 1, 0);
 
-noreturn_ void err(int status, const char *fmt, ...);
-noreturn_ void verr(int status, const char *fmt, va_list ap);
-noreturn_ void errx(int status, const char *fmt, ...);
-noreturn_ void verrx(int status, const char *fmt, va_list ap);
+noreturn_ void err(int status, const char *fmt, ...) format_(printf, 2, 3);
+noreturn_ void verr(int status, const char *fmt, va_list ap) format_(printf, 2, 0);
+noreturn_ void errx(int status, const char *fmt, ...) format_(printf, 2, 3);
+noreturn_ void verrx(int status, const char *fmt, va_list ap) format_(printf, 2, 0);
 
 #endif /* ERR_IN_LIBC */
 

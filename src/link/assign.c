@@ -412,7 +412,7 @@ void assign_AssignSections(void)
 	/* Overlaying requires only fully-constrained sections */
 	verbosePrint("Assigning other sections...\n");
 	if (overlayFileName)
-		errx(1, "All sections must be fixed when using an overlay file; %u %sn't",
+		errx(1, "All sections must be fixed when using an overlay file; %lu %sn't",
 		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
 
 	/* Assign all remaining sections by decreasing constraint order */
