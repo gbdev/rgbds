@@ -429,7 +429,7 @@ void obj_ReadFile(char const *fileName)
 			section->symbols = malloc(sizeof(*section->symbols)
 							* nbSymPerSect[i]);
 			if (!section->symbols)
-				err(1, "%s: Couldn't link to symbols");
+				err(1, "%s: Couldn't link to symbols", fileName);
 		} else {
 			section->symbols = NULL;
 		}
