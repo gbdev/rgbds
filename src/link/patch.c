@@ -163,6 +163,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 		case RPN_DIV:
 			value = popRPN();
+			if (value == 0)
+				errx(1, "%s: Division by 0", patch->fileName);
 			value = popRPN() / value;
 			break;
 		case RPN_MOD:
