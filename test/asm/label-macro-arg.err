@@ -1,5 +1,7 @@
-ERROR: label-macro-arg.asm(45) -> label-macro-arg.asm::test_char(31):
-    Label "sizeof_" created outside of a SECTION
+ERROR: label-macro-arg.asm(44) -> label-macro-arg.asm::test_char(31):
+    Local label in main scope
 while expanding symbol "VAR_DEF"
-ERROR: label-macro-arg.asm(45) -> label-macro-arg.asm::test_char(31):
-    Macro 'something' not defined
+ERROR: label-macro-arg.asm(44) -> label-macro-arg.asm::test_char(31):
+    syntax error
+while expanding symbol "VAR_DEF"
+error: Assembly aborted (2 errors)!

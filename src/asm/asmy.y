@@ -551,7 +551,12 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %left	NEG /* negation -- unary minus */
 
 %token	<tzSym> T_LABEL
+%token	<tzSym> T_LOCAL_LABEL
+%type	<tzSym> scoped_label
+%type	<tzSym> scoped_label_bare
 %token	<tzSym> T_ID
+%token	<tzSym> T_LOCAL_ID
+%type	<tzSym> scoped_id
 %token	<tzSym> T_POP_EQU
 %token	<tzSym> T_POP_SET
 %token	<tzSym> T_POP_EQUAL
@@ -654,22 +659,34 @@ line		: label
 		| pseudoop
 ;
 
+scoped_label_bare	: T_LABEL | T_LOCAL_LABEL ;
+scoped_label	: T_LABEL ':'
+		{
+			strcpy($$, $1);
+		}
+		| T_LOCAL_LABEL ':'
+		{
+			strcpy($$, $1);
+		}
+;
+scoped_id	: T_ID | T_LOCAL_ID ;
+
 label		: /* empty */
-		| T_LABEL
+		| scoped_label_bare
 		{
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
 			else
 				sym_AddReloc($1);
 		}
-		| T_LABEL ':'
+		| scoped_label
 		{
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
 			else
 				sym_AddReloc($1);
 		}
-		| T_LABEL ':' ':'
+		| scoped_label ':'
 		{
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
@@ -925,7 +942,7 @@ purge_list	: purge_list_entry
 		| purge_list_entry comma purge_list
 ;
 
-purge_list_entry : T_ID
+purge_list_entry : scoped_id
 		{
 			sym_Purge($1);
 		}
@@ -938,7 +955,7 @@ import_list	: import_list_entry
 		| import_list_entry comma import_list
 ;
 
-import_list_entry : T_ID
+import_list_entry : scoped_id
 		{
 			/*
 			 * This is done automatically if the label isn't found
@@ -955,7 +972,7 @@ export_list	: export_list_entry
 		| export_list_entry comma export_list
 ;
 
-export_list_entry : T_ID
+export_list_entry : scoped_id
 		{
 			sym_Export($1);
 		}
@@ -968,7 +985,7 @@ global_list	: global_list_entry
 		| global_list_entry comma global_list
 ;
 
-global_list_entry : T_ID
+global_list_entry : scoped_id
 		{
 			sym_Export($1);
 		}
@@ -1233,7 +1250,7 @@ relocexpr	: relocexpr_no_str
 		}
 ;
 
-relocexpr_no_str	: T_ID
+relocexpr_no_str	: scoped_id
 		{
 			rpn_Symbol(&$$, $1);
 		}
@@ -1265,7 +1282,7 @@ relocexpr_no_str	: T_ID
 		| T_OP_NOT relocexpr %prec NEG		{ rpn_UNNOT(&$$, &$2); }
 		| T_OP_HIGH '(' relocexpr ')'		{ rpn_HIGH(&$$, &$3); }
 		| T_OP_LOW '(' relocexpr ')'		{ rpn_LOW(&$$, &$3); }
-		| T_OP_BANK '(' T_ID ')'
+		| T_OP_BANK '(' scoped_id ')'
 		{
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
@@ -1276,7 +1293,7 @@ relocexpr_no_str	: T_ID
 		}
 		| T_OP_DEF {
 				oDontExpandStrings = true;
-			} '(' T_ID ')'
+			} '(' scoped_id ')'
 		{
 			struct sSymbol const *sym = sym_FindSymbol($4);
 			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))

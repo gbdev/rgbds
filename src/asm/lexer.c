@@ -913,10 +913,18 @@ scanagain:
 				goto scanagain;
 		}
 
-		if (token->nToken == T_ID && linestart)
-			return T_LABEL;
-		else
-			return token->nToken;
+		uint32_t type = token->nToken;
+
+		if (type == T_ID && strchr(yylval.tzSym, '.'))
+			type = T_LOCAL_ID;
+
+		if (linestart) {
+			if (type == T_ID)
+				return T_LABEL;
+			if (type == T_LOCAL_ID)
+				return T_LOCAL_LABEL;
+		}
+		return type;
 	}
 
 	/* Longest match was a keyword or operator. */
