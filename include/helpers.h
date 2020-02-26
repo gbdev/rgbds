@@ -14,7 +14,6 @@
 	#define format_(archetype, str_index, first_arg) \
 		__attribute__ ((format (archetype, str_index, first_arg)))
 	#define noreturn_	__attribute__ ((noreturn))
-	#define unused_		__attribute__ ((unused))
 	#define trap_		__builtin_trap()
 #else
 	/* Unsupported, but no need to throw a fit */

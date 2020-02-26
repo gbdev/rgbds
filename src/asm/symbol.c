@@ -49,8 +49,9 @@ static char SavedMINUTE[3];
 static char SavedSECOND[3];
 static bool exportall;
 
-static int32_t Callback_NARG(unused_ struct sSymbol const *sym)
+static int32_t Callback_NARG(struct sSymbol const *self)
 {
+	(void)self;
 	uint32_t i = 0;
 
 	while (currentmacroargs[i] && i < MAXMACROARGS)
@@ -59,8 +60,9 @@ static int32_t Callback_NARG(unused_ struct sSymbol const *sym)
 	return i;
 }
 
-static int32_t Callback__LINE__(unused_ struct sSymbol const *sym)
+static int32_t Callback__LINE__(struct sSymbol const *self)
 {
+	(void)self;
 	return nLineNo;
 }
 

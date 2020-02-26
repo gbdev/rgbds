@@ -318,8 +318,9 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 	return 0;
 }
 
-uint32_t PutUniqueArg(unused_ char *src, uint32_t size)
+uint32_t PutUniqueArg(char *src, uint32_t size)
 {
+	(void)src;
 	char *s;
 
 	yyskipbytes(size);
