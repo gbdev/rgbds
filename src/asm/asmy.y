@@ -659,7 +659,10 @@ line		: label
 		| pseudoop
 ;
 
-scoped_label_bare	: T_LABEL | T_LOCAL_LABEL ;
+scoped_label_bare	: T_LABEL {
+			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated");
+		}
+		| T_LOCAL_LABEL ;
 scoped_label	: T_LABEL ':'
 		{
 			strcpy($$, $1);
