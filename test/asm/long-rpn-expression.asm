@@ -10,11 +10,7 @@ n = 0
 
 REPT $7E
 n1 = n + 1
-NSTR EQUS STRSUB("{n}", 2, STRLEN("{n}") - 1)
-N1STR EQUS STRSUB("{n1}", 2, STRLEN("{n1}") - 1)
-XN1 EQUS STRCAT("X", "{N1STR}")
-    m XN1, {NSTR}
-    PURGE NSTR, N1STR, XN1
+    m X{X:n1}, {X:n}
 n = n + 1
 ENDR
 
