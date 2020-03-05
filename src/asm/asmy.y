@@ -23,6 +23,7 @@
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
+#include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/section.h"
 #include "asm/symbol.h"
@@ -497,6 +498,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	int32_t nConstValue;
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
+	enum AssertionType assertType;
 }
 
 %type	<sVal>		relocexpr
@@ -587,6 +589,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_LOAD T_POP_ENDL
 %token	T_POP_FAIL
 %token	T_POP_WARN
+%token	T_POP_FATAL
+%token	T_POP_ASSERT T_POP_STATIC_ASSERT
 %token	T_POP_PURGE
 %token	T_POP_POPS
 %token	T_POP_PUSHS
@@ -638,6 +642,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %type	<nConstValue>	op_a_r
 %type	<nConstValue>	op_hl_ss
 %type	<sVal>		op_mem_ind
+%type	<assertType>	assert_type
 %start asmfile
 
 %%
@@ -759,6 +764,7 @@ simple_pseudoop : include
 		| shift
 		| fail
 		| warn
+		| assert
 		| purge
 		| pops
 		| pushs
@@ -799,8 +805,97 @@ fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
 warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 ;
 
+assert_type	: /* empty */		{ $$ = ASSERT_ERROR; }
+		| T_POP_WARN ','	{ $$ = ASSERT_WARN; }
+		| T_POP_FAIL ','	{ $$ = ASSERT_ERROR; }
+		| T_POP_FATAL ','	{ $$ = ASSERT_FATAL; }
+;
+
+assert		: T_POP_ASSERT assert_type relocexpr
+		{
+			if (rpn_isKnown(&$3) && $3.nVal == 0) {
+				switch ($2) {
+					case ASSERT_FATAL:
+						fatalerror("Assertion failed");
+					case ASSERT_ERROR:
+						yyerror("Assertion failed");
+						break;
+					case ASSERT_WARN:
+						warning(WARNING_ASSERT,
+							"Assertion failed");
+						break;
+				}
+			} else {
+				if (!out_CreateAssert($2, &$3, ""))
+					yyerror("Assertion creation failed: %s",
+						strerror(errno));
+			}
+			rpn_Free(&$3);
+		}
+		| T_POP_ASSERT assert_type relocexpr ',' string
+		{
+			if (rpn_isKnown(&$3) && $3.nVal == 0) {
+				switch ($2) {
+					case ASSERT_FATAL:
+						fatalerror("Assertion failed: %s",
+							   $5);
+					case ASSERT_ERROR:
+						yyerror("Assertion failed: %s",
+							$5);
+						break;
+					case ASSERT_WARN:
+						warning(WARNING_ASSERT,
+							"Assertion failed: %s",
+							$5);
+						break;
+				}
+			} else {
+				if (!out_CreateAssert($2, &$3, $5))
+					yyerror("Assertion creation failed: %s",
+						strerror(errno));
+			}
+			rpn_Free(&$3);
+		}
+		| T_POP_STATIC_ASSERT assert_type const
+		{
+			if ($3 == 0) {
+				switch ($2) {
+					case ASSERT_FATAL:
+						fatalerror("Assertion failed");
+					case ASSERT_ERROR:
+						yyerror("Assertion failed");
+						break;
+					case ASSERT_WARN:
+						warning(WARNING_ASSERT,
+							"Assertion failed");
+						break;
+				}
+			}
+		}
+		| T_POP_STATIC_ASSERT assert_type const ',' string
+		{
+			if ($3 == 0) {
+				switch ($2) {
+					case ASSERT_FATAL:
+						fatalerror("Assertion failed: %s",
+							   $5);
+					case ASSERT_ERROR:
+						yyerror("Assertion failed: %s",
+							$5);
+						break;
+					case ASSERT_WARN:
+						warning(WARNING_ASSERT,
+							"Assertion failed: %s",
+							$5);
+						break;
+				}
+			}
+		}
+;
+
 shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(); }
-		| T_POP_SHIFT uconst {
+		| T_POP_SHIFT uconst
+		{
 			int32_t i = $2;
 			while (i--)
 				macro_ShiftCurrentArgs();

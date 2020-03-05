@@ -47,10 +47,18 @@ struct PatchSymbol {
 	struct PatchSymbol *pBucketNext; /* next symbol in hash table bucket */
 };
 
+struct Assertion {
+	struct Patch *patch;
+	struct Section *section;
+	char *message;
+	struct Assertion *next;
+};
+
 struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
 struct Section *pSectionList, *pCurrentSection;
 struct PatchSymbol *pPatchSymbols;
 struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
+struct Assertion *assertions = NULL;
 char *tzObjectname;
 
 /*
@@ -102,6 +110,21 @@ static uint32_t countpatches(struct Section *pSect)
 	}
 
 	return r;
+}
+
+/**
+ * Count the number of assertions used in this object
+ */
+static uint32_t countasserts(void)
+{
+	struct Assertion *assert = assertions;
+	uint32_t count = 0;
+
+	while (assert) {
+		count++;
+		assert = assert->next;
+	}
+	return count;
 }
 
 /*
@@ -287,62 +310,29 @@ static void addexports(void)
 	}
 }
 
-/*
- * Allocate a new patchstructure and link it into the list
- */
-struct Patch *allocpatch(void)
+static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
+		     uint32_t rpnlen)
 {
-	struct Patch *pPatch;
-
-	pPatch = malloc(sizeof(struct Patch));
-
-	if (pPatch == NULL)
-		fatalerror("No memory for patch");
-
-	pPatch->pNext = pCurrentSection->pPatches;
-	pPatch->nRPNSize = 0;
-	pPatch->pRPN = NULL;
-	pCurrentSection->pPatches = pPatch;
-
-	return pPatch;
-}
-
-/*
- * Create a new patch (includes the rpn expr)
- */
-void out_CreatePatch(uint32_t type, struct Expression const *expr)
-{
-	struct Patch *pPatch;
-	uint8_t *rpnexpr;
 	char tzSym[512];
-	uint32_t rpnptr = 0, symptr;
 
-	rpnexpr = malloc(expr->nRPNPatchSize);
-
-	if (rpnexpr == NULL)
-		fatalerror("No memory for patch RPN expression");
-
-	pPatch = allocpatch();
-	pPatch->nType = type;
-	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
-	pPatch->nOffset = pCurrentSection->nPC;
-
-	for (size_t offset = 0; offset < expr->nRPNLength; ) {
-#define popbyte(expr) (expr)->tRPN[offset++]
-		uint8_t rpndata = popbyte(expr);
+	for (size_t offset = 0; offset < rpnlen; ) {
+#define popbyte() rpn[offset++]
+#define writebyte(byte)	rpnexpr[(*rpnptr)++] = byte
+		uint8_t rpndata = popbyte();
 
 		switch (rpndata) {
 		case RPN_CONST:
-			rpnexpr[rpnptr++] = RPN_CONST;
-			rpnexpr[rpnptr++] = popbyte(expr);
-			rpnexpr[rpnptr++] = popbyte(expr);
-			rpnexpr[rpnptr++] = popbyte(expr);
-			rpnexpr[rpnptr++] = popbyte(expr);
+			writebyte(RPN_CONST);
+			writebyte(popbyte());
+			writebyte(popbyte());
+			writebyte(popbyte());
+			writebyte(popbyte());
 			break;
 		case RPN_SYM:
 		{
-			symptr = 0;
-			while ((tzSym[symptr++] = popbyte(expr)) != 0)
+			uint32_t symptr = 0;
+
+			while ((tzSym[symptr++] = popbyte()) != 0)
 				;
 
 			struct sSymbol const *sym = sym_FindSymbol(tzSym);
@@ -353,27 +343,27 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr)
 				uint32_t value;
 
 				value = sym_GetConstantValue(tzSym);
-				rpnexpr[rpnptr++] = RPN_CONST;
-				rpnexpr[rpnptr++] = value & 0xFF;
-				rpnexpr[rpnptr++] = value >> 8;
-				rpnexpr[rpnptr++] = value >> 16;
-				rpnexpr[rpnptr++] = value >> 24;
+				writebyte(RPN_CONST);
+				writebyte(value & 0xFF);
+				writebyte(value >> 8);
+				writebyte(value >> 16);
+				writebyte(value >> 24);
 			} else {
 				symptr = addsymbol(sym);
-				rpnexpr[rpnptr++] = RPN_SYM;
-				rpnexpr[rpnptr++] = symptr & 0xFF;
-				rpnexpr[rpnptr++] = symptr >> 8;
-				rpnexpr[rpnptr++] = symptr >> 16;
-				rpnexpr[rpnptr++] = symptr >> 24;
+				writebyte(RPN_SYM);
+				writebyte(symptr & 0xFF);
+				writebyte(symptr >> 8);
+				writebyte(symptr >> 16);
+				writebyte(symptr >> 24);
 			}
 			break;
 		}
 		case RPN_BANK_SYM:
 		{
 			struct sSymbol *sym;
+			uint32_t symptr = 0;
 
-			symptr = 0;
-			while ((tzSym[symptr++] = popbyte(expr)) != 0)
+			while ((tzSym[symptr++] = popbyte()) != 0)
 				;
 
 			sym = sym_FindSymbol(tzSym);
@@ -381,36 +371,103 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr)
 				break;
 
 			symptr = addsymbol(sym);
-			rpnexpr[rpnptr++] = RPN_BANK_SYM;
-			rpnexpr[rpnptr++] = symptr & 0xFF;
-			rpnexpr[rpnptr++] = symptr >> 8;
-			rpnexpr[rpnptr++] = symptr >> 16;
-			rpnexpr[rpnptr++] = symptr >> 24;
+			writebyte(RPN_BANK_SYM);
+			writebyte(symptr & 0xFF);
+			writebyte(symptr >> 8);
+			writebyte(symptr >> 16);
+			writebyte(symptr >> 24);
 			break;
 		}
 		case RPN_BANK_SECT:
 		{
 			uint16_t b;
 
-			rpnexpr[rpnptr++] = RPN_BANK_SECT;
+			writebyte(RPN_BANK_SECT);
 
 			do {
-				b = popbyte(expr);
-				rpnexpr[rpnptr++] = b & 0xFF;
+				b = popbyte();
+				writebyte(b & 0xFF);
 			} while (b != 0);
 			break;
 		}
 		default:
-			rpnexpr[rpnptr++] = rpndata;
+			writebyte(rpndata);
 			break;
 		}
 #undef popbyte
+#undef writebyte
+	}
+}
+
+/*
+ * Allocate a new patch structure and link it into the list
+ */
+static struct Patch *allocpatch(uint32_t type, struct Expression const *expr)
+{
+	struct Patch *pPatch;
+
+	pPatch = malloc(sizeof(struct Patch));
+
+	if (!pPatch)
+		fatalerror("No memory for patch: %s", strerror(errno));
+	pPatch->pRPN = malloc(sizeof(*pPatch->pRPN) * expr->nRPNPatchSize);
+
+	if (!pPatch->pRPN)
+		fatalerror("No memory for patch's RPN expression: %s",
+			   strerror(errno));
+
+	pPatch->nRPNSize = 0;
+	pPatch->nType = type;
+	pPatch->nOffset = pCurrentSection->nPC;
+	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
+
+	writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
+	assert(pPatch->nRPNSize == expr->nRPNPatchSize);
+
+	return pPatch;
+}
+
+/*
+ * Create a new patch (includes the rpn expr)
+ */
+void out_CreatePatch(uint32_t type, struct Expression const *expr)
+{
+	struct Patch *pPatch = allocpatch(type, expr);
+
+	pPatch->pNext = pCurrentSection->pPatches;
+	pCurrentSection->pPatches = pPatch;
+}
+
+/**
+ * Creates an assert that will be written to the object file
+ */
+bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
+		      char const *message)
+{
+	struct Assertion *assertion = malloc(sizeof(*assertion));
+
+	if (!assertion)
+		return false;
+
+	assertion->patch = allocpatch(type, expr);
+	assertion->section = pCurrentSection;
+	assertion->message = strdup(message);
+	if (!assertion->message) {
+		free(assertion);
+		return false;
 	}
 
-	assert(rpnptr == expr->nRPNPatchSize);
+	assertion->next = assertions;
+	assertions = assertion;
 
-	pPatch->pRPN = rpnexpr;
-	pPatch->nRPNSize = rpnptr;
+	return true;
+}
+
+static void writeassert(struct Assertion *assert, FILE *f)
+{
+	writepatch(assert->patch, f);
+	fputlong(getsectid(assert->section), f);
+	fputstring(assert->message, f);
 }
 
 /*
@@ -421,6 +478,7 @@ void out_WriteObject(void)
 	FILE *f;
 	struct PatchSymbol *pSym;
 	struct Section *pSect;
+	struct Assertion *assert = assertions;
 
 	addexports();
 
@@ -444,6 +502,12 @@ void out_WriteObject(void)
 	while (pSect) {
 		writesection(pSect, f);
 		pSect = pSect->pNext;
+	}
+
+	fputlong(countasserts(), f);
+	while (assert) {
+		writeassert(assert, f);
+		assert = assert->next;
 	}
 
 	fclose(f);

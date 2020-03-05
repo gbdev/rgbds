@@ -141,13 +141,21 @@ Enables literally every warning.
 The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
 Note that each of these flag also has a negation (for example,
 .Fl Wempty-entry
-enables the warning that Fl Wno-empty-entry
+enables the warning that
+.Fl Wno-empty-entry
 disables).
 Only the non-default flag is listed here.
 Ignoring the
 .Dq no-
 prefix, entries are listed alphabetically.
 .Bl -tag -width Ds
+.It Fl Wno-assert
+Warns when
+.Ic WARN Ns No -type
+assertions fail. (See
+.Xr rgbasm 5 "Aborting the assembly process"
+for
+.Ic ASSERT ) .
 .It Fl Wbuiltin-args
 Warn about incorrect arguments to built-in functions, such as
 .Fn STRSUB
@@ -182,9 +190,12 @@ This warning is enabled by
 Warn when shifting triggers C undefined behavior, potentially causing unpredictable behavior.
 Shfting behavior will be changed and this warning removed before next release.
 .It Fl Wno-user
-Warns when the built-in function
-.Fn WARN
-is executed.
+Warns when the
+.Ic WARN
+built-in is executed. (See
+.Xr rgbasm 5 "Aborting the assembly process"
+for
+.Ic WARN ) .
 .El
 .Sh EXAMPLES
 You can assemble a source file in two ways.

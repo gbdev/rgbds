@@ -14,7 +14,13 @@
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1hhu"
 #define RGBDS_OBJECT_VERSION_NUMBER (uint8_t)9
-#define RGBDS_OBJECT_REV 1
+#define RGBDS_OBJECT_REV 2
+
+enum AssertionType {
+	ASSERT_WARN,
+	ASSERT_ERROR,
+	ASSERT_FATAL
+};
 
 enum RPNCommand {
 	RPN_ADD		= 0x00,

@@ -20,6 +20,8 @@ extern struct Section *pSectionList, *pCurrentSection;
 
 void out_SetFileName(char *s);
 void out_CreatePatch(uint32_t type, struct Expression const *expr);
+bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
+		      char const *message);
 void out_WriteObject(void);
 
 #endif /* RGBDS_ASM_OUTPUT_H */

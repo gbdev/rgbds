@@ -10,6 +10,28 @@
 #ifndef RGBDS_LINK_PATCH_H
 #define RGBDS_LINK_PATCH_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "link/section.h"
+
+#include "linkdefs.h"
+
+struct Assertion {
+	struct Patch patch;
+	// enum AssertionType type; The `patch`'s field is instead re-used
+	struct Section *section;
+	char *message;
+
+	struct Assertion *next;
+};
+
+/**
+ * Checks all assertions
+ * @return true if assertion failed
+ */
+void patch_CheckAssertions(struct Assertion *assertion);
+
 /**
  * Applies all SECTIONs' patches to them
  */
