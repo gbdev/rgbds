@@ -210,7 +210,7 @@ wwwman:
 # compilation and make the continous integration infrastructure return failure.
 
 develop:
-	$Qenv make -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic \
+	$Qenv $(MAKE) -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic \
 		-Wno-sign-compare -Wformat -Wformat-security -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
 		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5 \
