@@ -14,4 +14,4 @@ jobs:
           touch spelling.txt
       - name: Checkpatch
         run: |
-          make checkpatch CHECKPATCH=./checkpatch.pl BASE_REF=${{ github.base_ref }}
+          make checkpatch CHECKPATCH=./checkpatch.pl BASE_REF=${{ github.base_ref }} Q=
