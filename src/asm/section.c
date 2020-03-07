@@ -407,7 +407,8 @@ void out_PCRelByte(struct Expression *expr)
 		int16_t offset = expr->nVal - address;
 
 		if (offset < -128 || offset > 127) {
-			yyerror("jr target out of reach (expected -129 < %d < 128)", offset);
+			yyerror("jr target out of reach (expected -129 < %d < 128)",
+				offset);
 			out_AbsByte(0);
 		} else {
 			out_AbsByte(offset);

@@ -55,6 +55,7 @@ struct ImageOptions {
 struct PNGImage {
 	png_struct *png;
 	png_info *info;
+
 	png_byte **data;
 	int width;
 	int height;

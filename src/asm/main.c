@@ -49,7 +49,7 @@ uint32_t unionStart[128], unionSize[128];
 extern int yydebug;
 #endif
 
-FILE *dependfile;
+FILE * dependfile;
 bool oGeneratedMissingIncludes;
 bool oFailedOnMissingInclude;
 bool oGeneratePhonyDeps;
