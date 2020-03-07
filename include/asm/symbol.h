@@ -59,10 +59,14 @@ static inline bool sym_IsNumeric(struct sSymbol const *sym)
 	    || sym->type == SYM_SET;
 }
 
+static inline bool sym_IsLabel(struct sSymbol const *sym)
+{
+	return sym->type == SYM_LABEL || sym->type == SYM_REF;
+}
+
 static inline bool sym_IsLocal(struct sSymbol const *sym)
 {
-	return (sym->type == SYM_LABEL || sym->type == SYM_REF)
-		&& strchr(sym->tzName, '.');
+	return sym_IsLabel(sym) && strchr(sym->tzName, '.');
 }
 
 static inline bool sym_IsExported(struct sSymbol const *sym)

@@ -165,7 +165,7 @@ void rpn_BankSelf(struct Expression *expr)
 	}
 }
 
-void rpn_BankSymbol(struct Expression *expr, char *tzSym)
+void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 {
 	struct sSymbol const *sym = sym_FindSymbol(tzSym);
 
@@ -176,7 +176,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 	}
 
 	rpn_Init(expr);
-	if (sym && sym_IsConstant(sym)) {
+	if (sym && !sym_IsLabel(sym)) {
 		yyerror("BANK argument must be a relocatable identifier");
 	} else {
 		sym_Ref(tzSym);
@@ -198,7 +198,7 @@ void rpn_BankSymbol(struct Expression *expr, char *tzSym)
 	}
 }
 
-void rpn_BankSection(struct Expression *expr, char *tzSectionName)
+void rpn_BankSection(struct Expression *expr, char const *tzSectionName)
 {
 	rpn_Init(expr);
 
