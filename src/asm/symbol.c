@@ -624,10 +624,10 @@ bool sym_IsRelocDiffDefined(char const *tzSym1, char const *tzSym2)
 	 * coherency with sym_AddReloc and sym_AddLocalReloc).
 	 */
 	if (!sym_IsDefined(nsym1))
-		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym1);
+		fatalerror("Label \"%s\" isn't defined.", tzSym1);
 
 	if (!sym_IsDefined(nsym2))
-		fatalerror("Relocatable symbol \"%s\" isn't defined.", tzSym2);
+		fatalerror("Label \"%s\" isn't defined.", tzSym2);
 
 	/*
 	 * Both of them must be in the same section for the difference to be

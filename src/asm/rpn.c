@@ -177,7 +177,7 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 
 	rpn_Init(expr);
 	if (sym && !sym_IsLabel(sym)) {
-		yyerror("BANK argument must be a relocatable identifier");
+		yyerror("BANK argument must be a label");
 	} else {
 		sym_Ref(tzSym);
 		/* If the symbol didn't exist, `sym_Ref` created it */
