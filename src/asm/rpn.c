@@ -72,7 +72,7 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 /*
  * Init the RPN expression
  */
-void rpn_Init(struct Expression *expr)
+static void rpn_Init(struct Expression *expr)
 {
 	expr->reason = NULL;
 	expr->isKnown = true;
@@ -91,22 +91,6 @@ void rpn_Free(struct Expression *expr)
 	free(expr->tRPN);
 	free(expr->reason);
 	rpn_Init(expr);
-}
-
-/*
- * Determine if the current expression is known at assembly time
- */
-bool rpn_isKnown(const struct Expression *expr)
-{
-	return expr->isKnown;
-}
-
-/*
- * Determine if the current expression is a symbol suitable for const diffing
- */
-bool rpn_isSymbol(const struct Expression *expr)
-{
-	return expr->isSymbol;
 }
 
 /*

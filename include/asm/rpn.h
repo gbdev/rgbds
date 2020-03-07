@@ -30,8 +30,22 @@ struct Expression {
 /* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
 extern int32_t nPCOffset;
 
-bool rpn_isKnown(const struct Expression *expr);
-bool rpn_isSymbol(const struct Expression *expr);
+/*
+ * Determines if an expression is known at assembly time
+ */
+static inline bool rpn_isKnown(const struct Expression *expr)
+{
+	return expr->isKnown;
+}
+
+/*
+ * Determines if an expression is a symbol suitable for const diffing
+ */
+static inline bool rpn_isSymbol(const struct Expression *expr)
+{
+	return expr->isSymbol;
+}
+
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
@@ -45,7 +59,6 @@ void rpn_UNNOT(struct Expression *expr, const struct Expression *src);
 void rpn_BankSymbol(struct Expression *expr, char const *tzSym);
 void rpn_BankSection(struct Expression *expr, char const *tzSectionName);
 void rpn_BankSelf(struct Expression *expr);
-void rpn_Init(struct Expression *expr);
 void rpn_Free(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src);
