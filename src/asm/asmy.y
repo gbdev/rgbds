@@ -515,38 +515,38 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	<nConstValue>	T_NUMBER
 %token	<tzString>	T_STRING
 
-%left	<nConstValue>	T_OP_LOGICNOT
-%left	<nConstValue>	T_OP_LOGICOR T_OP_LOGICAND
-%left	<nConstValue>	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
-%left	<nConstValue>	T_OP_ADD T_OP_SUB
-%left	<nConstValue>	T_OP_OR T_OP_XOR T_OP_AND
-%left	<nConstValue>	T_OP_SHL T_OP_SHR
-%left	<nConstValue>	T_OP_MUL T_OP_DIV T_OP_MOD
-%left	<nConstValue>	T_OP_NOT
-%left	<nConstValue>	T_OP_DEF
-%left	<nConstValue>	T_OP_BANK T_OP_ALIGN
-%left	<nConstValue>	T_OP_SIN
-%left	<nConstValue>	T_OP_COS
-%left	<nConstValue>	T_OP_TAN
-%left	<nConstValue>	T_OP_ASIN
-%left	<nConstValue>	T_OP_ACOS
-%left	<nConstValue>	T_OP_ATAN
-%left	<nConstValue>	T_OP_ATAN2
-%left	<nConstValue>	T_OP_FDIV
-%left	<nConstValue>	T_OP_FMUL
-%left	<nConstValue>	T_OP_ROUND
-%left	<nConstValue>	T_OP_CEIL
-%left	<nConstValue>	T_OP_FLOOR
+%left	T_OP_LOGICNOT
+%left	T_OP_LOGICOR T_OP_LOGICAND
+%left	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
+%left	T_OP_ADD T_OP_SUB
+%left	T_OP_OR T_OP_XOR T_OP_AND
+%left	T_OP_SHL T_OP_SHR
+%left	T_OP_MUL T_OP_DIV T_OP_MOD
+%left	T_OP_NOT
+%left	T_OP_DEF
+%left	T_OP_BANK T_OP_ALIGN
+%left	T_OP_SIN
+%left	T_OP_COS
+%left	T_OP_TAN
+%left	T_OP_ASIN
+%left	T_OP_ACOS
+%left	T_OP_ATAN
+%left	T_OP_ATAN2
+%left	T_OP_FDIV
+%left	T_OP_FMUL
+%left	T_OP_ROUND
+%left	T_OP_CEIL
+%left	T_OP_FLOOR
 
-%token	<nConstValue>	T_OP_HIGH T_OP_LOW
+%token	T_OP_HIGH T_OP_LOW
 
-%left	<nConstValue>	T_OP_STRCMP
-%left	<nConstValue>	T_OP_STRIN
-%left	<nConstValue>	T_OP_STRSUB
-%left	<nConstValue>	T_OP_STRLEN
-%left	<nConstValue>	T_OP_STRCAT
-%left	<nConstValue>	T_OP_STRUPR
-%left	<nConstValue>	T_OP_STRLWR
+%left	T_OP_STRCMP
+%left	T_OP_STRIN
+%left	T_OP_STRSUB
+%left	T_OP_STRLEN
+%left	T_OP_STRCAT
+%left	T_OP_STRUPR
+%left	T_OP_STRLWR
 
 %left	NEG /* negation -- unary minus */
 
@@ -557,10 +557,10 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	<tzSym> T_ID
 %token	<tzSym> T_LOCAL_ID
 %type	<tzSym> scoped_id
-%token	<tzSym> T_POP_EQU
-%token	<tzSym> T_POP_SET
-%token	<tzSym> T_POP_EQUAL
-%token	<tzSym> T_POP_EQUS
+%token	T_POP_EQU
+%token	T_POP_SET
+%token	T_POP_EQUAL
+%token	T_POP_EQUS
 
 %token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
