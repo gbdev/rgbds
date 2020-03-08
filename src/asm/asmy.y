@@ -539,6 +539,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %left	T_OP_FLOOR
 
 %token	T_OP_HIGH T_OP_LOW
+%token	T_OP_ISCONST
 
 %left	T_OP_STRCMP
 %left	T_OP_STRIN
@@ -1194,6 +1195,7 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_NOT relocexpr %prec NEG	{ rpn_UNNOT(&$$, &$2); }
 		| T_OP_HIGH '(' relocexpr ')'	{ rpn_HIGH(&$$, &$3); }
 		| T_OP_LOW '(' relocexpr ')'	{ rpn_LOW(&$$, &$3); }
+		| T_OP_ISCONST '(' relocexpr ')'{ rpn_ISCONST(&$$, &$3); }
 		| T_OP_BANK '(' scoped_id ')' {
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
