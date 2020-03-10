@@ -1662,11 +1662,6 @@ z80_jp		: T_Z80_JP reloc_16bit
 			out_AbsByte(0xC2 | ($2 << 3));
 			out_RelWord(&$4);
 		}
-		| T_Z80_JP T_MODE_HL_IND
-		{
-			out_AbsByte(0xE9);
-			warning(WARNING_OBSOLETE, "'JP [HL]' is obsolete, use 'JP HL' instead.");
-		}
 		| T_Z80_JP T_MODE_HL
 		{
 			out_AbsByte(0xE9);
@@ -1689,11 +1684,6 @@ z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
 		{
 			out_AbsByte(0x02 | (2 << 4));
 		}
-		| T_Z80_LDI T_MODE_A comma T_MODE_HL
-		{
-			out_AbsByte(0x0A | (2 << 4));
-			warning(WARNING_OBSOLETE, "'LDI A,HL' is obsolete, use 'LDI A,[HL]' or 'LD A,[HL+] instead.");
-		}
 		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND
 		{
 			out_AbsByte(0x0A | (2 << 4));
@@ -1703,11 +1693,6 @@ z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
 z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A
 		{
 			out_AbsByte(0x02 | (3 << 4));
-		}
-		| T_Z80_LDD T_MODE_A comma T_MODE_HL
-		{
-			out_AbsByte(0x0A | (3 << 4));
-			warning(WARNING_OBSOLETE, "'LDD A,HL' is obsolete, use 'LDD A,[HL]' or 'LD A,[HL-] instead.");
 		}
 		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND
 		{
@@ -1757,13 +1742,7 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL comma '[' T_MODE_SP reloc_8bit ']'
-		{
-			out_AbsByte(0xF8);
-			out_RelByte(&$6);
-			warning(WARNING_OBSOLETE, "'LD HL,[SP+e8]' is obsolete, use 'LD HL,SP+e8' instead.");
-		}
-		| T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit
+z80_ld_hl	: T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit
 		{
 			out_AbsByte(0xF8);
 			out_RelByte(&$5);
