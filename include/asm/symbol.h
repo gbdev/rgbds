@@ -32,6 +32,7 @@ struct sSymbol {
 	enum SymbolType type;
 	bool isConstant; /* Whether the symbol's value is currently known */
 	bool isExported; /* Whether the symbol is to be exported */
+	bool isBuiltin;  /* Whether the symbol is a built-in */
 	struct sSymbol *pScope;
 	struct sSymbol *pNext;
 	struct Section *pSection;

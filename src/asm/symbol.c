@@ -132,6 +132,7 @@ static struct sSymbol *createsymbol(char const *s)
 
 	(*ppsym)->isConstant = false;
 	(*ppsym)->isExported = false;
+	(*ppsym)->isBuiltin = false;
 	(*ppsym)->pScope = NULL;
 	(*ppsym)->pNext = NULL;
 	(*ppsym)->pSection = NULL;
@@ -231,7 +232,11 @@ void sym_Purge(char const *tzName)
 
 	ppSym = findpsymbol(tzName, pscope);
 
-	if (ppSym) {
+	if (!ppSym) {
+		yyerror("'%s' not defined", tzName);
+	} else if ((*ppSym)->isBuiltin) {
+		yyerror("Built-in symbol '%s' cannot be purged", tzName);
+	} else {
 		struct sSymbol *pSym;
 
 		pSym = *ppSym;
@@ -241,8 +246,6 @@ void sym_Purge(char const *tzName)
 			free(pSym->pMacro);
 
 		free(pSym);
-	} else {
-		yyerror("'%s' not defined", tzName);
 	}
 }
 
@@ -736,11 +739,16 @@ void sym_Init(void)
 
 	pPCSymbol = sym_AddReloc("@");
 	pPCSymbol->Callback = CallbackPC;
+	pPCSymbol->isBuiltin = true;
 	p_NARGSymbol = sym_AddEqu("_NARG", 0);
 	p_NARGSymbol->Callback = Callback_NARG;
+	p_NARGSymbol->isBuiltin = true;
 	p__LINE__Symbol = sym_AddEqu("__LINE__", 0);
 	p__LINE__Symbol->Callback = Callback__LINE__;
-	sym_AddSet("_RS", 0);
+	p__LINE__Symbol->isBuiltin = true;
+	struct sSymbol *_RSSymbol = sym_AddSet("_RS", 0);
+
+	_RSSymbol->isBuiltin = true;
 
 	time_t now = time(NULL);
 
@@ -772,17 +780,22 @@ void sym_Init(void)
 	strftime(SavedMINUTE, sizeof(SavedMINUTE), "%M", time_utc);
 	strftime(SavedSECOND, sizeof(SavedSECOND), "%S", time_utc);
 
-	sym_AddString("__TIME__", SavedTIME);
-	sym_AddString("__DATE__", SavedDATE);
-	sym_AddString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
-	sym_AddString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
+#define addString(name, val) do { \
+	struct sSymbol *symbol = sym_AddString(name, val); \
+	symbol->isBuiltin = true; \
+} while (0)
+	addString("__TIME__", SavedTIME);
+	addString("__DATE__", SavedDATE);
+	addString("__ISO_8601_LOCAL__", SavedTIMESTAMP_ISO8601_LOCAL);
+	addString("__ISO_8601_UTC__", SavedTIMESTAMP_ISO8601_UTC);
 	/* This cannot start with zeros */
-	sym_AddString("__UTC_YEAR__", SavedYEAR);
-	sym_AddString("__UTC_MONTH__", removeLeadingZeros(SavedMONTH));
-	sym_AddString("__UTC_DAY__", removeLeadingZeros(SavedDAY));
-	sym_AddString("__UTC_HOUR__", removeLeadingZeros(SavedHOUR));
-	sym_AddString("__UTC_MINUTE__", removeLeadingZeros(SavedMINUTE));
-	sym_AddString("__UTC_SECOND__", removeLeadingZeros(SavedSECOND));
+	addString("__UTC_YEAR__", SavedYEAR);
+	addString("__UTC_MONTH__", removeLeadingZeros(SavedMONTH));
+	addString("__UTC_DAY__", removeLeadingZeros(SavedDAY));
+	addString("__UTC_HOUR__", removeLeadingZeros(SavedHOUR));
+	addString("__UTC_MINUTE__", removeLeadingZeros(SavedMINUTE));
+	addString("__UTC_SECOND__", removeLeadingZeros(SavedSECOND));
+#undef addString
 
 	pScope = NULL;
 
