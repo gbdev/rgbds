@@ -441,7 +441,7 @@ static struct sSymbol *createNonrelocSymbol(char const *tzSym)
 /*
  * Add an equated symbol
  */
-void sym_AddEqu(char const *tzSym, int32_t value)
+struct sSymbol *sym_AddEqu(char const *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -450,6 +450,8 @@ void sym_AddEqu(char const *tzSym, int32_t value)
 	nsym->isConstant = true;
 	nsym->pScope = NULL;
 	updateSymbolFilename(nsym);
+
+	return nsym;
 }
 
 /*
@@ -464,7 +466,7 @@ void sym_AddEqu(char const *tzSym, int32_t value)
  * of the string are enough: sym_AddString("M_PI", "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-void sym_AddString(char const *tzSym, char const *tzValue)
+struct sSymbol *sym_AddString(char const *tzSym, char const *tzValue)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -478,12 +480,14 @@ void sym_AddString(char const *tzSym, char const *tzValue)
 	nsym->type = SYM_EQUS;
 	nsym->ulMacroSize = strlen(tzValue);
 	nsym->pScope = NULL;
+
+	return nsym;
 }
 
 /*
  * Alter a SET symbols value
  */
-void sym_AddSet(char const *tzSym, int32_t value)
+struct sSymbol *sym_AddSet(char const *tzSym, int32_t value)
 {
 	struct sSymbol *nsym = findsymbol(tzSym, NULL);
 
@@ -514,28 +518,30 @@ void sym_AddSet(char const *tzSym, int32_t value)
 	nsym->isConstant = true;
 	nsym->pScope = NULL;
 	updateSymbolFilename(nsym);
+
+	return nsym;
 }
 
 /*
  * Add a local (.name) relocatable symbol
  */
-void sym_AddLocalReloc(char const *tzSym)
+struct sSymbol *sym_AddLocalReloc(char const *tzSym)
 {
 	if (pScope) {
 		char fullname[MAXSYMLEN + 1];
 
 		fullSymbolName(fullname, sizeof(fullname), tzSym, pScope);
-		sym_AddReloc(fullname);
-
+		return sym_AddReloc(fullname);
 	} else {
 		yyerror("Local label '%s' in main scope", tzSym);
+		return NULL;
 	}
 }
 
 /*
  * Add a relocatable symbol
  */
-void sym_AddReloc(char const *tzSym)
+struct sSymbol *sym_AddReloc(char const *tzSym)
 {
 	struct sSymbol *scope = NULL;
 	struct sSymbol *nsym;
@@ -544,7 +550,7 @@ void sym_AddReloc(char const *tzSym)
 	if (localPtr != NULL) {
 		if (!pScope) {
 			yyerror("Local label in main scope");
-			return;
+			return NULL;
 		}
 
 		struct sSymbol *parent = pScope->pScope ?
@@ -587,6 +593,7 @@ void sym_AddReloc(char const *tzSym)
 	updateSymbolFilename(nsym);
 
 	pScope = findsymbol(tzSym, scope);
+	return pScope;
 }
 
 /*
@@ -650,7 +657,7 @@ void sym_Export(char const *tzSym)
 /*
  * Add a macro definition
  */
-void sym_AddMacro(char const *tzSym, int32_t nDefLineNo)
+struct sSymbol *sym_AddMacro(char const *tzSym, int32_t nDefLineNo)
 {
 	struct sSymbol *nsym = createNonrelocSymbol(tzSym);
 
@@ -664,6 +671,8 @@ void sym_AddMacro(char const *tzSym, int32_t nDefLineNo)
 	 * override this with the actual definition line
 	 */
 	nsym->nFileLine = nDefLineNo;
+
+	return nsym;
 }
 
 /*
@@ -725,16 +734,12 @@ void sym_Init(void)
 	for (i = 0; i < HASHSIZE; i++)
 		tHashedSymbols[i] = NULL;
 
-	sym_AddReloc("@");
-	pPCSymbol = findsymbol("@", NULL);
+	pPCSymbol = sym_AddReloc("@");
 	pPCSymbol->Callback = CallbackPC;
-	sym_AddEqu("_NARG", 0);
-	p_NARGSymbol = findsymbol("_NARG", NULL);
+	p_NARGSymbol = sym_AddEqu("_NARG", 0);
 	p_NARGSymbol->Callback = Callback_NARG;
-	sym_AddEqu("__LINE__", 0);
-	p__LINE__Symbol = findsymbol("__LINE__", NULL);
+	p__LINE__Symbol = sym_AddEqu("__LINE__", 0);
 	p__LINE__Symbol->Callback = Callback__LINE__;
-
 	sym_AddSet("_RS", 0);
 
 	time_t now = time(NULL);
