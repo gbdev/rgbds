@@ -564,7 +564,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 %token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
-%token	T_POP_IMPORT T_POP_EXPORT T_POP_GLOBAL
+%token	T_POP_EXPORT T_POP_GLOBAL
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
 %token	T_POP_SECTION
 %token	T_POP_RB
@@ -734,7 +734,6 @@ simple_pseudoop : include
 		| elif
 		| else
 		| endc
-		| import
 		| export
 		| global
 		| { nPCOffset = 0; } db
@@ -948,23 +947,6 @@ purge_list	: purge_list_entry
 purge_list_entry : scoped_id
 		{
 			sym_Purge($1);
-		}
-;
-
-import		: T_POP_IMPORT import_list
-;
-
-import_list	: import_list_entry
-		| import_list_entry comma import_list
-;
-
-import_list_entry : scoped_id
-		{
-			/*
-			 * This is done automatically if the label isn't found
-			 * in the list of defined symbols.
-			 */
-			warning(WARNING_OBSOLETE, "IMPORT is a deprecated keyword with no effect: %s", $1);
 		}
 ;
 
