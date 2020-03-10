@@ -402,7 +402,6 @@ const struct sLexInitString lexer_strings[] = {
 	{"[hl-]", T_MODE_HL_INDDEC},
 	{"[hli]", T_MODE_HL_INDINC},
 	{"[hld]", T_MODE_HL_INDDEC},
-	{"[sp]", T_MODE_SP_IND},
 	{"af", T_MODE_AF},
 	{"bc", T_MODE_BC},
 	{"de", T_MODE_DE},
@@ -527,12 +526,6 @@ const struct sLexInitString lexer_strings[] = {
 	{"wramx", T_SECT_WRAMX},
 	{"sram", T_SECT_SRAM},
 	{"oam", T_SECT_OAM},
-
-	/* Deprecated section type names */
-	{"home", T_SECT_HOME},
-	{"code", T_SECT_CODE},
-	{"data", T_SECT_DATA},
-	{"bss", T_SECT_BSS},
 
 	{"rb", T_POP_RB},
 	{"rw", T_POP_RW},

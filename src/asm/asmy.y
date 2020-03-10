@@ -593,7 +593,6 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_OPT
 %token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM
 %token	T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
-%token	T_SECT_HOME T_SECT_DATA T_SECT_CODE T_SECT_BSS
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
 %token	T_Z80_BIT
@@ -621,7 +620,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_MODE_AF
 %token	T_MODE_BC T_MODE_BC_IND
 %token	T_MODE_DE T_MODE_DE_IND
-%token	T_MODE_SP T_MODE_SP_IND
+%token	T_MODE_SP
 %token	T_MODE_C_IND
 %token	T_MODE_HL T_MODE_HL_IND T_MODE_HL_INDDEC T_MODE_HL_INDINC
 %token	T_CC_NZ T_CC_Z T_CC_NC
@@ -1323,22 +1322,6 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_WRAMX	{ $$ = SECTTYPE_WRAMX; }
 		| T_SECT_SRAM	{ $$ = SECTTYPE_SRAM; }
 		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
-		| T_SECT_HOME {
-			warning(WARNING_OBSOLETE, "HOME section name is deprecated, use ROM0 instead.");
-			$$ = SECTTYPE_ROM0;
-		}
-		| T_SECT_DATA {
-			warning(WARNING_OBSOLETE, "DATA section name is deprecated, use ROMX instead.");
-			$$ = SECTTYPE_ROMX;
-		}
-		| T_SECT_CODE {
-			warning(WARNING_OBSOLETE, "CODE section name is deprecated, use ROMX instead.");
-			$$ = SECTTYPE_ROMX;
-		}
-		| T_SECT_BSS {
-			warning(WARNING_OBSOLETE, "BSS section name is deprecated, use WRAM0 instead.");
-			$$ = SECTTYPE_WRAM0;
-		}
 ;
 
 sectorg		: /* empty */ { $$ = -1; }
