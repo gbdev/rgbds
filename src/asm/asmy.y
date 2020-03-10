@@ -644,12 +644,12 @@ asmfile		: lines;
 /* Note: The lexer adds '\n' at the end of the input */
 lines		: /* empty */
 		| lines {
-				nListCountEmpty = 0;
-				nPCOffset = 1;
-			} line '\n' {
-				nLineNo++;
-				nTotalLines++;
-			}
+			nListCountEmpty = 0;
+			nPCOffset = 1;
+		} line '\n' {
+			nLineNo++;
+			nTotalLines++;
+		}
 ;
 
 line		: label
@@ -659,38 +659,34 @@ line		: label
 		| pseudoop
 ;
 
-scoped_label_bare	: T_LABEL {
+scoped_label_bare : T_LABEL {
 			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated");
 		}
-		| T_LOCAL_LABEL ;
-scoped_label	: T_LABEL ':'
-		{
+		| T_LOCAL_LABEL
+;
+scoped_label	: T_LABEL ':' {
 			strcpy($$, $1);
 		}
-		| T_LOCAL_LABEL ':'
-		{
+		| T_LOCAL_LABEL ':' {
 			strcpy($$, $1);
 		}
 ;
 scoped_id	: T_ID | T_LOCAL_ID ;
 
 label		: /* empty */
-		| scoped_label_bare
-		{
+		| scoped_label_bare {
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
 			else
 				sym_AddReloc($1);
 		}
-		| scoped_label
-		{
+		| scoped_label {
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
 			else
 				sym_AddReloc($1);
 		}
-		| scoped_label ':'
-		{
+		| scoped_label ':' {
 			if ($1[0] == '.')
 				sym_AddLocalReloc($1);
 			else
@@ -700,12 +696,12 @@ label		: /* empty */
 ;
 
 macro		: T_ID {
-				yy_set_state(LEX_STATE_MACROARGS);
-			} macroargs {
-				yy_set_state(LEX_STATE_NORMAL);
-				if (!fstk_RunMacro($1))
-					fatalerror("Macro '%s' not defined", $1);
-			}
+			yy_set_state(LEX_STATE_MACROARGS);
+		} macroargs {
+			yy_set_state(LEX_STATE_NORMAL);
+			if (!fstk_RunMacro($1))
+				fatalerror("Macro '%s' not defined", $1);
+		}
 ;
 
 macroargs	: /* empty */
@@ -765,10 +761,10 @@ simple_pseudoop : include
 ;
 
 opt		: T_POP_OPT {
-				yy_set_state(LEX_STATE_MACROARGS);
-			} opt_list {
-				yy_set_state(LEX_STATE_NORMAL);
-			}
+			yy_set_state(LEX_STATE_MACROARGS);
+		} opt_list {
+			yy_set_state(LEX_STATE_NORMAL);
+		}
 ;
 
 opt_list	: opt_list_entry
@@ -797,87 +793,64 @@ warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 ;
 
 shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
-		| T_POP_SHIFT uconst
-		{
+		| T_POP_SHIFT uconst {
 			int32_t i = $2;
 			while (i--)
 				sym_ShiftCurrentMacroArgs();
 		}
 ;
 
-load		: T_POP_LOAD string comma sectiontype sectorg sectattrs
-		{
+load		: T_POP_LOAD string comma sectiontype sectorg sectattrs {
 			out_SetLoadSection($2, $4, $5, &$6);
 		}
-		| T_POP_ENDL
-		{
-			out_EndLoadSection();
-		}
+		| T_POP_ENDL	{ out_EndLoadSection(); }
 ;
 
-rept		: T_POP_REPT uconst
-		{
+rept		: T_POP_REPT uconst {
 			uint32_t nDefinitionLineNo = nLineNo;
 			copyrept();
 			fstk_RunRept($2, nDefinitionLineNo);
 		}
 ;
 
-macrodef	: T_LABEL ':' T_POP_MACRO
-		{
+macrodef	: T_LABEL ':' T_POP_MACRO {
 			int32_t nDefinitionLineNo = nLineNo;
 			copymacro();
 			sym_AddMacro($1, nDefinitionLineNo);
 		}
 ;
 
-equs		: T_LABEL T_POP_EQUS string
-		{
-			sym_AddString($1, $3);
-		}
+equs		: T_LABEL T_POP_EQUS string	{ sym_AddString($1, $3); }
 ;
 
-rsset		: T_POP_RSSET uconst
-		{
-			sym_AddSet("_RS", $2);
-		}
+rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
 ;
 
-rsreset		: T_POP_RSRESET
-		{
-			sym_AddSet("_RS", 0);
-		}
+rsreset		: T_POP_RSRESET	{ sym_AddSet("_RS", 0); }
 ;
 
-rl		: T_LABEL T_POP_RL uconst
-		{
+rl		: T_LABEL T_POP_RL uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
 ;
 
-rw		: T_LABEL T_POP_RW uconst
-		{
+rw		: T_LABEL T_POP_RW uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
-rb		: T_LABEL T_POP_RB uconst
-		{
+rb		: T_LABEL T_POP_RB uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
 		}
 ;
 
-union		: T_POP_UNION
-		{
-			startUnion();
-		}
+union		: T_POP_UNION	{ startUnion(); }
 ;
 
-nextu		: T_POP_NEXTU
-		{
+nextu		: T_POP_NEXTU {
 			if (nUnionDepth <= 0)
 				fatalerror("Found NEXTU outside of a UNION construct");
 
@@ -885,8 +858,7 @@ nextu		: T_POP_NEXTU
 		}
 ;
 
-endu		: T_POP_ENDU
-		{
+endu		: T_POP_ENDU {
 			if (nUnionDepth <= 0)
 				fatalerror("Found ENDU outside of a UNION construct");
 
@@ -898,55 +870,45 @@ endu		: T_POP_ENDU
 		}
 ;
 
-ds		: T_POP_DS uconst
-		{
-			out_Skip($2);
-		}
-		| T_POP_DS uconst comma reloc_8bit
-		{
+ds		: T_POP_DS uconst	{ out_Skip($2); }
+		| T_POP_DS uconst comma reloc_8bit {
 			out_RelBytes(&$4, $2);
 		}
 ;
 
 db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
-			if (nListCountEmpty > 0) {
+			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as padding).");
-			}
 		}
 		| T_POP_DB constlist_8bit_entry
 ;
 
 dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
-			if (nListCountEmpty > 0) {
+			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as padding).");
-			}
 		}
 		| T_POP_DW constlist_16bit_entry
 ;
 
 dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
-			if (nListCountEmpty > 0) {
+			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as padding).");
-			}
 		}
 		| T_POP_DL constlist_32bit_entry
 ;
 
 purge		: T_POP_PURGE {
-				oDontExpandStrings = true;
-			} purge_list {
-				oDontExpandStrings = false;
-			}
+			oDontExpandStrings = true;
+		} purge_list {
+			oDontExpandStrings = false;
+		}
 ;
 
 purge_list	: purge_list_entry
 		| purge_list_entry comma purge_list
 ;
 
-purge_list_entry : scoped_id
-		{
-			sym_Purge($1);
-		}
+purge_list_entry : scoped_id	{ sym_Purge($1); }
 ;
 
 export		: export_token export_list
@@ -965,52 +927,36 @@ export_list	: export_list_entry
 		| export_list_entry comma export_list
 ;
 
-export_list_entry : scoped_id
-		{
-			sym_Export($1);
-		}
+export_list_entry : scoped_id	{ sym_Export($1); }
 ;
 
-equ		: T_LABEL T_POP_EQU const
-		{
-			sym_AddEqu($1, $3);
-		}
+equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
 ;
 
-set		: T_LABEL T_POP_SET const
-		{
-			sym_AddSet($1, $3);
-		}
-		| T_LABEL T_POP_EQUAL const
-		{
-			sym_AddSet($1, $3);
-		}
+set		: T_LABEL T_POP_SET const	{ sym_AddSet($1, $3); }
+		| T_LABEL T_POP_EQUAL const	{ sym_AddSet($1, $3); }
 ;
 
-include		: T_POP_INCLUDE string
-		{
+include		: T_POP_INCLUDE string {
 			fstk_RunInclude($2);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
 ;
 
-incbin		: T_POP_INCBIN string
-		{
+incbin		: T_POP_INCBIN string {
 			out_BinaryFile($2);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
-		| T_POP_INCBIN string comma uconst comma uconst
-		{
+		| T_POP_INCBIN string comma uconst comma uconst {
 			out_BinaryFileSlice($2, $4, $6);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
 ;
 
-charmap		: T_POP_CHARMAP string comma const
-		{
+charmap		: T_POP_CHARMAP string comma const {
 			if (($4 & 0xFF) != $4)
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 
@@ -1019,20 +965,11 @@ charmap		: T_POP_CHARMAP string comma const
 		}
 ;
 
-newcharmap	: T_POP_NEWCHARMAP T_ID
-		{
-			charmap_New($2, NULL);
-		}
-		| T_POP_NEWCHARMAP T_ID comma T_ID
-		{
-			charmap_New($2, $4);
-		}
+newcharmap	: T_POP_NEWCHARMAP T_ID	{ charmap_New($2, NULL); }
+		| T_POP_NEWCHARMAP T_ID comma T_ID	{ charmap_New($2, $4); }
 ;
 
-setcharmap	: T_POP_SETCHARMAP T_ID
-		{
-			charmap_Set($2);
-		}
+setcharmap	: T_POP_SETCHARMAP T_ID	{ charmap_Set($2); }
 ;
 
 pushc		: T_POP_PUSHC	{ charmap_Push(); }
@@ -1041,45 +978,26 @@ pushc		: T_POP_PUSHC	{ charmap_Push(); }
 popc		: T_POP_POPC	{ charmap_Pop(); }
 ;
 
-printt		: T_POP_PRINTT string
-		{
-			printf("%s", $2);
-		}
+printt		: T_POP_PRINTT string	{ printf("%s", $2); }
 ;
 
-printv		: T_POP_PRINTV const
-		{
-			printf("$%X", $2);
-		}
+printv		: T_POP_PRINTV const	{ printf("$%X", $2); }
 ;
 
-printi		: T_POP_PRINTI const
-		{
-			printf("%d", $2);
-		}
+printi		: T_POP_PRINTI const	{ printf("%d", $2); }
 ;
 
-printf		: T_POP_PRINTF const
-		{
-			math_Print($2);
-		}
+printf		: T_POP_PRINTF const	{ math_Print($2); }
 ;
 
-if		: T_POP_IF const
-		{
+if		: T_POP_IF const {
 			nIFDepth++;
-			if (!$2) {
-				/*
-				 * Continue parsing after ELSE, or at ELIF or
-				 * ENDC keyword.
-				 */
+			if (!$2)
 				if_skip_to_else();
-			}
 		}
 ;
 
-elif		: T_POP_ELIF const
-		{
+elif		: T_POP_ELIF const {
 			if (nIFDepth <= 0)
 				fatalerror("Found ELIF outside an IF construct");
 
@@ -1111,8 +1029,7 @@ elif		: T_POP_ELIF const
 		}
 ;
 
-else		: T_POP_ELSE
-		{
+else		: T_POP_ELSE {
 			if (nIFDepth <= 0)
 				fatalerror("Found ELSE outside an IF construct");
 
@@ -1121,8 +1038,7 @@ else		: T_POP_ELSE
 		}
 ;
 
-endc		: T_POP_ENDC
-		{
+endc		: T_POP_ENDC {
 			if (nIFDepth <= 0)
 				fatalerror("Found ENDC outside an IF construct");
 
@@ -1130,8 +1046,7 @@ endc		: T_POP_ENDC
 		}
 ;
 
-const_3bit	: const
-		{
+const_3bit	: const {
 			int32_t value = $1;
 			if ((value < 0) || (value > 7))
 				yyerror("Immediate value must be 3-bit");
@@ -1144,17 +1059,12 @@ constlist_8bit	: constlist_8bit_entry
 		| constlist_8bit_entry comma constlist_8bit
 ;
 
-constlist_8bit_entry : /* empty */
-		{
+constlist_8bit_entry : /* empty */ {
 			out_Skip(1);
 			nListCountEmpty++;
 		}
-		| reloc_8bit_no_str
-		{
-			out_RelByte(&$1);
-		}
-		| string
-		{
+		| reloc_8bit_no_str	{ out_RelByte(&$1); }
+		| string {
 			char *s = $1;
 			int32_t length = charmap_Convert(&s);
 
@@ -1167,51 +1077,43 @@ constlist_16bit : constlist_16bit_entry
 		| constlist_16bit_entry comma constlist_16bit
 ;
 
-constlist_16bit_entry : /* empty */
-		{
+constlist_16bit_entry : /* empty */ {
 			out_Skip(2);
 			nListCountEmpty++;
 		}
-		| reloc_16bit
-		{
-			out_RelWord(&$1);
-		}
+		| reloc_16bit	{ out_RelWord(&$1); }
 ;
 
 constlist_32bit : constlist_32bit_entry
 		| constlist_32bit_entry comma constlist_32bit
 ;
 
-constlist_32bit_entry : /* empty */
-		{
+constlist_32bit_entry : /* empty */ {
 			out_Skip(4);
 			nListCountEmpty++;
 		}
-		| relocexpr
-		{
-			out_RelLong(&$1);
-		}
+		| relocexpr	{ out_RelLong(&$1); }
 ;
 
-reloc_8bit	: relocexpr
-		{
-			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
+reloc_8bit	: relocexpr {
+			if(rpn_isKnown(&$1)
+			 && ($1.nVal < -128 || $1.nVal > 255))
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 			$$ = $1;
 		}
 ;
 
-reloc_8bit_no_str	: relocexpr_no_str
-		{
-			if( (rpn_isKnown(&$1)) && (($1.nVal < -128) || ($1.nVal > 255)) )
+reloc_8bit_no_str : relocexpr_no_str {
+			if(rpn_isKnown(&$1)
+			 && ($1.nVal < -128 || $1.nVal > 255))
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 			$$ = $1;
 		}
 ;
 
-reloc_16bit	: relocexpr
-		{
-			if ((rpn_isKnown(&$1)) && (($1.nVal < -32768) || ($1.nVal > 65535)))
+reloc_16bit	: relocexpr {
+			if (rpn_isKnown(&$1)
+			 && ($1.nVal < -32768 || $1.nVal > 65535))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit");
 			$$ = $1;
 		}
@@ -1219,8 +1121,7 @@ reloc_16bit	: relocexpr
 
 
 relocexpr	: relocexpr_no_str
-		| string
-		{
+		| string {
 			char *s = $1;
 			int32_t length = charmap_Convert(&s);
 			uint32_t r = str2int2(s, length);
@@ -1230,140 +1131,146 @@ relocexpr	: relocexpr_no_str
 		}
 ;
 
-relocexpr_no_str	: scoped_id
-		{
-			rpn_Symbol(&$$, $1);
+relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
+		| T_NUMBER	{ rpn_Number(&$$, $1); }
+		| T_OP_LOGICNOT relocexpr %prec NEG {
+			rpn_LOGNOT(&$$, &$2);
 		}
-		| T_NUMBER
-		{
-			rpn_Number(&$$, $1);
+		| relocexpr T_OP_LOGICOR relocexpr {
+			rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3);
 		}
-		| T_OP_LOGICNOT relocexpr %prec NEG	{ rpn_LOGNOT(&$$, &$2); }
-		| relocexpr T_OP_LOGICOR relocexpr	{ rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICAND relocexpr	{ rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICEQU relocexpr	{ rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICGT relocexpr	{ rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICLT relocexpr	{ rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICGE relocexpr	{ rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICLE relocexpr	{ rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3); }
-		| relocexpr T_OP_LOGICNE relocexpr	{ rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3); }
-		| relocexpr T_OP_ADD relocexpr	{ rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3); }
-		| relocexpr T_OP_SUB relocexpr	{ rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3); }
-		| relocexpr T_OP_XOR relocexpr	{ rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3); }
-		| relocexpr T_OP_OR relocexpr		{ rpn_BinaryOp(RPN_OR, &$$, &$1, &$3); }
-		| relocexpr T_OP_AND relocexpr	{ rpn_BinaryOp(RPN_AND, &$$, &$1, &$3); }
-		| relocexpr T_OP_SHL relocexpr	{ rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3); }
-		| relocexpr T_OP_SHR relocexpr	{ rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3); }
-		| relocexpr T_OP_MUL relocexpr	{ rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3); }
-		| relocexpr T_OP_DIV relocexpr	{ rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3); }
-		| relocexpr T_OP_MOD relocexpr	{ rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3); }
-		| T_OP_ADD relocexpr %prec NEG		{ $$ = $2; }
-		| T_OP_SUB relocexpr %prec NEG		{ rpn_UNNEG(&$$, &$2); }
-		| T_OP_NOT relocexpr %prec NEG		{ rpn_UNNOT(&$$, &$2); }
-		| T_OP_HIGH '(' relocexpr ')'		{ rpn_HIGH(&$$, &$3); }
-		| T_OP_LOW '(' relocexpr ')'		{ rpn_LOW(&$$, &$3); }
-		| T_OP_BANK '(' scoped_id ')'
-		{
+		| relocexpr T_OP_LOGICAND relocexpr {
+			rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICEQU relocexpr {
+			rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICGT relocexpr {
+			rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICLT relocexpr {
+			rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICGE relocexpr {
+			rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICLE relocexpr {
+			rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_LOGICNE relocexpr {
+			rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_ADD relocexpr {
+			rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_SUB relocexpr {
+			rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_XOR relocexpr {
+			rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_OR relocexpr	 {
+			rpn_BinaryOp(RPN_OR, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_AND relocexpr {
+			rpn_BinaryOp(RPN_AND, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_SHL relocexpr {
+			rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_SHR relocexpr {
+			rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_MUL relocexpr {
+			rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_DIV relocexpr {
+			rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_MOD relocexpr {
+			rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3);
+		}
+		| T_OP_ADD relocexpr %prec NEG	{ $$ = $2; }
+		| T_OP_SUB relocexpr %prec NEG	{ rpn_UNNEG(&$$, &$2); }
+		| T_OP_NOT relocexpr %prec NEG	{ rpn_UNNOT(&$$, &$2); }
+		| T_OP_HIGH '(' relocexpr ')'	{ rpn_HIGH(&$$, &$3); }
+		| T_OP_LOW '(' relocexpr ')'	{ rpn_LOW(&$$, &$3); }
+		| T_OP_BANK '(' scoped_id ')' {
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
 		}
-		| T_OP_BANK '(' string ')'
-		{
-			rpn_BankSection(&$$, $3);
-		}
+		| T_OP_BANK '(' string ')'	{ rpn_BankSection(&$$, $3); }
 		| T_OP_DEF {
-				oDontExpandStrings = true;
-			} '(' scoped_id ')'
-		{
+			oDontExpandStrings = true;
+		} '(' scoped_id ')' {
 			struct sSymbol const *sym = sym_FindSymbol($4);
+
 			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))
 				yyerror("Label \"%s\" is not a valid argument to DEF",
 					$4);
 			rpn_Number(&$$, !!sym);
+
 			oDontExpandStrings = false;
 		}
-		| T_OP_ROUND '(' const ')'
-		{
+		| T_OP_ROUND '(' const ')' {
 			rpn_Number(&$$, math_Round($3));
 		}
-		| T_OP_CEIL '(' const ')'
-		{
+		| T_OP_CEIL '(' const ')' {
 			rpn_Number(&$$, math_Ceil($3));
 		}
-		| T_OP_FLOOR '(' const ')'
-		{
+		| T_OP_FLOOR '(' const ')' {
 			rpn_Number(&$$, math_Floor($3));
 		}
-		| T_OP_FDIV '(' const comma const ')'
-		{
-			rpn_Number(&$$,
-				   math_Div($3,
-					    $5));
+		| T_OP_FDIV '(' const comma const ')' {
+			rpn_Number(&$$, math_Div($3, $5));
 		}
-		| T_OP_FMUL '(' const comma const ')'
-		{
-			rpn_Number(&$$,
-				   math_Mul($3,
-					    $5));
+		| T_OP_FMUL '(' const comma const ')' {
+			rpn_Number(&$$, math_Mul($3, $5));
 		}
-		| T_OP_SIN '(' const ')'
-		{
+		| T_OP_SIN '(' const ')' {
 			rpn_Number(&$$, math_Sin($3));
 		}
-		| T_OP_COS '(' const ')'
-		{
+		| T_OP_COS '(' const ')' {
 			rpn_Number(&$$, math_Cos($3));
 		}
-		| T_OP_TAN '(' const ')'
-		{
+		| T_OP_TAN '(' const ')' {
 			rpn_Number(&$$, math_Tan($3));
 		}
-		| T_OP_ASIN '(' const ')'
-		{
+		| T_OP_ASIN '(' const ')' {
 			rpn_Number(&$$, math_ASin($3));
 		}
-		| T_OP_ACOS '(' const ')'
-		{
+		| T_OP_ACOS '(' const ')' {
 			rpn_Number(&$$, math_ACos($3));
 		}
-		| T_OP_ATAN '(' const ')'
-		{
+		| T_OP_ATAN '(' const ')' {
 			rpn_Number(&$$, math_ATan($3));
 		}
-		| T_OP_ATAN2 '(' const comma const ')'
-		{
-			rpn_Number(&$$,
-				   math_ATan2($3,
-					      $5));
+		| T_OP_ATAN2 '(' const comma const ')' {
+			rpn_Number(&$$, math_ATan2($3, $5));
 		}
-		| T_OP_STRCMP '(' string comma string ')'
-		{
+		| T_OP_STRCMP '(' string comma string ')' {
 			rpn_Number(&$$, strcmp($3, $5));
 		}
-		| T_OP_STRIN '(' string comma string ')'
-		{
+		| T_OP_STRIN '(' string comma string ')' {
 			char *p = strstr($3, $5);
 
-			if (p != NULL)
-				rpn_Number(&$$, p - $3 + 1);
-			else
-				rpn_Number(&$$, 0);
+			rpn_Number(&$$, p ? p - $3 + 1 : 0);
 		}
-		| T_OP_STRLEN '(' string ')'		{ rpn_Number(&$$, strlenUTF8($3)); }
-		| '(' relocexpr ')'			{ $$ = $2; }
+		| T_OP_STRLEN '(' string ')' {
+			rpn_Number(&$$, strlenUTF8($3));
+		}
+		| '(' relocexpr ')'	{ $$ = $2; }
 ;
 
-uconst		: const
-		{
-			int32_t value = $1;
-			if (value < 0)
-				fatalerror("Constant mustn't be negative: %d", value);
-			$$ = value;
+uconst		: const {
+			$$ = $1;
+			if ($$ < 0)
+				fatalerror("Constant mustn't be negative: %d",
+					   $1);
 		}
 ;
 
-const		: relocexpr
-		{
+const		: relocexpr {
 			if (!rpn_isKnown(&$1)) {
 				yyerror("Expected constant expression: %s",
 					$1.reason);
@@ -1374,38 +1281,36 @@ const		: relocexpr
 		}
 ;
 
-string		: T_STRING
-		{
+string		: T_STRING {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "String is too long '%s'", $1);
+				warning(WARNING_LONG_STR, "String is too long '%s'",
+					$1);
 		}
-		| T_OP_STRSUB '(' string comma uconst comma uconst ')'
-		{
+		| T_OP_STRSUB '(' string comma uconst comma uconst ')' {
 			strsubUTF8($$, $3, $5, $7);
 		}
-		| T_OP_STRCAT '(' string comma string ')'
-		{
+		| T_OP_STRCAT '(' string comma string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'", $3, $5);
+				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'",
+					$3, $5);
 		}
-		| T_OP_STRUPR '(' string ')'
-		{
+		| T_OP_STRUPR '(' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'", $3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'",
+					$3);
 
 			upperstring($$);
 		}
-		| T_OP_STRLWR '(' string ')'
-		{
+		| T_OP_STRLWR '(' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'", $3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'",
+					$3);
 
 			lowerstring($$);
 		}
 ;
 
-section		: T_POP_SECTION string comma sectiontype sectorg sectattrs
-		{
+section		: T_POP_SECTION string comma sectiontype sectorg sectattrs {
 			out_NewSection($2, $4, $5, &$6);
 		}
 ;
@@ -1418,31 +1323,26 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_WRAMX	{ $$ = SECTTYPE_WRAMX; }
 		| T_SECT_SRAM	{ $$ = SECTTYPE_SRAM; }
 		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
-		| T_SECT_HOME
-		{
+		| T_SECT_HOME {
 			warning(WARNING_OBSOLETE, "HOME section name is deprecated, use ROM0 instead.");
 			$$ = SECTTYPE_ROM0;
 		}
-		| T_SECT_DATA
-		{
+		| T_SECT_DATA {
 			warning(WARNING_OBSOLETE, "DATA section name is deprecated, use ROMX instead.");
 			$$ = SECTTYPE_ROMX;
 		}
-		| T_SECT_CODE
-		{
+		| T_SECT_CODE {
 			warning(WARNING_OBSOLETE, "CODE section name is deprecated, use ROMX instead.");
 			$$ = SECTTYPE_ROMX;
 		}
-		| T_SECT_BSS
-		{
+		| T_SECT_BSS {
 			warning(WARNING_OBSOLETE, "BSS section name is deprecated, use WRAM0 instead.");
 			$$ = SECTTYPE_WRAM0;
 		}
 ;
 
-sectorg		: { $$ = -1; }
-		| '[' uconst ']'
-		{
+sectorg		: /* empty */ { $$ = -1; }
+		| '[' uconst ']' {
 			if ($2 < 0 || $2 >= 0x10000) {
 				yyerror("Address $%x is not 16-bit", $2);
 				$$ = -1;
@@ -1452,21 +1352,18 @@ sectorg		: { $$ = -1; }
 		}
 ;
 
-sectattrs	:
-		{
+sectattrs	: /* empty */ {
 			$$.alignment = 0;
 			$$.bank = -1;
 		}
-		| sectattrs comma T_OP_ALIGN '[' uconst ']'
-		{
+		| sectattrs comma T_OP_ALIGN '[' uconst ']' {
 			if ($5 < 0 || $5 > 16)
 				yyerror("Alignment must be between 0 and 16 bits, not %u",
 					$5);
 			else
 				$$.alignment = $5;
 		}
-		| sectattrs comma T_OP_BANK '[' uconst ']'
-		{
+		| sectattrs comma T_OP_BANK '[' uconst ']' {
 			/* We cannot check the validity of this now */
 			$$.bank = $5;
 		}
@@ -1521,187 +1418,126 @@ cpu_command	: z80_adc
 		| z80_xor
 ;
 
-z80_adc		: T_Z80_ADC op_a_n
-		{
+z80_adc		: T_Z80_ADC op_a_n {
 			out_AbsByte(0xCE);
 			out_RelByte(&$2);
 		}
-		| T_Z80_ADC op_a_r
-		{
-			out_AbsByte(0x88 | $2);
-		}
+		| T_Z80_ADC op_a_r	{ out_AbsByte(0x88 | $2); }
 ;
 
-z80_add		: T_Z80_ADD op_a_n
-		{
+z80_add		: T_Z80_ADD op_a_n {
 			out_AbsByte(0xC6);
 			out_RelByte(&$2);
 		}
-		| T_Z80_ADD op_a_r
-		{
-			out_AbsByte(0x80 | $2);
-		}
-		| T_Z80_ADD op_hl_ss
-		{
-			out_AbsByte(0x09 | ($2 << 4));
-		}
-		| T_Z80_ADD T_MODE_SP comma reloc_8bit
-		{
+		| T_Z80_ADD op_a_r	{ out_AbsByte(0x80 | $2); }
+		| T_Z80_ADD op_hl_ss	{ out_AbsByte(0x09 | ($2 << 4)); }
+		| T_Z80_ADD T_MODE_SP comma reloc_8bit {
 			out_AbsByte(0xE8);
 			out_RelByte(&$4);
 		}
 
 ;
 
-z80_and		: T_Z80_AND op_a_n
-		{
+z80_and		: T_Z80_AND op_a_n {
 			out_AbsByte(0xE6);
 			out_RelByte(&$2);
 		}
-		| T_Z80_AND op_a_r
-		{
-			out_AbsByte(0xA0 | $2);
-		}
+		| T_Z80_AND op_a_r	{ out_AbsByte(0xA0 | $2); }
 ;
 
-z80_bit		: T_Z80_BIT const_3bit comma reg_r
-		{
+z80_bit		: T_Z80_BIT const_3bit comma reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x40 | ($2 << 3) | $4);
 		}
 ;
 
-z80_call	: T_Z80_CALL reloc_16bit
-		{
+z80_call	: T_Z80_CALL reloc_16bit {
 			out_AbsByte(0xCD);
 			out_RelWord(&$2);
 		}
-		| T_Z80_CALL ccode comma reloc_16bit
-		{
+		| T_Z80_CALL ccode comma reloc_16bit {
 			out_AbsByte(0xC4 | ($2 << 3));
 			out_RelWord(&$4);
 		}
 ;
 
-z80_ccf		: T_Z80_CCF
-		{
-			out_AbsByte(0x3F);
-		}
+z80_ccf		: T_Z80_CCF	{ out_AbsByte(0x3F); }
 ;
 
-z80_cp		: T_Z80_CP op_a_n
-		{
+z80_cp		: T_Z80_CP op_a_n {
 			out_AbsByte(0xFE);
 			out_RelByte(&$2);
 		}
-		| T_Z80_CP op_a_r
-		{
-			out_AbsByte(0xB8 | $2);
-		}
+		| T_Z80_CP op_a_r	{ out_AbsByte(0xB8 | $2); }
 ;
 
-z80_cpl		: T_Z80_CPL
-		{
-			out_AbsByte(0x2F);
-		}
+z80_cpl		: T_Z80_CPL	{ out_AbsByte(0x2F); }
 ;
 
-z80_daa		: T_Z80_DAA
-		{
-			out_AbsByte(0x27);
-		}
+z80_daa		: T_Z80_DAA	{ out_AbsByte(0x27); }
 ;
 
-z80_dec		: T_Z80_DEC reg_r
-		{
-			out_AbsByte(0x05 | ($2 << 3));
-		}
-		| T_Z80_DEC reg_ss
-		{
-			out_AbsByte(0x0B | ($2 << 4));
-		}
+z80_dec		: T_Z80_DEC reg_r	{ out_AbsByte(0x05 | ($2 << 3)); }
+		| T_Z80_DEC reg_ss	{ out_AbsByte(0x0B | ($2 << 4)); }
 ;
 
-z80_di		: T_Z80_DI
-		{
-			out_AbsByte(0xF3);
-		}
+z80_di		: T_Z80_DI	{ out_AbsByte(0xF3); }
 ;
 
-z80_ei		: T_Z80_EI
-		{
-			out_AbsByte(0xFB);
-		}
+z80_ei		: T_Z80_EI	{ out_AbsByte(0xFB); }
 ;
 
-z80_halt	: T_Z80_HALT
-		{
+z80_halt	: T_Z80_HALT {
 			out_AbsByte(0x76);
 			if (CurrentOptions.haltnop)
 				out_AbsByte(0x00);
 		}
 ;
 
-z80_inc		: T_Z80_INC reg_r
-		{
-			out_AbsByte(0x04 | ($2 << 3));
-		}
-		| T_Z80_INC reg_ss
-		{
-			out_AbsByte(0x03 | ($2 << 4));
-		}
+z80_inc		: T_Z80_INC reg_r	{ out_AbsByte(0x04 | ($2 << 3)); }
+		| T_Z80_INC reg_ss	{ out_AbsByte(0x03 | ($2 << 4)); }
 ;
 
-z80_jp		: T_Z80_JP reloc_16bit
-		{
+z80_jp		: T_Z80_JP reloc_16bit {
 			out_AbsByte(0xC3);
 			out_RelWord(&$2);
 		}
-		| T_Z80_JP ccode comma reloc_16bit
-		{
+		| T_Z80_JP ccode comma reloc_16bit {
 			out_AbsByte(0xC2 | ($2 << 3));
 			out_RelWord(&$4);
 		}
-		| T_Z80_JP T_MODE_HL
-		{
+		| T_Z80_JP T_MODE_HL {
 			out_AbsByte(0xE9);
 		}
 ;
 
-z80_jr		: T_Z80_JR reloc_16bit
-		{
+z80_jr		: T_Z80_JR reloc_16bit {
 			out_AbsByte(0x18);
 			out_PCRelByte(&$2);
 		}
-		| T_Z80_JR ccode comma reloc_16bit
-		{
+		| T_Z80_JR ccode comma reloc_16bit {
 			out_AbsByte(0x20 | ($2 << 3));
 			out_PCRelByte(&$4);
 		}
 ;
 
-z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A
-		{
+z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A {
 			out_AbsByte(0x02 | (2 << 4));
 		}
-		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND
-		{
+		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND {
 			out_AbsByte(0x0A | (2 << 4));
 		}
 ;
 
-z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A
-		{
+z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A {
 			out_AbsByte(0x02 | (3 << 4));
 		}
-		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND
-		{
+		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND {
 			out_AbsByte(0x0A | (3 << 4));
 		}
 ;
 
-z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
-		{
+z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
 			if ((rpn_isKnown(&$4)) && ($4.nVal < 0 || ($4.nVal > 0xFF && $4.nVal < 0xFF00) || $4.nVal > 0xFFFF))
@@ -1711,8 +1547,7 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
 			$4.nVal &= 0xFF;
 			out_RelByte(&$4);
 		}
-		| T_Z80_LDIO op_mem_ind comma T_MODE_A
-		{
+		| T_Z80_LDIO op_mem_ind comma T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
 			if ((rpn_isKnown(&$2)) && ($2.nVal < 0 || ($2.nVal > 0xFF && $2.nVal < 0xFF00) || $2.nVal > 0xFFFF))
@@ -1722,12 +1557,10 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind
 			$2.nVal &= 0xFF;
 			out_RelByte(&$2);
 		}
-		| T_Z80_LDIO T_MODE_A comma T_MODE_C_IND
-		{
+		| T_Z80_LDIO T_MODE_A comma T_MODE_C_IND {
 			out_AbsByte(0xF2);
 		}
-		| T_Z80_LDIO T_MODE_C_IND comma T_MODE_A
-		{
+		| T_Z80_LDIO T_MODE_C_IND comma T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;
@@ -1742,36 +1575,28 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit
-		{
+z80_ld_hl	: T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit {
 			out_AbsByte(0xF8);
 			out_RelByte(&$5);
 		}
-		| T_Z80_LD T_MODE_HL comma reloc_16bit
-		{
+		| T_Z80_LD T_MODE_HL comma reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
 			out_RelWord(&$4);
 		}
 ;
 
-z80_ld_sp	: T_Z80_LD T_MODE_SP comma T_MODE_HL
-		{
-			out_AbsByte(0xF9);
-		}
-		| T_Z80_LD T_MODE_SP comma reloc_16bit
-		{
+z80_ld_sp	: T_Z80_LD T_MODE_SP comma T_MODE_HL	{ out_AbsByte(0xF9); }
+		| T_Z80_LD T_MODE_SP comma reloc_16bit {
 			out_AbsByte(0x01 | (REG_SP << 4));
 			out_RelWord(&$4);
 		}
 ;
 
-z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP
-		{
+z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP {
 			out_AbsByte(0x08);
 			out_RelWord(&$2);
 		}
-		| T_Z80_LD op_mem_ind comma T_MODE_A
-		{
+		| T_Z80_LD op_mem_ind comma T_MODE_A {
 			if (CurrentOptions.optimizeloads &&
 			    (rpn_isKnown(&$2)) && ($2.nVal >= 0xFF00)) {
 				out_AbsByte(0xE0);
@@ -1784,25 +1609,21 @@ z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP
 		}
 ;
 
-z80_ld_cind	: T_Z80_LD T_MODE_C_IND comma T_MODE_A
-		{
+z80_ld_cind	: T_Z80_LD T_MODE_C_IND comma T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;
 
-z80_ld_rr	: T_Z80_LD reg_rr comma T_MODE_A
-		{
+z80_ld_rr	: T_Z80_LD reg_rr comma T_MODE_A {
 			out_AbsByte(0x02 | ($2 << 4));
 		}
 ;
 
-z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit
-		{
+z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit {
 			out_AbsByte(0x06 | ($2 << 3));
 			out_RelByte(&$4);
 		}
-		| T_Z80_LD reg_r comma reg_r
-		{
+		| T_Z80_LD reg_r comma reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
 				yyerror("LD [HL],[HL] not a valid instruction");
 			else
@@ -1810,22 +1631,19 @@ z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit
 		}
 ;
 
-z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
-		{
+z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND {
 			if ($2 == REG_A)
 				out_AbsByte(0xF2);
 			else
 				yyerror("Destination operand must be A");
 		}
-		| T_Z80_LD reg_r comma reg_rr
-		{
+		| T_Z80_LD reg_r comma reg_rr {
 			if ($2 == REG_A)
 				out_AbsByte(0x0A | ($4 << 4));
 			else
 				yyerror("Destination operand must be A");
 		}
-		| T_Z80_LD reg_r comma op_mem_ind
-		{
+		| T_Z80_LD reg_r comma op_mem_ind {
 			if ($2 == REG_A) {
 				if (CurrentOptions.optimizeloads &&
 				    (rpn_isKnown(&$4)) && ($4.nVal >= 0xFF00)) {
@@ -1843,13 +1661,11 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND
 		}
 ;
 
-z80_ld_ss	: T_Z80_LD T_MODE_BC comma reloc_16bit
-		{
+z80_ld_ss	: T_Z80_LD T_MODE_BC comma reloc_16bit {
 			out_AbsByte(0x01 | (REG_BC << 4));
 			out_RelWord(&$4);
 		}
-		| T_Z80_LD T_MODE_DE comma reloc_16bit
-		{
+		| T_Z80_LD T_MODE_DE comma reloc_16bit {
 			out_AbsByte(0x01 | (REG_DE << 4));
 			out_RelWord(&$4);
 		}
@@ -1859,112 +1675,73 @@ z80_ld_ss	: T_Z80_LD T_MODE_BC comma reloc_16bit
 		 */
 ;
 
-z80_nop		: T_Z80_NOP
-		{
-			out_AbsByte(0x00);
-		}
+z80_nop		: T_Z80_NOP	{ out_AbsByte(0x00); }
 ;
 
-z80_or		: T_Z80_OR op_a_n
-		{
+z80_or		: T_Z80_OR op_a_n {
 			out_AbsByte(0xF6);
 			out_RelByte(&$2);
 		}
-		| T_Z80_OR op_a_r
-		{
-			out_AbsByte(0xB0 | $2);
-		}
+		| T_Z80_OR op_a_r	{ out_AbsByte(0xB0 | $2); }
 ;
 
-z80_pop		: T_Z80_POP reg_tt
-		{
-			out_AbsByte(0xC1 | ($2 << 4));
-		}
+z80_pop		: T_Z80_POP reg_tt	{ out_AbsByte(0xC1 | ($2 << 4)); }
 ;
 
-z80_push	: T_Z80_PUSH reg_tt
-		{
-			out_AbsByte(0xC5 | ($2 << 4));
-		}
+z80_push	: T_Z80_PUSH reg_tt	{ out_AbsByte(0xC5 | ($2 << 4)); }
 ;
 
-z80_res		: T_Z80_RES const_3bit comma reg_r
-		{
+z80_res		: T_Z80_RES const_3bit comma reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x80 | ($2 << 3) | $4);
 		}
 ;
 
-z80_ret		: T_Z80_RET
-		{
-			out_AbsByte(0xC9);
+z80_ret		: T_Z80_RET	{ out_AbsByte(0xC9);
 		}
-		| T_Z80_RET ccode
-		{
-			out_AbsByte(0xC0 | ($2 << 3));
-		}
+		| T_Z80_RET ccode	{ out_AbsByte(0xC0 | ($2 << 3)); }
 ;
 
-z80_reti	: T_Z80_RETI
-		{
-			out_AbsByte(0xD9);
-		}
+z80_reti	: T_Z80_RETI	{ out_AbsByte(0xD9); }
 ;
 
-z80_rl		: T_Z80_RL reg_r
-		{
+z80_rl		: T_Z80_RL reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x10 | $2);
 		}
 ;
 
-z80_rla		: T_Z80_RLA
-		{
-			out_AbsByte(0x17);
-		}
+z80_rla		: T_Z80_RLA	{ out_AbsByte(0x17); }
 ;
 
-z80_rlc		: T_Z80_RLC reg_r
-		{
+z80_rlc		: T_Z80_RLC reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x00 | $2);
 		}
 ;
 
-z80_rlca	: T_Z80_RLCA
-		{
-			out_AbsByte(0x07);
-		}
+z80_rlca	: T_Z80_RLCA	{ out_AbsByte(0x07); }
 ;
 
-z80_rr		: T_Z80_RR reg_r
-		{
+z80_rr		: T_Z80_RR reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x18 | $2);
 		}
 ;
 
-z80_rra		: T_Z80_RRA
-		{
-			out_AbsByte(0x1F);
-		}
+z80_rra		: T_Z80_RRA	{ out_AbsByte(0x1F); }
 ;
 
-z80_rrc		: T_Z80_RRC reg_r
-		{
+z80_rrc		: T_Z80_RRC reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x08 | $2);
 		}
 ;
 
-z80_rrca	: T_Z80_RRCA
-		{
-			out_AbsByte(0x0F);
-		}
+z80_rrca	: T_Z80_RRCA	{ out_AbsByte(0x0F); }
 ;
 
-z80_rst		: T_Z80_RST reloc_8bit
-		{
+z80_rst		: T_Z80_RST reloc_8bit {
 			if (!rpn_isKnown(&$2)) {
 				rpn_CheckRST(&$2, &$2);
 				out_RelByte(&$2);
@@ -1977,90 +1754,69 @@ z80_rst		: T_Z80_RST reloc_8bit
 		}
 ;
 
-z80_sbc		: T_Z80_SBC op_a_n
-		{
+z80_sbc		: T_Z80_SBC op_a_n {
 			out_AbsByte(0xDE);
 			out_RelByte(&$2);
 		}
-		| T_Z80_SBC op_a_r
-		{
-			out_AbsByte(0x98 | $2);
-		}
+		| T_Z80_SBC op_a_r	{ out_AbsByte(0x98 | $2); }
 ;
 
-z80_scf		: T_Z80_SCF
-		{
-			out_AbsByte(0x37);
-		}
+z80_scf		: T_Z80_SCF	{ out_AbsByte(0x37); }
 ;
 
-z80_set		: T_POP_SET const_3bit comma reg_r
-		{
+z80_set		: T_POP_SET const_3bit comma reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0xC0 | ($2 << 3) | $4);
 		}
 ;
 
-z80_sla		: T_Z80_SLA reg_r
-		{
+z80_sla		: T_Z80_SLA reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x20 | $2);
 		}
 ;
 
-z80_sra		: T_Z80_SRA reg_r
-		{
+z80_sra		: T_Z80_SRA reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x28 | $2);
 		}
 ;
 
-z80_srl		: T_Z80_SRL reg_r
-		{
+z80_srl		: T_Z80_SRL reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x38 | $2);
 		}
 ;
 
-z80_stop	: T_Z80_STOP
-		{
+z80_stop	: T_Z80_STOP {
 			out_AbsByte(0x10);
 			out_AbsByte(0x00);
 		}
-		| T_Z80_STOP reloc_8bit
-		{
+		| T_Z80_STOP reloc_8bit {
 			out_AbsByte(0x10);
 			out_RelByte(&$2);
 		}
 ;
 
-z80_sub		: T_Z80_SUB op_a_n
-		{
+z80_sub		: T_Z80_SUB op_a_n {
 			out_AbsByte(0xD6);
 			out_RelByte(&$2);
 		}
-		| T_Z80_SUB op_a_r
-		{
-			out_AbsByte(0x90 | $2);
+		| T_Z80_SUB op_a_r	{ out_AbsByte(0x90 | $2);
 		}
 ;
 
-z80_swap	: T_Z80_SWAP reg_r
-		{
+z80_swap	: T_Z80_SWAP reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x30 | $2);
 		}
 ;
 
-z80_xor		: T_Z80_XOR op_a_n
-		{
+z80_xor		: T_Z80_XOR op_a_n {
 			out_AbsByte(0xEE);
 			out_RelByte(&$2);
 		}
-		| T_Z80_XOR op_a_r
-		{
-			out_AbsByte(0xA8 | $2);
-		}
+		| T_Z80_XOR op_a_r	{ out_AbsByte(0xA8 | $2); }
 ;
 
 op_mem_ind	: '[' reloc_16bit ']'		{ $$ = $2; }
