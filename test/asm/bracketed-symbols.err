@@ -2,3 +2,6 @@ ERROR: bracketed-symbols.asm(16):
     Print types are only allowed for numbers
 ERROR: bracketed-symbols.asm(20):
     "Label" does not have a constant value
+ERROR: bracketed-symbols.asm(21):
+    Expected constant PC but section is not fixed
+error: Assembly aborted (3 errors)!

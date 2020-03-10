@@ -18,3 +18,4 @@ PRINTT "{X:S}\n"
 SECTION "Test", ROM0
 Label:
 PRINTT "{x:Label}\n"
+PRINTT "{x:@}\n"

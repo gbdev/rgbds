@@ -279,10 +279,10 @@ uint32_t sym_GetConstantValue(char const *s)
 		if (sym_IsConstant(psym))
 			return sym_GetValue(psym);
 
-		fatalerror("\"%s\" does not have a constant value", s);
+		yyerror("\"%s\" does not have a constant value", s);
+	} else {
+		yyerror("'%s' not defined", s);
 	}
-
-	yyerror("'%s' not defined", s);
 
 	return 0;
 }
@@ -706,7 +706,7 @@ void sym_Ref(char const *tzSym)
 /*
  * Set whether to export all relocatable symbols by default
  */
-void sym_SetExportAll(uint8_t set)
+void sym_SetExportAll(bool set)
 {
 	exportall = set;
 }
