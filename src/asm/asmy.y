@@ -706,7 +706,7 @@ macro		: T_ID {
 
 macroargs	: /* empty */
 		| macroarg
-		| macroarg comma macroargs
+		| macroarg ',' macroargs
 ;
 
 macroarg	: T_STRING	{ sym_AddNewMacroArg($1); }
@@ -768,7 +768,7 @@ opt		: T_POP_OPT {
 ;
 
 opt_list	: opt_list_entry
-		| opt_list_entry comma opt_list
+		| opt_list_entry ',' opt_list
 ;
 
 opt_list_entry	: T_STRING		{ opt_Parse($1); }
@@ -800,7 +800,7 @@ shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
 		}
 ;
 
-load		: T_POP_LOAD string comma sectiontype sectorg sectattrs {
+load		: T_POP_LOAD string ',' sectiontype sectorg sectattrs {
 			out_SetLoadSection($2, $4, $5, &$6);
 		}
 		| T_POP_ENDL	{ out_EndLoadSection(); }
@@ -871,26 +871,26 @@ endu		: T_POP_ENDU {
 ;
 
 ds		: T_POP_DS uconst	{ out_Skip($2); }
-		| T_POP_DS uconst comma reloc_8bit {
+		| T_POP_DS uconst ',' reloc_8bit {
 			out_RelBytes(&$4, $2);
 		}
 ;
 
-db		: T_POP_DB constlist_8bit_entry comma constlist_8bit {
+db		: T_POP_DB constlist_8bit_entry ',' constlist_8bit {
 			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as padding).");
 		}
 		| T_POP_DB constlist_8bit_entry
 ;
 
-dw		: T_POP_DW constlist_16bit_entry comma constlist_16bit {
+dw		: T_POP_DW constlist_16bit_entry ',' constlist_16bit {
 			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as padding).");
 		}
 		| T_POP_DW constlist_16bit_entry
 ;
 
-dl		: T_POP_DL constlist_32bit_entry comma constlist_32bit {
+dl		: T_POP_DL constlist_32bit_entry ',' constlist_32bit {
 			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as padding).");
 		}
@@ -905,7 +905,7 @@ purge		: T_POP_PURGE {
 ;
 
 purge_list	: purge_list_entry
-		| purge_list_entry comma purge_list
+		| purge_list_entry ',' purge_list
 ;
 
 purge_list_entry : scoped_id	{ sym_Purge($1); }
@@ -924,7 +924,7 @@ export_token	: T_POP_EXPORT
 ;
 
 export_list	: export_list_entry
-		| export_list_entry comma export_list
+		| export_list_entry ',' export_list
 ;
 
 export_list_entry : scoped_id	{ sym_Export($1); }
@@ -949,14 +949,14 @@ incbin		: T_POP_INCBIN string {
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
-		| T_POP_INCBIN string comma uconst comma uconst {
+		| T_POP_INCBIN string ',' uconst ',' uconst {
 			out_BinaryFileSlice($2, $4, $6);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
 ;
 
-charmap		: T_POP_CHARMAP string comma const {
+charmap		: T_POP_CHARMAP string ',' const {
 			if (($4 & 0xFF) != $4)
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 
@@ -966,7 +966,7 @@ charmap		: T_POP_CHARMAP string comma const {
 ;
 
 newcharmap	: T_POP_NEWCHARMAP T_ID	{ charmap_New($2, NULL); }
-		| T_POP_NEWCHARMAP T_ID comma T_ID	{ charmap_New($2, $4); }
+		| T_POP_NEWCHARMAP T_ID ',' T_ID	{ charmap_New($2, $4); }
 ;
 
 setcharmap	: T_POP_SETCHARMAP T_ID	{ charmap_Set($2); }
@@ -1056,7 +1056,7 @@ const_3bit	: const {
 ;
 
 constlist_8bit	: constlist_8bit_entry
-		| constlist_8bit_entry comma constlist_8bit
+		| constlist_8bit_entry ',' constlist_8bit
 ;
 
 constlist_8bit_entry : /* empty */ {
@@ -1074,7 +1074,7 @@ constlist_8bit_entry : /* empty */ {
 ;
 
 constlist_16bit : constlist_16bit_entry
-		| constlist_16bit_entry comma constlist_16bit
+		| constlist_16bit_entry ',' constlist_16bit
 ;
 
 constlist_16bit_entry : /* empty */ {
@@ -1085,7 +1085,7 @@ constlist_16bit_entry : /* empty */ {
 ;
 
 constlist_32bit : constlist_32bit_entry
-		| constlist_32bit_entry comma constlist_32bit
+		| constlist_32bit_entry ',' constlist_32bit
 ;
 
 constlist_32bit_entry : /* empty */ {
@@ -1221,10 +1221,10 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_FLOOR '(' const ')' {
 			rpn_Number(&$$, math_Floor($3));
 		}
-		| T_OP_FDIV '(' const comma const ')' {
+		| T_OP_FDIV '(' const ',' const ')' {
 			rpn_Number(&$$, math_Div($3, $5));
 		}
-		| T_OP_FMUL '(' const comma const ')' {
+		| T_OP_FMUL '(' const ',' const ')' {
 			rpn_Number(&$$, math_Mul($3, $5));
 		}
 		| T_OP_SIN '(' const ')' {
@@ -1245,13 +1245,13 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_ATAN '(' const ')' {
 			rpn_Number(&$$, math_ATan($3));
 		}
-		| T_OP_ATAN2 '(' const comma const ')' {
+		| T_OP_ATAN2 '(' const ',' const ')' {
 			rpn_Number(&$$, math_ATan2($3, $5));
 		}
-		| T_OP_STRCMP '(' string comma string ')' {
+		| T_OP_STRCMP '(' string ',' string ')' {
 			rpn_Number(&$$, strcmp($3, $5));
 		}
-		| T_OP_STRIN '(' string comma string ')' {
+		| T_OP_STRIN '(' string ',' string ')' {
 			char *p = strstr($3, $5);
 
 			rpn_Number(&$$, p ? p - $3 + 1 : 0);
@@ -1286,10 +1286,10 @@ string		: T_STRING {
 				warning(WARNING_LONG_STR, "String is too long '%s'",
 					$1);
 		}
-		| T_OP_STRSUB '(' string comma uconst comma uconst ')' {
+		| T_OP_STRSUB '(' string ',' uconst ',' uconst ')' {
 			strsubUTF8($$, $3, $5, $7);
 		}
-		| T_OP_STRCAT '(' string comma string ')' {
+		| T_OP_STRCAT '(' string ',' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'",
 					$3, $5);
@@ -1310,7 +1310,7 @@ string		: T_STRING {
 		}
 ;
 
-section		: T_POP_SECTION string comma sectiontype sectorg sectattrs {
+section		: T_POP_SECTION string ',' sectiontype sectorg sectattrs {
 			out_NewSection($2, $4, $5, &$6);
 		}
 ;
@@ -1356,14 +1356,14 @@ sectattrs	: /* empty */ {
 			$$.alignment = 0;
 			$$.bank = -1;
 		}
-		| sectattrs comma T_OP_ALIGN '[' uconst ']' {
+		| sectattrs ',' T_OP_ALIGN '[' uconst ']' {
 			if ($5 < 0 || $5 > 16)
 				yyerror("Alignment must be between 0 and 16 bits, not %u",
 					$5);
 			else
 				$$.alignment = $5;
 		}
-		| sectattrs comma T_OP_BANK '[' uconst ']' {
+		| sectattrs ',' T_OP_BANK '[' uconst ']' {
 			/* We cannot check the validity of this now */
 			$$.bank = $5;
 		}
@@ -1431,7 +1431,7 @@ z80_add		: T_Z80_ADD op_a_n {
 		}
 		| T_Z80_ADD op_a_r	{ out_AbsByte(0x80 | $2); }
 		| T_Z80_ADD op_hl_ss	{ out_AbsByte(0x09 | ($2 << 4)); }
-		| T_Z80_ADD T_MODE_SP comma reloc_8bit {
+		| T_Z80_ADD T_MODE_SP ',' reloc_8bit {
 			out_AbsByte(0xE8);
 			out_RelByte(&$4);
 		}
@@ -1445,7 +1445,7 @@ z80_and		: T_Z80_AND op_a_n {
 		| T_Z80_AND op_a_r	{ out_AbsByte(0xA0 | $2); }
 ;
 
-z80_bit		: T_Z80_BIT const_3bit comma reg_r {
+z80_bit		: T_Z80_BIT const_3bit ',' reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x40 | ($2 << 3) | $4);
 		}
@@ -1455,7 +1455,7 @@ z80_call	: T_Z80_CALL reloc_16bit {
 			out_AbsByte(0xCD);
 			out_RelWord(&$2);
 		}
-		| T_Z80_CALL ccode comma reloc_16bit {
+		| T_Z80_CALL ccode ',' reloc_16bit {
 			out_AbsByte(0xC4 | ($2 << 3));
 			out_RelWord(&$4);
 		}
@@ -1502,7 +1502,7 @@ z80_jp		: T_Z80_JP reloc_16bit {
 			out_AbsByte(0xC3);
 			out_RelWord(&$2);
 		}
-		| T_Z80_JP ccode comma reloc_16bit {
+		| T_Z80_JP ccode ',' reloc_16bit {
 			out_AbsByte(0xC2 | ($2 << 3));
 			out_RelWord(&$4);
 		}
@@ -1515,29 +1515,29 @@ z80_jr		: T_Z80_JR reloc_16bit {
 			out_AbsByte(0x18);
 			out_PCRelByte(&$2);
 		}
-		| T_Z80_JR ccode comma reloc_16bit {
+		| T_Z80_JR ccode ',' reloc_16bit {
 			out_AbsByte(0x20 | ($2 << 3));
 			out_PCRelByte(&$4);
 		}
 ;
 
-z80_ldi		: T_Z80_LDI T_MODE_HL_IND comma T_MODE_A {
+z80_ldi		: T_Z80_LDI T_MODE_HL_IND ',' T_MODE_A {
 			out_AbsByte(0x02 | (2 << 4));
 		}
-		| T_Z80_LDI T_MODE_A comma T_MODE_HL_IND {
+		| T_Z80_LDI T_MODE_A ',' T_MODE_HL_IND {
 			out_AbsByte(0x0A | (2 << 4));
 		}
 ;
 
-z80_ldd		: T_Z80_LDD T_MODE_HL_IND comma T_MODE_A {
+z80_ldd		: T_Z80_LDD T_MODE_HL_IND ',' T_MODE_A {
 			out_AbsByte(0x02 | (3 << 4));
 		}
-		| T_Z80_LDD T_MODE_A comma T_MODE_HL_IND {
+		| T_Z80_LDD T_MODE_A ',' T_MODE_HL_IND {
 			out_AbsByte(0x0A | (3 << 4));
 		}
 ;
 
-z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind {
+z80_ldio	: T_Z80_LDIO T_MODE_A ',' op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
 			if ((rpn_isKnown(&$4)) && ($4.nVal < 0 || ($4.nVal > 0xFF && $4.nVal < 0xFF00) || $4.nVal > 0xFFFF))
@@ -1547,7 +1547,7 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind {
 			$4.nVal &= 0xFF;
 			out_RelByte(&$4);
 		}
-		| T_Z80_LDIO op_mem_ind comma T_MODE_A {
+		| T_Z80_LDIO op_mem_ind ',' T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
 			if ((rpn_isKnown(&$2)) && ($2.nVal < 0 || ($2.nVal > 0xFF && $2.nVal < 0xFF00) || $2.nVal > 0xFFFF))
@@ -1557,10 +1557,10 @@ z80_ldio	: T_Z80_LDIO T_MODE_A comma op_mem_ind {
 			$2.nVal &= 0xFF;
 			out_RelByte(&$2);
 		}
-		| T_Z80_LDIO T_MODE_A comma T_MODE_C_IND {
+		| T_Z80_LDIO T_MODE_A ',' T_MODE_C_IND {
 			out_AbsByte(0xF2);
 		}
-		| T_Z80_LDIO T_MODE_C_IND comma T_MODE_A {
+		| T_Z80_LDIO T_MODE_C_IND ',' T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;
@@ -1575,28 +1575,28 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL comma T_MODE_SP reloc_8bit {
+z80_ld_hl	: T_Z80_LD T_MODE_HL ',' T_MODE_SP reloc_8bit {
 			out_AbsByte(0xF8);
 			out_RelByte(&$5);
 		}
-		| T_Z80_LD T_MODE_HL comma reloc_16bit {
+		| T_Z80_LD T_MODE_HL ',' reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
 			out_RelWord(&$4);
 		}
 ;
 
-z80_ld_sp	: T_Z80_LD T_MODE_SP comma T_MODE_HL	{ out_AbsByte(0xF9); }
-		| T_Z80_LD T_MODE_SP comma reloc_16bit {
+z80_ld_sp	: T_Z80_LD T_MODE_SP ',' T_MODE_HL	{ out_AbsByte(0xF9); }
+		| T_Z80_LD T_MODE_SP ',' reloc_16bit {
 			out_AbsByte(0x01 | (REG_SP << 4));
 			out_RelWord(&$4);
 		}
 ;
 
-z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP {
+z80_ld_mem	: T_Z80_LD op_mem_ind ',' T_MODE_SP {
 			out_AbsByte(0x08);
 			out_RelWord(&$2);
 		}
-		| T_Z80_LD op_mem_ind comma T_MODE_A {
+		| T_Z80_LD op_mem_ind ',' T_MODE_A {
 			if (CurrentOptions.optimizeloads &&
 			    (rpn_isKnown(&$2)) && ($2.nVal >= 0xFF00)) {
 				out_AbsByte(0xE0);
@@ -1609,21 +1609,21 @@ z80_ld_mem	: T_Z80_LD op_mem_ind comma T_MODE_SP {
 		}
 ;
 
-z80_ld_cind	: T_Z80_LD T_MODE_C_IND comma T_MODE_A {
+z80_ld_cind	: T_Z80_LD T_MODE_C_IND ',' T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;
 
-z80_ld_rr	: T_Z80_LD reg_rr comma T_MODE_A {
+z80_ld_rr	: T_Z80_LD reg_rr ',' T_MODE_A {
 			out_AbsByte(0x02 | ($2 << 4));
 		}
 ;
 
-z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit {
+z80_ld_r	: T_Z80_LD reg_r ',' reloc_8bit {
 			out_AbsByte(0x06 | ($2 << 3));
 			out_RelByte(&$4);
 		}
-		| T_Z80_LD reg_r comma reg_r {
+		| T_Z80_LD reg_r ',' reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
 				yyerror("LD [HL],[HL] not a valid instruction");
 			else
@@ -1631,19 +1631,19 @@ z80_ld_r	: T_Z80_LD reg_r comma reloc_8bit {
 		}
 ;
 
-z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND {
+z80_ld_a	: T_Z80_LD reg_r ',' T_MODE_C_IND {
 			if ($2 == REG_A)
 				out_AbsByte(0xF2);
 			else
 				yyerror("Destination operand must be A");
 		}
-		| T_Z80_LD reg_r comma reg_rr {
+		| T_Z80_LD reg_r ',' reg_rr {
 			if ($2 == REG_A)
 				out_AbsByte(0x0A | ($4 << 4));
 			else
 				yyerror("Destination operand must be A");
 		}
-		| T_Z80_LD reg_r comma op_mem_ind {
+		| T_Z80_LD reg_r ',' op_mem_ind {
 			if ($2 == REG_A) {
 				if (CurrentOptions.optimizeloads &&
 				    (rpn_isKnown(&$4)) && ($4.nVal >= 0xFF00)) {
@@ -1661,11 +1661,11 @@ z80_ld_a	: T_Z80_LD reg_r comma T_MODE_C_IND {
 		}
 ;
 
-z80_ld_ss	: T_Z80_LD T_MODE_BC comma reloc_16bit {
+z80_ld_ss	: T_Z80_LD T_MODE_BC ',' reloc_16bit {
 			out_AbsByte(0x01 | (REG_BC << 4));
 			out_RelWord(&$4);
 		}
-		| T_Z80_LD T_MODE_DE comma reloc_16bit {
+		| T_Z80_LD T_MODE_DE ',' reloc_16bit {
 			out_AbsByte(0x01 | (REG_DE << 4));
 			out_RelWord(&$4);
 		}
@@ -1691,7 +1691,7 @@ z80_pop		: T_Z80_POP reg_tt	{ out_AbsByte(0xC1 | ($2 << 4)); }
 z80_push	: T_Z80_PUSH reg_tt	{ out_AbsByte(0xC5 | ($2 << 4)); }
 ;
 
-z80_res		: T_Z80_RES const_3bit comma reg_r {
+z80_res		: T_Z80_RES const_3bit ',' reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0x80 | ($2 << 3) | $4);
 		}
@@ -1764,7 +1764,7 @@ z80_sbc		: T_Z80_SBC op_a_n {
 z80_scf		: T_Z80_SCF	{ out_AbsByte(0x37); }
 ;
 
-z80_set		: T_POP_SET const_3bit comma reg_r {
+z80_set		: T_POP_SET const_3bit ',' reg_r {
 			out_AbsByte(0xCB);
 			out_AbsByte(0xC0 | ($2 << 3) | $4);
 		}
@@ -1823,18 +1823,15 @@ op_mem_ind	: '[' reloc_16bit ']'		{ $$ = $2; }
 ;
 
 op_hl_ss	: reg_ss			{ $$ = $1; }
-		| T_MODE_HL comma reg_ss	{ $$ = $3; }
+		| T_MODE_HL ',' reg_ss	{ $$ = $3; }
 ;
 
 op_a_r		: reg_r				{ $$ = $1; }
-		| T_MODE_A comma reg_r		{ $$ = $3; }
+		| T_MODE_A ',' reg_r		{ $$ = $3; }
 ;
 
 op_a_n		: reloc_8bit			{ $$ = $1; }
-		| T_MODE_A comma reloc_8bit	{ $$ = $3; }
-;
-
-comma		: ','
+		| T_MODE_A ',' reloc_8bit	{ $$ = $3; }
 ;
 
 T_MODE_A	: T_TOKEN_A
