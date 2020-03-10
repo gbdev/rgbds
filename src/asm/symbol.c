@@ -250,19 +250,6 @@ void sym_Purge(char const *tzName)
 }
 
 /*
- * Get a string equate's value
- */
-char *sym_GetStringValue(struct sSymbol const *sym)
-{
-	if (sym != NULL)
-		return sym->pMacro;
-
-	yyerror("String symbol '%s' not defined", sym->tzName);
-
-	return NULL;
-}
-
-/*
  * Return a constant symbols value
  */
 uint32_t sym_GetConstantValue(char const *s)

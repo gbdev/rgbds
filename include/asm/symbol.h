@@ -75,6 +75,14 @@ static inline bool sym_IsExported(struct sSymbol const *sym)
 	return sym->isExported;
 }
 
+/*
+ * Get a string equate's value
+ */
+static inline char *sym_GetStringValue(struct sSymbol const *sym)
+{
+	return sym->pMacro;
+}
+
 int32_t sym_GetValue(struct sSymbol const *sym);
 uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(bool set);
