@@ -1443,10 +1443,12 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 sectorg		: { $$ = -1; }
 		| '[' uconst ']'
 		{
-			if ($2 < 0 || $2 >= 0x10000)
+			if ($2 < 0 || $2 >= 0x10000) {
 				yyerror("Address $%x is not 16-bit", $2);
-			else
+				$$ = -1;
+			} else {
 				$$ = $2;
+			}
 		}
 ;
 
