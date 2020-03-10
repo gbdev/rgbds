@@ -476,7 +476,7 @@ const struct sLexInitString lexer_strings[] = {
 	{"printv", T_POP_PRINTV},
 	{"printf", T_POP_PRINTF},
 	{"export", T_POP_EXPORT},
-	{"xdef", T_POP_EXPORT},
+	{"xdef", T_POP_XDEF},
 	{"global", T_POP_GLOBAL},
 	{"ds", T_POP_DS},
 	{"db", T_POP_DB},

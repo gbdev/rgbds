@@ -564,7 +564,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 %token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
-%token	T_POP_EXPORT T_POP_GLOBAL
+%token	T_POP_EXPORT T_POP_GLOBAL T_POP_XDEF
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
 %token	T_POP_SECTION
 %token	T_POP_RB
@@ -735,7 +735,6 @@ simple_pseudoop : include
 		| else
 		| endc
 		| export
-		| global
 		| { nPCOffset = 0; } db
 		| { nPCOffset = 0; } dw
 		| { nPCOffset = 0; } dl
@@ -950,7 +949,16 @@ purge_list_entry : scoped_id
 		}
 ;
 
-export		: T_POP_EXPORT export_list
+export		: export_token export_list
+;
+
+export_token	: T_POP_EXPORT
+		| T_POP_GLOBAL {
+			warning(WARNING_OBSOLETE, "`GLOBAL` is a deprecated synonym for `EXPORT`");
+		}
+		| T_POP_XDEF {
+			warning(WARNING_OBSOLETE, "`XDEF` is a deprecated synonym for `EXPORT`");
+		}
 ;
 
 export_list	: export_list_entry
@@ -958,19 +966,6 @@ export_list	: export_list_entry
 ;
 
 export_list_entry : scoped_id
-		{
-			sym_Export($1);
-		}
-;
-
-global		: T_POP_GLOBAL global_list
-;
-
-global_list	: global_list_entry
-		| global_list_entry comma global_list
-;
-
-global_list_entry : scoped_id
 		{
 			sym_Export($1);
 		}
