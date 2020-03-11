@@ -587,53 +587,6 @@ struct sSymbol *sym_AddReloc(char const *tzSym)
 }
 
 /*
- * Check if the subtraction of two symbols is defined. That is, either both
- * symbols are defined and the result is a constant, or both symbols are
- * relocatable and belong to the same section.
- *
- * It returns 1 if the difference is defined, 0 if not.
- */
-bool sym_IsRelocDiffDefined(char const *tzSym1, char const *tzSym2)
-{
-	const struct sSymbol *nsym1 = sym_FindSymbol(tzSym1);
-	const struct sSymbol *nsym2 = sym_FindSymbol(tzSym2);
-
-	/* Do the symbols exist? */
-	if (nsym1 == NULL)
-		fatalerror("Symbol \"%s\" isn't defined.", tzSym1);
-
-	if (nsym2 == NULL)
-		fatalerror("Symbol \"%s\" isn't defined.", tzSym2);
-
-	int32_t s1const = sym_IsConstant(nsym1);
-	int32_t s2const = sym_IsConstant(nsym2);
-
-	/* Both are non-relocatable */
-	if (s1const && s2const)
-		return true;
-
-	/* One of them is relocatable, the other one is not. */
-	if (s1const ^ s2const)
-		return false;
-
-	/*
-	 * Both of them are relocatable. Make sure they are defined (internal
-	 * coherency with sym_AddReloc and sym_AddLocalReloc).
-	 */
-	if (!sym_IsDefined(nsym1))
-		fatalerror("Label \"%s\" isn't defined.", tzSym1);
-
-	if (!sym_IsDefined(nsym2))
-		fatalerror("Label \"%s\" isn't defined.", tzSym2);
-
-	/*
-	 * Both of them must be in the same section for the difference to be
-	 * defined.
-	 */
-	return nsym1->pSection == nsym2->pSection;
-}
-
-/*
  * Export a symbol
  */
 void sym_Export(char const *tzSym)

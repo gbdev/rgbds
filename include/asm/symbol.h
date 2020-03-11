@@ -111,7 +111,6 @@ void sym_ShiftCurrentMacroArgs(void);
 struct sSymbol *sym_AddString(char const *tzSym, char const *tzValue);
 uint32_t sym_GetDefinedValue(char const *s);
 void sym_Purge(char const *tzName);
-bool sym_IsRelocDiffDefined(char const *tzSym1, char const *tzSym2);
 
 /* Functions to save and restore the current symbol scope. */
 struct sSymbol *sym_GetCurrentSymbolScope(void);
