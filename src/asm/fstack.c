@@ -19,9 +19,9 @@
 
 #include "asm/fstack.h"
 #include "asm/lexer.h"
+#include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/output.h"
-#include "asm/symbol.h"
 #include "asm/warning.h"
 
 #include "extern/err.h"

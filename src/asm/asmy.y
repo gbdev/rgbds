@@ -20,6 +20,7 @@
 #include "asm/charmap.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
+#include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/rpn.h"

@@ -18,10 +18,11 @@
 
 #include "asm/asm.h"
 #include "asm/fstack.h"
-#include "asm/symbol.h"
+#include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
 #include "asm/section.h"
+#include "asm/symbol.h"
 #include "asm/util.h"
 #include "asm/warning.h"
 
@@ -35,8 +36,6 @@ static struct sSymbol *pScope; /* Current section symbol scope */
 struct sSymbol *pPCSymbol;
 static struct sSymbol *p_NARGSymbol;
 static struct sSymbol *p__LINE__Symbol;
-static char *currentmacroargs[MAXMACROARGS + 1];
-static char *newmacroargs[MAXMACROARGS + 1];
 static char SavedTIME[256];
 static char SavedDATE[256];
 static char SavedTIMESTAMP_ISO8601_LOCAL[256];
@@ -52,12 +51,7 @@ static bool exportall;
 static int32_t Callback_NARG(struct sSymbol const *self)
 {
 	(void)self;
-	uint32_t i = 0;
-
-	while (currentmacroargs[i] && i < MAXMACROARGS)
-		i++;
-
-	return i;
+	return sym_NbMacroArgs();
 }
 
 static int32_t Callback__LINE__(struct sSymbol const *self)
@@ -303,97 +297,6 @@ struct sSymbol *sym_GetCurrentSymbolScope(void)
 void sym_SetCurrentSymbolScope(struct sSymbol *pNewScope)
 {
 	pScope = pNewScope;
-}
-
-/*
- * Macro argument stuff
- */
-void sym_ShiftCurrentMacroArgs(void)
-{
-	int32_t i;
-
-	free(currentmacroargs[0]);
-	for (i = 0; i < MAXMACROARGS - 1; i++)
-		currentmacroargs[i] = currentmacroargs[i + 1];
-
-	currentmacroargs[MAXMACROARGS - 1] = NULL;
-}
-
-char *sym_FindMacroArg(int32_t i)
-{
-	if (i == -1)
-		i = MAXMACROARGS + 1;
-
-	assert(i >= 1);
-
-	assert((size_t)(i - 1)
-	       < sizeof(currentmacroargs) / sizeof(*currentmacroargs));
-
-	return currentmacroargs[i - 1];
-}
-
-void sym_UseNewMacroArgs(void)
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = newmacroargs[i];
-		newmacroargs[i] = NULL;
-	}
-}
-
-void sym_SaveCurrentMacroArgs(char *save[])
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		save[i] = currentmacroargs[i];
-		currentmacroargs[i] = NULL;
-	}
-}
-
-void sym_RestoreCurrentMacroArgs(char *save[])
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = save[i];
-	}
-}
-
-void sym_AddNewMacroArg(char const *s)
-{
-	int32_t i = 0;
-
-	while (i < MAXMACROARGS && newmacroargs[i] != NULL)
-		i++;
-
-	if (i < MAXMACROARGS) {
-		if (s)
-			newmacroargs[i] = strdup(s);
-		else
-			newmacroargs[i] = NULL;
-	} else {
-		yyerror("A maximum of %d arguments allowed", MAXMACROARGS);
-	}
-}
-
-void sym_SetMacroArgID(uint32_t nMacroCount)
-{
-	char s[256];
-
-	snprintf(s, sizeof(s) - 1, "_%u", nMacroCount);
-	newmacroargs[MAXMACROARGS] = strdup(s);
-}
-
-void sym_UseCurrentMacroArgs(void)
-{
-	int32_t i;
-
-	for (i = 1; i <= MAXMACROARGS; i++)
-		sym_AddNewMacroArg(sym_FindMacroArg(i));
 }
 
 /*
@@ -667,14 +570,9 @@ static inline char const *removeLeadingZeros(char const *ptr)
  */
 void sym_Init(void)
 {
-	int32_t i;
+	macro_Init();
 
-	for (i = 0; i < MAXMACROARGS; i++) {
-		currentmacroargs[i] = NULL;
-		newmacroargs[i] = NULL;
-	}
-
-	for (i = 0; i < HASHSIZE; i++)
+	for (int32_t i = 0; i < HASHSIZE; i++)
 		tHashedSymbols[i] = NULL;
 
 	pPCSymbol = sym_AddReloc("@");

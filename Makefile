@@ -57,6 +57,7 @@ rgbasm_obj := \
 	src/asm/fstack.o \
 	src/asm/globlex.o \
 	src/asm/lexer.o \
+	src/asm/macro.o \
 	src/asm/main.o \
 	src/asm/math.o \
 	src/asm/output.o \
