@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2020, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -89,7 +89,6 @@ void sym_SetExportAll(bool set);
 struct sSymbol *sym_AddLocalReloc(char const *tzSym);
 struct sSymbol *sym_AddReloc(char const *tzSym);
 void sym_Export(char const *tzSym);
-void sym_PrintSymbolTable(void);
 struct sSymbol *sym_FindMacro(char const *s);
 void sym_InitNewMacroArgs(void);
 void sym_AddNewMacroArg(char const *s);
