@@ -605,7 +605,7 @@ size_t CopyMacroArg(char *dest, size_t maxLength, char c)
 		return 0;
 	}
 
-	s = sym_FindMacroArg(argNum);
+	s = macro_FindArg(argNum);
 
 	if (s == NULL)
 		fatalerror("Macro argument not defined");

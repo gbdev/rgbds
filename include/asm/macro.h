@@ -13,15 +13,15 @@
 
 #include "helpers.h"
 
-void sym_AddNewMacroArg(char const *s);
-void sym_SaveCurrentMacroArgs(char *save[]);
-void sym_RestoreCurrentMacroArgs(char *save[]);
-void sym_UseNewMacroArgs(void);
-char *sym_FindMacroArg(int32_t i);
-void sym_UseCurrentMacroArgs(void);
-void sym_SetMacroArgID(uint32_t nMacroCount);
-void sym_ShiftCurrentMacroArgs(void);
-uint32_t sym_NbMacroArgs(void);
+void macro_AddNewArg(char const *s);
+void macro_SaveCurrentArgs(char *save[]);
+void macro_RestoreCurrentArgs(char *save[]);
+void macro_UseNewArgs(void);
+char *macro_FindArg(int32_t i);
+void macro_UseCurrentArgs(void);
+void macro_SetArgID(uint32_t nMacroCount);
+void macro_ShiftCurrentArgs(void);
+uint32_t macro_NbArgs(void);
 
 void macro_Init(void);
 

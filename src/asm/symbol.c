@@ -51,7 +51,7 @@ static bool exportall;
 static int32_t Callback_NARG(struct sSymbol const *self)
 {
 	(void)self;
-	return sym_NbMacroArgs();
+	return macro_NbArgs();
 }
 
 static int32_t Callback__LINE__(struct sSymbol const *self)

@@ -197,9 +197,9 @@ char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 	char *marg;
 
 	if (whichArg == '@')
-		marg = sym_FindMacroArg(-1);
+		marg = macro_FindArg(-1);
 	else if (whichArg >= '1' && whichArg <= '9')
-		marg = sym_FindMacroArg(whichArg - '0');
+		marg = macro_FindArg(whichArg - '0');
 	else
 		fatalerror("Invalid macro argument '\\%c' in symbol", whichArg);
 
@@ -306,7 +306,7 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 
 	yyskipbytes(size);
 	if ((size == 2 && src[1] >= '1' && src[1] <= '9')) {
-		s = sym_FindMacroArg(src[1] - '0');
+		s = macro_FindArg(src[1] - '0');
 
 		if (s != NULL)
 			yyunputstr(s);
@@ -325,7 +325,7 @@ uint32_t PutUniqueArg(char *src, uint32_t size)
 
 	yyskipbytes(size);
 
-	s = sym_FindMacroArg(-1);
+	s = macro_FindArg(-1);
 
 	if (s != NULL)
 		yyunputstr(s);

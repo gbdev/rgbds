@@ -85,14 +85,14 @@ static void pushcontext(void)
 	switch ((*ppFileStack)->nStatus = nCurrentStatus) {
 	case STAT_isMacroArg:
 	case STAT_isMacro:
-		sym_SaveCurrentMacroArgs((*ppFileStack)->tzMacroArgs);
+		macro_SaveCurrentArgs((*ppFileStack)->tzMacroArgs);
 		(*ppFileStack)->pMacro = pCurrentMacro;
 		break;
 	case STAT_isInclude:
 		(*ppFileStack)->pFile = pCurrentFile;
 		break;
 	case STAT_isREPTBlock:
-		sym_SaveCurrentMacroArgs((*ppFileStack)->tzMacroArgs);
+		macro_SaveCurrentArgs((*ppFileStack)->tzMacroArgs);
 		(*ppFileStack)->pREPTBlock = pCurrentREPTBlock;
 		(*ppFileStack)->nREPTBlockSize = nCurrentREPTBlockSize;
 		(*ppFileStack)->nREPTBlockCount = nCurrentREPTBlockCount;
@@ -122,9 +122,9 @@ static int32_t popcontext(void)
 				yy_scan_bytes(pCurrentREPTBlock,
 					      nCurrentREPTBlockSize);
 			yy_switch_to_buffer(CurrentFlexHandle);
-			sym_UseCurrentMacroArgs();
-			sym_SetMacroArgID(nMacroCount++);
-			sym_UseNewMacroArgs();
+			macro_UseCurrentArgs();
+			macro_SetArgID(nMacroCount++);
+			macro_UseNewArgs();
 
 			/* Increment REPT count in file path */
 			pREPTIterationWritePtr =
@@ -179,14 +179,14 @@ static int32_t popcontext(void)
 	switch (nCurrentStatus = pLastFile->nStatus) {
 	case STAT_isMacroArg:
 	case STAT_isMacro:
-		sym_RestoreCurrentMacroArgs(pLastFile->tzMacroArgs);
+		macro_RestoreCurrentArgs(pLastFile->tzMacroArgs);
 		pCurrentMacro = pLastFile->pMacro;
 		break;
 	case STAT_isInclude:
 		pCurrentFile = pLastFile->pFile;
 		break;
 	case STAT_isREPTBlock:
-		sym_RestoreCurrentMacroArgs(pLastFile->tzMacroArgs);
+		macro_RestoreCurrentArgs(pLastFile->tzMacroArgs);
 		pCurrentREPTBlock = pLastFile->pREPTBlock;
 		nCurrentREPTBlockSize = pLastFile->nREPTBlockSize;
 		nCurrentREPTBlockCount = pLastFile->nREPTBlockCount;
@@ -431,10 +431,10 @@ uint32_t fstk_RunMacro(char *s)
 		return 0;
 
 	pushcontext();
-	sym_SetMacroArgID(nMacroCount++);
+	macro_SetArgID(nMacroCount++);
 	/* Minus 1 because there is a newline at the beginning of the buffer */
 	nLineNo = sym->nFileLine - 1;
-	sym_UseNewMacroArgs();
+	macro_UseNewArgs();
 	nCurrentStatus = STAT_isMacro;
 	nPrintedChars = snprintf(tzCurrentFileName, _MAX_PATH + 1,
 				 "%s::%s", sym->tzFileName, s);
@@ -463,7 +463,7 @@ void fstk_RunMacroArg(int32_t s)
 	else
 		s -= '0';
 
-	sym = sym_FindMacroArg(s);
+	sym = macro_FindArg(s);
 
 	if (sym == NULL)
 		fatalerror("No such macroargument");
@@ -505,10 +505,10 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
 		/* For error printing to make sense, fake nLineNo */
 		nCurrentREPTBodyLastLine = nLineNo;
 		nLineNo = nReptLineNo;
-		sym_UseCurrentMacroArgs();
+		macro_UseCurrentArgs();
 		pushcontext();
-		sym_SetMacroArgID(nMacroCount++);
-		sym_UseNewMacroArgs();
+		macro_SetArgID(nMacroCount++);
+		macro_UseNewArgs();
 		nCurrentREPTBlockCount = count;
 		nCurrentStatus = STAT_isREPTBlock;
 		nCurrentREPTBlockSize = ulNewMacroSize;

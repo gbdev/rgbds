@@ -11,7 +11,7 @@
 static char *currentmacroargs[MAXMACROARGS + 1];
 static char *newmacroargs[MAXMACROARGS + 1];
 
-void sym_AddNewMacroArg(char const *s)
+void macro_AddNewArg(char const *s)
 {
 	int32_t i = 0;
 
@@ -28,7 +28,7 @@ void sym_AddNewMacroArg(char const *s)
 	}
 }
 
-void sym_SaveCurrentMacroArgs(char *save[])
+void macro_SaveCurrentArgs(char *save[])
 {
 	int32_t i;
 
@@ -38,7 +38,7 @@ void sym_SaveCurrentMacroArgs(char *save[])
 	}
 }
 
-void sym_RestoreCurrentMacroArgs(char *save[])
+void macro_RestoreCurrentArgs(char *save[])
 {
 	int32_t i;
 
@@ -48,7 +48,7 @@ void sym_RestoreCurrentMacroArgs(char *save[])
 	}
 }
 
-void sym_UseNewMacroArgs(void)
+void macro_UseNewArgs(void)
 {
 	int32_t i;
 
@@ -59,7 +59,7 @@ void sym_UseNewMacroArgs(void)
 	}
 }
 
-char *sym_FindMacroArg(int32_t i)
+char *macro_FindArg(int32_t i)
 {
 	if (i == -1)
 		i = MAXMACROARGS + 1;
@@ -72,15 +72,15 @@ char *sym_FindMacroArg(int32_t i)
 	return currentmacroargs[i - 1];
 }
 
-void sym_UseCurrentMacroArgs(void)
+void macro_UseCurrentArgs(void)
 {
 	int32_t i;
 
 	for (i = 1; i <= MAXMACROARGS; i++)
-		sym_AddNewMacroArg(sym_FindMacroArg(i));
+		macro_AddNewArg(macro_FindArg(i));
 }
 
-void sym_SetMacroArgID(uint32_t nMacroCount)
+void macro_SetArgID(uint32_t nMacroCount)
 {
 	char s[256];
 
@@ -88,7 +88,7 @@ void sym_SetMacroArgID(uint32_t nMacroCount)
 	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
-void sym_ShiftCurrentMacroArgs(void)
+void macro_ShiftCurrentArgs(void)
 {
 	int32_t i;
 
@@ -99,7 +99,7 @@ void sym_ShiftCurrentMacroArgs(void)
 	currentmacroargs[MAXMACROARGS - 1] = NULL;
 }
 
-uint32_t sym_NbMacroArgs(void)
+uint32_t macro_NbArgs(void)
 {
 	uint32_t i = 0;
 

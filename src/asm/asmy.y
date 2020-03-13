@@ -709,7 +709,7 @@ macroargs	: /* empty */
 		| macroarg ',' macroargs
 ;
 
-macroarg	: T_STRING	{ sym_AddNewMacroArg($1); }
+macroarg	: T_STRING	{ macro_AddNewArg($1); }
 ;
 
 pseudoop	: equ
@@ -792,11 +792,11 @@ fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
 warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
 ;
 
-shift		: T_POP_SHIFT		{ sym_ShiftCurrentMacroArgs(); }
+shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(); }
 		| T_POP_SHIFT uconst {
 			int32_t i = $2;
 			while (i--)
-				sym_ShiftCurrentMacroArgs();
+				macro_ShiftCurrentArgs();
 		}
 ;
 
