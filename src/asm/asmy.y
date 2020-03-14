@@ -1055,10 +1055,13 @@ endc		: T_POP_ENDC {
 
 const_3bit	: const {
 			int32_t value = $1;
-			if ((value < 0) || (value > 7))
+
+			if ((value < 0) || (value > 7)) {
 				yyerror("Immediate value must be 3-bit");
-			else
+				$$ = 0;
+			} else {
 				$$ = value & 0x7;
+			}
 		}
 ;
 
