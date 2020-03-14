@@ -648,7 +648,7 @@ asmfile		: lines;
 lines		: /* empty */
 		| lines {
 			nListCountEmpty = 0;
-			nPCOffset = 1;
+			nPCOffset = 0;
 		} line '\n' {
 			nLineNo++;
 			nTotalLines++;
@@ -738,9 +738,9 @@ simple_pseudoop : include
 		| else
 		| endc
 		| export
-		| { nPCOffset = 0; } db
-		| { nPCOffset = 0; } dw
-		| { nPCOffset = 0; } dl
+		| db
+		| dw
+		| dl
 		| ds
 		| section
 		| rsreset
@@ -1365,31 +1365,31 @@ sectattrs	: /* empty */ {
 ;
 
 
-cpu_command	: z80_adc
-		| z80_add
-		| z80_and
-		| z80_bit
-		| z80_call
+cpu_command	: { nPCOffset = 1; } z80_adc
+		| { nPCOffset = 1; } z80_add
+		| { nPCOffset = 1; } z80_and
+		| { nPCOffset = 1; } z80_bit
+		| { nPCOffset = 1; } z80_call
 		| z80_ccf
-		| z80_cp
+		| { nPCOffset = 1; } z80_cp
 		| z80_cpl
 		| z80_daa
-		| z80_dec
+		| { nPCOffset = 1; } z80_dec
 		| z80_di
 		| z80_ei
 		| z80_halt
 		| z80_inc
-		| z80_jp
-		| z80_jr
-		| z80_ld
+		| { nPCOffset = 1; } z80_jp
+		| { nPCOffset = 1; } z80_jr
+		| { nPCOffset = 1; } z80_ld
 		| z80_ldd
 		| z80_ldi
-		| z80_ldio
+		| { nPCOffset = 1; } z80_ldio
 		| z80_nop
-		| z80_or
+		| { nPCOffset = 1; } z80_or
 		| z80_pop
 		| z80_push
-		| z80_res
+		| { nPCOffset = 1; } z80_res
 		| z80_ret
 		| z80_reti
 		| z80_rl
@@ -1400,17 +1400,17 @@ cpu_command	: z80_adc
 		| z80_rra
 		| z80_rrc
 		| z80_rrca
-		| z80_rst
-		| z80_sbc
+		| /*{ nPCOffset = 0; }*/ z80_rst
+		| { nPCOffset = 1; } z80_sbc
 		| z80_scf
-		| z80_set
+		| { nPCOffset = 1; } z80_set
 		| z80_sla
 		| z80_sra
 		| z80_srl
-		| z80_stop
-		| z80_sub
+		| { nPCOffset = 1; } z80_stop
+		| { nPCOffset = 1; } z80_sub
 		| z80_swap
-		| z80_xor
+		| { nPCOffset = 1; } z80_xor
 ;
 
 z80_adc		: T_Z80_ADC op_a_n {
