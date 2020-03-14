@@ -26,7 +26,7 @@ if [ ! -d pokecrystal ]; then
 fi
 pushd pokecrystal
 git fetch
-git checkout 80cf859cd31c3882f8c42dd19e56fcde02b8955c
+git checkout c87f8512a4d736a847dbc69e09c781a29eeaa638
 make clean
 make -j4 compare
 popd

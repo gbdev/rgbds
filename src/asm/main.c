@@ -157,6 +157,9 @@ void opt_Parse(char *s)
 		}
 		break;
 	case 'z':
+		warning(WARNING_OBSOLETE, "Option 'z' is a deprecated alias for 'p'");
+		/* fallthrough */
+	case 'p':
 		if (strlen(&s[1]) <= 2) {
 			int32_t result;
 			unsigned int fillchar;
