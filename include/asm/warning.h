@@ -9,6 +9,8 @@
 #ifndef WARNING_H
 #define WARNING_H
 
+#include "helpers.h"
+
 extern unsigned int nbErrors;
 
 enum WarningID {
