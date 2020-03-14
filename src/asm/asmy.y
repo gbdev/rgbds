@@ -775,7 +775,7 @@ opt		: T_POP_OPT {
 ;
 
 opt_list	: opt_list_entry
-		| opt_list_entry ',' opt_list
+		| opt_list ',' opt_list_entry
 ;
 
 opt_list_entry	: T_STRING		{ opt_Parse($1); }
@@ -883,6 +883,7 @@ ds		: T_POP_DS uconst	{ out_Skip($2); }
 		}
 ;
 
+/* Authorize empty entries if there is only one */
 db		: T_POP_DB constlist_8bit_entry ',' constlist_8bit {
 			if (nListCountEmpty > 0)
 				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as padding).");
@@ -912,7 +913,7 @@ purge		: T_POP_PURGE {
 ;
 
 purge_list	: purge_list_entry
-		| purge_list_entry ',' purge_list
+		| purge_list ',' purge_list_entry
 ;
 
 purge_list_entry : scoped_id	{ sym_Purge($1); }
@@ -931,7 +932,7 @@ export_token	: T_POP_EXPORT
 ;
 
 export_list	: export_list_entry
-		| export_list_entry ',' export_list
+		| export_list ',' export_list_entry
 ;
 
 export_list_entry : scoped_id	{ sym_Export($1); }
@@ -1066,7 +1067,7 @@ const_3bit	: const {
 ;
 
 constlist_8bit	: constlist_8bit_entry
-		| constlist_8bit_entry ',' constlist_8bit
+		| constlist_8bit ',' constlist_8bit_entry
 ;
 
 constlist_8bit_entry : /* empty */ {
@@ -1084,7 +1085,7 @@ constlist_8bit_entry : /* empty */ {
 ;
 
 constlist_16bit : constlist_16bit_entry
-		| constlist_16bit_entry ',' constlist_16bit
+		| constlist_16bit ',' constlist_16bit_entry
 ;
 
 constlist_16bit_entry : /* empty */ {
@@ -1095,7 +1096,7 @@ constlist_16bit_entry : /* empty */ {
 ;
 
 constlist_32bit : constlist_32bit_entry
-		| constlist_32bit_entry ',' constlist_32bit
+		| constlist_32bit ',' constlist_32bit_entry
 ;
 
 constlist_32bit_entry : /* empty */ {
