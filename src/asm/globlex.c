@@ -192,14 +192,14 @@ uint32_t ParseNumber(char *s, uint32_t size)
  * return a pointer to the rest of the macro arg.
  * Otherwise, return NULL.
  */
-char *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
+char const *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 {
-	char *marg;
+	char const *marg;
 
 	if (whichArg == '@')
-		marg = macro_FindArg(-1);
+		marg = macro_GetUniqueIDStr();
 	else if (whichArg >= '1' && whichArg <= '9')
-		marg = macro_FindArg(whichArg - '0');
+		marg = macro_GetArg(whichArg - '0');
 	else
 		fatalerror("Invalid macro argument '\\%c' in symbol", whichArg);
 
@@ -236,7 +236,7 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 	char dest[MAXSYMLEN + 1];
 	size_t srcIndex = 0;
 	size_t destIndex = 0;
-	char *rest = NULL;
+	char const *rest = NULL;
 
 	while (srcIndex < size) {
 		char ch = src[srcIndex++];
@@ -302,11 +302,11 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 
 uint32_t PutMacroArg(char *src, uint32_t size)
 {
-	char *s;
+	char const *s;
 
 	yyskipbytes(size);
 	if ((size == 2 && src[1] >= '1' && src[1] <= '9')) {
-		s = macro_FindArg(src[1] - '0');
+		s = macro_GetArg(src[1] - '0');
 
 		if (s != NULL)
 			yyunputstr(s);
@@ -318,14 +318,14 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 	return 0;
 }
 
-uint32_t PutUniqueArg(char *src, uint32_t size)
+uint32_t PutUniqueID(char *src, uint32_t size)
 {
 	(void)src;
-	char *s;
+	char const *s;
 
 	yyskipbytes(size);
 
-	s = macro_FindArg(-1);
+	s = macro_GetUniqueIDStr();
 
 	if (s != NULL)
 		yyunputstr(s);
@@ -567,7 +567,7 @@ const struct sLexFloat tMacroArgToken = {
 };
 
 const struct sLexFloat tMacroUniqueToken = {
-	PutUniqueArg,
+	PutUniqueID,
 	T_LEX_MACROUNIQUE
 };
 

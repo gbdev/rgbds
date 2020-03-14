@@ -1,0 +1,2 @@
+ERROR: rept-shift.asm(17) -> rept-shift.asm::m(14):
+    Macro argument '\1' not defined

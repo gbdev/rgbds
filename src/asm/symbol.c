@@ -570,8 +570,6 @@ static inline char const *removeLeadingZeros(char const *ptr)
  */
 void sym_Init(void)
 {
-	macro_Init();
-
 	for (int32_t i = 0; i < HASHSIZE; i++)
 		tHashedSymbols[i] = NULL;
 

@@ -85,14 +85,14 @@ static void pushcontext(void)
 	switch ((*ppFileStack)->nStatus = nCurrentStatus) {
 	case STAT_isMacroArg:
 	case STAT_isMacro:
-		macro_SaveCurrentArgs((*ppFileStack)->tzMacroArgs);
+		(*ppFileStack)->macroArgs = macro_GetCurrentArgs();
 		(*ppFileStack)->pMacro = pCurrentMacro;
 		break;
 	case STAT_isInclude:
 		(*ppFileStack)->pFile = pCurrentFile;
 		break;
 	case STAT_isREPTBlock:
-		macro_SaveCurrentArgs((*ppFileStack)->tzMacroArgs);
+		(*ppFileStack)->macroArgs = macro_GetCurrentArgs();
 		(*ppFileStack)->pREPTBlock = pCurrentREPTBlock;
 		(*ppFileStack)->nREPTBlockSize = nCurrentREPTBlockSize;
 		(*ppFileStack)->nREPTBlockCount = nCurrentREPTBlockCount;
@@ -102,6 +102,7 @@ static void pushcontext(void)
 	default:
 		fatalerror("%s: Internal error.", __func__);
 	}
+	(*ppFileStack)->uniqueID = macro_GetUniqueID();
 
 	nLineNo = 0;
 }
@@ -122,9 +123,7 @@ static int32_t popcontext(void)
 				yy_scan_bytes(pCurrentREPTBlock,
 					      nCurrentREPTBlockSize);
 			yy_switch_to_buffer(CurrentFlexHandle);
-			macro_UseCurrentArgs();
-			macro_SetArgID(nMacroCount++);
-			macro_UseNewArgs();
+			macro_SetUniqueID(nMacroCount++);
 
 			/* Increment REPT count in file path */
 			pREPTIterationWritePtr =
@@ -176,17 +175,29 @@ static int32_t popcontext(void)
 	CurrentFlexHandle = pLastFile->FlexHandle;
 	strcpy((char *)tzCurrentFileName, (char *)pLastFile->tzFileName);
 
-	switch (nCurrentStatus = pLastFile->nStatus) {
+	switch (pLastFile->nStatus) {
+		struct MacroArgs *args;
+
 	case STAT_isMacroArg:
 	case STAT_isMacro:
-		macro_RestoreCurrentArgs(pLastFile->tzMacroArgs);
+		args = macro_GetCurrentArgs();
+		if (nCurrentStatus == STAT_isMacro) {
+			macro_FreeArgs(args);
+			free(args);
+		}
+		macro_UseNewArgs(pLastFile->macroArgs);
 		pCurrentMacro = pLastFile->pMacro;
 		break;
 	case STAT_isInclude:
 		pCurrentFile = pLastFile->pFile;
 		break;
 	case STAT_isREPTBlock:
-		macro_RestoreCurrentArgs(pLastFile->tzMacroArgs);
+		args = macro_GetCurrentArgs();
+		if (nCurrentStatus == STAT_isMacro) {
+			macro_FreeArgs(args);
+			free(args);
+		}
+		macro_UseNewArgs(pLastFile->macroArgs);
 		pCurrentREPTBlock = pLastFile->pREPTBlock;
 		nCurrentREPTBlockSize = pLastFile->nREPTBlockSize;
 		nCurrentREPTBlockCount = pLastFile->nREPTBlockCount;
@@ -195,6 +206,9 @@ static int32_t popcontext(void)
 	default:
 		fatalerror("%s: Internal error.", __func__);
 	}
+	macro_SetUniqueID(pLastFile->uniqueID);
+
+	nCurrentStatus = pLastFile->nStatus;
 
 	nFileStackDepth--;
 
@@ -422,19 +436,19 @@ void fstk_RunInclude(char *tzFileName)
 /*
  * Set up a macro for parsing
  */
-uint32_t fstk_RunMacro(char *s)
+bool fstk_RunMacro(char *s, struct MacroArgs *args)
 {
 	struct sSymbol *sym = sym_FindMacro(s);
 	int nPrintedChars;
 
 	if (sym == NULL || sym->pMacro == NULL)
-		return 0;
+		return false;
 
 	pushcontext();
-	macro_SetArgID(nMacroCount++);
+	macro_SetUniqueID(nMacroCount++);
 	/* Minus 1 because there is a newline at the beginning of the buffer */
 	nLineNo = sym->nFileLine - 1;
-	macro_UseNewArgs();
+	macro_UseNewArgs(args);
 	nCurrentStatus = STAT_isMacro;
 	nPrintedChars = snprintf(tzCurrentFileName, _MAX_PATH + 1,
 				 "%s::%s", sym->tzFileName, s);
@@ -448,31 +462,7 @@ uint32_t fstk_RunMacro(char *s)
 					  strlen(pCurrentMacro->pMacro));
 	yy_switch_to_buffer(CurrentFlexHandle);
 
-	return 1;
-}
-
-/*
- * Set up a macroargument for parsing
- */
-void fstk_RunMacroArg(int32_t s)
-{
-	char *sym;
-
-	if (s == '@')
-		s = -1;
-	else
-		s -= '0';
-
-	sym = macro_FindArg(s);
-
-	if (sym == NULL)
-		fatalerror("No such macroargument");
-
-	pushcontext();
-	nCurrentStatus = STAT_isMacroArg;
-	snprintf(tzCurrentFileName, _MAX_PATH + 1, "%c", (uint8_t)s);
-	CurrentFlexHandle = yy_scan_bytes(sym, strlen(sym));
-	yy_switch_to_buffer(CurrentFlexHandle);
+	return true;
 }
 
 /*
@@ -505,10 +495,8 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
 		/* For error printing to make sense, fake nLineNo */
 		nCurrentREPTBodyLastLine = nLineNo;
 		nLineNo = nReptLineNo;
-		macro_UseCurrentArgs();
 		pushcontext();
-		macro_SetArgID(nMacroCount++);
-		macro_UseNewArgs();
+		macro_SetUniqueID(nMacroCount++);
 		nCurrentREPTBlockCount = count;
 		nCurrentStatus = STAT_isREPTBlock;
 		nCurrentREPTBlockSize = ulNewMacroSize;

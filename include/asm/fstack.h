@@ -21,12 +21,15 @@
 
 #include "types.h"
 
+struct MacroArgs;
+
 struct sContext {
 	YY_BUFFER_STATE FlexHandle;
 	struct sSymbol *pMacro;
 	struct sContext *pNext;
 	char tzFileName[_MAX_PATH + 1];
-	char *tzMacroArgs[MAXMACROARGS + 1];
+	struct MacroArgs *macroArgs;
+	uint32_t uniqueID;
 	int32_t nLine;
 	uint32_t nStatus;
 	FILE *pFile;
@@ -40,13 +43,12 @@ struct sContext {
 extern unsigned int nMaxRecursionDepth;
 
 void fstk_RunInclude(char *tzFileName);
-void fstk_RunMacroArg(int32_t s);
 void fstk_Init(char *s);
 void fstk_Dump(void);
 void fstk_DumpToStr(char *buf, size_t len);
 void fstk_DumpStringExpansions(void);
 void fstk_AddIncludePath(char *s);
-uint32_t fstk_RunMacro(char *s);
+bool fstk_RunMacro(char *s, struct MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo);
 FILE *fstk_FindFile(char const *fname, char **incPathUsed);
 int32_t fstk_GetLine(void);

@@ -583,33 +583,19 @@ struct sLexString *yylex_GetLongestFixed(void)
 size_t CopyMacroArg(char *dest, size_t maxLength, char c)
 {
 	size_t i;
-	char *s;
-	int32_t argNum;
+	char const *s;
 
-	switch (c) {
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		argNum = c - '0';
-		break;
-	case '@':
-		argNum = -1;
-		break;
-	default:
+	if (c == '@')
+		s = macro_GetUniqueIDStr();
+	else if (c >= '1' && c <= '9')
+		s = macro_GetArg(c - '0');
+	else
 		return 0;
-	}
-
-	s = macro_FindArg(argNum);
 
 	if (s == NULL)
-		fatalerror("Macro argument not defined");
+		fatalerror("Macro argument '\\%c' not defined", c);
 
+	// TODO: `strncpy`, nay?
 	for (i = 0; s[i] != 0; i++) {
 		if (i >= maxLength)
 			fatalerror("Macro argument too long to fit buffer");

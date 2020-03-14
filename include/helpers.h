@@ -27,4 +27,8 @@
 	#define DEVELOP 0
 #endif
 
+/* Macros for stringification */
+#define STR(x) #x
+#define EXPAND_AND_STR(x) STR(x)
+
 #endif /* HELPERS_H */

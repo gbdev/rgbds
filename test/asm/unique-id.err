@@ -1,0 +1,19 @@
+warning: unique-id.asm(12) -> unique-id.asm::m(4): [-Wuser]
+    _0
+warning: unique-id.asm(12) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~1(6): [-Wuser]
+    _1
+warning: unique-id.asm(12) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~2(6): [-Wuser]
+    _2
+warning: unique-id.asm(12) -> unique-id.asm::m(8): [-Wuser]
+    _0
+warning: unique-id.asm(14) -> unique-id.asm::m(4): [-Wuser]
+    _3
+warning: unique-id.asm(14) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~1(6): [-Wuser]
+    _4
+warning: unique-id.asm(14) -> unique-id.asm::m(5) -> unique-id.asm::m::REPT~2(6): [-Wuser]
+    _5
+warning: unique-id.asm(14) -> unique-id.asm::m(8): [-Wuser]
+    _3
+ERROR: unique-id.asm(15):
+    Macro argument '\@' not defined
+while expanding symbol "print"

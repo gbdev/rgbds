@@ -8,111 +8,92 @@
 #include "asm/macro.h"
 #include "asm/warning.h"
 
-static char *currentmacroargs[MAXMACROARGS + 1];
-static char *newmacroargs[MAXMACROARGS + 1];
+struct MacroArgs {
+	char *args[MAXMACROARGS];
+	unsigned int nbArgs;
+	unsigned int shift;
+};
 
-void macro_AddNewArg(char const *s)
+static struct MacroArgs defaultArgs = { .nbArgs = 0, .shift = 0 };
+static struct MacroArgs *macroArgs = &defaultArgs;
+static uint32_t uniqueID = -1;
+/*
+ * The initialization is somewhat harmful, since it is never used, but it
+ * guarantees the size of the buffer will be correct. I was unable to find a
+ * better solution, but if you have one, please feel free!
+ */
+static char uniqueIDBuf[] = "_" EXPAND_AND_STR(UINT32_MAX);
+static char *uniqueIDPtr = NULL;
+
+struct MacroArgs *macro_GetCurrentArgs(void)
 {
-	int32_t i = 0;
+	return macroArgs;
+}
 
-	while (i < MAXMACROARGS && newmacroargs[i] != NULL)
-		i++;
+struct MacroArgs *macro_NewArgs(void)
+{
+	struct MacroArgs *args = malloc(sizeof(*args));
 
-	if (i < MAXMACROARGS) {
-		if (s)
-			newmacroargs[i] = strdup(s);
-		else
-			newmacroargs[i] = NULL;
+	args->nbArgs = 0;
+	args->shift = 0;
+	return args;
+}
+
+void macro_AppendArg(struct MacroArgs *args, char *s)
+{
+	if (args->nbArgs == MAXMACROARGS)
+		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
+			" arguments is allowed");
+	args->args[args->nbArgs++] = s;
+}
+
+void macro_UseNewArgs(struct MacroArgs *args)
+{
+	macroArgs = args;
+}
+
+void macro_FreeArgs(struct MacroArgs *args)
+{
+	for (uint32_t i = 0; i < macroArgs->nbArgs; i++)
+		free(args->args[i]);
+}
+
+char const *macro_GetArg(uint32_t i)
+{
+	uint32_t realIndex = i + macroArgs->shift - 1;
+
+	return realIndex >= MAXMACROARGS ? NULL : macroArgs->args[realIndex];
+}
+
+uint32_t macro_GetUniqueID(void)
+{
+	return uniqueID;
+}
+
+char const *macro_GetUniqueIDStr(void)
+{
+	return uniqueIDPtr;
+}
+
+void macro_SetUniqueID(uint32_t id)
+{
+	uniqueID = id;
+	if (id == -1) {
+		uniqueIDPtr = NULL;
 	} else {
-		yyerror("A maximum of %d arguments allowed", MAXMACROARGS);
+		/* The buffer is guaranteed to be the correct size */
+		sprintf(uniqueIDBuf, "_%u", id);
+		uniqueIDPtr = uniqueIDBuf;
 	}
-}
-
-void macro_SaveCurrentArgs(char *save[])
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		save[i] = currentmacroargs[i];
-		currentmacroargs[i] = NULL;
-	}
-}
-
-void macro_RestoreCurrentArgs(char *save[])
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = save[i];
-	}
-}
-
-void macro_UseNewArgs(void)
-{
-	int32_t i;
-
-	for (i = 0; i <= MAXMACROARGS; i++) {
-		free(currentmacroargs[i]);
-		currentmacroargs[i] = newmacroargs[i];
-		newmacroargs[i] = NULL;
-	}
-}
-
-char *macro_FindArg(int32_t i)
-{
-	if (i == -1)
-		i = MAXMACROARGS + 1;
-
-	assert(i >= 1);
-
-	assert((size_t)(i - 1)
-	       < sizeof(currentmacroargs) / sizeof(*currentmacroargs));
-
-	return currentmacroargs[i - 1];
-}
-
-void macro_UseCurrentArgs(void)
-{
-	int32_t i;
-
-	for (i = 1; i <= MAXMACROARGS; i++)
-		macro_AddNewArg(macro_FindArg(i));
-}
-
-void macro_SetArgID(uint32_t nMacroCount)
-{
-	char s[256];
-
-	snprintf(s, sizeof(s) - 1, "_%u", nMacroCount);
-	newmacroargs[MAXMACROARGS] = strdup(s);
 }
 
 void macro_ShiftCurrentArgs(void)
 {
-	int32_t i;
-
-	free(currentmacroargs[0]);
-	for (i = 0; i < MAXMACROARGS - 1; i++)
-		currentmacroargs[i] = currentmacroargs[i + 1];
-
-	currentmacroargs[MAXMACROARGS - 1] = NULL;
+	if (macroArgs->shift != macroArgs->nbArgs)
+		macroArgs->shift++;
 }
 
 uint32_t macro_NbArgs(void)
 {
-	uint32_t i = 0;
-
-	while (currentmacroargs[i] && i < MAXMACROARGS)
-		i++;
-
-	return i;
-}
-
-void macro_Init(void)
-{
-	for (uint32_t i = 0; i < MAXMACROARGS; i++) {
-		currentmacroargs[i] = NULL;
-		newmacroargs[i] = NULL;
-	}
+	return macroArgs->nbArgs - macroArgs->shift;
 }

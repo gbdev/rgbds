@@ -496,6 +496,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	struct Expression sVal;
 	int32_t nConstValue;
 	struct SectionSpec sectSpec;
+	struct MacroArgs *macroArg;
 }
 
 %type	<sVal>		relocexpr
@@ -594,6 +595,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_OPT
 %token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM
 %token	T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
+
+%type	<macroArg> macroargs;
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
 %token	T_Z80_BIT
@@ -699,17 +702,21 @@ macro		: T_ID {
 			yy_set_state(LEX_STATE_MACROARGS);
 		} macroargs {
 			yy_set_state(LEX_STATE_NORMAL);
-			if (!fstk_RunMacro($1))
+			if (!fstk_RunMacro($1, $3))
 				fatalerror("Macro '%s' not defined", $1);
 		}
 ;
 
-macroargs	: /* empty */
-		| macroarg
-		| macroarg ',' macroargs
-;
-
-macroarg	: T_STRING	{ macro_AddNewArg($1); }
+macroargs	: /* empty */ {
+			$$ = macro_NewArgs();
+		}
+		| T_STRING {
+			$$ = macro_NewArgs();
+			macro_AppendArg($$, strdup($1));
+		}
+		| macroargs ',' T_STRING {
+			macro_AppendArg($$, strdup($3));
+		}
 ;
 
 pseudoop	: equ

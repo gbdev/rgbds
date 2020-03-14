@@ -10,19 +10,25 @@
 #define RGBDS_MACRO_H
 
 #include <stdint.h>
+#include <stdlib.h>
+
+#include "asm/warning.h"
 
 #include "helpers.h"
 
-void macro_AddNewArg(char const *s);
-void macro_SaveCurrentArgs(char *save[]);
-void macro_RestoreCurrentArgs(char *save[]);
-void macro_UseNewArgs(void);
-char *macro_FindArg(int32_t i);
-void macro_UseCurrentArgs(void);
-void macro_SetArgID(uint32_t nMacroCount);
+struct MacroArgs;
+
+struct MacroArgs *macro_GetCurrentArgs(void);
+struct MacroArgs *macro_NewArgs(void);
+void macro_AppendArg(struct MacroArgs *args, char *s);
+void macro_UseNewArgs(struct MacroArgs *args);
+void macro_FreeArgs(struct MacroArgs *args);
+char const *macro_GetArg(uint32_t i);
+
+uint32_t macro_GetUniqueID(void);
+char const *macro_GetUniqueIDStr(void);
+void macro_SetUniqueID(uint32_t id);
 void macro_ShiftCurrentArgs(void);
 uint32_t macro_NbArgs(void);
-
-void macro_Init(void);
 
 #endif
