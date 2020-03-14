@@ -67,12 +67,10 @@ struct Charmap *charmap_New(const char *name, const char *baseName)
 	if (baseName != NULL) {
 		struct Charmap **ppBase = charmap_Get(baseName);
 
-		if (*ppBase == NULL) {
+		if (*ppBase == NULL)
 			yyerror("Base charmap '%s' doesn't exist", baseName);
-			return NULL;
-		}
-
-		pBase = *ppBase;
+		else
+			pBase = *ppBase;
 	}
 
 	struct Charmap **ppCharmap = charmap_Get(name);
