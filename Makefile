@@ -69,6 +69,7 @@ rgbasm_obj := \
 	src/extern/err.o \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
+	src/hashmap.o \
 	src/linkdefs.o
 
 src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h

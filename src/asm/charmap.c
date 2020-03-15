@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -19,6 +20,8 @@
 #include "asm/util.h"
 #include "asm/warning.h"
 
+#include "hashmap.h"
+
 #define CHARMAP_HASH_SIZE (1 << 9)
 
 struct CharmapStackEntry {
@@ -26,26 +29,16 @@ struct CharmapStackEntry {
 	struct CharmapStackEntry *next;
 };
 
-static struct Charmap *tHashedCharmaps[CHARMAP_HASH_SIZE];
+static HashMap charmaps;
 
 static struct Charmap *mainCharmap;
 static struct Charmap *currentCharmap;
 
 struct CharmapStackEntry *charmapStack;
 
-static uint32_t charmap_CalcHash(const char *s)
+static inline struct Charmap *charmap_Get(const char *name)
 {
-	return calchash(s) % CHARMAP_HASH_SIZE;
-}
-
-static struct Charmap **charmap_Get(const char *name)
-{
-	struct Charmap **ppCharmap = &tHashedCharmaps[charmap_CalcHash(name)];
-
-	while (*ppCharmap != NULL && strcmp((*ppCharmap)->name, name))
-		ppCharmap = &(*ppCharmap)->next;
-
-	return ppCharmap;
+	return hash_GetElement(charmaps, name);
 }
 
 static void CopyNode(struct Charmap *dest,
@@ -62,56 +55,54 @@ static void CopyNode(struct Charmap *dest,
 
 struct Charmap *charmap_New(const char *name, const char *baseName)
 {
-	struct Charmap *pBase = NULL;
+	struct Charmap *base = NULL;
 
 	if (baseName != NULL) {
-		struct Charmap **ppBase = charmap_Get(baseName);
+		base = charmap_Get(baseName);
 
-		if (*ppBase == NULL)
+		if (base == NULL)
 			yyerror("Base charmap '%s' doesn't exist", baseName);
-		else
-			pBase = *ppBase;
 	}
 
-	struct Charmap **ppCharmap = charmap_Get(name);
+	struct Charmap *charmap = charmap_Get(name);
 
-	if (*ppCharmap != NULL) {
+	if (charmap != NULL) {
 		yyerror("Charmap '%s' already exists", name);
 		return NULL;
 	}
 
-	*ppCharmap = calloc(1, sizeof(struct Charmap));
+	charmap = malloc(sizeof(*charmap));
+	if (charmap == NULL)
+		fatalerror("Failed to create charmap: %s", strerror(errno));
 
-	if (*ppCharmap == NULL)
-		fatalerror("Not enough memory for charmap");
-
-	struct Charmap *pCharmap = *ppCharmap;
-
-	snprintf(pCharmap->name, sizeof(pCharmap->name), "%s", name);
-
-	if (pBase != NULL) {
-		pCharmap->charCount = pBase->charCount;
-		pCharmap->nodeCount = pBase->nodeCount;
+	/* Init the new charmap's fields */
+	snprintf(charmap->name, sizeof(charmap->name), "%s", name);
+	if (base != NULL) {
+		charmap->charCount = base->charCount;
+		charmap->nodeCount = base->nodeCount;
 
 		for (int i = 0; i < MAXCHARNODES; i++)
-			CopyNode(pCharmap, pBase, i);
+			CopyNode(charmap, base, i);
+	} else {
+		charmap->charCount = 0;
+		charmap->nodeCount = 0;
+		memset(charmap->nodes, 0, sizeof(charmap->nodes));
 	}
 
-	currentCharmap = pCharmap;
+	hash_AddElement(charmaps, charmap->name, charmap);
+	currentCharmap = charmap;
 
-	return pCharmap;
+	return charmap;
 }
 
 void charmap_Set(const char *name)
 {
-	struct Charmap **ppCharmap = charmap_Get(name);
+	struct Charmap *charmap = charmap_Get(name);
 
-	if (*ppCharmap == NULL) {
+	if (charmap == NULL)
 		yyerror("Charmap '%s' doesn't exist", name);
-		return;
-	}
-
-	currentCharmap = *ppCharmap;
+	else
+		currentCharmap = charmap;
 }
 
 void charmap_Push(void)

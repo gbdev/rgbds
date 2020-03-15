@@ -33,7 +33,6 @@ struct Charmap {
 	struct Charnode nodes[MAXCHARNODES]; /* first node is reserved for the
 					      * root node in charmap.
 					      */
-	struct Charmap *next; /* next charmap in hash table bucket */
 };
 
 void charmap_InitMain(void);
