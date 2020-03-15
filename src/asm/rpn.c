@@ -208,11 +208,14 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 	*expr = *src;
 	expr->isSymbol = false;
 
-	if (rpn_isKnown(expr)) {
-		/* TODO */
-	} else {
+	if (!rpn_isKnown(expr)) {
 		expr->nRPNPatchSize++;
 		*reserveSpace(expr, 1) = RPN_HRAM;
+	} else if (expr->nVal >= 0xFF00 && expr->nVal <= 0xFFFF) {
+		/* That range is valid, but only keep the lower byte */
+		expr->nVal &= 0xFF;
+	} else if (expr->nVal < 0 || expr->nVal > 0xFF) {
+		yyerror("Source address $%x not in $FF00 to $FFFF", expr->nVal);
 	}
 }
 
@@ -221,7 +224,11 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 	*expr = *src;
 
 	if (rpn_isKnown(expr)) {
-		/* TODO */
+		/* A valid RST address must be masked with 0x38 */
+		if (expr->nVal & ~0x38)
+			yyerror("Invalid address $%x for RST", expr->nVal);
+		/* The target is in the "0x38" bits, all other bits are set */
+		expr->nVal |= 0xC7;
 	} else {
 		expr->nRPNPatchSize++;
 		*reserveSpace(expr, 1) = RPN_RST;

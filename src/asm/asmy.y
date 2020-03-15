@@ -1535,21 +1535,13 @@ z80_ldd		: T_Z80_LDD T_MODE_HL_IND ',' T_MODE_A {
 z80_ldio	: T_Z80_LDIO T_MODE_A ',' op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
-			if ((rpn_isKnown(&$4)) && ($4.nVal < 0 || ($4.nVal > 0xFF && $4.nVal < 0xFF00) || $4.nVal > 0xFFFF))
-				yyerror("Source address $%x not in $FF00 to $FFFF", $4.nVal);
-
 			out_AbsByte(0xF0);
-			$4.nVal &= 0xFF;
 			out_RelByte(&$4);
 		}
 		| T_Z80_LDIO op_mem_ind ',' T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
-			if ((rpn_isKnown(&$2)) && ($2.nVal < 0 || ($2.nVal > 0xFF && $2.nVal < 0xFF00) || $2.nVal > 0xFFFF))
-				yyerror("Destination address $%x not in $FF00 to $FFFF", $2.nVal);
-
 			out_AbsByte(0xE0);
-			$2.nVal &= 0xFF;
 			out_RelByte(&$2);
 		}
 		| T_Z80_LDIO T_MODE_A ',' T_MODE_C_IND {
@@ -1737,14 +1729,11 @@ z80_rrca	: T_Z80_RRCA	{ out_AbsByte(0x0F); }
 ;
 
 z80_rst		: T_Z80_RST reloc_8bit {
-			if (!rpn_isKnown(&$2)) {
-				rpn_CheckRST(&$2, &$2);
+			rpn_CheckRST(&$2, &$2);
+			if (!rpn_isKnown(&$2))
 				out_RelByte(&$2);
-			} else if (($2.nVal & 0x38) != $2.nVal) {
-				yyerror("Invalid address $%x for RST", $2.nVal);
-			} else {
+			else
 				out_AbsByte(0xC7 | $2.nVal);
-			}
 			rpn_Free(&$2);
 		}
 ;
