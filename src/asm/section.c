@@ -117,6 +117,9 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				pzName, org, startaddr[type], endaddr(type));
 	}
 
+	if (nbbanks(type) == 1)
+		bank = bankranges[type][0];
+
 	struct Section *pSect = out_FindSectionByName(pzName);
 
 	if (pSect) {
@@ -136,9 +139,6 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 	pSect->pzName = strdup(pzName);
 	if (pSect->pzName == NULL)
 		fatalerror("Not enough memory for sectionname");
-
-	if (nbbanks(type) == 1)
-		bank = bankranges[type][0];
 
 	pSect->nType = type;
 	pSect->nPC = 0;
