@@ -51,9 +51,9 @@ The defaults are 01.
 .It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl Fl define Ar name Ns Oo = Ns Ar value Oc
 Add a string symbol to the compiled source code.
 This is equivalent to
-.Ql Ar name Ic EQUS Qq Ar value
+.Ql Ar name Ic EQUS \(dq Ns Ar value Ns \(dq
 in code, or
-.Ql Ar name Ic EQUS Qq 1
+.Ql Ar name Ic EQUS \(dq1\(dq
 if
 .Ar value
 is not specified.
@@ -182,7 +182,7 @@ This warning is enabled by
 Warn when obsolete constructs such as the
 .Ic jp [hl]
 instruction or
-.Cm HOME
+.Ic HOME
 section type are encountered.
 This warning is enabled by
 .Fl Wextra .
@@ -201,18 +201,14 @@ for
 You can assemble a source file in two ways.
 Straightforward way:
 .Pp
-.Bd -literal -offset indent
-$ rgbasm -o bar.o foo.asm
-.Ed
+.Dl $ rgbasm -o bar.o foo.asm
 .Pp
 Pipes way:
 .Pp
-.Bd -literal -offset indent
-$ cat foo.asm | rgbasm -o bar.o -
-$ rgbasm -o bar.o - < foo.asm
-.Ed
+.Dl $ cat foo.asm | rgbasm -o bar.o -
+.Dl $ rgbasm -o bar.o - < foo.asm
 .Pp
-The resulting object file is not yet a usable ROM image \(em it must first be run through
+The resulting object file is not yet a usable ROM image\(emit must first be run through
 .Xr rgblink 1
 and then
 .Xr rgbfix 1 .

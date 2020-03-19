@@ -41,7 +41,7 @@ option to change this.
 Similarly, WRAM0 sections are placed in the first 4 KiB of WRAM
 .Pq Dq bank 0 ,
 and WRAMX sections are placed in any bank of the last 4 KiB.
-If your ROM doesn't use banked, WRAM you can use the
+If your ROM doesn't use banked WRAM, you can use the
 .Fl w
 option to change this.
 .Pp
@@ -93,14 +93,14 @@ The default is 0.
 This option is ignored.
 It was supposed to perform smart linking but fell into disrepair, and so has been removed.
 It will be reimplemented at some point.
-.It Fl t , Fl tiny
+.It Fl t , Fl Fl tiny
 Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM and prohibit the use of ROMX sections.
 Useful for ROMs that fit in 32 KiB.
-.It Fl V , Fl version
+.It Fl V , Fl Fl version
 Print the version of the program and exit.
-.It Fl v , Fl verbose
+.It Fl v , Fl Fl verbose
 Verbose: enable printing more information to standard error.
-.It Fl w , Fl wramx
+.It Fl w , Fl Fl wramx
 Expand the WRAM0 section size from 4 KiB to the full 8 KiB assigned to WRAM and prohibit the use of WRAMX sections.
 .El
 .Sh EXAMPLES
@@ -115,11 +115,13 @@ You should use
 .Xr rgbfix 1
 to fix these so that the program will actually run in a Game Boy:
 .Pp
-.D1 $ rgbfix -v bar.gb
+.Dl $ rgbfix -v bar.gb
+.Ed
 .Pp
 Here is a more complete example:
 .Pp
-.D1 $ rgblink -o bin/game.gb -n bin/game.sym -p 0xFF obj/title.o obj/engine.o
+.Dl $ rgblink -o bin/game.gb -n bin/game.sym -p 0xFF obj/title.o obj/engine.o
+.Ed
 .Sh BUGS
 Please report bugs on
 .Lk https://github.com/rednex/rgbds/issues GitHub .
