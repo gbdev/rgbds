@@ -206,6 +206,8 @@ void out_NewSection(char const *pzName, uint32_t type, int32_t org,
 void out_SetLoadSection(char const *name, uint32_t type, int32_t org,
 			struct SectionSpec const *attributes)
 {
+	checkcodesection();
+
 	if (currentLoadSection)
 		fatalerror("`LOAD` blocks cannot be nested");
 
