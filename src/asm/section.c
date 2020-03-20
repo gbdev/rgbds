@@ -16,16 +16,18 @@
 struct SectionStackEntry {
 	struct Section *pSection;
 	struct sSymbol *pScope; /* Section's symbol scope */
+	uint32_t offset;
 	struct SectionStackEntry *pNext;
 };
 
 struct SectionStackEntry *pSectionStack;
 static struct Section *currentLoadSection = NULL;
+uint32_t loadOffset = 0; /* The offset of the LOAD section within its parent */
 
 /*
  * A quick check to see if we have an initialized section
  */
-static void checksection(void)
+static inline void checksection(void)
 {
 	if (pCurrentSection == NULL)
 		fatalerror("Code generation before SECTION directive");
@@ -35,7 +37,7 @@ static void checksection(void)
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-static void checkcodesection(void)
+static inline void checkcodesection(void)
 {
 	checksection();
 
@@ -49,22 +51,20 @@ static void checkcodesection(void)
 /*
  * Check if the section has grown too much.
  */
-static void checksectionoverflow(uint32_t delta_size)
+static void reserveSpace(uint32_t delta_size)
 {
 	uint32_t maxSize = maxsize[pCurrentSection->nType];
-	uint32_t newSize = pCurrentSection->nPC + delta_size;
+	uint32_t newSize = curOffset + delta_size;
 
-	if (newSize > maxSize) {
-		/*
-		 * This check is here to trap broken code that generates
-		 * sections that are too big and to prevent the assembler from
-		 * generating huge object files or trying to allocate too much
-		 * memory.
-		 * The real check must be done at the linking stage.
-		 */
+	/*
+	 * This check is here to trap broken code that generates sections that
+	 * are too big and to prevent the assembler from generating huge object
+	 * files or trying to allocate too much memory.
+	 * A check at the linking stage is still necessary.
+	 */
+	if (newSize > maxSize)
 		fatalerror("Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
 			   pCurrentSection->pzName, maxSize, newSize);
-	}
 }
 
 struct Section *out_FindSectionByName(const char *pzName)
@@ -85,7 +85,8 @@ struct Section *out_FindSectionByName(const char *pzName)
  * Find a section by name and type. If it doesn't exist, create it
  */
 static struct Section *getSection(char const *pzName, enum SectionType type,
-				  int32_t org, int32_t bank, int32_t alignment)
+				  uint32_t org, uint32_t bank,
+				  uint32_t alignment, bool isUnion)
 {
 	if (bank != -1) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
@@ -123,13 +124,99 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 	struct Section *pSect = out_FindSectionByName(pzName);
 
 	if (pSect) {
-		if (type == pSect->nType
-			&& ((uint32_t)org) == pSect->nOrg
-			&& ((uint32_t)bank) == pSect->nBank
-			&& ((uint32_t)alignment == pSect->nAlign)) {
-			return pSect;
+		unsigned int nbSectErrors = 0;
+#define fail(...) \
+	do { \
+		yyerror(__VA_ARGS__); \
+		nbSectErrors++; \
+	} while (0)
+
+		if (type != pSect->nType)
+			fail("Section \"%s\" already exists but with type %s",
+			     pSect->pzName, typeNames[pSect->nType]);
+
+		/*
+		 * Normal sections need to have exactly identical constraints;
+		 * but unionized sections only need "compatible" constraints,
+		 * and they end up with the strictest combination of both
+		 */
+		if (isUnion) {
+			if (!pSect->isUnion)
+				fail("Section \"%s\" already declared as non-union",
+				     pSect->pzName);
+			/*
+			 * WARNING: see comment abount assumption in
+			 * `EndLoadSection` if modifying the following check!
+			 */
+			if (sect_HasData(type))
+				fail("Cannot declare ROM sections as UNION");
+			if (org != -1) {
+				/* If neither is fixed, they must be the same */
+				if (pSect->nOrg != -1 && pSect->nOrg != org)
+					fail("Section \"%s\" already declared as fixed at different address $%x",
+					     pSect->pzName, pSect->nOrg);
+				else
+					/* Otherwise, just override */
+					pSect->nOrg = org;
+			} else if (alignment != 0) {
+				/* Make sure any fixed address is compatible */
+				if (pSect->nOrg != -1) {
+					uint32_t mask = alignment - 1;
+
+					if (pSect->nOrg & mask)
+						fail("Section \"%s\" already declared as fixed at incompatible address $%x",
+						     pSect->pzName,
+						     pSect->nOrg);
+				} else if (alignment > pSect->nAlign) {
+					/*
+					 * If the section is not fixed,
+					 * its alignment is the largest of both
+					 */
+					pSect->nAlign = alignment;
+				}
+			}
+			/* If the section's bank is unspecified, override it */
+			if (pSect->nBank == -1)
+				pSect->nBank = bank;
+			/* If both specify a bank, it must be the same one */
+			else if (bank != -1 && pSect->nBank != bank)
+				fail("Section \"%s\" already declared with different bank %u",
+				     pSect->pzName, pSect->nBank);
+		} else {
+			if (pSect->isUnion)
+				fail("Section \"%s\" already declared as union",
+				     pSect->pzName);
+			if (org != pSect->nOrg) {
+				if (pSect->nOrg == -1)
+					fail("Section \"%s\" already declared as floating",
+					     pSect->pzName);
+				else
+					fail("Section \"%s\" already declared as fixed at $%x",
+					     pSect->pzName, pSect->nOrg);
+			}
+			if (bank != pSect->nBank) {
+				if (pSect->nBank == -1)
+					fail("Section \"%s\" already declared as floating bank",
+					     pSect->pzName);
+				else
+					fail("Section \"%s\" already declared as fixed at bank %u",
+					     pSect->pzName, pSect->nBank);
+			}
+			if (alignment != pSect->nAlign) {
+				if (pSect->nAlign == 0)
+					fail("Section \"%s\" already declared as unaligned",
+					     pSect->pzName);
+				else
+					fail("Section \"%s\" already declared as aligned to %u bits",
+					     pSect->pzName, pSect->nAlign);
+			}
 		}
-		fatalerror("Section already exists but with a different type");
+
+		if (nbSectErrors)
+			fatalerror("Cannot create section \"%s\" (%u errors)",
+				   pSect->pzName, nbSectErrors);
+#undef fail
+		return pSect;
 	}
 
 	pSect = malloc(sizeof(*pSect));
@@ -141,7 +228,8 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 		fatalerror("Not enough memory for sectionname");
 
 	pSect->nType = type;
-	pSect->nPC = 0;
+	pSect->isUnion = isUnion;
+	pSect->size = 0;
 	pSect->nOrg = org;
 	pSect->nBank = bank;
 	pSect->nAlign = alignment;
@@ -177,10 +265,7 @@ static void setSection(struct Section *pSect)
 	if (nUnionDepth > 0)
 		fatalerror("Cannot change the section within a UNION");
 
-	nPC = (pSect != NULL) ? pSect->nPC : 0;
-
 	pPCSymbol->pSection = pSect;
-	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
 
 	sym_SetCurrentSymbolScope(NULL);
 }
@@ -188,24 +273,24 @@ static void setSection(struct Section *pSect)
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char const *pzName, uint32_t type, int32_t org,
-		    struct SectionSpec const *attributes)
+void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
+		    struct SectionSpec const *attributes, bool isUnion)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block");
 
 	struct Section *pSect = getSection(pzName, type, org, attributes->bank,
-					   1 << attributes->alignment);
+					   1 << attributes->alignment, isUnion);
 
-	nPC = pSect->nPC;
 	setSection(pSect);
+	curOffset = isUnion ? 0 : pSect->size;
 	pCurrentSection = pSect;
 }
 
 /*
  * Set the current section by name and type
  */
-void out_SetLoadSection(char const *name, uint32_t type, int32_t org,
+void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 			struct SectionSpec const *attributes)
 {
 	checkcodesection();
@@ -214,9 +299,10 @@ void out_SetLoadSection(char const *name, uint32_t type, int32_t org,
 		fatalerror("`LOAD` blocks cannot be nested");
 
 	struct Section *pSect = getSection(name, type, org, attributes->bank,
-					   1 << attributes->alignment);
+					   1 << attributes->alignment, false);
 
-	nPC = pSect->nPC;
+	loadOffset = curOffset;
+	curOffset = 0; /* curOffset -= loadOffset; */
 	setSection(pSect);
 	currentLoadSection = pSect;
 }
@@ -227,8 +313,9 @@ void out_EndLoadSection(void)
 		yyerror("Found `ENDL` outside of a `LOAD` block");
 	currentLoadSection = NULL;
 
-	nPC = pCurrentSection->nPC;
 	setSection(pCurrentSection);
+	curOffset += loadOffset;
+	loadOffset = 0;
 }
 
 struct Section *sect_GetSymbolSection(void)
@@ -236,15 +323,44 @@ struct Section *sect_GetSymbolSection(void)
 	return currentLoadSection ? currentLoadSection : pCurrentSection;
 }
 
-/*
- * Output an absolute byte (bypassing ROM/union checks)
- */
-static void absByteBypassCheck(uint8_t b)
+uint32_t sect_GetOutputOffset(void)
 {
-	pCurrentSection->tData[pCurrentSection->nPC++] = b;
-	if (currentLoadSection)
-		currentLoadSection->nPC++;
-	nPC++;
+	return curOffset + loadOffset;
+}
+
+static inline void growSection(uint32_t growth)
+{
+	curOffset += growth;
+	if (curOffset > pCurrentSection->size)
+		pCurrentSection->size = curOffset;
+	if (currentLoadSection && curOffset > currentLoadSection->size)
+		currentLoadSection->size = curOffset;
+}
+
+static inline void writebyte(uint8_t byte)
+{
+	pCurrentSection->tData[sect_GetOutputOffset()] = byte;
+	growSection(1);
+}
+
+static inline void writeword(uint16_t b)
+{
+	writebyte(b & 0xFF);
+	writebyte(b >> 8);
+}
+
+static inline void writelong(uint32_t b)
+{
+	writebyte(b & 0xFF);
+	writebyte(b >> 8);
+	writebyte(b >> 16);
+	writebyte(b >> 24);
+}
+
+static inline void createPatch(enum PatchType type,
+			       struct Expression const *expr)
+{
+	out_CreatePatch(type, expr, sect_GetOutputOffset());
 }
 
 /*
@@ -253,16 +369,18 @@ static void absByteBypassCheck(uint8_t b)
 void out_AbsByte(uint8_t b)
 {
 	checkcodesection();
-	checksectionoverflow(1);
-	absByteBypassCheck(b);
+	reserveSpace(1);
+
+	writebyte(b);
 }
 
 void out_AbsByteGroup(uint8_t const *s, int32_t length)
 {
 	checkcodesection();
-	checksectionoverflow(length);
+	reserveSpace(length);
+
 	while (length--)
-		absByteBypassCheck(*s++);
+		writebyte(*s++);
 }
 
 /*
@@ -271,19 +389,17 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 void out_Skip(int32_t skip)
 {
 	checksection();
-	checksectionoverflow(skip);
+	reserveSpace(skip);
+
 	if (!sect_HasData(pCurrentSection->nType)) {
-		pCurrentSection->nPC += skip;
-		if (currentLoadSection)
-			currentLoadSection->nPC += skip;
-		nPC += skip;
+		growSection(skip);
 	} else if (nUnionDepth > 0) {
 		while (skip--)
-			absByteBypassCheck(CurrentOptions.fillchar);
+			writebyte(CurrentOptions.fillchar);
 	} else {
 		checkcodesection();
 		while (skip--)
-			absByteBypassCheck(CurrentOptions.fillchar);
+			writebyte(CurrentOptions.fillchar);
 	}
 }
 
@@ -293,19 +409,10 @@ void out_Skip(int32_t skip)
 void out_String(char const *s)
 {
 	checkcodesection();
-	checksectionoverflow(strlen(s));
-	while (*s)
-		absByteBypassCheck(*s++);
-}
+	reserveSpace(strlen(s));
 
-static void outputExpression(struct Expression const *expr)
-{
-	if (!rpn_isKnown(expr)) {
-		out_CreatePatch(PATCHTYPE_BYTE, expr);
-		out_AbsByte(0);
-	} else {
-		out_AbsByte(expr->nVal);
-	}
+	while (*s)
+		writebyte(*s++);
 }
 
 /*
@@ -314,7 +421,15 @@ static void outputExpression(struct Expression const *expr)
  */
 void out_RelByte(struct Expression *expr)
 {
-	outputExpression(expr);
+	checkcodesection();
+	reserveSpace(1);
+
+	if (!rpn_isKnown(expr)) {
+		createPatch(PATCHTYPE_BYTE, expr);
+		writebyte(0);
+	} else {
+		writebyte(expr->nVal);
+	}
 	rpn_Free(expr);
 }
 
@@ -322,25 +437,20 @@ void out_RelByte(struct Expression *expr)
  * Output several copies of a relocatable byte. Checking will be done to see if
  * it is an absolute value in disguise.
  */
-void out_RelBytes(struct Expression *expr, int32_t n)
-{
-	while (n--)
-		outputExpression(expr);
-	rpn_Free(expr);
-}
-
-/*
- * Output an absolute word
- */
-static void absWord(uint16_t b)
+void out_RelBytes(struct Expression *expr, uint32_t n)
 {
 	checkcodesection();
-	checksectionoverflow(2);
-	pCurrentSection->tData[pCurrentSection->nPC++] = b & 0xFF;
-	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 8;
-	if (currentLoadSection)
-		currentLoadSection->nPC += 2;
-	nPC += 2;
+	reserveSpace(n);
+
+	while (n--) {
+		if (!rpn_isKnown(expr)) {
+			createPatch(PATCHTYPE_BYTE, expr);
+			writebyte(0);
+		} else {
+			writebyte(expr->nVal);
+		}
+	}
+	rpn_Free(expr);
 }
 
 /*
@@ -349,29 +459,16 @@ static void absWord(uint16_t b)
  */
 void out_RelWord(struct Expression *expr)
 {
+	checkcodesection();
+	reserveSpace(2);
+
 	if (!rpn_isKnown(expr)) {
-		out_CreatePatch(PATCHTYPE_WORD, expr);
-		absWord(0);
+		createPatch(PATCHTYPE_WORD, expr);
+		writeword(0);
 	} else {
-		absWord(expr->nVal);
+		writeword(expr->nVal);
 	}
 	rpn_Free(expr);
-}
-
-/*
- * Output an absolute longword
- */
-static void absLong(uint32_t b)
-{
-	checkcodesection();
-	checksectionoverflow(4);
-	pCurrentSection->tData[pCurrentSection->nPC++] = b & 0xFF;
-	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 8;
-	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 16;
-	pCurrentSection->tData[pCurrentSection->nPC++] = b >> 24;
-	if (currentLoadSection)
-		currentLoadSection->nPC += 4;
-	nPC += 4;
 }
 
 /*
@@ -380,11 +477,14 @@ static void absLong(uint32_t b)
  */
 void out_RelLong(struct Expression *expr)
 {
+	checkcodesection();
+	reserveSpace(2);
+
 	if (!rpn_isKnown(expr)) {
-		out_CreatePatch(PATCHTYPE_LONG, expr);
-		absLong(0);
+		createPatch(PATCHTYPE_LONG, expr);
+		writelong(0);
 	} else {
-		absLong(expr->nVal);
+		writelong(expr->nVal);
 	}
 	rpn_Free(expr);
 }
@@ -396,13 +496,11 @@ void out_RelLong(struct Expression *expr)
 void out_PCRelByte(struct Expression *expr)
 {
 	checkcodesection();
-	checksectionoverflow(1);
+	reserveSpace(1);
+
 	if (!rpn_isKnown(expr) || pCurrentSection->nOrg == -1) {
-		out_CreatePatch(PATCHTYPE_JR, expr);
-		pCurrentSection->tData[pCurrentSection->nPC++] = 0;
-		if (currentLoadSection)
-			currentLoadSection->nPC++;
-		nPC++;
+		createPatch(PATCHTYPE_JR, expr);
+		writebyte(0);
 	} else {
 		/* Target is relative to the byte *after* the operand */
 		uint16_t address = sym_GetValue(pPCSymbol) + 1;
@@ -412,9 +510,9 @@ void out_PCRelByte(struct Expression *expr)
 		if (offset < -128 || offset > 127) {
 			yyerror("jr target out of reach (expected -129 < %d < 128)",
 				offset);
-			out_AbsByte(0);
+			writebyte(0);
 		} else {
-			out_AbsByte(offset);
+			writebyte(offset);
 		}
 	}
 	rpn_Free(expr);
@@ -444,7 +542,7 @@ void out_BinaryFile(char const *s)
 		fsize = ftell(f);
 		rewind(f);
 
-		checksectionoverflow(fsize);
+		reserveSpace(fsize);
 	} else if (errno != ESPIPE) {
 		yyerror("Error determining size of INCBIN file '%s': %s", s,
 			strerror(errno));
@@ -452,11 +550,8 @@ void out_BinaryFile(char const *s)
 
 	while ((byte = fgetc(f)) != EOF) {
 		if (fsize == -1)
-			checksectionoverflow(1);
-		pCurrentSection->tData[pCurrentSection->nPC++] = byte;
-		if (currentLoadSection)
-			currentLoadSection->nPC++;
-		nPC++;
+			growSection(1);
+		writebyte(byte);
 	}
 
 	if (ferror(f))
@@ -493,7 +588,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	}
 
 	checkcodesection();
-	checksectionoverflow(length);
+	reserveSpace(length);
 
 	int32_t fsize;
 
@@ -524,10 +619,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		int byte = fgetc(f);
 
 		if (byte != EOF) {
-			pCurrentSection->tData[pCurrentSection->nPC++] = byte;
-			if (currentLoadSection)
-				currentLoadSection->nPC++;
-			nPC++;
+			writebyte(byte);
 		} else if (ferror(f)) {
 			yyerror("Error reading INCBIN file '%s': %s", s,
 				strerror(errno));
@@ -553,6 +645,7 @@ void out_PushSection(void)
 
 	pSect->pSection = pCurrentSection;
 	pSect->pScope = sym_GetCurrentSymbolScope();
+	pSect->offset = curOffset;
 	pSect->pNext = pSectionStack;
 	pSectionStack = pSect;
 }
@@ -571,6 +664,8 @@ void out_PopSection(void)
 	setSection(pSect->pSection);
 	pCurrentSection = pSect->pSection;
 	sym_SetCurrentSymbolScope(pSect->pScope);
+	curOffset = pSect->offset;
+
 	pSectionStack = pSect->pNext;
 	free(pSect);
 }

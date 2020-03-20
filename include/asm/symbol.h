@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "asm/section.h"
+
 #include "types.h"
 
 #define HASHSIZE	(1 << 16)
@@ -30,7 +32,6 @@ enum SymbolType {
 struct sSymbol {
 	char tzName[MAXSYMLEN + 1];
 	enum SymbolType type;
-	bool isConstant; /* Whether the symbol's value is currently known */
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
 	bool isReferenced; /* Whether the symbol is referenced in a RPN expr */
@@ -52,7 +53,9 @@ static inline bool sym_IsDefined(struct sSymbol const *sym)
 
 static inline bool sym_IsConstant(struct sSymbol const *sym)
 {
-	return sym->isConstant;
+	return sym->type == SYM_EQU || sym->type == SYM_SET
+				|| (sym->type == SYM_LABEL && sym->pSection
+				    && sym->pSection->nOrg != -1);
 }
 
 static inline bool sym_IsNumeric(struct sSymbol const *sym)
