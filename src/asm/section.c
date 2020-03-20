@@ -562,6 +562,9 @@ void out_PopSection(void)
 	if (pSectionStack == NULL)
 		fatalerror("No entries in the section stack");
 
+	if (currentLoadSection)
+		fatalerror("Cannot change the section within a `LOAD` block!");
+
 	struct SectionStackEntry *pSect;
 
 	pSect = pSectionStack;
