@@ -10,12 +10,15 @@
  * FileStack routines
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "asm/fstack.h"
 #include "asm/lexer.h"
@@ -349,23 +352,34 @@ static void printdep(const char *fileName)
 	}
 }
 
+static FILE *getFile(char const *pathname)
+{
+	struct stat statbuf;
+
+	if (stat(pathname, &statbuf) != 0)
+		return NULL;
+
+	/* Reject directories */
+	if (S_ISDIR(statbuf.st_mode))
+		return NULL;
+
+	return fopen(pathname, "rb");
+}
+
 FILE *fstk_FindFile(char const *fname, char **incPathUsed)
 {
-	char path[_MAX_PATH];
-	int32_t i;
-	FILE *f;
-
 	if (fname == NULL)
 		return NULL;
 
-	f = fopen(fname, "rb");
+	char path[_MAX_PATH];
+	FILE *f = getFile(fname);
 
-	if (f != NULL || errno != ENOENT) {
+	if (f) {
 		printdep(fname);
 		return f;
 	}
 
-	for (i = 0; i < NextIncPath; ++i) {
+	for (size_t i = 0; i < NextIncPath; ++i) {
 		/*
 		 * The function snprintf() does not write more than `size` bytes
 		 * (including the terminating null byte ('\0')).  If the output
@@ -381,9 +395,8 @@ FILE *fstk_FindFile(char const *fname, char **incPathUsed)
 		if (fullpathlen >= (int)sizeof(path))
 			continue;
 
-		f = fopen(path, "rb");
-
-		if (f != NULL || errno != ENOENT) {
+		f = getFile(path);
+		if (f) {
 			printdep(path);
 
 			if (incPathUsed)
