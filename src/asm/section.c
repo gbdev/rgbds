@@ -405,7 +405,7 @@ void out_PCRelByte(struct Expression *expr)
 		nPC++;
 	} else {
 		/* Target is relative to the byte *after* the operand */
-		uint16_t address = pCurrentSection->nOrg + nPC + 1;
+		uint16_t address = sym_GetValue(pPCSymbol) + 1;
 		/* The offset wraps (jump from ROM to HRAM, for loopexample) */
 		int16_t offset = expr->nVal - address;
 
