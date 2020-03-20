@@ -3,6 +3,7 @@ SECTION "test", ROM0[1]
 	LOAD "new", WRAM0[$C001]
 Target:	dl DEAD << 16 | BEEF
 .end
+	ds 2, $2A
 	ENDL
 After:
 	jp Target
