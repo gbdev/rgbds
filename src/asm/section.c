@@ -181,6 +181,8 @@ static void setSection(struct Section *pSect)
 
 	pPCSymbol->pSection = pSect;
 	pPCSymbol->isConstant = pSect && pSect->nOrg != -1;
+
+	sym_SetCurrentSymbolScope(NULL);
 }
 
 /*
@@ -224,7 +226,6 @@ void out_EndLoadSection(void)
 	if (!currentLoadSection)
 		yyerror("Found `ENDL` outside of a `LOAD` block");
 	currentLoadSection = NULL;
-	sym_SetCurrentSymbolScope(NULL);
 
 	nPC = pCurrentSection->nPC;
 	setSection(pCurrentSection);
