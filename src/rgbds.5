@@ -48,8 +48,10 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
     BYTE    Type          ; 0 = LOCAL symbol only used in this file.
                           ; 1 = IMPORT this symbol from elsewhere
                           ; 2 = EXPORT this symbol to other objects.
+                          ; Bit 7 is independent from the above value, and
+                          ; encodes whether the section is unionized
 
-    IF      Type != 1     ; If symbol is defined in this object file.
+    IF (Type & 0x7F) != 1 ; If symbol is defined in this object file.
 
         STRING  FileName  ; File where the symbol is defined.
 
