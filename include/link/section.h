@@ -37,6 +37,7 @@ struct Section {
 	char *name;
 	uint16_t size;
 	enum SectionType type;
+	bool isUnion;
 	bool isAddressFixed;
 	uint16_t org;
 	bool isBankFixed;
@@ -50,6 +51,7 @@ struct Section {
 	struct Symbol **fileSymbols;
 	uint32_t nbSymbols;
 	struct Symbol const **symbols;
+	struct Section *nextu; /* The next "component" of this unionized sect */
 };
 
 /*

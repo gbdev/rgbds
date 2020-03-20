@@ -14,7 +14,7 @@
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1hhu"
 #define RGBDS_OBJECT_VERSION_NUMBER (uint8_t)9
-#define RGBDS_OBJECT_REV 2
+#define RGBDS_OBJECT_REV 3
 
 enum AssertionType {
 	ASSERT_WARN,

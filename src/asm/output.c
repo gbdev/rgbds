@@ -189,7 +189,7 @@ static void writesection(struct Section *pSect, FILE *f)
 
 	fputlong(pSect->size, f);
 
-	fputc(pSect->nType, f);
+	fputc(pSect->nType | pSect->isUnion << 7, f);
 
 	fputlong(pSect->nOrg, f);
 	fputlong(pSect->nBank, f);

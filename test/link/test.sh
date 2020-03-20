@@ -71,12 +71,20 @@ for i in *.asm; do
 	fi
 done
 
-# This test does its own thing
+# These tests do their own thing
+
 $RGBASM -o $otemp high-low/a.asm
 $RGBLINK -o $gbtemp $otemp
 $RGBASM -o $otemp high-low/b.asm
 $RGBLINK -o $gbtemp2 $otemp
-i="high-low.asm" tryDiff $gbtemp $gbtemp2
+i="high-low.asm" tryCmp $gbtemp $gbtemp2
+rc=$(($? || $rc))
+
+$RGBASM -o $otemp section-union/a.asm
+$RGBASM -o $gbtemp2 section-union/b.asm
+$RGBLINK -o $gbtemp -l section-union/script.link $otemp $gbtemp2
+dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/ref.out.bin)) > $otemp 2>/dev/null
+i="section-union.asm" tryCmp section-union/ref.out.bin $otemp
 rc=$(($? || $rc))
 
 rm -f $otemp $gbtemp $gbtemp2 $outtemp

@@ -245,6 +245,7 @@ static void readSection(FILE *file, struct Section *section,
 			char const *fileName)
 {
 	int32_t tmp;
+	uint8_t type;
 
 	tryReadstr(section->name, file, "%s: Cannot read section name: %s",
 		   fileName);
@@ -254,8 +255,10 @@ static void readSection(FILE *file, struct Section *section,
 		errx(1, "\"%s\"'s section size (%d) is invalid", section->name,
 		     tmp);
 	section->size = tmp;
-	tryGetc(section->type, file, "%s: Cannot read \"%s\"'s type: %s",
+	tryGetc(type, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, section->name);
+	section->type = type & 0x7F;
+	section->isUnion = type >> 7;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s",
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
@@ -358,6 +361,14 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 		   fileName);
 }
 
+static inline struct Section *getMainSection(struct Section *section)
+{
+	if (section->isUnion)
+		section = sect_GetSection(section->name);
+
+	return section;
+}
+
 /**
  * Reads an object file of any supported format
  * @param fileName The filename to report for errors
@@ -448,6 +459,7 @@ void obj_ReadFile(char const *fileName)
 
 		if (!section)
 			err(1, "%s: Couldn't create new section", fileName);
+		section->nextu = NULL;
 		readSection(file, section, fileName);
 		section->fileSymbols = fileSymbols;
 
@@ -472,9 +484,10 @@ void obj_ReadFile(char const *fileName)
 		if (sectionID == -1) {
 			fileSymbols[i]->section = NULL;
 		} else {
-			fileSymbols[i]->section = fileSections[sectionID];
 			/* Give the section a pointer to the symbol as well */
 			linkSymToSect(fileSymbols[i], fileSections[sectionID]);
+			fileSymbols[i]->section =
+					getMainSection(fileSections[sectionID]);
 		}
 	}
 
