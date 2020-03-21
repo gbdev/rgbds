@@ -788,6 +788,10 @@ void sym_Init(void)
 	p__LINE__Symbol = findsymbol("__LINE__", NULL);
 	p__LINE__Symbol->Callback = Callback__LINE__;
 
+	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
+	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
+	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
+
 	sym_AddSet("_RS", 0);
 
 	if (time(&now) != -1) {
