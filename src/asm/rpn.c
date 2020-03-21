@@ -506,6 +506,14 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 	}
 }
 
+void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
+{
+	rpn_Init(expr);
+	expr->nVal = rpn_isKnown(src);
+	expr->isKnown = true;
+	expr->isSymbol = false;
+}
+
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;

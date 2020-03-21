@@ -553,7 +553,7 @@ which references the same macro, which has the same problem.
 .Pp
 One of the best features of an assembler is the ability to write macros for it.
 Macros also provide a method of passing arguments to them and they can then react to the input using
-.Sy IF
+.Ic IF
 constructs.
 .Pp
 .Bd -literal -offset indent
@@ -1317,6 +1317,9 @@ For labels, as the linker has to resolve this, it can't be used when the express
 has been defined.
 .It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
 .It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
+.It Fn ISCONST arg Ta Returns 1 if Ar arg Ns No 's value is known by RGBASM (e.g. if it can be an argument to
+.Ic IF ) ,
+or 0 if only RGBLINK can compute its value.
 .El
 .Sh MISCELLANEOUS
 .Ss Changing options while assembling
