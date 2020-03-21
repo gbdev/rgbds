@@ -13,13 +13,15 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "link/object.h"
-#include "link/main.h"
-#include "link/symbol.h"
-#include "link/section.h"
 #include "link/assign.h"
+#include "link/main.h"
+#include "link/object.h"
+#include "link/patch.h"
+#include "link/section.h"
+#include "link/symbol.h"
 
 #include "extern/err.h"
+#include "helpers.h"
 #include "linkdefs.h"
 
 static struct SymbolList {
@@ -27,6 +29,8 @@ static struct SymbolList {
 	struct Symbol **symbolList;
 	struct SymbolList *next;
 } *symbolLists;
+
+static struct Assertion *assertions;
 
 /***** Helper functions for reading object files *****/
 
@@ -232,7 +236,7 @@ static void readPatch(FILE *file, struct Patch *patch,
 }
 
 /**
- * Reads a RGB6 section from a file.
+ * Reads a section from a file.
  * @param file The file to read from
  * @param section The struct to fill
  * @param fileName The filename to report in errors
@@ -329,6 +333,29 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 	}
 
 	section->nbSymbols++;
+}
+
+/**
+ * Reads an assertion from a file
+ * @param file The file to read from
+ * @param assert The struct to fill
+ * @param fileName The filename to report in errors
+ */
+static void readAssertion(FILE *file, struct Assertion *assert,
+			  char const *fileName, struct Section *fileSections[],
+			  uint32_t i)
+{
+	char assertName[sizeof("Assertion #" EXPAND_AND_STR(UINT32_MAX))];
+	uint32_t sectionID;
+
+	snprintf(assertName, sizeof(assertName), "Assertion #%u", i);
+
+	readPatch(file, &assert->patch, fileName, assertName, 0);
+	tryReadlong(sectionID, file, "%s: Cannot read assertion's section ID: %s",
+		    fileName);
+	assert->section = fileSections[sectionID];
+	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
+		   fileName);
 }
 
 /**
@@ -451,12 +478,29 @@ void obj_ReadFile(char const *fileName)
 		}
 	}
 
+	uint32_t nbAsserts;
+
+	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s",
+		    fileName);
+	verbosePrint("Reading %u assertions...\n", nbAsserts);
+	for (uint32_t i = 0; i < nbAsserts; i++) {
+		struct Assertion *assertion = malloc(sizeof(*assertion));
+
+		if (!assertion)
+			err(1, "%s: Couldn't create new assertion", fileName);
+		readAssertion(file, assertion, fileName, fileSections, i);
+		assertion->next = assertions;
+		assertions = assertion;
+	}
+
 	fclose(file);
 }
 
 void obj_DoSanityChecks(void)
 {
 	sect_DoSanityChecks();
+
+	patch_CheckAssertions(assertions);
 }
 
 static void freeSection(struct Section *section, void *arg)

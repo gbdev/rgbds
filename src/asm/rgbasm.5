@@ -980,6 +980,62 @@ take a string as the only argument and they will print this string out as a norm
 stops assembling immediately while
 .Ic WARN
 shows the message but continues afterwards.
+.Pp
+If you need to ensure some assumption is correct when compiling, you can use
+.Ic ASSERT
+and
+.Ic STATIC_ASSERT .
+Syntax examples are given below:
+.Pp
+.Bd -literal -offset indent
+Function:
+      xor a
+ASSERT LOW(Variable) == 0
+      ld h, HIGH(Variable)
+      ld l, a
+      ld a, [hli]
+      ; You can also indent this!
+      ASSERT BANK(OtherFunction) == BANK(Function)
+      call OtherFunction
+; Lowercase also works
+assert Variable + 1 == OtherVariable
+      ld c, [hl]
+      ret
+\&.end
+      ; If you specify one, a message will be printed
+      STATIC_ASSERT .end - Function < 256, "Function is too large!"
+.Ed
+.Pp
+First, the difference between
+.Ic ASSERT
+and
+.Ic STATIC_ASSERT
+is that the former is evaluated by RGBASM if it can, otherwise by RGBLINK; but the latter is only ever evaluated by RGBASM.
+If RGBASM cannot compute the value of the argument to
+.Ic STATIC_ASSERT ,
+it will produce an error.
+.Pp
+Second, as shown above, a string can be optionally added at the end, to give insight into what the assertion is checking.
+.Pp
+Finally, you can add one of
+.Ic WARN , FAIL
+or
+.Ic FATAL
+as the first optional argument to either
+.Ic ASSERT
+or
+.Ic STATIC_ASSERT .
+If the assertion fails,
+.Ic WARN
+will cause a simple warning (controlled by
+.Xr rgbasm 1 DIAGNOSTICS
+flag
+.Fl Wassert )
+to be emitted;
+.Ic FAIL
+(the default) will cause a non-fatal error; and
+.Ic FATAL
+immediately aborts.
 .Ss Including other source files
 Use
 .Ic INCLUDE

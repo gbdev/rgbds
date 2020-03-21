@@ -340,6 +340,48 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 #undef popRPN
 }
 
+void patch_CheckAssertions(struct Assertion *assert)
+{
+	verbosePrint("Checking assertions...");
+	initRPNStack();
+
+	uint8_t failures = 0;
+
+	while (assert) {
+		if (!computeRPNExpr(&assert->patch, assert->section)) {
+			switch ((enum AssertionType)assert->patch.type) {
+			case ASSERT_FATAL:
+				errx(1, "%s: %s", assert->patch.fileName,
+				     assert->message[0] ? assert->message
+							: "assert failure");
+				/* Not reached */
+				break; /* Here so checkpatch doesn't complain */
+			case ASSERT_ERROR:
+				fprintf(stderr, "%s: %s\n",
+					assert->patch.fileName,
+					assert->message[0] ? assert->message
+							   : "assert failure");
+				failures++;
+				break;
+			case ASSERT_WARN:
+				warnx("%s: %s", assert->patch.fileName,
+				      assert->message[0] ? assert->message
+							 : "assert failure");
+				break;
+			}
+		}
+		struct Assertion *next = assert->next;
+
+		free(assert);
+		assert = next;
+	}
+
+	freeRPNStack();
+
+	if (failures)
+		errx(1, "%u assertions failed!", failures);
+}
+
 /**
  * Applies all of a section's patches
  * @param section The section to patch
@@ -399,3 +441,4 @@ void patch_ApplyPatches(void)
 	sect_ForEach(applyPatches, NULL);
 	freeRPNStack();
 }
+

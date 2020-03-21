@@ -496,6 +496,9 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"fail", T_POP_FAIL},
 	{"warn", T_POP_WARN},
+	{"fatal", T_POP_FATAL},
+	{"assert", T_POP_ASSERT},
+	{"static_assert", T_POP_STATIC_ASSERT},
 
 	{"macro", T_POP_MACRO},
 	/* Not needed but we have it here just to protect the name */

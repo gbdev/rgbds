@@ -1,0 +1,3 @@
+warning: assert.asm(7): Worry about me, but not too much.
+assert.asm(8): Okay, this is getting serious!
+error: assert.asm(9): It all ends now.

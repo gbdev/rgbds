@@ -124,6 +124,34 @@ REPT NumberOfSections
     ENDC
 
 ENDR
+
+; Assertions
+
+LONG  NumberOfAssertions
+
+REPT  NumberOfAssertions
+
+  STRING  SourceFile   ; Name of the source file (for printing the failure).
+
+  LONG    Offset       ; Offset into the section where the assertion is located.
+
+  BYTE    Type         ; 0 = Prints the message but allows linking to continue
+                       ; 1 = Prints the message and evaluates other assertions,
+                       ;     but linking fails afterwards
+                       ; 2 = Prints the message and immediately fails linking
+
+  LONG    RPNSize      ; Size of the RPN expression's buffer.
+
+  BYTE    RPN[RPNSize] ; RPN expression, same as patches. Assert fails if == 0.
+
+  LONG    SectionID    ; The section number (of this object file) in which this
+                       ; assert is defined. If it doesn't belong to any specific
+                       ; section (like a constant), this field has the value -1.
+
+  STRING  Message      ; A message displayed when the assert fails. If set to
+                       ; the empty string, a generic message is printed instead.
+
+ENDR
 .Ed
 .Ss RPN DATA
 Expressions in the object file are stored as RPN.

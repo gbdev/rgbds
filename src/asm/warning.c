@@ -36,6 +36,7 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	WARNING_DISABLED, /* Obsolete things */
 	WARNING_DISABLED, /* Shifting undefined behavior */
 	WARNING_ENABLED,  /* User warnings */
+	WARNING_ENABLED,  /* Assertions */
 	WARNING_DISABLED, /* Strange shift amount */
 	WARNING_ENABLED,  /* Implicit truncation loses some bits */
 };
@@ -72,6 +73,7 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"obsolete",
 	"shift",
 	"user",
+	"assert",
 	"shift-amount",
 	"truncation",
 
