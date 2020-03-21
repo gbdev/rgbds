@@ -33,6 +33,7 @@ struct sSymbol {
 	bool isConstant; /* Whether the symbol's value is currently known */
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
+	bool isReferenced; /* Whether the symbol is referenced in a RPN expr */
 	struct sSymbol *pScope;
 	struct sSymbol *pNext;
 	struct Section *pSection;

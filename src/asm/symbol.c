@@ -127,6 +127,7 @@ static struct sSymbol *createsymbol(char const *s)
 	(*ppsym)->isConstant = false;
 	(*ppsym)->isExported = false;
 	(*ppsym)->isBuiltin = false;
+	(*ppsym)->isReferenced = false;
 	(*ppsym)->pScope = NULL;
 	(*ppsym)->pNext = NULL;
 	(*ppsym)->pSection = NULL;
@@ -211,6 +212,11 @@ struct sSymbol *sym_FindSymbol(char const *tzName)
 	return findsymbol(tzName, pscope);
 }
 
+static inline bool isReferenced(struct sSymbol const *sym)
+{
+	return sym->isReferenced;
+}
+
 /*
  * Purge a symbol
  */
@@ -230,6 +236,9 @@ void sym_Purge(char const *tzName)
 		yyerror("'%s' not defined", tzName);
 	} else if ((*ppSym)->isBuiltin) {
 		yyerror("Built-in symbol '%s' cannot be purged", tzName);
+	} else if (isReferenced(*ppSym)) {
+		yyerror("Symbol \"%s\" is referenced and thus cannot be purged",
+			tzName);
 	} else {
 		struct sSymbol *pSym;
 
@@ -468,6 +477,7 @@ struct sSymbol *sym_AddReloc(char const *tzSym)
 	else if (sym_IsDefined(nsym))
 		yyerror("'%s' already defined in %s(%d)", tzSym,
 			nsym->tzFileName, nsym->nFileLine);
+	/* If the symbol already exists as a ref, just "take over" it */
 
 	nsym->nValue = nPC;
 	nsym->type = SYM_LABEL;
@@ -544,6 +554,7 @@ void sym_Ref(char const *tzSym)
 		nsym = createsymbol(tzSym);
 		nsym->type = SYM_REF;
 	}
+	nsym->isReferenced = true;
 }
 
 /*
