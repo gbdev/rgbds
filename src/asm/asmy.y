@@ -814,7 +814,11 @@ assert_type	: /* empty */		{ $$ = ASSERT_ERROR; }
 
 assert		: T_POP_ASSERT assert_type relocexpr
 		{
-			if (rpn_isKnown(&$3) && $3.nVal == 0) {
+			if (!rpn_isKnown(&$3)) {
+				if (!out_CreateAssert($2, &$3, ""))
+					yyerror("Assertion creation failed: %s",
+						strerror(errno));
+			} else if ($3.nVal == 0) {
 				switch ($2) {
 					case ASSERT_FATAL:
 						fatalerror("Assertion failed");
@@ -826,16 +830,16 @@ assert		: T_POP_ASSERT assert_type relocexpr
 							"Assertion failed");
 						break;
 				}
-			} else {
-				if (!out_CreateAssert($2, &$3, ""))
-					yyerror("Assertion creation failed: %s",
-						strerror(errno));
 			}
 			rpn_Free(&$3);
 		}
 		| T_POP_ASSERT assert_type relocexpr ',' string
 		{
-			if (rpn_isKnown(&$3) && $3.nVal == 0) {
+			if (!rpn_isKnown(&$3)) {
+				if (!out_CreateAssert($2, &$3, $5))
+					yyerror("Assertion creation failed: %s",
+						strerror(errno));
+			} else if ($3.nVal == 0) {
 				switch ($2) {
 					case ASSERT_FATAL:
 						fatalerror("Assertion failed: %s",
@@ -850,10 +854,6 @@ assert		: T_POP_ASSERT assert_type relocexpr
 							$5);
 						break;
 				}
-			} else {
-				if (!out_CreateAssert($2, &$3, $5))
-					yyerror("Assertion creation failed: %s",
-						strerror(errno));
 			}
 			rpn_Free(&$3);
 		}
