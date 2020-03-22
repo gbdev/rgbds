@@ -108,6 +108,9 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
 					pzName);
 			alignment = 1; /* Ignore it if it's satisfied */
+		} else if (startaddr[type] & mask) {
+			yyerror("Section \"%s\"'s alignment cannot be attained in %s",
+				pzName, typeNames[type]);
 		}
 	}
 

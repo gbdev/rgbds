@@ -161,6 +161,13 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	if (section->isAlignFixed && section->alignMask == 1)
 		section->isAlignFixed = false;
 
+	/* Too large an alignment may not be satisfiable */
+	if (section->isAlignFixed
+	 && (section->alignMask & startaddr[section->type]))
+		fail("%s: %s sections cannot be aligned to $%x bytes",
+		     section->name, typeNames[section->type],
+		     section->alignMask + 1);
+
 	uint32_t minbank = bankranges[section->type][0],
 		 maxbank = bankranges[section->type][1];
 
