@@ -84,7 +84,7 @@ $RGBASM -o $otemp section-union/good/a.asm
 $RGBASM -o $gbtemp2 section-union/good/b.asm
 $RGBLINK -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2
 dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/good/ref.out.bin)) > $otemp 2>/dev/null
-i="section-union.asm" tryCmp section-union/good/ref.out.bin $otemp
+i="section-union/good.asm" tryCmp section-union/good/ref.out.bin $otemp
 rc=$(($? || $rc))
 for i in section-union/*.asm; do
 	$RGBASM -o $otemp   $i
