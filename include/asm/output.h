@@ -19,9 +19,10 @@ extern char *tzObjectname;
 extern struct Section *pSectionList, *pCurrentSection;
 
 void out_SetFileName(char *s);
-void out_CreatePatch(uint32_t type, struct Expression const *expr);
+void out_CreatePatch(uint32_t type, struct Expression const *expr,
+		     uint32_t ofs);
 bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
-		      char const *message);
+		      char const *message, uint32_t ofs);
 void out_WriteObject(void);
 
 #endif /* RGBDS_ASM_OUTPUT_H */

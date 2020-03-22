@@ -117,6 +117,24 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
+static struct Symbol const *getSymbol(struct Symbol ** const symbolList,
+				      uint32_t index, char const *fileName)
+{
+	struct Symbol const *symbol = symbolList[index];
+
+	/* If the symbol is defined elsewhere... */
+	if (symbol->type == SYMTYPE_IMPORT) {
+		struct Symbol const *symbolDefinition =
+						sym_GetSymbol(symbol->name);
+		if (!symbolDefinition)
+			errx(1, "%s: Unknown symbol \"%s\"", fileName,
+			     symbol->name);
+		symbol = symbolDefinition;
+	}
+
+	return symbol;
+}
+
 /**
  * Compute a patch's value from its RPN string.
  * @param patch The patch to compute the value of
@@ -238,19 +256,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
 
-			symbol = section->fileSymbols[value];
-
-			/* If the symbol is defined elsewhere... */
-			if (symbol->type == SYMTYPE_IMPORT) {
-				struct Symbol const *symbolDefinition =
-						sym_GetSymbol(symbol->name);
-				if (!symbolDefinition)
-					errx(1, "%s: Unknown symbol \"%s\"",
-					     patch->fileName, symbol->name);
-				symbol = symbolDefinition;
-			}
-
-			value = symbol->section->bank;
+			value = getSymbol(section->fileSymbols, value,
+					  patch->fileName)->section->bank;
 			break;
 
 		case RPN_BANK_SECT:
@@ -305,17 +312,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
 
-			symbol = section->fileSymbols[value];
-
-			/* If the symbol is defined elsewhere... */
-			if (symbol->type == SYMTYPE_IMPORT) {
-				struct Symbol const *symbolDefinition =
-						sym_GetSymbol(symbol->name);
-				if (!symbolDefinition)
-					errx(1, "%s: Unknown symbol \"%s\"",
-					     patch->fileName, symbol->name);
-				symbol = symbolDefinition;
-			}
+			symbol = getSymbol(section->fileSymbols, value,
+					   patch->fileName);
 
 			if (!strcmp(symbol->name, "@")) {
 				value = section->org + patch->offset;
@@ -387,10 +385,8 @@ void patch_CheckAssertions(struct Assertion *assert)
  * @param section The section to patch
  * @param arg Ignored callback arg
  */
-static void applyPatches(struct Section *section, void *arg)
+static void applyFilePatches(struct Section *section)
 {
-	(void)arg;
-
 	if (!sect_HasData(section->type))
 		return;
 
@@ -433,6 +429,22 @@ static void applyPatches(struct Section *section, void *arg)
 			}
 		}
 	}
+}
+
+/**
+ * Applies all of a section's patches, iterating over "components" of
+ * unionized sections
+ * @param section The section to patch
+ * @param arg Ignored callback arg
+ */
+static void applyPatches(struct Section *section, void *arg)
+{
+	(void)arg;
+
+	do {
+		applyFilePatches(section);
+		section = section->nextu;
+	} while (section);
 }
 
 void patch_ApplyPatches(void)

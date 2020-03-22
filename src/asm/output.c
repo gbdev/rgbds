@@ -187,9 +187,9 @@ static void writesection(struct Section *pSect, FILE *f)
 {
 	fputstring(pSect->pzName, f);
 
-	fputlong(pSect->nPC, f);
+	fputlong(pSect->size, f);
 
-	fputc(pSect->nType, f);
+	fputc(pSect->nType | pSect->isUnion << 7, f);
 
 	fputlong(pSect->nOrg, f);
 	fputlong(pSect->nBank, f);
@@ -198,7 +198,7 @@ static void writesection(struct Section *pSect, FILE *f)
 	if (sect_HasData(pSect->nType)) {
 		struct Patch *pPatch;
 
-		fwrite(pSect->tData, 1, pSect->nPC, f);
+		fwrite(pSect->tData, 1, pSect->size, f);
 		fputlong(countpatches(pSect), f);
 
 		pPatch = pSect->pPatches;
@@ -402,7 +402,8 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 /*
  * Allocate a new patch structure and link it into the list
  */
-static struct Patch *allocpatch(uint32_t type, struct Expression const *expr)
+static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
+				uint32_t ofs)
 {
 	struct Patch *pPatch;
 
@@ -418,8 +419,8 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr)
 
 	pPatch->nRPNSize = 0;
 	pPatch->nType = type;
-	pPatch->nOffset = pCurrentSection->nPC;
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
+	pPatch->nOffset = ofs;
 
 	writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
 	assert(pPatch->nRPNSize == expr->nRPNPatchSize);
@@ -430,9 +431,9 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr)
 /*
  * Create a new patch (includes the rpn expr)
  */
-void out_CreatePatch(uint32_t type, struct Expression const *expr)
+void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
-	struct Patch *pPatch = allocpatch(type, expr);
+	struct Patch *pPatch = allocpatch(type, expr, ofs);
 
 	pPatch->pNext = pCurrentSection->pPatches;
 	pCurrentSection->pPatches = pPatch;
@@ -442,14 +443,14 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr)
  * Creates an assert that will be written to the object file
  */
 bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
-		      char const *message)
+		      char const *message, uint32_t ofs)
 {
 	struct Assertion *assertion = malloc(sizeof(*assertion));
 
 	if (!assertion)
 		return false;
 
-	assertion->patch = allocpatch(type, expr);
+	assertion->patch = allocpatch(type, expr, ofs);
 	assertion->section = pCurrentSection;
 	assertion->message = strdup(message);
 	if (!assertion->message) {

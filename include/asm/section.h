@@ -18,7 +18,8 @@ struct Expression;
 struct Section {
 	char *pzName;
 	enum SectionType nType;
-	uint32_t nPC;
+	bool isUnion;
+	uint32_t size;
 	uint32_t nOrg;
 	uint32_t nBank;
 	uint32_t nAlign;
@@ -28,25 +29,26 @@ struct Section {
 };
 
 struct SectionSpec {
-	int32_t bank;
-	int32_t alignment;
+	uint32_t bank;
+	uint32_t alignment;
 };
 
 struct Section *out_FindSectionByName(const char *pzName);
-void out_NewSection(char const *pzName, uint32_t secttype, int32_t org,
-		    struct SectionSpec const *attributes);
-void out_SetLoadSection(char const *name, uint32_t secttype, int32_t org,
+void out_NewSection(char const *pzName, uint32_t secttype, uint32_t org,
+		    struct SectionSpec const *attributes, bool isUnion);
+void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
 			struct SectionSpec const *attributes);
 void out_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
+uint32_t sect_GetOutputOffset(void);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);
 void out_Skip(int32_t skip);
 void out_String(char const *s);
 void out_RelByte(struct Expression *expr);
-void out_RelBytes(struct Expression *expr, int32_t n);
+void out_RelBytes(struct Expression *expr, uint32_t n);
 void out_RelWord(struct Expression *expr);
 void out_RelLong(struct Expression *expr);
 void out_PCRelByte(struct Expression *expr);

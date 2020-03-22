@@ -40,10 +40,12 @@ const size_t cldefine_entrysize = 2 * sizeof(void *);
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
-int32_t nLineNo;
-uint32_t nTotalLines, nPC, nIFDepth, nUnionDepth;
+uint32_t nTotalLines, nIFDepth, nUnionDepth;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
+
+int32_t nLineNo;
+uint32_t curOffset;
 
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
@@ -525,7 +527,6 @@ int main(int argc, char *argv[])
 	nIFDepth = 0;
 	skipElif = true;
 	nUnionDepth = 0;
-	nPC = 0;
 	sym_Init();
 	sym_SetExportAll(CurrentOptions.exportall);
 	fstk_Init(tzMainfile);

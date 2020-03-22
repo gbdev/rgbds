@@ -1,0 +1,6 @@
+section-union/assert.asm(11): Force failing the build
+error: 1 assertions failed!
+---
+ERROR: -(30):
+    Assertion failed: Force failing the build
+error: Assembly aborted (1 errors)!

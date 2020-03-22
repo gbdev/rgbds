@@ -31,6 +31,8 @@ extern uint32_t ulNewMacroSize;
 extern int32_t nGBGfxID;
 extern int32_t nBinaryID;
 
+extern uint32_t curOffset; /* Offset into the current section */
+
 extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;
 

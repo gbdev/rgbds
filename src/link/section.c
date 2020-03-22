@@ -36,17 +36,80 @@ void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
 	hash_ForEach(sections, forEach, &callbackArg);
 }
 
+static void mergeSections(struct Section *target, struct Section *other)
+{
+	if (target->type != other->type)
+		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
+		     other->name,
+		     typeNames[target->type], typeNames[other->type]);
+	if (other->isAddressFixed) {
+		if (target->isAddressFixed) {
+			if (target->org != other->org)
+				errx(1, "Section \"%s\" is defined with conflicting addresses $%x and $%x",
+				     other->name, target->org, other->org);
+		} else if (target->isAlignFixed) {
+			if (other->org & target->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment and address $%x",
+				     other->name, target->alignMask + 1,
+				     other->org);
+		}
+		target->isAddressFixed = true;
+		target->org = other->org;
+	} else if (other->isAlignFixed) {
+		if (target->isAddressFixed) {
+			if (target->org & other->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting address $%x and %u-byte alignment",
+				     other->name, target->org,
+				     other->alignMask + 1);
+		} else if (!target->isAlignFixed
+			|| other->alignMask > target->alignMask) {
+			target->isAlignFixed = true;
+			target->alignMask = other->alignMask;
+		}
+	}
+
+	if (other->isBankFixed) {
+		if (!target->isBankFixed) {
+			target->isBankFixed = true;
+			target->bank = other->bank;
+		} else if (target->bank != other->bank) {
+			errx(1, "Section \"%s\" is defined with conflicting banks %u and %u",
+			     other->name, target->bank, other->bank);
+		}
+	}
+
+	if (other->size > target->size)
+		target->size = other->size;
+
+	target->nextu = other;
+}
+
 void sect_AddSection(struct Section *section)
 {
 	/* Check if the section already exists */
-	if (hash_GetElement(sections, section->name))
-		errx(1, "Section name \"%s\" is already in use", section->name);
+	struct Section *other = hash_GetElement(sections, section->name);
 
-	/* If not, add it */
-	bool collided = hash_AddElement(sections, section->name, section);
+	if (other) {
+		if (other->isUnion && section->isUnion) {
+			mergeSections(other, section);
+		} else if (section->isUnion || other->isUnion) {
+			errx(1, "Section \"%s\" defined as both unionized and not",
+			     section->name);
+		} else {
+			errx(1, "Section name \"%s\" is already in use",
+			     section->name);
+		}
+	} else if (section->isUnion && sect_HasData(section->type)) {
+		errx(1, "Section \"%s\" is of type %s, which cannot be unionized",
+		     section->name, typeNames[section->type]);
+	} else {
+		/* If not, add it */
+		bool collided = hash_AddElement(sections, section->name,
+						section);
 
-	if (beVerbose && collided)
-		warnx("Section hashmap collision occurred!");
+		if (beVerbose && collided)
+			warnx("Section hashmap collision occurred!");
+	}
 }
 
 struct Section *sect_GetSection(char const *name)

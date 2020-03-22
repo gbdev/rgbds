@@ -1,0 +1,8 @@
+ERROR: section-union.asm(37):
+    Section "test" already declared as union
+ERROR: section-union.asm(37):
+    Section "test" already declared as fixed at $c000
+ERROR: section-union.asm(37):
+    Section "test" already declared as aligned to 256 bytes
+ERROR: section-union.asm(37):
+    Cannot create section "test" (3 errors)

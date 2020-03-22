@@ -62,7 +62,7 @@ static int32_t Callback__LINE__(struct sSymbol const *self)
 
 static int32_t CallbackPC(struct sSymbol const *self)
 {
-	return self->pSection ? self->pSection->nOrg + self->pSection->nPC : 0;
+	return self->pSection ? self->pSection->nOrg + curOffset : 0;
 }
 
 /*
@@ -124,7 +124,6 @@ static struct sSymbol *createsymbol(char const *s)
 	if (snprintf((*ppsym)->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
 		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'", s);
 
-	(*ppsym)->isConstant = false;
 	(*ppsym)->isExported = false;
 	(*ppsym)->isBuiltin = false;
 	(*ppsym)->isReferenced = false;
@@ -349,7 +348,6 @@ struct sSymbol *sym_AddEqu(char const *tzSym, int32_t value)
 
 	nsym->nValue = value;
 	nsym->type = SYM_EQU;
-	nsym->isConstant = true;
 	nsym->pScope = NULL;
 	updateSymbolFilename(nsym);
 
@@ -417,7 +415,6 @@ struct sSymbol *sym_AddSet(char const *tzSym, int32_t value)
 
 	nsym->nValue = value;
 	nsym->type = SYM_SET;
-	nsym->isConstant = true;
 	nsym->pScope = NULL;
 	updateSymbolFilename(nsym);
 
@@ -479,9 +476,8 @@ struct sSymbol *sym_AddReloc(char const *tzSym)
 			nsym->tzFileName, nsym->nFileLine);
 	/* If the symbol already exists as a ref, just "take over" it */
 
-	nsym->nValue = nPC;
+	nsym->nValue = curOffset;
 	nsym->type = SYM_LABEL;
-	nsym->isConstant = pCurrentSection && pCurrentSection->nOrg != -1;
 
 	if (exportall)
 		nsym->isExported = true;

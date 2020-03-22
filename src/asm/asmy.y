@@ -393,20 +393,19 @@ static void startUnion(void)
 	if (nUnionDepth > MAXUNIONS)
 		fatalerror("Too many nested UNIONs");
 
-	unionStart[unionIndex] = nPC;
+	unionStart[unionIndex] = curOffset;
 	unionSize[unionIndex] = 0;
 }
 
 static void updateUnion(void)
 {
 	uint32_t unionIndex = nUnionDepth - 1;
-	uint32_t size = nPC - unionStart[unionIndex];
+	uint32_t size = curOffset - unionStart[unionIndex];
 
 	if (size > unionSize[unionIndex])
 		unionSize[unionIndex] = size;
 
-	nPC = unionStart[unionIndex];
-	pCurrentSection->nPC = unionStart[unionIndex];
+	curOffset = unionStart[unionIndex];
 }
 
 static size_t strlenUTF8(const char *s)
@@ -601,7 +600,8 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM
 %token	T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
 
-%type	<macroArg> macroargs;
+%type	<nConstValue> sectunion
+%type	<macroArg> macroargs
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
 %token	T_Z80_BIT
@@ -815,7 +815,8 @@ assert_type	: /* empty */		{ $$ = ASSERT_ERROR; }
 assert		: T_POP_ASSERT assert_type relocexpr
 		{
 			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, ""))
+				if (!out_CreateAssert($2, &$3, "",
+						      sect_GetOutputOffset()))
 					yyerror("Assertion creation failed: %s",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
@@ -836,7 +837,8 @@ assert		: T_POP_ASSERT assert_type relocexpr
 		| T_POP_ASSERT assert_type relocexpr ',' string
 		{
 			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, $5))
+				if (!out_CreateAssert($2, &$3, $5,
+						      sect_GetOutputOffset()))
 					yyerror("Assertion creation failed: %s",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
@@ -968,8 +970,7 @@ endu		: T_POP_ENDU {
 			updateUnion();
 
 			nUnionDepth--;
-			nPC = unionStart[nUnionDepth] + unionSize[nUnionDepth];
-			pCurrentSection->nPC = nPC;
+			curOffset = unionStart[nUnionDepth] + unionSize[nUnionDepth];
 		}
 ;
 
@@ -1418,10 +1419,13 @@ string		: T_STRING {
 		}
 ;
 
-section		: T_POP_SECTION string ',' sectiontype sectorg sectattrs {
-			out_NewSection($2, $4, $5, &$6);
+section		: T_POP_SECTION sectunion string ',' sectiontype sectorg sectattrs {
+			out_NewSection($3, $5, $6, &$7, $2);
 		}
 ;
+
+sectunion	: /* empty */	{ $$ = false; }
+		| T_POP_UNION	{ $$ = true; }
 
 sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_VRAM	{ $$ = SECTTYPE_VRAM; }
