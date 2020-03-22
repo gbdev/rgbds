@@ -56,7 +56,7 @@ for i in *.asm; do
 
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
-			../../rgblink -o $gb $o > $output 2>&1
+			../../rgblink -o $gb $o
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
 			tryCmp $bin $output
 			our_rc=$(($? || $our_rc))
