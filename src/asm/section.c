@@ -155,6 +155,10 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				if (pSect->nOrg != -1 && pSect->nOrg != org)
 					fail("Section \"%s\" already declared as fixed at different address $%x",
 					     pSect->pzName, pSect->nOrg);
+				else if (pSect->nAlign != 0
+				      && ((pSect->nAlign - 1) & org))
+					fail("Section \"%s\" already declared as aligned to %u bytes",
+					     pSect->pzName, pSect->nAlign);
 				else
 					/* Otherwise, just override */
 					pSect->nOrg = org;
@@ -207,7 +211,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 					fail("Section \"%s\" already declared as unaligned",
 					     pSect->pzName);
 				else
-					fail("Section \"%s\" already declared as aligned to %u bits",
+					fail("Section \"%s\" already declared as aligned to %u bytes",
 					     pSect->pzName, pSect->nAlign);
 			}
 		}

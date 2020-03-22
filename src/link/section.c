@@ -38,6 +38,10 @@ void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
 
 static void mergeSections(struct Section *target, struct Section *other)
 {
+	if (target->type != other->type)
+		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
+		     other->name,
+		     typeNames[target->type], typeNames[other->type]);
 	if (other->isAddressFixed) {
 		if (target->isAddressFixed) {
 			if (target->org != other->org)

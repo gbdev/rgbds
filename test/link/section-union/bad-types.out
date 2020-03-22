@@ -1,0 +1,6 @@
+error: Section "conflicting types" is defined with conflicting types HRAM and WRAM0
+---
+ERROR: -(18):
+    Section "conflicting types" already exists but with type HRAM
+ERROR: -(18):
+    Cannot create section "conflicting types" (1 errors)

@@ -80,12 +80,25 @@ $RGBLINK -o $gbtemp2 $otemp
 i="high-low.asm" tryCmp $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
-$RGBASM -o $otemp section-union/a.asm
-$RGBASM -o $gbtemp2 section-union/b.asm
-$RGBLINK -o $gbtemp -l section-union/script.link $otemp $gbtemp2
-dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/ref.out.bin)) > $otemp 2>/dev/null
-i="section-union.asm" tryCmp section-union/ref.out.bin $otemp
+$RGBASM -o $otemp section-union/good/a.asm
+$RGBASM -o $gbtemp2 section-union/good/b.asm
+$RGBLINK -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2
+dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/good/ref.out.bin)) > $otemp 2>/dev/null
+i="section-union.asm" tryCmp section-union/good/ref.out.bin $otemp
 rc=$(($? || $rc))
+for i in section-union/*.asm; do
+	$RGBASM -o $otemp   $i
+	$RGBASM -o $gbtemp2 $i -DSECOND
+	if $RGBLINK $otemp $gbtemp2 > $outtemp 2>&1; then
+		echo -e "${bold}${red}$i didn't fail to link!${rescolors}${resbold}"
+		rc=1
+	fi
+	echo --- >> $outtemp
+	# Ensure RGBASM also errors out
+	echo 'SECOND equs "1"' | cat $i - $i | $RGBASM - 2>> $outtemp
+	tryDiff ${i%.asm}.out $outtemp
+	rc=$(($? || $rc))
+done
 
 rm -f $otemp $gbtemp $gbtemp2 $outtemp
 exit $rc

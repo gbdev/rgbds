@@ -1,0 +1,6 @@
+error: Section "conflicting banks" is defined with conflicting banks 4 and 1
+---
+ERROR: -(14):
+    Section "conflicting banks" already declared with different bank 4
+ERROR: -(14):
+    Cannot create section "conflicting banks" (1 errors)

@@ -1,0 +1,6 @@
+error: Section "conflicting alignment" is defined with conflicting 4-byte alignment and address $cafe
+---
+ERROR: -(18):
+    Section "conflicting alignment" already declared as aligned to 4 bytes
+ERROR: -(18):
+    Cannot create section "conflicting alignment" (1 errors)
