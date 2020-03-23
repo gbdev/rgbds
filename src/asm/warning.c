@@ -28,6 +28,7 @@ enum WarningState {
 };
 
 static enum WarningState const defaultWarnings[NB_WARNINGS] = {
+	WARNING_ENABLED,  /* Assertions */
 	WARNING_DISABLED, /* Invalid args to builtins */
 	WARNING_DISABLED, /* Division undefined behavior */
 	WARNING_DISABLED, /* Empty entry in `db`, `dw` or `dl` */
@@ -35,10 +36,9 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	WARNING_DISABLED, /* String too long for internal buffers */
 	WARNING_DISABLED, /* Obsolete things */
 	WARNING_DISABLED, /* Shifting undefined behavior */
-	WARNING_ENABLED,  /* User warnings */
-	WARNING_ENABLED,  /* Assertions */
 	WARNING_DISABLED, /* Strange shift amount */
 	WARNING_ENABLED,  /* Implicit truncation loses some bits */
+	WARNING_ENABLED,  /* User warnings */
 };
 
 static enum WarningState warningStates[NB_WARNINGS];
@@ -65,6 +65,7 @@ static enum WarningState warningState(enum WarningID id)
 }
 
 static char const *warningFlags[NB_WARNINGS_ALL] = {
+	"assert",
 	"builtin-args",
 	"div",
 	"empty-entry",
@@ -72,10 +73,9 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"long-string",
 	"obsolete",
 	"shift",
-	"user",
-	"assert",
 	"shift-amount",
 	"truncation",
+	"user",
 
 	/* Meta warnings */
 	"all",
@@ -111,8 +111,9 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_LONG_STR,
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
-	WARNING_USER,
 	WARNING_SHIFT_AMOUNT,
+	/* WARNING_TRUNCATION, */
+	/* WARNING_USER, */
 	META_WARNING_DONE
 };
 
