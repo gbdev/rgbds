@@ -78,3 +78,8 @@ BEGIN {
 {
 	print
 }
+
+/<head>/ {
+	# Add viewport size <meta> tag for mobile users
+	print "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+}
