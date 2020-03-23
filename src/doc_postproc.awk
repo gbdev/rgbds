@@ -1,5 +1,17 @@
 #!/usr/bin/awk -f
 
+/<link/ {
+	# Inject our own style overrides
+	print("  <link rel=\"stylesheet\" href=\"rgbds.css\" type=\"text/css\" media=\"all\"/>")
+}
+
+/^\s+<td><b class="Sy">.+<\/b><\/td>$/ {
+	# Assuming that all cells whose contents are bold are heading cells,
+	# use the HTML tag for those
+	sub(/td><b class="Sy"/, "th");
+	sub(/b><\/td/, "th");
+}
+
 BEGIN {
 	in_synopsis = 0
 }

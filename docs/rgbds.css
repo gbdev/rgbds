@@ -1,0 +1,52 @@
+/* Overrides to default mandoc styling for HTML renders of RGBDS man pages */
+
+html {
+	/* Reduce contrast */
+	background-color: #f8f8f8;
+	color: #222;
+}
+
+body {
+	/* Improve readability */
+	font-size: 16px;
+	line-height: 1.4;
+	text-align: justify;
+
+	/* Center body horizontally (requires <html> to span full width) */
+	margin: 10px auto;
+	/* `mandoc.css`'s default, but it's applied to <html> there */
+	max-width: 100ex;
+}
+@media print {
+	body {
+		/* Max width doesn't make sense for print */
+		max-width: none;
+		/* Make font slightly smaller for printing */
+		font-size: 14px;
+	}
+}
+
+code, pre {
+	font-size: smaller;
+}
+
+/* Separate lines in tables */
+table.Bl-column {
+	border-collapse: collapse;
+}
+table.Bl-column tr:not(:first-child) > td,
+table.Bl-column tr:not(:first-child) > th {
+	border-top: 1px solid #aaa;
+}
+
+table.Bl-column th {
+	/* Apply `.Sy` style to table headers */
+	font-style: normal;
+	font-weight: bold;
+}
+
+table.Bl-column td,
+table.Bl-column th {
+	/* Add horizontal spacing between columns */
+	padding: 2px 7px 0;
+}

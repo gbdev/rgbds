@@ -5,7 +5,10 @@
 
 /* Global defaults. */
 
-html {		max-width: 100ex; }
+/* This is handled in `rgbds.css` instead
+ *
+ * html {		max-width: 100ex; }
+ */
 body {		font-family: Helvetica,Arial,sans-serif; }
 table {		margin-top: 0em;
 		margin-bottom: 0em; }
