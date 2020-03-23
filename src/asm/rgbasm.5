@@ -240,11 +240,19 @@ There are a number of escape sequences you can use within a string:
 A funky feature is
 .Ql {symbol}
 within a string.
-This will examine the type of the symbol and insert its value accordingly.
-If symbol is a string symbol, the symbols value is simply copied.
-If it's a numeric symbol, the value is converted to hexadecimal notation with a dollar sign
+This will paste
+.Ar symbol Ap s
+contents as a string.
+If it's a string symbol, the string is simply inserted.
+If it's a numeric symbol, its value is converted to hexadecimal notation with a dollar sign
 .Sq $
 prepended.
+.Bd -literal -offset indent
+TOPIC equs "life, the universe, and everything"
+ANSWER = 42
+;\ Prints "The answer to life, the universe, and everything is $2A"
+PRINTT "The answer to {TOPIC} is {ANSWER}\[rs]n"
+.Ed
 .Pp
 It's possible to change the way numeric symbols are converted by specifying a print type like so:
 .Ql {d:symbol} .
