@@ -4,18 +4,21 @@ html {
 	/* Reduce contrast */
 	background-color: #f8f8f8;
 	color: #222;
+
+	/* Override `mandoc.css`'s sowe can put it on <body> instead */
+	max-width: none;
 }
 
 body {
-	/* Improve readability */
-	font-size: 16px;
-	line-height: 1.4;
-	text-align: justify;
-
 	/* Center body horizontally (requires <html> to span full width) */
 	margin: 0 auto;
 	/* `mandoc.css`'s default, but it's applied to <html> there */
 	max-width: 65em;
+
+	/* Improve readability */
+	font-size: 16px;
+	line-height: 1.4;
+	text-align: justify;
 }
 @media print {
 	body {

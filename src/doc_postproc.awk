@@ -1,10 +1,5 @@
 #!/usr/bin/awk -f
 
-/<link/ {
-	# Inject our own style overrides
-	print("  <link rel=\"stylesheet\" href=\"rgbds.css\" type=\"text/css\" media=\"all\"/>")
-}
-
 /^\s+<td><b class="Sy">.+<\/b><\/td>$/ {
 	# Assuming that all cells whose contents are bold are heading cells,
 	# use the HTML tag for those
@@ -82,4 +77,9 @@ BEGIN {
 /<head>/ {
 	# Add viewport size <meta> tag for mobile users
 	print "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+}
+
+/<link/ {
+	# Inject our own style overrides
+	print("  <link rel=\"stylesheet\" href=\"rgbds.css\" type=\"text/css\" media=\"all\"/>")
 }
