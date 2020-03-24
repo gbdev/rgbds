@@ -19,6 +19,9 @@ body {
 	font-size: 16px;
 	line-height: 1.4;
 	text-align: justify;
+
+	/* Prevent text from bumping sides on mobile devices */
+	padding: 10px 20px 10px 10px;
 }
 @media print {
 	body {
