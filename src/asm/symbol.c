@@ -500,9 +500,13 @@ struct sSymbol *sym_AddReloc(char const *tzSym)
  */
 void sym_Export(char const *tzSym)
 {
-	sym_Ref(tzSym);
 	struct sSymbol *nsym = sym_FindSymbol(tzSym);
 
+	/* If the symbol doesn't exist, create a ref that can be purged */
+	if (!nsym) {
+		nsym = sym_Ref(tzSym);
+		nsym->isReferenced = false;
+	}
 	nsym->isExported = true;
 }
 
@@ -531,7 +535,7 @@ struct sSymbol *sym_AddMacro(char const *tzSym, int32_t nDefLineNo)
  * Flag that a symbol is referenced in an RPN expression
  * and create it if it doesn't exist yet
  */
-void sym_Ref(char const *tzSym)
+struct sSymbol *sym_Ref(char const *tzSym)
 {
 	struct sSymbol *nsym = sym_FindSymbol(tzSym);
 
@@ -551,6 +555,8 @@ void sym_Ref(char const *tzSym)
 		nsym->type = SYM_REF;
 	}
 	nsym->isReferenced = true;
+
+	return nsym;
 }
 
 /*

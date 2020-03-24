@@ -101,7 +101,7 @@ uint32_t sym_GetConstantValue(char const *s);
 struct sSymbol *sym_FindSymbol(char const *tzName);
 char *sym_GetStringValue(struct sSymbol const *sym);
 struct sSymbol *sym_AddMacro(char const *tzSym, int32_t nDefLineNo);
-void sym_Ref(char const *tzSym);
+struct sSymbol *sym_Ref(char const *tzSym);
 struct sSymbol *sym_AddString(char const *tzSym, char const *tzValue);
 uint32_t sym_GetDefinedValue(char const *s);
 void sym_Purge(char const *tzName);
