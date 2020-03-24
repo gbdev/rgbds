@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,10 +29,12 @@
 
 #include "extern/err.h"
 
+#include "hashmap.h"
 #include "helpers.h"
 #include "version.h"
 
-struct sSymbol *tHashedSymbols[HASHSIZE];
+HashMap symbols;
+
 static struct sSymbol *pScope; /* Current section symbol scope */
 struct sSymbol *pPCSymbol;
 static struct sSymbol *p_NARGSymbol;
@@ -47,6 +50,26 @@ static char SavedHOUR[3];
 static char SavedMINUTE[3];
 static char SavedSECOND[3];
 static bool exportall;
+
+struct ForEachArgs {
+	void (*func)(struct sSymbol *, void *);
+	void *arg;
+};
+
+static void forEachWrapper(void *_symbol, void *_argWrapper)
+{
+	struct ForEachArgs *argWrapper = _argWrapper;
+	struct sSymbol *symbol = _symbol;
+
+	argWrapper->func(symbol, argWrapper->arg);
+}
+
+void sym_ForEach(void (*func)(struct sSymbol *, void *), void *arg)
+{
+	struct ForEachArgs argWrapper = { .func = func, .arg = arg };
+
+	hash_ForEach(symbols, forEachWrapper, &argWrapper);
+}
 
 static int32_t Callback_NARG(struct sSymbol const *self)
 {
@@ -80,14 +103,6 @@ int32_t sym_GetValue(struct sSymbol const *sym)
 }
 
 /*
- * Calculate the hash value for a symbol name
- */
-uint32_t sym_CalcHash(const char *s)
-{
-	return calchash(s) % HASHSIZE;
-}
-
-/*
  * Update a symbol's definition filename and line
  */
 static void updateSymbolFilename(struct sSymbol *nsym)
@@ -105,36 +120,28 @@ static void updateSymbolFilename(struct sSymbol *nsym)
  */
 static struct sSymbol *createsymbol(char const *s)
 {
-	struct sSymbol **ppsym;
-	uint32_t hash;
+	struct sSymbol *symbol = malloc(sizeof(*symbol));
 
-	hash = sym_CalcHash(s);
-	ppsym = &(tHashedSymbols[hash]);
+	if (!symbol)
+		fatalerror("Failed to create symbol: %s", strerror(errno));
 
-	while ((*ppsym) != NULL)
-		ppsym = &((*ppsym)->pNext);
-
-	(*ppsym) = malloc(sizeof(struct sSymbol));
-
-	if ((*ppsym) == NULL) {
-		fatalerror("No memory for symbol");
-		return NULL;
-	}
-
-	if (snprintf((*ppsym)->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
+	if (snprintf(symbol->tzName, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
 		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'", s);
 
-	(*ppsym)->isExported = false;
-	(*ppsym)->isBuiltin = false;
-	(*ppsym)->isReferenced = false;
-	(*ppsym)->pScope = NULL;
-	(*ppsym)->pNext = NULL;
-	(*ppsym)->pSection = NULL;
-	(*ppsym)->nValue = 0;
-	(*ppsym)->pMacro = NULL;
-	(*ppsym)->Callback = NULL;
-	updateSymbolFilename(*ppsym);
-	return *ppsym;
+	hash_AddElement(symbols, symbol->tzName, symbol);
+
+	symbol->isExported = false;
+	symbol->isBuiltin = false;
+	symbol->pScope = NULL;
+	symbol->pSection = NULL;
+	symbol->nValue = 0; /* TODO: is this necessary? */
+	symbol->pMacro = NULL;
+	symbol->Callback = NULL;
+
+	symbol->ID = -1;
+	symbol->next = NULL;
+	updateSymbolFilename(symbol);
+	return symbol;
 }
 
 /*
@@ -153,12 +160,10 @@ static void fullSymbolName(char *output, size_t outputSize,
 }
 
 /*
- * Find the pointer to a symbol by name and scope
+ * Find a symbol by name and scope
  */
-static struct sSymbol **findpsymbol(char const *s, struct sSymbol const *scope)
+static struct sSymbol *findsymbol(char const *s, struct sSymbol const *scope)
 {
-	struct sSymbol **ppsym;
-	int32_t hash;
 	char fullname[MAXSYMLEN + 1];
 
 	if (s[0] == '.' && scope) {
@@ -168,32 +173,11 @@ static struct sSymbol **findpsymbol(char const *s, struct sSymbol const *scope)
 
 	char const *separator = strchr(s, '.');
 
-	if (separator) {
-		if (strchr(separator + 1, '.'))
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
-				   s);
-	}
+	if (separator && strchr(separator + 1, '.'))
+		fatalerror("'%s' is a nonsensical reference to a nested local symbol",
+			   s);
 
-	hash = sym_CalcHash(s);
-	ppsym = &(tHashedSymbols[hash]);
-
-	while ((*ppsym) != NULL) {
-		if ((strcmp(s, (*ppsym)->tzName) == 0))
-			return ppsym;
-
-		ppsym = &((*ppsym)->pNext);
-	}
-	return NULL;
-}
-
-/*
- * Find a symbol by name and scope
- */
-static struct sSymbol *findsymbol(char const *s, struct sSymbol const *scope)
-{
-	struct sSymbol **ppsym = findpsymbol(s, scope);
-
-	return ppsym ? *ppsym : NULL;
+	return hash_GetElement(symbols, s);
 }
 
 /*
@@ -213,7 +197,7 @@ struct sSymbol *sym_FindSymbol(char const *tzName)
 
 static inline bool isReferenced(struct sSymbol const *sym)
 {
-	return sym->isReferenced;
+	return sym->ID != -1;
 }
 
 /*
@@ -221,33 +205,20 @@ static inline bool isReferenced(struct sSymbol const *sym)
  */
 void sym_Purge(char const *tzName)
 {
-	struct sSymbol **ppSym;
-	struct sSymbol *pscope;
+	struct sSymbol *scope = tzName[0] == '.' ? pScope : NULL;
+	struct sSymbol *symbol = findsymbol(tzName, scope);
 
-	if (*tzName == '.')
-		pscope = pScope;
-	else
-		pscope = NULL;
-
-	ppSym = findpsymbol(tzName, pscope);
-
-	if (!ppSym) {
+	if (!symbol) {
 		yyerror("'%s' not defined", tzName);
-	} else if ((*ppSym)->isBuiltin) {
+	} else if (symbol->isBuiltin) {
 		yyerror("Built-in symbol '%s' cannot be purged", tzName);
-	} else if (isReferenced(*ppSym)) {
+	} else if (isReferenced(symbol)) {
 		yyerror("Symbol \"%s\" is referenced and thus cannot be purged",
 			tzName);
 	} else {
-		struct sSymbol *pSym;
-
-		pSym = *ppSym;
-		*ppSym = pSym->pNext;
-
-		if (pSym->pMacro)
-			free(pSym->pMacro);
-
-		free(pSym);
+		hash_RemoveElement(symbols, tzName);
+		free(symbol->pMacro);
+		free(symbol);
 	}
 }
 
@@ -503,10 +474,8 @@ void sym_Export(char const *tzSym)
 	struct sSymbol *nsym = sym_FindSymbol(tzSym);
 
 	/* If the symbol doesn't exist, create a ref that can be purged */
-	if (!nsym) {
+	if (!nsym)
 		nsym = sym_Ref(tzSym);
-		nsym->isReferenced = false;
-	}
 	nsym->isExported = true;
 }
 
@@ -554,7 +523,6 @@ struct sSymbol *sym_Ref(char const *tzSym)
 		nsym = createsymbol(tzSym);
 		nsym->type = SYM_REF;
 	}
-	nsym->isReferenced = true;
 
 	return nsym;
 }
@@ -583,9 +551,6 @@ static inline char const *removeLeadingZeros(char const *ptr)
  */
 void sym_Init(void)
 {
-	for (int32_t i = 0; i < HASHSIZE; i++)
-		tHashedSymbols[i] = NULL;
-
 	pPCSymbol = sym_AddReloc("@");
 	pPCSymbol->Callback = CallbackPC;
 	pPCSymbol->isBuiltin = true;

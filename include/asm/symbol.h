@@ -34,9 +34,7 @@ struct sSymbol {
 	enum SymbolType type;
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
-	bool isReferenced; /* Whether the symbol is referenced in a RPN expr */
 	struct sSymbol *pScope;
-	struct sSymbol *pNext;
 	struct Section *pSection;
 	int32_t nValue;
 	uint32_t ulMacroSize;
@@ -44,6 +42,9 @@ struct sSymbol {
 	int32_t (*Callback)(struct sSymbol const *self);
 	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t nFileLine; /* Line where the symbol was defined. */
+
+	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */
+	struct sSymbol *next; /* Next object to output in the object file */
 };
 
 static inline bool sym_IsDefined(struct sSymbol const *sym)
@@ -87,8 +88,9 @@ static inline char *sym_GetStringValue(struct sSymbol const *sym)
 	return sym->pMacro;
 }
 
+void sym_ForEach(void (*func)(struct sSymbol *, void *), void *arg);
+
 int32_t sym_GetValue(struct sSymbol const *sym);
-uint32_t sym_CalcHash(const char *s);
 void sym_SetExportAll(bool set);
 struct sSymbol *sym_AddLocalReloc(char const *tzSym);
 struct sSymbol *sym_AddReloc(char const *tzSym);

@@ -34,7 +34,6 @@ extern uint32_t unionStart[MAXUNIONS];
 extern uint32_t unionSize[MAXUNIONS];
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
-extern struct sSymbol *tHashedSymbols[HASHSIZE];
 extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 

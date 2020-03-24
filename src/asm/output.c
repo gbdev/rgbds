@@ -40,13 +40,6 @@ struct Patch {
 	struct Patch *pNext;
 };
 
-struct PatchSymbol {
-	uint32_t ID;
-	struct sSymbol const *pSymbol;
-	struct PatchSymbol *pNext;
-	struct PatchSymbol *pBucketNext; /* next symbol in hash table bucket */
-};
-
 struct Assertion {
 	struct Patch *patch;
 	struct Section *section;
@@ -54,29 +47,17 @@ struct Assertion {
 	struct Assertion *next;
 };
 
-struct PatchSymbol *tHashedPatchSymbols[HASHSIZE];
-struct Section *pSectionList, *pCurrentSection;
-struct PatchSymbol *pPatchSymbols;
-struct PatchSymbol **ppPatchSymbolsTail = &pPatchSymbols;
-struct Assertion *assertions = NULL;
 char *tzObjectname;
 
-/*
- * Count the number of symbols used in this object
- */
-static uint32_t countsymbols(void)
-{
-	struct PatchSymbol *pSym;
-	uint32_t count = 0;
+/* TODO: shouldn't `pCurrentSection` be somewhere else? */
+struct Section *pSectionList, *pCurrentSection;
 
-	pSym = pPatchSymbols;
-	while (pSym) {
-		count++;
-		pSym = pSym->pNext;
-	}
+/* Linked list of symbols to put in the object file */
+static struct sSymbol *objectSymbols = NULL;
+static struct sSymbol **objectSymbolsTail = &objectSymbols;
+static uint32_t nbSymbols = 0; /* Length of the above list */
 
-	return count;
-}
+static struct Assertion *assertions = NULL;
 
 /*
  * Count the number of sections used in this object
@@ -236,10 +217,8 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
 		break;
 	case SYMTYPE_EXPORT:
 		offset = pSym->nValue;
-		if (pSym->type != SYM_LABEL)
-			sectid = -1;
-		else
-			sectid = getsectid(pSym->pSection);
+		sectid = pSym->type == SYM_LABEL ? getsectid(pSym->pSection)
+						 : -1;
 		break;
 	}
 
@@ -256,58 +235,18 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
 }
 
 /*
- * Add a symbol to the object
+ * Returns a symbol's ID within the object file
+ * If the symbol does not have one, one is assigned by registering the symbol
  */
-static uint32_t nextID;
-
-static uint32_t addsymbol(struct sSymbol const *pSym)
+static uint32_t getSymbolID(struct sSymbol *sym)
 {
-	struct PatchSymbol *pPSym, **ppPSym;
-	uint32_t hash;
+	if (sym->ID == -1) {
+		sym->ID = nbSymbols++;
 
-	hash = sym_CalcHash(pSym->tzName);
-	ppPSym = &(tHashedPatchSymbols[hash]);
-
-	while ((*ppPSym) != NULL) {
-		if (pSym == (*ppPSym)->pSymbol)
-			return (*ppPSym)->ID;
-		ppPSym = &((*ppPSym)->pBucketNext);
+		*objectSymbolsTail = sym;
+		objectSymbolsTail = &sym->next;
 	}
-
-	pPSym = malloc(sizeof(struct PatchSymbol));
-	*ppPSym = pPSym;
-
-	if (pPSym == NULL)
-		fatalerror("No memory for patchsymbol");
-
-	pPSym->pNext = NULL;
-	pPSym->pBucketNext = NULL;
-	pPSym->pSymbol = pSym;
-	pPSym->ID = nextID++;
-
-	*ppPatchSymbolsTail = pPSym;
-	ppPatchSymbolsTail = &(pPSym->pNext);
-
-	return pPSym->ID;
-}
-
-/*
- * Add all exported symbols to the object
- */
-static void addexports(void)
-{
-	int32_t i;
-
-	for (i = 0; i < HASHSIZE; i++) {
-		struct sSymbol *pSym;
-
-		pSym = tHashedSymbols[i];
-		while (pSym) {
-			if (pSym->isExported)
-				addsymbol(pSym);
-			pSym = pSym->pNext;
-		}
-	}
+	return sym->ID;
 }
 
 static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
@@ -330,63 +269,46 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 			break;
 		case RPN_SYM:
 		{
-			uint32_t symptr = 0;
-
-			while ((tzSym[symptr++] = popbyte()) != 0)
+			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
 				;
+			struct sSymbol *sym = sym_FindSymbol(tzSym);
+			uint32_t value;
 
-			struct sSymbol const *sym = sym_FindSymbol(tzSym);
-
-			if (!sym) {
-				break; // TODO: wtf?
-			} else if (sym_IsConstant(sym)) {
-				uint32_t value;
-
-				value = sym_GetConstantValue(tzSym);
+			if (sym_IsConstant(sym)) {
 				writebyte(RPN_CONST);
-				writebyte(value & 0xFF);
-				writebyte(value >> 8);
-				writebyte(value >> 16);
-				writebyte(value >> 24);
+				value = sym_GetConstantValue(tzSym);
 			} else {
-				symptr = addsymbol(sym);
 				writebyte(RPN_SYM);
-				writebyte(symptr & 0xFF);
-				writebyte(symptr >> 8);
-				writebyte(symptr >> 16);
-				writebyte(symptr >> 24);
+				value = getSymbolID(sym);
 			}
+			writebyte(value & 0xFF);
+			writebyte(value >> 8);
+			writebyte(value >> 16);
+			writebyte(value >> 24);
 			break;
 		}
 		case RPN_BANK_SYM:
 		{
-			struct sSymbol *sym;
-			uint32_t symptr = 0;
-
-			while ((tzSym[symptr++] = popbyte()) != 0)
+			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
 				;
+			struct sSymbol *sym = sym_FindSymbol(tzSym);
+			uint32_t value = getSymbolID(sym);
 
-			sym = sym_FindSymbol(tzSym);
-			if (sym == NULL)
-				break;
-
-			symptr = addsymbol(sym);
 			writebyte(RPN_BANK_SYM);
-			writebyte(symptr & 0xFF);
-			writebyte(symptr >> 8);
-			writebyte(symptr >> 16);
-			writebyte(symptr >> 24);
+			writebyte(value & 0xFF);
+			writebyte(value >> 8);
+			writebyte(value >> 16);
+			writebyte(value >> 24);
 			break;
 		}
 		case RPN_BANK_SECT:
 		{
-			uint16_t b;
+			uint8_t b;
 
 			writebyte(RPN_BANK_SECT);
-
 			do {
 				b = popbyte();
-				writebyte(b & 0xFF);
+				writebyte(b);
 			} while (b != 0);
 			break;
 		}
@@ -471,32 +393,40 @@ static void writeassert(struct Assertion *assert, FILE *f)
 	fputstring(assert->message, f);
 }
 
+static void registerExportedSymbol(struct sSymbol *symbol, void *arg)
+{
+	(void)arg;
+	if (symbol->isExported && symbol->ID == -1) {
+		*objectSymbolsTail = symbol;
+		objectSymbolsTail = &symbol->next;
+		nbSymbols++;
+	}
+}
+
 /*
  * Write an objectfile
  */
 void out_WriteObject(void)
 {
 	FILE *f;
-	struct PatchSymbol *pSym;
 	struct Section *pSect;
 	struct Assertion *assert = assertions;
-
-	addexports();
 
 	f = fopen(tzObjectname, "wb");
 	if (!f)
 		err(1, "Couldn't write file '%s'", tzObjectname);
 
+	/* Also write exported symbols that weren't written above */
+	sym_ForEach(registerExportedSymbol, NULL);
+
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
 	fputlong(RGBDS_OBJECT_REV, f);
 
-	fputlong(countsymbols(), f);
+	fputlong(nbSymbols, f);
 	fputlong(countsections(), f);
 
-	pSym = pPatchSymbols;
-	while (pSym) {
-		writesymbol(pSym->pSymbol, f);
-		pSym = pSym->pNext;
+	for (struct sSymbol const *sym = objectSymbols; sym; sym = sym->next) {
+		writesymbol(sym, f);
 	}
 
 	pSect = pSectionList;
