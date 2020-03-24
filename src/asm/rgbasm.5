@@ -231,6 +231,7 @@ There are a number of escape sequences you can use within a string:
 .It Ql \[rs]{ Ta Curly bracket left
 .It Ql \[rs]} Ta Curly bracket right
 .It Ql \[rs]n Ta Newline ($0A)
+.It Ql \[rs]r Ta Carriage return ($0D)
 .It Ql \[rs]t Ta Tab ($09)
 .It Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc Ta Macro argument (Only the body of a macro, see Sx Invoking macros )
 .It Ql \[rs]@ Ta Label name suffix (Only in the body of macros and REPTs)
@@ -1031,7 +1032,7 @@ Nesting unions is possible, with each inner union's size being considered as des
 Unions may be used in any section, but inside them may only be
 .Ic DS -
 like commands (see
-.Xr Declaring variables in a RAM section ) .
+.Sx Declaring variables in a RAM section ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
 .Pp
@@ -1179,6 +1180,9 @@ will get the value of
 and so forth.
 .Pp
 This is the only way of accessing the value of arguments from 10 to 256.
+.Pp
+.Ic SHIFT
+can optionally be given an integer parameter, and will apply the above shifting that number of times.
 .Ss Printing things during assembly
 .Pp
 The next four commands print text and values to the standard output.
@@ -1308,7 +1312,7 @@ or
 If the assertion fails,
 .Ic WARN
 will cause a simple warning (controlled by
-.Xr rgbasm 1 DIAGNOSTICS
+.Xr rgbasm 1
 flag
 .Fl Wassert )
 to be emitted;
