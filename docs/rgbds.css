@@ -15,7 +15,7 @@ body {
 	/* Center body horizontally (requires <html> to span full width) */
 	margin: 0 auto;
 	/* `mandoc.css`'s default, but it's applied to <html> there */
-	max-width: 100ex;
+	max-width: 65em;
 }
 @media print {
 	body {
