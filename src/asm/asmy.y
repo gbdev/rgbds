@@ -555,7 +555,6 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %left	NEG /* negation -- unary minus */
 
 %token	<tzSym> T_LABEL
-%token	<tzSym> T_LOCAL_LABEL
 %type	<tzSym> scoped_label
 %type	<tzSym> scoped_label_bare
 %token	<tzSym> T_ID
@@ -671,12 +670,12 @@ line		: label
 scoped_label_bare : T_LABEL {
 			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated");
 		}
-		| T_LOCAL_LABEL
+		| T_LOCAL_ID
 ;
 scoped_label	: T_LABEL ':' {
 			strcpy($$, $1);
 		}
-		| T_LOCAL_LABEL ':' {
+		| T_LOCAL_ID ':' {
 			strcpy($$, $1);
 		}
 ;

@@ -905,12 +905,8 @@ scanagain:
 		if (type == T_ID && strchr(yylval.tzSym, '.'))
 			type = T_LOCAL_ID;
 
-		if (linestart) {
-			if (type == T_ID)
-				return T_LABEL;
-			if (type == T_LOCAL_ID)
-				return T_LOCAL_LABEL;
-		}
+		if (linestart && type == T_ID)
+			return T_LABEL;
 		return type;
 	}
 
