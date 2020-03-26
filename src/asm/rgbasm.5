@@ -575,36 +575,36 @@ Luckily,
 blocks are the perfect solution to that.
 Here's an example of how to use them:
 .Bd -literal -offset indent
-    SECTION "LOAD example", ROMX
-    CopyCode:
-        ld de, RAMCode
-        ld hl, RAMLocation
-        ld c, RAMLocation.end - RAMLocation
-    .loop
-        ld a, [de]
-        inc de
-        ld [hli], a
-        dec c
-        jr nz, .loop
-        ret
+SECTION "LOAD example", ROMX
+CopyCode:
+    ld de, RAMCode
+    ld hl, RAMLocation
+    ld c, RAMLocation.end - RAMLocation
+\&.loop
+    ld a, [de]
+    inc de
+    ld [hli], a
+    dec c
+    jr nz, .loop
+    ret
 
-    RAMCode:
-      LOAD "RAM code", WRAM0
-    RAMLocation:
-        ld hl, .string
-        ld de, $9864
-    .copy
-        ld a, [hli]
-        ld [de], a
-        inc de
-        and a
-        jr nz, .copy
-        ret
+RAMCode:
+  LOAD "RAM code", WRAM0
+RAMLocation:
+    ld hl, .string
+    ld de, $9864
+\&.copy
+    ld a, [hli]
+    ld [de], a
+    inc de
+    and a
+    jr nz, .copy
+    ret
 
-    .string
-        db "Hello World!", 0
-    .end
-      ENDL
+\&.string
+    db "Hello World!", 0
+\&.end
+  ENDL
 .Ed
 .Pp
 A
@@ -625,6 +625,52 @@ The former is situated in ROM, where the code is stored, the latter in RAM, wher
 You cannot nest
 .Ic LOAD
 blocks, nor can you change the current section within them.
+.Ss Unionized Sections
+.Pp
+When you're tight on RAM, you may want to define overlapping blocks of variables, as explained in the
+.Sx Unions
+section.
+However, the
+.Ic UNION
+keyword only works within a single file, which prevents e.g. defining temporary variables on a single memory area across several files.
+Unionized sections solve this problem.
+To declare an unionized section, add a
+.Ic UNION
+keyword after the
+.Ic SECTION
+one; the declaration is otherwise not different.
+Unionized sections follow some different rules from normal sections:
+.Bl -bullet -offset indent
+.It
+The same unionized section (= having the same name) can be declared several times per
+.Nm
+invocation, and across several invocations.
+Different declarations are treated and merged identically whether within the same invocation, or different ones.
+.It
+A section cannot be declared both as unionized or non-unionized.
+.It
+All declarations must have the same type.
+For example, even if
+.Xr rgblink 1 Ap s
+.Fl w
+flag is used,
+.Ic WRAM0
+and
+.Ic WRAMX
+types are still considered different.
+.It
+Different constraints (alignment, bank, etc.) can be specified for each unionized section declaration, but they must all be compatible.
+For example, alignment must be compatible with any fixed address, all specified banks must be the same, etc.
+.It
+Unionized sections cannot have type
+.Ic ROM0
+or
+.Ic ROMX .
+.El
+.Pp
+Different declarations of the same unionized section are not appended, but instead overlaid on top of eachother, just like
+.Sx Unions .
+Similarly, the size of an unionized section is the largest of all its declarations.
 .Sh SYMBOLS
 .Pp
 RGBDS supports several types of symbols:
