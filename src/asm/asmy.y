@@ -669,8 +669,11 @@ line		: label
 
 scoped_label_bare : T_LABEL {
 			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated");
+			strcpy($$, $1);
 		}
-		| T_LOCAL_ID
+		| T_LOCAL_ID {
+			strcpy($$, $1);
+		}
 ;
 scoped_label	: T_LABEL ':' {
 			strcpy($$, $1);
