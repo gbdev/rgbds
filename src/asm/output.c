@@ -381,12 +381,13 @@ static void registerExportedSymbol(struct sSymbol *symbol, void *arg)
  */
 void out_WriteObject(void)
 {
+	FILE *f;
 	struct Section *pSect;
 	struct Assertion *assert = assertions;
-	FILE *f = tmpfile(); /* Avoids producing a corrupted file on error */
 
+	f = fopen(tzObjectname, "wb");
 	if (!f)
-		err(1, "Couldn't create temporary file");
+		err(1, "Couldn't write file '%s'", tzObjectname);
 
 	/* Also write exported symbols that weren't written above */
 	sym_ForEach(registerExportedSymbol, NULL);
@@ -413,31 +414,6 @@ void out_WriteObject(void)
 		assert = assert->next;
 	}
 
-	/* We're finished writing the file; now, copy it to the final one */
-	FILE *objFile = fopen(tzObjectname, "wb");
-	long size = ftell(f);
-	char buf[1024];
-
-	rewind(f);
-	while (size) {
-		long blockSize = size < sizeof(buf) ? size : sizeof(buf);
-
-		if (fread(buf, blockSize, 1, f) < 1
-		 || fwrite(buf, blockSize, 1, objFile) < 1) {
-			char const *errmsg =
-				ferror(f) || ferror(objFile) ? strerror(errno)
-							     : "end of file";
-
-			fclose(objFile);
-			fclose(f);
-			remove(tzObjectname);
-			errx(1, "Failed to write file \"%s\": %s", tzObjectname,
-			     errmsg);
-		}
-		size -= blockSize;
-	}
-
-	fclose(objFile);
 	fclose(f);
 }
 
