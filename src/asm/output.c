@@ -195,42 +195,15 @@ static void writesection(struct Section *pSect, FILE *f)
  */
 static void writesymbol(struct sSymbol const *pSym, FILE *f)
 {
-	uint32_t type;
-	uint32_t offset;
-	int32_t sectid;
-
-	if (!sym_IsDefined(pSym))
-		type = SYMTYPE_IMPORT;
-	else if (pSym->isExported)
-		type = SYMTYPE_EXPORT;
-	else
-		type = SYMTYPE_LOCAL;
-
-	switch (type) {
-	case SYMTYPE_LOCAL:
-		offset = pSym->nValue;
-		sectid = getsectid(pSym->pSection);
-		break;
-	case SYMTYPE_IMPORT:
-		offset = 0;
-		sectid = -1;
-		break;
-	case SYMTYPE_EXPORT:
-		offset = pSym->nValue;
-		sectid = pSym->type == SYM_LABEL ? getsectid(pSym->pSection)
-						 : -1;
-		break;
-	}
-
 	fputstring(pSym->tzName, f);
-	fputc(type, f);
-
-	if (type != SYMTYPE_IMPORT) {
+	if (!sym_IsDefined(pSym)) {
+		fputc(SYMTYPE_IMPORT, f);
+	} else {
+		fputc(pSym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
 		fputstring(pSym->tzFileName, f);
 		fputlong(pSym->nFileLine, f);
-
-		fputlong(sectid, f);
-		fputlong(offset, f);
+		fputlong(pSym->pSection ? getsectid(pSym->pSection) : -1, f);
+		fputlong(pSym->nValue, f);
 	}
 }
 
