@@ -106,7 +106,10 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 {
 	struct sSymbol *sym = sym_FindSymbol(tzSym);
 
-	if (!sym || !sym_IsConstant(sym)) {
+	if (sym == pPCSymbol && !pPCSymbol->pSection) {
+		yyerror("PC has no value outside a section");
+		rpn_Number(expr, 0);
+	} else if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
 		expr->isSymbol = true;
 

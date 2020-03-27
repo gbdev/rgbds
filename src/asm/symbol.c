@@ -230,7 +230,9 @@ uint32_t sym_GetConstantValue(char const *s)
 	struct sSymbol const *psym = sym_FindSymbol(s);
 
 	if (psym == pPCSymbol) {
-		if (pCurrentSection->nOrg == -1)
+		if (!pCurrentSection)
+			yyerror("PC has no value outside a section");
+		else if (pCurrentSection->nOrg == -1)
 			yyerror("Expected constant PC but section is not fixed");
 		else
 			return sym_GetValue(psym);
