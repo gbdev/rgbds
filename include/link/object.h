@@ -23,6 +23,11 @@ void obj_ReadFile(char const *fileName);
 void obj_DoSanityChecks(void);
 
 /**
+ * Evaluate all assertions
+ */
+void obj_CheckAssertions(void);
+
+/**
  * `free`s all object memory that was allocated.
  */
 void obj_Cleanup(void);

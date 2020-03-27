@@ -512,7 +512,10 @@ void obj_ReadFile(char const *fileName)
 void obj_DoSanityChecks(void)
 {
 	sect_DoSanityChecks();
+}
 
+void obj_CheckAssertions(void)
+{
 	patch_CheckAssertions(assertions);
 }
 
