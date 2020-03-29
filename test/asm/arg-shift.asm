@@ -21,6 +21,16 @@ bad: MACRO
 	PRINTT "\n"
 ENDM
 
+bad_rept: MACRO
+	REPT _NARG - 2
+		REPT 1
+			shift
+		ENDR
+	ENDR
+	PRINTT \1
+	PRINTT "\n"
+ENDM
+
 	print_all This test, probably, passes\,, but who knows, ?
 
 	print_some R,e,d,n,e,x,G,a,m,e,B,o,y,D,e,v,e,l,o,p,e,m,e,n,t,S,y,s,t,e,m,\n
@@ -30,3 +40,10 @@ ENDM
 	bad 0, 1, 2, 3, "L"
 	bad 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "L"
 	bad as, asd, asdf, asdfg, asdgh, "O"
+
+	bad_rept "B", 0, " ", 11
+	bad_rept "U", 1, "W", 10
+	bad_rept "G", 2, "O", 9
+	bad_rept "G", 3, "R", 8
+	bad_rept "E", 4, "L", 7
+	bad_rept "D", 5, "D", 6
