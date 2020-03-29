@@ -362,7 +362,7 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 static void writeassert(struct Assertion *assert, FILE *f)
 {
 	writepatch(assert->patch, f);
-	fputlong(getsectid(assert->section), f);
+	fputlong(assert->section ? getsectid(assert->section) : -1, f);
 	fputstring(assert->message, f);
 }
 

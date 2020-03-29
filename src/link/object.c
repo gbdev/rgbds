@@ -356,7 +356,7 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 	readPatch(file, &assert->patch, fileName, assertName, 0);
 	tryReadlong(sectionID, file, "%s: Cannot read assertion's section ID: %s",
 		    fileName);
-	assert->section = fileSections[sectionID];
+	assert->section = sectionID == -1 ? NULL : fileSections[sectionID];
 	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
 		   fileName);
 }
@@ -502,6 +502,7 @@ void obj_ReadFile(char const *fileName)
 		if (!assertion)
 			err(1, "%s: Couldn't create new assertion", fileName);
 		readAssertion(file, assertion, fileName, fileSections, i);
+		assertion->fileSymbols = fileSymbols;
 		assertion->next = assertions;
 		assertions = assertion;
 	}

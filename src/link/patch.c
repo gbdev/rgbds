@@ -117,7 +117,7 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
-static struct Symbol const *getSymbol(struct Symbol ** const symbolList,
+static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
 				      uint32_t index, char const *fileName)
 {
 	struct Symbol const *symbol = symbolList[index];
@@ -142,7 +142,8 @@ static struct Symbol const *getSymbol(struct Symbol ** const symbolList,
  * @return The patch's value
  */
 static int32_t computeRPNExpr(struct Patch const *patch,
-			      struct Section const *section)
+			      struct Section const *section,
+			      struct Symbol const * const *fileSymbols)
 {
 /* Small shortcut to avoid a lot of repetition */
 #define popRPN() popRPN(patch->fileName)
@@ -256,7 +257,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
 
-			value = getSymbol(section->fileSymbols, value,
+			value = getSymbol(fileSymbols, value,
 					  patch->fileName)->section->bank;
 			break;
 
@@ -312,8 +313,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
 
-			symbol = getSymbol(section->fileSymbols, value,
-					   patch->fileName);
+			symbol = getSymbol(fileSymbols, value, patch->fileName);
 
 			if (!strcmp(symbol->name, "@")) {
 				value = section->org + patch->offset;
@@ -346,7 +346,9 @@ void patch_CheckAssertions(struct Assertion *assert)
 	uint8_t failures = 0;
 
 	while (assert) {
-		if (!computeRPNExpr(&assert->patch, assert->section)) {
+		if (!computeRPNExpr(&assert->patch, assert->section,
+				    (struct Symbol const * const *)
+				    			assert->fileSymbols)) {
 			switch ((enum AssertionType)assert->patch.type) {
 			case ASSERT_FATAL:
 				errx(1, "%s: %s", assert->patch.fileName,
@@ -393,7 +395,9 @@ static void applyFilePatches(struct Section *section)
 	verbosePrint("Patching section \"%s\"...\n", section->name);
 	for (uint32_t patchID = 0; patchID < section->nbPatches; patchID++) {
 		struct Patch *patch = &section->patches[patchID];
-		int32_t value = computeRPNExpr(patch, section);
+		int32_t value = computeRPNExpr(patch, section,
+					       (struct Symbol const * const *)
+							section->fileSymbols);
 
 		/* `jr` is quite unlike the others... */
 		if (patch->type == PATCHTYPE_JR) {
