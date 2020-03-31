@@ -410,8 +410,8 @@ static void update_built_palette(png_color *palette,
 	}
 	if (!color_exists) {
 		if (*num_colors == colors) {
-			err(1, "Too many colors in input PNG file to fit into a %d-bit palette (max %d).",
-			    depth, colors);
+			errx(1, "Too many colors in input PNG file to fit into a %d-bit palette (max %d).",
+			     depth, colors);
 		}
 		palette[*num_colors] = *pixel_color;
 		(*num_colors)++;
