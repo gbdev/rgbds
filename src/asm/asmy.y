@@ -1316,9 +1316,6 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		} '(' scoped_id ')' {
 			struct sSymbol const *sym = sym_FindSymbol($4);
 
-			if (sym && !(sym_IsDefined(sym) && sym->type != SYM_LABEL))
-				yyerror("Label \"%s\" is not a valid argument to DEF",
-					$4);
 			rpn_Number(&$$, !!sym);
 
 			oDontExpandStrings = false;

@@ -1,3 +1,0 @@
-ERROR: pc-def.asm(1):
-    Label "@" is not a valid argument to DEF
-error: Assembly aborted (1 errors)!
