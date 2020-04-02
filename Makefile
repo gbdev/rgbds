@@ -32,7 +32,7 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 WARNFLAGS	:= -Wall
 
 # Overridable CFLAGS
-CFLAGS		:= -g -O0
+CFLAGS		:= -O3
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c11 -D_POSIX_C_SOURCE=200809L \
 		   -D_DEFAULT_SOURCE -Iinclude
@@ -224,7 +224,7 @@ develop:
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
-		-fsanitize=alignment -fsanitize=null -DDEVELOP=1"
+		-fsanitize=alignment -fsanitize=null -DDEVELOP" CFLAGS="-g -O0"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
