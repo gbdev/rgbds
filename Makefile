@@ -197,15 +197,15 @@ checkpatch:
 MANDOC	:= -Thtml -Ios=General -Oman=%N.%S.html -Ostyle=mandoc.css
 
 wwwman:
-	$Qmandoc ${MANDOC} src/rgbds.7 > docs/rgbds.7.html
-	$Qmandoc ${MANDOC} src/gbz80.7 > docs/gbz80.7.html
-	$Qmandoc ${MANDOC} src/rgbds.5 > docs/rgbds.5.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.1 > docs/rgbasm.1.html
-	$Qmandoc ${MANDOC} src/asm/rgbasm.5 > docs/rgbasm.5.html
-	$Qmandoc ${MANDOC} src/fix/rgbfix.1 > docs/rgbfix.1.html
-	$Qmandoc ${MANDOC} src/link/rgblink.1 > docs/rgblink.1.html
-	$Qmandoc ${MANDOC} src/link/rgblink.5 > docs/rgblink.5.html
-	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 > docs/rgbgfx.1.html
+	$Qmandoc ${MANDOC} src/rgbds.7 | src/doc_postproc.awk > docs/rgbds.7.html
+	$Qmandoc ${MANDOC} src/gbz80.7 | src/doc_postproc.awk > docs/gbz80.7.html
+	$Qmandoc ${MANDOC} src/rgbds.5 | src/doc_postproc.awk > docs/rgbds.5.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.1 | src/doc_postproc.awk > docs/rgbasm.1.html
+	$Qmandoc ${MANDOC} src/asm/rgbasm.5 | src/doc_postproc.awk > docs/rgbasm.5.html
+	$Qmandoc ${MANDOC} src/fix/rgbfix.1 | src/doc_postproc.awk > docs/rgbfix.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.1 | src/doc_postproc.awk > docs/rgblink.1.html
+	$Qmandoc ${MANDOC} src/link/rgblink.5 | src/doc_postproc.awk > docs/rgblink.5.html
+	$Qmandoc ${MANDOC} src/gfx/rgbgfx.1 | src/doc_postproc.awk > docs/rgbgfx.1.html
 
 # This target is used during development in order to prevent adding new issues
 # to the source code. All warnings are treated as errors in order to block the

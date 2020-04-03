@@ -51,9 +51,9 @@ The defaults are 01.
 .It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl Fl define Ar name Ns Oo = Ns Ar value Oc
 Add a string symbol to the compiled source code.
 This is equivalent to
-.Ql Ar name Ic EQUS Qq Ar value
+.Ql Ar name Ic EQUS \(dq Ns Ar value Ns \(dq
 in code, or
-.Ql Ar name Ic EQUS Qq 1
+.Ql Ar name Ic EQUS \(dq1\(dq
 if
 .Ar value
 is not specified.
@@ -153,7 +153,9 @@ prefix, entries are listed alphabetically.
 Warns when
 .Ic WARN Ns No -type
 assertions fail. (See
-.Xr rgbasm 5 "Aborting the assembly process"
+.Dq Aborting the assembly process
+in
+.Xr rgbasm 5
 for
 .Ic ASSERT ) .
 .It Fl Wbuiltin-args
@@ -182,37 +184,40 @@ This warning is enabled by
 Warn when obsolete constructs such as the
 .Ic jp [hl]
 instruction or
-.Cm HOME
+.Ic HOME
 section type are encountered.
 This warning is enabled by
 .Fl Wextra .
 .It Fl Wshift
-Warn when shifting triggers C undefined behavior, potentially causing unpredictable behavior.
-Shfting behavior will be changed and this warning removed before next release.
+Warn when shifting right a negative value.
+Use a division by 2^N instead.
+.It Fl Wshift-amount
+Warn when a shift's operand is negative or greater than 32.
+.It Fl Wno-truncation
+Warn when an implicit truncation (for example,
+.Ic db )
+loses some bits.
 .It Fl Wno-user
-Warns when the
+Warn when the
 .Ic WARN
 built-in is executed. (See
-.Xr rgbasm 5 "Aborting the assembly process"
+.Dq Aborting the assembly process
+in
+.Xr rgbasm 5
 for
 .Ic WARN ) .
 .El
 .Sh EXAMPLES
 You can assemble a source file in two ways.
-Straightforward way:
 .Pp
-.Bd -literal -offset indent
-$ rgbasm -o bar.o foo.asm
-.Ed
+Straightforward way:
+.Dl $ rgbasm -o bar.o foo.asm
 .Pp
 Pipes way:
+.Dl $ cat foo.asm | rgbasm -o bar.o -
+.Dl $ rgbasm -o bar.o - < foo.asm
 .Pp
-.Bd -literal -offset indent
-$ cat foo.asm | rgbasm -o bar.o -
-$ rgbasm -o bar.o - < foo.asm
-.Ed
-.Pp
-The resulting object file is not yet a usable ROM image \(em it must first be run through
+The resulting object file is not yet a usable ROM image\(emit must first be run through
 .Xr rgblink 1
 and then
 .Xr rgbfix 1 .
