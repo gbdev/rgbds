@@ -8,8 +8,10 @@
    SPDX-License-Identifier: MIT
    -->
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <link rel="stylesheet" href="rgbds.css" type="text/css" media="all"/>
   <title>RGBDS(5)</title>
 </head>
 <body>
@@ -24,29 +26,30 @@
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
 <code class="Nm">rgbds</code> &#x2014;
-<div class="Nd">object file format documentation</div>
+<span class="Nd">object file format documentation</span>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-This is the description of the object files used by <a class="Xr">rgbasm(1)</a>
-  and <a class="Xr">rgblink(1)</a>. Please, note that the specifications may
-  change. This toolchain is in development and new features may require adding
-  more information to the current format, or modifying some fields, which would
-  break compatibility with older versions.
+This is the description of the object files used by <a class="Xr" href="rgbasm.1.html">rgbasm(1)</a>
+  and <a class="Xr" href="rgblink.1.html">rgblink(1)</a>. <i class="Em">Please note that the
+  specifications may change.</i> This toolchain is in development and new
+  features may require adding more information to the current format, or
+  modifying some fields, which would break compatibility with older versions.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="FILE_STRUCTURE"><a class="permalink" href="#FILE_STRUCTURE">FILE
   STRUCTURE</a></h1>
 The following types are used:
 <p class="Pp"><var class="Ar">LONG</var> is a 32&#x2010;bit integer stored in
-    little&#x2010;endian format (Intel). <var class="Ar">BYTE</var> is an
-    8&#x2010;bit integer. <var class="Ar">STRING</var> is a 0&#x2010;terminated
-    string of <var class="Ar">BYTE</var>.</p>
+    little&#x2010;endian format. <var class="Ar">BYTE</var> is an 8&#x2010;bit
+    integer. <var class="Ar">STRING</var> is a 0&#x2010;terminated string of
+    <var class="Ar">BYTE</var>.</p>
 <div class="Bd Pp">
 <pre>
 ; Header
 
-BYTE    ID[4]            ; &quot;RGB6&quot;
+BYTE    ID[4]            ; &quot;RGB9&quot;
+LONG    RevisionNumber   ; The format's revision number this file uses
 LONG    NumberOfSymbols  ; The number of symbols used in this file
 LONG    NumberOfSections ; The number of sections used in this file
 
@@ -60,8 +63,10 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
     BYTE    Type          ; 0 = LOCAL symbol only used in this file.
                           ; 1 = IMPORT this symbol from elsewhere
                           ; 2 = EXPORT this symbol to other objects.
+                          ; Bit 7 is independent from the above value, and
+                          ; encodes whether the section is unionized
 
-    IF      Type != 1     ; If symbol is defined in this object file.
+    IF (Type &amp; 0x7F) != 1 ; If symbol is defined in this object file.
 
         STRING  FileName  ; File where the symbol is defined.
 
@@ -102,8 +107,8 @@ REPT NumberOfSections
                   ; decide (floating bank). This field is only valid for ROMX,
                   ; VRAM, WRAMX and SRAM sections.
 
-    LONG    Align ; Alignment of this section (expressed as number of low bits
-                  ; to leave as 0). -1 if not defined.
+    LONG    Align ; Alignment of this section, expressed as 1 &lt;&lt; align. 1 if
+                  ; not specified.
 
     IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data.
 
@@ -117,8 +122,6 @@ REPT NumberOfSections
 
             STRING  SourceFile   ; Name of the source file (for printing error
                                  ; messages).
-
-            LONG    Line         ; The line of the source file.
 
             LONG    Offset       ; Offset into the section where patch should
                                  ; be applied (in bytes).
@@ -138,6 +141,34 @@ REPT NumberOfSections
     ENDC
 
 ENDR
+
+; Assertions
+
+LONG  NumberOfAssertions
+
+REPT  NumberOfAssertions
+
+  STRING  SourceFile   ; Name of the source file (for printing the failure).
+
+  LONG    Offset       ; Offset into the section where the assertion is located.
+
+  BYTE    Type         ; 0 = Prints the message but allows linking to continue
+                       ; 1 = Prints the message and evaluates other assertions,
+                       ;     but linking fails afterwards
+                       ; 2 = Prints the message and immediately fails linking
+
+  LONG    RPNSize      ; Size of the RPN expression's buffer.
+
+  BYTE    RPN[RPNSize] ; RPN expression, same as patches. Assert fails if == 0.
+
+  LONG    SectionID    ; The section number (of this object file) in which this
+                       ; assert is defined. If it doesn't belong to any specific
+                       ; section (like a constant), this field has the value -1.
+
+  STRING  Message      ; A message displayed when the assert fails. If set to
+                       ; the empty string, a generic message is printed instead.
+
+ENDR
 </pre>
 </div>
 <section class="Ss">
@@ -145,15 +176,15 @@ ENDR
   DATA</a></h2>
 Expressions in the object file are stored as RPN. This is an expression of the
   form &#x201C;2 5 +&#x201D;. This will first push the value &#x201C;2&#x201D;
-  to the stack. Then &#x201C;5&#x201D;. The &#x201C;+&#x201D; operator pops two
+  to the stack, then &#x201C;5&#x201D;. The &#x201C;+&#x201D; operator pops two
   arguments from the stack, adds them, and then pushes the result on the stack,
   effectively replacing the two top arguments with their sum. In the RGB format,
-  RPN expressions are stored as BYTEs with some bytes being special prefixes for
-  integers and symbols.
+  RPN expressions are stored as <var class="Ar">BYTE</var>s with some bytes
+  being special prefixes for integers and symbols.
 <table class="Bl-column Bd-indent">
   <tr>
-    <td><b class="Sy">Value</b></td>
-    <td><b class="Sy">Meaning</b></td>
+    <th>Value</th>
+    <th>Meaning</th>
   </tr>
   <tr>
     <td><a class="permalink" href="#$00"><code class="Li" id="$00">$00</code></a></td>
@@ -261,23 +292,28 @@ Expressions in the object file are stored as RPN. This is an expression of the
   </tr>
   <tr>
     <td><a class="permalink" href="#$50"><code class="Li" id="$50">$50</code></a></td>
-    <td><a class="permalink" href="#BANK(symbol),"><code class="Li" id="BANK(symbol),">BANK(symbol),</code></a>
+    <td><a class="permalink" href="#BANK(symbol)"><code class="Li" id="BANK(symbol)">BANK(symbol)</code></a>,
       a <var class="Ar">LONG</var> Symbol ID follows.</td>
   </tr>
   <tr>
     <td><a class="permalink" href="#$51"><code class="Li" id="$51">$51</code></a></td>
-    <td><a class="permalink" href="#BANK(section_name),"><code class="Li" id="BANK(section_name),">BANK(section_name),</code></a>
+    <td><a class="permalink" href="#BANK(section_name)"><code class="Li" id="BANK(section_name)">BANK(section_name)</code></a>,
       a null-terminated string follows.</td>
   </tr>
   <tr>
     <td><a class="permalink" href="#$52"><code class="Li" id="$52">$52</code></a></td>
     <td><a class="permalink" href="#Current_BANK()"><code class="Li" id="Current_BANK()">Current
-      BANK()</code></a>.</td>
+      BANK()</code></a></td>
   </tr>
   <tr>
     <td><a class="permalink" href="#$60"><code class="Li" id="$60">$60</code></a></td>
-    <td><a class="permalink" href="#HRAMCheck."><code class="Li" id="HRAMCheck.">HRAMCheck.</code></a>
-      Check if the value is in HRAM, AND it with 0xFF.</td>
+    <td><a class="permalink" href="#HRAMCheck"><code class="Li" id="HRAMCheck">HRAMCheck</code></a>.
+      Checks if the value is in HRAM, ANDs it with 0xFF.</td>
+  </tr>
+  <tr>
+    <td><a class="permalink" href="#$61"><code class="Li" id="$61">$61</code></a></td>
+    <td><a class="permalink" href="#RSTCheck"><code class="Li" id="RSTCheck">RSTCheck</code></a>.
+      Checks if the value is a RST vector, ORs it with 0xC7.</td>
   </tr>
   <tr>
     <td><a class="permalink" href="#$80"><code class="Li" id="$80">$80</code></a></td>
@@ -285,7 +321,7 @@ Expressions in the object file are stored as RPN. This is an expression of the
   </tr>
   <tr>
     <td><a class="permalink" href="#$81"><code class="Li" id="$81">$81</code></a></td>
-    <td><var class="Ar">LONG</var> Symbol ID follows.</td>
+    <td><var class="Ar">LONG</var> symbol ID follows.</td>
   </tr>
 </table>
 </section>
@@ -293,8 +329,8 @@ Expressions in the object file are stored as RPN. This is an expression of the
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr">rgbasm(1)</a>, <a class="Xr">rgblink(1)</a>,
-  <a class="Xr">rgbds(7)</a>, <a class="Xr">gbz80(7)</a>
+<a class="Xr" href="rgbasm.1.html">rgbasm(1)</a>, <a class="Xr" href="rgblink.1.html">rgblink(1)</a>,
+  <a class="Xr" href="rgbds.7.html">rgbds(7)</a>, <a class="Xr" href="gbz80.7.html">gbz80(7)</a>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
@@ -307,7 +343,7 @@ Expressions in the object file are stored as RPN. This is an expression of the
 <table class="foot">
   <tr>
     <td class="foot-date">January 26, 2018</td>
-    <td class="foot-os">RGBDS Manual</td>
+    <td class="foot-os">General</td>
   </tr>
 </table>
 </body>

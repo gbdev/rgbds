@@ -8,8 +8,10 @@
    SPDX-License-Identifier: MIT
    -->
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <link rel="stylesheet" href="rgbds.css" type="text/css" media="all"/>
   <title>RGBLINK(5)</title>
 </head>
 <body>
@@ -24,17 +26,15 @@
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
 <code class="Nm">rgblink</code> &#x2014;
-<div class="Nd">linkerscript file format</div>
+<span class="Nd">linker script file format</span>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-The linkerscript is an external file that allows the user to specify the order
-  of sections without the need for doing so before assembling each object file.
-<p class="Pp">The placement of sections specified in the linkerscript is done
-    before the sections whose placement is defined in the source code.</p>
-<p class="Pp">A linkerscript consists on a series of banks followed by a list of
-    sections and, optionally, commands. They can be lowercase or uppercase, it
-    is ignored. Any line can contain a comment starting with
+The linker script is an external file that allows the user to specify the order
+  of sections at link time and in a centralized manner.
+<p class="Pp">A linker script consists on a series of banks followed by a list
+    of sections and, optionally, commands. They can be lowercase or uppercase,
+    it is ignored. Any line can contain a comment starting with
     &#x2018;<code class="Li">;</code>&#x2019; that ends at the end of the
   line:</p>
 <div class="Bd Pp Bd-indent">
@@ -50,42 +50,48 @@ WRAMX 2
 </div>
 <p class="Pp">Numbers can be in decimal or hexadecimal format (the prefix is
     &#x2018;<code class="Li">$</code>&#x2019;). It is an error if any section
-    name or command are found before setting a bank.</p>
-<p class="Pp">Files can be included by using the <var class="Ar">INCLUDE</var>
-    keyword followed by a string with the path of the file that has to be
+    name or command is found before setting a bank.</p>
+<p class="Pp">Files can be included by using the <code class="Ic">INCLUDE</code>
+    keyword, followed by a string with the path of the file that has to be
     included.</p>
-<p class="Pp">The possible bank types are: <b class="Sy">ROM0</b>,
-    <b class="Sy">ROMX</b>, <b class="Sy">VRAM</b>, <b class="Sy">WRAM0</b>,
-    <b class="Sy">WRAMX</b>, <b class="Sy">OAM</b> and <b class="Sy">HRAM</b>.
-    Types <b class="Sy">ROMX</b>, <b class="Sy">VRAM</b>,
-    <b class="Sy">WRAMX</b> and <b class="Sy">SRAM</b> are banked, which means
-    that it is needed to specify a bank after the type.</p>
+<p class="Pp">The possible bank types are: <code class="Cm">ROM0</code>,
+    <code class="Cm">ROMX</code>, <code class="Cm">VRAM</code>,
+    <code class="Cm">SRAM</code>, <code class="Cm">WRAM0</code>,
+    <code class="Cm">WRAMX</code>, <code class="Cm">OAM</code> and
+    <code class="Cm">HRAM</code>. Unless there is a single bank, which can occur
+    with types <code class="Cm">ROMX</code>, <code class="Cm">VRAM</code>,
+    <code class="Cm">SRAM</code> and <code class="Cm">WRAMX</code>, it is needed
+    to specify a bank number after the type.</p>
 <p class="Pp">When a new bank statement is found, sections found after it will
-    be placed right from the beginning of that bank. If the linkerscript
-    switches to a different bank and then it comes back to the previous one it
-    will continue from the last address that was used.</p>
-<p class="Pp">The only two commands are <var class="Ar">ORG</var> and
-    <var class="Ar">ALIGN</var>:</p>
+    be placed right from the beginning of that bank. If the linker script
+    switches to a different bank and then comes back to a previous one, it will
+    continue from the last address that was used.</p>
+<p class="Pp">The only two commands are <code class="Ic">ORG</code> and
+    <code class="Ic">ALIGN</code>:</p>
 <ul class="Bl-bullet">
-  <li><var class="Ar">ORG</var> sets the address in which new sections will be
-      placed. It can not be lower than the current address.</li>
-  <li><var class="Ar">ALIGN</var> will increase the address until it is aligned
-      to the specified boundary (it tries to set to 0 the number of bits
-      specified after the command: <b class="Sy">ALIGN 8</b> will align to
-      $100).</li>
+  <li><a class="permalink" href="#ORG"><code class="Ic" id="ORG">ORG</code></a>
+      sets the address in which new sections will be placed. It can not be lower
+      than the current address.</li>
+  <li><a class="permalink" href="#ALIGN"><code class="Ic" id="ALIGN">ALIGN</code></a>
+      will increase the address until it is aligned to the specified boundary
+      (it tries to set to 0 the number of bits specified after the command:
+      &#x2018;<code class="Li">ALIGN 8</code>&#x2019; will align to $100).</li>
 </ul>
-<p class="Pp">Note: The bank, alignment, address and type of sections can be
-    specified both in the source code and in the linkerscript. For a section to
-    be able to be placed with the linkerscript the bank must be left unassigned
-    in the source code or be the same as the one specified in the linkerscript.
-    The address and alignment musn't be set.</p>
+<p class="Pp"><b class="Sy">Note:</b> The bank, alignment, address and type of
+    sections can be specified both in the source code and in the linker script.
+    For a section to be able to be placed with the linker script, the bank,
+    address and alignment must be left unassigned in the source code or be
+    compatible with what is specified in the linker script. For example,
+    &#x2018;<code class="Li">ALIGN[8]</code>&#x2019; in the source code is
+    compatible with &#x2018;<code class="Li">ORG $F00</code>&#x2019; in the
+    linker script.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr">rgbasm(1)</a>, <a class="Xr">rgblink(1)</a>,
-  <a class="Xr">rgbfix(1)</a>, <a class="Xr">rgbds(5)</a>,
-  <a class="Xr">rgbds(7)</a>
+<a class="Xr" href="rgbasm.1.html">rgbasm(1)</a>, <a class="Xr" href="rgblink.1.html">rgblink(1)</a>,
+  <a class="Xr" href="rgbfix.1.html">rgbfix(1)</a>, <a class="Xr" href="rgbds.5.html">rgbds(5)</a>,
+  <a class="Xr" href="rgbds.7.html">rgbds(7)</a>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
@@ -97,8 +103,8 @@ WRAMX 2
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">January 27, 2018</td>
-    <td class="foot-os">RGBDS Manual</td>
+    <td class="foot-date">November 26, 2019</td>
+    <td class="foot-os">General</td>
   </tr>
 </table>
 </body>

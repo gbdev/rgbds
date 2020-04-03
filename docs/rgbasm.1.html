@@ -8,8 +8,10 @@
    SPDX-License-Identifier: MIT
    -->
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8"/>
   <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <link rel="stylesheet" href="rgbds.css" type="text/css" media="all"/>
   <title>RGBASM(1)</title>
 </head>
 <body>
@@ -24,107 +26,224 @@
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
 <code class="Nm">rgbasm</code> &#x2014;
-<div class="Nd">Game Boy assembler</div>
+<span class="Nd">Game Boy assembler</span>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
 <table class="Nm">
   <tr>
     <td><code class="Nm">rgbasm</code></td>
-    <td>[<code class="Fl">-EhLVvw</code>] [<code class="Fl">-b</code>
-      <var class="Ar">chars</var>] [<code class="Fl">-D</code>
+    <td>[<code class="Fl"><a href="#E">-E</a><a href="#h">h</a><a href="#L">L</a><a href="#V">V</a><a href="#v">v</a><a href="#w">w</a></code>] [<code class="Fl"><a href="#b">-b</a></code>
+      <var class="Ar">chars</var>] [<code class="Fl"><a href="#D">-D</a></code>
       <var class="Ar">name</var>[=<var class="Ar">value</var>]]
-      [<code class="Fl">-g</code> <var class="Ar">chars</var>]
-      [<code class="Fl">-i</code> <var class="Ar">path</var>]
-      [<code class="Fl">-M</code> <var class="Ar">dependfile</var>]
-      [<code class="Fl">-o</code> <var class="Ar">outfile</var>]
-      [<code class="Fl">-p</code> <var class="Ar">pad_value</var>]
-      [<code class="Fl">-r</code> <var class="Ar">recursion_depth</var>]
-      <var class="Ar">file</var></td>
+      [<code class="Fl"><a href="#g">-g</a></code> <var class="Ar">chars</var>]
+      [<code class="Fl"><a href="#i">-i</a></code> <var class="Ar">path</var>]
+      [<code class="Fl"><a href="#M">-M</a></code> <var class="Ar">depend_file</var>]
+      [<code class="Fl"><a href="#o">-o</a></code> <var class="Ar">out_file</var>]
+      [<code class="Fl"><a href="#p">-p</a></code> <var class="Ar">pad_value</var>]
+      [<code class="Fl"><a href="#r">-r</a></code> <var class="Ar">recursion_depth</var>]
+      [<code class="Fl"><a href="#W">-W</a></code> <var class="Ar">warning</var>]
+      <var class="Ar">file ...</var></td>
   </tr>
 </table>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
-The <code class="Nm">rgbasm</code> program creates an object file from an
+The <code class="Nm">rgbasm</code> program creates an RGB object file from an
   assembly source file. The input <var class="Ar">file</var> can be a file path,
-  or <code class="Cm">-</code> denoting <code class="Cm">stdin</code>. Its
-  arguments are as follows:
+  or <code class="Cm">-</code> denoting <code class="Cm">stdin</code>.
+<p class="Pp">Note that options can be abbreviated as long as the abbreviation
+    is unambiguous: <code class="Fl">--verb</code> is
+    <code class="Fl">--verbose</code>, but
+    <code class="Fl">--ver</code> is invalid because it
+    could also be <code class="Fl">--version</code>. The
+    arguments are as follows:</p>
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#b"><code class="Fl" id="b">-b</code></a>
+    <var class="Ar">chars</var>,
+    <code class="Fl">--binary-digits</code>
     <var class="Ar">chars</var></dt>
   <dd>Change the two characters used for binary constants. The defaults are
     01.</dd>
   <dt><a class="permalink" href="#D"><code class="Fl" id="D">-D</code></a>
+    <var class="Ar">name</var>[=<var class="Ar">value</var>],
+    <code class="Fl">-</code> <code class="Fl">-define</code>
     <var class="Ar">name</var>[=<var class="Ar">value</var>]</dt>
-  <dd>Add string symbol to the compiled source code. This is equivalent to
-      <var class="Ar">name</var> <code class="Cm">EQUS</code>
-      &#x201C;<var class="Ar">value</var>&#x201D; in code. If a value is not
-      specified, a value of 1 is given.</dd>
-  <dt><a class="permalink" href="#E"><code class="Fl" id="E">-E</code></a></dt>
+  <dd>Add a string symbol to the compiled source code. This is equivalent to
+      &#x2018;<code class="Li"><var class="Ar">name</var> <code class="Ic">EQUS
+      &quot;</code><var class="Ar">value</var>&quot;</code>&#x2019; in code, or
+      &#x2018;<code class="Li"><var class="Ar">name</var> <code class="Ic">EQUS
+      &quot;1&quot;</code></code>&#x2019; if <var class="Ar">value</var> is not
+      specified.</dd>
+  <dt><a class="permalink" href="#E"><code class="Fl" id="E">-E</code></a>,
+    <code class="Fl">--export-all</code></dt>
   <dd>Export all labels, including unreferenced and local labels.</dd>
   <dt><a class="permalink" href="#g"><code class="Fl" id="g">-g</code></a>
+    <var class="Ar">chars</var>,
+    <code class="Fl">--gfx-chars</code>
     <var class="Ar">chars</var></dt>
-  <dd>Change the four characters used for binary constants. The defaults are
-      0123.</dd>
-  <dt><a class="permalink" href="#h"><code class="Fl" id="h">-h</code></a></dt>
-  <dd>By default, <code class="Nm">rgbasm</code> inserts a &#x2018;nop&#x2019;
-      instruction immediately after any &#x2018;halt&#x2019; instruction. The
-      <code class="Fl">-h</code> option disables this behavior.</dd>
+  <dd>Change the four characters used for gfx constants. The defaults are
+    0123.</dd>
+  <dt><a class="permalink" href="#h"><code class="Fl" id="h">-h</code></a>,
+    <code class="Fl">--halt-without-nop</code></dt>
+  <dd>By default, <code class="Nm">rgbasm</code> inserts a
+      <code class="Ic">nop</code> instruction immediately after any
+      <code class="Ic">halt</code> instruction. The <code class="Fl">-h</code>
+      option disables this behavior.</dd>
   <dt><a class="permalink" href="#i"><code class="Fl" id="i">-i</code></a>
+    <var class="Ar">path</var>,
+    <code class="Fl">--include</code>
     <var class="Ar">path</var></dt>
   <dd>Add an include path.</dd>
-  <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a></dt>
-  <dd>Disable the optimization that turns loads of the form <b class="Sy">LD
-      [$FF00+n8],A</b> into the opcode <b class="Sy">LDH [$FF00+n8],A</b> in
-      order to have full control of the result in the final ROM.</dd>
+  <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>,
+    <code class="Fl">--preserve-ld</code></dt>
+  <dd>Disable the optimization that turns loads of the form <code class="Ic">LD
+      [$FF00+n8],A</code> into the opcode <code class="Ic">LDH
+      [$FF00+n8],A</code> in order to have full control of the result in the
+      final ROM.</dd>
   <dt><a class="permalink" href="#M"><code class="Fl" id="M">-M</code></a>
-    <var class="Ar">dependfile</var></dt>
+    <var class="Ar">depend_file</var>,
+    <code class="Fl">--dependfile</code>
+    <var class="Ar">depend_file</var></dt>
   <dd>Print <a class="Xr">make(1)</a> dependencies to
-      <var class="Ar">dependfile</var>.</dd>
+      <var class="Ar">depend_file</var>.</dd>
   <dt><a class="permalink" href="#o"><code class="Fl" id="o">-o</code></a>
-    <var class="Ar">outfile</var></dt>
+    <var class="Ar">out_file</var>,
+    <code class="Fl">--output</code>
+    <var class="Ar">out_file</var></dt>
   <dd>Write an object file to the given filename.</dd>
   <dt><a class="permalink" href="#p"><code class="Fl" id="p">-p</code></a>
+    <var class="Ar">pad_value</var>,
+    <code class="Fl">--pad-value</code>
     <var class="Ar">pad_value</var></dt>
   <dd>When padding an image, pad with this value. The default is 0x00.</dd>
   <dt><a class="permalink" href="#r"><code class="Fl" id="r">-r</code></a>
+    <var class="Ar">recursion_depth</var>,
+    <code class="Fl">--recursion-depth</code>
     <var class="Ar">recursion_depth</var></dt>
   <dd>Specifies the recursion depth at which RGBASM will assume being in an
       infinite loop.</dd>
-  <dt><a class="permalink" href="#V"><code class="Fl" id="V">-V</code></a></dt>
+  <dt><a class="permalink" href="#V"><code class="Fl" id="V">-V</code></a>,
+    <code class="Fl">--version</code></dt>
   <dd>Print the version of the program and exit.</dd>
-  <dt><a class="permalink" href="#v"><code class="Fl" id="v">-v</code></a></dt>
+  <dt><a class="permalink" href="#v"><code class="Fl" id="v">-v</code></a>,
+    <code class="Fl">--verbose</code></dt>
   <dd>Be verbose.</dd>
+  <dt><a class="permalink" href="#W"><code class="Fl" id="W">-W</code></a>
+    <var class="Ar">warning</var>,
+    <code class="Fl">--warning</code>
+    <var class="Ar">warning</var></dt>
+  <dd>Set warning flag <var class="Ar">warning</var>. A warning message will be
+      printed if <var class="Ar">warning</var> is an unknown warning flag. See
+      the <a class="Sx" href="#DIAGNOSTICS">DIAGNOSTICS</a> section for a list
+      of warnings.</dd>
   <dt><a class="permalink" href="#w"><code class="Fl" id="w">-w</code></a></dt>
-  <dd>Disable warning output.</dd>
+  <dd>Disable all warning output, even when turned into errors.</dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DIAGNOSTICS"><a class="permalink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
+Warnings are diagnostic messages that indicate possibly erroneous behavior that
+  does not necessarily compromise the assembling process. The following options
+  alter the way warnings are processed.
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#Werror"><code class="Fl" id="Werror">-Werror</code></a></dt>
+  <dd>Make all warnings into errors.</dd>
+  <dt><a class="permalink" href="#Werror="><code class="Fl" id="Werror=">-Werror=</code></a></dt>
+  <dd>Make the specified warning into an error. A warning's name is appended
+      (example: <code class="Fl">-Werror=obsolete</code>), and this warning is
+      implicitly enabled and turned into an error. This is an error if used with
+      a meta warning, such as <code class="Fl">-Werror=all</code>.</dd>
+</dl>
+<p class="Pp">The following warnings are &#x201C;meta&#x201D; warnings, that
+    enable a collection of other warnings. If a specific warning is toggled via
+    a meta flag and a specific one, the more specific one takes priority. The
+    position on the command-line acts as a tie breaker, the last one taking
+    effect.</p>
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#Wall"><code class="Fl" id="Wall">-Wall</code></a></dt>
+  <dd>This enables warnings that are likely to indicate an error or undesired
+      behavior, and that can easily be fixed.</dd>
+  <dt><a class="permalink" href="#Wextra"><code class="Fl" id="Wextra">-Wextra</code></a></dt>
+  <dd>This enables extra warnings that are less likely to pose a problem, but
+      that may still be wanted.</dd>
+  <dt><a class="permalink" href="#Weverything"><code class="Fl" id="Weverything">-Weverything</code></a></dt>
+  <dd>Enables literally every warning.</dd>
+</dl>
+<p class="Pp">The following warnings are actual warning flags; with each
+    description, the corresponding warning flag is included. Note that each of
+    these flag also has a negation (for example,
+    <code class="Fl">-Wempty-entry</code> enables the warning that
+    <code class="Fl">-Wno-empty-entry</code> disables). Only the non-default
+    flag is listed here. Ignoring the &#x201C;no-&#x201D; prefix, entries are
+    listed alphabetically.</p>
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#Wno-assert"><code class="Fl" id="Wno-assert">-Wno-assert</code></a></dt>
+  <dd>Warns when <code class="Ic">WARN</code><span class="No">-type</span>
+      assertions fail. (See &#x201C;Aborting the assembly process&#x201D; in
+      <a class="Xr" href="rgbasm.5.html">rgbasm(5)</a> for <code class="Ic">ASSERT</code>).</dd>
+  <dt><a class="permalink" href="#Wbuiltin-args"><code class="Fl" id="Wbuiltin-args">-Wbuiltin-args</code></a></dt>
+  <dd>Warn about incorrect arguments to built-in functions, such as
+      <code class="Fn">STRSUB</code>() with indexes outside of the string's
+      bounds. This warning is enabled by <code class="Fl">-Wall</code>.</dd>
+  <dt><a class="permalink" href="#Wdiv"><code class="Fl" id="Wdiv">-Wdiv</code></a></dt>
+  <dd>Warn when dividing the smallest negative integer by -1, which yields
+      itself due to integer overflow.</dd>
+  <dt><a class="permalink" href="#Wempty-entry"><code class="Fl" id="Wempty-entry">-Wempty-entry</code></a></dt>
+  <dd>Warn when an empty entry is encountered in a <code class="Ic">db</code>,
+      <code class="Ic">dw</code>, <code class="Ic">dl</code> list. This warning
+      is enabled by <code class="Fl">-Wextra</code>.</dd>
+  <dt><a class="permalink" href="#Wlarge-constant"><code class="Fl" id="Wlarge-constant">-Wlarge-constant</code></a></dt>
+  <dd>Warn when a constant too large to fit in a signed 32-bit integer is
+      encountered. This warning is enabled by
+    <code class="Fl">-Wall</code>.</dd>
+  <dt><a class="permalink" href="#Wlong-string"><code class="Fl" id="Wlong-string">-Wlong-string</code></a></dt>
+  <dd>Warn when a string too long to fit in internal buffers is encountered.
+      This warning is enabled by <code class="Fl">-Wall</code>.</dd>
+  <dt><a class="permalink" href="#Wobsolete"><code class="Fl" id="Wobsolete">-Wobsolete</code></a></dt>
+  <dd>Warn when obsolete constructs such as the <code class="Ic">jp [hl]</code>
+      instruction or <code class="Ic">HOME</code> section type are encountered.
+      This warning is enabled by <code class="Fl">-Wextra</code>.</dd>
+  <dt><a class="permalink" href="#Wshift"><code class="Fl" id="Wshift">-Wshift</code></a></dt>
+  <dd>Warn when shifting right a negative value. Use a division by 2^N
+    instead.</dd>
+  <dt><a class="permalink" href="#Wshift-amount"><code class="Fl" id="Wshift-amount">-Wshift-amount</code></a></dt>
+  <dd>Warn when a shift's operand is negative or greater than 32.</dd>
+  <dt><a class="permalink" href="#Wno-truncation"><code class="Fl" id="Wno-truncation">-Wno-truncation</code></a></dt>
+  <dd>Warn when an implicit truncation (for example, <code class="Ic">db</code>)
+      loses some bits.</dd>
+  <dt><a class="permalink" href="#Wno-user"><code class="Fl" id="Wno-user">-Wno-user</code></a></dt>
+  <dd>Warn when the <code class="Ic">WARN</code> built-in is executed. (See
+      &#x201C;Aborting the assembly process&#x201D; in
+      <a class="Xr" href="rgbasm.5.html">rgbasm(5)</a> for <code class="Ic">WARN</code>).</dd>
 </dl>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-You can assemble a source file in two ways. Straight forward way:
-<div class="Bd Pp Bd-indent">
-<pre>
-$ rgbasm -o bar.o foo.asm
-</pre>
-</div>
+You can assemble a source file in two ways.
+<p class="Pp">Straightforward way:</p>
+<div class="Bd Bd-indent"><code class="Li">$ rgbasm -o bar.o
+  foo.asm</code></div>
 <p class="Pp">Pipes way:</p>
-<div class="Bd Pp Bd-indent">
-<pre>
-$ cat foo.asm | rgbasm -o bar.o -
-$ rgbasm -o bar.o - &lt; foo.asm
-</pre>
-</div>
-<p class="Pp">The resulting object file is not yet a usable ROM image &#x2014;
-    it must first be run through <a class="Xr">rgblink(1)</a> and
-    <a class="Xr">rgbfix(1)</a>.</p>
+<div class="Bd Bd-indent"><code class="Li">$ cat foo.asm | rgbasm -o bar.o
+  -</code></div>
+<div class="Bd Bd-indent"><code class="Li">$ rgbasm -o bar.o - &lt;
+  foo.asm</code></div>
+<p class="Pp">The resulting object file is not yet a usable ROM image&#x2014;it
+    must first be run through <a class="Xr" href="rgblink.1.html">rgblink(1)</a> and then
+    <a class="Xr" href="rgbfix.1.html">rgbfix(1)</a>.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
+Please report bugs on
+  <a class="Lk" href="https://github.com/rednex/rgbds/issues">GitHub</a>.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr">rgbasm(5)</a>, <a class="Xr">rgbfix(1)</a>,
-  <a class="Xr">rgblink(1)</a>, <a class="Xr">rgbds(5)</a>,
-  <a class="Xr">rgbds(7)</a>, <a class="Xr">gbz80(7)</a>
+<a class="Xr" href="rgbasm.5.html">rgbasm(5)</a>, <a class="Xr" href="rgbfix.1.html">rgbfix(1)</a>,
+  <a class="Xr" href="rgblink.1.html">rgblink(1)</a>, <a class="Xr" href="rgbds.5.html">rgbds(5)</a>,
+  <a class="Xr" href="rgbds.7.html">rgbds(7)</a>, <a class="Xr" href="gbz80.7.html">gbz80(7)</a>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
@@ -137,7 +256,7 @@ $ rgbasm -o bar.o - &lt; foo.asm
 <table class="foot">
   <tr>
     <td class="foot-date">July 8, 2019</td>
-    <td class="foot-os">RGBDS Manual</td>
+    <td class="foot-os">General</td>
   </tr>
 </table>
 </body>
