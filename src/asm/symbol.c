@@ -566,6 +566,10 @@ void sym_Init(void)
 
 	_RSSymbol->isBuiltin = true;
 
+	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
+	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
+	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
+
 	time_t now = time(NULL);
 
 	if (now == (time_t)-1) {

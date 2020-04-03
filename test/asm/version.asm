@@ -1,0 +1,1 @@
+PRINTT "RGBDS version {__RGBDS_MAJOR__}.{__RGBDS_MINOR__}.{__RGBDS_PATCH__}\n"
