@@ -10,8 +10,8 @@
 #define EXTERN_VERSION_H
 
 #define PACKAGE_VERSION_MAJOR (0)
-#define PACKAGE_VERSION_MINOR (3)
-#define PACKAGE_VERSION_PATCH (10)
+#define PACKAGE_VERSION_MINOR (4)
+#define PACKAGE_VERSION_PATCH (0)
 
 const char *get_package_version_string(void);
 
