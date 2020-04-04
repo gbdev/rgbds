@@ -251,7 +251,6 @@ wine-shim:
 # Target for the project maintainer to produce distributable release tarballs
 # of the source code.
 
-RELEASE_ARCHIVE := rgbds-`git describe --tags --always 2>/dev/null`.tar.gz
 dist:
-	$Qgit ls-files -z | sed -z s~^~$${PWD##*/}/~ \
-	 	| xargs -0 -- tar czf ${RELEASE_ARCHIVE} -C ..
+	$Qgit ls-files | sed s~^~$${PWD##*/}/~ \
+	  | tar -czf rgbds-`git describe --tags | cut -c 2-`.tar.gz -C .. -T -
