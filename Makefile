@@ -247,3 +247,11 @@ wine-shim:
 	$Qln -s rgbshim.sh rgblink
 	$Qln -s rgbshim.sh rgbfix
 	$Qln -s rgbshim.sh rgbgfx
+
+# Target for the project maintainer to produce distributable release tarballs
+# of the source code.
+
+RELEASE_ARCHIVE := rgbds-`git describe --tags --always 2>/dev/null`.tar.gz
+dist:
+	$Qgit ls-files -z | sed -z s~^~$${PWD##*/}/~ \
+	 	| xargs -0 -- tar czf ${RELEASE_ARCHIVE} -C ..
