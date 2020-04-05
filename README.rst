@@ -147,7 +147,7 @@ This is the complete list of user-defined variables:
   ``${PREFIX}/bin``.
 
 - ``mandir``: Location where the manpages will be installed. Defaults to
-  ``${PREFIX}/man``.
+  ``${PREFIX}/share/man``.
 
 - ``DESTDIR``: This is prepended to all paths during the installation. It is
   mainly used for packaging.
@@ -158,9 +158,9 @@ This is the complete list of user-defined variables:
 - ``STRIP``: Whether to strip the installed binaries of debug symbols or not.
   Defaults to ``-s``.
 
-- ``BINMODE``: Permissions of the installed binaries. Defaults to ``555``.
+- ``BINMODE``: Permissions of the installed binaries. Defaults to ``755``.
 
-- ``MANMODE``: Permissions of the installed manpages. Defaults to ``444``.
+- ``MANMODE``: Permissions of the installed manpages. Defaults to ``644``.
 
 - ``CHECKPATCH``: Path of the script ``checkpatch.pl`` of the Linux kernel.
   Defaults to ``../linux/scripts/checkpatch.pl``.
