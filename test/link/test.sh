@@ -46,7 +46,7 @@ for i in *.asm; do
 	fi
 
 	# Other tests have several linker scripts
-	for script in `find . -name "${i%.asm}*.link"`; do
+	find . -name "${i%.asm}*.link" | while read script; do
 		$RGBLINK -l $script -o $gbtemp $otemp > $outtemp 2>&1
 		tryDiff ${script%.link}.out $outtemp
 		rc=$(($? || $rc))
