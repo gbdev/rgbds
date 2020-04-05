@@ -14,10 +14,10 @@
 Q		:= @
 PREFIX		:= /usr/local
 bindir		:= ${PREFIX}/bin
-mandir		:= ${PREFIX}/man
+mandir		:= ${PREFIX}/share/man
 STRIP		:= -s
-BINMODE		:= 555
-MANMODE		:= 444
+BINMODE		:= 755
+MANMODE		:= 644
 CHECKPATCH	:= ../linux/scripts/checkpatch.pl
 
 # Other variables
