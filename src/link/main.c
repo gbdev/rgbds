@@ -35,6 +35,40 @@ bool is32kMode;               /* -t */
 bool beVerbose;               /* -v */
 bool isWRA0Mode;              /* -w */
 
+static uint32_t nbErrors = 0;
+
+void error(char const *fmt, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "error: ");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	if (nbErrors != UINT32_MAX)
+		nbErrors++;
+}
+
+noreturn_ void fatal(char const *fmt, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "fatal: ");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+
+	if (nbErrors != UINT32_MAX)
+		nbErrors++;
+
+	fprintf(stderr, "Linking aborted after %u error%s\n", nbErrors,
+		nbErrors != 1 ? "s" : "");
+	exit(1);
+}
+
 FILE *openFile(char const *fileName, char const *mode)
 {
 	if (!fileName)
@@ -138,10 +172,14 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			value = strtoul(optarg, &endptr, 0);
-			if (optarg[0] == '\0' || *endptr != '\0')
-				errx(1, "Invalid argument for option 'p'");
-			if (value > 0xFF)
-				errx(1, "Argument for 'p' must be a byte (between 0 and 0xFF)");
+			if (optarg[0] == '\0' || *endptr != '\0') {
+				error("Invalid argument for option 'p'");
+				value = 0xFF;
+			}
+			if (value > 0xFF) {
+				error("Argument for 'p' must be a byte (between 0 and 0xFF)");
+				value = 0xFF;
+			}
 			padValue = value;
 			break;
 		case 's':
@@ -171,7 +209,7 @@ int main(int argc, char *argv[])
 
 	/* If no input files were specified, the user must have screwed up */
 	if (curArgIndex == argc) {
-		fputs("FATAL: no input files\n", stderr);
+		fputs("fatal: no input files\n", stderr);
 		printUsage();
 		exit(1);
 	}
@@ -198,6 +236,11 @@ int main(int argc, char *argv[])
 
 	/* and finally output the result. */
 	patch_ApplyPatches();
+	if (nbErrors) {
+		fprintf(stderr, "Linking failed with %u error%s\n", nbErrors,
+			nbErrors != 1 ? "s" : "");
+		exit(1);
+	}
 	out_WriteFiles();
 
 	/* Do cleanup before quitting, though. */

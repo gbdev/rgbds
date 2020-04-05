@@ -80,15 +80,15 @@ static void processLinkerScript(void)
 
 		/* Check if this doesn't conflict with what the code says */
 		if (section->isBankFixed && placement->bank != section->bank)
-			errx(1, "Linker script contradicts \"%s\"'s bank placement",
-			     section->name);
+			error("Linker script contradicts \"%s\"'s bank placement",
+			      section->name);
 		if (section->isAddressFixed && placement->org != section->org)
-			errx(1, "Linker script contradicts \"%s\"'s address placement",
-			     section->name);
+			error("Linker script contradicts \"%s\"'s address placement",
+			      section->name);
 		if (section->isAlignFixed
 		 && (placement->org & section->alignMask) != 0)
-			errx(1, "Linker script contradicts \"%s\"'s alignment",
-			     section->name);
+			error("Linker script contradicts \"%s\"'s alignment",
+			      section->name);
 
 		section->isAddressFixed = true;
 		section->org = placement->org;

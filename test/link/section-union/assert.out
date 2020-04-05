@@ -1,5 +1,5 @@
-section-union/assert.asm(11): Force failing the build
-error: 1 assertions failed!
+error: section-union/assert.asm(11): Force failing the build
+Linking failed with 1 error
 ---
 ERROR: -(30):
     Assertion failed: Force failing the build

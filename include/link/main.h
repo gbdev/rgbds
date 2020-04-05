@@ -14,6 +14,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "helpers.h"
+
 /* Variables related to CLI options */
 extern bool isDmgMode;
 extern char const *linkerScriptName;
@@ -31,6 +33,10 @@ extern bool isWRA0Mode;
 					if (beVerbose) \
 						fprintf(stderr, __VA_ARGS__); \
 				} while (0)
+
+void error(char const *fmt, ...);
+
+noreturn_ void fatal(char const *fmt, ...);
 
 /**
  * Opens a file if specified, and aborts on error.

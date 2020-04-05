@@ -1,3 +1,4 @@
 warning: assert.asm(7): Worry about me, but not too much.
-assert.asm(8): Okay, this is getting serious!
-error: assert.asm(9): It all ends now.
+error: assert.asm(8): Okay, this is getting serious!
+fatal: assert.asm(9): It all ends now.
+Linking aborted after 2 errors

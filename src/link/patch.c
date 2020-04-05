@@ -118,19 +118,13 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 }
 
 static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
-				      uint32_t index, char const *fileName)
+				      uint32_t index)
 {
 	struct Symbol const *symbol = symbolList[index];
 
 	/* If the symbol is defined elsewhere... */
-	if (symbol->type == SYMTYPE_IMPORT) {
-		struct Symbol const *symbolDefinition =
-						sym_GetSymbol(symbol->name);
-		if (!symbolDefinition)
-			errx(1, "%s: Unknown symbol \"%s\"", fileName,
-			     symbol->name);
-		symbol = symbolDefinition;
-	}
+	if (symbol->type == SYMTYPE_IMPORT)
+		return sym_GetSymbol(symbol->name);
 
 	return symbol;
 }
@@ -182,9 +176,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 		case RPN_DIV:
 			value = popRPN();
-			if (value == 0)
-				errx(1, "%s: Division by 0", patch->fileName);
-			value = popRPN() / value;
+			if (value == 0) {
+				error("%s: Division by 0", patch->fileName);
+				popRPN();
+				value = INT32_MAX;
+			} else {
+				value = popRPN() / value;
+			}
 			break;
 		case RPN_MOD:
 			value = popRPN();
@@ -256,9 +254,16 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			for (uint8_t shift = 0; shift < 32; shift += 8)
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
+			symbol = getSymbol(fileSymbols, value);
 
-			value = getSymbol(fileSymbols, value,
-					  patch->fileName)->section->bank;
+			if (!symbol) {
+				error("%s: Requested BANK() of symbol \"%s\", which was not found",
+				      patch->fileName,
+				      fileSymbols[value]->name);
+				value = 1;
+			} else {
+				value = symbol->section->bank;
+			}
 			break;
 
 		case RPN_BANK_SECT:
@@ -268,11 +273,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 			sect = sect_GetSection(name);
 
-			if (!sect)
-				errx(1, "%s: Requested BANK() of section \"%s\", which was not found",
-				     patch->fileName, name);
-
-			value = sect->bank;
+			if (!sect) {
+				error("%s: Requested BANK() of section \"%s\", which was not found",
+				      patch->fileName, name);
+				value = 1;
+			} else {
+				value = sect->bank;
+			}
 			break;
 
 		case RPN_BANK_SELF:
@@ -284,8 +291,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (value < 0
 			 || (value > 0xFF && value < 0xFF00)
 			 || value > 0xFFFF)
-				errx(1, "%s: Value %d is not in HRAM range",
-				     patch->fileName, value);
+				error("%s: Value %d is not in HRAM range",
+				      patch->fileName, value);
 			value &= 0xFF;
 			break;
 
@@ -295,8 +302,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			 * They can be easily checked with a bitmask
 			 */
 			if (value & ~0x38)
-				errx(1, "%s: Value %d is not a RST vector",
-				     patch->fileName, value);
+				error("%s: Value %d is not a RST vector",
+				      patch->fileName, value);
 			value |= 0xC7;
 			break;
 
@@ -313,7 +320,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->fileName) << shift;
 
-			symbol = getSymbol(fileSymbols, value, patch->fileName);
+			symbol = getSymbol(fileSymbols, value);
 
 			if (!strcmp(symbol->name, "@")) {
 				value = section->org + patch->offset;
@@ -330,7 +337,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 	}
 
 	if (stack.size > 1)
-		warnx("%s: RPN stack has %lu entries on exit, not 1",
+		error("%s: RPN stack has %lu entries on exit, not 1",
 		      patch->fileName, stack.size);
 
 	return popRPN();
@@ -343,25 +350,21 @@ void patch_CheckAssertions(struct Assertion *assert)
 	verbosePrint("Checking assertions...");
 	initRPNStack();
 
-	uint8_t failures = 0;
-
 	while (assert) {
 		if (!computeRPNExpr(&assert->patch, assert->section,
 				    (struct Symbol const * const *)
 				    			assert->fileSymbols)) {
 			switch ((enum AssertionType)assert->patch.type) {
 			case ASSERT_FATAL:
-				errx(1, "%s: %s", assert->patch.fileName,
-				     assert->message[0] ? assert->message
-							: "assert failure");
+				fatal("%s: %s", assert->patch.fileName,
+				      assert->message[0] ? assert->message
+							 : "assert failure");
 				/* Not reached */
 				break; /* Here so checkpatch doesn't complain */
 			case ASSERT_ERROR:
-				fprintf(stderr, "%s: %s\n",
-					assert->patch.fileName,
-					assert->message[0] ? assert->message
-							   : "assert failure");
-				failures++;
+				error("%s: %s", assert->patch.fileName,
+				      assert->message[0] ? assert->message
+							 : "assert failure");
 				break;
 			case ASSERT_WARN:
 				warnx("%s: %s", assert->patch.fileName,
@@ -377,9 +380,6 @@ void patch_CheckAssertions(struct Assertion *assert)
 	}
 
 	freeRPNStack();
-
-	if (failures)
-		errx(1, "%u assertions failed!", failures);
 }
 
 /**
@@ -406,8 +406,8 @@ static void applyFilePatches(struct Section *section)
 			int16_t offset = value - address;
 
 			if (offset < -128 || offset > 127)
-				errx(1, "%s: jr target out of reach (expected -129 < %d < 128)",
-				     patch->fileName, offset);
+				error("%s: jr target out of reach (expected -129 < %d < 128)",
+				      patch->fileName, offset);
 			section->data[patch->offset] = offset & 0xFF;
 		} else {
 			/* Patch a certain number of bytes */
@@ -423,10 +423,10 @@ static void applyFilePatches(struct Section *section)
 
 			if (value < types[patch->type].min
 			 || value > types[patch->type].max)
-				errx(1, "%s: Value %#x%s is not %u-bit",
-				     patch->fileName, value,
-				     value < 0 ? " (maybe negative?)" : "",
-				     types[patch->type].size * 8);
+				error("%s: Value %#x%s is not %u-bit",
+				      patch->fileName, value,
+				      value < 0 ? " (maybe negative?)" : "",
+				      types[patch->type].size * 8);
 			for (uint8_t i = 0; i < types[patch->type].size; i++) {
 				section->data[patch->offset + i] = value & 0xFF;
 				value >>= 8;
