@@ -366,7 +366,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 	while (assert) {
 		if (!computeRPNExpr(&assert->patch,
 				    (struct Symbol const * const *)
-				    			assert->fileSymbols)) {
+							assert->fileSymbols)) {
 			switch ((enum AssertionType)assert->patch.type) {
 			case ASSERT_FATAL:
 				fatal("%s: %s", assert->patch.fileName,

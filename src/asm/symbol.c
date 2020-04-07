@@ -52,7 +52,7 @@ static char SavedSECOND[3];
 static bool exportall;
 
 struct ForEachArgs {
-	void (*func)(struct sSymbol *, void *);
+	void (*func)(struct sSymbol *symbol, void *arg);
 	void *arg;
 };
 
@@ -398,10 +398,10 @@ struct sSymbol *sym_AddLocalReloc(char const *tzSym)
 
 		fullSymbolName(fullname, sizeof(fullname), tzSym, pScope);
 		return sym_AddReloc(fullname);
-	} else {
-		yyerror("Local label '%s' in main scope", tzSym);
-		return NULL;
 	}
+
+	yyerror("Local label '%s' in main scope", tzSym);
+	return NULL;
 }
 
 /*

@@ -64,10 +64,10 @@ static void mergeSections(struct Section *target, struct Section *other)
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs)
 				 != (target->alignMask & other->alignOfs)) {
-				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and %u-byte alignment (offset %u)",
-				     other->name, target->alignMask + 1,
-				     target->alignOfs, other->alignMask + 1,
-				     other->alignOfs);
+			errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and %u-byte alignment (offset %u)",
+			     other->name, target->alignMask + 1,
+			     target->alignOfs, other->alignMask + 1,
+			     other->alignOfs);
 		} else if (!target->isAlignFixed
 			|| (other->alignMask > target->alignMask)) {
 			target->isAlignFixed = true;

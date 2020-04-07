@@ -25,7 +25,7 @@ struct Assertion {
 	 * This would be redundant with `.section->fileSymbols`... but
 	 * `section` is sometimes NULL!
 	 */
-	struct Symbol ** fileSymbols;
+	struct Symbol **fileSymbols;
 
 	struct Assertion *next;
 };
