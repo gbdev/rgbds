@@ -544,8 +544,8 @@ void fstk_Init(char *pFileName)
 	} else {
 		pCurrentFile = fopen(pFileName, "rb");
 		if (pCurrentFile == NULL)
-			yyerror("Unable to open file '%s': %s", pFileName,
-				strerror(errno));
+			fatalerror("Unable to open file '%s': %s", pFileName,
+				   strerror(errno));
 	}
 	nFileStackDepth = 0;
 
