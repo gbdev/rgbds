@@ -279,10 +279,10 @@ static void readSection(FILE *file, struct Section *section,
 		    fileName, section->name);
 	section->isBankFixed = tmp >= 0;
 	section->bank = tmp;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment: %s",
-		    fileName, section->name);
-	section->isAlignFixed = tmp != 1;
-	section->alignMask = tmp - 1;
+	tryGetc(tmp, file, "%s: Cannot read \"%s\"'s alignment: %s",
+		fileName, section->name);
+	section->isAlignFixed = tmp != 0;
+	section->alignMask = (1 << tmp) - 1;
 
 	if (sect_HasData(section->type)) {
 		/* Ensure we never allocate 0 bytes */
