@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gfx/main.h"
+#include "gfx/makepng.h"
 
 static void initialize_png(struct PNGImage *img, FILE * f);
 static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img);
