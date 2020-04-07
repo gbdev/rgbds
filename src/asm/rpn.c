@@ -143,7 +143,10 @@ void rpn_BankSelf(struct Expression *expr)
 {
 	rpn_Init(expr);
 
-	if (pCurrentSection->nBank == -1) {
+	if (!pCurrentSection) {
+		yyerror("PC has no bank outside a section");
+		expr->nVal = 1;
+	} else if (pCurrentSection->nBank == -1) {
 		makeUnknown(expr, "Current section's bank is not known");
 		expr->nRPNPatchSize++;
 		*reserveSpace(expr, 1) = RPN_BANK_SELF;

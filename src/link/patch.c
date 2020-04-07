@@ -282,7 +282,12 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_BANK_SELF:
-			value = patch->pcSection->bank;
+			if (!patch->pcSection) {
+				error("%s: PC has no bank outside a section");
+				value = 1;
+			} else {
+				value = patch->pcSection->bank;
+			}
 			break;
 
 		case RPN_HRAM:
