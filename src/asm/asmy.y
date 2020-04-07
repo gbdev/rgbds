@@ -1425,6 +1425,7 @@ section		: T_POP_SECTION sectunion string ',' sectiontype sectorg sectattrs {
 
 sectunion	: /* empty */	{ $$ = false; }
 		| T_POP_UNION	{ $$ = true; }
+;
 
 sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_VRAM	{ $$ = SECTTYPE_VRAM; }
@@ -1449,14 +1450,28 @@ sectorg		: /* empty */ { $$ = -1; }
 
 sectattrs	: /* empty */ {
 			$$.alignment = 0;
+			$$.alignOfs = 0;
 			$$.bank = -1;
 		}
 		| sectattrs ',' T_OP_ALIGN '[' uconst ']' {
-			if ($5 < 0 || $5 > 16)
-				yyerror("Alignment must be between 0 and 16 bits, not %u",
+			if ($5 > 16)
+				yyerror("Alignment must be between 0 and 16, not %u",
 					$5);
 			else
 				$$.alignment = $5;
+		}
+		| sectattrs ',' T_OP_ALIGN '[' uconst ',' uconst ']' {
+			if ($5 > 16) {
+				yyerror("Alignment must be between 0 and 16, not %u",
+					$5);
+			} else {
+				$$.alignment = $5;
+				if ($7 >= 1 << $$.alignment)
+					yyerror("Alignment offset must not be greater than alignment (%u < %u)",
+						$7, 1 << $$.alignment);
+				else
+					$$.alignOfs = $7;
+			}
 		}
 		| sectattrs ',' T_OP_BANK '[' uconst ']' {
 			/* We cannot check the validity of this now */

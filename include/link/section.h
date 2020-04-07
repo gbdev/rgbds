@@ -50,6 +50,7 @@ struct Section {
 	uint32_t bank;
 	bool isAlignFixed;
 	uint16_t alignMask;
+	uint16_t alignOfs;
 	uint8_t *data; /* Array of size `size`*/
 	uint32_t nbPatches;
 	struct Patch *patches;

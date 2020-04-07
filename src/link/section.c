@@ -48,21 +48,28 @@ static void mergeSections(struct Section *target, struct Section *other)
 				errx(1, "Section \"%s\" is defined with conflicting addresses $%x and $%x",
 				     other->name, target->org, other->org);
 		} else if (target->isAlignFixed) {
-			if (other->org & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment and address $%x",
+			if ((other->org - target->alignOfs) & target->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and address $%x",
 				     other->name, target->alignMask + 1,
-				     other->org);
+				     target->alignOfs, other->org);
 		}
 		target->isAddressFixed = true;
 		target->org = other->org;
 	} else if (other->isAlignFixed) {
 		if (target->isAddressFixed) {
-			if (target->org & other->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting address $%x and %u-byte alignment",
+			if ((target->org - other->alignOfs) & other->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting address $%x and %u-byte alignment (offset %u)",
 				     other->name, target->org,
-				     other->alignMask + 1);
+				     other->alignMask + 1, other->alignOfs);
+		} else if (target->isAlignFixed
+			&& (other->alignMask & target->alignOfs)
+				 != (target->alignMask & other->alignOfs)) {
+				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and %u-byte alignment (offset %u)",
+				     other->name, target->alignMask + 1,
+				     target->alignOfs, other->alignMask + 1,
+				     other->alignOfs);
 		} else if (!target->isAlignFixed
-			|| other->alignMask > target->alignMask) {
+			|| (other->alignMask > target->alignMask)) {
 			target->isAlignFixed = true;
 			target->alignMask = other->alignMask;
 		}

@@ -1,0 +1,6 @@
+error: Section "conflicting alignment" is defined with conflicting 8-byte alignment (offset 7) and 8-byte alignment (offset 6)
+---
+ERROR: -(18):
+    Section "conflicting alignment" already declared with incompatible 3-byte alignment (offset 7)
+ERROR: -(18):
+    Cannot create section "conflicting alignment" (1 errors)

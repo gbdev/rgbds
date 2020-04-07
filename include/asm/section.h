@@ -22,7 +22,8 @@ struct Section {
 	uint32_t size;
 	uint32_t nOrg;
 	uint32_t nBank;
-	uint32_t nAlign;
+	uint8_t nAlign;
+	uint16_t alignOfs;
 	struct Section *pNext;
 	struct Patch *pPatches;
 	uint8_t *tData;
@@ -30,7 +31,8 @@ struct Section {
 
 struct SectionSpec {
 	uint32_t bank;
-	uint32_t alignment;
+	uint8_t alignment;
+	uint16_t alignOfs;
 };
 
 struct Section *out_FindSectionByName(const char *pzName);

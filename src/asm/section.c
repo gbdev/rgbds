@@ -85,9 +85,14 @@ struct Section *out_FindSectionByName(const char *pzName)
  * Find a section by name and type. If it doesn't exist, create it
  */
 static struct Section *getSection(char const *pzName, enum SectionType type,
-				  uint32_t org, uint32_t bank,
-				  uint8_t alignment, bool isUnion)
+				  uint32_t org, struct SectionSpec const *attrs,
+				  bool isUnion)
 {
+#define mask(align) ((1 << (align)) - 1)
+	uint32_t bank = attrs->bank;
+	uint8_t alignment = attrs->alignment;
+	uint16_t alignOffset = attrs->alignOfs;
+
 	if (bank != -1) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
 		 && type != SECTTYPE_SRAM && type != SECTTYPE_WRAMX)
@@ -99,12 +104,18 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				bankranges[type][0], bankranges[type][1]);
 	}
 
+	if (alignOffset >= 1 << alignment) {
+		yyerror("Alignment offset must not be greater than alignment (%u < %u)",
+			alignOffset, 1 << alignment);
+		alignOffset = 0;
+	}
+
 	if (alignment != 0) {
-		/* It doesn't make sense to have both set */
-		uint32_t mask = (1 << alignment) - 1;
+		/* It doesn't make sense to have both alignment and org set */
+		uint32_t mask = mask(alignment);
 
 		if (org != -1) {
-			if (org & mask)
+			if ((org - alignOffset) & mask)
 				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
 					pzName);
 			alignment = 0; /* Ignore it if it's satisfied */
@@ -153,32 +164,41 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 			if (sect_HasData(type))
 				fail("Cannot declare ROM sections as UNION");
 			if (org != -1) {
-				/* If neither is fixed, they must be the same */
+				/* If both are fixed, they must be the same */
 				if (pSect->nOrg != -1 && pSect->nOrg != org)
 					fail("Section \"%s\" already declared as fixed at different address $%x",
 					     pSect->pzName, pSect->nOrg);
 				else if (pSect->nAlign != 0
-				      && (((1 << pSect->nAlign) - 1) & org))
-					fail("Section \"%s\" already declared as aligned to %u bytes",
-					     pSect->pzName, 1 << pSect->nAlign);
+				      && (mask(pSect->nAlign)
+						& (org - pSect->alignOfs)))
+					fail("Section \"%s\" already declared as aligned to %u bytes (offset %u)",
+					     pSect->pzName, 1 << pSect->nAlign,
+					     pSect->alignOfs);
 				else
 					/* Otherwise, just override */
 					pSect->nOrg = org;
 			} else if (alignment != 0) {
 				/* Make sure any fixed address is compatible */
 				if (pSect->nOrg != -1) {
-					uint32_t mask = alignment - 1;
-
-					if (pSect->nOrg & mask)
+					if ((pSect->nOrg - alignOffset)
+							& mask(alignment))
 						fail("Section \"%s\" already declared as fixed at incompatible address $%x",
 						     pSect->pzName,
 						     pSect->nOrg);
+				/* Check if alignment offsets are compatible */
+				} else if ((alignOffset & mask(pSect->nAlign))
+					!= (pSect->alignOfs
+							& mask(alignment))) {
+					fail("Section \"%s\" already declared with incompatible %u-byte alignment (offset %u)",
+					     pSect->pzName, pSect->nAlign,
+					     pSect->alignOfs);
 				} else if (alignment > pSect->nAlign) {
 					/*
 					 * If the section is not fixed,
 					 * its alignment is the largest of both
 					 */
 					pSect->nAlign = alignment;
+					pSect->alignOfs = alignOffset;
 				}
 			}
 			/* If the section's bank is unspecified, override it */
@@ -239,6 +259,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 	pSect->nOrg = org;
 	pSect->nBank = bank;
 	pSect->nAlign = alignment;
+	pSect->alignOfs = alignOffset;
 	pSect->pNext = pSectionList;
 	pSect->pPatches = NULL;
 
@@ -261,6 +282,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 	pSectionList = pSect;
 
 	return pSect;
+#undef mask
 }
 
 /*
@@ -280,13 +302,12 @@ static void setSection(struct Section *pSect)
  * Set the current section by name and type
  */
 void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
-		    struct SectionSpec const *attributes, bool isUnion)
+		    struct SectionSpec const *attribs, bool isUnion)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block");
 
-	struct Section *pSect = getSection(pzName, type, org, attributes->bank,
-					   attributes->alignment, isUnion);
+	struct Section *pSect = getSection(pzName, type, org, attribs, isUnion);
 
 	setSection(pSect);
 	curOffset = isUnion ? 0 : pSect->size;
@@ -297,15 +318,14 @@ void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
  * Set the current section by name and type
  */
 void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
-			struct SectionSpec const *attributes)
+			struct SectionSpec const *attribs)
 {
 	checkcodesection();
 
 	if (currentLoadSection)
 		fatalerror("`LOAD` blocks cannot be nested");
 
-	struct Section *pSect = getSection(name, type, org, attributes->bank,
-					   attributes->alignment, false);
+	struct Section *pSect = getSection(name, type, org, attribs, false);
 
 	loadOffset = curOffset;
 	curOffset = 0; /* curOffset -= loadOffset; */

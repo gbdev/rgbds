@@ -11,6 +11,11 @@ SECTION UNION "c", HRAM[$FFC0]
 	ds 5
 c1::
 
+SECTION UNION "d", SRAM,ALIGN[8,$BA]
+d1::
+
+SECTION UNION "e", SRAM[$BABE]
+
 
 SECTION "output 1", ROM0
 	dw a1,a2 ; $C00A, $C02A
@@ -19,3 +24,4 @@ SECTION "output 1", ROM0
 
 SECTION "output 3", ROM0
 	db BANK(banked)
+	dw d1,d2 ; $ABBA, $BBBA

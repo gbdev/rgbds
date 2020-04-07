@@ -12,6 +12,13 @@ b1: ; Same but in different sections now
 	ds 5
 c2::
 
+SECTION UNION "d", SRAM,ALIGN[12,$BBA]
+	ds $1000
+d2::
+
+SECTION UNION "e", SRAM,ALIGN[8,$BE]
+
+
 SECTION "output 2", ROM0
 	dw a1,a2
 	dw b1,b2

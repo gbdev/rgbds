@@ -181,6 +181,7 @@ static void writesection(struct Section const *pSect, FILE *f)
 	fputlong(pSect->nOrg, f);
 	fputlong(pSect->nBank, f);
 	fputc(pSect->nAlign, f);
+	fputlong(pSect->alignOfs, f);
 
 	if (sect_HasData(pSect->nType)) {
 		fwrite(pSect->tData, 1, pSect->size, f);

@@ -94,6 +94,9 @@ REPT NumberOfSections
 
     BYTE    Align ; Alignment of this section, as N bits. 0 when not specified.
 
+    LONG    Ofs   ; Offset relative to the alignment specified above.
+                  ; Must be below 1 << Align.
+
     IF      (Type == ROMX) || (Type == ROM0) ; Sections that can contain data.
 
         BYTE    Data[Size]      ; Raw data of the section.

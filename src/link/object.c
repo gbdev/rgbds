@@ -255,7 +255,7 @@ static void readSection(FILE *file, struct Section *section,
 			char const *fileName, struct Section *fileSections[])
 {
 	int32_t tmp;
-	uint8_t type;
+	uint8_t byte;
 
 	tryReadstr(section->name, file, "%s: Cannot read section name: %s",
 		   fileName);
@@ -265,24 +265,34 @@ static void readSection(FILE *file, struct Section *section,
 		errx(1, "\"%s\"'s section size (%d) is invalid", section->name,
 		     tmp);
 	section->size = tmp;
-	tryGetc(type, file, "%s: Cannot read \"%s\"'s type: %s",
+	tryGetc(byte, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, section->name);
-	section->type = type & 0x7F;
-	section->isUnion = type >> 7;
+	section->type = byte & 0x7F;
+	section->isUnion = byte >> 7;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s",
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
-	if (tmp > UINT16_MAX)
-		errx(1, "\"%s\"'s org' is too large (%d)", section->name, tmp);
+	if (tmp > UINT16_MAX) {
+		error("\"%s\"'s org is too large (%d)", section->name, tmp);
+		tmp = UINT16_MAX;
+	}
 	section->org = tmp;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s",
 		    fileName, section->name);
 	section->isBankFixed = tmp >= 0;
 	section->bank = tmp;
-	tryGetc(tmp, file, "%s: Cannot read \"%s\"'s alignment: %s",
+	tryGetc(byte, file, "%s: Cannot read \"%s\"'s alignment: %s",
 		fileName, section->name);
-	section->isAlignFixed = tmp != 0;
-	section->alignMask = (1 << tmp) - 1;
+	section->isAlignFixed = byte != 0;
+	section->alignMask = (1 << byte) - 1;
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s",
+		    fileName, section->name);
+	if (tmp > UINT16_MAX) {
+		error("\"%s\"'s alignment offset is too large (%d)",
+		      section->name, tmp);
+		tmp = UINT16_MAX;
+	}
+	section->alignOfs = tmp;
 
 	if (sect_HasData(section->type)) {
 		/* Ensure we never allocate 0 bytes */

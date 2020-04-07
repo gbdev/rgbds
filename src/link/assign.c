@@ -132,7 +132,8 @@ static bool isLocationSuitable(struct Section const *section,
 	if (section->isAddressFixed && section->org != location->address)
 		return false;
 
-	if (section->isAlignFixed && location->address & section->alignMask)
+	if (section->isAlignFixed
+	 && ((location->address - section->alignOfs) & section->alignMask))
 		return false;
 
 	if (location->address < freeSpace->address)
@@ -183,8 +184,13 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 					space = NULL;
 			} else if (section->isAlignFixed) {
 				/* Move to next aligned location */
+				/* Move back to alignment boundary */
+				location->address -= section->alignOfs;
+				/* Ensure we're there (e.g. on first check) */
 				location->address &= ~section->alignMask;
-				location->address += section->alignMask + 1;
+				/* Go to next align boundary and add offset */
+				location->address += section->alignMask + 1
+							+ section->alignOfs;
 			} else {
 				/* Any location is fine, so, next free block */
 				space = space->next;
@@ -309,8 +315,8 @@ static void placeSection(struct Section *section)
 		if (section->isAddressFixed)
 			snprintf(where, 64, "at address $%04x", section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "with align mask %x",
-				 ~section->alignMask);
+			snprintf(where, 64, "with align mask %x and offset %u",
+				 ~section->alignMask, section->alignOfs);
 		else
 			strcpy(where, "anywhere");
 	}
