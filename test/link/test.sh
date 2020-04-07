@@ -80,6 +80,12 @@ $RGBLINK -o $gbtemp2 $otemp
 i="high-low.asm" tryCmp $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
+$RGBASM -o $otemp bank-const/a.asm
+$RGBASM -o $gbtemp2 bank-const/b.asm
+$RGBLINK -o $gbtemp $gbtemp2 $otemp > $outtemp 2>&1
+i="bank-const.asm" tryDiff bank-const/err.out $outtemp
+rc=$(($? || $rc))
+
 $RGBASM -o $otemp section-union/good/a.asm
 $RGBASM -o $gbtemp2 section-union/good/b.asm
 $RGBLINK -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2

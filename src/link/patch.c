@@ -260,6 +260,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				      patch->fileName,
 				      fileSymbols[value]->name);
 				value = 1;
+			} else if (!symbol->section) {
+				error("%s: Requested BANK() of non-label symbol \"%s\"",
+				      patch->fileName,
+				      fileSymbols[value]->name);
+				value = 1;
 			} else {
 				value = symbol->section->bank;
 			}
