@@ -83,7 +83,7 @@ struct Mapfile {
 	int size;
 };
 
-int depth, colors;
+extern int depth, colors;
 
 #include "gfx/makepng.h"
 #include "gfx/gb.h"

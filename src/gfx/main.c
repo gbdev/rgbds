@@ -15,6 +15,8 @@
 #include "extern/getopt.h"
 #include "version.h"
 
+int depth, colors;
+
 /* Short options */
 static char const *optstring = "Aa:CDd:Ffhmo:Pp:Tt:uVvx:";
 

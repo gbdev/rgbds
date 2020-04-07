@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "gfx/main.h"
+#include "gfx/gb.h"
 
 void transpose_tiles(struct GBImage *gb, int width)
 {
