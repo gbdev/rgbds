@@ -293,23 +293,17 @@ struct sSymbol *sym_FindMacro(char const *s)
  * hasn't already been defined or referenced in a context that would
  * require that it be relocatable
  */
-static struct sSymbol *createNonrelocSymbol(char const *tzSym)
+static struct sSymbol *createNonrelocSymbol(char const *symbolName)
 {
-	struct sSymbol *nsym = findsymbol(tzSym, NULL);
+	struct sSymbol *symbol = findsymbol(symbolName, NULL);
 
-	if (nsym != NULL) {
-		if (sym_IsDefined(nsym)) {
-			yyerror("'%s' already defined at %s(%u)",
-				tzSym, nsym->tzFileName, nsym->nFileLine);
-		} else {
-			yyerror("'%s' referenced as label at %s(%u)",
-				tzSym, nsym->tzFileName, nsym->nFileLine);
-		}
-	} else {
-		nsym = createsymbol(tzSym);
-	}
+	if (!symbol)
+		symbol = createsymbol(symbolName);
+	else if (sym_IsDefined(symbol))
+		yyerror("'%s' already defined at %s(%u)", symbolName,
+			symbol->tzFileName, symbol->nFileLine);
 
-	return nsym;
+	return symbol;
 }
 
 /*
