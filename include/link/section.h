@@ -19,6 +19,8 @@
 
 #include "linkdefs.h"
 
+struct Section;
+
 struct AttachedSymbol {
 	struct Symbol *symbol;
 	struct AttachedSymbol *next;
@@ -27,9 +29,13 @@ struct AttachedSymbol {
 struct Patch {
 	char *fileName;
 	int32_t offset;
+	uint32_t pcSectionID;
+	uint32_t pcOffset;
 	enum PatchType type;
 	int32_t rpnSize;
 	uint8_t *rpnExpression;
+
+	struct Section const *pcSection;
 };
 
 struct Section {

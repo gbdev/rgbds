@@ -207,14 +207,24 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
  * @param fileName The filename to report in errors
  * @param i The number of the patch to report in errors
  */
-static void readPatch(FILE *file, struct Patch *patch,
-		      char const *fileName, char const *sectName, uint32_t i)
+static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
+		      char const *sectName, uint32_t i,
+		      struct Section *fileSections[])
 {
 	tryReadstr(patch->fileName, file,
 		   "%s: Unable to read \"%s\"'s patch #%u's name: %s",
 		   fileName, sectName, i);
 	tryReadlong(patch->offset, file,
 		    "%s: Unable to read \"%s\"'s patch #%u's offset: %s",
+		    fileName, sectName, i);
+	tryReadlong(patch->pcSectionID, file,
+		    "%s: Unable to read \"%s\"'s patch #%u's PC offset: %s",
+		    fileName, sectName, i);
+	patch->pcSection = patch->pcSectionID == -1
+					? NULL
+					: fileSections[patch->pcSectionID];
+	tryReadlong(patch->pcOffset, file,
+		    "%s: Unable to read \"%s\"'s patch #%u's PC offset: %s",
 		    fileName, sectName, i);
 	tryGetc(patch->type, file,
 		"%s: Unable to read \"%s\"'s patch #%u's type: %s",
@@ -242,7 +252,7 @@ static void readPatch(FILE *file, struct Patch *patch,
  * @param fileName The filename to report in errors
  */
 static void readSection(FILE *file, struct Section *section,
-			char const *fileName)
+			char const *fileName, struct Section *fileSections[])
 {
 	int32_t tmp;
 	uint8_t type;
@@ -302,9 +312,10 @@ static void readSection(FILE *file, struct Section *section,
 		if (!patches)
 			err(1, "%s: Unable to read \"%s\"'s patches", fileName,
 			    section->name);
-		for (uint32_t i = 0; i < section->nbPatches; i++)
+		for (uint32_t i = 0; i < section->nbPatches; i++) {
 			readPatch(file, &patches[i], fileName, section->name,
-				  i);
+				  i, fileSections);
+		}
 		section->patches = patches;
 	}
 }
@@ -345,18 +356,14 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
  * @param fileName The filename to report in errors
  */
 static void readAssertion(FILE *file, struct Assertion *assert,
-			  char const *fileName, struct Section *fileSections[],
-			  uint32_t i)
+			  char const *fileName, uint32_t i,
+			  struct Section *fileSections[])
 {
 	char assertName[sizeof("Assertion #" EXPAND_AND_STR(UINT32_MAX))];
-	uint32_t sectionID;
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%u", i);
 
-	readPatch(file, &assert->patch, fileName, assertName, 0);
-	tryReadlong(sectionID, file, "%s: Cannot read assertion's section ID: %s",
-		    fileName);
-	assert->section = sectionID == -1 ? NULL : fileSections[sectionID];
+	readPatch(file, &assert->patch, fileName, assertName, 0, fileSections);
 	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
 		   fileName);
 }
@@ -455,26 +462,25 @@ void obj_ReadFile(char const *fileName)
 	verbosePrint("Reading %u sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
 		/* Read section */
-		struct Section *section = malloc(sizeof(*section));
-
-		if (!section)
+		fileSections[i] = malloc(sizeof(*fileSections[i]));
+		if (!fileSections[i])
 			err(1, "%s: Couldn't create new section", fileName);
-		section->nextu = NULL;
-		readSection(file, section, fileName);
-		section->fileSymbols = fileSymbols;
 
-		sect_AddSection(section);
-		fileSections[i] = section;
+		fileSections[i]->nextu = NULL;
+		readSection(file, fileSections[i], fileName, fileSections);
+		fileSections[i]->fileSymbols = fileSymbols;
 		if (nbSymPerSect[i]) {
-			section->symbols = malloc(sizeof(*section->symbols)
-							* nbSymPerSect[i]);
-			if (!section->symbols)
+			fileSections[i]->symbols = malloc(nbSymPerSect[i]
+					* sizeof(*fileSections[i]->symbols));
+			if (!fileSections[i]->symbols)
 				err(1, "%s: Couldn't link to symbols",
 				    fileName);
 		} else {
-			section->symbols = NULL;
+			fileSections[i]->symbols = NULL;
 		}
-		section->nbSymbols = 0;
+		fileSections[i]->nbSymbols = 0;
+
+		sect_AddSection(fileSections[i]);
 	}
 
 	/* Give symbols pointers to their sections */
@@ -501,7 +507,7 @@ void obj_ReadFile(char const *fileName)
 
 		if (!assertion)
 			err(1, "%s: Couldn't create new assertion", fileName);
-		readAssertion(file, assertion, fileName, fileSections, i);
+		readAssertion(file, assertion, fileName, i, fileSections);
 		assertion->fileSymbols = fileSymbols;
 		assertion->next = assertions;
 		assertions = assertion;

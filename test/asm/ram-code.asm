@@ -1,8 +1,14 @@
 SECTION "test", ROM0[1]
 	call Target
-	LOAD "new", WRAM0[$C001]
+	PRINTT "PC in ROM: {@}\n"
+	LOAD "new", WRAMX[$D001],BANK[1]
+	PRINTT "PC in WRAM: {@}\n"
+	assert @ == $D001
 Target:	dl DEAD << 16 | BEEF
+	db BANK(@)
+	jr .end
 .end
+	jr .end
 	ds 2, $2A
 	ENDL
 After:
@@ -10,16 +16,16 @@ After:
 	ld hl, Word
 	dw Byte, Target.end, After
 
-SECTION "dead", WRAMX[$DEAD]
+SECTION "dead", WRAMX[$DEAD],BANK[2]
 DEAD:
 SECTION "beef", SRAM[$BEEF]
 BEEF:
 
-SECTION "ram test", WRAM0 ; Should end up at $C005
+SECTION "ram test", WRAMX,BANK[1] ; Should end up at $D005
 Word:
 	dw
 
-SECTION "small ram test", WRAM0 ; Should end up at $C000
+SECTION "small ram test", WRAMX,BANK[1] ; Should end up at $D000
 Byte:
 	db
 

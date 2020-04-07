@@ -101,8 +101,6 @@ REPT NumberOfSections
 
         LONG    NumberOfPatches ; Number of patches to apply.
 
-        ; These types of sections may have patches
-
         REPT    NumberOfPatches
 
             STRING  SourceFile   ; Name of the source file (for printing error
@@ -110,6 +108,16 @@ REPT NumberOfSections
 
             LONG    Offset       ; Offset into the section where patch should
                                  ; be applied (in bytes).
+
+            LONG    PCSectionID  ; Index within the file of the section in which
+                                 ; PC is located.
+                                 ; This is usually the same section that the
+                                 ; patch should be applied into, except e.g.
+                                 ; with LOAD blocks.
+
+            LONG    PCOffset     ; PC's offset into the above section.
+                                 ; Used because the section may be floating, so
+                                 ; PC's value is not known to RGBASM.
 
             BYTE    Type         ; 0 = BYTE patch.
                                  ; 1 = little endian WORD patch.
@@ -137,6 +145,13 @@ REPT  NumberOfAssertions
 
   LONG    Offset       ; Offset into the section where the assertion is located.
 
+  LONG    SectionID    ; Index within the file of the section in which PC is
+                       ; located, or -1 if defined outside a section.
+
+  LONG    PCOffset     ; PC's offset into the above section.
+                       ; Used because the section may be floating, so PC's value
+                       ; is not known to RGBASM.
+
   BYTE    Type         ; 0 = Prints the message but allows linking to continue
                        ; 1 = Prints the message and evaluates other assertions,
                        ;     but linking fails afterwards
@@ -145,10 +160,6 @@ REPT  NumberOfAssertions
   LONG    RPNSize      ; Size of the RPN expression's buffer.
 
   BYTE    RPN[RPNSize] ; RPN expression, same as patches. Assert fails if == 0.
-
-  LONG    SectionID    ; The section number (of this object file) in which this
-                       ; assert is defined. If it doesn't belong to any specific
-                       ; section (like a constant), this field has the value -1.
 
   STRING  Message      ; A message displayed when the assert fails. If set to
                        ; the empty string, a generic message is printed instead.

@@ -34,6 +34,8 @@
 struct Patch {
 	char tzFilename[_MAX_PATH + 1];
 	uint32_t nOffset;
+	struct Section *pcSection;
+	uint32_t pcOffset;
 	uint8_t nType;
 	uint32_t nRPNSize;
 	uint8_t *pRPN;
@@ -79,16 +81,13 @@ static uint32_t countsections(void)
 /*
  * Count the number of patches used in this object
  */
-static uint32_t countpatches(struct Section *pSect)
+static uint32_t countpatches(struct Section const *pSect)
 {
-	struct Patch *pPatch;
 	uint32_t r = 0;
 
-	pPatch = pSect->pPatches;
-	while (pPatch) {
+	for (struct Patch const *patch = pSect->pPatches; patch != NULL;
+	     patch = patch->pNext)
 		r++;
-		pPatch = pPatch->pNext;
-	}
 
 	return r;
 }
@@ -132,9 +131,9 @@ static void fputstring(char const *s, FILE *f)
 /*
  * Return a section's ID
  */
-static uint32_t getsectid(struct Section *pSect)
+static uint32_t getsectid(struct Section const *pSect)
 {
-	struct Section *sec;
+	struct Section const *sec;
 	uint32_t ID = 0;
 
 	sec = pSectionList;
@@ -149,13 +148,20 @@ static uint32_t getsectid(struct Section *pSect)
 	fatalerror("Unknown section '%s'", pSect->pzName);
 }
 
+static uint32_t getSectIDIfAny(struct Section const *sect)
+{
+	return sect ? getsectid(sect) : -1;
+}
+
 /*
  * Write a patch to a file
  */
-static void writepatch(struct Patch *pPatch, FILE *f)
+static void writepatch(struct Patch const *pPatch, FILE *f)
 {
 	fputstring(pPatch->tzFilename, f);
 	fputlong(pPatch->nOffset, f);
+	fputlong(getSectIDIfAny(pPatch->pcSection), f);
+	fputlong(pPatch->pcOffset, f);
 	fputc(pPatch->nType, f);
 	fputlong(pPatch->nRPNSize, f);
 	fwrite(pPatch->pRPN, 1, pPatch->nRPNSize, f);
@@ -164,7 +170,7 @@ static void writepatch(struct Patch *pPatch, FILE *f)
 /*
  * Write a section to a file
  */
-static void writesection(struct Section *pSect, FILE *f)
+static void writesection(struct Section const *pSect, FILE *f)
 {
 	fputstring(pSect->pzName, f);
 
@@ -177,16 +183,12 @@ static void writesection(struct Section *pSect, FILE *f)
 	fputlong(pSect->nAlign, f);
 
 	if (sect_HasData(pSect->nType)) {
-		struct Patch *pPatch;
-
 		fwrite(pSect->tData, 1, pSect->size, f);
 		fputlong(countpatches(pSect), f);
 
-		pPatch = pSect->pPatches;
-		while (pPatch) {
-			writepatch(pPatch, f);
-			pPatch = pPatch->pNext;
-		}
+		for (struct Patch const *patch = pSect->pPatches; patch != NULL;
+		     patch = patch->pNext)
+			writepatch(patch, f);
 	}
 }
 
@@ -202,7 +204,7 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
 		fputc(pSym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
 		fputstring(pSym->tzFileName, f);
 		fputlong(pSym->nFileLine, f);
-		fputlong(pSym->pSection ? getsectid(pSym->pSection) : -1, f);
+		fputlong(getSectIDIfAny(pSym->pSection), f);
 		fputlong(pSym->nValue, f);
 	}
 }
@@ -300,9 +302,7 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 				uint32_t ofs)
 {
-	struct Patch *pPatch;
-
-	pPatch = malloc(sizeof(struct Patch));
+	struct Patch *pPatch = malloc(sizeof(struct Patch));
 
 	if (!pPatch)
 		fatalerror("No memory for patch: %s", strerror(errno));
@@ -316,6 +316,8 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 	pPatch->nType = type;
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nOffset = ofs;
+	pPatch->pcSection = sect_GetSymbolSection();
+	pPatch->pcOffset = curOffset;
 
 	writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
 	assert(pPatch->nRPNSize == expr->nRPNPatchSize);
@@ -346,7 +348,6 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		return false;
 
 	assertion->patch = allocpatch(type, expr, ofs);
-	assertion->section = pCurrentSection;
 	assertion->message = strdup(message);
 	if (!assertion->message) {
 		free(assertion);
@@ -362,7 +363,6 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 static void writeassert(struct Assertion *assert, FILE *f)
 {
 	writepatch(assert->patch, f);
-	fputlong(assert->section ? getsectid(assert->section) : -1, f);
 	fputstring(assert->message, f);
 }
 
@@ -381,11 +381,8 @@ static void registerExportedSymbol(struct sSymbol *symbol, void *arg)
  */
 void out_WriteObject(void)
 {
-	FILE *f;
-	struct Section *pSect;
-	struct Assertion *assert = assertions;
+	FILE *f = fopen(tzObjectname, "wb");
 
-	f = fopen(tzObjectname, "wb");
 	if (!f)
 		err(1, "Couldn't write file '%s'", tzObjectname);
 
@@ -398,21 +395,16 @@ void out_WriteObject(void)
 	fputlong(nbSymbols, f);
 	fputlong(countsections(), f);
 
-	for (struct sSymbol const *sym = objectSymbols; sym; sym = sym->next) {
+	for (struct sSymbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
-	}
 
-	pSect = pSectionList;
-	while (pSect) {
-		writesection(pSect, f);
-		pSect = pSect->pNext;
-	}
+	for (struct Section *sect = pSectionList; sect; sect = sect->pNext)
+		writesection(sect, f);
 
 	fputlong(countasserts(), f);
-	while (assert) {
+	for (struct Assertion *assert = assertions; assert;
+	     assert = assert->next)
 		writeassert(assert, f);
-		assert = assert->next;
-	}
 
 	fclose(f);
 }

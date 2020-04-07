@@ -136,7 +136,6 @@ static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
  * @return The patch's value
  */
 static int32_t computeRPNExpr(struct Patch const *patch,
-			      struct Section const *section,
 			      struct Symbol const * const *fileSymbols)
 {
 /* Small shortcut to avoid a lot of repetition */
@@ -283,7 +282,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_BANK_SELF:
-			value = section->bank;
+			value = patch->pcSection->bank;
 			break;
 
 		case RPN_HRAM:
@@ -322,13 +321,17 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 			symbol = getSymbol(fileSymbols, value);
 
-			if (!strcmp(symbol->name, "@")) {
-				value = section->org + patch->offset;
-			} else {
+			if (strcmp(symbol->name, "@")) {
 				value = symbol->value;
 				/* Symbols attached to sections have offsets */
 				if (symbol->section)
 					value += symbol->section->org;
+			} else if (!patch->pcSection) {
+				error("%s: PC has no value outside a section",
+				      patch->fileName);
+				value = 0;
+			} else {
+				value = patch->pcOffset + patch->pcSection->org;
 			}
 			break;
 		}
@@ -351,7 +354,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 	initRPNStack();
 
 	while (assert) {
-		if (!computeRPNExpr(&assert->patch, assert->section,
+		if (!computeRPNExpr(&assert->patch,
 				    (struct Symbol const * const *)
 				    			assert->fileSymbols)) {
 			switch ((enum AssertionType)assert->patch.type) {
@@ -395,14 +398,15 @@ static void applyFilePatches(struct Section *section)
 	verbosePrint("Patching section \"%s\"...\n", section->name);
 	for (uint32_t patchID = 0; patchID < section->nbPatches; patchID++) {
 		struct Patch *patch = &section->patches[patchID];
-		int32_t value = computeRPNExpr(patch, section,
+		int32_t value = computeRPNExpr(patch,
 					       (struct Symbol const * const *)
 							section->fileSymbols);
 
 		/* `jr` is quite unlike the others... */
 		if (patch->type == PATCHTYPE_JR) {
 			/* Target is relative to the byte *after* the operand */
-			uint16_t address = section->org + patch->offset + 1;
+			uint16_t address = patch->pcSection->org
+							+ patch->pcOffset + 1;
 			int16_t offset = value - address;
 
 			if (offset < -128 || offset > 127)

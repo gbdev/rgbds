@@ -20,7 +20,6 @@
 struct Assertion {
 	struct Patch patch;
 	// enum AssertionType type; The `patch`'s field is instead re-used
-	struct Section *section;
 	char *message;
 	/*
 	 * This would be redundant with `.section->fileSymbols`... but
