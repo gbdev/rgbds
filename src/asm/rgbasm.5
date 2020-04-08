@@ -739,6 +739,8 @@ If the former notation is used, then
 .Ql scope
 must be the actual current scope.
 .Pp
+Local labels may have whitespace before their declaration as the only exception to the rule.
+.Pp
 A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
 However, if the section in which the label is declared has a fixed base address, its value is known at assembly time.
 .Pp
