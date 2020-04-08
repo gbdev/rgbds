@@ -185,7 +185,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 		case RPN_MOD:
 			value = popRPN();
-			value = popRPN() % value;
+			if (value == 0) {
+				error("%s: Modulo by 0", patch->fileName);
+				popRPN();
+				value = 0;
+			} else {
+				value = popRPN() % value;
+			}
 			break;
 		case RPN_UNSUB:
 			value = -popRPN();
