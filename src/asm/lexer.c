@@ -254,7 +254,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	else if (capacity == 0)
 		capacity = 1;
 
-	while (!feof(f)) {
+	do {
 		if (buf == NULL || size >= capacity) {
 			if (buf)
 				capacity *= 2;
@@ -273,7 +273,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 			fatalerror("%s: fread error", __func__);
 
 		size += read_count;
-	}
+	} while (!feof(f));
 
 	pBuffer->pBufferRealStart = buf;
 	pBuffer->pBufferStart = buf + SAFETYMARGIN;
