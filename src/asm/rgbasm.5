@@ -492,13 +492,21 @@ See above for possible values for
 .Ar bank ,
 depending on
 .Ar type .
-.It Ic ALIGN Ns Bq Ar align
+.It Ic ALIGN Ns Bq Ar align , offset
 Place the section at an address whose
 .Ar align
-least‐significant bits are zero.
+least‐significant bits are equal to
+.Ar offset .
+(Note that
+.Ic ALIGN Ns Bq Ar align
+is a shorthand for
+.Ic ALIGN Ns Bq Ar align , No 0 ) .
 This option can be used with
-.Ar addr ,
+.Bq Ar addr ,
 as long as they don't contradict eachother.
+It's also possible to request alignment in the middle of a section, see
+.Sx Requesting alignment
+below.
 .El
 .Pp
 If
@@ -520,7 +528,7 @@ Section examples:
 .Bl -item
 .It
 .Bd -literal -offset indent
-SECTION "CoolStuff",ROMX
+SECTION "Cool Stuff",ROMX
 .Ed
 This switches to the section called
 .Dq CoolStuff ,
@@ -530,17 +538,17 @@ Code and data may follow.
 .It
 If it is needed, the the base address of the section can be specified:
 .Bd -literal -offset indent
-SECTION "CoolStuff",ROMX[$4567]
+SECTION "Cool Stuff",ROMX[$4567]
 .Ed
 .It
 An example with a fixed bank:
 .Bd -literal -offset indent
-SECTION "CoolStuff",ROMX[$4567],BANK[3]
+SECTION "Cool Stuff",ROMX[$4567],BANK[3]
 .Ed
 .It
 And if you want to force only the section's bank, and not its position within the bank, that's also possible:
 .Bd -literal -offset indent
-SECTION "CoolStuff",ROMX,BANK[7]
+SECTION "Cool Stuff",ROMX,BANK[7]
 .Ed
 .It
 Alignment examples:
@@ -1460,10 +1468,29 @@ provide the interface to the option stack.
 will push the current set of options on the option stack.
 .Ic POPO
 can then later be used to restore them.
-Useful if you want to change some options in an include file and you don't want
-to destroy the options set by the program that included your file.
-The stack's number of entries is limited only by the amount of memory in your
-machine.
+Useful if you want to change some options in an include file and you don't want to destroy the options set by the program that included your file.
+The stack's number of entries is limited only by the amount of memory in your machine.
+.Ss Requesting alignment
+.Pp
+While
+.Ic ALIGN
+as presented in
+.Sx SECTIONS
+is often useful as-is, sometimes you instead want a particular piece of data (or code) in the middle of the section to be aligned.
+This is made easier through the use of mid-section
+.Ic align Ar align , offset .
+It will alter the section's attributes to ensure that the location the
+.Ic align
+directive is at, has its
+.Ar align
+lower bits equal to
+.Ar offset .
+.Pp
+If the constraint cannot be met (for example because the section is fixed at an incompatible address), and error is produced.
+Note that
+.Ic align Ar align
+is a shorthand for
+.Ic align Ar align , No 0 .
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,
