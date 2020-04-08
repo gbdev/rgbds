@@ -654,6 +654,7 @@ void setup_lexer(void)
 	lex_FloatAddFirstRange(id, 'a', 'z');
 	lex_FloatAddFirstRange(id, 'A', 'Z');
 	lex_FloatAddFirstRange(id, '_', '_');
+	lex_FloatAddSecondRange(id, '.', '.');
 	lex_FloatAddSecondRange(id, 'a', 'z');
 	lex_FloatAddSecondRange(id, 'A', 'Z');
 	lex_FloatAddSecondRange(id, '0', '9');
