@@ -774,6 +774,26 @@ simple_pseudoop : include
 		| popo
 		| pusho
 		| opt
+		| align
+;
+
+align		: T_OP_ALIGN uconst {
+			if ($2 > 16)
+				yyerror("Alignment must be between 0 and 16, not %u",
+					$2);
+			else
+				sect_AlignPC($2, 0);
+		}
+		| T_OP_ALIGN uconst ',' uconst {
+			if ($2 > 16)
+				yyerror("Alignment must be between 0 and 16, not %u",
+					$2);
+			else if ($4 >= 1 << $2)
+				yyerror("Offset must be between 0 and %u, not %u",
+					(1 << $2) - 1, $4);
+			else
+				sect_AlignPC($2, $4);
+		}
 ;
 
 opt		: T_POP_OPT {

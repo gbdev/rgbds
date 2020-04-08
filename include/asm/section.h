@@ -44,6 +44,7 @@ void out_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
 uint32_t sect_GetOutputOffset(void);
+void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);

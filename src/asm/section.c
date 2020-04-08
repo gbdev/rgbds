@@ -354,6 +354,28 @@ uint32_t sect_GetOutputOffset(void)
 	return curOffset + loadOffset;
 }
 
+void sect_AlignPC(uint8_t alignment, uint16_t offset)
+{
+	struct Section *sect = sect_GetSymbolSection();
+
+	if (sect->nOrg != -1) {
+		if ((sym_GetValue(pPCSymbol) - offset) % (1 << alignment))
+			yyerror("Section's fixed address fails required alignment (PC = $%04x)",
+				sym_GetValue(pPCSymbol));
+	} else if (sect->nAlign != 0) {
+		if ((((sect->alignOfs + curOffset) % (1 << sect->nAlign)) - offset) % (1 << alignment)) {
+			yyerror("Section's alignment fails required alignment (offset from section start = $%04x)",
+				curOffset);
+		} else if (alignment > sect->nAlign) {
+			sect->nAlign = alignment;
+			sect->alignOfs = (offset - curOffset) % (1 << alignment);
+		}
+	} else {
+		sect->nAlign = alignment;
+		sect->alignOfs = offset;
+	}
+}
+
 static inline void growSection(uint32_t growth)
 {
 	curOffset += growth;
