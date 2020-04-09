@@ -342,6 +342,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 					*mem++ = ' ';
 			/* Comments that start with * at the start of a line */
 			} else if ((mem[0] == '\n') && (mem[1] == '*')) {
+				warning(WARNING_OBSOLETE, "'*' is deprecated for comments, please use ';' instead");
 				mem++;
 				while (!((*mem == '\n') || (*mem == '\0')))
 					*mem++ = ' ';
