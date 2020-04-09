@@ -82,10 +82,18 @@ static inline void clearRPNStack(void)
 static void pushRPN(int32_t value)
 {
 	if (stack.size >= stack.capacity) {
-		stack.capacity *= 2;
+		static const size_t increase_factor = 2;
+
+		if (stack.capacity > SIZE_MAX / increase_factor)
+			err(1, "Overflow in RPN stack resize");
+
+		stack.capacity *= increase_factor;
 		stack.buf =
 			realloc(stack.buf, sizeof(*stack.buf) * stack.capacity);
-		if (!stack.buf)
+		// || !stack.capacity to fix bogus
+		// zero-size allocation warning from
+		// scan-build, already caught above
+		if (!stack.buf || !stack.capacity)
 			err(1, "Failed to resize RPN stack");
 	}
 
