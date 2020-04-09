@@ -82,6 +82,9 @@ void output_png_file(const struct Options *opts,
 	 */
 	if (opts->debug) {
 		outfile = malloc(strlen(opts->infile) + 5);
+		if (!outfile)
+			err(1, "%s: Failed to allocate memory for outfile",
+			    __func__);
 		strcpy(outfile, opts->infile);
 		strcat(outfile, ".out");
 	} else {
@@ -110,7 +113,10 @@ void output_png_file(const struct Options *opts,
 		     8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 		     PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-	png_palette = malloc(sizeof(png_color *) * raw_image->num_colors);
+	png_palette = malloc(sizeof(*png_palette) * raw_image->num_colors);
+	if (!png_palette)
+		err(1, "%s: Failed to allocate memory for PNG palette",
+		    __func__);
 	for (i = 0; i < raw_image->num_colors; i++) {
 		png_palette[i].red   = raw_image->palette[i].red;
 		png_palette[i].green = raw_image->palette[i].green;
@@ -207,9 +213,16 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 	if (png_get_tRNS(img->png, img->info, &trans_alpha, &num_trans,
 			 &trans_color)) {
 		original_palette = palette;
-		palette = malloc(sizeof(png_color) * colors_in_PLTE);
+		palette = malloc(sizeof(*palette) * colors_in_PLTE);
+		if (!palette)
+			err(1, "%s: Failed to allocate memory for palette",
+			    __func__);
 		colors_in_new_palette = 0;
-		old_to_new_palette = malloc(sizeof(uint8_t) * colors_in_PLTE);
+		old_to_new_palette = malloc(sizeof(*old_to_new_palette)
+					    * colors_in_PLTE);
+		if (!old_to_new_palette)
+			err(1, "%s: Failed to allocate memory for new palette",
+			    __func__);
 
 		for (i = 0; i < num_trans; i++) {
 			if (trans_alpha[i] == 0) {
@@ -227,8 +240,11 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 
 		if (colors_in_new_palette != colors_in_PLTE) {
 			palette = realloc(palette,
-					  sizeof(png_color) *
+					  sizeof(*palette) *
 					  colors_in_new_palette);
+			if (!palette)
+				err(1, "%s: Failed to allocate memory for palette",
+				    __func__);
 		}
 
 		/*
@@ -247,6 +263,7 @@ static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 			}
 		}
 
+		free(palette);
 		free(old_to_new_palette);
 	} else {
 		set_raw_image_palette(raw_image, palette, colors_in_PLTE);
@@ -353,7 +370,9 @@ static void rgba_build_palette(struct PNGImage *img,
 	 * By filling the palette up with black by default, if the image
 	 * doesn't have enough colors, the palette gets padded with black.
 	 */
-	*palette_ptr_ptr = calloc(colors, sizeof(png_color));
+	*palette_ptr_ptr = calloc(colors, sizeof(**palette_ptr_ptr));
+	if (!*palette_ptr_ptr)
+		err(1, "%s: Failed to allocate memory for palette", __func__);
 	palette = *palette_ptr_ptr;
 	*num_colors = 0;
 
@@ -421,9 +440,14 @@ static void update_built_palette(png_color *palette,
 static int fit_grayscale_palette(png_color *palette, int *num_colors)
 {
 	int interval = 256 / colors;
-	png_color *fitted_palette = malloc(sizeof(png_color) * colors);
-	bool *set_indices = calloc(colors, sizeof(bool));
+	png_color *fitted_palette = malloc(sizeof(*fitted_palette) * colors);
+	bool *set_indices = calloc(colors, sizeof(*set_indices));
 	int i, shade_index;
+
+	if (!fitted_palette)
+		err(1, "%s: Failed to allocate memory for palette", __func__);
+	if (!set_indices)
+		err(1, "%s: Failed to allocate memory for indices", __func__);
 
 	fitted_palette[0].red   = 0xFF;
 	fitted_palette[0].green = 0xFF;
@@ -481,7 +505,10 @@ static void order_color_palette(png_color *palette, int num_colors)
 {
 	int i;
 	struct ColorWithLuminance *palette_with_luminance =
-		malloc(sizeof(struct ColorWithLuminance) * num_colors);
+		malloc(sizeof(*palette_with_luminance) * num_colors);
+
+	if (!palette_with_luminance)
+		err(1, "%s: Failed to allocate memory for palette", __func__);
 
 	for (i = 0; i < num_colors; i++) {
 		/*
@@ -494,7 +521,7 @@ static void order_color_palette(png_color *palette, int num_colors)
 						       722 * palette[i].blue;
 	}
 	qsort(palette_with_luminance, num_colors,
-	      sizeof(struct ColorWithLuminance), compare_luminance);
+	      sizeof(*palette_with_luminance), compare_luminance);
 	for (i = 0; i < num_colors; i++)
 		palette[i] = palette_with_luminance[i].color;
 
@@ -582,9 +609,16 @@ static void read_png(struct PNGImage *img)
 
 	png_read_update_info(img->png, img->info);
 
-	img->data = malloc(sizeof(png_byte *) * img->height);
-	for (y = 0; y < img->height; y++)
+	img->data = malloc(sizeof(*img->data) * img->height);
+	if (!img->data)
+		err(1, "%s: Failed to allocate memory for image data",
+		    __func__);
+	for (y = 0; y < img->height; y++) {
 		img->data[y] = malloc(png_get_rowbytes(img->png, img->info));
+		if (!img->data[y])
+			err(1, "%s: Failed to allocate memory for image data",
+			    __func__);
+	}
 
 	png_read_image(img->png, img->data);
 	png_read_end(img->png, img->info);
@@ -596,17 +630,31 @@ static struct RawIndexedImage *create_raw_image(int width, int height,
 	struct RawIndexedImage *raw_image;
 	int y;
 
-	raw_image = malloc(sizeof(struct RawIndexedImage));
+	raw_image = malloc(sizeof(*raw_image));
+	if (!raw_image)
+		err(1, "%s: Failed to allocate memory for raw image",
+		    __func__);
 
 	raw_image->width = width;
 	raw_image->height = height;
 	raw_image->num_colors = num_colors;
 
-	raw_image->palette = malloc(sizeof(struct RGBColor) * num_colors);
+	raw_image->palette = malloc(sizeof(*raw_image->palette) * num_colors);
+	if (!raw_image->palette)
+		err(1, "%s: Failed to allocate memory for raw image palette",
+		    __func__);
 
-	raw_image->data = malloc(sizeof(uint8_t *) * height);
-	for (y = 0; y < height; y++)
-		raw_image->data[y] = malloc(sizeof(uint8_t) * width);
+	raw_image->data = malloc(sizeof(*raw_image->data) * height);
+	if (!raw_image->data)
+		err(1, "%s: Failed to allocate memory for raw image data",
+		    __func__);
+	for (y = 0; y < height; y++) {
+		raw_image->data[y] = malloc(sizeof(*raw_image->data[y])
+					    * width);
+		if (!raw_image->data[y])
+			err(1, "%s: Failed to allocate memory for raw image data",
+			    __func__);
+	}
 
 	return raw_image;
 }
@@ -690,7 +738,10 @@ static void set_text(const struct PNGImage *img,
 	png_text *text;
 	char buffer[3];
 
-	text = malloc(sizeof(png_text));
+	text = malloc(sizeof(*text));
+	if (!text)
+		err(1, "%s: Failed to allocate memory for PNG text",
+		    __func__);
 
 	if (png_options->horizontal) {
 		text[0].key = "h";
