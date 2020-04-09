@@ -15,7 +15,7 @@
 
 struct SectionStackEntry {
 	struct Section *pSection;
-	struct sSymbol *pScope; /* Section's symbol scope */
+	struct Symbol *pScope; /* Section's symbol scope */
 	uint32_t offset;
 	struct SectionStackEntry *pNext;
 };
@@ -288,12 +288,10 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 /*
  * Set the current section
  */
-static void setSection(struct Section *pSect)
+static void changeSection(void)
 {
 	if (nUnionDepth > 0)
 		fatalerror("Cannot change the section within a UNION");
-
-	pPCSymbol->pSection = pSect;
 
 	sym_SetCurrentSymbolScope(NULL);
 }
@@ -309,7 +307,7 @@ void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
 
 	struct Section *pSect = getSection(pzName, type, org, attribs, isUnion);
 
-	setSection(pSect);
+	changeSection();
 	curOffset = isUnion ? 0 : pSect->size;
 	pCurrentSection = pSect;
 }
@@ -329,7 +327,7 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 
 	loadOffset = curOffset;
 	curOffset = 0; /* curOffset -= loadOffset; */
-	setSection(pSect);
+	changeSection();
 	currentLoadSection = pSect;
 }
 
@@ -339,7 +337,7 @@ void out_EndLoadSection(void)
 		yyerror("Found `ENDL` outside of a `LOAD` block");
 	currentLoadSection = NULL;
 
-	setSection(pCurrentSection);
+	changeSection();
 	curOffset += loadOffset;
 	loadOffset = 0;
 }
@@ -359,9 +357,9 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 	struct Section *sect = sect_GetSymbolSection();
 
 	if (sect->nOrg != -1) {
-		if ((sym_GetValue(pPCSymbol) - offset) % (1 << alignment))
+		if ((sym_GetPCValue() - offset) % (1 << alignment))
 			yyerror("Section's fixed address fails required alignment (PC = $%04x)",
-				sym_GetValue(pPCSymbol));
+				sym_GetPCValue());
 	} else if (sect->nAlign != 0) {
 		if ((((sect->alignOfs + curOffset) % (1 << sect->nAlign))
 						- offset) % (1 << alignment)) {
@@ -553,7 +551,7 @@ void out_PCRelByte(struct Expression *expr)
 		writebyte(0);
 	} else {
 		/* Target is relative to the byte *after* the operand */
-		uint16_t address = sym_GetValue(pPCSymbol) + 1;
+		uint16_t address = sym_GetPCValue() + 1;
 		/* The offset wraps (jump from ROM to HRAM, for loopexample) */
 		int16_t offset = expr->nVal - address;
 
@@ -698,6 +696,7 @@ void out_PushSection(void)
 	pSect->offset = curOffset;
 	pSect->pNext = pSectionStack;
 	pSectionStack = pSect;
+	/* TODO: maybe set current section to NULL? */
 }
 
 void out_PopSection(void)
@@ -711,7 +710,7 @@ void out_PopSection(void)
 	struct SectionStackEntry *pSect;
 
 	pSect = pSectionStack;
-	setSection(pSect->pSection);
+	changeSection();
 	pCurrentSection = pSect->pSection;
 	sym_SetCurrentSymbolScope(pSect->pScope);
 	curOffset = pSect->offset;

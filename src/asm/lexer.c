@@ -190,7 +190,7 @@ static void yy_buffer_append_newlines(YY_BUFFER_STATE buf, size_t capacity)
 	}
 }
 
-YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size)
+YY_BUFFER_STATE yy_scan_bytes(char const *mem, uint32_t size)
 {
 	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
 

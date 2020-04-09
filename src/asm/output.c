@@ -55,8 +55,8 @@ char *tzObjectname;
 struct Section *pSectionList, *pCurrentSection;
 
 /* Linked list of symbols to put in the object file */
-static struct sSymbol *objectSymbols = NULL;
-static struct sSymbol **objectSymbolsTail = &objectSymbols;
+static struct Symbol *objectSymbols = NULL;
+static struct Symbol **objectSymbolsTail = &objectSymbols;
 static uint32_t nbSymbols = 0; /* Length of the above list */
 
 static struct Assertion *assertions = NULL;
@@ -196,17 +196,17 @@ static void writesection(struct Section const *pSect, FILE *f)
 /*
  * Write a symbol to a file
  */
-static void writesymbol(struct sSymbol const *pSym, FILE *f)
+static void writesymbol(struct Symbol const *sym, FILE *f)
 {
-	fputstring(pSym->tzName, f);
-	if (!sym_IsDefined(pSym)) {
+	fputstring(sym->name, f);
+	if (!sym_IsDefined(sym)) {
 		fputc(SYMTYPE_IMPORT, f);
 	} else {
-		fputc(pSym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
-		fputstring(pSym->tzFileName, f);
-		fputlong(pSym->nFileLine, f);
-		fputlong(getSectIDIfAny(pSym->pSection), f);
-		fputlong(pSym->nValue, f);
+		fputc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
+		fputstring(sym->fileName, f);
+		fputlong(sym->fileLine, f);
+		fputlong(getSectIDIfAny(sym_GetSection(sym)), f);
+		fputlong(sym->value, f);
 	}
 }
 
@@ -214,7 +214,7 @@ static void writesymbol(struct sSymbol const *pSym, FILE *f)
  * Returns a symbol's ID within the object file
  * If the symbol does not have one, one is assigned by registering the symbol
  */
-static uint32_t getSymbolID(struct sSymbol *sym)
+static uint32_t getSymbolID(struct Symbol *sym)
 {
 	if (sym->ID == -1) {
 		sym->ID = nbSymbols++;
@@ -247,7 +247,7 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		{
 			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
 				;
-			struct sSymbol *sym = sym_FindSymbol(tzSym);
+			struct Symbol *sym = sym_FindSymbol(tzSym);
 			uint32_t value;
 
 			if (sym_IsConstant(sym)) {
@@ -267,7 +267,7 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		{
 			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
 				;
-			struct sSymbol *sym = sym_FindSymbol(tzSym);
+			struct Symbol *sym = sym_FindSymbol(tzSym);
 			uint32_t value = getSymbolID(sym);
 
 			writebyte(RPN_BANK_SYM);
@@ -367,10 +367,10 @@ static void writeassert(struct Assertion *assert, FILE *f)
 	fputstring(assert->message, f);
 }
 
-static void registerExportedSymbol(struct sSymbol *symbol, void *arg)
+static void registerExportedSymbol(struct Symbol *symbol, void *arg)
 {
 	(void)arg;
-	if (symbol->isExported && symbol->ID == -1) {
+	if (sym_IsExported(symbol) && symbol->ID == -1) {
 		*objectSymbolsTail = symbol;
 		objectSymbolsTail = &symbol->next;
 		nbSymbols++;
@@ -396,7 +396,7 @@ void out_WriteObject(void)
 	fputlong(nbSymbols, f);
 	fputlong(countsections(), f);
 
-	for (struct sSymbol const *sym = objectSymbols; sym; sym = sym->next)
+	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
 
 	for (struct Section *sect = pSectionList; sect; sect = sect->pNext)

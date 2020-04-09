@@ -56,7 +56,7 @@ void setup_lexer(void);
 
 void yy_set_state(enum eLexerState i);
 YY_BUFFER_STATE yy_create_buffer(FILE *f);
-YY_BUFFER_STATE yy_scan_bytes(char *mem, uint32_t size);
+YY_BUFFER_STATE yy_scan_bytes(char const *mem, uint32_t size);
 void yy_delete_buffer(YY_BUFFER_STATE buf);
 void yy_switch_to_buffer(YY_BUFFER_STATE buf);
 uint32_t lex_FloatAlloc(const struct sLexFloat *tok);

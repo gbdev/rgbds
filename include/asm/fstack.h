@@ -25,7 +25,7 @@ struct MacroArgs;
 
 struct sContext {
 	YY_BUFFER_STATE FlexHandle;
-	struct sSymbol *pMacro;
+	struct Symbol const *pMacro;
 	struct sContext *pNext;
 	char tzFileName[_MAX_PATH + 1];
 	struct MacroArgs *macroArgs;
@@ -48,7 +48,7 @@ void fstk_Dump(void);
 void fstk_DumpToStr(char *buf, size_t len);
 void fstk_DumpStringExpansions(void);
 void fstk_AddIncludePath(char *s);
-bool fstk_RunMacro(char *s, struct MacroArgs *args);
+void fstk_RunMacro(char *s, struct MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo);
 FILE *fstk_FindFile(char const *fname, char **incPathUsed);
 int32_t fstk_GetLine(void);

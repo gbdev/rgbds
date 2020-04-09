@@ -34,7 +34,7 @@
 static struct sContext *pFileStack;
 static unsigned int nFileStackDepth;
 unsigned int nMaxRecursionDepth;
-static struct sSymbol *pCurrentMacro;
+static struct Symbol const *pCurrentMacro;
 static YY_BUFFER_STATE CurrentFlexHandle;
 static FILE *pCurrentFile;
 static uint32_t nCurrentStatus;
@@ -449,52 +449,38 @@ void fstk_RunInclude(char *tzFileName)
 /*
  * Set up a macro for parsing
  */
-bool fstk_RunMacro(char *s, struct MacroArgs *args)
+void fstk_RunMacro(char *s, struct MacroArgs *args)
 {
-	struct sSymbol *sym = sym_FindMacro(s);
+	struct Symbol const *sym = sym_FindSymbol(s);
 	int nPrintedChars;
 
-	if (sym == NULL || sym->pMacro == NULL)
-		return false;
+	if (sym == NULL) {
+		yyerror("Macro \"%s\" not defined", s);
+		return;
+	}
+	if (sym->type != SYM_MACRO) {
+		yyerror("\"%s\" is not a macro", s);
+		return;
+	}
 
 	pushcontext();
 	macro_SetUniqueID(nMacroCount++);
 	/* Minus 1 because there is a newline at the beginning of the buffer */
-	nLineNo = sym->nFileLine - 1;
+	nLineNo = sym->fileLine - 1;
 	macro_UseNewArgs(args);
 	nCurrentStatus = STAT_isMacro;
 	nPrintedChars = snprintf(tzCurrentFileName, _MAX_PATH + 1,
-				 "%s::%s", sym->tzFileName, s);
+				 "%s::%s", sym->fileName, s);
 	if (nPrintedChars > _MAX_PATH) {
 		popcontext();
 		fatalerror("File name + macro name is too large to fit into buffer");
 	}
 
 	pCurrentMacro = sym;
-	CurrentFlexHandle = yy_scan_bytes(pCurrentMacro->pMacro,
-					  strlen(pCurrentMacro->pMacro));
+	/* TODO: why is `strlen` being used when there's a macro size field? */
+	CurrentFlexHandle = yy_scan_bytes(pCurrentMacro->macro,
+					  strlen(pCurrentMacro->macro));
 	yy_switch_to_buffer(CurrentFlexHandle);
-
-	return true;
-}
-
-/*
- * Set up a stringequate for parsing
- */
-void fstk_RunString(char *s)
-{
-	const struct sSymbol *pSym = sym_FindSymbol(s);
-
-	if (pSym != NULL) {
-		pushcontext();
-		nCurrentStatus = STAT_isMacroArg;
-		strcpy(tzCurrentFileName, s);
-		CurrentFlexHandle =
-			yy_scan_bytes(pSym->pMacro, strlen(pSym->pMacro));
-		yy_switch_to_buffer(CurrentFlexHandle);
-	} else {
-		yyerror("No such string symbol '%s'", s);
-	}
 }
 
 /*

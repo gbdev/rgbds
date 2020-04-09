@@ -277,10 +277,10 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 
 	/* If the symbol is an EQUS, expand it */
 	if (!oDontExpandStrings) {
-		struct sSymbol const *sym = sym_FindSymbol(dest);
+		struct Symbol const *sym = sym_FindSymbol(dest);
 
 		if (sym && sym->type == SYM_EQUS) {
-			char *s;
+			char const *s;
 
 			lex_BeginStringExpansion(dest);
 

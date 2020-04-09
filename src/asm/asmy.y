@@ -43,7 +43,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 			const char *mode)
 {
 	size_t length;
-	struct sSymbol *sym = sym_FindSymbol(symName);
+	struct Symbol *sym = sym_FindSymbol(symName);
 
 	if (sym && sym->type == SYM_EQUS) {
 		char const *src = sym_GetStringValue(sym);
@@ -710,8 +710,7 @@ macro		: T_ID {
 			yy_set_state(LEX_STATE_MACROARGS);
 		} macroargs {
 			yy_set_state(LEX_STATE_NORMAL);
-			if (!fstk_RunMacro($1, $3))
-				fatalerror("Macro '%s' not defined", $1);
+			fstk_RunMacro($1, $3);
 		}
 ;
 
@@ -1334,7 +1333,7 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_DEF {
 			oDontExpandStrings = true;
 		} '(' scoped_id ')' {
-			struct sSymbol const *sym = sym_FindSymbol($4);
+			struct Symbol const *sym = sym_FindSymbol($4);
 
 			rpn_Number(&$$, !!sym);
 

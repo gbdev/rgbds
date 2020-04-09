@@ -29,53 +29,70 @@ enum SymbolType {
 	SYM_REF // Forward reference to a label
 };
 
-struct sSymbol {
-	char tzName[MAXSYMLEN + 1];
+struct Symbol {
+	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
-	struct sSymbol *pScope;
-	struct Section *pSection;
-	int32_t nValue;
-	uint32_t ulMacroSize;
-	char *pMacro;
-	int32_t (*Callback)(struct sSymbol const *self);
-	char tzFileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
-	uint32_t nFileLine; /* Line where the symbol was defined. */
+	struct Symbol const *scope;
+	struct Section *section;
+	char fileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
+	uint32_t fileLine; /* Line where the symbol was defined. */
+
+	union {
+		struct { /* If sym_IsNumeric */
+			int32_t value;
+			int32_t (*callback)(void);
+		};
+		struct { /* For SYM_MACRO */
+			uint32_t macroSize;
+			char *macro;
+		};
+	};
 
 	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */
-	struct sSymbol *next; /* Next object to output in the object file */
+	struct Symbol *next; /* Next object to output in the object file */
 };
 
-static inline bool sym_IsDefined(struct sSymbol const *sym)
+bool sym_IsPC(struct Symbol const *sym);
+
+static inline bool sym_IsDefined(struct Symbol const *sym)
 {
 	return sym->type != SYM_REF;
 }
 
-static inline bool sym_IsConstant(struct sSymbol const *sym)
+static inline struct Section *sym_GetSection(struct Symbol const *sym)
 {
-	return sym->type == SYM_EQU || sym->type == SYM_SET
-				|| (sym->type == SYM_LABEL && sym->pSection
-				    && sym->pSection->nOrg != -1);
+	return sym_IsPC(sym) ? sect_GetSymbolSection() : sym->section;
 }
 
-static inline bool sym_IsNumeric(struct sSymbol const *sym)
+static inline bool sym_IsConstant(struct Symbol const *sym)
+{
+	if (sym->type == SYM_LABEL) {
+		struct Section const *sect = sym_GetSection(sym);
+
+		return sect && sect->nOrg != -1;
+	}
+	return sym->type == SYM_EQU || sym->type == SYM_SET;
+}
+
+static inline bool sym_IsNumeric(struct Symbol const *sym)
 {
 	return sym->type == SYM_LABEL || sym->type == SYM_EQU
 	    || sym->type == SYM_SET;
 }
 
-static inline bool sym_IsLabel(struct sSymbol const *sym)
+static inline bool sym_IsLabel(struct Symbol const *sym)
 {
 	return sym->type == SYM_LABEL || sym->type == SYM_REF;
 }
 
-static inline bool sym_IsLocal(struct sSymbol const *sym)
+static inline bool sym_IsLocal(struct Symbol const *sym)
 {
-	return sym_IsLabel(sym) && strchr(sym->tzName, '.');
+	return sym_IsLabel(sym) && strchr(sym->name, '.');
 }
 
-static inline bool sym_IsExported(struct sSymbol const *sym)
+static inline bool sym_IsExported(struct Symbol const *sym)
 {
 	return sym->isExported;
 }
@@ -83,33 +100,32 @@ static inline bool sym_IsExported(struct sSymbol const *sym)
 /*
  * Get a string equate's value
  */
-static inline char *sym_GetStringValue(struct sSymbol const *sym)
+static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
-	return sym->pMacro;
+	return sym->macro;
 }
 
-void sym_ForEach(void (*func)(struct sSymbol *, void *), void *arg);
+void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg);
 
-int32_t sym_GetValue(struct sSymbol const *sym);
+int32_t sym_GetValue(struct Symbol const *sym);
 void sym_SetExportAll(bool set);
-struct sSymbol *sym_AddLocalReloc(char const *tzSym);
-struct sSymbol *sym_AddReloc(char const *tzSym);
-void sym_Export(char const *tzSym);
-struct sSymbol *sym_FindMacro(char const *s);
-struct sSymbol *sym_AddEqu(char const *tzSym, int32_t value);
-struct sSymbol *sym_AddSet(char const *tzSym, int32_t value);
-void sym_Init(void);
+struct Symbol *sym_AddLocalReloc(char const *symName);
+struct Symbol *sym_AddReloc(char const *symName);
+void sym_Export(char const *symName);
+struct Symbol *sym_AddEqu(char const *symName, int32_t value);
+struct Symbol *sym_AddSet(char const *symName, int32_t value);
+uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantValue(char const *s);
-struct sSymbol *sym_FindSymbol(char const *tzName);
-char *sym_GetStringValue(struct sSymbol const *sym);
-struct sSymbol *sym_AddMacro(char const *tzSym, int32_t nDefLineNo);
-struct sSymbol *sym_Ref(char const *tzSym);
-struct sSymbol *sym_AddString(char const *tzSym, char const *tzValue);
+struct Symbol *sym_FindSymbol(char const *symName);
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo);
+struct Symbol *sym_Ref(char const *symName);
+struct Symbol *sym_AddString(char const *symName, char const *value);
 uint32_t sym_GetDefinedValue(char const *s);
-void sym_Purge(char const *tzName);
+void sym_Purge(char const *symName);
+void sym_Init(void);
 
 /* Functions to save and restore the current symbol scope. */
-struct sSymbol *sym_GetCurrentSymbolScope(void);
-void sym_SetCurrentSymbolScope(struct sSymbol *pNewScope);
+struct Symbol *sym_GetCurrentSymbolScope(void);
+void sym_SetCurrentSymbolScope(struct Symbol *newScope);
 
 #endif /* RGBDS_SYMBOL_H */

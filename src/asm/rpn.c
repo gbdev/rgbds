@@ -104,9 +104,9 @@ void rpn_Number(struct Expression *expr, uint32_t i)
 
 void rpn_Symbol(struct Expression *expr, char *tzSym)
 {
-	struct sSymbol *sym = sym_FindSymbol(tzSym);
+	struct Symbol *sym = sym_FindSymbol(tzSym);
 
-	if (sym == pPCSymbol && !pPCSymbol->pSection) {
+	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		yyerror("PC has no value outside a section");
 		rpn_Number(expr, 0);
 	} else if (!sym || !sym_IsConstant(sym)) {
@@ -114,9 +114,9 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		expr->isSymbol = true;
 
 		sym_Ref(tzSym);
-		makeUnknown(expr, strcmp(tzSym, "@")
-				      ? "'%s' is not constant at assembly time"
-				      : "PC is not constant at assembly time",
+		makeUnknown(expr, sym_IsPC(sym)
+				      ? "PC is not constant at assembly time"
+				      : "'%s' is not constant at assembly time",
 			    tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
@@ -126,7 +126,7 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		memcpy(ptr, tzSym, nameLen);
 
 		/* RGBLINK assumes PC is at the byte being computed... */
-		if (sym == pPCSymbol && nPCOffset) {
+		if (sym_IsPC(sym) && nPCOffset) {
 			struct Expression pc = *expr, offset;
 
 			rpn_Number(&offset, nPCOffset);
@@ -157,10 +157,10 @@ void rpn_BankSelf(struct Expression *expr)
 
 void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 {
-	struct sSymbol const *sym = sym_FindSymbol(tzSym);
+	struct Symbol const *sym = sym_FindSymbol(tzSym);
 
 	/* The @ symbol is treated differently. */
-	if (sym == pPCSymbol) {
+	if (sym_IsPC(sym)) {
 		rpn_BankSelf(expr);
 		return;
 	}
@@ -170,12 +170,13 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 		yyerror("BANK argument must be a label");
 	} else {
 		sym_Ref(tzSym);
-		/* If the symbol didn't exist, `sym_Ref` created it */
-		struct sSymbol *pSymbol = sym_FindSymbol(tzSym);
+		if (!sym)
+			/* If the symbol didn't exist, `sym_Ref` created it */
+			sym = sym_FindSymbol(tzSym);
 
-		if (pSymbol->pSection && pSymbol->pSection->nBank != -1) {
+		if (sym_GetSection(sym) && sym_GetSection(sym)->nBank != -1) {
 			/* Symbol's section is known and bank is fixed */
-			expr->nVal = pSymbol->pSection->nBank;
+			expr->nVal = sym_GetSection(sym)->nBank;
 		} else {
 			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
 			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
@@ -293,7 +294,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
-static struct sSymbol const *symbolOf(struct Expression const *expr)
+static struct Symbol const *symbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
@@ -304,14 +305,14 @@ static bool isDiffConstant(struct Expression const *src1,
 			   struct Expression const *src2)
 {
 	/* Check if both expressions only refer to a single symbol */
-	struct sSymbol const *symbol1 = symbolOf(src1);
-	struct sSymbol const *symbol2 = symbolOf(src2);
+	struct Symbol const *symbol1 = symbolOf(src1);
+	struct Symbol const *symbol2 = symbolOf(src2);
 
 	if (!symbol1 || !symbol2
 	 || symbol1->type != SYM_LABEL || symbol2->type != SYM_LABEL)
 		return false;
 
-	return symbol1->pSection == symbol2->pSection;
+	return sym_GetSection(symbol1) == sym_GetSection(symbol2);
 }
 
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
@@ -424,8 +425,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		}
 
 	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
-		struct sSymbol const *symbol1 = symbolOf(src1);
-		struct sSymbol const *symbol2 = symbolOf(src2);
+		struct Symbol const *symbol1 = symbolOf(src1);
+		struct Symbol const *symbol2 = symbolOf(src2);
 
 		expr->nVal = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;

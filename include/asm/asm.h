@@ -34,7 +34,6 @@ extern uint32_t unionStart[MAXUNIONS];
 extern uint32_t unionSize[MAXUNIONS];
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
-extern struct sSymbol *pPCSymbol;
 extern bool oDontExpandStrings;
 
 size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
