@@ -1,4 +1,2 @@
 ERROR: divzero-section-bank.asm(1):
-    Invalid integer constant
-ERROR: divzero-section-bank.asm(1):
     Division by zero
