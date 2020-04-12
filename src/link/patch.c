@@ -337,7 +337,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 			symbol = getSymbol(fileSymbols, value);
 
-			if (strcmp(symbol->name, "@")) {
+			if (!symbol) {
+				error("%s: Unknown symbol \"%s\"",
+				      patch->fileName,
+				      fileSymbols[value]->name);
+			} else if (strcmp(symbol->name, "@")) {
 				value = symbol->value;
 				/* Symbols attached to sections have offsets */
 				if (symbol->section)
