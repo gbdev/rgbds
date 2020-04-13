@@ -48,7 +48,7 @@ static bool warningsAreErrors; /* Set if `-Werror` was specified */
 static enum WarningState warningState(enum WarningID id)
 {
 	/* Check if warnings are globally disabled */
-	if (!CurrentOptions.warnings)
+	if (!warnings)
 		return WARNING_DISABLED;
 
 	/* Get the actual state */

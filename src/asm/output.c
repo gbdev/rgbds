@@ -416,6 +416,6 @@ void out_WriteObject(void)
 void out_SetFileName(char *s)
 {
 	tzObjectname = s;
-	if (CurrentOptions.verbose)
+	if (verbose)
 		printf("Output filename %s\n", s);
 }

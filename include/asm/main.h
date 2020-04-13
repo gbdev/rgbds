@@ -18,12 +18,7 @@
 struct sOptions {
 	char binary[2];
 	char gbgfx[4];
-	bool exportall;
 	int32_t fillchar;
-	bool haltnop;
-	bool optimizeloads;
-	bool verbose;
-	bool warnings; /* True to enable warnings, false to disable them. */
 };
 
 extern char *tzNewMacro;
@@ -35,6 +30,10 @@ extern uint32_t curOffset; /* Offset into the current section */
 
 extern struct sOptions DefaultOptions;
 extern struct sOptions CurrentOptions;
+extern bool haltnop;
+extern bool optimizeloads;
+extern bool verbose;
+extern bool warnings; /* True to enable warnings, false to disable them. */
 
 extern FILE *dependfile;
 extern char *tzTargetFileName;

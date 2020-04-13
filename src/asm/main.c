@@ -63,6 +63,10 @@ char *tzTargetFileName;
 
 struct sOptions DefaultOptions;
 struct sOptions CurrentOptions;
+bool haltnop;
+bool optimizeloads;
+bool verbose;
+bool warnings; /* True to enable warnings, false to disable them. */
 
 struct sOptionStackEntry {
 	struct sOptions Options;
@@ -360,12 +364,12 @@ int main(int argc, char *argv[])
 	DefaultOptions.gbgfx[3] = '3';
 	DefaultOptions.binary[0] = '0';
 	DefaultOptions.binary[1] = '1';
-	DefaultOptions.exportall = false;
 	DefaultOptions.fillchar = 0;
-	DefaultOptions.optimizeloads = true;
-	DefaultOptions.haltnop = true;
-	DefaultOptions.verbose = false;
-	DefaultOptions.warnings = true;
+	optimizeloads = true;
+	haltnop = true;
+	verbose = false;
+	warnings = true;
+	bool exportall = false;
 
 	opt_SetCurrentOptions(&DefaultOptions);
 
@@ -386,7 +390,7 @@ int main(int argc, char *argv[])
 			opt_AddDefine(optarg);
 			break;
 		case 'E':
-			newopt.exportall = true;
+			exportall = true;
 			break;
 		case 'g':
 			if (strlen(optarg) == 4) {
@@ -399,13 +403,13 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'h':
-			newopt.haltnop = false;
+			haltnop = false;
 			break;
 		case 'i':
 			fstk_AddIncludePath(optarg);
 			break;
 		case 'L':
-			newopt.optimizeloads = false;
+			optimizeloads = false;
 			break;
 		case 'M':
 			if (!strcmp("-", optarg))
@@ -439,13 +443,13 @@ int main(int argc, char *argv[])
 			printf("rgbasm %s\n", get_package_version_string());
 			exit(0);
 		case 'v':
-			newopt.verbose = true;
+			verbose = true;
 			break;
 		case 'W':
 			processWarningFlag(optarg);
 			break;
 		case 'w':
-			newopt.warnings = false;
+			warnings = false;
 			break;
 
 		/* Long-only options */
@@ -510,7 +514,7 @@ int main(int argc, char *argv[])
 
 	setup_lexer();
 
-	if (CurrentOptions.verbose)
+	if (verbose)
 		printf("Assembling %s\n", tzMainfile);
 
 	if (dependfile) {
@@ -528,7 +532,7 @@ int main(int argc, char *argv[])
 	skipElif = true;
 	nUnionDepth = 0;
 	sym_Init();
-	sym_SetExportAll(CurrentOptions.exportall);
+	sym_SetExportAll(exportall);
 	fstk_Init(tzMainfile);
 	opt_ParseDefines();
 	charmap_InitMain();
@@ -554,7 +558,7 @@ int main(int argc, char *argv[])
 	nEndClock = clock();
 	timespent = ((double)(nEndClock - nStartClock))
 		     / (double)CLOCKS_PER_SEC;
-	if (CurrentOptions.verbose) {
+	if (verbose) {
 		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
 		       (int)timespent, ((int)(timespent * 100.0)) % 100);
 		if (timespent < FLT_MIN_EXP)

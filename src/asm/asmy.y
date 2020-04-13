@@ -1618,7 +1618,7 @@ z80_ei		: T_Z80_EI	{ out_AbsByte(0xFB); }
 
 z80_halt	: T_Z80_HALT {
 			out_AbsByte(0x76);
-			if (CurrentOptions.haltnop)
+			if (haltnop)
 				out_AbsByte(0x00);
 		}
 ;
@@ -1718,8 +1718,8 @@ z80_ld_mem	: T_Z80_LD op_mem_ind ',' T_MODE_SP {
 			out_RelWord(&$2);
 		}
 		| T_Z80_LD op_mem_ind ',' T_MODE_A {
-			if (CurrentOptions.optimizeloads &&
-			    (rpn_isKnown(&$2)) && ($2.nVal >= 0xFF00)) {
+			if (optimizeloads && rpn_isKnown(&$2)
+			 && $2.nVal >= 0xFF00) {
 				out_AbsByte(0xE0);
 				out_AbsByte($2.nVal & 0xFF);
 				rpn_Free(&$2);
@@ -1766,8 +1766,8 @@ z80_ld_a	: T_Z80_LD reg_r ',' T_MODE_C_IND {
 		}
 		| T_Z80_LD reg_r ',' op_mem_ind {
 			if ($2 == REG_A) {
-				if (CurrentOptions.optimizeloads &&
-				    (rpn_isKnown(&$4)) && ($4.nVal >= 0xFF00)) {
+				if (optimizeloads && rpn_isKnown(&$4)
+				 && $4.nVal >= 0xFF00) {
 					out_AbsByte(0xF0);
 					out_AbsByte($4.nVal & 0xFF);
 					rpn_Free(&$4);
