@@ -18,7 +18,7 @@
 
 /* Variables related to CLI options */
 extern bool isDmgMode;
-extern char const *linkerScriptName;
+extern char       *linkerScriptName;
 extern char const *mapFileName;
 extern char const *symFileName;
 extern char const *overlayFileName;

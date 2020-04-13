@@ -25,7 +25,7 @@
 #include "version.h"
 
 bool isDmgMode;               /* -d */
-char const *linkerScriptName; /* -l */
+char       *linkerScriptName; /* -l */
 char const *mapFileName;      /* -m */
 char const *symFileName;      /* -n */
 char const *overlayFileName;  /* -O */

@@ -19,19 +19,20 @@
 #include "extern/err.h"
 
 FILE * linkerScript;
+char *includeFileName;
 
 static uint32_t lineNo;
 
 static struct {
 	FILE *file;
 	uint32_t lineNo;
-	char const *name;
+	char *name;
 } *fileStack;
 
 static uint32_t fileStackSize;
 static uint32_t fileStackIndex;
 
-static void pushFile(char const *newFileName)
+static void pushFile(char *newFileName)
 {
 	if (fileStackIndex == UINT32_MAX)
 		errx(1, "%s(%u): INCLUDE recursion limit reached",
@@ -65,6 +66,8 @@ static bool popFile(void)
 {
 	if (!fileStackIndex)
 		return false;
+
+	free(linkerScriptName);
 
 	fileStackIndex--;
 	linkerScript = fileStack[fileStackIndex].file;
@@ -179,7 +182,7 @@ static int readChar(FILE *file)
 	return curchar;
 }
 
-static struct LinkerScriptToken const *nextToken(void)
+static struct LinkerScriptToken *nextToken(void)
 {
 	static struct LinkerScriptToken token;
 	int curchar;
@@ -368,7 +371,7 @@ struct SectionPlacement *script_NextSection(void)
 	}
 
 	for (;;) {
-		struct LinkerScriptToken const *token = nextToken();
+		struct LinkerScriptToken *token = nextToken();
 		enum LinkerScriptTokenType tokType;
 		union LinkerScriptTokenAttr attr;
 		bool hasArg;
@@ -498,6 +501,8 @@ struct SectionPlacement *script_NextSection(void)
 
 			/* Switch to that file */
 			pushFile(token->attr.string);
+			/* The file stack took ownership of the string */
+			token->attr.string = NULL;
 
 			parserState = PARSER_LINESTART;
 			break;
