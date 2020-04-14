@@ -19,6 +19,9 @@ void transpose_tiles(struct GBImage *gb, int width)
 	int newbyte;
 
 	newdata = calloc(gb->size, 1);
+	if (!newdata)
+		err(1, "%s: Failed to allocate memory for new data", __func__);
+
 	for (i = 0; i < gb->size; i++) {
 		newbyte = i / (8 * depth) * width * 8 * depth;
 		newbyte = newbyte % gb->size
@@ -62,7 +65,8 @@ void output_file(const struct Options *opts, const struct GBImage *gb)
 
 	f = fopen(opts->outfile, "wb");
 	if (!f)
-		err(1, "Opening output file '%s' failed", opts->outfile);
+		err(1, "%s: Opening output file '%s' failed", __func__,
+		    opts->outfile);
 
 	fwrite(gb->data, 1, gb->size - gb->trim * 8 * depth, f);
 
@@ -136,6 +140,9 @@ int get_mirrored_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles,
 	}
 
 	tile_yflip = malloc(tile_size);
+	if (!tile_yflip)
+		err(1, "%s: Failed to allocate memory for Y flip of tile",
+		    __func__);
 	yflip(tile, tile_yflip, tile_size);
 	index = get_tile_index(tile_yflip, tiles, num_tiles, tile_size);
 	if (index >= 0) {
@@ -145,6 +152,9 @@ int get_mirrored_tile_index(uint8_t *tile, uint8_t **tiles, int num_tiles,
 	}
 
 	tile_xflip = malloc(tile_size);
+	if (!tile_xflip)
+		err(1, "%s: Failed to allocate memory for X flip of tile",
+		    __func__);
 	xflip(tile, tile_xflip, tile_size);
 	index = get_tile_index(tile_xflip, tiles, num_tiles, tile_size);
 	if (index >= 0) {
@@ -178,7 +188,7 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 	uint8_t *tile;
 	uint8_t **tiles;
 
-	tile_size = sizeof(uint8_t) * depth * 8;
+	tile_size = sizeof(*tile) * depth * 8;
 	gb_size = gb->size - (gb->trim * tile_size);
 	max_tiles = gb_size / tile_size;
 
@@ -186,16 +196,24 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 	if (gb_size > max_tiles * tile_size)
 		max_tiles++;
 
-	tiles = calloc(max_tiles, sizeof(uint8_t *));
+	tiles = calloc(max_tiles, sizeof(*tiles));
+	if (!tiles)
+		err(1, "%s: Failed to allocate memory for tiles", __func__);
 	num_tiles = 0;
 
 	if (*opts->tilemapfile) {
-		tilemap->data = calloc(max_tiles, sizeof(uint8_t));
+		tilemap->data = calloc(max_tiles, sizeof(*tilemap->data));
+		if (!tilemap->data)
+			err(1, "%s: Failed to allocate memory for tilemap data",
+			    __func__);
 		tilemap->size = 0;
 	}
 
 	if (*opts->attrmapfile) {
-		attrmap->data = calloc(max_tiles, sizeof(uint8_t));
+		attrmap->data = calloc(max_tiles, sizeof(*attrmap->data));
+		if (!attrmap->data)
+			err(1, "%s: Failed to allocate memory for attrmap data",
+			    __func__);
 		attrmap->size = 0;
 	}
 
@@ -203,6 +221,9 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 	while (gb_i < gb_size) {
 		flags = 0;
 		tile = malloc(tile_size);
+		if (!tile)
+			err(1, "%s: Failed to allocate memory for tile",
+			    __func__);
 		for (i = 0; i < tile_size; i++) {
 			tile[i] = gb->data[gb_i];
 			gb_i++;
@@ -217,10 +238,13 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 				index = get_tile_index(tile, tiles, num_tiles,
 						       tile_size);
 			}
+
 			if (index < 0) {
 				index = num_tiles;
 				tiles[num_tiles] = tile;
 				num_tiles++;
+			} else {
+				free(tile);
 			}
 		} else {
 			index = num_tiles;
@@ -240,6 +264,9 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 	if (opts->unique) {
 		free(gb->data);
 		gb->data = malloc(tile_size * num_tiles);
+		if (!gb->data)
+			err(1, "%s: Failed to allocate memory for tile data",
+			    __func__);
 		for (i = 0; i < num_tiles; i++) {
 			tile = tiles[i];
 			for (j = 0; j < tile_size; j++)
@@ -261,7 +288,8 @@ void output_tilemap_file(const struct Options *opts,
 
 	f = fopen(opts->tilemapfile, "wb");
 	if (!f)
-		err(1, "Opening tilemap file '%s' failed", opts->tilemapfile);
+		err(1, "%s: Opening tilemap file '%s' failed", __func__,
+		    opts->tilemapfile);
 
 	fwrite(tilemap->data, 1, tilemap->size, f);
 	fclose(f);
@@ -277,7 +305,8 @@ void output_attrmap_file(const struct Options *opts,
 
 	f = fopen(opts->attrmapfile, "wb");
 	if (!f)
-		err(1, "Opening attrmap file '%s' failed", opts->attrmapfile);
+		err(1, "%s: Opening attrmap file '%s' failed", __func__,
+		    opts->attrmapfile);
 
 	fwrite(attrmap->data, 1, attrmap->size, f);
 	fclose(f);
@@ -319,7 +348,8 @@ void output_palette_file(const struct Options *opts,
 
 	f = fopen(opts->palfile, "wb");
 	if (!f)
-		err(1, "Opening palette file '%s' failed", opts->palfile);
+		err(1, "%s: Opening palette file '%s' failed", __func__,
+		    opts->palfile);
 
 	for (i = 0; i < raw_image->num_colors; i++) {
 		int r = raw_image->palette[i].red;
