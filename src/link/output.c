@@ -312,9 +312,14 @@ static void writeMapBank(struct SortedSections const *sectList,
 
 		slack -= sect->size;
 
-		fprintf(mapFile, "  SECTION: $%04x-$%04x ($%04x byte%s) [\"%s\"]\n",
-			sect->org, sect->org + sect->size - 1, sect->size,
-			sect->size == 1 ? "" : "s", sect->name);
+		if (sect->size != 0)
+			fprintf(mapFile, "  SECTION: $%04x-$%04x ($%04x byte%s) [\"%s\"]\n",
+				sect->org, sect->org + sect->size - 1,
+				sect->size, sect->size == 1 ? "" : "s",
+				sect->name);
+		else
+			fprintf(mapFile, "  SECTION: $%04x (0 bytes) [\"%s\"]\n",
+				sect->org, sect->name);
 
 		for (size_t i = 0; i < sect->nbSymbols; i++)
 			fprintf(mapFile, "           $%04x = %s\n",
