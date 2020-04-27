@@ -119,7 +119,7 @@ static struct option const longopts[] = {
 static void printUsage(void)
 {
 	fputs(
-"Usage: rgblink [-dtVvw] [-l script] [-m map_file] [-n sym_file]\n"
+"Usage: rgblink [-dtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 "               [-O overlay_file] [-o out_file] [-p pad_value] [-s symbol]\n"
 "               <file> ...\n"
 "Useful options:\n"
