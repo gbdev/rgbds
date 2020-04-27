@@ -27,6 +27,7 @@ extern uint8_t padValue;
 extern bool is32kMode;
 extern bool beVerbose;
 extern bool isWRA0Mode;
+extern bool disablePadding;
 
 /* Helper macro for printing verbose-mode messages */
 #define verbosePrint(...)   do { \

@@ -175,9 +175,13 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		bankSections = bankSections->next;
 	}
 
-	while (offset < size) {
-		putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
-		offset++;
+	if (!disablePadding) {
+		while (offset < size) {
+			putc(overlayFile ? getc(overlayFile)
+					 : padValue,
+			     outputFile);
+			offset++;
+		}
 	}
 }
 

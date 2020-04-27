@@ -34,6 +34,7 @@ uint8_t padValue;             /* -p */
 bool is32kMode;               /* -t */
 bool beVerbose;               /* -v */
 bool isWRA0Mode;              /* -w */
+bool disablePadding;          /* -x */
 
 static uint32_t nbErrors = 0;
 
@@ -83,7 +84,7 @@ FILE *openFile(char const *fileName, char const *mode)
 }
 
 /* Short options */
-static char const *optstring = "dl:m:n:O:o:p:s:tVvw";
+static char const *optstring = "dl:m:n:O:o:p:s:tVvwx";
 
 /*
  * Equivalent long options
@@ -108,6 +109,7 @@ static struct option const longopts[] = {
 	{ "version",      no_argument,       NULL, 'V' },
 	{ "verbose",      no_argument,       NULL, 'v' },
 	{ "wramx",        no_argument,       NULL, 'w' },
+	{ "nopad",        no_argument,       NULL, 'x' },
 	{ NULL,           no_argument,       NULL, 0   }
 };
 
@@ -117,7 +119,7 @@ static struct option const longopts[] = {
 static void printUsage(void)
 {
 	fputs(
-"Usage: rgblink [-dtVvw] [-l script] [-m map_file] [-n sym_file]\n"
+"Usage: rgblink [-dtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 "               [-O overlay_file] [-o out_file] [-p pad_value] [-s symbol]\n"
 "               <file> ...\n"
 "Useful options:\n"
@@ -126,6 +128,7 @@ static void printUsage(void)
 "    -n, --sym <path>           set the output symbol list file\n"
 "    -o, --output <path>        set the output file\n"
 "    -p, --pad <value>          set the value to pad between sections with\n"
+"    -x, --nopad                disable padding of output binary\n"
 "    -V, --version              print RGBLINK version and exits\n"
 "\n"
 "For help, use `man rgblink' or go to https://rednex.github.io/rgbds/\n",
@@ -198,6 +201,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'w':
 			isWRA0Mode = true;
+			break;
+		case 'x':
+			disablePadding = true;
+			/* implies tiny mode */
+			is32kMode = true;
 			break;
 		default:
 			printUsage();
