@@ -547,11 +547,11 @@ void sym_Init(void)
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
 	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
 	strftime(savedTIMESTAMP_ISO8601_LOCAL,
-		 sizeof(savedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H-%M-%S%z\"",
+		 sizeof(savedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H:%M:%S%z\"",
 		 time_local);
 
 	strftime(savedTIMESTAMP_ISO8601_UTC,
-		 sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H-%M-%SZ\"",
+		 sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
 		 time_utc);
 
 	strftime(savedYEAR, sizeof(savedYEAR), "%Y", time_utc);
