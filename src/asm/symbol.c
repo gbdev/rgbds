@@ -208,7 +208,7 @@ void sym_Purge(char const *symName)
 		yyerror("Symbol \"%s\" is referenced and thus cannot be purged",
 			symName);
 	} else {
-		hash_RemoveElement(symbols, symName);
+		hash_RemoveElement(symbols, symbol->name);
 		if (symbol->type == SYM_MACRO)
 			free(symbol->macro);
 		free(symbol);
@@ -476,11 +476,14 @@ struct Symbol *sym_Ref(char const *symName)
 
 	if (nsym == NULL) {
 		char fullname[MAXSYMLEN + 1];
+		struct Symbol const *scope = NULL;
 
-		if (*symName == '.') {
+		if (symName[0] == '.') {
 			if (!symbolScope)
 				fatalerror("Local label reference '%s' in main scope",
 					   symName);
+			scope = symbolScope->scope ? symbolScope->scope
+						   : symbolScope;
 			fullSymbolName(fullname, sizeof(fullname), symName,
 				       symbolScope);
 			symName = fullname;
@@ -488,6 +491,7 @@ struct Symbol *sym_Ref(char const *symName)
 
 		nsym = createsymbol(symName);
 		nsym->type = SYM_REF;
+		nsym->scope = scope;
 	}
 
 	return nsym;

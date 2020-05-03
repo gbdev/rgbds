@@ -11,6 +11,7 @@
 #define RGBDS_LINK_HASHMAP_H
 
 #include <assert.h>
+#include <stdbool.h>
 
 #define HASH_NB_BITS 32
 #define HALF_HASH_NB_BITS 16
