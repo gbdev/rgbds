@@ -78,6 +78,7 @@ bool hash_RemoveElement(HashMap map, char const *key)
 			*ptr = next;
 			return true;
 		}
+		ptr = &(*ptr)->next;
 	}
 	return false;
 }
