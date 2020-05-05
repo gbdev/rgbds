@@ -995,7 +995,7 @@ endu		: T_POP_ENDU {
 		}
 ;
 
-ds		: T_POP_DS uconst	{ out_Skip($2); }
+ds		: T_POP_DS uconst	{ out_Skip($2, true); }
 		| T_POP_DS uconst ',' reloc_8bit {
 			out_RelBytes(&$4, $2);
 		}
@@ -1189,7 +1189,7 @@ constlist_8bit	: constlist_8bit_entry
 ;
 
 constlist_8bit_entry : /* empty */ {
-			out_Skip(1);
+			out_Skip(1, false);
 			nListCountEmpty++;
 		}
 		| reloc_8bit_no_str	{ out_RelByte(&$1); }
@@ -1207,7 +1207,7 @@ constlist_16bit : constlist_16bit_entry
 ;
 
 constlist_16bit_entry : /* empty */ {
-			out_Skip(2);
+			out_Skip(2, false);
 			nListCountEmpty++;
 		}
 		| reloc_16bit	{ out_RelWord(&$1); }
@@ -1218,7 +1218,7 @@ constlist_32bit : constlist_32bit_entry
 ;
 
 constlist_32bit_entry : /* empty */ {
-			out_Skip(4);
+			out_Skip(4, false);
 			nListCountEmpty++;
 		}
 		| relocexpr	{ out_RelLong(&$1); }

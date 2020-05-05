@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "asm/fstack.h"
 #include "asm/main.h"
@@ -434,10 +435,13 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 /*
  * Skip this many bytes
  */
-void out_Skip(int32_t skip)
+void out_Skip(int32_t skip, bool ds)
 {
 	checksection();
 	reserveSpace(skip);
+
+	if (!ds && sect_HasData(pCurrentSection->nType))
+		warning(WARNING_EMPTY_DATA_DIRECTIVE, "db/dw/dl directive without data in ROM");
 
 	if (!sect_HasData(pCurrentSection->nType)) {
 		growSection(skip);

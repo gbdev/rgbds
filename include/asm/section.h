@@ -10,6 +10,7 @@
 #define RGBDS_SECTION_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "linkdefs.h"
 
@@ -48,7 +49,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);
-void out_Skip(int32_t skip);
+void out_Skip(int32_t skip, bool ds);
 void out_String(char const *s);
 void out_RelByte(struct Expression *expr);
 void out_RelBytes(struct Expression *expr, uint32_t n);
