@@ -487,9 +487,9 @@ void lex_AddStrings(const struct sLexInitString *lex)
 {
 	while (lex->tzName) {
 		struct sLexString **ppHash;
-		uint32_t hash;
+		uint32_t hash = lexcalchash(lex->tzName);
 
-		ppHash = &tLexHash[hash = lexcalchash(lex->tzName)];
+		ppHash = &tLexHash[hash];
 		while (*ppHash)
 			ppHash = &((*ppHash)->pNext);
 
