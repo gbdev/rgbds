@@ -6,12 +6,13 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <limits.h>
 
 #include "link/assign.h"
 #include "link/main.h"
@@ -212,25 +213,25 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
 		      struct Section *fileSections[])
 {
 	tryReadstr(patch->fileName, file,
-		   "%s: Unable to read \"%s\"'s patch #%u's name: %s",
+		   "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s name: %s",
 		   fileName, sectName, i);
 	tryReadlong(patch->offset, file,
-		    "%s: Unable to read \"%s\"'s patch #%u's offset: %s",
+		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
 		    fileName, sectName, i);
 	tryReadlong(patch->pcSectionID, file,
-		    "%s: Unable to read \"%s\"'s patch #%u's PC offset: %s",
+		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
 	patch->pcSection = patch->pcSectionID == -1
 					? NULL
 					: fileSections[patch->pcSectionID];
 	tryReadlong(patch->pcOffset, file,
-		    "%s: Unable to read \"%s\"'s patch #%u's PC offset: %s",
+		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
 	tryGetc(patch->type, file,
-		"%s: Unable to read \"%s\"'s patch #%u's type: %s",
+		"%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 		fileName, sectName, i);
 	tryReadlong(patch->rpnSize, file,
-		    "%s: Unable to read \"%s\"'s patch #%u's RPN size: %s",
+		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 		    fileName, sectName, i);
 
 	uint8_t *rpnExpression =
@@ -239,7 +240,7 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
 				      patch->rpnSize, file);
 
 	if (nbElementsRead != patch->rpnSize)
-		errx(1, "%s: Cannot read \"%s\"'s patch #%u's RPN expression: %s",
+		errx(1, "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		     fileName, sectName, i,
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
 	patch->rpnExpression = rpnExpression;
@@ -262,8 +263,8 @@ static void readSection(FILE *file, struct Section *section,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s",
 		    fileName, section->name);
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx(1, "\"%s\"'s section size (%d) is invalid", section->name,
-		     tmp);
+		errx(1, "\"%s\"'s section size (%" PRId32 ") is invalid",
+		     section->name, tmp);
 	section->size = tmp;
 	tryGetc(byte, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, section->name);
@@ -273,7 +274,8 @@ static void readSection(FILE *file, struct Section *section,
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error("\"%s\"'s org is too large (%d)", section->name, tmp);
+		error("\"%s\"'s org is too large (%" PRId32 ")",
+		      section->name, tmp);
 		tmp = UINT16_MAX;
 	}
 	section->org = tmp;
@@ -288,7 +290,7 @@ static void readSection(FILE *file, struct Section *section,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s",
 		    fileName, section->name);
 	if (tmp > UINT16_MAX) {
-		error("\"%s\"'s alignment offset is too large (%d)",
+		error("\"%s\"'s alignment offset is too large (%" PRId32 ")",
 		      section->name, tmp);
 		tmp = UINT16_MAX;
 	}
@@ -371,7 +373,7 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 {
 	char assertName[sizeof("Assertion #" EXPAND_AND_STR(UINT32_MAX))];
 
-	snprintf(assertName, sizeof(assertName), "Assertion #%u", i);
+	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
 	readPatch(file, &assert->patch, fileName, assertName, 0, fileSections);
 	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
@@ -417,7 +419,7 @@ void obj_ReadFile(char const *fileName)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV)
-		errx(1, "%s is a revision 0x%04x object file, only 0x%04x is supported",
+		errx(1, "%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
 		     fileName, revNum, RGBDS_OBJECT_REV);
 
 	uint32_t nbSymbols;
@@ -450,7 +452,7 @@ void obj_ReadFile(char const *fileName)
 
 	memset(nbSymPerSect, 0, sizeof(nbSymPerSect));
 
-	verbosePrint("Reading %u symbols...\n", nbSymbols);
+	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		/* Read symbol */
 		struct Symbol *symbol = malloc(sizeof(*symbol));
@@ -469,7 +471,7 @@ void obj_ReadFile(char const *fileName)
 	/* This file's sections, stored in a table to link symbols to them */
 	struct Section *fileSections[nbSections ? nbSections : 1];
 
-	verbosePrint("Reading %u sections...\n", nbSections);
+	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
 		/* Read section */
 		fileSections[i] = malloc(sizeof(*fileSections[i]));
@@ -511,7 +513,7 @@ void obj_ReadFile(char const *fileName)
 
 	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s",
 		    fileName);
-	verbosePrint("Reading %u assertions...\n", nbAsserts);
+	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
 		struct Assertion *assertion = malloc(sizeof(*assertion));
 

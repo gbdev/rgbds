@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -286,7 +287,7 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
 	if (!symbol)
 		symbol = createsymbol(symbolName);
 	else if (sym_IsDefined(symbol))
-		yyerror("'%s' already defined at %s(%u)", symbolName,
+		yyerror("'%s' already defined at %s(%" PRIu32 ")", symbolName,
 			symbol->fileName, symbol->fileLine);
 
 	return symbol;
@@ -346,8 +347,8 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 	if (sym == NULL)
 		sym = createsymbol(symName);
 	else if (sym_IsDefined(sym) && sym->type != SYM_SET)
-		yyerror("'%s' already defined as %s at %s(%u)", symName,
-			sym->type == SYM_LABEL ? "label" : "constant",
+		yyerror("'%s' already defined as %s at %s(%" PRIu32 ")",
+			symName, sym->type == SYM_LABEL ? "label" : "constant",
 			sym->fileName, sym->fileLine);
 	else
 		/* TODO: can the scope be incorrect when talking over refs? */
@@ -407,7 +408,7 @@ struct Symbol *sym_AddReloc(char const *symName)
 	if (!sym)
 		sym = createsymbol(symName);
 	else if (sym_IsDefined(sym))
-		yyerror("'%s' already defined in %s(%d)", symName,
+		yyerror("'%s' already defined in %s(%" PRIu32 ")", symName,
 			sym->fileName, sym->fileLine);
 	/* If the symbol already exists as a ref, just "take over" it */
 

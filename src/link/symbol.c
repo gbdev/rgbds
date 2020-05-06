@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 
 #include "link/symbol.h"
@@ -40,7 +41,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 	struct Symbol *other = hash_GetElement(symbols, symbol->name);
 
 	if (other)
-		errx(1, "\"%s\" both in %s from %s(%d) and in %s from %s(%d)",
+		errx(1, "\"%s\" both in %s from %s(%" PRId32 ") and in %s from %s(%" PRId32 ")",
 		     symbol->name,
 		     symbol->objFileName, symbol->fileName, symbol->lineNo,
 		      other->objFileName,  other->fileName,  other->lineNo);

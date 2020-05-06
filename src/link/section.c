@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 
 #include "link/main.h"
@@ -45,11 +46,11 @@ static void mergeSections(struct Section *target, struct Section *other)
 	if (other->isAddressFixed) {
 		if (target->isAddressFixed) {
 			if (target->org != other->org)
-				errx(1, "Section \"%s\" is defined with conflicting addresses $%x and $%x",
+				errx(1, "Section \"%s\" is defined with conflicting addresses $%" PRIx16 " and $%" PRIx16,
 				     other->name, target->org, other->org);
 		} else if (target->isAlignFixed) {
 			if ((other->org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and address $%x",
+				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16 "-byte alignment (offset %" PRIu16 ") and address $%" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
 		}
@@ -58,13 +59,13 @@ static void mergeSections(struct Section *target, struct Section *other)
 	} else if (other->isAlignFixed) {
 		if (target->isAddressFixed) {
 			if ((target->org - other->alignOfs) & other->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting address $%x and %u-byte alignment (offset %u)",
+				errx(1, "Section \"%s\" is defined with conflicting address $%" PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs)
 				 != (target->alignMask & other->alignOfs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %u-byte alignment (offset %u) and %u-byte alignment (offset %u)",
+			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16 "-byte alignment (offset %" PRIu16 ") and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
 			     other->name, target->alignMask + 1,
 			     target->alignOfs, other->alignMask + 1,
 			     other->alignOfs);
@@ -80,7 +81,7 @@ static void mergeSections(struct Section *target, struct Section *other)
 			target->isBankFixed = true;
 			target->bank = other->bank;
 		} else if (target->bank != other->bank) {
-			errx(1, "Section \"%s\" is defined with conflicting banks %u and %u",
+			errx(1, "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %" PRIu32,
 			     other->name, target->bank, other->bank);
 		}
 	}
@@ -171,7 +172,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	/* Too large an alignment may not be satisfiable */
 	if (section->isAlignFixed
 	 && (section->alignMask & startaddr[section->type]))
-		fail("%s: %s sections cannot be aligned to $%x bytes",
+		fail("%s: %s sections cannot be aligned to $%" PRIx16 " bytes",
 		     section->name, typeNames[section->type],
 		     section->alignMask + 1);
 
@@ -181,13 +182,13 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	if (section->isBankFixed && section->bank < minbank
 				 && section->bank > maxbank)
 		fail(minbank == maxbank
-			? "Cannot place section \"%s\" in bank %d, it must be %d"
-			: "Cannot place section \"%s\" in bank %d, it must be between %d and %d",
+			? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
+			: "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32 " and %" PRIu32,
 		     section->name, section->bank, minbank, maxbank);
 
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
-		fail("Section \"%s\" is bigger than the max size for that type: %#x > %#x",
+		fail("Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
 		     section->name, section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
@@ -218,12 +219,12 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* Ensure the target address is valid */
 		if (section->org < startaddr[section->type]
 		 || section->org > endaddr(section->type))
-			fail("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+			fail("Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#" PRIx16 "; %#" PRIx16 "]",
 			     section->name, section->org,
 			     startaddr[section->type], endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			fail("Section \"%s\"'s end address %#x is greater than last address %#x",
+			fail("Section \"%s\"'s end address %#" PRIx16 " is greater than last address %#" PRIx16,
 			     section->name, section->org + section->size,
 			     endaddr(section->type) + 1);
 	}

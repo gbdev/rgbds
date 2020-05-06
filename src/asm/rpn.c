@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,8 +51,8 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 			 * To avoid generating humongous object files, cap the
 			 * size of RPN expressions
 			 */
-			fatalerror("RPN expression cannot grow larger than %d bytes",
-				   MAXRPNLEN);
+			fatalerror("RPN expression cannot grow larger than %lu bytes",
+				   (unsigned long)MAXRPNLEN);
 		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
 			expr->nRPNCapacity = MAXRPNLEN;
 		else
@@ -222,7 +223,8 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 		/* That range is valid, but only keep the lower byte */
 		expr->nVal &= 0xFF;
 	} else if (expr->nVal < 0 || expr->nVal > 0xFF) {
-		yyerror("Source address $%x not in $FF00 to $FFFF", expr->nVal);
+		yyerror("Source address $%" PRIx32 " not between $FF00 to $FFFF",
+			expr->nVal);
 	}
 }
 
@@ -233,7 +235,8 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 	if (rpn_isKnown(expr)) {
 		/* A valid RST address must be masked with 0x38 */
 		if (expr->nVal & ~0x38)
-			yyerror("Invalid address $%x for RST", expr->nVal);
+			yyerror("Invalid address $%" PRIx32 " for RST",
+				expr->nVal);
 		/* The target is in the "0x38" bits, all other bits are set */
 		expr->nVal |= 0xC7;
 	} else {
@@ -260,7 +263,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	if (amount >= 0) {
 		// Left shift
 		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %d",
+			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32,
 				amount);
 			return 0;
 
@@ -276,7 +279,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 		// Right shift
 		amount = -amount;
 		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %d",
+			warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32,
 				amount);
 			return shiftee < 0 ? -1 : 0;
 
@@ -289,7 +292,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 			 * undefined, so use a left shift manually sign-extended
 			 */
 			return (uint32_t)shiftee >> amount
-				| -((uint32_t)1 << (32 - amount));
+				| -(UINT32_C(1) << (32 - amount));
 		}
 	}
 }
@@ -370,18 +373,18 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			break;
 		case RPN_SHL:
 			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %d",
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32,
 					src2->nVal);
 
 			expr->nVal = shift(src1->nVal, src2->nVal);
 			break;
 		case RPN_SHR:
 			if (src1->nVal < 0)
-				warning(WARNING_SHIFT, "Shifting negative value %d",
+				warning(WARNING_SHIFT, "Shifting negative value %" PRId32,
 					src1->nVal);
 
 			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %d",
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32,
 					src2->nVal);
 
 			expr->nVal = shift(src1->nVal, -src2->nVal);
@@ -421,7 +424,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		case RPN_RST:
 		case RPN_CONST:
 		case RPN_SYM:
-			fatalerror("%d is no binary operator", op);
+			fatalerror("%d is not a binary operator", op);
 		}
 
 	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {

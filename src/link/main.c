@@ -6,12 +6,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "link/object.h"
 #include "link/symbol.h"
@@ -65,7 +66,7 @@ noreturn_ void fatal(char const *fmt, ...)
 	if (nbErrors != UINT32_MAX)
 		nbErrors++;
 
-	fprintf(stderr, "Linking aborted after %u error%s\n", nbErrors,
+	fprintf(stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors,
 		nbErrors != 1 ? "s" : "");
 	exit(1);
 }
@@ -245,8 +246,8 @@ int main(int argc, char *argv[])
 	/* and finally output the result. */
 	patch_ApplyPatches();
 	if (nbErrors) {
-		fprintf(stderr, "Linking failed with %u error%s\n", nbErrors,
-			nbErrors != 1 ? "s" : "");
+		fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
+			nbErrors, nbErrors != 1 ? "s" : "");
 		exit(1);
 	}
 	out_WriteFiles();

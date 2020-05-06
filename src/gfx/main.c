@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 
 	if (opts.trim &&
 	    opts.trim > (raw_image->width / 8) * (raw_image->height / 8) - 1) {
-		errx(1, "Trim (%i) for input raw_image file '%s' too large (max: %i)",
+		errx(1, "Trim (%d) for input raw_image file '%s' too large (max: %u)",
 		     opts.trim, opts.infile,
 		     (raw_image->width / 8) * (raw_image->height / 8) - 1);
 	}

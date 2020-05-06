@@ -6,8 +6,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdlib.h>
+#include <inttypes.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "link/output.h"
 #include "link/main.h"
@@ -51,7 +52,7 @@ void out_AddSection(struct Section const *section)
 	uint32_t minNbBanks = targetBank + 1;
 
 	if (minNbBanks > maxNbBanks[section->type])
-		errx(1, "Section \"%s\" has invalid bank range (%u > %u)",
+		errx(1, "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
 		     section->name, section->bank,
 		     maxNbBanks[section->type] - 1);
 
@@ -283,7 +284,7 @@ static void writeSymBank(struct SortedSections const *bankSections)
 
 			minSectList = &zlSectList;
 		}
-		fprintf(symFile, "%02x:%04x %s\n",
+		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " %s\n",
 			minSectList->sect->bank, minSectList->addr,
 			minSectList->sym->name);
 		minSectList->i++;
@@ -304,7 +305,7 @@ static void writeMapBank(struct SortedSections const *sectList,
 	struct SortedSection const *section        = sectList->sections;
 	struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
 
-	fprintf(mapFile, "%s bank #%u:\n", typeNames[type],
+	fprintf(mapFile, "%s bank #%" PRIu32 ":\n", typeNames[type],
 		bank + bankranges[type][0]);
 
 	uint16_t slack = maxsize[type];
@@ -317,16 +318,16 @@ static void writeMapBank(struct SortedSections const *sectList,
 		slack -= sect->size;
 
 		if (sect->size != 0)
-			fprintf(mapFile, "  SECTION: $%04x-$%04x ($%04x byte%s) [\"%s\"]\n",
+			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04" PRIx16 " ($%04" PRIx16 " byte%s) [\"%s\"]\n",
 				sect->org, sect->org + sect->size - 1,
 				sect->size, sect->size == 1 ? "" : "s",
 				sect->name);
 		else
-			fprintf(mapFile, "  SECTION: $%04x (0 bytes) [\"%s\"]\n",
+			fprintf(mapFile, "  SECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
 				sect->org, sect->name);
 
 		for (size_t i = 0; i < sect->nbSymbols; i++)
-			fprintf(mapFile, "           $%04x = %s\n",
+			fprintf(mapFile, "           $%04" PRIx32 " = %s\n",
 				sect->symbols[i]->offset + sect->org,
 				sect->symbols[i]->name);
 
@@ -336,7 +337,7 @@ static void writeMapBank(struct SortedSections const *sectList,
 	if (slack == maxsize[type])
 		fputs("  EMPTY\n\n", mapFile);
 	else
-		fprintf(mapFile, "    SLACK: $%04x byte%s\n\n", slack,
+		fprintf(mapFile, "    SLACK: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
 }
 
