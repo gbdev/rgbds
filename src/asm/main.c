@@ -477,6 +477,7 @@ int main(int argc, char *argv[])
 							nTargetFileNameLen + 1);
 					if (tzTargetFileName == NULL)
 						err(1, "Cannot append new file to target file list");
+					*tzTargetFileName = 0;
 					strcat(tzTargetFileName, ep);
 					if (depType == 'Q')
 						free(ep);
