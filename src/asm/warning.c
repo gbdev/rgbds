@@ -31,6 +31,7 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	WARNING_ENABLED,  /* Assertions */
 	WARNING_DISABLED, /* Invalid args to builtins */
 	WARNING_DISABLED, /* Division undefined behavior */
+	WARNING_DISABLED, /* `db`, `dw`, or `dl` with no directive in ROM */
 	WARNING_DISABLED, /* Empty entry in `db`, `dw` or `dl` */
 	WARNING_DISABLED, /* Constants too large */
 	WARNING_DISABLED, /* String too long for internal buffers */
@@ -68,6 +69,7 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"assert",
 	"builtin-args",
 	"div",
+	"empty-data-directive",
 	"empty-entry",
 	"large-constant",
 	"long-string",
@@ -90,6 +92,7 @@ enum MetaWarningCommand {
 /* Warnings that probably indicate an error */
 static uint8_t const _wallCommands[] = {
 	WARNING_BUILTIN_ARG,
+	WARNING_EMPTY_DATA_DIRECTIVE,
 	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
 	META_WARNING_DONE
@@ -106,6 +109,7 @@ static uint8_t const _wextraCommands[] = {
 static uint8_t const _weverythingCommands[] = {
 	WARNING_BUILTIN_ARG,
 	WARNING_DIV,
+	WARNING_EMPTY_DATA_DIRECTIVE,
 	WARNING_EMPTY_ENTRY,
 	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
