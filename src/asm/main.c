@@ -454,38 +454,43 @@ int main(int argc, char *argv[])
 
 		/* Long-only options */
 		case 0:
-			if (depType) {
-				switch (depType) {
-				case 'G':
-					oGeneratedMissingIncludes = true;
-					break;
-				case 'P':
-					oGeneratePhonyDeps = true;
-					break;
-				case 'Q':
-				case 'T':
-					if (optind == argc)
-						errx(1, "-M%c takes a target file name argument",
-						     depType);
-					ep = optarg;
-					if (depType == 'Q')
-						ep = make_escape(ep);
+			switch (depType) {
+			case 'G':
+				oGeneratedMissingIncludes = true;
+				break;
+			case 'P':
+				oGeneratePhonyDeps = true;
+				break;
+			case 'Q':
+			case 'T':
+				if (optind == argc)
+					errx(1, "-M%c takes a target file name argument",
+					     depType);
+				ep = optarg;
+				if (depType == 'Q')
+					ep = make_escape(ep);
 
-					nTargetFileNameLen += strlen(ep) + 1;
+				nTargetFileNameLen += strlen(ep) + 1;
+				if (!tzTargetFileName) {
+					/* On first alloc, make an empty str */
+					tzTargetFileName =
+						malloc(nTargetFileNameLen + 1);
+					*tzTargetFileName = '\0';
+				} else {
 					tzTargetFileName =
 						realloc(tzTargetFileName,
 							nTargetFileNameLen + 1);
-					if (tzTargetFileName == NULL)
-						err(1, "Cannot append new file to target file list");
-					strcat(tzTargetFileName, ep);
-					if (depType == 'Q')
-						free(ep);
-					char *ptr = tzTargetFileName +
-						strlen(tzTargetFileName);
-					*ptr++ = ' ';
-					*ptr = '\0';
-					break;
 				}
+				if (tzTargetFileName == NULL)
+					err(1, "Cannot append new file to target file list");
+				strcat(tzTargetFileName, ep);
+				if (depType == 'Q')
+					free(ep);
+				char *ptr = tzTargetFileName +
+					strlen(tzTargetFileName);
+				*ptr++ = ' ';
+				*ptr = '\0';
+				break;
 			}
 			break;
 
