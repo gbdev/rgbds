@@ -7,12 +7,13 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <ctype.h>
 
 #include "asm/asm.h"
 #include "asm/fstack.h"
@@ -120,7 +121,7 @@ void yyunputstr(const char *s)
 void lex_BeginStringExpansion(const char *tzName)
 {
 	if (++nNbStringExpansions > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
+		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
 
 	struct sStringExpansionPos *pNewStringExpansion =
 		malloc(sizeof(*pNewStringExpansion));
@@ -371,7 +372,7 @@ uint32_t lex_FloatAlloc(const struct sLexFloat *token)
 bool lex_CheckCharacterRange(uint16_t start, uint16_t end)
 {
 	if (start > end || start < 1 || end > 127) {
-		yyerror("Invalid character range (start: %u, end: %u)",
+		yyerror("Invalid character range (start: %" PRIu16 ", end: %" PRIu16 ")",
 			start, end);
 		return false;
 	}
@@ -672,7 +673,7 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 			 * so it's handled differently
 			 */
 			static const char * const formatSpecifiers[] = {
-				"", "%x", "%X", "%d"
+				"", "%" PRIx32, "%" PRIX32, "%" PRId32
 			};
 			/* Prevent reading out of bounds! */
 			const char *designatedMode;

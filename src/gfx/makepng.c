@@ -38,7 +38,7 @@ struct RawIndexedImage *input_png_file(const struct Options *opts,
 
 	if (img.depth != depth) {
 		if (opts->verbose) {
-			warnx("Image bit depth is not %i (is %i).",
+			warnx("Image bit depth is not %d (is %d).",
 			      depth, img.depth);
 		}
 	}

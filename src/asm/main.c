@@ -167,7 +167,7 @@ void opt_Parse(char *s)
 		/* fallthrough */
 	case 'p':
 		if (strlen(&s[1]) <= 2) {
-			int32_t result;
+			int result;
 			unsigned int fillchar;
 
 			result = sscanf(&s[1], "%x", &fillchar);
@@ -551,10 +551,11 @@ int main(int argc, char *argv[])
 		fclose(dependfile);
 
 	if (nIFDepth != 0)
-		errx(1, "Unterminated IF construct (%u levels)!", nIFDepth);
+		errx(1, "Unterminated IF construct (%" PRIu32 " levels)!",
+		     nIFDepth);
 
 	if (nUnionDepth != 0) {
-		errx(1, "Unterminated UNION construct (%u levels)!",
+		errx(1, "Unterminated UNION construct (%" PRIu32 " levels)!",
 		     nUnionDepth);
 	}
 
@@ -564,8 +565,9 @@ int main(int argc, char *argv[])
 	timespent = ((double)(nEndClock - nStartClock))
 		     / (double)CLOCKS_PER_SEC;
 	if (verbose) {
-		printf("Success! %u lines in %d.%02d seconds ", nTotalLines,
-		       (int)timespent, ((int)(timespent * 100.0)) % 100);
+		printf("Success! %" PRIu32 " lines in %d.%02d seconds ",
+		       nTotalLines, (int)timespent,
+		       ((int)(timespent * 100.0)) % 100);
 		if (timespent < FLT_MIN_EXP)
 			printf("(INFINITY lines/minute)\n");
 		else

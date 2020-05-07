@@ -10,6 +10,7 @@
  * Fixedpoint math routines
  */
 
+#include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,12 +38,16 @@ void math_DefinePI(void)
  */
 void math_Print(int32_t i)
 {
-	if (i >= 0)
-		printf("%d.%05d", i >> 16,
-		       ((int32_t)(fx2double(i) * 100000 + 0.5)) % 100000);
-	else
-		printf("-%d.%05d", (-i) >> 16,
-		       ((int32_t)(fx2double(-i) * 100000 + 0.5)) % 100000);
+	uint32_t u = i;
+	const char *sign = "";
+
+	if (i < 0) {
+		u = -u;
+		sign = "-";
+	}
+
+	printf("%s%" PRIu32 ".%05" PRIu32, sign, u >> 16,
+	       ((uint32_t)(fx2double(u) * 100000 + 0.5)) % 100000);
 }
 
 /*

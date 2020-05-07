@@ -10,14 +10,15 @@
  * FileStack routines
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "asm/fstack.h"
@@ -69,7 +70,7 @@ static void pushcontext(void)
 	struct sContext **ppFileStack;
 
 	if (++nFileStackDepth > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%d) exceeded", nMaxRecursionDepth);
+		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)
@@ -271,12 +272,12 @@ void fstk_Dump(void)
 	pLastFile = pFileStack;
 
 	while (pLastFile) {
-		fprintf(stderr, "%s(%d) -> ", pLastFile->tzFileName,
+		fprintf(stderr, "%s(%" PRId32 ") -> ", pLastFile->tzFileName,
 			pLastFile->nLine);
 		pLastFile = pLastFile->pNext;
 	}
 
-	fprintf(stderr, "%s(%d)", tzCurrentFileName, nLineNo);
+	fprintf(stderr, "%s(%" PRId32 ")", tzCurrentFileName, nLineNo);
 }
 
 void fstk_DumpToStr(char *buf, size_t buflen)
@@ -286,7 +287,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 	size_t len = buflen;
 
 	while (pLastFile) {
-		retcode = snprintf(&buf[buflen - len], len, "%s(%d) -> ",
+		retcode = snprintf(&buf[buflen - len], len, "%s(%" PRId32 ") -> ",
 				   pLastFile->tzFileName, pLastFile->nLine);
 		if (retcode < 0)
 			fatalerror("Failed to dump file stack to string: %s",
@@ -298,8 +299,8 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 		pLastFile = pLastFile->pNext;
 	}
 
-	retcode = snprintf(&buf[buflen - len], len, "%s(%d)", tzCurrentFileName,
-			   nLineNo);
+	retcode = snprintf(&buf[buflen - len], len, "%s(%" PRId32 ")",
+			   tzCurrentFileName, nLineNo);
 	if (retcode < 0)
 		fatalerror("Failed to dump file stack to string: %s",
 			   strerror(errno));

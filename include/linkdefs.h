@@ -13,8 +13,8 @@
 #include <stdint.h>
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1hhu"
-#define RGBDS_OBJECT_VERSION_NUMBER (uint8_t)9
-#define RGBDS_OBJECT_REV 4
+#define RGBDS_OBJECT_VERSION_NUMBER 9
+#define RGBDS_OBJECT_REV 4U
 
 enum AssertionType {
 	ASSERT_WARN,

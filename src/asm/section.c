@@ -1,9 +1,10 @@
 
 #include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 #include "asm/fstack.h"
 #include "asm/main.h"
@@ -64,7 +65,7 @@ static void reserveSpace(uint32_t delta_size)
 	 * A check at the linking stage is still necessary.
 	 */
 	if (newSize > maxSize)
-		fatalerror("Section '%s' is too big (max size = 0x%X bytes, reached 0x%X).",
+		fatalerror("Section '%s' is too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").",
 			   pCurrentSection->pzName, maxSize, newSize);
 }
 
@@ -100,14 +101,14 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 			yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
 		else if (bank < bankranges[type][0]
 		      || bank > bankranges[type][1])
-			yyerror("%s bank value $%x out of range ($%x to $%x)",
+			yyerror("%s bank value $%" PRIx32 " out of range ($%" PRIx32 " to $%" PRIx32 ")",
 				typeNames[type], bank,
 				bankranges[type][0], bankranges[type][1]);
 	}
 
 	if (alignOffset >= 1 << alignment) {
-		yyerror("Alignment offset must not be greater than alignment (%u < %u)",
-			alignOffset, 1 << alignment);
+		yyerror("Alignment offset must not be greater than alignment (%" PRIu16 " < %u)",
+			alignOffset, 1U << alignment);
 		alignOffset = 0;
 	}
 
@@ -128,7 +129,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 
 	if (org != -1) {
 		if (org < startaddr[type] || org > endaddr(type))
-			yyerror("Section \"%s\"'s fixed address %#x is outside of range [%#x; %#x]",
+			yyerror("Section \"%s\"'s fixed address %#" PRIx32 " is outside of range [%#" PRIx16 "; %#" PRIx16 "]",
 				pzName, org, startaddr[type], endaddr(type));
 	}
 
@@ -167,13 +168,13 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 			if (org != -1) {
 				/* If both are fixed, they must be the same */
 				if (pSect->nOrg != -1 && pSect->nOrg != org)
-					fail("Section \"%s\" already declared as fixed at different address $%x",
+					fail("Section \"%s\" already declared as fixed at different address $%" PRIx32,
 					     pSect->pzName, pSect->nOrg);
 				else if (pSect->nAlign != 0
 				      && (mask(pSect->nAlign)
 						& (org - pSect->alignOfs)))
-					fail("Section \"%s\" already declared as aligned to %u bytes (offset %u)",
-					     pSect->pzName, 1 << pSect->nAlign,
+					fail("Section \"%s\" already declared as aligned to %u bytes (offset %" PRIu16 ")",
+					     pSect->pzName, 1U << pSect->nAlign,
 					     pSect->alignOfs);
 				else
 					/* Otherwise, just override */
@@ -183,14 +184,14 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				if (pSect->nOrg != -1) {
 					if ((pSect->nOrg - alignOffset)
 							& mask(alignment))
-						fail("Section \"%s\" already declared as fixed at incompatible address $%x",
+						fail("Section \"%s\" already declared as fixed at incompatible address $%" PRIx32,
 						     pSect->pzName,
 						     pSect->nOrg);
 				/* Check if alignment offsets are compatible */
 				} else if ((alignOffset & mask(pSect->nAlign))
 					!= (pSect->alignOfs
 							& mask(alignment))) {
-					fail("Section \"%s\" already declared with incompatible %u-byte alignment (offset %u)",
+					fail("Section \"%s\" already declared with incompatible %" PRIu8 "-byte alignment (offset %" PRIu16 ")",
 					     pSect->pzName, pSect->nAlign,
 					     pSect->alignOfs);
 				} else if (alignment > pSect->nAlign) {
@@ -207,7 +208,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				pSect->nBank = bank;
 			/* If both specify a bank, it must be the same one */
 			else if (bank != -1 && pSect->nBank != bank)
-				fail("Section \"%s\" already declared with different bank %u",
+				fail("Section \"%s\" already declared with different bank %" PRIu32,
 				     pSect->pzName, pSect->nBank);
 		} else {
 			if (pSect->isUnion)
@@ -218,7 +219,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 					fail("Section \"%s\" already declared as floating",
 					     pSect->pzName);
 				else
-					fail("Section \"%s\" already declared as fixed at $%x",
+					fail("Section \"%s\" already declared as fixed at $%" PRIx32,
 					     pSect->pzName, pSect->nOrg);
 			}
 			if (bank != pSect->nBank) {
@@ -226,7 +227,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 					fail("Section \"%s\" already declared as floating bank",
 					     pSect->pzName);
 				else
-					fail("Section \"%s\" already declared as fixed at bank %u",
+					fail("Section \"%s\" already declared as fixed at bank %" PRIu32,
 					     pSect->pzName, pSect->nBank);
 			}
 			if (alignment != pSect->nAlign) {
@@ -235,7 +236,8 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 					     pSect->pzName);
 				else
 					fail("Section \"%s\" already declared as aligned to %u bytes",
-					     pSect->pzName, 1 << pSect->nAlign);
+					     pSect->pzName,
+					     1U << pSect->nAlign);
 			}
 		}
 
@@ -359,12 +361,12 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 
 	if (sect->nOrg != -1) {
 		if ((sym_GetPCValue() - offset) % (1 << alignment))
-			yyerror("Section's fixed address fails required alignment (PC = $%04x)",
+			yyerror("Section's fixed address fails required alignment (PC = $%04" PRIx32 ")",
 				sym_GetPCValue());
 	} else if (sect->nAlign != 0) {
 		if ((((sect->alignOfs + curOffset) % (1 << sect->nAlign))
 						- offset) % (1 << alignment)) {
-			yyerror("Section's alignment fails required alignment (offset from section start = $%04x)",
+			yyerror("Section's alignment fails required alignment (offset from section start = $%04" PRIx32 ")",
 				curOffset);
 		} else if (alignment > sect->nAlign) {
 			sect->nAlign = alignment;
@@ -560,7 +562,7 @@ void out_PCRelByte(struct Expression *expr)
 		int16_t offset = expr->nVal - address;
 
 		if (offset < -128 || offset > 127) {
-			yyerror("jr target out of reach (expected -129 < %d < 128)",
+			yyerror("jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				offset);
 			writebyte(0);
 		} else {
@@ -616,12 +618,13 @@ void out_BinaryFile(char const *s)
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 {
 	if (start_pos < 0) {
-		yyerror("Start position cannot be negative (%d)", start_pos);
+		yyerror("Start position cannot be negative (%" PRId32 ")",
+			start_pos);
 		start_pos = 0;
 	}
 
 	if (length < 0) {
-		yyerror("Number of bytes to read cannot be negative (%d)",
+		yyerror("Number of bytes to read cannot be negative (%" PRId32 ")",
 			length);
 		length = 0;
 	}
@@ -676,7 +679,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			yyerror("Error reading INCBIN file '%s': %s", s,
 				strerror(errno));
 		} else {
-			yyerror("Premature end of file (%d bytes left to read)",
+			yyerror("Premature end of file (%" PRId32 " bytes left to read)",
 				todo + 1);
 		}
 	}

@@ -9,6 +9,7 @@
 %{
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -79,7 +80,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 			strncpy(dest, write_ptr, maxLength + 1);
 		} else {
 			fullLength = snprintf(dest, maxLength + 1,
-							  mode ? mode : "$%X",
+							  mode ? mode : "$%" PRIX32,
 						      value);
 		}
 

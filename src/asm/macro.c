@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,7 +83,7 @@ void macro_SetUniqueID(uint32_t id)
 		uniqueIDPtr = NULL;
 	} else {
 		/* The buffer is guaranteed to be the correct size */
-		sprintf(uniqueIDBuf, "_%u", id);
+		sprintf(uniqueIDBuf, "_%" PRIu32, id);
 		uniqueIDPtr = uniqueIDBuf;
 	}
 }

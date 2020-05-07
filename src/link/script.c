@@ -6,11 +6,12 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdlib.h>
+#include <ctype.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "link/main.h"
 #include "link/script.h"
@@ -35,7 +36,7 @@ static uint32_t fileStackIndex;
 static void pushFile(char *newFileName)
 {
 	if (fileStackIndex == UINT32_MAX)
-		errx(1, "%s(%u): INCLUDE recursion limit reached",
+		errx(1, "%s(%" PRIu32 "): INCLUDE recursion limit reached",
 		     linkerScriptName, lineNo);
 
 	if (fileStackIndex == fileStackSize) {
@@ -45,7 +46,7 @@ static void pushFile(char *newFileName)
 		fileStack = realloc(fileStack,
 				    sizeof(*fileStack) * fileStackSize);
 		if (!fileStack)
-			err(1, "%s(%u): Internal INCLUDE error",
+			err(1, "%s(%" PRIu32 "): Internal INCLUDE error",
 			    linkerScriptName, lineNo);
 	}
 
@@ -56,7 +57,7 @@ static void pushFile(char *newFileName)
 
 	linkerScript = fopen(newFileName, "r");
 	if (!linkerScript)
-		err(1, "%s(%u): Could not open \"%s\"",
+		err(1, "%s(%" PRIu32 "): Could not open \"%s\"",
 		    linkerScriptName, lineNo, newFileName);
 	lineNo = 1;
 	linkerScriptName = newFileName;
@@ -177,8 +178,8 @@ static int readChar(FILE *file)
 	int curchar = getc(file);
 
 	if (curchar == EOF && ferror(file))
-		err(1, "%s(%u): Unexpected error in %s", linkerScriptName,
-		    lineNo, __func__);
+		err(1, "%s(%" PRIu32 "): Unexpected error in %s",
+		    linkerScriptName, lineNo, __func__);
 	return curchar;
 }
 
@@ -223,7 +224,7 @@ static struct LinkerScriptToken *nextToken(void)
 		do {
 			curchar = readChar(linkerScript);
 			if (curchar == EOF || isNewline(curchar))
-				errx(1, "%s(%u): Unterminated string",
+				errx(1, "%s(%" PRIu32 "): Unterminated string",
 				     linkerScriptName, lineNo);
 			else if (curchar == '"')
 				/* Quotes force a string termination */
@@ -302,7 +303,7 @@ static struct LinkerScriptToken *nextToken(void)
 			if (tryParseNumber(str, &token.attr.number))
 				token.type = TOKEN_NUMBER;
 			else
-				errx(1, "%s(%u): Unknown token \"%s\"",
+				errx(1, "%s(%" PRIu32 "): Unknown token \"%s\"",
 				     linkerScriptName, lineNo, str);
 		}
 
@@ -330,7 +331,7 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 	}
 
 	if (arg < *pc)
-		errx(1, "%s(%u): `%s` cannot be used to go backwards",
+		errx(1, "%s(%" PRIu32 "): `%s` cannot be used to go backwards",
 		     linkerScriptName, lineNo, commands[command]);
 	*pc = arg;
 }
@@ -379,11 +380,11 @@ struct SectionPlacement *script_NextSection(void)
 
 		if (type != SECTTYPE_INVALID) {
 			if (curaddr[type][bankID] > endaddr(type) + 1)
-				errx(1, "%s(%u): Sections would extend past the end of %s ($%04hx > $%04hx)",
+				errx(1, "%s(%" PRIu32 "): Sections would extend past the end of %s ($%04" PRIx16 " > $%04" PRIx16 ")",
 				     linkerScriptName, lineNo, typeNames[type],
 				     curaddr[type][bankID], endaddr(type));
 			if (curaddr[type][bankID] < startaddr[type])
-				errx(1, "%s(%u): PC underflowed ($%04hx < $%04hx)",
+				errx(1, "%s(%" PRIu32 "): PC underflowed ($%04" PRIx16 " < $%04" PRIx16 ")",
 				     linkerScriptName, lineNo,
 				     curaddr[type][bankID], startaddr[type]);
 		}
@@ -404,7 +405,7 @@ struct SectionPlacement *script_NextSection(void)
 				break;
 
 			case TOKEN_NUMBER:
-				errx(1, "%s(%u): stray number \"%u\"",
+				errx(1, "%s(%" PRIu32 "): stray number \"%" PRIu32 "\"",
 				     linkerScriptName, lineNo,
 				     token->attr.number);
 
@@ -417,13 +418,13 @@ struct SectionPlacement *script_NextSection(void)
 				parserState = PARSER_LINEEND;
 
 				if (type == SECTTYPE_INVALID)
-					errx(1, "%s(%u): Didn't specify a location before the section",
+					errx(1, "%s(%" PRIu32 "): Didn't specify a location before the section",
 					     linkerScriptName, lineNo);
 
 				section.section =
 					sect_GetSection(token->attr.string);
 				if (!section.section)
-					errx(1, "%s(%u): Unknown section \"%s\"",
+					errx(1, "%s(%" PRIu32 "): Unknown section \"%s\"",
 					     linkerScriptName, lineNo,
 					     token->attr.string);
 				section.org = curaddr[type][bankID];
@@ -452,10 +453,10 @@ struct SectionPlacement *script_NextSection(void)
 
 				if (tokType == TOKEN_COMMAND) {
 					if (type == SECTTYPE_INVALID)
-						errx(1, "%s(%u): Didn't specify a location before the command",
+						errx(1, "%s(%" PRIu32 "): Didn't specify a location before the command",
 						     linkerScriptName, lineNo);
 					if (!hasArg)
-						errx(1, "%s(%u): Command specified without an argument",
+						errx(1, "%s(%" PRIu32 "): Command specified without an argument",
 						     linkerScriptName, lineNo);
 
 					processCommand(attr.command, arg,
@@ -467,16 +468,16 @@ struct SectionPlacement *script_NextSection(void)
 					 * specifying the number is optional.
 					 */
 					if (!hasArg && nbbanks(type) != 1)
-						errx(1, "%s(%u): Didn't specify a bank number",
+						errx(1, "%s(%" PRIu32 "): Didn't specify a bank number",
 						     linkerScriptName, lineNo);
 					else if (!hasArg)
 						arg = bankranges[type][0];
 					else if (arg < bankranges[type][0])
-						errx(1, "%s(%u): specified bank number is too low (%u < %u)",
+						errx(1, "%s(%" PRIu32 "): specified bank number is too low (%" PRIu32 " < %" PRIu32 ")",
 						     linkerScriptName, lineNo,
 						     arg, bankranges[type][0]);
 					else if (arg > bankranges[type][1])
-						errx(1, "%s(%u): specified bank number is too high (%u > %u)",
+						errx(1, "%s(%" PRIu32 "): specified bank number is too high (%" PRIu32 " > %" PRIu32 ")",
 						     linkerScriptName, lineNo,
 						     arg, bankranges[type][1]);
 					bank = arg;
@@ -496,7 +497,7 @@ struct SectionPlacement *script_NextSection(void)
 
 		case PARSER_INCLUDE:
 			if (token->type != TOKEN_STRING)
-				errx(1, "%s(%u): Expected a file name after INCLUDE",
+				errx(1, "%s(%" PRIu32 "): Expected a file name after INCLUDE",
 				     linkerScriptName, lineNo);
 
 			/* Switch to that file */
@@ -516,7 +517,7 @@ lineend:
 					return NULL;
 				parserState = PARSER_LINEEND;
 			} else if (token->type != TOKEN_NEWLINE)
-				errx(1, "%s(%u): Unexpected %s at the end of the line",
+				errx(1, "%s(%" PRIu32 "): Unexpected %s at the end of the line",
 				     linkerScriptName, lineNo,
 				     tokenTypes[token->type]);
 			break;

@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,7 +52,7 @@ static void initFreeSpace(void)
 			memory[type][bank].next =
 				malloc(sizeof(*memory[type][0].next));
 			if (!memory[type][bank].next)
-				err(1, "Failed to init free space for region %d bank %u",
+				err(1, "Failed to init free space for region %d bank %" PRIu32,
 				    type, bank);
 			memory[type][bank].next->address = startaddr[type];
 			memory[type][bank].next->size    = maxsize[type];
@@ -304,19 +305,22 @@ static void placeSection(struct Section *section)
 
 	if (section->isBankFixed && nbbanks(section->type) != 1) {
 		if (section->isAddressFixed)
-			snprintf(where, 64, "at $%02x:%04x",
+			snprintf(where, 64, "at $%02" PRIx32 ":%04" PRIx16,
 				 section->bank, section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "in bank $%02x with align mask %x",
-				 section->bank, ~section->alignMask);
+			snprintf(where, 64, "in bank $%02" PRIx32 " with align mask %" PRIx16,
+				 section->bank, (uint16_t)~section->alignMask);
 		else
-			snprintf(where, 64, "in bank $%02x", section->bank);
+			snprintf(where, 64, "in bank $%02" PRIx32,
+				 section->bank);
 	} else {
 		if (section->isAddressFixed)
-			snprintf(where, 64, "at address $%04x", section->org);
+			snprintf(where, 64, "at address $%04" PRIx16,
+				 section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "with align mask %x and offset %u",
-				 ~section->alignMask, section->alignOfs);
+			snprintf(where, 64, "with align mask %" PRIx16 " and offset %" PRIx16,
+				 (uint16_t)~section->alignMask,
+				 section->alignOfs);
 		else
 			strcpy(where, "anywhere");
 	}
@@ -327,7 +331,7 @@ static void placeSection(struct Section *section)
 		     section->name, typeNames[section->type], where);
 	/* If the section just can't fit the bank, report that */
 	else if (section->org + section->size > endaddr(section->type) + 1)
-		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
+		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04" PRIx16 " > $%04" PRIx16 ")",
 		     section->name, typeNames[section->type], where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	/* Otherwise there is overlap with another section */
@@ -418,7 +422,7 @@ void assign_AssignSections(void)
 	/* Overlaying requires only fully-constrained sections */
 	verbosePrint("Assigning other sections...\n");
 	if (overlayFileName)
-		errx(1, "All sections must be fixed when using an overlay file; %lu %sn't",
+		errx(1, "All sections must be fixed when using an overlay file; %" PRIu64 " %sn't",
 		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
 
 	/* Assign all remaining sections by decreasing constraint order */

@@ -6,8 +6,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <stdlib.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "link/patch.h"
@@ -316,7 +317,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (value < 0
 			 || (value > 0xFF && value < 0xFF00)
 			 || value > 0xFFFF)
-				error("%s: Value %d is not in HRAM range",
+				error("%s: Value %" PRId32 " is not in HRAM range",
 				      patch->fileName, value);
 			value &= 0xFF;
 			break;
@@ -327,7 +328,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			 * They can be easily checked with a bitmask
 			 */
 			if (value & ~0x38)
-				error("%s: Value %d is not a RST vector",
+				error("%s: Value %" PRId32 " is not a RST vector",
 				      patch->fileName, value);
 			value |= 0xC7;
 			break;
@@ -370,7 +371,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 	}
 
 	if (stack.size > 1)
-		error("%s: RPN stack has %lu entries on exit, not 1",
+		error("%s: RPN stack has %zu entries on exit, not 1",
 		      patch->fileName, stack.size);
 
 	return popRPN();
@@ -440,7 +441,7 @@ static void applyFilePatches(struct Section *section)
 			int16_t offset = value - address;
 
 			if (offset < -128 || offset > 127)
-				error("%s: jr target out of reach (expected -129 < %d < 128)",
+				error("%s: jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				      patch->fileName, offset);
 			section->data[patch->offset] = offset & 0xFF;
 		} else {
@@ -457,10 +458,10 @@ static void applyFilePatches(struct Section *section)
 
 			if (value < types[patch->type].min
 			 || value > types[patch->type].max)
-				error("%s: Value %#x%s is not %u-bit",
+				error("%s: Value %#" PRIx32 "%s is not %u-bit",
 				      patch->fileName, value,
 				      value < 0 ? " (maybe negative?)" : "",
-				      types[patch->type].size * 8);
+				      types[patch->type].size * 8U);
 			for (uint8_t i = 0; i < types[patch->type].size; i++) {
 				section->data[patch->offset + i] = value & 0xFF;
 				value >>= 8;
