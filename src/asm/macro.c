@@ -10,13 +10,12 @@
 #include "asm/warning.h"
 
 struct MacroArgs {
-	char *args[MAXMACROARGS];
 	unsigned int nbArgs;
 	unsigned int shift;
+	char *args[];
 };
 
-static struct MacroArgs defaultArgs = { .nbArgs = 0, .shift = 0 };
-static struct MacroArgs *macroArgs = &defaultArgs;
+static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = -1;
 /*
  * The initialization is somewhat harmful, since it is never used, but it
@@ -40,12 +39,13 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs *args, char *s)
+void macro_AppendArg(struct MacroArgs **args, char *s)
 {
-	if (args->nbArgs == MAXMACROARGS)
+	if ((**args).nbArgs == MAXMACROARGS)
 		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
 			" arguments is allowed");
-	args->args[args->nbArgs++] = s;
+	*args = realloc(*args, sizeof **args + sizeof (char *) * (1 + (**args).nbArgs));
+	(**args).args[(**args).nbArgs++] = s;
 }
 
 void macro_UseNewArgs(struct MacroArgs *args)
