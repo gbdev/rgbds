@@ -720,10 +720,10 @@ macroargs	: /* empty */ {
 		}
 		| T_STRING {
 			$$ = macro_NewArgs();
-			macro_AppendArg($$, strdup($1));
+			macro_AppendArg(&($$), strdup($1));
 		}
 		| macroargs ',' T_STRING {
-			macro_AppendArg($$, strdup($3));
+			macro_AppendArg(&($$), strdup($3));
 		}
 ;
 
