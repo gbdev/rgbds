@@ -9,11 +9,23 @@
 #include "asm/macro.h"
 #include "asm/warning.h"
 
+/*
+ * Your average macro invocation does not go past the tens, but some go further
+ * This ensures that sane and slightly insane invocations suffer no penalties,
+ * and the rest is insane and thus will assume responsibility.
+ * Additionally, ~300 bytes (on x64) of memory per level of nesting has been
+ * deemed reasonable. (Halve that on x86.)
+ */
+#define INITIAL_ARG_SIZE 32
 struct MacroArgs {
 	unsigned int nbArgs;
 	unsigned int shift;
+	unsigned int capacity;
 	char *args[];
 };
+
+#define SIZEOF_ARGS(nbArgs) (sizeof(struct MacroArgs) + \
+			    sizeof(((struct MacroArgs){0}).args[0]) * (nbArgs))
 
 static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = -1;
@@ -32,10 +44,11 @@ struct MacroArgs *macro_GetCurrentArgs(void)
 
 struct MacroArgs *macro_NewArgs(void)
 {
-	struct MacroArgs *args = malloc(sizeof(*args));
+	struct MacroArgs *args = malloc(SIZEOF_ARGS(INITIAL_ARG_SIZE));
 
 	args->nbArgs = 0;
 	args->shift = 0;
+	args->capacity = INITIAL_ARG_SIZE;
 	return args;
 }
 
@@ -44,8 +57,10 @@ void macro_AppendArg(struct MacroArgs **args, char *s)
 	if ((**args).nbArgs == MAXMACROARGS)
 		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
 			" arguments is allowed");
-	*args = realloc(*args, sizeof(**args) +
-	                       sizeof(char *) * (1 + (**args).nbArgs));
+	if ((**args).nbArgs == (**args).capacity) {
+		(**args).capacity *= 2;
+		*args = realloc(*args, SIZEOF_ARGS((**args).capacity));
+	}
 	(**args).args[(**args).nbArgs++] = s;
 }
 
