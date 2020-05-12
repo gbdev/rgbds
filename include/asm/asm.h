@@ -22,7 +22,7 @@
 #include "asm/symbol.h"
 
 #define MAXUNIONS	128
-#define MAXMACROARGS	256
+#define MAXMACROARGS	99999
 #define MAXINCPATHS	128
 
 extern int32_t nLineNo;

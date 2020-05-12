@@ -44,7 +44,8 @@ void macro_AppendArg(struct MacroArgs **args, char *s)
 	if ((**args).nbArgs == MAXMACROARGS)
 		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
 			" arguments is allowed");
-	*args = realloc(*args, sizeof **args + sizeof (char *) * (1 + (**args).nbArgs));
+	*args = realloc(*args, sizeof(**args) +
+	                       sizeof(char *) * (1 + (**args).nbArgs));
 	(**args).args[(**args).nbArgs++] = s;
 }
 
