@@ -64,7 +64,8 @@ char const *macro_GetArg(uint32_t i)
 {
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= MAXMACROARGS ? NULL : macroArgs->args[realIndex];
+	return realIndex >= macroArgs->nbArgs ? NULL
+					      : macroArgs->args[realIndex];
 }
 
 uint32_t macro_GetUniqueID(void)
