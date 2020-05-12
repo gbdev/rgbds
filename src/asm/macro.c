@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,22 +47,32 @@ struct MacroArgs *macro_NewArgs(void)
 {
 	struct MacroArgs *args = malloc(SIZEOF_ARGS(INITIAL_ARG_SIZE));
 
+	if (!args)
+		fatalerror("Unable to register macro arguments: %s", strerror(errno));
+
 	args->nbArgs = 0;
 	args->shift = 0;
 	args->capacity = INITIAL_ARG_SIZE;
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **args, char *s)
+void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 {
-	if ((**args).nbArgs == MAXMACROARGS)
+#define macArgs (*argPtr)
+	if (macArgs->nbArgs == MAXMACROARGS)
 		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
 			" arguments is allowed");
-	if ((**args).nbArgs == (**args).capacity) {
-		(**args).capacity *= 2;
-		*args = realloc(*args, SIZEOF_ARGS((**args).capacity));
+	if (macArgs->nbArgs >= macArgs->capacity) {
+		macArgs->capacity *= 2;
+		/* Check that overflow didn't roll us back */
+		if (macArgs->capacity <= macArgs->nbArgs)
+			fatalerror("Failed to add new macro argument: possible capacity overflow");
+		macArgs = realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
+		if (!macArgs)
+			fatalerror("Error adding new macro argument: %s", strerror(errno));
 	}
-	(**args).args[(**args).nbArgs++] = s;
+	macArgs->args[macArgs->nbArgs++] = s;
+#undef macArgs
 }
 
 void macro_UseNewArgs(struct MacroArgs *args)
