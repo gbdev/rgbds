@@ -34,8 +34,8 @@ WARNFLAGS	:= -Wall
 # Overridable CFLAGS
 CFLAGS		:= -O3
 # Non-overridable CFLAGS
-REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=c11 -D_POSIX_C_SOURCE=200809L \
-		   -D_DEFAULT_SOURCE -Iinclude
+REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -D_POSIX_C_SOURCE=200809L \
+		   -Iinclude
 # Overridable LDFLAGS
 LDFLAGS		:=
 # Non-overridable LDFLAGS
