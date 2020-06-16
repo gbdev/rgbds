@@ -88,8 +88,9 @@ void out_AddSection(struct Section const *section)
 
 struct Section const *out_OverlappingSection(struct Section const *section)
 {
+	struct SortedSections *banks = sections[section->type].banks;
 	struct SortedSection *ptr =
-		sections[section->type].banks[section->bank].sections;
+		banks[section->bank - bankranges[section->type][0]].sections;
 
 	while (ptr) {
 		if (ptr->section->org < section->org + section->size
