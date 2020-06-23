@@ -13,7 +13,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #include "asm/asm.h"
 #include "asm/fstack.h"
@@ -27,6 +26,7 @@
 #include "extern/err.h"
 
 #include "asmy.h"
+#include "platform.h" // strncasecmp
 
 struct sLexString {
 	char *tzName;
