@@ -400,18 +400,18 @@ void obj_ReadFile(char const *fileName)
 		err(1, "Could not open file %s", fileName);
 
 	/* Begin by reading the magic bytes and version number */
-	uint8_t versionNumber;
+	unsigned versionNumber;
 	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
 				  &versionNumber);
 
 	if (matchedElems != 1)
 		errx(1, "\"%s\" is not a RGBDS object file", fileName);
 
-	verbosePrint("Reading object file %s, version %hhu\n",
+	verbosePrint("Reading object file %s, version %u\n",
 		     fileName, versionNumber);
 
 	if (versionNumber != RGBDS_OBJECT_VERSION_NUMBER)
-		errx(1, "\"%s\" is an incompatible version %hhu object file",
+		errx(1, "\"%s\" is an incompatible version %u object file",
 		     fileName, versionNumber);
 
 	uint32_t revNum;
