@@ -19,6 +19,10 @@
 .Op Fl g Ar chars
 .Op Fl i Ar path
 .Op Fl M Ar depend_file
+.Op Fl MG
+.Op Fl MP
+.Op Fl MT Ar target_file
+.Op Fl MQ Ar target_file
 .Op Fl o Ar out_file
 .Op Fl p Ar pad_value
 .Op Fl r Ar recursion_depth
@@ -86,6 +90,41 @@ Print
 .Xr make 1
 dependencies to
 .Ar depend_file .
+.It Fl MG
+To be used in conjunction with
+.Fl M .
+This makes
+.Nm
+assume that missing files are auto-generated: when
+.Ic INCLUDE
+or
+.Ic INCBIN
+is attempted on a non-existent file, it is added as a dependency, then
+.Nm
+exits normally instead of erroring out.
+This feature is used in automatic updating of makefiles.
+.It Fl MP
+When enabled, this causes a phony target to be added for each dependency other than the main file.
+This prevents
+.Xr make 1
+from erroring out when dependency files are deleted.
+.It Fl MT Ar target_file
+Add a target to the rules emitted by
+.Fl M .
+The exact string provided will be written, including spaces and special characters.
+.Dl Fl MT fileA Fl MT fileB
+is equivalent to
+.Dl Fl MT 'fileA fileB' .
+If neither this nor
+.Fl MQ
+is specified, the output file name is used.
+.It Fl MQ Ar target_file
+Same as
+.Fl MT ,
+but additionally escapes any special
+.Xr make 1
+characters, essentially
+.Sq $ .
 .It Fl o Ar out_file , Fl Fl output Ar out_file
 Write an object file to the given filename.
 .It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
