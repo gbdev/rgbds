@@ -76,7 +76,7 @@ foreach(PROG "asm" "fix" "gfx" "link")
                  ${rgb${PROG}_src}
                  ${common_src}
                  )
-  install(TARGETS rgb${PROG} DESTINATION bin)
+  install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)
