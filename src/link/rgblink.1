@@ -94,7 +94,7 @@ This option is ignored.
 It was supposed to perform smart linking but fell into disrepair, and so has been removed.
 It will be reimplemented at some point.
 .It Fl t , Fl Fl tiny
-Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM and prohibit the use of ROMX sections.
+Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM. ROMX Bank 1 and WRAMX Bank 1 sections are converted to ROM0 and WRAM0, other banks are prohibited.
 Useful for ROMs that fit in 32 KiB.
 .It Fl V , Fl Fl version
 Print the version of the program and exit.
