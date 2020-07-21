@@ -1,5 +1,5 @@
 /*
- * Copyright © 2005-2019 Rich Felker, et al.
+ * Copyright © 2005-2020 Rich Felker, et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,8 +23,8 @@
 
 /* This implementation was taken from musl and modified for RGBDS */
 
-#ifndef _GETOPT_H
-#define _GETOPT_H
+#ifndef RGBDS_EXTERN_GETOPT_H
+#define RGBDS_EXTERN_GETOPT_H
 
 extern char *optarg;
 extern int optind, opterr, optopt, optreset;

@@ -30,6 +30,7 @@
 #include "extern/err.h"
 
 #include "linkdefs.h"
+#include "platform.h" // strdup
 
 struct Patch {
 	char tzFilename[_MAX_PATH + 1];
