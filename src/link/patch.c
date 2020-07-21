@@ -439,12 +439,12 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 			/* Target is relative to the byte *after* the operand */
 			uint16_t address = patch->pcSection->org
 							+ patch->pcOffset + 1;
-			int16_t offset = value - address;
+			int16_t jumpOffset = value - address;
 
-			if (offset < -128 || offset > 127)
+			if (jumpOffset < -128 || jumpOffset > 127)
 				error("%s: jr target out of reach (expected -129 < %" PRId16 " < 128)",
-				      patch->fileName, offset);
-			dataSection->data[offset] = offset & 0xFF;
+				      patch->fileName, jumpOffset);
+			dataSection->data[offset] = jumpOffset & 0xFF;
 		} else {
 			/* Patch a certain number of bytes */
 			struct {
