@@ -5,7 +5,7 @@ jobs:
   unix-testing:
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-16.04, macos-10.15]
+        os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04, macos-10.15]
         cc: [gcc, clang]
         include:
           - os: ubuntu-18.04
