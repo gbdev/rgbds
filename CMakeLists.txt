@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.8.8)
 
 cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 
-set(RGBDS_VER 0.4.0)
+set(RGBDS_VER 0.4.1)
 set(RGBDS_DESC "Rednex Game Boy Development System")
 
 if(CMAKE_VERSION VERSION_LESS 3.0)
