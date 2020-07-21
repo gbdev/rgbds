@@ -31,7 +31,7 @@
 #include <string.h>
 #include "extern/getopt.h"
 
-int __optpos, __optreset;
+static int __optpos, __optreset;
 
 void musl__getopt_msg(const char *a, const char *b, const char *c, size_t l)
 {
