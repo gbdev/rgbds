@@ -35,7 +35,7 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	WARNING_DISABLED, /* Empty entry in `db`, `dw` or `dl` */
 	WARNING_DISABLED, /* Constants too large */
 	WARNING_DISABLED, /* String too long for internal buffers */
-	WARNING_DISABLED, /* Obsolete things */
+	WARNING_ENABLED,  /* Obsolete things */
 	WARNING_DISABLED, /* Shifting undefined behavior */
 	WARNING_DISABLED, /* Strange shift amount */
 	WARNING_ENABLED,  /* Implicit truncation loses some bits */
@@ -101,7 +101,6 @@ static uint8_t const _wallCommands[] = {
 /* Warnings that are less likely to indicate an error */
 static uint8_t const _wextraCommands[] = {
 	WARNING_EMPTY_ENTRY,
-	WARNING_OBSOLETE,
 	META_WARNING_DONE
 };
 
