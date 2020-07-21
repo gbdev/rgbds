@@ -421,7 +421,7 @@ void patch_CheckAssertions(struct Assertion *assert)
  * @param section The section to patch
  * @param arg Ignored callback arg
  */
-static void applyFilePatches(struct Section *section)
+static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
 	if (!sect_HasData(section->type))
 		return;
@@ -432,6 +432,7 @@ static void applyFilePatches(struct Section *section)
 		int32_t value = computeRPNExpr(patch,
 					       (struct Symbol const * const *)
 							section->fileSymbols);
+		uint16_t offset = patch->offset + section->offset;
 
 		/* `jr` is quite unlike the others... */
 		if (patch->type == PATCHTYPE_JR) {
@@ -443,7 +444,7 @@ static void applyFilePatches(struct Section *section)
 			if (offset < -128 || offset > 127)
 				error("%s: jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				      patch->fileName, offset);
-			section->data[patch->offset] = offset & 0xFF;
+			dataSection->data[offset] = offset & 0xFF;
 		} else {
 			/* Patch a certain number of bytes */
 			struct {
@@ -463,7 +464,7 @@ static void applyFilePatches(struct Section *section)
 				      value < 0 ? " (maybe negative?)" : "",
 				      types[patch->type].size * 8U);
 			for (uint8_t i = 0; i < types[patch->type].size; i++) {
-				section->data[patch->offset + i] = value & 0xFF;
+				dataSection->data[offset + i] = value & 0xFF;
 				value >>= 8;
 			}
 		}
@@ -479,9 +480,10 @@ static void applyFilePatches(struct Section *section)
 static void applyPatches(struct Section *section, void *arg)
 {
 	(void)arg;
+	struct Section *dataSection = section;
 
 	do {
-		applyFilePatches(section);
+		applyFilePatches(section, dataSection);
 		section = section->nextu;
 	} while (section);
 }

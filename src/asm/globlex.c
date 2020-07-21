@@ -442,6 +442,7 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"def", T_OP_DEF},
 
+	{"fragment", T_POP_FRAGMENT},
 	{"bank", T_OP_BANK},
 	{"align", T_OP_ALIGN},
 

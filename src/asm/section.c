@@ -88,7 +88,7 @@ struct Section *out_FindSectionByName(const char *pzName)
  */
 static struct Section *getSection(char const *pzName, enum SectionType type,
 				  uint32_t org, struct SectionSpec const *attrs,
-				  bool isUnion)
+				  enum SectionModifier mod)
 {
 #define mask(align) ((1 << (align)) - 1)
 	uint32_t bank = attrs->bank;
@@ -150,17 +150,17 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 			fail("Section \"%s\" already exists but with type %s",
 			     pSect->pzName, typeNames[pSect->nType]);
 
+		if (pSect->modifier != mod)
+			fail("Section \"%s\" already declared as %s section",
+			     pSect->pzName, sectionModNames[pSect->modifier]);
 		/*
 		 * Normal sections need to have exactly identical constraints;
 		 * but unionized sections only need "compatible" constraints,
 		 * and they end up with the strictest combination of both
 		 */
-		if (isUnion) {
-			if (!pSect->isUnion)
-				fail("Section \"%s\" already declared as non-union",
-				     pSect->pzName);
+		if (mod == SECTION_UNION) {
 			/*
-			 * WARNING: see comment abount assumption in
+			 * WARNING: see comment about assumption in
 			 * `EndLoadSection` if modifying the following check!
 			 */
 			if (sect_HasData(type))
@@ -210,10 +210,11 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 			else if (bank != -1 && pSect->nBank != bank)
 				fail("Section \"%s\" already declared with different bank %" PRIu32,
 				     pSect->pzName, pSect->nBank);
-		} else {
-			if (pSect->isUnion)
-				fail("Section \"%s\" already declared as union",
-				     pSect->pzName);
+		} else { /* Section fragments are handled identically in RGBASM */
+			/* However, concaternating non-fragments will be made an error */
+			if (pSect->modifier != SECTION_FRAGMENT || mod != SECTION_FRAGMENT)
+				warning(WARNING_OBSOLETE, "Concatenation of non-fragment sections is deprecated");
+
 			if (org != pSect->nOrg) {
 				if (pSect->nOrg == -1)
 					fail("Section \"%s\" already declared as floating",
@@ -257,7 +258,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 		fatalerror("Not enough memory for sectionname");
 
 	pSect->nType = type;
-	pSect->isUnion = isUnion;
+	pSect->modifier = mod;
 	pSect->size = 0;
 	pSect->nOrg = org;
 	pSect->nBank = bank;
@@ -303,15 +304,15 @@ static void changeSection(void)
  * Set the current section by name and type
  */
 void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
-		    struct SectionSpec const *attribs, bool isUnion)
+		    struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block");
 
-	struct Section *pSect = getSection(pzName, type, org, attribs, isUnion);
+	struct Section *pSect = getSection(pzName, type, org, attribs, mod);
 
 	changeSection();
-	curOffset = isUnion ? 0 : pSect->size;
+	curOffset = mod == SECTION_UNION ? 0 : pSect->size;
 	pCurrentSection = pSect;
 }
 

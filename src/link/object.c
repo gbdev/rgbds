@@ -266,10 +266,16 @@ static void readSection(FILE *file, struct Section *section,
 		errx(1, "\"%s\"'s section size (%" PRId32 ") is invalid",
 		     section->name, tmp);
 	section->size = tmp;
+	section->offset = 0;
 	tryGetc(byte, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, section->name);
-	section->type = byte & 0x7F;
-	section->isUnion = byte >> 7;
+	section->type = byte & 0x3F;
+	if (byte >> 7)
+		section->modifier = SECTION_UNION;
+	else if (byte >> 6)
+		section->modifier = SECTION_FRAGMENT;
+	else
+		section->modifier = SECTION_NORMAL;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s",
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
@@ -382,7 +388,7 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 
 static inline struct Section *getMainSection(struct Section *section)
 {
-	if (section->isUnion)
+	if (section->modifier != SECTION_NORMAL)
 		section = sect_GetSection(section->name);
 
 	return section;
@@ -502,10 +508,18 @@ void obj_ReadFile(char const *fileName)
 		if (sectionID == -1) {
 			fileSymbols[i]->section = NULL;
 		} else {
+			struct Section *section = fileSections[sectionID];
+
 			/* Give the section a pointer to the symbol as well */
-			linkSymToSect(fileSymbols[i], fileSections[sectionID]);
-			fileSymbols[i]->section =
-					getMainSection(fileSections[sectionID]);
+			linkSymToSect(fileSymbols[i], section);
+
+			if (section->modifier != SECTION_NORMAL) {
+				if (section->modifier == SECTION_FRAGMENT)
+					/* Add the fragment's offset to the symbol's */
+					fileSymbols[i]->offset += section->offset;
+				section = getMainSection(section);
+			}
+			fileSymbols[i]->section = section;
 		}
 	}
 

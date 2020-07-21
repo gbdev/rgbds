@@ -176,7 +176,10 @@ static void writesection(struct Section const *pSect, FILE *f)
 
 	fputlong(pSect->size, f);
 
-	fputc(pSect->nType | pSect->isUnion << 7, f);
+	bool isUnion = pSect->modifier == SECTION_UNION;
+	bool isFragment = pSect->modifier == SECTION_FRAGMENT;
+
+	fputc(pSect->nType | isUnion << 7 | isFragment << 6, f);
 
 	fputlong(pSect->nOrg, f);
 	fputlong(pSect->nBank, f);

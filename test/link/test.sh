@@ -92,6 +92,12 @@ $RGBLINK -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2
 dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/good/ref.out.bin)) > $otemp 2>/dev/null
 i="section-union/good.asm" tryCmp section-union/good/ref.out.bin $otemp
 rc=$(($? || $rc))
+$RGBASM -o $otemp section-union/fragments/a.asm
+$RGBASM -o $gbtemp2 section-union/fragments/b.asm
+$RGBLINK -o $gbtemp $otemp $gbtemp2
+dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/fragments/ref.out.bin)) > $otemp 2>/dev/null
+i="section-union/fragments.asm" tryCmp section-union/fragments/ref.out.bin $otemp
+rc=$(($? || $rc))
 for i in section-union/*.asm; do
 	$RGBASM -o $otemp   $i
 	$RGBASM -o $gbtemp2 $i -DSECOND

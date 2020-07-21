@@ -44,3 +44,9 @@ char const * const typeNames[] = {
 	[SECTTYPE_OAM]   = "OAM",
 	[SECTTYPE_HRAM]  = "HRAM"
 };
+
+char const * const sectionModNames[] = {
+	[SECTION_NORMAL]   = "regular",
+	[SECTION_UNION]    = "union",
+	[SECTION_FRAGMENT] = "fragment",
+};

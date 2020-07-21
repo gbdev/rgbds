@@ -8,6 +8,8 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "link/main.h"
 #include "link/section.h"
@@ -37,7 +39,7 @@ void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
 	hash_ForEach(sections, forEach, &callbackArg);
 }
 
-static void mergeSections(struct Section *target, struct Section *other)
+static void mergeSections(struct Section *target, struct Section *other, enum SectionModifier mod)
 {
 	if (target->type != other->type)
 		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
@@ -86,9 +88,30 @@ static void mergeSections(struct Section *target, struct Section *other)
 		}
 	}
 
-	if (other->size > target->size)
-		target->size = other->size;
+	switch (mod) {
+	case SECTION_UNION:
+		if (other->size > target->size)
+			target->size = other->size;
+		break;
 
+	case SECTION_FRAGMENT:
+		target->size += other->size;
+		other->offset = target->size - other->size;
+		if (sect_HasData(target->type)) {
+			/* Ensure we're not allocating 0 bytes */
+			target->data = realloc(target->data,
+					       sizeof(*target->data) * target->size + 1);
+			if (!target->data)
+				errx(1, "Failed to concatenate \"%s\"'s fragments", target->name);
+			memcpy(target->data + target->size - other->size, other->data, other->size);
+		}
+		break;
+
+	case SECTION_NORMAL:
+		trap_;
+	}
+
+	other->nextu = target->nextu;
 	target->nextu = other;
 }
 
@@ -98,16 +121,14 @@ void sect_AddSection(struct Section *section)
 	struct Section *other = hash_GetElement(sections, section->name);
 
 	if (other) {
-		if (other->isUnion && section->isUnion) {
-			mergeSections(other, section);
-		} else if (section->isUnion || other->isUnion) {
-			errx(1, "Section \"%s\" defined as both unionized and not",
-			     section->name);
-		} else {
-			errx(1, "Section name \"%s\" is already in use",
-			     section->name);
-		}
-	} else if (section->isUnion && sect_HasData(section->type)) {
+		if (section->modifier != other->modifier)
+			errx(1, "Section \"%s\" defined as %s and %s", section->name,
+			     sectionModNames[section->modifier], sectionModNames[other->modifier]);
+		else if (section->modifier == SECTION_NORMAL)
+			errx(1, "Section name \"%s\" is already in use", section->name);
+		else
+			mergeSections(other, section, section->modifier);
+	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx(1, "Section \"%s\" is of type %s, which cannot be unionized",
 		     section->name, typeNames[section->type]);
 	} else {

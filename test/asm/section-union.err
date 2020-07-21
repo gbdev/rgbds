@@ -1,5 +1,7 @@
 ERROR: section-union.asm(37):
-    Section "test" already declared as union
+    Section "test" already declared as union section
+warning: section-union.asm(37): [-Wobsolete]
+    Concatenation of non-fragment sections is deprecated
 ERROR: section-union.asm(37):
     Section "test" already declared as fixed at $c000
 ERROR: section-union.asm(37):

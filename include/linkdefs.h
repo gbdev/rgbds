@@ -14,7 +14,7 @@
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1u"
 #define RGBDS_OBJECT_VERSION_NUMBER 9U
-#define RGBDS_OBJECT_REV 4U
+#define RGBDS_OBJECT_REV 5U
 
 enum AssertionType {
 	ASSERT_WARN,
@@ -72,6 +72,14 @@ enum SectionType {
 
 	SECTTYPE_INVALID
 };
+
+enum SectionModifier {
+	SECTION_NORMAL,
+	SECTION_UNION,
+	SECTION_FRAGMENT
+};
+
+extern char const * const sectionModNames[];
 
 /**
  * Tells whether a section has data in its object file definition,

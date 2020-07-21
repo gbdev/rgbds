@@ -19,7 +19,7 @@ struct Expression;
 struct Section {
 	char *pzName;
 	enum SectionType nType;
-	bool isUnion;
+	enum SectionModifier modifier;
 	uint32_t size;
 	uint32_t nOrg;
 	uint32_t nBank;
@@ -38,7 +38,8 @@ struct SectionSpec {
 
 struct Section *out_FindSectionByName(const char *pzName);
 void out_NewSection(char const *pzName, uint32_t secttype, uint32_t org,
-		    struct SectionSpec const *attributes, bool isUnion);
+		    struct SectionSpec const *attributes,
+		    enum SectionModifier mod);
 void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
 			struct SectionSpec const *attributes);
 void out_EndLoadSection(void);

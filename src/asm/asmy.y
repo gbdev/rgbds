@@ -496,6 +496,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	char tzString[MAXSTRLEN + 1];
 	struct Expression sVal;
 	int32_t nConstValue;
+	enum SectionModifier sectMod;
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
@@ -570,7 +571,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
 %token	T_POP_EXPORT T_POP_GLOBAL T_POP_XDEF
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
-%token	T_POP_SECTION
+%token	T_POP_SECTION T_POP_FRAGMENT
 %token	T_POP_RB
 %token	T_POP_RW
 %token	T_POP_RL
@@ -600,7 +601,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 %token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM
 %token	T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
 
-%type	<nConstValue> sectunion
+%type	<sectMod> sectmod
 %type	<macroArg> macroargs
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
@@ -1438,13 +1439,14 @@ string		: T_STRING {
 		}
 ;
 
-section		: T_POP_SECTION sectunion string ',' sectiontype sectorg sectattrs {
+section		: T_POP_SECTION sectmod string ',' sectiontype sectorg sectattrs {
 			out_NewSection($3, $5, $6, &$7, $2);
 		}
 ;
 
-sectunion	: /* empty */	{ $$ = false; }
-		| T_POP_UNION	{ $$ = true; }
+sectmod	: /* empty */	{ $$ = SECTION_NORMAL; }
+		| T_POP_UNION	{ $$ = SECTION_UNION; }
+		| T_POP_FRAGMENT{ $$ = SECTION_FRAGMENT; }
 ;
 
 sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }

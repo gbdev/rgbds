@@ -42,8 +42,9 @@ struct Section {
 	/* Info contained in the object files */
 	char *name;
 	uint16_t size;
+	uint16_t offset;
 	enum SectionType type;
-	bool isUnion;
+	enum SectionModifier modifier;
 	bool isAddressFixed;
 	uint16_t org;
 	bool isBankFixed;
