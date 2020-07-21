@@ -63,7 +63,7 @@ The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl d , Fl Fl dmg
 Enable DMG mode.
-Prohibit the use of sections that doesn't exist on a DMG, such as WRAMX and VRAM bank 1.
+Prohibit the use of sections that doesn't exist on a DMG, such as VRAM bank 1.
 This option automatically enables
 .Fl w .
 .It Fl l Ar linker_script, Fl Fl linkerscript Ar linker_script
@@ -94,14 +94,16 @@ This option is ignored.
 It was supposed to perform smart linking but fell into disrepair, and so has been removed.
 It will be reimplemented at some point.
 .It Fl t , Fl Fl tiny
-Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM and prohibit the use of ROMX sections.
+Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM.
+ROMX sections that are fixed to a bank other than 1 become errors, other ROMX sections are treated as ROM0.
 Useful for ROMs that fit in 32 KiB.
 .It Fl V , Fl Fl version
 Print the version of the program and exit.
 .It Fl v , Fl Fl verbose
 Verbose: enable printing more information to standard error.
 .It Fl w , Fl Fl wramx
-Expand the WRAM0 section size from 4 KiB to the full 8 KiB assigned to WRAM and prohibit the use of WRAMX sections.
+Expand the WRAM0 section size from 4 KiB to the full 8 KiB assigned to WRAM.
+WRAMX sections that are fixed to a bank other than 1 become errors, other WRAMX sections are treated as WRAM0.
 .It Fl x , Fl Fl nopad
 Disables padding the end of the final file.
 This option automatically enables
