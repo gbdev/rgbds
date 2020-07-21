@@ -1064,10 +1064,10 @@ Pop register <b class="Sy">AF</b> from the stack. This is roughly equivalent to
   the following <i class="Em">imaginary</i> instructions:
 <div class="Bd Pp Bd-indent">
 <pre>
+ld f, [sp] ; See below for individual flags
 inc sp
 ld a, [sp]
 inc sp
-ld f, [sp] ; See below for individual flags
 </pre>
 </div>
 <p class="Pp">Cycles: 3</p>

@@ -39,6 +39,9 @@
       [<code class="Fl"><a href="#g">-g</a></code> <var class="Ar">chars</var>]
       [<code class="Fl"><a href="#i">-i</a></code> <var class="Ar">path</var>]
       [<code class="Fl"><a href="#M">-M</a></code> <var class="Ar">depend_file</var>]
+      [<code class="Fl"><a href="#M">-M</a><a href="#G">G</a></code>] [<code class="Fl"><a href="#M">-M</a><a href="#P">P</a></code>]
+      [<code class="Fl"><a href="#M">-M</a><a href="#T">T</a></code> <var class="Ar">target_file</var>]
+      [<code class="Fl"><a href="#M">-M</a><a href="#Q">Q</a></code> <var class="Ar">target_file</var>]
       [<code class="Fl"><a href="#o">-o</a></code> <var class="Ar">out_file</var>]
       [<code class="Fl"><a href="#p">-p</a></code> <var class="Ar">pad_value</var>]
       [<code class="Fl"><a href="#r">-r</a></code> <var class="Ar">recursion_depth</var>]
@@ -107,6 +110,35 @@ The <code class="Nm">rgbasm</code> program creates an RGB object file from an
     <var class="Ar">depend_file</var></dt>
   <dd>Print <a class="Xr">make(1)</a> dependencies to
       <var class="Ar">depend_file</var>.</dd>
+  <dt><a class="permalink" href="#MG"><code class="Fl" id="MG">-MG</code></a></dt>
+  <dd>To be used in conjunction with <code class="Fl">-M</code>. This makes
+      <code class="Nm">rgbasm</code> assume that missing files are
+      auto-generated: when <code class="Ic">INCLUDE</code> or
+      <code class="Ic">INCBIN</code> is attempted on a non-existent file, it is
+      added as a dependency, then <code class="Nm">rgbasm</code> exits normally
+      instead of erroring out. This feature is used in automatic updating of
+      makefiles.</dd>
+  <dt><a class="permalink" href="#MP"><code class="Fl" id="MP">-MP</code></a></dt>
+  <dd>When enabled, this causes a phony target to be added for each dependency
+      other than the main file. This prevents <a class="Xr">make(1)</a> from
+      erroring out when dependency files are deleted.</dd>
+  <dt><a class="permalink" href="#MT"><code class="Fl" id="MT">-MT</code></a>
+    <var class="Ar">target_file</var></dt>
+  <dd>Add a target to the rules emitted by <code class="Fl">-M</code>. The exact
+      string provided will be written, including spaces and special characters.
+    <div class="Bd Bd-indent"><code class="Li"><code class="Fl">-MT</code>
+      <code class="Fl">-fileA</code> <code class="Fl">-MT</code>
+      <code class="Fl">-fileB</code></code></div>
+    is equivalent to
+    <div class="Bd Bd-indent"><code class="Li"><code class="Fl">-MT</code>
+      <code class="Fl">-'fileA</code>
+      <code class="Fl">-fileB'</code>.</code></div>
+    If neither this nor <code class="Fl">-MQ</code> is specified, the output
+      file name is used.</dd>
+  <dt><a class="permalink" href="#MQ"><code class="Fl" id="MQ">-MQ</code></a>
+    <var class="Ar">target_file</var></dt>
+  <dd>Same as <code class="Fl">-MT</code>, but additionally escapes any special
+      <a class="Xr">make(1)</a> characters, essentially &#x2018;$&#x2019;.</dd>
   <dt><a class="permalink" href="#o"><code class="Fl" id="o">-o</code></a>
     <var class="Ar">out_file</var>,
     <code class="Fl">--output</code>
@@ -200,10 +232,10 @@ Warnings are diagnostic messages that indicate possibly erroneous behavior that
   <dt><a class="permalink" href="#Wlong-string"><code class="Fl" id="Wlong-string">-Wlong-string</code></a></dt>
   <dd>Warn when a string too long to fit in internal buffers is encountered.
       This warning is enabled by <code class="Fl">-Wall</code>.</dd>
-  <dt><a class="permalink" href="#Wobsolete"><code class="Fl" id="Wobsolete">-Wobsolete</code></a></dt>
+  <dt><a class="permalink" href="#Wno-obsolete"><code class="Fl" id="Wno-obsolete">-Wno-obsolete</code></a></dt>
   <dd>Warn when obsolete constructs such as the <code class="Ic">jp [hl]</code>
-      instruction or <code class="Ic">HOME</code> section type are encountered.
-      This warning is enabled by <code class="Fl">-Wextra</code>.</dd>
+      instruction or <code class="Ic">HOME</code> section type are
+    encountered.</dd>
   <dt><a class="permalink" href="#Wshift"><code class="Fl" id="Wshift">-Wshift</code></a></dt>
   <dd>Warn when shifting right a negative value. Use a division by 2^N
     instead.</dd>
