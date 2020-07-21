@@ -19,7 +19,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 #include "asm/fstack.h"
 #include "asm/lexer.h"
@@ -30,6 +29,7 @@
 
 #include "extern/err.h"
 
+#include "platform.h" // S_ISDIR (stat macro)
 #include "types.h"
 
 static struct sContext *pFileStack;

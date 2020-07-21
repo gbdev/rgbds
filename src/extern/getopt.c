@@ -1,5 +1,5 @@
 /*
- * Copyright © 2005-2019 Rich Felker, et al.
+ * Copyright © 2005-2020 Rich Felker, et al.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,40 +26,128 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <unistd.h>
+#ifndef _MSC_VER
+# include <unistd.h>
+#endif
 #include <stdio.h>
 #include <string.h>
+#include <wchar.h>
+
 #include "extern/getopt.h"
 
-static int __optpos, __optreset;
+#ifdef _MSC_VER
+char *optarg;
+int optind=1, opterr=1, optopt;
+#endif
+int optreset=0;
+static int optpos;
 
-void musl__getopt_msg(const char *a, const char *b, const char *c, size_t l)
+static void musl_getopt_msg(const char *a, const char *b, const char *c, size_t l)
 {
 	FILE *f = stderr;
-	(void)(fputs(a, f)>=0
-	&& fwrite(b, strlen(b), 1, f)
-	&& fwrite(c, 1, l, f)==l
-	&& putc('\n', f));
+
+	if (fputs(a, f) >= 0 &&
+	    fwrite(b, strlen(b), 1, f) &&
+	    fwrite(c, 1, l, f) == l)
+		putc('\n', f);
 }
+
+#ifdef _MSC_VER
+static int getopt(int argc, char *argv[], const char *optstring)
+{
+	int i;
+	wchar_t c, d;
+	int k, l;
+	char *optchar;
+
+	if (!optind || optreset) {
+		optreset = 0;
+		optpos = 0;
+		optind = 1;
+	}
+
+	if (optind >= argc || !argv[optind])
+		return -1;
+
+	if (argv[optind][0] != '-') {
+		if (optstring[0] == '-') {
+			optarg = argv[optind++];
+			return 1;
+		}
+		return -1;
+	}
+
+	if (!argv[optind][1])
+		return -1;
+
+	if (argv[optind][1] == '-' && !argv[optind][2])
+		return optind++, -1;
+
+	if (!optpos) optpos++;
+	if ((k = mbtowc(&c, argv[optind]+optpos, MB_LEN_MAX)) < 0) {
+		k = 1;
+		c = 0xfffd; /* replacement char */
+	}
+	optchar = argv[optind]+optpos;
+	optpos += k;
+
+	if (!argv[optind][optpos]) {
+		optind++;
+		optpos = 0;
+	}
+
+	if (optstring[0] == '-' || optstring[0] == '+')
+		optstring++;
+
+	i = 0;
+	d = 0;
+	do {
+		l = mbtowc(&d, optstring+i, MB_LEN_MAX);
+		if (l>0) i+=l; else i++;
+	} while (l && d != c);
+
+	if (d != c || c == ':') {
+		optopt = c;
+		if (optstring[0] != ':' && opterr)
+			musl_getopt_msg(argv[0], ": unrecognized option: ", optchar, k);
+		return '?';
+	}
+	if (optstring[i] == ':') {
+		optarg = 0;
+		if (optstring[i+1] != ':' || optpos) {
+			optarg = argv[optind++] + optpos;
+			optpos = 0;
+		}
+		if (optind > argc) {
+			optopt = c;
+			if (optstring[0] == ':') return ':';
+			if (opterr) musl_getopt_msg(argv[0],
+				": option requires an argument: ",
+				optchar, k);
+			return '?';
+		}
+	}
+	return c;
+}
+#endif /* _MSC_VER */
 
 static void permute(char **argv, int dest, int src)
 {
-	char **av = (char **)argv;
-	char *tmp = av[src];
+	char *tmp = argv[src];
 	int i;
 	for (i=src; i>dest; i--)
-		av[i] = av[i-1];
-	av[dest] = tmp;
+		argv[i] = argv[i-1];
+	argv[dest] = tmp;
 }
 
-static int musl__getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly);
+static int musl_getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly);
 
-static int musl__getopt_long(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int musl_getopt_long(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
 {
 	int ret, skipped, resumed;
-	if (!optind || __optreset) {
-		__optreset = 0;
-		__optpos = 0;
+	if (!optind || optreset) {
+		optreset = 0;
+		optpos = 0;
 		optind = 1;
 	}
 	if (optind >= argc || !argv[optind]) return -1;
@@ -73,7 +161,7 @@ static int musl__getopt_long(int argc, char **argv, const char *optstring, const
 		optind = i;
 	}
 	resumed = optind;
-	ret = musl__getopt_long_core(argc, argv, optstring, longopts, idx, longonly);
+	ret = musl_getopt_long_core(argc, argv, optstring, longopts, idx, longonly);
 	if (resumed > skipped) {
 		int i, cnt = optind-resumed;
 		for (i=0; i<cnt; i++)
@@ -83,7 +171,7 @@ static int musl__getopt_long(int argc, char **argv, const char *optstring, const
 	return ret;
 }
 
-static int musl__getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int musl_getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
 {
 	optarg = 0;
 	if (longopts && argv[optind][0] == '-' &&
@@ -91,8 +179,8 @@ static int musl__getopt_long_core(int argc, char **argv, const char *optstring, 
 		 (argv[optind][1] == '-' && argv[optind][2])))
 	{
 		int colon = optstring[optstring[0]=='+'||optstring[0]=='-']==':';
-		int i, cnt, match;
-		char *arg, *opt, *start = argv[optind]+1;
+		int i, cnt, match = 0;
+		char *arg = 0, *opt, *start = argv[optind]+1;
 		for (cnt=i=0; longopts[i].name; i++) {
 			const char *name = longopts[i].name;
 			opt = start;
@@ -128,7 +216,7 @@ static int musl__getopt_long_core(int argc, char **argv, const char *optstring, 
 					optopt = longopts[i].val;
 					if (colon || !opterr)
 						return '?';
-					musl__getopt_msg(argv[0],
+					musl_getopt_msg(argv[0],
 						": option does not take an argument: ",
 						longopts[i].name,
 						strlen(longopts[i].name));
@@ -140,7 +228,7 @@ static int musl__getopt_long_core(int argc, char **argv, const char *optstring, 
 					optopt = longopts[i].val;
 					if (colon) return ':';
 					if (!opterr) return '?';
-					musl__getopt_msg(argv[0],
+					musl_getopt_msg(argv[0],
 						": option requires an argument: ",
 						longopts[i].name,
 						strlen(longopts[i].name));
@@ -158,7 +246,7 @@ static int musl__getopt_long_core(int argc, char **argv, const char *optstring, 
 		if (argv[optind][1] == '-') {
 			optopt = 0;
 			if (!colon && opterr)
-				musl__getopt_msg(argv[0], cnt ?
+				musl_getopt_msg(argv[0], cnt ?
 					": option is ambiguous: " :
 					": unrecognized option: ",
 					argv[optind]+2,
@@ -172,5 +260,5 @@ static int musl__getopt_long_core(int argc, char **argv, const char *optstring, 
 
 int musl_getopt_long_only(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx)
 {
-	return musl__getopt_long(argc, argv, optstring, longopts, idx, 1);
+	return musl_getopt_long(argc, argv, optstring, longopts, idx, 1);
 }

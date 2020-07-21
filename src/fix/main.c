@@ -98,9 +98,9 @@ int main(int argc, char *argv[])
 	bool resize = false;
 	bool setversion = false;
 
-	char *title; /* game title in ASCII */
-	char *id; /* game ID in ASCII */
-	char *newlicensee; /* new licensee ID, two ASCII characters */
+	char *title = NULL; /* game title in ASCII */
+	char *id = NULL; /* game ID in ASCII */
+	char *newlicensee = NULL; /* new licensee ID, two ASCII characters */
 
 	int licensee = 0;  /* old licensee ID */
 	int cartridge = 0; /* cartridge hardware ID */

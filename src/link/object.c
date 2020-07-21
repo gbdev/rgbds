@@ -454,9 +454,8 @@ void obj_ReadFile(char const *fileName)
 	symbolList->next = symbolLists;
 	symbolLists = symbolList;
 
-	uint32_t nbSymPerSect[nbSections ? nbSections : 1];
-
-	memset(nbSymPerSect, 0, sizeof(nbSymPerSect));
+	uint32_t *nbSymPerSect = calloc(nbSections ? nbSections : 1,
+					sizeof(*nbSymPerSect));
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
@@ -475,7 +474,8 @@ void obj_ReadFile(char const *fileName)
 	}
 
 	/* This file's sections, stored in a table to link symbols to them */
-	struct Section *fileSections[nbSections ? nbSections : 1];
+	struct Section **fileSections = malloc(sizeof(*fileSections)
+					    * (nbSections ? nbSections : 1));
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
@@ -500,6 +500,8 @@ void obj_ReadFile(char const *fileName)
 
 		sect_AddSection(fileSections[i]);
 	}
+
+	free(nbSymPerSect);
 
 	/* Give symbols pointers to their sections */
 	for (uint32_t i = 0; i < nbSymbols; i++) {
@@ -539,6 +541,7 @@ void obj_ReadFile(char const *fileName)
 		assertions = assertion;
 	}
 
+	free(fileSections);
 	fclose(file);
 }
 

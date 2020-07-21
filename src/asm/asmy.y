@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
@@ -34,6 +33,7 @@
 #include "extern/utf8decoder.h"
 
 #include "linkdefs.h"
+#include "platform.h" // strncasecmp, strdup
 
 uint32_t nListCountEmpty;
 char *tzNewMacro;

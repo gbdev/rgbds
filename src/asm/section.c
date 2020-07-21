@@ -14,6 +14,7 @@
 #include "asm/warning.h"
 
 #include "extern/err.h"
+#include "platform.h" // strdup
 
 struct SectionStackEntry {
 	struct Section *pSection;
