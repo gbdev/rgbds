@@ -47,7 +47,7 @@ if(srcdir STREQUAL bindir)
   message(FATAL_ERROR "Terminating configuration")
 endif()
 
-find_package(PNG 1.6 REQUIRED)
+find_package(PNG 1.2 REQUIRED)
 find_package(BISON REQUIRED)
 find_package(FLEX)
 
