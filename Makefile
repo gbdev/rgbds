@@ -32,17 +32,17 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 WARNFLAGS	:= -Wall
 
 # Overridable CFLAGS
-CFLAGS		:= -O3
+CFLAGS		?= -O3
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -D_POSIX_C_SOURCE=200809L \
 		   -Iinclude
 # Overridable LDFLAGS
-LDFLAGS		:=
+LDFLAGS		?=
 # Non-overridable LDFLAGS
 REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
 		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
-YFLAGS		:=
+YFLAGS		?=
 
 YACC		:= yacc
 RM		:= rm -rf
