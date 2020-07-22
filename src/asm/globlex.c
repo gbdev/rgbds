@@ -395,21 +395,15 @@ const struct sLexInitString lexer_strings[] = {
 	/* Handled in list of registers */
 	/* { "c", T_TOKEN_C }, */
 
-	{"[bc]", T_MODE_BC_IND},
-	{"[de]", T_MODE_DE_IND},
-	{"[hl]", T_MODE_HL_IND},
-	{"[hl+]", T_MODE_HL_INDINC},
-	{"[hl-]", T_MODE_HL_INDDEC},
-	{"[hli]", T_MODE_HL_INDINC},
-	{"[hld]", T_MODE_HL_INDDEC},
+	{"hli", T_MODE_HL_INC},
+	{"hld", T_MODE_HL_DEC},
+	{"$ff00+c", T_MODE_HW_C},
+	{"$ff00 + c", T_MODE_HW_C},
 	{"af", T_MODE_AF},
 	{"bc", T_MODE_BC},
 	{"de", T_MODE_DE},
 	{"hl", T_MODE_HL},
 	{"sp", T_MODE_SP},
-	{"[c]", T_MODE_C_IND},
-	{"[$ff00+c]", T_MODE_C_IND},
-	{"[$ff00 + c]", T_MODE_C_IND},
 
 	{"a", T_TOKEN_A},
 	{"b", T_TOKEN_B},

@@ -155,6 +155,8 @@ ENDM
     ld  [$ABCD],a
     ldh [$ff00+$DB],a
     ld  [$ff00+c],a
+    ld  [$ff00 + c],a
+    ldh [c],a
 
     ld  a,[bc]
     ld  a,[de]
@@ -162,11 +164,17 @@ ENDM
     ld  a,[$ABCD]
     ldh a,[$ff00+$DB]
     ld  a,[$ff00+c]
+    ld  a,[$ff00 + c]
+    ldh a,[c]
 
     ld  [hl+],a
+    ld  [hli],a
     ld  [hl-],a
+    ld  [hld],a
     ld  a,[hl+]
+    ld  a,[hli]
     ld  a,[hl-]
+    ld  a,[hld]
 
     ; Jumps and Subroutines
 
