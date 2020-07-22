@@ -27,6 +27,7 @@ PNGCFLAGS	:= `${PKG_CONFIG} --cflags libpng`
 PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
 PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 
+# Note: if this comes up empty, `version.c` will automatically fall back to last release number
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
 WARNFLAGS	:= -Wall
