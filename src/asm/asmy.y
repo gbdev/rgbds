@@ -1077,7 +1077,7 @@ incbin		: T_POP_INCBIN string {
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
-		| T_POP_INCBIN string ',' uconst ',' uconst {
+		| T_POP_INCBIN string ',' const ',' const {
 			out_BinaryFileSlice($2, $4, $6);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
