@@ -30,6 +30,13 @@
 /* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX);
 
+struct Expansion {
+	uint8_t distance; /* How far the expansion's beginning is from the current position */
+	char const *contents;
+	size_t len;
+	struct Expansion *parent;
+};
+
 struct LexerState {
 	char const *path;
 
@@ -37,14 +44,13 @@ struct LexerState {
 	bool isMmapped;
 	union {
 		struct { /* If mmap()ed */
-			char *ptr;
+			char *ptr; /* Technically `const` during the lexer's execution */
 			off_t size;
 			off_t offset;
 		};
 		struct { /* Otherwise */
 			int fd;
 			size_t index; /* Read index into the buffer */
-			size_t nbChars; /* Number of chars in front of the buffer */
 			char buf[LEXER_BUF_SIZE]; /* Circular buffer */
 		};
 	};
@@ -52,12 +58,17 @@ struct LexerState {
 	/* Common state */
 	enum LexerMode mode;
 	bool atLineStart;
-	unsigned int lineNo;
+	uint32_t lineNo;
+	uint32_t colNo;
+
 	bool capturing; /* Whether the text being lexed should be captured */
 	size_t captureSize; /* Amount of text captured */
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
 	size_t captureCapacity; /* Size of the buffer above */
+
+	size_t nbChars; /* Number of chars of lookahead, for processing expansions */
 	bool expandStrings;
+	struct Expansion *expansion;
 };
 
 struct LexerState *lexerState = NULL;
@@ -116,14 +127,18 @@ struct LexerState *lexer_OpenFile(char const *path)
 		/* Sometimes mmap() fails or isn't available, so have a fallback */
 		lseek(state->fd, 0, SEEK_SET);
 		state->index = 0;
-		state->nbChars = 0;
 	}
 
 	state->mode = LEXER_NORMAL;
-	state->atLineStart = true;
+	state->atLineStart = true; /* yylex() will init colNo due to this */
 	state->lineNo = 0;
+
 	state->capturing = false;
 	state->captureBuf = NULL;
+
+	state->nbChars = 0;
+	state->expandStrings = true;
+	state->expansion = NULL;
 	return state;
 }
 
@@ -164,28 +179,50 @@ static void reallocCaptureBuf(void)
 /* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
 static int peek(uint8_t distance)
 {
+	if (distance >= LEXER_BUF_SIZE)
+		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%u >= %u)\n",
+			   distance, LEXER_BUF_SIZE);
+
 	if (lexerState->isMmapped) {
 		if (lexerState->offset + distance >= lexerState->size)
 			return EOF;
+
+		if (!lexerState->capturing) {
+			bool escaped = false;
+
+			while (lexerState->nbChars < distance && !escaped) {
+				char c = lexerState->ptr[lexerState->offset
+							 + lexerState->nbChars++];
+
+				if (escaped) {
+					escaped = false;
+					if ((c >= '1' && c <= '9') || c == '@')
+						fatalerror("Macro arg expansion is not implemented yet\n");
+				} else if (c == '\\') {
+					escaped = true;
+				}
+			}
+		}
+
 		return lexerState->ptr[lexerState->offset + distance];
 	}
 
 	if (lexerState->nbChars <= distance) {
 		/* Buffer isn't full enough, read some chars in */
+		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; /* Aim: making the buf full */
 
 		/* Compute the index we'll start writing to */
 		size_t writeIndex = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
-		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; /* Aim: making the buf full */
-		ssize_t nbCharsRead = 0;
+		ssize_t nbCharsRead = 0, totalCharsRead = 0;
 
 #define readChars(size) do { \
 	nbCharsRead = read(lexerState->fd, &lexerState->buf[writeIndex], (size)); \
 	if (nbCharsRead == -1) \
 		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, errno); \
+	totalCharsRead += nbCharsRead; \
 	writeIndex += nbCharsRead; \
 	if (writeIndex == LEXER_BUF_SIZE) \
 		writeIndex = 0; \
-	lexerState->nbChars += nbCharsRead; /* Count all those chars in */ \
 	target -= nbCharsRead; \
 } while (0)
 
@@ -200,6 +237,40 @@ static int peek(uint8_t distance)
 			readChars(target);
 
 #undef readChars
+
+		/* Do not perform expansions when capturing */
+		if (!lexerState->capturing) {
+			/* Scan the newly-inserted chars for any expansions */
+			bool escaped = false;
+			size_t index = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
+
+			for (ssize_t i = 0; i < totalCharsRead; i++) {
+				char c = lexerState->buf[index++];
+
+				if (escaped) {
+					escaped = false;
+					if ((c >= '1' && c <= '9') || c == '@')
+						fatalerror("Macro arg expansion is not implemented yet\n");
+				} else if (c == '\\') {
+					escaped = true;
+				}
+				if (index == LEXER_BUF_SIZE) /* Wrap around buffer */
+					index = 0;
+			}
+
+			/*
+			 * If last char read was a backslash, pretend we didn't read it; this is
+			 * important, otherwise we may miss an expansion that straddles refills
+			 */
+			if (escaped) {
+				totalCharsRead--;
+				/* However, if that prevents having enough characters, error out */
+				if (lexerState->nbChars + totalCharsRead <= distance)
+					fatalerror("Internal lexer error: cannot read far enough due to backslash\n");
+			}
+		}
+
+		lexerState->nbChars += totalCharsRead;
 
 		/* If there aren't enough chars even after refilling, give up */
 		if (lexerState->nbChars <= distance)
@@ -231,6 +302,8 @@ static void shiftChars(uint8_t distance)
 		if (lexerState->index >= LEXER_BUF_SIZE)
 			lexerState->index %= LEXER_BUF_SIZE;
 	}
+
+	lexerState->colNo += distance;
 }
 
 static int nextChar(void)
@@ -250,9 +323,14 @@ char const *lexer_GetFileName(void)
 	return lexerState->path;
 }
 
-unsigned int lexer_GetLineNo(void)
+uint32_t lexer_GetLineNo(void)
 {
 	return lexerState->lineNo;
+}
+
+uint32_t lexer_GetColNo(void)
+{
+	return lexerState->colNo;
 }
 
 void lexer_DumpStringExpansions(void)
@@ -278,6 +356,20 @@ static int yylex_NORMAL(void)
 		case '\t':
 			break;
 
+		/* Handle single-char tokens */
+		case '+':
+			return T_OP_ADD;
+		case '-':
+			return T_OP_SUB;
+
+		/* Handle accepted single chars */
+		case '[':
+		case ']':
+		case '(':
+		case ')':
+		case ',':
+			return c;
+
 		case EOF:
 			/* Captures end at their buffer's boundary no matter what */
 			if (!lexerState->capturing) {
@@ -288,6 +380,7 @@ static int yylex_NORMAL(void)
 		default:
 			error("Unknown character '%c'\n");
 		}
+		lexerState->atLineStart = false;
 	}
 }
 
@@ -298,8 +391,10 @@ static int yylex_RAW(void)
 
 int yylex(void)
 {
-	if (lexerState->atLineStart)
+	if (lexerState->atLineStart) {
 		lexerState->lineNo++;
+		lexerState->colNo = 0;
+	}
 
 	static int (* const lexerModeFuncs[])(void) = {
 		[LEXER_NORMAL] = yylex_NORMAL,
@@ -316,7 +411,7 @@ int yylex(void)
 }
 
 void lexer_SkipToBlockEnd(int blockStartToken, int blockEndToken, int endToken,
-			  char **capture, size_t *size, char const *name)
+			  char const **capture, size_t *size, char const *name)
 {
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;

@@ -250,7 +250,8 @@ void fstk_Dump(void)
 		pLastFile = pLastFile->next;
 	}
 
-	fprintf(stderr, "%s(%" PRId32 ")", lexer_GetFileName(), lexer_GetLineNo());
+	fprintf(stderr, "%s(%" PRId32 ",%" PRId32 ")",
+		lexer_GetFileName(), lexer_GetLineNo(), lexer_GetColNo());
 }
 
 void fstk_DumpToStr(char *buf, size_t buflen)

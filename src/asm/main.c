@@ -483,6 +483,13 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
 
+	/* Init lexer; important to do first, since that's what provides the file name, line, etc */
+	struct LexerState *state = lexer_OpenFile(tzMainfile);
+
+	if (!state)
+		fatalerror("Failed to open main file!\n");
+	lexer_SetState(state);
+
 	nStartClock = clock();
 
 	nTotalLines = 0;
@@ -490,11 +497,6 @@ int main(int argc, char *argv[])
 	sym_Init();
 	sym_SetExportAll(exportall);
 	fstk_Init(tzMainfile);
-	struct LexerState *state = lexer_OpenFile(tzMainfile);
-
-	if (!state)
-		fatalerror("Failed to open main file!");
-	lexer_SetState(state);
 
 	opt_ParseDefines();
 	charmap_New("main", NULL);

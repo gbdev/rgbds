@@ -43,10 +43,11 @@ void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 
 char const *lexer_GetFileName(void);
-unsigned int lexer_GetLineNo(void);
+uint32_t lexer_GetLineNo(void);
+uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
 void lexer_SkipToBlockEnd(int blockStartToken, int blockEndToken, int endToken,
-			  char **capture, size_t *size, char const *name);
+			  char const **capture, size_t *size, char const *name);
 
 #endif /* RGBDS_ASM_LEXER_H */

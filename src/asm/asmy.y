@@ -604,7 +604,7 @@ load		: T_POP_LOAD string ',' sectiontype sectorg sectattrs {
 
 rept		: T_POP_REPT uconst {
 			uint32_t nDefinitionLineNo = lexer_GetLineNo();
-			char *body;
+			char const *body;
 			size_t size;
 			lexer_SkipToBlockEnd(T_POP_REPT, T_POP_ENDR, T_POP_ENDR,
 					     &body, &size, "REPT block");
@@ -614,7 +614,7 @@ rept		: T_POP_REPT uconst {
 
 macrodef	: T_LABEL ':' T_POP_MACRO {
 			int32_t nDefinitionLineNo = lexer_GetLineNo();
-			char *body;
+			char const *body;
 			size_t size;
 			lexer_SkipToBlockEnd(T_POP_MACRO, T_POP_ENDM, T_POP_ENDM,
 					     &body, &size, "macro definition");
