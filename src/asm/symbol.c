@@ -82,7 +82,7 @@ static int32_t Callback_NARG(void)
 
 static int32_t Callback__LINE__(void)
 {
-	return nLineNo;
+	return lexer_GetLineNo();
 }
 
 static int32_t CallbackPC(void)
@@ -113,8 +113,9 @@ int32_t sym_GetValue(struct Symbol const *sym)
 static void updateSymbolFilename(struct Symbol *sym)
 {
 	if (snprintf(sym->fileName, _MAX_PATH + 1, "%s",
-		     tzCurrentFileName) > _MAX_PATH)
-		fatalerror("%s: File name is too long: '%s'\n", __func__, tzCurrentFileName);
+		     lexer_GetFileName()) > _MAX_PATH)
+		fatalerror("%s: File name is too long: '%s'\n", __func__,
+			   lexer_GetFileName());
 	sym->fileLine = fstk_GetLine();
 }
 

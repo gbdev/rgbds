@@ -61,7 +61,7 @@ void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 #define macArgs (*argPtr)
 	if (macArgs->nbArgs == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
-			" arguments is allowed\n");
+		      " arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {
 		macArgs->capacity *= 2;
 		/* Check that overflow didn't roll us back */

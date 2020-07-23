@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <float.h>
 #include <inttypes.h>
@@ -41,10 +42,6 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 uint32_t nTotalLines, nIFDepth;
-bool skipElif;
-uint32_t unionStart[128], unionSize[128];
-
-int32_t nLineNo;
 
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
@@ -76,64 +73,8 @@ struct sOptionStackEntry *pOptionStack;
 
 void opt_SetCurrentOptions(struct sOptions *pOpt)
 {
-	if (nGBGfxID != -1) {
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				     CurrentOptions.gbgfx[0]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				     CurrentOptions.gbgfx[1]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				     CurrentOptions.gbgfx[2]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				     CurrentOptions.gbgfx[3]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					   CurrentOptions.gbgfx[0]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					   CurrentOptions.gbgfx[1]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					   CurrentOptions.gbgfx[2]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					   CurrentOptions.gbgfx[3]);
-	}
-	if (nBinaryID != -1) {
-		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[0],
-				     CurrentOptions.binary[0]);
-		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[1],
-				     CurrentOptions.binary[1]);
-		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[0],
-					   CurrentOptions.binary[0]);
-		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[1],
-					   CurrentOptions.binary[1]);
-	}
-	CurrentOptions = *pOpt;
-
-	if (nGBGfxID != -1) {
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				  CurrentOptions.gbgfx[0]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				  CurrentOptions.gbgfx[1]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				  CurrentOptions.gbgfx[2]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				  CurrentOptions.gbgfx[3]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					CurrentOptions.gbgfx[0]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					CurrentOptions.gbgfx[1]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					CurrentOptions.gbgfx[2]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					CurrentOptions.gbgfx[3]);
-	}
-	if (nBinaryID != -1) {
-		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[0],
-				  CurrentOptions.binary[0]);
-		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[1],
-				  CurrentOptions.binary[1]);
-		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[0],
-					CurrentOptions.binary[0]);
-		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[1],
-					CurrentOptions.binary[1]);
-	}
+	/* TODO */
+	(void)pOpt;
 }
 
 void opt_Parse(char *s)
@@ -249,6 +190,22 @@ static void opt_ParseDefines(void)
 
 	for (i = 0; i < cldefines_index; i += 2)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
+}
+
+void upperstring(char *s)
+{
+	while (*s) {
+		*s = toupper(*s);
+		s++;
+	}
+}
+
+void lowerstring(char *s)
+{
+	while (*s) {
+		*s = tolower(*s);
+		s++;
+	}
 }
 
 /* Escapes Make-special chars from a string */
@@ -516,8 +473,6 @@ int main(int argc, char *argv[])
 
 	tzMainfile = argv[argc - 1];
 
-	setup_lexer();
-
 	if (verbose)
 		printf("Assembling %s\n", tzMainfile);
 
@@ -530,17 +485,20 @@ int main(int argc, char *argv[])
 
 	nStartClock = clock();
 
-	nLineNo = 1;
 	nTotalLines = 0;
 	nIFDepth = 0;
-	skipElif = true;
 	sym_Init();
 	sym_SetExportAll(exportall);
 	fstk_Init(tzMainfile);
+	struct LexerState *state = lexer_OpenFile(tzMainfile);
+
+	if (!state)
+		fatalerror("Failed to open main file!");
+	lexer_SetState(state);
+
 	opt_ParseDefines();
 	charmap_New("main", NULL);
 
-	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nbErrors != 0)

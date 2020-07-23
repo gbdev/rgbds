@@ -39,6 +39,7 @@ uint32_t nListCountEmpty;
 char *tzNewMacro;
 uint32_t ulNewMacroSize;
 int32_t nPCOffset;
+bool skipElifs; /* If this is set, ELIFs cannot be executed anymore */
 
 size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 			const char *mode)
@@ -109,278 +110,6 @@ static uint32_t str2int2(uint8_t *s, int32_t length)
 	}
 
 	return r;
-}
-
-static uint32_t isWhiteSpace(char s)
-{
-	return (s == ' ') || (s == '\t') || (s == '\0') || (s == '\n');
-}
-
-static uint32_t isRept(char *s)
-{
-	return (strncasecmp(s, "REPT", 4) == 0)
-		&& isWhiteSpace(*(s - 1)) && isWhiteSpace(s[4]);
-}
-
-static uint32_t isEndr(char *s)
-{
-	return (strncasecmp(s, "ENDR", 4) == 0)
-		&& isWhiteSpace(*(s - 1)) && isWhiteSpace(s[4]);
-}
-
-static void copyrept(void)
-{
-	int32_t level = 1, len, instring = 0;
-	char *src = pCurrentBuffer->pBuffer;
-	char *bufferEnd = pCurrentBuffer->pBufferStart
-			+ pCurrentBuffer->nBufferSize;
-
-	while (src < bufferEnd && level) {
-		if (instring == 0) {
-			if (isRept(src)) {
-				level++;
-				src += 4;
-			} else if (isEndr(src)) {
-				level--;
-				src += 4;
-			} else {
-				if (*src == '\"')
-					instring = 1;
-				src++;
-			}
-		} else {
-			if (*src == '\\') {
-				src += 2;
-			} else if (*src == '\"') {
-				src++;
-				instring = 0;
-			} else {
-				src++;
-			}
-		}
-	}
-
-	if (level != 0)
-		fatalerror("Unterminated REPT block\n");
-
-	len = src - pCurrentBuffer->pBuffer - 4;
-
-	src = pCurrentBuffer->pBuffer;
-	ulNewMacroSize = len;
-
-	tzNewMacro = malloc(ulNewMacroSize + 1);
-
-	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for REPT block.\n");
-
-	uint32_t i;
-
-	tzNewMacro[ulNewMacroSize] = 0;
-	for (i = 0; i < ulNewMacroSize; i++) {
-		tzNewMacro[i] = src[i];
-		if (src[i] == '\n')
-			nLineNo++;
-	}
-
-	yyskipbytes(ulNewMacroSize + 4);
-
-}
-
-static uint32_t isMacro(char *s)
-{
-	return (strncasecmp(s, "MACRO", 4) == 0)
-		&& isWhiteSpace(*(s - 1)) && isWhiteSpace(s[5]);
-}
-
-static uint32_t isEndm(char *s)
-{
-	return (strncasecmp(s, "ENDM", 4) == 0)
-		&& isWhiteSpace(*(s - 1)) && isWhiteSpace(s[4]);
-}
-
-static void copymacro(void)
-{
-	int32_t level = 1, len, instring = 0;
-	char *src = pCurrentBuffer->pBuffer;
-	char *bufferEnd = pCurrentBuffer->pBufferStart
-			+ pCurrentBuffer->nBufferSize;
-
-	while (src < bufferEnd && level) {
-		if (instring == 0) {
-			if (isMacro(src)) {
-				level++;
-				src += 4;
-			} else if (isEndm(src)) {
-				level--;
-				src += 4;
-			} else {
-				if(*src == '\"')
-					instring = 1;
-				src++;
-			}
-		} else {
-			if (*src == '\\') {
-				src += 2;
-			} else if (*src == '\"') {
-				src++;
-				instring = 0;
-			} else {
-				src++;
-			}
-		}
-	}
-
-	if (level != 0)
-		fatalerror("Unterminated MACRO definition.\n");
-
-	len = src - pCurrentBuffer->pBuffer - 4;
-
-	src = pCurrentBuffer->pBuffer;
-	ulNewMacroSize = len;
-
-	tzNewMacro = (char *)malloc(ulNewMacroSize + 1);
-	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for MACRO definition.\n");
-
-	uint32_t i;
-
-	tzNewMacro[ulNewMacroSize] = 0;
-	for (i = 0; i < ulNewMacroSize; i++) {
-		tzNewMacro[i] = src[i];
-		if (src[i] == '\n')
-			nLineNo++;
-	}
-
-	yyskipbytes(ulNewMacroSize + 4);
-}
-
-static bool endsIf(char c)
-{
-	return isWhiteSpace(c) || c == '(' || c == '{';
-}
-
-static uint32_t isIf(char *s)
-{
-	return (strncasecmp(s, "IF", 2) == 0)
-		&& isWhiteSpace(s[-1]) && endsIf(s[2]);
-}
-
-static uint32_t isElif(char *s)
-{
-	return (strncasecmp(s, "ELIF", 4) == 0)
-		&& isWhiteSpace(s[-1]) && endsIf(s[4]);
-}
-
-static uint32_t isElse(char *s)
-{
-	return (strncasecmp(s, "ELSE", 4) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[4]);
-}
-
-static uint32_t isEndc(char *s)
-{
-	return (strncasecmp(s, "ENDC", 4) == 0)
-		&& isWhiteSpace(s[-1]) && isWhiteSpace(s[4]);
-}
-
-static void if_skip_to_else(void)
-{
-	int32_t level = 1;
-	bool inString = false;
-	char *src = pCurrentBuffer->pBuffer;
-
-	while (*src && level) {
-		if (*src == '\n')
-			nLineNo++;
-
-		if (!inString) {
-			if (isIf(src)) {
-				level++;
-				src += 2;
-
-			} else if (level == 1 && isElif(src)) {
-				level--;
-				skipElif = false;
-
-			} else if (level == 1 && isElse(src)) {
-				level--;
-				src += 4;
-
-			} else if (isEndc(src)) {
-				level--;
-				if (level != 0)
-					src += 4;
-
-			} else {
-				if (*src == '\"')
-					inString = true;
-				src++;
-			}
-		} else {
-			if (*src == '\"') {
-				inString = false;
-			} else if (*src == '\\') {
-				/* Escaped quotes don't end the string */
-				if (*++src != '\"')
-					src--;
-			}
-			src++;
-		}
-	}
-
-	if (level != 0)
-		fatalerror("Unterminated IF construct\n");
-
-	int32_t len = src - pCurrentBuffer->pBuffer;
-
-	yyskipbytes(len);
-	yyunput('\n');
-	nLineNo--;
-}
-
-static void if_skip_to_endc(void)
-{
-	int32_t level = 1;
-	bool inString = false;
-	char *src = pCurrentBuffer->pBuffer;
-
-	while (*src && level) {
-		if (*src == '\n')
-			nLineNo++;
-
-		if (!inString) {
-			if (isIf(src)) {
-				level++;
-				src += 2;
-			} else if (isEndc(src)) {
-				level--;
-				if (level != 0)
-					src += 4;
-			} else {
-				if (*src == '\"')
-					inString = true;
-				src++;
-			}
-		} else {
-			if (*src == '\"') {
-				inString = false;
-			} else if (*src == '\\') {
-				/* Escaped quotes don't end the string */
-				if (*++src != '\"')
-					src--;
-			}
-			src++;
-		}
-	}
-
-	if (level != 0)
-		fatalerror("Unterminated IF construct\n");
-
-	int32_t len = src - pCurrentBuffer->pBuffer;
-
-	yyskipbytes(len);
-	yyunput('\n');
-	nLineNo--;
 }
 
 static size_t strlenUTF8(const char *s)
@@ -660,7 +389,6 @@ lines		: /* empty */
 			nListCountEmpty = 0;
 			nPCOffset = 0;
 		} line '\n' {
-			nLineNo++;
 			nTotalLines++;
 		}
 ;
@@ -699,9 +427,9 @@ label		: /* empty */
 ;
 
 macro		: T_ID {
-			yy_set_state(LEX_STATE_MACROARGS);
+			lexer_SetMode(LEXER_RAW);
 		} macroargs {
-			yy_set_state(LEX_STATE_NORMAL);
+			lexer_SetMode(LEXER_NORMAL);
 			fstk_RunMacro($1, $3);
 		}
 ;
@@ -786,9 +514,9 @@ align		: T_OP_ALIGN uconst {
 ;
 
 opt		: T_POP_OPT {
-			yy_set_state(LEX_STATE_MACROARGS);
+			lexer_SetMode(LEXER_RAW);
 		} opt_list {
-			yy_set_state(LEX_STATE_NORMAL);
+			lexer_SetMode(LEXER_NORMAL);
 		}
 ;
 
@@ -875,15 +603,21 @@ load		: T_POP_LOAD string ',' sectiontype sectorg sectattrs {
 ;
 
 rept		: T_POP_REPT uconst {
-			uint32_t nDefinitionLineNo = nLineNo;
-			copyrept();
+			uint32_t nDefinitionLineNo = lexer_GetLineNo();
+			char *body;
+			size_t size;
+			lexer_SkipToBlockEnd(T_POP_REPT, T_POP_ENDR, T_POP_ENDR,
+					     &body, &size, "REPT block");
 			fstk_RunRept($2, nDefinitionLineNo);
 		}
 ;
 
 macrodef	: T_LABEL ':' T_POP_MACRO {
-			int32_t nDefinitionLineNo = nLineNo;
-			copymacro();
+			int32_t nDefinitionLineNo = lexer_GetLineNo();
+			char *body;
+			size_t size;
+			lexer_SkipToBlockEnd(T_POP_MACRO, T_POP_ENDM, T_POP_ENDM,
+					     &body, &size, "macro definition");
 			sym_AddMacro($1, nDefinitionLineNo);
 		}
 ;
@@ -956,9 +690,9 @@ dl		: T_POP_DL constlist_32bit_entry ',' constlist_32bit {
 ;
 
 purge		: T_POP_PURGE {
-			oDontExpandStrings = true;
+			lexer_ToggleStringExpansion(false);
 		} purge_list {
-			oDontExpandStrings = false;
+			lexer_ToggleStringExpansion(true);
 		}
 ;
 
@@ -1054,8 +788,14 @@ printf		: T_POP_PRINTF const	{ math_Print($2); }
 
 if		: T_POP_IF const {
 			nIFDepth++;
-			if (!$2)
-				if_skip_to_else();
+			if (!$2) {
+				/* The function is hardcoded to also stop on T_POP_ELSE and ENDC */
+				lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ELIF,
+						     NULL, NULL, "if block");
+				skipElifs = false;
+			} else {
+				skipElifs = true;
+			}
 		}
 ;
 
@@ -1063,7 +803,7 @@ elif		: T_POP_ELIF const {
 			if (nIFDepth <= 0)
 				fatalerror("Found ELIF outside an IF construct\n");
 
-			if (skipElif) {
+			if (skipElifs) {
 				/*
 				 * Executed when ELIF is reached at the end of
 				 * an IF or ELIF block for which the condition
@@ -1071,21 +811,24 @@ elif		: T_POP_ELIF const {
 				 *
 				 * Continue parsing at ENDC keyword
 				 */
-				if_skip_to_endc();
+				lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ENDC,
+						     NULL, NULL, "elif block");
 			} else {
 				/*
 				 * Executed when ELIF is skipped to because the
 				 * condition of the previous IF or ELIF block
 				 * was false.
 				 */
-				skipElif = true;
 
 				if (!$2) {
 					/*
 					 * Continue parsing after ELSE, or at
 					 * ELIF or ENDC keyword.
 					 */
-					if_skip_to_else();
+					lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ELIF,
+							     NULL, NULL, "elif block");
+				} else {
+					skipElifs = true;
 				}
 			}
 		}
@@ -1096,7 +839,8 @@ else		: T_POP_ELSE {
 				fatalerror("Found ELSE outside an IF construct\n");
 
 			/* Continue parsing at ENDC keyword */
-			if_skip_to_endc();
+			lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ENDC,
+					     NULL, NULL, "else block");
 		}
 ;
 
@@ -1267,13 +1011,13 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		}
 		| T_OP_BANK '(' string ')'	{ rpn_BankSection(&$$, $3); }
 		| T_OP_DEF {
-			oDontExpandStrings = true;
+			lexer_ToggleStringExpansion(false);
 		} '(' scoped_id ')' {
 			struct Symbol const *sym = sym_FindSymbol($4);
 
 			rpn_Number(&$$, !!sym);
 
-			oDontExpandStrings = false;
+			lexer_ToggleStringExpansion(true);
 		}
 		| T_OP_ROUND '(' const ')' {
 			rpn_Number(&$$, math_Round($3));

@@ -287,10 +287,10 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 			/* Feed the symbol's contents into the buffer */
 			yyunputstr(s = sym_GetStringValue(sym));
 
-			/* Lines inserted this way shall not increase nLineNo */
+			/* Lines inserted this way shall not increase lexer_GetLineNo() */
 			while (*s) {
 				if (*s++ == '\n')
-					nLineNo--;
+					lexer_GetLineNo()--;
 			}
 			return 0;
 		}

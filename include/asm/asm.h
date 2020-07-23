@@ -24,11 +24,8 @@
 #define MAXMACROARGS	99999
 #define MAXINCPATHS	128
 
-extern int32_t nLineNo;
 extern uint32_t nTotalLines;
 extern uint32_t nIFDepth;
-extern bool skipElif;
-extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern bool oDontExpandStrings;
 
