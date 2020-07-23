@@ -59,10 +59,18 @@ else()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
 endif()
 
+# Use versioning consistent with Makefile
+# the git revision is used but uses the fallback in an archive
+
+execute_process(COMMAND git describe --tags --dirty --always
+                OUTPUT_VARIABLE GIT_REV
+                ERROR_QUIET)
+string(STRIP "${GIT_REV}" GIT_REV)
+
 if(CMAKE_VERSION VERSION_LESS 3.12)
-  add_definitions(-DBUILD_VERSION_STRING="${PROJECT_VERSION}")
+  add_definitions(-DBUILD_VERSION_STRING="${GIT_REV}")
 else()
-  add_compile_definitions(BUILD_VERSION_STRING="${PROJECT_VERSION}")
+  add_compile_definitions(BUILD_VERSION_STRING="${GIT_REV}")
 endif()
 
 set(CMAKE_C_STANDARD 11)
