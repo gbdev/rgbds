@@ -12,11 +12,11 @@ resbold=$(tput sgr0)
 red=$(tput setaf 1)
 rescolors=$(tput op)
 tryDiff () {
-	diff -u --strip-trailing-cr $1 $2 || (echo -e "${bold}${red}${i%.asm}.out mismatch!${rescolors}${resbold}"; false)
+	diff -u --strip-trailing-cr $1 $2 || (echo "${bold}${red}${i%.asm}.out mismatch!${rescolors}${resbold}"; false)
 }
 
 tryCmp () {
-	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo -e "${bold}${red}${i%.asm}.out.bin mismatch!${rescolors}${resbold}"; false)
+	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo "${bold}${red}${i%.asm}.out.bin mismatch!${rescolors}${resbold}"; false)
 }
 
 RGBASM=../../rgbasm
