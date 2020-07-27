@@ -553,15 +553,21 @@ void out_PCRelByte(struct Expression *expr)
 {
 	checkcodesection();
 	reserveSpace(1);
+	struct Symbol const *pc = sym_FindSymbol("@");
 
-	if (!rpn_isKnown(expr) || pCurrentSection->nOrg == -1) {
+	if (!rpn_IsDiffConstant(expr, pc)) {
 		createPatch(PATCHTYPE_JR, expr);
 		writebyte(0);
 	} else {
-		/* Target is relative to the byte *after* the operand */
-		uint16_t address = sym_GetPCValue() + 1;
-		/* The offset wraps (jump from ROM to HRAM, for loopexample) */
-		int16_t offset = expr->nVal - address;
+		struct Symbol const *sym = rpn_SymbolOf(expr);
+		/* The offset wraps (jump from ROM to HRAM, for example) */
+		int16_t offset;
+
+		/* Offset is relative to the byte *after* the operand */
+		if (sym == pc)
+			offset = -2; /* PC as operand to `jr` is lower than reference PC by 2 */
+		else
+			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
 
 		if (offset < -128 || offset > 127) {
 			yyerror("jr target out of reach (expected -129 < %" PRId16 " < 128)",

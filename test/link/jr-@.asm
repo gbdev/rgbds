@@ -1,7 +1,3 @@
-SECTION "fixed", ROM0[0]
-	jr @
-; We need this section to be floating because RGBASM can know the value of PC
-; otherwise, leading to different behavior
-; FIXME: we rely on this landing at address 2, which isn't *guaranteed*...
-SECTION "floating", ROM0
-	jr @
+SECTION "Floating", ROM0
+	; RGBASM knows how to compute `jr @` by itself, but this will evade it
+	jr @ - 1 + 1

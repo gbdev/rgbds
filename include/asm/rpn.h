@@ -49,6 +49,8 @@ static inline bool rpn_isSymbol(const struct Expression *expr)
 void rpn_Symbol(struct Expression *expr, char *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);
+struct Symbol const *rpn_SymbolOf(struct Expression const *expr);
+bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym);
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1,
 		  const struct Expression *src2);

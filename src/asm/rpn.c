@@ -297,25 +297,28 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
-static struct Symbol const *symbolOf(struct Expression const *expr)
+struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
 	return sym_FindSymbol((char *)expr->tRPN + 1);
 }
 
+bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
+{
+	/* Check if both expressions only refer to a single symbol */
+	struct Symbol const *sym1 = rpn_SymbolOf(src);
+
+	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
+		return false;
+
+	return sym_GetSection(sym1) == sym_GetSection(sym);
+}
+
 static bool isDiffConstant(struct Expression const *src1,
 			   struct Expression const *src2)
 {
-	/* Check if both expressions only refer to a single symbol */
-	struct Symbol const *symbol1 = symbolOf(src1);
-	struct Symbol const *symbol2 = symbolOf(src2);
-
-	if (!symbol1 || !symbol2
-	 || symbol1->type != SYM_LABEL || symbol2->type != SYM_LABEL)
-		return false;
-
-	return sym_GetSection(symbol1) == sym_GetSection(symbol2);
+	return rpn_IsDiffConstant(src1, rpn_SymbolOf(src2));
 }
 
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
@@ -428,8 +431,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		}
 
 	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
-		struct Symbol const *symbol1 = symbolOf(src1);
-		struct Symbol const *symbol2 = symbolOf(src2);
+		struct Symbol const *symbol1 = rpn_SymbolOf(src1);
+		struct Symbol const *symbol2 = rpn_SymbolOf(src2);
 
 		expr->nVal = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;
