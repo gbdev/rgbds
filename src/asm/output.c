@@ -308,24 +308,36 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 				uint32_t ofs)
 {
 	struct Patch *pPatch = malloc(sizeof(struct Patch));
+	uint32_t rpnSize = expr->isKnown ? 5 : expr->nRPNPatchSize;
 
 	if (!pPatch)
 		fatalerror("No memory for patch: %s", strerror(errno));
-	pPatch->pRPN = malloc(sizeof(*pPatch->pRPN) * expr->nRPNPatchSize);
+	pPatch->pRPN = malloc(sizeof(*pPatch->pRPN) * rpnSize);
 
 	if (!pPatch->pRPN)
 		fatalerror("No memory for patch's RPN expression: %s",
 			   strerror(errno));
 
-	pPatch->nRPNSize = 0;
 	pPatch->nType = type;
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nOffset = ofs;
 	pPatch->pcSection = sect_GetSymbolSection();
 	pPatch->pcOffset = curOffset;
 
-	writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
-	assert(pPatch->nRPNSize == expr->nRPNPatchSize);
+	/* If the expression's value is known, output a constant RPN expression directly */
+	if (expr->isKnown) {
+		pPatch->nRPNSize = rpnSize;
+		/* Make sure to update `rpnSize` above if modifying this! */
+		pPatch->pRPN[0] = RPN_CONST;
+		pPatch->pRPN[1] = (uint32_t)(expr->nVal) & 0xFF;
+		pPatch->pRPN[2] = (uint32_t)(expr->nVal) >> 8;
+		pPatch->pRPN[3] = (uint32_t)(expr->nVal) >> 16;
+		pPatch->pRPN[4] = (uint32_t)(expr->nVal) >> 24;
+	} else {
+		pPatch->nRPNSize = 0;
+		writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
+	}
+	assert(pPatch->nRPNSize == rpnSize);
 
 	return pPatch;
 }
