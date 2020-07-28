@@ -1109,6 +1109,8 @@ static int yylex_NORMAL(void)
 			return T_OP_NOT;
 
 		case '@':
+			yylval.tzSym[0] = '@';
+			yylval.tzSym[1] = '\0';
 			return T_ID;
 
 		/* Handle accepted single chars */
