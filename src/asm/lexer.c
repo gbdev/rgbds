@@ -228,10 +228,12 @@ static struct KeywordMapping {
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX);
 
 struct Expansion {
-	uint8_t distance; /* How far the expansion's beginning is from the current position */
+	struct Expansion *firstChild;
+	struct Expansion *next;
 	char const *contents;
 	size_t len;
-	struct Expansion *parent;
+	uint8_t distance; /* Distance between the beginning of this expansion and of its parent */
+	uint8_t skip; /* How many extra characters to skip after the expansion is over */
 };
 
 struct LexerState {
@@ -266,7 +268,8 @@ struct LexerState {
 
 	size_t nbChars; /* Number of chars of lookahead, for processing expansions */
 	bool expandStrings;
-	struct Expansion *expansion;
+	struct Expansion *expansions;
+	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
 };
 
 struct LexerState *lexerState = NULL;
@@ -349,7 +352,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 
 	state->nbChars = 0;
 	state->expandStrings = true;
-	state->expansion = NULL;
+	state->expansions = NULL;
+	state->expansionOfs = 0;
 	return state;
 }
 
@@ -453,12 +457,83 @@ static void reallocCaptureBuf(void)
 		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
 }
 
+static struct Expansion *getExpansionAtDistance(size_t *distance)
+{
+	struct Expansion *expansion = lexerState->expansions;
+	struct Expansion *prevLevel = NULL; /* Top level has no "previous" level */
+
+	for (;;) {
+		/* Find the closest expansion whose end is after the target */
+		while (expansion && expansion->len - expansion->distance <= *distance) {
+			*distance -= expansion->skip;
+			expansion = expansion->next;
+		}
+
+		/* If there is none, or it begins after the target, return the previous level */
+		if (!expansion || expansion->distance > *distance)
+			return prevLevel;
+
+		/* We know we are inside of that expansion */
+		*distance -= expansion->distance; /* Distances are relative to their parent */
+
+		if (!expansion->firstChild) /* If there are no children, this is it */
+			return expansion;
+		/* Otherwise, register this expansion and repeat the process */
+		prevLevel = expansion;
+		expansion = expansion->firstChild;
+	}
+}
+
+static void beginExpansion(size_t distance, uint8_t skip, char const *str, size_t size)
+{
+	struct Expansion *parent = getExpansionAtDistance(&distance);
+	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
+
+	/* We cannot be *inside* of any of these expansions, so just keep the list sorted */
+	while (*insertPoint && (*insertPoint)->distance < distance)
+		insertPoint = &(*insertPoint)->next;
+
+	*insertPoint = malloc(sizeof(**insertPoint));
+	if (!*insertPoint)
+		fatalerror("Unable to allocate new expansion: %s", strerror(errno));
+	(*insertPoint)->firstChild = NULL;
+	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
+	(*insertPoint)->contents = str;
+	(*insertPoint)->len = size;
+	(*insertPoint)->distance = distance;
+	(*insertPoint)->skip = skip;
+
+	/* If expansion is the new closest one, update offset */
+	if (insertPoint == &lexerState->expansions)
+		lexerState->expansionOfs = 0;
+}
+
+static void freeExpansion(struct Expansion *expansion)
+{
+	do {
+		struct Expansion *next = expansion->next;
+
+		free(expansion);
+		expansion = next;
+	} while (expansion);
+}
+
 /* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
 static int peek(uint8_t distance)
 {
 	if (distance >= LEXER_BUF_SIZE)
 		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%u >= %u)\n",
 			   distance, LEXER_BUF_SIZE);
+
+	size_t ofs = lexerState->expansionOfs + distance;
+	struct Expansion const *expansion = getExpansionAtDistance(&ofs);
+
+	if (expansion) {
+		assert(distance < expansion->len);
+		return expansion->contents[ofs];
+	}
+
+	distance = ofs - lexerState->expansionOfs;
 
 	if (lexerState->isMmapped) {
 		if (lexerState->offset + distance >= lexerState->size)
@@ -577,6 +652,42 @@ static void shiftChars(uint8_t distance)
 		} else {
 			lexerState->captureSize += distance;
 		}
+	}
+
+	/*
+	 * The logic is as follows:
+	 * - Any characters up to the expansion need to be consumed in the file
+	 * - If some remain after that, advance the offset within the expansion
+	 * - If that goes *past* the expansion, then leftovers shall be consumed in the file
+	 * - If we went past the expansion, we're back to square one, and should re-do all
+	 */
+nextExpansion:
+	if (lexerState->expansions) {
+		/* If the read cursor reaches into the expansion, update offset */
+		if (distance > lexerState->expansions->distance) {
+			/* distance = <file chars (expansion distance)> + <expansion chars> */
+			lexerState->expansionOfs += distance - lexerState->expansions->distance;
+			distance = lexerState->expansions->distance; /* Nb chars to read in file */
+			/* Now, check if the expansion finished being read */
+			if (lexerState->expansionOfs >= lexerState->expansions->len) {
+				/* Add the leftovers to the distance */
+				distance += lexerState->expansionOfs - lexerState->expansions->len;
+				/* Also add in the post-expansion skip */
+				distance += lexerState->expansions->skip;
+				/* Move on to the next expansion */
+				struct Expansion *next = lexerState->expansions->next;
+
+				freeExpansion(lexerState->expansions);
+				lexerState->expansions = next;
+				/* Reset the offset for the next expansion */
+				lexerState->expansionOfs = 0;
+				/* And repeat, in case we also go into or over the next expansion */
+				goto nextExpansion;
+			}
+		}
+		/* Getting closer to the expansion */
+		lexerState->expansions->distance -= distance;
+		/* Now, `distance` is how many bytes to move forward **in the file** */
 	}
 
 	if (lexerState->isMmapped) {
@@ -1261,7 +1372,17 @@ static int yylex_NORMAL(void)
 				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
 					return tokenType;
 
-				/* TODO: attempt string expansion */
+				if (lexerState->expandStrings) {
+					/* Attempt string expansion */
+					struct Symbol const *sym = sym_FindSymbol(yylval.tzSym);
+
+					if (sym && sym->type == SYM_EQUS) {
+						char const *s = sym_GetStringValue(sym);
+
+						beginExpansion(0, 0, s, strlen(s));
+						continue; /* Restart, reading from the new buffer */
+					}
+				}
 
 				if (tokenType == T_ID && lexerState->atLineStart)
 					return T_LABEL;
