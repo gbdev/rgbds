@@ -27,9 +27,5 @@
 extern uint32_t nTotalLines;
 extern uint32_t nIFDepth;
 extern struct Section *pCurrentSection;
-extern bool oDontExpandStrings;
-
-size_t symvaluetostring(char *dest, size_t maxLength, char *sym,
-			const char *mode);
 
 #endif /* RGBDS_ASM_ASM_H */

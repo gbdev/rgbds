@@ -9,8 +9,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -19,12 +21,207 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "extern/utf8decoder.h"
+
+#include "asm/asm.h"
 #include "asm/lexer.h"
+#include "asm/macro.h"
+#include "asm/main.h"
 #include "asm/rpn.h"
-#include "asm/symbol.h" /* For MAXSYMLEN in asmy.h */
+#include "asm/symbol.h"
+#include "asm/util.h"
 #include "asm/warning.h"
 /* Include this last so it gets all type & constant definitions */
 #include "asmy.h" /* For token definitions, generated from asmy.y */
+
+/*
+ * Identifiers that are also keywords are listed here. This ONLY applies to ones
+ * that would normally be matched as identifiers! Check out `yylex_NORMAL` to
+ * see how this is used.
+ * Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
+ */
+static struct KeywordMapping {
+	char const *name;
+	int token;
+} const keywords[] = {
+	/*
+	 * CAUTION when editing this: adding keywords will probably require extra nodes in the
+	 * `keywordDict` array. If you forget to, you will probably trip up an assertion, anyways.
+	 * Also, all entries in this array must be in uppercase for the dict to build correctly.
+	 */
+	{"ADC", T_Z80_ADC},
+	{"ADD", T_Z80_ADD},
+	{"AND", T_Z80_AND},
+	{"BIT", T_Z80_BIT},
+	{"CALL", T_Z80_CALL},
+	{"CCF", T_Z80_CCF},
+	{"CPL", T_Z80_CPL},
+	{"CP", T_Z80_CP},
+	{"DAA", T_Z80_DAA},
+	{"DEC", T_Z80_DEC},
+	{"DI", T_Z80_DI},
+	{"EI", T_Z80_EI},
+	{"HALT", T_Z80_HALT},
+	{"INC", T_Z80_INC},
+	{"JP", T_Z80_JP},
+	{"JR", T_Z80_JR},
+	{"LD", T_Z80_LD},
+	{"LDI", T_Z80_LDI},
+	{"LDD", T_Z80_LDD},
+	{"LDIO", T_Z80_LDIO},
+	{"LDH", T_Z80_LDIO},
+	{"NOP", T_Z80_NOP},
+	{"OR", T_Z80_OR},
+	{"POP", T_Z80_POP},
+	{"PUSH", T_Z80_PUSH},
+	{"RES", T_Z80_RES},
+	{"RETI", T_Z80_RETI},
+	{"RET", T_Z80_RET},
+	{"RLCA", T_Z80_RLCA},
+	{"RLC", T_Z80_RLC},
+	{"RLA", T_Z80_RLA},
+	{"RL", T_Z80_RL},
+	{"RRC", T_Z80_RRC},
+	{"RRCA", T_Z80_RRCA},
+	{"RRA", T_Z80_RRA},
+	{"RR", T_Z80_RR},
+	{"RST", T_Z80_RST},
+	{"SBC", T_Z80_SBC},
+	{"SCF", T_Z80_SCF},
+	{"SET", T_POP_SET},
+	{"SLA", T_Z80_SLA},
+	{"SRA", T_Z80_SRA},
+	{"SRL", T_Z80_SRL},
+	{"STOP", T_Z80_STOP},
+	{"SUB", T_Z80_SUB},
+	{"SWAP", T_Z80_SWAP},
+	{"XOR", T_Z80_XOR},
+
+	{"NZ", T_CC_NZ},
+	{"Z", T_CC_Z},
+	{"NC", T_CC_NC},
+	/* Handled in list of registers */
+	/* { "C", T_CC_C }, */
+
+	{"AF", T_MODE_AF},
+	{"BC", T_MODE_BC},
+	{"DE", T_MODE_DE},
+	{"HL", T_MODE_HL},
+	{"SP", T_MODE_SP},
+
+	{"A", T_TOKEN_A},
+	{"B", T_TOKEN_B},
+	{"C", T_TOKEN_C},
+	{"D", T_TOKEN_D},
+	{"E", T_TOKEN_E},
+	{"H", T_TOKEN_H},
+	{"L", T_TOKEN_L},
+
+	{"DEF", T_OP_DEF},
+
+	{"FRAGMENT", T_POP_FRAGMENT},
+	{"BANK", T_OP_BANK},
+	{"ALIGN", T_OP_ALIGN},
+
+	{"ROUND", T_OP_ROUND},
+	{"CEIL", T_OP_CEIL},
+	{"FLOOR", T_OP_FLOOR},
+	{"DIV", T_OP_FDIV},
+	{"MUL", T_OP_FMUL},
+	{"SIN", T_OP_SIN},
+	{"COS", T_OP_COS},
+	{"TAN", T_OP_TAN},
+	{"ASIN", T_OP_ASIN},
+	{"ACOS", T_OP_ACOS},
+	{"ATAN", T_OP_ATAN},
+	{"ATAN2", T_OP_ATAN2},
+
+	{"HIGH", T_OP_HIGH},
+	{"LOW", T_OP_LOW},
+	{"ISCONST", T_OP_ISCONST},
+
+	{"STRCMP", T_OP_STRCMP},
+	{"STRIN", T_OP_STRIN},
+	{"STRSUB", T_OP_STRSUB},
+	{"STRLEN", T_OP_STRLEN},
+	{"STRCAT", T_OP_STRCAT},
+	{"STRUPR", T_OP_STRUPR},
+	{"STRLWR", T_OP_STRLWR},
+
+	{"INCLUDE", T_POP_INCLUDE},
+	{"PRINTT", T_POP_PRINTT},
+	{"PRINTI", T_POP_PRINTI},
+	{"PRINTV", T_POP_PRINTV},
+	{"PRINTF", T_POP_PRINTF},
+	{"EXPORT", T_POP_EXPORT},
+	{"XDEF", T_POP_XDEF},
+	{"GLOBAL", T_POP_GLOBAL},
+	{"DS", T_POP_DS},
+	{"DB", T_POP_DB},
+	{"DW", T_POP_DW},
+	{"DL", T_POP_DL},
+	{"SECTION", T_POP_SECTION},
+	{"PURGE", T_POP_PURGE},
+
+	{"RSRESET", T_POP_RSRESET},
+	{"RSSET", T_POP_RSSET},
+
+	{"INCBIN", T_POP_INCBIN},
+	{"CHARMAP", T_POP_CHARMAP},
+	{"NEWCHARMAP", T_POP_NEWCHARMAP},
+	{"SETCHARMAP", T_POP_SETCHARMAP},
+	{"PUSHC", T_POP_PUSHC},
+	{"POPC", T_POP_POPC},
+
+	{"FAIL", T_POP_FAIL},
+	{"WARN", T_POP_WARN},
+	{"FATAL", T_POP_FATAL},
+	{"ASSERT", T_POP_ASSERT},
+	{"STATIC_ASSERT", T_POP_STATIC_ASSERT},
+
+	{"MACRO", T_POP_MACRO},
+	{"ENDM", T_POP_ENDM},
+	{"SHIFT", T_POP_SHIFT},
+
+	{"REPT", T_POP_REPT},
+	{"ENDR", T_POP_ENDR},
+
+	{"LOAD", T_POP_LOAD},
+	{"ENDL", T_POP_ENDL},
+
+	{"IF", T_POP_IF},
+	{"ELSE", T_POP_ELSE},
+	{"ELIF", T_POP_ELIF},
+	{"ENDC", T_POP_ENDC},
+
+	{"UNION", T_POP_UNION},
+	{"NEXTU", T_POP_NEXTU},
+	{"ENDU", T_POP_ENDU},
+
+	{"WRAM0", T_SECT_WRAM0},
+	{"VRAM", T_SECT_VRAM},
+	{"ROMX", T_SECT_ROMX},
+	{"ROM0", T_SECT_ROM0},
+	{"HRAM", T_SECT_HRAM},
+	{"WRAMX", T_SECT_WRAMX},
+	{"SRAM", T_SECT_SRAM},
+	{"OAM", T_SECT_OAM},
+
+	{"RB", T_POP_RB},
+	{"RW", T_POP_RW},
+	{"EQU", T_POP_EQU},
+	{"EQUS", T_POP_EQUS},
+
+	/*  Handled before in list of CPU instructions */
+	/* {"SET", T_POP_SET}, */
+
+	{"PUSHS", T_POP_PUSHS},
+	{"POPS", T_POP_POPS},
+	{"PUSHO", T_POP_PUSHO},
+	{"POPO", T_POP_POPO},
+
+	{"OPT", T_POP_OPT}
+};
 
 #define LEXER_BUF_SIZE 42 /* TODO: determine a sane value for this */
 /* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
@@ -60,6 +257,7 @@ struct LexerState {
 	bool atLineStart;
 	uint32_t lineNo;
 	uint32_t colNo;
+	int lastToken;
 
 	bool capturing; /* Whether the text being lexed should be captured */
 	size_t captureSize; /* Amount of text captured */
@@ -83,12 +281,17 @@ struct LexerState *lexer_OpenFile(char const *path)
 	if (isStdin)
 		path = "<stdin>";
 	if (!state) {
-		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
+		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
 		return NULL;
 	}
 	state->path = path;
 
 	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
+	if (state->fd == -1) {
+		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
+		free(state);
+		return NULL;
+	}
 	state->isMmapped = false; /* By default, assume it won't be mmap()ed */
 	off_t size = lseek(state->fd, 0, SEEK_END);
 
@@ -121,10 +324,16 @@ struct LexerState *lexer_OpenFile(char const *path)
 			state->isMmapped = true;
 			state->ptr = pa;
 			state->size = size;
+
+			if (verbose)
+				printf("File %s successfully mmap()ped\n", path);
 		}
 	}
 	if (!state->isMmapped) {
 		/* Sometimes mmap() fails or isn't available, so have a fallback */
+		if (verbose)
+			printf("File %s opened as regular, errno reports \"%s\"\n",
+			       path, strerror(errno));
 		lseek(state->fd, 0, SEEK_SET);
 		state->index = 0;
 	}
@@ -132,6 +341,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; /* yylex() will init colNo due to this */
 	state->lineNo = 0;
+	state->lastToken = 0;
 
 	state->capturing = false;
 	state->captureBuf = NULL;
@@ -154,6 +364,72 @@ void lexer_DeleteState(struct LexerState *state)
 	else
 		close(state->fd);
 	free(state);
+}
+
+struct KeywordDictNode {
+	/*
+	 * The identifier charset is (currently) 44 characters big. By storing entries for the
+	 * entire printable ASCII charset, minus lower-case due to case-insensitivity,
+	 * we only waste (0x60 - 0x20) - 70 = 20 entries per node, which should be acceptable.
+	 * In turn, this allows greatly simplifying checking an index into this array,
+	 * which should help speed up the lexer.
+	 */
+	uint16_t children[0x60 - ' '];
+	struct KeywordMapping const *keyword;
+/* Since the keyword structure is invariant, the min number of nodes is known at compile time */
+} keywordDict[336] = {0}; /* Make sure to keep this correct when adding keywords! */
+
+/* Convert a char into its index into the dict */
+static inline uint8_t dictIndex(char c)
+{
+	/* Translate uppercase to lowercase (roughly) */
+	if (c > 0x60)
+		c = c - ('a' - 'A');
+	return c - ' ';
+}
+
+void lexer_Init(void)
+{
+	/*
+	 * Build the dictionary of keywords. This could be done at compile time instead, however:
+	 *  - Doing so manually is a task nobody wants to undertake
+	 *  - It would be massively hard to read
+	 *  - Doing it within CC or CPP would be quite non-trivial
+	 *  - Doing it externally would require some extra work to use only POSIX tools
+	 *  - The startup overhead isn't much compared to the program's
+	 */
+	uint16_t usedNodes = 1;
+
+	for (size_t i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+		uint16_t nodeID = 0;
+
+		/* Walk the dictionary, creating intermediate nodes for the keyword */
+		for (char const *ptr = keywords[i].name; *ptr; ptr++) {
+			/* We should be able to assume all entries are well-formed */
+			if (keywordDict[nodeID].children[*ptr - ' '] == 0) {
+				/*
+				 * If this gets tripped up, set the size of keywordDict to
+				 * something high, compile with `-DPRINT_NODE_COUNT` (see below),
+				 * and set the size to that.
+				 */
+				assert(usedNodes < sizeof(keywordDict) / sizeof(*keywordDict));
+
+				/* There is no node at that location, grab one from the pool */
+				keywordDict[nodeID].children[*ptr - ' '] = usedNodes;
+				usedNodes++;
+			}
+			nodeID = keywordDict[nodeID].children[*ptr - ' '];
+		}
+
+		/* This assumes that no two keywords have the same name */
+		keywordDict[nodeID].keyword = &keywords[i];
+	}
+
+#ifdef PRINT_NODE_COUNT /* For the maintainer to check how many nodes are needed */
+	printf("Lexer keyword dictionary: %zu keywords in %u nodes (pool size %zu)\n",
+	       sizeof(keywords) / sizeof(*keywords), usedNodes,
+	       sizeof(keywordDict) / sizeof(*keywordDict));
+#endif
 }
 
 void lexer_SetMode(enum LexerMode mode)
@@ -187,7 +463,16 @@ static int peek(uint8_t distance)
 		if (lexerState->offset + distance >= lexerState->size)
 			return EOF;
 
+		/*
+		 * Note: the following block is also duplicated for the non-mmap() path. This sucks.
+		 * However, due to subtle handling differences, I haven't found a clean way to
+		 * avoid that duplication. If you have any ideas, please discuss them in an issue or
+		 * pull request. Thank you!
+		 */
+
+		/* Do not perform expansions while capturing */
 		if (!lexerState->capturing) {
+			/* Scan the newly-inserted chars for any macro args */
 			bool escaped = false;
 
 			while (lexerState->nbChars < distance && !escaped) {
@@ -204,7 +489,7 @@ static int peek(uint8_t distance)
 			}
 		}
 
-		return lexerState->ptr[lexerState->offset + distance];
+		return (unsigned char)lexerState->ptr[lexerState->offset + distance];
 	}
 
 	if (lexerState->nbChars <= distance) {
@@ -240,7 +525,7 @@ static int peek(uint8_t distance)
 
 		/* Do not perform expansions when capturing */
 		if (!lexerState->capturing) {
-			/* Scan the newly-inserted chars for any expansions */
+			/* Scan the newly-inserted chars for any macro args */
 			bool escaped = false;
 			size_t index = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
 
@@ -276,7 +561,7 @@ static int peek(uint8_t distance)
 		if (lexerState->nbChars <= distance)
 			return EOF;
 	}
-	return lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
+	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
 }
 
 static void shiftChars(uint8_t distance)
@@ -320,7 +605,7 @@ static int nextChar(void)
 
 char const *lexer_GetFileName(void)
 {
-	return lexerState->path;
+	return lexerState ? lexerState->path : NULL;
 }
 
 uint32_t lexer_GetLineNo(void)
@@ -338,37 +623,621 @@ void lexer_DumpStringExpansions(void)
 	/* TODO */
 }
 
+/* Function to discard all of a line's comments */
+
+static void discardComment(void)
+{
+	for (;;) {
+		int c = peek(0);
+
+		if (c == EOF || c == '\r' || c == '\n')
+			break;
+		shiftChars(1);
+	}
+}
+
+/* Functions to lex numbers of various radixes */
+
+static void readNumber(int radix, int32_t baseValue)
+{
+	uint32_t value = baseValue;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c < '0' || c > '0' + radix - 1)
+			break;
+		if (value > UINT32_MAX / radix)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		value = value * radix + (c - '0');
+
+		shiftChars(1);
+	}
+
+	yylval.nConstValue = value;
+}
+
+static void readFractionalPart(void)
+{
+	uint32_t value = 0, divisor = 1;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c < '0' || c > '9')
+			break;
+		if (divisor > UINT32_MAX / 10) {
+			warning(WARNING_LARGE_CONSTANT,
+				"Precision of fixed-point constant is too large\n");
+			/* Discard any additional digits */
+			while (c = peek(0), c >= '0' && c <= '9')
+				shiftChars(1);
+			break;
+		}
+	}
+
+	if (yylval.nConstValue > INT16_MAX || yylval.nConstValue < INT16_MIN)
+		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
+
+	/* Cast to unsigned avoids UB if shifting discards bits */
+	yylval.nConstValue = (uint32_t)yylval.nConstValue << 16;
+	/* Cast to unsigned avoids undefined overflow behavior */
+	uint16_t fractional = value * 65536 / divisor;
+
+	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
+}
+
+static void readBinaryNumber(void)
+{
+	uint32_t value = 0;
+
+	for (;;) {
+		int c = peek(0);
+
+		/* TODO: handle `-b`'s dynamic chars */
+		if (c != '0' && c != '1')
+			break;
+		value = value * 2 + (c - '0');
+
+		shiftChars(1);
+	}
+
+	yylval.nConstValue = value;
+}
+
+static void readHexNumber(void)
+{
+	uint32_t value = 0;
+	bool empty = true;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c >= 'a' && c <= 'f') /* Convert letters to right after digits */
+			c = c - 'a' + 10;
+		else if (c >= 'A' && c <= 'F')
+			c = c - 'A' + 10;
+		else if (c >= '0' && c <= '9')
+			c = c - '0';
+		else
+			break;
+
+		if (value > UINT32_MAX / 16)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		value = value * 16 + c;
+
+		shiftChars(1);
+		empty = false;
+	}
+
+	if (empty)
+		error("Invalid integer constant, no digits after '$'\n");
+
+	yylval.nConstValue = value;
+}
+
+static void readGfxConstant(void)
+{
+	uint32_t bp0 = 0, bp1 = 0;
+	uint8_t width = 0;
+
+	for (;;) {
+		int c = peek(0);
+
+		/* TODO: handle `-g`'s dynamic chars */
+		if (c < '0' || c > '3')
+			break;
+		uint8_t pixel = c - '0';
+
+		if (width < 8) {
+			bp0 = bp0 << 1 | (pixel & 1);
+			bp1 = bp1 << 1 | (pixel >> 1);
+		}
+		if (width <= 8)
+			width++;
+		shiftChars(1);
+	}
+
+	if (width == 0)
+		error("Invalid gfx constant, no digits after '`'\n");
+	else if (width == 8)
+		warning(WARNING_LARGE_CONSTANT,
+			"Gfx constant is too large, only 8 first pixels considered\n");
+
+	yylval.nConstValue = bp1 << 8 | bp0;
+}
+
+/* Function to read identifiers & keywords */
+
+static int readIdentifier(char firstChar)
+{
+	/* Lex while checking for a keyword */
+	yylval.tzSym[0] = firstChar;
+	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
+	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
+	size_t i;
+
+	for (i = 1; ; i++) {
+		int c = peek(0);
+
+		/* If that char isn't in the symbol charset, end */
+		if ((c > '9' || c < '0')
+		 && (c > 'Z' || c < 'A')
+		 && (c > 'z' || c < 'a')
+		 && c != '#' && c != '.' && c != '@' && c != '_')
+			break;
+		shiftChars(1);
+
+		/* Write the char to the identifier's name */
+		if (i < sizeof(yylval.tzSym) - 1)
+			yylval.tzSym[i] = c;
+
+		/* If the char was a dot, mark the identifier as local */
+		if (c == '.')
+			tokenType = T_LOCAL_ID;
+
+		/* Attempt to traverse the tree to check for a keyword */
+		if (nodeID) /* Do nothing if matching already failed */
+			nodeID = keywordDict[nodeID].children[dictIndex(c)];
+	}
+
+	if (i > sizeof(yylval.tzSym) - 1) {
+		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
+		i = sizeof(yylval.tzSym) - 1;
+	}
+	yylval.tzSym[i] = '\0'; /* Terminate the string */
+
+	if (keywordDict[nodeID].keyword)
+		return keywordDict[nodeID].keyword->token;
+
+	return tokenType;
+}
+
+/* Functions to read strings */
+
+enum PrintType {
+	TYPE_NONE,
+	TYPE_DECIMAL,  /* d */
+	TYPE_UPPERHEX, /* X */
+	TYPE_LOWERHEX, /* x */
+	TYPE_BINARY,   /* b */
+};
+
+static void intToString(char *dest, size_t bufSize, struct Symbol const *sym, enum PrintType type)
+{
+	uint32_t value = sym_GetConstantSymValue(sym);
+	int fullLength;
+
+	/* Special cheat for binary */
+	if (type == TYPE_BINARY) {
+		char binary[33]; /* 32 bits + 1 terminator */
+		char *write_ptr = binary + 32;
+
+		fullLength = 0;
+		binary[32] = 0;
+		do {
+			*(--write_ptr) = (value & 1) + '0';
+			value >>= 1;
+			fullLength++;
+		} while (value);
+		strncpy(dest, write_ptr, bufSize - 1);
+	} else {
+		static char const * const formats[] = {
+			[TYPE_NONE]     = "$%" PRIX32,
+			[TYPE_DECIMAL]  = "%" PRId32,
+			[TYPE_UPPERHEX] = "%" PRIX32,
+			[TYPE_LOWERHEX] = "%" PRIx32
+		};
+
+		fullLength = snprintf(dest, bufSize, formats[type], value);
+		if (fullLength < 0) {
+			error("snprintf encoding error: %s\n", strerror(errno));
+			dest[0] = '\0';
+		}
+	}
+
+	if ((size_t)fullLength >= bufSize)
+		warning(WARNING_LONG_STR, "Interpolated symbol %s too long to fit buffer\n",
+			sym->name);
+}
+
+static char const *readInterpolation(void)
+{
+	char symName[MAXSYMLEN + 1];
+	size_t i = 0;
+	enum PrintType type = TYPE_NONE;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c == '{') { /* Nested interpolation */
+			shiftChars(1);
+			char const *inner = readInterpolation();
+
+			if (inner) {
+				while (*inner) {
+					if (i == sizeof(symName))
+						break;
+					symName[i++] = *inner++;
+				}
+			}
+		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
+			error("Unterminated interpolation\n");
+			break;
+		} else if (c == '}') {
+			shiftChars(1);
+			break;
+		} else if (c == ':' && type == TYPE_NONE) { /* Print type, only once */
+			if (i != 1) {
+				error("Print types are exactly 1 character long\n");
+			} else {
+				switch (symName[0]) {
+				case 'b':
+					type = TYPE_BINARY;
+					break;
+				case 'd':
+					type = TYPE_DECIMAL;
+					break;
+				case 'X':
+					type = TYPE_UPPERHEX;
+					break;
+				case 'x':
+					type = TYPE_LOWERHEX;
+					break;
+				default:
+					error("Invalid print type '%s'\n", print(symName[0]));
+				}
+			}
+			i = 0; /* Now that type has been set, restart at beginning of string */
+			shiftChars(1);
+		} else {
+			if (i < sizeof(symName)) /* Allow writing an extra char to flag overflow */
+				symName[i++] = c;
+			shiftChars(1);
+		}
+	}
+
+	if (i == sizeof(symName)) {
+		warning(WARNING_LONG_STR, "Symbol name too long\n");
+		i--;
+	}
+	symName[i] = '\0';
+
+	struct Symbol const *sym = sym_FindSymbol(symName);
+
+	if (!sym) {
+		error("Interpolated symbol \"%s\" does not exist\n", symName);
+	} else if (sym->type == SYM_EQUS) {
+		if (type != TYPE_NONE)
+			error("Print types are only allowed for numbers\n");
+		return sym_GetStringValue(sym);
+	} else if (sym_IsNumeric(sym)) {
+		static char buf[33]; /* Worst case of 32 digits + terminator */
+
+		intToString(buf, sizeof(buf), sym, type);
+		return buf;
+	} else {
+		error("Only numerical and string symbols can be interpolated\n");
+	}
+	return NULL;
+}
+
+static void readString(void)
+{
+	size_t i = 0;
+
+	for (;;) {
+		int c = peek(0);
+
+		switch (c) {
+		case '"':
+			shiftChars(1);
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "String constant too long\n");
+			}
+			yylval.tzString[i] = '\0';
+			return;
+		case '\r':
+		case '\n': /* Do not shift these! */
+		case EOF:
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "String constant too long\n");
+			}
+			yylval.tzString[i] = '\0';
+			error("Unterminated string\n");
+			return;
+
+		case '\\': /* Character escape */
+			c = peek(1);
+			switch (c) {
+			case '\\': /* Return that character unchanged */
+			case '"':
+			case '{':
+			case '}':
+				shiftChars(1);
+				break;
+			case 'n':
+				c = '\n';
+				shiftChars(1);
+				break;
+			case 'r':
+				c = '\r';
+				shiftChars(1);
+				break;
+			case 't':
+				c = '\t';
+				shiftChars(1);
+				break;
+
+			case EOF: /* Can't really print that one */
+				error("Illegal character escape at end of input\n");
+				c = '\\';
+				break;
+			default:
+				error("Illegal character escape '%s'\n", print(c));
+				c = '\\';
+				break;
+			}
+			break;
+
+		case '{': /* Symbol interpolation */
+			shiftChars(1);
+			char const *ptr = readInterpolation();
+
+			if (ptr) {
+				while (*ptr) {
+					if (i == sizeof(yylval.tzString))
+						break;
+					yylval.tzString[i++] = *ptr++;
+				}
+			}
+			continue; /* Do not copy an additional character */
+
+		/* Regular characters will just get copied */
+		}
+		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
+			yylval.tzString[i++] = c;
+		shiftChars(1);
+	}
+}
+
+/* Function to report one character's worth of garbage bytes */
+
+static char const *reportGarbageChar(unsigned char firstByte)
+{
+	static char bytes[6 + 2 + 1]; /* Max size of a UTF-8 encoded code point, plus "''\0" */
+	/* First, attempt UTF-8 decoding */
+	uint32_t state = 0; /* UTF8_ACCEPT */
+	uint32_t codepoint;
+	uint8_t size = 0; /* Number of additional bytes to shift */
+
+	bytes[1] = firstByte; /* No need to init the rest of the array */
+	decode(&state, &codepoint, firstByte);
+	while (state != 0 && state != 1 /* UTF8_REJECT */) {
+		int c = peek(size++);
+
+		if (c == EOF)
+			break;
+		bytes[size + 1] = c;
+		decode(&state, &codepoint, c);
+	}
+
+	if (state == 0 && (codepoint > UCHAR_MAX || isprint((unsigned char)codepoint))) {
+		/* Character is valid, printable UTF-8! */
+		shiftChars(size);
+		bytes[0] = '\'';
+		bytes[size + 2] = '\'';
+		bytes[size + 3] = '\0';
+		return bytes;
+	}
+
+	/* The character isn't valid UTF-8, so we'll only print that first byte */
+	if (isprint(firstByte)) {
+		/* bytes[1] = firstByte; */
+		bytes[0] = '\'';
+		bytes[2] = '\'';
+		bytes[3] = '\0';
+		return bytes;
+	}
+	/* Well then, print its hex value */
+	static char const hexChars[16] = "0123456789ABCDEF";
+
+	bytes[0] = '0';
+	bytes[1] = 'x';
+	bytes[2] = hexChars[firstByte >> 4];
+	bytes[3] = hexChars[firstByte & 0x0f];
+	bytes[4] = '\0';
+	return bytes;
+}
+
+/* Lexer core */
+
 static int yylex_NORMAL(void)
 {
 	for (;;) {
 		int c = nextChar();
 
 		switch (c) {
+		/* Ignore whitespace and comments */
+
+		case '*':
+			if (!lexerState->atLineStart)
+				return T_OP_MUL;
+			warning(WARNING_OBSOLETE,
+				"'*' is deprecated for comments, please use ';' instead\n");
+			/* fallthrough */
+		case ';':
+			discardComment();
+			/* fallthrough */
+		case ' ':
+		case '\t':
+			break;
+
+		/* Handle unambiguous single-char tokens */
+
+		case '^':
+			return T_OP_XOR;
+		case '+':
+			return T_OP_ADD;
+		case '-':
+			return T_OP_SUB;
+		case '/':
+			return T_OP_DIV;
+		case '~':
+			return T_OP_NOT;
+
+		case '@':
+			return T_ID;
+
+		/* Handle accepted single chars */
+
+		case '[':
+		case ']':
+		case '(':
+		case ')':
+		case ',':
+		case ':':
+			return c;
+
+		/* Handle ambiguous 1- or 2-char tokens */
+		char secondChar;
+
+		case '|': /* Either binary or logical OR */
+			secondChar = peek(0);
+			if (secondChar == '|') {
+				shiftChars(1);
+				return T_OP_LOGICOR;
+			}
+			return T_OP_OR;
+
+		case '=': /* Either SET alias, or EQ */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICEQU;
+			}
+			return T_POP_EQUAL;
+
+		case '<': /* Either a LT, LTE, or left shift */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICLE;
+			} else if (secondChar == '<') {
+				shiftChars(1);
+				return T_OP_SHL;
+			}
+			return T_OP_LOGICLT;
+
+		case '>': /* Either a GT, GTE, or right shift */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICGE;
+			} else if (secondChar == '>') {
+				shiftChars(1);
+				return T_OP_SHR;
+			}
+			return T_OP_LOGICGT;
+
+		case '!': /* Either a NEQ, or negation */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICNE;
+			}
+			return T_OP_LOGICNOT;
+
+		/* Handle numbers */
+
+		case '$':
+			yylval.nConstValue = 0;
+			readHexNumber();
+			return T_NUMBER;
+
+		case '0': /* Decimal number */
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			readNumber(10, c - '0');
+			int perhapsPeriod = peek(0);
+
+			if (perhapsPeriod == '.') {
+				shiftChars(1);
+				readFractionalPart();
+			}
+			return T_NUMBER;
+
+		case '&':
+			secondChar = peek(0);
+			if (secondChar == '&') {
+				shiftChars(1);
+				return T_OP_LOGICAND;
+			} else if (secondChar >= '0' && secondChar <= '7') {
+				readNumber(8, 0);
+				return T_NUMBER;
+			}
+			return T_OP_AND;
+
+		case '%': /* Either a modulo, or a binary constant */
+			secondChar = peek(0);
+			if (secondChar != '0' && secondChar != '1')
+				return T_OP_MOD;
+
+			yylval.nConstValue = 0;
+			readBinaryNumber();
+			return T_NUMBER;
+
+		case '`': /* Gfx constant */
+			readGfxConstant();
+			return T_NUMBER;
+
+		/* Handle strings */
+
+		case '"':
+			readString();
+			return T_STRING;
+
+		/* Handle newlines and EOF */
+
+		case '\r':
+			if (peek(0) == '\n')
+				shiftChars(1); /* Shift that EOL */
+			/* fallthrough */
 		case '\n':
 			if (lexerStateEOL) {
 				lexer_SetState(lexerStateEOL);
 				lexerStateEOL = NULL;
 			}
 			return '\n';
-
-		/* Ignore whitespace */
-		case ' ':
-		case '\t':
-			break;
-
-		/* Handle single-char tokens */
-		case '+':
-			return T_OP_ADD;
-		case '-':
-			return T_OP_SUB;
-
-		/* Handle accepted single chars */
-		case '[':
-		case ']':
-		case '(':
-		case ')':
-		case ',':
-			return c;
 
 		case EOF:
 			/* Captures end at their buffer's boundary no matter what */
@@ -377,8 +1246,31 @@ static int yylex_NORMAL(void)
 			}
 			return 0;
 
+		/* Handle identifiers... or error out */
+
 		default:
-			error("Unknown character '%c'\n");
+			if ((c <= 'Z' && c >= 'A')
+			 || (c <= 'z' && c >= 'a')
+			 || c == '.' || c == '_') {
+				int tokenType = readIdentifier(c);
+
+				/* If a keyword, don't try to expand */
+				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
+					return tokenType;
+
+				/* TODO: attempt string expansion */
+
+				if (tokenType == T_ID && lexerState->atLineStart)
+					return T_LABEL;
+
+				return tokenType;
+			}
+
+			/* Do not report weird characters when capturing, it'll be done later */
+			if (!lexerState->capturing) {
+				/* TODO: try to group reportings */
+				error("Unknown character %s\n", reportGarbageChar(c));
+			}
 		}
 		lexerState->atLineStart = false;
 	}
@@ -389,6 +1281,56 @@ static int yylex_RAW(void)
 	fatalerror("LEXER_RAW not yet implemented\n");
 }
 
+/*
+ * This function uses the fact that `if`, etc. constructs are only valid when
+ * there's nothing before them on their lines. This enables filtering
+ * "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
+ * It's especially important due to macro args not being handled in this
+ * state, and lexing them in "normal" mode potentially producing such tokens.
+ */
+static int skipIfBlock(bool toEndc)
+{
+	lexer_SetMode(LEXER_NORMAL);
+	int startingDepth = nIFDepth;
+	int token;
+
+	/* Prevent expanding macro args in this state by enabling capture to nothing */
+	lexerState->capturing = true;
+	lexerState->captureSize = 0;
+	lexerState->captureBuf = NULL;
+
+	for (;;) {
+		bool atLineStart = lexerState->atLineStart;
+
+		token = yylex();
+		if (token == 0) { /* Pass EOF through */
+			return token;
+		} else if (atLineStart && token == T_POP_IF) { /* Increase nesting */
+			nIFDepth++;
+		} else if (atLineStart && nIFDepth == startingDepth) { /* An occasion to finish? */
+			if (token == T_POP_ENDC || (!toEndc && (token == T_POP_ELIF
+							     || token == T_POP_ELSE)))
+				break;
+		} else if (atLineStart && token == T_POP_ENDC) { /* Decrease nesting */
+			nIFDepth--;
+		}
+	}
+
+	lexerState->capturing = false;
+
+	return token;
+}
+
+static int yylex_SKIP_TO_ELIF(void)
+{
+	return skipIfBlock(false);
+}
+
+static int yylex_SKIP_TO_ENDC(void)
+{
+	return skipIfBlock(true);
+}
+
 int yylex(void)
 {
 	if (lexerState->atLineStart) {
@@ -397,51 +1339,46 @@ int yylex(void)
 	}
 
 	static int (* const lexerModeFuncs[])(void) = {
-		[LEXER_NORMAL] = yylex_NORMAL,
-		[LEXER_RAW]    = yylex_RAW,
+		[LEXER_NORMAL]       = yylex_NORMAL,
+		[LEXER_RAW]          = yylex_RAW,
+		[LEXER_SKIP_TO_ELIF] = yylex_SKIP_TO_ELIF,
+		[LEXER_SKIP_TO_ENDC] = yylex_SKIP_TO_ENDC
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
+	/* Make sure to terminate files with a line feed */
+	if (token == 0 && lexerState->lastToken != '\n')
+		token = '\n';
+	lexerState->lastToken = token;
+
+	lexerState->atLineStart = false;
 	if (token == '\n')
 		lexerState->atLineStart = true;
-	else if (lexerState->atLineStart)
-		lexerState->atLineStart = false;
 
 	return token;
 }
 
-void lexer_SkipToBlockEnd(int blockStartToken, int blockEndToken, int endToken,
-			  char const **capture, size_t *size, char const *name)
+void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char const **capture, size_t *size,
+			char const *name)
 {
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	unsigned int level = 0;
 	char *captureStart;
 
-	if (capture) {
-		if (lexerState->isMmapped) {
-			captureStart = lexerState->ptr;
-		} else {
-			lexerState->captureCapacity = 128; /* The initial size will be twice that */
-			reallocCaptureBuf();
-			captureStart = lexerState->captureBuf;
-		}
+	if (lexerState->isMmapped) {
+		captureStart = lexerState->ptr;
+	} else {
+		lexerState->captureCapacity = 128; /* The initial size will be twice that */
+		reallocCaptureBuf();
+		captureStart = lexerState->captureBuf;
 	}
 
 	for (;;) {
 		int token = yylex();
 
-		if (level == 0) {
-			if (token == endToken)
-				break;
-			/*
-			 * Hack: skipping after a `if` requires stopping on three different tokens,
-			 * which there is no simple way to make this function support. Instead,
-			 * if ELIF is the end token, ELSE and ENDC are also checked for here.
-			 */
-			if (endToken == T_POP_ELIF && (token == T_POP_ELSE || token == T_POP_ENDC))
-				break;
-		}
+		if (level == 0 && token == blockEndToken)
+			break;
 
 		if (token == EOF)
 			error("Unterminated %s\n", name);
@@ -451,9 +1388,7 @@ void lexer_SkipToBlockEnd(int blockStartToken, int blockEndToken, int endToken,
 			level--;
 	}
 
-	if (capture) {
-		*capture = captureStart;
-		*size = lexerState->captureSize;
-	}
+	*capture = captureStart;
+	*size = lexerState->captureSize;
 	lexerState->captureBuf = NULL;
 }

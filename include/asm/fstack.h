@@ -32,7 +32,7 @@ struct sContext {
 	uint32_t uniqueID;
 	int32_t nLine;
 	uint32_t nStatus;
-	char *pREPTBlock;
+	char const *pREPTBlock;
 	uint32_t nREPTBlockCount;
 	uint32_t nREPTBlockSize;
 	int32_t nREPTBodyFirstLine;
@@ -47,7 +47,7 @@ void fstk_Dump(void);
 void fstk_DumpToStr(char *buf, size_t len);
 void fstk_AddIncludePath(char *s);
 void fstk_RunMacro(char *s, struct MacroArgs *args);
-void fstk_RunRept(uint32_t count, int32_t nReptLineNo);
+void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char const *body, size_t size);
 /**
  * @param path The user-provided file name
  * @param fullPath The address of a pointer, which will be made to point at the full path

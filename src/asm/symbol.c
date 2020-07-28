@@ -210,8 +210,6 @@ void sym_Purge(char const *symName)
 			labelScope = NULL;
 
 		hash_RemoveElement(symbols, symbol->name);
-		if (symbol->type == SYM_MACRO)
-			free(symbol->macro);
 		free(symbol);
 	}
 }
@@ -230,7 +228,22 @@ uint32_t sym_GetPCValue(void)
 }
 
 /*
- * Return a constant symbols value
+ * Return a constant symbol's value, assuming it's defined
+ */
+uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
+{
+	if (sym == PCSymbol)
+		return sym_GetPCValue();
+	else if (!sym_IsConstant(sym))
+		error("\"%s\" does not have a constant value\n", sym->name);
+	else
+		return sym_GetValue(sym);
+
+	return 0;
+}
+
+/*
+ * Return a constant symbol's value
  */
 uint32_t sym_GetConstantValue(char const *s)
 {
@@ -238,12 +251,8 @@ uint32_t sym_GetConstantValue(char const *s)
 
 	if (sym == NULL)
 		error("'%s' not defined\n", s);
-	else if (sym == PCSymbol)
-		return sym_GetPCValue();
-	else if (!sym_IsConstant(sym))
-		error("\"%s\" does not have a constant value\n", s);
 	else
-		return sym_GetValue(sym);
+		return sym_GetConstantSymValue(sym);
 
 	return 0;
 }
@@ -468,13 +477,13 @@ void sym_Export(char const *symName)
 /*
  * Add a macro definition
  */
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo)
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName);
 
 	sym->type = SYM_MACRO;
-	sym->macroSize = ulNewMacroSize;
-	sym->macro = tzNewMacro;
+	sym->macroSize = size;
+	sym->macro = body;
 	updateSymbolFilename(sym);
 	/*
 	 * The symbol is created at the line after the `endm`,

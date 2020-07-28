@@ -198,14 +198,14 @@ void processWarningFlag(char const *flag)
 	warnx("Unknown warning `%s`", flag);
 }
 
-void verror(const char *fmt, va_list args, char const *flag)
+void printDiag(const char *fmt, va_list args, char const *type,
+	       char const *flagfmt, char const *flag)
 {
-	fputs("ERROR: ", stderr);
+	fputs(type, stderr);
 	fstk_Dump();
-	fprintf(stderr, flag ? ": [-Werror=%s]\n    " : ":\n    ", flag);
+	fprintf(stderr, flagfmt, flag);
 	vfprintf(stderr, fmt, args);
 	lexer_DumpStringExpansions();
-	nbErrors++;
 }
 
 void error(const char *fmt, ...)
@@ -213,8 +213,9 @@ void error(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	verror(fmt, args, NULL);
+	printDiag(fmt, args, "ERROR: ", "\n    ", NULL);
 	va_end(args);
+	nbErrors++;
 }
 
 noreturn_ void fatalerror(const char *fmt, ...)
@@ -222,7 +223,7 @@ noreturn_ void fatalerror(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	verror(fmt, args, NULL);
+	printDiag(fmt, args, "FATAL: ", "\n    ", NULL);
 	va_end(args);
 
 	exit(1);
@@ -240,7 +241,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		return;
 
 	case WARNING_ERROR:
-		verror(fmt, args, flag);
+		printDiag(fmt, args, "ERROR: ", "[-Werror=%s]\n    ", flag);
 		va_end(args);
 		return;
 
@@ -252,11 +253,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		break;
 	}
 
-	fputs("warning: ", stderr);
-	fstk_Dump();
-	fprintf(stderr, ": [-W%s]\n    ", flag);
-	vfprintf(stderr, fmt, args);
-	lexer_DumpStringExpansions();
+	printDiag(fmt, args, "warning: ", "[-W%s]\n    ", flag);
 
 	va_end(args);
 }

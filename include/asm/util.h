@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 uint32_t calchash(const char *s);
+char const *print(char c);
 size_t readUTF8Char(uint8_t *dest, char const *src);
 
 #endif /* RGBDS_UTIL_H */

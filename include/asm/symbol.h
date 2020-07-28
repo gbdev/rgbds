@@ -44,8 +44,8 @@ struct Symbol {
 			int32_t (*callback)(void);
 		};
 		struct { /* For SYM_MACRO */
-			uint32_t macroSize;
-			char *macro;
+			size_t macroSize;
+			char const *macro;
 		};
 	};
 
@@ -114,9 +114,10 @@ void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
+uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *s);
 struct Symbol *sym_FindSymbol(char const *symName);
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo);
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
 uint32_t sym_GetDefinedValue(char const *s);

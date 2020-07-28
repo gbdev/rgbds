@@ -39,63 +39,7 @@ uint32_t nListCountEmpty;
 char *tzNewMacro;
 uint32_t ulNewMacroSize;
 int32_t nPCOffset;
-bool skipElifs; /* If this is set, ELIFs cannot be executed anymore */
-
-size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
-			const char *mode)
-{
-	size_t length;
-	struct Symbol *sym = sym_FindSymbol(symName);
-
-	if (sym && sym->type == SYM_EQUS) {
-		char const *src = sym_GetStringValue(sym);
-		size_t i;
-
-		if (mode)
-			error("Print types are only allowed for numbers\n");
-
-		for (i = 0; src[i] != 0; i++) {
-			if (i >= maxLength)
-				fatalerror("Symbol value too long to fit buffer\n");
-
-			dest[i] = src[i];
-		}
-
-		length = i;
-
-	} else {
-		uint32_t value = sym_GetConstantValue(symName);
-		int32_t fullLength;
-
-		/* Special cheat for binary */
-		if (mode && !mode[0]) {
-			char binary[33]; /* 32 bits + 1 terminator */
-			char *write_ptr = binary + 32;
-			fullLength = 0;
-			binary[32] = 0;
-			do {
-				*(--write_ptr) = (value & 1) + '0';
-				value >>= 1;
-				fullLength++;
-			} while(value);
-			strncpy(dest, write_ptr, maxLength + 1);
-		} else {
-			fullLength = snprintf(dest, maxLength + 1,
-							  mode ? mode : "$%" PRIX32,
-						      value);
-		}
-
-		if (fullLength < 0) {
-			fatalerror("snprintf encoding error\n");
-		} else {
-			length = (size_t)fullLength;
-			if (length > maxLength)
-				fatalerror("Symbol value too long to fit buffer\n");
-		}
-	}
-
-	return length;
-}
+bool executedIfBlock; /* If this is set, ELIFs cannot be executed anymore */
 
 static uint32_t str2int2(uint8_t *s, int32_t length)
 {
@@ -388,16 +332,69 @@ lines		: /* empty */
 		| lines {
 			nListCountEmpty = 0;
 			nPCOffset = 0;
-		} line '\n' {
+		} line {
 			nTotalLines++;
 		}
 ;
 
-line		: label
-		| label cpu_command
-		| label macro
-		| label simple_pseudoop
-		| pseudoop
+line		: label '\n'
+		| label cpu_command '\n'
+		| label macro '\n'
+		| label simple_pseudoop '\n'
+		| pseudoop '\n'
+		| conditional /* May not necessarily be followed by a newline, see below */
+;
+
+/*
+ * For "logistical" reasons, conditionals must manage newlines themselves.
+ * This is because we need to switch the lexer's mode *after* the newline has been read,
+ * and to avoid causing some grammar conflicts (token reducing is finicky).
+ * This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
+ */
+conditional	: if
+		/* It's important that all of these require being at line start for `skipIfBlock` */
+		| elif
+		| else
+		| endc
+;
+
+if		: T_POP_IF const '\n' {
+			nIFDepth++;
+			executedIfBlock = !!$2;
+			if (!executedIfBlock)
+				lexer_SetMode(LEXER_SKIP_TO_ELIF);
+		}
+;
+
+elif		: T_POP_ELIF const '\n' {
+			if (nIFDepth <= 0)
+				fatalerror("Found ELIF outside an IF construct\n");
+
+			if (executedIfBlock) {
+				lexer_SetMode(LEXER_SKIP_TO_ENDC);
+			} else {
+				executedIfBlock = !!$2;
+				if (!executedIfBlock)
+					lexer_SetMode(LEXER_SKIP_TO_ELIF);
+			}
+		}
+;
+
+else		: T_POP_ELSE '\n' {
+			if (nIFDepth <= 0)
+				fatalerror("Found ELSE outside an IF construct\n");
+
+			if (executedIfBlock)
+				lexer_SetMode(LEXER_SKIP_TO_ENDC);
+		}
+;
+
+endc		: T_POP_ENDC '\n' {
+			if (nIFDepth <= 0)
+				fatalerror("Found ENDC outside an IF construct\n");
+
+			nIFDepth--;
+		}
 ;
 
 scoped_id	: T_ID | T_LOCAL_ID ;
@@ -460,10 +457,6 @@ simple_pseudoop : include
 		| printt
 		| printv
 		| printi
-		| if
-		| elif
-		| else
-		| endc
 		| export
 		| db
 		| dw
@@ -606,9 +599,9 @@ rept		: T_POP_REPT uconst {
 			uint32_t nDefinitionLineNo = lexer_GetLineNo();
 			char const *body;
 			size_t size;
-			lexer_SkipToBlockEnd(T_POP_REPT, T_POP_ENDR, T_POP_ENDR,
-					     &body, &size, "REPT block");
-			fstk_RunRept($2, nDefinitionLineNo);
+			lexer_CaptureBlock(T_POP_REPT, T_POP_ENDR, &body, &size,
+					   "REPT block");
+			fstk_RunRept($2, nDefinitionLineNo, body, size);
 		}
 ;
 
@@ -616,9 +609,9 @@ macrodef	: T_LABEL ':' T_POP_MACRO {
 			int32_t nDefinitionLineNo = lexer_GetLineNo();
 			char const *body;
 			size_t size;
-			lexer_SkipToBlockEnd(T_POP_MACRO, T_POP_ENDM, T_POP_ENDM,
-					     &body, &size, "macro definition");
-			sym_AddMacro($1, nDefinitionLineNo);
+			lexer_CaptureBlock(T_POP_MACRO, T_POP_ENDM, &body, &size,
+					   "macro definition");
+			sym_AddMacro($1, nDefinitionLineNo, body, size);
 		}
 ;
 
@@ -784,72 +777,6 @@ printi		: T_POP_PRINTI const	{ printf("%" PRId32, $2); }
 ;
 
 printf		: T_POP_PRINTF const	{ math_Print($2); }
-;
-
-if		: T_POP_IF const {
-			nIFDepth++;
-			if (!$2) {
-				/* The function is hardcoded to also stop on T_POP_ELSE and ENDC */
-				lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ELIF,
-						     NULL, NULL, "if block");
-				skipElifs = false;
-			} else {
-				skipElifs = true;
-			}
-		}
-;
-
-elif		: T_POP_ELIF const {
-			if (nIFDepth <= 0)
-				fatalerror("Found ELIF outside an IF construct\n");
-
-			if (skipElifs) {
-				/*
-				 * Executed when ELIF is reached at the end of
-				 * an IF or ELIF block for which the condition
-				 * was true.
-				 *
-				 * Continue parsing at ENDC keyword
-				 */
-				lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ENDC,
-						     NULL, NULL, "elif block");
-			} else {
-				/*
-				 * Executed when ELIF is skipped to because the
-				 * condition of the previous IF or ELIF block
-				 * was false.
-				 */
-
-				if (!$2) {
-					/*
-					 * Continue parsing after ELSE, or at
-					 * ELIF or ENDC keyword.
-					 */
-					lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ELIF,
-							     NULL, NULL, "elif block");
-				} else {
-					skipElifs = true;
-				}
-			}
-		}
-;
-
-else		: T_POP_ELSE {
-			if (nIFDepth <= 0)
-				fatalerror("Found ELSE outside an IF construct\n");
-
-			/* Continue parsing at ENDC keyword */
-			lexer_SkipToBlockEnd(T_POP_IF, T_POP_ENDC, T_POP_ENDC,
-					     NULL, NULL, "else block");
-		}
-;
-
-endc		: T_POP_ENDC {
-			if (nIFDepth <= 0)
-				fatalerror("Found ENDC outside an IF construct\n");
-
-			nIFDepth--;
-		}
 ;
 
 const_3bit	: const {

@@ -488,6 +488,7 @@ int main(int argc, char *argv[])
 
 	if (!state)
 		fatalerror("Failed to open main file!\n");
+	lexer_Init();
 	lexer_SetState(state);
 
 	nStartClock = clock();

@@ -41,7 +41,7 @@ static char IncludePaths[MAXINCPATHS][_MAX_PATH + 1];
 static int32_t NextIncPath;
 static uint32_t nMacroCount;
 
-static char *pCurrentREPTBlock;
+static char const *pCurrentREPTBlock;
 static uint32_t nCurrentREPTBlockSize;
 static uint32_t nCurrentREPTBlockCount;
 static int32_t nCurrentREPTBodyFirstLine;
@@ -249,9 +249,11 @@ void fstk_Dump(void)
 			pLastFile->nLine);
 		pLastFile = pLastFile->next;
 	}
+	char const *fileName = lexer_GetFileName();
 
-	fprintf(stderr, "%s(%" PRId32 ",%" PRId32 ")",
-		lexer_GetFileName(), lexer_GetLineNo(), lexer_GetColNo());
+	if (fileName)
+		fprintf(stderr, "%s(%" PRId32 ",%" PRId32 "): ",
+			fileName, lexer_GetLineNo(), lexer_GetColNo());
 }
 
 void fstk_DumpToStr(char *buf, size_t buflen)
@@ -425,15 +427,15 @@ void fstk_RunMacro(char *s, struct MacroArgs *args)
 /*
  * Set up a repeat block for parsing
  */
-void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
+void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char const *body, size_t size)
 {
 	if (count) {
 		pushcontext();
 		macro_SetUniqueID(nMacroCount++);
 		nCurrentREPTBlockCount = count;
 		nCurrentStatus = STAT_isREPTBlock;
-		nCurrentREPTBlockSize = ulNewMacroSize;
-		pCurrentREPTBlock = tzNewMacro;
+		nCurrentREPTBlockSize = size;
+		pCurrentREPTBlock = body;
 		nCurrentREPTBodyFirstLine = nReptLineNo + 1;
 	}
 }
