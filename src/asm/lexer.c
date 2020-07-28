@@ -25,6 +25,7 @@
 
 #include "asm/asm.h"
 #include "asm/lexer.h"
+#include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
@@ -230,6 +231,7 @@ static_assert(LEXER_BUF_SIZE <= SSIZE_MAX);
 struct Expansion {
 	struct Expansion *firstChild;
 	struct Expansion *next;
+	char *name;
 	char const *contents;
 	size_t len;
 	uint8_t distance; /* Distance between the beginning of this expansion and of its parent */
@@ -461,6 +463,7 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 {
 	struct Expansion *expansion = lexerState->expansions;
 	struct Expansion *prevLevel = NULL; /* Top level has no "previous" level */
+	unsigned int depth = 0;
 
 	for (;;) {
 		/* Find the closest expansion whose end is after the target */
@@ -481,10 +484,14 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 		/* Otherwise, register this expansion and repeat the process */
 		prevLevel = expansion;
 		expansion = expansion->firstChild;
+
+		if (depth++ > nMaxRecursionDepth)
+			fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
 	}
 }
 
-static void beginExpansion(size_t distance, uint8_t skip, char const *str, size_t size)
+static void beginExpansion(size_t distance, uint8_t skip,
+			   char const *str, size_t size, char const *name)
 {
 	struct Expansion *parent = getExpansionAtDistance(&distance);
 	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
@@ -498,6 +505,7 @@ static void beginExpansion(size_t distance, uint8_t skip, char const *str, size_
 		fatalerror("Unable to allocate new expansion: %s", strerror(errno));
 	(*insertPoint)->firstChild = NULL;
 	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
+	(*insertPoint)->name = strdup(name);
 	(*insertPoint)->contents = str;
 	(*insertPoint)->len = size;
 	(*insertPoint)->distance = distance;
@@ -513,6 +521,7 @@ static void freeExpansion(struct Expansion *expansion)
 	do {
 		struct Expansion *next = expansion->next;
 
+		free(expansion->name);
 		free(expansion);
 		expansion = next;
 	} while (expansion);
@@ -654,6 +663,8 @@ static void shiftChars(uint8_t distance)
 		}
 	}
 
+	/* FIXME: this may not be too great, as only the top level is considered... */
+
 	/*
 	 * The logic is as follows:
 	 * - Any characters up to the expansion need to be consumed in the file
@@ -732,7 +743,37 @@ uint32_t lexer_GetColNo(void)
 
 void lexer_DumpStringExpansions(void)
 {
-	/* TODO */
+	if (!lexerState)
+		return;
+	/* This is essentially a modified copy-paste of `getExpansionAtDistance(0)` */
+	struct Expansion *stack[nMaxRecursionDepth];
+
+	struct Expansion *expansion = lexerState->expansions;
+	unsigned int depth = 0;
+	size_t distance = lexerState->expansionOfs;
+
+	for (;;) {
+		/* Find the closest expansion whose end is after the target */
+		while (expansion && expansion->len - expansion->distance <= distance) {
+			distance -= expansion->skip;
+			expansion = expansion->next;
+		}
+
+		/* If there is none, or it begins after the target, return the previous level */
+		if (!expansion || expansion->distance > distance)
+			break;
+
+		/* We know we are inside of that expansion */
+		distance -= expansion->distance; /* Distances are relative to their parent */
+
+		stack[depth++] = expansion;
+		if (!expansion->firstChild)
+			break;
+		expansion = expansion->firstChild;
+	}
+
+	while (depth--)
+		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
 }
 
 /* Function to discard all of a line's comments */
@@ -1379,7 +1420,7 @@ static int yylex_NORMAL(void)
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
 
-						beginExpansion(0, 0, s, strlen(s));
+						beginExpansion(0, 0, s, strlen(s), sym->name);
 						continue; /* Restart, reading from the new buffer */
 					}
 				}
@@ -1457,7 +1498,9 @@ static int yylex_SKIP_TO_ENDC(void)
 
 int yylex(void)
 {
-	if (lexerState->atLineStart) {
+	if (lexerState->atLineStart
+	/* Newlines read within an expansion should not increase the line count */
+	 && (!lexerState->expansions || lexerState->expansions->distance)) {
 		lexerState->lineNo++;
 		lexerState->colNo = 0;
 	}

@@ -1,0 +1,3 @@
+warning: test/asm/equs-purge.asm(0): [-Wuser]
+    Crash?
+while expanding symbol "BYE"
