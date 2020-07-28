@@ -324,6 +324,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 			state->isMmapped = true;
 			state->ptr = pa;
 			state->size = size;
+			state->offset = 0;
 
 			if (verbose)
 				printf("File %s successfully mmap()ped\n", path);
