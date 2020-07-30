@@ -234,7 +234,8 @@ struct Expansion {
 	char *name;
 	char const *contents;
 	size_t len;
-	uint8_t distance; /* Distance between the beginning of this expansion and of its parent */
+	size_t totalLen;
+	size_t distance; /* Distance between the beginning of this expansion and of its parent */
 	uint8_t skip; /* How many extra characters to skip after the expansion is over */
 };
 
@@ -459,44 +460,77 @@ static void reallocCaptureBuf(void)
 		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
 }
 
+/*
+ * The multiple evaluations of `retvar` causing side effects is INTENTIONAL, and
+ * required for example by `lexer_dumpStringExpansions`. It is however only
+ * evaluated once per level, and only then.
+ *
+ * This uses the concept of "X macros": you must #define LOOKUP_PRE_NEST and
+ *  LOOKUP_POST_NEST before invoking this (and #undef them right after), and
+ * those macros will be expanded at the corresponding points in the loop.
+ * This is necessary because there are at least 3 places which need to iterate
+ * through iterations while performing custom actions
+ */
+#define lookupExpansion(retvar, dist) do { \
+	struct Expansion *exp = lexerState->expansions; \
+	\
+	for (;;) { \
+		/* Find the closest expansion whose end is after the target */ \
+		while (exp && exp->totalLen + exp->distance <= (dist)) { \
+			(dist) -= exp->totalLen + exp->skip; \
+			exp = exp->next; \
+		} \
+		\
+		/* If there is none, or it begins after the target, return the previous level */ \
+		if (!exp || exp->distance > (dist)) \
+			break; \
+		\
+		/* We know we are inside of that expansion */ \
+		(dist) -= exp->distance; /* Distances are relative to their parent */ \
+		\
+		/* Otherwise, register this expansion and repeat the process */ \
+		LOOKUP_PRE_NEST(exp); \
+		(retvar) = exp; \
+		if (!exp->firstChild) /* If there are no children, this is it */ \
+			break; \
+		exp = exp->firstChild; \
+		\
+		LOOKUP_POST_NEST(exp); \
+	} \
+} while (0)
+
 static struct Expansion *getExpansionAtDistance(size_t *distance)
 {
-	struct Expansion *expansion = lexerState->expansions;
-	struct Expansion *prevLevel = NULL; /* Top level has no "previous" level */
 	unsigned int depth = 0;
+	struct Expansion *expansion = NULL; /* Top level has no "previous" level */
 
-	for (;;) {
-		/* Find the closest expansion whose end is after the target */
-		while (expansion && expansion->len - expansion->distance <= *distance) {
-			*distance -= expansion->skip;
-			expansion = expansion->next;
-		}
+#define LOOKUP_PRE_NEST(exp)
+#define LOOKUP_POST_NEST(exp) do { \
+	if (depth++ > nMaxRecursionDepth) \
+		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth); \
+} while (0)
+	lookupExpansion(expansion, *distance);
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
 
-		/* If there is none, or it begins after the target, return the previous level */
-		if (!expansion || expansion->distance > *distance)
-			return prevLevel;
-
-		/* We know we are inside of that expansion */
-		*distance -= expansion->distance; /* Distances are relative to their parent */
-
-		if (!expansion->firstChild) /* If there are no children, this is it */
-			return expansion;
-		/* Otherwise, register this expansion and repeat the process */
-		prevLevel = expansion;
-		expansion = expansion->firstChild;
-
-		if (depth++ > nMaxRecursionDepth)
-			fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
-	}
+	return expansion;
 }
 
 static void beginExpansion(size_t distance, uint8_t skip,
 			   char const *str, size_t size, char const *name)
 {
-	struct Expansion *parent = getExpansionAtDistance(&distance);
+	distance += lexerState->expansionOfs; /* Distance argument is relative to read offset! */
+	/* Increase the total length of all parents, and return the topmost one */
+	struct Expansion *parent = NULL;
+
+#define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size
+#define LOOKUP_POST_NEST(exp)
+	lookupExpansion(parent, distance);
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
 	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
 
-	/* We cannot be *inside* of any of these expansions, so just keep the list sorted */
+	/* We know we are in none of the children expansions: add ourselves, keeping it sorted */
 	while (*insertPoint && (*insertPoint)->distance < distance)
 		insertPoint = &(*insertPoint)->next;
 
@@ -508,6 +542,7 @@ static void beginExpansion(size_t distance, uint8_t skip,
 	(*insertPoint)->name = strdup(name);
 	(*insertPoint)->contents = str;
 	(*insertPoint)->len = size;
+	(*insertPoint)->totalLen = size;
 	(*insertPoint)->distance = distance;
 	(*insertPoint)->skip = skip;
 
@@ -680,9 +715,10 @@ nextExpansion:
 			lexerState->expansionOfs += distance - lexerState->expansions->distance;
 			distance = lexerState->expansions->distance; /* Nb chars to read in file */
 			/* Now, check if the expansion finished being read */
-			if (lexerState->expansionOfs >= lexerState->expansions->len) {
+			if (lexerState->expansionOfs >= lexerState->expansions->totalLen) {
 				/* Add the leftovers to the distance */
-				distance += lexerState->expansionOfs - lexerState->expansions->len;
+				distance += lexerState->expansionOfs;
+				distance -= lexerState->expansions->totalLen;
 				/* Also add in the post-expansion skip */
 				distance += lexerState->expansions->skip;
 				/* Move on to the next expansion */
@@ -745,32 +781,15 @@ void lexer_DumpStringExpansions(void)
 {
 	if (!lexerState)
 		return;
-	/* This is essentially a modified copy-paste of `getExpansionAtDistance(0)` */
 	struct Expansion *stack[nMaxRecursionDepth];
-
-	struct Expansion *expansion = lexerState->expansions;
 	unsigned int depth = 0;
 	size_t distance = lexerState->expansionOfs;
 
-	for (;;) {
-		/* Find the closest expansion whose end is after the target */
-		while (expansion && expansion->len - expansion->distance <= distance) {
-			distance -= expansion->skip;
-			expansion = expansion->next;
-		}
-
-		/* If there is none, or it begins after the target, return the previous level */
-		if (!expansion || expansion->distance > distance)
-			break;
-
-		/* We know we are inside of that expansion */
-		distance -= expansion->distance; /* Distances are relative to their parent */
-
-		stack[depth++] = expansion;
-		if (!expansion->firstChild)
-			break;
-		expansion = expansion->firstChild;
-	}
+#define LOOKUP_PRE_NEST(exp)
+#define LOOKUP_POST_NEST(exp)
+	lookupExpansion(stack[depth++], distance);
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
 
 	while (depth--)
 		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
