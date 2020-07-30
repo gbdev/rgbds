@@ -553,13 +553,16 @@ static void beginExpansion(size_t distance, uint8_t skip,
 
 static void freeExpansion(struct Expansion *expansion)
 {
-	do {
-		struct Expansion *next = expansion->next;
+	struct Expansion *child = expansion->firstChild;
 
-		free(expansion->name);
-		free(expansion);
-		expansion = next;
-	} while (expansion);
+	while (child) {
+		struct Expansion *next = child->next;
+
+		freeExpansion(child);
+		child = next;
+	}
+	free(expansion->name);
+	free(expansion);
 }
 
 /* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
