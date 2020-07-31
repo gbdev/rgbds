@@ -373,7 +373,7 @@ struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 	struct LexerState *state = malloc(sizeof(*state));
 
 	if (!state) {
-		error("Failed to allocate memory for lexer state: %s", strerror(errno));
+		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
 		return NULL;
 	}
 	// TODO: init `path`
@@ -1088,7 +1088,7 @@ static char const *readInterpolation(void)
 				}
 			}
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
-			error("Unterminated interpolation\n");
+			error("Missing }\n");
 			break;
 		} else if (c == '}') {
 			shiftChars(1);
@@ -1441,10 +1441,6 @@ static int yylex_NORMAL(void)
 				shiftChars(1); /* Shift that EOL */
 			/* fallthrough */
 		case '\n':
-			if (lexerStateEOL) {
-				lexer_SetState(lexerStateEOL);
-				lexerStateEOL = NULL;
-			}
 			return '\n';
 
 		case EOF:
@@ -1490,9 +1486,95 @@ static int yylex_NORMAL(void)
 	}
 }
 
+static bool isWhitespace(int c)
+{
+	return c == ' ' || c == '\t';
+}
+
 static int yylex_RAW(void)
 {
-	fatalerror("LEXER_RAW not yet implemented\n");
+	/* This is essentially a modified `readString` */
+	size_t i = 0;
+
+	/* Trim left of string... */
+	while (isWhitespace(peek(0)))
+		shiftChars(1);
+
+	for (;;) {
+		int c = peek(0);
+
+		switch (c) {
+		case ',':
+			shiftChars(1);
+			/* fallthrough */
+		case '\r':
+		case '\n': /* Do not shift these! */
+		case EOF:
+			if (c != ',')
+				lexer_SetMode(LEXER_NORMAL);
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "Macro argument too long\n");
+			}
+			/* Trim whitespace */
+			while (i && isWhitespace(yylval.tzString[i - 1]))
+				i--;
+			yylval.tzString[i] = '\0';
+			return T_STRING;
+
+		case '\\': /* Character escape */
+			c = peek(1);
+			switch (c) {
+			case ',':
+			case '\\': /* Return that character unchanged */
+			case '"':
+			case '{':
+			case '}':
+				shiftChars(1);
+				break;
+			case 'n':
+				c = '\n';
+				shiftChars(1);
+				break;
+			case 'r':
+				c = '\r';
+				shiftChars(1);
+				break;
+			case 't':
+				c = '\t';
+				shiftChars(1);
+				break;
+
+			case EOF: /* Can't really print that one */
+				error("Illegal character escape at end of input\n");
+				c = '\\';
+				break;
+			default:
+				error("Illegal character escape '%s'\n", print(c));
+				c = '\\';
+				break;
+			}
+			break;
+
+		case '{': /* Symbol interpolation */
+			shiftChars(1);
+			char const *ptr = readInterpolation();
+
+			if (ptr) {
+				while (*ptr) {
+					if (i == sizeof(yylval.tzString))
+						break;
+					yylval.tzString[i++] = *ptr++;
+				}
+			}
+			continue; /* Do not copy an additional character */
+
+		/* Regular characters will just get copied */
+		}
+		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
+			yylval.tzString[i++] = c;
+		shiftChars(1);
+	}
 }
 
 /*
@@ -1548,11 +1630,16 @@ static int yylex_SKIP_TO_ENDC(void)
 int yylex(void)
 {
 restart:
-	if (lexerState->atLineStart
-	/* Newlines read within an expansion should not increase the line count */
-	 && (!lexerState->expansions || lexerState->expansions->distance)) {
-		lexerState->lineNo++;
-		lexerState->colNo = 0;
+	if (lexerState->atLineStart) {
+		/* Newlines read within an expansion should not increase the line count */
+		if (!lexerState->expansions || lexerState->expansions->distance) {
+			lexerState->lineNo++;
+			lexerState->colNo = 0;
+		}
+		if (lexerStateEOL) {
+			lexer_SetState(lexerStateEOL);
+			lexerStateEOL = NULL;
+		}
 	}
 
 	static int (* const lexerModeFuncs[])(void) = {
@@ -1572,6 +1659,7 @@ restart:
 			if (!lexerState->capturing) {
 				if (!yywrap())
 					goto restart;
+				return 0;
 			}
 		}
 	}
