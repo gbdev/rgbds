@@ -501,14 +501,10 @@ static void reallocCaptureBuf(void)
 
 static struct Expansion *getExpansionAtDistance(size_t *distance)
 {
-	unsigned int depth = 0;
 	struct Expansion *expansion = NULL; /* Top level has no "previous" level */
 
 #define LOOKUP_PRE_NEST(exp)
-#define LOOKUP_POST_NEST(exp) do { \
-	if (depth++ > nMaxRecursionDepth) \
-		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth); \
-} while (0)
+#define LOOKUP_POST_NEST(exp)
 	lookupExpansion(expansion, *distance);
 #undef LOOKUP_PRE_NEST
 #undef LOOKUP_POST_NEST
@@ -522,9 +518,13 @@ static void beginExpansion(size_t distance, uint8_t skip,
 	distance += lexerState->expansionOfs; /* Distance argument is relative to read offset! */
 	/* Increase the total length of all parents, and return the topmost one */
 	struct Expansion *parent = NULL;
+	unsigned int depth = 0;
 
 #define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size
-#define LOOKUP_POST_NEST(exp)
+#define LOOKUP_POST_NEST(exp) do { \
+	if (++depth >= nMaxRecursionDepth) \
+		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth); \
+} while (0)
 	lookupExpansion(parent, distance);
 #undef LOOKUP_PRE_NEST
 #undef LOOKUP_POST_NEST
@@ -784,7 +784,7 @@ void lexer_DumpStringExpansions(void)
 {
 	if (!lexerState)
 		return;
-	struct Expansion *stack[nMaxRecursionDepth];
+	struct Expansion *stack[nMaxRecursionDepth + 1];
 	unsigned int depth = 0;
 	size_t distance = lexerState->expansionOfs;
 
