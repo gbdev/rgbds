@@ -164,6 +164,7 @@ This is the complete list of user-defined variables:
 
 - ``CHECKPATCH``: Path of the script ``checkpatch.pl`` of the Linux kernel.
   Defaults to ``../linux/scripts/checkpatch.pl``.
+  You can retrieve that script from `here <https://github.com/torvalds/linux/blob/master/scripts/checkpatch.pl>`__.
 
 3 History
 ---------
