@@ -213,7 +213,7 @@ void error(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "ERROR: ", "\n    ", NULL);
+	printDiag(fmt, args, "ERROR: ", ":\n    ", NULL);
 	va_end(args);
 	nbErrors++;
 }
@@ -223,7 +223,7 @@ noreturn_ void fatalerror(const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL: ", "\n    ", NULL);
+	printDiag(fmt, args, "FATAL: ", ":\n    ", NULL);
 	va_end(args);
 
 	exit(1);
@@ -241,7 +241,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		return;
 
 	case WARNING_ERROR:
-		printDiag(fmt, args, "ERROR: ", "[-Werror=%s]\n    ", flag);
+		printDiag(fmt, args, "ERROR: ", ": [-Werror=%s]\n    ", flag);
 		va_end(args);
 		return;
 
@@ -253,7 +253,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		break;
 	}
 
-	printDiag(fmt, args, "warning: ", "[-W%s]\n    ", flag);
+	printDiag(fmt, args, "warning: ", ": [-W%s]\n    ", flag);
 
 	va_end(args);
 }
