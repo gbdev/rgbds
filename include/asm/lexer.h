@@ -31,7 +31,8 @@ static inline void lexer_SetStateAtEOL(struct LexerState *state)
 }
 
 struct LexerState *lexer_OpenFile(char const *path);
-struct LexerState *lexer_OpenFileView(void);
+struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo);
+void lexer_RestartRept(uint32_t lineNo);
 void lexer_DeleteState(struct LexerState *state);
 void lexer_Init(void);
 
@@ -50,7 +51,7 @@ uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
-void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char const **capture, size_t *size,
+void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char **capture, size_t *size,
 			char const *name);
 
 #endif /* RGBDS_ASM_LEXER_H */

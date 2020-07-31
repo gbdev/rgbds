@@ -33,7 +33,7 @@
 #include "platform.h" // strdup
 
 struct Patch {
-	char tzFilename[_MAX_PATH + 1];
+	char *tzFilename;
 	uint32_t nOffset;
 	struct Section *pcSection;
 	uint32_t pcOffset;
@@ -318,7 +318,7 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 		fatalerror("No memory for patch's RPN expression: %s\n", strerror(errno));
 
 	patch->type = type;
-	fstk_DumpToStr(patch->tzFilename, sizeof(patch->tzFilename));
+	patch->tzFilename = fstk_DumpToStr();
 	patch->nOffset = ofs;
 	patch->pcSection = sect_GetSymbolSection();
 	patch->pcOffset = sect_GetSymbolOffset();

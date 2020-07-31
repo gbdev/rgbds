@@ -41,13 +41,7 @@ struct sContext {
 
 extern unsigned int nMaxRecursionDepth;
 
-void fstk_RunInclude(char *tzFileName);
-void fstk_Init(char *s);
-void fstk_Dump(void);
-void fstk_DumpToStr(char *buf, size_t len);
-void fstk_AddIncludePath(char *s);
-void fstk_RunMacro(char *s, struct MacroArgs *args);
-void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char const *body, size_t size);
+void fstk_AddIncludePath(char const *s);
 /**
  * @param path The user-provided file name
  * @param fullPath The address of a pointer, which will be made to point at the full path
@@ -56,6 +50,16 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char const *body, size_t 
  * @return True if the file was found, false if no path worked
  */
 bool fstk_FindFile(char const *path, char **fullPath, size_t *size);
-int32_t fstk_GetLine(void);
+
+bool yywrap(void);
+void fstk_RunInclude(char const *path);
+void fstk_RunMacro(char *macroName, struct MacroArgs *args);
+void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size);
+
+void fstk_Dump(void);
+char *fstk_DumpToStr(void);
+uint32_t fstk_GetLine(void);
+
+void fstk_Init(char *mainPath, uint32_t maxRecursionDepth);
 
 #endif /* RGBDS_ASM_FSTACK_H */

@@ -258,6 +258,8 @@ struct LexerState {
 	};
 
 	/* Common state */
+	bool isFile;
+
 	enum LexerMode mode;
 	bool atLineStart;
 	uint32_t lineNo;
@@ -278,6 +280,21 @@ struct LexerState {
 struct LexerState *lexerState = NULL;
 struct LexerState *lexerStateEOL = NULL;
 
+static void initState(struct LexerState *state)
+{
+	state->mode = LEXER_NORMAL;
+	state->atLineStart = true; /* yylex() will init colNo due to this */
+	state->lastToken = 0;
+
+	state->capturing = false;
+	state->captureBuf = NULL;
+
+	state->nbChars = 0;
+	state->expandStrings = true;
+	state->expansions = NULL;
+	state->expansionOfs = 0;
+}
+
 struct LexerState *lexer_OpenFile(char const *path)
 {
 	bool isStdin = !strcmp(path, "-");
@@ -292,6 +309,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 	}
 	state->path = path;
 
+	state->isFile = true;
 	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
 	if (state->fd == -1) {
 		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
@@ -345,32 +363,45 @@ struct LexerState *lexer_OpenFile(char const *path)
 		state->index = 0;
 	}
 
-	state->mode = LEXER_NORMAL;
-	state->atLineStart = true; /* yylex() will init colNo due to this */
-	state->lineNo = 0;
-	state->lastToken = 0;
-
-	state->capturing = false;
-	state->captureBuf = NULL;
-
-	state->nbChars = 0;
-	state->expandStrings = true;
-	state->expansions = NULL;
-	state->expansionOfs = 0;
+	initState(state);
+	state->lineNo = 0; /* Will be incremented at first line start */
 	return state;
 }
 
-struct LexerState *lexer_OpenFileView(void)
+struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 {
-	return NULL;
+	struct LexerState *state = malloc(sizeof(*state));
+
+	if (!state) {
+		error("Failed to allocate memory for lexer state: %s", strerror(errno));
+		return NULL;
+	}
+	// TODO: init `path`
+
+	state->isFile = false;
+	state->isMmapped = true; /* It's not *really* mmap()ed, but it behaves the same */
+	state->ptr = buf;
+	state->size = size;
+	state->offset = 0;
+
+	initState(state);
+	state->lineNo = lineNo; /* Will be incremented at first line start */
+	return state;
+}
+
+void lexer_RestartRept(uint32_t lineNo)
+{
+	lexerState->offset = 0;
+	initState(lexerState);
+	lexerState->lineNo = lineNo;
 }
 
 void lexer_DeleteState(struct LexerState *state)
 {
-	if (state->isMmapped)
-		munmap(state->ptr, state->size);
-	else
+	if (!state->isMmapped)
 		close(state->fd);
+	else if (state->isFile)
+		munmap(state->ptr, state->size);
 	free(state);
 }
 
@@ -523,7 +554,7 @@ static void beginExpansion(size_t distance, uint8_t skip,
 #define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size
 #define LOOKUP_POST_NEST(exp) do { \
 	if (++depth >= nMaxRecursionDepth) \
-		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth); \
+		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth); \
 } while (0)
 	lookupExpansion(parent, distance);
 #undef LOOKUP_PRE_NEST
@@ -536,7 +567,7 @@ static void beginExpansion(size_t distance, uint8_t skip,
 
 	*insertPoint = malloc(sizeof(**insertPoint));
 	if (!*insertPoint)
-		fatalerror("Unable to allocate new expansion: %s", strerror(errno));
+		fatalerror("Unable to allocate new expansion: %s\n", strerror(errno));
 	(*insertPoint)->firstChild = NULL;
 	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
 	(*insertPoint)->name = strdup(name);
@@ -1417,10 +1448,6 @@ static int yylex_NORMAL(void)
 			return '\n';
 
 		case EOF:
-			/* Captures end at their buffer's boundary no matter what */
-			if (!lexerState->capturing) {
-				/* TODO: use `yywrap()` */
-			}
 			return 0;
 
 		/* Handle identifiers... or error out */
@@ -1520,6 +1547,7 @@ static int yylex_SKIP_TO_ENDC(void)
 
 int yylex(void)
 {
+restart:
 	if (lexerState->atLineStart
 	/* Newlines read within an expansion should not increase the line count */
 	 && (!lexerState->expansions || lexerState->expansions->distance)) {
@@ -1536,8 +1564,17 @@ int yylex(void)
 	int token = lexerModeFuncs[lexerState->mode]();
 
 	/* Make sure to terminate files with a line feed */
-	if (token == 0 && lexerState->lastToken != '\n')
-		token = '\n';
+	if (token == 0) {
+		if (lexerState->lastToken != '\n') {
+			token = '\n';
+		} else { /* Try to switch to new buffer; if it succeeds, scan again */
+			/* Captures end at their buffer's boundary no matter what */
+			if (!lexerState->capturing) {
+				if (!yywrap())
+					goto restart;
+			}
+		}
+	}
 	lexerState->lastToken = token;
 
 	lexerState->atLineStart = false;
@@ -1547,16 +1584,18 @@ int yylex(void)
 	return token;
 }
 
-void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char const **capture, size_t *size,
+void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char **capture, size_t *size,
 			char const *name)
 {
+	assert(!lexerState->expansions);
+
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	unsigned int level = 0;
 	char *captureStart;
 
 	if (lexerState->isMmapped) {
-		captureStart = lexerState->ptr;
+		captureStart = &lexerState->ptr[lexerState->offset];
 	} else {
 		lexerState->captureCapacity = 128; /* The initial size will be twice that */
 		reallocCaptureBuf();

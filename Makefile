@@ -72,7 +72,7 @@ rgbasm_obj := \
 	src/hashmap.o \
 	src/linkdefs.o
 
-src/asm/lexer.o: src/asm/asmy.h
+src/asm/lexer.o src/asm/main.o: src/asm/asmy.h
 
 rgblink_obj := \
 	src/link/assign.o \

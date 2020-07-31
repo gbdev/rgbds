@@ -23,16 +23,16 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/output.h"
+#include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
+#include "asmy.h"
 
 #include "extern/err.h"
 #include "extern/getopt.h"
 
 #include "helpers.h"
 #include "version.h"
-
-extern int yyparse(void);
 
 size_t cldefines_index;
 size_t cldefines_numindices;
@@ -307,11 +307,11 @@ int main(int argc, char *argv[])
 	yydebug = 1;
 #endif
 
-	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
 	oGeneratedMissingIncludes = false;
 	oFailedOnMissingInclude = false;
 	tzTargetFileName = NULL;
+	uint32_t maxRecursionDepth = 64;
 	size_t nTargetFileNameLen = 0;
 
 	DefaultOptions.gbgfx[0] = '0';
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
 
 			break;
 		case 'r':
-			nMaxRecursionDepth = strtoul(optarg, &ep, 0);
+			maxRecursionDepth = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");
@@ -483,13 +483,9 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
 
-	/* Init lexer; important to do first, since that's what provides the file name, line, etc */
-	struct LexerState *state = lexer_OpenFile(tzMainfile);
-
-	if (!state)
-		fatalerror("Failed to open main file!\n");
+	/* Init file stack; important to do first, since it provides the file name, line, etc */
 	lexer_Init();
-	lexer_SetState(state);
+	fstk_Init(tzMainfile, maxRecursionDepth);
 
 	nStartClock = clock();
 
@@ -497,7 +493,6 @@ int main(int argc, char *argv[])
 	nIFDepth = 0;
 	sym_Init();
 	sym_SetExportAll(exportall);
-	fstk_Init(tzMainfile);
 
 	opt_ParseDefines();
 	charmap_New("main", NULL);

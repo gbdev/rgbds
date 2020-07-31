@@ -477,7 +477,7 @@ void sym_Export(char const *symName)
 /*
  * Add a macro definition
  */
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size)
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName);
 

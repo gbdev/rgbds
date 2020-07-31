@@ -29,7 +29,8 @@ struct MacroArgs {
 			    sizeof(((struct MacroArgs){0}).args[0]) * (nbArgs))
 
 static struct MacroArgs *macroArgs = NULL;
-static uint32_t uniqueID = -1;
+static uint32_t uniqueID = 0;
+static uint32_t maxUniqueID = 0;
 /*
  * The initialization is somewhat harmful, since it is never used, but it
  * guarantees the size of the buffer will be correct. I was unable to find a
@@ -107,13 +108,21 @@ char const *macro_GetUniqueIDStr(void)
 void macro_SetUniqueID(uint32_t id)
 {
 	uniqueID = id;
-	if (id == -1) {
+	if (id == 0) {
 		uniqueIDPtr = NULL;
 	} else {
+		if (uniqueID > maxUniqueID)
+			maxUniqueID = uniqueID;
 		/* The buffer is guaranteed to be the correct size */
 		sprintf(uniqueIDBuf, "_%" PRIu32, id);
 		uniqueIDPtr = uniqueIDBuf;
 	}
+}
+
+uint32_t macro_UseNewUniqueID(void)
+{
+	macro_SetUniqueID(++maxUniqueID);
+	return maxUniqueID;
 }
 
 void macro_ShiftCurrentArgs(void)

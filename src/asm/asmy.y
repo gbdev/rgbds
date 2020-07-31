@@ -597,21 +597,21 @@ load		: T_POP_LOAD string ',' sectiontype sectorg sectattrs {
 
 rept		: T_POP_REPT uconst {
 			uint32_t nDefinitionLineNo = lexer_GetLineNo();
-			char const *body;
+			char *body;
 			size_t size;
 			lexer_CaptureBlock(T_POP_REPT, T_POP_ENDR, &body, &size,
 					   "REPT block");
-			fstk_RunRept($2, nDefinitionLineNo, body, size);
+			fstk_RunRept($2, nDefinitionLineNo, body, size - strlen("ENDR"));
 		}
 ;
 
 macrodef	: T_LABEL ':' T_POP_MACRO {
 			int32_t nDefinitionLineNo = lexer_GetLineNo();
-			char const *body;
+			char *body;
 			size_t size;
 			lexer_CaptureBlock(T_POP_MACRO, T_POP_ENDM, &body, &size,
 					   "macro definition");
-			sym_AddMacro($1, nDefinitionLineNo, body, size);
+			sym_AddMacro($1, nDefinitionLineNo, body, size - strlen("ENDM"));
 		}
 ;
 
