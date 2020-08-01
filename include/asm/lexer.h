@@ -51,7 +51,7 @@ uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
-void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char **capture, size_t *size,
-			char const *name);
+void lexer_CaptureRept(char **capture, size_t *size);
+void lexer_CaptureMacroBody(char **capture, size_t *size);
 
 #endif /* RGBDS_ASM_LEXER_H */

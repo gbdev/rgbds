@@ -626,19 +626,19 @@ static int peek(uint8_t distance)
 
 		/* Do not perform expansions while capturing */
 		if (!lexerState->capturing) {
-			/* Scan the newly-inserted chars for any macro args */
-			bool escaped = false;
+			/* Scan the new chars for any macro args */
+#define BUF_OFS (lexerState->offset + lexerState->nbChars)
+			while (lexerState->nbChars <= distance) {
+				char c = lexerState->ptr[BUF_OFS];
 
-			while (lexerState->nbChars < distance && !escaped) {
-				char c = lexerState->ptr[lexerState->offset
-							 + lexerState->nbChars++];
-
-				if (escaped) {
-					escaped = false;
+				lexerState->nbChars++;
+				if (c == '\\') {
+					if (lexerState->size <= BUF_OFS)
+						break; /* This was the last char in the buffer */
+					c = lexerState->ptr[BUF_OFS];
+					lexerState->nbChars++;
 					if ((c >= '1' && c <= '9') || c == '@')
 						fatalerror("Macro arg expansion is not implemented yet\n");
-				} else if (c == '\\') {
-					escaped = true;
 				}
 			}
 		}
@@ -774,13 +774,13 @@ nextExpansion:
 	if (lexerState->isMmapped) {
 		lexerState->offset += distance;
 	} else {
-		lexerState->nbChars -= distance;
 		lexerState->index += distance;
 		/* Wrap around if necessary */
 		if (lexerState->index >= LEXER_BUF_SIZE)
 			lexerState->index %= LEXER_BUF_SIZE;
 	}
 
+	lexerState->nbChars -= distance;
 	lexerState->colNo += distance;
 }
 
@@ -974,6 +974,11 @@ static void readGfxConstant(void)
 }
 
 /* Function to read identifiers & keywords */
+
+static bool startsIdentifier(int c)
+{
+	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
+}
 
 static int readIdentifier(char firstChar)
 {
@@ -1449,9 +1454,7 @@ static int yylex_NORMAL(void)
 		/* Handle identifiers... or error out */
 
 		default:
-			if ((c <= 'Z' && c >= 'A')
-			 || (c <= 'z' && c >= 'a')
-			 || c == '.' || c == '_') {
+			if (startsIdentifier(c)) {
 				int tokenType = readIdentifier(c);
 
 				/* If a keyword, don't try to expand */
@@ -1672,39 +1675,163 @@ restart:
 	return token;
 }
 
-void lexer_CaptureBlock(int blockStartToken, int blockEndToken, char **capture, size_t *size,
-			char const *name)
+static char *startCapture(void)
 {
 	assert(!lexerState->expansions);
 
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
-	unsigned int level = 0;
-	char *captureStart;
 
 	if (lexerState->isMmapped) {
-		captureStart = &lexerState->ptr[lexerState->offset];
+		return &lexerState->ptr[lexerState->offset];
 	} else {
 		lexerState->captureCapacity = 128; /* The initial size will be twice that */
 		reallocCaptureBuf();
-		captureStart = lexerState->captureBuf;
+		return lexerState->captureBuf;
 	}
+}
 
+void lexer_CaptureRept(char **capture, size_t *size)
+{
+	char *captureStart = startCapture();
+	unsigned int level = 0;
+	int c;
+
+	/*
+	 * Due to parser internals, it reads the EOL after the expression before calling this.
+	 * Thus, we don't need to keep one in the buffer afterwards.
+	 * The following assertion checks that.
+	 */
+	assert(lexerState->atLineStart);
 	for (;;) {
-		int token = yylex();
+		/* We're at line start, so attempt to match a `REPT` or `ENDR` token */
+		do { /* Discard initial whitespace */
+			c = nextChar();
+		} while (isWhitespace(c));
+		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		if (startsIdentifier(c)) {
+			switch (readIdentifier(c)) {
+			case T_POP_REPT:
+				level++;
+				/* Ignore the rest of that line */
+				break;
 
-		if (level == 0 && token == blockEndToken)
-			break;
+			case T_POP_ENDR:
+				if (!level) {
+					/* Read (but don't capture) until EOL or EOF */
+					lexerState->capturing = false;
+					do {
+						c = nextChar();
+					} while (c != EOF && c != '\r' && c != '\n');
+					/* Handle Windows CRLF */
+					if (c == '\r' && peek(0) == '\n')
+						shiftChars(1);
+					goto finish;
+				}
+				level--;
+			}
+		}
+		lexerState->lineNo++;
 
-		if (token == EOF)
-			error("Unterminated %s\n", name);
-		else if (token == blockStartToken)
-			level++;
-		else if (token == blockEndToken)
-			level--;
+		/* Just consume characters until EOL or EOF */
+		for (;;) {
+			if (c == EOF) {
+				error("Unterminated REPT block\n");
+				goto finish;
+			} else if (c == '\n') {
+				break;
+			} else if (c == '\r') {
+				if (peek(0) == '\n')
+					shiftChars(1);
+				break;
+			}
+			c = nextChar();
+		}
 	}
 
+finish:
 	*capture = captureStart;
-	*size = lexerState->captureSize;
+	*size = lexerState->captureSize - strlen("ENDR");
+	lexerState->captureBuf = NULL;
+}
+
+void lexer_CaptureMacroBody(char **capture, size_t *size)
+{
+	char *captureStart = startCapture();
+	unsigned int level = 0;
+	int c = peek(0);
+
+	/*
+	 * Due to parser internals, it does not read the EOL after the T_POP_MACRO before calling
+	 * this. Thus, we need to keep one in the buffer afterwards.
+	 * (Note that this also means the captured buffer begins with a newline and maybe comment)
+	 * The following assertion checks that.
+	 */
+	assert(!lexerState->atLineStart);
+	for (;;) {
+		/* Just consume characters until EOL or EOF */
+		for (;;) {
+			if (c == EOF) {
+				error("Unterminated macro definition\n");
+				goto finish;
+			} else if (c == '\n') {
+				break;
+			} else if (c == '\r') {
+				if (peek(0) == '\n')
+					shiftChars(1);
+				break;
+			}
+			c = nextChar();
+		}
+
+		/* We're at line start, attempt to match a `label: MACRO` line or `ENDM` token */
+		do { /* Discard initial whitespace */
+			c = nextChar();
+		} while (isWhitespace(c));
+		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		if (startsIdentifier(c)) {
+			switch (readIdentifier(c)) {
+			case T_ID:
+				/* We have an initial label, look for a single colon */
+				do {
+					c = nextChar();
+				} while (isWhitespace(c));
+				if (c != ':') /* If not a colon, give up */
+					break;
+				/* And finally, a `MACRO` token */
+				do {
+					c = nextChar();
+				} while (isWhitespace(c));
+				if (!startsIdentifier(c))
+					break;
+				if (readIdentifier(c) != T_POP_MACRO)
+					break;
+				level++;
+				break;
+
+			case T_POP_ENDM:
+				if (!level) {
+					/* Read (but don't capture) until EOL or EOF */
+					lexerState->capturing = false;
+					do {
+						c = peek(0);
+						if (c == EOF || c == '\r' || c == '\n')
+							break;
+						shiftChars(1);
+					} while (c != EOF && c != '\r' && c != '\n');
+					/* Handle Windows CRLF */
+					if (c == '\r' && peek(1) == '\n')
+						shiftChars(1);
+					goto finish;
+				}
+				level--;
+			}
+		}
+		lexerState->lineNo++;
+	}
+
+finish:
+	*capture = captureStart;
+	*size = lexerState->captureSize - strlen("ENDM");
 	lexerState->captureBuf = NULL;
 }
