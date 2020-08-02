@@ -254,6 +254,7 @@ struct LexerState {
 			int fd;
 			size_t index; /* Read index into the buffer */
 			char buf[LEXER_BUF_SIZE]; /* Circular buffer */
+			size_t nbChars; /* Number of "fresh" chars in the buffer */
 		};
 	};
 
@@ -271,7 +272,7 @@ struct LexerState {
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
 	size_t captureCapacity; /* Size of the buffer above */
 
-	size_t nbChars; /* Number of chars of lookahead, for processing expansions */
+	size_t expansionDistance; /* Distance already considered for expansions */
 	bool expandStrings;
 	struct Expansion *expansions;
 	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
@@ -289,7 +290,7 @@ static void initState(struct LexerState *state)
 	state->capturing = false;
 	state->captureBuf = NULL;
 
-	state->nbChars = 0;
+	state->expansionDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
 	state->expansionOfs = 0;
@@ -361,6 +362,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 			       path, strerror(errno));
 		lseek(state->fd, 0, SEEK_SET);
 		state->index = 0;
+		state->nbChars = 0;
 	}
 
 	initState(state);
@@ -612,7 +614,7 @@ static char const *expandMacroArg(char name, size_t distance)
 }
 
 /* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
-static int peek(uint8_t distance)
+static int peekInternal(uint8_t distance)
 {
 	if (distance >= LEXER_BUF_SIZE)
 		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%u >= %u)\n",
@@ -632,29 +634,7 @@ static int peek(uint8_t distance)
 		if (lexerState->offset + distance >= lexerState->size)
 			return EOF;
 
-		/*
-		 * Note: the following block is also duplicated for the non-mmap() path. This sucks.
-		 * However, due to subtle handling differences, I haven't found a clean way to
-		 * avoid that duplication. If you have any ideas, please discuss them in an issue or
-		 * pull request. Thank you!
-		 */
-		unsigned char c = lexerState->ptr[lexerState->offset + distance];
-
-		/* If not capturing and character is a backslash, check for a macro arg */
-		if (!lexerState->capturing && c == '\\') {
-			/* We need to read the following character, so check if that's possible */
-			if (lexerState->offset + distance + 1 < lexerState->size) {
-				c = lexerState->ptr[lexerState->offset + distance + 1];
-				if (c == '@' || (c >= '1' && c <= '9'))
-					/* Expand the argument and return its first character */
-					c = expandMacroArg(c, distance)[0];
-					/* WARNING: this assumes macro args can't be empty!! */
-				else
-					c = '\\';
-			}
-		}
-
-		return c;
+		return (unsigned char)lexerState->ptr[lexerState->offset + distance];
 	}
 
 	if (lexerState->nbChars <= distance) {
@@ -694,22 +674,28 @@ static int peek(uint8_t distance)
 		if (lexerState->nbChars <= distance)
 			return EOF;
 	}
-	unsigned char c = lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
+	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
+}
 
-	/* If not capturing and character is a backslash, check for a macro arg */
-	if (!lexerState->capturing && c == '\\') {
-		/* We need to read the character at `distance + 1`, so check if that's possible */
-		if (lexerState->nbChars == distance + 1) /* We know that ...->nbChars > distance */
-			fatalerror("Internal lexer error: not enough lookahead for macro arg check\n");
-		c = lexerState->buf[(lexerState->index + distance + 1) % LEXER_BUF_SIZE];
-		if (c == '@' || (c >= '1' && c <= '9'))
-			/* Expand the argument and return its first character */
-			c = expandMacroArg(c, distance)[0];
-			/* WARNING: this assumes macro args can't be empty!! */
-		else
-			c = '\\';
+static int peek(uint8_t distance)
+{
+	int c = peekInternal(distance);
+
+	if (distance >= lexerState->expansionDistance) {
+		/* If not capturing and character is a backslash, check for a macro arg */
+		if (!lexerState->capturing && c == '\\') {
+			distance++;
+			c = peekInternal(distance);
+			if (c == '@' || (c >= '1' && c <= '9')) {
+				/* Expand the argument and return its first character */
+				c = expandMacroArg(c, distance - 1)[0];
+				/* WARNING: this assumes macro args can't be empty!! */
+			} else {
+				c = '\\';
+			}
+		}
+		lexerState->expansionDistance = distance + 1; /* Do not consider again */
 	}
-
 	return c;
 }
 
@@ -726,6 +712,8 @@ static void shiftChars(uint8_t distance)
 			lexerState->captureSize += distance;
 		}
 	}
+
+	lexerState->expansionDistance -= distance;
 
 	/* FIXME: this may not be too great, as only the top level is considered... */
 
@@ -774,9 +762,8 @@ nextExpansion:
 		/* Wrap around if necessary */
 		if (lexerState->index >= LEXER_BUF_SIZE)
 			lexerState->index %= LEXER_BUF_SIZE;
+		lexerState->nbChars -= distance;
 	}
-
-	lexerState->nbChars -= distance;
 }
 
 static int nextChar(void)
@@ -811,17 +798,18 @@ void lexer_DumpStringExpansions(void)
 	if (!lexerState)
 		return;
 	struct Expansion *stack[nMaxRecursionDepth + 1];
-	struct Expansion *expansion;
+	struct Expansion *expansion; /* Temp var for `lookupExpansion` */
 	unsigned int depth = 0;
 	size_t distance = lexerState->expansionOfs;
 
 #define LOOKUP_PRE_NEST(exp) do { \
 	/* Only register EQUS expansions, not string args */ \
-	if (expansion->name) \
-		stack[depth++] = expansion; \
+	if ((exp)->name) \
+		stack[depth++] = (exp); \
 } while (0)
 #define LOOKUP_POST_NEST(exp)
 	lookupExpansion(expansion, distance);
+	(void)expansion;
 #undef LOOKUP_PRE_NEST
 #undef LOOKUP_POST_NEST
 
