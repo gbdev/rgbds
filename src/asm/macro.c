@@ -89,6 +89,9 @@ void macro_FreeArgs(struct MacroArgs *args)
 
 char const *macro_GetArg(uint32_t i)
 {
+	if (!macroArgs)
+		return NULL;
+
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
 	return realIndex >= macroArgs->nbArgs ? NULL
