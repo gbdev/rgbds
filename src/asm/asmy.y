@@ -101,7 +101,11 @@ static uint32_t str2int2(char *s, int32_t length)
 	int32_t i;
 	uint32_t r = 0;
 
-	i = length < 4 ? 0 : length - 4;
+	i = 0;
+	if (length > 4) {
+		warning(WARNING_LONG_STR, "String is too long in expression '%s' only last 4 characters will be used.", s)
+		i = length - 4;
+	}
 	while (i < length) {
 		r <<= 8;
 		r |= (uint8_t)s[i];
