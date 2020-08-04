@@ -14,18 +14,19 @@
 extern unsigned int nbErrors;
 
 enum WarningID {
-	WARNING_ASSERT,
-	WARNING_BUILTIN_ARG,
-	WARNING_DIV,
+	WARNING_ASSERT,		/* Assertions */
+	WARNING_BUILTIN_ARG,	/* Invalid args to builtins */
+	WARNING_DIV,		/* Division undefined behavior */
 	WARNING_EMPTY_DATA_DIRECTIVE,
-	WARNING_EMPTY_ENTRY,
-	WARNING_LARGE_CONSTANT,
-	WARNING_LONG_STR,
-	WARNING_OBSOLETE,
-	WARNING_SHIFT,
-	WARNING_SHIFT_AMOUNT,
-	WARNING_TRUNCATION,
-	WARNING_USER,
+				/* `db`, `dw` or `dl` with no directive in ROM */
+	WARNING_EMPTY_ENTRY,	/* Empty entry in `db`, `dw` or `dl` */
+	WARNING_LARGE_CONSTANT,	/* Constants too large */
+	WARNING_LONG_STR,	/* String too long for internal buffers */
+	WARNING_OBSOLETE,	/* Obsolete things */
+	WARNING_SHIFT,		/* Shifting undefined behavior */
+	WARNING_SHIFT_AMOUNT,	/* Strange shift amount */
+	WARNING_TRUNCATION,	/* Implicit truncation loses some bits */
+	WARNING_USER,		/* User warnings */
 
 	NB_WARNINGS,
 

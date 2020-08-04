@@ -28,18 +28,18 @@ enum WarningState {
 };
 
 static enum WarningState const defaultWarnings[NB_WARNINGS] = {
-	WARNING_ENABLED,  /* Assertions */
-	WARNING_DISABLED, /* Invalid args to builtins */
-	WARNING_DISABLED, /* Division undefined behavior */
-	WARNING_DISABLED, /* `db`, `dw`, or `dl` with no directive in ROM */
-	WARNING_DISABLED, /* Empty entry in `db`, `dw` or `dl` */
-	WARNING_DISABLED, /* Constants too large */
-	WARNING_DISABLED, /* String too long for internal buffers */
-	WARNING_ENABLED,  /* Obsolete things */
-	WARNING_DISABLED, /* Shifting undefined behavior */
-	WARNING_DISABLED, /* Strange shift amount */
-	WARNING_ENABLED,  /* Implicit truncation loses some bits */
-	WARNING_ENABLED,  /* User warnings */
+	[WARNING_ASSERT]		= WARNING_ENABLED,
+	[WARNING_BUILTIN_ARG]		= WARNING_DISABLED,
+	[WARNING_DIV]			= WARNING_DISABLED,
+	[WARNING_EMPTY_DATA_DIRECTIVE]	= WARNING_DISABLED,
+	[WARNING_EMPTY_ENTRY]		= WARNING_DISABLED,
+	[WARNING_LARGE_CONSTANT]	= WARNING_DISABLED,
+	[WARNING_LONG_STR]		= WARNING_DISABLED,
+	[WARNING_OBSOLETE]		= WARNING_ENABLED,
+	[WARNING_SHIFT]			= WARNING_DISABLED,
+	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
+	[WARNING_TRUNCATION]		= WARNING_ENABLED,
+	[WARNING_USER]			= WARNING_ENABLED,
 };
 
 static enum WarningState warningStates[NB_WARNINGS];
