@@ -103,7 +103,7 @@ static uint32_t str2int2(char *s, int32_t length)
 
 	i = 0;
 	if (length > 4) {
-		warning(WARNING_LONG_STR, "String is too long in expression '%s' only last 4 characters will be used.", s)
+		warning(WARNING_LONG_STR, "String '%s' is too long, conversion will use only last 4 characters", s)
 		i = length - 4;
 	}
 	while (i < length) {
