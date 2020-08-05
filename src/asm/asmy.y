@@ -628,11 +628,11 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 %token	T_TOKEN_A T_TOKEN_B T_TOKEN_C T_TOKEN_D T_TOKEN_E T_TOKEN_H T_TOKEN_L
 %token	T_MODE_AF
-%token	T_MODE_BC T_MODE_BC_IND
-%token	T_MODE_DE T_MODE_DE_IND
+%token	T_MODE_BC
+%token	T_MODE_DE
 %token	T_MODE_SP
-%token	T_MODE_C_IND
-%token	T_MODE_HL T_MODE_HL_IND T_MODE_HL_INDDEC T_MODE_HL_INDINC
+%token	T_MODE_HW_C
+%token	T_MODE_HL T_MODE_HL_DEC T_MODE_HL_INC
 %token	T_CC_NZ T_CC_Z T_CC_NC
 
 %type	<nConstValue>	reg_r
@@ -1653,18 +1653,18 @@ z80_jr		: T_Z80_JR reloc_16bit {
 		}
 ;
 
-z80_ldi		: T_Z80_LDI T_MODE_HL_IND ',' T_MODE_A {
+z80_ldi		: T_Z80_LDI '[' T_MODE_HL ']' ',' T_MODE_A {
 			out_AbsByte(0x02 | (2 << 4));
 		}
-		| T_Z80_LDI T_MODE_A ',' T_MODE_HL_IND {
+		| T_Z80_LDI T_MODE_A ',' '[' T_MODE_HL ']' {
 			out_AbsByte(0x0A | (2 << 4));
 		}
 ;
 
-z80_ldd		: T_Z80_LDD T_MODE_HL_IND ',' T_MODE_A {
+z80_ldd		: T_Z80_LDD '[' T_MODE_HL ']' ',' T_MODE_A {
 			out_AbsByte(0x02 | (3 << 4));
 		}
-		| T_Z80_LDD T_MODE_A ',' T_MODE_HL_IND {
+		| T_Z80_LDD T_MODE_A ',' '[' T_MODE_HL ']' {
 			out_AbsByte(0x0A | (3 << 4));
 		}
 ;
@@ -1681,12 +1681,16 @@ z80_ldio	: T_Z80_LDIO T_MODE_A ',' op_mem_ind {
 			out_AbsByte(0xE0);
 			out_RelByte(&$2);
 		}
-		| T_Z80_LDIO T_MODE_A ',' T_MODE_C_IND {
+		| T_Z80_LDIO T_MODE_A ',' c_ind {
 			out_AbsByte(0xF2);
 		}
-		| T_Z80_LDIO T_MODE_C_IND ',' T_MODE_A {
+		| T_Z80_LDIO c_ind ',' T_MODE_A {
 			out_AbsByte(0xE2);
 		}
+;
+
+c_ind		: '[' T_MODE_C ']'
+		| '[' T_MODE_HW_C ']'
 ;
 
 z80_ld		: z80_ld_mem
@@ -1733,7 +1737,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind ',' T_MODE_SP {
 		}
 ;
 
-z80_ld_cind	: T_Z80_LD T_MODE_C_IND ',' T_MODE_A {
+z80_ld_cind	: T_Z80_LD c_ind ',' T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;
@@ -1755,7 +1759,7 @@ z80_ld_r	: T_Z80_LD reg_r ',' reloc_8bit {
 		}
 ;
 
-z80_ld_a	: T_Z80_LD reg_r ',' T_MODE_C_IND {
+z80_ld_a	: T_Z80_LD reg_r ',' c_ind {
 			if ($2 == REG_A)
 				out_AbsByte(0xF2);
 			else
@@ -1995,7 +1999,7 @@ reg_r		: T_MODE_B		{ $$ = REG_B; }
 		| T_MODE_E		{ $$ = REG_E; }
 		| T_MODE_H		{ $$ = REG_H; }
 		| T_MODE_L		{ $$ = REG_L; }
-		| T_MODE_HL_IND		{ $$ = REG_HL_IND; }
+		| '[' T_MODE_HL ']'	{ $$ = REG_HL_IND; }
 		| T_MODE_A		{ $$ = REG_A; }
 ;
 
@@ -2011,10 +2015,18 @@ reg_ss		: T_MODE_BC		{ $$ = REG_BC; }
 		| T_MODE_SP		{ $$ = REG_SP; }
 ;
 
-reg_rr		: T_MODE_BC_IND		{ $$ = REG_BC_IND; }
-		| T_MODE_DE_IND		{ $$ = REG_DE_IND; }
-		| T_MODE_HL_INDINC	{ $$ = REG_HL_INDINC; }
-		| T_MODE_HL_INDDEC	{ $$ = REG_HL_INDDEC; }
+reg_rr		: '[' T_MODE_BC ']'	{ $$ = REG_BC_IND; }
+		| '[' T_MODE_DE ']'	{ $$ = REG_DE_IND; }
+		| hl_ind_inc		{ $$ = REG_HL_INDINC; }
+		| hl_ind_dec		{ $$ = REG_HL_INDDEC; }
+;
+
+hl_ind_inc	: '[' T_MODE_HL_INC ']'
+		| '[' T_MODE_HL T_OP_ADD ']'
+;
+
+hl_ind_dec	: '[' T_MODE_HL_DEC ']'
+		| '[' T_MODE_HL T_OP_SUB ']'
 ;
 
 %%
