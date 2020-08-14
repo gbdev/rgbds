@@ -26,7 +26,7 @@ struct Context {
 	struct Context *child;
 	struct LexerState *lexerState;
 	uint32_t uniqueID;
-	char *fileName;
+	char const *fileName;
 	uint32_t lineNo; /* Line number at which the context was EXITED */
 	struct Symbol const *macro;
 	uint32_t nbReptIters; /* If zero, this isn't a REPT block */
@@ -149,14 +149,12 @@ bool yywrap(void)
 	contextDepth--;
 
 	lexer_DeleteState(contextStack->child->lexerState);
-	/* If at top level (= not in macro or in REPT), free the file name */
-	if (!contextStack->macro && contextStack->reptIters == 0)
-		free(contextStack->child->fileName);
 	/* Free the entry and make its parent the current entry */
 	free(contextStack->child);
 
 	contextStack->child = NULL;
 	lexer_SetState(contextStack->lexerState);
+	macro_SetUniqueID(contextStack->uniqueID);
 	return false;
 }
 
@@ -197,7 +195,7 @@ void fstk_RunInclude(char const *path)
 	/* We're back at top-level, so most things are reset */
 	contextStack->uniqueID = 0;
 	macro_SetUniqueID(0);
-	contextStack->fileName = fullPath;
+	contextStack->fileName = lexer_GetFileName();
 	contextStack->macro = NULL;
 	contextStack->nbReptIters = 0;
 }
@@ -217,8 +215,9 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 	macro_UseNewArgs(args);
 
 	newContext(0);
+	/* Line minus 1 because buffer begins with a newline */
 	contextStack->lexerState = lexer_OpenFileView(macro->macro,
-						      macro->macroSize, macro->fileLine);
+						      macro->macroSize, macro->fileLine - 1);
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for macro invocation\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
@@ -311,7 +310,7 @@ void fstk_Init(char *mainPath, uint32_t maxRecursionDepth)
 	lexer_SetState(topLevelContext->lexerState);
 	topLevelContext->uniqueID = 0;
 	macro_SetUniqueID(0);
-	topLevelContext->fileName = mainPath;
+	topLevelContext->fileName = lexer_GetFileName();
 	topLevelContext->macro = NULL;
 	topLevelContext->nbReptIters = 0;
 	topLevelContext->reptDepth = 0;

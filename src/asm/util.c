@@ -28,9 +28,12 @@ uint32_t calchash(const char *s)
 	return hash;
 }
 
-char const *print(char c)
+char const *print(int c)
 {
 	static char buf[5]; /* '\xNN' + '\0' */
+
+	if (c == EOF)
+		return "EOF";
 
 	if (isprint(c)) {
 		buf[0] = c;

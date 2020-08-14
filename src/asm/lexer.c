@@ -272,7 +272,6 @@ struct LexerState {
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
 	size_t captureCapacity; /* Size of the buffer above */
 
-	size_t expansionDistance; /* Distance already considered for expansions */
 	bool expandStrings;
 	struct Expansion *expansions;
 	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
@@ -290,7 +289,6 @@ static void initState(struct LexerState *state)
 	state->capturing = false;
 	state->captureBuf = NULL;
 
-	state->expansionDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
 	state->expansionOfs = 0;
@@ -538,7 +536,31 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 
 #define LOOKUP_PRE_NEST(exp)
 #define LOOKUP_POST_NEST(exp)
-	lookupExpansion(expansion, *distance);
+	struct Expansion *exp = lexerState->expansions;
+
+	for (;;) {
+		/* Find the closest expansion whose end is after the target */
+		while (exp && exp->totalLen + exp->distance <= *distance) {
+			*distance -= exp->totalLen - exp->skip;
+			exp = exp->next;
+		}
+
+		/* If there is none, or it begins after the target, return the previous level */
+		if (!exp || exp->distance > *distance)
+			break;
+
+		/* We know we are inside of that expansion */
+		*distance -= exp->distance; /* Distances are relative to their parent */
+
+		/* Otherwise, register this expansion and repeat the process */
+		LOOKUP_PRE_NEST(exp);
+		expansion = exp;
+		if (!exp->firstChild) /* If there are no children, this is it */
+			break;
+		exp = exp->firstChild;
+
+		LOOKUP_POST_NEST(exp);
+	}
 #undef LOOKUP_PRE_NEST
 #undef LOOKUP_POST_NEST
 
@@ -553,7 +575,7 @@ static void beginExpansion(size_t distance, uint8_t skip,
 	struct Expansion *parent = NULL;
 	unsigned int depth = 0;
 
-#define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size
+#define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size - skip
 #define LOOKUP_POST_NEST(exp) do { \
 	if (name && ++depth >= nMaxRecursionDepth) \
 		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth); \
@@ -604,6 +626,8 @@ static char const *expandMacroArg(char name, size_t distance)
 
 	if (name == '@')
 		str = macro_GetUniqueIDStr();
+	else if (name == '0')
+		fatalerror("Invalid macro argument '\\0'\n");
 	else
 		str = macro_GetArg(name - '0');
 	if (!str)
@@ -624,11 +648,11 @@ static int peekInternal(uint8_t distance)
 	struct Expansion const *expansion = getExpansionAtDistance(&ofs);
 
 	if (expansion) {
-		assert(distance < expansion->len);
+		assert(ofs < expansion->len);
 		return expansion->contents[ofs];
 	}
 
-	distance = ofs - lexerState->expansionOfs;
+	distance = ofs;
 
 	if (lexerState->isMmapped) {
 		if (lexerState->offset + distance >= lexerState->size)
@@ -681,20 +705,17 @@ static int peek(uint8_t distance)
 {
 	int c = peekInternal(distance);
 
-	if (distance >= lexerState->expansionDistance) {
-		/* If not capturing and character is a backslash, check for a macro arg */
-		if (!lexerState->capturing && c == '\\') {
-			distance++;
-			c = peekInternal(distance);
-			if (c == '@' || (c >= '1' && c <= '9')) {
-				/* Expand the argument and return its first character */
-				c = expandMacroArg(c, distance - 1)[0];
-				/* WARNING: this assumes macro args can't be empty!! */
-			} else {
-				c = '\\';
-			}
+	/* If not capturing and character is a backslash, check for a macro arg */
+	if (!lexerState->capturing && c == '\\') {
+		distance++;
+		c = peekInternal(distance);
+		if (c == '@' || (c >= '0' && c <= '9')) {
+			/* Expand the argument and return its first character */
+			c = expandMacroArg(c, distance - 1)[0];
+			/* WARNING: this assumes macro args can't be empty!! */
+		} else {
+			c = '\\';
 		}
-		lexerState->expansionDistance = distance + 1; /* Do not consider again */
 	}
 	return c;
 }
@@ -712,8 +733,6 @@ static void shiftChars(uint8_t distance)
 			lexerState->captureSize += distance;
 		}
 	}
-
-	lexerState->expansionDistance -= distance;
 
 	/* FIXME: this may not be too great, as only the top level is considered... */
 
@@ -827,6 +846,35 @@ static void discardComment(void)
 		if (c == EOF || c == '\r' || c == '\n')
 			break;
 		shiftChars(1);
+	}
+}
+
+/* Function to read a line continuation */
+
+static bool isWhitespace(int c)
+{
+	return c == ' ' || c == '\t';
+}
+
+static void readLineContinuation(void)
+{
+	for (;;) {
+		int c = peek(0);
+
+		if (isWhitespace(c)) {
+			shiftChars(1);
+		} else if (c == '\r' || c == '\n') {
+			shiftChars(1);
+			if (!lexerState->expansions
+			 || lexerState->expansions->distance) {
+				lexerState->lineNo++;
+			}
+			return;
+		} else {
+			error("Begun line continuation, but encountered character %s\n",
+			      print(c));
+			return;
+		}
 	}
 }
 
@@ -1190,6 +1238,13 @@ static void readString(void)
 				shiftChars(1);
 				break;
 
+			case ' ':
+			case '\r':
+			case '\n':
+				shiftChars(1); /* Shift the backslash */
+				readLineContinuation();
+				continue;
+
 			case EOF: /* Can't really print that one */
 				error("Illegal character escape at end of input\n");
 				c = '\\';
@@ -1477,15 +1532,11 @@ static int yylex_NORMAL(void)
 	}
 }
 
-static bool isWhitespace(int c)
-{
-	return c == ' ' || c == '\t';
-}
-
 static int yylex_RAW(void)
 {
 	/* This is essentially a modified `readString` */
 	size_t i = 0;
+	bool insideString = false;
 
 	/* Trim left of string... */
 	while (isWhitespace(peek(0)))
@@ -1495,15 +1546,23 @@ static int yylex_RAW(void)
 		int c = peek(0);
 
 		switch (c) {
-		case ',':
-			shiftChars(1);
+		case '"':
+			insideString = !insideString;
+			/* Other than that, just process quotes normally */
+			break;
+
+		case ';': /* Comments inside macro args */
+			if (insideString)
+				break;
+			do {
+				shiftChars(1);
+				c = peek(0);
+			} while (c != EOF && c != '\r' && c != '\n');
 			/* fallthrough */
+		case ',':
 		case '\r':
-		case '\n': /* Do not shift these! */
+		case '\n':
 		case EOF:
-			/* Empty macro args break their expansion, so prevent that */
-			if (i == 0)
-				return c;
 			if (i == sizeof(yylval.tzString)) {
 				i--;
 				warning(WARNING_LONG_STR, "Macro argument too long\n");
@@ -1511,6 +1570,11 @@ static int yylex_RAW(void)
 			/* Trim whitespace */
 			while (i && isWhitespace(yylval.tzString[i - 1]))
 				i--;
+			/* Empty macro args break their expansion, so prevent that */
+			if (i == 0) {
+				shiftChars(1);
+				return c == EOF ? 0 : c;
+			}
 			yylval.tzString[i] = '\0';
 			return T_STRING;
 
@@ -1518,31 +1582,21 @@ static int yylex_RAW(void)
 			c = peek(1);
 			switch (c) {
 			case ',':
-			case '\\': /* Return that character unchanged */
-			case '"':
-			case '{':
-			case '}':
 				shiftChars(1);
 				break;
-			case 'n':
-				c = '\n';
-				shiftChars(1);
-				break;
-			case 'r':
-				c = '\r';
-				shiftChars(1);
-				break;
-			case 't':
-				c = '\t';
-				shiftChars(1);
-				break;
+
+			case ' ':
+			case '\r':
+			case '\n':
+				shiftChars(1); /* Shift the backslash */
+				readLineContinuation();
+				continue;
 
 			case EOF: /* Can't really print that one */
 				error("Illegal character escape at end of input\n");
 				c = '\\';
 				break;
-			default:
-				error("Illegal character escape '%s'\n", print(c));
+			default: /* Pass the rest as-is */
 				c = '\\';
 				break;
 			}
@@ -1622,15 +1676,15 @@ static int yylex_SKIP_TO_ENDC(void)
 int yylex(void)
 {
 restart:
+	if (lexerState->atLineStart && lexerStateEOL) {
+		lexer_SetState(lexerStateEOL);
+		lexerStateEOL = NULL;
+	}
 	if (lexerState->atLineStart) {
 		/* Newlines read within an expansion should not increase the line count */
 		if (!lexerState->expansions || lexerState->expansions->distance) {
 			lexerState->lineNo++;
 			lexerState->colNo = 0;
-		}
-		if (lexerStateEOL) {
-			lexer_SetState(lexerStateEOL);
-			lexerStateEOL = NULL;
 		}
 	}
 
@@ -1693,6 +1747,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 	 */
 	assert(lexerState->atLineStart);
 	for (;;) {
+		lexerState->lineNo++;
 		/* We're at line start, so attempt to match a `REPT` or `ENDR` token */
 		do { /* Discard initial whitespace */
 			c = nextChar();
@@ -1720,7 +1775,6 @@ void lexer_CaptureRept(char **capture, size_t *size)
 				level--;
 			}
 		}
-		lexerState->lineNo++;
 
 		/* Just consume characters until EOL or EOF */
 		for (;;) {

@@ -6,5 +6,5 @@ ERROR: assert.asm(18):
     Expected constant expression: 'FloatingBase' is not constant at assembly time
 ERROR: assert.asm(18):
     Assertion failed
-ERROR: assert.asm(21):
+FATAL: assert.asm(21):
     Assertion failed

@@ -1,2 +1,2 @@
-ERROR: divzero-instr.asm(2):
+FATAL: divzero-instr.asm(2):
     Division by zero
