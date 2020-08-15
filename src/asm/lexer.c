@@ -35,6 +35,12 @@
 /* Include this last so it gets all type & constant definitions */
 #include "asmy.h" /* For token definitions, generated from asmy.y */
 
+#ifdef LEXER_DEBUG
+  #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
+#else
+  #define dbgPrint(...)
+#endif
+
 /*
  * Identifiers that are also keywords are listed here. This ONLY applies to ones
  * that would normally be matched as identifiers! Check out `yylex_NORMAL` to
@@ -296,6 +302,8 @@ static void initState(struct LexerState *state)
 
 struct LexerState *lexer_OpenFile(char const *path)
 {
+	dbgPrint("Opening file \"%s\"\n", path);
+
 	bool isStdin = !strcmp(path, "-");
 	struct LexerState *state = malloc(sizeof(*state));
 
@@ -370,6 +378,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 
 struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 {
+	dbgPrint("Opening view on buffer \"%.*s\"[...]\n", size < 16 ? (int)size : 16, buf);
+
 	struct LexerState *state = malloc(sizeof(*state));
 
 	if (!state) {
@@ -391,6 +401,7 @@ struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 
 void lexer_RestartRept(uint32_t lineNo)
 {
+	dbgPrint("Restarting REPT\n");
 	lexerState->offset = 0;
 	initState(lexerState);
 	lexerState->lineNo = lineNo;
@@ -840,6 +851,7 @@ void lexer_DumpStringExpansions(void)
 
 static void discardComment(void)
 {
+	dbgPrint("Discarding comment\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -858,6 +870,7 @@ static bool isWhitespace(int c)
 
 static void readLineContinuation(void)
 {
+	dbgPrint("Beginning line continuation\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -903,6 +916,7 @@ static void readFractionalPart(void)
 {
 	uint32_t value = 0, divisor = 1;
 
+	dbgPrint("Reading fractional part\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -933,6 +947,7 @@ static void readBinaryNumber(void)
 {
 	uint32_t value = 0;
 
+	dbgPrint("Reading binary number\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -952,6 +967,7 @@ static void readHexNumber(void)
 	uint32_t value = 0;
 	bool empty = true;
 
+	dbgPrint("Reading hex number\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -983,6 +999,7 @@ static void readGfxConstant(void)
 	uint32_t bp0 = 0, bp1 = 0;
 	uint8_t width = 0;
 
+	dbgPrint("Reading gfx constant\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -1018,6 +1035,7 @@ static bool startsIdentifier(int c)
 
 static int readIdentifier(char firstChar)
 {
+	dbgPrint("Reading identifier or keyword\n");
 	/* Lex while checking for a keyword */
 	yylval.tzSym[0] = firstChar;
 	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
@@ -1053,6 +1071,7 @@ static int readIdentifier(char firstChar)
 		i = sizeof(yylval.tzSym) - 1;
 	}
 	yylval.tzSym[i] = '\0'; /* Terminate the string */
+	dbgPrint("Ident/keyword = \"%s\"\n", yylval.tzSym);
 
 	if (keywordDict[nodeID].keyword)
 		return keywordDict[nodeID].keyword->token;
@@ -1193,6 +1212,7 @@ static void readString(void)
 {
 	size_t i = 0;
 
+	dbgPrint("Reading string\n");
 	for (;;) {
 		int c = peek(0);
 
@@ -1204,6 +1224,7 @@ static void readString(void)
 				warning(WARNING_LONG_STR, "String constant too long\n");
 			}
 			yylval.tzString[i] = '\0';
+			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			return;
 		case '\r':
 		case '\n': /* Do not shift these! */
@@ -1214,6 +1235,7 @@ static void readString(void)
 			}
 			yylval.tzString[i] = '\0';
 			error("Unterminated string\n");
+			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			return;
 
 		case '\\': /* Character escape */
@@ -1330,6 +1352,7 @@ static char const *reportGarbageChar(unsigned char firstByte)
 
 static int yylex_NORMAL(void)
 {
+	dbgPrint("Lexing in normal mode\n");
 	for (;;) {
 		int c = nextChar();
 
@@ -1534,6 +1557,8 @@ static int yylex_NORMAL(void)
 
 static int yylex_RAW(void)
 {
+	dbgPrint("Lexing in raw mode\n");
+
 	/* This is essentially a modified `readString` */
 	size_t i = 0;
 	bool insideString = false;
@@ -1576,6 +1601,7 @@ static int yylex_RAW(void)
 				return c == EOF ? 0 : c;
 			}
 			yylval.tzString[i] = '\0';
+			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
 			return T_STRING;
 
 		case '\\': /* Character escape */
@@ -1699,12 +1725,15 @@ restart:
 	/* Make sure to terminate files with a line feed */
 	if (token == 0) {
 		if (lexerState->lastToken != '\n') {
+			dbgPrint("Forcing EOL at EOF\n");
 			token = '\n';
 		} else { /* Try to switch to new buffer; if it succeeds, scan again */
+			dbgPrint("Reached EOF!\n");
 			/* Captures end at their buffer's boundary no matter what */
 			if (!lexerState->capturing) {
 				if (!yywrap())
 					goto restart;
+				dbgPrint("Reached end of input.");
 				return 0;
 			}
 		}

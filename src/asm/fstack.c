@@ -21,6 +21,12 @@
 #include "asm/warning.h"
 #include "platform.h" /* S_ISDIR (stat macro) */
 
+#ifdef LEXER_DEBUG
+  #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
+#else
+  #define dbgPrint(...)
+#endif
+
 struct Context {
 	struct Context *parent;
 	struct Context *child;
@@ -145,6 +151,8 @@ bool yywrap(void)
 	} else if (!contextStack->parent) {
 		return true;
 	}
+	dbgPrint("Popping context\n");
+
 	contextStack = contextStack->parent;
 	contextDepth--;
 
@@ -178,6 +186,8 @@ static void newContext(uint32_t reptDepth)
 
 void fstk_RunInclude(char const *path)
 {
+	dbgPrint("Including path \"%s\"\n", path);
+
 	char *fullPath = NULL;
 	size_t size = 0;
 
@@ -186,6 +196,7 @@ void fstk_RunInclude(char const *path)
 		error("Unable to open included file '%s': %s\n", path, strerror(errno));
 		return;
 	}
+	dbgPrint("Full path: \"%s\"\n", fullPath);
 
 	newContext(0);
 	contextStack->lexerState = lexer_OpenFile(fullPath);
@@ -202,6 +213,8 @@ void fstk_RunInclude(char const *path)
 
 void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 {
+	dbgPrint("Running macro \"%s\"\n", macroName);
+
 	struct Symbol *macro = sym_FindSymbol(macroName);
 
 	if (!macro) {
@@ -229,6 +242,8 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size)
 {
+	dbgPrint("Running REPT(%" PRIu32 ")\n", count);
+
 	uint32_t reptDepth = contextStack->reptDepth;
 
 	newContext(reptDepth + 1);
