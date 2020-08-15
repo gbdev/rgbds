@@ -583,8 +583,14 @@ void out_PCRelByte(struct Expression *expr)
 /*
  * Output a binary file
  */
-void out_BinaryFile(char const *s)
+void out_BinaryFile(char const *s, int32_t startPos)
 {
+	if (startPos < 0) {
+		yyerror("Start position cannot be negative (%" PRId32 ")",
+			startPos);
+		startPos = 0;
+	}
+
 	FILE *f = fstk_FindFile(s, NULL);
 
 	if (!f) {
@@ -602,12 +608,21 @@ void out_BinaryFile(char const *s)
 	checkcodesection();
 	if (fseek(f, 0, SEEK_END) != -1) {
 		fsize = ftell(f);
-		rewind(f);
 
-		reserveSpace(fsize);
-	} else if (errno != ESPIPE) {
-		yyerror("Error determining size of INCBIN file '%s': %s", s,
-			strerror(errno));
+		if (startPos >= fsize) {
+			yyerror("Specified start position is greater than length of file");
+			return;
+		}
+
+		fseek(f, startPos, SEEK_SET);
+		reserveSpace(fsize - startPos);
+	} else {
+		if (errno != ESPIPE)
+			yyerror("Error determining size of INCBIN file '%s': %s",
+				s, strerror(errno));
+		/* The file isn't seekable, so we'll just skip bytes */
+		while (startPos--)
+			(void)fgetc(f);
 	}
 
 	while ((byte = fgetc(f)) != EOF) {

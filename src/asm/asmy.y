@@ -1073,7 +1073,12 @@ include		: T_POP_INCLUDE string {
 ;
 
 incbin		: T_POP_INCBIN string {
-			out_BinaryFile($2);
+			out_BinaryFile($2, 0);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
+		}
+		| T_POP_INCBIN string ',' const {
+			out_BinaryFile($2, $4);
 			if (oFailedOnMissingInclude)
 				YYACCEPT;
 		}
