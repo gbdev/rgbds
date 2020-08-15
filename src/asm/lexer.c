@@ -725,7 +725,7 @@ static int peek(uint8_t distance)
 			distance++;
 			lexerState->macroArgScanDistance++;
 			c = peekInternal(distance);
-			if (c == '@' || (c >= '1' && c <= '9')) {
+			if (c == '@' || (c >= '0' && c <= '9')) {
 				/* Expand the argument and return its first character */
 				char const *str = expandMacroArg(c, distance - 1);
 
@@ -1677,9 +1677,11 @@ static int yylex_RAW(void)
  */
 static int skipIfBlock(bool toEndc)
 {
+	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
 	lexer_SetMode(LEXER_NORMAL);
 	int startingDepth = nIFDepth;
 	int token;
+	bool atLineStart = lexerState->atLineStart;
 
 	/* Prevent expanding macro args in this state by enabling capture to nothing */
 	lexerState->capturing = true;
@@ -1687,23 +1689,65 @@ static int skipIfBlock(bool toEndc)
 	lexerState->captureBuf = NULL;
 
 	for (;;) {
-		bool atLineStart = lexerState->atLineStart;
+		if (atLineStart) {
+			int c;
 
-		token = yylex();
-		if (token == 0) { /* Pass EOF through */
-			break;
-		} else if (atLineStart && token == T_POP_IF) { /* Increase nesting */
-			nIFDepth++;
-		} else if (atLineStart && nIFDepth == startingDepth) { /* An occasion to finish? */
-			if (token == T_POP_ENDC || (!toEndc && (token == T_POP_ELIF
-							     || token == T_POP_ELSE)))
-				break;
-		} else if (atLineStart && token == T_POP_ENDC) { /* Decrease nesting */
-			nIFDepth--;
+			for (;;) {
+				c = peek(0);
+				if (!isWhitespace(c))
+					break;
+				shiftChars(1);
+			}
+
+			if (startsIdentifier(c)) {
+				shiftChars(1);
+				token = readIdentifier(c);
+				switch (token) {
+				case T_POP_IF:
+					nIFDepth++;
+					break;
+
+				case T_POP_ELIF:
+				case T_POP_ELSE:
+					if (toEndc) /* Ignore ELIF and ELSE, go to ENDC */
+						break;
+					/* fallthrough */
+				case T_POP_ENDC:
+					if (nIFDepth == startingDepth)
+						goto finish;
+					if (token == T_POP_ENDC)
+						nIFDepth--;
+				}
+			}
+			atLineStart = false;
 		}
+
+		/* Read chars until EOL */
+		do {
+			int c = nextChar();
+
+			if (c == EOF) {
+				token = 0;
+				goto finish;
+			} else if (c == '\\') {
+				/* Unconditionally skip the next char, including line conts */
+				c = nextChar();
+			} else if (c == '\r' || c == '\n') {
+				atLineStart = true;
+			}
+
+			if (c == '\r' || c == '\n')
+				/* Do this both on line continuations and plain EOLs */
+				lexerState->lineNo++;
+			/* Handle CRLF */
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
+		} while (!atLineStart);
 	}
+finish:
 
 	lexerState->capturing = false;
+	lexerState->atLineStart = false;
 
 	return token;
 }
