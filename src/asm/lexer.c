@@ -278,6 +278,7 @@ struct LexerState {
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
 	size_t captureCapacity; /* Size of the buffer above */
 
+	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
 	bool expandStrings;
 	struct Expansion *expansions;
 	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
@@ -295,6 +296,7 @@ static void initState(struct LexerState *state)
 	state->capturing = false;
 	state->captureBuf = NULL;
 
+	state->macroArgScanDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
 	state->expansionOfs = 0;
@@ -716,16 +718,29 @@ static int peek(uint8_t distance)
 {
 	int c = peekInternal(distance);
 
-	/* If not capturing and character is a backslash, check for a macro arg */
-	if (!lexerState->capturing && c == '\\') {
-		distance++;
-		c = peekInternal(distance);
-		if (c == '@' || (c >= '0' && c <= '9')) {
-			/* Expand the argument and return its first character */
-			c = expandMacroArg(c, distance - 1)[0];
-			/* WARNING: this assumes macro args can't be empty!! */
-		} else {
-			c = '\\';
+	if (distance >= lexerState->macroArgScanDistance) {
+		lexerState->macroArgScanDistance = distance + 1; /* Do not consider again */
+		/* If not capturing and character is a backslash, check for a macro arg */
+		if (!lexerState->capturing && c == '\\') {
+			distance++;
+			lexerState->macroArgScanDistance++;
+			c = peekInternal(distance);
+			if (c == '@' || (c >= '1' && c <= '9')) {
+				/* Expand the argument and return its first character */
+				char const *str = expandMacroArg(c, distance - 1);
+
+				/*
+				 * Assuming macro args can't be recursive (I'll be damned if a way
+				 * is found...), then we mark the entire macro arg as scanned;
+				 * however, the two macro arg characters (\1) will be ignored,
+				 * so they shouldn't be counted in the scan distance!
+				 */
+				lexerState->macroArgScanDistance += strlen(str) - 2;
+				/* WARNING: this assumes macro args can't be empty!! */
+				c = str[0];
+			} else {
+				c = '\\';
+			}
 		}
 	}
 	return c;
@@ -744,6 +759,8 @@ static void shiftChars(uint8_t distance)
 			lexerState->captureSize += distance;
 		}
 	}
+
+	lexerState->macroArgScanDistance -= distance;
 
 	/* FIXME: this may not be too great, as only the top level is considered... */
 
