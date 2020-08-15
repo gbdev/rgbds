@@ -792,6 +792,7 @@ nextExpansion:
 		/* Wrap around if necessary */
 		if (lexerState->index >= LEXER_BUF_SIZE)
 			lexerState->index %= LEXER_BUF_SIZE;
+		assert(lexerState->nbChars >= distance);
 		lexerState->nbChars -= distance;
 	}
 }
@@ -1467,9 +1468,7 @@ static int yylex_NORMAL(void)
 		case '8':
 		case '9':
 			readNumber(10, c - '0');
-			int perhapsPeriod = peek(0);
-
-			if (perhapsPeriod == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				readFractionalPart();
 			}
@@ -1597,8 +1596,11 @@ static int yylex_RAW(void)
 				i--;
 			/* Empty macro args break their expansion, so prevent that */
 			if (i == 0) {
+				/* Return the EOF token, and don't shift a non-existent char! */
+				if (c == EOF)
+					return 0;
 				shiftChars(1);
-				return c == EOF ? 0 : c;
+				return c;
 			}
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
