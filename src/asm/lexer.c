@@ -1674,7 +1674,7 @@ static int skipIfBlock(bool toEndc)
 
 		token = yylex();
 		if (token == 0) { /* Pass EOF through */
-			return token;
+			break;
 		} else if (atLineStart && token == T_POP_IF) { /* Increase nesting */
 			nIFDepth++;
 		} else if (atLineStart && nIFDepth == startingDepth) { /* An occasion to finish? */
@@ -1811,6 +1811,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		for (;;) {
 			if (c == EOF) {
 				error("Unterminated REPT block\n");
+				lexerState->capturing = false;
 				goto finish;
 			} else if (c == '\n') {
 				break;
@@ -1824,6 +1825,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 	}
 
 finish:
+	assert(!lexerState->capturing);
 	*capture = captureStart;
 	*size = lexerState->captureSize - strlen("ENDR");
 	lexerState->captureBuf = NULL;
@@ -1847,6 +1849,7 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 		for (;;) {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
+				lexerState->capturing = false;
 				goto finish;
 			} else if (c == '\n') {
 				break;
@@ -1905,6 +1908,7 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 	}
 
 finish:
+	assert(!lexerState->capturing);
 	*capture = captureStart;
 	*size = lexerState->captureSize - strlen("ENDM");
 	lexerState->captureBuf = NULL;
