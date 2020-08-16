@@ -896,13 +896,14 @@ static void readLineContinuation(void)
 			shiftChars(1);
 		} else if (c == '\r' || c == '\n') {
 			shiftChars(1);
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
 			if (!lexerState->expansions
-			 || lexerState->expansions->distance) {
+			 || lexerState->expansions->distance)
 				lexerState->lineNo++;
-			}
 			return;
 		} else {
-			error("Begun line continuation, but encountered character %s\n",
+			error("Begun line continuation, but encountered character '%s'\n",
 			      print(c));
 			return;
 		}
@@ -1536,7 +1537,28 @@ static int yylex_NORMAL(void)
 		case EOF:
 			return 0;
 
-		/* Handle identifiers... or error out */
+		/* Handle escapes */
+
+		case '\\':
+			c = peek(0);
+
+			switch (c) {
+			case ' ':
+			case '\r':
+			case '\n':
+				readLineContinuation();
+				break;
+
+			case EOF:
+				error("Illegal character escape at end of input\n");
+				break;
+			default:
+				shiftChars(1);
+				error("Illegal character escape '%s'\n", print(c));
+			}
+			break;
+
+		/* Handle identifiers and escapes... or error out */
 
 		default:
 			if (startsIdentifier(c)) {
