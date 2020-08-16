@@ -115,6 +115,8 @@ static struct KeywordMapping {
 	{"DE", T_MODE_DE},
 	{"HL", T_MODE_HL},
 	{"SP", T_MODE_SP},
+	{"HLD", T_MODE_HL_DEC},
+	{"HLI", T_MODE_HL_INC},
 
 	{"A", T_TOKEN_A},
 	{"B", T_TOKEN_B},
@@ -429,7 +431,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[336] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[338] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -1476,6 +1478,25 @@ static int yylex_NORMAL(void)
 		case '$':
 			yylval.nConstValue = 0;
 			readHexNumber();
+			/* Attempt to match `$ff00+c` */
+			if (yylval.nConstValue == 0xff00) {
+				/* Whitespace is ignored anyways */
+				while (isWhitespace(c = peek(0)))
+					shiftChars(1);
+				if (c == '+') {
+					/* FIXME: not great due to large lookahead */
+					uint8_t distance = 1;
+
+					do {
+						c = peek(distance++);
+					} while (isWhitespace(c));
+
+					if (c == 'c' || c == 'C') {
+						shiftChars(distance);
+						return T_MODE_HW_C;
+					}
+				}
+			}
 			return T_NUMBER;
 
 		case '0': /* Decimal number */
