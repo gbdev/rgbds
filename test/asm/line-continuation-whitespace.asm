@@ -2,7 +2,6 @@
 ; file doesn't cause a segfault.
 
 bar: MACRO
-	WARN ""
 ENDM
 
 foo: bar baz\

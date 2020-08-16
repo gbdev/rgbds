@@ -920,7 +920,7 @@ static void readNumber(int radix, int32_t baseValue)
 
 		if (c < '0' || c > '0' + radix - 1)
 			break;
-		if (value > UINT32_MAX / radix)
+		if (value > (UINT32_MAX - (c - '0')) / radix)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * radix + (c - '0');
 
@@ -940,7 +940,7 @@ static void readFractionalPart(void)
 
 		if (c < '0' || c > '9')
 			break;
-		if (divisor > UINT32_MAX / 10) {
+		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 			warning(WARNING_LARGE_CONSTANT,
 				"Precision of fixed-point constant is too large\n");
 			/* Discard any additional digits */
@@ -948,6 +948,7 @@ static void readFractionalPart(void)
 				shiftChars(1);
 			break;
 		}
+		value = value * 10 + (c - '0');
 	}
 
 	if (yylval.nConstValue > INT16_MAX || yylval.nConstValue < INT16_MIN)
@@ -972,6 +973,8 @@ static void readBinaryNumber(void)
 		/* TODO: handle `-b`'s dynamic chars */
 		if (c != '0' && c != '1')
 			break;
+		if (value > (UINT32_MAX - (c - '0')) / 2)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * 2 + (c - '0');
 
 		shiftChars(1);
@@ -998,7 +1001,7 @@ static void readHexNumber(void)
 		else
 			break;
 
-		if (value > UINT32_MAX / 16)
+		if (value > (UINT32_MAX - c) / 16)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * 16 + c;
 
@@ -1030,16 +1033,16 @@ static void readGfxConstant(void)
 			bp0 = bp0 << 1 | (pixel & 1);
 			bp1 = bp1 << 1 | (pixel >> 1);
 		}
-		if (width <= 8)
+		if (width < 9)
 			width++;
 		shiftChars(1);
 	}
 
 	if (width == 0)
-		error("Invalid gfx constant, no digits after '`'\n");
-	else if (width == 8)
+		error("Invalid graphics constant, no digits after '`'\n");
+	else if (width == 9)
 		warning(WARNING_LARGE_CONSTANT,
-			"Gfx constant is too large, only 8 first pixels considered\n");
+			"Graphics constant is too long, only 8 first pixels considered\n");
 
 	yylval.nConstValue = bp1 << 8 | bp0;
 }

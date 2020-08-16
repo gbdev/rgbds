@@ -3,6 +3,6 @@ warning: overflow.asm(24): [-Wdiv]
 warning: overflow.asm(25): [-Wdiv]
     Division of -2147483648 by -1 yields -2147483648
 warning: overflow.asm(39): [-Wlarge-constant]
-    Integer constant '4294967296' is too large
+    Integer constant is too large
 warning: overflow.asm(42): [-Wlarge-constant]
-    Graphics constant '`333333333' is too long
+    Graphics constant is too long, only 8 first pixels considered
