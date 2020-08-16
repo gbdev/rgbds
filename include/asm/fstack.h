@@ -58,6 +58,7 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size);
 
 void fstk_Dump(void);
 char *fstk_DumpToStr(void);
+char const *fstk_GetFileName(void);
 uint32_t fstk_GetLine(void);
 
 void fstk_Init(char *mainPath, uint32_t maxRecursionDepth);

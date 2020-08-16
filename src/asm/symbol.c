@@ -85,6 +85,45 @@ static int32_t Callback__LINE__(void)
 	return lexer_GetLineNo();
 }
 
+static char const *Callback__FILE__(void)
+{
+	/*
+	 * FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
+	 * There are only two call sites for this; one copies the contents directly, the other is
+	 * EQUS expansions, which cannot straddle file boundaries. So this should be fine.
+	 */
+	static char *buf = NULL;
+	static size_t bufsize = 0;
+	char const *fileName = fstk_GetFileName();
+	size_t j = 1;
+
+	/* TODO: is there a way for a file name to be empty? */
+	assert(strlen(fileName) != 0);
+	/* The assertion above ensures the loop runs at least once */
+	for (size_t i = 0; fileName[i]; i++, j++) {
+		/* Account for the extra backslash inserted below */
+		if (fileName[i] == '"')
+			j++;
+		/* Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!! */
+		if (j + 2 >= bufsize) { /* Always keep room for 2 tail chars */
+			bufsize = bufsize ? bufsize * 2 : 64;
+			buf = realloc(buf, bufsize);
+			if (!buf)
+				fatalerror("Failed to grow buffer for file name: %s\n",
+					   strerror(errno));
+		}
+		/* Escape quotes, since we're returning a string */
+		if (fileName[i] == '"')
+			buf[j - 1] = '\\';
+		buf[j] = fileName[i];
+	}
+	/* Write everything after the loop, to ensure everything has been allocated */
+	buf[0] = '"';
+	buf[j++] = '"';
+	buf[j] = '\0';
+	return buf;
+}
+
 static int32_t CallbackPC(void)
 {
 	struct Section const *section = sect_GetSymbolSection();
@@ -97,8 +136,8 @@ static int32_t CallbackPC(void)
  */
 int32_t sym_GetValue(struct Symbol const *sym)
 {
-	if (sym_IsNumeric(sym) && sym->callback)
-		return sym->callback();
+	if (sym_IsNumeric(sym) && sym->hasCallback)
+		return sym->numCallback();
 
 	if (sym->type == SYM_LABEL)
 		/* TODO: do not use section's org directly */
@@ -113,9 +152,8 @@ int32_t sym_GetValue(struct Symbol const *sym)
 static void updateSymbolFilename(struct Symbol *sym)
 {
 	if (snprintf(sym->fileName, _MAX_PATH + 1, "%s",
-		     lexer_GetFileName()) > _MAX_PATH)
-		fatalerror("%s: File name is too long: '%s'\n", __func__,
-			   lexer_GetFileName());
+		     fstk_GetFileName()) > _MAX_PATH)
+		fatalerror("%s: File name is too long: '%s'\n", __func__, fstk_GetFileName());
 	sym->fileLine = fstk_GetLine();
 }
 
@@ -134,6 +172,7 @@ static struct Symbol *createsymbol(char const *s)
 
 	symbol->isExported = false;
 	symbol->isBuiltin = false;
+	symbol->hasCallback = false;
 	symbol->section = NULL;
 	updateSymbolFilename(symbol);
 	symbol->ID = -1;
@@ -310,7 +349,6 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 	struct Symbol *sym = createNonrelocSymbol(symName);
 
 	sym->type = SYM_EQU;
-	sym->callback = NULL;
 	sym->value = value;
 
 	return sym;
@@ -364,7 +402,6 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 		updateSymbolFilename(sym);
 
 	sym->type = SYM_SET;
-	sym->callback = NULL;
 	sym->value = value;
 
 	return sym;
@@ -375,7 +412,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
  * @param name The label's full name (so `.name` is invalid)
  * @return The created symbol
  */
-static struct Symbol *addSectionlessLabel(char const *name)
+static struct Symbol *addLabel(char const *name)
 {
 	assert(name[0] != '.'); /* The symbol name must have been expanded prior */
 	struct Symbol *sym = findsymbol(name, NULL); /* Due to this, don't look for expansions */
@@ -389,19 +426,11 @@ static struct Symbol *addSectionlessLabel(char const *name)
 	}
 	/* If the symbol already exists as a ref, just "take over" it */
 	sym->type = SYM_LABEL;
-	sym->callback = NULL;
 	sym->value = sect_GetSymbolOffset();
 	if (exportall)
 		sym->isExported = true;
 	sym->section = sect_GetSymbolSection();
 	updateSymbolFilename(sym);
-
-	return sym;
-}
-
-static struct Symbol *addLabel(char const *name)
-{
-	struct Symbol *sym = addSectionlessLabel(name);
 
 	if (sym && !sym->section)
 		error("Label \"%s\" created outside of a SECTION\n", name);
@@ -538,21 +567,35 @@ static inline char const *removeLeadingZeros(char const *ptr)
 	return ptr;
 }
 
+static inline struct Symbol *createBuiltinSymbol(char const *name)
+{
+	struct Symbol *sym = createsymbol(name);
+
+	sym->isBuiltin = true;
+	sym->hasCallback = true;
+	strcpy(sym->fileName, "<builtin>");
+	sym->fileLine = 0;
+	return sym;
+}
 /*
  * Initialize the symboltable
  */
 void sym_Init(void)
 {
-	struct Symbol *_NARGSymbol = sym_AddEqu("_NARG", 0);
-	struct Symbol *__LINE__Symbol = sym_AddEqu("__LINE__", 0);
+	PCSymbol = createBuiltinSymbol("@");
+	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
+	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
+	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
 
-	PCSymbol = addSectionlessLabel("@");
-	PCSymbol->isBuiltin = true;
-	PCSymbol->callback = CallbackPC;
-	_NARGSymbol->isBuiltin = true;
-	_NARGSymbol->callback = Callback_NARG;
-	__LINE__Symbol->isBuiltin = true;
-	__LINE__Symbol->callback = Callback__LINE__;
+	PCSymbol->type = SYM_LABEL;
+	PCSymbol->section = NULL;
+	PCSymbol->numCallback = CallbackPC;
+	_NARGSymbol->type = SYM_EQU;
+	_NARGSymbol->numCallback = Callback_NARG;
+	__LINE__Symbol->type = SYM_EQU;
+	__LINE__Symbol->numCallback = Callback__LINE__;
+	__FILE__Symbol->type = SYM_EQUS;
+	__FILE__Symbol->strCallback = Callback__FILE__;
 	sym_AddSet("_RS", 0)->isBuiltin = true;
 
 	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;

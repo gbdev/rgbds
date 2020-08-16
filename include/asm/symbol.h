@@ -38,14 +38,19 @@ struct Symbol {
 	char fileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t fileLine; /* Line where the symbol was defined. */
 
+	bool hasCallback;
 	union {
-		struct { /* If sym_IsNumeric */
+		union { /* Otherwise */
+			/* If sym_IsNumeric */
 			int32_t value;
-			int32_t (*callback)(void);
-		};
-		struct { /* For SYM_MACRO */
-			size_t macroSize;
-			char *macro;
+			int32_t (*numCallback)(void);
+			/* For SYM_MACRO */
+			struct {
+				size_t macroSize;
+				char *macro;
+			};
+			/* For SYM_EQUS, TODO: separate "base" fields from SYM_MACRO */
+			char const *(*strCallback)(void); /* For SYM_EQUS */
 		};
 	};
 
@@ -101,6 +106,8 @@ static inline bool sym_IsExported(struct Symbol const *sym)
  */
 static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
+	if (sym->hasCallback)
+		return sym->strCallback();
 	return sym->macro;
 }
 

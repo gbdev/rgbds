@@ -229,8 +229,8 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 
 	newContext(0);
 	/* Line minus 1 because buffer begins with a newline */
-	contextStack->lexerState = lexer_OpenFileView(macro->macro,
-						      macro->macroSize, macro->fileLine - 1);
+	contextStack->lexerState = lexer_OpenFileView(macro->macro, macro->macroSize,
+						      macro->fileLine - 1);
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for macro invocation\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
@@ -305,6 +305,11 @@ char *fstk_DumpToStr(void)
 	dumpToStream(stream);
 	fclose(stream);
 	return str;
+}
+
+char const *fstk_GetFileName(void)
+{
+	return contextStack->fileName;
 }
 
 uint32_t fstk_GetLine(void)
