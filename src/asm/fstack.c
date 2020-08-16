@@ -309,7 +309,30 @@ char *fstk_DumpToStr(void)
 
 char const *fstk_GetFileName(void)
 {
-	return contextStack->fileName;
+	/* FIXME: this is awful, but all callees copy the buffer anyways */
+	static char fileName[_MAX_PATH + 1];
+	size_t remainingChars = _MAX_PATH + 1;
+	char *dest = fileName;
+	char const *src = contextStack->fileName;
+
+#define append(...) do { \
+	int nbChars = snprintf(dest, remainingChars, __VA_ARGS__); \
+	\
+	if (nbChars >= remainingChars) \
+		fatalerror("File stack entry too large"); \
+	remainingChars -= nbChars; \
+	dest += nbChars; \
+} while (0)
+
+	while (*src && --remainingChars) /* Leave room for terminator */
+		*dest++ = *src++;
+	if (remainingChars && contextStack->macro)
+		append("::%s", contextStack->macro->name);
+	for (size_t i = 0; i < contextStack->reptDepth; i++)
+		append("::REPT~%" PRIu32, contextStack->reptIters[i]);
+
+	*dest = '\0';
+	return fileName;
 }
 
 uint32_t fstk_GetLine(void)
