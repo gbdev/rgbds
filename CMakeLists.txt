@@ -15,8 +15,13 @@ project(rgbds
 option(DEVELOP "build in development mode" OFF)
 
 set(DEFAULT_BUILD_TYPE "Release")
-if(NOT CMAKE_BUILD_TYPE AND NOT DEVELOP)
-  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
+set(DEVELOP_BUILD_TYPE "Debug")
+if(NOT CMAKE_BUILD_TYPE)
+  if(DEVELOP)
+    set(CMAKE_BUILD_TYPE "${DEVELOP_BUILD_TYPE}")
+  else()
+    set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
+  endif()
 endif()
 
 # get real path of source and binary directories
