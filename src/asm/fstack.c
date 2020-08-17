@@ -36,6 +36,7 @@ struct Context {
 	char *fileNameBuf;
 	uint32_t lineNo; /* Line number at which the context was EXITED */
 	struct Symbol const *macro;
+	struct MacroArgs *macroArgs; /* Macro args are *saved* here */
 	uint32_t nbReptIters; /* If zero, this isn't a REPT block */
 	size_t reptDepth;
 	uint32_t reptIters[];
@@ -162,6 +163,11 @@ bool yywrap(void)
 	contextDepth--;
 
 	lexer_DeleteState(contextStack->child->lexerState);
+	/* Restore args if a macro (not REPT) saved them */
+	if (contextStack->child->nbReptIters == 0 && contextStack->child->macro) {
+		dbgPrint("Restoring macro args %p\n", contextStack->macroArgs);
+		macro_UseNewArgs(contextStack->macroArgs);
+	}
 	/* Free the entry and make its parent the current entry */
 	free(contextStack->child);
 
@@ -231,7 +237,7 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 		error("\"%s\" is not a macro\n", macroName);
 		return;
 	}
-	macro_UseNewArgs(args);
+	contextStack->macroArgs = macro_GetCurrentArgs();
 
 	newContext(0);
 	/* Line minus 1 because buffer begins with a newline */
@@ -245,6 +251,7 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 	contextStack->fileNameBuf = NULL;
 	contextStack->macro = macro;
 	contextStack->nbReptIters = 0;
+	macro_UseNewArgs(args);
 }
 
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size)
