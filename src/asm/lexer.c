@@ -1377,7 +1377,8 @@ static char const *reportGarbageChar(unsigned char firstByte)
 
 static int yylex_NORMAL(void)
 {
-	dbgPrint("Lexing in normal mode\n");
+	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
+		 lexer_GetLineNo(), lexer_GetColNo());
 	for (;;) {
 		int c = nextChar();
 
@@ -1620,7 +1621,8 @@ static int yylex_NORMAL(void)
 
 static int yylex_RAW(void)
 {
-	dbgPrint("Lexing in raw mode\n");
+	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
+		 lexer_GetLineNo(), lexer_GetColNo());
 
 	/* This is essentially a modified `readString` */
 	size_t i = 0;
