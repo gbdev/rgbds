@@ -33,6 +33,7 @@ struct Context {
 	struct LexerState *lexerState;
 	uint32_t uniqueID;
 	char const *fileName;
+	char *fileNameBuf;
 	uint32_t lineNo; /* Line number at which the context was EXITED */
 	struct Symbol const *macro;
 	uint32_t nbReptIters; /* If zero, this isn't a REPT block */
@@ -153,6 +154,10 @@ bool yywrap(void)
 	}
 	dbgPrint("Popping context\n");
 
+	/* Free an `INCLUDE`'s path */
+	if (contextStack->fileNameBuf)
+		free(contextStack->fileNameBuf);
+
 	contextStack = contextStack->parent;
 	contextDepth--;
 
@@ -206,7 +211,8 @@ void fstk_RunInclude(char const *path)
 	/* We're back at top-level, so most things are reset */
 	contextStack->uniqueID = 0;
 	macro_SetUniqueID(0);
-	contextStack->fileName = lexer_GetFileName();
+	contextStack->fileName = fullPath;
+	contextStack->fileNameBuf = fullPath;
 	contextStack->macro = NULL;
 	contextStack->nbReptIters = 0;
 }
@@ -236,6 +242,7 @@ void fstk_RunMacro(char *macroName, struct MacroArgs *args)
 	lexer_SetStateAtEOL(contextStack->lexerState);
 	contextStack->uniqueID = macro_UseNewUniqueID();
 	contextStack->fileName = macro->fileName;
+	contextStack->fileNameBuf = NULL;
 	contextStack->macro = macro;
 	contextStack->nbReptIters = 0;
 }
@@ -253,6 +260,7 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size)
 	lexer_SetStateAtEOL(contextStack->lexerState);
 	contextStack->uniqueID = macro_UseNewUniqueID();
 	contextStack->fileName = contextStack->parent->fileName;
+	contextStack->fileNameBuf = NULL;
 	contextStack->macro = contextStack->parent->macro; /* Inherit */
 	contextStack->nbReptIters = count;
 	/* Copy all of parent's iters, and add ours */
@@ -354,6 +362,7 @@ void fstk_Init(char *mainPath, uint32_t maxRecursionDepth)
 	topLevelContext->uniqueID = 0;
 	macro_SetUniqueID(0);
 	topLevelContext->fileName = lexer_GetFileName();
+	topLevelContext->fileNameBuf = NULL;
 	topLevelContext->macro = NULL;
 	topLevelContext->nbReptIters = 0;
 	topLevelContext->reptDepth = 0;
