@@ -1667,10 +1667,8 @@ static int yylex_RAW(void)
 		case ';': /* Comments inside macro args */
 			if (insideString)
 				break;
-			do {
-				shiftChars(1);
-				c = peek(0);
-			} while (c != EOF && c != '\r' && c != '\n');
+			discardComment();
+			c = peek(0);
 			/* fallthrough */
 		case ',':
 		case '\r':
