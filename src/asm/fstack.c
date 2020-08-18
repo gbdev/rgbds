@@ -258,6 +258,8 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size)
 {
 	dbgPrint("Running REPT(%" PRIu32 ")\n", count);
 
+	if (count == 0)
+		return;
 	uint32_t reptDepth = contextStack->reptDepth;
 
 	newContext(reptDepth + 1);
