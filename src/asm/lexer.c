@@ -281,6 +281,7 @@ struct LexerState {
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
 	size_t captureCapacity; /* Size of the buffer above */
 
+	bool disableMacroArgs;
 	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
 	bool expandStrings;
 	struct Expansion *expansions;
@@ -299,6 +300,7 @@ static void initState(struct LexerState *state)
 	state->capturing = false;
 	state->captureBuf = NULL;
 
+	state->disableMacroArgs = false;
 	state->macroArgScanDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
@@ -723,8 +725,8 @@ static int peek(uint8_t distance)
 
 	if (distance >= lexerState->macroArgScanDistance) {
 		lexerState->macroArgScanDistance = distance + 1; /* Do not consider again */
-		/* If not capturing and character is a backslash, check for a macro arg */
-		if (!lexerState->capturing && c == '\\') {
+		/* If enabled and character is a backslash, check for a macro arg */
+		if (!lexerState->disableMacroArgs && c == '\\') {
 			distance++;
 			lexerState->macroArgScanDistance++;
 			c = peekInternal(distance);
@@ -873,6 +875,7 @@ void lexer_DumpStringExpansions(void)
 static void discardComment(void)
 {
 	dbgPrint("Discarding comment\n");
+	lexerState->disableMacroArgs = true;
 	for (;;) {
 		int c = peek(0);
 
@@ -880,6 +883,7 @@ static void discardComment(void)
 			break;
 		shiftChars(1);
 	}
+	lexerState->disableMacroArgs = false;
 }
 
 /* Function to read a line continuation */
@@ -1748,10 +1752,8 @@ static int skipIfBlock(bool toEndc)
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 
-	/* Prevent expanding macro args in this state by enabling capture to nothing */
-	lexerState->capturing = true;
-	lexerState->captureSize = 0;
-	lexerState->captureBuf = NULL;
+	/* Prevent expanding macro args in this state */
+	lexerState->disableMacroArgs = true;
 
 	for (;;) {
 		if (atLineStart) {
@@ -1811,7 +1813,7 @@ static int skipIfBlock(bool toEndc)
 	}
 finish:
 
-	lexerState->capturing = false;
+	lexerState->disableMacroArgs = false;
 	lexerState->atLineStart = false;
 
 	return token;
@@ -1881,6 +1883,7 @@ static char *startCapture(void)
 
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
+	lexerState->disableMacroArgs = true;
 
 	if (lexerState->isMmapped) {
 		return &lexerState->ptr[lexerState->offset];
@@ -1955,6 +1958,7 @@ finish:
 	*capture = captureStart;
 	*size = lexerState->captureSize - strlen("ENDR");
 	lexerState->captureBuf = NULL;
+	lexerState->disableMacroArgs = false;
 }
 
 void lexer_CaptureMacroBody(char **capture, size_t *size)
@@ -2043,4 +2047,5 @@ finish:
 	*capture = captureStart;
 	*size = lexerState->captureSize - strlen("ENDM");
 	lexerState->captureBuf = NULL;
+	lexerState->disableMacroArgs = false;
 }
