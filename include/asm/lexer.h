@@ -30,6 +30,19 @@ static inline void lexer_SetStateAtEOL(struct LexerState *state)
 	lexerStateEOL = state;
 }
 
+extern char const *binDigits;
+extern char const *gfxDigits;
+
+static inline void lexer_SetBinDigits(char const *digits)
+{
+	binDigits = digits;
+}
+
+static inline void lexer_SetGfxDigits(char const *digits)
+{
+	gfxDigits = digits;
+}
+
 struct LexerState *lexer_OpenFile(char const *path);
 struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);

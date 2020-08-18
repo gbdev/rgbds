@@ -336,7 +336,7 @@ char const *fstk_GetFileName(void)
 	int nbChars = snprintf(dest, remainingChars, __VA_ARGS__); \
 	\
 	if (nbChars >= remainingChars) \
-		fatalerror("File stack entry too large"); \
+		fatalerror("File stack entry too large\n"); \
 	remainingChars -= nbChars; \
 	dest += nbChars; \
 } while (0)

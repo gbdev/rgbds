@@ -966,20 +966,26 @@ static void readFractionalPart(void)
 	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
 }
 
+char const *binDigits;
+
 static void readBinaryNumber(void)
 {
 	uint32_t value = 0;
 
-	dbgPrint("Reading binary number\n");
+	dbgPrint("Reading binary number with digits [%c,%c]\n", binDigits[0], binDigits[1]);
 	for (;;) {
 		int c = peek(0);
+		int bit;
 
-		/* TODO: handle `-b`'s dynamic chars */
-		if (c != '0' && c != '1')
+		if (c == binDigits[0])
+			bit = 0;
+		else if (c == binDigits[1])
+			bit = 1;
+		else
 			break;
-		if (value > (UINT32_MAX - (c - '0')) / 2)
+		if (value > (UINT32_MAX - bit) / 2)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
-		value = value * 2 + (c - '0');
+		value = value * 2 + bit;
 
 		shiftChars(1);
 	}
@@ -1019,19 +1025,29 @@ static void readHexNumber(void)
 	yylval.nConstValue = value;
 }
 
+char const *gfxDigits;
+
 static void readGfxConstant(void)
 {
 	uint32_t bp0 = 0, bp1 = 0;
 	uint8_t width = 0;
 
-	dbgPrint("Reading gfx constant\n");
+	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
+		 gfxDigits[0], gfxDigits[1], gfxDigits[2], gfxDigits[3]);
 	for (;;) {
 		int c = peek(0);
+		uint32_t pixel;
 
-		/* TODO: handle `-g`'s dynamic chars */
-		if (c < '0' || c > '3')
+		if (c == gfxDigits[0])
+			pixel = 0;
+		else if (c == gfxDigits[1])
+			pixel = 1;
+		else if (c == gfxDigits[2])
+			pixel = 2;
+		else if (c == gfxDigits[3])
+			pixel = 3;
+		else
 			break;
-		uint8_t pixel = c - '0';
 
 		if (width < 8) {
 			bp0 = bp0 << 1 | (pixel & 1);
@@ -1531,7 +1547,7 @@ static int yylex_NORMAL(void)
 
 		case '%': /* Either a modulo, or a binary constant */
 			secondChar = peek(0);
-			if (secondChar != '0' && secondChar != '1')
+			if (secondChar != binDigits[0] && secondChar != binDigits[1])
 				return T_OP_MOD;
 
 			yylval.nConstValue = 0;

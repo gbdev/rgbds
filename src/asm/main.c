@@ -71,10 +71,11 @@ struct sOptionStackEntry {
 
 struct sOptionStackEntry *pOptionStack;
 
-void opt_SetCurrentOptions(struct sOptions *pOpt)
+void opt_SetCurrentOptions(struct sOptions *opt)
 {
-	/* TODO */
-	(void)pOpt;
+	CurrentOptions = *opt;
+	lexer_SetGfxDigits(CurrentOptions.gbgfx);
+	lexer_SetBinDigits(CurrentOptions.binary);
 }
 
 void opt_Parse(char *s)
