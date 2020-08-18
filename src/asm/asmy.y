@@ -39,7 +39,7 @@ uint32_t nListCountEmpty;
 char *tzNewMacro;
 uint32_t ulNewMacroSize;
 int32_t nPCOffset;
-bool executedIfBlock; /* If this is set, ELIFs cannot be executed anymore */
+bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
 
 static uint32_t str2int2(uint8_t *s, int32_t length)
 {
@@ -360,8 +360,8 @@ conditional	: if
 
 if		: T_POP_IF const '\n' {
 			nIFDepth++;
-			executedIfBlock = !!$2;
-			if (!executedIfBlock)
+			executeElseBlock = !$2;
+			if (executeElseBlock)
 				lexer_SetMode(LEXER_SKIP_TO_ELIF);
 		}
 ;
@@ -370,11 +370,11 @@ elif		: T_POP_ELIF const '\n' {
 			if (nIFDepth <= 0)
 				fatalerror("Found ELIF outside an IF construct\n");
 
-			if (executedIfBlock) {
+			if (!executeElseBlock) {
 				lexer_SetMode(LEXER_SKIP_TO_ENDC);
 			} else {
-				executedIfBlock = !!$2;
-				if (!executedIfBlock)
+				executeElseBlock = !$2;
+				if (executeElseBlock)
 					lexer_SetMode(LEXER_SKIP_TO_ELIF);
 			}
 		}
@@ -384,7 +384,7 @@ else		: T_POP_ELSE '\n' {
 			if (nIFDepth <= 0)
 				fatalerror("Found ELSE outside an IF construct\n");
 
-			if (executedIfBlock)
+			if (!executeElseBlock)
 				lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		}
 ;
@@ -394,6 +394,7 @@ endc		: T_POP_ENDC '\n' {
 				fatalerror("Found ENDC outside an IF construct\n");
 
 			nIFDepth--;
+			executeElseBlock = false;
 		}
 ;
 
