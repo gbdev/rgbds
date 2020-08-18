@@ -204,7 +204,10 @@ void fstk_RunInclude(char const *path)
 
 	if (!fstk_FindFile(path, &fullPath, &size)) {
 		free(fullPath);
-		error("Unable to open included file '%s': %s\n", path, strerror(errno));
+		if (oGeneratedMissingIncludes)
+			oFailedOnMissingInclude = true;
+		else
+			error("Unable to open included file '%s': %s\n", path, strerror(errno));
 		return;
 	}
 	dbgPrint("Full path: \"%s\"\n", fullPath);

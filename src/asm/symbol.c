@@ -78,7 +78,7 @@ void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg)
 static int32_t Callback_NARG(void)
 {
 	if (!macro_GetCurrentArgs()) {
-		yyerror("_NARG does not make sense outside of a macro");
+		error("_NARG does not make sense outside of a macro\n");
 		return 0;
 	}
 	return macro_NbArgs();
