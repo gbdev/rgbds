@@ -948,6 +948,7 @@ static void readFractionalPart(void)
 
 		if (c < '0' || c > '9')
 			break;
+		shiftChars(1);
 		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 			warning(WARNING_LARGE_CONSTANT,
 				"Precision of fixed-point constant is too large\n");
