@@ -909,6 +909,8 @@ static void readLineContinuation(void)
 			 || lexerState->expansions->distance)
 				lexerState->lineNo++;
 			return;
+		} else if (c == ';') {
+			discardComment();
 		} else {
 			error("Begun line continuation, but encountered character '%s'\n",
 			      print(c));
