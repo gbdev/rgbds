@@ -234,7 +234,7 @@ static struct KeywordMapping {
 
 #define LEXER_BUF_SIZE 42 /* TODO: determine a sane value for this */
 /* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
-static_assert(LEXER_BUF_SIZE <= SSIZE_MAX);
+static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
 struct Expansion {
 	struct Expansion *firstChild;

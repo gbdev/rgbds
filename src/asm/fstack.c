@@ -387,7 +387,8 @@ void fstk_Init(char *mainPath, uint32_t maxRecursionDepth)
 #else
 	/* If this holds, then GCC raises a warning about the `if` above being dead code */
 	static_assert(UINT32_MAX
-			<= (SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0]));
+			<= (SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0]),
+		      "Please enable recursion depth capping");
 	if (0) {
 #endif
 		error("Recursion depth may not be higher than %zu, defaulting to 64\n",
