@@ -503,7 +503,12 @@ void lexer_ToggleStringExpansion(bool enable)
 
 static void reallocCaptureBuf(void)
 {
-	lexerState->captureCapacity *= 2;
+	if (lexerState->captureCapacity == SIZE_MAX)
+		fatalerror("Cannot grow capture buffer past %zu bytes", SIZE_MAX);
+	else if (lexerState->captureCapacity > SIZE_MAX / 2)
+		lexerState->captureCapacity = SIZE_MAX;
+	else
+		lexerState->captureCapacity *= 2;
 	lexerState->captureBuf = realloc(lexerState->captureBuf, lexerState->captureCapacity);
 	if (!lexerState->captureBuf)
 		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
