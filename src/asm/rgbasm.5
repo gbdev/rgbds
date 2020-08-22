@@ -351,6 +351,7 @@ has been defined, FALSE (0) otherwise.
 String symbols are not expanded within the parentheses.
 .It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
 .It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
+.It Fn WORD arg Ta Returns the bottom 16 bits of the operand if Ar arg No is a label or constant.
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
 .Ic IF ) ,
 or 0 if only RGBLINK can compute its value.

@@ -13,7 +13,7 @@ Target:	dl DEAD << 16 | BEEF
 	ENDL
 After:
 	jp Target
-	ld hl, Word
+	ld hl, Word_
 	dw Byte, Target.end, After
 
 SECTION "dead", WRAMX[$DEAD],BANK[2]
@@ -22,7 +22,7 @@ SECTION "beef", SRAM[$BEEF]
 BEEF:
 
 SECTION "ram test", WRAMX,BANK[1] ; Should end up at $D005
-Word:
+Word_:
 	dw
 
 SECTION "small ram test", WRAMX,BANK[1] ; Should end up at $D000

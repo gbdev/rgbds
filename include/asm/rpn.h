@@ -56,6 +56,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src2);
 void rpn_HIGH(struct Expression *expr, const struct Expression *src);
 void rpn_LOW(struct Expression *expr, const struct Expression *src);
+void rpn_WORD(struct Expression *expr, const struct Expression *src);
 void rpn_ISCONST(struct Expression *expr, const struct Expression *src);
 void rpn_UNNEG(struct Expression *expr, const struct Expression *src);
 void rpn_UNNOT(struct Expression *expr, const struct Expression *src);

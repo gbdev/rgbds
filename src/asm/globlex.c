@@ -455,6 +455,7 @@ const struct sLexInitString lexer_strings[] = {
 
 	{"high", T_OP_HIGH},
 	{"low", T_OP_LOW},
+	{"word", T_OP_WORD},
 	{"isconst", T_OP_ISCONST},
 
 	{"strcmp", T_OP_STRCMP},

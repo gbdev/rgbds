@@ -1,0 +1,2 @@
+warning: dw-word.asm(16): [-Wtruncation]
+    Expression must be 16-bit

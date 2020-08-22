@@ -497,7 +497,7 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 	if (rpn_isKnown(expr)) {
 		expr->nVal = (uint32_t)expr->nVal >> 8 & 0xFF;
 	} else {
-		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
+		static const uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
 				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 		expr->nRPNPatchSize += sizeof(bytes);
 		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
@@ -512,7 +512,22 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 	if (rpn_isKnown(expr)) {
 		expr->nVal = expr->nVal & 0xFF;
 	} else {
-		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+		static const uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+
+		expr->nRPNPatchSize += sizeof(bytes);
+		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	}
+}
+
+void rpn_WORD(struct Expression *expr, const struct Expression *src)
+{
+	*expr = *src;
+	expr->isSymbol = false;
+
+	if (rpn_isKnown(expr)) {
+		expr->nVal = expr->nVal & 0xFFFF;
+	} else {
+		static const uint8_t bytes[] = {RPN_CONST, 0xFF, 0xFF, 0, 0, RPN_AND};
 
 		expr->nRPNPatchSize += sizeof(bytes);
 		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
