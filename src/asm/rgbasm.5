@@ -1080,6 +1080,8 @@ The example below includes 256 bytes from data.bin, starting from byte 78.
 .Bd -literal -offset indent
 INCBIN "data.bin",78,256
 .Ed
+.Pp
+The length argument is optional. If only the start position is specified, the bytes from the start position until the end of the file will be included.
 .Ss Unions
 .Pp
 Unions allow multiple memory allocations to overlap, like unions in C.
