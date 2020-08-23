@@ -965,6 +965,7 @@ static void readFractionalPart(void)
 			break;
 		}
 		value = value * 10 + (c - '0');
+		divisor *= 10;
 	}
 
 	if (yylval.nConstValue > INT16_MAX || yylval.nConstValue < INT16_MIN)
