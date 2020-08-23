@@ -44,8 +44,8 @@ struct Context {
 
 static struct Context *contextStack;
 static struct Context *topLevelContext;
-static unsigned int contextDepth = 0;
-unsigned int nMaxRecursionDepth;
+static size_t contextDepth = 0;
+size_t nMaxRecursionDepth;
 
 static unsigned int nbIncPaths = 0;
 static char const *includePaths[MAXINCPATHS];
@@ -180,7 +180,7 @@ bool yywrap(void)
 static void newContext(uint32_t reptDepth)
 {
 	if (++contextDepth >= nMaxRecursionDepth)
-		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth);
+		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
 	contextStack->child = malloc(sizeof(*contextStack->child)
 						+ reptDepth * sizeof(contextStack->reptIters[0]));
 	if (!contextStack->child)
@@ -360,7 +360,7 @@ uint32_t fstk_GetLine(void)
 	return lexer_GetLineNo();
 }
 
-void fstk_Init(char *mainPath, uint32_t maxRecursionDepth)
+void fstk_Init(char *mainPath, size_t maxRecursionDepth)
 {
 	topLevelContext = malloc(sizeof(*topLevelContext));
 	if (!topLevelContext)
@@ -381,18 +381,10 @@ void fstk_Init(char *mainPath, uint32_t maxRecursionDepth)
 
 	contextStack = topLevelContext;
 
-#if 0
 	if (maxRecursionDepth
 			> (SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0])) {
-#else
-	/* If this holds, then GCC raises a warning about the `if` above being dead code */
-	static_assert(UINT32_MAX
-			<= (SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0]),
-		      "Please enable recursion depth capping");
-	if (0) {
-#endif
 		error("Recursion depth may not be higher than %zu, defaulting to 64\n",
-			(SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0]));
+		      (SIZE_MAX - sizeof(*contextStack)) / sizeof(contextStack->reptIters[0]));
 		nMaxRecursionDepth = 64;
 	} else {
 		nMaxRecursionDepth = maxRecursionDepth;

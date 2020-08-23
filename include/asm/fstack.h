@@ -39,7 +39,7 @@ struct sContext {
 	int32_t nREPTBodyLastLine;
 };
 
-extern unsigned int nMaxRecursionDepth;
+extern size_t nMaxRecursionDepth;
 
 void fstk_AddIncludePath(char const *s);
 /**
@@ -61,6 +61,6 @@ char *fstk_DumpToStr(void);
 char const *fstk_GetFileName(void);
 uint32_t fstk_GetLine(void);
 
-void fstk_Init(char *mainPath, uint32_t maxRecursionDepth);
+void fstk_Init(char *mainPath, size_t maxRecursionDepth);
 
 #endif /* RGBDS_ASM_FSTACK_H */
