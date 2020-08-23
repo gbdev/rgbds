@@ -40,18 +40,16 @@ struct Symbol {
 
 	bool hasCallback;
 	union {
-		union { /* Otherwise */
-			/* If sym_IsNumeric */
-			int32_t value;
-			int32_t (*numCallback)(void);
-			/* For SYM_MACRO */
-			struct {
-				size_t macroSize;
-				char *macro;
-			};
-			/* For SYM_EQUS, TODO: separate "base" fields from SYM_MACRO */
-			char const *(*strCallback)(void); /* For SYM_EQUS */
+		/* If sym_IsNumeric */
+		int32_t value;
+		int32_t (*numCallback)(void);
+		/* For SYM_MACRO */
+		struct {
+			size_t macroSize;
+			char *macro;
 		};
+		/* For SYM_EQUS, TODO: separate "base" fields from SYM_MACRO */
+		char const *(*strCallback)(void); /* For SYM_EQUS */
 	};
 
 	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */
