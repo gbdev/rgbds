@@ -509,7 +509,7 @@ void lexer_ToggleStringExpansion(bool enable)
 static void reallocCaptureBuf(void)
 {
 	if (lexerState->captureCapacity == SIZE_MAX)
-		fatalerror("Cannot grow capture buffer past %zu bytes", SIZE_MAX);
+		fatalerror("Cannot grow capture buffer past %zu bytes\n", SIZE_MAX);
 	else if (lexerState->captureCapacity > SIZE_MAX / 2)
 		lexerState->captureCapacity = SIZE_MAX;
 	else
@@ -669,8 +669,8 @@ static char const *expandMacroArg(char name, size_t distance)
 static int peekInternal(uint8_t distance)
 {
 	if (distance >= LEXER_BUF_SIZE)
-		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%u >= %u)\n",
-			   distance, LEXER_BUF_SIZE);
+		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%"
+			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
 
 	size_t ofs = lexerState->expansionOfs + distance;
 	struct Expansion const *expansion = getExpansionAtDistance(&ofs);
