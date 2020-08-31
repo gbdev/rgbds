@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <sys/mman.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <ctype.h>
@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "extern/utf8decoder.h"
+#include "platform.h" /* For `mmap` */
 
 #include "asm/asm.h"
 #include "asm/lexer.h"
@@ -312,12 +313,55 @@ static void initState(struct LexerState *state)
 	state->expansionOfs = 0;
 }
 
+/* Neither MSVC nor MinGW provide `mmap` */
+#if defined(_MSC_VER) || defined(__MINGW32__)
+# include <windows.h>
+# include <fileapi.h>
+# include <winbase.h>
+# define MAP_FAILED NULL
+# define mapFile(ptr, fd, path, size) do { \
+	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
+				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
+	HANDLE mappingObj; \
+	\
+	if (file == INVALID_HANDLE_VALUE) \
+		break; \
+	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
+	(ptr) = mappingObj == INVALID_HANDLE_VALUE \
+			? NULL \
+		: MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
+	CloseHandle(mappingObj); \
+	CloseHandle(file); \
+} while (0)
+# define munmap(ptr, size)  UnmapViewOfFile((ptr))
+
+#else /* defined(_MSC_VER) || defined(__MINGW32__) */
+
+# include <sys/mman.h>
+# define mapFile(ptr, fd, path, size) do { \
+	(ptr) = mmap(NULL, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
+	\
+	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
+		/*
+		 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
+		 * instead, offering, I believe, weaker guarantees about external
+		 * modifications to the file while reading it. That's still better than not
+		 * opening it at all, though.
+		 */ \
+		if (verbose) \
+			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
+		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
+	} \
+} while (0)
+#endif /* !( defined(_MSC_VER) || defined(__MINGW32__) ) */
+
 struct LexerState *lexer_OpenFile(char const *path)
 {
 	dbgPrint("Opening file \"%s\"\n", path);
 
 	bool isStdin = !strcmp(path, "-");
 	struct LexerState *state = malloc(sizeof(*state));
+	struct stat fileInfo;
 
 	/* Give stdin a nicer file name */
 	if (isStdin)
@@ -326,38 +370,27 @@ struct LexerState *lexer_OpenFile(char const *path)
 		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
 		return NULL;
 	}
-	state->path = path;
-
-	state->isFile = true;
-	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
-	if (state->fd == -1) {
-		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
+	if (!isStdin && stat(path, &fileInfo) != 0) {
+		error("Failed to stat file \"%s\": %s\n", path, strerror(errno));
 		free(state);
 		return NULL;
 	}
+	state->path = path;
+	state->isFile = true;
+	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
 	state->isMmapped = false; /* By default, assume it won't be mmap()ed */
-	off_t size = lseek(state->fd, 0, SEEK_END);
-
-	if (size != 1) {
-		/* The file is a regular file, so use `mmap` for better performance */
+	if (!isStdin && fileInfo.st_size > 0) {
+		/* Try using `mmap` for better performance */
 
 		/*
 		 * Important: do NOT assign to `state->ptr` directly, to avoid a cast that may
 		 * alter an eventual `MAP_FAILED` value. It would also invalidate `state->fd`,
 		 * being on the other side of the union.
 		 */
-		void *pa = mmap(NULL, size, PROT_READ, MAP_PRIVATE, state->fd, 0);
+		void *mappingAddr;
 
-		if (pa == MAP_FAILED && errno == ENOTSUP)
-			/*
-			 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
-			 * instead, offering, I believe, weaker guarantees about external
-			 * modifications to the file while reading it. That's still better than not
-			 * opening it at all, though.
-			 */
-			pa = mmap(NULL, size, PROT_READ, MAP_SHARED, state->fd, 0);
-
-		if (pa == MAP_FAILED) {
+		mapFile(mappingAddr, state->fd, state->path, fileInfo.st_size);
+		if (mappingAddr == MAP_FAILED) {
 			/* If mmap()ing failed, try again using another method (below) */
 			state->isMmapped = false;
 		} else {
@@ -365,8 +398,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 			close(state->fd);
 
 			state->isMmapped = true;
-			state->ptr = pa;
-			state->size = size;
+			state->ptr = mappingAddr;
+			state->size = fileInfo.st_size;
 			state->offset = 0;
 
 			if (verbose)
@@ -378,7 +411,6 @@ struct LexerState *lexer_OpenFile(char const *path)
 		if (verbose)
 			printf("File %s opened as regular, errno reports \"%s\"\n",
 			       path, strerror(errno));
-		lseek(state->fd, 0, SEEK_SET);
 		state->index = 0;
 		state->nbChars = 0;
 	}
