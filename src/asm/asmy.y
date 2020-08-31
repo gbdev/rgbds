@@ -461,7 +461,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 		srcIndex++;
 	}
 
-	if (!src[srcIndex])
+	if (!src[srcIndex] && len)
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Position %lu is past the end of the string",
 			(unsigned long)pos);
 
