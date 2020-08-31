@@ -144,9 +144,6 @@ int32_t charmap_Add(char *input, uint8_t output)
 	struct Charmap  *charmap = currentCharmap;
 	struct Charnode *curr_node, *temp_node;
 
-	if (charmap->charCount >= MAXCHARMAPS || strlen(input) > CHARMAPLENGTH)
-		return -1;
-
 	curr_node = &charmap->nodes[0];
 
 	for (i = 0; (v = (uint8_t)input[i]); i++) {

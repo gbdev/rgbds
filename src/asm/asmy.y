@@ -1094,7 +1094,7 @@ charmap		: T_POP_CHARMAP string ',' const {
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 
 			if (charmap_Add($2, $4 & 0xFF) == -1)
-				yyerror("Error parsing charmap. Either you've added too many (%i), or the input character length is too long (%i)' : %s\n", MAXCHARMAPS, CHARMAPLENGTH, strerror(errno));
+				yyerror("Error adding new charmap mapping: %s\n", strerror(errno));
 		}
 ;
 
