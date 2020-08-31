@@ -32,4 +32,11 @@
 # define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 
+/* MSVC doesn't use POSIX types or defines for `read` */
+#ifdef _MSC_VER
+# define STDIN_FILENO 0
+# define ssize_t int
+# define SSIZE_MAX INT_MAX
+#endif
+
 #endif /* RGBDS_PLATFORM_H */

@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include "extern/utf8decoder.h"
-#include "platform.h" /* For `mmap` */
+#include "platform.h" /* For `ssize_t` */
 
 #include "asm/asm.h"
 #include "asm/lexer.h"
@@ -41,6 +41,47 @@
 #else
   #define dbgPrint(...)
 #endif
+
+/* Neither MSVC nor MinGW provide `mmap` */
+#if defined(_MSC_VER) || defined(__MINGW32__)
+# include <windows.h>
+# include <fileapi.h>
+# include <winbase.h>
+# define MAP_FAILED NULL
+# define mapFile(ptr, fd, path, size) do { \
+	(ptr) = MAP_FAILED; \
+	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
+				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
+	HANDLE mappingObj; \
+	\
+	if (file == INVALID_HANDLE_VALUE) \
+		break; \
+	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
+	if (mappingObj != INVALID_HANDLE_VALUE) \
+		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
+	CloseHandle(mappingObj); \
+	CloseHandle(file); \
+} while (0)
+# define munmap(ptr, size)  UnmapViewOfFile((ptr))
+
+#else /* defined(_MSC_VER) || defined(__MINGW32__) */
+
+# include <sys/mman.h>
+# define mapFile(ptr, fd, path, size) do { \
+	(ptr) = mmap(NULL, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
+	\
+	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
+		/*
+		 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
+		 * instead, offering, I believe, weaker guarantees about external modifications to
+		 * the file while reading it. That's still better than not opening it at all, though
+		 */ \
+		if (verbose) \
+			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
+		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
+	} \
+} while (0)
+#endif /* !( defined(_MSC_VER) || defined(__MINGW32__) ) */
 
 /*
  * Identifiers that are also keywords are listed here. This ONLY applies to ones
@@ -312,48 +353,6 @@ static void initState(struct LexerState *state)
 	state->expansions = NULL;
 	state->expansionOfs = 0;
 }
-
-/* Neither MSVC nor MinGW provide `mmap` */
-#if defined(_MSC_VER) || defined(__MINGW32__)
-# include <windows.h>
-# include <fileapi.h>
-# include <winbase.h>
-# define MAP_FAILED NULL
-# define mapFile(ptr, fd, path, size) do { \
-	(ptr) = MAP_FAILED; \
-	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
-				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
-	HANDLE mappingObj; \
-	\
-	if (file == INVALID_HANDLE_VALUE) \
-		break; \
-	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
-	if (mappingObj != INVALID_HANDLE_VALUE) \
-		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
-	CloseHandle(mappingObj); \
-	CloseHandle(file); \
-} while (0)
-# define munmap(ptr, size)  UnmapViewOfFile((ptr))
-
-#else /* defined(_MSC_VER) || defined(__MINGW32__) */
-
-# include <sys/mman.h>
-# define mapFile(ptr, fd, path, size) do { \
-	(ptr) = mmap(NULL, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
-	\
-	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
-		/*
-		 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
-		 * instead, offering, I believe, weaker guarantees about external
-		 * modifications to the file while reading it. That's still better than not
-		 * opening it at all, though.
-		 */ \
-		if (verbose) \
-			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
-		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
-	} \
-} while (0)
-#endif /* !( defined(_MSC_VER) || defined(__MINGW32__) ) */
 
 struct LexerState *lexer_OpenFile(char const *path)
 {
