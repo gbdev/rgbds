@@ -320,6 +320,7 @@ static void initState(struct LexerState *state)
 # include <winbase.h>
 # define MAP_FAILED NULL
 # define mapFile(ptr, fd, path, size) do { \
+	(ptr) = MAP_FAILED; \
 	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
 				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
 	HANDLE mappingObj; \
@@ -327,9 +328,8 @@ static void initState(struct LexerState *state)
 	if (file == INVALID_HANDLE_VALUE) \
 		break; \
 	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
-	(ptr) = mappingObj == INVALID_HANDLE_VALUE \
-			? NULL \
-		: MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
+	if (mappingObj != INVALID_HANDLE_VALUE) \
+		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
 	CloseHandle(mappingObj); \
 	CloseHandle(file); \
 } while (0)
