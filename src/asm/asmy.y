@@ -1090,10 +1090,10 @@ incbin		: T_POP_INCBIN string {
 ;
 
 charmap		: T_POP_CHARMAP string ',' const {
-			if (($4 & 0xFF) != $4)
+			if ($4 < INT8_MIN || $4 > UINT8_MAX)
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
 
-			if (charmap_Add($2, $4 & 0xFF) == -1)
+			if (charmap_Add($2, (uint8_t)$4) == -1)
 				yyerror("Error adding new charmap mapping: %s\n", strerror(errno));
 		}
 ;
