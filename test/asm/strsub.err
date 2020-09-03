@@ -6,8 +6,6 @@ warning: strsub.asm(15) -> strsub.asm::xstrsub(4): [-Wbuiltin-args]
     STRSUB: Position starts at 1
 warning: strsub.asm(15) -> strsub.asm::xstrsub(4): [-Wbuiltin-args]
     STRSUB: Length too big: 300
-warning: strsub.asm(16) -> strsub.asm::xstrsub(4): [-Wbuiltin-args]
-    STRSUB: Position 4 is past the end of the string
 warning: strsub.asm(17) -> strsub.asm::xstrsub(4): [-Wbuiltin-args]
     STRSUB: Position 4 is past the end of the string
 warning: strsub.asm(17) -> strsub.asm::xstrsub(4): [-Wbuiltin-args]
