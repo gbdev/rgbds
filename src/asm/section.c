@@ -51,23 +51,29 @@ static inline void checkcodesection(void)
 		fatalerror("UNIONs cannot contain code or data");
 }
 
+static inline void checkSectionSize(struct Section const *sect, uint32_t size)
+{
+	uint32_t maxSize = maxsize[sect->nType];
+
+	if (size > maxSize)
+		fatalerror("Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").",
+			   sect->pzName, maxSize, size);
+}
+
 /*
  * Check if the section has grown too much.
  */
-static void reserveSpace(uint32_t delta_size)
+static inline void reserveSpace(uint32_t delta_size)
 {
-	uint32_t maxSize = maxsize[pCurrentSection->nType];
-	uint32_t newSize = curOffset + delta_size;
-
 	/*
 	 * This check is here to trap broken code that generates sections that
 	 * are too big and to prevent the assembler from generating huge object
 	 * files or trying to allocate too much memory.
 	 * A check at the linking stage is still necessary.
 	 */
-	if (newSize > maxSize)
-		fatalerror("Section '%s' is too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").",
-			   pCurrentSection->pzName, maxSize, newSize);
+	checkSectionSize(pCurrentSection, curOffset + loadOffset + delta_size);
+	if (currentLoadSection)
+		checkSectionSize(currentLoadSection, curOffset + delta_size);
 }
 
 struct Section *out_FindSectionByName(const char *pzName)
@@ -384,8 +390,8 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 static inline void growSection(uint32_t growth)
 {
 	curOffset += growth;
-	if (curOffset > pCurrentSection->size)
-		pCurrentSection->size = curOffset;
+	if (curOffset + loadOffset > pCurrentSection->size)
+		pCurrentSection->size = curOffset + loadOffset;
 	if (currentLoadSection && curOffset > currentLoadSection->size)
 		currentLoadSection->size = curOffset;
 }
