@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#include "asm/symbol.h"
+
 #define MAXCHARMAPS	512
 #define CHARMAPLENGTH	16
 #define MAXCHARNODES	(MAXCHARMAPS * CHARMAPLENGTH + 1)
