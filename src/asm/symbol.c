@@ -89,7 +89,7 @@ static int32_t CallbackPC(void)
 {
 	struct Section const *section = sect_GetSymbolSection();
 
-	return section ? section->nOrg + sect_GetSymbolOffset() : 0;
+	return section ? section->org + sect_GetSymbolOffset() : 0;
 }
 
 /*
@@ -102,7 +102,7 @@ int32_t sym_GetValue(struct Symbol const *sym)
 
 	if (sym->type == SYM_LABEL)
 		/* TODO: do not use section's org directly */
-		return sym->value + sym_GetSection(sym)->nOrg;
+		return sym->value + sym_GetSection(sym)->org;
 
 	return sym->value;
 }
@@ -222,7 +222,7 @@ uint32_t sym_GetPCValue(void)
 
 	if (!sect)
 		yyerror("PC has no value outside a section");
-	else if (sect->nOrg == -1)
+	else if (sect->org == -1)
 		yyerror("Expected constant PC but section is not fixed");
 	else
 		return CallbackPC();

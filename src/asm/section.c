@@ -20,7 +20,7 @@ struct SectionStackEntry {
 	struct Section *pSection;
 	struct Symbol *pScope; /* Section's symbol scope */
 	uint32_t offset;
-	struct SectionStackEntry *pNext;
+	struct SectionStackEntry *next;
 };
 
 struct SectionStackEntry *pSectionStack;
@@ -51,18 +51,18 @@ static inline void checkcodesection(void)
 {
 	checksection();
 
-	if (!sect_HasData(pCurrentSection->nType))
+	if (!sect_HasData(pCurrentSection->type))
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
-			   pCurrentSection->pzName);
+			   pCurrentSection->name);
 }
 
 static inline void checkSectionSize(struct Section const *sect, uint32_t size)
 {
-	uint32_t maxSize = maxsize[sect->nType];
+	uint32_t maxSize = maxsize[sect->type];
 
 	if (size > maxSize)
 		fatalerror("Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").",
-			   sect->pzName, maxSize, size);
+			   sect->name, maxSize, size);
 }
 
 /*
@@ -81,15 +81,15 @@ static inline void reserveSpace(uint32_t delta_size)
 		checkSectionSize(currentLoadSection, curOffset + delta_size);
 }
 
-struct Section *out_FindSectionByName(const char *pzName)
+struct Section *out_FindSectionByName(const char *name)
 {
-	struct Section *pSect = pSectionList;
+	struct Section *sect = pSectionList;
 
-	while (pSect) {
-		if (strcmp(pzName, pSect->pzName) == 0)
-			return pSect;
+	while (sect) {
+		if (strcmp(name, sect->name) == 0)
+			return sect;
 
-		pSect = pSect->pNext;
+		sect = sect->next;
 	}
 
 	return NULL;
@@ -98,7 +98,7 @@ struct Section *out_FindSectionByName(const char *pzName)
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
-static struct Section *getSection(char const *pzName, enum SectionType type,
+static struct Section *getSection(char const *name, enum SectionType type,
 				  uint32_t org, struct SectionSpec const *attrs,
 				  enum SectionModifier mod)
 {
@@ -131,26 +131,26 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 		if (org != -1) {
 			if ((org - alignOffset) & mask)
 				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
-					pzName);
+					name);
 			alignment = 0; /* Ignore it if it's satisfied */
 		} else if (startaddr[type] & mask) {
 			yyerror("Section \"%s\"'s alignment cannot be attained in %s",
-				pzName, typeNames[type]);
+				name, typeNames[type]);
 		}
 	}
 
 	if (org != -1) {
 		if (org < startaddr[type] || org > endaddr(type))
 			yyerror("Section \"%s\"'s fixed address %#" PRIx32 " is outside of range [%#" PRIx16 "; %#" PRIx16 "]",
-				pzName, org, startaddr[type], endaddr(type));
+				name, org, startaddr[type], endaddr(type));
 	}
 
 	if (nbbanks(type) == 1)
 		bank = bankranges[type][0];
 
-	struct Section *pSect = out_FindSectionByName(pzName);
+	struct Section *sect = out_FindSectionByName(name);
 
-	if (pSect) {
+	if (sect) {
 		unsigned int nbSectErrors = 0;
 #define fail(...) \
 	do { \
@@ -158,13 +158,13 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 		nbSectErrors++; \
 	} while (0)
 
-		if (type != pSect->nType)
+		if (type != sect->type)
 			fail("Section \"%s\" already exists but with type %s",
-			     pSect->pzName, typeNames[pSect->nType]);
+			     sect->name, typeNames[sect->type]);
 
-		if (pSect->modifier != mod)
+		if (sect->modifier != mod)
 			fail("Section \"%s\" already declared as %s section",
-			     pSect->pzName, sectionModNames[pSect->modifier]);
+			     sect->name, sectionModNames[sect->modifier]);
 		/*
 		 * Normal sections need to have exactly identical constraints;
 		 * but unionized sections only need "compatible" constraints,
@@ -179,125 +179,125 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
 				fail("Cannot declare ROM sections as UNION");
 			if (org != -1) {
 				/* If both are fixed, they must be the same */
-				if (pSect->nOrg != -1 && pSect->nOrg != org)
+				if (sect->org != -1 && sect->org != org)
 					fail("Section \"%s\" already declared as fixed at different address $%" PRIx32,
-					     pSect->pzName, pSect->nOrg);
-				else if (pSect->nAlign != 0
-				      && (mask(pSect->nAlign)
-						& (org - pSect->alignOfs)))
+					     sect->name, sect->org);
+				else if (sect->align != 0
+				      && (mask(sect->align)
+						& (org - sect->alignOfs)))
 					fail("Section \"%s\" already declared as aligned to %u bytes (offset %" PRIu16 ")",
-					     pSect->pzName, 1U << pSect->nAlign,
-					     pSect->alignOfs);
+					     sect->name, 1U << sect->align,
+					     sect->alignOfs);
 				else
 					/* Otherwise, just override */
-					pSect->nOrg = org;
+					sect->org = org;
 			} else if (alignment != 0) {
 				/* Make sure any fixed address is compatible */
-				if (pSect->nOrg != -1) {
-					if ((pSect->nOrg - alignOffset)
+				if (sect->org != -1) {
+					if ((sect->org - alignOffset)
 							& mask(alignment))
 						fail("Section \"%s\" already declared as fixed at incompatible address $%" PRIx32,
-						     pSect->pzName,
-						     pSect->nOrg);
+						     sect->name,
+						     sect->org);
 				/* Check if alignment offsets are compatible */
-				} else if ((alignOffset & mask(pSect->nAlign))
-					!= (pSect->alignOfs
+				} else if ((alignOffset & mask(sect->align))
+					!= (sect->alignOfs
 							& mask(alignment))) {
 					fail("Section \"%s\" already declared with incompatible %" PRIu8 "-byte alignment (offset %" PRIu16 ")",
-					     pSect->pzName, pSect->nAlign,
-					     pSect->alignOfs);
-				} else if (alignment > pSect->nAlign) {
+					     sect->name, sect->align,
+					     sect->alignOfs);
+				} else if (alignment > sect->align) {
 					/*
 					 * If the section is not fixed,
 					 * its alignment is the largest of both
 					 */
-					pSect->nAlign = alignment;
-					pSect->alignOfs = alignOffset;
+					sect->align = alignment;
+					sect->alignOfs = alignOffset;
 				}
 			}
 			/* If the section's bank is unspecified, override it */
-			if (pSect->nBank == -1)
-				pSect->nBank = bank;
+			if (sect->bank == -1)
+				sect->bank = bank;
 			/* If both specify a bank, it must be the same one */
-			else if (bank != -1 && pSect->nBank != bank)
+			else if (bank != -1 && sect->bank != bank)
 				fail("Section \"%s\" already declared with different bank %" PRIu32,
-				     pSect->pzName, pSect->nBank);
+				     sect->name, sect->bank);
 		} else { /* Section fragments are handled identically in RGBASM */
 			/* However, concaternating non-fragments will be made an error */
-			if (pSect->modifier != SECTION_FRAGMENT || mod != SECTION_FRAGMENT)
+			if (sect->modifier != SECTION_FRAGMENT || mod != SECTION_FRAGMENT)
 				warning(WARNING_OBSOLETE, "Concatenation of non-fragment sections is deprecated");
 
-			if (org != pSect->nOrg) {
-				if (pSect->nOrg == -1)
+			if (org != sect->org) {
+				if (sect->org == -1)
 					fail("Section \"%s\" already declared as floating",
-					     pSect->pzName);
+					     sect->name);
 				else
 					fail("Section \"%s\" already declared as fixed at $%" PRIx32,
-					     pSect->pzName, pSect->nOrg);
+					     sect->name, sect->org);
 			}
-			if (bank != pSect->nBank) {
-				if (pSect->nBank == -1)
+			if (bank != sect->bank) {
+				if (sect->bank == -1)
 					fail("Section \"%s\" already declared as floating bank",
-					     pSect->pzName);
+					     sect->name);
 				else
 					fail("Section \"%s\" already declared as fixed at bank %" PRIu32,
-					     pSect->pzName, pSect->nBank);
+					     sect->name, sect->bank);
 			}
-			if (alignment != pSect->nAlign) {
-				if (pSect->nAlign == 0)
+			if (alignment != sect->align) {
+				if (sect->align == 0)
 					fail("Section \"%s\" already declared as unaligned",
-					     pSect->pzName);
+					     sect->name);
 				else
 					fail("Section \"%s\" already declared as aligned to %u bytes",
-					     pSect->pzName,
-					     1U << pSect->nAlign);
+					     sect->name,
+					     1U << sect->align);
 			}
 		}
 
 		if (nbSectErrors)
 			fatalerror("Cannot create section \"%s\" (%u errors)",
-				   pSect->pzName, nbSectErrors);
+				   sect->name, nbSectErrors);
 #undef fail
-		return pSect;
+		return sect;
 	}
 
-	pSect = malloc(sizeof(*pSect));
-	if (pSect == NULL)
+	sect = malloc(sizeof(*sect));
+	if (sect == NULL)
 		fatalerror("Not enough memory for section");
 
-	pSect->pzName = strdup(pzName);
-	if (pSect->pzName == NULL)
+	sect->name = strdup(name);
+	if (sect->name == NULL)
 		fatalerror("Not enough memory for sectionname");
 
-	pSect->nType = type;
-	pSect->modifier = mod;
-	pSect->size = 0;
-	pSect->nOrg = org;
-	pSect->nBank = bank;
-	pSect->nAlign = alignment;
-	pSect->alignOfs = alignOffset;
-	pSect->pNext = pSectionList;
-	pSect->pPatches = NULL;
+	sect->type = type;
+	sect->modifier = mod;
+	sect->size = 0;
+	sect->org = org;
+	sect->bank = bank;
+	sect->align = alignment;
+	sect->alignOfs = alignOffset;
+	sect->next = pSectionList;
+	sect->patches = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
 	if (sect_HasData(type)) {
 		uint32_t sectsize;
 
 		sectsize = maxsize[type];
-		pSect->tData = malloc(sectsize);
-		if (pSect->tData == NULL)
+		sect->data = malloc(sectsize);
+		if (sect->data == NULL)
 			fatalerror("Not enough memory for section");
 	} else {
-		pSect->tData = NULL;
+		sect->data = NULL;
 	}
 
 	/*
 	 * Add the new section to the list
 	 * at the beginning because order doesn't matter
 	 */
-	pSectionList = pSect;
+	pSectionList = sect;
 
-	return pSect;
+	return sect;
 #undef mask
 }
 
@@ -315,17 +315,17 @@ static void changeSection(void)
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char const *pzName, uint32_t type, uint32_t org,
+void out_NewSection(char const *name, uint32_t type, uint32_t org,
 		    struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block");
 
-	struct Section *pSect = getSection(pzName, type, org, attribs, mod);
+	struct Section *sect = getSection(name, type, org, attribs, mod);
 
 	changeSection();
-	curOffset = mod == SECTION_UNION ? 0 : pSect->size;
-	pCurrentSection = pSect;
+	curOffset = mod == SECTION_UNION ? 0 : sect->size;
+	pCurrentSection = sect;
 }
 
 /*
@@ -339,12 +339,12 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	if (currentLoadSection)
 		fatalerror("`LOAD` blocks cannot be nested");
 
-	struct Section *pSect = getSection(name, type, org, attribs, false);
+	struct Section *sect = getSection(name, type, org, attribs, false);
 
 	loadOffset = curOffset;
 	curOffset = 0; /* curOffset -= loadOffset; */
 	changeSection();
-	currentLoadSection = pSect;
+	currentLoadSection = sect;
 }
 
 void out_EndLoadSection(void)
@@ -380,22 +380,22 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 {
 	struct Section *sect = sect_GetSymbolSection();
 
-	if (sect->nOrg != -1) {
+	if (sect->org != -1) {
 		if ((sym_GetPCValue() - offset) % (1 << alignment))
 			yyerror("Section's fixed address fails required alignment (PC = $%04" PRIx32 ")",
 				sym_GetPCValue());
-	} else if (sect->nAlign != 0) {
-		if ((((sect->alignOfs + curOffset) % (1 << sect->nAlign))
+	} else if (sect->align != 0) {
+		if ((((sect->alignOfs + curOffset) % (1 << sect->align))
 						- offset) % (1 << alignment)) {
 			yyerror("Section's alignment fails required alignment (offset from section start = $%04" PRIx32 ")",
 				curOffset);
-		} else if (alignment > sect->nAlign) {
-			sect->nAlign = alignment;
+		} else if (alignment > sect->align) {
+			sect->align = alignment;
 			sect->alignOfs =
 					(offset - curOffset) % (1 << alignment);
 		}
 	} else {
-		sect->nAlign = alignment;
+		sect->align = alignment;
 		sect->alignOfs = offset;
 	}
 }
@@ -411,7 +411,7 @@ static inline void growSection(uint32_t growth)
 
 static inline void writebyte(uint8_t byte)
 {
-	pCurrentSection->tData[sect_GetOutputOffset()] = byte;
+	pCurrentSection->data[sect_GetOutputOffset()] = byte;
 	growSection(1);
 }
 
@@ -439,7 +439,7 @@ void sect_StartUnion(void)
 {
 	if (!pCurrentSection)
 		fatalerror("UNIONs must be inside a SECTION");
-	if (sect_HasData(pCurrentSection->nType))
+	if (sect_HasData(pCurrentSection->type))
 		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections");
 	struct UnionStackEntry *entry = malloc(sizeof(*entry));
 
@@ -513,10 +513,10 @@ void out_Skip(int32_t skip, bool ds)
 	checksection();
 	reserveSpace(skip);
 
-	if (!ds && sect_HasData(pCurrentSection->nType))
+	if (!ds && sect_HasData(pCurrentSection->type))
 		warning(WARNING_EMPTY_DATA_DIRECTIVE, "db/dw/dl directive without data in ROM");
 
-	if (!sect_HasData(pCurrentSection->nType)) {
+	if (!sect_HasData(pCurrentSection->type)) {
 		growSection(skip);
 	} else {
 		checkcodesection();
@@ -781,17 +781,17 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
  */
 void out_PushSection(void)
 {
-	struct SectionStackEntry *pSect;
+	struct SectionStackEntry *sect;
 
-	pSect = malloc(sizeof(struct SectionStackEntry));
-	if (pSect == NULL)
+	sect = malloc(sizeof(struct SectionStackEntry));
+	if (sect == NULL)
 		fatalerror("No memory for section stack");
 
-	pSect->pSection = pCurrentSection;
-	pSect->pScope = sym_GetCurrentSymbolScope();
-	pSect->offset = curOffset;
-	pSect->pNext = pSectionStack;
-	pSectionStack = pSect;
+	sect->pSection = pCurrentSection;
+	sect->pScope = sym_GetCurrentSymbolScope();
+	sect->offset = curOffset;
+	sect->next = pSectionStack;
+	pSectionStack = sect;
 	/* TODO: maybe set current section to NULL? */
 }
 
@@ -803,14 +803,14 @@ void out_PopSection(void)
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block!");
 
-	struct SectionStackEntry *pSect;
+	struct SectionStackEntry *sect;
 
-	pSect = pSectionStack;
+	sect = pSectionStack;
 	changeSection();
-	pCurrentSection = pSect->pSection;
-	sym_SetCurrentSymbolScope(pSect->pScope);
-	curOffset = pSect->offset;
+	pCurrentSection = sect->pSection;
+	sym_SetCurrentSymbolScope(sect->pScope);
+	curOffset = sect->offset;
 
-	pSectionStack = pSect->pNext;
-	free(pSect);
+	pSectionStack = sect->next;
+	free(sect);
 }

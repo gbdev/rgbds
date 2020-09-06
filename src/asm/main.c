@@ -69,7 +69,7 @@ bool warnings; /* True to enable warnings, false to disable them. */
 
 struct sOptionStackEntry {
 	struct sOptions Options;
-	struct sOptionStackEntry *pNext;
+	struct sOptionStackEntry *next;
 };
 
 struct sOptionStackEntry *pOptionStack;
@@ -196,7 +196,7 @@ void opt_Push(void)
 		fatalerror("No memory for option stack");
 
 	pOpt->Options = CurrentOptions;
-	pOpt->pNext = pOptionStack;
+	pOpt->next = pOptionStack;
 	pOptionStack = pOpt;
 }
 
@@ -209,7 +209,7 @@ void opt_Pop(void)
 
 	pOpt = pOptionStack;
 	opt_SetCurrentOptions(&(pOpt->Options));
-	pOptionStack = pOpt->pNext;
+	pOptionStack = pOpt->next;
 	free(pOpt);
 }
 

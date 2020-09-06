@@ -74,7 +74,7 @@ static void pushcontext(void)
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)
-		ppFileStack = &((*ppFileStack)->pNext);
+		ppFileStack = &((*ppFileStack)->next);
 
 	*ppFileStack = malloc(sizeof(struct sContext));
 
@@ -82,7 +82,7 @@ static void pushcontext(void)
 		fatalerror("No memory for context");
 
 	(*ppFileStack)->FlexHandle = CurrentFlexHandle;
-	(*ppFileStack)->pNext = NULL;
+	(*ppFileStack)->next = NULL;
 	strcpy((char *)(*ppFileStack)->tzFileName, (char *)tzCurrentFileName);
 	(*ppFileStack)->nLine = nLineNo;
 
@@ -160,8 +160,8 @@ static int32_t popcontext(void)
 		return 1;
 
 	ppLastFile = &pFileStack;
-	while (pLastFile->pNext) {
-		ppLastFile = &(pLastFile->pNext);
+	while (pLastFile->next) {
+		ppLastFile = &(pLastFile->next);
 		pLastFile = *ppLastFile;
 	}
 
@@ -243,8 +243,8 @@ int32_t fstk_GetLine(void)
 	pLastFile = pFileStack;
 
 	if (pLastFile != NULL) {
-		while (pLastFile->pNext) {
-			ppLastFile = &(pLastFile->pNext);
+		while (pLastFile->next) {
+			ppLastFile = &(pLastFile->next);
 			pLastFile = *ppLastFile;
 		}
 		return pLastFile->nLine;
@@ -274,7 +274,7 @@ void fstk_Dump(void)
 	while (pLastFile) {
 		fprintf(stderr, "%s(%" PRId32 ") -> ", pLastFile->tzFileName,
 			pLastFile->nLine);
-		pLastFile = pLastFile->pNext;
+		pLastFile = pLastFile->next;
 	}
 
 	fprintf(stderr, "%s(%" PRId32 ")", tzCurrentFileName, nLineNo);
@@ -296,7 +296,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 			len = 0;
 		else
 			len -= retcode;
-		pLastFile = pLastFile->pNext;
+		pLastFile = pLastFile->next;
 	}
 
 	retcode = snprintf(&buf[buflen - len], len, "%s(%" PRId32 ")",

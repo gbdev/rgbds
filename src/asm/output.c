@@ -37,10 +37,10 @@ struct Patch {
 	uint32_t nOffset;
 	struct Section *pcSection;
 	uint32_t pcOffset;
-	uint8_t nType;
+	uint8_t type;
 	uint32_t nRPNSize;
 	uint8_t *pRPN;
-	struct Patch *pNext;
+	struct Patch *next;
 };
 
 struct Assertion {
@@ -67,13 +67,13 @@ static struct Assertion *assertions = NULL;
  */
 static uint32_t countsections(void)
 {
-	struct Section *pSect;
+	struct Section *sect;
 	uint32_t count = 0;
 
-	pSect = pSectionList;
-	while (pSect) {
+	sect = pSectionList;
+	while (sect) {
 		count++;
-		pSect = pSect->pNext;
+		sect = sect->next;
 	}
 
 	return count;
@@ -82,12 +82,12 @@ static uint32_t countsections(void)
 /*
  * Count the number of patches used in this object
  */
-static uint32_t countpatches(struct Section const *pSect)
+static uint32_t countpatches(struct Section const *sect)
 {
 	uint32_t r = 0;
 
-	for (struct Patch const *patch = pSect->pPatches; patch != NULL;
-	     patch = patch->pNext)
+	for (struct Patch const *patch = sect->patches; patch != NULL;
+	     patch = patch->next)
 		r++;
 
 	return r;
@@ -132,7 +132,7 @@ static void fputstring(char const *s, FILE *f)
 /*
  * Return a section's ID
  */
-static uint32_t getsectid(struct Section const *pSect)
+static uint32_t getsectid(struct Section const *sect)
 {
 	struct Section const *sec;
 	uint32_t ID = 0;
@@ -140,13 +140,13 @@ static uint32_t getsectid(struct Section const *pSect)
 	sec = pSectionList;
 
 	while (sec) {
-		if (sec == pSect)
+		if (sec == sect)
 			return ID;
 		ID++;
-		sec = sec->pNext;
+		sec = sec->next;
 	}
 
-	fatalerror("Unknown section '%s'", pSect->pzName);
+	fatalerror("Unknown section '%s'", sect->name);
 }
 
 static uint32_t getSectIDIfAny(struct Section const *sect)
@@ -157,42 +157,42 @@ static uint32_t getSectIDIfAny(struct Section const *sect)
 /*
  * Write a patch to a file
  */
-static void writepatch(struct Patch const *pPatch, FILE *f)
+static void writepatch(struct Patch const *patch, FILE *f)
 {
-	fputstring(pPatch->tzFilename, f);
-	fputlong(pPatch->nOffset, f);
-	fputlong(getSectIDIfAny(pPatch->pcSection), f);
-	fputlong(pPatch->pcOffset, f);
-	fputc(pPatch->nType, f);
-	fputlong(pPatch->nRPNSize, f);
-	fwrite(pPatch->pRPN, 1, pPatch->nRPNSize, f);
+	fputstring(patch->tzFilename, f);
+	fputlong(patch->nOffset, f);
+	fputlong(getSectIDIfAny(patch->pcSection), f);
+	fputlong(patch->pcOffset, f);
+	fputc(patch->type, f);
+	fputlong(patch->nRPNSize, f);
+	fwrite(patch->pRPN, 1, patch->nRPNSize, f);
 }
 
 /*
  * Write a section to a file
  */
-static void writesection(struct Section const *pSect, FILE *f)
+static void writesection(struct Section const *sect, FILE *f)
 {
-	fputstring(pSect->pzName, f);
+	fputstring(sect->name, f);
 
-	fputlong(pSect->size, f);
+	fputlong(sect->size, f);
 
-	bool isUnion = pSect->modifier == SECTION_UNION;
-	bool isFragment = pSect->modifier == SECTION_FRAGMENT;
+	bool isUnion = sect->modifier == SECTION_UNION;
+	bool isFragment = sect->modifier == SECTION_FRAGMENT;
 
-	fputc(pSect->nType | isUnion << 7 | isFragment << 6, f);
+	fputc(sect->type | isUnion << 7 | isFragment << 6, f);
 
-	fputlong(pSect->nOrg, f);
-	fputlong(pSect->nBank, f);
-	fputc(pSect->nAlign, f);
-	fputlong(pSect->alignOfs, f);
+	fputlong(sect->org, f);
+	fputlong(sect->bank, f);
+	fputc(sect->align, f);
+	fputlong(sect->alignOfs, f);
 
-	if (sect_HasData(pSect->nType)) {
-		fwrite(pSect->tData, 1, pSect->size, f);
-		fputlong(countpatches(pSect), f);
+	if (sect_HasData(sect->type)) {
+		fwrite(sect->data, 1, sect->size, f);
+		fputlong(countpatches(sect), f);
 
-		for (struct Patch const *patch = pSect->pPatches; patch != NULL;
-		     patch = patch->pNext)
+		for (struct Patch const *patch = sect->patches; patch != NULL;
+		     patch = patch->next)
 			writepatch(patch, f);
 	}
 }
@@ -307,39 +307,39 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 				uint32_t ofs)
 {
-	struct Patch *pPatch = malloc(sizeof(struct Patch));
+	struct Patch *patch = malloc(sizeof(struct Patch));
 	uint32_t rpnSize = expr->isKnown ? 5 : expr->nRPNPatchSize;
 
-	if (!pPatch)
+	if (!patch)
 		fatalerror("No memory for patch: %s", strerror(errno));
-	pPatch->pRPN = malloc(sizeof(*pPatch->pRPN) * rpnSize);
+	patch->pRPN = malloc(sizeof(*patch->pRPN) * rpnSize);
 
-	if (!pPatch->pRPN)
+	if (!patch->pRPN)
 		fatalerror("No memory for patch's RPN expression: %s",
 			   strerror(errno));
 
-	pPatch->nType = type;
-	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
-	pPatch->nOffset = ofs;
-	pPatch->pcSection = sect_GetSymbolSection();
-	pPatch->pcOffset = sect_GetSymbolOffset();
+	patch->type = type;
+	fstk_DumpToStr(patch->tzFilename, sizeof(patch->tzFilename));
+	patch->nOffset = ofs;
+	patch->pcSection = sect_GetSymbolSection();
+	patch->pcOffset = sect_GetSymbolOffset();
 
 	/* If the expression's value is known, output a constant RPN expression directly */
 	if (expr->isKnown) {
-		pPatch->nRPNSize = rpnSize;
+		patch->nRPNSize = rpnSize;
 		/* Make sure to update `rpnSize` above if modifying this! */
-		pPatch->pRPN[0] = RPN_CONST;
-		pPatch->pRPN[1] = (uint32_t)(expr->nVal) & 0xFF;
-		pPatch->pRPN[2] = (uint32_t)(expr->nVal) >> 8;
-		pPatch->pRPN[3] = (uint32_t)(expr->nVal) >> 16;
-		pPatch->pRPN[4] = (uint32_t)(expr->nVal) >> 24;
+		patch->pRPN[0] = RPN_CONST;
+		patch->pRPN[1] = (uint32_t)(expr->nVal) & 0xFF;
+		patch->pRPN[2] = (uint32_t)(expr->nVal) >> 8;
+		patch->pRPN[3] = (uint32_t)(expr->nVal) >> 16;
+		patch->pRPN[4] = (uint32_t)(expr->nVal) >> 24;
 	} else {
-		pPatch->nRPNSize = 0;
-		writerpn(pPatch->pRPN, &pPatch->nRPNSize, expr->tRPN, expr->nRPNLength);
+		patch->nRPNSize = 0;
+		writerpn(patch->pRPN, &patch->nRPNSize, expr->tRPN, expr->nRPNLength);
 	}
-	assert(pPatch->nRPNSize == rpnSize);
+	assert(patch->nRPNSize == rpnSize);
 
-	return pPatch;
+	return patch;
 }
 
 /*
@@ -347,10 +347,10 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
  */
 void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
-	struct Patch *pPatch = allocpatch(type, expr, ofs);
+	struct Patch *patch = allocpatch(type, expr, ofs);
 
-	pPatch->pNext = pCurrentSection->pPatches;
-	pCurrentSection->pPatches = pPatch;
+	patch->next = pCurrentSection->patches;
+	pCurrentSection->patches = patch;
 }
 
 /**
@@ -415,7 +415,7 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
 
-	for (struct Section *sect = pSectionList; sect; sect = sect->pNext)
+	for (struct Section *sect = pSectionList; sect; sect = sect->next)
 		writesection(sect, f);
 
 	fputlong(countasserts(), f);

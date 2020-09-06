@@ -147,12 +147,12 @@ void rpn_BankSelf(struct Expression *expr)
 	if (!pCurrentSection) {
 		yyerror("PC has no bank outside a section");
 		expr->nVal = 1;
-	} else if (pCurrentSection->nBank == -1) {
+	} else if (pCurrentSection->bank == -1) {
 		makeUnknown(expr, "Current section's bank is not known");
 		expr->nRPNPatchSize++;
 		*reserveSpace(expr, 1) = RPN_BANK_SELF;
 	} else {
-		expr->nVal = pCurrentSection->nBank;
+		expr->nVal = pCurrentSection->bank;
 	}
 }
 
@@ -175,9 +175,9 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 			/* If the symbol didn't exist, `sym_Ref` created it */
 			sym = sym_FindSymbol(tzSym);
 
-		if (sym_GetSection(sym) && sym_GetSection(sym)->nBank != -1) {
+		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != -1) {
 			/* Symbol's section is known and bank is fixed */
-			expr->nVal = sym_GetSection(sym)->nBank;
+			expr->nVal = sym_GetSection(sym)->bank;
 		} else {
 			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
 			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
@@ -196,8 +196,8 @@ void rpn_BankSection(struct Expression *expr, char const *tzSectionName)
 
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
 
-	if (pSection && pSection->nBank != -1) {
-		expr->nVal = pSection->nBank;
+	if (pSection && pSection->bank != -1) {
+		expr->nVal = pSection->bank;
 	} else {
 		makeUnknown(expr, "Section \"%s\"'s bank is not known",
 			    tzSectionName);

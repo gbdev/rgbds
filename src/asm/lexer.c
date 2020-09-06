@@ -32,7 +32,7 @@ struct sLexString {
 	char *tzName;
 	uint32_t nToken;
 	uint32_t nNameLength;
-	struct sLexString *pNext;
+	struct sLexString *next;
 };
 
 #define pLexBufferRealStart	(pCurrentBuffer->pBufferRealStart)
@@ -492,7 +492,7 @@ void lex_AddStrings(const struct sLexInitString *lex)
 
 		ppHash = &tLexHash[hash];
 		while (*ppHash)
-			ppHash = &((*ppHash)->pNext);
+			ppHash = &((*ppHash)->next);
 
 		*ppHash = malloc(sizeof(struct sLexString));
 		if (*ppHash == NULL)
@@ -504,7 +504,7 @@ void lex_AddStrings(const struct sLexInitString *lex)
 
 		(*ppHash)->nNameLength = strlen(lex->tzName);
 		(*ppHash)->nToken = lex->nToken;
-		(*ppHash)->pNext = NULL;
+		(*ppHash)->next = NULL;
 
 		upperstring((*ppHash)->tzName);
 
@@ -575,7 +575,7 @@ struct sLexString *yylex_GetLongestFixed(void)
 				pLongestFixed = lex;
 				break;
 			}
-			lex = lex->pNext;
+			lex = lex->next;
 		}
 	}
 

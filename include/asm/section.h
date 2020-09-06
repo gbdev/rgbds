@@ -17,17 +17,17 @@
 struct Expression;
 
 struct Section {
-	char *pzName;
-	enum SectionType nType;
+	char *name;
+	enum SectionType type;
 	enum SectionModifier modifier;
 	uint32_t size;
-	uint32_t nOrg;
-	uint32_t nBank;
-	uint8_t nAlign;
+	uint32_t org;
+	uint32_t bank;
+	uint8_t align;
 	uint16_t alignOfs;
-	struct Section *pNext;
-	struct Patch *pPatches;
-	uint8_t *tData;
+	struct Section *next;
+	struct Patch *patches;
+	uint8_t *data;
 };
 
 struct SectionSpec {
@@ -36,8 +36,8 @@ struct SectionSpec {
 	uint16_t alignOfs;
 };
 
-struct Section *out_FindSectionByName(const char *pzName);
-void out_NewSection(char const *pzName, uint32_t secttype, uint32_t org,
+struct Section *out_FindSectionByName(const char *name);
+void out_NewSection(char const *name, uint32_t secttype, uint32_t org,
 		    struct SectionSpec const *attributes,
 		    enum SectionModifier mod);
 void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,

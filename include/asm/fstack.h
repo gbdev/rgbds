@@ -26,7 +26,7 @@ struct MacroArgs;
 struct sContext {
 	YY_BUFFER_STATE FlexHandle;
 	struct Symbol const *pMacro;
-	struct sContext *pNext;
+	struct sContext *next;
 	char tzFileName[_MAX_PATH + 1];
 	struct MacroArgs *macroArgs;
 	uint32_t uniqueID;
