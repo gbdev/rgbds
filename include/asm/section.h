@@ -46,9 +46,13 @@ void out_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
 uint32_t sect_GetSymbolOffset(void);
-void sect_SetSymbolOffset(uint32_t ofs);
 uint32_t sect_GetOutputOffset(void);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
+
+void sect_StartUnion(void);
+void sect_NextUnionMember(void);
+void sect_EndUnion(void);
+void sect_CheckUnionClosed(void);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);

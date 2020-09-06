@@ -40,7 +40,7 @@ const size_t cldefine_entrysize = 2 * sizeof(void *);
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
-uint32_t nTotalLines, nIFDepth, nUnionDepth;
+uint32_t nTotalLines, nIFDepth;
 bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
@@ -534,7 +534,6 @@ int main(int argc, char *argv[])
 	nTotalLines = 0;
 	nIFDepth = 0;
 	skipElif = true;
-	nUnionDepth = 0;
 	sym_Init();
 	sym_SetExportAll(exportall);
 	fstk_Init(tzMainfile);
@@ -553,10 +552,7 @@ int main(int argc, char *argv[])
 		errx(1, "Unterminated IF construct (%" PRIu32 " levels)!",
 		     nIFDepth);
 
-	if (nUnionDepth != 0) {
-		errx(1, "Unterminated UNION construct (%" PRIu32 " levels)!",
-		     nUnionDepth);
-	}
+	sect_CheckUnionClosed();
 
 	double timespent;
 

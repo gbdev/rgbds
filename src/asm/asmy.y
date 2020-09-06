@@ -383,32 +383,6 @@ static void if_skip_to_endc(void)
 	nLineNo--;
 }
 
-static void startUnion(void)
-{
-	if (!pCurrentSection)
-		fatalerror("UNIONs must be inside a SECTION");
-
-	uint32_t unionIndex = nUnionDepth;
-
-	nUnionDepth++;
-	if (nUnionDepth > MAXUNIONS)
-		fatalerror("Too many nested UNIONs");
-
-	unionStart[unionIndex] = sect_GetOutputOffset();
-	unionSize[unionIndex] = 0;
-}
-
-static void updateUnion(void)
-{
-	uint32_t unionIndex = nUnionDepth - 1;
-	uint32_t size = sect_GetOutputOffset() - unionStart[unionIndex];
-
-	if (size > unionSize[unionIndex])
-		unionSize[unionIndex] = size;
-
-	sect_SetSymbolOffset(unionStart[unionIndex]);
-}
-
 static size_t strlenUTF8(const char *s)
 {
 	size_t len = 0;
@@ -975,26 +949,13 @@ rb		: T_LABEL T_POP_RB uconst {
 		}
 ;
 
-union		: T_POP_UNION	{ startUnion(); }
+union		: T_POP_UNION	{ sect_StartUnion(); }
 ;
 
-nextu		: T_POP_NEXTU {
-			if (nUnionDepth <= 0)
-				fatalerror("Found NEXTU outside of a UNION construct");
-
-			updateUnion();
-		}
+nextu		: T_POP_NEXTU	{ sect_NextUnionMember(); }
 ;
 
-endu		: T_POP_ENDU {
-			if (nUnionDepth <= 0)
-				fatalerror("Found ENDU outside of a UNION construct");
-
-			updateUnion();
-
-			nUnionDepth--;
-			sect_SetSymbolOffset(unionStart[nUnionDepth] + unionSize[nUnionDepth]);
-		}
+endu		: T_POP_ENDU	{ sect_EndUnion(); }
 ;
 
 ds		: T_POP_DS uconst	{ out_Skip($2, true); }

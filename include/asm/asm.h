@@ -21,7 +21,6 @@
 #include "asm/localasm.h"
 #include "asm/symbol.h"
 
-#define MAXUNIONS	128
 #define MAXMACROARGS	99999
 #define MAXINCPATHS	128
 
@@ -29,9 +28,6 @@ extern int32_t nLineNo;
 extern uint32_t nTotalLines;
 extern uint32_t nIFDepth;
 extern bool skipElif;
-extern uint32_t nUnionDepth;
-extern uint32_t unionStart[MAXUNIONS];
-extern uint32_t unionSize[MAXUNIONS];
 extern char tzCurrentFileName[_MAX_PATH + 1];
 extern struct Section *pCurrentSection;
 extern bool oDontExpandStrings;

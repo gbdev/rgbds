@@ -28,6 +28,12 @@ uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset
 static struct Section *currentLoadSection = NULL;
 uint32_t loadOffset; /* The offset of the LOAD section within its parent */
 
+struct UnionStackEntry {
+	uint32_t start;
+	uint32_t size;
+	struct UnionStackEntry *next;
+} *unionStack = NULL;
+
 /*
  * A quick check to see if we have an initialized section
  */
@@ -48,8 +54,6 @@ static inline void checkcodesection(void)
 	if (!sect_HasData(pCurrentSection->nType))
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
 			   pCurrentSection->pzName);
-	else if (nUnionDepth > 0)
-		fatalerror("UNIONs cannot contain code or data");
 }
 
 static inline void checkSectionSize(struct Section const *sect, uint32_t size)
@@ -302,7 +306,7 @@ static struct Section *getSection(char const *pzName, enum SectionType type,
  */
 static void changeSection(void)
 {
-	if (nUnionDepth > 0)
+	if (unionStack)
 		fatalerror("Cannot change the section within a UNION");
 
 	sym_SetCurrentSymbolScope(NULL);
@@ -365,11 +369,6 @@ struct Section *sect_GetSymbolSection(void)
 uint32_t sect_GetSymbolOffset(void)
 {
 	return curOffset;
-}
-
-void sect_SetSymbolOffset(uint32_t ofs)
-{
-	curOffset = ofs;
 }
 
 uint32_t sect_GetOutputOffset(void)
@@ -436,6 +435,56 @@ static inline void createPatch(enum PatchType type,
 	out_CreatePatch(type, expr, sect_GetOutputOffset());
 }
 
+void sect_StartUnion(void)
+{
+	if (!pCurrentSection)
+		fatalerror("UNIONs must be inside a SECTION");
+	if (sect_HasData(pCurrentSection->nType))
+		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections");
+	struct UnionStackEntry *entry = malloc(sizeof(*entry));
+
+	if (!entry)
+		fatalerror("Failed to allocate new union stack entry: %s", strerror(errno));
+	entry->start = curOffset;
+	entry->size = 0;
+	entry->next = unionStack;
+	unionStack = entry;
+}
+
+static void endUnionMember(void)
+{
+	uint32_t memberSize = curOffset - unionStack->start;
+
+	if (memberSize > unionStack->size)
+		unionStack->size = memberSize;
+	curOffset = unionStack->start;
+}
+
+void sect_NextUnionMember(void)
+{
+	if (!unionStack)
+		fatalerror("Found NEXTU outside of a UNION construct");
+	endUnionMember();
+}
+
+void sect_EndUnion(void)
+{
+	if (!unionStack)
+		fatalerror("Found ENDU outside of a UNION construct");
+	endUnionMember();
+	curOffset += unionStack->size;
+	struct UnionStackEntry *next = unionStack->next;
+
+	free(unionStack);
+	unionStack = next;
+}
+
+void sect_CheckUnionClosed(void)
+{
+	if (unionStack)
+		fatalerror("Unterminated UNION construct!");
+}
+
 /*
  * Output an absolute byte
  */
@@ -469,9 +518,6 @@ void out_Skip(int32_t skip, bool ds)
 
 	if (!sect_HasData(pCurrentSection->nType)) {
 		growSection(skip);
-	} else if (nUnionDepth > 0) {
-		while (skip--)
-			writebyte(CurrentOptions.fillchar);
 	} else {
 		checkcodesection();
 		while (skip--)
