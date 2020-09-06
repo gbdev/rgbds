@@ -322,7 +322,7 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 	fstk_DumpToStr(pPatch->tzFilename, sizeof(pPatch->tzFilename));
 	pPatch->nOffset = ofs;
 	pPatch->pcSection = sect_GetSymbolSection();
-	pPatch->pcOffset = curOffset;
+	pPatch->pcOffset = sect_GetSymbolOffset();
 
 	/* If the expression's value is known, output a constant RPN expression directly */
 	if (expr->isKnown) {

@@ -45,7 +45,6 @@ bool skipElif;
 uint32_t unionStart[128], unionSize[128];
 
 int32_t nLineNo;
-uint32_t curOffset;
 
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;

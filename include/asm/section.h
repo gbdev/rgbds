@@ -45,6 +45,8 @@ void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
 void out_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
+uint32_t sect_GetSymbolOffset(void);
+void sect_SetSymbolOffset(uint32_t ofs);
 uint32_t sect_GetOutputOffset(void);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
 

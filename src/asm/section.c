@@ -24,8 +24,9 @@ struct SectionStackEntry {
 };
 
 struct SectionStackEntry *pSectionStack;
+uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset) */
 static struct Section *currentLoadSection = NULL;
-uint32_t loadOffset = 0; /* The offset of the LOAD section within its parent */
+uint32_t loadOffset; /* The offset of the LOAD section within its parent */
 
 /*
  * A quick check to see if we have an initialized section
@@ -356,6 +357,19 @@ void out_EndLoadSection(void)
 struct Section *sect_GetSymbolSection(void)
 {
 	return currentLoadSection ? currentLoadSection : pCurrentSection;
+}
+
+/*
+ * The offset into the section above
+ */
+uint32_t sect_GetSymbolOffset(void)
+{
+	return curOffset;
+}
+
+void sect_SetSymbolOffset(uint32_t ofs)
+{
+	curOffset = ofs;
 }
 
 uint32_t sect_GetOutputOffset(void)

@@ -394,19 +394,19 @@ static void startUnion(void)
 	if (nUnionDepth > MAXUNIONS)
 		fatalerror("Too many nested UNIONs");
 
-	unionStart[unionIndex] = curOffset;
+	unionStart[unionIndex] = sect_GetOutputOffset();
 	unionSize[unionIndex] = 0;
 }
 
 static void updateUnion(void)
 {
 	uint32_t unionIndex = nUnionDepth - 1;
-	uint32_t size = curOffset - unionStart[unionIndex];
+	uint32_t size = sect_GetOutputOffset() - unionStart[unionIndex];
 
 	if (size > unionSize[unionIndex])
 		unionSize[unionIndex] = size;
 
-	curOffset = unionStart[unionIndex];
+	sect_SetSymbolOffset(unionStart[unionIndex]);
 }
 
 static size_t strlenUTF8(const char *s)
@@ -993,7 +993,7 @@ endu		: T_POP_ENDU {
 			updateUnion();
 
 			nUnionDepth--;
-			curOffset = unionStart[nUnionDepth] + unionSize[nUnionDepth];
+			sect_SetSymbolOffset(unionStart[nUnionDepth] + unionSize[nUnionDepth]);
 		}
 ;
 

@@ -89,7 +89,7 @@ static int32_t CallbackPC(void)
 {
 	struct Section const *section = sect_GetSymbolSection();
 
-	return section ? section->nOrg + curOffset : 0;
+	return section ? section->nOrg + sect_GetSymbolOffset() : 0;
 }
 
 /*
@@ -414,7 +414,7 @@ struct Symbol *sym_AddReloc(char const *symName)
 
 	sym->type = SYM_LABEL;
 	sym->callback = NULL;
-	sym->value = curOffset;
+	sym->value = sect_GetSymbolOffset();
 
 	if (exportall)
 		sym->isExported = true;
