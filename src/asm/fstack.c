@@ -522,7 +522,26 @@ void fstk_Init(char *pFileName)
 {
 	char tzSymFileName[_MAX_PATH + 1 + 2];
 
-	snprintf(tzSymFileName, sizeof(tzSymFileName), "\"%s\"", pFileName);
+	char *c = pFileName;
+	int fileNameIndex = 0;
+
+	tzSymFileName[fileNameIndex++] = '"';
+
+	// minus 2 to account for trailing "\"\0"
+	// minus 1 to avoid a buffer overflow in extreme cases
+	while (*c && fileNameIndex < sizeof(tzSymFileName) - 2 - 1) {
+		
+		if (*c == '"') {
+			tzSymFileName[fileNameIndex++] = '\\';
+		}
+
+		tzSymFileName[fileNameIndex++] = *c;
+		++c;
+	}
+
+	tzSymFileName[fileNameIndex++] = '"';
+	tzSymFileName[fileNameIndex]   = '\0';
+
 	sym_AddString("__FILE__", tzSymFileName);
 
 	pFileStack = NULL;
