@@ -77,7 +77,7 @@ EOF
 	if [ $stem = rgbasm.5 ]; then
 		options+=,toc
 	fi
-	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | src/doc_postproc.awk >> "$1/$2/$page"
+	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | .github/actions/doc_postproc.awk >> "$1/$2/$page"
 	if [ $update_redirects -ne 0 ]; then
 		cat - >"$1/$page" <<EOF
 ---
