@@ -38,48 +38,11 @@ BEGIN {
 	}
 }
 
-/<div class="Nd">/ {
-	# Make the description blurb inline, as with terminal output
-	gsub(/div/, "span")
-}
-
-BEGIN {
-	pages["gbz80",  7] = 1
-	pages["rgbds",  5] = 1
-	pages["rgbds",  7] = 1
-	pages["rgbasm", 1] = 1
-	pages["rgbasm", 5] = 1
-	pages["rgblink",1] = 1
-	pages["rgblink",5] = 1
-	pages["rgbfix", 1] = 1
-	pages["rgbgfx", 1] = 1
-}
-/<a class="Xr">/ {
-	# Link to other pages in the doc
-	for (i in pages) {
-		split(i, page, SUBSEP)
-		name = page[1]
-		section = page[2]
-		gsub(sprintf("<a class=\"Xr\">%s\\(%d\\)", name, section),
-		     sprintf("<a class=\"Xr\" href=\"%s.%d.html\">%s(%d)", name, section, name, section))
-	}
-}
-
 {
 	# Make long opts (defined using `Fl Fl`) into a single tag
-	gsub(/<code class="Fl">-<\/code><code class="Fl">/, "<code class=\"Fl\">-")
+	gsub(/<code class="Fl">-<\/code>\s*<code class="Fl">/, "<code class=\"Fl\">-")
 }
 
 {
 	print
-}
-
-/<head>/ {
-	# Add viewport size <meta> tag for mobile users
-	print "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-}
-
-/<link/ {
-	# Inject our own style overrides
-	print("  <link rel=\"stylesheet\" href=\"rgbds.css\" type=\"text/css\" media=\"all\"/>")
 }
