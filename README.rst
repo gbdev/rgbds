@@ -186,4 +186,4 @@ This is the complete list of user-defined variables:
 
 - 2018, codebase relicensed under the MIT license.
 
-- 2020, repository is moved to the [gbdev](https://github.com/gbdev) organisation. The [rgbds.gbdev.io](https://rgbds.gbdev.io/) website serving documentation and downloads is created.
+- 2020, repository is moved to the `gbdev <https://github.com/gbdev>`__ organisation. The `rgbds.gbdev.io <https://rgbds.gbdev.io>`__ website serving documentation and downloads is created.
