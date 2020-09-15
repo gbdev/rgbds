@@ -30,10 +30,16 @@ jobs:
           repository: gbdev/rgbds-www
           ref: master
           path: rgbds-www
-      - name: Install mandoc
+      - name: Build and install mandoc
         run: |
           sudo apt-get -qq update
-          sudo apt-get install -yq mandoc
+          sudo apt-get install -yq zlib1g-dev
+          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz'
+          tar xf mandoc-1.14.5.tar.gz
+          cd mandoc-1.14.5
+          ./configure
+          make
+          sudo make install
       - name: Update pages
         working-directory: rgbds
         run: |
