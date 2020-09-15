@@ -16,7 +16,7 @@ on:
 
 jobs:
   build:
-    run-on: ubuntu-18.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout rgbds@master
         uses: actions/checkout@v2
@@ -44,8 +44,15 @@ jobs:
           mkdir -p -m 700 ~/.ssh
           echo "${{ secrets.SSH_KEY_SECRET }}" > ~/.ssh/id_ed25519
           chmod 0600 ~/.ssh/id_ed25519
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_ed25519
           git config --global user.name "GitHub Action"
           git config --global user.email "community@gbdev.io"
           git add .
           git commit -m "Update RGBDS master documentation"
-          git push
+          if git remote | grep -q origin; then
+            git remote set-url origin git@github.com:gbdev/rgbds-www.git
+          else
+            git remote add origin git@github.com:gbdev/rgbds-www.git
+          fi
+          git push origin master
