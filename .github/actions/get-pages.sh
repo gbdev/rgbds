@@ -54,6 +54,13 @@ PAGES=(
 WWWPATH="/docs"
 mkdir -p "$1/$2"
 
+# `mandoc` uses a different format for referring to man pages present in the **current** directory
+# We want that format for RGBDS man pages, and the other one for the t=rest;
+# we thus need to copy all pages to a temporary directory, and process them there.
+
+# Copy all pages to current dir
+cp "${PAGES[@]}" .
+
 for page in "${!PAGES[@]}"; do
 stem="${page%.html}"
 manpage="${stem%.?}(${stem#*.})"
@@ -66,7 +73,11 @@ title: $manpage [$2]
 description: RGBDS $2 — $descr
 ---
 EOF
-	mandoc -Thtml -Ofragment "${PAGES[$page]}" >> "$1/$2/$page"
+	options=fragment,man='%N.%S.html;https://linux.die.net/man/%S/%N'
+	if [ $stem = rgbasm.5 ]; then
+		options+=,toc
+	fi
+	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | src/doc_postproc.awk >> "$1/$2/$page"
 	if [ $update_redirects -ne 0 ]; then
 		cat - >"$1/$page" <<EOF
 ---
@@ -85,3 +96,6 @@ title: RGBDS online manual [$2]
 description: RGBDS $2 - Online manual
 ---
 EOF
+
+# Clean up
+rm "${PAGES[@]##*/}"
