@@ -1,0 +1,51 @@
+name: "Update master docs"
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - src/gbz80.7
+      - src/rgbds.5
+      - src/rgbds.7
+      - src/asm/rgbasm.1
+      - src/asm/rgbasm.5
+      - src/link/rgblink.1
+      - src/link/rgblink.5
+      - src/fix/rgbfix.1
+      - src/gfx/rgbgfx.1
+
+jobs:
+  build:
+    run-on: ubuntu-18.04
+    steps:
+      - name: Checkout rgbds@master
+        uses: actions/checkout@v2
+        with:
+          repository: gbdev/rgbds
+          ref: master
+          path: rgbds
+      - name: Checkout rgbds-www@master
+        uses: actions/checkout@v2
+        with:
+          repository: gbdev/rgbds-www
+          ref: master
+          path: rgbds-www
+      - name: Install mandoc
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get install -yq mandoc
+      - name: Update pages
+        working-directory: rgbds
+        run: |
+          ./.github/actions/get-pages.sh ../rgbds-www/_documentation master
+      - name: Push new pages
+        working-directory: rgbds-www
+        run: |
+          mkdir -p -m 700 ~/.ssh
+          echo "${{ secrets.SSH_KEY_SECRET }}" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          git config --global user.name "GitHub Action"
+          git config --global user.email "community@gbdev.io"
+          git add .
+          git commit -m "Update RGBDS master documentation"
+          git push
