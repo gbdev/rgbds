@@ -73,7 +73,7 @@ title: $manpage [$2]
 description: RGBDS $2 — $descr
 ---
 EOF
-	options=fragment,man='%N.%S.html;https://linux.die.net/man/%S/%N'
+	options=fragment,man='%N.%S;https://linux.die.net/man/%S/%N'
 	if [ $stem = rgbasm.5 ]; then
 		options+=,toc
 	fi
@@ -81,8 +81,8 @@ EOF
 	if [ $update_redirects -ne 0 ]; then
 		cat - >"$1/$page" <<EOF
 ---
-redirect_to: $WWWPATH/$2/$page
-permalink: $WWWPATH/$page
+redirect_to: $WWWPATH/$2/${page%.html}/
+permalink: $WWWPATH/${page%.html}/
 title: $manpage [latest stable]
 description: RGBDS latest stable — $descr
 ---
@@ -92,6 +92,7 @@ done
 cat - >"$1/$2/index.html" <<EOF
 ---
 layout: doc_index
+permalink: /docs/$2/
 title: RGBDS online manual [$2]
 description: RGBDS $2 - Online manual
 ---
