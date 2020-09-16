@@ -81,7 +81,7 @@ EOF
 	if [ $update_redirects -ne 0 ]; then
 		cat - >"$1/$page" <<EOF
 ---
-redirect_to: $WWWPATH/$2/${page%.html}/
+redirect_to: $WWWPATH/$2/${page%.html}
 permalink: $WWWPATH/${page%.html}/
 title: $manpage [latest stable]
 description: RGBDS latest stable — $descr
