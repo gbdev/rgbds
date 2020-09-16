@@ -15,7 +15,7 @@ other UNIX tools.
 This toolchain is maintained on `GitHub <https://github.com/rednex/rgbds>`__.
 
 The documentation of this toolchain can be viewed online
-`here <https://rednex.github.io/rgbds/>`__, it is generated from the man pages
+`here <https://rgbds.gbdev.io/docs/>`__, it is generated from the man pages
 found in this repository.
 
 1. Installing RGBDS
