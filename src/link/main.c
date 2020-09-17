@@ -132,7 +132,7 @@ static void printUsage(void)
 "    -x, --nopad                disable padding of output binary\n"
 "    -V, --version              print RGBLINK version and exits\n"
 "\n"
-"For help, use `man rgblink' or go to https://rednex.github.io/rgbds/\n",
+"For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 }
 

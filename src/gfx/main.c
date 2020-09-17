@@ -66,7 +66,7 @@ static void print_usage(void)
 "    -u, --unique-tiles        optimize out identical tiles\n"
 "    -V, --version             print RGBGFX version and exit\n"
 "\n"
-"For help, use `man rgbgfx' or go to https://rednex.github.io/rgbds/\n",
+"For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 	exit(1);
 }

@@ -63,7 +63,7 @@ static void print_usage(void)
 "    -V, --version               print RGBFIX version and exit\n"
 "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
 "\n"
-"For help, use `man rgbfix' or go to https://rednex.github.io/rgbds/\n",
+"For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 	exit(1);
 }

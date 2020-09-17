@@ -323,7 +323,7 @@ static void print_usage(void)
 "    -V, --version            print RGBASM version and exit\n"
 "    -W, --warning <warning>  enable or disable warnings\n"
 "\n"
-"For help, use `man rgbasm' or go to https://rednex.github.io/rgbds/\n",
+"For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 	exit(1);
 }
