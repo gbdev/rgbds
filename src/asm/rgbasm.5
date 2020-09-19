@@ -681,6 +681,11 @@ Similarly, the size of an unionized section is the largest of all its declaratio
 .Ss Section Fragments
 Section fragments are sections with a small twist: when several of the same name are encountered, they are concatenated instead of producing an error.
 This works within the same file (paralleling the behavior "plain" sections has in previous versions), but also across object files.
+To declare an section fragment, add a
+.Ic FRAGMENT
+keyword after the
+.Ic SECTION
+one; the declaration is otherwise not different.
 However, similarly to
 .Sx Unionized Sections ,
 some rules must be followed:
