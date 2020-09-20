@@ -37,7 +37,6 @@ endif()
 
 find_package(PNG 1.2 REQUIRED)
 find_package(BISON REQUIRED)
-find_package(FLEX)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
