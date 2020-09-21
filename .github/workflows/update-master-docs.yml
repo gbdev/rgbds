@@ -4,6 +4,7 @@ on:
     branches:
       - master
     paths:
+      - .github/actions/get-pages.sh
       - src/gbz80.7
       - src/rgbds.5
       - src/rgbds.7
