@@ -304,7 +304,7 @@ struct LexerState {
 			char *ptr; /* Technically `const` during the lexer's execution */
 			off_t size;
 			off_t offset;
-			bool isReferenced; /* If a macro in this file requires not unmapping it*/
+			bool isReferenced; /* If a macro in this file requires not unmapping it */
 		};
 		struct { /* Otherwise */
 			int fd;
@@ -2007,7 +2007,6 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
 	if (lexerState->isMmapped)
-		/* FIXME: this is godawful, but RGBASM doesn't even clean up anything anyways. */
 		lexerState->isReferenced = true;
 
 	/*
