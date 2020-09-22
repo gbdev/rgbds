@@ -104,6 +104,10 @@ jobs:
         shell: bash
         run: |
           cp bins/* .
+      - name: Who am I
+        shell: bash
+        run: |
+          uname
       - name: Run tests
         shell: bash
         run: |

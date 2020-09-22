@@ -20,6 +20,19 @@ tryCmp () {
 	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
 }
 
+# Add the quote test, except on Windows
+if uname | grep -vic mingw; then
+	cat > quote\"file.asm <<EOF
+WARN __FILE__
+EOF
+	cat > quote\"file.out <<EOF
+EOF
+	cat > quote\"file.err <<EOF
+warning: quote"file.asm(1): [-Wuser]
+    quote"file.asm
+EOF
+fi
+
 for i in *.asm; do
 	for variant in '' '.pipe'; do
 		if [ -z "$variant" ]; then
