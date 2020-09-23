@@ -53,7 +53,78 @@ jobs:
         run: |
           test/run-tests.sh
 
-  windows-build:
+  windows-testing:
+    strategy:
+      matrix:
+        bits: [32, 64]
+        include:
+          - bits: 32
+            arch: x86
+            platform: Win32
+          - bits: 64
+            arch: x86_x64
+            platform: x64
+      fail-fast: false
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get zlib, libpng and bison
+        run: | # TODO: use an array
+          $wc = New-Object System.Net.WebClient
+          $wc.DownloadFile('https://www.zlib.net/zlib1211.zip', 'zlib.zip')
+          $hash = (Get-FileHash "zlib.zip" -Algorithm SHA256).Hash
+          if ($hash -ne 'd7510a8ee1918b7d0cad197a089c0a2cd4d6df05fee22389f67f115e738b178d') {
+            Write-Host "zlib SHA256 mismatch! ($hash)"
+            exit 1
+          }
+          $wc.DownloadFile('https://download.sourceforge.net/libpng/lpng1637.zip', 'libpng.zip')
+          $hash = (Get-FileHash "libpng.zip" -Algorithm SHA256).Hash
+          if ($hash -ne '3b4b1cbd0bae6822f749d39b1ccadd6297f05e2b85a83dd2ce6ecd7d09eabdf2') {
+            Write-Host "libpng SHA256 mismatch! ($hash)"
+            exit 1
+          }
+          $wc.DownloadFile('https://github.com/lexxmark/winflexbison/releases/download/v2.5.23/win_flex_bison-2.5.23.zip', 'winflexbison.zip')
+          $hash = (Get-FileHash "winflexbison.zip" -Algorithm SHA256).Hash
+          if ($hash -ne '6AA5C8EA662DA1550020A5804C28BE63FFAA53486DA9F6842E24C379EC422DFC') {
+            Write-Host "bison SHA256 mismatch! ($hash)"
+          }
+          Expand-Archive -DestinationPath .           "zlib.zip"
+          Expand-Archive -DestinationPath .           "libpng.zip"
+          Expand-Archive -DestinationPath install_dir "winflexbison.zip"
+          Move-Item zlib-1.2.11 zlib
+          Move-Item lpng1637 libpng
+      - name: Build zlib
+        run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
+          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
+          cmake --build zbuild --config Release
+          cmake --install zbuild
+      - name: Build libpng
+        run: |
+          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
+          cmake --build pngbuild --config Release
+          cmake --install pngbuild
+      - name: Build Windows binaries
+        run: |
+          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          cmake --install build
+      - name: Package binaries
+        shell: bash
+        run: |
+          mkdir bins
+          cp install_dir/bin/{rgbasm.exe,rgblink.exe,rgbfix.exe,rgbgfx.exe,zlib1.dll,libpng16.dll} bins
+      - name: Upload Windows binaries
+        uses: actions/upload-artifact@v1
+        with:
+          name: rgbds-canary-win${{ matrix.bits }}
+          path: bins
+      - name: Test
+        shell: bash
+        run: |
+          cp bins/* .
+          test/run-tests.sh
+
+  windows-xbuild:
     strategy:
       matrix:
         bits: [32, 64]
@@ -65,6 +136,7 @@ jobs:
           - bits: 64
             arch: x86-64
             triplet: x86_64-w64-mingw32
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     env:
       DIST_DIR: win${{ matrix.bits }}
@@ -80,7 +152,7 @@ jobs:
       - name: Install libpng dev headers for MinGW
         run: |
           sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
-      - name: Build Windows binaries
+      - name: Cross-build Windows binaries
         run: |
           make mingw${{ matrix.bits }} -j Q=
       - name: Package binaries
@@ -96,21 +168,22 @@ jobs:
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v1
         with:
-          name: rgbds-canary-win${{ matrix.bits }}
+          name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
 
-  windows-testing:
-    needs: windows-build
+  windows-xtesting:
+    needs: windows-xbuild
     strategy:
       matrix:
         bits: [32, 64]
+      fail-fast: false
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v2
       - name: Retrieve binaries
         uses: actions/download-artifact@v1
         with:
-          name: rgbds-canary-win${{ matrix.bits }}
+          name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
       - name: Extract binaries
         shell: bash
