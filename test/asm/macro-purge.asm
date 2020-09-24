@@ -3,3 +3,4 @@ m: MACRO
 	PURGE m
 	WARN "Where am I?"
 ENDM
+	m
