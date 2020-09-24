@@ -48,8 +48,6 @@ REPT    NumberOfSymbols   ; Number of symbols defined in this object file.
     BYTE    Type          ; 0 = LOCAL symbol only used in this file.
                           ; 1 = IMPORT this symbol from elsewhere
                           ; 2 = EXPORT this symbol to other objects.
-                          ; Bit 7 is independent from the above value, and
-                          ; encodes whether the section is unionized
 
     IF (Type & 0x7F) != 1 ; If symbol is defined in this object file.
 
@@ -84,6 +82,10 @@ REPT NumberOfSections
                   ; 5 = WRAMX
                   ; 6 = SRAM
                   ; 7 = OAM
+                  ; Bits 7 and 6 are independent from the above value:
+                  ; Bit 7 iencodes whether the section is unionized
+                  ; Bit 6 encodes whether the section is a fragment
+                  ; Bits 6 and 7 may not be both set at the same time!
 
     LONG    Org   ; Address to fix this section at. -1 if the linker should
                   ; decide (floating address).
