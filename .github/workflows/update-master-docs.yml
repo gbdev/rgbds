@@ -17,7 +17,7 @@ on:
 
 jobs:
   build:
-    if: ${{ secrets.SSH_KEY_SECRET }} != ${{ '' }}
+    if: secrets.SSH_KEY_SECRET != ''
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout rgbds@master
