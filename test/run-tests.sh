@@ -46,7 +46,7 @@ if [ ! -d ucity ]; then
 fi
 pushd ucity
 git fetch
-git checkout b0635f12553c2fae947fd91aa54d4caa602d8266
+git checkout 780b951b6959b0a98e915ecb9f5fc82544d56d01
 make clean
 make -j4
 popd
