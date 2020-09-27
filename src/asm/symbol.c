@@ -114,8 +114,7 @@ static void updateSymbolFilename(struct Symbol *sym)
 {
 	if (snprintf(sym->fileName, _MAX_PATH + 1, "%s",
 		     tzCurrentFileName) > _MAX_PATH)
-		fatalerror("%s: File name is too long: '%s'", __func__,
-			   tzCurrentFileName);
+		fatalerror("%s: File name is too long: '%s'\n", __func__, tzCurrentFileName);
 	sym->fileLine = fstk_GetLine();
 }
 
@@ -127,10 +126,10 @@ static struct Symbol *createsymbol(char const *s)
 	struct Symbol *symbol = malloc(sizeof(*symbol));
 
 	if (!symbol)
-		fatalerror("Failed to create symbol: %s", strerror(errno));
+		fatalerror("Failed to create symbol '%s': %s\n", s, strerror(errno));
 
 	if (snprintf(symbol->name, MAXSYMLEN + 1, "%s", s) > MAXSYMLEN)
-		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'", s);
+		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", s);
 
 	symbol->isExported = false;
 	symbol->isBuiltin = false;
@@ -155,8 +154,7 @@ static void fullSymbolName(char *output, size_t outputSize,
 	int n = snprintf(output, outputSize, "%s%s", parent->name, localName);
 
 	if (n >= (int)outputSize)
-		fatalerror("Symbol name is too long: '%s%s'", parent->name,
-			   localName);
+		fatalerror("Symbol name is too long: '%s%s'\n", parent->name, localName);
 }
 
 /*
@@ -174,8 +172,7 @@ static struct Symbol *findsymbol(char const *s, struct Symbol const *scope)
 	char const *separator = strchr(s, '.');
 
 	if (separator && strchr(separator + 1, '.'))
-		fatalerror("'%s' is a nonsensical reference to a nested local symbol",
-			   s);
+		fatalerror("'%s' is a nonsensical reference to a nested local symbol\n", s);
 
 	return hash_GetElement(symbols, s);
 }
@@ -202,12 +199,11 @@ void sym_Purge(char const *symName)
 	struct Symbol *symbol = findsymbol(symName, scope);
 
 	if (!symbol) {
-		yyerror("'%s' not defined", symName);
+		error("'%s' not defined\n", symName);
 	} else if (symbol->isBuiltin) {
-		yyerror("Built-in symbol '%s' cannot be purged", symName);
+		error("Built-in symbol '%s' cannot be purged\n", symName);
 	} else if (isReferenced(symbol)) {
-		yyerror("Symbol \"%s\" is referenced and thus cannot be purged",
-			symName);
+		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
 	} else {
 		hash_RemoveElement(symbols, symbol->name);
 		if (symbol->type == SYM_MACRO)
@@ -221,9 +217,9 @@ uint32_t sym_GetPCValue(void)
 	struct Section const *sect = sect_GetSymbolSection();
 
 	if (!sect)
-		yyerror("PC has no value outside a section");
+		error("PC has no value outside a section\n");
 	else if (sect->org == -1)
-		yyerror("Expected constant PC but section is not fixed");
+		error("Expected constant PC but section is not fixed\n");
 	else
 		return CallbackPC();
 	return 0;
@@ -237,11 +233,11 @@ uint32_t sym_GetConstantValue(char const *s)
 	struct Symbol const *sym = sym_FindSymbol(s);
 
 	if (sym == NULL)
-		yyerror("'%s' not defined", s);
+		error("'%s' not defined\n", s);
 	else if (sym == PCSymbol)
 		return sym_GetPCValue();
 	else if (!sym_IsConstant(sym))
-		yyerror("\"%s\" does not have a constant value", s);
+		error("\"%s\" does not have a constant value\n", s);
 	else
 		return sym_GetValue(sym);
 
@@ -256,9 +252,9 @@ uint32_t sym_GetDefinedValue(char const *s)
 	struct Symbol const *sym = sym_FindSymbol(s);
 
 	if (sym == NULL || !sym_IsDefined(sym))
-		yyerror("'%s' not defined", s);
+		error("'%s' not defined\n", s);
 	else if (!sym_IsNumeric(sym))
-		yyerror("'%s' is a macro or string symbol", s);
+		error("'%s' is a macro or string symbol\n", s);
 	else
 		return sym_GetValue(sym);
 
@@ -287,7 +283,7 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
 	if (!symbol)
 		symbol = createsymbol(symbolName);
 	else if (sym_IsDefined(symbol))
-		yyerror("'%s' already defined at %s(%" PRIu32 ")", symbolName,
+		error("'%s' already defined at %s(%" PRIu32 ")\n", symbolName,
 			symbol->fileName, symbol->fileLine);
 
 	return symbol;
@@ -326,7 +322,7 @@ struct Symbol *sym_AddString(char const *symName, char const *value)
 	char *string = malloc(len + 1);
 
 	if (string == NULL)
-		fatalerror("No memory for string equate");
+		fatalerror("No memory for string equate: %s\n", strerror(errno));
 	strcpy(string, value);
 
 	sym->type = SYM_EQUS;
@@ -347,7 +343,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 	if (sym == NULL)
 		sym = createsymbol(symName);
 	else if (sym_IsDefined(sym) && sym->type != SYM_SET)
-		yyerror("'%s' already defined as %s at %s(%" PRIu32 ")",
+		error("'%s' already defined as %s at %s(%" PRIu32 ")\n",
 			symName, sym->type == SYM_LABEL ? "label" : "constant",
 			sym->fileName, sym->fileLine);
 	else
@@ -367,7 +363,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 struct Symbol *sym_AddLocalReloc(char const *symName)
 {
 	if (!symbolScope) {
-		yyerror("Local label '%s' in main scope", symName);
+		error("Local label '%s' in main scope\n", symName);
 		return NULL;
 	}
 
@@ -387,7 +383,7 @@ struct Symbol *sym_AddReloc(char const *symName)
 
 	if (localPtr != NULL) {
 		if (!symbolScope) {
-			yyerror("Local label in main scope");
+			error("Local label in main scope\n");
 			return NULL;
 		}
 
@@ -395,12 +391,11 @@ struct Symbol *sym_AddReloc(char const *symName)
 		uint32_t parentLen = localPtr - symName;
 
 		if (strchr(localPtr + 1, '.') != NULL)
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol",
+			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
 				   symName);
 		else if (strlen(scope->name) != parentLen
 			|| strncmp(symName, scope->name, parentLen) != 0)
-			yyerror("Not currently in the scope of '%.*s'",
-				parentLen, symName);
+			error("Not currently in the scope of '%.*s'\n", parentLen, symName);
 	}
 
 	struct Symbol *sym = findsymbol(symName, scope);
@@ -408,8 +403,8 @@ struct Symbol *sym_AddReloc(char const *symName)
 	if (!sym)
 		sym = createsymbol(symName);
 	else if (sym_IsDefined(sym))
-		yyerror("'%s' already defined in %s(%" PRIu32 ")", symName,
-			sym->fileName, sym->fileLine);
+		error("'%s' already defined in %s(%" PRIu32 ")\n",
+			symName, sym->fileName, sym->fileLine);
 	/* If the symbol already exists as a ref, just "take over" it */
 
 	sym->type = SYM_LABEL;
@@ -423,8 +418,7 @@ struct Symbol *sym_AddReloc(char const *symName)
 	sym->section = sect_GetSymbolSection();
 	/* Labels need to be assigned a section, except PC */
 	if (!sym->section && strcmp(symName, "@"))
-		yyerror("Label \"%s\" created outside of a SECTION",
-			symName);
+		error("Label \"%s\" created outside of a SECTION\n", symName);
 
 	updateSymbolFilename(sym);
 
@@ -481,12 +475,9 @@ struct Symbol *sym_Ref(char const *symName)
 
 		if (symName[0] == '.') {
 			if (!symbolScope)
-				fatalerror("Local label reference '%s' in main scope",
-					   symName);
-			scope = symbolScope->scope ? symbolScope->scope
-						   : symbolScope;
-			fullSymbolName(fullname, sizeof(fullname), symName,
-				       symbolScope);
+				fatalerror("Local label reference '%s' in main scope\n", symName);
+			scope = symbolScope->scope ? symbolScope->scope : symbolScope;
+			fullSymbolName(fullname, sizeof(fullname), symName, symbolScope);
 			symName = fullname;
 		}
 

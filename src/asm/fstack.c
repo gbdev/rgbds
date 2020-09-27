@@ -70,7 +70,7 @@ static void pushcontext(void)
 	struct sContext **ppFileStack;
 
 	if (++nFileStackDepth > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
+		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth);
 
 	ppFileStack = &pFileStack;
 	while (*ppFileStack)
@@ -79,7 +79,7 @@ static void pushcontext(void)
 	*ppFileStack = malloc(sizeof(struct sContext));
 
 	if (*ppFileStack == NULL)
-		fatalerror("No memory for context");
+		fatalerror("No memory for context\n");
 
 	(*ppFileStack)->FlexHandle = CurrentFlexHandle;
 	(*ppFileStack)->next = NULL;
@@ -104,7 +104,7 @@ static void pushcontext(void)
 		(*ppFileStack)->nREPTBodyLastLine = nCurrentREPTBodyLastLine;
 		break;
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror("%s: Internal error.\n", __func__);
 	}
 	(*ppFileStack)->uniqueID = macro_GetUniqueID();
 
@@ -147,7 +147,7 @@ static int32_t popcontext(void)
 				 */
 				sprintf(pREPTIterationWritePtr, "%lu",
 					nREPTIterationNo);
-				fatalerror("Cannot write REPT count to file path");
+				fatalerror("Cannot write REPT count to file path\n");
 			}
 
 			nLineNo = nCurrentREPTBodyFirstLine;
@@ -208,7 +208,7 @@ static int32_t popcontext(void)
 		nCurrentREPTBodyFirstLine = pLastFile->nREPTBodyFirstLine;
 		break;
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror("%s: Internal error.\n", __func__);
 	}
 	macro_SetUniqueID(pLastFile->uniqueID);
 
@@ -237,7 +237,7 @@ int32_t fstk_GetLine(void)
 	case STAT_isREPTBlock:
 		break; /* Peek top file of the stack */
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror("%s: Internal error.\n", __func__);
 	}
 
 	pLastFile = pFileStack;
@@ -254,7 +254,7 @@ int32_t fstk_GetLine(void)
 	 * This is only reached if the lexer is in REPT or MACRO mode but there
 	 * are no saved contexts with the origin of said REPT or MACRO.
 	 */
-	fatalerror("%s: Internal error.", __func__);
+	fatalerror("%s: Internal error.\n", __func__);
 }
 
 int yywrap(void)
@@ -290,8 +290,7 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 		retcode = snprintf(&buf[buflen - len], len, "%s(%" PRId32 ") -> ",
 				   pLastFile->tzFileName, pLastFile->nLine);
 		if (retcode < 0)
-			fatalerror("Failed to dump file stack to string: %s",
-				   strerror(errno));
+			fatalerror("Failed to dump file stack to string: %s\n", strerror(errno));
 		else if (retcode >= len)
 			len = 0;
 		else
@@ -302,15 +301,14 @@ void fstk_DumpToStr(char *buf, size_t buflen)
 	retcode = snprintf(&buf[buflen - len], len, "%s(%" PRId32 ")",
 			   tzCurrentFileName, nLineNo);
 	if (retcode < 0)
-		fatalerror("Failed to dump file stack to string: %s",
-			   strerror(errno));
+		fatalerror("Failed to dump file stack to string: %s\n", strerror(errno));
 	else if (retcode >= len)
 		len = 0;
 	else
 		len -= retcode;
 
 	if (!len)
-		warning(WARNING_LONG_STR, "File stack dump too long, got truncated");
+		warning(WARNING_LONG_STR, "File stack dump too long, got truncated\n");
 }
 
 /*
@@ -333,7 +331,7 @@ void fstk_DumpStringExpansions(void)
 void fstk_AddIncludePath(char *s)
 {
 	if (NextIncPath == MAXINCPATHS)
-		fatalerror("Too many include directories passed from command line");
+		fatalerror("Too many include directories passed from command line\n");
 
 	// Find last occurrence of slash; is it at the end of the string?
 	char const *lastSlash = strrchr(s, '/');
@@ -341,7 +339,7 @@ void fstk_AddIncludePath(char *s)
 
 	if (snprintf(IncludePaths[NextIncPath++], _MAX_PATH, pattern,
 		     s) >= _MAX_PATH)
-		fatalerror("Include path too long '%s'", s);
+		fatalerror("Include path too long '%s'\n", s);
 }
 
 static void printdep(const char *fileName)
@@ -425,8 +423,7 @@ void fstk_RunInclude(char *tzFileName)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		yyerror("Unable to open included file '%s': %s", tzFileName,
-			strerror(errno));
+		error("Unable to open included file '%s': %s\n", tzFileName, strerror(errno));
 		return;
 	}
 
@@ -456,11 +453,11 @@ void fstk_RunMacro(char *s, struct MacroArgs *args)
 	int nPrintedChars;
 
 	if (sym == NULL) {
-		yyerror("Macro \"%s\" not defined", s);
+		error("Macro \"%s\" not defined\n", s);
 		return;
 	}
 	if (sym->type != SYM_MACRO) {
-		yyerror("\"%s\" is not a macro", s);
+		error("\"%s\" is not a macro\n", s);
 		return;
 	}
 
@@ -474,7 +471,7 @@ void fstk_RunMacro(char *s, struct MacroArgs *args)
 				 "%s::%s", sym->fileName, s);
 	if (nPrintedChars > _MAX_PATH) {
 		popcontext();
-		fatalerror("File name + macro name is too large to fit into buffer");
+		fatalerror("File name + macro name is too large to fit into buffer\n");
 	}
 
 	pCurrentMacro = sym;
@@ -505,8 +502,7 @@ void fstk_RunRept(uint32_t count, int32_t nReptLineNo)
 		nLineNo = nReptLineNo;
 
 		if (strlen(tzCurrentFileName) + strlen(tzReptStr) > _MAX_PATH)
-			fatalerror("Cannot append \"%s\" to file path",
-				   tzReptStr);
+			fatalerror("Cannot append \"%s\" to file path\n", tzReptStr);
 		strcat(tzCurrentFileName, tzReptStr);
 
 		CurrentFlexHandle =
@@ -530,7 +526,7 @@ void fstk_Init(char *pFileName)
 	// minus 2 to account for trailing "\"\0"
 	// minus 1 to avoid a buffer overflow in extreme cases
 	while (*c && fileNameIndex < sizeof(tzSymFileName) - 2 - 1) {
-		
+
 		if (*c == '"') {
 			tzSymFileName[fileNameIndex++] = '\\';
 		}
@@ -550,8 +546,7 @@ void fstk_Init(char *pFileName)
 	} else {
 		pCurrentFile = fopen(pFileName, "rb");
 		if (pCurrentFile == NULL)
-			fatalerror("Unable to open file '%s': %s", pFileName,
-				   strerror(errno));
+			fatalerror("Unable to open file '%s': %s\n", pFileName, strerror(errno));
 	}
 	nFileStackDepth = 0;
 

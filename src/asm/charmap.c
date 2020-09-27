@@ -61,19 +61,19 @@ struct Charmap *charmap_New(const char *name, const char *baseName)
 		base = charmap_Get(baseName);
 
 		if (base == NULL)
-			yyerror("Base charmap '%s' doesn't exist", baseName);
+			error("Base charmap '%s' doesn't exist\n", baseName);
 	}
 
 	struct Charmap *charmap = charmap_Get(name);
 
 	if (charmap != NULL) {
-		yyerror("Charmap '%s' already exists", name);
+		error("Charmap '%s' already exists\n", name);
 		return NULL;
 	}
 
 	charmap = malloc(sizeof(*charmap));
 	if (charmap == NULL)
-		fatalerror("Failed to create charmap: %s", strerror(errno));
+		fatalerror("Failed to create charmap: %s\n", strerror(errno));
 
 	/* Init the new charmap's fields */
 	snprintf(charmap->name, sizeof(charmap->name), "%s", name);
@@ -100,7 +100,7 @@ void charmap_Set(const char *name)
 	struct Charmap *charmap = charmap_Get(name);
 
 	if (charmap == NULL)
-		yyerror("Charmap '%s' doesn't exist", name);
+		error("Charmap '%s' doesn't exist\n", name);
 	else
 		currentCharmap = charmap;
 }
@@ -111,7 +111,7 @@ void charmap_Push(void)
 
 	stackEntry = malloc(sizeof(struct CharmapStackEntry));
 	if (stackEntry == NULL)
-		fatalerror("No memory for charmap stack");
+		fatalerror("No memory for charmap stack\n");
 
 	stackEntry->charmap = currentCharmap;
 	stackEntry->next = charmapStack;
@@ -122,7 +122,7 @@ void charmap_Push(void)
 void charmap_Pop(void)
 {
 	if (charmapStack == NULL)
-		fatalerror("No entries in the charmap stack");
+		fatalerror("No entries in the charmap stack\n");
 
 	struct CharmapStackEntry *top = charmapStack;
 
@@ -182,7 +182,8 @@ int32_t charmap_Convert(char **input)
 
 	output = malloc(strlen(*input));
 	if (output == NULL)
-		fatalerror("Not enough memory for buffer");
+		fatalerror("Not enough memory for charmap conversion buffer: %s\n",
+			   strerror(errno));
 
 	length = 0;
 

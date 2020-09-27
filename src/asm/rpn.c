@@ -31,7 +31,7 @@
 	/* If we had `asprintf` this would be great, but alas. */ \
 	_expr->reason = malloc(128); /* Use an initial reasonable size */ \
 	if (!_expr->reason) \
-		fatalerror("Can't allocate err string: %s", strerror(errno)); \
+		fatalerror("Can't allocate err string: %s\n", strerror(errno)); \
 	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
 	if (size >= 128) { /* If this wasn't enough, try again */ \
 		_expr->reason = realloc(_expr->reason, size + 1); \
@@ -51,8 +51,8 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 			 * To avoid generating humongous object files, cap the
 			 * size of RPN expressions
 			 */
-			fatalerror("RPN expression cannot grow larger than %lu bytes",
-				   (unsigned long)MAXRPNLEN);
+			fatalerror("RPN expression cannot grow larger than "
+				   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
 		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
 			expr->nRPNCapacity = MAXRPNLEN;
 		else
@@ -60,8 +60,7 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 
 		if (!expr->tRPN)
-			fatalerror("Failed to grow RPN expression: %s",
-				   strerror(errno));
+			fatalerror("Failed to grow RPN expression: %s\n", strerror(errno));
 	}
 
 	uint8_t *ptr = expr->tRPN + expr->nRPNLength;
@@ -108,17 +107,15 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 	struct Symbol *sym = sym_FindSymbol(tzSym);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
-		yyerror("PC has no value outside a section");
+		error("PC has no value outside a section\n");
 		rpn_Number(expr, 0);
 	} else if (!sym || !sym_IsConstant(sym)) {
 		rpn_Init(expr);
 		expr->isSymbol = true;
 
 		sym_Ref(tzSym);
-		makeUnknown(expr, sym_IsPC(sym)
-				      ? "PC is not constant at assembly time"
-				      : "'%s' is not constant at assembly time",
-			    tzSym);
+		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
+						: "'%s' is not constant at assembly time", tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
 		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
@@ -145,7 +142,7 @@ void rpn_BankSelf(struct Expression *expr)
 	rpn_Init(expr);
 
 	if (!pCurrentSection) {
-		yyerror("PC has no bank outside a section");
+		error("PC has no bank outside a section\n");
 		expr->nVal = 1;
 	} else if (pCurrentSection->bank == -1) {
 		makeUnknown(expr, "Current section's bank is not known");
@@ -168,7 +165,7 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 
 	rpn_Init(expr);
 	if (sym && !sym_IsLabel(sym)) {
-		yyerror("BANK argument must be a label");
+		error("BANK argument must be a label\n");
 	} else {
 		sym_Ref(tzSym);
 		if (!sym)
@@ -223,8 +220,7 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 		/* That range is valid, but only keep the lower byte */
 		expr->nVal &= 0xFF;
 	} else if (expr->nVal < 0 || expr->nVal > 0xFF) {
-		yyerror("Source address $%" PRIx32 " not between $FF00 to $FFFF",
-			expr->nVal);
+		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", expr->nVal);
 	}
 }
 
@@ -235,8 +231,7 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 	if (rpn_isKnown(expr)) {
 		/* A valid RST address must be masked with 0x38 */
 		if (expr->nVal & ~0x38)
-			yyerror("Invalid address $%" PRIx32 " for RST",
-				expr->nVal);
+			error("Invalid address $%" PRIx32 " for RST\n", expr->nVal);
 		/* The target is in the "0x38" bits, all other bits are set */
 		expr->nVal |= 0xC7;
 	} else {
@@ -263,7 +258,7 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	if (amount >= 0) {
 		// Left shift
 		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32,
+			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n",
 				amount);
 			return 0;
 
@@ -279,8 +274,8 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 		// Right shift
 		amount = -amount;
 		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32,
-				amount);
+			warning(WARNING_SHIFT_AMOUNT,
+				"Shifting right by large amount %" PRId32 "\n", amount);
 			return shiftee < 0 ? -1 : 0;
 
 		} else if (shiftee >= 0) {
@@ -376,18 +371,20 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			break;
 		case RPN_SHL:
 			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32,
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting left by negative amount %" PRId32 "\n",
 					src2->nVal);
 
 			expr->nVal = shift(src1->nVal, src2->nVal);
 			break;
 		case RPN_SHR:
 			if (src1->nVal < 0)
-				warning(WARNING_SHIFT, "Shifting negative value %" PRId32,
+				warning(WARNING_SHIFT, "Shifting negative value %" PRId32 "\n",
 					src1->nVal);
 
 			if (src2->nVal < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32,
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting right by negative amount %" PRId32 "\n",
 					src2->nVal);
 
 			expr->nVal = shift(src1->nVal, -src2->nVal);
@@ -397,11 +394,11 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			break;
 		case RPN_DIV:
 			if (src2->nVal == 0)
-				fatalerror("Division by zero");
+				fatalerror("Division by zero\n");
 
-			if (src1->nVal == INT32_MIN
-			 && src2->nVal == -1) {
-				warning(WARNING_DIV, "Division of min value by -1");
+			if (src1->nVal == INT32_MIN && src2->nVal == -1) {
+				warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %"
+					PRId32 "\n", INT32_MIN, INT32_MIN);
 				expr->nVal = INT32_MIN;
 			} else {
 				expr->nVal = src1->nVal / src2->nVal;
@@ -409,7 +406,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			break;
 		case RPN_MOD:
 			if (src2->nVal == 0)
-				fatalerror("Division by zero");
+				fatalerror("Division by zero\n");
 
 			if (src1->nVal == INT32_MIN && src2->nVal == -1)
 				expr->nVal = 0;
@@ -427,7 +424,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		case RPN_RST:
 		case RPN_CONST:
 		case RPN_SYM:
-			fatalerror("%d is not a binary operator", op);
+			fatalerror("%d is not a binary operator\n", op);
 		}
 
 	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {

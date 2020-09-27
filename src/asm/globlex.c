@@ -110,7 +110,7 @@ static int32_t ascii2bin(char *s)
 		 * There are no digits after the radix prefix
 		 * (or the string is empty, which shouldn't happen).
 		 */
-		yyerror("Invalid integer constant");
+		error("Invalid integer constant\n");
 	} else if (radix == 4) {
 		int32_t size = 0;
 		int32_t c;
@@ -126,7 +126,7 @@ static int32_t ascii2bin(char *s)
 		 * the Game Boy tile width, produces a nonsensical result.
 		 */
 		if (size > 8) {
-			warning(WARNING_LARGE_CONSTANT, "Graphics constant '%s' is too long",
+			warning(WARNING_LARGE_CONSTANT, "Graphics constant '%s' is too long\n",
 				start);
 		}
 	} else {
@@ -143,7 +143,7 @@ static int32_t ascii2bin(char *s)
 		}
 
 		if (overflow)
-			warning(WARNING_LARGE_CONSTANT, "Integer constant '%s' is too large",
+			warning(WARNING_LARGE_CONSTANT, "Integer constant '%s' is too large\n",
 				start);
 	}
 
@@ -176,7 +176,7 @@ uint32_t ParseNumber(char *s, uint32_t size)
 	char dest[256];
 
 	if (size > 255)
-		fatalerror("Number token too long");
+		fatalerror("Number token too long\n");
 
 	strncpy(dest, s, size);
 	dest[size] = 0;
@@ -201,10 +201,10 @@ char const *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 	else if (whichArg >= '1' && whichArg <= '9')
 		marg = macro_GetArg(whichArg - '0');
 	else
-		fatalerror("Invalid macro argument '\\%c' in symbol", whichArg);
+		fatalerror("Invalid macro argument '\\%c' in symbol\n", whichArg);
 
 	if (!marg)
-		fatalerror("Macro argument '\\%c' not defined", whichArg);
+		fatalerror("Macro argument '\\%c' not defined\n", whichArg);
 
 	char ch;
 
@@ -217,7 +217,7 @@ char const *AppendMacroArg(char whichArg, char *dest, size_t *destIndex)
 		 || ch == '#'
 		 || ch == '.') {
 			if (*destIndex >= MAXSYMLEN)
-				fatalerror("Symbol too long");
+				fatalerror("Symbol too long\n");
 
 			dest[*destIndex] = ch;
 			(*destIndex)++;
@@ -256,7 +256,7 @@ uint32_t ParseSymbol(char *src, uint32_t size)
 				break;
 		} else {
 			if (destIndex >= MAXSYMLEN)
-				fatalerror("Symbol too long");
+				fatalerror("Symbol too long\n");
 			dest[destIndex++] = ch;
 		}
 	}
@@ -311,9 +311,9 @@ uint32_t PutMacroArg(char *src, uint32_t size)
 		if (s != NULL)
 			yyunputstr(s);
 		else
-			yyerror("Macro argument '\\%c' not defined", src[1]);
+			error("Macro argument '\\%c' not defined\n", src[1]);
 	} else {
-		yyerror("Invalid macro argument '\\%c'", src[1]);
+		error("Invalid macro argument '\\%c'\n", src[1]);
 	}
 	return 0;
 }
@@ -330,7 +330,7 @@ uint32_t PutUniqueID(char *src, uint32_t size)
 	if (s != NULL)
 		yyunputstr(s);
 	else
-		yyerror("Macro unique label string not defined");
+		error("Macro unique label string not defined\n");
 
 	return 0;
 }

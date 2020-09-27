@@ -40,7 +40,7 @@ struct UnionStackEntry {
 static inline void checksection(void)
 {
 	if (pCurrentSection == NULL)
-		fatalerror("Code generation before SECTION directive");
+		fatalerror("Code generation before SECTION directive\n");
 }
 
 /*
@@ -52,7 +52,7 @@ static inline void checkcodesection(void)
 	checksection();
 
 	if (!sect_HasData(pCurrentSection->type))
-		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)",
+		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
 			   pCurrentSection->name);
 }
 
@@ -61,8 +61,8 @@ static inline void checkSectionSize(struct Section const *sect, uint32_t size)
 	uint32_t maxSize = maxsize[sect->type];
 
 	if (size > maxSize)
-		fatalerror("Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").",
-			   sect->name, maxSize, size);
+		fatalerror("Section '%s' grew too big (max size = 0x%" PRIX32
+			   " bytes, reached 0x%" PRIX32 ").\n", sect->name, maxSize, size);
 }
 
 /*
@@ -110,16 +110,16 @@ static struct Section *getSection(char const *name, enum SectionType type,
 	if (bank != -1) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
 		 && type != SECTTYPE_SRAM && type != SECTTYPE_WRAMX)
-			yyerror("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections");
+			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
 		else if (bank < bankranges[type][0]
 		      || bank > bankranges[type][1])
-			yyerror("%s bank value $%" PRIx32 " out of range ($%" PRIx32 " to $%" PRIx32 ")",
-				typeNames[type], bank,
+			error("%s bank value $%" PRIx32 " out of range ($%" PRIx32 " to $%"
+				PRIx32 ")\n", typeNames[type], bank,
 				bankranges[type][0], bankranges[type][1]);
 	}
 
 	if (alignOffset >= 1 << alignment) {
-		yyerror("Alignment offset must not be greater than alignment (%" PRIu16 " < %u)",
+		error("Alignment offset must not be greater than alignment (%" PRIu16 " < %u)\n",
 			alignOffset, 1U << alignment);
 		alignOffset = 0;
 	}
@@ -130,18 +130,19 @@ static struct Section *getSection(char const *name, enum SectionType type,
 
 		if (org != -1) {
 			if ((org - alignOffset) & mask)
-				yyerror("Section \"%s\"'s fixed address doesn't match its alignment",
+				error("Section \"%s\"'s fixed address doesn't match its alignment\n",
 					name);
 			alignment = 0; /* Ignore it if it's satisfied */
 		} else if (startaddr[type] & mask) {
-			yyerror("Section \"%s\"'s alignment cannot be attained in %s",
+			error("Section \"%s\"'s alignment cannot be attained in %s\n",
 				name, typeNames[type]);
 		}
 	}
 
 	if (org != -1) {
 		if (org < startaddr[type] || org > endaddr(type))
-			yyerror("Section \"%s\"'s fixed address %#" PRIx32 " is outside of range [%#" PRIx16 "; %#" PRIx16 "]",
+			error("Section \"%s\"'s fixed address %#" PRIx32
+				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
 				name, org, startaddr[type], endaddr(type));
 	}
 
@@ -154,16 +155,16 @@ static struct Section *getSection(char const *name, enum SectionType type,
 		unsigned int nbSectErrors = 0;
 #define fail(...) \
 	do { \
-		yyerror(__VA_ARGS__); \
+		error(__VA_ARGS__); \
 		nbSectErrors++; \
 	} while (0)
 
 		if (type != sect->type)
-			fail("Section \"%s\" already exists but with type %s",
+			fail("Section \"%s\" already exists but with type %s\n",
 			     sect->name, typeNames[sect->type]);
 
 		if (sect->modifier != mod)
-			fail("Section \"%s\" already declared as %s section",
+			fail("Section \"%s\" already declared as %s section\n",
 			     sect->name, sectionModNames[sect->modifier]);
 		/*
 		 * Normal sections need to have exactly identical constraints;
@@ -176,18 +177,18 @@ static struct Section *getSection(char const *name, enum SectionType type,
 			 * `EndLoadSection` if modifying the following check!
 			 */
 			if (sect_HasData(type))
-				fail("Cannot declare ROM sections as UNION");
+				fail("Cannot declare ROM sections as UNION\n");
 			if (org != -1) {
 				/* If both are fixed, they must be the same */
 				if (sect->org != -1 && sect->org != org)
-					fail("Section \"%s\" already declared as fixed at different address $%" PRIx32,
+					fail("Section \"%s\" already declared as fixed at different address $%"
+					     PRIx32 "\n",
 					     sect->name, sect->org);
 				else if (sect->align != 0
 				      && (mask(sect->align)
 						& (org - sect->alignOfs)))
-					fail("Section \"%s\" already declared as aligned to %u bytes (offset %" PRIu16 ")",
-					     sect->name, 1U << sect->align,
-					     sect->alignOfs);
+					fail("Section \"%s\" already declared as aligned to %u bytes (offset %"
+					     PRIu16 ")\n", sect->name, 1U << sect->align, sect->alignOfs);
 				else
 					/* Otherwise, just override */
 					sect->org = org;
@@ -196,16 +197,15 @@ static struct Section *getSection(char const *name, enum SectionType type,
 				if (sect->org != -1) {
 					if ((sect->org - alignOffset)
 							& mask(alignment))
-						fail("Section \"%s\" already declared as fixed at incompatible address $%" PRIx32,
-						     sect->name,
-						     sect->org);
+						fail("Section \"%s\" already declared as fixed at incompatible address $%"
+						     PRIx32 "\n", sect->name, sect->org);
 				/* Check if alignment offsets are compatible */
 				} else if ((alignOffset & mask(sect->align))
 					!= (sect->alignOfs
 							& mask(alignment))) {
-					fail("Section \"%s\" already declared with incompatible %" PRIu8 "-byte alignment (offset %" PRIu16 ")",
-					     sect->name, sect->align,
-					     sect->alignOfs);
+					fail("Section \"%s\" already declared with incompatible %"
+					     PRIu8 "-byte alignment (offset %" PRIu16 ")\n",
+					     sect->name, sect->align, sect->alignOfs);
 				} else if (alignment > sect->align) {
 					/*
 					 * If the section is not fixed,
@@ -220,42 +220,42 @@ static struct Section *getSection(char const *name, enum SectionType type,
 				sect->bank = bank;
 			/* If both specify a bank, it must be the same one */
 			else if (bank != -1 && sect->bank != bank)
-				fail("Section \"%s\" already declared with different bank %" PRIu32,
-				     sect->name, sect->bank);
+				fail("Section \"%s\" already declared with different bank %"
+				     PRIu32 "\n", sect->name, sect->bank);
 		} else { /* Section fragments are handled identically in RGBASM */
 			/* However, concaternating non-fragments will be made an error */
 			if (sect->modifier != SECTION_FRAGMENT || mod != SECTION_FRAGMENT)
-				warning(WARNING_OBSOLETE, "Concatenation of non-fragment sections is deprecated");
+				warning(WARNING_OBSOLETE,
+					"Concatenation of non-fragment sections is deprecated\n");
 
 			if (org != sect->org) {
 				if (sect->org == -1)
-					fail("Section \"%s\" already declared as floating",
+					fail("Section \"%s\" already declared as floating\n",
 					     sect->name);
 				else
-					fail("Section \"%s\" already declared as fixed at $%" PRIx32,
-					     sect->name, sect->org);
+					fail("Section \"%s\" already declared as fixed at $%"
+					     PRIx32 "\n", sect->name, sect->org);
 			}
 			if (bank != sect->bank) {
 				if (sect->bank == -1)
-					fail("Section \"%s\" already declared as floating bank",
+					fail("Section \"%s\" already declared as floating bank\n",
 					     sect->name);
 				else
-					fail("Section \"%s\" already declared as fixed at bank %" PRIu32,
-					     sect->name, sect->bank);
+					fail("Section \"%s\" already declared as fixed at bank %"
+					     PRIu32 "\n", sect->name, sect->bank);
 			}
 			if (alignment != sect->align) {
 				if (sect->align == 0)
-					fail("Section \"%s\" already declared as unaligned",
+					fail("Section \"%s\" already declared as unaligned\n",
 					     sect->name);
 				else
-					fail("Section \"%s\" already declared as aligned to %u bytes",
-					     sect->name,
-					     1U << sect->align);
+					fail("Section \"%s\" already declared as aligned to %u bytes\n",
+					     sect->name, 1U << sect->align);
 			}
 		}
 
 		if (nbSectErrors)
-			fatalerror("Cannot create section \"%s\" (%u errors)",
+			fatalerror("Cannot create section \"%s\" (%u errors)\n",
 				   sect->name, nbSectErrors);
 #undef fail
 		return sect;
@@ -263,11 +263,11 @@ static struct Section *getSection(char const *name, enum SectionType type,
 
 	sect = malloc(sizeof(*sect));
 	if (sect == NULL)
-		fatalerror("Not enough memory for section");
+		fatalerror("Not enough memory for section: %s\n", strerror(errno));
 
 	sect->name = strdup(name);
 	if (sect->name == NULL)
-		fatalerror("Not enough memory for sectionname");
+		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
 
 	sect->type = type;
 	sect->modifier = mod;
@@ -286,7 +286,7 @@ static struct Section *getSection(char const *name, enum SectionType type,
 		sectsize = maxsize[type];
 		sect->data = malloc(sectsize);
 		if (sect->data == NULL)
-			fatalerror("Not enough memory for section");
+			fatalerror("Not enough memory for section: %s\n", strerror(errno));
 	} else {
 		sect->data = NULL;
 	}
@@ -307,7 +307,7 @@ static struct Section *getSection(char const *name, enum SectionType type,
 static void changeSection(void)
 {
 	if (unionStack)
-		fatalerror("Cannot change the section within a UNION");
+		fatalerror("Cannot change the section within a UNION\n");
 
 	sym_SetCurrentSymbolScope(NULL);
 }
@@ -319,7 +319,7 @@ void out_NewSection(char const *name, uint32_t type, uint32_t org,
 		    struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block");
+		fatalerror("Cannot change the section within a `LOAD` block\n");
 
 	struct Section *sect = getSection(name, type, org, attribs, mod);
 
@@ -337,7 +337,7 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	checkcodesection();
 
 	if (currentLoadSection)
-		fatalerror("`LOAD` blocks cannot be nested");
+		fatalerror("`LOAD` blocks cannot be nested\n");
 
 	struct Section *sect = getSection(name, type, org, attribs, false);
 
@@ -350,7 +350,7 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 void out_EndLoadSection(void)
 {
 	if (!currentLoadSection)
-		yyerror("Found `ENDL` outside of a `LOAD` block");
+		error("Found `ENDL` outside of a `LOAD` block\n");
 	currentLoadSection = NULL;
 
 	changeSection();
@@ -382,13 +382,13 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 
 	if (sect->org != -1) {
 		if ((sym_GetPCValue() - offset) % (1 << alignment))
-			yyerror("Section's fixed address fails required alignment (PC = $%04" PRIx32 ")",
-				sym_GetPCValue());
+			error("Section's fixed address fails required alignment (PC = $%04"
+				PRIx32 ")\n", sym_GetPCValue());
 	} else if (sect->align != 0) {
 		if ((((sect->alignOfs + curOffset) % (1 << sect->align))
 						- offset) % (1 << alignment)) {
-			yyerror("Section's alignment fails required alignment (offset from section start = $%04" PRIx32 ")",
-				curOffset);
+			error("Section's alignment fails required alignment (offset from section start = $%04"
+				PRIx32 ")\n", curOffset);
 		} else if (alignment > sect->align) {
 			sect->align = alignment;
 			sect->alignOfs =
@@ -438,13 +438,13 @@ static inline void createPatch(enum PatchType type,
 void sect_StartUnion(void)
 {
 	if (!pCurrentSection)
-		fatalerror("UNIONs must be inside a SECTION");
+		fatalerror("UNIONs must be inside a SECTION\n");
 	if (sect_HasData(pCurrentSection->type))
-		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections");
+		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections\n");
 	struct UnionStackEntry *entry = malloc(sizeof(*entry));
 
 	if (!entry)
-		fatalerror("Failed to allocate new union stack entry: %s", strerror(errno));
+		fatalerror("Failed to allocate new union stack entry: %s\n", strerror(errno));
 	entry->start = curOffset;
 	entry->size = 0;
 	entry->next = unionStack;
@@ -463,14 +463,14 @@ static void endUnionMember(void)
 void sect_NextUnionMember(void)
 {
 	if (!unionStack)
-		fatalerror("Found NEXTU outside of a UNION construct");
+		fatalerror("Found NEXTU outside of a UNION construct\n");
 	endUnionMember();
 }
 
 void sect_EndUnion(void)
 {
 	if (!unionStack)
-		fatalerror("Found ENDU outside of a UNION construct");
+		fatalerror("Found ENDU outside of a UNION construct\n");
 	endUnionMember();
 	curOffset += unionStack->size;
 	struct UnionStackEntry *next = unionStack->next;
@@ -482,7 +482,7 @@ void sect_EndUnion(void)
 void sect_CheckUnionClosed(void)
 {
 	if (unionStack)
-		fatalerror("Unterminated UNION construct!");
+		fatalerror("Unterminated UNION construct!\n");
 }
 
 /*
@@ -514,7 +514,7 @@ void out_Skip(int32_t skip, bool ds)
 	reserveSpace(skip);
 
 	if (!ds && sect_HasData(pCurrentSection->type))
-		warning(WARNING_EMPTY_DATA_DIRECTIVE, "db/dw/dl directive without data in ROM");
+		warning(WARNING_EMPTY_DATA_DIRECTIVE, "db/dw/dl directive without data in ROM\n");
 
 	if (!sect_HasData(pCurrentSection->type)) {
 		growSection(skip);
@@ -636,7 +636,7 @@ void out_PCRelByte(struct Expression *expr)
 			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
 
 		if (offset < -128 || offset > 127) {
-			yyerror("jr target out of reach (expected -129 < %" PRId16 " < 128)",
+			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n",
 				offset);
 			writebyte(0);
 		} else {
@@ -652,8 +652,7 @@ void out_PCRelByte(struct Expression *expr)
 void out_BinaryFile(char const *s, int32_t startPos)
 {
 	if (startPos < 0) {
-		yyerror("Start position cannot be negative (%" PRId32 ")",
-			startPos);
+		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
 	}
 
@@ -664,8 +663,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		fatalerror("Error opening INCBIN file '%s': %s", s,
-			   strerror(errno));
+		fatalerror("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
 	}
 
 	int32_t fsize = -1;
@@ -676,7 +674,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		fsize = ftell(f);
 
 		if (startPos >= fsize) {
-			yyerror("Specified start position is greater than length of file");
+			error("Specified start position is greater than length of file\n");
 			return;
 		}
 
@@ -684,7 +682,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		reserveSpace(fsize - startPos);
 	} else {
 		if (errno != ESPIPE)
-			yyerror("Error determining size of INCBIN file '%s': %s",
+			error("Error determining size of INCBIN file '%s': %s\n",
 				s, strerror(errno));
 		/* The file isn't seekable, so we'll just skip bytes */
 		while (startPos--)
@@ -698,8 +696,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 	}
 
 	if (ferror(f))
-		yyerror("Error reading INCBIN file '%s': %s", s,
-			strerror(errno));
+		error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 
 	fclose(f);
 }
@@ -707,14 +704,12 @@ void out_BinaryFile(char const *s, int32_t startPos)
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 {
 	if (start_pos < 0) {
-		yyerror("Start position cannot be negative (%" PRId32 ")",
-			start_pos);
+		error("Start position cannot be negative (%" PRId32 ")\n", start_pos);
 		start_pos = 0;
 	}
 
 	if (length < 0) {
-		yyerror("Number of bytes to read cannot be negative (%" PRId32 ")",
-			length);
+		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
 	if (length == 0) /* Don't even bother with 0-byte slices */
@@ -727,8 +722,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		fatalerror("Error opening INCBIN file '%s': %s", s,
-			   strerror(errno));
+		fatalerror("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
 	}
 
 	checkcodesection();
@@ -740,17 +734,17 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		fsize = ftell(f);
 
 		if (start_pos >= fsize) {
-			yyerror("Specified start position is greater than length of file");
+			error("Specified start position is greater than length of file\n");
 			return;
 		}
 
 		if ((start_pos + length) > fsize)
-			fatalerror("Specified range in INCBIN is out of bounds");
+			fatalerror("Specified range in INCBIN is out of bounds\n");
 
 		fseek(f, start_pos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE)
-			yyerror("Error determining size of INCBIN file '%s': %s",
+			error("Error determining size of INCBIN file '%s': %s\n",
 				s, strerror(errno));
 		/* The file isn't seekable, so we'll just skip bytes */
 		while (start_pos--)
@@ -765,10 +759,9 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		if (byte != EOF) {
 			writebyte(byte);
 		} else if (ferror(f)) {
-			yyerror("Error reading INCBIN file '%s': %s", s,
-				strerror(errno));
+			error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 		} else {
-			yyerror("Premature end of file (%" PRId32 " bytes left to read)",
+			error("Premature end of file (%" PRId32 " bytes left to read)\n",
 				todo + 1);
 		}
 	}
@@ -785,7 +778,7 @@ void out_PushSection(void)
 
 	sect = malloc(sizeof(struct SectionStackEntry));
 	if (sect == NULL)
-		fatalerror("No memory for section stack");
+		fatalerror("No memory for section stack: %s<\n",  strerror(errno));
 
 	sect->pSection = pCurrentSection;
 	sect->pScope = sym_GetCurrentSymbolScope();
@@ -798,10 +791,10 @@ void out_PushSection(void)
 void out_PopSection(void)
 {
 	if (pSectionStack == NULL)
-		fatalerror("No entries in the section stack");
+		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block!");
+		fatalerror("Cannot change the section within a `LOAD` block!\n");
 
 	struct SectionStackEntry *sect;
 

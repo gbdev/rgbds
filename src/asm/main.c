@@ -150,7 +150,7 @@ void opt_Parse(char *s)
 			newopt.gbgfx[2] = s[3];
 			newopt.gbgfx[3] = s[4];
 		} else {
-			yyerror("Must specify exactly 4 characters for option 'g'");
+			error("Must specify exactly 4 characters for option 'g'\n");
 		}
 		break;
 	case 'b':
@@ -158,11 +158,11 @@ void opt_Parse(char *s)
 			newopt.binary[0] = s[1];
 			newopt.binary[1] = s[2];
 		} else {
-			yyerror("Must specify exactly 2 characters for option 'b'");
+			error("Must specify exactly 2 characters for option 'b'\n");
 		}
 		break;
 	case 'z':
-		warning(WARNING_OBSOLETE, "Option 'z' is a deprecated alias for 'p'");
+		warning(WARNING_OBSOLETE, "Option 'z' is a deprecated alias for 'p'\n");
 		/* fallthrough */
 	case 'p':
 		if (strlen(&s[1]) <= 2) {
@@ -171,15 +171,15 @@ void opt_Parse(char *s)
 
 			result = sscanf(&s[1], "%x", &fillchar);
 			if (result != EOF && result != 1)
-				yyerror("Invalid argument for option 'z'");
+				error("Invalid argument for option 'z'\n");
 			else
 				newopt.fillchar = fillchar;
 		} else {
-			yyerror("Invalid argument for option 'z'");
+			error("Invalid argument for option 'z'\n");
 		}
 		break;
 	default:
-		yyerror("Unknown option");
+		error("Unknown option\n");
 		break;
 	}
 
@@ -193,7 +193,7 @@ void opt_Push(void)
 	pOpt = malloc(sizeof(struct sOptionStackEntry));
 
 	if (pOpt == NULL)
-		fatalerror("No memory for option stack");
+		fatalerror("No memory for option stack\n");
 
 	pOpt->Options = CurrentOptions;
 	pOpt->next = pOptionStack;
@@ -203,7 +203,7 @@ void opt_Push(void)
 void opt_Pop(void)
 {
 	if (pOptionStack == NULL)
-		fatalerror("No entries in the option stack");
+		fatalerror("No entries in the option stack\n");
 
 	struct sOptionStackEntry *pOpt;
 
@@ -220,17 +220,17 @@ void opt_AddDefine(char *s)
 	if (cldefines_index >= cldefines_numindices) {
 		/* Check for overflows */
 		if ((cldefines_numindices * 2) < cldefines_numindices)
-			fatalerror("No memory for command line defines");
+			fatalerror("No memory for command line defines\n");
 
 		if ((cldefines_bufsize * 2) < cldefines_bufsize)
-			fatalerror("No memory for command line defines");
+			fatalerror("No memory for command line defines\n");
 
 		cldefines_numindices *= 2;
 		cldefines_bufsize *= 2;
 
 		cldefines = realloc(cldefines, cldefines_bufsize);
 		if (!cldefines)
-			fatalerror("No memory for command line defines");
+			fatalerror("No memory for command line defines\n");
 	}
 	equals = strchr(s, '=');
 	if (equals) {
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 	cldefines_bufsize = cldefines_numindices * cldefine_entrysize;
 	cldefines = malloc(cldefines_bufsize);
 	if (!cldefines)
-		fatalerror("No memory for command line defines");
+		fatalerror("No memory for command line defines\n");
 
 #if defined(YYDEBUG) && YYDEBUG
 	yydebug = 1;

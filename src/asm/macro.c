@@ -48,7 +48,7 @@ struct MacroArgs *macro_NewArgs(void)
 	struct MacroArgs *args = malloc(SIZEOF_ARGS(INITIAL_ARG_SIZE));
 
 	if (!args)
-		fatalerror("Unable to register macro arguments: %s", strerror(errno));
+		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
 
 	args->nbArgs = 0;
 	args->shift = 0;
@@ -60,16 +60,16 @@ void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 {
 #define macArgs (*argPtr)
 	if (macArgs->nbArgs == MAXMACROARGS)
-		yyerror("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
-			" arguments is allowed");
+		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
+			" arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {
 		macArgs->capacity *= 2;
 		/* Check that overflow didn't roll us back */
 		if (macArgs->capacity <= macArgs->nbArgs)
-			fatalerror("Failed to add new macro argument: possible capacity overflow");
+			fatalerror("Failed to add new macro argument: possible capacity overflow\n");
 		macArgs = realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
 		if (!macArgs)
-			fatalerror("Error adding new macro argument: %s", strerror(errno));
+			fatalerror("Error adding new macro argument: %s\n", strerror(errno));
 	}
 	macArgs->args[macArgs->nbArgs++] = s;
 #undef macArgs

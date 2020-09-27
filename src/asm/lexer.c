@@ -89,7 +89,7 @@ void yyunputbytes(uint32_t count)
 void yyunput(char c)
 {
 	if (pLexBuffer <= pLexBufferRealStart)
-		fatalerror("Buffer safety margin exceeded");
+		fatalerror("Buffer safety margin exceeded\n");
 
 	*(--pLexBuffer) = c;
 }
@@ -107,7 +107,7 @@ void yyunputstr(const char *s)
 	 * Refer to https://github.com/rednex/rgbds/pull/411#discussion_r319779797
 	 */
 	if (pLexBuffer - pLexBufferRealStart < len)
-		fatalerror("Buffer safety margin exceeded");
+		fatalerror("Buffer safety margin exceeded\n");
 
 	pLexBuffer -= len;
 
@@ -121,15 +121,14 @@ void yyunputstr(const char *s)
 void lex_BeginStringExpansion(const char *tzName)
 {
 	if (++nNbStringExpansions > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%u) exceeded", nMaxRecursionDepth);
+		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth);
 
 	struct sStringExpansionPos *pNewStringExpansion =
 		malloc(sizeof(*pNewStringExpansion));
 	char *tzNewExpansionName = strdup(tzName);
 
 	if (!pNewStringExpansion || !tzNewExpansionName)
-		fatalerror("Could not allocate memory to expand '%s'",
-			   tzName);
+		fatalerror("Could not allocate memory to expand '%s'\n", tzName);
 
 	pNewStringExpansion->tzName = tzNewExpansionName;
 	pNewStringExpansion->pBuffer = pLexBufferRealStart;
@@ -196,14 +195,14 @@ YY_BUFFER_STATE yy_scan_bytes(char const *mem, uint32_t size)
 	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
 
 	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!", __func__);
+		fatalerror("%s: Out of memory!\n", __func__);
 
 	size_t capacity = size + 3; /* space for 2 newlines and terminator */
 
 	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
 
 	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!", __func__);
+		fatalerror("%s: Out of memory for buffer!\n", __func__);
 
 	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
 	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
@@ -221,7 +220,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
 
 	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!", __func__);
+		fatalerror("%s: Out of memory!\n", __func__);
 
 	size_t size = 0, capacity = -1;
 	char *buf = NULL;
@@ -263,7 +262,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 			buf = realloc(buf, capacity + SAFETYMARGIN + 3);
 
 			if (buf == NULL)
-				fatalerror("%s: Out of memory for buffer!",
+				fatalerror("%s: Out of memory for buffer!\n",
 					   __func__);
 		}
 
@@ -271,7 +270,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 		size_t read_count = fread(bufpos, 1, capacity - size, f);
 
 		if (read_count == 0 && !feof(f))
-			fatalerror("%s: fread error", __func__);
+			fatalerror("%s: fread error\n", __func__);
 
 		size += read_count;
 	} while (!feof(f));
@@ -320,7 +319,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 
 	if (mem != pBuffer->pBuffer + size) {
 		nLineNo = lineCount + 1;
-		fatalerror("Found null character");
+		fatalerror("Found null character\n");
 	}
 
 	/* Remove comments */
@@ -343,7 +342,8 @@ YY_BUFFER_STATE yy_create_buffer(FILE *f)
 					*mem++ = ' ';
 			/* Comments that start with * at the start of a line */
 			} else if ((mem[0] == '\n') && (mem[1] == '*')) {
-				warning(WARNING_OBSOLETE, "'*' is deprecated for comments, please use ';' instead");
+				warning(WARNING_OBSOLETE,
+					"'*' is deprecated for comments, please use ';' instead\n");
 				mem++;
 				while (!((*mem == '\n') || (*mem == '\0')))
 					*mem++ = ' ';
@@ -372,7 +372,7 @@ uint32_t lex_FloatAlloc(const struct sLexFloat *token)
 bool lex_CheckCharacterRange(uint16_t start, uint16_t end)
 {
 	if (start > end || start < 1 || end > 127) {
-		yyerror("Invalid character range (start: %" PRIu16 ", end: %" PRIu16 ")",
+		error("Invalid character range (start: %" PRIu16 ", end: %" PRIu16 ")\n",
 			start, end);
 		return false;
 	}
@@ -442,7 +442,7 @@ void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
 static struct sLexFloat *lexgetfloat(uint32_t nFloatMask)
 {
 	if (nFloatMask == 0)
-		fatalerror("Internal error in %s", __func__);
+		fatalerror("Internal error in %s\n", __func__);
 
 	int32_t i = 0;
 
@@ -496,11 +496,11 @@ void lex_AddStrings(const struct sLexInitString *lex)
 
 		*ppHash = malloc(sizeof(struct sLexString));
 		if (*ppHash == NULL)
-			fatalerror("Out of memory!");
+			fatalerror("Out of memory!\n");
 
 		(*ppHash)->tzName = (char *)strdup(lex->tzName);
 		if ((*ppHash)->tzName == NULL)
-			fatalerror("Out of memory!");
+			fatalerror("Out of memory!\n");
 
 		(*ppHash)->nNameLength = strlen(lex->tzName);
 		(*ppHash)->nToken = lex->nToken;
@@ -595,12 +595,12 @@ size_t CopyMacroArg(char *dest, size_t maxLength, char c)
 		return 0;
 
 	if (s == NULL)
-		fatalerror("Macro argument '\\%c' not defined", c);
+		fatalerror("Macro argument '\\%c' not defined\n", c);
 
 	// TODO: `strncpy`, nay?
 	for (i = 0; s[i] != 0; i++) {
 		if (i >= maxLength)
-			fatalerror("Macro argument too long to fit buffer");
+			fatalerror("Macro argument too long to fit buffer\n");
 
 		dest[i] = s[i];
 	}
@@ -611,7 +611,7 @@ size_t CopyMacroArg(char *dest, size_t maxLength, char c)
 static inline void yylex_StringWriteChar(char *s, size_t index, char c)
 {
 	if (index >= MAXSTRLEN)
-		fatalerror("String too long");
+		fatalerror("String too long\n");
 
 	s[index] = c;
 }
@@ -619,7 +619,7 @@ static inline void yylex_StringWriteChar(char *s, size_t index, char c)
 static inline void yylex_SymbolWriteChar(char *s, size_t index, char c)
 {
 	if (index >= MAXSYMLEN)
-		fatalerror("Symbol too long");
+		fatalerror("Symbol too long\n");
 
 	s[index] = c;
 }
@@ -657,7 +657,7 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 			if (length != 0)
 				i += length;
 			else
-				fatalerror("Illegal character escape '%c'", ch);
+				fatalerror("Illegal character escape '%c'\n", ch);
 		} else if (ch == '{') {
 			/* Handle nested symbols */
 			++pLexBuffer;
@@ -679,12 +679,11 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 			const char *designatedMode;
 
 			if (i != 1)
-				fatalerror("Print types are exactly 1 character long");
+				fatalerror("Print types are exactly 1 character long\n");
 
 			designatedMode = strchr(acceptedModes, sym[i - 1]);
 			if (!designatedMode)
-				fatalerror("Illegal print type '%c'",
-					   sym[i - 1]);
+				fatalerror("Illegal print type '%c'\n", sym[i - 1]);
 			mode = formatSpecifiers[designatedMode - acceptedModes];
 			/* Begin writing the symbol again */
 			i = 0;
@@ -703,7 +702,7 @@ size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
 	if (*pLexBuffer == '}')
 		pLexBuffer++;
 	else
-		fatalerror("Missing }");
+		fatalerror("Missing }\n");
 
 	return length;
 }
@@ -752,8 +751,7 @@ static void yylex_ReadQuotedString(void)
 				if (length != 0)
 					index += length;
 				else
-					fatalerror("Illegal character escape '%c'",
-						   ch);
+					fatalerror("Illegal character escape '%c'\n", ch);
 
 				ch = 0;
 				break;
@@ -774,7 +772,7 @@ static void yylex_ReadQuotedString(void)
 	if (*pLexBuffer == '"')
 		pLexBuffer++;
 	else
-		fatalerror("Unterminated string");
+		fatalerror("Unterminated string\n");
 }
 
 static uint32_t yylex_NORMAL(void)
@@ -818,7 +816,7 @@ scanagain:
 					nLineNo++;
 					goto scanagain;
 				} else {
-					yyerror("Expected a new line after the continuation character.");
+					error("Expected a new line after the continuation character.\n");
 					pLexBuffer++;
 				}
 			}
@@ -883,7 +881,7 @@ scanagain:
 		if (ch != 0
 		 && ch != '\n'
 		 && !(ch >= 0x20 && ch <= 0x7E))
-			fatalerror("Found garbage character: 0x%02X", ch);
+			fatalerror("Found garbage character: 0x%02X\n", ch);
 
 		return ch;
 	}
@@ -973,7 +971,7 @@ static uint32_t yylex_MACROARGS(void)
 						ch = 0;
 						break;
 					} else {
-						yyerror("Expected a new line after the continuation character.");
+						error("Expected a new line after the continuation character.\n");
 					}
 				}
 				break;
@@ -990,8 +988,7 @@ static uint32_t yylex_MACROARGS(void)
 				if (length != 0)
 					index += length;
 				else
-					fatalerror("Illegal character escape '%c'",
-						   ch);
+					fatalerror("Illegal character escape '%c'\n", ch);
 
 				ch = 0;
 				break;
@@ -1022,7 +1019,7 @@ static uint32_t yylex_MACROARGS(void)
 		return ',';
 	}
 
-	fatalerror("Internal error in %s", __func__);
+	fatalerror("Internal error in %s\n", __func__);
 }
 
 int yylex(void)
@@ -1037,7 +1034,7 @@ int yylex(void)
 		returnedChar = yylex_MACROARGS();
 		break;
 	default:
-		fatalerror("%s: Internal error.", __func__);
+		fatalerror("%s: Internal error.\n", __func__);
 	}
 
 	/* Check if string expansions were fully read */

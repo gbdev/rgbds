@@ -51,11 +51,11 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 		size_t i;
 
 		if (mode)
-			yyerror("Print types are only allowed for numbers");
+			error("Print types are only allowed for numbers\n");
 
 		for (i = 0; src[i] != 0; i++) {
 			if (i >= maxLength)
-				fatalerror("Symbol value too long to fit buffer");
+				fatalerror("Symbol value too long to fit buffer\n");
 
 			dest[i] = src[i];
 		}
@@ -85,11 +85,11 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 		}
 
 		if (fullLength < 0) {
-			fatalerror("snprintf encoding error");
+			fatalerror("snprintf encoding error\n");
 		} else {
 			length = (size_t)fullLength;
 			if (length > maxLength)
-				fatalerror("Symbol value too long to fit buffer");
+				fatalerror("Symbol value too long to fit buffer\n");
 		}
 	}
 
@@ -161,7 +161,7 @@ static void copyrept(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated REPT block");
+		fatalerror("Unterminated REPT block\n");
 
 	len = src - pCurrentBuffer->pBuffer - 4;
 
@@ -171,7 +171,7 @@ static void copyrept(void)
 	tzNewMacro = malloc(ulNewMacroSize + 1);
 
 	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for REPT block.");
+		fatalerror("Not enough memory for REPT block.\n");
 
 	uint32_t i;
 
@@ -231,7 +231,7 @@ static void copymacro(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated MACRO definition.");
+		fatalerror("Unterminated MACRO definition.\n");
 
 	len = src - pCurrentBuffer->pBuffer - 4;
 
@@ -240,7 +240,7 @@ static void copymacro(void)
 
 	tzNewMacro = (char *)malloc(ulNewMacroSize + 1);
 	if (tzNewMacro == NULL)
-		fatalerror("Not enough memory for MACRO definition.");
+		fatalerror("Not enough memory for MACRO definition.\n");
 
 	uint32_t i;
 
@@ -329,7 +329,7 @@ static void if_skip_to_else(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated IF construct");
+		fatalerror("Unterminated IF construct\n");
 
 	int32_t len = src - pCurrentBuffer->pBuffer;
 
@@ -374,7 +374,7 @@ static void if_skip_to_endc(void)
 	}
 
 	if (level != 0)
-		fatalerror("Unterminated IF construct");
+		fatalerror("Unterminated IF construct\n");
 
 	int32_t len = src - pCurrentBuffer->pBuffer;
 
@@ -392,7 +392,7 @@ static size_t strlenUTF8(const char *s)
 	while (*s) {
 		switch (decode(&state, &codep, (uint8_t)*s)) {
 		case 1:
-			fatalerror("STRLEN: Invalid UTF-8 character");
+			fatalerror("STRLEN: Invalid UTF-8 character\n");
 			break;
 		case 0:
 			len++;
@@ -403,7 +403,7 @@ static size_t strlenUTF8(const char *s)
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRLEN: Invalid UTF-8 character");
+		fatalerror("STRLEN: Invalid UTF-8 character\n");
 
 	return len;
 }
@@ -418,7 +418,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	uint32_t curLen = 0;
 
 	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Position starts at 1");
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Position starts at 1\n");
 		pos = 1;
 	}
 
@@ -426,7 +426,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	while (src[srcIndex] && curPos < pos) {
 		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character");
+			fatalerror("STRSUB: Invalid UTF-8 character\n");
 			break;
 		case 0:
 			curPos++;
@@ -436,14 +436,15 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	}
 
 	if (!src[srcIndex] && len)
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Position %lu is past the end of the string",
+		warning(WARNING_BUILTIN_ARG,
+			"STRSUB: Position %lu is past the end of the string\n",
 			(unsigned long)pos);
 
 	/* Copy from source to destination. */
 	while (src[srcIndex] && destIndex < MAXSTRLEN && curLen < len) {
 		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character");
+			fatalerror("STRSUB: Invalid UTF-8 character\n");
 			break;
 		case 0:
 			curLen++;
@@ -453,11 +454,11 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	}
 
 	if (curLen < len)
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %lu", (unsigned long)len);
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %lu\n", (unsigned long)len);
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRSUB: Invalid UTF-8 character");
+		fatalerror("STRSUB: Invalid UTF-8 character\n");
 
 	dest[destIndex] = 0;
 }
@@ -466,13 +467,12 @@ static inline void failAssert(enum AssertionType type)
 {
 	switch (type) {
 		case ASSERT_FATAL:
-			fatalerror("Assertion failed");
+			fatalerror("Assertion failed\n");
 		case ASSERT_ERROR:
-			yyerror("Assertion failed");
+			error("Assertion failed\n");
 			break;
 		case ASSERT_WARN:
-			warning(WARNING_ASSERT,
-				"Assertion failed");
+			warning(WARNING_ASSERT, "Assertion failed\n");
 			break;
 	}
 }
@@ -481,16 +481,17 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 {
 	switch (type) {
 		case ASSERT_FATAL:
-			fatalerror("Assertion failed: %s", msg);
+			fatalerror("Assertion failed: %s\n", msg);
 		case ASSERT_ERROR:
-			yyerror("Assertion failed: %s", msg);
+			error("Assertion failed: %s\n", msg);
 			break;
 		case ASSERT_WARN:
-			warning(WARNING_ASSERT,
-				"Assertion failed: %s", msg);
+			warning(WARNING_ASSERT, "Assertion failed: %s\n", msg);
 			break;
 	}
 }
+
+#define yyerror(str) error(str "\n")
 
 %}
 
@@ -674,7 +675,7 @@ line		: label
 ;
 
 scoped_label_bare : T_LABEL {
-			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated");
+			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated\n");
 			strcpy($$, $1);
 		}
 		| T_LOCAL_ID {
@@ -784,17 +785,15 @@ simple_pseudoop : include
 
 align		: T_OP_ALIGN uconst {
 			if ($2 > 16)
-				yyerror("Alignment must be between 0 and 16, not %u",
-					$2);
+				error("Alignment must be between 0 and 16, not %u\n", $2);
 			else
 				sect_AlignPC($2, 0);
 		}
 		| T_OP_ALIGN uconst ',' uconst {
 			if ($2 > 16)
-				yyerror("Alignment must be between 0 and 16, not %u",
-					$2);
+				error("Alignment must be between 0 and 16, not %u\n", $2);
 			else if ($4 >= 1 << $2)
-				yyerror("Offset must be between 0 and %u, not %u",
+				error("Offset must be between 0 and %u, not %u\n",
 					(1 << $2) - 1, $4);
 			else
 				sect_AlignPC($2, $4);
@@ -827,10 +826,10 @@ pops		: T_POP_POPS		{ out_PopSection(); }
 pushs		: T_POP_PUSHS		{ out_PushSection(); }
 ;
 
-fail		: T_POP_FAIL string	{ fatalerror("%s", $2); }
+fail		: T_POP_FAIL string	{ fatalerror("%s\n", $2); }
 ;
 
-warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s", $2); }
+warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s\n", $2); }
 ;
 
 assert_type	: /* empty */		{ $$ = ASSERT_ERROR; }
@@ -844,7 +843,7 @@ assert		: T_POP_ASSERT assert_type relocexpr
 			if (!rpn_isKnown(&$3)) {
 				if (!out_CreateAssert($2, &$3, "",
 						      sect_GetOutputOffset()))
-					yyerror("Assertion creation failed: %s",
+					error("Assertion creation failed: %s\n",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
 				failAssert($2);
@@ -856,7 +855,7 @@ assert		: T_POP_ASSERT assert_type relocexpr
 			if (!rpn_isKnown(&$3)) {
 				if (!out_CreateAssert($2, &$3, $5,
 						      sect_GetOutputOffset()))
-					yyerror("Assertion creation failed: %s",
+					error("Assertion creation failed: %s\n",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
 				failAssertMsg($2, $5);
@@ -949,21 +948,24 @@ ds		: T_POP_DS uconst	{ out_Skip($2, true); }
 /* Authorize empty entries if there is only one */
 db		: T_POP_DB constlist_8bit_entry ',' constlist_8bit {
 			if (nListCountEmpty > 0)
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 8-bit elements (treated as padding).");
+				warning(WARNING_EMPTY_ENTRY,
+					"Empty entry in list of 8-bit elements (treated as padding).\n");
 		}
 		| T_POP_DB constlist_8bit_entry
 ;
 
 dw		: T_POP_DW constlist_16bit_entry ',' constlist_16bit {
 			if (nListCountEmpty > 0)
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 16-bit elements (treated as padding).");
+				warning(WARNING_EMPTY_ENTRY,
+					"Empty entry in list of 16-bit elements (treated as padding).\n");
 		}
 		| T_POP_DW constlist_16bit_entry
 ;
 
 dl		: T_POP_DL constlist_32bit_entry ',' constlist_32bit {
 			if (nListCountEmpty > 0)
-				warning(WARNING_EMPTY_ENTRY, "Empty entry in list of 32-bit elements (treated as padding).");
+				warning(WARNING_EMPTY_ENTRY,
+					"Empty entry in list of 32-bit elements (treated as padding).\n");
 		}
 		| T_POP_DL constlist_32bit_entry
 ;
@@ -987,10 +989,11 @@ export		: export_token export_list
 
 export_token	: T_POP_EXPORT
 		| T_POP_GLOBAL {
-			warning(WARNING_OBSOLETE, "`GLOBAL` is a deprecated synonym for `EXPORT`");
+			warning(WARNING_OBSOLETE,
+				"`GLOBAL` is a deprecated synonym for `EXPORT`\n");
 		}
 		| T_POP_XDEF {
-			warning(WARNING_OBSOLETE, "`XDEF` is a deprecated synonym for `EXPORT`");
+			warning(WARNING_OBSOLETE, "`XDEF` is a deprecated synonym for `EXPORT`\n");
 		}
 ;
 
@@ -1034,10 +1037,10 @@ incbin		: T_POP_INCBIN string {
 
 charmap		: T_POP_CHARMAP string ',' const {
 			if ($4 < INT8_MIN || $4 > UINT8_MAX)
-				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
 
 			if (charmap_Add($2, (uint8_t)$4) == -1)
-				yyerror("Error adding new charmap mapping: %s\n", strerror(errno));
+				error("Error adding new charmap mapping: %s\n", strerror(errno));
 		}
 ;
 
@@ -1075,7 +1078,7 @@ if		: T_POP_IF const {
 
 elif		: T_POP_ELIF const {
 			if (nIFDepth <= 0)
-				fatalerror("Found ELIF outside an IF construct");
+				fatalerror("Found ELIF outside an IF construct\n");
 
 			if (skipElif) {
 				/*
@@ -1107,7 +1110,7 @@ elif		: T_POP_ELIF const {
 
 else		: T_POP_ELSE {
 			if (nIFDepth <= 0)
-				fatalerror("Found ELSE outside an IF construct");
+				fatalerror("Found ELSE outside an IF construct\n");
 
 			/* Continue parsing at ENDC keyword */
 			if_skip_to_endc();
@@ -1116,7 +1119,7 @@ else		: T_POP_ELSE {
 
 endc		: T_POP_ENDC {
 			if (nIFDepth <= 0)
-				fatalerror("Found ENDC outside an IF construct");
+				fatalerror("Found ENDC outside an IF construct\n");
 
 			nIFDepth--;
 		}
@@ -1126,7 +1129,7 @@ const_3bit	: const {
 			int32_t value = $1;
 
 			if ((value < 0) || (value > 7)) {
-				yyerror("Immediate value must be 3-bit");
+				error("Immediate value must be 3-bit\n");
 				$$ = 0;
 			} else {
 				$$ = value & 0x7;
@@ -1177,7 +1180,7 @@ constlist_32bit_entry : /* empty */ {
 reloc_8bit	: relocexpr {
 			if(rpn_isKnown(&$1)
 			 && ($1.nVal < -128 || $1.nVal > 255))
-				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
 			$$ = $1;
 		}
 ;
@@ -1185,7 +1188,7 @@ reloc_8bit	: relocexpr {
 reloc_8bit_no_str : relocexpr_no_str {
 			if(rpn_isKnown(&$1)
 			 && ($1.nVal < -128 || $1.nVal > 255))
-				warning(WARNING_TRUNCATION, "Expression must be 8-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
 			$$ = $1;
 		}
 ;
@@ -1193,7 +1196,7 @@ reloc_8bit_no_str : relocexpr_no_str {
 reloc_16bit	: relocexpr {
 			if (rpn_isKnown(&$1)
 			 && ($1.nVal < -32768 || $1.nVal > 65535))
-				warning(WARNING_TRUNCATION, "Expression must be 16-bit");
+				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
 			$$ = $1;
 		}
 ;
@@ -1342,14 +1345,14 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 uconst		: const {
 			$$ = $1;
 			if ($$ < 0)
-				fatalerror("Constant mustn't be negative: %d",
+				fatalerror("Constant mustn't be negative: %d\n",
 					   $1);
 		}
 ;
 
 const		: relocexpr {
 			if (!rpn_isKnown(&$1)) {
-				yyerror("Expected constant expression: %s",
+				error("Expected constant expression: %s\n",
 					$1.reason);
 				$$ = 0;
 			} else {
@@ -1360,28 +1363,25 @@ const		: relocexpr {
 
 string		: T_STRING {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "String is too long '%s'",
-					$1);
+				warning(WARNING_LONG_STR, "String is too long '%s'\n", $1);
 		}
 		| T_OP_STRSUB '(' string ',' uconst ',' uconst ')' {
 			strsubUTF8($$, $3, $5, $7);
 		}
 		| T_OP_STRCAT '(' string ',' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'",
+				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$3, $5);
 		}
 		| T_OP_STRUPR '(' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'",
-					$3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'\n", $3);
 
 			upperstring($$);
 		}
 		| T_OP_STRLWR '(' string ')' {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'",
-					$3);
+				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'\n", $3);
 
 			lowerstring($$);
 		}
@@ -1410,7 +1410,7 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 sectorg		: /* empty */ { $$ = -1; }
 		| '[' uconst ']' {
 			if ($2 < 0 || $2 >= 0x10000) {
-				yyerror("Address $%x is not 16-bit", $2);
+				error("Address $%x is not 16-bit\n", $2);
 				$$ = -1;
 			} else {
 				$$ = $2;
@@ -1425,19 +1425,17 @@ sectattrs	: /* empty */ {
 		}
 		| sectattrs ',' T_OP_ALIGN '[' uconst ']' {
 			if ($5 > 16)
-				yyerror("Alignment must be between 0 and 16, not %u",
-					$5);
+				error("Alignment must be between 0 and 16, not %u\n", $5);
 			else
 				$$.alignment = $5;
 		}
 		| sectattrs ',' T_OP_ALIGN '[' uconst ',' uconst ']' {
 			if ($5 > 16) {
-				yyerror("Alignment must be between 0 and 16, not %u",
-					$5);
+				error("Alignment must be between 0 and 16, not %u\n", $5);
 			} else {
 				$$.alignment = $5;
 				if ($7 >= 1 << $$.alignment)
-					yyerror("Alignment offset must not be greater than alignment (%u < %u)",
+					error("Alignment offset must not be greater than alignment (%u < %u)\n",
 						$7, 1 << $$.alignment);
 				else
 					$$.alignOfs = $7;
@@ -1701,7 +1699,7 @@ z80_ld_r	: T_Z80_LD reg_r ',' reloc_8bit {
 		}
 		| T_Z80_LD reg_r ',' reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
-				yyerror("LD [HL],[HL] not a valid instruction");
+				error("LD [HL],[HL] not a valid instruction\n");
 			else
 				out_AbsByte(0x40 | ($2 << 3) | $4);
 		}
@@ -1711,13 +1709,13 @@ z80_ld_a	: T_Z80_LD reg_r ',' c_ind {
 			if ($2 == REG_A)
 				out_AbsByte(0xF2);
 			else
-				yyerror("Destination operand must be A");
+				error("Destination operand must be A\n");
 		}
 		| T_Z80_LD reg_r ',' reg_rr {
 			if ($2 == REG_A)
 				out_AbsByte(0x0A | ($4 << 4));
 			else
-				yyerror("Destination operand must be A");
+				error("Destination operand must be A\n");
 		}
 		| T_Z80_LD reg_r ',' op_mem_ind {
 			if ($2 == REG_A) {
@@ -1731,7 +1729,7 @@ z80_ld_a	: T_Z80_LD reg_r ',' c_ind {
 					out_RelWord(&$4);
 				}
 			} else {
-				yyerror("Destination operand must be A");
+				error("Destination operand must be A\n");
 				rpn_Free(&$4);
 			}
 		}

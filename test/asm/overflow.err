@@ -1,7 +1,7 @@
 warning: overflow.asm(24): [-Wdiv]
-    Division of min value by -1
+    Division of -2147483648 by -1 yields -2147483648
 warning: overflow.asm(25): [-Wdiv]
-    Division of min value by -1
+    Division of -2147483648 by -1 yields -2147483648
 warning: overflow.asm(39): [-Wlarge-constant]
     Integer constant '4294967296' is too large
 warning: overflow.asm(42): [-Wlarge-constant]

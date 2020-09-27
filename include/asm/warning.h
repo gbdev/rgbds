@@ -62,6 +62,6 @@ noreturn_ void fatalerror(const char *fmt, ...);
  * get a list of all errors at the end, making it easier to fix all of them at
  * once.
  */
-void yyerror(const char *fmt, ...);
+void error(const char *fmt, ...);
 
 #endif

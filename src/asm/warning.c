@@ -201,12 +201,11 @@ void verror(const char *fmt, va_list args, char const *flag)
 	fstk_Dump();
 	fprintf(stderr, flag ? ": [-Werror=%s]\n    " : ":\n    ", flag);
 	vfprintf(stderr, fmt, args);
-	fputc('\n', stderr);
 	fstk_DumpStringExpansions();
 	nbErrors++;
 }
 
-void yyerror(const char *fmt, ...)
+void error(const char *fmt, ...)
 {
 	va_list args;
 
@@ -254,7 +253,6 @@ void warning(enum WarningID id, char const *fmt, ...)
 	fstk_Dump();
 	fprintf(stderr, ": [-W%s]\n    ", flag);
 	vfprintf(stderr, fmt, args);
-	fputc('\n', stderr);
 	fstk_DumpStringExpansions();
 
 	va_end(args);

@@ -146,7 +146,7 @@ static uint32_t getsectid(struct Section const *sect)
 		sec = sec->next;
 	}
 
-	fatalerror("Unknown section '%s'", sect->name);
+	fatalerror("Unknown section '%s'\n", sect->name);
 }
 
 static uint32_t getSectIDIfAny(struct Section const *sect)
@@ -311,12 +311,11 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
 	uint32_t rpnSize = expr->isKnown ? 5 : expr->nRPNPatchSize;
 
 	if (!patch)
-		fatalerror("No memory for patch: %s", strerror(errno));
+		fatalerror("No memory for patch: %s\n", strerror(errno));
 	patch->pRPN = malloc(sizeof(*patch->pRPN) * rpnSize);
 
 	if (!patch->pRPN)
-		fatalerror("No memory for patch's RPN expression: %s",
-			   strerror(errno));
+		fatalerror("No memory for patch's RPN expression: %s\n", strerror(errno));
 
 	patch->type = type;
 	fstk_DumpToStr(patch->tzFilename, sizeof(patch->tzFilename));
