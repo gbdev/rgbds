@@ -33,7 +33,7 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 WARNFLAGS	:= -Wall
 
 # Overridable CFLAGS
-CFLAGS		?= -O3
+CFLAGS		?= -O3 -DNDEBUG
 # Non-overridable CFLAGS
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -D_POSIX_C_SOURCE=200809L \
 		   -Iinclude
