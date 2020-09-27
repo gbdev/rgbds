@@ -462,6 +462,36 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	dest[destIndex] = 0;
 }
 
+static inline void failAssert(enum AssertionType type)
+{
+	switch (type) {
+		case ASSERT_FATAL:
+			fatalerror("Assertion failed");
+		case ASSERT_ERROR:
+			yyerror("Assertion failed");
+			break;
+		case ASSERT_WARN:
+			warning(WARNING_ASSERT,
+				"Assertion failed");
+			break;
+	}
+}
+
+static inline void failAssertMsg(enum AssertionType type, char const *msg)
+{
+	switch (type) {
+		case ASSERT_FATAL:
+			fatalerror("Assertion failed: %s", msg);
+		case ASSERT_ERROR:
+			yyerror("Assertion failed: %s", msg);
+			break;
+		case ASSERT_WARN:
+			warning(WARNING_ASSERT,
+				"Assertion failed: %s", msg);
+			break;
+	}
+}
+
 %}
 
 %union
@@ -817,17 +847,7 @@ assert		: T_POP_ASSERT assert_type relocexpr
 					yyerror("Assertion creation failed: %s",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
-				switch ($2) {
-					case ASSERT_FATAL:
-						fatalerror("Assertion failed");
-					case ASSERT_ERROR:
-						yyerror("Assertion failed");
-						break;
-					case ASSERT_WARN:
-						warning(WARNING_ASSERT,
-							"Assertion failed");
-						break;
-				}
+				failAssert($2);
 			}
 			rpn_Free(&$3);
 		}
@@ -839,57 +859,19 @@ assert		: T_POP_ASSERT assert_type relocexpr
 					yyerror("Assertion creation failed: %s",
 						strerror(errno));
 			} else if ($3.nVal == 0) {
-				switch ($2) {
-					case ASSERT_FATAL:
-						fatalerror("Assertion failed: %s",
-							   $5);
-					case ASSERT_ERROR:
-						yyerror("Assertion failed: %s",
-							$5);
-						break;
-					case ASSERT_WARN:
-						warning(WARNING_ASSERT,
-							"Assertion failed: %s",
-							$5);
-						break;
-				}
+				failAssertMsg($2, $5);
 			}
 			rpn_Free(&$3);
 		}
 		| T_POP_STATIC_ASSERT assert_type const
 		{
-			if ($3 == 0) {
-				switch ($2) {
-					case ASSERT_FATAL:
-						fatalerror("Assertion failed");
-					case ASSERT_ERROR:
-						yyerror("Assertion failed");
-						break;
-					case ASSERT_WARN:
-						warning(WARNING_ASSERT,
-							"Assertion failed");
-						break;
-				}
-			}
+			if ($3 == 0)
+				failAssert($2);
 		}
 		| T_POP_STATIC_ASSERT assert_type const ',' string
 		{
-			if ($3 == 0) {
-				switch ($2) {
-					case ASSERT_FATAL:
-						fatalerror("Assertion failed: %s",
-							   $5);
-					case ASSERT_ERROR:
-						yyerror("Assertion failed: %s",
-							$5);
-						break;
-					case ASSERT_WARN:
-						warning(WARNING_ASSERT,
-							"Assertion failed: %s",
-							$5);
-						break;
-				}
-			}
+			if ($3 == 0)
+				failAssertMsg($2, $5);
 		}
 ;
 
