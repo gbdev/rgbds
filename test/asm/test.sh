@@ -1,4 +1,5 @@
 #!/bin/sh
+
 export LC_ALL=C
 
 o=$(mktemp)
@@ -21,7 +22,7 @@ tryCmp () {
 }
 
 # Add the quote test, except on Windows
-if uname | grep -vic mingw; then
+if uname | grep -viq mingw; then
 	cat > quote\"file.asm <<EOF
 WARN __FILE__
 EOF
