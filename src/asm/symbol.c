@@ -103,7 +103,7 @@ static char const *Callback__FILE__(void)
 	size_t j = 1;
 
 	/* TODO: is there a way for a file name to be empty? */
-	assert(strlen(fileName) != 0);
+	assert(fileName[0]);
 	/* The assertion above ensures the loop runs at least once */
 	for (size_t i = 0; fileName[i]; i++, j++) {
 		/* Account for the extra backslash inserted below */
