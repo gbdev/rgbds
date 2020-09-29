@@ -1611,9 +1611,7 @@ static int yylex_NORMAL(void)
 		/* Handle newlines and EOF */
 
 		case '\r':
-			if (peek(0) == '\n')
-				shiftChars(1); /* Shift that EOL */
-			/* fallthrough */
+			return '\r';
 		case '\n':
 			return '\n';
 
@@ -1905,6 +1903,10 @@ restart:
 				return 0;
 			}
 		}
+	} else if (token == '\r') { /* Handle CR and CRLF line endings */
+		token = '\n'; /* We universally use '\n' as the value for line ending tokens */
+		if (peek(0) == '\n')
+			shiftChars(1); /* Shift the CRLF's LF */
 	}
 	lexerState->lastToken = token;
 
