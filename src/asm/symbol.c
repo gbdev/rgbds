@@ -23,6 +23,7 @@
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
+#include "asm/output.h"
 #include "asm/section.h"
 #include "asm/symbol.h"
 #include "asm/util.h"
@@ -121,7 +122,7 @@ static char const *Callback__FILE__(void)
 			buf[j - 1] = '\\';
 		buf[j] = fileName[i];
 	}
-	/* Write everything after the loop, to ensure everything has been allocated */
+	/* Write everything after the loop, to ensure the buffer has been allocated */
 	buf[0] = '"';
 	buf[j++] = '"';
 	buf[j] = '\0';
@@ -150,15 +151,35 @@ int32_t sym_GetValue(struct Symbol const *sym)
 	return sym->value;
 }
 
+static void dumpFilename(struct Symbol const *sym)
+{
+	if (!sym->src)
+		fputs("<builtin>", stderr);
+	else
+		fstk_Dump(sym->src, sym->fileLine);
+}
+
+/*
+ * Set a symbol's definition filename and line
+ */
+static void setSymbolFilename(struct Symbol *sym)
+{
+	sym->src = fstk_GetFileStack();
+	sym->fileLine = lexer_GetLineNo();
+}
+
 /*
  * Update a symbol's definition filename and line
  */
 static void updateSymbolFilename(struct Symbol *sym)
 {
-	if (snprintf(sym->fileName, _MAX_PATH + 1, "%s",
-		     fstk_GetFileName()) > _MAX_PATH)
-		fatalerror("%s: File name is too long: '%s'\n", __func__, fstk_GetFileName());
-	sym->fileLine = fstk_GetLine();
+	struct FileStackNode *oldSrc = sym->src;
+
+	setSymbolFilename(sym);
+	/* If the old node was referenced, ensure the new one is */
+	if (oldSrc->referenced && oldSrc->ID != -1)
+		out_RegisterNode(sym->src);
+	/* TODO: unref the old node, and use `out_ReplaceNode` instead if deleting it */
 }
 
 /*
@@ -178,7 +199,7 @@ static struct Symbol *createsymbol(char const *s)
 	symbol->isBuiltin = false;
 	symbol->hasCallback = false;
 	symbol->section = NULL;
-	updateSymbolFilename(symbol);
+	setSymbolFilename(symbol);
 	symbol->ID = -1;
 	symbol->next = NULL;
 
@@ -253,6 +274,7 @@ void sym_Purge(char const *symName)
 			labelScope = NULL;
 
 		hash_RemoveElement(symbols, symbol->name);
+		/* TODO: ideally, also unref the file stack nodes */
 		free(symbol);
 	}
 }
@@ -338,9 +360,11 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
 
 	if (!symbol)
 		symbol = createsymbol(symbolName);
-	else if (sym_IsDefined(symbol))
-		error("'%s' already defined at %s(%" PRIu32 ")\n", symbolName,
-			symbol->fileName, symbol->fileLine);
+	else if (sym_IsDefined(symbol)) {
+		error("'%s' already defined at ", symbolName);
+		dumpFilename(symbol);
+		putc('\n', stderr);
+	}
 
 	return symbol;
 }
@@ -395,15 +419,17 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 {
 	struct Symbol *sym = findsymbol(symName, NULL);
 
-	if (sym == NULL)
+	if (sym == NULL) {
 		sym = createsymbol(symName);
-	else if (sym_IsDefined(sym) && sym->type != SYM_SET)
-		error("'%s' already defined as %s at %s(%" PRIu32 ")\n",
-			symName, sym->type == SYM_LABEL ? "label" : "constant",
-			sym->fileName, sym->fileLine);
-	else
-		/* TODO: can the scope be incorrect when talking over refs? */
+	} else if (sym_IsDefined(sym) && sym->type != SYM_SET) {
+		error("'%s' already defined as %s at ",
+		      symName, sym->type == SYM_LABEL ? "label" : "constant");
+		dumpFilename(sym);
+		putc('\n', stderr);
+	} else {
+		/* TODO: can the scope be incorrect when taking over refs? */
 		updateSymbolFilename(sym);
+	}
 
 	sym->type = SYM_SET;
 	sym->value = value;
@@ -424,9 +450,12 @@ static struct Symbol *addLabel(char const *name)
 	if (!sym) {
 		sym = createsymbol(name);
 	} else if (sym_IsDefined(sym)) {
-		error("'%s' already defined in %s(%" PRIu32 ")\n",
-		      name, sym->fileName, sym->fileLine);
+		error("'%s' already defined at ", name);
+		dumpFilename(sym);
+		putc('\n', stderr);
 		return NULL;
+	} else {
+		updateSymbolFilename(sym);
 	}
 	/* If the symbol already exists as a ref, just "take over" it */
 	sym->type = SYM_LABEL;
@@ -434,7 +463,6 @@ static struct Symbol *addLabel(char const *name)
 	if (exportall)
 		sym->isExported = true;
 	sym->section = sect_GetSymbolSection();
-	updateSymbolFilename(sym);
 
 	if (sym && !sym->section)
 		error("Label \"%s\" created outside of a SECTION\n", name);
@@ -517,7 +545,7 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 	sym->type = SYM_MACRO;
 	sym->macroSize = size;
 	sym->macro = body;
-	updateSymbolFilename(sym);
+	setSymbolFilename(sym); /* TODO: is this really necessary? */
 	/*
 	 * The symbol is created at the line after the `endm`,
 	 * override this with the actual definition line
@@ -577,10 +605,11 @@ static inline struct Symbol *createBuiltinSymbol(char const *name)
 
 	sym->isBuiltin = true;
 	sym->hasCallback = true;
-	strcpy(sym->fileName, "<builtin>");
+	sym->src = NULL;
 	sym->fileLine = 0;
 	return sym;
 }
+
 /*
  * Initialize the symboltable
  */

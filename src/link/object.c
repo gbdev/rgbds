@@ -31,6 +31,11 @@ static struct SymbolList {
 	struct SymbolList *next;
 } *symbolLists;
 
+unsigned int nbObjFiles;
+static struct {
+	struct FileStackNode *nodes;
+	uint32_t nbNodes;
+} *nodes;
 static struct Assertion *assertions;
 
 /***** Helper functions for reading object files *****/
@@ -170,12 +175,56 @@ static char *readstr(FILE *file)
 /***** Functions to parse object files *****/
 
 /**
- * Reads a RGB6 symbol from a file.
+ * Reads a file stack node form a file.
+ * @param file The file to read from
+ * @param nodes The file's array of nodes
+ * @param i The ID of the node in the array
+ * @param fileName The filename to report in errors
+ */
+static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint32_t i,
+			      char const *fileName)
+{
+	uint32_t parentID;
+
+	tryReadlong(parentID, file,
+		    "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
+	fileNodes[i].parent = parentID == -1 ? NULL : &fileNodes[parentID];
+	tryReadlong(fileNodes[i].lineNo, file,
+		    "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i);
+	tryGetc(fileNodes[i].type, file, "%s: Cannot read node #%" PRIu32 "'s type: %s",
+		fileName, i);
+	switch (fileNodes[i].type) {
+	case NODE_FILE:
+	case NODE_MACRO:
+		tryReadstr(fileNodes[i].name, file,
+			   "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i);
+		break;
+
+	case NODE_REPT:
+		tryReadlong(fileNodes[i].reptDepth, file,
+			    "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
+		fileNodes[i].iters = malloc(sizeof(*fileNodes[i].iters) * fileNodes[i].reptDepth);
+		if (!fileNodes[i].iters)
+			fatal(NULL, 0, "%s: Failed to alloc node #%" PRIu32 "'s iters: %s",
+			      fileName, i, strerror(errno));
+		for (uint32_t k = 0; k < fileNodes[i].reptDepth; k++)
+			tryReadlong(fileNodes[i].iters[k], file,
+				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
+				    fileName, i, k);
+		if (!fileNodes[i].parent)
+			fatal(NULL, 0, "%s is not a valid object file: root node (#%"
+			      PRIu32 ") may not be REPT", fileName, i);
+	}
+}
+
+/**
+ * Reads a symbol from a file.
  * @param file The file to read from
  * @param symbol The struct to fill
  * @param fileName The filename to report in errors
  */
-static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
+static void readSymbol(FILE *file, struct Symbol *symbol,
+		       char const *fileName, struct FileStackNode fileNodes[])
 {
 	tryReadstr(symbol->name, file, "%s: Cannot read symbol name: %s",
 		   fileName);
@@ -184,9 +233,12 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
 	/* If the symbol is defined in this file, read its definition */
 	if (symbol->type != SYMTYPE_IMPORT) {
 		symbol->objFileName = fileName;
-		tryReadstr(symbol->fileName, file,
-			   "%s: Cannot read \"%s\"'s file name: %s",
+		uint32_t nodeID;
+
+		tryReadlong(nodeID, file,
+			   "%s: Cannot read \"%s\"'s node ID: %s",
 			   fileName, symbol->name);
+		symbol->src = &fileNodes[nodeID];
 		tryReadlong(symbol->lineNo, file,
 			    "%s: Cannot read \"%s\"'s line number: %s",
 			    fileName, symbol->name);
@@ -202,7 +254,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
 }
 
 /**
- * Reads a RGB6 patch from a file.
+ * Reads a patch from a file.
  * @param file The file to read from
  * @param patch The struct to fill
  * @param fileName The filename to report in errors
@@ -210,20 +262,25 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName)
  */
 static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
 		      char const *sectName, uint32_t i,
-		      struct Section *fileSections[])
+		      struct Section *fileSections[], struct FileStackNode fileNodes[])
 {
-	tryReadstr(patch->fileName, file,
-		   "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s name: %s",
+	uint32_t nodeID;
+
+	tryReadlong(nodeID, file,
+		   "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
 		   fileName, sectName, i);
+	patch->src = &fileNodes[nodeID];
+	tryReadlong(patch->lineNo, file,
+		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
+		    fileName, sectName, i);
 	tryReadlong(patch->offset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
 		    fileName, sectName, i);
 	tryReadlong(patch->pcSectionID, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
-	patch->pcSection = patch->pcSectionID == -1
-					? NULL
-					: fileSections[patch->pcSectionID];
+	patch->pcSection = patch->pcSectionID == -1 ? NULL
+						    : fileSections[patch->pcSectionID];
 	tryReadlong(patch->pcOffset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
@@ -234,16 +291,17 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 		    fileName, sectName, i);
 
-	uint8_t *rpnExpression =
-		malloc(sizeof(*rpnExpression) * patch->rpnSize);
-	size_t nbElementsRead = fread(rpnExpression, sizeof(*rpnExpression),
+	patch->rpnExpression = malloc(sizeof(*patch->rpnExpression) * patch->rpnSize);
+	if (!patch->rpnExpression)
+		err(1, "%s: Failed to alloc \"%s\"'s patch #%" PRIu32 "'s RPN expression",
+		    fileName, sectName, i);
+	size_t nbElementsRead = fread(patch->rpnExpression, sizeof(*patch->rpnExpression),
 				      patch->rpnSize, file);
 
 	if (nbElementsRead != patch->rpnSize)
 		errx(1, "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		     fileName, sectName, i,
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
-	patch->rpnExpression = rpnExpression;
 }
 
 /**
@@ -252,8 +310,8 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
  * @param section The struct to fill
  * @param fileName The filename to report in errors
  */
-static void readSection(FILE *file, struct Section *section,
-			char const *fileName, struct Section *fileSections[])
+static void readSection(FILE *file, struct Section *section, char const *fileName,
+			struct Section *fileSections[], struct FileStackNode fileNodes[])
 {
 	int32_t tmp;
 	uint8_t byte;
@@ -280,7 +338,7 @@ static void readSection(FILE *file, struct Section *section,
 		    fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error("\"%s\"'s org is too large (%" PRId32 ")",
+		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")",
 		      section->name, tmp);
 		tmp = UINT16_MAX;
 	}
@@ -296,7 +354,7 @@ static void readSection(FILE *file, struct Section *section,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s",
 		    fileName, section->name);
 	if (tmp > UINT16_MAX) {
-		error("\"%s\"'s alignment offset is too large (%" PRId32 ")",
+		error(NULL, 0, "\"%s\"'s alignment offset is too large (%" PRId32 ")",
 		      section->name, tmp);
 		tmp = UINT16_MAX;
 	}
@@ -332,7 +390,7 @@ static void readSection(FILE *file, struct Section *section,
 			    section->name);
 		for (uint32_t i = 0; i < section->nbPatches; i++) {
 			readPatch(file, &patches[i], fileName, section->name,
-				  i, fileSections);
+				  i, fileSections, fileNodes);
 		}
 		section->patches = patches;
 	}
@@ -375,13 +433,13 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
  */
 static void readAssertion(FILE *file, struct Assertion *assert,
 			  char const *fileName, uint32_t i,
-			  struct Section *fileSections[])
+			  struct Section *fileSections[], struct FileStackNode fileNodes[])
 {
 	char assertName[sizeof("Assertion #" EXPAND_AND_STR(UINT32_MAX))];
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
-	readPatch(file, &assert->patch, fileName, assertName, 0, fileSections);
+	readPatch(file, &assert->patch, fileName, assertName, 0, fileSections, fileNodes);
 	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
 		   fileName);
 }
@@ -394,11 +452,7 @@ static inline struct Section *getMainSection(struct Section *section)
 	return section;
 }
 
-/**
- * Reads an object file of any supported format
- * @param fileName The filename to report for errors
- */
-void obj_ReadFile(char const *fileName)
+void obj_ReadFile(char const *fileName, unsigned int fileID)
 {
 	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
 
@@ -438,6 +492,14 @@ void obj_ReadFile(char const *fileName)
 
 	nbSectionsToAssign += nbSections;
 
+	tryReadlong(nodes[fileID].nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
+	nodes[fileID].nodes = calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
+	if (!nodes[fileID].nodes)
+		err(1, "Failed to get memory for %s's nodes", fileName);
+	verbosePrint("Reading %u nodes...\n", nodes[fileID].nbNodes);
+	for (uint32_t i = 0; i < nodes[fileID].nbNodes; i++)
+		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
+
 	/* This file's symbols, kept to link sections to them */
 	struct Symbol **fileSymbols =
 		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
@@ -464,7 +526,7 @@ void obj_ReadFile(char const *fileName)
 
 		if (!symbol)
 			err(1, "%s: Couldn't create new symbol", fileName);
-		readSymbol(file, symbol, fileName);
+		readSymbol(file, symbol, fileName, nodes[fileID].nodes);
 
 		fileSymbols[i] = symbol;
 		if (symbol->type == SYMTYPE_EXPORT)
@@ -485,7 +547,7 @@ void obj_ReadFile(char const *fileName)
 			err(1, "%s: Couldn't create new section", fileName);
 
 		fileSections[i]->nextu = NULL;
-		readSection(file, fileSections[i], fileName, fileSections);
+		readSection(file, fileSections[i], fileName, fileSections, nodes[fileID].nodes);
 		fileSections[i]->fileSymbols = fileSymbols;
 		if (nbSymPerSect[i]) {
 			fileSections[i]->symbols = malloc(nbSymPerSect[i]
@@ -535,7 +597,7 @@ void obj_ReadFile(char const *fileName)
 
 		if (!assertion)
 			err(1, "%s: Couldn't create new assertion", fileName);
-		readAssertion(file, assertion, fileName, i, fileSections);
+		readAssertion(file, assertion, fileName, i, fileSections, nodes[fileID].nodes);
 		assertion->fileSymbols = fileSymbols;
 		assertion->next = assertions;
 		assertions = assertion;
@@ -555,6 +617,15 @@ void obj_CheckAssertions(void)
 	patch_CheckAssertions(assertions);
 }
 
+void obj_Setup(unsigned int nbFiles)
+{
+	nbObjFiles = nbFiles;
+
+	if (nbFiles > SIZE_MAX / sizeof(*nodes))
+		fatal(NULL, 0, "Impossible to link more than %zu files!", SIZE_MAX / sizeof(*nodes));
+	nodes = malloc(sizeof(*nodes) * nbFiles);
+}
+
 static void freeSection(struct Section *section, void *arg)
 {
 	(void)arg;
@@ -562,12 +633,8 @@ static void freeSection(struct Section *section, void *arg)
 	free(section->name);
 	if (sect_HasData(section->type)) {
 		free(section->data);
-		for (int32_t i = 0; i < section->nbPatches; i++) {
-			struct Patch *patch = &section->patches[i];
-
-			free(patch->fileName);
-			free(patch->rpnExpression);
-		}
+		for (int32_t i = 0; i < section->nbPatches; i++)
+			free(section->patches[i].rpnExpression);
 		free(section->patches);
 	}
 	free(section->symbols);
@@ -577,13 +644,20 @@ static void freeSection(struct Section *section, void *arg)
 static void freeSymbol(struct Symbol *symbol)
 {
 	free(symbol->name);
-	if (symbol->type != SYMTYPE_IMPORT)
-		free(symbol->fileName);
 	free(symbol);
 }
 
 void obj_Cleanup(void)
 {
+	for (unsigned int i = 0; i < nbObjFiles; i++) {
+		for (uint32_t j = 0; j < nodes[i].nbNodes; j++) {
+			if (nodes[i].nodes[j].type == NODE_REPT)
+				free(nodes[i].nodes[j].iters);
+		}
+		free(nodes[i].nodes);
+	}
+	free(nodes);
+
 	sym_CleanupSymbols();
 
 	sect_ForEach(freeSection, NULL);

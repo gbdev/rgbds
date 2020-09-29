@@ -202,7 +202,7 @@ void printDiag(const char *fmt, va_list args, char const *type,
 	       char const *flagfmt, char const *flag)
 {
 	fputs(type, stderr);
-	fstk_Dump();
+	fstk_DumpCurrent();
 	fprintf(stderr, flagfmt, flag);
 	vfprintf(stderr, fmt, args);
 	lexer_DumpStringExpansions();

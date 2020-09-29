@@ -35,8 +35,8 @@ struct Symbol {
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
 	struct Section *section;
-	char fileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
-	uint32_t fileLine; /* Line where the symbol was defined. */
+	struct FileStackNode *src; /* Where the symbol was defined */
+	uint32_t fileLine; /* Line where the symbol was defined */
 
 	bool hasCallback;
 	union {

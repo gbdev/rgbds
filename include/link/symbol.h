@@ -16,12 +16,14 @@
 
 #include "linkdefs.h"
 
+struct FileStackNode;
+
 struct Symbol {
 	/* Info contained in the object files */
 	char *name;
 	enum ExportLevel type;
 	char const *objFileName;
-	char *fileName;
+	struct FileStackNode const *src;
 	int32_t lineNo;
 	int32_t sectionID;
 	union {

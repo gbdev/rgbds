@@ -8,9 +8,12 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
+#include "link/object.h"
 #include "link/symbol.h"
 #include "link/main.h"
+
 #include "extern/err.h"
 #include "hashmap.h"
 
@@ -40,11 +43,15 @@ void sym_AddSymbol(struct Symbol *symbol)
 	/* Check if the symbol already exists */
 	struct Symbol *other = hash_GetElement(symbols, symbol->name);
 
-	if (other)
-		errx(1, "\"%s\" both in %s from %s(%" PRId32 ") and in %s from %s(%" PRId32 ")",
-		     symbol->name,
-		     symbol->objFileName, symbol->fileName, symbol->lineNo,
-		      other->objFileName,  other->fileName,  other->lineNo);
+	if (other) {
+		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name, symbol->objFileName);
+		dumpFileStack(symbol->src);
+		fprintf(stderr, "(%" PRIu32 ") and in %s from ",
+			symbol->lineNo, other->objFileName);
+		dumpFileStack(other->src);
+		fprintf(stderr, "(%" PRIu32 ")\n", other->lineNo);
+		exit(1);
+	}
 
 	/* If not, add it */
 	bool collided = hash_AddElement(symbols, symbol->name, symbol);
