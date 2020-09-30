@@ -202,12 +202,13 @@ bool yywrap(void)
 
 		/* If the node is referenced, we can't edit it; duplicate it */
 		if (contextStack->fileInfo->referenced) {
-			struct FileStackReptNode *copy = malloc(sizeof(*copy) + sizeof(copy->iters[0]) * fileInfo->reptDepth);
+			size_t size = sizeof(*fileInfo) + sizeof(fileInfo->iters[0]) * fileInfo->reptDepth;
+			struct FileStackReptNode *copy = malloc(size);
 
 			if (!copy)
 				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
 			/* Copy all info but the referencing */
-			*copy = *fileInfo;
+			memcpy(copy, fileInfo, size);
 			copy->node.next = NULL;
 			copy->node.referenced = false;
 
