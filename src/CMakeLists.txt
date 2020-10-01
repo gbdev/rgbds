@@ -12,6 +12,16 @@ set(common_src
     "version.c"
     )
 
+find_package(BISON REQUIRED)
+find_package(PkgConfig)
+
+if(NOT PKG_CONFIG_FOUND)
+  # fallback to find_package
+  find_package(PNG REQUIRED)
+else()
+  pkg_check_modules(LIBPNG REQUIRED libpng)
+endif()
+
 BISON_TARGET(ASMy "asm/asmy.y"
              "${PROJECT_SOURCE_DIR}/src/asm/asmy.c"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/asmy.h"
@@ -68,9 +78,15 @@ foreach(PROG "asm" "fix" "gfx" "link")
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
 
-target_compile_definitions(rgbgfx PRIVATE ${PNG_DEFINITIONS})
-target_include_directories(rgbgfx PRIVATE ${PNG_INCLUDE_DIRS})
-target_link_libraries(rgbgfx PRIVATE ${PNG_LIBRARIES})
+if(LIBPNG_FOUND) # pkg-config
+  target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
+  target_link_directories(rgbgfx PRIVATE ${LIBPNG_LIBRARY_DIRS})
+  target_link_libraries(rgbgfx PRIVATE ${LIBPNG_LIBRARIES})
+else()
+  target_compile_definitions(rgbgfx PRIVATE ${PNG_DEFINITIONS})
+  target_include_directories(rgbgfx PRIVATE ${PNG_INCLUDE_DIRS})
+  target_link_libraries(rgbgfx PRIVATE ${PNG_LIBRARIES})
+endif()
 
 include(CheckLibraryExists)
 check_library_exists("m" "sin" "" HAS_LIBM)
