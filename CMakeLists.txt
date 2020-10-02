@@ -35,9 +35,6 @@ if(srcdir STREQUAL bindir)
   message(FATAL_ERROR "Terminating configuration")
 endif()
 
-find_package(PNG 1.2 REQUIRED)
-find_package(BISON REQUIRED)
-
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 if(DEVELOP)
