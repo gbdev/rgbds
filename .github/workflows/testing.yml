@@ -15,6 +15,10 @@ jobs:
             cc: gcc
             target: develop
             cmakevars: -DDEVELOP=ON
+          - os: ubuntu-20.04
+            cc: gcc
+            target: develop
+            cmakevars: -DDEVELOP=ON
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
