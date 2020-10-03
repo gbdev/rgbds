@@ -562,8 +562,6 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	NEG /* negation -- unary minus */
 
 %token	<tzSym> T_LABEL
-%type	<tzSym> scoped_label
-%type	<tzSym> scoped_label_bare
 %token	<tzSym> T_ID
 %token	<tzSym> T_LOCAL_ID
 %type	<tzSym> scoped_id
@@ -674,41 +672,28 @@ line		: label
 		| pseudoop
 ;
 
-scoped_label_bare : T_LABEL {
-			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated\n");
-			strcpy($$, $1);
-		}
-		| T_LOCAL_ID {
-			strcpy($$, $1);
-		}
-;
-scoped_label	: T_LABEL ':' {
-			strcpy($$, $1);
-		}
-		| T_LOCAL_ID ':' {
-			strcpy($$, $1);
-		}
-;
 scoped_id	: T_ID | T_LOCAL_ID ;
 
 label		: /* empty */
-		| scoped_label_bare {
-			if ($1[0] == '.')
-				sym_AddLocalReloc($1);
-			else
-				sym_AddReloc($1);
+		| T_LOCAL_ID {
+			sym_AddLocalLabel($1);
 		}
-		| scoped_label {
-			if ($1[0] == '.')
-				sym_AddLocalReloc($1);
-			else
-				sym_AddReloc($1);
+		| T_LABEL {
+			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated\n");
+			sym_AddLabel($1);
 		}
-		| scoped_label ':' {
-			if ($1[0] == '.')
-				sym_AddLocalReloc($1);
-			else
-				sym_AddReloc($1);
+		| T_LOCAL_ID ':' {
+			sym_AddLocalLabel($1);
+		}
+		| T_LABEL ':' {
+			sym_AddLabel($1);
+		}
+		| T_LOCAL_ID ':' ':' {
+			sym_AddLocalLabel($1);
+			sym_Export($1);
+		}
+		| T_LABEL ':' ':' {
+			sym_AddLabel($1);
 			sym_Export($1);
 		}
 ;

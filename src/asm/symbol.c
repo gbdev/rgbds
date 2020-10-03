@@ -36,7 +36,7 @@
 
 HashMap symbols;
 
-static struct Symbol *symbolScope; /* Current section symbol scope */
+static char const *labelScope; /* Current section's label scope */
 static struct Symbol *PCSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
@@ -133,7 +133,6 @@ static struct Symbol *createsymbol(char const *s)
 
 	symbol->isExported = false;
 	symbol->isBuiltin = false;
-	symbol->scope = NULL;
 	symbol->section = NULL;
 	updateSymbolFilename(symbol);
 	symbol->ID = -1;
@@ -148,19 +147,20 @@ static struct Symbol *createsymbol(char const *s)
  * the name with the parent symbol's name.
  */
 static void fullSymbolName(char *output, size_t outputSize,
-			   char const *localName, const struct Symbol *scope)
+			   char const *localName, char const *scopeName)
 {
-	const struct Symbol *parent = scope->scope ? scope->scope : scope;
-	int n = snprintf(output, outputSize, "%s%s", parent->name, localName);
+	int ret = snprintf(output, outputSize, "%s%s", scopeName, localName);
 
-	if (n >= (int)outputSize)
-		fatalerror("Symbol name is too long: '%s%s'\n", parent->name, localName);
+	if (ret < 0)
+		fatalerror("snprintf error when expanding symbol name: %s", strerror(errno));
+	else if ((size_t)ret >= outputSize)
+		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
 /*
  * Find a symbol by name and scope
  */
-static struct Symbol *findsymbol(char const *s, struct Symbol const *scope)
+static struct Symbol *findsymbol(char const *s, char const *scope)
 {
 	char fullname[MAXSYMLEN + 1];
 
@@ -182,7 +182,7 @@ static struct Symbol *findsymbol(char const *s, struct Symbol const *scope)
  */
 struct Symbol *sym_FindSymbol(char const *symName)
 {
-	return findsymbol(symName, symName[0] == '.' ? symbolScope : NULL);
+	return findsymbol(symName, symName[0] == '.' ? labelScope : NULL);
 }
 
 static inline bool isReferenced(struct Symbol const *sym)
@@ -195,8 +195,7 @@ static inline bool isReferenced(struct Symbol const *sym)
  */
 void sym_Purge(char const *symName)
 {
-	struct Symbol *scope = symName[0] == '.' ? symbolScope : NULL;
-	struct Symbol *symbol = findsymbol(symName, scope);
+	struct Symbol *symbol = sym_FindSymbol(symName);
 
 	if (!symbol) {
 		error("'%s' not defined\n", symName);
@@ -205,6 +204,10 @@ void sym_Purge(char const *symName)
 	} else if (isReferenced(symbol)) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
 	} else {
+		/* Do not keep a reference to the label's name after purging it */
+		if (symbol->name == labelScope)
+			labelScope = NULL;
+
 		hash_RemoveElement(symbols, symbol->name);
 		if (symbol->type == SYM_MACRO)
 			free(symbol->macro);
@@ -261,14 +264,14 @@ uint32_t sym_GetDefinedValue(char const *s)
 	return 0;
 }
 
-struct Symbol *sym_GetCurrentSymbolScope(void)
+char const *sym_GetCurrentSymbolScope(void)
 {
-	return symbolScope;
+	return labelScope;
 }
 
-void sym_SetCurrentSymbolScope(struct Symbol *newScope)
+void sym_SetCurrentSymbolScope(char const *newScope)
 {
-	symbolScope = newScope;
+	labelScope = newScope;
 }
 
 /*
@@ -358,74 +361,94 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 }
 
 /*
- * Add a local (.name) relocatable symbol
+ * Add a label (aka "relocatable symbol")
+ * @param name The label's full name (so `.name` is invalid)
+ * @return The created symbol
  */
-struct Symbol *sym_AddLocalReloc(char const *symName)
+static struct Symbol *addSectionlessLabel(char const *name)
 {
-	if (!symbolScope) {
-		error("Local label '%s' in main scope\n", symName);
+	assert(name[0] != '.'); /* The symbol name must have been expanded prior */
+	struct Symbol *sym = findsymbol(name, NULL); /* Due to this, don't look for expansions */
+
+	if (!sym) {
+		sym = createsymbol(name);
+	} else if (sym_IsDefined(sym)) {
+		error("'%s' already defined in %s(%" PRIu32 ")\n",
+		      name, sym->fileName, sym->fileLine);
+		return NULL;
+	}
+	/* If the symbol already exists as a ref, just "take over" it */
+	sym->type = SYM_LABEL;
+	sym->callback = NULL;
+	sym->value = sect_GetSymbolOffset();
+	if (exportall)
+		sym->isExported = true;
+	sym->section = sect_GetSymbolSection();
+	updateSymbolFilename(sym);
+
+	return sym;
+}
+
+static struct Symbol *addLabel(char const *name)
+{
+	struct Symbol *sym = addSectionlessLabel(name);
+
+	if (sym && !sym->section)
+		error("Label \"%s\" created outside of a SECTION\n", name);
+	return sym;
+}
+
+/*
+ * Add a local (.name or Parent.name) relocatable symbol
+ */
+struct Symbol *sym_AddLocalLabel(char const *name)
+{
+	if (!labelScope) {
+		error("Local label '%s' in main scope\n", name);
 		return NULL;
 	}
 
 	char fullname[MAXSYMLEN + 1];
 
-	fullSymbolName(fullname, sizeof(fullname), symName, symbolScope);
-	return sym_AddReloc(fullname);
+	if (name[0] == '.') {
+		/* If symbol is of the form `.name`, expand to the full `Parent.name` name */
+		fullSymbolName(fullname, sizeof(fullname), name, labelScope);
+		name = fullname; /* Use the expanded name instead */
+	} else {
+		size_t i = 0;
+
+		/* Otherwise, check that `Parent` is in fact the current scope */
+		while (labelScope[i] && name[i] == labelScope[i])
+			i++;
+		/* Assuming no dots in `labelScope` */
+		assert(strchr(&name[i], '.')); /* There should be at least one dot, though */
+		size_t parentLen = i + (strchr(&name[i], '.') - name);
+
+		/*
+		 * Check that `labelScope[i]` ended the check, guaranteeing that `name` is at least
+		 * as long, and then that this was the entirety of the `Parent` part of `name`.
+		 */
+		if (labelScope[i] != '\0' || name[i] != '.')
+			error("Not currently in the scope of '%.*s'\n", parentLen, name);
+		if (strchr(&name[parentLen + 1], '.')) /* There will at least be a terminator */
+			fatalerror("'%s' is a nonsensical reference to a nested local label\n",
+				   name);
+	}
+
+	return addLabel(name);
 }
 
 /*
  * Add a relocatable symbol
  */
-struct Symbol *sym_AddReloc(char const *symName)
+struct Symbol *sym_AddLabel(char const *name)
 {
-	struct Symbol const *scope = NULL;
-	char *localPtr = strchr(symName, '.');
-
-	if (localPtr != NULL) {
-		if (!symbolScope) {
-			error("Local label in main scope\n");
-			return NULL;
-		}
-
-		scope = symbolScope->scope ? symbolScope->scope : symbolScope;
-		uint32_t parentLen = localPtr - symName;
-
-		if (strchr(localPtr + 1, '.') != NULL)
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
-				   symName);
-		else if (strlen(scope->name) != parentLen
-			|| strncmp(symName, scope->name, parentLen) != 0)
-			error("Not currently in the scope of '%.*s'\n", parentLen, symName);
-	}
-
-	struct Symbol *sym = findsymbol(symName, scope);
-
-	if (!sym)
-		sym = createsymbol(symName);
-	else if (sym_IsDefined(sym))
-		error("'%s' already defined in %s(%" PRIu32 ")\n",
-			symName, sym->fileName, sym->fileLine);
-	/* If the symbol already exists as a ref, just "take over" it */
-
-	sym->type = SYM_LABEL;
-	sym->callback = NULL;
-	sym->value = sect_GetSymbolOffset();
-
-	if (exportall)
-		sym->isExported = true;
-
-	sym->scope = scope;
-	sym->section = sect_GetSymbolSection();
-	/* Labels need to be assigned a section, except PC */
-	if (!sym->section && strcmp(symName, "@"))
-		error("Label \"%s\" created outside of a SECTION\n", symName);
-
-	updateSymbolFilename(sym);
+	struct Symbol *sym = addLabel(name);
 
 	/* Set the symbol as the new scope */
-	/* TODO: don't do this for local labels */
-	symbolScope = findsymbol(symName, scope);
-	return symbolScope;
+	if (sym)
+		labelScope = sym->name;
+	return sym;
 }
 
 /*
@@ -471,19 +494,16 @@ struct Symbol *sym_Ref(char const *symName)
 
 	if (nsym == NULL) {
 		char fullname[MAXSYMLEN + 1];
-		struct Symbol const *scope = NULL;
 
 		if (symName[0] == '.') {
-			if (!symbolScope)
+			if (!labelScope)
 				fatalerror("Local label reference '%s' in main scope\n", symName);
-			scope = symbolScope->scope ? symbolScope->scope : symbolScope;
-			fullSymbolName(fullname, sizeof(fullname), symName, symbolScope);
+			fullSymbolName(fullname, sizeof(fullname), symName, labelScope);
 			symName = fullname;
 		}
 
 		nsym = createsymbol(symName);
 		nsym->type = SYM_REF;
-		nsym->scope = scope;
 	}
 
 	return nsym;
@@ -516,7 +536,7 @@ void sym_Init(void)
 	struct Symbol *_NARGSymbol = sym_AddEqu("_NARG", 0);
 	struct Symbol *__LINE__Symbol = sym_AddEqu("__LINE__", 0);
 
-	PCSymbol = sym_AddReloc("@"),
+	PCSymbol = addSectionlessLabel("@");
 	PCSymbol->isBuiltin = true;
 	PCSymbol->callback = CallbackPC;
 	_NARGSymbol->isBuiltin = true;
@@ -571,7 +591,7 @@ void sym_Init(void)
 	addString("__UTC_SECOND__", removeLeadingZeros(savedSECOND));
 #undef addString
 
-	symbolScope = NULL;
+	labelScope = NULL;
 
 	math_DefinePI();
 }

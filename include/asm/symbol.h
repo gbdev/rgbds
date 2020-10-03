@@ -34,7 +34,6 @@ struct Symbol {
 	enum SymbolType type;
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
-	struct Symbol const *scope;
 	struct Section *section;
 	char fileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
 	uint32_t fileLine; /* Line where the symbol was defined. */
@@ -109,8 +108,8 @@ void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg);
 
 int32_t sym_GetValue(struct Symbol const *sym);
 void sym_SetExportAll(bool set);
-struct Symbol *sym_AddLocalReloc(char const *symName);
-struct Symbol *sym_AddReloc(char const *symName);
+struct Symbol *sym_AddLocalLabel(char const *symName);
+struct Symbol *sym_AddLabel(char const *symName);
 void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);
@@ -125,7 +124,7 @@ void sym_Purge(char const *symName);
 void sym_Init(void);
 
 /* Functions to save and restore the current symbol scope. */
-struct Symbol *sym_GetCurrentSymbolScope(void);
-void sym_SetCurrentSymbolScope(struct Symbol *newScope);
+char const *sym_GetCurrentSymbolScope(void);
+void sym_SetCurrentSymbolScope(char const *newScope);
 
 #endif /* RGBDS_SYMBOL_H */

@@ -1,5 +1,5 @@
 ERROR: label-macro-arg.asm(44) -> label-macro-arg.asm::test_char(31):
-    Local label in main scope
+    Local label 'sizeof_.something' in main scope
 while expanding symbol "VAR_DEF"
 ERROR: label-macro-arg.asm(44) -> label-macro-arg.asm::test_char(31):
     syntax error

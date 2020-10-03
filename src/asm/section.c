@@ -17,13 +17,13 @@
 #include "platform.h" // strdup
 
 struct SectionStackEntry {
-	struct Section *pSection;
-	struct Symbol *pScope; /* Section's symbol scope */
+	struct Section *section;
+	char const *scope; /* Section's symbol scope */
 	uint32_t offset;
 	struct SectionStackEntry *next;
 };
 
-struct SectionStackEntry *pSectionStack;
+struct SectionStackEntry *sectionStack;
 uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset) */
 static struct Section *currentLoadSection = NULL;
 uint32_t loadOffset; /* The offset of the LOAD section within its parent */
@@ -774,23 +774,21 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
  */
 void out_PushSection(void)
 {
-	struct SectionStackEntry *sect;
+	struct SectionStackEntry *sect = malloc(sizeof(*sect));
 
-	sect = malloc(sizeof(struct SectionStackEntry));
 	if (sect == NULL)
-		fatalerror("No memory for section stack: %s<\n",  strerror(errno));
-
-	sect->pSection = pCurrentSection;
-	sect->pScope = sym_GetCurrentSymbolScope();
+		fatalerror("No memory for section stack: %s\n",  strerror(errno));
+	sect->section = pCurrentSection;
+	sect->scope = sym_GetCurrentSymbolScope();
 	sect->offset = curOffset;
-	sect->next = pSectionStack;
-	pSectionStack = sect;
+	sect->next = sectionStack;
+	sectionStack = sect;
 	/* TODO: maybe set current section to NULL? */
 }
 
 void out_PopSection(void)
 {
-	if (pSectionStack == NULL)
+	if (!sectionStack)
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
@@ -798,12 +796,12 @@ void out_PopSection(void)
 
 	struct SectionStackEntry *sect;
 
-	sect = pSectionStack;
+	sect = sectionStack;
 	changeSection();
-	pCurrentSection = sect->pSection;
-	sym_SetCurrentSymbolScope(sect->pScope);
+	pCurrentSection = sect->section;
+	sym_SetCurrentSymbolScope(sect->scope);
 	curOffset = sect->offset;
 
-	pSectionStack = sect->next;
+	sectionStack = sect->next;
 	free(sect);
 }
