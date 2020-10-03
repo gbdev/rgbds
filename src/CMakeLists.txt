@@ -78,6 +78,22 @@ foreach(PROG "asm" "fix" "gfx" "link")
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
 
+set(MANDIR "share/man")
+set(man1 "asm/rgbasm.1"
+         "fix/rgbfix.1"
+         "gfx/rgbgfx.1"
+         "link/rgblink.1")
+set(man5 "asm/rgbasm.5"
+         "link/rgblink.5"
+         "rgbds.5")
+set(man7 "gbz80.7"
+         "rgbds.7")
+
+foreach(SECTION "man1" "man5" "man7")
+  set(DEST "${MANDIR}/${SECTION}")
+  install(FILES ${${SECTION}} DESTINATION ${DEST})
+endforeach()
+
 if(LIBPNG_FOUND) # pkg-config
   target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
   target_link_directories(rgbgfx PRIVATE ${LIBPNG_LIBRARY_DIRS})
