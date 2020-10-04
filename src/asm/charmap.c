@@ -22,17 +22,35 @@
 
 #include "hashmap.h"
 
-#define CHARMAP_HASH_SIZE (1 << 9)
+/*
+ * Charmaps are stored using a structure known as "trie".
+ * Essentially a tree, where each nodes stores a single character's worth of info:
+ * whether there exists a mapping that ends at the current character,
+ */
+struct Charnode {
+	bool isTerminal; /* Whether there exists a mapping that ends here */
+	uint8_t value; /* If the above is true, its corresponding value */
+	/* This MUST be indexes and not pointers, because pointers get invalidated by `realloc`!! */
+	size_t next[255]; /* Indexes of where to go next, 0 = nowhere */
+};
+
+#define INITIAL_CAPACITY 32
+
+struct Charmap {
+	char *name;
+	size_t usedNodes; /* How many nodes are being used */
+	size_t capacity; /* How many nodes have been allocated */
+	struct Charnode nodes[]; /* first node is reserved for the root node */
+};
+
+static HashMap charmaps;
+
+static struct Charmap *currentCharmap;
 
 struct CharmapStackEntry {
 	struct Charmap *charmap;
 	struct CharmapStackEntry *next;
 };
-
-static HashMap charmaps;
-
-static struct Charmap *mainCharmap;
-static struct Charmap *currentCharmap;
 
 struct CharmapStackEntry *charmapStack;
 
@@ -41,16 +59,21 @@ static inline struct Charmap *charmap_Get(const char *name)
 	return hash_GetElement(charmaps, name);
 }
 
-static void CopyNode(struct Charmap *dest,
-		     const struct Charmap *src,
-		     int nodeIdx)
+static inline struct Charmap *resizeCharmap(struct Charmap *map, size_t capacity)
 {
-	dest->nodes[nodeIdx].code = src->nodes[nodeIdx].code;
-	dest->nodes[nodeIdx].isCode = src->nodes[nodeIdx].isCode;
-	for (int i = 0; i < 256; i++)
-		if (src->nodes[nodeIdx].next[i])
-			dest->nodes[nodeIdx].next[i] = dest->nodes +
-				(src->nodes[nodeIdx].next[i] - src->nodes);
+	struct Charmap *new = realloc(map, sizeof(*map) + sizeof(*map->nodes) * capacity);
+
+	if (!new)
+		fatalerror("Failed to %s charmap: %s\n",
+			   map ? "create" : "resize", strerror(errno));
+	new->capacity = capacity;
+	return new;
+}
+
+static inline void initNode(struct Charnode *node)
+{
+	node->isTerminal = false;
+	memset(node->next, 0, sizeof(node->next));
 }
 
 struct Charmap *charmap_New(const char *name, const char *baseName)
@@ -66,33 +89,34 @@ struct Charmap *charmap_New(const char *name, const char *baseName)
 
 	struct Charmap *charmap = charmap_Get(name);
 
-	if (charmap != NULL) {
+	if (charmap) {
 		error("Charmap '%s' already exists\n", name);
-		return NULL;
+		return charmap;
 	}
-
-	charmap = malloc(sizeof(*charmap));
-	if (charmap == NULL)
-		fatalerror("Failed to create charmap: %s\n", strerror(errno));
 
 	/* Init the new charmap's fields */
-	snprintf(charmap->name, sizeof(charmap->name), "%s", name);
-	if (base != NULL) {
-		charmap->charCount = base->charCount;
-		charmap->nodeCount = base->nodeCount;
+	if (base) {
+		charmap = resizeCharmap(NULL, base->capacity);
+		charmap->usedNodes = base->usedNodes;
 
-		for (int i = 0; i < MAXCHARNODES; i++)
-			CopyNode(charmap, base, i);
+		memcpy(charmap->nodes, base->nodes, sizeof(base->nodes[0]) * charmap->usedNodes);
 	} else {
-		charmap->charCount = 0;
-		charmap->nodeCount = 0;
-		memset(charmap->nodes, 0, sizeof(charmap->nodes));
+		charmap = resizeCharmap(NULL, INITIAL_CAPACITY);
+		charmap->usedNodes = 1;
+		initNode(&charmap->nodes[0]); /* Init the root node */
 	}
+	charmap->name = strdup(name);
 
 	hash_AddElement(charmaps, charmap->name, charmap);
 	currentCharmap = charmap;
 
 	return charmap;
+}
+
+void charmap_Delete(struct Charmap *charmap)
+{
+	free(charmap->name);
+	free(charmap);
 }
 
 void charmap_Set(const char *name)
@@ -109,9 +133,9 @@ void charmap_Push(void)
 {
 	struct CharmapStackEntry *stackEntry;
 
-	stackEntry = malloc(sizeof(struct CharmapStackEntry));
+	stackEntry = malloc(sizeof(*stackEntry));
 	if (stackEntry == NULL)
-		fatalerror("No memory for charmap stack\n");
+		fatalerror("Failed to alloc charmap stack entry: %s\n", strerror(errno));
 
 	stackEntry->charmap = currentCharmap;
 	stackEntry->next = charmapStack;
@@ -121,8 +145,10 @@ void charmap_Push(void)
 
 void charmap_Pop(void)
 {
-	if (charmapStack == NULL)
-		fatalerror("No entries in the charmap stack\n");
+	if (charmapStack == NULL) {
+		error("No entries in the charmap stack\n");
+		return;
+	}
 
 	struct CharmapStackEntry *top = charmapStack;
 
@@ -131,109 +157,86 @@ void charmap_Pop(void)
 	free(top);
 }
 
-void charmap_InitMain(void)
+void charmap_Add(char *mapping, uint8_t value)
 {
-	mainCharmap = charmap_New("main", NULL);
-}
+	struct Charnode *node = &currentCharmap->nodes[0];
 
-int32_t charmap_Add(char *input, uint8_t output)
-{
-	int32_t i;
-	uint8_t v;
+	for (uint8_t c; *mapping; mapping++) {
+		c = *mapping - 1;
 
-	struct Charmap  *charmap = currentCharmap;
-	struct Charnode *curr_node, *temp_node;
-
-	curr_node = &charmap->nodes[0];
-
-	for (i = 0; (v = (uint8_t)input[i]); i++) {
-		if (curr_node->next[v]) {
-			curr_node = curr_node->next[v];
+		if (node->next[c]) {
+			node = &currentCharmap->nodes[node->next[c]];
 		} else {
-			temp_node = &charmap->nodes[charmap->nodeCount + 1];
+			/* Register next available node */
+			node->next[c] = currentCharmap->usedNodes;
+			/* If no more nodes are available, get new ones */
+			if (currentCharmap->usedNodes == currentCharmap->capacity) {
+				currentCharmap->capacity *= 2;
+				currentCharmap = resizeCharmap(currentCharmap, currentCharmap->capacity);
+			}
 
-			curr_node->next[v] = temp_node;
-			curr_node = temp_node;
-
-			++charmap->nodeCount;
+			/* Switch to and init new node */
+			node = &currentCharmap->nodes[currentCharmap->usedNodes++];
+			initNode(node);
 		}
 	}
 
-	/* prevent duplicated keys by accepting only first key-value pair.  */
-	if (curr_node->isCode)
-		return charmap->charCount;
+	if (node->isTerminal)
+		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping");
 
-	curr_node->code = output;
-	curr_node->isCode = 1;
-
-	return ++charmap->charCount;
+	node->isTerminal = true;
+	node->value = value;
 }
 
-int32_t charmap_Convert(char **input)
+size_t charmap_Convert(char const *input, uint8_t *output)
 {
-	struct Charmap  *charmap = currentCharmap;
-	struct Charnode *charnode;
+	/*
+	 * The goal is to match the longest mapping possible.
+	 * For that, advance through the trie with each character read.
+	 * If that would lead to a dead end, rewind characters until the last match, and output.
+	 * If no match, read a UTF-8 codepoint and output that.
+	 */
+	size_t outputLen = 0;
+	struct Charnode const *node = &currentCharmap->nodes[0];
+	struct Charnode const *match = NULL;
+	size_t rewindDistance = 0;
 
-	char *output;
-	char outchar[8];
+	for (;;) {
+		/* We still want NULs to reach the `else` path, to give a chance to rewind */
+		uint8_t c = *input - 1;
 
-	int32_t i, match, length;
-	uint8_t v, foundCode;
+		if (*input && node->next[c]) {
+			input++; /* Consume that char */
+			rewindDistance++;
 
-	output = malloc(strlen(*input));
-	if (output == NULL)
-		fatalerror("Not enough memory for charmap conversion buffer: %s\n",
-			   strerror(errno));
+			node = &currentCharmap->nodes[node->next[c]];
+			if (node->isTerminal) {
+				match = node;
+				rewindDistance = 0; /* Rewind from after the match */
+			}
 
-	length = 0;
+		} else {
+			input -= rewindDistance; /* Rewind */
+			rewindDistance = 0;
+			node = &currentCharmap->nodes[0];
 
-	while (**input) {
-		charnode = &charmap->nodes[0];
+			if (match) { /* Arrived at a dead end with a match found */
+				*output++ = match->value;
+				outputLen++;
+				match = NULL; /* Reset match for next round */
 
-		/*
-		 * Find the longest valid match which has been registered in
-		 * charmap, possibly yielding multiple or no matches.
-		 * The longest match is taken, meaning partial matches shorter
-		 * than the longest one are ignored.
-		 */
-		for (i = match = 0; (v = (*input)[i]);) {
-			if (!charnode->next[v])
+			} else if (*input) { /* No match found */
+				size_t codepointLen = readUTF8Char(output, input);
+
+				input += codepointLen; /* OK because UTF-8 has no NUL in multi-byte chars */
+				output += codepointLen;
+				outputLen += codepointLen;
+			}
+
+			if (!*input)
 				break;
-
-			charnode = charnode->next[v];
-			i++;
-
-			if (charnode->isCode) {
-				match = i;
-				foundCode = charnode->code;
-			}
 		}
-
-		if (match) {
-			output[length] = foundCode;
-
-			length++;
-		} else {
-			/*
-			 * put a utf-8 character
-			 * if failed to find a match.
-			 */
-			match = readUTF8Char(outchar, *input);
-
-			if (match) {
-				memcpy(output + length, *input, match);
-			} else {
-				output[length] = 0;
-				match = 1;
-			}
-
-			length += match;
-		}
-
-		*input += match;
 	}
 
-	*input = output;
-
-	return length;
+	return outputLen;
 }

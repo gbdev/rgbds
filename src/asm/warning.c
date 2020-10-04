@@ -30,6 +30,7 @@ enum WarningState {
 static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_ASSERT]		= WARNING_ENABLED,
 	[WARNING_BUILTIN_ARG]		= WARNING_DISABLED,
+	[WARNING_CHARMAP_REDEF]		= WARNING_DISABLED,
 	[WARNING_DIV]			= WARNING_DISABLED,
 	[WARNING_EMPTY_DATA_DIRECTIVE]	= WARNING_DISABLED,
 	[WARNING_EMPTY_ENTRY]		= WARNING_DISABLED,
@@ -68,6 +69,7 @@ static enum WarningState warningState(enum WarningID id)
 static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"assert",
 	"builtin-args",
+	"charmap-redef",
 	"div",
 	"empty-data-directive",
 	"empty-entry",
@@ -92,6 +94,7 @@ enum MetaWarningCommand {
 /* Warnings that probably indicate an error */
 static uint8_t const _wallCommands[] = {
 	WARNING_BUILTIN_ARG,
+	WARNING_CHARMAP_REDEF,
 	WARNING_EMPTY_DATA_DIRECTIVE,
 	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,

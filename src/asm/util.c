@@ -27,21 +27,20 @@ uint32_t calchash(const char *s)
 	return hash;
 }
 
-int32_t readUTF8Char(char *dest, char *src)
+size_t readUTF8Char(uint8_t *dest, char const *src)
 {
-	uint32_t state;
+	uint32_t state = 0;
 	uint32_t codep;
-	int32_t i;
+	size_t i = 0;
 
-	for (i = 0, state = 0;; i++) {
+	for (;;) {
 		if (decode(&state, &codep, (uint8_t)src[i]) == 1)
 			fatalerror("invalid UTF-8 character\n");
 
 		dest[i] = src[i];
+		i++;
 
-		if (state == 0) {
-			dest[++i] = '\0';
+		if (state == 0)
 			return i;
-		}
 	}
 }
