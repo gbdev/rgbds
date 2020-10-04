@@ -12,6 +12,7 @@ rc=0
 bold=$(tput bold)
 resbold=$(tput sgr0)
 red=$(tput setaf 1)
+green=$(tput setaf 2)
 rescolors=$(tput op)
 tryDiff () {
 	diff -u --strip-trailing-cr $1 $2 || (echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"; false)
@@ -36,6 +37,7 @@ fi
 
 for i in *.asm; do
 	for variant in '' '.pipe'; do
+		echo -e "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 		if [ -z "$variant" ]; then
 			../../rgbasm -Weverything -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
@@ -59,8 +61,8 @@ for i in *.asm; do
 			# Escape regex metacharacters
 			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
 			# Replace the file name with a dash to match changed output
-			sed "s/$subst/-/g" ${i%.asm}.out > $desired_output
-			sed "s/$subst/-/g" ${i%.asm}.err > $desired_errput
+			sed "s/$subst/<stdin>/g" ${i%.asm}.out > $desired_output
+			sed "s/$subst/<stdin>/g" ${i%.asm}.err > $desired_errput
 		fi
 
 		tryDiff $desired_output $output out

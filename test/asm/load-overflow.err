@@ -1,2 +1,2 @@
-ERROR: load-overflow.asm(4):
+FATAL: load-overflow.asm(4):
     Section 'Overflow' grew too big (max size = 0x8000 bytes, reached 0x8001).

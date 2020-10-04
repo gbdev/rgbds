@@ -258,8 +258,8 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	if (amount >= 0) {
 		// Left shift
 		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n",
-				amount);
+			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %"
+				PRId32 "\n", amount);
 			return 0;
 
 		} else {

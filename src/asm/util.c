@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <ctype.h>
 #include <stdint.h>
 
 #include "asm/main.h"
@@ -25,6 +26,40 @@ uint32_t calchash(const char *s)
 		hash = (hash * 33) ^ (*s++);
 
 	return hash;
+}
+
+char const *print(int c)
+{
+	static char buf[5]; /* '\xNN' + '\0' */
+
+	if (c == EOF)
+		return "EOF";
+
+	if (isprint(c)) {
+		buf[0] = c;
+		buf[1] = '\0';
+		return buf;
+	}
+
+	buf[0] = '\\';
+	switch (c) {
+	case '\n':
+		buf[1] = 'n';
+		break;
+	case '\r':
+		buf[1] = 'r';
+		break;
+	case '\t':
+		buf[1] = 't';
+		break;
+
+	default: /* Print as hex */
+		buf[1] = 'x';
+		sprintf(&buf[2], "%02hhx", c);
+		return buf;
+	}
+	buf[2] = '\0';
+	return buf;
 }
 
 size_t readUTF8Char(uint8_t *dest, char const *src)

@@ -1,1054 +1,2094 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 2020, Eldred Habert and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
-#include <stdio.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "extern/utf8decoder.h"
+#include "platform.h" /* For `ssize_t` */
 
 #include "asm/asm.h"
-#include "asm/fstack.h"
 #include "asm/lexer.h"
+#include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/rpn.h"
-#include "asm/section.h"
+#include "asm/symbol.h"
+#include "asm/util.h"
 #include "asm/warning.h"
+/* Include this last so it gets all type & constant definitions */
+#include "asmy.h" /* For token definitions, generated from asmy.y */
 
-#include "extern/err.h"
+#ifdef LEXER_DEBUG
+  #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
+#else
+  #define dbgPrint(...)
+#endif
 
-#include "asmy.h"
-#include "platform.h" // strncasecmp, strdup
+/* Neither MSVC nor MinGW provide `mmap` */
+#if defined(_MSC_VER) || defined(__MINGW32__)
+# include <windows.h>
+# include <fileapi.h>
+# include <winbase.h>
+# define MAP_FAILED NULL
+# define mapFile(ptr, fd, path, size) do { \
+	(ptr) = MAP_FAILED; \
+	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
+				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
+	HANDLE mappingObj; \
+	\
+	if (file == INVALID_HANDLE_VALUE) \
+		break; \
+	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
+	if (mappingObj != INVALID_HANDLE_VALUE) \
+		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
+	CloseHandle(mappingObj); \
+	CloseHandle(file); \
+} while (0)
+# define munmap(ptr, size)  UnmapViewOfFile((ptr))
 
-struct sLexString {
-	char *tzName;
-	uint32_t nToken;
-	uint32_t nNameLength;
-	struct sLexString *next;
+#else /* defined(_MSC_VER) || defined(__MINGW32__) */
+
+# include <sys/mman.h>
+# define mapFile(ptr, fd, path, size) do { \
+	(ptr) = mmap(NULL, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
+	\
+	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
+		/*
+		 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
+		 * instead, offering, I believe, weaker guarantees about external modifications to
+		 * the file while reading it. That's still better than not opening it at all, though
+		 */ \
+		if (verbose) \
+			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
+		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
+	} \
+} while (0)
+#endif /* !( defined(_MSC_VER) || defined(__MINGW32__) ) */
+
+/*
+ * Identifiers that are also keywords are listed here. This ONLY applies to ones
+ * that would normally be matched as identifiers! Check out `yylex_NORMAL` to
+ * see how this is used.
+ * Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
+ */
+static struct KeywordMapping {
+	char const *name;
+	int token;
+} const keywords[] = {
+	/*
+	 * CAUTION when editing this: adding keywords will probably require extra nodes in the
+	 * `keywordDict` array. If you forget to, you will probably trip up an assertion, anyways.
+	 * Also, all entries in this array must be in uppercase for the dict to build correctly.
+	 */
+	{"ADC", T_Z80_ADC},
+	{"ADD", T_Z80_ADD},
+	{"AND", T_Z80_AND},
+	{"BIT", T_Z80_BIT},
+	{"CALL", T_Z80_CALL},
+	{"CCF", T_Z80_CCF},
+	{"CPL", T_Z80_CPL},
+	{"CP", T_Z80_CP},
+	{"DAA", T_Z80_DAA},
+	{"DEC", T_Z80_DEC},
+	{"DI", T_Z80_DI},
+	{"EI", T_Z80_EI},
+	{"HALT", T_Z80_HALT},
+	{"INC", T_Z80_INC},
+	{"JP", T_Z80_JP},
+	{"JR", T_Z80_JR},
+	{"LD", T_Z80_LD},
+	{"LDI", T_Z80_LDI},
+	{"LDD", T_Z80_LDD},
+	{"LDIO", T_Z80_LDIO},
+	{"LDH", T_Z80_LDIO},
+	{"NOP", T_Z80_NOP},
+	{"OR", T_Z80_OR},
+	{"POP", T_Z80_POP},
+	{"PUSH", T_Z80_PUSH},
+	{"RES", T_Z80_RES},
+	{"RETI", T_Z80_RETI},
+	{"RET", T_Z80_RET},
+	{"RLCA", T_Z80_RLCA},
+	{"RLC", T_Z80_RLC},
+	{"RLA", T_Z80_RLA},
+	{"RL", T_Z80_RL},
+	{"RRC", T_Z80_RRC},
+	{"RRCA", T_Z80_RRCA},
+	{"RRA", T_Z80_RRA},
+	{"RR", T_Z80_RR},
+	{"RST", T_Z80_RST},
+	{"SBC", T_Z80_SBC},
+	{"SCF", T_Z80_SCF},
+	{"SET", T_POP_SET},
+	{"SLA", T_Z80_SLA},
+	{"SRA", T_Z80_SRA},
+	{"SRL", T_Z80_SRL},
+	{"STOP", T_Z80_STOP},
+	{"SUB", T_Z80_SUB},
+	{"SWAP", T_Z80_SWAP},
+	{"XOR", T_Z80_XOR},
+
+	{"NZ", T_CC_NZ},
+	{"Z", T_CC_Z},
+	{"NC", T_CC_NC},
+	/* Handled in list of registers */
+	/* { "C", T_CC_C }, */
+
+	{"AF", T_MODE_AF},
+	{"BC", T_MODE_BC},
+	{"DE", T_MODE_DE},
+	{"HL", T_MODE_HL},
+	{"SP", T_MODE_SP},
+	{"HLD", T_MODE_HL_DEC},
+	{"HLI", T_MODE_HL_INC},
+
+	{"A", T_TOKEN_A},
+	{"B", T_TOKEN_B},
+	{"C", T_TOKEN_C},
+	{"D", T_TOKEN_D},
+	{"E", T_TOKEN_E},
+	{"H", T_TOKEN_H},
+	{"L", T_TOKEN_L},
+
+	{"DEF", T_OP_DEF},
+
+	{"FRAGMENT", T_POP_FRAGMENT},
+	{"BANK", T_OP_BANK},
+	{"ALIGN", T_OP_ALIGN},
+
+	{"ROUND", T_OP_ROUND},
+	{"CEIL", T_OP_CEIL},
+	{"FLOOR", T_OP_FLOOR},
+	{"DIV", T_OP_FDIV},
+	{"MUL", T_OP_FMUL},
+	{"SIN", T_OP_SIN},
+	{"COS", T_OP_COS},
+	{"TAN", T_OP_TAN},
+	{"ASIN", T_OP_ASIN},
+	{"ACOS", T_OP_ACOS},
+	{"ATAN", T_OP_ATAN},
+	{"ATAN2", T_OP_ATAN2},
+
+	{"HIGH", T_OP_HIGH},
+	{"LOW", T_OP_LOW},
+	{"ISCONST", T_OP_ISCONST},
+
+	{"STRCMP", T_OP_STRCMP},
+	{"STRIN", T_OP_STRIN},
+	{"STRSUB", T_OP_STRSUB},
+	{"STRLEN", T_OP_STRLEN},
+	{"STRCAT", T_OP_STRCAT},
+	{"STRUPR", T_OP_STRUPR},
+	{"STRLWR", T_OP_STRLWR},
+
+	{"INCLUDE", T_POP_INCLUDE},
+	{"PRINTT", T_POP_PRINTT},
+	{"PRINTI", T_POP_PRINTI},
+	{"PRINTV", T_POP_PRINTV},
+	{"PRINTF", T_POP_PRINTF},
+	{"EXPORT", T_POP_EXPORT},
+	{"XDEF", T_POP_XDEF},
+	{"GLOBAL", T_POP_GLOBAL},
+	{"DS", T_POP_DS},
+	{"DB", T_POP_DB},
+	{"DW", T_POP_DW},
+	{"DL", T_POP_DL},
+	{"SECTION", T_POP_SECTION},
+	{"PURGE", T_POP_PURGE},
+
+	{"RSRESET", T_POP_RSRESET},
+	{"RSSET", T_POP_RSSET},
+
+	{"INCBIN", T_POP_INCBIN},
+	{"CHARMAP", T_POP_CHARMAP},
+	{"NEWCHARMAP", T_POP_NEWCHARMAP},
+	{"SETCHARMAP", T_POP_SETCHARMAP},
+	{"PUSHC", T_POP_PUSHC},
+	{"POPC", T_POP_POPC},
+
+	{"FAIL", T_POP_FAIL},
+	{"WARN", T_POP_WARN},
+	{"FATAL", T_POP_FATAL},
+	{"ASSERT", T_POP_ASSERT},
+	{"STATIC_ASSERT", T_POP_STATIC_ASSERT},
+
+	{"MACRO", T_POP_MACRO},
+	{"ENDM", T_POP_ENDM},
+	{"SHIFT", T_POP_SHIFT},
+
+	{"REPT", T_POP_REPT},
+	{"ENDR", T_POP_ENDR},
+
+	{"LOAD", T_POP_LOAD},
+	{"ENDL", T_POP_ENDL},
+
+	{"IF", T_POP_IF},
+	{"ELSE", T_POP_ELSE},
+	{"ELIF", T_POP_ELIF},
+	{"ENDC", T_POP_ENDC},
+
+	{"UNION", T_POP_UNION},
+	{"NEXTU", T_POP_NEXTU},
+	{"ENDU", T_POP_ENDU},
+
+	{"WRAM0", T_SECT_WRAM0},
+	{"VRAM", T_SECT_VRAM},
+	{"ROMX", T_SECT_ROMX},
+	{"ROM0", T_SECT_ROM0},
+	{"HRAM", T_SECT_HRAM},
+	{"WRAMX", T_SECT_WRAMX},
+	{"SRAM", T_SECT_SRAM},
+	{"OAM", T_SECT_OAM},
+
+	{"RB", T_POP_RB},
+	{"RW", T_POP_RW},
+	{"EQU", T_POP_EQU},
+	{"EQUS", T_POP_EQUS},
+
+	/*  Handled before in list of CPU instructions */
+	/* {"SET", T_POP_SET}, */
+
+	{"PUSHS", T_POP_PUSHS},
+	{"POPS", T_POP_POPS},
+	{"PUSHO", T_POP_PUSHO},
+	{"POPO", T_POP_POPO},
+
+	{"OPT", T_POP_OPT}
 };
 
-#define pLexBufferRealStart	(pCurrentBuffer->pBufferRealStart)
-#define pLexBuffer		(pCurrentBuffer->pBuffer)
-#define AtLineStart		(pCurrentBuffer->oAtLineStart)
-
-#define SAFETYMARGIN		1024
-
-#define BOM_SIZE 3
-
-struct sLexFloat tLexFloat[32];
-struct sLexString *tLexHash[LEXHASHSIZE];
-YY_BUFFER_STATE pCurrentBuffer;
-uint32_t nLexMaxLength; // max length of all keywords and operators
-
-uint32_t tFloatingSecondChar[256];
-uint32_t tFloatingFirstChar[256];
-uint32_t tFloatingChars[256];
-uint32_t nFloating;
-enum eLexerState lexerstate = LEX_STATE_NORMAL;
-
-struct sStringExpansionPos *pCurrentStringExpansion;
-static unsigned int nNbStringExpansions;
-
-/* UTF-8 byte order mark */
-static const unsigned char bom[BOM_SIZE] = { 0xEF, 0xBB, 0xBF };
-
-void upperstring(char *s)
+static bool isWhitespace(int c)
 {
-	while (*s) {
-		*s = toupper(*s);
-		s++;
+	return c == ' ' || c == '\t';
+}
+
+#define LEXER_BUF_SIZE 42 /* TODO: determine a sane value for this */
+/* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
+static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
+
+struct Expansion {
+	struct Expansion *firstChild;
+	struct Expansion *next;
+	char *name;
+	char const *contents;
+	size_t len;
+	size_t totalLen;
+	size_t distance; /* Distance between the beginning of this expansion and of its parent */
+	uint8_t skip; /* How many extra characters to skip after the expansion is over */
+};
+
+struct LexerState {
+	char const *path;
+
+	/* mmap()-dependent IO state */
+	bool isMmapped;
+	union {
+		struct { /* If mmap()ed */
+			char *ptr; /* Technically `const` during the lexer's execution */
+			off_t size;
+			off_t offset;
+			bool isReferenced; /* If a macro in this file requires not unmapping it */
+		};
+		struct { /* Otherwise */
+			int fd;
+			size_t index; /* Read index into the buffer */
+			char buf[LEXER_BUF_SIZE]; /* Circular buffer */
+			size_t nbChars; /* Number of "fresh" chars in the buffer */
+		};
+	};
+
+	/* Common state */
+	bool isFile;
+
+	enum LexerMode mode;
+	bool atLineStart;
+	uint32_t lineNo;
+	uint32_t colNo;
+	int lastToken;
+
+	bool capturing; /* Whether the text being lexed should be captured */
+	size_t captureSize; /* Amount of text captured */
+	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
+	size_t captureCapacity; /* Size of the buffer above */
+
+	bool disableMacroArgs;
+	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
+	bool expandStrings;
+	struct Expansion *expansions;
+	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
+};
+
+struct LexerState *lexerState = NULL;
+struct LexerState *lexerStateEOL = NULL;
+
+static void initState(struct LexerState *state)
+{
+	state->mode = LEXER_NORMAL;
+	state->atLineStart = true; /* yylex() will init colNo due to this */
+	state->lastToken = 0;
+
+	state->capturing = false;
+	state->captureBuf = NULL;
+
+	state->disableMacroArgs = false;
+	state->macroArgScanDistance = 0;
+	state->expandStrings = true;
+	state->expansions = NULL;
+	state->expansionOfs = 0;
+}
+
+struct LexerState *lexer_OpenFile(char const *path)
+{
+	dbgPrint("Opening file \"%s\"\n", path);
+
+	bool isStdin = !strcmp(path, "-");
+	struct LexerState *state = malloc(sizeof(*state));
+	struct stat fileInfo;
+
+	/* Give stdin a nicer file name */
+	if (isStdin)
+		path = "<stdin>";
+	if (!state) {
+		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
+		return NULL;
 	}
-}
-
-void lowerstring(char *s)
-{
-	while (*s) {
-		*s = tolower(*s);
-		s++;
+	if (!isStdin && stat(path, &fileInfo) != 0) {
+		error("Failed to stat file \"%s\": %s\n", path, strerror(errno));
+		free(state);
+		return NULL;
 	}
-}
+	state->path = path;
+	state->isFile = true;
+	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
+	state->isMmapped = false; /* By default, assume it won't be mmap()ed */
+	if (!isStdin && fileInfo.st_size > 0) {
+		/* Try using `mmap` for better performance */
 
-void yyskipbytes(uint32_t count)
-{
-	pLexBuffer += count;
-}
+		/*
+		 * Important: do NOT assign to `state->ptr` directly, to avoid a cast that may
+		 * alter an eventual `MAP_FAILED` value. It would also invalidate `state->fd`,
+		 * being on the other side of the union.
+		 */
+		void *mappingAddr;
 
-void yyunputbytes(uint32_t count)
-{
-	pLexBuffer -= count;
-}
-
-void yyunput(char c)
-{
-	if (pLexBuffer <= pLexBufferRealStart)
-		fatalerror("Buffer safety margin exceeded\n");
-
-	*(--pLexBuffer) = c;
-}
-
-void yyunputstr(const char *s)
-{
-	int32_t len;
-
-	len = strlen(s);
-
-	/*
-	 * It would be undefined behavior to subtract `len` from pLexBuffer and
-	 * potentially have it point outside of pLexBufferRealStart's buffer,
-	 * this is why the check is done this way.
-	 * Refer to https://github.com/rednex/rgbds/pull/411#discussion_r319779797
-	 */
-	if (pLexBuffer - pLexBufferRealStart < len)
-		fatalerror("Buffer safety margin exceeded\n");
-
-	pLexBuffer -= len;
-
-	memcpy(pLexBuffer, s, len);
-}
-
-/*
- * Marks that a new string expansion with name `tzName` ends here
- * Enforces recursion depth
- */
-void lex_BeginStringExpansion(const char *tzName)
-{
-	if (++nNbStringExpansions > nMaxRecursionDepth)
-		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth);
-
-	struct sStringExpansionPos *pNewStringExpansion =
-		malloc(sizeof(*pNewStringExpansion));
-	char *tzNewExpansionName = strdup(tzName);
-
-	if (!pNewStringExpansion || !tzNewExpansionName)
-		fatalerror("Could not allocate memory to expand '%s'\n", tzName);
-
-	pNewStringExpansion->tzName = tzNewExpansionName;
-	pNewStringExpansion->pBuffer = pLexBufferRealStart;
-	pNewStringExpansion->pBufferPos = pLexBuffer;
-	pNewStringExpansion->pParent = pCurrentStringExpansion;
-
-	pCurrentStringExpansion = pNewStringExpansion;
-}
-
-void yy_switch_to_buffer(YY_BUFFER_STATE buf)
-{
-	pCurrentBuffer = buf;
-}
-
-void yy_set_state(enum eLexerState i)
-{
-	lexerstate = i;
-}
-
-void yy_delete_buffer(YY_BUFFER_STATE buf)
-{
-	free(buf->pBufferStart - SAFETYMARGIN);
-	free(buf);
-}
-
-/*
- * Maintains the following invariants:
- * 1. nBufferSize < capacity
- * 2. The buffer is terminated with 0
- * 3. nBufferSize is the size without the terminator
- */
-static void yy_buffer_append(YY_BUFFER_STATE buf, size_t capacity, char c)
-{
-	assert(buf->pBufferStart[buf->nBufferSize] == 0);
-	assert(buf->nBufferSize + 1 < capacity);
-
-	buf->pBufferStart[buf->nBufferSize++] = c;
-	buf->pBufferStart[buf->nBufferSize] = 0;
-}
-
-static void yy_buffer_append_newlines(YY_BUFFER_STATE buf, size_t capacity)
-{
-	/* Add newline if file doesn't end with one */
-	if (buf->nBufferSize == 0
-	 || buf->pBufferStart[buf->nBufferSize - 1] != '\n')
-		yy_buffer_append(buf, capacity, '\n');
-
-	/* Add newline if \ will eat the last newline */
-	if (buf->nBufferSize >= 2) {
-		size_t pos = buf->nBufferSize - 2;
-
-		/* Skip spaces and tabs */
-		while (pos > 0 && (buf->pBufferStart[pos] == ' '
-				|| buf->pBufferStart[pos] == '\t'))
-			pos--;
-
-		if (buf->pBufferStart[pos] == '\\')
-			yy_buffer_append(buf, capacity, '\n');
-	}
-}
-
-YY_BUFFER_STATE yy_scan_bytes(char const *mem, uint32_t size)
-{
-	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
-
-	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!\n", __func__);
-
-	size_t capacity = size + 3; /* space for 2 newlines and terminator */
-
-	pBuffer->pBufferRealStart = malloc(capacity + SAFETYMARGIN);
-
-	if (pBuffer->pBufferRealStart == NULL)
-		fatalerror("%s: Out of memory for buffer!\n", __func__);
-
-	pBuffer->pBufferStart = pBuffer->pBufferRealStart + SAFETYMARGIN;
-	pBuffer->pBuffer = pBuffer->pBufferRealStart + SAFETYMARGIN;
-	memcpy(pBuffer->pBuffer, mem, size);
-	pBuffer->pBuffer[size] = 0;
-	pBuffer->nBufferSize = size;
-	yy_buffer_append_newlines(pBuffer, capacity);
-	pBuffer->oAtLineStart = 1;
-
-	return pBuffer;
-}
-
-YY_BUFFER_STATE yy_create_buffer(FILE *f)
-{
-	YY_BUFFER_STATE pBuffer = malloc(sizeof(struct yy_buffer_state));
-
-	if (pBuffer == NULL)
-		fatalerror("%s: Out of memory!\n", __func__);
-
-	size_t size = 0, capacity = -1;
-	char *buf = NULL;
-
-	/*
-	 * Check if we can get the file size without implementation-defined
-	 * behavior:
-	 *
-	 * From ftell(3p):
-	 * [On error], ftell() and ftello() shall return −1, and set errno to
-	 * indicate the error.
-	 *
-	 * The ftell() and ftello() functions shall fail if: [...]
-	 * ESPIPE The file descriptor underlying stream is associated with a
-	 * pipe, FIFO, or socket.
-	 *
-	 * From fseek(3p):
-	 * The behavior of fseek() on devices which are incapable of seeking
-	 * is implementation-defined.
-	 */
-	if (ftell(f) != -1) {
-		fseek(f, 0, SEEK_END);
-		capacity = ftell(f);
-		rewind(f);
-	}
-
-	// If ftell errored or the block above wasn't executed
-	if (capacity == -1)
-		capacity = 4096;
-	// Handle 0-byte files gracefully
-	else if (capacity == 0)
-		capacity = 1;
-
-	do {
-		if (buf == NULL || size >= capacity) {
-			if (buf)
-				capacity *= 2;
-			/* Give extra room for 2 newlines and terminator */
-			buf = realloc(buf, capacity + SAFETYMARGIN + 3);
-
-			if (buf == NULL)
-				fatalerror("%s: Out of memory for buffer!\n",
-					   __func__);
-		}
-
-		char *bufpos = buf + SAFETYMARGIN + size;
-		size_t read_count = fread(bufpos, 1, capacity - size, f);
-
-		if (read_count == 0 && !feof(f))
-			fatalerror("%s: fread error\n", __func__);
-
-		size += read_count;
-	} while (!feof(f));
-
-	pBuffer->pBufferRealStart = buf;
-	pBuffer->pBufferStart = buf + SAFETYMARGIN;
-	pBuffer->pBuffer = buf + SAFETYMARGIN;
-	pBuffer->pBuffer[size] = 0;
-	pBuffer->nBufferSize = size;
-
-	/* This is added here to make the buffer scaling above easy to express,
-	 * while taking the newline space into account
-	 * for the yy_buffer_append_newlines() call below.
-	 */
-	capacity += 3;
-
-	/* Skip UTF-8 byte order mark. */
-	if (pBuffer->nBufferSize >= BOM_SIZE
-	 && !memcmp(pBuffer->pBuffer, bom, BOM_SIZE))
-		pBuffer->pBuffer += BOM_SIZE;
-
-	/* Convert all line endings to LF and spaces */
-
-	char *mem = pBuffer->pBuffer;
-	int32_t lineCount = 0;
-
-	while (*mem) {
-		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
-			mem += 2;
+		mapFile(mappingAddr, state->fd, state->path, fileInfo.st_size);
+		if (mappingAddr == MAP_FAILED) {
+			/* If mmap()ing failed, try again using another method (below) */
+			state->isMmapped = false;
 		} else {
-			/* LF CR and CR LF */
-			if (((mem[0] == '\n') && (mem[1] == '\r'))
-			 || ((mem[0] == '\r') && (mem[1] == '\n'))) {
-				*mem++ = ' ';
-				*mem++ = '\n';
-				lineCount++;
-			/* LF and CR */
-			} else if ((mem[0] == '\n') || (mem[0] == '\r')) {
-				*mem++ = '\n';
-				lineCount++;
-			} else {
-				mem++;
-			}
+			/* IMPORTANT: the `union` mandates this is accessed before other members! */
+			close(state->fd);
+
+			state->isMmapped = true;
+			state->ptr = mappingAddr;
+			state->size = fileInfo.st_size;
+			state->offset = 0;
+
+			if (verbose)
+				printf("File %s successfully mmap()ped\n", path);
 		}
 	}
-
-	if (mem != pBuffer->pBuffer + size) {
-		nLineNo = lineCount + 1;
-		fatalerror("Found null character\n");
+	if (!state->isMmapped) {
+		/* Sometimes mmap() fails or isn't available, so have a fallback */
+		if (verbose)
+			printf("File %s opened as regular, errno reports \"%s\"\n",
+			       path, strerror(errno));
+		state->index = 0;
+		state->nbChars = 0;
 	}
 
-	/* Remove comments */
+	initState(state);
+	state->lineNo = 0; /* Will be incremented at first line start */
+	return state;
+}
 
-	mem = pBuffer->pBuffer;
-	bool instring = false;
+struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
+{
+	dbgPrint("Opening view on buffer \"%.*s\"[...]\n", size < 16 ? (int)size : 16, buf);
 
-	while (*mem) {
-		if (*mem == '\"')
-			instring = !instring;
+	struct LexerState *state = malloc(sizeof(*state));
 
-		if ((mem[0] == '\\') && (mem[1] == '\"' || mem[1] == '\\')) {
-			mem += 2;
-		} else if (instring) {
-			mem++;
-		} else {
-			/* Comments that start with ; anywhere in a line */
-			if (*mem == ';') {
-				while (!((*mem == '\n') || (*mem == '\0')))
-					*mem++ = ' ';
-			/* Comments that start with * at the start of a line */
-			} else if ((mem[0] == '\n') && (mem[1] == '*')) {
-				warning(WARNING_OBSOLETE,
-					"'*' is deprecated for comments, please use ';' instead\n");
-				mem++;
-				while (!((*mem == '\n') || (*mem == '\0')))
-					*mem++ = ' ';
-			} else {
-				mem++;
-			}
-		}
+	if (!state) {
+		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
+		return NULL;
 	}
+	// TODO: init `path`
 
-	yy_buffer_append_newlines(pBuffer, capacity);
-	pBuffer->oAtLineStart = 1;
-	return pBuffer;
+	state->isFile = false;
+	state->isMmapped = true; /* It's not *really* mmap()ed, but it behaves the same */
+	state->ptr = buf;
+	state->size = size;
+	state->offset = 0;
+
+	initState(state);
+	state->lineNo = lineNo; /* Will be incremented at first line start */
+	return state;
 }
 
-uint32_t lex_FloatAlloc(const struct sLexFloat *token)
+void lexer_RestartRept(uint32_t lineNo)
 {
-	tLexFloat[nFloating] = *token;
-
-	return (1 << (nFloating++));
+	dbgPrint("Restarting REPT\n");
+	lexerState->offset = 0;
+	initState(lexerState);
+	lexerState->lineNo = lineNo;
 }
 
-/*
- * Make sure that only non-zero ASCII characters are used. Also, check if the
- * start is greater than the end of the range.
- */
-bool lex_CheckCharacterRange(uint16_t start, uint16_t end)
+void lexer_DeleteState(struct LexerState *state)
 {
-	if (start > end || start < 1 || end > 127) {
-		error("Invalid character range (start: %" PRIu16 ", end: %" PRIu16 ")\n",
-			start, end);
-		return false;
-	}
-	return true;
+	if (!state->isMmapped)
+		close(state->fd);
+	else if (state->isFile && !state->isReferenced)
+		munmap(state->ptr, state->size);
+	free(state);
 }
 
-void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end)
+struct KeywordDictNode {
+	/*
+	 * The identifier charset is (currently) 44 characters big. By storing entries for the
+	 * entire printable ASCII charset, minus lower-case due to case-insensitivity,
+	 * we only waste (0x60 - 0x20) - 70 = 20 entries per node, which should be acceptable.
+	 * In turn, this allows greatly simplifying checking an index into this array,
+	 * which should help speed up the lexer.
+	 */
+	uint16_t children[0x60 - ' '];
+	struct KeywordMapping const *keyword;
+/* Since the keyword structure is invariant, the min number of nodes is known at compile time */
+} keywordDict[338] = {0}; /* Make sure to keep this correct when adding keywords! */
+
+/* Convert a char into its index into the dict */
+static inline uint8_t dictIndex(char c)
 {
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingChars[start] &= ~id;
-			start++;
-		}
-	}
+	/* Translate uppercase to lowercase (roughly) */
+	if (c > 0x60)
+		c = c - ('a' - 'A');
+	return c - ' ';
 }
 
-void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end)
-{
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingChars[start] |= id;
-			start++;
-		}
-	}
-}
-
-void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end)
-{
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingFirstChar[start] &= ~id;
-			start++;
-		}
-	}
-}
-
-void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end)
-{
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingFirstChar[start] |= id;
-			start++;
-		}
-	}
-}
-
-void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end)
-{
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingSecondChar[start] &= ~id;
-			start++;
-		}
-	}
-}
-
-void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end)
-{
-	if (lex_CheckCharacterRange(start, end)) {
-		while (start <= end) {
-			tFloatingSecondChar[start] |= id;
-			start++;
-		}
-	}
-}
-
-static struct sLexFloat *lexgetfloat(uint32_t nFloatMask)
-{
-	if (nFloatMask == 0)
-		fatalerror("Internal error in %s\n", __func__);
-
-	int32_t i = 0;
-
-	while ((nFloatMask & 1) == 0) {
-		nFloatMask >>= 1;
-		i++;
-	}
-
-	return &tLexFloat[i];
-}
-
-static uint32_t lexcalchash(char *s)
-{
-	uint32_t hash = 0;
-
-	while (*s)
-		hash = (hash * 283) ^ toupper(*s++);
-
-	return hash % LEXHASHSIZE;
-}
-
-void lex_Init(void)
-{
-	uint32_t i;
-
-	for (i = 0; i < LEXHASHSIZE; i++)
-		tLexHash[i] = NULL;
-
-	for (i = 0; i < 256; i++) {
-		tFloatingFirstChar[i] = 0;
-		tFloatingSecondChar[i] = 0;
-		tFloatingChars[i] = 0;
-	}
-
-	nLexMaxLength = 0;
-	nFloating = 0;
-
-	pCurrentStringExpansion = NULL;
-	nNbStringExpansions = 0;
-}
-
-void lex_AddStrings(const struct sLexInitString *lex)
-{
-	while (lex->tzName) {
-		struct sLexString **ppHash;
-		uint32_t hash = lexcalchash(lex->tzName);
-
-		ppHash = &tLexHash[hash];
-		while (*ppHash)
-			ppHash = &((*ppHash)->next);
-
-		*ppHash = malloc(sizeof(struct sLexString));
-		if (*ppHash == NULL)
-			fatalerror("Out of memory!\n");
-
-		(*ppHash)->tzName = (char *)strdup(lex->tzName);
-		if ((*ppHash)->tzName == NULL)
-			fatalerror("Out of memory!\n");
-
-		(*ppHash)->nNameLength = strlen(lex->tzName);
-		(*ppHash)->nToken = lex->nToken;
-		(*ppHash)->next = NULL;
-
-		upperstring((*ppHash)->tzName);
-
-		if ((*ppHash)->nNameLength > nLexMaxLength)
-			nLexMaxLength = (*ppHash)->nNameLength;
-
-		lex++;
-	}
-}
-
-/*
- * Gets the "float" mask and "float" length.
- * "Float" refers to the token type of a token that is not a keyword.
- * The character classes floatingFirstChar, floatingSecondChar, and
- * floatingChars are defined separately for each token type.
- * It uses bit masks to match against a set of simple regular expressions
- * of the form /[floatingFirstChar]([floatingSecondChar][floatingChars]*)?/.
- * The token types with the longest match from the current position in the
- * buffer will have their bits set in the float mask.
- */
-void yylex_GetFloatMaskAndFloatLen(uint32_t *pnFloatMask, uint32_t *pnFloatLen)
+void lexer_Init(void)
 {
 	/*
-	 * Note that '\0' should always have a bit mask of 0 in the "floating"
-	 * tables, so it doesn't need to be checked for separately.
+	 * Build the dictionary of keywords. This could be done at compile time instead, however:
+	 *  - Doing so manually is a task nobody wants to undertake
+	 *  - It would be massively hard to read
+	 *  - Doing it within CC or CPP would be quite non-trivial
+	 *  - Doing it externally would require some extra work to use only POSIX tools
+	 *  - The startup overhead isn't much compared to the program's
 	 */
+	uint16_t usedNodes = 1;
 
-	char *s = pLexBuffer;
-	uint32_t nOldFloatMask = 0;
-	uint32_t nFloatMask = tFloatingFirstChar[(uint8_t)*s];
+	for (size_t i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+		uint16_t nodeID = 0;
 
-	if (nFloatMask != 0) {
-		s++;
-		nOldFloatMask = nFloatMask;
-		nFloatMask &= tFloatingSecondChar[(uint8_t)*s];
+		/* Walk the dictionary, creating intermediate nodes for the keyword */
+		for (char const *ptr = keywords[i].name; *ptr; ptr++) {
+			/* We should be able to assume all entries are well-formed */
+			if (keywordDict[nodeID].children[*ptr - ' '] == 0) {
+				/*
+				 * If this gets tripped up, set the size of keywordDict to
+				 * something high, compile with `-DPRINT_NODE_COUNT` (see below),
+				 * and set the size to that.
+				 */
+				assert(usedNodes < sizeof(keywordDict) / sizeof(*keywordDict));
 
-		while (nFloatMask != 0) {
-			s++;
-			nOldFloatMask = nFloatMask;
-			nFloatMask &= tFloatingChars[(uint8_t)*s];
-		}
-	}
-
-	*pnFloatMask = nOldFloatMask;
-	*pnFloatLen = (uint32_t)(s - pLexBuffer);
-}
-
-/*
- * Gets the longest keyword/operator from the current position in the buffer.
- */
-struct sLexString *yylex_GetLongestFixed(void)
-{
-	struct sLexString *pLongestFixed = NULL;
-	char *s = pLexBuffer;
-	uint32_t hash = 0;
-	uint32_t length = 0;
-
-	while (length < nLexMaxLength && *s) {
-		hash = (hash * 283) ^ toupper(*s);
-		s++;
-		length++;
-
-		struct sLexString *lex = tLexHash[hash % LEXHASHSIZE];
-
-		while (lex) {
-			if (lex->nNameLength == length
-			 && strncasecmp(pLexBuffer, lex->tzName, length) == 0) {
-				pLongestFixed = lex;
-				break;
+				/* There is no node at that location, grab one from the pool */
+				keywordDict[nodeID].children[*ptr - ' '] = usedNodes;
+				usedNodes++;
 			}
-			lex = lex->next;
+			nodeID = keywordDict[nodeID].children[*ptr - ' '];
 		}
+
+		/* This assumes that no two keywords have the same name */
+		keywordDict[nodeID].keyword = &keywords[i];
 	}
 
-	return pLongestFixed;
+#ifdef PRINT_NODE_COUNT /* For the maintainer to check how many nodes are needed */
+	printf("Lexer keyword dictionary: %zu keywords in %u nodes (pool size %zu)\n",
+	       sizeof(keywords) / sizeof(*keywords), usedNodes,
+	       sizeof(keywordDict) / sizeof(*keywordDict));
+#endif
 }
 
-size_t CopyMacroArg(char *dest, size_t maxLength, char c)
+void lexer_SetMode(enum LexerMode mode)
 {
-	size_t i;
-	char const *s;
+	lexerState->mode = mode;
+}
 
-	if (c == '@')
-		s = macro_GetUniqueIDStr();
-	else if (c >= '1' && c <= '9')
-		s = macro_GetArg(c - '0');
+void lexer_ToggleStringExpansion(bool enable)
+{
+	lexerState->expandStrings = enable;
+}
+
+/* Functions for the actual lexer to obtain characters */
+
+static void reallocCaptureBuf(void)
+{
+	if (lexerState->captureCapacity == SIZE_MAX)
+		fatalerror("Cannot grow capture buffer past %zu bytes\n", SIZE_MAX);
+	else if (lexerState->captureCapacity > SIZE_MAX / 2)
+		lexerState->captureCapacity = SIZE_MAX;
 	else
-		return 0;
-
-	if (s == NULL)
-		fatalerror("Macro argument '\\%c' not defined\n", c);
-
-	// TODO: `strncpy`, nay?
-	for (i = 0; s[i] != 0; i++) {
-		if (i >= maxLength)
-			fatalerror("Macro argument too long to fit buffer\n");
-
-		dest[i] = s[i];
-	}
-
-	return i;
-}
-
-static inline void yylex_StringWriteChar(char *s, size_t index, char c)
-{
-	if (index >= MAXSTRLEN)
-		fatalerror("String too long\n");
-
-	s[index] = c;
-}
-
-static inline void yylex_SymbolWriteChar(char *s, size_t index, char c)
-{
-	if (index >= MAXSYMLEN)
-		fatalerror("Symbol too long\n");
-
-	s[index] = c;
+		lexerState->captureCapacity *= 2;
+	lexerState->captureBuf = realloc(lexerState->captureBuf, lexerState->captureCapacity);
+	if (!lexerState->captureBuf)
+		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
 }
 
 /*
- * Trims white space at the end of a string.
- * The index parameter is the index of the 0 at the end of the string.
+ * The multiple evaluations of `retvar` causing side effects is INTENTIONAL, and
+ * required for example by `lexer_dumpStringExpansions`. It is however only
+ * evaluated once per level, and only then.
+ *
+ * This uses the concept of "X macros": you must #define LOOKUP_PRE_NEST and
+ *  LOOKUP_POST_NEST before invoking this (and #undef them right after), and
+ * those macros will be expanded at the corresponding points in the loop.
+ * This is necessary because there are at least 3 places which need to iterate
+ * through iterations while performing custom actions
  */
-void yylex_TrimEnd(char *s, size_t index)
-{
-	int32_t i = (int32_t)index - 1;
+#define lookupExpansion(retvar, dist) do { \
+	struct Expansion *exp = lexerState->expansions; \
+	\
+	for (;;) { \
+		/* Find the closest expansion whose end is after the target */ \
+		while (exp && exp->totalLen + exp->distance <= (dist)) { \
+			(dist) -= exp->totalLen + exp->skip; \
+			exp = exp->next; \
+		} \
+		\
+		/* If there is none, or it begins after the target, return the previous level */ \
+		if (!exp || exp->distance > (dist)) \
+			break; \
+		\
+		/* We know we are inside of that expansion */ \
+		(dist) -= exp->distance; /* Distances are relative to their parent */ \
+		\
+		/* Otherwise, register this expansion and repeat the process */ \
+		LOOKUP_PRE_NEST(exp); \
+		(retvar) = exp; \
+		if (!exp->firstChild) /* If there are no children, this is it */ \
+			break; \
+		exp = exp->firstChild; \
+		\
+		LOOKUP_POST_NEST(exp); \
+	} \
+} while (0)
 
-	while ((i >= 0) && (s[i] == ' ' || s[i] == '\t')) {
-		s[i] = 0;
+static struct Expansion *getExpansionAtDistance(size_t *distance)
+{
+	struct Expansion *expansion = NULL; /* Top level has no "previous" level */
+
+#define LOOKUP_PRE_NEST(exp)
+#define LOOKUP_POST_NEST(exp)
+	struct Expansion *exp = lexerState->expansions;
+
+	for (;;) {
+		/* Find the closest expansion whose end is after the target */
+		while (exp && exp->totalLen + exp->distance <= *distance) {
+			*distance -= exp->totalLen - exp->skip;
+			exp = exp->next;
+		}
+
+		/* If there is none, or it begins after the target, return the previous level */
+		if (!exp || exp->distance > *distance)
+			break;
+
+		/* We know we are inside of that expansion */
+		*distance -= exp->distance; /* Distances are relative to their parent */
+
+		/* Otherwise, register this expansion and repeat the process */
+		LOOKUP_PRE_NEST(exp);
+		expansion = exp;
+		if (!exp->firstChild) /* If there are no children, this is it */
+			break;
+		exp = exp->firstChild;
+
+		LOOKUP_POST_NEST(exp);
+	}
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
+
+	return expansion;
+}
+
+static void beginExpansion(size_t distance, uint8_t skip,
+			   char const *str, size_t size, char const *name)
+{
+	distance += lexerState->expansionOfs; /* Distance argument is relative to read offset! */
+	/* Increase the total length of all parents, and return the topmost one */
+	struct Expansion *parent = NULL;
+	unsigned int depth = 0;
+
+#define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size - skip
+#define LOOKUP_POST_NEST(exp) do { \
+	if (name && ++depth >= nMaxRecursionDepth) \
+		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth); \
+} while (0)
+	lookupExpansion(parent, distance);
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
+	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
+
+	/* We know we are in none of the children expansions: add ourselves, keeping it sorted */
+	while (*insertPoint && (*insertPoint)->distance < distance)
+		insertPoint = &(*insertPoint)->next;
+
+	*insertPoint = malloc(sizeof(**insertPoint));
+	if (!*insertPoint)
+		fatalerror("Unable to allocate new expansion: %s\n", strerror(errno));
+	(*insertPoint)->firstChild = NULL;
+	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
+	(*insertPoint)->name = name ? strdup(name) : NULL;
+	(*insertPoint)->contents = str;
+	(*insertPoint)->len = size;
+	(*insertPoint)->totalLen = size;
+	(*insertPoint)->distance = distance;
+	(*insertPoint)->skip = skip;
+
+	/* If expansion is the new closest one, update offset */
+	if (insertPoint == &lexerState->expansions)
+		lexerState->expansionOfs = 0;
+}
+
+static void freeExpansion(struct Expansion *expansion)
+{
+	struct Expansion *child = expansion->firstChild;
+
+	while (child) {
+		struct Expansion *next = child->next;
+
+		freeExpansion(child);
+		child = next;
+	}
+	free(expansion->name);
+	free(expansion);
+}
+
+static char const *expandMacroArg(char name, size_t distance)
+{
+	char const *str;
+
+	if (name == '@')
+		str = macro_GetUniqueIDStr();
+	else if (name == '0')
+		fatalerror("Invalid macro argument '\\0'\n");
+	else
+		str = macro_GetArg(name - '0');
+	if (!str)
+		fatalerror("Macro argument '\\%c' not defined\n", name);
+
+	beginExpansion(distance, 2, str, strlen(str), NULL);
+	return str;
+}
+
+/* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
+static int peekInternal(uint8_t distance)
+{
+	if (distance >= LEXER_BUF_SIZE)
+		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%"
+			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
+
+	size_t ofs = lexerState->expansionOfs + distance;
+	struct Expansion const *expansion = getExpansionAtDistance(&ofs);
+
+	if (expansion) {
+		assert(ofs < expansion->len);
+		return expansion->contents[ofs];
+	}
+
+	distance = ofs;
+
+	if (lexerState->isMmapped) {
+		if (lexerState->offset + distance >= lexerState->size)
+			return EOF;
+
+		return (unsigned char)lexerState->ptr[lexerState->offset + distance];
+	}
+
+	if (lexerState->nbChars <= distance) {
+		/* Buffer isn't full enough, read some chars in */
+		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; /* Aim: making the buf full */
+
+		/* Compute the index we'll start writing to */
+		size_t writeIndex = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
+		ssize_t nbCharsRead = 0, totalCharsRead = 0;
+
+#define readChars(size) do { \
+	/* This buffer overflow made me lose WEEKS of my life. Never again. */ \
+	assert(writeIndex + (size) <= LEXER_BUF_SIZE); \
+	nbCharsRead = read(lexerState->fd, &lexerState->buf[writeIndex], (size)); \
+	if (nbCharsRead == -1) \
+		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, errno); \
+	totalCharsRead += nbCharsRead; \
+	writeIndex += nbCharsRead; \
+	if (writeIndex == LEXER_BUF_SIZE) \
+		writeIndex = 0; \
+	target -= nbCharsRead; \
+} while (0)
+
+		/* If the range to fill passes over the buffer wrapping point, we need two reads */
+		if (writeIndex + target > LEXER_BUF_SIZE) {
+			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+
+			readChars(nbExpectedChars);
+			/* If the read was incomplete, don't perform a second read */
+			if (nbCharsRead < nbExpectedChars)
+				target = 0;
+		}
+		if (target != 0)
+			readChars(target);
+
+#undef readChars
+
+		lexerState->nbChars += totalCharsRead;
+
+		/* If there aren't enough chars even after refilling, give up */
+		if (lexerState->nbChars <= distance)
+			return EOF;
+	}
+	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
+}
+
+static int peek(uint8_t distance)
+{
+	int c = peekInternal(distance);
+
+	if (distance >= lexerState->macroArgScanDistance) {
+		lexerState->macroArgScanDistance = distance + 1; /* Do not consider again */
+		/* If enabled and character is a backslash, check for a macro arg */
+		if (!lexerState->disableMacroArgs && c == '\\') {
+			distance++;
+			lexerState->macroArgScanDistance++;
+			c = peekInternal(distance);
+			if (c == '@' || (c >= '0' && c <= '9')) {
+				/* Expand the argument and return its first character */
+				char const *str = expandMacroArg(c, distance - 1);
+
+				/*
+				 * Assuming macro args can't be recursive (I'll be damned if a way
+				 * is found...), then we mark the entire macro arg as scanned;
+				 * however, the two macro arg characters (\1) will be ignored,
+				 * so they shouldn't be counted in the scan distance!
+				 */
+				lexerState->macroArgScanDistance += strlen(str) - 2;
+				/* WARNING: this assumes macro args can't be empty!! */
+				c = str[0];
+			} else {
+				c = '\\';
+			}
+		}
+	}
+	return c;
+}
+
+static void shiftChars(uint8_t distance)
+{
+	if (lexerState->capturing) {
+		if (lexerState->captureBuf) {
+			if (lexerState->captureSize + distance >= lexerState->captureCapacity)
+				reallocCaptureBuf();
+			/* TODO: improve this? */
+			for (uint8_t i = 0; i < distance; i++)
+				lexerState->captureBuf[lexerState->captureSize++] = peek(i);
+		} else {
+			lexerState->captureSize += distance;
+		}
+	}
+
+	lexerState->macroArgScanDistance -= distance;
+
+	/* FIXME: this may not be too great, as only the top level is considered... */
+
+	/*
+	 * The logic is as follows:
+	 * - Any characters up to the expansion need to be consumed in the file
+	 * - If some remain after that, advance the offset within the expansion
+	 * - If that goes *past* the expansion, then leftovers shall be consumed in the file
+	 * - If we went past the expansion, we're back to square one, and should re-do all
+	 */
+nextExpansion:
+	if (lexerState->expansions) {
+		/* If the read cursor reaches into the expansion, update offset */
+		if (distance > lexerState->expansions->distance) {
+			/* distance = <file chars (expansion distance)> + <expansion chars> */
+			lexerState->expansionOfs += distance - lexerState->expansions->distance;
+			distance = lexerState->expansions->distance; /* Nb chars to read in file */
+			/* Now, check if the expansion finished being read */
+			if (lexerState->expansionOfs >= lexerState->expansions->totalLen) {
+				/* Add the leftovers to the distance */
+				distance += lexerState->expansionOfs;
+				distance -= lexerState->expansions->totalLen;
+				/* Also add in the post-expansion skip */
+				distance += lexerState->expansions->skip;
+				/* Move on to the next expansion */
+				struct Expansion *next = lexerState->expansions->next;
+
+				freeExpansion(lexerState->expansions);
+				lexerState->expansions = next;
+				/* Reset the offset for the next expansion */
+				lexerState->expansionOfs = 0;
+				/* And repeat, in case we also go into or over the next expansion */
+				goto nextExpansion;
+			}
+		}
+		/* Getting closer to the expansion */
+		lexerState->expansions->distance -= distance;
+		/* Now, `distance` is how many bytes to move forward **in the file** */
+	}
+
+	if (lexerState->isMmapped) {
+		lexerState->offset += distance;
+	} else {
+		lexerState->index += distance;
+		lexerState->colNo += distance;
+		/* Wrap around if necessary */
+		if (lexerState->index >= LEXER_BUF_SIZE)
+			lexerState->index %= LEXER_BUF_SIZE;
+		assert(lexerState->nbChars >= distance);
+		lexerState->nbChars -= distance;
+	}
+}
+
+static int nextChar(void)
+{
+	int c = peek(0);
+
+	/* If not at EOF, advance read position */
+	if (c != EOF)
+		shiftChars(1);
+	return c;
+}
+
+/* "Services" provided by the lexer to the rest of the program */
+
+char const *lexer_GetFileName(void)
+{
+	return lexerState ? lexerState->path : NULL;
+}
+
+uint32_t lexer_GetLineNo(void)
+{
+	return lexerState->lineNo;
+}
+
+uint32_t lexer_GetColNo(void)
+{
+	return lexerState->colNo;
+}
+
+void lexer_DumpStringExpansions(void)
+{
+	if (!lexerState)
+		return;
+	struct Expansion *stack[nMaxRecursionDepth + 1];
+	struct Expansion *expansion; /* Temp var for `lookupExpansion` */
+	unsigned int depth = 0;
+	size_t distance = lexerState->expansionOfs;
+
+#define LOOKUP_PRE_NEST(exp) do { \
+	/* Only register EQUS expansions, not string args */ \
+	if ((exp)->name) \
+		stack[depth++] = (exp); \
+} while (0)
+#define LOOKUP_POST_NEST(exp)
+	lookupExpansion(expansion, distance);
+	(void)expansion;
+#undef LOOKUP_PRE_NEST
+#undef LOOKUP_POST_NEST
+
+	while (depth--)
+		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
+}
+
+/* Function to discard all of a line's comments */
+
+static void discardComment(void)
+{
+	dbgPrint("Discarding comment\n");
+	lexerState->disableMacroArgs = true;
+	for (;;) {
+		int c = peek(0);
+
+		if (c == EOF || c == '\r' || c == '\n')
+			break;
+		shiftChars(1);
+	}
+	lexerState->disableMacroArgs = false;
+}
+
+/* Function to read a line continuation */
+
+static void readLineContinuation(void)
+{
+	dbgPrint("Beginning line continuation\n");
+	for (;;) {
+		int c = peek(0);
+
+		if (isWhitespace(c)) {
+			shiftChars(1);
+		} else if (c == '\r' || c == '\n') {
+			shiftChars(1);
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
+			if (!lexerState->expansions
+			 || lexerState->expansions->distance)
+				lexerState->lineNo++;
+			return;
+		} else if (c == ';') {
+			discardComment();
+		} else {
+			error("Begun line continuation, but encountered character '%s'\n",
+			      print(c));
+			return;
+		}
+	}
+}
+
+/* Functions to lex numbers of various radixes */
+
+static void readNumber(int radix, int32_t baseValue)
+{
+	uint32_t value = baseValue;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c < '0' || c > '0' + radix - 1)
+			break;
+		if (value > (UINT32_MAX - (c - '0')) / radix)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		value = value * radix + (c - '0');
+
+		shiftChars(1);
+	}
+
+	yylval.nConstValue = value;
+}
+
+static void readFractionalPart(void)
+{
+	uint32_t value = 0, divisor = 1;
+
+	dbgPrint("Reading fractional part\n");
+	for (;;) {
+		int c = peek(0);
+
+		if (c < '0' || c > '9')
+			break;
+		shiftChars(1);
+		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
+			warning(WARNING_LARGE_CONSTANT,
+				"Precision of fixed-point constant is too large\n");
+			/* Discard any additional digits */
+			while (c = peek(0), c >= '0' && c <= '9')
+				shiftChars(1);
+			break;
+		}
+		value = value * 10 + (c - '0');
+		divisor *= 10;
+	}
+
+	if (yylval.nConstValue > INT16_MAX || yylval.nConstValue < INT16_MIN)
+		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
+
+	/* Cast to unsigned avoids UB if shifting discards bits */
+	yylval.nConstValue = (uint32_t)yylval.nConstValue << 16;
+	/* Cast to unsigned avoids undefined overflow behavior */
+	uint16_t fractional = value * 65536 / divisor;
+
+	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
+}
+
+char const *binDigits;
+
+static void readBinaryNumber(void)
+{
+	uint32_t value = 0;
+
+	dbgPrint("Reading binary number with digits [%c,%c]\n", binDigits[0], binDigits[1]);
+	for (;;) {
+		int c = peek(0);
+		int bit;
+
+		if (c == binDigits[0])
+			bit = 0;
+		else if (c == binDigits[1])
+			bit = 1;
+		else
+			break;
+		if (value > (UINT32_MAX - bit) / 2)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		value = value * 2 + bit;
+
+		shiftChars(1);
+	}
+
+	yylval.nConstValue = value;
+}
+
+static void readHexNumber(void)
+{
+	uint32_t value = 0;
+	bool empty = true;
+
+	dbgPrint("Reading hex number\n");
+	for (;;) {
+		int c = peek(0);
+
+		if (c >= 'a' && c <= 'f') /* Convert letters to right after digits */
+			c = c - 'a' + 10;
+		else if (c >= 'A' && c <= 'F')
+			c = c - 'A' + 10;
+		else if (c >= '0' && c <= '9')
+			c = c - '0';
+		else
+			break;
+
+		if (value > (UINT32_MAX - c) / 16)
+			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		value = value * 16 + c;
+
+		shiftChars(1);
+		empty = false;
+	}
+
+	if (empty)
+		error("Invalid integer constant, no digits after '$'\n");
+
+	yylval.nConstValue = value;
+}
+
+char const *gfxDigits;
+
+static void readGfxConstant(void)
+{
+	uint32_t bp0 = 0, bp1 = 0;
+	uint8_t width = 0;
+
+	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
+		 gfxDigits[0], gfxDigits[1], gfxDigits[2], gfxDigits[3]);
+	for (;;) {
+		int c = peek(0);
+		uint32_t pixel;
+
+		if (c == gfxDigits[0])
+			pixel = 0;
+		else if (c == gfxDigits[1])
+			pixel = 1;
+		else if (c == gfxDigits[2])
+			pixel = 2;
+		else if (c == gfxDigits[3])
+			pixel = 3;
+		else
+			break;
+
+		if (width < 8) {
+			bp0 = bp0 << 1 | (pixel & 1);
+			bp1 = bp1 << 1 | (pixel >> 1);
+		}
+		if (width < 9)
+			width++;
+		shiftChars(1);
+	}
+
+	if (width == 0)
+		error("Invalid graphics constant, no digits after '`'\n");
+	else if (width == 9)
+		warning(WARNING_LARGE_CONSTANT,
+			"Graphics constant is too long, only 8 first pixels considered\n");
+
+	yylval.nConstValue = bp1 << 8 | bp0;
+}
+
+/* Function to read identifiers & keywords */
+
+static bool startsIdentifier(int c)
+{
+	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
+}
+
+static int readIdentifier(char firstChar)
+{
+	dbgPrint("Reading identifier or keyword\n");
+	/* Lex while checking for a keyword */
+	yylval.tzSym[0] = firstChar;
+	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
+	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
+	size_t i;
+
+	for (i = 1; ; i++) {
+		int c = peek(0);
+
+		/* If that char isn't in the symbol charset, end */
+		if ((c > '9' || c < '0')
+		 && (c > 'Z' || c < 'A')
+		 && (c > 'z' || c < 'a')
+		 && c != '#' && c != '.' && c != '@' && c != '_')
+			break;
+		shiftChars(1);
+
+		/* Write the char to the identifier's name */
+		if (i < sizeof(yylval.tzSym) - 1)
+			yylval.tzSym[i] = c;
+
+		/* If the char was a dot, mark the identifier as local */
+		if (c == '.')
+			tokenType = T_LOCAL_ID;
+
+		/* Attempt to traverse the tree to check for a keyword */
+		if (nodeID) /* Do nothing if matching already failed */
+			nodeID = keywordDict[nodeID].children[dictIndex(c)];
+	}
+
+	if (i > sizeof(yylval.tzSym) - 1) {
+		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
+		i = sizeof(yylval.tzSym) - 1;
+	}
+	yylval.tzSym[i] = '\0'; /* Terminate the string */
+	dbgPrint("Ident/keyword = \"%s\"\n", yylval.tzSym);
+
+	if (keywordDict[nodeID].keyword)
+		return keywordDict[nodeID].keyword->token;
+
+	return tokenType;
+}
+
+/* Functions to read strings */
+
+enum PrintType {
+	TYPE_NONE,
+	TYPE_DECIMAL,  /* d */
+	TYPE_UPPERHEX, /* X */
+	TYPE_LOWERHEX, /* x */
+	TYPE_BINARY,   /* b */
+};
+
+static void intToString(char *dest, size_t bufSize, struct Symbol const *sym, enum PrintType type)
+{
+	uint32_t value = sym_GetConstantSymValue(sym);
+	int fullLength;
+
+	/* Special cheat for binary */
+	if (type == TYPE_BINARY) {
+		char binary[33]; /* 32 bits + 1 terminator */
+		char *write_ptr = binary + 32;
+
+		fullLength = 0;
+		binary[32] = 0;
+		do {
+			*(--write_ptr) = (value & 1) + '0';
+			value >>= 1;
+			fullLength++;
+		} while (value);
+		strncpy(dest, write_ptr, bufSize - 1);
+	} else {
+		static char const * const formats[] = {
+			[TYPE_NONE]     = "$%" PRIX32,
+			[TYPE_DECIMAL]  = "%" PRId32,
+			[TYPE_UPPERHEX] = "%" PRIX32,
+			[TYPE_LOWERHEX] = "%" PRIx32
+		};
+
+		fullLength = snprintf(dest, bufSize, formats[type], value);
+		if (fullLength < 0) {
+			error("snprintf encoding error: %s\n", strerror(errno));
+			dest[0] = '\0';
+		}
+	}
+
+	if ((size_t)fullLength >= bufSize)
+		warning(WARNING_LONG_STR, "Interpolated symbol %s too long to fit buffer\n",
+			sym->name);
+}
+
+static char const *readInterpolation(void)
+{
+	char symName[MAXSYMLEN + 1];
+	size_t i = 0;
+	enum PrintType type = TYPE_NONE;
+
+	for (;;) {
+		int c = peek(0);
+
+		if (c == '{') { /* Nested interpolation */
+			shiftChars(1);
+			char const *inner = readInterpolation();
+
+			if (inner) {
+				while (*inner) {
+					if (i == sizeof(symName))
+						break;
+					symName[i++] = *inner++;
+				}
+			}
+		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
+			error("Missing }\n");
+			break;
+		} else if (c == '}') {
+			shiftChars(1);
+			break;
+		} else if (c == ':' && type == TYPE_NONE) { /* Print type, only once */
+			if (i != 1) {
+				error("Print types are exactly 1 character long\n");
+			} else {
+				switch (symName[0]) {
+				case 'b':
+					type = TYPE_BINARY;
+					break;
+				case 'd':
+					type = TYPE_DECIMAL;
+					break;
+				case 'X':
+					type = TYPE_UPPERHEX;
+					break;
+				case 'x':
+					type = TYPE_LOWERHEX;
+					break;
+				default:
+					error("Invalid print type '%s'\n", print(symName[0]));
+				}
+			}
+			i = 0; /* Now that type has been set, restart at beginning of string */
+			shiftChars(1);
+		} else {
+			if (i < sizeof(symName)) /* Allow writing an extra char to flag overflow */
+				symName[i++] = c;
+			shiftChars(1);
+		}
+	}
+
+	if (i == sizeof(symName)) {
+		warning(WARNING_LONG_STR, "Symbol name too long\n");
 		i--;
 	}
-}
+	symName[i] = '\0';
 
-size_t yylex_ReadBracketedSymbol(char *dest, size_t index)
-{
-	char sym[MAXSYMLEN + 1];
-	char ch;
-	size_t i = 0;
-	size_t length, maxLength;
-	const char *mode = NULL;
+	struct Symbol const *sym = sym_FindSymbol(symName);
 
-	for (ch = *pLexBuffer;
-	     ch != '}' && ch != '"' && ch != '\n';
-		 ch = *(++pLexBuffer)) {
-		if (ch == '\\') {
-			ch = *(++pLexBuffer);
-			maxLength = MAXSYMLEN - i;
-			length = CopyMacroArg(&sym[i], maxLength, ch);
+	if (!sym) {
+		error("Interpolated symbol \"%s\" does not exist\n", symName);
+	} else if (sym->type == SYM_EQUS) {
+		if (type != TYPE_NONE)
+			error("Print types are only allowed for numbers\n");
+		return sym_GetStringValue(sym);
+	} else if (sym_IsNumeric(sym)) {
+		static char buf[33]; /* Worst case of 32 digits + terminator */
 
-			if (length != 0)
-				i += length;
-			else
-				fatalerror("Illegal character escape '%c'\n", ch);
-		} else if (ch == '{') {
-			/* Handle nested symbols */
-			++pLexBuffer;
-			i += yylex_ReadBracketedSymbol(sym, i);
-			--pLexBuffer;
-		} else if (ch == ':' && !mode) { /* Only grab 1st colon */
-			/* Use a whitelist of modes, which does prevent the
-			 * use of some features such as precision,
-			 * but also avoids a security flaw
-			 */
-			const char *acceptedModes = "bxXd";
-			/* Binary isn't natively supported,
-			 * so it's handled differently
-			 */
-			static const char * const formatSpecifiers[] = {
-				"", "%" PRIx32, "%" PRIX32, "%" PRId32
-			};
-			/* Prevent reading out of bounds! */
-			const char *designatedMode;
-
-			if (i != 1)
-				fatalerror("Print types are exactly 1 character long\n");
-
-			designatedMode = strchr(acceptedModes, sym[i - 1]);
-			if (!designatedMode)
-				fatalerror("Illegal print type '%c'\n", sym[i - 1]);
-			mode = formatSpecifiers[designatedMode - acceptedModes];
-			/* Begin writing the symbol again */
-			i = 0;
-		} else {
-			yylex_SymbolWriteChar(sym, i++, ch);
-		}
+		intToString(buf, sizeof(buf), sym, type);
+		return buf;
+	} else {
+		error("Only numerical and string symbols can be interpolated\n");
 	}
-
-	/* Properly terminate the string */
-	yylex_SymbolWriteChar(sym, i, 0);
-
-	/* It's assumed we're writing to a T_STRING */
-	maxLength = MAXSTRLEN - index;
-	length = symvaluetostring(&dest[index], maxLength, sym, mode);
-
-	if (*pLexBuffer == '}')
-		pLexBuffer++;
-	else
-		fatalerror("Missing }\n");
-
-	return length;
+	return NULL;
 }
 
-static void yylex_ReadQuotedString(void)
+static void readString(void)
 {
-	size_t index = 0;
-	size_t length, maxLength;
+	size_t i = 0;
 
-	while (*pLexBuffer != '"' && *pLexBuffer != '\n') {
-		char ch = *pLexBuffer++;
+	dbgPrint("Reading string\n");
+	for (;;) {
+		int c = peek(0);
 
-		if (ch == '\\') {
-			ch = *pLexBuffer++;
+		switch (c) {
+		case '"':
+			shiftChars(1);
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "String constant too long\n");
+			}
+			yylval.tzString[i] = '\0';
+			dbgPrint("Read string \"%s\"\n", yylval.tzString);
+			return;
+		case '\r':
+		case '\n': /* Do not shift these! */
+		case EOF:
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "String constant too long\n");
+			}
+			yylval.tzString[i] = '\0';
+			error("Unterminated string\n");
+			dbgPrint("Read string \"%s\"\n", yylval.tzString);
+			return;
 
-			switch (ch) {
+		case '\\': /* Character escape */
+			c = peek(1);
+			switch (c) {
+			case '\\': /* Return that character unchanged */
+			case '"':
+			case '{':
+			case '}':
+				shiftChars(1);
+				break;
 			case 'n':
-				ch = '\n';
+				c = '\n';
+				shiftChars(1);
 				break;
 			case 'r':
-				ch = '\r';
+				c = '\r';
+				shiftChars(1);
 				break;
 			case 't':
-				ch = '\t';
+				c = '\t';
+				shiftChars(1);
 				break;
-			case '\\':
-				ch = '\\';
-				break;
-			case '"':
-				ch = '"';
-				break;
-			case ',':
-				ch = ',';
-				break;
-			case '{':
-				ch = '{';
-				break;
-			case '}':
-				ch = '}';
+
+			case ' ':
+			case '\r':
+			case '\n':
+				shiftChars(1); /* Shift the backslash */
+				readLineContinuation();
+				continue;
+
+			case EOF: /* Can't really print that one */
+				error("Illegal character escape at end of input\n");
+				c = '\\';
 				break;
 			default:
-				maxLength = MAXSTRLEN - index;
-				length = CopyMacroArg(&yylval.tzString[index],
-						      maxLength, ch);
-
-				if (length != 0)
-					index += length;
-				else
-					fatalerror("Illegal character escape '%c'\n", ch);
-
-				ch = 0;
+				error("Illegal character escape '%s'\n", print(c));
+				c = '\\';
 				break;
 			}
-		} else if (ch == '{') {
-			// Get bracketed symbol within string.
-			index += yylex_ReadBracketedSymbol(yylval.tzString,
-							   index);
-			ch = 0;
-		}
+			break;
 
-		if (ch)
-			yylex_StringWriteChar(yylval.tzString, index++, ch);
-	}
+		case '{': /* Symbol interpolation */
+			shiftChars(1);
+			char const *ptr = readInterpolation();
 
-	yylex_StringWriteChar(yylval.tzString, index, 0);
-
-	if (*pLexBuffer == '"')
-		pLexBuffer++;
-	else
-		fatalerror("Unterminated string\n");
-}
-
-static uint32_t yylex_NORMAL(void)
-{
-	struct sLexString *pLongestFixed = NULL;
-	uint32_t nFloatMask, nFloatLen;
-	uint32_t linestart = AtLineStart;
-
-	AtLineStart = 0;
-
-scanagain:
-	while (*pLexBuffer == ' ' || *pLexBuffer == '\t') {
-		linestart = 0;
-		pLexBuffer++;
-	}
-
-	if (*pLexBuffer == 0) {
-		// Reached the end of a file, macro, or rept.
-		if (yywrap() == 0) {
-			linestart = AtLineStart;
-			AtLineStart = 0;
-			goto scanagain;
-		}
-	}
-
-	/* Check for line continuation character */
-	if (*pLexBuffer == '\\') {
-		/*
-		 * Look for line continuation character after a series of
-		 * spaces. This is also useful for files that use Windows line
-		 * endings: "\r\n" is replaced by " \n" before the lexer has the
-		 * opportunity to see it.
-		 */
-		if (pLexBuffer[1] == ' ' || pLexBuffer[1] == '\t') {
-			pLexBuffer += 2;
-			while (1) {
-				if (*pLexBuffer == ' ' || *pLexBuffer == '\t') {
-					pLexBuffer++;
-				} else if (*pLexBuffer == '\n') {
-					pLexBuffer++;
-					nLineNo++;
-					goto scanagain;
-				} else {
-					error("Expected a new line after the continuation character.\n");
-					pLexBuffer++;
+			if (ptr) {
+				while (*ptr) {
+					if (i == sizeof(yylval.tzString))
+						break;
+					yylval.tzString[i++] = *ptr++;
 				}
 			}
-		}
+			continue; /* Do not copy an additional character */
 
-		/* Line continuation character */
-		if (pLexBuffer[1] == '\n') {
-			pLexBuffer += 2;
-			nLineNo++;
-			goto scanagain;
+		/* Regular characters will just get copied */
 		}
-
-		/*
-		 * If there isn't a newline character or a space, ignore the
-		 * character '\'. It will eventually be handled by other
-		 * functions like PutMacroArg().
-		 */
+		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
+			yylval.tzString[i++] = c;
+		shiftChars(1);
 	}
-
-	/*
-	 * Try to match an identifier, macro argument (e.g. \1),
-	 * or numeric literal.
-	 */
-	yylex_GetFloatMaskAndFloatLen(&nFloatMask, &nFloatLen);
-
-	/* Try to match a keyword or operator. */
-	pLongestFixed = yylex_GetLongestFixed();
-
-	if (nFloatLen == 0 && pLongestFixed == NULL) {
-		/*
-		 * No keyword, identifier, operator, or numerical literal
-		 * matches.
-		 */
-
-		if (*pLexBuffer == '"') {
-			pLexBuffer++;
-			yylex_ReadQuotedString();
-			return T_STRING;
-		} else if (*pLexBuffer == '{') {
-			pLexBuffer++;
-			size_t len = yylex_ReadBracketedSymbol(yylval.tzString,
-							       0);
-			yylval.tzString[len] = 0;
-			return T_STRING;
-		}
-
-		/*
-		 * It's not a keyword, operator, identifier, macro argument,
-		 * numeric literal, string, or bracketed symbol, so just return
-		 * the ASCII character.
-		 */
-		unsigned char ch = *pLexBuffer++;
-
-		if (ch == '\n')
-			AtLineStart = 1;
-
-		/*
-		 * Check for invalid unprintable characters.
-		 * They may not be readily apparent in a text editor,
-		 * so this is useful for identifying encoding problems.
-		 */
-		if (ch != 0
-		 && ch != '\n'
-		 && !(ch >= 0x20 && ch <= 0x7E))
-			fatalerror("Found garbage character: 0x%02X\n", ch);
-
-		return ch;
-	}
-
-	if (pLongestFixed == NULL || nFloatLen > pLongestFixed->nNameLength) {
-		/*
-		 * Longest match was an identifier, macro argument, or numeric
-		 * literal.
-		 */
-		struct sLexFloat *token = lexgetfloat(nFloatMask);
-
-		if (token->Callback) {
-			int32_t done = token->Callback(pLexBuffer, nFloatLen);
-
-			if (!done)
-				goto scanagain;
-		}
-
-		uint32_t type = token->nToken;
-
-		if (type == T_ID && strchr(yylval.tzSym, '.'))
-			type = T_LOCAL_ID;
-
-		if (linestart && type == T_ID)
-			return T_LABEL;
-		return type;
-	}
-
-	/* Longest match was a keyword or operator. */
-	pLexBuffer += pLongestFixed->nNameLength;
-	yylval.nConstValue = pLongestFixed->nToken;
-	return pLongestFixed->nToken;
 }
 
-static uint32_t yylex_MACROARGS(void)
+/* Function to report one character's worth of garbage bytes */
+
+static char const *reportGarbageChar(unsigned char firstByte)
 {
-	size_t index = 0;
-	size_t length, maxLength;
+	static char bytes[6 + 2 + 1]; /* Max size of a UTF-8 encoded code point, plus "''\0" */
+	/* First, attempt UTF-8 decoding */
+	uint32_t state = 0; /* UTF8_ACCEPT */
+	uint32_t codepoint;
+	uint8_t size = 0; /* Number of additional bytes to shift */
 
-	while ((*pLexBuffer == ' ') || (*pLexBuffer == '\t'))
-		pLexBuffer++;
+	bytes[1] = firstByte; /* No need to init the rest of the array */
+	decode(&state, &codepoint, firstByte);
+	while (state != 0 && state != 1 /* UTF8_REJECT */) {
+		int c = peek(size++);
 
-	while ((*pLexBuffer != ',') && (*pLexBuffer != '\n')) {
-		char ch = *pLexBuffer++;
+		if (c == EOF)
+			break;
+		bytes[size + 1] = c;
+		decode(&state, &codepoint, c);
+	}
 
-		if (ch == '\\') {
-			ch = *pLexBuffer++;
+	if (state == 0 && (codepoint > UCHAR_MAX || isprint((unsigned char)codepoint))) {
+		/* Character is valid, printable UTF-8! */
+		shiftChars(size);
+		bytes[0] = '\'';
+		bytes[size + 2] = '\'';
+		bytes[size + 3] = '\0';
+		return bytes;
+	}
 
-			switch (ch) {
-			case 'n':
-				ch = '\n';
-				break;
-			case 't':
-				ch = '\t';
-				break;
-			case '\\':
-				ch = '\\';
-				break;
-			case '"':
-				ch = '\"';
-				break;
-			case ',':
-				ch = ',';
-				break;
-			case '{':
-				ch = '{';
-				break;
-			case '}':
-				ch = '}';
-				break;
-			case ' ':
-			case '\t':
-				/*
-				 * Look for line continuation character after a
-				 * series of spaces. This is also useful for
-				 * files that use Windows line endings: "\r\n"
-				 * is replaced by " \n" before the lexer has the
-				 * opportunity to see it.
-				 */
-				while (1) {
-					if (*pLexBuffer == ' '
-					 || *pLexBuffer == '\t') {
-						pLexBuffer++;
-					} else if (*pLexBuffer == '\n') {
-						pLexBuffer++;
-						nLineNo++;
-						ch = 0;
-						break;
-					} else {
-						error("Expected a new line after the continuation character.\n");
+	/* The character isn't valid UTF-8, so we'll only print that first byte */
+	if (isprint(firstByte)) {
+		/* bytes[1] = firstByte; */
+		bytes[0] = '\'';
+		bytes[2] = '\'';
+		bytes[3] = '\0';
+		return bytes;
+	}
+	/* Well then, print its hex value */
+	static char const hexChars[16] = "0123456789ABCDEF";
+
+	bytes[0] = '0';
+	bytes[1] = 'x';
+	bytes[2] = hexChars[firstByte >> 4];
+	bytes[3] = hexChars[firstByte & 0x0f];
+	bytes[4] = '\0';
+	return bytes;
+}
+
+/* Lexer core */
+
+static int yylex_NORMAL(void)
+{
+	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
+		 lexer_GetLineNo(), lexer_GetColNo());
+	for (;;) {
+		int c = nextChar();
+
+		switch (c) {
+		/* Ignore whitespace and comments */
+
+		case '*':
+			if (!lexerState->atLineStart)
+				return T_OP_MUL;
+			warning(WARNING_OBSOLETE,
+				"'*' is deprecated for comments, please use ';' instead\n");
+			/* fallthrough */
+		case ';':
+			discardComment();
+			/* fallthrough */
+		case ' ':
+		case '\t':
+			break;
+
+		/* Handle unambiguous single-char tokens */
+
+		case '^':
+			return T_OP_XOR;
+		case '+':
+			return T_OP_ADD;
+		case '-':
+			return T_OP_SUB;
+		case '/':
+			return T_OP_DIV;
+		case '~':
+			return T_OP_NOT;
+
+		case '@':
+			yylval.tzSym[0] = '@';
+			yylval.tzSym[1] = '\0';
+			return T_ID;
+
+		/* Handle accepted single chars */
+
+		case '[':
+		case ']':
+		case '(':
+		case ')':
+		case ',':
+		case ':':
+			return c;
+
+		/* Handle ambiguous 1- or 2-char tokens */
+		char secondChar;
+
+		case '|': /* Either binary or logical OR */
+			secondChar = peek(0);
+			if (secondChar == '|') {
+				shiftChars(1);
+				return T_OP_LOGICOR;
+			}
+			return T_OP_OR;
+
+		case '=': /* Either SET alias, or EQ */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICEQU;
+			}
+			return T_POP_EQUAL;
+
+		case '<': /* Either a LT, LTE, or left shift */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICLE;
+			} else if (secondChar == '<') {
+				shiftChars(1);
+				return T_OP_SHL;
+			}
+			return T_OP_LOGICLT;
+
+		case '>': /* Either a GT, GTE, or right shift */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICGE;
+			} else if (secondChar == '>') {
+				shiftChars(1);
+				return T_OP_SHR;
+			}
+			return T_OP_LOGICGT;
+
+		case '!': /* Either a NEQ, or negation */
+			secondChar = peek(0);
+			if (secondChar == '=') {
+				shiftChars(1);
+				return T_OP_LOGICNE;
+			}
+			return T_OP_LOGICNOT;
+
+		/* Handle numbers */
+
+		case '$':
+			yylval.nConstValue = 0;
+			readHexNumber();
+			/* Attempt to match `$ff00+c` */
+			if (yylval.nConstValue == 0xff00) {
+				/* Whitespace is ignored anyways */
+				while (isWhitespace(c = peek(0)))
+					shiftChars(1);
+				if (c == '+') {
+					/* FIXME: not great due to large lookahead */
+					uint8_t distance = 1;
+
+					do {
+						c = peek(distance++);
+					} while (isWhitespace(c));
+
+					if (c == 'c' || c == 'C') {
+						shiftChars(distance);
+						return T_MODE_HW_C;
 					}
 				}
-				break;
+			}
+			return T_NUMBER;
+
+		case '0': /* Decimal number */
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			readNumber(10, c - '0');
+			if (peek(0) == '.') {
+				shiftChars(1);
+				readFractionalPart();
+			}
+			return T_NUMBER;
+
+		case '&':
+			secondChar = peek(0);
+			if (secondChar == '&') {
+				shiftChars(1);
+				return T_OP_LOGICAND;
+			} else if (secondChar >= '0' && secondChar <= '7') {
+				readNumber(8, 0);
+				return T_NUMBER;
+			}
+			return T_OP_AND;
+
+		case '%': /* Either a modulo, or a binary constant */
+			secondChar = peek(0);
+			if (secondChar != binDigits[0] && secondChar != binDigits[1])
+				return T_OP_MOD;
+
+			yylval.nConstValue = 0;
+			readBinaryNumber();
+			return T_NUMBER;
+
+		case '`': /* Gfx constant */
+			readGfxConstant();
+			return T_NUMBER;
+
+		/* Handle strings */
+
+		case '"':
+			readString();
+			return T_STRING;
+
+		/* Handle newlines and EOF */
+
+		case '\r':
+			return '\r';
+		case '\n':
+			return '\n';
+
+		case EOF:
+			return 0;
+
+		/* Handle escapes */
+
+		case '\\':
+			c = peek(0);
+
+			switch (c) {
+			case ' ':
+			case '\r':
 			case '\n':
-				/* Line continuation character */
-				nLineNo++;
-				ch = 0;
+				readLineContinuation();
+				break;
+
+			case EOF:
+				error("Illegal character escape at end of input\n");
 				break;
 			default:
-				maxLength = MAXSTRLEN - index;
-				length = CopyMacroArg(&yylval.tzString[index],
-						      maxLength, ch);
+				shiftChars(1);
+				error("Illegal character escape '%s'\n", print(c));
+			}
+			break;
 
-				if (length != 0)
-					index += length;
-				else
-					fatalerror("Illegal character escape '%c'\n", ch);
+		/* Handle identifiers and escapes... or error out */
 
-				ch = 0;
+		default:
+			if (startsIdentifier(c)) {
+				int tokenType = readIdentifier(c);
+
+				/* If a keyword, don't try to expand */
+				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
+					return tokenType;
+
+				if (lexerState->expandStrings) {
+					/* Attempt string expansion */
+					struct Symbol const *sym = sym_FindSymbol(yylval.tzSym);
+
+					if (sym && sym->type == SYM_EQUS) {
+						char const *s = sym_GetStringValue(sym);
+
+						beginExpansion(0, 0, s, strlen(s), sym->name);
+						continue; /* Restart, reading from the new buffer */
+					}
+				}
+
+				if (tokenType == T_ID && lexerState->atLineStart)
+					return T_LABEL;
+
+				return tokenType;
+			}
+
+			/* Do not report weird characters when capturing, it'll be done later */
+			if (!lexerState->capturing) {
+				/* TODO: try to group reportings */
+				error("Unknown character %s\n", reportGarbageChar(c));
+			}
+		}
+		lexerState->atLineStart = false;
+	}
+}
+
+static int yylex_RAW(void)
+{
+	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
+		 lexer_GetLineNo(), lexer_GetColNo());
+
+	/* This is essentially a modified `readString` */
+	size_t i = 0;
+	bool insideString = false;
+
+	/* Trim left of string... */
+	while (isWhitespace(peek(0)))
+		shiftChars(1);
+
+	for (;;) {
+		int c = peek(0);
+
+		switch (c) {
+		case '"':
+			insideString = !insideString;
+			/* Other than that, just process quotes normally */
+			break;
+
+		case ';': /* Comments inside macro args */
+			if (insideString)
+				break;
+			discardComment();
+			c = peek(0);
+			/* fallthrough */
+		case ',':
+		case '\r':
+		case '\n':
+		case EOF:
+			if (i == sizeof(yylval.tzString)) {
+				i--;
+				warning(WARNING_LONG_STR, "Macro argument too long\n");
+			}
+			/* Trim whitespace */
+			while (i && isWhitespace(yylval.tzString[i - 1]))
+				i--;
+			/* Empty macro args break their expansion, so prevent that */
+			if (i == 0) {
+				/* Return the EOF token, and don't shift a non-existent char! */
+				if (c == EOF)
+					return 0;
+				shiftChars(1);
+				return c;
+			}
+			yylval.tzString[i] = '\0';
+			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
+			return T_STRING;
+
+		case '\\': /* Character escape */
+			c = peek(1);
+			switch (c) {
+			case ',':
+				shiftChars(1);
+				break;
+
+			case ' ':
+			case '\r':
+			case '\n':
+				shiftChars(1); /* Shift the backslash */
+				readLineContinuation();
+				continue;
+
+			case EOF: /* Can't really print that one */
+				error("Illegal character escape at end of input\n");
+				c = '\\';
+				break;
+			default: /* Pass the rest as-is */
+				c = '\\';
 				break;
 			}
-		} else if (ch == '{') {
-			index += yylex_ReadBracketedSymbol(yylval.tzString,
-							   index);
-			ch = 0;
+			break;
+
+		case '{': /* Symbol interpolation */
+			shiftChars(1);
+			char const *ptr = readInterpolation();
+
+			if (ptr) {
+				while (*ptr) {
+					if (i == sizeof(yylval.tzString))
+						break;
+					yylval.tzString[i++] = *ptr++;
+				}
+			}
+			continue; /* Do not copy an additional character */
+
+		/* Regular characters will just get copied */
 		}
-		if (ch)
-			yylex_StringWriteChar(yylval.tzString, index++, ch);
+		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
+			yylval.tzString[i++] = c;
+		shiftChars(1);
 	}
+}
 
-	if (index) {
-		yylex_StringWriteChar(yylval.tzString, index, 0);
+/*
+ * This function uses the fact that `if`, etc. constructs are only valid when
+ * there's nothing before them on their lines. This enables filtering
+ * "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
+ * It's especially important due to macro args not being handled in this
+ * state, and lexing them in "normal" mode potentially producing such tokens.
+ */
+static int skipIfBlock(bool toEndc)
+{
+	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
+	lexer_SetMode(LEXER_NORMAL);
+	int startingDepth = nIFDepth;
+	int token;
+	bool atLineStart = lexerState->atLineStart;
 
-		/* trim trailing white space at the end of the line */
-		if (*pLexBuffer == '\n')
-			yylex_TrimEnd(yylval.tzString, index);
+	/* Prevent expanding macro args in this state */
+	lexerState->disableMacroArgs = true;
 
-		return T_STRING;
-	} else if (*pLexBuffer == '\n') {
-		pLexBuffer++;
-		AtLineStart = 1;
-		return '\n';
-	} else if (*pLexBuffer == ',') {
-		pLexBuffer++;
-		return ',';
+	for (;;) {
+		if (atLineStart) {
+			int c;
+
+			for (;;) {
+				c = peek(0);
+				if (!isWhitespace(c))
+					break;
+				shiftChars(1);
+			}
+
+			if (startsIdentifier(c)) {
+				shiftChars(1);
+				token = readIdentifier(c);
+				switch (token) {
+				case T_POP_IF:
+					nIFDepth++;
+					break;
+
+				case T_POP_ELIF:
+				case T_POP_ELSE:
+					if (toEndc) /* Ignore ELIF and ELSE, go to ENDC */
+						break;
+					/* fallthrough */
+				case T_POP_ENDC:
+					if (nIFDepth == startingDepth)
+						goto finish;
+					if (token == T_POP_ENDC)
+						nIFDepth--;
+				}
+			}
+			atLineStart = false;
+		}
+
+		/* Read chars until EOL */
+		do {
+			int c = nextChar();
+
+			if (c == EOF) {
+				token = 0;
+				goto finish;
+			} else if (c == '\\') {
+				/* Unconditionally skip the next char, including line conts */
+				c = nextChar();
+			} else if (c == '\r' || c == '\n') {
+				atLineStart = true;
+			}
+
+			if (c == '\r' || c == '\n')
+				/* Do this both on line continuations and plain EOLs */
+				lexerState->lineNo++;
+			/* Handle CRLF */
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
+		} while (!atLineStart);
 	}
+finish:
 
-	fatalerror("Internal error in %s\n", __func__);
+	lexerState->disableMacroArgs = false;
+	lexerState->atLineStart = false;
+
+	return token;
+}
+
+static int yylex_SKIP_TO_ELIF(void)
+{
+	return skipIfBlock(false);
+}
+
+static int yylex_SKIP_TO_ENDC(void)
+{
+	return skipIfBlock(true);
 }
 
 int yylex(void)
 {
-	int returnedChar;
-
-	switch (lexerstate) {
-	case LEX_STATE_NORMAL:
-		returnedChar = yylex_NORMAL();
-		break;
-	case LEX_STATE_MACROARGS:
-		returnedChar = yylex_MACROARGS();
-		break;
-	default:
-		fatalerror("%s: Internal error.\n", __func__);
+restart:
+	if (lexerState->atLineStart && lexerStateEOL) {
+		lexer_SetState(lexerStateEOL);
+		lexerStateEOL = NULL;
+	}
+	if (lexerState->atLineStart) {
+		/* Newlines read within an expansion should not increase the line count */
+		if (!lexerState->expansions || lexerState->expansions->distance) {
+			lexerState->lineNo++;
+			lexerState->colNo = 0;
+		}
 	}
 
-	/* Check if string expansions were fully read */
-	while (pCurrentStringExpansion
-	    && pCurrentStringExpansion->pBuffer == pLexBufferRealStart
-	    && pCurrentStringExpansion->pBufferPos <= pLexBuffer) {
-		struct sStringExpansionPos *pParent =
-			pCurrentStringExpansion->pParent;
-		free(pCurrentStringExpansion->tzName);
-		free(pCurrentStringExpansion);
+	static int (* const lexerModeFuncs[])(void) = {
+		[LEXER_NORMAL]       = yylex_NORMAL,
+		[LEXER_RAW]          = yylex_RAW,
+		[LEXER_SKIP_TO_ELIF] = yylex_SKIP_TO_ELIF,
+		[LEXER_SKIP_TO_ENDC] = yylex_SKIP_TO_ENDC
+	};
+	int token = lexerModeFuncs[lexerState->mode]();
 
-		pCurrentStringExpansion = pParent;
-		nNbStringExpansions--;
+	/* Make sure to terminate files with a line feed */
+	if (token == 0) {
+		if (lexerState->lastToken != '\n') {
+			dbgPrint("Forcing EOL at EOF\n");
+			token = '\n';
+		} else { /* Try to switch to new buffer; if it succeeds, scan again */
+			dbgPrint("Reached EOF!\n");
+			/* Captures end at their buffer's boundary no matter what */
+			if (!lexerState->capturing) {
+				if (!yywrap())
+					goto restart;
+				dbgPrint("Reached end of input.");
+				return 0;
+			}
+		}
+	} else if (token == '\r') { /* Handle CR and CRLF line endings */
+		token = '\n'; /* We universally use '\n' as the value for line ending tokens */
+		if (peek(0) == '\n')
+			shiftChars(1); /* Shift the CRLF's LF */
+	}
+	lexerState->lastToken = token;
+
+	lexerState->atLineStart = false;
+	if (token == '\n')
+		lexerState->atLineStart = true;
+
+	return token;
+}
+
+static char *startCapture(void)
+{
+	assert(!lexerState->expansions);
+
+	lexerState->capturing = true;
+	lexerState->captureSize = 0;
+	lexerState->disableMacroArgs = true;
+
+	if (lexerState->isMmapped) {
+		return &lexerState->ptr[lexerState->offset];
+	} else {
+		lexerState->captureCapacity = 128; /* The initial size will be twice that */
+		reallocCaptureBuf();
+		return lexerState->captureBuf;
+	}
+}
+
+void lexer_CaptureRept(char **capture, size_t *size)
+{
+	char *captureStart = startCapture();
+	unsigned int level = 0;
+	int c;
+
+	/*
+	 * Due to parser internals, it reads the EOL after the expression before calling this.
+	 * Thus, we don't need to keep one in the buffer afterwards.
+	 * The following assertion checks that.
+	 */
+	assert(lexerState->atLineStart);
+	for (;;) {
+		lexerState->lineNo++;
+		/* We're at line start, so attempt to match a `REPT` or `ENDR` token */
+		do { /* Discard initial whitespace */
+			c = nextChar();
+		} while (isWhitespace(c));
+		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		if (startsIdentifier(c)) {
+			switch (readIdentifier(c)) {
+			case T_POP_REPT:
+				level++;
+				/* Ignore the rest of that line */
+				break;
+
+			case T_POP_ENDR:
+				if (!level) {
+					/* Read (but don't capture) until EOL or EOF */
+					lexerState->capturing = false;
+					do {
+						c = nextChar();
+					} while (c != EOF && c != '\r' && c != '\n');
+					/* Handle Windows CRLF */
+					if (c == '\r' && peek(0) == '\n')
+						shiftChars(1);
+					goto finish;
+				}
+				level--;
+			}
+		}
+
+		/* Just consume characters until EOL or EOF */
+		for (;;) {
+			if (c == EOF) {
+				error("Unterminated REPT block\n");
+				lexerState->capturing = false;
+				goto finish;
+			} else if (c == '\n') {
+				break;
+			} else if (c == '\r') {
+				if (peek(0) == '\n')
+					shiftChars(1);
+				break;
+			}
+			c = nextChar();
+		}
 	}
 
-	return returnedChar;
+finish:
+	assert(!lexerState->capturing);
+	*capture = captureStart;
+	*size = lexerState->captureSize - strlen("ENDR");
+	lexerState->captureBuf = NULL;
+	lexerState->disableMacroArgs = false;
+}
+
+void lexer_CaptureMacroBody(char **capture, size_t *size)
+{
+	char *captureStart = startCapture();
+	unsigned int level = 0;
+	int c = peek(0);
+
+	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
+	if (lexerState->isMmapped)
+		lexerState->isReferenced = true;
+
+	/*
+	 * Due to parser internals, it does not read the EOL after the T_POP_MACRO before calling
+	 * this. Thus, we need to keep one in the buffer afterwards.
+	 * (Note that this also means the captured buffer begins with a newline and maybe comment)
+	 * The following assertion checks that.
+	 */
+	assert(!lexerState->atLineStart);
+	for (;;) {
+		/* Just consume characters until EOL or EOF */
+		for (;;) {
+			if (c == EOF) {
+				error("Unterminated macro definition\n");
+				lexerState->capturing = false;
+				goto finish;
+			} else if (c == '\n') {
+				break;
+			} else if (c == '\r') {
+				if (peek(0) == '\n')
+					shiftChars(1);
+				break;
+			}
+			c = nextChar();
+		}
+
+		/* We're at line start, attempt to match a `label: MACRO` line or `ENDM` token */
+		do { /* Discard initial whitespace */
+			c = nextChar();
+		} while (isWhitespace(c));
+		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		if (startsIdentifier(c)) {
+			switch (readIdentifier(c)) {
+			case T_ID:
+				/* We have an initial label, look for a single colon */
+				do {
+					c = nextChar();
+				} while (isWhitespace(c));
+				if (c != ':') /* If not a colon, give up */
+					break;
+				/* And finally, a `MACRO` token */
+				do {
+					c = nextChar();
+				} while (isWhitespace(c));
+				if (!startsIdentifier(c))
+					break;
+				if (readIdentifier(c) != T_POP_MACRO)
+					break;
+				level++;
+				break;
+
+			case T_POP_ENDM:
+				if (!level) {
+					/* Read (but don't capture) until EOL or EOF */
+					lexerState->capturing = false;
+					do {
+						c = peek(0);
+						if (c == EOF || c == '\r' || c == '\n')
+							break;
+						shiftChars(1);
+					} while (c != EOF && c != '\r' && c != '\n');
+					/* Handle Windows CRLF */
+					if (c == '\r' && peek(1) == '\n')
+						shiftChars(1);
+					goto finish;
+				}
+				level--;
+			}
+		}
+		lexerState->lineNo++;
+	}
+
+finish:
+	assert(!lexerState->capturing);
+	*capture = captureStart;
+	*size = lexerState->captureSize - strlen("ENDM");
+	lexerState->captureBuf = NULL;
+	lexerState->disableMacroArgs = false;
 }

@@ -18,6 +18,8 @@ struct Expression;
 extern char *tzObjectname;
 extern struct Section *pSectionList, *pCurrentSection;
 
+void out_RegisterNode(struct FileStackNode *node);
+void out_ReplaceNode(struct FileStackNode *node);
 void out_SetFileName(char *s);
 void out_CreatePatch(uint32_t type, struct Expression const *expr,
 		     uint32_t ofs);

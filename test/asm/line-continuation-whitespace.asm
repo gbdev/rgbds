@@ -4,4 +4,4 @@
 bar: MACRO
 ENDM
 
-foo: bar baz\ 	
+foo: bar baz\

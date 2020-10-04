@@ -35,18 +35,21 @@ struct Symbol {
 	bool isExported; /* Whether the symbol is to be exported */
 	bool isBuiltin;  /* Whether the symbol is a built-in */
 	struct Section *section;
-	char fileName[_MAX_PATH + 1]; /* File where the symbol was defined. */
-	uint32_t fileLine; /* Line where the symbol was defined. */
+	struct FileStackNode *src; /* Where the symbol was defined */
+	uint32_t fileLine; /* Line where the symbol was defined */
 
+	bool hasCallback;
 	union {
-		struct { /* If sym_IsNumeric */
-			int32_t value;
-			int32_t (*callback)(void);
-		};
-		struct { /* For SYM_MACRO */
-			uint32_t macroSize;
+		/* If sym_IsNumeric */
+		int32_t value;
+		int32_t (*numCallback)(void);
+		/* For SYM_MACRO */
+		struct {
+			size_t macroSize;
 			char *macro;
 		};
+		/* For SYM_EQUS, TODO: separate "base" fields from SYM_MACRO */
+		char const *(*strCallback)(void); /* For SYM_EQUS */
 	};
 
 	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */
@@ -101,6 +104,8 @@ static inline bool sym_IsExported(struct Symbol const *sym)
  */
 static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
+	if (sym->hasCallback)
+		return sym->strCallback();
 	return sym->macro;
 }
 
@@ -114,9 +119,10 @@ void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
+uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *s);
 struct Symbol *sym_FindSymbol(char const *symName);
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo);
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
 uint32_t sym_GetDefinedValue(char const *s);

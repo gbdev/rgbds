@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <float.h>
 #include <inttypes.h>
@@ -22,16 +23,16 @@
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/output.h"
+#include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
+#include "asmy.h"
 
 #include "extern/err.h"
 #include "extern/getopt.h"
 
 #include "helpers.h"
 #include "version.h"
-
-extern int yyparse(void);
 
 size_t cldefines_index;
 size_t cldefines_numindices;
@@ -41,10 +42,6 @@ char **cldefines;
 
 clock_t nStartClock, nEndClock;
 uint32_t nTotalLines, nIFDepth;
-bool skipElif;
-uint32_t unionStart[128], unionSize[128];
-
-int32_t nLineNo;
 
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
@@ -74,66 +71,11 @@ struct sOptionStackEntry {
 
 struct sOptionStackEntry *pOptionStack;
 
-void opt_SetCurrentOptions(struct sOptions *pOpt)
+void opt_SetCurrentOptions(struct sOptions *opt)
 {
-	if (nGBGfxID != -1) {
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				     CurrentOptions.gbgfx[0]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				     CurrentOptions.gbgfx[1]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				     CurrentOptions.gbgfx[2]);
-		lex_FloatDeleteRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				     CurrentOptions.gbgfx[3]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					   CurrentOptions.gbgfx[0]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					   CurrentOptions.gbgfx[1]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					   CurrentOptions.gbgfx[2]);
-		lex_FloatDeleteSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					   CurrentOptions.gbgfx[3]);
-	}
-	if (nBinaryID != -1) {
-		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[0],
-				     CurrentOptions.binary[0]);
-		lex_FloatDeleteRange(nBinaryID, CurrentOptions.binary[1],
-				     CurrentOptions.binary[1]);
-		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[0],
-					   CurrentOptions.binary[0]);
-		lex_FloatDeleteSecondRange(nBinaryID, CurrentOptions.binary[1],
-					   CurrentOptions.binary[1]);
-	}
-	CurrentOptions = *pOpt;
-
-	if (nGBGfxID != -1) {
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[0],
-				  CurrentOptions.gbgfx[0]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[1],
-				  CurrentOptions.gbgfx[1]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[2],
-				  CurrentOptions.gbgfx[2]);
-		lex_FloatAddRange(nGBGfxID, CurrentOptions.gbgfx[3],
-				  CurrentOptions.gbgfx[3]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[0],
-					CurrentOptions.gbgfx[0]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[1],
-					CurrentOptions.gbgfx[1]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[2],
-					CurrentOptions.gbgfx[2]);
-		lex_FloatAddSecondRange(nGBGfxID, CurrentOptions.gbgfx[3],
-					CurrentOptions.gbgfx[3]);
-	}
-	if (nBinaryID != -1) {
-		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[0],
-				  CurrentOptions.binary[0]);
-		lex_FloatAddRange(nBinaryID, CurrentOptions.binary[1],
-				  CurrentOptions.binary[1]);
-		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[0],
-					CurrentOptions.binary[0]);
-		lex_FloatAddSecondRange(nBinaryID, CurrentOptions.binary[1],
-					CurrentOptions.binary[1]);
-	}
+	CurrentOptions = *opt;
+	lexer_SetGfxDigits(CurrentOptions.gbgfx);
+	lexer_SetBinDigits(CurrentOptions.binary);
 }
 
 void opt_Parse(char *s)
@@ -251,6 +193,22 @@ static void opt_ParseDefines(void)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
 }
 
+void upperstring(char *s)
+{
+	while (*s) {
+		*s = toupper(*s);
+		s++;
+	}
+}
+
+void lowerstring(char *s)
+{
+	while (*s) {
+		*s = tolower(*s);
+		s++;
+	}
+}
+
 /* Escapes Make-special chars from a string */
 static char *make_escape(const char *str)
 {
@@ -350,11 +308,11 @@ int main(int argc, char *argv[])
 	yydebug = 1;
 #endif
 
-	nMaxRecursionDepth = 64;
 	oGeneratePhonyDeps = false;
 	oGeneratedMissingIncludes = false;
 	oFailedOnMissingInclude = false;
 	tzTargetFileName = NULL;
+	uint32_t maxRecursionDepth = 64;
 	size_t nTargetFileNameLen = 0;
 
 	DefaultOptions.gbgfx[0] = '0';
@@ -433,7 +391,7 @@ int main(int argc, char *argv[])
 
 			break;
 		case 'r':
-			nMaxRecursionDepth = strtoul(optarg, &ep, 0);
+			maxRecursionDepth = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");
@@ -516,8 +474,6 @@ int main(int argc, char *argv[])
 
 	tzMainfile = argv[argc - 1];
 
-	setup_lexer();
-
 	if (verbose)
 		printf("Assembling %s\n", tzMainfile);
 
@@ -528,19 +484,20 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
 	}
 
+	/* Init file stack; important to do first, since it provides the file name, line, etc */
+	lexer_Init();
+	fstk_Init(tzMainfile, maxRecursionDepth);
+
 	nStartClock = clock();
 
-	nLineNo = 1;
 	nTotalLines = 0;
 	nIFDepth = 0;
-	skipElif = true;
 	sym_Init();
 	sym_SetExportAll(exportall);
-	fstk_Init(tzMainfile);
+
 	opt_ParseDefines();
 	charmap_New("main", NULL);
 
-	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nbErrors != 0)

@@ -46,7 +46,7 @@ if(MSVC)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
   if(DEVELOP)
-    add_compile_options(-Werror -Wall -Wextra -pedantic
+    add_compile_options(-Werror -Wall -Wextra -pedantic -Wno-type-limits
                         -Wno-sign-compare -Wformat -Wformat-security -Wformat-overflow=2
                         -Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused
                         -Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5

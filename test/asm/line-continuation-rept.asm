@@ -2,7 +2,9 @@ m: MACRO
 ENDM
 
 REPT 1
-	m ENDR
+	m
+ENDR
 
 REPT 1
-	m \ ENDR
+	m \
+ENDR

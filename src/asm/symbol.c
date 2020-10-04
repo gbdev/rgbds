@@ -23,6 +23,7 @@
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
+#include "asm/output.h"
 #include "asm/section.h"
 #include "asm/symbol.h"
 #include "asm/util.h"
@@ -77,12 +78,55 @@ void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg)
 
 static int32_t Callback_NARG(void)
 {
+	if (!macro_GetCurrentArgs()) {
+		error("_NARG does not make sense outside of a macro\n");
+		return 0;
+	}
 	return macro_NbArgs();
 }
 
 static int32_t Callback__LINE__(void)
 {
-	return nLineNo;
+	return lexer_GetLineNo();
+}
+
+static char const *Callback__FILE__(void)
+{
+	/*
+	 * FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
+	 * There are only two call sites for this; one copies the contents directly, the other is
+	 * EQUS expansions, which cannot straddle file boundaries. So this should be fine.
+	 */
+	static char *buf = NULL;
+	static size_t bufsize = 0;
+	char const *fileName = fstk_GetFileName();
+	size_t j = 1;
+
+	/* TODO: is there a way for a file name to be empty? */
+	assert(fileName[0]);
+	/* The assertion above ensures the loop runs at least once */
+	for (size_t i = 0; fileName[i]; i++, j++) {
+		/* Account for the extra backslash inserted below */
+		if (fileName[i] == '"')
+			j++;
+		/* Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!! */
+		if (j + 2 >= bufsize) { /* Always keep room for 2 tail chars */
+			bufsize = bufsize ? bufsize * 2 : 64;
+			buf = realloc(buf, bufsize);
+			if (!buf)
+				fatalerror("Failed to grow buffer for file name: %s\n",
+					   strerror(errno));
+		}
+		/* Escape quotes, since we're returning a string */
+		if (fileName[i] == '"')
+			buf[j - 1] = '\\';
+		buf[j] = fileName[i];
+	}
+	/* Write everything after the loop, to ensure the buffer has been allocated */
+	buf[0] = '"';
+	buf[j++] = '"';
+	buf[j] = '\0';
+	return buf;
 }
 
 static int32_t CallbackPC(void)
@@ -97,8 +141,8 @@ static int32_t CallbackPC(void)
  */
 int32_t sym_GetValue(struct Symbol const *sym)
 {
-	if (sym_IsNumeric(sym) && sym->callback)
-		return sym->callback();
+	if (sym_IsNumeric(sym) && sym->hasCallback)
+		return sym->numCallback();
 
 	if (sym->type == SYM_LABEL)
 		/* TODO: do not use section's org directly */
@@ -107,15 +151,35 @@ int32_t sym_GetValue(struct Symbol const *sym)
 	return sym->value;
 }
 
+static void dumpFilename(struct Symbol const *sym)
+{
+	if (!sym->src)
+		fputs("<builtin>", stderr);
+	else
+		fstk_Dump(sym->src, sym->fileLine);
+}
+
+/*
+ * Set a symbol's definition filename and line
+ */
+static void setSymbolFilename(struct Symbol *sym)
+{
+	sym->src = fstk_GetFileStack();
+	sym->fileLine = lexer_GetLineNo();
+}
+
 /*
  * Update a symbol's definition filename and line
  */
 static void updateSymbolFilename(struct Symbol *sym)
 {
-	if (snprintf(sym->fileName, _MAX_PATH + 1, "%s",
-		     tzCurrentFileName) > _MAX_PATH)
-		fatalerror("%s: File name is too long: '%s'\n", __func__, tzCurrentFileName);
-	sym->fileLine = fstk_GetLine();
+	struct FileStackNode *oldSrc = sym->src;
+
+	setSymbolFilename(sym);
+	/* If the old node was referenced, ensure the new one is */
+	if (oldSrc->referenced && oldSrc->ID != -1)
+		out_RegisterNode(sym->src);
+	/* TODO: unref the old node, and use `out_ReplaceNode` instead if deleting it */
 }
 
 /*
@@ -133,8 +197,9 @@ static struct Symbol *createsymbol(char const *s)
 
 	symbol->isExported = false;
 	symbol->isBuiltin = false;
+	symbol->hasCallback = false;
 	symbol->section = NULL;
-	updateSymbolFilename(symbol);
+	setSymbolFilename(symbol);
 	symbol->ID = -1;
 	symbol->next = NULL;
 
@@ -209,8 +274,7 @@ void sym_Purge(char const *symName)
 			labelScope = NULL;
 
 		hash_RemoveElement(symbols, symbol->name);
-		if (symbol->type == SYM_MACRO)
-			free(symbol->macro);
+		/* TODO: ideally, also unref the file stack nodes */
 		free(symbol);
 	}
 }
@@ -229,7 +293,22 @@ uint32_t sym_GetPCValue(void)
 }
 
 /*
- * Return a constant symbols value
+ * Return a constant symbol's value, assuming it's defined
+ */
+uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
+{
+	if (sym == PCSymbol)
+		return sym_GetPCValue();
+	else if (!sym_IsConstant(sym))
+		error("\"%s\" does not have a constant value\n", sym->name);
+	else
+		return sym_GetValue(sym);
+
+	return 0;
+}
+
+/*
+ * Return a constant symbol's value
  */
 uint32_t sym_GetConstantValue(char const *s)
 {
@@ -237,12 +316,8 @@ uint32_t sym_GetConstantValue(char const *s)
 
 	if (sym == NULL)
 		error("'%s' not defined\n", s);
-	else if (sym == PCSymbol)
-		return sym_GetPCValue();
-	else if (!sym_IsConstant(sym))
-		error("\"%s\" does not have a constant value\n", s);
 	else
-		return sym_GetValue(sym);
+		return sym_GetConstantSymValue(sym);
 
 	return 0;
 }
@@ -285,9 +360,11 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
 
 	if (!symbol)
 		symbol = createsymbol(symbolName);
-	else if (sym_IsDefined(symbol))
-		error("'%s' already defined at %s(%" PRIu32 ")\n", symbolName,
-			symbol->fileName, symbol->fileLine);
+	else if (sym_IsDefined(symbol)) {
+		error("'%s' already defined at ", symbolName);
+		dumpFilename(symbol);
+		putc('\n', stderr);
+	}
 
 	return symbol;
 }
@@ -300,7 +377,6 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 	struct Symbol *sym = createNonrelocSymbol(symName);
 
 	sym->type = SYM_EQU;
-	sym->callback = NULL;
 	sym->value = value;
 
 	return sym;
@@ -343,18 +419,19 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 {
 	struct Symbol *sym = findsymbol(symName, NULL);
 
-	if (sym == NULL)
+	if (sym == NULL) {
 		sym = createsymbol(symName);
-	else if (sym_IsDefined(sym) && sym->type != SYM_SET)
-		error("'%s' already defined as %s at %s(%" PRIu32 ")\n",
-			symName, sym->type == SYM_LABEL ? "label" : "constant",
-			sym->fileName, sym->fileLine);
-	else
-		/* TODO: can the scope be incorrect when talking over refs? */
+	} else if (sym_IsDefined(sym) && sym->type != SYM_SET) {
+		error("'%s' already defined as %s at ",
+		      symName, sym->type == SYM_LABEL ? "label" : "constant");
+		dumpFilename(sym);
+		putc('\n', stderr);
+	} else {
+		/* TODO: can the scope be incorrect when taking over refs? */
 		updateSymbolFilename(sym);
+	}
 
 	sym->type = SYM_SET;
-	sym->callback = NULL;
 	sym->value = value;
 
 	return sym;
@@ -365,7 +442,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
  * @param name The label's full name (so `.name` is invalid)
  * @return The created symbol
  */
-static struct Symbol *addSectionlessLabel(char const *name)
+static struct Symbol *addLabel(char const *name)
 {
 	assert(name[0] != '.'); /* The symbol name must have been expanded prior */
 	struct Symbol *sym = findsymbol(name, NULL); /* Due to this, don't look for expansions */
@@ -373,25 +450,19 @@ static struct Symbol *addSectionlessLabel(char const *name)
 	if (!sym) {
 		sym = createsymbol(name);
 	} else if (sym_IsDefined(sym)) {
-		error("'%s' already defined in %s(%" PRIu32 ")\n",
-		      name, sym->fileName, sym->fileLine);
+		error("'%s' already defined at ", name);
+		dumpFilename(sym);
+		putc('\n', stderr);
 		return NULL;
+	} else {
+		updateSymbolFilename(sym);
 	}
 	/* If the symbol already exists as a ref, just "take over" it */
 	sym->type = SYM_LABEL;
-	sym->callback = NULL;
 	sym->value = sect_GetSymbolOffset();
 	if (exportall)
 		sym->isExported = true;
 	sym->section = sect_GetSymbolSection();
-	updateSymbolFilename(sym);
-
-	return sym;
-}
-
-static struct Symbol *addLabel(char const *name)
-{
-	struct Symbol *sym = addSectionlessLabel(name);
 
 	if (sym && !sym->section)
 		error("Label \"%s\" created outside of a SECTION\n", name);
@@ -467,14 +538,14 @@ void sym_Export(char const *symName)
 /*
  * Add a macro definition
  */
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo)
+struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName);
 
 	sym->type = SYM_MACRO;
-	sym->macroSize = ulNewMacroSize;
-	sym->macro = tzNewMacro;
-	updateSymbolFilename(sym);
+	sym->macroSize = size;
+	sym->macro = body;
+	setSymbolFilename(sym); /* TODO: is this really necessary? */
 	/*
 	 * The symbol is created at the line after the `endm`,
 	 * override this with the actual definition line
@@ -528,21 +599,36 @@ static inline char const *removeLeadingZeros(char const *ptr)
 	return ptr;
 }
 
+static inline struct Symbol *createBuiltinSymbol(char const *name)
+{
+	struct Symbol *sym = createsymbol(name);
+
+	sym->isBuiltin = true;
+	sym->hasCallback = true;
+	sym->src = NULL;
+	sym->fileLine = 0;
+	return sym;
+}
+
 /*
  * Initialize the symboltable
  */
 void sym_Init(void)
 {
-	struct Symbol *_NARGSymbol = sym_AddEqu("_NARG", 0);
-	struct Symbol *__LINE__Symbol = sym_AddEqu("__LINE__", 0);
+	PCSymbol = createBuiltinSymbol("@");
+	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
+	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
+	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
 
-	PCSymbol = addSectionlessLabel("@");
-	PCSymbol->isBuiltin = true;
-	PCSymbol->callback = CallbackPC;
-	_NARGSymbol->isBuiltin = true;
-	_NARGSymbol->callback = Callback_NARG;
-	__LINE__Symbol->isBuiltin = true;
-	__LINE__Symbol->callback = Callback__LINE__;
+	PCSymbol->type = SYM_LABEL;
+	PCSymbol->section = NULL;
+	PCSymbol->numCallback = CallbackPC;
+	_NARGSymbol->type = SYM_EQU;
+	_NARGSymbol->numCallback = Callback_NARG;
+	__LINE__Symbol->type = SYM_EQU;
+	__LINE__Symbol->numCallback = Callback__LINE__;
+	__FILE__Symbol->type = SYM_EQUS;
+	__FILE__Symbol->strCallback = Callback__FILE__;
 	sym_AddSet("_RS", 0)->isBuiltin = true;
 
 	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;

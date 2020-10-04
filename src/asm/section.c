@@ -656,9 +656,15 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		startPos = 0;
 	}
 
-	FILE *f = fstk_FindFile(s, NULL);
+	char *fullPath = NULL;
+	size_t size = 0;
+	FILE *f = NULL;
+
+	if (fstk_FindFile(s, &fullPath, &size))
+		f = fopen(fullPath, "rb");
 
 	if (!f) {
+		free(fullPath);
 		if (oGeneratedMissingIncludes) {
 			oFailedOnMissingInclude = true;
 			return;
@@ -699,6 +705,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 
 	fclose(f);
+	free(fullPath);
 }
 
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
@@ -715,9 +722,15 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	if (length == 0) /* Don't even bother with 0-byte slices */
 		return;
 
-	FILE *f = fstk_FindFile(s, NULL);
+	char *fullPath = NULL;
+	size_t size = 0;
+	FILE *f = NULL;
+
+	if (fstk_FindFile(s, &fullPath, &size))
+		f = fopen(fullPath, "rb");
 
 	if (!f) {
+		free(fullPath);
 		if (oGeneratedMissingIncludes) {
 			oFailedOnMissingInclude = true;
 			return;
@@ -767,6 +780,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	}
 
 	fclose(f);
+	free(fullPath);
 }
 
 /*

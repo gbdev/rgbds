@@ -81,14 +81,14 @@ static void processLinkerScript(void)
 
 		/* Check if this doesn't conflict with what the code says */
 		if (section->isBankFixed && placement->bank != section->bank)
-			error("Linker script contradicts \"%s\"'s bank placement",
+			error(NULL, 0, "Linker script contradicts \"%s\"'s bank placement",
 			      section->name);
 		if (section->isAddressFixed && placement->org != section->org)
-			error("Linker script contradicts \"%s\"'s address placement",
+			error(NULL, 0, "Linker script contradicts \"%s\"'s address placement",
 			      section->name);
 		if (section->isAlignFixed
 		 && (placement->org & section->alignMask) != 0)
-			error("Linker script contradicts \"%s\"'s alignment",
+			error(NULL, 0, "Linker script contradicts \"%s\"'s alignment",
 			      section->name);
 
 		section->isAddressFixed = true;

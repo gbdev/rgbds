@@ -21,36 +21,59 @@
 
 #include "types.h"
 
-struct MacroArgs;
+struct FileStackNode {
+	struct FileStackNode *parent; /* Pointer to parent node, for error reporting */
+	/* Line at which the parent context was exited; meaningless for the root level */
+	uint32_t lineNo;
 
-struct sContext {
-	YY_BUFFER_STATE FlexHandle;
-	struct Symbol const *pMacro;
-	struct sContext *next;
-	char tzFileName[_MAX_PATH + 1];
-	struct MacroArgs *macroArgs;
-	uint32_t uniqueID;
-	int32_t nLine;
-	uint32_t nStatus;
-	FILE *pFile;
-	char *pREPTBlock;
-	uint32_t nREPTBlockCount;
-	uint32_t nREPTBlockSize;
-	int32_t nREPTBodyFirstLine;
-	int32_t nREPTBodyLastLine;
+	struct FileStackNode *next; /* Next node in the output linked list */
+	bool referenced; /* If referenced, don't free! */
+	uint32_t ID; /* Set only if referenced: ID within the object file, -1 if not output yet */
+
+	enum {
+		NODE_REPT,
+		NODE_FILE,
+		NODE_MACRO,
+	} type;
 };
 
-extern unsigned int nMaxRecursionDepth;
+struct FileStackReptNode { /* NODE_REPT */
+	struct FileStackNode node;
+	uint32_t reptDepth;
+	/* WARNING: if changing this type, change overflow check in `fstk_Init` */
+	uint32_t iters[]; /* REPT iteration counts since last named node, in reverse depth order */
+};
 
-void fstk_RunInclude(char *tzFileName);
-void fstk_Init(char *s);
-void fstk_Dump(void);
-void fstk_DumpToStr(char *buf, size_t len);
-void fstk_DumpStringExpansions(void);
-void fstk_AddIncludePath(char *s);
-void fstk_RunMacro(char *s, struct MacroArgs *args);
-void fstk_RunRept(uint32_t count, int32_t nReptLineNo);
-FILE *fstk_FindFile(char const *fname, char **incPathUsed);
-int32_t fstk_GetLine(void);
+struct FileStackNamedNode { /* NODE_FILE, NODE_MACRO */
+	struct FileStackNode node;
+	char name[]; /* File name for files, file::macro name for macros */
+};
+
+extern size_t nMaxRecursionDepth;
+
+struct MacroArgs;
+
+void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo);
+void fstk_DumpCurrent(void);
+struct FileStackNode *fstk_GetFileStack(void);
+/* The lifetime of the returned chars is until reaching the end of that file */
+char const *fstk_GetFileName(void);
+
+void fstk_AddIncludePath(char const *s);
+/**
+ * @param path The user-provided file name
+ * @param fullPath The address of a pointer, which will be made to point at the full path
+ *                 The pointer's value must be a valid argument to `realloc`, including NULL
+ * @param size Current size of the buffer, or 0 if the pointer is NULL
+ * @return True if the file was found, false if no path worked
+ */
+bool fstk_FindFile(char const *path, char **fullPath, size_t *size);
+
+bool yywrap(void);
+void fstk_RunInclude(char const *path);
+void fstk_RunMacro(char const *macroName, struct MacroArgs *args);
+void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size);
+
+void fstk_Init(char const *mainPath, size_t maxRecursionDepth);
 
 #endif /* RGBDS_ASM_FSTACK_H */

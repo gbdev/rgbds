@@ -56,7 +56,6 @@ rgbasm_obj := \
 	src/asm/asmy.o \
 	src/asm/charmap.o \
 	src/asm/fstack.o \
-	src/asm/globlex.o \
 	src/asm/lexer.o \
 	src/asm/macro.o \
 	src/asm/main.o \
@@ -73,7 +72,7 @@ rgbasm_obj := \
 	src/hashmap.o \
 	src/linkdefs.o
 
-src/asm/globlex.o src/asm/lexer.o src/asm/constexpr.o: src/asm/asmy.h
+src/asm/lexer.o src/asm/main.o: src/asm/asmy.h
 
 rgblink_obj := \
 	src/link/assign.o \
@@ -187,7 +186,7 @@ checkpatch:
 # compilation and make the continous integration infrastructure return failure.
 
 develop:
-	$Qenv $(MAKE) -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic \
+	$Qenv $(MAKE) -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
 		-Wno-sign-compare -Wformat -Wformat-security -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
 		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5 \
@@ -199,7 +198,7 @@ develop:
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
-		-fsanitize=alignment -fsanitize=null -DDEVELOP" CFLAGS="-g -O0"
+		-fsanitize=alignment -fsanitize=null -DDEVELOP" CFLAGS="-ggdb3 -O0"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!

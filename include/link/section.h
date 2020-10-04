@@ -19,6 +19,7 @@
 
 #include "linkdefs.h"
 
+struct FileStackNode;
 struct Section;
 
 struct AttachedSymbol {
@@ -27,7 +28,8 @@ struct AttachedSymbol {
 };
 
 struct Patch {
-	char *fileName;
+	struct FileStackNode const *src;
+	uint32_t lineNo;
 	int32_t offset;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;

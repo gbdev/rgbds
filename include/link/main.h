@@ -29,15 +29,45 @@ extern bool beVerbose;
 extern bool isWRA0Mode;
 extern bool disablePadding;
 
+struct FileStackNode {
+	struct FileStackNode *parent;
+	/* Line at which the parent context was exited; meaningless for the root level */
+	uint32_t lineNo;
+
+	enum {
+		NODE_REPT,
+		NODE_FILE,
+		NODE_MACRO,
+	} type;
+	union {
+		char *name; /* NODE_FILE, NODE_MACRO */
+		struct { /* NODE_REPT */
+			uint32_t reptDepth;
+			uint32_t *iters;
+		};
+	};
+};
+
 /* Helper macro for printing verbose-mode messages */
 #define verbosePrint(...)   do { \
 					if (beVerbose) \
 						fprintf(stderr, __VA_ARGS__); \
 				} while (0)
 
-void error(char const *fmt, ...);
+/**
+ * Dump a file stack to stderr
+ * @param node The leaf node to dump the context of
+ */
+char const *dumpFileStack(struct FileStackNode const *node);
 
-noreturn_ void fatal(char const *fmt, ...);
+void warning(struct FileStackNode const *where, uint32_t lineNo,
+	     char const *fmt, ...) format_(printf, 3, 4);
+
+void error(struct FileStackNode const *where, uint32_t lineNo,
+	   char const *fmt, ...) format_(printf, 3, 4);
+
+noreturn_ void fatal(struct FileStackNode const *where, uint32_t lineNo,
+		     char const *fmt, ...) format_(printf, 3, 4);
 
 /**
  * Opens a file if specified, and aborts on error.

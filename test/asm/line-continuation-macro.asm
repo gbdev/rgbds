@@ -2,6 +2,7 @@ m: MACRO
 ENDM
 
 m2: MACRO
-	m \ ENDM
+	m \
+ENDM
 
 	m2

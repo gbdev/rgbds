@@ -31,7 +31,6 @@ set(rgbasm_src
     "${BISON_ASMy_OUTPUT_SOURCE}"
     "asm/charmap.c"
     "asm/fstack.c"
-    "asm/globlex.c"
     "asm/lexer.c"
     "asm/macro.c"
     "asm/main.c"

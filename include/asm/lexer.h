@@ -9,78 +9,65 @@
 #ifndef RGBDS_ASM_LEXER_H
 #define RGBDS_ASM_LEXER_H
 
-#include <stdint.h>
-#include <stdio.h>
-
-#define LEXHASHSIZE	(1 << 11)
 #define MAXSTRLEN	255
 
-struct sLexInitString {
-	char *tzName;
-	uint32_t nToken;
+struct LexerState;
+extern struct LexerState *lexerState;
+extern struct LexerState *lexerStateEOL;
+
+static inline struct LexerState *lexer_GetState(void)
+{
+	return lexerState;
+}
+
+static inline void lexer_SetState(struct LexerState *state)
+{
+	lexerState = state;
+}
+
+static inline void lexer_SetStateAtEOL(struct LexerState *state)
+{
+	lexerStateEOL = state;
+}
+
+extern char const *binDigits;
+extern char const *gfxDigits;
+
+static inline void lexer_SetBinDigits(char const *digits)
+{
+	binDigits = digits;
+}
+
+static inline void lexer_SetGfxDigits(char const *digits)
+{
+	gfxDigits = digits;
+}
+
+/*
+ * `path` is referenced, but not held onto..!
+ */
+struct LexerState *lexer_OpenFile(char const *path);
+struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo);
+void lexer_RestartRept(uint32_t lineNo);
+void lexer_DeleteState(struct LexerState *state);
+void lexer_Init(void);
+
+enum LexerMode {
+	LEXER_NORMAL,
+	LEXER_RAW,
+	LEXER_SKIP_TO_ELIF,
+	LEXER_SKIP_TO_ENDC
 };
 
-struct sLexFloat {
-	uint32_t (*Callback)(char *s, uint32_t size);
-	uint32_t nToken;
-};
+void lexer_SetMode(enum LexerMode mode);
+void lexer_ToggleStringExpansion(bool enable);
 
-struct yy_buffer_state {
-	/* Actual starting address */
-	char *pBufferRealStart;
-	/* Address where the data is initially written after a safety margin */
-	char *pBufferStart;
-	char *pBuffer;
-	size_t nBufferSize;
-	uint32_t oAtLineStart;
-};
-
-enum eLexerState {
-	LEX_STATE_NORMAL,
-	LEX_STATE_MACROARGS
-};
-
-struct sStringExpansionPos {
-	char *tzName;
-	char *pBuffer;
-	char *pBufferPos;
-	struct sStringExpansionPos *pParent;
-};
-
-#define INITIAL		0
-#define macroarg	3
-
-typedef struct yy_buffer_state *YY_BUFFER_STATE;
-
-void setup_lexer(void);
-
-void yy_set_state(enum eLexerState i);
-YY_BUFFER_STATE yy_create_buffer(FILE *f);
-YY_BUFFER_STATE yy_scan_bytes(char const *mem, uint32_t size);
-void yy_delete_buffer(YY_BUFFER_STATE buf);
-void yy_switch_to_buffer(YY_BUFFER_STATE buf);
-uint32_t lex_FloatAlloc(const struct sLexFloat *tok);
-void lex_FloatAddRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_FloatDeleteRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_FloatAddFirstRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_FloatDeleteFirstRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_FloatAddSecondRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_FloatDeleteSecondRange(uint32_t id, uint16_t start, uint16_t end);
-void lex_Init(void);
-void lex_AddStrings(const struct sLexInitString *lex);
-void lex_SetBuffer(char *buffer, uint32_t len);
-void lex_BeginStringExpansion(const char *tzName);
-int yywrap(void);
+char const *lexer_GetFileName(void);
+uint32_t lexer_GetLineNo(void);
+uint32_t lexer_GetColNo(void);
+void lexer_DumpStringExpansions(void);
 int yylex(void);
-void yyunput(char c);
-void yyunputstr(const char *s);
-void yyskipbytes(uint32_t count);
-void yyunputbytes(uint32_t count);
-
-extern YY_BUFFER_STATE pCurrentBuffer;
-extern struct sStringExpansionPos *pCurrentStringExpansion;
-
-void upperstring(char *s);
-void lowerstring(char *s);
+void lexer_CaptureRept(char **capture, size_t *size);
+void lexer_CaptureMacroBody(char **capture, size_t *size);
 
 #endif /* RGBDS_ASM_LEXER_H */

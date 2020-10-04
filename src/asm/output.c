@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -33,7 +34,8 @@
 #include "platform.h" // strdup
 
 struct Patch {
-	char tzFilename[_MAX_PATH + 1];
+	struct FileStackNode const *src;
+	uint32_t lineNo;
 	uint32_t nOffset;
 	struct Section *pcSection;
 	uint32_t pcOffset;
@@ -62,19 +64,17 @@ static uint32_t nbSymbols = 0; /* Length of the above list */
 
 static struct Assertion *assertions = NULL;
 
+static struct FileStackNode *fileStackNodes = NULL;
+
 /*
  * Count the number of sections used in this object
  */
 static uint32_t countsections(void)
 {
-	struct Section *sect;
 	uint32_t count = 0;
 
-	sect = pSectionList;
-	while (sect) {
+	for (struct Section const *sect = pSectionList; sect; sect = sect->next)
 		count++;
-		sect = sect->next;
-	}
 
 	return count;
 }
@@ -129,15 +129,59 @@ static void fputstring(char const *s, FILE *f)
 	fputc(0, f);
 }
 
+static uint32_t getNbFileStackNodes(void)
+{
+	return fileStackNodes ? fileStackNodes->ID + 1 : 0;
+}
+
+void out_RegisterNode(struct FileStackNode *node)
+{
+	/* If node is not already registered, register it (and parents), and give it a unique ID */
+	while (node->ID == -1) {
+		node->ID = getNbFileStackNodes();
+		if (node->ID == -1)
+			fatalerror("Reached too many file stack nodes; try splitting the file up\n");
+		node->next = fileStackNodes;
+		fileStackNodes = node;
+
+		/* Also register the node's parents */
+		node = node->parent;
+		if (!node)
+			break;
+	}
+}
+
+void out_ReplaceNode(struct FileStackNode *node)
+{
+	(void)node;
+#if 0
+This is code intended to replace a node, which is pretty useless until ref counting is added...
+
+	struct FileStackNode **ptr = &fileStackNodes;
+
+	/*
+	 * The linked list is supposed to have decrementing IDs, so iterate with less memory reads,
+	 * to hopefully hit the cache less. A debug check is added after, in case a change is made
+	 * that breaks this assumption.
+	 */
+	for (uint32_t i = fileStackNodes->ID; i != node->ID; i--)
+		ptr = &(*ptr)->next;
+	assert((*ptr)->ID == node->ID);
+
+	node->next = (*ptr)->next;
+	assert(!node->next || node->next->ID == node->ID - 1); /* Catch inconsistencies early */
+	/* TODO: unreference the node */
+	*ptr = node;
+#endif
+}
+
 /*
  * Return a section's ID
  */
 static uint32_t getsectid(struct Section const *sect)
 {
-	struct Section const *sec;
+	struct Section const *sec = pSectionList;
 	uint32_t ID = 0;
-
-	sec = pSectionList;
 
 	while (sec) {
 		if (sec == sect)
@@ -159,7 +203,10 @@ static uint32_t getSectIDIfAny(struct Section const *sect)
  */
 static void writepatch(struct Patch const *patch, FILE *f)
 {
-	fputstring(patch->tzFilename, f);
+	assert(patch->src->ID != -1);
+
+	fputlong(patch->src->ID, f);
+	fputlong(patch->lineNo, f);
 	fputlong(patch->nOffset, f);
 	fputlong(getSectIDIfAny(patch->pcSection), f);
 	fputlong(patch->pcOffset, f);
@@ -206,12 +253,25 @@ static void writesymbol(struct Symbol const *sym, FILE *f)
 	if (!sym_IsDefined(sym)) {
 		fputc(SYMTYPE_IMPORT, f);
 	} else {
+		assert(sym->src->ID != -1);
+
 		fputc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
-		fputstring(sym->fileName, f);
+		fputlong(sym->src->ID, f);
 		fputlong(sym->fileLine, f);
 		fputlong(getSectIDIfAny(sym_GetSection(sym)), f);
 		fputlong(sym->value, f);
 	}
+}
+
+static void registerSymbol(struct Symbol *sym)
+{
+	*objectSymbolsTail = sym;
+	objectSymbolsTail = &sym->next;
+	out_RegisterNode(sym->src);
+	if (nbSymbols == -1)
+		fatalerror("Registered too many symbols (%" PRIu32
+			   "); try splitting up your files\n", (uint32_t)-1);
+	sym->ID = nbSymbols++;
 }
 
 /*
@@ -220,12 +280,8 @@ static void writesymbol(struct Symbol const *sym, FILE *f)
  */
 static uint32_t getSymbolID(struct Symbol *sym)
 {
-	if (sym->ID == -1) {
-		sym->ID = nbSymbols++;
-
-		*objectSymbolsTail = sym;
-		objectSymbolsTail = &sym->next;
-	}
+	if (sym->ID == -1 && !sym_IsPC(sym))
+		registerSymbol(sym);
 	return sym->ID;
 }
 
@@ -303,22 +359,25 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 
 /*
  * Allocate a new patch structure and link it into the list
+ * WARNING: all patches are assumed to eventually be written, so the file stack node is registered
  */
-static struct Patch *allocpatch(uint32_t type, struct Expression const *expr,
-				uint32_t ofs)
+static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
 	struct Patch *patch = malloc(sizeof(struct Patch));
 	uint32_t rpnSize = expr->isKnown ? 5 : expr->nRPNPatchSize;
+	struct FileStackNode *node = fstk_GetFileStack();
 
 	if (!patch)
 		fatalerror("No memory for patch: %s\n", strerror(errno));
-	patch->pRPN = malloc(sizeof(*patch->pRPN) * rpnSize);
 
+	patch->pRPN = malloc(sizeof(*patch->pRPN) * rpnSize);
 	if (!patch->pRPN)
 		fatalerror("No memory for patch's RPN expression: %s\n", strerror(errno));
 
 	patch->type = type;
-	fstk_DumpToStr(patch->tzFilename, sizeof(patch->tzFilename));
+	patch->src = node;
+	out_RegisterNode(node);
+	patch->lineNo = lexer_GetLineNo();
 	patch->nOffset = ofs;
 	patch->pcSection = sect_GetSymbolSection();
 	patch->pcOffset = sect_GetSymbolOffset();
@@ -382,13 +441,28 @@ static void writeassert(struct Assertion *assert, FILE *f)
 	fputstring(assert->message, f);
 }
 
+static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
+{
+	fputlong(node->parent ? node->parent->ID : -1, f);
+	fputlong(node->lineNo, f);
+	fputc(node->type, f);
+	if (node->type != NODE_REPT) {
+		fputstring(((struct FileStackNamedNode const *)node)->name, f);
+	} else {
+		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
+
+		fputlong(reptNode->reptDepth, f);
+		/* Iters are stored by decreasing depth, so reverse the order for output */
+		for (uint32_t i = reptNode->reptDepth; i--; )
+			fputlong(reptNode->iters[i], f);
+	}
+}
+
 static void registerExportedSymbol(struct Symbol *symbol, void *arg)
 {
 	(void)arg;
 	if (sym_IsExported(symbol) && symbol->ID == -1) {
-		*objectSymbolsTail = symbol;
-		objectSymbolsTail = &symbol->next;
-		nbSymbols++;
+		registerSymbol(symbol);
 	}
 }
 
@@ -410,6 +484,15 @@ void out_WriteObject(void)
 
 	fputlong(nbSymbols, f);
 	fputlong(countsections(), f);
+
+	fputlong(getNbFileStackNodes(), f);
+	for (struct FileStackNode const *node = fileStackNodes; node; node = node->next) {
+		writeFileStackNode(node, f);
+		if (node->next && node->next->ID != node->ID - 1)
+			fatalerror("Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
+				   ". Please report this to the developers!\n",
+				   node->next->ID, node->ID);
+	}
 
 	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);

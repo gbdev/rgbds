@@ -1,5 +1,6 @@
-ERROR: equs-recursion.asm(2):
+FATAL: equs-recursion.asm(2):
     Recursion limit (64) exceeded
+while expanding symbol "recurse"
 while expanding symbol "recurse"
 while expanding symbol "recurse"
 while expanding symbol "recurse"

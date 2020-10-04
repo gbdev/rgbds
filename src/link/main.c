@@ -6,8 +6,10 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -39,11 +41,55 @@ bool disablePadding;          /* -x */
 
 static uint32_t nbErrors = 0;
 
-void error(char const *fmt, ...)
+/***** Helper function to dump a file stack to stderr *****/
+
+char const *dumpFileStack(struct FileStackNode const *node)
+{
+	char const *lastName;
+
+	if (node->parent) {
+		lastName = dumpFileStack(node->parent);
+		/* REPT nodes use their parent's name */
+		if (node->type != NODE_REPT)
+			lastName = node->name;
+		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName);
+		if (node->type == NODE_REPT) {
+			for (uint32_t i = 0; i < node->reptDepth; i++)
+				fprintf(stderr, "::REPT~%" PRIu32, node->iters[i]);
+		}
+	} else {
+		assert(node->type != NODE_REPT);
+		lastName = node->name;
+		fputs(lastName, stderr);
+	}
+
+	return lastName;
+}
+
+void warning(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "error: ");
+	fputs("warning: ", stderr);
+	if (where) {
+		dumpFileStack(where);
+		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+	}
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	putc('\n', stderr);
+}
+
+void error(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+{
+	va_list ap;
+
+	fputs("error: ", stderr);
+	if (where) {
+		dumpFileStack(where);
+		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+	}
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -53,11 +99,15 @@ void error(char const *fmt, ...)
 		nbErrors++;
 }
 
-noreturn_ void fatal(char const *fmt, ...)
+noreturn_ void fatal(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "fatal: ");
+	fputs("fatal: ", stderr);
+	if (where) {
+		dumpFileStack(where);
+		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+	}
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -177,11 +227,11 @@ int main(int argc, char *argv[])
 		case 'p':
 			value = strtoul(optarg, &endptr, 0);
 			if (optarg[0] == '\0' || *endptr != '\0') {
-				error("Invalid argument for option 'p'");
+				error(NULL, 0, "Invalid argument for option 'p'");
 				value = 0xFF;
 			}
 			if (value > 0xFF) {
-				error("Argument for 'p' must be a byte (between 0 and 0xFF)");
+				error(NULL, 0, "Argument for 'p' must be a byte (between 0 and 0xFF)");
 				value = 0xFF;
 			}
 			padValue = value;
@@ -189,7 +239,7 @@ int main(int argc, char *argv[])
 		case 's':
 			/* FIXME: nobody knows what this does, figure it out */
 			(void)optarg;
-			warnx("Nobody has any idea what `-s` does");
+			warning(NULL, 0, "Nobody has any idea what `-s` does");
 			break;
 		case 't':
 			is32kMode = true;
@@ -234,8 +284,8 @@ int main(int argc, char *argv[])
 		bankranges[SECTTYPE_VRAM][1] = BANK_MIN_VRAM;
 
 	/* Read all object files first, */
-	while (curArgIndex < argc)
-		obj_ReadFile(argv[curArgIndex++]);
+	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
+		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
 
 	/* then process them, */
 	obj_DoSanityChecks();

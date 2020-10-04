@@ -1,2 +1,2 @@
-ERROR: divzero-section-bank.asm(1):
+FATAL: divzero-section-bank.asm(1):
     Division by zero
