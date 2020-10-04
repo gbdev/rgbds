@@ -36,8 +36,60 @@ is possible using ``make`` or ``cmake``; follow the link for more detailed instr
     cmake --build build
     cmake --install build
 
-2. History
----------
+2. RGBDS Folder Organization
+----------------------------
+
+The RGBDS source code file structure somewhat resembles the following:
+
+::
+
+       .
+       ├── .github/
+       │   ├── actions/
+       │   │   └── ...
+       │   └── workflows/
+       │       └── ...
+       ├── contrib/
+       │   └── ...
+       ├── include/
+       │   └── ...
+       ├── src/
+       │   ├── asm/
+       │   │   └── ...
+       │   ├── extern/
+       │   │   └── ...
+       │   ├── fix/
+       │   │   └── ...
+       │   ├── gfx/
+       │   │   └── ...
+       │   ├── link/
+       │   │   └── ...
+       │   ├── CMakeLists.txt
+       │   └── ...
+       ├── test/
+       │   ├── ...
+       │   └── run-tests.sh
+       ├── CMakeLists.txt
+       ├── Makefile
+       └── README.rst
+
+- ``.github/`` - files and scripts related to the integration of the RGBDS codebase with
+  GitHub.
+
+- ``contrib/`` - scripts and other resources which may be useful to users and developers of
+  RGBDS.
+
+- ``include/`` - header files for each respective C files in `src`.
+
+- ``src/`` - source code and manual pages for RGBDS.
+
+  * Note that the code unique to each RGBDS tool is stored in its respective subdirectory
+    (rgbasm -> ``src/asm/``, for example). ``src/extern/`` contains code imported from external sources.
+
+- ``test/`` - testing framework used to verify that changes to the code don't break or modify the behavior of RGBDS.
+
+3. History
+----------
 
 - Around 1997, Carsten Sørensen (AKA SurfSmurf) writes ASMotor as a
   general-purpose assembler/linker system for DOS/Win32
