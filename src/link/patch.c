@@ -434,7 +434,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 	while (assert) {
 		int32_t value = computeRPNExpr(&assert->patch,
 			(struct Symbol const * const *)assert->fileSymbols);
-		enum AssertionType type = assert->patch.type;
+		enum AssertionType type = (enum AssertionType)assert->patch.type;
 
 		if (!isError && !value) {
 			switch (type) {
