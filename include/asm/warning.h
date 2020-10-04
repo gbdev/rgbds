@@ -14,19 +14,19 @@
 extern unsigned int nbErrors;
 
 enum WarningID {
-	WARNING_ASSERT,		/* Assertions */
-	WARNING_BUILTIN_ARG,	/* Invalid args to builtins */
-	WARNING_DIV,		/* Division undefined behavior */
-	WARNING_EMPTY_DATA_DIRECTIVE,
-				/* `db`, `dw` or `dl` with no directive in ROM */
-	WARNING_EMPTY_ENTRY,	/* Empty entry in `db`, `dw` or `dl` */
-	WARNING_LARGE_CONSTANT,	/* Constants too large */
-	WARNING_LONG_STR,	/* String too long for internal buffers */
-	WARNING_OBSOLETE,	/* Obsolete things */
-	WARNING_SHIFT,		/* Shifting undefined behavior */
-	WARNING_SHIFT_AMOUNT,	/* Strange shift amount */
-	WARNING_TRUNCATION,	/* Implicit truncation loses some bits */
-	WARNING_USER,		/* User warnings */
+	WARNING_ASSERT,		      /* Assertions */
+	WARNING_BUILTIN_ARG,	      /* Invalid args to builtins */
+	WARNING_CHARMAP_REDEF,        /* Charmap entry re-definition */
+	WARNING_DIV,		      /* Division undefined behavior */
+	WARNING_EMPTY_DATA_DIRECTIVE, /* `db`, `dw` or `dl` with no directive in ROM */
+	WARNING_EMPTY_ENTRY,	      /* Empty entry in `db`, `dw` or `dl` */
+	WARNING_LARGE_CONSTANT,	      /* Constants too large */
+	WARNING_LONG_STR,	      /* String too long for internal buffers */
+	WARNING_OBSOLETE,	      /* Obsolete things */
+	WARNING_SHIFT,		      /* Shifting undefined behavior */
+	WARNING_SHIFT_AMOUNT,	      /* Strange shift amount */
+	WARNING_TRUNCATION,	      /* Implicit truncation loses some bits */
+	WARNING_USER,		      /* User warnings */
 
 	NB_WARNINGS,
 

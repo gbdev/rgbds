@@ -96,7 +96,7 @@ size_t symvaluetostring(char *dest, size_t maxLength, char *symName,
 	return length;
 }
 
-static uint32_t str2int2(char *s, int32_t length)
+static uint32_t str2int2(uint8_t *s, int32_t length)
 {
 	int32_t i;
 	uint32_t r = 0;
@@ -104,7 +104,7 @@ static uint32_t str2int2(char *s, int32_t length)
 	i = length < 4 ? 0 : length - 4;
 	while (i < length) {
 		r <<= 8;
-		r |= (uint8_t)s[i];
+		r |= s[i];
 		i++;
 	}
 
@@ -1023,9 +1023,7 @@ incbin		: T_POP_INCBIN string {
 charmap		: T_POP_CHARMAP string ',' const {
 			if ($4 < INT8_MIN || $4 > UINT8_MAX)
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
-
-			if (charmap_Add($2, (uint8_t)$4) == -1)
-				error("Error adding new charmap mapping: %s\n", strerror(errno));
+			charmap_Add($2, (uint8_t)$4);
 		}
 ;
 
@@ -1132,11 +1130,11 @@ constlist_8bit_entry : /* empty */ {
 		}
 		| reloc_8bit_no_str	{ out_RelByte(&$1); }
 		| string {
-			char *s = $1;
-			int32_t length = charmap_Convert(&s);
+			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
+			int32_t length = charmap_Convert($1, output);
 
-			out_AbsByteGroup((uint8_t*)s, length);
-			free(s);
+			out_AbsByteGroup(output, length);
+			free(output);
 		}
 ;
 
@@ -1189,11 +1187,11 @@ reloc_16bit	: relocexpr {
 
 relocexpr	: relocexpr_no_str
 		| string {
-			char *s = $1;
-			int32_t length = charmap_Convert(&s);
-			uint32_t r = str2int2(s, length);
+			uint8_t *output = malloc(strlen($1)); /* Cannot be longer than that */
+			int32_t length = charmap_Convert($1, output);
+			uint32_t r = str2int2(output, length);
 
-			free(s);
+			free(output);
 			rpn_Number(&$$, r);
 		}
 ;

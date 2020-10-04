@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
 	sym_SetExportAll(exportall);
 	fstk_Init(tzMainfile);
 	opt_ParseDefines();
-	charmap_InitMain();
+	charmap_New("main", NULL);
 
 	yy_set_state(LEX_STATE_NORMAL);
 	opt_SetCurrentOptions(&DefaultOptions);
