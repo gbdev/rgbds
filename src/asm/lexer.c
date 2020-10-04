@@ -729,6 +729,8 @@ static int peekInternal(uint8_t distance)
 		ssize_t nbCharsRead = 0, totalCharsRead = 0;
 
 #define readChars(size) do { \
+	/* This buffer overflow made me lose WEEKS of my life. Never again. */ \
+	assert(writeIndex + (size) <= LEXER_BUF_SIZE); \
 	nbCharsRead = read(lexerState->fd, &lexerState->buf[writeIndex], (size)); \
 	if (nbCharsRead == -1) \
 		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, errno); \
@@ -741,9 +743,11 @@ static int peekInternal(uint8_t distance)
 
 		/* If the range to fill passes over the buffer wrapping point, we need two reads */
 		if (writeIndex + target > LEXER_BUF_SIZE) {
-			readChars(LEXER_BUF_SIZE - writeIndex);
+			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+
+			readChars(nbExpectedChars);
 			/* If the read was incomplete, don't perform a second read */
-			if (nbCharsRead < LEXER_BUF_SIZE - writeIndex)
+			if (nbCharsRead < nbExpectedChars)
 				target = 0;
 		}
 		if (target != 0)
