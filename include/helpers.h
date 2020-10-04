@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 2014-2018, RGBDS contributors.
+ * Copyright (c) 2014-2020, RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -21,10 +21,6 @@
 	#define noreturn_
 	#define unused_
 	#define trap_
-#endif
-
-#ifndef DEVELOP
-	#define DEVELOP 0
 #endif
 
 /* Macros for stringification */

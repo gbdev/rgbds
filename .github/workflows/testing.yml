@@ -14,11 +14,11 @@ jobs:
           - os: ubuntu-18.04
             cc: gcc
             target: develop
-            cmakevars: -DDEVELOP=ON
+            cmakevars: -DSANITIZERS=ON -DMORE_WARNINGS=ON -DCMAKE_BUILD_TYPE=Debug
           - os: ubuntu-20.04
             cc: gcc
             target: develop
-            cmakevars: -DDEVELOP=ON
+            cmakevars: -DSANITIZERS=ON -DMORE_WARNINGS=ON -DCMAKE_BUILD_TYPE=Debug
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
