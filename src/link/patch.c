@@ -62,9 +62,17 @@ static int32_t asl(int32_t value, int32_t shiftamt)
 	return (uint32_t)value << shiftamt;
 }
 
-/* This is an "empty"-type stack */
+/*
+ * This is an "empty"-type stack. Apart from the actual values, we also remember
+ * whether the value is a placeholder inserted for error recovery. This allows
+ * us to avoid cascading errors.
+ *
+ * The best way to think about this is a stack of (value, errorFlag) pairs.
+ * They are only separated for reasons of memory efficiency.
+ */
 struct RPNStack {
-	int32_t *buf;
+	int32_t *values;
+	bool *errorFlags;
 	size_t size;
 	size_t capacity;
 } stack;
@@ -72,8 +80,9 @@ struct RPNStack {
 static inline void initRPNStack(void)
 {
 	stack.capacity = 64;
-	stack.buf = malloc(sizeof(*stack.buf) * stack.capacity);
-	if (!stack.buf)
+	stack.values = malloc(sizeof(*stack.values) * stack.capacity);
+	stack.errorFlags = malloc(sizeof(*stack.errorFlags) * stack.capacity);
+	if (!stack.values || !stack.errorFlags)
 		err(1, "Failed to init RPN stack");
 }
 
@@ -82,7 +91,7 @@ static inline void clearRPNStack(void)
 	stack.size = 0;
 }
 
-static void pushRPN(int32_t value)
+static void pushRPN(int32_t value, bool comesFromError)
 {
 	if (stack.size >= stack.capacity) {
 		static const size_t increase_factor = 2;
@@ -91,20 +100,27 @@ static void pushRPN(int32_t value)
 			errx(1, "Overflow in RPN stack resize");
 
 		stack.capacity *= increase_factor;
-		stack.buf =
-			realloc(stack.buf, sizeof(*stack.buf) * stack.capacity);
+		stack.values =
+			realloc(stack.values, sizeof(*stack.values) * stack.capacity);
+		stack.errorFlags =
+			realloc(stack.errorFlags, sizeof(*stack.errorFlags) * stack.capacity);
 		/*
 		 * Static analysis tools complain that the capacity might become
 		 * zero due to overflow, but fail to realize that it's caught by
 		 * the overflow check above. Hence the stringent check below.
 		 */
-		if (!stack.buf || !stack.capacity)
+		if (!stack.values || !stack.errorFlags || !stack.capacity)
 			err(1, "Failed to resize RPN stack");
 	}
 
-	stack.buf[stack.size] = value;
+	stack.values[stack.size] = value;
+	stack.errorFlags[stack.size] = comesFromError;
 	stack.size++;
 }
+
+// This flag tracks whether the RPN op that is currently being evaluated
+// has popped any values with the error flag set.
+static bool isError = false;
 
 static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
 {
@@ -112,12 +128,14 @@ static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
 		fatal(node, lineNo, "Internal error, RPN stack empty");
 
 	stack.size--;
-	return stack.buf[stack.size];
+	isError |= stack.errorFlags[stack.size];
+	return stack.values[stack.size];
 }
 
 static inline void freeRPNStack(void)
 {
-	free(stack.buf);
+	free(stack.values);
+	free(stack.errorFlags);
 }
 
 /* RPN operators */
@@ -149,6 +167,8 @@ static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
  * @param patch The patch to compute the value of
  * @param section The section the patch is contained in
  * @return The patch's value
+ * @return isError Set if an error occurred during evaluation, and further
+ *                 errors caused by the value should be suppressed.
  */
 static int32_t computeRPNExpr(struct Patch const *patch,
 			      struct Symbol const * const *fileSymbols)
@@ -165,6 +185,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		enum RPNCommand command = getRPNByte(&expression, &size,
 						     patch->src, patch->lineNo);
 		int32_t value;
+
+		isError = false;
 
 		/*
 		 * Friendly reminder:
@@ -191,7 +213,9 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		case RPN_DIV:
 			value = popRPN();
 			if (value == 0) {
-				error(patch->src, patch->lineNo, "Division by 0");
+				if (!isError)
+					error(patch->src, patch->lineNo, "Division by 0");
+				isError = true;
 				popRPN();
 				value = INT32_MAX;
 			} else {
@@ -201,7 +225,9 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		case RPN_MOD:
 			value = popRPN();
 			if (value == 0) {
-				error(patch->src, patch->lineNo, "Modulo by 0");
+				if (!isError)
+					error(patch->src, patch->lineNo, "Modulo by 0");
+				isError = true;
 				popRPN();
 				value = 0;
 			} else {
@@ -280,11 +306,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of symbol \"%s\", which was not found",
 				      fileSymbols[value]->name);
+				isError = true;
 				value = 1;
 			} else if (!symbol->section) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
 				      fileSymbols[value]->name);
+				isError = true;
 				value = 1;
 			} else {
 				value = symbol->section->bank;
@@ -302,6 +330,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of section \"%s\", which was not found",
 				      name);
+				isError = true;
 				value = 1;
 			} else {
 				value = sect->bank;
@@ -312,6 +341,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (!patch->pcSection) {
 				error(patch->src, patch->lineNo,
 				      "PC has no bank outside a section");
+				isError = true;
 				value = 1;
 			} else {
 				value = patch->pcSection->bank;
@@ -320,11 +350,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 		case RPN_HRAM:
 			value = popRPN();
-			if (value < 0
-			 || (value > 0xFF && value < 0xFF00)
-			 || value > 0xFFFF)
+			if (!isError && (value < 0
+				     || (value > 0xFF && value < 0xFF00)
+				     || value > 0xFFFF)) {
 				error(patch->src, patch->lineNo,
 				      "Value %" PRId32 " is not in HRAM range", value);
+				isError = true;
+			}
 			value &= 0xFF;
 			break;
 
@@ -333,9 +365,12 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			/* Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			 * They can be easily checked with a bitmask
 			 */
-			if (value & ~0x38)
-				error(patch->src, patch->lineNo,
-				      "Value %" PRId32 " is not a RST vector", value);
+			if (value & ~0x38) {
+				if (!isError)
+					error(patch->src, patch->lineNo,
+					      "Value %" PRId32 " is not a RST vector", value);
+				isError = true;
+			}
 			value |= 0xC7;
 			break;
 
@@ -357,6 +392,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 					error(patch->src, patch->lineNo,
 					      "PC has no value outside a section");
 					value = 0;
+					isError = true;
 				} else {
 					value = patch->pcOffset + patch->pcSection->org;
 				}
@@ -366,6 +402,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				if (!symbol) {
 					error(patch->src, patch->lineNo,
 					      "Unknown symbol \"%s\"", fileSymbols[value]->name);
+					isError = true;
 				} else {
 					value = symbol->value;
 					/* Symbols attached to sections have offsets */
@@ -376,13 +413,14 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 		}
 
-		pushRPN(value);
+		pushRPN(value, isError);
 	}
 
 	if (stack.size > 1)
 		error(patch->src, patch->lineNo,
 		      "RPN stack has %zu entries on exit, not 1", stack.size);
 
+	isError = false;
 	return popRPN();
 
 #undef popRPN
@@ -394,10 +432,12 @@ void patch_CheckAssertions(struct Assertion *assert)
 	initRPNStack();
 
 	while (assert) {
-		if (!computeRPNExpr(&assert->patch,
-				    (struct Symbol const * const *)
-							assert->fileSymbols)) {
-			switch ((enum AssertionType)assert->patch.type) {
+		int32_t value = computeRPNExpr(&assert->patch,
+			(struct Symbol const * const *)assert->fileSymbols);
+		enum AssertionType type = assert->patch.type;
+
+		if (!isError && !value) {
+			switch (type) {
 			case ASSERT_FATAL:
 				fatal(assert->patch.src, assert->patch.lineNo, "%s",
 				      assert->message[0] ? assert->message
@@ -415,6 +455,11 @@ void patch_CheckAssertions(struct Assertion *assert)
 							   : "assert failure");
 				break;
 			}
+		} else if (isError && type == ASSERT_FATAL) {
+			fatal(assert->patch.src, assert->patch.lineNo,
+			      "couldn't evaluate assertion%s%s",
+			      assert->message[0] ? ": " : "",
+			      assert->message);
 		}
 		struct Assertion *next = assert->next;
 
@@ -450,7 +495,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 							+ patch->pcOffset + 1;
 			int16_t jumpOffset = value - address;
 
-			if (jumpOffset < -128 || jumpOffset > 127)
+			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
 				error(patch->src, patch->lineNo,
 				      "jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				      jumpOffset);
@@ -467,8 +512,8 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				[PATCHTYPE_LONG] = {4, INT32_MIN, INT32_MAX}
 			};
 
-			if (value < types[patch->type].min
-			 || value > types[patch->type].max)
+			if (!isError && (value < types[patch->type].min
+				      || value > types[patch->type].max))
 				error(patch->src, patch->lineNo,
 				      "Value %#" PRIx32 "%s is not %u-bit",
 				      value, value < 0 ? " (maybe negative?)" : "",
