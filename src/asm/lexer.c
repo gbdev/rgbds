@@ -897,10 +897,13 @@ void lexer_DumpStringExpansions(void)
 {
 	if (!lexerState)
 		return;
-	struct Expansion *stack[nMaxRecursionDepth + 1];
+	struct Expansion **stack = malloc(sizeof(*stack) * (nMaxRecursionDepth + 1));
 	struct Expansion *expansion; /* Temp var for `lookupExpansion` */
 	unsigned int depth = 0;
 	size_t distance = lexerState->expansionOfs;
+
+	if (!stack)
+		fatalerror("Failed to alloc string expansion stack: %s\n", strerror(errno));
 
 #define LOOKUP_PRE_NEST(exp) do { \
 	/* Only register EQUS expansions, not string args */ \
@@ -915,6 +918,7 @@ void lexer_DumpStringExpansions(void)
 
 	while (depth--)
 		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
+	free(stack);
 }
 
 /* Function to discard all of a line's comments */
