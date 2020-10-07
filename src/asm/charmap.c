@@ -173,6 +173,7 @@ void charmap_Add(char *mapping, uint8_t value)
 			if (currentCharmap->usedNodes == currentCharmap->capacity) {
 				currentCharmap->capacity *= 2;
 				currentCharmap = resizeCharmap(currentCharmap, currentCharmap->capacity);
+				hash_ReplaceElement(charmaps, currentCharmap->name, currentCharmap);
 			}
 
 			/* Switch to and init new node */

@@ -64,6 +64,22 @@ bool hash_AddElement(HashMap map, char const *key, void *element)
 	return newEntry->next != NULL;
 }
 
+bool hash_ReplaceElement(HashMap const map, char const *key, void *element)
+{
+	HashType hashedKey = hash(key);
+	struct HashMapEntry *ptr = map[(HalfHashType)hashedKey];
+
+	while (ptr) {
+		if (hashedKey >> HALF_HASH_NB_BITS == ptr->hash
+		 && !strcmp(ptr->key, key)) {
+			ptr->content = element;
+			return true;
+		}
+		ptr = ptr->next;
+	}
+	return false;
+}
+
 bool hash_RemoveElement(HashMap map, char const *key)
 {
 	HashType hashedKey = hash(key);
