@@ -1,0 +1,3 @@
+ERROR: line-continuation-macro.asm(10):
+    Unterminated macro definition
+error: Assembly aborted (1 errors)!
