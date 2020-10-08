@@ -1174,6 +1174,80 @@ static int readIdentifier(char firstChar)
 	return tokenType;
 }
 
+/* Function to read identifiers & keywords for macros within macros */
+
+static bool startsMacroWithinMacro(int c)
+{
+	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '_' || c == '\\';
+}
+
+static int readMacroWithinMacro(char firstChar)
+{
+	dbgPrint("Reading macro or keyword within macro\n");
+	/* Lex while checking for a keyword */
+	yylval.tzSym[0] = firstChar;
+	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
+	int tokenType = T_ID;
+	bool backslash = firstChar == '\\';
+	size_t i;
+
+	for (i = 1; ; i++) {
+		int c = peek(0);
+
+		if (backslash) {
+			/* If that char isn't in the \1-\9 or \@ set, end */
+			if ((c > '9' || c < '0')
+			 && c != '@')
+				break;
+			shiftChars(1);
+
+			/* Write the char to the identifier's name */
+			if (i < sizeof(yylval.tzSym) - 1)
+				yylval.tzSym[i] = c;
+
+			backslash = false;
+
+			/* Attempt to traverse the tree to check for a keyword */
+			if (nodeID) /* Do nothing if matching already failed */
+				nodeID = keywordDict[nodeID].children[dictIndex(c)];
+
+		} else {
+			/* If that char isn't in the symbol charset, end */
+			if ((c > '9' || c < '0')
+			 && (c > 'Z' || c < 'A')
+			 && (c > 'z' || c < 'a')
+			 && c != '#' && c != '@' && c != '_' && c != '\\')
+				break;
+			shiftChars(1);
+
+			/* Write the char to the identifier's name */
+			if (i < sizeof(yylval.tzSym) - 1)
+				yylval.tzSym[i] = c;
+
+			/* If the char was a backslash, prepare for \1-\9 or \@ */
+			if (c == '.')
+				backslash = true;
+
+			/* Attempt to traverse the tree to check for a keyword */
+			if (nodeID) /* Do nothing if matching already failed */
+				nodeID = keywordDict[nodeID].children[dictIndex(c)];
+
+		}
+	}
+
+	if (i > sizeof(yylval.tzSym) - 1) {
+		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
+		i = sizeof(yylval.tzSym) - 1;
+	}
+	yylval.tzSym[i] = '\0'; /* Terminate the string */
+	dbgPrint("Ident/keyword = \"%s\"\n", yylval.tzSym);
+
+	if (keywordDict[nodeID].keyword)
+		return keywordDict[nodeID].keyword->token;
+
+	return tokenType;
+}
+
 /* Functions to read strings */
 
 enum PrintType {
@@ -2049,20 +2123,32 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 		do { /* Discard initial whitespace */
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
-		if (startsIdentifier(c)) {
-			switch (readIdentifier(c)) {
+		/* Now, try to match either `label: MACRO` or `ENDM` as a **whole** identifier */
+		if (startsMacroWithinMacro(c)) {
+			switch (readMacroWithinMacro(c)) {
 			case T_ID:
 				/* We have an initial label, look for a single colon */
-				do {
-					c = nextChar();
-				} while (isWhitespace(c));
+				for (;;) {
+					do {
+						c = nextChar();
+					} while (isWhitespace(c));
+					if (c == '\\')
+						readLineContinuation();
+					else
+						break;
+				}
 				if (c != ':') /* If not a colon, give up */
 					break;
 				/* And finally, a `MACRO` token */
-				do {
-					c = nextChar();
-				} while (isWhitespace(c));
+				for (;;) {
+					do {
+						c = nextChar();
+					} while (isWhitespace(c));
+					if (c == '\\')
+						readLineContinuation();
+					else
+						break;
+				}
 				if (!startsIdentifier(c))
 					break;
 				if (readIdentifier(c) != T_POP_MACRO)
