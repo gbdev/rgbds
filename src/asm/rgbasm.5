@@ -310,7 +310,7 @@ and it is automatically selected as the current character map from the beginning
 There is also a character map stack that can be used to save and restore which character map is currently active.
 .Bl -column "NEWCHARMAP name, basename"
 .It Sy Command Ta Sy Meaning
-.It Ic NEWCHARMAP Ar name Ta Creates a new, empty character map called Ar name .
+.It Ic NEWCHARMAP Ar name Ta Creates a new character map called Ar name initialized with ASCII encoding.
 .It Ic NEWCHARMAP Ar name , basename Ta Creates a new character map called Ar name , No copied from character map Ar basename .
 .It Ic SETCHARMAP Ar name Ta Switch to character map Ar name .
 .It Ic PUSHC Ta Push the current character map onto the stack.
