@@ -34,6 +34,16 @@ typedef struct HashMapEntry *HashMap[HASHMAP_NB_BUCKETS];
 bool hash_AddElement(HashMap map, char const *key, void *element);
 
 /**
+ * Replaces an element with an already-present key in a hashmap.
+ * @warning Inserting a NULL will make `hash_GetElement`'s return ambiguous!
+ * @param map The HashMap to replace the element in
+ * @param key The key with which the element will be stored and retrieved
+ * @param element The element to replace
+ * @return True if the element was found and replaced
+ */
+bool hash_ReplaceElement(HashMap const map, char const *key, void *element);
+
+/**
  * Removes an element from a hashmap.
  * @param map The HashMap to remove the element from
  * @param key The key to search the element with
