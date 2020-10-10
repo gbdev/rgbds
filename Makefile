@@ -23,12 +23,12 @@ CHECKPATCH	:= ../linux/scripts/checkpatch.pl
 # Other variables
 
 PKG_CONFIG	:= pkg-config
-PNGCFLAGS	:= `${PKG_CONFIG} --cflags libpng`
-PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
-PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
+PNGCFLAGS	:= $(shell ${PKG_CONFIG} --cflags libpng)
+PNGLDFLAGS	:= $(shell ${PKG_CONFIG} --libs-only-L libpng)
+PNGLDLIBS	:= $(shell ${PKG_CONFIG} --libs-only-l libpng)
 
 # Note: if this comes up empty, `version.c` will automatically fall back to last release number
-VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
+VERSION_STRING	:= $(shell git describe --tags --dirty --always 2>/dev/null)
 
 WARNFLAGS	:= -Wall
 
