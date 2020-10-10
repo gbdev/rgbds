@@ -743,10 +743,16 @@ code that can be invoked later.
 String symbol that can be evaluated, similarly to a macro.
 .El
 .Pp
-Symbol names can contain letters, numbers, underscores, hashes and
+Symbol names can contain letters, numbers, underscores
+.Sq _ ,
+hashes
+.Sq #
+and at signs
 .Sq @ .
-However, they must begin with either a letter, a number, or an underscore.
-Periods are allowed exclusively for labels, as described below.
+However, they must begin with either a letter, or an underscore.
+Periods
+.Sq \&.
+are allowed exclusively for labels, as described below.
 A symbol cannot have the same name as a reserved keyword.
 .Em \&In the line where a symbol is defined there must not be any whitespace before it ,
 otherwise
