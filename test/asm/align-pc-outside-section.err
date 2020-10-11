@@ -1,0 +1,2 @@
+FATAL: align-pc-outside-section.asm(1):
+    Code generation before SECTION directive
