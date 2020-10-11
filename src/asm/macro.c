@@ -130,7 +130,9 @@ uint32_t macro_UseNewUniqueID(void)
 
 void macro_ShiftCurrentArgs(void)
 {
-	if (macroArgs->shift != macroArgs->nbArgs)
+	if (!macroArgs)
+		error("Cannot shift macro arguments outside of a macro\n");
+	else if (macroArgs->shift != macroArgs->nbArgs)
 		macroArgs->shift++;
 }
 
