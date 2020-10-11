@@ -978,7 +978,7 @@ The following symbols are defined by the assembler:
 .It Ic EQU Ta Dv @ Ta PC value (essentially, the current memory address)
 .It Ic EQU Ta Dv _PI Ta Fixed point \[*p]
 .It Ic SET Ta Dv _RS Ta _RS Counter
-.It Ic EQU Ta Dv _NARG Ta Number of arguments passed to macro
+.It Ic EQU Ta Dv _NARG Ta Number of arguments passed to macro, updated by Ic SHIFT
 .It Ic EQU Ta Dv __LINE__ Ta The current line number
 .It Ic EQUS Ta Dv __FILE__ Ta The current filename
 .It Ic EQUS Ta Dv __DATE__ Ta Today's date
@@ -1282,7 +1282,9 @@ is a special command only available in macros.
 Very useful in
 .Ic REPT
 blocks.
-It will shift the arguments by one to the left.
+It will shift the arguments by one to the left, and decrease
+.Dv _NARG
+by 1.
 .Ic \[rs]1
 will get the value of
 .Ic \[rs]2 , \[rs]2
