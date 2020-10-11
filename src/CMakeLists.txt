@@ -22,13 +22,13 @@ else()
   pkg_check_modules(LIBPNG REQUIRED libpng)
 endif()
 
-BISON_TARGET(ASMy "asm/asmy.y"
-             "${PROJECT_SOURCE_DIR}/src/asm/asmy.c"
-             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/asmy.h"
+BISON_TARGET(PARSER "asm/parser.y"
+             "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
+             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.h"
              )
 
 set(rgbasm_src
-    "${BISON_ASMy_OUTPUT_SOURCE}"
+    "${BISON_PARSER_OUTPUT_SOURCE}"
     "asm/charmap.c"
     "asm/fstack.c"
     "asm/lexer.c"

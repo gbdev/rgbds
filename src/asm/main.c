@@ -26,7 +26,7 @@
 #include "asm/rpn.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
-#include "asmy.h"
+#include "parser.h"
 
 #include "extern/err.h"
 #include "extern/getopt.h"

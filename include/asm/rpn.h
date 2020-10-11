@@ -27,7 +27,7 @@ struct Expression {
 	uint32_t nRPNPatchSize; // Size the expression will take in the obj file
 };
 
-/* FIXME: Should be defined in `asmy.h`, but impossible with POSIX Yacc */
+/* FIXME: Should be defined in `parser.h`, but impossible with POSIX Yacc */
 extern int32_t nPCOffset;
 
 /*

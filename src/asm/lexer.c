@@ -36,7 +36,7 @@
 #include "asm/util.h"
 #include "asm/warning.h"
 /* Include this last so it gets all type & constant definitions */
-#include "asmy.h" /* For token definitions, generated from asmy.y */
+#include "parser.h" /* For token definitions, generated from parser.y */
 
 #ifdef LEXER_DEBUG
   #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
