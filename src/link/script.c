@@ -331,8 +331,8 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 	}
 
 	if (arg < *pc)
-		errx(1, "%s(%" PRIu32 "): `%s` cannot be used to go backwards",
-		     linkerScriptName, lineNo, commands[command]);
+		errx(1, "%s(%" PRIu32 "): `%s` cannot be used to go backwards (currently at $%x)",
+		     linkerScriptName, lineNo, commands[command], *pc);
 	*pc = arg;
 }
 
