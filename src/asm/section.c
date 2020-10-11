@@ -378,6 +378,7 @@ uint32_t sect_GetOutputOffset(void)
 
 void sect_AlignPC(uint8_t alignment, uint16_t offset)
 {
+	checksection();
 	struct Section *sect = sect_GetSymbolSection();
 
 	if (sect->org != -1) {
