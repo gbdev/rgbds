@@ -61,7 +61,7 @@ static size_t strlenUTF8(const char *s)
 	uint32_t codep = 0;
 
 	while (*s) {
-		switch (decode(&state, &codep, (uint8_t)*s)) {
+		switch (decode(&state, &codep, *s)) {
 		case 1:
 			fatalerror("STRLEN: Invalid UTF-8 character\n");
 			break;
@@ -95,7 +95,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 	/* Advance to starting position in source string. */
 	while (src[srcIndex] && curPos < pos) {
-		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
+		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			fatalerror("STRSUB: Invalid UTF-8 character\n");
 			break;
@@ -113,7 +113,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 
 	/* Copy from source to destination. */
 	while (src[srcIndex] && destIndex < MAXSTRLEN && curLen < len) {
-		switch (decode(&state, &codep, (uint8_t)src[srcIndex])) {
+		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			fatalerror("STRSUB: Invalid UTF-8 character\n");
 			break;
