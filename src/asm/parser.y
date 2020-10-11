@@ -36,8 +36,6 @@
 #include "platform.h" // strncasecmp, strdup
 
 uint32_t nListCountEmpty;
-char *tzNewMacro;
-uint32_t ulNewMacroSize;
 int32_t nPCOffset;
 bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
 
