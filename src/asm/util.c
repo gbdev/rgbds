@@ -69,7 +69,7 @@ size_t readUTF8Char(uint8_t *dest, char const *src)
 	size_t i = 0;
 
 	for (;;) {
-		if (decode(&state, &codep, (uint8_t)src[i]) == 1)
+		if (decode(&state, &codep, src[i]) == 1)
 			fatalerror("invalid UTF-8 character\n");
 
 		dest[i] = src[i];

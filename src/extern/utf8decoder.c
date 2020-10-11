@@ -38,7 +38,7 @@ static const uint8_t utf8d[] = {
 	  1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* s8 */
 };
 
-uint32_t decode(uint32_t *state, uint32_t *codep, uint32_t byte)
+uint32_t decode(uint32_t *state, uint32_t *codep, uint8_t byte)
 {
 	uint32_t type = utf8d[byte];
 
