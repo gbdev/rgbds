@@ -46,17 +46,19 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 		/* If there isn't enough room to reserve the space, realloc */
 		if (!expr->tRPN)
 			expr->nRPNCapacity = 256; /* Initial size */
-		else if (expr->nRPNCapacity >= MAXRPNLEN)
-			/*
-			 * To avoid generating humongous object files, cap the
-			 * size of RPN expressions
-			 */
-			fatalerror("RPN expression cannot grow larger than "
-				   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
-		else if (expr->nRPNCapacity > MAXRPNLEN / 2)
-			expr->nRPNCapacity = MAXRPNLEN;
-		else
-			expr->nRPNCapacity *= 2;
+		while (expr->nRPNCapacity - expr->nRPNLength < size) {
+			if (expr->nRPNCapacity >= MAXRPNLEN)
+				/*
+				 * To avoid generating humongous object files, cap the
+				 * size of RPN expressions
+				 */
+				fatalerror("RPN expression cannot grow larger than "
+					   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
+			else if (expr->nRPNCapacity > MAXRPNLEN / 2)
+				expr->nRPNCapacity = MAXRPNLEN;
+			else
+				expr->nRPNCapacity *= 2;
+		}
 		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
 
 		if (!expr->tRPN)
