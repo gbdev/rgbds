@@ -27,6 +27,8 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 option(SANITIZERS "Build with sanitizers enabled" OFF)
 option(MORE_WARNINGS "Turn on more warnings" OFF)
+option(TRACE_PARSER "Trace parser execution" OFF)
+option(TRACE_LEXER "Trace lexer execution" OFF)
 
 if(MSVC)
   add_compile_options(/W1 /MP)
@@ -69,3 +71,11 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
+
+if(TRACE_PARSER)
+  target_compile_definitions(rgbasm PRIVATE -DYYDEBUG)
+endif()
+
+if(TRACE_LEXER)
+  target_compile_definitions(rgbasm PRIVATE -DLEXER_DEBUG)
+endif()
