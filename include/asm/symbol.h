@@ -125,7 +125,6 @@ struct Symbol *sym_FindSymbol(char const *symName);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
-uint32_t sym_GetDefinedValue(char const *s);
 void sym_Purge(char const *symName);
 void sym_Init(void);
 

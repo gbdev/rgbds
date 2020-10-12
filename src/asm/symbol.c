@@ -322,23 +322,6 @@ uint32_t sym_GetConstantValue(char const *s)
 	return 0;
 }
 
-/*
- * Return a defined symbols value... aborts if not defined yet
- */
-uint32_t sym_GetDefinedValue(char const *s)
-{
-	struct Symbol const *sym = sym_FindSymbol(s);
-
-	if (sym == NULL || !sym_IsDefined(sym))
-		error("'%s' not defined\n", s);
-	else if (!sym_IsNumeric(sym))
-		error("'%s' is a macro or string symbol\n", s);
-	else
-		return sym_GetValue(sym);
-
-	return 0;
-}
-
 char const *sym_GetCurrentSymbolScope(void)
 {
 	return labelScope;
