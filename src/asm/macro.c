@@ -130,9 +130,11 @@ uint32_t macro_UseNewUniqueID(void)
 
 void macro_ShiftCurrentArgs(int32_t count)
 {
-	if (!macroArgs)
+	if (!macroArgs) {
 		error("Cannot shift macro arguments outside of a macro\n");
-	else if (macroArgs->shift < macroArgs->nbArgs) {
+	} else if (count < 0) {
+		error("Cannot shift arguments by negative amount %" PRId32 "\n", count);
+	} else if (macroArgs->shift < macroArgs->nbArgs) {
 		macroArgs->shift += count;
 		if (macroArgs->shift > macroArgs->nbArgs)
 			macroArgs->shift = macroArgs->nbArgs;
