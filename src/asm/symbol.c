@@ -426,6 +426,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 		      symName, sym->type == SYM_LABEL ? "label" : "constant");
 		dumpFilename(sym);
 		putc('\n', stderr);
+		return sym;
 	} else {
 		/* TODO: can the scope be incorrect when taking over refs? */
 		updateSymbolFilename(sym);

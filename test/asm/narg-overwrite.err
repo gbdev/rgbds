@@ -1,0 +1,5 @@
+ERROR: narg-overwrite.asm(1):
+    '_NARG' already defined as constant at <builtin>
+ERROR: narg-overwrite.asm(2):
+    '_NARG' already defined as constant at <builtin>
+error: Assembly aborted (2 errors)!
