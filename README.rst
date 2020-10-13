@@ -32,7 +32,7 @@ is possible using ``make`` or ``cmake``; follow the link for more detailed instr
 
 .. code:: sh
 
-    cmake -S . -B build
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build
     cmake --install build
 
