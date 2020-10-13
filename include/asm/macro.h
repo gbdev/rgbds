@@ -29,7 +29,7 @@ uint32_t macro_GetUniqueID(void);
 char const *macro_GetUniqueIDStr(void);
 void macro_SetUniqueID(uint32_t id);
 uint32_t macro_UseNewUniqueID(void);
-void macro_ShiftCurrentArgs(void);
+void macro_ShiftCurrentArgs(int32_t count);
 uint32_t macro_NbArgs(void);
 
 #endif

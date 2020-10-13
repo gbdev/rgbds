@@ -579,13 +579,8 @@ assert		: T_POP_ASSERT assert_type relocexpr
 		}
 ;
 
-shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(); }
-		| T_POP_SHIFT uconst
-		{
-			int32_t i = $2;
-			while (i--)
-				macro_ShiftCurrentArgs();
-		}
+shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(1); }
+		| T_POP_SHIFT const	{ macro_ShiftCurrentArgs($2); }
 ;
 
 load		: T_POP_LOAD string ',' sectiontype sectorg sectattrs {
