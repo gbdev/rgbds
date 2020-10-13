@@ -309,7 +309,9 @@ bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
 	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
 		return false;
 
-	return sym_GetSection(sym1) == sym_GetSection(sym);
+	struct Section const *section1 = sym_GetSection(sym1);
+	struct Section const *section2 = sym_GetSection(sym);
+	return section1 && (section1 == section2);
 }
 
 static bool isDiffConstant(struct Expression const *src1,
