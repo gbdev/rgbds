@@ -47,13 +47,22 @@ The assembler
 .Em always
 ignores comments and their contents.
 .Pp
-There are two syntaxes for comments. The most common is that anything that follows a semicolon
+There are three syntaxes for comments. The most common is that anything that follows a semicolon
 .Ql \&;
 not inside a string, is a comment until the end of the line.
-The other is that lines beginning with a
+The second is a block comment, beginning with
+.Ql /*
+and ending with
+.Ql */ .
+It can be split across multiple lines, or occur in the middle of an expression:
+.Bd -literal -offset indent
+X = /* the value of x
+       should be 3 */ 3
+.Ed
+The third is that lines beginning with a
 .Ql *
 (not even spaces before it) are ignored.
-This second syntax is deprecated (will be removed in a future version) and should be replaced with the first one.
+This third syntax is deprecated (will be removed in a future version) and should be replaced with either of the first two.
 .Pp
 Sometimes lines can be too long and it may be necessary to split them.
 To do so, put a backslash at the end of the line:

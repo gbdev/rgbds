@@ -921,6 +921,33 @@ void lexer_DumpStringExpansions(void)
 	free(stack);
 }
 
+/* Discards an block comment */
+static void discardBlockComment(void)
+{
+	dbgPrint("Discarding block comment\n");
+	for (;;) {
+		switch (nextChar()) {
+		case EOF:
+			error("Unterminated block comment\n");
+			return;
+		case '/':
+			if (peek(0) == '*') {
+				warning(WARNING_NESTED_COMMENT,
+					"/* in block comment\n");
+			}
+			continue;
+		case '*':
+			if (peek(0) == '/') {
+				shiftChars(1);
+				return;
+			}
+			/* fallthrough */
+		default:
+			continue;
+		}
+	}
+}
+
 /* Function to discard all of a line's comments */
 
 static void discardComment(void)
@@ -1476,8 +1503,6 @@ static int yylex_NORMAL(void)
 			return T_OP_ADD;
 		case '-':
 			return T_OP_SUB;
-		case '/':
-			return T_OP_DIV;
 		case '~':
 			return T_OP_NOT;
 
@@ -1498,7 +1523,14 @@ static int yylex_NORMAL(void)
 
 		/* Handle ambiguous 1- or 2-char tokens */
 		char secondChar;
-
+		case '/': /* Either division or a block comment */
+			secondChar = peek(0);
+			if (secondChar == '*') {
+				shiftChars(1);
+				discardBlockComment();
+				break;
+			}
+			return T_OP_DIV;
 		case '|': /* Either binary or logical OR */
 			secondChar = peek(0);
 			if (secondChar == '|') {

@@ -36,6 +36,7 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_EMPTY_ENTRY]		= WARNING_DISABLED,
 	[WARNING_LARGE_CONSTANT]	= WARNING_DISABLED,
 	[WARNING_LONG_STR]		= WARNING_DISABLED,
+	[WARNING_NESTED_COMMENT]	= WARNING_ENABLED,
 	[WARNING_OBSOLETE]		= WARNING_ENABLED,
 	[WARNING_SHIFT]			= WARNING_DISABLED,
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
@@ -75,6 +76,7 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"empty-entry",
 	"large-constant",
 	"long-string",
+	"nested-comment",
 	"obsolete",
 	"shift",
 	"shift-amount",
@@ -104,6 +106,7 @@ static uint8_t const _wallCommands[] = {
 /* Warnings that are less likely to indicate an error */
 static uint8_t const _wextraCommands[] = {
 	WARNING_EMPTY_ENTRY,
+	WARNING_NESTED_COMMENT,
 	META_WARNING_DONE
 };
 
@@ -115,6 +118,7 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_EMPTY_ENTRY,
 	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
+	WARNING_NESTED_COMMENT,
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
