@@ -26,14 +26,12 @@ while getopts ":hr" opt; do
 			;;
 		\?)
 			echo "Unknown option '$OPTARG'"
-			if [ $bad_usage -eq 0 ]; then
-				usage
-				bad_usage=1
-			fi
+			bad_usage=1
 			;;
 	esac
 done
 if [ $bad_usage -ne 0 ]; then
+	usage
 	exit 1
 fi
 shift $(($OPTIND - 1))
