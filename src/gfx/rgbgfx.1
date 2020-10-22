@@ -26,7 +26,7 @@
 The
 .Nm
 program converts PNG images into the Nintendo Game Boy's planar tile format.
-
+.Pp
 The resulting colors and their palette indices are determined differently depending on the input PNG file:
 .Bl -dash -width Ds
 .It
@@ -39,7 +39,7 @@ If the image has multiple shades that map to the same index, the palette is inst
 .It
 If the image has color (or the grayscale method failed), the colors are sorted from lightest to darkest.
 .El
-
+.Pp
 The input image may not contain more colors than the selected bit depth allows.
 Transparent pixels are set to palette index 0.
 .Sh ARGUMENTS
@@ -53,7 +53,7 @@ is invalid because it could also be
 .Fl Fl version .
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar attrmap, Fl Fl attr-map Ar attrmap
+.It Fl a Ar attrmap , Fl Fl attr-map Ar attrmap
 Generate a file of tile mirroring attributes for OAM or (CGB-only) background tiles.
 For each tile in the input file, a byte is written representing the dimensions that the associated tile in the output file should be mirrored.
 Useful in combination with

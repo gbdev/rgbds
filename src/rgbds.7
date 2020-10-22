@@ -13,7 +13,6 @@
 .Nd Rednex Game Boy Development System
 .Sh EXAMPLES
 To get a working ROM image from a single assembly source file:
-.Pp
 .Bd -literal -offset indent
 $ rgbasm \-o bar.o foo.asm
 $ rgblink \-o baz.gb bar.o
@@ -26,7 +25,7 @@ $ rgbfix \-v \-p 0 baz.gb
 .Xr rgbds 5 ,
 .Xr gbz80 7
 .Sh HISTORY
-.Bl -ohang
+.Bl -item
 .It
 1997, Carsten S\(/orensen (AKA SurfSmurf) writes ASMotor as a general-purpose
 assembler/linker system for DOS/Win32.
@@ -37,8 +36,8 @@ assembly/machine code, and releases this version as RGBDS.
 2009, Vegard Nossum adapts the code to be more UNIX-like and releases this
 version as rgbds-linux on GitHub.
 .It
-2010, Anthony J. Bentley forks that repository. The fork becomes the reference
-implementation of rgbds.
+2010, Anthony J. Bentley forks that repository.
+The fork becomes the reference implementation of rgbds.
 .It
 2017, Bentley's repository is moved to a neutral name.
 It is now maintained by a number of contributors at

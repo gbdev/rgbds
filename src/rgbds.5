@@ -18,7 +18,6 @@ and
 .Xr rgblink 1 .
 .Em Please note that the specifications may change .
 This toolchain is in development and new features may require adding more information to the current format, or modifying some fields, which would break compatibility with older versions.
-.Pp
 .Sh FILE STRUCTURE
 The following types are used:
 .Pp
@@ -29,7 +28,6 @@ is an 8‐bit integer.
 .Ar STRING
 is a 0‐terminated string of
 .Ar BYTE .
-.Pp
 .Bd -literal
 ; Header
 
@@ -219,8 +217,7 @@ The
 In the RGB format, RPN expressions are stored as
 .Ar BYTE Ns s
 with some bytes being special prefixes for integers and symbols.
-.Pp
-.Bl -column -offset indent ".Sy String" ".Sy String"
+.Bl -column -offset indent "Sy String" "Sy String"
 .It Sy Value Ta Sy Meaning
 .It Li $00 Ta Li + operator
 .It Li $01 Ta Li - operator
@@ -259,7 +256,6 @@ integer follows.
 .It Li $81 Ta Ar LONG
 symbol ID follows.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,

@@ -12,7 +12,6 @@
 .Nm rgbasm
 .Nd language documentation
 .Sh DESCRIPTION
-.Pp
 This is the full description of the language used by
 .Xr rgbasm 1 .
 The description of the instructions supported by the Game Boy CPU is in
@@ -30,7 +29,6 @@ but any program that processes RGB object files (described in
 .Xr rgbds 5 )
 can be used in its place.
 .Sh SYNTAX
-.Pp
 The syntax is line‐based, just as in any other assembler, meaning that you do one instruction or pseudo‐op per line:
 .Pp
 .Dl Oo Ar label Oc Oo Ar instruction Oc Oo Ar ;\ comment Oc
@@ -47,7 +45,8 @@ The assembler
 .Em always
 ignores comments and their contents.
 .Pp
-There are three syntaxes for comments. The most common is that anything that follows a semicolon
+There are three syntaxes for comments.
+The most common is that anything that follows a semicolon
 .Ql \&;
 not inside a string, is a comment until the end of the line.
 The second is a block comment, beginning with
@@ -81,7 +80,6 @@ like this:
               "world!")
 .Ed
 .Sh EXPRESSIONS
-.Pp
 An expression can be composed of many things.
 Numerical expressions are always evaluated using signed 32-bit math.
 Zero is considered to be the only "false" number, all non-zero numbers (including negative) are "true".
@@ -95,9 +93,7 @@ section.
 .Pp
 The instructions in the macro-language generally require constant expressions.
 .Ss Numeric Formats
-.Pp
 There are a number of numeric formats.
-.Pp
 .Bl -column -offset indent "Fixed point (16.16)" "Prefix"
 .It Sy Format type Ta Sy Prefix Ta Sy Accepted characters
 .It Hexadecimal Ta $ Ta 0123456789ABCDEF
@@ -128,9 +124,7 @@ is equivalent to
 .Pp
 You can also use symbols, which are implicitly replaced with their value.
 .Ss Operators
-.Pp
 A great number of operators you can use in expressions are available (listed from highest to lowest precedence):
-.Pp
 .Bl -column -offset indent "!= == <= >= < >"
 .It Sy Operator Ta Sy Meaning
 .It Li \&( \&) Ta Precedence override
@@ -176,7 +170,6 @@ and
 .Pp
 ! returns 1 if the operand was 0, and 0 otherwise.
 .Ss Fixed‐point Expressions
-.Pp
 Fixed-point numbers are basically normal (32-bit) integers, which count 65536th's instead of entire units, offering better precision than integers but limiting the range of values.
 The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
 Since they are still akin to integers, you can use them in normal integer expressions, and some integer operators like
@@ -191,7 +184,6 @@ The following functions are designed to operate with fixed-point numbers:
 .EQ
 delim $$
 .EN
-.Pp
 .Bl -column -offset indent "ATAN2(x, y)"
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta $x \[di] y$
@@ -222,7 +214,6 @@ ANGLE = ANGLE + 256.0 ; 256 = 65536 / table_len, with table_len = 256
       ENDR
 .Ed
 .Ss String Expressions
-.Pp
 The most basic string expression is any number of characters contained in double quotes
 .Pq Ql \&"for instance" .
 The backslash character
@@ -231,8 +222,7 @@ is special in that it causes the character following it to be
 .Dq escaped ,
 meaning that it is treated differently from normal.
 There are a number of escape sequences you can use within a string:
-.Pp
-.Bl -column -offset indent "'\1' - '\9'"
+.Bl -column -offset indent "Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc"
 .It Sy String Ta Sy Meaning
 .It Ql \[rs]\[rs] Ta Produces a backslash
 .It Ql \[rs]" Ta Produces a double quote without terminating
@@ -287,7 +277,6 @@ The symbol's value is again inserted directly.
 .Pp
 The following functions operate on string expressions.
 Most of them return a string, however some of these functions actually return an integer and can be used as part of an integer expression!
-.Pp
 .Bl -column "STRSUB(str, pos, len)"
 .It Sy Name Ta Sy Operation
 .It Fn STRLEN string Ta Returns the number of characters in Ar string .
@@ -299,7 +288,6 @@ Most of them return a string, however some of these functions actually return an
 .It Fn STRLWR str Ta Converts all characters in Ar str No to lower case and returns the new string.
 .El
 .Ss Character maps
-.Pp
 When writing text that is meant to be displayed in the Game Boy, the characters used in the source code may have a different encoding than the default of ASCII.
 For example, the tiles used for uppercase letters may be placed starting at tile index 128, which makes it difficult to add text strings to the ROM.
 .Pp
@@ -334,9 +322,7 @@ This means that any string that the code may want to print as debug information 
 The output value of a mapping can be 0.
 If this happens, the assembler will treat this as the end of the string and the rest of it will be trimmed.
 .Ss Other functions
-.Pp
 There are a few other functions that do various useful things:
-.Pp
 .Bl -column "DEF(label)"
 .It Sy Name Ta Sy Operation
 .It Fn BANK arg Ta Returns a bank number.
@@ -365,7 +351,6 @@ String symbols are not expanded within the parentheses.
 or 0 if only RGBLINK can compute its value.
 .El
 .Sh SECTIONS
-.Pp
 Before you can start writing code, you must define a section.
 This tells the assembler what kind of information follows and, if it is code, where to put it.
 .Pp
@@ -382,7 +367,6 @@ All other sections must have a unique name, even in different source files, or t
 Possible section
 .Ar type Ns s
 are as follows:
-.Pp
 .Bl -tag
 .It Ic ROM0
 A ROM section.
@@ -568,7 +552,6 @@ SECTION "VRAM Data",ROMX,BANK[2],ALIGN[4] ;\ align to 16 bytes
 .Ed
 .El
 .Ss Section Stack
-.Pp
 .Ic POPS
 and
 .Ic PUSHS
@@ -581,7 +564,6 @@ will push the current section context on the section stack.
 can then later be used to restore it.
 Useful for defining sections in included files when you don't want to override the section context at the point the file was included.
 .Ss RAM Code
-.Pp
 Sometimes you want to have some code in RAM.
 But then you can't simply put it in a RAM section, you have to store it in ROM and copy it to RAM at some point.
 .Pp
@@ -642,7 +624,6 @@ You cannot nest
 .Ic LOAD
 blocks, nor can you change the current section within them.
 .Ss Unionized Sections
-.Pp
 When you're tight on RAM, you may want to define overlapping blocks of variables, as explained in the
 .Sx Unions
 section.
@@ -736,12 +717,11 @@ and the one from
 .Ql bar.o
 last.
 .Sh SYMBOLS
-.Pp
 RGBDS supports several types of symbols:
-.Pp
 .Bl -hang
 .It Sy Label
-Numerical symbol designating a memory location. May or may not have a value known at assembly time.
+Numerical symbol designating a memory location.
+May or may not have a value known at assembly time.
 .It Sy Constant
 Numerical symbol whose value has to be known at assembly time.
 .It Sy Macro
@@ -861,7 +841,6 @@ str_SIZEOF EQU 259
 .Ed
 .Pp
 There are five commands in the RS group of commands:
-.Pp
 .Bl -column "RSSET constexpr"
 .It Sy Command Ta Sy Meaning
 .It Ic RSRESET Ta Equivalent to Ql RSSET 0 .
@@ -940,7 +919,6 @@ following the macro's name is required.
 Macros can't be exported or imported.
 .El
 .Ss Exporting and importing symbols
-.Pp
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.
 .Pp
 Exporting of symbols has to be done manually, importing is done automatically if
@@ -960,7 +938,6 @@ do not use it.
 Note also that only exported symbols will appear in symbol and map files produced by
 .Xr rgblink 1 .
 .Ss Purging symbols
-.Pp
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table as if it had never existed.
 .Em USE WITH EXTREME CAUTION!!!
@@ -979,9 +956,7 @@ Note that, as an exception, string symbols in the argument list of a
 command
 .Em will not be expanded .
 .Ss Predeclared Symbols
-.Pp
 The following symbols are defined by the assembler:
-.Pp
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
 .It Sy Type Ta Sy Name Ta Sy Contents
 .It Ic EQU Ta Dv @ Ta PC value (essentially, the current memory address)
@@ -1006,7 +981,6 @@ The following symbols are defined by the assembler:
 .El
 .Sh DEFINING DATA
 .Ss Declaring variables in a RAM section
-.Pp
 .Ic DS
 allocates a number of empty bytes.
 This is the preferred method of allocating space in a RAM section.
@@ -1027,7 +1001,6 @@ In ROM sections, it will be filled with the value passed to the
 command-line option, except when using overlays with
 .Fl O .
 .Ss Defining constant data
-.Pp
 .Ic DB
 defines a list of bytes that will be stored in the final image.
 Ideal for tables and text.
@@ -1079,7 +1052,6 @@ can be used in a
 .Ic SRAM
 section.
 .Ss Including binary files
-.Pp
 You probably have some graphics, level data, etc. you'd like to include.
 Use
 .Ic INCBIN
@@ -1101,9 +1073,9 @@ The example below includes 256 bytes from data.bin, starting from byte 78.
 INCBIN "data.bin",78,256
 .Ed
 .Pp
-The length argument is optional. If only the start position is specified, the bytes from the start position until the end of the file will be included.
+The length argument is optional.
+If only the start position is specified, the bytes from the start position until the end of the file will be included.
 .Ss Unions
-.Pp
 Unions allow multiple memory allocations to overlap, like unions in C.
 This does not increase the amount of memory available, but allows re-using the same memory region for different purposes.
 .Pp
@@ -1155,7 +1127,6 @@ like commands (see
 .Sx Declaring variables in a RAM section ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
-.Pp
 You execute the macro by inserting its name.
 .Bd -literal -offset indent
          add a,b
@@ -1216,7 +1187,6 @@ command-line option in
 Also, a macro can have inside an
 .Sy EQUS
 which references the same macro, which has the same problem.
-.Pp
 .Pp
 It's possible to pass arguments to macros as well!
 You retrieve the arguments by using the escape sequences
@@ -1306,7 +1276,6 @@ This is the only way of accessing the value of arguments from 10 to 256.
 .Ic SHIFT
 can optionally be given an integer parameter, and will apply the above shifting that number of times.
 .Ss Printing things during assembly
-.Pp
 The next four commands print text and values to the standard output.
 Useful for debugging macros, or wherever you may feel the need to tell yourself some important information.
 .Bd -literal -offset indent
@@ -1315,7 +1284,6 @@ PRINTI (2 + 3) / 5
 PRINTV $FF00 + $F0
 PRINTF MUL(3.14, 3987.0)
 .Ed
-.Pp
 .Bl -inset
 .It Ic PRINTT
 prints out a string.
@@ -1334,7 +1302,6 @@ prints out a fixed point value.
 Be careful that none of those automatically print a line feed; if you need one, use
 .Ic PRINTT "\[rs]n" .
 .Ss Automatically repeating blocks of code
-.Pp
 Suppose you want to unroll a time consuming loop without copy-pasting it.
 .Ic REPT
 is here for that purpose.
@@ -1371,7 +1338,6 @@ As in macros, you can also use the escape sequence
 .Ic REPT
 blocks can be nested.
 .Ss Aborting the assembly process
-.Pp
 .Ic FAIL
 and
 .Ic WARN
@@ -1392,7 +1358,6 @@ If you need to ensure some assumption is correct when compiling, you can use
 and
 .Ic STATIC_ASSERT .
 Syntax examples are given below:
-.Pp
 .Bd -literal -offset indent
 Function:
       xor a
@@ -1443,7 +1408,6 @@ to be emitted;
 .Ic FATAL
 immediately aborts.
 .Ss Including other source files
-.Pp
 Use
 .Ic INCLUDE
 to process another assembler file and then return to the current file when done.
@@ -1459,7 +1423,6 @@ calls infinitely (or until you run out of memory, whichever comes first).
     INCLUDE "irq.inc"
 .Ed
 .Ss Conditional assembling
-.Pp
 The four commands
 .Ic IF , ELIF , ELSE ,
 and
@@ -1509,7 +1472,6 @@ Also, if there is more than one
 block, all of them but the first one are ignored.
 .Sh MISCELLANEOUS
 .Ss Changing options while assembling
-.Pp
 .Ic OPT
 can be used to change some of the options during assembling from within the source, instead of defining them on the command-line.
 .Pp
@@ -1539,7 +1501,6 @@ can then later be used to restore them.
 Useful if you want to change some options in an include file and you don't want to destroy the options set by the program that included your file.
 The stack's number of entries is limited only by the amount of memory in your machine.
 .Ss Requesting alignment
-.Pp
 While
 .Ic ALIGN
 as presented in
@@ -1567,7 +1528,6 @@ is a shorthand for
 .Xr rgbds 7 ,
 .Xr gbz80 7
 .Sh HISTORY
-.Pp
 .Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,
 and was later packaged in RGBDS by Justin Lloyd.

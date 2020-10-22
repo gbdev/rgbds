@@ -66,7 +66,7 @@ Enable DMG mode.
 Prohibit the use of sections that doesn't exist on a DMG, such as VRAM bank 1.
 This option automatically enables
 .Fl w .
-.It Fl l Ar linker_script, Fl Fl linkerscript Ar linker_script
+.It Fl l Ar linker_script , Fl Fl linkerscript Ar linker_script
 Specify a linker script file that tells the linker how sections must be placed in the ROM.
 The attributes assigned in the linker script must be consistent with any assigned in the code.
 See
@@ -116,7 +116,7 @@ option!
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM image like so:
 .Pp
-.D1 $ rgblink -o bar.gb foo.o
+.Dl $ rgblink -o bar.gb foo.o
 .Pp
 The resulting
 .Ar bar.gb
@@ -126,12 +126,10 @@ You should use
 to fix these so that the program will actually run in a Game Boy:
 .Pp
 .Dl $ rgbfix -v bar.gb
-.Ed
 .Pp
 Here is a more complete example:
 .Pp
 .Dl $ rgblink -o bin/game.gb -n bin/game.sym -p 0xFF obj/title.o obj/engine.o
-.Ed
 .Sh BUGS
 Please report bugs on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .
