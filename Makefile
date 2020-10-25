@@ -136,7 +136,7 @@ clean:
 	$Q${RM} rgbgfx rgbgfx.exe
 	$Qfind src/ -name "*.o" -exec rm {} \;
 	$Q${RM} rgbshim.sh
-	$Q${RM} src/asm/asmy.c src/asm/asmy.h
+	$Q${RM} src/asm/parser.c src/asm/parser.h
 
 # Target used to install the binaries and man pages.
 
