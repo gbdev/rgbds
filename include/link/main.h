@@ -66,7 +66,7 @@ void warning(struct FileStackNode const *where, uint32_t lineNo,
 void error(struct FileStackNode const *where, uint32_t lineNo,
 	   char const *fmt, ...) format_(printf, 3, 4);
 
-noreturn_ void fatal(struct FileStackNode const *where, uint32_t lineNo,
+_Noreturn void fatal(struct FileStackNode const *where, uint32_t lineNo,
 		     char const *fmt, ...) format_(printf, 3, 4);
 
 /**

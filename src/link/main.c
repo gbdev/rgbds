@@ -99,7 +99,7 @@ void error(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, 
 		nbErrors++;
 }
 
-noreturn_ void fatal(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+_Noreturn void fatal(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list ap;
 

@@ -318,7 +318,7 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
 {
 	switch (command) {
 	case COMMAND_INVALID:
-		trap_;
+		unreachable_();
 
 	case COMMAND_ORG:
 		break;
@@ -391,12 +391,12 @@ struct SectionPlacement *script_NextSection(void)
 
 		switch (parserState) {
 		case PARSER_FIRSTTIME:
-			trap_;
+			unreachable_();
 
 		case PARSER_LINESTART:
 			switch (token->type) {
 			case TOKEN_INVALID:
-				trap_;
+				unreachable_();
 
 			case TOKEN_EOF:
 				if (!popFile())

@@ -108,7 +108,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 		break;
 
 	case SECTION_NORMAL:
-		trap_;
+		unreachable_();
 	}
 
 	other->nextu = target->nextu;

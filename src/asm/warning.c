@@ -222,7 +222,7 @@ void error(const char *fmt, ...)
 	nbErrors++;
 }
 
-noreturn_ void fatalerror(const char *fmt, ...)
+_Noreturn void fatalerror(const char *fmt, ...)
 {
 	va_list args;
 
@@ -250,7 +250,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		return;
 
 	case WARNING_DEFAULT:
-		trap_;
+		unreachable_();
 		/* Not reached */
 
 	case WARNING_ENABLED:

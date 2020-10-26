@@ -439,7 +439,7 @@ void assign_AssignSections(void)
 			return;
 	}
 
-	trap_;
+	unreachable_();
 }
 
 void assign_Cleanup(void)
