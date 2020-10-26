@@ -471,7 +471,12 @@ static void registerExportedSymbol(struct Symbol *symbol, void *arg)
  */
 void out_WriteObject(void)
 {
-	FILE *f = fopen(tzObjectname, "wb");
+	FILE *f;
+	if (strcmp(tzObjectname, "-") != 0) {
+		f = fopen(tzObjectname, "wb");
+	} else {
+		f = fdopen(1, "wb");
+	}
 
 	if (!f)
 		err(1, "Couldn't write file '%s'", tzObjectname);
