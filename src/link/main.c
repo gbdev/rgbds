@@ -128,13 +128,12 @@ FILE *openFile(char const *fileName, char const *mode)
 		return NULL;
 
 	FILE *file;
-	if (strcmp(fileName, "-") != 0) {
+	if (strcmp(fileName, "-") != 0)
 		file = fopen(fileName, mode);
-	} else if (strchr(mode, 'r')) {
+	else if (mode[0] == 'r')
 		file = fdopen(0, mode);
-	} else {
+	else
 		file = fdopen(1, mode);
-	}
 
 	if (!file)
 		err(1, "Could not open file \"%s\"", fileName);
