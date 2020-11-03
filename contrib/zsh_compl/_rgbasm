@@ -1,0 +1,49 @@
+#compdef rgbasm
+
+_rgbasm_warnings() {
+	local warnings=(
+		'error:Turn all warnings into errors'
+
+		'all:Enable most warning messages'
+		'extra:Enable extra, possibly unwanted, messages'
+		'everything:Enable literally everything'
+
+		'assert:Warn when WARN-type asserts fail'
+		'builtin-args:Report incorrect args to built-in funcs'
+		'div:Warn when dividing the smallest int by -1'
+		'empty-entry:Warn on empty entries in db, dw, dl args'
+		'large-constant:Warn on constants too large for a signed 32-bit int'
+		'long-string:Warn on strings too long'
+		'obsolete:Warn when using deprecated features'
+		'shift:Warn when shifting negative values'
+		'shift-amount:Warn when a shift'\''s operand it negative or \> 32'
+		'truncation:Warn when implicit truncations lose bits'
+		'user:Warn when executing the WARN built-in'
+	)
+	# TODO: handle `no-` and `error=` somehow?
+	_describe warning warnings
+}
+
+local args=(
+	# Arguments are listed here in the same order as in the manual, except for the version
+	'(- : * options)'{-V,--version}'[Print version number]'
+
+	'(-E --export-all)'{-E,--export-all}'[Export all symbols]'
+	'(-h --halt-without-nop)'{-h,--halt-without-nop}'[Avoid outputting a `nop` after `halt`]'
+	'(-L ---preserve-ld)'{-L,--preserve-ld}'[Prevent auto-optimizing `ld` into `ldh`]'
+	'(-v --verbose)'{-v,--verbose}'[Print additional messages regarding progression]'
+	-w'[Disable all warnings]'
+
+	'(-b --binary-digits)'{-b,--binary-digits}'+[Change chars for binary constants]:digit spec:'
+	'(-D --define)'{-D,--define}'+[Define a string symbol]:name + value (default 1):'
+	'(-g --gfx-chars)'{-g,--gfx-chars}'+[Change chars for gfx constants]:chars spec:'
+	'(-i --include)'{-i,--include}'+[Add an include directory]:include path:_files -/'
+	'(-M --dependfile)'{-M,--dependfile}"+[List deps in make format]:output file:_files -g '*.{d,mk}"
+	'(-o --output)'{-o,--output}'+[Output file]:output file:_files'
+	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
+	'(-r --recursion-depth)'{-r,--recursion-depth}'+[Set maximum recursion depth]:depth:'
+	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbasm_warnings'
+
+	'*'":assembly sources:_files -g '*.asm'"
+)
+_arguments -s -S : $args

@@ -1,0 +1,37 @@
+#compdef rgbgfx
+
+_depths() {
+	local depths=(
+		'1:1bpp'
+		'2:2bpp (native)'
+	)
+
+	_describe 'bit depth' depths
+}
+
+local args=(
+	# Arguments are listed here in the same order as in the manual, except for the version
+	'(- : * options)'{-V,--version}'[Print version number]'
+
+	'(-a --attr-map -A --output-attr-map)'{-A,--output-attr-map}'[Shortcut for -a <file>.attrmap]'
+	'(-C --color-curve)'{-C,--color-curve}'[Generate palettes using GBC color curve]'
+	'(-D --debug)'{-D,--debug}'[Enable debug features]'
+	'(-f --fix -F --fix-and-save)'{-f,--fix}'[Fix input PNG into an indexed image]'
+	'(-f --fix -F --fix-and-save)'{-F,--fix-and-save}'[Like -f but also save CLI params within the PNG]'
+	'(-h --horizontal)'{-h,--horizontal}'[Lay out tiles horizontally instead of vertically]'
+	'(-m --mirror-tiles)'{-m,--mirror-tiles}'[Eliminate mirrored tiles from output]'
+	'(-p --palette -P --output-palette)'{-P,--output-palette}'[Shortcut for -p <file>.pal]'
+	'(-t --tilemap -T --output-tilemap)'{-T,--output-tilemap}'[Shortcut for -t <file>.tilemap]'
+	'(-u --unique-tiles)'{-u,--unique-tiles}'[Eliminate redundant tiles]'
+	'(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
+
+	'(-a --attr-map -A --output-attr-map)'{-a,--attr-map}'+[Generate a map of tile attributes (mirroring)]:attrmap file:_files'
+	'(-d --depth)'{-d,--depth}'+[Set bit depth]:bit depth:_depths'
+	'(-o --output)'{-o,--output}'+[Set output file]:output file:_files'
+	'(-p --palette -P --output-palette)'{-p,--palette}"+[Output the image's palette in little-endian native RGB555 format]:palette file:_files"
+	'(-t --tilemap -T --output-tilemap)'{-t,--tilemap}'+[Generate a map of tile indices]:tilemap file:_files'
+	'(-x --trim-end)'{-x,--trim-end}'+[Trim end of output by this many tiles]:tile count:'
+
+	'*'":input png files:_files -g '*.png'"
+)
+_arguments -s -S : $args

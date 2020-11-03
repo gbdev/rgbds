@@ -50,6 +50,8 @@ The RGBDS source code file structure somewhat resembles the following:
        │   └── workflows/
        │       └── ...
        ├── contrib/
+       │   ├── zsh_compl/
+       │   │   └── ...
        │   └── ...
        ├── include/
        │   └── ...
@@ -78,6 +80,8 @@ The RGBDS source code file structure somewhat resembles the following:
 
 - ``contrib/`` - scripts and other resources which may be useful to users and developers of
   RGBDS.
+
+  * ``zsh_compl`` contains tab completion scripts for use with zsh. Put them somewhere in your ``fpath``, and they should auto-load.
 
 - ``include/`` - header files for each respective C files in `src`.
 
