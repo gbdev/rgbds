@@ -497,7 +497,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	if (!nodes[fileID].nodes)
 		err(1, "Failed to get memory for %s's nodes", fileName);
 	verbosePrint("Reading %u nodes...\n", nodes[fileID].nbNodes);
-	for (uint32_t i = 0; i < nodes[fileID].nbNodes; i++)
+	for (uint32_t i = nodes[fileID].nbNodes; i--; )
 		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
 
 	/* This file's symbols, kept to link sections to them */
