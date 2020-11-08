@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -126,7 +127,13 @@ FILE *openFile(char const *fileName, char const *mode)
 	if (!fileName)
 		return NULL;
 
-	FILE *file = fopen(fileName, mode);
+	FILE *file;
+	if (strcmp(fileName, "-") != 0)
+		file = fopen(fileName, mode);
+	else if (mode[0] == 'r')
+		file = fdopen(0, mode);
+	else
+		file = fdopen(1, mode);
 
 	if (!file)
 		err(1, "Could not open file \"%s\"", fileName);
