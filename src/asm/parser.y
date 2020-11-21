@@ -932,7 +932,7 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} '(' scoped_id ')' {
-			struct Symbol const *sym = sym_FindSymbol($4);
+			struct Symbol const *sym = sym_FindScopedSymbol($4);
 
 			rpn_Number(&$$, !!sym);
 

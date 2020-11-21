@@ -222,32 +222,42 @@ static void fullSymbolName(char *output, size_t outputSize,
 		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
-/*
- * Find a symbol by name and scope
- */
-static struct Symbol *findsymbol(char const *s, char const *scope)
+struct Symbol *sym_FindExactSymbol(char const *name)
 {
-	char fullname[MAXSYMLEN + 1];
-
-	if (s[0] == '.' && scope) {
-		fullSymbolName(fullname, sizeof(fullname), s, scope);
-		s = fullname;
-	}
-
-	char const *separator = strchr(s, '.');
-
-	if (separator && strchr(separator + 1, '.'))
-		fatalerror("'%s' is a nonsensical reference to a nested local symbol\n", s);
-
-	return hash_GetElement(symbols, s);
+	return hash_GetElement(symbols, name);
 }
 
-/*
- * Find a symbol by name, with automatically determined scope
- */
-struct Symbol *sym_FindSymbol(char const *symName)
+struct Symbol *sym_FindUnscopedSymbol(char const *name)
 {
-	return findsymbol(symName, symName[0] == '.' ? labelScope : NULL);
+	if (strchr(name, '.')) {
+		error("Expected non-scoped symbol name, not \"%s\"\n", name);
+		return NULL;
+	}
+	return sym_FindExactSymbol(name);
+}
+
+struct Symbol *sym_FindScopedSymbol(char const *name)
+{
+	char const *dotPtr = strchr(name, '.');
+
+	if (dotPtr) {
+		if (strchr(dotPtr + 1, '.'))
+			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
+				   name);
+		/* If auto-scoped local label, expand the name */
+		if (dotPtr == name) { /* Meaning, the name begins with the dot */
+			char fullname[MAXSYMLEN + 1];
+
+			fullSymbolName(fullname, sizeof(fullname), name, labelScope);
+			return sym_FindExactSymbol(fullname);
+		}
+	}
+	return sym_FindExactSymbol(name);
+}
+
+struct Symbol const *sym_GetPC(void)
+{
+	return PCSymbol;
 }
 
 static inline bool isReferenced(struct Symbol const *sym)
@@ -260,7 +270,7 @@ static inline bool isReferenced(struct Symbol const *sym)
  */
 void sym_Purge(char const *symName)
 {
-	struct Symbol *symbol = sym_FindSymbol(symName);
+	struct Symbol *symbol = sym_FindScopedSymbol(symName);
 
 	if (!symbol) {
 		error("'%s' not defined\n", symName);
@@ -312,7 +322,7 @@ uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
  */
 uint32_t sym_GetConstantValue(char const *s)
 {
-	struct Symbol const *sym = sym_FindSymbol(s);
+	struct Symbol const *sym = sym_FindScopedSymbol(s);
 
 	if (sym == NULL)
 		error("'%s' not defined\n", s);
@@ -339,11 +349,11 @@ void sym_SetCurrentSymbolScope(char const *newScope)
  */
 static struct Symbol *createNonrelocSymbol(char const *symbolName)
 {
-	struct Symbol *symbol = findsymbol(symbolName, NULL);
+	struct Symbol *symbol = sym_FindExactSymbol(symbolName);
 
-	if (!symbol)
+	if (!symbol) {
 		symbol = createsymbol(symbolName);
-	else if (sym_IsDefined(symbol)) {
+	} else if (sym_IsDefined(symbol)) {
 		error("'%s' already defined at ", symbolName);
 		dumpFilename(symbol);
 		putc('\n', stderr);
@@ -400,7 +410,7 @@ struct Symbol *sym_AddString(char const *symName, char const *value)
  */
 struct Symbol *sym_AddSet(char const *symName, int32_t value)
 {
-	struct Symbol *sym = findsymbol(symName, NULL);
+	struct Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (sym == NULL) {
 		sym = createsymbol(symName);
@@ -411,7 +421,6 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 		putc('\n', stderr);
 		return sym;
 	} else {
-		/* TODO: can the scope be incorrect when taking over refs? */
 		updateSymbolFilename(sym);
 	}
 
@@ -429,7 +438,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 static struct Symbol *addLabel(char const *name)
 {
 	assert(name[0] != '.'); /* The symbol name must have been expanded prior */
-	struct Symbol *sym = findsymbol(name, NULL); /* Due to this, don't look for expansions */
+	struct Symbol *sym = sym_FindExactSymbol(name);
 
 	if (!sym) {
 		sym = createsymbol(name);
@@ -511,7 +520,7 @@ struct Symbol *sym_AddLabel(char const *name)
  */
 void sym_Export(char const *symName)
 {
-	struct Symbol *sym = sym_FindSymbol(symName);
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
 	/* If the symbol doesn't exist, create a ref that can be purged */
 	if (!sym)
@@ -545,7 +554,7 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
  */
 struct Symbol *sym_Ref(char const *symName)
 {
-	struct Symbol *nsym = sym_FindSymbol(symName);
+	struct Symbol *nsym = sym_FindScopedSymbol(symName);
 
 	if (nsym == NULL) {
 		char fullname[MAXSYMLEN + 1];

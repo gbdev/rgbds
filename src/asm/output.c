@@ -296,6 +296,11 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		uint8_t rpndata = popbyte();
 
 		switch (rpndata) {
+			struct Symbol *sym;
+			uint32_t value;
+			uint8_t b;
+			size_t i;
+
 		case RPN_CONST:
 			writebyte(RPN_CONST);
 			writebyte(popbyte());
@@ -303,13 +308,15 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 			writebyte(popbyte());
 			writebyte(popbyte());
 			break;
-		case RPN_SYM:
-		{
-			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
-				;
-			struct Symbol *sym = sym_FindSymbol(tzSym);
-			uint32_t value;
 
+		case RPN_SYM:
+			i = 0;
+			do {
+				tzSym[i] = popbyte();
+			} while (tzSym[i++]);
+
+			// The symbol name is always written expanded
+			sym = sym_FindExactSymbol(tzSym);
 			if (sym_IsConstant(sym)) {
 				writebyte(RPN_CONST);
 				value = sym_GetConstantValue(tzSym);
@@ -317,18 +324,22 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 				writebyte(RPN_SYM);
 				value = getSymbolID(sym);
 			}
+
 			writebyte(value & 0xFF);
 			writebyte(value >> 8);
 			writebyte(value >> 16);
 			writebyte(value >> 24);
 			break;
-		}
+
 		case RPN_BANK_SYM:
-		{
-			for (unsigned int i = -1; (tzSym[++i] = popbyte()); )
-				;
-			struct Symbol *sym = sym_FindSymbol(tzSym);
-			uint32_t value = getSymbolID(sym);
+			i = 0;
+			do {
+				tzSym[i] = popbyte();
+			} while (tzSym[i++]);
+
+			// The symbol name is always written expanded
+			sym = sym_FindExactSymbol(tzSym);
+			value = getSymbolID(sym);
 
 			writebyte(RPN_BANK_SYM);
 			writebyte(value & 0xFF);
@@ -336,18 +347,15 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 			writebyte(value >> 16);
 			writebyte(value >> 24);
 			break;
-		}
-		case RPN_BANK_SECT:
-		{
-			uint8_t b;
 
+		case RPN_BANK_SECT:
 			writebyte(RPN_BANK_SECT);
 			do {
 				b = popbyte();
 				writebyte(b);
 			} while (b != 0);
 			break;
-		}
+
 		default:
 			writebyte(rpndata);
 			break;

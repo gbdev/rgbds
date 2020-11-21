@@ -104,9 +104,9 @@ void rpn_Number(struct Expression *expr, uint32_t i)
 	expr->nVal = i;
 }
 
-void rpn_Symbol(struct Expression *expr, char *tzSym)
+void rpn_Symbol(struct Expression *expr, char const *tzSym)
 {
-	struct Symbol *sym = sym_FindSymbol(tzSym);
+	struct Symbol *sym = sym_FindScopedSymbol(tzSym);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
@@ -115,15 +115,15 @@ void rpn_Symbol(struct Expression *expr, char *tzSym)
 		rpn_Init(expr);
 		expr->isSymbol = true;
 
-		sym_Ref(tzSym);
 		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
 						: "'%s' is not constant at assembly time", tzSym);
+		sym = sym_Ref(tzSym);
 		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
-		size_t nameLen = strlen(tzSym) + 1; /* Don't forget NUL! */
+		size_t nameLen = strlen(sym->name) + 1; /* Don't forget NUL! */
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 		*ptr++ = RPN_SYM;
-		memcpy(ptr, tzSym, nameLen);
+		memcpy(ptr, sym->name, nameLen);
 
 		/* RGBLINK assumes PC is at the byte being computed... */
 		if (sym_IsPC(sym) && nPCOffset) {
@@ -157,7 +157,7 @@ void rpn_BankSelf(struct Expression *expr)
 
 void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 {
-	struct Symbol const *sym = sym_FindSymbol(tzSym);
+	struct Symbol const *sym = sym_FindScopedSymbol(tzSym);
 
 	/* The @ symbol is treated differently. */
 	if (sym_IsPC(sym)) {
@@ -169,10 +169,8 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 	if (sym && !sym_IsLabel(sym)) {
 		error("BANK argument must be a label\n");
 	} else {
-		sym_Ref(tzSym);
-		if (!sym)
-			/* If the symbol didn't exist, `sym_Ref` created it */
-			sym = sym_FindSymbol(tzSym);
+		sym = sym_Ref(tzSym);
+		assert(sym); // If the symbol didn't exist, it should have been created
 
 		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != -1) {
 			/* Symbol's section is known and bank is fixed */
@@ -181,10 +179,10 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
 			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
 
-			size_t nameLen = strlen(tzSym) + 1; /* Room for NUL! */
+			size_t nameLen = strlen(sym->name) + 1; /* Room for NUL! */
 			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 			*ptr++ = RPN_BANK_SYM;
-			memcpy(ptr, tzSym, nameLen);
+			memcpy(ptr, sym->name, nameLen);
 		}
 	}
 }
@@ -298,7 +296,7 @@ struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
-	return sym_FindSymbol((char *)expr->tRPN + 1);
+	return sym_FindScopedSymbol((char *)expr->tRPN + 1);
 }
 
 bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)

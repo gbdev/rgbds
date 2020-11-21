@@ -121,7 +121,19 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *s);
-struct Symbol *sym_FindSymbol(char const *symName);
+/*
+ * Find a symbol by exact name, bypassing expansion checks
+ */
+struct Symbol *sym_FindExactSymbol(char const *name);
+/*
+ * Find a symbol by exact name; may not be scoped, produces an error if it is
+ */
+struct Symbol *sym_FindUnscopedSymbol(char const *name);
+/*
+ * Find a symbol, possibly scoped, by name
+ */
+struct Symbol *sym_FindScopedSymbol(char const *name);
+struct Symbol const *sym_GetPC(void);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);

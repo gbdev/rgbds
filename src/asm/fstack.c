@@ -317,7 +317,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 {
 	dbgPrint("Running macro \"%s\"\n", macroName);
 
-	struct Symbol *macro = sym_FindSymbol(macroName);
+	struct Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
 		error("Macro \"%s\" not defined\n", macroName);

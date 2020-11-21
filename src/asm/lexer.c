@@ -1311,7 +1311,7 @@ static char const *readInterpolation(void)
 	}
 	symName[i] = '\0';
 
-	struct Symbol const *sym = sym_FindSymbol(symName);
+	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
@@ -1691,9 +1691,10 @@ static int yylex_NORMAL(void)
 				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
 					return tokenType;
 
-				if (lexerState->expandStrings) {
+				/* Local symbols cannot be string expansions */
+				if (tokenType == T_ID && lexerState->expandStrings) {
 					/* Attempt string expansion */
-					struct Symbol const *sym = sym_FindSymbol(yylval.tzSym);
+					struct Symbol const *sym = sym_FindExactSymbol(yylval.tzSym);
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
