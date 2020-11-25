@@ -620,7 +620,7 @@ void out_PCRelByte(struct Expression *expr)
 {
 	checkcodesection();
 	reserveSpace(1);
-	struct Symbol const *pc = sym_FindSymbol("@");
+	struct Symbol const *pc = sym_GetPC();
 
 	if (!rpn_IsDiffConstant(expr, pc)) {
 		createPatch(PATCHTYPE_JR, expr);
