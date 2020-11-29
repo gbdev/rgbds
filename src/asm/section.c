@@ -663,9 +663,9 @@ void out_BinaryFile(char const *s, int32_t startPos)
 
 	if (fstk_FindFile(s, &fullPath, &size))
 		f = fopen(fullPath, "rb");
+	free(fullPath);
 
 	if (!f) {
-		free(fullPath);
 		if (oGeneratedMissingIncludes) {
 			oFailedOnMissingInclude = true;
 			return;
@@ -682,6 +682,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 
 		if (startPos >= fsize) {
 			error("Specified start position is greater than length of file\n");
+			fclose(f);
 			return;
 		}
 
@@ -706,7 +707,6 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 
 	fclose(f);
-	free(fullPath);
 }
 
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
