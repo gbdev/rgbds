@@ -432,7 +432,8 @@ int main(int argc, char *argv[])
 					/* On first alloc, make an empty str */
 					tzTargetFileName =
 						malloc(nTargetFileNameLen + 1);
-					*tzTargetFileName = '\0';
+					if (tzTargetFileName)
+						*tzTargetFileName = '\0';
 				} else {
 					tzTargetFileName =
 						realloc(tzTargetFileName,
