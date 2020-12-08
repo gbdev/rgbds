@@ -930,13 +930,55 @@ The following will cause
 and so on to be accessible to other files during the link process:
 .Dl Ic EXPORT Ar symbol1 Bq , Ar symbol2 , No ...
 .Pp
+For example, if you have the following three files:
+.Pp
+.Ql a.asm :
+.Bd -literal -compact
+SECTION "a", WRAM0
+LabelA:
+.Ed
+.Pp
+.Ql b.asm :
+.Bd -literal -compact
+SECTION "b", WRAM0
+ExportedLabelB1::
+ExportedLabelB2:
+	EXPORT ExportedLabelB2
+.Ed
+.Pp
+.Ql c.asm :
+.Bd -literal -compact
+SECTION "C", ROM0[0]
+	dw LabelA
+	dw ExportedLabelB1
+	dw ExportedLabelB2
+.Ed
+.Pp
+Then
+.Ql c.asm
+can use
+.Ql ExportedLabelB1
+and
+.Ql ExportedLabelB2 ,
+but not
+.Ql LabelA ,
+so linking them together will fail:
+.Bd -literal
+$ rgbasm -o a.o a.asm
+$ rgbasm -o b.o b.asm
+$ rgbasm -o c.o c.asm
+$ rgblink a.o b.o c.o
+error: c.asm(2): Unknown symbol "LabelA"
+Linking failed with 1 error
+.Ed
+.Pp
+Note also that only exported symbols will appear in symbol and map files produced by
+.Xr rgblink 1 .
+.Pp
 .Ic GLOBAL
 is a deprecated synonym for
 .Ic EXPORT ,
 do not use it.
-.Pp
-Note also that only exported symbols will appear in symbol and map files produced by
-.Xr rgblink 1 .
 .Ss Purging symbols
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table as if it had never existed.
