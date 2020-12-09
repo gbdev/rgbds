@@ -117,7 +117,8 @@ void macro_SetUniqueID(uint32_t id)
 		if (uniqueID > maxUniqueID)
 			maxUniqueID = uniqueID;
 		/* The buffer is guaranteed to be the correct size */
-		sprintf(uniqueIDBuf, "_%" PRIu32, id);
+		/* This is a valid label fragment, but not a valid numeric */
+		sprintf(uniqueIDBuf, "_u%" PRIu32, id);
 		uniqueIDPtr = uniqueIDBuf;
 	}
 }
