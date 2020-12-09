@@ -18,9 +18,7 @@ Constant2: ; Same as above
 
 print_diff: MACRO
 	PRINTV (\1) - (\2)
-	PRINTT "\n"
 	PRINTV (\2) - (\1)
-	PRINTT "\n"
 ENDM
 
 POPS ; Ensure we are in neither section

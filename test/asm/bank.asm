@@ -6,7 +6,6 @@ def_sect: macro
 	ENDC
 
 	PRINTV BANK("\1")
-	PRINTT "\n"
 endm
 
  def_sect ROM0_ok,  ROM0

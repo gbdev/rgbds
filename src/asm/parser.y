@@ -795,13 +795,13 @@ popc		: T_POP_POPC	{ charmap_Pop(); }
 printt		: T_POP_PRINTT string	{ printf("%s", $2); }
 ;
 
-printv		: T_POP_PRINTV const	{ printf("$%" PRIX32, $2); }
+printv		: T_POP_PRINTV const	{ printf("$%" PRIX32 "\n", $2); }
 ;
 
-printi		: T_POP_PRINTI const	{ printf("%" PRId32, $2); }
+printi		: T_POP_PRINTI const	{ printf("%" PRId32 "\n", $2); }
 ;
 
-printf		: T_POP_PRINTF const	{ math_Print($2); }
+printf		: T_POP_PRINTF const	{ math_Print($2); putchar('\n'); }
 ;
 
 const_3bit	: const {

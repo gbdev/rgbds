@@ -1,9 +1,3 @@
-print: MACRO
-	printv \1
-	printt "\n"
-ENDM
-
-
 m1: MACRO
 x\1
 ENDM
@@ -20,10 +14,10 @@ ENDM
 	m1 x = 7
 	m2 2 = 8
 
-	print x
-	print y
-	print xx
-	print yy
+	printv x
+	printv y
+	printv xx
+	printv yy
 
 
 test_char: MACRO

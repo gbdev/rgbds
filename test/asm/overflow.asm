@@ -1,39 +1,34 @@
 SECTION "sec", ROM0
 
-print_x: MACRO
-	printv x
-	printt "\n"
-ENDM
-
 x = 2147483647
 x = x + 1
 	dl 2147483647+1
-	print_x
+	printv x
 
 x = -2147483648
 x = x - 1
 	dl -2147483648-1
-	print_x
+	printv x
 
 x = -2147483648
 x = x * -1
 	dl -2147483648 * -1
-	print_x
+	printv x
 
 x = -2147483648
 x = x / -1
 	dl -2147483648 / -1
-	print_x
+	printv x
 
 x = -2147483648
 x = x % -1
 	dl -2147483648 % -1
-	print_x
+	printv x
 
 x = -1
 x = x << 1
 	dl -1 << 1
-	print_x
+	printv x
 
 x = 4294967295
 x = 4294967296
