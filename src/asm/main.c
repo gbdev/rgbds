@@ -34,6 +34,10 @@
 #include "helpers.h"
 #include "version.h"
 
+// Old Bison versions (confirmed for 2.3) do not forward-declare `yyparse` in the generated header
+// Unfortunately, macOS still ships 2.3, which is from 2008...
+int yyparse(void);
+
 size_t cldefines_index;
 size_t cldefines_numindices;
 size_t cldefines_bufsize;
