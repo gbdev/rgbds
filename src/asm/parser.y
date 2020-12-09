@@ -182,6 +182,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<sVal>		relocexpr_no_str
 %type	<nConstValue>	const
 %type	<nConstValue>	uconst
+%type	<nConstValue>	rs_uconst
 %type	<nConstValue>	const_3bit
 %type	<sVal>		reloc_8bit
 %type	<sVal>		reloc_8bit_no_str
@@ -616,19 +617,27 @@ rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
 rsreset		: T_POP_RSRESET	{ sym_AddSet("_RS", 0); }
 ;
 
-rl		: T_LABEL T_POP_RL uconst {
+rs_uconst	: /* empty */ {
+			$$ = 1;
+		}
+		| uconst {
+			$$ = $1;
+		}
+;
+
+rl		: T_LABEL T_POP_RL rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
 ;
 
-rw		: T_LABEL T_POP_RW uconst {
+rw		: T_LABEL T_POP_RW rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
-rb		: T_LABEL T_POP_RB uconst {
+rb		: T_LABEL T_POP_RB rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
 		}
