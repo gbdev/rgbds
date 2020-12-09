@@ -45,7 +45,7 @@ REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
 
 YFLAGS		?=
 
-YACC		:= yacc
+BISON		:= bison
 RM		:= rm -rf
 
 # Rules to build the RGBDS binaries
@@ -114,15 +114,15 @@ rgbgfx: ${rgbgfx_obj}
 
 # Rules to process files
 
-# We want the yacc invocations to pass through our rules, not default ones
+# We want the Bison invocations to pass through our rules, not default ones
 .y.o:
 
-# yacc-generated C files have an accompanying header
+# bison-generated C files have an accompanying header
 .c.h:
 	$Qtouch $@
 
 .y.c:
-	$Q${YACC} -d ${YFLAGS} -o $@ $<
+	$Q${BISON} -d ${YFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} ${PNGCFLAGS} -c -o $@ $<
@@ -206,11 +206,11 @@ develop:
 # install instructions instead.
 
 mingw32:
-	$Qmake CC=i686-w64-mingw32-gcc YACC=bison \
+	$Qmake CC=i686-w64-mingw32-gcc BISON=bison \
 		PKG_CONFIG=i686-w64-mingw32-pkg-config -j
 
 mingw64:
-	$Qmake CC=x86_64-w64-mingw32-gcc YACC=bison \
+	$Qmake CC=x86_64-w64-mingw32-gcc BISON=bison \
 		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
 
 wine-shim:

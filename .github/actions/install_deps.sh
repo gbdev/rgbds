@@ -11,4 +11,4 @@ case `echo $1 | cut -d '-' -f 1` in
 		;;
 esac
 
-yacc --version
+bison --version
