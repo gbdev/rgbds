@@ -1962,13 +1962,11 @@ restart:
 
 static char *startCapture(void)
 {
-	assert(!lexerState->expansions);
-
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	lexerState->disableMacroArgs = true;
 
-	if (lexerState->isMmapped) {
+	if (lexerState->isMmapped && !lexerState->expansions) {
 		return &lexerState->ptr[lexerState->offset];
 	} else {
 		lexerState->captureCapacity = 128; /* The initial size will be twice that */
