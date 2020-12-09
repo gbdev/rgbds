@@ -56,6 +56,8 @@ void sect_CheckUnionClosed(void);
 
 void out_AbsByte(uint8_t b);
 void out_AbsByteGroup(uint8_t const *s, int32_t length);
+void out_AbsWordGroup(uint8_t const *s, int32_t length);
+void out_AbsLongGroup(uint8_t const *s, int32_t length);
 void out_Skip(int32_t skip, bool ds);
 void out_String(char const *s);
 void out_RelByte(struct Expression *expr);

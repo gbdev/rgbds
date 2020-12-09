@@ -506,6 +506,24 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 		writebyte(*s++);
 }
 
+void out_AbsWordGroup(uint8_t const *s, int32_t length)
+{
+	checkcodesection();
+	reserveSpace(length * 2);
+
+	while (length--)
+		writeword(*s++);
+}
+
+void out_AbsLongGroup(uint8_t const *s, int32_t length)
+{
+	checkcodesection();
+	reserveSpace(length * 4);
+
+	while (length--)
+		writelong(*s++);
+}
+
 /*
  * Skip this many bytes
  */
