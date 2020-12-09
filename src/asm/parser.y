@@ -202,6 +202,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<sVal>		reloc_8bit
 %type	<sVal>		reloc_8bit_no_str
 %type	<sVal>		reloc_16bit
+%type	<sVal>		reloc_16bit_no_str
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
@@ -842,7 +843,14 @@ constlist_16bit_entry : /* empty */ {
 			out_Skip(2, false);
 			nListCountEmpty++;
 		}
-		| reloc_16bit	{ out_RelWord(&$1); }
+		| reloc_16bit_no_str	{ out_RelWord(&$1); }
+		| string {
+			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
+			int32_t length = charmap_Convert($1, output);
+
+			out_AbsWordGroup(output, length);
+			free(output);
+		}
 ;
 
 constlist_32bit : constlist_32bit_entry
@@ -853,7 +861,14 @@ constlist_32bit_entry : /* empty */ {
 			out_Skip(4, false);
 			nListCountEmpty++;
 		}
-		| relocexpr	{ out_RelLong(&$1); }
+		| relocexpr_no_str	{ out_RelLong(&$1); }
+		| string {
+			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
+			int32_t length = charmap_Convert($1, output);
+
+			out_AbsLongGroup(output, length);
+			free(output);
+		}
 ;
 
 reloc_8bit	: relocexpr {
@@ -873,6 +888,14 @@ reloc_8bit_no_str : relocexpr_no_str {
 ;
 
 reloc_16bit	: relocexpr {
+			if (rpn_isKnown(&$1)
+			 && ($1.nVal < -32768 || $1.nVal > 65535))
+				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
+			$$ = $1;
+		}
+;
+
+reloc_16bit_no_str : relocexpr_no_str {
 			if (rpn_isKnown(&$1)
 			 && ($1.nVal < -32768 || $1.nVal > 65535))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
