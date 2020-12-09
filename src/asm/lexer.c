@@ -2045,7 +2045,6 @@ finish:
 void lexer_CaptureMacroBody(char **capture, size_t *size)
 {
 	char *captureStart = startCapture();
-	unsigned int level = 0;
 	int c = peek(0);
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
@@ -2082,41 +2081,19 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 		} while (isWhitespace(c));
 		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
 		if (startsIdentifier(c)) {
-			switch (readIdentifier(c)) {
-			case T_ID:
-				/* We have an initial label, look for a single colon */
+			if (readIdentifier(c) == T_POP_ENDM) {
+				/* Read (but don't capture) until EOL or EOF */
+				lexerState->capturing = false;
 				do {
-					c = nextChar();
-				} while (isWhitespace(c));
-				if (c != ':') /* If not a colon, give up */
-					break;
-				/* And finally, a `MACRO` token */
-				do {
-					c = nextChar();
-				} while (isWhitespace(c));
-				if (!startsIdentifier(c))
-					break;
-				if (readIdentifier(c) != T_POP_MACRO)
-					break;
-				level++;
-				break;
-
-			case T_POP_ENDM:
-				if (!level) {
-					/* Read (but don't capture) until EOL or EOF */
-					lexerState->capturing = false;
-					do {
-						c = peek(0);
-						if (c == EOF || c == '\r' || c == '\n')
-							break;
-						shiftChars(1);
-					} while (c != EOF && c != '\r' && c != '\n');
-					/* Handle Windows CRLF */
-					if (c == '\r' && peek(1) == '\n')
-						shiftChars(1);
-					goto finish;
-				}
-				level--;
+					c = peek(0);
+					if (c == EOF || c == '\r' || c == '\n')
+						break;
+					shiftChars(1);
+				} while (c != EOF && c != '\r' && c != '\n');
+				/* Handle Windows CRLF */
+				if (c == '\r' && peek(1) == '\n')
+					shiftChars(1);
+				goto finish;
 			}
 		}
 		lexerState->lineNo++;

@@ -923,6 +923,26 @@ Note that a single colon
 .Ql \&:
 following the macro's name is required.
 Macros can't be exported or imported.
+.Pp
+Plainly nesting macro definitions is not allowed, but this can be worked around using
+.Ic EQUS .
+This won't work:
+.Bd -literal -offset indent
+outer: MACRO
+inner: MACRO
+    PRINTT "Hello!\[rs]n"
+ENDM
+ENDM
+.Ed
+.Pp
+But this will:
+.Bd -literal -offset indent
+outer: MACRO
+definition equs "inner: MACRO\[rs]nPRINTT \[rs]"Hello!\[rs]\[rs]n\[rs]"\[rs]nENDM"
+definition
+    PURGE definition
+ENDM
+.Ed
 .El
 .Ss Exporting and importing symbols
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.

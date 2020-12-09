@@ -1,0 +1,5 @@
+warning: nested-macrodef.asm(26) -> nested-macrodef.asm::outer(22): [-Wuser]
+    Nested macros shouldn't work, whose argument would be \1?
+ERROR: nested-macrodef.asm(26) -> nested-macrodef.asm::outer(25):
+    Unterminated macro definition
+error: Assembly aborted (1 errors)!
