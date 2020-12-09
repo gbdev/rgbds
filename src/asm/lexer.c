@@ -1472,7 +1472,7 @@ static char const *reportGarbageChar(unsigned char firstByte)
 
 /* Lexer core */
 
-static int yylex_NORMAL(void)
+static yytoken_kind_t yylex_NORMAL(void)
 {
 	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
@@ -1514,12 +1514,17 @@ static int yylex_NORMAL(void)
 		/* Handle accepted single chars */
 
 		case '[':
+			return T_LBRACK;
 		case ']':
+			return T_RBRACK;
 		case '(':
+			return T_LPAREN;
 		case ')':
+			return T_RPAREN;
 		case ',':
+			return T_COMMA;
 		case ':':
-			return c;
+			return T_COLON;
 
 		/* Handle ambiguous 1- or 2-char tokens */
 		char secondChar;
@@ -1653,9 +1658,12 @@ static int yylex_NORMAL(void)
 		/* Handle newlines and EOF */
 
 		case '\r':
-			return '\r';
+			// Handle CRLF
+			if (peek(0) == '\n')
+				shiftChars(1);
+			/* fallthrough */
 		case '\n':
-			return '\n';
+			return T_NEWLINE;
 
 		case EOF:
 			return 0;
@@ -1720,7 +1728,7 @@ static int yylex_NORMAL(void)
 	}
 }
 
-static int yylex_RAW(void)
+static yytoken_kind_t yylex_RAW(void)
 {
 	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
@@ -1765,7 +1773,9 @@ static int yylex_RAW(void)
 				if (c == EOF)
 					return 0;
 				shiftChars(1);
-				return c;
+				if (c == '\r' && peek(0) == '\r')
+					shiftChars(1);
+				return c == ',' ? T_COMMA : T_NEWLINE;
 			}
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
@@ -1898,12 +1908,12 @@ finish:
 	return token;
 }
 
-static int yylex_SKIP_TO_ELIF(void)
+static yytoken_kind_t yylex_SKIP_TO_ELIF(void)
 {
 	return skipIfBlock(false);
 }
 
-static int yylex_SKIP_TO_ENDC(void)
+static yytoken_kind_t yylex_SKIP_TO_ENDC(void)
 {
 	return skipIfBlock(true);
 }
@@ -1933,9 +1943,9 @@ restart:
 
 	/* Make sure to terminate files with a line feed */
 	if (token == 0) {
-		if (lexerState->lastToken != '\n') {
+		if (lexerState->lastToken != T_NEWLINE) {
 			dbgPrint("Forcing EOL at EOF\n");
-			token = '\n';
+			token = T_NEWLINE;
 		} else { /* Try to switch to new buffer; if it succeeds, scan again */
 			dbgPrint("Reached EOF!\n");
 			/* Captures end at their buffer's boundary no matter what */
@@ -1946,15 +1956,11 @@ restart:
 				return 0;
 			}
 		}
-	} else if (token == '\r') { /* Handle CR and CRLF line endings */
-		token = '\n'; /* We universally use '\n' as the value for line ending tokens */
-		if (peek(0) == '\n')
-			shiftChars(1); /* Shift the CRLF's LF */
 	}
 	lexerState->lastToken = token;
 
 	lexerState->atLineStart = false;
-	if (token == '\n')
+	if (token == T_NEWLINE)
 		lexerState->atLineStart = true;
 
 	return token;
