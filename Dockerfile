@@ -8,7 +8,6 @@ FROM alpine:latest
 RUN apk add --update \
       build-base \
       byacc \
-      flex \
       libpng-dev
 COPY . /rgbds
 WORKDIR /rgbds
