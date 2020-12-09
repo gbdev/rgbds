@@ -998,16 +998,16 @@ static void readNumber(int radix, int32_t baseValue)
 {
 	uint32_t value = baseValue;
 
-	for (;;) {
+	for (;; shiftChars(1)) {
 		int c = peek(0);
 
-		if (c < '0' || c > '0' + radix - 1)
+		if (c == '_')
+			continue;
+		else if (c < '0' || c > '0' + radix - 1)
 			break;
 		if (value > (UINT32_MAX - (c - '0')) / radix)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * radix + (c - '0');
-
-		shiftChars(1);
 	}
 
 	yylval.nConstValue = value;
@@ -1018,17 +1018,19 @@ static void readFractionalPart(void)
 	uint32_t value = 0, divisor = 1;
 
 	dbgPrint("Reading fractional part\n");
-	for (;;) {
+	for (;; shiftChars(1)) {
 		int c = peek(0);
 
-		if (c < '0' || c > '9')
+		if (c == '_')
+			continue;
+		else if (c < '0' || c > '9')
 			break;
-		shiftChars(1);
 		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 			warning(WARNING_LARGE_CONSTANT,
 				"Precision of fixed-point constant is too large\n");
 			/* Discard any additional digits */
-			while (c = peek(0), c >= '0' && c <= '9')
+			shiftChars(1);
+			while (c = peek(0), (c >= '0' && c <= '9') || c == '_')
 				shiftChars(1);
 			break;
 		}
@@ -1054,7 +1056,7 @@ static void readBinaryNumber(void)
 	uint32_t value = 0;
 
 	dbgPrint("Reading binary number with digits [%c,%c]\n", binDigits[0], binDigits[1]);
-	for (;;) {
+	for (;; shiftChars(1)) {
 		int c = peek(0);
 		int bit;
 
@@ -1062,13 +1064,13 @@ static void readBinaryNumber(void)
 			bit = 0;
 		else if (c == binDigits[1])
 			bit = 1;
+		else if (c == '_')
+			continue;
 		else
 			break;
 		if (value > (UINT32_MAX - bit) / 2)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * 2 + bit;
-
-		shiftChars(1);
 	}
 
 	yylval.nConstValue = value;
@@ -1080,7 +1082,7 @@ static void readHexNumber(void)
 	bool empty = true;
 
 	dbgPrint("Reading hex number\n");
-	for (;;) {
+	for (;; shiftChars(1)) {
 		int c = peek(0);
 
 		if (c >= 'a' && c <= 'f') /* Convert letters to right after digits */
@@ -1089,6 +1091,8 @@ static void readHexNumber(void)
 			c = c - 'A' + 10;
 		else if (c >= '0' && c <= '9')
 			c = c - '0';
+		else if (c == '_' && !empty)
+			continue;
 		else
 			break;
 
@@ -1096,7 +1100,6 @@ static void readHexNumber(void)
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
 		value = value * 16 + c;
 
-		shiftChars(1);
 		empty = false;
 	}
 
