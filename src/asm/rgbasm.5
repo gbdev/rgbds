@@ -1075,16 +1075,8 @@ command-line option, except when using overlays with
 .Ic DB
 defines a list of bytes that will be stored in the final image.
 Ideal for tables and text.
-Note that strings are not zero-terminated!
 .Bd -literal -offset indent
 DB 1,2,3,4,"This is a string"
-.Ed
-.Pp
-.Ic DS
-can also be used to fill a region of memory with some value.
-The following produces 42 times the byte $FF:
-.Bd -literal -offset indent
-DS 42, $FF
 .Ed
 .Pp
 Alternatively, you can use
@@ -1092,10 +1084,24 @@ Alternatively, you can use
 to store a list of words (16-bit) or
 .Ic DL
 to store a list of double-words/longs (32-bit).
-Strings are not allowed as arguments to
-.Ic DW
-and
-.Ic DL .
+.Pp
+Strings are handled a little specially: they first undergo charmap conversion (see
+.Sx Character maps ) ,
+then each resulting character is output individually.
+For example, under the default charmap, the following two lines are identical:
+.Bd -literal -offset indent
+DW "Hello!"
+DW "H", "e", "l", "l", "o", "!"
+.Ed
+.Pp
+If you do not want this special handling, enclose the string in parentheses.
+.Pp
+.Ic DS
+can also be used to fill a region of memory with some value.
+The following produces 42 times the byte $FF:
+.Bd -literal -offset indent
+DS 42, $FF
+.Ed
 .Pp
 You can also use
 .Ic DB , DW
