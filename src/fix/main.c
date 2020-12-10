@@ -68,6 +68,60 @@ static void print_usage(void)
 	exit(1);
 }
 
+/*
+ * Cartridge type names from Pan Docs, also allowing "_" instead of " "
+ * and with "ROM" as an alias for "ROM ONLY".
+ * https://gbdev.io/pandocs/#_0147-cartridge-type
+ */
+struct {
+	long value;
+	const char *name;
+} cartridge_types[] = {
+	{0x00, "ROM ONLY"},
+	{0x00, "ROM_ONLY"},
+	{0x00, "ROM"},
+	{0x01, "MBC1"},
+	{0x02, "MBC1+RAM"},
+	{0x03, "MBC1+RAM+BATTERY"},
+	{0x05, "MBC2"},
+	{0x06, "MBC2+BATTERY"},
+	{0x08, "ROM+RAM"},
+	{0x09, "ROM+RAM+BATTERY"},
+	{0x0B, "MMM01"},
+	{0x0C, "MMM01+RAM"},
+	{0x0D, "MMM01+RAM+BATTERY"},
+	{0x0F, "MBC3+TIMER+BATTERY"},
+	{0x10, "MBC3+TIMER+RAM+BATTERY"},
+	{0x11, "MBC3"},
+	{0x12, "MBC3+RAM"},
+	{0x13, "MBC3+RAM+BATTERY"},
+	{0x19, "MBC5"},
+	{0x1A, "MBC5+RAM"},
+	{0x1B, "MBC5+RAM+BATTERY"},
+	{0x1C, "MBC5+RUMBLE"},
+	{0x1D, "MBC5+RUMBLE+RAM"},
+	{0x1E, "MBC5+RUMBLE+RAM+BATTERY"},
+	{0x20, "MBC6"},
+	{0x22, "MBC7+SENSOR+RUMBLE+RAM+BATTERY"},
+	{0xFC, "POCKET CAMERA"},
+	{0xFC, "POCKET_CAMERA"},
+	{0xFD, "BANDAI TAMA5"},
+	{0xFD, "BANDAI_TAMA5"},
+	{0xFE, "HuC3"},
+	{0xFF, "HuC1+RAM+BATTERY"},
+};
+
+static long parse_cartridge(char *arg, char **ep)
+{
+	for (int i = 0; i < sizeof(cartridge_types) / sizeof(cartridge_types[0]); i++) {
+		if (!strcmp(arg, cartridge_types[i].name)) {
+			*ep = arg + strlen(arg);
+			return cartridge_types[i].value;
+		}
+	}
+	return strtoul(arg, ep, 0);
+}
+
 int main(int argc, char *argv[])
 {
 	FILE *rom;
@@ -160,7 +214,7 @@ int main(int argc, char *argv[])
 		case 'm':
 			setcartridge = true;
 
-			cartridge = strtoul(optarg, &ep, 0);
+			cartridge = parse_cartridge(optarg, &ep);
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'm'");
 
