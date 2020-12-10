@@ -246,6 +246,9 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_OP_HIGH T_OP_LOW
 %token	T_OP_ISCONST
 
+%left	T_OP_NUMVAL
+%left	T_OP_STRVAL
+
 %left	T_OP_STRCMP
 %left	T_OP_STRIN
 %left	T_OP_STRRIN
@@ -1007,6 +1010,14 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_ATAN2 T_LPAREN const T_COMMA const T_RPAREN {
 			rpn_Number(&$$, math_ATan2($3, $5));
 		}
+		| T_OP_NUMVAL T_LPAREN string T_RPAREN {
+			struct Symbol const *sym = sym_FindScopedSymbol($3);
+
+			if (!sym)
+				fatalerror("NUMVAL: Symbol does not exist '%s'\n", $3);
+
+			rpn_Symbol(&$$, sym->name);
+		}
 		| T_OP_STRCMP T_LPAREN string T_COMMA string T_RPAREN {
 			rpn_Number(&$$, strcmp($3, $5));
 		}
@@ -1048,6 +1059,17 @@ const		: relocexpr {
 string		: T_STRING {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "String is too long '%s'\n", $1);
+		}
+		| T_OP_STRVAL T_LPAREN string T_RPAREN {
+			struct Symbol const *sym = sym_FindScopedSymbol($3);
+
+			if (!sym)
+				fatalerror("STRVAL: Symbol does not exist '%s'\n", $3);
+
+			char const *s = sym_GetStringValue(sym);
+
+			if (snprintf($$, MAXSTRLEN + 1, "%s", s) > MAXSTRLEN)
+				warning(WARNING_LONG_STR, "STRVAL: String too long '%s'\n", s);
 		}
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
 			strsubUTF8($$, $3, $5, $7);

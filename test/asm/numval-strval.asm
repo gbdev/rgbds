@@ -1,0 +1,14 @@
+SECTION "Test", ROM0
+
+MYSET = $07
+MYNUM EQU $bb
+MYWORD EQU $ccdd
+MYSTR EQUS "HELLO"
+
+	ld a, NUMVAL("MYNUM") + 5
+	bit NUMVAL("MYSET"), a
+	jp NUMVAL("MYWORD")
+
+	db $11, NUMVAL(STRCAT("MY", "NUM")), $ff
+	dw NUMVAL("MYWORD")
+	db STRLEN(STRVAL("MYSTR")), STRVAL(STRUPR("mystr"))
