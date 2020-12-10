@@ -282,7 +282,8 @@ Most of them return a string, however some of these functions actually return an
 .It Fn STRLEN string Ta Returns the number of characters in Ar string .
 .It Fn STRCAT str1 str2 Ta Appends Ar str2 No to Ar str1 .
 .It Fn STRCMP str1 str2 Ta Returns -1 if Ar str1 No is alphabetically lower than Ar str2 No , zero if they match, 1 if Ar str1 No is greater than Ar str2 .
-.It Fn STRIN str1 str2 Ta Returns the position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
+.It Fn STRIN str1 str2 Ta Returns the first position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
+.It Fn STRRIN str1 str2 Ta Returns the last position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
 .It Fn STRSUB str pos len Ta Returns a substring from Ar str No starting at Ar pos Po first character is position 1 Pc and Ar len No characters long.
 .It Fn STRUPR str Ta Converts all characters in Ar str No to capitals and returns the new string.
 .It Fn STRLWR str Ta Converts all characters in Ar str No to lower case and returns the new string.
