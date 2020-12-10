@@ -1777,7 +1777,7 @@ static int yylex_RAW(void)
 				if (c == EOF)
 					return 0;
 				shiftChars(1);
-				if (c == '\r' && peek(0) == '\r')
+				if (c == '\r' && peek(0) == '\n')
 					shiftChars(1);
 				return c == ',' ? T_COMMA : T_NEWLINE;
 			}
@@ -2033,10 +2033,8 @@ void lexer_CaptureRept(char **capture, size_t *size)
 				error("Unterminated REPT block\n");
 				lexerState->capturing = false;
 				goto finish;
-			} else if (c == '\n') {
-				break;
-			} else if (c == '\r') {
-				if (peek(0) == '\n')
+			} else if (c == '\n' || c == '\r') {
+				if (c == '\r' && peek(0) == '\n')
 					shiftChars(1);
 				break;
 			}
