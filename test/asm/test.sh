@@ -22,6 +22,9 @@ tryCmp () {
 	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
 }
 
+# Add the version constants test, outputting the closest tag to the HEAD
+git describe --tags --abbrev=0 > version.out
+
 # Add the quote test, except on Windows
 if uname | grep -viq mingw; then
 	cat > quote\"file.asm <<EOF
