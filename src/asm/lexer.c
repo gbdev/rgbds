@@ -1472,7 +1472,7 @@ static char const *reportGarbageChar(unsigned char firstByte)
 
 /* Lexer core */
 
-static yytoken_kind_t yylex_NORMAL(void)
+static int yylex_NORMAL(void)
 {
 	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
@@ -1728,7 +1728,7 @@ static yytoken_kind_t yylex_NORMAL(void)
 	}
 }
 
-static yytoken_kind_t yylex_RAW(void)
+static int yylex_RAW(void)
 {
 	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
@@ -1908,12 +1908,12 @@ finish:
 	return token;
 }
 
-static yytoken_kind_t yylex_SKIP_TO_ELIF(void)
+static int yylex_SKIP_TO_ELIF(void)
 {
 	return skipIfBlock(false);
 }
 
-static yytoken_kind_t yylex_SKIP_TO_ENDC(void)
+static int yylex_SKIP_TO_ENDC(void)
 {
 	return skipIfBlock(true);
 }
