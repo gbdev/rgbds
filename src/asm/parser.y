@@ -166,8 +166,6 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 %}
 
-%define api.token.raw true
-
 %union
 {
 	char tzSym[MAXSYMLEN + 1];

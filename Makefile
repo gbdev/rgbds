@@ -114,15 +114,22 @@ rgbgfx: ${rgbgfx_obj}
 
 # Rules to process files
 
-# We want the Bison invocations to pass through our rules, not default ones
+# We want the Bison invocation to pass through our rules, not default ones
 .y.o:
 
-# bison-generated C files have an accompanying header
-.c.h:
+# Bison-generated C files have an accompanying header
+src/asm/parser.h: src/asm/parser.c
 	$Qtouch $@
 
-.y.c:
-	$Q${BISON} -d ${YFLAGS} -o $@ $<
+src/asm/parser.c: src/asm/parser.y
+	$QDEFS=; \
+	add_flag(){ \
+		if src/check_bison_ver.sh $$1 $$2; then \
+			DEFS+=-D$$3; \
+		fi \
+	}; \
+	add_flag 3 5 api.token.raw=true; \
+	${BISON} -d $$DEFS ${YFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} ${PNGCFLAGS} -c -o $@ $<

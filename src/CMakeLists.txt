@@ -12,9 +12,7 @@ set(common_src
     "version.c"
     )
 
-find_package(BISON REQUIRED)
 find_package(PkgConfig)
-
 if(NOT PKG_CONFIG_FOUND)
   # fallback to find_package
   find_package(PNG REQUIRED)
@@ -22,8 +20,15 @@ else()
   pkg_check_modules(LIBPNG REQUIRED libpng)
 endif()
 
+find_package(BISON REQUIRED)
+set(BISON_FLAGS "")
+# Set sompe optimization flags on versions that support them
+if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
+endif()
 BISON_TARGET(PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
+             COMPILE_FLAGS "${BISON_FLAGS}"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.h"
              )
 
