@@ -2,18 +2,19 @@
 
 export LC_ALL=C
 
-o=$(mktemp)
-gb=$(mktemp)
-input=$(mktemp)
-output=$(mktemp)
-errput=$(mktemp)
+o="$(mktemp)"
+gb="$(mktemp)"
+input="$(mktemp)"
+output="$(mktemp)"
+errput="$(mktemp)"
 rc=0
 
-bold=$(tput bold)
-resbold=$(tput sgr0)
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-rescolors=$(tput op)
+bold="$(tput bold)"
+resbold="$(tput sgr0)"
+red="$(tput setaf 1)"
+green="$(tput setaf 2)"
+orange="$(tput setaf 3)"
+rescolors="$(tput op)"
 tryDiff () {
 	diff -u --strip-trailing-cr $1 $2 || (echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"; false)
 }
@@ -23,7 +24,13 @@ tryCmp () {
 }
 
 # Add the version constants test, outputting the closest tag to the HEAD
-git describe --tags --abbrev=0 > version.out
+if git describe --tags --abbrev=0 > version.out; then
+	cat > version.asm <<EOF
+PRINTT "v{d:__RGBDS_MAJOR__}.{d:__RGBDS_MINOR__}.{d:__RGBDS_PATCH__}\n"
+EOF
+else
+	echo "${bold}${orange}Warning: cannot run version test!${rescolors}${resbold}"
+fi
 
 # Add the quote test, except on Windows
 if uname | grep -viq mingw; then
@@ -40,7 +47,7 @@ fi
 
 for i in *.asm; do
 	for variant in '' '.pipe'; do
-		echo -e "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
+		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 		if [ -z "$variant" ]; then
 			../../rgbasm -Weverything -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
