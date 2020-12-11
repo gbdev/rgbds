@@ -206,6 +206,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
+%type	<tzString>	string_no_sym
 
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
@@ -247,6 +248,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_OP_HIGH T_OP_LOW
 %token	T_OP_ISCONST
 
+%left	T_OP_SYM
+
 %left	T_OP_STRCMP
 %left	T_OP_STRIN
 %left	T_OP_STRRIN
@@ -259,9 +262,12 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	NEG /* negation -- unary minus */
 
 %token	<tzSym> T_LABEL
+%type	<tzSym> sym_def_name
 %token	<tzSym> T_ID
 %token	<tzSym> T_LOCAL_ID
 %type	<tzSym> scoped_id
+%type	<tzSym> scoped_id_no_sym
+%type	<tzSym> call_sym_name
 %token	T_POP_EQU
 %token	T_POP_SET
 %token	T_POP_EQUAL
@@ -422,27 +428,37 @@ endc		: T_POP_ENDC T_NEWLINE {
 		}
 ;
 
-scoped_id	: T_ID | T_LOCAL_ID ;
+scoped_id	: scoped_id_no_sym | call_sym_name ;
+
+scoped_id_no_sym	: T_ID | T_LOCAL_ID;
+
+sym_def_name	: T_LABEL | call_sym_name ;
+
+call_sym_name	: T_OP_SYM T_LPAREN string T_RPAREN {
+			if (snprintf($$, MAXSYMLEN + 1, "%s", $3) > MAXSYMLEN)
+				fatalerror("SYM: Symbol is too long '%s'\n", $3);
+		}
+;
 
 label		: /* empty */
 		| T_LOCAL_ID {
 			sym_AddLocalLabel($1);
 		}
-		| T_LABEL {
+		| sym_def_name {
 			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated\n");
 			sym_AddLabel($1);
 		}
 		| T_LOCAL_ID T_COLON {
 			sym_AddLocalLabel($1);
 		}
-		| T_LABEL T_COLON {
+		| sym_def_name T_COLON {
 			sym_AddLabel($1);
 		}
 		| T_LOCAL_ID T_COLON T_COLON {
 			sym_AddLocalLabel($1);
 			sym_Export($1);
 		}
-		| T_LABEL T_COLON T_COLON {
+		| sym_def_name T_COLON T_COLON {
 			sym_AddLabel($1);
 			sym_Export($1);
 		}
@@ -624,7 +640,7 @@ rept		: T_POP_REPT uconst {
 		}
 ;
 
-macrodef	: T_LABEL T_COLON T_POP_MACRO {
+macrodef	: sym_def_name T_COLON T_POP_MACRO {
 			int32_t nDefinitionLineNo = lexer_GetLineNo();
 			char *body;
 			size_t size;
@@ -633,7 +649,7 @@ macrodef	: T_LABEL T_COLON T_POP_MACRO {
 		}
 ;
 
-equs		: T_LABEL T_POP_EQUS string	{ sym_AddString($1, $3); }
+equs		: sym_def_name T_POP_EQUS string	{ sym_AddString($1, $3); }
 ;
 
 rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
@@ -650,19 +666,19 @@ rs_uconst	: /* empty */ {
 		}
 ;
 
-rl		: T_LABEL T_POP_RL rs_uconst {
+rl		: sym_def_name T_POP_RL rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
 ;
 
-rw		: T_LABEL T_POP_RW rs_uconst {
+rw		: sym_def_name T_POP_RW rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
-rb		: T_LABEL T_POP_RB rs_uconst {
+rb		: sym_def_name T_POP_RB rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
 		}
@@ -742,11 +758,11 @@ export_list	: export_list_entry
 export_list_entry : scoped_id	{ sym_Export($1); }
 ;
 
-equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
+equ		: sym_def_name T_POP_EQU const	{ sym_AddEqu($1, $3); }
 ;
 
-set		: T_LABEL T_POP_SET const	{ sym_AddSet($1, $3); }
-		| T_LABEL T_POP_EQUAL const	{ sym_AddSet($1, $3); }
+set		: sym_def_name T_POP_SET const	{ sym_AddSet($1, $3); }
+		| sym_def_name T_POP_EQUAL const	{ sym_AddSet($1, $3); }
 ;
 
 include		: T_POP_INCLUDE string {
@@ -826,7 +842,7 @@ constlist_8bit_entry : /* empty */ {
 			nListCountEmpty++;
 		}
 		| reloc_8bit_no_str	{ out_RelByte(&$1); }
-		| string {
+		| string_no_sym {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
 			int32_t length = charmap_Convert($1, output);
 
@@ -844,7 +860,7 @@ constlist_16bit_entry : /* empty */ {
 			nListCountEmpty++;
 		}
 		| reloc_16bit_no_str	{ out_RelWord(&$1); }
-		| string {
+		| string_no_sym {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
 			int32_t length = charmap_Convert($1, output);
 
@@ -862,7 +878,7 @@ constlist_32bit_entry : /* empty */ {
 			nListCountEmpty++;
 		}
 		| relocexpr_no_str	{ out_RelLong(&$1); }
-		| string {
+		| string_no_sym {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
 			int32_t length = charmap_Convert($1, output);
 
@@ -905,7 +921,7 @@ reloc_16bit_no_str : relocexpr_no_str {
 
 
 relocexpr	: relocexpr_no_str
-		| string {
+		| string_no_sym {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be longer than that */
 			int32_t length = charmap_Convert($1, output);
 			uint32_t r = str2int2(output, length);
@@ -980,11 +996,21 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_HIGH T_LPAREN relocexpr T_RPAREN	{ rpn_HIGH(&$$, &$3); }
 		| T_OP_LOW T_LPAREN relocexpr T_RPAREN	{ rpn_LOW(&$$, &$3); }
 		| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN{ rpn_ISCONST(&$$, &$3); }
-		| T_OP_BANK T_LPAREN scoped_id T_RPAREN {
+		| T_OP_BANK T_LPAREN scoped_id_no_sym T_RPAREN {
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
 		}
-		| T_OP_BANK T_LPAREN string T_RPAREN	{ rpn_BankSection(&$$, $3); }
+		| T_OP_BANK T_LPAREN string_no_sym T_RPAREN	{ rpn_BankSection(&$$, $3); }
+		| T_OP_BANK T_LPAREN call_sym_name T_RPAREN	{
+			/* Assume for BANK(SYM("x")) that x expands to an ID, not a section name string */
+			struct Symbol const *sym = sym_FindScopedSymbol($3);
+
+			if (!sym) {
+				fatalerror("Symbol '%s' does not exist\n", $3);
+			} else {
+				rpn_BankSymbol(&$$, sym_GetStringValue(sym));
+			}
+		}
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_id T_RPAREN {
@@ -1068,7 +1094,21 @@ const		: relocexpr {
 		}
 ;
 
-string		: T_STRING {
+string		: string_no_sym
+		| call_sym_name {
+			struct Symbol const *sym = sym_FindScopedSymbol($1);
+
+			if (!sym) {
+				fatalerror("Symbol '%s' does not exist\n", $1);
+			} else if (sym->type != SYM_EQUS) {
+				fatalerror("Symbol '%s' is not a string\n", $1);
+			} else if (snprintf($$, MAXSTRLEN + 1, "%s", sym_GetStringValue(sym)) > MAXSTRLEN) {
+				warning(WARNING_LONG_STR, "String is too long '%s'\n", $1);
+			}
+		}
+;
+
+string_no_sym		: T_STRING {
 			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "String is too long '%s'\n", $1);
 		}
