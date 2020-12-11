@@ -332,6 +332,7 @@ struct LexerState {
 	size_t captureCapacity; /* Size of the buffer above */
 
 	bool disableMacroArgs;
+	bool disableInterpolation;
 	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
 	bool expandStrings;
 	struct Expansion *expansions;
@@ -351,6 +352,7 @@ static void initState(struct LexerState *state)
 	state->captureBuf = NULL;
 
 	state->disableMacroArgs = false;
+	state->disableInterpolation = false;
 	state->macroArgScanDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
@@ -767,16 +769,23 @@ static int peekInternal(uint8_t distance)
 	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
 }
 
+/* forward declarations for peek */
+static void shiftChars(uint8_t distance);
+static char const *readInterpolation(void);
+
 static int peek(uint8_t distance)
 {
-	int c = peekInternal(distance);
+	int c;
+
+restart:
+	c = peekInternal(distance);
 
 	if (distance >= lexerState->macroArgScanDistance) {
 		lexerState->macroArgScanDistance = distance + 1; /* Do not consider again */
-		/* If enabled and character is a backslash, check for a macro arg */
-		if (!lexerState->disableMacroArgs && c == '\\') {
-			distance++;
+		if (c == '\\' && !lexerState->disableMacroArgs) {
+			/* If character is a backslash, check for a macro arg */
 			lexerState->macroArgScanDistance++;
+			distance++;
 			c = peekInternal(distance);
 			if (c == '@' || (c >= '0' && c <= '9')) {
 				/* Expand the argument and return its first character */
@@ -794,8 +803,19 @@ static int peek(uint8_t distance)
 			} else {
 				c = '\\';
 			}
+		} else if (c == '{' && !lexerState->disableInterpolation) {
+			/* If character is an open brace, do symbol interpolation */
+			lexerState->macroArgScanDistance++;
+			shiftChars(1);
+			char const *ptr = readInterpolation();
+
+			if (ptr) {
+				beginExpansion(distance, 0, ptr, strlen(ptr), ptr);
+				goto restart;
+			}
 		}
 	}
+
 	return c;
 }
 
@@ -927,6 +947,7 @@ static void discardBlockComment(void)
 {
 	dbgPrint("Discarding block comment\n");
 	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
 	for (;;) {
 		switch (nextChar()) {
 		case EOF:
@@ -950,6 +971,7 @@ static void discardBlockComment(void)
 	}
 finish:
 	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
 }
 
 /* Function to discard all of a line's comments */
@@ -958,6 +980,7 @@ static void discardComment(void)
 {
 	dbgPrint("Discarding comment\n");
 	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
 	for (;;) {
 		int c = peek(0);
 
@@ -966,6 +989,7 @@ static void discardComment(void)
 		shiftChars(1);
 	}
 	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
 }
 
 /* Function to read a line continuation */
@@ -1267,14 +1291,11 @@ static char const *readInterpolation(void)
 
 		if (c == '{') { /* Nested interpolation */
 			shiftChars(1);
-			char const *inner = readInterpolation();
+			char const *ptr = readInterpolation();
 
-			if (inner) {
-				while (*inner) {
-					if (i == sizeof(symName))
-						break;
-					symName[i++] = *inner++;
-				}
+			if (ptr) {
+				beginExpansion(0, 0, ptr, strlen(ptr), ptr);
+				continue; /* Restart, reading from the new buffer */
 			}
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
@@ -1342,6 +1363,7 @@ static void readString(void)
 	size_t i = 0;
 
 	dbgPrint("Reading string\n");
+	lexerState->disableInterpolation = true;
 	for (;;) {
 		int c = peek(0);
 
@@ -1354,7 +1376,7 @@ static void readString(void)
 			}
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read string \"%s\"\n", yylval.tzString);
-			return;
+			goto finish;
 		case '\r':
 		case '\n': /* Do not shift these! */
 		case EOF:
@@ -1365,7 +1387,7 @@ static void readString(void)
 			yylval.tzString[i] = '\0';
 			error("Unterminated string\n");
 			dbgPrint("Read string \"%s\"\n", yylval.tzString);
-			return;
+			goto finish;
 
 		case '\\': /* Character escape */
 			c = peek(1);
@@ -1426,6 +1448,9 @@ static void readString(void)
 			yylval.tzString[i++] = c;
 		shiftChars(1);
 	}
+
+finish:
+	lexerState->disableInterpolation = false;
 }
 
 /* Function to report one character's worth of garbage bytes */
@@ -1812,19 +1837,6 @@ static int yylex_RAW(void)
 			}
 			break;
 
-		case '{': /* Symbol interpolation */
-			shiftChars(1);
-			char const *ptr = readInterpolation();
-
-			if (ptr) {
-				while (*ptr) {
-					if (i == sizeof(yylval.tzString))
-						break;
-					yylval.tzString[i++] = *ptr++;
-				}
-			}
-			continue; /* Do not copy an additional character */
-
 		/* Regular characters will just get copied */
 		}
 		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
@@ -1848,8 +1860,9 @@ static int skipIfBlock(bool toEndc)
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 
-	/* Prevent expanding macro args in this state */
+	/* Prevent expanding macro args and symbol interpolation in this state */
 	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
 
 	for (;;) {
 		if (atLineStart) {
@@ -1910,6 +1923,7 @@ static int skipIfBlock(bool toEndc)
 finish:
 
 	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
 
 	return token;
@@ -1978,6 +1992,7 @@ static char *startCapture(void)
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
 
 	if (lexerState->isMmapped && !lexerState->expansions) {
 		return &lexerState->ptr[lexerState->offset];
@@ -2051,6 +2066,7 @@ finish:
 	*size = lexerState->captureSize - strlen("ENDR");
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
 }
 
 void lexer_CaptureMacroBody(char **capture, size_t *size)
@@ -2116,4 +2132,5 @@ finish:
 	*size = lexerState->captureSize - strlen("ENDM");
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
 }

@@ -251,9 +251,9 @@ If it's a numeric symbol, its value is converted to hexadecimal notation with a 
 .Sq $
 prepended.
 .Bd -literal -offset indent
-TOPIC equs "life, the universe, and everything"
+TOPIC equs "life, the universe, and \[rs]"everything\[rs]""
 ANSWER = 42
-;\ Prints "The answer to life, the universe, and everything is $2A"
+;\ Prints "The answer to life, the universe, and "everything" is $2A"
 PRINTT "The answer to {TOPIC} is {ANSWER}\[rs]n"
 .Ed
 .Pp
@@ -276,6 +276,20 @@ HINT: The
 .Ic {symbol}
 construct can also be used outside strings.
 The symbol's value is again inserted directly.
+.Bd -literal -offset indent
+NAME equs "ITEM"
+FMT equs "d"
+ZERO_NUM equ 0
+ZERO_STR equs "0"
+;\ Defines INDEX as 100
+INDEX = 1{ZERO_STR}{{FMT}:ZERO_NUM}
+;\ Defines ITEM_100 as "\[rs]"hundredth\[rs]""
+{NAME}_{d:INDEX} equs "\[rs]"hundredth\[rs]""
+;\ Prints "ITEM_100 is hundredth"
+PRINTT STRCAT("{NAME}_{d:INDEX} is ", {NAME}_{d:INDEX})
+;\ Purges ITEM_100
+PURGE {NAME}_{d:INDEX}
+.Ed
 .Pp
 The following functions operate on string expressions.
 Most of them return a string, however some of these functions actually return an integer and can be used as part of an integer expression!
