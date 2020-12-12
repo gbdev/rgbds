@@ -645,9 +645,7 @@ rsreset		: T_POP_RSRESET	{ sym_AddSet("_RS", 0); }
 rs_uconst	: /* empty */ {
 			$$ = 1;
 		}
-		| uconst {
-			$$ = $1;
-		}
+		| uconst
 ;
 
 rl		: T_LABEL T_POP_RL rs_uconst {
@@ -1597,18 +1595,18 @@ z80_xor		: T_Z80_XOR op_a_n {
 		| T_Z80_XOR op_a_r	{ out_AbsByte(0xA8 | $2); }
 ;
 
-op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK		{ $$ = $2; }
+op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK	{ $$ = $2; }
 ;
 
-op_hl_ss	: reg_ss			{ $$ = $1; }
+op_hl_ss	: reg_ss
 		| T_MODE_HL T_COMMA reg_ss	{ $$ = $3; }
 ;
 
-op_a_r		: reg_r				{ $$ = $1; }
-		| T_MODE_A T_COMMA reg_r		{ $$ = $3; }
+op_a_r		: reg_r
+		| T_MODE_A T_COMMA reg_r	{ $$ = $3; }
 ;
 
-op_a_n		: reloc_8bit			{ $$ = $1; }
+op_a_n		: reloc_8bit
 		| T_MODE_A T_COMMA reloc_8bit	{ $$ = $3; }
 ;
 
