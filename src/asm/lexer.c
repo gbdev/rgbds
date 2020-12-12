@@ -926,11 +926,12 @@ void lexer_DumpStringExpansions(void)
 static void discardBlockComment(void)
 {
 	dbgPrint("Discarding block comment\n");
+	lexerState->disableMacroArgs = true;
 	for (;;) {
 		switch (nextChar()) {
 		case EOF:
 			error("Unterminated block comment\n");
-			return;
+			goto finish;
 		case '/':
 			if (peek(0) == '*') {
 				warning(WARNING_NESTED_COMMENT,
@@ -940,13 +941,15 @@ static void discardBlockComment(void)
 		case '*':
 			if (peek(0) == '/') {
 				shiftChars(1);
-				return;
+				goto finish;
 			}
 			/* fallthrough */
 		default:
 			continue;
 		}
 	}
+finish:
+	lexerState->disableMacroArgs = false;
 }
 
 /* Function to discard all of a line's comments */
