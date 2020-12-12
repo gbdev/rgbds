@@ -98,6 +98,41 @@ char const *macro_GetArg(uint32_t i)
 					      : macroArgs->args[realIndex];
 }
 
+char *macro_GetAllArgs(void)
+{
+	if (!macroArgs)
+		return NULL;
+
+	if (macroArgs->shift >= macroArgs->nbArgs)
+		return "";
+
+	size_t len = strlen(macroArgs->args[macroArgs->shift]);
+
+	for (uint32_t i = macroArgs->shift + 1; i < macroArgs->nbArgs; i++)
+		len += 1 + strlen(macroArgs->args[i]);
+
+	char *str = malloc(len + 1);
+
+	if (!str)
+		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
+
+	char *ptr = str;
+
+	size_t n = strlen(macroArgs->args[macroArgs->shift]);
+
+	memcpy(ptr, macroArgs->args[macroArgs->shift], n);
+	ptr += n;
+	for (uint32_t i = macroArgs->shift + 1; i < macroArgs->nbArgs; i++) {
+		*ptr++ = ','; /* no space after comma */
+		n = strlen(macroArgs->args[i]);
+		memcpy(ptr, macroArgs->args[i], n);
+		ptr += n;
+	}
+	*ptr = '\0';
+
+	return str;
+}
+
 uint32_t macro_GetUniqueID(void)
 {
 	return uniqueID;

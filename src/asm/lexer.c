@@ -290,11 +290,15 @@ struct Expansion {
 	struct Expansion *firstChild;
 	struct Expansion *next;
 	char *name;
-	char const *contents;
+	union {
+		char const *unowned;
+		char *owned;
+	} contents;
 	size_t len;
 	size_t totalLen;
 	size_t distance; /* Distance between the beginning of this expansion and of its parent */
 	uint8_t skip; /* How many extra characters to skip after the expansion is over */
+	bool owned; /* Whether or not to free contents when this expansion is freed */
 };
 
 struct LexerState {
@@ -632,7 +636,8 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 }
 
 static void beginExpansion(size_t distance, uint8_t skip,
-			   char const *str, size_t size, char const *name)
+			   char const *str, size_t size, bool owned,
+			   char const *name)
 {
 	distance += lexerState->expansionOfs; /* Distance argument is relative to read offset! */
 	/* Increase the total length of all parents, and return the topmost one */
@@ -659,11 +664,12 @@ static void beginExpansion(size_t distance, uint8_t skip,
 	(*insertPoint)->firstChild = NULL;
 	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
 	(*insertPoint)->name = name ? strdup(name) : NULL;
-	(*insertPoint)->contents = str;
+	(*insertPoint)->contents.unowned = str;
 	(*insertPoint)->len = size;
 	(*insertPoint)->totalLen = size;
 	(*insertPoint)->distance = distance;
 	(*insertPoint)->skip = skip;
+	(*insertPoint)->owned = owned;
 
 	/* If expansion is the new closest one, update offset */
 	if (insertPoint == &lexerState->expansions)
@@ -681,6 +687,8 @@ static void freeExpansion(struct Expansion *expansion)
 		child = next;
 	}
 	free(expansion->name);
+	if (expansion->owned)
+		free(expansion->contents.owned);
 	free(expansion);
 }
 
@@ -690,6 +698,8 @@ static char const *expandMacroArg(char name, size_t distance)
 
 	if (name == '@')
 		str = macro_GetUniqueIDStr();
+	else if (name == '#')
+		str = macro_GetAllArgs();
 	else if (name == '0')
 		fatalerror("Invalid macro argument '\\0'\n");
 	else
@@ -697,7 +707,11 @@ static char const *expandMacroArg(char name, size_t distance)
 	if (!str)
 		fatalerror("Macro argument '\\%c' not defined\n", name);
 
-	beginExpansion(distance, 2, str, strlen(str), NULL);
+	/* Cannot expand an empty string */
+	if (!str[0])
+		return NULL;
+
+	beginExpansion(distance, 2, str, strlen(str), name == '#', NULL);
 	return str;
 }
 
@@ -713,7 +727,7 @@ static int peekInternal(uint8_t distance)
 
 	if (expansion) {
 		assert(ofs < expansion->len);
-		return expansion->contents[ofs];
+		return expansion->contents.unowned[ofs];
 	}
 
 	distance = ofs;
@@ -785,11 +799,19 @@ restart:
 		if (c == '\\' && !lexerState->disableMacroArgs) {
 			/* If character is a backslash, check for a macro arg */
 			lexerState->macroArgScanDistance++;
-			distance++;
-			c = peekInternal(distance);
-			if (c == '@' || (c >= '0' && c <= '9')) {
+			c = peekInternal(distance + 1);
+			if (c == '@' || c == '#' || (c >= '0' && c <= '9')) {
 				/* Expand the argument and return its first character */
-				char const *str = expandMacroArg(c, distance - 1);
+				char const *str = expandMacroArg(c, distance);
+
+				/*
+				 * If the argument is an empty string, nothing was
+				 * expanded, so skip it and keep peeking.
+				 */
+				if (!str) {
+					shiftChars(2);
+					goto restart;
+				}
 
 				/*
 				 * Assuming macro args can't be recursive (I'll be damned if a way
@@ -798,7 +820,10 @@ restart:
 				 * so they shouldn't be counted in the scan distance!
 				 */
 				lexerState->macroArgScanDistance += strlen(str) - 2;
-				/* WARNING: this assumes macro args can't be empty!! */
+				/*
+				 * This assumes macro args can't be empty, since expandMacroArg
+				 * returns NULL instead of an empty string.
+				 */
 				c = str[0];
 			} else {
 				c = '\\';
@@ -810,7 +835,7 @@ restart:
 			char const *ptr = readInterpolation();
 
 			if (ptr) {
-				beginExpansion(distance, 0, ptr, strlen(ptr), ptr);
+				beginExpansion(distance, 0, ptr, strlen(ptr), false, ptr);
 				goto restart;
 			}
 		}
@@ -1294,7 +1319,7 @@ static char const *readInterpolation(void)
 			char const *ptr = readInterpolation();
 
 			if (ptr) {
-				beginExpansion(0, 0, ptr, strlen(ptr), ptr);
+				beginExpansion(0, 0, ptr, strlen(ptr), false, ptr);
 				continue; /* Restart, reading from the new buffer */
 			}
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
@@ -1739,7 +1764,8 @@ static int yylex_NORMAL(void)
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
 
-						beginExpansion(0, 0, s, strlen(s), sym->name);
+						beginExpansion(0, 0, s, strlen(s), false,
+							       sym->name);
 						continue; /* Restart, reading from the new buffer */
 					}
 				}
