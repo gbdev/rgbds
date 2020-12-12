@@ -515,11 +515,60 @@ struct Symbol *sym_AddLabel(char const *name)
 	return sym;
 }
 
+static uint32_t anonLabelID;
+
+/*
+ * Add an anonymous label
+ */
+struct Symbol *sym_AddAnonLabel(void)
+{
+	if (anonLabelID == UINT32_MAX) {
+		error("Only %" PRIu32 " anonymous labels can be created!");
+		return NULL;
+	}
+	char name[MAXSYMLEN + 1];
+
+	sym_WriteAnonLabelName(name, 0, true); // The direction is important!!
+	anonLabelID++;
+	return addLabel(name);
+}
+
+/*
+ * Write an anonymous label's name to a buffer
+ */
+void sym_WriteAnonLabelName(char buf[static MAXSYMLEN + 1], uint32_t ofs, bool neg)
+{
+	uint32_t id = 0;
+
+	if (neg) {
+		if (ofs > anonLabelID)
+			error("Reference to anonymous label %" PRIu32 " before, when only %" PRIu32
+			      " ha%s been created so far\n",
+			      ofs, anonLabelID, anonLabelID == 1 ? "s" : "ve");
+		else
+			id = anonLabelID - ofs;
+	} else {
+		ofs--; // We're referencing symbols that haven't been created yet...
+		if (ofs > UINT32_MAX - anonLabelID)
+			error("Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
+			      " may still be created\n", ofs + 1, UINT32_MAX - anonLabelID);
+		else
+			id = anonLabelID + ofs;
+	}
+
+	sprintf(buf, "!%u", id);
+}
+
 /*
  * Export a symbol
  */
 void sym_Export(char const *symName)
 {
+	if (symName[0] == '!') {
+		error("Anonymous labels cannot be exported\n");
+		return;
+	}
+
 	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
 	/* If the symbol doesn't exist, create a ref that can be purged */
@@ -671,6 +720,7 @@ void sym_Init(void)
 #undef addString
 
 	labelScope = NULL;
+	anonLabelID = 0;
 
 	math_DefinePI();
 }

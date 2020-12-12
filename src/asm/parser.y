@@ -262,7 +262,9 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	<tzSym> T_LABEL
 %token	<tzSym> T_ID
 %token	<tzSym> T_LOCAL_ID
+%token	<tzSym> T_ANON
 %type	<tzSym> scoped_id
+%type	<tzSym> scoped_anon_id
 %token	T_POP_EQU
 %token	T_POP_SET
 %token	T_POP_EQUAL
@@ -423,9 +425,13 @@ endc		: T_POP_ENDC T_NEWLINE {
 		}
 ;
 
-scoped_id	: T_ID | T_LOCAL_ID ;
+scoped_id	: T_ID | T_LOCAL_ID;
+scoped_anon_id	: scoped_id | T_ANON;
 
 label		: /* empty */
+		| T_COLON {
+			sym_AddAnonLabel();
+		}
 		| T_LOCAL_ID {
 			sym_AddLocalLabel($1);
 		}
@@ -914,7 +920,7 @@ relocexpr	: relocexpr_no_str
 		}
 ;
 
-relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
+relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| T_NUMBER	{ rpn_Number(&$$, $1); }
 		| T_OP_LOGICNOT relocexpr %prec NEG {
 			rpn_LOGNOT(&$$, &$2);
@@ -979,14 +985,14 @@ relocexpr_no_str : scoped_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_HIGH T_LPAREN relocexpr T_RPAREN	{ rpn_HIGH(&$$, &$3); }
 		| T_OP_LOW T_LPAREN relocexpr T_RPAREN	{ rpn_LOW(&$$, &$3); }
 		| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN{ rpn_ISCONST(&$$, &$3); }
-		| T_OP_BANK T_LPAREN scoped_id T_RPAREN {
+		| T_OP_BANK T_LPAREN scoped_anon_id T_RPAREN {
 			/* '@' is also a T_ID, it is handled here. */
 			rpn_BankSymbol(&$$, $3);
 		}
 		| T_OP_BANK T_LPAREN string T_RPAREN	{ rpn_BankSection(&$$, $3); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
-		} T_LPAREN scoped_id T_RPAREN {
+		} T_LPAREN scoped_anon_id T_RPAREN {
 			struct Symbol const *sym = sym_FindScopedSymbol($4);
 
 			rpn_Number(&$$, !!sym);
