@@ -206,6 +206,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<nConstValue>	sectiontype
 
 %type	<tzString>	string
+%type	<tzString>	strcat_args
 
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
@@ -1066,29 +1067,29 @@ const		: relocexpr {
 		}
 ;
 
-string		: T_STRING {
-			if (snprintf($$, MAXSTRLEN + 1, "%s", $1) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "String is too long '%s'\n", $1);
-		}
+string		: T_STRING
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
 			strsubUTF8($$, $3, $5, $7);
 		}
-		| T_OP_STRCAT T_LPAREN string T_COMMA string T_RPAREN {
-			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $3, $5) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
-					$3, $5);
+		| T_OP_STRCAT T_LPAREN T_RPAREN {
+			$$[0] = '\0';
+		}
+		| T_OP_STRCAT T_LPAREN strcat_args T_RPAREN {
+			strcpy($$, $3);
 		}
 		| T_OP_STRUPR T_LPAREN string T_RPAREN {
-			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'\n", $3);
-
 			upperstring($$);
 		}
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
-			if (snprintf($$, MAXSTRLEN + 1, "%s", $3) > MAXSTRLEN)
-				warning(WARNING_LONG_STR, "STRUPR: String too long '%s'\n", $3);
-
 			lowerstring($$);
+		}
+;
+
+strcat_args	: string
+		| strcat_args T_COMMA string {
+			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $1, $3) > MAXSTRLEN)
+				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
+					$1, $3);
 		}
 ;
 
@@ -1097,7 +1098,7 @@ section		: T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
 		}
 ;
 
-sectmod	: /* empty */	{ $$ = SECTION_NORMAL; }
+sectmod		: /* empty */	{ $$ = SECTION_NORMAL; }
 		| T_POP_UNION	{ $$ = SECTION_UNION; }
 		| T_POP_FRAGMENT{ $$ = SECTION_FRAGMENT; }
 ;
