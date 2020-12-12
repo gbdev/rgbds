@@ -993,6 +993,21 @@ static void readLineContinuation(void)
 	}
 }
 
+/* Function to read an anonymous label ref */
+
+static void readAnonLabelRef(char c)
+{
+	uint32_t n = 0;
+
+	// We come here having already peeked at one char, so no need to do it again
+	do {
+		shiftChars(1);
+		n++;
+	} while (peek(0) == c);
+
+	sym_WriteAnonLabelName(yylval.tzSym, n, c == '-');
+}
+
 /* Functions to lex numbers of various radixes */
 
 static void readNumber(int radix, int32_t baseValue)
@@ -1515,8 +1530,6 @@ static int yylex_NORMAL(void)
 			yylval.tzSym[1] = '\0';
 			return T_ID;
 
-		/* Handle accepted single chars */
-
 		case '[':
 			return T_LBRACK;
 		case ']':
@@ -1527,8 +1540,6 @@ static int yylex_NORMAL(void)
 			return T_RPAREN;
 		case ',':
 			return T_COMMA;
-		case ':':
-			return T_COLON;
 
 		/* Handle ambiguous 1- or 2-char tokens */
 		char secondChar;
@@ -1585,6 +1596,16 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICNE;
 			}
 			return T_OP_LOGICNOT;
+
+		/* Handle colon, which may begin an anonymous label ref */
+
+		case ':':
+			c = peek(0);
+			if (c != '+' && c != '-')
+				return T_COLON;
+
+			readAnonLabelRef(c);
+			return T_ANON;
 
 		/* Handle numbers */
 

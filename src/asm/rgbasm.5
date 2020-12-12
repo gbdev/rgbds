@@ -786,6 +786,33 @@ must be the actual current scope.
 .Pp
 Local labels may have whitespace before their declaration as the only exception to the rule.
 .Pp
+.Sy Anonymous labels
+are useful for short blocks of code.
+They are defined like normal labels, but without a name before the colon.
+Defining one does not change the label scope (unlike global labels).
+Referencing one is done using a colon
+.Ql \&:
+followed by pluses
+.Ql +
+or minuses
+.Ql - .
+.Ic :+
+references the next one after the expression,
+.Ic :++
+the one after it, and so on.
+The logic is similar for -, just backwards.
+.Bd -literal -offset indent
+    ld hl, :++
+:   ld a, [hli] ; Jumps to here
+    ldh [c], a
+    dec c
+    jr nz, :-
+    ret
+
+: ; This address referenced by "ld hl"
+    dw $7FFF, $1061, $03E0, $58A5
+.Ed
+.Pp
 A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
 However, if the section in which the label is declared has a fixed base address, its value is known at assembly time.
 .Pp
