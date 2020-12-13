@@ -54,6 +54,24 @@ void sym_AddSymbol(struct Symbol *symbol);
 struct Symbol *sym_GetSymbol(char const *name);
 
 /**
+ * Cleanly deletes a symbol and associated data
+ * @param arg The symbol to delete
+ */
+static inline void sym_FreeSymbol(void *arg)
+{
+	struct Symbol *sym = arg;
+
+	free(sym->name);
+	free(sym);
+}
+
+/**
+ * Cleanly deletes a symbol and associated data
+ * @param name The name of the symbol to delete
+ */
+void sym_RemoveSymbol(char const *name);
+
+/**
  * `free`s all symbol memory that was allocated.
  */
 void sym_CleanupSymbols(void);

@@ -47,9 +47,9 @@ bool hash_ReplaceElement(HashMap const map, char const *key, void *element);
  * Removes an element from a hashmap.
  * @param map The HashMap to remove the element from
  * @param key The key to search the element with
- * @return True if the element was found and removed
+ * @return The element removed, or NULL if none was found
  */
-bool hash_RemoveElement(HashMap map, char const *key);
+void *hash_RemoveElement(HashMap map, char const *key);
 
 /**
  * Finds an element in a hashmap.
@@ -74,6 +74,6 @@ void hash_ForEach(HashMap const map, void (*func)(void *, void *), void *arg);
  * This does not `free` the data structure itself!
  * @param map The map to empty
  */
-void hash_EmptyMap(HashMap map);
+void hash_EmptyMap(HashMap map, void (*callback)(void *));
 
 #endif /* RGBDS_LINK_HASHMAP_H */
