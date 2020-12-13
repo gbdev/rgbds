@@ -80,7 +80,7 @@ bool hash_ReplaceElement(HashMap const map, char const *key, void *element)
 	return false;
 }
 
-bool hash_RemoveElement(HashMap map, char const *key)
+void *hash_RemoveElement(HashMap map, char const *key)
 {
 	HashType hashedKey = hash(key);
 	struct HashMapEntry **ptr = &map[(HalfHashType)hashedKey];
@@ -89,14 +89,15 @@ bool hash_RemoveElement(HashMap map, char const *key)
 		if (hashedKey >> HALF_HASH_NB_BITS == (*ptr)->hash
 		 && !strcmp((*ptr)->key, key)) {
 			struct HashMapEntry *next = (*ptr)->next;
+			void *elem = (*ptr)->content;
 
 			free(*ptr);
 			*ptr = next;
-			return true;
+			return elem;
 		}
 		ptr = &(*ptr)->next;
 	}
-	return false;
+	return NULL;
 }
 
 void *hash_GetElement(HashMap const map, char const *key)
@@ -126,7 +127,7 @@ void hash_ForEach(HashMap const map, void (*func)(void *, void *), void *arg)
 	}
 }
 
-void hash_EmptyMap(HashMap map)
+void hash_EmptyMap(HashMap map, void (*callback)(void *))
 {
 	for (size_t i = 0; i < HASHMAP_NB_BUCKETS; i++) {
 		struct HashMapEntry *ptr = map[i];
@@ -134,6 +135,8 @@ void hash_EmptyMap(HashMap map)
 		while (ptr) {
 			struct HashMapEntry *next = ptr->next;
 
+			if (callback)
+				callback(ptr->content);
 			free(ptr);
 			ptr = next;
 		}

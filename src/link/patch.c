@@ -428,7 +428,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 void patch_CheckAssertions(struct Assertion *assert)
 {
-	verbosePrint("Checking assertions...");
+	verbosePrint("Checking assertions...\n");
 	initRPNStack();
 
 	while (assert) {
@@ -548,5 +548,103 @@ void patch_ApplyPatches(void)
 	initRPNStack();
 	sect_ForEach(applyPatches, NULL);
 	freeRPNStack();
+}
+
+void patch_FindRefdSections(struct Patch const *patch, void (*callback)(struct Section *),
+			    struct Symbol const * const *fileSymbols)
+{
+	uint8_t const *expression = patch->rpnExpression;
+	int32_t size = patch->rpnSize;
+
+	// Read through the RPN expression; to separate concerns more, do not attempt to validate
+	//
+	while (size > 0) {
+		enum RPNCommand command = getRPNByte(&expression, &size,
+						     patch->src, patch->lineNo);
+
+		switch (command) {
+			int32_t symbolID;
+			struct Symbol const *symbol;
+			char const *name;
+			struct Section *sect;
+
+		// Ignore operators...
+		case RPN_ADD:
+		case RPN_SUB:
+		case RPN_MUL:
+		case RPN_DIV:
+		case RPN_MOD:
+		case RPN_UNSUB:
+		case RPN_OR:
+		case RPN_AND:
+		case RPN_XOR:
+		case RPN_UNNOT:
+		case RPN_LOGAND:
+		case RPN_LOGOR:
+		case RPN_LOGUNNOT:
+		case RPN_LOGEQ:
+		case RPN_LOGNE:
+		case RPN_LOGGT:
+		case RPN_LOGLT:
+		case RPN_LOGGE:
+		case RPN_LOGLE:
+		case RPN_SHL:
+		case RPN_SHR:
+			break;
+
+		case RPN_BANK_SYM:
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				symbolID |= getRPNByte(&expression, &size,
+						    patch->src, patch->lineNo) << shift;
+			symbol = getSymbol(fileSymbols, symbolID);
+
+			if (!symbol)
+				error(patch->src, patch->lineNo,
+				      "Requested BANK() of symbol \"%s\", which was not found",
+				      fileSymbols[symbolID]->name);
+			else if (!symbol->section)
+				error(patch->src, patch->lineNo,
+				      "Requested BANK() of non-label symbol \"%s\"",
+				      fileSymbols[symbolID]->name);
+			else
+				callback(symbol->section);
+			break;
+
+		case RPN_BANK_SECT:
+			name = (char const *)expression;
+			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
+				;
+
+			sect = sect_GetSection(name);
+
+			if (!sect)
+				error(patch->src, patch->lineNo,
+				      "Requested BANK() of section \"%s\", which was not found",
+				      name);
+			else
+				callback(sect);
+			break;
+
+		// Ignore values that do not reference a symbol
+		case RPN_BANK_SELF:
+		case RPN_HRAM:
+		case RPN_RST:
+		case RPN_CONST:
+			break;
+
+		case RPN_SYM:
+			symbolID = 0;
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				symbolID |= getRPNByte(&expression, &size,
+						    patch->src, patch->lineNo) << shift;
+
+			if (symbolID != -1) { // Ignore PC
+				symbol = getSymbol(fileSymbols, symbolID);
+				if (symbol->section) // Do not callback if symbol is a constant...
+					callback(symbol->section);
+			}
+			break;
+		}
+	}
 }
 

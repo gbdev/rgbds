@@ -200,6 +200,8 @@ static void printUsage(void)
 static void cleanup(void)
 {
 	obj_Cleanup();
+	sym_CleanupSymbols();
+	sect_CleanupSections();
 }
 
 int main(int argc, char *argv[])
@@ -244,9 +246,7 @@ int main(int argc, char *argv[])
 			padValue = value;
 			break;
 		case 's':
-			/* FIXME: nobody knows what this does, figure it out */
-			(void)optarg;
-			warning(NULL, 0, "Nobody has any idea what `-s` does");
+			sect_AddSmartSection(optarg);
 			break;
 		case 't':
 			is32kMode = true;
@@ -296,6 +296,7 @@ int main(int argc, char *argv[])
 
 	/* then process them, */
 	obj_DoSanityChecks();
+	sect_PerformSmartLink();
 	assign_AssignSections();
 	obj_CheckAssertions();
 	assign_Cleanup();

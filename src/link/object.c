@@ -316,17 +316,13 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	int32_t tmp;
 	uint8_t byte;
 
-	tryReadstr(section->name, file, "%s: Cannot read section name: %s",
-		   fileName);
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s",
-		    fileName, section->name);
+	tryReadstr(section->name, file, "%s: Cannot read section name: %s", fileName);
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section->name);
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx(1, "\"%s\"'s section size (%" PRId32 ") is invalid",
-		     section->name, tmp);
+		errx(1, "\"%s\"'s section size (%" PRId32 ") is invalid", section->name, tmp);
 	section->size = tmp;
 	section->offset = 0;
-	tryGetc(byte, file, "%s: Cannot read \"%s\"'s type: %s",
-		fileName, section->name);
+	tryGetc(byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName, section->name);
 	section->type = byte & 0x3F;
 	if (byte >> 7)
 		section->modifier = SECTION_UNION;
@@ -334,21 +330,17 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		section->modifier = SECTION_FRAGMENT;
 	else
 		section->modifier = SECTION_NORMAL;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s",
-		    fileName, section->name);
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section->name);
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")",
-		      section->name, tmp);
+		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")", section->name, tmp);
 		tmp = UINT16_MAX;
 	}
 	section->org = tmp;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s",
-		    fileName, section->name);
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s", fileName, section->name);
 	section->isBankFixed = tmp >= 0;
 	section->bank = tmp;
-	tryGetc(byte, file, "%s: Cannot read \"%s\"'s alignment: %s",
-		fileName, section->name);
+	tryGetc(byte, file, "%s: Cannot read \"%s\"'s alignment: %s", fileName, section->name);
 	section->isAlignFixed = byte != 0;
 	section->alignMask = (1 << byte) - 1;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s",
@@ -365,16 +357,13 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		uint8_t *data = malloc(sizeof(*data) * section->size + 1);
 
 		if (!data)
-			err(1, "%s: Unable to read \"%s\"'s data", fileName,
-			    section->name);
+			err(1, "%s: Unable to read \"%s\"'s data", fileName, section->name);
 		if (section->size) {
-			size_t nbElementsRead = fread(data, sizeof(*data),
-						      section->size, file);
+			size_t nbElementsRead = fread(data, sizeof(*data), section->size, file);
 			if (nbElementsRead != section->size)
 				errx(1, "%s: Cannot read \"%s\"'s data: %s",
 				     fileName, section->name,
-				     feof(file) ? "Unexpected end of file"
-						: strerror(errno));
+				     feof(file) ? "Unexpected end of file" : strerror(errno));
 		}
 		section->data = data;
 
@@ -382,18 +371,18 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 			    "%s: Cannot read \"%s\"'s number of patches: %s",
 			    fileName, section->name);
 
-		struct Patch *patches =
-			malloc(sizeof(*patches) * section->nbPatches + 1);
+		struct Patch *patches = malloc(sizeof(*patches) * section->nbPatches + 1);
 
 		if (!patches)
-			err(1, "%s: Unable to read \"%s\"'s patches", fileName,
-			    section->name);
+			err(1, "%s: Unable to read \"%s\"'s patches", fileName, section->name);
 		for (uint32_t i = 0; i < section->nbPatches; i++) {
 			readPatch(file, &patches[i], fileName, section->name,
 				  i, fileSections, fileNodes);
 		}
 		section->patches = patches;
 	}
+
+	section->smartLinked = false;
 }
 
 /**
@@ -612,6 +601,11 @@ void obj_DoSanityChecks(void)
 	sect_DoSanityChecks();
 }
 
+struct Assertion const *obj_GetFirstAssertion(void)
+{
+	return assertions;
+}
+
 void obj_CheckAssertions(void)
 {
 	patch_CheckAssertions(assertions);
@@ -626,27 +620,6 @@ void obj_Setup(unsigned int nbFiles)
 	nodes = malloc(sizeof(*nodes) * nbFiles);
 }
 
-static void freeSection(struct Section *section, void *arg)
-{
-	(void)arg;
-
-	free(section->name);
-	if (sect_HasData(section->type)) {
-		free(section->data);
-		for (int32_t i = 0; i < section->nbPatches; i++)
-			free(section->patches[i].rpnExpression);
-		free(section->patches);
-	}
-	free(section->symbols);
-	free(section);
-}
-
-static void freeSymbol(struct Symbol *symbol)
-{
-	free(symbol->name);
-	free(symbol);
-}
-
 void obj_Cleanup(void)
 {
 	for (unsigned int i = 0; i < nbObjFiles; i++) {
@@ -658,16 +631,11 @@ void obj_Cleanup(void)
 	}
 	free(nodes);
 
-	sym_CleanupSymbols();
-
-	sect_ForEach(freeSection, NULL);
-	sect_CleanupSections();
-
 	struct SymbolList *list = symbolLists;
 
 	while (list) {
 		for (size_t i = 0; i < list->nbSymbols; i++)
-			freeSymbol(list->symbolList[i]);
+			sym_FreeSymbol(list->symbolList[i]);
 		free(list->symbolList);
 
 		struct SymbolList *next = list->next;

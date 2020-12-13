@@ -24,6 +24,11 @@ void obj_ReadFile(char const *fileName, unsigned int i);
 void obj_DoSanityChecks(void);
 
 /**
+ * @return The first assertion in the linked list of all assertions
+ */
+struct Assertion const *obj_GetFirstAssertion(void);
+
+/**
  * Evaluate all assertions
  */
 void obj_CheckAssertions(void);

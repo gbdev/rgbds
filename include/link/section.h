@@ -62,6 +62,7 @@ struct Section {
 	uint32_t nbSymbols;
 	struct Symbol const **symbols;
 	struct Section *nextu; /* The next "component" of this unionized sect */
+	bool smartLinked; // Set to true if kept by smart linking
 };
 
 /*
@@ -96,5 +97,12 @@ void sect_CleanupSections(void);
  * Checks if all sections meet reasonable criteria, such as max size
  */
 void sect_DoSanityChecks(void);
+
+/**
+ * Adds a new function as "root" of the smart link graph
+ */
+void sect_AddSmartSection(char const *name);
+
+void sect_PerformSmartLink(void);
 
 #endif /* RGBDS_LINK_SECTION_H */

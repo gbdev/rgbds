@@ -65,7 +65,13 @@ struct Symbol *sym_GetSymbol(char const *name)
 	return (struct Symbol *)hash_GetElement(symbols, name);
 }
 
+void sym_RemoveSymbol(char const *name)
+{
+	sym_RemoveSymbol(hash_RemoveElement(symbols, name));
+}
+
 void sym_CleanupSymbols(void)
 {
-	hash_EmptyMap(symbols);
+	// The hash map only contains exported symbols, so they're cleared elsewhere
+	hash_EmptyMap(symbols, NULL);
 }

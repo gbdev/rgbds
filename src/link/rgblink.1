@@ -89,10 +89,16 @@ Has no effect if
 .Fl O
 is specified.
 The default is 0.
-.It Fl s Ar symbol , Fl Fl smart Ar symbol
-This option is ignored.
-It was supposed to perform smart linking but fell into disrepair, and so has been removed.
-It will be reimplemented at some point.
+.It Fl s Ar sect_name , Fl Fl smart Ar sect_name
+This option specifies the name of a section that will be used as a starting point for smart linking; it may appear several times per
+.Nm
+invocation.
+See
+.Sx SMART LINKING
+below.
+If no section with that name is found,
+.Nm
+will error out.
 .It Fl t , Fl Fl tiny
 Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM.
 ROMX sections that are fixed to a bank other than 1 become errors, other ROMX sections are treated as ROM0.
@@ -130,6 +136,107 @@ to fix these so that the program will actually run in a Game Boy:
 Here is a more complete example:
 .Pp
 .Dl $ rgblink -o bin/game.gb -n bin/game.sym -p 0xFF obj/title.o obj/engine.o
+.Sh SMART LINKING
+Smart linking is a feature of
+.Nm
+that allows "trimming the fat" off of a ROM.
+It is enabled only if at least one
+.Fl s
+option is given on the command line.
+.Pp
+The smart linking process begins by finding all the
+.Ql referenced
+sections.
+A section is referenced if its name is specified using a
+.Fl s
+option, or if it is referred to by a referenced section.
+This definition applies recursively, so if section
+.Ql A
+is specified using
+.Fl s Va A ,
+section
+.Ql A
+references section
+.Ql B ,
+and section
+.Ql B
+references section
+.Ql C ,
+then all three sections
+.Ql A ,
+.Ql B ,
+and
+.Ql C
+are referenced.
+.Pp
+Sections refer to each other through expressions. For example:
+.Bd -literal -offset indent
+SECTION "A", ROM0
+	db Someplace
+	db BANK("C")
+
+SECTION "B", ROM0
+Someplace:
+
+SECTION "C", ROMX
+	db 42
+.Ed
+Here, section
+.Ql A
+references section
+.Ql B
+via the label
+.Ql Someplace ,
+and references section
+.Ql C
+via its name in
+.Ql BANK("C") .
+.Pp
+After all the referenced sections are found, all sections that were not referenced are deleted, and the linking process continues as normal.
+.Sy This should not cause any symbols not to be found, please report a bug (see Sx BUGS Ns Sy ) if this occurs.
+.Pp
+This is useful to detect
+.Dq unused
+sections, i.e. sections that contain data not used by anything.
+Typically, the section containing the header, including the entry point at
+.Ad $00:0100
+will be one of the starting sections; more exotic use cases may require more starting sections.
+It may be a good idea to start with the header as the only root, and if needed, add more root sections.
+.Pp
+Be careful, as numeric expressions do
+.Sy not
+cause references:
+.Bd -literal -offset indent
+BASE_ADDR equ $4000
+
+SECTION "A", ROM0
+	dw BASE_ADDR
+
+SECTION "B", ROMX[BASE_ADDR]
+	db 42
+.Ed
+Section
+.Ql A
+does
+.Sy not
+reference section
+.Ql B ,
+since
+.Va BASE_ADDR
+is a constant, and thus does not belong to section
+.Ql B .
+.Pp
+Finally, be careful that
+.Xr rgbasm 1
+tries to fill in data by itself to speed up
+.Nm Ap s
+work, which may cause
+.Nm
+not to see references to sections whose bank and/or address are fixed.
+It may be advisable to avoid fixing those (notably, to enable
+.Nm
+to improve section placement), but they can still be manually referenced using
+.Fl s .
 .Sh BUGS
 Please report bugs on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .

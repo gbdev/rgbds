@@ -6,13 +6,17 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "link/main.h"
+#include "link/object.h"
+#include "link/patch.h"
 #include "link/section.h"
+#include "link/symbol.h"
 
 #include "extern/err.h"
 
@@ -141,6 +145,30 @@ void sect_AddSection(struct Section *section)
 	}
 }
 
+static void deleteSection(void *arg)
+{
+	struct Section *sect = arg;
+
+	free(sect->name);
+	if (sect_HasData(sect->type)) {
+		free(sect->data);
+		for (size_t i = 0; i < sect->nbPatches; i++)
+			patch_DeletePatch(&sect->patches[i]);
+		free(sect->patches);
+	}
+	free(sect);
+}
+
+static void sect_RemoveSection(char const *name)
+{
+	struct Section *sect = hash_RemoveElement(sections, name);
+
+	for (size_t i = 0; i < sect->nbSymbols; i++) {
+		sym_RemoveSymbol(sect->symbols[i]->name);
+	}
+	deleteSection(sect);
+}
+
 struct Section *sect_GetSection(char const *name)
 {
 	return (struct Section *)hash_GetElement(sections, name);
@@ -148,7 +176,7 @@ struct Section *sect_GetSection(char const *name)
 
 void sect_CleanupSections(void)
 {
-	hash_EmptyMap(sections);
+	hash_EmptyMap(sections, deleteSection);
 }
 
 static bool sanityChecksFailed;
@@ -258,4 +286,117 @@ void sect_DoSanityChecks(void)
 	sect_ForEach(doSanityChecks, NULL);
 	if (sanityChecksFailed)
 		errx(1, "Sanity checks failed");
+}
+
+// Base amount of sections allocated in array below
+#define SMART_LINK_NB_SECTIONS 32
+// Names of
+char const **smartLinkNames = NULL;
+size_t nbSmartLinkNames;
+size_t smartLinkNameCap; // Capacity
+
+void sect_AddSmartSection(char const *name)
+{
+	if (!smartLinkNames) {
+		nbSmartLinkNames = 0;
+		smartLinkNameCap = SMART_LINK_NB_SECTIONS;
+		smartLinkNames = malloc(sizeof(*smartLinkNames) * smartLinkNameCap);
+	} else if (nbSmartLinkNames == smartLinkNameCap) {
+		if (smartLinkNameCap == SIZE_MAX)
+			error(NULL, 0,
+			      "Smart linking can only accept %zu section names, please stop",
+			      SIZE_MAX);
+		if (smartLinkNameCap > SIZE_MAX / 2)
+			smartLinkNameCap = SIZE_MAX;
+		else
+			smartLinkNameCap *= 2;
+		smartLinkNames = realloc(smartLinkNames, sizeof(*smartLinkNames) * smartLinkNameCap);
+	}
+
+	if (!smartLinkNames)
+		errx(1, "Failed to alloc smart link names: %s", strerror(errno));
+
+	smartLinkNames[nbSmartLinkNames] = name;
+	nbSmartLinkNames++;
+}
+
+static void smartSectionPurge(void *arg, void *ign)
+{
+	(void)ign;
+	struct Section *sect = arg;
+
+	if (!sect->smartLinked) {
+		verbosePrint("Dropping \"%s\" due to smart linking\n", sect->name);
+		sect_RemoveSection(sect->name);
+	}
+}
+
+// Actually a stack, not a queue; however, the order in which sections are processed doesn't matter
+struct Section **smartLinkQueue;
+size_t queueSize = 0;
+size_t queueCapacity;
+
+static void queueSmartSection(struct Section *sect)
+{
+	if (queueSize == queueCapacity) {
+		if (queueCapacity == SIZE_MAX)
+			error(NULL, 0, "Smart linking queue capacity exceeded!");
+		else if (queueCapacity > SIZE_MAX / 2)
+			queueCapacity = SIZE_MAX;
+		else
+			queueCapacity *= 2;
+		smartLinkQueue = realloc(smartLinkQueue, sizeof(*smartLinkQueue) * queueCapacity);
+	}
+
+	sect->smartLinked = true;
+}
+
+void sect_LinkSection(struct Section const *sect)
+{
+	// Scan all linked sections
+	for (uint32_t i = 0; i < sect->nbPatches; i++)
+		patch_FindRefdSections(&sect->patches[i], queueSmartSection, (struct Symbol const * const *)sect->fileSymbols);
+}
+
+void sect_PerformSmartLink(void)
+{
+	// If smart linking wasn't requested, do nothing
+	if (!smartLinkNames)
+		return;
+
+	// Assume that each section is going to link a new one...
+	queueCapacity = nbSmartLinkNames;
+	smartLinkQueue = malloc(queueSize * sizeof(*smartLinkQueue));
+	if (!smartLinkQueue)
+		error(NULL, 0,  "Smart linking allocation failed: %s", strerror(errno));
+
+	// Add all sections requested on the CLI
+	for (size_t i = 0; i < nbSmartLinkNames; ++i) {
+		struct Section *sect = sect_GetSection(smartLinkNames[i]);
+
+		if (!sect) {
+			error(NULL, 0,
+			      "Section \"%s\" was specified for smart linking, but was not found",
+			      smartLinkNames[i]);
+		} else {
+			sect->smartLinked = true;
+			sect_LinkSection(sect);
+		}
+	}
+	free(smartLinkNames);
+
+	// Also add sections referenced by assertions
+	struct Assertion const *assertion = obj_GetFirstAssertion();
+
+	while (assertion) {
+		patch_FindRefdSections(&assertion->patch, queueSmartSection, (struct Symbol const * const *)assertion->fileSymbols);
+		assertion = assertion->next;
+	}
+
+	// As long as the queue isn't empty, get the last one, and process it
+	while (queueSize)
+		sect_LinkSection(smartLinkQueue[--queueSize]);
+	free(smartLinkQueue);
+
+	hash_ForEach(sections, smartSectionPurge, NULL);
 }
