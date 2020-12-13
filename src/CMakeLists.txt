@@ -49,6 +49,7 @@ set(rgbasm_src
     "extern/utf8decoder.c"
     "hashmap.c"
     "linkdefs.c"
+    "stacklist.c"
     )
 
 set(rgbfix_src

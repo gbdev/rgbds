@@ -29,6 +29,7 @@
 #include "asm/symbol.h"
 #include "asm/util.h"
 #include "asm/warning.h"
+#include "stacklist.h"
 
 #include "extern/utf8decoder.h"
 
@@ -38,6 +39,7 @@
 uint32_t nListCountEmpty;
 int32_t nPCOffset;
 bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
+struct StackList *strjoinStack;
 
 static uint32_t str2int2(uint8_t *s, int32_t length)
 {
@@ -207,6 +209,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 %type	<tzString>	string
 %type	<tzString>	strcat_args
+%type	<tzString>	strjoin_args
 
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
@@ -254,6 +257,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_STRSUB
 %left	T_OP_STRLEN
 %left	T_OP_STRCAT
+%left	T_OP_STRJOIN
 %left	T_OP_STRUPR
 %left	T_OP_STRLWR
 
@@ -1077,6 +1081,15 @@ string		: T_STRING
 		| T_OP_STRCAT T_LPAREN strcat_args T_RPAREN {
 			strcpy($$, $3);
 		}
+		| T_OP_STRJOIN T_LPAREN string T_RPAREN {
+			$$[0] = '\0';
+		}
+		| T_OP_STRJOIN T_LPAREN string T_COMMA {
+			stack_Push(&strjoinStack, $3);
+		} strjoin_args T_RPAREN {
+			stack_Pop(&strjoinStack);
+			strcpy($$, $6);
+		}
 		| T_OP_STRUPR T_LPAREN string T_RPAREN {
 			upperstring($$);
 		}
@@ -1090,6 +1103,16 @@ strcat_args	: string
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $1, $3) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
+		}
+;
+
+strjoin_args	: string
+		| strjoin_args T_COMMA string {
+			char const *join = stack_Top(strjoinStack);
+
+			if (snprintf($$, MAXSTRLEN + 1, "%s%s%s", $1, join, $3) > MAXSTRLEN)
+				warning(WARNING_LONG_STR, "STRJOIN: String too long '%s%s%s'\n",
+					$1, join, $3);
 		}
 ;
 
