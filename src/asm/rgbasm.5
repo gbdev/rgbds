@@ -234,7 +234,8 @@ There are a number of escape sequences you can use within a string:
 .It Ql \[rs]n Ta Newline ($0A)
 .It Ql \[rs]r Ta Carriage return ($0D)
 .It Ql \[rs]t Ta Tab ($09)
-.It Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc Ta Macro argument (Only the body of a macro, see Sx Invoking macros )
+.It Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc Ta Macro argument (Only in the body of a macro; see Sx Invoking macros )
+.It Ql \[rs]# Ta All Dv _NARG No macro arguments, separated by commas (Only in the body of a macro)
 .It Ql \[rs]@ Ta Label name suffix (Only in the body of macros and REPTs)
 .El
 (Note that some of those can be used outside of strings, when noted further in this document.)
