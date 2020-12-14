@@ -64,7 +64,7 @@ stem="${page%.html}"
 manpage="${stem%.?}(${stem#*.})"
 descr="$(awk -v 'FS=.Nd ' '/.Nd/ { print $2; }' "${PAGES[$page]}")"
 
-	cat - >"$1/$2/$page" <<EOF
+	cat >"$1/$2/$page" <<EOF
 ---
 layout: doc
 title: $manpage [$2]

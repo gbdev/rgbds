@@ -7,6 +7,14 @@
 	sub(/b><\/td/, "th");
 }
 
+# The whole page is being generated, so it's not meant to contain any Liquid
+BEGIN {
+	print "{% raw %}"
+}
+END {
+	print "{% endraw %}"
+}
+
 BEGIN {
 	in_synopsis = 0
 }
