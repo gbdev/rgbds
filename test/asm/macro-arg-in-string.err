@@ -1,0 +1,3 @@
+ERROR: macro-arg-in-string.asm(10) -> macro-arg-in-string.asm::print(2):
+    Illegal character escape '!'
+error: Assembly aborted (1 errors)!

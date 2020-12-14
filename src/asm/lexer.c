@@ -692,7 +692,7 @@ static void freeExpansion(struct Expansion *expansion)
 	free(expansion);
 }
 
-static char const *expandMacroArg(char name, size_t distance)
+static char const *readMacroArg(char name)
 {
 	char const *str;
 
@@ -707,11 +707,6 @@ static char const *expandMacroArg(char name, size_t distance)
 	if (!str)
 		fatalerror("Macro argument '\\%c' not defined\n", name);
 
-	/* Cannot expand an empty string */
-	if (!str[0])
-		return NULL;
-
-	beginExpansion(distance, 2, str, strlen(str), name == '#', NULL);
 	return str;
 }
 
@@ -801,17 +796,18 @@ restart:
 			lexerState->macroArgScanDistance++;
 			c = peekInternal(distance + 1);
 			if (c == '@' || c == '#' || (c >= '0' && c <= '9')) {
-				/* Expand the argument and return its first character */
-				char const *str = expandMacroArg(c, distance);
+				char const *str = readMacroArg(c);
 
 				/*
-				 * If the argument is an empty string, nothing was
+				 * If the argument is an empty string, it cannot be
 				 * expanded, so skip it and keep peeking.
 				 */
-				if (!str) {
+				if (!str[0]) {
 					shiftChars(2);
 					goto restart;
 				}
+
+				beginExpansion(distance, 2, str, strlen(str), c == '#', NULL);
 
 				/*
 				 * Assuming macro args can't be recursive (I'll be damned if a way
@@ -820,10 +816,7 @@ restart:
 				 * so they shouldn't be counted in the scan distance!
 				 */
 				lexerState->macroArgScanDistance += strlen(str) - 2;
-				/*
-				 * This assumes macro args can't be empty, since expandMacroArg
-				 * returns NULL instead of an empty string.
-				 */
+
 				c = str[0];
 			} else {
 				c = '\\';
@@ -1398,11 +1391,62 @@ static char const *readInterpolation(void)
 	return NULL;
 }
 
+static int appendMacroArg(char const *str, int i)
+{
+	while (*str && i < sizeof(yylval.tzString)) {
+		int c = *str++;
+
+		if (c != '\\') {
+			yylval.tzString[i++] = c;
+			continue;
+		}
+
+		c = *str++;
+
+		switch (c) {
+		case '\\': /* Return that character unchanged */
+		case '"':
+		case '{':
+		case '}':
+			break;
+		case 'n':
+			c = '\n';
+			break;
+		case 'r':
+			c = '\r';
+			break;
+		case 't':
+			c = '\t';
+			break;
+
+		case '\0': /* Can't really print that one */
+			error("Illegal character escape at end of macro arg\n");
+			yylval.tzString[i++] = '\\';
+			break;
+
+		/*
+		 * Line continuations and macro args were already
+		 * handled while reading the macro args, so '\@',
+		 * '\#', and '\0'-'\9' should not occur here.
+		 */
+
+		default:
+			error("Illegal character escape '%s'\n", print(c));
+			c = '\\';
+			break;
+		}
+		yylval.tzString[i++] = c;
+	}
+
+	return i;
+}
+
 static void readString(void)
 {
 	size_t i = 0;
 
 	dbgPrint("Reading string\n");
+	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;;) {
 		int c = peek(0);
@@ -1417,6 +1461,7 @@ static void readString(void)
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			goto finish;
+
 		case '\r':
 		case '\n': /* Do not shift these! */
 		case EOF:
@@ -1429,7 +1474,7 @@ static void readString(void)
 			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			goto finish;
 
-		case '\\': /* Character escape */
+		case '\\': /* Character escape or macro arg */
 			c = peek(1);
 			switch (c) {
 			case '\\': /* Return that character unchanged */
@@ -1451,12 +1496,32 @@ static void readString(void)
 				shiftChars(1);
 				break;
 
+			/* Line continuation */
 			case ' ':
 			case '\r':
 			case '\n':
 				shiftChars(1); /* Shift the backslash */
 				readLineContinuation();
 				continue;
+
+			/* Macro arg */
+			case '@':
+			case '#':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				shiftChars(2);
+				char const *str = readMacroArg(c);
+
+				i = appendMacroArg(str, i);
+				continue; /* Do not copy an additional character */
 
 			case EOF: /* Can't really print that one */
 				error("Illegal character escape at end of input\n");
@@ -1471,15 +1536,13 @@ static void readString(void)
 
 		case '{': /* Symbol interpolation */
 			shiftChars(1);
+			lexerState->disableMacroArgs = false;
 			char const *ptr = readInterpolation();
 
-			if (ptr) {
-				while (*ptr) {
-					if (i == sizeof(yylval.tzString))
-						break;
+			if (ptr)
+				while (*ptr && i < sizeof(yylval.tzString))
 					yylval.tzString[i++] = *ptr++;
-				}
-			}
+			lexerState->disableMacroArgs = true;
 			continue; /* Do not copy an additional character */
 
 		/* Regular characters will just get copied */
@@ -1490,6 +1553,7 @@ static void readString(void)
 	}
 
 finish:
+	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }
 
