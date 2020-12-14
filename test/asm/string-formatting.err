@@ -1,0 +1,2 @@
+warning: string-formatting.asm(9): [-Wstring-format]
+    Formatting string with prefix flag '#'

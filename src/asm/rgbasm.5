@@ -268,18 +268,62 @@ PRINTT "The answer to {TOPIC} is {ANSWER}\[rs]n"
 .Pp
 Symbol interpolations can be nested, too!
 .Pp
-It's possible to change the way numeric symbols are converted by specifying a print type like so:
-.Ql {d:symbol} .
+It's possible to change the way symbols are converted by specifying a print format like so:
+.Ql {fmt:symbol} .
+The
+.Ql fmt
+specifier consists of parts
+.Ql <sign><prefix><align><pad><width><frac><type> .
+These parts are:
+.Bl -column "<prefix>"
+.It Sy Part Ta Sy Meaning
+.It Ql <sign> Ta May be
+.Ql +
+or
+.Ql \  .
+If specified, prints this character in front of non-negative numbers.
+.It Ql <prefix> Ta May be
+.Ql # .
+If specified, prints the appropriate prefix for numbers,
+.Ql $ ,
+.Ql & ,
+or
+.Ql % .
+.It Ql <align> Ta May be
+.Ql - .
+If specified, aligns left instead of right.
+.It Ql <pad> Ta May be
+.Ql 0 .
+If specified, pads right-aligned numbers with zeros instead of spaces.
+.It Ql <width> Ta May be one or more
+.Ql 0
+\[en]
+.Ql 9 .
+If specified, pads the value to this width, right-aligned with spaces by default.
+.It Ql <frac> Ta May be
+.Ql \&.
+followed by one or more
+.Ql 0
+\[en]
+.Ql 9 .
+If specified, prints this many digits of a fixed-point fraction.
+.It Ql <type> Ta Specifies the type of value.
+.El
+.Pp
+All the format specifier parts are optional except the
+.Ql <type> .
 Valid print types are:
 .Bl -column -offset indent "Print type" "Lowercase hexadecimal" "Example"
 .It Sy Print type Ta Sy Format Ta Sy Example
-.It Ql d Ta Decimal Ta 42
+.It Ql d Ta Signed decimal Ta -42
+.It Ql u Ta Unsigned decimal Ta 42
 .It Ql x Ta Lowercase hexadecimal Ta 2a
 .It Ql X Ta Uppercase hexadecimal Ta 2A
 .It Ql b Ta Binary Ta 101010
+.It Ql o Ta Octal Ta 52
+.It Ql f Ta Fixed-point Ta 1234.56789
+.It Ql s Ta String Ta \&"example\&"
 .El
-.Pp
-Note that print types should only be used with numeric values, not strings.
 .Pp
 HINT: The
 .Ic {symbol}

@@ -18,6 +18,7 @@
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
+#include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/macro.h"

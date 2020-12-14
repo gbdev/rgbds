@@ -35,6 +35,7 @@ BISON_TARGET(PARSER "asm/parser.y"
 set(rgbasm_src
     "${BISON_PARSER_OUTPUT_SOURCE}"
     "asm/charmap.c"
+    "asm/format.c"
     "asm/fstack.c"
     "asm/lexer.c"
     "asm/macro.c"

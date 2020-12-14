@@ -22,10 +22,11 @@ enum WarningID {
 	WARNING_EMPTY_ENTRY,	      /* Empty entry in `db`, `dw` or `dl` */
 	WARNING_LARGE_CONSTANT,	      /* Constants too large */
 	WARNING_LONG_STR,	      /* String too long for internal buffers */
-	WARNING_NESTED_COMMENT,	      /* Comment-start delimeter in a block comment */
+	WARNING_NESTED_COMMENT,	      /* Comment-start delimiter in a block comment */
 	WARNING_OBSOLETE,	      /* Obsolete things */
 	WARNING_SHIFT,		      /* Shifting undefined behavior */
 	WARNING_SHIFT_AMOUNT,	      /* Strange shift amount */
+	WARNING_STRING_FORMAT,	      /* String format specifications */
 	WARNING_TRUNCATION,	      /* Implicit truncation loses some bits */
 	WARNING_USER,		      /* User warnings */
 

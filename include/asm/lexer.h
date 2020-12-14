@@ -9,8 +9,6 @@
 #ifndef RGBDS_ASM_LEXER_H
 #define RGBDS_ASM_LEXER_H
 
-#define MAXSTRLEN	255
-
 struct LexerState;
 extern struct LexerState *lexerState;
 extern struct LexerState *lexerStateEOL;
