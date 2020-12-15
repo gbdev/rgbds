@@ -197,22 +197,6 @@ static void opt_ParseDefines(void)
 		sym_AddString(cldefines[i], cldefines[i + 1]);
 }
 
-void upperstring(char *s)
-{
-	while (*s) {
-		*s = toupper(*s);
-		s++;
-	}
-}
-
-void lowerstring(char *s)
-{
-	while (*s) {
-		*s = tolower(*s);
-		s++;
-	}
-}
-
 /* Escapes Make-special chars from a string */
 static char *make_escape(const char *str)
 {

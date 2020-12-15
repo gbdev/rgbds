@@ -39,6 +39,20 @@ uint32_t nListCountEmpty;
 int32_t nPCOffset;
 bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
 
+static void upperstring(char *dest, char const *src)
+{
+	while (*src)
+		*dest++ = toupper(*src++);
+	*dest = '\0';
+}
+
+static void lowerstring(char *dest, char const *src)
+{
+	while (*src)
+		*dest++ = tolower(*src++);
+	*dest = '\0';
+}
+
 static uint32_t str2int2(uint8_t *s, int32_t length)
 {
 	int32_t i;
@@ -1084,10 +1098,10 @@ string		: T_STRING
 			strcpy($$, $3);
 		}
 		| T_OP_STRUPR T_LPAREN string T_RPAREN {
-			upperstring($$);
+			upperstring($$, $3);
 		}
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
-			lowerstring($$);
+			lowerstring($$, $3);
 		}
 ;
 

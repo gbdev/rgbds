@@ -43,9 +43,6 @@ void opt_Push(void);
 void opt_Pop(void);
 void opt_Parse(char *s);
 
-void upperstring(char *s);
-void lowerstring(char *s);
-
 /* TODO: are these really needed? */
 #define YY_FATAL_ERROR fatalerror
 
