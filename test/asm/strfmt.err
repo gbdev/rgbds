@@ -1,0 +1,5 @@
+warning: strfmt.asm(14): [-Wstring-format]
+    Formatting number as type 's'
+ERROR: strfmt.asm(14):
+    STRFMT: 1 unformatted argument(s)
+error: Assembly aborted (1 errors)!

@@ -37,6 +37,21 @@ struct FormatSpec {
 	bool valid;
 };
 
+struct StrFmtArg {
+	union {
+		uint32_t number;
+		char *string;
+	} value;
+	bool isNumeric;
+};
+
+#define INITIAL_STRFMT_ARG_SIZE 4
+struct StrFmtArgList {
+	size_t nbArgs;
+	size_t capacity;
+	struct StrFmtArg *args;
+};
+
 struct FormatSpec fmt_NewSpec(void);
 bool fmt_IsEmpty(struct FormatSpec const *fmt);
 bool fmt_IsValid(struct FormatSpec const *fmt);
