@@ -655,7 +655,7 @@ static inline struct Symbol *createBuiltinSymbol(char const *name)
 /*
  * Initialize the symboltable
  */
-void sym_Init(void)
+void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
 	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
@@ -676,8 +676,6 @@ void sym_Init(void)
 	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH)->isBuiltin = true;
-
-	time_t now = time(NULL);
 
 	if (now == (time_t)-1) {
 		warn("Couldn't determine current time");

@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "asm/section.h"
 
@@ -140,7 +141,7 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
 void sym_Purge(char const *symName);
-void sym_Init(void);
+void sym_Init(time_t now);
 
 /* Functions to save and restore the current symbol scope. */
 char const *sym_GetCurrentSymbolScope(void);
