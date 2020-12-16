@@ -240,6 +240,14 @@ There are a number of escape sequences you can use within a string:
 .El
 (Note that some of those can be used outside of strings, when noted further in this document.)
 .Pp
+Multi-line strings are contained in triple quotes
+.Pq Ql \&"\&"\&"for instance\&"\&"\&" .
+Escape sequences work the same way in multi-line strings; however, literal newline
+characters will be included as-is, without needing to escape them with
+.Ql \[rs]r
+or
+.Ql \[rs]n .
+.Pp
 A funky feature is
 .Ql {symbol}
 within a string, called

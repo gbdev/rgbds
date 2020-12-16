@@ -1448,30 +1448,57 @@ static void readString(void)
 	dbgPrint("Reading string\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
+
+	bool multiline = false;
+
+	if (peek(0) == '"') {
+		shiftChars(1);
+		if (peek(0) == '"') {
+			/* """ begins a multi-line string */
+			shiftChars(1);
+			multiline = true;
+		} else {
+			/* "" is an empty string */
+			goto finish;
+		}
+	}
+
 	for (;;) {
 		int c = peek(0);
 
+		if (c == '\r' || c == '\n') {
+			if (!multiline) {
+				/* '\r' or '\n' ends a single-line string early */
+				c = EOF;
+			} else if (c == '\r' && peek(1) == '\n') {
+				/* '\r\n' becomes '\n' in multi-line strings */
+				shiftChars(1);
+				c = '\n';
+			}
+		}
+
 		switch (c) {
 		case '"':
-			shiftChars(1);
+			if (multiline) {
+				/* """ ends a multi-line string */
+				if (peek(1) != '"' || peek(2) != '"')
+					break;
+				shiftChars(3);
+			} else {
+				shiftChars(1);
+			}
 			if (i == sizeof(yylval.tzString)) {
 				i--;
 				warning(WARNING_LONG_STR, "String constant too long\n");
 			}
-			yylval.tzString[i] = '\0';
-			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			goto finish;
 
-		case '\r':
-		case '\n': /* Do not shift these! */
 		case EOF:
 			if (i == sizeof(yylval.tzString)) {
 				i--;
 				warning(WARNING_LONG_STR, "String constant too long\n");
 			}
-			yylval.tzString[i] = '\0';
 			error("Unterminated string\n");
-			dbgPrint("Read string \"%s\"\n", yylval.tzString);
 			goto finish;
 
 		case '\\': /* Character escape or macro arg */
@@ -1553,6 +1580,9 @@ static void readString(void)
 	}
 
 finish:
+	yylval.tzString[i] = '\0';
+
+	dbgPrint("Read string \"%s\"\n", yylval.tzString);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }
