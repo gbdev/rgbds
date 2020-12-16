@@ -26,7 +26,6 @@ enum WarningID {
 	WARNING_OBSOLETE,	      /* Obsolete things */
 	WARNING_SHIFT,		      /* Shifting undefined behavior */
 	WARNING_SHIFT_AMOUNT,	      /* Strange shift amount */
-	WARNING_STRING_FORMAT,	      /* String format specifications */
 	WARNING_TRUNCATION,	      /* Implicit truncation loses some bits */
 	WARNING_USER,		      /* User warnings */
 

@@ -1,7 +1,7 @@
-warning: bracketed-symbols.asm(16): [-Wstring-format]
+ERROR: bracketed-symbols.asm(16):
     Formatting string as type 'X'
 ERROR: bracketed-symbols.asm(20):
     "Label" does not have a constant value
 ERROR: bracketed-symbols.asm(21):
     Expected constant PC but section is not fixed
-error: Assembly aborted (2 errors)!
+error: Assembly aborted (3 errors)!

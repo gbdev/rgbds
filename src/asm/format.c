@@ -134,21 +134,16 @@ void fmt_FinishCharacters(struct FormatSpec *fmt)
 
 void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value)
 {
-	if (fmt->type != 's')
-		warning(WARNING_STRING_FORMAT,
-			"Formatting string as type '%c'\n", fmt->type);
 	if (fmt->sign)
-		warning(WARNING_STRING_FORMAT,
-			"Formatting string with sign flag '%c'\n", fmt->sign);
+		error("Formatting string with sign flag '%c'\n", fmt->sign);
 	if (fmt->prefix)
-		warning(WARNING_STRING_FORMAT,
-			"Formatting string with prefix flag '#'\n");
+		error("Formatting string with prefix flag '#'\n");
 	if (fmt->padZero)
-		warning(WARNING_STRING_FORMAT,
-			"Formatting string with padding flag '0'\n");
+		error("Formatting string with padding flag '0'\n");
 	if (fmt->hasFrac)
-		warning(WARNING_STRING_FORMAT,
-			"Formatting string with fractional width\n");
+		error("Formatting string with fractional width\n");
+	if (fmt->type != 's')
+		error("Formatting string as type '%c'\n", fmt->type);
 
 	size_t len = strlen(value);
 	size_t totalLen = fmt->width > len ? fmt->width : len;
@@ -174,12 +169,13 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 
 void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value)
 {
-	if (fmt->type == 's')
-		warning(WARNING_STRING_FORMAT,
-			"Formatting number as type 's'\n");
+	if (fmt->type != 'X' && fmt->type != 'x' && fmt->type != 'b' && fmt->type != 'o'
+	    && fmt->prefix)
+		error("Formatting type '%c' with prefix flag '#'\n", fmt->type);
 	if (fmt->type != 'f' && fmt->hasFrac)
-		warning(WARNING_STRING_FORMAT,
-			"Formatting type '%c' with fractional width\n", fmt->type);
+		error("Formatting type '%c' with fractional width\n", fmt->type);
+	if (fmt->type == 's')
+		error("Formatting number as type 's'\n");
 
 	char sign = fmt->sign; /* 0 or ' ' or '+' */
 

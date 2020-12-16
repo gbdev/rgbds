@@ -238,8 +238,6 @@ static void strfmt(char *dest, size_t destLen, char *fmt, size_t nbArgs, struct 
 			continue;
 		}
 
-		/* TODO: handle spec for arg a */
-
 		struct StrFmtArg *arg = &args[a++];
 		static char buf[MAXSTRLEN + 1];
 

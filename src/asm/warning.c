@@ -40,7 +40,6 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_OBSOLETE]		= WARNING_ENABLED,
 	[WARNING_SHIFT]			= WARNING_DISABLED,
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
-	[WARNING_STRING_FORMAT]		= WARNING_DISABLED,
 	[WARNING_TRUNCATION]		= WARNING_ENABLED,
 	[WARNING_USER]			= WARNING_ENABLED,
 };
@@ -81,7 +80,6 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"obsolete",
 	"shift",
 	"shift-amount",
-	"string-format",
 	"truncation",
 	"user",
 
@@ -124,7 +122,6 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
-	WARNING_STRING_FORMAT,
 	/* WARNING_TRUNCATION, */
 	/* WARNING_USER, */
 	META_WARNING_DONE
