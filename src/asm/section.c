@@ -339,6 +339,9 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	if (currentLoadSection)
 		fatalerror("`LOAD` blocks cannot be nested\n");
 
+	if (sect_HasData(type))
+		error("`LOAD` blocks cannot create a ROM section\n");
+
 	struct Section *sect = getSection(name, type, org, attribs, false);
 
 	loadOffset = curOffset;
