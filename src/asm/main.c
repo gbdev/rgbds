@@ -218,7 +218,7 @@ static char *make_escape(const char *str)
 }
 
 /* Short options */
-static char const *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
+static const char *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
 
 /* Variables for the long-only options */
 static int depType; /* Variants of `-M` */
@@ -282,6 +282,16 @@ int main(int argc, char *argv[])
 	struct sOptions newopt;
 
 	char *tzMainfile;
+
+	time_t now = time(NULL);
+	char *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
+
+	/*
+	 * Support SOURCE_DATE_EPOCH for reproducible builds
+	 * https://reproducible-builds.org/docs/source-date-epoch/
+	 */
+	if (sourceDateEpoch)
+		now = (time_t)strtoul(sourceDateEpoch, NULL, 0);
 
 	dependfile = NULL;
 
@@ -481,7 +491,7 @@ int main(int argc, char *argv[])
 
 	nTotalLines = 0;
 	nIFDepth = 0;
-	sym_Init();
+	sym_Init(now);
 	sym_SetExportAll(exportall);
 
 	opt_ParseDefines();
