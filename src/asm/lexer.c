@@ -692,6 +692,11 @@ static void freeExpansion(struct Expansion *expansion)
 	free(expansion);
 }
 
+static bool isMacroChar(char c)
+{
+	return c == '@' || c == '#' || (c >= '0' && c <= '9');
+}
+
 static char const *readMacroArg(char name)
 {
 	char const *str;
@@ -795,7 +800,7 @@ restart:
 			/* If character is a backslash, check for a macro arg */
 			lexerState->macroArgScanDistance++;
 			c = peekInternal(distance + 1);
-			if (c == '@' || c == '#' || (c >= '0' && c <= '9')) {
+			if (isMacroChar(c)) {
 				char const *str = readMacroArg(c);
 
 				/*
@@ -1443,22 +1448,22 @@ static int appendMacroArg(char const *str, int i)
 
 static void readString(void)
 {
-	size_t i = 0;
-
 	dbgPrint("Reading string\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
+	size_t i = 0;
 	bool multiline = false;
 
+	// We reach this function after reading a single quote, but we also support triple quotes
 	if (peek(0) == '"') {
 		shiftChars(1);
 		if (peek(0) == '"') {
-			/* """ begins a multi-line string */
+			// """ begins a multi-line string
 			shiftChars(1);
 			multiline = true;
 		} else {
-			/* "" is an empty string */
+			// "" is an empty string, skip the loop
 			goto finish;
 		}
 	}
@@ -1466,45 +1471,35 @@ static void readString(void)
 	for (;;) {
 		int c = peek(0);
 
-		if (c == '\r' || c == '\n') {
-			if (!multiline) {
-				/* '\r' or '\n' ends a single-line string early */
-				c = EOF;
-			} else if (c == '\r' && peek(1) == '\n') {
-				/* '\r\n' becomes '\n' in multi-line strings */
-				shiftChars(1);
-				c = '\n';
-			}
+		// '\r', '\n' or EOF ends a single-line string early
+		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
+			error("Unterminated string\n");
+			break;
+		}
+
+		// We'll be staying in the string, so we can safely consume the char
+		shiftChars(1);
+
+		// Handle CRLF (in multiline strings only, already handled above otherwise)
+		if (c == '\r' && peek(0) == '\n') {
+			shiftChars(1);
+			c = '\n';
 		}
 
 		switch (c) {
 		case '"':
 			if (multiline) {
-				/* """ ends a multi-line string */
-				if (peek(1) != '"' || peek(2) != '"')
+				// Only """ ends a multi-line string
+				if (peek(0) != '"' || peek(1) != '"')
 					break;
-				shiftChars(3);
-			} else {
-				shiftChars(1);
-			}
-			if (i == sizeof(yylval.tzString)) {
-				i--;
-				warning(WARNING_LONG_STR, "String constant too long\n");
+				shiftChars(2);
 			}
 			goto finish;
 
-		case EOF:
-			if (i == sizeof(yylval.tzString)) {
-				i--;
-				warning(WARNING_LONG_STR, "String constant too long\n");
-			}
-			error("Unterminated string\n");
-			goto finish;
-
-		case '\\': /* Character escape or macro arg */
-			c = peek(1);
+		case '\\': // Character escape or macro arg
+			c = peek(0);
 			switch (c) {
-			case '\\': /* Return that character unchanged */
+			case '\\': // Return that character unchanged
 			case '"':
 			case '{':
 			case '}':
@@ -1523,15 +1518,14 @@ static void readString(void)
 				shiftChars(1);
 				break;
 
-			/* Line continuation */
+			// Line continuation
 			case ' ':
 			case '\r':
 			case '\n':
-				shiftChars(1); /* Shift the backslash */
 				readLineContinuation();
 				continue;
 
-			/* Macro arg */
+			// Macro arg
 			case '@':
 			case '#':
 			case '0':
@@ -1544,13 +1538,13 @@ static void readString(void)
 			case '7':
 			case '8':
 			case '9':
-				shiftChars(2);
+				shiftChars(1);
 				char const *str = readMacroArg(c);
 
 				i = appendMacroArg(str, i);
-				continue; /* Do not copy an additional character */
+				continue; // Do not copy an additional character
 
-			case EOF: /* Can't really print that one */
+			case EOF: // Can't really print that one
 				error("Illegal character escape at end of input\n");
 				c = '\\';
 				break;
@@ -1561,8 +1555,9 @@ static void readString(void)
 			}
 			break;
 
-		case '{': /* Symbol interpolation */
-			shiftChars(1);
+		case '{': // Symbol interpolation
+			// We'll be exiting the string scope, so re-enable expansions
+			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
 			char const *ptr = readInterpolation();
 
@@ -1570,16 +1565,20 @@ static void readString(void)
 				while (*ptr && i < sizeof(yylval.tzString))
 					yylval.tzString[i++] = *ptr++;
 			lexerState->disableMacroArgs = true;
-			continue; /* Do not copy an additional character */
+			continue; // Do not copy an additional character
 
-		/* Regular characters will just get copied */
+		// Regular characters will just get copied
 		}
-		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
+
+		if (i < sizeof(yylval.tzString)) // Copy one extra to flag overflow
 			yylval.tzString[i++] = c;
-		shiftChars(1);
 	}
 
 finish:
+	if (i == sizeof(yylval.tzString)) {
+		i--;
+		warning(WARNING_LONG_STR, "String constant too long\n");
+	}
 	yylval.tzString[i] = '\0';
 
 	dbgPrint("Read string \"%s\"\n", yylval.tzString);
