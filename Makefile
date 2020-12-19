@@ -64,7 +64,6 @@ rgbasm_obj := \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/section.o \
-	src/asm/stacklist.o \
 	src/asm/symbol.o \
 	src/asm/util.o \
 	src/asm/warning.o \

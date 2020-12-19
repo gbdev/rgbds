@@ -27,7 +27,6 @@
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/section.h"
-#include "asm/stacklist.h"
 #include "asm/symbol.h"
 #include "asm/util.h"
 #include "asm/warning.h"
@@ -40,7 +39,6 @@
 uint32_t nListCountEmpty;
 int32_t nPCOffset;
 bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
-struct StackList *fmtStringStack;
 
 static void upperstring(char *dest, char const *src)
 {
@@ -187,6 +185,7 @@ static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args) {
 }
 
 static void freeStrFmtArgList(struct StrFmtArgList *args) {
+	free(args->format);
 	for (size_t i = 0; i < args->nbArgs; i++)
 		if (!args->args[i].isNumeric)
 			free(args->args[i].value.string);
@@ -324,6 +323,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<tzString>	string
 %type	<tzString>	strcat_args
 %type	<strfmtArgs>	strfmt_args
+%type	<strfmtArgs>	strfmt_va_args
 
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
@@ -1235,13 +1235,9 @@ string		: T_STRING
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
 			lowerstring($$, $3);
 		}
-		| T_OP_STRFMT T_LPAREN string {
-			stack_Push(&fmtStringStack, $3);
-		} strfmt_args T_RPAREN {
-			char *fmtString = stack_Pop(&fmtStringStack);
-
-			strfmt($$, MAXSTRLEN + 1, fmtString, $5.nbArgs, $5.args);
-			freeStrFmtArgList(&$5);
+		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
+			strfmt($$, MAXSTRLEN + 1, $3.format, $3.nbArgs, $3.args);
+			freeStrFmtArgList(&$3);
 		}
 ;
 
@@ -1253,10 +1249,18 @@ strcat_args	: string
 		}
 ;
 
-strfmt_args	: /* empty */ {
+strfmt_args	: string strfmt_va_args {
+			$$.format = strdup($1);
+			$$.capacity = $2.capacity;
+			$$.nbArgs = $2.nbArgs;
+			$$.args = $2.args;
+		}
+;
+
+strfmt_va_args	: /* empty */ {
 			initStrFmtArgList(&$$);
 		}
-		| strfmt_args T_COMMA relocexpr_no_str {
+		| strfmt_va_args T_COMMA relocexpr_no_str {
 			int32_t value;
 
 			if (!rpn_isKnown(&$3)) {
@@ -1273,7 +1277,7 @@ strfmt_args	: /* empty */ {
 			$1.args[i].isNumeric = true;
 			$$ = $1;
 		}
-		| strfmt_args T_COMMA string {
+		| strfmt_va_args T_COMMA string {
 			size_t i = nextStrFmtArgListIndex(&$1);
 
 			$1.args[i].value.string = strdup($3);

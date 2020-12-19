@@ -47,6 +47,7 @@ struct StrFmtArg {
 
 #define INITIAL_STRFMT_ARG_SIZE 4
 struct StrFmtArgList {
+	char *format;
 	size_t nbArgs;
 	size_t capacity;
 	struct StrFmtArg *args;
