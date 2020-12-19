@@ -548,6 +548,7 @@ void patch_FindRefdSections(struct Patch const *patch, void (*callback)(struct S
 		case RPN_DIV:
 		case RPN_MOD:
 		case RPN_UNSUB:
+		case RPN_EXP:
 		case RPN_OR:
 		case RPN_AND:
 		case RPN_XOR:

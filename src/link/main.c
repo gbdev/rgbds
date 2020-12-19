@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 			padValue = value;
 			break;
 		case 's':
-			sect_AddSmartSection(optarg);
+			sect_AddSmartSection(musl_optarg);
 			break;
 		case 't':
 			is32kMode = true;
