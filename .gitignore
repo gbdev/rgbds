@@ -9,7 +9,3 @@ rgbshim.sh
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
-
-test/pokecrystal
-test/pokered
-test/ucity
