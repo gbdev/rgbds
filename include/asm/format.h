@@ -41,7 +41,7 @@ struct StrFmtArg {
 	union {
 		uint32_t number;
 		char *string;
-	} value;
+	};
 	bool isNumeric;
 };
 

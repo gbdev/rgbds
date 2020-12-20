@@ -188,7 +188,7 @@ static void freeStrFmtArgList(struct StrFmtArgList *args) {
 	free(args->format);
 	for (size_t i = 0; i < args->nbArgs; i++)
 		if (!args->args[i].isNumeric)
-			free(args->args[i].value.string);
+			free(args->args[i].string);
 	free(args->args);
 }
 
@@ -241,9 +241,9 @@ static void strfmt(char *dest, size_t destLen, char *fmt, size_t nbArgs, struct 
 		static char buf[MAXSTRLEN + 1];
 
 		if (arg->isNumeric)
-			fmt_PrintNumber(buf, sizeof(buf), &spec, arg->value.number);
+			fmt_PrintNumber(buf, sizeof(buf), &spec, arg->number);
 		else
-			fmt_PrintString(buf, sizeof(buf), &spec, arg->value.string);
+			fmt_PrintString(buf, sizeof(buf), &spec, arg->string);
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
 	}
@@ -1273,14 +1273,14 @@ strfmt_va_args	: /* empty */ {
 
 			size_t i = nextStrFmtArgListIndex(&$1);
 
-			$1.args[i].value.number = value;
+			$1.args[i].number = value;
 			$1.args[i].isNumeric = true;
 			$$ = $1;
 		}
 		| strfmt_va_args T_COMMA string {
 			size_t i = nextStrFmtArgListIndex(&$1);
 
-			$1.args[i].value.string = strdup($3);
+			$1.args[i].string = strdup($3);
 			$1.args[i].isNumeric = false;
 			$$ = $1;
 		}
