@@ -1470,6 +1470,54 @@ As in macros, you can also use the escape sequence
 .Ic \[rs]@ .
 .Ic REPT
 blocks can be nested.
+.Pp
+A common pattern is to repeat a block for each value in some range.
+.Ic FOREACH
+is simpler than
+.Ic REPT
+for that purpose. Everything
+.Ic FOREACH
+and the matching
+.Ic ENDR
+will be repeated for each value of a given symbol.
+For example, this code will produce a table of squared values from 0 to 255:
+.Bd -literal -offset indent
+FOREACH N, 256
+      dw N * N
+ENDR
+.Ed
+.Pp
+It acts just as if you had done:
+.Bd -literal -offset ident
+N = 0
+      dw N * N
+N = 1
+      dw N * N
+N = 2
+      dw N * N
+; ...
+N = 255
+      dw N * N
+N = 256
+.Ed
+.Pp
+You can customize the range of
+.Ic FOREACH
+values:
+.Bl -column "FOREACH V, start, stop, step"
+.It Sy Code Ta Sy Range
+.It Ic FOREACH Ar V, stop Ta Ar V No increments from 0 to Ar stop No
+.It Ic FOREACH Ar V, start, stop Ta Ar V No increments from Ar start No to Ar stop No
+.It Ic FOREACH Ar V, start, stop, step Ta Ar V No goes from Ar start No to Ar stop No by Ar step No
+.El
+.Pp
+Just like with
+.Ic REPT
+blocks, you can use the escape sequence
+.Ic \[rs]@
+inside of
+.Ic FOREACH
+blocks, and they can be nested.
 .Ss Aborting the assembly process
 .Ic FAIL
 and

@@ -205,6 +205,11 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
+	struct {
+		int32_t start;
+		int32_t stop;
+		int32_t step;
+	} foreachArgs;
 }
 
 %type	<sVal>		relocexpr
@@ -296,7 +301,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_POP_ENDM
 %token	T_POP_RSRESET T_POP_RSSET
 %token	T_POP_UNION T_POP_NEXTU T_POP_ENDU
-%token	T_POP_INCBIN T_POP_REPT
+%token	T_POP_INCBIN T_POP_REPT T_POP_FOREACH
 %token	T_POP_CHARMAP
 %token	T_POP_NEWCHARMAP
 %token	T_POP_SETCHARMAP
@@ -320,6 +325,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 %type	<sectMod> sectmod
 %type	<macroArg> macroargs
+
+%type	<foreachArgs> foreach_args
 
 %token	T_Z80_ADC T_Z80_ADD T_Z80_AND
 %token	T_Z80_BIT
@@ -522,6 +529,7 @@ simple_pseudoop : include
 		| popc
 		| load
 		| rept
+		| foreach
 		| shift
 		| fail
 		| warn
@@ -642,6 +650,31 @@ rept		: T_POP_REPT uconst {
 			size_t size;
 			lexer_CaptureRept(&body, &size);
 			fstk_RunRept($2, nDefinitionLineNo, body, size);
+		}
+;
+
+foreach		: T_POP_FOREACH T_ID T_COMMA foreach_args {
+			uint32_t nDefinitionLineNo = lexer_GetLineNo();
+			char *body;
+			size_t size;
+			lexer_CaptureRept(&body, &size);
+			fstk_RunForeach($2, $4.start, $4.stop, $4.step, nDefinitionLineNo, body, size);
+		}
+
+foreach_args	: const {
+			$$.start = 0;
+			$$.stop = $1;
+			$$.step = 1;
+		}
+		| const T_COMMA const {
+			$$.start = $1;
+			$$.stop = $3;
+			$$.step = 1;
+		}
+		| const T_COMMA const T_COMMA const {
+			$$.start = $1;
+			$$.stop = $3;
+			$$.step = $5;
 		}
 ;
 

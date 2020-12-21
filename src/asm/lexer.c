@@ -238,6 +238,7 @@ static struct KeywordMapping {
 	{"SHIFT", T_POP_SHIFT},
 
 	{"REPT", T_POP_REPT},
+	{"FOREACH", T_POP_FOREACH},
 	{"ENDR", T_POP_ENDR},
 
 	{"LOAD", T_POP_LOAD},
@@ -453,7 +454,7 @@ struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 
 void lexer_RestartRept(uint32_t lineNo)
 {
-	dbgPrint("Restarting REPT\n");
+	dbgPrint("Restarting REPT/FOREACH\n");
 	lexerState->offset = 0;
 	initState(lexerState);
 	lexerState->lineNo = lineNo;
@@ -479,7 +480,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[341] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[347] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -2161,10 +2162,11 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		do { /* Discard initial whitespace */
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		/* Now, try to match `REPT`, `FOREACH` or `ENDR` as a **whole** identifier */
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c)) {
 			case T_POP_REPT:
+			case T_POP_FOREACH:
 				level++;
 				/* Ignore the rest of that line */
 				break;
@@ -2188,7 +2190,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		/* Just consume characters until EOL or EOF */
 		for (;;) {
 			if (c == EOF) {
-				error("Unterminated REPT block\n");
+				error("Unterminated REPT/FOREACH block\n");
 				lexerState->capturing = false;
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
@@ -2246,7 +2248,7 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 		do { /* Discard initial whitespace */
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match either `REPT` or `ENDR` as a **whole** identifier */
+		/* Now, try to match `ENDM` as a **whole** identifier */
 		if (startsIdentifier(c)) {
 			if (readIdentifier(c) == T_POP_ENDM) {
 				/* Read (but don't capture) until EOL or EOF */
