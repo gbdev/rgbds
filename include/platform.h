@@ -34,9 +34,15 @@
 
 /* MSVC doesn't use POSIX types or defines for `read` */
 #ifdef _MSC_VER
+# include <io.h>
 # define STDIN_FILENO 0
+# define STDOUT_FILENO 1
+# define STDERR_FILENO 2
 # define ssize_t int
 # define SSIZE_MAX INT_MAX
+#else
+# include <fcntl.h>
+# include <unistd.h>
 #endif
 
 /* MSVC doesn't support `[static N]` for array arguments from C99 */
@@ -44,6 +50,24 @@
 # define MIN_NB_ELMS(N)
 #else
 # define MIN_NB_ELMS(N) static (N)
+#endif
+
+// MSVC uses a different name for O_RDWR, and needs an additional _O_BINARY flag
+#ifdef _MSC_VER
+# include <fcntl.h>
+# define O_RDWR _O_RDWR
+# define S_ISREG(field) ((field) & _S_IFREG)
+# define O_BINARY _O_BINARY
+#elif !defined(O_BINARY) // Cross-compilers define O_BINARY
+# define O_BINARY 0 // POSIX says we shouldn't care!
+#endif // _MSC_VER
+
+// Windows has stdin and stdout open as text by default, which we may not want
+#if defined(_MSC_VER) || defined(__MINGW32__)
+# include <io.h>
+# define setmode(fd, mode) _setmode(fd, mode)
+#else
+# define setmode(fd, mode) ((void)0)
 #endif
 
 #endif /* RGBDS_PLATFORM_H */

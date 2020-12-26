@@ -203,7 +203,7 @@ develop:
 	$Qenv $(MAKE) -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
 		-Wno-sign-compare -Wvla -Wformat -Wformat-security -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
-		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5 \
+		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=4 \
 		-Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond \
 		-Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op \
 		-Wnested-externs -Wno-aggressive-loop-optimizations -Winline \
