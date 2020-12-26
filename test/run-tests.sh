@@ -14,13 +14,11 @@ fi
 
 # Tests included with the repository
 
-pushd asm
-./test.sh
-popd
-
-pushd link
-./test.sh
-popd
+for dir in asm link fix; do
+	pushd $dir
+	./test.sh
+	popd
+done
 
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
