@@ -6,6 +6,12 @@ set -e
 
 cd "$(dirname "$0")"
 
+# Refuse to run if RGBDS isn't present
+if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
+	echo "Please build RGBDS before running the tests"
+	false
+fi
+
 # Tests included with the repository
 
 pushd asm
