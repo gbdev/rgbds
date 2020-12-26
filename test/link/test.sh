@@ -7,6 +7,8 @@ gbtemp2=$(mktemp)
 outtemp=$(mktemp)
 rc=0
 
+trap "rm -f '$otemp' '$gbtemp' '$gbtemp2' '$outtemp'" EXIT
+
 bold=$(tput bold)
 resbold=$(tput sgr0)
 red=$(tput setaf 1)
@@ -112,5 +114,4 @@ for i in section-union/*.asm; do
 	rc=$(($? || $rc))
 done
 
-rm -f $otemp $gbtemp $gbtemp2 $outtemp
 exit $rc

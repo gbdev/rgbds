@@ -9,6 +9,8 @@ output="$(mktemp)"
 errput="$(mktemp)"
 rc=0
 
+trap "rm -f '$o' '$gb' '$input' '$output' '$errput'" EXIT
+
 bold="$(tput bold)"
 resbold="$(tput sgr0)"
 red="$(tput setaf 1)"
@@ -93,5 +95,4 @@ for i in *.asm; do
 	done
 done
 
-rm -f $o $gb $input $output
 exit $rc
