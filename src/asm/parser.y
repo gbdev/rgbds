@@ -1185,11 +1185,27 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_LOGICNOT relocexpr %prec NEG {
 			rpn_LOGNOT(&$$, &$2);
 		}
-		| relocexpr T_OP_LOGICOR relocexpr {
-			rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICOR {
+			// If the first operand is nonzero...
+			rpn_EnterShortCircuitOp(rpn_isKnown(&$1) && $1.nVal);
+		} relocexpr {
+			// ...then short-circuit to 1 without evaluating the second operand.
+			if (rpn_IsShortCircuited())
+				rpn_Number(&$$, 1);
+			else
+				rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$4);
+			rpn_LeaveShortCircuitOp();
 		}
-		| relocexpr T_OP_LOGICAND relocexpr {
-			rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICAND {
+			// If the first operand is zero...
+			rpn_EnterShortCircuitOp(rpn_isKnown(&$1) && !$1.nVal);
+		} relocexpr {
+			// ...then short-circuit to 0 without evaluating the second operand.
+			if (rpn_IsShortCircuited())
+				rpn_Number(&$$, 0);
+			else
+				rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$4);
+			rpn_LeaveShortCircuitOp();
 		}
 		| relocexpr T_OP_LOGICEQU relocexpr {
 			rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3);
@@ -1355,32 +1371,52 @@ const_no_str	: relocexpr_no_str {
 
 string		: T_STRING
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
-			strsubUTF8($$, $3, $5, $7);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				strsubUTF8($$, $3, $5, $7);
 		}
 		| T_OP_STRCAT T_LPAREN T_RPAREN {
 			$$[0] = '\0';
 		}
 		| T_OP_STRCAT T_LPAREN strcat_args T_RPAREN {
-			strcpy($$, $3);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				strcpy($$, $3);
 		}
 		| T_OP_STRUPR T_LPAREN string T_RPAREN {
-			upperstring($$, $3);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				upperstring($$, $3);
 		}
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
-			lowerstring($$, $3);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				lowerstring($$, $3);
 		}
 		| T_OP_STRRPL T_LPAREN string T_COMMA string T_COMMA string T_RPAREN {
-			strrpl($$, sizeof($$), $3, $5, $7);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				strrpl($$, sizeof($$), $3, $5, $7);
 		}
 		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
-			strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else
+				strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
 			freeStrFmtArgList(&$3);
 		}
 ;
 
 strcat_args	: string
 		| strcat_args T_COMMA string {
-			if (snprintf($$, sizeof($$), "%s%s", $1, $3) > MAXSTRLEN)
+			if (rpn_IsShortCircuited())
+				$$[0] = '\0';
+			else if (snprintf($$, sizeof($$), "%s%s", $1, $3) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
 		}
@@ -1395,31 +1431,36 @@ strfmt_args	: string strfmt_va_args {
 ;
 
 strfmt_va_args	: /* empty */ {
-			initStrFmtArgList(&$$);
+			if (!rpn_IsShortCircuited())
+				initStrFmtArgList(&$$);
 		}
 		| strfmt_va_args T_COMMA relocexpr_no_str {
-			int32_t value;
+			if (!rpn_IsShortCircuited()) {
+				int32_t value;
 
-			if (!rpn_isKnown(&$3)) {
-				error("Expected constant expression: %s\n",
-					$3.reason);
-				value = 0;
-			} else {
-				value = $3.nVal;
+				if (!rpn_isKnown(&$3)) {
+					error("Expected constant expression: %s\n",
+						$3.reason);
+					value = 0;
+				} else {
+					value = $3.nVal;
+				}
+
+				size_t i = nextStrFmtArgListIndex(&$1);
+
+				$1.args[i].number = value;
+				$1.args[i].isNumeric = true;
+				$$ = $1;
 			}
-
-			size_t i = nextStrFmtArgListIndex(&$1);
-
-			$1.args[i].number = value;
-			$1.args[i].isNumeric = true;
-			$$ = $1;
 		}
 		| strfmt_va_args T_COMMA string {
-			size_t i = nextStrFmtArgListIndex(&$1);
+			if (!rpn_IsShortCircuited()) {
+				size_t i = nextStrFmtArgListIndex(&$1);
 
-			$1.args[i].string = strdup($3);
-			$1.args[i].isNumeric = false;
-			$$ = $1;
+				$1.args[i].string = strdup($3);
+				$1.args[i].isNumeric = false;
+				$$ = $1;
+			}
 		}
 ;
 

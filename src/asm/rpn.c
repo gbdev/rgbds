@@ -24,6 +24,9 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
+uint32_t nestedShortCircuitOps; // How many nested short-circuitable operators there currently are
+uint32_t shortCircuitAtDepth; // The nested depth at which short-circuiting occurred (0 if N/A)
+
 /* Makes an expression "not known", also setting its error message */
 #define makeUnknown(expr_, ...) do { \
 	struct Expression *_expr = expr_; \
@@ -95,6 +98,25 @@ void rpn_Free(struct Expression *expr)
 	rpn_Init(expr);
 }
 
+void rpn_EnterShortCircuitOp(bool startShortCircuit)
+{
+	nestedShortCircuitOps++;
+	if (startShortCircuit && shortCircuitAtDepth == 0)
+		shortCircuitAtDepth = nestedShortCircuitOps;
+}
+
+void rpn_LeaveShortCircuitOp(void)
+{
+	nestedShortCircuitOps--;
+	if (shortCircuitAtDepth > nestedShortCircuitOps)
+		shortCircuitAtDepth = 0;
+}
+
+bool rpn_IsShortCircuited(void)
+{
+	return shortCircuitAtDepth > 0 && shortCircuitAtDepth >= nestedShortCircuitOps;
+}
+
 /*
  * Add symbols, constants and operators to expression
  */
@@ -106,6 +128,11 @@ void rpn_Number(struct Expression *expr, uint32_t i)
 
 void rpn_Symbol(struct Expression *expr, char const *tzSym)
 {
+	if (rpn_IsShortCircuited()) {
+		rpn_Number(expr, 0);
+		return;
+	}
+
 	struct Symbol *sym = sym_FindScopedSymbol(tzSym);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
@@ -157,6 +184,11 @@ void rpn_BankSelf(struct Expression *expr)
 
 void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 {
+	if (rpn_IsShortCircuited()) {
+		rpn_Number(expr, 0);
+		return;
+	}
+
 	struct Symbol const *sym = sym_FindScopedSymbol(tzSym);
 
 	/* The @ symbol is treated differently. */
@@ -189,6 +221,11 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 
 void rpn_BankSection(struct Expression *expr, char const *tzSectionName)
 {
+	if (rpn_IsShortCircuited()) {
+		rpn_Number(expr, 0);
+		return;
+	}
+
 	rpn_Init(expr);
 
 	struct Section *pSection = out_FindSectionByName(tzSectionName);
@@ -335,6 +372,11 @@ static bool isDiffConstant(struct Expression const *src1,
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
+	if (rpn_IsShortCircuited()) {
+		rpn_Number(expr, 0);
+		return;
+	}
+
 	expr->isSymbol = false;
 
 	/* First, check if the expression is known */

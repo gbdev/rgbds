@@ -46,6 +46,9 @@ static inline bool rpn_isSymbol(const struct Expression *expr)
 	return expr->isSymbol;
 }
 
+void rpn_EnterShortCircuitOp(bool startShortCircuit);
+void rpn_LeaveShortCircuitOp(void);
+bool rpn_IsShortCircuited(void);
 void rpn_Symbol(struct Expression *expr, char const *tzSym);
 void rpn_Number(struct Expression *expr, uint32_t i);
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src);

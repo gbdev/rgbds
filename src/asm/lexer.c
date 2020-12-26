@@ -1346,6 +1346,9 @@ static char const *readInterpolation(void)
 		}
 	}
 
+	if (rpn_IsShortCircuited())
+		return NULL;
+
 	if (i == sizeof(symName)) {
 		warning(WARNING_LONG_STR, "Symbol name too long\n");
 		i--;
