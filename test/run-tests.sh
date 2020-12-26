@@ -26,7 +26,7 @@ if [ ! -d pokecrystal ]; then
 fi
 pushd pokecrystal
 git fetch
-git checkout b577e4e179711e96f8e059b42c7115e7103a4a69
+git checkout 5db892782adaa5bb5a3e4cd6fa06565764bd1fb0
 make clean
 make -j4 compare
 popd
@@ -36,7 +36,7 @@ if [ ! -d pokered ]; then
 fi
 pushd pokered
 git fetch
-git checkout 2fe1505babaf02b995cc0d9c3a827b798935b19a
+git checkout 21908ba30a8bae5c5e1c86b1164402ec95da0220
 make clean
 make -j4 compare
 popd
@@ -46,7 +46,7 @@ if [ ! -d ucity ]; then
 fi
 pushd ucity
 git fetch
-git checkout 780b951b6959b0a98e915ecb9f5fc82544d56d01
+git checkout 15be184b26b337110e1ec2998cd42f134f00f281
 make clean
 make -j4
 popd
