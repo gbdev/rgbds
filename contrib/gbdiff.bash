@@ -50,12 +50,14 @@ diff <(xxd $1) <(xxd $2) | while read -r LINE; do
 		EXTRA=$(if [ -f "$SYMFILE" ]; then
 			# Read the sym file for such a symbol
 			# Ignore comment lines, only pick matching bank
-			cut -d ';' -f 1 "$SYMFILE" |
-			 grep -Ei $(printf "^%02x:" $BANK) |
+			# (The bank regex ignores comments already, make `cut` and `tr` process less lines)
+			grep -Ei $(printf "^%02x:" $BANK) "$SYMFILE" |
+			 cut -d ';' -f 1 |
+			 tr -d "\r" |
 			 while read -r SYMADDR SYM; do
 				SYMADDR=$((0x${SYMADDR#*:}))
 				if [ $SYMADDR -le $ADDR ]; then
-					printf " (%s+%#x)\n" $SYM $(($ADDR - $SYMADDR))
+					printf " (%s+%#x)\n" "$SYM" $(($ADDR - $SYMADDR))
 				fi
 			# TODO: assumes sorted sym files
 			done | tail -n 1
