@@ -185,6 +185,7 @@ checkpatch:
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
 		echo "[*] Analyzing commit '$$commit'";			\
 		git format-patch --stdout "$$commit~..$$commit"		\
+			-- src include '!src/extern' '!include/extern'	\
 			| ${CHECKPATCH} - || true;			\
 	done
 
