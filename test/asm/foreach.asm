@@ -29,3 +29,12 @@ foreach s, 3, 30, 3
 	printt "{d:x} "
 endr
 	printt "-> {d:x}\n"
+
+foreach v, 10
+	printt "{d:v} "
+if v == 5
+purge v
+v equ 42
+endc
+endr
+	printt "-> {d:v}\n"
