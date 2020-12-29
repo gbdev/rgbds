@@ -31,7 +31,7 @@ bool fmt_IsEmpty(struct FormatSpec const *fmt)
 
 bool fmt_IsValid(struct FormatSpec const *fmt)
 {
-	return fmt->valid || fmt_IsEmpty(fmt);
+	return fmt->valid || fmt->state == FORMAT_DONE;
 }
 
 bool fmt_IsFinished(struct FormatSpec const *fmt)
@@ -128,8 +128,8 @@ invalid:
 
 void fmt_FinishCharacters(struct FormatSpec *fmt)
 {
-	if (!fmt_IsEmpty(fmt))
-		fmt->state = fmt->valid ? FORMAT_DONE : FORMAT_INVALID;
+	if (!fmt_IsValid(fmt))
+		fmt->state = FORMAT_INVALID;
 }
 
 void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value)

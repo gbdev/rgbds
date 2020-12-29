@@ -5,3 +5,6 @@ roses are red
 violets are blue
 void are 0
 3.141586304 ~ three
+1 eol %
+invalid % spec
+one=1 two=% three=%

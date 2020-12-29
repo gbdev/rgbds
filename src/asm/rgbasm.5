@@ -325,6 +325,16 @@ Valid print types are:
 .It Ql s Ta String Ta \&"example\&"
 .El
 .Pp
+Examples:
+.Bd -literal -offset indent
+; Prints "%0010 + $3 == 5"
+PRINTT STRFMT("%#05b + %#x == %d\n", 2, 3, 2+3)
+; Prints "32% of 20 = 6.40"
+PRINTT STRFMT("%d%% of %d = %.2f\n", 32, 20, MUL(20.0, 0.32))
+; Prints "Hello world!"
+PRINTT STRFMT("Hello %s!\n", STRLWR("WORLD"))
+.Ed
+.Pp
 HINT: The
 .Ic {symbol}
 construct can also be used outside strings.

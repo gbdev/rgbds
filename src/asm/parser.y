@@ -192,7 +192,7 @@ static void freeStrFmtArgList(struct StrFmtArgList *args) {
 	free(args->args);
 }
 
-static void strfmt(char *dest, size_t destLen, char *fmt, size_t nbArgs, struct StrFmtArg *args) {
+static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args) {
 	size_t a = 0;
 	size_t i;
 
@@ -225,13 +225,19 @@ static void strfmt(char *dest, size_t destLen, char *fmt, size_t nbArgs, struct 
 		if (fmt_IsEmpty(&spec)) {
 			error("STRFMT: Illegal '%%' at end of format string\n");
 			dest[i++] = '%';
-			continue;
+			break;
 		} else if (!fmt_IsValid(&spec)) {
 			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
 			dest[i++] = '%';
+			a++;
 			continue;
-		} else if (a >= nbArgs) {
-			error("STRFMT: no argument %zu for format spec\n", a + 1);
+		} else if (a == nbArgs) {
+			error("STRFMT: Not enough arguments for format spec\n", a + 1);
+			dest[i++] = '%';
+			a++;
+			continue;
+		} else if (a > nbArgs) {
+			// already warned for a == nbArgs
 			dest[i++] = '%';
 			a++;
 			continue;

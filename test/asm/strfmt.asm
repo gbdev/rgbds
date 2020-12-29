@@ -15,3 +15,10 @@ PRINTT STRFMT(TEMPLATE, "void", 0, "extra")
 
 PRINTT STRCAT(STRFMT(STRFMT("%%%s.%d%s", "", 9, "f"), _PI), \
 	STRFMT(" ~ %s\n", STRFMT("%s%x", "thr", 238)))
+
+PRINTT STRFMT("%d eol %", 1)
+PRINTT "\n"
+
+PRINTT STRFMT("invalid %w spec\n", 42)
+
+PRINTT STRFMT("one=%d two=%d three=%d\n", 1)

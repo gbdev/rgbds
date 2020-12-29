@@ -12,8 +12,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAXSTRLEN	255
-
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
 	FORMAT_PREFIX,  // expects '#' (optional)

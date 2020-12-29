@@ -1300,14 +1300,14 @@ static char const *readInterpolation(void)
 			break;
 		} else if (c == ':' && !fmt_IsFinished(&fmt)) { /* Format spec, only once */
 			shiftChars(1);
-			for (int j = 0; j < i; j++)
+			for (size_t j = 0; j < i; j++)
 				fmt_UseCharacter(&fmt, symName[j]);
 			fmt_FinishCharacters(&fmt);
 			symName[i] = '\0';
 			if (!fmt_IsValid(&fmt)) {
 				error("Invalid format spec '%s'\n", symName);
 			} else if (!strcmp(symName, "f")) {
-				/* Format 'f' defaults to '.5f' like PRINTV */
+				/* Format 'f' defaults to '.5f' like PRINTF */
 				fmt.hasFrac = true;
 				fmt.fracWidth = 5;
 			}

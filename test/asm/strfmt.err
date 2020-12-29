@@ -2,4 +2,10 @@ ERROR: strfmt.asm(14):
     Formatting number as type 's'
 ERROR: strfmt.asm(14):
     STRFMT: 1 unformatted argument(s)
-error: Assembly aborted (2 errors)!
+ERROR: strfmt.asm(19):
+    STRFMT: Illegal '%' at end of format string
+ERROR: strfmt.asm(22):
+    STRFMT: Invalid format spec for argument 1
+ERROR: strfmt.asm(24):
+    STRFMT: Not enough arguments for format spec
+error: Assembly aborted (5 errors)!
