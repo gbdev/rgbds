@@ -4,7 +4,15 @@ endr
 	printt "-> {d:n}\n"
 
 foreach v, 0
-	printt "unreached\n"
+	printt "unreached"
+endr
+
+foreach v, 2, 1
+	printt "unreached"
+endr
+
+foreach v, 1, 2, 0
+	printt "unreached"
 endr
 
 foreach x, 1, 5+1
@@ -31,10 +39,10 @@ endr
 	printt "-> {d:x}\n"
 
 foreach v, 10
-	printt "{d:v} "
-if v == 5
+	printt "{d:v}\n"
+if v == 3
 purge v
-v equ 42
+v equ 42 ; causes a fatal error
 endc
 endr
 	printt "-> {d:v}\n"

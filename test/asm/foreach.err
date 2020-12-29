@@ -1,6 +1,6 @@
-ERROR: foreach.asm(8):
+ERROR: foreach.asm(16):
     FOREACH cannot have a step value of 0
-ERROR: foreach.asm(33) -> foreach.asm::REPT~7(39):
-    'v' already defined as constant at foreach.asm(33) -> foreach.asm::REPT~6(37)
-FATAL: foreach.asm(33) -> foreach.asm::REPT~7(39):
+ERROR: foreach.asm(41) -> foreach.asm::REPT~5(47):
+    'v' already defined as constant at foreach.asm(41) -> foreach.asm::REPT~4(45)
+FATAL: foreach.asm(41) -> foreach.asm::REPT~5(47):
     Failed to update FOREACH symbol value

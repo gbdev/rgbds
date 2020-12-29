@@ -463,7 +463,7 @@ void fstk_RunForeach(char const *symName, int32_t start, int32_t stop, int32_t s
 		count = (stop - start - 1) / step + 1;
 	else if (step < 0 && stop < start)
 		count = (start - stop - 1) / -step + 1;
-	else
+	else if (step == 0)
 		error("FOREACH cannot have a step value of 0\n");
 
 	if (count == 0)
