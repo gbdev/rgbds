@@ -1512,6 +1512,24 @@ values:
 .It Ic FOREACH Ar V , start , stop , step Ta Ar V No goes from Ar start No to Ar stop No by Ar step No
 .El
 .Pp
+The
+.Ic FOREACH
+value will be updated by
+.Ar step
+until it reaches or exceeds
+.Ar stop.
+For example:
+.Bd -literal -offset indent
+FOREACH V, 4, 25, 5
+      PRINTT "{d:V} "
+ENDR
+      PRINTT "done {d:V}\n"
+.Ed
+This will print:
+.Bd -literal -offset indent
+4 9 14 19 24 done 29
+.Ed
+.Pp
 Just like with
 .Ic REPT
 blocks, you can use the escape sequence
