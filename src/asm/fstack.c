@@ -34,6 +34,9 @@ struct Context {
 	uint32_t uniqueID;
 	struct MacroArgs *macroArgs; /* Macro args are *saved* here */
 	uint32_t nbReptIters;
+	int32_t foreachValue;
+	int32_t foreachStep;
+	char *foreachName;
 };
 
 static struct Context *contextStack;
@@ -217,6 +220,15 @@ bool yywrap(void)
 		}
 
 		fileInfo->iters[0]++;
+		/* If this is a FOREACH, update the symbol value */
+		if (contextStack->foreachName) {
+			contextStack->foreachValue += contextStack->foreachStep;
+			struct Symbol *sym = sym_AddSet(contextStack->foreachName,
+				contextStack->foreachValue);
+
+			if (sym->type != SYM_SET)
+				fatalerror("Failed to update FOREACH symbol value\n");
+		}
 		/* If this wasn't the last iteration, wrap instead of popping */
 		if (fileInfo->iters[0] <= contextStack->nbReptIters) {
 			lexer_RestartRept(contextStack->fileInfo->lineNo);
@@ -242,6 +254,8 @@ bool yywrap(void)
 	/* Free the file stack node */
 	if (!context->fileInfo->referenced)
 		free(context->fileInfo);
+	/* Free the FOREACH symbol name */
+	free(context->foreachName);
 	/* Free the entry and make its parent the current entry */
 	free(context);
 
@@ -267,13 +281,13 @@ static void newContext(struct FileStackNode *fileInfo)
 	fileInfo->referenced = false;
 	fileInfo->lineNo = lexer_GetLineNo();
 	context->fileInfo = fileInfo;
+	context->foreachName = NULL;
 	/*
 	 * Link new entry to its parent so it's reachable later
 	 * ERRORS SHOULD NOT OCCUR AFTER THIS!!
 	 */
 	context->parent = contextStack;
 	contextStack = context;
-
 }
 
 void fstk_RunInclude(char const *path)
@@ -386,12 +400,8 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	macro_UseNewArgs(args);
 }
 
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
+static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 {
-	dbgPrint("Running REPT(%" PRIu32 ")\n", count);
-	if (count == 0)
-		return;
-
 	uint32_t reptDepth = contextStack->fileInfo->type == NODE_REPT
 				? ((struct FileStackReptNode *)contextStack->fileInfo)->reptDepth
 				: 0;
@@ -400,7 +410,7 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for REPT: %s\n", strerror(errno));
-		return;
+		return false;
 	}
 	fileInfo->node.type = NODE_REPT;
 	fileInfo->reptDepth = reptDepth + 1;
@@ -420,8 +430,53 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 		fatalerror("Failed to set up lexer for rept block\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
 	contextStack->uniqueID = macro_UseNewUniqueID();
-	contextStack->nbReptIters = count;
+	return true;
+}
 
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
+{
+	dbgPrint("Running REPT(%" PRIu32 ")\n", count);
+
+	if (count == 0)
+		return;
+	if (!newReptContext(reptLineNo, body, size))
+		return;
+
+	contextStack->nbReptIters = count;
+	contextStack->foreachName = NULL;
+}
+
+void fstk_RunForeach(char const *symName, int32_t start, int32_t stop, int32_t step,
+		     int32_t reptLineNo, char *body, size_t size)
+{
+	dbgPrint("Running FOREACH(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
+		 symName, start, stop, step);
+
+	struct Symbol *sym = sym_AddSet(symName, start);
+
+	if (sym->type != SYM_SET)
+		return;
+
+	uint32_t count = 0;
+
+	if (step > 0 && start < stop)
+		count = (stop - start - 1) / step + 1;
+	else if (step < 0 && stop < start)
+		count = (start - stop - 1) / -step + 1;
+	else if (step == 0)
+		error("FOREACH cannot have a step value of 0\n");
+
+	if (count == 0)
+		return;
+	if (!newReptContext(reptLineNo, body, size))
+		return;
+
+	contextStack->nbReptIters = count;
+	contextStack->foreachValue = start;
+	contextStack->foreachStep = step;
+	contextStack->foreachName = strdup(symName);
+	if (!contextStack->foreachName)
+		fatalerror("Not enough memory for FOREACH name: %s\n", strerror(errno));
 }
 
 void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
@@ -453,6 +508,9 @@ void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
 	context->uniqueID = 0;
 	macro_SetUniqueID(0);
 	context->nbReptIters = 0;
+	context->foreachValue = 0;
+	context->foreachStep = 0;
+	context->foreachName = NULL;
 
 	/* Now that it's set up properly, register the context */
 	contextStack = context;
