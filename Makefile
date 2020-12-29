@@ -125,7 +125,7 @@ src/asm/parser.c: src/asm/parser.y
 	$QDEFS=; \
 	add_flag(){ \
 		if src/check_bison_ver.sh $$1 $$2; then \
-			DEFS+=-D$$3; \
+			DEFS="$$DEFS -D$$3"; \
 		fi \
 	}; \
 	add_flag 3 5 api.token.raw=true; \
