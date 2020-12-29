@@ -1475,7 +1475,8 @@ A common pattern is to repeat a block for each value in some range.
 .Ic FOREACH
 is simpler than
 .Ic REPT
-for that purpose. Everything
+for that purpose.
+Everything between
 .Ic FOREACH
 and the matching
 .Ic ENDR
@@ -1506,9 +1507,9 @@ You can customize the range of
 values:
 .Bl -column "FOREACH V, start, stop, step"
 .It Sy Code Ta Sy Range
-.It Ic FOREACH Ar V, stop Ta Ar V No increments from 0 to Ar stop No
-.It Ic FOREACH Ar V, start, stop Ta Ar V No increments from Ar start No to Ar stop No
-.It Ic FOREACH Ar V, start, stop, step Ta Ar V No goes from Ar start No to Ar stop No by Ar step No
+.It Ic FOREACH Ar V , stop Ta Ar V No increments from 0 to Ar stop No
+.It Ic FOREACH Ar V , start , stop Ta Ar V No increments from Ar start No to Ar stop No
+.It Ic FOREACH Ar V , start , stop , step Ta Ar V No goes from Ar start No to Ar stop No by Ar step No
 .El
 .Pp
 Just like with
