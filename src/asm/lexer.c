@@ -28,6 +28,7 @@
 
 #include "asm/asm.h"
 #include "asm/lexer.h"
+#include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"
@@ -201,6 +202,7 @@ static struct KeywordMapping {
 	{"STRCAT", T_OP_STRCAT},
 	{"STRUPR", T_OP_STRUPR},
 	{"STRLWR", T_OP_STRLWR},
+	{"STRFMT", T_OP_STRFMT},
 
 	{"INCLUDE", T_POP_INCLUDE},
 	{"PRINTT", T_POP_PRINTT},
@@ -480,7 +482,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[347] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[350] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -1273,57 +1275,11 @@ static int readIdentifier(char firstChar)
 
 /* Functions to read strings */
 
-enum PrintType {
-	TYPE_NONE,
-	TYPE_DECIMAL,  /* d */
-	TYPE_UPPERHEX, /* X */
-	TYPE_LOWERHEX, /* x */
-	TYPE_BINARY,   /* b */
-};
-
-static void intToString(char *dest, size_t bufSize, struct Symbol const *sym, enum PrintType type)
-{
-	uint32_t value = sym_GetConstantSymValue(sym);
-	int fullLength;
-
-	/* Special cheat for binary */
-	if (type == TYPE_BINARY) {
-		char binary[33]; /* 32 bits + 1 terminator */
-		char *write_ptr = binary + 32;
-
-		fullLength = 0;
-		binary[32] = 0;
-		do {
-			*(--write_ptr) = (value & 1) + '0';
-			value >>= 1;
-			fullLength++;
-		} while (value);
-		strncpy(dest, write_ptr, bufSize - 1);
-	} else {
-		static char const * const formats[] = {
-			[TYPE_NONE]     = "$%" PRIX32,
-			[TYPE_DECIMAL]  = "%" PRId32,
-			[TYPE_UPPERHEX] = "%" PRIX32,
-			[TYPE_LOWERHEX] = "%" PRIx32
-		};
-
-		fullLength = snprintf(dest, bufSize, formats[type], value);
-		if (fullLength < 0) {
-			error("snprintf encoding error: %s\n", strerror(errno));
-			dest[0] = '\0';
-		}
-	}
-
-	if ((size_t)fullLength >= bufSize)
-		warning(WARNING_LONG_STR, "Interpolated symbol %s too long to fit buffer\n",
-			sym->name);
-}
-
 static char const *readInterpolation(void)
 {
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
-	enum PrintType type = TYPE_NONE;
+	struct FormatSpec fmt = fmt_NewSpec();
 
 	for (;;) {
 		int c = peek(0);
@@ -1342,33 +1298,24 @@ static char const *readInterpolation(void)
 		} else if (c == '}') {
 			shiftChars(1);
 			break;
-		} else if (c == ':' && type == TYPE_NONE) { /* Print type, only once */
-			if (i != 1) {
-				error("Print types are exactly 1 character long\n");
-			} else {
-				switch (symName[0]) {
-				case 'b':
-					type = TYPE_BINARY;
-					break;
-				case 'd':
-					type = TYPE_DECIMAL;
-					break;
-				case 'X':
-					type = TYPE_UPPERHEX;
-					break;
-				case 'x':
-					type = TYPE_LOWERHEX;
-					break;
-				default:
-					error("Invalid print type '%s'\n", print(symName[0]));
-				}
-			}
-			i = 0; /* Now that type has been set, restart at beginning of string */
+		} else if (c == ':' && !fmt_IsFinished(&fmt)) { /* Format spec, only once */
 			shiftChars(1);
+			for (size_t j = 0; j < i; j++)
+				fmt_UseCharacter(&fmt, symName[j]);
+			fmt_FinishCharacters(&fmt);
+			symName[i] = '\0';
+			if (!fmt_IsValid(&fmt)) {
+				error("Invalid format spec '%s'\n", symName);
+			} else if (!strcmp(symName, "f")) {
+				/* Format 'f' defaults to '.5f' like PRINTF */
+				fmt.hasFrac = true;
+				fmt.fracWidth = 5;
+			}
+			i = 0; /* Now that format has been set, restart at beginning of string */
 		} else {
+			shiftChars(1);
 			if (i < sizeof(symName)) /* Allow writing an extra char to flag overflow */
 				symName[i++] = c;
-			shiftChars(1);
 		}
 	}
 
@@ -1378,18 +1325,25 @@ static char const *readInterpolation(void)
 	}
 	symName[i] = '\0';
 
+	static char buf[MAXSTRLEN + 1];
+
 	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
 	} else if (sym->type == SYM_EQUS) {
-		if (type != TYPE_NONE)
-			error("Print types are only allowed for numbers\n");
-		return sym_GetStringValue(sym);
+		if (fmt_IsEmpty(&fmt))
+			/* No format was specified */
+			fmt.type = 's';
+		fmt_PrintString(buf, sizeof(buf), &fmt, sym_GetStringValue(sym));
+		return buf;
 	} else if (sym_IsNumeric(sym)) {
-		static char buf[33]; /* Worst case of 32 digits + terminator */
-
-		intToString(buf, sizeof(buf), sym, type);
+		if (fmt_IsEmpty(&fmt)) {
+			/* No format was specified; default to uppercase $hex */
+			fmt.type = 'X';
+			fmt.prefix = true;
+		}
+		fmt_PrintNumber(buf, sizeof(buf), &fmt, sym_GetConstantSymValue(sym));
 		return buf;
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");

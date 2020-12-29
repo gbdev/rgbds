@@ -1,5 +1,5 @@
 ERROR: bracketed-symbols.asm(16):
-    Print types are only allowed for numbers
+    Formatting string as type 'X'
 ERROR: bracketed-symbols.asm(20):
     "Label" does not have a constant value
 ERROR: bracketed-symbols.asm(21):

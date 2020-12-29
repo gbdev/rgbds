@@ -18,6 +18,7 @@
 
 #include "asm/asm.h"
 #include "asm/charmap.h"
+#include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/macro.h"
@@ -163,6 +164,106 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	dest[destIndex] = 0;
 }
 
+static void initStrFmtArgList(struct StrFmtArgList *args) {
+	args->nbArgs = 0;
+	args->capacity = INITIAL_STRFMT_ARG_SIZE;
+	args->args = malloc(args->capacity * sizeof(*args->args));
+	if (!args->args)
+		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
+			   strerror(errno));
+}
+
+static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args) {
+	if (args->nbArgs == args->capacity) {
+		args->capacity = (args->capacity + 1) * 2;
+		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		if (!args->args)
+			fatalerror("realloc error while resizing STRFMT arg list: %s\n",
+				   strerror(errno));
+	}
+	return args->nbArgs++;
+}
+
+static void freeStrFmtArgList(struct StrFmtArgList *args) {
+	free(args->format);
+	for (size_t i = 0; i < args->nbArgs; i++)
+		if (!args->args[i].isNumeric)
+			free(args->args[i].string);
+	free(args->args);
+}
+
+static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args) {
+	size_t a = 0;
+	size_t i;
+
+	for (i = 0; i < destLen;) {
+		int c = *fmt++;
+
+		if (c == '\0') {
+			break;
+		} else if (c != '%') {
+			dest[i++] = c;
+			continue;
+		}
+
+		c = *fmt++;
+
+		if (c == '%') {
+			dest[i++] = c;
+			continue;
+		}
+
+		struct FormatSpec spec = fmt_NewSpec();
+
+		while (c != '\0') {
+			fmt_UseCharacter(&spec, c);
+			if (fmt_IsFinished(&spec))
+				break;
+			c = *fmt++;
+		}
+
+		if (fmt_IsEmpty(&spec)) {
+			error("STRFMT: Illegal '%%' at end of format string\n");
+			dest[i++] = '%';
+			break;
+		} else if (!fmt_IsValid(&spec)) {
+			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
+			dest[i++] = '%';
+			a++;
+			continue;
+		} else if (a == nbArgs) {
+			error("STRFMT: Not enough arguments for format spec\n", a + 1);
+			dest[i++] = '%';
+			a++;
+			continue;
+		} else if (a > nbArgs) {
+			// already warned for a == nbArgs
+			dest[i++] = '%';
+			a++;
+			continue;
+		}
+
+		struct StrFmtArg *arg = &args[a++];
+		static char buf[MAXSTRLEN + 1];
+
+		if (arg->isNumeric)
+			fmt_PrintNumber(buf, sizeof(buf), &spec, arg->number);
+		else
+			fmt_PrintString(buf, sizeof(buf), &spec, arg->string);
+
+		i += snprintf(&dest[i], destLen - i, "%s", buf);
+	}
+
+	if (i > destLen - 1) {
+		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
+		i = destLen - 1;
+	}
+	dest[i] = '\0';
+
+	if (a < nbArgs)
+		error("STRFMT: %zu unformatted argument(s)\n", nbArgs - a);
+}
+
 static inline void failAssert(enum AssertionType type)
 {
 	switch (type) {
@@ -210,6 +311,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 		int32_t stop;
 		int32_t step;
 	} foreachArgs;
+	struct StrFmtArgList strfmtArgs;
 }
 
 %type	<sVal>		relocexpr
@@ -226,6 +328,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 %type	<tzString>	string
 %type	<tzString>	strcat_args
+%type	<strfmtArgs>	strfmt_args
+%type	<strfmtArgs>	strfmt_va_args
 
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
@@ -275,6 +379,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_STRCAT
 %left	T_OP_STRUPR
 %left	T_OP_STRLWR
+%left	T_OP_STRFMT
 
 %left	NEG /* negation -- unary minus */
 
@@ -1136,6 +1241,10 @@ string		: T_STRING
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
 			lowerstring($$, $3);
 		}
+		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
+			strfmt($$, MAXSTRLEN + 1, $3.format, $3.nbArgs, $3.args);
+			freeStrFmtArgList(&$3);
+		}
 ;
 
 strcat_args	: string
@@ -1143,6 +1252,43 @@ strcat_args	: string
 			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $1, $3) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
+		}
+;
+
+strfmt_args	: string strfmt_va_args {
+			$$.format = strdup($1);
+			$$.capacity = $2.capacity;
+			$$.nbArgs = $2.nbArgs;
+			$$.args = $2.args;
+		}
+;
+
+strfmt_va_args	: /* empty */ {
+			initStrFmtArgList(&$$);
+		}
+		| strfmt_va_args T_COMMA relocexpr_no_str {
+			int32_t value;
+
+			if (!rpn_isKnown(&$3)) {
+				error("Expected constant expression: %s\n",
+					$3.reason);
+				value = 0;
+			} else {
+				value = $3.nVal;
+			}
+
+			size_t i = nextStrFmtArgListIndex(&$1);
+
+			$1.args[i].number = value;
+			$1.args[i].isNumeric = true;
+			$$ = $1;
+		}
+		| strfmt_va_args T_COMMA string {
+			size_t i = nextStrFmtArgListIndex(&$1);
+
+			$1.args[i].string = strdup($3);
+			$1.args[i].isNumeric = false;
+			$$ = $1;
 		}
 ;
 
