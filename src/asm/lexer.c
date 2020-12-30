@@ -2127,6 +2127,11 @@ void lexer_CaptureRept(char **capture, size_t *size)
 
 			case T_POP_ENDR:
 				if (!level) {
+					/*
+					 * The final ENDR has been captured, but we don't want it!
+					 * We know we have read exactly "ENDR", not e.g. an EQUS
+					 */
+					lexerState->captureSize -= strlen("ENDR");
 					/* Read (but don't capture) until EOL or EOF */
 					lexerState->capturing = false;
 					do {
@@ -2159,7 +2164,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 finish:
 	assert(!lexerState->capturing);
 	*capture = captureStart;
-	*size = lexerState->captureSize - strlen("ENDR");
+	*size = lexerState->captureSize;
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
