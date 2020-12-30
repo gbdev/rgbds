@@ -364,6 +364,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_ATAN2
 %left	T_OP_FDIV
 %left	T_OP_FMUL
+%left	T_OP_POW
+%left	T_OP_LOG
 %left	T_OP_ROUND
 %left	T_OP_CEIL
 %left	T_OP_FLOOR
@@ -1165,6 +1167,12 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		}
 		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
 			rpn_Number(&$$, math_Mul($3, $5));
+		}
+		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
+			rpn_Number(&$$, math_Pow($3, $5));
+		}
+		| T_OP_LOG T_LPAREN const T_COMMA const T_RPAREN {
+			rpn_Number(&$$, math_Log($3, $5));
 		}
 		| T_OP_SIN T_LPAREN const T_RPAREN {
 			rpn_Number(&$$, math_Sin($3));

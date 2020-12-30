@@ -126,6 +126,22 @@ int32_t math_Div(int32_t i, int32_t j)
 }
 
 /*
+ * Power
+ */
+int32_t math_Pow(int32_t i, int32_t j)
+{
+	return double2fx(pow(fx2double(i), fx2double(j)));
+}
+
+/*
+ * Logarithm
+ */
+int32_t math_Log(int32_t i, int32_t j)
+{
+	return double2fx(log(fx2double(i)) / log(fx2double(j)));
+}
+
+/*
  * Round
  */
 int32_t math_Round(int32_t i)

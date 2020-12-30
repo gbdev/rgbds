@@ -22,6 +22,8 @@ int32_t math_ATan(int32_t i);
 int32_t math_ATan2(int32_t i, int32_t j);
 int32_t math_Mul(int32_t i, int32_t j);
 int32_t math_Div(int32_t i, int32_t j);
+int32_t math_Pow(int32_t i, int32_t j);
+int32_t math_Log(int32_t i, int32_t j);
 int32_t math_Round(int32_t i);
 int32_t math_Ceil(int32_t i);
 int32_t math_Floor(int32_t i);
