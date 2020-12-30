@@ -1,6 +1,9 @@
+	assert 2*10**2*2 == 400
+	assert -3**4 == -81
+
 	assert DIV(5.0, 2.0) == 2.5
 	assert DIV(-5.0, 2.0) == -2.5
-	assert DIV(-5.0, 0.0) == -32768.0
+	assert DIV(-5.0, 0.0) == $8000_0000
 
 	assert MUL(10.0, 0.5) == 5.0
 	assert MUL(10.0, 0.0) == 0.0

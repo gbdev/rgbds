@@ -1608,13 +1608,20 @@ static int yylex_NORMAL(void)
 		 lexer_GetLineNo(), lexer_GetColNo());
 	for (;;) {
 		int c = nextChar();
+		char secondChar;
 
 		switch (c) {
 		/* Ignore whitespace and comments */
 
 		case '*':
-			if (!lexerState->atLineStart)
+			if (!lexerState->atLineStart) { /* Either MUL or EXP */
+				secondChar = peek(0);
+				if (secondChar == '*') {
+					shiftChars(1);
+					return T_OP_EXP;
+				}
 				return T_OP_MUL;
+			}
 			warning(WARNING_OBSOLETE,
 				"'*' is deprecated for comments, please use ';' instead\n");
 			/* fallthrough */
@@ -1653,7 +1660,6 @@ static int yylex_NORMAL(void)
 			return T_COMMA;
 
 		/* Handle ambiguous 1- or 2-char tokens */
-		char secondChar;
 		case '/': /* Either division or a block comment */
 			secondChar = peek(0);
 			if (secondChar == '*') {

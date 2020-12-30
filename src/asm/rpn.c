@@ -292,6 +292,20 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
+static int32_t exponent(int32_t base, int32_t power)
+{
+	int32_t result = 1;
+
+	while (power) {
+		if (power % 2)
+			result *= base;
+		power /= 2;
+		base *= base;
+	}
+
+	return result;
+}
+
 struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
@@ -414,6 +428,15 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 				expr->nVal = 0;
 			else
 				expr->nVal = src1->nVal % src2->nVal;
+			break;
+		case RPN_EXP:
+			if (src2->nVal < 0)
+				fatalerror("Exponentiation by negative power\n");
+
+			if (src1->nVal == INT32_MIN && src2->nVal == -1)
+				expr->nVal = 0;
+			else
+				expr->nVal = exponent(src1->nVal, src2->nVal);
 			break;
 
 		case RPN_UNSUB:
