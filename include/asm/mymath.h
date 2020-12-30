@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 
-void math_DefinePI(void);
+int32_t math_Callback_PI(void);
 void math_Print(int32_t i);
 int32_t math_Sin(int32_t i);
 int32_t math_Cos(int32_t i);

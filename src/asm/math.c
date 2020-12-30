@@ -17,6 +17,7 @@
 
 #include "asm/mymath.h"
 #include "asm/symbol.h"
+#include "asm/warning.h"
 
 #define fx2double(i)	((double)((i) / 65536.0))
 #define double2fx(d)	((int32_t)((d) * 65536.0))
@@ -26,11 +27,13 @@
 #endif
 
 /*
- * Define the _PI symbol
+ * Return the _PI symbol value
  */
-void math_DefinePI(void)
+int32_t math_Callback_PI(void)
 {
-	sym_AddEqu("_PI", double2fx(M_PI));
+	warning(WARNING_OBSOLETE, "`_PI` is deprecated; use 3.14159\n");
+
+	return double2fx(M_PI);
 }
 
 /*

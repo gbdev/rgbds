@@ -1,3 +1,3 @@
-ERROR: string-formatting.asm(9):
+ERROR: string-formatting.asm(10):
     Formatting string with prefix flag '#'
 error: Assembly aborted (1 errors)!
