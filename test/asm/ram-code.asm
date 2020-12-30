@@ -1,8 +1,8 @@
 SECTION "test", ROM0[1]
 	call Target
-	PRINTT "PC in ROM: {@}\n"
+	PRINTLN "PC in ROM: {@}"
 	LOAD "new", WRAMX[$D001],BANK[1]
-	PRINTT "PC in WRAM: {@}\n"
+	PRINTLN "PC in WRAM: {@}"
 	assert @ == $D001
 Target:	dl DEAD << 16 | BEEF
 	db BANK(@)
@@ -29,4 +29,4 @@ SECTION "small ram test", WRAMX,BANK[1] ; Should end up at $D000
 Byte:
 	db
 
-	PRINTT "{Target}\n{Target.end}\n{After}\n"
+	PRINTLN "{Target}\n{Target.end}\n{After}"

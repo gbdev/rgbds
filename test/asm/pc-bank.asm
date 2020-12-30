@@ -6,6 +6,6 @@ X = BANK(@)
 SECTION "Something else", ROMX
 Y = BANK("Fixed bank")
 
-    PRINTT "@: {X}\nStr: {Y}\n"
+    PRINTLN "@: {X}\nStr: {Y}"
 
 ERR = BANK(@)

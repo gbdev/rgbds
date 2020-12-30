@@ -5,8 +5,7 @@ def_sect: macro
 		SECTION "\1", \2, BANK[\3]
 	ENDC
 
-	PRINTV BANK("\1")
-	PRINTT "\n"
+	PRINTLN BANK("\1")
 endm
 
  def_sect ROM0_ok,  ROM0

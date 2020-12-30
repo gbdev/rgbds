@@ -1,9 +1,9 @@
 m: macro
-	PRINTT "\1 "
+	PRINT "\1 "
 	REPT 4
 		SHIFT
 	ENDR
-	PRINTT "\1s!\n"
+	PRINTLN "\1s!"
 
 	; Shifting a little more to check that over-shifting doesn't crash
 	SHIFT
@@ -11,7 +11,7 @@ m: macro
 	REPT 256
 		SHIFT
 	ENDR
-	PRINTT "\1\n"
+	PRINTLN "\1"
 endm
 
  m This, used, not, to, work

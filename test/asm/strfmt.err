@@ -4,8 +4,8 @@ ERROR: strfmt.asm(14):
     STRFMT: 1 unformatted argument(s)
 ERROR: strfmt.asm(19):
     STRFMT: Illegal '%' at end of format string
-ERROR: strfmt.asm(22):
+ERROR: strfmt.asm(21):
     STRFMT: Invalid format spec for argument 1
-ERROR: strfmt.asm(24):
+ERROR: strfmt.asm(23):
     STRFMT: Not enough arguments for format spec
 error: Assembly aborted (5 errors)!

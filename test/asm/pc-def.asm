@@ -1,5 +1,5 @@
 IF DEF(@)
-	PRINTT "defined\n"
+	PRINTLN "defined"
 ELSE
-	PRINTT "not defined\n"
+	PRINTLN "not defined"
 ENDC

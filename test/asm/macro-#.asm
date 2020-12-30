@@ -27,7 +27,7 @@ ENDM
 	object 12,  6, $66, $77, $88
 
 echo: MACRO
-	printt "\#\n"
+	println "\#"
 ENDM
 
 R EQUS "S"
@@ -36,11 +36,10 @@ R EQUS "S"
 	echo Q,R, {R},  T
 	echo 42,$2a
 
-print: MACRO
-	printt STRCAT(\#)
-	printt "\n"
+printall: MACRO
+	println \#
 ENDM
 
-	print
-	print "A"
-	print "B", "C",  "D"
+	printall
+	printall "A"
+	printall "B", "C",  "D"

@@ -1,8 +1,7 @@
 SECTION "sec", ROM0
 
 xstrlen: MACRO
-	PRINTV STRLEN(\1)
-	PRINTT "\n"
+	PRINTLN STRLEN(\1)
 ENDM
 
 	xstrlen "ABC"

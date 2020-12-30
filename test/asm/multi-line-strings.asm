@@ -1,23 +1,23 @@
 S EQUS "Hello"
 
-PRINTT "\"\"\"\n"
+PRINT "\"\"\"\n"
 
-PRINTT """{S}
+PRINT """{S}
 world
 """
 
-PRINTT """The multi-line string \ ; line continuations work
+PRINT """The multi-line string \ ; line continuations work
 can contain:
 - "single quotes"
 - ""double quotes""
 - even escaped \"""triple"\"" ""\"quotes\"\"\"
 !"""
 
-PRINTT """\n"""
+PRINT """\n"""
 
 printarg: MACRO
-	PRINTT "arg <\1>\n"
-	PRINTT """arg (\1)\n"""
+	PRINTLN "arg <\1>"
+	PRINTLN """arg (\1)"""
 ENDM
 
 	printarg "
@@ -29,4 +29,4 @@ EMPTY2 EQUS "\ ; comment
 EMPTY3 EQUS """"""
 EMPTY4 EQUS """\ ; comment
 """
-	PRINTT STRCAT("(", "{EMPTY1}", "{EMPTY2}", "{EMPTY3}", "{EMPTY4}", ")\n")
+	PRINTLN STRCAT("(", "{EMPTY1}", "{EMPTY2}", "{EMPTY3}", "{EMPTY4}", ")")

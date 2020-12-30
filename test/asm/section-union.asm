@@ -25,7 +25,7 @@ RESULT equs "expected {EXPECTED}"
 	ENDC
 	PURGE EXPECTED
 
-	PRINTT "\1 is at {\1} ({RESULT})\n"
+	PRINTLN "\1 is at {\1} ({RESULT})"
 	PURGE RESULT
 ENDM
 

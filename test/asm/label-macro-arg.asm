@@ -1,9 +1,3 @@
-print: MACRO
-	printv \1
-	printt "\n"
-ENDM
-
-
 m1: MACRO
 x\1
 ENDM
@@ -20,10 +14,10 @@ ENDM
 	m1 x = 7
 	m2 2 = 8
 
-	print x
-	print y
-	print xx
-	print yy
+	println x
+	println y
+	println xx
+	println yy
 
 
 test_char: MACRO
@@ -32,7 +26,7 @@ VAR_DEF
 sizeof_\1something = 1
 	PURGE VAR_DEF
 
-VAR_PRINT equs "printt \"sizeof_\1something equals {sizeof_\1something}\\n\""
+VAR_PRINT equs "println \"sizeof_\1something equals {sizeof_\1something}\""
 	VAR_PRINT
 	PURGE VAR_PRINT
 ENDM

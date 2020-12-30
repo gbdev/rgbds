@@ -1,2 +1,2 @@
-PRINTT /* // PRINTT "this is **comm //ented out\n" */ "this is not commented out\n"
-PRINTT /*//*/ "this is not commented out\n"
+PRINTLN /* // PRINT "this is **comm //ented out\n" */ "this is not commented out"
+PRINTLN /*//*/ "this is not commented out"

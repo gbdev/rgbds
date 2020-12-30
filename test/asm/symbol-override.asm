@@ -1,6 +1,6 @@
 V set 0
 V set 1
-    PRINTT "V={V}\n"
+    PRINTLN "V={V}"
 
 W equ 1
 W set 0

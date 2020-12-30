@@ -1,1 +1,1 @@
-PRINTT /* block comments must terminate before EOF
+PRINT /* block comments must terminate before EOF

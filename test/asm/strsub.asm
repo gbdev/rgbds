@@ -1,8 +1,7 @@
 SECTION "sec", ROM0
 
 xstrsub: MACRO
-	PRINTT STRSUB(\1, \2, \3)
-	PRINTT "\n"
+	PRINTLN STRSUB(\1, \2, \3)
 ENDM
 
 	xstrsub "ABC", 1, 1

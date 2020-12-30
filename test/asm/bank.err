@@ -1,9 +1,9 @@
-ERROR: bank.asm(14) -> bank.asm::def_sect(8):
+ERROR: bank.asm(13) -> bank.asm::def_sect(8):
     Expected constant expression: Section "ROMX_bad"'s bank is not known
-ERROR: bank.asm(16) -> bank.asm::def_sect(8):
+ERROR: bank.asm(15) -> bank.asm::def_sect(8):
     Expected constant expression: Section "VRAM_bad"'s bank is not known
-ERROR: bank.asm(18) -> bank.asm::def_sect(8):
+ERROR: bank.asm(17) -> bank.asm::def_sect(8):
     Expected constant expression: Section "SRAM_bad"'s bank is not known
-ERROR: bank.asm(21) -> bank.asm::def_sect(8):
+ERROR: bank.asm(20) -> bank.asm::def_sect(8):
     Expected constant expression: Section "WRAMX_bad"'s bank is not known
 error: Assembly aborted (4 errors)!

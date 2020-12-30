@@ -1,18 +1,16 @@
-print: MACRO
-	PRINTT "\1"
-	PRINTT "\n"
+print1: MACRO
+	PRINTLN "\1"
 ENDM
 
-	print John "Danger" Smith
-	print \\A\nB
-	print C\
+	print1 John "Danger" Smith
+	print1 \\A\nB
+	print1 C\
 D
-	print E\!F ; illegal character escape
+	print1 E\!F ; illegal character escape
 
 
 iprint: MACRO
-	PRINTT "{\1}"
-	PRINTT "\n"
+	PRINTLN "{\1}"
 ENDM
 
 s EQUS "hello"

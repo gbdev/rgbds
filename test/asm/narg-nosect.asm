@@ -1,1 +1,1 @@
-	PRINTT "{_NARG}\n"
+	PRINTLN "{_NARG}"
