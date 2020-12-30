@@ -720,5 +720,12 @@ void sym_Init(time_t now)
 	labelScope = NULL;
 	anonLabelID = 0;
 
-	math_DefinePI();
+	/* _PI is deprecated */
+	struct Symbol *_PISymbol = createBuiltinSymbol("_PI");
+
+	_PISymbol->type = SYM_EQU;
+	_PISymbol->src = NULL;
+	_PISymbol->fileLine = 0;
+	_PISymbol->hasCallback = true;
+	_PISymbol->numCallback = math_Callback_PI;
 }

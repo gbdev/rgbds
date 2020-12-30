@@ -13,7 +13,7 @@ PRINTT STRFMT(TEMPLATE, "roses", "red")
 PRINTT STRFMT(TEMPLATE, "violets", "blue")
 PRINTT STRFMT(TEMPLATE, "void", 0, "extra")
 
-PRINTT STRCAT(STRFMT(STRFMT("%%%s.%d%s", "", 9, "f"), _PI), \
+PRINTT STRCAT(STRFMT(STRFMT("%%%s.%d%s", "", 9, "f"), 3.14159), \
 	STRFMT(" ~ %s\n", STRFMT("%s%x", "thr", 238)))
 
 PRINTT STRFMT("%d eol %", 1)
