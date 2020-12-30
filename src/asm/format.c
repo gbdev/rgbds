@@ -220,12 +220,16 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 		}
 	} else if (fmt->type == 'f') {
 		/* Special case for fixed-point */
-		if (fmt->fracWidth) {
+
+		/* Default fractional width (C's is 6 for "%f"; here 5 is enough) */
+		uint8_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
+
+		if (fracWidth) {
 			char spec[16]; /* Max "%" + 5-char PRIu32 + ".%0255.f" + terminator */
 
-			snprintf(spec, sizeof(spec), "%%" PRIu32 ".%%0%d.f", fmt->fracWidth);
+			snprintf(spec, sizeof(spec), "%%" PRIu32 ".%%0%d.f", fracWidth);
 			snprintf(valueBuf, sizeof(valueBuf), spec, value >> 16,
-				 (value % 65536) / 65536.0 * pow(10, fmt->fracWidth) + 0.5);
+				 (value % 65536) / 65536.0 * pow(10, fracWidth) + 0.5);
 		} else {
 			snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, value >> 16);
 		}

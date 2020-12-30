@@ -6,7 +6,7 @@ s equs "hello"
 
 	println "<{ -6d:n}> <{+06u:n}> <{5x:n}> <{#16b:n}>"
 	println "<{u:m}> <{+3d:m}> <{#016o:m}>"
-	println "<{f:pi}> <{06f:f}> <{.10f:f}>"
+	println "<{f:pi}> <{06.f:f}> <{.10f:f}>"
 	println "<{#-10s:s}> <{10s:s}>"
 
 foo: macro

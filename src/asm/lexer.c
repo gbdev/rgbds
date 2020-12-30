@@ -1317,13 +1317,8 @@ static char const *readInterpolation(void)
 				fmt_UseCharacter(&fmt, symName[j]);
 			fmt_FinishCharacters(&fmt);
 			symName[i] = '\0';
-			if (!fmt_IsValid(&fmt)) {
+			if (!fmt_IsValid(&fmt))
 				error("Invalid format spec '%s'\n", symName);
-			} else if (!strcmp(symName, "f")) {
-				/* Format 'f' defaults to '.5f' like PRINTF */
-				fmt.hasFrac = true;
-				fmt.fracWidth = 5;
-			}
 			i = 0; /* Now that format has been set, restart at beginning of string */
 		} else {
 			shiftChars(1);
