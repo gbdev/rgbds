@@ -204,6 +204,7 @@ static struct KeywordMapping {
 	{"STRCAT", T_OP_STRCAT},
 	{"STRUPR", T_OP_STRUPR},
 	{"STRLWR", T_OP_STRLWR},
+	{"STRRPL", T_OP_STRRPL},
 	{"STRFMT", T_OP_STRFMT},
 
 	{"INCLUDE", T_POP_INCLUDE},
@@ -493,7 +494,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[353] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[355] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)

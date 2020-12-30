@@ -164,7 +164,46 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	dest[destIndex] = 0;
 }
 
-static void initStrFmtArgList(struct StrFmtArgList *args) {
+static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *new)
+{
+	size_t oldLen = strlen(old);
+	size_t newLen = strlen(new);
+	size_t i = 0;
+
+	if (!oldLen) {
+		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string\n");
+		strcpy(dest, src);
+		return;
+	}
+
+	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
+		memcpy(dest + i, src, next - src < destLen - i ? next - src : destLen - i);
+		i += next - src;
+		if (i >= destLen)
+			break;
+
+		memcpy(dest + i, new, newLen < destLen - i ? newLen : destLen - i);
+		i += newLen;
+		if (i >= destLen)
+			break;
+
+		src = next + oldLen;
+	}
+
+	size_t srcLen = strlen(src);
+
+	memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
+	i += srcLen;
+
+	if (i >= destLen) {
+		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
+		i = destLen - 1;
+	}
+	dest[i] = '\0';
+}
+
+static void initStrFmtArgList(struct StrFmtArgList *args)
+{
 	args->nbArgs = 0;
 	args->capacity = INITIAL_STRFMT_ARG_SIZE;
 	args->args = malloc(args->capacity * sizeof(*args->args));
@@ -173,7 +212,8 @@ static void initStrFmtArgList(struct StrFmtArgList *args) {
 			   strerror(errno));
 }
 
-static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args) {
+static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args)
+{
 	if (args->nbArgs == args->capacity) {
 		args->capacity = (args->capacity + 1) * 2;
 		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
@@ -184,7 +224,8 @@ static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args) {
 	return args->nbArgs++;
 }
 
-static void freeStrFmtArgList(struct StrFmtArgList *args) {
+static void freeStrFmtArgList(struct StrFmtArgList *args)
+{
 	free(args->format);
 	for (size_t i = 0; i < args->nbArgs; i++)
 		if (!args->args[i].isNumeric)
@@ -192,11 +233,12 @@ static void freeStrFmtArgList(struct StrFmtArgList *args) {
 	free(args->args);
 }
 
-static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args) {
+static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args)
+{
 	size_t a = 0;
-	size_t i;
+	size_t i = 0;
 
-	for (i = 0; i < destLen;) {
+	while (i < destLen) {
 		int c = *fmt++;
 
 		if (c == '\0') {
@@ -254,14 +296,14 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
 	}
 
+	if (a < nbArgs)
+		error("STRFMT: %zu unformatted argument(s)\n", nbArgs - a);
+
 	if (i > destLen - 1) {
 		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
 		i = destLen - 1;
 	}
 	dest[i] = '\0';
-
-	if (a < nbArgs)
-		error("STRFMT: %zu unformatted argument(s)\n", nbArgs - a);
 }
 
 static inline void failAssert(enum AssertionType type)
@@ -387,6 +429,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_STRCAT
 %left	T_OP_STRUPR
 %left	T_OP_STRLWR
+%left	T_OP_STRRPL
 %left	T_OP_STRFMT
 
 %token	<tzSym> T_LABEL
@@ -1293,15 +1336,18 @@ string		: T_STRING
 		| T_OP_STRLWR T_LPAREN string T_RPAREN {
 			lowerstring($$, $3);
 		}
+		| T_OP_STRRPL T_LPAREN string T_COMMA string T_COMMA string T_RPAREN {
+			strrpl($$, sizeof($$), $3, $5, $7);
+		}
 		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
-			strfmt($$, MAXSTRLEN + 1, $3.format, $3.nbArgs, $3.args);
+			strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
 			freeStrFmtArgList(&$3);
 		}
 ;
 
 strcat_args	: string
 		| strcat_args T_COMMA string {
-			if (snprintf($$, MAXSTRLEN + 1, "%s%s", $1, $3) > MAXSTRLEN)
+			if (snprintf($$, sizeof($$), "%s%s", $1, $3) > MAXSTRLEN)
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
 		}
