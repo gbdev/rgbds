@@ -215,6 +215,12 @@ Warn when an empty entry is encountered in a
 list.
 This warning is enabled by
 .Fl Wextra .
+.It Fl Wempty-strrpl
+Warn when
+.Fn STRRPL
+is called with an empty string as its second argument (the substring to replace).
+This warning is enabled by
+.Fl Wall .
 .It Fl Wlarge-constant
 Warn when a constant too large to fit in a signed 32-bit integer is encountered.
 This warning is enabled by
