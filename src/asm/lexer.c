@@ -366,6 +366,12 @@ static void initState(struct LexerState *state)
 	state->expansionOfs = 0;
 }
 
+static void nextLine(void)
+{
+	lexerState->lineNo++;
+	lexerState->colNo = 0;
+}
+
 struct LexerState *lexer_OpenFile(char const *path)
 {
 	dbgPrint("Opening file \"%s\"\n", path);
@@ -900,11 +906,12 @@ nextExpansion:
 		/* Now, `distance` is how many bytes to move forward **in the file** */
 	}
 
+	lexerState->colNo += distance;
+
 	if (lexerState->isMmapped) {
 		lexerState->offset += distance;
 	} else {
 		lexerState->index += distance;
-		lexerState->colNo += distance;
 		/* Wrap around if necessary */
 		if (lexerState->index >= LEXER_BUF_SIZE)
 			lexerState->index %= LEXER_BUF_SIZE;
@@ -1031,10 +1038,11 @@ static void readLineContinuation(void)
 		} else if (c == '\r' || c == '\n') {
 			shiftChars(1);
 			if (c == '\r' && peek(0) == '\n')
+				/* Handle CRLF */
 				shiftChars(1);
 			if (!lexerState->expansions
 			 || lexerState->expansions->distance)
-				lexerState->lineNo++;
+				nextLine();
 			return;
 		} else if (c == ';') {
 			discardComment();
@@ -2007,12 +2015,13 @@ static int skipIfBlock(bool toEndc)
 				atLineStart = true;
 			}
 
-			if (c == '\r' || c == '\n')
+			if (c == '\r' || c == '\n') {
+				/* Handle CRLF */
+				if (c == '\r' && peek(0) == '\n')
+					shiftChars(1);
 				/* Do this both on line continuations and plain EOLs */
-				lexerState->lineNo++;
-			/* Handle CRLF */
-			if (c == '\r' && peek(0) == '\n')
-				shiftChars(1);
+				nextLine();
+			}
 		} while (!atLineStart);
 	}
 finish:
@@ -2043,10 +2052,8 @@ restart:
 	}
 	if (lexerState->atLineStart) {
 		/* Newlines read within an expansion should not increase the line count */
-		if (!lexerState->expansions || lexerState->expansions->distance) {
-			lexerState->lineNo++;
-			lexerState->colNo = 0;
-		}
+		if (!lexerState->expansions || lexerState->expansions->distance)
+			nextLine();
 	}
 
 	static int (* const lexerModeFuncs[])(void) = {
@@ -2111,7 +2118,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 	 */
 	assert(lexerState->atLineStart);
 	for (;;) {
-		lexerState->lineNo++;
+		nextLine();
 		/* We're at line start, so attempt to match a `REPT` or `ENDR` token */
 		do { /* Discard initial whitespace */
 			c = nextChar();
@@ -2224,7 +2231,7 @@ void lexer_CaptureMacroBody(char **capture, size_t *size)
 				goto finish;
 			}
 		}
-		lexerState->lineNo++;
+		nextLine();
 	}
 
 finish:
