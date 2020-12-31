@@ -369,7 +369,7 @@ static void initState(struct LexerState *state)
 static void nextLine(void)
 {
 	lexerState->lineNo++;
-	lexerState->colNo = 0;
+	lexerState->colNo = 1;
 }
 
 struct LexerState *lexer_OpenFile(char const *path)
@@ -1037,8 +1037,8 @@ static void readLineContinuation(void)
 			shiftChars(1);
 		} else if (c == '\r' || c == '\n') {
 			shiftChars(1);
+			/* Handle CRLF before nextLine() since shiftChars updates colNo */
 			if (c == '\r' && peek(0) == '\n')
-				/* Handle CRLF */
 				shiftChars(1);
 			if (!lexerState->expansions
 			 || lexerState->expansions->distance)
@@ -2016,7 +2016,7 @@ static int skipIfBlock(bool toEndc)
 			}
 
 			if (c == '\r' || c == '\n') {
-				/* Handle CRLF */
+				/* Handle CRLF before nextLine() since shiftChars updates colNo */
 				if (c == '\r' && peek(0) == '\n')
 					shiftChars(1);
 				/* Do this both on line continuations and plain EOLs */
