@@ -240,7 +240,7 @@ static struct KeywordMapping {
 	{"SHIFT", T_POP_SHIFT},
 
 	{"REPT", T_POP_REPT},
-	{"FOREACH", T_POP_FOREACH},
+	{"FOR", T_POP_FOR},
 	{"ENDR", T_POP_ENDR},
 
 	{"LOAD", T_POP_LOAD},
@@ -462,7 +462,7 @@ struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 
 void lexer_RestartRept(uint32_t lineNo)
 {
-	dbgPrint("Restarting REPT/FOREACH\n");
+	dbgPrint("Restarting REPT/FOR\n");
 	lexerState->offset = 0;
 	initState(lexerState);
 	lexerState->lineNo = lineNo;
@@ -2123,11 +2123,11 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		do { /* Discard initial whitespace */
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match `REPT`, `FOREACH` or `ENDR` as a **whole** identifier */
+		/* Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier */
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c)) {
 			case T_POP_REPT:
-			case T_POP_FOREACH:
+			case T_POP_FOR:
 				level++;
 				/* Ignore the rest of that line */
 				break;
@@ -2156,7 +2156,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		/* Just consume characters until EOL or EOF */
 		for (;;) {
 			if (c == EOF) {
-				error("Unterminated REPT/FOREACH block\n");
+				error("Unterminated REPT/FOR block\n");
 				lexerState->capturing = false;
 				goto finish;
 			} else if (c == '\n' || c == '\r') {

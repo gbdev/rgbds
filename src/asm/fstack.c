@@ -34,9 +34,9 @@ struct Context {
 	uint32_t uniqueID;
 	struct MacroArgs *macroArgs; /* Macro args are *saved* here */
 	uint32_t nbReptIters;
-	int32_t foreachValue;
-	int32_t foreachStep;
-	char *foreachName;
+	int32_t forValue;
+	int32_t forStep;
+	char *forName;
 };
 
 static struct Context *contextStack;
@@ -220,14 +220,14 @@ bool yywrap(void)
 		}
 
 		fileInfo->iters[0]++;
-		/* If this is a FOREACH, update the symbol value */
-		if (contextStack->foreachName) {
-			contextStack->foreachValue += contextStack->foreachStep;
-			struct Symbol *sym = sym_AddSet(contextStack->foreachName,
-				contextStack->foreachValue);
+		/* If this is a FOR, update the symbol value */
+		if (contextStack->forName) {
+			contextStack->forValue += contextStack->forStep;
+			struct Symbol *sym = sym_AddSet(contextStack->forName,
+				contextStack->forValue);
 
 			if (sym->type != SYM_SET)
-				fatalerror("Failed to update FOREACH symbol value\n");
+				fatalerror("Failed to update FOR symbol value\n");
 		}
 		/* If this wasn't the last iteration, wrap instead of popping */
 		if (fileInfo->iters[0] <= contextStack->nbReptIters) {
@@ -254,8 +254,8 @@ bool yywrap(void)
 	/* Free the file stack node */
 	if (!context->fileInfo->referenced)
 		free(context->fileInfo);
-	/* Free the FOREACH symbol name */
-	free(context->foreachName);
+	/* Free the FOR symbol name */
+	free(context->forName);
 	/* Free the entry and make its parent the current entry */
 	free(context);
 
@@ -281,7 +281,7 @@ static void newContext(struct FileStackNode *fileInfo)
 	fileInfo->referenced = false;
 	fileInfo->lineNo = lexer_GetLineNo();
 	context->fileInfo = fileInfo;
-	context->foreachName = NULL;
+	context->forName = NULL;
 	/*
 	 * Link new entry to its parent so it's reachable later
 	 * ERRORS SHOULD NOT OCCUR AFTER THIS!!
@@ -443,13 +443,13 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 		return;
 
 	contextStack->nbReptIters = count;
-	contextStack->foreachName = NULL;
+	contextStack->forName = NULL;
 }
 
-void fstk_RunForeach(char const *symName, int32_t start, int32_t stop, int32_t step,
+void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size)
 {
-	dbgPrint("Running FOREACH(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
+	dbgPrint("Running FOR(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
 		 symName, start, stop, step);
 
 	struct Symbol *sym = sym_AddSet(symName, start);
@@ -464,7 +464,7 @@ void fstk_RunForeach(char const *symName, int32_t start, int32_t stop, int32_t s
 	else if (step < 0 && stop < start)
 		count = (start - stop - 1) / -step + 1;
 	else if (step == 0)
-		error("FOREACH cannot have a step value of 0\n");
+		error("FOR cannot have a step value of 0\n");
 
 	if (count == 0)
 		return;
@@ -472,11 +472,11 @@ void fstk_RunForeach(char const *symName, int32_t start, int32_t stop, int32_t s
 		return;
 
 	contextStack->nbReptIters = count;
-	contextStack->foreachValue = start;
-	contextStack->foreachStep = step;
-	contextStack->foreachName = strdup(symName);
-	if (!contextStack->foreachName)
-		fatalerror("Not enough memory for FOREACH name: %s\n", strerror(errno));
+	contextStack->forValue = start;
+	contextStack->forStep = step;
+	contextStack->forName = strdup(symName);
+	if (!contextStack->forName)
+		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
 }
 
 void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
@@ -508,9 +508,9 @@ void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
 	context->uniqueID = 0;
 	macro_SetUniqueID(0);
 	context->nbReptIters = 0;
-	context->foreachValue = 0;
-	context->foreachStep = 0;
-	context->foreachName = NULL;
+	context->forValue = 0;
+	context->forStep = 0;
+	context->forName = NULL;
 
 	/* Now that it's set up properly, register the context */
 	contextStack = context;

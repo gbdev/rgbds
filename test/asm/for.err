@@ -1,0 +1,6 @@
+ERROR: for.asm(16):
+    FOR cannot have a step value of 0
+ERROR: for.asm(41) -> for.asm::REPT~5(47):
+    'v' already defined as constant at for.asm(41) -> for.asm::REPT~4(45)
+FATAL: for.asm(41) -> for.asm::REPT~5(47):
+    Failed to update FOR symbol value
