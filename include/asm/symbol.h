@@ -140,6 +140,7 @@ struct Symbol const *sym_GetPC(void);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
+struct Symbol *sym_RedefString(char const *symName, char const *value);
 void sym_Purge(char const *symName);
 void sym_Init(time_t now);
 

@@ -270,6 +270,7 @@ static struct KeywordMapping {
 	{"RW", T_POP_RW},
 	{"EQU", T_POP_EQU},
 	{"EQUS", T_POP_EQUS},
+	{"REDEF", T_POP_REDEF},
 
 	/*  Handled before in list of CPU instructions */
 	/* {"SET", T_POP_SET}, */
@@ -490,7 +491,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[352] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[356] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)

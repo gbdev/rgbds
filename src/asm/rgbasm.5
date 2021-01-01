@@ -929,7 +929,7 @@ or its synonym
 .Ic = ,
 defines constant symbols like
 .Ic EQU ,
-but those constants can be re-defined.
+but those constants can be redefined.
 This is useful for variables in macros, for counters, etc.
 .Bd -literal -offset indent
 ARRAY_SIZE EQU 4
@@ -1008,7 +1008,22 @@ pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
 Note that colons
 .Ql \&:
 following the name are not allowed.
+.Pp
 String equates can't be exported or imported.
+.Pp
+String equates, like
+.Ic EQU
+constants, cannot be redefined.
+However, the
+.Ic REDEF
+keyword will define or redefine a string symbol.
+For example:
+.Bd -literal -offset indent
+s EQUS "Hello, "
+REDEF s EQUS "{s}world!"
+; prints "Hello, world!"
+PRINTT "{s}\n"
+.Ed
 .Pp
 .Sy Important note :
 An

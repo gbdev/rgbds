@@ -1,0 +1,23 @@
+s EQUS "Hello, "
+REDEF s EQUS "{s}world!"
+; prints "Hello, world!"
+PRINTT "{s}\n"
+
+list: MACRO
+LIST_NAME EQUS "\1"
+REDEF {LIST_NAME} EQUS "["
+REPT _NARG - 1
+REDEF {LIST_NAME} EQUS "{{LIST_NAME}}\2;"
+SHIFT
+ENDR
+REDEF {LIST_NAME} EQUS "{{LIST_NAME}}]"
+PURGE LIST_NAME
+ENDM
+
+	list FOO
+	PRINTT "{FOO}\n"
+	list FOO, 1, A, 2, B
+	PRINTT "{FOO}\n"
+
+N EQU 42
+REDEF N EQUS "X"

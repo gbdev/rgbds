@@ -425,6 +425,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_POP_FATAL
 %token	T_POP_ASSERT T_POP_STATIC_ASSERT
 %token	T_POP_PURGE
+%token	T_POP_REDEF
 %token	T_POP_POPS
 %token	T_POP_PUSHS
 %token	T_POP_POPO
@@ -645,6 +646,7 @@ simple_pseudoop : include
 		| warn
 		| assert
 		| purge
+		| redef
 		| pops
 		| pushs
 		| popo
@@ -874,6 +876,15 @@ purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
 		} purge_list {
 			lexer_ToggleStringExpansion(true);
+		}
+;
+
+redef		: T_POP_REDEF {
+			lexer_ToggleStringExpansion(false);
+		} scoped_id {
+			lexer_ToggleStringExpansion(true);
+		} T_POP_EQUS string {
+			sym_RedefString($3, $6);
 		}
 ;
 
