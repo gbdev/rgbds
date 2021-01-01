@@ -222,6 +222,19 @@ static void fullSymbolName(char *output, size_t outputSize,
 		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
+static void assignStringSymbol(struct Symbol *sym, char const *value)
+{
+	char *string = strdup(value);
+
+	if (string == NULL)
+		fatalerror("No memory for string equate: %s\n", strerror(errno));
+
+	sym->type = SYM_EQUS;
+	/* TODO: use other fields */
+	sym->macro = string;
+	sym->macroSize = strlen(string);
+}
+
 struct Symbol *sym_FindExactSymbol(char const *name)
 {
 	return hash_GetElement(symbols, name);
@@ -282,6 +295,11 @@ void sym_Purge(char const *symName)
 		/* Do not keep a reference to the label's name after purging it */
 		if (symbol->name == labelScope)
 			labelScope = NULL;
+
+		/*
+		 * FIXME: this leaks symbol->macro for SYM_EQUS and SYM_MACRO, but this can't
+		 * free(symbol->macro) because the expansion may be purging itself.
+		 */
 
 		hash_RemoveElement(symbols, symbol->name);
 		/* TODO: ideally, also unref the file stack nodes */
@@ -390,17 +408,30 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 struct Symbol *sym_AddString(char const *symName, char const *value)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName);
-	size_t len = strlen(value);
-	char *string = malloc(len + 1);
 
-	if (string == NULL)
-		fatalerror("No memory for string equate: %s\n", strerror(errno));
-	strcpy(string, value);
+	assignStringSymbol(sym, value);
 
-	sym->type = SYM_EQUS;
-	/* TODO: use other fields */
-	sym->macroSize = len;
-	sym->macro = string;
+	return sym;
+}
+
+struct Symbol *sym_RedefString(char const *symName, char const *value)
+{
+	struct Symbol *sym = sym_FindExactSymbol(symName);
+
+	if (!sym) {
+		sym = createsymbol(symName);
+	} else if (sym->type != SYM_EQUS) {
+		error("'%s' already defined as non-EQUS at ", symName);
+		dumpFilename(sym);
+		putc('\n', stderr);
+	}
+
+	/*
+	 * FIXME: this leaks the previous sym->macro value, but this can't
+	 * free(sym->macro) because the expansion may be redefining itself.
+	 */
+
+	assignStringSymbol(sym, value);
 
 	return sym;
 }
