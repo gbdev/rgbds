@@ -16,4 +16,4 @@ warning: unique-id.asm(14) -> unique-id.asm::m(8): [-Wuser]
     _u4
 FATAL: unique-id.asm(15):
     Macro argument '\@' not defined
-while expanding symbol "print"
+while expanding symbol "warn_unique"

@@ -1,3 +1,3 @@
-DEFINE equs "mac: MACRO\nPRINTT \"Hello :D\\n\"\nENDM"
+DEFINE equs "mac: MACRO\nPRINTLN \"Hello :D\"\nENDM"
 DEFINE
 	mac

@@ -6,12 +6,9 @@ m: MACRO
 \1 EQUS STRCAT("{X\2}", "+1")
 ENDM
 
-n = 0
-
-REPT $7E
+FOR n, $7E
 n1 = n + 1
     m X{X:n1}, {X:n}
-n = n + 1
 ENDR
 
 ; string of 127 zeros separated by plus signs

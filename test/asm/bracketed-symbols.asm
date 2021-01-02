@@ -1,21 +1,21 @@
 X = 42
-PRINTT "{X}\n"
-PRINTT "{x:X}\n"
-PRINTT "{X:X}\n"
-PRINTT "{d:X}\n"
-PRINTT "{b:X}\n"
+PRINTLN "{X}"
+PRINTLN "{x:X}"
+PRINTLN "{X:X}"
+PRINTLN "{d:X}"
+PRINTLN "{b:X}"
 
 Y equ 1337
-PRINTT "{b:Y}\n"
+PRINTLN "{b:Y}"
 
 rsreset
 R rb 0
-PRINTT "{d:R}\n"
+PRINTLN "{d:R}"
 
 S equs "You can't format me!"
-PRINTT "{X:S}\n"
+PRINTLN "{X:S}"
 
 SECTION "Test", ROM0
 Label:
-PRINTT "{x:Label}\n"
-PRINTT "{x:@}\n"
+PRINTLN "{x:Label}"
+PRINTLN "{x:@}"

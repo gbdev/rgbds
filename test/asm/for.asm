@@ -1,48 +1,48 @@
 for n, 10
-	printt "{d:n} "
+	print "{d:n} "
 endr
-	printt "-> {d:n}\n"
+	println "-> {d:n}"
 
 for v, 0
-	printt "unreached"
+	print "unreached"
 endr
 
 for v, 2, 1
-	printt "unreached"
+	print "unreached"
 endr
 
 for v, 1, 2, 0
-	printt "unreached"
+	print "unreached"
 endr
 
 for x, 1, 5+1
-	printt "{d:x} "
+	print "{d:x} "
 endr
-	printt "-> {d:x}\n"
+	println "-> {d:x}"
 
 for v, 10, -1, -1
-	printt "{d:v} "
+	print "{d:v} "
 v = 42
 endr
-	printt "-> {d:v}\n"
+	println "-> {d:v}"
 
 for q, 5, 21, 5
-	printt "{d:q} "
+	print "{d:q} "
 purge q
 endr
-	printt "-> {d:q}\n"
+	println "-> {d:q}"
 
 s EQUS "x"
 for s, 3, 30, 3
-	printt "{d:x} "
+	print "{d:x} "
 endr
-	printt "-> {d:x}\n"
+	println "-> {d:x}"
 
 for v, 10
-	printt "{d:v}\n"
+	println "{d:v}"
 if v == 3
 purge v
 v equ 42 ; causes a fatal error
 endc
 endr
-	printt "-> {d:v}\n"
+	println "-> {d:v}"

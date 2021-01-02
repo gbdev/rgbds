@@ -1,8 +1,7 @@
 SECTION "sec", ROM0
 
 print_x: MACRO
-	printv x
-	printt "\n"
+	println x
 ENDM
 
 x = 2147483647

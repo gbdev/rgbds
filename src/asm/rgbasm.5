@@ -269,7 +269,7 @@ prepended.
 TOPIC equs "life, the universe, and \[rs]"everything\[rs]""
 ANSWER = 42
 ;\ Prints "The answer to life, the universe, and "everything" is $2A"
-PRINTT "The answer to {TOPIC} is {ANSWER}\[rs]n"
+PRINTLN "The answer to {TOPIC} is {ANSWER}"
 .Ed
 .Pp
 Symbol interpolations can be nested, too!
@@ -313,6 +313,7 @@ followed by one or more
 \[en]
 .Ql 9 .
 If specified, prints this many digits of a fixed-point fraction.
+Defaults to 5 digits.
 .It Ql <type> Ta Specifies the type of value.
 .El
 .Pp
@@ -334,11 +335,11 @@ Valid print types are:
 Examples:
 .Bd -literal -offset indent
 ; Prints "%0010 + $3 == 5"
-PRINTT STRFMT("%#05b + %#x == %d\n", 2, 3, 2+3)
+PRINTLN STRFMT("%#05b + %#x == %d", 2, 3, 2+3)
 ; Prints "32% of 20 = 6.40"
-PRINTT STRFMT("%d%% of %d = %.2f\n", 32, 20, MUL(20.0, 0.32))
+PRINTLN STRFMT("%d%% of %d = %.2f", 32, 20, MUL(20.0, 0.32))
 ; Prints "Hello world!"
-PRINTT STRFMT("Hello %s!\n", STRLWR("WORLD"))
+PRINTLN STRFMT("Hello %s!", STRLWR("WORLD"))
 .Ed
 .Pp
 HINT: The
@@ -355,7 +356,7 @@ INDEX = 1{ZERO_STR}{{FMT}:ZERO_NUM}
 ;\ Defines ITEM_100 as "\[rs]"hundredth\[rs]""
 {NAME}_{d:INDEX} equs "\[rs]"hundredth\[rs]""
 ;\ Prints "ITEM_100 is hundredth"
-PRINTT STRCAT("{NAME}_{d:INDEX} is ", {NAME}_{d:INDEX})
+PRINTLN STRCAT("{NAME}_{d:INDEX} is ", {NAME}_{d:INDEX})
 ;\ Purges ITEM_100
 PURGE {NAME}_{d:INDEX}
 .Ed
@@ -1065,7 +1066,7 @@ This won't work:
 .Bd -literal -offset indent
 outer: MACRO
 inner: MACRO
-    PRINTT "Hello!\[rs]n"
+    PRINTLN "Hello!"
 ENDM
 ENDM
 .Ed
@@ -1073,7 +1074,7 @@ ENDM
 But this will:
 .Bd -literal -offset indent
 outer: MACRO
-definition equs "inner: MACRO\[rs]nPRINTT \[rs]"Hello!\[rs]\[rs]n\[rs]"\[rs]nENDM"
+definition equs "inner: MACRO\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
 definition
     PURGE definition
 ENDM
@@ -1435,22 +1436,22 @@ if you perform further calculations on them.
 For instance, consider the following:
 .Bd -literal -offset indent
 print_double: MACRO
-    PRINTV \[rs]1 * 2
+    PRINTLN \[rs]1 * 2
 ENDM
     print_double 1 + 2
 .Ed
 .Pp
 The
-.Ic PRINTV
+.Ic PRINTLN
 statement will expand to
-.Ql PRINTV 1 + 2 * 2 ,
+.Ql PRINTLN 1 + 2 * 2 ,
 which will print 5 and not 6 as you might have expected.
 .Pp
 Line continuations work as usual inside macros or lists of macro arguments.
 However, some characters need to be escaped, as in the following example:
 .Bd -literal -offset indent
 PrintMacro: MACRO
-    PRINTT \[rs]1
+    PRINT \[rs]1
 ENDM
 
     PrintMacro STRCAT("Hello "\[rs], \[rs]
@@ -1490,31 +1491,31 @@ This is the only way of accessing the value of arguments from 10 to 256.
 .Ic SHIFT
 can optionally be given an integer parameter, and will apply the above shifting that number of times.
 .Ss Printing things during assembly
-The next four commands print text and values to the standard output.
+The
+.Ic PRINT
+and
+.Ic PRINTLN
+commands print text and values to the standard output.
 Useful for debugging macros, or wherever you may feel the need to tell yourself some important information.
 .Bd -literal -offset indent
-PRINTT "I'm the greatest programmer in the whole wide world\[rs]n"
-PRINTI (2 + 3) / 5
-PRINTV $FF00 + $F0
-PRINTF MUL(3.14, 3987.0)
+PRINT "Hello world!\[rs]n"
+PRINTLN "Hello world!"
+PRINT _NARG, " arguments\[rs]n"
+PRINTLN "sum: ", 2+3, " product: ", 2*3
+PRINTLN "Line #", __LINE__
+PRINTLN STRFMT("E = %f", 2.718)
 .Ed
 .Bl -inset
-.It Ic PRINTT
-prints out a string.
-Be careful to add a line feed
-.Pq Qq \[rs]n
-at the end, as it is not added automatically.
-.It Ic PRINTV
-prints out an integer value in hexadecimal or, as in the example, the result of a calculation.
-Unsurprisingly, you can also print out a constant symbol's value.
-.It Ic PRINTI
-prints out a signed integer value.
-.It Ic PRINTF
-prints out a fixed point value.
+.It Ic PRINT
+prints out each of its comma-separated arguments.
+Numbers are printed as unsigned uppercase hexadecimal with a leading
+.Ic $ .
+For different formats, use
+.Ic STRFMT .
+.It Ic PRINTLN
+prints out each of its comma-separated arguments, if any, followed by a line feed
+.Pq Ql \[rs]n .
 .El
-.Pp
-Be careful that none of those automatically print a line feed; if you need one, use
-.Ic PRINTT "\[rs]n" .
 .Ss Automatically repeating blocks of code
 Suppose you want to unroll a time consuming loop without copy-pasting it.
 .Ic REPT
@@ -1537,14 +1538,12 @@ You can also use
 .Ic REPT
 to generate tables on the fly:
 .Bd -literal -offset indent
-;\ --
-;\ -- Generate a 256 byte sine table with values between 0 and 128
-;\ --
-ANGLE =   0.0
-      REPT  256
-      db    (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
-ANGLE = ANGLE+256.0
-      ENDR
+; Generate a 256-byte sine table with values between 0 and 128
+ANGLE = 0.0
+    REPT 256
+        db (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
+ANGLE = ANGLE + 256.0
+    ENDR
 .Ed
 .Pp
 As in macros, you can also use the escape sequence
@@ -1602,9 +1601,9 @@ until it reaches or exceeds
 For example:
 .Bd -literal -offset indent
 FOR V, 4, 25, 5
-      PRINTT "{d:V} "
+      PRINT "{d:V} "
 ENDR
-      PRINTT "done {d:V}\n"
+      PRINTLN "done {d:V}"
 .Ed
 This will print:
 .Bd -literal -offset indent
@@ -1714,11 +1713,11 @@ skip over parts of your code depending on a condition.
 This is a powerful feature commonly used in macros.
 .Bd -literal -offset indent
 IF NUM < 0
-  PRINTT "NUM < 0\[rs]n"
+  PRINTLN "NUM < 0"
 ELIF NUM == 0
-  PRINTT "NUM == 0\[rs]n"
+  PRINTLN "NUM == 0"
 ELSE
-  PRINTT "NUM > 0\[rs]n"
+  PRINTLN "NUM > 0"
 ENDC
 .Ed
 .Pp

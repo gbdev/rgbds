@@ -28,7 +28,7 @@ tryCmp () {
 # Add the version constants test, outputting the closest tag to the HEAD
 if git describe --tags --abbrev=0 > version.out; then
 	cat > version.asm <<EOF
-PRINTT "v{d:__RGBDS_MAJOR__}.{d:__RGBDS_MINOR__}.{d:__RGBDS_PATCH__}\n"
+PRINTLN "v{d:__RGBDS_MAJOR__}.{d:__RGBDS_MINOR__}.{d:__RGBDS_PATCH__}"
 EOF
 else
 	echo "${bold}${orange}Warning: cannot run version test!${rescolors}${resbold}"

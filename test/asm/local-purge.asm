@@ -5,4 +5,4 @@ SECTION "Test", ROM0[0]
 Glob:
 .loc
 	PURGE .loc
-	PRINTT "{.loc}\n" ; This should fail because the label doesn't exist anymore
+	PRINTLN "{.loc}" ; This should fail because the label doesn't exist anymore

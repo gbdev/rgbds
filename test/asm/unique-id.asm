@@ -1,15 +1,15 @@
-print EQUS "WARN \"\\@\""
+warn_unique EQUS "WARN \"\\@\""
 
 m: macro
-    print
+    warn_unique
     REPT 2
-    	print
+    	warn_unique
     ENDR
-    print
+    warn_unique
 endm
 	; TODO: Ideally we'd test now as well, but it'd cause a fatal error
-	;print
+	;warn_unique
 	m
-	;print
+	;warn_unique
 	m
-	print
+	warn_unique

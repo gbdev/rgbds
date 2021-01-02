@@ -207,6 +207,8 @@ static struct KeywordMapping {
 	{"STRFMT", T_OP_STRFMT},
 
 	{"INCLUDE", T_POP_INCLUDE},
+	{"PRINT", T_POP_PRINT},
+	{"PRINTLN", T_POP_PRINTLN},
 	{"PRINTT", T_POP_PRINTT},
 	{"PRINTI", T_POP_PRINTI},
 	{"PRINTV", T_POP_PRINTV},
@@ -491,7 +493,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[356] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[353] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -1315,13 +1317,8 @@ static char const *readInterpolation(void)
 				fmt_UseCharacter(&fmt, symName[j]);
 			fmt_FinishCharacters(&fmt);
 			symName[i] = '\0';
-			if (!fmt_IsValid(&fmt)) {
+			if (!fmt_IsValid(&fmt))
 				error("Invalid format spec '%s'\n", symName);
-			} else if (!strcmp(symName, "f")) {
-				/* Format 'f' defaults to '.5f' like PRINTF */
-				fmt.hasFrac = true;
-				fmt.fracWidth = 5;
-			}
 			i = 0; /* Now that format has been set, restart at beginning of string */
 		} else {
 			shiftChars(1);

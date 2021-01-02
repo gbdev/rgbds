@@ -1,1 +1,1 @@
-PRINTT "{__FILE__}\n"
+PRINTLN "{__FILE__}"

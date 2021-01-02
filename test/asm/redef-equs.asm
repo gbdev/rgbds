@@ -1,7 +1,7 @@
 s EQUS "Hello, "
 REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
-PRINTT "{s}\n"
+PRINTLN "{s}"
 
 list: MACRO
 LIST_NAME EQUS "\1"
@@ -15,9 +15,9 @@ PURGE LIST_NAME
 ENDM
 
 	list FOO
-	PRINTT "{FOO}\n"
+	PRINTLN "{FOO}"
 	list FOO, 1, A, 2, B
-	PRINTT "{FOO}\n"
+	PRINTLN "{FOO}"
 
 N EQU 42
 REDEF N EQUS "X"

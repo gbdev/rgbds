@@ -4,13 +4,13 @@ f equ -123.0456
 pi equ 3.14159
 s equs "hello"
 
-	printt "<{ -6d:n}> <{+06u:n}> <{5x:n}> <{#16b:n}>\n"
-	printt "<{u:m}> <{+3d:m}> <{#016o:m}>\n"
-	printt "<{f:pi}> <{06f:f}> <{.10f:f}>\n"
-	printt "<{#-10s:s}> <{10s:s}>\n"
+	println "<{ -6d:n}> <{+06u:n}> <{5x:n}> <{#16b:n}>"
+	println "<{u:m}> <{+3d:m}> <{#016o:m}>"
+	println "<{f:pi}> <{06.f:f}> <{.10f:f}>"
+	println "<{#-10s:s}> <{10s:s}>"
 
 foo: macro
-	printt "<{\1}>\n"
+	println "<{\1}>"
 endm
 
 	foo  -6d:n ; space is trimmed

@@ -4,7 +4,7 @@ test: macro
 
 	; ...as well as the constexpr system
 result\@ equ \1
-	printt "\1 = {result\@}\n"
+	println "\1 = {result\@}"
 endm
 
 section "test", ROM0[0]

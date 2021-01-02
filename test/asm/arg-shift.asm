@@ -1,24 +1,23 @@
 print_all: MACRO
 	REPT _NARG
-		PRINTT " \1"
+		PRINT " \1"
 		SHIFT
 	ENDR
-	PRINTT "\n"
+	PRINTLN
 ENDM
 
 print_some: MACRO
-	PRINTT "\1"
+	PRINT "\1"
 	SHIFT 5
-	PRINTT "\2\6\9"
+	PRINT "\2\6\9"
 	SHIFT 17
 	SHIFT
-	PRINTT "\3\9"
+	PRINT "\3\9"
 ENDM
 
 bad: MACRO
 	shift _NARG - 1
-	PRINTT \1
-	PRINTT "\n"
+	PRINTLN \1
 ENDM
 
 bad_rept: MACRO
@@ -27,8 +26,7 @@ bad_rept: MACRO
 			shift
 		ENDR
 	ENDR
-	PRINTT \1
-	PRINTT "\n"
+	PRINTLN \1
 ENDM
 
 	print_all This test, probably, passes\,, but who knows, ?

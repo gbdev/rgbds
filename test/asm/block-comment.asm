@@ -1,5 +1,5 @@
-PRINTT /* block comments are ignored // ** */ "hi\n"
-PRINTT "block (/* ... */) comments at ends of line are fine\n" /* hi */
-PRINTT /* block comments
+PRINTLN /* block comments are ignored // ** */ "hi"
+PRINTLN "block (/* ... */) comments at ends of line are fine" /* hi */
+PRINTLN /* block comments
 can span multiple lines
-*/ "mutliline\n"
+*/ "mutliline"

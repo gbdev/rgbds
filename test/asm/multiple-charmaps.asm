@@ -1,81 +1,81 @@
 new_: MACRO
 	IF _NARG > 1
-	printt "newcharmap \1, \2\n"
+	println "newcharmap \1, \2"
 	newcharmap \1, \2
 	ELSE
-	printt "newcharmap \1\n"
+	println "newcharmap \1"
 	newcharmap \1
 	ENDC
 ENDM
 
 set_: MACRO
-	printt "setcharmap \1\n"
+	println "setcharmap \1"
 	setcharmap \1
 ENDM
 
 push_: MACRO
-	printt "pushc\n"
+	println "pushc"
 	pushc
 ENDM
 
 pop_: MACRO
-	printt "popc\n"
+	println "popc"
 	popc
 ENDM
 
-print: MACRO
+print_mapped: MACRO
 x = \1
-printt "{x}\n"
+println "{x}"
 ENDM
 
-printt "main charmap\n"
+println "main charmap"
 
 charmap "ab", $0
 
-	print "ab"
+	print_mapped "ab"
 
 	new_ map1
 
-	print "ab"
+	print_mapped "ab"
 
 	new_ map2, main
 
-	print "ab"
+	print_mapped "ab"
 
 	set_ map1
 
-	print "ab"
+	print_mapped "ab"
 
 	new_ map3
 
 charmap "ab", $1
 
-	print "ab"
+	print_mapped "ab"
 
 	new_ map4, map3
 
 charmap "ab", $1
 charmap "cd", $2
 
-	print "ab"
-	print "cd"
+	print_mapped "ab"
+	print_mapped "cd"
 
 	set_ map3
 
-	print "ab"
-	print "cd"
+	print_mapped "ab"
+	print_mapped "cd"
 
 	set_ main
 
 SECTION "sec0", ROM0
 
-	print "ab"
+	print_mapped "ab"
 
-printt "modify main charmap\n"
+println "modify main charmap"
 charmap "ef", $3
 
-	print "ab"
-	print "ef"
+	print_mapped "ab"
+	print_mapped "ef"
 
 	set_ map1
 
@@ -85,17 +85,17 @@ charmap "ef", $3
 
 	set_ map3
 
-	print "ab"
-	print "cd"
-	print "ef"
+	print_mapped "ab"
+	print_mapped "cd"
+	print_mapped "ef"
 
 	pop_
 
-	print "ab"
+	print_mapped "ab"
 
 	pop_
 
-	print "ab"
+	print_mapped "ab"
 
 	new_ map1
 

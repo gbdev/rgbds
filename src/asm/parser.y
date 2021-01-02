@@ -317,6 +317,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<sVal>		relocexpr
 %type	<sVal>		relocexpr_no_str
 %type	<nConstValue>	const
+%type	<nConstValue>	const_no_str
 %type	<nConstValue>	uconst
 %type	<nConstValue>	rs_uconst
 %type	<nConstValue>	const_3bit
@@ -399,7 +400,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_POP_EQUAL
 %token	T_POP_EQUS
 
-%token	T_POP_INCLUDE T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
+%token	T_POP_INCLUDE T_POP_PRINT T_POP_PRINTLN T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
 %token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
 %token	T_POP_EXPORT T_POP_GLOBAL T_POP_XDEF
 %token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
@@ -617,6 +618,8 @@ pseudoop	: equ
 ;
 
 simple_pseudoop : include
+		| print
+		| println
 		| printf
 		| printt
 		| printv
@@ -966,16 +969,43 @@ pushc		: T_POP_PUSHC	{ charmap_Push(); }
 popc		: T_POP_POPC	{ charmap_Pop(); }
 ;
 
-printt		: T_POP_PRINTT string	{ printf("%s", $2); }
+print		: T_POP_PRINT print_exprs
 ;
 
-printv		: T_POP_PRINTV const	{ printf("$%" PRIX32, $2); }
+println		: T_POP_PRINTLN { putchar('\n'); }
+		| T_POP_PRINTLN print_exprs { putchar('\n'); }
 ;
 
-printi		: T_POP_PRINTI const	{ printf("%" PRId32, $2); }
+print_exprs	: print_expr
+		| print_exprs T_COMMA print_expr
 ;
 
-printf		: T_POP_PRINTF const	{ math_Print($2); }
+print_expr	: const_no_str { printf("$%" PRIX32, $1); }
+		| string { printf("%s", $1); }
+;
+
+printt		: T_POP_PRINTT string	{
+			warning(WARNING_OBSOLETE, "`PRINTT` is deprecated; use `PRINT`\n");
+			printf("%s", $2);
+		}
+;
+
+printv		: T_POP_PRINTV const	{
+			warning(WARNING_OBSOLETE, "`PRINTV` is deprecated; use `PRINT`\n");
+			printf("$%" PRIX32, $2);
+		}
+;
+
+printi		: T_POP_PRINTI const	{
+			warning(WARNING_OBSOLETE, "`PRINTI` is deprecated; use `PRINT` with `STRFMT`\n");
+			printf("%" PRId32, $2);
+		}
+;
+
+printf		: T_POP_PRINTF const	{
+			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT`\n");
+			math_Print($2);
+		}
 ;
 
 const_3bit	: const {
@@ -1240,6 +1270,17 @@ uconst		: const {
 ;
 
 const		: relocexpr {
+			if (!rpn_isKnown(&$1)) {
+				error("Expected constant expression: %s\n",
+					$1.reason);
+				$$ = 0;
+			} else {
+				$$ = $1.nVal;
+			}
+		}
+;
+
+const_no_str	: relocexpr_no_str {
 			if (!rpn_isKnown(&$1)) {
 				error("Expected constant expression: %s\n",
 					$1.reason);
