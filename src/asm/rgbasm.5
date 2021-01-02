@@ -131,6 +131,7 @@ A great number of operators you can use in expressions are available (listed fro
 .It Sy Operator Ta Sy Meaning
 .It Li \&( \&) Ta Precedence override
 .It Li FUNC() Ta Built-in function call
+.It Li ** Ta Exponent
 .It Li ~ + - Ta Unary complement/plus/minus
 .It Li * / % Ta Multiply/divide/modulo
 .It Li << >> Ta Shift left/right
@@ -190,12 +191,17 @@ delim $$
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta $x \[di] y$
 .It Fn MUL x y Ta $x \[mu] y$
-.It Fn SIN x Ta $sin ( x )$
-.It Fn COS x Ta $cos ( x )$
-.It Fn TAN x Ta $tan ( x )$
-.It Fn ASIN x Ta $asin ( x )$
-.It Fn ACOS x Ta $acos ( x )$
-.It Fn ATAN x Ta $atan ( x )$
+.It Fn POW x y Ta $x$ to the $y$ power
+.It Fn LOG x y Ta Logarithm of $x$ to the base $y$
+.It Fn ROUND x Ta Round $x$ to the nearest integer
+.It Fn CEIL x Ta Round $x$ up to an integer
+.It Fn FLOOR x Ta Round $x$ down to an integer
+.It Fn SIN x Ta Sine of $x$
+.It Fn COS x Ta Cosine of $x$
+.It Fn TAN x Ta Tangent of $x$
+.It Fn ASIN x Ta Inverse sine of $x$
+.It Fn ACOS x Ta Inverse cosine of $x$
+.It Fn ATAN x Ta Inverse tangent of $x$
 .It Fn ATAN2 x y Ta Angle between $( x , y )$ and $( 1 , 0 )$
 .El
 .EQ

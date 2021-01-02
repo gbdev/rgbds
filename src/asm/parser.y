@@ -353,6 +353,11 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_SHL T_OP_SHR
 %left	T_OP_MUL T_OP_DIV T_OP_MOD
 %left	T_OP_NOT
+
+%left	NEG /* negation -- unary minus */
+
+%left	T_OP_EXP
+
 %left	T_OP_DEF
 %left	T_OP_BANK T_OP_ALIGN
 %left	T_OP_SIN
@@ -364,6 +369,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_ATAN2
 %left	T_OP_FDIV
 %left	T_OP_FMUL
+%left	T_OP_POW
+%left	T_OP_LOG
 %left	T_OP_ROUND
 %left	T_OP_CEIL
 %left	T_OP_FLOOR
@@ -380,8 +387,6 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %left	T_OP_STRUPR
 %left	T_OP_STRLWR
 %left	T_OP_STRFMT
-
-%left	NEG /* negation -- unary minus */
 
 %token	<tzSym> T_LABEL
 %token	<tzSym> T_ID
@@ -1131,6 +1136,9 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| relocexpr T_OP_MOD relocexpr {
 			rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3);
 		}
+		| relocexpr T_OP_EXP relocexpr {
+			rpn_BinaryOp(RPN_EXP, &$$, &$1, &$3);
+		}
 		| T_OP_ADD relocexpr %prec NEG	{ $$ = $2; }
 		| T_OP_SUB relocexpr %prec NEG	{ rpn_UNNEG(&$$, &$2); }
 		| T_OP_NOT relocexpr %prec NEG	{ rpn_UNNOT(&$$, &$2); }
@@ -1165,6 +1173,12 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		}
 		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
 			rpn_Number(&$$, math_Mul($3, $5));
+		}
+		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
+			rpn_Number(&$$, math_Pow($3, $5));
+		}
+		| T_OP_LOG T_LPAREN const T_COMMA const T_RPAREN {
+			rpn_Number(&$$, math_Log($3, $5));
 		}
 		| T_OP_SIN T_LPAREN const T_RPAREN {
 			rpn_Number(&$$, math_Sin($3));

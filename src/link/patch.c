@@ -21,6 +21,20 @@
 
 #include "extern/err.h"
 
+static int32_t exponent(int32_t base, int32_t power)
+{
+	int32_t result = 1;
+
+	while (power) {
+		if (power % 2)
+			result *= base;
+		power /= 2;
+		base *= base;
+	}
+
+	return result;
+}
+
 static int32_t asl(int32_t value, int32_t shiftamt); // Forward decl for below
 static int32_t asr(int32_t value, int32_t shiftamt)
 {
@@ -236,6 +250,18 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 		case RPN_UNSUB:
 			value = -popRPN();
+			break;
+		case RPN_EXP:
+			value = popRPN();
+			if (value < 0) {
+				if (!isError)
+					error(patch->src, patch->lineNo, "Exponent by negative");
+				isError = true;
+				popRPN();
+				value = 0;
+			} else {
+				value = exponent(popRPN(), value);
+			}
 			break;
 
 		case RPN_OR:
