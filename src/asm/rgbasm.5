@@ -38,7 +38,8 @@ Example:
 John: ld a,87 ;Weee
 .Ed
 .Pp
-All reserved keywords (pseudo‐ops, mnemonics, registers etc.) are case‐insensitive, all identifiers (symbol names) are case-sensitive.
+All reserved keywords (pseudo‐ops, mnemonics, registers, etc.) are case‐insensitive;
+all identifiers (symbol names) are case-sensitive.
 .Pp
 Comments are used to give humans information about the code, such as explanations.
 The assembler
@@ -204,18 +205,22 @@ delim $$
 delim off
 .EN
 .Pp
+The trigonometry functions (
+.Ic SIN ,
+.Ic COS ,
+.Ic TAN ,
+etc) are defined in terms of a circle divided into 65535.0 degrees.
+.Pp
 These functions are useful for automatic generation of various tables.
-Example: assuming a circle has 65536.0 degrees, and sine values are in range
-.Bq -1.0 ;\ 1.0 :
+For example:
 .Bd -literal -offset indent
-;\ --
-;\ -- Generate a 256-byte sine table with values between 0 and 128
-;\ --
+; Generate a 256-byte sine table with values in the range [0, 128]
+; (shifted and scaled from the range [-1.0, 1.0])
 ANGLE = 0.0
-      REPT 256
-      db MUL(64.0, SIN(ANGLE) + 1.0) >> 16
-ANGLE = ANGLE + 256.0 ; 256 = 65536 / table_len, with table_len = 256
-      ENDR
+    REPT 256
+        db (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
+ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
+    ENDR
 .Ed
 .Ss String Expressions
 The most basic string expression is any number of characters contained in double quotes
@@ -238,7 +243,7 @@ There are a number of escape sequences you can use within a string:
 .It Ql \[rs]t Ta Tab ($09)
 .It Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc Ta Macro argument (Only in the body of a macro; see Sx Invoking macros )
 .It Ql \[rs]# Ta All Dv _NARG No macro arguments, separated by commas (Only in the body of a macro)
-.It Ql \[rs]@ Ta Label name suffix (Only in the body of macros and REPTs)
+.It Ql \[rs]@ Ta Label name suffix (Only in the body of a macro or a Ic REPT No block)
 .El
 (Note that some of those can be used outside of strings, when noted further in this document.)
 .Pp
@@ -362,13 +367,13 @@ Most of them return a string, however some of these functions actually return an
 .Bl -column "STRSUB(str, pos, len)"
 .It Sy Name Ta Sy Operation
 .It Fn STRLEN str Ta Returns the number of characters in Ar str .
-.It Fn STRCAT str1 str2 Ta Appends Ar str2 No to Ar str1 .
+.It Fn STRCAT strs... Ta Concatenates Ar strs .
 .It Fn STRCMP str1 str2 Ta Returns -1 if Ar str1 No is alphabetically lower than Ar str2 No , zero if they match, 1 if Ar str1 No is greater than Ar str2 .
 .It Fn STRIN str1 str2 Ta Returns the first position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
 .It Fn STRRIN str1 str2 Ta Returns the last position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
 .It Fn STRSUB str pos len Ta Returns a substring from Ar str No starting at Ar pos Po first character is position 1 Pc and Ar len No characters long.
-.It Fn STRUPR str Ta Converts all characters in Ar str No to capitals and returns the new string.
-.It Fn STRLWR str Ta Converts all characters in Ar str No to lower case and returns the new string.
+.It Fn STRUPR str Ta Returns Ar str No with all letters in uppercase.
+.It Fn STRLWR str Ta Returns Ar str No with all letters in lowercase.
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
 .Ql %spec
 pattern replaced by interpolating the format
@@ -1530,11 +1535,12 @@ You can also use
 .Ic REPT
 to generate tables on the fly:
 .Bd -literal -offset indent
-; Generate a 256-byte sine table with values between 0 and 128
+; Generate a 256-byte sine table with values in the range [0, 128]
+; (shifted and scaled from the range [-1.0, 1.0])
 ANGLE = 0.0
     REPT 256
         db (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
-ANGLE = ANGLE + 256.0
+ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
     ENDR
 .Ed
 .Pp
