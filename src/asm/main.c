@@ -108,9 +108,6 @@ void opt_Parse(char *s)
 			error("Must specify exactly 2 characters for option 'b'\n");
 		}
 		break;
-	case 'z':
-		warning(WARNING_OBSOLETE, "Option 'z' is a deprecated alias for 'p'\n");
-		/* fallthrough */
 	case 'p':
 		if (strlen(&s[1]) <= 2) {
 			int result;

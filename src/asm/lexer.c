@@ -1611,18 +1611,6 @@ static int yylex_NORMAL(void)
 		switch (c) {
 		/* Ignore whitespace and comments */
 
-		case '*':
-			if (!lexerState->atLineStart) { /* Either MUL or EXP */
-				secondChar = peek(0);
-				if (secondChar == '*') {
-					shiftChars(1);
-					return T_OP_EXP;
-				}
-				return T_OP_MUL;
-			}
-			warning(WARNING_OBSOLETE,
-				"'*' is deprecated for comments, please use ';' instead\n");
-			/* fallthrough */
 		case ';':
 			discardComment();
 			/* fallthrough */
@@ -1658,55 +1646,62 @@ static int yylex_NORMAL(void)
 			return T_COMMA;
 
 		/* Handle ambiguous 1- or 2-char tokens */
+
+		case '*': /* Either MUL or EXP */
+			if (peek(0) == '*') {
+				shiftChars(1);
+				return T_OP_EXP;
+			}
+			return T_OP_MUL;
+
 		case '/': /* Either division or a block comment */
-			secondChar = peek(0);
-			if (secondChar == '*') {
+			if (peek(0) == '*') {
 				shiftChars(1);
 				discardBlockComment();
 				break;
 			}
 			return T_OP_DIV;
+
 		case '|': /* Either binary or logical OR */
-			secondChar = peek(0);
-			if (secondChar == '|') {
+			if (peek(0) == '|') {
 				shiftChars(1);
 				return T_OP_LOGICOR;
 			}
 			return T_OP_OR;
 
 		case '=': /* Either SET alias, or EQ */
-			secondChar = peek(0);
-			if (secondChar == '=') {
+			if (peek(0) == '=') {
 				shiftChars(1);
 				return T_OP_LOGICEQU;
 			}
 			return T_POP_EQUAL;
 
 		case '<': /* Either a LT, LTE, or left shift */
-			secondChar = peek(0);
-			if (secondChar == '=') {
+			switch (peek(0)) {
+			case '=':
 				shiftChars(1);
 				return T_OP_LOGICLE;
-			} else if (secondChar == '<') {
+			case '<':
 				shiftChars(1);
 				return T_OP_SHL;
+			default:
+				return T_OP_LOGICLT;
 			}
-			return T_OP_LOGICLT;
 
 		case '>': /* Either a GT, GTE, or right shift */
-			secondChar = peek(0);
-			if (secondChar == '=') {
+			switch (peek(0)) {
+			case '=':
 				shiftChars(1);
 				return T_OP_LOGICGE;
-			} else if (secondChar == '>') {
+			case '>':
 				shiftChars(1);
 				return T_OP_SHR;
+			default:
+				return T_OP_LOGICGT;
 			}
-			return T_OP_LOGICGT;
 
 		case '!': /* Either a NEQ, or negation */
-			secondChar = peek(0);
-			if (secondChar == '=') {
+			if (peek(0) == '=') {
 				shiftChars(1);
 				return T_OP_LOGICNE;
 			}

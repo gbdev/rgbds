@@ -568,10 +568,6 @@ label		: /* empty */
 		| T_LOCAL_ID {
 			sym_AddLocalLabel($1);
 		}
-		| T_LABEL {
-			warning(WARNING_OBSOLETE, "Non-local labels without a colon are deprecated\n");
-			sym_AddLabel($1);
-		}
 		| T_LOCAL_ID T_COLON {
 			sym_AddLocalLabel($1);
 		}
@@ -898,17 +894,7 @@ purge_list	: purge_list_entry
 purge_list_entry : scoped_id	{ sym_Purge($1); }
 ;
 
-export		: export_token export_list
-;
-
-export_token	: T_POP_EXPORT
-		| T_POP_GLOBAL {
-			warning(WARNING_OBSOLETE,
-				"`GLOBAL` is a deprecated synonym for `EXPORT`\n");
-		}
-		| T_POP_XDEF {
-			warning(WARNING_OBSOLETE, "`XDEF` is a deprecated synonym for `EXPORT`\n");
-		}
+export		: T_POP_EXPORT export_list
 ;
 
 export_list	: export_list_entry
