@@ -16,6 +16,7 @@
 
 #include "asm/section.h"
 
+#include "platform.h" // MIN_NB_ELMS
 #include "types.h"
 
 #define HASHSIZE	(1 << 16)
@@ -117,7 +118,7 @@ void sym_SetExportAll(bool set);
 struct Symbol *sym_AddLocalLabel(char const *symName);
 struct Symbol *sym_AddLabel(char const *symName);
 struct Symbol *sym_AddAnonLabel(void);
-void sym_WriteAnonLabelName(char name[static MAXSYMLEN + 1], uint32_t ofs, bool neg);
+void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg);
 void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);

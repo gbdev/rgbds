@@ -31,7 +31,9 @@ option(TRACE_PARSER "Trace parser execution" OFF)
 option(TRACE_LEXER "Trace lexer execution" OFF)
 
 if(MSVC)
-  add_compile_options(/W1 /MP)
+  # MSVC's standard library triggers warning C5105,
+  # "macro expansion producing 'defined' has undefined behavior"
+  add_compile_options(/std:c11 /W1 /MP /wd5105)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
   add_compile_options(-Wall -pedantic)
