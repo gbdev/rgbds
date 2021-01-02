@@ -45,7 +45,7 @@ The assembler
 .Em always
 ignores comments and their contents.
 .Pp
-There are three syntaxes for comments.
+There are two syntaxes for comments.
 The most common is that anything that follows a semicolon
 .Ql \&;
 not inside a string, is a comment until the end of the line.
@@ -58,10 +58,6 @@ It can be split across multiple lines, or occur in the middle of an expression:
 X = /* the value of x
        should be 3 */ 3
 .Ed
-The third is that lines beginning with a
-.Ql *
-(not even spaces before it) are ignored.
-This third syntax is deprecated (will be removed in a future version) and should be replaced with either of the first two.
 .Pp
 Sometimes lines can be too long and it may be necessary to split them.
 To do so, put a backslash at the end of the line:
@@ -417,7 +413,7 @@ The output value of a mapping can be 0.
 If this happens, the assembler will treat this as the end of the string and the rest of it will be trimmed.
 .Ss Other functions
 There are a few other functions that do various useful things:
-.Bl -column "DEF(label)"
+.Bl -column "DEF(symbol)"
 .It Sy Name Ta Sy Operation
 .It Fn BANK arg Ta Returns a bank number.
 If
@@ -434,8 +430,8 @@ is a label, it returns the bank number the label is in.
 The result may be constant if
 .Nm
 is able to compute it.
-.It Fn DEF label Ta Returns TRUE (1) if
-.Ar label
+.It Fn DEF symbol Ta Returns TRUE (1) if
+.Ar symbol
 has been defined, FALSE (0) otherwise.
 String symbols are not expanded within the parentheses.
 .It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
@@ -847,8 +843,8 @@ One of the assembler's main tasks is to keep track of addresses for you, so you 
 .Pp
 This can be done in a number of ways:
 .Bd -literal -offset indent
-GlobalLabel ;\ This syntax is deprecated,
-AnotherGlobal: ;\ please use this instead
+GlobalLabel:
+AnotherGlobal:
 \&.locallabel
 \&.yet_a_local:
 AnotherGlobal.with_another_local:
@@ -1137,10 +1133,6 @@ Linking failed with 1 error
 Note also that only exported symbols will appear in symbol and map files produced by
 .Xr rgblink 1 .
 .Pp
-.Ic GLOBAL
-is a deprecated synonym for
-.Ic EXPORT ,
-do not use it.
 .Ss Purging symbols
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table as if it had never existed.
