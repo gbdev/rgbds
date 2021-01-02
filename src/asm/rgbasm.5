@@ -1516,25 +1516,6 @@ For different formats, use
 prints out each of its comma-separated arguments, if any, followed by a line feed
 .Pq Ql \[rs]n .
 .El
-.Pp
-Four other printing commands have been deprecated. Use
-.Ic PRINT
-or
-.Ic PRINTLN
-with
-.Ic STRFMT
-instead.
-.Bl -inset
-.It Ic PRINTT
-prints out a string.
-.It Ic PRINTV
-prints out an unsigned integer value in uppercase hexadecimal with a leading
-.Ic $ .
-.It Ic PRINTI
-prints out a signed integer value.
-.It Ic PRINTF
-prints out a fixed-point value with 5 fractional digits.
-.El
 .Ss Automatically repeating blocks of code
 Suppose you want to unroll a time consuming loop without copy-pasting it.
 .Ic REPT
