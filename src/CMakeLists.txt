@@ -13,7 +13,7 @@ set(common_src
     )
 
 find_package(PkgConfig)
-if(NOT PKG_CONFIG_FOUND)
+if(MSVC OR NOT PKG_CONFIG_FOUND)
   # fallback to find_package
   find_package(PNG REQUIRED)
 else()

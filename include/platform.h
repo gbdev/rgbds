@@ -39,4 +39,11 @@
 # define SSIZE_MAX INT_MAX
 #endif
 
+/* MSVC doesn't support `[static N]` for array arguments from C99 */
+#ifdef _MSC_VER
+# define MIN_NB_ELMS(N)
+#else
+# define MIN_NB_ELMS(N) static (N)
+#endif
+
 #endif /* RGBDS_PLATFORM_H */

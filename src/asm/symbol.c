@@ -567,7 +567,7 @@ struct Symbol *sym_AddAnonLabel(void)
 /*
  * Write an anonymous label's name to a buffer
  */
-void sym_WriteAnonLabelName(char buf[static MAXSYMLEN + 1], uint32_t ofs, bool neg)
+void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg)
 {
 	uint32_t id = 0;
 
