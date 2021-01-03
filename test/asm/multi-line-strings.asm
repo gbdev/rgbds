@@ -21,7 +21,8 @@ printarg: MACRO
 ENDM
 
 	printarg "
-	printarg """
+	printarg """multi-line
+string argument"""
 
 EMPTY1 EQUS ""
 EMPTY2 EQUS "\ ; comment

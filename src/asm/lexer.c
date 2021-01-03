@@ -845,7 +845,6 @@ restart:
 			}
 		} else if (c == '{' && !lexerState->disableInterpolation) {
 			/* If character is an open brace, do symbol interpolation */
-			lexerState->macroArgScanDistance++;
 			shiftChars(1);
 			char const *ptr = readInterpolation();
 
@@ -1373,8 +1372,9 @@ static char const *readInterpolation(void)
 	return NULL;
 }
 
-static int appendMacroArg(char const *str, int i)
+static size_t appendUnescapedString(char const *str, size_t i)
 {
+	/* Copy one extra to flag overflow */
 	while (*str && i < sizeof(yylval.tzString)) {
 		int c = *str++;
 
@@ -1385,11 +1385,13 @@ static int appendMacroArg(char const *str, int i)
 
 		c = *str++;
 
+		/* Interpret character escapes */
 		switch (c) {
-		case '\\': /* Return that character unchanged */
+		case '\\':
 		case '"':
 		case '{':
 		case '}':
+			/* Return that character unchanged */
 			break;
 		case 'n':
 			c = '\n';
@@ -1423,20 +1425,64 @@ static int appendMacroArg(char const *str, int i)
 	return i;
 }
 
-static void readString(void)
+static size_t appendEscapedString(char const *str, size_t i)
+{
+	/* Copy one extra to flag overflow */
+	while (*str && i < sizeof(yylval.tzString)) {
+		int c = *str++;
+
+		/* Escape characters that need escaping */
+		switch (c) {
+		case '\\':
+		case '"':
+		case '{':
+			yylval.tzString[i++] = '\\';
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = c;
+			break;
+		case '\n':
+			yylval.tzString[i++] = '\\';
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = 'n';
+			break;
+		case '\r':
+			yylval.tzString[i++] = '\\';
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = 'r';
+			break;
+		case '\t':
+			yylval.tzString[i++] = '\\';
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = 't';
+			break;
+		default:
+			yylval.tzString[i++] = c;
+			break;
+		}
+	}
+
+	return i;
+}
+
+static size_t appendStringLiteral(size_t i, bool keepLiteral)
 {
 	dbgPrint("Reading string\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
-	size_t i = 0;
 	bool multiline = false;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
+	if (keepLiteral && i < sizeof(yylval.tzString))
+		yylval.tzString[i++] = '"';
 	if (peek(0) == '"') {
+		if (keepLiteral && i < sizeof(yylval.tzString))
+			yylval.tzString[i++] = '"';
 		shiftChars(1);
 		if (peek(0) == '"') {
 			// """ begins a multi-line string
+			if (keepLiteral && i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = '"';
 			shiftChars(1);
 			multiline = true;
 		} else {
@@ -1472,29 +1518,47 @@ static void readString(void)
 				// Only """ ends a multi-line string
 				if (peek(0) != '"' || peek(1) != '"')
 					break;
+				if (keepLiteral && i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '"';
+				if (keepLiteral && i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '"';
 				shiftChars(2);
 			}
+			if (keepLiteral && i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = '"';
 			goto finish;
 
 		case '\\': // Character escape or macro arg
 			c = peek(0);
 			switch (c) {
-			case '\\': // Return that character unchanged
+			case '\\':
 			case '"':
 			case '{':
 			case '}':
+				// Return that character unchanged
+				if (keepLiteral && i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '\\';
 				shiftChars(1);
 				break;
 			case 'n':
-				c = '\n';
+				if (!keepLiteral)
+					c = '\n';
+				else if (i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '\\';
 				shiftChars(1);
 				break;
 			case 'r':
-				c = '\r';
+				if (!keepLiteral)
+					c = '\r';
+				else if (i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '\\';
 				shiftChars(1);
 				break;
 			case 't':
-				c = '\t';
+				if (!keepLiteral)
+					c = '\t';
+				else if (i < sizeof(yylval.tzString))
+					yylval.tzString[i++] = '\\';
 				shiftChars(1);
 				break;
 
@@ -1521,7 +1585,11 @@ static void readString(void)
 				shiftChars(1);
 				char const *str = readMacroArg(c);
 
-				i = appendMacroArg(str, i);
+				if (keepLiteral)
+					i = appendEscapedString(str, i);
+				else
+					i = appendUnescapedString(str, i);
+
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
@@ -1541,9 +1609,14 @@ static void readString(void)
 			lexerState->disableMacroArgs = false;
 			char const *ptr = readInterpolation();
 
-			if (ptr)
-				while (*ptr && i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = *ptr++;
+			if (ptr) {
+				if (keepLiteral)
+					i = appendEscapedString(ptr, i);
+				else
+					while (*ptr && i < sizeof(yylval.tzString))
+						yylval.tzString[i++] = *ptr++;
+			}
+
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
@@ -1564,6 +1637,8 @@ finish:
 	dbgPrint("Read string \"%s\"\n", yylval.tzString);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+
+	return i;
 }
 
 /* Function to report one character's worth of garbage bytes */
@@ -1804,7 +1879,7 @@ static int yylex_NORMAL(void)
 		/* Handle strings */
 
 		case '"':
-			readString();
+			appendStringLiteral(0, false);
 			return T_STRING;
 
 		/* Handle newlines and EOF */
@@ -1886,9 +1961,7 @@ static int yylex_RAW(void)
 	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
 
-	/* This is essentially a modified `readString` */
 	size_t i = 0;
-	bool insideString = false;
 
 	/* Trim left of string... */
 	while (isWhitespace(peek(0)))
@@ -1898,14 +1971,12 @@ static int yylex_RAW(void)
 		int c = peek(0);
 
 		switch (c) {
-		case '"':
-			insideString = !insideString;
-			/* Other than that, just process quotes normally */
+		case '"': /* String literals inside macro args */
+			shiftChars(1);
+			i = appendStringLiteral(i, true);
 			break;
 
 		case ';': /* Comments inside macro args */
-			if (insideString)
-				break;
 			discardComment();
 			c = peek(0);
 			/* fallthrough */
@@ -1960,13 +2031,17 @@ static int yylex_RAW(void)
 				c = '\\';
 				break;
 			}
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = c;
+			shiftChars(1);
 			break;
 
-		/* Regular characters will just get copied */
+		default: /* Regular characters will just get copied */
+			if (i < sizeof(yylval.tzString))
+				yylval.tzString[i++] = c;
+			shiftChars(1);
+			break;
 		}
-		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
-			yylval.tzString[i++] = c;
-		shiftChars(1);
 	}
 }
 

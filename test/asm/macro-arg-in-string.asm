@@ -15,3 +15,10 @@ ENDM
 
 s EQUS "hello"
 	iprint s
+
+symprint: MACRO
+	PRINTLN {\1}
+ENDM
+
+hello EQUS "\"goodbye\""
+	symprint s

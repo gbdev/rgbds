@@ -8,6 +8,8 @@ The multi-line string can contain:
 !
 arg <">
 arg (")
-arg <""">
-arg (""")
+arg <"""multi-line
+string argument""">
+arg ("""multi-line
+string argument""")
 ()
