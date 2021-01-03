@@ -3,7 +3,7 @@ print1: MACRO
 ENDM
 
 	print1 John "Danger" Smith
-	print1 \\A\nB
+	print1 \\\\A\\nB\n
 	print1 C\
 D
 	print1 E\!F ; illegal character escape

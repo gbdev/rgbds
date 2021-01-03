@@ -2012,8 +2012,11 @@ static int yylex_RAW(void)
 		case '\\': /* Character escape */
 			c = peek(1);
 			switch (c) {
+			case '\\':
+			case '"':
+			case ';':
 			case ',':
-				shiftChars(1);
+				shiftChars(1); /* Shift the backslash */
 				break;
 
 			case ' ':
