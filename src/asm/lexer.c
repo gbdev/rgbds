@@ -251,6 +251,7 @@ static struct KeywordMapping {
 	{"REPT", T_POP_REPT},
 	{"FOR", T_POP_FOR},
 	{"ENDR", T_POP_ENDR},
+	{"BREAK", T_POP_BREAK},
 
 	{"LOAD", T_POP_LOAD},
 	{"ENDL", T_POP_ENDL},
@@ -498,7 +499,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[355] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[359] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -2049,6 +2050,85 @@ static int yylex_SKIP_TO_ENDC(void)
 	return skipIfBlock(true);
 }
 
+static int yylex_SKIP_TO_ENDR(void)
+{
+	dbgPrint("Skipping remainder of REPT/FOR block\n");
+	lexer_SetMode(LEXER_NORMAL);
+	int depth = 1;
+	bool atLineStart = lexerState->atLineStart;
+
+	/* Prevent expanding macro args and symbol interpolation in this state */
+	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
+
+	for (;;) {
+		if (atLineStart) {
+			int c;
+
+			for (;;) {
+				c = peek(0);
+				if (!isWhitespace(c))
+					break;
+				shiftChars(1);
+			}
+
+			if (startsIdentifier(c)) {
+				shiftChars(1);
+				switch (readIdentifier(c)) {
+				case T_POP_FOR:
+				case T_POP_REPT:
+					depth++;
+					break;
+
+				case T_POP_ENDR:
+					depth--;
+					if (!depth)
+						goto finish;
+					break;
+
+				case T_POP_IF:
+					nIFDepth++;
+					break;
+
+				case T_POP_ENDC:
+					nIFDepth--;
+				}
+			}
+			atLineStart = false;
+		}
+
+		/* Read chars until EOL */
+		do {
+			int c = nextChar();
+
+			if (c == EOF) {
+				goto finish;
+			} else if (c == '\\') {
+				/* Unconditionally skip the next char, including line conts */
+				c = nextChar();
+			} else if (c == '\r' || c == '\n') {
+				atLineStart = true;
+			}
+
+			if (c == '\r' || c == '\n') {
+				/* Handle CRLF before nextLine() since shiftChars updates colNo */
+				if (c == '\r' && peek(0) == '\n')
+					shiftChars(1);
+				/* Do this both on line continuations and plain EOLs */
+				nextLine();
+			}
+		} while (!atLineStart);
+	}
+finish:
+
+	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
+	lexerState->atLineStart = false;
+
+	/* yywrap() will finish the REPT/FOR loop */
+	return 0;
+}
+
 int yylex(void)
 {
 restart:
@@ -2066,7 +2146,8 @@ restart:
 		[LEXER_NORMAL]       = yylex_NORMAL,
 		[LEXER_RAW]          = yylex_RAW,
 		[LEXER_SKIP_TO_ELIF] = yylex_SKIP_TO_ELIF,
-		[LEXER_SKIP_TO_ENDC] = yylex_SKIP_TO_ENDC
+		[LEXER_SKIP_TO_ENDC] = yylex_SKIP_TO_ENDC,
+		[LEXER_SKIP_TO_ENDR] = yylex_SKIP_TO_ENDR
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 

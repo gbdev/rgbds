@@ -1616,6 +1616,35 @@ blocks, you can use the escape sequence
 inside of
 .Ic FOR
 blocks, and they can be nested.
+.Pp
+You can stop a repeating block with the
+.Ic BREAK
+command.
+A
+.Ic BREAK
+inside of a
+.Ic REPT
+or
+.Ic FOR
+block will interrupt the current iteration and not repeat any more.
+It will continue running code after the block's
+.Ic ENDR .
+For example:
+.Bd -literal -offset indent
+FOR V, 1, 100
+      PRINT "{d:V}"
+      IF V == 5
+          PRINT " stop! "
+          BREAK
+      ENDC
+      PRINT ", "
+ENDR
+      PRINTLN "done {d:V}"
+.Ed
+This will print:
+.Bd -literal -offset indent
+1, 2, 3, 4, 5 stop! done 5
+.Ed
 .Ss Aborting the assembly process
 .Ic FAIL
 and
