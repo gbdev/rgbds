@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <math.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -1130,7 +1131,7 @@ static void readFractionalPart(void)
 	/* Cast to unsigned avoids UB if shifting discards bits */
 	yylval.nConstValue = (uint32_t)yylval.nConstValue << 16;
 	/* Cast to unsigned avoids undefined overflow behavior */
-	uint16_t fractional = value * 65536 / divisor;
+	uint16_t fractional = (uint16_t)round(value * 65536.0 / divisor);
 
 	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
 }
