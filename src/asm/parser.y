@@ -380,6 +380,8 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	<nConstValue>	T_NUMBER
 %token	<tzString>	T_STRING
 
+%type	<tzString>	lit_string
+
 %left	T_COMMA
 %left	T_COLON
 %left	T_LBRACK
@@ -638,11 +640,11 @@ macro		: T_ID {
 macroargs	: /* empty */ {
 			$$ = macro_NewArgs();
 		}
-		| T_STRING {
+		| lit_string {
 			$$ = macro_NewArgs();
 			macro_AppendArg(&($$), strdup($1));
 		}
-		| macroargs T_COMMA T_STRING {
+		| macroargs T_COMMA lit_string {
 			macro_AppendArg(&($$), strdup($3));
 		}
 ;
@@ -725,7 +727,7 @@ opt_list	: opt_list_entry
 		| opt_list T_COMMA opt_list_entry
 ;
 
-opt_list_entry	: T_STRING		{ opt_Parse($1); }
+opt_list_entry	: lit_string		{ opt_Parse($1); }
 ;
 
 popo		: T_POP_POPO		{ opt_Pop(); }
@@ -1320,7 +1322,7 @@ const_no_str	: relocexpr_no_str {
 		}
 ;
 
-string		: T_STRING
+string		: lit_string
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
 			strsubUTF8($$, $3, $5, $7);
 		}
@@ -1342,6 +1344,14 @@ string		: T_STRING
 		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
 			strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
 			freeStrFmtArgList(&$3);
+		}
+;
+
+lit_string	: T_STRING
+		| lit_string T_STRING {
+			if (snprintf($$, sizeof($$), "%s%s", $1, $2) > MAXSTRLEN)
+				warning(WARNING_LONG_STR, "Concatenated string too long '%s%s'\n",
+					$1, $2);
 		}
 ;
 

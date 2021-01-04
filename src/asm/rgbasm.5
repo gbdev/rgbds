@@ -255,6 +255,12 @@ characters will be included as-is, without needing to escape them with
 or
 .Ql \[rs]n .
 .Pp
+Adjacent string literals are concatenated together, like in C.
+For instance,
+.Ql \&"poly\&" \&"\&"\&"syllabic\&"\&"\&"
+is the same as
+.Ql \&"polysyllabic\&" .
+.Pp
 A funky feature is
 .Ql {symbol}
 within a string, called
