@@ -219,16 +219,18 @@ bool yywrap(void)
 			contextStack->fileInfo = (struct FileStackNode *)fileInfo;
 		}
 
-		fileInfo->iters[0]++;
 		/* If this is a FOR, update the symbol value */
-		if (contextStack->forName) {
+		if (contextStack->forName && fileInfo->iters[0] <= contextStack->nbReptIters) {
 			contextStack->forValue += contextStack->forStep;
 			struct Symbol *sym = sym_AddSet(contextStack->forName,
 				contextStack->forValue);
 
+			/* This error message will refer to the current iteration */
 			if (sym->type != SYM_SET)
 				fatalerror("Failed to update FOR symbol value\n");
 		}
+		/* Advance to the next iteration */
+		fileInfo->iters[0]++;
 		/* If this wasn't the last iteration, wrap instead of popping */
 		if (fileInfo->iters[0] <= contextStack->nbReptIters) {
 			lexer_RestartRept(contextStack->fileInfo->lineNo);
@@ -477,6 +479,20 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	contextStack->forName = strdup(symName);
 	if (!contextStack->forName)
 		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
+}
+
+bool fstk_Break(void)
+{
+	dbgPrint("Breaking out of REPT/FOR\n");
+
+	if (contextStack->fileInfo->type != NODE_REPT) {
+		error("BREAK can only be used inside a REPT/FOR block\n");
+		return false;
+	}
+
+	/* Prevent more iterations */
+	contextStack->nbReptIters = 0;
+	return true;
 }
 
 void fstk_Init(char const *mainPath, size_t maxRecursionDepth)

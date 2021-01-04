@@ -463,6 +463,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_POP_POPC
 %token	T_POP_SHIFT
 %token	T_POP_ENDR
+%token	T_POP_BREAK
 %token	T_POP_LOAD T_POP_ENDL
 %token	T_POP_FAIL
 %token	T_POP_WARN
@@ -684,6 +685,7 @@ simple_pseudoop : include
 		| rept
 		| for
 		| shift
+		| break
 		| fail
 		| warn
 		| assert
@@ -829,6 +831,12 @@ for_args	: const {
 			$$.start = $1;
 			$$.stop = $3;
 			$$.step = $5;
+		}
+;
+
+break		: T_POP_BREAK		{
+			if (fstk_Break())
+				lexer_SetMode(LEXER_SKIP_TO_ENDR);
 		}
 ;
 
