@@ -1537,8 +1537,17 @@ static size_t appendStringLiteral(size_t i, bool keepLiteral)
 				c = '\\';
 				break;
 
+			case ',':
+				if (keepLiteral) { /* `\,` inside a macro arg string literal */
+					warning(WARNING_OBSOLETE,
+						"`\\,` is deprecated inside strings\n");
+					shiftChars(1);
+					break;
+				}
+				/* fallthrough */
 			default:
 				error("Illegal character escape '%s'\n", print(c));
+				shiftChars(1);
 				break;
 			}
 			break;
@@ -1916,7 +1925,6 @@ static int yylex_RAW(void)
 			discardComment();
 			c = peek(0);
 			/* fallthrough */
-
 		case ',': /* End of macro arg */
 		case '\r':
 		case '\n':
