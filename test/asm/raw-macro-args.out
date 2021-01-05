@@ -1,6 +1,6 @@
 $2A
 42
-string
+str"ing
 $10
 "literal \"\\\""
 literal "\"
@@ -10,10 +10,10 @@ $60000
 unclosed
 NUM
 "42"
-"string"
+"str\"ing"
 16
+"\"literal \\\"\\\\\\\"\""
 "literal \"\\\""
-"literal "\""
 """multi-"line"
   ""string"" arg"""
 MUL(2.0, 3.0)

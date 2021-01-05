@@ -13,7 +13,7 @@ printlit: MACRO
 ENDM
 
 NUM EQU 42
-STR EQUS "string"
+STR EQUS "str\"ing"
 
 	printargs NUM
 	printargs "{d:NUM}"
@@ -28,11 +28,11 @@ STR EQUS "string"
 	printlit NUM
 	printlit "{d:NUM}"
 	printlit "{STR}", 16 ; comment 3
-	println "\"literal \\\"\\\\\\\"\""
+	printlit "\"literal \\\"\\\\\\\"\""
 	printlit "literal \"\\\"", \ ; comment 4
 """multi-"line"
   ""string"" arg"""
 	printlit MUL(2.0\, 3.0)
-	printlit this\\n is\, \{not\} a\\\\n syntax\" error
+	printlit this\n is\, \{not\} a\\n syntax\" error
 	printlit "unclosed
 	printlit """EOF
