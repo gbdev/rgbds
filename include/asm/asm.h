@@ -25,7 +25,6 @@
 #define MAXINCPATHS	128
 
 extern uint32_t nTotalLines;
-extern uint32_t nIFDepth;
 extern struct Section *pCurrentSection;
 
 #endif /* RGBDS_ASM_ASM_H */
