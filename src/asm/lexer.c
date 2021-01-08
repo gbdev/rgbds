@@ -1966,7 +1966,7 @@ static int skipIfBlock(bool toEndc)
 {
 	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
 	lexer_SetMode(LEXER_NORMAL);
-	int startingDepth = nIFDepth;
+	int startingDepth = fstk_GetIFDepth();
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 
@@ -1990,7 +1990,7 @@ static int skipIfBlock(bool toEndc)
 				token = readIdentifier(c);
 				switch (token) {
 				case T_POP_IF:
-					nIFDepth++;
+					fstk_IncIFDepth();
 					break;
 
 				case T_POP_ELIF:
@@ -1999,10 +1999,10 @@ static int skipIfBlock(bool toEndc)
 						break;
 					/* fallthrough */
 				case T_POP_ENDC:
-					if (nIFDepth == startingDepth)
+					if (fstk_GetIFDepth() == startingDepth)
 						goto finish;
 					if (token == T_POP_ENDC)
-						nIFDepth--;
+						fstk_DecIFDepth();
 				}
 			}
 			atLineStart = false;
@@ -2087,11 +2087,11 @@ static int yylex_SKIP_TO_ENDR(void)
 					break;
 
 				case T_POP_IF:
-					nIFDepth++;
+					fstk_IncIFDepth();
 					break;
 
 				case T_POP_ENDC:
-					nIFDepth--;
+					fstk_DecIFDepth();
 				}
 			}
 			atLineStart = false;

@@ -46,7 +46,7 @@ const size_t cldefine_entrysize = 2 * sizeof(void *);
 char **cldefines;
 
 clock_t nStartClock, nEndClock;
-uint32_t nTotalLines, nIFDepth;
+uint32_t nTotalLines;
 
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
@@ -488,7 +488,6 @@ int main(int argc, char *argv[])
 	nStartClock = clock();
 
 	nTotalLines = 0;
-	nIFDepth = 0;
 	sym_Init(now);
 	sym_SetExportAll(exportall);
 
@@ -501,10 +500,6 @@ int main(int argc, char *argv[])
 		errx(1, "Assembly aborted (%u errors)!", nbErrors);
 	if (dependfile)
 		fclose(dependfile);
-
-	if (nIFDepth != 0)
-		errx(1, "Unterminated IF construct (%" PRIu32 " levels)!",
-		     nIFDepth);
 
 	sect_CheckUnionClosed();
 

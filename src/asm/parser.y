@@ -563,7 +563,7 @@ conditional	: if
 ;
 
 if		: T_POP_IF const T_NEWLINE {
-			nIFDepth++;
+			fstk_IncIFDepth();
 			executeElseBlock = !$2;
 			if (executeElseBlock)
 				lexer_SetMode(LEXER_SKIP_TO_ELIF);
@@ -571,7 +571,7 @@ if		: T_POP_IF const T_NEWLINE {
 ;
 
 elif		: T_POP_ELIF const T_NEWLINE {
-			if (nIFDepth <= 0)
+			if (fstk_GetIFDepth() == 0)
 				fatalerror("Found ELIF outside an IF construct\n");
 
 			if (!executeElseBlock) {
@@ -585,7 +585,7 @@ elif		: T_POP_ELIF const T_NEWLINE {
 ;
 
 else		: T_POP_ELSE T_NEWLINE {
-			if (nIFDepth <= 0)
+			if (fstk_GetIFDepth() == 0)
 				fatalerror("Found ELSE outside an IF construct\n");
 
 			if (!executeElseBlock)
@@ -594,10 +594,10 @@ else		: T_POP_ELSE T_NEWLINE {
 ;
 
 endc		: T_POP_ENDC T_NEWLINE {
-			if (nIFDepth <= 0)
+			if (fstk_GetIFDepth() == 0)
 				fatalerror("Found ENDC outside an IF construct\n");
 
-			nIFDepth--;
+			fstk_DecIFDepth();
 			executeElseBlock = false;
 		}
 ;
