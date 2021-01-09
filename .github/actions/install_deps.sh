@@ -12,3 +12,5 @@ case `echo $1 | cut -d '-' -f 1` in
 esac
 
 bison --version
+make --version
+cmake --version
