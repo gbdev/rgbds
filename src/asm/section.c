@@ -383,24 +383,24 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 {
 	checksection();
 	struct Section *sect = sect_GetSymbolSection();
+	uint16_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != -1) {
-		if ((sym_GetPCValue() - offset) % (1 << alignment))
-			error("Section's fixed address fails required alignment (PC = $%04"
-				PRIx32 ")\n", sym_GetPCValue());
+		if ((sym_GetPCValue() - offset) % alignSize)
+			error("Section's fixed address fails required alignment (PC = $%04" PRIx32
+			      ")\n", sym_GetPCValue());
 	} else if (sect->align != 0) {
-		if ((((sect->alignOfs + curOffset) % (1 << sect->align))
-						- offset) % (1 << alignment)) {
+		if ((((sect->alignOfs + curOffset) % (1 << sect->align)) - offset) % alignSize) {
 			error("Section's alignment fails required alignment (offset from section start = $%04"
 				PRIx32 ")\n", curOffset);
 		} else if (alignment > sect->align) {
 			sect->align = alignment;
-			sect->alignOfs =
-					(offset - curOffset) % (1 << alignment);
+			sect->alignOfs = (offset - curOffset) % alignSize;
 		}
 	} else {
 		sect->align = alignment;
-		sect->alignOfs = offset;
+		// We need `(sect->alignOfs + curOffset) % alignSize == offset
+		sect->alignOfs = (offset - curOffset) % alignSize;
 	}
 }
 
