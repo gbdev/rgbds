@@ -334,7 +334,46 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 	}
 }
 
-#define yyerror(str) error(str "\n")
+void yyerror(char const *str)
+{
+	size_t len = strlen(str);
+	char *buf = malloc(len + 2);
+
+	memcpy(buf, str, len);
+	buf[len] = '\n';
+	buf[len + 1] = '\0';
+	error(buf);
+	free(buf);
+}
+
+/*
+ * The default 'yytnamerr' implementation strips the added double quotes
+ * from token names only if they do not contain quotes themselves.
+ * This strips them in all cases.
+ */
+static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
+{
+	size_t n = strlen(yystr);
+
+	if (!yyres)
+		return n;
+
+	if (yystr[0] == '"' && yystr[n-1] == '"') {
+		memcpy(yyres, yystr + 1, n - 2);
+		yyres[n-1] = '\0';
+		return n - 2;
+	}
+
+	strcpy(yyres, yystr);
+	return n;
+}
+
+/* Avoid a "'yystpcpy' defined but not used" error from gcc */
+#ifndef _MSC_VER
+# define yystpcpy stpcpy
+#endif
+
+#define yytnamerr rgbasm_yytnamerr
 
 %}
 
@@ -377,19 +416,29 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %type	<nConstValue>	sectorg
 %type	<sectSpec>	sectattrs
 
-%token	<nConstValue>	T_NUMBER
-%token	<tzString>	T_STRING
+%token	<nConstValue>	T_NUMBER "number"
+%token	<tzString>	T_STRING "string"
 
-%left	T_COMMA
-%left	T_COLON
-%left	T_LBRACK
-%left	T_RBRACK
-%left	T_LPAREN
-%left	T_RPAREN
-%left	T_NEWLINE
+%token	T_COMMA "','"
+%token	T_COLON "':'"
+%token	T_LBRACK "'['" T_RBRACK "']'"
+%token	T_LPAREN "'('" T_RPAREN "')'"
+%token	T_NEWLINE "newline"
+%left	T_COMMA T_COLON T_LBRACK T_RBRACK T_LPAREN T_RPAREN T_NEWLINE
 
+%token	T_OP_LOGICNOT "'!'"
+%token	T_OP_LOGICAND "'&&'" T_OP_LOGICOR "'||'"
+%token	T_OP_LOGICGT "'>'" T_OP_LOGICLT "'<'"
+%token	T_OP_LOGICGE "'>='" T_OP_LOGICLE "'<='"
+%token	T_OP_LOGICNE "'!='" T_OP_LOGICEQU "'=='"
+%token	T_OP_ADD "'+'" T_OP_SUB "'-'"
+%token	T_OP_OR "'|'" T_OP_XOR "'^'" T_OP_AND "'&'"
+%token	T_OP_SHL "'<<'" T_OP_SHR "'>>'"
+%token	T_OP_MUL "'*'" T_OP_DIV "'/'" T_OP_MOD "'%'"
+%token	T_OP_NOT "'~'"
 %left	T_OP_LOGICNOT
-%left	T_OP_LOGICOR T_OP_LOGICAND
+%left	T_OP_LOGICOR
+%left	T_OP_LOGICAND
 %left	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
 %left	T_OP_ADD T_OP_SUB
 %left	T_OP_OR T_OP_XOR T_OP_AND
@@ -399,121 +448,123 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 %left	NEG /* negation -- unary minus */
 
+%token	T_OP_EXP "'**'"
 %left	T_OP_EXP
 
-%left	T_OP_DEF
-%left	T_OP_BANK T_OP_ALIGN
-%left	T_OP_SIN
-%left	T_OP_COS
-%left	T_OP_TAN
-%left	T_OP_ASIN
-%left	T_OP_ACOS
-%left	T_OP_ATAN
-%left	T_OP_ATAN2
-%left	T_OP_FDIV
-%left	T_OP_FMUL
-%left	T_OP_POW
-%left	T_OP_LOG
-%left	T_OP_ROUND
-%left	T_OP_CEIL
-%left	T_OP_FLOOR
+%token	T_OP_DEF "DEF"
+%token	T_OP_BANK "BANK"
+%token	T_OP_ALIGN "ALIGN"
+%token	T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
+%token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
+%token	T_OP_FDIV "FDIV"
+%token	T_OP_FMUL "FMUL"
+%token	T_OP_POW "POW"
+%token	T_OP_LOG "LOG"
+%token	T_OP_ROUND "ROUND"
+%token	T_OP_CEIL "CEIL" T_OP_FLOOR "FLOOR"
+%left	T_OP_DEF T_OP_BANK T_OP_ALIGN
+%left	T_OP_SIN T_OP_COS T_OP_TAN T_OP_ASIN T_OP_ACOS T_OP_ATAN T_OP_ATAN2
+%left	T_OP_FDIV T_OP_FMUL T_OP_POW T_OP_LOG
+%left	T_OP_ROUND T_OP_CEIL T_OP_FLOOR
 
-%token	T_OP_HIGH T_OP_LOW
-%token	T_OP_ISCONST
+%token	T_OP_HIGH "HIGH" T_OP_LOW "LOW"
+%token	T_OP_ISCONST "ISCONST"
 
-%left	T_OP_STRCMP
-%left	T_OP_STRIN
-%left	T_OP_STRRIN
-%left	T_OP_STRSUB
-%left	T_OP_STRLEN
-%left	T_OP_STRCAT
-%left	T_OP_STRUPR
-%left	T_OP_STRLWR
-%left	T_OP_STRRPL
-%left	T_OP_STRFMT
+%token	T_OP_STRCMP "STRCMP"
+%token	T_OP_STRIN "STRIN" T_OP_STRRIN "STRRIN"
+%token	T_OP_STRSUB "STRSUB"
+%token	T_OP_STRLEN "STRLEN"
+%token	T_OP_STRCAT "STRCAT"
+%token	T_OP_STRUPR "STRUPR" T_OP_STRLWR "STRLWR"
+%token	T_OP_STRRPL "STRRPL"
+%token	T_OP_STRFMT "STRFMT"
+%left	T_OP_STRCMP T_OP_STRIN T_OP_STRRIN T_OP_STRSUB T_OP_STRLEN T_OP_STRCAT
+%left	T_OP_STRUPR T_OP_STRLWR T_OP_STRRPL T_OP_STRFMT
 
-%token	<tzSym> T_LABEL
-%token	<tzSym> T_ID
-%token	<tzSym> T_LOCAL_ID
-%token	<tzSym> T_ANON
+%token	<tzSym> T_LABEL "label"
+%token	<tzSym> T_ID "identifier"
+%token	<tzSym> T_LOCAL_ID "local identifier"
+%token	<tzSym> T_ANON "anonymous label"
 %type	<tzSym> scoped_id
 %type	<tzSym> scoped_anon_id
-%token	T_POP_EQU
-%token	T_POP_SET
-%token	T_POP_EQUAL
-%token	T_POP_EQUS
+%token	T_POP_EQU "EQU"
+%token	T_POP_SET "SET"
+%token	T_POP_EQUAL "'='"
+%token	T_POP_EQUS "EQUS"
 
-%token	T_POP_INCLUDE T_POP_PRINT T_POP_PRINTLN T_POP_PRINTF T_POP_PRINTT T_POP_PRINTV T_POP_PRINTI
-%token	T_POP_IF T_POP_ELIF T_POP_ELSE T_POP_ENDC
-%token	T_POP_EXPORT T_POP_GLOBAL T_POP_XDEF
-%token	T_POP_DB T_POP_DS T_POP_DW T_POP_DL
-%token	T_POP_SECTION T_POP_FRAGMENT
-%token	T_POP_RB
-%token	T_POP_RW
-// There is no T_POP_RL, only T_Z80_RL
-%token	T_POP_MACRO
-%token	T_POP_ENDM
-%token	T_POP_RSRESET T_POP_RSSET
-%token	T_POP_UNION T_POP_NEXTU T_POP_ENDU
-%token	T_POP_INCBIN T_POP_REPT T_POP_FOR
-%token	T_POP_CHARMAP
-%token	T_POP_NEWCHARMAP
-%token	T_POP_SETCHARMAP
-%token	T_POP_PUSHC
-%token	T_POP_POPC
-%token	T_POP_SHIFT
-%token	T_POP_ENDR
-%token	T_POP_BREAK
-%token	T_POP_LOAD T_POP_ENDL
-%token	T_POP_FAIL
-%token	T_POP_WARN
-%token	T_POP_FATAL
-%token	T_POP_ASSERT T_POP_STATIC_ASSERT
-%token	T_POP_PURGE
-%token	T_POP_REDEF
-%token	T_POP_POPS
-%token	T_POP_PUSHS
-%token	T_POP_POPO
-%token	T_POP_PUSHO
-%token	T_POP_OPT
-%token	T_SECT_WRAM0 T_SECT_VRAM T_SECT_ROMX T_SECT_ROM0 T_SECT_HRAM
-%token	T_SECT_WRAMX T_SECT_SRAM T_SECT_OAM
+%token	T_POP_INCLUDE "INCLUDE"
+%token	T_POP_PRINT "PRINT" T_POP_PRINTLN "PRINTLN"
+%token	T_POP_PRINTF "PRINTF" T_POP_PRINTT "PRINTT" T_POP_PRINTV "PRINTV" T_POP_PRINTI "PRINTI"
+%token	T_POP_IF "IF" T_POP_ELIF "ELIF" T_POP_ELSE "ELSE" T_POP_ENDC "ENDC"
+%token	T_POP_EXPORT "EXPORT" T_POP_GLOBAL "GLOBAL" T_POP_XDEF "XDEF"
+%token	T_POP_DB "DB" T_POP_DS "DS" T_POP_DW "DW" T_POP_DL "DL"
+%token	T_POP_SECTION "SECTION" T_POP_FRAGMENT "FRAGMENT"
+%token	T_POP_RB "RB" T_POP_RW "RW" // There is no T_POP_RL, only T_Z80_RL
+%token	T_POP_MACRO "MACRO"
+%token	T_POP_ENDM "ENDM"
+%token	T_POP_RSRESET "RSRESET" T_POP_RSSET "RSSET"
+%token	T_POP_UNION "UNION" T_POP_NEXTU "NEXTU" T_POP_ENDU "ENDU"
+%token	T_POP_INCBIN "INCBIN" T_POP_REPT "REPT" T_POP_FOR "FOR"
+%token	T_POP_CHARMAP "CHARMAP"
+%token	T_POP_NEWCHARMAP "NEWCHARMAP"
+%token	T_POP_SETCHARMAP "SETCHARMAP"
+%token	T_POP_PUSHC "PUSHC"
+%token	T_POP_POPC "POPC"
+%token	T_POP_SHIFT "SHIFT"
+%token	T_POP_ENDR "ENDR"
+%token	T_POP_BREAK "BREAK"
+%token	T_POP_LOAD "LOAD" T_POP_ENDL "ENDL"
+%token	T_POP_FAIL "FAIL"
+%token	T_POP_WARN "WARN"
+%token	T_POP_FATAL "FATAL"
+%token	T_POP_ASSERT "ASSERT" T_POP_STATIC_ASSERT "STATIC_ASSERT"
+%token	T_POP_PURGE "PURGE"
+%token	T_POP_REDEF "REDEF"
+%token	T_POP_POPS "POPS"
+%token	T_POP_PUSHS "PUSHS"
+%token	T_POP_POPO "POPO"
+%token	T_POP_PUSHO "PUSHO"
+%token	T_POP_OPT "OPT"
+%token	T_SECT_ROM0 "ROM0" T_SECT_ROMX "ROMX"
+%token	T_SECT_WRAM0 "WRAM0" T_SECT_WRAMX "WRAMX" T_SECT_HRAM "HRAM"
+%token	T_SECT_VRAM "VRAM" T_SECT_SRAM "SRAM" T_SECT_OAM "OAM"
 
 %type	<sectMod> sectmod
 %type	<macroArg> macroargs
 
 %type	<forArgs> for_args
 
-%token	T_Z80_ADC T_Z80_ADD T_Z80_AND
-%token	T_Z80_BIT
-%token	T_Z80_CALL T_Z80_CCF T_Z80_CP T_Z80_CPL
-%token	T_Z80_DAA T_Z80_DEC T_Z80_DI
-%token	T_Z80_EI
-%token	T_Z80_HALT
-%token	T_Z80_INC
-%token	T_Z80_JP T_Z80_JR
-%token	T_Z80_LD
-%token	T_Z80_LDI
-%token	T_Z80_LDD
-%token	T_Z80_LDIO
-%token	T_Z80_NOP
-%token	T_Z80_OR
-%token	T_Z80_POP T_Z80_PUSH
-%token	T_Z80_RES T_Z80_RET T_Z80_RETI T_Z80_RST
-%token	T_Z80_RL T_Z80_RLA T_Z80_RLC T_Z80_RLCA
-%token	T_Z80_RR T_Z80_RRA T_Z80_RRC T_Z80_RRCA
-%token	T_Z80_SBC T_Z80_SCF T_Z80_STOP
-%token	T_Z80_SLA T_Z80_SRA T_Z80_SRL T_Z80_SUB T_Z80_SWAP
-%token	T_Z80_XOR
+%token	T_Z80_ADC "'adc'" T_Z80_ADD "'add'" T_Z80_AND "'and'"
+%token	T_Z80_BIT "'bit'"
+%token	T_Z80_CALL "'call'" T_Z80_CCF "'ccf'" T_Z80_CP "'cp'" T_Z80_CPL "'cpl'"
+%token	T_Z80_DAA "'daa'" T_Z80_DEC "'dec'" T_Z80_DI "'di'"
+%token	T_Z80_EI "'ei'"
+%token	T_Z80_HALT "'halt'"
+%token	T_Z80_INC "'inc'"
+%token	T_Z80_JP "'jp'" T_Z80_JR "'jr'"
+%token	T_Z80_LD "'ld'"
+%token	T_Z80_LDI "'ldi'"
+%token	T_Z80_LDD "'ldd'"
+%token	T_Z80_LDH "'ldh'"
+%token	T_Z80_NOP "'nop'"
+%token	T_Z80_OR "'or'"
+%token	T_Z80_POP "'pop'" T_Z80_PUSH "'push'"
+%token	T_Z80_RES "'res'" T_Z80_RET "'ret'" T_Z80_RETI "'reti'" T_Z80_RST "'rst'"
+%token	T_Z80_RL "'rl'" T_Z80_RLA "'rla'" T_Z80_RLC "'rlc'" T_Z80_RLCA "'rlca'"
+%token	T_Z80_RR "'rr'" T_Z80_RRA "'rra'" T_Z80_RRC "'rrc'" T_Z80_RRCA "'rrca'"
+%token	T_Z80_SBC "'sbc'" T_Z80_SCF "'scf'" T_Z80_STOP "'stop'"
+%token	T_Z80_SLA "'sla'" T_Z80_SRA "'sra'" T_Z80_SRL "'srl'" T_Z80_SUB "'sub'"
+%token	T_Z80_SWAP "'swap'"
+%token	T_Z80_XOR "'xor'"
 
-%token	T_TOKEN_A T_TOKEN_B T_TOKEN_C T_TOKEN_D T_TOKEN_E T_TOKEN_H T_TOKEN_L
-%token	T_MODE_AF
-%token	T_MODE_BC
-%token	T_MODE_DE
-%token	T_MODE_SP
-%token	T_MODE_HW_C
-%token	T_MODE_HL T_MODE_HL_DEC T_MODE_HL_INC
-%token	T_CC_NZ T_CC_Z T_CC_NC
+%token	T_TOKEN_A "'a'"
+%token	T_TOKEN_B "'b'" T_TOKEN_C "'c'"
+%token	T_TOKEN_D "'d'" T_TOKEN_E "'e'"
+%token	T_TOKEN_H "'h'" T_TOKEN_L "'l'"
+%token	T_MODE_AF "'af'" T_MODE_BC "'bc'" T_MODE_DE "'de'" T_MODE_SP "'sp'"
+%token	T_MODE_HW_C "'$ff00+c'"
+%token	T_MODE_HL "'hl'" T_MODE_HL_DEC "'hld'/'hl-'" T_MODE_HL_INC "'hli'/'hl+'"
+%token	T_CC_NZ "'nz'" T_CC_Z "'z'" T_CC_NC "'nc'"
 
 %type	<nConstValue>	reg_r
 %type	<nConstValue>	reg_ss
@@ -1626,22 +1677,22 @@ z80_ldd		: T_Z80_LDD T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
 		}
 ;
 
-z80_ldio	: T_Z80_LDIO T_MODE_A T_COMMA op_mem_ind {
+z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
 			out_AbsByte(0xF0);
 			out_RelByte(&$4);
 		}
-		| T_Z80_LDIO op_mem_ind T_COMMA T_MODE_A {
+		| T_Z80_LDH op_mem_ind T_COMMA T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
 			out_AbsByte(0xE0);
 			out_RelByte(&$2);
 		}
-		| T_Z80_LDIO T_MODE_A T_COMMA c_ind {
+		| T_Z80_LDH T_MODE_A T_COMMA c_ind {
 			out_AbsByte(0xF2);
 		}
-		| T_Z80_LDIO c_ind T_COMMA T_MODE_A {
+		| T_Z80_LDH c_ind T_COMMA T_MODE_A {
 			out_AbsByte(0xE2);
 		}
 ;

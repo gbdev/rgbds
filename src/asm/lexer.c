@@ -124,8 +124,8 @@ static struct KeywordMapping {
 	{"LD", T_Z80_LD},
 	{"LDI", T_Z80_LDI},
 	{"LDD", T_Z80_LDD},
-	{"LDIO", T_Z80_LDIO},
-	{"LDH", T_Z80_LDIO},
+	{"LDIO", T_Z80_LDH},
+	{"LDH", T_Z80_LDH},
 	{"NOP", T_Z80_NOP},
 	{"OR", T_Z80_OR},
 	{"POP", T_Z80_POP},
@@ -156,7 +156,7 @@ static struct KeywordMapping {
 	{"NZ", T_CC_NZ},
 	{"Z", T_CC_Z},
 	{"NC", T_CC_NC},
-	/* Handled in list of registers */
+	/* Handled after as T_TOKEN_C */
 	/* { "C", T_CC_C }, */
 
 	{"AF", T_MODE_AF},
@@ -276,11 +276,13 @@ static struct KeywordMapping {
 
 	{"RB", T_POP_RB},
 	{"RW", T_POP_RW},
+	/* Handled before as T_Z80_RL */
+	/* {"RL", T_POP_RL}, */
 	{"EQU", T_POP_EQU},
 	{"EQUS", T_POP_EQUS},
 	{"REDEF", T_POP_REDEF},
 
-	/*  Handled before in list of CPU instructions */
+	/* Handled before as T_Z80_SET */
 	/* {"SET", T_POP_SET}, */
 
 	{"PUSHS", T_POP_PUSHS},

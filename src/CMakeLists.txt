@@ -26,6 +26,14 @@ set(BISON_FLAGS "")
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
   set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
 endif()
+if(BISON_VERSION VERSION_GREATER_EQUAL "3.6")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=detailed")
+elseif(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=verbose")
+endif()
+if(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
+endif()
 BISON_TARGET(PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
              COMPILE_FLAGS "${BISON_FLAGS}"
