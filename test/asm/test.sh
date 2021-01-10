@@ -47,13 +47,26 @@ warning: quote"file.asm(1): [-Wuser]
 EOF
 fi
 
+# Check whether to use '.simple.err' files if they exist
+# (rgbasm with pre-3.0 Bison just reports "syntax error")
+../../rgbasm -Weverything -o $o syntax-error.asm > $output 2> $errput
+cmp syntax-error.err $errput > /dev/null 2> /dev/null
+simple_error=$?
+if [ "$simple_error" -eq 1 ]; then
+	echo "${bold}${orange}Warning: using .simple.err files when available.${rescolors}${resbold}"
+fi
+
 for i in *.asm; do
 	for variant in '' '.pipe'; do
 		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
+		desired_errname=${i%.asm}.err
+		if [ "$simple_error" -eq 1 ] && [ -e ${i%.asm}.simple.err ]; then
+			desired_errname=${i%.asm}.simple.err
+		fi
 		if [ -z "$variant" ]; then
 			../../rgbasm -Weverything -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
-			desired_errput=${i%.asm}.err
+			desired_errput=$desired_errname
 		else
 			# `include-recursion.asm` refers to its own name inside the test code.
 			# Skip testing with stdin input for that file.
@@ -74,7 +87,7 @@ for i in *.asm; do
 			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
 			# Replace the file name with a dash to match changed output
 			sed "s/$subst/<stdin>/g" ${i%.asm}.out > $desired_output
-			sed "s/$subst/<stdin>/g" ${i%.asm}.err > $desired_errput
+			sed "s/$subst/<stdin>/g" $desired_errname > $desired_errput
 		fi
 
 		tryDiff $desired_output $output out

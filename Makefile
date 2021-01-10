@@ -126,11 +126,15 @@ src/asm/parser.c: src/asm/parser.y
 	$QDEFS=; \
 	add_flag(){ \
 		if src/check_bison_ver.sh $$1 $$2; then \
-			DEFS="$$DEFS -D$$3"; \
+			DEFS="-D$$3 $$DEFS"; \
 		fi \
 	}; \
 	add_flag 3 5 api.token.raw=true; \
-	${BISON} -d $$DEFS ${YFLAGS} -o $@ $<
+	add_flag 3 6 parse.error=detailed; \
+	add_flag 3 0 parse.error=verbose; \
+	add_flag 3 0 parse.lac=full; \
+	echo "DEFS=$$DEFS"; \
+	${BISON} $$DEFS -d ${YFLAGS} -o $@ $<
 
 .c.o:
 	$Q${CC} ${REALCFLAGS} ${PNGCFLAGS} -c -o $@ $<
