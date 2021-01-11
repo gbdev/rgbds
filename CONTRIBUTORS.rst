@@ -40,6 +40,8 @@ Other contributors
 
 - Quint Guvernator <quint@guvernator.net>
 
+- Rangi <http://github.com/Rangi42>
+
 - Sanqui <gsanky@gmail.com>
 
 - YamaArashi <shadow962@live.com>
