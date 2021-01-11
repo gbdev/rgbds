@@ -450,7 +450,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 %token	T_POP_SECTION T_POP_FRAGMENT
 %token	T_POP_RB
 %token	T_POP_RW
-%token	T_POP_RL
+// There is no T_POP_RL, only T_Z80_RL
 %token	T_POP_MACRO
 %token	T_POP_ENDM
 %token	T_POP_RSRESET T_POP_RSSET
@@ -864,7 +864,7 @@ rs_uconst	: /* empty */ {
 		| uconst
 ;
 
-rl		: T_LABEL T_POP_RL rs_uconst {
+rl		: T_LABEL T_Z80_RL rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
