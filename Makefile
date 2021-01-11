@@ -133,6 +133,7 @@ src/asm/parser.c: src/asm/parser.y
 	add_flag 3 6 parse.error=detailed; \
 	add_flag 3 0 parse.error=verbose; \
 	add_flag 3 0 parse.lac=full; \
+	add_flag 3 0 lr.type=ielr; \
 	echo "DEFS=$$DEFS"; \
 	${BISON} $$DEFS -d ${YFLAGS} -o $@ $<
 

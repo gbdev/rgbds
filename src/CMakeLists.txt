@@ -33,6 +33,7 @@ elseif(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
 endif()
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
+  set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
 endif()
 BISON_TARGET(PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
