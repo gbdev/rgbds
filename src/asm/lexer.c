@@ -995,10 +995,21 @@ static void discardBlockComment(void)
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;;) {
-		switch (nextChar()) {
+		int c = nextChar();
+
+		switch (c) {
 		case EOF:
 			error("Unterminated block comment\n");
 			goto finish;
+		case '\r':
+			/* Handle CRLF before nextLine() since shiftChars updates colNo */
+			if (peek(0) == '\n')
+				shiftChars(1);
+			/* fallthrough */
+		case '\n':
+			if (!lexerState->expansions || lexerState->expansions->distance)
+				nextLine();
+			continue;
 		case '/':
 			if (peek(0) == '*') {
 				warning(WARNING_NESTED_COMMENT,
@@ -2194,8 +2205,10 @@ static char *startCapture(void)
 	}
 }
 
-void lexer_CaptureRept(char **capture, size_t *size)
+void lexer_CaptureRept(struct CaptureBody *capture)
 {
+	capture->lineNo = lexer_GetLineNo();
+
 	char *captureStart = startCapture();
 	unsigned int level = 0;
 	int c;
@@ -2228,14 +2241,7 @@ void lexer_CaptureRept(char **capture, size_t *size)
 					 * We know we have read exactly "ENDR", not e.g. an EQUS
 					 */
 					lexerState->captureSize -= strlen("ENDR");
-					/* Read (but don't capture) until EOL or EOF */
-					lexerState->capturing = false;
-					do {
-						c = nextChar();
-					} while (c != EOF && c != '\r' && c != '\n');
-					/* Handle Windows CRLF */
-					if (c == '\r' && peek(0) == '\n')
-						shiftChars(1);
+					lexerState->lastToken = T_POP_ENDR; // Force EOL at EOF
 					goto finish;
 				}
 				level--;
@@ -2246,7 +2252,6 @@ void lexer_CaptureRept(char **capture, size_t *size)
 		for (;;) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
-				lexerState->capturing = false;
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
 				if (c == '\r' && peek(0) == '\n')
@@ -2258,76 +2263,72 @@ void lexer_CaptureRept(char **capture, size_t *size)
 	}
 
 finish:
-	assert(!lexerState->capturing);
-	*capture = captureStart;
-	*size = lexerState->captureSize;
+	capture->body = captureStart;
+	capture->size = lexerState->captureSize;
+	lexerState->capturing = false;
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+	lexerState->atLineStart = false;
 }
 
-void lexer_CaptureMacroBody(char **capture, size_t *size)
+void lexer_CaptureMacroBody(struct CaptureBody *capture)
 {
+	capture->lineNo = lexer_GetLineNo();
+
 	char *captureStart = startCapture();
-	int c = peek(0);
+	int c;
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
 	if (lexerState->isMmapped)
 		lexerState->isReferenced = true;
 
 	/*
-	 * Due to parser internals, it does not read the EOL after the T_POP_MACRO before calling
-	 * this. Thus, we need to keep one in the buffer afterwards.
-	 * (Note that this also means the captured buffer begins with a newline and maybe comment)
+	 * Due to parser internals, it reads the EOL after the expression before calling this.
+	 * Thus, we don't need to keep one in the buffer afterwards.
 	 * The following assertion checks that.
 	 */
-	assert(!lexerState->atLineStart);
+	assert(lexerState->atLineStart);
 	for (;;) {
-		/* Just consume characters until EOL or EOF */
-		for (;;) {
-			if (c == EOF) {
-				error("Unterminated macro definition\n");
-				lexerState->capturing = false;
-				goto finish;
-			} else if (c == '\n') {
-				break;
-			} else if (c == '\r') {
-				if (peek(0) == '\n')
-					shiftChars(1);
-				break;
-			}
-			c = nextChar();
-		}
-
-		/* We're at line start, attempt to match a `label: MACRO` line or `ENDM` token */
+		nextLine();
+		/* We're at line start, so attempt to match an `ENDM` token */
 		do { /* Discard initial whitespace */
 			c = nextChar();
 		} while (isWhitespace(c));
 		/* Now, try to match `ENDM` as a **whole** identifier */
 		if (startsIdentifier(c)) {
-			if (readIdentifier(c) == T_POP_ENDM) {
-				/* Read (but don't capture) until EOL or EOF */
-				lexerState->capturing = false;
-				do {
-					c = peek(0);
-					if (c == EOF || c == '\r' || c == '\n')
-						break;
-					shiftChars(1);
-				} while (c != EOF && c != '\r' && c != '\n');
-				/* Handle Windows CRLF */
-				if (c == '\r' && peek(1) == '\n')
-					shiftChars(1);
+			switch (readIdentifier(c)) {
+			case T_POP_ENDM:
+				/*
+				 * The ENDM has been captured, but we don't want it!
+				 * We know we have read exactly "ENDM", not e.g. an EQUS
+				 */
+				lexerState->captureSize -= strlen("ENDM");
+				lexerState->lastToken = T_POP_ENDM; // Force EOL at EOF
 				goto finish;
 			}
 		}
-		nextLine();
+
+		/* Just consume characters until EOL or EOF */
+		for (;;) {
+			if (c == EOF) {
+				error("Unterminated macro definition\n");
+				goto finish;
+			} else if (c == '\n' || c == '\r') {
+				if (c == '\r' && peek(0) == '\n')
+					shiftChars(1);
+				break;
+			}
+			c = nextChar();
+		}
 	}
 
 finish:
-	assert(!lexerState->capturing);
-	*capture = captureStart;
-	*size = lexerState->captureSize - strlen("ENDM");
+	capture->body = captureStart;
+	capture->size = lexerState->captureSize;
+	lexerState->capturing = false;
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+	lexerState->atLineStart = false;
 }

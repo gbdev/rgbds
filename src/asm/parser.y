@@ -36,9 +36,11 @@
 #include "linkdefs.h"
 #include "platform.h" // strncasecmp, strdup
 
-uint32_t nListCountEmpty;
-int32_t nPCOffset;
-bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
+int32_t nPCOffset; /* Read by rpn_Symbol */
+
+static uint32_t nListCountEmpty;
+static bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
+static struct CaptureBody captureBody; /* Captures a REPT/FOR or MACRO */
 
 static void upperstring(char *dest, char const *src)
 {
@@ -596,17 +598,21 @@ line		: label T_NEWLINE
 		| label cpu_command T_NEWLINE
 		| label macro T_NEWLINE
 		| label simple_pseudoop T_NEWLINE
-		| pseudoop T_NEWLINE
-		| conditional /* May not necessarily be followed by a newline, see below */
+		| assignment_pseudoop T_NEWLINE
+		| entire_line /* Commands that manage newlines themselves */
 ;
 
 /*
- * For "logistical" reasons, conditionals must manage newlines themselves.
+ * For "logistical" reasons, these commands must manage newlines themselves.
  * This is because we need to switch the lexer's mode *after* the newline has been read,
  * and to avoid causing some grammar conflicts (token reducing is finicky).
  * This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
  */
-conditional	: if
+entire_line	: macrodef
+		| rept
+		| for
+		| break
+		| if
 		/* It's important that all of these require being at line start for `skipIfBlock` */
 		| elif
 		| else
@@ -699,13 +705,13 @@ macroargs	: /* empty */ {
 		}
 ;
 
-pseudoop	: equ
+/* These commands start with a T_LABEL. */
+assignment_pseudoop	: equ
 		| set
 		| rb
 		| rw
 		| rl
 		| equs
-		| macrodef
 ;
 
 simple_pseudoop : include
@@ -733,10 +739,7 @@ simple_pseudoop : include
 		| pushc
 		| popc
 		| load
-		| rept
-		| for
 		| shift
-		| break
 		| fail
 		| warn
 		| assert
@@ -851,21 +854,18 @@ load		: T_POP_LOAD string T_COMMA sectiontype sectorg sectattrs {
 		| T_POP_ENDL	{ out_EndLoadSection(); }
 ;
 
-rept		: T_POP_REPT uconst {
-			uint32_t nDefinitionLineNo = lexer_GetLineNo();
-			char *body;
-			size_t size;
-			lexer_CaptureRept(&body, &size);
-			fstk_RunRept($2, nDefinitionLineNo, body, size);
+rept		: T_POP_REPT uconst T_NEWLINE {
+			lexer_CaptureRept(&captureBody);
+		} T_NEWLINE {
+			fstk_RunRept($2, captureBody.lineNo, captureBody.body, captureBody.size);
 		}
 ;
 
-for		: T_POP_FOR T_ID T_COMMA for_args {
-			uint32_t nDefinitionLineNo = lexer_GetLineNo();
-			char *body;
-			size_t size;
-			lexer_CaptureRept(&body, &size);
-			fstk_RunFor($2, $4.start, $4.stop, $4.step, nDefinitionLineNo, body, size);
+for		: T_POP_FOR T_ID T_COMMA for_args T_NEWLINE {
+			lexer_CaptureRept(&captureBody);
+		} T_NEWLINE {
+			fstk_RunFor($2, $4.start, $4.stop, $4.step, captureBody.lineNo,
+				    captureBody.body, captureBody.size);
 		}
 
 for_args	: const {
@@ -885,18 +885,16 @@ for_args	: const {
 		}
 ;
 
-break		: T_POP_BREAK		{
+break		: T_POP_BREAK T_NEWLINE {
 			if (fstk_Break())
 				lexer_SetMode(LEXER_SKIP_TO_ENDR);
 		}
 ;
 
-macrodef	: T_LABEL T_COLON T_POP_MACRO {
-			int32_t nDefinitionLineNo = lexer_GetLineNo();
-			char *body;
-			size_t size;
-			lexer_CaptureMacroBody(&body, &size);
-			sym_AddMacro($1, nDefinitionLineNo, body, size);
+macrodef	: T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
+			lexer_CaptureMacroBody(&captureBody);
+		} T_NEWLINE {
+			sym_AddMacro($1, captureBody.lineNo, captureBody.body, captureBody.size);
 		}
 ;
 

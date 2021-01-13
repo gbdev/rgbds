@@ -63,12 +63,18 @@ enum LexerMode {
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 
+struct CaptureBody {
+	uint32_t lineNo;
+	char *body;
+	size_t size;
+};
+
 char const *lexer_GetFileName(void);
 uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
-void lexer_CaptureRept(char **capture, size_t *size);
-void lexer_CaptureMacroBody(char **capture, size_t *size);
+void lexer_CaptureRept(struct CaptureBody *capture);
+void lexer_CaptureMacroBody(struct CaptureBody *capture);
 
 #endif /* RGBDS_ASM_LEXER_H */
