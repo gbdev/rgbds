@@ -7,7 +7,7 @@ jobs:
   unix-testing:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04, macos-10.15]
+        os: [ubuntu-20.04, ubuntu-18.04, macos-11.0, macos-10.15]
         cc: [gcc, clang]
         buildsys: [make, cmake]
         include:
