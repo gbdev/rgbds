@@ -348,35 +348,6 @@ void yyerror(char const *str)
 	free(buf);
 }
 
-/*
- * The default 'yytnamerr' implementation strips the added double quotes
- * from token names only if they do not contain quotes themselves.
- * This strips them in all cases.
- */
-static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
-{
-	size_t n = strlen(yystr);
-
-	if (!yyres)
-		return n;
-
-	if (yystr[0] == '"' && yystr[n-1] == '"') {
-		memcpy(yyres, yystr + 1, n - 2);
-		yyres[n-1] = '\0';
-		return n - 2;
-	}
-
-	strcpy(yyres, yystr);
-	return n;
-}
-
-/* Avoid a "'yystpcpy' defined but not used" error from gcc */
-#ifndef _MSC_VER
-# define yystpcpy stpcpy
-#endif
-
-#define yytnamerr rgbasm_yytnamerr
-
 %}
 
 %union
@@ -421,23 +392,23 @@ static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
 %token	<nConstValue>	T_NUMBER "number"
 %token	<tzString>	T_STRING "string"
 
-%token	T_COMMA "','"
-%token	T_COLON "':'"
-%token	T_LBRACK "'['" T_RBRACK "']'"
-%token	T_LPAREN "'('" T_RPAREN "')'"
+%token	T_COMMA ","
+%token	T_COLON ":"
+%token	T_LBRACK "[" T_RBRACK "]"
+%token	T_LPAREN "(" T_RPAREN ")"
 %token	T_NEWLINE "newline"
 %left	T_COMMA T_COLON T_LBRACK T_RBRACK T_LPAREN T_RPAREN T_NEWLINE
 
-%token	T_OP_LOGICNOT "'!'"
-%token	T_OP_LOGICAND "'&&'" T_OP_LOGICOR "'||'"
-%token	T_OP_LOGICGT "'>'" T_OP_LOGICLT "'<'"
-%token	T_OP_LOGICGE "'>='" T_OP_LOGICLE "'<='"
-%token	T_OP_LOGICNE "'!='" T_OP_LOGICEQU "'=='"
-%token	T_OP_ADD "'+'" T_OP_SUB "'-'"
-%token	T_OP_OR "'|'" T_OP_XOR "'^'" T_OP_AND "'&'"
-%token	T_OP_SHL "'<<'" T_OP_SHR "'>>'"
-%token	T_OP_MUL "'*'" T_OP_DIV "'/'" T_OP_MOD "'%'"
-%token	T_OP_NOT "'~'"
+%token	T_OP_LOGICNOT "!"
+%token	T_OP_LOGICAND "&&" T_OP_LOGICOR "||"
+%token	T_OP_LOGICGT ">" T_OP_LOGICLT "<"
+%token	T_OP_LOGICGE ">=" T_OP_LOGICLE "<="
+%token	T_OP_LOGICNE "!=" T_OP_LOGICEQU "=="
+%token	T_OP_ADD "+" T_OP_SUB "-"
+%token	T_OP_OR "|" T_OP_XOR "^" T_OP_AND "&"
+%token	T_OP_SHL "<<" T_OP_SHR ">>"
+%token	T_OP_MUL "*" T_OP_DIV "/" T_OP_MOD "%"
+%token	T_OP_NOT "~"
 %left	T_OP_LOGICNOT
 %left	T_OP_LOGICOR
 %left	T_OP_LOGICAND
@@ -450,7 +421,7 @@ static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
 
 %left	NEG /* negation -- unary minus */
 
-%token	T_OP_EXP "'**'"
+%token	T_OP_EXP "**"
 %left	T_OP_EXP
 
 %token	T_OP_DEF "DEF"
@@ -491,7 +462,7 @@ static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
 %type	<tzSym> scoped_anon_id
 %token	T_POP_EQU "EQU"
 %token	T_POP_SET "SET"
-%token	T_POP_EQUAL "'='"
+%token	T_POP_EQUAL "="
 %token	T_POP_EQUS "EQUS"
 
 %token	T_POP_INCLUDE "INCLUDE"
@@ -536,37 +507,37 @@ static size_t rgbasm_yytnamerr(char *yyres, const char *yystr)
 
 %type	<forArgs> for_args
 
-%token	T_Z80_ADC "'adc'" T_Z80_ADD "'add'" T_Z80_AND "'and'"
-%token	T_Z80_BIT "'bit'"
-%token	T_Z80_CALL "'call'" T_Z80_CCF "'ccf'" T_Z80_CP "'cp'" T_Z80_CPL "'cpl'"
-%token	T_Z80_DAA "'daa'" T_Z80_DEC "'dec'" T_Z80_DI "'di'"
-%token	T_Z80_EI "'ei'"
-%token	T_Z80_HALT "'halt'"
-%token	T_Z80_INC "'inc'"
-%token	T_Z80_JP "'jp'" T_Z80_JR "'jr'"
-%token	T_Z80_LD "'ld'"
-%token	T_Z80_LDI "'ldi'"
-%token	T_Z80_LDD "'ldd'"
-%token	T_Z80_LDH "'ldh'"
-%token	T_Z80_NOP "'nop'"
-%token	T_Z80_OR "'or'"
-%token	T_Z80_POP "'pop'" T_Z80_PUSH "'push'"
-%token	T_Z80_RES "'res'" T_Z80_RET "'ret'" T_Z80_RETI "'reti'" T_Z80_RST "'rst'"
-%token	T_Z80_RL "'rl'" T_Z80_RLA "'rla'" T_Z80_RLC "'rlc'" T_Z80_RLCA "'rlca'"
-%token	T_Z80_RR "'rr'" T_Z80_RRA "'rra'" T_Z80_RRC "'rrc'" T_Z80_RRCA "'rrca'"
-%token	T_Z80_SBC "'sbc'" T_Z80_SCF "'scf'" T_Z80_STOP "'stop'"
-%token	T_Z80_SLA "'sla'" T_Z80_SRA "'sra'" T_Z80_SRL "'srl'" T_Z80_SUB "'sub'"
-%token	T_Z80_SWAP "'swap'"
-%token	T_Z80_XOR "'xor'"
+%token	T_Z80_ADC "adc" T_Z80_ADD "add" T_Z80_AND "and"
+%token	T_Z80_BIT "bit"
+%token	T_Z80_CALL "call" T_Z80_CCF "ccf" T_Z80_CP "cp" T_Z80_CPL "cpl"
+%token	T_Z80_DAA "daa" T_Z80_DEC "dec" T_Z80_DI "di"
+%token	T_Z80_EI "ei"
+%token	T_Z80_HALT "halt"
+%token	T_Z80_INC "inc"
+%token	T_Z80_JP "jp" T_Z80_JR "jr"
+%token	T_Z80_LD "ld"
+%token	T_Z80_LDI "ldi"
+%token	T_Z80_LDD "ldd"
+%token	T_Z80_LDH "ldh"
+%token	T_Z80_NOP "nop"
+%token	T_Z80_OR "or"
+%token	T_Z80_POP "pop" T_Z80_PUSH "push"
+%token	T_Z80_RES "res" T_Z80_RET "ret" T_Z80_RETI "reti" T_Z80_RST "rst"
+%token	T_Z80_RL "rl" T_Z80_RLA "rla" T_Z80_RLC "rlc" T_Z80_RLCA "rlca"
+%token	T_Z80_RR "rr" T_Z80_RRA "rra" T_Z80_RRC "rrc" T_Z80_RRCA "rrca"
+%token	T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_STOP "stop"
+%token	T_Z80_SLA "sla" T_Z80_SRA "sra" T_Z80_SRL "srl" T_Z80_SUB "sub"
+%token	T_Z80_SWAP "swap"
+%token	T_Z80_XOR "xor"
 
-%token	T_TOKEN_A "'a'"
-%token	T_TOKEN_B "'b'" T_TOKEN_C "'c'"
-%token	T_TOKEN_D "'d'" T_TOKEN_E "'e'"
-%token	T_TOKEN_H "'h'" T_TOKEN_L "'l'"
-%token	T_MODE_AF "'af'" T_MODE_BC "'bc'" T_MODE_DE "'de'" T_MODE_SP "'sp'"
-%token	T_MODE_HW_C "'$ff00+c'"
-%token	T_MODE_HL "'hl'" T_MODE_HL_DEC "'hld'/'hl-'" T_MODE_HL_INC "'hli'/'hl+'"
-%token	T_CC_NZ "'nz'" T_CC_Z "'z'" T_CC_NC "'nc'"
+%token	T_TOKEN_A "a"
+%token	T_TOKEN_B "b" T_TOKEN_C "c"
+%token	T_TOKEN_D "d" T_TOKEN_E "e"
+%token	T_TOKEN_H "h" T_TOKEN_L "l"
+%token	T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp"
+%token	T_MODE_HW_C "$ff00+c"
+%token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
+%token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc"
 
 %type	<nConstValue>	reg_r
 %type	<nConstValue>	reg_ss
