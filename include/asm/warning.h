@@ -18,7 +18,7 @@ enum WarningID {
 	WARNING_BUILTIN_ARG,	      /* Invalid args to builtins */
 	WARNING_CHARMAP_REDEF,        /* Charmap entry re-definition */
 	WARNING_DIV,		      /* Division undefined behavior */
-	WARNING_EMPTY_DATA_DIRECTIVE, /* `db`, `dw` or `dl` with no directive in ROM */
+	WARNING_EMPTY_DATA_DIRECTIVE, /* `db`, `dw` or `dl` directive without data in ROM */
 	WARNING_EMPTY_ENTRY,	      /* Empty entry in `db`, `dw` or `dl` */
 	WARNING_EMPTY_STRRPL,	      /* Empty second argument in `STRRPL` */
 	WARNING_LARGE_CONSTANT,	      /* Constants too large */
