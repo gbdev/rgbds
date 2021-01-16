@@ -16,7 +16,9 @@
 #include "extern/utf8decoder.h"
 
 /*
- * Calculate the hash value for a string
+ * Calculate the hash value for a string.
+ * Uses the djb2 algorithm (xor version).
+ * http://www.cse.yorku.ca/~oz/hash.html
  */
 uint32_t calchash(const char *s)
 {
