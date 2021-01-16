@@ -29,7 +29,7 @@ but any program that processes RGB object files (described in
 .Xr rgbds 5 )
 can be used in its place.
 .Sh SYNTAX
-The syntax is line‐based, just as in any other assembler, meaning that you do one instruction or pseudo‐op per line:
+The syntax is line‐based, just as in any other assembler, meaning that you do one instruction or directive per line:
 .Pp
 .Dl Oo Ar label Oc Oo Ar instruction Oc Oo Ar ;\ comment Oc
 .Pp
@@ -38,7 +38,7 @@ Example:
 John: ld a,87 ;Weee
 .Ed
 .Pp
-All reserved keywords (pseudo‐ops, mnemonics, registers, etc.) are case‐insensitive;
+All reserved keywords (directives, mnemonics, registers, etc.) are case‐insensitive;
 all identifiers (symbol names) are case-sensitive.
 .Pp
 Comments are used to give humans information about the code, such as explanations.

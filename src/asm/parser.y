@@ -508,7 +508,7 @@ void yyerror(char const *str)
 %type	<forArgs> for_args
 
 %token	T_Z80_ADC "adc" T_Z80_ADD "add" T_Z80_AND "and"
-%token	T_Z80_BIT "bit"
+%token	T_Z80_BIT "bit" // There is no T_Z80_SET, only T_POP_SET
 %token	T_Z80_CALL "call" T_Z80_CCF "ccf" T_Z80_CP "cp" T_Z80_CPL "cpl"
 %token	T_Z80_DAA "daa" T_Z80_DEC "dec" T_Z80_DI "di"
 %token	T_Z80_EI "ei"
@@ -537,7 +537,7 @@ void yyerror(char const *str)
 %token	T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp"
 %token	T_MODE_HW_C "$ff00+c"
 %token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
-%token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc"
+%token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
 
 %type	<nConstValue>	reg_r
 %type	<nConstValue>	reg_ss
@@ -568,18 +568,18 @@ lines		: /* empty */
 line		: label T_NEWLINE
 		| label cpu_command T_NEWLINE
 		| label macro T_NEWLINE
-		| label simple_pseudoop T_NEWLINE
-		| assignment_pseudoop T_NEWLINE
-		| entire_line /* Commands that manage newlines themselves */
+		| label directive T_NEWLINE
+		| assignment_directive T_NEWLINE
+		| line_directive /* Directives that manage newlines themselves */
 ;
 
 /*
- * For "logistical" reasons, these commands must manage newlines themselves.
+ * For "logistical" reasons, these directives must manage newlines themselves.
  * This is because we need to switch the lexer's mode *after* the newline has been read,
  * and to avoid causing some grammar conflicts (token reducing is finicky).
  * This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
  */
-entire_line	: macrodef
+line_directive	: macrodef
 		| rept
 		| for
 		| break
@@ -677,7 +677,7 @@ macroargs	: /* empty */ {
 ;
 
 /* These commands start with a T_LABEL. */
-assignment_pseudoop	: equ
+assignment_directive	: equ
 		| set
 		| rb
 		| rw
@@ -685,7 +685,7 @@ assignment_pseudoop	: equ
 		| equs
 ;
 
-simple_pseudoop : include
+directive	: include
 		| print
 		| println
 		| printf
