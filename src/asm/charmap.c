@@ -183,7 +183,7 @@ void charmap_Add(char *mapping, uint8_t value)
 	}
 
 	if (node->isTerminal)
-		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping");
+		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
 
 	node->isTerminal = true;
 	node->value = value;
