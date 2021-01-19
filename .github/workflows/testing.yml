@@ -34,7 +34,7 @@ jobs:
         if: matrix.buildsys == 'make'
       - name: Build & install using CMake
         run: |
-          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmakevars }}
+          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.cc }} ${{ matrix.cmakevars }}
           cmake --build build
           cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build
