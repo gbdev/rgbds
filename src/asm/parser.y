@@ -179,11 +179,13 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 	}
 
 	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
+		// Copy anything before the substring to replace
 		memcpy(dest + i, src, next - src < destLen - i ? next - src : destLen - i);
 		i += next - src;
 		if (i >= destLen)
 			break;
 
+		// Copy the replacement substring
 		memcpy(dest + i, new, newLen < destLen - i ? newLen : destLen - i);
 		i += newLen;
 		if (i >= destLen)
@@ -192,10 +194,13 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 		src = next + oldLen;
 	}
 
-	size_t srcLen = strlen(src);
+	if (i < destLen) {
+		size_t srcLen = strlen(src);
 
-	memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
-	i += srcLen;
+		// Copy anything after the last replaced substring
+		memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
+		i += srcLen;
+	}
 
 	if (i >= destLen) {
 		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
