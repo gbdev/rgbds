@@ -1416,17 +1416,19 @@ static size_t appendStringLiteral(size_t i, bool keepLiteral)
 
 	bool multiline = false;
 
+#define appendIfLiteral(c) do { \
+	if (keepLiteral && i < sizeof(yylval.tzString)) \
+		yylval.tzString[i++] = (c); \
+} while (0)
+
 	// We reach this function after reading a single quote, but we also support triple quotes
-	if (keepLiteral && i < sizeof(yylval.tzString))
-		yylval.tzString[i++] = '"';
+	appendIfLiteral('"');
 	if (peek(0) == '"') {
-		if (keepLiteral && i < sizeof(yylval.tzString))
-			yylval.tzString[i++] = '"';
+		appendIfLiteral('"');
 		shiftChars(1);
 		if (peek(0) == '"') {
 			// """ begins a multi-line string
-			if (keepLiteral && i < sizeof(yylval.tzString))
-				yylval.tzString[i++] = '"';
+			appendIfLiteral('"');
 			shiftChars(1);
 			multiline = true;
 		} else {
@@ -1462,14 +1464,11 @@ static size_t appendStringLiteral(size_t i, bool keepLiteral)
 				// Only """ ends a multi-line string
 				if (peek(0) != '"' || peek(1) != '"')
 					break;
-				if (keepLiteral && i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '"';
-				if (keepLiteral && i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '"';
+				appendIfLiteral('"');
+				appendIfLiteral('"');
 				shiftChars(2);
 			}
-			if (keepLiteral && i < sizeof(yylval.tzString))
-				yylval.tzString[i++] = '"';
+			appendIfLiteral('"');
 			goto finish;
 
 		case '\\': // Character escape or macro arg
@@ -1480,29 +1479,25 @@ static size_t appendStringLiteral(size_t i, bool keepLiteral)
 			case '{':
 			case '}':
 				// Return that character unchanged
-				if (keepLiteral && i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '\\';
+				appendIfLiteral('\\');
 				shiftChars(1);
 				break;
 			case 'n':
 				if (!keepLiteral)
 					c = '\n';
-				else if (i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '\\';
+				appendIfLiteral('\\');
 				shiftChars(1);
 				break;
 			case 'r':
 				if (!keepLiteral)
 					c = '\r';
-				else if (i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '\\';
+				appendIfLiteral('\\');
 				shiftChars(1);
 				break;
 			case 't':
 				if (!keepLiteral)
 					c = '\t';
-				else if (i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = '\\';
+				appendIfLiteral('\\');
 				shiftChars(1);
 				break;
 
@@ -1566,9 +1561,11 @@ static size_t appendStringLiteral(size_t i, bool keepLiteral)
 		// Regular characters will just get copied
 		}
 
-		if (i < sizeof(yylval.tzString)) // Copy one extra to flag overflow
+		if (i < sizeof(yylval.tzString))
 			yylval.tzString[i++] = c;
 	}
+
+#undef appendIfLiteral
 
 finish:
 	if (i == sizeof(yylval.tzString)) {
@@ -1957,6 +1954,7 @@ static int yylex_RAW(void)
 		case '\\': /* Character escape */
 			shiftChars(1); /* Shift the backslash */
 			c = peek(0);
+
 			switch (c) {
 			case ',': /* Escape `\,` only inside a macro arg */
 			case '\\': /* Escapes shared with string literals */
@@ -1995,10 +1993,7 @@ static int yylex_RAW(void)
 				error("Illegal character escape '%s'\n", print(c));
 				break;
 			}
-			if (i < sizeof(yylval.tzString))
-				yylval.tzString[i++] = c;
-			shiftChars(1);
-			break;
+			/* fallthrough */
 
 		default: /* Regular characters will just get copied */
 			if (i < sizeof(yylval.tzString))
