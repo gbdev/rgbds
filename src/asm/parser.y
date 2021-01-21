@@ -1487,22 +1487,11 @@ sectattrs	: %empty {
 			$$.bank = -1;
 		}
 		| sectattrs T_COMMA T_OP_ALIGN T_LBRACK uconst T_RBRACK {
-			if ($5 > 16)
-				error("Alignment must be between 0 and 16, not %u\n", $5);
-			else
-				$$.alignment = $5;
+			$$.alignment = $5;
 		}
 		| sectattrs T_COMMA T_OP_ALIGN T_LBRACK uconst T_COMMA uconst T_RBRACK {
-			if ($5 > 16) {
-				error("Alignment must be between 0 and 16, not %u\n", $5);
-			} else {
-				$$.alignment = $5;
-				if ($7 >= 1 << $$.alignment)
-					error("Alignment offset must not be greater than alignment (%u < %u)\n",
-						$7, 1 << $$.alignment);
-				else
-					$$.alignOfs = $7;
-			}
+			$$.alignment = $5;
+			$$.alignOfs = $7;
 		}
 		| sectattrs T_COMMA T_OP_BANK T_LBRACK uconst T_RBRACK {
 			/* We cannot check the validity of this now */

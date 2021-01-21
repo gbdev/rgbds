@@ -1,0 +1,3 @@
+ERROR: fragment-align.asm(25):
+    Section's alignment fails required alignment (offset from section start = $0004)
+error: Assembly aborted (1 errors)!

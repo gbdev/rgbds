@@ -1,10 +1,4 @@
 ERROR: section-union.asm(37):
-    Section "test" already declared as union section
-warning: section-union.asm(37): [-Wobsolete]
-    Concatenation of non-fragment sections is deprecated
-ERROR: section-union.asm(37):
-    Section "test" already declared as fixed at $c000
-ERROR: section-union.asm(37):
-    Section "test" already declared as aligned to 256 bytes
+    Section already declared as union section
 FATAL: section-union.asm(37):
-    Cannot create section "test" (3 errors)
+    Cannot create section "test" (1 error)

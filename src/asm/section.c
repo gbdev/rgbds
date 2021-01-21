@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -98,17 +99,166 @@ struct Section *out_FindSectionByName(const char *name)
 	return NULL;
 }
 
+#define mask(align) ((1U << (align)) - 1)
+#define fail(...) \
+do { \
+	error(__VA_ARGS__); \
+	nbSectErrors++; \
+} while (0)
+
+static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, uint32_t org,
+				   uint8_t alignment, uint16_t alignOffset)
+{
+	assert(alignment < 16); // Should be ensured by the caller
+	unsigned int nbSectErrors = 0;
+
+	/*
+	 * Unionized sections only need "compatible" constraints, and they end up with the strictest
+	 * combination of both.
+	 */
+	if (sect_HasData(type))
+		fail("Cannot declare ROM sections as UNION\n");
+
+	if (org != -1) {
+		/* If both are fixed, they must be the same */
+		if (sect->org != -1 && sect->org != org)
+			fail("Section already declared as fixed at different address $%04"
+			     PRIx32 "\n", sect->org);
+		else if (sect->align != 0 && (mask(sect->align) & (org - sect->alignOfs)))
+			fail("Section already declared as aligned to %u bytes (offset %"
+				   PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
+		else
+			/* Otherwise, just override */
+			sect->org = org;
+
+	} else if (alignment != 0) {
+		/* Make sure any fixed address given is compatible */
+		if (sect->org != -1) {
+			if ((sect->org - alignOffset) & mask(alignment))
+				fail("Section already declared as fixed at incompatible address $%04"
+				     PRIx32 "\n", sect->org);
+		/* Check if alignment offsets are compatible */
+		} else if ((alignOffset & mask(sect->align))
+			   != (sect->alignOfs & mask(alignment))) {
+			fail("Section already declared with incompatible %" PRIu8
+			     "-byte alignment (offset %" PRIu16 ")\n",
+			     sect->align, sect->alignOfs);
+		} else if (alignment > sect->align) {
+			// If the section is not fixed, its alignment is the largest of both
+			sect->align = alignment;
+			sect->alignOfs = alignOffset;
+		}
+	}
+
+	return nbSectErrors;
+}
+
+static unsigned int mergeFragments(struct Section *sect, enum SectionType type, uint32_t org,
+				   uint8_t alignment, uint16_t alignOffset)
+{
+	(void)type;
+	assert(alignment < 16); // Should be ensured by the caller
+	unsigned int nbSectErrors = 0;
+
+	/*
+	 * Fragments only need "compatible" constraints, and they end up with the strictest
+	 * combination of both.
+	 * The merging is however performed at the *end* of the original section!
+	 */
+	if (org != -1) {
+		uint16_t curOrg = org - sect->size;
+
+		/* If both are fixed, they must be the same */
+		if (sect->org != -1 && sect->org != curOrg)
+			fail("Section already declared as fixed at incompatible address $%04"
+			     PRIx32 " (cur addr = %04" PRIx32 ")\n",
+			     sect->org, sect->org + sect->size);
+		else if (sect->align != 0 && (mask(sect->align) & (curOrg - sect->alignOfs)))
+			fail("Section already declared as aligned to %u bytes (offset %"
+			     PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
+		else
+			/* Otherwise, just override */
+			sect->org = curOrg;
+
+	} else if (alignment != 0) {
+		int32_t curOfs = (alignOffset - sect->size) % (1U << alignment);
+
+		if (curOfs < 0)
+			curOfs += 1U << alignment;
+
+		/* Make sure any fixed address given is compatible */
+		if (sect->org != -1) {
+			if ((sect->org - curOfs) & mask(alignment))
+				fail("Section already declared as fixed at incompatible address $%04"
+				     PRIx32 "\n", sect->org);
+		/* Check if alignment offsets are compatible */
+		} else if ((curOfs & mask(sect->align)) != (sect->alignOfs & mask(alignment))) {
+			fail("Section already declared with incompatible %" PRIu8
+			     "-byte alignment (offset %" PRIu16 ")\n",
+			     sect->align, sect->alignOfs);
+		} else if (alignment > sect->align) {
+			// If the section is not fixed, its alignment is the largest of both
+			sect->align = alignment;
+			sect->alignOfs = curOfs;
+		}
+	}
+
+	return nbSectErrors;
+}
+
+static void mergeSections(struct Section *sect, enum SectionType type, uint32_t org, uint32_t bank,
+			  uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod)
+{
+	unsigned int nbSectErrors = 0;
+
+	if (type != sect->type)
+		fail("Section already exists but with type %s\n", typeNames[sect->type]);
+
+	if (sect->modifier != mod) {
+		fail("Section already declared as %s section\n", sectionModNames[sect->modifier]);
+	} else {
+		switch (mod) {
+		case SECTION_UNION:
+		case SECTION_FRAGMENT:
+			nbSectErrors += (mod == SECTION_UNION ? mergeSectUnion : mergeFragments)
+						(sect, type, org, alignment, alignOffset);
+
+			// Common checks
+
+			/* If the section's bank is unspecified, override it */
+			if (sect->bank == -1)
+				sect->bank = bank;
+			/* If both specify a bank, it must be the same one */
+			else if (bank != -1 && sect->bank != bank)
+				fail("Section already declared with different bank %" PRIu32 "\n",
+				     sect->bank);
+			break;
+
+		case SECTION_NORMAL:
+			// TODO: this should report where the section was defined
+			fail("Section already defined previously\n");
+			break;
+		}
+	}
+
+	if (nbSectErrors)
+		fatalerror("Cannot create section \"%s\" (%u error%s)\n",
+			   sect->name, nbSectErrors, nbSectErrors == 1 ? "" : "s");
+}
+
+#undef fail
+
 /*
  * Find a section by name and type. If it doesn't exist, create it
  */
-static struct Section *getSection(char const *name, enum SectionType type,
-				  uint32_t org, struct SectionSpec const *attrs,
-				  enum SectionModifier mod)
+static struct Section *getSection(char const *name, enum SectionType type, uint32_t org,
+				  struct SectionSpec const *attrs, enum SectionModifier mod)
 {
-#define mask(align) ((1 << (align)) - 1)
 	uint32_t bank = attrs->bank;
 	uint8_t alignment = attrs->alignment;
 	uint16_t alignOffset = attrs->alignOfs;
+
+	// First, validate parameters, and normalize them if applicable
 
 	if (bank != -1) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
@@ -116,18 +266,32 @@ static struct Section *getSection(char const *name, enum SectionType type,
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
 		else if (bank < bankranges[type][0]
 		      || bank > bankranges[type][1])
-			error("%s bank value $%" PRIx32 " out of range ($%" PRIx32 " to $%"
+			error("%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04"
 				PRIx32 ")\n", typeNames[type], bank,
 				bankranges[type][0], bankranges[type][1]);
+	} else if (nbbanks(type) == 1) {
+		// If the section type only has a single bank, implicitly force it
+		bank = bankranges[type][0];
 	}
 
 	if (alignOffset >= 1 << alignment) {
-		error("Alignment offset must not be greater than alignment (%" PRIu16 " < %u)\n",
-			alignOffset, 1U << alignment);
+		error("Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
+		      alignOffset, 1U << alignment);
 		alignOffset = 0;
 	}
 
+	if (org != -1) {
+		if (org < startaddr[type] || org > endaddr(type))
+			error("Section \"%s\"'s fixed address %#" PRIx32
+				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
+				name, org, startaddr[type], endaddr(type));
+	}
+
 	if (alignment != 0) {
+		if (alignment > 16) {
+			error("Alignment must be between 0 and 16, not %u\n", alignment);
+			alignment = 16;
+		}
 		/* It doesn't make sense to have both alignment and org set */
 		uint32_t mask = mask(alignment);
 
@@ -139,128 +303,20 @@ static struct Section *getSection(char const *name, enum SectionType type,
 		} else if (startaddr[type] & mask) {
 			error("Section \"%s\"'s alignment cannot be attained in %s\n",
 				name, typeNames[type]);
+		} else if (alignment == 16) {
+			// Treat an alignment of 16 as being fixed at address 0
+			alignment = 0;
+			org = 0;
+			// The address is known to be valid, since the alignment is
 		}
 	}
 
-	if (org != -1) {
-		if (org < startaddr[type] || org > endaddr(type))
-			error("Section \"%s\"'s fixed address %#" PRIx32
-				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
-				name, org, startaddr[type], endaddr(type));
-	}
-
-	if (nbbanks(type) == 1)
-		bank = bankranges[type][0];
+	// Check if another section exists with the same name; merge if yes, otherwise create one
 
 	struct Section *sect = out_FindSectionByName(name);
 
 	if (sect) {
-		unsigned int nbSectErrors = 0;
-#define fail(...) \
-	do { \
-		error(__VA_ARGS__); \
-		nbSectErrors++; \
-	} while (0)
-
-		if (type != sect->type)
-			fail("Section \"%s\" already exists but with type %s\n",
-			     sect->name, typeNames[sect->type]);
-
-		if (sect->modifier != mod)
-			fail("Section \"%s\" already declared as %s section\n",
-			     sect->name, sectionModNames[sect->modifier]);
-		/*
-		 * Normal sections need to have exactly identical constraints;
-		 * but unionized sections only need "compatible" constraints,
-		 * and they end up with the strictest combination of both
-		 */
-		if (mod == SECTION_UNION) {
-			/*
-			 * WARNING: see comment about assumption in
-			 * `EndLoadSection` if modifying the following check!
-			 */
-			if (sect_HasData(type))
-				fail("Cannot declare ROM sections as UNION\n");
-			if (org != -1) {
-				/* If both are fixed, they must be the same */
-				if (sect->org != -1 && sect->org != org)
-					fail("Section \"%s\" already declared as fixed at different address $%"
-					     PRIx32 "\n",
-					     sect->name, sect->org);
-				else if (sect->align != 0
-				      && (mask(sect->align)
-						& (org - sect->alignOfs)))
-					fail("Section \"%s\" already declared as aligned to %u bytes (offset %"
-					     PRIu16 ")\n", sect->name, 1U << sect->align, sect->alignOfs);
-				else
-					/* Otherwise, just override */
-					sect->org = org;
-			} else if (alignment != 0) {
-				/* Make sure any fixed address is compatible */
-				if (sect->org != -1) {
-					if ((sect->org - alignOffset)
-							& mask(alignment))
-						fail("Section \"%s\" already declared as fixed at incompatible address $%"
-						     PRIx32 "\n", sect->name, sect->org);
-				/* Check if alignment offsets are compatible */
-				} else if ((alignOffset & mask(sect->align))
-					!= (sect->alignOfs
-							& mask(alignment))) {
-					fail("Section \"%s\" already declared with incompatible %"
-					     PRIu8 "-byte alignment (offset %" PRIu16 ")\n",
-					     sect->name, sect->align, sect->alignOfs);
-				} else if (alignment > sect->align) {
-					/*
-					 * If the section is not fixed,
-					 * its alignment is the largest of both
-					 */
-					sect->align = alignment;
-					sect->alignOfs = alignOffset;
-				}
-			}
-			/* If the section's bank is unspecified, override it */
-			if (sect->bank == -1)
-				sect->bank = bank;
-			/* If both specify a bank, it must be the same one */
-			else if (bank != -1 && sect->bank != bank)
-				fail("Section \"%s\" already declared with different bank %"
-				     PRIu32 "\n", sect->name, sect->bank);
-		} else { /* Section fragments are handled identically in RGBASM */
-			/* However, concaternating non-fragments will be made an error */
-			if (sect->modifier != SECTION_FRAGMENT || mod != SECTION_FRAGMENT)
-				warning(WARNING_OBSOLETE,
-					"Concatenation of non-fragment sections is deprecated\n");
-
-			if (org != sect->org) {
-				if (sect->org == -1)
-					fail("Section \"%s\" already declared as floating\n",
-					     sect->name);
-				else
-					fail("Section \"%s\" already declared as fixed at $%"
-					     PRIx32 "\n", sect->name, sect->org);
-			}
-			if (bank != sect->bank) {
-				if (sect->bank == -1)
-					fail("Section \"%s\" already declared as floating bank\n",
-					     sect->name);
-				else
-					fail("Section \"%s\" already declared as fixed at bank %"
-					     PRIu32 "\n", sect->name, sect->bank);
-			}
-			if (alignment != sect->align) {
-				if (sect->align == 0)
-					fail("Section \"%s\" already declared as unaligned\n",
-					     sect->name);
-				else
-					fail("Section \"%s\" already declared as aligned to %u bytes\n",
-					     sect->name, 1U << sect->align);
-			}
-		}
-
-		if (nbSectErrors)
-			fatalerror("Cannot create section \"%s\" (%u errors)\n",
-				   sect->name, nbSectErrors);
-#undef fail
+		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
 		return sect;
 	}
 
@@ -279,7 +335,6 @@ static struct Section *getSection(char const *name, enum SectionType type,
 	sect->bank = bank;
 	sect->align = alignment;
 	sect->alignOfs = alignOffset;
-	sect->next = pSectionList;
 	sect->patches = NULL;
 
 	/* It is only needed to allocate memory for ROM sections. */
@@ -294,14 +349,11 @@ static struct Section *getSection(char const *name, enum SectionType type,
 		sect->data = NULL;
 	}
 
-	/*
-	 * Add the new section to the list
-	 * at the beginning because order doesn't matter
-	 */
+	// Add the new section to the list (order doesn't matter)
+	sect->next = pSectionList;
 	pSectionList = sect;
 
 	return sect;
-#undef mask
 }
 
 /*

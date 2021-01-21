@@ -1,6 +1,6 @@
 error: Section "conflicting address" is defined with conflicting addresses $beef and $babe
 ---
 ERROR: <stdin>(16):
-    Section "conflicting address" already declared as fixed at different address $beef
+    Section already declared as fixed at different address $beef
 FATAL: <stdin>(16):
-    Cannot create section "conflicting address" (1 errors)
+    Cannot create section "conflicting address" (1 error)
