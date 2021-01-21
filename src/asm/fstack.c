@@ -506,6 +506,12 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
 }
 
+void fstk_StopRept(void)
+{
+	/* Prevent more iterations */
+	contextStack->nbReptIters = 0;
+}
+
 bool fstk_Break(void)
 {
 	dbgPrint("Breaking out of REPT/FOR\n");
@@ -515,8 +521,7 @@ bool fstk_Break(void)
 		return false;
 	}
 
-	/* Prevent more iterations */
-	contextStack->nbReptIters = 0;
+	fstk_StopRept();
 	return true;
 }
 

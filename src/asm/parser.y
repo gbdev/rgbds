@@ -609,6 +609,9 @@ line		: label T_NEWLINE
 		| label directive T_NEWLINE
 		| assignment_directive T_NEWLINE
 		| line_directive /* Directives that manage newlines themselves */
+		| error T_NEWLINE { /* Continue parsing the next line on a syntax error */
+			fstk_StopRept();
+		}
 ;
 
 /*

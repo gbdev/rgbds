@@ -5,3 +5,5 @@ $8
 sizeof__something equals $1
 sizeof_@something equals $1
 sizeof_#something equals $1
+sizeof_.something equals 
+sizeof_:something equals 
