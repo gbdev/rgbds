@@ -349,6 +349,8 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	section->bank = tmp;
 	tryGetc(byte, file, "%s: Cannot read \"%s\"'s alignment: %s",
 		fileName, section->name);
+	if (byte > 16)
+		byte = 16;
 	section->isAlignFixed = byte != 0;
 	section->alignMask = (1 << byte) - 1;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s",

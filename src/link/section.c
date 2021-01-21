@@ -39,62 +39,123 @@ void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
 	hash_ForEach(sections, forEach, &callbackArg);
 }
 
-static void mergeSections(struct Section *target, struct Section *other, enum SectionModifier mod)
+static void checkSectUnionCompat(struct Section *target, struct Section *other)
 {
-	if (target->type != other->type)
-		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
-		     other->name,
-		     typeNames[target->type], typeNames[other->type]);
 	if (other->isAddressFixed) {
 		if (target->isAddressFixed) {
 			if (target->org != other->org)
-				errx(1, "Section \"%s\" is defined with conflicting addresses $%" PRIx16 " and $%" PRIx16,
+				errx(1, "Section \"%s\" is defined with conflicting addresses $%04"
+				     PRIx16 " and $%04" PRIx16,
 				     other->name, target->org, other->org);
 		} else if (target->isAlignFixed) {
 			if ((other->org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16 "-byte alignment (offset %" PRIu16 ") and address $%" PRIx16,
+				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
+				     "-byte alignment (offset %" PRIu16 ") and address $%04" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
 		}
 		target->isAddressFixed = true;
 		target->org = other->org;
+
 	} else if (other->isAlignFixed) {
 		if (target->isAddressFixed) {
 			if ((target->org - other->alignOfs) & other->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting address $%" PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
+				errx(1, "Section \"%s\" is defined with conflicting address $%04"
+				     PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs)
 				 != (target->alignMask & other->alignOfs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16 "-byte alignment (offset %" PRIu16 ") and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
-			     other->name, target->alignMask + 1,
-			     target->alignOfs, other->alignMask + 1,
-			     other->alignOfs);
-		} else if (!target->isAlignFixed
-			|| (other->alignMask > target->alignMask)) {
+			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
+			     "-byte alignment (offset %" PRIu16 ") and %" PRIu16
+			     "-byte alignment (offset %" PRIu16 ")",
+			     other->name, target->alignMask + 1, target->alignOfs,
+			     other->alignMask + 1, other->alignOfs);
+		} else if (!target->isAlignFixed || (other->alignMask > target->alignMask)) {
 			target->isAlignFixed = true;
 			target->alignMask = other->alignMask;
 		}
 	}
+}
+
+static void checkFragmentCompat(struct Section *target, struct Section *other)
+{
+	if (other->isAddressFixed) {
+		uint16_t org = other->org - target->size;
+
+		if (target->isAddressFixed) {
+			if (target->org != org)
+				errx(1, "Section \"%s\" is defined with conflicting addresses $%04"
+				     PRIx16 " and $%04" PRIx16,
+				     other->name, target->org, other->org);
+
+		} else if (target->isAlignFixed) {
+			if ((org - target->alignOfs) & target->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
+				     "-byte alignment (offset %" PRIu16 ") and address $%04" PRIx16,
+				     other->name, target->alignMask + 1,
+				     target->alignOfs, other->org);
+		}
+		target->isAddressFixed = true;
+		target->org = org;
+
+	} else if (other->isAlignFixed) {
+		int32_t ofs = (other->alignOfs - target->size) % (other->alignMask + 1);
+
+		if (ofs < 0)
+			ofs += other->alignMask + 1;
+
+		if (target->isAddressFixed) {
+			if ((target->org - ofs) & other->alignMask)
+				errx(1, "Section \"%s\" is defined with conflicting address $%04"
+				     PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
+				     other->name, target->org,
+				     other->alignMask + 1, other->alignOfs);
+
+		} else if (target->isAlignFixed
+			&& (other->alignMask & target->alignOfs) != (target->alignMask & ofs)) {
+			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
+			     "-byte alignment (offset %" PRIu16 ") and %" PRIu16
+			     "-byte alignment (offset %" PRIu16 ")",
+			     other->name, target->alignMask + 1, target->alignOfs,
+			     other->alignMask + 1, other->alignOfs);
+
+		} else if (!target->isAlignFixed || (other->alignMask > target->alignMask)) {
+			target->isAlignFixed = true;
+			target->alignMask = other->alignMask;
+			target->alignOfs = ofs;
+		}
+	}
+}
+
+static void mergeSections(struct Section *target, struct Section *other, enum SectionModifier mod)
+{
+	// Common checks
+
+	if (target->type != other->type)
+		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
+		     other->name, typeNames[target->type], typeNames[other->type]);
 
 	if (other->isBankFixed) {
 		if (!target->isBankFixed) {
 			target->isBankFixed = true;
 			target->bank = other->bank;
 		} else if (target->bank != other->bank) {
-			errx(1, "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %" PRIu32,
-			     other->name, target->bank, other->bank);
+			errx(1, "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %"
+			     PRIu32, other->name, target->bank, other->bank);
 		}
 	}
 
 	switch (mod) {
 	case SECTION_UNION:
+		checkSectUnionCompat(target, other);
 		if (other->size > target->size)
 			target->size = other->size;
 		break;
 
 	case SECTION_FRAGMENT:
+		checkFragmentCompat(target, other);
 		target->size += other->size;
 		other->offset = target->size - other->size;
 		if (sect_HasData(target->type)) {
@@ -167,20 +228,20 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		fail("Section \"%s\" has an invalid type.", section->name);
 	if (is32kMode && section->type == SECTTYPE_ROMX) {
 		if (section->isBankFixed && section->bank != 1)
-			fail("%s: ROMX sections must be in bank 1 with option -t.",
+			fail("%s: ROMX sections must be in bank 1 (if any) with option -t",
 			     section->name);
 		else
 			section->type = SECTTYPE_ROM0;
 	}
 	if (isWRA0Mode && section->type == SECTTYPE_WRAMX) {
 		if (section->isBankFixed && section->bank != 1)
-			fail("%s: WRAMX sections must be in bank 1 with options -w or -d.",
+			fail("%s: WRAMX sections must be in bank 1 with options -w or -d",
 			     section->name);
 		else
 			section->type = SECTTYPE_WRAMX;
 	}
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
-		fail("%s: VRAM bank 1 can't be used with option -d.",
+		fail("%s: VRAM bank 1 can't be used with option -d",
 		     section->name);
 
 	/*
@@ -191,17 +252,13 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		section->isAlignFixed = false;
 
 	/* Too large an alignment may not be satisfiable */
-	if (section->isAlignFixed
-	 && (section->alignMask & startaddr[section->type]))
-		fail("%s: %s sections cannot be aligned to $%" PRIx16 " bytes",
-		     section->name, typeNames[section->type],
-		     section->alignMask + 1);
+	if (section->isAlignFixed && (section->alignMask & startaddr[section->type]))
+		fail("%s: %s sections cannot be aligned to $%04" PRIx16 " bytes",
+		     section->name, typeNames[section->type], section->alignMask + 1);
 
-	uint32_t minbank = bankranges[section->type][0],
-		 maxbank = bankranges[section->type][1];
+	uint32_t minbank = bankranges[section->type][0], maxbank = bankranges[section->type][1];
 
-	if (section->isBankFixed && section->bank < minbank
-				 && section->bank > maxbank)
+	if (section->isBankFixed && section->bank < minbank && section->bank > maxbank)
 		fail(minbank == maxbank
 			? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
 			: "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32 " and %" PRIu32,
@@ -219,35 +276,26 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		section->isBankFixed = true;
 	}
 
-	if (section->isAlignFixed) {
-		enum SectionType type = section->type;
-
+	if (section->isAddressFixed) {
 		/* It doesn't make sense to have both org and alignment set */
-		if (section->isAddressFixed) {
-			if (section->org & section->alignMask)
+		if (section->isAlignFixed) {
+			if ((section->org & section->alignMask) != section->alignOfs)
 				fail("Section \"%s\"'s fixed address doesn't match its alignment",
 				     section->name);
 			section->isAlignFixed = false;
-		} else if ((endaddr(type) & section->alignMask)
-			   == startaddr[type]) {
-			section->org = startaddr[type];
-			section->isAlignFixed = false;
-			section->isAddressFixed = true;
 		}
-	}
 
-	if (section->isAddressFixed) {
 		/* Ensure the target address is valid */
 		if (section->org < startaddr[section->type]
 		 || section->org > endaddr(section->type))
-			fail("Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#" PRIx16 "; %#" PRIx16 "]",
-			     section->name, section->org,
+			fail("Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"
+			     PRIx16 "; %#" PRIx16 "]", section->name, section->org,
 			     startaddr[section->type], endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			fail("Section \"%s\"'s end address %#" PRIx16 " is greater than last address %#" PRIx16,
-			     section->name, section->org + section->size,
-			     endaddr(section->type) + 1);
+			fail("Section \"%s\"'s end address %#" PRIx16
+			     " is greater than last address %#" PRIx16, section->name,
+			     section->org + section->size, endaddr(section->type) + 1);
 	}
 
 #undef fail
