@@ -78,6 +78,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size);
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size);
+void fstk_StopRept(void);
 bool fstk_Break(void);
 
 void fstk_Init(char const *mainPath, size_t maxRecursionDepth);
