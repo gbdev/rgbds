@@ -23,6 +23,7 @@
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
+#include "asm/opt.h"
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/symbol.h"
@@ -55,104 +56,10 @@ bool oFailedOnMissingInclude;
 bool oGeneratePhonyDeps;
 char *tzTargetFileName;
 
-/*
- * Option stack
- */
-
-struct sOptions DefaultOptions;
-struct sOptions CurrentOptions;
 bool haltnop;
 bool optimizeloads;
 bool verbose;
 bool warnings; /* True to enable warnings, false to disable them. */
-
-struct sOptionStackEntry {
-	struct sOptions Options;
-	struct sOptionStackEntry *next;
-};
-
-struct sOptionStackEntry *pOptionStack;
-
-void opt_SetCurrentOptions(struct sOptions *opt)
-{
-	CurrentOptions = *opt;
-	lexer_SetGfxDigits(CurrentOptions.gbgfx);
-	lexer_SetBinDigits(CurrentOptions.binary);
-}
-
-void opt_Parse(char *s)
-{
-	struct sOptions newopt;
-
-	newopt = CurrentOptions;
-
-	switch (s[0]) {
-	case 'g':
-		if (strlen(&s[1]) == 4) {
-			newopt.gbgfx[0] = s[1];
-			newopt.gbgfx[1] = s[2];
-			newopt.gbgfx[2] = s[3];
-			newopt.gbgfx[3] = s[4];
-		} else {
-			error("Must specify exactly 4 characters for option 'g'\n");
-		}
-		break;
-	case 'b':
-		if (strlen(&s[1]) == 2) {
-			newopt.binary[0] = s[1];
-			newopt.binary[1] = s[2];
-		} else {
-			error("Must specify exactly 2 characters for option 'b'\n");
-		}
-		break;
-	case 'p':
-		if (strlen(&s[1]) <= 2) {
-			int result;
-			unsigned int fillchar;
-
-			result = sscanf(&s[1], "%x", &fillchar);
-			if (result != EOF && result != 1)
-				error("Invalid argument for option 'z'\n");
-			else
-				newopt.fillchar = fillchar;
-		} else {
-			error("Invalid argument for option 'z'\n");
-		}
-		break;
-	default:
-		error("Unknown option\n");
-		break;
-	}
-
-	opt_SetCurrentOptions(&newopt);
-}
-
-void opt_Push(void)
-{
-	struct sOptionStackEntry *pOpt;
-
-	pOpt = malloc(sizeof(struct sOptionStackEntry));
-
-	if (pOpt == NULL)
-		fatalerror("No memory for option stack\n");
-
-	pOpt->Options = CurrentOptions;
-	pOpt->next = pOptionStack;
-	pOptionStack = pOpt;
-}
-
-void opt_Pop(void)
-{
-	if (pOptionStack == NULL)
-		fatalerror("No entries in the option stack\n");
-
-	struct sOptionStackEntry *pOpt;
-
-	pOpt = pOptionStack;
-	opt_SetCurrentOptions(&(pOpt->Options));
-	pOptionStack = pOpt->next;
-	free(pOpt);
-}
 
 void opt_AddDefine(char *s)
 {
@@ -274,10 +181,8 @@ int main(int argc, char *argv[])
 	int ch;
 	char *ep;
 
-	struct sOptions newopt;
-
 	time_t now = time(NULL);
-	char *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
+	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
 
 	/*
 	 * Support SOURCE_DATE_EPOCH for reproducible builds
@@ -299,66 +204,60 @@ int main(int argc, char *argv[])
 	yydebug = 1;
 #endif
 
+	// Set defaults
+
 	oGeneratePhonyDeps = false;
 	oGeneratedMissingIncludes = false;
 	oFailedOnMissingInclude = false;
 	tzTargetFileName = NULL;
-	uint32_t maxRecursionDepth = 64;
-	size_t nTargetFileNameLen = 0;
 
-	DefaultOptions.gbgfx[0] = '0';
-	DefaultOptions.gbgfx[1] = '1';
-	DefaultOptions.gbgfx[2] = '2';
-	DefaultOptions.gbgfx[3] = '3';
-	DefaultOptions.binary[0] = '0';
-	DefaultOptions.binary[1] = '1';
-	DefaultOptions.fillchar = 0;
+	opt_B("01");
+	opt_G("0123");
+	opt_P(0);
 	optimizeloads = true;
 	haltnop = true;
 	verbose = false;
 	warnings = true;
+	uint32_t maxRecursionDepth = 64;
+	size_t nTargetFileNameLen = 0;
 	bool exportall = false;
 
-	opt_SetCurrentOptions(&DefaultOptions);
-
-	newopt = CurrentOptions;
-
-	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts,
-					   NULL)) != -1) {
+	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
-			if (strlen(optarg) == 2) {
-				newopt.binary[0] = optarg[1];
-				newopt.binary[1] = optarg[2];
-			} else {
+			if (strlen(optarg) == 2)
+				opt_B(&optarg[1]);
+			else
 				errx(1, "Must specify exactly 2 characters for option 'b'");
-			}
 			break;
+
 		case 'D':
 			opt_AddDefine(optarg);
 			break;
+
 		case 'E':
 			exportall = true;
 			break;
+
 		case 'g':
-			if (strlen(optarg) == 4) {
-				newopt.gbgfx[0] = optarg[1];
-				newopt.gbgfx[1] = optarg[2];
-				newopt.gbgfx[2] = optarg[3];
-				newopt.gbgfx[3] = optarg[4];
-			} else {
+			if (strlen(optarg) == 4)
+				opt_G(&optarg[1]);
+			else
 				errx(1, "Must specify exactly 4 characters for option 'g'");
-			}
 			break;
+
 		case 'h':
 			haltnop = false;
 			break;
+
 		case 'i':
 			fstk_AddIncludePath(optarg);
 			break;
+
 		case 'L':
 			optimizeloads = false;
 			break;
+
 		case 'M':
 			if (!strcmp("-", optarg))
 				dependfile = stdout;
@@ -368,34 +267,42 @@ int main(int argc, char *argv[])
 				err(1, "Could not open dependfile %s",
 				    optarg);
 			break;
+
 		case 'o':
 			out_SetFileName(optarg);
 			break;
+
+			unsigned long fill;
 		case 'p':
-			newopt.fillchar = strtoul(optarg, &ep, 0);
+			fill = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'p'");
 
-			if (newopt.fillchar < 0 || newopt.fillchar > 0xFF)
+			if (fill < 0 || fill > 0xFF)
 				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
 
+			opt_P(fill);
 			break;
+
 		case 'r':
 			maxRecursionDepth = strtoul(optarg, &ep, 0);
 
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");
 			break;
+
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
 			exit(0);
 		case 'v':
 			verbose = true;
 			break;
+
 		case 'W':
 			processWarningFlag(optarg);
 			break;
+
 		case 'w':
 			warnings = false;
 			break;
@@ -406,9 +313,11 @@ int main(int argc, char *argv[])
 			case 'G':
 				oGeneratedMissingIncludes = true;
 				break;
+
 			case 'P':
 				oGeneratePhonyDeps = true;
 				break;
+
 			case 'Q':
 			case 'T':
 				if (optind == argc)
@@ -453,10 +362,6 @@ int main(int argc, char *argv[])
 	if (tzTargetFileName == NULL)
 		tzTargetFileName = tzObjectname;
 
-	opt_SetCurrentOptions(&newopt);
-
-	DefaultOptions = CurrentOptions;
-
 	if (argc == optind) {
 		fputs("FATAL: No input files\n", stderr);
 		print_usage();
@@ -486,8 +391,6 @@ int main(int argc, char *argv[])
 
 	opt_ParseDefines();
 	charmap_New("main", NULL);
-
-	opt_SetCurrentOptions(&DefaultOptions);
 
 	if (yyparse() != 0 || nbErrors != 0)
 		errx(1, "Assembly aborted (%u errors)!", nbErrors);

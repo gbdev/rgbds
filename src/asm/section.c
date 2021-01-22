@@ -16,6 +16,8 @@
 #include "extern/err.h"
 #include "platform.h" // strdup
 
+uint8_t fillByte;
+
 struct SectionStackEntry {
 	struct Section *section;
 	char const *scope; /* Section's symbol scope */
@@ -543,7 +545,7 @@ void out_Skip(int32_t skip, bool ds)
 	} else {
 		checkcodesection();
 		while (skip--)
-			writebyte(CurrentOptions.fillchar);
+			writebyte(fillByte);
 	}
 }
 

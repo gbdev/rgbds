@@ -1150,7 +1150,7 @@ static void readFractionalPart(void)
 	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
 }
 
-char const *binDigits;
+char binDigits[2];
 
 static void readBinaryNumber(void)
 {
@@ -1210,7 +1210,7 @@ static void readHexNumber(void)
 	yylval.nConstValue = value;
 }
 
-char const *gfxDigits;
+char gfxDigits[4];
 
 static void readGfxConstant(void)
 {

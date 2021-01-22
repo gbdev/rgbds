@@ -14,6 +14,8 @@
 
 #include "linkdefs.h"
 
+extern uint8_t fillByte;
+
 struct Expression;
 
 struct Section {

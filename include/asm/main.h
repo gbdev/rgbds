@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
+ * Copyright (c) 1997-2021, Carsten Sorensen and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -15,19 +15,6 @@
 
 #include "helpers.h"
 
-struct sOptions {
-	char binary[2];
-	char gbgfx[4];
-	int32_t fillchar;
-};
-
-extern char *tzNewMacro;
-extern uint32_t ulNewMacroSize;
-extern int32_t nGBGfxID;
-extern int32_t nBinaryID;
-
-extern struct sOptions DefaultOptions;
-extern struct sOptions CurrentOptions;
 extern bool haltnop;
 extern bool optimizeloads;
 extern bool verbose;
@@ -38,10 +25,6 @@ extern char *tzTargetFileName;
 extern bool oGeneratedMissingIncludes;
 extern bool oFailedOnMissingInclude;
 extern bool oGeneratePhonyDeps;
-
-void opt_Push(void);
-void opt_Pop(void);
-void opt_Parse(char *s);
 
 /* TODO: are these really needed? */
 #define YY_FATAL_ERROR fatalerror

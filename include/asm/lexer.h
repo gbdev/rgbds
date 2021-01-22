@@ -30,17 +30,21 @@ static inline void lexer_SetStateAtEOL(struct LexerState *state)
 	lexerStateEOL = state;
 }
 
-extern char const *binDigits;
-extern char const *gfxDigits;
+extern char binDigits[2];
+extern char gfxDigits[4];
 
-static inline void lexer_SetBinDigits(char const *digits)
+static inline void lexer_SetBinDigits(char const digits[2])
 {
-	binDigits = digits;
+	binDigits[0] = digits[0];
+	binDigits[1] = digits[1];
 }
 
-static inline void lexer_SetGfxDigits(char const *digits)
+static inline void lexer_SetGfxDigits(char const digits[4])
 {
-	gfxDigits = digits;
+	gfxDigits[0] = digits[0];
+	gfxDigits[1] = digits[1];
+	gfxDigits[2] = digits[2];
+	gfxDigits[3] = digits[3];
 }
 
 /*

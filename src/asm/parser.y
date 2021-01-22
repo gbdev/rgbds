@@ -24,6 +24,7 @@
 #include "asm/macro.h"
 #include "asm/main.h"
 #include "asm/mymath.h"
+#include "asm/opt.h"
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/section.h"

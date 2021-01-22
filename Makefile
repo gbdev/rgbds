@@ -61,6 +61,7 @@ rgbasm_obj := \
 	src/asm/main.o \
 	src/asm/math.o \
 	src/asm/parser.o \
+	src/asm/opt.o \
 	src/asm/output.o \
 	src/asm/rpn.o \
 	src/asm/section.o \
