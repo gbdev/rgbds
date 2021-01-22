@@ -40,12 +40,6 @@
 // Unfortunately, macOS still ships 2.3, which is from 2008...
 int yyparse(void);
 
-size_t cldefines_index;
-size_t cldefines_numindices;
-size_t cldefines_bufsize;
-const size_t cldefine_entrysize = 2 * sizeof(void *);
-char **cldefines;
-
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
 #endif
@@ -60,44 +54,6 @@ bool haltnop;
 bool optimizeloads;
 bool verbose;
 bool warnings; /* True to enable warnings, false to disable them. */
-
-void opt_AddDefine(char *s)
-{
-	char *value, *equals;
-
-	if (cldefines_index >= cldefines_numindices) {
-		/* Check for overflows */
-		if ((cldefines_numindices * 2) < cldefines_numindices)
-			fatalerror("No memory for command line defines\n");
-
-		if ((cldefines_bufsize * 2) < cldefines_bufsize)
-			fatalerror("No memory for command line defines\n");
-
-		cldefines_numindices *= 2;
-		cldefines_bufsize *= 2;
-
-		cldefines = realloc(cldefines, cldefines_bufsize);
-		if (!cldefines)
-			fatalerror("No memory for command line defines\n");
-	}
-	equals = strchr(s, '=');
-	if (equals) {
-		*equals = '\0';
-		value = equals + 1;
-	} else {
-		value = "1";
-	}
-	cldefines[cldefines_index++] = s;
-	cldefines[cldefines_index++] = value;
-}
-
-static void opt_ParseDefines(void)
-{
-	uint32_t i;
-
-	for (i = 0; i < cldefines_index; i += 2)
-		sym_AddString(cldefines[i], cldefines[i + 1]);
-}
 
 /* Escapes Make-special chars from a string */
 static char *make_escape(const char *str)
@@ -193,16 +149,12 @@ int main(int argc, char *argv[])
 
 	dependfile = NULL;
 
-	/* Initial number of allocated elements in array */
-	cldefines_numindices = 32;
-	cldefines_bufsize = cldefines_numindices * cldefine_entrysize;
-	cldefines = malloc(cldefines_bufsize);
-	if (!cldefines)
-		fatalerror("No memory for command line defines\n");
-
 #if defined(YYDEBUG) && YYDEBUG
 	yydebug = 1;
 #endif
+
+	// Perform some init for below
+	sym_Init(now);
 
 	// Set defaults
 
@@ -218,9 +170,9 @@ int main(int argc, char *argv[])
 	haltnop = true;
 	verbose = false;
 	warnings = true;
+	sym_SetExportAll(false);
 	uint32_t maxRecursionDepth = 64;
 	size_t nTargetFileNameLen = 0;
-	bool exportall = false;
 
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -231,12 +183,19 @@ int main(int argc, char *argv[])
 				errx(1, "Must specify exactly 2 characters for option 'b'");
 			break;
 
+			char *equals;
 		case 'D':
-			opt_AddDefine(optarg);
+			equals = strchr(optarg, '=');
+			if (equals) {
+				*equals = '\0';
+				sym_AddString(optarg, equals + 1);
+			} else {
+				sym_AddString(optarg, "1");
+			}
 			break;
 
 		case 'E':
-			exportall = true;
+			sym_SetExportAll(true);
 			break;
 
 		case 'g':
@@ -264,8 +223,7 @@ int main(int argc, char *argv[])
 			else
 				dependfile = fopen(optarg, "w");
 			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s",
-				    optarg);
+				err(1, "Could not open dependfile %s", optarg);
 			break;
 
 		case 'o':
@@ -321,8 +279,7 @@ int main(int argc, char *argv[])
 			case 'Q':
 			case 'T':
 				if (optind == argc)
-					errx(1, "-M%c takes a target file name argument",
-					     depType);
+					errx(1, "-M%c takes a target file name argument", depType);
 				ep = optarg;
 				if (depType == 'Q')
 					ep = make_escape(ep);
@@ -330,22 +287,20 @@ int main(int argc, char *argv[])
 				nTargetFileNameLen += strlen(ep) + 1;
 				if (!tzTargetFileName) {
 					/* On first alloc, make an empty str */
-					tzTargetFileName =
-						malloc(nTargetFileNameLen + 1);
+					tzTargetFileName = malloc(nTargetFileNameLen + 1);
 					if (tzTargetFileName)
 						*tzTargetFileName = '\0';
 				} else {
-					tzTargetFileName =
-						realloc(tzTargetFileName,
-							nTargetFileNameLen + 1);
+					tzTargetFileName = realloc(tzTargetFileName,
+								   nTargetFileNameLen + 1);
 				}
 				if (tzTargetFileName == NULL)
 					err(1, "Cannot append new file to target file list");
 				strcat(tzTargetFileName, ep);
 				if (depType == 'Q')
 					free(ep);
-				char *ptr = tzTargetFileName +
-					strlen(tzTargetFileName);
+				char *ptr = tzTargetFileName + strlen(tzTargetFileName);
+
 				*ptr++ = ' ';
 				*ptr = '\0';
 				break;
@@ -386,10 +341,6 @@ int main(int argc, char *argv[])
 	lexer_Init();
 	fstk_Init(mainFileName, maxRecursionDepth);
 
-	sym_Init(now);
-	sym_SetExportAll(exportall);
-
-	opt_ParseDefines();
 	charmap_New("main", NULL);
 
 	if (yyparse() != 0 || nbErrors != 0)

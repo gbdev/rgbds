@@ -104,6 +104,9 @@ void fstk_DumpCurrent(void)
 
 struct FileStackNode *fstk_GetFileStack(void)
 {
+	if (!contextStack)
+		return NULL;
+
 	struct FileStackNode *node = contextStack->fileInfo;
 
 	/* Mark node and all of its parents as referenced if not already so they don't get freed */

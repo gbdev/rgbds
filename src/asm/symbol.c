@@ -153,10 +153,12 @@ int32_t sym_GetValue(struct Symbol const *sym)
 
 static void dumpFilename(struct Symbol const *sym)
 {
-	if (!sym->src)
-		fputs("<builtin>", stderr);
-	else
+	if (sym->src)
 		fstk_Dump(sym->src, sym->fileLine);
+	else if (sym->fileLine == 0)
+		fputs("<command-line>", stderr);
+	else
+		fputs("<builtin>", stderr);
 }
 
 /*
@@ -165,7 +167,7 @@ static void dumpFilename(struct Symbol const *sym)
 static void setSymbolFilename(struct Symbol *sym)
 {
 	sym->src = fstk_GetFileStack();
-	sym->fileLine = lexer_GetLineNo();
+	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is (NULL, 1) for built-ins
 }
 
 /*
@@ -177,7 +179,7 @@ static void updateSymbolFilename(struct Symbol *sym)
 
 	setSymbolFilename(sym);
 	/* If the old node was referenced, ensure the new one is */
-	if (oldSrc->referenced && oldSrc->ID != -1)
+	if (oldSrc && oldSrc->referenced && oldSrc->ID != -1)
 		out_RegisterNode(sym->src);
 	/* TODO: unref the old node, and use `out_ReplaceNode` instead if deleting it */
 }
@@ -679,7 +681,7 @@ static inline struct Symbol *createBuiltinSymbol(char const *name)
 	sym->isBuiltin = true;
 	sym->hasCallback = true;
 	sym->src = NULL;
-	sym->fileLine = 0;
+	sym->fileLine = 1; // This is 0 for CLI-defined symbols
 	return sym;
 }
 
