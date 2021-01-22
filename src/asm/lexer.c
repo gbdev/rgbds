@@ -218,8 +218,6 @@ static struct KeywordMapping {
 	{"PRINTV", T_POP_PRINTV},
 	{"PRINTF", T_POP_PRINTF},
 	{"EXPORT", T_POP_EXPORT},
-	{"XDEF", T_POP_XDEF},
-	{"GLOBAL", T_POP_GLOBAL},
 	{"DS", T_POP_DS},
 	{"DB", T_POP_DB},
 	{"DW", T_POP_DW},
