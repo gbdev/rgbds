@@ -36,7 +36,7 @@ static uint32_t maxUniqueID = 0;
  * guarantees the size of the buffer will be correct. I was unable to find a
  * better solution, but if you have one, please feel free!
  */
-static char uniqueIDBuf[] = "_" EXPAND_AND_STR(UINT32_MAX);
+static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
 static char *uniqueIDPtr = NULL;
 
 struct MacroArgs *macro_GetCurrentArgs(void)
@@ -61,13 +61,12 @@ void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 {
 #define macArgs (*argPtr)
 	if (macArgs->nbArgs == MAXMACROARGS)
-		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS)
-		      " arguments is allowed\n");
+		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {
 		macArgs->capacity *= 2;
 		/* Check that overflow didn't roll us back */
 		if (macArgs->capacity <= macArgs->nbArgs)
-			fatalerror("Failed to add new macro argument: possible capacity overflow\n");
+			fatalerror("Failed to add new macro argument: capacity overflow\n");
 		macArgs = realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
 		if (!macArgs)
 			fatalerror("Error adding new macro argument: %s\n", strerror(errno));

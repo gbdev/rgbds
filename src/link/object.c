@@ -435,7 +435,7 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 			  char const *fileName, uint32_t i,
 			  struct Section *fileSections[], struct FileStackNode fileNodes[])
 {
-	char assertName[sizeof("Assertion #" EXPAND_AND_STR(UINT32_MAX))];
+	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
