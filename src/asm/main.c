@@ -255,7 +255,7 @@ static void print_usage(void)
 	fputs(
 "Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-"              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file> ...\n"
+"              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file>\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -275,8 +275,6 @@ int main(int argc, char *argv[])
 	char *ep;
 
 	struct sOptions newopt;
-
-	char *tzMainfile;
 
 	time_t now = time(NULL);
 	char *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
@@ -451,8 +449,6 @@ int main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-	argc -= optind;
-	argv += optind;
 
 	if (tzTargetFileName == NULL)
 		tzTargetFileName = tzObjectname;
@@ -461,26 +457,29 @@ int main(int argc, char *argv[])
 
 	DefaultOptions = CurrentOptions;
 
-	if (argc == 0) {
-		fputs("FATAL: no input files\n", stderr);
+	if (argc == optind) {
+		fputs("FATAL: No input files\n", stderr);
+		print_usage();
+	} else if (argc != optind + 1) {
+		fputs("FATAL: More than one input file given\n", stderr);
 		print_usage();
 	}
 
-	tzMainfile = argv[argc - 1];
+	char const *mainFileName = argv[optind];
 
 	if (verbose)
-		printf("Assembling %s\n", tzMainfile);
+		printf("Assembling %s\n", mainFileName);
 
 	if (dependfile) {
 		if (!tzTargetFileName)
-			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT.\n");
+			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT\n");
 
-		fprintf(dependfile, "%s: %s\n", tzTargetFileName, tzMainfile);
+		fprintf(dependfile, "%s: %s\n", tzTargetFileName, mainFileName);
 	}
 
 	/* Init file stack; important to do first, since it provides the file name, line, etc */
 	lexer_Init();
-	fstk_Init(tzMainfile, maxRecursionDepth);
+	fstk_Init(mainFileName, maxRecursionDepth);
 
 	sym_Init(now);
 	sym_SetExportAll(exportall);
