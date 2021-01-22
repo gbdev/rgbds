@@ -565,9 +565,7 @@ lines		: /* empty */
 		| lines {
 			nListCountEmpty = 0;
 			nPCOffset = 0;
-		} line {
-			nTotalLines++;
-		}
+		} line
 ;
 
 line		: label T_NEWLINE

@@ -45,9 +45,6 @@ size_t cldefines_bufsize;
 const size_t cldefine_entrysize = 2 * sizeof(void *);
 char **cldefines;
 
-clock_t nStartClock, nEndClock;
-uint32_t nTotalLines;
-
 #if defined(YYDEBUG) && YYDEBUG
 extern int yydebug;
 #endif
@@ -485,9 +482,6 @@ int main(int argc, char *argv[])
 	lexer_Init();
 	fstk_Init(tzMainfile, maxRecursionDepth);
 
-	nStartClock = clock();
-
-	nTotalLines = 0;
 	sym_Init(now);
 	sym_SetExportAll(exportall);
 
@@ -502,22 +496,6 @@ int main(int argc, char *argv[])
 		fclose(dependfile);
 
 	sect_CheckUnionClosed();
-
-	double timespent;
-
-	nEndClock = clock();
-	timespent = ((double)(nEndClock - nStartClock))
-		     / (double)CLOCKS_PER_SEC;
-	if (verbose) {
-		printf("Success! %" PRIu32 " lines in %d.%02d seconds ",
-		       nTotalLines, (int)timespent,
-		       ((int)(timespent * 100.0)) % 100);
-		if (timespent < FLT_MIN_EXP)
-			printf("(INFINITY lines/minute)\n");
-		else
-			printf("(%d lines/minute)\n",
-			       (int)(60 / timespent * nTotalLines));
-	}
 
 	if (oFailedOnMissingInclude)
 		return 0;
