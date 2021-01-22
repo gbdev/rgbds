@@ -15,10 +15,11 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "asm/asm.h"
 #include "asm/main.h"
+#include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/section.h"
 #include "asm/symbol.h"

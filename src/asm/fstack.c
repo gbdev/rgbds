@@ -21,6 +21,8 @@
 #include "asm/warning.h"
 #include "platform.h" /* S_ISDIR (stat macro) */
 
+#define MAXINCPATHS 128
+
 #ifdef LEXER_DEBUG
   #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
 #else

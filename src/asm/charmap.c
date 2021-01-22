@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "asm/asm.h"
 #include "asm/charmap.h"
 #include "asm/main.h"
 #include "asm/output.h"

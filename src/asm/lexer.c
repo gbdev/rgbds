@@ -27,7 +27,6 @@
 #include "extern/utf8decoder.h"
 #include "platform.h" /* For `ssize_t` */
 
-#include "asm/asm.h"
 #include "asm/lexer.h"
 #include "asm/format.h"
 #include "asm/fstack.h"

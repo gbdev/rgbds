@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/asm.h"
 #include "asm/charmap.h"
 #include "asm/format.h"
 #include "asm/fstack.h"
@@ -353,6 +352,41 @@ void yyerror(char const *str)
 	error(buf);
 	free(buf);
 }
+
+// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
+// These enums thus help with bit twiddling to compute opcodes
+enum {
+	REG_B = 0,
+	REG_C,
+	REG_D,
+	REG_E,
+	REG_H,
+	REG_L,
+	REG_HL_IND,
+	REG_A
+};
+
+enum {
+	REG_BC_IND = 0,
+	REG_DE_IND,
+	REG_HL_INDINC,
+	REG_HL_INDDEC,
+};
+
+enum {
+	REG_BC = 0,
+	REG_DE = 1,
+	REG_HL = 2,
+	REG_SP = 3,
+	REG_AF = 3
+};
+
+enum {
+	CC_NZ = 0,
+	CC_Z,
+	CC_NC,
+	CC_C
+};
 
 %}
 

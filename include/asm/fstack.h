@@ -13,10 +13,10 @@
 #ifndef RGBDS_ASM_FSTACK_H
 #define RGBDS_ASM_FSTACK_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#include "asm/asm.h"
 #include "asm/lexer.h"
 
 #include "types.h"

@@ -18,7 +18,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "asm/asm.h"
 #include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"

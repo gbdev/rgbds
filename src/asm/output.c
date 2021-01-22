@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/asm.h"
 #include "asm/charmap.h"
 #include "asm/fstack.h"
 #include "asm/main.h"

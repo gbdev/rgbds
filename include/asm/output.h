@@ -14,6 +14,7 @@
 #include "linkdefs.h"
 
 struct Expression;
+struct FileStackNode;
 
 extern char *tzObjectname;
 extern struct Section *pSectionList, *pCurrentSection;

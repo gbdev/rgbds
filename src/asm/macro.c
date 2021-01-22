@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/asm.h"
 #include "asm/macro.h"
 #include "asm/warning.h"
+
+#define MAXMACROARGS 99999
 
 /*
  * Your average macro invocation does not go past the tens, but some go further
