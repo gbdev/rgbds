@@ -50,6 +50,7 @@ set(rgbasm_src
     "asm/macro.c"
     "asm/main.c"
     "asm/math.c"
+    "asm/opt.c"
     "asm/output.c"
     "asm/rpn.c"
     "asm/section.c"
