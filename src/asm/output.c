@@ -69,7 +69,7 @@ static struct FileStackNode *fileStackNodes = NULL;
 /*
  * Count the number of sections used in this object
  */
-static uint32_t countsections(void)
+static uint32_t countSections(void)
 {
 	uint32_t count = 0;
 
@@ -82,7 +82,7 @@ static uint32_t countsections(void)
 /*
  * Count the number of patches used in this object
  */
-static uint32_t countpatches(struct Section const *sect)
+static uint32_t countPatches(struct Section const *sect)
 {
 	uint32_t r = 0;
 
@@ -96,7 +96,7 @@ static uint32_t countpatches(struct Section const *sect)
 /**
  * Count the number of assertions used in this object
  */
-static uint32_t countasserts(void)
+static uint32_t countAsserts(void)
 {
 	struct Assertion *assert = assertions;
 	uint32_t count = 0;
@@ -111,22 +111,22 @@ static uint32_t countasserts(void)
 /*
  * Write a long to a file (little-endian)
  */
-static void fputlong(uint32_t i, FILE *f)
+static void putlong(uint32_t i, FILE *f)
 {
-	fputc(i, f);
-	fputc(i >> 8, f);
-	fputc(i >> 16, f);
-	fputc(i >> 24, f);
+	putc(i, f);
+	putc(i >> 8, f);
+	putc(i >> 16, f);
+	putc(i >> 24, f);
 }
 
 /*
  * Write a NULL-terminated string to a file
  */
-static void fputstring(char const *s, FILE *f)
+static void putstring(char const *s, FILE *f)
 {
 	while (*s)
-		fputc(*s++, f);
-	fputc(0, f);
+		putc(*s++, f);
+	putc(0, f);
 }
 
 static uint32_t getNbFileStackNodes(void)
@@ -205,13 +205,13 @@ static void writepatch(struct Patch const *patch, FILE *f)
 {
 	assert(patch->src->ID != -1);
 
-	fputlong(patch->src->ID, f);
-	fputlong(patch->lineNo, f);
-	fputlong(patch->nOffset, f);
-	fputlong(getSectIDIfAny(patch->pcSection), f);
-	fputlong(patch->pcOffset, f);
-	fputc(patch->type, f);
-	fputlong(patch->nRPNSize, f);
+	putlong(patch->src->ID, f);
+	putlong(patch->lineNo, f);
+	putlong(patch->nOffset, f);
+	putlong(getSectIDIfAny(patch->pcSection), f);
+	putlong(patch->pcOffset, f);
+	putc(patch->type, f);
+	putlong(patch->nRPNSize, f);
 	fwrite(patch->pRPN, 1, patch->nRPNSize, f);
 }
 
@@ -220,23 +220,23 @@ static void writepatch(struct Patch const *patch, FILE *f)
  */
 static void writesection(struct Section const *sect, FILE *f)
 {
-	fputstring(sect->name, f);
+	putstring(sect->name, f);
 
-	fputlong(sect->size, f);
+	putlong(sect->size, f);
 
 	bool isUnion = sect->modifier == SECTION_UNION;
 	bool isFragment = sect->modifier == SECTION_FRAGMENT;
 
-	fputc(sect->type | isUnion << 7 | isFragment << 6, f);
+	putc(sect->type | isUnion << 7 | isFragment << 6, f);
 
-	fputlong(sect->org, f);
-	fputlong(sect->bank, f);
-	fputc(sect->align, f);
-	fputlong(sect->alignOfs, f);
+	putlong(sect->org, f);
+	putlong(sect->bank, f);
+	putc(sect->align, f);
+	putlong(sect->alignOfs, f);
 
 	if (sect_HasData(sect->type)) {
 		fwrite(sect->data, 1, sect->size, f);
-		fputlong(countpatches(sect), f);
+		putlong(countPatches(sect), f);
 
 		for (struct Patch const *patch = sect->patches; patch != NULL;
 		     patch = patch->next)
@@ -249,17 +249,17 @@ static void writesection(struct Section const *sect, FILE *f)
  */
 static void writesymbol(struct Symbol const *sym, FILE *f)
 {
-	fputstring(sym->name, f);
+	putstring(sym->name, f);
 	if (!sym_IsDefined(sym)) {
-		fputc(SYMTYPE_IMPORT, f);
+		putc(SYMTYPE_IMPORT, f);
 	} else {
 		assert(sym->src->ID != -1);
 
-		fputc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
-		fputlong(sym->src->ID, f);
-		fputlong(sym->fileLine, f);
-		fputlong(getSectIDIfAny(sym_GetSection(sym)), f);
-		fputlong(sym->value, f);
+		putc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
+		putlong(sym->src->ID, f);
+		putlong(sym->fileLine, f);
+		putlong(getSectIDIfAny(sym_GetSection(sym)), f);
+		putlong(sym->value, f);
 	}
 }
 
@@ -446,23 +446,23 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 static void writeassert(struct Assertion *assert, FILE *f)
 {
 	writepatch(assert->patch, f);
-	fputstring(assert->message, f);
+	putstring(assert->message, f);
 }
 
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 {
-	fputlong(node->parent ? node->parent->ID : -1, f);
-	fputlong(node->lineNo, f);
-	fputc(node->type, f);
+	putlong(node->parent ? node->parent->ID : -1, f);
+	putlong(node->lineNo, f);
+	putc(node->type, f);
 	if (node->type != NODE_REPT) {
-		fputstring(((struct FileStackNamedNode const *)node)->name, f);
+		putstring(((struct FileStackNamedNode const *)node)->name, f);
 	} else {
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
-		fputlong(reptNode->reptDepth, f);
+		putlong(reptNode->reptDepth, f);
 		/* Iters are stored by decreasing depth, so reverse the order for output */
 		for (uint32_t i = reptNode->reptDepth; i--; )
-			fputlong(reptNode->iters[i], f);
+			putlong(reptNode->iters[i], f);
 	}
 }
 
@@ -492,12 +492,12 @@ void out_WriteObject(void)
 	sym_ForEach(registerExportedSymbol, NULL);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
-	fputlong(RGBDS_OBJECT_REV, f);
+	putlong(RGBDS_OBJECT_REV, f);
 
-	fputlong(nbSymbols, f);
-	fputlong(countsections(), f);
+	putlong(nbSymbols, f);
+	putlong(countSections(), f);
 
-	fputlong(getNbFileStackNodes(), f);
+	putlong(getNbFileStackNodes(), f);
 	for (struct FileStackNode const *node = fileStackNodes; node; node = node->next) {
 		writeFileStackNode(node, f);
 		if (node->next && node->next->ID != node->ID - 1)
@@ -512,7 +512,7 @@ void out_WriteObject(void)
 	for (struct Section *sect = pSectionList; sect; sect = sect->next)
 		writesection(sect, f);
 
-	fputlong(countasserts(), f);
+	putlong(countAsserts(), f);
 	for (struct Assertion *assert = assertions; assert;
 	     assert = assert->next)
 		writeassert(assert, f);
