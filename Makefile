@@ -43,7 +43,7 @@ LDFLAGS		?=
 REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
 		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
-YFLAGS		?=
+YFLAGS		?= -Wall
 
 BISON		:= bison
 RM		:= rm -rf

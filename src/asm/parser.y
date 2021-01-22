@@ -437,7 +437,6 @@ enum {
 %token	T_LBRACK "[" T_RBRACK "]"
 %token	T_LPAREN "(" T_RPAREN ")"
 %token	T_NEWLINE "newline"
-%left	T_COMMA T_COLON T_LBRACK T_RBRACK T_LPAREN T_RPAREN T_NEWLINE
 
 %token	T_OP_LOGICNOT "!"
 %token	T_OP_LOGICAND "&&" T_OP_LOGICOR "||"
@@ -449,7 +448,6 @@ enum {
 %token	T_OP_SHL "<<" T_OP_SHR ">>"
 %token	T_OP_MUL "*" T_OP_DIV "/" T_OP_MOD "%"
 %token	T_OP_NOT "~"
-%left	T_OP_LOGICNOT
 %left	T_OP_LOGICOR
 %left	T_OP_LOGICAND
 %left	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
@@ -457,9 +455,8 @@ enum {
 %left	T_OP_OR T_OP_XOR T_OP_AND
 %left	T_OP_SHL T_OP_SHR
 %left	T_OP_MUL T_OP_DIV T_OP_MOD
-%left	T_OP_NOT
 
-%left	NEG /* negation -- unary minus */
+%precedence	NEG /* negation -- unary minus */
 
 %token	T_OP_EXP "**"
 %left	T_OP_EXP
@@ -475,10 +472,6 @@ enum {
 %token	T_OP_LOG "LOG"
 %token	T_OP_ROUND "ROUND"
 %token	T_OP_CEIL "CEIL" T_OP_FLOOR "FLOOR"
-%left	T_OP_DEF T_OP_BANK T_OP_ALIGN
-%left	T_OP_SIN T_OP_COS T_OP_TAN T_OP_ASIN T_OP_ACOS T_OP_ATAN T_OP_ATAN2
-%left	T_OP_FDIV T_OP_FMUL T_OP_POW T_OP_LOG
-%left	T_OP_ROUND T_OP_CEIL T_OP_FLOOR
 
 %token	T_OP_HIGH "HIGH" T_OP_LOW "LOW"
 %token	T_OP_ISCONST "ISCONST"
@@ -491,8 +484,6 @@ enum {
 %token	T_OP_STRUPR "STRUPR" T_OP_STRLWR "STRLWR"
 %token	T_OP_STRRPL "STRRPL"
 %token	T_OP_STRFMT "STRFMT"
-%left	T_OP_STRCMP T_OP_STRIN T_OP_STRRIN T_OP_STRSUB T_OP_STRLEN T_OP_STRCAT
-%left	T_OP_STRUPR T_OP_STRLWR T_OP_STRRPL T_OP_STRFMT
 
 %token	<tzSym> T_LABEL "label"
 %token	<tzSym> T_ID "identifier"
@@ -596,7 +587,7 @@ enum {
 asmfile		: lines;
 
 /* Note: The lexer adds T_NEWLINE at the end of the input */
-lines		: /* empty */
+lines		: %empty
 		| lines {
 			nListCountEmpty = 0;
 			nPCOffset = 0;
@@ -674,7 +665,7 @@ endc		: T_POP_ENDC T_NEWLINE {
 scoped_id	: T_ID | T_LOCAL_ID;
 scoped_anon_id	: scoped_id | T_ANON;
 
-label		: /* empty */
+label		: %empty
 		| T_COLON {
 			sym_AddAnonLabel();
 		}
@@ -705,7 +696,7 @@ macro		: T_ID {
 		}
 ;
 
-macroargs	: /* empty */ {
+macroargs	: %empty {
 			$$ = macro_NewArgs();
 		}
 		| T_STRING {
@@ -814,7 +805,7 @@ fail		: T_POP_FAIL string	{ fatalerror("%s\n", $2); }
 warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s\n", $2); }
 ;
 
-assert_type	: /* empty */		{ $$ = ASSERT_ERROR; }
+assert_type	: %empty		{ $$ = ASSERT_ERROR; }
 		| T_POP_WARN T_COMMA	{ $$ = ASSERT_WARN; }
 		| T_POP_FAIL T_COMMA	{ $$ = ASSERT_ERROR; }
 		| T_POP_FATAL T_COMMA	{ $$ = ASSERT_FATAL; }
@@ -919,7 +910,7 @@ rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
 rsreset		: T_POP_RSRESET	{ sym_AddSet("_RS", 0); }
 ;
 
-rs_uconst	: /* empty */ {
+rs_uconst	: %empty {
 			$$ = 1;
 		}
 		| uconst
@@ -1122,7 +1113,7 @@ constlist_8bit	: constlist_8bit_entry
 		| constlist_8bit T_COMMA constlist_8bit_entry
 ;
 
-constlist_8bit_entry : /* empty */ {
+constlist_8bit_entry : %empty {
 			out_Skip(1, false);
 			nListCountEmpty++;
 		}
@@ -1140,7 +1131,7 @@ constlist_16bit : constlist_16bit_entry
 		| constlist_16bit T_COMMA constlist_16bit_entry
 ;
 
-constlist_16bit_entry : /* empty */ {
+constlist_16bit_entry : %empty {
 			out_Skip(2, false);
 			nListCountEmpty++;
 		}
@@ -1158,7 +1149,7 @@ constlist_32bit : constlist_32bit_entry
 		| constlist_32bit T_COMMA constlist_32bit_entry
 ;
 
-constlist_32bit_entry : /* empty */ {
+constlist_32bit_entry : %empty {
 			out_Skip(4, false);
 			nListCountEmpty++;
 		}
@@ -1430,7 +1421,7 @@ strfmt_args	: string strfmt_va_args {
 		}
 ;
 
-strfmt_va_args	: /* empty */ {
+strfmt_va_args	: %empty {
 			initStrFmtArgList(&$$);
 		}
 		| strfmt_va_args T_COMMA relocexpr_no_str {
@@ -1464,7 +1455,7 @@ section		: T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
 		}
 ;
 
-sectmod		: /* empty */	{ $$ = SECTION_NORMAL; }
+sectmod		: %empty	{ $$ = SECTION_NORMAL; }
 		| T_POP_UNION	{ $$ = SECTION_UNION; }
 		| T_POP_FRAGMENT{ $$ = SECTION_FRAGMENT; }
 ;
@@ -1479,7 +1470,7 @@ sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
 		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
 ;
 
-sectorg		: /* empty */ { $$ = -1; }
+sectorg		: %empty { $$ = -1; }
 		| T_LBRACK uconst T_RBRACK {
 			if ($2 < 0 || $2 >= 0x10000) {
 				error("Address $%x is not 16-bit\n", $2);
@@ -1490,7 +1481,7 @@ sectorg		: /* empty */ { $$ = -1; }
 		}
 ;
 
-sectattrs	: /* empty */ {
+sectattrs	: %empty {
 			$$.alignment = 0;
 			$$.alignOfs = 0;
 			$$.bank = -1;
