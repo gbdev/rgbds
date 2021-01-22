@@ -337,19 +337,25 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", tzTargetFileName, mainFileName);
 	}
 
-	/* Init file stack; important to do first, since it provides the file name, line, etc */
+	charmap_New("main", NULL);
+
+	// Init lexer and file stack, prodiving file info
 	lexer_Init();
 	fstk_Init(mainFileName, maxRecursionDepth);
 
-	charmap_New("main", NULL);
+	// Perform parse (yyparse is auto-generated from `parser.y`)
+	if (yyparse() != 0 && nbErrors == 0)
+		nbErrors = 1;
 
-	if (yyparse() != 0 || nbErrors != 0)
-		errx(1, "Assembly aborted (%u errors)!", nbErrors);
 	if (dependfile)
 		fclose(dependfile);
 
 	sect_CheckUnionClosed();
 
+	if (nbErrors != 0)
+		errx(1, "Assembly aborted (%u errors)!", nbErrors);
+
+	// If parse aborted due to missing an include, and `-MG` was given, exit normally
 	if (oFailedOnMissingInclude)
 		return 0;
 

@@ -488,7 +488,7 @@ void sect_EndUnion(void)
 void sect_CheckUnionClosed(void)
 {
 	if (unionStack)
-		fatalerror("Unterminated UNION construct!\n");
+		error("Unterminated UNION construct!\n");
 }
 
 /*
