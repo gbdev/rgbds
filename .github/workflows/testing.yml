@@ -27,13 +27,18 @@ jobs:
         shell: bash
         run: |
           ./.github/actions/install_deps.sh ${{ matrix.os }}
+      # The `export` lines are to allow working on macOS...
+      # Apple's base version is severely outdated, not even supporting -Wall,
+      # but it overrides Homebrew's version nonetheless...
       - name: Build & install using Make
         run: |
+          export PATH="/usr/local/opt/bison/bin:$PATH"
           make ${{ matrix.target }} -j Q= CC=${{ matrix.cc }}
           sudo make install -j Q=
         if: matrix.buildsys == 'make'
       - name: Build & install using CMake
         run: |
+          export PATH="/usr/local/opt/bison/bin:$PATH"
           cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.cc }} ${{ matrix.cmakevars }}
           cmake --build build
           cp build/src/rgb{asm,link,fix,gfx} .
