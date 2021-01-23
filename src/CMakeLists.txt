@@ -22,7 +22,7 @@ endif()
 
 find_package(BISON REQUIRED)
 set(BISON_FLAGS "-Wall")
-# Set sompe optimization flags on versions that support them
+# Set some optimization flags on versions that support them
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
   set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
 endif()
