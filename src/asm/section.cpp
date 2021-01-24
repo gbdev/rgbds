@@ -457,6 +457,41 @@ void sect_EndLoadSection(void)
 	sym_SetCurrentSymbolScope(currentLoadScope);
 }
 
+void sect_PushInlineFragmentSection(void)
+{
+	if (!checkcodesection())
+		return;
+
+	if (currentLoadSection)
+		fatalerror("`LOAD` blocks cannot contain inline fragments\n");
+
+	struct Section *sect = currentSection;
+
+	// SECTION UNION (RAM-only) is incompatible with SECTION FRAGMENT (ROM-only)
+	if (sect->modifier == SECTION_UNION)
+		fatalerror("`SECTION UNION` cannot contain inline fragments\n");
+
+	// A section containing an inline fragment has to become a fragment too
+	sect->modifier = SECTION_FRAGMENT;
+
+	sect_PushSection();
+
+	// `SECTION "...", ROM0, BANK[0]` is not allowed
+	uint32_t bank = sect->bank == 0 ? (uint32_t)-1 : sect->bank;
+
+	struct Section *newSect = createSection(sect->name, sect->type, -1, bank, 0, 0,
+						SECTION_FRAGMENT);
+
+	// Add the new section fragment to the list (after the section containing it)
+	auto pos = std::find(RANGE(sectionList), sect);
+	assert(pos != sectionList.end());
+	sectionList.insert(std::next(pos), newSect);
+
+	changeSection();
+	curOffset = newSect->size;
+	currentSection = newSect;
+}
+
 struct Section *sect_GetSymbolSection(void)
 {
 	return currentLoadSection ? currentLoadSection : currentSection;

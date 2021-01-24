@@ -339,6 +339,7 @@ struct LexerState {
 	uint32_t lineNo;
 	uint32_t colNo;
 	int lastToken;
+	int nextToken;
 
 	std::stack<struct IfStackEntry> *ifStack;
 
@@ -362,6 +363,7 @@ static void initState(struct LexerState *state)
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; // yylex() will init colNo due to this
 	state->lastToken = T_EOF;
+	state->nextToken = 0;
 
 	state->ifStack = new(std::nothrow) std::stack<struct IfStackEntry>();
 	if (!state->ifStack)
@@ -1271,6 +1273,7 @@ static uint32_t readGfxConstant(void)
 static bool startsIdentifier(int c)
 {
 	// Anonymous labels internally start with '!'
+	// Section fragment labels internally start with '$'
 	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
 }
 
@@ -1752,6 +1755,13 @@ static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
 
 static int yylex_NORMAL(void)
 {
+	if (lexerState->nextToken) {
+		int token = lexerState->nextToken;
+
+		lexerState->nextToken = 0;
+		return token;
+	}
+
 	for (;;) {
 		int c = nextChar();
 
@@ -1775,10 +1785,6 @@ static int yylex_NORMAL(void)
 			yylval.symName[1] = '\0';
 			return T_ID;
 
-		case '[':
-			return T_LBRACK;
-		case ']':
-			return T_RBRACK;
 		case '(':
 			return T_LPAREN;
 		case ')':
@@ -1787,6 +1793,24 @@ static int yylex_NORMAL(void)
 			return T_COMMA;
 
 		// Handle ambiguous 1- or 2-char tokens
+
+		case '[': // Either [ or [[
+			if (peek() == '[') {
+				shiftChar();
+				return T_2LBRACK;
+			}
+			return T_LBRACK;
+
+		case ']': // Either ] or ]]
+			if (peek() == ']') {
+				shiftChar();
+				// [[ Inline fragments ]] inject a T_EOL token to
+				// end their contents even without a newline.
+				// Retroactively lex the ]] after it.
+				lexerState->nextToken = T_2RBRACK;
+				return T_EOL;
+			}
+			return T_RBRACK;
 
 		case '+': // Either += or ADD
 			if (peek() == '=') {

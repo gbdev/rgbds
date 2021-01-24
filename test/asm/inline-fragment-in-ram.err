@@ -1,0 +1,4 @@
+error: inline-fragment-in-ram.asm(6):
+    Section 'RAM' cannot contain code or data (not ROM0 or ROMX)
+FATAL: inline-fragment-in-ram.asm(9):
+    No entries in the section stack

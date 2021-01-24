@@ -921,6 +921,70 @@ first, followed by the one from
 and the one from
 .Ql bar.o
 last.
+.Ss Inline Fragments
+Inline fragments are useful for short blocks of code or data that are only referenced once.
+They are section fragments created by surrounding instructions or directives with
+.Ql [[
+double brackets
+.Ql ]] ,
+without a separate
+.Ic SECTION FRAGMENT
+declaration.
+.Pp
+The content of an inline fragment becomes a
+.Ic SECTION FRAGMENT ,
+sharing the same name and bank as its parent ROM section, but without any other constraints.
+The parent section also becomes a
+.Ic FRAGMENT
+if it was not one already, so that it can be merged with its inline fragments.
+RGBLINK merges the fragments in no particular order.
+.Pp
+An inline fragment can take the place of any 16-bit integer constant
+.Ql n16
+from the
+.Xr gbz80 7
+documentation, as well as a
+.Ic DW
+item.
+The inline fragment then evaluates to its starting address.
+For example, you can
+.Ic CALL
+or
+.Ic JP
+to an inline fragment.
+.Pp
+This code using named labels:
+.Bd -literal -offset indent
+FortyTwo:
+    call Sub1
+    jp Sub2
+Sub1:
+    ld a, [Twenty]
+    ret
+Sub2:
+    inc a
+    add a
+    ret
+Twenty: db 20
+dw FortyTwo
+.Ed
+.Pp
+is equivalent to this code using inline fragments:
+.Bd -literal -offset indent
+dw [[
+    call [[
+        ld a, [ [[db 20]] ]
+        ret
+    ]]
+    jp [[
+        inc a
+        add a
+        ret
+    ]]
+]]
+.Ed
+.Pp
+The difference is that the example using inline fragments does not declare a particular order for its pieces.
 .Sh SYMBOLS
 RGBDS supports several types of symbols:
 .Bl -hang

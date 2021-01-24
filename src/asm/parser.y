@@ -30,6 +30,7 @@
 #include "platform.hpp" // strncasecmp, strdup
 
 static struct CaptureBody captureBody; // Captures a REPT/FOR or MACRO
+static uint32_t inlineFragmentID = 0; // Incrementing unique ID for inline fragment labels
 
 static void upperstring(char *dest, char const *src)
 {
@@ -549,6 +550,7 @@ enum {
 %token	T_COMMA ","
 %token	T_COLON ":" T_DOUBLE_COLON "::"
 %token	T_LBRACK "[" T_RBRACK "]"
+%token	T_2LBRACK "[[" T_2RBRACK "]]"
 %token	T_LPAREN "(" T_RPAREN ")"
 %token	T_NEWLINE "newline"
 
@@ -615,6 +617,7 @@ enum {
 %type	<symName> redef_id
 %type	<symName> scoped_id
 %type	<symName> scoped_anon_id
+%type	<symName> inline_fragment
 %token	T_POP_EQU "EQU"
 %token	T_POP_EQUAL "="
 %token	T_POP_EQUS "EQUS"
@@ -713,6 +716,7 @@ enum {
 %type	<expr>		op_mem_ind
 %type	<assertType>	assert_type
 
+%token T_EOL "end of line"
 %token T_EOB "end of buffer"
 %token T_EOF 0 "end of file"
 %start asmfile
@@ -726,7 +730,7 @@ lines		: %empty
 		| lines opt_diff_mark line
 ;
 
-endofline	: T_NEWLINE | T_EOB
+endofline	: T_NEWLINE | T_EOL | T_EOB
 ;
 
 opt_diff_mark	: %empty // OK
@@ -1457,14 +1461,25 @@ reloc_16bit	: relocexpr {
 			rpn_CheckNBit(&$1, 16);
 			$$ = $1;
 		}
+		| inline_fragment { rpn_Symbol(&$$, $1); }
 ;
 
 reloc_16bit_no_str : relocexpr_no_str {
 			rpn_CheckNBit(&$1, 16);
 			$$ = $1;
 		}
+		| inline_fragment { rpn_Symbol(&$$, $1); }
 ;
 
+inline_fragment	: T_2LBRACK {
+			sect_PushInlineFragmentSection();
+			sprintf($<symName>$, "$%" PRIu32, inlineFragmentID++);
+			sym_AddLabel($<symName>$);
+		} asmfile T_2RBRACK {
+			sect_PopSection();
+			strcpy($$, $<symName>2);
+		}
+;
 
 relocexpr	: relocexpr_no_str
 		| string {
