@@ -1232,10 +1232,13 @@ DW "H", "e", "l", "l", "o", "!"
 If you do not want this special handling, enclose the string in parentheses.
 .Pp
 .Ic DS
-can also be used to fill a region of memory with some value.
-The following produces 42 times the byte $FF:
+can also be used to fill a region of memory with some repeated values.
+For example:
 .Bd -literal -offset indent
-DS 42, $FF
+; outputs 3 bytes: $AA, $AA, $AA
+DS 3, $AA
+; outputs 7 bytes: $BB, $CC, $BB, $CC, $BB, $CC, $BB
+DS 7, $BB, $CC
 .Ed
 .Pp
 You can also use

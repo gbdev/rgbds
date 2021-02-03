@@ -83,4 +83,11 @@ int yylex(void);
 void lexer_CaptureRept(struct CaptureBody *capture);
 void lexer_CaptureMacroBody(struct CaptureBody *capture);
 
+#define INITIAL_DS_ARG_SIZE 2
+struct DsArgList {
+	size_t nbArgs;
+	size_t capacity;
+	struct Expression *args;
+};
+
 #endif /* RGBDS_ASM_LEXER_H */

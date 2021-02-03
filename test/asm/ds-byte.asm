@@ -6,3 +6,4 @@ Label:
 	ds 5, .other - Label - 5 ; Expressions should work...
 	ds 60, .last - Label     ; ...even if not constant
 .last
+	ds 11, $67, $89
