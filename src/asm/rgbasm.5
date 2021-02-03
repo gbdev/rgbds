@@ -445,6 +445,7 @@ String symbols are not expanded within the parentheses.
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
 .Ic IF ) ,
 or 0 if only RGBLINK can compute its value.
+.It Fn FILESIZE arg Ta Returns the size of the file named Ar arg No , or -1 on failure.
 .El
 .Sh SECTIONS
 Before you can start writing code, you must define a section.

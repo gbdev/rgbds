@@ -180,6 +180,8 @@ static struct KeywordMapping {
 	{"BANK", T_OP_BANK},
 	{"ALIGN", T_OP_ALIGN},
 
+	{"FILESIZE", T_OP_FILESIZE},
+
 	{"ROUND", T_OP_ROUND},
 	{"CEIL", T_OP_CEIL},
 	{"FLOOR", T_OP_FLOOR},
@@ -498,7 +500,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[359] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[357] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)

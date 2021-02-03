@@ -42,6 +42,29 @@ static uint32_t nListCountEmpty;
 static bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
 static struct CaptureBody captureBody; /* Captures a REPT/FOR or MACRO */
 
+static int32_t filesize(char *filename)
+{
+	FILE *file = fopen(filename, "rb");
+
+	if (!file)
+		return -1;
+
+	if (fseek(file, 0, SEEK_END) == -1) {
+		fclose(file);
+		return -1;
+	}
+
+	long size = (int32_t)ftell(file);
+
+	if (size < 0 || size > INT32_MAX) {
+		fclose(file);
+		return -1;
+	}
+
+	fclose(file);
+	return (int32_t)size;
+}
+
 static void upperstring(char *dest, char const *src)
 {
 	while (*src)
@@ -464,6 +487,7 @@ enum {
 %token	T_OP_DEF "DEF"
 %token	T_OP_BANK "BANK"
 %token	T_OP_ALIGN "ALIGN"
+%token	T_OP_FILESIZE "FILESIZE"
 %token	T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
 %token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
 %token	T_OP_FDIV "FDIV"
@@ -1280,6 +1304,9 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 			rpn_BankSymbol(&$$, $3);
 		}
 		| T_OP_BANK T_LPAREN string T_RPAREN	{ rpn_BankSection(&$$, $3); }
+		| T_OP_FILESIZE T_LPAREN string T_RPAREN {
+			rpn_Number(&$$, filesize($3));
+		}
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
