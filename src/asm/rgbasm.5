@@ -476,6 +476,8 @@ String equates are not expanded within the parentheses.
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
 .Ic IF ) ,
 or 0 if only RGBLINK can compute its value.
+.It Fn MIN args... Ta Returns the minimum operand, given at least one numeric operand.
+.It Fn MAX args... Ta Returns the maximum operand, given at least one numeric operand.
 .El
 .Sh SECTIONS
 Before you can start writing code, you must define a section.

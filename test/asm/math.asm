@@ -16,6 +16,14 @@ ENDM
 	test (v 1) << (v 30) == (v $4000_0000)
 	test (v 2)**(v 30) == (v $4000_0000)
 
+	assert MIN(42) == 42
+	assert MIN(-10, 10) == -10
+	assert MIN(2, 1, 4, 3) == 1
+
+	assert MAX(42) == 42
+	assert MAX(-10, 10) == 10
+	assert MAX(2, 1, 4, 3) == 4
+
 	assert DIV(5.0, 2.0) == 2.5
 	assert DIV(-5.0, 2.0) == -2.5
 	assert DIV(-5.0, 0.0) == $8000_0000

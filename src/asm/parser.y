@@ -485,6 +485,8 @@ enum {
 %type	<constValue>	uconst
 %type	<constValue>	rs_uconst
 %type	<constValue>	const_3bit
+%type	<constValue>	min_args
+%type	<constValue>	max_args
 %type	<expr>		reloc_8bit
 %type	<expr>		reloc_8bit_no_str
 %type	<expr>		reloc_8bit_offset
@@ -537,6 +539,7 @@ enum {
 %token	T_OP_BANK "BANK"
 %token	T_OP_ALIGN "ALIGN"
 %token	T_OP_SIZEOF "SIZEOF" T_OP_STARTOF "STARTOF"
+%token	T_OP_MIN "MIN" T_OP_MAX "MAX"
 %token	T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
 %token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
 %token	T_OP_FDIV "FDIV"
@@ -1481,6 +1484,8 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 
 			lexer_ToggleStringExpansion(true);
 		}
+		| T_OP_MIN T_LPAREN min_args T_RPAREN { rpn_Number(&$$, $3); }
+		| T_OP_MAX T_LPAREN max_args T_RPAREN { rpn_Number(&$$, $3); }
 		| T_OP_ROUND T_LPAREN const T_RPAREN {
 			rpn_Number(&$$, fix_Round($3));
 		}
@@ -1559,6 +1564,18 @@ const_no_str	: relocexpr_no_str { $$ = rpn_GetConstVal(&$1); }
 ;
 
 const_8bit	: reloc_8bit { $$ = rpn_GetConstVal(&$1); }
+;
+
+min_args	: const
+		| min_args T_COMMA const {
+			$$ = $1 < $3 ? $1 : $3;
+		}
+;
+
+max_args	: const
+		| max_args T_COMMA const {
+			$$ = $1 > $3 ? $1 : $3;
+		}
 ;
 
 string		: T_STRING
