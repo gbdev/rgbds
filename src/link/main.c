@@ -217,23 +217,23 @@ int main(int argc, char *argv[])
 			isWRA0Mode = true;
 			break;
 		case 'l':
-			linkerScriptName = optarg;
+			linkerScriptName = musl_optarg;
 			break;
 		case 'm':
-			mapFileName = optarg;
+			mapFileName = musl_optarg;
 			break;
 		case 'n':
-			symFileName = optarg;
+			symFileName = musl_optarg;
 			break;
 		case 'O':
-			overlayFileName = optarg;
+			overlayFileName = musl_optarg;
 			break;
 		case 'o':
-			outputFileName = optarg;
+			outputFileName = musl_optarg;
 			break;
 		case 'p':
-			value = strtoul(optarg, &endptr, 0);
-			if (optarg[0] == '\0' || *endptr != '\0') {
+			value = strtoul(musl_optarg, &endptr, 0);
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				error(NULL, 0, "Invalid argument for option 'p'");
 				value = 0xFF;
 			}
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
 			break;
 		case 's':
 			/* FIXME: nobody knows what this does, figure it out */
-			(void)optarg;
+			(void)musl_optarg;
 			warning(NULL, 0, "Nobody has any idea what `-s` does");
 			break;
 		case 't':
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	int curArgIndex = optind;
+	int curArgIndex = musl_optind;
 
 	/* If no input files were specified, the user must have screwed up */
 	if (curArgIndex == argc) {

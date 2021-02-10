@@ -26,8 +26,8 @@
 #ifndef RGBDS_EXTERN_GETOPT_H
 #define RGBDS_EXTERN_GETOPT_H
 
-extern char *optarg;
-extern int optind, opterr, optopt, optreset;
+extern char *musl_optarg;
+extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
 
 struct option {
 	const char *name;
