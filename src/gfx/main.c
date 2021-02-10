@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 			opts.attrmapout = true;
 			break;
 		case 'a':
-			opts.attrmapfile = optarg;
+			opts.attrmapfile = musl_optarg;
 			break;
 		case 'C':
 			opts.colorcurve = true;
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 			opts.debug = true;
 			break;
 		case 'd':
-			depth = strtoul(optarg, NULL, 0);
+			depth = strtoul(musl_optarg, NULL, 0);
 			break;
 		case 'F':
 			opts.hardfix = true;
@@ -121,19 +121,19 @@ int main(int argc, char *argv[])
 			opts.unique = true;
 			break;
 		case 'o':
-			opts.outfile = optarg;
+			opts.outfile = musl_optarg;
 			break;
 		case 'P':
 			opts.palout = true;
 			break;
 		case 'p':
-			opts.palfile = optarg;
+			opts.palfile = musl_optarg;
 			break;
 		case 'T':
 			opts.tilemapout = true;
 			break;
 		case 't':
-			opts.tilemapfile = optarg;
+			opts.tilemapfile = musl_optarg;
 			break;
 		case 'u':
 			opts.unique = true;
@@ -145,15 +145,15 @@ int main(int argc, char *argv[])
 			opts.verbose = true;
 			break;
 		case 'x':
-			opts.trim = strtoul(optarg, NULL, 0);
+			opts.trim = strtoul(musl_optarg, NULL, 0);
 			break;
 		default:
 			print_usage();
 			/* NOTREACHED */
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= musl_optind;
+	argv += musl_optind;
 
 	if (argc == 0) {
 		fputs("FATAL: no input files\n", stderr);

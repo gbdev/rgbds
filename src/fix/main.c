@@ -973,17 +973,17 @@ do { \
 	char *endptr; \
 	unsigned long tmp; \
 	\
-	if (optarg[0] == 0) { \
+	if (musl_optarg[0] == 0) { \
 		report("error: Argument to option '" name "' may not be empty\n"); \
 	} else { \
-		if (optarg[0] == '$') { \
-			tmp = strtoul(&optarg[1], &endptr, 16); \
+		if (musl_optarg[0] == '$') { \
+			tmp = strtoul(&musl_optarg[1], &endptr, 16); \
 		} else { \
-			tmp = strtoul(optarg, &endptr, 0); \
+			tmp = strtoul(musl_optarg, &endptr, 0); \
 		} \
 		if (*endptr) \
 			report("error: Expected number as argument to option '" name "', got %s\n", \
-			       optarg); \
+			       musl_optarg); \
 		else if (tmp > 0xFF) \
 			report("error: Argument to option '" name "' is larger than 255: %lu\n", tmp); \
 		else \
@@ -1003,8 +1003,8 @@ do { \
 
 		case 'f':
 			fixSpec = 0;
-			while (*optarg) {
-				switch (*optarg) {
+			while (*musl_optarg) {
+				switch (*musl_optarg) {
 #define SPEC_l FIX_LOGO
 #define SPEC_L TRASH_LOGO
 #define SPEC_h FIX_HEADER_SUM
@@ -1041,15 +1041,15 @@ do { \
 
 				default:
 					fprintf(stderr, "warning: Ignoring '%c' in fix spec\n",
-						*optarg);
+						*musl_optarg);
 #undef or
 				}
-				optarg++;
+				musl_optarg++;
 			}
 			break;
 
 		case 'i':
-			gameID = optarg;
+			gameID = musl_optarg;
 			len = strlen(gameID);
 			if (len > 4) {
 				len = 4;
@@ -1069,7 +1069,7 @@ do { \
 			break;
 
 		case 'k':
-			newLicensee = optarg;
+			newLicensee = musl_optarg;
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
@@ -1085,14 +1085,15 @@ do { \
 			break;
 
 		case 'm':
-			cartridgeType = parseMBC(optarg);
+			cartridgeType = parseMBC(musl_optarg);
 			if (cartridgeType == MBC_BAD) {
-				report("error: Unknown MBC \"%s\"\n", optarg);
+				report("error: Unknown MBC \"%s\"\n", musl_optarg);
 			} else if (cartridgeType == MBC_WRONG_FEATURES) {
-				report("error: Features incompatible with MBC (\"%s\")\n", optarg);
+				report("error: Features incompatible with MBC (\"%s\")\n",
+				       musl_optarg);
 			} else if (cartridgeType == MBC_BAD_RANGE) {
 				report("error: Specified MBC ID out of range 0-255: %s\n",
-				       optarg);
+				       musl_optarg);
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 				fprintf(stderr, "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly supported\n");
 			}
@@ -1115,7 +1116,7 @@ do { \
 			break;
 
 		case 't':
-			title = optarg;
+			title = musl_optarg;
 			len = strlen(title);
 			uint8_t maxLen = maxTitleLen();
 
@@ -1170,7 +1171,7 @@ do { \
 			"warning: SGB compatibility enabled, but old licensee is %#x, not 0x33\n",
 			oldLicensee);
 
-	argv += optind;
+	argv += musl_optind;
 	bool failed = nbErrors;
 
 	if (!*argv) {

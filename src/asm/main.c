@@ -177,20 +177,20 @@ int main(int argc, char *argv[])
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
-			if (strlen(optarg) == 2)
-				opt_B(&optarg[1]);
+			if (strlen(musl_optarg) == 2)
+				opt_B(&musl_optarg[1]);
 			else
 				errx(1, "Must specify exactly 2 characters for option 'b'");
 			break;
 
 			char *equals;
 		case 'D':
-			equals = strchr(optarg, '=');
+			equals = strchr(musl_optarg, '=');
 			if (equals) {
 				*equals = '\0';
-				sym_AddString(optarg, equals + 1);
+				sym_AddString(musl_optarg, equals + 1);
 			} else {
-				sym_AddString(optarg, "1");
+				sym_AddString(musl_optarg, "1");
 			}
 			break;
 
@@ -199,8 +199,8 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'g':
-			if (strlen(optarg) == 4)
-				opt_G(&optarg[1]);
+			if (strlen(musl_optarg) == 4)
+				opt_G(&musl_optarg[1]);
 			else
 				errx(1, "Must specify exactly 4 characters for option 'g'");
 			break;
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'i':
-			fstk_AddIncludePath(optarg);
+			fstk_AddIncludePath(musl_optarg);
 			break;
 
 		case 'L':
@@ -218,23 +218,23 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'M':
-			if (!strcmp("-", optarg))
+			if (!strcmp("-", musl_optarg))
 				dependfile = stdout;
 			else
-				dependfile = fopen(optarg, "w");
+				dependfile = fopen(musl_optarg, "w");
 			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s", optarg);
+				err(1, "Could not open dependfile %s", musl_optarg);
 			break;
 
 		case 'o':
-			out_SetFileName(optarg);
+			out_SetFileName(musl_optarg);
 			break;
 
 			unsigned long fill;
 		case 'p':
-			fill = strtoul(optarg, &ep, 0);
+			fill = strtoul(musl_optarg, &ep, 0);
 
-			if (optarg[0] == '\0' || *ep != '\0')
+			if (musl_optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'p'");
 
 			if (fill < 0 || fill > 0xFF)
@@ -244,9 +244,9 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'r':
-			maxRecursionDepth = strtoul(optarg, &ep, 0);
+			maxRecursionDepth = strtoul(musl_optarg, &ep, 0);
 
-			if (optarg[0] == '\0' || *ep != '\0')
+			if (musl_optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");
 			break;
 
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'W':
-			processWarningFlag(optarg);
+			processWarningFlag(musl_optarg);
 			break;
 
 		case 'w':
@@ -278,9 +278,9 @@ int main(int argc, char *argv[])
 
 			case 'Q':
 			case 'T':
-				if (optind == argc)
+				if (musl_optind == argc)
 					errx(1, "-M%c takes a target file name argument", depType);
-				ep = optarg;
+				ep = musl_optarg;
 				if (depType == 'Q')
 					ep = make_escape(ep);
 
@@ -317,15 +317,15 @@ int main(int argc, char *argv[])
 	if (tzTargetFileName == NULL)
 		tzTargetFileName = tzObjectname;
 
-	if (argc == optind) {
+	if (argc == musl_optind) {
 		fputs("FATAL: No input files\n", stderr);
 		print_usage();
-	} else if (argc != optind + 1) {
+	} else if (argc != musl_optind + 1) {
 		fputs("FATAL: More than one input file given\n", stderr);
 		print_usage();
 	}
 
-	char const *mainFileName = argv[optind];
+	char const *mainFileName = argv[musl_optind];
 
 	if (verbose)
 		printf("Assembling %s\n", mainFileName);
