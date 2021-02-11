@@ -62,11 +62,11 @@ void out_AbsWordGroup(uint8_t const *s, int32_t length);
 void out_AbsLongGroup(uint8_t const *s, int32_t length);
 void out_Skip(int32_t skip, bool ds);
 void out_String(char const *s);
-void out_RelByte(struct Expression *expr);
+void out_RelByte(struct Expression *expr, bool isOperand);
 void out_RelBytes(struct Expression *expr, uint32_t n);
-void out_RelWord(struct Expression *expr);
-void out_RelLong(struct Expression *expr);
-void out_PCRelByte(struct Expression *expr);
+void out_RelWord(struct Expression *expr, bool isOperand);
+void out_RelLong(struct Expression *expr, bool isOperand);
+void out_PCRelByte(struct Expression *expr, bool isOperand);
 void out_BinaryFile(char const *s, int32_t startPos);
 void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 

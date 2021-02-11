@@ -125,16 +125,6 @@ void rpn_Symbol(struct Expression *expr, char const *tzSym)
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name, nameLen);
-
-		/* RGBLINK assumes PC is at the byte being computed... */
-		if (sym_IsPC(sym) && nPCOffset) {
-			struct Expression pc = *expr, offset;
-
-			rpn_Number(&offset, nPCOffset);
-			rpn_BinaryOp(RPN_SUB, expr, &pc, &offset);
-			if (!rpn_isKnown(expr))
-				expr->isSymbol = true;
-		}
 	} else {
 		rpn_Number(expr, sym_GetConstantValue(tzSym));
 	}

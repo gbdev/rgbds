@@ -421,6 +421,10 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 					isError = true;
 				} else {
 					value = patch->pcOffset + patch->pcSection->org;
+					// If the patch is an operand, PC is not at the patch's
+					// location, but at the (opcode) byte right before it
+					if (patch->isOperand)
+						value--;
 				}
 			} else {
 				symbol = getSymbol(fileSymbols, value);

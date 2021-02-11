@@ -34,6 +34,7 @@ struct Patch {
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	enum PatchType type;
+	bool isOperand;
 	int32_t rpnSize;
 	uint8_t *rpnExpression;
 

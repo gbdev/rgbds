@@ -1,5 +1,5 @@
 ERROR: block-comment-termination-error.asm(1):
     Unterminated block comment
 ERROR: block-comment-termination-error.asm(1):
-    syntax error, unexpected newline
+    syntax error, unexpected end of file
 error: Assembly aborted (2 errors)!

@@ -99,6 +99,8 @@ enum ExportLevel {
 	SYMTYPE_EXPORT
 };
 
+// Bit 7 is special, not part of the actual patch type
+#define PATCH_ISOPERAND 0x80
 enum PatchType {
 	PATCHTYPE_BYTE,
 	PATCHTYPE_WORD,

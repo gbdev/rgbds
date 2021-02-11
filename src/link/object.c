@@ -260,11 +260,11 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
  * @param fileName The filename to report in errors
  * @param i The number of the patch to report in errors
  */
-static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
-		      char const *sectName, uint32_t i,
-		      struct Section *fileSections[], struct FileStackNode fileNodes[])
+static void readPatch(FILE *file, struct Patch *patch, char const *fileName, char const *sectName,
+		      uint32_t i, struct Section *fileSections[], struct FileStackNode fileNodes[])
 {
 	uint32_t nodeID;
+	uint8_t type;
 
 	tryReadlong(nodeID, file,
 		   "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
@@ -279,14 +279,15 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName,
 	tryReadlong(patch->pcSectionID, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
-	patch->pcSection = patch->pcSectionID == -1 ? NULL
-						    : fileSections[patch->pcSectionID];
+	patch->pcSection = patch->pcSectionID == -1 ? NULL : fileSections[patch->pcSectionID];
 	tryReadlong(patch->pcOffset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
-	tryGetc(patch->type, file,
+	tryGetc(type, file,
 		"%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 		fileName, sectName, i);
+	patch->type = type & 0x7F;
+	patch->isOperand = type & PATCH_ISOPERAND;
 	tryReadlong(patch->rpnSize, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 		    fileName, sectName, i);
