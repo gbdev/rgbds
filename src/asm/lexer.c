@@ -1815,7 +1815,7 @@ static int yylex_NORMAL(void)
 			return T_NEWLINE;
 
 		case EOF:
-			return 0;
+			return T_EOF;
 
 		/* Handle escapes */
 
@@ -2025,7 +2025,7 @@ static int skipIfBlock(bool toEndc)
 			int c = nextChar();
 
 			if (c == EOF) {
-				token = 0;
+				token = T_EOF;
 				goto finish;
 			} else if (c == '\\') {
 				/* Unconditionally skip the next char, including line conts */
@@ -2163,8 +2163,7 @@ restart:
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
-	/* Make sure to terminate files with a line feed */
-	if (token == 0) {
+	if (token == T_EOF) {
 		/* Try to switch to new buffer; if it succeeds, scan again */
 		dbgPrint("Reached EOF!\n");
 		/* Captures end at their buffer's boundary no matter what */
@@ -2172,7 +2171,7 @@ restart:
 			if (!yywrap())
 				goto restart;
 			dbgPrint("Reached end of input.");
-			return 0;
+			return T_EOF;
 		}
 	}
 

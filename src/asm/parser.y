@@ -581,6 +581,8 @@ enum {
 %type	<nConstValue>	op_hl_ss
 %type	<sVal>		op_mem_ind
 %type	<assertType>	assert_type
+
+%token T_EOF 0 "end of file"
 %start asmfile
 
 %%
