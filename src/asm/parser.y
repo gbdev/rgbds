@@ -108,7 +108,7 @@ static size_t strlenUTF8(const char *s)
 	return len;
 }
 
-static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
+static void strsubUTF8(char *dest, size_t destLen, const char *src, uint32_t pos, uint32_t len)
 {
 	size_t srcIndex = 0;
 	size_t destIndex = 0;
@@ -141,7 +141,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 			(unsigned long)pos);
 
 	/* Copy from source to destination. */
-	while (src[srcIndex] && destIndex < MAXSTRLEN && curLen < len) {
+	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
 		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			fatalerror("STRSUB: Invalid UTF-8 character\n");
@@ -160,7 +160,7 @@ static void strsubUTF8(char *dest, const char *src, uint32_t pos, uint32_t len)
 	if (state != 0)
 		fatalerror("STRSUB: Invalid UTF-8 character\n");
 
-	dest[destIndex] = 0;
+	dest[destIndex] = '\0';
 }
 
 static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *new)
@@ -1402,7 +1402,7 @@ const_no_str	: relocexpr_no_str {
 
 string		: T_STRING
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
-			strsubUTF8($$, $3, $5, $7);
+			strsubUTF8($$, sizeof($$), $3, $5, $7);
 		}
 		| T_OP_STRCAT T_LPAREN T_RPAREN {
 			$$[0] = '\0';
@@ -1427,7 +1427,7 @@ string		: T_STRING
 
 strcat_args	: string
 		| strcat_args T_COMMA string {
-			if (snprintf($$, sizeof($$), "%s%s", $1, $3) > MAXSTRLEN)
+			if (snprintf($$, sizeof($$), "%s%s", $1, $3) >= sizeof($$))
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
 		}
