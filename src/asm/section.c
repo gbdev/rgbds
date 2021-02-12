@@ -87,15 +87,10 @@ static inline void reserveSpace(uint32_t delta_size)
 
 struct Section *out_FindSectionByName(const char *name)
 {
-	struct Section *sect = pSectionList;
-
-	while (sect) {
+	for (struct Section *sect = pSectionList; sect; sect = sect->next) {
 		if (strcmp(name, sect->name) == 0)
 			return sect;
-
-		sect = sect->next;
 	}
-
 	return NULL;
 }
 
@@ -375,6 +370,11 @@ void out_NewSection(char const *name, uint32_t type, uint32_t org,
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
+
+	for (struct SectionStackEntry *stack = sectionStack; stack; stack = stack->next) {
+		if (stack->section && !strcmp(name, stack->section->name))
+			fatalerror("Section '%s' is already on the stack\n", name);
+	}
 
 	struct Section *sect = getSection(name, type, org, attribs, mod);
 
