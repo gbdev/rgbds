@@ -30,3 +30,5 @@ EMPTY3 EQUS """"""
 EMPTY4 EQUS """\ ; comment
 """
 	PRINTLN STRCAT("(", "{EMPTY1}", "{EMPTY2}", "{EMPTY3}", "{EMPTY4}", ")")
+
+	warn "check the line number"

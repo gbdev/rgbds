@@ -1457,9 +1457,12 @@ static void readString(void)
 		// We'll be staying in the string, so we can safely consume the char
 		shiftChars(1);
 
-		// Handle CRLF (in multiline strings only, already handled above otherwise)
-		if (c == '\r' && peek(0) == '\n') {
-			shiftChars(1);
+		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
+		if (c == '\r' || c == '\n') {
+			/* Handle CRLF before nextLine() since shiftChars updates colNo */
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
+			nextLine();
 			c = '\n';
 		}
 
