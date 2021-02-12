@@ -1919,7 +1919,7 @@ static int yylex_RAW(void)
 				i--;
 			/* Empty macro args break their expansion, so prevent that */
 			if (i == 0) {
-				// If at EOF, don't shift a non-existent chat
+				// If at EOF, don't shift a non-existent char.
 				// However, don't return EOF, as this might cause a bug...
 				// If a macro is invoked on the last line of a file, with no blank
 				// line afterwards, returning EOF here will cause Bison to stop

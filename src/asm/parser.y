@@ -590,7 +590,6 @@ enum {
 asmfile		: lines last_line
 ;
 
-/* Note: The lexer adds T_NEWLINE at the end of the input */
 lines		: %empty
 		| lines line
 ;
@@ -1556,7 +1555,7 @@ cpu_command	: z80_adc
 		| z80_rra
 		| z80_rrc
 		| z80_rrca
-		| /*{ nPCOffset = 0; }*/ z80_rst
+		| z80_rst
 		| z80_sbc
 		| z80_scf
 		| z80_set
