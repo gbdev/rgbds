@@ -1,3 +1,0 @@
-ERROR: shift-negative.asm(4) -> shift-negative.asm::m(2):
-    Cannot shift arguments by negative amount -3
-error: Assembly aborted (1 errors)!
