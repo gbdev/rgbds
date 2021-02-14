@@ -30,7 +30,7 @@ struct SectionStackEntry {
 struct SectionStackEntry *sectionStack;
 uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset) */
 static struct Section *currentLoadSection = NULL;
-uint32_t loadOffset; /* The offset of the LOAD section within its parent */
+int32_t loadOffset; /* Offset into the LOAD section's parent (see sect_GetOutputOffset) */
 
 struct UnionStackEntry {
 	uint32_t start;
@@ -387,7 +387,8 @@ void out_NewSection(char const *name, uint32_t type, uint32_t org,
  * Set the current section by name and type
  */
 void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
-			struct SectionSpec const *attribs)
+			struct SectionSpec const *attribs,
+			enum SectionModifier mod)
 {
 	checkcodesection();
 
@@ -397,11 +398,11 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	if (sect_HasData(type))
 		error("`LOAD` blocks cannot create a ROM section\n");
 
-	struct Section *sect = getSection(name, type, org, attribs, false);
+	struct Section *sect = getSection(name, type, org, attribs, mod);
 
-	loadOffset = curOffset;
-	curOffset = 0; /* curOffset -= loadOffset; */
 	changeSection();
+	loadOffset = curOffset - (mod == SECTION_UNION ? 0 : sect->size);
+	curOffset -= loadOffset;
 	currentLoadSection = sect;
 }
 
@@ -409,11 +410,11 @@ void out_EndLoadSection(void)
 {
 	if (!currentLoadSection)
 		error("Found `ENDL` outside of a `LOAD` block\n");
-	currentLoadSection = NULL;
 
 	changeSection();
 	curOffset += loadOffset;
 	loadOffset = 0;
+	currentLoadSection = NULL;
 }
 
 struct Section *sect_GetSymbolSection(void)

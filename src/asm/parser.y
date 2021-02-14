@@ -853,8 +853,8 @@ shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(1); }
 		| T_POP_SHIFT const	{ macro_ShiftCurrentArgs($2); }
 ;
 
-load		: T_POP_LOAD string T_COMMA sectiontype sectorg sectattrs {
-			out_SetLoadSection($2, $4, $5, &$6);
+load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
+			out_SetLoadSection($3, $5, $6, &$7, $2);
 		}
 		| T_POP_ENDL	{ out_EndLoadSection(); }
 ;
