@@ -719,6 +719,13 @@ The former is situated in ROM, where the code is stored, the latter in RAM, wher
 You cannot nest
 .Ic LOAD
 blocks, nor can you change the current section within them.
+.Pp
+.Ic LOAD
+blocks can use the
+.Ic UNION
+or
+.Ic FRAGMENT
+modifiers, as described below.
 .Ss Unionized Sections
 When you're tight on RAM, you may want to define overlapping blocks of variables, as explained in the
 .Sx Unions

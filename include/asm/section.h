@@ -43,7 +43,8 @@ void out_NewSection(char const *name, uint32_t secttype, uint32_t org,
 		    struct SectionSpec const *attributes,
 		    enum SectionModifier mod);
 void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
-			struct SectionSpec const *attributes);
+			struct SectionSpec const *attributes,
+			enum SectionModifier mod);
 void out_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
