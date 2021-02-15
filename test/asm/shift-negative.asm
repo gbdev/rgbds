@@ -12,5 +12,9 @@ ENDM
 m: MACRO
 	shift 2
 	shift -3
+	shift 1
+	shift 1
+	shift -1
+	shift -1
 ENDM
-	m
+	m one
