@@ -421,10 +421,6 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 					isError = true;
 				} else {
 					value = patch->pcOffset + patch->pcSection->org;
-					// If the patch is an operand, PC is not at the patch's
-					// location, but at the (opcode) byte right before it
-					if (patch->isOperand)
-						value--;
 				}
 			} else {
 				symbol = getSymbol(fileSymbols, value);
@@ -520,9 +516,10 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 
 		/* `jr` is quite unlike the others... */
 		if (patch->type == PATCHTYPE_JR) {
-			/* Target is relative to the byte *after* the operand */
+			// Offset is relative to the byte *after* the operand
+			// PC as operand to `jr` is lower than reference PC by 2
 			uint16_t address = patch->pcSection->org
-							+ patch->pcOffset + 1;
+							+ patch->pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
 			if (!isError && (jumpOffset < -128 || jumpOffset > 127))

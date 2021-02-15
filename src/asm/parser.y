@@ -1122,7 +1122,7 @@ constlist_8bit_entry : %empty {
 			$$ = true;
 		}
 		| reloc_8bit_no_str	{
-			out_RelByte(&$1, false);
+			out_RelByte(&$1, 0);
 			$$ = false;
 		}
 		| string {
@@ -1146,7 +1146,7 @@ constlist_16bit_entry : %empty {
 			$$ = true;
 		}
 		| reloc_16bit_no_str	{
-			out_RelWord(&$1, false);
+			out_RelWord(&$1, 0);
 			$$ = false;
 		}
 		| string {
@@ -1170,7 +1170,7 @@ constlist_32bit_entry : %empty {
 			$$ = true;
 		}
 		| relocexpr_no_str	{
-			out_RelLong(&$1, false);
+			out_RelLong(&$1, 0);
 			$$ = false;
 		}
 		| string {
@@ -1570,27 +1570,27 @@ cpu_command	: z80_adc
 
 z80_adc		: T_Z80_ADC op_a_n {
 			out_AbsByte(0xCE);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_ADC op_a_r	{ out_AbsByte(0x88 | $2); }
 ;
 
 z80_add		: T_Z80_ADD op_a_n {
 			out_AbsByte(0xC6);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_ADD op_a_r	{ out_AbsByte(0x80 | $2); }
 		| T_Z80_ADD op_hl_ss	{ out_AbsByte(0x09 | ($2 << 4)); }
 		| T_Z80_ADD T_MODE_SP T_COMMA reloc_8bit {
 			out_AbsByte(0xE8);
-			out_RelByte(&$4, true);
+			out_RelByte(&$4, 1);
 		}
 
 ;
 
 z80_and		: T_Z80_AND op_a_n {
 			out_AbsByte(0xE6);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_AND op_a_r	{ out_AbsByte(0xA0 | $2); }
 ;
@@ -1603,11 +1603,11 @@ z80_bit		: T_Z80_BIT const_3bit T_COMMA reg_r {
 
 z80_call	: T_Z80_CALL reloc_16bit {
 			out_AbsByte(0xCD);
-			out_RelWord(&$2, true);
+			out_RelWord(&$2, 1);
 		}
 		| T_Z80_CALL ccode T_COMMA reloc_16bit {
 			out_AbsByte(0xC4 | ($2 << 3));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 ;
 
@@ -1616,7 +1616,7 @@ z80_ccf		: T_Z80_CCF	{ out_AbsByte(0x3F); }
 
 z80_cp		: T_Z80_CP op_a_n {
 			out_AbsByte(0xFE);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_CP op_a_r	{ out_AbsByte(0xB8 | $2); }
 ;
@@ -1650,11 +1650,11 @@ z80_inc		: T_Z80_INC reg_r	{ out_AbsByte(0x04 | ($2 << 3)); }
 
 z80_jp		: T_Z80_JP reloc_16bit {
 			out_AbsByte(0xC3);
-			out_RelWord(&$2, true);
+			out_RelWord(&$2, 1);
 		}
 		| T_Z80_JP ccode T_COMMA reloc_16bit {
 			out_AbsByte(0xC2 | ($2 << 3));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 		| T_Z80_JP T_MODE_HL {
 			out_AbsByte(0xE9);
@@ -1663,11 +1663,11 @@ z80_jp		: T_Z80_JP reloc_16bit {
 
 z80_jr		: T_Z80_JR reloc_16bit {
 			out_AbsByte(0x18);
-			out_PCRelByte(&$2, true);
+			out_PCRelByte(&$2, 1);
 		}
 		| T_Z80_JR ccode T_COMMA reloc_16bit {
 			out_AbsByte(0x20 | ($2 << 3));
-			out_PCRelByte(&$4, true);
+			out_PCRelByte(&$4, 1);
 		}
 ;
 
@@ -1691,13 +1691,13 @@ z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
 			out_AbsByte(0xF0);
-			out_RelByte(&$4, true);
+			out_RelByte(&$4, 1);
 		}
 		| T_Z80_LDH op_mem_ind T_COMMA T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
 			out_AbsByte(0xE0);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_LDH T_MODE_A T_COMMA c_ind {
 			out_AbsByte(0xF2);
@@ -1723,24 +1723,24 @@ z80_ld		: z80_ld_mem
 
 z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP reloc_8bit {
 			out_AbsByte(0xF8);
-			out_RelByte(&$5, true);
+			out_RelByte(&$5, 1);
 		}
 		| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 ;
 
 z80_ld_sp	: T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL	{ out_AbsByte(0xF9); }
 		| T_Z80_LD T_MODE_SP T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_SP << 4));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 ;
 
 z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 			out_AbsByte(0x08);
-			out_RelWord(&$2, true);
+			out_RelWord(&$2, 1);
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
 			if (optimizeloads && rpn_isKnown(&$2)
@@ -1750,7 +1750,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 				rpn_Free(&$2);
 			} else {
 				out_AbsByte(0xEA);
-				out_RelWord(&$2, true);
+				out_RelWord(&$2, 1);
 			}
 		}
 ;
@@ -1767,7 +1767,7 @@ z80_ld_rr	: T_Z80_LD reg_rr T_COMMA T_MODE_A {
 
 z80_ld_r	: T_Z80_LD reg_r T_COMMA reloc_8bit {
 			out_AbsByte(0x06 | ($2 << 3));
-			out_RelByte(&$4, true);
+			out_RelByte(&$4, 1);
 		}
 		| T_Z80_LD reg_r T_COMMA reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
@@ -1798,7 +1798,7 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 					rpn_Free(&$4);
 				} else {
 					out_AbsByte(0xFA);
-					out_RelWord(&$4, true);
+					out_RelWord(&$4, 1);
 				}
 			} else {
 				error("Destination operand must be A\n");
@@ -1809,11 +1809,11 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 
 z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_BC << 4));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 		| T_Z80_LD T_MODE_DE T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_DE << 4));
-			out_RelWord(&$4, true);
+			out_RelWord(&$4, 1);
 		}
 		/*
 		 * HL is taken care of in z80_ld_hl
@@ -1826,7 +1826,7 @@ z80_nop		: T_Z80_NOP	{ out_AbsByte(0x00); }
 
 z80_or		: T_Z80_OR op_a_n {
 			out_AbsByte(0xF6);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_OR op_a_r	{ out_AbsByte(0xB0 | $2); }
 ;
@@ -1890,10 +1890,7 @@ z80_rrca	: T_Z80_RRCA	{ out_AbsByte(0x0F); }
 z80_rst		: T_Z80_RST reloc_8bit {
 			rpn_CheckRST(&$2, &$2);
 			if (!rpn_isKnown(&$2))
-				// This could be considered as an "operand", but the purpose of the
-				// "operand" flag is to signal to RGBLINK to correct PC,
-				// which we don't want here.
-				out_RelByte(&$2, false);
+				out_RelByte(&$2, 0);
 			else
 				out_AbsByte(0xC7 | $2.nVal);
 			rpn_Free(&$2);
@@ -1902,7 +1899,7 @@ z80_rst		: T_Z80_RST reloc_8bit {
 
 z80_sbc		: T_Z80_SBC op_a_n {
 			out_AbsByte(0xDE);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_SBC op_a_r	{ out_AbsByte(0x98 | $2); }
 ;
@@ -1940,13 +1937,13 @@ z80_stop	: T_Z80_STOP {
 		}
 		| T_Z80_STOP reloc_8bit {
 			out_AbsByte(0x10);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 ;
 
 z80_sub		: T_Z80_SUB op_a_n {
 			out_AbsByte(0xD6);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_SUB op_a_r	{ out_AbsByte(0x90 | $2);
 		}
@@ -1960,7 +1957,7 @@ z80_swap	: T_Z80_SWAP reg_r {
 
 z80_xor		: T_Z80_XOR op_a_n {
 			out_AbsByte(0xEE);
-			out_RelByte(&$2, true);
+			out_RelByte(&$2, 1);
 		}
 		| T_Z80_XOR op_a_r	{ out_AbsByte(0xA8 | $2); }
 ;

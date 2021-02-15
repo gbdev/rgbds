@@ -488,9 +488,10 @@ static inline void writelong(uint32_t b)
 	writebyte(b >> 24);
 }
 
-static inline void createPatch(enum PatchType type, struct Expression const *expr, bool isOperand)
+static inline void createPatch(enum PatchType type, struct Expression const *expr,
+			       uint32_t pcShift)
 {
-	out_CreatePatch(type, expr, sect_GetOutputOffset(), isOperand);
+	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
 
 void sect_StartUnion(void)
@@ -617,13 +618,13 @@ void out_String(char const *s)
  * Output a relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
-void out_RelByte(struct Expression *expr, bool isOperand)
+void out_RelByte(struct Expression *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(1);
 
 	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_BYTE, expr, isOperand);
+		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
 	} else {
 		writebyte(expr->nVal);
@@ -640,9 +641,9 @@ void out_RelBytes(struct Expression *expr, uint32_t n)
 	checkcodesection();
 	reserveSpace(n);
 
-	while (n--) {
+	for (uint32_t i = 0; i < n; i++) {
 		if (!rpn_isKnown(expr)) {
-			createPatch(PATCHTYPE_BYTE, expr, false);
+			createPatch(PATCHTYPE_BYTE, expr, i);
 			writebyte(0);
 		} else {
 			writebyte(expr->nVal);
@@ -655,13 +656,13 @@ void out_RelBytes(struct Expression *expr, uint32_t n)
  * Output a relocatable word. Checking will be done to see if
  * it's an absolute value in disguise.
  */
-void out_RelWord(struct Expression *expr, bool isOperand)
+void out_RelWord(struct Expression *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(2);
 
 	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_WORD, expr, isOperand);
+		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
 	} else {
 		writeword(expr->nVal);
@@ -673,13 +674,13 @@ void out_RelWord(struct Expression *expr, bool isOperand)
  * Output a relocatable longword. Checking will be done to see if
  * is an absolute value in disguise.
  */
-void out_RelLong(struct Expression *expr, bool isOperand)
+void out_RelLong(struct Expression *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(2);
 
 	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_LONG, expr, isOperand);
+		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
 	} else {
 		writelong(expr->nVal);
@@ -691,14 +692,14 @@ void out_RelLong(struct Expression *expr, bool isOperand)
  * Output a PC-relative relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
-void out_PCRelByte(struct Expression *expr, bool isOperand)
+void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(1);
 	struct Symbol const *pc = sym_GetPC();
 
 	if (!rpn_IsDiffConstant(expr, pc)) {
-		createPatch(PATCHTYPE_JR, expr, isOperand);
+		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
 		struct Symbol const *sym = rpn_SymbolOf(expr);
