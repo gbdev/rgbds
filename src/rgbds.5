@@ -41,7 +41,7 @@ LONG    NumberOfSections ; The number of sections used in this file.
 LONG    NumberOfNodes       ; The number of nodes contained in this file.
 
 REPT NumberOfNodes          ; IMPORTANT NOTE: the nodes are actually written in
-                            ; **reverse** order, meaningthe node with ID 0 is
+                            ; **reverse** order, meaning the node with ID 0 is
                             ; the last one in the file!
 
     LONG    ParentID        ; ID of the parent node, -1 means this is the root.
@@ -225,6 +225,7 @@ with some bytes being special prefixes for integers and symbols.
 .It Li $03 Ta Li / operator
 .It Li $04 Ta Li % operator
 .It Li $05 Ta Li unary -
+.It Li $06 Ta Li ** operator
 .It Li $10 Ta Li | operator
 .It Li $11 Ta Li & operator
 .It Li $12 Ta Li ^ operator
