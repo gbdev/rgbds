@@ -39,7 +39,6 @@ struct Patch {
 	struct Section *pcSection;
 	uint32_t pcOffset;
 	uint8_t type;
-	bool isOperand; // If set, PC is not at the patch's address, but at the byte before
 	uint32_t nRPNSize;
 	uint8_t *pRPN;
 	struct Patch *next;
@@ -204,17 +203,12 @@ static uint32_t getSectIDIfAny(struct Section const *sect)
 static void writepatch(struct Patch const *patch, FILE *f)
 {
 	assert(patch->src->ID != -1);
-	uint8_t type = patch->type;
-
-	if (patch->isOperand)
-		type |= PATCH_ISOPERAND;
-
 	putlong(patch->src->ID, f);
 	putlong(patch->lineNo, f);
 	putlong(patch->nOffset, f);
 	putlong(getSectIDIfAny(patch->pcSection), f);
 	putlong(patch->pcOffset, f);
-	putc(type, f);
+	putc(patch->type, f);
 	putlong(patch->nRPNSize, f);
 	fwrite(patch->pRPN, 1, patch->nRPNSize, f);
 }
@@ -387,7 +381,6 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 		fatalerror("No memory for patch's RPN expression: %s\n", strerror(errno));
 
 	patch->type = type;
-	patch->isOperand = false;
 	patch->src = node;
 	out_RegisterNode(node);
 	patch->lineNo = lexer_GetLineNo();
@@ -416,11 +409,15 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 /*
  * Create a new patch (includes the rpn expr)
  */
-void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, bool isOperand)
+void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, uint32_t pcShift)
 {
 	struct Patch *patch = allocpatch(type, expr, ofs);
 
-	patch->isOperand = isOperand;
+	// If the patch had a quantity of bytes output before it,
+	// PC is not at the patch's location, but at the location
+	// before those bytes.
+	patch->pcOffset -= pcShift;
+
 	patch->next = pCurrentSection->patches;
 	pCurrentSection->patches = patch;
 }

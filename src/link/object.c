@@ -286,8 +286,7 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 	tryGetc(type, file,
 		"%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 		fileName, sectName, i);
-	patch->type = type & 0x7F;
-	patch->isOperand = type & PATCH_ISOPERAND;
+	patch->type = type;
 	tryReadlong(patch->rpnSize, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 		    fileName, sectName, i);
