@@ -8,9 +8,7 @@ m: macro
 	; Shifting a little more to check that over-shifting doesn't crash
 	SHIFT
 	SHIFT
-	REPT 256
-		SHIFT
-	ENDR
+	SHIFT 256
 	PRINTLN "\1"
 endm
 
