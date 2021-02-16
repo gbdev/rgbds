@@ -22,6 +22,10 @@
 #define fx2double(i)	((double)((i) / 65536.0))
 #define double2fx(d)	((int32_t)round((d) * 65536.0))
 
+// pi radians == 32768 fixed-point "degrees"
+#define fdeg2rad(f)	((f) * (M_PI / 32768.0))
+#define rad2fdeg(r)	((r) * (32768.0 / M_PI))
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -58,7 +62,7 @@ void math_Print(int32_t i)
  */
 int32_t math_Sin(int32_t i)
 {
-	return double2fx(sin(fx2double(i) * 2 * M_PI / 65536));
+	return double2fx(sin(fdeg2rad(fx2double(i))));
 }
 
 /*
@@ -66,7 +70,7 @@ int32_t math_Sin(int32_t i)
  */
 int32_t math_Cos(int32_t i)
 {
-	return double2fx(cos(fx2double(i) * 2 * M_PI / 65536));
+	return double2fx(cos(fdeg2rad(fx2double(i))));
 }
 
 /*
@@ -74,7 +78,7 @@ int32_t math_Cos(int32_t i)
  */
 int32_t math_Tan(int32_t i)
 {
-	return double2fx(tan(fx2double(i) * 2 * M_PI / 65536));
+	return double2fx(tan(fdeg2rad(fx2double(i))));
 }
 
 /*
@@ -82,7 +86,7 @@ int32_t math_Tan(int32_t i)
  */
 int32_t math_ASin(int32_t i)
 {
-	return double2fx(asin(fx2double(i)) / 2 / M_PI * 65536);
+	return double2fx(rad2fdeg(asin(fx2double(i))));
 }
 
 /*
@@ -90,7 +94,7 @@ int32_t math_ASin(int32_t i)
  */
 int32_t math_ACos(int32_t i)
 {
-	return double2fx(acos(fx2double(i)) / 2 / M_PI * 65536);
+	return double2fx(rad2fdeg(acos(fx2double(i))));
 }
 
 /*
@@ -98,7 +102,7 @@ int32_t math_ACos(int32_t i)
  */
 int32_t math_ATan(int32_t i)
 {
-	return double2fx(atan(fx2double(i)) / 2 / M_PI * 65536);
+	return double2fx(rad2fdeg(atan(fx2double(i))));
 }
 
 /*
@@ -106,7 +110,7 @@ int32_t math_ATan(int32_t i)
  */
 int32_t math_ATan2(int32_t i, int32_t j)
 {
-	return double2fx(atan2(fx2double(i), fx2double(j)) / 2 / M_PI * 65536);
+	return double2fx(rad2fdeg(atan2(fx2double(i), fx2double(j))));
 }
 
 /*
