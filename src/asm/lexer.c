@@ -1457,9 +1457,14 @@ static void readString(void)
 		case '"':
 			if (multiline) {
 				// Only """ ends a multi-line string
-				if (peek(0) != '"' || peek(1) != '"')
+				if (peek(0) != '"')
 					break;
-				shiftChars(2);
+				shiftChars(1);
+				if (peek(0) != '"') {
+					append_yylval_tzString('"');
+					break;
+				}
+				shiftChars(1);
 			}
 			goto finish;
 
@@ -1604,11 +1609,14 @@ static size_t appendStringLiteral(size_t i)
 		case '"':
 			if (multiline) {
 				// Only """ ends a multi-line string
-				if (peek(0) != '"' || peek(1) != '"')
+				if (peek(0) != '"')
 					break;
 				append_yylval_tzString('"');
+				shiftChars(1);
+				if (peek(0) != '"')
+					break;
 				append_yylval_tzString('"');
-				shiftChars(2);
+				shiftChars(1);
 			}
 			append_yylval_tzString('"');
 			goto finish;
