@@ -637,12 +637,14 @@ void out_RelByte(struct Expression *expr, uint32_t pcShift)
  * Output several copies of a relocatable byte. Checking will be done to see if
  * it is an absolute value in disguise.
  */
-void out_RelBytes(struct Expression *expr, uint32_t n)
+void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 {
 	checkcodesection();
 	reserveSpace(n);
 
 	for (uint32_t i = 0; i < n; i++) {
+		struct Expression *expr = &exprs[i % size];
+
 		if (!rpn_isKnown(expr)) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writebyte(0);
@@ -650,7 +652,9 @@ void out_RelBytes(struct Expression *expr, uint32_t n)
 			writebyte(expr->nVal);
 		}
 	}
-	rpn_Free(expr);
+
+	for (size_t i = 0; i < size; i++)
+		rpn_Free(&exprs[i]);
 }
 
 /*

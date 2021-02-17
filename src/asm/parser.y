@@ -310,6 +310,33 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 	dest[i] = '\0';
 }
 
+static void initDsArgList(struct DsArgList *args)
+{
+	args->nbArgs = 0;
+	args->capacity = INITIAL_DS_ARG_SIZE;
+	args->args = malloc(args->capacity * sizeof(*args->args));
+	if (!args->args)
+		fatalerror("Failed to allocate memory for ds arg list: %s\n",
+			   strerror(errno));
+}
+
+static size_t nextDsArgListIndex(struct DsArgList *args)
+{
+	if (args->nbArgs == args->capacity) {
+		args->capacity = (args->capacity + 1) * 2;
+		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		if (!args->args)
+			fatalerror("realloc error while resizing ds arg list: %s\n",
+				   strerror(errno));
+	}
+	return args->nbArgs++;
+}
+
+static void freeDsArgList(struct DsArgList *args)
+{
+	free(args->args);
+}
+
 static inline void failAssert(enum AssertionType type)
 {
 	switch (type) {
@@ -397,6 +424,7 @@ enum {
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
+	struct DsArgList dsArgs;
 	struct {
 		int32_t start;
 		int32_t stop;
@@ -536,6 +564,8 @@ enum {
 
 %type	<sectMod> sectmod
 %type	<macroArg> macroargs
+
+%type	<dsArgs> ds_args
 
 %type	<forArgs> for_args
 
@@ -946,8 +976,23 @@ endu		: T_POP_ENDU	{ sect_EndUnion(); }
 ;
 
 ds		: T_POP_DS uconst	{ out_Skip($2, true); }
-		| T_POP_DS uconst T_COMMA reloc_8bit {
-			out_RelBytes(&$4, $2);
+		| T_POP_DS uconst T_COMMA ds_args {
+			out_RelBytes($2, $4.args, $4.nbArgs);
+			freeDsArgList(&$4);
+		}
+;
+
+ds_args		: reloc_8bit {
+			initDsArgList(&$$);
+			size_t i = nextDsArgListIndex(&$$);
+
+			$$.args[i] = $1;
+		}
+		| ds_args T_COMMA reloc_8bit {
+			size_t i = nextDsArgListIndex(&$1);
+
+			$1.args[i] = $3;
+			$$ = $1;
 		}
 ;
 
@@ -1265,7 +1310,7 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| relocexpr T_OP_XOR relocexpr {
 			rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3);
 		}
-		| relocexpr T_OP_OR relocexpr	 {
+		| relocexpr T_OP_OR relocexpr {
 			rpn_BinaryOp(RPN_OR, &$$, &$1, &$3);
 		}
 		| relocexpr T_OP_AND relocexpr {
