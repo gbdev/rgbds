@@ -903,7 +903,7 @@ restart:
 				char const *str = readMacroArg(c);
 
 				/*
-				 * If the argument is an empty string, it cannot be
+				 * If the macro arg is an empty string, it cannot be
 				 * expanded, so skip it and keep peeking.
 				 */
 				if (!str[0]) {
@@ -2163,6 +2163,16 @@ static int yylex_RAW(void)
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
 			return T_STRING;
+
+		case '/': /* Block comments inside macro args */
+			shiftChars(1); /* Shift the slash */
+			if (peek(0) == '*') {
+				shiftChars(1);
+				discardBlockComment();
+				continue;
+			}
+			append_yylval_tzString(c); /* Append the slash */
+			break;
 
 		case '\\': /* Character escape */
 			shiftChars(1); /* Shift the backslash */
