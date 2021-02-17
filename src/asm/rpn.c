@@ -283,6 +283,22 @@ static int32_t shift(int32_t shiftee, int32_t amount)
 	}
 }
 
+static int32_t divide(int32_t dividend, int32_t divisor)
+{
+	// Adjust division to floor toward negative infinity,
+	// not truncate toward zero
+	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
+}
+
+static int32_t modulo(int32_t dividend, int32_t divisor)
+{
+	int32_t remainder = dividend % divisor;
+
+	// Adjust modulo to have the sign of the divisor,
+	// not the sign of the dividend
+	return remainder + divisor * ((remainder < 0) != (divisor < 0));
+}
+
 static int32_t exponent(int32_t base, uint32_t power)
 {
 	int32_t result = 1;
@@ -410,17 +426,17 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 					PRId32 "\n", INT32_MIN, INT32_MIN);
 				expr->nVal = INT32_MIN;
 			} else {
-				expr->nVal = src1->nVal / src2->nVal;
+				expr->nVal = divide(src1->nVal, src2->nVal);
 			}
 			break;
 		case RPN_MOD:
 			if (src2->nVal == 0)
-				fatalerror("Division by zero\n");
+				fatalerror("Modulo by zero\n");
 
 			if (src1->nVal == INT32_MIN && src2->nVal == -1)
 				expr->nVal = 0;
 			else
-				expr->nVal = src1->nVal % src2->nVal;
+				expr->nVal = modulo(src1->nVal, src2->nVal);
 			break;
 		case RPN_EXP:
 			if (src2->nVal < 0)

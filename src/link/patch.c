@@ -21,6 +21,22 @@
 
 #include "extern/err.h"
 
+static int32_t divide(int32_t dividend, int32_t divisor)
+{
+	// Adjust division to floor toward negative infinity,
+	// not truncate toward zero
+	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
+}
+
+static int32_t modulo(int32_t dividend, int32_t divisor)
+{
+	int32_t remainder = dividend % divisor;
+
+	// Adjust modulo to have the sign of the divisor,
+	// not the sign of the dividend
+	return remainder + divisor * ((remainder < 0) != (divisor < 0));
+}
+
 static int32_t exponent(int32_t base, uint32_t power)
 {
 	int32_t result = 1;
@@ -235,7 +251,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				popRPN();
 				value = INT32_MAX;
 			} else {
-				value = popRPN() / value;
+				value = divide(popRPN(), value);
 			}
 			break;
 		case RPN_MOD:
@@ -247,7 +263,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				popRPN();
 				value = 0;
 			} else {
-				value = popRPN() % value;
+				value = modulo(popRPN(), value);
 			}
 			break;
 		case RPN_UNSUB:
