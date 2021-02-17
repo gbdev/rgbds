@@ -730,7 +730,6 @@ label		: %empty
 macro		: T_ID {
 			lexer_SetMode(LEXER_RAW);
 		} macroargs {
-			lexer_SetMode(LEXER_NORMAL);
 			fstk_RunMacro($1, $3);
 		}
 ;
@@ -738,12 +737,8 @@ macro		: T_ID {
 macroargs	: %empty {
 			$$ = macro_NewArgs();
 		}
-		| T_STRING {
-			$$ = macro_NewArgs();
-			macro_AppendArg(&($$), strdup($1));
-		}
-		| macroargs T_COMMA T_STRING {
-			macro_AppendArg(&($$), strdup($3));
+		| macroargs T_STRING {
+			macro_AppendArg(&($$), strdup($2), !lexer_IsRawMode());
 		}
 ;
 

@@ -14,3 +14,10 @@ ENDM
 	c, d
 	mac 1, 2 + /* another ;
 		; comment */ 2, 3
+
+	mac
+	mac a,,
+	mac ,,z
+	mac a,,z
+	mac ,a,b,c,
+	mac ,,x,,

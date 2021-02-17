@@ -1,0 +1,22 @@
+warning: macro-arguments.asm(19): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(19): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(20): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(20): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(21): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(22): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(22): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(23): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(23): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(23): [-Wempty-macro-arg]
+    Empty macro argument
+warning: macro-arguments.asm(23): [-Wempty-macro-arg]
+    Empty macro argument
