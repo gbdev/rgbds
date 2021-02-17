@@ -182,10 +182,9 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	if (fmt->type == 'd' || fmt->type == 'f') {
 		int32_t v = value;
 
-		if (v < 0) {
+		if (v < 0 && v != INT32_MIN) {
 			sign = '-';
-			if (v != INT32_MIN)
-				value = -v;
+			value = -v;
 		}
 	}
 
