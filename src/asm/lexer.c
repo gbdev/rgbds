@@ -2339,7 +2339,7 @@ restart:
 		if (!lexerState->capturing) {
 			if (!yywrap())
 				goto restart;
-			dbgPrint("Reached end of input.");
+			dbgPrint("Reached end of input.\n");
 			return T_EOF;
 		}
 	}
