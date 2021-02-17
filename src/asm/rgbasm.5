@@ -235,7 +235,6 @@ There are a number of escape sequences you can use within a string:
 .It Sy String Ta Sy Meaning
 .It Ql \[rs]\[rs] Ta Produces a backslash
 .It Ql \[rs]" Ta Produces a double quote without terminating
-.It Ql \[rs], Ta Comma
 .It Ql \[rs]{ Ta Curly bracket left
 .It Ql \[rs]} Ta Curly bracket right
 .It Ql \[rs]n Ta Newline ($0A)
@@ -1088,6 +1087,10 @@ definition
 ENDM
 .Ed
 .El
+.Pp
+Macro arguments support all the escape sequences of strings, as well as
+.Ql \[rs],
+to escape commas, since those otherwise separate arguments.
 .Ss Exporting and importing symbols
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.
 .Pp
@@ -1462,16 +1465,13 @@ PrintMacro: MACRO
 ENDM
 
     PrintMacro STRCAT("Hello "\[rs], \[rs]
-                      "world\[rs]\[rs]n")
+                      "world\[rs]n")
 .Ed
 .Pp
 The comma needs to be escaped to avoid it being treated as separating the macro's arguments.
-The backslash
-.Sq \[rs]
-.Pq from Sq \[rs]n
-also needs to be escaped because of the way
-.Nm
-processes macro arguments.
+The backslash in
+.Ql \[rs]n
+does not need to be escaped because string literals also work as usual inside macro arguments.
 .Pp
 In reality, up to 256 arguments can be passed to a macro, but you can only use the first 9 like this.
 If you want to use the rest, you need to use the
