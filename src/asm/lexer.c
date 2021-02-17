@@ -845,7 +845,6 @@ restart:
 			}
 		} else if (c == '{' && !lexerState->disableInterpolation) {
 			/* If character is an open brace, do symbol interpolation */
-			lexerState->macroArgScanDistance++;
 			shiftChars(1);
 			char const *ptr = readInterpolation();
 
@@ -1247,7 +1246,7 @@ static void readGfxConstant(void)
 	yylval.nConstValue = bp1 << 8 | bp0;
 }
 
-/* Function to read identifiers & keywords */
+/* Functions to read identifiers & keywords */
 
 static bool startsIdentifier(int c)
 {
@@ -1373,51 +1372,39 @@ static char const *readInterpolation(void)
 	return NULL;
 }
 
-static int appendMacroArg(char const *str, int i)
+#define append_yylval_tzString(c) do { \
+	if (i < sizeof(yylval.tzString)) \
+		yylval.tzString[i++] = (c); \
+} while (0)
+
+static size_t appendEscapedSubstring(char const *str, size_t i)
 {
-	while (*str && i < sizeof(yylval.tzString)) {
+	/* Copy one extra to flag overflow */
+	while (*str) {
 		int c = *str++;
 
-		if (c != '\\') {
-			yylval.tzString[i++] = c;
-			continue;
-		}
-
-		c = *str++;
-
+		/* Escape characters that need escaping */
 		switch (c) {
-		case '\\': /* Return that character unchanged */
+		case '\\':
 		case '"':
 		case '{':
-		case '}':
+			append_yylval_tzString('\\');
 			break;
-		case 'n':
-			c = '\n';
+		case '\n':
+			append_yylval_tzString('\\');
+			c = 'n';
 			break;
-		case 'r':
-			c = '\r';
+		case '\r':
+			append_yylval_tzString('\\');
+			c = 'r';
 			break;
-		case 't':
-			c = '\t';
-			break;
-
-		case '\0': /* Can't really print that one */
-			error("Illegal character escape at end of macro arg\n");
-			yylval.tzString[i++] = '\\';
-			break;
-
-		/*
-		 * Line continuations and macro args were already
-		 * handled while reading the macro args, so '\@',
-		 * '\#', and '\0'-'\9' should not occur here.
-		 */
-
-		default:
-			error("Illegal character escape '%s'\n", print(c));
-			c = '\\';
+		case '\t':
+			append_yylval_tzString('\\');
+			c = 't';
 			break;
 		}
-		yylval.tzString[i++] = c;
+
+		append_yylval_tzString(c);
 	}
 
 	return i;
@@ -1479,10 +1466,11 @@ static void readString(void)
 		case '\\': // Character escape or macro arg
 			c = peek(0);
 			switch (c) {
-			case '\\': // Return that character unchanged
+			case '\\':
 			case '"':
 			case '{':
 			case '}':
+				// Return that character unchanged
 				shiftChars(1);
 				break;
 			case 'n':
@@ -1521,16 +1509,18 @@ static void readString(void)
 				shiftChars(1);
 				char const *str = readMacroArg(c);
 
-				i = appendMacroArg(str, i);
+				while (*str)
+					append_yylval_tzString(*str++);
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
 				error("Illegal character escape at end of input\n");
 				c = '\\';
 				break;
+
 			default:
 				error("Illegal character escape '%s'\n", print(c));
-				c = '\\';
+				shiftChars(1);
 				break;
 			}
 			break;
@@ -1542,16 +1532,15 @@ static void readString(void)
 			char const *ptr = readInterpolation();
 
 			if (ptr)
-				while (*ptr && i < sizeof(yylval.tzString))
-					yylval.tzString[i++] = *ptr++;
+				while (*ptr)
+					append_yylval_tzString(*ptr++);
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
 		// Regular characters will just get copied
 		}
 
-		if (i < sizeof(yylval.tzString)) // Copy one extra to flag overflow
-			yylval.tzString[i++] = c;
+		append_yylval_tzString(c);
 	}
 
 finish:
@@ -1564,6 +1553,155 @@ finish:
 	dbgPrint("Read string \"%s\"\n", yylval.tzString);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+}
+
+static size_t appendStringLiteral(size_t i)
+{
+	dbgPrint("Reading string\n");
+	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
+
+	bool multiline = false;
+
+	// We reach this function after reading a single quote, but we also support triple quotes
+	append_yylval_tzString('"');
+	if (peek(0) == '"') {
+		append_yylval_tzString('"');
+		shiftChars(1);
+		if (peek(0) == '"') {
+			// """ begins a multi-line string
+			append_yylval_tzString('"');
+			shiftChars(1);
+			multiline = true;
+		} else {
+			// "" is an empty string, skip the loop
+			goto finish;
+		}
+	}
+
+	for (;;) {
+		int c = peek(0);
+
+		// '\r', '\n' or EOF ends a single-line string early
+		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
+			error("Unterminated string\n");
+			break;
+		}
+
+		// We'll be staying in the string, so we can safely consume the char
+		shiftChars(1);
+
+		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
+		if (c == '\r' || c == '\n') {
+			/* Handle CRLF before nextLine() since shiftChars updates colNo */
+			if (c == '\r' && peek(0) == '\n')
+				shiftChars(1);
+			nextLine();
+			c = '\n';
+		}
+
+		switch (c) {
+		case '"':
+			if (multiline) {
+				// Only """ ends a multi-line string
+				if (peek(0) != '"' || peek(1) != '"')
+					break;
+				append_yylval_tzString('"');
+				append_yylval_tzString('"');
+				shiftChars(2);
+			}
+			append_yylval_tzString('"');
+			goto finish;
+
+		case '\\': // Character escape or macro arg
+			c = peek(0);
+			switch (c) {
+			// Character escape
+			case '\\':
+			case '"':
+			case '{':
+			case '}':
+			case 'n':
+			case 'r':
+			case 't':
+				// Return that character unchanged
+				append_yylval_tzString('\\');
+				shiftChars(1);
+				break;
+
+			// Line continuation
+			case ' ':
+			case '\r':
+			case '\n':
+				readLineContinuation();
+				continue;
+
+			// Macro arg
+			case '@':
+			case '#':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				shiftChars(1);
+				char const *str = readMacroArg(c);
+
+				i = appendEscapedSubstring(str, i);
+				continue; // Do not copy an additional character
+
+			case EOF: // Can't really print that one
+				error("Illegal character escape at end of input\n");
+				c = '\\';
+				break;
+
+			case ',': /* `\,` inside a macro arg string literal */
+				warning(WARNING_OBSOLETE,
+					"`\\,` is deprecated inside strings\n");
+				shiftChars(1);
+				break;
+
+			default:
+				error("Illegal character escape '%s'\n", print(c));
+				shiftChars(1);
+				break;
+			}
+			break;
+
+		case '{': // Symbol interpolation
+			// We'll be exiting the string scope, so re-enable expansions
+			// (Not interpolations, since they're handled by the function itself...)
+			lexerState->disableMacroArgs = false;
+			char const *ptr = readInterpolation();
+
+			if (ptr)
+				i = appendEscapedSubstring(ptr, i);
+			lexerState->disableMacroArgs = true;
+			continue; // Do not copy an additional character
+
+		// Regular characters will just get copied
+		}
+
+		append_yylval_tzString(c);
+	}
+
+finish:
+	if (i == sizeof(yylval.tzString)) {
+		i--;
+		warning(WARNING_LONG_STR, "String constant too long\n");
+	}
+	yylval.tzString[i] = '\0';
+
+	dbgPrint("Read string \"%s\"\n", yylval.tzString);
+	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
+
+	return i;
 }
 
 /* Function to report one character's worth of garbage bytes */
@@ -1835,6 +1973,7 @@ static int yylex_NORMAL(void)
 			case EOF:
 				error("Illegal character escape at end of input\n");
 				break;
+
 			default:
 				shiftChars(1);
 				error("Illegal character escape '%s'\n", print(c));
@@ -1886,9 +2025,8 @@ static int yylex_RAW(void)
 	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
 
-	/* This is essentially a modified `readString` */
+	/* This is essentially a modified `appendStringLiteral` */
 	size_t i = 0;
-	bool insideString = false;
 
 	/* Trim left of string... */
 	while (isWhitespace(peek(0)))
@@ -1898,18 +2036,16 @@ static int yylex_RAW(void)
 		int c = peek(0);
 
 		switch (c) {
-		case '"':
-			insideString = !insideString;
-			/* Other than that, just process quotes normally */
+		case '"': /* String literals inside macro args */
+			shiftChars(1);
+			i = appendStringLiteral(i);
 			break;
 
 		case ';': /* Comments inside macro args */
-			if (insideString)
-				break;
 			discardComment();
 			c = peek(0);
 			/* fallthrough */
-		case ',':
+		case ',': /* End of macro arg */
 		case '\r':
 		case '\n':
 		case EOF:
@@ -1939,16 +2075,30 @@ static int yylex_RAW(void)
 			return T_STRING;
 
 		case '\\': /* Character escape */
-			c = peek(1);
+			shiftChars(1); /* Shift the backslash */
+			c = peek(0);
+
 			switch (c) {
-			case ',':
-				shiftChars(1);
+			case ',': /* Escape `\,` only inside a macro arg */
+			case '\\': /* Escapes shared with string literals */
+			case '"':
+			case '{':
+			case '}':
+				break;
+
+			case 'n':
+				c = '\n';
+				break;
+			case 'r':
+				c = '\r';
+				break;
+			case 't':
+				c = '\t';
 				break;
 
 			case ' ':
 			case '\r':
 			case '\n':
-				shiftChars(1); /* Shift the backslash */
 				readLineContinuation();
 				continue;
 
@@ -1956,19 +2106,27 @@ static int yylex_RAW(void)
 				error("Illegal character escape at end of input\n");
 				c = '\\';
 				break;
-			default: /* Pass the rest as-is */
-				c = '\\';
+
+			/*
+			 * Macro args were already handled by peek, so '\@',
+			 * '\#', and '\0'-'\9' should not occur here.
+			 */
+
+			default:
+				error("Illegal character escape '%s'\n", print(c));
 				break;
 			}
-			break;
+			/* fallthrough */
 
-		/* Regular characters will just get copied */
+		default: /* Regular characters will just get copied */
+			append_yylval_tzString(c);
+			shiftChars(1);
+			break;
 		}
-		if (i < sizeof(yylval.tzString)) /* Copy one extra to flag overflow */
-			yylval.tzString[i++] = c;
-		shiftChars(1);
 	}
 }
+
+#undef append_yylval_tzString
 
 /*
  * This function uses the fact that `if`, etc. constructs are only valid when
