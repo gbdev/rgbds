@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,9 +59,15 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **argPtr, char *s)
+void macro_AppendArg(struct MacroArgs **argPtr, char *s, bool isLastArg)
 {
 #define macArgs (*argPtr)
+	if (s[0] == '\0') {
+		/* Zero arguments are parsed as a spurious empty argument; do not append it */
+		if (isLastArg && !macArgs->nbArgs)
+			return;
+		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
+	}
 	if (macArgs->nbArgs == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {

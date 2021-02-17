@@ -360,6 +360,7 @@ struct LexerState {
 	bool disableMacroArgs;
 	bool disableInterpolation;
 	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
+	bool injectNewline; /* Whether to inject a newline at EOF */
 	bool expandStrings;
 	struct Expansion *expansions;
 	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
@@ -381,6 +382,7 @@ static void initState(struct LexerState *state)
 	state->disableMacroArgs = false;
 	state->disableInterpolation = false;
 	state->macroArgScanDistance = 0;
+	state->injectNewline = false;
 	state->expandStrings = true;
 	state->expansions = NULL;
 	state->expansionOfs = 0;
@@ -636,6 +638,11 @@ void lexer_Init(void)
 void lexer_SetMode(enum LexerMode mode)
 {
 	lexerState->mode = mode;
+}
+
+bool lexer_IsRawMode(void)
+{
+	return lexerState->mode == LEXER_RAW;
 }
 
 void lexer_ToggleStringExpansion(bool enable)
@@ -2047,6 +2054,10 @@ static int yylex_NORMAL(void)
 			return T_NEWLINE;
 
 		case EOF:
+			if (lexerState->injectNewline) {
+				lexerState->injectNewline = false;
+				return T_NEWLINE;
+			}
 			return T_EOF;
 
 		/* Handle escapes */
@@ -2140,26 +2151,25 @@ static int yylex_RAW(void)
 		case '\r':
 		case '\n':
 		case EOF:
+			// Returning T_COMMAs to the parser would mean that two consecutive commas
+			// (i.e. an empty argument) need to return two different tokens (T_STRING
+			// then T_COMMA) without advancing the read. To avoid this, commas in raw
+			// mode end the current macro argument but are not tokenized themselves.
+			if (c == ',')
+				shiftChars(1);
+			else
+				lexer_SetMode(LEXER_NORMAL);
+			// If a macro is invoked on the last line of a file, with no blank
+			// line afterwards, returning EOF afterwards will cause Bison to
+			// stop parsing, despite the lexer being ready to output more.
+			if (c == EOF)
+				lexerState->injectNewline = true;
 			/* Trim right whitespace */
 			while (i && isWhitespace(yylval.tzString[i - 1]))
 				i--;
 			if (i == sizeof(yylval.tzString)) {
 				i--;
 				warning(WARNING_LONG_STR, "Macro argument too long\n");
-			}
-			/* Empty macro args break their expansion, so prevent that */
-			if (i == 0) {
-				// If at EOF, don't shift a non-existent char.
-				// However, don't return EOF, as this might cause a bug...
-				// If a macro is invoked on the last line of a file, with no blank
-				// line afterwards, returning EOF here will cause Bison to stop
-				// parsing, despite the lexer being ready to output more.
-				if (c == EOF)
-					return T_NEWLINE;
-				shiftChars(1);
-				if (c == '\r' && peek(0) == '\n')
-					shiftChars(1);
-				return c == ',' ? T_COMMA : T_NEWLINE;
 			}
 			yylval.tzString[i] = '\0';
 			dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
