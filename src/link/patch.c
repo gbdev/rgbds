@@ -21,14 +21,16 @@
 
 #include "extern/err.h"
 
-static int32_t exponent(int32_t base, int32_t power)
+static int32_t exponent(int32_t base, uint32_t power)
 {
 	int32_t result = 1;
 
-	while (power) {
+	for (;;) {
 		if (power % 2)
 			result *= base;
 		power /= 2;
+		if (!power)
+			break;
 		base *= base;
 	}
 
