@@ -2118,7 +2118,7 @@ static int yylex_RAW(void)
 	/* This is essentially a modified `appendStringLiteral` */
 	size_t i = 0;
 
-	/* Trim left of string... */
+	/* Trim left whitespace (stops at a block comment or line continuation) */
 	while (isWhitespace(peek(0)))
 		shiftChars(1);
 
@@ -2139,13 +2139,13 @@ static int yylex_RAW(void)
 		case '\r':
 		case '\n':
 		case EOF:
+			/* Trim right whitespace */
+			while (i && isWhitespace(yylval.tzString[i - 1]))
+				i--;
 			if (i == sizeof(yylval.tzString)) {
 				i--;
 				warning(WARNING_LONG_STR, "Macro argument too long\n");
 			}
-			/* Trim whitespace */
-			while (i && isWhitespace(yylval.tzString[i - 1]))
-				i--;
 			/* Empty macro args break their expansion, so prevent that */
 			if (i == 0) {
 				// If at EOF, don't shift a non-existent char.
