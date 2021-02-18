@@ -423,6 +423,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 			close(state->fd);
 
 			state->isMmapped = true;
+			state->isReferenced = false; // By default, a state isn't referenced
 			state->ptr = mappingAddr;
 			state->size = fileInfo.st_size;
 			state->offset = 0;
