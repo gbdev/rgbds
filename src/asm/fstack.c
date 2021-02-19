@@ -24,7 +24,7 @@
 #define MAXINCPATHS 128
 
 #ifdef LEXER_DEBUG
-  #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
+  #define dbgPrint(...) fprintf(stderr, "[fstack] " __VA_ARGS__)
 #else
   #define dbgPrint(...)
 #endif
@@ -270,6 +270,7 @@ bool yywrap(void)
 	struct Context *context = contextStack;
 
 	contextStack = contextStack->parent;
+	assert(contextDepth != 0); // This is never supposed to underflow
 	contextDepth--;
 
 	lexer_DeleteState(context->lexerState);

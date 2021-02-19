@@ -479,6 +479,19 @@ void lexer_RestartRept(uint32_t lineNo)
 
 void lexer_DeleteState(struct LexerState *state)
 {
+	// A big chunk of the lexer state soundness is the file stack ("fstack").
+	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
+	// that lexer states lifetimes are always properly managed, since they're handled solely
+	// by the fstack... with *one* exception.
+	// Assume a context is pushed on top of the fstack, and the corresponding lexer state gets
+	// scheduled at EOF; `lexerStateAtEOL` thus becomes a (weak) ref to that lexer state...
+	// It has been possible, due to a bug, that the corresponding fstack context gets popped
+	// before EOL, deleting the associated state... but it would still be switched to at EOL.
+	// This assertion checks that this doesn't happen again.
+	// It could be argued that deleting a state that's scheduled for EOF could simply clear
+	// `lexerStateEOL`, but there's currently no situation in which this should happen.
+	assert(state != lexerStateEOL);
+
 	if (!state->isMmapped)
 		close(state->fd);
 	else if (state->isFile && !state->isReferenced)
@@ -2329,13 +2342,13 @@ restart:
 		[LEXER_RAW]          = yylex_RAW,
 		[LEXER_SKIP_TO_ELIF] = yylex_SKIP_TO_ELIF,
 		[LEXER_SKIP_TO_ENDC] = yylex_SKIP_TO_ENDC,
-		[LEXER_SKIP_TO_ENDR] = yylex_SKIP_TO_ENDR
+		[LEXER_SKIP_TO_ENDR] = yylex_SKIP_TO_ENDR,
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
 	if (token == T_EOF) {
 		/* Try to switch to new buffer; if it succeeds, scan again */
-		dbgPrint("Reached EOF!\n");
+		dbgPrint("Reached EOB!\n");
 		/* Captures end at their buffer's boundary no matter what */
 		if (!lexerState->capturing) {
 			if (!yywrap())
@@ -2345,9 +2358,7 @@ restart:
 		}
 	}
 
-	lexerState->atLineStart = false;
-	if (token == T_NEWLINE)
-		lexerState->atLineStart = true;
+	lexerState->atLineStart = token == T_NEWLINE;
 
 	return token;
 }
