@@ -651,7 +651,6 @@ line_directive	: macrodef
 		/* It's important that all of these require being at line start for `skipIfBlock` */
 		| elif
 		| else
-		| endc
 ;
 
 if		: T_POP_IF const T_NEWLINE {
@@ -685,7 +684,7 @@ else		: T_POP_ELSE T_NEWLINE {
 		}
 ;
 
-endc		: T_POP_ENDC T_NEWLINE {
+endc		: T_POP_ENDC {
 			if (fstk_GetIFDepth() == 0)
 				fatalerror("Found ENDC outside an IF construct\n");
 
@@ -750,6 +749,7 @@ assignment_directive	: equ
 ;
 
 directive	: include
+		| endc
 		| print
 		| println
 		| printf
