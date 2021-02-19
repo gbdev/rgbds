@@ -275,7 +275,7 @@ bool yywrap(void)
 	lexer_DeleteState(context->lexerState);
 	/* Restore args if a macro (not REPT) saved them */
 	if (context->fileInfo->type == NODE_MACRO) {
-		dbgPrint("Restoring macro args %p\n", contextStack->macroArgs);
+		dbgPrint("Restoring macro args %p\n", (void *)contextStack->macroArgs);
 		macro_UseNewArgs(contextStack->macroArgs);
 	}
 	/* Free the file stack node */
