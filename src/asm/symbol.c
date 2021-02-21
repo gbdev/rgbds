@@ -365,8 +365,10 @@ void sym_SetCurrentSymbolScope(char const *newScope)
  * Create a symbol that will be non-relocatable and ensure that it
  * hasn't already been defined or referenced in a context that would
  * require that it be relocatable
+ * @param symbolName The name of the symbol to create
+ * @param numeric If false, the symbol may not have been referenced earlier
  */
-static struct Symbol *createNonrelocSymbol(char const *symbolName)
+static struct Symbol *createNonrelocSymbol(char const *symbolName, bool numeric)
 {
 	struct Symbol *symbol = sym_FindExactSymbol(symbolName);
 
@@ -376,6 +378,12 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
 		error("'%s' already defined at ", symbolName);
 		dumpFilename(symbol);
 		putc('\n', stderr);
+	} else if (!numeric) {
+		// The symbol has already been referenced, but it's not allowed
+		error("'%s' already referenced at ", symbolName);
+		dumpFilename(symbol);
+		putc('\n', stderr);
+		return NULL; // Don't allow overriding the symbol, that'd be bad!
 	}
 
 	return symbol;
@@ -386,7 +394,10 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName)
  */
 struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName);
+	struct Symbol *sym = createNonrelocSymbol(symName, true);
+
+	if (!sym)
+		return NULL;
 
 	sym->type = SYM_EQU;
 	sym->value = value;
@@ -408,10 +419,12 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
  */
 struct Symbol *sym_AddString(char const *symName, char const *value)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName);
+	struct Symbol *sym = createNonrelocSymbol(symName, false);
+
+	if (!sym)
+		return NULL;
 
 	assignStringSymbol(sym, value);
-
 	return sym;
 }
 
@@ -614,7 +627,10 @@ void sym_Export(char const *symName)
  */
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName);
+	struct Symbol *sym = createNonrelocSymbol(symName, false);
+
+	if (!sym)
+		return NULL;
 
 	sym->type = SYM_MACRO;
 	sym->macroSize = size;
