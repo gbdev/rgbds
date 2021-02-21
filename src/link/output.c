@@ -17,7 +17,11 @@
 
 #include "extern/err.h"
 
-FILE * outputFile;
+#include "linkdefs.h"
+
+#define BANK_SIZE 0x4000
+
+FILE *outputFile;
 FILE *overlayFile;
 FILE *symFile;
 FILE *mapFile;
@@ -103,43 +107,63 @@ struct Section const *out_OverlappingSection(struct Section const *section)
 
 /**
  * Performs sanity checks on the overlay file.
+ * @return The number of ROM banks in the overlay file
  */
-static void checkOverlay(void)
+static uint32_t checkOverlaySize(void)
 {
 	if (!overlayFile)
-		return;
+		return 0;
 
 	if (fseek(overlayFile, 0, SEEK_END) != 0) {
 		warnx("Overlay file is not seekable, cannot check if properly formed");
-		return;
+		return 0;
 	}
 
 	long overlaySize = ftell(overlayFile);
 
-	if (overlaySize % 0x4000)
-		errx(1, "Overlay file must have a size multiple of 0x4000");
-
 	/* Reset back to beginning */
 	fseek(overlayFile, 0, SEEK_SET);
 
-	uint32_t nbOverlayBanks = overlaySize / 0x4000 - 1;
+	if (overlaySize % BANK_SIZE)
+		errx(1, "Overlay file must have a size multiple of 0x4000");
 
-	if (nbOverlayBanks < 1)
+	uint32_t nbOverlayBanks = overlaySize / BANK_SIZE;
+
+	if (is32kMode && nbOverlayBanks != 2)
+		errx(1, "Overlay must be exactly 0x8000 bytes large");
+
+	if (nbOverlayBanks < 2)
 		errx(1, "Overlay must be at least 0x8000 bytes large");
 
-	if (nbOverlayBanks > sections[SECTTYPE_ROMX].nbBanks) {
+	return nbOverlayBanks;
+}
+
+/**
+ * Expand sections[SECTTYPE_ROMX].banks to cover all the overlay banks.
+ * This ensures that writeROM will output each bank, even if some are not
+ * covered by any sections.
+ * @param nbOverlayBanks The number of banks in the overlay file
+ */
+static void coverOverlayBanks(uint32_t nbOverlayBanks)
+{
+	/* 2 if is32kMode, 1 otherwise */
+	uint32_t nbRom0Banks = maxsize[SECTTYPE_ROM0] / BANK_SIZE;
+	/* Discount ROM0 banks to avoid outputting too much */
+	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].nbBanks
+				    ? nbOverlayBanks - nbRom0Banks
+				    : 0;
+
+	if (nbUncoveredBanks > sections[SECTTYPE_ROMX].nbBanks) {
 		sections[SECTTYPE_ROMX].banks =
 			realloc(sections[SECTTYPE_ROMX].banks,
-				sizeof(*sections[SECTTYPE_ROMX].banks) *
-					nbOverlayBanks);
+				sizeof(*sections[SECTTYPE_ROMX].banks) * nbUncoveredBanks);
 		if (!sections[SECTTYPE_ROMX].banks)
 			err(1, "Failed to realloc banks for overlay");
-		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks;
-		     i < nbOverlayBanks; i++) {
+		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks; i < nbUncoveredBanks; i++) {
 			sections[SECTTYPE_ROMX].banks[i].sections = NULL;
 			sections[SECTTYPE_ROMX].banks[i].zeroLenSections = NULL;
 		}
-		sections[SECTTYPE_ROMX].nbBanks = nbOverlayBanks;
+		sections[SECTTYPE_ROMX].nbBanks = nbUncoveredBanks;
 	}
 }
 
@@ -195,16 +219,19 @@ static void writeROM(void)
 	outputFile = openFile(outputFileName, "wb");
 	overlayFile = openFile(overlayFileName, "rb");
 
-	checkOverlay();
+	uint32_t nbOverlayBanks = checkOverlaySize();
+
+	if (nbOverlayBanks > 0)
+		coverOverlayBanks(nbOverlayBanks);
 
 	if (outputFile) {
 		if (sections[SECTTYPE_ROM0].nbBanks > 0)
 			writeBank(sections[SECTTYPE_ROM0].banks[0].sections,
-				  0x0000, 0x4000);
+				  startaddr[SECTTYPE_ROM0], maxsize[SECTTYPE_ROM0]);
 
 		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
 			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
-				  0x4000, 0x4000);
+				  startaddr[SECTTYPE_ROMX], maxsize[SECTTYPE_ROMX]);
 	}
 
 	closeFile(outputFile);

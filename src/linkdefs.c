@@ -13,11 +13,11 @@ uint16_t startaddr[] = {
 };
 
 uint16_t maxsize[] = {
-	[SECTTYPE_ROM0]  = 0x8000,
+	[SECTTYPE_ROM0]  = 0x8000, // patched to 0x4000 if !is32kMode
 	[SECTTYPE_ROMX]  = 0x4000,
 	[SECTTYPE_VRAM]  = 0x2000,
 	[SECTTYPE_SRAM]  = 0x2000,
-	[SECTTYPE_WRAM0] = 0x2000,
+	[SECTTYPE_WRAM0] = 0x2000, // patched to 0x1000 if !isWRA0Mode
 	[SECTTYPE_WRAMX] = 0x1000,
 	[SECTTYPE_OAM]   = 0x00A0,
 	[SECTTYPE_HRAM]  = 0x007F

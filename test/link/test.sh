@@ -117,6 +117,14 @@ rgblink -o $gbtemp2 $otemp
 i="high-low.asm" tryCmp $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
+$RGBASM -o $otemp overlay/a.asm
+rgblink -o $gbtemp -t -O overlay/overlay.gb $otemp > $outtemp 2>&1
+# This test does not trim its output with 'dd' because it needs to verify the correct output size
+i="overlay.asm" tryDiff overlay/out.err $outtemp
+rc=$(($? || $rc))
+i="overlay.asm" tryCmp overlay/out.gb $gbtemp
+rc=$(($? || $rc))
+
 $RGBASM -o $otemp section-union/good/a.asm
 $RGBASM -o $gbtemp2 section-union/good/b.asm
 rgblink -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2
