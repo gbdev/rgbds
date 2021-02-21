@@ -143,9 +143,16 @@ A great number of operators you can use in expressions are available (listed fro
 complements a value by inverting all its bits.
 .Pp
 .Ic %
-is used to get the remainder of the corresponding division.
-.Sq 5 % 2
-is 1.
+is used to get the remainder of the corresponding division, so that
+.Sq a / b * b + a % b == a
+is always true.
+The result has the same sign as the divisor.
+This makes
+.Sq a % b .
+equal to
+.Sq (a + b) % b
+or
+.Sq (a - b) % b .
 .Pp
 Shifting works by shifting all bits in the left operand either left
 .Pq Sq <<
@@ -168,7 +175,8 @@ still evaluates both operands of
 and
 .Sq || .
 .Pp
-! returns 1 if the operand was 0, and 0 otherwise.
+.Ic \&!
+returns 1 if the operand was 0, and 0 otherwise.
 .Ss Fixed‐point Expressions
 Fixed-point numbers are basically normal (32-bit) integers, which count 65536th's instead of entire units, offering better precision than integers but limiting the range of values.
 The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
