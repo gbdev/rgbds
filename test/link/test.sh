@@ -13,7 +13,12 @@ trap "rm -f '$otemp' '$gbtemp' '$gbtemp2' '$outtemp'" EXIT
 bold=$(tput bold)
 resbold=$(tput sgr0)
 red=$(tput setaf 1)
+green=$(tput setaf 2)
 rescolors=$(tput op)
+
+startTest () {
+	echo "$bold$green${i%.asm}...$rescolors$resbold"
+}
 
 tryDiff () {
 	if ! diff -u --strip-trailing-cr $1 $2; then
@@ -41,6 +46,7 @@ rgblink() {
 }
 
 for i in *.asm; do
+	startTest
 	$RGBASM -o $otemp $i
 
 	# Some tests have variants depending on flags
@@ -91,13 +97,16 @@ done
 
 # These tests do their own thing
 
+i="bank-const.asm"
+startTest
 $RGBASM -o $otemp bank-const/a.asm
 $RGBASM -o $gbtemp2 bank-const/b.asm
 rgblink -o $gbtemp $gbtemp2 $otemp > $outtemp 2>&1
-i="bank-const.asm" tryDiff bank-const/err.out $outtemp
+tryDiff bank-const/err.out $outtemp
 rc=$(($? || $rc))
 
 for i in fragment-align/*; do
+	startTest
 	$RGBASM -o $otemp $i/a.asm
 	$RGBASM -o $gbtemp2 $i/b.asm
 	rgblink -o $gbtemp $otemp $gbtemp2 2>$outtemp
@@ -110,34 +119,45 @@ for i in fragment-align/*; do
 	fi
 done
 
+i="high-low.asm"
+startTest
 $RGBASM -o $otemp high-low/a.asm
 rgblink -o $gbtemp $otemp
 $RGBASM -o $otemp high-low/b.asm
 rgblink -o $gbtemp2 $otemp
-i="high-low.asm" tryCmp $gbtemp $gbtemp2
+tryCmp $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
+i="overlay.asm"
+startTest
 $RGBASM -o $otemp overlay/a.asm
 rgblink -o $gbtemp -t -O overlay/overlay.gb $otemp > $outtemp 2>&1
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
-i="overlay.asm" tryDiff overlay/out.err $outtemp
+tryDiff overlay/out.err $outtemp
 rc=$(($? || $rc))
-i="overlay.asm" tryCmp overlay/out.gb $gbtemp
+tryCmp overlay/out.gb $gbtemp
 rc=$(($? || $rc))
 
+i="section-union/good.asm"
+startTest
 $RGBASM -o $otemp section-union/good/a.asm
 $RGBASM -o $gbtemp2 section-union/good/b.asm
 rgblink -o $gbtemp -l section-union/good/script.link $otemp $gbtemp2
 dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/good/ref.out.bin)) > $otemp 2>/dev/null
-i="section-union/good.asm" tryCmp section-union/good/ref.out.bin $otemp
+tryCmp section-union/good/ref.out.bin $otemp
 rc=$(($? || $rc))
+
+i="section-union/fragments.asm"
+startTest
 $RGBASM -o $otemp section-union/fragments/a.asm
 $RGBASM -o $gbtemp2 section-union/fragments/b.asm
 rgblink -o $gbtemp $otemp $gbtemp2
 dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-union/fragments/ref.out.bin)) > $otemp 2>/dev/null
-i="section-union/fragments.asm" tryCmp section-union/fragments/ref.out.bin $otemp
+tryCmp section-union/fragments/ref.out.bin $otemp
 rc=$(($? || $rc))
+
 for i in section-union/*.asm; do
+	startTest
 	$RGBASM -o $otemp   $i
 	$RGBASM -o $gbtemp2 $i -DSECOND
 	if rgblink $otemp $gbtemp2 2>$outtemp; then
