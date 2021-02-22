@@ -230,8 +230,9 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 			break;
 
 		case SECTION_NORMAL:
-			// TODO: this should report where the section was defined
-			fail("Section already defined previously\n");
+			fail("Section already defined previously at ");
+			fstk_Dump(sect->src, sect->fileLine);
+			putc('\n', stderr);
 			break;
 		}
 	}
@@ -325,6 +326,8 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	sect->type = type;
 	sect->modifier = mod;
+	sect->src = fstk_GetFileStack();
+	sect->fileLine = lexer_GetLineNo();
 	sect->size = 0;
 	sect->org = org;
 	sect->bank = bank;
