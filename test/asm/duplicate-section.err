@@ -1,0 +1,4 @@
+ERROR: duplicate-section.asm(4):
+    Section already defined previously
+FATAL: duplicate-section.asm(4):
+    Cannot create section "sec" (1 error)
