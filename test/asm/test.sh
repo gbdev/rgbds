@@ -17,12 +17,23 @@ red="$(tput setaf 1)"
 green="$(tput setaf 2)"
 orange="$(tput setaf 3)"
 rescolors="$(tput op)"
+
+RGBASM=../../rgbasm
+RGBLINK=../../rgblink
+
 tryDiff () {
-	diff -u --strip-trailing-cr $1 $2 || (echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"; false)
+	if ! diff -u --strip-trailing-cr "$1" "$2"; then
+		echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"
+		false
+	fi
 }
 
 tryCmp () {
-	cmp $1 $2 || (../../contrib/gbdiff.bash $1 $2; echo "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"; false)
+	if ! cmp "$1" "$2"; then
+		../../contrib/gbdiff.bash "$1" "$2"
+		echo "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"
+		false
+	fi
 }
 
 # Add the version constants test, outputting the closest tag to the HEAD
@@ -49,7 +60,7 @@ fi
 
 # Check whether to use '.simple.err' files if they exist
 # (rgbasm with pre-3.0 Bison just reports "syntax error")
-../../rgbasm -Weverything -o $o syntax-error.asm > $output 2> $errput
+$RGBASM -Weverything -o $o syntax-error.asm > $output 2> $errput
 cmp syntax-error.err $errput > /dev/null 2> /dev/null
 simple_error=$?
 if [ "$simple_error" -eq 1 ]; then
@@ -64,7 +75,7 @@ for i in *.asm; do
 			desired_errname=${i%.asm}.simple.err
 		fi
 		if [ -z "$variant" ]; then
-			../../rgbasm -Weverything -o $o $i > $output 2> $errput
+			$RGBASM -Weverything -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
 			desired_errput=$desired_errname
 		else
@@ -78,7 +89,7 @@ for i in *.asm; do
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with and was broken when the feature was
 			# first implemented.
-			cat $i | ../../rgbasm -Weverything -o $o - > $output 2> $errput
+			cat $i | $RGBASM -Weverything -o $o - > $output 2> $errput
 
 			# Use two otherwise unused files for temp storage
 			desired_output=$input
@@ -97,7 +108,7 @@ for i in *.asm; do
 
 		bin=${i%.asm}.out.bin
 		if [ -f $bin ]; then
-			../../rgblink -o $gb $o
+			$RGBLINK -o $gb $o
 			dd if=$gb count=1 bs=$(printf %s $(wc -c < $bin)) > $output 2>/dev/null
 			tryCmp $bin $output
 			our_rc=$(($? || $our_rc))

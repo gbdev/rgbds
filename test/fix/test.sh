@@ -16,6 +16,8 @@ red="$(tput setaf 1)"
 green="$(tput setaf 2)"
 rescolors="$(tput op)"
 
+RGBFIX=./rgbfix
+
 tryDiff () {
 	if ! diff -u --strip-trailing-cr "$1" "$2"; then
 		echo "${bold}${red}${3:-$1} mismatch!${rescolors}${resbold}"
@@ -41,7 +43,7 @@ runTest () {
 		fi
 		if [[ -z "$variant" ]]; then
 			cp "$2/$1.bin" out.gb
-			if [[ -n "$(eval ./rgbfix $flags out.gb '2>out.err')" ]]; then
+			if [[ -n "$(eval $RGBFIX $flags out.gb '2>out.err')" ]]; then
 				echo "${bold}${red}Fixing $1 in-place shouldn't output anything on stdout!${rescolors}${resbold}"
 				our_rc=1
 			fi
@@ -50,14 +52,14 @@ runTest () {
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with.
-			cat "$2/$1.bin" | eval ./rgbfix "$flags" '>out.gb' '2>out.err'
+			cat "$2/$1.bin" | eval $RGBFIX "$flags" '>out.gb' '2>out.err'
 			subst='<stdin>'
 		fi
 
-		sed "s/$subst/<filename>/g" "out.err" | tryDiff "$2/$1.err" -  "$1.err${variant}"
+		sed "s/$subst/<filename>/g" "out.err" | tryDiff "$2/$1.err" - "$1.err${variant}"
 		our_rc=$(($? || $our_rc))
 		if [[ -r "$2/$1.gb" ]]; then
-			tryCmp "$2/$1.gb" "out.gb"  "$1.gb${variant}"
+			tryCmp "$2/$1.gb" "out.gb" "$1.gb${variant}"
 			our_rc=$(($? || $our_rc))
 		fi
 
@@ -91,9 +93,9 @@ printf "\rDone! \n"
 # TODO: check MBC names
 
 # Check that RGBFIX errors out when inputting a non-existent file...
-./rgbfix noexist 2>out.err
+$RGBFIX noexist 2>out.err
 rc=$(($rc || $? != 1))
-tryDiff "$src/noexist.err" out.err  noexist.err
+tryDiff "$src/noexist.err" out.err noexist.err
 rc=$(($rc || $?))
 
 exit $rc

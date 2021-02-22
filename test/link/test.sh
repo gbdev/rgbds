@@ -1,42 +1,44 @@
 #!/bin/bash
+
 export LC_ALL=C
 set -o pipefail
 
-otemp=$(mktemp)
-gbtemp=$(mktemp)
-gbtemp2=$(mktemp)
-outtemp=$(mktemp)
+otemp="$(mktemp)"
+gbtemp="$(mktemp)"
+gbtemp2="$(mktemp)"
+outtemp="$(mktemp)"
 rc=0
 
 trap "rm -f '$otemp' '$gbtemp' '$gbtemp2' '$outtemp'" EXIT
 
-bold=$(tput bold)
-resbold=$(tput sgr0)
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-rescolors=$(tput op)
+bold="$(tput bold)"
+resbold="$(tput sgr0)"
+red="$(tput setaf 1)"
+green="$(tput setaf 2)"
+rescolors="$(tput op)"
+
+RGBASM=../../rgbasm
+RGBLINK=../../rgblink
 
 startTest () {
 	echo "$bold$green${i%.asm}...$rescolors$resbold"
 }
 
 tryDiff () {
-	if ! diff -u --strip-trailing-cr $1 $2; then
+	if ! diff -u --strip-trailing-cr "$1" "$2"; then
 		echo "${bold}${red}${i%.asm}.out mismatch!${rescolors}${resbold}"
 		false
 	fi
 }
 
 tryCmp () {
-	if ! cmp $1 $2; then
-		../../contrib/gbdiff.bash $1 $2
+	if ! cmp "$1" "$2"; then
+		../../contrib/gbdiff.bash "$1" "$2"
 		echo "${bold}${red}${i%.asm}.out.bin mismatch!${rescolors}${resbold}"
 		false
 	fi
 }
 
-RGBASM=../../rgbasm
-RGBLINK=../../rgblink
 rgblink() {
 	out="$(env $RGBLINK "$@")" || return $?
 	if [[ -n "$out" ]]; then
@@ -102,7 +104,7 @@ startTest
 $RGBASM -o $otemp bank-const/a.asm
 $RGBASM -o $gbtemp2 bank-const/b.asm
 rgblink -o $gbtemp $gbtemp2 $otemp > $outtemp 2>&1
-tryDiff bank-const/err.out $outtemp
+tryDiff bank-const/out.err $outtemp
 rc=$(($? || $rc))
 
 for i in fragment-align/*; do
@@ -158,7 +160,7 @@ rc=$(($? || $rc))
 
 for i in section-union/*.asm; do
 	startTest
-	$RGBASM -o $otemp   $i
+	$RGBASM -o $otemp $i
 	$RGBASM -o $gbtemp2 $i -DSECOND
 	if rgblink $otemp $gbtemp2 2>$outtemp; then
 		echo -e "${bold}${red}$i didn't fail to link!${rescolors}${resbold}"
