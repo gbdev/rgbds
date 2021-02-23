@@ -934,7 +934,12 @@ break		: T_POP_BREAK T_NEWLINE {
 		}
 ;
 
-macrodef	: T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
+macrodef	: T_POP_MACRO T_ID T_NEWLINE {
+			lexer_CaptureMacroBody(&captureBody);
+		} T_NEWLINE {
+			sym_AddMacro($2, captureBody.lineNo, captureBody.body, captureBody.size);
+		}
+		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
 			lexer_CaptureMacroBody(&captureBody);
 		} T_NEWLINE {
 			sym_AddMacro($1, captureBody.lineNo, captureBody.body, captureBody.size);

@@ -1076,33 +1076,40 @@ Macros can be called with arguments, and can react depending on input using
 .Ic IF
 constructs.
 .Bd -literal -offset indent
-MyMacro: MACRO
-         ld   a,80
+MACRO MyMacro
+         ld a, 80
          call MyFunc
-         ENDM
+ENDM
 .Ed
 .Pp
-Note that a single colon
+The example above defines
+.Ql MyMacro
+as a new macro.
+You may use the older syntax
+.Ql MyMacro: MACRO
+instead of
+.Ql MACRO MyMacro ,
+with a single colon
 .Ql \&:
-following the macro's name is required.
+following the macro's name.
 Macros can't be exported or imported.
 .Pp
 Plainly nesting macro definitions is not allowed, but this can be worked around using
 .Ic EQUS .
-This won't work:
+So this won't work:
 .Bd -literal -offset indent
-outer: MACRO
-inner: MACRO
-    PRINTLN "Hello!"
-ENDM
+MACRO outer
+    MACRO inner
+        PRINTLN "Hello!"
+    ENDM
 ENDM
 .Ed
 .Pp
 But this will:
 .Bd -literal -offset indent
-outer: MACRO
-definition equs "inner: MACRO\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
-definition
+MACRO outer
+definition EQUS "MACRO inner\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
+    definition
     PURGE definition
 ENDM
 .Ed
@@ -1393,7 +1400,7 @@ it will insert the macro definition (the code enclosed in
 .Pp
 Suppose your macro contains a loop.
 .Bd -literal -offset indent
-LoopyMacro: MACRO
+MACRO LoopyMacro
             xor  a,a
 \&.loop       ld   [hl+],a
             dec  c
@@ -1411,7 +1418,7 @@ also works in
 .Ic REPT
 blocks.
 .Bd -literal -offset indent
-LoopyMacro: MACRO
+MACRO LoopyMacro
             xor  a,a
 \&.loop\[rs]@     ld   [hl+],a
             dec  c
@@ -1440,7 +1447,7 @@ through
 .Ic \[rs]9 , \[rs]1
 being the first argument specified on the macro invocation.
 .Bd -literal -offset indent
-LoopyMacro: MACRO
+MACRO LoopyMacro
             ld   hl,\[rs]1
             ld   c,\[rs]2
             xor  a,a
@@ -1465,7 +1472,7 @@ to
 if you perform further calculations on them.
 For instance, consider the following:
 .Bd -literal -offset indent
-print_double: MACRO
+MACRO print_double
     PRINTLN \[rs]1 * 2
 ENDM
     print_double 1 + 2
@@ -1480,7 +1487,7 @@ which will print 5 and not 6 as you might have expected.
 Line continuations work as usual inside macros or lists of macro arguments.
 However, some characters need to be escaped, as in the following example:
 .Bd -literal -offset indent
-PrintMacro: MACRO
+MACRO PrintMacro
     PRINT \[rs]1
 ENDM
 
