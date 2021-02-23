@@ -2026,7 +2026,7 @@ static int yylex_NORMAL(void)
 					}
 				}
 
-				if (tokenType == T_ID && lexerState->atLineStart)
+				if (tokenType == T_ID && (lexerState->atLineStart || peek(0) == ':'))
 					return T_LABEL;
 
 				return tokenType;
