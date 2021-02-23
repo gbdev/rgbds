@@ -1,0 +1,5 @@
+ERROR: macro-syntax.asm(13):
+    syntax error, unexpected identifier, expecting newline
+ERROR: macro-syntax.asm(15):
+    syntax error, unexpected ENDM
+error: Assembly aborted (2 errors)!
