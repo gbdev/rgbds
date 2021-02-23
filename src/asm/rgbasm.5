@@ -839,7 +839,7 @@ A block of
 .Nm
 code that can be invoked later.
 .It Sy String equate
-String symbol that can be evaluated, similarly to a macro.
+A text string that can be expanded later, similarly to a macro.
 .El
 .Pp
 Symbol names can contain letters, numbers, underscores
@@ -848,15 +848,19 @@ hashes
 .Sq #
 and at signs
 .Sq @ .
-However, they must begin with either a letter, or an underscore.
+However, they must begin with either a letter or an underscore.
 Periods
 .Sq \&.
-are allowed exclusively for labels, as described below.
+are allowed exclusively in labels, as described below.
 A symbol cannot have the same name as a reserved keyword.
-.Em \&In the line where a symbol is defined there must not be any whitespace before it ,
+.Pp
+Constants and string equates
+.Em must not 
+have any whitespace before their name when they are defined;
 otherwise
 .Nm
-will treat it as a macro invocation.
+will treat them as a macro invocation.
+Label and macro definitions may have whitespace before them, since a leading period or a following colon distinguishes them from invoking a macro.
 .Bl -tag -width indent
 .It Sy Label declaration
 One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of "magic" numbers.
@@ -866,57 +870,65 @@ This can be done in a number of ways:
 GlobalLabel:
 AnotherGlobal:
 \&.locallabel
-\&.yet_a_local:
+\&.another_local:
 AnotherGlobal.with_another_local:
 ThisWillBeExported:: ;\ Note the two colons
 ThisWillBeExported.too::
 .Ed
 .Pp
-Declaring a label (global or local) with
+Any label whose name does not contain a period is a global label.
+Declaring a global label sets it as the current scoped label, until the next global one.
+Global labels must be followed by one or two colons.
+.Pp
+Any label whose name contains a single period is a local label.
+Label names cannot contain more than one period.
+If the period is the first character, it will have the current scoped label's name implicitly prepended.
+Local labels may optionally be followed by one or two colons.
+Local labels can be declared as
+.Ql scoped.local
+or simply as
+.Ql .local .
+If the former notation is used, then
+.Ql scoped
+must actually be the current scoped label.
+.Pp
+Declaring a label (global or local) with two colons
 .Ql ::
-does an
+will
 .Ic EXPORT
-at the same time.
+and define it at the same time.
 (See
 .Sx Exporting and importing symbols
 below).
 .Pp
-Any label whose name does not contain a period is a global label, others are locals.
-Declaring a global label sets it as the current label scope until the next one; any local label whose first character is a period will have the global label's name implicitly prepended.
-Local labels can be declared as
-.Ql scope.local:
-or simply as as
-.Ql .local: .
-If the former notation is used, then
-.Ql scope
-must be the actual current scope.
-.Pp
-Local labels may have whitespace before their declaration as the only exception to the rule.
-.Pp
 .Sy Anonymous labels
 are useful for short blocks of code.
 They are defined like normal labels, but without a name before the colon.
-Defining one does not change the label scope (unlike global labels).
-Referencing one is done using a colon
+Anonymous labels are independent of label scoping, so defining one does not change the scoped label, and referencing one is not affected by the current scoped label.
+.Pp
+Anonymous labels are referenced using a colon
 .Ql \&:
 followed by pluses
 .Ql +
 or minuses
 .Ql - .
+Thus
 .Ic :+
 references the next one after the expression,
 .Ic :++
-the one after it, and so on.
-The logic is similar for -, just backwards.
+the one after that;
+.Ic :-
+references the one before the expression;
+and so on.
 .Bd -literal -offset indent
     ld hl, :++
-:   ld a, [hli] ; Jumps to here
+:   ld a, [hli] ; referenced by "jr nz"
     ldh [c], a
     dec c
     jr nz, :-
     ret
 
-: ; This address referenced by "ld hl"
+:   ; referenced by "ld hl"
     dw $7FFF, $1061, $03E0, $58A5
 .Ed
 .Pp
