@@ -1455,15 +1455,16 @@ static char const *readInterpolation(void)
 }
 
 #define append_yylval_tzString(c) do { \
+	char v = (c); /* Evaluate c exactly once in case it has side effects. */ \
 	if (i < sizeof(yylval.tzString)) \
-		yylval.tzString[i++] = (c); \
+		yylval.tzString[i++] = v; \
 } while (0)
 
 static size_t appendEscapedSubstring(char const *str, size_t i)
 {
 	/* Copy one extra to flag overflow */
 	while (*str) {
-		int c = *str++;
+		char c = *str++;
 
 		/* Escape characters that need escaping */
 		switch (c) {
