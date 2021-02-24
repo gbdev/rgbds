@@ -461,6 +461,7 @@ enum {
 %token	<nConstValue>	T_NUMBER "number"
 %token	<tzString>	T_STRING "string"
 
+%token	T_PERIOD "."
 %token	T_COMMA ","
 %token	T_COLON ":"
 %token	T_LBRACK "[" T_RBRACK "]"

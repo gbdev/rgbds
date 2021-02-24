@@ -287,7 +287,9 @@ static struct KeywordMapping {
 	{"PUSHO", T_POP_PUSHO},
 	{"POPO", T_POP_POPO},
 
-	{"OPT", T_POP_OPT}
+	{"OPT", T_POP_OPT},
+
+	{".", T_PERIOD},
 };
 
 static bool isWhitespace(int c)
@@ -510,7 +512,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[350] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[351] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
