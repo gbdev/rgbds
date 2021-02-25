@@ -36,7 +36,6 @@
 #include "linkdefs.h"
 #include "platform.h" // strncasecmp, strdup
 
-static bool executeElseBlock; /* If this is set, ELIFs cannot be executed anymore */
 static struct CaptureBody captureBody; /* Captures a REPT/FOR or MACRO */
 
 static void upperstring(char *dest, char const *src)
@@ -654,42 +653,50 @@ line_directive	: macrodef
 ;
 
 if		: T_POP_IF const T_NEWLINE {
-			fstk_IncIFDepth();
-			executeElseBlock = !$2;
-			if (executeElseBlock)
+			lexer_IncIFDepth();
+
+			if ($2)
+				lexer_RunIFBlock();
+			else
 				lexer_SetMode(LEXER_SKIP_TO_ELIF);
 		}
 ;
 
 elif		: T_POP_ELIF const T_NEWLINE {
-			if (fstk_GetIFDepth() == 0)
+			if (lexer_GetIFDepth() == 0)
 				fatalerror("Found ELIF outside an IF construct\n");
 
-			if (!executeElseBlock) {
+			if (lexer_RanIFBlock()) {
+				if (lexer_ReachedELSEBlock())
+					fatalerror("Found ELIF after an ELSE block\n");
+
 				lexer_SetMode(LEXER_SKIP_TO_ENDC);
+			} else if ($2) {
+				lexer_RunIFBlock();
 			} else {
-				executeElseBlock = !$2;
-				if (executeElseBlock)
-					lexer_SetMode(LEXER_SKIP_TO_ELIF);
+				lexer_SetMode(LEXER_SKIP_TO_ELIF);
 			}
 		}
 ;
 
 else		: T_POP_ELSE T_NEWLINE {
-			if (fstk_GetIFDepth() == 0)
+			if (lexer_GetIFDepth() == 0)
 				fatalerror("Found ELSE outside an IF construct\n");
 
-			if (!executeElseBlock)
+			if (lexer_RanIFBlock()) {
+				if (lexer_ReachedELSEBlock())
+					fatalerror("Found ELSE after an ELSE block\n");
+
 				lexer_SetMode(LEXER_SKIP_TO_ENDC);
+			} else {
+				lexer_RunIFBlock();
+				lexer_ReachELSEBlock();
+			}
 		}
 ;
 
 endc		: T_POP_ENDC {
-			if (fstk_GetIFDepth() == 0)
-				fatalerror("Found ENDC outside an IF construct\n");
-
-			fstk_DecIFDepth();
-			executeElseBlock = false;
+			lexer_DecIFDepth();
 		}
 ;
 

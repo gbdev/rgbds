@@ -53,9 +53,6 @@ extern size_t nMaxRecursionDepth;
 
 struct MacroArgs;
 
-uint32_t fstk_GetIFDepth(void);
-void fstk_IncIFDepth(void);
-void fstk_DecIFDepth(void);
 void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo);
 void fstk_DumpCurrent(void);
 struct FileStackNode *fstk_GetFileStack(void);

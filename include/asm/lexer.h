@@ -69,6 +69,14 @@ enum LexerMode {
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 
+uint32_t lexer_GetIFDepth(void);
+void lexer_IncIFDepth(void);
+void lexer_DecIFDepth(void);
+bool lexer_RanIFBlock(void);
+bool lexer_ReachedELSEBlock(void);
+void lexer_RunIFBlock(void);
+void lexer_ReachELSEBlock(void);
+
 struct CaptureBody {
 	uint32_t lineNo;
 	char *body;

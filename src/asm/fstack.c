@@ -33,7 +33,6 @@ struct Context {
 	struct Context *parent;
 	struct FileStackNode *fileInfo;
 	struct LexerState *lexerState;
-	uint32_t nIFDepth;
 	uint32_t uniqueID;
 	struct MacroArgs *macroArgs; /* Macro args are *saved* here */
 	uint32_t nbReptIters;
@@ -49,21 +48,6 @@ size_t nMaxRecursionDepth;
 
 static unsigned int nbIncPaths = 0;
 static char const *includePaths[MAXINCPATHS];
-
-uint32_t fstk_GetIFDepth(void)
-{
-	return contextStack->nIFDepth;
-}
-
-void fstk_IncIFDepth(void)
-{
-	contextStack->nIFDepth++;
-}
-
-void fstk_DecIFDepth(void)
-{
-	contextStack->nIFDepth--;
-}
 
 static const char *dumpNodeAndParents(struct FileStackNode const *node)
 {
@@ -221,9 +205,11 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 
 bool yywrap(void)
 {
-	if (contextStack->nIFDepth != 0)
+	uint32_t nIFDepth = lexer_GetIFDepth();
+
+	if (nIFDepth != 0)
 		fatalerror("Ended block with %" PRIu32 " unterminated IF construct%s\n",
-			   contextStack->nIFDepth, contextStack->nIFDepth == 1 ? "" : "s");
+			   nIFDepth, nIFDepth == 1 ? "" : "s");
 
 	if (contextStack->fileInfo->type == NODE_REPT) { /* The context is a REPT block, which may loop */
 		struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)contextStack->fileInfo;
@@ -295,6 +281,7 @@ bool yywrap(void)
 /*
  * Make sure not to switch the lexer state before calling this, so the saved line no is correct
  * BE CAREFUL!! This modifies the file stack directly, you should have set up the file info first
+ * Callers should set contextStack->lexerState after this so it is not NULL
  */
 static void newContext(struct FileStackNode *fileInfo)
 {
@@ -309,7 +296,6 @@ static void newContext(struct FileStackNode *fileInfo)
 	fileInfo->referenced = false;
 	fileInfo->lineNo = lexer_GetLineNo();
 	context->fileInfo = fileInfo;
-	context->nIFDepth = 0;
 	context->forName = NULL;
 	/*
 	 * Link new entry to its parent so it's reachable later
@@ -552,7 +538,6 @@ void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
 
 	context->parent = NULL;
 	context->lexerState = state;
-	context->nIFDepth = 0;
 	context->uniqueID = 0;
 	macro_SetUniqueID(0);
 	context->nbReptIters = 0;

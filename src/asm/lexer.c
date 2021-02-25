@@ -314,6 +314,12 @@ struct Expansion {
 	bool owned; /* Whether or not to free contents when this expansion is freed */
 };
 
+struct IfStack {
+	struct IfStack *next;
+	bool ranIfBlock; /* Whether an IF/ELIF/ELSE block ran already */
+	bool reachedElseBlock; /* Whether an ELSE block ran already */
+};
+
 struct LexerState {
 	char const *path;
 
@@ -342,6 +348,8 @@ struct LexerState {
 	uint32_t lineNo;
 	uint32_t colNo;
 
+	struct IfStack *ifStack;
+
 	bool capturing; /* Whether the text being lexed should be captured */
 	size_t captureSize; /* Amount of text captured */
 	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
@@ -363,6 +371,8 @@ static void initState(struct LexerState *state)
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; /* yylex() will init colNo due to this */
 
+	state->ifStack = NULL;
+
 	state->capturing = false;
 	state->captureBuf = NULL;
 
@@ -378,6 +388,62 @@ static void nextLine(void)
 {
 	lexerState->lineNo++;
 	lexerState->colNo = 1;
+}
+
+uint32_t lexer_GetIFDepth(void)
+{
+	uint32_t depth = 0;
+
+	for (struct IfStack *stack = lexerState->ifStack; stack != NULL; stack = stack->next)
+		depth++;
+
+	return depth;
+}
+
+void lexer_IncIFDepth(void)
+{
+	struct IfStack *new = malloc(sizeof(*new));
+
+	if (!new)
+		fatalerror("Unable to allocate new IF depth: %s\n", strerror(errno));
+
+	new->ranIfBlock = false;
+	new->reachedElseBlock = false;
+	new->next = lexerState->ifStack;
+
+	lexerState->ifStack = new;
+}
+
+void lexer_DecIFDepth(void)
+{
+	if (!lexerState->ifStack)
+		fatalerror("Found ENDC outside an IF construct\n");
+
+	struct IfStack *top = lexerState->ifStack->next;
+
+	free(lexerState->ifStack);
+
+	lexerState->ifStack = top;
+}
+
+bool lexer_RanIFBlock(void)
+{
+	return lexerState->ifStack->ranIfBlock;
+}
+
+bool lexer_ReachedELSEBlock(void)
+{
+	return lexerState->ifStack->reachedElseBlock;
+}
+
+void lexer_RunIFBlock(void)
+{
+	lexerState->ifStack->ranIfBlock = true;
+}
+
+void lexer_ReachELSEBlock(void)
+{
+	lexerState->ifStack->reachedElseBlock = true;
 }
 
 struct LexerState *lexer_OpenFile(char const *path)
@@ -2161,7 +2227,7 @@ static int skipIfBlock(bool toEndc)
 {
 	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
 	lexer_SetMode(LEXER_NORMAL);
-	int startingDepth = fstk_GetIFDepth();
+	int startingDepth = lexer_GetIFDepth();
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 
@@ -2185,19 +2251,28 @@ static int skipIfBlock(bool toEndc)
 				token = readIdentifier(c);
 				switch (token) {
 				case T_POP_IF:
-					fstk_IncIFDepth();
+					lexer_IncIFDepth();
 					break;
 
 				case T_POP_ELIF:
+					if (lexer_ReachedELSEBlock())
+						fatalerror("Found ELIF after an ELSE block\n");
+					goto maybeFinish;
+
 				case T_POP_ELSE:
+					if (lexer_ReachedELSEBlock())
+						fatalerror("Found ELSE after an ELSE block\n");
+					lexer_ReachELSEBlock();
+					/* fallthrough */
+				maybeFinish:
 					if (toEndc) /* Ignore ELIF and ELSE, go to ENDC */
 						break;
 					/* fallthrough */
 				case T_POP_ENDC:
-					if (fstk_GetIFDepth() == startingDepth)
+					if (lexer_GetIFDepth() == startingDepth)
 						goto finish;
 					if (token == T_POP_ENDC)
-						fstk_DecIFDepth();
+						lexer_DecIFDepth();
 				}
 			}
 			atLineStart = false;
@@ -2282,11 +2357,11 @@ static int yylex_SKIP_TO_ENDR(void)
 					break;
 
 				case T_POP_IF:
-					fstk_IncIFDepth();
+					lexer_IncIFDepth();
 					break;
 
 				case T_POP_ENDC:
-					fstk_DecIFDepth();
+					lexer_DecIFDepth();
 				}
 			}
 			atLineStart = false;
