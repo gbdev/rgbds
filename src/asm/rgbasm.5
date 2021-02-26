@@ -461,6 +461,12 @@ is a label, it returns the bank number the label is in.
 The result may be constant if
 .Nm
 is able to compute it.
+.It Fn SIZEOF arg Ta Returns the size of the section named
+.Ar arg .
+The result is not constant, since only RGBLINK can compute its value.
+.It Fn STARTOF arg Ta Returns the starting address of the section named
+.Ar arg .
+The result is not constant, since only RGBLINK can compute its value.
 .It Fn DEF symbol Ta Returns TRUE (1) if
 .Ar symbol
 has been defined, FALSE (0) otherwise.

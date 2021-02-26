@@ -514,6 +514,7 @@ enum {
 %token	T_OP_DEF "DEF"
 %token	T_OP_BANK "BANK"
 %token	T_OP_ALIGN "ALIGN"
+%token	T_OP_SIZEOF "SIZEOF" T_OP_STARTOF "STARTOF"
 %token	T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
 %token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
 %token	T_OP_FDIV "FDIV"
@@ -1419,6 +1420,8 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 			rpn_BankSymbol(&$$, $3);
 		}
 		| T_OP_BANK T_LPAREN string T_RPAREN	{ rpn_BankSection(&$$, $3); }
+		| T_OP_SIZEOF T_LPAREN string T_RPAREN	{ rpn_SizeOfSection(&$$, $3); }
+		| T_OP_STARTOF T_LPAREN string T_RPAREN	{ rpn_StartOfSection(&$$, $3); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {

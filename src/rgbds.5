@@ -248,6 +248,10 @@ Symbol ID follows, where -1 means PC
 .It Li $51 Ta Li BANK(section_name) ,
 a null-terminated string follows.
 .It Li $52 Ta Li Current BANK()
+.It Li $53 Ta Li SIZEOF(section_name) ,
+a null-terminated string follows.
+.It Li $54 Ta Li STARTOF(section_name) ,
+a null-terminated string follows.
 .It Li $60 Ta Li HRAMCheck .
 Checks if the value is in HRAM, ANDs it with 0xFF.
 .It Li $61 Ta Li RSTCheck .

@@ -59,6 +59,8 @@ void rpn_UNNOT(struct Expression *expr, const struct Expression *src);
 void rpn_BankSymbol(struct Expression *expr, char const *tzSym);
 void rpn_BankSection(struct Expression *expr, char const *tzSectionName);
 void rpn_BankSelf(struct Expression *expr);
+void rpn_SizeOfSection(struct Expression *expr, char const *tzSectionName);
+void rpn_StartOfSection(struct Expression *expr, char const *tzSectionName);
 void rpn_Free(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src);
