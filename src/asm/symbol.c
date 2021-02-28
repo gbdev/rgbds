@@ -18,10 +18,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "asm/fixpoint.h"
 #include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"
-#include "asm/mymath.h"
 #include "asm/output.h"
 #include "asm/section.h"
 #include "asm/symbol.h"
@@ -775,5 +775,5 @@ void sym_Init(time_t now)
 	_PISymbol->src = NULL;
 	_PISymbol->fileLine = 0;
 	_PISymbol->hasCallback = true;
-	_PISymbol->numCallback = math_Callback_PI;
+	_PISymbol->numCallback = fix_Callback_PI;
 }

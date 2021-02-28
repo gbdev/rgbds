@@ -17,12 +17,12 @@
 #include <string.h>
 
 #include "asm/charmap.h"
+#include "asm/fixpoint.h"
 #include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/macro.h"
 #include "asm/main.h"
-#include "asm/mymath.h"
 #include "asm/opt.h"
 #include "asm/output.h"
 #include "asm/rpn.h"
@@ -1148,7 +1148,7 @@ printi		: T_POP_PRINTI const	{
 
 printf		: T_POP_PRINTF const	{
 			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT`\n");
-			math_Print($2);
+			fix_Print($2);
 		}
 ;
 
@@ -1363,46 +1363,46 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 			lexer_ToggleStringExpansion(true);
 		}
 		| T_OP_ROUND T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Round($3));
+			rpn_Number(&$$, fix_Round($3));
 		}
 		| T_OP_CEIL T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Ceil($3));
+			rpn_Number(&$$, fix_Ceil($3));
 		}
 		| T_OP_FLOOR T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Floor($3));
+			rpn_Number(&$$, fix_Floor($3));
 		}
 		| T_OP_FDIV T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, math_Div($3, $5));
+			rpn_Number(&$$, fix_Div($3, $5));
 		}
 		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, math_Mul($3, $5));
+			rpn_Number(&$$, fix_Mul($3, $5));
 		}
 		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, math_Pow($3, $5));
+			rpn_Number(&$$, fix_Pow($3, $5));
 		}
 		| T_OP_LOG T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, math_Log($3, $5));
+			rpn_Number(&$$, fix_Log($3, $5));
 		}
 		| T_OP_SIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Sin($3));
+			rpn_Number(&$$, fix_Sin($3));
 		}
 		| T_OP_COS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Cos($3));
+			rpn_Number(&$$, fix_Cos($3));
 		}
 		| T_OP_TAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_Tan($3));
+			rpn_Number(&$$, fix_Tan($3));
 		}
 		| T_OP_ASIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_ASin($3));
+			rpn_Number(&$$, fix_ASin($3));
 		}
 		| T_OP_ACOS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_ACos($3));
+			rpn_Number(&$$, fix_ACos($3));
 		}
 		| T_OP_ATAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, math_ATan($3));
+			rpn_Number(&$$, fix_ATan($3));
 		}
 		| T_OP_ATAN2 T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, math_ATan2($3, $5));
+			rpn_Number(&$$, fix_ATan2($3, $5));
 		}
 		| T_OP_STRCMP T_LPAREN string T_COMMA string T_RPAREN {
 			rpn_Number(&$$, strcmp($3, $5));
