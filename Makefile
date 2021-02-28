@@ -72,7 +72,8 @@ rgbasm_obj := \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/hashmap.o \
-	src/linkdefs.o
+	src/linkdefs.o \
+	src/opmath.o
 
 src/asm/lexer.o src/asm/main.o: src/asm/parser.h
 
@@ -88,7 +89,8 @@ rgblink_obj := \
 	src/extern/err.o \
 	src/extern/getopt.o \
 	src/hashmap.o \
-	src/linkdefs.o
+	src/linkdefs.o \
+	src/opmath.o
 
 rgbfix_obj := \
 	src/fix/main.o \

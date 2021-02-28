@@ -60,6 +60,7 @@ set(rgbasm_src
     "extern/utf8decoder.c"
     "hashmap.c"
     "linkdefs.c"
+    "opmath.c"
     )
 
 set(rgbfix_src
@@ -83,6 +84,7 @@ set(rgblink_src
     "link/symbol.c"
     "hashmap.c"
     "linkdefs.c"
+    "opmath.c"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

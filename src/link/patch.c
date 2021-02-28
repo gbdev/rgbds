@@ -18,81 +18,9 @@
 #include "link/symbol.h"
 
 #include "linkdefs.h"
+#include "opmath.h"
 
 #include "extern/err.h"
-
-static int32_t divide(int32_t dividend, int32_t divisor)
-{
-	// Adjust division to floor toward negative infinity,
-	// not truncate toward zero
-	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
-}
-
-static int32_t modulo(int32_t dividend, int32_t divisor)
-{
-	int32_t remainder = dividend % divisor;
-
-	// Adjust modulo to have the sign of the divisor,
-	// not the sign of the dividend
-	return remainder + divisor * ((remainder < 0) != (divisor < 0));
-}
-
-static int32_t exponent(int32_t base, uint32_t power)
-{
-	int32_t result = 1;
-
-	for (;;) {
-		if (power % 2)
-			result *= base;
-		power /= 2;
-		if (!power)
-			break;
-		base *= base;
-	}
-
-	return result;
-}
-
-static int32_t asl(int32_t value, int32_t shiftamt); // Forward decl for below
-static int32_t asr(int32_t value, int32_t shiftamt)
-{
-	uint32_t uvalue = value;
-
-	// Get the easy cases out of the way
-	if (shiftamt == 0)
-		return value;
-	if (value == 0 || shiftamt <= -32)
-		return 0;
-	if (shiftamt > 31)
-		return (value < 0) ? -1 : 0;
-	if (shiftamt < 0)
-		return asl(value, -shiftamt);
-	if (value > 0)
-		return uvalue >> shiftamt;
-
-	{
-		// Calculate an OR mask for sign extension
-		// 1->0x80000000, 2->0xC0000000, ..., 31->0xFFFFFFFE
-		uint32_t shiftamt_high_bits = -((uint32_t)1 << (32 - shiftamt));
-
-		return (uvalue >> shiftamt) | shiftamt_high_bits;
-	}
-}
-
-static int32_t asl(int32_t value, int32_t shiftamt)
-{
-	// Repeat the easy cases here to avoid INT_MIN funny business
-	if (shiftamt == 0)
-		return value;
-	if (value == 0 || shiftamt >= 32)
-		return 0;
-	if (shiftamt < -31)
-		return (value < 0) ? -1 : 0;
-	if (shiftamt < 0)
-		return asr(value, -shiftamt);
-
-	return (uint32_t)value << shiftamt;
-}
 
 /*
  * This is an "empty"-type stack. Apart from the actual values, we also remember
@@ -251,7 +179,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				popRPN();
 				value = INT32_MAX;
 			} else {
-				value = divide(popRPN(), value);
+				value = op_divide(popRPN(), value);
 			}
 			break;
 		case RPN_MOD:
@@ -263,7 +191,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				popRPN();
 				value = 0;
 			} else {
-				value = modulo(popRPN(), value);
+				value = op_modulo(popRPN(), value);
 			}
 			break;
 		case RPN_UNSUB:
@@ -278,7 +206,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				popRPN();
 				value = 0;
 			} else {
-				value = exponent(popRPN(), value);
+				value = op_exponent(popRPN(), value);
 			}
 			break;
 
@@ -332,11 +260,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 		case RPN_SHL:
 			value = popRPN();
-			value = asl(popRPN(), value);
+			value = op_shift_left(popRPN(), value);
 			break;
 		case RPN_SHR:
 			value = popRPN();
-			value = asr(popRPN(), value);
+			value = op_shift_right(popRPN(), value);
 			break;
 
 		case RPN_BANK_SYM:

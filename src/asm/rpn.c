@@ -25,6 +25,8 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
+#include "opmath.h"
+
 /* Makes an expression "not known", also setting its error message */
 #define makeUnknown(expr_, ...) do { \
 	struct Expression *_expr = expr_; \
@@ -244,77 +246,6 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-static int32_t shift(int32_t shiftee, int32_t amount)
-{
-	if (amount >= 0) {
-		// Left shift
-		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %"
-				PRId32 "\n", amount);
-			return 0;
-
-		} else {
-			/*
-			 * Use unsigned to force a bitwise shift
-			 * Casting back is OK because the types implement two's
-			 * complement behavior
-			 */
-			return (uint32_t)shiftee << amount;
-		}
-	} else {
-		// Right shift
-		amount = -amount;
-		if (amount >= 32) {
-			warning(WARNING_SHIFT_AMOUNT,
-				"Shifting right by large amount %" PRId32 "\n", amount);
-			return shiftee < 0 ? -1 : 0;
-
-		} else if (shiftee >= 0) {
-			return shiftee >> amount;
-
-		} else {
-			/*
-			 * The C standard leaves shifting right negative values
-			 * undefined, so use a left shift manually sign-extended
-			 */
-			return (uint32_t)shiftee >> amount
-				| -(UINT32_C(1) << (32 - amount));
-		}
-	}
-}
-
-static int32_t divide(int32_t dividend, int32_t divisor)
-{
-	// Adjust division to floor toward negative infinity,
-	// not truncate toward zero
-	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
-}
-
-static int32_t modulo(int32_t dividend, int32_t divisor)
-{
-	int32_t remainder = dividend % divisor;
-
-	// Adjust modulo to have the sign of the divisor,
-	// not the sign of the dividend
-	return remainder + divisor * ((remainder < 0) != (divisor < 0));
-}
-
-static int32_t exponent(int32_t base, uint32_t power)
-{
-	int32_t result = 1;
-
-	for (;;) {
-		if (power % 2)
-			result *= base;
-		power /= 2;
-		if (!power)
-			break;
-		base *= base;
-	}
-
-	return result;
-}
-
 struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
@@ -400,11 +331,17 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 					"Shifting left by negative amount %" PRId32 "\n",
 					src2->nVal);
 
-			expr->nVal = shift(src1->nVal, src2->nVal);
+			if (src2->nVal >= 32)
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting left by large amount %" PRId32 "\n",
+					src2->nVal);
+
+			expr->nVal = op_shift_left(src1->nVal, src2->nVal);
 			break;
 		case RPN_SHR:
 			if (src1->nVal < 0)
-				warning(WARNING_SHIFT, "Shifting negative value %" PRId32 "\n",
+				warning(WARNING_SHIFT, "Shifting right negative value %"
+					PRId32 "\n",
 					src1->nVal);
 
 			if (src2->nVal < 0)
@@ -412,7 +349,12 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 					"Shifting right by negative amount %" PRId32 "\n",
 					src2->nVal);
 
-			expr->nVal = shift(src1->nVal, -src2->nVal);
+			if (src2->nVal >= 32)
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting right by large amount %" PRId32 "\n",
+					src2->nVal);
+
+			expr->nVal = op_shift_right(src1->nVal, src2->nVal);
 			break;
 		case RPN_MUL:
 			expr->nVal = uleft * uright;
@@ -426,7 +368,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 					PRId32 "\n", INT32_MIN, INT32_MIN);
 				expr->nVal = INT32_MIN;
 			} else {
-				expr->nVal = divide(src1->nVal, src2->nVal);
+				expr->nVal = op_divide(src1->nVal, src2->nVal);
 			}
 			break;
 		case RPN_MOD:
@@ -436,7 +378,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			if (src1->nVal == INT32_MIN && src2->nVal == -1)
 				expr->nVal = 0;
 			else
-				expr->nVal = modulo(src1->nVal, src2->nVal);
+				expr->nVal = op_modulo(src1->nVal, src2->nVal);
 			break;
 		case RPN_EXP:
 			if (src2->nVal < 0)
@@ -445,7 +387,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			if (src1->nVal == INT32_MIN && src2->nVal == -1)
 				expr->nVal = 0;
 			else
-				expr->nVal = exponent(src1->nVal, src2->nVal);
+				expr->nVal = op_exponent(src1->nVal, src2->nVal);
 			break;
 
 		case RPN_UNSUB:
