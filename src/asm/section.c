@@ -245,7 +245,47 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 #undef fail
 
 /*
- * Find a section by name and type. If it doesn't exist, create it
+ * Create a new section, not yet in the list.
+ */
+static struct Section *createSection(char const *name, enum SectionType type,
+				     uint32_t org, uint32_t bank, uint8_t alignment,
+				     uint16_t alignOffset, enum SectionModifier mod)
+{
+	struct Section *sect = malloc(sizeof(*sect));
+
+	if (sect == NULL)
+		fatalerror("Not enough memory for section: %s\n", strerror(errno));
+
+	sect->name = strdup(name);
+	if (sect->name == NULL)
+		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
+
+	sect->type = type;
+	sect->modifier = mod;
+	sect->src = fstk_GetFileStack();
+	sect->fileLine = lexer_GetLineNo();
+	sect->size = 0;
+	sect->org = org;
+	sect->bank = bank;
+	sect->align = alignment;
+	sect->alignOfs = alignOffset;
+	sect->next = NULL;
+	sect->patches = NULL;
+
+	/* It is only needed to allocate memory for ROM sections. */
+	if (sect_HasData(type)) {
+		sect->data = malloc(maxsize[type]);
+		if (sect->data == NULL)
+			fatalerror("Not enough memory for section: %s\n", strerror(errno));
+	} else {
+		sect->data = NULL;
+	}
+
+	return sect;
+}
+
+/*
+ * Find a section by name and type. If it doesn't exist, create it.
  */
 static struct Section *getSection(char const *name, enum SectionType type, uint32_t org,
 				  struct SectionSpec const *attrs, enum SectionModifier mod)
@@ -313,43 +353,12 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	if (sect) {
 		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
-		return sect;
-	}
-
-	sect = malloc(sizeof(*sect));
-	if (sect == NULL)
-		fatalerror("Not enough memory for section: %s\n", strerror(errno));
-
-	sect->name = strdup(name);
-	if (sect->name == NULL)
-		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
-
-	sect->type = type;
-	sect->modifier = mod;
-	sect->src = fstk_GetFileStack();
-	sect->fileLine = lexer_GetLineNo();
-	sect->size = 0;
-	sect->org = org;
-	sect->bank = bank;
-	sect->align = alignment;
-	sect->alignOfs = alignOffset;
-	sect->patches = NULL;
-
-	/* It is only needed to allocate memory for ROM sections. */
-	if (sect_HasData(type)) {
-		uint32_t sectsize;
-
-		sectsize = maxsize[type];
-		sect->data = malloc(sectsize);
-		if (sect->data == NULL)
-			fatalerror("Not enough memory for section: %s\n", strerror(errno));
 	} else {
-		sect->data = NULL;
+		sect = createSection(name, type, org, bank, alignment, alignOffset, mod);
+		// Add the new section to the list (order doesn't matter)
+		sect->next = pSectionList;
+		pSectionList = sect;
 	}
-
-	// Add the new section to the list (order doesn't matter)
-	sect->next = pSectionList;
-	pSectionList = sect;
 
 	return sect;
 }
