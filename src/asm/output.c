@@ -469,10 +469,10 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	}
 }
 
-static void registerExportedSymbol(struct Symbol *symbol, void *arg)
+static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
 {
 	(void)arg;
-	if (sym_IsExported(symbol) && symbol->ID == -1) {
+	if (symbol->src && symbol->ID == -1) {
 		registerSymbol(symbol);
 	}
 }
@@ -491,8 +491,8 @@ void out_WriteObject(void)
 	if (!f)
 		err(1, "Couldn't write file '%s'", tzObjectname);
 
-	/* Also write exported symbols that weren't written above */
-	sym_ForEach(registerExportedSymbol, NULL);
+	/* Also write symbols that weren't written above */
+	sym_ForEach(registerUnregisteredSymbol, NULL);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
 	putlong(RGBDS_OBJECT_REV, f);
