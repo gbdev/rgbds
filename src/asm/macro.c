@@ -59,15 +59,11 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **argPtr, char *s, bool isLastArg)
+void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 {
 #define macArgs (*argPtr)
-	if (s[0] == '\0') {
-		/* Zero arguments are parsed as a spurious empty argument; do not append it */
-		if (isLastArg && !macArgs->nbArgs)
-			return;
+	if (s[0] == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	}
 	if (macArgs->nbArgs == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {
@@ -113,27 +109,26 @@ char *macro_GetAllArgs(void)
 	if (macroArgs->shift >= macroArgs->nbArgs)
 		return "";
 
-	size_t len = strlen(macroArgs->args[macroArgs->shift]);
+	size_t len = 0;
 
-	for (uint32_t i = macroArgs->shift + 1; i < macroArgs->nbArgs; i++)
-		len += 1 + strlen(macroArgs->args[i]);
+	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++)
+		len += strlen(macroArgs->args[i]) + 1; /* 1 for comma */
 
-	char *str = malloc(len + 1);
+	char *str = malloc(len + 1); /* 1 for '\0' */
+	char *ptr = str;
 
 	if (!str)
 		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
 
-	char *ptr = str;
+	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++) {
+		size_t n = strlen(macroArgs->args[i]);
 
-	size_t n = strlen(macroArgs->args[macroArgs->shift]);
-
-	memcpy(ptr, macroArgs->args[macroArgs->shift], n);
-	ptr += n;
-	for (uint32_t i = macroArgs->shift + 1; i < macroArgs->nbArgs; i++) {
-		*ptr++ = ','; /* no space after comma */
-		n = strlen(macroArgs->args[i]);
 		memcpy(ptr, macroArgs->args[i], n);
 		ptr += n;
+
+		/* Commas go between args and after a last empty arg */
+		if (i < macroArgs->nbArgs - 1 || n == 0)
+			*ptr++ = ','; /* no space after comma */
 	}
 	*ptr = '\0';
 

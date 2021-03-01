@@ -430,7 +430,6 @@ enum {
 		int32_t step;
 	} forArgs;
 	struct StrFmtArgList strfmtArgs;
-	bool hasEmpty; // Whether `db`, `dw`, `dl` argument lists contain any empty entries
 }
 
 %type	<sVal>		relocexpr
@@ -445,9 +444,6 @@ enum {
 %type	<sVal>		reloc_16bit
 %type	<sVal>		reloc_16bit_no_str
 %type	<nConstValue>	sectiontype
-%type	<hasEmpty>	constlist_8bit  constlist_8bit_entry
-%type	<hasEmpty>	constlist_16bit constlist_16bit_entry
-%type	<hasEmpty>	constlist_32bit constlist_32bit_entry
 
 %type	<tzString>	string
 %type	<tzString>	strcat_args
@@ -728,6 +724,7 @@ label		: %empty
 ;
 
 macro		: T_ID {
+			// Parsing 'macroargs' will restore the lexer's normal mode
 			lexer_SetMode(LEXER_RAW);
 		} macroargs {
 			fstk_RunMacro($1, $3);
@@ -738,7 +735,7 @@ macroargs	: %empty {
 			$$ = macro_NewArgs();
 		}
 		| macroargs T_STRING {
-			macro_AppendArg(&($$), strdup($2), !lexer_IsRawMode());
+			macro_AppendArg(&($$), strdup($2));
 		}
 ;
 
@@ -791,6 +788,9 @@ directive	: include
 		| align
 ;
 
+trailing_comma	: %empty | T_COMMA
+;
+
 align		: T_OP_ALIGN uconst {
 			if ($2 > 16)
 				error("Alignment must be between 0 and 16, not %u\n", $2);
@@ -809,14 +809,13 @@ align		: T_OP_ALIGN uconst {
 ;
 
 opt		: T_POP_OPT {
+			// Parsing 'opt_list' will restore the lexer's normal mode
 			lexer_SetMode(LEXER_RAW);
-		} opt_list {
-			lexer_SetMode(LEXER_NORMAL);
-		}
+		} opt_list
 ;
 
 opt_list	: opt_list_entry
-		| opt_list T_COMMA opt_list_entry
+		| opt_list opt_list_entry
 ;
 
 opt_list_entry	: T_STRING		{ opt_Parse($1); }
@@ -984,7 +983,7 @@ endu		: T_POP_ENDU	{ sect_EndUnion(); }
 ;
 
 ds		: T_POP_DS uconst	{ out_Skip($2, true); }
-		| T_POP_DS uconst T_COMMA ds_args {
+		| T_POP_DS uconst T_COMMA ds_args trailing_comma {
 			out_RelBytes($2, $4.args, $4.nbArgs);
 			freeDsArgList(&$4);
 		}
@@ -1004,34 +1003,21 @@ ds_args		: reloc_8bit {
 		}
 ;
 
-/* Authorize empty entries if there is only one */
-db		: T_POP_DB constlist_8bit_entry T_COMMA constlist_8bit {
-			if ($2 || $4)
-				warning(WARNING_EMPTY_ENTRY,
-					"Empty entry in list of 8-bit elements (treated as padding).\n");
-		}
-		| T_POP_DB constlist_8bit_entry
+db		: T_POP_DB	{ out_Skip(1, false); }
+		| T_POP_DB constlist_8bit trailing_comma
 ;
 
-dw		: T_POP_DW constlist_16bit_entry T_COMMA constlist_16bit {
-			if ($2 || $4)
-				warning(WARNING_EMPTY_ENTRY,
-					"Empty entry in list of 16-bit elements (treated as padding).\n");
-		}
-		| T_POP_DW constlist_16bit_entry
+dw		: T_POP_DW	{ out_Skip(2, false); }
+		| T_POP_DW constlist_16bit trailing_comma
 ;
 
-dl		: T_POP_DL constlist_32bit_entry T_COMMA constlist_32bit {
-			if ($2 || $4)
-				warning(WARNING_EMPTY_ENTRY,
-					"Empty entry in list of 32-bit elements (treated as padding).\n");
-		}
-		| T_POP_DL constlist_32bit_entry
+dl		: T_POP_DL	{ out_Skip(4, false); }
+		| T_POP_DL constlist_32bit trailing_comma
 ;
 
 purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
-		} purge_list {
+		} purge_list trailing_comma {
 			lexer_ToggleStringExpansion(true);
 		}
 ;
@@ -1052,7 +1038,7 @@ purge_list	: purge_list_entry
 purge_list_entry : scoped_id	{ sym_Purge($1); }
 ;
 
-export		: T_POP_EXPORT export_list
+export		: T_POP_EXPORT export_list trailing_comma
 ;
 
 export_list	: export_list_entry
@@ -1113,11 +1099,11 @@ pushc		: T_POP_PUSHC	{ charmap_Push(); }
 popc		: T_POP_POPC	{ charmap_Pop(); }
 ;
 
-print		: T_POP_PRINT print_exprs
+print		: T_POP_PRINT print_exprs trailing_comma
 ;
 
 println		: T_POP_PRINTLN { putchar('\n'); }
-		| T_POP_PRINTLN print_exprs { putchar('\n'); }
+		| T_POP_PRINTLN print_exprs trailing_comma { putchar('\n'); }
 ;
 
 print_exprs	: print_expr
@@ -1165,18 +1151,11 @@ const_3bit	: const {
 ;
 
 constlist_8bit	: constlist_8bit_entry
-		| constlist_8bit T_COMMA constlist_8bit_entry {
-			$$ = $1 || $3;
-		}
+		| constlist_8bit T_COMMA constlist_8bit_entry
 ;
 
-constlist_8bit_entry : %empty {
-			out_Skip(1, false);
-			$$ = true;
-		}
-		| reloc_8bit_no_str	{
+constlist_8bit_entry : reloc_8bit_no_str	{
 			out_RelByte(&$1, 0);
-			$$ = false;
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1184,23 +1163,15 @@ constlist_8bit_entry : %empty {
 
 			out_AbsByteGroup(output, length);
 			free(output);
-			$$ = false;
 		}
 ;
 
 constlist_16bit : constlist_16bit_entry
-		| constlist_16bit T_COMMA constlist_16bit_entry {
-			$$ = $1 || $3;
-		}
+		| constlist_16bit T_COMMA constlist_16bit_entry
 ;
 
-constlist_16bit_entry : %empty {
-			out_Skip(2, false);
-			$$ = true;
-		}
-		| reloc_16bit_no_str	{
+constlist_16bit_entry : reloc_16bit_no_str	{
 			out_RelWord(&$1, 0);
-			$$ = false;
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1208,23 +1179,15 @@ constlist_16bit_entry : %empty {
 
 			out_AbsWordGroup(output, length);
 			free(output);
-			$$ = false;
 		}
 ;
 
 constlist_32bit : constlist_32bit_entry
-		| constlist_32bit T_COMMA constlist_32bit_entry {
-			$$ = $1 || $3;
-		}
+		| constlist_32bit T_COMMA constlist_32bit_entry
 ;
 
-constlist_32bit_entry : %empty {
-			out_Skip(4, false);
-			$$ = true;
-		}
-		| relocexpr_no_str	{
+constlist_32bit_entry :relocexpr_no_str	{
 			out_RelLong(&$1, 0);
-			$$ = false;
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1232,7 +1195,6 @@ constlist_32bit_entry : %empty {
 
 			out_AbsLongGroup(output, length);
 			free(output);
-			$$ = false;
 		}
 ;
 

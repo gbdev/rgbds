@@ -179,9 +179,9 @@ Enables literally every warning.
 .Pp
 The following warnings are actual warning flags; with each description, the corresponding warning flag is included.
 Note that each of these flag also has a negation (for example,
-.Fl Wempty-entry
+.Fl Wcharmap-redef
 enables the warning that
-.Fl Wno-empty-entry
+.Fl Wno-charmap-redef
 disables).
 Only the non-default flag is listed here.
 Ignoring the
@@ -209,12 +209,6 @@ This warning is enabled by
 .Fl Wall .
 .It Fl Wdiv
 Warn when dividing the smallest negative integer by -1, which yields itself due to integer overflow.
-.It Fl Wempty-entry
-Warn when an empty entry is encountered in a
-.Ic db , dw , dl
-list.
-This warning is enabled by
-.Fl Wextra .
 .It Fl Wempty-macro-arg
 Warn when a macro argument is empty.
 This warning is enabled by
