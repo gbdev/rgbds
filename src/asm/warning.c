@@ -34,7 +34,6 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_CHARMAP_REDEF]		= WARNING_DISABLED,
 	[WARNING_DIV]			= WARNING_DISABLED,
 	[WARNING_EMPTY_DATA_DIRECTIVE]	= WARNING_DISABLED,
-	[WARNING_EMPTY_ENTRY]		= WARNING_DISABLED,
 	[WARNING_EMPTY_MACRO_ARG]	= WARNING_DISABLED,
 	[WARNING_EMPTY_STRRPL]		= WARNING_DISABLED,
 	[WARNING_LARGE_CONSTANT]	= WARNING_DISABLED,
@@ -77,7 +76,6 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"charmap-redef",
 	"div",
 	"empty-data-directive",
-	"empty-entry",
 	"empty-macro-arg",
 	"empty-strrpl",
 	"large-constant",
@@ -113,7 +111,6 @@ static uint8_t const _wallCommands[] = {
 
 /* Warnings that are less likely to indicate an error */
 static uint8_t const _wextraCommands[] = {
-	WARNING_EMPTY_ENTRY,
 	WARNING_EMPTY_MACRO_ARG,
 	WARNING_MACRO_SHIFT,
 	WARNING_NESTED_COMMENT,
@@ -125,7 +122,6 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_BUILTIN_ARG,
 	WARNING_DIV,
 	WARNING_EMPTY_DATA_DIRECTIVE,
-	WARNING_EMPTY_ENTRY,
 	WARNING_EMPTY_MACRO_ARG,
 	WARNING_EMPTY_STRRPL,
 	WARNING_LARGE_CONSTANT,

@@ -67,7 +67,6 @@ enum LexerMode {
 };
 
 void lexer_SetMode(enum LexerMode mode);
-bool lexer_IsRawMode(void);
 void lexer_ToggleStringExpansion(bool enable);
 
 uint32_t lexer_GetIFDepth(void);
