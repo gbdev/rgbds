@@ -604,7 +604,8 @@ void out_Skip(int32_t skip, bool ds)
 	reserveSpace(skip);
 
 	if (!ds && sect_HasData(pCurrentSection->type))
-		warning(WARNING_EMPTY_DATA_DIRECTIVE, "db/dw/dl directive without data in ROM\n");
+		warning(WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
+			(skip == 4) ? "DL" : (skip == 2) ? "DW" : "DB");
 
 	if (!sect_HasData(pCurrentSection->type)) {
 		growSection(skip);
