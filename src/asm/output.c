@@ -471,7 +471,9 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 
 static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
 {
-	(void)arg;
+	(void)arg; // sym_ForEach requires a void* parameter, but we are not using it.
+
+	// Check for symbol->src, to skip any auto generated symbol from rgbasm
 	if (symbol->src && symbol->ID == -1) {
 		registerSymbol(symbol);
 	}
