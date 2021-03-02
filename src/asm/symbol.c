@@ -84,7 +84,7 @@ static int32_t Callback__LINE__(void)
 	return lexer_GetLineNo();
 }
 
-static char const *Callback__FILE__(void)
+static const char *Callback__FILE__(void)
 {
 	/*
 	 * FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
@@ -118,6 +118,22 @@ static char const *Callback__FILE__(void)
 	buf[0] = '"';
 	buf[j++] = '"';
 	buf[j] = '\0';
+	return buf;
+}
+
+static const char *Callback__SCOPE__(void)
+{
+	static char buf[MAXSYMLEN + 1];
+
+	if (!labelScope) {
+		// __SCOPE__ is empty inside the main scope (no global label)
+		buf[0] = '\0';
+	} else {
+		// labelScope is a valid label, so it will fit within MAXSYMLEN characters
+		assert(strlen(labelScope) < sizeof(buf));
+		strcpy(buf, labelScope);
+	}
+
 	return buf;
 }
 
@@ -724,6 +740,7 @@ void sym_Init(time_t now)
 	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
 	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
 	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
+	struct Symbol *__SCOPE__Symbol = createBuiltinSymbol("__SCOPE__");
 
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->section = NULL;
@@ -734,6 +751,8 @@ void sym_Init(time_t now)
 	__LINE__Symbol->numCallback = Callback__LINE__;
 	__FILE__Symbol->type = SYM_EQUS;
 	__FILE__Symbol->strCallback = Callback__FILE__;
+	__SCOPE__Symbol->type = SYM_EQUS;
+	__SCOPE__Symbol->strCallback = Callback__SCOPE__;
 
 	sym_AddSet("_RS", 0)->isBuiltin = true;
 
