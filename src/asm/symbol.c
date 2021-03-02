@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -537,8 +538,10 @@ struct Symbol *sym_AddLocalLabel(char const *name)
 		 * Check that `labelScope[i]` ended the check, guaranteeing that `name` is at least
 		 * as long, and then that this was the entirety of the `Parent` part of `name`.
 		 */
-		if (labelScope[i] != '\0' || name[i] != '.')
-			error("Not currently in the scope of '%.*s'\n", parentLen, name);
+		if (labelScope[i] != '\0' || name[i] != '.') {
+			assert(parentLen <= INT_MAX);
+			error("Not currently in the scope of '%.*s'\n", (int)parentLen, name);
+		}
 		if (strchr(&name[parentLen + 1], '.')) /* There will at least be a terminator */
 			fatalerror("'%s' is a nonsensical reference to a nested local label\n",
 				   name);
@@ -568,7 +571,7 @@ static uint32_t anonLabelID;
 struct Symbol *sym_AddAnonLabel(void)
 {
 	if (anonLabelID == UINT32_MAX) {
-		error("Only %" PRIu32 " anonymous labels can be created!");
+		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
 		return NULL;
 	}
 	char name[MAXSYMLEN + 1];

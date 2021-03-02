@@ -746,7 +746,7 @@ static void beginExpansion(size_t distance, uint8_t skip,
 #define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size - skip
 #define LOOKUP_POST_NEST(exp) do { \
 	if (name && ++depth >= nMaxRecursionDepth) \
-		fatalerror("Recursion limit (%u) exceeded\n", nMaxRecursionDepth); \
+		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth); \
 } while (0)
 	lookupExpansion(parent, distance);
 #undef LOOKUP_PRE_NEST
@@ -851,7 +851,7 @@ static int peekInternal(uint8_t distance)
 	assert(writeIndex + (size) <= LEXER_BUF_SIZE); \
 	nbCharsRead = read(lexerState->fd, &lexerState->buf[writeIndex], (size)); \
 	if (nbCharsRead == -1) \
-		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, errno); \
+		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, strerror(errno)); \
 	totalCharsRead += nbCharsRead; \
 	writeIndex += nbCharsRead; \
 	if (writeIndex == LEXER_BUF_SIZE) \

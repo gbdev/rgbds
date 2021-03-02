@@ -276,13 +276,8 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 			dest[i++] = '%';
 			a++;
 			continue;
-		} else if (a == nbArgs) {
-			error("STRFMT: Not enough arguments for format spec\n", a + 1);
-			dest[i++] = '%';
-			a++;
-			continue;
-		} else if (a > nbArgs) {
-			// already warned for a == nbArgs
+		} else if (a >= nbArgs) {
+			// Will warn after formatting is done.
 			dest[i++] = '%';
 			a++;
 			continue;
@@ -301,6 +296,8 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 
 	if (a < nbArgs)
 		error("STRFMT: %zu unformatted argument(s)\n", nbArgs - a);
+	else if (a > nbArgs)
+		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n", nbArgs, a);
 
 	if (i > destLen - 1) {
 		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
@@ -366,14 +363,7 @@ static inline void failAssertMsg(enum AssertionType type, char const *msg)
 
 void yyerror(char const *str)
 {
-	size_t len = strlen(str);
-	char *buf = malloc(len + 2);
-
-	memcpy(buf, str, len);
-	buf[len] = '\n';
-	buf[len + 1] = '\0';
-	error(buf);
-	free(buf);
+	error("%s\n", str);
 }
 
 // The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
