@@ -1021,6 +1021,12 @@ static int nextChar(void)
 	return c;
 }
 
+static void handleCRLF(int c)
+{
+	if (c == '\r' && peek(0) == '\n')
+		shiftChars(1);
+}
+
 /* "Services" provided by the lexer to the rest of the program */
 
 char const *lexer_GetFileName(void)
@@ -1081,8 +1087,7 @@ static void discardBlockComment(void)
 			goto finish;
 		case '\r':
 			/* Handle CRLF before nextLine() since shiftChars updates colNo */
-			if (peek(0) == '\n')
-				shiftChars(1);
+			handleCRLF(c);
 			/* fallthrough */
 		case '\n':
 			if (!lexerState->expansions || lexerState->expansions->distance)
@@ -1140,10 +1145,8 @@ static void readLineContinuation(void)
 		} else if (c == '\r' || c == '\n') {
 			shiftChars(1);
 			/* Handle CRLF before nextLine() since shiftChars updates colNo */
-			if (c == '\r' && peek(0) == '\n')
-				shiftChars(1);
-			if (!lexerState->expansions
-			 || lexerState->expansions->distance)
+			handleCRLF(c);
+			if (!lexerState->expansions || lexerState->expansions->distance)
 				nextLine();
 			return;
 		} else if (c == ';') {
@@ -1532,8 +1535,7 @@ static void readString(void)
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
 			/* Handle CRLF before nextLine() since shiftChars updates colNo */
-			if (c == '\r' && peek(0) == '\n')
-				shiftChars(1);
+			handleCRLF(c);
 			nextLine();
 			c = '\n';
 		}
@@ -1684,8 +1686,7 @@ static size_t appendStringLiteral(size_t i)
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
 			/* Handle CRLF before nextLine() since shiftChars updates colNo */
-			if (c == '\r' && peek(0) == '\n')
-				shiftChars(1);
+			handleCRLF(c);
 			nextLine();
 			c = '\n';
 		}
@@ -2041,9 +2042,7 @@ static int yylex_NORMAL(void)
 		/* Handle newlines and EOF */
 
 		case '\r':
-			// Handle CRLF
-			if (peek(0) == '\n')
-				shiftChars(1);
+			handleCRLF(c);
 			/* fallthrough */
 		case '\n':
 			return T_NEWLINE;
@@ -2239,9 +2238,7 @@ finish:
 
 	if (c == '\r' || c == '\n') {
 		shiftChars(1);
-		/* Handle CRLF */
-		if (c == '\r' && peek(0) == '\n')
-			shiftChars(1);
+		handleCRLF(c);
 		return T_NEWLINE;
 	}
 
@@ -2328,8 +2325,7 @@ static int skipIfBlock(bool toEndc)
 
 			if (c == '\r' || c == '\n') {
 				/* Handle CRLF before nextLine() since shiftChars updates colNo */
-				if (c == '\r' && peek(0) == '\n')
-					shiftChars(1);
+				handleCRLF(c);
 				/* Do this both on line continuations and plain EOLs */
 				nextLine();
 			}
@@ -2416,8 +2412,7 @@ static int yylex_SKIP_TO_ENDR(void)
 
 			if (c == '\r' || c == '\n') {
 				/* Handle CRLF before nextLine() since shiftChars updates colNo */
-				if (c == '\r' && peek(0) == '\n')
-					shiftChars(1);
+				handleCRLF(c);
 				/* Do this both on line continuations and plain EOLs */
 				nextLine();
 			}
@@ -2430,7 +2425,7 @@ finish:
 	lexerState->atLineStart = false;
 
 	/* yywrap() will finish the REPT/FOR loop */
-	return 0;
+	return T_EOF;
 }
 
 int yylex(void)
@@ -2472,7 +2467,6 @@ restart:
 		}
 	}
 	lexerState->lastToken = token;
-
 	lexerState->atLineStart = token == T_NEWLINE;
 
 	return token;
@@ -2543,8 +2537,7 @@ void lexer_CaptureRept(struct CaptureBody *capture)
 				error("Unterminated REPT/FOR block\n");
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
-				if (c == '\r' && peek(0) == '\n')
-					shiftChars(1);
+				handleCRLF(c);
 				break;
 			}
 			c = nextChar();
@@ -2604,8 +2597,7 @@ void lexer_CaptureMacroBody(struct CaptureBody *capture)
 				error("Unterminated macro definition\n");
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
-				if (c == '\r' && peek(0) == '\n')
-					shiftChars(1);
+				handleCRLF(c);
 				break;
 			}
 			c = nextChar();
