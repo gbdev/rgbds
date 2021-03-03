@@ -606,16 +606,22 @@ enum {
 asmfile		: lines
 ;
 
-/* Note: The lexer adds T_NEWLINE at the end of the input */
+/*
+ * The lexer adds T_NEWLINE at the end of the file if one was not
+ * already present, so we can rely on it to end a line.
+ */
 lines		: %empty
 		| lines line
 ;
 
-line		: label T_NEWLINE
-		| label cpu_command T_NEWLINE
-		| label macro T_NEWLINE
-		| label directive T_NEWLINE
-		| assignment_directive T_NEWLINE
+plain_directive	: label
+		| label cpu_command
+		| label macro
+		| label directive
+		| assignment_directive
+;
+
+line		: plain_directive T_NEWLINE
 		| line_directive /* Directives that manage newlines themselves */
 		| error T_NEWLINE { /* Continue parsing the next line on a syntax error */
 			fstk_StopRept();
