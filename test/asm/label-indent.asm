@@ -5,6 +5,8 @@ SECTION "Label testing", WRAMX
 	.loc
 	Lab.loc2
 
+	: ; anonymous
+
 	mac: MACRO
 		println "\1"
 	ENDM
