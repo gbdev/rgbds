@@ -583,7 +583,7 @@ enum {
 %token	T_TOKEN_D "d" T_TOKEN_E "e"
 %token	T_TOKEN_H "h" T_TOKEN_L "l"
 %token	T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp"
-%token	T_MODE_HW_C "$ff00+c"
+%token	T_FF00_PLUS "$ff00+"
 %token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
 %token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
 
@@ -1269,6 +1269,12 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| relocexpr T_OP_ADD relocexpr {
 			rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3);
 		}
+		| T_FF00_PLUS relocexpr %prec T_OP_ADD {
+			struct Expression ff00;
+
+			rpn_Number(&ff00, 0xff00);
+			rpn_BinaryOp(RPN_ADD, &$$, &ff00, &$2);
+		}
 		| relocexpr T_OP_SUB relocexpr {
 			rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3);
 		}
@@ -1718,7 +1724,7 @@ z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 ;
 
 c_ind		: T_LBRACK T_MODE_C T_RBRACK
-		| T_LBRACK T_MODE_HW_C T_RBRACK
+		| T_LBRACK T_FF00_PLUS T_MODE_C T_RBRACK
 ;
 
 z80_ld		: z80_ld_mem

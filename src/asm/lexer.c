@@ -1977,17 +1977,8 @@ static int yylex_NORMAL(void)
 				while (isWhitespace(c = peek(0)))
 					shiftChars(1);
 				if (c == '+') {
-					/* FIXME: not great due to large lookahead */
-					uint8_t distance = 1;
-
-					do {
-						c = peek(distance++);
-					} while (isWhitespace(c));
-
-					if (c == 'c' || c == 'C') {
-						shiftChars(distance);
-						return T_MODE_HW_C;
-					}
+					shiftChars(1);
+					return T_FF00_PLUS;
 				}
 			}
 			return T_NUMBER;
