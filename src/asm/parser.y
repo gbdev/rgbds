@@ -603,20 +603,19 @@ enum {
 
 %%
 
-asmfile		: lines last_line
+asmfile		: lines
 ;
 
+/* Note: The lexer adds T_NEWLINE at the end of the input */
 lines		: %empty
 		| lines line
 ;
 
-last_line	: label
-		| label cpu_command
-		| label macro
-		| label directive
-		| assignment_directive
-;
-line		: last_line T_NEWLINE
+line		: label T_NEWLINE
+		| label cpu_command T_NEWLINE
+		| label macro T_NEWLINE
+		| label directive T_NEWLINE
+		| assignment_directive T_NEWLINE
 		| line_directive /* Directives that manage newlines themselves */
 		| error T_NEWLINE { /* Continue parsing the next line on a syntax error */
 			fstk_StopRept();

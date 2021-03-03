@@ -349,6 +349,7 @@ struct LexerState {
 	bool atLineStart;
 	uint32_t lineNo;
 	uint32_t colNo;
+	int lastToken;
 
 	struct IfStack *ifStack;
 
@@ -372,6 +373,7 @@ static void initState(struct LexerState *state)
 {
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; /* yylex() will init colNo due to this */
+	state->lastToken = T_EOF;
 
 	state->ifStack = NULL;
 
@@ -2235,17 +2237,15 @@ finish:
 		return T_STRING;
 	lexer_SetMode(LEXER_NORMAL);
 
-	// If a macro is invoked on the last line of a file, with no blank
-	// line afterwards, returning EOF afterwards will cause Bison to
-	// stop parsing, despite the lexer being ready to output more.
-	// To avoid this, return T_NEWLINE for EOF as well.
 	if (c == '\r' || c == '\n') {
 		shiftChars(1);
 		/* Handle CRLF */
 		if (c == '\r' && peek(0) == '\n')
 			shiftChars(1);
+		return T_NEWLINE;
 	}
-	return T_NEWLINE;
+
+	return T_EOF;
 }
 
 #undef append_yylval_tzString
@@ -2456,16 +2456,22 @@ restart:
 	int token = lexerModeFuncs[lexerState->mode]();
 
 	if (token == T_EOF) {
-		/* Try to switch to new buffer; if it succeeds, scan again */
-		dbgPrint("Reached EOB!\n");
-		/* Captures end at their buffer's boundary no matter what */
-		if (!lexerState->capturing) {
-			if (!yywrap())
-				goto restart;
-			dbgPrint("Reached end of input.\n");
-			return T_EOF;
+		if (lexerState->lastToken != T_NEWLINE) {
+			dbgPrint("Forcing EOL at EOF\n");
+			token = T_NEWLINE;
+		} else {
+			/* Try to switch to new buffer; if it succeeds, scan again */
+			dbgPrint("Reached EOF!\n");
+			/* Captures end at their buffer's boundary no matter what */
+			if (!lexerState->capturing) {
+				if (!yywrap())
+					goto restart;
+				dbgPrint("Reached end of input.\n");
+				return T_EOF;
+			}
 		}
 	}
+	lexerState->lastToken = token;
 
 	lexerState->atLineStart = token == T_NEWLINE;
 
@@ -2524,6 +2530,7 @@ void lexer_CaptureRept(struct CaptureBody *capture)
 					 * We know we have read exactly "ENDR", not e.g. an EQUS
 					 */
 					lexerState->captureSize -= strlen("ENDR");
+					lexerState->lastToken = T_POP_ENDR; // Force EOL at EOF
 					goto finish;
 				}
 				level--;
@@ -2586,6 +2593,7 @@ void lexer_CaptureMacroBody(struct CaptureBody *capture)
 				 * We know we have read exactly "ENDM", not e.g. an EQUS
 				 */
 				lexerState->captureSize -= strlen("ENDM");
+				lexerState->lastToken = T_POP_ENDM; // Force EOL at EOF
 				goto finish;
 			}
 		}

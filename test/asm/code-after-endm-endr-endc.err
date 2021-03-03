@@ -7,9 +7,9 @@ ERROR: code-after-endm-endr-endc.asm(12):
 ERROR: code-after-endm-endr-endc.asm(17):
     syntax error, unexpected PRINTLN, expecting newline
 ERROR: code-after-endm-endr-endc.asm(19):
-    syntax error, unexpected PRINTLN, expecting end of file or newline
+    syntax error, unexpected PRINTLN, expecting newline
 ERROR: code-after-endm-endr-endc.asm(23):
     syntax error, unexpected PRINTLN, expecting newline
 ERROR: code-after-endm-endr-endc.asm(25):
-    syntax error, unexpected PRINTLN, expecting end of file or newline
+    syntax error, unexpected PRINTLN, expecting newline
 error: Assembly aborted (7 errors)!
