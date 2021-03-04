@@ -97,21 +97,18 @@ for i in *.asm; do
 	fi
 done
 
-ffpad() { # Pads $1 to size $3 into $2 with 0xFF bytes
-	dd if=/dev/zero count=1 ibs=$3 2>/dev/null | tr '\000' '\377' > $2
-	dd if="$1" of=$2 conv=notrunc 2>/dev/null
-}
 for i in smart/*.asm; do
 	startTest
 	$RGBASM -o $otemp $i
-	$RGBLINK -p 0xff -o $gbtemp $otemp
-	SIZE=$(wc -c $gbtemp | cut -d ' ' -f 1)
-	ffpad "${i%.asm}.bin" $gbtemp2 $SIZE
-	tryCmp $gbtemp2 $gbtemp
+	rm $gbtemp
+	$RGBLINK -o $gbtemp $otemp
+	tryCmp "${i%.asm}.bin" $gbtemp
 	rc=$(($? || $rc))
-	$RGBLINK -p 0xff -vs "root" -o $gbtemp $otemp
-	ffpad "${i%.asm}.smart.bin" $gbtemp2 $SIZE
-	tryCmp $gbtemp2 $gbtemp
+	rm $gbtemp
+	i="${i%.asm}.smart"
+	startTest
+	$RGBLINK -vs "root" -o $gbtemp $otemp
+	tryCmp "$i.bin" $gbtemp
 	rc=$(($? || $rc))
 done
 

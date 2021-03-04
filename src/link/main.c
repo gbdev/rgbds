@@ -296,7 +296,6 @@ int main(int argc, char *argv[])
 
 	/* then process them, */
 	obj_DoSanityChecks();
-	sect_PerformSmartLink();
 	assign_AssignSections();
 	obj_CheckAssertions();
 	assign_Cleanup();

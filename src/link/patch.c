@@ -567,6 +567,7 @@ void patch_FindRefdSections(struct Patch const *patch, void (*callback)(struct S
 			break;
 
 		case RPN_BANK_SYM:
+			symbolID = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)
 				symbolID |= getRPNByte(&expression, &size,
 						    patch->src, patch->lineNo) << shift;
@@ -603,7 +604,10 @@ void patch_FindRefdSections(struct Patch const *patch, void (*callback)(struct S
 		case RPN_BANK_SELF:
 		case RPN_HRAM:
 		case RPN_RST:
+			break;
 		case RPN_CONST:
+			for (uint8_t shift = 0; shift < 32; shift += 8)
+				getRPNByte(&expression, &size, patch->src, patch->lineNo);
 			break;
 
 		case RPN_SYM:

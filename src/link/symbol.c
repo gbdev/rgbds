@@ -67,7 +67,7 @@ struct Symbol *sym_GetSymbol(char const *name)
 
 void sym_RemoveSymbol(char const *name)
 {
-	sym_RemoveSymbol(hash_RemoveElement(symbols, name));
+	hash_RemoveElement(symbols, name);
 }
 
 void sym_CleanupSymbols(void)

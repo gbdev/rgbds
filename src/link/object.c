@@ -383,6 +383,10 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 				  i, fileSections, fileNodes);
 		}
 		section->patches = patches;
+	} else {
+		section->data = NULL;
+		section->nbPatches = 0;
+		section->patches = NULL;
 	}
 
 	section->smartLinked = false;

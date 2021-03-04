@@ -400,6 +400,10 @@ void assign_AssignSections(void)
 	/* Process linker script, if any */
 	processLinkerScript();
 
+	/* After the linker script check if we need to do smart linking
+	   and discard any sections */
+	sect_PerformSmartLink();
+
 	nbSectionsToAssign = 0;
 	sect_ForEach(categorizeSection, NULL);
 

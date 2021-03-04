@@ -3,14 +3,14 @@ SECTION "root", ROM0[0]
 
 	db Label
 
-SECTION "A", ROM0[1]
+SECTION "A", ROM0
 
 Label:
 	db 2, Label
 
-SECTION "B", ROM0[3]
+SECTION "B", ROM0
 
 Unrefd:
 	db Unrefd ; References itself, but unless referenced externally, that doesn't matter
 
-assert Unrefd == 3 ; The assertion should reference section "B"... but it'll be resolved by RGBASM
+	assert Label == 1 ; This assert will be ignored when smart linking, as nothing references section "B"

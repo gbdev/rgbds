@@ -368,6 +368,11 @@ void sect_AddSmartSection(char const *name)
 	nbSmartLinkNames++;
 }
 
+// Actually a stack, not a queue; however, the order in which sections are processed doesn't matter
+struct Section **smartLinkQueue;
+size_t queueSize = 0;
+size_t queueCapacity;
+
 static void smartSectionPurge(void *arg, void *ign)
 {
 	(void)ign;
@@ -375,14 +380,21 @@ static void smartSectionPurge(void *arg, void *ign)
 
 	if (!sect->smartLinked) {
 		verbosePrint("Dropping \"%s\" due to smart linking\n", sect->name);
-		sect_RemoveSection(sect->name);
+
+		if (queueSize == queueCapacity) {
+			if (queueCapacity == SIZE_MAX)
+				error(NULL, 0, "Smart linking queue capacity exceeded!");
+			else if (queueCapacity > SIZE_MAX / 2)
+				queueCapacity = SIZE_MAX;
+			else
+				queueCapacity *= 2;
+			smartLinkQueue = realloc(smartLinkQueue, sizeof(*smartLinkQueue) * queueCapacity);
+		}
+
+		smartLinkQueue[queueSize] = sect;
+		queueSize++;
 	}
 }
-
-// Actually a stack, not a queue; however, the order in which sections are processed doesn't matter
-struct Section **smartLinkQueue;
-size_t queueSize = 0;
-size_t queueCapacity;
 
 static void queueSmartSection(struct Section *sect)
 {
@@ -396,7 +408,12 @@ static void queueSmartSection(struct Section *sect)
 		smartLinkQueue = realloc(smartLinkQueue, sizeof(*smartLinkQueue) * queueCapacity);
 	}
 
-	sect->smartLinked = true;
+	if (!sect->smartLinked) {
+		sect->smartLinked = true;
+
+		smartLinkQueue[queueSize] = sect;
+		queueSize++;
+	}
 }
 
 void sect_LinkSection(struct Section const *sect)
@@ -404,6 +421,19 @@ void sect_LinkSection(struct Section const *sect)
 	// Scan all linked sections
 	for (uint32_t i = 0; i < sect->nbPatches; i++)
 		patch_FindRefdSections(&sect->patches[i], queueSmartSection, (struct Symbol const * const *)sect->fileSymbols);
+}
+
+static void smartLinkConstrained(void *arg, void *ign)
+{
+	(void)ign;
+
+	struct Section *sect = arg;
+	/* if a section isn't smart linked yet, but is fully constrained
+	   by address and bank, we want to smart link it as well */
+	if (!sect->smartLinked && sect->isAddressFixed && sect->isBankFixed) {
+		sect->smartLinked = true;
+		sect_LinkSection(sect);
+	}
 }
 
 void sect_PerformSmartLink(void)
@@ -414,7 +444,7 @@ void sect_PerformSmartLink(void)
 
 	// Assume that each section is going to link a new one...
 	queueCapacity = nbSmartLinkNames;
-	smartLinkQueue = malloc(queueSize * sizeof(*smartLinkQueue));
+	smartLinkQueue = malloc(queueCapacity * sizeof(*smartLinkQueue));
 	if (!smartLinkQueue)
 		error(NULL, 0,  "Smart linking allocation failed: %s", strerror(errno));
 
@@ -433,6 +463,8 @@ void sect_PerformSmartLink(void)
 	}
 	free(smartLinkNames);
 
+	hash_ForEach(sections, smartLinkConstrained, NULL);
+
 	// Also add sections referenced by assertions
 	struct Assertion const *assertion = obj_GetFirstAssertion();
 
@@ -444,7 +476,12 @@ void sect_PerformSmartLink(void)
 	// As long as the queue isn't empty, get the last one, and process it
 	while (queueSize)
 		sect_LinkSection(smartLinkQueue[--queueSize]);
-	free(smartLinkQueue);
 
+	// Find each section that needs to be removed and put it in the smartLinkQueue
 	hash_ForEach(sections, smartSectionPurge, NULL);
+
+	// Remove all entries that need to be purged. (cannot be done during hash_ForEach)
+	while (queueSize)
+		sect_RemoveSection(smartLinkQueue[--queueSize]->name);
+	free(smartLinkQueue);
 }
