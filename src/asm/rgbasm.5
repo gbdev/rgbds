@@ -391,8 +391,8 @@ with its corresponding argument in
 .Pq So %% Sc is replaced by the So % Sc character .
 .El
 .Ss Character maps
-When writing text that is meant to be displayed on the Game Boy, the characters used in the source code may need to have a different encoding than the rest of the source code.
-For example, the tiles used for uppercase letters may be placed starting at tile index 128, which would make it difficult to add text strings to the ROM.
+When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
+For example, the tiles used for uppercase letters may be placed starting at tile index 128, which differs from ASCII starting at 65.
 .Pp
 Character maps allow mapping strings to arbitrary 8-bit values:
 .Bd -literal -offset indent
