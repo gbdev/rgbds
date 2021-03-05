@@ -133,7 +133,7 @@ jobs:
     strategy:
       matrix:
         bits: [32, 64]
-        os: [ubuntu-latest]
+        os: [ubuntu-18.04]
         include:
           - bits: 32
             arch: i686
