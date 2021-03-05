@@ -19,6 +19,8 @@
 
 #include "linkdefs.h"
 
+#include "platform.h" // MIN_NB_ELMS
+
 #define BANK_SIZE 0x4000
 
 FILE *outputFile;
@@ -38,6 +40,18 @@ static struct {
 		struct SortedSection *zeroLenSections;
 	} *banks;
 } sections[SECTTYPE_INVALID];
+
+/* Defines the order in which types are output to the sym and map files */
+static enum SectionType typeMap[SECTTYPE_INVALID] = {
+	SECTTYPE_ROM0,
+	SECTTYPE_ROMX,
+	SECTTYPE_VRAM,
+	SECTTYPE_SRAM,
+	SECTTYPE_WRAM0,
+	SECTTYPE_WRAMX,
+	SECTTYPE_OAM,
+	SECTTYPE_HRAM
+};
 
 void out_AddSection(struct Section const *section)
 {
@@ -64,8 +78,7 @@ void out_AddSection(struct Section const *section)
 		sections[section->type].banks =
 			realloc(sections[section->type].banks,
 				sizeof(*sections[0].banks) * minNbBanks);
-		for (uint32_t i = sections[section->type].nbBanks;
-		     i < minNbBanks; i++) {
+		for (uint32_t i = sections[section->type].nbBanks; i < minNbBanks; i++) {
 			sections[section->type].banks[i].sections = NULL;
 			sections[section->type].banks[i].zeroLenSections = NULL;
 		}
@@ -323,12 +336,13 @@ static void writeSymBank(struct SortedSections const *bankSections)
 /**
  * Write a bank's contents to the map file
  * @param bankSections The bank's sections
+ * @return The bank's slack space
  */
-static void writeMapBank(struct SortedSections const *sectList,
-			 enum SectionType type, uint32_t bank)
+static uint16_t writeMapBank(struct SortedSections const *sectList,
+			     enum SectionType type, uint32_t bank)
 {
 	if (!mapFile)
-		return;
+		return 0;
 
 	struct SortedSection const *section        = sectList->sections;
 	struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
@@ -367,6 +381,34 @@ static void writeMapBank(struct SortedSections const *sectList,
 	else
 		fprintf(mapFile, "    SLACK: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
+
+	return slack;
+}
+
+/**
+ * Write the total slack space by section type to the map file
+ * @param slackMap The total slack space by section type
+ */
+static void writeMapSlack(uint32_t slackMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
+{
+	if (!mapFile)
+		return;
+
+	fputs("FREE:\n", mapFile);
+
+	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
+		enum SectionType type = typeMap[i];
+
+		// Do not output slack space for VRAM or OAM
+		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
+			continue;
+
+		if (sections[type].nbBanks > 0) {
+			fprintf(mapFile, "    %s: $%04" PRIx32 " byte%s in %" PRIu32 " bank%s\n",
+				typeNames[type], slackMap[type], slackMap[type] == 1 ? "" : "s",
+				sections[type].nbBanks, sections[type].nbBanks == 1 ? "" : "s");
+		}
+	}
 }
 
 /**
@@ -377,16 +419,7 @@ static void writeSymAndMap(void)
 	if (!symFileName && !mapFileName)
 		return;
 
-	enum SectionType typeMap[SECTTYPE_INVALID] = {
-		SECTTYPE_ROM0,
-		SECTTYPE_ROMX,
-		SECTTYPE_VRAM,
-		SECTTYPE_SRAM,
-		SECTTYPE_WRAM0,
-		SECTTYPE_WRAMX,
-		SECTTYPE_OAM,
-		SECTTYPE_HRAM
-	};
+	uint32_t slackMap[SECTTYPE_INVALID] = {0};
 
 	symFile = openFile(symFileName, "w");
 	mapFile = openFile(mapFileName, "w");
@@ -397,15 +430,15 @@ static void writeSymAndMap(void)
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
 
-		if (sections[type].nbBanks > 0) {
-			for (uint32_t bank = 0; bank < sections[type].nbBanks;
-			     bank++) {
-				writeSymBank(&sections[type].banks[bank]);
-				writeMapBank(&sections[type].banks[bank],
-					     type, bank);
-			}
+		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++) {
+			struct SortedSections const *sect = &sections[type].banks[bank];
+
+			writeSymBank(sect);
+			slackMap[type] += writeMapBank(sect, type, bank);
 		}
 	}
+
+	writeMapSlack(slackMap);
 
 	closeFile(symFile);
 	closeFile(mapFile);
