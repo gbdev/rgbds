@@ -1196,25 +1196,25 @@ command
 .Ss Predeclared Symbols
 The following symbols are defined by the assembler:
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
-.It Sy Type Ta Sy Name Ta Sy Contents
-.It Ic EQU Ta Dv @ Ta PC value (essentially, the current memory address)
-.It Ic SET Ta Dv _RS Ta _RS Counter
-.It Ic EQU Ta Dv _NARG Ta Number of arguments passed to macro, updated by Ic SHIFT
-.It Ic EQU Ta Dv __LINE__ Ta The current line number
-.It Ic EQUS Ta Dv __FILE__ Ta The current filename
-.It Ic EQUS Ta Dv __DATE__ Ta Today's date
-.It Ic EQUS Ta Dv __TIME__ Ta The current time
-.It Ic EQUS Ta Dv __ISO_8601_LOCAL__ Ta ISO 8601 timestamp (local)
-.It Ic EQUS Ta Dv __ISO_8601_UTC__ Ta ISO 8601 timestamp (UTC)
-.It Ic EQU Ta Dv __UTC_YEAR__ Ta Today's year
-.It Ic EQU Ta Dv __UTC_MONTH__ Ta Today's month number, 1\[en]12
-.It Ic EQU Ta Dv __UTC_DAY__ Ta Today's day of the month, 1\[en]31
-.It Ic EQU Ta Dv __UTC_HOUR__ Ta Current hour, 0\[en]23
-.It Ic EQU Ta Dv __UTC_MINUTE__ Ta Current minute, 0\[en]59
-.It Ic EQU Ta Dv __UTC_SECOND__ Ta Current second, 0\[en]59
-.It Ic EQU Ta Dv __RGBDS_MAJOR__ Ta Major version number of RGBDS
-.It Ic EQU Ta Dv __RGBDS_MINOR__ Ta Minor version number of RGBDS
-.It Ic EQU Ta Dv __RGBDS_PATCH__ Ta Patch version number of RGBDS
+.It Sy Name Ta Sy Type Ta Sy Contents
+.It Dv @ Ta Ic EQU Ta PC value (essentially, the current memory address)
+.It Dv _RS Ta Ic SET Ta _RS Counter
+.It Dv _NARG Ta Ic EQU Ta Number of arguments passed to macro, updated by Ic SHIFT
+.It Dv __LINE__ Ta Ic EQU Ta The current line number
+.It Dv __FILE__ Ta Ic EQUS Ta The current filename
+.It Dv __DATE__ Ta Ic EQUS Ta Today's date
+.It Dv __TIME__ Ta Ic EQUS Ta The current time
+.It Dv __ISO_8601_LOCAL__ Ta Ic EQUS Ta ISO 8601 timestamp (local)
+.It Dv __ISO_8601_UTC__ Ta Ic EQUS Ta ISO 8601 timestamp (UTC)
+.It Dv __UTC_YEAR__ Ta Ic EQU Ta Today's year
+.It Dv __UTC_MONTH__ Ta Ic EQU Ta Today's month number, 1\[en]12
+.It Dv __UTC_DAY__ Ta Ic EQU Ta Today's day of the month, 1\[en]31
+.It Dv __UTC_HOUR__ Ta Ic EQU Ta Current hour, 0\[en]23
+.It Dv __UTC_MINUTE__ Ta Ic EQU Ta Current minute, 0\[en]59
+.It Dv __UTC_SECOND__ Ta Ic EQU Ta Current second, 0\[en]59
+.It Dv __RGBDS_MAJOR__ Ta Ic EQU Ta Major version number of RGBDS
+.It Dv __RGBDS_MINOR__ Ta Ic EQU Ta Minor version number of RGBDS
+.It Dv __RGBDS_PATCH__ Ta Ic EQU Ta Patch version number of RGBDS
 .El
 .Pp
 The current time values will be taken from the
