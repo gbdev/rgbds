@@ -67,7 +67,8 @@ size_t readUTF8Char(uint8_t *dest, char const *src)
 		if (decode(&state, &codep, src[i]) == 1)
 			return 0;
 
-		dest[i] = src[i];
+		if (dest)
+			dest[i] = src[i];
 		i++;
 
 		if (state == 0)

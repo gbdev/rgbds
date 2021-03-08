@@ -82,13 +82,12 @@ static char *strrstr(char *s1, char *s2)
 	return NULL;
 }
 
-static size_t strlenUTF8(const char *s)
+static size_t strlenUTF8(char const *s)
 {
 	size_t len = 0;
 	uint32_t state = 0;
-	uint32_t codep = 0;
 
-	while (*s) {
+	for (uint32_t codep = 0; *s; s++) {
 		switch (decode(&state, &codep, *s)) {
 		case 1:
 			fatalerror("STRLEN: Invalid UTF-8 character\n");
@@ -97,7 +96,6 @@ static size_t strlenUTF8(const char *s)
 			len++;
 			break;
 		}
-		s++;
 	}
 
 	/* Check for partial code point. */
@@ -107,13 +105,12 @@ static size_t strlenUTF8(const char *s)
 	return len;
 }
 
-static void strsubUTF8(char *dest, size_t destLen, const char *src, uint32_t pos, uint32_t len)
+static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len)
 {
 	size_t srcIndex = 0;
 	size_t destIndex = 0;
 	uint32_t state = 0;
 	uint32_t codep = 0;
-	uint32_t curPos = 1;
 	uint32_t curLen = 0;
 
 	if (pos < 1) {
@@ -122,7 +119,7 @@ static void strsubUTF8(char *dest, size_t destLen, const char *src, uint32_t pos
 	}
 
 	/* Advance to starting position in source string. */
-	while (src[srcIndex] && curPos < pos) {
+	for (uint32_t curPos = 1; src[srcIndex] && curPos < pos; srcIndex++) {
 		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			fatalerror("STRSUB: Invalid UTF-8 character\n");
@@ -131,7 +128,6 @@ static void strsubUTF8(char *dest, size_t destLen, const char *src, uint32_t pos
 			curPos++;
 			break;
 		}
-		srcIndex++;
 	}
 
 	if (!src[srcIndex] && len)
@@ -160,6 +156,42 @@ static void strsubUTF8(char *dest, size_t destLen, const char *src, uint32_t pos
 		fatalerror("STRSUB: Invalid UTF-8 character\n");
 
 	dest[destIndex] = '\0';
+}
+
+static size_t charlenUTF8(char const *s)
+{
+	size_t len;
+
+	for (len = 0; charmap_ConvertNext(&s, NULL); len++)
+		;
+
+	return len;
+}
+
+static void charsubUTF8(char *dest, char const *src, uint32_t pos)
+{
+	size_t charLen = 1;
+
+	if (pos < 1) {
+		warning(WARNING_BUILTIN_ARG, "CHARSUB: Position starts at 1\n");
+		pos = 1;
+	}
+
+	/* Advance to starting position in source string. */
+	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
+		charLen = charmap_ConvertNext(&src, NULL);
+
+	char const *start = src;
+
+	if (!charmap_ConvertNext(&src, NULL))
+		warning(WARNING_BUILTIN_ARG,
+			"CHARSUB: Position %lu is past the end of the string\n",
+			(unsigned long)pos);
+
+	/* Copy from source to destination. */
+	memcpy(dest, start, src - start);
+
+	dest[src - start] = '\0';
 }
 
 static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *new)
@@ -502,6 +534,9 @@ enum {
 %token	T_OP_STRUPR "STRUPR" T_OP_STRLWR "STRLWR"
 %token	T_OP_STRRPL "STRRPL"
 %token	T_OP_STRFMT "STRFMT"
+
+%token	T_OP_CHARLEN "CHARLEN"
+%token	T_OP_CHARSUB "CHARSUB"
 
 %token	<tzSym> T_LABEL "label"
 %token	<tzSym> T_ID "identifier"
@@ -1451,6 +1486,9 @@ relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
 		| T_OP_STRLEN T_LPAREN string T_RPAREN {
 			rpn_Number(&$$, strlenUTF8($3));
 		}
+		| T_OP_CHARLEN T_LPAREN string T_RPAREN {
+			rpn_Number(&$$, charlenUTF8($3));
+		}
 		| T_LPAREN relocexpr T_RPAREN	{ $$ = $2; }
 ;
 
@@ -1487,6 +1525,9 @@ const_no_str	: relocexpr_no_str {
 string		: T_STRING
 		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
 			strsubUTF8($$, sizeof($$), $3, $5, $7);
+		}
+		| T_OP_CHARSUB T_LPAREN string T_COMMA uconst T_RPAREN {
+			charsubUTF8($$, $3, $5);
 		}
 		| T_OP_STRCAT T_LPAREN T_RPAREN {
 			$$[0] = '\0';

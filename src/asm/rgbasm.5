@@ -394,11 +394,13 @@ Most of them return a string, however some of these functions actually return an
 .It Fn STRCMP str1 str2 Ta Returns -1 if Ar str1 No is alphabetically lower than Ar str2 No , zero if they match, 1 if Ar str1 No is greater than Ar str2 .
 .It Fn STRIN str1 str2 Ta Returns the first position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
 .It Fn STRRIN str1 str2 Ta Returns the last position of Ar str2 No in Ar str1 No or zero if it's not present Pq first character is position 1 .
-.It Fn STRSUB str pos len Ta Returns a substring from Ar str No starting at Ar pos Po first character is position 1 Pc and Ar len No characters long.
+.It Fn STRSUB str pos len Ta Returns a substring from Ar str No starting at Ar pos No (first character is position 1) and Ar len No characters long.
 .It Fn STRUPR str Ta Returns Ar str No with all letters in uppercase.
 .It Fn STRLWR str Ta Returns Ar str No with all letters in lowercase.
 .It Fn STRRPL str old new Ta Returns Ar str No with each non-overlapping occurrence of the substring Ar old No replaced with Ar new .
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
+.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
+.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1) with the current charmap.
 .Ql %spec
 pattern replaced by interpolating the format
 .Ar spec
