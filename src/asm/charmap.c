@@ -193,18 +193,15 @@ void charmap_Add(char *mapping, uint8_t value)
 
 size_t charmap_Convert(char const *input, uint8_t *output)
 {
-	size_t outputLen = 0;
+	uint8_t *start = output;
 
-	for (size_t charLen = charmap_ConvertNext(&input, output); charLen;
-	     charLen = charmap_ConvertNext(&input, output)) {
-		output += charLen;
-		outputLen += charLen;
-	}
+	while (charmap_ConvertNext(&input, &output))
+		;
 
-	return outputLen;
+	return output - start;
 }
 
-size_t charmap_ConvertNext(char const **input, uint8_t *output)
+size_t charmap_ConvertNext(char const **input, uint8_t **output)
 {
 	/*
 	 * The goal is to match the longest mapping possible.
@@ -238,18 +235,21 @@ size_t charmap_ConvertNext(char const **input, uint8_t *output)
 
 			if (match) { /* Arrived at a dead end with a match found */
 				if (output)
-					*output = match->value;
+					*(*output)++ = match->value;
 
 				return 1;
 
 			} else if (**input) { /* No match found */
-				size_t codepointLen = readUTF8Char(output, *input);
+				size_t codepointLen = readUTF8Char(output ? *output : NULL,
+								   *input);
 
 				if (codepointLen == 0)
 					error("Input string is not valid UTF-8!\n");
 
 				/* OK because UTF-8 has no NUL in multi-byte chars */
 				*input += codepointLen;
+				if (output)
+					*output += codepointLen;
 
 				return codepointLen;
 
