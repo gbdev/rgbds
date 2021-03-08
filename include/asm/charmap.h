@@ -18,5 +18,6 @@ void charmap_Push(void);
 void charmap_Pop(void);
 void charmap_Add(char *mapping, uint8_t value);
 size_t charmap_Convert(char const *input, uint8_t *output);
+size_t charmap_ConvertNext(char const **input, uint8_t *output);
 
 #endif /* RGBDS_ASM_CHARMAP_H */

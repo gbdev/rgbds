@@ -57,7 +57,7 @@ struct CharmapStackEntry {
 
 struct CharmapStackEntry *charmapStack;
 
-static struct Charmap *charmap_Get(const char *name)
+static struct Charmap *charmap_Get(char const *name)
 {
 	return hash_GetElement(charmaps, name);
 }
@@ -193,13 +193,25 @@ void charmap_Add(char *mapping, uint8_t value)
 
 size_t charmap_Convert(char const *input, uint8_t *output)
 {
+	size_t outputLen = 0;
+
+	for (size_t charLen = charmap_ConvertNext(&input, output); charLen;
+	     charLen = charmap_ConvertNext(&input, output)) {
+		output += charLen;
+		outputLen += charLen;
+	}
+
+	return outputLen;
+}
+
+size_t charmap_ConvertNext(char const **input, uint8_t *output)
+{
 	/*
 	 * The goal is to match the longest mapping possible.
 	 * For that, advance through the trie with each character read.
 	 * If that would lead to a dead end, rewind characters until the last match, and output.
 	 * If no match, read a UTF-8 codepoint and output that.
 	 */
-	size_t outputLen = 0;
 	struct Charmap const *charmap = *currentCharmap;
 	struct Charnode const *node = &charmap->nodes[0];
 	struct Charnode const *match = NULL;
@@ -207,10 +219,10 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 
 	for (;;) {
 		/* We still want NULs to reach the `else` path, to give a chance to rewind */
-		uint8_t c = *input - 1;
+		uint8_t c = **input - 1;
 
-		if (*input && node->next[c]) {
-			input++; /* Consume that char */
+		if (**input && node->next[c]) {
+			(*input)++; /* Consume that char */
 			rewindDistance++;
 
 			node = &charmap->nodes[node->next[c]];
@@ -220,31 +232,32 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 			}
 
 		} else {
-			input -= rewindDistance; /* Rewind */
+			*input -= rewindDistance; /* Rewind */
 			rewindDistance = 0;
 			node = &charmap->nodes[0];
 
 			if (match) { /* Arrived at a dead end with a match found */
-				*output++ = match->value;
-				outputLen++;
-				match = NULL; /* Reset match for next round */
+				if (output)
+					*output = match->value;
 
-			} else if (*input) { /* No match found */
-				size_t codepointLen = readUTF8Char(output, input);
+				return 1;
 
-				if (codepointLen == 0) {
+			} else if (**input) { /* No match found */
+				size_t codepointLen = readUTF8Char(output, *input);
+
+				if (codepointLen == 0)
 					error("Input string is not valid UTF-8!\n");
-					break;
-				}
-				input += codepointLen; /* OK because UTF-8 has no NUL in multi-byte chars */
-				output += codepointLen;
-				outputLen += codepointLen;
-			}
 
-			if (!*input)
-				break;
+				/* OK because UTF-8 has no NUL in multi-byte chars */
+				*input += codepointLen;
+
+				return codepointLen;
+
+			} else { /* End of input */
+				return 0;
+			}
 		}
 	}
 
-	return outputLen;
+	unreachable_();
 }
