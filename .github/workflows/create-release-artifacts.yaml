@@ -86,7 +86,7 @@ jobs:
             Once that's done, replace this text with the changelog, un-draft the release, and update the `release` branch.
             By the way, if you forgot to update `include/version.h`, RGBASM's version test is gonna fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
           draft: true # Don't publish the release quite yet...
-          prerelease: ${{ endsWith(github.ref, '-pre') }}
+          prerelease: ${{ contains(github.ref, '-rc') }}
           files: |
             rgbds-${{ env.version }}-win32.zip
             rgbds-${{ env.version }}-win64.zip

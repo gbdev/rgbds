@@ -12,6 +12,7 @@
 #define PACKAGE_VERSION_MAJOR 0
 #define PACKAGE_VERSION_MINOR 4
 #define PACKAGE_VERSION_PATCH 2
+// #define PACKAGE_VERSION_RC 1
 
 const char *get_package_version_string(void);
 

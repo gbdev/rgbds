@@ -855,7 +855,7 @@ are allowed exclusively in labels, as described below.
 A symbol cannot have the same name as a reserved keyword.
 .Pp
 Constants and string equates
-.Em must not 
+.Em must not
 have any whitespace before their name when they are defined;
 otherwise
 .Nm
@@ -1215,6 +1215,7 @@ The following symbols are defined by the assembler:
 .It Dv __RGBDS_MAJOR__ Ta Ic EQU Ta Major version number of RGBDS
 .It Dv __RGBDS_MINOR__ Ta Ic EQU Ta Minor version number of RGBDS
 .It Dv __RGBDS_PATCH__ Ta Ic EQU Ta Patch version number of RGBDS
+.It Dv __RGBDS_RC__ Ta Ic EQU Ta Release candidate ID of RGBDS, not defined for final releases
 .El
 .Pp
 The current time values will be taken from the
