@@ -5,6 +5,7 @@ rgbgfx
 rgbshim.sh
 *.o
 *.exe
+*.dll
 .checkpatch-camelcase.*
 CMakeCache.txt
 CMakeFiles
