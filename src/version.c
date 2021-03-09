@@ -9,17 +9,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "helpers.h"
 #include "version.h"
 
 const char *get_package_version_string(void)
 {
-	static char s[50];
-
-	/* The following conditional should be simplified by the compiler. */
+	// The following conditional should be simplified by the compiler.
 	if (strlen(BUILD_VERSION_STRING) == 0) {
-		snprintf(s, sizeof(s), "v%d.%d.%d", PACKAGE_VERSION_MAJOR,
-			 PACKAGE_VERSION_MINOR, PACKAGE_VERSION_PATCH);
-		return s;
+		// Fallback if version string can't be obtained from Git
+		return "v" EXPAND_AND_STR(PACKAGE_VERSION_MAJOR)
+			"." EXPAND_AND_STR(PACKAGE_VERSION_MINOR)
+			"." EXPAND_AND_STR(PACKAGE_VERSION_PATCH);
 	} else {
 		return BUILD_VERSION_STRING;
 	}
