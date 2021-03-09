@@ -764,7 +764,8 @@ void out_BinaryFile(char const *s, int32_t startPos)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		fatalerror("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+		error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+		return;
 	}
 
 	int32_t fsize = -1;
@@ -830,7 +831,8 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			oFailedOnMissingInclude = true;
 			return;
 		}
-		fatalerror("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+		error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+		return;
 	}
 
 	checkcodesection();
@@ -846,8 +848,11 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			return;
 		}
 
-		if ((start_pos + length) > fsize)
-			fatalerror("Specified range in INCBIN is out of bounds\n");
+		if ((start_pos + length) > fsize) {
+			error("Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32
+			      " > %" PRIu32 ")\n", start_pos, length, fsize);
+			return;
+		}
 
 		fseek(f, start_pos, SEEK_SET);
 	} else {
