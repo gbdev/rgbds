@@ -774,7 +774,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 	if (fseek(f, 0, SEEK_END) != -1) {
 		fsize = ftell(f);
 
-		if (startPos >= fsize) {
+		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
 			fclose(f);
 			return;
@@ -841,7 +841,7 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	if (fseek(f, 0, SEEK_END) != -1) {
 		fsize = ftell(f);
 
-		if (start_pos >= fsize) {
+		if (start_pos > fsize) {
 			error("Specified start position is greater than length of file\n");
 			return;
 		}
