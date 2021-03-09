@@ -43,6 +43,7 @@ PRINTLN "v{d:__RGBDS_MAJOR__}.{d:__RGBDS_MINOR__}.{d:__RGBDS_PATCH__}"
 EOF
 else
 	echo "${bold}${orange}Warning: cannot run version test!${rescolors}${resbold}"
+	rm -f version.asm
 fi
 
 # Add the quote test, except on Windows
