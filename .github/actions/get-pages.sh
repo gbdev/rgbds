@@ -5,20 +5,21 @@ usage() {
 Usage: $0 [-h] [-r] <rgbds-www> <version>
 Copy renders from RGBDS repository to rgbds-www documentation
 Execute from the root folder of the RGBDS repo, checked out at the desired tag
-<rgbds-www> : Path to the '_documentation' folder in the rgbds-www repository
+<rgbds-www> : Path to the rgbds-www repository
 <version>   : Version to be copied, such as 'v0.4.1' or 'master'
 
     -h  Display this help message
-    -r  Update "latest stable" redirection pages (use for releases, not master)
+    -r  Update "latest stable" redirection pages and add a new entry to the index
+        (use for releases, not master)
 EOF
 }
 
-update_redirects=0
+is_release=0
 bad_usage=0
 while getopts ":hr" opt; do
 	case $opt in
 		r)
-			update_redirects=1
+			is_release=1
 			;;
 		h)
 			usage
@@ -50,7 +51,7 @@ PAGES=(
 	[gbz80.7.html]=src/gbz80.7
 )
 WWWPATH="/docs"
-mkdir -p "$1/$2"
+mkdir -p "$1/_documentation/$2"
 
 # `mandoc` uses a different format for referring to man pages present in the **current** directory
 # We want that format for RGBDS man pages, and the other one for the t=rest;
@@ -64,7 +65,7 @@ stem="${page%.html}"
 manpage="${stem%.?}(${stem#*.})"
 descr="$(awk -v 'FS=.Nd ' '/.Nd/ { print $2; }' "${PAGES[$page]}")"
 
-	cat >"$1/$2/$page" <<EOF
+	cat >"$1/_documentation/$2/$page" <<EOF
 ---
 layout: doc
 title: $manpage [$2]
@@ -75,9 +76,9 @@ EOF
 	if [ $stem = rgbasm.5 ]; then
 		options+=,toc
 	fi
-	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | .github/actions/doc_postproc.awk >> "$1/$2/$page"
-	if [ $update_redirects -ne 0 ]; then
-		cat - >"$1/$page" <<EOF
+	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | .github/actions/doc_postproc.awk >> "$1/_documentation/$2/$page"
+	if [ $is_release -ne 0 ]; then
+		cat - >"$1/_documentation/$page" <<EOF
 ---
 redirect_to: $WWWPATH/$2/${page%.html}
 permalink: $WWWPATH/${page%.html}/
@@ -87,7 +88,7 @@ description: RGBDS latest stable — $descr
 EOF
 	fi
 done
-cat - >"$1/$2/index.html" <<EOF
+cat - >"$1/_documentation/$2/index.html" <<EOF
 ---
 layout: doc_index
 permalink: /docs/$2/
@@ -95,6 +96,14 @@ title: RGBDS online manual [$2]
 description: RGBDS $2 - Online manual
 ---
 EOF
+
+# If making a release, add a new entry right after `master`
+if [ $is_release -ne 0 ]; then
+	awk '{ print }
+/"name": "master"/ { print "\t\t{\"name\": \"'$2'\",  \"text\": \"'$2'\" }," }
+' "$1/_data/doc.json" >"$1/_data/doc.json.tmp"
+	mv "$1/_data/doc.json"{.tmp,}
+fi
 
 # Clean up
 rm "${PAGES[@]##*/}"
