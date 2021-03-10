@@ -44,7 +44,7 @@ jobs:
       - name: Update pages
         working-directory: rgbds
         run: |
-          ./.github/actions/get-pages.sh ../rgbds-www/_documentation master
+          ./.github/actions/get-pages.sh ../rgbds-www master
       - name: Push new pages
         working-directory: rgbds-www
         run: |
