@@ -176,7 +176,9 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 
 	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
 		// Copy anything before the substring to replace
-		memcpy(dest + i, src, next - src < destLen - i ? next - src : destLen - i);
+		unsigned int lenBefore = next - src;
+
+		memcpy(dest + i, src, lenBefore < destLen - i ? lenBefore : destLen - i);
 		i += next - src;
 		if (i >= destLen)
 			break;
@@ -1437,7 +1439,11 @@ string		: T_STRING
 
 strcat_args	: string
 		| strcat_args T_COMMA string {
-			if (snprintf($$, sizeof($$), "%s%s", $1, $3) >= sizeof($$))
+			int ret = snprintf($$, sizeof($$), "%s%s", $1, $3);
+
+			if (ret == -1)
+				fatalerror("snprintf error in STRCAT: %s\n", strerror(errno));
+			else if ((unsigned int)ret >= sizeof($$))
 				warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n",
 					$1, $3);
 		}

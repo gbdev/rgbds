@@ -57,7 +57,7 @@ char const *print(int c)
 
 	default: /* Print as hex */
 		buf[1] = 'x';
-		sprintf(&buf[2], "%02hhx", c);
+		sprintf(&buf[2], "%02hhx", (uint8_t)c);
 		return buf;
 	}
 	buf[2] = '\0';

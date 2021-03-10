@@ -179,7 +179,7 @@ static void updateSymbolFilename(struct Symbol *sym)
 
 	setSymbolFilename(sym);
 	/* If the old node was referenced, ensure the new one is */
-	if (oldSrc && oldSrc->referenced && oldSrc->ID != -1)
+	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
 		out_RegisterNode(sym->src);
 	/* TODO: unref the old node, and use `out_ReplaceNode` instead if deleting it */
 }
@@ -277,7 +277,7 @@ struct Symbol const *sym_GetPC(void)
 
 static inline bool isReferenced(struct Symbol const *sym)
 {
-	return sym->ID != -1;
+	return sym->ID != (uint32_t)-1;
 }
 
 /*
@@ -315,7 +315,7 @@ uint32_t sym_GetPCValue(void)
 
 	if (!sect)
 		error("PC has no value outside a section\n");
-	else if (sect->org == -1)
+	else if (sect->org == (uint32_t)-1)
 		error("Expected constant PC but section is not fixed\n");
 	else
 		return CallbackPC();

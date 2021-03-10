@@ -114,9 +114,9 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 	if (sect_HasData(type))
 		fail("Cannot declare ROM sections as UNION\n");
 
-	if (org != -1) {
+	if (org != (uint32_t)-1) {
 		/* If both are fixed, they must be the same */
-		if (sect->org != -1 && sect->org != org)
+		if (sect->org != (uint32_t)-1 && sect->org != org)
 			fail("Section already declared as fixed at different address $%04"
 			     PRIx32 "\n", sect->org);
 		else if (sect->align != 0 && (mask(sect->align) & (org - sect->alignOfs)))
@@ -128,7 +128,7 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 
 	} else if (alignment != 0) {
 		/* Make sure any fixed address given is compatible */
-		if (sect->org != -1) {
+		if (sect->org != (uint32_t)-1) {
 			if ((sect->org - alignOffset) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
 				     PRIx32 "\n", sect->org);
@@ -160,11 +160,11 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 	 * combination of both.
 	 * The merging is however performed at the *end* of the original section!
 	 */
-	if (org != -1) {
+	if (org != (uint32_t)-1) {
 		uint16_t curOrg = org - sect->size;
 
 		/* If both are fixed, they must be the same */
-		if (sect->org != -1 && sect->org != curOrg)
+		if (sect->org != (uint32_t)-1 && sect->org != curOrg)
 			fail("Section already declared as fixed at incompatible address $%04"
 			     PRIx32 " (cur addr = %04" PRIx32 ")\n",
 			     sect->org, sect->org + sect->size);
@@ -182,7 +182,7 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 			curOfs += 1U << alignment;
 
 		/* Make sure any fixed address given is compatible */
-		if (sect->org != -1) {
+		if (sect->org != (uint32_t)-1) {
 			if ((sect->org - curOfs) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
 				     PRIx32 "\n", sect->org);
@@ -221,10 +221,10 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 			// Common checks
 
 			/* If the section's bank is unspecified, override it */
-			if (sect->bank == -1)
+			if (sect->bank == (uint32_t)-1)
 				sect->bank = bank;
 			/* If both specify a bank, it must be the same one */
-			else if (bank != -1 && sect->bank != bank)
+			else if (bank != (uint32_t)-1 && sect->bank != bank)
 				fail("Section already declared with different bank %" PRIu32 "\n",
 				     sect->bank);
 			break;
@@ -296,7 +296,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	// First, validate parameters, and normalize them if applicable
 
-	if (bank != -1) {
+	if (bank != (uint32_t)-1) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
 		 && type != SECTTYPE_SRAM && type != SECTTYPE_WRAMX)
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
@@ -316,7 +316,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		alignOffset = 0;
 	}
 
-	if (org != -1) {
+	if (org != (uint32_t)-1) {
 		if (org < startaddr[type] || org > endaddr(type))
 			error("Section \"%s\"'s fixed address %#" PRIx32
 				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
@@ -331,7 +331,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		/* It doesn't make sense to have both alignment and org set */
 		uint32_t mask = mask(alignment);
 
-		if (org != -1) {
+		if (org != (uint32_t)-1) {
 			if ((org - alignOffset) & mask)
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n",
 					name);
@@ -453,7 +453,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 	struct Section *sect = sect_GetSymbolSection();
 	uint16_t alignSize = 1 << alignment; // Size of an aligned "block"
 
-	if (sect->org != -1) {
+	if (sect->org != (uint32_t)-1) {
 		if ((sym_GetPCValue() - offset) % alignSize)
 			error("Section's fixed address fails required alignment (PC = $%04" PRIx32
 			      ")\n", sym_GetPCValue());

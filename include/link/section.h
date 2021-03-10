@@ -30,11 +30,11 @@ struct AttachedSymbol {
 struct Patch {
 	struct FileStackNode const *src;
 	uint32_t lineNo;
-	int32_t offset;
+	uint32_t offset;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	enum PatchType type;
-	int32_t rpnSize;
+	uint32_t rpnSize;
 	uint8_t *rpnExpression;
 
 	struct Section const *pcSection;

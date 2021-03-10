@@ -170,12 +170,12 @@ void macro_ShiftCurrentArgs(int32_t count)
 {
 	if (!macroArgs) {
 		error("Cannot shift macro arguments outside of a macro\n");
-	} else if (count > 0 && (count > macroArgs->nbArgs
+	} else if (count > 0 && ((uint32_t)count > macroArgs->nbArgs
 		   || macroArgs->shift > macroArgs->nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT,
 			"Cannot shift macro arguments past their end\n");
 		macroArgs->shift = macroArgs->nbArgs;
-	} else if (count < 0 && macroArgs->shift < -count) {
+	} else if (count < 0 && macroArgs->shift < (uint32_t)-count) {
 		warning(WARNING_MACRO_SHIFT,
 			"Cannot shift macro arguments past their beginning\n");
 		macroArgs->shift = 0;

@@ -175,8 +175,14 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 			char const *incPath = i ? includePaths[i - 1] : "";
 			int len = snprintf(*fullPath, *size, "%s%s", incPath, path);
 
+			if (len < 0) {
+				error("snprintf error during include path search: %s\n",
+				      strerror(errno));
+				break;
+			}
+
 			/* Oh how I wish `asnprintf` was standard... */
-			if (len >= *size) { /* `len` doesn't include the terminator, `size` does */
+			if ((size_t)len >= *size) { /* `len` doesn't include the terminator, `size` does */
 				*size = len + 1;
 				*fullPath = realloc(*fullPath, *size);
 				if (!*fullPath) {
@@ -187,10 +193,7 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 				len = sprintf(*fullPath, "%s%s", incPath, path);
 			}
 
-			if (len < 0) {
-				error("snprintf error during include path search: %s\n",
-				      strerror(errno));
-			} else if (isPathValid(*fullPath)) {
+			if (isPathValid(*fullPath)) {
 				printDep(*fullPath);
 				return true;
 			}

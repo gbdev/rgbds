@@ -870,11 +870,13 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	// Output ROMX if it was buffered
 	if (romx) {
+		// The value returned is either -1, or smaller than `totalRomxLen`,
+		// so it's fine to cast to `size_t`
 		writeLen = writeBytes(output, romx, totalRomxLen);
 		if (writeLen == -1) {
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
 			goto free_romx;
-		} else if (writeLen < totalRomxLen) {
+		} else if ((size_t)writeLen < totalRomxLen) {
 			report("FATAL: Could only write %ld of \"%s\"'s %ld ROMX bytes\n",
 			       writeLen, name, totalRomxLen);
 			goto free_romx;
@@ -898,7 +900,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			size_t thisLen = len > sizeof(bank) ? sizeof(bank) : len;
 			ssize_t ret = writeBytes(output, bank, thisLen);
 
-			if (ret != thisLen) {
+			// The return value is either -1, or at most `thisLen`,
+			// so it's fine to cast to `size_t`
+			if ((size_t)ret != thisLen) {
 				report("FATAL: Failed to write \"%s\"'s padding: %s\n",
 				       name, strerror(errno));
 				break;

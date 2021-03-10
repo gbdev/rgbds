@@ -136,9 +136,9 @@ static uint32_t getNbFileStackNodes(void)
 void out_RegisterNode(struct FileStackNode *node)
 {
 	/* If node is not already registered, register it (and parents), and give it a unique ID */
-	while (node->ID == -1) {
+	while (node->ID == (uint32_t)-1) {
 		node->ID = getNbFileStackNodes();
-		if (node->ID == -1)
+		if (node->ID == (uint32_t)-1)
 			fatalerror("Reached too many file stack nodes; try splitting the file up\n");
 		node->next = fileStackNodes;
 		fileStackNodes = node;
@@ -266,7 +266,7 @@ static void registerSymbol(struct Symbol *sym)
 	*objectSymbolsTail = sym;
 	objectSymbolsTail = &sym->next;
 	out_RegisterNode(sym->src);
-	if (nbSymbols == -1)
+	if (nbSymbols == (uint32_t)-1)
 		fatalerror("Registered too many symbols (%" PRIu32
 			   "); try splitting up your files\n", (uint32_t)-1);
 	sym->ID = nbSymbols++;
@@ -278,7 +278,7 @@ static void registerSymbol(struct Symbol *sym)
  */
 static uint32_t getSymbolID(struct Symbol *sym)
 {
-	if (sym->ID == -1 && !sym_IsPC(sym))
+	if (sym->ID == (uint32_t)-1 && !sym_IsPC(sym))
 		registerSymbol(sym);
 	return sym->ID;
 }
@@ -474,7 +474,7 @@ static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
 	(void)arg; // sym_ForEach requires a void* parameter, but we are not using it.
 
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
-	if (symbol->src && symbol->ID == -1) {
+	if (symbol->src && symbol->ID == (uint32_t)-1) {
 		registerSymbol(symbol);
 	}
 }

@@ -75,7 +75,7 @@ static inline bool sym_IsConstant(struct Symbol const *sym)
 	if (sym->type == SYM_LABEL) {
 		struct Section const *sect = sym_GetSection(sym);
 
-		return sect && sect->org != -1;
+		return sect && sect->org != (uint32_t)-1;
 	}
 	return sym->type == SYM_EQU || sym->type == SYM_SET;
 }

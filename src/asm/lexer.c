@@ -866,8 +866,9 @@ static int peekInternal(uint8_t distance)
 			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
 
 			readChars(nbExpectedChars);
-			/* If the read was incomplete, don't perform a second read */
-			if (nbCharsRead < nbExpectedChars)
+			// If the read was incomplete, don't perform a second read
+			// `nbCharsRead` cannot be negative, so it's fine to cast to `size_t`
+			if ((size_t)nbCharsRead < nbExpectedChars)
 				target = 0;
 		}
 		if (target != 0)
@@ -2258,7 +2259,7 @@ static int skipIfBlock(bool toEndc)
 {
 	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
 	lexer_SetMode(LEXER_NORMAL);
-	int startingDepth = lexer_GetIFDepth();
+	uint32_t startingDepth = lexer_GetIFDepth();
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 

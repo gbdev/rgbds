@@ -188,7 +188,7 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 
 	tryReadlong(parentID, file,
 		    "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
-	fileNodes[i].parent = parentID == -1 ? NULL : &fileNodes[parentID];
+	fileNodes[i].parent = parentID == (uint32_t)-1 ? NULL : &fileNodes[parentID];
 	tryReadlong(fileNodes[i].lineNo, file,
 		    "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i);
 	tryGetc(fileNodes[i].type, file, "%s: Cannot read node #%" PRIu32 "'s type: %s",
@@ -279,7 +279,8 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 	tryReadlong(patch->pcSectionID, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
-	patch->pcSection = patch->pcSectionID == -1 ? NULL : fileSections[patch->pcSectionID];
+	patch->pcSection = patch->pcSectionID == (uint32_t)-1 ? NULL
+							      : fileSections[patch->pcSectionID];
 	tryReadlong(patch->pcOffset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
@@ -635,7 +636,7 @@ static void freeSection(struct Section *section, void *arg)
 	free(section->name);
 	if (sect_HasData(section->type)) {
 		free(section->data);
-		for (int32_t i = 0; i < section->nbPatches; i++)
+		for (uint32_t i = 0; i < section->nbPatches; i++)
 			free(section->patches[i].rpnExpression);
 		free(section->patches);
 	}
