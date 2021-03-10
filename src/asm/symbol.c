@@ -727,6 +727,9 @@ void sym_Init(time_t now)
 	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH)->isBuiltin = true;
+#ifdef PACKAGE_VERSION_RC
+	sym_AddEqu("__RGBDS_RC__", PACKAGE_VERSION_RC)->isBuiltin = true;
+#endif
 
 	if (now == (time_t)-1) {
 		warn("Couldn't determine current time");
