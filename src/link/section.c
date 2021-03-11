@@ -248,7 +248,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	 * Check if alignment is reasonable, this is important to avoid UB
 	 * An alignment of zero is equivalent to no alignment, basically
 	 */
-	if (section->isAlignFixed && section->alignMask == 1)
+	if (section->isAlignFixed && section->alignMask == 0)
 		section->isAlignFixed = false;
 
 	/* Too large an alignment may not be satisfiable */
