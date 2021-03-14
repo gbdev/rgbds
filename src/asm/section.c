@@ -761,6 +761,8 @@ void out_BinaryFile(char const *s, int32_t startPos)
 
 	if (!f) {
 		if (oGeneratedMissingIncludes) {
+			if (verbose)
+				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
 			oFailedOnMissingInclude = true;
 			return;
 		}
@@ -828,6 +830,8 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	if (!f) {
 		free(fullPath);
 		if (oGeneratedMissingIncludes) {
+			if (verbose)
+				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
 			oFailedOnMissingInclude = true;
 			return;
 		}

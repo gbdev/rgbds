@@ -317,10 +317,14 @@ void fstk_RunInclude(char const *path)
 
 	if (!fstk_FindFile(path, &fullPath, &size)) {
 		free(fullPath);
-		if (oGeneratedMissingIncludes)
+		if (oGeneratedMissingIncludes) {
+			if (verbose)
+				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n",
+				       path, strerror(errno));
 			oFailedOnMissingInclude = true;
-		else
+		} else {
 			error("Unable to open included file '%s': %s\n", path, strerror(errno));
+		}
 		return;
 	}
 	dbgPrint("Full path: \"%s\"\n", fullPath);
