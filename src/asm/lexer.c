@@ -504,9 +504,15 @@ struct LexerState *lexer_OpenFile(char const *path)
 	}
 	if (!state->isMmapped) {
 		/* Sometimes mmap() fails or isn't available, so have a fallback */
-		if (verbose)
-			printf("File %s opened as regular, errno reports \"%s\"\n",
-			       path, strerror(errno));
+		if (verbose) {
+			if (isStdin)
+				printf("Opening stdin\n");
+			else if (fileInfo.st_size == 0)
+				printf("File %s is empty\n", path);
+			else
+				printf("File %s opened as regular, errno reports \"%s\"\n",
+				       path, strerror(errno));
+		}
 		state->index = 0;
 		state->nbChars = 0;
 	}
