@@ -15,6 +15,8 @@ struct OptStackEntry {
 	char gbgfx[4];
 	int32_t fillByte;
 	bool optimizeLoads;
+	bool warningsAreErrors;
+	enum WarningState warningStates[NB_WARNINGS];
 	struct OptStackEntry *next;
 };
 
@@ -38,6 +40,11 @@ void opt_P(uint8_t fill)
 void opt_L(bool optimize)
 {
 	optimizeLoads = optimize;
+}
+
+void opt_W(char const *flag)
+{
+	processWarningFlag(flag);
 }
 
 void opt_Parse(char *s)
@@ -77,6 +84,13 @@ void opt_Parse(char *s)
 			opt_L(true);
 		else
 			error("Option 'L' does not take an argument\n");
+		break;
+
+	case 'W':
+		if (strlen(&s[1]) > 0)
+			opt_W(&s[1]);
+		else
+			error("Must specify an argument for option 'W'\n");
 		break;
 
 	case '!': // negates flag options that do not take an argument
@@ -120,6 +134,10 @@ void opt_Push(void)
 
 	entry->optimizeLoads = optimizeLoads; // Pulled from main.h
 
+	// Both of these pulled from warning.h
+	entry->warningsAreErrors = warningsAreErrors;
+	memcpy(entry->warningStates, warningStates, sizeof(warningStates));
+
 	entry->next = stack;
 	stack = entry;
 }
@@ -137,6 +155,11 @@ void opt_Pop(void)
 	opt_G(entry->gbgfx);
 	opt_P(entry->fillByte);
 	opt_L(entry->optimizeLoads);
+
+	// opt_W does not apply a whole warning state; it processes one flag string
+	warningsAreErrors = entry->warningsAreErrors;
+	memcpy(warningStates, entry->warningStates, sizeof(warningStates));
+
 	stack = entry->next;
 	free(entry);
 }

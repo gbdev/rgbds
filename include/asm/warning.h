@@ -13,6 +13,13 @@
 
 extern unsigned int nbErrors;
 
+enum WarningState {
+	WARNING_DEFAULT,
+	WARNING_DISABLED,
+	WARNING_ENABLED,
+	WARNING_ERROR
+};
+
 enum WarningID {
 	WARNING_ASSERT,		      /* Assertions */
 	WARNING_BACKWARDS_FOR,	      /* `for` loop with backwards range */
@@ -42,6 +49,9 @@ enum WarningID {
 	NB_WARNINGS_ALL
 #define NB_META_WARNINGS (NB_WARNINGS_ALL - NB_WARNINGS)
 };
+
+extern enum WarningState warningStates[NB_WARNINGS];
+extern bool warningsAreErrors;
 
 void processWarningFlag(char const *flag);
 
