@@ -16,7 +16,7 @@
 #include "helpers.h"
 
 extern bool haltnop;
-extern bool optimizeloads;
+extern bool optimizeLoads;
 extern bool verbose;
 extern bool warnings; /* True to enable warnings, false to disable them. */
 
