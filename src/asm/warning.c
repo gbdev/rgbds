@@ -21,13 +21,6 @@
 
 unsigned int nbErrors = 0;
 
-enum WarningState {
-	WARNING_DEFAULT,
-	WARNING_DISABLED,
-	WARNING_ENABLED,
-	WARNING_ERROR
-};
-
 static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_ASSERT]		= WARNING_ENABLED,
 	[WARNING_BACKWARDS_FOR]		= WARNING_DISABLED,
@@ -48,9 +41,9 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_USER]			= WARNING_ENABLED,
 };
 
-static enum WarningState warningStates[NB_WARNINGS];
+enum WarningState warningStates[NB_WARNINGS];
 
-static bool warningsAreErrors; /* Set if `-Werror` was specified */
+bool warningsAreErrors; /* Set if `-Werror` was specified */
 
 static enum WarningState warningState(enum WarningID id)
 {
