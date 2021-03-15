@@ -275,10 +275,10 @@ static struct KeywordMapping {
 	{"RW", T_POP_RW},
 	/* Handled before as T_Z80_RL */
 	/* {"RL", T_POP_RL}, */
+
 	{"EQU", T_POP_EQU},
 	{"EQUS", T_POP_EQUS},
 	{"REDEF", T_POP_REDEF},
-
 	/* Handled before as T_Z80_SET */
 	/* {"SET", T_POP_SET}, */
 

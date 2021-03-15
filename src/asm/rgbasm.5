@@ -274,7 +274,7 @@ If it's a numeric symbol, its value is converted to hexadecimal notation with a 
 .Sq $
 prepended.
 .Bd -literal -offset indent
-TOPIC equs "life, the universe, and \[rs]"everything\[rs]""
+def TOPIC equs "life, the universe, and \[rs]"everything\[rs]""
 ANSWER = 42
 ;\ Prints "The answer to life, the universe, and "everything" is $2A"
 PRINTLN "The answer to {TOPIC} is {ANSWER}"
@@ -355,14 +355,14 @@ HINT: The
 construct can also be used outside strings.
 The symbol's value is again inserted directly.
 .Bd -literal -offset indent
-NAME equs "ITEM"
-FMT equs "d"
-ZERO_NUM equ 0
-ZERO_STR equs "0"
+def NAME equs "ITEM"
+def FMT equs "d"
+def ZERO_NUM equ 0
+def ZERO_STR equs "0"
 ;\ Defines INDEX as 100
 INDEX = 1{ZERO_STR}{{FMT}:ZERO_NUM}
 ;\ Defines ITEM_100 as "\[rs]"hundredth\[rs]""
-{NAME}_{d:INDEX} equs "\[rs]"hundredth\[rs]""
+def {NAME}_{d:INDEX} equs "\[rs]"hundredth\[rs]""
 ;\ Prints "ITEM_100 is hundredth"
 PRINTLN STRCAT("{NAME}_{d:INDEX} is ", {NAME}_{d:INDEX})
 ;\ Purges ITEM_100
@@ -853,14 +853,6 @@ Periods
 .Sq \&.
 are allowed exclusively in labels, as described below.
 A symbol cannot have the same name as a reserved keyword.
-.Pp
-Constants and string equates
-.Em must not
-have any whitespace before their name when they are defined;
-otherwise
-.Nm
-will treat them as a macro invocation.
-Label and macro definitions may have whitespace before them, since a leading period or a following colon distinguishes them from invoking a macro.
 .Bl -tag -width indent
 .It Sy Label declaration
 One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of "magic" numbers.
@@ -945,8 +937,8 @@ Unlike
 below, constants defined this way cannot be redefined.
 They can, for example, be used for things such as bit definitions of hardware registers.
 .Bd -literal -offset indent
-SCREEN_WIDTH   equ 160 ;\ In pixels
-SCREEN_HEIGHT  equ 144
+def SCREEN_WIDTH  equ 160 ;\ In pixels
+def SCREEN_HEIGHT equ 144
 .Ed
 .Pp
 Note that colons
@@ -961,11 +953,12 @@ defines constant symbols like
 but those constants can be redefined.
 This is useful for variables in macros, for counters, etc.
 .Bd -literal -offset indent
-ARRAY_SIZE EQU 4
-COUNT      SET 2
-COUNT      SET ARRAY_SIZE+COUNT
-;\ COUNT now has the value 6
-COUNT      = COUNT + 1
+DEF ARRAY_SIZE EQU 4
+DEF   COUNT SET 2
+DEF   COUNT SET 3
+REDEF COUNT SET ARRAY_SIZE+COUNT
+COUNT = COUNT*2
+;\ COUNT now has the value 14
 .Ed
 .Pp
 Note that colons
@@ -974,19 +967,19 @@ following the name are not allowed.
 .It Ic RSSET , RSRESET , RB , RW
 The RS group of commands is a handy way of defining structures:
 .Bd -literal -offset indent
-              RSRESET
-str_pStuff    RW   1
-str_tData     RB   256
-str_bCount    RB   1
-str_SIZEOF    RB   0
+               RSRESET
+DEF str_pStuff RW   1
+DEF str_tData  RB   256
+DEF str_bCount RB   1
+DEF str_SIZEOF RB   0
 .Ed
 .Pp
 The example defines four constants as if by:
 .Bd -literal -offset indent
-str_pStuff EQU 0
-str_tData  EQU 2
-str_bCount EQU 258
-str_SIZEOF EQU 259
+DEF str_pStuff EQU 0
+DEF str_tData  EQU 2
+DEF str_bCount EQU 258
+DEF str_SIZEOF EQU 259
 .Ed
 .Pp
 There are five commands in the RS group of commands:
@@ -1015,10 +1008,10 @@ Wherever the assembler meets a string symbol its name is replaced with its value
 If you are familiar with C you can think of it as similar to
 .Fd #define .
 .Bd -literal -offset indent
-COUNTREG EQUS "[hl+]"
+DEF COUNTREG EQUS "[hl+]"
     ld a,COUNTREG
 
-PLAYER_NAME EQUS "\[rs]"John\[rs]""
+DEF PLAYER_NAME EQUS "\[rs]"John\[rs]""
     db PLAYER_NAME
 .Ed
 .Pp
@@ -1030,7 +1023,7 @@ This will be interpreted as:
 .Pp
 String symbols can also be used to define small one-line macros:
 .Bd -literal -offset indent
-pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
+DEF pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
 .Ed
 .Pp
 Note that colons
@@ -1047,7 +1040,7 @@ However, the
 keyword will define or redefine a string symbol.
 For example:
 .Bd -literal -offset indent
-s EQUS "Hello, "
+DEF s EQUS "Hello, "
 REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
 PRINTT "{s}\n"
@@ -1070,6 +1063,46 @@ command-line option in
 Also, a macro can contain an
 .Ic EQUS
 which calls the same macro, which causes the same problem.
+.Pp
+The examples above for
+.Ql EQU ,
+.Ql SET
+or
+.Ql = ,
+.Ql RB ,
+.Ql RW ,
+.Ql RL ,
+and
+.Ql EQUS
+all start with
+.Ql DEF .
+(A
+.Ql SET
+or
+.Ql =
+definition may start with
+.Ql REDEF
+instead, since they are redefinable.)
+You may use the older syntax without
+.Ql DEF ,
+but then the name being defined
+.Em must not
+have any whitespace before it;
+otherwise
+.Nm
+will treat it as a macro invocation.
+Furthermore, without the
+.Ql DEF
+keyword,
+string equates may expanded for the name.
+This can lead to surprising results:
+.Bd -literal -offset indent
+X EQUS "Y"
+; this defines Y, not X!
+X EQU 42
+; prints "Y $2A"
+PRINTLN "{X} {Y}"
+.Ed
 .It Ic MACRO
 One of the best features of an assembler is the ability to write macros for it.
 Macros can be called with arguments, and can react depending on input using
@@ -1092,6 +1125,7 @@ instead of
 with a single colon
 .Ql \&:
 following the macro's name.
+.Pp
 Macros can't be exported or imported.
 .Pp
 Plainly nesting macro definitions is not allowed, but this can be worked around using
@@ -1108,7 +1142,7 @@ ENDM
 But this will:
 .Bd -literal -offset indent
 MACRO outer
-definition EQUS "MACRO inner\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
+DEF definition EQUS "MACRO inner\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
     definition
     PURGE definition
 ENDM
@@ -1184,8 +1218,8 @@ I can't stress this enough,
 DON'T purge a symbol that you use in expressions the linker needs to calculate.
 When not sure, it's probably not safe to purge anything other than string symbols, macros, and constants.
 .Bd -literal -offset indent
-Kamikaze EQUS  "I don't want to live anymore"
-AOLer    EQUS  "Me too"
+DEF Kamikaze EQUS  "I don't want to live anymore"
+DEF AOLer    EQUS  "Me too"
          PURGE Kamikaze, AOLer
 .Ed
 .Pp

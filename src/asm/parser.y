@@ -506,6 +506,8 @@ enum {
 %token	<tzSym> T_ID "identifier"
 %token	<tzSym> T_LOCAL_ID "local identifier"
 %token	<tzSym> T_ANON "anonymous label"
+%type	<tzSym> def_id
+%type	<tzSym> redef_id
 %type	<tzSym> scoped_id
 %type	<tzSym> scoped_anon_id
 %token	T_POP_EQU "EQU"
@@ -694,6 +696,22 @@ endc		: T_POP_ENDC {
 		}
 ;
 
+def_id		: T_OP_DEF {
+			lexer_ToggleStringExpansion(false);
+		} T_ID {
+			lexer_ToggleStringExpansion(true);
+			strcpy($$, $3);
+		}
+;
+
+redef_id	: T_POP_REDEF {
+			lexer_ToggleStringExpansion(false);
+		} T_ID {
+			lexer_ToggleStringExpansion(true);
+			strcpy($$, $3);
+		}
+;
+
 scoped_id	: T_ID | T_LOCAL_ID;
 scoped_anon_id	: scoped_id | T_ANON;
 
@@ -775,8 +793,14 @@ directive	: include
 		| fail
 		| warn
 		| assert
+		| def_equ
+		| def_set
+		| def_rb
+		| def_rw
+		| def_rl
+		| def_equs
+		| redef_equs
 		| purge
-		| redef
 		| pops
 		| pushs
 		| popo
@@ -786,6 +810,36 @@ directive	: include
 ;
 
 trailing_comma	: %empty | T_COMMA
+;
+
+equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
+;
+
+set_or_equal	: T_POP_SET | T_POP_EQUAL
+;
+
+set		: T_LABEL set_or_equal const	{ sym_AddSet($1, $3); }
+;
+
+equs		: T_LABEL T_POP_EQUS string	{ sym_AddString($1, $3); }
+;
+
+rb		: T_LABEL T_POP_RB rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
+		}
+;
+
+rw		: T_LABEL T_POP_RW rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+		}
+;
+
+rl		: T_LABEL T_Z80_RL rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+		}
 ;
 
 align		: T_OP_ALIGN uconst {
@@ -937,9 +991,6 @@ macrodef	: T_POP_MACRO T_ID T_NEWLINE {
 		}
 ;
 
-equs		: T_LABEL T_POP_EQUS string	{ sym_AddString($1, $3); }
-;
-
 rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
 ;
 
@@ -950,24 +1001,6 @@ rs_uconst	: %empty {
 			$$ = 1;
 		}
 		| uconst
-;
-
-rl		: T_LABEL T_Z80_RL rs_uconst {
-			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
-		}
-;
-
-rw		: T_LABEL T_POP_RW rs_uconst {
-			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
-		}
-;
-
-rb		: T_LABEL T_POP_RB rs_uconst {
-			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
-		}
 ;
 
 union		: T_POP_UNION	{ sect_StartUnion(); }
@@ -1012,19 +1045,51 @@ dl		: T_POP_DL	{ out_Skip(4, false); }
 		| T_POP_DL constlist_32bit trailing_comma
 ;
 
+def_equ		: def_id T_POP_EQU const {
+			sym_AddEqu($1, $3);
+		}
+;
+
+def_set		: def_id set_or_equal const {
+			sym_AddSet($1, $3);
+		}
+		| redef_id set_or_equal const {
+			sym_AddSet($1, $3);
+		}
+;
+
+def_rb		: def_id T_POP_RB rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
+		}
+;
+
+def_rw		: def_id T_POP_RW rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+		}
+;
+
+def_rl		: def_id T_Z80_RL rs_uconst {
+			sym_AddEqu($1, sym_GetConstantValue("_RS"));
+			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+		}
+;
+
+def_equs	: def_id T_POP_EQUS string {
+			sym_AddString($1, $3);
+		}
+;
+
+redef_equs	: redef_id T_POP_EQUS string {
+			sym_RedefString($1, $3);
+		}
+;
+
 purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
 		} purge_list trailing_comma {
 			lexer_ToggleStringExpansion(true);
-		}
-;
-
-redef		: T_POP_REDEF {
-			lexer_ToggleStringExpansion(false);
-		} scoped_id {
-			lexer_ToggleStringExpansion(true);
-		} T_POP_EQUS string {
-			sym_RedefString($3, $6);
 		}
 ;
 
@@ -1043,13 +1108,6 @@ export_list	: export_list_entry
 ;
 
 export_list_entry : scoped_id	{ sym_Export($1); }
-;
-
-equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
-;
-
-set		: T_LABEL T_POP_SET const	{ sym_AddSet($1, $3); }
-		| T_LABEL T_POP_EQUAL const	{ sym_AddSet($1, $3); }
 ;
 
 include		: T_POP_INCLUDE string {
