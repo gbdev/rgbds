@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -7,6 +6,7 @@
 #include <string.h>
 
 #include "asm/lexer.h"
+#include "asm/main.h"
 #include "asm/section.h"
 #include "asm/warning.h"
 
@@ -14,6 +14,7 @@ struct OptStackEntry {
 	char binary[2];
 	char gbgfx[4];
 	int32_t fillByte;
+	bool optimizeLoads;
 	struct OptStackEntry *next;
 };
 
@@ -32,6 +33,11 @@ void opt_G(char chars[4])
 void opt_P(uint8_t fill)
 {
 	fillByte = fill;
+}
+
+void opt_L(bool optimize)
+{
+	optimizeLoads = optimize;
 }
 
 void opt_Parse(char *s)
@@ -66,6 +72,28 @@ void opt_Parse(char *s)
 		}
 		break;
 
+	case 'L':
+		if (s[1] == '\0')
+			opt_L(true);
+		else
+			error("Option 'L' does not take an argument\n");
+		break;
+
+	case '!': // negates flag options that do not take an argument
+		switch (s[1]) {
+		case 'L':
+			if (s[2] == '\0')
+				opt_L(false);
+			else
+				error("Option '!L' does not take an argument\n");
+			break;
+
+		default:
+			error("Unknown option '!%c'\n", s[1]);
+			break;
+		}
+		break;
+
 	default:
 		error("Unknown option '%c'\n", s[0]);
 		break;
@@ -90,6 +118,8 @@ void opt_Push(void)
 
 	entry->fillByte = fillByte; // Pulled from section.h
 
+	entry->optimizeLoads = optimizeLoads; // Pulled from main.h
+
 	entry->next = stack;
 	stack = entry;
 }
@@ -106,6 +136,7 @@ void opt_Pop(void)
 	opt_B(entry->binary);
 	opt_G(entry->gbgfx);
 	opt_P(entry->fillByte);
+	opt_L(entry->optimizeLoads);
 	stack = entry->next;
 	free(entry);
 }

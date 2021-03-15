@@ -51,7 +51,7 @@ bool oGeneratePhonyDeps;
 char *tzTargetFileName;
 
 bool haltnop;
-bool optimizeloads;
+bool optimizeLoads;
 bool verbose;
 bool warnings; /* True to enable warnings, false to disable them. */
 
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 	opt_B("01");
 	opt_G("0123");
 	opt_P(0);
-	optimizeloads = true;
+	optimizeLoads = true;
 	haltnop = true;
 	verbose = false;
 	warnings = true;
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			optimizeloads = false;
+			optimizeLoads = false;
 			break;
 
 		case 'M':

@@ -1831,7 +1831,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 			out_RelWord(&$2, 1);
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
-			if (optimizeloads && rpn_isKnown(&$2)
+			if (optimizeLoads && rpn_isKnown(&$2)
 			 && $2.nVal >= 0xFF00) {
 				out_AbsByte(0xE0);
 				out_AbsByte($2.nVal & 0xFF);
@@ -1879,7 +1879,7 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 		}
 		| T_Z80_LD reg_r T_COMMA op_mem_ind {
 			if ($2 == REG_A) {
-				if (optimizeloads && rpn_isKnown(&$4)
+				if (optimizeLoads && rpn_isKnown(&$4)
 				 && $4.nVal >= 0xFF00) {
 					out_AbsByte(0xF0);
 					out_AbsByte($4.nVal & 0xFF);
