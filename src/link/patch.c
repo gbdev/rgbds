@@ -400,7 +400,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 void patch_CheckAssertions(struct Assertion *assert)
 {
-	verbosePrint("Checking assertions...");
+	verbosePrint("Checking assertions...\n");
 	initRPNStack();
 
 	while (assert) {
