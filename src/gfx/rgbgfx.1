@@ -78,7 +78,8 @@ Same as
 .Fl f ,
 but additionally, the supplied command line parameters are saved within the PNG and will be loaded and automatically used next time.
 .It Fl h , Fl Fl horizontal
-Lay out tiles horizontally rather than vertically.
+Lay out tiles in column-major order (column by column), instead of the default row-major order (line by line).
+Especially useful for "8x16" OBJ mode, if the input image is 16 pixels tall.
 .It Fl m , Fl Fl mirror-tiles
 Truncate tiles by checking for tiles that are mirrored versions of others and omitting these from the output file.
 Useful with tilemaps and attrmaps together to keep track of the duplicated tiles and the dimension mirrored.
