@@ -178,7 +178,7 @@ and
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.
 .Ss Fixed‐point Expressions
-Fixed-point numbers are basically normal (32-bit) integers, which count 65536th's instead of entire units, offering better precision than integers but limiting the range of values.
+Fixed-point numbers are basically normal (32-bit) integers, which count 65536ths instead of entire units, offering better precision than integers but limiting the range of values.
 The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
 Since they are still akin to integers, you can use them in normal integer expressions, and some integer operators like
 .Sq +
@@ -266,21 +266,37 @@ A funky feature is
 .Ql {symbol}
 within a string, called
 .Dq symbol interpolation .
-This will paste
-.Ar symbol Ap s
-contents as a string.
-If it's a string symbol, the string is simply inserted.
-If it's a numeric symbol, its value is converted to hexadecimal notation with a dollar sign
+This will paste the contents of
+.Ql symbol
+as if they were part of the source file.
+If it's a string symbol, its characters are simply inserted.
+If it's a numerical symbol, its value is converted to hexadecimal notation with a dollar sign
 .Sq $
 prepended.
-.Bd -literal -offset indent
-def TOPIC equs "life, the universe, and \[rs]"everything\[rs]""
-ANSWER = 42
-;\ Prints "The answer to life, the universe, and "everything" is $2A"
-PRINTLN "The answer to {TOPIC} is {ANSWER}"
-.Ed
+.Pp
+Symbols can be
+.Em interpolated
+even in the contexts that disable
+.Em expansion
+of string equates:
+.Ql DEF({name}) ,
+.Ql DEF {name} EQU/SET/EQUS/etc ... ,
+.Ql PURGE {name} ,
+and
+.Ql MACRO {name}
+will all interpolate the contents of
+.Ql {name} .
 .Pp
 Symbol interpolations can be nested, too!
+.Bd -literal -offset indent
+DEF topic EQUS "life, the universe, and \[rs]"everything\[rs]""
+DEF meaning EQUS "answer"
+;\ Defines answer = 42
+DEF {meaning} = 42
+;\ Prints "The answer to life, the universe, and "everything" is 42"
+PRINTLN "The {meaning} to {topic} is {d:{meaning}}"
+PURGE topic, meaning, {meaning}
+.Ed
 .Pp
 It's possible to change the way symbols are converted by specifying a print format like so:
 .Ql {fmt:symbol} .
@@ -446,7 +462,7 @@ is able to compute it.
 .It Fn DEF symbol Ta Returns TRUE (1) if
 .Ar symbol
 has been defined, FALSE (0) otherwise.
-String symbols are not expanded within the parentheses.
+String equates are not expanded within the parentheses.
 .It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
 .It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
@@ -931,7 +947,7 @@ However, if the section in which the label is declared has a fixed base address,
 is able to compute the subtraction of two labels either if both are constant as described above, or if both belong to the same section.
 .It Ic EQU
 .Ic EQU
-allows defining constant symbols.
+is used to define numerical constant symbols.
 Unlike
 .Ic SET
 below, constants defined this way cannot be redefined.
@@ -948,9 +964,9 @@ following the name are not allowed.
 .Ic SET ,
 or its synonym
 .Ic = ,
-defines constant symbols like
+is used to define numerical symbols like
 .Ic EQU ,
-but those constants can be redefined.
+but these symbols can be redefined.
 This is useful for variables in macros, for counters, etc.
 .Bd -literal -offset indent
 DEF ARRAY_SIZE EQU 4
@@ -1003,10 +1019,19 @@ Note that colons
 following the name are not allowed.
 .It Ic EQUS
 .Ic EQUS
-is used to define string symbols.
-Wherever the assembler meets a string symbol its name is replaced with its value.
-If you are familiar with C you can think of it as similar to
+is used to define string equate symbols.
+Wherever the assembler reads a string equate, it gets
+.Em expanded :
+the symbol's name is replaced with its contents.
+If you are familiar with C, you can think of it as similar to
 .Fd #define .
+This expansion is disabled in a few contexts:
+.Ql DEF(name) ,
+.Ql DEF name EQU/SET/EQUS/etc ... ,
+.Ql PURGE name ,
+and
+.Ql MACRO name
+will not expand string equates in their names.
 .Bd -literal -offset indent
 DEF COUNTREG EQUS "[hl+]"
     ld a,COUNTREG
@@ -1021,7 +1046,7 @@ This will be interpreted as:
     db "John"
 .Ed
 .Pp
-String symbols can also be used to define small one-line macros:
+String equates can also be used to define small one-line macros:
 .Bd -literal -offset indent
 DEF pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
 .Ed
@@ -1094,7 +1119,7 @@ will treat it as a macro invocation.
 Furthermore, without the
 .Ql DEF
 keyword,
-string symbols may be expanded for the name.
+string equates may be expanded for the name.
 This can lead to surprising results:
 .Bd -literal -offset indent
 X EQUS "Y"
@@ -1118,7 +1143,7 @@ ENDM
 The example above defines
 .Ql MyMacro
 as a new macro.
-String symbols are not expanded within the name of the macro.
+String equates are not expanded within the name of the macro.
 You may use the older syntax
 .Ql MyMacro: MACRO
 instead of
@@ -1126,7 +1151,7 @@ instead of
 with a single colon
 .Ql \&:
 following the macro's name.
-With the older syntax, string symbols may be expanded for the name.
+With the older syntax, string equates may be expanded for the name.
 .Pp
 Macros can't be exported or imported.
 .Pp
@@ -1225,10 +1250,7 @@ DEF AOLer    EQUS  "Me too"
          PURGE Kamikaze, AOLer
 .Ed
 .Pp
-Note that, as an exception, string symbols in the argument list of a
-.Ic PURGE
-command
-.Em will not be expanded .
+String equates are not expanded within the symbol names.
 .Ss Predeclared Symbols
 The following symbols are defined by the assembler:
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
@@ -1494,7 +1516,7 @@ MACRO LoopyMacro
             ENDM
 .Ed
 .Pp
-Now I can call the macro specifying two arguments, the first being the address and the second being a byte count.
+Now you can call the macro specifying two arguments, the first being the address and the second being a byte count.
 The generated code will then reset all bytes in this range.
 .Bd -literal -offset indent
 LoopyMacro MyVars,54
@@ -1634,7 +1656,7 @@ Everything between
 and the matching
 .Ic ENDR
 will be repeated for each value of a given symbol.
-String symbols are not expanded within the symbol name.
+String equates are not expanded within the symbol name.
 For example, this code will produce a table of squared values from 0 to 255:
 .Bd -literal -offset indent
 FOR N, 256
