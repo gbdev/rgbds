@@ -261,7 +261,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
  * @param i The number of the patch to report in errors
  */
 static void readPatch(FILE *file, struct Patch *patch, char const *fileName, char const *sectName,
-		      uint32_t i, struct Section *fileSections[], struct FileStackNode fileNodes[])
+		      uint32_t i, struct FileStackNode fileNodes[])
 {
 	uint32_t nodeID;
 	uint8_t type;
@@ -279,8 +279,6 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 	tryReadlong(patch->pcSectionID, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
-	patch->pcSection = patch->pcSectionID == (uint32_t)-1 ? NULL
-							      : fileSections[patch->pcSectionID];
 	tryReadlong(patch->pcOffset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
 		    fileName, sectName, i);
@@ -306,13 +304,23 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 }
 
 /**
+ * Sets a patch's pcSection from its pcSectionID.
+ * @param patch The struct to fix
+ */
+static void linkPatchToPCSect(struct Patch *patch, struct Section *fileSections[])
+{
+	patch->pcSection = patch->pcSectionID == (uint32_t)-1 ? NULL
+							      : fileSections[patch->pcSectionID];
+}
+
+/**
  * Reads a section from a file.
  * @param file The file to read from
  * @param section The struct to fill
  * @param fileName The filename to report in errors
  */
 static void readSection(FILE *file, struct Section *section, char const *fileName,
-			struct Section *fileSections[], struct FileStackNode fileNodes[])
+			struct FileStackNode fileNodes[])
 {
 	int32_t tmp;
 	uint8_t byte;
@@ -389,12 +397,9 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 			malloc(sizeof(*patches) * section->nbPatches + 1);
 
 		if (!patches)
-			err(1, "%s: Unable to read \"%s\"'s patches", fileName,
-			    section->name);
-		for (uint32_t i = 0; i < section->nbPatches; i++) {
-			readPatch(file, &patches[i], fileName, section->name,
-				  i, fileSections, fileNodes);
-		}
+			err(1, "%s: Unable to read \"%s\"'s patches", fileName, section->name);
+		for (uint32_t i = 0; i < section->nbPatches; i++)
+			readPatch(file, &patches[i], fileName, section->name, i, fileNodes);
 		section->patches = patches;
 	}
 }
@@ -436,13 +441,13 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
  */
 static void readAssertion(FILE *file, struct Assertion *assert,
 			  char const *fileName, uint32_t i,
-			  struct Section *fileSections[], struct FileStackNode fileNodes[])
+			  struct FileStackNode fileNodes[])
 {
 	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
-	readPatch(file, &assert->patch, fileName, assertName, 0, fileSections, fileNodes);
+	readPatch(file, &assert->patch, fileName, assertName, 0, fileNodes);
 	tryReadstr(assert->message, file, "%s: Cannot read assertion's message: %s",
 		   fileName);
 }
@@ -550,7 +555,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			err(1, "%s: Couldn't create new section", fileName);
 
 		fileSections[i]->nextu = NULL;
-		readSection(file, fileSections[i], fileName, fileSections, nodes[fileID].nodes);
+		readSection(file, fileSections[i], fileName, nodes[fileID].nodes);
 		fileSections[i]->fileSymbols = fileSymbols;
 		if (nbSymPerSect[i]) {
 			fileSections[i]->symbols = malloc(nbSymPerSect[i]
@@ -568,7 +573,15 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	free(nbSymPerSect);
 
-	/* Give symbols pointers to their sections */
+	/* Give patches' PC section pointers to their sections */
+	for (uint32_t i = 0; i < nbSections; i++) {
+		if (sect_HasData(fileSections[i]->type)) {
+			for (uint32_t j = 0; j < fileSections[i]->nbPatches; j++)
+				linkPatchToPCSect(&fileSections[i]->patches[j], fileSections);
+		}
+	}
+
+	/* Give symbols' section pointers to their sections */
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		int32_t sectionID = fileSymbols[i]->sectionID;
 
@@ -600,7 +613,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		if (!assertion)
 			err(1, "%s: Couldn't create new assertion", fileName);
-		readAssertion(file, assertion, fileName, i, fileSections, nodes[fileID].nodes);
+		readAssertion(file, assertion, fileName, i, nodes[fileID].nodes);
+		linkPatchToPCSect(&assertion->patch, fileSections);
 		assertion->fileSymbols = fileSymbols;
 		assertion->next = assertions;
 		assertions = assertion;
