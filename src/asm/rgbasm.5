@@ -1094,7 +1094,7 @@ will treat it as a macro invocation.
 Furthermore, without the
 .Ql DEF
 keyword,
-string equates may expanded for the name.
+string symbols may be expanded for the name.
 This can lead to surprising results:
 .Bd -literal -offset indent
 X EQUS "Y"
@@ -1118,6 +1118,7 @@ ENDM
 The example above defines
 .Ql MyMacro
 as a new macro.
+String symbols are not expanded within the name of the macro.
 You may use the older syntax
 .Ql MyMacro: MACRO
 instead of
@@ -1125,6 +1126,7 @@ instead of
 with a single colon
 .Ql \&:
 following the macro's name.
+With the older syntax, string symbols may be expanded for the name.
 .Pp
 Macros can't be exported or imported.
 .Pp
@@ -1632,6 +1634,7 @@ Everything between
 and the matching
 .Ic ENDR
 will be repeated for each value of a given symbol.
+String symbols are not expanded within the symbol name.
 For example, this code will produce a table of squared values from 0 to 255:
 .Bd -literal -offset indent
 FOR N, 256

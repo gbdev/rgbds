@@ -33,7 +33,7 @@ endr
 	println "-> {d:q}"
 
 s EQUS "x"
-for s, 3, 30, 3
+for {s}, 3, 30, 3
 	print "{d:x} "
 endr
 	println "-> {d:x}"
