@@ -869,8 +869,7 @@ Periods
 .Sq \&.
 are allowed exclusively in labels, as described below.
 A symbol cannot have the same name as a reserved keyword.
-.Bl -tag -width indent
-.It Sy Label declaration
+.Ss Label declaration
 One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of "magic" numbers.
 .Pp
 This can be done in a number of ways:
@@ -945,7 +944,7 @@ However, if the section in which the label is declared has a fixed base address,
 .Pp
 .Nm
 is able to compute the subtraction of two labels either if both are constant as described above, or if both belong to the same section.
-.It Ic EQU
+.Ss Immutable constants
 .Ic EQU
 is used to define numerical constant symbols.
 Unlike
@@ -960,7 +959,7 @@ def SCREEN_HEIGHT equ 144
 Note that colons
 .Ql \&:
 following the name are not allowed.
-.It Ic SET
+.Ss Mutable constants
 .Ic SET ,
 or its synonym
 .Ic = ,
@@ -980,8 +979,8 @@ COUNT = COUNT*2
 Note that colons
 .Ql \&:
 following the name are not allowed.
-.It Ic RSSET , RSRESET , RB , RW
-The RS group of commands is a handy way of defining structures:
+.Ss Offset constants
+The RS group of commands is a handy way of defining structure offsets:
 .Bd -literal -offset indent
                RSRESET
 DEF str_pStuff RW   1
@@ -1017,7 +1016,7 @@ is omitted, it's assumed to be 1.
 Note that colons
 .Ql \&:
 following the name are not allowed.
-.It Ic EQUS
+.Ss String equates
 .Ic EQUS
 is used to define string equate symbols.
 Wherever the assembler reads a string equate, it gets
@@ -1128,7 +1127,7 @@ X EQU 42
 ; prints "Y $2A"
 PRINTLN "{X} {Y}"
 .Ed
-.It Ic MACRO
+.Ss Macros
 One of the best features of an assembler is the ability to write macros for it.
 Macros can be called with arguments, and can react depending on input using
 .Ic IF
