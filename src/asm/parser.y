@@ -949,10 +949,14 @@ rept		: T_POP_REPT uconst T_NEWLINE {
 		}
 ;
 
-for		: T_POP_FOR T_ID T_COMMA for_args T_NEWLINE {
+for		: T_POP_FOR {
+			lexer_ToggleStringExpansion(false);
+		} T_ID {
+			lexer_ToggleStringExpansion(true);
+		} T_COMMA for_args T_NEWLINE {
 			lexer_CaptureRept(&captureBody);
 		} T_NEWLINE {
-			fstk_RunFor($2, $4.start, $4.stop, $4.step, captureBody.lineNo,
+			fstk_RunFor($3, $6.start, $6.stop, $6.step, captureBody.lineNo,
 				    captureBody.body, captureBody.size);
 		}
 
@@ -979,10 +983,14 @@ break		: T_POP_BREAK T_NEWLINE {
 		}
 ;
 
-macrodef	: T_POP_MACRO T_ID T_NEWLINE {
+macrodef	: T_POP_MACRO {
+			lexer_ToggleStringExpansion(false);
+		} T_ID {
+			lexer_ToggleStringExpansion(true);
+		} T_NEWLINE {
 			lexer_CaptureMacroBody(&captureBody);
 		} T_NEWLINE {
-			sym_AddMacro($2, captureBody.lineNo, captureBody.body, captureBody.size);
+			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
 		}
 		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
 			lexer_CaptureMacroBody(&captureBody);
