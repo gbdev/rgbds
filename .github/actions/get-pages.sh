@@ -53,8 +53,8 @@ PAGES=(
 WWWPATH="/docs"
 mkdir -p "$1/_documentation/$2"
 
-# `mandoc` uses a different format for referring to man pages present in the **current** directory
-# We want that format for RGBDS man pages, and the other one for the t=rest;
+# `mandoc` uses a different format for referring to man pages present in the **current** directory.
+# We want that format for RGBDS man pages, and the other one for the rest;
 # we thus need to copy all pages to a temporary directory, and process them there.
 
 # Copy all pages to current dir
@@ -77,6 +77,7 @@ EOF
 		options+=,toc
 	fi
 	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | .github/actions/doc_postproc.awk >> "$1/_documentation/$2/$page"
+	groff -Tpdf -mdoc -wall "${PAGES[$page]##*/}" >"$1/_documentation/$2/$stem.pdf"
 	if [ $is_release -ne 0 ]; then
 		cat - >"$1/_documentation/$page" <<EOF
 ---
@@ -88,6 +89,7 @@ description: RGBDS latest stable — $descr
 EOF
 	fi
 done
+
 cat - >"$1/_documentation/$2/index.html" <<EOF
 ---
 layout: doc_index
@@ -97,6 +99,7 @@ description: RGBDS $2 - Online manual
 ---
 EOF
 
+
 # If making a release, add a new entry right after `master`
 if [ $is_release -ne 0 ]; then
 	awk '{ print }
@@ -104,6 +107,7 @@ if [ $is_release -ne 0 ]; then
 ' "$1/_data/doc.json" >"$1/_data/doc.json.tmp"
 	mv "$1/_data/doc.json"{.tmp,}
 fi
+
 
 # Clean up
 rm "${PAGES[@]##*/}"
