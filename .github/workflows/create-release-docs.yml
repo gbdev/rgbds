@@ -18,10 +18,10 @@ jobs:
           repository: ${{ github.repository_owner }}/rgbds-www
           path: rgbds-www
       # `-O toc` was added in 1.14.5, but the repos only have 1.14.4
-      - name: Build and install mandoc
+      - name: Build and install mandoc + install groff
         run: |
           sudo apt-get -qq update
-          sudo apt-get install -yq zlib1g-dev
+          sudo apt-get install -yq groff zlib1g-dev
           wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz'
           tar xf mandoc-1.14.5.tar.gz
           cd mandoc-1.14.5

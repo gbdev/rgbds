@@ -31,10 +31,10 @@ jobs:
           repository: gbdev/rgbds-www
           ref: master
           path: rgbds-www
-      - name: Build and install mandoc
+      - name: Build and install mandoc + install groff
         run: |
           sudo apt-get -qq update
-          sudo apt-get install -yq zlib1g-dev
+          sudo apt-get install -yq groff zlib1g-dev
           wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz'
           tar xf mandoc-1.14.5.tar.gz
           cd mandoc-1.14.5
