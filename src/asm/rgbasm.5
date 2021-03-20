@@ -25,11 +25,11 @@ Generally,
 .Dq the linker
 will refer to
 .Xr rgblink 1 ,
-but any program that processes RGB object files (described in
+but any program that processes RGBDS object files (described in
 .Xr rgbds 5 )
 can be used in its place.
 .Sh SYNTAX
-The syntax is line‐based, just as in any other assembler, meaning that you do one instruction or directive per line:
+The syntax is line-based, just as in any other assembler, meaning that you do one instruction or directive per line:
 .Pp
 .Dl Oo Ar label Oc Oo Ar instruction Oc Oo Ar ;\ comment Oc
 .Pp
@@ -38,7 +38,7 @@ Example:
 John: ld a,87 ;Weee
 .Ed
 .Pp
-All reserved keywords (directives, mnemonics, registers, etc.) are case‐insensitive;
+All reserved keywords (directives, mnemonics, registers, etc.) are case-insensitive;
 all identifiers (symbol names) are case-sensitive.
 .Pp
 Comments are used to give humans information about the code, such as explanations.
@@ -177,7 +177,7 @@ and
 .Pp
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.
-.Ss Fixed‐point Expressions
+.Ss Fixed-point Expressions
 Fixed-point numbers are basically normal (32-bit) integers, which count 65536ths instead of entire units, offering better precision than integers but limiting the range of values.
 The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
 Since they are still akin to integers, you can use them in normal integer expressions, and some integer operators like
@@ -606,7 +606,7 @@ depending on
 .It Ic ALIGN Ns Bq Ar align , offset
 Place the section at an address whose
 .Ar align
-least‐significant bits are equal to
+least-significant bits are equal to
 .Ar offset .
 (Note that
 .Ic ALIGN Ns Bq Ar align
@@ -1173,7 +1173,6 @@ DEF definition EQUS "MACRO inner\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
     PURGE definition
 ENDM
 .Ed
-.El
 .Pp
 Macro arguments support all the escape sequences of strings, as well as
 .Ql \[rs],
@@ -1682,9 +1681,9 @@ You can customize the range of
 values:
 .Bl -column "FOR V, start, stop, step"
 .It Sy Code Ta Sy Range
-.It Ic FOR Ar V , stop Ta Ar V No increments from 0 to Ar stop No
-.It Ic FOR Ar V , start , stop Ta Ar V No increments from Ar start No to Ar stop No
-.It Ic FOR Ar V , start , stop , step Ta Ar V No goes from Ar start No to Ar stop No by Ar step No
+.It Ic FOR Ar V , stop Ta Ar V No increments from 0 to Ar stop
+.It Ic FOR Ar V , start , stop Ta Ar V No increments from Ar start No to Ar stop
+.It Ic FOR Ar V , start , stop , step Ta Ar V No goes from Ar start No to Ar stop No by Ar step
 .El
 .Pp
 The
