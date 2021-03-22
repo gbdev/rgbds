@@ -368,10 +368,16 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 			fprintf(mapFile, "  SECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
 				sect->org, sect->name);
 
-		for (size_t i = 0; i < sect->nbSymbols; i++)
-			fprintf(mapFile, "           $%04" PRIx32 " = %s\n",
-				sect->symbols[i]->offset + sect->org,
-				sect->symbols[i]->name);
+		uint16_t org = sect->org;
+
+		while (sect) {
+			for (size_t i = 0; i < sect->nbSymbols; i++)
+				fprintf(mapFile, "           $%04" PRIx32 " = %s\n",
+					sect->symbols[i]->offset + org,
+					sect->symbols[i]->name);
+
+			sect = sect->nextu; // Also print symbols in the following "pieces"
+		}
 
 		*pickedSection = (*pickedSection)->next;
 	}
