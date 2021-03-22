@@ -1856,6 +1856,8 @@ static char const *reportGarbageChar(unsigned char firstByte)
 
 /* Lexer core */
 
+static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
+
 static int yylex_NORMAL(void)
 {
 	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
@@ -2084,6 +2086,12 @@ static int yylex_NORMAL(void)
 		default:
 			if (startsIdentifier(c)) {
 				int tokenType = readIdentifier(c);
+
+				/* An ELIF after a taken IF needs to not evaluate its condition */
+				if (tokenType == T_POP_ELIF && lexerState->lastToken == T_NEWLINE
+				 && lexer_GetIFDepth() > 0 && lexer_RanIFBlock()
+				 && !lexer_ReachedELSEBlock())
+					return yylex_SKIP_TO_ENDC();
 
 				/* If a keyword, don't try to expand */
 				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
