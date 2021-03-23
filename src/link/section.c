@@ -194,11 +194,7 @@ void sect_AddSection(struct Section *section)
 		     section->name, typeNames[section->type]);
 	} else {
 		/* If not, add it */
-		bool collided = hash_AddElement(sections, section->name,
-						section);
-
-		if (beVerbose && collided)
-			warnx("Section hashmap collision occurred!");
+		hash_AddElement(sections, section->name, section);
 	}
 }
 
