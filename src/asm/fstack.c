@@ -539,6 +539,7 @@ void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
 	context->fileInfo = (struct FileStackNode *)fileInfo;
 	/* lineNo and reptIter are unused on the top-level context */
 	context->fileInfo->parent = NULL;
+	context->fileInfo->lineNo = 0; // This still gets written to the object file, so init it
 	context->fileInfo->referenced = false;
 	context->fileInfo->type = NODE_FILE;
 	memcpy(fileInfo->name, fileName, len + 1);
