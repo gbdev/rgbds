@@ -2059,29 +2059,15 @@ static int yylex_NORMAL(void)
 		case EOF:
 			return T_EOF;
 
-		/* Handle escapes */
+		/* Handle line continuations */
 
 		case '\\':
-			c = peek(0);
-
-			switch (c) {
-			case ' ':
-			case '\r':
-			case '\n':
-				readLineContinuation();
-				break;
-
-			case EOF:
-				error("Illegal character escape at end of input\n");
-				break;
-
-			default:
-				shiftChars(1);
-				error("Illegal character escape '%s'\n", print(c));
-			}
+			// Macro args were handled by `peek`, and character escapes do not exist
+			// outside of string literals, so this must be a line continuation.
+			readLineContinuation();
 			break;
 
-		/* Handle identifiers and escapes... or error out */
+		/* Handle identifiers... or report garbage characters */
 
 		default:
 			if (startsIdentifier(c)) {
