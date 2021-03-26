@@ -567,6 +567,7 @@ enum {
 %token	<symName> T_ANON "anonymous label"
 %type	<symName> def_id
 %type	<symName> redef_id
+%type	<symName> comma_id
 %type	<symName> scoped_id
 %type	<symName> scoped_anon_id
 %token	T_POP_EQU "EQU"
@@ -764,6 +765,14 @@ def_id		: T_OP_DEF {
 ;
 
 redef_id	: T_POP_REDEF {
+			lexer_ToggleStringExpansion(false);
+		} T_ID {
+			lexer_ToggleStringExpansion(true);
+			strcpy($$, $3);
+		}
+;
+
+comma_id	: T_COMMA {
 			lexer_ToggleStringExpansion(false);
 		} T_ID {
 			lexer_ToggleStringExpansion(true);
@@ -1117,6 +1126,12 @@ dl		: T_POP_DL { sect_Skip(4, false); }
 
 def_equ		: def_id T_POP_EQU const {
 			sym_AddEqu($1, $3);
+		} more_equ trailing_comma
+;
+
+more_equ	: %empty
+		| more_equ comma_id T_POP_EQU const {
+			sym_AddEqu($2, $4);
 		}
 ;
 
@@ -1127,9 +1142,15 @@ redef_equ	: redef_id T_POP_EQU const {
 
 def_set		: def_id set_or_equal const {
 			sym_AddSet($1, $3);
-		}
+		} more_set trailing_comma
 		| redef_id set_or_equal const {
 			sym_AddSet($1, $3);
+		} more_set trailing_comma
+;
+
+more_set	: %empty
+		| more_set comma_id set_or_equal const {
+			sym_AddSet($2, $4);
 		}
 ;
 
@@ -1153,11 +1174,23 @@ def_rl		: def_id T_Z80_RL rs_uconst {
 
 def_equs	: def_id T_POP_EQUS string {
 			sym_AddString($1, $3);
+		} more_equs trailing_comma
+;
+
+more_equs	: %empty
+		| more_equs comma_id T_POP_EQUS string {
+			sym_AddString($2, $4);
 		}
 ;
 
 redef_equs	: redef_id T_POP_EQUS string {
 			sym_RedefString($1, $3);
+		} more_redef_equs trailing_comma
+;
+
+more_redef_equs	: %empty
+		| more_redef_equs comma_id T_POP_EQUS string {
+			sym_RedefString($2, $4);
 		}
 ;
 

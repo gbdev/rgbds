@@ -1,0 +1,5 @@
+ERROR: def-multiple.asm(18):
+    'spam' already defined at def-multiple.asm(10)
+ERROR: def-multiple.asm(21):
+    syntax error, unexpected EQU, expecting SET or =
+error: Assembly aborted (2 errors)!

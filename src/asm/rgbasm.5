@@ -968,6 +968,14 @@ Note that colons
 .Ql \&:
 following the name are not allowed.
 .Pp
+Multiple
+.Ic EQU
+constants can be defined on the same line;
+the definitions will happen left to right.
+.Bd -literal -offset indent
+def Y equ 0, X equ Y+1, TILE equ X+1, ATTR equ TILE+1
+.Ed
+.Pp
 If you
 .Em really
 need to, the
@@ -1007,6 +1015,16 @@ COUNT = COUNT*2
 Note that colons
 .Ql \&:
 following the name are not allowed.
+.Pp
+Multiple
+.Ic SET
+constants can be defined or redefined on the same line;
+the definitions will happen left to right.
+.Bd -literal -offset indent
+def INDEX set -1, ELEM set -1
+  def w = 0, x = 0, y = 0,
+redef w = 2, x = 10-w, y = w+x,
+.Ed
 .Ss Offset constants
 The RS group of commands is a handy way of defining structure offsets:
 .Bd -literal -offset indent
@@ -1098,6 +1116,15 @@ REDEF s EQUS "{s}world!"
 PRINTLN "{s}\n"
 .Ed
 .Pp
+Multiple
+.Ic EQUS
+strings can be defined or redefined on the same line;
+the definitions will happen left to right.
+.Bd -literal -offset indent
+DEF   NAME EQUS "John", FULLNAME EQUS "{NAME} Smith"
+REDEF NAME EQUS "Jane", FULLNAME EQUS "{NAME} Smith"
+.Ed
+.Pp
 .Sy Important note :
 An
 .Ic EQUS
@@ -1143,6 +1170,7 @@ have any whitespace before it;
 otherwise
 .Nm
 will treat it as a macro invocation.
+The older syntax also does not support multiple definitions on one line.
 Furthermore, without the
 .Ql DEF
 keyword,
@@ -1151,8 +1179,12 @@ This can lead to surprising results:
 .Bd -literal -offset indent
 X EQUS "Y"
 ; this defines Y, not X!
-X EQU 42
+X = 42
 ; prints "Y $2A"
+PRINTLN "{X} {Y}"
+; this also defines Y, since {X} is interpolated
+def {X} = 100
+; prints "Y $64"
 PRINTLN "{X} {Y}"
 .Ed
 .Ss Macros

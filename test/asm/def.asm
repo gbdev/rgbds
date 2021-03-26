@@ -20,7 +20,7 @@ def _z rl
 def _size rb 0
 	println "{_x} {_y} {_z} {_size}"
 
-def constant equ 6*7 ; fails
+def constant equ 6*9 ; error, already defined
 	println constant
 
 redef string equs "there"
