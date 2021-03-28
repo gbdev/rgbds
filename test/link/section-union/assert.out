@@ -3,4 +3,4 @@ Linking failed with 1 error
 ---
 ERROR: <stdin>(30):
     Assertion failed: Force failing the build
-error: Assembly aborted (1 errors)!
+error: Assembly aborted (1 error)!

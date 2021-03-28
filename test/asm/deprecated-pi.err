@@ -2,4 +2,4 @@ warning: deprecated-pi.asm(2): [-Wobsolete]
     `_PI` is deprecated; use 3.14159
 ERROR: deprecated-pi.asm(3):
     Built-in symbol '_PI' cannot be purged
-error: Assembly aborted (1 errors)!
+error: Assembly aborted (1 error)!

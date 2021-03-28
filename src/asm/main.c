@@ -353,7 +353,8 @@ int main(int argc, char *argv[])
 	sect_CheckUnionClosed();
 
 	if (nbErrors != 0)
-		errx(1, "Assembly aborted (%u errors)!", nbErrors);
+		errx(1, "Assembly aborted (%u error%s)!", nbErrors,
+			nbErrors == 1 ? "" : "s");
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
 	if (oFailedOnMissingInclude)
