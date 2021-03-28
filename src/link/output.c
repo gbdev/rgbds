@@ -336,7 +336,7 @@ static void writeSymBank(struct SortedSections const *bankSections)
 /**
  * Write a bank's contents to the map file
  * @param bankSections The bank's sections
- * @return The bank's slack space
+ * @return The bank's used space
  */
 static uint16_t writeMapBank(struct SortedSections const *sectList,
 			     enum SectionType type, uint32_t bank)
@@ -350,14 +350,14 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	fprintf(mapFile, "%s bank #%" PRIu32 ":\n", typeNames[type],
 		bank + bankranges[type][0]);
 
-	uint16_t slack = maxsize[type];
+	uint16_t used = 0;
 
 	while (section || zeroLenSection) {
 		struct SortedSection const **pickedSection =
 			nextSection(&section, &zeroLenSection);
 		struct Section const *sect = (*pickedSection)->section;
 
-		slack -= sect->size;
+		used += sect->size;
 
 		if (sect->size != 0)
 			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04" PRIx16 " ($%04" PRIx16 " byte%s) [\"%s\"]\n",
@@ -382,36 +382,40 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		*pickedSection = (*pickedSection)->next;
 	}
 
-	if (slack == maxsize[type])
+
+	if (used == 0) {
 		fputs("  EMPTY\n\n", mapFile);
-	else
+	} else {
+		uint16_t slack = maxsize[type] - used;
+
 		fprintf(mapFile, "    SLACK: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
+	}
 
-	return slack;
+	return used;
 }
 
 /**
- * Write the total slack space by section type to the map file
- * @param slackMap The total slack space by section type
+ * Write the total used space by section type to the map file
+ * @param usedMap The total used space by section type
  */
-static void writeMapSlack(uint32_t slackMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
+static void writeMapUsed(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
 {
 	if (!mapFile)
 		return;
 
-	fputs("FREE:\n", mapFile);
+	fputs("USED:\n", mapFile);
 
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
 
-		// Do not output slack space for VRAM or OAM
+		// Do not output used space for VRAM or OAM
 		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
 			continue;
 
 		if (sections[type].nbBanks > 0) {
 			fprintf(mapFile, "    %s: $%04" PRIx32 " byte%s in %" PRIu32 " bank%s\n",
-				typeNames[type], slackMap[type], slackMap[type] == 1 ? "" : "s",
+				typeNames[type], usedMap[type], usedMap[type] == 1 ? "" : "s",
 				sections[type].nbBanks, sections[type].nbBanks == 1 ? "" : "s");
 		}
 	}
@@ -425,7 +429,7 @@ static void writeSymAndMap(void)
 	if (!symFileName && !mapFileName)
 		return;
 
-	uint32_t slackMap[SECTTYPE_INVALID] = {0};
+	uint32_t usedMap[SECTTYPE_INVALID] = {0};
 
 	symFile = openFile(symFileName, "w");
 	mapFile = openFile(mapFileName, "w");
@@ -440,11 +444,11 @@ static void writeSymAndMap(void)
 			struct SortedSections const *sect = &sections[type].banks[bank];
 
 			writeSymBank(sect);
-			slackMap[type] += writeMapBank(sect, type, bank);
+			usedMap[type] += writeMapBank(sect, type, bank);
 		}
 	}
 
-	writeMapSlack(slackMap);
+	writeMapUsed(usedMap);
 
 	closeFile(symFile);
 	closeFile(mapFile);
