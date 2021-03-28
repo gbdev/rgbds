@@ -1,7 +1,6 @@
-
 SECTION "SECTION2", ROM0
 LOAD FRAGMENT "test", SRAM
-    jr Label
+	jr Label
 Label:
 	dw Label
 ENDL

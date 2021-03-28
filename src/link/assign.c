@@ -112,6 +112,13 @@ static inline void assignSection(struct Section *section,
 	section->org = location->address;
 	section->bank = location->bank;
 
+	// Propagate the assigned location to all UNIONs/FRAGMENTs
+	// so `jr` patches in them will have the correct offset
+	for (struct Section *next = section->nextu; next != NULL; next = next->nextu) {
+		next->org = section->org;
+		next->bank = section->bank;
+	}
+
 	nbSectionsToAssign--;
 
 	out_AddSection(section);
