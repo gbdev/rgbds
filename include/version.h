@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 2017-2018, Antonio Nino Diaz and RGBDS contributors.
+ * Copyright (c) 2017-2021, Antonio Nino Diaz and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +12,7 @@
 #define PACKAGE_VERSION_MAJOR 0
 #define PACKAGE_VERSION_MINOR 5
 #define PACKAGE_VERSION_PATCH 0
-#define PACKAGE_VERSION_RC 1
+#define PACKAGE_VERSION_RC 2
 
 const char *get_package_version_string(void);
 
