@@ -163,10 +163,13 @@ static struct KeywordMapping {
 	{"DE", T_MODE_DE},
 	{"HL", T_MODE_HL},
 	{"SP", T_MODE_SP},
+	{"PC", T_MODE_PC},
 	{"HLD", T_MODE_HL_DEC},
 	{"HLI", T_MODE_HL_INC},
+	{"IME", T_MODE_IME},
 
 	{"A", T_TOKEN_A},
+	{"F", T_TOKEN_F},
 	{"B", T_TOKEN_B},
 	{"C", T_TOKEN_C},
 	{"D", T_TOKEN_D},
@@ -350,6 +353,7 @@ struct LexerState {
 	uint32_t lineNo;
 	uint32_t colNo;
 	int lastToken;
+	int nextToken;
 
 	struct IfStack *ifStack;
 
@@ -374,6 +378,7 @@ static void initState(struct LexerState *state)
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; /* yylex() will init colNo due to this */
 	state->lastToken = T_EOF;
+	state->nextToken = 0;
 
 	state->ifStack = NULL;
 
@@ -586,7 +591,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[351] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[354] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -1862,6 +1867,14 @@ static int yylex_NORMAL(void)
 {
 	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
+
+	if (lexerState->nextToken) {
+		int token = lexerState->nextToken;
+
+		lexerState->nextToken = 0;
+		return token;
+	}
+
 	for (;;) {
 		int c = nextChar();
 		char secondChar;
@@ -1902,6 +1915,11 @@ static int yylex_NORMAL(void)
 			return T_RPAREN;
 		case ',':
 			return T_COMMA;
+
+		case '\'':
+			return T_PRIME;
+		case '?':
+			return T_QUESTION;
 
 		/* Handle ambiguous 1- or 2-char tokens */
 
@@ -1953,6 +1971,10 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICGE;
 			case '>':
 				shiftChars(1);
+				if (peek(0) == '>') {
+					shiftChars(1);
+					return T_OP_SHRL;
+				}
 				return T_OP_SHR;
 			default:
 				return T_OP_LOGICGT;
@@ -1980,25 +2002,6 @@ static int yylex_NORMAL(void)
 		case '$':
 			yylval.nConstValue = 0;
 			readHexNumber();
-			/* Attempt to match `$ff00+c` */
-			if (yylval.nConstValue == 0xff00) {
-				/* Whitespace is ignored anyways */
-				while (isWhitespace(c = peek(0)))
-					shiftChars(1);
-				if (c == '+') {
-					/* FIXME: not great due to large lookahead */
-					uint8_t distance = 1;
-
-					do {
-						c = peek(distance++);
-					} while (isWhitespace(c));
-
-					if (c == 'c' || c == 'C') {
-						shiftChars(distance);
-						return T_MODE_HW_C;
-					}
-				}
-			}
 			return T_NUMBER;
 
 		case '0': /* Decimal number */
@@ -2067,8 +2070,83 @@ static int yylex_NORMAL(void)
 			readLineContinuation();
 			break;
 
+		/* Handle 8-bit registers followed by a period */
+
+		case 'A':
+		case 'a':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_A;
+			}
+			goto normal_identifier;
+
+		case 'F':
+		case 'f':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_F;
+			}
+			goto normal_identifier;
+
+		case 'B':
+		case 'b':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_B;
+			}
+			goto normal_identifier;
+
+		case 'C':
+		case 'c':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_C;
+			}
+			goto normal_identifier;
+
+		case 'D':
+		case 'd':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_D;
+			}
+			goto normal_identifier;
+
+		case 'E':
+		case 'e':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_E;
+			}
+			goto normal_identifier;
+
+		case 'H':
+		case 'h':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_H;
+			}
+			goto normal_identifier;
+
+		case 'L':
+		case 'l':
+			if (peek(1) == '.') {
+				shiftChars(1);
+				lexerState->nextToken = T_PERIOD;
+				return T_TOKEN_L;
+			}
+			/* fallthrough */
+
 		/* Handle identifiers... or report garbage characters */
 
+normal_identifier:
 		default:
 			if (startsIdentifier(c)) {
 				int tokenType = readIdentifier(c);
