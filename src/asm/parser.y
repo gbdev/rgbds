@@ -1910,6 +1910,10 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 			out_RelBytes($1, $3.args, $3.nbArgs);
 			freeDsArgList(&$3);
 		}
+		| slice_const T_COMMA T_QUESTION {
+			// ds <len> ==> ld [b @:<len>], ?
+			out_Skip($1, true);
+		}
 		| slice_const T_POP_EQUAL string T_LBRACK const T_COLON optional_ellipsis T_RBRACK {
 			// INCBIN "file.bin", <ofs>, <len> ==> ld [b @:<len>] = "file.bin"[<ofs>:...]
 			if ($1 < 0)
