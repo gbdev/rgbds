@@ -1760,6 +1760,9 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 		| T_LBRACK T_TOKEN_H T_MODE_C T_RBRACK T_COMMA T_MODE_A { // $E2: ldh [c], a ==> ld [h c], a
 			out_AbsByte(0xE2);
 		}
+		| T_LBRACK T_MODE_C T_RBRACK T_COMMA T_MODE_A { // $E2: ldh [c], a ==> ld [c], a
+			out_AbsByte(0xE2);
+		}
 		| T_MODE_SP T_COMMA T_MODE_SP T_OP_ADD reloc_8bit { // $E8: add sp, <imm8> ==> ld sp, sp+<imm8>
 			out_AbsByte(0xE8);
 			out_RelByte(&$5, 1);
@@ -1981,12 +1984,15 @@ z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
 			out_AbsByte(0xEE);
 			out_RelByte(&$3, 1);
 		}
-		| T_LBRACK T_TOKEN_H reloc_16bit T_RBRACK  { // $F0: ldh a, [<mem8>] ==> ld a, [h <mem8>]
+		| T_LBRACK T_TOKEN_H reloc_16bit T_RBRACK { // $F0: ldh a, [<mem8>] ==> ld a, [h <mem8>]
 			rpn_CheckHRAM(&$3, &$3);
 			out_AbsByte(0xF0);
 			out_RelByte(&$3, 1);
 		}
-		| T_LBRACK T_TOKEN_H T_MODE_C T_RBRACK  { // $F2: ldh a, [c] ==> ld a, [h c]
+		| T_LBRACK T_TOKEN_H T_MODE_C T_RBRACK { // $F2: ldh a, [c] ==> ld a, [c]
+			out_AbsByte(0xF2);
+		}
+		| T_LBRACK T_MODE_C T_RBRACK { // $F2: ldh a, [c] ==> ld a, [h c]
 			out_AbsByte(0xF2);
 		}
 		| T_MODE_A T_OP_OR reloc_8bit { // $F6: or a, <imm8> ==> ld a, a | <imm8>
