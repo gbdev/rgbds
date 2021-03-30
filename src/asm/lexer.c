@@ -2078,7 +2078,7 @@ static int yylex_NORMAL(void)
 
 		case 'A':
 		case 'a':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_A;
@@ -2087,7 +2087,7 @@ static int yylex_NORMAL(void)
 
 		case 'F':
 		case 'f':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_F;
@@ -2096,7 +2096,7 @@ static int yylex_NORMAL(void)
 
 		case 'B':
 		case 'b':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_B;
@@ -2105,7 +2105,7 @@ static int yylex_NORMAL(void)
 
 		case 'C':
 		case 'c':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_C;
@@ -2114,7 +2114,7 @@ static int yylex_NORMAL(void)
 
 		case 'D':
 		case 'd':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_D;
@@ -2123,7 +2123,7 @@ static int yylex_NORMAL(void)
 
 		case 'E':
 		case 'e':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_E;
@@ -2132,7 +2132,7 @@ static int yylex_NORMAL(void)
 
 		case 'H':
 		case 'h':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_H;
@@ -2141,7 +2141,7 @@ static int yylex_NORMAL(void)
 
 		case 'L':
 		case 'l':
-			if (peek(1) == '.') {
+			if (peek(0) == '.') {
 				shiftChars(1);
 				lexerState->nextToken = T_PERIOD;
 				return T_TOKEN_L;
