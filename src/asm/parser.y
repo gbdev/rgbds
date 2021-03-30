@@ -819,6 +819,9 @@ directive	: include
 trailing_comma	: %empty | T_COMMA
 ;
 
+optional_ellipsis	: %empty | T_ELLIPSIS
+;
+
 equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
 ;
 
@@ -1268,7 +1271,7 @@ constlist_32bit : constlist_32bit_entry
 		| constlist_32bit T_COMMA constlist_32bit_entry
 ;
 
-constlist_32bit_entry :relocexpr_no_str	{
+constlist_32bit_entry : relocexpr_no_str	{
 			out_RelLong(&$1, 0);
 		}
 		| string {
@@ -1627,6 +1630,7 @@ cpu_command	: T_Z80_LD z80_ld_args
 		| T_Z80_LD T_MODE_DE T_COMMA z80_ld_de_comma_args
 		| T_Z80_LD T_MODE_HL T_COMMA z80_ld_hl_comma_args
 		| T_Z80_LD T_MODE_SP T_COMMA z80_ld_sp_comma_args
+		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_POP_EQUAL z80_ld_incbin_args
 ;
 
 z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==> ld pc, pc
@@ -1866,6 +1870,41 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 			out_AbsByte(0xCB);
 			out_AbsByte(0x80 | ($5 << 6) | ($3 << 3) | $1);
 		}
+		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_RBRACK T_COMMA T_QUESTION {
+			// db ==> ld [b @], ?
+			out_Skip(1, false);
+		}
+		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_RBRACK T_COMMA reloc_8bit_no_str {
+			// db <n> ==> ld [b @], <n>
+			out_RelByte(&$6, 0);
+		}
+		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_COMMA constlist_8bit trailing_comma
+			// db <ns...> ==> ld [b @:...], <ns...>
+		| T_LBRACK T_TOKEN_W T_TOKEN_AT T_RBRACK T_COMMA T_QUESTION {
+			// dw ==> ld [w @], ?
+			out_Skip(2, false);
+		}
+		| T_LBRACK T_TOKEN_W T_TOKEN_AT T_RBRACK T_COMMA reloc_16bit_no_str {
+			// dw <n> ==> ld [w @], <n>
+			out_RelWord(&$6, 0);
+		}
+		| T_LBRACK T_TOKEN_W T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_COMMA constlist_16bit trailing_comma
+			// dw <ns...> ==> ld [w @:...], <ns...>
+		| T_LBRACK T_TOKEN_L T_TOKEN_AT T_RBRACK T_COMMA T_QUESTION {
+			// dl ==> ld [l @], ?
+			out_Skip(4, false);
+		}
+		| T_LBRACK T_TOKEN_L T_TOKEN_AT T_RBRACK T_COMMA relocexpr_no_str {
+			// dl <n> ==> ld [l @], <n>
+			out_RelLong(&$6, 0);
+		}
+		| T_LBRACK T_TOKEN_L T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_COMMA constlist_32bit trailing_comma
+			// dl <ns...> ==> ld [l @:...], <ns...>
+		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON uconst T_RBRACK T_COMMA ds_args trailing_comma {
+			// ds <len>, <ns...> ==> ld [b @:<len>], <ns...>
+			out_RelBytes($5, $8.args, $8.nbArgs);
+			freeDsArgList(&$8);
+		}
 ;
 
 z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
@@ -2034,6 +2073,26 @@ z80_ld_sp_comma_args	: reloc_16bit { // $31: ld sp, <imm16>
 			out_RelWord(&$1, 1);
 		}
 		| T_MODE_HL { out_AbsByte(0xF9); } // $F9: ld sp, hl
+;
+
+z80_ld_incbin_args	: string {
+			// INCBIN "file.bin" ==> ld [b @:...] = "file.bin"
+			out_BinaryFile($1, 0);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
+		}
+		| string T_LBRACK const T_COLON optional_ellipsis T_RBRACK {
+			// INCBIN "file.bin", <ofs> ==> ld [b @:...] = "file.bin"[<ofs>:...]
+			out_BinaryFile($1, $3);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
+		}
+		| string T_LBRACK const T_COLON const T_RBRACK {
+			// INCBIN "file.bin", <ofs>, <len> ==> ld [b @:...] = "file.bin"[<ofs>:<len>]
+			out_BinaryFileSlice($1, $3, $5);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
+		}
 ;
 
 op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK	{ $$ = $2; }
