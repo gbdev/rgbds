@@ -1618,14 +1618,14 @@ sectattrs	: %empty {
 
 cpu_command	: T_Z80_LD z80_ld_args
 		| T_Z80_LD T_MODE_A T_COMMA z80_ld_a_comma_args
+		| T_Z80_LD T_MODE_BC T_COMMA z80_ld_bc_comma_args
+		| T_Z80_LD T_MODE_DE T_COMMA z80_ld_de_comma_args
+		| T_Z80_LD T_MODE_HL T_COMMA z80_ld_hl_comma_args
+		| T_Z80_LD T_MODE_SP T_COMMA z80_ld_sp_comma_args
 ;
 
 z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==> ld pc, pc
 		| T_MODE_F T_COMMA T_MODE_F { out_AbsByte(0x00); } // $00: nop ==> ld f, f
-		| reg_ss T_COMMA reloc_16bit { // $01,$11,$21,$31: ld <r16>, <imm16>
-			out_AbsByte(0x01 | ($1 << 4));
-			out_RelWord(&$3, 1);
-		}
 		| reg_rr T_COMMA T_MODE_A { // $02,$12,$22,$32: ld [<r16>], a
 			out_AbsByte(0x02 | ($1 << 4));
 		}
@@ -1646,10 +1646,6 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 		| op_mem_ind T_COMMA T_MODE_SP { // $08: ld [<mem16>], sp
 			out_AbsByte(0x08);
 			out_RelWord(&$1, 1);
-		}
-		| T_MODE_HL T_COMMA T_MODE_HL T_OP_ADD reg_ss {
-			// $09,$19,$29,$39: add hl, <r16> ==> ld hl, hl + <r16>
-			out_AbsByte(0x09 | ($5 << 4));
 		}
 		| reg_ss T_OP_SUB { // $0B,$1B,$2B,$3B: dec <r16> ==> ld <r16> -
 			out_AbsByte(0x09 | ($1 << 4));
@@ -1703,9 +1699,6 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 		}
 		| ccode T_MODE_PC T_COMMA sp_inc_inc_ind { // $C0,$C8,$D0,$D8: ret <cc> ==> ld <cc> pc, [sp++]
 			out_AbsByte(0xC0 | ($1 << 3));
-		}
-		| reg_tt T_COMMA sp_inc_inc_ind { // $C1,$D1,$E1,$F1: pop <r16> ==> ld <r16>, [sp++]
-			out_AbsByte(0xC1 | ($1 << 4));
 		}
 		| ccode T_MODE_PC T_COMMA reloc_16bit { // $C2,$CA,$D2,$DA: jp <cc>, <mem16> ==> ld <cc> pc, <mem16>
 			out_AbsByte(0xC2 | ($1 << 3));
@@ -1768,19 +1761,9 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 				out_RelWord(&$1, 1);
 			}
 		}
+		| T_MODE_AF T_COMMA sp_inc_inc_ind { out_AbsByte(0xF1); } // $F1: pop af ==> ld af, [sp++]
 		| T_MODE_IME T_COMMA const_1bit { // $F3: di ==> ld ime, 0; $FB: ei ==> ld ime, 1
 			out_AbsByte(0xF3 | ($3 << 3));
-		}
-		| T_MODE_HL T_COMMA T_MODE_SP T_OP_ADD reloc_8bit { // $F8: ld hl, sp + <imm8>
-			out_AbsByte(0xF8);
-			out_RelByte(&$5, 1);
-		}
-		| T_MODE_HL T_COMMA T_MODE_SP { // $F8: ld hl, sp+0 ==> ld hl, sp
-			out_AbsByte(0xF8);
-			out_AbsByte(0x00);
-		}
-		| T_MODE_SP T_COMMA T_MODE_HL { // $F9: ld sp, hl
-			out_AbsByte(0xF9);
 		}
 		| T_MODE_F T_PERIOD const_3bit T_COMMA T_MODE_A T_OP_SUB reloc_8bit {
 			// $FE: cp a, <imm8> ==> ld f.4, a - <imm8>
@@ -1989,6 +1972,45 @@ z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
 			out_AbsByte(0xCB);
 			out_AbsByte(0x3F);
 		}
+;
+
+z80_ld_bc_comma_args	: reloc_16bit { // $01: ld bc, <imm16>
+			out_AbsByte(0x01);
+			out_RelWord(&$1, 1);
+		}
+		| sp_inc_inc_ind { out_AbsByte(0xC1); } // $C1: pop bc ==> ld bc, [sp++]
+;
+
+z80_ld_de_comma_args	: reloc_16bit { // $11: ld de, <imm16>
+			out_AbsByte(0x11);
+			out_RelWord(&$1, 1);
+		}
+		| sp_inc_inc_ind { out_AbsByte(0xD1); } // $D1: pop de ==> ld de, [sp++]
+;
+
+z80_ld_hl_comma_args	: reloc_16bit { // $21: ld hl, <imm16>
+			out_AbsByte(0x21);
+			out_RelWord(&$1, 1);
+		}
+		| T_MODE_HL T_OP_ADD reg_ss { // $09,$19,$29,$39: add hl, <r16> ==> ld hl, hl + <r16>
+			out_AbsByte(0x09 | ($3 << 4));
+		}
+		| sp_inc_inc_ind { out_AbsByte(0xE1); } // $E1: pop hl ==> ld hl, [sp++]
+		| T_MODE_SP T_OP_ADD reloc_8bit { // $F8: ld hl, sp + <imm8>
+			out_AbsByte(0xF8);
+			out_RelByte(&$3, 1);
+		}
+		| T_MODE_SP { // $F8: ld hl, sp+0 ==> ld hl, sp
+			out_AbsByte(0xF8);
+			out_AbsByte(0x00);
+		}
+;
+
+z80_ld_sp_comma_args	: reloc_16bit { // $31: ld sp, <imm16>
+			out_AbsByte(0x31);
+			out_RelWord(&$1, 1);
+		}
+		| T_MODE_HL { out_AbsByte(0xF9); } // $F9: ld sp, hl
 ;
 
 op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK	{ $$ = $2; }
