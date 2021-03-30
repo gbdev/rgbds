@@ -295,8 +295,6 @@ static struct KeywordMapping {
 
 	{".", T_PERIOD},
 	{"...", T_ELLIPSIS},
-
-	{"@", T_TOKEN_AT},
 };
 
 static bool isWhitespace(int c)
@@ -595,7 +593,7 @@ struct KeywordDictNode {
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[357] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[356] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
 static inline uint8_t dictIndex(char c)
@@ -1907,7 +1905,7 @@ static int yylex_NORMAL(void)
 		case '@':
 			yylval.tzSym[0] = '@';
 			yylval.tzSym[1] = '\0';
-			return T_ID;
+			return T_TOKEN_AT;
 
 		case '[':
 			return T_LBRACK;
