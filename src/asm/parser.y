@@ -1802,9 +1802,9 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP reloc_8bit {
+z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP T_OP_ADD reloc_8bit {
 			out_AbsByte(0xF8);
-			out_RelByte(&$5, 1);
+			out_RelByte(&$6, 1);
 		}
 		| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
