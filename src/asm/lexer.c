@@ -473,6 +473,11 @@ struct LexerState *lexer_OpenFile(char const *path)
 	state->path = path;
 	state->isFile = true;
 	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
+	if (state->fd < 0) {
+		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
+		free(state);
+		return NULL;
+	}
 	state->isMmapped = false; /* By default, assume it won't be mmap()ed */
 	if (!isStdin && fileInfo.st_size > 0) {
 		/* Try using `mmap` for better performance */
