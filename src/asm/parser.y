@@ -430,6 +430,7 @@ enum {
 %type	<nConstValue>	const_no_str
 %type	<nConstValue>	uconst
 %type	<nConstValue>	rs_uconst
+%type	<nConstValue>	slice_const
 %type	<nConstValue>	const_1bit
 %type	<nConstValue>	const_3bit
 %type	<sVal>		reloc_8bit
@@ -1623,6 +1624,10 @@ sectattrs	: %empty {
 		}
 ;
 
+slice_const	: T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON const T_RBRACK {
+			$$ = $5;
+		}
+;
 
 cpu_command	: T_Z80_LD z80_ld_args
 		| T_Z80_LD T_MODE_A T_COMMA z80_ld_a_comma_args
@@ -1900,10 +1905,18 @@ z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==>
 		}
 		| T_LBRACK T_TOKEN_L T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_COMMA constlist_32bit trailing_comma
 			// dl <ns...> ==> ld [l @:...], <ns...>
-		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON uconst T_RBRACK T_COMMA ds_args trailing_comma {
+		| slice_const T_COMMA ds_args trailing_comma {
 			// ds <len>, <ns...> ==> ld [b @:<len>], <ns...>
-			out_RelBytes($5, $8.args, $8.nbArgs);
-			freeDsArgList(&$8);
+			out_RelBytes($1, $3.args, $3.nbArgs);
+			freeDsArgList(&$3);
+		}
+		| slice_const T_POP_EQUAL string T_LBRACK const T_COLON optional_ellipsis T_RBRACK {
+			// INCBIN "file.bin", <ofs>, <len> ==> ld [b @:<len>] = "file.bin"[<ofs>:...]
+			if ($1 < 0)
+				fatalerror("Constant mustn't be negative: %d\n", $1);
+			out_BinaryFileSlice($3, $5, $1);
+			if (oFailedOnMissingInclude)
+				YYACCEPT;
 		}
 ;
 
