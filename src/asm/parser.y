@@ -2049,7 +2049,7 @@ z80_ld_a_comma_a_plus_c_plus_args	: reg_nc {
 			// $88-$8F: adc a, <r8> ==> ld a, a + c + <r8> (except $89: adc a, c)
 			out_AbsByte(0x88 | $1);
 		}
-		| T_TOKEN_C { out_AbsByte(0x89); } // $89: adc a, c ==> ld a, a + c + c
+		| T_MODE_C { out_AbsByte(0x89); } // $89: adc a, c ==> ld a, a + c + c
 		| reloc_8bit { // $CE: adc a, <imm8> ==> ld a, a + c + <imm8>
 			out_AbsByte(0xCE);
 			out_RelByte(&$1, 1);
@@ -2060,7 +2060,7 @@ z80_ld_a_comma_a_minus_c_minus_args	: reg_nc {
 			// $98-$9F: sbc a, <r8> ==> ld a, a - c - <r8> (except $99: sbc a, c)
 			out_AbsByte(0x98 | $1);
 		}
-		| T_TOKEN_C { out_AbsByte(0x99); } // $99: sbc a, c ==> ld a, a - c - c
+		| T_MODE_C { out_AbsByte(0x99); } // $99: sbc a, c ==> ld a, a - c - c
 		| reloc_8bit { // $DE: sbc a, <imm8> ==> ld a, a - c - <imm8>
 			out_AbsByte(0xDE);
 			out_RelByte(&$1, 1);
