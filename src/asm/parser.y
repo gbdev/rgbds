@@ -450,6 +450,7 @@ enum {
 %token	<tzString>	T_STRING "string"
 
 %token	T_PERIOD "."
+%token	T_ELLIPSIS "..."
 %token	T_COMMA ","
 %token	T_COLON ":"
 %token	T_LBRACK "[" T_RBRACK "]"
@@ -510,6 +511,7 @@ enum {
 %token	<tzSym> T_ID "identifier"
 %token	<tzSym> T_LOCAL_ID "local identifier"
 %token	<tzSym> T_ANON "anonymous label"
+%token	<tzSym> T_TOKEN_AT "@"
 %type	<tzSym> def_id
 %type	<tzSym> redef_id
 %type	<tzSym> scoped_id
@@ -590,6 +592,7 @@ enum {
 %token	T_TOKEN_B "b" T_TOKEN_C "c"
 %token	T_TOKEN_D "d" T_TOKEN_E "e"
 %token	T_TOKEN_H "h" T_TOKEN_L "l"
+%token	T_TOKEN_W "w"
 %token	T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp" T_MODE_PC "pc"
 %token	T_MODE_IME "ime"
 %token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
@@ -717,7 +720,7 @@ redef_id	: T_POP_REDEF {
 ;
 
 scoped_id	: T_ID | T_LOCAL_ID;
-scoped_anon_id	: scoped_id | T_ANON;
+scoped_anon_id	: scoped_id | T_ANON | T_TOKEN_AT;
 
 label		: %empty
 		| T_COLON {
