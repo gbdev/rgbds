@@ -598,7 +598,6 @@ enum {
 %type	<nConstValue>	ccode
 %type	<sVal>		op_a_n
 %type	<nConstValue>	op_a_r
-%type	<nConstValue>	op_hl_ss
 %type	<sVal>		op_mem_ind
 %type	<assertType>	assert_type
 
@@ -1662,7 +1661,7 @@ z80_add		: T_Z80_ADD op_a_n {
 			out_RelByte(&$2, 1);
 		}
 		| T_Z80_ADD op_a_r	{ out_AbsByte(0x80 | $2); }
-		| T_Z80_ADD op_hl_ss	{ out_AbsByte(0x09 | ($2 << 4)); }
+		| T_Z80_ADD T_MODE_HL T_COMMA reg_ss	{ out_AbsByte(0x09 | ($4 << 4)); }
 		| T_Z80_ADD T_MODE_SP T_COMMA reloc_8bit {
 			out_AbsByte(0xE8);
 			out_RelByte(&$4, 1);
@@ -2045,10 +2044,6 @@ z80_xor		: T_Z80_XOR op_a_n {
 ;
 
 op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK	{ $$ = $2; }
-;
-
-op_hl_ss	: reg_ss
-		| T_MODE_HL T_COMMA reg_ss	{ $$ = $3; }
 ;
 
 op_a_r		: reg_r
