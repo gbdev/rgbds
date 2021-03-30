@@ -595,7 +595,9 @@ enum {
 %token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
 %token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
 
+%type	<nConstValue>	reg_nac
 %type	<nConstValue>	reg_na
+%type	<nConstValue>	reg_nc
 %type	<nConstValue>	reg_r
 %type	<nConstValue>	reg_ss
 %type	<nConstValue>	reg_rr
@@ -1876,14 +1878,24 @@ z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
 		| T_MODE_A T_OP_ADD reg_r { // $80-$87: add a, <r8> ==> ld a, a + <r8>
 			out_AbsByte(0x80 | $3);
 		}
-		| T_MODE_A T_OP_ADD reg_r T_OP_ADD T_TOKEN_C { // $88-$8F: adc a, <r8> ==> ld a, a + <r8> + c
+		| T_MODE_A T_OP_ADD reg_nc T_OP_ADD T_TOKEN_C {
+			// $88-$8F: adc a, <r8> ==> ld a, a + <r8> + c (except $89: adc a, c)
 			out_AbsByte(0x88 | $3);
+		}
+		| T_MODE_A T_OP_ADD T_OP_LOW T_LPAREN T_MODE_BC T_RPAREN T_OP_ADD T_TOKEN_C {
+			// $89: adc a, c ==> ld a, a + HIGH(bc) + c
+			out_AbsByte(0x89);
 		}
 		| T_MODE_A T_OP_SUB reg_r { // $90-$97: sub a, <r8> ==> ld a, a - <r8>
 			out_AbsByte(0x90 | $3);
 		}
-		| T_MODE_A T_OP_SUB reg_r T_OP_SUB T_TOKEN_C { // $98-$9F: sbc a, <r8> ==> ld a, a - <r8> - c
+		| T_MODE_A T_OP_SUB reg_nc T_OP_SUB T_TOKEN_C {
+			// $98-$9F: sbc a, <r8> ==> ld a, a - <r8> - c (except $99: sbc a, c)
 			out_AbsByte(0x98 | $3);
+		}
+		| T_MODE_A T_OP_SUB T_OP_LOW T_LPAREN T_MODE_BC T_RPAREN T_OP_SUB T_TOKEN_C {
+			// $99: sbc a, c ==> ld a, a - LOW(bc) - c
+			out_AbsByte(0x99);
 		}
 		| T_MODE_A T_OP_AND reg_r { // $A0-$A7: and a, <r8> ==> ld a, a & <r8>
 			out_AbsByte(0xA0 | $3);
@@ -1898,17 +1910,9 @@ z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
 			out_AbsByte(0xC6);
 			out_RelByte(&$3, 1);
 		}
-		| T_MODE_A T_OP_ADD T_TOKEN_C T_OP_ADD reloc_8bit { // $CE: adc a, <imm8> ==> ld a, a + c + <imm8>
-			out_AbsByte(0xCE);
-			out_RelByte(&$5, 1);
-		}
 		| T_MODE_A T_OP_SUB reloc_8bit { // $D6: sub a, <imm8> ==> ld a, a - <imm8>
 			out_AbsByte(0xD6);
 			out_RelByte(&$3, 1);
-		}
-		| T_MODE_A T_OP_SUB T_TOKEN_C T_OP_SUB reloc_8bit { // $DE: sbc a, <imm8> ==> ld a, a - c - <imm8>
-			out_AbsByte(0xDE);
-			out_RelByte(&$5, 1);
 		}
 		| T_MODE_A T_OP_AND reloc_8bit { // $E6: and a, <imm8> ==> ld a, a & <imm8>
 			out_AbsByte(0xE6);
@@ -1971,6 +1975,22 @@ z80_ld_a_comma_args	: reg_rr { // $0A,$1A,$2A,$3A: ld a, [<r16>]
 		| T_OP_SHRL T_MODE_A { // $CB $3F: srl a ==> ld a, >>> a
 			out_AbsByte(0xCB);
 			out_AbsByte(0x3F);
+		}
+		| T_MODE_A T_OP_ADD T_TOKEN_C T_OP_ADD z80_ld_a_comma_a_plus_c_plus_args
+		| T_MODE_A T_OP_SUB T_TOKEN_C T_OP_SUB z80_ld_a_comma_a_minus_c_minus_args
+;
+
+z80_ld_a_comma_a_plus_c_plus_args	: T_TOKEN_C { out_AbsByte(0x89); } // $89: adc a, c ==> ld a, a + c + c
+		| reloc_8bit { // $CE: adc a, <imm8> ==> ld a, a + c + <imm8>
+			out_AbsByte(0xCE);
+			out_RelByte(&$1, 1);
+		}
+;
+
+z80_ld_a_comma_a_minus_c_minus_args	: T_TOKEN_C { out_AbsByte(0x99); } // $99: sbc a, c ==> ld a, a - c - c
+		| reloc_8bit { // $DE: sbc a, <imm8> ==> ld a, a - c - <imm8>
+			out_AbsByte(0xDE);
+			out_RelByte(&$1, 1);
 		}
 ;
 
@@ -2054,8 +2074,7 @@ ccode		: T_CC_NZ		{ $$ = CC_NZ; }
 		| T_TOKEN_C		{ $$ = CC_C; }
 ;
 
-reg_na		: T_MODE_B		{ $$ = REG_B; }
-		| T_MODE_C		{ $$ = REG_C; }
+reg_nac		: T_MODE_B		{ $$ = REG_B; }
 		| T_MODE_D		{ $$ = REG_D; }
 		| T_MODE_E		{ $$ = REG_E; }
 		| T_MODE_H		{ $$ = REG_H; }
@@ -2063,7 +2082,16 @@ reg_na		: T_MODE_B		{ $$ = REG_B; }
 		| T_LBRACK T_MODE_HL T_RBRACK	{ $$ = REG_HL_IND; }
 ;
 
-reg_r		: reg_na
+reg_na		: reg_nac
+		| T_MODE_C		{ $$ = REG_C; }
+;
+
+reg_nc		: reg_nac
+		| T_MODE_A		{ $$ = REG_A; }
+;
+
+reg_r		: reg_nac
+		| T_MODE_C		{ $$ = REG_C; }
 		| T_MODE_A		{ $$ = REG_A; }
 ;
 

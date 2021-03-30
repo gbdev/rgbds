@@ -45,7 +45,7 @@ REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
 
 YFLAGS		?= -Wall
 
-BISON		:= winflexbison/win_bison --verbose --report-file=bison.log -Wcounterexamples
+BISON		:= bison
 RM		:= rm -rf
 
 # Rules to build the RGBDS binaries
