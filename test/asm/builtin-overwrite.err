@@ -1,0 +1,57 @@
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(7):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(8):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(11):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(12):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(16):
+    Built-in symbol '__LINE__' cannot be purged
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(17):
+    Built-in symbol '__LINE__' cannot be purged
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(20):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(21):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(24):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(25):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(28):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(29):
+    '__LINE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(32):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(33):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(36):
+    '__LINE__' already defined as non-EQUS at <builtin>
+ERROR: builtin-overwrite.asm(42) -> builtin-overwrite.asm::tickle(37):
+    '__LINE__' already defined as non-EQUS at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(16):
+    Built-in symbol '__FILE__' cannot be purged
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(17):
+    Built-in symbol '__FILE__' cannot be purged
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(20):
+    '__FILE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(21):
+    '__FILE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(24):
+    '__FILE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(25):
+    '__FILE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(28):
+    '__FILE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(29):
+    '__FILE__' already defined at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(32):
+    '__FILE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(33):
+    '__FILE__' already defined as constant at <builtin>
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(36):
+    Built-in symbol '__FILE__' cannot be redefined
+ERROR: builtin-overwrite.asm(43) -> builtin-overwrite.asm::tickle(37):
+    Built-in symbol '__FILE__' cannot be redefined
+error: Assembly aborted (28 errors)!

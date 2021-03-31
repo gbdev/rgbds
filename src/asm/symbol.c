@@ -379,6 +379,7 @@ static struct Symbol *createNonrelocSymbol(char const *symbolName, bool numeric)
 		error("'%s' already defined at ", symbolName);
 		dumpFilename(symbol);
 		putc('\n', stderr);
+		return NULL; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		error("'%s' already referenced at ", symbolName);
@@ -439,6 +440,10 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 		error("'%s' already defined as non-EQUS at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
+		return NULL;
+	} else if (sym->isBuiltin) {
+		error("Built-in symbol '%s' cannot be redefined\n", symName);
+		return NULL;
 	}
 
 	/*
