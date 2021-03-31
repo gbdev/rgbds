@@ -8,11 +8,15 @@ for v, 0
 endr
 
 for v, 2, 1
-	print "unreached"
+	print "backwards"
 endr
 
 for v, 1, 2, 0
 	print "unreached"
+endr
+
+for v, 1, 2, -1
+	print "backwards"
 endr
 
 for x, 1, 5+1

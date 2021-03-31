@@ -189,7 +189,7 @@ Ignoring the
 prefix, entries are listed alphabetically.
 .Bl -tag -width Ds
 .It Fl Wno-assert
-Warns when
+Warn when
 .Ic WARN Ns No -type
 assertions fail. (See
 .Dq Aborting the assembly process
@@ -197,6 +197,12 @@ in
 .Xr rgbasm 5
 for
 .Ic ASSERT ) .
+.It Fl Wbackwards-for
+Warn when
+.Ic FOR
+loops have their start and stop values switched according to the step value.
+This warning is enabled by
+.Fl Wall .
 .It Fl Wbuiltin-args
 Warn about incorrect arguments to built-in functions, such as
 .Fn STRSUB
@@ -239,7 +245,7 @@ constant or
 directive are encountered.
 .It Fl Wshift
 Warn when shifting right a negative value.
-Use a division by 2^N instead.
+Use a division by 2**N instead.
 .It Fl Wshift-amount
 Warn when a shift's operand is negative or greater than 32.
 .It Fl Wno-truncation

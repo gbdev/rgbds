@@ -487,6 +487,10 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	else if (step == 0)
 		error("FOR cannot have a step value of 0\n");
 
+	if ((step > 0 && start > stop) || (step < 0 && start < stop))
+		warning(WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d\n",
+			start, stop, step);
+
 	if (count == 0)
 		return;
 	if (!newReptContext(reptLineNo, body, size))

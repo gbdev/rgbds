@@ -15,6 +15,7 @@ extern unsigned int nbErrors;
 
 enum WarningID {
 	WARNING_ASSERT,		      /* Assertions */
+	WARNING_BACKWARDS_FOR,	      /* `for` loop with backwards range */
 	WARNING_BUILTIN_ARG,	      /* Invalid args to builtins */
 	WARNING_CHARMAP_REDEF,        /* Charmap entry re-definition */
 	WARNING_DIV,		      /* Division undefined behavior */
