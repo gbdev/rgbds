@@ -63,9 +63,9 @@ X = /* the value of x
 Sometimes lines can be too long and it may be necessary to split them.
 To do so, put a backslash at the end of the line:
 .Bd -literal -offset indent
-    DB 1, 2, 3,\ \[rs]
-       4, 5, 6,\ \[rs]\ ;\ Put it before any comments
-       7, 8, 9
+    LD [B @:...], 1, 2, 3,\ \[rs]
+                  4, 5, 6,\ \[rs]\ ;\ Put it before any comments
+                  7, 8, 9
 .Ed
 .Pp
 This works anywhere in the code except inside of strings.
@@ -73,8 +73,8 @@ To split strings it is needed to use
 .Fn STRCAT
 like this:
 .Bd -literal -offset indent
-    db STRCAT("Hello ",\ \[rs]
-              "world!")
+    LD [B @:], STRCAT("Hello ",\ \[rs]
+                      "world!")
 .Ed
 .Sh EXPRESSIONS
 An expression can be composed of many things.
@@ -226,7 +226,7 @@ For example:
 ; (shifted and scaled from the range [-1.0, 1.0])
 ANGLE = 0.0
     REPT 256
-        db (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
+        ld [b @], (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
 ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
     ENDR
 .Ed
@@ -417,9 +417,9 @@ CHARMAP "&iacute", 20
 CHARMAP "A", 128
 .Ed
 This would result in
-.Ql db \(dqAmen<LF>\(dq
+.Ql ld [b @:...], \(dqAmen<LF>\(dq
 being equivalent to
-.Ql db 128, 109, 101, 110, 10 .
+.Ql ld [b @:...], 128, 109, 101, 110, 10 .
 .Pp
 Any characters in a string without defined mappings will be copied directly, using the source file's encoding of characters to bytes.
 .Pp
@@ -574,15 +574,15 @@ While
 will automatically optimize
 .Ic ld
 instructions to the smaller and faster
-.Ic ldh
+.Ic ld\ h
 (see
 .Xr gbz80 7 )
 whenever possible, it is generally unable to do so when a label is involved.
 Using the
-.Ic ldh
+.Ic ld\ h
 instruction directly is recommended.
 This forces the assembler to emit a
-.Ic ldh
+.Ic ld\ h
 instruction and the linker to check if the value is in the correct range.
 .El
 .Pp
@@ -699,11 +699,11 @@ CopyCode:
     ld c, RAMLocation.end - RAMLocation
 \&.loop
     ld a, [de]
-    inc de
+    ld de+
     ld [hli], a
-    dec c
-    jr nz, .loop
-    ret
+    ld c-
+    ld nz pc, b .loop
+    ld pc,[sp++]
 
 RAMCode:
   LOAD "RAM code", WRAM0
@@ -713,13 +713,13 @@ RAMLocation:
 \&.copy
     ld a, [hli]
     ld [de], a
-    inc de
-    and a
-    jr nz, .copy
-    ret
+    ld de+
+    ld a,a&a
+    ld nz pc, b .copy
+    ld pc,[sp++]
 
 \&.string
-    db "Hello World!", 0
+    ld [b @:...], "Hello World!", 0
 \&.end
   ENDL
 .Ed
@@ -929,14 +929,14 @@ references the one before the expression;
 and so on.
 .Bd -literal -offset indent
     ld hl, :++
-:   ld a, [hli] ; referenced by "jr nz"
+:   ld a, [hli] ; referenced by "ld nz pc"
     ldh [c], a
-    dec c
-    jr nz, :-
-    ret
+    ld c-
+    ld nz pc,b  :-
+    ld pc,[sp++]
 
 :   ; referenced by "ld hl"
-    dw $7FFF, $1061, $03E0, $58A5
+    ld [w @:], $7FFF, $1061, $03E0, $58A5
 .Ed
 .Pp
 A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
@@ -1036,13 +1036,13 @@ DEF COUNTREG EQUS "[hl+]"
     ld a,COUNTREG
 
 DEF PLAYER_NAME EQUS "\[rs]"John\[rs]""
-    db PLAYER_NAME
+    ld [b @:], PLAYER_NAME
 .Ed
 .Pp
 This will be interpreted as:
 .Bd -literal -offset indent
     ld a,[hl+]
-    db "John"
+    ld [b @:], "John"
 .Ed
 .Pp
 String equates can also be used to define small one-line macros:
@@ -1135,7 +1135,7 @@ constructs.
 .Bd -literal -offset indent
 MACRO MyMacro
          ld a, 80
-         call MyFunc
+         ld[--sp],pc, MyFunc
 ENDM
 .Ed
 .Pp
@@ -1208,9 +1208,9 @@ ExportedLabelB2:
 .Ql c.asm :
 .Bd -literal -compact
 SECTION "C", ROM0[0]
-	dw LabelA
-	dw ExportedLabelB1
-	dw ExportedLabelB2
+	ld [w @], LabelA
+	ld [w @], ExportedLabelB1
+	ld [w @], ExportedLabelB2
 .Ed
 .Pp
 Then
@@ -1281,18 +1281,20 @@ Refer to the spec at
 .Lk https://reproducible-builds.org/docs/source-date-epoch/ .
 .Sh DEFINING DATA
 .Ss Declaring variables in a RAM section
-.Ic DS
+.Ic LD [B @:<len>]
 allocates a number of empty bytes.
 This is the preferred method of allocating space in a RAM section.
 You can also use
-.Ic DB , DW
+.Ic LD [B @] , LD [W @]
 and
-.Ic DL
-without any arguments instead (see
+.Ic LD [L @]
+with
+.Ql \&?
+instead (see
 .Sx Defining constant data
 below).
 .Bd -literal -offset indent
-DS 42 ;\ Allocates 42 bytes
+LD [B @:42], ? ;\ Allocates 42 bytes
 .Ed
 .Pp
 Empty space in RAM sections will not be initialized.
@@ -1301,17 +1303,24 @@ In ROM sections, it will be filled with the value passed to the
 command-line option, except when using overlays with
 .Fl O .
 .Ss Defining constant data
-.Ic DB
+.Ic LD [B @]
 defines a list of bytes that will be stored in the final image.
 Ideal for tables and text.
 .Bd -literal -offset indent
-DB 1,2,3,4,"This is a string"
+LD [B @:...], 1,2,3,4,"This is a string"
 .Ed
 .Pp
+Python slice syntax is used: for a single byte, close the brackets immediately after
+.Ql @ ;
+if more than one entry follows, a colon must be added after the
+.Ql @ ,
+optionally followed by an ellipsis
+.Ql ... .
+.Pp
 Alternatively, you can use
-.Ic DW
+.Ic LD [W @]
 to store a list of words (16-bit) or
-.Ic DL
+.Ic LD [L @]
 to store a list of double-words/longs (32-bit).
 .Pp
 Strings are handled a little specially: they first undergo charmap conversion (see
@@ -1323,32 +1332,38 @@ DW "Hello!"
 DW "H", "e", "l", "l", "o", "!"
 .Ed
 .Pp
+Note that strings require a colon after the
+.Ql @
+in the directive.
+.Pp
 If you do not want this special handling, enclose the string in parentheses.
 .Pp
-.Ic DS
+.Ic LD [B @:<len>]
 can also be used to fill a region of memory with some repeated values.
 For example:
 .Bd -literal -offset indent
 ; outputs 3 bytes: $AA, $AA, $AA
-DS 3, $AA
+LD [B @:3], $AA
 ; outputs 7 bytes: $BB, $CC, $BB, $CC, $BB, $CC, $BB
-DS 7, $BB, $CC
+LD [B @:7], $BB, $CC
 .Ed
 .Pp
 You can also use
-.Ic DB , DW
+.Ic LD [B @] , LD [W @]
 and
-.Ic DL
-without arguments.
+.Ic LD [L @]
+with
+.Ql \&?
+as its sole argument (in which case neither the colon nor an ellipsis may be present).
 This works exactly like
-.Ic DS 1 , DS 2
+.Ic LD [B @:1] , LD [B @:2]
 and
-.Ic DS 4
+.Ic LD [B @:4]
 respectively.
-Consequently, no-argument
-.Ic DB , DW
+Consequently, these forms of
+.Ic LD [B @] , LD [W @]
 and
-.Ic DL
+.Ic LD [L @]
 can be used in a
 .Ic WRAM0
 /
@@ -1363,23 +1378,24 @@ section.
 .Ss Including binary files
 You probably have some graphics, level data, etc. you'd like to include.
 Use
-.Ic INCBIN
+.Ic LD [B @:...] =
 to include a raw binary file as it is.
+.Pq The ellipsis are optional.
 If the file isn't found in the current directory, the include-path list passed to
 .Xr rgbasm 1
 (see the
 .Fl i
 option) on the command line will be searched.
 .Bd -literal -offset indent
-INCBIN "titlepic.bin"
-INCBIN "sprites/hero.bin"
+LD [B @:] = "titlepic.bin"
+LD [B @:...] = "sprites/hero.bin"
 .Ed
 .Pp
 You can also include only part of a file with
-.Ic INCBIN .
+.Ic LD [B @:] .
 The example below includes 256 bytes from data.bin, starting from byte 78.
 .Bd -literal -offset indent
-INCBIN "data.bin",78,256
+LD [B @:] = "data.bin"[78:256]
 .Ed
 .Pp
 The length argument is optional.
@@ -1399,19 +1415,19 @@ separates each block of allocations, and you may use it as many times within a u
     ; Let's say PC = $C0DE here
     UNION
     ; Here, PC = $C0DE
-Name: ds 8
+Name: ld [b @:8], ?
     ; PC = $C0E6
-Nickname: ds 8
+Nickname: ld [b @:8], ?
     ; PC = $C0EE
     NEXTU
     ; PC is back to $C0DE
-Health: dw
+Health: ld pc [w @], ?
     ; PC = $C0E0
-Something: ds 6
+Something: ld [b @:6], ?
     ; And so on
-Lives: db
+Lives: ld pc [b @], ?
     NEXTU
-VideoBuffer: ds 19
+VideoBuffer: ld [b @:19], ?
     ENDU
 .Ed
 .Pp
@@ -1431,17 +1447,17 @@ The size of this union is 19 bytes, as this is the size of the largest block (th
 Nesting unions is possible, with each inner union's size being considered as described above.
 .Pp
 Unions may be used in any section, but inside them may only be
-.Ic DS -
+.Ic LD\ [B\ @],\ ? Ns - Ns
 like commands (see
 .Sx Declaring variables in a RAM section ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
 You execute the macro by inserting its name.
 .Bd -literal -offset indent
-         add a,b
+         ld a,a+b
          ld sp,hl
          MyMacro ;\ This will be expanded
-         sub a,87
+         ld a,a-87
 .Ed
 .Pp
 It's valid to call a macro from a macro (yes, even the same one).
@@ -1458,10 +1474,10 @@ it will insert the macro definition (the code enclosed in
 Suppose your macro contains a loop.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            xor  a,a
+            ld   a,a^a
 \&.loop       ld   [hl+],a
-            dec  c
-            jr   nz,.loop
+            ld   c-
+            ld   nz pc,b .loop
 ENDM
 .Ed
 .Pp
@@ -1476,10 +1492,10 @@ also works in
 blocks.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            xor  a,a
+            ld   a,a^a
 \&.loop\[rs]@     ld   [hl+],a
-            dec  c
-            jr   nz,.loop\[rs]@
+            ld   c-
+            ld   nz pc,b .loop\[rs]@
 ENDM
 .Ed
 .Pp
@@ -1507,10 +1523,10 @@ being the first argument specified on the macro invocation.
 MACRO LoopyMacro
             ld   hl,\[rs]1
             ld   c,\[rs]2
-            xor  a,a
+            ld   a,a^a
 \&.loop\[rs]@     ld   [hl+],a
-            dec  c
-            jr   nz,.loop\[rs]@
+            ld   c-
+            ld   nz pc,b .loop\[rs]@
             ENDM
 .Ed
 .Pp
@@ -1622,7 +1638,7 @@ The following example will assemble
 four times:
 .Bd -literal -offset indent
 REPT 4
-  add  a,c
+  ld  a,a+c
 ENDR
 .Ed
 .Pp
@@ -1634,7 +1650,7 @@ to generate tables on the fly:
 ; (shifted and scaled from the range [-1.0, 1.0])
 ANGLE = 0.0
     REPT 256
-        db (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
+        ld [b @], (MUL(64.0, SIN(ANGLE)) + 64.0) >> 16
 ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
     ENDR
 .Ed
@@ -1658,21 +1674,21 @@ String equates are not expanded within the symbol name.
 For example, this code will produce a table of squared values from 0 to 255:
 .Bd -literal -offset indent
 FOR N, 256
-      dw N * N
+      ld [w @], N * N
 ENDR
 .Ed
 .Pp
 It acts just as if you had done:
 .Bd -literal -offset ident
 N = 0
-      dw N * N
+      ld [w @], N * N
 N = 1
-      dw N * N
+      ld [w @], N * N
 N = 2
-      dw N * N
+      ld [w @], N * N
 ; ...
 N = 255
-      dw N * N
+      ld [w @], N * N
 N = 256
 .Ed
 .Pp
@@ -1763,18 +1779,18 @@ and
 Syntax examples are given below:
 .Bd -literal -offset indent
 Function:
-      xor a
+      ld a,a^a
 ASSERT LOW(Variable) == 0
       ld h, HIGH(Variable)
       ld l, a
       ld a, [hli]
       ; You can also indent this!
       ASSERT BANK(OtherFunction) == BANK(Function)
-      call OtherFunction
+      ld [--sp], pc,OtherFunction
 ; Lowercase also works
 assert Variable + 1 == OtherVariable
       ld c, [hl]
-      ret
+      ld pc,[sp++]
 \&.end
       ; If you specify one, a message will be printed
       STATIC_ASSERT .end - Function < 256, "Function is too large!"
@@ -1883,9 +1899,9 @@ takes a comma-separated list of options as its argument:
 .Bd -literal -offset indent
 PUSHO
 OPT   g.oOX ;Set the GB graphics constants to use these characters
-DW    `..ooOOXX
+LD [W @],    `..ooOOXX
 POPO
-DW    `00112233
+LD [W @],    `00112233
 .Ed
 .Pp
 The options that OPT can modify are currently:
