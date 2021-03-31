@@ -1635,7 +1635,7 @@ cpu_command	: T_Z80_LD z80_ld_args
 		| T_Z80_LD T_MODE_DE T_COMMA z80_ld_de_comma_args
 		| T_Z80_LD T_MODE_HL T_COMMA z80_ld_hl_comma_args
 		| T_Z80_LD T_MODE_SP T_COMMA z80_ld_sp_comma_args
-		| T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_POP_EQUAL z80_ld_incbin_args
+		| T_Z80_LD T_LBRACK T_TOKEN_B T_TOKEN_AT T_COLON optional_ellipsis T_RBRACK T_POP_EQUAL z80_ld_incbin_args
 ;
 
 z80_ld_args	: T_MODE_PC T_COMMA T_MODE_PC { out_AbsByte(0x00); } // $00: nop ==> ld pc, pc
