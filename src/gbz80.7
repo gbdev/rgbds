@@ -16,16 +16,6 @@ This is the list of opcodes supported by
 .Xr rgbasm 1 ,
 including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete them.
 .Pp
-Note: All arithmetic/logic operations that use register
-.Sy A
-as destination can omit the destination as it is assumed to be register
-.Sy A
-by default.
-The following two lines have the same effect:
-.Bd -literal -offset indent
-OR A,B
-OR B
-.Ed
 .Sh LEGEND
 List of abbreviations used in this document.
 .Bl -tag
@@ -73,11 +63,11 @@ and
 .Pc .
 .El
 .Sh INSTRUCTION OVERVIEW
-.Ss 8-bit Arithmetic and Logic Instructions
+.Ss Load Instructions
 .Bl -inset -compact
-.It Sx LD A,A+r8+C
-.It Sx LD A,A+[HL]+C
-.It Sx LD A,A+n8+C
+.It Sx LD A,A+C+r8
+.It Sx LD A,A+C+[HL]
+.It Sx LD A,A+C+n8
 .It Sx LD A,A+r8
 .It Sx LD A,A+[HL]
 .It Sx LD A,A+n8
@@ -94,24 +84,18 @@ and
 .It Sx LD A,A|r8
 .It Sx LD A,A|[HL]
 .It Sx LD A,A|n8
-.It Sx LD A,A-r8-C
-.It Sx LD A,A-[HL]-C
-.It Sx LD A,A-n8-C
+.It Sx LD A,A-C-r8
+.It Sx LD A,A-C-[HL]
+.It Sx LD A,A-C-n8
 .It Sx LD A,A-r8
 .It Sx LD A,A-[HL]
 .It Sx LD A,A-n8
 .It Sx LD A,A^r8
 .It Sx LD A,A^[HL]
 .It Sx LD A,A^n8
-.El
-.Ss 16-bit Arithmetic Instructions
-.Bl -inset -compact
 .It Sx LD HL,HL+r16
 .It Sx LD r16-
 .It Sx LD r16+
-.El
-.Ss Bit Operations Instructions
-.Bl -inset -compact
 .It Sx LD F.7,r8.u3
 .It Sx LD F.7,[HL].u3
 .It Sx LD r8.u3,0
@@ -120,9 +104,6 @@ and
 .It Sx LD [HL].u3,1
 .It Sx LD r8,''r8''
 .It Sx LD [HL],''[HL]''
-.El
-.Ss Bit Shift Instructions
-.Bl -inset -compact
 .It Sx LD r8,'r8
 .It Sx LD [HL],'[HL]
 .It Sx LD 'A
@@ -141,9 +122,6 @@ and
 .It Sx LD [HL],>>[HL]
 .It Sx LD r8,>>>r8
 .It Sx LD [HL],>>>[HL]
-.El
-.Ss Load Instructions
-.Bl -inset -compact
 .It Sx LD r8,r8
 .It Sx LD r8,n8
 .It Sx LD r16,n16
@@ -162,9 +140,6 @@ and
 .It Sx LD [HLD],A
 .It Sx LD A,[HLI]
 .It Sx LD A,[HLD]
-.El
-.Ss Jumps and Subroutines
-.Bl -inset -compact
 .It Sx LD [--SP],PC,n16
 .It Sx LD cc [--SP],PC,n16
 .It Sx LD PC,HL
@@ -176,9 +151,6 @@ and
 .It Sx LD PC,[SP++]
 .It Sx LD PC,[SP++] / LD IME,1
 .It Sx LD [--SP],PC,B vec
-.El
-.Ss Stack Operations Instructions
-.Bl -inset -compact
 .It Sx LD HL,HL+SP
 .It Sx LD SP,SP+e8
 .It Sx LD SP-
@@ -191,9 +163,6 @@ and
 .It Sx LD r16,[SP++]
 .It Sx LD [--SP],AF
 .It Sx LD [--SP],r16
-.El
-.Ss Miscellaneous Instructions
-.Bl -inset -compact
 .It Sx LD F.4,!F.4
 .It Sx LD A,~A
 .It Sx LD A,A?
@@ -205,7 +174,7 @@ and
 .It Sx LD,0
 .El
 .Sh INSTRUCTION REFERENCE
-.Ss LD A,A+r8+C
+.Ss LD A,A+C+r8
 Add the value in
 .Ar r8
 plus the carry flag to
@@ -226,7 +195,7 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss LD A,A+[HL]+C
+.Ss LD A,A+C+[HL]
 Add the byte pointed to by
 .Sy HL
 plus the carry flag to
@@ -237,8 +206,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx LD A,A+r8+C
-.Ss LD A,A+n8+C
+.Sx LD A,A+C+r8
+.Ss LD A,A+C+n8
 Add the value
 .Ar n8
 plus the carry flag to
@@ -249,7 +218,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx LD A,A+r8+C
+.Sx LD A,A+C+r8
 .Ss LD A,A+r8
 Add the value in
 .Ar r8
@@ -433,7 +402,7 @@ This pushes the address of the instruction after the
 on the stack, such that
 .Sx LD
 can pop it later; then, it executes an implicit
-.Sx LD PC,n16.
+.Sx LD PC,n16 .
 .Pp
 Cycles: 6
 .Pp
@@ -716,12 +685,12 @@ Bytes: 1
 .Pp
 Flags: None affected.
 .Ss LD PC,n16
-Jump to address
-.Ar n16 ;
-effectively, store
+Store
 .Ar n16
 into
-.Sy PC .
+.Sy PC ;
+effectively, jump to address
+.Ar n16 .
 .Pp
 Cycles: 4
 .Pp
@@ -741,11 +710,11 @@ Bytes: 3
 .Pp
 Flags: None affected.
 .Ss LD PC,HL
-Jump to address in
-.Sy HL ;
-effectively, load
+Load 
 .Sy PC
 with value in register
+.Sy HL ;
+effectively, jump to address in 
 .Sy HL .
 .Pp
 Cycles: 1
@@ -1123,10 +1092,8 @@ This is roughly equivalent to the following
 .Em imaginary
 instructions:
 .Bd -literal -offset indent
-ld f, [sp] ; See below for individual flags
-inc sp
-ld a, [sp]
-inc sp
+ld f, [sp+] ; See below for individual flags
+ld a, [sp+]
 .Ed
 .Pp
 Cycles: 3
@@ -1152,10 +1119,8 @@ This is roughly equivalent to the following
 .Em imaginary
 instructions:
 .Bd -literal -offset indent
-ld LOW(r16), [sp] ; C, E or L
-inc sp
-ld HIGH(r16), [sp] ; B, D or H
-inc sp
+ld LOW(r16), [sp+] ; C, E or L
+ld HIGH(r16), [sp+] ; B, D or H
 .Ed
 .Pp
 Cycles: 3
@@ -1171,10 +1136,8 @@ This is roughly equivalent to the following
 .Em imaginary
 instructions:
 .Bd -literal -offset indent
-dec sp
-ld [sp], a
-dec sp
-ld [sp], flag_Z << 7 | flag_N << 6 | flag_H << 5 | flag_C << 4
+ld [-sp], a
+ld [-sp], f
 .Ed
 .Pp
 Cycles: 4
@@ -1190,10 +1153,8 @@ This is roughly equivalent to the following
 .Em imaginary
 instructions:
 .Bd -literal -offset indent
-dec sp
-ld [sp], HIGH(r16) ; B, D or H
-dec sp
-ld [sp], LOW(r16) ; C, E or L
+ld [-sp], HIGH(r16) ; B, D or H
+ld [-sp], LOW(r16) ; C, E or L
 .Ed
 .Pp
 Cycles: 4
@@ -1493,16 +1454,18 @@ Set according to result.
 Call address
 .Ar vec .
 This is a shorter and faster equivalent to
-.Sx LD [--SP],PC,vec
-for suitable values of
-.Ar vec .
+.Sx LD [--SP],PC,n16
+for suitable
+.Ar vec
+values of
+.Ar n16 .
 .Pp
 Cycles: 4
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss LD A,A-r8-C
+.Ss LD A,A-C-r8
 Subtract the value in
 .Ar r8
 and the carry flag from
@@ -1527,7 +1490,7 @@ Set if borrow (i.e. if
 .Pc >
 .Sy A ) .
 .El
-.Ss LD A,A-[HL]-C
+.Ss LD A,A-C-[HL]
 Subtract the byte pointed to by
 .Sy HL
 and the carry flag from
@@ -1538,8 +1501,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx LD A,A-r8-C
-.Ss LD A,A-n8-C
+.Sx LD A,A-C-r8
+.Ss LD A,A-C-n8
 Subtract the value
 .Ar n8
 and the carry flag from
@@ -1550,7 +1513,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx LD A,A-r8-C
+.Sx LD A,A-C-r8
 .Ss LD F.4,1
 Set Carry Flag.
 .Pp
