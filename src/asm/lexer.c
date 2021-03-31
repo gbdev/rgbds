@@ -751,6 +751,10 @@ static void beginExpansion(size_t distance, uint8_t skip,
 			   char const *str, size_t size, bool owned,
 			   char const *name)
 {
+	/* Do not expand empty strings */
+	if (!size)
+		return;
+
 	distance += lexerState->expansionOfs; /* Distance argument is relative to read offset! */
 	/* Increase the total length of all parents, and return the topmost one */
 	struct Expansion *parent = NULL;
