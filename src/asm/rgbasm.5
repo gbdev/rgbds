@@ -930,7 +930,7 @@ and so on.
 .Bd -literal -offset indent
     ld hl, :++
 :   ld a, [hli] ; referenced by "ld nz pc"
-    ldh [c], a
+    ld [h c], a
     ld c-
     ld nz pc,b  :-
     ld pc,[sp++]
@@ -1047,7 +1047,7 @@ This will be interpreted as:
 .Pp
 String equates can also be used to define small one-line macros:
 .Bd -literal -offset indent
-DEF pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
+DEF ld_de_hl EQUS "ld d,h\[rs]n ld e,l\[rs]n"
 .Ed
 .Pp
 Note that colons
@@ -1328,8 +1328,8 @@ Strings are handled a little specially: they first undergo charmap conversion (s
 then each resulting character is output individually.
 For example, under the default charmap, the following two lines are identical:
 .Bd -literal -offset indent
-DW "Hello!"
-DW "H", "e", "l", "l", "o", "!"
+LD [W @:], "Hello!"
+LD [W @:], "H", "e", "l", "l", "o", "!"
 .Ed
 .Pp
 Note that strings require a colon after the
@@ -1393,9 +1393,10 @@ LD [B @:...] = "sprites/hero.bin"
 .Pp
 You can also include only part of a file with
 .Ic LD [B @:] .
-The example below includes 256 bytes from data.bin, starting from byte 78.
+The examples below include 256 bytes from data.bin, starting from byte 78.
 .Bd -literal -offset indent
 LD [B @:] = "data.bin"[78:256]
+LD [B @:256] = "data.bin"[78:]
 .Ed
 .Pp
 The length argument is optional.
@@ -1415,17 +1416,17 @@ separates each block of allocations, and you may use it as many times within a u
     ; Let's say PC = $C0DE here
     UNION
     ; Here, PC = $C0DE
-Name: ld [b @:8], ?
+Name:        ld [b @:8], ?
     ; PC = $C0E6
-Nickname: ld [b @:8], ?
+Nickname:    ld [b @:8], ?
     ; PC = $C0EE
     NEXTU
     ; PC is back to $C0DE
-Health: ld pc [w @], ?
+Health:      ld [w @], ?
     ; PC = $C0E0
-Something: ld [b @:6], ?
+Something:   ld [b @:6], ?
     ; And so on
-Lives: ld pc [b @], ?
+Lives:       ld [b @], ?
     NEXTU
 VideoBuffer: ld [b @:19], ?
     ENDU
