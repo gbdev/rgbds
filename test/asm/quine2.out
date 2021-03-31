@@ -1,4 +1,4 @@
-q:macro
+macro q
 println\1,"\1"
 endm
- q"q:macro\nprintln\\1,\"\\1\"\nendm\n q"
+ q"macro q\nprintln\\1,\"\\1\"\nendm\n q"
