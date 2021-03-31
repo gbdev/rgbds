@@ -83,7 +83,7 @@ Add an include path.
 Disable the optimization that turns loads of the form
 .Ic LD [$FF00+n8],A
 into the opcode
-.Ic LDH [$FF00+n8],A
+.Ic LD [H $FF00+n8],A
 in order to have full control of the result in the final ROM.
 .It Fl M Ar depend_file , Fl Fl dependfile Ar depend_file
 Print
@@ -244,7 +244,7 @@ Use a division by 2^N instead.
 Warn when a shift's operand is negative or greater than 32.
 .It Fl Wno-truncation
 Warn when an implicit truncation (for example,
-.Ic db )
+.Ic LD [B @] )
 loses some bits.
 .It Fl Wno-user
 Warn when the
