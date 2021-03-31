@@ -392,6 +392,7 @@ enum {
 	REG_BC = 0,
 	REG_DE = 1,
 	REG_HL = 2,
+	// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
 	REG_SP = 3,
 	REG_AF = 3
 };
