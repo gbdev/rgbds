@@ -747,10 +747,11 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 	return expansion;
 }
 
-static void beginExpansion(size_t distance, uint8_t skip,
-			   char const *str, size_t size, bool owned,
+static void beginExpansion(size_t distance, uint8_t skip, char const *str, bool owned,
 			   char const *name)
 {
+	size_t size = strlen(str);
+
 	/* Do not expand empty strings */
 	if (!size)
 		return;
@@ -929,7 +930,7 @@ restart:
 					goto restart;
 				}
 
-				beginExpansion(distance, 2, str, strlen(str), c == '#', NULL);
+				beginExpansion(distance, 2, str, c == '#', NULL);
 
 				/*
 				 * Assuming macro args can't be recursive (I'll be damned if a way
@@ -949,7 +950,7 @@ restart:
 			char const *ptr = readInterpolation();
 
 			if (ptr) {
-				beginExpansion(distance, 0, ptr, strlen(ptr), false, ptr);
+				beginExpansion(distance, 0, ptr, false, ptr);
 				goto restart;
 			}
 		}
@@ -1418,7 +1419,7 @@ static char const *readInterpolation(void)
 			char const *ptr = readInterpolation();
 
 			if (ptr) {
-				beginExpansion(0, 0, ptr, strlen(ptr), false, ptr);
+				beginExpansion(0, 0, ptr, false, ptr);
 				continue; /* Restart, reading from the new buffer */
 			}
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
@@ -2100,8 +2101,7 @@ static int yylex_NORMAL(void)
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
 
-						beginExpansion(0, 0, s, strlen(s), false,
-							       sym->name);
+						beginExpansion(0, 0, s, false, sym->name);
 						continue; /* Restart, reading from the new buffer */
 					}
 				}
