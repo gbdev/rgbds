@@ -339,6 +339,8 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		} else if (startaddr[type] & mask) {
 			error("Section \"%s\"'s alignment cannot be attained in %s\n",
 				name, typeNames[type]);
+			alignment = 0; /* Ignore it if it's unattainable */
+			org = 0;
 		} else if (alignment == 16) {
 			// Treat an alignment of 16 as being fixed at address 0
 			alignment = 0;
