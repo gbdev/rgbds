@@ -1164,8 +1164,14 @@ popc		: T_POP_POPC	{ charmap_Pop(); }
 print		: T_POP_PRINT print_exprs trailing_comma
 ;
 
-println		: T_POP_PRINTLN { putchar('\n'); }
-		| T_POP_PRINTLN print_exprs trailing_comma { putchar('\n'); }
+println		: T_POP_PRINTLN {
+			putchar('\n');
+			fflush(stdout);
+		}
+		| T_POP_PRINTLN print_exprs trailing_comma {
+			putchar('\n');
+			fflush(stdout);
+		}
 ;
 
 print_exprs	: print_expr
