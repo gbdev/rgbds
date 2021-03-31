@@ -1,36 +1,62 @@
-_ASM equ 0
+def _ASM equ 0
 
 test: MACRO
-; Test RGBASM
-V equs "_ASM +"
+	; Test RGBASM
+	redef V equs "_ASM +"
 	static_assert \#
-	PURGE V
-; Test RGBLINK
-V equs "_LINK +"
+	; Test RGBLINK
+	redef V equs "_LINK +"
 	assert \#
-	PURGE V
 ENDM
 
-for x, -300, 301
-  for y, -x - 1, x + 2
-    if y != 0
-q = x / y
-r = x % y
-      test (V (q * y + r)) == (V x)
-      test (V (x + y) % y) == (V r)
-      test (V (x - y) % y) == (V r)
-    endc
-  endr
-endr
+test_mod: MACRO
+	def x = \1 ; dividend
+	def y = \2 ; divisor
+	shift 2
+	def q = x / y ; quotient
+	def r = x % y ; remainder
+	; identity laws
+	test (V (q * y + r)) == (V x)
+	test (V (x + y) % y) == (V r)
+	test (V (x - y) % y) == (V r)
+ENDM
 
-for x, -300, 301
-  for p, 31
-y = 2 ** p
-r = x % y
-m = x & (y - 1)
-    test (V r) == (V m)
-  endr
-endr
+test_each_mod: MACRO
+	test_mod (\1), (\2)
+	test_mod (\1), -(\2)
+	test_mod -(\1), (\2)
+	test_mod -(\1), -(\2)
+ENDM
+
+test_pow: MACRO
+	def x = \1 ; dividend
+	def y = 2 ** \2 ; divisor
+	def r = x % y ; remainder
+	def m = x & (y - 1) ; mask
+	; identity law
+	test (V r) == (V m)
+ENDM
+
+test_each_pow: MACRO
+	test_pow (\1), (\2)
+	test_pow -(\1), (\2)
+ENDM
+
+	test_each_mod 0, 1
+	test_each_mod 7, 5
+	test_each_mod 42, 256
+	test_each_mod 567, 256
+	test_each_mod 256, 512
+	test_each_mod 1, 65535
+	test_each_mod 100, 65535
+	test_each_mod 10000, 65535
+	test_each_mod 1000000, 65535
+
+	test_each_pow 5, 1
+	test_each_pow 42, 8
+	test_each_pow 567, 8
+	test_each_pow 12345, 16
+	test_each_pow 99999, 16
 
 SECTION "LINK", ROM0
 _LINK::
