@@ -75,72 +75,72 @@ and
 .Sh INSTRUCTION OVERVIEW
 .Ss 8-bit Arithmetic and Logic Instructions
 .Bl -inset -compact
-.It Sx ADC A,r8
-.It Sx ADC A,[HL]
-.It Sx ADC A,n8
-.It Sx ADD A,r8
-.It Sx ADD A,[HL]
-.It Sx ADD A,n8
-.It Sx AND A,r8
-.It Sx AND A,[HL]
-.It Sx AND A,n8
-.It Sx CP A,r8
-.It Sx CP A,[HL]
-.It Sx CP A,n8
-.It Sx DEC r8
-.It Sx DEC [HL]
-.It Sx INC r8
-.It Sx INC [HL]
-.It Sx OR A,r8
-.It Sx OR A,[HL]
-.It Sx OR A,n8
-.It Sx SBC A,r8
-.It Sx SBC A,[HL]
-.It Sx SBC A,n8
-.It Sx SUB A,r8
-.It Sx SUB A,[HL]
-.It Sx SUB A,n8
-.It Sx XOR A,r8
-.It Sx XOR A,[HL]
-.It Sx XOR A,n8
+.It Sx LD A,A+r8+C
+.It Sx LD A,A+[HL]+C
+.It Sx LD A,A+n8+C
+.It Sx LD A,A+r8
+.It Sx LD A,A+[HL]
+.It Sx LD A,A+n8
+.It Sx LD A,A&r8
+.It Sx LD A,A&[HL]
+.It Sx LD A,A&n8
+.It Sx LD F.7,A-r8
+.It Sx LD F.7,A-[HL]
+.It Sx LD F.7,A-n8
+.It Sx LD r8-
+.It Sx LD [HL]-
+.It Sx LD r8+
+.It Sx LD [HL]+
+.It Sx LD A,A|r8
+.It Sx LD A,A|[HL]
+.It Sx LD A,A|n8
+.It Sx LD A,A-r8-C
+.It Sx LD A,A-[HL]-C
+.It Sx LD A,A-n8-C
+.It Sx LD A,A-r8
+.It Sx LD A,A-[HL]
+.It Sx LD A,A-n8
+.It Sx LD A,A^r8
+.It Sx LD A,A^[HL]
+.It Sx LD A,A^n8
 .El
 .Ss 16-bit Arithmetic Instructions
 .Bl -inset -compact
-.It Sx ADD HL,r16
-.It Sx DEC r16
-.It Sx INC r16
+.It Sx LD HL,HL+r16
+.It Sx LD r16-
+.It Sx LD r16+
 .El
 .Ss Bit Operations Instructions
 .Bl -inset -compact
-.It Sx BIT u3,r8
-.It Sx BIT u3,[HL]
-.It Sx RES u3,r8
-.It Sx RES u3,[HL]
-.It Sx SET u3,r8
-.It Sx SET u3,[HL]
-.It Sx SWAP r8
-.It Sx SWAP [HL]
+.It Sx LD F.7,r8.u3
+.It Sx LD F.7,[HL].u3
+.It Sx LD r8.u3,0
+.It Sx LD [HL].u3,0
+.It Sx LD r8.u3,1
+.It Sx LD [HL].u3,1
+.It Sx LD r8,''r8''
+.It Sx LD [HL],''[HL]''
 .El
 .Ss Bit Shift Instructions
 .Bl -inset -compact
-.It Sx RL r8
-.It Sx RL [HL]
-.It Sx RLA
-.It Sx RLC r8
-.It Sx RLC [HL]
-.It Sx RLCA
-.It Sx RR r8
-.It Sx RR [HL]
-.It Sx RRA
-.It Sx RRC r8
-.It Sx RRC [HL]
-.It Sx RRCA
-.It Sx SLA r8
-.It Sx SLA [HL]
-.It Sx SRA r8
-.It Sx SRA [HL]
-.It Sx SRL r8
-.It Sx SRL [HL]
+.It Sx LD r8,'r8
+.It Sx LD [HL],'[HL]
+.It Sx LD 'A
+.It Sx LD r8,''r8
+.It Sx LD [HL],''[HL]
+.It Sx LD ''A
+.It Sx LD r8,r8'
+.It Sx LD [HL],[HL]'
+.It Sx LD A'
+.It Sx LD r8,r8''
+.It Sx LD [HL],[HL]''
+.It Sx LD A''
+.It Sx LD r8,<<r8
+.It Sx LD [HL],<<[HL]
+.It Sx LD r8,>>r8
+.It Sx LD [HL],>>[HL]
+.It Sx LD r8,>>>r8
+.It Sx LD [HL],>>>[HL]
 .El
 .Ss Load Instructions
 .Bl -inset -compact
@@ -152,12 +152,12 @@ and
 .It Sx LD r8,[HL]
 .It Sx LD [r16],A
 .It Sx LD [n16],A
-.It Sx LDH [n16],A
-.It Sx LDH [C],A
+.It Sx LD [H n16],A
+.It Sx LD [H C],A
 .It Sx LD A,[r16]
 .It Sx LD A,[n16]
-.It Sx LDH A,[n16]
-.It Sx LDH A,[C]
+.It Sx LD A,[H n16]
+.It Sx LD A,[H C]
 .It Sx LD [HLI],A
 .It Sx LD [HLD],A
 .It Sx LD A,[HLI]
@@ -165,47 +165,47 @@ and
 .El
 .Ss Jumps and Subroutines
 .Bl -inset -compact
-.It Sx CALL n16
-.It Sx CALL cc,n16
-.It Sx JP HL
-.It Sx JP n16
-.It Sx JP cc,n16
-.It Sx JR e8
-.It Sx JR cc,e8
-.It Sx RET cc
-.It Sx RET
-.It Sx RETI
-.It Sx RST vec
+.It Sx LD [--SP],PC,n16
+.It Sx LD cc [--SP],PC,n16
+.It Sx LD PC,HL
+.It Sx LD PC,n16
+.It Sx LD cc PC,n16
+.It Sx LD PC,B e8
+.It Sx LD cc PC,B e8
+.It Sx LD cc PC,[SP++]
+.It Sx LD PC,[SP++]
+.It Sx LD PC,[SP++] / LD IME,1
+.It Sx LD [--SP],PC,B vec
 .El
 .Ss Stack Operations Instructions
 .Bl -inset -compact
-.It Sx ADD HL,SP
-.It Sx ADD SP,e8
-.It Sx DEC SP
-.It Sx INC SP
+.It Sx LD HL,HL+SP
+.It Sx LD SP,SP+e8
+.It Sx LD SP-
+.It Sx LD SP+
 .It Sx LD SP,n16
 .It Sx LD [n16],SP
 .It Sx LD HL,SP+e8
 .It Sx LD SP,HL
-.It Sx POP AF
-.It Sx POP r16
-.It Sx PUSH AF
-.It Sx PUSH r16
+.It Sx LD AF,[SP++]
+.It Sx LD r16,[SP++]
+.It Sx LD [--SP],AF
+.It Sx LD [--SP],r16
 .El
 .Ss Miscellaneous Instructions
 .Bl -inset -compact
-.It Sx CCF
-.It Sx CPL
-.It Sx DAA
-.It Sx DI
-.It Sx EI
-.It Sx HALT
-.It Sx NOP
-.It Sx SCF
-.It Sx STOP
+.It Sx LD F.4,!F.4
+.It Sx LD A,~A
+.It Sx LD A,A?
+.It Sx LD IME,0
+.It Sx LD IME,1
+.It Sx LD [HL],[HL]
+.It Sx LD PC,PC
+.It Sx LD F.4,1
+.It Sx LD,0
 .El
 .Sh INSTRUCTION REFERENCE
-.Ss ADC A,r8
+.Ss LD A,A+r8+C
 Add the value in
 .Ar r8
 plus the carry flag to
@@ -226,7 +226,7 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss ADC A,[HL]
+.Ss LD A,A+[HL]+C
 Add the byte pointed to by
 .Sy HL
 plus the carry flag to
@@ -237,8 +237,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADC A,r8
-.Ss ADC A,n8
+.Sx LD A,A+r8+C
+.Ss LD A,A+n8+C
 Add the value
 .Ar n8
 plus the carry flag to
@@ -249,8 +249,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx ADC A,r8
-.Ss ADD A,r8
+.Sx LD A,A+r8+C
+.Ss LD A,A+r8
 Add the value in
 .Ar r8
 to
@@ -271,7 +271,7 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss ADD A,[HL]
+.Ss LD A,A+[HL]
 Add the byte pointed to by
 .Sy HL
 to
@@ -282,8 +282,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADD A,r8
-.Ss ADD A,n8
+.Sx LD A,A+r8
+.Ss LD A,A+n8
 Add the value
 .Ar n8
 to
@@ -294,8 +294,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx ADD A,r8
-.Ss ADD HL,r16
+.Sx LD A,A+r8
+.Ss LD HL,HL+r16
 Add the value in
 .Ar r16
 to
@@ -314,7 +314,7 @@ Set if overflow from bit 11.
 .It Sy C
 Set if overflow from bit 15.
 .El
-.Ss ADD HL,SP
+.Ss LD HL,HL+SP
 Add the value in
 .Sy SP
 to
@@ -325,8 +325,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADD HL,r16
-.Ss ADD SP,e8
+.Sx LD HL,HL+r16
+.Ss LD SP,SP+e8
 Add the signed value
 .Ar e8
 to
@@ -347,7 +347,7 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss AND A,r8
+.Ss LD A,A&r8
 Bitwise AND between the value in
 .Ar r8
 and
@@ -368,7 +368,7 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss AND A,[HL]
+.Ss LD A,A&[HL]
 Bitwise AND between the byte pointed to by
 .Sy HL
 and
@@ -379,8 +379,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx AND A,r8
-.Ss AND A,n8
+.Sx LD A,A&r8
+.Ss LD A,A&n8
 Bitwise AND between the value in
 .Ar n8
 and
@@ -391,8 +391,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx AND A,r8
-.Ss BIT u3,r8
+.Sx LD A,A&r8
+.Ss LD F.7,r8.u3
 Test bit
 .Ar u3
 in register
@@ -412,7 +412,7 @@ Set if the selected bit is 0.
 .It Sy H
 1
 .El
-.Ss BIT u3,[HL]
+.Ss LD F.7,[HL].u3
 Test bit
 .Ar u3
 in the byte pointed by
@@ -424,23 +424,23 @@ Cycles: 3
 Bytes: 2
 .Pp
 Flags: See
-.Sx BIT u3,r8
-.Ss CALL n16
+.Sx LD F.7,r8.u3
+.Ss LD [--SP],PC,n16
 Call address
 .Ar n16 .
 This pushes the address of the instruction after the
-.Sy CALL
+.Sy LD
 on the stack, such that
-.Sx RET
+.Sx LD
 can pop it later; then, it executes an implicit
-.Sx JP n16 .
+.Sx LD PC,n16.
 .Pp
 Cycles: 6
 .Pp
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss CALL cc,n16
+.Ss LD cc [--SP],PC,n16
 Call address
 .Ar n16
 if condition
@@ -452,7 +452,7 @@ Cycles: 6 taken / 3 untaken
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss CCF
+.Ss LD F.4,!F.4
 Complement Carry Flag.
 .Pp
 Cycles: 1
@@ -468,7 +468,7 @@ Flags:
 .It Sy C
 Inverted.
 .El
-.Ss CP A,r8
+.Ss LD F.7,A-r8
 Subtract the value in
 .Ar r8
 from
@@ -494,7 +494,7 @@ Set if borrow (i.e. if
 >
 .Sy A ) .
 .El
-.Ss CP A,[HL]
+.Ss LD F.7,A-[HL]
 Subtract the byte pointed to by
 .Sy HL
 from
@@ -506,8 +506,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx CP A,r8
-.Ss CP A,n8
+.Sx LD F.7,A-r8
+.Ss LD F.7,A-n8
 Subtract the value
 .Ar n8
 from
@@ -519,8 +519,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx CP A,r8
-.Ss CPL
+.Sx LD F.7,A-r8
+.Ss LD A,~A
 ComPLement accumulator
 .Po Sy A
 =
@@ -538,7 +538,7 @@ Flags:
 .It Sy H
 1
 .El
-.Ss DAA
+.Ss LD A,A?
 Decimal Adjust Accumulator to get a correct BCD representation after an arithmetic instruction.
 .Pp
 Cycles: 1
@@ -554,7 +554,7 @@ Set if result is 0.
 .It Sy C
 Set or reset depending on the operation.
 .El
-.Ss DEC r8
+.Ss LD r8-
 Decrement value in register
 .Ar r8
 by 1.
@@ -572,7 +572,7 @@ Set if result is 0.
 .It Sy H
 Set if borrow from bit 4.
 .El
-.Ss DEC [HL]
+.Ss LD [HL]-
 Decrement the byte pointed to by
 .Sy HL
 by 1.
@@ -582,8 +582,8 @@ Cycles: 3
 Bytes: 1
 .Pp
 Flags: See
-.Sx DEC r8
-.Ss DEC r16
+.Sx LD r8-
+.Ss LD r16-
 Decrement value in register
 .Ar r16
 by 1.
@@ -593,7 +593,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss DEC SP
+.Ss LD SP-
 Decrement value in register
 .Sy SP
 by 1.
@@ -603,7 +603,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss DI
+.Ss LD IME,0
 Disable Interrupts by clearing the
 .Sy IME
 flag.
@@ -613,21 +613,21 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss EI
+.Ss LD IME,1
 Enable Interrupts by setting the
 .Sy IME
 flag.
 The flag is only set
 .Em after
 the instruction following
-.Sy EI .
+.Sy LD IME,1 .
 .Pp
 Cycles: 1
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss HALT
+.Ss LD [HL],[HL]
 Enter CPU low-power consumption mode until an interrupt occurs.
 The exact behavior of this instruction depends on the state of the
 .Sy IME
@@ -638,7 +638,7 @@ The CPU enters low-power mode until
 .Em after
 an interrupt is about to be serviced.
 The handler is executed normally, and the CPU resumes execution after the
-.Ic HALT
+.Ic LD [HL],[HL]
 when that returns.
 .It Sy IME No not set
 The behavior depends on whether an interrupt is pending (i.e.\&
@@ -652,7 +652,7 @@ This is like the above, except that the handler is
 called.
 .It Some pending
 The CPU continues execution after the
-.Ic HALT ,
+.Ic LD [HL],[HL] ,
 but the byte after it is read twice in a row
 .Po
 .Sy PC
@@ -666,7 +666,7 @@ Cycles: -
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss INC r8
+.Ss LD r8+
 Increment value in register
 .Ar r8
 by 1.
@@ -684,7 +684,7 @@ Set if result is 0.
 .It Sy H
 Set if overflow from bit 3.
 .El
-.Ss INC [HL]
+.Ss LD [HL]+
 Increment the byte pointed to by
 .Sy HL
 by 1.
@@ -694,8 +694,8 @@ Cycles: 3
 Bytes: 1
 .Pp
 Flags: See
-.Sx INC r8
-.Ss INC r16
+.Sx LD r8+
+.Ss LD r16+
 Increment value in register
 .Ar r16
 by 1.
@@ -705,7 +705,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss INC SP
+.Ss LD SP+
 Increment value in register
 .Sy SP
 by 1.
@@ -715,7 +715,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss JP n16
+.Ss LD PC,n16
 Jump to address
 .Ar n16 ;
 effectively, store
@@ -728,7 +728,7 @@ Cycles: 4
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss JP cc,n16
+.Ss LD cc PC,n16
 Jump to address
 .Ar n16
 if condition
@@ -740,7 +740,7 @@ Cycles: 4 taken / 3 untaken
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss JP HL
+.Ss LD PC,HL
 Jump to address in
 .Sy HL ;
 effectively, load
@@ -753,11 +753,11 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss JR e8
+.Ss LD PC,B e8
 Relative Jump by adding
 .Ar e8
 to the address of the instruction following the
-.Sy JR .
+.Sy LD PC,B e8 .
 To clarify, an operand of 0 is equivalent to no jumping.
 .Pp
 Cycles: 3
@@ -765,7 +765,7 @@ Cycles: 3
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss JR cc,e8
+.Ss LD cc PC,B e8
 Relative Jump by adding
 .Ar e8
 to the current address if condition
@@ -862,7 +862,7 @@ Cycles: 4
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LDH [n16],A
+.Ss LD [H n16],A
 Store value in register
 .Sy A
 into byte at address
@@ -877,12 +877,7 @@ Cycles: 3
 Bytes: 2
 .Pp
 Flags: None affected.
-.Pp
-This is sometimes written as
-.Ql ldio [n16], a ,
-or
-.Ql ld [$ff00+n8], a .
-.Ss LDH [C],A
+.Ss LD [H C],A
 Store value in register
 .Sy A
 into byte at address
@@ -893,11 +888,6 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Pp
-This is sometimes written as
-.Ql ldio [c], a ,
-or
-.Ql ld [$ff00+c], a .
 .Ss LD A,[r16]
 Load value in register
 .Sy A
@@ -920,7 +910,7 @@ Cycles: 4
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LDH A,[n16]
+.Ss LD A,[H n16]
 Load value in register
 .Sy A
 from byte at address
@@ -935,12 +925,7 @@ Cycles: 3
 Bytes: 2
 .Pp
 Flags: None affected.
-.Pp
-This is sometimes written as
-.Ql ldio a, [n16] ,
-or
-.Ql ld a, [$ff00+n8] .
-.Ss LDH A,[C]
+.Ss LD A,[H C]
 Load value in register
 .Sy A
 from byte at address
@@ -951,11 +936,6 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Pp
-This is sometimes written as
-.Ql ldio a, [c] ,
-or
-.Ql ld a, [$ff00+c] .
 .Ss LD [HLI],A
 Store value in register
 .Sy A
@@ -1073,7 +1053,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss NOP
+.Ss LD PC,PC
 No OPeration.
 .Pp
 Cycles: 1
@@ -1081,7 +1061,10 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss OR A,r8
+.Pp
+This may be written, arguably incorrectly, as
+.Ql LD F,F .
+.Ss LD A,A|r8
 Store into
 .Sy A
 the bitwise OR of the value in
@@ -1104,7 +1087,7 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss OR A,[HL]
+.Ss LD A,A|[HL]
 Store into
 .Sy A
 the bitwise OR of the byte pointed to by
@@ -1117,8 +1100,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx OR A,r8
-.Ss OR A,n8
+.Sx LD A,A|r8
+.Ss LD A,A|n8
 Store into
 .Sy A
 the bitwise OR of
@@ -1131,8 +1114,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx OR A,r8
-.Ss POP AF
+.Sx LD A,A|r8
+.Ss LD AF,[SP++]
 Pop register
 .Sy AF
 from the stack.
@@ -1161,7 +1144,7 @@ Set from bit 5 of the popped low byte.
 .It Sy C
 Set from bit 4 of the popped low byte.
 .El
-.Ss POP r16
+.Ss LD r16,[SP++]
 Pop register
 .Ar r16
 from the stack.
@@ -1180,7 +1163,7 @@ Cycles: 3
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss PUSH AF
+.Ss LD [--SP],AF
 Push register
 .Sy AF
 into the stack.
@@ -1199,7 +1182,7 @@ Cycles: 4
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss PUSH r16
+.Ss LD [--SP],r16
 Push register
 .Ar r16
 into the stack.
@@ -1218,7 +1201,7 @@ Cycles: 4
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss RES u3,r8
+.Ss LD r8.u3,0
 Set bit
 .Ar u3
 in register
@@ -1231,7 +1214,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss RES u3,[HL]
+.Ss LD [HL].u3,0
 Set bit
 .Ar u3
 in the byte pointed by
@@ -1244,23 +1227,15 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss RET
+.Ss LD PC,[SP++]
 Return from subroutine.
-This is basically a
-.Sy POP PC
-(if such an instruction existed).
-See
-.Sx POP r16
-for an explanation of how
-.Sy POP
-works.
 .Pp
 Cycles: 4
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss RET cc
+.Ss LD cc PC,[SP++]
 Return from subroutine if condition
 .Ar cc
 is met.
@@ -1270,22 +1245,23 @@ Cycles: 5 taken / 2 untaken
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss RETI
+.Ss LD PC,[SP++] / LD IME,1
 Return from subroutine and enable interrupts.
 This is basically equivalent to executing
-.Sx EI
+.Sx LD IME,1
 then
-.Sx RET ,
+.Sx LD PC,[SP++] ,
 meaning that
 .Sy IME
 is set right after this instruction.
+.Pq For technical reasons, the notation is backwards.
 .Pp
 Cycles: 4
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss RL r8
+.Ss LD r8,'r8
 Rotate bits in register
 .Ar r8
 left through carry.
@@ -1307,7 +1283,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RL [HL]
+.Ss LD [HL],'[HL]
 Rotate byte pointed to by
 .Sy HL
 left through carry.
@@ -1319,8 +1295,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx RL r8
-.Ss RLA
+.Sx LD r8,'r8
+.Ss LD 'A
 Rotate register
 .Sy A
 left through carry.
@@ -1342,7 +1318,7 @@ Flags:
 .It Sy C
 Set according to result.
 .El
-.Ss RLC r8
+.Ss LD r8,''r8
 Rotate register
 .Ar r8
 left.
@@ -1364,7 +1340,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RLC [HL]
+.Ss LD [HL],''[HL]
 Rotate byte pointed to by
 .Sy HL
 left.
@@ -1376,8 +1352,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx RLC r8
-.Ss RLCA
+.Sx LD r8,''r8
+.Ss LD ''A
 Rotate register
 .Sy A
 left.
@@ -1399,7 +1375,7 @@ Flags:
 .It Sy C
 Set according to result.
 .El
-.Ss RR r8
+.Ss LD r8,r8'
 Rotate register
 .Ar r8
 right through carry.
@@ -1421,7 +1397,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RR [HL]
+.Ss LD [HL],[HL]'
 Rotate byte pointed to by
 .Sy HL
 right through carry.
@@ -1433,8 +1409,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx RR r8
-.Ss RRA
+.Sx LD r8,r8'
+.Ss LD A'
 Rotate register
 .Sy A
 right through carry.
@@ -1456,7 +1432,7 @@ Flags:
 .It Sy C
 Set according to result.
 .El
-.Ss RRC r8
+.Ss LD r8,r8''
 Rotate register
 .Ar r8
 right.
@@ -1478,7 +1454,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RRC [HL]
+.Ss LD [HL],[HL]''
 Rotate byte pointed to by
 .Sy HL
 right.
@@ -1490,8 +1466,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx RRC r8
-.Ss RRCA
+.Sx LD r8,r8''
+.Ss LD A''
 Rotate register
 .Sy A
 right.
@@ -1513,11 +1489,11 @@ Flags:
 .It Sy C
 Set according to result.
 .El
-.Ss RST vec
+.Ss LD [--SP],PC,B vec
 Call address
 .Ar vec .
 This is a shorter and faster equivalent to
-.Sx CALL
+.Sx LD [--SP],PC,vec
 for suitable values of
 .Ar vec .
 .Pp
@@ -1526,7 +1502,7 @@ Cycles: 4
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss SBC A,r8
+.Ss LD A,A-r8-C
 Subtract the value in
 .Ar r8
 and the carry flag from
@@ -1551,7 +1527,7 @@ Set if borrow (i.e. if
 .Pc >
 .Sy A ) .
 .El
-.Ss SBC A,[HL]
+.Ss LD A,A-[HL]-C
 Subtract the byte pointed to by
 .Sy HL
 and the carry flag from
@@ -1562,8 +1538,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx SBC A,r8
-.Ss SBC A,n8
+.Sx LD A,A-r8-C
+.Ss LD A,A-n8-C
 Subtract the value
 .Ar n8
 and the carry flag from
@@ -1574,8 +1550,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx SBC A,r8
-.Ss SCF
+.Sx LD A,A-r8-C
+.Ss LD F.4,1
 Set Carry Flag.
 .Pp
 Cycles: 1
@@ -1591,7 +1567,7 @@ Flags:
 .It Sy C
 1
 .El
-.Ss SET u3,r8
+.Ss LD r8.u3,1
 Set bit
 .Ar u3
 in register
@@ -1604,7 +1580,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss SET u3,[HL]
+.Ss LD [HL].u3,1
 Set bit
 .Ar u3
 in the byte pointed by
@@ -1617,7 +1593,7 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss SLA r8
+.Ss LD r8,<<r8
 Shift Left Arithmetic register
 .Ar r8 .
 .Pp
@@ -1638,7 +1614,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SLA [HL]
+.Ss LD [HL],<<[HL]
 Shift Left Arithmetic byte pointed to by
 .Sy HL .
 .Pp
@@ -1649,8 +1625,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx SLA r8
-.Ss SRA r8
+.Sx LD r8,<<r8
+.Ss LD r8,>>r8
 Shift Right Arithmetic register
 .Ar r8 .
 .Pp
@@ -1671,7 +1647,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SRA [HL]
+.Ss LD [HL],>>[HL]
 Shift Right Arithmetic byte pointed to by
 .Sy HL .
 .Pp
@@ -1682,8 +1658,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx SRA r8
-.Ss SRL r8
+.Sx LD r8,>>r8
+.Ss LD r8,>>>r8
 Shift Right Logic register
 .Ar r8 .
 .Pp
@@ -1704,7 +1680,7 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SRL [HL]
+.Ss LD [HL],>>>[HL]
 Shift Right Logic byte pointed to by
 .Sy HL .
 .Pp
@@ -1715,8 +1691,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx SRA r8
-.Ss STOP
+.Sx LD r8,>>>r8
+.Ss LD,0
 Enter CPU very low power mode.
 Also used to switch between double and normal speed CPU modes in GBC.
 .Pp
@@ -1725,7 +1701,7 @@ Cycles: -
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss SUB A,r8
+.Ss LD A,A-r8
 Subtract the value in
 .Ar r8
 from
@@ -1749,7 +1725,7 @@ Set if borrow (set if
 >
 .Sy A ) .
 .El
-.Ss SUB A,[HL]
+.Ss LD A,A-[HL]
 Subtract the byte pointed to by
 .Sy HL
 from
@@ -1760,8 +1736,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx SUB A,r8
-.Ss SUB A,n8
+.Sx LD A,A-r8
+.Ss LD A,A-n8
 Subtract the value
 .Ar n8
 from
@@ -1772,8 +1748,8 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx SUB A,r8
-.Ss SWAP r8
+.Sx LD A,A-r8
+.Ss LD r8,''r8''
 Swap upper 4 bits in register
 .Ar r8
 and the lower 4 ones.
@@ -1793,7 +1769,7 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss SWAP [HL]
+.Ss LD [HL],''[HL]''
 Swap upper 4 bits in the byte pointed by
 .Sy HL
 and the lower 4 ones.
@@ -1803,8 +1779,8 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags: See
-.Sx SWAP r8
-.Ss XOR A,r8
+.Sx LD r8,''r8''
+.Ss LD A,A^r8
 Bitwise XOR between the value in
 .Ar r8
 and
@@ -1825,7 +1801,7 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss XOR A,[HL]
+.Ss LD A,A^[HL]
 Bitwise XOR between the byte pointed to by
 .Sy HL
 and
@@ -1836,8 +1812,8 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx XOR A,r8
-.Ss XOR A,n8
+.Sx LD A,A^r8
+.Ss LD A,A^n8
 Bitwise XOR between the value in
 .Ar n8
 and
@@ -1848,7 +1824,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx XOR A,r8
+.Sx LD A,A^r8
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgbds 7
