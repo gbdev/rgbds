@@ -761,7 +761,10 @@ static void beginExpansion(size_t distance, uint8_t skip, char const *str, bool 
 	struct Expansion *parent = NULL;
 	unsigned int depth = 0;
 
-#define LOOKUP_PRE_NEST(exp) (exp)->totalLen += size - skip
+#define LOOKUP_PRE_NEST(exp) do { \
+	assert((exp)->totalLen <= SIZE_MAX - (size - skip)); \
+	(exp)->totalLen += size - skip; \
+} while (0)
 #define LOOKUP_POST_NEST(exp) do { \
 	if (name && ++depth >= nMaxRecursionDepth) \
 		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth); \
