@@ -671,27 +671,37 @@ static void reallocCaptureBuf(void)
 		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
 }
 
+/*
+ * A single { code block } is expected to be passed after `dist` and `exp`.
+ * This macro uses `__VA_ARGS__` so that the block can contain commas.
+ *
+ * `dist` is INTENDED to be mutable, since `getExpansionAtDistance` passes
+ * a dereferenced pointer to it.
+ */
+#define lookupExpansion(dist, exp, ...) do { \
+	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) { \
+		/* Find the closest expansion whose end is after the target */ \
+		while (exp && exp->totalLen + exp->distance <= (dist)) { \
+			(dist) -= exp->totalLen + exp->skip; \
+			exp = exp->next; \
+		} \
+		/* If there is none, or it begins after the target, stop at the previous level */ \
+		if (!exp || exp->distance > (dist)) \
+			break; \
+		/* We know we are inside of that expansion */ \
+		(dist) -= exp->distance; /* Distances are relative to their parent */ \
+		/* Otherwise, do something with this expansion and repeat the process */ \
+		__VA_ARGS__ \
+	} \
+} while (0)
+
 static struct Expansion *getExpansionAtDistance(size_t *distance)
 {
 	struct Expansion *expansion = NULL; /* Top level has no "previous" level */
 
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) {
-		/* Find the closest expansion whose end is after the target */
-		while (exp && exp->totalLen + exp->distance <= *distance) {
-			*distance -= exp->totalLen - exp->skip;
-			exp = exp->next;
-		}
-
-		/* If there is none, or it begins after the target, stop at previous level */
-		if (!exp || exp->distance > *distance)
-			break;
-
-		/* We know we are inside of that expansion */
-		*distance -= exp->distance; /* Distances are relative to their parent */
-
-		/* Otherwise, register this expansion and repeat the process */
+	lookupExpansion(*distance, exp, {
 		expansion = exp;
-	}
+	});
 
 	return expansion;
 }
@@ -711,28 +721,14 @@ static void beginExpansion(size_t distance, uint8_t skip, char const *str, bool 
 	struct Expansion *parent = NULL;
 	unsigned int depth = 0;
 
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) {
-		/* Find the closest expansion whose end is after the target */
-		while (exp && exp->totalLen + exp->distance <= distance) {
-			distance -= exp->totalLen + exp->skip;
-			exp = exp->next;
-		}
-
-		/* If there is none, or it begins after the target, stop at the previous level */
-		if (!exp || exp->distance > distance)
-			break;
-
-		/* We know we are inside of that expansion */
-		distance -= exp->distance; /* Distances are relative to their parent */
-
-		/* Otherwise, register this expansion and repeat the process */
+	lookupExpansion(distance, exp, {
 		assert(exp->totalLen <= SIZE_MAX - (size - skip));
 		exp->totalLen += size - skip;
 		parent = exp;
 
 		if (name && depth++ >= nMaxRecursionDepth)
 			fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
-	}
+	});
 
 	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
 
@@ -1037,24 +1033,11 @@ void lexer_DumpStringExpansions(void)
 	if (!stack)
 		fatalerror("Failed to alloc string expansion stack: %s\n", strerror(errno));
 
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) {
-		/* Find the closest expansion whose end is after the target */
-		while (exp && exp->totalLen + exp->distance <= distance) {
-			distance -= exp->totalLen + exp->skip;
-			exp = exp->next;
-		}
-
-		/* If there is none, or it begins after the target, stop at the previous level */
-		if (!exp || exp->distance > distance)
-			break;
-
-		/* We know we are inside of that expansion */
-		distance -= exp->distance; /* Distances are relative to their parent */
-
+	lookupExpansion(distance, exp, {
 		/* Only register EQUS expansions, not string args */
 		if (exp->name)
 			stack[depth++] = exp;
-	}
+	});
 
 	while (depth--)
 		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
