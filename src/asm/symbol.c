@@ -774,6 +774,7 @@ void sym_Init(time_t now)
 	addString("__UTC_HOUR__", removeLeadingZeros(savedHOUR));
 	addString("__UTC_MINUTE__", removeLeadingZeros(savedMINUTE));
 	addString("__UTC_SECOND__", removeLeadingZeros(savedSECOND));
+	addString("__RGBDS_VERSION__", get_package_version_string());
 #undef addString
 
 	labelScope = NULL;
