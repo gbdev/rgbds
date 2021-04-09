@@ -32,35 +32,43 @@ uint32_t calchash(const char *s)
 
 char const *print(int c)
 {
-	static char buf[5]; /* '\xNN' + '\0' */
+	// "'A'" + '\0': 4 bytes
+	// "'\\n'" + '\0': 5 bytes
+	// "0xFF" + '\0': 5 bytes
+	static char buf[5];
 
 	if (c == EOF)
 		return "EOF";
 
 	if (isprint(c)) {
-		buf[0] = c;
-		buf[1] = '\0';
+		buf[0] = '\'';
+		buf[1] = c;
+		buf[2] = '\'';
+		buf[3] = '\0';
 		return buf;
 	}
 
-	buf[0] = '\\';
 	switch (c) {
 	case '\n':
-		buf[1] = 'n';
+		buf[2] = 'n';
 		break;
 	case '\r':
-		buf[1] = 'r';
+		buf[2] = 'r';
 		break;
 	case '\t':
-		buf[1] = 't';
+		buf[2] = 't';
 		break;
 
 	default: /* Print as hex */
+		buf[0] = '0';
 		buf[1] = 'x';
-		sprintf(&buf[2], "%02hhx", (uint8_t)c);
+		snprintf(&buf[2], 3, "%02hhX", (uint8_t)c); // includes the '\0'
 		return buf;
 	}
-	buf[2] = '\0';
+	buf[0] = '\'';
+	buf[1] = '\\';
+	buf[3] = '\'';
+	buf[4] = '\0';
 	return buf;
 }
 

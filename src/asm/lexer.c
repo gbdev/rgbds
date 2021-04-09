@@ -1172,7 +1172,7 @@ static void readLineContinuation(void)
 		} else if (c == ';') {
 			discardComment();
 		} else {
-			error("Begun line continuation, but encountered character '%s'\n",
+			error("Begun line continuation, but encountered character %s\n",
 			      print(c));
 			return;
 		}
@@ -1631,7 +1631,7 @@ static void readString(void)
 				break;
 
 			default:
-				error("Illegal character escape '%s'\n", print(c));
+				error("Illegal character escape %s\n", print(c));
 				shiftChars(1);
 				break;
 			}
@@ -1781,7 +1781,7 @@ static size_t appendStringLiteral(size_t i)
 				break;
 
 			default:
-				error("Illegal character escape '%s'\n", print(c));
+				error("Illegal character escape %s\n", print(c));
 				shiftChars(1);
 				break;
 			}
@@ -2069,7 +2069,7 @@ static int yylex_NORMAL(void)
 			/* Do not report weird characters when capturing, it'll be done later */
 			if (!lexerState->capturing) {
 				/* TODO: try to group reportings */
-				error("Unknown character '%s'\n", print(c));
+				error("Unknown character %s\n", print(c));
 			}
 		}
 		lexerState->atLineStart = false;
@@ -2157,7 +2157,7 @@ static int yylex_RAW(void)
 			 */
 
 			default:
-				error("Illegal character escape '%s'\n", print(c));
+				error("Illegal character escape %s\n", print(c));
 				break;
 			}
 			/* fallthrough */
