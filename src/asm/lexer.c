@@ -1818,55 +1818,6 @@ finish:
 	return i;
 }
 
-/* Function to report one character's worth of garbage bytes */
-
-static char const *reportGarbageChar(unsigned char firstByte)
-{
-	static char bytes[6 + 2 + 1]; /* Max size of a UTF-8 encoded code point, plus "''\0" */
-	/* First, attempt UTF-8 decoding */
-	uint32_t state = 0; /* UTF8_ACCEPT */
-	uint32_t codepoint;
-	uint8_t size = 0; /* Number of additional bytes to shift */
-
-	bytes[1] = firstByte; /* No need to init the rest of the array */
-	decode(&state, &codepoint, firstByte);
-	while (state != 0 && state != 1 /* UTF8_REJECT */) {
-		int c = peek(size++);
-
-		if (c == EOF)
-			break;
-		bytes[size + 1] = c;
-		decode(&state, &codepoint, c);
-	}
-
-	if (state == 0 && (codepoint > UCHAR_MAX || isprint((unsigned char)codepoint))) {
-		/* Character is valid, printable UTF-8! */
-		shiftChars(size);
-		bytes[0] = '\'';
-		bytes[size + 2] = '\'';
-		bytes[size + 3] = '\0';
-		return bytes;
-	}
-
-	/* The character isn't valid UTF-8, so we'll only print that first byte */
-	if (isprint(firstByte)) {
-		/* bytes[1] = firstByte; */
-		bytes[0] = '\'';
-		bytes[2] = '\'';
-		bytes[3] = '\0';
-		return bytes;
-	}
-	/* Well then, print its hex value */
-	static char const hexChars[16] = "0123456789ABCDEF";
-
-	bytes[0] = '0';
-	bytes[1] = 'x';
-	bytes[2] = hexChars[firstByte >> 4];
-	bytes[3] = hexChars[firstByte & 0x0f];
-	bytes[4] = '\0';
-	return bytes;
-}
-
 /* Lexer core */
 
 static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
@@ -2118,7 +2069,7 @@ static int yylex_NORMAL(void)
 			/* Do not report weird characters when capturing, it'll be done later */
 			if (!lexerState->capturing) {
 				/* TODO: try to group reportings */
-				error("Unknown character %s\n", reportGarbageChar(c));
+				error("Unknown character '%s'\n", print(c));
 			}
 		}
 		lexerState->atLineStart = false;
