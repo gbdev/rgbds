@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 uint32_t calchash(const char *s);
-char const *print(int c);
+char const *printChar(int c);
 /*
  * @return The number of bytes read, or 0 if invalid data was found
  */
