@@ -30,7 +30,7 @@ uint32_t calchash(const char *s)
 	return hash;
 }
 
-char const *print(int c)
+char const *printChar(int c)
 {
 	// "'A'" + '\0': 4 bytes
 	// "'\\n'" + '\0': 5 bytes
