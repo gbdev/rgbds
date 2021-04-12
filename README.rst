@@ -18,6 +18,8 @@ The documentation of this toolchain can be viewed online
 `here <https://rgbds.gbdev.io/docs/>`__, it is generated from the man pages
 found in this repository.
 
+If you want to contribute or maintain RGBDS, and have questions regarding the code, its organisation, etc. you can find me `on GBDev <https://gbdev.io/chat>`__ or via mail at ``rgbds at eldred dot fr``.
+
 1. Installing RGBDS
 -------------------
 
