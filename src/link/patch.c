@@ -37,7 +37,7 @@ struct RPNStack {
 	size_t capacity;
 } stack;
 
-static inline void initRPNStack(void)
+static void initRPNStack(void)
 {
 	stack.capacity = 64;
 	stack.values = malloc(sizeof(*stack.values) * stack.capacity);
@@ -46,7 +46,7 @@ static inline void initRPNStack(void)
 		err(1, "Failed to init RPN stack");
 }
 
-static inline void clearRPNStack(void)
+static void clearRPNStack(void)
 {
 	stack.size = 0;
 }
@@ -92,7 +92,7 @@ static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
 	return stack.values[stack.size];
 }
 
-static inline void freeRPNStack(void)
+static void freeRPNStack(void)
 {
 	free(stack.values);
 	free(stack.errorFlags);

@@ -269,7 +269,7 @@ struct Symbol const *sym_GetPC(void)
 	return PCSymbol;
 }
 
-static inline bool isReferenced(struct Symbol const *sym)
+static bool isReferenced(struct Symbol const *sym)
 {
 	return sym->ID != (uint32_t)-1;
 }
@@ -680,7 +680,7 @@ void sym_SetExportAll(bool set)
 	exportall = set;
 }
 
-static inline struct Symbol *createBuiltinSymbol(char const *name)
+static struct Symbol *createBuiltinSymbol(char const *name)
 {
 	struct Symbol *sym = createsymbol(name);
 

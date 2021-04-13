@@ -53,12 +53,12 @@ struct CharmapStackEntry {
 
 struct CharmapStackEntry *charmapStack;
 
-static inline struct Charmap *charmap_Get(const char *name)
+static struct Charmap *charmap_Get(const char *name)
 {
 	return hash_GetElement(charmaps, name);
 }
 
-static inline struct Charmap *resizeCharmap(struct Charmap *map, size_t capacity)
+static struct Charmap *resizeCharmap(struct Charmap *map, size_t capacity)
 {
 	struct Charmap *new = realloc(map, sizeof(*map) + sizeof(*map->nodes) * capacity);
 
@@ -69,7 +69,7 @@ static inline struct Charmap *resizeCharmap(struct Charmap *map, size_t capacity
 	return new;
 }
 
-static inline void initNode(struct Charnode *node)
+static void initNode(struct Charnode *node)
 {
 	node->isTerminal = false;
 	memset(node->next, 0, sizeof(node->next));

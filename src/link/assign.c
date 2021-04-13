@@ -106,8 +106,7 @@ static void processLinkerScript(void)
  * @param section The section to assign
  * @param location The location to assign the section to
  */
-static inline void assignSection(struct Section *section,
-				 struct MemoryLocation const *location)
+static void assignSection(struct Section *section, struct MemoryLocation const *location)
 {
 	section->org = location->address;
 	section->bank = location->bank;

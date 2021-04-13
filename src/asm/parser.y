@@ -335,7 +335,7 @@ static void freeDsArgList(struct DsArgList *args)
 	free(args->args);
 }
 
-static inline void failAssert(enum AssertionType type)
+static void failAssert(enum AssertionType type)
 {
 	switch (type) {
 		case ASSERT_FATAL:
@@ -349,7 +349,7 @@ static inline void failAssert(enum AssertionType type)
 	}
 }
 
-static inline void failAssertMsg(enum AssertionType type, char const *msg)
+static void failAssertMsg(enum AssertionType type, char const *msg)
 {
 	switch (type) {
 		case ASSERT_FATAL:

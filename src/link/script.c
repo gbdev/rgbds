@@ -78,12 +78,12 @@ static bool popFile(void)
 	return true;
 }
 
-static inline bool isWhiteSpace(int c)
+static bool isWhiteSpace(int c)
 {
 	return c == ' ' || c == '\t';
 }
 
-static inline bool isNewline(int c)
+static bool isNewline(int c)
 {
 	return c == '\r' || c == '\n';
 }

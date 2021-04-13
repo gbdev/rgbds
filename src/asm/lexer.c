@@ -594,7 +594,7 @@ struct KeywordDictNode {
 } keywordDict[351] = {0}; /* Make sure to keep this correct when adding keywords! */
 
 /* Convert a char into its index into the dict */
-static inline uint8_t dictIndex(char c)
+static uint8_t dictIndex(char c)
 {
 	/* Translate uppercase to lowercase (roughly) */
 	if (c > 0x60)

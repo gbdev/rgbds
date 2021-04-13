@@ -452,7 +452,7 @@ static void readAssertion(FILE *file, struct Assertion *assert,
 		   fileName);
 }
 
-static inline struct Section *getMainSection(struct Section *section)
+static struct Section *getMainSection(struct Section *section)
 {
 	if (section->modifier != SECTION_NORMAL)
 		section = sect_GetSection(section->name);

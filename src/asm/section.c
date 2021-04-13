@@ -41,7 +41,7 @@ struct UnionStackEntry {
 /*
  * A quick check to see if we have an initialized section
  */
-static inline void checksection(void)
+static void checksection(void)
 {
 	if (pCurrentSection == NULL)
 		fatalerror("Code generation before SECTION directive\n");
@@ -51,7 +51,7 @@ static inline void checksection(void)
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-static inline void checkcodesection(void)
+static void checkcodesection(void)
 {
 	checksection();
 
@@ -60,7 +60,7 @@ static inline void checkcodesection(void)
 			   pCurrentSection->name);
 }
 
-static inline void checkSectionSize(struct Section const *sect, uint32_t size)
+static void checkSectionSize(struct Section const *sect, uint32_t size)
 {
 	uint32_t maxSize = maxsize[sect->type];
 
@@ -72,7 +72,7 @@ static inline void checkSectionSize(struct Section const *sect, uint32_t size)
 /*
  * Check if the section has grown too much.
  */
-static inline void reserveSpace(uint32_t delta_size)
+static void reserveSpace(uint32_t delta_size)
 {
 	/*
 	 * This check is here to trap broken code that generates sections that
@@ -474,7 +474,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 	}
 }
 
-static inline void growSection(uint32_t growth)
+static void growSection(uint32_t growth)
 {
 	curOffset += growth;
 	if (curOffset + loadOffset > pCurrentSection->size)
@@ -483,19 +483,19 @@ static inline void growSection(uint32_t growth)
 		currentLoadSection->size = curOffset;
 }
 
-static inline void writebyte(uint8_t byte)
+static void writebyte(uint8_t byte)
 {
 	pCurrentSection->data[sect_GetOutputOffset()] = byte;
 	growSection(1);
 }
 
-static inline void writeword(uint16_t b)
+static void writeword(uint16_t b)
 {
 	writebyte(b & 0xFF);
 	writebyte(b >> 8);
 }
 
-static inline void writelong(uint32_t b)
+static void writelong(uint32_t b)
 {
 	writebyte(b & 0xFF);
 	writebyte(b >> 8);
@@ -503,8 +503,7 @@ static inline void writelong(uint32_t b)
 	writebyte(b >> 24);
 }
 
-static inline void createPatch(enum PatchType type, struct Expression const *expr,
-			       uint32_t pcShift)
+static void createPatch(enum PatchType type, struct Expression const *expr, uint32_t pcShift)
 {
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
