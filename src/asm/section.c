@@ -781,8 +781,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 
 		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
-			fclose(f);
-			return;
+			goto cleanup;
 		}
 
 		fseek(f, startPos, SEEK_SET);
@@ -805,6 +804,7 @@ void out_BinaryFile(char const *s, int32_t startPos)
 	if (ferror(f))
 		error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 
+cleanup:
 	fclose(f);
 }
 
@@ -828,16 +828,16 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 
 	if (fstk_FindFile(s, &fullPath, &size))
 		f = fopen(fullPath, "rb");
+	free(fullPath);
 
 	if (!f) {
-		free(fullPath);
 		if (oGeneratedMissingIncludes) {
 			if (verbose)
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
 			oFailedOnMissingInclude = true;
-			return;
+		} else {
+			error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
 		}
-		error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
 		return;
 	}
 
@@ -851,13 +851,13 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 
 		if (start_pos > fsize) {
 			error("Specified start position is greater than length of file\n");
-			return;
+			goto cleanup;
 		}
 
 		if ((start_pos + length) > fsize) {
 			error("Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32
 			      " > %" PRIu32 ")\n", start_pos, length, fsize);
-			return;
+			goto cleanup;
 		}
 
 		fseek(f, start_pos, SEEK_SET);
@@ -885,8 +885,8 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		}
 	}
 
+cleanup:
 	fclose(f);
-	free(fullPath);
 }
 
 /*
