@@ -43,12 +43,6 @@ static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
-static char savedDAY[3];
-static char savedMONTH[3];
-static char savedYEAR[20];
-static char savedHOUR[3];
-static char savedMINUTE[3];
-static char savedSECOND[3];
 static bool exportall;
 
 bool sym_IsPC(struct Symbol const *sym)
@@ -727,13 +721,18 @@ void sym_Init(time_t now)
 	__LINE__Symbol->numCallback = Callback__LINE__;
 	__FILE__Symbol->type = SYM_EQUS;
 	__FILE__Symbol->strCallback = Callback__FILE__;
+
 	sym_AddSet("_RS", 0)->isBuiltin = true;
 
-	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH)->isBuiltin = true;
+#define addNumber(name, val) sym_AddEqu(name, val)->isBuiltin = true
+#define addString(name, val) sym_AddString(name, val)->isBuiltin = true
+
+	addString("__RGBDS_VERSION__", get_package_version_string());
+	addNumber("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
+	addNumber("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
+	addNumber("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
 #ifdef PACKAGE_VERSION_RC
-	sym_AddEqu("__RGBDS_RC__", PACKAGE_VERSION_RC)->isBuiltin = true;
+	addNumber("__RGBDS_RC__", PACKAGE_VERSION_RC);
 #endif
 
 	if (now == (time_t)-1) {
@@ -755,26 +754,19 @@ void sym_Init(time_t now)
 		 sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
 		 time_utc);
 
-	strftime(savedYEAR, sizeof(savedYEAR), "%Y", time_utc);
-	strftime(savedMONTH, sizeof(savedMONTH), "%m", time_utc);
-	strftime(savedDAY, sizeof(savedDAY), "%d", time_utc);
-	strftime(savedHOUR, sizeof(savedHOUR), "%H", time_utc);
-	strftime(savedMINUTE, sizeof(savedMINUTE), "%M", time_utc);
-	strftime(savedSECOND, sizeof(savedSECOND), "%S", time_utc);
-
-#define addString(name, val) sym_AddString(name, val)->isBuiltin = true
 	addString("__TIME__", savedTIME);
 	addString("__DATE__", savedDATE);
 	addString("__ISO_8601_LOCAL__", savedTIMESTAMP_ISO8601_LOCAL);
 	addString("__ISO_8601_UTC__", savedTIMESTAMP_ISO8601_UTC);
-	/* This cannot start with zeros */
-	addString("__UTC_YEAR__", savedYEAR);
-	addString("__UTC_MONTH__", removeLeadingZeros(savedMONTH));
-	addString("__UTC_DAY__", removeLeadingZeros(savedDAY));
-	addString("__UTC_HOUR__", removeLeadingZeros(savedHOUR));
-	addString("__UTC_MINUTE__", removeLeadingZeros(savedMINUTE));
-	addString("__UTC_SECOND__", removeLeadingZeros(savedSECOND));
-	addString("__RGBDS_VERSION__", get_package_version_string());
+
+	addNumber("__UTC_YEAR__", time_utc->tm_year + 1900);
+	addNumber("__UTC_MONTH__", time_utc->tm_mon + 1);
+	addNumber("__UTC_DAY__", time_utc->tm_mday);
+	addNumber("__UTC_HOUR__", time_utc->tm_hour);
+	addNumber("__UTC_MINUTE__", time_utc->tm_min);
+	addNumber("__UTC_SECOND__", time_utc->tm_sec);
+
+#undef addNumber
 #undef addString
 
 	labelScope = NULL;

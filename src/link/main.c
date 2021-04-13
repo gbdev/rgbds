@@ -205,7 +205,7 @@ static void cleanup(void)
 int main(int argc, char *argv[])
 {
 	int optionChar;
-	char *endptr; /* For error checking with `strtol` */
+	char *endptr; /* For error checking with `strtoul` */
 	unsigned long value; /* For storing `strtoul`'s return value */
 
 	/* Parse options */
