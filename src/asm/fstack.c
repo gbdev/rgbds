@@ -191,6 +191,11 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 					break;
 				}
 				len = sprintf(*fullPath, "%s%s", incPath, path);
+				if (len < 0) {
+					error("sprintf error during include path search: %s\n",
+					       strerror(errno));
+					break;
+				}
 			}
 
 			if (isPathValid(*fullPath)) {
