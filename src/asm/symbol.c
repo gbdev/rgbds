@@ -680,17 +680,6 @@ void sym_SetExportAll(bool set)
 	exportall = set;
 }
 
-/**
- * Returns a pointer to the first non-zero character in a string
- * Non-'0', not non-'\0'.
- */
-static inline char const *removeLeadingZeros(char const *ptr)
-{
-	while (*ptr == '0')
-		ptr++;
-	return ptr;
-}
-
 static inline struct Symbol *createBuiltinSymbol(char const *name)
 {
 	struct Symbol *sym = createsymbol(name);
