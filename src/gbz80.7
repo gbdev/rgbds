@@ -879,9 +879,9 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql ldio [n16], a ,
+.Ql LDIO [n16],A ,
 or
-.Ql ld [$ff00+n8], a .
+.Ql LD [$FF00+n8],A .
 .Ss LDH [C],A
 Store value in register
 .Sy A
@@ -895,9 +895,9 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql ldio [c], a ,
+.Ql LDIO [C],A ,
 or
-.Ql ld [$ff00+c], a .
+.Ql LD [$FF00+C],A .
 .Ss LD A,[r16]
 Load value in register
 .Sy A
@@ -937,9 +937,9 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql ldio a, [n16] ,
+.Ql LDIO A,[n16] ,
 or
-.Ql ld a, [$ff00+n8] .
+.Ql LD A,[$FF00+n8] .
 .Ss LDH A,[C]
 Load value in register
 .Sy A
@@ -953,9 +953,9 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql ldio a, [c] ,
+.Ql LDIO A,[C] ,
 or
-.Ql ld a, [$ff00+c] .
+.Ql LD A,[$FF00+C] .
 .Ss LD [HLI],A
 Store value in register
 .Sy A
@@ -970,6 +970,11 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
+.Pp
+This is sometimes written as
+.Ql LD [HL+],A ,
+or
+.Ql LDI [HL],A .
 .Ss LD [HLD],A
 Store value in register
 .Sy A
@@ -984,6 +989,11 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
+.Pp
+This is sometimes written as
+.Ql LD [HL-],A ,
+or
+.Ql LDD [HL],A .
 .Ss LD A,[HLD]
 Load value into register
 .Sy A
@@ -998,6 +1008,11 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
+.Pp
+This is sometimes written as
+.Ql LD A,[HL-] ,
+or
+.Ql LDD A,[HL] .
 .Ss LD A,[HLI]
 Load value into register
 .Sy A
@@ -1012,6 +1027,11 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
+.Pp
+This is sometimes written as
+.Ql LD A,[HL+], ,
+or
+.Ql LDI A,[HL] .
 .Ss LD SP,n16
 Load value
 .Ar n16
