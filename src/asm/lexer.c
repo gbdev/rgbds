@@ -312,7 +312,6 @@ struct Expansion {
 	size_t len;
 	size_t totalLen;
 	size_t distance; /* Distance between the beginning of this expansion and of its parent */
-	uint8_t skip; /* How many extra characters to skip after the expansion is over */
 	bool owned; /* Whether or not to free contents when this expansion is freed */
 };
 
@@ -684,7 +683,7 @@ static void reallocCaptureBuf(void)
 	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) { \
 		/* Find the closest expansion whose end is after the target */ \
 		while (exp && exp->totalLen + exp->distance <= (dist)) { \
-			(dist) -= exp->totalLen + exp->skip; \
+			(dist) -= exp->totalLen; \
 			exp = exp->next; \
 		} \
 		/* If there is none, or it begins after the target, stop at the previous level */ \
@@ -708,7 +707,7 @@ static struct Expansion *getExpansionAtDistance(size_t *distance)
 	return expansion;
 }
 
-static void beginExpansion(uint8_t skip, char const *str, bool owned, char const *name)
+static void beginExpansion(char const *str, bool owned, char const *name)
 {
 	size_t size = strlen(str);
 
@@ -724,8 +723,8 @@ static void beginExpansion(uint8_t skip, char const *str, bool owned, char const
 	unsigned int depth = 0;
 
 	lookupExpansion(distance, exp, {
-		assert(exp->totalLen <= SIZE_MAX - (size - skip));
-		exp->totalLen += size - skip;
+		assert(exp->totalLen <= SIZE_MAX - size);
+		exp->totalLen += size;
 		parent = exp;
 
 		if (name && depth++ >= nMaxRecursionDepth)
@@ -748,7 +747,6 @@ static void beginExpansion(uint8_t skip, char const *str, bool owned, char const
 	(*insertPoint)->len = size;
 	(*insertPoint)->totalLen = size;
 	(*insertPoint)->distance = distance;
-	(*insertPoint)->skip = skip;
 	(*insertPoint)->owned = owned;
 
 	/* If expansion is the new closest one, update offset */
@@ -885,27 +883,24 @@ restart:
 		lexerState->macroArgScanDistance++;
 		c = peekInternal(1);
 		if (isMacroChar(c)) {
+			shiftChar();
+			shiftChar();
 			char const *str = readMacroArg(c);
 
 			/*
 			 * If the macro arg is an empty string, it cannot be
 			 * expanded, so skip it and keep peeking.
 			 */
-			if (!str[0]) {
-				shiftChar();
-				shiftChar();
+			if (!str[0])
 				goto restart;
-			}
 
-			beginExpansion(2, str, c == '#', NULL);
+			beginExpansion(str, c == '#', NULL);
 
 			/*
 			 * Assuming macro args can't be recursive (I'll be damned if a way
-			 * is found...), then we mark the entire macro arg as scanned;
-			 * however, the two macro arg characters (\1) will be ignored,
-			 * so they shouldn't be counted in the scan distance!
+			 * is found...), then we mark the entire macro arg as scanned.
 			 */
-			lexerState->macroArgScanDistance += strlen(str) - 2;
+			lexerState->macroArgScanDistance += strlen(str);
 
 			c = str[0];
 		} else {
@@ -917,7 +912,7 @@ restart:
 		char const *ptr = readInterpolation();
 
 		if (ptr) {
-			beginExpansion(0, ptr, false, ptr);
+			beginExpansion(ptr, false, ptr);
 			goto restart;
 		}
 	}
@@ -962,8 +957,6 @@ nextExpansion:
 				/* Add the leftovers to the distance */
 				distance += lexerState->expansionOfs;
 				distance -= lexerState->expansions->totalLen;
-				/* Also add in the post-expansion skip */
-				distance += lexerState->expansions->skip;
 				/* Move on to the next expansion */
 				struct Expansion *next = lexerState->expansions->next;
 
@@ -1379,7 +1372,7 @@ static char const *readInterpolation(void)
 			char const *ptr = readInterpolation();
 
 			if (ptr) {
-				beginExpansion(0, ptr, false, ptr);
+				beginExpansion(ptr, false, ptr);
 				continue; /* Restart, reading from the new buffer */
 			}
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
@@ -2018,7 +2011,7 @@ static int yylex_NORMAL(void)
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
 
-						beginExpansion(0, s, false, sym->name);
+						beginExpansion(s, false, sym->name);
 						continue; /* Restart, reading from the new buffer */
 					}
 				}
