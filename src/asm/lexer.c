@@ -309,7 +309,7 @@ struct Expansion {
 		char const *unowned;
 		char *owned;
 	} contents;
-	size_t len;
+	size_t len; /* Length of the contents */
 	size_t totalLen;
 	size_t distance; /* Distance between the beginning of this expansion and of its parent */
 	bool owned; /* Whether or not to free contents when this expansion is freed */
@@ -329,8 +329,8 @@ struct LexerState {
 	union {
 		struct { /* If mmap()ed */
 			char *ptr; /* Technically `const` during the lexer's execution */
-			off_t size;
-			off_t offset;
+			size_t size;
+			size_t offset;
 			bool isReferenced; /* If a macro in this file requires not unmapping it */
 		};
 		struct { /* Otherwise */
@@ -501,7 +501,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 			state->isMmapped = true;
 			state->isReferenced = false; // By default, a state isn't referenced
 			state->ptr = mappingAddr;
-			state->size = fileInfo.st_size;
+			assert(fileInfo.st_size >= 0);
+			state->size = (size_t)fileInfo.st_size;
 			state->offset = 0;
 
 			if (verbose)
@@ -876,7 +877,7 @@ restart:
 	if (lexerState->macroArgScanDistance > 0)
 		return c;
 
-	lexerState->macroArgScanDistance = 1; /* Do not consider again */
+	lexerState->macroArgScanDistance++; /* Do not consider again */
 
 	if (c == '\\' && !lexerState->disableMacroArgs) {
 		/* If character is a backslash, check for a macro arg */
