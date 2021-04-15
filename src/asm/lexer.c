@@ -364,7 +364,7 @@ struct LexerState {
 	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
 	bool expandStrings;
 	struct Expansion *expansions;
-	size_t expansionOfs; /* Offset into the current top-level expansion (negative = before) */
+	size_t expansionOfs; /* Offset into the current top-level expansion */
 };
 
 struct LexerState *lexerState = NULL;
