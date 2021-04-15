@@ -1,10 +1,9 @@
 Contributing
 ============
 
-RGBDS was created in the late 90's and has received contributions from several
+RGBDS was created in the late '90s and has received contributions from several
 developers since then. It wouldn't have been possible to get to this point
-without their work and, for that reason, it is always open to the contributions
-of other people.
+without their work, and it is always open to the contributions of other people.
 
 Reporting Bugs
 --------------
