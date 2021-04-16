@@ -54,10 +54,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 	}
 
 	/* If not, add it */
-	bool collided = hash_AddElement(symbols, symbol->name, symbol);
-
-	if (beVerbose && collided)
-		warnx("Symbol hashmap collision occurred!");
+	hash_AddElement(symbols, symbol->name, symbol);
 }
 
 struct Symbol *sym_GetSymbol(char const *name)
