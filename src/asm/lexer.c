@@ -800,7 +800,7 @@ static int peekInternal(uint8_t distance)
 
 /* forward declarations for peek */
 static void shiftChar(void);
-static char const *readInterpolation(void);
+static char const *readInterpolation(unsigned int depth);
 
 static int peek(void)
 {
@@ -845,7 +845,7 @@ restart:
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		/* If character is an open brace, do symbol interpolation */
 		shiftChar();
-		char const *ptr = readInterpolation();
+		char const *ptr = readInterpolation(0);
 
 		if (ptr) {
 			beginExpansion(ptr, false, ptr);
@@ -1258,8 +1258,11 @@ static int readIdentifier(char firstChar)
 
 /* Functions to read strings */
 
-static char const *readInterpolation(void)
+static char const *readInterpolation(unsigned int depth)
 {
+	if (depth >= nMaxRecursionDepth)
+		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
+
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
 	struct FormatSpec fmt = fmt_NewSpec();
@@ -1269,7 +1272,7 @@ static char const *readInterpolation(void)
 
 		if (c == '{') { /* Nested interpolation */
 			shiftChar();
-			char const *ptr = readInterpolation();
+			char const *ptr = readInterpolation(depth + 1);
 
 			if (ptr) {
 				beginExpansion(ptr, false, ptr);
@@ -1491,7 +1494,7 @@ static void readString(void)
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			char const *ptr = readInterpolation();
+			char const *ptr = readInterpolation(0);
 
 			if (ptr)
 				while (*ptr)
@@ -1641,7 +1644,7 @@ static size_t appendStringLiteral(size_t i)
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			char const *ptr = readInterpolation();
+			char const *ptr = readInterpolation(0);
 
 			if (ptr)
 				i = appendEscapedSubstring(ptr, i);
