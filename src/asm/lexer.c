@@ -302,16 +302,14 @@ static bool isWhitespace(int c)
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
 struct Expansion {
-	struct Expansion *firstChild;
-	struct Expansion *next;
+	struct Expansion *parent;
 	char *name;
 	union {
 		char const *unowned;
 		char *owned;
 	} contents;
-	size_t len; /* Length of the contents */
-	size_t totalLen;
-	size_t distance; /* Distance between the beginning of this expansion and of its parent */
+	size_t size; /* Length of the contents */
+	size_t offset; /* Cursor into the contents */
 	bool owned; /* Whether or not to free contents when this expansion is freed */
 };
 
@@ -362,8 +360,7 @@ struct LexerState {
 	bool disableInterpolation;
 	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
 	bool expandStrings;
-	struct Expansion *expansions;
-	size_t expansionOfs; /* Offset into the current top-level expansion */
+	struct Expansion *expansions; /* Points to the innermost current expansion */
 };
 
 struct LexerState *lexerState = NULL;
@@ -386,7 +383,6 @@ static void initState(struct LexerState *state)
 	state->macroArgScanDistance = 0;
 	state->expandStrings = true;
 	state->expansions = NULL;
-	state->expansionOfs = 0;
 }
 
 static void nextLine(void)
@@ -673,41 +669,6 @@ static void reallocCaptureBuf(void)
 		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
 }
 
-/*
- * A single { code block } is expected to be passed after `dist` and `exp`.
- * This macro uses `__VA_ARGS__` so that the block can contain commas.
- *
- * `dist` is INTENDED to be mutable, since `getExpansionAtDistance` passes
- * a dereferenced pointer to it.
- */
-#define lookupExpansion(dist, exp, ...) do { \
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->firstChild) { \
-		/* Find the closest expansion whose end is after the target */ \
-		while (exp && exp->totalLen + exp->distance <= (dist)) { \
-			(dist) -= exp->totalLen; \
-			exp = exp->next; \
-		} \
-		/* If there is none, or it begins after the target, stop at the previous level */ \
-		if (!exp || exp->distance > (dist)) \
-			break; \
-		/* We know we are inside of that expansion */ \
-		(dist) -= exp->distance; /* Distances are relative to their parent */ \
-		/* Otherwise, do something with this expansion and repeat the process */ \
-		__VA_ARGS__ \
-	} \
-} while (0)
-
-static struct Expansion *getExpansionAtDistance(size_t *distance)
-{
-	struct Expansion *expansion = NULL; /* Top level has no "previous" level */
-
-	lookupExpansion(*distance, exp, {
-		expansion = exp;
-	});
-
-	return expansion;
-}
-
 static void beginExpansion(char const *str, bool owned, char const *name)
 {
 	size_t size = strlen(str);
@@ -716,55 +677,32 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 	if (!size)
 		return;
 
-	/* Distance argument is relative to read offset! */
-	size_t distance = lexerState->expansionOfs;
+	if (name) {
+		unsigned int depth = 0;
 
-	/* Increase the total length of all parents, and return the topmost one */
-	struct Expansion *parent = NULL;
-	unsigned int depth = 0;
+		for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
+			if (depth++ >= nMaxRecursionDepth)
+				fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
+		}
+	}
 
-	lookupExpansion(distance, exp, {
-		assert(exp->totalLen <= SIZE_MAX - size);
-		exp->totalLen += size;
-		parent = exp;
+	struct Expansion *new = malloc(sizeof(*new));
 
-		if (name && depth++ >= nMaxRecursionDepth)
-			fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
-	});
-
-	struct Expansion **insertPoint = parent ? &parent->firstChild : &lexerState->expansions;
-
-	/* We know we are in none of the children expansions: add ourselves, keeping it sorted */
-	while (*insertPoint && (*insertPoint)->distance < distance)
-		insertPoint = &(*insertPoint)->next;
-
-	*insertPoint = malloc(sizeof(**insertPoint));
-	if (!*insertPoint)
+	if (!new)
 		fatalerror("Unable to allocate new expansion: %s\n", strerror(errno));
-	(*insertPoint)->firstChild = NULL;
-	(*insertPoint)->next = NULL; /* Expansions are always performed left to right */
-	(*insertPoint)->name = name ? strdup(name) : NULL;
-	(*insertPoint)->contents.unowned = str;
-	(*insertPoint)->len = size;
-	(*insertPoint)->totalLen = size;
-	(*insertPoint)->distance = distance;
-	(*insertPoint)->owned = owned;
 
-	/* If expansion is the new closest one, update offset */
-	if (insertPoint == &lexerState->expansions)
-		lexerState->expansionOfs = 0;
+	new->parent = lexerState->expansions;
+	new->name = name ? strdup(name) : NULL;
+	new->contents.unowned = str;
+	new->size = size;
+	new->offset = 0;
+	new->owned = owned;
+
+	lexerState->expansions = new;
 }
 
 static void freeExpansion(struct Expansion *expansion)
 {
-	struct Expansion *child = expansion->firstChild;
-
-	while (child) {
-		struct Expansion *next = child->next;
-
-		freeExpansion(child);
-		child = next;
-	}
 	free(expansion->name);
 	if (expansion->owned)
 		free(expansion->contents.owned);
@@ -794,22 +732,19 @@ static char const *readMacroArg(char name)
 	return str;
 }
 
-/* If at any point we need more than 255 characters of lookahead, something went VERY wrong. */
+/* We only need one character of lookahead, for macro arguments */
 static int peekInternal(uint8_t distance)
 {
+	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
+		assert(exp->offset < exp->size);
+		if (distance < exp->size - exp->offset)
+			return exp->contents.unowned[exp->offset + distance];
+		distance -= exp->size - exp->offset;
+	}
+
 	if (distance >= LEXER_BUF_SIZE)
 		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%"
 			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
-
-	size_t ofs = lexerState->expansionOfs + distance;
-	struct Expansion const *expansion = getExpansionAtDistance(&ofs);
-
-	if (expansion) {
-		assert(ofs < expansion->len);
-		return expansion->contents.unowned[ofs];
-	}
-
-	distance = ofs;
 
 	if (lexerState->isMmapped) {
 		if (lexerState->offset + distance >= lexerState->size)
@@ -935,56 +870,30 @@ static void shiftChar(void)
 
 	lexerState->macroArgScanDistance--;
 
-	/* FIXME: this may not be too great, as only the top level is considered... */
-
-	uint8_t distance = 1;
-
-	/*
-	 * The logic is as follows:
-	 * - Any characters up to the expansion need to be consumed in the file
-	 * - If some remain after that, advance the offset within the expansion
-	 * - If that goes *past* the expansion, then leftovers shall be consumed in the file
-	 * - If we went past the expansion, we're back to square one, and should re-do all
-	 */
-nextExpansion:
 	if (lexerState->expansions) {
-		/* If the read cursor reaches into the expansion, update offset */
-		if (distance > lexerState->expansions->distance) {
-			/* distance = <file chars (expansion distance)> + <expansion chars> */
-			lexerState->expansionOfs += distance - lexerState->expansions->distance;
-			distance = lexerState->expansions->distance; /* Nb chars to read in file */
-			/* Now, check if the expansion finished being read */
-			if (lexerState->expansionOfs >= lexerState->expansions->totalLen) {
-				/* Add the leftovers to the distance */
-				distance += lexerState->expansionOfs;
-				distance -= lexerState->expansions->totalLen;
-				/* Move on to the next expansion */
-				struct Expansion *next = lexerState->expansions->next;
+		/* Advance within the current expansion */
+		assert(lexerState->expansions->offset < lexerState->expansions->size);
+		lexerState->expansions->offset++;
+		if (lexerState->expansions->offset == lexerState->expansions->size) {
+			/* When an expansion is done, free it and move up to its parent */
+			struct Expansion *exp = lexerState->expansions;
 
-				freeExpansion(lexerState->expansions);
-				lexerState->expansions = next;
-				/* Reset the offset for the next expansion */
-				lexerState->expansionOfs = 0;
-				/* And repeat, in case we also go into or over the next expansion */
-				goto nextExpansion;
-			}
+			lexerState->expansions = lexerState->expansions->parent;
+			freeExpansion(exp);
 		}
-		/* Getting closer to the expansion */
-		lexerState->expansions->distance -= distance;
-		/* Now, `distance` is how many bytes to move forward **in the file** */
-	}
-
-	lexerState->colNo += distance;
-
-	if (lexerState->isMmapped) {
-		lexerState->offset += distance;
 	} else {
-		lexerState->index += distance;
-		/* Wrap around if necessary */
-		if (lexerState->index >= LEXER_BUF_SIZE)
-			lexerState->index %= LEXER_BUF_SIZE;
-		assert(lexerState->nbChars >= distance);
-		lexerState->nbChars -= distance;
+		/* Advance within the file contents */
+		lexerState->colNo++;
+		if (lexerState->isMmapped) {
+			lexerState->offset++;
+		} else {
+			assert(lexerState->index < LEXER_BUF_SIZE);
+			lexerState->index++;
+			if (lexerState->index == LEXER_BUF_SIZE)
+				lexerState->index = 0; /* Wrap around if necessary */
+			assert(lexerState->nbChars > 0);
+			lexerState->nbChars--;
+		}
 	}
 }
 
@@ -1025,22 +934,12 @@ void lexer_DumpStringExpansions(void)
 {
 	if (!lexerState)
 		return;
-	struct Expansion **stack = malloc(sizeof(*stack) * (nMaxRecursionDepth + 1));
-	unsigned int depth = 0;
-	size_t distance = lexerState->expansionOfs;
 
-	if (!stack)
-		fatalerror("Failed to alloc string expansion stack: %s\n", strerror(errno));
-
-	lookupExpansion(distance, exp, {
+	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
 		/* Only register EQUS expansions, not string args */
 		if (exp->name)
-			stack[depth++] = exp;
-	});
-
-	while (depth--)
-		fprintf(stderr, "while expanding symbol \"%s\"\n", stack[depth]->name);
-	free(stack);
+			fprintf(stderr, "while expanding symbol \"%s\"\n", exp->name);
+	}
 }
 
 /* Discards an block comment */
@@ -1061,7 +960,7 @@ static void discardBlockComment(void)
 			handleCRLF(c);
 			/* fallthrough */
 		case '\n':
-			if (!lexerState->expansions || lexerState->expansions->distance)
+			if (!lexerState->expansions)
 				nextLine();
 			continue;
 		case '/':
@@ -1117,7 +1016,7 @@ static void readLineContinuation(void)
 			shiftChar();
 			/* Handle CRLF before nextLine() since shiftChar updates colNo */
 			handleCRLF(c);
-			if (!lexerState->expansions || lexerState->expansions->distance)
+			if (!lexerState->expansions)
 				nextLine();
 			return;
 		} else if (c == ';') {
@@ -2358,7 +2257,7 @@ restart:
 	}
 	if (lexerState->atLineStart) {
 		/* Newlines read within an expansion should not increase the line count */
-		if (!lexerState->expansions || lexerState->expansions->distance)
+		if (!lexerState->expansions)
 			nextLine();
 	}
 
