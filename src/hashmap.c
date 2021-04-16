@@ -66,18 +66,14 @@ bool hash_AddElement(HashMap map, char const *key, void *element)
 
 bool hash_ReplaceElement(HashMap const map, char const *key, void *element)
 {
-	HashType hashedKey = hash(key);
-	struct HashMapEntry *ptr = map[(HalfHashType)hashedKey];
+	void **node = hash_GetNode(map, key);
 
-	while (ptr) {
-		if (hashedKey >> HALF_HASH_NB_BITS == ptr->hash
-		 && !strcmp(ptr->key, key)) {
-			ptr->content = element;
-			return true;
-		}
-		ptr = ptr->next;
+	if (node) {
+		*node = element;
+		return true;
+	} else {
+		return false;
 	}
-	return false;
 }
 
 bool hash_RemoveElement(HashMap map, char const *key)
@@ -99,7 +95,7 @@ bool hash_RemoveElement(HashMap map, char const *key)
 	return false;
 }
 
-void *hash_GetElement(HashMap const map, char const *key)
+void **hash_GetNode(HashMap const map, char const *key)
 {
 	HashType hashedKey = hash(key);
 	struct HashMapEntry *ptr = map[(HalfHashType)hashedKey];
@@ -107,11 +103,18 @@ void *hash_GetElement(HashMap const map, char const *key)
 	while (ptr) {
 		if (hashedKey >> HALF_HASH_NB_BITS == ptr->hash
 		 && !strcmp(ptr->key, key)) {
-			return ptr->content;
+			return &ptr->content;
 		}
 		ptr = ptr->next;
 	}
 	return NULL;
+}
+
+void *hash_GetElement(HashMap const map, char const *key)
+{
+	void **node = hash_GetNode(map, key);
+
+	return node ? *node : NULL;
 }
 
 void hash_ForEach(HashMap const map, void (*func)(void *, void *), void *arg)
