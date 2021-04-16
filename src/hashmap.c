@@ -46,7 +46,7 @@ static HashType hash(char const *str)
 	return hash;
 }
 
-bool hash_AddElement(HashMap map, char const *key, void *element)
+void **hash_AddElement(HashMap map, char const *key, void *element)
 {
 	HashType hashedKey = hash(key);
 	HalfHashType index = hashedKey;
@@ -61,7 +61,7 @@ bool hash_AddElement(HashMap map, char const *key, void *element)
 	newEntry->next = map[index];
 	map[index] = newEntry;
 
-	return newEntry->next != NULL;
+	return &newEntry->content;
 }
 
 bool hash_ReplaceElement(HashMap const map, char const *key, void *element)
