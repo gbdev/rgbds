@@ -148,8 +148,11 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 	size_t len = strlen(value);
 	size_t totalLen = fmt->width > len ? fmt->width : len;
 
-	if (totalLen + 1 > bufLen) /* bufLen includes terminator */
+	if (totalLen + 1 > bufLen) { /* bufLen includes terminator */
 		error("Formatted string value too long\n");
+		buf[0] = '\0';
+		return;
+	}
 
 	size_t padLen = fmt->width > len ? fmt->width - len : 0;
 
@@ -253,8 +256,11 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
 
-	if (totalLen + 1 > bufLen) /* bufLen includes terminator */
+	if (totalLen + 1 > bufLen) { /* bufLen includes terminator */
 		error("Formatted numeric value too long\n");
+		buf[0] = '\0';
+		return;
+	}
 
 	size_t padLen = fmt->width > numLen ? fmt->width - numLen : 0;
 

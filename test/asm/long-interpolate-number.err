@@ -1,0 +1,4 @@
+ERROR: long-interpolate-number.asm(4):
+    Formatted numeric value too long
+FATAL: long-interpolate-number.asm(4):
+    Macro argument '\1' not defined
