@@ -52,6 +52,14 @@ bool hash_ReplaceElement(HashMap const map, char const *key, void *element);
 bool hash_RemoveElement(HashMap map, char const *key);
 
 /**
+ * Finds an element in a hashmap, and returns a pointer to its value field.
+ * @param map The map to consider the elements of
+ * @param key The key to search an element for
+ * @return A pointer to the pointer to the element, or NULL if not found.
+ */
+void **hash_GetNode(HashMap const map, char const *key);
+
+/**
  * Finds an element in a hashmap.
  * @param map The map to consider the elements of
  * @param key The key to search an element for
