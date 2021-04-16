@@ -44,10 +44,14 @@ struct Charmap {
 
 static HashMap charmaps;
 
-static struct Charmap *currentCharmap;
+/*
+ * Store pointers to hashmap nodes, so that there is only one pointer to the memory block
+ * that gets reallocated.
+ */
+static struct Charmap **currentCharmap;
 
 struct CharmapStackEntry {
-	struct Charmap *charmap;
+	struct Charmap **charmap;
 	struct CharmapStackEntry *next;
 };
 
@@ -58,15 +62,14 @@ static struct Charmap *charmap_Get(const char *name)
 	return hash_GetElement(charmaps, name);
 }
 
-static struct Charmap *resizeCharmap(struct Charmap *map, size_t capacity)
+static void resizeCharmap(struct Charmap **map, size_t capacity)
 {
-	struct Charmap *new = realloc(map, sizeof(*map) + sizeof(*map->nodes) * capacity);
+	*map = realloc(*map, sizeof(**map) + sizeof(*(*map)->nodes) * capacity);
 
-	if (!new)
+	if (!*map)
 		fatalerror("Failed to %s charmap: %s\n",
-			   map ? "create" : "resize", strerror(errno));
-	new->capacity = capacity;
-	return new;
+			   *map ? "create" : "resize", strerror(errno));
+	(**map).capacity = capacity;
 }
 
 static void initNode(struct Charnode *node)
@@ -95,19 +98,18 @@ struct Charmap *charmap_New(const char *name, const char *baseName)
 
 	/* Init the new charmap's fields */
 	if (base) {
-		charmap = resizeCharmap(NULL, base->capacity);
+		resizeCharmap(&charmap, base->capacity);
 		charmap->usedNodes = base->usedNodes;
 
 		memcpy(charmap->nodes, base->nodes, sizeof(base->nodes[0]) * charmap->usedNodes);
 	} else {
-		charmap = resizeCharmap(NULL, INITIAL_CAPACITY);
+		resizeCharmap(&charmap, INITIAL_CAPACITY);
 		charmap->usedNodes = 1;
 		initNode(&charmap->nodes[0]); /* Init the root node */
 	}
 	charmap->name = strdup(name);
 
-	hash_AddElement(charmaps, charmap->name, charmap);
-	currentCharmap = charmap;
+	currentCharmap = (struct Charmap **)hash_AddElement(charmaps, charmap->name, charmap);
 
 	return charmap;
 }
@@ -120,7 +122,7 @@ void charmap_Delete(struct Charmap *charmap)
 
 void charmap_Set(const char *name)
 {
-	struct Charmap *charmap = charmap_Get(name);
+	struct Charmap **charmap = (struct Charmap **)hash_GetNode(charmaps, name);
 
 	if (charmap == NULL)
 		error("Charmap '%s' doesn't exist\n", name);
@@ -158,25 +160,26 @@ void charmap_Pop(void)
 
 void charmap_Add(char *mapping, uint8_t value)
 {
-	struct Charnode *node = &currentCharmap->nodes[0];
+	struct Charmap *charmap = *currentCharmap;
+	struct Charnode *node = &charmap->nodes[0];
 
 	for (uint8_t c; *mapping; mapping++) {
 		c = *mapping - 1;
 
 		if (node->next[c]) {
-			node = &currentCharmap->nodes[node->next[c]];
+			node = &charmap->nodes[node->next[c]];
 		} else {
 			/* Register next available node */
-			node->next[c] = currentCharmap->usedNodes;
+			node->next[c] = charmap->usedNodes;
 			/* If no more nodes are available, get new ones */
-			if (currentCharmap->usedNodes == currentCharmap->capacity) {
-				currentCharmap->capacity *= 2;
-				currentCharmap = resizeCharmap(currentCharmap, currentCharmap->capacity);
-				hash_ReplaceElement(charmaps, currentCharmap->name, currentCharmap);
+			if (charmap->usedNodes == charmap->capacity) {
+				charmap->capacity *= 2;
+				resizeCharmap(currentCharmap, charmap->capacity);
+				charmap = *currentCharmap;
 			}
 
 			/* Switch to and init new node */
-			node = &currentCharmap->nodes[currentCharmap->usedNodes++];
+			node = &charmap->nodes[charmap->usedNodes++];
 			initNode(node);
 		}
 	}
@@ -197,7 +200,8 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 	 * If no match, read a UTF-8 codepoint and output that.
 	 */
 	size_t outputLen = 0;
-	struct Charnode const *node = &currentCharmap->nodes[0];
+	struct Charmap const *charmap = *currentCharmap;
+	struct Charnode const *node = &charmap->nodes[0];
 	struct Charnode const *match = NULL;
 	size_t rewindDistance = 0;
 
@@ -209,7 +213,7 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 			input++; /* Consume that char */
 			rewindDistance++;
 
-			node = &currentCharmap->nodes[node->next[c]];
+			node = &charmap->nodes[node->next[c]];
 			if (node->isTerminal) {
 				match = node;
 				rewindDistance = 0; /* Rewind from after the match */
@@ -218,7 +222,7 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 		} else {
 			input -= rewindDistance; /* Rewind */
 			rewindDistance = 0;
-			node = &currentCharmap->nodes[0];
+			node = &charmap->nodes[0];
 
 			if (match) { /* Arrived at a dead end with a match found */
 				*output++ = match->value;
