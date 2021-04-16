@@ -64,18 +64,6 @@ void **hash_AddElement(HashMap map, char const *key, void *element)
 	return &newEntry->content;
 }
 
-bool hash_ReplaceElement(HashMap const map, char const *key, void *element)
-{
-	void **node = hash_GetNode(map, key);
-
-	if (node) {
-		*node = element;
-		return true;
-	} else {
-		return false;
-	}
-}
-
 bool hash_RemoveElement(HashMap map, char const *key)
 {
 	HashType hashedKey = hash(key);
