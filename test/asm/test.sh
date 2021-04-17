@@ -62,6 +62,7 @@ EOF
 	cat > quote\"file.err <<EOF
 warning: quote"file.asm(1): [-Wuser]
     quote"file.asm
+while expanding symbol "__FILE__"
 EOF
 fi
 

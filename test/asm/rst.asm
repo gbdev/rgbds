@@ -16,12 +16,8 @@ SECTION "calls", ROM0[0]
 
 
 defRST: MACRO
-; FIXME: This is required, otherwise the lexer does not paste the two tokens
-ADDR equs "$\1"
-SECTION "rst\1", ROM0[ADDR]
-
-rst\1:
-	PURGE ADDR
+	SECTION "rst\1", ROM0[$\1]
+	rst\1:
 ENDM
 	defRST 00
 	defRST 08
