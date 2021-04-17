@@ -736,7 +736,11 @@ static char const *readMacroArg(char name)
 static int peekInternal(uint8_t distance)
 {
 	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-		assert(exp->offset < exp->size);
+		/*
+		 * An expansion that has reached its end will have `exp->offset` == `exp->size`,
+		 * and `peekInternal` will continue with its parent
+		 */
+		assert(exp->offset <= exp->size);
 		if (distance < exp->size - exp->offset)
 			return exp->contents.unowned[exp->offset + distance];
 		distance -= exp->size - exp->offset;
@@ -870,16 +874,21 @@ static void shiftChar(void)
 
 	lexerState->macroArgScanDistance--;
 
+restart:
 	if (lexerState->expansions) {
 		/* Advance within the current expansion */
-		assert(lexerState->expansions->offset < lexerState->expansions->size);
+		assert(lexerState->expansions->offset <= lexerState->expansions->size);
 		lexerState->expansions->offset++;
-		if (lexerState->expansions->offset == lexerState->expansions->size) {
-			/* When an expansion is done, free it and move up to its parent */
+		if (lexerState->expansions->offset > lexerState->expansions->size) {
+			/*
+			 * When advancing would go past an expansion's end, free it,
+			 * move up to its parent, and try again to advance
+			 */
 			struct Expansion *exp = lexerState->expansions;
 
 			lexerState->expansions = lexerState->expansions->parent;
 			freeExpansion(exp);
+			goto restart;
 		}
 	} else {
 		/* Advance within the file contents */
