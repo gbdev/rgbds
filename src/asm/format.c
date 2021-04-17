@@ -166,8 +166,7 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 	} else {
 		for (size_t i = 0; i < padLen; i++)
 			buf[i] = ' ';
-		if (totalLen > padLen)
-			memcpy(buf + padLen, value, len);
+		memcpy(buf + padLen, value, len);
 	}
 
 	buf[totalLen] = '\0';
@@ -256,13 +255,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	}
 
 	size_t len = strlen(valueBuf);
-	size_t numLen = len;
-
-	if (sign)
-		numLen++;
-	if (prefix)
-		numLen++;
-
+	size_t numLen = !!sign + !!prefix + len;
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
 
 	if (totalLen > bufLen - 1) { /* bufLen includes terminator */
@@ -304,8 +297,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 			if (prefix)
 				buf[pos++] = prefix;
 		}
-		if (totalLen > pos)
-			memcpy(buf + pos, valueBuf, len);
+		memcpy(buf + pos, valueBuf, len);
 	}
 
 	buf[totalLen] = '\0';
