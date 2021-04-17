@@ -1,0 +1,5 @@
+ERROR: section-sizeof-startof.asm(5):
+    Expected constant expression: Section "sect"'s size is not known
+ERROR: section-sizeof-startof.asm(6):
+    Expected constant expression: Section "sect"'s start is not known
+error: Assembly aborted (2 errors)!

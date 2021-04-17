@@ -201,6 +201,34 @@ void rpn_BankSection(struct Expression *expr, char const *tzSectionName)
 	}
 }
 
+void rpn_SizeOfSection(struct Expression *expr, char const *tzSectionName)
+{
+	rpn_Init(expr);
+
+	makeUnknown(expr, "Section \"%s\"'s size is not known", tzSectionName);
+
+	size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+
+	expr->nRPNPatchSize += nameLen + 1;
+	*ptr++ = RPN_SIZEOF_SECT;
+	memcpy(ptr, tzSectionName, nameLen);
+}
+
+void rpn_StartOfSection(struct Expression *expr, char const *tzSectionName)
+{
+	rpn_Init(expr);
+
+	makeUnknown(expr, "Section \"%s\"'s start is not known", tzSectionName);
+
+	size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+
+	expr->nRPNPatchSize += nameLen + 1;
+	*ptr++ = RPN_STARTOF_SECT;
+	memcpy(ptr, tzSectionName, nameLen);
+}
+
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
@@ -396,6 +424,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		case RPN_BANK_SYM:
 		case RPN_BANK_SECT:
 		case RPN_BANK_SELF:
+		case RPN_SIZEOF_SECT:
+		case RPN_STARTOF_SECT:
 		case RPN_HRAM:
 		case RPN_RST:
 		case RPN_CONST:

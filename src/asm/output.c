@@ -354,6 +354,22 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 			} while (b != 0);
 			break;
 
+		case RPN_SIZEOF_SECT:
+			writebyte(RPN_SIZEOF_SECT);
+			do {
+				b = popbyte();
+				writebyte(b);
+			} while (b != 0);
+			break;
+
+		case RPN_STARTOF_SECT:
+			writebyte(RPN_STARTOF_SECT);
+			do {
+				b = popbyte();
+				writebyte(b);
+			} while (b != 0);
+			break;
+
 		default:
 			writebyte(rpndata);
 			break;

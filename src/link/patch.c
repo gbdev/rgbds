@@ -292,6 +292,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_BANK_SECT:
+			/*
+			 * `expression` is not guaranteed to be '\0'-terminated. If it is not,
+			 * `getRPNByte` will have a fatal internal error.
+			 * In either case, `getRPNByte` will not free `expression`.
+			 */
 			name = (char const *)expression;
 			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
 				;
@@ -317,6 +322,44 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value = 1;
 			} else {
 				value = patch->pcSection->bank;
+			}
+			break;
+
+		case RPN_SIZEOF_SECT:
+			/* This has assumptions commented in the `RPN_BANK_SECT` case above. */
+			name = (char const *)expression;
+			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
+				;
+
+			sect = sect_GetSection(name);
+
+			if (!sect) {
+				error(patch->src, patch->lineNo,
+				      "Requested SIZEOF() of section \"%s\", which was not found",
+				      name);
+				isError = true;
+				value = 1;
+			} else {
+				value = sect->size;
+			}
+			break;
+
+		case RPN_STARTOF_SECT:
+			/* This has assumptions commented in the `RPN_BANK_SECT` case above. */
+			name = (char const *)expression;
+			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
+				;
+
+			sect = sect_GetSection(name);
+
+			if (!sect) {
+				error(patch->src, patch->lineNo,
+				      "Requested STARTOF() of section \"%s\", which was not found",
+				      name);
+				isError = true;
+				value = 1;
+			} else {
+				value = sect->org;
 			}
 			break;
 

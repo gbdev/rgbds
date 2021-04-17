@@ -14,7 +14,7 @@
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1u"
 #define RGBDS_OBJECT_VERSION_NUMBER 9U
-#define RGBDS_OBJECT_REV 7U
+#define RGBDS_OBJECT_REV 8U
 
 enum AssertionType {
 	ASSERT_WARN,
@@ -23,42 +23,44 @@ enum AssertionType {
 };
 
 enum RPNCommand {
-	RPN_ADD		= 0x00,
-	RPN_SUB		= 0x01,
-	RPN_MUL		= 0x02,
-	RPN_DIV		= 0x03,
-	RPN_MOD		= 0x04,
-	RPN_UNSUB	= 0x05,
-	RPN_EXP		= 0x06,
+	RPN_ADD			= 0x00,
+	RPN_SUB			= 0x01,
+	RPN_MUL			= 0x02,
+	RPN_DIV			= 0x03,
+	RPN_MOD			= 0x04,
+	RPN_UNSUB		= 0x05,
+	RPN_EXP			= 0x06,
 
-	RPN_OR		= 0x10,
-	RPN_AND		= 0x11,
-	RPN_XOR		= 0x12,
-	RPN_UNNOT	= 0x13,
+	RPN_OR			= 0x10,
+	RPN_AND			= 0x11,
+	RPN_XOR			= 0x12,
+	RPN_UNNOT		= 0x13,
 
-	RPN_LOGAND	= 0x21,
-	RPN_LOGOR	= 0x22,
-	RPN_LOGUNNOT	= 0x23,
+	RPN_LOGAND		= 0x21,
+	RPN_LOGOR		= 0x22,
+	RPN_LOGUNNOT		= 0x23,
 
-	RPN_LOGEQ	= 0x30,
-	RPN_LOGNE	= 0x31,
-	RPN_LOGGT	= 0x32,
-	RPN_LOGLT	= 0x33,
-	RPN_LOGGE	= 0x34,
-	RPN_LOGLE	= 0x35,
+	RPN_LOGEQ		= 0x30,
+	RPN_LOGNE		= 0x31,
+	RPN_LOGGT		= 0x32,
+	RPN_LOGLT		= 0x33,
+	RPN_LOGGE		= 0x34,
+	RPN_LOGLE		= 0x35,
 
-	RPN_SHL		= 0x40,
-	RPN_SHR		= 0x41,
+	RPN_SHL			= 0x40,
+	RPN_SHR			= 0x41,
 
-	RPN_BANK_SYM	= 0x50,
-	RPN_BANK_SECT	= 0x51,
-	RPN_BANK_SELF	= 0x52,
+	RPN_BANK_SYM		= 0x50,
+	RPN_BANK_SECT		= 0x51,
+	RPN_BANK_SELF		= 0x52,
+	RPN_SIZEOF_SECT		= 0x53,
+	RPN_STARTOF_SECT	= 0x54,
 
-	RPN_HRAM	= 0x60,
-	RPN_RST         = 0x61,
+	RPN_HRAM		= 0x60,
+	RPN_RST			= 0x61,
 
-	RPN_CONST	= 0x80,
-	RPN_SYM		= 0x81
+	RPN_CONST		= 0x80,
+	RPN_SYM			= 0x81
 };
 
 enum SectionType {
