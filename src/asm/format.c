@@ -147,25 +147,21 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 
 	size_t len = strlen(value);
 	size_t totalLen = fmt->width > len ? fmt->width : len;
+
+	if (totalLen + 1 > bufLen) /* bufLen includes terminator */
+		error("Formatted string value too long\n");
+
 	size_t padLen = fmt->width > len ? fmt->width - len : 0;
 
-	if (totalLen + 1 > bufLen) { /* bufLen includes terminator */
-		error("Formatted string value too long\n");
-		totalLen = bufLen - 1;
-		if (len > totalLen)
-			len = totalLen;
-		padLen = totalLen - len;
-	}
-
 	if (fmt->alignLeft) {
-		memcpy(buf, value, len < bufLen ? len : bufLen);
+		strncpy(buf, value, len < bufLen ? len : bufLen);
 		for (size_t i = 0; i < totalLen && len + i < bufLen; i++)
 			buf[len + i] = ' ';
 	} else {
 		for (size_t i = 0; i < padLen && i < bufLen; i++)
 			buf[i] = ' ';
 		if (bufLen > padLen)
-			memcpy(buf + padLen, value, bufLen - padLen - 1);
+			strncpy(buf + padLen, value, bufLen - padLen - 1);
 	}
 
 	buf[totalLen] = '\0';
@@ -225,18 +221,12 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 		/* Special case for fixed-point */
 
 		/* Default fractional width (C's is 6 for "%f"; here 5 is enough) */
-		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
+		uint8_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
 
 		if (fracWidth) {
-			if (fracWidth > 255) {
-				error("Fractional width %zu too long, limiting to 255\n",
-				       fracWidth);
-				fracWidth = 255;
-			}
-
 			char spec[16]; /* Max "%" + 5-char PRIu32 + ".%0255.f" + terminator */
 
-			snprintf(spec, sizeof(spec), "%%" PRIu32 ".%%0%zu.f", fracWidth);
+			snprintf(spec, sizeof(spec), "%%" PRIu32 ".%%0%d.f", fracWidth);
 			snprintf(valueBuf, sizeof(valueBuf), spec, value >> 16,
 				 (value % 65536) / 65536.0 * pow(10, fracWidth) + 0.5);
 		} else {
@@ -262,17 +252,11 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 		numLen++;
 
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
-	size_t padLen = fmt->width > numLen ? fmt->width - numLen : 0;
 
-	if (totalLen + 1 > bufLen) { /* bufLen includes terminator */
+	if (totalLen + 1 > bufLen) /* bufLen includes terminator */
 		error("Formatted numeric value too long\n");
-		totalLen = bufLen - 1;
-		if (numLen > totalLen) {
-			len = totalLen - (numLen - len);
-			numLen = totalLen;
-		}
-		padLen = totalLen - numLen;
-	}
+
+	size_t padLen = fmt->width > numLen ? fmt->width - numLen : 0;
 
 	if (fmt->alignLeft) {
 		size_t pos = 0;

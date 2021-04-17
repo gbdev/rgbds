@@ -28,9 +28,9 @@ struct FormatSpec {
 	bool prefix;
 	bool alignLeft;
 	bool padZero;
-	size_t width;
+	uint8_t width;
 	bool hasFrac;
-	size_t fracWidth;
+	uint8_t fracWidth;
 	int type;
 	bool valid;
 };
