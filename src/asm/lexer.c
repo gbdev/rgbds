@@ -1210,6 +1210,11 @@ static bool startsIdentifier(int c)
 	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
 }
 
+static bool continuesIdentifier(int c)
+{
+	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
+}
+
 static int readIdentifier(char firstChar)
 {
 	dbgPrint("Reading identifier or keyword\n");
@@ -1217,30 +1222,24 @@ static int readIdentifier(char firstChar)
 	yylval.tzSym[0] = firstChar;
 	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
 	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
-	size_t i;
+	size_t i = 1;
 
-	for (i = 1; ; i++) {
-		int c = peek();
-
-		/* If that char isn't in the symbol charset, end */
-		if ((c > '9' || c < '0')
-		 && (c > 'Z' || c < 'A')
-		 && (c > 'z' || c < 'a')
-		 && c != '#' && c != '.' && c != '@' && c != '_')
-			break;
+	/* Continue reading while the char is in the symbol charset */
+	for (int c = peek(); continuesIdentifier(c); i++, c = peek()) {
 		shiftChar();
 
-		/* Write the char to the identifier's name */
-		if (i < sizeof(yylval.tzSym) - 1)
+		if (i < sizeof(yylval.tzSym) - 1) {
+			/* Write the char to the identifier's name */
 			yylval.tzSym[i] = c;
 
-		/* If the char was a dot, mark the identifier as local */
-		if (c == '.')
-			tokenType = T_LOCAL_ID;
+			/* If the char was a dot, mark the identifier as local */
+			if (c == '.')
+				tokenType = T_LOCAL_ID;
 
-		/* Attempt to traverse the tree to check for a keyword */
-		if (nodeID) /* Do nothing if matching already failed */
-			nodeID = keywordDict[nodeID].children[dictIndex(c)];
+			/* Attempt to traverse the tree to check for a keyword */
+			if (nodeID) /* Do nothing if matching already failed */
+				nodeID = keywordDict[nodeID].children[dictIndex(c)];
+		}
 	}
 
 	if (i > sizeof(yylval.tzSym) - 1) {
