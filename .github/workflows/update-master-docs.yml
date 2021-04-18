@@ -17,6 +17,7 @@ on:
 
 jobs:
   build:
+    if: github.repository_owner == 'gbdev'
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout rgbds@master
