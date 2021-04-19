@@ -191,14 +191,13 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 {
 	/*
 	 * STRSUB and CHARSUB adjust negative `pos` arguments the same way,
-	 * such that position 0 is the last character of a string.
+	 * such that position -1 is the last character of a string.
 	 */
+	if (pos < 0)
+		pos += len + 1;
 	if (pos < 1) {
-		pos += len;
-		if (pos < 1) {
-			warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
-			pos = 1;
-		}
+		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
+		pos = 1;
 	}
 	return (uint32_t)pos;
 }
