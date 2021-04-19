@@ -2336,12 +2336,12 @@ static char *startCapture(void)
 	}
 }
 
-void lexer_CaptureRept(struct CaptureBody *capture)
+bool lexer_CaptureRept(struct CaptureBody *capture)
 {
-	capture->unterminated = false;
 	capture->lineNo = lexer_GetLineNo();
 
 	char *captureStart = startCapture();
+	bool terminated = false;
 	unsigned int level = 0;
 	int c;
 
@@ -2373,6 +2373,7 @@ void lexer_CaptureRept(struct CaptureBody *capture)
 					 * We know we have read exactly "ENDR", not e.g. an EQUS
 					 */
 					lexerState->captureSize -= strlen("ENDR");
+					terminated = true;
 					goto finish;
 				}
 				level--;
@@ -2383,7 +2384,6 @@ void lexer_CaptureRept(struct CaptureBody *capture)
 		for (;;) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
-				capture->unterminated = true;
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
@@ -2401,14 +2401,15 @@ finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
+	return terminated;
 }
 
-void lexer_CaptureMacroBody(struct CaptureBody *capture)
+bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 {
-	capture->unterminated = false;
 	capture->lineNo = lexer_GetLineNo();
 
 	char *captureStart = startCapture();
+	bool terminated = false;
 	int c;
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
@@ -2436,6 +2437,7 @@ void lexer_CaptureMacroBody(struct CaptureBody *capture)
 				 * We know we have read exactly "ENDM", not e.g. an EQUS
 				 */
 				lexerState->captureSize -= strlen("ENDM");
+				terminated = true;
 				goto finish;
 			}
 		}
@@ -2444,7 +2446,6 @@ void lexer_CaptureMacroBody(struct CaptureBody *capture)
 		for (;;) {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
-				capture->unterminated = true;
 				goto finish;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
@@ -2462,4 +2463,5 @@ finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
+	return terminated;
 }
