@@ -189,8 +189,7 @@ void rpn_BankSection(struct Expression *expr, char const *sectionName)
 	if (section && section->bank != (uint32_t)-1) {
 		expr->val = section->bank;
 	} else {
-		makeUnknown(expr, "Section \"%s\"'s bank is not known",
-			    sectionName);
+		makeUnknown(expr, "Section \"%s\"'s bank is not known", sectionName);
 
 		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -361,16 +360,14 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 
 			if (src2->val >= 32)
 				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting left by large amount %" PRId32 "\n",
-					src2->val);
+					"Shifting left by large amount %" PRId32 "\n", src2->val);
 
 			expr->val = op_shift_left(src1->val, src2->val);
 			break;
 		case RPN_SHR:
 			if (src1->val < 0)
-				warning(WARNING_SHIFT, "Shifting right negative value %"
-					PRId32 "\n",
-					src1->val);
+				warning(WARNING_SHIFT,
+					"Shifting right negative value %" PRId32 "\n", src1->val);
 
 			if (src2->val < 0)
 				warning(WARNING_SHIFT_AMOUNT,
@@ -392,8 +389,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 				fatalerror("Division by zero\n");
 
 			if (src1->val == INT32_MIN && src2->val == -1) {
-				warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %"
-					PRId32 "\n", INT32_MIN, INT32_MIN);
+				warning(WARNING_DIV,
+					"Division of %" PRId32 " by -1 yields %" PRId32 "\n",
+					INT32_MIN, INT32_MIN);
 				expr->val = INT32_MIN;
 			} else {
 				expr->val = op_divide(src1->val, src2->val);

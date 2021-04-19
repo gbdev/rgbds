@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 						*targetFileName = '\0';
 				} else {
 					targetFileName = realloc(targetFileName,
-								   targetFileNameLen + 1);
+								 targetFileNameLen + 1);
 				}
 				if (targetFileName == NULL)
 					err(1, "Cannot append new file to target file list");
