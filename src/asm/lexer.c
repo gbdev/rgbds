@@ -724,6 +724,8 @@ static bool isMacroChar(char c)
 static int peek(void);
 static void shiftChar(void);
 static uint32_t readNumber(int radix, uint32_t baseValue);
+static bool startsIdentifier(int c);
+static bool continuesIdentifier(int c);
 
 static uint32_t readParentheticMacroArgNum(void)
 {
@@ -736,15 +738,42 @@ static uint32_t readParentheticMacroArgNum(void)
 
 	uint32_t num = 0;
 	int c = peek();
-	bool hasDigit = c >= '0' && c <= '9';
+	bool empty = false;
 
-	if (hasDigit)
+	if (c >= '0' && c <= '9') {
 		num = readNumber(10, 0);
+	} else if (startsIdentifier(c)) {
+		char symName[MAXSYMLEN + 1];
+		size_t i = 0;
+
+		for (; continuesIdentifier(c); c = peek()) {
+			if (i < sizeof(symName))
+				symName[i++] = c;
+			shiftChar();
+		}
+
+		if (i == sizeof(symName)) {
+			warning(WARNING_LONG_STR, "Symbol name too long\n");
+			i--;
+		}
+		symName[i] = '\0';
+
+		struct Symbol const *sym = sym_FindScopedSymbol(symName);
+
+		if (!sym)
+			fatalerror("Parenthetic symbol \"%s\" does not exist\n", symName);
+		else if (!sym_IsNumeric(sym))
+			fatalerror("Parenthetic symbol \"%s\" is not numeric\n", symName);
+
+		num = sym_GetConstantSymValue(sym);
+	} else {
+		empty = true;
+	}
 
 	c = peek();
 	if (c != ')')
 		fatalerror("Invalid character in parenthetic macro argument %s\n", printChar(c));
-	else if (!hasDigit)
+	else if (empty)
 		fatalerror("Empty parenthetic macro argument\n");
 	else if (num == 0)
 		fatalerror("Invalid parenthetic macro argument '\\(0)'\n");
