@@ -503,9 +503,9 @@ static void writelong(uint32_t b)
 	writebyte(b >> 24);
 }
 
-static void createPatch(enum PatchType type, struct Expression const *expr, uint32_t pcShift)
+static void createPatch(enum PatchType type, struct RPNBuffer *rpn, uint32_t pcShift)
 {
-	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
+	out_CreatePatch(type, rpn, sect_GetOutputOffset(), pcShift);
 }
 
 void sect_StartUnion(void)
@@ -633,113 +633,63 @@ void out_String(char const *s)
  * Output a relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
-void out_RelByte(struct Expression *expr, uint32_t pcShift)
+void out_RelByte(struct Expression const *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(1);
+	struct RPNBuffer *rpnBufPtr = NULL;
 
-	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_BYTE, expr, pcShift);
-		writebyte(0);
-	} else {
-		writebyte(expr->val);
-	}
-	rpn_Free(expr);
+	writebyte(rpn_Eval(expr, &rpnBufPtr));
+	if (rpnBufPtr)
+		createPatch(PATCHTYPE_BYTE, rpnBufPtr, pcShift);
 }
 
 /*
  * Output several copies of a relocatable byte. Checking will be done to see if
  * it is an absolute value in disguise.
  */
-void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
+void out_RelBytes(uint32_t n, struct Expression * const *exprs, size_t size)
 {
 	checkcodesection();
 	reserveSpace(n);
+	struct RPNBuffer *rpnBufPtr;
 
 	for (uint32_t i = 0; i < n; i++) {
-		struct Expression *expr = &exprs[i % size];
-
-		if (!rpn_isKnown(expr)) {
-			createPatch(PATCHTYPE_BYTE, expr, i);
-			writebyte(0);
-		} else {
-			writebyte(expr->val);
-		}
+		rpnBufPtr = NULL;
+		writebyte(rpn_Eval(exprs[i % size], &rpnBufPtr));
+		if (rpnBufPtr)
+			createPatch(PATCHTYPE_BYTE, rpnBufPtr, i);
 	}
-
-	for (size_t i = 0; i < size; i++)
-		rpn_Free(&exprs[i]);
 }
 
 /*
  * Output a relocatable word. Checking will be done to see if
  * it's an absolute value in disguise.
  */
-void out_RelWord(struct Expression *expr, uint32_t pcShift)
+void out_RelWord(struct Expression const *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(2);
+	struct RPNBuffer *rpnBufPtr = NULL;
 
-	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_WORD, expr, pcShift);
-		writeword(0);
-	} else {
-		writeword(expr->val);
-	}
-	rpn_Free(expr);
+	writeword(rpn_Eval(expr, &rpnBufPtr));
+	if (rpnBufPtr)
+		createPatch(PATCHTYPE_WORD, rpnBufPtr, pcShift);
 }
 
 /*
  * Output a relocatable longword. Checking will be done to see if
  * is an absolute value in disguise.
  */
-void out_RelLong(struct Expression *expr, uint32_t pcShift)
+void out_RelLong(struct Expression const *expr, uint32_t pcShift)
 {
 	checkcodesection();
 	reserveSpace(2);
+	struct RPNBuffer *rpnBufPtr = NULL;
 
-	if (!rpn_isKnown(expr)) {
-		createPatch(PATCHTYPE_LONG, expr, pcShift);
-		writelong(0);
-	} else {
-		writelong(expr->val);
-	}
-	rpn_Free(expr);
-}
-
-/*
- * Output a PC-relative relocatable byte. Checking will be done to see if it
- * is an absolute value in disguise.
- */
-void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
-{
-	checkcodesection();
-	reserveSpace(1);
-	struct Symbol const *pc = sym_GetPC();
-
-	if (!rpn_IsDiffConstant(expr, pc)) {
-		createPatch(PATCHTYPE_JR, expr, pcShift);
-		writebyte(0);
-	} else {
-		struct Symbol const *sym = rpn_SymbolOf(expr);
-		/* The offset wraps (jump from ROM to HRAM, for example) */
-		int16_t offset;
-
-		/* Offset is relative to the byte *after* the operand */
-		if (sym == pc)
-			offset = -2; /* PC as operand to `jr` is lower than reference PC by 2 */
-		else
-			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
-
-		if (offset < -128 || offset > 127) {
-			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n",
-				offset);
-			writebyte(0);
-		} else {
-			writebyte(offset);
-		}
-	}
-	rpn_Free(expr);
+	writelong(rpn_Eval(expr, &rpnBufPtr));
+	if (rpnBufPtr)
+		createPatch(PATCHTYPE_LONG, rpnBufPtr, pcShift);
 }
 
 /*

@@ -95,7 +95,7 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture);
 struct DsArgList {
 	size_t nbArgs;
 	size_t capacity;
-	struct Expression *args;
+	struct Expression *args[];
 };
 
 #endif /* RGBDS_ASM_LEXER_H */

@@ -9,6 +9,10 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <stdint.h>
+
+#include "platform.h"
+
 // Of course, MSVC does not support C11, so no _Noreturn there...
 #ifdef _MSC_VER
 	#define _Noreturn __declspec(noreturn)
@@ -87,5 +91,20 @@
 // Macros for stringification
 #define STR(x) #x
 #define EXPAND_AND_STR(x) STR(x)
+
+// Helper function to write a LE 32-bit value to a buffer
+
+static inline uint32_t readLE32(uint8_t const ptr[MIN_NB_ELMS(4)])
+{
+	return ptr[0] | ptr[1] << 8 | ptr[2] << 16 | ptr[3] << 24;
+}
+
+static inline void writeLE32(uint8_t ptr[MIN_NB_ELMS(4)], uint32_t i)
+{
+	ptr[0] = i;
+	ptr[1] = i >> 8;
+	ptr[2] = i >> 16;
+	ptr[3] = i >> 24;
+}
 
 #endif /* HELPERS_H */

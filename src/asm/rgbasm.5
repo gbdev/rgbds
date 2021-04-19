@@ -168,12 +168,13 @@ equivalent to multiplying and dividing by 2 to the power of b, respectively.
 .Pp
 Comparison operators return 0 if the comparison is false, and 1 otherwise.
 .Pp
-Unlike in a lot of languages, and for technical reasons,
+Like in a lot of languages,
 .Nm
-still evaluates both operands of
+only evaluates the left operand of
 .Sq &&
 and
-.Sq || .
+.Sq ||
+if it's equal to 0 or 1 respectively.
 .Pp
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.

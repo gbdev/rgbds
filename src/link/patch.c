@@ -7,6 +7,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -22,6 +23,15 @@
 
 #include "extern/err.h"
 
+enum ErrorType {
+	NO_ERR,
+#define ERR(name) ERR_##name = RPN_ERR_##name
+	ERR(NO_SELF_BANK), // BANK(@) outside of a SECTION
+	ERR(DIV_BY_0),     // Division by 0
+	ERR(BANK_NOT_SYM), // BANK(Sym), but `Sym` is not a label
+#undef ERR
+};
+
 /*
  * This is an "empty"-type stack. Apart from the actual values, we also remember
  * whether the value is a placeholder inserted for error recovery. This allows
@@ -31,8 +41,10 @@
  * They are only separated for reasons of memory efficiency.
  */
 struct RPNStack {
-	int32_t *values;
-	bool *errorFlags;
+	struct Entry {
+		int32_t val;
+		enum ErrorType errType;
+	} *entries;
 	size_t size;
 	size_t capacity;
 } stack;
@@ -40,10 +52,9 @@ struct RPNStack {
 static void initRPNStack(void)
 {
 	stack.capacity = 64;
-	stack.values = malloc(sizeof(*stack.values) * stack.capacity);
-	stack.errorFlags = malloc(sizeof(*stack.errorFlags) * stack.capacity);
-	if (!stack.values || !stack.errorFlags)
-		err(1, "Failed to init RPN stack");
+	stack.entries = malloc(sizeof(*stack.entries) * stack.capacity);
+	if (!stack.entries)
+		fatal(NULL, 0, "Failed to init RPN stack: %s", strerror(errno));
 }
 
 static void clearRPNStack(void)
@@ -51,51 +62,41 @@ static void clearRPNStack(void)
 	stack.size = 0;
 }
 
-static void pushRPN(int32_t value, bool comesFromError)
+static void pushRPN(int32_t value, enum ErrorType errType)
 {
 	if (stack.size >= stack.capacity) {
 		static const size_t increase_factor = 2;
 
 		if (stack.capacity > SIZE_MAX / increase_factor)
-			errx(1, "Overflow in RPN stack resize");
+			fatal(NULL, 0, "Overflow in RPN stack resize");
 
 		stack.capacity *= increase_factor;
-		stack.values =
-			realloc(stack.values, sizeof(*stack.values) * stack.capacity);
-		stack.errorFlags =
-			realloc(stack.errorFlags, sizeof(*stack.errorFlags) * stack.capacity);
+		stack.entries = realloc(stack.entries, sizeof(*stack.entries) * stack.capacity);
 		/*
 		 * Static analysis tools complain that the capacity might become
 		 * zero due to overflow, but fail to realize that it's caught by
 		 * the overflow check above. Hence the stringent check below.
 		 */
-		if (!stack.values || !stack.errorFlags || !stack.capacity)
-			err(1, "Failed to resize RPN stack");
+		if (!stack.entries || !stack.capacity)
+			fatal(NULL, 0, "Failed to resize RPN stack: %s", strerror(errno));
 	}
 
-	stack.values[stack.size] = value;
-	stack.errorFlags[stack.size] = comesFromError;
+	stack.entries[stack.size] = (struct Entry){ .val = value, .errType = errType };
 	stack.size++;
 }
 
-// This flag tracks whether the RPN op that is currently being evaluated
-// has popped any values with the error flag set.
-static bool isError = false;
-
-static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
+static struct Entry *popRPN(struct FileStackNode const *node, uint32_t lineNo)
 {
 	if (stack.size == 0)
 		fatal(node, lineNo, "Internal error, RPN stack empty");
 
 	stack.size--;
-	isError |= stack.errorFlags[stack.size];
-	return stack.values[stack.size];
+	return &stack.entries[stack.size];
 }
 
 static void freeRPNStack(void)
 {
-	free(stack.values);
-	free(stack.errorFlags);
+	free(stack.entries);
 }
 
 /* RPN operators */
@@ -109,8 +110,7 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
-static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
-				      uint32_t index)
+static struct Symbol const *getSymbol(struct Symbol const * const *symbolList, uint32_t index)
 {
 	assert(index != -1); /* PC needs to be handled specially, not here */
 	struct Symbol const *symbol = symbolList[index];
@@ -144,128 +144,14 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 	while (size > 0) {
 		enum RPNCommand command = getRPNByte(&expression, &size,
 						     patch->src, patch->lineNo);
+		enum ErrorType errType = NO_ERR;
 		int32_t value;
 
-		isError = false;
-
-		/*
-		 * Friendly reminder:
-		 * Be VERY careful with two `popRPN` in the same expression.
-		 * C does not guarantee order of evaluation of operands!!
-		 * So, if there are two `popRPN` in the same expression, make
-		 * sure the operation is commutative.
-		 */
 		switch (command) {
 			struct Symbol const *symbol;
 			char const *name;
 			struct Section const *sect;
-
-		case RPN_ADD:
-			value = popRPN() + popRPN();
-			break;
-		case RPN_SUB:
-			value = popRPN();
-			value = popRPN() - value;
-			break;
-		case RPN_MUL:
-			value = popRPN() * popRPN();
-			break;
-		case RPN_DIV:
-			value = popRPN();
-			if (value == 0) {
-				if (!isError)
-					error(patch->src, patch->lineNo, "Division by 0");
-				isError = true;
-				popRPN();
-				value = INT32_MAX;
-			} else {
-				value = op_divide(popRPN(), value);
-			}
-			break;
-		case RPN_MOD:
-			value = popRPN();
-			if (value == 0) {
-				if (!isError)
-					error(patch->src, patch->lineNo, "Modulo by 0");
-				isError = true;
-				popRPN();
-				value = 0;
-			} else {
-				value = op_modulo(popRPN(), value);
-			}
-			break;
-		case RPN_UNSUB:
-			value = -popRPN();
-			break;
-		case RPN_EXP:
-			value = popRPN();
-			if (value < 0) {
-				if (!isError)
-					error(patch->src, patch->lineNo, "Exponent by negative");
-				isError = true;
-				popRPN();
-				value = 0;
-			} else {
-				value = op_exponent(popRPN(), value);
-			}
-			break;
-
-		case RPN_OR:
-			value = popRPN() | popRPN();
-			break;
-		case RPN_AND:
-			value = popRPN() & popRPN();
-			break;
-		case RPN_XOR:
-			value = popRPN() ^ popRPN();
-			break;
-		case RPN_UNNOT:
-			value = ~popRPN();
-			break;
-
-		case RPN_LOGAND:
-			value = popRPN();
-			value = popRPN() && value;
-			break;
-		case RPN_LOGOR:
-			value = popRPN();
-			value = popRPN() || value;
-			break;
-		case RPN_LOGUNNOT:
-			value = !popRPN();
-			break;
-
-		case RPN_LOGEQ:
-			value = popRPN() == popRPN();
-			break;
-		case RPN_LOGNE:
-			value = popRPN() != popRPN();
-			break;
-		case RPN_LOGGT:
-			value = popRPN();
-			value = popRPN() > value;
-			break;
-		case RPN_LOGLT:
-			value = popRPN();
-			value = popRPN() < value;
-			break;
-		case RPN_LOGGE:
-			value = popRPN();
-			value = popRPN() >= value;
-			break;
-		case RPN_LOGLE:
-			value = popRPN();
-			value = popRPN() <= value;
-			break;
-
-		case RPN_SHL:
-			value = popRPN();
-			value = op_shift_left(popRPN(), value);
-			break;
-		case RPN_SHR:
-			value = popRPN();
-			value = op_shift_right(popRPN(), value);
-			break;
+			struct Entry *lhs, *rhs;
 
 		case RPN_BANK_SYM:
 			value = 0;
@@ -425,6 +311,64 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 						value += symbol->section->org;
 				}
 			}
+			break;
+
+		case RPN_ADD:
+		case RPN_SUB:
+		case RPN_MUL:
+		case RPN_DIV:
+		case RPN_MOD:
+		case RPN_EXP:
+		case RPN_OR:
+		case RPN_AND:
+		case RPN_XOR:
+		case RPN_LOGAND: // May be short-circuiting
+		case RPN_LOGOR: // May be short-circuiting
+		case RPN_LOGEQ:
+		case RPN_LOGNE:
+		case RPN_LOGGT:
+		case RPN_LOGLT:
+		case RPN_LOGGE:
+		case RPN_LOGLE:
+		case RPN_SHL:
+		case RPN_SHR:
+			rhs = popRPN();
+			lhs = popRPN();
+
+			// Propagate the LHS' error, if any
+			if (lhs->errType != NO_ERR) {
+				errType = lhs->errType;
+				break;
+			}
+			// Attempt short-circuiting
+			if (command == RPN_LOGAND && lhs->value == 0) {
+				value = 0;
+				break;
+			} else if (command == RPN_LOGOR && lhs->value != 0) {
+				value = 1;
+				break;
+			}
+			// Propagare the RHS' error, if any
+			if (rhs->errType != NO_ERR) {
+				errType = rhs->errType;
+				break;
+			}
+
+			struct Result res = rpn_ConstBinaryOp(lhs->val, command, rhs->val);
+
+			// TODO
+			break;
+
+		case RPN_ERR_NO_SELF_BANK:
+		case RPN_ERR_DIV_BY_0:
+		case RPN_ERR_MOD_BY_0:
+		case RPN_ERR_BANK_NOT_SYM:
+		case RPN_ERR_EXP_NEG_POW:
+			// TODO
+			break;
+
+		case RPN_ISCONST:
+			error("Bad object file: RPN_ISCONST is not valid in object files");
 			break;
 		}
 

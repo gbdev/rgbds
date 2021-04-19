@@ -359,31 +359,27 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 	dest[i] = '\0';
 }
 
-static void initDsArgList(struct DsArgList *args)
+static struct DsArgList *newDsArgList(void)
 {
+	struct DsArgList *args = malloc(sizeof(*args) + INITIAL_DS_ARG_SIZE * sizeof(args->args[0]));
+
+	if (!args)
+		fatalerror("Failed to allocate ds arg list: %s\n", strerror(errno));
 	args->nbArgs = 0;
 	args->capacity = INITIAL_DS_ARG_SIZE;
-	args->args = malloc(args->capacity * sizeof(*args->args));
-	if (!args->args)
-		fatalerror("Failed to allocate memory for ds arg list: %s\n",
-			   strerror(errno));
+	return args;
 }
 
-static size_t nextDsArgListIndex(struct DsArgList *args)
+static struct Expression **nextDsArgListIndex(struct DsArgList **args)
 {
-	if (args->nbArgs == args->capacity) {
-		args->capacity = (args->capacity + 1) * 2;
-		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
-		if (!args->args)
+	if ((*args)->nbArgs == (*args)->capacity) {
+		(*args)->capacity = ((*args)->capacity + 1) * 2;
+		*args = realloc(*args, sizeof(*args) + (*args)->capacity * sizeof((*args)->args[0]));
+		if (!*args)
 			fatalerror("realloc error while resizing ds arg list: %s\n",
 				   strerror(errno));
 	}
-	return args->nbArgs++;
-}
-
-static void freeDsArgList(struct DsArgList *args)
-{
-	free(args->args);
+	return &(*args)->args[(*args)->nbArgs++];
 }
 
 static void failAssert(enum AssertionType type)
@@ -461,13 +457,13 @@ enum {
 {
 	char symName[MAXSYMLEN + 1];
 	char string[MAXSTRLEN + 1];
-	struct Expression expr;
+	struct Expression *expr;
 	int32_t constValue;
 	enum SectionModifier sectMod;
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
-	struct DsArgList dsArgs;
+	struct DsArgList *dsArgs;
 	struct {
 		int32_t start;
 		int32_t stop;
@@ -476,6 +472,11 @@ enum {
 	struct StrFmtArgList strfmtArgs;
 	bool captureTerminated;
 }
+
+// Avoid leaking memory when a syntax error occurs, or YYACCEPT is used
+%destructor {
+	free($$);
+} <expr> <macroArg> <dsArgs>
 
 %type	<expr>		relocexpr
 %type	<expr>		relocexpr_no_str
@@ -868,16 +869,16 @@ directive	: endc
 trailing_comma	: %empty | T_COMMA
 ;
 
-equ		: T_LABEL T_POP_EQU const	{ sym_AddEqu($1, $3); }
+equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
 set_or_equal	: T_POP_SET | T_POP_EQUAL
 ;
 
-set		: T_LABEL set_or_equal const	{ sym_AddSet($1, $3); }
+set		: T_LABEL set_or_equal const { sym_AddSet($1, $3); }
 ;
 
-equs		: T_LABEL T_POP_EQUS string	{ sym_AddString($1, $3); }
+equs		: T_LABEL T_POP_EQUS string { sym_AddString($1, $3); }
 ;
 
 rb		: T_LABEL T_POP_RB rs_uconst {
@@ -940,41 +941,45 @@ pops		: T_POP_POPS		{ out_PopSection(); }
 pushs		: T_POP_PUSHS		{ out_PushSection(); }
 ;
 
-fail		: T_POP_FAIL string	{ fatalerror("%s\n", $2); }
+fail		: T_POP_FAIL string { fatalerror("%s\n", $2); }
 ;
 
-warn		: T_POP_WARN string	{ warning(WARNING_USER, "%s\n", $2); }
+warn		: T_POP_WARN string { warning(WARNING_USER, "%s\n", $2); }
 ;
 
 assert_type	: %empty		{ $$ = ASSERT_ERROR; }
-		| T_POP_WARN T_COMMA	{ $$ = ASSERT_WARN; }
-		| T_POP_FAIL T_COMMA	{ $$ = ASSERT_ERROR; }
-		| T_POP_FATAL T_COMMA	{ $$ = ASSERT_FATAL; }
+		| T_POP_WARN T_COMMA { $$ = ASSERT_WARN; }
+		| T_POP_FAIL T_COMMA { $$ = ASSERT_ERROR; }
+		| T_POP_FATAL T_COMMA { $$ = ASSERT_FATAL; }
 ;
 
 assert		: T_POP_ASSERT assert_type relocexpr
 		{
-			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, "",
-						      sect_GetOutputOffset()))
+			struct RPNBuffer *rpnBuf = NULL;
+			uint32_t value = rpn_Eval($3, &rpnBuf);
+
+			if (rpnBuf) {
+				if (!out_CreateAssert($2, rpnBuf, "", sect_GetOutputOffset()))
 					error("Assertion creation failed: %s\n",
 						strerror(errno));
-			} else if ($3.val == 0) {
+			} else if (value == 0) {
 				failAssert($2);
 			}
-			rpn_Free(&$3);
+			free($3);
 		}
 		| T_POP_ASSERT assert_type relocexpr T_COMMA string
 		{
-			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, $5,
-						      sect_GetOutputOffset()))
+			struct RPNBuffer *rpnBuf = NULL;
+			uint32_t value = rpn_Eval($3, &rpnBuf);
+
+			if (rpnBuf) {
+				if (!out_CreateAssert($2, rpnBuf, $5, sect_GetOutputOffset()))
 					error("Assertion creation failed: %s\n",
 						strerror(errno));
-			} else if ($3.val == 0) {
+			} else if (value == 0) {
 				failAssertMsg($2, $5);
 			}
-			rpn_Free(&$3);
+			free($3);
 		}
 		| T_POP_STATIC_ASSERT assert_type const
 		{
@@ -989,13 +994,13 @@ assert		: T_POP_ASSERT assert_type relocexpr
 ;
 
 shift		: T_POP_SHIFT		{ macro_ShiftCurrentArgs(1); }
-		| T_POP_SHIFT const	{ macro_ShiftCurrentArgs($2); }
+		| T_POP_SHIFT const { macro_ShiftCurrentArgs($2); }
 ;
 
 load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
 			out_SetLoadSection($3, $5, $6, &$7, $2);
 		}
-		| T_POP_ENDL	{ out_EndLoadSection(); }
+		| T_POP_ENDL { out_EndLoadSection(); }
 ;
 
 rept		: T_POP_REPT uconst T_NEWLINE {
@@ -1062,10 +1067,10 @@ macrodef	: T_POP_MACRO {
 		}
 ;
 
-rsset		: T_POP_RSSET uconst	{ sym_AddSet("_RS", $2); }
+rsset		: T_POP_RSSET uconst { sym_AddSet("_RS", $2); }
 ;
 
-rsreset		: T_POP_RSRESET	{ sym_AddSet("_RS", 0); }
+rsreset		: T_POP_RSRESET { sym_AddSet("_RS", 0); }
 ;
 
 rs_uconst	: %empty {
@@ -1074,45 +1079,44 @@ rs_uconst	: %empty {
 		| uconst
 ;
 
-union		: T_POP_UNION	{ sect_StartUnion(); }
+union		: T_POP_UNION { sect_StartUnion(); }
 ;
 
-nextu		: T_POP_NEXTU	{ sect_NextUnionMember(); }
+nextu		: T_POP_NEXTU { sect_NextUnionMember(); }
 ;
 
-endu		: T_POP_ENDU	{ sect_EndUnion(); }
+endu		: T_POP_ENDU { sect_EndUnion(); }
 ;
 
-ds		: T_POP_DS uconst	{ out_Skip($2, true); }
+ds		: T_POP_DS uconst { out_Skip($2, true); }
 		| T_POP_DS uconst T_COMMA ds_args trailing_comma {
-			out_RelBytes($2, $4.args, $4.nbArgs);
-			freeDsArgList(&$4);
+			out_RelBytes($2, $4->args, $4->nbArgs);
+
+			for (size_t i = 0; i < $4->nbArgs; i++)
+				free($4->args[i]);
+			free($4);
 		}
 ;
 
 ds_args		: reloc_8bit {
-			initDsArgList(&$$);
-			size_t i = nextDsArgListIndex(&$$);
-
-			$$.args[i] = $1;
+			$$ = newDsArgList();
+			*nextDsArgListIndex(&$$) = $1;
 		}
 		| ds_args T_COMMA reloc_8bit {
-			size_t i = nextDsArgListIndex(&$1);
-
-			$1.args[i] = $3;
 			$$ = $1;
+			*nextDsArgListIndex(&$$) = $3;
 		}
 ;
 
-db		: T_POP_DB	{ out_Skip(1, false); }
+db		: T_POP_DB { out_Skip(1, false); }
 		| T_POP_DB constlist_8bit trailing_comma
 ;
 
-dw		: T_POP_DW	{ out_Skip(2, false); }
+dw		: T_POP_DW { out_Skip(2, false); }
 		| T_POP_DW constlist_16bit trailing_comma
 ;
 
-dl		: T_POP_DL	{ out_Skip(4, false); }
+dl		: T_POP_DL { out_Skip(4, false); }
 		| T_POP_DL constlist_32bit trailing_comma
 ;
 
@@ -1168,7 +1172,7 @@ purge_list	: purge_list_entry
 		| purge_list T_COMMA purge_list_entry
 ;
 
-purge_list_entry : scoped_id	{ sym_Purge($1); }
+purge_list_entry : scoped_id { sym_Purge($1); }
 ;
 
 export		: T_POP_EXPORT export_list trailing_comma
@@ -1178,7 +1182,7 @@ export_list	: export_list_entry
 		| export_list T_COMMA export_list_entry
 ;
 
-export_list_entry : scoped_id	{ sym_Export($1); }
+export_list_entry : scoped_id { sym_Export($1); }
 ;
 
 include		: label T_POP_INCLUDE string endofline {
@@ -1212,17 +1216,17 @@ charmap		: T_POP_CHARMAP string T_COMMA const {
 		}
 ;
 
-newcharmap	: T_POP_NEWCHARMAP T_ID	{ charmap_New($2, NULL); }
-		| T_POP_NEWCHARMAP T_ID T_COMMA T_ID	{ charmap_New($2, $4); }
+newcharmap	: T_POP_NEWCHARMAP T_ID { charmap_New($2, NULL); }
+		| T_POP_NEWCHARMAP T_ID T_COMMA T_ID { charmap_New($2, $4); }
 ;
 
-setcharmap	: T_POP_SETCHARMAP T_ID	{ charmap_Set($2); }
+setcharmap	: T_POP_SETCHARMAP T_ID { charmap_Set($2); }
 ;
 
-pushc		: T_POP_PUSHC	{ charmap_Push(); }
+pushc		: T_POP_PUSHC { charmap_Push(); }
 ;
 
-popc		: T_POP_POPC	{ charmap_Pop(); }
+popc		: T_POP_POPC { charmap_Pop(); }
 ;
 
 print		: T_POP_PRINT print_exprs trailing_comma
@@ -1246,25 +1250,25 @@ print_expr	: const_no_str { printf("$%" PRIX32, $1); }
 		| string { printf("%s", $1); }
 ;
 
-printt		: T_POP_PRINTT string	{
+printt		: T_POP_PRINTT string {
 			warning(WARNING_OBSOLETE, "`PRINTT` is deprecated; use `PRINT`\n");
 			printf("%s", $2);
 		}
 ;
 
-printv		: T_POP_PRINTV const	{
+printv		: T_POP_PRINTV const {
 			warning(WARNING_OBSOLETE, "`PRINTV` is deprecated; use `PRINT`\n");
 			printf("$%" PRIX32, $2);
 		}
 ;
 
-printi		: T_POP_PRINTI const	{
+printi		: T_POP_PRINTI const {
 			warning(WARNING_OBSOLETE, "`PRINTI` is deprecated; use `PRINT` with `STRFMT`\n");
 			printf("%" PRId32, $2);
 		}
 ;
 
-printf		: T_POP_PRINTF const	{
+printf		: T_POP_PRINTF const {
 			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT`\n");
 			fix_Print($2);
 		}
@@ -1286,8 +1290,8 @@ constlist_8bit	: constlist_8bit_entry
 		| constlist_8bit T_COMMA constlist_8bit_entry
 ;
 
-constlist_8bit_entry : reloc_8bit_no_str	{
-			out_RelByte(&$1, 0);
+constlist_8bit_entry : reloc_8bit_no_str {
+			out_RelByte($1, 0);
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1302,8 +1306,8 @@ constlist_16bit : constlist_16bit_entry
 		| constlist_16bit T_COMMA constlist_16bit_entry
 ;
 
-constlist_16bit_entry : reloc_16bit_no_str	{
-			out_RelWord(&$1, 0);
+constlist_16bit_entry : reloc_16bit_no_str {
+			out_RelWord($1, 0);
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1318,8 +1322,8 @@ constlist_32bit : constlist_32bit_entry
 		| constlist_32bit T_COMMA constlist_32bit_entry
 ;
 
-constlist_32bit_entry :relocexpr_no_str	{
-			out_RelLong(&$1, 0);
+constlist_32bit_entry : relocexpr_no_str {
+			out_RelLong($1, 0);
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
@@ -1331,33 +1335,25 @@ constlist_32bit_entry :relocexpr_no_str	{
 ;
 
 reloc_8bit	: relocexpr {
-			if(rpn_isKnown(&$1)
-			 && ($1.val < -128 || $1.val > 255))
-				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
+			rpn_CheckNBit($1, 8);
 			$$ = $1;
 		}
 ;
 
 reloc_8bit_no_str : relocexpr_no_str {
-			if(rpn_isKnown(&$1)
-			 && ($1.val < -128 || $1.val > 255))
-				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
+			rpn_CheckNBit($1, 8);
 			$$ = $1;
 		}
 ;
 
 reloc_16bit	: relocexpr {
-			if (rpn_isKnown(&$1)
-			 && ($1.val < -32768 || $1.val > 65535))
-				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
+			rpn_CheckNBit($1, 16);
 			$$ = $1;
 		}
 ;
 
 reloc_16bit_no_str : relocexpr_no_str {
-			if (rpn_isKnown(&$1)
-			 && ($1.val < -32768 || $1.val > 65535))
-				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
+			rpn_CheckNBit($1, 16);
 			$$ = $1;
 		}
 ;
@@ -1370,156 +1366,173 @@ relocexpr	: relocexpr_no_str
 			uint32_t r = str2int2(output, length);
 
 			free(output);
-			rpn_Number(&$$, r);
+			$$ = rpn_Number(r);
 		}
 ;
 
-relocexpr_no_str : scoped_anon_id	{ rpn_Symbol(&$$, $1); }
-		| T_NUMBER	{ rpn_Number(&$$, $1); }
+relocexpr_no_str : scoped_anon_id { $$ = rpn_Symbol($1); }
+		| T_NUMBER { $$ = rpn_Number($1); }
 		| T_OP_LOGICNOT relocexpr %prec NEG {
-			rpn_LOGNOT(&$$, &$2);
+			$$ = rpn_UnaryOp(RPN_LOGUNNOT, $2);
 		}
-		| relocexpr T_OP_LOGICOR relocexpr {
-			rpn_BinaryOp(RPN_LOGOR, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICOR relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGOR, $3);
 		}
-		| relocexpr T_OP_LOGICAND relocexpr {
-			rpn_BinaryOp(RPN_LOGAND, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICAND relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGAND, $3);
 		}
-		| relocexpr T_OP_LOGICEQU relocexpr {
-			rpn_BinaryOp(RPN_LOGEQ, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICEQU relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGEQ, $3);
 		}
-		| relocexpr T_OP_LOGICGT relocexpr {
-			rpn_BinaryOp(RPN_LOGGT, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICGT relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGGT, $3);
 		}
-		| relocexpr T_OP_LOGICLT relocexpr {
-			rpn_BinaryOp(RPN_LOGLT, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICLT relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGLT, $3);
 		}
-		| relocexpr T_OP_LOGICGE relocexpr {
-			rpn_BinaryOp(RPN_LOGGE, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICGE relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGGE, $3);
 		}
-		| relocexpr T_OP_LOGICLE relocexpr {
-			rpn_BinaryOp(RPN_LOGLE, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICLE relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGLE, $3);
 		}
-		| relocexpr T_OP_LOGICNE relocexpr {
-			rpn_BinaryOp(RPN_LOGNE, &$$, &$1, &$3);
+		| relocexpr T_OP_LOGICNE relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_LOGNE, $3);
 		}
-		| relocexpr T_OP_ADD relocexpr {
-			rpn_BinaryOp(RPN_ADD, &$$, &$1, &$3);
+		| relocexpr T_OP_ADD relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_ADD, $3);
 		}
-		| relocexpr T_OP_SUB relocexpr {
-			rpn_BinaryOp(RPN_SUB, &$$, &$1, &$3);
+		| relocexpr T_OP_SUB relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_SUB, $3);
 		}
-		| relocexpr T_OP_XOR relocexpr {
-			rpn_BinaryOp(RPN_XOR, &$$, &$1, &$3);
+		| relocexpr T_OP_XOR relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_XOR, $3);
 		}
-		| relocexpr T_OP_OR relocexpr {
-			rpn_BinaryOp(RPN_OR, &$$, &$1, &$3);
+		| relocexpr T_OP_OR relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_OR, $3);
 		}
-		| relocexpr T_OP_AND relocexpr {
-			rpn_BinaryOp(RPN_AND, &$$, &$1, &$3);
+		| relocexpr T_OP_AND relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_AND, $3);
 		}
-		| relocexpr T_OP_SHL relocexpr {
-			rpn_BinaryOp(RPN_SHL, &$$, &$1, &$3);
+		| relocexpr T_OP_SHL relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_SHL, $3);
 		}
-		| relocexpr T_OP_SHR relocexpr {
-			rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3);
+		| relocexpr T_OP_SHR relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_SHR, $3);
 		}
-		| relocexpr T_OP_MUL relocexpr {
-			rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3);
+		| relocexpr T_OP_MUL relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_MUL, $3);
 		}
-		| relocexpr T_OP_DIV relocexpr {
-			rpn_BinaryOp(RPN_DIV, &$$, &$1, &$3);
+		| relocexpr T_OP_DIV relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_DIV, $3);
 		}
-		| relocexpr T_OP_MOD relocexpr {
-			rpn_BinaryOp(RPN_MOD, &$$, &$1, &$3);
+		| relocexpr T_OP_MOD relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_MOD, $3);
 		}
-		| relocexpr T_OP_EXP relocexpr {
-			rpn_BinaryOp(RPN_EXP, &$$, &$1, &$3);
+		| relocexpr T_OP_EXP relocexpr
+		{
+			$$ = rpn_BinaryOp($1, RPN_EXP, $3);
 		}
-		| T_OP_ADD relocexpr %prec NEG	{ $$ = $2; }
-		| T_OP_SUB relocexpr %prec NEG	{ rpn_UNNEG(&$$, &$2); }
-		| T_OP_NOT relocexpr %prec NEG	{ rpn_UNNOT(&$$, &$2); }
-		| T_OP_HIGH T_LPAREN relocexpr T_RPAREN	{ rpn_HIGH(&$$, &$3); }
-		| T_OP_LOW T_LPAREN relocexpr T_RPAREN	{ rpn_LOW(&$$, &$3); }
-		| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN{ rpn_ISCONST(&$$, &$3); }
+		| T_OP_ADD relocexpr %prec NEG { $$ = $2; }
+		| T_OP_SUB relocexpr %prec NEG { $$ = rpn_UnaryOp(RPN_UNSUB, $2); }
+		| T_OP_NOT relocexpr %prec NEG { $$ = rpn_UnaryOp(RPN_UNNOT, $2); }
+		| T_OP_HIGH T_LPAREN relocexpr T_RPAREN { $$ = rpn_HIGH($3); }
+		| T_OP_LOW T_LPAREN relocexpr T_RPAREN { $$ = rpn_LOW($3); }
+		| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN { $$ = rpn_UnaryOp(RPN_ISCONST, $3); }
 		| T_OP_BANK T_LPAREN scoped_anon_id T_RPAREN {
-			/* '@' is also a T_ID, it is handled here. */
-			rpn_BankSymbol(&$$, $3);
+			// '@' is also a T_ID, it is handled here.
+			$$ = rpn_BankSymbol($3);
 		}
-		| T_OP_BANK T_LPAREN string T_RPAREN	{ rpn_BankSection(&$$, $3); }
-		| T_OP_SIZEOF T_LPAREN string T_RPAREN	{ rpn_SizeOfSection(&$$, $3); }
-		| T_OP_STARTOF T_LPAREN string T_RPAREN	{ rpn_StartOfSection(&$$, $3); }
+		| T_OP_BANK T_LPAREN string T_RPAREN { $$ = rpn_BankSection($3); }
+		| T_OP_SIZEOF T_LPAREN string T_RPAREN { $$ = rpn_SizeOfSection($3); }
+		| T_OP_STARTOF T_LPAREN string T_RPAREN { $$ = rpn_StartOfSection($3); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
-			struct Symbol const *sym = sym_FindScopedSymbol($4);
-
-			rpn_Number(&$$, !!sym);
+			$$ = rpn_Number(!!sym_FindScopedSymbol($4));
 
 			lexer_ToggleStringExpansion(true);
 		}
 		| T_OP_ROUND T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Round($3));
+			$$ = rpn_Number(fix_Round($3));
 		}
 		| T_OP_CEIL T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Ceil($3));
+			$$ = rpn_Number(fix_Ceil($3));
 		}
 		| T_OP_FLOOR T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Floor($3));
+			$$ = rpn_Number(fix_Floor($3));
 		}
 		| T_OP_FDIV T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Div($3, $5));
+			$$ = rpn_Number(fix_Div($3, $5));
 		}
 		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Mul($3, $5));
+			$$ = rpn_Number(fix_Mul($3, $5));
 		}
 		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Pow($3, $5));
+			$$ = rpn_Number(fix_Pow($3, $5));
 		}
 		| T_OP_LOG T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Log($3, $5));
+			$$ = rpn_Number(fix_Log($3, $5));
 		}
 		| T_OP_SIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Sin($3));
+			$$ = rpn_Number(fix_Sin($3));
 		}
 		| T_OP_COS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Cos($3));
+			$$ = rpn_Number(fix_Cos($3));
 		}
 		| T_OP_TAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Tan($3));
+			$$ = rpn_Number(fix_Tan($3));
 		}
 		| T_OP_ASIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ASin($3));
+			$$ = rpn_Number(fix_ASin($3));
 		}
 		| T_OP_ACOS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ACos($3));
+			$$ = rpn_Number(fix_ACos($3));
 		}
 		| T_OP_ATAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ATan($3));
+			$$ = rpn_Number(fix_ATan($3));
 		}
 		| T_OP_ATAN2 T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_ATan2($3, $5));
+			$$ = rpn_Number(fix_ATan2($3, $5));
 		}
 		| T_OP_STRCMP T_LPAREN string T_COMMA string T_RPAREN {
-			rpn_Number(&$$, strcmp($3, $5));
+			$$ = rpn_Number(strcmp($3, $5));
 		}
 		| T_OP_STRIN T_LPAREN string T_COMMA string T_RPAREN {
 			char *p = strstr($3, $5);
 
-			rpn_Number(&$$, p ? p - $3 + 1 : 0);
+			$$ = rpn_Number(p ? p - $3 + 1 : 0);
 		}
 		| T_OP_STRRIN T_LPAREN string T_COMMA string T_RPAREN {
 			char *p = strrstr($3, $5);
 
-			rpn_Number(&$$, p ? p - $3 + 1 : 0);
+			$$ = rpn_Number(p ? p - $3 + 1 : 0);
 		}
 		| T_OP_STRLEN T_LPAREN string T_RPAREN {
-			rpn_Number(&$$, strlenUTF8($3));
+			$$ = rpn_Number(strlenUTF8($3));
 		}
 		| T_OP_CHARLEN T_LPAREN string T_RPAREN {
-			rpn_Number(&$$, charlenUTF8($3));
+			$$ = rpn_Number(charlenUTF8($3));
 		}
-		| T_LPAREN relocexpr T_RPAREN	{ $$ = $2; }
+		| T_LPAREN relocexpr T_RPAREN { $$ = $2; }
 ;
 
 uconst		: const {
@@ -1531,24 +1544,14 @@ uconst		: const {
 ;
 
 const		: relocexpr {
-			if (!rpn_isKnown(&$1)) {
-				error("Expected constant expression: %s\n",
-					$1.reason);
-				$$ = 0;
-			} else {
-				$$ = $1.val;
-			}
+			$$ = rpn_Eval($1, NULL);
+			free($1);
 		}
 ;
 
 const_no_str	: relocexpr_no_str {
-			if (!rpn_isKnown(&$1)) {
-				error("Expected constant expression: %s\n",
-					$1.reason);
-				$$ = 0;
-			} else {
-				$$ = $1.val;
-			}
+			$$ = rpn_Eval($1, NULL);
+			free($1);
 		}
 ;
 
@@ -1616,19 +1619,9 @@ strfmt_va_args	: %empty {
 			initStrFmtArgList(&$$);
 		}
 		| strfmt_va_args T_COMMA relocexpr_no_str {
-			int32_t value;
-
-			if (!rpn_isKnown(&$3)) {
-				error("Expected constant expression: %s\n",
-					$3.reason);
-				value = 0;
-			} else {
-				value = $3.val;
-			}
-
 			size_t i = nextStrFmtArgListIndex(&$1);
 
-			$1.args[i].number = value;
+			$1.args[i].number = rpn_Eval($3, NULL);
 			$1.args[i].isNumeric = true;
 			$$ = $1;
 		}
@@ -1646,19 +1639,19 @@ section		: T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
 		}
 ;
 
-sectmod		: %empty	{ $$ = SECTION_NORMAL; }
-		| T_POP_UNION	{ $$ = SECTION_UNION; }
+sectmod		: %empty { $$ = SECTION_NORMAL; }
+		| T_POP_UNION { $$ = SECTION_UNION; }
 		| T_POP_FRAGMENT{ $$ = SECTION_FRAGMENT; }
 ;
 
-sectiontype	: T_SECT_WRAM0	{ $$ = SECTTYPE_WRAM0; }
-		| T_SECT_VRAM	{ $$ = SECTTYPE_VRAM; }
-		| T_SECT_ROMX	{ $$ = SECTTYPE_ROMX; }
-		| T_SECT_ROM0	{ $$ = SECTTYPE_ROM0; }
-		| T_SECT_HRAM	{ $$ = SECTTYPE_HRAM; }
-		| T_SECT_WRAMX	{ $$ = SECTTYPE_WRAMX; }
-		| T_SECT_SRAM	{ $$ = SECTTYPE_SRAM; }
-		| T_SECT_OAM	{ $$ = SECTTYPE_OAM; }
+sectiontype	: T_SECT_WRAM0 { $$ = SECTTYPE_WRAM0; }
+		| T_SECT_VRAM { $$ = SECTTYPE_VRAM; }
+		| T_SECT_ROMX { $$ = SECTTYPE_ROMX; }
+		| T_SECT_ROM0 { $$ = SECTTYPE_ROM0; }
+		| T_SECT_HRAM { $$ = SECTTYPE_HRAM; }
+		| T_SECT_WRAMX { $$ = SECTTYPE_WRAMX; }
+		| T_SECT_SRAM { $$ = SECTTYPE_SRAM; }
+		| T_SECT_OAM { $$ = SECTTYPE_OAM; }
 ;
 
 sectorg		: %empty { $$ = -1; }
@@ -1741,29 +1734,29 @@ cpu_command	: z80_adc
 
 z80_adc		: T_Z80_ADC op_a_n {
 			out_AbsByte(0xCE);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_ADC op_a_r	{ out_AbsByte(0x88 | $2); }
+		| T_Z80_ADC op_a_r { out_AbsByte(0x88 | $2); }
 ;
 
 z80_add		: T_Z80_ADD op_a_n {
 			out_AbsByte(0xC6);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_ADD op_a_r	{ out_AbsByte(0x80 | $2); }
-		| T_Z80_ADD T_MODE_HL T_COMMA reg_ss	{ out_AbsByte(0x09 | ($4 << 4)); }
+		| T_Z80_ADD op_a_r { out_AbsByte(0x80 | $2); }
+		| T_Z80_ADD T_MODE_HL T_COMMA reg_ss { out_AbsByte(0x09 | ($4 << 4)); }
 		| T_Z80_ADD T_MODE_SP T_COMMA reloc_8bit {
 			out_AbsByte(0xE8);
-			out_RelByte(&$4, 1);
+			out_RelByte($4, 1);
 		}
 
 ;
 
 z80_and		: T_Z80_AND op_a_n {
 			out_AbsByte(0xE6);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_AND op_a_r	{ out_AbsByte(0xA0 | $2); }
+		| T_Z80_AND op_a_r { out_AbsByte(0xA0 | $2); }
 ;
 
 z80_bit		: T_Z80_BIT const_3bit T_COMMA reg_r {
@@ -1774,38 +1767,38 @@ z80_bit		: T_Z80_BIT const_3bit T_COMMA reg_r {
 
 z80_call	: T_Z80_CALL reloc_16bit {
 			out_AbsByte(0xCD);
-			out_RelWord(&$2, 1);
+			out_RelWord($2, 1);
 		}
 		| T_Z80_CALL ccode T_COMMA reloc_16bit {
 			out_AbsByte(0xC4 | ($2 << 3));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
 		}
 ;
 
-z80_ccf		: T_Z80_CCF	{ out_AbsByte(0x3F); }
+z80_ccf		: T_Z80_CCF { out_AbsByte(0x3F); }
 ;
 
 z80_cp		: T_Z80_CP op_a_n {
 			out_AbsByte(0xFE);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_CP op_a_r	{ out_AbsByte(0xB8 | $2); }
+		| T_Z80_CP op_a_r { out_AbsByte(0xB8 | $2); }
 ;
 
-z80_cpl		: T_Z80_CPL	{ out_AbsByte(0x2F); }
+z80_cpl		: T_Z80_CPL { out_AbsByte(0x2F); }
 ;
 
-z80_daa		: T_Z80_DAA	{ out_AbsByte(0x27); }
+z80_daa		: T_Z80_DAA { out_AbsByte(0x27); }
 ;
 
-z80_dec		: T_Z80_DEC reg_r	{ out_AbsByte(0x05 | ($2 << 3)); }
-		| T_Z80_DEC reg_ss	{ out_AbsByte(0x0B | ($2 << 4)); }
+z80_dec		: T_Z80_DEC reg_r { out_AbsByte(0x05 | ($2 << 3)); }
+		| T_Z80_DEC reg_ss { out_AbsByte(0x0B | ($2 << 4)); }
 ;
 
-z80_di		: T_Z80_DI	{ out_AbsByte(0xF3); }
+z80_di		: T_Z80_DI { out_AbsByte(0xF3); }
 ;
 
-z80_ei		: T_Z80_EI	{ out_AbsByte(0xFB); }
+z80_ei		: T_Z80_EI { out_AbsByte(0xFB); }
 ;
 
 z80_halt	: T_Z80_HALT {
@@ -1815,17 +1808,17 @@ z80_halt	: T_Z80_HALT {
 		}
 ;
 
-z80_inc		: T_Z80_INC reg_r	{ out_AbsByte(0x04 | ($2 << 3)); }
-		| T_Z80_INC reg_ss	{ out_AbsByte(0x03 | ($2 << 4)); }
+z80_inc		: T_Z80_INC reg_r { out_AbsByte(0x04 | ($2 << 3)); }
+		| T_Z80_INC reg_ss { out_AbsByte(0x03 | ($2 << 4)); }
 ;
 
 z80_jp		: T_Z80_JP reloc_16bit {
 			out_AbsByte(0xC3);
-			out_RelWord(&$2, 1);
+			out_RelWord($2, 1);
 		}
 		| T_Z80_JP ccode T_COMMA reloc_16bit {
 			out_AbsByte(0xC2 | ($2 << 3));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
 		}
 		| T_Z80_JP T_MODE_HL {
 			out_AbsByte(0xE9);
@@ -1833,12 +1826,18 @@ z80_jp		: T_Z80_JP reloc_16bit {
 ;
 
 z80_jr		: T_Z80_JR reloc_16bit {
+			struct Expression *ofs = rpn_BinaryOp(rpn_Symbol("@"), RPN_SUB, $2);
+
 			out_AbsByte(0x18);
-			out_PCRelByte(&$2, 1);
+			out_RelByte(ofs, 1);
+			$2 = ofs;
 		}
 		| T_Z80_JR ccode T_COMMA reloc_16bit {
+			struct Expression *ofs = rpn_BinaryOp(rpn_Symbol("@"), RPN_SUB, $4);
+
 			out_AbsByte(0x20 | ($2 << 3));
-			out_PCRelByte(&$4, 1);
+			out_RelByte(ofs, 1);
+			$4 = ofs;
 		}
 ;
 
@@ -1859,16 +1858,16 @@ z80_ldd		: T_Z80_LDD T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
 ;
 
 z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
-			rpn_CheckHRAM(&$4, &$4);
+			rpn_UnaryOp(RPN_HRAM, $4);
 
 			out_AbsByte(0xF0);
-			out_RelByte(&$4, 1);
+			out_RelByte($4, 1);
 		}
 		| T_Z80_LDH op_mem_ind T_COMMA T_MODE_A {
-			rpn_CheckHRAM(&$2, &$2);
+			rpn_UnaryOp(RPN_HRAM, $2);
 
 			out_AbsByte(0xE0);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
 		| T_Z80_LDH T_MODE_A T_COMMA c_ind {
 			out_AbsByte(0xF2);
@@ -1894,35 +1893,43 @@ z80_ld		: z80_ld_mem
 
 z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP T_OP_ADD reloc_8bit {
 			out_AbsByte(0xF8);
-			out_RelByte(&$6, 1);
+			out_RelByte($6, 1);
 		}
 		| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
 		}
 ;
 
-z80_ld_sp	: T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL	{ out_AbsByte(0xF9); }
+z80_ld_sp	: T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL { out_AbsByte(0xF9); }
 		| T_Z80_LD T_MODE_SP T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_SP << 4));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
 		}
 ;
 
 z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 			out_AbsByte(0x08);
-			out_RelWord(&$2, 1);
+			out_RelWord($2, 1);
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
-			if (optimizeLoads && rpn_isKnown(&$2)
-			 && $2.val >= 0xFF00) {
+			struct RPNBuffer *rpnBufPtr = NULL;
+			uint32_t val;
+
+			if (optimizeLoads) {
+				// Attempt to evaluate the expression, see if it's constant
+				val = rpn_Eval($2, &rpnBufPtr);
+				free(rpnBufPtr); // We don't want to keep the RPN buf, though
+			}
+			// If we computed it from above, and it was constant, then check the value
+			if (optimizeLoads && !rpnBufPtr && val >= 0xFF00) {
 				out_AbsByte(0xE0);
-				out_AbsByte($2.val & 0xFF);
-				rpn_Free(&$2);
+				out_AbsByte(val & 0xFF);
 			} else {
 				out_AbsByte(0xEA);
-				out_RelWord(&$2, 1);
+				out_RelWord($2, 1);
 			}
+			free($2);
 		}
 ;
 
@@ -1938,7 +1945,7 @@ z80_ld_rr	: T_Z80_LD reg_rr T_COMMA T_MODE_A {
 
 z80_ld_r	: T_Z80_LD reg_r T_COMMA reloc_8bit {
 			out_AbsByte(0x06 | ($2 << 3));
-			out_RelByte(&$4, 1);
+			out_RelByte($4, 1);
 		}
 		| T_Z80_LD reg_r T_COMMA reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
@@ -1962,29 +1969,38 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 		}
 		| T_Z80_LD reg_r T_COMMA op_mem_ind {
 			if ($2 == REG_A) {
-				if (optimizeLoads && rpn_isKnown(&$4)
-				 && $4.val >= 0xFF00) {
+				struct RPNBuffer *rpnBufPtr = NULL;
+				uint32_t val;
+
+				if (optimizeLoads) {
+					// Attempt to evaluate the expression, see if it's constant
+					val = rpn_Eval($4, &rpnBufPtr);
+					free(rpnBufPtr); // We don't want to keep the RPN buf, though
+				}
+				// If we computed it from above, and it was constant, then check the value
+				if (optimizeLoads && !rpnBufPtr && val >= 0xFF00) {
 					out_AbsByte(0xF0);
-					out_AbsByte($4.val & 0xFF);
-					rpn_Free(&$4);
+					out_AbsByte(val & 0xFF);
 				} else {
 					out_AbsByte(0xFA);
-					out_RelWord(&$4, 1);
+					out_RelWord($4, 1);
 				}
 			} else {
 				error("Destination operand must be A\n");
-				rpn_Free(&$4);
 			}
+			free($4);
 		}
 ;
 
 z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_BC << 4));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
+			free($4);
 		}
 		| T_Z80_LD T_MODE_DE T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_DE << 4));
-			out_RelWord(&$4, 1);
+			out_RelWord($4, 1);
+			free($4);
 		}
 		/*
 		 * HL is taken care of in z80_ld_hl
@@ -1992,20 +2008,20 @@ z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
 		 */
 ;
 
-z80_nop		: T_Z80_NOP	{ out_AbsByte(0x00); }
+z80_nop		: T_Z80_NOP { out_AbsByte(0x00); }
 ;
 
 z80_or		: T_Z80_OR op_a_n {
 			out_AbsByte(0xF6);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_OR op_a_r	{ out_AbsByte(0xB0 | $2); }
+		| T_Z80_OR op_a_r { out_AbsByte(0xB0 | $2); }
 ;
 
-z80_pop		: T_Z80_POP reg_tt	{ out_AbsByte(0xC1 | ($2 << 4)); }
+z80_pop		: T_Z80_POP reg_tt { out_AbsByte(0xC1 | ($2 << 4)); }
 ;
 
-z80_push	: T_Z80_PUSH reg_tt	{ out_AbsByte(0xC5 | ($2 << 4)); }
+z80_push	: T_Z80_PUSH reg_tt { out_AbsByte(0xC5 | ($2 << 4)); }
 ;
 
 z80_res		: T_Z80_RES const_3bit T_COMMA reg_r {
@@ -2014,12 +2030,12 @@ z80_res		: T_Z80_RES const_3bit T_COMMA reg_r {
 		}
 ;
 
-z80_ret		: T_Z80_RET	{ out_AbsByte(0xC9);
+z80_ret		: T_Z80_RET { out_AbsByte(0xC9);
 		}
-		| T_Z80_RET ccode	{ out_AbsByte(0xC0 | ($2 << 3)); }
+		| T_Z80_RET ccode { out_AbsByte(0xC0 | ($2 << 3)); }
 ;
 
-z80_reti	: T_Z80_RETI	{ out_AbsByte(0xD9); }
+z80_reti	: T_Z80_RETI { out_AbsByte(0xD9); }
 ;
 
 z80_rl		: T_Z80_RL reg_r {
@@ -2028,7 +2044,7 @@ z80_rl		: T_Z80_RL reg_r {
 		}
 ;
 
-z80_rla		: T_Z80_RLA	{ out_AbsByte(0x17); }
+z80_rla		: T_Z80_RLA { out_AbsByte(0x17); }
 ;
 
 z80_rlc		: T_Z80_RLC reg_r {
@@ -2037,7 +2053,7 @@ z80_rlc		: T_Z80_RLC reg_r {
 		}
 ;
 
-z80_rlca	: T_Z80_RLCA	{ out_AbsByte(0x07); }
+z80_rlca	: T_Z80_RLCA { out_AbsByte(0x07); }
 ;
 
 z80_rr		: T_Z80_RR reg_r {
@@ -2046,7 +2062,7 @@ z80_rr		: T_Z80_RR reg_r {
 		}
 ;
 
-z80_rra		: T_Z80_RRA	{ out_AbsByte(0x1F); }
+z80_rra		: T_Z80_RRA { out_AbsByte(0x1F); }
 ;
 
 z80_rrc		: T_Z80_RRC reg_r {
@@ -2055,27 +2071,23 @@ z80_rrc		: T_Z80_RRC reg_r {
 		}
 ;
 
-z80_rrca	: T_Z80_RRCA	{ out_AbsByte(0x0F); }
+z80_rrca	: T_Z80_RRCA { out_AbsByte(0x0F); }
 ;
 
 z80_rst		: T_Z80_RST reloc_8bit {
-			rpn_CheckRST(&$2, &$2);
-			if (!rpn_isKnown(&$2))
-				out_RelByte(&$2, 0);
-			else
-				out_AbsByte(0xC7 | $2.val);
-			rpn_Free(&$2);
+			rpn_UnaryOp(RPN_RST, $2);
+			out_RelByte($2, 0);
 		}
 ;
 
 z80_sbc		: T_Z80_SBC op_a_n {
 			out_AbsByte(0xDE);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_SBC op_a_r	{ out_AbsByte(0x98 | $2); }
+		| T_Z80_SBC op_a_r { out_AbsByte(0x98 | $2); }
 ;
 
-z80_scf		: T_Z80_SCF	{ out_AbsByte(0x37); }
+z80_scf		: T_Z80_SCF { out_AbsByte(0x37); }
 ;
 
 z80_set		: T_POP_SET const_3bit T_COMMA reg_r {
@@ -2108,15 +2120,15 @@ z80_stop	: T_Z80_STOP {
 		}
 		| T_Z80_STOP reloc_8bit {
 			out_AbsByte(0x10);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
 ;
 
 z80_sub		: T_Z80_SUB op_a_n {
 			out_AbsByte(0xD6);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_SUB op_a_r	{ out_AbsByte(0x90 | $2);
+		| T_Z80_SUB op_a_r { out_AbsByte(0x90 | $2);
 		}
 ;
 
@@ -2128,20 +2140,20 @@ z80_swap	: T_Z80_SWAP reg_r {
 
 z80_xor		: T_Z80_XOR op_a_n {
 			out_AbsByte(0xEE);
-			out_RelByte(&$2, 1);
+			out_RelByte($2, 1);
 		}
-		| T_Z80_XOR op_a_r	{ out_AbsByte(0xA8 | $2); }
+		| T_Z80_XOR op_a_r { out_AbsByte(0xA8 | $2); }
 ;
 
-op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK	{ $$ = $2; }
+op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK { $$ = $2; }
 ;
 
 op_a_r		: reg_r
-		| T_MODE_A T_COMMA reg_r	{ $$ = $3; }
+		| T_MODE_A T_COMMA reg_r { $$ = $3; }
 ;
 
 op_a_n		: reloc_8bit
-		| T_MODE_A T_COMMA reloc_8bit	{ $$ = $3; }
+		| T_MODE_A T_COMMA reloc_8bit { $$ = $3; }
 ;
 
 T_MODE_A	: T_TOKEN_A
@@ -2184,7 +2196,7 @@ reg_r		: T_MODE_B		{ $$ = REG_B; }
 		| T_MODE_E		{ $$ = REG_E; }
 		| T_MODE_H		{ $$ = REG_H; }
 		| T_MODE_L		{ $$ = REG_L; }
-		| T_LBRACK T_MODE_HL T_RBRACK	{ $$ = REG_HL_IND; }
+		| T_LBRACK T_MODE_HL T_RBRACK { $$ = REG_HL_IND; }
 		| T_MODE_A		{ $$ = REG_A; }
 ;
 
@@ -2200,8 +2212,8 @@ reg_ss		: T_MODE_BC		{ $$ = REG_BC; }
 		| T_MODE_SP		{ $$ = REG_SP; }
 ;
 
-reg_rr		: T_LBRACK T_MODE_BC T_RBRACK	{ $$ = REG_BC_IND; }
-		| T_LBRACK T_MODE_DE T_RBRACK	{ $$ = REG_DE_IND; }
+reg_rr		: T_LBRACK T_MODE_BC T_RBRACK { $$ = REG_BC_IND; }
+		| T_LBRACK T_MODE_DE T_RBRACK { $$ = REG_DE_IND; }
 		| hl_ind_inc		{ $$ = REG_HL_INDINC; }
 		| hl_ind_dec		{ $$ = REG_HL_INDDEC; }
 ;

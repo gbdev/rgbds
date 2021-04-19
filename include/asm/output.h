@@ -13,8 +13,9 @@
 
 #include "linkdefs.h"
 
-struct Expression;
 struct FileStackNode;
+struct RPNBuffer;
+struct Symbol;
 
 extern char *objectName;
 extern struct Section *sectionList, *currentSection;
@@ -22,8 +23,9 @@ extern struct Section *sectionList, *currentSection;
 void out_RegisterNode(struct FileStackNode *node);
 void out_ReplaceNode(struct FileStackNode *node);
 void out_SetFileName(char *s);
-void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, uint32_t pcShift);
-bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
+uint32_t out_GetSymbolID(struct Symbol *sym);
+void out_CreatePatch(uint32_t type, struct RPNBuffer *rpn, uint32_t ofs, uint32_t pcShift);
+bool out_CreateAssert(enum AssertionType type, struct RPNBuffer *rpn,
 		      char const *message, uint32_t ofs);
 void out_WriteObject(void);
 

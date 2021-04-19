@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,530 +27,684 @@
 #include "asm/warning.h"
 
 #include "opmath.h"
+#include "rpn.h"
 
-/* Makes an expression "not known", also setting its error message */
-#define makeUnknown(expr_, ...) do { \
-	struct Expression *_expr = expr_; \
-	_expr->isKnown = false; \
-	/* If we had `asprintf` this would be great, but alas. */ \
-	_expr->reason = malloc(128); /* Use an initial reasonable size */ \
-	if (!_expr->reason) \
-		fatalerror("Can't allocate err string: %s\n", strerror(errno)); \
-	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
-	if (size >= 128) { /* If this wasn't enough, try again */ \
-		_expr->reason = realloc(_expr->reason, size + 1); \
-		sprintf(_expr->reason, __VA_ARGS__); \
-	} \
-} while (0)
+struct Expression {
+	size_t   rpnLength; // Used size of the `rpn` buffer
+	uint8_t  rpn[];     // Array of bytes serializing the RPN expression (see rgbds(5) roughly)
+};
 
-static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
+/*
+ * Determines if an expression is known at assembly time
+ */
+static bool isConstant(struct Expression const *expr)
 {
-	/* This assumes the RPN length is always less than the capacity */
-	if (expr->rpnCapacity - expr->rpnLength < size) {
-		/* If there isn't enough room to reserve the space, realloc */
-		if (!expr->rpn)
-			expr->rpnCapacity = 256; /* Initial size */
-		while (expr->rpnCapacity - expr->rpnLength < size) {
-			if (expr->rpnCapacity >= MAXRPNLEN)
-				/*
-				 * To avoid generating humongous object files, cap the
-				 * size of RPN expressions
-				 */
-				fatalerror("RPN expression cannot grow larger than "
-					   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
-			else if (expr->rpnCapacity > MAXRPNLEN / 2)
-				expr->rpnCapacity = MAXRPNLEN;
-			else
-				expr->rpnCapacity *= 2;
-		}
-		expr->rpn = realloc(expr->rpn, expr->rpnCapacity);
+	// An expression is known if it reduces to a single number
+	return expr->rpnLength == 1 + sizeof(uint32_t) && expr->rpn[0] == RPN_CONST;
+}
 
-		if (!expr->rpn)
-			fatalerror("Failed to grow RPN expression: %s\n", strerror(errno));
-	}
+static uint32_t getConstVal(struct Expression const *expr)
+{
+	return readLE32(&expr->rpn[1]);
+}
 
-	uint8_t *ptr = expr->rpn + expr->rpnLength;
-
-	expr->rpnLength += size;
-	return ptr;
+static void setConstVal(struct Expression *expr, uint32_t i)
+{
+	writeLE32(&expr->rpn[1], i);
 }
 
 /*
- * Init the RPN expression
+ * Init a RPN expression
  */
-static void rpn_Init(struct Expression *expr)
+static struct Expression *rpn_Init(size_t rpnSize)
 {
-	expr->reason = NULL;
-	expr->isKnown = true;
-	expr->isSymbol = false;
-	expr->rpn = NULL;
-	expr->rpnCapacity = 0;
-	expr->rpnLength = 0;
-	expr->rpnPatchSize = 0;
+	// FIXME: there's a possible overflow there
+	struct Expression *expr = malloc(sizeof(*expr) + rpnSize);
+
+	if (!expr)
+		fatalerror("Failed to alloc expression: %s\n", strerror(errno));
+	expr->rpnLength = rpnSize;
+	// Don't init the RPN buffer, the caller will do it
+	return expr;
 }
 
-/*
- * Free the RPN expression
- */
-void rpn_Free(struct Expression *expr)
+static struct Expression *rpn_Grow(struct Expression *expr, size_t additionalSize)
 {
-	free(expr->rpn);
-	free(expr->reason);
-	rpn_Init(expr);
+	// FIXME: there's a possible overflow here
+	expr->rpnLength += additionalSize;
+	expr = realloc(expr, sizeof(*expr) + expr->rpnLength);
+	if (!expr)
+		fatalerror("Failed to grow expression: %s\n", strerror(errno));
+	return expr;
 }
 
-/*
- * Add symbols, constants and operators to expression
- */
-void rpn_Number(struct Expression *expr, uint32_t i)
+/// TERMINALS
+
+struct Expression *rpn_Number(uint32_t i)
 {
-	rpn_Init(expr);
-	expr->val = i;
+	struct Expression *expr = rpn_Init(1 + sizeof(uint32_t));
+
+	expr->rpn[0] = RPN_CONST;
+	setConstVal(expr, i);
+	return expr;
 }
 
-void rpn_Symbol(struct Expression *expr, char const *symName)
+struct Expression *rpn_Symbol(char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	// FIXME: we have two possible overflows here
+	size_t nameLen = strlen(symName) + 1; // Don't forget the terminator!
+	struct Expression *expr = rpn_Init(1 + nameLen);
 
-	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
-		error("PC has no value outside a section\n");
-		rpn_Number(expr, 0);
-	} else if (!sym || !sym_IsConstant(sym)) {
-		rpn_Init(expr);
-		expr->isSymbol = true;
-
-		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
-						: "'%s' is not constant at assembly time", symName);
-		sym = sym_Ref(symName);
-		expr->rpnPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
-
-		size_t nameLen = strlen(sym->name) + 1; /* Don't forget NUL! */
-		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
-		*ptr++ = RPN_SYM;
-		memcpy(ptr, sym->name, nameLen);
-	} else {
-		rpn_Number(expr, sym_GetConstantValue(symName));
-	}
+	expr->rpn[0] = RPN_SYM;
+	memcpy(&expr->rpn[1], symName, nameLen);
+	return expr;
 }
 
-void rpn_BankSelf(struct Expression *expr)
+static struct Expression *rpn_BankSelf(void)
 {
-	rpn_Init(expr);
+	struct Expression *expr = rpn_Init(1);
 
-	if (!currentSection) {
-		error("PC has no bank outside a section\n");
-		expr->val = 1;
-	} else if (currentSection->bank == (uint32_t)-1) {
-		makeUnknown(expr, "Current section's bank is not known");
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_BANK_SELF;
-	} else {
-		expr->val = currentSection->bank;
-	}
+	expr->rpn[0] = RPN_BANK_SELF;
+	return expr;
 }
 
-void rpn_BankSymbol(struct Expression *expr, char const *symName)
+struct Expression *rpn_BankSymbol(char const *symName)
 {
 	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
-	/* The @ symbol is treated differently. */
-	if (sym_IsPC(sym)) {
-		rpn_BankSelf(expr);
-		return;
+	if (sym_IsPC(sym)) // This can be determined at parsing time, no need to defer to evaluation
+		return rpn_BankSelf();
+
+	// FIXME: we have two possible overflows here
+	size_t nameLen = strlen(symName) + 1; // Don't forget the terminator!
+	struct Expression *expr = rpn_Init(1 + nameLen);
+
+	expr->rpn[0] = RPN_BANK_SYM;
+	memcpy(&expr->rpn[1], symName, nameLen);
+	return expr;
+}
+
+struct Expression *rpn_BankSection(char const *sectionName)
+{
+	// FIXME: we have two possible overflows here
+	size_t nameLen = strlen(sectionName) + 1; // Don't forget the terminator!
+	struct Expression *expr = rpn_Init(1 + nameLen);
+
+	expr->rpn[0] = RPN_BANK_SECT;
+	memcpy(&expr->rpn[1], sectionName, nameLen);
+	return expr;
+}
+
+struct Expression *rpn_SizeOfSection(char const *sectionName)
+{
+	// FIXME: we have two possible overflows here
+	size_t nameLen = strlen(sectionName) + 1; // Don't forget the terminator!
+	struct Expression *expr = rpn_Init(1 + nameLen);
+
+	expr->rpn[0] = RPN_SIZEOF_SECT;
+	memcpy(&expr->rpn[1], sectionName, nameLen);
+	return expr;
+}
+
+struct Expression *rpn_StartOfSection(char const *sectionName)
+{
+	// FIXME: we have two possible overflows here
+	size_t nameLen = strlen(sectionName) + 1; // Don't forget the terminator!
+	struct Expression *expr = rpn_Init(1 + nameLen);
+
+	expr->rpn[0] = RPN_STARTOF_SECT;
+	memcpy(&expr->rpn[1], sectionName, nameLen);
+	return expr;
+}
+
+/// UNARY OPERATORS
+
+struct Expression *rpn_HIGH(struct Expression *expr)
+{
+	if (isConstant(expr)) {
+		// Truncate the result to a single byte via unsigned casting
+		uint8_t val = getConstVal(expr) >> 8;
+
+		setConstVal(expr, val);
+		return expr;
 	}
 
-	rpn_Init(expr);
-	if (sym && !sym_IsLabel(sym)) {
-		error("BANK argument must be a label\n");
-	} else {
-		sym = sym_Ref(symName);
-		assert(sym); // If the symbol didn't exist, it should have been created
+	static uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
+				  RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
-		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != (uint32_t)-1) {
-			/* Symbol's section is known and bank is fixed */
-			expr->val = sym_GetSection(sym)->bank;
-		} else {
-			makeUnknown(expr, "\"%s\"'s bank is not known", symName);
-			expr->rpnPatchSize += 5; /* opcode + 4-byte sect ID */
+	expr = rpn_Grow(expr, sizeof(bytes));
+	memcpy(&expr->rpn[expr->rpnLength - sizeof(bytes)], bytes, sizeof(bytes));
+	return expr;
+}
 
-			size_t nameLen = strlen(sym->name) + 1; /* Room for NUL! */
-			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
-			*ptr++ = RPN_BANK_SYM;
-			memcpy(ptr, sym->name, nameLen);
+struct Expression *rpn_LOW(struct Expression *expr)
+{
+	if (isConstant(expr)) {
+		// Truncate the result to a single byte via unsigned casting
+		uint8_t val = getConstVal(expr);
+
+		setConstVal(expr, val);
+		return expr;
+	}
+
+	static uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+
+	expr = rpn_Grow(expr, sizeof(bytes));
+	memcpy(&expr->rpn[expr->rpnLength - sizeof(bytes)], bytes, sizeof(bytes));
+	return expr;
+}
+
+struct Expression *rpn_UnaryOp(enum RPNCommand op, struct Expression *expr)
+{
+	if (isConstant(expr)) {
+		setConstVal(expr, rpn_ConstUnaryOp(op, getConstVal(expr), NULL));
+		return expr;
+	}
+
+	expr = rpn_Grow(expr, 1);
+	expr->rpn[expr->rpnLength - 1] = op;
+	return expr;
+}
+
+/// BINARY OPERATORS
+
+struct Expression *rpn_BinaryOp(struct Expression *lhs, enum RPNCommand op, struct Expression *rhs)
+{
+	// Modify `lhs` to contain the result, and free `rhs`
+
+	if (isConstant(lhs)) {
+		uint32_t lhsVal = getConstVal(lhs);
+
+		// We might have a chance with short-circuiting ops
+		if (op == RPN_LOGAND && !lhsVal) {
+			setConstVal(lhs, 0);
+			free(rhs);
+			return lhs;
+		}
+		if (op == RPN_LOGOR && lhsVal) {
+			setConstVal(lhs, 1);
+			free(rhs);
+			return lhs;
+		}
+		// Otherwise, if both are constant, we can compute the result unconditionally
+		if (isConstant(rhs)) {
+			struct Result res = rpn_ConstBinaryOp(lhsVal, op, getConstVal(rhs), NULL);
+
+			free(rhs);
+			if (is_ok(&res)) {
+				setConstVal(lhs, res.value);
+			} else if (res.error == ERR_UNK) {
+				// This happens when we get a warning
+				assert(lhs->rpnLength == 5); // Since LHS is supposed to be a constant...
+				lhs = rpn_Grow(lhs, 5 + 1); // One extra constant plus operator
+				memcpy(&lhs->rpn[5], rhs->rpn, 5);
+				lhs->rpn[10] = op;
+			} else {
+				lhs->rpnLength = 1;
+				lhs->rpn[0] = res.error;
+			}
+			free(rhs);
+			return lhs;
 		}
 	}
+
+	// FIXME: there's a possible overflow here
+	lhs = rpn_Grow(lhs, rhs->rpnLength + 1);
+	memcpy(&lhs->rpn[lhs->rpnLength - rhs->rpnLength - 1], rhs->rpn, rhs->rpnLength);
+	lhs->rpn[lhs->rpnLength - 1] = op;
+	free(rhs);
+	return lhs;
 }
 
-void rpn_BankSection(struct Expression *expr, char const *sectionName)
+/// EXPRESSION REDUCER
+
+static void reportUnaryError(enum UnaryError type, int32_t value)
 {
-	rpn_Init(expr);
+	switch (type) {
+	case UN_ERR_HRAM:
+		error("Value $%" PRIx32 " not in range [$FF00; $FFFF]\n", value);
+		break;
 
-	struct Section *section = out_FindSectionByName(sectionName);
-
-	if (section && section->bank != (uint32_t)-1) {
-		expr->val = section->bank;
-	} else {
-		makeUnknown(expr, "Section \"%s\"'s bank is not known", sectionName);
-
-		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
-		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
-
-		expr->rpnPatchSize += nameLen + 1;
-		*ptr++ = RPN_BANK_SECT;
-		memcpy(ptr, sectionName, nameLen);
+	case UN_ERR_RST:
+		error("Invalid address $%" PRIx32 " for RST\n", value);
+		break;
 	}
 }
 
-void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
+static void reportBinaryError(enum BinaryWarning type, int32_t lhs, int32_t rhs)
 {
-	rpn_Init(expr);
+	switch (type) {
+        case BIN_WARN_SHL_NEG:
+        	warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n",
+        		rhs);
+        	break;
 
-	makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
+        case BIN_WARN_SHL_LARGE:
+        	warning(WARNING_SHIFT_AMOUNT, "Shfting left by large amount %" PRId32 "\n", rhs);
+        	break;
 
-	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
-	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+        case BIN_WARN_NEG_SHR:
+        	warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", lhs);
+        	break;
 
-	expr->rpnPatchSize += nameLen + 1;
-	*ptr++ = RPN_SIZEOF_SECT;
-	memcpy(ptr, sectionName, nameLen);
-}
+        case BIN_WARN_SHR_NEG:
+        	warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+        		rhs);
+        	break;
 
-void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
-{
-	rpn_Init(expr);
+        case BIN_WARN_SHR_LARGE:
+        	warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rhs);
+        	break;
 
-	makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
-
-	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
-	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
-
-	expr->rpnPatchSize += nameLen + 1;
-	*ptr++ = RPN_STARTOF_SECT;
-	memcpy(ptr, sectionName, nameLen);
-}
-
-void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-	expr->isSymbol = false;
-
-	if (!rpn_isKnown(expr)) {
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_HRAM;
-	} else if (expr->val >= 0xFF00 && expr->val <= 0xFFFF) {
-		/* That range is valid, but only keep the lower byte */
-		expr->val &= 0xFF;
-	} else if (expr->val < 0 || expr->val > 0xFF) {
-		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", expr->val);
+        case BIN_WARN_DIV:
+        	assert(lhs == INT32_MIN);
+        	assert(rhs == -1);
+		warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
+			INT32_MIN, INT32_MIN);
+		break;
 	}
 }
 
-void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
+static size_t growRPNBuf(struct RPNBuffer *rpnBufPtr[MIN_NB_ELMS(1)], size_t capacity, size_t size)
 {
-	*expr = *src;
+	if (!*rpnBufPtr) {
+		*rpnBufPtr = malloc(sizeof(**rpnBufPtr) * capacity);
+		if (!*rpnBufPtr)
+			fatalerror("Failed to grow RPN buffer: %s\n", strerror(errno));
+		(*rpnBufPtr)->size = size;
+		return capacity;
+	}
 
-	if (rpn_isKnown(expr)) {
-		/* A valid RST address must be masked with 0x38 */
-		if (expr->val & ~0x38)
-			error("Invalid address $%" PRIx32 " for RST\n", expr->val);
-		/* The target is in the "0x38" bits, all other bits are set */
-		expr->val |= 0xC7;
-	} else {
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_RST;
+	// FIXME: there's potential for overflow here
+	(*rpnBufPtr)->size += size;
+	if ((*rpnBufPtr)->size > capacity) {
+		capacity *= 2;
+		*rpnBufPtr = realloc(*rpnBufPtr, sizeof(**rpnBufPtr) * capacity);
+		if (!rpnBufPtr)
+			fatalerror("Failed to grow RPN buffer: %s\n", strerror(errno));
+	}
+	return capacity;
+}
+
+// Call this when discarding a potentially-unknown operand, so that its RPN expression gets purged
+// if that's the case
+static void discardOperand(struct RPNBuffer **rpnBufPtr, struct Result const *operand)
+{
+	// If the rhs is unknown, purge it from the RPN buf
+	if (operand->error == ERR_UNK) {
+		assert(rpnBufPtr);
+		assert(*rpnBufPtr);
+		assert((*rpnBufPtr)->size >= operand->exprSize);
+		(*rpnBufPtr)->size -= operand->exprSize;
 	}
 }
 
-void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
+// Le plat de résistance.
+// Note: this assumes that the input is valid, and does not perform any bounds checking, except
+// some assertions in debug mode.
+// This is because the function is only used on internally-generated expressions, which should be
+// okay anyway.
+uint32_t rpn_Eval(struct Expression const *expr, struct RPNBuffer **rpnBufPtr)
 {
-	*expr = *src;
-	expr->isSymbol = false;
+	size_t i = 0; // Expr RPN buffer index
+	size_t rpnBufCapacity = 256; // RPN buffer capacity
 
-	if (rpn_isKnown(expr)) {
-		expr->val = !expr->val;
-	} else {
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_LOGUNNOT;
-	}
-}
+#define APPEND_BYTE(byte) do { \
+	if (rpnBufPtr) { \
+		rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, 1); \
+		(*rpnBufPtr)->buf[(*rpnBufPtr)->size - 1] = (byte); \
+	} \
+} while (0)
 
-struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
-{
-	if (!rpn_isSymbol(expr))
-		return NULL;
-	return sym_FindScopedSymbol((char *)expr->rpn + 1);
-}
+// If the operand is an error, it must be propagated, not written to the buffer
+// If the operand is unknown, it has already been writted to the buffer
+#define APPEND_OPERAND(operand) do { \
+	if (rpnBufPtr) { \
+		if (is_ok((operand))) { \
+			rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, 1 + sizeof(uint32_t)); \
+			(*rpnBufPtr)->buf[0] = RPN_CONST; \
+			writeLE32(&(*rpnBufPtr)->buf[1], (operand)->value); \
+		} else if ((operand)->error == ERR_SYM) { \
+			rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, 1 + sizeof(uint32_t)); \
+			(*rpnBufPtr)->buf[0] = RPN_SYM; \
+			writeLE32(&(*rpnBufPtr)->buf[1], out_GetSymbolID((operand)->symbol)); \
+		} else if (is_err((operand))) { \
+			APPEND_BYTE((operand)->error); \
+		} \
+	} \
+} while(0)
 
-bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
-{
-	/* Check if both expressions only refer to a single symbol */
-	struct Symbol const *sym1 = rpn_SymbolOf(src);
+#define DISCARD(operand) do { \
+	if (rpnBufPtr) \
+		discardOperand(rpnBufPtr, (operand)); \
+} while (0)
 
-	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
-		return false;
+	// RPN stack
+	size_t capacity = 32; // 256 / sizeof(rpnStack[0]), somewhat arbitrarily
+	size_t size = 0;
+	struct Result *rpnStack = malloc(capacity);
 
-	struct Section const *section1 = sym_GetSection(sym1);
-	struct Section const *section2 = sym_GetSection(sym);
-	return section1 && (section1 == section2);
-}
+// FIXME: capacity doubling may overflow
+#define PUSH(entry) do { \
+	if (size == capacity) { \
+		capacity *= 2; \
+		rpnStack = realloc(rpnStack, sizeof(rpnStack[0]) * capacity); \
+		if (!rpnStack) \
+			fatalerror("Failed to grow RPN stack: %s\n", strerror(errno)); \
+	} \
+	rpnStack[size++] = (entry); \
+} while (0)
 
-static bool isDiffConstant(struct Expression const *src1,
-			   struct Expression const *src2)
-{
-	return rpn_IsDiffConstant(src1, rpn_SymbolOf(src2));
-}
+// !!! Be careful that popped results are invalidated as soon as you PUSH!
+#define POP() (assert(size != 0), &rpnStack[--size])
 
-void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
-		  const struct Expression *src1, const struct Expression *src2)
-{
-	expr->isSymbol = false;
+	if (!rpnStack)
+		fatalerror("Failed to alloc RPN stack: %s\n", strerror(errno));
 
-	/* First, check if the expression is known */
-	expr->isKnown = src1->isKnown && src2->isKnown;
-	if (expr->isKnown) {
-		rpn_Init(expr); /* Init the expression to something sane */
+	/// Now, process the input RPN
 
-		/* If both expressions are known, just compute the value */
-		uint32_t uleft = src1->val, uright = src2->val;
+	while (i != expr->rpnLength) {
+		assert(i < expr->rpnLength);
 
-		switch (op) {
-		case RPN_LOGOR:
-			expr->val = src1->val || src2->val;
-			break;
-		case RPN_LOGAND:
-			expr->val = src1->val && src2->val;
-			break;
-		case RPN_LOGEQ:
-			expr->val = src1->val == src2->val;
-			break;
-		case RPN_LOGGT:
-			expr->val = src1->val > src2->val;
-			break;
-		case RPN_LOGLT:
-			expr->val = src1->val < src2->val;
-			break;
-		case RPN_LOGGE:
-			expr->val = src1->val >= src2->val;
-			break;
-		case RPN_LOGLE:
-			expr->val = src1->val <= src2->val;
-			break;
-		case RPN_LOGNE:
-			expr->val = src1->val != src2->val;
-			break;
-		case RPN_ADD:
-			expr->val = uleft + uright;
-			break;
-		case RPN_SUB:
-			expr->val = uleft - uright;
-			break;
-		case RPN_XOR:
-			expr->val = src1->val ^ src2->val;
-			break;
-		case RPN_OR:
-			expr->val = src1->val | src2->val;
-			break;
-		case RPN_AND:
-			expr->val = src1->val & src2->val;
-			break;
-		case RPN_SHL:
-			if (src2->val < 0)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting left by negative amount %" PRId32 "\n",
-					src2->val);
+		enum RPNCommand opcode = expr->rpn[i++];
 
-			if (src2->val >= 32)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting left by large amount %" PRId32 "\n", src2->val);
+		switch (opcode) {
+			struct Result *lhs, *rhs;
+			char const *name;
+			size_t nameLen;
+			struct Section const *sect;
+			struct Symbol *sym;
+			uint32_t val;
 
-			expr->val = op_shift_left(src1->val, src2->val);
+		// Terminals
+
+		case RPN_CONST:
+			val = readLE32(&expr->rpn[i]);
+
+			i += sizeof(val);
+			PUSH(Ok(val));
 			break;
-		case RPN_SHR:
-			if (src1->val < 0)
-				warning(WARNING_SHIFT,
-					"Shifting right negative value %" PRId32 "\n", src1->val);
 
-			if (src2->val < 0)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by negative amount %" PRId32 "\n",
-					src2->val);
+		case RPN_SYM:
+			// I'm sure this is fine...
+			name = (char const *)&expr->rpn[i];
+			// Check that there is a terminator somewhere
+			// (The RPN is supposed to be valid, so elide this from release mode)
+			assert(strnlen(name, expr->rpnLength - i) < expr->rpnLength - i);
+			i += strlen(name);
 
-			if (src2->val >= 32)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by large amount %" PRId32 "\n",
-					src2->val);
-
-			expr->val = op_shift_right(src1->val, src2->val);
-			break;
-		case RPN_MUL:
-			expr->val = uleft * uright;
-			break;
-		case RPN_DIV:
-			if (src2->val == 0)
-				fatalerror("Division by zero\n");
-
-			if (src1->val == INT32_MIN && src2->val == -1) {
-				warning(WARNING_DIV,
-					"Division of %" PRId32 " by -1 yields %" PRId32 "\n",
-					INT32_MIN, INT32_MIN);
-				expr->val = INT32_MIN;
+			sym = sym_Ref(name);
+			if (!sym_IsConstant(sym)) {
+				PUSH(Sym(sym));
 			} else {
-				expr->val = op_divide(src1->val, src2->val);
+				PUSH(Ok(sym_GetConstantSymValue(sym)));
 			}
 			break;
-		case RPN_MOD:
-			if (src2->val == 0)
-				fatalerror("Modulo by zero\n");
 
-			if (src1->val == INT32_MIN && src2->val == -1)
-				expr->val = 0;
-			else
-				expr->val = op_modulo(src1->val, src2->val);
+		case RPN_BANK_SELF:
+			if (!currentSection) {
+				PUSH(Err(ERR_NO_SELF_BANK));
+			} else if (currentSection->bank == (uint32_t)-1) {
+				APPEND_BYTE(RPN_BANK_SELF);
+				PUSH(Unk(1));
+			} else {
+				PUSH(Ok(currentSection->bank));
+			}
 			break;
-		case RPN_EXP:
-			if (src2->val < 0)
-				fatalerror("Exponentiation by negative power\n");
 
-			if (src1->val == INT32_MIN && src2->val == -1)
-				expr->val = 0;
-			else
-				expr->val = op_exponent(src1->val, src2->val);
+		case RPN_BANK_SYM:
+			// I'm sure this is fine...
+			name = (char const *)&expr->rpn[i];
+			// Check that there is a terminator somewhere
+			// (The RPN is supposed to be valid, so elide this from release mode)
+			assert(strnlen(name, expr->rpnLength - i) < expr->rpnLength - i);
+			nameLen = strlen(name);
+			i += nameLen;
+
+			sym = sym_Ref(name);
+			assert(sym); // The above should have created the symbol if it didn't exist
+			if (!sym_IsLabel(sym)) {
+				PUSH(Err(ERR_BANK_NOT_SYM));
+			} else if (sym_GetSection(sym)->bank != (uint32_t)-1) {
+				PUSH(Ok(sym_GetSection(sym)->bank));
+			} else {
+				size_t len = 1 + nameLen + 1; // RPN_BANK_SYM, name, terminator
+
+				if (rpnBufPtr) {
+					rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, len);
+					uint8_t *ptr = &(*rpnBufPtr)->buf[(*rpnBufPtr)->size - len];
+
+					*ptr++ = RPN_BANK_SYM;
+					memcpy(ptr, name, nameLen + 1);
+				}
+				PUSH(Unk(len));
+			}
+			break;
+
+		case RPN_BANK_SECT:
+			// I'm sure this is fine...
+			name = (char const *)&expr->rpn[i];
+			// Check that there is a terminator somewhere
+			// (The RPN is supposed to be valid, so elide this from release mode)
+			assert(strnlen(name, expr->rpnLength - i) < expr->rpnLength - i);
+			nameLen = strlen(name);
+			i += nameLen;
+
+			sect = out_FindSectionByName(name);
+			if (sect && sect->bank != (uint32_t)-1) {
+				PUSH(Ok(sect->bank));
+			} else {
+				size_t len = 1 + nameLen + 1; // RPN_BANK_SECT, name, terminator
+
+				if (rpnBufPtr) {
+					rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, len);
+					uint8_t *ptr = &(*rpnBufPtr)->buf[(*rpnBufPtr)->size - len];
+
+					*ptr++ = RPN_BANK_SYM;
+					memcpy(ptr, name, nameLen + 1);
+				}
+				PUSH(Unk(len));
+			}
+			break;
+
+		case RPN_SIZEOF_SECT:
+		case RPN_STARTOF_SECT:
+			// Due to SECTION FRAGMENT, neither of those can be computed by RGBASM
+			// TODO: actually, this is not entirely the case: the size of a "basic" one
+			// is known if it's not the current section and isn't on the stack, and its
+			// address may be known, too. (STARTOF of a fixed SECTION UNION is also
+			// constant.)
+			// I'm sure this is fine...
+			name = (char const *)&expr->rpn[i];
+			// Check that there is a terminator somewhere
+			// (The RPN is supposed to be valid, so elide this from release mode)
+			assert(strnlen(name, expr->rpnLength - i) < expr->rpnLength - i);
+			nameLen = strlen(name);
+			i += nameLen;
+			size_t len = 1 + nameLen + 1;
+
+			if (rpnBufPtr) {
+				rpnBufCapacity = growRPNBuf(rpnBufPtr, rpnBufCapacity, len);
+				uint8_t *ptr = &(*rpnBufPtr)->buf[(*rpnBufPtr)->size - len];
+
+				*ptr++ = opcode;
+				memcpy(ptr, name, nameLen + 1);
+			}
+			PUSH(Unk(len));
+			break;
+
+		// Unary operators
+
+		case RPN_ISCONST:
+			lhs = POP();
+			DISCARD(lhs);
+			PUSH(Ok(is_ok(lhs)));
 			break;
 
 		case RPN_UNSUB:
 		case RPN_UNNOT:
 		case RPN_LOGUNNOT:
-		case RPN_BANK_SYM:
-		case RPN_BANK_SECT:
-		case RPN_BANK_SELF:
-		case RPN_SIZEOF_SECT:
-		case RPN_STARTOF_SECT:
 		case RPN_HRAM:
 		case RPN_RST:
-		case RPN_CONST:
-		case RPN_SYM:
-			fatalerror("%d is not a binary operator\n", op);
+			lhs = POP();
+			if (is_ok(lhs)) {
+				lhs->value = rpn_ConstUnaryOp(opcode, lhs->value,
+							      reportUnaryError);
+			} else if (is_unk(lhs)) {
+				APPEND_BYTE(opcode);
+			} // Preserve errors
+			size++; // Push the modified entry back
+			break;
+
+		// Binary operators
+
+		case RPN_ADD:
+		case RPN_SUB: // May be constant for same-section symbol subtraction
+		case RPN_MUL:
+		case RPN_DIV:
+		case RPN_MOD:
+		case RPN_EXP:
+		case RPN_OR:
+		case RPN_AND:
+		case RPN_XOR:
+		case RPN_LOGAND: // May be short-circuiting
+		case RPN_LOGOR: // May be short-circuiting
+		case RPN_LOGEQ:
+		case RPN_LOGNE:
+		case RPN_LOGGT:
+		case RPN_LOGLT:
+		case RPN_LOGGE:
+		case RPN_LOGLE:
+		case RPN_SHL:
+		case RPN_SHR:
+			rhs = POP();
+			lhs = POP();
+
+			if (is_ok(lhs) && is_ok(rhs)) {
+				PUSH(rpn_ConstBinaryOp(lhs->value, opcode, rhs->value,
+						       reportBinaryError));
+				break;
+			}
+
+			// Logical AND/OR are short-circuiting
+			if (is_ok(lhs)) {
+				if (opcode == RPN_LOGAND) {
+					if (lhs->value == 0) {
+						DISCARD(rhs);
+						PUSH(Ok(0));
+						break;
+					}
+				} else if (opcode == RPN_LOGOR) {
+					if (lhs->value != 0) {
+						DISCARD(rhs);
+						PUSH(Ok(1));
+						break;
+					}
+				}
+			}
+
+			// If either operand is an error, return that error
+			// However, short-circuiting may end up discarding some errors at link time;
+			// in those cases, write the error to the RPN buffer instead
+			if (is_err(lhs)) {
+				DISCARD(rhs);
+				// Instead of copying `lhs` over itself, just increment the size
+				size++;
+				break;
+			}
+			if (is_err(rhs) && opcode != RPN_LOGAND && opcode != RPN_LOGOR) {
+				DISCARD(lhs);
+				PUSH(*rhs);
+				break;
+			}
+
+			// Subtracting two symbols in the same section is still constant
+			if (opcode == RPN_SUB) {
+			        if (lhs->error == ERR_SYM && rhs->error == ERR_SYM
+			         && lhs->symbol->section == rhs->symbol->section) {
+				        // Non-numeric symbols are rejected while parsing
+				        assert(sym_IsNumeric(lhs->symbol));
+				        assert(sym_IsNumeric(rhs->symbol));
+					// Subtract their offset within the section
+					PUSH(Ok(lhs->symbol->value - rhs->symbol->value));
+					break;
+				}
+			}
+
+			APPEND_OPERAND(lhs);
+			APPEND_OPERAND(rhs);
+			APPEND_BYTE(opcode);
+			size_t exprSize = 1; // Size of the corresponding RPN expression
+
+			// FIXME: potential overflows here
+			if (is_unk(lhs))
+				exprSize += lhs->exprSize;
+			if (is_unk(rhs))
+				exprSize += rhs->exprSize;
+			PUSH(Unk(exprSize));
+			break;
+
+		// Errors
+		case RPN_ERR_NO_SELF_BANK:
+		case RPN_ERR_DIV_BY_0:
+		case RPN_ERR_MOD_BY_0:
+		case RPN_ERR_BANK_NOT_SYM:
+		case RPN_ERR_EXP_NEG_POW:
+			PUSH(Err(opcode));
+			break;
 		}
+	}
 
-	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
-		struct Symbol const *symbol1 = rpn_SymbolOf(src1);
-		struct Symbol const *symbol2 = rpn_SymbolOf(src2);
+#undef PUSH
+#undef POP
+#undef DISCARD
 
-		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
-		expr->isKnown = true;
-	} else {
-		/* If it's not known, start computing the RPN expression */
+	assert(size == 1);
 
-		/* Convert the left-hand expression if it's constant */
-		if (src1->isKnown) {
-			uint32_t lval = src1->val;
-			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
-					   lval >> 16, lval >> 24};
-			expr->rpnPatchSize = sizeof(bytes);
-			expr->rpn = NULL;
-			expr->rpnCapacity = 0;
-			expr->rpnLength = 0;
-			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
-			       sizeof(bytes));
-
-			/* Use the other expression's un-const reason */
-			expr->reason = src2->reason;
-			free(src1->reason);
-		} else {
-			/* Otherwise just reuse its RPN buffer */
-			expr->rpnPatchSize = src1->rpnPatchSize;
-			expr->rpn = src1->rpn;
-			expr->rpnCapacity = src1->rpnCapacity;
-			expr->rpnLength = src1->rpnLength;
-			expr->reason = src1->reason;
-			free(src2->reason);
+	if (is_ok(&rpnStack[0])) {
+		if (rpnBufPtr && *rpnBufPtr) {
+			free(*rpnBufPtr);
+			*rpnBufPtr = NULL;
 		}
+		return rpnStack[0].value;
+	}
 
-		/* Now, merge the right expression into the left one */
-		uint8_t *ptr = src2->rpn; /* Pointer to the right RPN */
-		uint32_t len = src2->rpnLength; /* Size of the right RPN */
-		uint32_t patchSize = src2->rpnPatchSize;
-
-		/* If the right expression is constant, merge a shim instead */
-		uint32_t rval = src2->val;
-		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
-				   rval >> 24};
-		if (src2->isKnown) {
-			ptr = bytes;
-			len = sizeof(bytes);
-			patchSize = sizeof(bytes);
+	if (is_err(&rpnStack[0])) {
+		// Yield the error
+		// TODO
+		if (rpnBufPtr) {
+			free(*rpnBufPtr);
+			*rpnBufPtr = NULL;
 		}
-		/* Copy the right RPN and append the operator */
-		uint8_t *buf = reserveSpace(expr, len + 1);
-
-		memcpy(buf, ptr, len);
-		buf[len] = op;
-
-		free(src2->rpn); /* If there was none, this is `free(NULL)` */
-		expr->rpnPatchSize += patchSize + 1;
+		return 0;
 	}
-}
 
-void rpn_HIGH(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-	expr->isSymbol = false;
-
-	if (rpn_isKnown(expr)) {
-		expr->val = (uint32_t)expr->val >> 8 & 0xFF;
-	} else {
-		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
-				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
-		expr->rpnPatchSize += sizeof(bytes);
-		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
+	// If the value isn't constant, we must have somewhere to write the expression to
+	if (!rpnBufPtr) {
+		// TODO
+		error("Expected constant expression: <REASON>\n");
 	}
+
+	// If the value is unknown, then the whole expression is already on the stack
+	// But it might also be a symbol, in which case it needs to be written
+	if (rpnStack[0].error == ERR_SYM)
+		APPEND_OPERAND(&rpnStack[0]);
+
+#undef APPEND_BYTE
+#undef APPEND_OPERAND
+
+	return 0;
 }
 
-void rpn_LOW(struct Expression *expr, const struct Expression *src)
+void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
 {
-	*expr = *src;
-	expr->isSymbol = false;
+	assert(n != 0); // That doesn't make sense
+	assert(n <= CHAR_BIT * sizeof(int)); // Otherwise `1u << (n - 1)` is UB
 
-	if (rpn_isKnown(expr)) {
-		expr->val = expr->val & 0xFF;
-	} else {
-		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+	if (isConstant(expr)) {
+		uint32_t val = getConstVal(expr);
 
-		expr->rpnPatchSize += sizeof(bytes);
-		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
-	}
-}
-
-void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
-{
-	rpn_Init(expr);
-	expr->val = rpn_isKnown(src);
-	expr->isKnown = true;
-	expr->isSymbol = false;
-}
-
-void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-	expr->isSymbol = false;
-
-	if (rpn_isKnown(expr)) {
-		expr->val = -(uint32_t)expr->val;
-	} else {
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_UNSUB;
-	}
-}
-
-void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
-{
-	*expr = *src;
-	expr->isSymbol = false;
-
-	if (rpn_isKnown(expr)) {
-		expr->val = ~expr->val;
-	} else {
-		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_UNNOT;
+		if (val < -(1u << (n - 1)) || val >= 1u << (n - 1))
+			warning(WARNING_TRUNCATION, "Expression must be %u-bit\n", n);
 	}
 }
