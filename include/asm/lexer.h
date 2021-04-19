@@ -81,6 +81,7 @@ struct CaptureBody {
 	uint32_t lineNo;
 	char *body;
 	size_t size;
+	bool unterminated;
 };
 
 char const *lexer_GetFileName(void);
