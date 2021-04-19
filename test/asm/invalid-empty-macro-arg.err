@@ -1,0 +1,2 @@
+FATAL: invalid-empty-macro-arg.asm(1):
+    Empty parenthetic macro argument

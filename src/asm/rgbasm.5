@@ -1566,16 +1566,30 @@ The backslash in
 .Ql \[rs]n
 does not need to be escaped because string literals also work as usual inside macro arguments.
 .Pp
-In reality, up to 256 arguments can be passed to a macro, but you can only use the first 9 like this.
-If you want to use the rest, you need to use the
-.Ic SHIFT
-command.
+Since there are only nine digits, you can only access the first nine macro arguments like this.
+To use the rest, you need to put the multi-digit argument number in parentheses, like
+.Ql \[rs](10) .
+This parenthetic syntax only supports decimal numbers.
 .Pp
+Other macro arguments and symbol interpolations will be expanded inside the parentheses.
+For example, if
+.Ql \[rs]1
+is
+.Ql 13 ,
+then
+.Ql \[rs](\[rs]1)
+will expand to
+.Ql \[rs](13) .
+And if
+.Ql x = 42 ,
+then
+.Ql \[rs]({d:x})
+will expand to
+.Ql \[rs](42) .
+.Pp
+Another way to access more than nine macro arguments is the
 .Ic SHIFT
-is a special command only available in macros.
-Very useful in
-.Ic REPT
-blocks.
+command, a special command only available in macros.
 It will shift the arguments by one to the left, and decrease
 .Dv _NARG
 by 1.
@@ -1586,11 +1600,14 @@ will get the value of
 .Ic \[rs]3 ,
 and so forth.
 .Pp
-This is the only way of accessing the value of arguments from 10 to 256.
-.Pp
 .Ic SHIFT
 can optionally be given an integer parameter, and will apply the above shifting that number of times.
 A negative parameter will shift the arguments in reverse.
+.Pp
+.Ic SHIFT
+is useful in
+.Ic REPT
+blocks to repeat the same commands with multiple arguments.
 .Ss Printing things during assembly
 The
 .Ic PRINT

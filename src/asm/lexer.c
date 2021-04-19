@@ -717,21 +717,65 @@ static void freeExpansion(struct Expansion *expansion)
 
 static bool isMacroChar(char c)
 {
-	return c == '@' || c == '#' || (c >= '0' && c <= '9');
+	return c == '@' || c == '#' || c == '(' || (c >= '0' && c <= '9');
+}
+
+/* forward declarations for readParentheticMacroArgNum */
+static int peek(void);
+static void shiftChar(void);
+static uint32_t readNumber(int radix, uint32_t baseValue);
+
+static uint32_t readParentheticMacroArgNum(void)
+{
+	dbgPrint("Reading parenthetic macro arg\n");
+	bool disableMacroArgs = lexerState->disableMacroArgs;
+	bool disableInterpolation = lexerState->disableInterpolation;
+
+	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
+
+	uint32_t num = 0;
+	int c = peek();
+	bool hasDigit = c >= '0' && c <= '9';
+
+	if (hasDigit)
+		num = readNumber(10, 0);
+
+	c = peek();
+	if (c != ')')
+		fatalerror("Invalid character in parenthetic macro argument %s\n", printChar(c));
+	else if (!hasDigit)
+		fatalerror("Empty parenthetic macro argument\n");
+	else if (num == 0)
+		fatalerror("Invalid parenthetic macro argument '\\(0)'\n");
+
+	shiftChar();
+
+	lexerState->disableMacroArgs = disableMacroArgs;
+	lexerState->disableInterpolation = disableInterpolation;
+	return num;
 }
 
 static char const *readMacroArg(char name)
 {
 	char const *str;
 
-	if (name == '@')
+	if (name == '@') {
 		str = macro_GetUniqueIDStr();
-	else if (name == '#')
+	} else if (name == '#') {
 		str = macro_GetAllArgs();
-	else if (name == '0')
+	} else if (name == '(') {
+		uint32_t num = readParentheticMacroArgNum();
+
+		str = macro_GetArg(num);
+		if (!str)
+			fatalerror("Macro argument '\\(%" PRIu32 ")' not defined\n", num);
+	} else if (name == '0') {
 		fatalerror("Invalid macro argument '\\0'\n");
-	else
+	} else {
 		str = macro_GetArg(name - '0');
+	}
+
 	if (!str)
 		fatalerror("Macro argument '\\%c' not defined\n", name);
 
@@ -1061,7 +1105,7 @@ static void readAnonLabelRef(char c)
 
 /* Functions to lex numbers of various radixes */
 
-static void readNumber(int radix, int32_t baseValue)
+static uint32_t readNumber(int radix, uint32_t baseValue)
 {
 	uint32_t value = baseValue;
 
@@ -1077,10 +1121,10 @@ static void readNumber(int radix, int32_t baseValue)
 		value = value * radix + (c - '0');
 	}
 
-	yylval.constValue = value;
+	return value;
 }
 
-static void readFractionalPart(void)
+static uint32_t readFractionalPart(int32_t integer)
 {
 	uint32_t value = 0, divisor = 1;
 
@@ -1105,20 +1149,20 @@ static void readFractionalPart(void)
 		divisor *= 10;
 	}
 
-	if (yylval.constValue > INT16_MAX || yylval.constValue < INT16_MIN)
+	if (integer > INT16_MAX || integer < INT16_MIN)
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
 	/* Cast to unsigned avoids UB if shifting discards bits */
-	yylval.constValue = (uint32_t)yylval.constValue << 16;
+	integer = (uint32_t)integer << 16;
 	/* Cast to unsigned avoids undefined overflow behavior */
 	uint16_t fractional = (uint16_t)round(value * 65536.0 / divisor);
 
-	yylval.constValue |= fractional * (yylval.constValue >= 0 ? 1 : -1);
+	return (uint32_t)integer | (fractional * (integer >= 0 ? 1 : -1));
 }
 
 char binDigits[2];
 
-static void readBinaryNumber(void)
+static uint32_t readBinaryNumber(void)
 {
 	uint32_t value = 0;
 
@@ -1140,10 +1184,10 @@ static void readBinaryNumber(void)
 		value = value * 2 + bit;
 	}
 
-	yylval.constValue = value;
+	return value;
 }
 
-static void readHexNumber(void)
+static uint32_t readHexNumber(void)
 {
 	uint32_t value = 0;
 	bool empty = true;
@@ -1173,12 +1217,12 @@ static void readHexNumber(void)
 	if (empty)
 		error("Invalid integer constant, no digits after '$'\n");
 
-	yylval.constValue = value;
+	return value;
 }
 
 char gfxDigits[4];
 
-static void readGfxConstant(void)
+static uint32_t readGfxConstant(void)
 {
 	uint32_t bp0 = 0, bp1 = 0;
 	uint8_t width = 0;
@@ -1215,7 +1259,7 @@ static void readGfxConstant(void)
 		warning(WARNING_LARGE_CONSTANT,
 			"Graphics constant is too long, only 8 first pixels considered\n");
 
-	yylval.constValue = bp1 << 8 | bp0;
+	return bp1 << 8 | bp0;
 }
 
 /* Functions to read identifiers & keywords */
@@ -1485,6 +1529,7 @@ static void readString(void)
 			case '7':
 			case '8':
 			case '9':
+			case '(':
 				shiftChar();
 				char const *str = readMacroArg(c);
 
@@ -1630,6 +1675,7 @@ static size_t appendStringLiteral(size_t i)
 			case '7':
 			case '8':
 			case '9':
+			case '(':
 				shiftChar();
 				char const *str = readMacroArg(c);
 
@@ -1817,8 +1863,7 @@ static int yylex_NORMAL(void)
 		/* Handle numbers */
 
 		case '$':
-			yylval.constValue = 0;
-			readHexNumber();
+			yylval.constValue = readHexNumber();
 			/* Attempt to match `$ff00+c` */
 			if (yylval.constValue == 0xff00) {
 				/* Whitespace is ignored anyways */
@@ -1848,10 +1893,10 @@ static int yylex_NORMAL(void)
 		case '7':
 		case '8':
 		case '9':
-			readNumber(10, c - '0');
+			yylval.constValue = readNumber(10, c - '0');
 			if (peek() == '.') {
 				shiftChar();
-				readFractionalPart();
+				yylval.constValue = readFractionalPart(yylval.constValue);
 			}
 			return T_NUMBER;
 
@@ -1861,7 +1906,7 @@ static int yylex_NORMAL(void)
 				shiftChar();
 				return T_OP_LOGICAND;
 			} else if (secondChar >= '0' && secondChar <= '7') {
-				readNumber(8, 0);
+				yylval.constValue = readNumber(8, 0);
 				return T_NUMBER;
 			}
 			return T_OP_AND;
@@ -1871,12 +1916,11 @@ static int yylex_NORMAL(void)
 			if (secondChar != binDigits[0] && secondChar != binDigits[1])
 				return T_OP_MOD;
 
-			yylval.constValue = 0;
-			readBinaryNumber();
+			yylval.constValue = readBinaryNumber();
 			return T_NUMBER;
 
 		case '`': /* Gfx constant */
-			readGfxConstant();
+			yylval.constValue = readGfxConstant();
 			return T_NUMBER;
 
 		/* Handle strings */
