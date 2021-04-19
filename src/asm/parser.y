@@ -455,6 +455,7 @@ enum {
 		int32_t step;
 	} forArgs;
 	struct StrFmtArgList strfmtArgs;
+	bool captureTerminated;
 }
 
 %type	<expr>		relocexpr
@@ -979,9 +980,9 @@ load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
 ;
 
 rept		: T_POP_REPT uconst T_NEWLINE {
-			lexer_CaptureRept(&captureBody);
+			$<captureTerminated>$ = lexer_CaptureRept(&captureBody);
 		} endofline {
-			if (!captureBody.unterminated)
+			if ($<captureTerminated>4)
 				fstk_RunRept($2, captureBody.lineNo, captureBody.body,
 					     captureBody.size);
 		}
@@ -992,9 +993,9 @@ for		: T_POP_FOR {
 		} T_ID {
 			lexer_ToggleStringExpansion(true);
 		} T_COMMA for_args T_NEWLINE {
-			lexer_CaptureRept(&captureBody);
+			$<captureTerminated>$ = lexer_CaptureRept(&captureBody);
 		} endofline {
-			if (!captureBody.unterminated)
+			if ($<captureTerminated>8)
 				fstk_RunFor($3, $6.start, $6.stop, $6.step, captureBody.lineNo,
 					    captureBody.body, captureBody.size);
 		}
@@ -1027,16 +1028,16 @@ macrodef	: T_POP_MACRO {
 		} T_ID {
 			lexer_ToggleStringExpansion(true);
 		} T_NEWLINE {
-			lexer_CaptureMacroBody(&captureBody);
+			$<captureTerminated>$ = lexer_CaptureMacroBody(&captureBody);
 		} endofline {
-			if (!captureBody.unterminated)
+			if ($<captureTerminated>6)
 				sym_AddMacro($3, captureBody.lineNo, captureBody.body,
 					     captureBody.size);
 		}
 		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
-			lexer_CaptureMacroBody(&captureBody);
+			$<captureTerminated>$ = lexer_CaptureMacroBody(&captureBody);
 		} endofline {
-			if (!captureBody.unterminated)
+			if ($<captureTerminated>5)
 				sym_AddMacro($1, captureBody.lineNo, captureBody.body,
 					     captureBody.size);
 		}

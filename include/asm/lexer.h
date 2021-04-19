@@ -81,7 +81,6 @@ struct CaptureBody {
 	uint32_t lineNo;
 	char *body;
 	size_t size;
-	bool unterminated;
 };
 
 char const *lexer_GetFileName(void);
@@ -89,8 +88,8 @@ uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
-void lexer_CaptureRept(struct CaptureBody *capture);
-void lexer_CaptureMacroBody(struct CaptureBody *capture);
+bool lexer_CaptureRept(struct CaptureBody *capture);
+bool lexer_CaptureMacroBody(struct CaptureBody *capture);
 
 #define INITIAL_DS_ARG_SIZE 2
 struct DsArgList {
