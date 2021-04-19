@@ -1569,7 +1569,10 @@ does not need to be escaped because string literals also work as usual inside ma
 Since there are only nine digits, you can only access the first nine macro arguments like this.
 To use the rest, you need to put the multi-digit argument number in parentheses, like
 .Ql \[rs](10) .
-This parenthetic syntax only supports decimal numbers.
+This parenthetic syntax supports decimal numbers and numeric symbol names.
+For example,
+.Ql \[rs](_NARG)
+will get the last argument.
 .Pp
 Other macro arguments and symbol interpolations will be expanded inside the parentheses.
 For example, if
@@ -1580,10 +1583,12 @@ then
 .Ql \[rs](\[rs]1)
 will expand to
 .Ql \[rs](13) .
-And if
-.Ql x = 42 ,
+Or if
+.Ql v10 = 42
+and
+.Ql x = 10 ,
 then
-.Ql \[rs]({d:x})
+.Ql \[rs](v{d:x})
 will expand to
 .Ql \[rs](42) .
 .Pp
