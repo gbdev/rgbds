@@ -105,7 +105,7 @@ static size_t strlenUTF8(char const *s)
 	return len;
 }
 
-static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len)
+static void strsubUTF8(char *dest, size_t destLen, char const *src, int32_t pos, uint32_t len)
 {
 	size_t srcIndex = 0;
 	size_t destIndex = 0;
@@ -114,8 +114,11 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 	uint32_t curLen = 0;
 
 	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Position starts at 1\n");
-		pos = 1;
+		pos += strlenUTF8(src);
+		if (pos < 1) {
+			warning(WARNING_BUILTIN_ARG, "STRSUB: Position starts at 1\n");
+			pos = 1;
+		}
 	}
 
 	/* Advance to starting position in source string. */
@@ -132,8 +135,7 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 
 	if (!src[srcIndex] && len)
 		warning(WARNING_BUILTIN_ARG,
-			"STRSUB: Position %lu is past the end of the string\n",
-			(unsigned long)pos);
+			"STRSUB: Position %" PRId32 " is past the end of the string\n", pos);
 
 	/* Copy from source to destination. */
 	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
@@ -168,13 +170,16 @@ static size_t charlenUTF8(char const *s)
 	return len;
 }
 
-static void charsubUTF8(char *dest, char const *src, uint32_t pos)
+static void charsubUTF8(char *dest, char const *src, int32_t pos)
 {
 	size_t charLen = 1;
 
 	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "CHARSUB: Position starts at 1\n");
-		pos = 1;
+		pos += charlenUTF8(src);
+		if (pos < 1) {
+			warning(WARNING_BUILTIN_ARG, "CHARSUB: Position starts at 1\n");
+			pos = 1;
+		}
 	}
 
 	/* Advance to starting position in source string. */
@@ -185,8 +190,7 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos)
 
 	if (!charmap_ConvertNext(&src, NULL))
 		warning(WARNING_BUILTIN_ARG,
-			"CHARSUB: Position %lu is past the end of the string\n",
-			(unsigned long)pos);
+			"CHARSUB: Position %" PRId32 " is past the end of the string\n", pos);
 
 	/* Copy from source to destination. */
 	memcpy(dest, start, src - start);
@@ -1526,10 +1530,10 @@ const_no_str	: relocexpr_no_str {
 ;
 
 string		: T_STRING
-		| T_OP_STRSUB T_LPAREN string T_COMMA uconst T_COMMA uconst T_RPAREN {
+		| T_OP_STRSUB T_LPAREN string T_COMMA const T_COMMA uconst T_RPAREN {
 			strsubUTF8($$, sizeof($$), $3, $5, $7);
 		}
-		| T_OP_CHARSUB T_LPAREN string T_COMMA uconst T_RPAREN {
+		| T_OP_CHARSUB T_LPAREN string T_COMMA const T_RPAREN {
 			charsubUTF8($$, $3, $5);
 		}
 		| T_OP_STRCAT T_LPAREN T_RPAREN {

@@ -11,6 +11,7 @@ S EQUS "XBold<NULL>ABC"
 	assert CHARLEN("{S}") == 6
 	println CHARSUB("{S}", 2)
 	assert !STRCMP(CHARSUB("{S}", 2), "Bold")
+	assert CHARSUB("{S}", -4) == CHARSUB("{S}", CHARLEN("{S}") - 4)
 	assert CHARSUB("{S}", 2) == "Bold" && "Bold" == $88
 	assert CHARSUB("{S}", 1) == $58 ; ASCII "X"
 	db "{S}"
@@ -20,6 +21,7 @@ S EQUS "XBold<NULL>ABC"
 	assert CHARLEN("{S}") == 14
 	println CHARSUB("{S}", 2)
 	assert !STRCMP(CHARSUB("{S}", 2), "B")
+	assert CHARSUB("{S}", -4) == CHARSUB("{S}", CHARLEN("{S}") - 4)
 	assert CHARSUB("{S}", 2) == "B" && "B" == $42 ; ASCII "B"
 	assert CHARSUB("{S}", 1) == $58 ; ASCII "X"
 	db "{S}"
