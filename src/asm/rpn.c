@@ -45,32 +45,32 @@
 static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
 	/* This assumes the RPN length is always less than the capacity */
-	if (expr->nRPNCapacity - expr->nRPNLength < size) {
+	if (expr->rpnCapacity - expr->rpnLength < size) {
 		/* If there isn't enough room to reserve the space, realloc */
-		if (!expr->tRPN)
-			expr->nRPNCapacity = 256; /* Initial size */
-		while (expr->nRPNCapacity - expr->nRPNLength < size) {
-			if (expr->nRPNCapacity >= MAXRPNLEN)
+		if (!expr->rpn)
+			expr->rpnCapacity = 256; /* Initial size */
+		while (expr->rpnCapacity - expr->rpnLength < size) {
+			if (expr->rpnCapacity >= MAXRPNLEN)
 				/*
 				 * To avoid generating humongous object files, cap the
 				 * size of RPN expressions
 				 */
 				fatalerror("RPN expression cannot grow larger than "
 					   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
-			else if (expr->nRPNCapacity > MAXRPNLEN / 2)
-				expr->nRPNCapacity = MAXRPNLEN;
+			else if (expr->rpnCapacity > MAXRPNLEN / 2)
+				expr->rpnCapacity = MAXRPNLEN;
 			else
-				expr->nRPNCapacity *= 2;
+				expr->rpnCapacity *= 2;
 		}
-		expr->tRPN = realloc(expr->tRPN, expr->nRPNCapacity);
+		expr->rpn = realloc(expr->rpn, expr->rpnCapacity);
 
-		if (!expr->tRPN)
+		if (!expr->rpn)
 			fatalerror("Failed to grow RPN expression: %s\n", strerror(errno));
 	}
 
-	uint8_t *ptr = expr->tRPN + expr->nRPNLength;
+	uint8_t *ptr = expr->rpn + expr->rpnLength;
 
-	expr->nRPNLength += size;
+	expr->rpnLength += size;
 	return ptr;
 }
 
@@ -82,10 +82,10 @@ static void rpn_Init(struct Expression *expr)
 	expr->reason = NULL;
 	expr->isKnown = true;
 	expr->isSymbol = false;
-	expr->tRPN = NULL;
-	expr->nRPNCapacity = 0;
-	expr->nRPNLength = 0;
-	expr->nRPNPatchSize = 0;
+	expr->rpn = NULL;
+	expr->rpnCapacity = 0;
+	expr->rpnLength = 0;
+	expr->rpnPatchSize = 0;
 }
 
 /*
@@ -93,7 +93,7 @@ static void rpn_Init(struct Expression *expr)
  */
 void rpn_Free(struct Expression *expr)
 {
-	free(expr->tRPN);
+	free(expr->rpn);
 	free(expr->reason);
 	rpn_Init(expr);
 }
@@ -104,12 +104,12 @@ void rpn_Free(struct Expression *expr)
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
 	rpn_Init(expr);
-	expr->nVal = i;
+	expr->val = i;
 }
 
-void rpn_Symbol(struct Expression *expr, char const *tzSym)
+void rpn_Symbol(struct Expression *expr, char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(tzSym);
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
@@ -119,16 +119,16 @@ void rpn_Symbol(struct Expression *expr, char const *tzSym)
 		expr->isSymbol = true;
 
 		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
-						: "'%s' is not constant at assembly time", tzSym);
-		sym = sym_Ref(tzSym);
-		expr->nRPNPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
+						: "'%s' is not constant at assembly time", symName);
+		sym = sym_Ref(symName);
+		expr->rpnPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
 
 		size_t nameLen = strlen(sym->name) + 1; /* Don't forget NUL! */
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name, nameLen);
 	} else {
-		rpn_Number(expr, sym_GetConstantValue(tzSym));
+		rpn_Number(expr, sym_GetConstantValue(symName));
 	}
 }
 
@@ -136,21 +136,21 @@ void rpn_BankSelf(struct Expression *expr)
 {
 	rpn_Init(expr);
 
-	if (!pCurrentSection) {
+	if (!currentSection) {
 		error("PC has no bank outside a section\n");
-		expr->nVal = 1;
-	} else if (pCurrentSection->bank == (uint32_t)-1) {
+		expr->val = 1;
+	} else if (currentSection->bank == (uint32_t)-1) {
 		makeUnknown(expr, "Current section's bank is not known");
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_BANK_SELF;
 	} else {
-		expr->nVal = pCurrentSection->bank;
+		expr->val = currentSection->bank;
 	}
 }
 
-void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
+void rpn_BankSymbol(struct Expression *expr, char const *symName)
 {
-	struct Symbol const *sym = sym_FindScopedSymbol(tzSym);
+	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	/* The @ symbol is treated differently. */
 	if (sym_IsPC(sym)) {
@@ -162,15 +162,15 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 	if (sym && !sym_IsLabel(sym)) {
 		error("BANK argument must be a label\n");
 	} else {
-		sym = sym_Ref(tzSym);
+		sym = sym_Ref(symName);
 		assert(sym); // If the symbol didn't exist, it should have been created
 
 		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != (uint32_t)-1) {
 			/* Symbol's section is known and bank is fixed */
-			expr->nVal = sym_GetSection(sym)->bank;
+			expr->val = sym_GetSection(sym)->bank;
 		} else {
-			makeUnknown(expr, "\"%s\"'s bank is not known", tzSym);
-			expr->nRPNPatchSize += 5; /* opcode + 4-byte sect ID */
+			makeUnknown(expr, "\"%s\"'s bank is not known", symName);
+			expr->rpnPatchSize += 5; /* opcode + 4-byte sect ID */
 
 			size_t nameLen = strlen(sym->name) + 1; /* Room for NUL! */
 			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -180,53 +180,53 @@ void rpn_BankSymbol(struct Expression *expr, char const *tzSym)
 	}
 }
 
-void rpn_BankSection(struct Expression *expr, char const *tzSectionName)
+void rpn_BankSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	struct Section *pSection = out_FindSectionByName(tzSectionName);
+	struct Section *section = out_FindSectionByName(sectionName);
 
-	if (pSection && pSection->bank != (uint32_t)-1) {
-		expr->nVal = pSection->bank;
+	if (section && section->bank != (uint32_t)-1) {
+		expr->val = section->bank;
 	} else {
 		makeUnknown(expr, "Section \"%s\"'s bank is not known",
-			    tzSectionName);
+			    sectionName);
 
-		size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-		expr->nRPNPatchSize += nameLen + 1;
+		expr->rpnPatchSize += nameLen + 1;
 		*ptr++ = RPN_BANK_SECT;
-		memcpy(ptr, tzSectionName, nameLen);
+		memcpy(ptr, sectionName, nameLen);
 	}
 }
 
-void rpn_SizeOfSection(struct Expression *expr, char const *tzSectionName)
+void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	makeUnknown(expr, "Section \"%s\"'s size is not known", tzSectionName);
+	makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
 
-	size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
 	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-	expr->nRPNPatchSize += nameLen + 1;
+	expr->rpnPatchSize += nameLen + 1;
 	*ptr++ = RPN_SIZEOF_SECT;
-	memcpy(ptr, tzSectionName, nameLen);
+	memcpy(ptr, sectionName, nameLen);
 }
 
-void rpn_StartOfSection(struct Expression *expr, char const *tzSectionName)
+void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	makeUnknown(expr, "Section \"%s\"'s start is not known", tzSectionName);
+	makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
 
-	size_t nameLen = strlen(tzSectionName) + 1; /* Room for NUL! */
+	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
 	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
-	expr->nRPNPatchSize += nameLen + 1;
+	expr->rpnPatchSize += nameLen + 1;
 	*ptr++ = RPN_STARTOF_SECT;
-	memcpy(ptr, tzSectionName, nameLen);
+	memcpy(ptr, sectionName, nameLen);
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
@@ -235,13 +235,13 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (!rpn_isKnown(expr)) {
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_HRAM;
-	} else if (expr->nVal >= 0xFF00 && expr->nVal <= 0xFFFF) {
+	} else if (expr->val >= 0xFF00 && expr->val <= 0xFFFF) {
 		/* That range is valid, but only keep the lower byte */
-		expr->nVal &= 0xFF;
-	} else if (expr->nVal < 0 || expr->nVal > 0xFF) {
-		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", expr->nVal);
+		expr->val &= 0xFF;
+	} else if (expr->val < 0 || expr->val > 0xFF) {
+		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", expr->val);
 	}
 }
 
@@ -251,12 +251,12 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 
 	if (rpn_isKnown(expr)) {
 		/* A valid RST address must be masked with 0x38 */
-		if (expr->nVal & ~0x38)
-			error("Invalid address $%" PRIx32 " for RST\n", expr->nVal);
+		if (expr->val & ~0x38)
+			error("Invalid address $%" PRIx32 " for RST\n", expr->val);
 		/* The target is in the "0x38" bits, all other bits are set */
-		expr->nVal |= 0xC7;
+		expr->val |= 0xC7;
 	} else {
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_RST;
 	}
 }
@@ -267,9 +267,9 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = !expr->nVal;
+		expr->val = !expr->val;
 	} else {
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_LOGUNNOT;
 	}
 }
@@ -278,7 +278,7 @@ struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
-	return sym_FindScopedSymbol((char *)expr->tRPN + 1);
+	return sym_FindScopedSymbol((char *)expr->rpn + 1);
 }
 
 bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
@@ -311,111 +311,111 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		rpn_Init(expr); /* Init the expression to something sane */
 
 		/* If both expressions are known, just compute the value */
-		uint32_t uleft = src1->nVal, uright = src2->nVal;
+		uint32_t uleft = src1->val, uright = src2->val;
 
 		switch (op) {
 		case RPN_LOGOR:
-			expr->nVal = src1->nVal || src2->nVal;
+			expr->val = src1->val || src2->val;
 			break;
 		case RPN_LOGAND:
-			expr->nVal = src1->nVal && src2->nVal;
+			expr->val = src1->val && src2->val;
 			break;
 		case RPN_LOGEQ:
-			expr->nVal = src1->nVal == src2->nVal;
+			expr->val = src1->val == src2->val;
 			break;
 		case RPN_LOGGT:
-			expr->nVal = src1->nVal > src2->nVal;
+			expr->val = src1->val > src2->val;
 			break;
 		case RPN_LOGLT:
-			expr->nVal = src1->nVal < src2->nVal;
+			expr->val = src1->val < src2->val;
 			break;
 		case RPN_LOGGE:
-			expr->nVal = src1->nVal >= src2->nVal;
+			expr->val = src1->val >= src2->val;
 			break;
 		case RPN_LOGLE:
-			expr->nVal = src1->nVal <= src2->nVal;
+			expr->val = src1->val <= src2->val;
 			break;
 		case RPN_LOGNE:
-			expr->nVal = src1->nVal != src2->nVal;
+			expr->val = src1->val != src2->val;
 			break;
 		case RPN_ADD:
-			expr->nVal = uleft + uright;
+			expr->val = uleft + uright;
 			break;
 		case RPN_SUB:
-			expr->nVal = uleft - uright;
+			expr->val = uleft - uright;
 			break;
 		case RPN_XOR:
-			expr->nVal = src1->nVal ^ src2->nVal;
+			expr->val = src1->val ^ src2->val;
 			break;
 		case RPN_OR:
-			expr->nVal = src1->nVal | src2->nVal;
+			expr->val = src1->val | src2->val;
 			break;
 		case RPN_AND:
-			expr->nVal = src1->nVal & src2->nVal;
+			expr->val = src1->val & src2->val;
 			break;
 		case RPN_SHL:
-			if (src2->nVal < 0)
+			if (src2->val < 0)
 				warning(WARNING_SHIFT_AMOUNT,
 					"Shifting left by negative amount %" PRId32 "\n",
-					src2->nVal);
+					src2->val);
 
-			if (src2->nVal >= 32)
+			if (src2->val >= 32)
 				warning(WARNING_SHIFT_AMOUNT,
 					"Shifting left by large amount %" PRId32 "\n",
-					src2->nVal);
+					src2->val);
 
-			expr->nVal = op_shift_left(src1->nVal, src2->nVal);
+			expr->val = op_shift_left(src1->val, src2->val);
 			break;
 		case RPN_SHR:
-			if (src1->nVal < 0)
+			if (src1->val < 0)
 				warning(WARNING_SHIFT, "Shifting right negative value %"
 					PRId32 "\n",
-					src1->nVal);
+					src1->val);
 
-			if (src2->nVal < 0)
+			if (src2->val < 0)
 				warning(WARNING_SHIFT_AMOUNT,
 					"Shifting right by negative amount %" PRId32 "\n",
-					src2->nVal);
+					src2->val);
 
-			if (src2->nVal >= 32)
+			if (src2->val >= 32)
 				warning(WARNING_SHIFT_AMOUNT,
 					"Shifting right by large amount %" PRId32 "\n",
-					src2->nVal);
+					src2->val);
 
-			expr->nVal = op_shift_right(src1->nVal, src2->nVal);
+			expr->val = op_shift_right(src1->val, src2->val);
 			break;
 		case RPN_MUL:
-			expr->nVal = uleft * uright;
+			expr->val = uleft * uright;
 			break;
 		case RPN_DIV:
-			if (src2->nVal == 0)
+			if (src2->val == 0)
 				fatalerror("Division by zero\n");
 
-			if (src1->nVal == INT32_MIN && src2->nVal == -1) {
+			if (src1->val == INT32_MIN && src2->val == -1) {
 				warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %"
 					PRId32 "\n", INT32_MIN, INT32_MIN);
-				expr->nVal = INT32_MIN;
+				expr->val = INT32_MIN;
 			} else {
-				expr->nVal = op_divide(src1->nVal, src2->nVal);
+				expr->val = op_divide(src1->val, src2->val);
 			}
 			break;
 		case RPN_MOD:
-			if (src2->nVal == 0)
+			if (src2->val == 0)
 				fatalerror("Modulo by zero\n");
 
-			if (src1->nVal == INT32_MIN && src2->nVal == -1)
-				expr->nVal = 0;
+			if (src1->val == INT32_MIN && src2->val == -1)
+				expr->val = 0;
 			else
-				expr->nVal = op_modulo(src1->nVal, src2->nVal);
+				expr->val = op_modulo(src1->val, src2->val);
 			break;
 		case RPN_EXP:
-			if (src2->nVal < 0)
+			if (src2->val < 0)
 				fatalerror("Exponentiation by negative power\n");
 
-			if (src1->nVal == INT32_MIN && src2->nVal == -1)
-				expr->nVal = 0;
+			if (src1->val == INT32_MIN && src2->val == -1)
+				expr->val = 0;
 			else
-				expr->nVal = op_exponent(src1->nVal, src2->nVal);
+				expr->val = op_exponent(src1->val, src2->val);
 			break;
 
 		case RPN_UNSUB:
@@ -437,20 +437,20 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		struct Symbol const *symbol1 = rpn_SymbolOf(src1);
 		struct Symbol const *symbol2 = rpn_SymbolOf(src2);
 
-		expr->nVal = sym_GetValue(symbol1) - sym_GetValue(symbol2);
+		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;
 	} else {
 		/* If it's not known, start computing the RPN expression */
 
 		/* Convert the left-hand expression if it's constant */
 		if (src1->isKnown) {
-			uint32_t lval = src1->nVal;
+			uint32_t lval = src1->val;
 			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
 					   lval >> 16, lval >> 24};
-			expr->nRPNPatchSize = sizeof(bytes);
-			expr->tRPN = NULL;
-			expr->nRPNCapacity = 0;
-			expr->nRPNLength = 0;
+			expr->rpnPatchSize = sizeof(bytes);
+			expr->rpn = NULL;
+			expr->rpnCapacity = 0;
+			expr->rpnLength = 0;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
 			       sizeof(bytes));
 
@@ -459,21 +459,21 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			free(src1->reason);
 		} else {
 			/* Otherwise just reuse its RPN buffer */
-			expr->nRPNPatchSize = src1->nRPNPatchSize;
-			expr->tRPN = src1->tRPN;
-			expr->nRPNCapacity = src1->nRPNCapacity;
-			expr->nRPNLength = src1->nRPNLength;
+			expr->rpnPatchSize = src1->rpnPatchSize;
+			expr->rpn = src1->rpn;
+			expr->rpnCapacity = src1->rpnCapacity;
+			expr->rpnLength = src1->rpnLength;
 			expr->reason = src1->reason;
 			free(src2->reason);
 		}
 
 		/* Now, merge the right expression into the left one */
-		uint8_t *ptr = src2->tRPN; /* Pointer to the right RPN */
-		uint32_t len = src2->nRPNLength; /* Size of the right RPN */
-		uint32_t patchSize = src2->nRPNPatchSize;
+		uint8_t *ptr = src2->rpn; /* Pointer to the right RPN */
+		uint32_t len = src2->rpnLength; /* Size of the right RPN */
+		uint32_t patchSize = src2->rpnPatchSize;
 
 		/* If the right expression is constant, merge a shim instead */
-		uint32_t rval = src2->nVal;
+		uint32_t rval = src2->val;
 		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
 				   rval >> 24};
 		if (src2->isKnown) {
@@ -487,8 +487,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		memcpy(buf, ptr, len);
 		buf[len] = op;
 
-		free(src2->tRPN); /* If there was none, this is `free(NULL)` */
-		expr->nRPNPatchSize += patchSize + 1;
+		free(src2->rpn); /* If there was none, this is `free(NULL)` */
+		expr->rpnPatchSize += patchSize + 1;
 	}
 }
 
@@ -498,11 +498,11 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = (uint32_t)expr->nVal >> 8 & 0xFF;
+		expr->val = (uint32_t)expr->val >> 8 & 0xFF;
 	} else {
 		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
 				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
-		expr->nRPNPatchSize += sizeof(bytes);
+		expr->rpnPatchSize += sizeof(bytes);
 		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	}
 }
@@ -513,11 +513,11 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = expr->nVal & 0xFF;
+		expr->val = expr->val & 0xFF;
 	} else {
 		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
-		expr->nRPNPatchSize += sizeof(bytes);
+		expr->rpnPatchSize += sizeof(bytes);
 		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	}
 }
@@ -525,7 +525,7 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
 {
 	rpn_Init(expr);
-	expr->nVal = rpn_isKnown(src);
+	expr->val = rpn_isKnown(src);
 	expr->isKnown = true;
 	expr->isSymbol = false;
 }
@@ -536,9 +536,9 @@ void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = -(uint32_t)expr->nVal;
+		expr->val = -(uint32_t)expr->val;
 	} else {
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_UNSUB;
 	}
 }
@@ -549,9 +549,9 @@ void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 
 	if (rpn_isKnown(expr)) {
-		expr->nVal = ~expr->nVal;
+		expr->val = ~expr->val;
 	} else {
-		expr->nRPNPatchSize++;
+		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_UNNOT;
 	}
 }

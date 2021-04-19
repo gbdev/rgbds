@@ -43,7 +43,7 @@ struct UnionStackEntry {
  */
 static void checksection(void)
 {
-	if (pCurrentSection == NULL)
+	if (currentSection == NULL)
 		fatalerror("Code generation before SECTION directive\n");
 }
 
@@ -55,9 +55,9 @@ static void checkcodesection(void)
 {
 	checksection();
 
-	if (!sect_HasData(pCurrentSection->type))
+	if (!sect_HasData(currentSection->type))
 		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
-			   pCurrentSection->name);
+			   currentSection->name);
 }
 
 static void checkSectionSize(struct Section const *sect, uint32_t size)
@@ -80,14 +80,14 @@ static void reserveSpace(uint32_t delta_size)
 	 * files or trying to allocate too much memory.
 	 * A check at the linking stage is still necessary.
 	 */
-	checkSectionSize(pCurrentSection, curOffset + loadOffset + delta_size);
+	checkSectionSize(currentSection, curOffset + loadOffset + delta_size);
 	if (currentLoadSection)
 		checkSectionSize(currentLoadSection, curOffset + delta_size);
 }
 
 struct Section *out_FindSectionByName(const char *name)
 {
-	for (struct Section *sect = pSectionList; sect; sect = sect->next) {
+	for (struct Section *sect = sectionList; sect; sect = sect->next) {
 		if (strcmp(name, sect->name) == 0)
 			return sect;
 	}
@@ -358,8 +358,8 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 	} else {
 		sect = createSection(name, type, org, bank, alignment, alignOffset, mod);
 		// Add the new section to the list (order doesn't matter)
-		sect->next = pSectionList;
-		pSectionList = sect;
+		sect->next = sectionList;
+		sectionList = sect;
 	}
 
 	return sect;
@@ -394,7 +394,7 @@ void out_NewSection(char const *name, uint32_t type, uint32_t org,
 
 	changeSection();
 	curOffset = mod == SECTION_UNION ? 0 : sect->size;
-	pCurrentSection = sect;
+	currentSection = sect;
 }
 
 /*
@@ -433,7 +433,7 @@ void out_EndLoadSection(void)
 
 struct Section *sect_GetSymbolSection(void)
 {
-	return currentLoadSection ? currentLoadSection : pCurrentSection;
+	return currentLoadSection ? currentLoadSection : currentSection;
 }
 
 /*
@@ -477,15 +477,15 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 static void growSection(uint32_t growth)
 {
 	curOffset += growth;
-	if (curOffset + loadOffset > pCurrentSection->size)
-		pCurrentSection->size = curOffset + loadOffset;
+	if (curOffset + loadOffset > currentSection->size)
+		currentSection->size = curOffset + loadOffset;
 	if (currentLoadSection && curOffset > currentLoadSection->size)
 		currentLoadSection->size = curOffset;
 }
 
 static void writebyte(uint8_t byte)
 {
-	pCurrentSection->data[sect_GetOutputOffset()] = byte;
+	currentSection->data[sect_GetOutputOffset()] = byte;
 	growSection(1);
 }
 
@@ -510,9 +510,9 @@ static void createPatch(enum PatchType type, struct Expression const *expr, uint
 
 void sect_StartUnion(void)
 {
-	if (!pCurrentSection)
+	if (!currentSection)
 		fatalerror("UNIONs must be inside a SECTION\n");
-	if (sect_HasData(pCurrentSection->type))
+	if (sect_HasData(currentSection->type))
 		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections\n");
 	struct UnionStackEntry *entry = malloc(sizeof(*entry));
 
@@ -604,11 +604,11 @@ void out_Skip(int32_t skip, bool ds)
 	checksection();
 	reserveSpace(skip);
 
-	if (!ds && sect_HasData(pCurrentSection->type))
+	if (!ds && sect_HasData(currentSection->type))
 		warning(WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
 			(skip == 4) ? "DL" : (skip == 2) ? "DW" : "DB");
 
-	if (!sect_HasData(pCurrentSection->type)) {
+	if (!sect_HasData(currentSection->type)) {
 		growSection(skip);
 	} else {
 		checkcodesection();
@@ -642,7 +642,7 @@ void out_RelByte(struct Expression *expr, uint32_t pcShift)
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
 	} else {
-		writebyte(expr->nVal);
+		writebyte(expr->val);
 	}
 	rpn_Free(expr);
 }
@@ -663,7 +663,7 @@ void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writebyte(0);
 		} else {
-			writebyte(expr->nVal);
+			writebyte(expr->val);
 		}
 	}
 
@@ -684,7 +684,7 @@ void out_RelWord(struct Expression *expr, uint32_t pcShift)
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
 	} else {
-		writeword(expr->nVal);
+		writeword(expr->val);
 	}
 	rpn_Free(expr);
 }
@@ -702,7 +702,7 @@ void out_RelLong(struct Expression *expr, uint32_t pcShift)
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
 	} else {
-		writelong(expr->nVal);
+		writelong(expr->val);
 	}
 	rpn_Free(expr);
 }
@@ -761,10 +761,10 @@ void out_BinaryFile(char const *s, int32_t startPos)
 	free(fullPath);
 
 	if (!f) {
-		if (oGeneratedMissingIncludes) {
+		if (generatedMissingIncludes) {
 			if (verbose)
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
-			oFailedOnMissingInclude = true;
+			failedOnMissingInclude = true;
 			return;
 		}
 		error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
@@ -830,10 +830,10 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	free(fullPath);
 
 	if (!f) {
-		if (oGeneratedMissingIncludes) {
+		if (generatedMissingIncludes) {
 			if (verbose)
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
-			oFailedOnMissingInclude = true;
+			failedOnMissingInclude = true;
 		} else {
 			error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
 		}
@@ -897,7 +897,7 @@ void out_PushSection(void)
 
 	if (sect == NULL)
 		fatalerror("No memory for section stack: %s\n",  strerror(errno));
-	sect->section = pCurrentSection;
+	sect->section = currentSection;
 	sect->scope = sym_GetCurrentSymbolScope();
 	sect->offset = curOffset;
 	sect->next = sectionStack;
@@ -917,7 +917,7 @@ void out_PopSection(void)
 
 	sect = sectionStack;
 	changeSection();
-	pCurrentSection = sect->section;
+	currentSection = sect->section;
 	sym_SetCurrentSymbolScope(sect->scope);
 	curOffset = sect->offset;
 

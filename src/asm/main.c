@@ -45,10 +45,10 @@ extern int yydebug;
 #endif
 
 FILE * dependfile;
-bool oGeneratedMissingIncludes;
-bool oFailedOnMissingInclude;
-bool oGeneratePhonyDeps;
-char *tzTargetFileName;
+bool generatedMissingIncludes;
+bool failedOnMissingInclude;
+bool generatePhonyDeps;
+char *targetFileName;
 
 bool haltnop;
 bool optimizeLoads;
@@ -158,10 +158,10 @@ int main(int argc, char *argv[])
 
 	// Set defaults
 
-	oGeneratePhonyDeps = false;
-	oGeneratedMissingIncludes = false;
-	oFailedOnMissingInclude = false;
-	tzTargetFileName = NULL;
+	generatePhonyDeps = false;
+	generatedMissingIncludes = false;
+	failedOnMissingInclude = false;
+	targetFileName = NULL;
 
 	opt_B("01");
 	opt_G("0123");
@@ -171,8 +171,8 @@ int main(int argc, char *argv[])
 	verbose = false;
 	warnings = true;
 	sym_SetExportAll(false);
-	uint32_t maxRecursionDepth = 64;
-	size_t nTargetFileNameLen = 0;
+	uint32_t maxDepth = 64;
+	size_t targetFileNameLen = 0;
 
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'r':
-			maxRecursionDepth = strtoul(musl_optarg, &ep, 0);
+			maxDepth = strtoul(musl_optarg, &ep, 0);
 
 			if (musl_optarg[0] == '\0' || *ep != '\0')
 				errx(1, "Invalid argument for option 'r'");
@@ -269,11 +269,11 @@ int main(int argc, char *argv[])
 		case 0:
 			switch (depType) {
 			case 'G':
-				oGeneratedMissingIncludes = true;
+				generatedMissingIncludes = true;
 				break;
 
 			case 'P':
-				oGeneratePhonyDeps = true;
+				generatePhonyDeps = true;
 				break;
 
 			case 'Q':
@@ -284,22 +284,22 @@ int main(int argc, char *argv[])
 				if (depType == 'Q')
 					ep = make_escape(ep);
 
-				nTargetFileNameLen += strlen(ep) + 1;
-				if (!tzTargetFileName) {
+				targetFileNameLen += strlen(ep) + 1;
+				if (!targetFileName) {
 					/* On first alloc, make an empty str */
-					tzTargetFileName = malloc(nTargetFileNameLen + 1);
-					if (tzTargetFileName)
-						*tzTargetFileName = '\0';
+					targetFileName = malloc(targetFileNameLen + 1);
+					if (targetFileName)
+						*targetFileName = '\0';
 				} else {
-					tzTargetFileName = realloc(tzTargetFileName,
-								   nTargetFileNameLen + 1);
+					targetFileName = realloc(targetFileName,
+								   targetFileNameLen + 1);
 				}
-				if (tzTargetFileName == NULL)
+				if (targetFileName == NULL)
 					err(1, "Cannot append new file to target file list");
-				strcat(tzTargetFileName, ep);
+				strcat(targetFileName, ep);
 				if (depType == 'Q')
 					free(ep);
-				char *ptr = tzTargetFileName + strlen(tzTargetFileName);
+				char *ptr = targetFileName + strlen(targetFileName);
 
 				*ptr++ = ' ';
 				*ptr = '\0';
@@ -314,8 +314,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (tzTargetFileName == NULL)
-		tzTargetFileName = tzObjectname;
+	if (targetFileName == NULL)
+		targetFileName = objectName;
 
 	if (argc == musl_optind) {
 		fputs("FATAL: No input files\n", stderr);
@@ -331,17 +331,17 @@ int main(int argc, char *argv[])
 		printf("Assembling %s\n", mainFileName);
 
 	if (dependfile) {
-		if (!tzTargetFileName)
+		if (!targetFileName)
 			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT\n");
 
-		fprintf(dependfile, "%s: %s\n", tzTargetFileName, mainFileName);
+		fprintf(dependfile, "%s: %s\n", targetFileName, mainFileName);
 	}
 
 	charmap_New("main", NULL);
 
 	// Init lexer and file stack, prodiving file info
 	lexer_Init();
-	fstk_Init(mainFileName, maxRecursionDepth);
+	fstk_Init(mainFileName, maxDepth);
 
 	// Perform parse (yyparse is auto-generated from `parser.y`)
 	if (yyparse() != 0 && nbErrors == 0)
@@ -357,11 +357,11 @@ int main(int argc, char *argv[])
 			nbErrors == 1 ? "" : "s");
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
-	if (oFailedOnMissingInclude)
+	if (failedOnMissingInclude)
 		return 0;
 
 	/* If no path specified, don't write file */
-	if (tzObjectname != NULL)
+	if (objectName != NULL)
 		out_WriteObject();
 	return 0;
 }

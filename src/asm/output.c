@@ -35,12 +35,12 @@
 struct Patch {
 	struct FileStackNode const *src;
 	uint32_t lineNo;
-	uint32_t nOffset;
+	uint32_t offset;
 	struct Section *pcSection;
 	uint32_t pcOffset;
 	uint8_t type;
-	uint32_t nRPNSize;
-	uint8_t *pRPN;
+	uint32_t rpnSize;
+	uint8_t *rpn;
 	struct Patch *next;
 };
 
@@ -51,10 +51,10 @@ struct Assertion {
 	struct Assertion *next;
 };
 
-char *tzObjectname;
+char *objectName;
 
-/* TODO: shouldn't `pCurrentSection` be somewhere else? */
-struct Section *pSectionList, *pCurrentSection;
+/* TODO: shouldn't `currentSection` be somewhere else? */
+struct Section *sectionList, *currentSection;
 
 /* Linked list of symbols to put in the object file */
 static struct Symbol *objectSymbols = NULL;
@@ -72,7 +72,7 @@ static uint32_t countSections(void)
 {
 	uint32_t count = 0;
 
-	for (struct Section const *sect = pSectionList; sect; sect = sect->next)
+	for (struct Section const *sect = sectionList; sect; sect = sect->next)
 		count++;
 
 	return count;
@@ -179,7 +179,7 @@ This is code intended to replace a node, which is pretty useless until ref count
  */
 static uint32_t getsectid(struct Section const *sect)
 {
-	struct Section const *sec = pSectionList;
+	struct Section const *sec = sectionList;
 	uint32_t ID = 0;
 
 	while (sec) {
@@ -205,12 +205,12 @@ static void writepatch(struct Patch const *patch, FILE *f)
 	assert(patch->src->ID != -1);
 	putlong(patch->src->ID, f);
 	putlong(patch->lineNo, f);
-	putlong(patch->nOffset, f);
+	putlong(patch->offset, f);
 	putlong(getSectIDIfAny(patch->pcSection), f);
 	putlong(patch->pcOffset, f);
 	putc(patch->type, f);
-	putlong(patch->nRPNSize, f);
-	fwrite(patch->pRPN, 1, patch->nRPNSize, f);
+	putlong(patch->rpnSize, f);
+	fwrite(patch->rpn, 1, patch->rpnSize, f);
 }
 
 /*
@@ -286,7 +286,7 @@ static uint32_t getSymbolID(struct Symbol *sym)
 static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		     uint32_t rpnlen)
 {
-	char tzSym[512];
+	char symName[512];
 
 	for (size_t offset = 0; offset < rpnlen; ) {
 #define popbyte() rpn[offset++]
@@ -310,14 +310,14 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		case RPN_SYM:
 			i = 0;
 			do {
-				tzSym[i] = popbyte();
-			} while (tzSym[i++]);
+				symName[i] = popbyte();
+			} while (symName[i++]);
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(tzSym);
+			sym = sym_FindExactSymbol(symName);
 			if (sym_IsConstant(sym)) {
 				writebyte(RPN_CONST);
-				value = sym_GetConstantValue(tzSym);
+				value = sym_GetConstantValue(symName);
 			} else {
 				writebyte(RPN_SYM);
 				value = getSymbolID(sym);
@@ -332,11 +332,11 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 		case RPN_BANK_SYM:
 			i = 0;
 			do {
-				tzSym[i] = popbyte();
-			} while (tzSym[i++]);
+				symName[i] = popbyte();
+			} while (symName[i++]);
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(tzSym);
+			sym = sym_FindExactSymbol(symName);
 			value = getSymbolID(sym);
 
 			writebyte(RPN_BANK_SYM);
@@ -386,38 +386,38 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
 	struct Patch *patch = malloc(sizeof(struct Patch));
-	uint32_t rpnSize = expr->isKnown ? 5 : expr->nRPNPatchSize;
+	uint32_t rpnSize = expr->isKnown ? 5 : expr->rpnPatchSize;
 	struct FileStackNode *node = fstk_GetFileStack();
 
 	if (!patch)
 		fatalerror("No memory for patch: %s\n", strerror(errno));
 
-	patch->pRPN = malloc(sizeof(*patch->pRPN) * rpnSize);
-	if (!patch->pRPN)
-		fatalerror("No memory for patch's RPN expression: %s\n", strerror(errno));
+	patch->rpn = malloc(sizeof(*patch->rpn) * rpnSize);
+	if (!patch->rpn)
+		fatalerror("No memory for patch's RPN rpnSize: %s\n", strerror(errno));
 
 	patch->type = type;
 	patch->src = node;
 	out_RegisterNode(node);
 	patch->lineNo = lexer_GetLineNo();
-	patch->nOffset = ofs;
+	patch->offset = ofs;
 	patch->pcSection = sect_GetSymbolSection();
 	patch->pcOffset = sect_GetSymbolOffset();
 
-	/* If the expression's value is known, output a constant RPN expression directly */
+	/* If the rpnSize's value is known, output a constant RPN rpnSize directly */
 	if (expr->isKnown) {
-		patch->nRPNSize = rpnSize;
+		patch->rpnSize = rpnSize;
 		/* Make sure to update `rpnSize` above if modifying this! */
-		patch->pRPN[0] = RPN_CONST;
-		patch->pRPN[1] = (uint32_t)(expr->nVal) & 0xFF;
-		patch->pRPN[2] = (uint32_t)(expr->nVal) >> 8;
-		patch->pRPN[3] = (uint32_t)(expr->nVal) >> 16;
-		patch->pRPN[4] = (uint32_t)(expr->nVal) >> 24;
+		patch->rpn[0] = RPN_CONST;
+		patch->rpn[1] = (uint32_t)(expr->val) & 0xFF;
+		patch->rpn[2] = (uint32_t)(expr->val) >> 8;
+		patch->rpn[3] = (uint32_t)(expr->val) >> 16;
+		patch->rpn[4] = (uint32_t)(expr->val) >> 24;
 	} else {
-		patch->nRPNSize = 0;
-		writerpn(patch->pRPN, &patch->nRPNSize, expr->tRPN, expr->nRPNLength);
+		patch->rpnSize = 0;
+		writerpn(patch->rpn, &patch->rpnSize, expr->rpn, expr->rpnLength);
 	}
-	assert(patch->nRPNSize == rpnSize);
+	assert(patch->rpnSize == rpnSize);
 
 	return patch;
 }
@@ -434,8 +434,8 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
 	// before those bytes.
 	patch->pcOffset -= pcShift;
 
-	patch->next = pCurrentSection->patches;
-	pCurrentSection->patches = patch;
+	patch->next = currentSection->patches;
+	currentSection->patches = patch;
 }
 
 /**
@@ -501,13 +501,13 @@ static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
 void out_WriteObject(void)
 {
 	FILE *f;
-	if (strcmp(tzObjectname, "-") != 0)
-		f = fopen(tzObjectname, "wb");
+	if (strcmp(objectName, "-") != 0)
+		f = fopen(objectName, "wb");
 	else
 		f = fdopen(1, "wb");
 
 	if (!f)
-		err(1, "Couldn't write file '%s'", tzObjectname);
+		err(1, "Couldn't write file '%s'", objectName);
 
 	/* Also write symbols that weren't written above */
 	sym_ForEach(registerUnregisteredSymbol, NULL);
@@ -530,7 +530,7 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
 
-	for (struct Section *sect = pSectionList; sect; sect = sect->next)
+	for (struct Section *sect = sectionList; sect; sect = sect->next)
 		writesection(sect, f);
 
 	putlong(countAsserts(), f);
@@ -546,7 +546,7 @@ void out_WriteObject(void)
  */
 void out_SetFileName(char *s)
 {
-	tzObjectname = s;
+	objectName = s;
 	if (verbose)
 		printf("Output filename %s\n", s);
 }

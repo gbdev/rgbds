@@ -687,8 +687,8 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		unsigned int depth = 0;
 
 		for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-			if (depth++ >= nMaxRecursionDepth)
-				fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
+			if (depth++ >= maxRecursionDepth)
+				fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 		}
 	}
 
@@ -1056,7 +1056,7 @@ static void readAnonLabelRef(char c)
 		n++;
 	} while (peek() == c);
 
-	sym_WriteAnonLabelName(yylval.tzSym, n, c == '-');
+	sym_WriteAnonLabelName(yylval.symName, n, c == '-');
 }
 
 /* Functions to lex numbers of various radixes */
@@ -1077,7 +1077,7 @@ static void readNumber(int radix, int32_t baseValue)
 		value = value * radix + (c - '0');
 	}
 
-	yylval.nConstValue = value;
+	yylval.constValue = value;
 }
 
 static void readFractionalPart(void)
@@ -1105,15 +1105,15 @@ static void readFractionalPart(void)
 		divisor *= 10;
 	}
 
-	if (yylval.nConstValue > INT16_MAX || yylval.nConstValue < INT16_MIN)
+	if (yylval.constValue > INT16_MAX || yylval.constValue < INT16_MIN)
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
 	/* Cast to unsigned avoids UB if shifting discards bits */
-	yylval.nConstValue = (uint32_t)yylval.nConstValue << 16;
+	yylval.constValue = (uint32_t)yylval.constValue << 16;
 	/* Cast to unsigned avoids undefined overflow behavior */
 	uint16_t fractional = (uint16_t)round(value * 65536.0 / divisor);
 
-	yylval.nConstValue |= fractional * (yylval.nConstValue >= 0 ? 1 : -1);
+	yylval.constValue |= fractional * (yylval.constValue >= 0 ? 1 : -1);
 }
 
 char binDigits[2];
@@ -1140,7 +1140,7 @@ static void readBinaryNumber(void)
 		value = value * 2 + bit;
 	}
 
-	yylval.nConstValue = value;
+	yylval.constValue = value;
 }
 
 static void readHexNumber(void)
@@ -1173,7 +1173,7 @@ static void readHexNumber(void)
 	if (empty)
 		error("Invalid integer constant, no digits after '$'\n");
 
-	yylval.nConstValue = value;
+	yylval.constValue = value;
 }
 
 char gfxDigits[4];
@@ -1215,7 +1215,7 @@ static void readGfxConstant(void)
 		warning(WARNING_LARGE_CONSTANT,
 			"Graphics constant is too long, only 8 first pixels considered\n");
 
-	yylval.nConstValue = bp1 << 8 | bp0;
+	yylval.constValue = bp1 << 8 | bp0;
 }
 
 /* Functions to read identifiers & keywords */
@@ -1234,7 +1234,7 @@ static int readIdentifier(char firstChar)
 {
 	dbgPrint("Reading identifier or keyword\n");
 	/* Lex while checking for a keyword */
-	yylval.tzSym[0] = firstChar;
+	yylval.symName[0] = firstChar;
 	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
 	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
 	size_t i = 1;
@@ -1243,9 +1243,9 @@ static int readIdentifier(char firstChar)
 	for (int c = peek(); continuesIdentifier(c); i++, c = peek()) {
 		shiftChar();
 
-		if (i < sizeof(yylval.tzSym) - 1) {
+		if (i < sizeof(yylval.symName) - 1) {
 			/* Write the char to the identifier's name */
-			yylval.tzSym[i] = c;
+			yylval.symName[i] = c;
 
 			/* If the char was a dot, mark the identifier as local */
 			if (c == '.')
@@ -1257,12 +1257,12 @@ static int readIdentifier(char firstChar)
 		}
 	}
 
-	if (i > sizeof(yylval.tzSym) - 1) {
+	if (i > sizeof(yylval.symName) - 1) {
 		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
-		i = sizeof(yylval.tzSym) - 1;
+		i = sizeof(yylval.symName) - 1;
 	}
-	yylval.tzSym[i] = '\0'; /* Terminate the string */
-	dbgPrint("Ident/keyword = \"%s\"\n", yylval.tzSym);
+	yylval.symName[i] = '\0'; /* Terminate the string */
+	dbgPrint("Ident/keyword = \"%s\"\n", yylval.symName);
 
 	if (keywordDict[nodeID].keyword)
 		return keywordDict[nodeID].keyword->token;
@@ -1274,8 +1274,8 @@ static int readIdentifier(char firstChar)
 
 static char const *readInterpolation(unsigned int depth)
 {
-	if (depth >= nMaxRecursionDepth)
-		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
+	if (depth >= maxRecursionDepth)
+		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
@@ -1346,10 +1346,10 @@ static char const *readInterpolation(unsigned int depth)
 	return NULL;
 }
 
-#define append_yylval_tzString(c) do { \
+#define append_yylval_string(c) do { \
 	char v = (c); /* Evaluate c exactly once in case it has side effects. */ \
-	if (i < sizeof(yylval.tzString)) \
-		yylval.tzString[i++] = v; \
+	if (i < sizeof(yylval.string)) \
+		yylval.string[i++] = v; \
 } while (0)
 
 static size_t appendEscapedSubstring(char const *str, size_t i)
@@ -1363,23 +1363,23 @@ static size_t appendEscapedSubstring(char const *str, size_t i)
 		case '\\':
 		case '"':
 		case '{':
-			append_yylval_tzString('\\');
+			append_yylval_string('\\');
 			break;
 		case '\n':
-			append_yylval_tzString('\\');
+			append_yylval_string('\\');
 			c = 'n';
 			break;
 		case '\r':
-			append_yylval_tzString('\\');
+			append_yylval_string('\\');
 			c = 'r';
 			break;
 		case '\t':
-			append_yylval_tzString('\\');
+			append_yylval_string('\\');
 			c = 't';
 			break;
 		}
 
-		append_yylval_tzString(c);
+		append_yylval_string(c);
 	}
 
 	return i;
@@ -1435,7 +1435,7 @@ static void readString(void)
 					break;
 				shiftChar();
 				if (peek() != '"') {
-					append_yylval_tzString('"');
+					append_yylval_string('"');
 					break;
 				}
 				shiftChar();
@@ -1489,7 +1489,7 @@ static void readString(void)
 				char const *str = readMacroArg(c);
 
 				while (*str)
-					append_yylval_tzString(*str++);
+					append_yylval_string(*str++);
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
@@ -1512,24 +1512,24 @@ static void readString(void)
 
 			if (ptr)
 				while (*ptr)
-					append_yylval_tzString(*ptr++);
+					append_yylval_string(*ptr++);
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
 		// Regular characters will just get copied
 		}
 
-		append_yylval_tzString(c);
+		append_yylval_string(c);
 	}
 
 finish:
-	if (i == sizeof(yylval.tzString)) {
+	if (i == sizeof(yylval.string)) {
 		i--;
 		warning(WARNING_LONG_STR, "String constant too long\n");
 	}
-	yylval.tzString[i] = '\0';
+	yylval.string[i] = '\0';
 
-	dbgPrint("Read string \"%s\"\n", yylval.tzString);
+	dbgPrint("Read string \"%s\"\n", yylval.string);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }
@@ -1543,13 +1543,13 @@ static size_t appendStringLiteral(size_t i)
 	bool multiline = false;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
-	append_yylval_tzString('"');
+	append_yylval_string('"');
 	if (peek() == '"') {
-		append_yylval_tzString('"');
+		append_yylval_string('"');
 		shiftChar();
 		if (peek() == '"') {
 			// """ begins a multi-line string
-			append_yylval_tzString('"');
+			append_yylval_string('"');
 			shiftChar();
 			multiline = true;
 		} else {
@@ -1584,14 +1584,14 @@ static size_t appendStringLiteral(size_t i)
 				// Only """ ends a multi-line string
 				if (peek() != '"')
 					break;
-				append_yylval_tzString('"');
+				append_yylval_string('"');
 				shiftChar();
 				if (peek() != '"')
 					break;
-				append_yylval_tzString('"');
+				append_yylval_string('"');
 				shiftChar();
 			}
-			append_yylval_tzString('"');
+			append_yylval_string('"');
 			goto finish;
 
 		case '\\': // Character escape or macro arg
@@ -1606,7 +1606,7 @@ static size_t appendStringLiteral(size_t i)
 			case 'r':
 			case 't':
 				// Return that character unchanged
-				append_yylval_tzString('\\');
+				append_yylval_string('\\');
 				shiftChar();
 				break;
 
@@ -1668,17 +1668,17 @@ static size_t appendStringLiteral(size_t i)
 		// Regular characters will just get copied
 		}
 
-		append_yylval_tzString(c);
+		append_yylval_string(c);
 	}
 
 finish:
-	if (i == sizeof(yylval.tzString)) {
+	if (i == sizeof(yylval.string)) {
 		i--;
 		warning(WARNING_LONG_STR, "String constant too long\n");
 	}
-	yylval.tzString[i] = '\0';
+	yylval.string[i] = '\0';
 
-	dbgPrint("Read string \"%s\"\n", yylval.tzString);
+	dbgPrint("Read string \"%s\"\n", yylval.string);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 
@@ -1727,8 +1727,8 @@ static int yylex_NORMAL(void)
 			return T_OP_NOT;
 
 		case '@':
-			yylval.tzSym[0] = '@';
-			yylval.tzSym[1] = '\0';
+			yylval.symName[0] = '@';
+			yylval.symName[1] = '\0';
 			return T_ID;
 
 		case '[':
@@ -1817,10 +1817,10 @@ static int yylex_NORMAL(void)
 		/* Handle numbers */
 
 		case '$':
-			yylval.nConstValue = 0;
+			yylval.constValue = 0;
 			readHexNumber();
 			/* Attempt to match `$ff00+c` */
-			if (yylval.nConstValue == 0xff00) {
+			if (yylval.constValue == 0xff00) {
 				/* Whitespace is ignored anyways */
 				while (isWhitespace(c = peek()))
 					shiftChar();
@@ -1871,7 +1871,7 @@ static int yylex_NORMAL(void)
 			if (secondChar != binDigits[0] && secondChar != binDigits[1])
 				return T_OP_MOD;
 
-			yylval.nConstValue = 0;
+			yylval.constValue = 0;
 			readBinaryNumber();
 			return T_NUMBER;
 
@@ -1923,7 +1923,7 @@ static int yylex_NORMAL(void)
 				/* Local symbols cannot be string expansions */
 				if (tokenType == T_ID && lexerState->expandStrings) {
 					/* Attempt string expansion */
-					struct Symbol const *sym = sym_FindExactSymbol(yylval.tzSym);
+					struct Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
@@ -1988,7 +1988,7 @@ static int yylex_RAW(void)
 				discardBlockComment();
 				continue;
 			}
-			append_yylval_tzString(c); /* Append the slash */
+			append_yylval_string(c); /* Append the slash */
 			break;
 
 		case '\\': /* Character escape */
@@ -2036,23 +2036,23 @@ static int yylex_RAW(void)
 			/* fallthrough */
 
 		default: /* Regular characters will just get copied */
-			append_yylval_tzString(c);
+			append_yylval_string(c);
 			shiftChar();
 			break;
 		}
 	}
 
 finish:
-	if (i == sizeof(yylval.tzString)) {
+	if (i == sizeof(yylval.string)) {
 		i--;
 		warning(WARNING_LONG_STR, "Macro argument too long\n");
 	}
 	/* Trim right whitespace */
-	while (i && isWhitespace(yylval.tzString[i - 1]))
+	while (i && isWhitespace(yylval.string[i - 1]))
 		i--;
-	yylval.tzString[i] = '\0';
+	yylval.string[i] = '\0';
 
-	dbgPrint("Read raw string \"%s\"\n", yylval.tzString);
+	dbgPrint("Read raw string \"%s\"\n", yylval.string);
 
 	// Returning T_COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (T_STRING
@@ -2082,7 +2082,7 @@ finish:
 	return T_EOF;
 }
 
-#undef append_yylval_tzString
+#undef append_yylval_string
 
 /*
  * This function uses the fact that `if`, etc. constructs are only valid when

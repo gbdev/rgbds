@@ -21,10 +21,10 @@ extern bool verbose;
 extern bool warnings; /* True to enable warnings, false to disable them. */
 
 extern FILE *dependfile;
-extern char *tzTargetFileName;
-extern bool oGeneratedMissingIncludes;
-extern bool oFailedOnMissingInclude;
-extern bool oGeneratePhonyDeps;
+extern char *targetFileName;
+extern bool generatedMissingIncludes;
+extern bool failedOnMissingInclude;
+extern bool generatePhonyDeps;
 
 /* TODO: are these really needed? */
 #define YY_FATAL_ERROR fatalerror

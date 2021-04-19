@@ -49,7 +49,7 @@ struct FileStackNamedNode { /* NODE_FILE, NODE_MACRO */
 	char name[]; /* File name for files, file::macro name for macros */
 };
 
-extern size_t nMaxRecursionDepth;
+extern size_t maxRecursionDepth;
 
 struct MacroArgs;
 
@@ -72,12 +72,12 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size);
 bool yywrap(void);
 void fstk_RunInclude(char const *path);
 void fstk_RunMacro(char const *macroName, struct MacroArgs *args);
-void fstk_RunRept(uint32_t count, int32_t nReptLineNo, char *body, size_t size);
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size);
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size);
 void fstk_StopRept(void);
 bool fstk_Break(void);
 
-void fstk_Init(char const *mainPath, size_t maxRecursionDepth);
+void fstk_Init(char const *mainPath, size_t maxDepth);
 
 #endif /* RGBDS_ASM_FSTACK_H */

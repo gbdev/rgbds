@@ -44,7 +44,7 @@ struct Context {
 static struct Context *contextStack;
 static size_t contextDepth = 0;
 #define DEFAULT_MAX_DEPTH 64
-size_t nMaxRecursionDepth;
+size_t maxRecursionDepth;
 
 static unsigned int nbIncPaths = 0;
 static char const *includePaths[MAXINCPATHS];
@@ -143,8 +143,8 @@ void fstk_AddIncludePath(char const *path)
 static void printDep(char const *path)
 {
 	if (dependfile) {
-		fprintf(dependfile, "%s: %s\n", tzTargetFileName, path);
-		if (oGeneratePhonyDeps)
+		fprintf(dependfile, "%s: %s\n", targetFileName, path);
+		if (generatePhonyDeps)
 			fprintf(dependfile, "%s:\n", path);
 	}
 }
@@ -206,18 +206,18 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 	}
 
 	errno = ENOENT;
-	if (oGeneratedMissingIncludes)
+	if (generatedMissingIncludes)
 		printDep(path);
 	return false;
 }
 
 bool yywrap(void)
 {
-	uint32_t nIFDepth = lexer_GetIFDepth();
+	uint32_t ifDepth = lexer_GetIFDepth();
 
-	if (nIFDepth != 0)
+	if (ifDepth != 0)
 		fatalerror("Ended block with %" PRIu32 " unterminated IF construct%s\n",
-			   nIFDepth, nIFDepth == 1 ? "" : "s");
+			   ifDepth, ifDepth == 1 ? "" : "s");
 
 	if (contextStack->fileInfo->type == NODE_REPT) { /* The context is a REPT block, which may loop */
 		struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)contextStack->fileInfo;
@@ -293,8 +293,8 @@ bool yywrap(void)
  */
 static void newContext(struct FileStackNode *fileInfo)
 {
-	if (++contextDepth >= nMaxRecursionDepth)
-		fatalerror("Recursion limit (%zu) exceeded\n", nMaxRecursionDepth);
+	if (++contextDepth >= maxRecursionDepth)
+		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 	struct Context *context = malloc(sizeof(*context));
 
 	if (!context)
@@ -322,11 +322,11 @@ void fstk_RunInclude(char const *path)
 
 	if (!fstk_FindFile(path, &fullPath, &size)) {
 		free(fullPath);
-		if (oGeneratedMissingIncludes) {
+		if (generatedMissingIncludes) {
 			if (verbose)
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n",
 				       path, strerror(errno));
-			oFailedOnMissingInclude = true;
+			failedOnMissingInclude = true;
 		} else {
 			error("Unable to open included file '%s': %s\n", path, strerror(errno));
 		}
@@ -528,7 +528,7 @@ bool fstk_Break(void)
 	return true;
 }
 
-void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
+void fstk_Init(char const *mainPath, size_t maxDepth)
 {
 	struct LexerState *state = lexer_OpenFile(mainPath);
 
@@ -570,12 +570,12 @@ void fstk_Init(char const *mainPath, size_t maxRecursionDepth)
 	 * This assumes that the rept node is larger
 	 */
 #define DEPTH_LIMIT ((SIZE_MAX - sizeof(struct FileStackReptNode)) / sizeof(uint32_t))
-	if (maxRecursionDepth > DEPTH_LIMIT) {
+	if (maxDepth > DEPTH_LIMIT) {
 		error("Recursion depth may not be higher than %zu, defaulting to "
 		      EXPAND_AND_STR(DEFAULT_MAX_DEPTH) "\n", DEPTH_LIMIT);
-		nMaxRecursionDepth = DEFAULT_MAX_DEPTH;
+		maxRecursionDepth = DEFAULT_MAX_DEPTH;
 	} else {
-		nMaxRecursionDepth = maxRecursionDepth;
+		maxRecursionDepth = maxDepth;
 	}
 	/* Make sure that the default of 64 is OK, though */
 	assert(DEPTH_LIMIT >= DEFAULT_MAX_DEPTH);

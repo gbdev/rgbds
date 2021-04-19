@@ -16,8 +16,8 @@
 struct Expression;
 struct FileStackNode;
 
-extern char *tzObjectname;
-extern struct Section *pSectionList, *pCurrentSection;
+extern char *objectName;
+extern struct Section *sectionList, *currentSection;
 
 void out_RegisterNode(struct FileStackNode *node);
 void out_ReplaceNode(struct FileStackNode *node);

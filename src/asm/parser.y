@@ -440,10 +440,10 @@ enum {
 
 %union
 {
-	char tzSym[MAXSYMLEN + 1];
-	char tzString[MAXSTRLEN + 1];
-	struct Expression sVal;
-	int32_t nConstValue;
+	char symName[MAXSYMLEN + 1];
+	char string[MAXSTRLEN + 1];
+	struct Expression expr;
+	int32_t constValue;
 	enum SectionModifier sectMod;
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
@@ -457,29 +457,29 @@ enum {
 	struct StrFmtArgList strfmtArgs;
 }
 
-%type	<sVal>		relocexpr
-%type	<sVal>		relocexpr_no_str
-%type	<nConstValue>	const
-%type	<nConstValue>	const_no_str
-%type	<nConstValue>	uconst
-%type	<nConstValue>	rs_uconst
-%type	<nConstValue>	const_3bit
-%type	<sVal>		reloc_8bit
-%type	<sVal>		reloc_8bit_no_str
-%type	<sVal>		reloc_16bit
-%type	<sVal>		reloc_16bit_no_str
-%type	<nConstValue>	sectiontype
+%type	<expr>		relocexpr
+%type	<expr>		relocexpr_no_str
+%type	<constValue>	const
+%type	<constValue>	const_no_str
+%type	<constValue>	uconst
+%type	<constValue>	rs_uconst
+%type	<constValue>	const_3bit
+%type	<expr>		reloc_8bit
+%type	<expr>		reloc_8bit_no_str
+%type	<expr>		reloc_16bit
+%type	<expr>		reloc_16bit_no_str
+%type	<constValue>	sectiontype
 
-%type	<tzString>	string
-%type	<tzString>	strcat_args
+%type	<string>	string
+%type	<string>	strcat_args
 %type	<strfmtArgs>	strfmt_args
 %type	<strfmtArgs>	strfmt_va_args
 
-%type	<nConstValue>	sectorg
+%type	<constValue>	sectorg
 %type	<sectSpec>	sectattrs
 
-%token	<nConstValue>	T_NUMBER "number"
-%token	<tzString>	T_STRING "string"
+%token	<constValue>	T_NUMBER "number"
+%token	<string>	T_STRING "string"
 
 %token	T_PERIOD "."
 %token	T_COMMA ","
@@ -539,14 +539,14 @@ enum {
 %token	T_OP_CHARLEN "CHARLEN"
 %token	T_OP_CHARSUB "CHARSUB"
 
-%token	<tzSym> T_LABEL "label"
-%token	<tzSym> T_ID "identifier"
-%token	<tzSym> T_LOCAL_ID "local identifier"
-%token	<tzSym> T_ANON "anonymous label"
-%type	<tzSym> def_id
-%type	<tzSym> redef_id
-%type	<tzSym> scoped_id
-%type	<tzSym> scoped_anon_id
+%token	<symName> T_LABEL "label"
+%token	<symName> T_ID "identifier"
+%token	<symName> T_LOCAL_ID "local identifier"
+%token	<symName> T_ANON "anonymous label"
+%type	<symName> def_id
+%type	<symName> redef_id
+%type	<symName> scoped_id
+%type	<symName> scoped_anon_id
 %token	T_POP_EQU "EQU"
 %token	T_POP_SET "SET"
 %token	T_POP_EQUAL "="
@@ -628,14 +628,14 @@ enum {
 %token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
 %token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
 
-%type	<nConstValue>	reg_r
-%type	<nConstValue>	reg_ss
-%type	<nConstValue>	reg_rr
-%type	<nConstValue>	reg_tt
-%type	<nConstValue>	ccode
-%type	<sVal>		op_a_n
-%type	<nConstValue>	op_a_r
-%type	<sVal>		op_mem_ind
+%type	<constValue>	reg_r
+%type	<constValue>	reg_ss
+%type	<constValue>	reg_rr
+%type	<constValue>	reg_tt
+%type	<constValue>	ccode
+%type	<expr>		op_a_n
+%type	<constValue>	op_a_r
+%type	<expr>		op_mem_ind
 %type	<assertType>	assert_type
 
 %token T_EOF 0 "end of file"
@@ -939,7 +939,7 @@ assert		: T_POP_ASSERT assert_type relocexpr
 						      sect_GetOutputOffset()))
 					error("Assertion creation failed: %s\n",
 						strerror(errno));
-			} else if ($3.nVal == 0) {
+			} else if ($3.val == 0) {
 				failAssert($2);
 			}
 			rpn_Free(&$3);
@@ -951,7 +951,7 @@ assert		: T_POP_ASSERT assert_type relocexpr
 						      sect_GetOutputOffset()))
 					error("Assertion creation failed: %s\n",
 						strerror(errno));
-			} else if ($3.nVal == 0) {
+			} else if ($3.val == 0) {
 				failAssertMsg($2, $5);
 			}
 			rpn_Free(&$3);
@@ -1156,24 +1156,24 @@ export_list_entry : scoped_id	{ sym_Export($1); }
 
 include		: T_POP_INCLUDE string {
 			fstk_RunInclude($2);
-			if (oFailedOnMissingInclude)
+			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 ;
 
 incbin		: T_POP_INCBIN string {
 			out_BinaryFile($2, 0);
-			if (oFailedOnMissingInclude)
+			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 		| T_POP_INCBIN string T_COMMA const {
 			out_BinaryFile($2, $4);
-			if (oFailedOnMissingInclude)
+			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 		| T_POP_INCBIN string T_COMMA const T_COMMA const {
 			out_BinaryFileSlice($2, $4, $6);
-			if (oFailedOnMissingInclude)
+			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 ;
@@ -1305,7 +1305,7 @@ constlist_32bit_entry :relocexpr_no_str	{
 
 reloc_8bit	: relocexpr {
 			if(rpn_isKnown(&$1)
-			 && ($1.nVal < -128 || $1.nVal > 255))
+			 && ($1.val < -128 || $1.val > 255))
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
 			$$ = $1;
 		}
@@ -1313,7 +1313,7 @@ reloc_8bit	: relocexpr {
 
 reloc_8bit_no_str : relocexpr_no_str {
 			if(rpn_isKnown(&$1)
-			 && ($1.nVal < -128 || $1.nVal > 255))
+			 && ($1.val < -128 || $1.val > 255))
 				warning(WARNING_TRUNCATION, "Expression must be 8-bit\n");
 			$$ = $1;
 		}
@@ -1321,7 +1321,7 @@ reloc_8bit_no_str : relocexpr_no_str {
 
 reloc_16bit	: relocexpr {
 			if (rpn_isKnown(&$1)
-			 && ($1.nVal < -32768 || $1.nVal > 65535))
+			 && ($1.val < -32768 || $1.val > 65535))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
 			$$ = $1;
 		}
@@ -1329,7 +1329,7 @@ reloc_16bit	: relocexpr {
 
 reloc_16bit_no_str : relocexpr_no_str {
 			if (rpn_isKnown(&$1)
-			 && ($1.nVal < -32768 || $1.nVal > 65535))
+			 && ($1.val < -32768 || $1.val > 65535))
 				warning(WARNING_TRUNCATION, "Expression must be 16-bit\n");
 			$$ = $1;
 		}
@@ -1509,7 +1509,7 @@ const		: relocexpr {
 					$1.reason);
 				$$ = 0;
 			} else {
-				$$ = $1.nVal;
+				$$ = $1.val;
 			}
 		}
 ;
@@ -1520,7 +1520,7 @@ const_no_str	: relocexpr_no_str {
 					$1.reason);
 				$$ = 0;
 			} else {
-				$$ = $1.nVal;
+				$$ = $1.val;
 			}
 		}
 ;
@@ -1584,7 +1584,7 @@ strfmt_va_args	: %empty {
 					$3.reason);
 				value = 0;
 			} else {
-				value = $3.nVal;
+				value = $3.val;
 			}
 
 			size_t i = nextStrFmtArgListIndex(&$1);
@@ -1876,9 +1876,9 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
 			if (optimizeLoads && rpn_isKnown(&$2)
-			 && $2.nVal >= 0xFF00) {
+			 && $2.val >= 0xFF00) {
 				out_AbsByte(0xE0);
-				out_AbsByte($2.nVal & 0xFF);
+				out_AbsByte($2.val & 0xFF);
 				rpn_Free(&$2);
 			} else {
 				out_AbsByte(0xEA);
@@ -1924,9 +1924,9 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 		| T_Z80_LD reg_r T_COMMA op_mem_ind {
 			if ($2 == REG_A) {
 				if (optimizeLoads && rpn_isKnown(&$4)
-				 && $4.nVal >= 0xFF00) {
+				 && $4.val >= 0xFF00) {
 					out_AbsByte(0xF0);
-					out_AbsByte($4.nVal & 0xFF);
+					out_AbsByte($4.val & 0xFF);
 					rpn_Free(&$4);
 				} else {
 					out_AbsByte(0xFA);
@@ -2024,7 +2024,7 @@ z80_rst		: T_Z80_RST reloc_8bit {
 			if (!rpn_isKnown(&$2))
 				out_RelByte(&$2, 0);
 			else
-				out_AbsByte(0xC7 | $2.nVal);
+				out_AbsByte(0xC7 | $2.val);
 			rpn_Free(&$2);
 		}
 ;
