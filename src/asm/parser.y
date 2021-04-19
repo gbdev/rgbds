@@ -638,6 +638,7 @@ enum {
 %type	<expr>		op_mem_ind
 %type	<assertType>	assert_type
 
+%token T_EOB "end of buffer"
 %token T_EOF 0 "end of file"
 %start asmfile
 
@@ -646,12 +647,11 @@ enum {
 asmfile		: lines
 ;
 
-/*
- * The lexer adds T_NEWLINE at the end of the file if one was not
- * already present, so we can rely on it to end a line.
- */
 lines		: %empty
 		| lines line
+;
+
+endofline	: T_NEWLINE | T_EOB
 ;
 
 plain_directive	: label
@@ -661,9 +661,9 @@ plain_directive	: label
 		| assignment_directive
 ;
 
-line		: plain_directive T_NEWLINE
+line		: plain_directive endofline
 		| line_directive /* Directives that manage newlines themselves */
-		| error T_NEWLINE { /* Continue parsing the next line on a syntax error */
+		| error endofline { /* Continue parsing the next line on a syntax error */
 			fstk_StopRept();
 		}
 ;
@@ -678,6 +678,7 @@ line_directive	: macrodef
 		| rept
 		| for
 		| break
+		| include
 		| if
 		/* It's important that all of these require being at line start for `skipIfBlock` */
 		| elif
@@ -799,8 +800,7 @@ assignment_directive	: equ
 		| equs
 ;
 
-directive	: include
-		| endc
+directive	: endc
 		| print
 		| println
 		| printf
@@ -980,8 +980,10 @@ load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
 
 rept		: T_POP_REPT uconst T_NEWLINE {
 			lexer_CaptureRept(&captureBody);
-		} T_NEWLINE {
-			fstk_RunRept($2, captureBody.lineNo, captureBody.body, captureBody.size);
+		} endofline {
+			if (!captureBody.unterminated)
+				fstk_RunRept($2, captureBody.lineNo, captureBody.body,
+					     captureBody.size);
 		}
 ;
 
@@ -991,9 +993,10 @@ for		: T_POP_FOR {
 			lexer_ToggleStringExpansion(true);
 		} T_COMMA for_args T_NEWLINE {
 			lexer_CaptureRept(&captureBody);
-		} T_NEWLINE {
-			fstk_RunFor($3, $6.start, $6.stop, $6.step, captureBody.lineNo,
-				    captureBody.body, captureBody.size);
+		} endofline {
+			if (!captureBody.unterminated)
+				fstk_RunFor($3, $6.start, $6.stop, $6.step, captureBody.lineNo,
+					    captureBody.body, captureBody.size);
 		}
 
 for_args	: const {
@@ -1013,7 +1016,7 @@ for_args	: const {
 		}
 ;
 
-break		: T_POP_BREAK T_NEWLINE {
+break		: label T_POP_BREAK endofline {
 			if (fstk_Break())
 				lexer_SetMode(LEXER_SKIP_TO_ENDR);
 		}
@@ -1025,13 +1028,17 @@ macrodef	: T_POP_MACRO {
 			lexer_ToggleStringExpansion(true);
 		} T_NEWLINE {
 			lexer_CaptureMacroBody(&captureBody);
-		} T_NEWLINE {
-			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
+		} endofline {
+			if (!captureBody.unterminated)
+				sym_AddMacro($3, captureBody.lineNo, captureBody.body,
+					     captureBody.size);
 		}
 		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
 			lexer_CaptureMacroBody(&captureBody);
-		} T_NEWLINE {
-			sym_AddMacro($1, captureBody.lineNo, captureBody.body, captureBody.size);
+		} endofline {
+			if (!captureBody.unterminated)
+				sym_AddMacro($1, captureBody.lineNo, captureBody.body,
+					     captureBody.size);
 		}
 ;
 
@@ -1154,8 +1161,8 @@ export_list	: export_list_entry
 export_list_entry : scoped_id	{ sym_Export($1); }
 ;
 
-include		: T_POP_INCLUDE string {
-			fstk_RunInclude($2);
+include		: label T_POP_INCLUDE string endofline {
+			fstk_RunInclude($3);
 			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
