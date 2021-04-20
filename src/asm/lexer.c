@@ -354,7 +354,6 @@ struct LexerState {
 	uint32_t colNo;
 	int lastToken;
 	int nextToken;
-	bool isAtEOF;
 
 	struct IfStack *ifStack;
 
@@ -379,7 +378,6 @@ static void initState(struct LexerState *state)
 	state->atLineStart = true; /* yylex() will init colNo due to this */
 	state->lastToken = T_EOF;
 	state->nextToken = 0;
-	state->isAtEOF = false;
 
 	state->ifStack = NULL;
 
@@ -571,7 +569,7 @@ void lexer_DeleteState(struct LexerState *state)
 	// that lexer states lifetimes are always properly managed, since they're handled solely
 	// by the fstack... with *one* exception.
 	// Assume a context is pushed on top of the fstack, and the corresponding lexer state gets
-	// scheduled at EOF; `lexerStateAtEOL` thus becomes a (weak) ref to that lexer state...
+	// scheduled at EOF; `lexerStateEOL` thus becomes a (weak) ref to that lexer state...
 	// It has been possible, due to a bug, that the corresponding fstack context gets popped
 	// before EOL, deleting the associated state... but it would still be switched to at EOL.
 	// This assertion checks that this doesn't happen again.
@@ -2280,13 +2278,17 @@ finish:
 
 int yylex(void)
 {
-	if (lexerStateEOL) {
+	if (lexerState->atLineStart && lexerStateEOL) {
 		lexer_SetState(lexerStateEOL);
 		lexerStateEOL = NULL;
 	}
 	/* `lexer_SetState` updates `lexerState`, so check for EOF after it */
-	if (lexerState->isAtEOF)
-		return T_EOF;
+	if (lexerState->lastToken == T_EOB) {
+		if (yywrap()) {
+			dbgPrint("Reached end of input.\n");
+			return T_EOF;
+		}
+	}
 	if (lexerState->atLineStart) {
 		/* Newlines read within an expansion should not increase the line count */
 		if (!lexerState->expansions)
@@ -2303,16 +2305,10 @@ int yylex(void)
 	int token = lexerModeFuncs[lexerState->mode]();
 
 	if (token == T_EOF) {
-		/* Try to switch to new buffer; if it succeeds, scan again */
 		dbgPrint("Reached EOB!\n");
 		/* Captures end at their buffer's boundary no matter what */
-		if (!lexerState->capturing) {
-			if (yywrap()) {
-				dbgPrint("Reached end of input.\n");
-				lexerState->isAtEOF = true;
-			}
+		if (!lexerState->capturing)
 			token = T_EOB;
-		}
 	}
 	lexerState->lastToken = token;
 	lexerState->atLineStart = token == T_NEWLINE || token == T_EOB;
