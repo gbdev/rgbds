@@ -739,6 +739,7 @@ static uint32_t readBracketedMacroArgNum(void)
 	uint32_t num = 0;
 	int c = peek();
 	bool empty = false;
+	bool symbolError = false;
 
 	if (c >= '0' && c <= '9') {
 		num = readNumber(10, 0);
@@ -760,25 +761,33 @@ static uint32_t readBracketedMacroArgNum(void)
 
 		struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
-		if (!sym)
-			fatalerror("Bracketed symbol \"%s\" does not exist\n", symName);
-		else if (!sym_IsNumeric(sym))
-			fatalerror("Bracketed symbol \"%s\" is not numeric\n", symName);
-
-		num = sym_GetConstantSymValue(sym);
+		if (!sym) {
+			error("Bracketed symbol \"%s\" does not exist\n", symName);
+			num = 0;
+			symbolError = true;
+		} else if (!sym_IsNumeric(sym)) {
+			error("Bracketed symbol \"%s\" is not numeric\n", symName);
+			num = 0;
+			symbolError = true;
+		} else {
+			num = sym_GetConstantSymValue(sym);
+		}
 	} else {
 		empty = true;
 	}
 
 	c = peek();
-	if (c != '>')
-		fatalerror("Invalid character in bracketed macro argument %s\n", printChar(c));
-	else if (empty)
-		fatalerror("Empty bracketed macro argument\n");
-	else if (num == 0)
-		fatalerror("Invalid bracketed macro argument '\\<0>'\n");
-
 	shiftChar();
+	if (c != '>') {
+		error("Invalid character in bracketed macro argument %s\n", printChar(c));
+		return 0;
+	} else if (empty) {
+		error("Empty bracketed macro argument\n");
+		return 0;
+	} else if (num == 0 && !symbolError) {
+		error("Invalid bracketed macro argument '\\<0>'\n");
+		return 0;
+	}
 
 	lexerState->disableMacroArgs = disableMacroArgs;
 	lexerState->disableInterpolation = disableInterpolation;
@@ -787,7 +796,7 @@ static uint32_t readBracketedMacroArgNum(void)
 
 static char const *readMacroArg(char name)
 {
-	char const *str;
+	char const *str = NULL;
 
 	if (name == '@') {
 		str = macro_GetUniqueIDStr();
@@ -796,18 +805,22 @@ static char const *readMacroArg(char name)
 	} else if (name == '<') {
 		uint32_t num = readBracketedMacroArgNum();
 
+		if (num == 0)
+			return NULL;
 		str = macro_GetArg(num);
 		if (!str)
-			fatalerror("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
+			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
+		return str;
 	} else if (name == '0') {
-		fatalerror("Invalid macro argument '\\0'\n");
+		error("Invalid macro argument '\\0'\n");
+		return NULL;
 	} else {
+		assert(name > '0' && name <= '9');
 		str = macro_GetArg(name - '0');
 	}
 
 	if (!str)
-		fatalerror("Macro argument '\\%c' not defined\n", name);
-
+		error("Macro argument '\\%c' not defined\n", name);
 	return str;
 }
 
@@ -907,10 +920,10 @@ restart:
 			char const *str = readMacroArg(c);
 
 			/*
-			 * If the macro arg is an empty string, it cannot be
+			 * If the macro arg is invalid or an empty string, it cannot be
 			 * expanded, so skip it and keep peeking.
 			 */
-			if (!str[0])
+			if (!str || !str[0])
 				goto restart;
 
 			beginExpansion(str, c == '#', NULL);
@@ -930,10 +943,9 @@ restart:
 		shiftChar();
 		char const *ptr = readInterpolation(0);
 
-		if (ptr) {
+		if (ptr && ptr[0])
 			beginExpansion(ptr, false, ptr);
-			goto restart;
-		}
+		goto restart;
 	}
 
 	return c;
@@ -1369,10 +1381,9 @@ static char const *readInterpolation(unsigned int depth)
 			shiftChar();
 			char const *ptr = readInterpolation(depth + 1);
 
-			if (ptr) {
+			if (ptr && ptr[0])
 				beginExpansion(ptr, false, ptr);
-				continue; /* Restart, reading from the new buffer */
-			}
+			continue; /* Restart, reading from the new buffer */
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
 			break;
@@ -1573,8 +1584,10 @@ static void readString(void)
 				shiftChar();
 				char const *str = readMacroArg(c);
 
-				while (*str)
-					append_yylval_string(*str++);
+				if (str) {
+					while (*str)
+						append_yylval_string(*str++);
+				}
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
@@ -1595,9 +1608,10 @@ static void readString(void)
 			lexerState->disableMacroArgs = false;
 			char const *ptr = readInterpolation(0);
 
-			if (ptr)
+			if (ptr) {
 				while (*ptr)
 					append_yylval_string(*ptr++);
+			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
@@ -1719,7 +1733,8 @@ static size_t appendStringLiteral(size_t i)
 				shiftChar();
 				char const *str = readMacroArg(c);
 
-				i = appendEscapedSubstring(str, i);
+				if (str)
+					i = appendEscapedSubstring(str, i);
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
@@ -1746,7 +1761,7 @@ static size_t appendStringLiteral(size_t i)
 			lexerState->disableMacroArgs = false;
 			char const *ptr = readInterpolation(0);
 
-			if (ptr)
+			if (ptr && ptr[0])
 				i = appendEscapedSubstring(ptr, i);
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
@@ -2012,7 +2027,9 @@ static int yylex_NORMAL(void)
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
 
-						beginExpansion(s, false, sym->name);
+						assert(s);
+						if (s[0])
+							beginExpansion(s, false, sym->name);
 						continue; /* Restart, reading from the new buffer */
 					}
 				}
