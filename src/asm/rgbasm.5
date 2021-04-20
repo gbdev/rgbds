@@ -1184,7 +1184,11 @@ ENDM
 .Pp
 Macro arguments support all the escape sequences of strings, as well as
 .Ql \[rs],
-to escape commas, since those otherwise separate arguments.
+to escape commas, as well as
+.Ql \[rs](
+and
+.Ql \[rs])
+to escape parentheses, since those otherwise separate and enclose arguments, respectively.
 .Ss Exporting and importing symbols
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.
 .Pp
@@ -1553,18 +1557,27 @@ which will print 5 and not 6 as you might have expected.
 Line continuations work as usual inside macros or lists of macro arguments.
 However, some characters need to be escaped, as in the following example:
 .Bd -literal -offset indent
-MACRO PrintMacro
+MACRO PrintMacro1
+    PRINTLN STRCAT(\[rs]1)
+ENDM
+    PrintMacro1 "Hello "\[rs], \[rs]
+                       "world"
+MACRO PrintMacro2
     PRINT \[rs]1
 ENDM
-
-    PrintMacro STRCAT("Hello "\[rs], \[rs]
-                      "world\[rs]n")
+    PrintMacro2 STRCAT("Hello ", \[rs]
+                       "world\[rs]n")
 .Ed
 .Pp
-The comma needs to be escaped to avoid it being treated as separating the macro's arguments.
+The comma in
+.Ql PrintMacro1
+needs to be escaped to prevent it from starting another macro argument.
+The comma in
+.Ql PrintMacro2
+does not need escaping because it is inside parentheses, similar to macro arguments in C.
 The backslash in
 .Ql \[rs]n
-does not need to be escaped because string literals also work as usual inside macro arguments.
+also does not need escaping because string literals work as usual inside macro arguments.
 .Pp
 Since there are only nine digits, you can only access the first nine macro arguments like this.
 To use the rest, you need to put the multi-digit argument number in angle brackets, like

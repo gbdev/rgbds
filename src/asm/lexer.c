@@ -2039,6 +2039,7 @@ static int yylex_RAW(void)
 		 lexer_GetLineNo(), lexer_GetColNo());
 
 	/* This is essentially a modified `appendStringLiteral` */
+	unsigned int parenDepth = 0;
 	size_t i = 0;
 	int c;
 
@@ -2059,8 +2060,7 @@ static int yylex_RAW(void)
 			discardComment();
 			c = peek();
 			/* fallthrough */
-		case ',': /* End of macro arg */
-		case '\r':
+		case '\r': /* End of line */
 		case '\n':
 		case EOF:
 			goto finish;
@@ -2075,12 +2075,29 @@ static int yylex_RAW(void)
 			append_yylval_string(c); /* Append the slash */
 			break;
 
+		case ',': /* End of macro arg */
+			if (parenDepth == 0)
+				goto finish;
+			goto append;
+
+		case '(': /* Open parentheses inside macro args */
+			if (parenDepth < UINT_MAX)
+				parenDepth++;
+			goto append;
+
+		case ')': /* Close parentheses inside macro args */
+			if (parenDepth > 0)
+				parenDepth--;
+			goto append;
+
 		case '\\': /* Character escape */
 			shiftChar();
 			c = peek();
 
 			switch (c) {
-			case ',': /* Escape `\,` only inside a macro arg */
+			case ',': /* Escapes only valid inside a macro arg */
+			case '(':
+			case ')':
 			case '\\': /* Escapes shared with string literals */
 			case '"':
 			case '{':
@@ -2120,6 +2137,7 @@ static int yylex_RAW(void)
 			/* fallthrough */
 
 		default: /* Regular characters will just get copied */
+append:
 			append_yylval_string(c);
 			shiftChar();
 			break;
