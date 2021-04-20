@@ -753,7 +753,7 @@ static uint32_t readBracketedMacroArgNum(void)
 		}
 
 		if (i == sizeof(symName)) {
-			warning(WARNING_LONG_STR, "Symbol name too long\n");
+			warning(WARNING_LONG_STR, "Bracketed symbol name too long\n");
 			i--;
 		}
 		symName[i] = '\0';
@@ -1388,7 +1388,7 @@ static char const *readInterpolation(unsigned int depth)
 	}
 
 	if (i == sizeof(symName)) {
-		warning(WARNING_LONG_STR, "Symbol name too long\n");
+		warning(WARNING_LONG_STR, "Interpolated symbol name too long\n");
 		i--;
 	}
 	symName[i] = '\0';
