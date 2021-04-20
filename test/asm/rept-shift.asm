@@ -9,7 +9,7 @@ m: macro
 	SHIFT
 	SHIFT
 	SHIFT 256
-	PRINTLN "\1"
+	PRINTLN "\1?"
 endm
 
  m This, used, not, to, work
