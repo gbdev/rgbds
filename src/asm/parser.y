@@ -82,16 +82,24 @@ static char *strrstr(char *s1, char *s2)
 	return NULL;
 }
 
+static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName)
+{
+	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
+}
+
 static size_t strlenUTF8(char const *s)
 {
 	size_t len = 0;
 	uint32_t state = 0;
 
 	for (uint32_t codep = 0; *s; s++) {
-		switch (decode(&state, &codep, *s)) {
+		uint8_t byte = *s;
+
+		switch (decode(&state, &codep, byte)) {
 		case 1:
-			fatalerror("STRLEN: Invalid UTF-8 character\n");
-			break;
+			errorInvalidUTF8Byte(byte, "STRLEN");
+			state = 0;
+			/* fallthrough */
 		case 0:
 			len++;
 			break;
@@ -100,7 +108,7 @@ static size_t strlenUTF8(char const *s)
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRLEN: Invalid UTF-8 character\n");
+		error("STRLEN: Incomplete UTF-8 character\n");
 
 	return len;
 }
@@ -116,14 +124,16 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 
 	/* Advance to starting position in source string. */
 	while (src[srcIndex] && curPos < pos) {
-		switch (decode(&state, &codep, src[srcIndex++])) {
+		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character\n");
-			break;
+			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			state = 0;
+			/* fallthrough */
 		case 0:
 			curPos++;
 			break;
 		}
+		srcIndex++;
 	}
 
 	/*
@@ -138,8 +148,9 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
 		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
-			fatalerror("STRSUB: Invalid UTF-8 character\n");
-			break;
+			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			state = 0;
+			/* fallthrough */
 		case 0:
 			curLen++;
 			break;
@@ -152,7 +163,7 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 
 	/* Check for partial code point. */
 	if (state != 0)
-		fatalerror("STRSUB: Invalid UTF-8 character\n");
+		error("STRSUB: Incomplete UTF-8 character\n");
 
 	dest[destIndex] = '\0';
 }
