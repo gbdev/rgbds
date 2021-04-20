@@ -1567,30 +1567,30 @@ The backslash in
 does not need to be escaped because string literals also work as usual inside macro arguments.
 .Pp
 Since there are only nine digits, you can only access the first nine macro arguments like this.
-To use the rest, you need to put the multi-digit argument number in parentheses, like
-.Ql \[rs](10) .
-This parenthetic syntax supports decimal numbers and numeric symbol names.
+To use the rest, you need to put the multi-digit argument number in angle brackets, like
+.Ql \[rs]<10> .
+This bracketed syntax supports decimal numbers and numeric symbol names.
 For example,
-.Ql \[rs](_NARG)
+.Ql \[rs]<_NARG>
 will get the last argument.
 .Pp
-Other macro arguments and symbol interpolations will be expanded inside the parentheses.
+Other macro arguments and symbol interpolations will be expanded inside the angle brackets.
 For example, if
 .Ql \[rs]1
 is
 .Ql 13 ,
 then
-.Ql \[rs](\[rs]1)
+.Ql \[rs]<\[rs]1>
 will expand to
-.Ql \[rs](13) .
+.Ql \[rs]<13> .
 Or if
 .Ql v10 = 42
 and
 .Ql x = 10 ,
 then
-.Ql \[rs](v{d:x})
+.Ql \[rs]<v{d:x}>
 will expand to
-.Ql \[rs](42) .
+.Ql \[rs]<42> .
 .Pp
 Another way to access more than nine macro arguments is the
 .Ic SHIFT

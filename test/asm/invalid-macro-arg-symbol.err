@@ -1,2 +1,2 @@
 FATAL: invalid-macro-arg-symbol.asm(1):
-    Parenthetic symbol "foo" does not exist
+    Bracketed symbol "foo" does not exist

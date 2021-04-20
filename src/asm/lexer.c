@@ -717,19 +717,19 @@ static void freeExpansion(struct Expansion *expansion)
 
 static bool isMacroChar(char c)
 {
-	return c == '@' || c == '#' || c == '(' || (c >= '0' && c <= '9');
+	return c == '@' || c == '#' || c == '<' || (c >= '0' && c <= '9');
 }
 
-/* forward declarations for readParentheticMacroArgNum */
+/* forward declarations for readBracketedMacroArgNum */
 static int peek(void);
 static void shiftChar(void);
 static uint32_t readNumber(int radix, uint32_t baseValue);
 static bool startsIdentifier(int c);
 static bool continuesIdentifier(int c);
 
-static uint32_t readParentheticMacroArgNum(void)
+static uint32_t readBracketedMacroArgNum(void)
 {
-	dbgPrint("Reading parenthetic macro arg\n");
+	dbgPrint("Reading bracketed macro arg\n");
 	bool disableMacroArgs = lexerState->disableMacroArgs;
 	bool disableInterpolation = lexerState->disableInterpolation;
 
@@ -761,9 +761,9 @@ static uint32_t readParentheticMacroArgNum(void)
 		struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
 		if (!sym)
-			fatalerror("Parenthetic symbol \"%s\" does not exist\n", symName);
+			fatalerror("Bracketed symbol \"%s\" does not exist\n", symName);
 		else if (!sym_IsNumeric(sym))
-			fatalerror("Parenthetic symbol \"%s\" is not numeric\n", symName);
+			fatalerror("Bracketed symbol \"%s\" is not numeric\n", symName);
 
 		num = sym_GetConstantSymValue(sym);
 	} else {
@@ -771,12 +771,12 @@ static uint32_t readParentheticMacroArgNum(void)
 	}
 
 	c = peek();
-	if (c != ')')
-		fatalerror("Invalid character in parenthetic macro argument %s\n", printChar(c));
+	if (c != '>')
+		fatalerror("Invalid character in bracketed macro argument %s\n", printChar(c));
 	else if (empty)
-		fatalerror("Empty parenthetic macro argument\n");
+		fatalerror("Empty bracketed macro argument\n");
 	else if (num == 0)
-		fatalerror("Invalid parenthetic macro argument '\\(0)'\n");
+		fatalerror("Invalid bracketed macro argument '\\<0>'\n");
 
 	shiftChar();
 
@@ -793,12 +793,12 @@ static char const *readMacroArg(char name)
 		str = macro_GetUniqueIDStr();
 	} else if (name == '#') {
 		str = macro_GetAllArgs();
-	} else if (name == '(') {
-		uint32_t num = readParentheticMacroArgNum();
+	} else if (name == '<') {
+		uint32_t num = readBracketedMacroArgNum();
 
 		str = macro_GetArg(num);
 		if (!str)
-			fatalerror("Macro argument '\\(%" PRIu32 ")' not defined\n", num);
+			fatalerror("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
 	} else if (name == '0') {
 		fatalerror("Invalid macro argument '\\0'\n");
 	} else {
@@ -1569,7 +1569,7 @@ static void readString(void)
 			case '7':
 			case '8':
 			case '9':
-			case '(':
+			case '<':
 				shiftChar();
 				char const *str = readMacroArg(c);
 
@@ -1715,7 +1715,7 @@ static size_t appendStringLiteral(size_t i)
 			case '7':
 			case '8':
 			case '9':
-			case '(':
+			case '<':
 				shiftChar();
 				char const *str = readMacroArg(c);
 
