@@ -22,7 +22,7 @@ STR EQUS "str\"ing"
 	printargs "literal \"\\\"", \ ; comment 2
 """multi-"line"
   ""string"" arg"""
-	printargs MUL(2.0\, 3.0)
+	printargs MUL(2.0, 3.0)
 	printargs "unclosed
 
 	printlit NUM
@@ -32,7 +32,7 @@ STR EQUS "str\"ing"
 	printlit "literal \"\\\"", \ ; comment 4
 """multi-"line"
   ""string"" arg"""
-	printlit MUL(2.0\, 3.0)
+	printlit MUL(2.0, 3.0)
 	printlit this\n is\, \{not\} a\\n syntax\" error
 	printlit "unclosed
 	printlit """EOF
