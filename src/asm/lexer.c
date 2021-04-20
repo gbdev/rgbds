@@ -1280,6 +1280,14 @@ static char const *readInterpolation(unsigned int depth)
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
 	struct FormatSpec fmt = fmt_NewSpec();
+	bool disableInterpolation = lexerState->disableInterpolation;
+
+	/*
+	 * In a context where `lexerState->disableInterpolation` is true, `peek` will expand
+	 * nested interpolations itself, which can lead to stack overflow. This lets
+	 * `readInterpolation` handle its own nested expansions, increasing `depth` each time.
+	 */
+	lexerState->disableInterpolation = true;
 
 	for (;;) {
 		int c = peek();
@@ -1319,6 +1327,9 @@ static char const *readInterpolation(unsigned int depth)
 		i--;
 	}
 	symName[i] = '\0';
+
+	/* Don't return before `lexerState->disableInterpolation` is reset! */ 
+	lexerState->disableInterpolation = disableInterpolation;
 
 	static char buf[MAXSTRLEN + 1];
 
