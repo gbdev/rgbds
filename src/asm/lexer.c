@@ -2341,9 +2341,8 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 	capture->lineNo = lexer_GetLineNo();
 
 	char *captureStart = startCapture();
-	bool terminated = false;
 	unsigned int level = 0;
-	int c;
+	int c = EOF;
 
 	/*
 	 * Due to parser internals, it reads the EOL after the expression before calling this.
@@ -2373,7 +2372,6 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 					 * We know we have read exactly "ENDR", not e.g. an EQUS
 					 */
 					lexerState->captureSize -= strlen("ENDR");
-					terminated = true;
 					goto finish;
 				}
 				level--;
@@ -2401,7 +2399,9 @@ finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
-	return terminated;
+
+	/* Returns true if an ENDR terminated the block, false if it reached EOF first */
+	return c != EOF;
 }
 
 bool lexer_CaptureMacroBody(struct CaptureBody *capture)
@@ -2409,8 +2409,7 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 	capture->lineNo = lexer_GetLineNo();
 
 	char *captureStart = startCapture();
-	bool terminated = false;
-	int c;
+	int c = EOF;
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
 	if (lexerState->isMmapped)
@@ -2437,7 +2436,6 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 				 * We know we have read exactly "ENDM", not e.g. an EQUS
 				 */
 				lexerState->captureSize -= strlen("ENDM");
-				terminated = true;
 				goto finish;
 			}
 		}
@@ -2463,5 +2461,7 @@ finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
-	return terminated;
+
+	/* Returns true if an ENDM terminated the block, false if it reached EOF first */
+	return c != EOF;
 }
