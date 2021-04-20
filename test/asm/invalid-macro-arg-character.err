@@ -1,2 +1,2 @@
 FATAL: invalid-macro-arg-character.asm(1):
-    Invalid character in parenthetic macro argument '!'
+    Invalid character in bracketed macro argument '!'
