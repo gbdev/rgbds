@@ -18,6 +18,10 @@ $ rgbasm \-o bar.o foo.asm
 $ rgblink \-o baz.gb bar.o
 $ rgbfix \-v \-p 0 baz.gb
 .Ed
+Or in a single command line:
+.Bd -literal -offset indent
+$ rgbasm \-o - foo.asm | rgblink \-o - - | rgbfix \-v \-p 0 - > baz.gb
+.Ed
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgbfix 1 ,
