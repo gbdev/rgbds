@@ -684,7 +684,7 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		return;
 
 	if (name) {
-		unsigned int depth = 0;
+		size_t depth = 0;
 
 		for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
 			if (depth++ >= maxRecursionDepth)
@@ -896,7 +896,7 @@ static int peekInternal(uint8_t distance)
 
 /* forward declarations for peek */
 static void shiftChar(void);
-static char const *readInterpolation(unsigned int depth);
+static char const *readInterpolation(size_t depth);
 
 static int peek(void)
 {
@@ -1357,7 +1357,7 @@ static int readIdentifier(char firstChar)
 
 /* Functions to read strings */
 
-static char const *readInterpolation(unsigned int depth)
+static char const *readInterpolation(size_t depth)
 {
 	if (depth >= maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
@@ -2056,7 +2056,7 @@ static int yylex_RAW(void)
 		 lexer_GetLineNo(), lexer_GetColNo());
 
 	/* This is essentially a modified `appendStringLiteral` */
-	unsigned int parenDepth = 0;
+	size_t parenDepth = 0;
 	size_t i = 0;
 	int c;
 
@@ -2445,7 +2445,7 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 	capture->lineNo = lexer_GetLineNo();
 
 	char *captureStart = startCapture();
-	unsigned int level = 0;
+	size_t depth = 0;
 	int c = EOF;
 
 	/*
@@ -2465,12 +2465,12 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 			switch (readIdentifier(c)) {
 			case T_POP_REPT:
 			case T_POP_FOR:
-				level++;
+				depth++;
 				/* Ignore the rest of that line */
 				break;
 
 			case T_POP_ENDR:
-				if (!level) {
+				if (!depth) {
 					/*
 					 * The final ENDR has been captured, but we don't want it!
 					 * We know we have read exactly "ENDR", not e.g. an EQUS
@@ -2478,7 +2478,7 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 					lexerState->captureSize -= strlen("ENDR");
 					goto finish;
 				}
-				level--;
+				depth--;
 			}
 		}
 
