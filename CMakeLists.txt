@@ -35,6 +35,7 @@ if(MSVC)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
   add_compile_options(-Wall -pedantic)
+  add_definitions(-D_POSIX_C_SOURCE=200809L -D_ISOC11_SOURCE)
   if(SANITIZERS)
     set(SAN_FLAGS -fsanitize=shift -fsanitize=integer-divide-by-zero
                   -fsanitize=unreachable -fsanitize=vla-bound

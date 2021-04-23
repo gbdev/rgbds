@@ -35,8 +35,9 @@ WARNFLAGS	:= -Wall
 # Overridable CFLAGS
 CFLAGS		?= -O3 -flto -DNDEBUG
 # Non-overridable CFLAGS
-REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -D_POSIX_C_SOURCE=200809L \
-		   -Iinclude
+# _ISOC11_SOURCE is required on certain platforms to get C11 on top of the C99-based POSIX 2008
+REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -I include \
+		   -D_POSIX_C_SOURCE=200809L -D_ISOC11_SOURCE
 # Overridable LDFLAGS
 LDFLAGS		?=
 # Non-overridable LDFLAGS
