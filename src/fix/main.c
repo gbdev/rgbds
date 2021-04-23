@@ -674,8 +674,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
 		return;
 	} else if (rom0Len < 0x150) {
-		report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %ld\n",
-		       name, rom0Len);
+		report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
+		       name, (intmax_t)rom0Len);
 		return;
 	}
 	// Accept partial reads if the file contains at least the header
@@ -863,8 +863,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
 		goto free_romx;
 	} else if (writeLen < rom0Len) {
-		report("FATAL: Could only write %ld of \"%s\"'s %ld ROM0 bytes\n",
-		       writeLen, name, rom0Len);
+		report("FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
+		       (intmax_t)writeLen, name, (intmax_t)rom0Len);
 		goto free_romx;
 	}
 
@@ -877,8 +877,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
 			goto free_romx;
 		} else if ((size_t)writeLen < totalRomxLen) {
-			report("FATAL: Could only write %ld of \"%s\"'s %ld ROMX bytes\n",
-			       writeLen, name, totalRomxLen);
+			report("FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
+			       (intmax_t)writeLen, name, totalRomxLen);
 			goto free_romx;
 		}
 	}
@@ -949,8 +949,8 @@ static bool processFilename(char const *name)
 		} else if (stat.st_size < 0x150) {
 			// This check is in theory redundant with the one in `processFile`, but it
 			// prevents passing a file size of 0, which usually indicates pipes
-			report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %ld\n",
-			       name, stat.st_size);
+			report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
+			       name, (intmax_t)stat.st_size);
 		} else {
 			processFile(input, input, name, stat.st_size);
 		}
