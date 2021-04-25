@@ -242,6 +242,21 @@ static void writesection(struct Section const *sect, FILE *f)
 	}
 }
 
+static void freesection(struct Section const *sect)
+{
+	if (sect_HasData(sect->type)) {
+		struct Patch *patch = sect->patches;
+
+		while (patch != NULL) {
+			struct Patch *next = patch->next;
+
+			free(patch->rpn);
+			free(patch);
+			patch = next;
+		}
+	}
+}
+
 /*
  * Write a symbol to a file
  */
@@ -468,6 +483,13 @@ static void writeassert(struct Assertion *assert, FILE *f)
 	putstring(assert->message, f);
 }
 
+static void freeassert(struct Assertion *assert)
+{
+	free(assert->patch->rpn);
+	free(assert->patch);
+	free(assert);
+}
+
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 {
 	putlong(node->parent ? node->parent->ID : -1, f);
@@ -530,13 +552,21 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
 
-	for (struct Section *sect = sectionList; sect; sect = sect->next)
+	for (struct Section *sect = sectionList; sect; sect = sect->next) {
 		writesection(sect, f);
+		freesection(sect);
+	}
 
 	putlong(countAsserts(), f);
-	for (struct Assertion *assert = assertions; assert;
-	     assert = assert->next)
+	struct Assertion *assert = assertions;
+
+	while (assert != NULL) {
+		struct Assertion *next = assert->next;
+
 		writeassert(assert, f);
+		freeassert(assert);
+		assert = next;
+	}
 
 	fclose(f);
 }

@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,7 +76,7 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 }
 
 /*
- * Init the RPN expression
+ * Init a RPN expression
  */
 static void rpn_Init(struct Expression *expr)
 {
@@ -258,6 +259,31 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_RST;
 	}
+}
+
+/*
+ * Checks that an RPN expression's value fits within N bits (signed or unsigned)
+ */
+void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
+{
+	assert(n != 0); // That doesn't make sense
+	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+
+	if (rpn_isKnown(expr)) {
+		int32_t val = expr->val;
+
+		if (val < -(1 << (n - 1)) || val >= 1 << n)
+			warning(WARNING_TRUNCATION, "Expression must be %u-bit\n", n);
+	}
+}
+
+int32_t rpn_GetConstVal(struct Expression const *expr)
+{
+	if (!rpn_isKnown(expr)) {
+		error("Expected constant expression: %s\n", expr->reason);
+		return 0;
+	}
+	return expr->val;
 }
 
 void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)

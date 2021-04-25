@@ -30,7 +30,7 @@ struct Expression {
 /*
  * Determines if an expression is known at assembly time
  */
-static inline bool rpn_isKnown(const struct Expression *expr)
+static inline bool rpn_isKnown(struct Expression const *expr)
 {
 	return expr->isKnown;
 }
@@ -64,5 +64,7 @@ void rpn_StartOfSection(struct Expression *expr, char const *sectionName);
 void rpn_Free(struct Expression *expr);
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src);
 void rpn_CheckRST(struct Expression *expr, const struct Expression *src);
+void rpn_CheckNBit(struct Expression const *expr, uint8_t n);
+int32_t rpn_GetConstVal(struct Expression const *expr);
 
 #endif /* RGBDS_ASM_RPN_H */
