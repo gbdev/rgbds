@@ -941,10 +941,10 @@ restart:
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		/* If character is an open brace, do symbol interpolation */
 		shiftChar();
-		char const *ptr = readInterpolation(0);
+		char const *str = readInterpolation(0);
 
-		if (ptr && ptr[0])
-			beginExpansion(ptr, false, ptr);
+		if (str && str[0])
+			beginExpansion(str, false, str);
 		goto restart;
 	}
 
@@ -1379,10 +1379,10 @@ static char const *readInterpolation(size_t depth)
 
 		if (c == '{') { /* Nested interpolation */
 			shiftChar();
-			char const *ptr = readInterpolation(depth + 1);
+			char const *str = readInterpolation(depth + 1);
 
-			if (ptr && ptr[0])
-				beginExpansion(ptr, false, ptr);
+			if (str && str[0])
+				beginExpansion(str, false, str);
 			continue; /* Restart, reading from the new buffer */
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
@@ -1488,6 +1488,7 @@ static void readString(void)
 
 	size_t i = 0;
 	bool multiline = false;
+	char const *str;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	if (peek() == '"') {
@@ -1582,8 +1583,7 @@ static void readString(void)
 			case '9':
 			case '<':
 				shiftChar();
-				char const *str = readMacroArg(c);
-
+				str = readMacroArg(c);
 				if (str) {
 					while (*str)
 						append_yylval_string(*str++);
@@ -1606,11 +1606,10 @@ static void readString(void)
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			char const *ptr = readInterpolation(0);
-
-			if (ptr) {
-				while (*ptr)
-					append_yylval_string(*ptr++);
+			str = readInterpolation(0);
+			if (str) {
+				while (*str)
+					append_yylval_string(*str++);
 			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
@@ -1640,6 +1639,7 @@ static size_t appendStringLiteral(size_t i)
 	lexerState->disableInterpolation = true;
 
 	bool multiline = false;
+	char const *str;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	append_yylval_string('"');
@@ -1731,9 +1731,8 @@ static size_t appendStringLiteral(size_t i)
 			case '9':
 			case '<':
 				shiftChar();
-				char const *str = readMacroArg(c);
-
-				if (str)
+				str = readMacroArg(c);
+				if (str && str[0])
 					i = appendEscapedSubstring(str, i);
 				continue; // Do not copy an additional character
 
@@ -1759,10 +1758,9 @@ static size_t appendStringLiteral(size_t i)
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			char const *ptr = readInterpolation(0);
-
-			if (ptr && ptr[0])
-				i = appendEscapedSubstring(ptr, i);
+			str = readInterpolation(0);
+			if (str && str[0])
+				i = appendEscapedSubstring(str, i);
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
