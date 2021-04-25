@@ -61,9 +61,9 @@ rgbasm_obj := \
 	src/asm/lexer.o \
 	src/asm/macro.o \
 	src/asm/main.o \
-	src/asm/parser.o \
 	src/asm/opt.o \
 	src/asm/output.o \
+	src/asm/parser.o \
 	src/asm/rpn.o \
 	src/asm/section.o \
 	src/asm/symbol.o \
@@ -204,7 +204,7 @@ checkpatch:
 # compilation and make the continous integration infrastructure return failure.
 
 develop:
-	$Qenv $(MAKE) -j WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
+	$Qenv $(MAKE) WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
 		-Wno-sign-compare -Wvla -Wformat -Wformat-security -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
 		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=4 \

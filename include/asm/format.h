@@ -9,8 +9,8 @@
 #ifndef RGBDS_FORMAT_SPEC_H
 #define RGBDS_FORMAT_SPEC_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)

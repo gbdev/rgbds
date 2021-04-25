@@ -82,8 +82,7 @@ static inline bool sym_IsConstant(struct Symbol const *sym)
 
 static inline bool sym_IsNumeric(struct Symbol const *sym)
 {
-	return sym->type == SYM_LABEL || sym->type == SYM_EQU
-	    || sym->type == SYM_SET;
+	return sym->type == SYM_LABEL || sym->type == SYM_EQU || sym->type == SYM_SET;
 }
 
 static inline bool sym_IsLabel(struct Symbol const *sym)
@@ -124,19 +123,19 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
-uint32_t sym_GetConstantValue(char const *s);
+uint32_t sym_GetConstantValue(char const *symName);
 /*
  * Find a symbol by exact name, bypassing expansion checks
  */
-struct Symbol *sym_FindExactSymbol(char const *name);
+struct Symbol *sym_FindExactSymbol(char const *symName);
 /*
  * Find a symbol by exact name; may not be scoped, produces an error if it is
  */
-struct Symbol *sym_FindUnscopedSymbol(char const *name);
+struct Symbol *sym_FindUnscopedSymbol(char const *symName);
 /*
  * Find a symbol, possibly scoped, by name
  */
-struct Symbol *sym_FindScopedSymbol(char const *name);
+struct Symbol *sym_FindScopedSymbol(char const *symName);
 struct Symbol const *sym_GetPC(void);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);
