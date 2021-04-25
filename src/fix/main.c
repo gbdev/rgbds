@@ -967,7 +967,7 @@ fail:
 int main(int argc, char *argv[])
 {
 	nbErrors = 0;
-	char ch;
+	int ch;
 
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
