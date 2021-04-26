@@ -1,3 +1,1 @@
-ROM0
-	"A\"B\tC\rD\nE"
-	"in\{valid"
+; This uses CR line endingsROM0	"A\"B\tC\rD\nE"	"in\{valid"
