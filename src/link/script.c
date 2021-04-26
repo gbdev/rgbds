@@ -19,7 +19,7 @@
 
 #include "extern/err.h"
 
-FILE * linkerScript;
+FILE *linkerScript;
 char *includeFileName;
 
 static uint32_t lineNo;
@@ -223,12 +223,28 @@ static struct LinkerScriptToken *nextToken(void)
 
 		do {
 			curchar = readChar(linkerScript);
-			if (curchar == EOF || isNewline(curchar))
+			if (curchar == EOF || isNewline(curchar)) {
 				errx(1, "%s(%" PRIu32 "): Unterminated string",
 				     linkerScriptName, lineNo);
-			else if (curchar == '"')
+			} else if (curchar == '"') {
 				/* Quotes force a string termination */
 				curchar = '\0';
+			} else if (curchar == '\\') {
+				/* Backslashes are escape sequences */
+				curchar = readChar(linkerScript);
+				if (curchar == EOF || isNewline(curchar))
+					errx(1, "%s(%" PRIu32 "): Unterminated string",
+					     linkerScriptName, lineNo);
+				else if (curchar == 'n')
+					curchar = '\n';
+				else if (curchar == 'r')
+					curchar = '\r';
+				else if (curchar == 't')
+					curchar = '\t';
+				else if (curchar != '\\' && curchar != '"')
+					errx(1, "%s(%" PRIu32 "): Illegal character escape",
+					     linkerScriptName, lineNo);
+			}
 
 			if (size >= capacity || token.attr.string == NULL) {
 				capacity *= 2;
