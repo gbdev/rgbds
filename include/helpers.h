@@ -59,7 +59,6 @@
 	}
 
 #else
-	// FIXME: these are rarely used, and need testing...
 	#include <limits.h>
 	static inline int ctz(unsigned int x)
 	{
