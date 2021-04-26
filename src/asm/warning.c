@@ -152,8 +152,7 @@ void processWarningFlag(char const *flag)
 				errx(1, "Cannot make meta warning \"%s\" into an error",
 				     flag);
 
-			uint8_t const *ptr =
-					metaWarningCommands[id - NB_WARNINGS];
+			uint8_t const *ptr = metaWarningCommands[id - NB_WARNINGS];
 
 			for (;;) {
 				if (*ptr == META_WARNING_DONE)
@@ -194,7 +193,7 @@ void processWarningFlag(char const *flag)
 	bool isNegation = !strncmp(flag, "no-", strlen("no-")) && !setError;
 	char const *rootFlag = isNegation ? flag + strlen("no-") : flag;
 	enum WarningState state = setError ? WARNING_ERROR :
-			isNegation ? WARNING_DISABLED : WARNING_ENABLED;
+				  isNegation ? WARNING_DISABLED : WARNING_ENABLED;
 
 	/* Try to match the flag against a "normal" flag */
 	for (enum WarningID id = 0; id < NB_WARNINGS; id++) {

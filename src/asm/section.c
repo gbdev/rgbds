@@ -902,7 +902,6 @@ void out_PushSection(void)
 	sect->offset = curOffset;
 	sect->next = sectionStack;
 	sectionStack = sect;
-	/* TODO: maybe set current section to NULL? */
 }
 
 void out_PopSection(void)

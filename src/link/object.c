@@ -48,6 +48,7 @@ static struct Assertion *assertions;
 	do { \
 		FILE *tmpFile = file; \
 		type tmpVal = func(tmpFile); \
+		/* TODO: maybe mark the condition as `unlikely`; how to do that portably? */ \
 		if (tmpVal == (errval)) { \
 			errx(1, __VA_ARGS__, feof(tmpFile) \
 						? "Unexpected end of file" \
@@ -86,7 +87,6 @@ static int64_t readlong(FILE *file)
 /**
  * Helper macro for reading longs from a file, and errors out if it fails to.
  * Not as a function to avoid overhead in the general case.
- * TODO: maybe mark the condition as `unlikely`; how to do that portably?
  * @param var The variable to stash the number into
  * @param file The file to read from. Its position will be advanced
  * @param ... A format string and related arguments; note that an extra string
@@ -101,7 +101,6 @@ static int64_t readlong(FILE *file)
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Differs from `tryGetc` in that the backing function is fgetc(1).
  * Not as a function to avoid overhead in the general case.
- * TODO: maybe mark the condition as `unlikely`; how to do that portably?
  * @param var The variable to stash the number into
  * @param file The file to read from. Its position will be advanced
  * @param ... A format string and related arguments; note that an extra string
@@ -114,7 +113,6 @@ static int64_t readlong(FILE *file)
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Differs from `tryGetc` in that the backing function is fgetc(1).
  * Not as a function to avoid overhead in the general case.
- * TODO: maybe mark the condition as `unlikely`; how to do that portably?
  * @param var The variable to stash the number into
  * @param file The file to read from. Its position will be advanced
  * @param ... A format string and related arguments; note that an extra string
@@ -163,7 +161,6 @@ static char *readstr(FILE *file)
 /**
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Not as a function to avoid overhead in the general case.
- * TODO: maybe mark the condition as `unlikely`; how to do that portably?
  * @param var The variable to stash the string into
  * @param file The file to read from. Its position will be advanced
  * @param ... A format string and related arguments; note that an extra string

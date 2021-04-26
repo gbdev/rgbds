@@ -53,7 +53,7 @@ static inline void lexer_SetGfxDigits(char const digits[4])
  * `path` is referenced, but not held onto..!
  */
 struct LexerState *lexer_OpenFile(char const *path);
-struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo);
+struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_DeleteState(struct LexerState *state);
 void lexer_Init(void);

@@ -304,6 +304,8 @@ static bool isWhitespace(int c)
 }
 
 #define LEXER_BUF_SIZE 42 /* TODO: determine a sane value for this */
+/* The buffer needs to be large enough for the maximum `peekInternal` lookahead distance */
+static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 /* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
@@ -531,7 +533,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 	return state;
 }
 
-struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
+struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo)
 {
 	dbgPrint("Opening view on buffer \"%.*s\"[...]\n", size < 16 ? (int)size : 16, buf);
 
@@ -541,8 +543,8 @@ struct LexerState *lexer_OpenFileView(char *buf, size_t size, uint32_t lineNo)
 		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
 		return NULL;
 	}
-	// TODO: init `path`
 
+	state->path = path; /* Used to report read errors in `peekInternal` */
 	state->isFile = false;
 	state->isMmapped = true; /* It's not *really* mmap()ed, but it behaves the same */
 	state->ptr = buf;

@@ -26,12 +26,4 @@ extern bool generatedMissingIncludes;
 extern bool failedOnMissingInclude;
 extern bool generatePhonyDeps;
 
-/* TODO: are these really needed? */
-#define YY_FATAL_ERROR fatalerror
-
-#ifdef YYLMAX
-#undef YYLMAX
-#endif
-#define YYLMAX 65536
-
 #endif /* RGBDS_MAIN_H */

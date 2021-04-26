@@ -96,8 +96,6 @@ static char const *Callback__FILE__(void)
 	char const *fileName = fstk_GetFileName();
 	size_t j = 1;
 
-	/* TODO: is there a way for a file name to be empty? */
-	assert(fileName[0]);
 	/* The assertion above ensures the loop runs at least once */
 	for (size_t i = 0; fileName[i]; i++, j++) {
 		/* Account for the extra backslash inserted below */
@@ -175,7 +173,7 @@ static void updateSymbolFilename(struct Symbol *sym)
 	/* If the old node was referenced, ensure the new one is */
 	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
 		out_RegisterNode(sym->src);
-	/* TODO: unref the old node, and use `out_ReplaceNode` instead if deleting it */
+	/* TODO: unref the old node, and use `out_ReplaceNode` instead of deleting it */
 }
 
 /*
@@ -226,7 +224,6 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 		fatalerror("No memory for string equate: %s\n", strerror(errno));
 
 	sym->type = SYM_EQUS;
-	/* TODO: use other fields */
 	sym->macro = string;
 	sym->macroSize = strlen(string);
 }

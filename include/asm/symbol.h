@@ -45,13 +45,13 @@ struct Symbol {
 		/* If sym_IsNumeric */
 		int32_t value;
 		int32_t (*numCallback)(void);
-		/* For SYM_MACRO */
+		/* For SYM_MACRO and SYM_EQUS; TODO: have separate fields */
 		struct {
 			size_t macroSize;
 			char *macro;
 		};
-		/* For SYM_EQUS, TODO: separate "base" fields from SYM_MACRO */
-		char const *(*strCallback)(void); /* For SYM_EQUS */
+		/* For SYM_EQUS */
+		char const *(*strCallback)(void);
 	};
 
 	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */

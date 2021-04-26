@@ -417,7 +417,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	memcpy(dest, macro->name, macroNameLen + 1);
 
 	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFileView(macro->macro, macro->macroSize,
+	contextStack->lexerState = lexer_OpenFileView("MACRO", macro->macro, macro->macroSize,
 						      macro->fileLine);
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for macro invocation\n");
@@ -451,7 +451,7 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 	/* Correct our line number, which currently points to the `ENDR` line */
 	contextStack->fileInfo->lineNo = reptLineNo;
 
-	contextStack->lexerState = lexer_OpenFileView(body, size, reptLineNo);
+	contextStack->lexerState = lexer_OpenFileView("REPT", body, size, reptLineNo);
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for REPT block\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
