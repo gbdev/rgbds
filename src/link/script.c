@@ -43,8 +43,7 @@ static void pushFile(char *newFileName)
 		if (!fileStackSize) /* Init file stack */
 			fileStackSize = 4;
 		fileStackSize *= 2;
-		fileStack = realloc(fileStack,
-				    sizeof(*fileStack) * fileStackSize);
+		fileStack = realloc(fileStack, sizeof(*fileStack) * fileStackSize);
 		if (!fileStack)
 			err(1, "%s(%" PRIu32 "): Internal INCLUDE error",
 			    linkerScriptName, lineNo);
@@ -173,11 +172,11 @@ static char const * const commands[] = {
 	[COMMAND_ALIGN] = "ALIGN"
 };
 
-static int readChar(FILE *file)
+static int nextChar(void)
 {
-	int curchar = getc(file);
+	int curchar = getc(linkerScript);
 
-	if (curchar == EOF && ferror(file))
+	if (curchar == EOF && ferror(linkerScript))
 		err(1, "%s(%" PRIu32 "): Unexpected error in %s",
 		    linkerScriptName, lineNo, __func__);
 	return curchar;
@@ -194,14 +193,14 @@ static struct LinkerScriptToken *nextToken(void)
 
 	/* Skip initial whitespace... */
 	do
-		curchar = readChar(linkerScript);
+		curchar = nextChar();
 	while (isWhiteSpace(curchar));
 
 	/* If this is a comment, skip to the end of the line */
 	if (curchar == ';') {
-		do
-			curchar = readChar(linkerScript);
-		while (!isNewline(curchar) && curchar != EOF);
+		do {
+			curchar = nextChar();
+		} while (!isNewline(curchar) && curchar != EOF);
 	}
 
 	if (curchar == EOF) {
@@ -210,9 +209,14 @@ static struct LinkerScriptToken *nextToken(void)
 		/* If we have a newline char, this is a newline token */
 		token.type = TOKEN_NEWLINE;
 
-		/* FIXME: This works with CRLF newlines, but not CR-only */
-		if (curchar == '\r')
-			readChar(linkerScript); /* Read and discard LF */
+		if (curchar == '\r') {
+			/* Handle CRLF */
+			curchar = nextChar();
+			if (curchar != '\n') {
+				ungetc(curchar, linkerScript);
+				curchar = '\r';
+			}
+		}
 	} else if (curchar == '"') {
 		/* If we have a string start, this is a string */
 		token.type = TOKEN_STRING;
@@ -222,7 +226,7 @@ static struct LinkerScriptToken *nextToken(void)
 		size_t capacity = 16; /* Half of the default capacity */
 
 		do {
-			curchar = readChar(linkerScript);
+			curchar = nextChar();
 			if (curchar == EOF || isNewline(curchar)) {
 				errx(1, "%s(%" PRIu32 "): Unterminated string",
 				     linkerScriptName, lineNo);
@@ -231,7 +235,7 @@ static struct LinkerScriptToken *nextToken(void)
 				curchar = '\0';
 			} else if (curchar == '\\') {
 				/* Backslashes are escape sequences */
-				curchar = readChar(linkerScript);
+				curchar = nextChar();
 				if (curchar == EOF || isNewline(curchar))
 					errx(1, "%s(%" PRIu32 "): Unterminated string",
 					     linkerScriptName, lineNo);
@@ -248,8 +252,7 @@ static struct LinkerScriptToken *nextToken(void)
 
 			if (size >= capacity || token.attr.string == NULL) {
 				capacity *= 2;
-				token.attr.string = realloc(token.attr.string,
-							    capacity);
+				token.attr.string = realloc(token.attr.string, capacity);
 				if (!token.attr.string)
 					err(1, "%s: Failed to allocate memory for string",
 					    __func__);
@@ -276,10 +279,9 @@ static struct LinkerScriptToken *nextToken(void)
 			if (!curchar)
 				break;
 
-			curchar = readChar(linkerScript);
+			curchar = nextChar();
 			/* Whitespace, a newline or a comment end the token */
-			if (isWhiteSpace(curchar) || isNewline(curchar)
-			 || curchar == ';') {
+			if (isWhiteSpace(curchar) || isNewline(curchar) || curchar == ';') {
 				ungetc(curchar, linkerScript);
 				curchar = '\0';
 			}
@@ -298,8 +300,7 @@ static struct LinkerScriptToken *nextToken(void)
 
 		if (token.type == TOKEN_INVALID) {
 			/* Try to match a bank specifier */
-			for (enum SectionType type = 0; type < SECTTYPE_INVALID;
-			     type++) {
+			for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
 				if (!strcmp(typeNames[type], str)) {
 					token.type = TOKEN_BANK;
 					token.attr.secttype = type;
@@ -329,8 +330,7 @@ static struct LinkerScriptToken *nextToken(void)
 	return &token;
 }
 
-static void processCommand(enum LinkerScriptCommand command, uint16_t arg,
-			   uint16_t *pc)
+static void processCommand(enum LinkerScriptCommand command, uint16_t arg, uint16_t *pc)
 {
 	switch (command) {
 	case COMMAND_INVALID:
@@ -475,8 +475,7 @@ struct SectionPlacement *script_NextSection(void)
 						errx(1, "%s(%" PRIu32 "): Command specified without an argument",
 						     linkerScriptName, lineNo);
 
-					processCommand(attr.command, arg,
-						       &curaddr[type][bankID]);
+					processCommand(attr.command, arg, &curaddr[type][bankID]);
 				} else { /* TOKEN_BANK */
 					type = attr.secttype;
 					/*
