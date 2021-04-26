@@ -120,6 +120,7 @@ struct Symbol *sym_AddAnonLabel(void);
 void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg);
 void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
+struct Symbol *sym_RedefEqu(char const *symName, int32_t value);
 struct Symbol *sym_AddSet(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym);

@@ -967,6 +967,26 @@ def SCREEN_HEIGHT equ 144
 Note that colons
 .Ql \&:
 following the name are not allowed.
+.Pp
+If you
+.Em really
+need to, the
+.Ic REDEF
+keyword will define or redefine a constant symbol.
+This can be used, for example, to update a constant using a macro, without making it mutable in general.
+.Bd -literal -offset indent
+    def NUM_ITEMS equ 0
+MACRO add_item
+    redef NUM_ITEMS equ NUM_ITEMS + 1
+    def ITEM_{02x:NUM_ITEMS} equ \1
+ENDM
+    add_item 1
+    add_item 4
+    add_item 9
+    add_item 16
+    assert NUM_ITEMS == 4
+    assert ITEM_04 == 16
+.Ed
 .Ss Mutable constants
 .Ic SET ,
 or its synonym

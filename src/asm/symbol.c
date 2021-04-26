@@ -397,6 +397,30 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 	return sym;
 }
 
+struct Symbol *sym_RedefEqu(char const *symName, int32_t value)
+{
+	struct Symbol *sym = sym_FindExactSymbol(symName);
+
+	if (!sym)
+		return sym_AddEqu(symName, value);
+
+	if (sym_IsDefined(sym) && sym->type != SYM_EQU) {
+		error("'%s' already defined as non-EQU at ", symName);
+		dumpFilename(sym);
+		putc('\n', stderr);
+		return NULL;
+	} else if (sym->isBuiltin) {
+		error("Built-in symbol '%s' cannot be redefined\n", symName);
+		return NULL;
+	}
+
+	updateSymbolFilename(sym);
+	sym->type = SYM_EQU;
+	sym->value = value;
+
+	return sym;
+}
+
 /*
  * Add a string equated symbol.
  *
