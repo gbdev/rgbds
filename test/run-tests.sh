@@ -24,27 +24,27 @@ done
 # When adding new ones, don't forget to add them to the .gitignore!
 
 if [ ! -d pokecrystal ]; then
-	git clone https://github.com/pret/pokecrystal.git --shallow-since=2018-06-04 --single-branch
+	git clone https://github.com/pret/pokecrystal.git --shallow-since=2021-04-19 --single-branch
 fi
 pushd pokecrystal
 git fetch
-git checkout 5db892782adaa5bb5a3e4cd6fa06565764bd1fb0
+git checkout 316fa4b69558a1930a1a1ae44a40221a1ddd4f26
 make clean
 make -j4 compare RGBDS=../../
 popd
 
 if [ ! -d pokered ]; then
-	git clone --recursive https://github.com/pret/pokered.git --shallow-since=2018-03-23 --single-branch
+	git clone --recursive https://github.com/pret/pokered.git --shallow-since=2021-04-19 --single-branch
 fi
 pushd pokered
 git fetch
-git checkout 21908ba30a8bae5c5e1c86b1164402ec95da0220
+git checkout bcc4380d40767983a0b253d486bb3c82f0f1fd07
 make clean
 make -j4 compare RGBDS=../../
 popd
 
 if [ ! -d ucity ]; then
-	git clone https://github.com/AntonioND/ucity.git --shallow-since=2017-07-13 --single-branch
+	git clone https://github.com/AntonioND/ucity.git --shallow-since=2020-11-11 --single-branch
 fi
 pushd ucity
 git fetch
