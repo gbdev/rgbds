@@ -26,4 +26,5 @@ def constant equ 6*7 ; fails
 redef string equs "there"
 	println "{string}"
 
-redef constant equ 6*9 ; syntax error
+redef constant equ 6*9
+	println constant

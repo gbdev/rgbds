@@ -851,6 +851,7 @@ directive	: endc
 		| warn
 		| assert
 		| def_equ
+		| redef_equ
 		| def_set
 		| def_rb
 		| def_rw
@@ -1115,6 +1116,11 @@ dl		: T_POP_DL { out_Skip(4, false); }
 
 def_equ		: def_id T_POP_EQU const {
 			sym_AddEqu($1, $3);
+		}
+;
+
+redef_equ	: redef_id T_POP_EQU const {
+			sym_RedefEqu($1, $3);
 		}
 ;
 
