@@ -958,7 +958,7 @@ is used to define numerical constant symbols.
 Unlike
 .Ic SET
 below, constants defined this way cannot be redefined.
-They can, for example, be used for things such as bit definitions of hardware registers.
+These constants can be used for unchanging values such as properties of the hardware.
 .Bd -literal -offset indent
 def SCREEN_WIDTH  equ 160 ;\ In pixels
 def SCREEN_HEIGHT equ 144
@@ -1075,7 +1075,7 @@ For example:
 DEF s EQUS "Hello, "
 REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
-PRINTT "{s}\n"
+PRINTLN "{s}\n"
 .Ed
 .Pp
 .Sy Important note :

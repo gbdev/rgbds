@@ -51,16 +51,16 @@ bool sym_IsPC(struct Symbol const *sym)
 }
 
 struct ForEachArgs {
-	void (*func)(struct Symbol *symbol, void *arg);
+	void (*func)(struct Symbol *sym, void *arg);
 	void *arg;
 };
 
-static void forEachWrapper(void *_symbol, void *_argWrapper)
+static void forEachWrapper(void *_sym, void *_argWrapper)
 {
 	struct ForEachArgs *argWrapper = _argWrapper;
-	struct Symbol *symbol = _symbol;
+	struct Symbol *sym = _sym;
 
-	argWrapper->func(symbol, argWrapper->arg);
+	argWrapper->func(sym, argWrapper->arg);
 }
 
 void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg)
@@ -181,24 +181,24 @@ static void updateSymbolFilename(struct Symbol *sym)
  */
 static struct Symbol *createsymbol(char const *symName)
 {
-	struct Symbol *symbol = malloc(sizeof(*symbol));
+	struct Symbol *sym = malloc(sizeof(*sym));
 
-	if (!symbol)
+	if (!sym)
 		fatalerror("Failed to create symbol '%s': %s\n", symName, strerror(errno));
 
-	if (snprintf(symbol->name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
+	if (snprintf(sym->name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
 		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", symName);
 
-	symbol->isExported = false;
-	symbol->isBuiltin = false;
-	symbol->hasCallback = false;
-	symbol->section = NULL;
-	setSymbolFilename(symbol);
-	symbol->ID = -1;
-	symbol->next = NULL;
+	sym->isExported = false;
+	sym->isBuiltin = false;
+	sym->hasCallback = false;
+	sym->section = NULL;
+	setSymbolFilename(sym);
+	sym->ID = -1;
+	sym->next = NULL;
 
-	hash_AddElement(symbols, symbol->name, symbol);
-	return symbol;
+	hash_AddElement(symbols, sym->name, sym);
+	return sym;
 }
 
 /*
@@ -220,7 +220,7 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 {
 	char *string = strdup(value);
 
-	if (string == NULL)
+	if (!string)
 		fatalerror("No memory for string equate: %s\n", strerror(errno));
 
 	sym->type = SYM_EQUS;
@@ -276,27 +276,26 @@ static bool isReferenced(struct Symbol const *sym)
  */
 void sym_Purge(char const *symName)
 {
-	struct Symbol *symbol = sym_FindScopedSymbol(symName);
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
-	if (!symbol) {
+	if (!sym) {
 		error("'%s' not defined\n", symName);
-	} else if (symbol->isBuiltin) {
+	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be purged\n", symName);
-	} else if (isReferenced(symbol)) {
+	} else if (isReferenced(sym)) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
 	} else {
 		/* Do not keep a reference to the label's name after purging it */
-		if (symbol->name == labelScope)
+		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(NULL);
 
 		/*
-		 * FIXME: this leaks symbol->macro for SYM_EQUS and SYM_MACRO, but this can't
-		 * free(symbol->macro) because the expansion may be purging itself.
+		 * FIXME: this leaks sym->macro for SYM_EQUS and SYM_MACRO, but this can't
+		 * free(sym->macro) because the expansion may be purging itself.
 		 */
-
-		hash_RemoveElement(symbols, symbol->name);
+		hash_RemoveElement(symbols, sym->name);
 		/* TODO: ideally, also unref the file stack nodes */
-		free(symbol);
+		free(sym);
 	}
 }
 
@@ -335,7 +334,7 @@ uint32_t sym_GetConstantValue(char const *symName)
 {
 	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
-	if (sym == NULL)
+	if (!sym)
 		error("'%s' not defined\n", symName);
 	else
 		return sym_GetConstantSymValue(sym);
@@ -362,24 +361,24 @@ void sym_SetCurrentSymbolScope(char const *newScope)
  */
 static struct Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 {
-	struct Symbol *symbol = sym_FindExactSymbol(symName);
+	struct Symbol *sym = sym_FindExactSymbol(symName);
 
-	if (!symbol) {
-		symbol = createsymbol(symName);
-	} else if (sym_IsDefined(symbol)) {
+	if (!sym) {
+		sym = createsymbol(symName);
+	} else if (sym_IsDefined(sym)) {
 		error("'%s' already defined at ", symName);
-		dumpFilename(symbol);
+		dumpFilename(sym);
 		putc('\n', stderr);
 		return NULL; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		error("'%s' already referenced at ", symName);
-		dumpFilename(symbol);
+		dumpFilename(sym);
 		putc('\n', stderr);
 		return NULL; // Don't allow overriding the symbol, that'd be bad!
 	}
 
-	return symbol;
+	return sym;
 }
 
 /*
@@ -425,10 +424,14 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
-	if (!sym) {
-		sym = createsymbol(symName);
-	} else if (sym->type != SYM_EQUS) {
-		error("'%s' already defined as non-EQUS at ", symName);
+	if (!sym)
+		return sym_AddString(symName, value);
+
+	if (sym->type != SYM_EQUS) {
+		if (sym_IsDefined(sym))
+			error("'%s' already defined as non-EQUS at ", symName);
+		else
+			error("'%s' already referenced at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
 		return NULL;
@@ -437,11 +440,11 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 		return NULL;
 	}
 
+	updateSymbolFilename(sym);
 	/*
 	 * FIXME: this leaks the previous sym->macro value, but this can't
 	 * free(sym->macro) because the expansion may be redefining itself.
 	 */
-
 	assignStringSymbol(sym, value);
 
 	return sym;
@@ -454,7 +457,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
-	if (sym == NULL) {
+	if (!sym) {
 		sym = createsymbol(symName);
 	} else if (sym_IsDefined(sym) && sym->type != SYM_SET) {
 		error("'%s' already defined as %s at ",
@@ -650,9 +653,9 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
  */
 struct Symbol *sym_Ref(char const *symName)
 {
-	struct Symbol *nsym = sym_FindScopedSymbol(symName);
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
-	if (nsym == NULL) {
+	if (!sym) {
 		char fullname[MAXSYMLEN + 1];
 
 		if (symName[0] == '.') {
@@ -662,11 +665,11 @@ struct Symbol *sym_Ref(char const *symName)
 			symName = fullname;
 		}
 
-		nsym = createsymbol(symName);
-		nsym->type = SYM_REF;
+		sym = createsymbol(symName);
+		sym->type = SYM_REF;
 	}
 
-	return nsym;
+	return sym;
 }
 
 /*
