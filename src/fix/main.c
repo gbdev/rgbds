@@ -654,6 +654,22 @@ static ssize_t writeBytes(int fd, void *buf, size_t len)
 }
 
 /**
+ * @param rom0 A pointer to rom0
+ * @param startAddr What address to begin checking from
+ * @param size How many bytes to check
+ * @param areaName Name to be displayed in the warning message
+ */
+static void warnNonZero(uint8_t *rom0, uint16_t startAddr, uint8_t size, char const *areaName)
+{
+	for (uint8_t i = 0; i < size; i++) {
+		if (rom0[i + startAddr] != 0) {
+			fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+			break;
+		}
+	}
+}
+
+/**
  * @param input File descriptor to be used for reading
  * @param output File descriptor to be used for writing, may be equal to `input`
  * @param name The file's name, to be displayed for error output
@@ -681,6 +697,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// Accept partial reads if the file contains at least the header
 
 	if (fixSpec & (FIX_LOGO | TRASH_LOGO)) {
+		warnNonZero(rom0, 0x0104, sizeof(ninLogo), "Nintendo logo");
 		if (fixSpec & FIX_LOGO) {
 			memcpy(&rom0[0x104], ninLogo, sizeof(ninLogo));
 		} else {
@@ -689,36 +706,56 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		}
 	}
 
-	if (title)
+	if (title) {
+		warnNonZero(rom0, 0x134, titleLen, "title");
 		memcpy(&rom0[0x134], title, titleLen);
+	}
 
-	if (gameID)
+	if (gameID) {
+		warnNonZero(rom0, 0x13f, gameIDLen, "manufacturer code");
 		memcpy(&rom0[0x13f], gameID, gameIDLen);
+	}
 
-	if (model != DMG)
+	if (model != DMG) {
+		warnNonZero(rom0, 0x143, 1, "CGB flag");
 		rom0[0x143] = model == BOTH ? 0x80 : 0xc0;
+	}
 
-	if (newLicensee)
+	if (newLicensee) {
+		warnNonZero(rom0, 0x144, newLicenseeLen, "new licensee code");
 		memcpy(&rom0[0x144], newLicensee, newLicenseeLen);
+	}
 
-	if (sgb)
+	if (sgb) {
+		warnNonZero(rom0, 0x146, 1, "SGB flag");
 		rom0[0x146] = 0x03;
+	}
 
 	// If a valid MBC was specified...
-	if (cartridgeType < MBC_NONE)
+	if (cartridgeType < MBC_NONE) {
+		warnNonZero(rom0, 0x147, 1, "cartridge type");
 		rom0[0x147] = cartridgeType;
+	}
 
-	if (ramSize != UNSPECIFIED)
+	if (ramSize != UNSPECIFIED) {
+		warnNonZero(rom0, 0x149, 1, "RAM size");
 		rom0[0x149] = ramSize;
+	}
 
-	if (!japanese)
+	if (!japanese) {
+		warnNonZero(rom0, 0x14a, 1, "destination code");
 		rom0[0x14a] = 0x01;
+	}
 
-	if (oldLicensee != UNSPECIFIED)
+	if (oldLicensee != UNSPECIFIED) {
+		warnNonZero(rom0, 0x14b, 1, "old licensee code");
 		rom0[0x14b] = oldLicensee;
+	}
 
-	if (romVersion != UNSPECIFIED)
+	if (romVersion != UNSPECIFIED) {
+		warnNonZero(rom0, 0x14c, 1, "mask ROM version number");
 		rom0[0x14c] = romVersion;
+	}
 
 	// Remain to be handled the ROM size, and header checksum.
 	// The latter depends on the former, and so will be handled after it.
@@ -818,6 +855,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 		for (uint16_t i = 0x134; i < 0x14d; i++)
 			sum -= rom0[i] + 1;
+		warnNonZero(rom0, 0x14d, 1, "header checksum");
 		rom0[0x14d] = fixSpec & TRASH_HEADER_SUM ? ~sum : sum;
 	}
 
@@ -841,6 +879,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 		if (fixSpec & TRASH_GLOBAL_SUM)
 			globalSum = ~globalSum;
+		warnNonZero(rom0, 0x14e, 2, "global checksum");
 		rom0[0x14e] = globalSum >> 8;
 		rom0[0x14f] = globalSum & 0xff;
 	}
@@ -914,8 +953,6 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 free_romx:
 	free(romx);
 }
-
-#undef trySeek
 
 static bool processFilename(char const *name)
 {
@@ -1015,7 +1052,7 @@ do { \
 #define SPEC_H TRASH_HEADER_SUM
 #define SPEC_g FIX_GLOBAL_SUM
 #define SPEC_G TRASH_GLOBAL_SUM
-#define or(new, bad) \
+#define overrideSpec(new, bad) \
 do { \
 	if (fixSpec & SPEC_##bad) \
 		fprintf(stderr, \
@@ -1023,30 +1060,30 @@ do { \
 	fixSpec = (fixSpec & ~SPEC_##bad) | SPEC_##new; \
 } while (0)
 				case 'l':
-					or(l, L);
+					overrideSpec(l, L);
 					break;
 				case 'L':
-					or(L, l);
+					overrideSpec(L, l);
 					break;
 
 				case 'h':
-					or(h, H);
+					overrideSpec(h, H);
 					break;
 				case 'H':
-					or(H, h);
+					overrideSpec(H, h);
 					break;
 
 				case 'g':
-					or(g, G);
+					overrideSpec(g, G);
 					break;
 				case 'G':
-					or(G, g);
+					overrideSpec(G, g);
 					break;
 
 				default:
 					fprintf(stderr, "warning: Ignoring '%c' in fix spec\n",
 						*musl_optarg);
-#undef or
+#undef overrideSpec
 				}
 				musl_optarg++;
 			}
