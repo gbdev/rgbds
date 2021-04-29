@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "asm/format.h"
+#include "asm/string.h"
 #include "asm/warning.h"
 
 struct FormatSpec fmt_NewSpec(void)
@@ -133,7 +134,7 @@ void fmt_FinishCharacters(struct FormatSpec *fmt)
 		fmt->state = FORMAT_INVALID;
 }
 
-void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value)
+struct String *fmt_PrintString(struct FormatSpec const *fmt, struct String const *value)
 {
 	if (fmt->sign)
 		error("Formatting string with sign flag '%c'\n", fmt->sign);
@@ -146,33 +147,28 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 	if (fmt->type != 's')
 		error("Formatting string as type '%c'\n", fmt->type);
 
-	size_t len = strlen(value);
+	size_t len = str_Len(value);
 	size_t totalLen = fmt->width > len ? fmt->width : len;
-
-	if (totalLen > bufLen - 1) { /* bufLen includes terminator */
-		error("Formatted string value too long\n");
-		totalLen = bufLen - 1;
-		if (len > totalLen)
-			len = totalLen;
-	}
-	assert(len < bufLen && totalLen < bufLen && len <= totalLen);
-
 	size_t padLen = totalLen - len;
+	struct String *str = str_New(totalLen);
+
+	if (!str)
+		return NULL;
 
 	if (fmt->alignLeft) {
-		memcpy(buf, value, len);
-		for (size_t i = len; i < totalLen; i++)
-			buf[i] = ' ';
+		MUTATE_STR(str, str_Append(str, value));
+		for (size_t i = 0; i < padLen; i++)
+			MUTATE_STR(str, str_Push(str, ' '));
 	} else {
 		for (size_t i = 0; i < padLen; i++)
-			buf[i] = ' ';
-		memcpy(buf + padLen, value, len);
+			MUTATE_STR(str, str_Push(str, ' '));
+		MUTATE_STR(str, str_Append(str, value));
 	}
 
-	buf[totalLen] = '\0';
+	return str;
 }
 
-void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value)
+struct String *fmt_PrintNumber(struct FormatSpec const *fmt, uint32_t value)
 {
 	if (fmt->type != 'X' && fmt->type != 'x' && fmt->type != 'b' && fmt->type != 'o'
 	    && fmt->prefix)
@@ -257,48 +253,40 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	size_t len = strlen(valueBuf);
 	size_t numLen = !!sign + !!prefix + len;
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
-
-	if (totalLen > bufLen - 1) { /* bufLen includes terminator */
-		error("Formatted numeric value too long\n");
-		totalLen = bufLen - 1;
-		if (numLen > totalLen) {
-			len -= numLen - totalLen;
-			numLen = totalLen;
-		}
-	}
-	assert(numLen < bufLen && totalLen < bufLen && numLen <= totalLen && len <= numLen);
-
 	size_t padLen = totalLen - numLen;
-	size_t pos = 0;
+	struct String *str = str_New(totalLen);
+
+	if (!str)
+		return NULL;
 
 	if (fmt->alignLeft) {
 		if (sign)
-			buf[pos++] = sign;
+			MUTATE_STR(str, str_Push(str, sign));
 		if (prefix)
-			buf[pos++] = prefix;
-		memcpy(buf + pos, valueBuf, len);
-		for (size_t i = pos + len; i < totalLen; i++)
-			buf[i] = ' ';
+			MUTATE_STR(str, str_Push(str, prefix));
+		MUTATE_STR(str, str_AppendSlice(str, valueBuf, len));
+		for (size_t i = 0; i < padLen; i++)
+			MUTATE_STR(str, str_Push(str, ' '));
 	} else {
 		if (fmt->padZero) {
 			/* sign, then prefix, then zero padding */
 			if (sign)
-				buf[pos++] = sign;
+				MUTATE_STR(str, str_Push(str, sign));
 			if (prefix)
-				buf[pos++] = prefix;
+				MUTATE_STR(str, str_Push(str, prefix));
 			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = '0';
+				MUTATE_STR(str, str_Push(str, '0'));
 		} else {
 			/* space padding, then sign, then prefix */
 			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = ' ';
+				MUTATE_STR(str, str_Push(str, ' '));
 			if (sign)
-				buf[pos++] = sign;
+				MUTATE_STR(str, str_Push(str, sign));
 			if (prefix)
-				buf[pos++] = prefix;
+				MUTATE_STR(str, str_Push(str, prefix));
 		}
-		memcpy(buf + pos, valueBuf, len);
+		MUTATE_STR(str, str_AppendSlice(str, valueBuf, len));
 	}
 
-	buf[totalLen] = '\0';
+	return str;
 }

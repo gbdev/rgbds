@@ -11,8 +11,6 @@
 
 #include <stdbool.h>
 
-#define MAXSTRLEN	255
-
 struct LexerState;
 extern struct LexerState *lexerState;
 extern struct LexerState *lexerStateEOL;
@@ -50,7 +48,8 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 }
 
 /*
- * `path` is referenced, but not held onto..!
+ * `path` is referenced, but not held onto!
+ * This means that the path passed to both of these functions MUST outlive the returned lexer state
  */
 struct LexerState *lexer_OpenFile(char const *path);
 struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo);

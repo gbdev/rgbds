@@ -69,6 +69,7 @@ rgbasm_obj := \
 	src/asm/parser.o \
 	src/asm/rpn.o \
 	src/asm/section.o \
+	src/asm/string.o \
 	src/asm/symbol.o \
 	src/asm/util.o \
 	src/asm/warning.o \

@@ -24,6 +24,7 @@
 #include "asm/output.h"
 #include "asm/rpn.h"
 #include "asm/section.h"
+#include "asm/string.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
@@ -47,7 +48,7 @@ struct Patch {
 struct Assertion {
 	struct Patch *patch;
 	struct Section *section;
-	char *message;
+	struct String *message;
 	struct Assertion *next;
 };
 
@@ -118,12 +119,21 @@ static void putlong(uint32_t i, FILE *f)
 }
 
 /*
- * Write a NULL-terminated string to a file
+ * Write a NUL-terminated string to a file
  */
-static void putstring(char const *s, FILE *f)
+static void putcstring(char const *str, FILE *f)
 {
-	while (*s)
-		putc(*s++, f);
+	while (*str)
+		putc(*str++, f);
+	putc(0, f);
+}
+
+/*
+ * Write a known-size string to a file
+ */
+static void putstring(struct String const *str, FILE *f)
+{
+	fwrite(str_Chars(str), str_Len(str), sizeof(char), f);
 	putc(0, f);
 }
 
@@ -188,7 +198,7 @@ static uint32_t getsectid(struct Section const *sect)
 		sec = sec->next;
 	}
 
-	fatalerror("Unknown section '%s'\n", sect->name);
+	fatalerror("Unknown section \"%" PRI_STR "\"\n", STR_FMT(sect->name));
 }
 
 static uint32_t getSectIDIfAny(struct Section const *sect)
@@ -456,7 +466,7 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
  * Creates an assert that will be written to the object file
  */
 bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
-		      char const *message, uint32_t ofs)
+		      struct String *message, uint32_t ofs)
 {
 	struct Assertion *assertion = malloc(sizeof(*assertion));
 
@@ -464,11 +474,7 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		return false;
 
 	assertion->patch = allocpatch(type, expr, ofs);
-	assertion->message = strdup(message);
-	if (!assertion->message) {
-		free(assertion);
-		return false;
-	}
+	assertion->message = message;
 
 	assertion->next = assertions;
 	assertions = assertion;

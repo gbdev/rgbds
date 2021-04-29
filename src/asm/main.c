@@ -196,14 +196,37 @@ int main(int argc, char *argv[])
 			break;
 
 			char *equals;
+			size_t len, nameLen;
+			struct String *name, *value;
 		case 'D':
 			equals = strchr(musl_optarg, '=');
+			len = strlen(musl_optarg);
+
 			if (equals) {
-				*equals = '\0';
-				sym_AddString(musl_optarg, equals + 1);
+				nameLen = equals - musl_optarg;
+				size_t valueLen = len - nameLen - 1; // Ignore the '='!
+
+				value = str_New(valueLen);
+				if (value)
+					value = str_AppendSlice(value, equals + 1, valueLen);
 			} else {
-				sym_AddString(musl_optarg, "1");
+				value = str_New(1);
+				if (value)
+					value = str_Push(value, '1');
 			}
+
+			if (!value)
+				fatalerror("Failed to alloc value for \"%s\": %s\n",
+					   musl_optarg, strerror(errno));
+
+			name = str_New(nameLen);
+			if (!name)
+				fatalerror("Failed to alloc name for \"%s\": %s\n",
+					   musl_optarg, strerror(errno));
+			// OK because we reserved the right capacity
+			MUTATE_STR(name, str_AppendSlice(name, musl_optarg, nameLen));
+
+			sym_AddString(name, value);
 			break;
 
 		case 'E':

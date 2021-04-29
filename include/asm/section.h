@@ -18,9 +18,10 @@
 extern uint8_t fillByte;
 
 struct Expression;
+struct String;
 
 struct Section {
-	char *name;
+	struct String *name;
 	enum SectionType type;
 	enum SectionModifier modifier;
 	struct FileStackNode *src; /* Where the section was defined */

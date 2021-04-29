@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "asm/macro.h"
+#include "asm/string.h"
 #include "asm/warning.h"
 
 #define MAXMACROARGS 99999
@@ -24,7 +25,7 @@ struct MacroArgs {
 	unsigned int nbArgs;
 	unsigned int shift;
 	unsigned int capacity;
-	char *args[];
+	struct String *args[];
 };
 
 #define SIZEOF_ARGS(nbArgs) (sizeof(struct MacroArgs) + \
@@ -33,13 +34,8 @@ struct MacroArgs {
 static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
-/*
- * The initialization is somewhat harmful, since it is never used, but it
- * guarantees the size of the buffer will be correct. I was unable to find a
- * better solution, but if you have one, please feel free!
- */
-static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
-static char *uniqueIDPtr = NULL;
+static uint32_t strUniqueID = 0; // The uniqueID contained within the uniqueIDStr
+static struct String *uniqueIDStr = NULL;
 
 struct MacroArgs *macro_GetCurrentArgs(void)
 {
@@ -59,10 +55,13 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **argPtr, char *s)
+/**
+ * Takes ownership of the string
+ */
+void macro_AppendArg(struct MacroArgs **argPtr, struct String *str)
 {
 #define macArgs (*argPtr)
-	if (s[0] == '\0')
+	if (str_Index(str, 0) == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
 	if (macArgs->nbArgs == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
@@ -75,7 +74,7 @@ void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 		if (!macArgs)
 			fatalerror("Error adding new macro argument: %s\n", strerror(errno));
 	}
-	macArgs->args[macArgs->nbArgs++] = s;
+	macArgs->args[macArgs->nbArgs++] = str;
 #undef macArgs
 }
 
@@ -87,10 +86,10 @@ void macro_UseNewArgs(struct MacroArgs *args)
 void macro_FreeArgs(struct MacroArgs *args)
 {
 	for (uint32_t i = 0; i < macroArgs->nbArgs; i++)
-		free(args->args[i]);
+		str_Unref(args->args[i]);
 }
 
-char const *macro_GetArg(uint32_t i)
+struct String *macro_GetArg(uint32_t i)
 {
 	if (!macroArgs)
 		return NULL;
@@ -101,36 +100,28 @@ char const *macro_GetArg(uint32_t i)
 					      : macroArgs->args[realIndex];
 }
 
-char *macro_GetAllArgs(void)
+struct String *macro_GetAllArgs(void)
 {
 	if (!macroArgs)
 		return NULL;
 
-	if (macroArgs->shift >= macroArgs->nbArgs)
-		return "";
-
 	size_t len = 0;
 
 	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++)
-		len += strlen(macroArgs->args[i]) + 1; /* 1 for comma */
+		len += str_Len(macroArgs->args[i]) + 1; // 1 for comma
 
-	char *str = malloc(len + 1); /* 1 for '\0' */
-	char *ptr = str;
+	struct String *str = str_New(len); // Technically that's 1 too much, but eh
 
 	if (!str)
 		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
 
 	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++) {
-		size_t n = strlen(macroArgs->args[i]);
+		str = str_Append(str, macroArgs->args[i]);
 
-		memcpy(ptr, macroArgs->args[i], n);
-		ptr += n;
-
-		/* Commas go between args and after a last empty arg */
-		if (i < macroArgs->nbArgs - 1 || n == 0)
-			*ptr++ = ','; /* no space after comma */
+		// Commas go between args and after a last empty arg
+		if (i < macroArgs->nbArgs - 1 || str_Len(macroArgs->args[i]) == 0)
+			str = str_Push(str, ','); // No space after comma
 	}
-	*ptr = '\0';
 
 	return str;
 }
@@ -140,30 +131,45 @@ uint32_t macro_GetUniqueID(void)
 	return uniqueID;
 }
 
-char const *macro_GetUniqueIDStr(void)
+struct String *macro_GetUniqueIDStr(void)
 {
-	return uniqueIDPtr;
+	// Unique ID hasn't changed since the last time we generated the string, return it
+	if (strUniqueID == uniqueID && uniqueIDStr)
+		return uniqueIDStr;
+
+	if (!uniqueIDStr) {
+		// Make room for the terminator because `sprintf` and I'm lazy
+		uniqueIDStr = str_New(strlen("_u4294967295") + 1); // UINT32_MAX
+		if (!uniqueIDStr)
+			fatalerror("Failed to alloc unique ID str: %s\n", strerror(errno));
+		char *ptr = str_CharsMut(uniqueIDStr);
+
+		ptr[0] = '_';
+		ptr[1] = 'u';
+	}
+
+	// Write the number
+	int len = sprintf(&str_CharsMut(uniqueIDStr)[2], "%u", uniqueID);
+
+	if (len < 0) {
+		error("Failed to print unique ID str: %s\n", strerror(errno));
+		return NULL;
+	}
+	str_SetLen(uniqueIDStr, len);
+	strUniqueID = uniqueID; // Remember which ID the string is now storing
+
+	return uniqueIDStr;
 }
 
 void macro_SetUniqueID(uint32_t id)
 {
 	uniqueID = id;
-	if (id == 0) {
-		uniqueIDPtr = NULL;
-	} else {
-		if (uniqueID > maxUniqueID)
-			maxUniqueID = uniqueID;
-		/* The buffer is guaranteed to be the correct size */
-		/* This is a valid label fragment, but not a valid numeric */
-		sprintf(uniqueIDBuf, "_u%" PRIu32, id);
-		uniqueIDPtr = uniqueIDBuf;
-	}
 }
 
 uint32_t macro_UseNewUniqueID(void)
 {
 	macro_SetUniqueID(++maxUniqueID);
-	return maxUniqueID;
+	return uniqueID;
 }
 
 void macro_ShiftCurrentArgs(int32_t count)

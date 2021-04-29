@@ -35,10 +35,12 @@ struct FormatSpec {
 	bool valid;
 };
 
+struct String;
+
 struct StrFmtArg {
 	union {
 		uint32_t number;
-		char *string;
+		struct String *string;
 	};
 	bool isNumeric;
 };
@@ -57,7 +59,7 @@ bool fmt_IsValid(struct FormatSpec const *fmt);
 bool fmt_IsFinished(struct FormatSpec const *fmt);
 void fmt_UseCharacter(struct FormatSpec *fmt, int c);
 void fmt_FinishCharacters(struct FormatSpec *fmt);
-void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value);
-void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value);
+struct String *fmt_PrintString(struct FormatSpec const *fmt, struct String const *value);
+struct String *fmt_PrintNumber(struct FormatSpec const *fmt, uint32_t value);
 
 #endif /* RGBDS_FORMAT_SPEC_H */

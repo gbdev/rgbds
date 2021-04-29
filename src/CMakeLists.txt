@@ -54,6 +54,7 @@ set(rgbasm_src
     "asm/output.c"
     "asm/rpn.c"
     "asm/section.c"
+    "asm/string.c"
     "asm/symbol.c"
     "asm/util.c"
     "asm/warning.c"

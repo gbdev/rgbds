@@ -17,6 +17,7 @@
 #include "asm/fstack.h"
 #include "asm/macro.h"
 #include "asm/main.h"
+#include "asm/string.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
 #include "platform.h" /* S_ISDIR (stat macro) */
@@ -38,7 +39,7 @@ struct Context {
 	uint32_t nbReptIters;
 	int32_t forValue;
 	int32_t forStep;
-	char *forName;
+	struct String *forName;
 };
 
 static struct Context *contextStack;
@@ -49,25 +50,25 @@ size_t maxRecursionDepth;
 static unsigned int nbIncPaths = 0;
 static char const *includePaths[MAXINCPATHS];
 
-static const char *dumpNodeAndParents(struct FileStackNode const *node)
+static struct String const *dumpNodeAndParents(struct FileStackNode const *node)
 {
-	char const *name;
+	struct String const *name;
 
 	if (node->type == NODE_REPT) {
 		assert(node->parent); /* REPT nodes should always have a parent */
 		struct FileStackReptNode const *reptInfo = (struct FileStackReptNode const *)node;
 
 		name = dumpNodeAndParents(node->parent);
-		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
+		fprintf(stderr, "(%" PRIu32 ") -> %" PRI_STR, node->lineNo, STR_FMT(name));
 		for (uint32_t i = reptInfo->reptDepth; i--; )
 			fprintf(stderr, "::REPT~%" PRIu32, reptInfo->iters[i]);
 	} else {
 		name = ((struct FileStackNamedNode const *)node)->name;
 		if (node->parent) {
 			dumpNodeAndParents(node->parent);
-			fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
+			fprintf(stderr, "(%" PRIu32 ") -> %" PRI_STR, node->lineNo, STR_FMT(name));
 		} else {
-			fputs(name, stderr);
+			fwrite(str_Chars(name), str_Len(name), sizeof(char), stderr);
 		}
 	}
 	return name;
@@ -104,7 +105,7 @@ struct FileStackNode *fstk_GetFileStack(void)
 	return contextStack->fileInfo;
 }
 
-char const *fstk_GetFileName(void)
+struct String const *fstk_GetFileName(void)
 {
 	/* Iterating via the nodes themselves skips nested REPTs */
 	struct FileStackNode const *node = contextStack->fileInfo;
@@ -140,12 +141,12 @@ void fstk_AddIncludePath(char const *path)
 	includePaths[nbIncPaths++] = str;
 }
 
-static void printDep(char const *path)
+static void printDep(struct String const *path)
 {
 	if (dependfile) {
-		fprintf(dependfile, "%s: %s\n", targetFileName, path);
+		fprintf(dependfile, "%s: %" PRI_STR "\n", targetFileName, STR_FMT(path));
 		if (generatePhonyDeps)
-			fprintf(dependfile, "%s:\n", path);
+			fprintf(dependfile, "%" PRI_STR ":\n", STR_FMT(path));
 	}
 }
 
@@ -160,55 +161,41 @@ static bool isPathValid(char const *path)
 	return !S_ISDIR(statbuf.st_mode);
 }
 
-bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
+struct String *fstk_FindFile(struct String const *path)
 {
-	if (!*size) {
-		*size = 64; /* This is arbitrary, really */
-		*fullPath = realloc(*fullPath, *size);
-		if (!*fullPath)
-			error("realloc error during include path search: %s\n",
-			      strerror(errno));
-	}
+	struct String *fullPath = str_New(64); // Arbitrary but usually sufficient
+	size_t pathLen = str_Len(path);
 
-	if (*fullPath) {
-		for (size_t i = 0; i <= nbIncPaths; ++i) {
-			char const *incPath = i ? includePaths[i - 1] : "";
-			int len = snprintf(*fullPath, *size, "%s%s", incPath, path);
+	for (size_t i = 0; i <= nbIncPaths; ++i) {
+		char const *incPath = i ? includePaths[i - 1] : "";
+		size_t incPathLen = strlen(incPath);
 
-			if (len < 0) {
-				error("snprintf error during include path search: %s\n",
-				      strerror(errno));
-				break;
-			}
+		str_SetLen(fullPath, 0);
+		fullPath = str_Reserve(fullPath, incPathLen + str_Len(path) + 1);
+		if (!fullPath) {
+			error("Failed to generate full path while searching for \"%" PRI_STR "\": %s\n",
+			      STR_FMT(path), strerror(errno));
+			return NULL;
+		}
 
-			/* Oh how I wish `asnprintf` was standard... */
-			if ((size_t)len >= *size) { /* `len` doesn't include the terminator, `size` does */
-				*size = len + 1;
-				*fullPath = realloc(*fullPath, *size);
-				if (!*fullPath) {
-					error("realloc error during include path search: %s\n",
-					      strerror(errno));
-					break;
-				}
-				len = sprintf(*fullPath, "%s%s", incPath, path);
-				if (len < 0) {
-					error("sprintf error during include path search: %s\n",
-					       strerror(errno));
-					break;
-				}
-			}
+		char *ptr = str_CharsMut(fullPath);
 
-			if (isPathValid(*fullPath)) {
-				printDep(*fullPath);
-				return true;
-			}
+		memcpy(ptr, incPath, incPathLen);
+		ptr += incPathLen;
+		memcpy(ptr, str_Chars(path), pathLen);
+		ptr += pathLen;
+		*ptr = '\0';
+
+		if (isPathValid(str_Chars(fullPath))) {
+			printDep(fullPath);
+			return fullPath;
 		}
 	}
 
 	errno = ENOENT;
 	if (generatedMissingIncludes)
 		printDep(path);
-	return false;
+	return NULL;
 }
 
 bool yywrap(void)
@@ -313,39 +300,38 @@ static void newContext(struct FileStackNode *fileInfo)
 	contextStack = context;
 }
 
-void fstk_RunInclude(char const *path)
+void fstk_RunInclude(struct String const *path)
 {
 	dbgPrint("Including path \"%s\"\n", path);
 
-	char *fullPath = NULL;
-	size_t size = 0;
+	struct String *fullPath = fstk_FindFile(path);
 
-	if (!fstk_FindFile(path, &fullPath, &size)) {
-		free(fullPath);
+	if (!fullPath) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n",
-				       path, strerror(errno));
+				printf("Aborting (-MG) on INCLUDE file \"%" PRI_STR "\" (%s)\n",
+				       STR_FMT(path), strerror(errno));
 			failedOnMissingInclude = true;
 		} else {
-			error("Unable to open included file '%s': %s\n", path, strerror(errno));
+			error("Unable to open included file \"%" PRI_STR "\": %s\n",
+			      STR_FMT(path), strerror(errno));
 		}
 		return;
 	}
-	dbgPrint("Full path: \"%s\"\n", fullPath);
+	dbgPrint("Full path: \"%" PRI_STR "\"\n", STR_FMT(fullPath));
 
-	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo) + size);
+	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo));
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
+		str_Unref(fullPath);
 		return;
 	}
 	fileInfo->node.type = NODE_FILE;
-	strcpy(fileInfo->name, fullPath);
-	free(fullPath);
+	fileInfo->name = fullPath;
 
 	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFile(fileInfo->name);
+	contextStack->lexerState = lexer_OpenFile(str_Chars(fileInfo->name));
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
@@ -354,18 +340,18 @@ void fstk_RunInclude(char const *path)
 	macro_SetUniqueID(0);
 }
 
-void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
+void fstk_RunMacro(struct String const *macroName, struct MacroArgs *args)
 {
-	dbgPrint("Running macro \"%s\"\n", macroName);
+	dbgPrint("Running macro \"%" PRI_STR "\"\n", STR_FMT(macroName));
 
 	struct Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
-		error("Macro \"%s\" not defined\n", macroName);
+		error("Macro \"%" PRI_STR "\" not defined\n", STR_FMT(macroName));
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
-		error("\"%s\" is not a macro\n", macroName);
+		error("\"%" PRI_STR "\" is not a macro\n", STR_FMT(macroName));
 		return;
 	}
 	contextStack->macroArgs = macro_GetCurrentArgs();
@@ -385,18 +371,26 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 		} while (node->type == NODE_REPT);
 	}
 	struct FileStackNamedNode const *baseNode = (struct FileStackNamedNode const *)node;
-	size_t baseLen = strlen(baseNode->name);
-	size_t macroNameLen = strlen(macro->name);
-	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo) + baseLen
-						     + reptNameLen + 2 + macroNameLen + 1);
+	size_t baseLen = str_Len(baseNode->name), macroNameLen = str_Len(macro->name);
+	size_t nameLen = baseLen + reptNameLen + 2 + macroNameLen;
+	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo));
 
 	if (!fileInfo) {
-		error("Failed to alloc file info for \"%s\": %s\n", macro->name, strerror(errno));
+		error("Failed to alloc file info for \"%" PRI_STR "\": %s\n",
+		      STR_FMT(macro->name), strerror(errno));
 		return;
 	}
 	fileInfo->node.type = NODE_MACRO;
+	fileInfo->name = str_New(nameLen);
+	if (!fileInfo->name) {
+		error("Failed to alloc file info name for \"%" PRI_STR "\": %s\n",
+		      STR_FMT(macro->name), strerror(errno));
+		free(fileInfo);
+		return;
+	}
 	/* Print the name... */
-	char *dest = fileInfo->name;
+	str_SetLen(fileInfo->name, nameLen);
+	char *dest = str_CharsMut(fileInfo->name);
 
 	memcpy(dest, baseNode->name, baseLen);
 	dest += baseLen;
@@ -414,7 +408,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	}
 	*dest++ = ':';
 	*dest++ = ':';
-	memcpy(dest, macro->name, macroNameLen + 1);
+	memcpy(dest, str_Chars(macro->name), macroNameLen);
 
 	newContext((struct FileStackNode *)fileInfo);
 	contextStack->lexerState = lexer_OpenFileView("MACRO", macro->macro, macro->macroSize,
@@ -472,11 +466,14 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 	contextStack->forName = NULL;
 }
 
-void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
-		     int32_t reptLineNo, char *body, size_t size)
+void fstk_RunFor(struct String *symName, int32_t start, int32_t stop, int32_t step,
+		 int32_t reptLineNo, char *body, size_t size)
 {
-	dbgPrint("Running FOR(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
-		 symName, start, stop, step);
+	dbgPrint("Running FOR(\"%" PRI_STR "\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
+		 STR_FMT(symName), start, stop, step);
+
+	assert(0 || "Check ownership of FOR sym name on exit, and also here when erroring out");
+	str_Ref(symName);
 
 	struct Symbol *sym = sym_AddSet(symName, start);
 
@@ -504,9 +501,7 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	contextStack->nbReptIters = count;
 	contextStack->forValue = start;
 	contextStack->forStep = step;
-	contextStack->forName = strdup(symName);
-	if (!contextStack->forName)
-		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
+	contextStack->forName = symName;
 }
 
 void fstk_StopRept(void)
@@ -571,8 +566,8 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	 */
 #define DEPTH_LIMIT ((SIZE_MAX - sizeof(struct FileStackReptNode)) / sizeof(uint32_t))
 	if (maxDepth > DEPTH_LIMIT) {
-		error("Recursion depth may not be higher than %zu, defaulting to "
-		      EXPAND_AND_STR(DEFAULT_MAX_DEPTH) "\n", DEPTH_LIMIT);
+		error("Recursion depth may not be higher than %zu, defaulting to %u\n",
+		      DEPTH_LIMIT, DEFAULT_MAX_DEPTH);
 		maxRecursionDepth = DEFAULT_MAX_DEPTH;
 	} else {
 		maxRecursionDepth = maxDepth;

@@ -282,69 +282,76 @@ static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args)
 
 static void freeStrFmtArgList(struct StrFmtArgList *args)
 {
-	free(args->format);
+	str_Unref(args->format);
 	for (size_t i = 0; i < args->nbArgs; i++)
 		if (!args->args[i].isNumeric)
-			free(args->args[i].string);
+			str_Unref(args->args[i].string);
 	free(args->args);
 }
 
-static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args)
+static void strfmt(struct String const *fmt, size_t nbArgs, struct StrFmtArg *args)
 {
 	size_t a = 0;
-	size_t i = 0;
+	size_t n = str_Len(fmt);
+	struct String *str = str_New(0);
 
-	while (i < destLen) {
-		int c = *fmt++;
+	if (!str)
+		return NULL;
 
-		if (c == '\0') {
-			break;
-		} else if (c != '%') {
-			dest[i++] = c;
+	for (size_t i = 0; i < n;) {
+		char c = str_Index(fmt, i++);
+
+		if (c != '%') {
+			str = str_Push(str, c);
 			continue;
 		}
 
-		c = *fmt++;
+		if (i == n) {
+			error("STRFMT: Illegal '%%' at end of format string\n");
+			str = str_Push(str, '%');
+			break;
+		}
+
+		c = str_Index(fmt, i++);
 
 		if (c == '%') {
-			dest[i++] = c;
+			str = str_Push(str, '%');
 			continue;
 		}
 
 		struct FormatSpec spec = fmt_NewSpec();
 
-		while (c != '\0') {
+		while (i < n) {
 			fmt_UseCharacter(&spec, c);
 			if (fmt_IsFinished(&spec))
 				break;
-			c = *fmt++;
+			c = str_Index(fmt, i++);
 		}
 
-		if (fmt_IsEmpty(&spec)) {
-			error("STRFMT: Illegal '%%' at end of format string\n");
-			dest[i++] = '%';
-			break;
-		} else if (!fmt_IsValid(&spec)) {
+		if (!fmt_IsValid(&spec)) {
 			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
-			dest[i++] = '%';
+			str = str_Push(str, '%');
 			a++;
 			continue;
 		} else if (a >= nbArgs) {
 			// Will warn after formatting is done.
-			dest[i++] = '%';
+			str = str_Push(str, '%');
 			a++;
 			continue;
 		}
 
 		struct StrFmtArg *arg = &args[a++];
-		static char buf[MAXSTRLEN + 1];
+		struct String *argStr;
 
-		if (arg->isNumeric)
-			fmt_PrintNumber(buf, sizeof(buf), &spec, arg->number);
-		else
-			fmt_PrintString(buf, sizeof(buf), &spec, arg->string);
+		if (arg->isNumeric) {
+			argStr = fmt_PrintNumber(&spec, arg->number);
+		} else {
+			argStr = fmt_PrintString(&spec, arg->string);
+			str_Unref(arg->string);
+		}
 
-		i += snprintf(&dest[i], destLen - i, "%s", buf);
+		str = str_Append(str, argStr);
+		str_Unref(argStr);
 	}
 
 	if (a < nbArgs)
@@ -352,11 +359,7 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 	else if (a > nbArgs)
 		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n", nbArgs, a);
 
-	if (i > destLen - 1) {
-		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
-		i = destLen - 1;
-	}
-	dest[i] = '\0';
+	return str;
 }
 
 static void initDsArgList(struct DsArgList *args)
@@ -459,8 +462,8 @@ enum {
 
 %union
 {
-	char symName[MAXSYMLEN + 1];
-	char string[MAXSTRLEN + 1];
+	struct String *symName;
+	struct String *string;
 	struct Expression expr;
 	int32_t constValue;
 	enum SectionModifier sectMod;
@@ -1614,7 +1617,7 @@ strcat_args	: string
 ;
 
 strfmt_args	: string strfmt_va_args {
-			$$.format = strdup($1);
+			$$.format = $1; // Take ownership of the string
 			$$.capacity = $2.capacity;
 			$$.nbArgs = $2.nbArgs;
 			$$.args = $2.args;
@@ -1634,7 +1637,7 @@ strfmt_va_args	: %empty {
 		| strfmt_va_args T_COMMA string {
 			size_t i = nextStrFmtArgListIndex(&$1);
 
-			$1.args[i].string = strdup($3);
+			$1.args[i].string = $3; // Take ownership of the string
 			$1.args[i].isNumeric = false;
 			$$ = $1;
 		}

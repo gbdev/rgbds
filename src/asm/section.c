@@ -1,3 +1,10 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 1997-2021, Carsten Sorensen and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #include <assert.h>
 #include <errno.h>

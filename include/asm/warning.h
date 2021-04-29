@@ -30,7 +30,6 @@ enum WarningID {
 	WARNING_EMPTY_MACRO_ARG,      /* Empty macro argument */
 	WARNING_EMPTY_STRRPL,	      /* Empty second argument in `STRRPL` */
 	WARNING_LARGE_CONSTANT,	      /* Constants too large */
-	WARNING_LONG_STR,	      /* String too long for internal buffers */
 	WARNING_MACRO_SHIFT,	      /* Shift past available arguments in macro */
 	WARNING_NESTED_COMMENT,	      /* Comment-start delimiter in a block comment */
 	WARNING_OBSOLETE,	      /* Obsolete things */

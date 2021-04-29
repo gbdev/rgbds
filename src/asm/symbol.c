@@ -25,6 +25,7 @@
 #include "asm/main.h"
 #include "asm/output.h"
 #include "asm/section.h"
+#include "asm/string.h"
 #include "asm/symbol.h"
 #include "asm/util.h"
 #include "asm/warning.h"
@@ -84,42 +85,37 @@ static int32_t Callback__LINE__(void)
 	return lexer_GetLineNo();
 }
 
-static char const *Callback__FILE__(void)
+static struct String *Callback__FILE__(void)
 {
-	/*
-	 * FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
-	 * There are only two call sites for this; one copies the contents directly, the other is
-	 * EQUS expansions, which cannot straddle file boundaries. So this should be fine.
-	 */
-	static char *buf = NULL;
-	static size_t bufsize = 0;
-	char const *fileName = fstk_GetFileName();
-	size_t j = 1;
+	struct String const *fileName = fstk_GetFileName();
+	size_t len = str_Len(fileName);
+	struct String *str = str_New(len);
 
-	assert(fileName[0]);
+	if (!str)
+		return str;
+
+	str = str_Push(str, '"');
+	if (!str)
+		return str;
+
+	assert(str_Index(fileName, 0));
 	/* The assertion above ensures the loop runs at least once */
-	for (size_t i = 0; fileName[i]; i++, j++) {
-		/* Account for the extra backslash inserted below */
-		if (fileName[i] == '"')
-			j++;
-		/* Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!! */
-		if (j + 2 >= bufsize) { /* Always keep room for 2 tail chars */
-			bufsize = bufsize ? bufsize * 2 : 64;
-			buf = realloc(buf, bufsize);
-			if (!buf)
-				fatalerror("Failed to grow buffer for file name: %s\n",
-					   strerror(errno));
-		}
+	for (size_t i = 0; i < len i++) {
+		char c = str_Index(fileName, i);
+
 		/* Escape quotes, since we're returning a string */
-		if (fileName[i] == '"')
-			buf[j - 1] = '\\';
-		buf[j] = fileName[i];
+		if (c == '"') {
+			str = str_Push(str, '\\');
+			if (!str)
+				return NULL;
+		}
+		str = str_Push(str, c);
+		if (!str)
+			return str;
 	}
-	/* Write everything after the loop, to ensure the buffer has been allocated */
-	buf[0] = '"';
-	buf[j++] = '"';
-	buf[j] = '\0';
-	return buf;
+
+	str = str_Push(str, '"');
+	return str;
 }
 
 static int32_t CallbackPC(void)
@@ -179,17 +175,17 @@ static void updateSymbolFilename(struct Symbol *sym)
 
 /*
  * Create a new symbol by name
+ * @param symName The symbol's name; ownership taken by the returned symbol
  */
-static struct Symbol *createsymbol(char const *symName)
+static struct Symbol *createsymbol(struct String *symName)
 {
 	struct Symbol *sym = malloc(sizeof(*sym));
 
 	if (!sym)
-		fatalerror("Failed to create symbol '%s': %s\n", symName, strerror(errno));
+		fatalerror("Failed to create symbol '%" PRI_STR "': %s\n",
+			   STR_FMT(symName), strerror(errno));
 
-	if (snprintf(sym->name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
-		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", symName);
-
+	sym->name = symName;
 	sym->isExported = false;
 	sym->isBuiltin = false;
 	sym->hasCallback = false;
@@ -360,20 +356,20 @@ void sym_SetCurrentSymbolScope(char const *newScope)
  * @param symName The name of the symbol to create
  * @param numeric If false, the symbol may not have been referenced earlier
  */
-static struct Symbol *createNonrelocSymbol(char const *symName, bool numeric)
+static struct Symbol *createNonrelocSymbol(struct String *symName, bool numeric)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
 	} else if (sym_IsDefined(sym)) {
-		error("'%s' already defined at ", symName);
+		error("'%" PRI_STR "' already defined at ", STR_FMT(symName));
 		dumpFilename(sym);
 		putc('\n', stderr);
 		return NULL; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
-		error("'%s' already referenced at ", symName);
+		error("'%" PRI_STR "' already referenced at ", STR_FMT(symName));
 		dumpFilename(sym);
 		putc('\n', stderr);
 		return NULL; // Don't allow overriding the symbol, that'd be bad!
@@ -478,15 +474,15 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 /*
  * Alter a SET symbol's value
  */
-struct Symbol *sym_AddSet(char const *symName, int32_t value)
+struct Symbol *sym_AddSet(struct String *symName, int32_t value)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
 	} else if (sym_IsDefined(sym) && sym->type != SYM_SET) {
-		error("'%s' already defined as %s at ",
-		      symName, sym->type == SYM_LABEL ? "label" : "constant");
+		error("'%" PRI_STR "' already defined as %s at ",
+		      STR_FMT(symName), sym->type == SYM_LABEL ? "label" : "constant");
 		dumpFilename(sym);
 		putc('\n', stderr);
 		return sym;
@@ -577,7 +573,7 @@ struct Symbol *sym_AddLocalLabel(char const *symName)
 /*
  * Add a relocatable symbol
  */
-struct Symbol *sym_AddLabel(char const *symName)
+struct Symbol *sym_AddLabel(struct String *symName)
 {
 	struct Symbol *sym = addLabel(symName);
 
@@ -598,9 +594,12 @@ struct Symbol *sym_AddAnonLabel(void)
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
 		return NULL;
 	}
-	char name[MAXSYMLEN + 1];
 
-	sym_WriteAnonLabelName(name, 0, true); // The direction is important!!
+	struct String *name = sym_WriteAnonLabelName(name, 0, true); // The direction is important!
+
+	if (!name)
+		fatalerror("Failed to write anonymous label name: %s\n", strerror(errno));
+
 	anonLabelID++;
 	return addLabel(name);
 }
@@ -608,7 +607,7 @@ struct Symbol *sym_AddAnonLabel(void)
 /*
  * Write an anonymous label's name to a buffer
  */
-void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg)
+struct String *sym_WriteAnonLabelName(uint32_t ofs, bool neg)
 {
 	uint32_t id = 0;
 
@@ -628,7 +627,22 @@ void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, 
 			id = anonLabelID + ofs;
 	}
 
-	sprintf(buf, "!%u", id);
+	struct String *name = str_New(9);
+
+	if (name) {
+		// Begin the name with a character normally illegal in symbol names
+		// That way, anonymous label *cannot* be referenced directly
+		MUTATE_STR(name, str_Push(name, '!'));
+		for (uint8_t i = 0; i < 8; i++) {
+			uint32_t shift = 32 - (i + 1) * 4;
+			uint32_t nybble = (id >> shift) & 0xF;
+			char c = nybble + (nybble > 9 ? 'a' - 10 : '0');
+
+			MUTATE_STR(name, str_Push(name, c));
+		}
+	}
+
+	return name;
 }
 
 /*

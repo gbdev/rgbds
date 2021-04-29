@@ -46,35 +46,33 @@ struct FileStackReptNode { /* NODE_REPT */
 
 struct FileStackNamedNode { /* NODE_FILE, NODE_MACRO */
 	struct FileStackNode node;
-	char name[]; /* File name for files, file::macro name for macros */
+	struct String *name; /* File name for files, file::macro name for macros */
 };
 
 extern size_t maxRecursionDepth;
 
 struct MacroArgs;
+struct String;
 
 void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo);
 void fstk_DumpCurrent(void);
 struct FileStackNode *fstk_GetFileStack(void);
 /* The lifetime of the returned chars is until reaching the end of that file */
-char const *fstk_GetFileName(void);
+struct String const *fstk_GetFileName(void);
 
 void fstk_AddIncludePath(char const *s);
 /**
  * @param path The user-provided file name
- * @param fullPath The address of a pointer, which will be made to point at the full path
- *                 The pointer's value must be a valid argument to `realloc`, including NULL
- * @param size Current size of the buffer, or 0 if the pointer is NULL
- * @return True if the file was found, false if no path worked
+ * @return The full path if the file was found, NULL if no path worked
  */
-bool fstk_FindFile(char const *path, char **fullPath, size_t *size);
+struct String *fstk_FindFile(struct String const *path);
 
 bool yywrap(void);
-void fstk_RunInclude(char const *path);
-void fstk_RunMacro(char const *macroName, struct MacroArgs *args);
+void fstk_RunInclude(struct String const *path);
+void fstk_RunMacro(struct String const *macroName, struct MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size);
-void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
-		     int32_t reptLineNo, char *body, size_t size);
+void fstk_RunFor(struct String *symName, int32_t start, int32_t stop, int32_t step,
+		 int32_t reptLineNo, char *body, size_t size);
 void fstk_StopRept(void);
 bool fstk_Break(void);
 
