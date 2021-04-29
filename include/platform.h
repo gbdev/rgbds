@@ -11,9 +11,10 @@
 #ifndef RGBDS_PLATFORM_H
 #define RGBDS_PLATFORM_H
 
-/* MSVC doesn't have strncasecmp, use a suitable replacement */
+// MSVC doesn't have str(n)casecmp, use a suitable replacement
 #ifdef _MSC_VER
 # include <string.h>
+# define strcasecmp _stricmp
 # define strncasecmp _strnicmp
 #else
 # include <strings.h>

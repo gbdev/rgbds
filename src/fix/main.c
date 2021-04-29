@@ -127,6 +127,25 @@ enum MbcType {
 	MBC_BAD_RANGE, // MBC number out of range
 };
 
+static void printAcceptedMBCNames(void)
+{
+	fputs("\tROM ($00) [aka ROM_ONLY]\n", stderr);
+	fputs("\tMBC1 ($02), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
+	fputs("\tMBC2 ($05), MBC2+BATTERY ($06)\n", stderr);
+	fputs("\tROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]\n", stderr);
+	fputs("\tMMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)\n", stderr);
+	fputs("\tMBC3+TIMER+BATTERY ($0F), MBC3+TIMER+RAM+BATTERY ($10)\n", stderr);
+	fputs("\tMBC3 ($11), MBC3+RAM ($12), MBC3+RAM+BATTERY ($13)\n", stderr);
+	fputs("\tMBC5 ($19), MBC5+RAM ($1A), MBC5+RAM+BATTERY ($1B)\n", stderr);
+	fputs("\tMBC5+RUMBLE ($1C), MBC5+RUMBLE+RAM ($1D), MBC5+RUMBLE+RAM+BATTERY ($1E)\n", stderr);
+	fputs("\tMBC6 ($20)\n", stderr);
+	fputs("\tMBC7+SENSOR+RUMBLE+RAM+BATTERY ($22)\n", stderr);
+	fputs("\tPOCKET_CAMERA ($FC)\n", stderr);
+	fputs("\tBANDAI_TAMA5 ($FD)\n", stderr);
+	fputs("\tHUC3 ($FE)\n", stderr);
+	fputs("\tHUC1+RAM+BATTERY ($FF)\n", stderr);
+}
+
 /**
  * @return False on failure
  */
@@ -151,6 +170,12 @@ static bool readMBCSlice(char const **name, char const *expected)
 
 static enum MbcType parseMBC(char const *name)
 {
+	if (!strcasecmp(name, "help")) {
+		fputs("Accepted MBC names:\n", stderr);
+		printAcceptedMBCNames();
+		exit(0);
+	}
+
 	if ((name[0] >= '0' && name[0] <= '9') || name[0] == '$') {
 		int base = 0;
 
@@ -1134,10 +1159,13 @@ do { \
 		case 'm':
 			cartridgeType = parseMBC(musl_optarg);
 			if (cartridgeType == MBC_BAD) {
-				report("error: Unknown MBC \"%s\"\n", musl_optarg);
-			} else if (cartridgeType == MBC_WRONG_FEATURES) {
-				report("error: Features incompatible with MBC (\"%s\")\n",
+				report("error: Unknown MBC \"%s\"\nAccepted MBC names:\n",
 				       musl_optarg);
+				printAcceptedMBCNames();
+			} else if (cartridgeType == MBC_WRONG_FEATURES) {
+				report("error: Features incompatible with MBC (\"%s\")\nAccepted combinations:\n",
+				       musl_optarg);
+				printAcceptedMBCNames();
 			} else if (cartridgeType == MBC_BAD_RANGE) {
 				report("error: Specified MBC ID out of range 0-255: %s\n",
 				       musl_optarg);
