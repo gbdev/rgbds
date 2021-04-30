@@ -220,6 +220,7 @@ jrlabel:
     add sp,$DB
     ld  [$ABCD],sp
     ld  hl,sp+$DB
+    ld  hl,sp-$25
     ld  sp,hl
 
     pop af
@@ -243,8 +244,6 @@ jrlabel:
     nop
     scf
     stop
-BYTE = 0
-REPT 256
+FOR BYTE, 256
     stop BYTE
-BYTE = BYTE + 1
 ENDR

@@ -487,6 +487,7 @@ enum {
 %type	<constValue>	const_3bit
 %type	<expr>		reloc_8bit
 %type	<expr>		reloc_8bit_no_str
+%type	<expr>		reloc_8bit_offset
 %type	<expr>		reloc_16bit
 %type	<expr>		reloc_16bit_no_str
 %type	<constValue>	sectiontype
@@ -1344,6 +1345,16 @@ reloc_8bit_no_str : relocexpr_no_str {
 		}
 ;
 
+reloc_8bit_offset : T_OP_ADD relocexpr {
+			rpn_CheckNBit(&$2, 8);
+			$$ = $2;
+		}
+		| T_OP_SUB relocexpr {
+			rpn_UNNEG(&$$, &$2);
+			rpn_CheckNBit(&$$, 8);
+		}
+;
+
 reloc_16bit	: relocexpr {
 			rpn_CheckNBit(&$1, 16);
 			$$ = $1;
@@ -1863,9 +1874,9 @@ z80_ld		: z80_ld_mem
 		| z80_ld_a
 ;
 
-z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP T_OP_ADD reloc_8bit {
+z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP reloc_8bit_offset {
 			out_AbsByte(0xF8);
-			out_RelByte(&$6, 1);
+			out_RelByte(&$5, 1);
 		}
 		| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
 			out_AbsByte(0x01 | (REG_HL << 4));
