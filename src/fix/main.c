@@ -25,7 +25,7 @@
 #include "platform.h"
 #include "version.h"
 
-#define UNSPECIFIED 0x100 // May not be in byte range
+#define UNSPECIFIED 0x200 // Should not be in byte range
 
 #define BANK_SIZE 0x4000
 
@@ -79,6 +79,20 @@ static void printUsage(void)
 	      stderr);
 }
 
+static uint8_t nbErrors;
+
+static format_(printf, 1, 2) void report(char const *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	if (nbErrors != UINT8_MAX)
+		nbErrors++;
+}
+
 enum MbcType {
 	ROM  = 0x00,
 	ROM_RAM = 0x08,
@@ -120,6 +134,28 @@ enum MbcType {
 
 	HUC1_RAM_BATTERY = 0xFF,
 
+	// "Extended" values (still valid, but not directly actionable)
+
+	// A high byte of 0x01 means TPP1, the low byte is the requested features
+	// This does not include SRAM, which is instead implied by a non-zero SRAM size
+	// Note: Multiple rumble speeds imply rumble
+	TPP1 = 0x100,
+	TPP1_RUMBLE = 0x101,
+	TPP1_MULTIRUMBLE = 0x102, // Should not be possible
+	TPP1_MULTIRUMBLE_RUMBLE = 0x103,
+	TPP1_RTC = 0x104,
+	TPP1_RTC_RUMBLE = 0x105,
+	TPP1_RTC_MULTIRUMBLE = 0x106, // Should not be possible
+	TPP1_RTC_MULTIRUMBLE_RUMBLE = 0x107,
+	TPP1_BATTERY = 0x108,
+	TPP1_BATTERY_RUMBLE = 0x109,
+	TPP1_BATTERY_MULTIRUMBLE = 0x10a, // Should not be possible
+	TPP1_BATTERY_MULTIRUMBLE_RUMBLE = 0x10b,
+	TPP1_BATTERY_RTC = 0x10c,
+	TPP1_BATTERY_RTC_RUMBLE = 0x10d,
+	TPP1_BATTERY_RTC_MULTIRUMBLE = 0x10e, // Should not be possible
+	TPP1_BATTERY_RTC_MULTIRUMBLE_RUMBLE = 0x10f,
+
 	// Error values
 	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
 	MBC_BAD, // Specified MBC does not exist / syntax error
@@ -144,7 +180,15 @@ static void printAcceptedMBCNames(void)
 	fputs("\tBANDAI_TAMA5 ($FD)\n", stderr);
 	fputs("\tHUC3 ($FE)\n", stderr);
 	fputs("\tHUC1+RAM+BATTERY ($FF)\n", stderr);
+
+	fputs("\n\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+RTC,\n", stderr);
+	fputs("\tTPP1_1.0+RTC+RUMBLE, TPP1_1.0+RTC+MULTIRUMBLE, TPP1_1.0+BATTERY,\n", stderr);
+	fputs("\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n", stderr);
+	fputs("\tTPP1_1.0+BATTERY+RTC, TPP1_1.0+BATTERY+RTC+RUMBLE,\n", stderr);
+	fputs("\tTPP1_1.0+BATTERY+RTC+MULTIRUMBLE\n", stderr);
 }
+
+static uint8_t tpp1Rev[2];
 
 /**
  * @return False on failure
@@ -279,10 +323,50 @@ do { \
 			mbc = BANDAI_TAMA5;
 			break;
 
-		case 'T': // TAMA5
+		case 'T': // TAMA5 / TPP1
 		case 't':
-			tryReadSlice("AMA5");
-			mbc = BANDAI_TAMA5;
+			switch (*ptr++) {
+			case 'A':
+				tryReadSlice("MA5");
+				mbc = BANDAI_TAMA5;
+				break;
+			case 'P':
+				tryReadSlice("P1");
+				// Parse version
+				while (*ptr == ' ' || *ptr == '_')
+					ptr++;
+				// Major
+				char *endptr;
+				unsigned long val = strtoul(ptr, &endptr, 10);
+
+				if (endptr == ptr) {
+					report("error: Failed to parse TPP1 major revision number\n");
+					return MBC_BAD;
+				}
+				ptr = endptr;
+				if (val != 1) {
+					report("error: RGBFIX only supports TPP1 versions 1.0\n");
+					return MBC_BAD;
+				}
+				tpp1Rev[0] = val;
+				tryReadSlice(".");
+				// Minor
+				val = strtoul(ptr, &endptr, 10);
+				if (endptr == ptr) {
+					report("error: Failed to parse TPP1 minor revision number\n");
+					return MBC_BAD;
+				}
+				ptr = endptr;
+				if (val > 0xFF) {
+					report("error: TPP1 minor revision number must be 8-bit\n");
+					return MBC_BAD;
+				}
+				tpp1Rev[1] = val;
+				mbc = TPP1;
+				break;
+			default:
+				return MBC_BAD;
+			}
 			break;
 
 		case 'H': // HuC{1, 3}
@@ -311,6 +395,7 @@ do { \
 #define TIMER 0x20
 #define RUMBLE 0x10
 #define SENSOR 0x08
+#define MULTIRUMBLE 0x04
 
 		for (;;) {
 			// Trim off trailing whitespace
@@ -332,6 +417,12 @@ do { \
 			case 'b':
 				tryReadSlice("ATTERY");
 				features |= BATTERY;
+				break;
+
+			case 'M':
+			case 'm':
+				tryReadSlice("ULTIRUMBLE");
+				features |= MULTIRUMBLE;
 				break;
 
 			case 'R': // RAM or RUMBLE
@@ -455,6 +546,22 @@ do { \
 			if (features != (RAM | BATTERY)) // HuC1 expects RAM+BATTERY
 				return MBC_WRONG_FEATURES;
 			break;
+
+		case TPP1:
+			if (features & RAM)
+				fprintf(stderr,
+					"warning: TPP1 requests RAM implicitly if given a non-zero RAM size");
+			if (features & BATTERY)
+				mbc |= 0x08;
+			if (features & TIMER)
+				mbc |= 0x04;
+			if (features & MULTIRUMBLE)
+				mbc |= 0x03; // Also set the rumble flag
+			if (features & RUMBLE)
+				mbc |= 0x01;
+			if (features & SENSOR)
+				return MBC_WRONG_FEATURES;
+			break;
 		}
 
 		// Trim off trailing whitespace
@@ -528,6 +635,34 @@ static char const *mbcName(enum MbcType type)
 		return "HUC3";
 	case HUC1_RAM_BATTERY:
 		return "HUC1+RAM+BATTERY";
+	case TPP1:
+		return "TPP1";
+	case TPP1_RUMBLE:
+		return "TPP1+RUMBLE";
+	case TPP1_MULTIRUMBLE:
+	case TPP1_MULTIRUMBLE_RUMBLE:
+		return "TPP1+MULTIRUMBLE";
+	case TPP1_RTC:
+		return "TPP1+RTC";
+	case TPP1_RTC_RUMBLE:
+		return "TPP1+RTC+RUMBLE";
+	case TPP1_RTC_MULTIRUMBLE:
+	case TPP1_RTC_MULTIRUMBLE_RUMBLE:
+		return "TPP1+RTC+MULTIRUMBLE";
+	case TPP1_BATTERY:
+		return "TPP1+BATTERY";
+	case TPP1_BATTERY_RUMBLE:
+		return "TPP1+BATTERY+RUMBLE";
+	case TPP1_BATTERY_MULTIRUMBLE:
+	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
+		return "TPP1+BATTERY+MULTIRUMBLE";
+	case TPP1_BATTERY_RTC:
+		return "TPP1+BATTERY+RTC";
+	case TPP1_BATTERY_RTC_RUMBLE:
+		return "TPP1+BATTERY+RTC+RUMBLE";
+	case TPP1_BATTERY_RTC_MULTIRUMBLE:
+	case TPP1_BATTERY_RTC_MULTIRUMBLE_RUMBLE:
+		return "TPP1+BATTERY+RTC+MULTIRUMBLE";
 
 	// Error values
 	case MBC_NONE:
@@ -578,23 +713,28 @@ static bool hasRAM(enum MbcType type)
 	case HUC3:
 	case HUC1_RAM_BATTERY:
 		return true;
+
+	// TPP1 may or may not have RAM, don't call this function for it
+	case TPP1:
+	case TPP1_RUMBLE:
+	case TPP1_MULTIRUMBLE:
+	case TPP1_MULTIRUMBLE_RUMBLE:
+	case TPP1_RTC:
+	case TPP1_RTC_RUMBLE:
+	case TPP1_RTC_MULTIRUMBLE:
+	case TPP1_RTC_MULTIRUMBLE_RUMBLE:
+	case TPP1_BATTERY:
+	case TPP1_BATTERY_RUMBLE:
+	case TPP1_BATTERY_MULTIRUMBLE:
+	case TPP1_BATTERY_MULTIRUMBLE_RUMBLE:
+	case TPP1_BATTERY_RTC:
+	case TPP1_BATTERY_RTC_RUMBLE:
+	case TPP1_BATTERY_RTC_MULTIRUMBLE:
+	case TPP1_BATTERY_RTC_MULTIRUMBLE_RUMBLE:
+		break;
 	}
 
 	unreachable_();
-}
-
-static uint8_t nbErrors;
-
-static format_(printf, 1, 2) void report(char const *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-	if (nbErrors != UINT8_MAX)
-		nbErrors++;
 }
 
 static const uint8_t ninLogo[] = {
@@ -716,13 +856,15 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	uint8_t rom0[BANK_SIZE];
 	ssize_t rom0Len = readBytes(input, rom0, sizeof(rom0));
+	// Also used as how many bytes to write back when fixing in-place
+	ssize_t headerSize = (cartridgeType & 0xff00) == TPP1 ? 0x154 : 0x150;
 
 	if (rom0Len == -1) {
 		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
 		return;
-	} else if (rom0Len < 0x150) {
-		report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
-		       name, (intmax_t)rom0Len);
+	} else if (rom0Len < headerSize) {
+		report("FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n",
+		       name, (intmax_t)headerSize, (intmax_t)headerSize, (intmax_t)rom0Len);
 		return;
 	}
 	// Accept partial reads if the file contains at least the header
@@ -765,17 +907,46 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// If a valid MBC was specified...
 	if (cartridgeType < MBC_NONE) {
 		warnNonZero(rom0, 0x147, 1, "cartridge type");
-		rom0[0x147] = cartridgeType;
+		uint8_t byte = cartridgeType;
+
+		if ((cartridgeType & 0xff00) == TPP1) {
+			// Cartridge type isn't directly actionable, translate it
+			byte = 0xBC;
+			// The other TPP1 identification bytes will be written below
+		}
+		rom0[0x147] = byte;
 	}
 
-	if (ramSize != UNSPECIFIED) {
-		warnNonZero(rom0, 0x149, 1, "RAM size");
-		rom0[0x149] = ramSize;
-	}
+	// ROM size will be written last, after evaluating the file's size
 
-	if (!japanese) {
-		warnNonZero(rom0, 0x14a, 1, "destination code");
-		rom0[0x14a] = 0x01;
+	if ((cartridgeType & 0xff00) == TPP1) {
+		warnNonZero(rom0, 0x149, 2, "TPP1 identification code");
+		rom0[0x149] = 0xC1;
+		rom0[0x14a] = 0x65;
+
+		warnNonZero(rom0, 0x150, 2, "TPP1 revision number");
+		rom0[0x150] = tpp1Rev[0];
+		rom0[0x151] = tpp1Rev[1];
+
+		if (ramSize != UNSPECIFIED) {
+			warnNonZero(rom0, 0x152, 1, "RAM size");
+			rom0[0x152] = ramSize;
+		}
+
+		warnNonZero(rom0, 0x153, 1, "TPP1 feature flags");
+		rom0[0x153] = cartridgeType & 0xFF;
+	} else {
+		// Regular mappers
+
+		if (ramSize != UNSPECIFIED) {
+			warnNonZero(rom0, 0x149, 1, "RAM size");
+			rom0[0x149] = ramSize;
+		}
+
+		if (!japanese) {
+			warnNonZero(rom0, 0x14a, 1, "destination code");
+			rom0[0x14a] = 0x01;
+		}
 	}
 
 	if (oldLicensee != UNSPECIFIED) {
@@ -925,7 +1096,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		// If modifying the file in-place, we only need to edit the header
 		// However, padding may have modified ROM0 (added padding), so don't in that case
 		if (padValue == UNSPECIFIED)
-			rom0Len = 0x150;
+			rom0Len = headerSize;
 	}
 	ssize_t writeLen = writeBytes(output, rom0, rom0Len);
 
@@ -1219,7 +1390,11 @@ do { \
 #undef parseByte
 	}
 
-	if (ramSize != UNSPECIFIED && cartridgeType < UNSPECIFIED) {
+	if ((cartridgeType & 0xff00) == TPP1 && !japanese)
+		fprintf(stderr, "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n");
+
+	// Check that RAM size is correct for "standard" mappers
+	if (ramSize != UNSPECIFIED && (cartridgeType & 0xff00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1)
 				fprintf(stderr, "warning: MBC \"%s\" should have 2kiB of RAM (-r 1)\n",
