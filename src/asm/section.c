@@ -29,6 +29,7 @@ struct SectionStackEntry {
 
 struct SectionStackEntry *sectionStack;
 uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset) */
+struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
 int32_t loadOffset; /* Offset into the LOAD section's parent (see sect_GetOutputOffset) */
 
@@ -44,7 +45,7 @@ struct UnionStackEntry {
 static void checksection(void)
 {
 	if (currentSection == NULL)
-		fatalerror("Code generation before SECTION directive\n");
+		fatalerror("Cannot output data outside of a SECTION\n");
 }
 
 /*
@@ -902,6 +903,9 @@ void out_PushSection(void)
 	sect->offset = curOffset;
 	sect->next = sectionStack;
 	sectionStack = sect;
+
+	// Reset the section scope
+	currentSection = NULL;
 }
 
 void out_PopSection(void)

@@ -40,6 +40,8 @@ struct SectionSpec {
 	uint16_t alignOfs;
 };
 
+extern struct Section *currentSection;
+
 struct Section *out_FindSectionByName(const char *name);
 void out_NewSection(char const *name, uint32_t secttype, uint32_t org,
 		    struct SectionSpec const *attributes,

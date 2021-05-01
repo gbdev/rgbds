@@ -53,8 +53,7 @@ struct Assertion {
 
 char *objectName;
 
-/* TODO: shouldn't `currentSection` be somewhere else? */
-struct Section *sectionList, *currentSection;
+struct Section *sectionList;
 
 /* Linked list of symbols to put in the object file */
 static struct Symbol *objectSymbols = NULL;
