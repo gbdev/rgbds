@@ -1,2 +1,3 @@
-FATAL: align-pc-outside-section.asm(1):
+ERROR: align-pc-outside-section.asm(1):
     Cannot output data outside of a SECTION
+error: Assembly aborted (1 error)!

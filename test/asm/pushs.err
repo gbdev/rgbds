@@ -1,2 +1,3 @@
-FATAL: pushs.asm(5):
+ERROR: pushs.asm(5):
     Cannot output data outside of a SECTION
+error: Assembly aborted (1 error)!
