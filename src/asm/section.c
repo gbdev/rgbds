@@ -22,8 +22,10 @@ uint8_t fillByte;
 
 struct SectionStackEntry {
 	struct Section *section;
+	struct Section *loadSection;
 	char const *scope; /* Section's symbol scope */
 	uint32_t offset;
+	int32_t loadOffset;
 	struct SectionStackEntry *next;
 };
 
@@ -899,13 +901,17 @@ void out_PushSection(void)
 	if (sect == NULL)
 		fatalerror("No memory for section stack: %s\n",  strerror(errno));
 	sect->section = currentSection;
+	sect->loadSection = currentLoadSection;
 	sect->scope = sym_GetCurrentSymbolScope();
 	sect->offset = curOffset;
+	sect->loadOffset = loadOffset;
 	sect->next = sectionStack;
 	sectionStack = sect;
 
 	// Reset the section scope
 	currentSection = NULL;
+	currentLoadSection = NULL;
+	sym_SetCurrentSymbolScope(NULL);
 }
 
 void out_PopSection(void)
@@ -921,8 +927,10 @@ void out_PopSection(void)
 	sect = sectionStack;
 	changeSection();
 	currentSection = sect->section;
+	currentLoadSection = sect->loadSection;
 	sym_SetCurrentSymbolScope(sect->scope);
 	curOffset = sect->offset;
+	loadOffset = sect->loadOffset;
 
 	sectionStack = sect->next;
 	free(sect);
