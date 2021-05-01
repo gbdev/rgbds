@@ -2426,6 +2426,7 @@ int yylex(void)
 
 static char *startCapture(void)
 {
+	assert(!lexerState->capturing);
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	lexerState->disableMacroArgs = true;
@@ -2435,16 +2436,17 @@ static char *startCapture(void)
 		return &lexerState->ptr[lexerState->offset];
 	} else {
 		lexerState->captureCapacity = 128; /* The initial size will be twice that */
+		assert(lexerState->captureBuf == NULL);
 		reallocCaptureBuf();
-		return lexerState->captureBuf;
+		return NULL; // Indicate to retrieve the capture buffer when done capturing
 	}
 }
 
 bool lexer_CaptureRept(struct CaptureBody *capture)
 {
 	capture->lineNo = lexer_GetLineNo();
+	capture->body = startCapture();
 
-	char *captureStart = startCapture();
 	size_t depth = 0;
 	int c = EOF;
 
@@ -2496,7 +2498,10 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 	}
 
 finish:
-	capture->body = captureStart;
+	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
+	// the whole capture process, and so MUST be retrieved at the end
+	if (!capture->body)
+		capture->body = lexerState->captureBuf;
 	capture->size = lexerState->captureSize;
 	lexerState->capturing = false;
 	lexerState->captureBuf = NULL;
@@ -2511,8 +2516,8 @@ finish:
 bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 {
 	capture->lineNo = lexer_GetLineNo();
+	capture->body = startCapture();
 
-	char *captureStart = startCapture();
 	int c = EOF;
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
@@ -2558,7 +2563,10 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 	}
 
 finish:
-	capture->body = captureStart;
+	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
+	// the whole capture process, and so MUST be retrieved at the end
+	if (!capture->body)
+		capture->body = lexerState->captureBuf;
 	capture->size = lexerState->captureSize;
 	lexerState->capturing = false;
 	lexerState->captureBuf = NULL;
