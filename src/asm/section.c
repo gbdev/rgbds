@@ -44,23 +44,30 @@ struct UnionStackEntry {
 /*
  * A quick check to see if we have an initialized section
  */
-static void checksection(void)
+static bool checksection(void)
 {
-	if (currentSection == NULL)
-		fatalerror("Cannot output data outside of a SECTION\n");
+	if (currentSection)
+		return true;
+
+	error("Cannot output data outside of a SECTION\n");
+	return false;
 }
 
 /*
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-static void checkcodesection(void)
+static bool checkcodesection(void)
 {
-	checksection();
+	if (!checksection())
+		return false;
 
-	if (!sect_HasData(currentSection->type))
-		fatalerror("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
-			   currentSection->name);
+	if (sect_HasData(currentSection->type))
+		return true;
+
+	error("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
+	      currentSection->name);
+	return false;
 }
 
 static void checkSectionSize(struct Section const *sect, uint32_t size)
@@ -407,7 +414,8 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 			struct SectionSpec const *attribs,
 			enum SectionModifier mod)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 
 	if (currentLoadSection)
 		fatalerror("`LOAD` blocks cannot be nested\n");
@@ -454,7 +462,9 @@ uint32_t sect_GetOutputOffset(void)
 
 void sect_AlignPC(uint8_t alignment, uint16_t offset)
 {
-	checksection();
+	if (!checksection())
+		return;
+
 	struct Section *sect = sect_GetSymbolSection();
 	uint16_t alignSize = 1 << alignment; // Size of an aligned "block"
 
@@ -566,7 +576,8 @@ void sect_CheckUnionClosed(void)
  */
 void out_AbsByte(uint8_t b)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(1);
 
 	writebyte(b);
@@ -574,7 +585,8 @@ void out_AbsByte(uint8_t b)
 
 void out_AbsByteGroup(uint8_t const *s, int32_t length)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(length);
 
 	while (length--)
@@ -583,7 +595,8 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 
 void out_AbsWordGroup(uint8_t const *s, int32_t length)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(length * 2);
 
 	while (length--)
@@ -592,7 +605,8 @@ void out_AbsWordGroup(uint8_t const *s, int32_t length)
 
 void out_AbsLongGroup(uint8_t const *s, int32_t length)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(length * 4);
 
 	while (length--)
@@ -604,7 +618,8 @@ void out_AbsLongGroup(uint8_t const *s, int32_t length)
  */
 void out_Skip(int32_t skip, bool ds)
 {
-	checksection();
+	if (!checksection())
+		return;
 	reserveSpace(skip);
 
 	if (!ds && sect_HasData(currentSection->type))
@@ -614,7 +629,8 @@ void out_Skip(int32_t skip, bool ds)
 	if (!sect_HasData(currentSection->type)) {
 		growSection(skip);
 	} else {
-		checkcodesection();
+		if (!checkcodesection())
+			return;
 		while (skip--)
 			writebyte(fillByte);
 	}
@@ -625,7 +641,8 @@ void out_Skip(int32_t skip, bool ds)
  */
 void out_String(char const *s)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(strlen(s));
 
 	while (*s)
@@ -638,7 +655,8 @@ void out_String(char const *s)
  */
 void out_RelByte(struct Expression *expr, uint32_t pcShift)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(1);
 
 	if (!rpn_isKnown(expr)) {
@@ -656,7 +674,8 @@ void out_RelByte(struct Expression *expr, uint32_t pcShift)
  */
 void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(n);
 
 	for (uint32_t i = 0; i < n; i++) {
@@ -680,7 +699,8 @@ void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
  */
 void out_RelWord(struct Expression *expr, uint32_t pcShift)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(2);
 
 	if (!rpn_isKnown(expr)) {
@@ -698,7 +718,8 @@ void out_RelWord(struct Expression *expr, uint32_t pcShift)
  */
 void out_RelLong(struct Expression *expr, uint32_t pcShift)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(2);
 
 	if (!rpn_isKnown(expr)) {
@@ -716,7 +737,8 @@ void out_RelLong(struct Expression *expr, uint32_t pcShift)
  */
 void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
 {
-	checkcodesection();
+	if (!checkcodesection())
+		return;
 	reserveSpace(1);
 	struct Symbol const *pc = sym_GetPC();
 
@@ -754,6 +776,8 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
 	}
+	if (!checkcodesection())
+		return;
 
 	char *fullPath = NULL;
 	size_t size = 0;
@@ -777,7 +801,6 @@ void out_BinaryFile(char const *s, int32_t startPos)
 	int32_t fsize = -1;
 	int byte;
 
-	checkcodesection();
 	if (fseek(f, 0, SEEK_END) != -1) {
 		fsize = ftell(f);
 
@@ -821,8 +844,12 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
+
+	if (!checkcodesection())
+		return;
 	if (length == 0) /* Don't even bother with 0-byte slices */
 		return;
+	reserveSpace(length);
 
 	char *fullPath = NULL;
 	size_t size = 0;
@@ -842,9 +869,6 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		}
 		return;
 	}
-
-	checkcodesection();
-	reserveSpace(length);
 
 	int32_t fsize;
 
