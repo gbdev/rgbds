@@ -41,7 +41,7 @@ else()
                   -fsanitize=unreachable -fsanitize=vla-bound
                   -fsanitize=signed-integer-overflow -fsanitize=bounds
                   -fsanitize=object-size -fsanitize=bool -fsanitize=enum
-                  -fsanitize=alignment -fsanitize=null)
+                  -fsanitize=alignment -fsanitize=null -fsanitize=address)
     add_compile_options(${SAN_FLAGS})
     link_libraries(${SAN_FLAGS})
   endif()
