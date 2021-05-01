@@ -151,10 +151,16 @@ static bool readMBCSlice(char const **name, char const *expected)
 
 static enum MbcType parseMBC(char const *name)
 {
-	if (name[0] >= '0' && name[0] <= '9') {
+	if ((name[0] >= '0' && name[0] <= '9') || name[0] == '$') {
+		int base = 0;
+
+		if (name[0] == '$') {
+			name++;
+			base = 16;
+		}
 		// Parse number, and return it as-is (unless it's too large)
 		char *endptr;
-		unsigned long mbc = strtoul(name, &endptr, 0);
+		unsigned long mbc = strtoul(name, &endptr, base);
 
 		if (*endptr)
 			return MBC_BAD;
