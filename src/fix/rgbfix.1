@@ -116,6 +116,9 @@ to a given value from 0 to 0xFF.
 This value may also be an MBC name.
 The list of accepted names can be obtained by passing "help" as the argument.
 Any amount of whitespace (space and tabs) is allowed around plus signs, and the order of "components" is free, as long as the MBC name is first.
+There are special considerations to take for the TPP1 mapper; see the
+.Sx TPP1
+section below.
 .It Fl n Ar rom_version , Fl Fl rom-version Ar rom_version
 Set the ROM version
 .Pq Ad 0x14C
@@ -182,6 +185,46 @@ sans global checksum:
 .Pp
 .D1 $ rgbfix -cjsv -k A4 -l 0x33 -m 0x1B -p 0xFF -r 3 -t SURVIVALKIDAVKE \
 SurvivalKids.gbc
+.Sh TPP1
+TPP1 is a homebrew mapper designed as a functional superset of the common traditional MBCs, allowing larger ROM and RAM sizes combined with other hardware features.
+Its specification, as well as more resources, can be found online at
+.Lk https://github.com/TwitchPlaysPokemon/tpp1 .
+.Ss MBC name
+The MBC name for TPP1 is more complex than standard mappers.
+It must be followed with the revision number, of the form
+.Ql major.minor ,
+where both
+.Ql major
+and
+.Ql minor
+are decimal, 8-bit integers.
+There may be any amount of spaces or underscores between
+.Ql TPP1
+and the revision number.
+.Nm
+only supports 1.x revisions, and will reject everything else.
+.Pp
+Like other mappers, the name may be followed with a list of optional,
+.Ql + Ns
+-separated features; however,
+.Ql RAM
+should not be specified, as the TPP1 mapper implicitly requests RAM if a non-zero RAM size is specified.
+Therefore,
+.Nm
+will ignore the
+.Ql RAM
+feature on a TPP1 mapper with a warning.
+.Ss Special considerations
+TPP1 overwrites the byte at
+.Ad 0x14A ,
+usually indicating the region destination
+.Pq see Fl j ,
+with one of its three identification bytes.
+Therefore,
+.Nm
+will warn about and ignore
+.Fl j
+if used in combination with TPP1.
 .Sh BUGS
 Please report bugs on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .
