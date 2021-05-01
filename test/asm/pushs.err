@@ -1,2 +1,2 @@
-FATAL: align-pc-outside-section.asm(1):
+FATAL: pushs.asm(5):
     Cannot output data outside of a SECTION
