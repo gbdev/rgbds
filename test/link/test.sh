@@ -151,6 +151,24 @@ rc=$(($? || $rc))
 tryCmp overlay/out.gb $gbtemp
 rc=$(($? || $rc))
 
+i="section-fragment/jr-offset.asm"
+startTest
+$RGBASM -o $otemp section-fragment/jr-offset/a.asm
+$RGBASM -o $gbtemp2 section-fragment/jr-offset/b.asm
+rgblinkQuiet -o $gbtemp $otemp $gbtemp2
+dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-fragment/jr-offset/ref.out.bin)) > $otemp 2>/dev/null
+tryCmp section-fragment/jr-offset/ref.out.bin $otemp
+rc=$(($? || $rc))
+
+i="section-fragment/jr-offset-load.asm"
+startTest
+$RGBASM -o $otemp section-fragment/jr-offset-load/a.asm
+$RGBASM -o $gbtemp2 section-fragment/jr-offset-load/b.asm
+rgblinkQuiet -o $gbtemp $otemp $gbtemp2
+dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-fragment/jr-offset-load/ref.out.bin)) > $otemp 2>/dev/null
+tryCmp section-fragment/jr-offset-load/ref.out.bin $otemp
+rc=$(($? || $rc))
+
 i="section-union/good.asm"
 startTest
 $RGBASM -o $otemp section-union/good/a.asm

@@ -165,6 +165,9 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 			if (!target->data)
 				errx(1, "Failed to concatenate \"%s\"'s fragments", target->name);
 			memcpy(target->data + target->size - other->size, other->data, other->size);
+			/* Adjust patches' PC offsets */
+			for (uint32_t patchID = 0; patchID < other->nbPatches; patchID++)
+				other->patches[patchID].pcOffset += other->offset;
 		}
 		break;
 
