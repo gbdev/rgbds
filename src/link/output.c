@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -31,6 +32,12 @@ FILE *mapFile;
 struct SortedSection {
 	struct Section const *section;
 	struct SortedSection *next;
+};
+
+struct SortedSymbol {
+	struct Symbol const *sym;
+	uint32_t idx;
+	uint16_t addr;
 };
 
 static struct {
@@ -268,69 +275,86 @@ static struct SortedSection const **nextSection(struct SortedSection const **s1,
 	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
+/*
+ * Comparator function for `qsort` to sort symbols
+ * Symbols are ordered by address, or else by original index for a stable sort
+ */
+static int compareSymbols(void const *a, void const *b)
+{
+	struct SortedSymbol const *sym1 = (struct SortedSymbol const *)a;
+	struct SortedSymbol const *sym2 = (struct SortedSymbol const *)b;
+
+	if (sym1->addr != sym2->addr)
+		return sym1->addr < sym2->addr ? -1 : 1;
+
+	return sym1->idx < sym2->idx ? -1 : sym1->idx > sym2->idx ? 1 : 0;
+}
+
 /**
  * Write a bank's contents to the sym file
  * @param bankSections The bank's sections
  */
-static void writeSymBank(struct SortedSections const *bankSections)
+static void writeSymBank(struct SortedSections const *bankSections,
+			 enum SectionType type, uint32_t bank)
 {
 	if (!symFile)
 		return;
 
-	struct {
-		struct SortedSection const *sections;
-#define sect sections->section /* Fake member as a shortcut */
-		uint32_t i;
-		struct Symbol const *sym;
-		uint16_t addr;
-	} sectList = { .sections = bankSections->sections, .i = 0 },
-	zlSectList = { .sections = bankSections->zeroLenSections, .i = 0 },
-	  *minSectList;
+	uint32_t nbSymbols = 0;
 
-	for (;;) {
-		while (sectList.sections
-		    && sectList.i   == sectList.sect->nbSymbols) {
-			sectList.sections   = sectList.sections->next;
-			sectList.i   = 0;
-		}
-		while (zlSectList.sections
-		    && zlSectList.i == zlSectList.sect->nbSymbols) {
-			zlSectList.sections = zlSectList.sections->next;
-			zlSectList.i = 0;
-		}
-
-		if (!sectList.sections && !zlSectList.sections) {
-			break;
-		} else if (sectList.sections && zlSectList.sections) {
-			sectList.sym   = sectList.sect->symbols[sectList.i];
-			zlSectList.sym = zlSectList.sect->symbols[zlSectList.i];
-			sectList.addr =
-				sectList.sym->offset   + sectList.sect->org;
-			zlSectList.addr =
-				zlSectList.sym->offset + zlSectList.sect->org;
-
-			minSectList = sectList.addr < zlSectList.addr
-								? &sectList
-								: &zlSectList;
-		} else if (sectList.sections) {
-			sectList.sym   = sectList.sect->symbols[sectList.i];
-			sectList.addr   =
-				sectList.sym->offset   + sectList.sect->org;
-
-			minSectList = &sectList;
-		} else {
-			zlSectList.sym = zlSectList.sect->symbols[zlSectList.i];
-			zlSectList.addr =
-				zlSectList.sym->offset + zlSectList.sect->org;
-
-			minSectList = &zlSectList;
-		}
-		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " %s\n",
-			minSectList->sect->bank, minSectList->addr,
-			minSectList->sym->name);
-		minSectList->i++;
+	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
+		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
+			nbSymbols += sect->nbSymbols;
 	}
-#undef sect
+	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
+		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
+			nbSymbols += sect->nbSymbols;
+	}
+
+	if (!nbSymbols)
+		return;
+
+	struct SortedSymbol *symList = malloc(sizeof(*symList) * nbSymbols);
+
+	if (!symList)
+		err(1, "Failed to allocate symbol list");
+
+	uint32_t idx = 0;
+
+	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
+		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
+			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
+				symList[idx].idx = idx;
+				symList[idx].sym = sect->symbols[i];
+				symList[idx].addr = symList[idx].sym->offset + sect->org;
+				idx++;
+			}
+		}
+	}
+	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
+		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
+			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
+				symList[idx].idx = idx;
+				symList[idx].sym = sect->symbols[i];
+				symList[idx].addr = symList[idx].sym->offset + sect->org;
+				idx++;
+			}
+		}
+	}
+	assert(idx == nbSymbols);
+
+	qsort(symList, nbSymbols, sizeof(*symList), compareSymbols);
+
+	uint32_t symBank = bank + bankranges[type][0];
+
+	for (uint32_t i = 0; i < nbSymbols; i++) {
+		struct SortedSymbol *sym = &symList[i];
+
+		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " %s\n",
+			symBank, sym->addr, sym->sym->name);
+	}
+
+	free(symList);
 }
 
 /**
@@ -443,7 +467,7 @@ static void writeSymAndMap(void)
 		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++) {
 			struct SortedSections const *sect = &sections[type].banks[bank];
 
-			writeSymBank(sect);
+			writeSymBank(sect, type, bank);
 			usedMap[type] += writeMapBank(sect, type, bank);
 		}
 	}
