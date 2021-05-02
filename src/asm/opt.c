@@ -81,7 +81,7 @@ void opt_Parse(char *s)
 
 	case 'L':
 		if (s[1] == '\0')
-			opt_L(true);
+			opt_L(false);
 		else
 			error("Option 'L' does not take an argument\n");
 		break;
@@ -97,7 +97,7 @@ void opt_Parse(char *s)
 		switch (s[1]) {
 		case 'L':
 			if (s[2] == '\0')
-				opt_L(false);
+				opt_L(true);
 			else
 				error("Option '!L' does not take an argument\n");
 			break;
