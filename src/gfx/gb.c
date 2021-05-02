@@ -224,7 +224,11 @@ void create_mapfiles(const struct Options *opts, struct GBImage *gb,
 		if (!tile)
 			err(1, "%s: Failed to allocate memory for tile",
 			    __func__);
-		for (i = 0; i < tile_size; i++) {
+		/*
+		 * If the input image doesn't fill the last tile,
+		 * `gb_i` will reach `gb_size`.
+		 */
+		for (i = 0; i < tile_size && gb_i < gb_size; i++) {
 			tile[i] = gb->data[gb_i];
 			gb_i++;
 		}
