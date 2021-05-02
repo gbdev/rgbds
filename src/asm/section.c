@@ -427,6 +427,11 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 		return;
 	}
 
+	if (mod == SECTION_FRAGMENT) {
+		error("`LOAD FRAGMENT` is not allowed\n");
+		return;
+	}
+
 	struct Section *sect = getSection(name, type, org, attribs, mod);
 
 	changeSection();

@@ -1,4 +1,0 @@
-SECTION "main", ROM0
-LOAD FRAGMENT "test", SRAM
-	db 0
-ENDL

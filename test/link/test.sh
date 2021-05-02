@@ -130,17 +130,6 @@ rgblinkQuiet -o $gbtemp2 $otemp
 tryCmp $gbtemp $gbtemp2
 rc=$(($? || $rc))
 
-i="load-fragment.asm"
-startTest
-$RGBASM -o $otemp load-fragment/a.asm
-$RGBASM -o $gbtemp2 load-fragment/b.asm
-rgblinkQuiet -o $gbtemp $otemp $gbtemp2 2>$outtemp
-tryDiff load-fragment/out.err $outtemp
-rc=$(($? || $rc))
-dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < load-fragment/out.gb)) > $otemp 2>/dev/null
-tryCmp load-fragment/out.gb $otemp
-rc=$(($? || $rc))
-
 i="overlay.asm"
 startTest
 $RGBASM -o $otemp overlay/a.asm
@@ -158,15 +147,6 @@ $RGBASM -o $gbtemp2 section-fragment/jr-offset/b.asm
 rgblinkQuiet -o $gbtemp $otemp $gbtemp2
 dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-fragment/jr-offset/ref.out.bin)) > $otemp 2>/dev/null
 tryCmp section-fragment/jr-offset/ref.out.bin $otemp
-rc=$(($? || $rc))
-
-i="section-fragment/jr-offset-load.asm"
-startTest
-$RGBASM -o $otemp section-fragment/jr-offset-load/a.asm
-$RGBASM -o $gbtemp2 section-fragment/jr-offset-load/b.asm
-rgblinkQuiet -o $gbtemp $otemp $gbtemp2
-dd if=$gbtemp count=1 bs=$(printf %s $(wc -c < section-fragment/jr-offset-load/ref.out.bin)) > $otemp 2>/dev/null
-tryCmp section-fragment/jr-offset-load/ref.out.bin $otemp
 rc=$(($? || $rc))
 
 i="section-union/good.asm"
