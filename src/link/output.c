@@ -302,11 +302,11 @@ static void writeSymBank(struct SortedSections const *bankSections,
 
 	uint32_t nbSymbols = 0;
 
-	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
+	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
 			nbSymbols += sect->nbSymbols;
 	}
-	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
+	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
 			nbSymbols += sect->nbSymbols;
 	}
@@ -321,7 +321,7 @@ static void writeSymBank(struct SortedSections const *bankSections,
 
 	uint32_t idx = 0;
 
-	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
+	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
 			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
 				symList[idx].idx = idx;
@@ -331,7 +331,7 @@ static void writeSymBank(struct SortedSections const *bankSections,
 			}
 		}
 	}
-	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
+	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
 			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
 				symList[idx].idx = idx;
