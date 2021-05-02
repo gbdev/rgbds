@@ -1957,15 +1957,18 @@ POPO
 .Ed
 .Pp
 The options that OPT can modify are currently:
-.Cm b , g , p , L ,
+.Cm b , g , p , h , L ,
 and
 .Cm W .
-The Boolean flag option
+The Boolean flag options
+.Cm h
+and
 .Cm L
-can be specified as
-.Ql OPT L
-or
-.Ql OPT !L .
+can be negated as
+.Ql OPT !h
+and
+.Ql OPT !L
+to act like omitting them from the command-line.
 .Pp
 .Ic POPO
 and

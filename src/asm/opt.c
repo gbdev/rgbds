@@ -14,6 +14,7 @@ struct OptStackEntry {
 	char binary[2];
 	char gbgfx[4];
 	int32_t fillByte;
+	bool haltnop;
 	bool optimizeLoads;
 	bool warningsAreErrors;
 	enum WarningState warningStates[NB_WARNINGS];
@@ -35,6 +36,11 @@ void opt_G(char chars[4])
 void opt_P(uint8_t fill)
 {
 	fillByte = fill;
+}
+
+void opt_h(bool halt)
+{
+	haltnop = halt;
 }
 
 void opt_L(bool optimize)
@@ -79,6 +85,13 @@ void opt_Parse(char *s)
 		}
 		break;
 
+	case 'h':
+		if (s[1] == '\0')
+			opt_h(false);
+		else
+			error("Option 'h' does not take an argument\n");
+		break;
+
 	case 'L':
 		if (s[1] == '\0')
 			opt_L(false);
@@ -95,6 +108,13 @@ void opt_Parse(char *s)
 
 	case '!': // negates flag options that do not take an argument
 		switch (s[1]) {
+		case 'h':
+			if (s[2] == '\0')
+				opt_h(true);
+			else
+				error("Option '!h' does not take an argument\n");
+			break;
+
 		case 'L':
 			if (s[2] == '\0')
 				opt_L(true);
@@ -132,6 +152,8 @@ void opt_Push(void)
 
 	entry->fillByte = fillByte; // Pulled from section.h
 
+	entry->haltnop = haltnop; // Pulled from main.h
+
 	entry->optimizeLoads = optimizeLoads; // Pulled from main.h
 
 	// Both of these pulled from warning.h
@@ -154,6 +176,7 @@ void opt_Pop(void)
 	opt_B(entry->binary);
 	opt_G(entry->gbgfx);
 	opt_P(entry->fillByte);
+	opt_h(entry->haltnop);
 	opt_L(entry->optimizeLoads);
 
 	// opt_W does not apply a whole warning state; it processes one flag string
