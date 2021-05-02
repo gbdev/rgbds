@@ -534,10 +534,14 @@ static void createPatch(enum PatchType type, struct Expression const *expr, uint
 
 void sect_StartUnion(void)
 {
-	if (!currentSection)
-		fatalerror("UNIONs must be inside a SECTION\n");
-	if (sect_HasData(currentSection->type))
-		fatalerror("Cannot use UNION inside of ROM0 or ROMX sections\n");
+	if (!currentSection) {
+		error("UNIONs must be inside a SECTION\n");
+		return;
+	}
+	if (sect_HasData(currentSection->type)) {
+		error("Cannot use UNION inside of ROM0 or ROMX sections\n");
+		return;
+	}
 	struct UnionStackEntry *entry = malloc(sizeof(*entry));
 
 	if (!entry)
@@ -559,15 +563,19 @@ static void endUnionMember(void)
 
 void sect_NextUnionMember(void)
 {
-	if (!unionStack)
-		fatalerror("Found NEXTU outside of a UNION construct\n");
+	if (!unionStack) {
+		error("Found NEXTU outside of a UNION construct\n");
+		return;
+	}
 	endUnionMember();
 }
 
 void sect_EndUnion(void)
 {
-	if (!unionStack)
-		fatalerror("Found ENDU outside of a UNION construct\n");
+	if (!unionStack) {
+		error("Found ENDU outside of a UNION construct\n");
+		return;
+	}
 	endUnionMember();
 	curOffset += unionStack->size;
 	struct UnionStackEntry *next = unionStack->next;
