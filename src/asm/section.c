@@ -417,11 +417,15 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	if (!checkcodesection())
 		return;
 
-	if (currentLoadSection)
-		fatalerror("`LOAD` blocks cannot be nested\n");
+	if (currentLoadSection) {
+		error("`LOAD` blocks cannot be nested\n");
+		return;
+	}
 
-	if (sect_HasData(type))
+	if (sect_HasData(type)) {
 		error("`LOAD` blocks cannot create a ROM section\n");
+		return;
+	}
 
 	struct Section *sect = getSection(name, type, org, attribs, mod);
 
@@ -433,8 +437,10 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 
 void out_EndLoadSection(void)
 {
-	if (!currentLoadSection)
+	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
+		return;
+	}
 
 	changeSection();
 	curOffset += loadOffset;
