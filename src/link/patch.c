@@ -478,6 +478,8 @@ void patch_CheckAssertions(struct Assertion *assert)
 		}
 		struct Assertion *next = assert->next;
 
+		free(assert->patch.rpnExpression);
+		free(assert->message);
 		free(assert);
 		assert = next;
 	}

@@ -640,19 +640,33 @@ void obj_Setup(unsigned int nbFiles)
 	nodes = malloc(sizeof(*nodes) * nbFiles);
 }
 
+static void freeNode(struct FileStackNode *node)
+{
+	if (node->type == NODE_REPT)
+		free(node->iters);
+	else
+		free(node->name);
+}
+
 static void freeSection(struct Section *section, void *arg)
 {
 	(void)arg;
 
-	free(section->name);
-	if (sect_HasData(section->type)) {
-		free(section->data);
-		for (uint32_t i = 0; i < section->nbPatches; i++)
-			free(section->patches[i].rpnExpression);
-		free(section->patches);
-	}
-	free(section->symbols);
-	free(section);
+	do {
+		struct Section *next = section->nextu;
+
+		free(section->name);
+		if (sect_HasData(section->type)) {
+			free(section->data);
+			for (uint32_t i = 0; i < section->nbPatches; i++)
+				free(section->patches[i].rpnExpression);
+			free(section->patches);
+		}
+		free(section->symbols);
+		free(section);
+
+		section = next;
+	} while (section);
 }
 
 static void freeSymbol(struct Symbol *symbol)
@@ -665,8 +679,7 @@ void obj_Cleanup(void)
 {
 	for (unsigned int i = 0; i < nbObjFiles; i++) {
 		for (uint32_t j = 0; j < nodes[i].nbNodes; j++) {
-			if (nodes[i].nodes[j].type == NODE_REPT)
-				free(nodes[i].nodes[j].iters);
+			freeNode(&nodes[i].nodes[j]);
 		}
 		free(nodes[i].nodes);
 	}
@@ -677,16 +690,12 @@ void obj_Cleanup(void)
 	sect_ForEach(freeSection, NULL);
 	sect_CleanupSections();
 
-	struct SymbolList *list = symbolLists;
+	for (struct SymbolList *list = symbolLists, *next; list; list = next) {
+		next = list->next;
 
-	while (list) {
 		for (size_t i = 0; i < list->nbSymbols; i++)
 			freeSymbol(list->symbolList[i]);
 		free(list->symbolList);
-
-		struct SymbolList *next = list->next;
-
 		free(list);
-		list = next;
 	}
 }

@@ -28,18 +28,6 @@
 #include "extern/getopt.h"
 #include "version.h"
 
-#ifdef __clang__
-#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-#define __SANITIZE_ADDRESS__
-#endif /* __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__) */
-#endif /* __clang__ */
-
-#ifdef __SANITIZE_ADDRESS__
-// There are known, non-trivial to fix leaks. We would still like to have `make develop'
-// detect memory corruption, though.
-const char *__asan_default_options(void) { return "detect_leaks=0"; }
-#endif
-
 bool isDmgMode;               /* -d */
 char       *linkerScriptName; /* -l */
 char const *mapFileName;      /* -m */
