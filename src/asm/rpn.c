@@ -185,7 +185,7 @@ void rpn_BankSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	struct Section *section = out_FindSectionByName(sectionName);
+	struct Section *section = sect_FindSectionByName(sectionName);
 
 	if (section && section->bank != (uint32_t)-1) {
 		expr->val = section->bank;

@@ -95,7 +95,7 @@ static void reserveSpace(uint32_t delta_size)
 		checkSectionSize(currentLoadSection, curOffset + delta_size);
 }
 
-struct Section *out_FindSectionByName(const char *name)
+struct Section *sect_FindSectionByName(const char *name)
 {
 	for (struct Section *sect = sectionList; sect; sect = sect->next) {
 		if (strcmp(name, sect->name) == 0)
@@ -361,7 +361,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	// Check if another section exists with the same name; merge if yes, otherwise create one
 
-	struct Section *sect = out_FindSectionByName(name);
+	struct Section *sect = sect_FindSectionByName(name);
 
 	if (sect) {
 		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
@@ -389,8 +389,8 @@ static void changeSection(void)
 /*
  * Set the current section by name and type
  */
-void out_NewSection(char const *name, uint32_t type, uint32_t org,
-		    struct SectionSpec const *attribs, enum SectionModifier mod)
+void sect_NewSection(char const *name, uint32_t type, uint32_t org,
+		     struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
@@ -410,9 +410,8 @@ void out_NewSection(char const *name, uint32_t type, uint32_t org,
 /*
  * Set the current section by name and type
  */
-void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
-			struct SectionSpec const *attribs,
-			enum SectionModifier mod)
+void sect_SetLoadSection(char const *name, uint32_t type, uint32_t org,
+			 struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (!checkcodesection())
 		return;
@@ -440,7 +439,7 @@ void out_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 	currentLoadSection = sect;
 }
 
-void out_EndLoadSection(void)
+void sect_EndLoadSection(void)
 {
 	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
@@ -593,7 +592,7 @@ void sect_CheckUnionClosed(void)
 /*
  * Output an absolute byte
  */
-void out_AbsByte(uint8_t b)
+void sect_AbsByte(uint8_t b)
 {
 	if (!checkcodesection())
 		return;
@@ -602,7 +601,7 @@ void out_AbsByte(uint8_t b)
 	writebyte(b);
 }
 
-void out_AbsByteGroup(uint8_t const *s, int32_t length)
+void sect_AbsByteGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
@@ -612,7 +611,7 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 		writebyte(*s++);
 }
 
-void out_AbsWordGroup(uint8_t const *s, int32_t length)
+void sect_AbsWordGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
@@ -622,7 +621,7 @@ void out_AbsWordGroup(uint8_t const *s, int32_t length)
 		writeword(*s++);
 }
 
-void out_AbsLongGroup(uint8_t const *s, int32_t length)
+void sect_AbsLongGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
@@ -635,7 +634,7 @@ void out_AbsLongGroup(uint8_t const *s, int32_t length)
 /*
  * Skip this many bytes
  */
-void out_Skip(int32_t skip, bool ds)
+void sect_Skip(int32_t skip, bool ds)
 {
 	if (!checksection())
 		return;
@@ -658,7 +657,7 @@ void out_Skip(int32_t skip, bool ds)
 /*
  * Output a NULL terminated string (excluding the NULL-character)
  */
-void out_String(char const *s)
+void sect_String(char const *s)
 {
 	if (!checkcodesection())
 		return;
@@ -672,7 +671,7 @@ void out_String(char const *s)
  * Output a relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
-void out_RelByte(struct Expression *expr, uint32_t pcShift)
+void sect_RelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -691,7 +690,7 @@ void out_RelByte(struct Expression *expr, uint32_t pcShift)
  * Output several copies of a relocatable byte. Checking will be done to see if
  * it is an absolute value in disguise.
  */
-void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
+void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 {
 	if (!checkcodesection())
 		return;
@@ -716,7 +715,7 @@ void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
  * Output a relocatable word. Checking will be done to see if
  * it's an absolute value in disguise.
  */
-void out_RelWord(struct Expression *expr, uint32_t pcShift)
+void sect_RelWord(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -735,7 +734,7 @@ void out_RelWord(struct Expression *expr, uint32_t pcShift)
  * Output a relocatable longword. Checking will be done to see if
  * is an absolute value in disguise.
  */
-void out_RelLong(struct Expression *expr, uint32_t pcShift)
+void sect_RelLong(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -754,7 +753,7 @@ void out_RelLong(struct Expression *expr, uint32_t pcShift)
  * Output a PC-relative relocatable byte. Checking will be done to see if it
  * is an absolute value in disguise.
  */
-void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
+void sect_PCRelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -789,7 +788,7 @@ void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
 /*
  * Output a binary file
  */
-void out_BinaryFile(char const *s, int32_t startPos)
+void sect_BinaryFile(char const *s, int32_t startPos)
 {
 	if (startPos < 0) {
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
@@ -852,7 +851,7 @@ cleanup:
 	fclose(f);
 }
 
-void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
+void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 {
 	if (start_pos < 0) {
 		error("Start position cannot be negative (%" PRId32 ")\n", start_pos);
@@ -937,7 +936,7 @@ cleanup:
 /*
  * Section stack routines
  */
-void out_PushSection(void)
+void sect_PushSection(void)
 {
 	struct SectionStackEntry *sect = malloc(sizeof(*sect));
 
@@ -957,7 +956,7 @@ void out_PushSection(void)
 	sym_SetCurrentSymbolScope(NULL);
 }
 
-void out_PopSection(void)
+void sect_PopSection(void)
 {
 	if (!sectionStack)
 		fatalerror("No entries in the section stack\n");

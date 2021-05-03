@@ -42,14 +42,12 @@ struct SectionSpec {
 
 extern struct Section *currentSection;
 
-struct Section *out_FindSectionByName(const char *name);
-void out_NewSection(char const *name, uint32_t secttype, uint32_t org,
-		    struct SectionSpec const *attributes,
-		    enum SectionModifier mod);
-void out_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
-			struct SectionSpec const *attributes,
-			enum SectionModifier mod);
-void out_EndLoadSection(void);
+struct Section *sect_FindSectionByName(const char *name);
+void sect_NewSection(char const *name, uint32_t secttype, uint32_t org,
+		     struct SectionSpec const *attributes, enum SectionModifier mod);
+void sect_SetLoadSection(char const *name, uint32_t secttype, uint32_t org,
+			 struct SectionSpec const *attributes, enum SectionModifier mod);
+void sect_EndLoadSection(void);
 
 struct Section *sect_GetSymbolSection(void);
 uint32_t sect_GetSymbolOffset(void);
@@ -61,21 +59,21 @@ void sect_NextUnionMember(void);
 void sect_EndUnion(void);
 void sect_CheckUnionClosed(void);
 
-void out_AbsByte(uint8_t b);
-void out_AbsByteGroup(uint8_t const *s, int32_t length);
-void out_AbsWordGroup(uint8_t const *s, int32_t length);
-void out_AbsLongGroup(uint8_t const *s, int32_t length);
-void out_Skip(int32_t skip, bool ds);
-void out_String(char const *s);
-void out_RelByte(struct Expression *expr, uint32_t pcShift);
-void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size);
-void out_RelWord(struct Expression *expr, uint32_t pcShift);
-void out_RelLong(struct Expression *expr, uint32_t pcShift);
-void out_PCRelByte(struct Expression *expr, uint32_t pcShift);
-void out_BinaryFile(char const *s, int32_t startPos);
-void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
+void sect_AbsByte(uint8_t b);
+void sect_AbsByteGroup(uint8_t const *s, int32_t length);
+void sect_AbsWordGroup(uint8_t const *s, int32_t length);
+void sect_AbsLongGroup(uint8_t const *s, int32_t length);
+void sect_Skip(int32_t skip, bool ds);
+void sect_String(char const *s);
+void sect_RelByte(struct Expression *expr, uint32_t pcShift);
+void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size);
+void sect_RelWord(struct Expression *expr, uint32_t pcShift);
+void sect_RelLong(struct Expression *expr, uint32_t pcShift);
+void sect_PCRelByte(struct Expression *expr, uint32_t pcShift);
+void sect_BinaryFile(char const *s, int32_t startPos);
+void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 
-void out_PushSection(void);
-void out_PopSection(void);
+void sect_PushSection(void);
+void sect_PopSection(void);
 
 #endif

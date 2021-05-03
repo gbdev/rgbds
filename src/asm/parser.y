@@ -937,10 +937,10 @@ popo		: T_POP_POPO { opt_Pop(); }
 pusho		: T_POP_PUSHO { opt_Push(); }
 ;
 
-pops		: T_POP_POPS { out_PopSection(); }
+pops		: T_POP_POPS { sect_PopSection(); }
 ;
 
-pushs		: T_POP_PUSHS { out_PushSection(); }
+pushs		: T_POP_PUSHS { sect_PushSection(); }
 ;
 
 fail		: T_POP_FAIL string { fatalerror("%s\n", $2); }
@@ -992,9 +992,9 @@ shift		: T_POP_SHIFT { macro_ShiftCurrentArgs(1); }
 ;
 
 load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
-			out_SetLoadSection($3, $5, $6, &$7, $2);
+			sect_SetLoadSection($3, $5, $6, &$7, $2);
 		}
-		| T_POP_ENDL { out_EndLoadSection(); }
+		| T_POP_ENDL { sect_EndLoadSection(); }
 ;
 
 rept		: T_POP_REPT uconst T_NEWLINE {
@@ -1082,9 +1082,9 @@ nextu		: T_POP_NEXTU { sect_NextUnionMember(); }
 endu		: T_POP_ENDU { sect_EndUnion(); }
 ;
 
-ds		: T_POP_DS uconst { out_Skip($2, true); }
+ds		: T_POP_DS uconst { sect_Skip($2, true); }
 		| T_POP_DS uconst T_COMMA ds_args trailing_comma {
-			out_RelBytes($2, $4.args, $4.nbArgs);
+			sect_RelBytes($2, $4.args, $4.nbArgs);
 			freeDsArgList(&$4);
 		}
 ;
@@ -1103,15 +1103,15 @@ ds_args		: reloc_8bit {
 		}
 ;
 
-db		: T_POP_DB { out_Skip(1, false); }
+db		: T_POP_DB { sect_Skip(1, false); }
 		| T_POP_DB constlist_8bit trailing_comma
 ;
 
-dw		: T_POP_DW { out_Skip(2, false); }
+dw		: T_POP_DW { sect_Skip(2, false); }
 		| T_POP_DW constlist_16bit trailing_comma
 ;
 
-dl		: T_POP_DL { out_Skip(4, false); }
+dl		: T_POP_DL { sect_Skip(4, false); }
 		| T_POP_DL constlist_32bit trailing_comma
 ;
 
@@ -1193,17 +1193,17 @@ include		: label T_POP_INCLUDE string endofline {
 ;
 
 incbin		: T_POP_INCBIN string {
-			out_BinaryFile($2, 0);
+			sect_BinaryFile($2, 0);
 			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 		| T_POP_INCBIN string T_COMMA const {
-			out_BinaryFile($2, $4);
+			sect_BinaryFile($2, $4);
 			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
 		| T_POP_INCBIN string T_COMMA const T_COMMA const {
-			out_BinaryFileSlice($2, $4, $6);
+			sect_BinaryFileSlice($2, $4, $6);
 			if (failedOnMissingInclude)
 				YYACCEPT;
 		}
@@ -1289,13 +1289,13 @@ constlist_8bit	: constlist_8bit_entry
 ;
 
 constlist_8bit_entry : reloc_8bit_no_str {
-			out_RelByte(&$1, 0);
+			sect_RelByte(&$1, 0);
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
 			int32_t length = charmap_Convert($1, output);
 
-			out_AbsByteGroup(output, length);
+			sect_AbsByteGroup(output, length);
 			free(output);
 		}
 ;
@@ -1305,13 +1305,13 @@ constlist_16bit : constlist_16bit_entry
 ;
 
 constlist_16bit_entry : reloc_16bit_no_str {
-			out_RelWord(&$1, 0);
+			sect_RelWord(&$1, 0);
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
 			int32_t length = charmap_Convert($1, output);
 
-			out_AbsWordGroup(output, length);
+			sect_AbsWordGroup(output, length);
 			free(output);
 		}
 ;
@@ -1321,14 +1321,14 @@ constlist_32bit : constlist_32bit_entry
 ;
 
 constlist_32bit_entry : relocexpr_no_str {
-			out_RelLong(&$1, 0);
+			sect_RelLong(&$1, 0);
 		}
 		| string {
 			// Charmaps cannot increase the length of a string
 			uint8_t *output = malloc(strlen($1));
 			int32_t length = charmap_Convert($1, output);
 
-			out_AbsLongGroup(output, length);
+			sect_AbsLongGroup(output, length);
 			free(output);
 		}
 ;
@@ -1624,7 +1624,7 @@ strfmt_va_args	: %empty {
 ;
 
 section		: T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
-			out_NewSection($3, $5, $6, &$7, $2);
+			sect_NewSection($3, $5, $6, &$7, $2);
 		}
 ;
 
@@ -1722,141 +1722,141 @@ cpu_command	: z80_adc
 ;
 
 z80_adc		: T_Z80_ADC op_a_n {
-			out_AbsByte(0xCE);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xCE);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_ADC op_a_r { out_AbsByte(0x88 | $2); }
+		| T_Z80_ADC op_a_r { sect_AbsByte(0x88 | $2); }
 ;
 
 z80_add		: T_Z80_ADD op_a_n {
-			out_AbsByte(0xC6);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xC6);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_ADD op_a_r { out_AbsByte(0x80 | $2); }
-		| T_Z80_ADD T_MODE_HL T_COMMA reg_ss { out_AbsByte(0x09 | ($4 << 4)); }
+		| T_Z80_ADD op_a_r { sect_AbsByte(0x80 | $2); }
+		| T_Z80_ADD T_MODE_HL T_COMMA reg_ss { sect_AbsByte(0x09 | ($4 << 4)); }
 		| T_Z80_ADD T_MODE_SP T_COMMA reloc_8bit {
-			out_AbsByte(0xE8);
-			out_RelByte(&$4, 1);
+			sect_AbsByte(0xE8);
+			sect_RelByte(&$4, 1);
 		}
 
 ;
 
 z80_and		: T_Z80_AND op_a_n {
-			out_AbsByte(0xE6);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xE6);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_AND op_a_r { out_AbsByte(0xA0 | $2); }
+		| T_Z80_AND op_a_r { sect_AbsByte(0xA0 | $2); }
 ;
 
 z80_bit		: T_Z80_BIT const_3bit T_COMMA reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x40 | ($2 << 3) | $4);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x40 | ($2 << 3) | $4);
 		}
 ;
 
 z80_call	: T_Z80_CALL reloc_16bit {
-			out_AbsByte(0xCD);
-			out_RelWord(&$2, 1);
+			sect_AbsByte(0xCD);
+			sect_RelWord(&$2, 1);
 		}
 		| T_Z80_CALL ccode T_COMMA reloc_16bit {
-			out_AbsByte(0xC4 | ($2 << 3));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0xC4 | ($2 << 3));
+			sect_RelWord(&$4, 1);
 		}
 ;
 
-z80_ccf		: T_Z80_CCF { out_AbsByte(0x3F); }
+z80_ccf		: T_Z80_CCF { sect_AbsByte(0x3F); }
 ;
 
 z80_cp		: T_Z80_CP op_a_n {
-			out_AbsByte(0xFE);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xFE);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_CP op_a_r { out_AbsByte(0xB8 | $2); }
+		| T_Z80_CP op_a_r { sect_AbsByte(0xB8 | $2); }
 ;
 
-z80_cpl		: T_Z80_CPL { out_AbsByte(0x2F); }
+z80_cpl		: T_Z80_CPL { sect_AbsByte(0x2F); }
 ;
 
-z80_daa		: T_Z80_DAA { out_AbsByte(0x27); }
+z80_daa		: T_Z80_DAA { sect_AbsByte(0x27); }
 ;
 
-z80_dec		: T_Z80_DEC reg_r { out_AbsByte(0x05 | ($2 << 3)); }
-		| T_Z80_DEC reg_ss { out_AbsByte(0x0B | ($2 << 4)); }
+z80_dec		: T_Z80_DEC reg_r { sect_AbsByte(0x05 | ($2 << 3)); }
+		| T_Z80_DEC reg_ss { sect_AbsByte(0x0B | ($2 << 4)); }
 ;
 
-z80_di		: T_Z80_DI { out_AbsByte(0xF3); }
+z80_di		: T_Z80_DI { sect_AbsByte(0xF3); }
 ;
 
-z80_ei		: T_Z80_EI { out_AbsByte(0xFB); }
+z80_ei		: T_Z80_EI { sect_AbsByte(0xFB); }
 ;
 
 z80_halt	: T_Z80_HALT {
-			out_AbsByte(0x76);
+			sect_AbsByte(0x76);
 			if (haltnop)
-				out_AbsByte(0x00);
+				sect_AbsByte(0x00);
 		}
 ;
 
-z80_inc		: T_Z80_INC reg_r { out_AbsByte(0x04 | ($2 << 3)); }
-		| T_Z80_INC reg_ss { out_AbsByte(0x03 | ($2 << 4)); }
+z80_inc		: T_Z80_INC reg_r { sect_AbsByte(0x04 | ($2 << 3)); }
+		| T_Z80_INC reg_ss { sect_AbsByte(0x03 | ($2 << 4)); }
 ;
 
 z80_jp		: T_Z80_JP reloc_16bit {
-			out_AbsByte(0xC3);
-			out_RelWord(&$2, 1);
+			sect_AbsByte(0xC3);
+			sect_RelWord(&$2, 1);
 		}
 		| T_Z80_JP ccode T_COMMA reloc_16bit {
-			out_AbsByte(0xC2 | ($2 << 3));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0xC2 | ($2 << 3));
+			sect_RelWord(&$4, 1);
 		}
 		| T_Z80_JP T_MODE_HL {
-			out_AbsByte(0xE9);
+			sect_AbsByte(0xE9);
 		}
 ;
 
 z80_jr		: T_Z80_JR reloc_16bit {
-			out_AbsByte(0x18);
-			out_PCRelByte(&$2, 1);
+			sect_AbsByte(0x18);
+			sect_PCRelByte(&$2, 1);
 		}
 		| T_Z80_JR ccode T_COMMA reloc_16bit {
-			out_AbsByte(0x20 | ($2 << 3));
-			out_PCRelByte(&$4, 1);
+			sect_AbsByte(0x20 | ($2 << 3));
+			sect_PCRelByte(&$4, 1);
 		}
 ;
 
 z80_ldi		: T_Z80_LDI T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
-			out_AbsByte(0x02 | (2 << 4));
+			sect_AbsByte(0x02 | (2 << 4));
 		}
 		| T_Z80_LDI T_MODE_A T_COMMA T_LBRACK T_MODE_HL T_RBRACK {
-			out_AbsByte(0x0A | (2 << 4));
+			sect_AbsByte(0x0A | (2 << 4));
 		}
 ;
 
 z80_ldd		: T_Z80_LDD T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
-			out_AbsByte(0x02 | (3 << 4));
+			sect_AbsByte(0x02 | (3 << 4));
 		}
 		| T_Z80_LDD T_MODE_A T_COMMA T_LBRACK T_MODE_HL T_RBRACK {
-			out_AbsByte(0x0A | (3 << 4));
+			sect_AbsByte(0x0A | (3 << 4));
 		}
 ;
 
 z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 			rpn_CheckHRAM(&$4, &$4);
 
-			out_AbsByte(0xF0);
-			out_RelByte(&$4, 1);
+			sect_AbsByte(0xF0);
+			sect_RelByte(&$4, 1);
 		}
 		| T_Z80_LDH op_mem_ind T_COMMA T_MODE_A {
 			rpn_CheckHRAM(&$2, &$2);
 
-			out_AbsByte(0xE0);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xE0);
+			sect_RelByte(&$2, 1);
 		}
 		| T_Z80_LDH T_MODE_A T_COMMA c_ind {
-			out_AbsByte(0xF2);
+			sect_AbsByte(0xF2);
 		}
 		| T_Z80_LDH c_ind T_COMMA T_MODE_A {
-			out_AbsByte(0xE2);
+			sect_AbsByte(0xE2);
 		}
 ;
 
@@ -1875,70 +1875,70 @@ z80_ld		: z80_ld_mem
 ;
 
 z80_ld_hl	: T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP reloc_8bit_offset {
-			out_AbsByte(0xF8);
-			out_RelByte(&$5, 1);
+			sect_AbsByte(0xF8);
+			sect_RelByte(&$5, 1);
 		}
 		| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
-			out_AbsByte(0x01 | (REG_HL << 4));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0x01 | (REG_HL << 4));
+			sect_RelWord(&$4, 1);
 		}
 ;
 
-z80_ld_sp	: T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL { out_AbsByte(0xF9); }
+z80_ld_sp	: T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL { sect_AbsByte(0xF9); }
 		| T_Z80_LD T_MODE_SP T_COMMA reloc_16bit {
-			out_AbsByte(0x01 | (REG_SP << 4));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0x01 | (REG_SP << 4));
+			sect_RelWord(&$4, 1);
 		}
 ;
 
 z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
-			out_AbsByte(0x08);
-			out_RelWord(&$2, 1);
+			sect_AbsByte(0x08);
+			sect_RelWord(&$2, 1);
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
 			if (optimizeLoads && rpn_isKnown(&$2)
 			 && $2.val >= 0xFF00) {
-				out_AbsByte(0xE0);
-				out_AbsByte($2.val & 0xFF);
+				sect_AbsByte(0xE0);
+				sect_AbsByte($2.val & 0xFF);
 				rpn_Free(&$2);
 			} else {
-				out_AbsByte(0xEA);
-				out_RelWord(&$2, 1);
+				sect_AbsByte(0xEA);
+				sect_RelWord(&$2, 1);
 			}
 		}
 ;
 
 z80_ld_cind	: T_Z80_LD c_ind T_COMMA T_MODE_A {
-			out_AbsByte(0xE2);
+			sect_AbsByte(0xE2);
 		}
 ;
 
 z80_ld_rr	: T_Z80_LD reg_rr T_COMMA T_MODE_A {
-			out_AbsByte(0x02 | ($2 << 4));
+			sect_AbsByte(0x02 | ($2 << 4));
 		}
 ;
 
 z80_ld_r	: T_Z80_LD reg_r T_COMMA reloc_8bit {
-			out_AbsByte(0x06 | ($2 << 3));
-			out_RelByte(&$4, 1);
+			sect_AbsByte(0x06 | ($2 << 3));
+			sect_RelByte(&$4, 1);
 		}
 		| T_Z80_LD reg_r T_COMMA reg_r {
 			if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
 				error("LD [HL],[HL] not a valid instruction\n");
 			else
-				out_AbsByte(0x40 | ($2 << 3) | $4);
+				sect_AbsByte(0x40 | ($2 << 3) | $4);
 		}
 ;
 
 z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 			if ($2 == REG_A)
-				out_AbsByte(0xF2);
+				sect_AbsByte(0xF2);
 			else
 				error("Destination operand must be A\n");
 		}
 		| T_Z80_LD reg_r T_COMMA reg_rr {
 			if ($2 == REG_A)
-				out_AbsByte(0x0A | ($4 << 4));
+				sect_AbsByte(0x0A | ($4 << 4));
 			else
 				error("Destination operand must be A\n");
 		}
@@ -1946,12 +1946,12 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 			if ($2 == REG_A) {
 				if (optimizeLoads && rpn_isKnown(&$4)
 				 && $4.val >= 0xFF00) {
-					out_AbsByte(0xF0);
-					out_AbsByte($4.val & 0xFF);
+					sect_AbsByte(0xF0);
+					sect_AbsByte($4.val & 0xFF);
 					rpn_Free(&$4);
 				} else {
-					out_AbsByte(0xFA);
-					out_RelWord(&$4, 1);
+					sect_AbsByte(0xFA);
+					sect_RelWord(&$4, 1);
 				}
 			} else {
 				error("Destination operand must be A\n");
@@ -1961,12 +1961,12 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 ;
 
 z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
-			out_AbsByte(0x01 | (REG_BC << 4));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0x01 | (REG_BC << 4));
+			sect_RelWord(&$4, 1);
 		}
 		| T_Z80_LD T_MODE_DE T_COMMA reloc_16bit {
-			out_AbsByte(0x01 | (REG_DE << 4));
-			out_RelWord(&$4, 1);
+			sect_AbsByte(0x01 | (REG_DE << 4));
+			sect_RelWord(&$4, 1);
 		}
 		/*
 		 * HL is taken care of in z80_ld_hl
@@ -1974,143 +1974,143 @@ z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
 		 */
 ;
 
-z80_nop		: T_Z80_NOP { out_AbsByte(0x00); }
+z80_nop		: T_Z80_NOP { sect_AbsByte(0x00); }
 ;
 
 z80_or		: T_Z80_OR op_a_n {
-			out_AbsByte(0xF6);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xF6);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_OR op_a_r { out_AbsByte(0xB0 | $2); }
+		| T_Z80_OR op_a_r { sect_AbsByte(0xB0 | $2); }
 ;
 
-z80_pop		: T_Z80_POP reg_tt { out_AbsByte(0xC1 | ($2 << 4)); }
+z80_pop		: T_Z80_POP reg_tt { sect_AbsByte(0xC1 | ($2 << 4)); }
 ;
 
-z80_push	: T_Z80_PUSH reg_tt { out_AbsByte(0xC5 | ($2 << 4)); }
+z80_push	: T_Z80_PUSH reg_tt { sect_AbsByte(0xC5 | ($2 << 4)); }
 ;
 
 z80_res		: T_Z80_RES const_3bit T_COMMA reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x80 | ($2 << 3) | $4);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x80 | ($2 << 3) | $4);
 		}
 ;
 
-z80_ret		: T_Z80_RET { out_AbsByte(0xC9); }
-		| T_Z80_RET ccode { out_AbsByte(0xC0 | ($2 << 3)); }
+z80_ret		: T_Z80_RET { sect_AbsByte(0xC9); }
+		| T_Z80_RET ccode { sect_AbsByte(0xC0 | ($2 << 3)); }
 ;
 
-z80_reti	: T_Z80_RETI { out_AbsByte(0xD9); }
+z80_reti	: T_Z80_RETI { sect_AbsByte(0xD9); }
 ;
 
 z80_rl		: T_Z80_RL reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x10 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x10 | $2);
 		}
 ;
 
-z80_rla		: T_Z80_RLA { out_AbsByte(0x17); }
+z80_rla		: T_Z80_RLA { sect_AbsByte(0x17); }
 ;
 
 z80_rlc		: T_Z80_RLC reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x00 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x00 | $2);
 		}
 ;
 
-z80_rlca	: T_Z80_RLCA { out_AbsByte(0x07); }
+z80_rlca	: T_Z80_RLCA { sect_AbsByte(0x07); }
 ;
 
 z80_rr		: T_Z80_RR reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x18 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x18 | $2);
 		}
 ;
 
-z80_rra		: T_Z80_RRA { out_AbsByte(0x1F); }
+z80_rra		: T_Z80_RRA { sect_AbsByte(0x1F); }
 ;
 
 z80_rrc		: T_Z80_RRC reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x08 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x08 | $2);
 		}
 ;
 
-z80_rrca	: T_Z80_RRCA { out_AbsByte(0x0F); }
+z80_rrca	: T_Z80_RRCA { sect_AbsByte(0x0F); }
 ;
 
 z80_rst		: T_Z80_RST reloc_8bit {
 			rpn_CheckRST(&$2, &$2);
 			if (!rpn_isKnown(&$2))
-				out_RelByte(&$2, 0);
+				sect_RelByte(&$2, 0);
 			else
-				out_AbsByte(0xC7 | $2.val);
+				sect_AbsByte(0xC7 | $2.val);
 			rpn_Free(&$2);
 		}
 ;
 
 z80_sbc		: T_Z80_SBC op_a_n {
-			out_AbsByte(0xDE);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xDE);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_SBC op_a_r { out_AbsByte(0x98 | $2); }
+		| T_Z80_SBC op_a_r { sect_AbsByte(0x98 | $2); }
 ;
 
-z80_scf		: T_Z80_SCF { out_AbsByte(0x37); }
+z80_scf		: T_Z80_SCF { sect_AbsByte(0x37); }
 ;
 
 z80_set		: T_POP_SET const_3bit T_COMMA reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0xC0 | ($2 << 3) | $4);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0xC0 | ($2 << 3) | $4);
 		}
 ;
 
 z80_sla		: T_Z80_SLA reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x20 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x20 | $2);
 		}
 ;
 
 z80_sra		: T_Z80_SRA reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x28 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x28 | $2);
 		}
 ;
 
 z80_srl		: T_Z80_SRL reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x38 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x38 | $2);
 		}
 ;
 
 z80_stop	: T_Z80_STOP {
-			out_AbsByte(0x10);
-			out_AbsByte(0x00);
+			sect_AbsByte(0x10);
+			sect_AbsByte(0x00);
 		}
 		| T_Z80_STOP reloc_8bit {
-			out_AbsByte(0x10);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0x10);
+			sect_RelByte(&$2, 1);
 		}
 ;
 
 z80_sub		: T_Z80_SUB op_a_n {
-			out_AbsByte(0xD6);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xD6);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_SUB op_a_r { out_AbsByte(0x90 | $2); }
+		| T_Z80_SUB op_a_r { sect_AbsByte(0x90 | $2); }
 ;
 
 z80_swap	: T_Z80_SWAP reg_r {
-			out_AbsByte(0xCB);
-			out_AbsByte(0x30 | $2);
+			sect_AbsByte(0xCB);
+			sect_AbsByte(0x30 | $2);
 		}
 ;
 
 z80_xor		: T_Z80_XOR op_a_n {
-			out_AbsByte(0xEE);
-			out_RelByte(&$2, 1);
+			sect_AbsByte(0xEE);
+			sect_RelByte(&$2, 1);
 		}
-		| T_Z80_XOR op_a_r { out_AbsByte(0xA8 | $2); }
+		| T_Z80_XOR op_a_r { sect_AbsByte(0xA8 | $2); }
 ;
 
 op_mem_ind	: T_LBRACK reloc_16bit T_RBRACK { $$ = $2; }
