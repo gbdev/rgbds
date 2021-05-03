@@ -44,7 +44,7 @@ struct UnionStackEntry {
 /*
  * A quick check to see if we have an initialized section
  */
-static bool checksection(void)
+attr_(warn_unused_result) static bool checksection(void)
 {
 	if (currentSection)
 		return true;
@@ -57,7 +57,7 @@ static bool checksection(void)
  * A quick check to see if we have an initialized section that can contain
  * this much initialized data
  */
-static bool checkcodesection(void)
+attr_(warn_unused_result) static bool checkcodesection(void)
 {
 	if (!checksection())
 		return false;
@@ -70,29 +70,43 @@ static bool checkcodesection(void)
 	return false;
 }
 
-static void checkSectionSize(struct Section const *sect, uint32_t size)
+attr_(warn_unused_result) static bool checkSectionSize(struct Section const *sect, uint32_t size)
 {
 	uint32_t maxSize = maxsize[sect->type];
 
-	if (size > maxSize)
-		fatalerror("Section '%s' grew too big (max size = 0x%" PRIX32
-			   " bytes, reached 0x%" PRIX32 ").\n", sect->name, maxSize, size);
+	// If the new size is reasonable, keep going
+	if (size <= maxSize)
+		return true;
+
+	error("Section '%s' grew too big (max size = 0x%" PRIX32
+	      " bytes, reached 0x%" PRIX32 ").\n", sect->name, maxSize, size);
+	return false;
 }
 
 /*
  * Check if the section has grown too much.
  */
-static void reserveSpace(uint32_t delta_size)
+attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 {
 	/*
-	 * This check is here to trap broken code that generates sections that
-	 * are too big and to prevent the assembler from generating huge object
-	 * files or trying to allocate too much memory.
+	 * This check is here to trap broken code that generates sections that are too big and to
+	 * prevent the assembler from generating huge object files or trying to allocate too much
+	 * memory.
 	 * A check at the linking stage is still necessary.
 	 */
-	checkSectionSize(currentSection, curOffset + loadOffset + delta_size);
-	if (currentLoadSection)
-		checkSectionSize(currentLoadSection, curOffset + delta_size);
+
+	// If the section has already overflowed, skip the check to avoid erroring out ad nauseam
+	if (currentSection->size != UINT32_MAX
+	 && !checkSectionSize(currentSection, curOffset + loadOffset + delta_size))
+		// Mark the section as overflowed, to avoid repeating the error
+		currentSection->size = UINT32_MAX;
+
+	if (currentLoadSection && currentLoadSection->size != UINT32_MAX
+	 && !checkSectionSize(currentLoadSection, curOffset + delta_size))
+		currentLoadSection->size = UINT32_MAX;
+
+	return currentSection->size != UINT32_MAX
+		&& (!currentLoadSection || currentLoadSection->size != UINT32_MAX);
 }
 
 struct Section *out_FindSectionByName(const char *name)
@@ -597,7 +611,8 @@ void out_AbsByte(uint8_t b)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(1);
+	if (!reserveSpace(1))
+		return;
 
 	writebyte(b);
 }
@@ -606,7 +621,8 @@ void out_AbsByteGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(length);
+	if (!reserveSpace(length))
+		return;
 
 	while (length--)
 		writebyte(*s++);
@@ -616,7 +632,8 @@ void out_AbsWordGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(length * 2);
+	if (!reserveSpace(length * 2))
+		return;
 
 	while (length--)
 		writeword(*s++);
@@ -626,7 +643,8 @@ void out_AbsLongGroup(uint8_t const *s, int32_t length)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(length * 4);
+	if (!reserveSpace(length * 4))
+		return;
 
 	while (length--)
 		writelong(*s++);
@@ -639,17 +657,16 @@ void out_Skip(int32_t skip, bool ds)
 {
 	if (!checksection())
 		return;
-	reserveSpace(skip);
-
-	if (!ds && sect_HasData(currentSection->type))
-		warning(WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
-			(skip == 4) ? "DL" : (skip == 2) ? "DW" : "DB");
+	if (!reserveSpace(skip))
+		return;
 
 	if (!sect_HasData(currentSection->type)) {
 		growSection(skip);
 	} else {
-		if (!checkcodesection())
-			return;
+		if (!ds)
+			warning(WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
+				(skip == 4) ? "DL" : (skip == 2) ? "DW" : "DB");
+		// We know we're in a code SECTION
 		while (skip--)
 			writebyte(fillByte);
 	}
@@ -662,7 +679,8 @@ void out_String(char const *s)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(strlen(s));
+	if (!reserveSpace(strlen(s)))
+		return;
 
 	while (*s)
 		writebyte(*s++);
@@ -676,7 +694,8 @@ void out_RelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(1);
+	if (!reserveSpace(1))
+		return;
 
 	if (!rpn_isKnown(expr)) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
@@ -695,7 +714,8 @@ void out_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(n);
+	if (!reserveSpace(n))
+		return;
 
 	for (uint32_t i = 0; i < n; i++) {
 		struct Expression *expr = &exprs[i % size];
@@ -720,7 +740,8 @@ void out_RelWord(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(2);
+	if (!reserveSpace(2))
+		return;
 
 	if (!rpn_isKnown(expr)) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
@@ -739,7 +760,8 @@ void out_RelLong(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(2);
+	if (!reserveSpace(2))
+		return;
 
 	if (!rpn_isKnown(expr)) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
@@ -758,7 +780,8 @@ void out_PCRelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
-	reserveSpace(1);
+	if (!reserveSpace(1))
+		return;
 	struct Symbol const *pc = sym_GetPC();
 
 	if (!rpn_IsDiffConstant(expr, pc)) {
@@ -829,11 +852,12 @@ void out_BinaryFile(char const *s, int32_t startPos)
 		}
 
 		fseek(f, startPos, SEEK_SET);
-		reserveSpace(fsize - startPos);
+		if (!reserveSpace(fsize - startPos))
+			goto cleanup;
 	} else {
 		if (errno != ESPIPE)
 			error("Error determining size of INCBIN file '%s': %s\n",
-				s, strerror(errno));
+			      s, strerror(errno));
 		/* The file isn't seekable, so we'll just skip bytes */
 		while (startPos--)
 			(void)fgetc(f);
@@ -868,7 +892,8 @@ void out_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		return;
 	if (length == 0) /* Don't even bother with 0-byte slices */
 		return;
-	reserveSpace(length);
+	if (!reserveSpace(length))
+		return;
 
 	char *fullPath = NULL;
 	size_t size = 0;
