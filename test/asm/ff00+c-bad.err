@@ -1,7 +1,5 @@
 ERROR: ff00+c-bad.asm(8):
-    Expected constant equal to $FF00 for "$ff00 + c", got $FF01 instead (did you mistype the C?)
+    Expected constant expression equal to $FF00 for "$ff00+c"
 ERROR: ff00+c-bad.asm(9):
-    Expected constant expression: 'xyz' is not constant at assembly time
-ERROR: ff00+c-bad.asm(9):
-    Expected constant equal to $FF00 for "$ff00 + c", got $0000 instead (did you mistype the C?)
-error: Assembly aborted (3 errors)!
+    Expected constant expression equal to $FF00 for "$ff00+c"
+error: Assembly aborted (2 errors)!

@@ -1861,12 +1861,8 @@ z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 
 c_ind		: T_LBRACK T_MODE_C T_RBRACK
 		| T_LBRACK relocexpr T_OP_ADD T_MODE_C T_RBRACK {
-			int32_t val = rpn_GetConstVal(&$2);
-
-			if (val != 0xff00) {
-				error("Expected constant equal to $FF00 for \"$ff00 + c\", got $%04X instead (did you mistype the C?)\n",
-				      val);
-			}
+			if (!rpn_isKnown(&$2) || $2.val != 0xff00)
+				error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
 		}
 ;
 
