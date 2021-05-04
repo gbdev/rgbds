@@ -355,7 +355,6 @@ struct LexerState {
 	uint32_t lineNo;
 	uint32_t colNo;
 	int lastToken;
-	int nextToken;
 
 	struct IfStack *ifStack;
 
@@ -379,7 +378,6 @@ static void initState(struct LexerState *state)
 	state->mode = LEXER_NORMAL;
 	state->atLineStart = true; /* yylex() will init colNo due to this */
 	state->lastToken = T_EOF;
-	state->nextToken = 0;
 
 	state->ifStack = NULL;
 
@@ -1795,13 +1793,6 @@ static int yylex_NORMAL(void)
 	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
 		 lexer_GetLineNo(), lexer_GetColNo());
 
-	if (lexerState->nextToken) {
-		int token = lexerState->nextToken;
-
-		lexerState->nextToken = 0;
-		return token;
-	}
-
 	for (;;) {
 		int c = nextChar();
 		char secondChar;
@@ -1919,23 +1910,6 @@ static int yylex_NORMAL(void)
 
 		case '$':
 			yylval.constValue = readHexNumber();
-			/* Attempt to match `$ff00+c` */
-			if (yylval.constValue == 0xff00) {
-				/* Whitespace is ignored anyways */
-				while (isWhitespace(c = peek()))
-					shiftChar();
-				if (c == '+') {
-					shiftChar();
-					while (isWhitespace(c = peek()))
-						shiftChar();
-					if (c == 'c' || c == 'C') {
-						shiftChar();
-						return T_MODE_HW_C;
-					}
-					/* Retroactively lex the plus after the $ff00 */
-					lexerState->nextToken = T_OP_ADD;
-				}
-			}
 			return T_NUMBER;
 
 		case '0': /* Decimal number */
