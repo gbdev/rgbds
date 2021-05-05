@@ -384,7 +384,8 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		used += sect->size;
 
 		if (sect->size != 0)
-			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04" PRIx16 " ($%04" PRIx16 " byte%s) [\"%s\"]\n",
+			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
+				" byte%s) [\"%s\"]\n",
 				sect->org, sect->org + sect->size - 1,
 				sect->size, sect->size == 1 ? "" : "s",
 				sect->name);
