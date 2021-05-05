@@ -337,7 +337,7 @@ static void placeSection(struct Section *section)
 		     section->name, typeNames[section->type], where);
 	/* If the section just can't fit the bank, report that */
 	else if (section->org + section->size > endaddr(section->type) + 1)
-		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04" PRIx16 " > $%04" PRIx16 ")",
+		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
 		     section->name, typeNames[section->type], where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	/* Otherwise there is overlap with another section */

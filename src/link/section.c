@@ -49,8 +49,8 @@ static void checkSectUnionCompat(struct Section *target, struct Section *other)
 				     other->name, target->org, other->org);
 		} else if (target->isAlignFixed) {
 			if ((other->org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
-				     "-byte alignment (offset %" PRIu16 ") and address $%04" PRIx16,
+				errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+				     PRIu16 ") and address $%04" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
 		}
@@ -61,15 +61,14 @@ static void checkSectUnionCompat(struct Section *target, struct Section *other)
 		if (target->isAddressFixed) {
 			if ((target->org - other->alignOfs) & other->alignMask)
 				errx(1, "Section \"%s\" is defined with conflicting address $%04"
-				     PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
+				     PRIx16 " and %d-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs)
 				 != (target->alignMask & other->alignOfs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
-			     "-byte alignment (offset %" PRIu16 ") and %" PRIu16
-			     "-byte alignment (offset %" PRIu16 ")",
+			errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+			     PRIu16 ") and %d-byte alignment (offset %" PRIu16 ")",
 			     other->name, target->alignMask + 1, target->alignOfs,
 			     other->alignMask + 1, other->alignOfs);
 		} else if (!target->isAlignFixed || (other->alignMask > target->alignMask)) {
@@ -92,8 +91,8 @@ static void checkFragmentCompat(struct Section *target, struct Section *other)
 
 		} else if (target->isAlignFixed) {
 			if ((org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
-				     "-byte alignment (offset %" PRIu16 ") and address $%04" PRIx16,
+				errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+				     PRIu16 ") and address $%04" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
 		}
@@ -109,15 +108,14 @@ static void checkFragmentCompat(struct Section *target, struct Section *other)
 		if (target->isAddressFixed) {
 			if ((target->org - ofs) & other->alignMask)
 				errx(1, "Section \"%s\" is defined with conflicting address $%04"
-				     PRIx16 " and %" PRIu16 "-byte alignment (offset %" PRIu16 ")",
+				     PRIx16 " and %d-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs) != (target->alignMask & ofs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %" PRIu16
-			     "-byte alignment (offset %" PRIu16 ") and %" PRIu16
-			     "-byte alignment (offset %" PRIu16 ")",
+			errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+			     PRIu16 ") and %d-byte alignment (offset %" PRIu16 ")",
 			     other->name, target->alignMask + 1, target->alignOfs,
 			     other->alignMask + 1, other->alignOfs);
 
@@ -252,7 +250,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	/* Too large an alignment may not be satisfiable */
 	if (section->isAlignFixed && (section->alignMask & startaddr[section->type]))
-		fail("%s: %s sections cannot be aligned to $%04" PRIx16 " bytes",
+		fail("%s: %s sections cannot be aligned to $%04x bytes",
 		     section->name, typeNames[section->type], section->alignMask + 1);
 
 	uint32_t minbank = bankranges[section->type][0], maxbank = bankranges[section->type][1];
@@ -292,9 +290,9 @@ static void doSanityChecks(struct Section *section, void *ptr)
 			     startaddr[section->type], endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			fail("Section \"%s\"'s end address %#" PRIx16
-			     " is greater than last address %#" PRIx16, section->name,
-			     section->org + section->size, endaddr(section->type) + 1);
+			fail("Section \"%s\"'s end address %#x is greater than last address %#x",
+			     section->name, section->org + section->size,
+			     endaddr(section->type) + 1);
 	}
 
 #undef fail
