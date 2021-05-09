@@ -8,9 +8,6 @@ jobs:
   windows:
     runs-on: windows-2019
     steps:
-      - name: Disable auto-CRLF # This breaks scripts (see https://github.com/gbdev/rgbds/issues/841)
-        run: |
-          git config --global --unset core.autocrlf
       - uses: actions/checkout@v2
       - name: Get version from tag
         shell: bash
