@@ -399,14 +399,14 @@ Most of them return a string, however some of these functions actually return an
 .It Fn STRLWR str Ta Returns Ar str No with all letters in lowercase.
 .It Fn STRRPL str old new Ta Returns Ar str No with each non-overlapping occurrence of the substring Ar old No replaced with Ar new .
 .It Fn STRFMT fmt args... Ta Returns the string Ar fmt No with each
-.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
-.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap.
 .Ql %spec
 pattern replaced by interpolating the format
 .Ar spec
 with its corresponding argument in
 .Ar args
 .Pq So %% Sc is replaced by the So % Sc character .
+.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
+.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap.
 .El
 .Ss Character maps
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
