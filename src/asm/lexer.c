@@ -1307,6 +1307,7 @@ static uint32_t readGfxConstant(void)
 
 static bool startsIdentifier(int c)
 {
+	// Anonymous labels internally start with '!'
 	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
 }
 
