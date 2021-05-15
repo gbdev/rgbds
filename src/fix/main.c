@@ -181,11 +181,11 @@ static void printAcceptedMBCNames(void)
 	fputs("\tHUC3 ($FE)\n", stderr);
 	fputs("\tHUC1+RAM+BATTERY ($FF)\n", stderr);
 
-	fputs("\n\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+RTC,\n", stderr);
-	fputs("\tTPP1_1.0+RTC+RUMBLE, TPP1_1.0+RTC+MULTIRUMBLE, TPP1_1.0+BATTERY,\n", stderr);
+	fputs("\n\tTPP1_1.0, TPP1_1.0+RUMBLE, TPP1_1.0+MULTIRUMBLE, TPP1_1.0+TIMER,\n", stderr);
+	fputs("\tTPP1_1.0+TIMER+RUMBLE, TPP1_1.0+TIMER+MULTIRUMBLE, TPP1_1.0+BATTERY,\n", stderr);
 	fputs("\tTPP1_1.0+BATTERY+RUMBLE, TPP1_1.0+BATTERY+MULTIRUMBLE,\n", stderr);
-	fputs("\tTPP1_1.0+BATTERY+RTC, TPP1_1.0+BATTERY+RTC+RUMBLE,\n", stderr);
-	fputs("\tTPP1_1.0+BATTERY+RTC+MULTIRUMBLE\n", stderr);
+	fputs("\tTPP1_1.0+BATTERY+TIMER, TPP1_1.0+BATTERY+TIMER+RUMBLE,\n", stderr);
+	fputs("\tTPP1_1.0+BATTERY+TIMER+MULTIRUMBLE\n", stderr);
 }
 
 static uint8_t tpp1Rev[2];
