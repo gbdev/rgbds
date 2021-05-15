@@ -860,58 +860,79 @@ code that can be invoked later.
 A text string that can be expanded later, similarly to a macro.
 .El
 .Pp
-Symbol names can contain letters, numbers, underscores
+Symbol names can contain ASCII letters, numbers, underscores
 .Sq _ ,
 hashes
 .Sq #
 and at signs
 .Sq @ .
 However, they must begin with either a letter or an underscore.
-Periods
-.Sq \&.
-are allowed exclusively in labels, as described below.
-A symbol cannot have the same name as a reserved keyword.
-.Ss Label declaration
-One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of "magic" numbers.
+Additionally, label names can contain up to a single dot
+.Ql \&. ,
+which may not be the first character.
 .Pp
-This can be done in a number of ways:
+A symbol cannot have the same name as a reserved keyword.
+.Ss Labels
+One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of
+.Dq magic
+numbers.
+Labels enable just that: a label ties a name to a specific location within a section.
+A label resolves to a bank and address, determined at the same time as its parent section's (see further in this section).
+.Pp
+A label is said to be
+.Em local
+if its name contains a dot
+.Ql \&. ;
+otherwise, it is said to be
+.Em global
+(not to be mistaken with
+.Dq exported ,
+explained in
+.Sx Exporting and importing symbols
+further below).
+More than one dot in label names is not allowed.
+.Pp
+For convenience, local labels can use a shorthand syntax: when a symbol name starting with a dot is found (for example, inside an expression, or when declaring a label), then the current
+.Dq label scope
+(explained below)
+is implicitly prepended.
+.Pp
+A label is defined by writing its name at the beginning of a line, followed by one or two colons,
+.Em without any whitespace between the label name and the colon(s) .
+When defining a local label, the colon can be omitted, and
+.Nm
+will act as if there was only one.
+.Pp
+Defining a global label sets it as the current
+.Dq label scope ,
+until the next global label definition, or the end of the current section.
+Declaring a label (global or local) with two colons
+.Ql ::
+will define and
+.Ic EXPORT
+it at the same time.
+(See
+.Sx Exporting and importing symbols
+below).
+.Pp
+Here are some examples of label definitions:
 .Bd -literal -offset indent
 GlobalLabel:
 AnotherGlobal:
-\&.locallabel
+\&.locallabel ;\ This defines "AnotherGlobal.locallabel"
 \&.another_local:
 AnotherGlobal.with_another_local:
 ThisWillBeExported:: ;\ Note the two colons
 ThisWillBeExported.too::
 .Ed
 .Pp
-Any label whose name does not contain a period is a global label.
-Declaring a global label sets it as the current scoped label, until the next global one.
-Global labels must be followed by one or two colons.
-.Pp
-Any label whose name contains a single period is a local label.
-Label names cannot contain more than one period.
-If the period is the first character, it will have the current scoped label's name implicitly prepended.
-Local labels may optionally be followed by one or two colons.
-Local labels can be declared as
-.Ql scoped.local
-or simply as
-.Ql .local .
-If the former notation is used, then
-.Ql scoped
-must actually be the current scoped label.
-.Pp
-Declaring a label (global or local) with two colons
-.Ql ::
-will
-.Ic EXPORT
-and define it at the same time.
-(See
-.Sx Exporting and importing symbols
-below).
-.Pp
-.Sy Anonymous labels
-are useful for short blocks of code.
+A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
+However, if the section in which the label is defined has a fixed base address, its value is known at assembly time.
+Also,
+.Nm
+is able to compute the subtraction of two labels either if both are constant as described above, or if both belong to the same section.
+.Ss Anonymous labels
+Anonymous labels are useful for short blocks of code.
 They are defined like normal labels, but without a name before the colon.
 Anonymous labels are independent of label scoping, so defining one does not change the scoped label, and referencing one is not affected by the current scoped label.
 .Pp
@@ -940,12 +961,6 @@ and so on.
 :   ; referenced by "ld hl"
     dw $7FFF, $1061, $03E0, $58A5
 .Ed
-.Pp
-A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
-However, if the section in which the label is declared has a fixed base address, its value is known at assembly time.
-.Pp
-.Nm
-is able to compute the subtraction of two labels either if both are constant as described above, or if both belong to the same section.
 .Ss Immutable constants
 .Ic EQU
 is used to define numerical constant symbols.
