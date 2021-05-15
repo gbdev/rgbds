@@ -494,7 +494,7 @@ All other sections must have a unique name, even in different source files, or t
 Possible section
 .Ar type Ns s
 are as follows:
-.Bl -tag
+.Bl -tag -width Ds
 .It Ic ROM0
 A ROM section.
 .Ar addr
@@ -602,7 +602,7 @@ sections.
 To put some in RAM, have it stored in ROM, and copy it to RAM.
 .Pp
 .Ar option Ns s are comma-separated and may include:
-.Bl -tag
+.Bl -tag -width Ds
 .It Ic BANK Ns Bq Ar bank
 Specify which
 .Ar bank
@@ -978,7 +978,7 @@ This can be used, for example, to update a constant using a macro, without makin
     def NUM_ITEMS equ 0
 MACRO add_item
     redef NUM_ITEMS equ NUM_ITEMS + 1
-    def ITEM_{02x:NUM_ITEMS} equ \1
+    def ITEM_{02x:NUM_ITEMS} equ \[rs]1
 ENDM
     add_item 1
     add_item 4
@@ -1265,7 +1265,6 @@ Linking failed with 1 error
 .Pp
 Note also that only exported symbols will appear in symbol and map files produced by
 .Xr rgblink 1 .
-.Pp
 .Ss Purging symbols
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table as if it had never existed.
@@ -1755,7 +1754,7 @@ The
 value will be updated by
 .Ar step
 until it reaches or exceeds
-.Ar stop.
+.Ar stop .
 For example:
 .Bd -literal -offset indent
 FOR V, 4, 25, 5

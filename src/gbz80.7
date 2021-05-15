@@ -28,7 +28,7 @@ OR B
 .Ed
 .Sh LEGEND
 List of abbreviations used in this document.
-.Bl -tag
+.Bl -tag -width Ds
 .It Ar r8
 Any of the 8-bit registers
 .Pq Sy A , B , C , D , E , H , L .
@@ -53,7 +53,7 @@ to
 .Pc .
 .It Ar cc
 Condition codes:
-.Bl -tag -compact
+.Bl -tag -width Ds -compact
 .It Sy Z
 Execute if Z is set.
 .It Sy NZ
@@ -67,10 +67,9 @@ Execute if C is not set.
 One of the
 .Sy RST
 vectors
-.Po Ad 0x00 , 0x08 , 0x10 , 0x18 , 0x20 , 0x28 , 0x30
+.Po Ad 0x00 , 0x08 , 0x10 , 0x18 , 0x20 , 0x28 , 0x30 ,
 and
-.Sy 0x38
-.Pc .
+.Ad 0x38 Pc .
 .El
 .Sh INSTRUCTION OVERVIEW
 .Ss 8-bit Arithmetic and Logic Instructions
@@ -1029,7 +1028,7 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LD A,[HL+], ,
+.Ql LD A,[HL+] ,
 or
 .Ql LDI A,[HL] .
 .Ss LD SP,n16
