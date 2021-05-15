@@ -2,7 +2,7 @@ error: TPP1 minor revision number must be 8-bit
 error: Unknown MBC "TPP1_1.256"
 Accepted MBC names:
 	ROM ($00) [aka ROM_ONLY]
-	MBC1 ($02), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)
+	MBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)
 	MBC2 ($05), MBC2+BATTERY ($06)
 	ROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]
 	MMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)

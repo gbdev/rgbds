@@ -166,7 +166,7 @@ enum MbcType {
 static void printAcceptedMBCNames(void)
 {
 	fputs("\tROM ($00) [aka ROM_ONLY]\n", stderr);
-	fputs("\tMBC1 ($02), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
+	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
 	fputs("\tMBC2 ($05), MBC2+BATTERY ($06)\n", stderr);
 	fputs("\tROM+RAM ($08) [deprecated], ROM+RAM+BATTERY ($09) [deprecated]\n", stderr);
 	fputs("\tMMM01 ($0B), MMM01+RAM ($0C), MMM01+RAM+BATTERY ($0D)\n", stderr);

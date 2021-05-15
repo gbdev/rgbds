@@ -8,6 +8,7 @@ local args=(
 	'(-t --tiny)'{-t,--tiny}'[Enable tiny mode, disabling ROM banking]'
 	'(-v --verbose)'{-v,--verbose}'[Enable verbose output]'
 	'(-w --wramx)'{-w,--wramx}'[Disable WRAM banking]'
+	'(-x --nopad)'{-x,--nopad}'[Disable padding the end of the final file]'
 
 	'(-l --linkerscript)'{-l,--linkerscript}"+[Use a linker script]:linker script:_files -g '*.link'"
 	'(-m --map)'{-m,--map}"+[Produce a map file]:map file:_files -g '*.map'"

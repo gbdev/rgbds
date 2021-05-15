@@ -32,6 +32,6 @@ local args=(
 	'(-t --tilemap -T --output-tilemap)'{-t,--tilemap}'+[Generate a map of tile indices]:tilemap file:_files'
 	'(-x --trim-end)'{-x,--trim-end}'+[Trim end of output by this many tiles]:tile count:'
 
-	'*'":input png files:_files -g '*.png'"
+	":input png file:_files -g '*.png'"
 )
 _arguments -s -S : $args
