@@ -212,10 +212,8 @@ static struct LinkerScriptToken *nextToken(void)
 		if (curchar == '\r') {
 			/* Handle CRLF */
 			curchar = nextChar();
-			if (curchar != '\n') {
+			if (curchar != '\n')
 				ungetc(curchar, linkerScript);
-				curchar = '\r';
-			}
 		}
 	} else if (curchar == '"') {
 		/* If we have a string start, this is a string */
