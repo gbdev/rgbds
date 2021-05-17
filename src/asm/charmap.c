@@ -215,49 +215,50 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 	size_t rewindDistance = 0;
 
 	for (;;) {
-		/* We still want NULs to reach the `else` path, to give a chance to rewind */
 		uint8_t c = **input - 1;
 
 		if (**input && node->next[c]) {
-			(*input)++; /* Consume that char */
+			// Consume that char
+			(*input)++;
 			rewindDistance++;
 
+			// Advance to next node (index starts at 1)
 			node = &charmap->nodes[node->next[c]];
 			if (node->isTerminal) {
+				// This node matches, register it
 				match = node;
-				rewindDistance = 0; /* Rewind from after the match */
+				rewindDistance = 0; // If no longer match is found, rewind here
 			}
 
 		} else {
-			*input -= rewindDistance; /* Rewind */
-			rewindDistance = 0;
-			node = &charmap->nodes[0];
+			// We are at a dead end (either because we reached the end of input, or of
+			// the trie), so rewind up to the last match, and output.
+			*input -= rewindDistance; // This will rewind all the way if no match found
 
-			if (match) { /* Arrived at a dead end with a match found */
+			if (match) { // A match was found, use it
 				if (output)
 					*(*output)++ = match->value;
 
 				return 1;
 
-			} else if (**input) { /* No match found */
+			} else if (**input) { // No match found, but there is some input left
+				// This will write the codepoint's value to `output`, little-endian
 				size_t codepointLen = readUTF8Char(output ? *output : NULL,
 								   *input);
 
 				if (codepointLen == 0)
 					error("Input string is not valid UTF-8!\n");
 
-				/* OK because UTF-8 has no NUL in multi-byte chars */
+				// OK because UTF-8 has no NUL in multi-byte chars
 				*input += codepointLen;
 				if (output)
 					*output += codepointLen;
 
 				return codepointLen;
 
-			} else { /* End of input */
+			} else { // End of input
 				return 0;
 			}
 		}
 	}
-
-	unreachable_();
 }
