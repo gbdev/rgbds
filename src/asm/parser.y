@@ -686,6 +686,7 @@ line		: plain_directive endofline
 		| line_directive /* Directives that manage newlines themselves */
 		| error endofline { /* Continue parsing the next line on a syntax error */
 			fstk_StopRept();
+			yyerrok;
 		}
 ;
 
