@@ -20,12 +20,19 @@
 
 uint8_t fillByte;
 
+struct UnionStackEntry {
+	uint32_t start;
+	uint32_t size;
+	struct UnionStackEntry *next;
+} *unionStack = NULL;
+
 struct SectionStackEntry {
 	struct Section *section;
 	struct Section *loadSection;
 	char const *scope; /* Section's symbol scope */
 	uint32_t offset;
 	int32_t loadOffset;
+	struct UnionStackEntry *unionStack;
 	struct SectionStackEntry *next;
 };
 
@@ -34,12 +41,6 @@ uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset
 struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
 int32_t loadOffset; /* Offset into the LOAD section's parent (see sect_GetOutputOffset) */
-
-struct UnionStackEntry {
-	uint32_t start;
-	uint32_t size;
-	struct UnionStackEntry *next;
-} *unionStack = NULL;
 
 /*
  * A quick check to see if we have an initialized section
@@ -428,6 +429,11 @@ void sect_NewSection(char const *name, uint32_t type, uint32_t org,
 void sect_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 			 struct SectionSpec const *attribs, enum SectionModifier mod)
 {
+	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
+	// "code" sections, whereas LOAD is restricted to them.
+	// Therefore, any interactions are NOT TESTED, so lift either of those restrictions at
+	// your own peril! ^^
+
 	if (!checkcodesection())
 		return;
 
@@ -548,6 +554,11 @@ static void createPatch(enum PatchType type, struct Expression const *expr, uint
 
 void sect_StartUnion(void)
 {
+	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
+	// "code" sections, whereas LOAD is restricted to them.
+	// Therefore, any interactions are NOT TESTED, so lift either of those restrictions at
+	// your own peril! ^^
+
 	if (!currentSection) {
 		error("UNIONs must be inside a SECTION\n");
 		return;
@@ -964,22 +975,24 @@ cleanup:
  */
 void sect_PushSection(void)
 {
-	struct SectionStackEntry *sect = malloc(sizeof(*sect));
+	struct SectionStackEntry *entry = malloc(sizeof(*entry));
 
-	if (sect == NULL)
+	if (entry == NULL)
 		fatalerror("No memory for section stack: %s\n",  strerror(errno));
-	sect->section = currentSection;
-	sect->loadSection = currentLoadSection;
-	sect->scope = sym_GetCurrentSymbolScope();
-	sect->offset = curOffset;
-	sect->loadOffset = loadOffset;
-	sect->next = sectionStack;
-	sectionStack = sect;
+	entry->section = currentSection;
+	entry->loadSection = currentLoadSection;
+	entry->scope = sym_GetCurrentSymbolScope();
+	entry->offset = curOffset;
+	entry->loadOffset = loadOffset;
+	entry->unionStack = unionStack;
+	entry->next = sectionStack;
+	sectionStack = entry;
 
 	// Reset the section scope
 	currentSection = NULL;
 	currentLoadSection = NULL;
 	sym_SetCurrentSymbolScope(NULL);
+	unionStack = NULL;
 }
 
 void sect_PopSection(void)
@@ -998,6 +1011,7 @@ void sect_PopSection(void)
 	sym_SetCurrentSymbolScope(entry->scope);
 	curOffset = entry->offset;
 	loadOffset = entry->loadOffset;
+	unionStack = entry->unionStack;
 
 	sectionStack = entry->next;
 	free(entry);
