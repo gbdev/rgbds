@@ -418,6 +418,7 @@ void sect_NewSection(char const *name, uint32_t type, uint32_t org,
 
 	changeSection();
 	curOffset = mod == SECTION_UNION ? 0 : sect->size;
+	loadOffset = 0; // This is still used when checking for section size overflow!
 	currentSection = sect;
 }
 
@@ -989,16 +990,15 @@ void sect_PopSection(void)
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block!\n");
 
-	struct SectionStackEntry *sect;
+	struct SectionStackEntry *entry = sectionStack;
 
-	sect = sectionStack;
 	changeSection();
-	currentSection = sect->section;
-	currentLoadSection = sect->loadSection;
-	sym_SetCurrentSymbolScope(sect->scope);
-	curOffset = sect->offset;
-	loadOffset = sect->loadOffset;
+	currentSection = entry->section;
+	currentLoadSection = entry->loadSection;
+	sym_SetCurrentSymbolScope(entry->scope);
+	curOffset = entry->offset;
+	loadOffset = entry->loadOffset;
 
-	sectionStack = sect->next;
-	free(sect);
+	sectionStack = entry->next;
+	free(entry);
 }
