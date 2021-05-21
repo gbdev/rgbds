@@ -688,6 +688,15 @@ line		: plain_directive endofline
 			fstk_StopRept();
 			yyerrok;
 		}
+		| T_LABEL error endofline { /* Hint about unindented macros parsed as labels */
+			struct Symbol *macro = sym_FindExactSymbol($1);
+
+			if (macro && macro->type == SYM_MACRO)
+				fprintf(stderr,
+					"    To invoke `%s` as a macro it must be indented\n", $1);
+			fstk_StopRept();
+			yyerrok;
+		}
 ;
 
 /*
