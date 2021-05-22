@@ -684,11 +684,19 @@ plain_directive	: label
 
 line		: plain_directive endofline
 		| line_directive /* Directives that manage newlines themselves */
-		| error endofline { /* Continue parsing the next line on a syntax error */
+		/* Continue parsing the next line on a syntax error */
+		| error {
+			lexer_SetMode(LEXER_NORMAL);
+			lexer_ToggleStringExpansion(true);
+		} endofline {
 			fstk_StopRept();
 			yyerrok;
 		}
-		| T_LABEL error endofline { /* Hint about unindented macros parsed as labels */
+		/* Hint about unindented macros parsed as labels */
+		| T_LABEL error {
+			lexer_SetMode(LEXER_NORMAL);
+			lexer_ToggleStringExpansion(true);
+		} endofline {
 			struct Symbol *macro = sym_FindExactSymbol($1);
 
 			if (macro && macro->type == SYM_MACRO)
