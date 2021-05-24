@@ -809,7 +809,7 @@ Flags: None affected.
 .Ss LD [HL],r8
 Store value in register
 .Ar r8
-into byte pointed to by register
+into the byte pointed to by register
 .Sy HL .
 .Pp
 Cycles: 2
@@ -820,7 +820,7 @@ Flags: None affected.
 .Ss LD [HL],n8
 Store value
 .Ar n8
-into byte pointed to by register
+into the byte pointed to by register
 .Sy HL .
 .Pp
 Cycles: 3
@@ -831,7 +831,7 @@ Flags: None affected.
 .Ss LD r8,[HL]
 Load value into register
 .Ar r8
-from byte pointed to by register
+from the byte pointed to by register
 .Sy HL .
 .Pp
 Cycles: 2
@@ -842,7 +842,7 @@ Flags: None affected.
 .Ss LD [r16],A
 Store value in register
 .Sy A
-into byte pointed to by register
+into the byte pointed to by register
 .Ar r16 .
 .Pp
 Cycles: 2
@@ -853,7 +853,7 @@ Flags: None affected.
 .Ss LD [n16],A
 Store value in register
 .Sy A
-into byte at address
+into the byte at address
 .Ar n16 .
 .Pp
 Cycles: 4
@@ -864,9 +864,9 @@ Flags: None affected.
 .Ss LDH [n16],A
 Store value in register
 .Sy A
-into byte at address
+into the byte at address
 .Ar n16 ,
-provided it is between
+provided the address is between
 .Ad $FF00
 and
 .Ad $FFFF .
@@ -884,7 +884,7 @@ or
 .Ss LDH [C],A
 Store value in register
 .Sy A
-into byte at address
+into the byte at address
 .Ad $FF00+C .
 .Pp
 Cycles: 2
@@ -900,7 +900,7 @@ or
 .Ss LD A,[r16]
 Load value in register
 .Sy A
-from byte pointed to by register
+from the byte pointed to by register
 .Ar r16 .
 .Pp
 Cycles: 2
@@ -911,7 +911,7 @@ Flags: None affected.
 .Ss LD A,[n16]
 Load value in register
 .Sy A
-from byte at address
+from the byte at address
 .Ar n16 .
 .Pp
 Cycles: 4
@@ -922,9 +922,9 @@ Flags: None affected.
 .Ss LDH A,[n16]
 Load value in register
 .Sy A
-from byte at address
+from the byte at address
 .Ar n16 ,
-provided it is between
+provided the address is between
 .Ad $FF00
 and
 .Ad $FFFF .
@@ -942,7 +942,7 @@ or
 .Ss LDH A,[C]
 Load value in register
 .Sy A
-from byte at address
+from the byte at address
 .Ad $FF00+c .
 .Pp
 Cycles: 2
@@ -958,7 +958,7 @@ or
 .Ss LD [HLI],A
 Store value in register
 .Sy A
-into byte pointed by
+into the byte pointed by
 .Sy HL
 and increment
 .Sy HL
@@ -977,7 +977,7 @@ or
 .Ss LD [HLD],A
 Store value in register
 .Sy A
-into byte pointed by
+into the byte pointed by
 .Sy HL
 and decrement
 .Sy HL
@@ -996,7 +996,7 @@ or
 .Ss LD A,[HLD]
 Load value into register
 .Sy A
-from byte pointed by
+from the byte pointed by
 .Sy HL
 and decrement
 .Sy HL
@@ -1015,7 +1015,7 @@ or
 .Ss LD A,[HLI]
 Load value into register
 .Sy A
-from byte pointed by
+from the byte pointed by
 .Sy HL
 and increment
 .Sy HL
@@ -1327,7 +1327,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss RL [HL]
-Rotate byte pointed to by
+Rotate the byte pointed to by
 .Sy HL
 left through carry.
 .Pp
@@ -1384,7 +1384,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss RLC [HL]
-Rotate byte pointed to by
+Rotate the byte pointed to by
 .Sy HL
 left.
 .Pp
@@ -1441,7 +1441,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss RR [HL]
-Rotate byte pointed to by
+Rotate the byte pointed to by
 .Sy HL
 right through carry.
 .Pp
@@ -1498,7 +1498,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss RRC [HL]
-Rotate byte pointed to by
+Rotate the byte pointed to by
 .Sy HL
 right.
 .Pp
@@ -1637,7 +1637,7 @@ Bytes: 2
 .Pp
 Flags: None affected.
 .Ss SLA r8
-Shift Left Arithmetic register
+Shift Left Arithmetically register
 .Ar r8 .
 .Pp
 .D1 C <- [7 <- 0] <- 0
@@ -1658,7 +1658,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss SLA [HL]
-Shift Left Arithmetic byte pointed to by
+Shift Left Arithmetically the byte pointed to by
 .Sy HL .
 .Pp
 .D1 C <- [7 <- 0] <- 0
@@ -1670,7 +1670,7 @@ Bytes: 2
 Flags: See
 .Sx SLA r8
 .Ss SRA r8
-Shift Right Arithmetic register
+Shift Right Arithmetically register
 .Ar r8 .
 .Pp
 .D1 [7] -> [7 -> 0] -> C
@@ -1691,7 +1691,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss SRA [HL]
-Shift Right Arithmetic byte pointed to by
+Shift Right Arithmetically the byte pointed to by
 .Sy HL .
 .Pp
 .D1 [7] -> [7 -> 0] -> C
@@ -1703,7 +1703,7 @@ Bytes: 2
 Flags: See
 .Sx SRA r8
 .Ss SRL r8
-Shift Right Logic register
+Shift Right Logically register
 .Ar r8 .
 .Pp
 .D1 0 -> [7 -> 0] -> C
@@ -1724,7 +1724,7 @@ Set if result is 0.
 Set according to result.
 .El
 .Ss SRL [HL]
-Shift Right Logic byte pointed to by
+Shift Right Logically the byte pointed to by
 .Sy HL .
 .Pp
 .D1 0 -> [7 -> 0] -> C
@@ -1793,7 +1793,7 @@ Bytes: 2
 Flags: See
 .Sx SUB A,r8
 .Ss SWAP r8
-Swap upper 4 bits in register
+Swap the upper 4 bits in register
 .Ar r8
 and the lower 4 ones.
 .Pp
@@ -1813,7 +1813,7 @@ Set if result is 0.
 0
 .El
 .Ss SWAP [HL]
-Swap upper 4 bits in the byte pointed by
+Swap the upper 4 bits in the byte pointed by
 .Sy HL
 and the lower 4 ones.
 .Pp
