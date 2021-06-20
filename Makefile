@@ -193,7 +193,7 @@ checkcodebase:
 # `.y` files aren't checked, unfortunately...
 
 checkpatch:
-	$Qeval COMMON_COMMIT=$$(git merge-base HEAD ${BASE_REF});	\
+	$QCOMMON_COMMIT=`git merge-base HEAD ${BASE_REF}`;		\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
 		echo "[*] Analyzing commit '$$commit'";			\
 		git format-patch --stdout "$$commit~..$$commit"		\
@@ -204,8 +204,7 @@ checkpatch:
 # Target used to check for suspiciously missing changed files.
 
 checkdiff:
-	$Qeval COMMON_COMMIT=$$(git merge-base HEAD ${BASE_REF});	\
-	contrib/checkdiff.bash $$COMMON_COMMIT
+	$Qcontrib/checkdiff.bash `git merge-base HEAD ${BASE_REF}`
 
 # This target is used during development in order to prevent adding new issues
 # to the source code. All warnings are treated as errors in order to block the

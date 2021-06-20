@@ -22,20 +22,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FILES=`git diff --name-only $1 HEAD`
+declare -A FILES
+while read -r -d '' file; do
+	FILES["$file"]="true"
+done < <(git diff --name-only -z $1 HEAD)
 
 edited () {
-	echo "$FILES" | grep -Fxq "$1"
+	${FILES["$1"]:-"false"}
 }
 
 dependency () {
-	if edited $1 && ! edited $2; then
-		echo "Edited '$1' but not '$2'!"
+	if edited "$1" && ! edited "$2"; then
+		default_msg="'$1' was modified, but not '$2'!"
+		shift 2
+		echo "$@" "$default_msg"
 	fi
 }
 
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
-dependency include/linkdefs.h    src/rgbds.5
-dependency src/asm/parser.y      src/asm/rgbasm.5
-dependency include/asm/warning.h src/asm/rgbasm.1
+dependency include/linkdefs.h    src/rgbds.5         "Should rgbds(5) be synced with the obj file format changes?"
+dependency src/asm/parser.y      src/asm/rgbasm.5    "Should rgbasm(5) be synced with the parser changes?"
+dependency include/asm/warning.h src/asm/rgbasm.1    "Should rgbasm(1) be synced with the warning changes?"
+dependency src/asm/object.c      include/linkdefs.h  "Should the obj file revision be bumped?"
+dependency src/link/object.c     include/linkdefs.h  "Should the obj file revision be bumped?"
