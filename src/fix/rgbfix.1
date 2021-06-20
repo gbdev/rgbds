@@ -13,7 +13,7 @@
 .Nd Game Boy header utility and checksum fixer
 .Sh SYNOPSIS
 .Nm
-.Op Fl jsVv
+.Op Fl jOsVv
 .Op Fl C | c
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
@@ -125,6 +125,8 @@ section below.
 Set the ROM version
 .Pq Ad 0x14C
 to a given value from 0 to 0xFF.
+.It Fl O , Fl Fl overwrite
+Allow overwriting different non-zero bytes in the header without a warning being emitted.
 .It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
 Pad the ROM image to a valid size with a given pad value from 0 to 255 (0xFF).
 .Nm

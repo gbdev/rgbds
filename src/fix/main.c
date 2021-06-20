@@ -30,7 +30,7 @@
 #define BANK_SIZE 0x4000
 
 /* Short options */
-static const char *optstring = "Ccf:i:jk:l:m:n:p:r:st:Vv";
+static const char *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
 
 /*
  * Equivalent long options
@@ -52,6 +52,7 @@ static struct option const longopts[] = {
 	{ "old-licensee",     required_argument, NULL, 'l' },
 	{ "mbc-type",         required_argument, NULL, 'm' },
 	{ "rom-version",      required_argument, NULL, 'n' },
+	{ "overwrite",        no_argument,       NULL, 'O' },
 	{ "pad-value",        required_argument, NULL, 'p' },
 	{ "ram-size",         required_argument, NULL, 'r' },
 	{ "sgb-compatible",   no_argument,       NULL, 's' },
@@ -64,7 +65,7 @@ static struct option const longopts[] = {
 static void printUsage(void)
 {
 	fputs(
-"Usage: rgbfix [-jsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+"Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
 "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
 "              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] [<file> ...]\n"
 "Useful options:\n"
@@ -149,12 +150,12 @@ enum MbcType {
 	TPP1_TIMER_MULTIRUMBLE_RUMBLE = 0x107,
 	TPP1_BATTERY = 0x108,
 	TPP1_BATTERY_RUMBLE = 0x109,
-	TPP1_BATTERY_MULTIRUMBLE = 0x10a, // Should not be possible
-	TPP1_BATTERY_MULTIRUMBLE_RUMBLE = 0x10b,
-	TPP1_BATTERY_TIMER = 0x10c,
-	TPP1_BATTERY_TIMER_RUMBLE = 0x10d,
-	TPP1_BATTERY_TIMER_MULTIRUMBLE = 0x10e, // Should not be possible
-	TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE = 0x10f,
+	TPP1_BATTERY_MULTIRUMBLE = 0x10A, // Should not be possible
+	TPP1_BATTERY_MULTIRUMBLE_RUMBLE = 0x10B,
+	TPP1_BATTERY_TIMER = 0x10C,
+	TPP1_BATTERY_TIMER_RUMBLE = 0x10D,
+	TPP1_BATTERY_TIMER_MULTIRUMBLE = 0x10E, // Should not be possible
+	TPP1_BATTERY_TIMER_MULTIRUMBLE_RUMBLE = 0x10F,
 
 	// Error values
 	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
@@ -746,6 +747,15 @@ static const uint8_t ninLogo[] = {
 	0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
 };
 
+static const uint8_t trashLogo[] = {
+	0xFF^0xCE, 0xFF^0xED, 0xFF^0x66, 0xFF^0x66, 0xFF^0xCC, 0xFF^0x0D, 0xFF^0x00, 0xFF^0x0B,
+	0xFF^0x03, 0xFF^0x73, 0xFF^0x00, 0xFF^0x83, 0xFF^0x00, 0xFF^0x0C, 0xFF^0x00, 0xFF^0x0D,
+	0xFF^0x00, 0xFF^0x08, 0xFF^0x11, 0xFF^0x1F, 0xFF^0x88, 0xFF^0x89, 0xFF^0x00, 0xFF^0x0E,
+	0xFF^0xDC, 0xFF^0xCC, 0xFF^0x6E, 0xFF^0xE6, 0xFF^0xDD, 0xFF^0xDD, 0xFF^0xD9, 0xFF^0x99,
+	0xFF^0xBB, 0xFF^0xBB, 0xFF^0x67, 0xFF^0x63, 0xFF^0x6E, 0xFF^0x0E, 0xFF^0xEC, 0xFF^0xCC,
+	0xFF^0xDD, 0xFF^0xDC, 0xFF^0x99, 0xFF^0x9F, 0xFF^0xBB, 0xFF^0xB9, 0xFF^0x33, 0xFF^0x3E
+};
+
 static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 #define   FIX_LOGO        0x80
 #define TRASH_LOGO        0x40
@@ -762,6 +772,7 @@ static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
 static enum MbcType cartridgeType = MBC_NONE;
 static uint16_t romVersion = UNSPECIFIED;
+static bool overwriteRom = false; // If false, warn when overwriting non-zero non-identical bytes
 static uint16_t padValue = UNSPECIFIED;
 static uint16_t ramSize = UNSPECIFIED;
 static bool sgb = false; // If false, SGB flags are left alone
@@ -770,7 +781,7 @@ static uint8_t titleLen;
 
 static uint8_t maxTitleLen(void)
 {
-	return gameID ? 11 :  model != DMG ? 15 : 16;
+	return gameID ? 11 : model != DMG ? 15 : 16;
 }
 
 static ssize_t readBytes(int fd, uint8_t *buf, size_t len)
@@ -826,18 +837,43 @@ static ssize_t writeBytes(int fd, void *buf, size_t len)
 
 /**
  * @param rom0 A pointer to rom0
+ * @param addr What address to check
+ * @param fixedByte The fixed byte at the address
+ * @param areaName Name to be displayed in the warning message
+ */
+static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char const *areaName)
+{
+	uint8_t origByte = rom0[addr];
+
+	if (!overwriteRom && origByte != 0 && origByte != fixedByte)
+		fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
+
+	rom0[addr] = fixedByte;
+}
+
+/**
+ * @param rom0 A pointer to rom0
  * @param startAddr What address to begin checking from
+ * @param fixed The fixed bytes at the address
  * @param size How many bytes to check
  * @param areaName Name to be displayed in the warning message
  */
-static void warnNonZero(uint8_t *rom0, uint16_t startAddr, uint8_t size, char const *areaName)
+static void overwriteBytes(uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size,
+			   char const *areaName)
 {
-	for (uint8_t i = 0; i < size; i++) {
-		if (rom0[i + startAddr] != 0) {
-			fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n", areaName);
-			break;
+	if (!overwriteRom) {
+		for (uint8_t i = 0; i < size; i++) {
+			uint8_t origByte = rom0[i + startAddr];
+
+			if (origByte != 0 && origByte != fixed[i]) {
+				fprintf(stderr, "warning: Overwrote a non-zero byte in the %s\n",
+					areaName);
+				break;
+			}
 		}
 	}
+
+	memcpy(&rom0[startAddr], fixed, size);
 }
 
 /**
@@ -857,7 +893,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	uint8_t rom0[BANK_SIZE];
 	ssize_t rom0Len = readBytes(input, rom0, sizeof(rom0));
 	// Also used as how many bytes to write back when fixing in-place
-	ssize_t headerSize = (cartridgeType & 0xff00) == TPP1 ? 0x154 : 0x150;
+	ssize_t headerSize = (cartridgeType & 0xFF00) == TPP1 ? 0x154 : 0x150;
 
 	if (rom0Len == -1) {
 		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
@@ -870,94 +906,68 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// Accept partial reads if the file contains at least the header
 
 	if (fixSpec & (FIX_LOGO | TRASH_LOGO)) {
-		warnNonZero(rom0, 0x0104, sizeof(ninLogo), "Nintendo logo");
-		if (fixSpec & FIX_LOGO) {
-			memcpy(&rom0[0x104], ninLogo, sizeof(ninLogo));
-		} else {
-			for (uint8_t i = 0; i < sizeof(ninLogo); i++)
-				rom0[i + 0x104] = ~ninLogo[i];
-		}
+		if (fixSpec & FIX_LOGO)
+			overwriteBytes(rom0, 0x0104, ninLogo, sizeof(ninLogo), "Nintendo logo");
+		else
+			overwriteBytes(rom0, 0x0104, trashLogo, sizeof(trashLogo), "Nintendo logo");
 	}
 
-	if (title) {
-		warnNonZero(rom0, 0x134, titleLen, "title");
-		memcpy(&rom0[0x134], title, titleLen);
-	}
+	if (title)
+		overwriteBytes(rom0, 0x134, (const uint8_t *)title, titleLen, "title");
 
-	if (gameID) {
-		warnNonZero(rom0, 0x13f, gameIDLen, "manufacturer code");
-		memcpy(&rom0[0x13f], gameID, gameIDLen);
-	}
+	if (gameID)
+		overwriteBytes(rom0, 0x13F, (const uint8_t *)gameID, gameIDLen, "manufacturer code");
 
-	if (model != DMG) {
-		warnNonZero(rom0, 0x143, 1, "CGB flag");
-		rom0[0x143] = model == BOTH ? 0x80 : 0xc0;
-	}
+	if (model != DMG)
+		overwriteByte(rom0, 0x143, model == BOTH ? 0x80 : 0xC0, "CGB flag");
 
-	if (newLicensee) {
-		warnNonZero(rom0, 0x144, newLicenseeLen, "new licensee code");
-		memcpy(&rom0[0x144], newLicensee, newLicenseeLen);
-	}
+	if (newLicensee)
+		overwriteBytes(rom0, 0x144, (const uint8_t *)newLicensee, newLicenseeLen,
+			       "new licensee code");
 
-	if (sgb) {
-		warnNonZero(rom0, 0x146, 1, "SGB flag");
-		rom0[0x146] = 0x03;
-	}
+	if (sgb)
+		overwriteByte(rom0, 0x146, 0x03, "SGB flag");
 
 	// If a valid MBC was specified...
 	if (cartridgeType < MBC_NONE) {
-		warnNonZero(rom0, 0x147, 1, "cartridge type");
 		uint8_t byte = cartridgeType;
 
-		if ((cartridgeType & 0xff00) == TPP1) {
+		if ((cartridgeType & 0xFF00) == TPP1) {
 			// Cartridge type isn't directly actionable, translate it
 			byte = 0xBC;
 			// The other TPP1 identification bytes will be written below
 		}
-		rom0[0x147] = byte;
+		overwriteByte(rom0, 0x147, byte, "cartridge type");
 	}
 
 	// ROM size will be written last, after evaluating the file's size
 
-	if ((cartridgeType & 0xff00) == TPP1) {
-		warnNonZero(rom0, 0x149, 2, "TPP1 identification code");
-		rom0[0x149] = 0xC1;
-		rom0[0x14a] = 0x65;
+	if ((cartridgeType & 0xFF00) == TPP1) {
+		uint8_t const tpp1Code[2] = {0xC1, 0x65};
 
-		warnNonZero(rom0, 0x150, 2, "TPP1 revision number");
-		rom0[0x150] = tpp1Rev[0];
-		rom0[0x151] = tpp1Rev[1];
+		overwriteBytes(rom0, 0x149, tpp1Code, sizeof(tpp1Code), "TPP1 identification code");
 
-		if (ramSize != UNSPECIFIED) {
-			warnNonZero(rom0, 0x152, 1, "RAM size");
-			rom0[0x152] = ramSize;
-		}
+		overwriteBytes(rom0, 0x150, tpp1Rev, sizeof(tpp1Rev), "TPP1 revision number");
 
-		warnNonZero(rom0, 0x153, 1, "TPP1 feature flags");
-		rom0[0x153] = cartridgeType & 0xFF;
+		if (ramSize != UNSPECIFIED)
+			overwriteByte(rom0, 0x152, ramSize, "RAM size");
+
+		overwriteByte(rom0, 0x153, cartridgeType & 0xFF, "TPP1 feature flags");
 	} else {
 		// Regular mappers
 
-		if (ramSize != UNSPECIFIED) {
-			warnNonZero(rom0, 0x149, 1, "RAM size");
-			rom0[0x149] = ramSize;
-		}
+		if (ramSize != UNSPECIFIED)
+			overwriteByte(rom0, 0x149, ramSize, "RAM size");
 
-		if (!japanese) {
-			warnNonZero(rom0, 0x14a, 1, "destination code");
-			rom0[0x14a] = 0x01;
-		}
+		if (!japanese)
+			overwriteByte(rom0, 0x14A, 0x01, "destination code");
 	}
 
-	if (oldLicensee != UNSPECIFIED) {
-		warnNonZero(rom0, 0x14b, 1, "old licensee code");
-		rom0[0x14b] = oldLicensee;
-	}
+	if (oldLicensee != UNSPECIFIED)
+		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 
-	if (romVersion != UNSPECIFIED) {
-		warnNonZero(rom0, 0x14c, 1, "mask ROM version number");
-		rom0[0x14c] = romVersion;
-	}
+	if (romVersion != UNSPECIFIED)
+		overwriteByte(rom0, 0x14C, romVersion, "mask ROM version number");
 
 	// Remain to be handled the ROM size, and header checksum.
 	// The latter depends on the former, and so will be handled after it.
@@ -1055,17 +1065,19 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (fixSpec & (FIX_HEADER_SUM | TRASH_HEADER_SUM)) {
 		uint8_t sum = 0;
 
-		for (uint16_t i = 0x134; i < 0x14d; i++)
+		for (uint16_t i = 0x134; i < 0x14D; i++)
 			sum -= rom0[i] + 1;
-		warnNonZero(rom0, 0x14d, 1, "header checksum");
-		rom0[0x14d] = fixSpec & TRASH_HEADER_SUM ? ~sum : sum;
+
+		overwriteByte(rom0, 0x14D, fixSpec & TRASH_HEADER_SUM ? ~sum : sum,
+			      "header checksum");
 	}
 
 	if (fixSpec & (FIX_GLOBAL_SUM | TRASH_GLOBAL_SUM)) {
-		// Computation of the global checksum assumes 0s being stored in its place
-		rom0[0x14e] = 0;
-		rom0[0x14f] = 0;
-		for (uint16_t i = 0; i < rom0Len; i++)
+		// Computation of the global checksum does not include the checksum bytes
+		assert(rom0Len >= 0x14E);
+		for (uint16_t i = 0; i < 0x14E; i++)
+			globalSum += rom0[i];
+		for (uint16_t i = 0x150; i < rom0Len; i++)
 			globalSum += rom0[i];
 		// Pipes have already read ROMX and updated globalSum, but not regular files
 		if (input == output) {
@@ -1081,9 +1093,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 		if (fixSpec & TRASH_GLOBAL_SUM)
 			globalSum = ~globalSum;
-		warnNonZero(rom0, 0x14e, 2, "global checksum");
-		rom0[0x14e] = globalSum >> 8;
-		rom0[0x14f] = globalSum & 0xff;
+
+		uint8_t bytes[2] = {globalSum >> 8, globalSum & 0xFF};
+
+		overwriteBytes(rom0, 0x14E, bytes, sizeof(bytes), "global checksum");
 	}
 
 	// In case the output depends on the input, reset to the beginning of the file, and only
@@ -1349,6 +1362,10 @@ do { \
 			parseByte(romVersion, "n");
 			break;
 
+		case 'O':
+			overwriteRom = true;
+			break;
+
 		case 'p':
 			parseByte(padValue, "p");
 			break;
@@ -1390,11 +1407,11 @@ do { \
 #undef parseByte
 	}
 
-	if ((cartridgeType & 0xff00) == TPP1 && !japanese)
+	if ((cartridgeType & 0xFF00) == TPP1 && !japanese)
 		fprintf(stderr, "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n");
 
 	// Check that RAM size is correct for "standard" mappers
-	if (ramSize != UNSPECIFIED && (cartridgeType & 0xff00) == 0) {
+	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1)
 				fprintf(stderr, "warning: MBC \"%s\" should have 2kiB of RAM (-r 1)\n",
