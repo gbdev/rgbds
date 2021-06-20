@@ -49,8 +49,10 @@
 /* MSVC doesn't support `[static N]` for array arguments from C99 */
 #ifdef _MSC_VER
 # define MIN_NB_ELMS(N)
+# define NONNULL(ptr) *ptr
 #else
 # define MIN_NB_ELMS(N) static (N)
+# define NONNULL(ptr) ptr[static 1]
 #endif
 
 // MSVC uses a different name for O_RDWR, and needs an additional _O_BINARY flag

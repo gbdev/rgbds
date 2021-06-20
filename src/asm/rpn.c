@@ -205,28 +205,40 @@ void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
+	struct Section *section = sect_FindSectionByName(sectionName);
 
-	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
-	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+	if (section && sect_IsSizeKnown(section)) {
+		expr->val = section->size;
+	} else {
+		makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
 
-	expr->rpnPatchSize += nameLen + 1;
-	*ptr++ = RPN_SIZEOF_SECT;
-	memcpy(ptr, sectionName, nameLen);
+		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+
+		expr->rpnPatchSize += nameLen + 1;
+		*ptr++ = RPN_SIZEOF_SECT;
+		memcpy(ptr, sectionName, nameLen);
+	}
 }
 
 void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
+	struct Section *section = sect_FindSectionByName(sectionName);
 
-	size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
-	uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+	if (section && section->org != (uint32_t)-1) {
+		expr->val = section->org;
+	} else {
+		makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
 
-	expr->rpnPatchSize += nameLen + 1;
-	*ptr++ = RPN_STARTOF_SECT;
-	memcpy(ptr, sectionName, nameLen);
+		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
+		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
+
+		expr->rpnPatchSize += nameLen + 1;
+		*ptr++ = RPN_STARTOF_SECT;
+		memcpy(ptr, sectionName, nameLen);
+	}
 }
 
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)

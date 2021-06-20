@@ -1016,3 +1016,22 @@ void sect_PopSection(void)
 	sectionStack = entry->next;
 	free(entry);
 }
+
+bool sect_IsSizeKnown(struct Section const NONNULL(sect))
+{
+	// SECTION UNION and SECTION FRAGMENT can still grow
+	if (sect->modifier != SECTION_NORMAL)
+		return false;
+
+	// The current section (or current load section if within one) is still growing
+	if (sect == currentSection || sect == currentLoadSection)
+		return false;
+
+	// Any section on the stack is still growing
+	for (struct SectionStackEntry *stack = sectionStack; stack; stack = stack->next) {
+		if (stack->section && !strcmp(sect->name, stack->section->name))
+			return false;
+	}
+
+	return true;
+}
