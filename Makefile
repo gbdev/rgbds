@@ -49,6 +49,9 @@ YFLAGS		?= -Wall
 BISON		:= bison
 RM		:= rm -rf
 
+# Used for checking pull requests
+BASE_REF	:= origin/master
+
 # Rules to build the RGBDS binaries
 
 all: rgbasm rgblink rgbfix rgbgfx
@@ -189,7 +192,6 @@ checkcodebase:
 # the first common commit between the HEAD and origin/master.
 # `.y` files aren't checked, unfortunately...
 
-BASE_REF:= origin/master
 checkpatch:
 	$Qeval COMMON_COMMIT=$$(git merge-base HEAD ${BASE_REF});	\
 	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
@@ -198,6 +200,12 @@ checkpatch:
 			-- src include '!src/extern' '!include/extern'	\
 			| ${CHECKPATCH} - || true;			\
 	done
+
+# Target used to check for suspiciously missing changed files.
+
+checkdiff:
+	$Qeval COMMON_COMMIT=$$(git merge-base HEAD ${BASE_REF});	\
+	contrib/checkdiff.bash $$COMMON_COMMIT
 
 # This target is used during development in order to prevent adding new issues
 # to the source code. All warnings are treated as errors in order to block the
