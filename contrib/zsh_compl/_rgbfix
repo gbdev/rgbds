@@ -41,6 +41,7 @@ local args=(
 	'(-C --color-only -c --color-compatible)'{-C,--color-only}'[Mark ROM as GBC-only]'
 	'(-C --color-only -c --color-compatible)'{-c,--color-compatible}'[Mark ROM as GBC-compatible]'
 	'(-j --non-japanese)'{-j,--non-japanese}'[Set the non-Japanese region flag]'
+	'(-O --overwrite)'{-O,--overwrite}'[Allow overwriting non-zero bytes]'
 	'(-s --sgb-compatible)'{-s,--sgb-compatible}'[Set the SGB flag]'
 	'(-f --fix-spec -v --validate)'{-v,--validate}'[Shorthand for -f lhg]'
 
