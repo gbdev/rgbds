@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 #include "linkdefs.h"
+#include "platform.h" // NONNULL
 
 extern uint8_t fillByte;
 
@@ -75,5 +76,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 
 void sect_PushSection(void);
 void sect_PopSection(void);
+
+bool sect_IsSizeKnown(struct Section const NONNULL(name));
 
 #endif
