@@ -33,16 +33,25 @@ edited () {
 
 dependency () {
 	if edited "$1" && ! edited "$2"; then
-		default_msg="'$1' was modified, but not '$2'!"
+		echo "'$1' was modified, but not '$2'!"
 		shift 2
-		echo "$@" "$default_msg"
+		if [ "$#" -gt 0 ]; then
+			echo "$@"
+		fi
 	fi
 }
 
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
-dependency include/linkdefs.h    src/rgbds.5         "Should rgbds(5) be synced with the obj file format changes?"
-dependency src/asm/parser.y      src/asm/rgbasm.5    "Should rgbasm(5) be synced with the parser changes?"
-dependency include/asm/warning.h src/asm/rgbasm.1    "Should rgbasm(1) be synced with the warning changes?"
-dependency src/asm/object.c      include/linkdefs.h  "Should the obj file revision be bumped?"
-dependency src/link/object.c     include/linkdefs.h  "Should the obj file revision be bumped?"
+dependency include/linkdefs.h    src/rgbds.5        \
+           "Should the object file format changes be documented?"
+dependency src/asm/parser.y      src/asm/rgbasm.5   \
+           "Should the parser changes be documented?"
+dependency include/asm/warning.h src/asm/rgbasm.1   \
+           "Should the rgbasm warning changes be documented?"
+dependency src/asm/object.c      include/linkdefs.h \
+           "Should the object file revision be bumped?"
+dependency src/link/object.c     include/linkdefs.h \
+           "Should the object file revision be bumped?"
+dependency Makefile              CMakeLists.txt
+dependency Makefile              src/CMakeLists.txt

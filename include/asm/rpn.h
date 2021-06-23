@@ -24,7 +24,7 @@ struct Expression {
 	uint8_t  *rpn;         // Array of bytes serializing the RPN expression
 	uint32_t rpnCapacity;  // Size of the `rpn` buffer
 	uint32_t rpnLength;    // Used size of the `rpn` buffer
-	uint32_t rpnPatchSize; // Size the expression will take in the obj file
+	uint32_t rpnPatchSize; // Size the expression will take in the object file
 };
 
 /*
