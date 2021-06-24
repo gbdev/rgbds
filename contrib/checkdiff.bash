@@ -40,14 +40,35 @@ dependency () {
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
 dependency include/linkdefs.h    src/rgbds.5        \
-           "Should the object file format changes be documented?"
+           "Was the object file format changed?"
+
 dependency src/asm/parser.y      src/asm/rgbasm.5   \
-           "Should the parser changes be documented?"
+           "Was the parser changed?"
+
 dependency include/asm/warning.h src/asm/rgbasm.1   \
-           "Should the rgbasm warning changes be documented?"
+           "Were rgbasm warnings changed?"
+
 dependency src/asm/object.c      include/linkdefs.h \
            "Should the object file revision be bumped?"
 dependency src/link/object.c     include/linkdefs.h \
            "Should the object file revision be bumped?"
+
 dependency Makefile              CMakeLists.txt
 dependency Makefile              src/CMakeLists.txt
+
+dependency src/asm/main.c        src/asm/rgbasm.1 \
+           "Did the CLI change?"
+dependency src/asm/main.c        contrib/zsh_compl/_rgbasm \
+           "Did the CLI change?"
+dependency src/link/main.c       src/link/rgblink.1 \
+           "Did the CLI change?"
+dependency src/link/main.c       contrib/zsh_compl/_rgblink \
+           "Did the CLI change?"
+dependency src/fix/main.c        src/fix/rgbfix.1 \
+           "Did the CLI change?"
+dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
+           "Did the CLI change?"
+dependency src/gfx/main.c        src/gfx/rgbgfx.1 \
+           "Did the CLI change?"
+dependency src/gfx/main.c        contrib/zsh_compl/_rgbgfx \
+           "Did the CLI change?"
