@@ -33,11 +33,7 @@ edited () {
 
 dependency () {
 	if edited "$1" && ! edited "$2"; then
-		echo "'$1' was modified, but not '$2'!"
-		shift 2
-		if [ "$#" -gt 0 ]; then
-			echo "$@"
-		fi
+		echo "'$1' was modified, but not '$2'! $3" | xargs
 	fi
 }
 
