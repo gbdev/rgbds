@@ -39,36 +39,39 @@ dependency () {
 
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
-dependency include/linkdefs.h    src/rgbds.5        \
+
+dependency include/linkdefs.h    src/rgbds.5 \
            "Was the object file format changed?"
 
-dependency src/asm/parser.y      src/asm/rgbasm.5   \
-           "Was the parser changed?"
+dependency src/asm/parser.y      src/asm/rgbasm.5 \
+           "Was the rgbasm grammar changed?"
 
-dependency include/asm/warning.h src/asm/rgbasm.1   \
-           "Were rgbasm warnings changed?"
+dependency include/asm/warning.h src/asm/rgbasm.1 \
+           "Were the rgbasm warnings changed?"
 
 dependency src/asm/object.c      include/linkdefs.h \
            "Should the object file revision be bumped?"
 dependency src/link/object.c     include/linkdefs.h \
            "Should the object file revision be bumped?"
 
-dependency Makefile              CMakeLists.txt
-dependency Makefile              src/CMakeLists.txt
+dependency Makefile              CMakeLists.txt \
+           "Did the build process change?"
+dependency Makefile              src/CMakeLists.txt \
+           "Did the build process change?"
 
 dependency src/asm/main.c        src/asm/rgbasm.1 \
-           "Did the CLI change?"
+           "Did the rgbasm CLI change?"
 dependency src/asm/main.c        contrib/zsh_compl/_rgbasm \
-           "Did the CLI change?"
+           "Did the rgbasm CLI change?"
 dependency src/link/main.c       src/link/rgblink.1 \
-           "Did the CLI change?"
+           "Did the rgblink CLI change?"
 dependency src/link/main.c       contrib/zsh_compl/_rgblink \
-           "Did the CLI change?"
+           "Did the rgblink CLI change?"
 dependency src/fix/main.c        src/fix/rgbfix.1 \
-           "Did the CLI change?"
+           "Did the rgbfix CLI change?"
 dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
-           "Did the CLI change?"
+           "Did the rgbfix CLI change?"
 dependency src/gfx/main.c        src/gfx/rgbgfx.1 \
-           "Did the CLI change?"
+           "Did the rgbgfx CLI change?"
 dependency src/gfx/main.c        contrib/zsh_compl/_rgbgfx \
-           "Did the CLI change?"
+           "Did the rgbgfx CLI change?"
