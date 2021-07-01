@@ -66,15 +66,8 @@ To do so, put a backslash at the end of the line:
     DB 1, 2, 3,\ \[rs]
        4, 5, 6,\ \[rs]\ ;\ Put it before any comments
        7, 8, 9
-.Ed
-.Pp
-This works anywhere in the code except inside of strings.
-To split strings it is needed to use
-.Fn STRCAT
-like this:
-.Bd -literal -offset indent
-    db STRCAT("Hello ",\ \[rs]
-              "world!")
+    DB "Hello,\ \[rs]\ \ ;\ Space before the \[rs] is included
+world!"\ \ \ \ \ \ \ \ \ \ \ ;\ Any leading space is included
 .Ed
 .Sh EXPRESSIONS
 An expression can be composed of many things.
