@@ -1,0 +1,33 @@
+ERROR: invalid-line-separators.asm(5):
+    syntax error, unexpected .
+ERROR: invalid-line-separators.asm(5):
+    syntax error, unexpected ENDR
+ERROR: invalid-line-separators.asm(7):
+    syntax error, unexpected .
+ERROR: invalid-line-separators.asm(8):
+    syntax error, unexpected ENDR
+ERROR: invalid-line-separators.asm(10) -> invalid-line-separators.asm::REPT~1(11):
+    syntax error, unexpected ENDR
+ERROR: invalid-line-separators.asm(16):
+    syntax error, unexpected .
+ERROR: invalid-line-separators.asm(16):
+    Expected constant expression: 'n' is not constant at assembly time
+ERROR: invalid-line-separators.asm(16):
+    syntax error, unexpected ENDR
+ERROR: invalid-line-separators.asm(18):
+    syntax error, unexpected .
+ERROR: invalid-line-separators.asm(23) -> invalid-line-separators.asm::foo(21):
+    syntax error, unexpected ENDM
+ERROR: invalid-line-separators.asm(25):
+    syntax error, unexpected ., expecting newline
+ERROR: invalid-line-separators.asm(25):
+    syntax error, unexpected ENDM
+ERROR: invalid-line-separators.asm(26):
+    Macro "bar" not defined
+ERROR: invalid-line-separators.asm(28):
+    syntax error, unexpected ., expecting newline
+ERROR: invalid-line-separators.asm(29):
+    syntax error, unexpected ENDM
+ERROR: invalid-line-separators.asm(30):
+    Macro "baz" not defined
+error: Assembly aborted (16 errors)!

@@ -672,7 +672,7 @@ lines		: %empty
 		| lines line
 ;
 
-endofline	: T_NEWLINE | T_EOB
+endofline	: T_NEWLINE | T_EOB | T_PERIOD
 ;
 
 plain_directive	: label

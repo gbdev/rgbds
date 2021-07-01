@@ -69,6 +69,27 @@ To do so, put a backslash at the end of the line:
     DB "Hello,\ \[rs]\ \ ;\ Space before the \[rs] is included
 world!"\ \ \ \ \ \ \ \ \ \ \ ;\ Any leading space is included
 .Ed
+.Pp
+To put statements on the same line, separate them with a period.
+For example:
+.Bd -literal -offset indent
+    DB 1 . DW 2
+    PRINTLN "one" . PRINTLN "two"
+    ld a, [hli] . ld h, [hl] . ld l, a
+.Ed
+.Pp
+Note that macro invocations and block directives (such as
+.Ic IF
+and
+.Ic ENDC ,
+.Ic REPT
+and
+.Ic ENDR ,
+or
+.Ic MACRO
+and
+.Ic ENDM )
+must be the only statements on their line.
 .Sh EXPRESSIONS
 An expression can be composed of many things.
 Numerical expressions are always evaluated using signed 32-bit math.
