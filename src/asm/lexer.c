@@ -2431,7 +2431,6 @@ static void endCapture(struct CaptureBody *capture)
 	lexerState->captureBuf = NULL;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
-	lexerState->atLineStart = false;
 }
 
 bool lexer_CaptureRept(struct CaptureBody *capture)
@@ -2490,6 +2489,8 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 
 finish:
 	endCapture(capture);
+	/* ENDR or EOF puts us past the start of the line */
+	lexerState->atLineStart = false;
 
 	/* Returns true if an ENDR terminated the block, false if it reached EOF first */
 	return c != EOF;
@@ -2545,6 +2546,8 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 
 finish:
 	endCapture(capture);
+	/* ENDM or EOF puts us past the start of the line */
+	lexerState->atLineStart = false;
 
 	/* Returns true if an ENDM terminated the block, false if it reached EOF first */
 	return c != EOF;
