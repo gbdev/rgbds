@@ -1042,7 +1042,7 @@ void lexer_DumpStringExpansions(void)
 	}
 }
 
-/* Discards an block comment */
+/* Discards a block comment */
 static void discardBlockComment(void)
 {
 	dbgPrint("Discarding block comment\n");

@@ -1979,9 +1979,9 @@ as presented in
 .Sx SECTIONS
 is often useful as-is, sometimes you instead want a particular piece of data (or code) in the middle of the section to be aligned.
 This is made easier through the use of mid-section
-.Ic align Ar align , offset .
+.Ic ALIGN Ar align , offset .
 It will alter the section's attributes to ensure that the location the
-.Ic align
+.Ic ALIGN
 directive is at, has its
 .Ar align
 lower bits equal to
@@ -1989,9 +1989,9 @@ lower bits equal to
 .Pp
 If the constraint cannot be met (for example because the section is fixed at an incompatible address), and error is produced.
 Note that
-.Ic align Ar align
+.Ic ALIGN Ar align
 is a shorthand for
-.Ic align Ar align , No 0 .
+.Ic ALIGN Ar align , No 0 .
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,
