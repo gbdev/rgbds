@@ -2399,7 +2399,7 @@ int yylex(void)
 	return token;
 }
 
-static char *startCapture(void)
+static void startCapture(struct CaptureBody *capture)
 {
 	assert(!lexerState->capturing);
 	lexerState->capturing = true;
@@ -2407,20 +2407,36 @@ static char *startCapture(void)
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
+	capture->lineNo = lexer_GetLineNo();
+
 	if (lexerState->isMmapped && !lexerState->expansions) {
-		return &lexerState->ptr[lexerState->offset];
+		capture->body = &lexerState->ptr[lexerState->offset];
 	} else {
 		lexerState->captureCapacity = 128; /* The initial size will be twice that */
 		assert(lexerState->captureBuf == NULL);
 		reallocCaptureBuf();
-		return NULL; // Indicate to retrieve the capture buffer when done capturing
+		capture->body = NULL; // Indicate to retrieve the capture buffer when done capturing
 	}
+}
+
+static void endCapture(struct CaptureBody *capture)
+{
+	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
+	// the whole capture process, and so MUST be retrieved at the end
+	if (!capture->body)
+		capture->body = lexerState->captureBuf;
+	capture->size = lexerState->captureSize;
+
+	lexerState->capturing = false;
+	lexerState->captureBuf = NULL;
+	lexerState->disableMacroArgs = false;
+	lexerState->disableInterpolation = false;
+	lexerState->atLineStart = false;
 }
 
 bool lexer_CaptureRept(struct CaptureBody *capture)
 {
-	capture->lineNo = lexer_GetLineNo();
-	capture->body = startCapture();
+	startCapture(capture);
 
 	size_t depth = 0;
 	int c = EOF;
@@ -2473,16 +2489,7 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 	}
 
 finish:
-	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
-	// the whole capture process, and so MUST be retrieved at the end
-	if (!capture->body)
-		capture->body = lexerState->captureBuf;
-	capture->size = lexerState->captureSize;
-	lexerState->capturing = false;
-	lexerState->captureBuf = NULL;
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
-	lexerState->atLineStart = false;
+	endCapture(capture);
 
 	/* Returns true if an ENDR terminated the block, false if it reached EOF first */
 	return c != EOF;
@@ -2490,14 +2497,13 @@ finish:
 
 bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 {
-	capture->lineNo = lexer_GetLineNo();
-	capture->body = startCapture();
-
-	int c = EOF;
+	startCapture(capture);
 
 	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
 	if (lexerState->isMmapped)
 		lexerState->isReferenced = true;
+
+	int c = EOF;
 
 	/*
 	 * Due to parser internals, it reads the EOL after the expression before calling this.
@@ -2538,16 +2544,7 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 	}
 
 finish:
-	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
-	// the whole capture process, and so MUST be retrieved at the end
-	if (!capture->body)
-		capture->body = lexerState->captureBuf;
-	capture->size = lexerState->captureSize;
-	lexerState->capturing = false;
-	lexerState->captureBuf = NULL;
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
-	lexerState->atLineStart = false;
+	endCapture(capture);
 
 	/* Returns true if an ENDM terminated the block, false if it reached EOF first */
 	return c != EOF;
