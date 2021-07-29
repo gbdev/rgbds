@@ -245,18 +245,18 @@ struct Symbol *sym_FindUnscopedSymbol(char const *symName)
 
 struct Symbol *sym_FindScopedSymbol(char const *symName)
 {
-	char const *dotPtr = strchr(symName, '.');
+	char const *localName = strchr(symName, '.');
 
-	if (dotPtr) {
-		if (strchr(dotPtr + 1, '.'))
+	if (localName) {
+		if (strchr(localName + 1, '.'))
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
 				   symName);
 		/* If auto-scoped local label, expand the name */
-		if (dotPtr == symName) { /* Meaning, the name begins with the dot */
-			char fullname[MAXSYMLEN + 1];
+		if (localName == symName) { /* Meaning, the name begins with the dot */
+			char fullName[MAXSYMLEN + 1];
 
-			fullSymbolName(fullname, sizeof(fullname), symName, labelScope);
-			return sym_FindExactSymbol(fullname);
+			fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
+			return sym_FindExactSymbol(fullName);
 		}
 	}
 	return sym_FindExactSymbol(symName);
@@ -533,7 +533,7 @@ static struct Symbol *addLabel(char const *symName)
 }
 
 /*
- * Add a local (.name or Parent.name) relocatable symbol
+ * Add a local (`.name` or `Parent.name`) relocatable symbol
  */
 struct Symbol *sym_AddLocalLabel(char const *symName)
 {
@@ -541,34 +541,40 @@ struct Symbol *sym_AddLocalLabel(char const *symName)
 		error("Local label '%s' in main scope\n", symName);
 		return NULL;
 	}
+	assert(!strchr(labelScope, '.')); /* Assuming no dots in `labelScope` */
 
-	char fullname[MAXSYMLEN + 1];
+	char fullName[MAXSYMLEN + 1];
+	char const *localName = strchr(symName, '.');
 
-	if (symName[0] == '.') {
-		/* If symbol is of the form `.name`, expand to the full `Parent.name` name */
-		fullSymbolName(fullname, sizeof(fullname), symName, labelScope);
-		symName = fullname; /* Use the expanded name instead */
+	assert(localName); /* There should be at least one dot in `symName` */
+	/* Check for something after the dot in `localName` */
+	if (localName[1] == '\0') {
+		fatalerror("'%s' is a nonsensical reference to an empty local label\n",
+			   symName);
+	}
+	/* Check for more than one dot in `localName` */
+	if (strchr(localName + 1, '.'))
+		fatalerror("'%s' is a nonsensical reference to a nested local label\n",
+			   symName);
+
+	if (localName == symName) {
+		/* Expand `symName` to the full `labelScope.symName` name */
+		fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
+		symName = fullName;
 	} else {
 		size_t i = 0;
 
-		/* Otherwise, check that `Parent` is in fact the current scope */
+		/* Find where `labelScope` and `symName` first differ */
 		while (labelScope[i] && symName[i] == labelScope[i])
 			i++;
-		/* Assuming no dots in `labelScope` */
-		assert(strchr(&symName[i], '.')); /* There should be at least one dot, though */
-		size_t parentLen = i + (strchr(&symName[i], '.') - symName);
 
-		/*
-		 * Check that `labelScope[i]` ended the check, guaranteeing that `symName` is at
-		 * least as long, and then that this was the entire `Parent` part of `symName`.
-		 */
+		/* Check that `symName` starts with `labelScope` and then a '.' */
 		if (labelScope[i] != '\0' || symName[i] != '.') {
+			size_t parentLen = localName - symName;
+
 			assert(parentLen <= INT_MAX);
 			error("Not currently in the scope of '%.*s'\n", (int)parentLen, symName);
 		}
-		if (strchr(&symName[parentLen + 1], '.')) /* There will at least be a terminator */
-			fatalerror("'%s' is a nonsensical reference to a nested local label\n",
-				   symName);
 	}
 
 	return addLabel(symName);

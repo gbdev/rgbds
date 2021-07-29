@@ -4,4 +4,4 @@ Parent:
 .child:
 	db 0
 NotParent:
-	dw Parent.child.fail
+	dw Parent.orphan
