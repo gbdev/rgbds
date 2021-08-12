@@ -494,7 +494,9 @@ do { \
 
 		case MBC3:
 			// Handle timer, which also requires battery
-			if (features & (TIMER & BATTERY)) {
+			if (features & TIMER) {
+				if (!(features & BATTERY))
+					fprintf(stderr, "warning: MBC3+TIMER implies BATTERY\n");
 				features &= ~(TIMER | BATTERY); // Reset those bits
 				mbc = MBC3_TIMER_BATTERY;
 				// RAM is handled below
