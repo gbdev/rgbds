@@ -160,9 +160,9 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 		/* Check if alignment offsets are compatible */
 		} else if ((alignOffset & mask(sect->align))
 			   != (sect->alignOfs & mask(alignment))) {
-			fail("Section already declared with incompatible %" PRIu8
+			fail("Section already declared with incompatible %u"
 			     "-byte alignment (offset %" PRIu16 ")\n",
-			     sect->align, sect->alignOfs);
+			     1u << sect->align, sect->alignOfs);
 		} else if (alignment > sect->align) {
 			// If the section is not fixed, its alignment is the largest of both
 			sect->align = alignment;
@@ -213,9 +213,9 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 				     PRIx32 "\n", sect->org);
 		/* Check if alignment offsets are compatible */
 		} else if ((curOfs & mask(sect->align)) != (sect->alignOfs & mask(alignment))) {
-			fail("Section already declared with incompatible %" PRIu8
+			fail("Section already declared with incompatible %u"
 			     "-byte alignment (offset %" PRIu16 ")\n",
-			     sect->align, sect->alignOfs);
+			     1u << sect->align, sect->alignOfs);
 		} else if (alignment > sect->align) {
 			// If the section is not fixed, its alignment is the largest of both
 			sect->align = alignment;
