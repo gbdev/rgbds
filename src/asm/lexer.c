@@ -900,10 +900,7 @@ static char const *readInterpolation(size_t depth);
 
 static int peek(void)
 {
-	int c;
-
-restart:
-	c = peekInternal(0);
+	int c = peekInternal(0);
 
 	if (lexerState->macroArgScanDistance > 0)
 		return c;
@@ -924,7 +921,7 @@ restart:
 			 * expanded, so skip it and keep peeking.
 			 */
 			if (!str || !str[0])
-				goto restart;
+				return peek();
 
 			beginExpansion(str, c == '#', NULL);
 
@@ -945,7 +942,7 @@ restart:
 
 		if (str && str[0])
 			beginExpansion(str, false, str);
-		goto restart;
+		return peek();
 	}
 
 	return c;
