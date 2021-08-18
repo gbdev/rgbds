@@ -24,8 +24,10 @@ extern char const *symFileName;
 extern char const *overlayFileName;
 extern char const *outputFileName;
 extern uint8_t padValue;
+extern uint16_t scrambleROMBanks;
 extern bool is32kMode;
 extern bool beVerbose;
+extern bool scrambleWRAMBanks;
 extern bool isWRA0Mode;
 extern bool disablePadding;
 

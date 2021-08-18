@@ -35,8 +35,10 @@ char const *symFileName;      /* -n */
 char const *overlayFileName;  /* -O */
 char const *outputFileName;   /* -o */
 uint8_t padValue;             /* -p */
+uint16_t scrambleROMBanks;    /* -S */
 bool is32kMode;               /* -t */
 bool beVerbose;               /* -v */
+bool scrambleWRAMBanks;       /* -W */
 bool isWRA0Mode;              /* -w */
 bool disablePadding;          /* -x */
 
@@ -142,7 +144,7 @@ FILE *openFile(char const *fileName, char const *mode)
 }
 
 /* Short options */
-static char const *optstring = "dl:m:n:O:o:p:s:tVvwx";
+static const char *optstring = "dl:m:n:O:o:p:S:s:tVvWwx";
 
 /*
  * Equivalent long options
@@ -155,20 +157,22 @@ static char const *optstring = "dl:m:n:O:o:p:s:tVvwx";
  * over short opt matching
  */
 static struct option const longopts[] = {
-	{ "dmg",          no_argument,       NULL, 'd' },
-	{ "linkerscript", required_argument, NULL, 'l' },
-	{ "map",          required_argument, NULL, 'm' },
-	{ "sym",          required_argument, NULL, 'n' },
-	{ "overlay",      required_argument, NULL, 'O' },
-	{ "output",       required_argument, NULL, 'o' },
-	{ "pad",          required_argument, NULL, 'p' },
-	{ "smart",        required_argument, NULL, 's' },
-	{ "tiny",         no_argument,       NULL, 't' },
-	{ "version",      no_argument,       NULL, 'V' },
-	{ "verbose",      no_argument,       NULL, 'v' },
-	{ "wramx",        no_argument,       NULL, 'w' },
-	{ "nopad",        no_argument,       NULL, 'x' },
-	{ NULL,           no_argument,       NULL, 0   }
+	{ "dmg",           no_argument,       NULL, 'd' },
+	{ "linkerscript",  required_argument, NULL, 'l' },
+	{ "map",           required_argument, NULL, 'm' },
+	{ "sym",           required_argument, NULL, 'n' },
+	{ "overlay",       required_argument, NULL, 'O' },
+	{ "output",        required_argument, NULL, 'o' },
+	{ "pad",           required_argument, NULL, 'p' },
+	{ "scramble-rom",  required_argument, NULL, 'S' },
+	{ "smart",         required_argument, NULL, 's' },
+	{ "tiny",          no_argument,       NULL, 't' },
+	{ "version",       no_argument,       NULL, 'V' },
+	{ "verbose",       no_argument,       NULL, 'v' },
+	{ "scramble-wram", no_argument,       NULL, 'W' },
+	{ "wramx",         no_argument,       NULL, 'w' },
+	{ "nopad",         no_argument,       NULL, 'x' },
+	{ NULL,            no_argument,       NULL, 0   }
 };
 
 /**
@@ -243,6 +247,22 @@ int main(int argc, char *argv[])
 			}
 			padValue = value;
 			break;
+		case 'S':
+			value = strtoul(musl_optarg, &endptr, 0);
+			if (musl_optarg[0] == '\0' || *endptr != '\0') {
+				error(NULL, 0, "Invalid argument for option 'S'");
+				value = 256;
+			}
+			if (value < 2) {
+				error(NULL, 0, "Argument for 'S' must be at least 2");
+				value = 256;
+			}
+			if (value > 0xFFFF) {
+				error(NULL, 0, "Argument for 'S' must be a word (between 2 and 0xFFFF)");
+				value = 256;
+			}
+			scrambleROMBanks = value;
+			break;
 		case 's':
 			/* FIXME: nobody knows what this does, figure it out */
 			(void)musl_optarg;
@@ -256,6 +276,9 @@ int main(int argc, char *argv[])
 			exit(0);
 		case 'v':
 			beVerbose = true;
+			break;
+		case 'W':
+			scrambleWRAMBanks = true;
 			break;
 		case 'w':
 			isWRA0Mode = true;
