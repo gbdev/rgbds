@@ -1719,7 +1719,7 @@ ENDR
 .Ed
 .Pp
 It acts just as if you had done:
-.Bd -literal -offset ident
+.Bd -literal -offset indent
 N = 0
       dw N * N
 N = 1
@@ -1757,6 +1757,7 @@ FOR V, 4, 25, 5
 ENDR
       PRINTLN "done {d:V}"
 .Ed
+.Pp
 This will print:
 .Bd -literal -offset indent
 4 9 14 19 24 done 29
@@ -1794,6 +1795,7 @@ FOR V, 1, 100
 ENDR
       PRINTLN "done {d:V}"
 .Ed
+.Pp
 This will print:
 .Bd -literal -offset indent
 1, 2, 3, 4, 5 stop! done 5
