@@ -19,6 +19,10 @@ Main contributors
 
 - Antonio Niño Díaz <antonio_nd@outlook.com>
 
+- Eldred Habert <eldredhabert0@gmail.com>
+
+- Rangi <http://github.com/Rangi42>
+
 Other contributors
 ------------------
 
@@ -30,8 +34,6 @@ Other contributors
 
 - David Brotz <dbrotz007@gmail.com>
 
-- Eldred Habert <eldredhabert0@gmail.com>
-
 - The Musl C library <http://www.musl-libc.org>
 
 - obskyr <powpowd@gmail.com>
@@ -39,8 +41,6 @@ Other contributors
 - The OpenBSD Project <http://www.openbsd.org>
 
 - Quint Guvernator <quint@guvernator.net>
-
-- Rangi <http://github.com/Rangi42>
 
 - Sanqui <gsanky@gmail.com>
 
