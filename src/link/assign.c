@@ -161,17 +161,23 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 {
 	static uint16_t curScrambleROM = 1;
 	static uint8_t curScrambleWRAM = 1;
+	static uint8_t curScrambleSRAM = 1;
 
+	// Determine which bank we should start searching in
 	if (section->isBankFixed) {
 		location->bank = section->bank;
-	} else if (scrambleROMBanks && section->type == SECTTYPE_ROMX) {
+	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
 		location->bank = curScrambleROM++;
-		if (curScrambleROM > scrambleROMBanks)
+		if (curScrambleROM > scrambleROMX)
 			curScrambleROM = 1;
-	} else if (scrambleWRAMBanks && section->type == SECTTYPE_WRAMX) {
+	} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX) {
 		location->bank = curScrambleWRAM++;
-		if (curScrambleWRAM > BANK_MAX_WRAMX)
+		if (curScrambleWRAM > scrambleWRAMX)
 			curScrambleWRAM = 1;
+	} else if (scrambleSRAM && section->type == SECTTYPE_SRAM) {
+		location->bank = curScrambleSRAM++;
+		if (curScrambleSRAM > scrambleSRAM)
+			curScrambleSRAM = 0;
 	} else {
 		location->bank = bankranges[section->type][0];
 	}
