@@ -10,6 +10,12 @@ jobs:
         os: [ubuntu-20.04, ubuntu-18.04, macos-11.0, macos-10.15]
         cc: [gcc, clang]
         buildsys: [make, cmake]
+        exclude:
+          # `gcc` is just an alias to `clang` on macOS, don't bother
+          - os: macos-10.15
+            cc: gcc
+          - os: macos-11.0
+            cc: gcc
         include:
           - os: ubuntu-18.04
             cc: gcc
