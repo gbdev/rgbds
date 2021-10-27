@@ -37,7 +37,8 @@ static enum WarningState const defaultWarnings[NB_WARNINGS] = {
 	[WARNING_OBSOLETE]		= WARNING_ENABLED,
 	[WARNING_SHIFT]			= WARNING_DISABLED,
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
-	[WARNING_TRUNCATION]		= WARNING_ENABLED,
+	[WARNING_TRUNCATION_1]		= WARNING_ENABLED,
+	[WARNING_TRUNCATION_2]		= WARNING_DISABLED,
 	[WARNING_USER]			= WARNING_ENABLED,
 };
 
@@ -81,6 +82,7 @@ static char const *warningFlags[NB_WARNINGS_ALL] = {
 	"shift",
 	"shift-amount",
 	"truncation",
+	"truncation",
 	"user",
 
 	/* Meta warnings */
@@ -102,6 +104,8 @@ static uint8_t const _wallCommands[] = {
 	WARNING_EMPTY_STRRPL,
 	WARNING_LARGE_CONSTANT,
 	WARNING_LONG_STR,
+	WARNING_NESTED_COMMENT,
+	WARNING_OBSOLETE,
 	META_WARNING_DONE
 };
 
@@ -110,6 +114,9 @@ static uint8_t const _wextraCommands[] = {
 	WARNING_EMPTY_MACRO_ARG,
 	WARNING_MACRO_SHIFT,
 	WARNING_NESTED_COMMENT,
+	WARNING_OBSOLETE,
+	WARNING_TRUNCATION_1,
+	WARNING_TRUNCATION_2,
 	META_WARNING_DONE
 };
 
@@ -128,7 +135,8 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
-	/* WARNING_TRUNCATION, */
+	WARNING_TRUNCATION_1,
+	WARNING_TRUNCATION_2,
 	/* WARNING_USER, */
 	META_WARNING_DONE
 };
@@ -194,6 +202,21 @@ void processWarningFlag(char const *flag)
 	char const *rootFlag = isNegation ? flag + strlen("no-") : flag;
 	enum WarningState state = setError ? WARNING_ERROR :
 				  isNegation ? WARNING_DISABLED : WARNING_ENABLED;
+
+	/* Special-case matching against -Wtruncation=0/1/2 */
+	if (!strcmp(flag, "truncation=0") || !strcmp(flag, "no-truncation")) {
+		warningStates[WARNING_TRUNCATION_1] = WARNING_DISABLED;
+		warningStates[WARNING_TRUNCATION_2] = WARNING_DISABLED;
+		return;
+	} else if (!strcmp(flag, "truncation=1")) {
+		warningStates[WARNING_TRUNCATION_1] = state;
+		warningStates[WARNING_TRUNCATION_2] = WARNING_DISABLED;
+		return;
+	} else if (!strcmp(flag, "truncation=2") || !strcmp(flag, "truncation")) {
+		warningStates[WARNING_TRUNCATION_1] = state;
+		warningStates[WARNING_TRUNCATION_2] = state;
+		return;
+	}
 
 	/* Try to match the flag against a "normal" flag */
 	for (enum WarningID id = 0; id < NB_WARNINGS; id++) {
