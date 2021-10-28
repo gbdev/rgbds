@@ -880,6 +880,14 @@ Labels enable just that: a label ties a name to a specific location within a sec
 A label resolves to a bank and address, determined at the same time as its parent section's (see further in this section).
 .Pp
 A label is defined by writing its name at the beginning of a line, followed by one or two colons, without any whitespace between the label name and the colon(s).
+Declaring a label (global or local) with two colons
+.Ql ::
+will define and
+.Ic EXPORT
+it at the same time.
+(See
+.Sx Exporting and importing symbols
+below).
 When defining a local label, the colon can be omitted, and
 .Nm
 will act as if there was only one.
@@ -899,20 +907,11 @@ More than one dot in label names is not allowed.
 .Pp
 For convenience, local labels can use a shorthand syntax: when a symbol name starting with a dot is found (for example, inside an expression, or when declaring a label), then the current
 .Dq label scope
-(explained below)
 is implicitly prepended.
 .Pp
 Defining a global label sets it as the current
 .Dq label scope ,
 until the next global label definition, or the end of the current section.
-Declaring a label (global or local) with two colons
-.Ql ::
-will define and
-.Ic EXPORT
-it at the same time.
-(See
-.Sx Exporting and importing symbols
-below).
 .Pp
 Here are some examples of label definitions:
 .Bd -literal -offset indent
