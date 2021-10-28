@@ -879,6 +879,11 @@ numbers.
 Labels enable just that: a label ties a name to a specific location within a section.
 A label resolves to a bank and address, determined at the same time as its parent section's (see further in this section).
 .Pp
+A label is defined by writing its name at the beginning of a line, followed by one or two colons, without any whitespace between the label name and the colon(s).
+When defining a local label, the colon can be omitted, and
+.Nm
+will act as if there was only one.
+.Pp
 A label is said to be
 .Em local
 if its name contains a dot
@@ -896,12 +901,6 @@ For convenience, local labels can use a shorthand syntax: when a symbol name sta
 .Dq label scope
 (explained below)
 is implicitly prepended.
-.Pp
-A label is defined by writing its name at the beginning of a line, followed by one or two colons,
-.Em without any whitespace between the label name and the colon(s) .
-When defining a local label, the colon can be omitted, and
-.Nm
-will act as if there was only one.
 .Pp
 Defining a global label sets it as the current
 .Dq label scope ,
