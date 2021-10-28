@@ -924,11 +924,35 @@ ThisWillBeExported:: ;\ Note the two colons
 ThisWillBeExported.too::
 .Ed
 .Pp
+In a numeric expression, a label evaluates to its address in memory.
+.Po To obtain its bank, use the
+.Ql BANK()
+function described in
+.Sx Other functions
+.Pc .
+For example, given the following,
+.Ql ld de, vPlayerTiles
+would be equivalent to
+.Ql ld de, $80C0
+assuming the section ends up at
+.Ad $80C0 :
+.Bd -literal -offset indent
+SECTION "Player tiles", VRAM
+PlayerTiles:
+    ds 6 * 16
+.end
+.Ed
+.Pp
 A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
 However, if the section in which the label is defined has a fixed base address, its value is known at assembly time.
-Also,
+.Pp
+Also, while
 .Nm
-is able to compute the difference between two labels either if both are constant as described above, or if both belong to the same section.
+obviously can compute the difference between two labels if both are constant, it is also able to compute the difference between two non-constant labels if they both belong to the same section, such as
+.Ql PlayerTiles
+and
+.Ql PlayerTiles.end
+above.
 .Ss Anonymous labels
 Anonymous labels are useful for short blocks of code.
 They are defined like normal labels, but without a name before the colon.
