@@ -30,6 +30,8 @@ MACRO try
 ENDM
 
 	try Wno-truncation
+	try Wtruncation
+	try Wtruncation=0
 	try Wtruncation=1
 	try Wtruncation=2
 	try Werror=truncation=1
