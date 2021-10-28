@@ -228,21 +228,13 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 		/* Default fractional width (C's is 6 for "%f"; here 5 is enough) */
 		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
 
-		if (fracWidth) {
-			if (fracWidth > 255) {
-				error("Fractional width %zu too long, limiting to 255\n",
-				      fracWidth);
-				fracWidth = 255;
-			}
-
-			char spec[16]; /* Max "%" + 5-char PRIu32 + ".%0255.f" + terminator */
-
-			snprintf(spec, sizeof(spec), "%%" PRIu32 ".%%0%zu.f", fracWidth);
-			snprintf(valueBuf, sizeof(valueBuf), spec, value >> 16,
-				 (value % 65536) / 65536.0 * pow(10, fracWidth) + 0.5);
-		} else {
-			snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, value >> 16);
+		if (fracWidth > 255) {
+			error("Fractional width %zu too long, limiting to 255\n",
+			      fracWidth);
+			fracWidth = 255;
 		}
+
+		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)fracWidth, value / 65536.0);
 	} else {
 		char const *spec = fmt->type == 'd' ? "%" PRId32
 				 : fmt->type == 'u' ? "%" PRIu32
