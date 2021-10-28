@@ -17,7 +17,8 @@ struct OptStackEntry {
 	bool haltnop;
 	bool optimizeLoads;
 	bool warningsAreErrors;
-	enum WarningState warningStates[NB_WARNINGS];
+	// Don't be confused: we use the size of the **global variable** `warningStates`!
+	enum WarningState warningStates[sizeof(warningStates)];
 	struct OptStackEntry *next;
 };
 
@@ -48,7 +49,7 @@ void opt_L(bool optimize)
 	optimizeLoads = optimize;
 }
 
-void opt_W(char const *flag)
+void opt_W(char *flag)
 {
 	processWarningFlag(flag);
 }
