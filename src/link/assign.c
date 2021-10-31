@@ -159,9 +159,28 @@ static bool isLocationSuitable(struct Section const *section,
 static struct FreeSpace *getPlacement(struct Section const *section,
 				      struct MemoryLocation *location)
 {
-	location->bank = section->isBankFixed
-				? section->bank
-				: bankranges[section->type][0];
+	static uint16_t curScrambleROM = 1;
+	static uint8_t curScrambleWRAM = 1;
+	static uint8_t curScrambleSRAM = 1;
+
+	// Determine which bank we should start searching in
+	if (section->isBankFixed) {
+		location->bank = section->bank;
+	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
+		location->bank = curScrambleROM++;
+		if (curScrambleROM > scrambleROMX)
+			curScrambleROM = 1;
+	} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX) {
+		location->bank = curScrambleWRAM++;
+		if (curScrambleWRAM > scrambleWRAMX)
+			curScrambleWRAM = 1;
+	} else if (scrambleSRAM && section->type == SECTTYPE_SRAM) {
+		location->bank = curScrambleSRAM++;
+		if (curScrambleSRAM > scrambleSRAM)
+			curScrambleSRAM = 0;
+	} else {
+		location->bank = bankranges[section->type][0];
+	}
 	struct FreeSpace *space;
 
 	for (;;) {

@@ -16,6 +16,7 @@ local args=(
 	'(-O --overlay)'{-O,--overlay}'+[Overlay sections over on top of bin file]:base overlay:_files'
 	'(-o --output)'{-o,--output}"+[Write ROM image to this file]:rom file:_files -g '*.{gb,sgb,gbc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
+	'(-S --scramble)'{-s,--scramble}'+[Activate scrambling]:scramble spec'
 	'(-s --smart)'{-s,--smart}'+[!BROKEN! Perform smart linking from this symbol]:symbol name:'
 
 	'*'":object files:_files -g '*.o'"
