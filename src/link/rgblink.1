@@ -20,6 +20,7 @@
 .Op Fl O Ar overlay_file
 .Op Fl o Ar out_file
 .Op Fl p Ar pad_value
+.Op Fl S Ar spec
 .Op Fl s Ar symbol
 .Ar
 .Sh DESCRIPTION
@@ -89,6 +90,14 @@ Has no effect if
 .Fl O
 is specified.
 The default is 0.
+.It Fl S Ar spec , Fl Fl scramble Ar spec
+Enables a different
+.Dq scrambling
+algorithm for placing sections.
+See
+.Sx Scrambling algorithm
+below for an explanation and a description of
+.Ar spec .
 .It Fl s Ar symbol , Fl Fl smart Ar symbol
 This option is ignored.
 It was supposed to perform smart linking but fell into disrepair, and so has been removed.
@@ -113,6 +122,56 @@ When making a ROM, be careful that not using this is not a replacement for
 .Xr rgbfix 1 Ap s Fl p
 option!
 .El
+.Ss Scrambling algorithm
+The default section placement algorithm tries to minimize the number of banks used;
+.Dq scrambling
+instead places sections into a given pool of banks, trying to minimize the number of sections sharing a given bank.
+This is useful to catch broken bank assumptions, such as expecting two different sections to land in the same bank (that is not guaranteed unless both are manually assigned the same bank number).
+.Pp
+A scrambling spec is a comma-separated list of region specs.
+A trailing comma is allowed, as well as whitespace between all specs and their components.
+Each region spec has the following form:
+.D1 Ar region Ns Op = Ns Ar size
+.Ar region
+must be one of the following (case-insensitive), while
+.Ar size
+must be a positive decimal integer between 1 and the corresponding maximum.
+Certain regions allow omitting the size, in which case it defaults to its max value.
+.Bl -column "Region name" "Max value" "Size optional"
+Region name Ta Max size Ta Size optional
+.Cm romx Ta 65535 Ta \&No
+.Cm sram Ta 255 Ta \&No
+.Cm wramx Ta 7 Ta Yes
+.El
+.Pp
+A
+.Ar size
+of 0 disables scrambling for that region.
+.Pp
+For example,
+.Ql romx=64,wramx=4
+will scramble
+.Ic ROMX
+sections among ROM banks 1 to 64,
+.Ic WRAMX
+sections among RAM banks 1 to 4, and will not scramble
+.Ic SRAM
+sections.
+.Pp
+Later region specs override earlier ones; for example,
+.Ql romx=42, Romx=0
+disables scrambling for
+.Cm romx .
+.Pp
+.Cm wramx
+scrambling is silently ignored if
+.Fl w
+is passed (including if implied by
+.Fl d ) ,
+as
+.Ic WRAMX
+sections will be treated as
+.Ic WRAM0 .
 .Sh EXAMPLES
 All you need for a basic ROM is an object file, which can be made into a ROM image like so:
 .Pp

@@ -200,7 +200,7 @@ static void printUsage(void)
 	fputs(
 "Usage: rgblink [-dtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-"               [-S scramble_flags] [-s symbol] <file> ...\n"
+"               [-S spec] [-s symbol] <file> ...\n"
 "Useful options:\n"
 "    -l, --linkerscript <path>  set the input linker script\n"
 "    -m, --map <path>           set the output map file\n"
