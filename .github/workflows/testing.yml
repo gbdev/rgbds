@@ -18,11 +18,9 @@ jobs:
             cc: gcc
         include:
           - os: ubuntu-18.04
-            cc: gcc
             target: develop
             cmakevars: -DSANITIZERS=ON -DMORE_WARNINGS=ON -DCMAKE_BUILD_TYPE=Debug
           - os: ubuntu-20.04
-            cc: gcc
             target: develop
             cmakevars: -DSANITIZERS=ON -DMORE_WARNINGS=ON -DCMAKE_BUILD_TYPE=Debug
           - os: macos-11.0
