@@ -618,7 +618,7 @@ void lexer_Init(void)
 	 */
 	uint16_t usedNodes = 1;
 
-	for (size_t i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(keywords); i++) {
 		uint16_t nodeID = 0;
 
 		/* Walk the dictionary, creating intermediate nodes for the keyword */
@@ -645,8 +645,7 @@ void lexer_Init(void)
 
 #ifdef PRINT_NODE_COUNT /* For the maintainer to check how many nodes are needed */
 	printf("Lexer keyword dictionary: %zu keywords in %u nodes (pool size %zu)\n",
-	       sizeof(keywords) / sizeof(*keywords), usedNodes,
-	       sizeof(keywordDict) / sizeof(*keywordDict));
+	       ARRAY_SIZE(keywords), usedNodes, ARRAY_SIZE(keywordDict));
 #endif
 }
 

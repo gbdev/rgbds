@@ -89,4 +89,8 @@
 #define STR(x) #x
 #define EXPAND_AND_STR(x) STR(x)
 
+// Obtaining the size of an array; `arr` must be an expression, not a type!
+// (Having two instances of `arr` is OK because the contents of `sizeof` are not evaluated.)
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof *(arr))
+
 #endif /* HELPERS_H */
