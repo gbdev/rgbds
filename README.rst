@@ -88,6 +88,8 @@ The RGBDS source code file structure somewhat resembles the following:
 
   * ``zsh_compl`` contains tab completion scripts for use with zsh. Put them somewhere in your ``fpath``, and they should auto-load.
 
+  * ``bash_compl`` contains tab completion scripts for use with bash. Run them with `source` somewhere in your ``.bashrc``, and they should load every time you open a shell.
+
 - ``include/`` - header files for each respective C files in `src`.
 
 - ``src/`` - source code and manual pages for RGBDS.
