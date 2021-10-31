@@ -63,6 +63,8 @@ dependency src/asm/main.c        src/asm/rgbasm.1 \
            "Did the rgbasm CLI change?"
 dependency src/asm/main.c        contrib/zsh_compl/_rgbasm \
            "Did the rgbasm CLI change?"
+dependency src/asm/main.c        contrib/bash_compl/_rgbasm.bash \
+           "Did the rgbasm CLI change?"
 dependency src/link/main.c       src/link/rgblink.1 \
            "Did the rgblink CLI change?"
 dependency src/link/main.c       contrib/zsh_compl/_rgblink \
