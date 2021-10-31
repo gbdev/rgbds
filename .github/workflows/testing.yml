@@ -50,7 +50,7 @@ jobs:
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
           cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.cc }} ${{ matrix.cmakevars }}
-          cmake --build build
+          cmake --build build -j
           cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build
         if: matrix.buildsys == 'cmake'
@@ -111,17 +111,17 @@ jobs:
       - name: Build zlib
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
           cmake -S zlib -B zbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
-          cmake --build zbuild --config Release
+          cmake --build zbuild --config Release -j
           cmake --install zbuild
       - name: Build libpng
         run: |
           cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
-          cmake --build pngbuild --config Release
+          cmake --build pngbuild --config Release -j
           cmake --install pngbuild
       - name: Build Windows binaries
         run: |
           cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release
+          cmake --build build --config Release -j
           cmake --install build
       - name: Package binaries
         shell: bash
