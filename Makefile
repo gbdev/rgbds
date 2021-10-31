@@ -219,6 +219,7 @@ develop:
 		-Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op \
 		-Wnested-externs -Wno-aggressive-loop-optimizations -Winline \
 		-Wundef -Wstrict-prototypes -Wold-style-definition \
+		-Wno-unknown-warning-option -Wno-tautological-constant-out-of-range-compare \
 		-fsanitize=shift -fsanitize=integer-divide-by-zero \
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \

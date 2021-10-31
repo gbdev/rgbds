@@ -54,7 +54,8 @@ else()
                         -Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond
                         -Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op
                         -Wnested-externs -Wno-aggressive-loop-optimizations -Winline
-                        -Wundef -Wstrict-prototypes -Wold-style-definition)
+                        -Wundef -Wstrict-prototypes -Wold-style-definition
+                        -Wno-unknown-warning-option -Wno-tautological-constant-out-of-range-compare)
   endif()
 endif()
 
