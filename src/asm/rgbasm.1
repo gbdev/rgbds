@@ -248,10 +248,20 @@ Warn when shifting right a negative value.
 Use a division by 2**N instead.
 .It Fl Wshift-amount
 Warn when a shift's operand is negative or greater than 32.
-.It Fl Wno-truncation
+.It Fl Wtruncation=
 Warn when an implicit truncation (for example,
-.Ic db )
-loses some bits.
+.Ic db
+to an 8-bit value) loses some bits.
+.Fl Wtruncation=0
+or
+.Fl Wno-truncation
+disables this warning.
+.Fl Wtruncation=1
+warns when an N-bit value's absolute value is 2**N or greater.
+.Fl Wtruncation=2
+or just
+.Fl Wtruncation
+also warns when an N-bit value is below -2**(N-1), which will not fit in two's complement encoding.
 .It Fl Wno-user
 Warn when the
 .Ic WARN
