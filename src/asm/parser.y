@@ -653,6 +653,7 @@ enum {
 %type	<constValue>	reg_ss
 %type	<constValue>	reg_rr
 %type	<constValue>	reg_tt
+%type	<constValue>	ccode_expr
 %type	<constValue>	ccode
 %type	<expr>		op_a_n
 %type	<constValue>	op_a_r
@@ -1775,7 +1776,7 @@ z80_call	: T_Z80_CALL reloc_16bit {
 			sect_AbsByte(0xCD);
 			sect_RelWord(&$2, 1);
 		}
-		| T_Z80_CALL ccode T_COMMA reloc_16bit {
+		| T_Z80_CALL ccode_expr T_COMMA reloc_16bit {
 			sect_AbsByte(0xC4 | ($2 << 3));
 			sect_RelWord(&$4, 1);
 		}
@@ -1822,7 +1823,7 @@ z80_jp		: T_Z80_JP reloc_16bit {
 			sect_AbsByte(0xC3);
 			sect_RelWord(&$2, 1);
 		}
-		| T_Z80_JP ccode T_COMMA reloc_16bit {
+		| T_Z80_JP ccode_expr T_COMMA reloc_16bit {
 			sect_AbsByte(0xC2 | ($2 << 3));
 			sect_RelWord(&$4, 1);
 		}
@@ -1835,7 +1836,7 @@ z80_jr		: T_Z80_JR reloc_16bit {
 			sect_AbsByte(0x18);
 			sect_PCRelByte(&$2, 1);
 		}
-		| T_Z80_JR ccode T_COMMA reloc_16bit {
+		| T_Z80_JR ccode_expr T_COMMA reloc_16bit {
 			sect_AbsByte(0x20 | ($2 << 3));
 			sect_PCRelByte(&$4, 1);
 		}
@@ -2017,7 +2018,7 @@ z80_res		: T_Z80_RES const_3bit T_COMMA reg_r {
 ;
 
 z80_ret		: T_Z80_RET { sect_AbsByte(0xC9); }
-		| T_Z80_RET ccode { sect_AbsByte(0xC0 | ($2 << 3)); }
+		| T_Z80_RET ccode_expr { sect_AbsByte(0xC0 | ($2 << 3)); }
 ;
 
 z80_reti	: T_Z80_RETI { sect_AbsByte(0xD9); }
@@ -2170,6 +2171,12 @@ T_MODE_H	: T_TOKEN_H
 
 T_MODE_L	: T_TOKEN_L
 		| T_OP_LOW T_LPAREN T_MODE_HL T_RPAREN
+;
+
+ccode_expr	: ccode
+		| T_OP_LOGICNOT ccode_expr {
+			$$ = $2 ^ 1;
+		}
 ;
 
 ccode		: T_CC_NZ { $$ = CC_NZ; }
