@@ -288,33 +288,23 @@ int main(int argc, char *argv[])
 				generatePhonyDeps = true;
 				break;
 
+				char *newTarget;
 			case 'Q':
 			case 'T':
-				if (musl_optind == argc)
-					errx(1, "-M%c takes a target file name argument", depType);
-				ep = musl_optarg;
+				newTarget = musl_optarg;
 				if (depType == 'Q')
-					ep = make_escape(ep);
+					newTarget = make_escape(newTarget);
+				size_t newTargetLen = strlen(newTarget) + 1; // Plus the space
 
-				targetFileNameLen += strlen(ep) + 1;
-				if (!targetFileName) {
-					/* On first alloc, make an empty str */
-					targetFileName = malloc(targetFileNameLen + 1);
-					if (targetFileName)
-						*targetFileName = '\0';
-				} else {
-					targetFileName = realloc(targetFileName,
-								 targetFileNameLen + 1);
-				}
+				targetFileName = realloc(targetFileName,
+							 targetFileNameLen + newTargetLen + 1);
 				if (targetFileName == NULL)
 					err(1, "Cannot append new file to target file list");
-				strcat(targetFileName, ep);
+				memcpy(&targetFileName[targetFileNameLen], newTarget, newTargetLen);
 				if (depType == 'Q')
-					free(ep);
-				char *ptr = targetFileName + strlen(targetFileName);
-
-				*ptr++ = ' ';
-				*ptr = '\0';
+					free(newTarget);
+				targetFileNameLen += newTargetLen;
+				targetFileName[targetFileNameLen - 1] = ' ';
 				break;
 			}
 			break;
@@ -328,6 +318,8 @@ int main(int argc, char *argv[])
 
 	if (targetFileName == NULL)
 		targetFileName = objectName;
+	else
+		targetFileName[targetFileNameLen - 1] = '\0'; // Overwrite the last space
 
 	if (argc == musl_optind) {
 		fputs("FATAL: No input files\n", stderr);
@@ -344,7 +336,7 @@ int main(int argc, char *argv[])
 
 	if (dependfile) {
 		if (!targetFileName)
-			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT\n");
+			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT");
 
 		fprintf(dependfile, "%s: %s\n", targetFileName, mainFileName);
 	}
