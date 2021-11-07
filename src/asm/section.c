@@ -628,7 +628,7 @@ void sect_AbsByte(uint8_t b)
 	writebyte(b);
 }
 
-void sect_AbsByteGroup(uint8_t const *s, uint32_t length)
+void sect_AbsByteGroup(uint8_t const *s, size_t length)
 {
 	if (!checkcodesection())
 		return;
@@ -639,7 +639,7 @@ void sect_AbsByteGroup(uint8_t const *s, uint32_t length)
 		writebyte(*s++);
 }
 
-void sect_AbsWordGroup(uint8_t const *s, uint32_t length)
+void sect_AbsWordGroup(uint8_t const *s, size_t length)
 {
 	if (!checkcodesection())
 		return;
@@ -650,7 +650,7 @@ void sect_AbsWordGroup(uint8_t const *s, uint32_t length)
 		writeword(*s++);
 }
 
-void sect_AbsLongGroup(uint8_t const *s, uint32_t length)
+void sect_AbsLongGroup(uint8_t const *s, size_t length)
 {
 	if (!checkcodesection())
 		return;

@@ -1344,7 +1344,7 @@ constlist_8bit_entry : reloc_8bit_no_str {
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
-			uint32_t length = charmap_Convert($1, output);
+			size_t length = charmap_Convert($1, output);
 
 			sect_AbsByteGroup(output, length);
 			free(output);
@@ -1360,7 +1360,7 @@ constlist_16bit_entry : reloc_16bit_no_str {
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
-			uint32_t length = charmap_Convert($1, output);
+			size_t length = charmap_Convert($1, output);
 
 			sect_AbsWordGroup(output, length);
 			free(output);
@@ -1377,7 +1377,7 @@ constlist_32bit_entry : relocexpr_no_str {
 		| string {
 			// Charmaps cannot increase the length of a string
 			uint8_t *output = malloc(strlen($1));
-			uint32_t length = charmap_Convert($1, output);
+			size_t length = charmap_Convert($1, output);
 
 			sect_AbsLongGroup(output, length);
 			free(output);
