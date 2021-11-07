@@ -17,10 +17,8 @@
 #include "asm/section.h"
 
 #include "platform.h" // MIN_NB_ELMS
-#include "types.h"
 
-#define HASHSIZE	(1 << 16)
-#define MAXSYMLEN	256
+#define MAXSYMLEN	255
 
 enum SymbolType {
 	SYM_LABEL,

@@ -19,7 +19,6 @@
 
 #include "asm/lexer.h"
 
-#include "types.h"
 
 struct FileStackNode {
 	struct FileStackNode *parent; /* Pointer to parent node, for error reporting */
