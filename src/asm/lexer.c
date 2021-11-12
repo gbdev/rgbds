@@ -24,7 +24,6 @@
 #include <unistd.h>
 #endif
 
-#include "extern/utf8decoder.h"
 #include "platform.h" /* For `ssize_t` */
 
 #include "asm/lexer.h"
