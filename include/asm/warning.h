@@ -42,8 +42,11 @@ enum WarningID {
 
 	// Warnings past this point are "parametric" warnings, only mapping to a single flag
 #define PARAM_WARNINGS_START NB_PLAIN_WARNINGS
+	// Treating string as number may lose some bits
+	WARNING_NUMERIC_STRING_1 = PARAM_WARNINGS_START,
+	WARNING_NUMERIC_STRING_2,
 	// Implicit truncation loses some bits
-	WARNING_TRUNCATION_1 = PARAM_WARNINGS_START,
+	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
 
 	NB_PLAIN_AND_PARAM_WARNINGS,

@@ -1,3 +1,15 @@
+warning: multiple-charmaps.asm(39) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
+warning: multiple-charmaps.asm(47) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
+warning: multiple-charmaps.asm(66) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
+warning: multiple-charmaps.asm(89) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
+warning: multiple-charmaps.asm(90) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
+warning: multiple-charmaps.asm(98) -> multiple-charmaps.asm::print_mapped(27): [-Wnumeric-string]
+    Treating 2-character string as a number
 ERROR: multiple-charmaps.asm(100) -> multiple-charmaps.asm::new_(7):
     Charmap 'map1' already exists
 ERROR: multiple-charmaps.asm(102) -> multiple-charmaps.asm::set_(13):

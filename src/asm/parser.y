@@ -52,16 +52,21 @@ static void lowerstring(char *dest, char const *src)
 	*dest = '\0';
 }
 
-static uint32_t str2int2(uint8_t *s, int32_t length)
+static uint32_t str2int2(uint8_t *s, uint32_t length)
 {
-	int32_t i;
+	if (length > 4)
+		warning(WARNING_NUMERIC_STRING_1,
+			"Treating string as a number ignores first %" PRIu32 " character%s\n",
+			length - 4, length == 5 ? "" : "s");
+	else if (length > 1)
+		warning(WARNING_NUMERIC_STRING_2,
+			"Treating %" PRIu32 "-character string as a number\n", length);
+
 	uint32_t r = 0;
 
-	i = length < 4 ? 0 : length - 4;
-	while (i < length) {
+	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; i++) {
 		r <<= 8;
 		r |= s[i];
-		i++;
 	}
 
 	return r;
@@ -1311,7 +1316,7 @@ constlist_8bit_entry : reloc_8bit_no_str {
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
-			int32_t length = charmap_Convert($1, output);
+			uint32_t length = charmap_Convert($1, output);
 
 			sect_AbsByteGroup(output, length);
 			free(output);
@@ -1327,7 +1332,7 @@ constlist_16bit_entry : reloc_16bit_no_str {
 		}
 		| string {
 			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
-			int32_t length = charmap_Convert($1, output);
+			uint32_t length = charmap_Convert($1, output);
 
 			sect_AbsWordGroup(output, length);
 			free(output);
@@ -1344,7 +1349,7 @@ constlist_32bit_entry : relocexpr_no_str {
 		| string {
 			// Charmaps cannot increase the length of a string
 			uint8_t *output = malloc(strlen($1));
-			int32_t length = charmap_Convert($1, output);
+			uint32_t length = charmap_Convert($1, output);
 
 			sect_AbsLongGroup(output, length);
 			free(output);
@@ -1390,7 +1395,7 @@ relocexpr	: relocexpr_no_str
 		| string {
 			// Charmaps cannot increase the length of a string
 			uint8_t *output = malloc(strlen($1));
-			int32_t length = charmap_Convert($1, output);
+			uint32_t length = charmap_Convert($1, output);
 			uint32_t r = str2int2(output, length);
 
 			free(output);
