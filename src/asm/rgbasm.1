@@ -214,7 +214,7 @@ Warn when re-defining a charmap mapping.
 This warning is enabled by
 .Fl Wall .
 .It Fl Wdiv
-Warn when dividing the smallest negative integer by -1, which yields itself due to integer overflow.
+Warn when dividing the smallest negative integer (-2**31) by -1, which yields itself due to integer overflow.
 .It Fl Wempty-macro-arg
 Warn when a macro argument is empty.
 This warning is enabled by
@@ -261,7 +261,7 @@ warns when an N-bit value's absolute value is 2**N or greater.
 .Fl Wtruncation=2
 or just
 .Fl Wtruncation
-also warns when an N-bit value is below -2**(N-1), which will not fit in two's complement encoding.
+also warns when an N-bit value is less than -2**(N-1), which will not fit in two's complement encoding.
 .It Fl Wno-user
 Warn when the
 .Ic WARN
