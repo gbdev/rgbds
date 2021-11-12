@@ -61,10 +61,10 @@ void sect_EndUnion(void);
 void sect_CheckUnionClosed(void);
 
 void sect_AbsByte(uint8_t b);
-void sect_AbsByteGroup(uint8_t const *s, int32_t length);
-void sect_AbsWordGroup(uint8_t const *s, int32_t length);
-void sect_AbsLongGroup(uint8_t const *s, int32_t length);
-void sect_Skip(int32_t skip, bool ds);
+void sect_AbsByteGroup(uint8_t const *s, uint32_t length);
+void sect_AbsWordGroup(uint8_t const *s, uint32_t length);
+void sect_AbsLongGroup(uint8_t const *s, uint32_t length);
+void sect_Skip(uint32_t skip, bool ds);
 void sect_String(char const *s);
 void sect_RelByte(struct Expression *expr, uint32_t pcShift);
 void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size);

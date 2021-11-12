@@ -138,7 +138,7 @@ _Noreturn void fatal(struct FileStackNode const *where, uint32_t lineNo, char co
 		nbErrors++;
 
 	fprintf(stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors,
-		nbErrors != 1 ? "s" : "");
+		nbErrors == 1 ? "" : "s");
 	exit(1);
 }
 
@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
 	patch_ApplyPatches();
 	if (nbErrors) {
 		fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
-			nbErrors, nbErrors != 1 ? "s" : "");
+			nbErrors, nbErrors == 1 ? "" : "s");
 		exit(1);
 	}
 	out_WriteFiles();

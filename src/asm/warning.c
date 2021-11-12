@@ -40,6 +40,8 @@ static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
 	[WARNING_USER]			= WARNING_ENABLED,
 
+	[WARNING_NUMERIC_STRING_1]	= WARNING_ENABLED,
+	[WARNING_NUMERIC_STRING_2]	= WARNING_DISABLED,
 	[WARNING_TRUNCATION_1]		= WARNING_ENABLED,
 	[WARNING_TRUNCATION_2]		= WARNING_DISABLED,
 };
@@ -86,6 +88,8 @@ static const char * const warningFlags[NB_WARNINGS] = {
 	"user",
 
 	// Parametric warnings
+	"numeric-string",
+	"numeric-string",
 	"truncation",
 	"truncation",
 
@@ -100,6 +104,7 @@ static const struct {
 	uint8_t nbLevels;
 	uint8_t defaultLevel;
 } paramWarnings[] = {
+	{ "numeric-string", 2, 1 },
 	{ "truncation", 2, 2 },
 };
 
@@ -155,6 +160,7 @@ static uint8_t const _wallCommands[] = {
 	WARNING_LONG_STR,
 	WARNING_NESTED_COMMENT,
 	WARNING_OBSOLETE,
+	WARNING_NUMERIC_STRING_1,
 	META_WARNING_DONE
 };
 
@@ -164,6 +170,7 @@ static uint8_t const _wextraCommands[] = {
 	WARNING_MACRO_SHIFT,
 	WARNING_NESTED_COMMENT,
 	WARNING_OBSOLETE,
+	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
 	META_WARNING_DONE
@@ -184,6 +191,8 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
+	WARNING_NUMERIC_STRING_1,
+	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
 	/* WARNING_USER, */
