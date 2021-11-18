@@ -72,7 +72,7 @@ static uint32_t str2int2(uint8_t *s, uint32_t length)
 	return r;
 }
 
-static char *strrstr(char *s1, char *s2)
+static char const *strrstr(char const *s1, char const *s2)
 {
 	size_t len1 = strlen(s1);
 	size_t len2 = strlen(s2);
@@ -80,7 +80,7 @@ static char *strrstr(char *s1, char *s2)
 	if (len2 > len1)
 		return NULL;
 
-	for (char *p = s1 + len1 - len2; p >= s1; p--)
+	for (char const *p = s1 + len1 - len2; p >= s1; p--)
 		if (!strncmp(p, s2, len2))
 			return p;
 
@@ -1533,12 +1533,12 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 			rpn_Number(&$$, strcmp($3, $5));
 		}
 		| T_OP_STRIN T_LPAREN string T_COMMA string T_RPAREN {
-			char *p = strstr($3, $5);
+			char const *p = strstr($3, $5);
 
 			rpn_Number(&$$, p ? p - $3 + 1 : 0);
 		}
 		| T_OP_STRRIN T_LPAREN string T_COMMA string T_RPAREN {
-			char *p = strrstr($3, $5);
+			char const *p = strrstr($3, $5);
 
 			rpn_Number(&$$, p ? p - $3 + 1 : 0);
 		}
