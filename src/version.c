@@ -12,7 +12,7 @@
 #include "helpers.h"
 #include "version.h"
 
-const char *get_package_version_string(void)
+char const *get_package_version_string(void)
 {
 	// The following conditional should be simplified by the compiler.
 	if (strlen(BUILD_VERSION_STRING) == 0) {

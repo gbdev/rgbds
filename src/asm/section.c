@@ -110,7 +110,7 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 		&& (!currentLoadSection || currentLoadSection->size != UINT32_MAX);
 }
 
-struct Section *sect_FindSectionByName(const char *name)
+struct Section *sect_FindSectionByName(char const *name)
 {
 	for (struct Section *sect = sectionList; sect; sect = sect->next) {
 		if (strcmp(name, sect->name) == 0)

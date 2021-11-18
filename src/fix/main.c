@@ -915,16 +915,16 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	}
 
 	if (title)
-		overwriteBytes(rom0, 0x134, (const uint8_t *)title, titleLen, "title");
+		overwriteBytes(rom0, 0x134, (uint8_t const *)title, titleLen, "title");
 
 	if (gameID)
-		overwriteBytes(rom0, 0x13F, (const uint8_t *)gameID, gameIDLen, "manufacturer code");
+		overwriteBytes(rom0, 0x13F, (uint8_t const *)gameID, gameIDLen, "manufacturer code");
 
 	if (model != DMG)
 		overwriteByte(rom0, 0x143, model == BOTH ? 0x80 : 0xC0, "CGB flag");
 
 	if (newLicensee)
-		overwriteBytes(rom0, 0x144, (const uint8_t *)newLicensee, newLicenseeLen,
+		overwriteBytes(rom0, 0x144, (uint8_t const *)newLicensee, newLicenseeLen,
 			       "new licensee code");
 
 	if (sgb)

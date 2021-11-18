@@ -37,7 +37,7 @@ int musl_optind = 1, musl_opterr = 1, musl_optopt;
 int musl_optreset = 0;
 static int musl_optpos;
 
-static void musl_getopt_msg(const char *a, const char *b, const char *c, size_t l)
+static void musl_getopt_msg(char const *a, char const *b, char const *c, size_t l)
 {
 	FILE *f = stderr;
 
@@ -47,7 +47,7 @@ static void musl_getopt_msg(const char *a, const char *b, const char *c, size_t 
 		putc('\n', f);
 }
 
-static int getopt(int argc, char *argv[], const char *optstring)
+static int getopt(int argc, char *argv[], char const *optstring)
 {
 	int i;
 	wchar_t c, d;
@@ -140,9 +140,11 @@ static void permute(char **argv, int dest, int src)
 	argv[dest] = tmp;
 }
 
-static int musl_getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly);
+static int musl_getopt_long_core(int argc, char **argv, char const *optstring,
+				 const struct option *longopts, int *idx, int longonly);
 
-static int musl_getopt_long(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int musl_getopt_long(int argc, char **argv, char const *optstring,
+			    const struct option *longopts, int *idx, int longonly)
 {
 	int ret, skipped, resumed;
 
@@ -178,7 +180,8 @@ static int musl_getopt_long(int argc, char **argv, const char *optstring, const 
 	return ret;
 }
 
-static int musl_getopt_long_core(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx, int longonly)
+static int musl_getopt_long_core(int argc, char **argv, char const *optstring,
+				 const struct option *longopts, int *idx, int longonly)
 {
 	musl_optarg = 0;
 	if (longopts && argv[musl_optind][0] == '-' &&
@@ -189,7 +192,7 @@ static int musl_getopt_long_core(int argc, char **argv, const char *optstring, c
 		char *arg = 0, *opt, *start = argv[musl_optind] + 1;
 
 		for (cnt = i = 0; longopts[i].name; i++) {
-			const char *name = longopts[i].name;
+			char const *name = longopts[i].name;
 
 			opt = start;
 			if (*opt == '-')
@@ -277,7 +280,8 @@ static int musl_getopt_long_core(int argc, char **argv, const char *optstring, c
 	return getopt(argc, argv, optstring);
 }
 
-int musl_getopt_long_only(int argc, char **argv, const char *optstring, const struct option *longopts, int *idx)
+int musl_getopt_long_only(int argc, char **argv, char const *optstring,
+			  const struct option *longopts, int *idx)
 {
 	return musl_getopt_long(argc, argv, optstring, longopts, idx, 1);
 }

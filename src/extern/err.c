@@ -14,7 +14,7 @@
 
 #include "extern/err.h"
 
-void rgbds_vwarn(const char *fmt, va_list ap)
+void rgbds_vwarn(char const *fmt, va_list ap)
 {
 	fprintf(stderr, "warning: ");
 	if (fmt) {
@@ -24,7 +24,7 @@ void rgbds_vwarn(const char *fmt, va_list ap)
 	perror(NULL);
 }
 
-void rgbds_vwarnx(const char *fmt, va_list ap)
+void rgbds_vwarnx(char const *fmt, va_list ap)
 {
 	fprintf(stderr, "warning");
 	if (fmt) {
@@ -34,7 +34,7 @@ void rgbds_vwarnx(const char *fmt, va_list ap)
 	putc('\n', stderr);
 }
 
-_Noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
+_Noreturn void rgbds_verr(int status, char const *fmt, va_list ap)
 {
 	fprintf(stderr, "error: ");
 	if (fmt) {
@@ -46,7 +46,7 @@ _Noreturn void rgbds_verr(int status, const char *fmt, va_list ap)
 	exit(status);
 }
 
-_Noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
+_Noreturn void rgbds_verrx(int status, char const *fmt, va_list ap)
 {
 	fprintf(stderr, "error");
 	if (fmt) {
@@ -57,7 +57,7 @@ _Noreturn void rgbds_verrx(int status, const char *fmt, va_list ap)
 	exit(status);
 }
 
-void rgbds_warn(const char *fmt, ...)
+void rgbds_warn(char const *fmt, ...)
 {
 	va_list ap;
 
@@ -66,7 +66,7 @@ void rgbds_warn(const char *fmt, ...)
 	va_end(ap);
 }
 
-void rgbds_warnx(const char *fmt, ...)
+void rgbds_warnx(char const *fmt, ...)
 {
 	va_list ap;
 
@@ -75,7 +75,7 @@ void rgbds_warnx(const char *fmt, ...)
 	va_end(ap);
 }
 
-_Noreturn void rgbds_err(int status, const char *fmt, ...)
+_Noreturn void rgbds_err(int status, char const *fmt, ...)
 {
 	va_list ap;
 
@@ -84,7 +84,7 @@ _Noreturn void rgbds_err(int status, const char *fmt, ...)
 	va_end(ap);
 }
 
-_Noreturn void rgbds_errx(int status, const char *fmt, ...)
+_Noreturn void rgbds_errx(int status, char const *fmt, ...)
 {
 	va_list ap;
 

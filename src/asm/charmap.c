@@ -78,7 +78,7 @@ static void initNode(struct Charnode *node)
 	memset(node->next, 0, sizeof(node->next));
 }
 
-struct Charmap *charmap_New(const char *name, const char *baseName)
+struct Charmap *charmap_New(char const *name, char const *baseName)
 {
 	struct Charmap *base = NULL;
 
@@ -120,7 +120,7 @@ void charmap_Delete(struct Charmap *charmap)
 	free(charmap);
 }
 
-void charmap_Set(const char *name)
+void charmap_Set(char const *name)
 {
 	struct Charmap **charmap = (struct Charmap **)hash_GetNode(charmaps, name);
 
