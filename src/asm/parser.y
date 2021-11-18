@@ -72,7 +72,7 @@ static uint32_t str2int2(uint8_t *s, uint32_t length)
 	return r;
 }
 
-static char const *strrstr(char const *s1, char const *s2)
+static const char *strrstr(char const *s1, char const *s2)
 {
 	size_t len1 = strlen(s1);
 	size_t len2 = strlen(s2);

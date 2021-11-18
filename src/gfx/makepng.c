@@ -182,7 +182,7 @@ static void read_png(struct PNGImage *img);
 static struct RawIndexedImage *create_raw_image(int width, int height,
 						int num_colors);
 static void set_raw_image_palette(struct RawIndexedImage *raw_image,
-				  const png_color *palette, int num_colors);
+				  png_color const *palette, int num_colors);
 
 static struct RawIndexedImage *indexed_png_to_raw(struct PNGImage *img)
 {
@@ -291,7 +291,7 @@ static void rgba_png_palette(struct PNGImage *img,
 			     png_color **palette_ptr_ptr, int *num_colors);
 static struct RawIndexedImage
 	*processed_rgba_png_to_raw(const struct PNGImage *img,
-				   const png_color *palette,
+				   png_color const *palette,
 				   int colors_in_palette);
 
 static struct RawIndexedImage *truecolor_png_to_raw(struct PNGImage *img)
@@ -352,7 +352,7 @@ static void rgba_PLTE_palette(struct PNGImage *img,
 }
 
 static void update_built_palette(png_color *palette,
-				 const png_color *pixel_color, png_byte alpha,
+				 png_color const *pixel_color, png_byte alpha,
 				 int *num_colors, bool *only_grayscale);
 static int fit_grayscale_palette(png_color *palette, int *num_colors);
 static void order_color_palette(png_color *palette, int num_colors);
@@ -398,7 +398,7 @@ static void rgba_build_palette(struct PNGImage *img,
 }
 
 static void update_built_palette(png_color *palette,
-				 const png_color *pixel_color, png_byte alpha,
+				 png_color const *pixel_color, png_byte alpha,
 				 int *num_colors, bool *only_grayscale)
 {
 	bool color_exists;
@@ -491,7 +491,7 @@ struct ColorWithLuminance {
 	int luminance;
 };
 
-static int compare_luminance(const void *a, const void *b)
+static int compare_luminance(void const *a, void const *b)
 {
 	const struct ColorWithLuminance *x, *y;
 
@@ -531,12 +531,12 @@ static void order_color_palette(png_color *palette, int num_colors)
 static void put_raw_image_pixel(struct RawIndexedImage *raw_image,
 				const struct PNGImage *img,
 				int *value_index, int x, int y,
-				const png_color *palette,
+				png_color const *palette,
 				int colors_in_palette);
 
 static struct RawIndexedImage
 	*processed_rgba_png_to_raw(const struct PNGImage *img,
-				   const png_color *palette,
+				   png_color const *palette,
 				   int colors_in_palette)
 {
 	struct RawIndexedImage *raw_image;
@@ -561,13 +561,13 @@ static struct RawIndexedImage
 	return raw_image;
 }
 
-static uint8_t palette_index_of(const png_color *palette,
-				int num_colors, const png_color *color);
+static uint8_t palette_index_of(png_color const *palette,
+				int num_colors, png_color const *color);
 
 static void put_raw_image_pixel(struct RawIndexedImage *raw_image,
 				const struct PNGImage *img,
 				int *value_index, int x, int y,
-				const png_color *palette,
+				png_color const *palette,
 				int colors_in_palette)
 {
 	png_color pixel_color;
@@ -588,8 +588,8 @@ static void put_raw_image_pixel(struct RawIndexedImage *raw_image,
 	}
 }
 
-static uint8_t palette_index_of(const png_color *palette,
-				int num_colors, const png_color *color)
+static uint8_t palette_index_of(png_color const *palette,
+				int num_colors, png_color const *color)
 {
 	uint8_t i;
 
@@ -660,7 +660,7 @@ static struct RawIndexedImage *create_raw_image(int width, int height,
 }
 
 static void set_raw_image_palette(struct RawIndexedImage *raw_image,
-				  const png_color *palette, int num_colors)
+				  png_color const *palette, int num_colors)
 {
 	int i;
 

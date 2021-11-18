@@ -324,7 +324,7 @@ void processWarningFlag(char *flag)
 	warnx("Unknown warning `%s`", flag);
 }
 
-void printDiag(const char *fmt, va_list args, char const *type,
+void printDiag(char const *fmt, va_list args, char const *type,
 	       char const *flagfmt, char const *flag)
 {
 	fputs(type, stderr);
@@ -334,7 +334,7 @@ void printDiag(const char *fmt, va_list args, char const *type,
 	lexer_DumpStringExpansions();
 }
 
-void error(const char *fmt, ...)
+void error(char const *fmt, ...)
 {
 	va_list args;
 
@@ -344,7 +344,7 @@ void error(const char *fmt, ...)
 	nbErrors++;
 }
 
-_Noreturn void fatalerror(const char *fmt, ...)
+_Noreturn void fatalerror(char const *fmt, ...)
 {
 	va_list args;
 

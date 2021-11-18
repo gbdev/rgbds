@@ -45,7 +45,7 @@
 #ifdef __SANITIZE_ADDRESS__
 // There are known, non-trivial to fix leaks. We would still like to have `make develop'
 // detect memory corruption, though.
-const char *__asan_default_options(void) { return "detect_leaks=0"; }
+char const *__asan_default_options(void) { return "detect_leaks=0"; }
 #endif
 
 // Old Bison versions (confirmed for 2.3) do not forward-declare `yyparse` in the generated header
@@ -68,7 +68,7 @@ bool verbose;
 bool warnings; /* True to enable warnings, false to disable them. */
 
 /* Escapes Make-special chars from a string */
-static char *make_escape(const char *str)
+static char *make_escape(char const *str)
 {
 	char * const escaped_str = malloc(strlen(str) * 2 + 1);
 	char *dest = escaped_str;

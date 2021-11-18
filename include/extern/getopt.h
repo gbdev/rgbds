@@ -30,13 +30,14 @@ extern char *musl_optarg;
 extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
 
 struct option {
-	const char *name;
+	char const *name;
 	int has_arg;
 	int *flag;
 	int val;
 };
 
-int musl_getopt_long_only(int, char **, const char *, const struct option *, int *);
+int musl_getopt_long_only(int argc, char **argv, char const *optstring,
+			  const struct option *longopts, int *idx);
 
 #define no_argument        0
 #define required_argument  1

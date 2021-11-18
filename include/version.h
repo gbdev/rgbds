@@ -13,6 +13,6 @@
 #define PACKAGE_VERSION_MINOR 5
 #define PACKAGE_VERSION_PATCH 1
 
-const char *get_package_version_string(void);
+char const *get_package_version_string(void);
 
 #endif /* EXTERN_VERSION_H */

@@ -71,7 +71,7 @@ void processWarningFlag(char *flag);
  * Used to warn the user about problems that don't prevent the generation of
  * valid code.
  */
-void warning(enum WarningID id, const char *fmt, ...) format_(printf, 2, 3);
+void warning(enum WarningID id, char const *fmt, ...) format_(printf, 2, 3);
 
 /*
  * Used for errors that compromise the whole assembly process by affecting the
@@ -80,7 +80,7 @@ void warning(enum WarningID id, const char *fmt, ...) format_(printf, 2, 3);
  * It is also used when the assembler goes into an invalid state (for example,
  * when it fails to allocate memory).
  */
-_Noreturn void fatalerror(const char *fmt, ...) format_(printf, 1, 2);
+_Noreturn void fatalerror(char const *fmt, ...) format_(printf, 1, 2);
 
 /*
  * Used for errors that make it impossible to assemble correctly, but don't
@@ -88,6 +88,6 @@ _Noreturn void fatalerror(const char *fmt, ...) format_(printf, 1, 2);
  * get a list of all errors at the end, making it easier to fix all of them at
  * once.
  */
-void error(const char *fmt, ...) format_(printf, 1, 2);
+void error(char const *fmt, ...) format_(printf, 1, 2);
 
 #endif

@@ -46,7 +46,7 @@ int32_t fix_Callback_PI(void)
 void fix_Print(int32_t i)
 {
 	uint32_t u = i;
-	const char *sign = "";
+	char const *sign = "";
 
 	if (i < 0) {
 		u = -u;
