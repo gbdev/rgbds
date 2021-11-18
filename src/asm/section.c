@@ -951,9 +951,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			(void)fgetc(f);
 	}
 
-	int32_t todo = length;
-
-	while (todo--) {
+	while (length--) {
 		int byte = fgetc(f);
 
 		if (byte != EOF) {
@@ -962,7 +960,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 			error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
 		} else {
 			error("Premature end of file (%" PRId32 " bytes left to read)\n",
-				todo + 1);
+				length + 1);
 		}
 	}
 

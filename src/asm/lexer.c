@@ -2257,8 +2257,8 @@ static int skipIfBlock(bool toEndc)
 			}
 		} while (!atLineStart);
 	}
-finish:
 
+finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
@@ -2344,8 +2344,8 @@ static int yylex_SKIP_TO_ENDR(void)
 			}
 		} while (!atLineStart);
 	}
-finish:
 
+finish:
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;

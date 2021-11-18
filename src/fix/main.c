@@ -1016,8 +1016,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 				static_assert(0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
 				if (nbBanks == 0x10000) {
 					report("FATAL: \"%s\" has more than 65536 banks\n", name);
-					free(romx);
-					return;
+					goto cleanup;
 				}
 				nbBanks++;
 
@@ -1106,7 +1105,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (input == output) {
 		if (lseek(output, 0, SEEK_SET) == (off_t)-1) {
 			report("FATAL: Failed to rewind \"%s\": %s\n", name, strerror(errno));
-			goto free_romx;
+			goto cleanup;
 		}
 		// If modifying the file in-place, we only need to edit the header
 		// However, padding may have modified ROM0 (added padding), so don't in that case
@@ -1117,11 +1116,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (writeLen == -1) {
 		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
-		goto free_romx;
+		goto cleanup;
 	} else if (writeLen < rom0Len) {
 		report("FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
 		       (intmax_t)writeLen, name, (intmax_t)rom0Len);
-		goto free_romx;
+		goto cleanup;
 	}
 
 	// Output ROMX if it was buffered
@@ -1131,11 +1130,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		writeLen = writeBytes(output, romx, totalRomxLen);
 		if (writeLen == -1) {
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
-			goto free_romx;
+			goto cleanup;
 		} else if ((size_t)writeLen < totalRomxLen) {
 			report("FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
 			       (intmax_t)writeLen, name, totalRomxLen);
-			goto free_romx;
+			goto cleanup;
 		}
 	}
 
@@ -1145,7 +1144,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			if (lseek(output, 0, SEEK_END) == (off_t)-1) {
 				report("FATAL: Failed to seek to end of \"%s\": %s\n",
 				       name, strerror(errno));
-				goto free_romx;
+				goto cleanup;
 			}
 		}
 		memset(bank, padValue, sizeof(bank));
@@ -1167,7 +1166,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		}
 	}
 
-free_romx:
+cleanup:
 	free(romx);
 }
 
@@ -1192,7 +1191,7 @@ static bool processFilename(char const *name)
 		if (input == -1) {
 			report("FATAL: Failed to open \"%s\" for reading+writing: %s\n",
 				name, strerror(errno));
-			goto fail;
+			goto finish;
 		}
 
 		if (fstat(input, &stat) == -1) {
@@ -1211,8 +1210,8 @@ static bool processFilename(char const *name)
 
 		close(input);
 	}
+finish:
 	if (nbErrors)
-fail:
 		fprintf(stderr, "Fixing \"%s\" failed with %u error%s\n",
 			name, nbErrors, nbErrors == 1 ? "" : "s");
 	return nbErrors;
