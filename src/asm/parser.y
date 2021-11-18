@@ -897,10 +897,11 @@ trailing_comma	: %empty | T_COMMA
 equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
-set_or_equal	: T_POP_SET | T_POP_EQUAL
-;
-
-set		: T_LABEL set_or_equal const { sym_AddSet($1, $3); }
+set		: T_LABEL T_POP_EQUAL const { sym_AddSet($1, $3); }
+		| T_LABEL T_POP_SET const {
+			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
+			sym_AddSet($1, $3);
+		}
 ;
 
 equs		: T_LABEL T_POP_EQUS string { sym_AddString($1, $3); }
@@ -1090,9 +1091,7 @@ rsset		: T_POP_RSSET uconst { sym_AddSet("_RS", $2); }
 rsreset		: T_POP_RSRESET { sym_AddSet("_RS", 0); }
 ;
 
-rs_uconst	: %empty {
-			$$ = 1;
-		}
+rs_uconst	: %empty { $$ = 1; }
 		| uconst
 ;
 
@@ -1138,20 +1137,20 @@ dl		: T_POP_DL { sect_Skip(4, false); }
 		| T_POP_DL constlist_32bit trailing_comma
 ;
 
-def_equ		: def_id T_POP_EQU const {
-			sym_AddEqu($1, $3);
-		}
+def_equ		: def_id T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
-redef_equ	: redef_id T_POP_EQU const {
-			sym_RedefEqu($1, $3);
-		}
+redef_equ	: redef_id T_POP_EQU const { sym_RedefEqu($1, $3); }
 ;
 
-def_set		: def_id set_or_equal const {
+def_set		: def_id T_POP_EQUAL const { sym_AddSet($1, $3); }
+		| redef_id T_POP_EQUAL const { sym_AddSet($1, $3); }
+		| def_id T_POP_SET const {
+			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
 			sym_AddSet($1, $3);
 		}
-		| redef_id set_or_equal const {
+		| redef_id T_POP_SET const {
+			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
 			sym_AddSet($1, $3);
 		}
 ;
@@ -1174,14 +1173,10 @@ def_rl		: def_id T_Z80_RL rs_uconst {
 		}
 ;
 
-def_equs	: def_id T_POP_EQUS string {
-			sym_AddString($1, $3);
-		}
+def_equs	: def_id T_POP_EQUS string { sym_AddString($1, $3); }
 ;
 
-redef_equs	: redef_id T_POP_EQUS string {
-			sym_RedefString($1, $3);
-		}
+redef_equs	: redef_id T_POP_EQUS string { sym_RedefString($1, $3); }
 ;
 
 purge		: T_POP_PURGE {

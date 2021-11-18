@@ -57,7 +57,7 @@ ENDM
     ; Bit Operations Instructions
 
 bitop_u3_instruction_list: MACRO
-NBIT SET 0
+NBIT = 0
     REPT 8
         \1 NBIT,a
         \1 NBIT,b
@@ -67,7 +67,7 @@ NBIT SET 0
         \1 NBIT,h
         \1 NBIT,[hl]
         \1 NBIT,l
-NBIT SET NBIT + 1
+NBIT = NBIT + 1
     ENDR
 ENDM
 
