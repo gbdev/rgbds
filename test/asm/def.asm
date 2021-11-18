@@ -1,10 +1,10 @@
 def variable = 1
 	println variable
-def variable set 2
+def variable = 2
 	println variable
 redef variable = 3
 	println variable
-redef variable set 4
+redef variable = 4
 	println variable
 
 DEF constant EQU 42

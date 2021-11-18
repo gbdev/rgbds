@@ -101,7 +101,7 @@ of string equates:
 .Ql name
 will be expanded in all of
 .Ql DEF({name}) ,
-.Ql DEF {name} EQU/SET/EQUS/etc ... ,
+.Ql DEF {name} EQU/=/EQUS/etc ... ,
 .Ql PURGE {name} ,
 and
 .Ql MACRO {name} ,
@@ -987,7 +987,7 @@ and so on.
 .Ic EQU
 is used to define numerical constant symbols.
 Unlike
-.Ic SET
+.Ic =
 below, constants defined this way cannot be redefined.
 These constants can be used for unchanging values such as properties of the hardware.
 .Bd -literal -offset indent
@@ -1019,18 +1019,16 @@ ENDM
     assert ITEM_04 == 16
 .Ed
 .Ss Mutable constants
-.Ic SET ,
-or its synonym
-.Ic = ,
+.Ic =
 is used to define numerical symbols like
 .Ic EQU ,
 but these symbols can be redefined.
 This is useful for variables in macros, for counters, etc.
 .Bd -literal -offset indent
 DEF ARRAY_SIZE EQU 4
-DEF   COUNT SET 2
-DEF   COUNT SET 3
-REDEF COUNT SET ARRAY_SIZE+COUNT
+DEF COUNT = 2
+DEF COUNT = 3
+REDEF COUNT = ARRAY_SIZE + COUNT
 COUNT = COUNT*2
 ;\ COUNT now has the value 14
 .Ed
@@ -1085,7 +1083,7 @@ If you are familiar with C, you can think of it as similar to
 .Fd #define .
 This expansion is disabled in a few contexts:
 .Ql DEF(name) ,
-.Ql DEF name EQU/SET/EQUS/etc ... ,
+.Ql DEF name EQU/=/EQUS/etc ... ,
 .Ql PURGE name ,
 and
 .Ql MACRO name
@@ -1149,8 +1147,6 @@ which calls the same macro, which causes the same problem.
 .Pp
 The examples above for
 .Ql EQU ,
-.Ql SET
-or
 .Ql = ,
 .Ql RB ,
 .Ql RW ,
@@ -1159,9 +1155,7 @@ and
 .Ql EQUS
 all start with
 .Ql DEF .
-(A
-.Ql SET
-or
+(An
 .Ql =
 definition may start with
 .Ql REDEF
@@ -1316,7 +1310,7 @@ The following symbols are defined by the assembler:
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
 .It Sy Name Ta Sy Type Ta Sy Contents
 .It Dv @ Ta Ic EQU Ta PC value (essentially, the current memory address)
-.It Dv _RS Ta Ic SET Ta _RS Counter
+.It Dv _RS Ta Ic = Ta _RS Counter
 .It Dv _NARG Ta Ic EQU Ta Number of arguments passed to macro, updated by Ic SHIFT
 .It Dv __LINE__ Ta Ic EQU Ta The current line number
 .It Dv __FILE__ Ta Ic EQUS Ta The current filename
