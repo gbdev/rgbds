@@ -25,7 +25,7 @@
 enum SymbolType {
 	SYM_LABEL,
 	SYM_EQU,
-	SYM_SET,
+	SYM_VAR,
 	SYM_MACRO,
 	SYM_EQUS,
 	SYM_REF // Forward reference to a label
@@ -77,12 +77,12 @@ static inline bool sym_IsConstant(struct Symbol const *sym)
 
 		return sect && sect->org != (uint32_t)-1;
 	}
-	return sym->type == SYM_EQU || sym->type == SYM_SET;
+	return sym->type == SYM_EQU || sym->type == SYM_VAR;
 }
 
 static inline bool sym_IsNumeric(struct Symbol const *sym)
 {
-	return sym->type == SYM_LABEL || sym->type == SYM_EQU || sym->type == SYM_SET;
+	return sym->type == SYM_LABEL || sym->type == SYM_EQU || sym->type == SYM_VAR;
 }
 
 static inline bool sym_IsLabel(struct Symbol const *sym)
@@ -121,7 +121,7 @@ void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, 
 void sym_Export(char const *symName);
 struct Symbol *sym_AddEqu(char const *symName, int32_t value);
 struct Symbol *sym_RedefEqu(char const *symName, int32_t value);
-struct Symbol *sym_AddSet(char const *symName, int32_t value);
+struct Symbol *sym_AddVar(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *symName);
