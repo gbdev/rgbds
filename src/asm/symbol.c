@@ -476,7 +476,7 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 }
 
 /*
- * Alter a SET symbol's value
+ * Alter a mutable symbol's value
  */
 struct Symbol *sym_AddSet(char const *symName, int32_t value)
 {

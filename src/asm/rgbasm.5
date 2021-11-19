@@ -1036,6 +1036,25 @@ COUNT = COUNT*2
 Note that colons
 .Ql \&:
 following the name are not allowed.
+.Pp
+Mutable constants can be conveniently redefined by compound assignment operators like in C:
+.Bl -column -offset indent "*= /= %="
+.It Sy Operator Ta Sy Meaning
+.It Li += -= Ta Compound plus/minus
+.It Li *= /= %= Ta Compound multiply/divide/modulo
+.It Li <<= >>= Ta Compound shift left/right
+.It Li &= \&|= ^= Ta Compound and/or/xor
+.El
+.Pp
+Examples:
+.Bd -literal -offset indent
+DEF x = 10
+DEF x += 1    ; x == 11
+DEF y = x - 1 ; y == 10
+DEF y *= 2    ; y == 20
+DEF y >>= 1   ; y == 10
+DEF x ^= y    ; x == 1
+.Ed
 .Ss Offset constants
 The RS group of commands is a handy way of defining structure offsets:
 .Bd -literal -offset indent

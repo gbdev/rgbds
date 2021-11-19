@@ -364,6 +364,17 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 	dest[i] = '\0';
 }
 
+static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue) {
+	struct Expression oldExpr, constExpr, newExpr;
+	int32_t newValue;
+
+	rpn_Symbol(&oldExpr, symName);
+	rpn_Number(&constExpr, constValue);
+	rpn_BinaryOp(op, &newExpr, &oldExpr, &constExpr);
+	newValue = rpn_GetConstVal(&newExpr);
+	sym_AddSet(symName, newValue);
+}
+
 static void initDsArgList(struct DsArgList *args)
 {
 	args->nbArgs = 0;
@@ -468,6 +479,7 @@ enum {
 	char string[MAXSTRLEN + 1];
 	struct Expression expr;
 	int32_t constValue;
+	enum RPNCommand compoundEqual;
 	enum SectionModifier sectMod;
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
@@ -578,6 +590,12 @@ enum {
 %token	T_POP_SET "SET"
 %token	T_POP_EQUAL "="
 %token	T_POP_EQUS "EQUS"
+
+%token	T_POP_ADDEQ "+=" T_POP_SUBEQ "-="
+%token	T_POP_MULEQ "*=" T_POP_DIVEQ "/=" T_POP_MODEQ "%="
+%token	T_POP_OREQ "|=" T_POP_XOREQ "^=" T_POP_ANDEQ "&="
+%token	T_POP_SHLEQ "<<=" T_POP_SHREQ ">>="
+%type	<compoundEqual> compoundeq
 
 %token	T_POP_INCLUDE "INCLUDE"
 %token	T_POP_PRINT "PRINT" T_POP_PRINTLN "PRINTLN"
@@ -894,10 +912,23 @@ directive	: endc
 trailing_comma	: %empty | T_COMMA
 ;
 
+compoundeq	: T_POP_ADDEQ { $$ = RPN_ADD; }
+		| T_POP_SUBEQ { $$ = RPN_SUB; }
+		| T_POP_MULEQ { $$ = RPN_MUL; }
+		| T_POP_DIVEQ { $$ = RPN_DIV; }
+		| T_POP_MODEQ { $$ = RPN_MOD; }
+		| T_POP_XOREQ { $$ = RPN_XOR; }
+		| T_POP_OREQ { $$ = RPN_OR; }
+		| T_POP_ANDEQ { $$ = RPN_AND; }
+		| T_POP_SHLEQ { $$ = RPN_SHL; }
+		| T_POP_SHREQ { $$ = RPN_SHR; }
+;
+
 equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
 set		: T_LABEL T_POP_EQUAL const { sym_AddSet($1, $3); }
+		| T_LABEL compoundeq const { compoundAssignment($1, $2, $3); }
 		| T_LABEL T_POP_SET const {
 			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
 			sym_AddSet($1, $3);
@@ -1145,6 +1176,8 @@ redef_equ	: redef_id T_POP_EQU const { sym_RedefEqu($1, $3); }
 
 def_set		: def_id T_POP_EQUAL const { sym_AddSet($1, $3); }
 		| redef_id T_POP_EQUAL const { sym_AddSet($1, $3); }
+		| def_id compoundeq const { compoundAssignment($1, $2, $3); }
+		| redef_id compoundeq const { compoundAssignment($1, $2, $3); }
 		| def_id T_POP_SET const {
 			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
 			sym_AddSet($1, $3);
