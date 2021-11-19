@@ -1,0 +1,5 @@
+ERROR: compound-assignment.asm(36):
+    '__LINE__' already defined as constant at <builtin>
+ERROR: compound-assignment.asm(39):
+    Expected constant expression: 'UnDeFiNeD' is not constant at assembly time
+error: Assembly aborted (2 errors)!

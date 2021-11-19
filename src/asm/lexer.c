@@ -284,8 +284,6 @@ static struct KeywordMapping {
 	{"EQU", T_POP_EQU},
 	{"EQUS", T_POP_EQUS},
 	{"REDEF", T_POP_REDEF},
-	/* Handled before as T_Z80_SET */
-	/* {"SET", T_POP_SET}, */
 
 	{"PUSHS", T_POP_PUSHS},
 	{"POPS", T_POP_POPS},
@@ -1805,12 +1803,6 @@ static int yylex_NORMAL(void)
 
 		/* Handle unambiguous single-char tokens */
 
-		case '^':
-			return T_OP_XOR;
-		case '+':
-			return T_OP_ADD;
-		case '-':
-			return T_OP_SUB;
 		case '~':
 			return T_OP_NOT;
 
@@ -1832,65 +1824,112 @@ static int yylex_NORMAL(void)
 
 		/* Handle ambiguous 1- or 2-char tokens */
 
-		case '*': /* Either MUL or EXP */
-			if (peek() == '*') {
+		case '+': /* Either += or ADD */
+			if (peek() == '=') {
+				shiftChar();
+				return T_POP_ADDEQ;
+			}
+			return T_OP_ADD;
+
+		case '-': /* Either -= or SUB */
+			if (peek() == '=') {
+				shiftChar();
+				return T_POP_SUBEQ;
+			}
+			return T_OP_SUB;
+
+		case '*': /* Either *=, MUL, or EXP */
+			switch (peek()) {
+			case '=':
+				shiftChar();
+				return T_POP_MULEQ;
+			case '*':
 				shiftChar();
 				return T_OP_EXP;
+			default:
+				return T_OP_MUL;
 			}
-			return T_OP_MUL;
 
-		case '/': /* Either division or a block comment */
-			if (peek() == '*') {
+		case '/': /* Either /=, DIV, or a block comment */
+			switch (peek()) {
+			case '=':
+				shiftChar();
+				return T_POP_DIVEQ;
+			case '*':
 				shiftChar();
 				discardBlockComment();
 				break;
+			default:
+				return T_OP_DIV;
 			}
-			return T_OP_DIV;
+			break;
 
-		case '|': /* Either binary or logical OR */
-			if (peek() == '|') {
+		case '|': /* Either |=, binary OR, or logical OR */
+			switch (peek()) {
+			case '=':
+				shiftChar();
+				return T_POP_OREQ;
+			case '|':
 				shiftChar();
 				return T_OP_LOGICOR;
+			default:
+				return T_OP_OR;
 			}
-			return T_OP_OR;
 
-		case '=': /* Either SET alias, or EQ */
+		case '^': /* Either ^= or XOR */
+			if (peek() == '=') {
+				shiftChar();
+				return T_POP_XOREQ;
+			}
+			return T_OP_XOR;
+
+		case '=': /* Either assignment or EQ */
 			if (peek() == '=') {
 				shiftChar();
 				return T_OP_LOGICEQU;
 			}
 			return T_POP_EQUAL;
 
-		case '<': /* Either a LT, LTE, or left shift */
+		case '!': /* Either a NEQ or negation */
+			if (peek() == '=') {
+				shiftChar();
+				return T_OP_LOGICNE;
+			}
+			return T_OP_LOGICNOT;
+
+		/* Handle ambiguous 1-, 2-, or 3-char tokens */
+
+		case '<': /* Either <<=, LT, LTE, or left shift */
 			switch (peek()) {
 			case '=':
 				shiftChar();
 				return T_OP_LOGICLE;
 			case '<':
 				shiftChar();
+				if (peek() == '=') {
+					shiftChar();
+					return T_POP_SHLEQ;
+				}
 				return T_OP_SHL;
 			default:
 				return T_OP_LOGICLT;
 			}
 
-		case '>': /* Either a GT, GTE, or right shift */
+		case '>': /* Either >>=, GT, GTE, or right shift */
 			switch (peek()) {
 			case '=':
 				shiftChar();
 				return T_OP_LOGICGE;
 			case '>':
 				shiftChar();
+				if (peek() == '=') {
+					shiftChar();
+					return T_POP_SHREQ;
+				}
 				return T_OP_SHR;
 			default:
 				return T_OP_LOGICGT;
 			}
-
-		case '!': /* Either a NEQ, or negation */
-			if (peek() == '=') {
-				shiftChar();
-				return T_OP_LOGICNE;
-			}
-			return T_OP_LOGICNOT;
 
 		/* Handle colon, which may begin an anonymous label ref */
 
@@ -1904,11 +1943,7 @@ static int yylex_NORMAL(void)
 
 		/* Handle numbers */
 
-		case '$':
-			yylval.constValue = readHexNumber();
-			return T_NUMBER;
-
-		case '0': /* Decimal number */
+		case '0': /* Decimal or fixed-point number */
 		case '1':
 		case '2':
 		case '3':
@@ -1925,9 +1960,12 @@ static int yylex_NORMAL(void)
 			}
 			return T_NUMBER;
 
-		case '&':
+		case '&': /* Either &=, binary AND, logical AND, or an octal constant */
 			secondChar = peek();
-			if (secondChar == '&') {
+			if (secondChar == '=') {
+				shiftChar();
+				return T_POP_ANDEQ;
+			} else if (secondChar == '&') {
 				shiftChar();
 				return T_OP_LOGICAND;
 			} else if (secondChar >= '0' && secondChar <= '7') {
@@ -1936,12 +1974,19 @@ static int yylex_NORMAL(void)
 			}
 			return T_OP_AND;
 
-		case '%': /* Either a modulo, or a binary constant */
+		case '%': /* Either %=, MOD, or a binary constant */
 			secondChar = peek();
-			if (secondChar != binDigits[0] && secondChar != binDigits[1])
-				return T_OP_MOD;
+			if (secondChar == '=') {
+				shiftChar();
+				return T_POP_MODEQ;
+			} else if (secondChar == binDigits[0] || secondChar == binDigits[1]) {
+				yylval.constValue = readBinaryNumber();
+				return T_NUMBER;
+			}
+			return T_OP_MOD;
 
-			yylval.constValue = readBinaryNumber();
+		case '$': /* Hex constant */
+			yylval.constValue = readHexNumber();
 			return T_NUMBER;
 
 		case '`': /* Gfx constant */
