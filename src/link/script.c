@@ -17,7 +17,7 @@
 #include "link/script.h"
 #include "link/section.h"
 
-#include "extern/err.h"
+#include "error.h"
 
 FILE *linkerScript;
 char *includeFileName;

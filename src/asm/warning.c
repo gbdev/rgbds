@@ -18,7 +18,7 @@
 #include "asm/main.h"
 #include "asm/warning.h"
 
-#include "extern/err.h"
+#include "error.h"
 
 unsigned int nbErrors = 0;
 

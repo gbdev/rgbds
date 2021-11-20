@@ -30,10 +30,10 @@
 #include "asm/warning.h"
 #include "parser.h"
 
-#include "extern/err.h"
 #include "extern/getopt.h"
 
 #include "helpers.h"
+#include "error.h"
 #include "version.h"
 
 #ifdef __clang__

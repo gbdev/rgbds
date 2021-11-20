@@ -17,10 +17,9 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
+#include "error.h"
 #include "linkdefs.h"
 #include "opmath.h"
-
-#include "extern/err.h"
 
 /*
  * This is an "empty"-type stack. Apart from the actual values, we also remember

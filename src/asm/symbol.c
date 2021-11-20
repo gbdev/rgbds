@@ -29,8 +29,7 @@
 #include "asm/util.h"
 #include "asm/warning.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "hashmap.h"
 #include "helpers.h"
 #include "version.h"

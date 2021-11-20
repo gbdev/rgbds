@@ -25,8 +25,9 @@
 #include "link/patch.h"
 #include "link/output.h"
 
-#include "extern/err.h"
 #include "extern/getopt.h"
+
+#include "error.h"
 #include "platform.h"
 #include "version.h"
 

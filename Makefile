@@ -72,9 +72,9 @@ rgbasm_obj := \
 	src/asm/symbol.o \
 	src/asm/util.o \
 	src/asm/warning.o \
-	src/extern/err.o \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
+	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
 	src/opmath.o
@@ -90,23 +90,23 @@ rgblink_obj := \
 	src/link/script.o \
 	src/link/section.o \
 	src/link/symbol.o \
-	src/extern/err.o \
 	src/extern/getopt.o \
+	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
 	src/opmath.o
 
 rgbfix_obj := \
 	src/fix/main.o \
-	src/extern/err.o \
-	src/extern/getopt.o
+	src/extern/getopt.o \
+	src/error.o
 
 rgbgfx_obj := \
 	src/gfx/gb.o \
 	src/gfx/main.o \
 	src/gfx/makepng.o \
-	src/extern/err.o \
-	src/extern/getopt.o
+	src/extern/getopt.o \
+	src/error.o
 
 rgbasm: ${rgbasm_obj}
 	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCFLAGS} src/version.c -lm

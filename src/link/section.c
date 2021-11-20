@@ -14,8 +14,7 @@
 #include "link/main.h"
 #include "link/section.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "hashmap.h"
 
 HashMap sections;

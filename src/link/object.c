@@ -21,7 +21,7 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "helpers.h"
 #include "linkdefs.h"
 

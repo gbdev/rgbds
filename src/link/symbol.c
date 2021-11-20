@@ -14,7 +14,7 @@
 #include "link/symbol.h"
 #include "link/main.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "hashmap.h"
 
 HashMap symbols;

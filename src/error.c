@@ -1,7 +1,7 @@
 /*
  * This file is part of RGBDS.
  *
- * Copyright (c) 2005-2018, Rich Felker and RGBDS contributors.
+ * Copyright (c) 2005-2021, Rich Felker and RGBDS contributors.
  *
  * SPDX-License-Identifier: MIT
  */
@@ -12,9 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "extern/err.h"
+#include "error.h"
 
-void rgbds_vwarn(char const *fmt, va_list ap)
+static void vwarn(char const *fmt, va_list ap)
 {
 	fprintf(stderr, "warning: ");
 	if (fmt) {
@@ -24,7 +24,7 @@ void rgbds_vwarn(char const *fmt, va_list ap)
 	perror(NULL);
 }
 
-void rgbds_vwarnx(char const *fmt, va_list ap)
+static void vwarnx(char const *fmt, va_list ap)
 {
 	fprintf(stderr, "warning");
 	if (fmt) {
@@ -34,7 +34,7 @@ void rgbds_vwarnx(char const *fmt, va_list ap)
 	putc('\n', stderr);
 }
 
-_Noreturn void rgbds_verr(int status, char const *fmt, va_list ap)
+_Noreturn static void verr(int status, char const *fmt, va_list ap)
 {
 	fprintf(stderr, "error: ");
 	if (fmt) {
@@ -46,7 +46,7 @@ _Noreturn void rgbds_verr(int status, char const *fmt, va_list ap)
 	exit(status);
 }
 
-_Noreturn void rgbds_verrx(int status, char const *fmt, va_list ap)
+_Noreturn static void verrx(int status, char const *fmt, va_list ap)
 {
 	fprintf(stderr, "error");
 	if (fmt) {
@@ -57,7 +57,7 @@ _Noreturn void rgbds_verrx(int status, char const *fmt, va_list ap)
 	exit(status);
 }
 
-void rgbds_warn(char const *fmt, ...)
+void warn(char const *fmt, ...)
 {
 	va_list ap;
 
@@ -66,7 +66,7 @@ void rgbds_warn(char const *fmt, ...)
 	va_end(ap);
 }
 
-void rgbds_warnx(char const *fmt, ...)
+void warnx(char const *fmt, ...)
 {
 	va_list ap;
 
@@ -75,7 +75,7 @@ void rgbds_warnx(char const *fmt, ...)
 	va_end(ap);
 }
 
-_Noreturn void rgbds_err(int status, char const *fmt, ...)
+_Noreturn void err(int status, char const *fmt, ...)
 {
 	va_list ap;
 
@@ -84,7 +84,7 @@ _Noreturn void rgbds_err(int status, char const *fmt, ...)
 	va_end(ap);
 }
 
-_Noreturn void rgbds_errx(int status, char const *fmt, ...)
+_Noreturn void errx(int status, char const *fmt, ...)
 {
 	va_list ap;
 

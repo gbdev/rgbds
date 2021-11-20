@@ -19,7 +19,7 @@
 #include "link/script.h"
 #include "link/output.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "helpers.h"
 
 struct MemoryLocation {

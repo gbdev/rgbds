@@ -16,10 +16,8 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "linkdefs.h"
-
 #include "platform.h" // MIN_NB_ELMS
 
 #define BANK_SIZE 0x4000

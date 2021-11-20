@@ -7,7 +7,7 @@
 #
 
 set(common_src
-    "extern/err.c"
+    "error.c"
     "extern/getopt.c"
     "version.c"
     )

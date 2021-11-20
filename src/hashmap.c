@@ -12,8 +12,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "error.h"
 #include "hashmap.h"
-#include "extern/err.h"
 
 /*
  * The lower half of the hash is used to index the "master" table,

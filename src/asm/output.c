@@ -27,8 +27,7 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "linkdefs.h"
 #include "platform.h" // strdup
 
