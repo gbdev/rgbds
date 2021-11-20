@@ -1084,12 +1084,11 @@ static void discardComment(void)
 	dbgPrint("Discarding comment\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
-	for (;;) {
+	for (;; shiftChar()) {
 		int c = peek();
 
 		if (c == EOF || c == '\r' || c == '\n')
 			break;
-		shiftChar();
 	}
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
@@ -1111,13 +1110,13 @@ static void readLineContinuation(void)
 			handleCRLF(c);
 			if (!lexerState->expansions)
 				nextLine();
-			return;
+			break;
 		} else if (c == ';') {
 			discardComment();
 		} else {
 			error("Begun line continuation, but encountered character %s\n",
 			      printChar(c));
-			return;
+			break;
 		}
 	}
 }
@@ -2240,11 +2239,10 @@ static int skipIfBlock(bool toEndc)
 		if (atLineStart) {
 			int c;
 
-			for (;;) {
+			for (;; shiftChar()) {
 				c = peek();
 				if (!isWhitespace(c))
 					break;
-				shiftChar();
 			}
 
 			if (startsIdentifier(c)) {
@@ -2514,7 +2512,7 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 		}
 
 		/* Just consume characters until EOL or EOF */
-		for (;;) {
+		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
 				goto finish;
@@ -2522,7 +2520,6 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 				handleCRLF(c);
 				break;
 			}
-			c = nextChar();
 		}
 	}
 
@@ -2571,7 +2568,7 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 		}
 
 		/* Just consume characters until EOL or EOF */
-		for (;;) {
+		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
 				goto finish;
@@ -2579,7 +2576,6 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 				handleCRLF(c);
 				break;
 			}
-			c = nextChar();
 		}
 	}
 

@@ -218,17 +218,14 @@ void processWarningFlag(char *flag)
 				errx(1, "Cannot make meta warning \"%s\" into an error",
 				     flag);
 
-			uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];
-
-			for (;;) {
-				if (*ptr == META_WARNING_DONE)
-					return;
-
+			for (uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];
+			     *ptr != META_WARNING_DONE; ptr++) {
 				/* Warning flag, set without override */
 				if (warningStates[*ptr] == WARNING_DEFAULT)
 					warningStates[*ptr] = WARNING_ENABLED;
-				ptr++;
 			}
+
+			return;
 		}
 	}
 
