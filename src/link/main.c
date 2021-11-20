@@ -157,7 +157,7 @@ FILE *openFile(char const *fileName, char const *mode)
 		file = fdopen(1, mode);
 
 	if (!file)
-		err(1, "Could not open file \"%s\"", fileName);
+		err("Could not open file \"%s\"", fileName);
 
 	return file;
 }

@@ -43,12 +43,12 @@ static void checkSectUnionCompat(struct Section *target, struct Section *other)
 	if (other->isAddressFixed) {
 		if (target->isAddressFixed) {
 			if (target->org != other->org)
-				errx(1, "Section \"%s\" is defined with conflicting addresses $%04"
+				errx("Section \"%s\" is defined with conflicting addresses $%04"
 				     PRIx16 " and $%04" PRIx16,
 				     other->name, target->org, other->org);
 		} else if (target->isAlignFixed) {
 			if ((other->org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+				errx("Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
 				     PRIu16 ") and address $%04" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
@@ -59,14 +59,14 @@ static void checkSectUnionCompat(struct Section *target, struct Section *other)
 	} else if (other->isAlignFixed) {
 		if (target->isAddressFixed) {
 			if ((target->org - other->alignOfs) & other->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting address $%04"
+				errx("Section \"%s\" is defined with conflicting address $%04"
 				     PRIx16 " and %d-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs)
 				 != (target->alignMask & other->alignOfs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+			errx("Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
 			     PRIu16 ") and %d-byte alignment (offset %" PRIu16 ")",
 			     other->name, target->alignMask + 1, target->alignOfs,
 			     other->alignMask + 1, other->alignOfs);
@@ -84,13 +84,13 @@ static void checkFragmentCompat(struct Section *target, struct Section *other)
 
 		if (target->isAddressFixed) {
 			if (target->org != org)
-				errx(1, "Section \"%s\" is defined with conflicting addresses $%04"
+				errx("Section \"%s\" is defined with conflicting addresses $%04"
 				     PRIx16 " and $%04" PRIx16,
 				     other->name, target->org, other->org);
 
 		} else if (target->isAlignFixed) {
 			if ((org - target->alignOfs) & target->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+				errx("Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
 				     PRIu16 ") and address $%04" PRIx16,
 				     other->name, target->alignMask + 1,
 				     target->alignOfs, other->org);
@@ -106,14 +106,14 @@ static void checkFragmentCompat(struct Section *target, struct Section *other)
 
 		if (target->isAddressFixed) {
 			if ((target->org - ofs) & other->alignMask)
-				errx(1, "Section \"%s\" is defined with conflicting address $%04"
+				errx("Section \"%s\" is defined with conflicting address $%04"
 				     PRIx16 " and %d-byte alignment (offset %" PRIu16 ")",
 				     other->name, target->org,
 				     other->alignMask + 1, other->alignOfs);
 
 		} else if (target->isAlignFixed
 			&& (other->alignMask & target->alignOfs) != (target->alignMask & ofs)) {
-			errx(1, "Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
+			errx("Section \"%s\" is defined with conflicting %d-byte alignment (offset %"
 			     PRIu16 ") and %d-byte alignment (offset %" PRIu16 ")",
 			     other->name, target->alignMask + 1, target->alignOfs,
 			     other->alignMask + 1, other->alignOfs);
@@ -131,7 +131,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 	// Common checks
 
 	if (target->type != other->type)
-		errx(1, "Section \"%s\" is defined with conflicting types %s and %s",
+		errx("Section \"%s\" is defined with conflicting types %s and %s",
 		     other->name, typeNames[target->type], typeNames[other->type]);
 
 	if (other->isBankFixed) {
@@ -139,7 +139,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 			target->isBankFixed = true;
 			target->bank = other->bank;
 		} else if (target->bank != other->bank) {
-			errx(1, "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %"
+			errx("Section \"%s\" is defined with conflicting banks %" PRIu32 " and %"
 			     PRIu32, other->name, target->bank, other->bank);
 		}
 	}
@@ -160,7 +160,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 			target->data = realloc(target->data,
 					       sizeof(*target->data) * target->size + 1);
 			if (!target->data)
-				errx(1, "Failed to concatenate \"%s\"'s fragments", target->name);
+				errx("Failed to concatenate \"%s\"'s fragments", target->name);
 			memcpy(target->data + target->size - other->size, other->data, other->size);
 			/* Adjust patches' PC offsets */
 			for (uint32_t patchID = 0; patchID < other->nbPatches; patchID++)
@@ -183,14 +183,14 @@ void sect_AddSection(struct Section *section)
 
 	if (other) {
 		if (section->modifier != other->modifier)
-			errx(1, "Section \"%s\" defined as %s and %s", section->name,
+			errx("Section \"%s\" defined as %s and %s", section->name,
 			     sectionModNames[section->modifier], sectionModNames[other->modifier]);
 		else if (section->modifier == SECTION_NORMAL)
-			errx(1, "Section name \"%s\" is already in use", section->name);
+			errx("Section name \"%s\" is already in use", section->name);
 		else
 			mergeSections(other, section, section->modifier);
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
-		errx(1, "Section \"%s\" is of type %s, which cannot be unionized",
+		errx("Section \"%s\" is of type %s, which cannot be unionized",
 		     section->name, typeNames[section->type]);
 	} else {
 		/* If not, add it */
@@ -301,5 +301,5 @@ void sect_DoSanityChecks(void)
 {
 	sect_ForEach(doSanityChecks, NULL);
 	if (sanityChecksFailed)
-		errx(1, "Sanity checks failed");
+		errx("Sanity checks failed");
 }

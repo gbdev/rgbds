@@ -53,7 +53,7 @@ void **hash_AddElement(HashMap map, char const *key, void *element)
 	struct HashMapEntry *newEntry = malloc(sizeof(*newEntry));
 
 	if (!newEntry)
-		err(1, "%s: Failed to allocate new entry", __func__);
+		err("%s: Failed to allocate new entry", __func__);
 
 	newEntry->hash = hashedKey >> HALF_HASH_NB_BITS;
 	newEntry->key = key;

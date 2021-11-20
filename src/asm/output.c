@@ -527,7 +527,7 @@ void out_WriteObject(void)
 		f = fdopen(1, "wb");
 
 	if (!f)
-		err(1, "Couldn't write file '%s'", objectName);
+		err("Couldn't write file '%s'", objectName);
 
 	/* Also write symbols that weren't written above */
 	sym_ForEach(registerUnregisteredSymbol, NULL);

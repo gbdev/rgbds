@@ -215,7 +215,7 @@ void processWarningFlag(char *flag)
 		if (!strcmp(flag, warningFlags[id])) {
 			/* We got a match! */
 			if (setError)
-				errx(1, "Cannot make meta warning \"%s\" into an error",
+				errx("Cannot make meta warning \"%s\" into an error",
 				     flag);
 
 			for (uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];

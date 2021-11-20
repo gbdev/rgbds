@@ -13,51 +13,44 @@
 #include <string.h>
 
 #include "error.h"
+#include "platform.h"
 
-static void vwarn(char const *fmt, va_list ap)
+static void vwarn(char const NONNULL(fmt), va_list ap)
 {
 	fprintf(stderr, "warning: ");
-	if (fmt) {
-		vfprintf(stderr, fmt, ap);
-		fputs(": ", stderr);
-	}
+	vfprintf(stderr, fmt, ap);
+	fputs(": ", stderr);
 	perror(NULL);
 }
 
-static void vwarnx(char const *fmt, va_list ap)
+static void vwarnx(char const NONNULL(fmt), va_list ap)
 {
 	fprintf(stderr, "warning");
-	if (fmt) {
-		fputs(": ", stderr);
-		vfprintf(stderr, fmt, ap);
-	}
+	fputs(": ", stderr);
+	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
 }
 
-_Noreturn static void verr(int status, char const *fmt, va_list ap)
+_Noreturn static void verr(char const NONNULL(fmt), va_list ap)
 {
 	fprintf(stderr, "error: ");
-	if (fmt) {
-		vfprintf(stderr, fmt, ap);
-		fputs(": ", stderr);
-	}
+	vfprintf(stderr, fmt, ap);
+	fputs(": ", stderr);
 	fputs(strerror(errno), stderr);
 	putc('\n', stderr);
-	exit(status);
+	exit(1);
 }
 
-_Noreturn static void verrx(int status, char const *fmt, va_list ap)
+_Noreturn static void verrx(char const NONNULL(fmt), va_list ap)
 {
 	fprintf(stderr, "error");
-	if (fmt) {
-		fputs(": ", stderr);
-		vfprintf(stderr, fmt, ap);
-	}
+	fputs(": ", stderr);
+	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
-	exit(status);
+	exit(1);
 }
 
-void warn(char const *fmt, ...)
+void warn(char const NONNULL(fmt), ...)
 {
 	va_list ap;
 
@@ -66,7 +59,7 @@ void warn(char const *fmt, ...)
 	va_end(ap);
 }
 
-void warnx(char const *fmt, ...)
+void warnx(char const NONNULL(fmt), ...)
 {
 	va_list ap;
 
@@ -75,20 +68,20 @@ void warnx(char const *fmt, ...)
 	va_end(ap);
 }
 
-_Noreturn void err(int status, char const *fmt, ...)
+_Noreturn void err(char const NONNULL(fmt), ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	verr(status, fmt, ap);
+	verr(fmt, ap);
 	va_end(ap);
 }
 
-_Noreturn void errx(int status, char const *fmt, ...)
+_Noreturn void errx(char const NONNULL(fmt), ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	verrx(status, fmt, ap);
+	verrx(fmt, ap);
 	va_end(ap);
 }

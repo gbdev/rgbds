@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 	opts.infile = argv[argc - 1];
 
 	if (depth != 1 && depth != 2)
-		errx(1, "Depth option must be either 1 or 2.");
+		errx("Depth option must be either 1 or 2.");
 
 	colors = 1 << depth;
 
@@ -200,17 +200,17 @@ int main(int argc, char *argv[])
 		opts.trim = png_options.trim;
 
 	if (raw_image->width % 8) {
-		errx(1, "Input PNG file %s not sized correctly. The image's width must be a multiple of 8.",
+		errx("Input PNG file %s not sized correctly. The image's width must be a multiple of 8.",
 		     opts.infile);
 	}
 	if (raw_image->width / 8 > 1 && raw_image->height % 8) {
-		errx(1, "Input PNG file %s not sized correctly. If the image is more than 1 tile wide, its height must be a multiple of 8.",
+		errx("Input PNG file %s not sized correctly. If the image is more than 1 tile wide, its height must be a multiple of 8.",
 		     opts.infile);
 	}
 
 	if (opts.trim &&
 	    opts.trim > (raw_image->width / 8) * (raw_image->height / 8) - 1) {
-		errx(1, "Trim (%d) for input raw_image file '%s' too large (max: %u)",
+		errx("Trim (%d) for input raw_image file '%s' too large (max: %u)",
 		     opts.trim, opts.infile,
 		     (raw_image->width / 8) * (raw_image->height / 8) - 1);
 	}

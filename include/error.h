@@ -10,11 +10,12 @@
 #define RGBDS_ERROR_H
 
 #include "helpers.h"
+#include "platform.h"
 
-void warn(char const *fmt, ...) format_(printf, 1, 2);
-void warnx(char const *fmt, ...) format_(printf, 1, 2);
+void warn(char const NONNULL(fmt), ...) format_(printf, 1, 2);
+void warnx(char const NONNULL(fmt), ...) format_(printf, 1, 2);
 
-_Noreturn void err(int status, char const *fmt, ...) format_(printf, 2, 3);
-_Noreturn void errx(int status, char const *fmt, ...) format_(printf, 2, 3);
+_Noreturn void err(char const NONNULL(fmt), ...) format_(printf, 1, 2);
+_Noreturn void errx(char const NONNULL(fmt), ...) format_(printf, 1, 2);
 
 #endif /* RGBDS_ERROR_H */
