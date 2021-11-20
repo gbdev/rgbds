@@ -1,5 +1,5 @@
-ERROR: macro-syntax.asm(13):
+error: macro-syntax.asm(13):
     syntax error
-ERROR: macro-syntax.asm(15):
+error: macro-syntax.asm(15):
     syntax error
 error: Assembly aborted (2 errors)!

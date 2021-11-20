@@ -240,7 +240,7 @@ void processWarningFlag(char *flag)
 			return;
 
 		case '=':
-			/* `-Werror=XXX */
+			/* `-Werror=XXX` */
 			setError = true;
 			processWarningFlag(errorFlag + 1); /* Skip the `=` */
 			setError = false;
@@ -336,7 +336,7 @@ void error(char const *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "ERROR: ", ":\n    ", NULL);
+	printDiag(fmt, args, "error: ", ":\n    ", NULL);
 	va_end(args);
 	nbErrors++;
 }
@@ -364,7 +364,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 		return;
 
 	case WARNING_ERROR:
-		printDiag(fmt, args, "ERROR: ", ": [-Werror=%s]\n    ", flag);
+		printDiag(fmt, args, "error: ", ": [-Werror=%s]\n    ", flag);
 		va_end(args);
 		return;
 

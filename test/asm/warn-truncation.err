@@ -30,23 +30,23 @@ warning: warn-truncation.asm(36) -> warn-truncation.asm::try(28): [-Wtruncation]
     Expression must be 8-bit
 warning: warn-truncation.asm(36) -> warn-truncation.asm::try(29): [-Wtruncation]
     Expression must be 16-bit
-ERROR: warn-truncation.asm(37) -> warn-truncation.asm::try(23): [-Werror=truncation]
+error: warn-truncation.asm(37) -> warn-truncation.asm::try(23): [-Werror=truncation]
     Expression must be 8-bit
-ERROR: warn-truncation.asm(37) -> warn-truncation.asm::try(24): [-Werror=truncation]
+error: warn-truncation.asm(37) -> warn-truncation.asm::try(24): [-Werror=truncation]
     Expression must be 8-bit
-ERROR: warn-truncation.asm(37) -> warn-truncation.asm::try(25): [-Werror=truncation]
+error: warn-truncation.asm(37) -> warn-truncation.asm::try(25): [-Werror=truncation]
     Expression must be 16-bit
-ERROR: warn-truncation.asm(37) -> warn-truncation.asm::try(26): [-Werror=truncation]
+error: warn-truncation.asm(37) -> warn-truncation.asm::try(26): [-Werror=truncation]
     Expression must be 16-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(23): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(23): [-Werror=truncation]
     Expression must be 8-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(24): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(24): [-Werror=truncation]
     Expression must be 8-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(25): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(25): [-Werror=truncation]
     Expression must be 16-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(26): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(26): [-Werror=truncation]
     Expression must be 16-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(28): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(28): [-Werror=truncation]
     Expression must be 8-bit
-ERROR: warn-truncation.asm(38) -> warn-truncation.asm::try(29): [-Werror=truncation]
+error: warn-truncation.asm(38) -> warn-truncation.asm::try(29): [-Werror=truncation]
     Expression must be 16-bit
