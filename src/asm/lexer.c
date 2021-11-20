@@ -1263,7 +1263,7 @@ static uint32_t readGfxConstant(void)
 
 	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
 		 gfxDigits[0], gfxDigits[1], gfxDigits[2], gfxDigits[3]);
-	for (;;) {
+	for (;; shiftChar()) {
 		int c = peek();
 		uint32_t pixel;
 
@@ -1284,14 +1284,13 @@ static uint32_t readGfxConstant(void)
 		}
 		if (width < 9)
 			width++;
-		shiftChar();
 	}
 
 	if (width == 0)
 		error("Invalid graphics constant, no digits after '`'\n");
 	else if (width == 9)
 		warning(WARNING_LARGE_CONSTANT,
-			"Graphics constant is too long, only 8 first pixels considered\n");
+			"Graphics constant is too long, only first 8 pixels considered\n");
 
 	return bp1 << 8 | bp0;
 }
