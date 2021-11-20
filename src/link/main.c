@@ -124,7 +124,7 @@ _Noreturn void fatal(struct FileStackNode const *where, uint32_t lineNo, char co
 {
 	va_list ap;
 
-	fputs("fatal: ", stderr);
+	fputs("FATAL: ", stderr);
 	if (where) {
 		dumpFileStack(where);
 		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 
 	/* If no input files were specified, the user must have screwed up */
 	if (curArgIndex == argc) {
-		fputs("fatal: no input files\n", stderr);
+		fputs("FATAL: no input files\n", stderr);
 		printUsage();
 		exit(1);
 	}
