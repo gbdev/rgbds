@@ -1,4 +1,4 @@
-ERROR: if@-no-sect.asm(1):
+error: if@-no-sect.asm(1):
     PC has no value outside a section
 warning: if@-no-sect.asm(1): [-Wnumeric-string]
     Treating 2-character string as a number

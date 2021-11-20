@@ -1,34 +1,34 @@
-ERROR: format-truncation.asm(5):
+error: format-truncation.asm(5):
     Formatted numeric value too long
-ERROR: format-truncation.asm(6):
+error: format-truncation.asm(6):
     Formatted numeric value too long
-ERROR: format-truncation.asm(7):
+error: format-truncation.asm(7):
     Fractional width 260 too long, limiting to 255
-ERROR: format-truncation.asm(7):
+error: format-truncation.asm(7):
     Formatted numeric value too long
-ERROR: format-truncation.asm(8):
+error: format-truncation.asm(8):
     Formatted string value too long
-ERROR: format-truncation.asm(9):
+error: format-truncation.asm(9):
     Formatted string value too long
-ERROR: format-truncation.asm(11):
+error: format-truncation.asm(11):
     Formatted numeric value too long
 warning: format-truncation.asm(11): [-Wlong-string]
     String constant too long
-ERROR: format-truncation.asm(12):
+error: format-truncation.asm(12):
     Formatted numeric value too long
 warning: format-truncation.asm(12): [-Wlong-string]
     String constant too long
-ERROR: format-truncation.asm(13):
+error: format-truncation.asm(13):
     Fractional width 260 too long, limiting to 255
-ERROR: format-truncation.asm(13):
+error: format-truncation.asm(13):
     Formatted numeric value too long
 warning: format-truncation.asm(13): [-Wlong-string]
     String constant too long
-ERROR: format-truncation.asm(14):
+error: format-truncation.asm(14):
     Formatted string value too long
 warning: format-truncation.asm(14): [-Wlong-string]
     String constant too long
-ERROR: format-truncation.asm(15):
+error: format-truncation.asm(15):
     Formatted string value too long
 warning: format-truncation.asm(15): [-Wlong-string]
     String constant too long
