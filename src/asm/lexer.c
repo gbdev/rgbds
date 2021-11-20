@@ -1263,7 +1263,7 @@ static uint32_t readGfxConstant(void)
 
 	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
 		 gfxDigits[0], gfxDigits[1], gfxDigits[2], gfxDigits[3]);
-	for (;;) {
+	for (;; shiftChar()) {
 		int c = peek();
 		uint32_t pixel;
 
@@ -1275,6 +1275,8 @@ static uint32_t readGfxConstant(void)
 			pixel = 2;
 		else if (c == gfxDigits[3])
 			pixel = 3;
+		else if (c == '_')
+			continue;
 		else
 			break;
 
@@ -1284,7 +1286,6 @@ static uint32_t readGfxConstant(void)
 		}
 		if (width < 9)
 			width++;
-		shiftChar();
 	}
 
 	if (width == 0)
