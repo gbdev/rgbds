@@ -10,6 +10,7 @@ _1234::
 	db &200 ; octal
 	db %11110000, %10 ; binary
 	dl 6.283185 ; fixed point
+	dw `01233210, `00332211 ; gfx
 
 ; with underscores
 	dw _1234 ; label
@@ -19,3 +20,9 @@ _1234::
 	db &2_0_0_ ; octal
 	db %1111_0000, %1_0 ; binary
 	dl 6_._283_185 ; fixed point
+	dw `0123_3210, `00_33_22_11_ ; gfx
+
+; underscores as digits
+	opt g_ABC, b_X
+	db %_X_X__XX
+	dw `_A_B_C__
