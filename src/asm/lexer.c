@@ -1204,6 +1204,7 @@ static uint32_t readBinaryNumber(void)
 		int c = peek();
 		int bit;
 
+		// Check for '_' after digits in case one of the digits is '_'
 		if (c == binDigits[0])
 			bit = 0;
 		else if (c == binDigits[1])
@@ -1229,7 +1230,7 @@ static uint32_t readHexNumber(void)
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c >= 'a' && c <= 'f') /* Convert letters to right after digits */
+		if (c >= 'a' && c <= 'f')
 			c = c - 'a' + 10;
 		else if (c >= 'A' && c <= 'F')
 			c = c - 'A' + 10;
@@ -1257,7 +1258,7 @@ char gfxDigits[4];
 
 static uint32_t readGfxConstant(void)
 {
-	uint32_t bp0 = 0, bp1 = 0;
+	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
 
 	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
@@ -1266,6 +1267,7 @@ static uint32_t readGfxConstant(void)
 		int c = peek();
 		uint32_t pixel;
 
+		// Check for '_' after digits in case one of the digits is '_'
 		if (c == gfxDigits[0])
 			pixel = 0;
 		else if (c == gfxDigits[1])
@@ -1274,12 +1276,14 @@ static uint32_t readGfxConstant(void)
 			pixel = 2;
 		else if (c == gfxDigits[3])
 			pixel = 3;
+		else if (c == '_' && width > 0)
+			continue;
 		else
 			break;
 
 		if (width < 8) {
-			bp0 = bp0 << 1 | (pixel & 1);
-			bp1 = bp1 << 1 | (pixel >> 1);
+			bitPlaneLower = bitPlaneLower << 1 | (pixel & 1);
+			bitPlaneUpper = bitPlaneUpper << 1 | (pixel >> 1);
 		}
 		if (width < 9)
 			width++;
@@ -1291,7 +1295,7 @@ static uint32_t readGfxConstant(void)
 		warning(WARNING_LARGE_CONSTANT,
 			"Graphics constant is too long, only first 8 pixels considered\n");
 
-	return bp1 << 8 | bp0;
+	return bitPlaneUpper << 8 | bitPlaneLower;
 }
 
 /* Functions to read identifiers & keywords */
