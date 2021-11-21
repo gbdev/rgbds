@@ -16,10 +16,8 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "linkdefs.h"
-
 #include "platform.h" // MIN_NB_ELMS
 
 #define BANK_SIZE 0x4000
@@ -77,7 +75,7 @@ void out_AddSection(struct Section const *section)
 	uint32_t minNbBanks = targetBank + 1;
 
 	if (minNbBanks > maxNbBanks[section->type])
-		errx(1, "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
+		errx("Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
 		     section->name, section->bank,
 		     maxNbBanks[section->type] - 1);
 
@@ -92,7 +90,7 @@ void out_AddSection(struct Section const *section)
 		sections[section->type].nbBanks = minNbBanks;
 	}
 	if (!sections[section->type].banks)
-		err(1, "Failed to realloc banks");
+		err("Failed to realloc banks");
 
 	struct SortedSection *newSection = malloc(sizeof(*newSection));
 	struct SortedSection **ptr = section->size
@@ -100,7 +98,7 @@ void out_AddSection(struct Section const *section)
 		: &sections[section->type].banks[targetBank].zeroLenSections;
 
 	if (!newSection)
-		err(1, "Failed to add new section \"%s\"", section->name);
+		err("Failed to add new section \"%s\"", section->name);
 	newSection->section = section;
 
 	while (*ptr && (*ptr)->section->org < section->org)
@@ -145,15 +143,15 @@ static uint32_t checkOverlaySize(void)
 	fseek(overlayFile, 0, SEEK_SET);
 
 	if (overlaySize % BANK_SIZE)
-		errx(1, "Overlay file must have a size multiple of 0x4000");
+		errx("Overlay file must have a size multiple of 0x4000");
 
 	uint32_t nbOverlayBanks = overlaySize / BANK_SIZE;
 
 	if (is32kMode && nbOverlayBanks != 2)
-		errx(1, "Overlay must be exactly 0x8000 bytes large");
+		errx("Overlay must be exactly 0x8000 bytes large");
 
 	if (nbOverlayBanks < 2)
-		errx(1, "Overlay must be at least 0x8000 bytes large");
+		errx("Overlay must be at least 0x8000 bytes large");
 
 	return nbOverlayBanks;
 }
@@ -178,7 +176,7 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks)
 			realloc(sections[SECTTYPE_ROMX].banks,
 				sizeof(*sections[SECTTYPE_ROMX].banks) * nbUncoveredBanks);
 		if (!sections[SECTTYPE_ROMX].banks)
-			err(1, "Failed to realloc banks for overlay");
+			err("Failed to realloc banks for overlay");
 		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks; i < nbUncoveredBanks; i++) {
 			sections[SECTTYPE_ROMX].banks[i].sections = NULL;
 			sections[SECTTYPE_ROMX].banks[i].zeroLenSections = NULL;
@@ -317,7 +315,7 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	struct SortedSymbol *symList = malloc(sizeof(*symList) * nbSymbols);
 
 	if (!symList)
-		err(1, "Failed to allocate symbol list");
+		err("Failed to allocate symbol list");
 
 	uint32_t idx = 0;
 

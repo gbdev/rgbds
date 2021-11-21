@@ -19,7 +19,7 @@
 #include "link/script.h"
 #include "link/output.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "helpers.h"
 
 struct MemoryLocation {
@@ -46,13 +46,13 @@ static void initFreeSpace(void)
 	for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
 		memory[type] = malloc(sizeof(*memory[type]) * nbbanks(type));
 		if (!memory[type])
-			err(1, "Failed to init free space for region %d", type);
+			err("Failed to init free space for region %d", type);
 
 		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
 			memory[type][bank].next =
 				malloc(sizeof(*memory[type][0].next));
 			if (!memory[type][bank].next)
-				err(1, "Failed to init free space for region %d bank %" PRIu32,
+				err("Failed to init free space for region %d bank %" PRIu32,
 				    type, bank);
 			memory[type][bank].next->address = startaddr[type];
 			memory[type][bank].next->size    = maxsize[type];
@@ -301,7 +301,7 @@ static void placeSection(struct Section *section)
 			struct FreeSpace *newSpace = malloc(sizeof(*newSpace));
 
 			if (!newSpace)
-				err(1, "Failed to split new free space");
+				err("Failed to split new free space");
 			/* Append the new space after the chosen one */
 			newSpace->prev = freeSpace;
 			newSpace->next = freeSpace->next;
@@ -352,16 +352,16 @@ static void placeSection(struct Section *section)
 
 	/* If a section failed to go to several places, nothing we can report */
 	if (!section->isBankFixed || !section->isAddressFixed)
-		errx(1, "Unable to place \"%s\" (%s section) %s",
+		errx("Unable to place \"%s\" (%s section) %s",
 		     section->name, typeNames[section->type], where);
 	/* If the section just can't fit the bank, report that */
 	else if (section->org + section->size > endaddr(section->type) + 1)
-		errx(1, "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
+		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
 		     section->name, typeNames[section->type], where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	/* Otherwise there is overlap with another section */
 	else
-		errx(1, "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
+		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
 		     section->name, typeNames[section->type], where,
 		     out_OverlappingSection(section)->name);
 }
@@ -418,7 +418,7 @@ void assign_AssignSections(void)
 	/* Generate linked lists of sections to assign */
 	sections = malloc(sizeof(*sections) * nbSectionsToAssign + 1);
 	if (!sections)
-		err(1, "Failed to allocate memory for section assignment");
+		err("Failed to allocate memory for section assignment");
 
 	initFreeSpace();
 
@@ -447,7 +447,7 @@ void assign_AssignSections(void)
 	/* Overlaying requires only fully-constrained sections */
 	verbosePrint("Assigning other sections...\n");
 	if (overlayFileName)
-		errx(1, "All sections must be fixed when using an overlay file; %" PRIu64 " %sn't",
+		errx("All sections must be fixed when using an overlay file; %" PRIu64 " %sn't",
 		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
 
 	/* Assign all remaining sections by decreasing constraint order */

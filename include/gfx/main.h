@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "extern/err.h"
+#include "error.h"
 
 struct Options {
 	bool debug;

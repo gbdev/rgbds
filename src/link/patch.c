@@ -17,10 +17,9 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
+#include "error.h"
 #include "linkdefs.h"
 #include "opmath.h"
-
-#include "extern/err.h"
 
 /*
  * This is an "empty"-type stack. Apart from the actual values, we also remember
@@ -43,7 +42,7 @@ static void initRPNStack(void)
 	stack.values = malloc(sizeof(*stack.values) * stack.capacity);
 	stack.errorFlags = malloc(sizeof(*stack.errorFlags) * stack.capacity);
 	if (!stack.values || !stack.errorFlags)
-		err(1, "Failed to init RPN stack");
+		err("Failed to init RPN stack");
 }
 
 static void clearRPNStack(void)
@@ -57,7 +56,7 @@ static void pushRPN(int32_t value, bool comesFromError)
 		static const size_t increase_factor = 2;
 
 		if (stack.capacity > SIZE_MAX / increase_factor)
-			errx(1, "Overflow in RPN stack resize");
+			errx("Overflow in RPN stack resize");
 
 		stack.capacity *= increase_factor;
 		stack.values =
@@ -70,7 +69,7 @@ static void pushRPN(int32_t value, bool comesFromError)
 		 * the overflow check above. Hence the stringent check below.
 		 */
 		if (!stack.values || !stack.errorFlags || !stack.capacity)
-			err(1, "Failed to resize RPN stack");
+			err("Failed to resize RPN stack");
 	}
 
 	stack.values[stack.size] = value;

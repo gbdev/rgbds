@@ -25,8 +25,9 @@
 #include "link/patch.h"
 #include "link/output.h"
 
-#include "extern/err.h"
 #include "extern/getopt.h"
+
+#include "error.h"
 #include "platform.h"
 #include "version.h"
 
@@ -156,7 +157,7 @@ FILE *openFile(char const *fileName, char const *mode)
 		file = fdopen(1, mode);
 
 	if (!file)
-		err(1, "Could not open file \"%s\"", fileName);
+		err("Could not open file \"%s\"", fileName);
 
 	return file;
 }

@@ -15,7 +15,7 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "platform.h" // strdup
 
 uint8_t fillByte;

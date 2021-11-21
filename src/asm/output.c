@@ -27,8 +27,7 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
-#include "extern/err.h"
-
+#include "error.h"
 #include "linkdefs.h"
 #include "platform.h" // strdup
 
@@ -528,7 +527,7 @@ void out_WriteObject(void)
 		f = fdopen(1, "wb");
 
 	if (!f)
-		err(1, "Couldn't write file '%s'", objectName);
+		err("Couldn't write file '%s'", objectName);
 
 	/* Also write symbols that weren't written above */
 	sym_ForEach(registerUnregisteredSymbol, NULL);

@@ -21,7 +21,7 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
-#include "extern/err.h"
+#include "error.h"
 #include "helpers.h"
 #include "linkdefs.h"
 
@@ -50,7 +50,7 @@ static struct Assertion *assertions;
 		type tmpVal = func(tmpFile); \
 		/* TODO: maybe mark the condition as `unlikely`; how to do that portably? */ \
 		if (tmpVal == (errval)) { \
-			errx(1, __VA_ARGS__, feof(tmpFile) \
+			errx(__VA_ARGS__, feof(tmpFile) \
 						? "Unexpected end of file" \
 						: strerror(errno)); \
 		} \
@@ -289,13 +289,13 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 
 	patch->rpnExpression = malloc(sizeof(*patch->rpnExpression) * patch->rpnSize);
 	if (!patch->rpnExpression)
-		err(1, "%s: Failed to alloc \"%s\"'s patch #%" PRIu32 "'s RPN expression",
+		err("%s: Failed to alloc \"%s\"'s patch #%" PRIu32 "'s RPN expression",
 		    fileName, sectName, i);
 	size_t nbElementsRead = fread(patch->rpnExpression, sizeof(*patch->rpnExpression),
 				      patch->rpnSize, file);
 
 	if (nbElementsRead != patch->rpnSize)
-		errx(1, "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
+		errx("%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		     fileName, sectName, i,
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
 }
@@ -327,7 +327,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s",
 		    fileName, section->name);
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx(1, "\"%s\"'s section size (%" PRId32 ") is invalid",
+		errx("\"%s\"'s section size (%" PRId32 ") is invalid",
 		     section->name, tmp);
 	section->size = tmp;
 	section->offset = 0;
@@ -373,13 +373,13 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		uint8_t *data = malloc(sizeof(*data) * section->size + 1);
 
 		if (!data)
-			err(1, "%s: Unable to read \"%s\"'s data", fileName,
+			err("%s: Unable to read \"%s\"'s data", fileName,
 			    section->name);
 		if (section->size) {
 			size_t nbElementsRead = fread(data, sizeof(*data),
 						      section->size, file);
 			if (nbElementsRead != section->size)
-				errx(1, "%s: Cannot read \"%s\"'s data: %s",
+				errx("%s: Cannot read \"%s\"'s data: %s",
 				     fileName, section->name,
 				     feof(file) ? "Unexpected end of file"
 						: strerror(errno));
@@ -394,7 +394,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 			malloc(sizeof(*patches) * section->nbPatches + 1);
 
 		if (!patches)
-			err(1, "%s: Unable to read \"%s\"'s patches", fileName, section->name);
+			err("%s: Unable to read \"%s\"'s patches", fileName, section->name);
 		for (uint32_t i = 0; i < section->nbPatches; i++)
 			readPatch(file, &patches[i], fileName, section->name, i, fileNodes);
 		section->patches = patches;
@@ -462,7 +462,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
 
 	if (!file)
-		err(1, "Could not open file %s", fileName);
+		err("Could not open file %s", fileName);
 
 	/* Begin by reading the magic bytes and version number */
 	unsigned versionNumber;
@@ -470,13 +470,13 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 				  &versionNumber);
 
 	if (matchedElems != 1)
-		errx(1, "\"%s\" is not a RGBDS object file", fileName);
+		errx("\"%s\" is not a RGBDS object file", fileName);
 
 	verbosePrint("Reading object file %s, version %u\n",
 		     fileName, versionNumber);
 
 	if (versionNumber != RGBDS_OBJECT_VERSION_NUMBER)
-		errx(1, "\"%s\" is an incompatible version %u object file",
+		errx("\"%s\" is an incompatible version %u object file",
 		     fileName, versionNumber);
 
 	uint32_t revNum;
@@ -484,7 +484,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV)
-		errx(1, "%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
+		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
 		     fileName, revNum, RGBDS_OBJECT_REV);
 
 	uint32_t nbSymbols;
@@ -500,7 +500,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(nodes[fileID].nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].nodes = calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
 	if (!nodes[fileID].nodes)
-		err(1, "Failed to get memory for %s's nodes", fileName);
+		err("Failed to get memory for %s's nodes", fileName);
 	verbosePrint("Reading %u nodes...\n", nodes[fileID].nbNodes);
 	for (uint32_t i = nodes[fileID].nbNodes; i--; )
 		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
@@ -510,12 +510,12 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
 
 	if (!fileSymbols)
-		err(1, "Failed to get memory for %s's symbols", fileName);
+		err("Failed to get memory for %s's symbols", fileName);
 
 	struct SymbolList *symbolList = malloc(sizeof(*symbolList));
 
 	if (!symbolList)
-		err(1, "Failed to register %s's symbol list", fileName);
+		err("Failed to register %s's symbol list", fileName);
 	symbolList->symbolList = fileSymbols;
 	symbolList->nbSymbols = nbSymbols;
 	symbolList->next = symbolLists;
@@ -530,7 +530,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		struct Symbol *symbol = malloc(sizeof(*symbol));
 
 		if (!symbol)
-			err(1, "%s: Couldn't create new symbol", fileName);
+			err("%s: Couldn't create new symbol", fileName);
 		readSymbol(file, symbol, fileName, nodes[fileID].nodes);
 
 		fileSymbols[i] = symbol;
@@ -549,7 +549,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		/* Read section */
 		fileSections[i] = malloc(sizeof(*fileSections[i]));
 		if (!fileSections[i])
-			err(1, "%s: Couldn't create new section", fileName);
+			err("%s: Couldn't create new section", fileName);
 
 		fileSections[i]->nextu = NULL;
 		readSection(file, fileSections[i], fileName, nodes[fileID].nodes);
@@ -558,7 +558,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			fileSections[i]->symbols = malloc(nbSymPerSect[i]
 					* sizeof(*fileSections[i]->symbols));
 			if (!fileSections[i]->symbols)
-				err(1, "%s: Couldn't link to symbols",
+				err("%s: Couldn't link to symbols",
 				    fileName);
 		} else {
 			fileSections[i]->symbols = NULL;
@@ -609,7 +609,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		struct Assertion *assertion = malloc(sizeof(*assertion));
 
 		if (!assertion)
-			err(1, "%s: Couldn't create new assertion", fileName);
+			err("%s: Couldn't create new assertion", fileName);
 		readAssertion(file, assertion, fileName, i, nodes[fileID].nodes);
 		linkPatchToPCSect(&assertion->patch, fileSections);
 		assertion->fileSymbols = fileSymbols;

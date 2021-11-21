@@ -30,10 +30,10 @@
 #include "asm/warning.h"
 #include "parser.h"
 
-#include "extern/err.h"
 #include "extern/getopt.h"
 
 #include "helpers.h"
+#include "error.h"
 #include "version.h"
 
 #ifdef __clang__
@@ -74,7 +74,7 @@ static char *make_escape(char const *str)
 	char *dest = escaped_str;
 
 	if (escaped_str == NULL)
-		err(1, "%s: Failed to allocate memory", __func__);
+		err("%s: Failed to allocate memory", __func__);
 
 	while (*str) {
 		/* All dollars needs to be doubled */
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 			if (strlen(musl_optarg) == 2)
 				opt_B(&musl_optarg[1]);
 			else
-				errx(1, "Must specify exactly 2 characters for option 'b'");
+				errx("Must specify exactly 2 characters for option 'b'");
 			break;
 
 			char *equals;
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 			if (strlen(musl_optarg) == 4)
 				opt_G(&musl_optarg[1]);
 			else
-				errx(1, "Must specify exactly 4 characters for option 'g'");
+				errx("Must specify exactly 4 characters for option 'g'");
 			break;
 
 		case 'h':
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 			else
 				dependfile = fopen(musl_optarg, "w");
 			if (dependfile == NULL)
-				err(1, "Could not open dependfile %s", musl_optarg);
+				err("Could not open dependfile %s", musl_optarg);
 			break;
 
 		case 'o':
@@ -247,10 +247,10 @@ int main(int argc, char *argv[])
 			fill = strtoul(musl_optarg, &ep, 0);
 
 			if (musl_optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'p'");
+				errx("Invalid argument for option 'p'");
 
 			if (fill < 0 || fill > 0xFF)
-				errx(1, "Argument for option 'p' must be between 0 and 0xFF");
+				errx("Argument for option 'p' must be between 0 and 0xFF");
 
 			opt_P(fill);
 			break;
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 			maxDepth = strtoul(musl_optarg, &ep, 0);
 
 			if (musl_optarg[0] == '\0' || *ep != '\0')
-				errx(1, "Invalid argument for option 'r'");
+				errx("Invalid argument for option 'r'");
 			break;
 
 		case 'V':
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 				targetFileName = realloc(targetFileName,
 							 targetFileNameLen + newTargetLen + 1);
 				if (targetFileName == NULL)
-					err(1, "Cannot append new file to target file list");
+					err("Cannot append new file to target file list");
 				memcpy(&targetFileName[targetFileNameLen], newTarget, newTargetLen);
 				if (depType == 'Q')
 					free(newTarget);
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
 
 	if (dependfile) {
 		if (!targetFileName)
-			errx(1, "Dependency files can only be created if a target file is specified with either -o, -MQ or -MT");
+			errx("Dependency files can only be created if a target file is specified with either -o, -MQ or -MT");
 
 		fprintf(dependfile, "%s: %s\n", targetFileName, mainFileName);
 	}
@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
 	sect_CheckUnionClosed();
 
 	if (nbErrors != 0)
-		errx(1, "Assembly aborted (%u error%s)!", nbErrors,
+		errx("Assembly aborted (%u error%s)!", nbErrors,
 			nbErrors == 1 ? "" : "s");
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
