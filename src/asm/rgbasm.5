@@ -752,12 +752,12 @@ or
 .Ic FRAGMENT
 modifiers, as described below.
 .Ss Unionized Sections
-When you're tight on RAM, you may want to define overlapping memory allocations, as explained in the
+When you're tight on RAM, you may want to define overlapping static memory allocations, as explained in the
 .Sx Unions
 section.
 However, the
 .Ic UNION
-keyword only works within a single file, which prevents e.g. defining temporary allocations on a single memory area across several files.
+keyword only works within a single file, which prevents e.g. defining overlapping static allocations on a single memory area across several files.
 Unionized sections solve this problem.
 To declare an unionized section, add a
 .Ic UNION
@@ -767,7 +767,7 @@ one; the declaration is otherwise not different.
 Unionized sections follow some different rules from normal sections:
 .Bl -bullet -offset indent
 .It
-The same unionized section (= having the same name) can be declared several times per
+The same unionized section (i.e. having the same name) can be declared several times per
 .Nm
 invocation, and across several invocations.
 Different declarations are treated and merged identically whether within the same invocation, or different ones.
@@ -1347,9 +1347,9 @@ environment variable if that is defined as a UNIX timestamp.
 Refer to the spec at
 .Lk https://reproducible-builds.org/docs/source-date-epoch/ .
 .Sh DEFINING DATA
-.Ss Allocating space in RAM
+.Ss Statically allocating space in RAM
 .Ic DS
-allocates a number of empty bytes.
+statically allocates a number of empty bytes.
 This is the preferred method of allocating space in a RAM section.
 You can also use
 .Ic DB , DW
@@ -1452,7 +1452,7 @@ INCBIN "data.bin",78,256
 The length argument is optional.
 If only the start position is specified, the bytes from the start position until the end of the file will be included.
 .Ss Unions
-Unions allow multiple memory allocations to overlap, like unions in C.
+Unions allow multiple static memory allocations to overlap, like unions in C.
 This does not increase the amount of memory available, but allows re-using the same memory region for different purposes.
 .Pp
 A union starts with a
@@ -1500,7 +1500,7 @@ Nesting unions is possible, with each inner union's size being considered as des
 Unions may be used in any section, but inside them may only be
 .Ic DS -
 like commands (see
-.Sx Allocating space in RAM ) .
+.Sx Statically allocating space in RAM ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
 You execute the macro by inserting its name.
