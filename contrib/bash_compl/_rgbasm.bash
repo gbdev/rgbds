@@ -183,6 +183,7 @@ _rgbasm_completions() {
 				long-string
 				macro-shift
 				nested-comment
+				numeric-string
 				obsolete
 				shift
 				shift-amount
