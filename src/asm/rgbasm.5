@@ -755,9 +755,9 @@ modifiers, as described below.
 When you're tight on RAM, you may want to define overlapping static memory allocations, as explained in the
 .Sx Unions
 section.
-However, the
+However, a
 .Ic UNION
-keyword only works within a single file, which prevents e.g. defining overlapping static allocations on a single memory area across several files.
+only works within a single file, so it can't be used e.g. to define temporary variables across several files, all of which use the same statically allocated memory.
 Unionized sections solve this problem.
 To declare an unionized section, add a
 .Ic UNION
