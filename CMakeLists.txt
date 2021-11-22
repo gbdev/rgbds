@@ -26,7 +26,6 @@ endif()
 option(SANITIZERS "Build with sanitizers enabled" OFF) # Ignored on MSVC
 option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
 option(TRACE_PARSER "Trace parser execution" OFF)
-option(TRACE_LEXER "Trace lexer execution" OFF)
 
 if(MSVC)
   # MSVC's standard library triggers warning C5105,
@@ -92,8 +91,4 @@ endif()
 
 if(TRACE_PARSER)
   target_compile_definitions(rgbasm PRIVATE -DYYDEBUG)
-endif()
-
-if(TRACE_LEXER)
-  target_compile_definitions(rgbasm PRIVATE -DLEXER_DEBUG)
 endif()

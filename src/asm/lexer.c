@@ -38,12 +38,6 @@
 /* Include this last so it gets all type & constant definitions */
 #include "parser.h" /* For token definitions, generated from parser.y */
 
-#ifdef LEXER_DEBUG
-  #define dbgPrint(...) fprintf(stderr, "[lexer] " __VA_ARGS__)
-#else
-  #define dbgPrint(...)
-#endif
-
 /* Neither MSVC nor MinGW provide `mmap` */
 #if defined(_MSC_VER) || defined(__MINGW32__)
 # define WIN32_LEAN_AND_MEAN // include less from windows.h
@@ -452,8 +446,6 @@ void lexer_ReachELSEBlock(void)
 
 struct LexerState *lexer_OpenFile(char const *path)
 {
-	dbgPrint("Opening file \"%s\"\n", path);
-
 	bool isStdin = !strcmp(path, "-");
 	struct LexerState *state = malloc(sizeof(*state));
 	struct stat fileInfo;
@@ -530,8 +522,6 @@ struct LexerState *lexer_OpenFile(char const *path)
 
 struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo)
 {
-	dbgPrint("Opening view on buffer \"%.*s\"[...]\n", size < 16 ? (int)size : 16, buf);
-
 	struct LexerState *state = malloc(sizeof(*state));
 
 	if (!state) {
@@ -553,7 +543,6 @@ struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, 
 
 void lexer_RestartRept(uint32_t lineNo)
 {
-	dbgPrint("Restarting REPT/FOR\n");
 	lexerState->offset = 0;
 	initState(lexerState);
 	lexerState->lineNo = lineNo;
@@ -725,7 +714,6 @@ static bool continuesIdentifier(int c);
 
 static uint32_t readBracketedMacroArgNum(void)
 {
-	dbgPrint("Reading bracketed macro arg\n");
 	bool disableMacroArgs = lexerState->disableMacroArgs;
 	bool disableInterpolation = lexerState->disableInterpolation;
 
@@ -1038,7 +1026,6 @@ void lexer_DumpStringExpansions(void)
 /* Discards a block comment */
 static void discardBlockComment(void)
 {
-	dbgPrint("Discarding block comment\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;;) {
@@ -1081,7 +1068,6 @@ finish:
 
 static void discardComment(void)
 {
-	dbgPrint("Discarding comment\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;; shiftChar()) {
@@ -1098,7 +1084,6 @@ static void discardComment(void)
 
 static void readLineContinuation(void)
 {
-	dbgPrint("Beginning line continuation\n");
 	for (;;) {
 		int c = peek();
 
@@ -1161,7 +1146,6 @@ static uint32_t readFractionalPart(int32_t integer)
 {
 	uint32_t value = 0, divisor = 1;
 
-	dbgPrint("Reading fractional part\n");
 	for (;; shiftChar()) {
 		int c = peek();
 
@@ -1199,7 +1183,6 @@ static uint32_t readBinaryNumber(void)
 {
 	uint32_t value = 0;
 
-	dbgPrint("Reading binary number with digits [%c,%c]\n", binDigits[0], binDigits[1]);
 	for (;; shiftChar()) {
 		int c = peek();
 		int bit;
@@ -1226,7 +1209,6 @@ static uint32_t readHexNumber(void)
 	uint32_t value = 0;
 	bool empty = true;
 
-	dbgPrint("Reading hex number\n");
 	for (;; shiftChar()) {
 		int c = peek();
 
@@ -1261,8 +1243,6 @@ static uint32_t readGfxConstant(void)
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
 
-	dbgPrint("Reading gfx constant with digits [%c,%c,%c,%c]\n",
-		 gfxDigits[0], gfxDigits[1], gfxDigits[2], gfxDigits[3]);
 	for (;; shiftChar()) {
 		int c = peek();
 		uint32_t pixel;
@@ -1313,7 +1293,6 @@ static bool continuesIdentifier(int c)
 
 static int readIdentifier(char firstChar)
 {
-	dbgPrint("Reading identifier or keyword\n");
 	/* Lex while checking for a keyword */
 	yylval.symName[0] = firstChar;
 	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
@@ -1343,7 +1322,6 @@ static int readIdentifier(char firstChar)
 		i = sizeof(yylval.symName) - 1;
 	}
 	yylval.symName[i] = '\0'; /* Terminate the string */
-	dbgPrint("Ident/keyword = \"%s\"\n", yylval.symName);
 
 	if (keywordDict[nodeID].keyword)
 		return keywordDict[nodeID].keyword->token;
@@ -1478,7 +1456,6 @@ static size_t appendEscapedSubstring(char const *str, size_t i)
 
 static void readString(void)
 {
-	dbgPrint("Reading string\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1623,14 +1600,12 @@ finish:
 	}
 	yylval.string[i] = '\0';
 
-	dbgPrint("Read string \"%s\"\n", yylval.string);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }
 
 static size_t appendStringLiteral(size_t i)
 {
-	dbgPrint("Reading string\n");
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1773,7 +1748,6 @@ finish:
 	}
 	yylval.string[i] = '\0';
 
-	dbgPrint("Read string \"%s\"\n", yylval.string);
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 
@@ -1786,9 +1760,6 @@ static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
 
 static int yylex_NORMAL(void)
 {
-	dbgPrint("Lexing in normal mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
-		 lexer_GetLineNo(), lexer_GetColNo());
-
 	for (;;) {
 		int c = nextChar();
 		char secondChar;
@@ -2069,9 +2040,6 @@ static int yylex_NORMAL(void)
 
 static int yylex_RAW(void)
 {
-	dbgPrint("Lexing in raw mode, line=%" PRIu32 ", col=%" PRIu32 "\n",
-		 lexer_GetLineNo(), lexer_GetColNo());
-
 	/* This is essentially a modified `appendStringLiteral` */
 	size_t parenDepth = 0;
 	size_t i = 0;
@@ -2188,8 +2156,6 @@ finish:
 		i--;
 	yylval.string[i] = '\0';
 
-	dbgPrint("Read raw string \"%s\"\n", yylval.string);
-
 	// Returning T_COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (T_STRING
 	// then T_COMMA) without advancing the read. To avoid this, commas in raw
@@ -2229,7 +2195,6 @@ finish:
  */
 static int skipIfBlock(bool toEndc)
 {
-	dbgPrint("Skipping IF block (toEndc = %s)\n", toEndc ? "true" : "false");
 	lexer_SetMode(LEXER_NORMAL);
 	uint32_t startingDepth = lexer_GetIFDepth();
 	int token;
@@ -2324,7 +2289,6 @@ static int yylex_SKIP_TO_ENDC(void)
 
 static int yylex_SKIP_TO_ENDR(void)
 {
-	dbgPrint("Skipping remainder of REPT/FOR block\n");
 	lexer_SetMode(LEXER_NORMAL);
 	int depth = 1;
 	bool atLineStart = lexerState->atLineStart;
@@ -2407,17 +2371,11 @@ int yylex(void)
 		lexerStateEOL = NULL;
 	}
 	/* `lexer_SetState` updates `lexerState`, so check for EOF after it */
-	if (lexerState->lastToken == T_EOB) {
-		if (yywrap()) {
-			dbgPrint("Reached end of input.\n");
-			return T_EOF;
-		}
-	}
-	if (lexerState->atLineStart) {
-		/* Newlines read within an expansion should not increase the line count */
-		if (!lexerState->expansions)
-			nextLine();
-	}
+	if (lexerState->lastToken == T_EOB && yywrap())
+		return T_EOF;
+	/* Newlines read within an expansion should not increase the line count */
+	if (lexerState->atLineStart && !lexerState->expansions)
+		nextLine();
 
 	static int (* const lexerModeFuncs[])(void) = {
 		[LEXER_NORMAL]       = yylex_NORMAL,
@@ -2428,12 +2386,9 @@ int yylex(void)
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
-	if (token == T_EOF) {
-		dbgPrint("Reached EOB!\n");
-		/* Captures end at their buffer's boundary no matter what */
-		if (!lexerState->capturing)
-			token = T_EOB;
-	}
+	/* Captures end at their buffer's boundary no matter what */
+	if (token == T_EOF && !lexerState->capturing)
+		token = T_EOB;
 	lexerState->lastToken = token;
 	lexerState->atLineStart = token == T_NEWLINE || token == T_EOB;
 
