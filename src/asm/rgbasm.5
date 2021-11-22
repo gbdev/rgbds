@@ -190,7 +190,7 @@ PRINTLN "Hello {s:WHO}!"
 Although, for these examples,
 .Ic STRFMT
 would be more approriate; see
-.Sx String Expressions
+.Sx String expressions
 further below.
 .Sh EXPRESSIONS
 An expression can be composed of many things.
@@ -205,7 +205,7 @@ This is generally always the case, unless a label is involved, as explained in t
 section.
 .Pp
 The instructions in the macro-language generally require constant expressions.
-.Ss Numeric Formats
+.Ss Numeric formats
 There are a number of numeric formats.
 .Bl -column -offset indent "Fixed point (Q16.16)" "Prefix"
 .It Sy Format type Ta Sy Prefix Ta Sy Accepted characters
@@ -297,7 +297,7 @@ and
 .Pp
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.
-.Ss Fixed-point Expressions
+.Ss Fixed-point expressions
 Fixed-point numbers are basically normal (32-bit) integers, which count 65536ths instead of entire units, offering better precision than integers but limiting the range of values.
 The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
 Since they are still akin to integers, you can use them in normal integer expressions, and some integer operators like
@@ -350,7 +350,7 @@ ANGLE = 0.0
 ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
     ENDR
 .Ed
-.Ss String Expressions
+.Ss String expressions
 The most basic string expression is any number of characters contained in double quotes
 .Pq Ql \&"for instance" .
 The backslash character
@@ -676,7 +676,7 @@ SECTION "OAM Data",WRAM0,ALIGN[8] ;\ align to 256 bytes
 SECTION "VRAM Data",ROMX,BANK[2],ALIGN[4] ;\ align to 16 bytes
 .Ed
 .El
-.Ss Section Stack
+.Ss Section stack
 .Ic POPS
 and
 .Ic PUSHS
@@ -688,7 +688,7 @@ will push the current section context on the section stack.
 .Ic POPS
 can then later be used to restore it.
 Useful for defining sections in included files when you don't want to override the section context at the point the file was included.
-.Ss RAM Code
+.Ss RAM code
 Sometimes you want to have some code in RAM.
 But then you can't simply put it in a RAM section, you have to store it in ROM and copy it to RAM at some point.
 .Pp
@@ -755,7 +755,7 @@ blocks can use the
 or
 .Ic FRAGMENT
 modifiers, as described below.
-.Ss Unionized Sections
+.Ss Unionized sections
 When you're tight on RAM, you may want to define overlapping static memory allocations, as explained in the
 .Sx Unions
 section.
@@ -800,7 +800,7 @@ or
 Different declarations of the same unionized section are not appended, but instead overlaid on top of eachother, just like
 .Sx Unions .
 Similarly, the size of an unionized section is the largest of all its declarations.
-.Ss Section Fragments
+.Ss Section fragments
 Section fragments are sections with a small twist: when several of the same name are encountered, they are concatenated instead of producing an error.
 This works within the same file (paralleling the behavior "plain" sections has in previous versions), but also across object files.
 To declare an section fragment, add a
@@ -809,7 +809,7 @@ keyword after the
 .Ic SECTION
 one; the declaration is otherwise not different.
 However, similarly to
-.Sx Unionized Sections ,
+.Sx Unionized sections ,
 some rules must be followed:
 .Bl -bullet -offset indent
 .It
@@ -1319,7 +1319,7 @@ DEF AOLer    EQUS  "Me too"
 .Ed
 .Pp
 String constants are not expanded within the symbol names.
-.Ss Predeclared Symbols
+.Ss Predeclared symbols
 The following symbols are defined by the assembler:
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
 .It Sy Name Ta Sy Type Ta Sy Contents
