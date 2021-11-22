@@ -477,13 +477,13 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 /*
  * Alter a mutable symbol's value
  */
-struct Symbol *sym_AddSet(char const *symName, int32_t value)
+struct Symbol *sym_AddVar(char const *symName, int32_t value)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
-	} else if (sym_IsDefined(sym) && sym->type != SYM_SET) {
+	} else if (sym_IsDefined(sym) && sym->type != SYM_VAR) {
 		error("'%s' already defined as %s at ",
 		      symName, sym->type == SYM_LABEL ? "label" : "constant");
 		dumpFilename(sym);
@@ -493,7 +493,7 @@ struct Symbol *sym_AddSet(char const *symName, int32_t value)
 		updateSymbolFilename(sym);
 	}
 
-	sym->type = SYM_SET;
+	sym->type = SYM_VAR;
 	sym->value = value;
 
 	return sym;
@@ -741,7 +741,7 @@ void sym_Init(time_t now)
 	__FILE__Symbol->type = SYM_EQUS;
 	__FILE__Symbol->strCallback = Callback__FILE__;
 
-	sym_AddSet("_RS", 0)->isBuiltin = true;
+	sym_AddVar("_RS", 0)->isBuiltin = true;
 
 #define addNumber(name, val) sym_AddEqu(name, val)->isBuiltin = true
 #define addString(name, val) sym_AddString(name, val)->isBuiltin = true

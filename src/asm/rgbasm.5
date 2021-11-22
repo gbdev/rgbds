@@ -77,8 +77,8 @@ within a string, called
 This will paste the contents of
 .Ql symbol
 as if they were part of the source file.
-If it is a string equate, its characters are simply inserted as-is.
-If it is a numerical symbol, its value is converted to hexadecimal notation with a dollar sign
+If it is a string symbol, its characters are simply inserted as-is.
+If it is a numeric symbol, its value is converted to hexadecimal notation with a dollar sign
 .Sq $
 prepended.
 .Pp
@@ -97,7 +97,7 @@ Symbols can be
 .Em interpolated
 even in the contexts that disable automatic
 .Em expansion
-of string equates:
+of string constants:
 .Ql name
 will be expanded in all of
 .Ql DEF({name}) ,
@@ -170,8 +170,8 @@ Examples:
 .Bd -literal -offset indent
 SECTION "Test", ROM0[2]
 X:             ;\ This works with labels **whose address is known**
-Y = 3          ;\ This also works with mutable constants
-SUM equ X + Y  ;\ Likewise with immutable constants
+Y = 3          ;\ This also works with variables
+SUM equ X + Y  ;\ And likewise with numeric constants
 ; Prints "%0010 + $3 == 5"
 PRINTLN "{#05b:X} + {#x:Y} == {d:SUM}"
 
@@ -194,7 +194,7 @@ would be more approriate; see
 further below.
 .Sh EXPRESSIONS
 An expression can be composed of many things.
-Numerical expressions are always evaluated using signed 32-bit math.
+Numeric expressions are always evaluated using signed 32-bit math.
 Zero is considered to be the only "false" number, all non-zero numbers (including negative) are "true".
 .Pp
 An expression is said to be "constant" if
@@ -468,7 +468,7 @@ The result is not constant, since only RGBLINK can compute its value.
 .It Fn DEF symbol Ta Returns TRUE (1) if
 .Ar symbol
 has been defined, FALSE (0) otherwise.
-String equates are not expanded within the parentheses.
+String constants are not expanded within the parentheses.
 .It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
 .It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
@@ -756,12 +756,12 @@ or
 .Ic FRAGMENT
 modifiers, as described below.
 .Ss Unionized Sections
-When you're tight on RAM, you may want to define overlapping blocks of variables, as explained in the
+When you're tight on RAM, you may want to define overlapping static memory allocations, as explained in the
 .Sx Unions
 section.
-However, the
+However, a
 .Ic UNION
-keyword only works within a single file, which prevents e.g. defining temporary variables on a single memory area across several files.
+only works within a single file, so it can't be used e.g. to define temporary variables across several files, all of which use the same statically allocated memory.
 Unionized sections solve this problem.
 To declare an unionized section, add a
 .Ic UNION
@@ -771,7 +771,7 @@ one; the declaration is otherwise not different.
 Unionized sections follow some different rules from normal sections:
 .Bl -bullet -offset indent
 .It
-The same unionized section (= having the same name) can be declared several times per
+The same unionized section (i.e. having the same name) can be declared several times per
 .Nm
 invocation, and across several invocations.
 Different declarations are treated and merged identically whether within the same invocation, or different ones.
@@ -852,15 +852,15 @@ last.
 RGBDS supports several types of symbols:
 .Bl -hang
 .It Sy Label
-Numerical symbol designating a memory location.
+Numeric symbol designating a memory location.
 May or may not have a value known at assembly time.
 .It Sy Constant
-Numerical symbol whose value has to be known at assembly time.
+Numeric symbol whose value has to be known at assembly time.
 .It Sy Macro
 A block of
 .Nm
 code that can be invoked later.
-.It Sy String equate
+.It Sy String
 A text string that can be expanded later, similarly to a macro.
 .El
 .Pp
@@ -987,52 +987,17 @@ and so on.
 :   ; referenced by "ld hl"
     dw $7FFF, $1061, $03E0, $58A5
 .Ed
-.Ss Immutable constants
-.Ic EQU
-is used to define numerical constant symbols.
-Unlike
+.Ss Variables
+An equal sign
 .Ic =
-below, constants defined this way cannot be redefined.
-These constants can be used for unchanging values such as properties of the hardware.
-.Bd -literal -offset indent
-def SCREEN_WIDTH  equ 160 ;\ In pixels
-def SCREEN_HEIGHT equ 144
-.Ed
-.Pp
-Note that colons
-.Ql \&:
-following the name are not allowed.
-.Pp
-If you
-.Em really
-need to, the
-.Ic REDEF
-keyword will define or redefine a constant symbol.
-This can be used, for example, to update a constant using a macro, without making it mutable in general.
-.Bd -literal -offset indent
-    def NUM_ITEMS equ 0
-MACRO add_item
-    redef NUM_ITEMS equ NUM_ITEMS + 1
-    def ITEM_{02x:NUM_ITEMS} equ \[rs]1
-ENDM
-    add_item 1
-    add_item 4
-    add_item 9
-    add_item 16
-    assert NUM_ITEMS == 4
-    assert ITEM_04 == 16
-.Ed
-.Ss Mutable constants
-.Ic =
-is used to define numerical symbols like
-.Ic EQU ,
-but these symbols can be redefined.
-This is useful for variables in macros, for counters, etc.
+is used to define mutable numeric symbols.
+Unlike the other symbols described below, variables can be redefined.
+This is useful for internal symbols in macros, for counters, etc.
 .Bd -literal -offset indent
 DEF ARRAY_SIZE EQU 4
 DEF COUNT = 2
 DEF COUNT = 3
-REDEF COUNT = ARRAY_SIZE + COUNT
+DEF COUNT = ARRAY_SIZE + COUNT
 COUNT = COUNT*2
 ;\ COUNT now has the value 14
 .Ed
@@ -1041,7 +1006,7 @@ Note that colons
 .Ql \&:
 following the name are not allowed.
 .Pp
-Mutable constants can be conveniently redefined by compound assignment operators like in C:
+Variables can be conveniently redefined by compound assignment operators like in C:
 .Bl -column -offset indent "*= /= %="
 .It Sy Operator Ta Sy Meaning
 .It Li += -= Ta Compound plus/minus
@@ -1058,6 +1023,42 @@ DEF y = x - 1 ; y == 10
 DEF y *= 2    ; y == 20
 DEF y >>= 1   ; y == 10
 DEF x ^= y    ; x == 1
+.Ed
+.Ss Numeric constants
+.Ic EQU
+is used to define immutable numeric symbols.
+Unlike
+.Ic =
+above, constants defined this way cannot be redefined.
+These constants can be used for unchanging values such as properties of the hardware.
+.Bd -literal -offset indent
+def SCREEN_WIDTH  equ 160 ;\ In pixels
+def SCREEN_HEIGHT equ 144
+.Ed
+.Pp
+Note that colons
+.Ql \&:
+following the name are not allowed.
+.Pp
+If you
+.Em really
+need to, the
+.Ic REDEF
+keyword will define or redefine a numeric constant symbol.
+(It can also be used for variables, although it's not necessary since they are mutable.)
+This can be used, for example, to update a constant using a macro, without making it mutable in general.
+.Bd -literal -offset indent
+    def NUM_ITEMS equ 0
+MACRO add_item
+    redef NUM_ITEMS equ NUM_ITEMS + 1
+    def ITEM_{02x:NUM_ITEMS} equ \[rs]1
+ENDM
+    add_item 1
+    add_item 4
+    add_item 9
+    add_item 16
+    assert NUM_ITEMS == 4
+    assert ITEM_04 == 16
 .Ed
 .Ss Offset constants
 The RS group of commands is a handy way of defining structure offsets:
@@ -1096,10 +1097,10 @@ is omitted, it's assumed to be 1.
 Note that colons
 .Ql \&:
 following the name are not allowed.
-.Ss String equates
+.Ss String constants
 .Ic EQUS
-is used to define string equate symbols.
-Wherever the assembler reads a string equate, it gets
+is used to define string constant symbols.
+Wherever the assembler reads a string constant, it gets
 .Em expanded :
 the symbol's name is replaced with its contents.
 If you are familiar with C, you can think of it as similar to
@@ -1110,7 +1111,7 @@ This expansion is disabled in a few contexts:
 .Ql PURGE name ,
 and
 .Ql MACRO name
-will not expand string equates in their names.
+will not expand string constants in their names.
 .Bd -literal -offset indent
 DEF COUNTREG EQUS "[hl+]"
     ld a,COUNTREG
@@ -1125,7 +1126,7 @@ This will be interpreted as:
     db "John"
 .Ed
 .Pp
-String equates can also be used to define small one-line macros:
+String constants can also be used to define small one-line macros:
 .Bd -literal -offset indent
 DEF pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
 .Ed
@@ -1134,14 +1135,12 @@ Note that colons
 .Ql \&:
 following the name are not allowed.
 .Pp
-String equates can't be exported or imported.
+String constants can't be exported or imported.
 .Pp
-String equates, like
-.Ic EQU
-constants, cannot be redefined.
+String constants, like numeric constants, cannot be redefined.
 However, the
 .Ic REDEF
-keyword will define or redefine a string symbol.
+keyword will define or redefine a string constant symbol.
 For example:
 .Bd -literal -offset indent
 DEF s EQUS "Hello, "
@@ -1151,11 +1150,7 @@ PRINTLN "{s}\n"
 .Ed
 .Pp
 .Sy Important note :
-An
-.Ic EQUS
-can be expanded to a string that contains another
-.Ic EQUS
-and it will be expanded as well.
+When a string constant is expanded, its expansion may contain another string constant, which will be expanded as well.
 If this creates an infinite loop,
 .Nm
 will error out once a certain depth is
@@ -1164,9 +1159,7 @@ See the
 .Fl r
 command-line option in
 .Xr rgbasm 1 .
-Also, a macro can contain an
-.Ic EQUS
-which calls the same macro, which causes the same problem.
+The same problem can occur if the expansion of a macro invokes another macro, recursively.
 .Pp
 The examples above for
 .Ql EQU ,
@@ -1178,9 +1171,7 @@ and
 .Ql EQUS
 all start with
 .Ql DEF .
-(An
-.Ql =
-definition may start with
+(A variable definition may start with
 .Ql REDEF
 instead, since they are redefinable.)
 You may use the older syntax without
@@ -1194,7 +1185,7 @@ will treat it as a macro invocation.
 Furthermore, without the
 .Ql DEF
 keyword,
-string equates may be expanded for the name.
+string constants may be expanded for the name.
 This can lead to surprising results:
 .Bd -literal -offset indent
 X EQUS "Y"
@@ -1218,7 +1209,7 @@ ENDM
 The example above defines
 .Ql MyMacro
 as a new macro.
-String equates are not expanded within the name of the macro.
+String constants are not expanded within the name of the macro.
 You may use the older syntax
 .Ql MyMacro: MACRO
 instead of
@@ -1226,7 +1217,7 @@ instead of
 with a single colon
 .Ql \&:
 following the macro's name.
-With the older syntax, string equates may be expanded for the name.
+With the older syntax, string constants may be expanded for the name.
 .Pp
 Macros can't be exported or imported.
 .Pp
@@ -1320,14 +1311,14 @@ allows you to completely remove a symbol from the symbol table as if it had neve
 I can't stress this enough,
 .Sy you seriously need to know what you are doing .
 DON'T purge a symbol that you use in expressions the linker needs to calculate.
-When not sure, it's probably not safe to purge anything other than string symbols, macros, and constants.
+When not sure, it's probably not safe to purge anything other than variables, numeric or string constants, or macros.
 .Bd -literal -offset indent
 DEF Kamikaze EQUS  "I don't want to live anymore"
 DEF AOLer    EQUS  "Me too"
          PURGE Kamikaze, AOLer
 .Ed
 .Pp
-String equates are not expanded within the symbol names.
+String constants are not expanded within the symbol names.
 .Ss Predeclared Symbols
 The following symbols are defined by the assembler:
 .Bl -column -offset indent "EQUS" "__ISO_8601_LOCAL__"
@@ -1360,16 +1351,16 @@ environment variable if that is defined as a UNIX timestamp.
 Refer to the spec at
 .Lk https://reproducible-builds.org/docs/source-date-epoch/ .
 .Sh DEFINING DATA
-.Ss Declaring variables in a RAM section
+.Ss Statically allocating space in RAM
 .Ic DS
-allocates a number of empty bytes.
+statically allocates a number of empty bytes.
 This is the preferred method of allocating space in a RAM section.
 You can also use
 .Ic DB , DW
 and
 .Ic DL
 without any arguments instead (see
-.Sx Defining constant data
+.Sx Defining constant data in ROM
 below).
 .Bd -literal -offset indent
 DS 42 ;\ Allocates 42 bytes
@@ -1380,7 +1371,7 @@ In ROM sections, it will be filled with the value passed to the
 .Fl p
 command-line option, except when using overlays with
 .Fl O .
-.Ss Defining constant data
+.Ss Defining constant data in ROM
 .Ic DB
 defines a list of bytes that will be stored in the final image.
 Ideal for tables and text.
@@ -1465,7 +1456,7 @@ INCBIN "data.bin",78,256
 The length argument is optional.
 If only the start position is specified, the bytes from the start position until the end of the file will be included.
 .Ss Unions
-Unions allow multiple memory allocations to overlap, like unions in C.
+Unions allow multiple static memory allocations to overlap, like unions in C.
 This does not increase the amount of memory available, but allows re-using the same memory region for different purposes.
 .Pp
 A union starts with a
@@ -1513,7 +1504,7 @@ Nesting unions is possible, with each inner union's size being considered as des
 Unions may be used in any section, but inside them may only be
 .Ic DS -
 like commands (see
-.Sx Declaring variables in a RAM section ) .
+.Sx Statically allocating space in RAM ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
 You execute the macro by inserting its name.
@@ -1600,7 +1591,7 @@ The generated code will then reset all bytes in this range.
 LoopyMacro MyVars,54
 .Ed
 .Pp
-Arguments are passed as string equates, although there's no need to enclose them in quotes.
+Arguments are passed as string constants, although there's no need to enclose them in quotes.
 Thus, an expression will not be evaluated first but kind of copy-pasted.
 This means that it's probably a very good idea to use brackets around
 .Ic \[rs]1
@@ -1649,7 +1640,7 @@ also does not need escaping because string literals work as usual inside macro a
 Since there are only nine digits, you can only access the first nine macro arguments like this.
 To use the rest, you need to put the multi-digit argument number in angle brackets, like
 .Ql \[rs]<10> .
-This bracketed syntax supports decimal numbers and numeric symbol names.
+This bracketed syntax supports decimal numbers and numeric constant symbols.
 For example,
 .Ql \[rs]<_NARG>
 will get the last argument.
@@ -1765,7 +1756,7 @@ Everything between
 and the matching
 .Ic ENDR
 will be repeated for each value of a given symbol.
-String equates are not expanded within the symbol name.
+String constants are not expanded within the symbol name.
 For example, this code will produce a table of squared values from 0 to 255:
 .Bd -literal -offset indent
 FOR N, 256
@@ -1879,16 +1870,18 @@ Syntax examples are given below:
 .Bd -literal -offset indent
 Function:
       xor a
-ASSERT LOW(Variable) == 0
-      ld h, HIGH(Variable)
+ASSERT LOW(MyByte) == 0
+      ld h, HIGH(MyByte)
       ld l, a
       ld a, [hli]
-      ; You can also indent this!
+; You can also indent this!
       ASSERT BANK(OtherFunction) == BANK(Function)
       call OtherFunction
 ; Lowercase also works
-assert Variable + 1 == OtherVariable
-      ld c, [hl]
+      ld hl, FirstByte
+      ld a, [hli]
+assert FirstByte + 1 == SecondByte
+      ld b, [hl]
       ret
 \&.end
       ; If you specify one, a message will be printed

@@ -241,11 +241,11 @@ bool yywrap(void)
 		/* If this is a FOR, update the symbol value */
 		if (contextStack->forName && fileInfo->iters[0] <= contextStack->nbReptIters) {
 			contextStack->forValue += contextStack->forStep;
-			struct Symbol *sym = sym_AddSet(contextStack->forName,
+			struct Symbol *sym = sym_AddVar(contextStack->forName,
 				contextStack->forValue);
 
 			/* This error message will refer to the current iteration */
-			if (sym->type != SYM_SET)
+			if (sym->type != SYM_VAR)
 				fatalerror("Failed to update FOR symbol value\n");
 		}
 		/* Advance to the next iteration */
@@ -478,9 +478,9 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	dbgPrint("Running FOR(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
 		 symName, start, stop, step);
 
-	struct Symbol *sym = sym_AddSet(symName, start);
+	struct Symbol *sym = sym_AddVar(symName, start);
 
-	if (sym->type != SYM_SET)
+	if (sym->type != SYM_VAR)
 		return;
 
 	uint32_t count = 0;

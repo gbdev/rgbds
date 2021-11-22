@@ -372,7 +372,7 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	rpn_Number(&constExpr, constValue);
 	rpn_BinaryOp(op, &newExpr, &oldExpr, &constExpr);
 	newValue = rpn_GetConstVal(&newExpr);
-	sym_AddSet(symName, newValue);
+	sym_AddVar(symName, newValue);
 }
 
 static void initDsArgList(struct DsArgList *args)
@@ -927,11 +927,11 @@ compoundeq	: T_POP_ADDEQ { $$ = RPN_ADD; }
 equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
-set		: T_LABEL T_POP_EQUAL const { sym_AddSet($1, $3); }
+set		: T_LABEL T_POP_EQUAL const { sym_AddVar($1, $3); }
 		| T_LABEL compoundeq const { compoundAssignment($1, $2, $3); }
 		| T_LABEL T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
-			sym_AddSet($1, $3);
+			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
+			sym_AddVar($1, $3);
 		}
 ;
 
@@ -940,19 +940,19 @@ equs		: T_LABEL T_POP_EQUS string { sym_AddString($1, $3); }
 
 rb		: T_LABEL T_POP_RB rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 		}
 ;
 
 rw		: T_LABEL T_POP_RW rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
 rl		: T_LABEL T_Z80_RL rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
 ;
 
@@ -1116,10 +1116,10 @@ macrodef	: T_POP_MACRO {
 		}
 ;
 
-rsset		: T_POP_RSSET uconst { sym_AddSet("_RS", $2); }
+rsset		: T_POP_RSSET uconst { sym_AddVar("_RS", $2); }
 ;
 
-rsreset		: T_POP_RSRESET { sym_AddSet("_RS", 0); }
+rsreset		: T_POP_RSRESET { sym_AddVar("_RS", 0); }
 ;
 
 rs_uconst	: %empty { $$ = 1; }
@@ -1174,35 +1174,35 @@ def_equ		: def_id T_POP_EQU const { sym_AddEqu($1, $3); }
 redef_equ	: redef_id T_POP_EQU const { sym_RedefEqu($1, $3); }
 ;
 
-def_set		: def_id T_POP_EQUAL const { sym_AddSet($1, $3); }
-		| redef_id T_POP_EQUAL const { sym_AddSet($1, $3); }
+def_set		: def_id T_POP_EQUAL const { sym_AddVar($1, $3); }
+		| redef_id T_POP_EQUAL const { sym_AddVar($1, $3); }
 		| def_id compoundeq const { compoundAssignment($1, $2, $3); }
 		| redef_id compoundeq const { compoundAssignment($1, $2, $3); }
 		| def_id T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
-			sym_AddSet($1, $3);
+			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
+			sym_AddVar($1, $3);
 		}
 		| redef_id T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` is deprecated; use `=`\n");
-			sym_AddSet($1, $3);
+			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
+			sym_AddVar($1, $3);
 		}
 ;
 
 def_rb		: def_id T_POP_RB rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 		}
 ;
 
 def_rw		: def_id T_POP_RW rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
 def_rl		: def_id T_Z80_RL rs_uconst {
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
-			sym_AddSet("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}
 ;
 
@@ -1312,13 +1312,13 @@ printv		: T_POP_PRINTV const {
 ;
 
 printi		: T_POP_PRINTI const {
-			warning(WARNING_OBSOLETE, "`PRINTI` is deprecated; use `PRINT` with `STRFMT`\n");
+			warning(WARNING_OBSOLETE, "`PRINTI` is deprecated; use `PRINT` with `STRFMT` \"%%d\"\n");
 			printf("%" PRId32, $2);
 		}
 ;
 
 printf		: T_POP_PRINTF const {
-			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT`\n");
+			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT` \"%%f\"\n");
 			fix_Print($2);
 		}
 ;
