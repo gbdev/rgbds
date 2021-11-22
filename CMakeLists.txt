@@ -25,7 +25,6 @@ endif()
 
 option(SANITIZERS "Build with sanitizers enabled" OFF) # Ignored on MSVC
 option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
-option(TRACE_PARSER "Trace parser execution" OFF)
 
 if(MSVC)
   # MSVC's standard library triggers warning C5105,
@@ -87,8 +86,4 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   else()
     message(CHECK_FAIL "no")
   endif()
-endif()
-
-if(TRACE_PARSER)
-  target_compile_definitions(rgbasm PRIVATE -DYYDEBUG)
 endif()

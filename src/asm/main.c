@@ -52,10 +52,6 @@ char const *__asan_default_options(void) { return "detect_leaks=0"; }
 // Unfortunately, macOS still ships 2.3, which is from 2008...
 int yyparse(void);
 
-#if defined(YYDEBUG) && YYDEBUG
-extern int yydebug;
-#endif
-
 FILE * dependfile;
 bool generatedMissingIncludes;
 bool failedOnMissingInclude;
@@ -160,10 +156,6 @@ int main(int argc, char *argv[])
 		now = (time_t)strtoul(sourceDateEpoch, NULL, 0);
 
 	dependfile = NULL;
-
-#if defined(YYDEBUG) && YYDEBUG
-	yydebug = 1;
-#endif
 
 	// Perform some init for below
 	sym_Init(now);
