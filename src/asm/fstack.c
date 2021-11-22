@@ -23,12 +23,6 @@
 
 #define MAXINCPATHS 128
 
-#ifdef LEXER_DEBUG
-  #define dbgPrint(...) fprintf(stderr, "[fstack] " __VA_ARGS__)
-#else
-  #define dbgPrint(...)
-#endif
-
 struct Context {
 	struct Context *parent;
 	struct FileStackNode *fileInfo;
@@ -259,7 +253,6 @@ bool yywrap(void)
 	} else if (!contextStack->parent) {
 		return true;
 	}
-	dbgPrint("Popping context\n");
 
 	struct Context *context = contextStack;
 
@@ -269,10 +262,8 @@ bool yywrap(void)
 
 	lexer_DeleteState(context->lexerState);
 	/* Restore args if a macro (not REPT) saved them */
-	if (context->fileInfo->type == NODE_MACRO) {
-		dbgPrint("Restoring macro args %p\n", (void *)contextStack->macroArgs);
+	if (context->fileInfo->type == NODE_MACRO)
 		macro_UseNewArgs(contextStack->macroArgs);
-	}
 	/* Free the file stack node */
 	if (!context->fileInfo->referenced)
 		free(context->fileInfo);
@@ -315,8 +306,6 @@ static void newContext(struct FileStackNode *fileInfo)
 
 void fstk_RunInclude(char const *path)
 {
-	dbgPrint("Including path \"%s\"\n", path);
-
 	char *fullPath = NULL;
 	size_t size = 0;
 
@@ -332,7 +321,6 @@ void fstk_RunInclude(char const *path)
 		}
 		return;
 	}
-	dbgPrint("Full path: \"%s\"\n", fullPath);
 
 	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo) + size);
 
@@ -356,8 +344,6 @@ void fstk_RunInclude(char const *path)
 
 void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 {
-	dbgPrint("Running macro \"%s\"\n", macroName);
-
 	struct Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
@@ -461,8 +447,6 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 {
-	dbgPrint("Running REPT(%" PRIu32 ")\n", count);
-
 	if (count == 0)
 		return;
 	if (!newReptContext(reptLineNo, body, size))
@@ -475,9 +459,6 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size)
 {
-	dbgPrint("Running FOR(\"%s\", %" PRId32 ", %" PRId32 ", %" PRId32 ")\n",
-		 symName, start, stop, step);
-
 	struct Symbol *sym = sym_AddVar(symName, start);
 
 	if (sym->type != SYM_VAR)
@@ -517,8 +498,6 @@ void fstk_StopRept(void)
 
 bool fstk_Break(void)
 {
-	dbgPrint("Breaking out of REPT/FOR\n");
-
 	if (contextStack->fileInfo->type != NODE_REPT) {
 		error("BREAK can only be used inside a REPT/FOR block\n");
 		return false;
