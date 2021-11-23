@@ -69,11 +69,17 @@ dependency src/link/main.c       src/link/rgblink.1 \
            "Did the rgblink CLI change?"
 dependency src/link/main.c       contrib/zsh_compl/_rgblink \
            "Did the rgblink CLI change?"
+dependency src/link/main.c        contrib/bash_compl/_rgblink.bash \
+           "Did the rgblink CLI change?"
 dependency src/fix/main.c        src/fix/rgbfix.1 \
            "Did the rgbfix CLI change?"
 dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
            "Did the rgbfix CLI change?"
+dependency src/fix/main.c        contrib/bash_compl/_rgbfix.bash \
+           "Did the rgbfix CLI change?"
 dependency src/gfx/main.c        src/gfx/rgbgfx.1 \
            "Did the rgbgfx CLI change?"
 dependency src/gfx/main.c        contrib/zsh_compl/_rgbgfx \
+           "Did the rgbgfx CLI change?"
+dependency src/gfx/main.c        contrib/bash_compl/_rgbgfx.bash \
            "Did the rgbgfx CLI change?"
