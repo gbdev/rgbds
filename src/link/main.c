@@ -281,13 +281,12 @@ static void parseScrambleSpec(char const *spec)
 		// Now, determine which region type this is
 		enum ScrambledRegion region = 0;
 
-		while (region < SCRAMBLE_UNK) {
+		for (; region < SCRAMBLE_UNK; region++) {
 			// If the strings match (case-insensitively), we got it!
-			// It's OK not to use `strncasecmp` because `regionName` is still
-			// NUL-terminated, since the encompassing spec is.
-			if (!strcasecmp(scrambleSpecs[region].name, regionName))
+			// `strncasecmp` must be used here since `regionName` points
+			// to the entire remaining argument.
+			if (!strncasecmp(scrambleSpecs[region].name, regionName, regionNameLen))
 				break;
-			region++;
 		}
 
 		if (region == SCRAMBLE_UNK)
