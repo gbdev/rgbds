@@ -808,6 +808,19 @@ static char const *readMacroArg(char name)
 	return str;
 }
 
+static size_t readInternal(size_t bufIndex, size_t nbChars)
+{
+	// This buffer overflow made me lose WEEKS of my life. Never again.
+	assert(bufIndex + nbChars <= LEXER_BUF_SIZE);
+	ssize_t nbReadChars = read(lexerState->fd, &lexerState->buf[bufIndex], nbChars);
+
+	if (nbReadChars == -1)
+		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, strerror(errno));
+
+	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
+	return (size_t)nbReadChars;
+}
+
 /* We only need one character of lookahead, for macro arguments */
 static int peekInternal(uint8_t distance)
 {
@@ -839,42 +852,31 @@ static int peekInternal(uint8_t distance)
 
 		/* Compute the index we'll start writing to */
 		size_t writeIndex = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
-		ssize_t nbCharsRead = 0, totalCharsRead = 0;
-
-#define readChars(size) do { \
-	/* This buffer overflow made me lose WEEKS of my life. Never again. */ \
-	assert(writeIndex + (size) <= LEXER_BUF_SIZE); \
-	nbCharsRead = read(lexerState->fd, &lexerState->buf[writeIndex], (size)); \
-	if (nbCharsRead == -1) \
-		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, strerror(errno)); \
-	totalCharsRead += nbCharsRead; \
-	writeIndex += nbCharsRead; \
-	if (writeIndex == LEXER_BUF_SIZE) \
-		writeIndex = 0; \
-	target -= nbCharsRead; \
-} while (0)
 
 		/* If the range to fill passes over the buffer wrapping point, we need two reads */
 		if (writeIndex + target > LEXER_BUF_SIZE) {
 			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+			size_t nbReadChars = readInternal(writeIndex, nbExpectedChars);
 
-			readChars(nbExpectedChars);
+			lexerState->nbChars += nbReadChars;
+
+			writeIndex += nbReadChars;
+			if (writeIndex == LEXER_BUF_SIZE)
+				writeIndex = 0;
+
 			// If the read was incomplete, don't perform a second read
-			// `nbCharsRead` cannot be negative, so it's fine to cast to `size_t`
-			if ((size_t)nbCharsRead < nbExpectedChars)
+			target -= nbReadChars;
+			if (nbReadChars < nbExpectedChars)
 				target = 0;
 		}
 		if (target != 0)
-			readChars(target);
-
-#undef readChars
-
-		lexerState->nbChars += totalCharsRead;
+			lexerState->nbChars += readInternal(writeIndex, target);
 
 		/* If there aren't enough chars even after refilling, give up */
 		if (lexerState->nbChars <= distance)
 			return EOF;
 	}
+
 	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
 }
 
