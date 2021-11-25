@@ -400,16 +400,16 @@ uint32_t lexer_GetIFDepth(void)
 
 void lexer_IncIFDepth(void)
 {
-	struct IfStack *new = malloc(sizeof(*new));
+	struct IfStack *ifStack = malloc(sizeof(*ifStack));
 
-	if (!new)
+	if (!ifStack)
 		fatalerror("Unable to allocate new IF depth: %s\n", strerror(errno));
 
-	new->ranIfBlock = false;
-	new->reachedElseBlock = false;
-	new->next = lexerState->ifStack;
+	ifStack->ranIfBlock = false;
+	ifStack->reachedElseBlock = false;
+	ifStack->next = lexerState->ifStack;
 
-	lexerState->ifStack = new;
+	lexerState->ifStack = ifStack;
 }
 
 void lexer_DecIFDepth(void)
@@ -677,19 +677,19 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		}
 	}
 
-	struct Expansion *new = malloc(sizeof(*new));
+	struct Expansion *exp = malloc(sizeof(*exp));
 
-	if (!new)
+	if (!exp)
 		fatalerror("Unable to allocate new expansion: %s\n", strerror(errno));
 
-	new->parent = lexerState->expansions;
-	new->name = name ? strdup(name) : NULL;
-	new->contents.unowned = str;
-	new->size = size;
-	new->offset = 0;
-	new->owned = owned;
+	exp->parent = lexerState->expansions;
+	exp->name = name ? strdup(name) : NULL;
+	exp->contents.unowned = str;
+	exp->size = size;
+	exp->offset = 0;
+	exp->owned = owned;
 
-	lexerState->expansions = new;
+	lexerState->expansions = exp;
 }
 
 static void freeExpansion(struct Expansion *expansion)
