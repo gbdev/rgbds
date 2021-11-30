@@ -218,10 +218,10 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 	return (uint32_t)pos;
 }
 
-static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *new)
+static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *rep)
 {
 	size_t oldLen = strlen(old);
-	size_t newLen = strlen(new);
+	size_t repLen = strlen(rep);
 	size_t i = 0;
 
 	if (!oldLen) {
@@ -240,8 +240,8 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 			break;
 
 		// Copy the replacement substring
-		memcpy(dest + i, new, newLen < destLen - i ? newLen : destLen - i);
-		i += newLen;
+		memcpy(dest + i, rep, repLen < destLen - i ? repLen : destLen - i);
+		i += repLen;
 		if (i >= destLen)
 			break;
 

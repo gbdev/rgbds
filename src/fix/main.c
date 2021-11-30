@@ -1268,12 +1268,12 @@ do { \
 #define SPEC_H TRASH_HEADER_SUM
 #define SPEC_g FIX_GLOBAL_SUM
 #define SPEC_G TRASH_GLOBAL_SUM
-#define overrideSpec(new, bad) \
+#define overrideSpec(cur, bad) \
 do { \
 	if (fixSpec & SPEC_##bad) \
 		fprintf(stderr, \
-			"warning: '" #new "' overriding '" #bad "' in fix spec\n"); \
-	fixSpec = (fixSpec & ~SPEC_##bad) | SPEC_##new; \
+			"warning: '" #cur "' overriding '" #bad "' in fix spec\n"); \
+	fixSpec = (fixSpec & ~SPEC_##bad) | SPEC_##cur; \
 } while (0)
 				case 'l':
 					overrideSpec(l, L);
