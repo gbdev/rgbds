@@ -385,7 +385,7 @@ static void initDsArgList(struct DsArgList *args)
 			   strerror(errno));
 }
 
-static size_t nextDsArgListIndex(struct DsArgList *args)
+static void appendDsArgList(struct DsArgList *args, const struct Expression *expr)
 {
 	if (args->nbArgs == args->capacity) {
 		args->capacity = (args->capacity + 1) * 2;
@@ -394,7 +394,7 @@ static size_t nextDsArgListIndex(struct DsArgList *args)
 			fatalerror("realloc error while resizing ds arg list: %s\n",
 				   strerror(errno));
 	}
-	return args->nbArgs++;
+	args->args[args->nbArgs++] = *expr;
 }
 
 static void freeDsArgList(struct DsArgList *args)
@@ -1144,14 +1144,10 @@ ds		: T_POP_DS uconst { sect_Skip($2, true); }
 
 ds_args		: reloc_8bit {
 			initDsArgList(&$$);
-			size_t i = nextDsArgListIndex(&$$);
-
-			$$.args[i] = $1;
+			appendDsArgList(&$$, &$1);
 		}
 		| ds_args T_COMMA reloc_8bit {
-			size_t i = nextDsArgListIndex(&$1);
-
-			$1.args[i] = $3;
+			appendDsArgList(&$1, &$3);
 			$$ = $1;
 		}
 ;
