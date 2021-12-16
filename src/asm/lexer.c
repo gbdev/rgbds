@@ -27,6 +27,7 @@
 #include "platform.h" // For `ssize_t`
 
 #include "asm/lexer.h"
+#include "asm/fixpoint.h"
 #include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/macro.h"
@@ -1125,39 +1126,66 @@ static uint32_t readNumber(int radix, uint32_t baseValue)
 	return value;
 }
 
-static uint32_t readFractionalPart(int32_t integer)
+static uint32_t readFractionalPart(uint32_t integer)
 {
 	uint32_t value = 0, divisor = 1;
+	uint8_t precision = 0;
+	enum {
+		READFRACTIONALPART_DIGITS,
+		READFRACTIONALPART_PRECISION,
+		READFRACTIONALPART_PRECISION_DIGITS,
+	} state = READFRACTIONALPART_DIGITS;
 
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c == '_')
-			continue;
-		else if (c < '0' || c > '9')
-			break;
-		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
-			warning(WARNING_LARGE_CONSTANT,
-				"Precision of fixed-point constant is too large\n");
-			// Discard any additional digits
-			shiftChar();
-			while (c = peek(), (c >= '0' && c <= '9') || c == '_')
+		if (state == READFRACTIONALPART_DIGITS) {
+			if (c == '_') {
+				continue;
+			} else if (c == 'q' || c == 'Q') {
+				state = READFRACTIONALPART_PRECISION;
+				continue;
+			} else if (c < '0' || c > '9') {
+				break;
+			}
+			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
+				warning(WARNING_LARGE_CONSTANT,
+					"Precision of fixed-point constant is too large\n");
+				// Discard any additional digits
 				shiftChar();
-			break;
+				while (c = peek(), (c >= '0' && c <= '9') || c == '_')
+					shiftChar();
+				break;
+			}
+			value = value * 10 + (c - '0');
+			divisor *= 10;
+		} else {
+			if (c == '.' && state == READFRACTIONALPART_PRECISION) {
+				state = READFRACTIONALPART_PRECISION_DIGITS;
+				continue;
+			} else if (c < '0' || c > '9') {
+				break;
+			}
+			precision = precision * 10 + (c - '0');
 		}
-		value = value * 10 + (c - '0');
-		divisor *= 10;
 	}
 
-	if (integer > INT16_MAX || integer < INT16_MIN)
+	if (precision == 0) {
+		if (state >= READFRACTIONALPART_PRECISION)
+			error("Invalid fixed-point constant, no significant digits after 'q'\n");
+		precision = fixPrecision;
+	} else if (precision > 31) {
+		error("Fixed-point constant precision must be between 1 and 31\n");
+		precision = fixPrecision;
+	}
+
+	if (integer >= ((uint32_t)1 << (precision - 1)))
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
-	// Cast to unsigned avoids UB if shifting discards bits
-	integer = (uint32_t)integer << 16;
 	// Cast to unsigned avoids undefined overflow behavior
-	uint16_t fractional = (uint16_t)round(value * 65536.0 / divisor);
+	uint32_t fractional = (uint32_t)round((double)value / divisor * pow(2.0, precision));
 
-	return (uint32_t)integer | (fractional * (integer >= 0 ? 1 : -1));
+	return (integer << precision) | fractional;
 }
 
 char binDigits[2];
@@ -1741,6 +1769,8 @@ static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
 
 static int yylex_NORMAL(void)
 {
+	uint32_t num = 0;
+
 	for (;;) {
 		int c = nextChar();
 		char secondChar;
@@ -1912,10 +1942,12 @@ static int yylex_NORMAL(void)
 		case '7':
 		case '8':
 		case '9':
-			yylval.constValue = readNumber(10, c - '0');
+			num = readNumber(10, c - '0');
 			if (peek() == '.') {
 				shiftChar();
-				yylval.constValue = readFractionalPart(yylval.constValue);
+				yylval.constValue = readFractionalPart(num);
+			} else {
+				yylval.constValue = num;
 			}
 			return T_NUMBER;
 

@@ -1,0 +1,7 @@
+warning: opt-Q.asm(10) -> opt-Q.asm::REPT~1(12) -> opt-Q.asm::test(5): [-Wlarge-constant]
+    Magnitude of fixed-point constant is too large
+error: opt-Q.asm(17) -> opt-Q.asm::test(3):
+    Argument for option 'Q' must be between 1 and 31
+error: opt-Q.asm(18) -> opt-Q.asm::test(3):
+    Argument for option 'Q' must be between 1 and 31
+error: Assembly aborted (2 errors)!

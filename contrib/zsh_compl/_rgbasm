@@ -56,6 +56,7 @@ local args=(
 	'*'-MQ"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
 	'(-o --output)'{-o,--output}'+[Output file]:output file:_files'
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
+	'(-Q --q-precision)'{-Q,--q-precision}'+[Set fixed-point precision]:precision:'
 	'(-r --recursion-depth)'{-r,--recursion-depth}'+[Set maximum recursion depth]:depth:'
 	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbasm_warnings'
 

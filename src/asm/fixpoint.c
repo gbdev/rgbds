@@ -17,16 +17,23 @@
 #include "asm/symbol.h"
 #include "asm/warning.h"
 
-#define fix2double(i)	((double)((i) / 65536.0))
-#define double2fix(d)	((int32_t)round((d) * 65536.0))
-
-// pi radians == 32768 fixed-point "degrees"
-#define fdeg2rad(f)	((f) * (M_PI / 32768.0))
-#define rad2fdeg(r)	((r) * (32768.0 / M_PI))
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+#define fix2double(i)	((double)((i) / fix_PrecisionFactor()))
+#define double2fix(d)	((int32_t)round((d) * fix_PrecisionFactor()))
+
+// pi*2 radians == 2**fixPrecision fixed-point "degrees"
+#define fdeg2rad(f)	((f) * (M_PI * 2) / fix_PrecisionFactor())
+#define rad2fdeg(r)	((r) * fix_PrecisionFactor() / (M_PI * 2))
+
+uint8_t fixPrecision;
+
+double fix_PrecisionFactor(void)
+{
+	return pow(2.0, fixPrecision);
+}
 
 void fix_Print(int32_t i)
 {
@@ -38,7 +45,7 @@ void fix_Print(int32_t i)
 		sign = "-";
 	}
 
-	printf("%s%" PRIu32 ".%05" PRIu32, sign, u >> 16,
+	printf("%s%" PRIu32 ".%05" PRIu32, sign, u >> fixPrecision,
 	       ((uint32_t)(fix2double(u) * 100000 + 0.5)) % 100000);
 }
 
