@@ -760,7 +760,6 @@ void sym_Init(time_t now)
 		now = 0;
 	}
 
-	const struct tm *time_utc = gmtime(&now);
 	const struct tm *time_local = localtime(&now);
 
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
@@ -768,6 +767,8 @@ void sym_Init(time_t now)
 	strftime(savedTIMESTAMP_ISO8601_LOCAL,
 		 sizeof(savedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H:%M:%S%z\"",
 		 time_local);
+
+	const struct tm *time_utc = gmtime(&now);
 
 	strftime(savedTIMESTAMP_ISO8601_UTC,
 		 sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
