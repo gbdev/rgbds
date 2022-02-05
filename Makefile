@@ -230,7 +230,7 @@ develop:
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
 		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
-		CFLAGS="-ggdb3 -O0"
+		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!

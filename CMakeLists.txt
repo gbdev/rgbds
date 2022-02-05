@@ -42,16 +42,18 @@ else()
                   -fsanitize=alignment -fsanitize=null -fsanitize=address)
     add_compile_options(${SAN_FLAGS})
     link_libraries(${SAN_FLAGS})
+    # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
+    # TODO: this overrides anything previously set... that's a bit sloppy!
+    set(CMAKE_C_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
   endif()
 
   if(MORE_WARNINGS)
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition
-                        -Wshift-overflow=2
-                        -Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused
+                        -Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wnull-dereference
+                        -Wold-style-definition -Wshift-overflow=2 -Wstrict-overflow=5
+                        -Wstrict-prototypes -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local ?
-                        -Wnull-dereference -Wstringop-overflow=4 # TODO: would work better with optimizations
                         -Wno-sign-compare # TODO: fix those warnings
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral # We have a couple of "dynamic" prints
