@@ -209,17 +209,21 @@ checkdiff:
 # This target is used during development in order to prevent adding new issues
 # to the source code. All warnings are treated as errors in order to block the
 # compilation and make the continous integration infrastructure return failure.
+# The rationale for some of the flags is documented in the CMakeLists.
 
 develop:
-	$Qenv ${MAKE} WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
-		-Wno-sign-compare -Wvla -Wformat -Wformat-security -Wformat-overflow=2 \
-		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
-		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=4 \
-		-Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond \
-		-Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op \
-		-Wnested-externs -Wno-aggressive-loop-optimizations -Winline \
-		-Wundef -Wstrict-prototypes -Wold-style-definition \
-		-Wno-unknown-warning-option -Wno-tautological-constant-out-of-range-compare \
+	$Qenv ${MAKE} WARNFLAGS="-Werror -Wextra \
+		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-cond \
+		-Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition \
+		-Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused \
+		-Wshadow \
+		-Wstringop-overflow=4 \
+		-Wno-sign-compare \
+		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
+		-Wno-format-nonliteral \
+		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \
+		-Wvla \
+		-Wno-unknown-warning-option \
 		-fsanitize=shift -fsanitize=integer-divide-by-zero \
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
