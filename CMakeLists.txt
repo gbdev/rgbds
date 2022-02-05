@@ -46,11 +46,12 @@ else()
 
   if(MORE_WARNINGS)
     add_compile_options(-Werror -Wextra
-                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-cond
+                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
                         -Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition
+                        -Wshift-overflow=2
                         -Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local ?
-                        -Wstringop-overflow=4 # TODO: would work better with optimizations
+                        -Wnull-dereference -Wstringop-overflow=4 # TODO: would work better with optimizations
                         -Wno-sign-compare # TODO: fix those warnings
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral # We have a couple of "dynamic" prints
