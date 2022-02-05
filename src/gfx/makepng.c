@@ -95,6 +95,9 @@ void output_png_file(const struct Options *opts,
 	if (!f)
 		err("Opening output png file '%s' failed", outfile);
 
+	if (opts->debug)
+		free(outfile);
+
 	img.png = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 					  NULL, NULL, NULL);
 	if (!img.png)
@@ -135,9 +138,6 @@ void output_png_file(const struct Options *opts,
 
 	png_destroy_write_struct(&img.png, &img.info);
 	fclose(f);
-
-	if (opts->debug)
-		free(outfile);
 }
 
 void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr)
