@@ -1386,6 +1386,12 @@ Alternatively, you can use
 to store a list of words (16-bit) or
 .Ic DL
 to store a list of double-words/longs (32-bit).
+Both of these write their data in little-endian byte order; for example,
+.Ql dw $CAFE
+is equivalent to
+.Ql db $FE, $CA
+and not
+.Ql db $CA, $FE .
 .Pp
 Strings are handled a little specially: they first undergo charmap conversion (see
 .Sx Character maps ) ,
