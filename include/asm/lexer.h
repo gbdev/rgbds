@@ -83,6 +83,7 @@ struct CaptureBody {
 	size_t size;
 };
 
+void lexer_CheckRecursionDepth(void);
 char const *lexer_GetFileName(void);
 uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);

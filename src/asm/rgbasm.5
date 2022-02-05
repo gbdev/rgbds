@@ -1993,6 +1993,7 @@ block, all of them but the first one are ignored.
 .Ss Changing options while assembling
 .Ic OPT
 can be used to change some of the options during assembling from within the source, instead of defining them on the command-line.
+.Pq See Xr rgbasm 1 .
 .Pp
 .Ic OPT
 takes a comma-separated list of options as its argument:
@@ -2008,8 +2009,10 @@ POPO
     LD [$FF88], A         ; optimized to use LDH by default
 .Ed
 .Pp
-The options that OPT can modify are currently:
-.Cm b , g , p , h , L ,
+The options that
+.Ic OPT
+can modify are currently:
+.Cm b , g , p , r , h , L ,
 and
 .Cm W .
 The Boolean flag options
