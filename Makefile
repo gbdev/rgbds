@@ -30,7 +30,7 @@ PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 # Note: if this comes up empty, `version.c` will automatically fall back to last release number
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Wall
+WARNFLAGS	:= -Wall -pedantic
 
 # Overridable CFLAGS
 CFLAGS		?= -O3 -flto -DNDEBUG
