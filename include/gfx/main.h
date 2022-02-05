@@ -24,7 +24,7 @@ struct Options {
 	bool mirror;
 	bool unique;
 	bool colorcurve;
-	int trim;
+	unsigned int trim;
 	char *tilemapfile;
 	bool tilemapout;
 	char *attrmapfile;
@@ -43,7 +43,7 @@ struct RGBColor {
 
 struct ImageOptions {
 	bool horizontal;
-	int trim;
+	unsigned int trim;
 	char *tilemapfile;
 	bool tilemapout;
 	char *attrmapfile;

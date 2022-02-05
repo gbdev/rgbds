@@ -54,7 +54,6 @@ else()
                         -Wold-style-definition -Wshift-overflow=2 -Wstrict-overflow=5
                         -Wstrict-prototypes -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local ?
-                        -Wno-sign-compare # TODO: fix those warnings
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral # We have a couple of "dynamic" prints
                         # We do some range checks that are always false on some platforms (GCC, Clang)

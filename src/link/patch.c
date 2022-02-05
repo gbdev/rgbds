@@ -111,7 +111,7 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
 				      uint32_t index)
 {
-	assert(index != -1); /* PC needs to be handled specially, not here */
+	assert(index != (uint32_t)-1); /* PC needs to be handled specially, not here */
 	struct Symbol const *symbol = symbolList[index];
 
 	/* If the symbol is defined elsewhere... */

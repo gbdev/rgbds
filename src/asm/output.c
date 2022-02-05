@@ -192,7 +192,7 @@ static uint32_t getsectid(struct Section const *sect)
 
 static uint32_t getSectIDIfAny(struct Section const *sect)
 {
-	return sect ? getsectid(sect) : -1;
+	return sect ? getsectid(sect) : (uint32_t)-1;
 }
 
 /*
@@ -200,7 +200,7 @@ static uint32_t getSectIDIfAny(struct Section const *sect)
  */
 static void writepatch(struct Patch const *patch, FILE *f)
 {
-	assert(patch->src->ID != -1);
+	assert(patch->src->ID != (uint32_t)-1);
 	putlong(patch->src->ID, f);
 	putlong(patch->lineNo, f);
 	putlong(patch->offset, f);
@@ -264,7 +264,7 @@ static void writesymbol(struct Symbol const *sym, FILE *f)
 	if (!sym_IsDefined(sym)) {
 		putc(SYMTYPE_IMPORT, f);
 	} else {
-		assert(sym->src->ID != -1);
+		assert(sym->src->ID != (uint32_t)-1);
 
 		putc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
 		putlong(sym->src->ID, f);
@@ -490,7 +490,7 @@ static void freeassert(struct Assertion *assert)
 
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 {
-	putlong(node->parent ? node->parent->ID : -1, f);
+	putlong(node->parent ? node->parent->ID : (uint32_t)-1, f);
 	putlong(node->lineNo, f);
 	putc(node->type, f);
 	if (node->type != NODE_REPT) {
