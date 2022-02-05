@@ -10,3 +10,5 @@
 -4 >> 1 = $FFFFFFFE
 -4 >> 2 = $FFFFFFFF
 -1 >> -9001 = $0
+$DEADBEEF >> 1 = $EF56DF77
+$DEADBEEF >>> 1 = $6F56DF77

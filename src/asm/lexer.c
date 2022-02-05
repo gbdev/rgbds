@@ -1890,18 +1890,23 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICLT;
 			}
 
-		case '>': /* Either >>=, GT, GTE, or right shift */
+		case '>': /* Either >>=, GT, GTE, or either kind of right shift */
 			switch (peek()) {
 			case '=':
 				shiftChar();
 				return T_OP_LOGICGE;
 			case '>':
 				shiftChar();
-				if (peek() == '=') {
+				switch (peek()) {
+				case '=':
 					shiftChar();
 					return T_POP_SHREQ;
+				case '>':
+					shiftChar();
+					return T_OP_USHR;
+				default:
+					return T_OP_SHR;
 				}
-				return T_OP_SHR;
 			default:
 				return T_OP_LOGICGT;
 			}

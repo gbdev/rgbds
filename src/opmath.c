@@ -86,3 +86,18 @@ int32_t op_shift_right(int32_t value, int32_t amount)
 	// undefined, so use a left shift manually sign-extended
 	return ((uint32_t)value >> amount) | amount_high_bits;
 }
+
+int32_t op_shift_right_unsigned(int32_t value, int32_t amount)
+{
+	// Repeat the easy cases here to avoid INT_MIN funny business
+	if (amount == 0)
+		return value;
+	if (value == 0 || amount <= -32)
+		return 0;
+	if (amount > 31)
+		return (value < 0) ? -1 : 0;
+	if (amount < 0)
+		return op_shift_left(value, -amount);
+
+	return (uint32_t)value >> amount;
+}
