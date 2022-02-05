@@ -219,7 +219,6 @@ develop:
 		-Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused \
 		-Wshadow \
 		-Wnull-dereference -Wstringop-overflow=4 \
-		-Wno-sign-compare \
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \

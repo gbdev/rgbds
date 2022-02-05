@@ -37,15 +37,14 @@ void transpose_tiles(struct GBImage *gb, int width)
 
 void raw_to_gb(const struct RawIndexedImage *raw_image, struct GBImage *gb)
 {
-	int x, y, byte;
 	uint8_t index;
 
-	for (y = 0; y < raw_image->height; y++) {
-		for (x = 0; x < raw_image->width; x++) {
+	for (unsigned int y = 0; y < raw_image->height; y++) {
+		for (unsigned int x = 0; x < raw_image->width; x++) {
 			index = raw_image->data[y][x];
 			index &= (1 << depth) - 1;
 
-			byte = y * depth
+			unsigned int byte = y * depth
 				+ x / 8 * raw_image->height / 8 * 8 * depth;
 			gb->data[byte] |= (index & 1) << (7 - x % 8);
 			if (depth == 2) {

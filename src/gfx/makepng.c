@@ -142,10 +142,9 @@ void output_png_file(const struct Options *opts,
 
 void destroy_raw_image(struct RawIndexedImage **raw_image_ptr_ptr)
 {
-	int y;
 	struct RawIndexedImage *raw_image = *raw_image_ptr_ptr;
 
-	for (y = 0; y < raw_image->height; y++)
+	for (unsigned int y = 0; y < raw_image->height; y++)
 		free(raw_image->data[y]);
 
 	free(raw_image->data);
