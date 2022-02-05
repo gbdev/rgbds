@@ -10,6 +10,7 @@
 #define RGBDS_OPT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 void opt_B(char chars[2]);
 void opt_G(char chars[4]);
