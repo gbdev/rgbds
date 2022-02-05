@@ -24,12 +24,12 @@ struct OptStackEntry {
 
 static struct OptStackEntry *stack = NULL;
 
-void opt_B(char chars[2])
+void opt_B(char const chars[2])
 {
 	lexer_SetBinDigits(chars);
 }
 
-void opt_G(char chars[4])
+void opt_G(char const chars[4])
 {
 	lexer_SetGfxDigits(chars);
 }
