@@ -213,11 +213,12 @@ checkdiff:
 
 develop:
 	$Qenv ${MAKE} WARNFLAGS="-Werror -Wextra \
-		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-cond \
+		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond \
 		-Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition \
+		-Wshift-overflow=2 \
 		-Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused \
 		-Wshadow \
-		-Wstringop-overflow=4 \
+		-Wnull-dereference -Wstringop-overflow=4 \
 		-Wno-sign-compare \
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral \
