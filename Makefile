@@ -211,7 +211,7 @@ checkdiff:
 # compilation and make the continous integration infrastructure return failure.
 
 develop:
-	$Qenv $(MAKE) WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
+	$Qenv ${MAKE} WARNFLAGS="-Werror -Wall -Wextra -Wpedantic -Wno-type-limits \
 		-Wno-sign-compare -Wvla -Wformat -Wformat-security -Wformat-overflow=2 \
 		-Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused \
 		-Wuninitialized -Wunknown-pragmas -Wstrict-overflow=4 \
@@ -233,11 +233,11 @@ develop:
 # install instructions instead.
 
 mingw32:
-	$Qmake CC=i686-w64-mingw32-gcc BISON=bison \
+	$Q${MAKE} CC=i686-w64-mingw32-gcc BISON=bison \
 		PKG_CONFIG=i686-w64-mingw32-pkg-config -j
 
 mingw64:
-	$Qmake CC=x86_64-w64-mingw32-gcc BISON=bison \
+	$Q${MAKE} CC=x86_64-w64-mingw32-gcc BISON=bison \
 		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
 
 wine-shim:
