@@ -1,10 +1,11 @@
-test: macro
+macro test
 	; Test the rpn system, as well as the linker...
-	dl \1 + zero
+	DEF expr EQUS STRRPL(STRRPL("\1 + zero)", "<<", "<< ("), ">>", ">> (")
+	dl expr
+	PURGE expr
 
 	; ...as well as the constexpr system
-result\@ equ \1
-	println "\1 = {result\@}"
+	println "\1 = ", (\1)
 endm
 
 section "test", ROM0[0]
