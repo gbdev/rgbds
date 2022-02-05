@@ -317,7 +317,7 @@ struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
-	return sym_FindScopedSymbol((char *)expr->rpn + 1);
+	return sym_FindScopedSymbol((char const *)expr->rpn + 1);
 }
 
 bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
@@ -339,10 +339,51 @@ static bool isDiffConstant(struct Expression const *src1,
 	return rpn_IsDiffConstant(src1, rpn_SymbolOf(src2));
 }
 
+/**
+ * Attempts to compute a constant binary AND from non-constant operands
+ * This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
+ * a constant that only keeps (some of) the lower N bits.
+ *
+ * @return The constant result if it can be computed, or -1 otherwise.
+ */
+static int32_t tryConstMask(struct Expression const *lhs, struct Expression const *rhs)
+{
+	struct Symbol const *sym = rpn_SymbolOf(lhs);
+	struct Expression const *expr = rhs;
+
+	if (!sym || !sym_GetSection(sym)) {
+		// If the lhs isn't a symbol, try again the other way around
+		sym = rpn_SymbolOf(rhs);
+		expr = lhs;
+
+		if (!sym || !sym_GetSection(sym))
+			return -1;
+	}
+	assert(sym_IsNumeric(sym));
+
+	if (!rpn_isKnown(expr))
+		return -1;
+	// We can now safely use `expr->val`
+	struct Section const *sect = sym_GetSection(sym);
+	int32_t unknownBits = (1 << 16) - (1 << sect->align); // The max alignment is 16
+
+	// The mask must ignore all unknown bits
+	if ((expr->val & unknownBits) != 0)
+		return -1;
+
+	// `sym_GetValue()` attempts to add the section's address,
+	// but that's "-1" because the section is floating (otherwise we wouldn't be here)
+	assert(sect->org == (uint32_t)-1);
+	int32_t symbolOfs = sym_GetValue(sym) + 1;
+
+	return (symbolOfs + sect->alignOfs) & ~unknownBits;
+}
+
 void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
 	expr->isSymbol = false;
+	int32_t constMaskVal;
 
 	/* First, check if the expression is known */
 	expr->isKnown = src1->isKnown && src2->isKnown;
@@ -489,6 +530,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		struct Symbol const *symbol2 = rpn_SymbolOf(src2);
 
 		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
+		expr->isKnown = true;
+	} else if (op == RPN_AND && (constMaskVal = tryConstMask(src1, src2)) != -1) {
+		expr->val = constMaskVal;
 		expr->isKnown = true;
 	} else {
 		/* If it's not known, start computing the RPN expression */
