@@ -45,15 +45,19 @@ else()
   endif()
 
   if(MORE_WARNINGS)
-    add_compile_options(-Werror -Wextra -Wno-type-limits
-                        -Wno-sign-compare -Wvla -Wformat -Wformat-security -Wformat-overflow=2
-                        -Wformat-truncation=1 -Wformat-y2k -Wswitch-enum -Wunused
-                        -Wuninitialized -Wunknown-pragmas -Wstrict-overflow=5
-                        -Wstringop-overflow=4 -Walloc-zero -Wduplicated-cond
-                        -Wfloat-equal -Wshadow -Wcast-qual -Wcast-align -Wlogical-op
-                        -Wnested-externs -Wno-aggressive-loop-optimizations -Winline
-                        -Wundef -Wstrict-prototypes -Wold-style-definition
-                        -Wno-unknown-warning-option -Wno-tautological-constant-out-of-range-compare)
+    add_compile_options(-Werror -Wextra
+                        -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-cond
+                        -Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition
+                        -Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused
+                        -Wshadow # TODO: -Wshadow=compatible-local ?
+                        -Wstringop-overflow=4 # TODO: would work better with optimizations
+                        -Wno-sign-compare # TODO: fix those warnings
+                        -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
+                        -Wno-format-nonliteral # We have a couple of "dynamic" prints
+                        # We do some range checks that are always false on some platforms (GCC, Clang)
+                        -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
+                        -Wvla # MSVC does not support VLAs
+                        -Wno-unknown-warning-option) # Clang shouldn't diagnose unknown warnings
   endif()
 endif()
 
