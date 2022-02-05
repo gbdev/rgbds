@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -5,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
 #include "asm/section.h"
@@ -17,6 +19,7 @@ struct OptStackEntry {
 	bool haltnop;
 	bool optimizeLoads;
 	bool warningsAreErrors;
+	size_t maxRecursionDepth;
 	// Don't be confused: we use the size of the **global variable** `warningStates`!
 	enum WarningState warningStates[sizeof(warningStates)];
 	struct OptStackEntry *next;
@@ -37,6 +40,12 @@ void opt_G(char chars[4])
 void opt_P(uint8_t fill)
 {
 	fillByte = fill;
+}
+
+void opt_R(size_t newDepth)
+{
+	fstk_NewRecursionDepth(newDepth);
+	lexer_CheckRecursionDepth();
 }
 
 void opt_h(bool halt)
@@ -85,6 +94,29 @@ void opt_Parse(char *s)
 			error("Invalid argument for option 'p'\n");
 		}
 		break;
+
+	case 'r': {
+		++s; // Skip 'r'
+		while (isblank(*s))
+			++s; // Skip leading whitespace
+
+		if (s[0] == '\0') {
+			error("Missing argument to option 'r'\n");
+			break;
+		}
+
+		char *endptr;
+		unsigned long newDepth = strtoul(s, &endptr, 10);
+
+		if (*endptr != '\0') {
+			error("Invalid argument to option 'r' (\"%s\")\n", s);
+		} else if (errno == ERANGE) {
+			error("Argument to 'r' is out of range (\"%s\")\n", s);
+		} else {
+			opt_R(newDepth);
+		}
+		break;
+	}
 
 	case 'h':
 		if (s[1] == '\0')

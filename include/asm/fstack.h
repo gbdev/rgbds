@@ -77,6 +77,7 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 void fstk_StopRept(void);
 bool fstk_Break(void);
 
+void fstk_NewRecursionDepth(size_t newDepth);
 void fstk_Init(char const *mainPath, size_t maxDepth);
 
 #endif /* RGBDS_ASM_FSTACK_H */

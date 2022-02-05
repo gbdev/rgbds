@@ -668,14 +668,8 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 	if (!size)
 		return;
 
-	if (name) {
-		size_t depth = 0;
-
-		for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-			if (depth++ >= maxRecursionDepth)
-				fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
-		}
-	}
+	if (name)
+		lexer_CheckRecursionDepth();
 
 	struct Expansion *exp = malloc(sizeof(*exp));
 
@@ -690,6 +684,16 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 	exp->owned = owned;
 
 	lexerState->expansions = exp;
+}
+
+void lexer_CheckRecursionDepth(void)
+{
+	size_t depth = 0;
+
+	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
+		if (depth++ >= maxRecursionDepth)
+			fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+	}
 }
 
 static void freeExpansion(struct Expansion *expansion)

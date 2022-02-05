@@ -284,8 +284,9 @@ bool yywrap(void)
  */
 static void newContext(struct FileStackNode *fileInfo)
 {
-	if (++contextDepth >= maxRecursionDepth)
-		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+	++contextDepth;
+	fstk_NewRecursionDepth(maxRecursionDepth); // Only checks if the max depth was exceeded
+
 	struct Context *context = malloc(sizeof(*context));
 
 	if (!context)
@@ -505,6 +506,13 @@ bool fstk_Break(void)
 
 	fstk_StopRept();
 	return true;
+}
+
+void fstk_NewRecursionDepth(size_t newDepth)
+{
+	if (contextDepth >= newDepth)
+		fatalerror("Recursion limit (%zu) exceeded\n", newDepth);
+	maxRecursionDepth = newDepth;
 }
 
 void fstk_Init(char const *mainPath, size_t maxDepth)
