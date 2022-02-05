@@ -28,7 +28,7 @@ struct Section {
 	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
-	uint8_t align;
+	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
 	struct Section *next;
 	struct Patch *patches;
