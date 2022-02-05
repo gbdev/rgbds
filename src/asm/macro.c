@@ -101,7 +101,7 @@ char const *macro_GetArg(uint32_t i)
 					      : macroArgs->args[realIndex];
 }
 
-char *macro_GetAllArgs(void)
+char const *macro_GetAllArgs(void)
 {
 	if (!macroArgs)
 		return NULL;

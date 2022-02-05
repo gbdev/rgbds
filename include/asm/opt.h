@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 
-void opt_B(char chars[2]);
-void opt_G(char chars[4]);
+void opt_B(char const chars[2]);
+void opt_G(char const chars[4]);
 void opt_P(uint8_t fill);
 void opt_L(bool optimize);
 void opt_W(char const *flag);

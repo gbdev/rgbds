@@ -25,7 +25,7 @@ void macro_AppendArg(struct MacroArgs **args, char *s);
 void macro_UseNewArgs(struct MacroArgs *args);
 void macro_FreeArgs(struct MacroArgs *args);
 char const *macro_GetArg(uint32_t i);
-char *macro_GetAllArgs(void);
+char const *macro_GetAllArgs(void);
 
 uint32_t macro_GetUniqueID(void);
 char const *macro_GetUniqueIDStr(void);
