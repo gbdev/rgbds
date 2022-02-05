@@ -1,6 +1,6 @@
 macro test
 	; Test the rpn system, as well as the linker...
-	DEF expr EQUS STRRPL(STRRPL("\1 + zero)", "<<", "<< ("), ">>", ">> (")
+	DEF expr EQUS STRRPL(STRRPL("\1 + zero)", "<< ", "<< ("), ">> ", ">> (")
 	dl expr
 	PURGE expr
 
@@ -23,6 +23,9 @@ section "test", ROM0[0]
 	test -4 >> 1
 	test -4 >> 2
 	test -1 >> -9001
+
+	test $DEADBEEF >> 1
+	test $DEADBEEF >>> 1
 
 SECTION "Zero", ROM0[0]
 zero:

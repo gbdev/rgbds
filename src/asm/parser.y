@@ -534,7 +534,7 @@ enum {
 %token	T_OP_LOGICNE "!=" T_OP_LOGICEQU "=="
 %token	T_OP_ADD "+" T_OP_SUB "-"
 %token	T_OP_OR "|" T_OP_XOR "^" T_OP_AND "&"
-%token	T_OP_SHL "<<" T_OP_SHR ">>"
+%token	T_OP_SHL "<<" T_OP_SHR ">>" T_OP_USHR ">>>"
 %token	T_OP_MUL "*" T_OP_DIV "/" T_OP_MOD "%"
 %token	T_OP_NOT "~"
 %left	T_OP_LOGICOR
@@ -542,7 +542,7 @@ enum {
 %left	T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
 %left	T_OP_ADD T_OP_SUB
 %left	T_OP_OR T_OP_XOR T_OP_AND
-%left	T_OP_SHL T_OP_SHR
+%left	T_OP_SHL T_OP_SHR T_OP_USHR
 %left	T_OP_MUL T_OP_DIV T_OP_MOD
 
 %precedence	NEG /* negation -- unary minus */
@@ -1476,6 +1476,9 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		}
 		| relocexpr T_OP_SHR relocexpr {
 			rpn_BinaryOp(RPN_SHR, &$$, &$1, &$3);
+		}
+		| relocexpr T_OP_USHR relocexpr {
+			rpn_BinaryOp(RPN_USHR, &$$, &$1, &$3);
 		}
 		| relocexpr T_OP_MUL relocexpr {
 			rpn_BinaryOp(RPN_MUL, &$$, &$1, &$3);

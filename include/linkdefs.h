@@ -14,7 +14,7 @@
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB%1u"
 #define RGBDS_OBJECT_VERSION_NUMBER 9U
-#define RGBDS_OBJECT_REV 8U
+#define RGBDS_OBJECT_REV 9U
 
 enum AssertionType {
 	ASSERT_WARN,
@@ -49,6 +49,7 @@ enum RPNCommand {
 
 	RPN_SHL			= 0x40,
 	RPN_SHR			= 0x41,
+	RPN_USHR		= 0x42,
 
 	RPN_BANK_SYM		= 0x50,
 	RPN_BANK_SECT		= 0x51,

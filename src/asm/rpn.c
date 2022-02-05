@@ -421,6 +421,19 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 
 			expr->val = op_shift_right(src1->val, src2->val);
 			break;
+		case RPN_USHR:
+			if (src2->val < 0)
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting right by negative amount %" PRId32 "\n",
+					src2->val);
+
+			if (src2->val >= 32)
+				warning(WARNING_SHIFT_AMOUNT,
+					"Shifting right by large amount %" PRId32 "\n",
+					src2->val);
+
+			expr->val = op_shift_right_unsigned(src1->val, src2->val);
+			break;
 		case RPN_MUL:
 			expr->val = uleft * uright;
 			break;

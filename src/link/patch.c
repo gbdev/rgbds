@@ -265,6 +265,10 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			value = popRPN();
 			value = op_shift_right(popRPN(), value);
 			break;
+		case RPN_USHR:
+			value = popRPN();
+			value = op_shift_right_unsigned(popRPN(), value);
+			break;
 
 		case RPN_BANK_SYM:
 			value = 0;

@@ -24,3 +24,5 @@ warning: shift.asm(25) -> shift.asm::test(8): [-Wshift]
     Shifting right negative value -1
 warning: shift.asm(25) -> shift.asm::test(8): [-Wshift-amount]
     Shifting right by negative amount -9001
+warning: shift.asm(27) -> shift.asm::test(8): [-Wshift]
+    Shifting right negative value -559038737
