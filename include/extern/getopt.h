@@ -26,6 +26,10 @@
 #ifndef RGBDS_EXTERN_GETOPT_H
 #define RGBDS_EXTERN_GETOPT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char *musl_optarg;
 extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
 
@@ -42,5 +46,9 @@ int musl_getopt_long_only(int argc, char **argv, char const *optstring,
 #define no_argument        0
 #define required_argument  1
 #define optional_argument  2
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

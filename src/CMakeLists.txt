@@ -70,9 +70,13 @@ set(rgbfix_src
     )
 
 set(rgbgfx_src
-    "gfx/gb.c"
-    "gfx/main.c"
-    "gfx/makepng.c"
+    "gfx/convert.cpp"
+    "gfx/main.cpp"
+    "gfx/pal_packing.cpp"
+    "gfx/pal_sorting.cpp"
+    "gfx/proto_palette.cpp"
+    "extern/getopt.c"
+    "error.c"
     )
 
 set(rgblink_src
@@ -96,6 +100,8 @@ foreach(PROG "asm" "fix" "gfx" "link")
                  )
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
+
+set_target_properties(rgbgfx PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED True)
 
 if(LIBPNG_FOUND) # pkg-config
   target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
