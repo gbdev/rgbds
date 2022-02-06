@@ -10,7 +10,7 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
 project(rgbds
-        LANGUAGES C)
+        LANGUAGES C CXX)
 
 # get real path of source and binary directories
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -45,14 +45,14 @@ else()
     # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
     # TODO: this overrides anything previously set... that's a bit sloppy!
     set(CMAKE_C_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
   endif()
 
   if(MORE_WARNINGS)
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Wlogical-op -Wnested-externs -Wnull-dereference
-                        -Wold-style-definition -Wshift-overflow=2 -Wstrict-overflow=5
-                        -Wstrict-prototypes -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
+                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wshift-overflow=2
+                        -Wstringop-overflow=4 -Wstrict-overflow=5 -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local ?
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
                         -Wno-format-nonliteral # We have a couple of "dynamic" prints
