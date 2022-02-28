@@ -93,7 +93,7 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: c++20
+Standard: c++17
 TabWidth: 4
 UseCRLF: false
 UseTab: AlignWithSpaces
