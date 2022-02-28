@@ -7,6 +7,7 @@
 
 #include "helpers.h"
 
+#include "gfx/convert.hpp"
 #include "gfx/main.hpp"
 
 namespace sorting {
@@ -19,10 +20,12 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 		std::sort(pal.begin(), pal.end(), [&](uint16_t lhs, uint16_t rhs) {
 			// Iterate through the PNG's palette, looking for either of the two
 			for (int i = 0; i < palSize; ++i) {
-				if (palAlpha && palAlpha[i])
-					continue;
 				auto const &c = palRGB[i];
-				uint16_t cgbColor = c.red >> 3 | (c.green >> 3) << 5 | (c.blue >> 3) << 10;
+				Rgba color(c.red, c.green, c.blue, palAlpha ? palAlpha[i] : 0xFF);
+				uint16_t cgbColor = color.cgbColor();
+				if (cgbColor == Rgba::transparent) {
+					continue;
+				}
 				// Return whether lhs < rhs
 				if (cgbColor == rhs) {
 					return false;
