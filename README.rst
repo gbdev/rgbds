@@ -73,9 +73,13 @@ The RGBDS source code file structure somewhat resembles the following:
        ├── test/
        │   ├── ...
        │   └── run-tests.sh
+       ├── .clang-format
        ├── CMakeLists.txt
        ├── Makefile
        └── README.rst
+
+.. |clang-format| replace:: ``clang-format``
+.. _clang-format: https://clang.llvm.org/docs/ClangFormat.html
 
 - ``.github/`` - files and scripts related to the integration of the RGBDS codebase with
   GitHub.
@@ -98,6 +102,8 @@ The RGBDS source code file structure somewhat resembles the following:
     (rgbasm -> ``src/asm/``, for example). ``src/extern/`` contains code imported from external sources.
 
 - ``test/`` - testing framework used to verify that changes to the code don't break or modify the behavior of RGBDS.
+
+- ``.clang-format`` - code style for automated formatting with |clang-format|_. The C code does not currently follow this style, but all C++ code should.
 
 3. History
 ----------
