@@ -203,10 +203,8 @@ public:
 	size_t volume() const { return uniqueColors().size(); }
 	bool canFit(ProtoPalette const &protoPal) const {
 		auto &colors = uniqueColors();
-		for (uint16_t color : protoPal) {
-			colors.insert(color);
-		}
-		return colors.size() <= 4;
+		colors.insert(protoPal.begin(), protoPal.end());
+		return colors.size() <= options.maxPalSize();
 	}
 };
 
@@ -274,9 +272,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			bestPal.assign(std::move(attrs));
 
 			// If this overloads the palette, get it back to normal (if possible)
-			while (bestPal.volume() > 4) {
-				options.verbosePrint("Palette %zu is overloaded! (%zu > 4)\n", bestPalIndex,
-				                     bestPal.volume());
+			while (bestPal.volume() > options.maxPalSize()) {
+				options.verbosePrint("Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
+				                     bestPalIndex, bestPal.volume(), options.maxPalSize());
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
 				auto efficiency = [&bestPal](ProtoPalette const &pal) {
@@ -309,7 +307,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 	// Deal with palettes still overloaded, by emptying them
 	for (AssignedProtos &pal : assignments) {
-		if (pal.volume() > 4) {
+		if (pal.volume() > options.maxPalSize()) {
 			for (ProtoPalAttrs &attrs : pal) {
 				queue.emplace(std::move(attrs));
 			}
