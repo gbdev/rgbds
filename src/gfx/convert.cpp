@@ -44,7 +44,8 @@ public:
 		if (!slot.has_value()) {
 			slot.emplace(rgba);
 		} else if (*slot != rgba) {
-			warning("Different colors melded together"); // TODO: indicate position
+			warning("Different colors melded together (#%08x into #%08x as %04x)", rgba.toCSS(),
+			        slot->toCSS(), rgba.cgbColor()); // TODO: indicate position
 		}
 	}
 
@@ -363,7 +364,7 @@ public:
 	public:
 		iterator begin() const { return {*this, _width, 0, 0}; }
 		iterator end() const {
-			iterator it{*this, _width, _width - 8, _height - 8}; // Last valid one
+			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one
 			return ++it; // Now one-past-last
 		}
 	};
@@ -443,7 +444,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 				}
 			}
 			output.sputc(row & 0xFF);
-			output.sputc(row >> 8);
+			if (options.bitDepth == 2) {
+				output.sputc(row >> 8);
+			}
 		}
 		++iter;
 	}
@@ -505,6 +508,7 @@ public:
 	mutable size_t tileID;
 
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
+		size_t writeIndex = 0;
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = 0;
 			for (uint32_t x = 0; x < 8; ++x) {
@@ -517,8 +521,10 @@ public:
 					bitplanes |= 0x100;
 				}
 			}
-			_data[y * 2] = bitplanes & 0xFF;
-			_data[y * 2 + 1] = bitplanes >> 8;
+			_data[writeIndex++] = bitplanes & 0xFF;
+			if (options.bitDepth == 2) {
+				_data[writeIndex++] = bitplanes >> 8;
+			}
 
 			// Update the hash
 			_hash ^= bitplanes;
@@ -632,7 +638,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	for (TileData const *tile : tiles) {
 		assert(tile->tileID == tileID);
 		++tileID;
-		output.sputn(reinterpret_cast<char const *>(tile->data().data()), tile->data().size());
+		output.sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
 	}
 }
 

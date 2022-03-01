@@ -23,9 +23,14 @@ struct Rgba {
 	Rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : red(r), green(g), blue(b), alpha(a) {}
 	Rgba(uint32_t rgba) : red(rgba), green(rgba >> 8), blue(rgba >> 16), alpha(rgba >> 24) {}
 
-	operator uint32_t() const {
+	operator uint32_t() const { return toCSS(); }
+	/**
+	 * Returns this RGBA as a 32-bit number that can be printed in hex (`%08x`) to yield its CSS
+	 * representation
+	 */
+	uint32_t toCSS() const {
 		auto shl = [](uint8_t val, unsigned shift) { return static_cast<uint32_t>(val) << shift; };
-		return shl(red, 0) | shl(green, 8) | shl(blue, 16) | shl(alpha, 24);
+		return shl(red, 24) | shl(green, 16) | shl(blue, 8) | shl(alpha, 0);
 	}
 	bool operator!=(Rgba const &other) const {
 		return static_cast<uint32_t>(*this) != static_cast<uint32_t>(other);
@@ -39,12 +44,15 @@ struct Rgba {
 	 */
 	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
 
-	static constexpr uint8_t transparency_threshold = 5; // TODO: adjust this
+	/**
+	 * All alpha values strictly below this will be considered transparent
+	 */
+	static constexpr uint8_t opacity_threshold = 0xF0; // TODO: adjust this
 	/**
 	 * Computes the equivalent CGB color, respects the color curve depending on options
 	 */
 	uint16_t cgbColor() const {
-		if (alpha > 0xFF - transparency_threshold)
+		if (alpha < opacity_threshold)
 			return transparent;
 		if (options.useColorCurve) {
 			assert(!"TODO");

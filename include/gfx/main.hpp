@@ -11,6 +11,7 @@
 
 #include <array>
 #include <filesystem>
+#include <limits.h>
 #include <stdint.h>
 
 #include "helpers.h"
@@ -27,7 +28,7 @@ struct Options {
 	uint8_t nbPalettes = 8; // TODO
 	uint8_t nbColorsPerPal = 0; // TODO; 0 means "auto" = 1 << bitDepth;
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // TODO
-	std::array<uint16_t, 2> maxNbTiles{384, 0}; // TODO
+	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // TODO
 	std::filesystem::path tilemap{}; // -t, -T
 	std::filesystem::path attrmap{}; // -a, -A
 	std::filesystem::path palettes{}; // -p, -P
@@ -35,6 +36,9 @@ struct Options {
 	std::filesystem::path input{}; // positional arg
 
 	format_(printf, 2, 3) void verbosePrint(char const *fmt, ...) const;
+	uint8_t maxPalSize() const {
+		return nbColorsPerPal;
+	} // TODO: minus 1 when transparency is active
 };
 
 extern Options options;
