@@ -39,11 +39,21 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 	}
 }
 
-void grayscale(std::vector<Palette> &palettes) {
-	options.verbosePrint("Sorting grayscale-only palettes...\n");
+void grayscale(std::vector<Palette> &palettes,
+               std::array<std::optional<Rgba>, 0x8001> const &colors) {
+	options.verbosePrint("Sorting grayscale-only palette...\n");
 
-	for (Palette &pal : palettes) {
-		(void)pal; // TODO
+	// This method is only applicable if there are at most as many colors as colors per palette, so
+	// we should only have a single palette.
+	assert(palettes.size() == 1);
+
+	Palette &palette = palettes[0];
+	std::fill(palette.begin(), palette.end(), Rgba::transparent);
+	for (auto const &slot : colors) {
+		if (!slot.has_value() || slot->isTransparent()) {
+			continue;
+		}
+		palette[slot->grayIndex()] = slot->cgbColor();
 	}
 }
 

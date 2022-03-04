@@ -78,7 +78,7 @@ void Options::verbosePrint(char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "Aa:CDd:Ffhmo:Pp:Tt:uVvx:";
+static char const *optstring = "Aa:Cc:Dd:Ffhmo:Pp:Tt:uVvx:";
 
 /*
  * Equivalent long options
@@ -94,6 +94,7 @@ static struct option const longopts[] = {
 	{"output-attr-map", no_argument,       NULL, 'A'},
 	{"attr-map",        required_argument, NULL, 'a'},
 	{"color-curve",     no_argument,       NULL, 'C'},
+	{"colors",          required_argument, NULL, 'c'},
 	{"debug",           no_argument,       NULL, 'D'},
 	{"depth",           required_argument, NULL, 'd'},
 	{"fix",             no_argument,       NULL, 'f'},
@@ -112,8 +113,8 @@ static struct option const longopts[] = {
 	{NULL,              no_argument,       NULL, 0  }
 };
 
-static void print_usage(void) {
-	fputs("Usage: rgbgfx [-CDhmuVv] [-f | -F] [-a <attr_map> | -A] [-d <depth>]\n"
+static void printUsage(void) {
+	fputs("Usage: rgbgfx [-CcDhmuVv] [-f | -F] [-a <attr_map> | -A] [-d <depth>]\n"
 	      "	      [-o <out_file>] [-p <pal_file> | -P] [-t <tile_map> | -T]\n"
 	      "	      [-x <tiles>] <file>\n"
 	      "Useful options:\n"
@@ -132,6 +133,22 @@ static void print_usage(void) {
 void fputsv(std::string_view const &view, FILE *f) {
 	if (view.data()) {
 		fwrite(view.data(), sizeof(char), view.size(), f);
+	}
+}
+
+void parsePaletteSpec(char *arg) {
+	if (arg[0] == '#') {
+		// List of #rrggbb/#rgb colors, comma-separated, palettes are separated by colons
+		options.palSpecType = Options::EXPLICIT;
+		// TODO
+	} else if (strcasecmp(arg, "embedded") == 0) {
+		// Use PLTE, error out if missing
+		options.palSpecType = Options::EMBEDDED;
+	} else {
+		// `fmt:path`, parse the file according to the given format
+		// TODO: split both parts, error out if malformed or file not found
+		options.palSpecType = Options::EXPLICIT;
+		// TODO
 	}
 }
 
@@ -166,6 +183,9 @@ int main(int argc, char *argv[]) {
 		case 'C':
 			options.useColorCurve = true;
 			break;
+		case 'c':
+			parsePaletteSpec(musl_optarg);
+			break;
 		case 'd':
 			if (parseDecimalArg(options.bitDepth) && options.bitDepth != 1
 			    && options.bitDepth != 2) {
@@ -177,9 +197,9 @@ int main(int argc, char *argv[]) {
 			options.fixInput = true;
 			break;
 		case 'h':
-			warning("`-h` is deprecated, use `-???` instead");
+			warning("`-h` is deprecated, use `-Z` instead");
 			[[fallthrough]];
-		case '?': // TODO
+		case 'Z':
 			options.columnMajor = true;
 			break;
 		case 'm':
@@ -219,7 +239,7 @@ int main(int argc, char *argv[]) {
 			warning("Ignoring option '%c'", musl_optopt);
 			break;
 		default:
-			print_usage();
+			printUsage();
 			exit(1);
 		}
 	}
@@ -233,11 +253,11 @@ int main(int argc, char *argv[]) {
 
 	if (musl_optind == argc) {
 		fputs("FATAL: No input image specified\n", stderr);
-		print_usage();
+		printUsage();
 		exit(1);
 	} else if (argc - musl_optind != 1) {
 		fprintf(stderr, "FATAL: %d input images were specified instead of 1\n", argc - musl_optind);
-		print_usage();
+		printUsage();
 		exit(1);
 	}
 
@@ -259,7 +279,7 @@ int main(int argc, char *argv[]) {
 		if (options.fixInput)
 			fputs("\tConvert input to indexed\n", stderr);
 		if (options.columnMajor)
-			fputs("\tOutput {tile,attr}map in column-major order\n", stderr);
+			fputs("\tVisit image in column-major order\n", stderr);
 		if (options.allowMirroring)
 			fputs("\tAllow mirroring tiles\n", stderr);
 		if (options.allowDedup)
@@ -267,7 +287,8 @@ int main(int argc, char *argv[]) {
 		if (options.useColorCurve)
 			fputs("\tUse color curve\n", stderr);
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
-		fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
+		if (options.trim != 0)
+			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
 		fprintf(stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
 		        options.baseTileIDs[1]);
 		fprintf(stderr, "\tMax number of tiles: [%" PRIu16 ", %" PRIu16 "]\n",

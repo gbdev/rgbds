@@ -49,10 +49,15 @@ public:
 		}
 	}
 
-	size_t size() const { return _colors.size(); }
+	size_t size() const {
+		return std::count_if(_colors.begin(), _colors.end(),
+		                     [](decltype(_colors)::value_type const &slot) {
+								 return slot.has_value() && !slot->isTransparent();
+							 });
+	}
+	decltype(_colors) const &raw() const { return _colors; }
 
 	auto begin() const { return _colors.begin(); }
-
 	auto end() const { return _colors.end(); }
 };
 
@@ -64,13 +69,12 @@ class Png {
 
 	// These are cached for speed
 	uint32_t width, height;
-	DefaultInitVec<uint16_t> pixels;
+	std::vector<Rgba> pixels;
 	ImagePalette colors;
 	int colorType;
 	int nbColors;
 	png_colorp embeddedPal = nullptr;
 	png_bytep transparencyPal = nullptr;
-	bool isGrayOnly = true;
 
 	[[noreturn]] static void handleError(png_structp png, char const *msg) {
 		struct Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
@@ -110,11 +114,38 @@ public:
 
 	uint32_t getHeight() const { return height; }
 
-	uint16_t &pixel(uint32_t x, uint32_t y) { return pixels[y * width + x]; }
+	Rgba &pixel(uint32_t x, uint32_t y) { return pixels[y * width + x]; }
 
-	uint16_t const &pixel(uint32_t x, uint32_t y) const { return pixels[y * width + x]; }
+	Rgba const &pixel(uint32_t x, uint32_t y) const { return pixels[y * width + x]; }
 
-	bool hasNonGray() const { return !isGrayOnly; }
+	bool isSuitableForGrayscale() const {
+		// Check that all of the grays don't fall into the same "bin"
+		if (colors.size() > options.maxPalSize()) { // Apply the Pigeonhole Principle
+			options.verbosePrint("Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
+			                     colors.size(), options.maxPalSize());
+			return false;
+		}
+		uint8_t bins = 0;
+		for (auto const &color : colors) {
+			if (color->isTransparent()) {
+				continue;
+			}
+			if (!color->isGray()) {
+				options.verbosePrint("Found non-gray color #%08x, not using grayscale sorting\n",
+				                     color->toCSS());
+				return false;
+			}
+			uint8_t mask = 1 << color->grayIndex();
+			if (bins & mask) { // Two in the same bin!
+				options.verbosePrint(
+					"Color #%08x conflicts with another one, not using grayscale sorting\n",
+					color->toCSS());
+				return false;
+			}
+			bins |= mask;
+		}
+		return true;
+	}
 
 	/**
 	 * Reads a PNG and notes all of its colors
@@ -276,8 +307,7 @@ public:
 					Rgba rgba(row[x * 4], row[x * 4 + 1], row[x * 4 + 2], row[x * 4 + 3]);
 
 					colors.registerColor(rgba);
-					pixel(x, y) = rgba.cgbColor();
-					isGrayOnly &= rgba.isGray();
+					pixel(x, y) = rgba;
 				}
 			}
 		} else {
@@ -299,16 +329,15 @@ public:
 						Rgba rgba(ptr[0], ptr[1], ptr[2], ptr[3]);
 
 						colors.registerColor(rgba);
-						pixel(x, y) = rgba.cgbColor();
-						isGrayOnly &= rgba.isGray();
+						pixel(x, y) = rgba;
 						ptr += 4;
 					}
 				}
 			}
 		}
 
-		png_read_end(png,
-		             nullptr); // We don't care about chunks after the image data (comments, etc.)
+		// We don't care about chunks after the image data (comments, etc.)
+		png_read_end(png, nullptr);
 	}
 
 	~Png() { png_destroy_read_struct(&png, &info, nullptr); }
@@ -330,7 +359,7 @@ public:
 		public:
 			Tile(Png const &png, uint32_t x, uint32_t y) : _png(png), _x(x), _y(y) {}
 
-			uint16_t pixel(uint32_t xOfs, uint32_t yOfs) const {
+			Rgba pixel(uint32_t xOfs, uint32_t yOfs) const {
 				return _png.pixel(_x + xOfs, _y + yOfs);
 			}
 		};
@@ -362,10 +391,10 @@ public:
 		};
 
 	public:
-		iterator begin() const { return {*this, _width, 0, 0}; }
+		iterator begin() const { return {*this, _limit, 0, 0}; }
 		iterator end() const {
-			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one
-			return ++it; // Now one-past-last
+			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
+			return ++it; // ...now one-past-last!
 		}
 	};
 public:
@@ -407,6 +436,93 @@ struct AttrmapEntry {
 	bool xFlip;
 };
 
+static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
+	generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
+	// Run a "pagination" problem solver
+	// TODO: allow picking one of several solvers?
+	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
+	assert(mappings.size() == protoPalettes.size());
+
+	if (options.beVerbose) {
+		options.verbosePrint("Proto-palette mappings: (%zu palette%s)\n", nbPalettes,
+		                     nbPalettes != 1 ? "s" : "");
+		for (size_t i = 0; i < mappings.size(); ++i) {
+			options.verbosePrint("%zu -> %zu\n", i, mappings[i]);
+		}
+	}
+
+	std::vector<Palette> palettes(nbPalettes);
+	// Generate the actual palettes from the mappings
+	for (size_t protoPalID = 0; protoPalID < mappings.size(); ++protoPalID) {
+		auto &pal = palettes[mappings[protoPalID]];
+		for (uint16_t color : protoPalettes[protoPalID]) {
+			pal.addColor(color);
+		}
+	}
+
+	// "Sort" colors in the generated palettes, see the man page for the flowchart
+	auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
+	if (embPalRGB != nullptr) {
+		sorting::indexed(palettes, embPalSize, embPalRGB, embPalAlpha);
+	} else if (png.isSuitableForGrayscale()) {
+		sorting::grayscale(palettes, png.getColors().raw());
+	} else {
+		sorting::rgb(palettes);
+	}
+	return {mappings, palettes};
+}
+
+static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
+	makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
+	if (options.palSpecType == Options::EMBEDDED) {
+		// Generate a palette spec from the first few colors in the embedded palette
+		auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
+		if (embPalRGB == nullptr) {
+			fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
+		}
+
+		// Fill in the palette spec
+		options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
+		assert(options.palSpec.size() == 1);
+		// TODO: abort if ignored colors are being used; do it now for a friendlier error
+		// message
+		if (embPalSize > options.maxPalSize()) { // Ignore extraneous colors if they are unused
+			embPalSize = options.maxPalSize();
+		}
+		for (int i = 0; i < embPalSize; ++i) {
+			options.palSpec[0][i] = Rgba(embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
+			                             embPalAlpha ? embPalAlpha[i] : 0xFF);
+		}
+	}
+
+	// Convert the palette spec to actual palettes
+	std::vector<Palette> palettes(options.palSpec.size());
+	auto palIter = palettes.begin(); // TODO: `zip`
+	for (auto const &spec : options.palSpec) {
+		for (size_t i = 0; i < options.maxPalSize(); ++i) {
+			(*palIter)[i] = spec[i].cgbColor();
+		}
+		++palIter;
+	}
+
+	// Iterate through proto-palettes, and try mapping them to the specified palettes
+	DefaultInitVec<size_t> mappings(protoPalettes.size());
+	for (size_t i = 0; i < protoPalettes.size(); ++i) {
+		ProtoPalette const &protoPal = protoPalettes[i];
+		// Find the palette...
+		auto iter = std::find_if(palettes.begin(), palettes.end(), [&protoPal](Palette const &pal) {
+			// ...which contains all colors in this proto-pal
+			return std::all_of(protoPal.begin(), protoPal.end(), [&pal](uint16_t color) {
+				return std::find(pal.begin(), pal.end(), color) != pal.end();
+			});
+		});
+		assert(iter != palettes.end()); // TODO: produce a proper error message
+		mappings[i] = iter - palettes.begin();
+	}
+
+	return {mappings, palettes};
+}
+
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	std::filebuf output;
 	output.open(options.palettes, std::ios_base::out | std::ios_base::binary);
@@ -421,12 +537,18 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 
 namespace unoptimized {
 
-// TODO: this is very redundant with `TileData`; try merging both?
+// TODO: this is very redundant with `TileData::TileData`; try merging both?
 static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
                            std::vector<Palette> const &palettes,
                            DefaultInitVec<size_t> const &mappings) {
 	std::filebuf output;
 	output.open(options.output, std::ios_base::out | std::ios_base::binary);
+
+	uint64_t remainingTiles = (png.getWidth() / 8) * (png.getHeight() / 8);
+	if (remainingTiles <= options.trim) {
+		return;
+	}
+	remainingTiles -= options.trim;
 
 	auto iter = attrmap.begin();
 	for (auto tile : png.visitAsTiles(options.columnMajor)) {
@@ -435,7 +557,7 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 			uint16_t row = 0;
 			for (uint32_t x = 0; x < 8; ++x) {
 				row <<= 1;
-				uint8_t index = palette.indexOf(tile.pixel(x, y));
+				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
 				if (index & 1) {
 					row |= 0x001;
 				}
@@ -449,8 +571,14 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 			}
 		}
 		++iter;
+
+		--remainingTiles;
+		if (remainingTiles == 0) {
+			break;
+		}
 	}
-	assert(iter == attrmap.end());
+	assert(remainingTiles == 0);
+	assert(iter + options.trim == attrmap.end());
 }
 
 static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
@@ -485,6 +613,7 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 		}
 		++tileID;
 	}
+	assert(iter == attrmap.end());
 }
 
 } // namespace unoptimized
@@ -513,7 +642,7 @@ public:
 			uint16_t bitplanes = 0;
 			for (uint32_t x = 0; x < 8; ++x) {
 				bitplanes <<= 1;
-				uint8_t index = palette.indexOf(tile.pixel(x, y));
+				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
 				if (index & 1) {
 					bitplanes |= 1;
 				}
@@ -626,8 +755,8 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 	}
 	assert(iter == attrmap.end());
 
-	return tiles; // Copy elision should prevent the contained `unordered_set` from being
-	              // re-constructed
+	// Copy elision should prevent the contained `unordered_set` from being re-constructed
+	return tiles;
 }
 
 static void outputTileData(UniqueTiles const &tiles) {
@@ -635,7 +764,8 @@ static void outputTileData(UniqueTiles const &tiles) {
 	output.open(options.output, std::ios_base::out | std::ios_base::binary);
 
 	uint16_t tileID = 0;
-	for (TileData const *tile : tiles) {
+	for (auto iter = tiles.begin(), end = tiles.end() - options.trim; iter != end; ++iter) {
+		TileData const *tile = *iter;
 		assert(tile->tileID == tileID);
 		++tileID;
 		output.sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
@@ -705,7 +835,7 @@ void process() {
 
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				tileColors.add(tile.pixel(x, y));
+				tileColors.add(tile.pixel(x, y).cgbColor());
 			}
 		}
 
@@ -733,42 +863,14 @@ contained:;
 	                     protoPalettes.size() != 1 ? "s" : "");
 
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
-	// TODO: try keeping the palettes stored while inserting them instead, might perform better
+	// We sort after all insertions to avoid moving items: https://stackoverflow.com/a/2710332
 	std::sort(
 		protoPalettes.begin(), protoPalettes.end(),
 		[](ProtoPalette const &lhs, ProtoPalette const &rhs) { return lhs.size() < rhs.size(); });
 
-	// Run a "pagination" problem solver
-	// TODO: allow picking one of several solvers?
-	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
-	assert(mappings.size() == protoPalettes.size());
-	if (options.beVerbose) {
-		options.verbosePrint("Proto-palette mappings: (%zu palettes)\n", nbPalettes);
-		for (size_t i = 0; i < mappings.size(); ++i) {
-			options.verbosePrint("%zu -> %zu\n", i, mappings[i]);
-		}
-	}
-
-	// TODO: optionally, "decant" the result
-
-	// Generate the actual palettes from the mappings
-	std::vector<Palette> palettes(nbPalettes);
-	for (size_t protoPalID = 0; protoPalID < mappings.size(); ++protoPalID) {
-		auto &pal = palettes[mappings[protoPalID]];
-		for (uint16_t color : protoPalettes[protoPalID]) {
-			pal.addColor(color);
-		}
-	}
-
-	// "Sort" colors in the generated palettes, see the man page for the flowchart
-	auto [palSize, palRGB, palAlpha] = png.getEmbeddedPal();
-	if (palRGB) {
-		sorting::indexed(palettes, palSize, palRGB, palAlpha);
-	} else if (png.hasNonGray()) {
-		sorting::rgb(palettes);
-	} else {
-		sorting::grayscale(palettes);
-	}
+	auto [mappings, palettes] = options.palSpecType == Options::NO_SPEC
+	                                ? generatePalettes(protoPalettes, png)
+	                                : makePalsAsSpecified(protoPalettes, png);
 
 	if (options.beVerbose) {
 		for (auto &&palette : palettes) {
@@ -796,13 +898,11 @@ contained:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint("Generating unoptimized tile data...\n");
-
 			unoptimized::outputTileData(png, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty()) {
 			options.verbosePrint("Generating unoptimized tilemap and/or attrmap...\n");
-
 			unoptimized::outputMaps(png, attrmap, mappings);
 		}
 	} else {
@@ -817,19 +917,16 @@ contained:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint("Generating optimized tile data...\n");
-
 			optimized::outputTileData(tiles);
 		}
 
 		if (!options.tilemap.empty()) {
 			options.verbosePrint("Generating optimized tilemap...\n");
-
 			optimized::outputTilemap(attrmap);
 		}
 
 		if (!options.attrmap.empty()) {
 			options.verbosePrint("Generating optimized attrmap...\n");
-
 			optimized::outputAttrmap(attrmap, mappings);
 		}
 	}
