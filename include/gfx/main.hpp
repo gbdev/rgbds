@@ -13,22 +13,33 @@
 #include <filesystem>
 #include <limits.h>
 #include <stdint.h>
+#include <vector>
 
 #include "helpers.h"
+
+#include "gfx/rgba.hpp"
 
 struct Options {
 	bool beVerbose = false; // -v
 	bool fixInput = false; // -f
-	bool columnMajor = false; // -h; whether to output the tilemap in columns instead of rows
+	bool columnMajor = false; // -Z, previously -h
 	bool allowMirroring = false; // -m
 	bool allowDedup = false; // -u
 	bool useColorCurve = false; // -C
 	uint8_t bitDepth = 2; // -d
 	uint64_t trim = 0; // -x
-	uint8_t nbPalettes = 8; // TODO
-	uint8_t nbColorsPerPal = 0; // TODO; 0 means "auto" = 1 << bitDepth;
-	std::array<uint8_t, 2> baseTileIDs{0, 0}; // TODO
-	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // TODO
+	uint8_t nbPalettes = 8; // -n
+	uint8_t nbColorsPerPal = 0; // -s; 0 means "auto" = 1 << bitDepth;
+	enum {
+		NO_SPEC,
+		EXPLICIT,
+		EMBEDDED,
+	} palSpecType = NO_SPEC; // -c
+	std::vector<std::array<Rgba, 4>> palSpec{};
+	std::array<uint16_t, 2> unitSize{1, 1}; // -u (in tiles)
+	std::array<uint32_t, 4> inputSlice; // -L
+	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
+	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
 	std::filesystem::path tilemap{}; // -t, -T
 	std::filesystem::path attrmap{}; // -a, -A
 	std::filesystem::path palettes{}; // -p, -P
@@ -37,8 +48,8 @@ struct Options {
 
 	format_(printf, 2, 3) void verbosePrint(char const *fmt, ...) const;
 	uint8_t maxPalSize() const {
-		return nbColorsPerPal;
-	} // TODO: minus 1 when transparency is active
+		return nbColorsPerPal; // TODO: minus 1 when transparency is active
+	}
 };
 
 extern Options options;
@@ -53,6 +64,8 @@ struct Palette {
 
 	void addColor(uint16_t color);
 	uint8_t indexOf(uint16_t color) const;
+	uint16_t &operator[](size_t index) { return colors[index]; }
+	uint16_t const &operator[](size_t index) const { return colors[index]; }
 
 	decltype(colors)::iterator begin();
 	decltype(colors)::iterator end();

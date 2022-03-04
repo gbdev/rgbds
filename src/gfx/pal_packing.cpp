@@ -66,12 +66,12 @@ class AssignedProtos {
 	// We leave room for emptied slots to avoid copying the structs around on removal
 	std::vector<std::optional<ProtoPalAttrs>> _assigned;
 	// For resolving proto-palette indices
-	std::vector<ProtoPalette> const &_protoPals;
+	std::vector<ProtoPalette> const *_protoPals;
 
 public:
 	template<typename... Ts>
-	AssignedProtos(decltype(_protoPals) protoPals, Ts &&...elems)
-		: _assigned{std::forward<Ts>(elems)...}, _protoPals{protoPals} {}
+	AssignedProtos(std::vector<ProtoPalette> const &protoPals, Ts &&...elems)
+		: _assigned{std::forward<Ts>(elems)...}, _protoPals{&protoPals} {}
 
 private:
 	template<typename Inner, template<typename> typename Constness>
@@ -93,7 +93,7 @@ private:
 			skipEmpty();
 		}
 		void skipEmpty() {
-			while (_iter != _array->end() && !(*_iter).has_value()) {
+			while (_iter != _array->end() && !_iter->has_value()) {
 				++_iter;
 			}
 		}
@@ -139,7 +139,7 @@ public:
 	 * Args are passed to the `ProtoPalAttrs`'s constructor
 	 */
 	template<typename... Ts>
-	auto assign(Ts &&...args) {
+	void assign(Ts &&...args) {
 		auto freeSlot = std::find_if_not(
 			_assigned.begin(), _assigned.end(),
 			[](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
@@ -147,34 +147,24 @@ public:
 		if (freeSlot == _assigned.end()) { // We are full, use a new slot
 			_assigned.emplace_back(std::forward<Ts>(args)...);
 		} else { // Reuse a free slot
-			(*freeSlot).emplace(std::forward<Ts>(args)...);
+			freeSlot->emplace(std::forward<Ts>(args)...);
 		}
-		return freeSlot;
 	}
 	void remove(iterator const &iter) {
-		(*iter._iter).reset(); // This time, we want to access the `optional` itself
+		iter._iter->reset(); // This time, we want to access the `optional` itself
 	}
 	void clear() { _assigned.clear(); }
 
-	/**
-	 * Computes the "relative size" of a proto-palette on this palette
-	 */
-	double relSizeOf(ProtoPalette const &protoPal) const {
-		return std::transform_reduce(
-			protoPal.begin(), protoPal.end(), .0, std::plus<>(), [this](uint16_t color) {
-				// NOTE: The paper and the associated code disagree on this: the code has
-			    // this `1 +`, whereas the paper does not; its lack causes a division by 0
-			    // if the symbol is not found anywhere, so I'm assuming the paper is wrong.
-				return 1.
-			           / (1
-			              + std::count_if(
-							  begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
-								  ProtoPalette const &pal = _protoPals[attrs.palIndex];
-								  return std::find(pal.begin(), pal.end(), color) != pal.end();
-							  }));
-			});
-	}
+	bool empty() const { return std::distance(begin(), end()) == 0; }
+
 private:
+	static void addUniqueColors(std::unordered_set<uint16_t> &colors, AssignedProtos const &pal) {
+		for (ProtoPalAttrs const &attrs : pal) {
+			for (uint16_t color : (*pal._protoPals)[attrs.palIndex]) {
+				colors.insert(color);
+			}
+		}
+	}
 	std::unordered_set<uint16_t> &uniqueColors() const {
 		// We check for *distinct* colors by stuffing them into a `set`; this should be
 		// faster than "back-checking" on every element (O(n²))
@@ -182,18 +172,16 @@ private:
 		// TODO: calc84maniac suggested another approach; try implementing it, see if it
 		// performs better:
 		// > So basically you make a priority queue that takes iterators into each of your sets
-		// (paired with end iterators so you'll know where to stop), and the comparator tests the
-		// values pointed to by each iterator > Then each iteration you pop from the queue,
-		// optionally add one to your count, increment the iterator and push it back into the queue
-		// if it didn't reach the end > and you do this until the priority queue is empty
+		// > (paired with end iterators so you'll know where to stop), and the comparator tests the
+		// > values pointed to by each iterator
+		// > Then each iteration you pop from the queue,
+		// > optionally add one to your count, increment the iterator and push it back into the
+		// > queue if it didn't reach the end
+		// > And you do this until the priority queue is empty
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();
-		for (ProtoPalAttrs const &attrs : *this) {
-			for (uint16_t color : _protoPals[attrs.palIndex]) {
-				colors.insert(color);
-			}
-		}
+		addUniqueColors(colors, *this);
 		return colors;
 	}
 public:
@@ -206,7 +194,105 @@ public:
 		colors.insert(protoPal.begin(), protoPal.end());
 		return colors.size() <= options.maxPalSize();
 	}
+
+public:
+	/**
+	 * Computes the "relative size" of a proto-palette on this palette
+	 */
+	double relSizeOf(ProtoPalette const &protoPal) const {
+		// NOTE: this function must not call `uniqueColors`, or one of its callers will break
+		return std::transform_reduce(
+			protoPal.begin(), protoPal.end(), 0.0, std::plus<>(), [this](uint16_t color) {
+				// NOTE: The paper and the associated code disagree on this: the code has
+			    // this `1 +`, whereas the paper does not; its lack causes a division by 0
+			    // if the symbol is not found anywhere, so I'm assuming the paper is wrong.
+				return 1.
+			           / (1
+			              + std::count_if(
+							  begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
+								  ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
+								  return std::find(pal.begin(), pal.end(), color) != pal.end();
+							  }));
+			});
+	}
+
+	/**
+	 * Computes the "relative size" of a palette on this one
+	 */
+	double combinedVolume(AssignedProtos const &pal) const {
+		auto &colors = uniqueColors();
+		addUniqueColors(colors, pal);
+		return colors.size();
+	}
 };
+
+static void removeEmptyPals(std::vector<AssignedProtos> &assignments) {
+	// We do this by plucking "replacement" palettes from the end of the vector, so as to minimize
+	// the amount of moves performed. We can afford this because we don't care about their order,
+	// unlike `std::remove_if`, which permits less moves and thus better performance.
+	for (size_t i = 0; i != assignments.size(); ++i) {
+		if (assignments[i].empty()) {
+			// Hinting the compiler that the `return;` can only be reached if entering the loop
+			// produces better assembly
+			if (assignments.back().empty()) {
+				do {
+					assignments.pop_back();
+					assert(assignments.size() != 0);
+				} while (assignments.back().empty());
+				// Worst case, the loop ended on `assignments[i - 1]` (since every slot before `i`
+				// is known to be non-empty).
+				// (This could be a problem if `i` was 0, but we know there must be at least one
+				// color, so we're safe from that. The assertion in the loop checks it to be sure.)
+				// However, if it did stop at `i - 1`, then `i` no longer points to a valid slot,
+				// and we must end.
+				if (i == assignments.size()) {
+					break;
+				}
+			}
+			assert(i < assignments.size());
+			assignments[i] = std::move(assignments.back());
+			assignments.pop_back();
+		}
+	}
+}
+
+static void decant(std::vector<AssignedProtos> &assignments) {
+	// "Decanting" is the process of moving all *things* that can fit in a lower index there
+	auto decantOn = [&assignments](auto const &move) {
+		// No need to attempt decanting on palette #0, as there are no palettes to decant to
+		for (size_t from = assignments.size(); --from;) {
+			// Scan all palettes before this one
+			for (size_t to = 0; to < from; ++to) {
+				move(assignments[to], assignments[from]);
+			}
+		}
+	};
+
+	// Decant on palettes
+	decantOn([](AssignedProtos &to, AssignedProtos &from) {
+		// If the entire palettes can be merged, move all of `from`'s proto-palettes
+		if (to.combinedVolume(from) <= options.maxPalSize()) {
+			for (ProtoPalAttrs &protoPal : from) {
+				to.assign(std::move(protoPal));
+			}
+			from.clear();
+		}
+	});
+
+	// Decant on "components" (= proto-pals sharing colors)
+	decantOn([](AssignedProtos &to, AssignedProtos &from) {
+		// TODO
+		(void)to;
+		(void)from;
+	});
+
+	// Decant on proto-palettes
+	decantOn([](AssignedProtos &to, AssignedProtos &from) {
+		// TODO
+		(void)to;
+		(void)from;
+	});
+}
 
 std::tuple<DefaultInitVec<size_t>, size_t>
 	overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
@@ -256,7 +342,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				continue;
 			}
 
-			options.verbosePrint("%zu: Rel size: %f (size = %zu)\n", i,
+			options.verbosePrint("%zu/%zu: Rel size: %f (size = %zu)\n", i, assignments.size(),
 			                     assignments[i].relSizeOf(protoPal), protoPal.size());
 			if (assignments[i].relSizeOf(protoPal) < bestRelSize) {
 				bestPalIndex = i;
@@ -330,8 +416,12 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		}
 		queue.pop();
 	}
-	// Deal with any empty palettes left over from the "un-overloading" step
-	// TODO (can there be any?)
+
+	// "Decant" the result
+	decant(assignments);
+
+	// Remove all empty palettes, filling the gaps created.
+	removeEmptyPals(assignments);
 
 	if (options.beVerbose) {
 		for (auto &&assignment : assignments) {
@@ -341,7 +431,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					options.verbosePrint("%04" PRIx16 ", ", colorIndex);
 				}
 			}
-			options.verbosePrint("} (%zu)\n", assignment.volume());
+			options.verbosePrint("} (volume = %zu)\n", assignment.volume());
 		}
 	}
 

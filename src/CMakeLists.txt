@@ -75,6 +75,7 @@ set(rgbgfx_src
     "gfx/pal_packing.cpp"
     "gfx/pal_sorting.cpp"
     "gfx/proto_palette.cpp"
+    "gfx/rgba.cpp"
     "extern/getopt.c"
     "error.c"
     )

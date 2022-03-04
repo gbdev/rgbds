@@ -129,16 +129,25 @@ PNG), then colors in each output palette will be sorted according to their order
 Any unused entries will be ignored, and only the first entry is considered if there any duplicates.
 .Pq If you want a given color to appear more than once in a palette, you should specify the palettes explicitly instead using Fl TODO .
 .It
-Otherwise, if the PNG only contains shades of gray, they will be categorized into 4
+Otherwise, if the PNG only contains shades of gray, they will be categorized into as many
 .Dq bins
-.Pq white, light gray, dark gray, and black in this order ,
-and the palette is set to these four bins.
-(TODO: how does this interact with 1bpp? With more than 1 palette?)
-If more than one grey ends up in the same bin, the RGB method below is used instead.
+as there are colors per palette, and the palette is set to these bins.
+The darkest gray will end up in bin #0, and so on; note that this is the opposite of the RGB method below.
+If two distinct grays end up in the same bin, the RGB method is used instead.
 .It
 If none of the above apply, colors are sorted from lightest to darkest.
-(This is what the old documentation claimed, but the definition of luminance that was used wasn't quite right.
-It is kept for compatibility.)
+.EQ
+delim $$
+.EN
+The definition of luminance that
+.Nm
+uses is
+.Do
+$2126 times red + 7152 times green + 722 times blue$
+.Dc .
+.EQ
+delim off
+.EN
 .El
 .Pp
 Note that the
