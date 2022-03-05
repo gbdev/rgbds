@@ -37,7 +37,7 @@ struct Options {
 	} palSpecType = NO_SPEC; // -c
 	std::vector<std::array<Rgba, 4>> palSpec{};
 	std::array<uint16_t, 2> unitSize{1, 1}; // -u (in tiles)
-	std::array<uint32_t, 4> inputSlice; // -L
+	std::array<uint32_t, 4> inputSlice{0, 0, 0, 0}; // -L
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
 	std::filesystem::path tilemap{}; // -t, -T
