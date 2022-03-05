@@ -163,7 +163,7 @@ jobs:
           ./.github/actions/install_deps.sh ${{ matrix.os }}
       - name: Install MinGW
         run: |
-          sudo apt-get install gcc-mingw-w64-${{ matrix.arch }} mingw-w64-tools libz-mingw-w64-dev
+          sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }} mingw-w64-tools libz-mingw-w64-dev
       - name: Install libpng dev headers for MinGW
         run: |
           sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}

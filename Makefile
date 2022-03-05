@@ -245,12 +245,12 @@ develop:
 # install instructions instead.
 
 mingw32:
-	$Q${MAKE} CC=i686-w64-mingw32-gcc BISON=bison \
-		PKG_CONFIG=i686-w64-mingw32-pkg-config -j
+	$Q${MAKE} CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ \
+		BISON=bison PKG_CONFIG=i686-w64-mingw32-pkg-config -j
 
 mingw64:
-	$Q${MAKE} CC=x86_64-w64-mingw32-gcc BISON=bison \
-		PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
+	$Q${MAKE} CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+		BISON=bison PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
 
 wine-shim:
 	$Qecho '#!/bin/bash' > rgbshim.sh
