@@ -83,7 +83,7 @@ private:
 		using value_type = ProtoPalAttrs;
 		using pointer = Constness<value_type> *;
 		using reference = Constness<value_type> &;
-		using iterator_category = std::input_iterator_tag;
+		using iterator_category = std::forward_iterator_tag;
 
 	private:
 		Constness<decltype(_assigned)> *_array = nullptr;
