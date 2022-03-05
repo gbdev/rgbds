@@ -634,7 +634,7 @@ class TileData {
 	// non-pathological cases.
 	uint16_t _hash;
 public:
-	mutable size_t tileID;
+	mutable uint16_t tileID;
 
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
@@ -719,7 +719,7 @@ struct UniqueTiles {
 		TileData::MatchType matchType = TileData::EXACT;
 		if (inserted) {
 			// Give the new tile the next available unique ID
-			tileData->tileID = tiles.size();
+			tileData->tileID = static_cast<uint16_t>(tiles.size());
 			// Pointers are never invalidated!
 			tiles.emplace_back(&*tileData);
 		} else {
