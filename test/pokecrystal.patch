@@ -1,0 +1,16 @@
+diff --git a/Makefile b/Makefile
+index ca08f23f..abd2e95c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -170,9 +170,9 @@ gfx/pokemon/girafarig/front.animated.tilemap: gfx/pokemon/girafarig/front.2bpp g
+ 
+ ### Misc file-specific graphics rules
+ 
+-gfx/pokemon/%/back.2bpp: rgbgfx += -h
++gfx/pokemon/%/back.2bpp: rgbgfx += -h -c embedded
+ 
+-gfx/trainers/%.2bpp: rgbgfx += -h
++gfx/trainers/%.2bpp: rgbgfx += -h -c embedded
+ 
+ gfx/pokemon/egg/unused_front.2bpp: rgbgfx += -h
+ 
