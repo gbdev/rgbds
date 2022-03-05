@@ -296,7 +296,13 @@ int main(int argc, char *argv[]) {
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
 		auto printPath = [](char const *name, std::filesystem::path const &path) {
 			if (!path.empty()) {
-				fprintf(stderr, "\t%s: %s\n", name, path.c_str());
+#ifdef _MSC_VER
+	#define PRIpath "ls"
+#else
+	#define PRIpath "s"
+#endif
+				fprintf(stderr, "\t%s: %" PRIpath "\n", name, path.c_str());
+#undef PRIpath
 			}
 		};
 		printPath("Input image", options.input);
