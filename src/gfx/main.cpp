@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "extern/getopt.h"
+#include "platform.h"
 #include "version.h"
 
 #include "gfx/convert.hpp"
