@@ -124,7 +124,7 @@ rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCFLAGS} src/version.c
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} src/version.c ${PNGLDLIBS}
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} -x c++ src/version.c ${PNGLDLIBS}
 
 # Rules to process files
 
