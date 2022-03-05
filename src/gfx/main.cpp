@@ -79,7 +79,7 @@ void Options::verbosePrint(char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "Aa:Cc:Dd:Ffhmo:Pp:Tt:uVvx:";
+static char const *optstring = "Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -93,33 +93,39 @@ static char const *optstring = "Aa:Cc:Dd:Ffhmo:Pp:Tt:uVvx:";
  */
 static struct option const longopts[] = {
 	{"output-attr-map", no_argument,       NULL, 'A'},
-	{"attr-map",        required_argument, NULL, 'a'},
-	{"color-curve",     no_argument,       NULL, 'C'},
+    {"attr-map",        required_argument, NULL, 'a'},
+	{"base-tiles",      required_argument, NULL, 'b'},
+    {"color-curve",     no_argument,       NULL, 'C'},
 	{"colors",          required_argument, NULL, 'c'},
-	{"debug",           no_argument,       NULL, 'D'},
+    {"debug",           no_argument,       NULL, 'D'}, // Ignored
 	{"depth",           required_argument, NULL, 'd'},
-	{"fix",             no_argument,       NULL, 'f'},
-	{"fix-and-save",    no_argument,       NULL, 'F'},
-	{"horizontal",      no_argument,       NULL, 'h'},
-	{"mirror-tiles",    no_argument,       NULL, 'm'},
+    {"fix",             no_argument,       NULL, 'f'},
+	{"fix-and-save",    no_argument,       NULL, 'F'}, // Deprecated
+	{"horizontal",      no_argument,       NULL, 'h'}, // Deprecated
+	{"slice",           required_argument, NULL, 'L'},
+    {"mirror-tiles",    no_argument,       NULL, 'm'},
+	{"nb-tiles",        required_argument, NULL, 'N'},
+    {"nb-palettes",     required_argument, NULL, 'n'},
 	{"output",          required_argument, NULL, 'o'},
-	{"output-palette",  no_argument,       NULL, 'P'},
+    {"output-palette",  no_argument,       NULL, 'P'},
 	{"palette",         required_argument, NULL, 'p'},
-	{"output-tilemap",  no_argument,       NULL, 'T'},
+    {"output-tilemap",  no_argument,       NULL, 'T'},
 	{"tilemap",         required_argument, NULL, 't'},
+    {"unit-size",       required_argument, NULL, 'U'},
 	{"unique-tiles",    no_argument,       NULL, 'u'},
-	{"version",         no_argument,       NULL, 'V'},
+    {"version",         no_argument,       NULL, 'V'},
 	{"verbose",         no_argument,       NULL, 'v'},
-	{"trim-end",        required_argument, NULL, 'x'},
-	{NULL,              no_argument,       NULL, 0  }
+    {"trim-end",        required_argument, NULL, 'x'},
+	{"columns",         no_argument,       NULL, 'Z'},
+    {NULL,              no_argument,       NULL, 0  }
 };
 
 static void printUsage(void) {
-	fputs("Usage: rgbgfx [-CcDhmuVv] [-f | -F] [-a <attr_map> | -A] [-d <depth>]\n"
-	      "	      [-o <out_file>] [-p <pal_file> | -P] [-t <tile_map> | -T]\n"
-	      "	      [-x <tiles>] <file>\n"
+	fputs("Usage: rgbgfx [-CfmuVZ] [-v [-v ...]] [-a <attr_map> | -A] [-b base_ids]\n"
+	      "       [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles] [-n nb_pals]\n"
+	      "	      [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors] [-t <tile_map> | -T]\n"
+	      "	      [-U unit_size] [-x <tiles>] <file>\n"
 	      "Useful options:\n"
-	      "    -f, --fix		 make the input image an indexed PNG\n"
 	      "    -m, --mirror-tiles	optimize out mirrored tiles\n"
 	      "    -o, --output <path>       set the output binary file\n"
 	      "    -t, --tilemap <path>      set the output tilemap file\n"
@@ -181,11 +187,17 @@ int main(int argc, char *argv[]) {
 			autoAttrmap = false;
 			options.attrmap = musl_optarg;
 			break;
+		case 'b':
+			options.baseTileIDs = {0, 0}; // TODO
+			break;
 		case 'C':
 			options.useColorCurve = true;
 			break;
 		case 'c':
 			parsePaletteSpec(musl_optarg);
+			break;
+		case 'D':
+			warning("Ignoring retired option `-D`");
 			break;
 		case 'd':
 			if (parseDecimalArg(options.bitDepth) && options.bitDepth != 1
@@ -194,20 +206,26 @@ int main(int argc, char *argv[]) {
 				options.bitDepth = 2;
 			}
 			break;
+		case 'F':
+			warning("`-F` is now deprecated, and behaves like `-f`");
+			[[fallthrough]];
 		case 'f':
 			options.fixInput = true;
 			break;
-		case 'h':
-			warning("`-h` is deprecated, use `-Z` instead");
-			[[fallthrough]];
-		case 'Z':
-			options.columnMajor = true;
+		case 'L':
+			options.inputSlice = {0, 0, 0, 0}; // TODO
 			break;
 		case 'm':
 			options.allowMirroring = true;
 			[[fallthrough]]; // Imply `-u`
 		case 'u':
 			options.allowDedup = true;
+			break;
+		case 'N':
+			options.maxNbTiles = {0, 0}; // TODO
+			break;
+		case 'n':
+			options.nbPalettes = 0; // TODO
 			break;
 		case 'o':
 			options.output = musl_optarg;
@@ -218,6 +236,9 @@ int main(int argc, char *argv[]) {
 		case 'p':
 			autoPalettes = false;
 			options.palettes = musl_optarg;
+			break;
+		case 's':
+			options.nbColorsPerPal = 0; // TODO
 			break;
 		case 'T':
 			autoTilemap = true;
@@ -235,9 +256,11 @@ int main(int argc, char *argv[]) {
 		case 'x':
 			parseDecimalArg(options.trim);
 			break;
-		case 'D':
-		case 'F':
-			warning("Ignoring option '%c'", musl_optopt);
+		case 'h':
+			warning("`-h` is deprecated, use `-Z` instead");
+			[[fallthrough]];
+		case 'Z':
+			options.columnMajor = true;
 			break;
 		default:
 			printUsage();
