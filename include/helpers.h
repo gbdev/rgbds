@@ -31,7 +31,7 @@
 	#define attr_(...)
 	// This seems to generate similar code to __builtin_unreachable, despite different semantics
 	// Note that executing this is undefined behavior (declared _Noreturn, but does return)
-	static inline _Noreturn unreachable_(void) {}
+	static inline _Noreturn void unreachable_(void) {}
 #endif
 
 // Use builtins whenever possible, and shim them otherwise
