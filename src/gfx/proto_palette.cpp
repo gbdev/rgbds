@@ -62,11 +62,6 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 	return theyBigger ? THEY_BIGGER : (weBigger ? WE_BIGGER : NEITHER);
 }
 
-ProtoPalette &ProtoPalette::operator=(ProtoPalette const &other) {
-	_colorIndices = other._colorIndices;
-	return *this;
-}
-
 size_t ProtoPalette::size() const {
 	return std::distance(begin(), end());
 }

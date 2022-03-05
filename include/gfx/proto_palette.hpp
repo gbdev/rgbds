@@ -33,8 +33,6 @@ public:
 	};
 	ComparisonResult compare(ProtoPalette const &other) const;
 
-	ProtoPalette &operator=(ProtoPalette const &other);
-
 	size_t size() const;
 
 	decltype(_colorIndices)::const_iterator begin() const;
