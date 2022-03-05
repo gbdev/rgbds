@@ -290,9 +290,29 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
 		if (options.trim != 0)
 			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
+		fprintf(stderr, "\tMaximum %" PRIu8 " palettes\n", options.nbPalettes);
+		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
+		fprintf(stderr, "\t%s palette spec\n", []() {
+			switch (options.palSpecType) {
+			case Options::NO_SPEC:
+				return "No";
+			case Options::EXPLICIT:
+				return "Explicit";
+			case Options::EMBEDDED:
+				return "Embedded";
+			}
+			return "???";
+		}());
+		fprintf(stderr, "\tDedup unit: %" PRIu16 "x%" PRIu16 " tiles\n", options.unitSize[0],
+		        options.unitSize[1]);
+		fprintf(stderr,
+		        "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels from (%" PRIu32 ", %" PRIu32
+		        ")\n",
+		        options.inputSlice[2], options.inputSlice[3], options.inputSlice[0],
+		        options.inputSlice[1]);
 		fprintf(stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
 		        options.baseTileIDs[1]);
-		fprintf(stderr, "\tMax number of tiles: [%" PRIu16 ", %" PRIu16 "]\n",
+		fprintf(stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
 		auto printPath = [](char const *name, std::filesystem::path const &path) {
 			if (!path.empty()) {
