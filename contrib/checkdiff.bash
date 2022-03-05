@@ -77,9 +77,9 @@ dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
            "Did the rgbfix CLI change?"
 dependency src/fix/main.c        contrib/bash_compl/_rgbfix.bash \
            "Did the rgbfix CLI change?"
-dependency src/gfx/main.c        man/rgbgfx.1 \
+dependency src/gfx/main.cpp      man/rgbgfx.1 \
            "Did the rgbgfx CLI change?"
-dependency src/gfx/main.c        contrib/zsh_compl/_rgbgfx \
+dependency src/gfx/main.cpp      contrib/zsh_compl/_rgbgfx \
            "Did the rgbgfx CLI change?"
-dependency src/gfx/main.c        contrib/bash_compl/_rgbgfx.bash \
+dependency src/gfx/main.cpp      contrib/bash_compl/_rgbgfx.bash \
            "Did the rgbgfx CLI change?"
