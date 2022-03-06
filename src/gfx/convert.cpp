@@ -69,7 +69,7 @@ class Png {
 
 	// These are cached for speed
 	uint32_t width, height;
-	std::vector<Rgba> pixels;
+	DefaultInitVec<Rgba> pixels;
 	ImagePalette colors;
 	int colorType;
 	int nbColors;
@@ -206,8 +206,6 @@ public:
 		if (height % 8 != 0)
 			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", height);
 
-		// TODO: use an allocator that doesn't zero on init to save potentially a lot of perf
-		// https://stackoverflow.com/questions/21028299/is-this-behavior-of-vectorresizesize-type-n-under-c11-and-boost-container/21028912#21028912
 		pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
 		auto colorTypeName = [this]() {
