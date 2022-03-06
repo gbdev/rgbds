@@ -625,7 +625,6 @@ static uint8_t flip(uint8_t byte) {
 }
 
 class TileData {
-	// TODO: might want to switch to `std::byte` instead?
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in
@@ -837,17 +836,31 @@ void process() {
 			}
 		}
 
-		// Insert the palette, making sure to avoid overlaps
-		// TODO: if inserting (0, 1), (0, 2), and then (0, 1, 2), we might have a problem!
-		for (size_t i = 0; i < protoPalettes.size(); ++i) {
-			switch (tileColors.compare(protoPalettes[i])) {
+		// Insert the proto-palette, making sure to avoid overlaps
+		for (size_t n = 0; n < protoPalettes.size(); ++n) {
+			switch (tileColors.compare(protoPalettes[n])) {
 			case ProtoPalette::WE_BIGGER:
-				protoPalettes[i] = tileColors; // Override them
+				protoPalettes[n] = tileColors; // Override them
+				// Remove any other proto-palettes that we encompass
+				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
+				/* The following code does its job, except that references to the removed
+				   proto-palettes are not updated, causing issues.
+				   TODO: overlap might not be detrimental to the packing algorithm.
+				   Investigation is necessary, especially if pathological cases are found.
+
+				for (size_t i = protoPalettes.size(); --i != n;) {
+				    if (tileColors.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
+				        protoPalettes.erase(protoPalettes.begin() + i);
+				    }
+				}
+				*/
 				[[fallthrough]];
+
 			case ProtoPalette::THEY_BIGGER:
 				// Do nothing, they already contain us
-				attrs.protoPaletteID = i;
+				attrs.protoPaletteID = n;
 				goto contained;
+
 			case ProtoPalette::NEITHER:
 				break; // Keep going
 			}
