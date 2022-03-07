@@ -156,7 +156,13 @@ public:
 	}
 	void clear() { _assigned.clear(); }
 
-	bool empty() const { return std::distance(begin(), end()) == 0; }
+	bool empty() const {
+		return std::find_if_not(
+				   _assigned.begin(), _assigned.end(),
+				   [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); })
+		       == _assigned.end();
+	}
+	size_t nbProtoPals() const { return std::distance(begin(), end()); }
 
 private:
 	template<typename Iter>
