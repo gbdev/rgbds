@@ -89,13 +89,12 @@ private:
 		Constness<decltype(_assigned)> *_array = nullptr;
 		Inner _iter{};
 
-		Iter(decltype(_array) array, decltype(_iter) &&iter) : _array(array), _iter(iter) {
-			skipEmpty();
-		}
-		void skipEmpty() {
+		Iter(decltype(_array) array, decltype(_iter) &&iter) : _array(array), _iter(iter) {}
+		Iter &skipEmpty() {
 			while (_iter != _array->end() && !_iter->has_value()) {
 				++_iter;
 			}
+			return *this;
 		}
 
 	public:
@@ -128,10 +127,12 @@ private:
 	};
 public:
 	using iterator = Iter<decltype(_assigned)::iterator, std::remove_const_t>;
-	iterator begin() { return iterator{&_assigned, _assigned.begin()}; }
+	iterator begin() { return iterator{&_assigned, _assigned.begin()}.skipEmpty(); }
 	iterator end() { return iterator{&_assigned, _assigned.end()}; }
 	using const_iterator = Iter<decltype(_assigned)::const_iterator, std::add_const_t>;
-	const_iterator begin() const { return const_iterator{&_assigned, _assigned.begin()}; }
+	const_iterator begin() const {
+		return const_iterator{&_assigned, _assigned.begin()}.skipEmpty();
+	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
 	/**
