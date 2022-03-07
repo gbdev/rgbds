@@ -234,52 +234,43 @@ public:
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
 	}
+	/**
+	 * Computes the "relative size" of a set of colors on this palette
+	 */
+	template<typename Iter>
+	auto combinedVolume(Iter &&begin, Iter &&end) const {
+		auto &colors = uniqueColors();
+		colors.insert(std::forward<Iter>(begin), std::forward<Iter>(end));
+		return colors.size();
+	}
 };
 
-static void removeEmptyPals(std::vector<AssignedProtos> &assignments) {
-	// We do this by plucking "replacement" palettes from the end of the vector, so as to minimize
-	// the amount of moves performed. We can afford this because we don't care about their order,
-	// unlike `std::remove_if`, which permits less moves and thus better performance.
-	for (size_t i = 0; i != assignments.size(); ++i) {
-		if (assignments[i].empty()) {
-			// Hinting the compiler that the `return;` can only be reached if entering the loop
-			// produces better assembly
-			if (assignments.back().empty()) {
-				do {
-					assignments.pop_back();
-					assert(assignments.size() != 0);
-				} while (assignments.back().empty());
-				// Worst case, the loop ended on `assignments[i - 1]` (since every slot before `i`
-				// is known to be non-empty).
-				// (This could be a problem if `i` was 0, but we know there must be at least one
-				// color, so we're safe from that. The assertion in the loop checks it to be sure.)
-				// However, if it did stop at `i - 1`, then `i` no longer points to a valid slot,
-				// and we must end.
-				if (i == assignments.size()) {
-					break;
-				}
-			}
-			assert(i < assignments.size());
-			assignments[i] = std::move(assignments.back());
-			assignments.pop_back();
-		}
-	}
-}
-
-static void decant(std::vector<AssignedProtos> &assignments) {
+static void decant(std::vector<AssignedProtos> &assignments,
+                   std::vector<ProtoPalette> const &protoPalettes) {
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
-	auto decantOn = [&assignments](auto const &move) {
+	auto decantOn = [&assignments](auto const &tryDecanting) {
 		// No need to attempt decanting on palette #0, as there are no palettes to decant to
 		for (size_t from = assignments.size(); --from;) {
 			// Scan all palettes before this one
 			for (size_t to = 0; to < from; ++to) {
-				move(assignments[to], assignments[from]);
+				tryDecanting(assignments[to], assignments[from]);
+			}
+
+			// If the proto-palette is now empty, remove it
+			// Doing this now reduces the number of iterations performed by later steps
+			// NB: order is intentionally preserved so as not to alter the "decantation"'s
+			// properties NB: this does mean that the first step might get empty palettes as its
+			// input! NB: this is safe to do because we go towards the beginning of the vector,
+			// thereby not invalidating our iteration (thus, iterators should not be used to drive
+			// the outer loop)
+			if (assignments[from].empty()) {
+				assignments.erase(assignments.begin() + from);
 			}
 		}
 	};
 
 	// Decant on palettes
-	decantOn([](AssignedProtos &to, AssignedProtos &from) {
+	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
 		// If the entire palettes can be merged, move all of `from`'s proto-palettes
 		if (to.combinedVolume(from.begin(), from.end(), protoPalettes) <= options.maxPalSize()) {
 			for (ProtoPalAttrs &protoPal : from) {
@@ -290,17 +281,63 @@ static void decant(std::vector<AssignedProtos> &assignments) {
 	});
 
 	// Decant on "components" (= proto-pals sharing colors)
-	decantOn([](AssignedProtos &to, AssignedProtos &from) {
-		// TODO
-		(void)to;
-		(void)from;
+	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
+		// We need to iterate on all the "components", which are groups of proto-palettes sharing at
+		// least one color with another proto-palettes in the group.
+		// We do this by adding the first available proto-palette, and then looking for palettes
+		// with common colors. (As an optimization, we know we can skip palettes already scanned.)
+		std::vector<bool> processed(from.nbProtoPals(), false);
+		std::unordered_set<uint16_t> colors;
+		std::vector<size_t> members;
+		while (true) {
+			auto iter = std::find(processed.begin(), processed.end(), true);
+			if (iter == processed.end()) { // Processed everything!
+				break;
+			}
+			auto attrs = from.begin();
+			std::advance(attrs, (iter - processed.begin()));
+
+			// Build up the "component"...
+			colors.clear();
+			members.clear();
+			assert(members.empty()); // Compiler optimization hint
+			do {
+				ProtoPalette const &protoPal = protoPalettes[attrs->palIndex];
+				// If this is the first proto-pal, or if at least one color matches, add it
+				if (members.empty()
+				    || std::find_first_of(colors.begin(), colors.end(), protoPal.begin(),
+				                          protoPal.end())
+				           != colors.end()) {
+					colors.insert(protoPal.begin(), protoPal.end());
+					members.push_back(iter - processed.begin());
+					*iter = true; // Mark that proto-pal as processed
+				}
+				++iter;
+				++attrs;
+			} while (iter != processed.end());
+
+			if (to.combinedVolume(colors.begin(), colors.end()) <= options.maxPalSize()) {
+				// Iterate through the component's proto-palettes, and transfer them
+				auto member = from.begin();
+				size_t curIndex = 0;
+				for (size_t index : members) {
+					std::advance(member, index - curIndex);
+					curIndex = index;
+					to.assign(std::move(*member));
+					from.remove(member); // Removing does not shift elements, so it's cheap
+				}
+			}
+		}
 	});
 
-	// Decant on proto-palettes
-	decantOn([](AssignedProtos &to, AssignedProtos &from) {
-		// TODO
-		(void)to;
-		(void)from;
+	// Decant on individual proto-palettes
+	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
+		for (auto iter = from.begin(); iter != from.end(); ++iter) {
+			if (to.canFit(protoPalettes[iter->palIndex])) {
+				to.assign(std::move(*iter));
+				from.remove(iter);
+			}
+		}
 	});
 }
 
@@ -428,10 +465,8 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	}
 
 	// "Decant" the result
-	decant(assignments);
-
-	// Remove all empty palettes, filling the gaps created.
-	removeEmptyPals(assignments);
+	decant(assignments, protoPalettes);
+	// Note that the result does not contain any empty palettes
 
 	if (options.beVerbose) {
 		for (auto &&assignment : assignments) {
