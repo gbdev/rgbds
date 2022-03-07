@@ -158,13 +158,15 @@ public:
 	bool empty() const { return std::distance(begin(), end()) == 0; }
 
 private:
-	static void addUniqueColors(std::unordered_set<uint16_t> &colors, AssignedProtos const &pal) {
-		for (ProtoPalAttrs const &attrs : pal) {
-			for (uint16_t color : (*pal._protoPals)[attrs.palIndex]) {
-				colors.insert(color);
-			}
+	template<typename Iter>
+	static void addUniqueColors(std::unordered_set<uint16_t> &colors, Iter iter, Iter const &end,
+	                            std::vector<ProtoPalette> const &protoPals) {
+		for (; iter != end; ++iter) {
+			ProtoPalette const &protoPal = protoPals[iter->palIndex];
+			colors.insert(protoPal.begin(), protoPal.end());
 		}
 	}
+	// This function should stay private because it returns a reference to a unique object
 	std::unordered_set<uint16_t> &uniqueColors() const {
 		// We check for *distinct* colors by stuffing them into a `set`; this should be
 		// faster than "back-checking" on every element (O(n²))
@@ -181,7 +183,7 @@ private:
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();
-		addUniqueColors(colors, *this);
+		addUniqueColors(colors, begin(), end(), *_protoPals);
 		return colors;
 	}
 public:
@@ -195,7 +197,6 @@ public:
 		return colors.size() <= options.maxPalSize();
 	}
 
-public:
 	/**
 	 * Computes the "relative size" of a proto-palette on this palette
 	 */
@@ -217,11 +218,13 @@ public:
 	}
 
 	/**
-	 * Computes the "relative size" of a palette on this one
+	 * Computes the "relative size" of a set of proto-palettes on this palette
 	 */
-	double combinedVolume(AssignedProtos const &pal) const {
+	template<typename Iter>
+	auto combinedVolume(Iter &&begin, Iter const &end,
+	                    std::vector<ProtoPalette> const &protoPals) const {
 		auto &colors = uniqueColors();
-		addUniqueColors(colors, pal);
+		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
 	}
 };
@@ -271,7 +274,7 @@ static void decant(std::vector<AssignedProtos> &assignments) {
 	// Decant on palettes
 	decantOn([](AssignedProtos &to, AssignedProtos &from) {
 		// If the entire palettes can be merged, move all of `from`'s proto-palettes
-		if (to.combinedVolume(from) <= options.maxPalSize()) {
+		if (to.combinedVolume(from.begin(), from.end(), protoPalettes) <= options.maxPalSize()) {
 			for (ProtoPalAttrs &protoPal : from) {
 				to.assign(std::move(protoPal));
 			}
