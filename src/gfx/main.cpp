@@ -374,7 +374,7 @@ void Palette::addColor(uint16_t color) {
 }
 
 uint8_t Palette::indexOf(uint16_t color) const {
-	return std::distance(colors.begin(), std::find(colors.begin(), colors.end(), color));
+	return std::find(colors.begin(), colors.end(), color) - colors.begin();
 }
 
 auto Palette::begin() -> decltype(colors)::iterator {
@@ -389,4 +389,8 @@ auto Palette::begin() const -> decltype(colors)::const_iterator {
 }
 auto Palette::end() const -> decltype(colors)::const_iterator {
 	return std::find(colors.begin(), colors.end(), UINT16_MAX);
+}
+
+uint8_t Palette::size() const {
+	return indexOf(UINT16_MAX);
 }

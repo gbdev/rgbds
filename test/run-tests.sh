@@ -30,8 +30,7 @@ if [ ! -d pokecrystal ]; then
 fi
 pushd pokecrystal
 git fetch
-git checkout a3e31d6463e6313aed12ebc733b3f772f2fc78d7 -f
-git apply ../pokecrystal.patch
+git checkout a3e31d6463e6313aed12ebc733b3f772f2fc78d7
 make clean
 make -j4 compare RGBDS=../../
 popd

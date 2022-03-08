@@ -73,6 +73,8 @@ struct Palette {
 	decltype(colors)::iterator end();
 	decltype(colors)::const_iterator begin() const;
 	decltype(colors)::const_iterator end() const;
+
+	uint8_t size() const;
 };
 
 #endif /* RGBDS_GFX_MAIN_HPP */
