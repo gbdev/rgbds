@@ -62,7 +62,7 @@ public:
 };
 
 class Png {
-	std::filesystem::path const &path;
+	std::string const &path;
 	std::filebuf file{};
 	png_structp png = nullptr;
 	png_infop info = nullptr;
@@ -156,7 +156,7 @@ public:
 	 * We also use that occasion to only read the PNG one line at a time, since we store all of
 	 * the pixel data in `pixels`, which saves on memory allocations.
 	 */
-	explicit Png(std::filesystem::path const &filePath) : path(filePath), colors() {
+	explicit Png(std::string const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
 			fatal("Failed to open input image (\"%s\"): %s", path.c_str(), strerror(errno));
 		}
