@@ -16,6 +16,11 @@ jobs:
             cc: gcc
           - os: macos-11.0
             cc: gcc
+        include:
+          - cc: gcc
+            cxx: g++
+          - cc: clang
+            cxx: clang++
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -30,13 +35,13 @@ jobs:
       - name: Build & install using Make
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          make develop -j Q= CC=${{ matrix.cc }}
+          make develop -j Q= CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
           sudo make install -j Q=
         if: matrix.buildsys == 'make'
       - name: Build & install using CMake
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.cc }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
+          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
           cmake --build build -j
           cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build
