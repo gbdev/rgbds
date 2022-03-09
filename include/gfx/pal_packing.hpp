@@ -25,7 +25,7 @@ namespace packing {
  * Returns which palette each proto-palette maps to, and how many palettes are necessary
  */
 std::tuple<DefaultInitVec<size_t>, size_t>
-	overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes);
+    overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes);
 
 }
 

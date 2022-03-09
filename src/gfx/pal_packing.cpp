@@ -71,7 +71,7 @@ class AssignedProtos {
 public:
 	template<typename... Ts>
 	AssignedProtos(std::vector<ProtoPalette> const &protoPals, Ts &&...elems)
-		: _assigned{std::forward<Ts>(elems)...}, _protoPals{&protoPals} {}
+	    : _assigned{std::forward<Ts>(elems)...}, _protoPals{&protoPals} {}
 
 private:
 	template<typename Inner, template<typename> typename Constness>
@@ -142,8 +142,8 @@ public:
 	template<typename... Ts>
 	void assign(Ts &&...args) {
 		auto freeSlot = std::find_if_not(
-			_assigned.begin(), _assigned.end(),
-			[](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
+		    _assigned.begin(), _assigned.end(),
+		    [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
 
 		if (freeSlot == _assigned.end()) { // We are full, use a new slot
 			_assigned.emplace_back(std::forward<Ts>(args)...);
@@ -158,8 +158,8 @@ public:
 
 	bool empty() const {
 		return std::find_if_not(
-				   _assigned.begin(), _assigned.end(),
-				   [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); })
+		           _assigned.begin(), _assigned.end(),
+		           [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); })
 		       == _assigned.end();
 	}
 	size_t nbProtoPals() const { return std::distance(begin(), end()); }
@@ -210,18 +210,18 @@ public:
 	double relSizeOf(ProtoPalette const &protoPal) const {
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break
 		return std::transform_reduce(
-			protoPal.begin(), protoPal.end(), 0.0, std::plus<>(), [this](uint16_t color) {
-				// NOTE: The paper and the associated code disagree on this: the code has
+		    protoPal.begin(), protoPal.end(), 0.0, std::plus<>(), [this](uint16_t color) {
+			    // NOTE: The paper and the associated code disagree on this: the code has
 			    // this `1 +`, whereas the paper does not; its lack causes a division by 0
 			    // if the symbol is not found anywhere, so I'm assuming the paper is wrong.
-				return 1.
+			    return 1.
 			           / (1
 			              + std::count_if(
-							  begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
-								  ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
-								  return std::find(pal.begin(), pal.end(), color) != pal.end();
-							  }));
-			});
+			                  begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
+				                  ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
+				                  return std::find(pal.begin(), pal.end(), color) != pal.end();
+			                  }));
+		    });
 	}
 
 	/**
@@ -342,7 +342,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 }
 
 std::tuple<DefaultInitVec<size_t>, size_t>
-	overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
+    overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
 	options.verbosePrint("Paginating palettes using \"overload-and-remove\" strategy...\n");
 
 	struct Iota {
@@ -414,12 +414,12 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					return pal.size() / bestPal.relSizeOf(pal);
 				};
 				auto [minEfficiencyIter, maxEfficiencyIter] =
-					std::minmax_element(bestPal.begin(), bestPal.end(),
+				    std::minmax_element(bestPal.begin(), bestPal.end(),
 				                        [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
 				                                                      ProtoPalAttrs const &rhs) {
-											return efficiency(protoPalettes[lhs.palIndex])
+					                        return efficiency(protoPalettes[lhs.palIndex])
 					                               < efficiency(protoPalettes[rhs.palIndex]);
-										});
+				                        });
 
 				// All efficiencies are identical iff min equals max
 				// TODO: maybe not ideal to re-compute these two?
@@ -452,7 +452,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		ProtoPalAttrs const &attrs = queue.front();
 		ProtoPalette const &protoPal = protoPalettes[attrs.palIndex];
 		auto iter =
-			std::find_if(assignments.begin(), assignments.end(),
+		    std::find_if(assignments.begin(), assignments.end(),
 		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint("Adding new palette for overflow\n");

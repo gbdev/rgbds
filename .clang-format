@@ -96,4 +96,4 @@ SpacesInSquareBrackets: false
 Standard: c++17
 TabWidth: 4
 UseCRLF: false
-UseTab: AlignWithSpaces
+UseTab: ForIndentation
