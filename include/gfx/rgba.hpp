@@ -22,7 +22,7 @@ struct Rgba {
 	 * Constructs the color from a "packed" RGBA representation (0xRRGGBBAA)
 	 */
 	explicit Rgba(uint32_t rgba = 0)
-		: red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
+	    : red(rgba >> 24), green(rgba >> 16), blue(rgba >> 8), alpha(rgba) {}
 
 	/**
 	 * Returns this RGBA as a 32-bit number that can be printed in hex (`%08x`) to yield its CSS

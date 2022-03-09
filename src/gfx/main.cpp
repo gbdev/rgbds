@@ -93,31 +93,31 @@ static char const *optstring = "Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:s:Tt:U:uVvx:Z";
  * over short opt matching
  */
 static struct option const longopts[] = {
-	{"output-attr-map", no_argument,       NULL, 'A'},
+    {"output-attr-map", no_argument,       NULL, 'A'},
     {"attr-map",        required_argument, NULL, 'a'},
-	{"base-tiles",      required_argument, NULL, 'b'},
+    {"base-tiles",      required_argument, NULL, 'b'},
     {"color-curve",     no_argument,       NULL, 'C'},
-	{"colors",          required_argument, NULL, 'c'},
+    {"colors",          required_argument, NULL, 'c'},
     {"debug",           no_argument,       NULL, 'D'}, // Ignored
-	{"depth",           required_argument, NULL, 'd'},
+    {"depth",           required_argument, NULL, 'd'},
     {"fix",             no_argument,       NULL, 'f'},
-	{"fix-and-save",    no_argument,       NULL, 'F'}, // Deprecated
-	{"horizontal",      no_argument,       NULL, 'h'}, // Deprecated
-	{"slice",           required_argument, NULL, 'L'},
+    {"fix-and-save",    no_argument,       NULL, 'F'}, // Deprecated
+    {"horizontal",      no_argument,       NULL, 'h'}, // Deprecated
+    {"slice",           required_argument, NULL, 'L'},
     {"mirror-tiles",    no_argument,       NULL, 'm'},
-	{"nb-tiles",        required_argument, NULL, 'N'},
+    {"nb-tiles",        required_argument, NULL, 'N'},
     {"nb-palettes",     required_argument, NULL, 'n'},
-	{"output",          required_argument, NULL, 'o'},
+    {"output",          required_argument, NULL, 'o'},
     {"output-palette",  no_argument,       NULL, 'P'},
-	{"palette",         required_argument, NULL, 'p'},
+    {"palette",         required_argument, NULL, 'p'},
     {"output-tilemap",  no_argument,       NULL, 'T'},
-	{"tilemap",         required_argument, NULL, 't'},
+    {"tilemap",         required_argument, NULL, 't'},
     {"unit-size",       required_argument, NULL, 'U'},
-	{"unique-tiles",    no_argument,       NULL, 'u'},
+    {"unique-tiles",    no_argument,       NULL, 'u'},
     {"version",         no_argument,       NULL, 'V'},
-	{"verbose",         no_argument,       NULL, 'v'},
+    {"verbose",         no_argument,       NULL, 'v'},
     {"trim-end",        required_argument, NULL, 'x'},
-	{"columns",         no_argument,       NULL, 'Z'},
+    {"columns",         no_argument,       NULL, 'Z'},
     {NULL,              no_argument,       NULL, 0  }
 };
 
@@ -293,9 +293,9 @@ int main(int argc, char *argv[]) {
 			constexpr std::string_view chars =
 // Both must start with a dot!
 #if defined(_MSC_VER) || defined(__MINGW32__)
-				"./\\"sv;
+			    "./\\"sv;
 #else
-				"./"sv;
+			    "./"sv;
 #endif
 			size_t i = options.input.find_last_of(chars);
 			if (i != options.input.npos && options.input[i] == '.') {

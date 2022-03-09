@@ -52,8 +52,8 @@ public:
 	size_t size() const {
 		return std::count_if(_colors.begin(), _colors.end(),
 		                     [](decltype(_colors)::value_type const &slot) {
-								 return slot.has_value() && !slot->isTransparent();
-							 });
+			                     return slot.has_value() && !slot->isTransparent();
+		                     });
 	}
 	decltype(_colors) const &raw() const { return _colors; }
 
@@ -138,8 +138,8 @@ public:
 			uint8_t mask = 1 << color->grayIndex();
 			if (bins & mask) { // Two in the same bin!
 				options.verbosePrint(
-					"Color #%08x conflicts with another one, not using grayscale sorting\n",
-					color->toCSS());
+				    "Color #%08x conflicts with another one, not using grayscale sorting\n",
+				    color->toCSS());
 				return false;
 			}
 			bins |= mask;
@@ -348,7 +348,7 @@ public:
 
 	public:
 		TilesVisitor(Png const &png, bool columnMajor, uint32_t width, uint32_t height)
-			: _png(png), _columnMajor(columnMajor), _width(width), _height(height) {}
+		    : _png(png), _columnMajor(columnMajor), _width(width), _height(height) {}
 
 		class Tile {
 			Png const &_png;
@@ -435,7 +435,7 @@ struct AttrmapEntry {
 };
 
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
-	generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
+    generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	// Run a "pagination" problem solver
 	// TODO: allow picking one of several solvers?
 	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
@@ -471,7 +471,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
-	makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
+    makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	if (options.palSpecType == Options::EMBEDDED) {
 		// Generate a palette spec from the first few colors in the embedded palette
 		auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
@@ -876,8 +876,8 @@ contained:;
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
 	// We sort after all insertions to avoid moving items: https://stackoverflow.com/a/2710332
 	std::sort(
-		protoPalettes.begin(), protoPalettes.end(),
-		[](ProtoPalette const &lhs, ProtoPalette const &rhs) { return lhs.size() < rhs.size(); });
+	    protoPalettes.begin(), protoPalettes.end(),
+	    [](ProtoPalette const &lhs, ProtoPalette const &rhs) { return lhs.size() < rhs.size(); });
 
 	auto [mappings, palettes] = options.palSpecType == Options::NO_SPEC
 	                                ? generatePalettes(protoPalettes, png)
