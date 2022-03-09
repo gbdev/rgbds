@@ -10,8 +10,8 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cinttypes>
 #include <ctype.h>
-#include <inttypes.h>
 #include <limits>
 #include <numeric>
 #include <stdarg.h>
