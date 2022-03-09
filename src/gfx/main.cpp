@@ -10,9 +10,10 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <charconv>
+#include <ctype.h>
 #include <inttypes.h>
 #include <limits>
+#include <numeric>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -138,10 +139,77 @@ static void printUsage(void) {
 	exit(1);
 }
 
-void fputsv(std::string_view const &view, FILE *f) {
-	if (view.data()) {
-		fwrite(view.data(), sizeof(char), view.size(), f);
+/**
+ * Parses a number at the beginning of a string, moving the pointer to skip the parsed characters
+ * Returns -1 on error
+ */
+static uint16_t parseNumber(char *&string, char const *errPrefix) {
+	uint8_t base = 10;
+	if (*string == '\0') {
+		error("%s: expected number, but found nothing", errPrefix);
+		return -1;
+	} else if (*string == '$') {
+		base = 16;
+		++string;
+	} else if (*string == '%') {
+		base = 2;
+		++string;
+	} else if (*string == '0' && string[1] != '\0') {
+		// Check if we have a "0x" or "0b" here
+		if (string[1] == 'x' || string[1] == 'X') {
+			base = 16;
+			string += 2;
+		} else if (string[1] == 'b' || string[1] == 'B') {
+			base = 2;
+			string += 2;
+		}
 	}
+
+	/**
+	 * Turns a digit into its numeric value in the current base, if it has one.
+	 * Maximum is inclusive. The string_view is modified to "consume" all digits.
+	 * Returns -1 (255) on parse failure (including wrong char for base), in which case
+	 * the string_view may be pointing on garbage.
+	 */
+	auto charIndex = [&base](unsigned char c) -> uint8_t {
+		unsigned char index = c - '0'; // Use wrapping semantics
+		if (base == 2 && index >= 2) {
+			return -1;
+		} else if (index < 10) {
+			return index;
+		} else if (base != 16) {
+			return -1; // Letters are only valid in hex
+		}
+		index = tolower(c) - 'a'; // OK because we pass an `unsigned char`
+		if (index < 6) {
+			return index + 10;
+		}
+		return -1;
+	};
+
+	if (charIndex(*string) == -1) {
+		error("%s: expected number after base, but found nothing", errPrefix);
+		return -1;
+	}
+	uint16_t number = 0;
+	do {
+		// Read a character, and check if it's valid in the given base
+		number *= base;
+		uint8_t index = charIndex(*string);
+		if (index == -1) {
+			break; // Found an invalid character, end
+		}
+		++string;
+
+		number += index;
+		// The lax check covers the addition on top of the multiplication
+		if (number >= UINT16_MAX / base) {
+			error("%s: the number is too large!", errPrefix);
+			return -1;
+		}
+	} while (*string != '\0'); // No more characters?
+
+	return number;
 }
 
 void parsePaletteSpec(char *arg) {
@@ -164,22 +232,8 @@ int main(int argc, char *argv[]) {
 	int opt;
 	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false;
 
-	auto parseDecimalArg = [&opt](auto &out) {
-		char const *end = &musl_optarg[strlen(musl_optarg)];
-		// `options.bitDepth` is not modified if the parse fails entirely
-		auto result = std::from_chars(musl_optarg, end, out, 10);
-
-		if (result.ec == std::errc::result_out_of_range) {
-			error("Argument to option '%c' (\"%s\") is out of range", opt, musl_optarg);
-			return false;
-		} else if (result.ptr != end) {
-			error("Invalid argument to option '%c' (\"%s\")", opt, musl_optarg);
-			return false;
-		}
-		return true;
-	};
-
 	while ((opt = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1) {
+		char *arg = musl_optarg; // Make a copy for scanning
 		switch (opt) {
 		case 'A':
 			autoAttrmap = true;
@@ -201,9 +255,11 @@ int main(int argc, char *argv[]) {
 			warning("Ignoring retired option `-D`");
 			break;
 		case 'd':
-			if (parseDecimalArg(options.bitDepth) && options.bitDepth != 1
-			    && options.bitDepth != 2) {
-				error("Bit depth must be 1 or 2, not %" PRIu8 "");
+			options.bitDepth = parseNumber(arg, "Bit depth");
+			if (*arg != '\0') {
+				error("Bit depth (-b) argument must be a valid number, not %s", musl_optarg);
+			} else if (options.bitDepth != -1 && options.bitDepth != 1 && options.bitDepth != 2) {
+				error("Bit depth must be 1 or 2, not %" PRIu8);
 				options.bitDepth = 2;
 			}
 			break;
@@ -255,7 +311,10 @@ int main(int argc, char *argv[]) {
 			options.beVerbose = true;
 			break;
 		case 'x':
-			parseDecimalArg(options.trim);
+			options.trim = parseNumber(arg, "Number of tiles to trim");
+			if (*arg != '\0') {
+				error("Tile trim (-x) argument must be a valid number, not %s", musl_optarg);
+			}
 			break;
 		case 'h':
 			warning("`-h` is deprecated, use `-Z` instead");
