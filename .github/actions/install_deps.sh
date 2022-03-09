@@ -1,5 +1,7 @@
 #!/bin/bash
-case `echo $1 | cut -d '-' -f 1` in
+set -e
+
+case "${1%-*}" in
 	ubuntu)
 		sudo apt-get -qq update
 		sudo apt-get install -yq bison libpng-dev pkg-config
