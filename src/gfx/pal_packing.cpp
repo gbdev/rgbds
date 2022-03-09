@@ -370,7 +370,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	};
 
 	// Begin with all proto-palettes queued up for insertion
-	std::queue queue(std::deque<ProtoPalAttrs>(Iota{0}, Iota{protoPalettes.size()}));
+	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(Iota{0}, Iota{protoPalettes.size()}));
 	// Begin with no pages
 	std::vector<AssignedProtos> assignments{};
 
