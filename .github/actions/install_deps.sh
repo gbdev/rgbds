@@ -1,3 +1,4 @@
+#!/bin/bash
 case `echo $1 | cut -d '-' -f 1` in
 	ubuntu)
 		sudo apt-get -qq update
