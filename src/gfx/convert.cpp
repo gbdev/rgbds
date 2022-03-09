@@ -10,9 +10,9 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cinttypes>
 #include <errno.h>
 #include <fstream>
-#include <inttypes.h>
 #include <memory>
 #include <optional>
 #include <png.h>

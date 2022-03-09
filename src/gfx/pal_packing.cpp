@@ -10,7 +10,7 @@
 
 #include <assert.h>
 #include <bitset>
-#include <inttypes.h>
+#include <cinttypes>
 #include <numeric>
 #include <optional>
 #include <queue>
