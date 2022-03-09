@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <charconv>
-#include <filesystem>
 #include <inttypes.h>
 #include <limits>
 #include <stdarg.h>
@@ -25,6 +24,8 @@
 #include "version.h"
 
 #include "gfx/convert.hpp"
+
+using namespace std::literals::string_view_literals;
 
 Options options;
 static uintmax_t nbErrors;
@@ -287,10 +288,25 @@ int main(int argc, char *argv[]) {
 
 	options.input = argv[argc - 1];
 
-	auto autoOutPath = [](bool autoOptEnabled, std::filesystem::path &path, char const *extension) {
+	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
 		if (autoOptEnabled) {
-			path = options.input;
-			path.replace_extension(extension);
+			constexpr std::string_view chars =
+// Both must start with a dot!
+#if defined(_MSC_VER) || defined(__MINGW32__)
+				"./\\"sv;
+#else
+				"./"sv;
+#endif
+			size_t i = options.input.find_last_of(chars);
+			if (i != options.input.npos && options.input[i] == '.') {
+				// We found the last dot, but check if it's part of a stem
+				// (There must be a non-path separator character before it)
+				if (i != 0 && chars.find(options.input[i - 1], 1) == chars.npos) {
+					// We can replace the extension
+					path.resize(i + 1); // Keep the dot, though
+					path.append(extension);
+				}
+			}
 		}
 	};
 	autoOutPath(autoAttrmap, options.attrmap, ".attrmap");
@@ -337,15 +353,9 @@ int main(int argc, char *argv[]) {
 		        options.baseTileIDs[1]);
 		fprintf(stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
-		auto printPath = [](char const *name, std::filesystem::path const &path) {
+		auto printPath = [](char const *name, std::string const &path) {
 			if (!path.empty()) {
-#ifdef _MSC_VER
-	#define PRIpath "ls"
-#else
-	#define PRIpath "s"
-#endif
-				fprintf(stderr, "\t%s: %" PRIpath "\n", name, path.c_str());
-#undef PRIpath
+				fprintf(stderr, "\t%s: %s\n", name, path.c_str());
 			}
 		};
 		printPath("Input image", options.input);

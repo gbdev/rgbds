@@ -39,7 +39,8 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 				return std::find(colors.begin(), colors.end(), color) != colors.end();
 			})) {
 			if (palette.size() != options.maxPalSize()) {
-				warning("Unused color in PNG embedded palette was re-added; please use `-c embedded` to get this in future versions");
+				warning("Unused color in PNG embedded palette was re-added; please use `-c "
+				        "embedded` to get this in future versions");
 			}
 			// Overwrite the palette, and return with that (it's already sorted)
 			palette.colors = colors;
