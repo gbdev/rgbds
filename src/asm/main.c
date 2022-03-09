@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 			if (musl_optarg[0] == '\0' || *ep != '\0')
 				errx("Invalid argument for option 'p'");
 
-			if (fill < 0 || fill > 0xFF)
+			if (fill > 0xFF)
 				errx("Argument for option 'p' must be between 0 and 0xFF");
 
 			opt_P(fill);
