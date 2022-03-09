@@ -208,20 +208,19 @@ public:
 	 * Computes the "relative size" of a proto-palette on this palette
 	 */
 	double relSizeOf(ProtoPalette const &protoPal) const {
-		// NOTE: this function must not call `uniqueColors`, or one of its callers will break
-		return std::transform_reduce(
-		    protoPal.begin(), protoPal.end(), 0.0, std::plus<>(), [this](uint16_t color) {
-			    // NOTE: The paper and the associated code disagree on this: the code has
-			    // this `1 +`, whereas the paper does not; its lack causes a division by 0
-			    // if the symbol is not found anywhere, so I'm assuming the paper is wrong.
-			    return 1.
-			           / (1
-			              + std::count_if(
-			                  begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
-				                  ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
-				                  return std::find(pal.begin(), pal.end(), color) != pal.end();
-			                  }));
-		    });
+		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
+		double relSize = 0.;
+		for (uint16_t color : protoPal) {
+			// NOTE: The paper and the associated code disagree on this: the code has
+			// this `1 +`, whereas the paper does not; its lack causes a division by 0
+			// if the symbol is not found anywhere, so I'm assuming the paper is wrong.
+			relSize +=
+			    1. / (1 + std::count_if(begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
+				          ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
+				          return std::find(pal.begin(), pal.end(), color) != pal.end();
+			          }));
+		}
+		return relSize;
 	}
 
 	/**
