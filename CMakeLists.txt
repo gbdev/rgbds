@@ -66,14 +66,18 @@ endif()
 # Use versioning consistent with Makefile
 # the git revision is used but uses the fallback in an archive
 
-execute_process(COMMAND git describe --tags --dirty --always
-                OUTPUT_VARIABLE GIT_REV
-                ERROR_QUIET)
-string(STRIP "${GIT_REV}" GIT_REV)
+find_program(GIT git)
+if(GIT)
+  execute_process(COMMAND ${GIT} describe --tags --dirty --always
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                  OUTPUT_VARIABLE GIT_REV OUTPUT_STRIP_TRAILING_WHITESPACE
+                  ERROR_QUIET)
+  message(STATUS "RGBDS version: ${GIT_REV}")
+else(GIT)
+  message(STATUS "Cannot determine RGBDS version (Git not installed), falling back")
+endif(GIT)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
-
-add_definitions(-DBUILD_VERSION_STRING="${GIT_REV}")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)

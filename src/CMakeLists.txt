@@ -6,10 +6,12 @@
 # SPDX-License-Identifier: MIT
 #
 
+configure_file(version.c _version.c ESCAPE_QUOTES)
+
 set(common_src
     "error.c"
     "extern/getopt.c"
-    "version.c"
+    "_version.c"
     )
 
 find_package(PkgConfig)
