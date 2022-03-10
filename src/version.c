@@ -12,6 +12,13 @@
 #include "helpers.h"
 #include "version.h"
 
+// This variable is passed via `-D` from the Makefile, but not from CMake
+// (in which `configure_file()` is used on this file to replace some syntax)
+#ifndef BUILD_VERSION_STRING
+// CMake-specific syntax here
+#define BUILD_VERSION_STRING "@GIT_REV@"
+#endif
+
 char const *get_package_version_string(void)
 {
 	// The following conditional should be simplified by the compiler.
