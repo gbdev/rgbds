@@ -77,19 +77,19 @@ class Png {
 	png_bytep transparencyPal = nullptr;
 
 	[[noreturn]] static void handleError(png_structp png, char const *msg) {
-		struct Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
+		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		fatal("Error reading input image (\"%s\"): %s", self->path.c_str(), msg);
 	}
 
 	static void handleWarning(png_structp png, char const *msg) {
-		struct Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
+		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		warning("In input image (\"%s\"): %s", self->path.c_str(), msg);
 	}
 
 	static void readData(png_structp png, png_bytep data, size_t length) {
-		struct Png *self = reinterpret_cast<Png *>(png_get_io_ptr(png));
+		Png *self = reinterpret_cast<Png *>(png_get_io_ptr(png));
 		std::streamsize expectedLen = length;
 		std::streamsize nbBytesRead = self->file.sgetn(reinterpret_cast<char *>(data), expectedLen);
 

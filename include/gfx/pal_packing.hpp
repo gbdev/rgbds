@@ -16,7 +16,7 @@
 
 #include "gfx/main.hpp"
 
-class Palette;
+struct Palette;
 class ProtoPalette;
 
 namespace packing {

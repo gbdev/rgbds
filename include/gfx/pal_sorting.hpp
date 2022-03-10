@@ -17,7 +17,7 @@
 
 #include "gfx/rgba.hpp"
 
-class Palette;
+struct Palette;
 
 namespace sorting {
 
