@@ -184,7 +184,7 @@ jobs:
           mv rgbgfx bins/rgbgfx.exe
           cp /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
           cp /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
-          if [ ${{ matrix.bits }} -eq 32 ]; then cp /usr/lib/gcc/${{ matrix.triplet }}/7.3-win32/libgcc_s_sjlj-1.dll bins; fi
+          if [ ${{ matrix.bits }} -eq 32 ]; then cp /usr/lib/gcc/${{ matrix.triplet }}/7.3-win32/lib{gcc_s_sjlj-1,stdc++-6}.dll bins; fi
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v1
         with:
