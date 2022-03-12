@@ -51,8 +51,28 @@ but
 is invalid because it could also be
 .Fl Fl version .
 .Pp
-TODO: describe what number formats are accepted.
+.Nm
+accepts decimal, binary, and hexadecimal numbers in option arguments.
+Decimal numbers are written as usual; binary numbers must be prefixed with either
+.Ql %
+or
+.Ql 0b ,
+and hexadecimal numbers must be prefixed with either
+.Ql $
+(which will likely need escaping or quoting to avoid being interpreted by the shell), or
+.Ql 0x .
+Leading zeros (after the base prefix, if any) are accepted, and letters are not case-sensitive.
+All of these are equivalent:
+.Ql 42 ,
+.Ql 042 ,
+.Ql 0b00101010 ,
+.Ql 0B101010 ,
+.Ql 0x2A ,
+.Ql 0X2A ,
+.Ql 0x2a .
+.Pp
 TODO: add "palette map" output.
+TODO: implement "at-files", and document them.
 .Pp
 The following options are accepted:
 .Bl -tag -width Ds
