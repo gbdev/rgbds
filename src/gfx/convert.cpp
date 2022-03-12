@@ -674,14 +674,43 @@ public:
 		VHFLIP,
 	};
 	MatchType tryMatching(TileData const &other) const {
-		if (std::equal(_data.begin(), _data.end(), other._data.begin()))
+		// Check for strict equality first, as that can typically be optimized, and it allows
+		// hoisting the mirroring check out of the loop
+		if (_data == other._data) {
 			return MatchType::EXACT;
-
-		if (options.allowMirroring) {
-			// TODO
 		}
 
-		return MatchType::NOPE;
+		if (!options.allowMirroring) {
+			return MatchType::NOPE;
+		}
+
+		// Check if we have horizontal mirroring, which scans the array forward again
+		if (std::equal(_data.begin(), _data.end(), other._data.begin(),
+		               [](uint8_t lhs, uint8_t rhs) { return lhs == flip(rhs); })) {
+			return MatchType::HFLIP;
+		}
+
+		// Check if we have vertical or vertical+horizontal mirroring, for which we have to read
+		// bitplane *pairs*  backwards
+		bool hasVFlip = true, hasVHFlip = true;
+		for (uint8_t i = 0; i < _data.size(); ++i) {
+			// Flip the bottom bit to get the corresponding row's bitplane 0/1
+			// (This works because the array size is even)
+			uint8_t lhs = _data[i], rhs = other._data[(15 - i) ^ 1];
+			if (lhs != rhs) {
+				hasVFlip = false;
+			}
+			if (lhs != flip(rhs)) {
+				hasVHFlip = false;
+			}
+			if (!hasVFlip && !hasVHFlip) {
+				return MatchType::NOPE; // If both have been eliminated, all hope is lost!
+			}
+		}
+
+		// If we have both (i.e. we have symmetry), default to vflip only
+		assert(hasVFlip || hasVHFlip);
+		return hasVFlip ? MatchType::VFLIP : MatchType::VHFLIP;
 	}
 	friend bool operator==(TileData const &lhs, TileData const &rhs) {
 		return lhs.tryMatching(rhs) != MatchType::NOPE;
@@ -745,7 +774,6 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 
 		iter->xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 		iter->yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-		assert(tileID < 1 << 10);
 		iter->tileID = tileID;
 
 		++iter;
