@@ -141,13 +141,13 @@ static void printUsage(void) {
 
 /**
  * Parses a number at the beginning of a string, moving the pointer to skip the parsed characters
- * Returns -1 on error
+ * Returns the provided errVal on error
  */
-static uint16_t parseNumber(char *&string, char const *errPrefix) {
+static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = -1) {
 	uint8_t base = 10;
 	if (*string == '\0') {
 		error("%s: expected number, but found nothing", errPrefix);
-		return -1;
+		return errVal;
 	} else if (*string == '$') {
 		base = 16;
 		++string;
@@ -188,8 +188,9 @@ static uint16_t parseNumber(char *&string, char const *errPrefix) {
 	};
 
 	if (charIndex(*string) == (uint8_t)-1) {
-		error("%s: expected digit%s, but found nothing", errPrefix, base != 10 ? " after base" : "");
-		return -1;
+		error("%s: expected digit%s, but found nothing", errPrefix,
+		      base != 10 ? " after base" : "");
+		return errVal;
 	}
 	uint16_t number = 0;
 	do {
@@ -205,7 +206,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix) {
 		// The lax check covers the addition on top of the multiplication
 		if (number >= UINT16_MAX / base) {
 			error("%s: the number is too large!", errPrefix);
-			return -1;
+			return errVal;
 		}
 	} while (*string != '\0'); // No more characters?
 
@@ -247,7 +248,7 @@ int main(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
-			options.baseTileIDs[0] = parseNumber(arg, "Bank 0 base tile ID");
+			options.baseTileIDs[0] = parseNumber(arg, "Bank 0 base tile ID", 0);
 			if (options.baseTileIDs[0] >= 256) {
 				error("Bank 0 base tile ID must be below 256");
 			}
@@ -262,7 +263,7 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 			skipWhitespace(arg);
-			options.baseTileIDs[1] = parseNumber(arg, "Bank 1 base tile ID");
+			options.baseTileIDs[1] = parseNumber(arg, "Bank 1 base tile ID", 0);
 			if (options.baseTileIDs[1] >= 256) {
 				error("Bank 1 base tile ID must be below 256");
 			}
@@ -282,7 +283,7 @@ int main(int argc, char *argv[]) {
 			warning("Ignoring retired option `-D`");
 			break;
 		case 'd':
-			options.bitDepth = parseNumber(arg, "Bit depth");
+			options.bitDepth = parseNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
 				error("Bit depth (-b) argument must be a valid number, not \"%s\"", musl_optarg);
 			} else if (options.bitDepth != -1 && options.bitDepth != 1 && options.bitDepth != 2) {
@@ -322,7 +323,7 @@ int main(int argc, char *argv[]) {
 			options.palettes = musl_optarg;
 			break;
 		case 's':
-			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette");
+			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette", 4);
 			if (*arg != '\0') {
 				error("Palette size (-s) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
@@ -343,7 +344,7 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case 'x':
-			options.trim = parseNumber(arg, "Number of tiles to trim");
+			options.trim = parseNumber(arg, "Number of tiles to trim", 0);
 			if (*arg != '\0') {
 				error("Tile trim (-x) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
