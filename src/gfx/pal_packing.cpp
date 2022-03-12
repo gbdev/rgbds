@@ -39,14 +39,14 @@ namespace packing {
  * A reference to a proto-palette, and attached attributes for sorting purposes
  */
 struct ProtoPalAttrs {
-	size_t const palIndex;
+	size_t const protoPalIndex;
 	/**
 	 * Pages from which we are banned (to prevent infinite loops)
 	 * This is dynamic because we wish not to hard-cap the amount of palettes
 	 */
 	std::vector<bool> bannedPages;
 
-	ProtoPalAttrs(size_t index) : palIndex(index) {}
+	ProtoPalAttrs(size_t index) : protoPalIndex(index) {}
 	bool isBannedFrom(size_t index) const {
 		return index < bannedPages.size() && bannedPages[index];
 	}
@@ -169,7 +169,7 @@ private:
 	static void addUniqueColors(std::unordered_set<uint16_t> &colors, Iter iter, Iter const &end,
 	                            std::vector<ProtoPalette> const &protoPals) {
 		for (; iter != end; ++iter) {
-			ProtoPalette const &protoPal = protoPals[iter->palIndex];
+			ProtoPalette const &protoPal = protoPals[iter->protoPalIndex];
 			colors.insert(protoPal.begin(), protoPal.end());
 		}
 	}
@@ -216,7 +216,7 @@ public:
 			// if the symbol is not found anywhere, so I'm assuming the paper is wrong.
 			relSize +=
 			    1. / (1 + std::count_if(begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
-				          ProtoPalette const &pal = (*_protoPals)[attrs.palIndex];
+				          ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
 				          return std::find(pal.begin(), pal.end(), color) != pal.end();
 			          }));
 		}
@@ -258,26 +258,32 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			// If the proto-palette is now empty, remove it
 			// Doing this now reduces the number of iterations performed by later steps
 			// NB: order is intentionally preserved so as not to alter the "decantation"'s
-			// properties NB: this does mean that the first step might get empty palettes as its
-			// input! NB: this is safe to do because we go towards the beginning of the vector,
-			// thereby not invalidating our iteration (thus, iterators should not be used to drive
-			// the outer loop)
+			// properties
+			// NB: this does mean that the first step might get empty palettes as its input!
+			// NB: this is safe to do because we go towards the beginning of the vector, thereby not
+			// invalidating our iteration (thus, iterators should not be used to drivethe outer
+			// loop)
 			if (assignments[from].empty()) {
 				assignments.erase(assignments.begin() + from);
 			}
 		}
 	};
 
+	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes before decanting\n",
+	                     assignments.size());
+
 	// Decant on palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
 		// If the entire palettes can be merged, move all of `from`'s proto-palettes
 		if (to.combinedVolume(from.begin(), from.end(), protoPalettes) <= options.maxPalSize()) {
-			for (ProtoPalAttrs &protoPal : from) {
-				to.assign(std::move(protoPal));
+			for (ProtoPalAttrs &attrs : from) {
+				to.assign(attrs.protoPalIndex);
 			}
 			from.clear();
 		}
 	});
+	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n",
+	                     assignments.size());
 
 	// Decant on "components" (= proto-pals sharing colors)
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
@@ -301,7 +307,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			members.clear();
 			assert(members.empty()); // Compiler optimization hint
 			do {
-				ProtoPalette const &protoPal = protoPalettes[attrs->palIndex];
+				ProtoPalette const &protoPal = protoPalettes[attrs->protoPalIndex];
 				// If this is the first proto-pal, or if at least one color matches, add it
 				if (members.empty()
 				    || std::find_first_of(colors.begin(), colors.end(), protoPal.begin(),
@@ -328,16 +334,20 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			}
 		}
 	});
+	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on \"components\"\n",
+	                     assignments.size());
 
 	// Decant on individual proto-palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
 		for (auto iter = from.begin(); iter != from.end(); ++iter) {
-			if (to.canFit(protoPalettes[iter->palIndex])) {
+			if (to.canFit(protoPalettes[iter->protoPalIndex])) {
 				to.assign(std::move(*iter));
 				from.remove(iter);
 			}
 		}
 	});
+	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on proto-palettes\n",
+	                     assignments.size());
 }
 
 std::tuple<DefaultInitVec<size_t>, size_t>
@@ -376,8 +386,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 	for (; !queue.empty(); queue.pop()) {
 		ProtoPalAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
+		options.verbosePrint(Options::VERB_DEBUG, "Handling proto-pal %zu\n", attrs.protoPalIndex);
 
-		ProtoPalette const &protoPal = protoPalettes[attrs.palIndex];
+		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
 		size_t bestPalIndex = assignments.size();
 		// We're looking for a palette where the proto-palette's relative size is less than
 		// its actual size; so only overwrite the "not found" index on meeting that criterion
@@ -419,15 +430,15 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				    std::minmax_element(bestPal.begin(), bestPal.end(),
 				                        [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
 				                                                      ProtoPalAttrs const &rhs) {
-					                        return efficiency(protoPalettes[lhs.palIndex])
-					                               < efficiency(protoPalettes[rhs.palIndex]);
+					                        return efficiency(protoPalettes[lhs.protoPalIndex])
+					                               < efficiency(protoPalettes[rhs.protoPalIndex]);
 				                        });
 
 				// All efficiencies are identical iff min equals max
 				// TODO: maybe not ideal to re-compute these two?
 				// TODO: yikes for float comparison! I *think* this threshold is OK?
-				if (efficiency(protoPalettes[maxEfficiencyIter->palIndex])
-				        - efficiency(protoPalettes[minEfficiencyIter->palIndex])
+				if (efficiency(protoPalettes[maxEfficiencyIter->protoPalIndex])
+				        - efficiency(protoPalettes[minEfficiencyIter->protoPalIndex])
 				    < .001) {
 					break;
 				}
@@ -452,19 +463,35 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	// Place back any proto-palettes now in the queue via first-fit
 	while (!queue.empty()) {
 		ProtoPalAttrs const &attrs = queue.front();
-		ProtoPalette const &protoPal = protoPalettes[attrs.palIndex];
+		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
 		auto iter =
 		    std::find_if(assignments.begin(), assignments.end(),
 		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
 		if (iter == assignments.end()) { // No such page, create a new one
-			options.verbosePrint(Options::VERB_DEBUG, "Adding new palette for overflow\n");
+			options.verbosePrint(Options::VERB_DEBUG,
+			                     "Adding new palette (%zu) for overflowing proto-pal %zu\n",
+			                     assignments.size(), attrs.protoPalIndex);
 			assignments.emplace_back(protoPalettes, std::move(attrs));
 		} else {
-			options.verbosePrint(Options::VERB_DEBUG, "Assigning overflow to palette %zu\n",
-			                     iter - assignments.begin());
+			options.verbosePrint(Options::VERB_DEBUG,
+			                     "Assigning overflowing proto-pal %zu to palette %zu\n",
+			                     attrs.protoPalIndex, iter - assignments.begin());
 			iter->assign(std::move(attrs));
 		}
 		queue.pop();
+	}
+
+	if (options.verbosity >= Options::VERB_INTERM) {
+		for (auto &&assignment : assignments) {
+			fprintf(stderr, "{ ");
+			for (auto &&attrs : assignment) {
+				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
+				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {
+					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
+				}
+			}
+			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
+		}
 	}
 
 	// "Decant" the result
@@ -475,7 +502,8 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		for (auto &&assignment : assignments) {
 			fprintf(stderr, "{ ");
 			for (auto &&attrs : assignment) {
-				for (auto &&colorIndex : protoPalettes[attrs.palIndex]) {
+				fprintf(stderr, "[%zu] ", attrs.protoPalIndex);
+				for (auto &&colorIndex : protoPalettes[attrs.protoPalIndex]) {
 					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
 				}
 			}
@@ -486,7 +514,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	DefaultInitVec<size_t> mappings(protoPalettes.size());
 	for (size_t i = 0; i < assignments.size(); ++i) {
 		for (ProtoPalAttrs const &attrs : assignments[i]) {
-			mappings[attrs.palIndex] = i;
+			mappings[attrs.protoPalIndex] = i;
 		}
 	}
 	return {mappings, assignments.size()};
