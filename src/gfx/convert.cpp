@@ -428,8 +428,9 @@ public:
 };
 
 struct AttrmapEntry {
-	size_t protoPaletteID;
-	uint16_t tileID;
+	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
+	uint8_t tileID; // This is the ID as it will be output to the tilemap
+	bool bank;
 	bool yFlip;
 	bool xFlip;
 };
@@ -631,6 +632,10 @@ class TileData {
 	// non-pathological cases.
 	uint16_t _hash;
 public:
+	// This is an index within the "global" pool; no bank info is encoded here
+	// It's marked as `mutable` so that it can be modified even on a `const` object;
+	// this is necessary because the `set` in which it's inserted refuses any modification for fear
+	// of altering the element's hash, but the tile ID is not part of it.
 	mutable uint16_t tileID;
 
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
@@ -760,6 +765,12 @@ struct UniqueTiles {
 	auto end() const { return tiles.end(); }
 };
 
+/**
+ * Generate tile data while deduplicating unique tiles (via mirroring if enabled)
+ * Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
+ * 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
+ * twice)
+ */
 static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attrmap,
                               std::vector<Palette> const &palettes,
                               DefaultInitVec<size_t> const &mappings) {
@@ -774,7 +785,9 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 
 		iter->xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 		iter->yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-		iter->tileID = tileID;
+		iter->bank = tileID >= options.maxNbTiles[0];
+		iter->tileID = (iter->bank ? tileID - options.maxNbTiles[0] : tileID)
+		               + options.baseTileIDs[iter->bank];
 
 		++iter;
 	}
@@ -801,9 +814,8 @@ static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	std::filebuf output;
 	output.open(options.tilemap, std::ios_base::out | std::ios_base::binary);
 
-	assert(options.baseTileIDs[0] == 0 && options.baseTileIDs[1] == 0); // TODO: deal with offset
 	for (AttrmapEntry const &entry : attrmap) {
-		output.sputc(entry.tileID & 0xFF);
+		output.sputc(entry.tileID); // The tile ID has already been converted
 	}
 }
 
@@ -812,10 +824,9 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 	std::filebuf output;
 	output.open(options.attrmap, std::ios_base::out | std::ios_base::binary);
 
-	assert(options.baseTileIDs[0] == 0 && options.baseTileIDs[1] == 0); // TODO: deal with offset
 	for (AttrmapEntry const &entry : attrmap) {
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
-		attr |= (entry.tileID >= options.maxNbTiles[0]) << 3;
+		attr |= entry.bank << 3;
 		attr |= mappings[entry.protoPaletteID] & 7;
 		output.sputc(attr);
 	}
