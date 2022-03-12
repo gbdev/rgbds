@@ -511,6 +511,11 @@ int main(int argc, char *argv[]) {
 		fputs("Ready.\n", stderr);
 	}
 
+	// Do not do anything if option parsing went wrong
+	if (nbErrors) {
+		return 0;
+	}
+
 	process();
 
 	return 0;
