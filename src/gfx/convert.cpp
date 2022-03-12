@@ -937,6 +937,11 @@ contained:;
 		}
 	}
 
+	if (palettes.size() > options.nbPalettes) {
+		// If the palette generation is wrong, other (dependee) operations are likely to be nonsensical, so fatal-error outright
+		fatal("Generated %zu palettes, over the maximum of %" PRIu8, palettes.size(), options.nbPalettes);
+	}
+
 	if (!options.palettes.empty()) {
 		outputPalettes(palettes);
 	}
