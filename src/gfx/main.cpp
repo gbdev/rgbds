@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
 			}
 			break;
 		case 'n':
-			options.nbPalettes = 0; // TODO
+			options.nbPalettes = parseNumber(arg, "Number of palettes", 8);
 			break;
 		case 'o':
 			options.output = musl_optarg;
