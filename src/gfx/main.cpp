@@ -187,8 +187,8 @@ static uint16_t parseNumber(char *&string, char const *errPrefix) {
 		return -1;
 	};
 
-	if (charIndex(*string) == -1) {
-		error("%s: expected number after base, but found nothing", errPrefix);
+	if (charIndex(*string) == (uint8_t)-1) {
+		error("%s: expected digit%s, but found nothing", errPrefix, base != 10 ? " after base" : "");
 		return -1;
 	}
 	uint16_t number = 0;
@@ -196,7 +196,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix) {
 		// Read a character, and check if it's valid in the given base
 		number *= base;
 		uint8_t index = charIndex(*string);
-		if (index == -1) {
+		if (index == (uint8_t)-1) {
 			break; // Found an invalid character, end
 		}
 		++string;
@@ -212,7 +212,11 @@ static uint16_t parseNumber(char *&string, char const *errPrefix) {
 	return number;
 }
 
-void parsePaletteSpec(char *arg) {
+static void skipWhitespace(char *&arg) {
+	arg += strcspn(arg, " \t");
+}
+
+static void parsePaletteSpec(char const *arg) {
 	if (arg[0] == '#') {
 		// List of #rrggbb/#rgb colors, comma-separated, palettes are separated by colons
 		options.palSpecType = Options::EXPLICIT;
@@ -243,7 +247,30 @@ int main(int argc, char *argv[]) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
-			options.baseTileIDs = {0, 0}; // TODO
+			options.baseTileIDs[0] = parseNumber(arg, "Bank 0 base tile ID");
+			if (options.baseTileIDs[0] >= 256) {
+				error("Bank 0 base tile ID must be below 256");
+			}
+			if (*arg == '\0') {
+				options.baseTileIDs[1] = 0;
+				break;
+			}
+			skipWhitespace(arg);
+			if (*arg != ',') {
+				error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
+				      musl_optarg);
+				break;
+			}
+			skipWhitespace(arg);
+			options.baseTileIDs[1] = parseNumber(arg, "Bank 1 base tile ID");
+			if (options.baseTileIDs[1] >= 256) {
+				error("Bank 1 base tile ID must be below 256");
+			}
+			if (*arg != '\0') {
+				error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
+				      musl_optarg);
+				break;
+			}
 			break;
 		case 'C':
 			options.useColorCurve = true;
@@ -257,7 +284,7 @@ int main(int argc, char *argv[]) {
 		case 'd':
 			options.bitDepth = parseNumber(arg, "Bit depth");
 			if (*arg != '\0') {
-				error("Bit depth (-b) argument must be a valid number, not %s", musl_optarg);
+				error("Bit depth (-b) argument must be a valid number, not \"%s\"", musl_optarg);
 			} else if (options.bitDepth != -1 && options.bitDepth != 1 && options.bitDepth != 2) {
 				error("Bit depth must be 1 or 2, not %" PRIu8);
 				options.bitDepth = 2;
@@ -295,7 +322,10 @@ int main(int argc, char *argv[]) {
 			options.palettes = musl_optarg;
 			break;
 		case 's':
-			options.nbColorsPerPal = 0; // TODO
+			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette");
+			if (*arg != '\0') {
+				error("Palette size (-s) argument must be a valid number, not \"%s\"", musl_optarg);
+			}
 			break;
 		case 'T':
 			autoTilemap = true;
@@ -315,7 +345,7 @@ int main(int argc, char *argv[]) {
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim");
 			if (*arg != '\0') {
-				error("Tile trim (-x) argument must be a valid number, not %s", musl_optarg);
+				error("Tile trim (-x) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
 			break;
 		case 'h':
@@ -331,7 +361,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (options.nbColorsPerPal == 0) {
-		options.nbColorsPerPal = 1 << options.bitDepth;
+		options.nbColorsPerPal = 1u << options.bitDepth;
 	} else if (options.nbColorsPerPal > 1u << options.bitDepth) {
 		error("%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8, options.bitDepth,
 		      1u << options.bitDepth, options.nbColorsPerPal);
