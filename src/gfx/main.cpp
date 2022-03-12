@@ -307,7 +307,30 @@ int main(int argc, char *argv[]) {
 			options.allowDedup = true;
 			break;
 		case 'N':
-			options.maxNbTiles = {0, 0}; // TODO
+			options.maxNbTiles[0] = parseNumber(arg, "Number of tiles in bank 0", 256);
+			if (options.maxNbTiles[0] > 256) {
+				error("Bank 0 cannot contain more than 256 tiles");
+			}
+			if (*arg == '\0') {
+				options.maxNbTiles[1] = 0;
+				break;
+			}
+			skipWhitespace(arg);
+			if (*arg != ',') {
+				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"",
+				      musl_optarg);
+				break;
+			}
+			skipWhitespace(arg);
+			options.maxNbTiles[1] = parseNumber(arg, "Number of tiles in bank 1", 256);
+			if (options.maxNbTiles[1] > 256) {
+				error("Bank 1 cannot contain more than 256 tiles");
+			}
+			if (*arg != '\0') {
+				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"",
+				      musl_optarg);
+				break;
+			}
 			break;
 		case 'n':
 			options.nbPalettes = 0; // TODO
