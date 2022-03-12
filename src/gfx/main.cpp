@@ -70,8 +70,8 @@ void error(char const *fmt, ...) {
 	exit(1);
 }
 
-void Options::verbosePrint(char const *fmt, ...) const {
-	if (beVerbose) {
+void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
+	if (verbosity >= level) {
 		va_list ap;
 
 		va_start(ap, fmt);
@@ -308,7 +308,9 @@ int main(int argc, char *argv[]) {
 			printf("rgbgfx %s\n", get_package_version_string());
 			exit(0);
 		case 'v':
-			options.beVerbose = true;
+			if (options.verbosity < Options::VERB_VVVVVV) {
+				++options.verbosity;
+			}
 			break;
 		case 'x':
 			options.trim = parseNumber(arg, "Number of tiles to trim");
@@ -372,8 +374,36 @@ int main(int argc, char *argv[]) {
 	autoOutPath(autoTilemap, options.tilemap, ".tilemap");
 	autoOutPath(autoPalettes, options.palettes, ".pal");
 
-	if (options.beVerbose) {
+	if (options.verbosity >= Options::VERB_CFG) {
 		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
+
+		if (options.verbosity >= Options::VERB_VVVVVV) {
+			fputc('\n', stderr);
+			static std::array<uint16_t, 21> gfx{
+			    0x1FE, 0x3FF, 0x399, 0x399, 0x3FF, 0x3FF, 0x381, 0x3C3, 0x1FE, 0x078, 0x1FE,
+			    0x3FF, 0x3FF, 0x3FF, 0x37B, 0x37B, 0x0FC, 0x0CC, 0x1CE, 0x1CE, 0x1CE,
+			};
+			static std::array<char const *, 3> textbox{
+			    "  ,----------------------------------------.",
+			    "  | Augh, dimensional interference again?! |",
+			    "  `----------------------------------------'"};
+			for (size_t i = 0; i < gfx.size(); ++i) {
+				uint16_t row = gfx[i];
+				for (uint8_t _ = 0; _ < 10; ++_) {
+					unsigned char c = row & 1 ? '0' : ' ';
+					fputc(c, stderr);
+					// Double the pixel horizontally, otherwise the aspect ratio looks wrong
+					fputc(c, stderr);
+					row >>= 1;
+				}
+				if (i < textbox.size()) {
+					fputs(textbox[i], stderr);
+				}
+				fputc('\n', stderr);
+			}
+			fputc('\n', stderr);
+		}
+
 		fputs("Options:\n", stderr);
 		if (options.fixInput)
 			fputs("\tConvert input to indexed\n", stderr);

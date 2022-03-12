@@ -121,7 +121,8 @@ public:
 	bool isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
 		if (colors.size() > options.maxPalSize()) { // Apply the Pigeonhole Principle
-			options.verbosePrint("Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
+			options.verbosePrint(Options::VERB_DEBUG,
+			                     "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
 			                     colors.size(), options.maxPalSize());
 			return false;
 		}
@@ -131,13 +132,15 @@ public:
 				continue;
 			}
 			if (!color->isGray()) {
-				options.verbosePrint("Found non-gray color #%08x, not using grayscale sorting\n",
+				options.verbosePrint(Options::VERB_DEBUG,
+				                     "Found non-gray color #%08x, not using grayscale sorting\n",
 				                     color->toCSS());
 				return false;
 			}
 			uint8_t mask = 1 << color->grayIndex();
 			if (bins & mask) { // Two in the same bin!
 				options.verbosePrint(
+				    Options::VERB_DEBUG,
 				    "Color #%08x conflicts with another one, not using grayscale sorting\n",
 				    color->toCSS());
 				return false;
@@ -161,7 +164,7 @@ public:
 			fatal("Failed to open input image (\"%s\"): %s", path.c_str(), strerror(errno));
 		}
 
-		options.verbosePrint("Opened input file\n");
+		options.verbosePrint(Options::VERB_LOG_ACT, "Opened input file\n");
 
 		std::array<unsigned char, 8> pngHeader;
 
@@ -171,7 +174,7 @@ public:
 			fatal("Input file (\"%s\") is not a PNG image!", path.c_str());
 		}
 
-		options.verbosePrint("PNG header signature is OK\n");
+		options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");
 
 		png = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)this, handleError,
 		                             handleWarning);
@@ -234,7 +237,8 @@ public:
 				fatal("Unknown interlace type %d", interlaceType);
 			}
 		};
-		options.verbosePrint("Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n", height,
+		options.verbosePrint(Options::VERB_INTERM,
+		                     "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n", height,
 		                     width, bitDepth, colorTypeName(), interlaceTypeName());
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
@@ -243,15 +247,16 @@ public:
 				assert(nbTransparentEntries == nbColors);
 			}
 
-			options.verbosePrint("Embedded palette has %d colors: [", nbColors);
+			options.verbosePrint(Options::VERB_INTERM, "Embedded palette has %d colors: [",
+			                     nbColors);
 			for (int i = 0; i < nbColors; ++i) {
 				auto const &color = embeddedPal[i];
-				options.verbosePrint("#%02x%02x%02x%02x%s", color.red, color.green, color.blue,
-				                     transparencyPal ? transparencyPal[i] : 0xFF,
-				                     i != nbColors - 1 ? ", " : "]\n");
+				options.verbosePrint(
+				    Options::VERB_INTERM, "#%02x%02x%02x%02x%s", color.red, color.green, color.blue,
+				    transparencyPal ? transparencyPal[i] : 0xFF, i != nbColors - 1 ? ", " : "]\n");
 			}
 		} else {
-			options.verbosePrint("No embedded palette\n");
+			options.verbosePrint(Options::VERB_INTERM, "No embedded palette\n");
 		}
 
 		// Set up transformations; to turn everything into RGBA888
@@ -442,11 +447,11 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
 	assert(mappings.size() == protoPalettes.size());
 
-	if (options.beVerbose) {
-		options.verbosePrint("Proto-palette mappings: (%zu palette%s)\n", nbPalettes,
-		                     nbPalettes != 1 ? "s" : "");
+	if (options.verbosity >= Options::VERB_INTERM) {
+		fprintf(stderr, "Proto-palette mappings: (%zu palette%s)\n", nbPalettes,
+		        nbPalettes != 1 ? "s" : "");
 		for (size_t i = 0; i < mappings.size(); ++i) {
-			options.verbosePrint("%zu -> %zu\n", i, mappings[i]);
+			fprintf(stderr, "%zu -> %zu\n", i, mappings[i]);
 		}
 	}
 
@@ -835,27 +840,27 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 } // namespace optimized
 
 void process() {
-	options.verbosePrint("Using libpng %s\n", png_get_libpng_ver(nullptr));
+	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
-	options.verbosePrint("Reading tiles...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
 	Png png(options.input);
 	ImagePalette const &colors = png.getColors();
 
 	// Now, we have all the image's colors in `colors`
 	// The next step is to order the palette
 
-	if (options.beVerbose) {
-		options.verbosePrint("Image colors: [ ");
+	if (options.verbosity >= Options::VERB_INTERM) {
+		fputs("Image colors: [ ", stderr);
 		size_t i = 0;
 		for (auto const &slot : colors) {
 			if (!slot.has_value()) {
 				continue;
 			}
-			options.verbosePrint("#%02x%02x%02x%02x%s", slot->red, slot->green, slot->blue,
-			                     slot->alpha, i != colors.size() - 1 ? ", " : "");
+			fprintf(stderr, "#%02x%02x%02x%02x%s", slot->red, slot->green, slot->blue, slot->alpha,
+			        i != colors.size() - 1 ? ", " : "");
 			++i;
 		}
-		options.verbosePrint("]\n");
+		fputs("]\n", stderr);
 	}
 
 	// Now, iterate through the tiles, generating proto-palettes as we go
@@ -909,8 +914,8 @@ void process() {
 contained:;
 	}
 
-	options.verbosePrint("Image contains %zu proto-palette%s\n", protoPalettes.size(),
-	                     protoPalettes.size() != 1 ? "s" : "");
+	options.verbosePrint(Options::VERB_INTERM, "Image contains %zu proto-palette%s\n",
+	                     protoPalettes.size(), protoPalettes.size() != 1 ? "s" : "");
 
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
 	// We sort after all insertions to avoid moving items: https://stackoverflow.com/a/2710332
@@ -922,13 +927,13 @@ contained:;
 	                                ? generatePalettes(protoPalettes, png)
 	                                : makePalsAsSpecified(protoPalettes, png);
 
-	if (options.beVerbose) {
+	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&palette : palettes) {
-			options.verbosePrint("{ ");
+			fputs("{ ", stderr);
 			for (uint16_t colorIndex : palette) {
-				options.verbosePrint("%04" PRIx16 ", ", colorIndex);
+				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
 			}
-			options.verbosePrint("}\n");
+			fputs("}\n", stderr);
 		}
 	}
 
@@ -947,17 +952,18 @@ contained:;
 		}
 
 		if (!options.output.empty()) {
-			options.verbosePrint("Generating unoptimized tile data...\n");
+			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
 			unoptimized::outputTileData(png, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty()) {
-			options.verbosePrint("Generating unoptimized tilemap and/or attrmap...\n");
+			options.verbosePrint(Options::VERB_LOG_ACT,
+			                     "Generating unoptimized tilemap and/or attrmap...\n");
 			unoptimized::outputMaps(png, attrmap, mappings);
 		}
 	} else {
 		// All of these require the deduplication process to be performed to be output
-		options.verbosePrint("Deduplicating tiles...\n");
+		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
 		optimized::UniqueTiles tiles = optimized::dedupTiles(png, attrmap, palettes, mappings);
 
 		if (tiles.size() > options.maxNbTiles[0] + options.maxNbTiles[1]) {
@@ -966,17 +972,17 @@ contained:;
 		}
 
 		if (!options.output.empty()) {
-			options.verbosePrint("Generating optimized tile data...\n");
+			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tile data...\n");
 			optimized::outputTileData(tiles);
 		}
 
 		if (!options.tilemap.empty()) {
-			options.verbosePrint("Generating optimized tilemap...\n");
+			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tilemap...\n");
 			optimized::outputTilemap(attrmap);
 		}
 
 		if (!options.attrmap.empty()) {
-			options.verbosePrint("Generating optimized attrmap...\n");
+			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
 			optimized::outputAttrmap(attrmap, mappings);
 		}
 	}

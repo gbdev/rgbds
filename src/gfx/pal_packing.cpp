@@ -342,7 +342,8 @@ static void decant(std::vector<AssignedProtos> &assignments,
 
 std::tuple<DefaultInitVec<size_t>, size_t>
     overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
-	options.verbosePrint("Paginating palettes using \"overload-and-remove\" strategy...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT,
+	                     "Paginating palettes using \"overload-and-remove\" strategy...\n");
 
 	struct Iota {
 		using value_type = size_t;
@@ -388,8 +389,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				continue;
 			}
 
-			options.verbosePrint("%zu/%zu: Rel size: %f (size = %zu)\n", i, assignments.size(),
-			                     assignments[i].relSizeOf(protoPal), protoPal.size());
+			options.verbosePrint(Options::VERB_DEBUG, "%zu/%zu: Rel size: %f (size = %zu)\n", i,
+			                     assignments.size(), assignments[i].relSizeOf(protoPal),
+			                     protoPal.size());
 			if (assignments[i].relSizeOf(protoPal) < bestRelSize) {
 				bestPalIndex = i;
 			}
@@ -405,7 +407,8 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 			// If this overloads the palette, get it back to normal (if possible)
 			while (bestPal.volume() > options.maxPalSize()) {
-				options.verbosePrint("Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
+				options.verbosePrint(Options::VERB_DEBUG,
+				                     "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
 				                     bestPalIndex, bestPal.volume(), options.maxPalSize());
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
@@ -454,10 +457,11 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		    std::find_if(assignments.begin(), assignments.end(),
 		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
 		if (iter == assignments.end()) { // No such page, create a new one
-			options.verbosePrint("Adding new palette for overflow\n");
+			options.verbosePrint(Options::VERB_DEBUG, "Adding new palette for overflow\n");
 			assignments.emplace_back(protoPalettes, std::move(attrs));
 		} else {
-			options.verbosePrint("Assigning overflow to palette %zu\n", iter - assignments.begin());
+			options.verbosePrint(Options::VERB_DEBUG, "Assigning overflow to palette %zu\n",
+			                     iter - assignments.begin());
 			iter->assign(std::move(attrs));
 		}
 		queue.pop();
@@ -467,15 +471,15 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	decant(assignments, protoPalettes);
 	// Note that the result does not contain any empty palettes
 
-	if (options.beVerbose) {
+	if (options.verbosity >= Options::VERB_INTERM) {
 		for (auto &&assignment : assignments) {
-			options.verbosePrint("{ ");
+			fprintf(stderr, "{ ");
 			for (auto &&attrs : assignment) {
 				for (auto &&colorIndex : protoPalettes[attrs.palIndex]) {
-					options.verbosePrint("%04" PRIx16 ", ", colorIndex);
+					fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
 				}
 			}
-			options.verbosePrint("} (volume = %zu)\n", assignment.volume());
+			fprintf(stderr, "} (volume = %zu)\n", assignment.volume());
 		}
 	}
 
