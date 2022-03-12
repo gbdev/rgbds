@@ -16,7 +16,7 @@ namespace sorting {
 
 void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRGB,
              png_byte *palAlpha) {
-	options.verbosePrint("Sorting palettes using embedded palette...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");
 
 	auto pngToRgb = [&palRGB, &palAlpha](int index) {
 		auto const &c = palRGB[index];
@@ -71,7 +71,7 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 
 void grayscale(std::vector<Palette> &palettes,
                std::array<std::optional<Rgba>, 0x8001> const &colors) {
-	options.verbosePrint("Sorting grayscale-only palette...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting grayscale-only palette...\n");
 
 	// This method is only applicable if there are at most as many colors as colors per palette, so
 	// we should only have a single palette.
@@ -95,7 +95,7 @@ static unsigned int legacyLuminance(uint16_t color) {
 }
 
 void rgb(std::vector<Palette> &palettes) {
-	options.verbosePrint("Sorting palettes by \"\"\"luminance\"\"\"...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by \"\"\"luminance\"\"\"...\n");
 
 	for (Palette &pal : palettes) {
 		std::sort(pal.begin(), pal.end(), [](uint16_t lhs, uint16_t rhs) {

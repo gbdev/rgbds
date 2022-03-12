@@ -24,8 +24,8 @@ struct Options {
 	bool fixInput = false; // -f
 	bool allowMirroring = false; // -m
 	bool allowDedup = false; // -u
-	bool beVerbose = false; // -v
 	bool columnMajor = false; // -Z, previously -h
+	uint8_t verbosity = 0; // -v
 
 	std::string attrmap{}; // -a, -A
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
@@ -48,7 +48,14 @@ struct Options {
 
 	std::string input{}; // positional arg
 
-	format_(printf, 2, 3) void verbosePrint(char const *fmt, ...) const;
+	static constexpr uint8_t VERB_NONE = 0; // Normal, no extra output
+	static constexpr uint8_t VERB_CFG = 1; // Print configuration after parsing options
+	static constexpr uint8_t VERB_LOG_ACT = 2; // Log actions before doing them
+	static constexpr uint8_t VERB_INTERM = 3; // Print some intermediate results
+	static constexpr uint8_t VERB_DEBUG = 4; // Internals are logged
+	static constexpr uint8_t VERB_UNMAPPED = 5; // Unused so far
+	static constexpr uint8_t VERB_VVVVVV = 6; // What, can't I have a little fun?
+	format_(printf, 3, 4) void verbosePrint(uint8_t level, char const *fmt, ...) const;
 	uint8_t maxPalSize() const {
 		return nbColorsPerPal; // TODO: minus 1 when transparency is active
 	}
