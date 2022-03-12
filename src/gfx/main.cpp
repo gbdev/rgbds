@@ -412,16 +412,18 @@ int main(int argc, char *argv[]) {
 #else
 			    "./"sv;
 #endif
+			size_t len = options.input.npos;
 			size_t i = options.input.find_last_of(chars);
 			if (i != options.input.npos && options.input[i] == '.') {
 				// We found the last dot, but check if it's part of a stem
 				// (There must be a non-path separator character before it)
 				if (i != 0 && chars.find(options.input[i - 1], 1) == chars.npos) {
 					// We can replace the extension
-					path.resize(i + 1); // Keep the dot, though
-					path.append(extension);
+					len = i;
 				}
 			}
+			path.assign(options.input, 0, len);
+			path.append(extension);
 		}
 	};
 	autoOutPath(autoAttrmap, options.attrmap, ".attrmap");
