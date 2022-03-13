@@ -22,23 +22,25 @@ done
 
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
+# When updating subprojects, change the commit being checked out, and set the `shallow-since`
+# to the day before, to reduce the amount of refs being transferred and thus speed up CI.
 
 if [ ! -d pokecrystal ]; then
-	git clone https://github.com/pret/pokecrystal.git --shallow-since=2021-04-01 --single-branch
+	git clone https://github.com/pret/pokecrystal.git --shallow-since=2022-03-12 --single-branch
 fi
 pushd pokecrystal
 git fetch
-git checkout b8fc67848e1d5911204fa42bbd9b954fdec6228a
+git checkout a3e31d6463e6313aed12ebc733b3f772f2fc78d7
 make clean
 make -j4 compare RGBDS=../../
 popd
 
 if [ ! -d pokered ]; then
-	git clone --recursive https://github.com/pret/pokered.git --shallow-since=2021-04-01 --single-branch
+	git clone https://github.com/pret/pokered.git --shallow-since=2022-03-07 --single-branch
 fi
 pushd pokered
 git fetch
-git checkout 0af787ea6d42d6f9c16f952b46519ab94f356abb
+git checkout a75dd222709c92ae136d835ff2451391d5a88e45
 make clean
 make -j4 compare RGBDS=../../
 popd
