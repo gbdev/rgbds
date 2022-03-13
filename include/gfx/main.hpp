@@ -56,9 +56,9 @@ struct Options {
 	static constexpr uint8_t VERB_UNMAPPED = 5; // Unused so far
 	static constexpr uint8_t VERB_VVVVVV = 6; // What, can't I have a little fun?
 	format_(printf, 3, 4) void verbosePrint(uint8_t level, char const *fmt, ...) const;
-	uint8_t maxPalSize() const {
-		return nbColorsPerPal; // TODO: minus 1 when transparency is active
-	}
+
+	mutable bool hasTransparentPixels = false;
+	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
 };
 
 extern Options options;

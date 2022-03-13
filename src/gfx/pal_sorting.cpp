@@ -30,15 +30,15 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 		Palette &palette = palettes[0];
 		// Build our candidate array of colors
 		decltype(palette.colors) colors{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
-		for (int i = 0; i < options.maxPalSize(); ++i) {
-			colors[i] = pngToRgb(i).cgbColor();
+		for (int i = 0; i < options.maxOpaqueColors(); ++i) {
+			colors[i + options.hasTransparentPixels] = pngToRgb(i).cgbColor();
 		}
 
 		// Check that the palette only uses those colors
 		if (std::all_of(palette.begin(), palette.end(), [&colors](uint16_t color) {
 			    return std::find(colors.begin(), colors.end(), color) != colors.end();
 		    })) {
-			if (palette.size() != options.maxPalSize()) {
+			if (palette.size() != options.maxOpaqueColors()) {
 				warning("Unused color in PNG embedded palette was re-added; please use `-c "
 				        "embedded` to get this in future versions");
 			}

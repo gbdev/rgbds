@@ -543,17 +543,19 @@ uint8_t Palette::indexOf(uint16_t color) const {
 }
 
 auto Palette::begin() -> decltype(colors)::iterator {
-	return colors.begin();
+	// Skip the first slot if reserved for transparency
+	return colors.begin() + options.hasTransparentPixels;
 }
 auto Palette::end() -> decltype(colors)::iterator {
-	return std::find(colors.begin(), colors.end(), UINT16_MAX);
+	return std::find(begin(), colors.end(), UINT16_MAX);
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
-	return colors.begin();
+	// Skip the first slot if reserved for transparency
+	return colors.begin() + options.hasTransparentPixels;
 }
 auto Palette::end() const -> decltype(colors)::const_iterator {
-	return std::find(colors.begin(), colors.end(), UINT16_MAX);
+	return std::find(begin(), colors.end(), UINT16_MAX);
 }
 
 uint8_t Palette::size() const {

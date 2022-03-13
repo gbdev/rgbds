@@ -201,7 +201,7 @@ public:
 	bool canFit(ProtoPalette const &protoPal) const {
 		auto &colors = uniqueColors();
 		colors.insert(protoPal.begin(), protoPal.end());
-		return colors.size() <= options.maxPalSize();
+		return colors.size() <= options.maxOpaqueColors();
 	}
 
 	/**
@@ -275,7 +275,8 @@ static void decant(std::vector<AssignedProtos> &assignments,
 	// Decant on palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
 		// If the entire palettes can be merged, move all of `from`'s proto-palettes
-		if (to.combinedVolume(from.begin(), from.end(), protoPalettes) <= options.maxPalSize()) {
+		if (to.combinedVolume(from.begin(), from.end(), protoPalettes)
+		    <= options.maxOpaqueColors()) {
 			for (ProtoPalAttrs &attrs : from) {
 				to.assign(attrs.protoPalIndex);
 			}
@@ -321,7 +322,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 				++attrs;
 			} while (iter != processed.end());
 
-			if (to.combinedVolume(colors.begin(), colors.end()) <= options.maxPalSize()) {
+			if (to.combinedVolume(colors.begin(), colors.end()) <= options.maxOpaqueColors()) {
 				// Iterate through the component's proto-palettes, and transfer them
 				auto member = from.begin();
 				size_t curIndex = 0;
@@ -417,10 +418,10 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			bestPal.assign(std::move(attrs));
 
 			// If this overloads the palette, get it back to normal (if possible)
-			while (bestPal.volume() > options.maxPalSize()) {
+			while (bestPal.volume() > options.maxOpaqueColors()) {
 				options.verbosePrint(Options::VERB_DEBUG,
 				                     "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
-				                     bestPalIndex, bestPal.volume(), options.maxPalSize());
+				                     bestPalIndex, bestPal.volume(), options.maxOpaqueColors());
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
 				auto efficiency = [&bestPal](ProtoPalette const &pal) {
@@ -453,7 +454,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 	// Deal with palettes still overloaded, by emptying them
 	for (AssignedProtos &pal : assignments) {
-		if (pal.volume() > options.maxPalSize()) {
+		if (pal.volume() > options.maxOpaqueColors()) {
 			for (ProtoPalAttrs &attrs : pal) {
 				queue.emplace(std::move(attrs));
 			}
