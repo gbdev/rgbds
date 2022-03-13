@@ -41,6 +41,10 @@ public:
 	void registerColor(Rgba const &rgba) {
 		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
 
+		if (rgba.cgbColor() == Rgba::transparent) {
+			options.hasTransparentPixels = true;
+		}
+
 		if (!slot.has_value()) {
 			slot.emplace(rgba);
 		} else if (*slot != rgba) {
@@ -120,10 +124,10 @@ public:
 
 	bool isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
-		if (colors.size() > options.maxPalSize()) { // Apply the Pigeonhole Principle
+		if (colors.size() > options.maxOpaqueColors()) { // Apply the Pigeonhole Principle
 			options.verbosePrint(Options::VERB_DEBUG,
 			                     "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
-			                     colors.size(), options.maxPalSize());
+			                     colors.size(), options.maxOpaqueColors());
 			return false;
 		}
 		uint8_t bins = 0;
@@ -490,8 +494,8 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		assert(options.palSpec.size() == 1);
 		// TODO: abort if ignored colors are being used; do it now for a friendlier error
 		// message
-		if (embPalSize > options.maxPalSize()) { // Ignore extraneous colors if they are unused
-			embPalSize = options.maxPalSize();
+		if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
+			embPalSize = options.maxOpaqueColors();
 		}
 		for (int i = 0; i < embPalSize; ++i) {
 			options.palSpec[0][i] = Rgba(embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
@@ -503,7 +507,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	std::vector<Palette> palettes(options.palSpec.size());
 	auto palIter = palettes.begin(); // TODO: `zip`
 	for (auto const &spec : options.palSpec) {
-		for (size_t i = 0; i < options.maxPalSize(); ++i) {
+		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
 			(*palIter)[i] = spec[i].cgbColor();
 		}
 		++palIter;
@@ -532,7 +536,8 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	output.open(options.palettes, std::ios_base::out | std::ios_base::binary);
 
 	for (Palette const &palette : palettes) {
-		for (uint16_t color : palette) {
+		for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
+			uint16_t color = palette.colors[i]; // Will return `UINT16_MAX` for unused slots
 			output.sputc(color & 0xFF);
 			output.sputc(color >> 8);
 		}
