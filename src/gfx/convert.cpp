@@ -544,89 +544,6 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	}
 }
 
-namespace unoptimized {
-
-// TODO: this is very redundant with `TileData::TileData`; try merging both?
-static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
-                           std::vector<Palette> const &palettes,
-                           DefaultInitVec<size_t> const &mappings) {
-	std::filebuf output;
-	output.open(options.output, std::ios_base::out | std::ios_base::binary);
-
-	uint64_t remainingTiles = (png.getWidth() / 8) * (png.getHeight() / 8);
-	if (remainingTiles <= options.trim) {
-		return;
-	}
-	remainingTiles -= options.trim;
-
-	auto iter = attrmap.begin();
-	for (auto tile : png.visitAsTiles(options.columnMajor)) {
-		Palette const &palette = palettes[mappings[iter->protoPaletteID]];
-		for (uint32_t y = 0; y < 8; ++y) {
-			uint16_t row = 0;
-			for (uint32_t x = 0; x < 8; ++x) {
-				row <<= 1;
-				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
-				if (index & 1) {
-					row |= 0x001;
-				}
-				if (index & 2) {
-					row |= 0x100;
-				}
-			}
-			output.sputc(row & 0xFF);
-			if (options.bitDepth == 2) {
-				output.sputc(row >> 8);
-			}
-		}
-		++iter;
-
-		--remainingTiles;
-		if (remainingTiles == 0) {
-			break;
-		}
-	}
-	assert(remainingTiles == 0);
-	assert(iter + options.trim == attrmap.end());
-}
-
-static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
-                       DefaultInitVec<size_t> const &mappings) {
-	std::optional<std::filebuf> tilemapOutput, attrmapOutput;
-	if (!options.tilemap.empty()) {
-		tilemapOutput.emplace();
-		tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary);
-	}
-	if (!options.attrmap.empty()) {
-		attrmapOutput.emplace();
-		attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary);
-	}
-
-	uint8_t tileID = 0;
-	uint8_t bank = 0;
-	auto iter = attrmap.begin();
-	for ([[maybe_unused]] auto tile : png.visitAsTiles(options.columnMajor)) {
-		if (tileID == options.maxNbTiles[bank]) {
-			assert(bank == 0);
-			bank = 1;
-			tileID = 0;
-		}
-
-		if (tilemapOutput.has_value()) {
-			tilemapOutput->sputc(tileID + options.baseTileIDs[bank]);
-		}
-		if (attrmapOutput.has_value()) {
-			uint8_t palID = mappings[iter->protoPaletteID] & 7;
-			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
-			++iter;
-		}
-		++tileID;
-	}
-	assert(iter == attrmap.end());
-}
-
-} // namespace unoptimized
-
 static uint8_t flip(uint8_t byte) {
 	// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
 	byte = (byte & 0x0F) << 4 | (byte & 0xF0) >> 4;
@@ -648,20 +565,25 @@ public:
 	// of altering the element's hash, but the tile ID is not part of it.
 	mutable uint16_t tileID;
 
+	static uint16_t rowBitplanes(Png::TilesVisitor::Tile const & tile, Palette const &palette, uint32_t y) {
+			uint16_t row = 0;
+			for (uint32_t x = 0; x < 8; ++x) {
+				row <<= 1;
+				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
+				if (index & 1) {
+					row |= 1;
+				}
+				if (index & 2) {
+					row |= 0x100;
+				}
+			}
+			return row;
+	}
+
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
 		for (uint32_t y = 0; y < 8; ++y) {
-			uint16_t bitplanes = 0;
-			for (uint32_t x = 0; x < 8; ++x) {
-				bitplanes <<= 1;
-				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
-				if (index & 1) {
-					bitplanes |= 1;
-				}
-				if (index & 2) {
-					bitplanes |= 0x100;
-				}
-			}
+			uint16_t bitplanes = rowBitplanes(tile, palette, y);
 			_data[writeIndex++] = bitplanes & 0xFF;
 			if (options.bitDepth == 2) {
 				_data[writeIndex++] = bitplanes >> 8;
@@ -736,6 +658,79 @@ template<>
 struct std::hash<TileData> {
 	std::size_t operator()(TileData const &tile) const { return tile.hash(); }
 };
+
+namespace unoptimized {
+
+// TODO: this is very redundant with `TileData::TileData`; try merging both?
+static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
+                           std::vector<Palette> const &palettes,
+                           DefaultInitVec<size_t> const &mappings) {
+	std::filebuf output;
+	output.open(options.output, std::ios_base::out | std::ios_base::binary);
+
+	uint64_t remainingTiles = (png.getWidth() / 8) * (png.getHeight() / 8);
+	if (remainingTiles <= options.trim) {
+		return;
+	}
+	remainingTiles -= options.trim;
+
+	auto iter = attrmap.begin();
+	for (auto tile : png.visitAsTiles(options.columnMajor)) {
+		Palette const &palette = palettes[mappings[iter->protoPaletteID]];
+		for (uint32_t y = 0; y < 8; ++y) {
+			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
+			output.sputc(bitplanes & 0xFF);
+			if (options.bitDepth == 2) {
+				output.sputc(bitplanes >> 8);
+			}
+		}
+		++iter;
+
+		--remainingTiles;
+		if (remainingTiles == 0) {
+			break;
+		}
+	}
+	assert(remainingTiles == 0);
+	assert(iter + options.trim == attrmap.end());
+}
+
+static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
+                       DefaultInitVec<size_t> const &mappings) {
+	std::optional<std::filebuf> tilemapOutput, attrmapOutput;
+	if (!options.tilemap.empty()) {
+		tilemapOutput.emplace();
+		tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary);
+	}
+	if (!options.attrmap.empty()) {
+		attrmapOutput.emplace();
+		attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+	}
+
+	uint8_t tileID = 0;
+	uint8_t bank = 0;
+	auto iter = attrmap.begin();
+	for ([[maybe_unused]] auto tile : png.visitAsTiles(options.columnMajor)) {
+		if (tileID == options.maxNbTiles[bank]) {
+			assert(bank == 0);
+			bank = 1;
+			tileID = 0;
+		}
+
+		if (tilemapOutput.has_value()) {
+			tilemapOutput->sputc(tileID + options.baseTileIDs[bank]);
+		}
+		if (attrmapOutput.has_value()) {
+			uint8_t palID = mappings[iter->protoPaletteID] & 7;
+			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
+			++iter;
+		}
+		++tileID;
+	}
+	assert(iter == attrmap.end());
+}
+
+} // namespace unoptimized
 
 namespace optimized {
 
