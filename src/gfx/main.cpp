@@ -350,6 +350,11 @@ int main(int argc, char *argv[]) {
 			if (*arg != '\0') {
 				error("Palette size (-s) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
+			if (options.nbColorsPerPal > 4) {
+				error("Palette size (-s) argument must not exceed 4!");
+			} else if (options.nbColorsPerPal == 0) {
+				error("Palette size (-s) argument may not be 0!");
+			}
 			break;
 		case 'T':
 			autoTilemap = true;
