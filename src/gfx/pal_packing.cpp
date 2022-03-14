@@ -211,14 +211,14 @@ public:
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
 		double relSize = 0.;
 		for (uint16_t color : protoPal) {
+			auto n = std::count_if(begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
+				ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
+				return std::find(pal.begin(), pal.end(), color) != pal.end();
+			});
 			// NOTE: The paper and the associated code disagree on this: the code has
 			// this `1 +`, whereas the paper does not; its lack causes a division by 0
 			// if the symbol is not found anywhere, so I'm assuming the paper is wrong.
-			relSize +=
-			    1. / (1 + std::count_if(begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
-				          ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
-				          return std::find(pal.begin(), pal.end(), color) != pal.end();
-			          }));
+			relSize += 1. / (1 + n);
 		}
 		return relSize;
 	}

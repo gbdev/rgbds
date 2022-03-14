@@ -208,10 +208,12 @@ public:
 		png_get_IHDR(png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr,
 		             nullptr);
 
-		if (width % 8 != 0)
+		if (width % 8 != 0) {
 			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", width);
-		if (height % 8 != 0)
+		}
+		if (height % 8 != 0) {
 			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", height);
+		}
 
 		pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
@@ -277,18 +279,20 @@ public:
 			break;
 		}
 
-		// If we read a tRNS chunk, convert it to alpha
-		if (png_get_valid(png, info, PNG_INFO_tRNS))
+		if (png_get_valid(png, info, PNG_INFO_tRNS)) {
+			// If we read a tRNS chunk, convert it to alpha
 			png_set_tRNS_to_alpha(png);
-		// Otherwise, if we lack an alpha channel, default to full opacity
-		else if (!(colorType & PNG_COLOR_MASK_ALPHA))
+		} else if (!(colorType & PNG_COLOR_MASK_ALPHA)) {
+			// Otherwise, if we lack an alpha channel, default to full opacity
 			png_set_add_alpha(png, 0xFFFF, PNG_FILLER_AFTER);
+		}
 
 		// Scale 16bpp back to 8 (we don't need all of that precision anyway)
-		if (bitDepth == 16)
+		if (bitDepth == 16) {
 			png_set_scale_16(png);
-		else if (bitDepth < 8)
+		} else if (bitDepth < 8) {
 			png_set_packing(png);
+		}
 
 		// Set interlace handling (MUST be done before `png_read_update_info`)
 		int nbPasses = png_set_interlace_handling(png);
@@ -312,7 +316,6 @@ public:
 
 				for (png_uint_32 x = 0; x < width; ++x) {
 					Rgba rgba(row[x * 4], row[x * 4 + 1], row[x * 4 + 2], row[x * 4 + 3]);
-
 					colors.registerColor(rgba);
 					pixel(x, y) = rgba;
 				}
@@ -330,11 +333,10 @@ public:
 
 				for (png_uint_32 y = PNG_PASS_START_ROW(pass); y < height; y += yStep) {
 					png_bytep ptr = row.data();
-
 					png_read_row(png, ptr, nullptr);
+
 					for (png_uint_32 x = PNG_PASS_START_COL(pass); x < width; x += xStep) {
 						Rgba rgba(ptr[0], ptr[1], ptr[2], ptr[3]);
-
 						colors.registerColor(rgba);
 						pixel(x, y) = rgba;
 						ptr += 4;
@@ -377,7 +379,6 @@ public:
 			uint32_t const limit;
 			uint32_t x, y;
 
-		public:
 			std::pair<uint32_t, uint32_t> coords() const { return {x, y}; }
 			Tile operator*() const { return {parent._png, x, y}; }
 
@@ -388,7 +389,6 @@ public:
 					minor += 8;
 					major = 0;
 				}
-
 				return *this;
 			}
 
@@ -411,7 +411,6 @@ public:
 };
 
 class RawTiles {
-public:
 	/**
 	 * A tile which only contains indices into the image's global palette
 	 */
@@ -565,19 +564,20 @@ public:
 	// of altering the element's hash, but the tile ID is not part of it.
 	mutable uint16_t tileID;
 
-	static uint16_t rowBitplanes(Png::TilesVisitor::Tile const & tile, Palette const &palette, uint32_t y) {
-			uint16_t row = 0;
-			for (uint32_t x = 0; x < 8; ++x) {
-				row <<= 1;
-				uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
-				if (index & 1) {
-					row |= 1;
-				}
-				if (index & 2) {
-					row |= 0x100;
-				}
+	static uint16_t rowBitplanes(Png::TilesVisitor::Tile const &tile, Palette const &palette,
+	                             uint32_t y) {
+		uint16_t row = 0;
+		for (uint32_t x = 0; x < 8; ++x) {
+			row <<= 1;
+			uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
+			if (index & 1) {
+				row |= 1;
 			}
-			return row;
+			if (index & 2) {
+				row |= 0x100;
+			}
+		}
+		return row;
 	}
 
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
@@ -856,8 +856,7 @@ void process() {
 			if (!slot.has_value()) {
 				continue;
 			}
-			fprintf(stderr, "#%02x%02x%02x%02x%s", slot->red, slot->green, slot->blue, slot->alpha,
-			        i != colors.size() - 1 ? ", " : "");
+			fprintf(stderr, "#%08x%s", slot->toCSS(), i != colors.size() - 1 ? ", " : "");
 			++i;
 		}
 		fputs("]\n", stderr);
@@ -888,9 +887,9 @@ void process() {
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
 				/* The following code does its job, except that references to the removed
-				   proto-palettes are not updated, causing issues.
-				   TODO: overlap might not be detrimental to the packing algorithm.
-				   Investigation is necessary, especially if pathological cases are found.
+				 * proto-palettes are not updated, causing issues.
+				 * TODO: overlap might not be detrimental to the packing algorithm.
+				 * Investigation is necessary, especially if pathological cases are found.
 
 				for (size_t i = protoPalettes.size(); --i != n;) {
 				    if (tileColors.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
