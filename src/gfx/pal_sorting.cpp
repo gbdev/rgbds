@@ -10,8 +10,6 @@
 #include "gfx/convert.hpp"
 #include "gfx/main.hpp"
 
-using std::swap;
-
 namespace sorting {
 
 void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRGB,

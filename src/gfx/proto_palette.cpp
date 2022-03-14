@@ -22,7 +22,7 @@ bool ProtoPalette::add(uint16_t color) {
 	while (_colorIndices[i] < color) {
 		++i;
 		if (i == _colorIndices.size())
-			return false; // EOF
+			return false;
 	}
 	// If we found ourselves, great!
 	if (_colorIndices[i] == color)
@@ -51,7 +51,7 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 		} else if (*ours < *theirs) {
 			++ours;
 			theyBigger = false;
-		} else {
+		} else { // *ours > *theirs
 			++theirs;
 			weBigger = false;
 		}
