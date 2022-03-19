@@ -22,31 +22,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+FILE *rngRecorder; // File to which the random bytes will be read
 uint32_t randBits = 0; // Storage for bits read from the input stream but not yet used
 uint8_t randCount = 0; // How many bits are currently stored in the above
-size_t nbRandBytes = 0;
 
 static uint32_t getRandomBits(uint8_t count) {
-	// Trying to read one more byte with `randCount` at least this high will drop some bits
-	// If the count is no higher than that limit, then the loop will exit without reading more bytes
+	// Trying to read one more byte with `randCount` at least this high will drop some bits!
+	// If the count is no higher than that limit, then the loop is guaranteed to exit without
+	// reading more bytes.
 	assert(count <= sizeof(randBits) * 8 + 1);
 
 	// Read bytes until we have enough bits to serve the request
 	while (count > randCount) {
 		int data = getchar();
 		if (data == EOF) {
-			fprintf(stderr, "Exit after reading %zu bytes\n", nbRandBytes);
 			exit(0);
 		}
 		randBits |= (uint32_t)data << randCount;
 		randCount += 8;
-		++nbRandBytes;
+		fputc(data, rngRecorder);
 	}
 
 	uint32_t result = randBits & (((uint32_t)1 << count) - 1);
 	randBits >>= count;
 	randCount -= count;
 	return result;
+}
+
+/**
+ * Flush any remaining bits in the RNG storage
+ */
+static void flushRng(void) {
+	randCount = 0;
+	randBits = 0;
 }
 
 /**
@@ -203,10 +211,17 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	char filename[maxBasenameLen + 25];
+	char filename[maxBasenameLen + sizeof("65535.png")];
 	for (uint16_t i = 0;; i++) { // 65k images ought to be enough
 		for (int index = 1; index < argc; index++) {
-			sprintf(filename, "%s%" PRIu16 ".png", argv[index], i);
+			int len = sprintf(filename, "%s%" PRIu16 ".rng", argv[index], i);
+			rngRecorder = fopen(filename, "wb");
+			if (!rngRecorder) {
+				perror("RNG fopen");
+				return 1;
+			}
+
+			filename[len - 3] = 'p'; // `.rng` -> `.png`
 			FILE *img = fopen(filename, "wb");
 			if (!img) {
 				perror("PNG fopen");
@@ -227,10 +242,15 @@ int main(int argc, char **argv) {
 				return 1;
 			}
 
+			// Ensure that image generation starts on byte boundaries
+			// (This is necessary so that all involved random bits are recorded in the `.rng` file)
+			flushRng();
+
 			png_init_io(png, img);
 			generate_random_image(png, pngInfo);
 			png_destroy_write_struct(&png, &pngInfo);
 			fclose(img);
+			fclose(rngRecorder);
 		}
 
 		if (i == UINT16_MAX) {
