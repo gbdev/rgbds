@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gfx/convert.hpp"
+#include "gfx/process.hpp"
 
 #include <algorithm>
 #include <assert.h>
@@ -687,7 +687,8 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 	for (auto tile : png.visitAsTiles(options.columnMajor)) {
 		size_t protoPaletteID = iter->protoPaletteID;
 		// If the tile is fully transparent, default to palette 0
-		Palette const &palette = palettes[protoPaletteID != AttrmapEntry::transparent ? mappings[protoPaletteID] : 0];
+		Palette const &palette =
+		    palettes[protoPaletteID != AttrmapEntry::transparent ? mappings[protoPaletteID] : 0];
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			output.sputc(bitplanes & 0xFF);

@@ -70,10 +70,10 @@ set(rgbfix_src
     )
 
 set(rgbgfx_src
-    "gfx/convert.cpp"
     "gfx/main.cpp"
     "gfx/pal_packing.cpp"
     "gfx/pal_sorting.cpp"
+    "gfx/process.cpp"
     "gfx/proto_palette.cpp"
     "gfx/rgba.cpp"
     "extern/getopt.c"
