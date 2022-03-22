@@ -441,6 +441,8 @@ struct AttrmapEntry {
 	bool bank;
 	bool yFlip;
 	bool xFlip;
+
+	static constexpr decltype(protoPaletteID) transparent = SIZE_MAX;
 };
 
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
@@ -459,6 +461,13 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	}
 
 	std::vector<Palette> palettes(nbPalettes);
+	// If the image contains at least one transparent pixel, force transparency in the first slot of
+	// all palettes
+	if (options.hasTransparentPixels) {
+		for (Palette &pal : palettes) {
+			pal.colors[0] = Rgba::transparent;
+		}
+	}
 	// Generate the actual palettes from the mappings
 	for (size_t protoPalID = 0; protoPalID < mappings.size(); ++protoPalID) {
 		auto &pal = palettes[mappings[protoPalID]];
@@ -676,7 +685,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 
 	auto iter = attrmap.begin();
 	for (auto tile : png.visitAsTiles(options.columnMajor)) {
-		Palette const &palette = palettes[mappings[iter->protoPaletteID]];
+		size_t protoPaletteID = iter->protoPaletteID;
+		// If the tile is fully transparent, default to palette 0
+		Palette const &palette = palettes[protoPaletteID != AttrmapEntry::transparent ? mappings[protoPaletteID] : 0];
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			output.sputc(bitplanes & 0xFF);
@@ -843,7 +854,7 @@ void process() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
-	Png png(options.input);
+	Png png(options.input); // This also sets `hasTransparentPixels` as a side effect
 	ImagePalette const &colors = png.getColors();
 
 	// Now, we have all the image's colors in `colors`
@@ -851,13 +862,11 @@ void process() {
 
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fputs("Image colors: [ ", stderr);
-		size_t i = 0;
 		for (auto const &slot : colors) {
 			if (!slot.has_value()) {
 				continue;
 			}
-			fprintf(stderr, "#%08x%s", slot->toCSS(), i != colors.size() - 1 ? ", " : "");
-			++i;
+			fprintf(stderr, "#%08x, ", slot->toCSS());
 		}
 		fputs("]\n", stderr);
 	}
@@ -875,8 +884,17 @@ void process() {
 
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				tileColors.add(tile.pixel(x, y).cgbColor());
+				Rgba color = tile.pixel(x, y);
+				if (!color.isTransparent()) { // Do not count transparency in for packing
+					tileColors.add(color.cgbColor());
+				}
 			}
+		}
+
+		if (tileColors.empty()) {
+			// "Empty" proto-palettes screw with the packing process, so discard those
+			attrs.protoPaletteID = AttrmapEntry::transparent;
+			continue;
 		}
 
 		// Insert the proto-palette, making sure to avoid overlaps
@@ -909,12 +927,24 @@ void process() {
 			}
 		}
 		attrs.protoPaletteID = protoPalettes.size();
+		if (protoPalettes.size() == AttrmapEntry::transparent) {
+			abort(); // TODO: nice error message
+		}
 		protoPalettes.push_back(tileColors);
 contained:;
 	}
 
 	options.verbosePrint(Options::VERB_INTERM, "Image contains %zu proto-palette%s\n",
 	                     protoPalettes.size(), protoPalettes.size() != 1 ? "s" : "");
+	if (options.verbosity >= Options::VERB_INTERM) {
+		for (auto const &protoPal : protoPalettes) {
+			fputs("[ ", stderr);
+			for (uint16_t color : protoPal) {
+				fprintf(stderr, "$%04x, ", color);
+			}
+			fputs("]\n", stderr);
+		}
+	}
 
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
 	// We sort after all insertions to avoid moving items: https://stackoverflow.com/a/2710332
