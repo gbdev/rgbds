@@ -34,6 +34,7 @@ public:
 	ComparisonResult compare(ProtoPalette const &other) const;
 
 	size_t size() const;
+	bool empty() const;
 
 	decltype(_colorIndices)::const_iterator begin() const;
 	decltype(_colorIndices)::const_iterator end() const;

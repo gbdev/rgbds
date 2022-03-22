@@ -66,6 +66,10 @@ size_t ProtoPalette::size() const {
 	return std::distance(begin(), end());
 }
 
+bool ProtoPalette::empty() const {
+	return _colorIndices[0] == UINT16_MAX;
+}
+
 auto ProtoPalette::begin() const -> decltype(_colorIndices)::const_iterator {
 	return _colorIndices.begin();
 }
