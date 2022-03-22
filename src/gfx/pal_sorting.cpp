@@ -7,8 +7,8 @@
 
 #include "helpers.h"
 
-#include "gfx/convert.hpp"
 #include "gfx/main.hpp"
+#include "gfx/process.hpp"
 
 namespace sorting {
 

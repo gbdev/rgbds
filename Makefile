@@ -105,10 +105,10 @@ rgbfix_obj := \
 	src/error.o
 
 rgbgfx_obj := \
-	src/gfx/convert.o \
 	src/gfx/main.o \
 	src/gfx/pal_packing.o \
 	src/gfx/pal_sorting.o \
+	src/gfx/process.o \
 	src/gfx/proto_palette.o \
 	src/gfx/rgba.o \
 	src/extern/getopt.o \
