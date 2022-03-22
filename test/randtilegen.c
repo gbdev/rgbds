@@ -65,13 +65,13 @@ static uint8_t _5to8(uint8_t five) {
 }
 
 static void generate_random_image(png_structp png, png_infop pngInfo) {
-#define NB_TILES 100
+#define NB_TILES 10 * 10
 	struct {
 		unsigned char palette;
 		unsigned char nbColors;
 	} attributes[NB_TILES];
 	uint8_t tileData[NB_TILES][8][8];
-	// These two are in tiles, not pixels
+	// These two are in tiles, not pixels, and in range [3; 10], hence `NB_TILES` above
 	// Both width and height are 4-bit values, so nbTiles is 8-bit (OK!)
 	uint8_t const width = getRandomBits(3) + 3, height = getRandomBits(3) + 3,
 	              nbTiles = width * height;
@@ -86,6 +86,7 @@ static void generate_random_image(png_structp png, png_infop pngInfo) {
 		static uint8_t const popcount[] = {1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
 		                                   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4};
 		attributes[p].nbColors = popcount[pal - 1];
+		// Handle single-color tiles the simple way, without trying to pull more random bits
 		if (attributes[p].nbColors < 2) {
 			memset(tileData[p], 0, sizeof(tileData[p]));
 			continue;
@@ -104,6 +105,9 @@ static void generate_random_image(png_structp png, png_infop pngInfo) {
 				for (index = 0; total; index++) {
 					if (attributes[index].nbColors == attributes[p].nbColors) {
 						total--;
+					}
+					if (!total) {
+						index--;
 					}
 				}
 			} else {
