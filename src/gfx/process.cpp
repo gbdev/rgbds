@@ -552,14 +552,6 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	}
 }
 
-static uint8_t flip(uint8_t byte) {
-	// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
-	byte = (byte & 0x0F) << 4 | (byte & 0xF0) >> 4;
-	byte = (byte & 0x33) << 2 | (byte & 0xCC) >> 2;
-	byte = (byte & 0x55) << 1 | (byte & 0xAA) >> 1;
-	return byte;
-}
-
 class TileData {
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical

@@ -14,6 +14,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
+.Op Fl r Ar stride
 .Op Fl CfmuVZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
@@ -33,7 +34,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-program converts PNG images into data suitable for display on the Game Boy and Game Boy Color.
+program converts PNG images into data suitable for display on the Game Boy and Game Boy Color, or vice-versa.
 .Pp
 The main function of
 .Nm
@@ -214,6 +215,22 @@ Specify how many colors each palette contains, including the transparent one if 
 cannot be more than
 .Ql 1 << Ar depth
 .Pq see Fl d .
+.It Fl r Ar width , Fl Fl reverse Ar width
+Switches
+.Nm
+into
+.Dq Sy reverse
+mode.
+In this mode, instead of converting a PNG image into Game Boy data,
+.Nm
+will attempt to reverse the process, and render Game Boy data into an image.
+See
+.Sx REVERSE MODE
+below for details.
+.Pp
+.Ar width
+is the image's width, in tiles
+.Pq including any margins specified by Fl L .
 .It Fl t Ar tilemap , Fl Fl tilemap Ar tilemap
 Generate a file of tile indices.
 For each square of the input image, its corresponding tile map byte contains the index of the associated tile in the tile data file.
@@ -430,6 +447,46 @@ There is no padding between colors, nor between palettes; however, empty colors 
 TODO.
 .Ss Attrmap data
 TODO.
+.Sh REVERSE MODE
+.Nm
+can produce a PNG image from valid data.
+This may be useful for ripping graphics, recovering lost source images, etc.
+An important caveat on that last one, though: the conversion process is
+.Sy lossy
+both ways, so the
+.Do reversed Dc image won't be perfectly identical to the original\(embut it should be close to a Game Boy's output .
+.Pq Keep in mind that many of consoles output different colors, so there is no true reference rendering.
+.Pp
+When using reverse mode, make sure to pass the same flags that were given when generating the data, especially
+.Fl C , d , N , s , x ,
+and
+.Fl Z .
+.Do At-files Dc may help with this .
+.Nm
+will warn about any inconsistencies it detects.
+.Pp
+Files that are normally outputs
+.Pq Fl a , p , t
+become inputs, and
+.Ar file
+will be written to instead of read from, and thus needs not exist beforehand.
+Any of these inputs not passed is assumed to be some default:
+.Bl -column "attribute map"
+.It palettes Ta Unspecified palette data makes
+.Nm
+assume DMG (monochrome Game Boy) mode: a single palette of 4 grays.
+It is possible to pass palettes using
+.Fl c
+instead of
+.Fl p .
+.It tile data Ta Tile data must be provided, as there is no reasonable assumption to fall back on.
+.It tile map Ta A missing tile map makes
+.Nm
+assume that tiles were not deduplicated, and should be laid out in the order they are stored.
+.It attribute map Ta Without an attribute map,
+.Nm
+assumes that no tiles were mirrored.
+.El
 .Sh NOTES
 Some flags have had their functionality removed.
 .Fl D

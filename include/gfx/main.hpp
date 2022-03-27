@@ -20,6 +20,9 @@
 #include "gfx/rgba.hpp"
 
 struct Options {
+	uint8_t reversedWidth = 0; // -r, in pixels
+	bool reverse() const { return reversedWidth != 0; }
+
 	bool useColorCurve = false; // -C
 	bool fixInput = false; // -f
 	bool allowMirroring = false; // -m
@@ -36,7 +39,7 @@ struct Options {
 	} palSpecType = NO_SPEC; // -c
 	std::vector<std::array<Rgba, 4>> palSpec{};
 	uint8_t bitDepth = 2; // -d
-	std::array<uint32_t, 4> inputSlice{0, 0, 0, 0}; // -L
+	std::array<uint32_t, 4> inputSlice{0, 0, 0, 0}; // -L (margins in clockwise order, like CSS)
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
 	uint8_t nbPalettes = 8; // -n
 	std::string output{}; // -o
@@ -83,5 +86,13 @@ struct Palette {
 
 	uint8_t size() const;
 };
+
+static constexpr uint8_t flip(uint8_t byte) {
+	// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
+	byte = (byte & 0b0000'1111) << 4 | (byte & 0b1111'0000) >> 4;
+	byte = (byte & 0b0011'0011) << 2 | (byte & 0b1100'1100) >> 2;
+	byte = (byte & 0b0101'0101) << 1 | (byte & 0b1010'1010) >> 1;
+	return byte;
+}
 
 #endif /* RGBDS_GFX_MAIN_HPP */

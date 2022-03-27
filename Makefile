@@ -110,6 +110,7 @@ rgbgfx_obj := \
 	src/gfx/pal_sorting.o \
 	src/gfx/process.o \
 	src/gfx/proto_palette.o \
+	src/gfx/reverse.o \
 	src/gfx/rgba.o \
 	src/extern/getopt.o \
 	src/error.o

@@ -27,6 +27,7 @@
 #include "version.h"
 
 #include "gfx/process.hpp"
+#include "gfx/reverse.hpp"
 
 using namespace std::literals::string_view_literals;
 
@@ -83,7 +84,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:r:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -113,6 +114,7 @@ static struct option const longopts[] = {
     {"output",          required_argument, NULL, 'o'},
     {"output-palette",  no_argument,       NULL, 'P'},
     {"palette",         required_argument, NULL, 'p'},
+    {"reverse",         required_argument, NULL, 'r'},
     {"output-tilemap",  no_argument,       NULL, 'T'},
     {"tilemap",         required_argument, NULL, 't'},
     {"unit-size",       required_argument, NULL, 'U'},
@@ -125,7 +127,7 @@ static struct option const longopts[] = {
 };
 
 static void printUsage(void) {
-	fputs("Usage: rgbgfx [-CfmuVZ] [-v [-v ...]] [-a <attr_map> | -A] [-b base_ids]\n"
+	fputs("Usage: rgbgfx [-r] [-CfmuVZ] [-v [-v ...]] [-a <attr_map> | -A] [-b base_ids]\n"
 	      "       [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles] [-n nb_pals]\n"
 	      "	      [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors] [-t <tile_map> | -T]\n"
 	      "	      [-U unit_size] [-x <tiles>] <file>\n"
@@ -430,6 +432,14 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'n':
 			options.nbPalettes = parseNumber(arg, "Number of palettes", 8);
+			if (*arg != '\0') {
+				error("Number of palettes (-n) must be a valid number, not \"%s\"", musl_optarg);
+			}
+			if (options.nbPalettes > 8) {
+				error("Number of palettes (-n) must not exceed 8!");
+			} else if (options.nbPalettes == 0) {
+				error("Number of palettes (-n) may not be 0!");
+			}
 			break;
 		case 'o':
 			options.output = musl_optarg;
@@ -441,15 +451,24 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			autoPalettes = false;
 			options.palettes = musl_optarg;
 			break;
+		case 'r':
+			options.reversedWidth = parseNumber(arg, "Reversed image stride");
+			if (*arg != '\0') {
+				error("Reversed image stride (-r) must be a valid number, not \"%s\"", musl_optarg);
+			}
+			if (options.reversedWidth == 0) {
+				error("Reversed image stride (-r) may not be 0!");
+			}
+			break;
 		case 's':
 			options.nbColorsPerPal = parseNumber(arg, "Number of colors per palette", 4);
 			if (*arg != '\0') {
-				error("Palette size (-s) argument must be a valid number, not \"%s\"", musl_optarg);
+				error("Palette size (-s) must be a valid number, not \"%s\"", musl_optarg);
 			}
 			if (options.nbColorsPerPal > 4) {
-				error("Palette size (-s) argument must not exceed 4!");
+				error("Palette size (-s) must not exceed 4!");
 			} else if (options.nbColorsPerPal == 0) {
-				error("Palette size (-s) argument may not be 0!");
+				error("Palette size (-s) may not be 0!");
 			}
 			break;
 		case 'T':
@@ -678,7 +697,11 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	process();
+	if (options.reverse()) {
+		reverse();
+	} else {
+		process();
+	}
 
 	return 0;
 }
