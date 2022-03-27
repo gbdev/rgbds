@@ -72,7 +72,6 @@ All of these are equivalent:
 .Ql 0x2a .
 .Pp
 TODO: add "palette map" output.
-TODO: implement "at-files", and document them.
 .Pp
 The following options are accepted:
 .Bl -tag -width Ds
@@ -302,6 +301,51 @@ limit.
 Read squares from the PNG in column-major order (column by column), instead of the default row-major order (line by line).
 This primarily affects tile map and attribute map output, although it may also change generated tile data and palettes.
 .El
+.Ss At-files
+In a given project, many images are to be converted with different flags.
+The traditional way of solving this problem has been to specify the different flags for each image in the Makefile / build script; this can be inconvenient, as it centralizes all those flags away from the images they concern.
+.Pp
+To avoid these drawbacks,
+.Nm
+supports
+.Dq at-files :
+any command-line argument that begins with an at sign
+.Pq Ql @
+is interpreted as one.
+The rest of the argument (without the @, that is) is interpreted as the path to a file, whose contents are interpreted as if given on the command line.
+At-files can be stored right next to the corresponding image, for example.
+.Pp
+Since the contents of at-files are interpreted by
+.Nm ,
+.Sy no shell processing is performed ;
+for example, shell variables are not expanded
+.Ql ( $PWD ,
+.Ql %WINDIR% ,
+etc.).
+In at-files, lines that are empty or contain only whitespace are ignored; lines that begin with a hash sign
+.Pq Ql # ,
+optionally preceded by whitespace, are considered comments and also ignored.
+Each line can contain any number of arguments, which are separated by whitespace.
+.Pq \&No quoting feature to prevent this is provided.
+.Pp
+Note that this special meaning given to arguments has less precedence than option arguments, and that the standard
+.Ql --
+to stop option processing also disables at-file processing.
+For example, the following command line processes
+.Ql @tilesets/town.png ,
+outputs tile data to
+.Ql @tilesets/town.2bpp ,
+and reads command-line options from
+.Ql tilesets/town.flags
+then
+.Ql tilesets.flags :
+.Pp
+.Dl $ rgbgfx -o @tilesets/town.2bpp @tilesets/town.flags @tilesets.flags -- @tilesets/town.png
+.Pp
+At-files can also specify the input image directly, and call for more at-files, both using the regular syntax.
+Note that while
+.Ql --
+can be used in an at-file (with identical semantics), it is only effective inside of it\(emnormal option processing continues in the parent scope.
 .Sh PALETTE SPECIFICATION FORMATS
 TODO.
 .Sh PALETTE GENERATION
