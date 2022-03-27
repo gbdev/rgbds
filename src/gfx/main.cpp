@@ -12,6 +12,8 @@
 #include <assert.h>
 #include <cinttypes>
 #include <ctype.h>
+#include <fstream>
+#include <ios>
 #include <limits>
 #include <numeric>
 #include <stdarg.h>
@@ -81,7 +83,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -233,9 +235,103 @@ static void parsePaletteSpec(char const *arg) {
 	}
 }
 
-int main(int argc, char *argv[]) {
+static void registerInput(char const *arg) {
+	if (!options.input.empty()) {
+		fprintf(stderr,
+		        "FATAL: input image specified more than once! (first \"%s\", then "
+		        "\"%s\")\n",
+		        options.input.c_str(), arg);
+		printUsage();
+		exit(1);
+	} else if (arg[0] == '\0') { // Empty input path
+		fprintf(stderr, "FATAL: input image path cannot be empty!\n");
+		printUsage();
+		exit(1);
+	} else {
+		options.input = arg;
+	}
+}
+
+/**
+ * Turn an "at-file"'s contents into an argv that `getopt` can handle
+ * @param argPool Argument characters will be appended to this vector, for storage purposes.
+ */
+static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
+	std::filebuf file;
+	file.open(path, std::ios_base::in);
+
+	static_assert(decltype(file)::traits_type::eof() == EOF,
+	              "isblank(char_traits<...>::eof()) is UB!");
+	std::vector<size_t> argvOfs;
+
+	for (;;) {
+		int c;
+
+		// First, discard any leading whitespace
+		do {
+			c = file.sbumpc();
+			if (c == EOF) {
+				return argvOfs;
+			}
+		} while (isblank(c));
+
+		switch (c) {
+		case '#': // If it's a comment, discard everything until EOL
+			while ((c = file.sbumpc()) != '\n') {
+				if (c == EOF) {
+					return argvOfs;
+				}
+			}
+			continue; // Start processing the next line
+		// If it's an empty line, ignore it
+		case '\r': // Assuming CRLF here
+			file.sbumpc(); // Discard the upcoming '\n'
+			[[fallthrough]];
+		case '\n':
+			continue; // Start processing the next line
+		}
+
+		// Alright, now we can parse the line
+		do {
+			// Read one argument (until the next whitespace char).
+			// We know there is one because we already have its first character in `c`.
+			argvOfs.push_back(argPool.size());
+			// Reading and appending characters one at a time may be inefficient, but I'm counting
+			// on `vector` and `sbumpc` to do the right thing here.
+			argPool.push_back(c); // Push the character we've already read
+			for (;;) {
+				c = file.sbumpc();
+				if (isblank(c) || c == '\n' || c == EOF) {
+					break;
+				} else if (c == '\r') {
+					file.sbumpc(); // Discard the '\n'
+					break;
+				}
+				argPool.push_back(c);
+			}
+			argPool.push_back('\0');
+
+			// Discard whitespace until the next argument (candidate)
+			while (isblank(c)) {
+				c = file.sbumpc();
+			}
+			if (c == '\r') {
+				c = file.sbumpc(); // Skip the '\n'
+			}
+		} while (c != '\n' && c != EOF); // End if we reached EOL
+	}
+}
+/**
+ * Parses an arg vector, modifying `options` as options are read.
+ * The three booleans are for the "auto path" flags, since their processing must be deferred to the
+ * end of option parsing.
+ *
+ * Returns NULL if the vector was fully parsed, or a pointer (which is part of the arg vector) to an
+ * "at-file" path if one is encountered.
+ */
+static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilemap,
+                       bool &autoPalettes) {
 	int opt;
-	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false;
 
 	while ((opt = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1) {
 		char *arg = musl_optarg; // Make a copy for scanning
@@ -383,9 +479,82 @@ int main(int argc, char *argv[]) {
 		case 'Z':
 			options.columnMajor = true;
 			break;
+		case 1: // Positional argument, requested by leading `-` in opt string
+			if (musl_optarg[0] == '@') {
+				// Instruct the caller to process that at-file
+				return &musl_optarg[1];
+			} else {
+				registerInput(musl_optarg);
+			}
+			break;
 		default:
 			printUsage();
 			exit(1);
+		}
+	}
+
+	return nullptr; // Done processing this argv
+}
+
+int main(int argc, char *argv[]) {
+	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false;
+
+	struct AtFileStackEntry {
+		int parentInd; // Saved offset into parent argv
+		std::vector<char *> argv; // This context's arg pointer vec
+		std::vector<char> argPool;
+
+		AtFileStackEntry(int parentInd_, std::vector<char *> argv_)
+		    : parentInd(parentInd_), argv(argv_) {}
+	};
+	std::vector<AtFileStackEntry> atFileStack;
+
+	int curArgc = argc;
+	char **curArgv = argv;
+	for (;;) {
+		char *atFileName = parseArgv(curArgc, curArgv, autoAttrmap, autoTilemap, autoPalettes);
+		if (atFileName) {
+			// Copy `argv[0]` for error reporting, and because option parsing skips it
+			AtFileStackEntry &stackEntry =
+			    atFileStack.emplace_back(musl_optind, std::vector{atFileName});
+			// It would be nice to compute the char pointers on the fly, but reallocs don't allow
+			// that; so we must compute the offsets after the pool is fixed
+			auto offsets = readAtFile(&musl_optarg[1], stackEntry.argPool);
+			stackEntry.argv.reserve(offsets.size() + 2); // Avoid a bunch of reallocs
+			for (size_t ofs : offsets) {
+				stackEntry.argv.push_back(&stackEntry.argPool.data()[ofs]);
+			}
+			stackEntry.argv.push_back(nullptr); // Don't forget the arg vector terminator!
+
+			curArgc = stackEntry.argv.size() - 1;
+			curArgv = stackEntry.argv.data();
+			musl_optind = 1; // Don't use 0 because we're not scanning a different argv per se
+			continue; // Begin scanning that arg vector
+		}
+
+		if (musl_optind != curArgc) {
+			// This happens if `--` is passed, process the remaining arg(s) as positional
+			assert(musl_optind < curArgc);
+			for (int i = musl_optind; i < curArgc; ++i) {
+				registerInput(argv[i]);
+			}
+		}
+
+		// Pop off the top stack entry, or end parsing if none
+		if (atFileStack.empty()) {
+			break;
+		}
+		// OK to restore `optind` directly, because `optpos` must be 0 right now.
+		// (Providing 0 would be a "proper" reset, but we want to resume parsing)
+		musl_optind = atFileStack.back().parentInd;
+		atFileStack.pop_back();
+		if (atFileStack.empty()) {
+			curArgc = argc;
+			curArgv = argv;
+		} else {
+			auto &vec = atFileStack.back().argv;
+			curArgc = vec.size();
+			curArgv = vec.data();
 		}
 	}
 
@@ -395,18 +564,6 @@ int main(int argc, char *argv[]) {
 		error("%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8, options.bitDepth,
 		      1u << options.bitDepth, options.nbColorsPerPal);
 	}
-
-	if (musl_optind == argc) {
-		fputs("FATAL: No input image specified\n", stderr);
-		printUsage();
-		exit(1);
-	} else if (argc - musl_optind != 1) {
-		fprintf(stderr, "FATAL: %d input images were specified instead of 1\n", argc - musl_optind);
-		printUsage();
-		exit(1);
-	}
-
-	options.input = argv[argc - 1];
 
 	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
 		if (autoOptEnabled) {
