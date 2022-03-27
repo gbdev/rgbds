@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "helpers.h"
+
 FILE *rngRecorder; // File to which the random bytes will be read
 uint32_t randBits = 0; // Storage for bits read from the input stream but not yet used
 uint8_t randCount = 0; // How many bits are currently stored in the above
@@ -64,12 +66,48 @@ static uint8_t _5to8(uint8_t five) {
 	return five << 3 | five >> 2;
 }
 
-static void generate_random_image(png_structp png, png_infop pngInfo) {
+struct Attribute {
+	unsigned char palette;
+	unsigned char nbColors;
+};
 #define NB_TILES 10 * 10
-	struct {
-		unsigned char palette;
-		unsigned char nbColors;
-	} attributes[NB_TILES];
+
+static void writePng(png_structp png, png_infop pngInfo, uint8_t width, uint8_t height, uint16_t palettes[][4], struct Attribute const *attributes, uint8_t tileData[][8][8]) {
+	uint8_t const nbTiles = width * height;
+	
+	png_set_IHDR(png, pngInfo, width * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+	             getRandomBits(1) ? PNG_INTERLACE_NONE : PNG_INTERLACE_ADAM7,
+	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+	// While it would be nice to write the image little by little, I really don't want to handle
+	// interlacing myself. (We're doing interlacing to test that RGBGFX correctly handles it.)
+	uint8_t const SIZEOF_PIXEL = 4; // Each pixel is 4 bytes (RGBA @ 8 bits/component)
+	uint8_t data[height * 8 * width * 8 * SIZEOF_PIXEL];
+	uint8_t *rowPtrs[height * 8];
+	for (uint8_t y = 0; y < height * 8; ++y) {
+		rowPtrs[y] = &data[y * width * 8 * SIZEOF_PIXEL];
+	}
+
+	for (uint8_t p = 0; p < nbTiles; p++) {
+		uint8_t tx = 8 * (p % width), ty = 8 * (p / width);
+		for (uint8_t y = 0; y < 8; y++) {
+			uint8_t * const row = rowPtrs[ty + y];
+			for (uint8_t x = 0; x < 8; x++) {
+				uint8_t * const pixel = &row[(tx + x) * SIZEOF_PIXEL];
+				uint16_t color = palettes[attributes[p].palette][tileData[p][y][x]];
+				pixel[0] = _5to8(color & 0x1F);
+				pixel[1] = _5to8(color >> 5 & 0x1F);
+				pixel[2] = _5to8(color >> 10 & 0x1F);
+				pixel[3] = color & 0x8000 ? 0x00 : 0xFF;
+			}
+		}
+	}
+	png_set_rows(png, pngInfo, rowPtrs);
+	png_write_png(png, pngInfo, PNG_TRANSFORM_IDENTITY, NULL);
+}
+
+static void generate_random_image(png_structp png, png_infop pngInfo) {
+	struct Attribute attributes[NB_TILES];
 	uint8_t tileData[NB_TILES][8][8];
 	// These two are in tiles, not pixels, and in range [3; 10], hence `NB_TILES` above
 	// Both width and height are 4-bit values, so nbTiles is 8-bit (OK!)
@@ -124,24 +162,28 @@ static void generate_random_image(png_structp png, png_infop pngInfo) {
 			}
 		} else {
 			switch (attributes[p].nbColors) {
-			case 2:
+			case 2: // Two-color tiles only need one random bit per pixel
 				for (uint8_t y = 0; y < 8; y++)
 					for (uint8_t x = 0; x < 8; x++)
 						tileData[p][y][x] = getRandomBits(1);
 				break;
-			case 4:
+			case 4: // 4-color tiles can use two random bits per pixel
 				for (uint8_t y = 0; y < 8; y++)
 					for (uint8_t x = 0; x < 8; x++)
 						tileData[p][y][x] = getRandomBits(2);
 				break;
-			default:
-				for (uint8_t y = 0; y < 8; y++)
+			case 3: // 3-color tiles must draw two random bits, but reject them if out of range
+				for (uint8_t y = 0; y < 8; y++) {
 					for (uint8_t x = 0; x < 8; x++) {
 						do {
 							index = getRandomBits(2);
 						} while (index == 3);
 						tileData[p][y][x] = index;
 					}
+				}
+				break;
+			default: // 1-color tiles were handled earlier
+				unreachable_();
 			}
 		}
 	}
@@ -158,10 +200,7 @@ static void generate_random_image(png_structp png, png_infop pngInfo) {
 
 	uint16_t palettes[60][4];
 	for (uint8_t p = 0; p < 60; p++) {
-		const uint16_t *subpal = colors;
-		if (p & 1) {
-			subpal += 5;
-		}
+		uint16_t const *subpal = &colors[p & 1 ? 5 : 0];
 		uint8_t total = 0;
 		for (uint8_t index = 0; index < 5; index++) {
 			if (p & (2 << index)) {
@@ -170,35 +209,7 @@ static void generate_random_image(png_structp png, png_infop pngInfo) {
 		}
 	}
 
-	png_set_IHDR(png, pngInfo, width * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
-	             getRandomBits(1) ? PNG_INTERLACE_NONE : PNG_INTERLACE_ADAM7,
-	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-
-	// While it would be nice to write the image little by little, I really don't want to handle
-	// interlacing myself. (We're doing interlacing to test that RGBGFX correctly handles it.)
-	uint8_t const SIZEOF_PIXEL = 4; // Each pixel is 4 bytes (RGBA @ 8 bits/component)
-	uint8_t data[height * 8 * width * 8 * SIZEOF_PIXEL];
-	uint8_t *rowPtrs[height * 8];
-	for (uint8_t y = 0; y < height * 8; ++y) {
-		rowPtrs[y] = &data[y * width * 8 * SIZEOF_PIXEL];
-	}
-
-	for (uint8_t p = 0; p < nbTiles; p++) {
-		uint8_t tx = 8 * (p % width), ty = 8 * (p / width);
-		for (uint8_t y = 0; y < 8; y++) {
-			uint8_t * const row = rowPtrs[ty + y];
-			for (uint8_t x = 0; x < 8; x++) {
-				uint8_t * const pixel = &row[(tx + x) * SIZEOF_PIXEL];
-				uint16_t color = palettes[attributes[p].palette][tileData[p][y][x]];
-				pixel[0] = _5to8(color & 0x1F);
-				pixel[1] = _5to8(color >> 5 & 0x1F);
-				pixel[2] = _5to8(color >> 10 & 0x1F);
-				pixel[3] = color & 0x8000 ? 0x00 : 0xFF;
-			}
-		}
-	}
-	png_set_rows(png, pngInfo, rowPtrs);
-	png_write_png(png, pngInfo, PNG_TRANSFORM_IDENTITY, NULL);
+	writePng(png, pngInfo, width, height, palettes, attributes, tileData);
 }
 
 int main(int argc, char **argv) {
