@@ -73,9 +73,9 @@ jobs:
       - name: Get zlib, libpng and bison
         run: | # TODO: use an array
           $wc = New-Object System.Net.WebClient
-          $wc.DownloadFile('https://www.zlib.net/zlib1211.zip', 'zlib.zip')
+          $wc.DownloadFile('https://www.zlib.net/zlib1212.zip', 'zlib.zip')
           $hash = (Get-FileHash "zlib.zip" -Algorithm SHA256).Hash
-          if ($hash -ne 'd7510a8ee1918b7d0cad197a089c0a2cd4d6df05fee22389f67f115e738b178d') {
+          if ($hash -ne '173e89893dcb8b4a150d7731cd72f0602f1d6b45e60e2a54efdf7f3fc3325fd7') {
             Write-Host "zlib SHA256 mismatch! ($hash)"
             exit 1
           }
@@ -93,7 +93,7 @@ jobs:
           Expand-Archive -DestinationPath .           "zlib.zip"
           Expand-Archive -DestinationPath .           "libpng.zip"
           Expand-Archive -DestinationPath install_dir "winflexbison.zip"
-          Move-Item zlib-1.2.11 zlib
+          Move-Item zlib-1.2.12 zlib
           Move-Item lpng1637 libpng
       - name: Build zlib
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
