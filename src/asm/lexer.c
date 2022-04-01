@@ -148,24 +148,29 @@ static struct KeywordMapping {
 	{"NZ", T_CC_NZ},
 	{"Z", T_CC_Z},
 	{"NC", T_CC_NC},
-	/* Handled after as T_TOKEN_C */
-	/* { "C", T_CC_C }, */
+	{"C", T_CC_C},
 
-	{"AF", T_MODE_AF},
-	{"BC", T_MODE_BC},
-	{"DE", T_MODE_DE},
-	{"HL", T_MODE_HL},
+	{"•̀A•́)𝓕𝓾𝓬𝓴", T_MODE_AF},
+	// {"BC", T_MODE_BC},
+	// {"DE", T_MODE_DE},
+	{"н∠(", T_MODE_HL_START},
 	{"SP", T_MODE_SP},
-	{"HLD", T_MODE_HL_DEC},
-	{"HLI", T_MODE_HL_INC},
+	{"н∠( ᐛ 」∠)＿👁", T_MODE_HL_DEC},
+	{"н∠( ᐛ 」∠)＿👎", T_MODE_HL_INC},
 
-	{"A", T_TOKEN_A},
-	{"B", T_TOKEN_B},
-	{"C", T_TOKEN_C},
-	{"D", T_TOKEN_D},
-	{"E", T_TOKEN_E},
-	{"H", T_TOKEN_H},
-	{"L", T_TOKEN_L},
+	// HACK: normally this is surrounded by parens, but this is annoying to special-case,
+	// so we use cooperation from the parser.
+	{"•̀A•́", T_TOKEN_A},
+	// {"=B", T_TOKEN_B}, HACK: This begins with a non-identifier character, so we'll cheat
+	{"♥(˘⌣˘", T_TOKEN_C}, // HACK: same for "C" after the space & closing paren
+	// {";D", T_TOKEN_D}, HACK: also needs to be special-cased. God I feel dirty.
+	{"(´ε｀", T_TOKEN_E},
+	{"♡", T_TOKEN_E_HEART},
+	{"н", T_TOKEN_H},
+	{"∠(", T_TOKEN_L_ARM},
+	{"ᐛ", T_TOKEN_L_FACE},
+	{"」∠", T_TOKEN_L_BODY},
+	{"＿", T_TOKEN_L_LEG},
 
 	{"DEF", T_OP_DEF},
 
@@ -578,16 +583,16 @@ struct KeywordDictNode {
 	 * In turn, this allows greatly simplifying checking an index into this array,
 	 * which should help speed up the lexer.
 	 */
-	uint16_t children[0x60 - ' '];
+	uint16_t children[256]; // HACK: we "support" UTF-8 as input now
 	struct KeywordMapping const *keyword;
 /* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[365] = {0}; /* Make sure to keep this correct when adding keywords! */
+} keywordDict[690] = {0}; /* Nice */
 
 /* Convert a char into its index into the dict */
 static uint8_t dictIndex(char c)
 {
 	/* Translate uppercase to lowercase (roughly) */
-	if (c > 0x60)
+	if (c > 0x60 && c < 0x80)
 		c = c - ('a' - 'A');
 	return c - ' ';
 }
@@ -609,8 +614,9 @@ void lexer_Init(void)
 
 		/* Walk the dictionary, creating intermediate nodes for the keyword */
 		for (char const *ptr = keywords[i].name; *ptr; ptr++) {
+			unsigned char index = (unsigned char)*ptr - ' ';
 			/* We should be able to assume all entries are well-formed */
-			if (keywordDict[nodeID].children[*ptr - ' '] == 0) {
+			if (keywordDict[nodeID].children[index] == 0) {
 				/*
 				 * If this gets tripped up, set the size of keywordDict to
 				 * something high, compile with `-DPRINT_NODE_COUNT` (see below),
@@ -619,10 +625,10 @@ void lexer_Init(void)
 				assert(usedNodes < sizeof(keywordDict) / sizeof(*keywordDict));
 
 				/* There is no node at that location, grab one from the pool */
-				keywordDict[nodeID].children[*ptr - ' '] = usedNodes;
+				keywordDict[nodeID].children[index] = usedNodes;
 				usedNodes++;
 			}
-			nodeID = keywordDict[nodeID].children[*ptr - ' '];
+			nodeID = keywordDict[nodeID].children[index];
 		}
 
 		/* This assumes that no two keywords have the same name */
@@ -1289,11 +1295,15 @@ static uint32_t readGfxConstant(void)
 static bool startsIdentifier(int c)
 {
 	// Anonymous labels internally start with '!'
-	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
+	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_' || c >= 0x80 || c == '(';
 }
 
 static bool continuesIdentifier(int c)
 {
+	// April Fools HACK: allow UTF-8 :D
+	// This would normally be quite unsafe (hello, RTL control codes?),
+	// but since this is for a joke I'll also make the code a joke
+	// Also, hi if you're reading this!
 	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
 }
 
@@ -1774,6 +1784,10 @@ static int yylex_NORMAL(void)
 		/* Ignore whitespace and comments */
 
 		case ';':
+			if (peek() == 'D') {
+				shiftChar();
+				return T_TOKEN_D;
+			}
 			discardComment();
 			/* fallthrough */
 		case ' ':
@@ -1794,8 +1808,6 @@ static int yylex_NORMAL(void)
 			return T_LBRACK;
 		case ']':
 			return T_RBRACK;
-		case '(':
-			return T_LPAREN;
 		case ')':
 			return T_RPAREN;
 		case ',':
@@ -1863,9 +1875,14 @@ static int yylex_NORMAL(void)
 			return T_OP_XOR;
 
 		case '=': /* Either assignment or EQ */
-			if (peek() == '=') {
+			switch (peek()) {
+			case '=':
 				shiftChar();
 				return T_OP_LOGICEQU;
+			case 'b':
+			case 'B':
+				shiftChar();
+				return T_TOKEN_B;
 			}
 			return T_POP_EQUAL;
 
@@ -2003,6 +2020,12 @@ static int yylex_NORMAL(void)
 			break;
 
 		/* Handle identifiers... or report garbage characters */
+
+		case '(':
+			if (peek() != (unsigned char)"´"[0]) {
+				return T_LPAREN;
+			}
+			// fallthrough
 
 		default:
 			if (startsIdentifier(c)) {

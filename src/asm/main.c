@@ -142,6 +142,9 @@ static void print_usage(void)
 
 int main(int argc, char *argv[])
 {
+	#if YYDEBUG
+	yydebug = 1;
+	#endif
 	int ch;
 	char *ep;
 

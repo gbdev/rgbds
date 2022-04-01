@@ -664,13 +664,13 @@ enum {
 %token	T_Z80_SWAP "swap"
 %token	T_Z80_XOR "xor"
 
-%token	T_TOKEN_A "a"
-%token	T_TOKEN_B "b" T_TOKEN_C "c"
-%token	T_TOKEN_D "d" T_TOKEN_E "e"
-%token	T_TOKEN_H "h" T_TOKEN_L "l"
-%token	T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp"
-%token	T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
-%token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
+%token	T_TOKEN_A "( •̀A•́)" T_TOKEN_F "𝓕𝓾𝓬𝓴"
+%token	T_TOKEN_B "=B" T_TOKEN_C "♥(˘⌣˘ C)"
+%token	T_TOKEN_D ";D" T_TOKEN_E "(´ε｀ )♡" T_TOKEN_E_HEART "(´ε｀ )♡"
+%token	T_TOKEN_H "н" T_TOKEN_L_ARM "∠( ᐛ 」∠)＿" T_TOKEN_L_FACE "∠( ᐛ 」∠)＿" T_TOKEN_L_BODY "∠( ᐛ 」∠)＿" T_TOKEN_L_LEG "∠( ᐛ 」∠)＿"
+%token	T_MODE_AF "af" /* T_MODE_BC "bc" T_MODE_DE "de" */ T_MODE_SP "sp"
+%token	T_MODE_HL_START "н∠( ᐛ 」∠)＿" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
+%token	T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" T_CC_C "c"
 
 %type	<constValue>	reg_r
 %type	<constValue>	reg_ss
@@ -2177,7 +2177,7 @@ op_a_n		: reloc_8bit
 		| T_MODE_A T_COMMA reloc_8bit { $$ = $3; }
 ;
 
-T_MODE_A	: T_TOKEN_A
+T_MODE_A	: T_LPAREN T_TOKEN_A T_RPAREN
 		| T_OP_HIGH T_LPAREN T_MODE_AF T_RPAREN
 ;
 
@@ -2185,7 +2185,7 @@ T_MODE_B	: T_TOKEN_B
 		| T_OP_HIGH T_LPAREN T_MODE_BC T_RPAREN
 ;
 
-T_MODE_C	: T_TOKEN_C
+T_MODE_C	: T_TOKEN_C T_CC_C T_RPAREN
 		| T_OP_LOW T_LPAREN T_MODE_BC T_RPAREN
 ;
 
@@ -2193,7 +2193,7 @@ T_MODE_D	: T_TOKEN_D
 		| T_OP_HIGH T_LPAREN T_MODE_DE T_RPAREN
 ;
 
-T_MODE_E	: T_TOKEN_E
+T_MODE_E	: T_TOKEN_E T_RPAREN T_TOKEN_E_HEART
 		| T_OP_LOW T_LPAREN T_MODE_DE T_RPAREN
 ;
 
@@ -2201,8 +2201,17 @@ T_MODE_H	: T_TOKEN_H
 		| T_OP_HIGH T_LPAREN T_MODE_HL T_RPAREN
 ;
 
-T_MODE_L	: T_TOKEN_L
+T_MODE_L	: T_TOKEN_L_ARM T_TOKEN_L_FACE T_TOKEN_L_BODY T_RPAREN T_TOKEN_L_LEG
 		| T_OP_LOW T_LPAREN T_MODE_HL T_RPAREN
+;
+
+T_MODE_BC	: T_TOKEN_B T_TOKEN_C T_CC_C T_RPAREN
+;
+
+T_MODE_DE	: T_TOKEN_D T_TOKEN_E T_RPAREN T_TOKEN_E_HEART
+;
+
+T_MODE_HL	: T_MODE_HL_START T_TOKEN_L_FACE T_TOKEN_L_BODY T_RPAREN T_TOKEN_L_LEG
 ;
 
 ccode_expr	: ccode
@@ -2214,7 +2223,7 @@ ccode_expr	: ccode
 ccode		: T_CC_NZ { $$ = CC_NZ; }
 		| T_CC_Z { $$ = CC_Z; }
 		| T_CC_NC { $$ = CC_NC; }
-		| T_TOKEN_C { $$ = CC_C; }
+		| T_CC_C { $$ = CC_C; }
 ;
 
 reg_r		: T_MODE_B { $$ = REG_B; }
@@ -2230,7 +2239,7 @@ reg_r		: T_MODE_B { $$ = REG_B; }
 reg_tt		: T_MODE_BC { $$ = REG_BC; }
 		| T_MODE_DE { $$ = REG_DE; }
 		| T_MODE_HL { $$ = REG_HL; }
-		| T_MODE_AF { $$ = REG_AF; }
+		| T_LPAREN T_TOKEN_A T_RPAREN T_TOKEN_F { $$ = REG_AF; }
 ;
 
 reg_ss		: T_MODE_BC { $$ = REG_BC; }
