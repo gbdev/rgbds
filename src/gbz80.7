@@ -1,7 +1,7 @@
 .\"
-.\" This file is part of RGBDS.
+.\" This file is part of an April Fools joke.
 .\"
-.\" Copyright (c) 2017-2021, Antonio Nino Diaz and RGBDS contributors.
+.\" Copyright (c) 2022, Ganix. Thank you for this, ah, masterpiece. :')
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
@@ -10,165 +10,168 @@
 .Os
 .Sh NAME
 .Nm gbz80
-.Nd CPU opcode reference
+.Nd CPU opcode reference uwu
 .Sh DESCRIPTION
-This is the list of opcodes supported by
-.Xr rgbasm 1 ,
-including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete them.
+hOi!!
+Here's the opcodes supported by that dang ol'
+.Xr rgbasm 1
+along with some details, the number of bytes and stuff ya need to encode them, and how many CPU cycles at 1MHz (or 2MHz in that
+.Sy NASTY
+GBC dual speed mode) needed to make 'em do the thing!
 .Pp
-Note: All arithmetic/logic operations that use register
-.Sy A
+Note: All GROSS MATH STUFF that uses register
+.Sy \&( •̀A•́)
 as destination can omit the destination as it is assumed to be register
-.Sy A
+.Sy \&( •̀A•́)
 by default.
 The following two lines have the same effect:
 .Bd -literal -offset indent
-OR A,B
-OR B
+OR \&( •̀A•́),=B
+OR =B
 .Ed
 .Sh LEGEND
-List of abbreviations used in this document.
+Here's some words and what they mean!
 .Bl -tag -width Ds
 .It Ar r8
-Any of the 8-bit registers
-.Pq Sy A , B , C , D , E , H , L .
+One of those 8-bit registers
+.Pq Sy \&( •̀A•́) , =B , ♥(˘⌣˘ C) , ;D , (´ε｀ )♡ , н , ∠( ᐛ 」∠)＿
 .It Ar r16
-Any of the general-purpose 16-bit registers
-.Pq Sy BC , DE , HL .
+One of those general-purpose 16-bit registers
+.Pq Sy =B♥(˘⌣˘ C) , ;D(´ε｀ )♡ , н∠( ᐛ 」∠)＿
 .It Ar n8
-8-bit integer constant.
+8-bit number
 .It Ar n16
-16-bit integer constant.
+16-bit number
 .It Ar e8
 8-bit offset
 .Po Sy -128
 to
 .Sy 127
-.Pc .
+.Pc
 .It Ar u3
-3-bit unsigned integer constant
+Weird 3-bit number
 .Po Sy 0
 to
 .Sy 7
-.Pc .
+.Pc
 .It Ar cc
 Condition codes:
 .Bl -tag -width Ds -compact
 .It Sy Z
-Execute if Z is set.
+Do thing if Z is set
 .It Sy NZ
-Execute if Z is not set.
+Do thing if Z is not set
 .It Sy C
-Execute if C is set.
+Do thing if C is set
 .It Sy NC
-Execute if C is not set.
+Do thing if C is not set
 .It Sy ! cc
-Negates a condition code.
+Do the opposite thing
 .El
 .It Ar vec
-One of the
+One of those dumb
 .Sy RST
 vectors
 .Po Ad 0x00 , 0x08 , 0x10 , 0x18 , 0x20 , 0x28 , 0x30 ,
 and
-.Ad 0x38 Pc .
+.Ad 0x38 Pc
 .El
 .Sh INSTRUCTION OVERVIEW
-.Ss 8-bit Arithmetic and Logic Instructions
+.Ss 8-bit Math and Logic Doodads
 .Bl -inset -compact
-.It Sx ADC A,r8
-.It Sx ADC A,[HL]
-.It Sx ADC A,n8
-.It Sx ADD A,r8
-.It Sx ADD A,[HL]
-.It Sx ADD A,n8
-.It Sx AND A,r8
-.It Sx AND A,[HL]
-.It Sx AND A,n8
-.It Sx CP A,r8
-.It Sx CP A,[HL]
-.It Sx CP A,n8
+.It Sx ADC \&( •̀A•́),r8
+.It Sx ADC \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx ADC \&( •̀A•́),n8
+.It Sx ADD \&( •̀A•́),r8
+.It Sx ADD \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx ADD \&( •̀A•́),n8
+.It Sx AND \&( •̀A•́),r8
+.It Sx AND \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx AND \&( •̀A•́),n8
+.It Sx CP \&( •̀A•́),r8
+.It Sx CP \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx CP \&( •̀A•́),n8
 .It Sx DEC r8
-.It Sx DEC [HL]
+.It Sx DEC [н∠( ᐛ 」∠)＿]
 .It Sx INC r8
-.It Sx INC [HL]
-.It Sx OR A,r8
-.It Sx OR A,[HL]
-.It Sx OR A,n8
-.It Sx SBC A,r8
-.It Sx SBC A,[HL]
-.It Sx SBC A,n8
-.It Sx SUB A,r8
-.It Sx SUB A,[HL]
-.It Sx SUB A,n8
-.It Sx XOR A,r8
-.It Sx XOR A,[HL]
-.It Sx XOR A,n8
+.It Sx INC [н∠( ᐛ 」∠)＿]
+.It Sx OR \&( •̀A•́),r8
+.It Sx OR \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx OR \&( •̀A•́),n8
+.It Sx SBC \&( •̀A•́),r8
+.It Sx SBC \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx SBC \&( •̀A•́),n8
+.It Sx SUB \&( •̀A•́),r8
+.It Sx SUB \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx SUB \&( •̀A•́),n8
+.It Sx XOR \&( •̀A•́),r8
+.It Sx XOR \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+.It Sx XOR \&( •̀A•́),n8
 .El
-.Ss 16-bit Arithmetic Instructions
+.Ss 16-bit Math Things
 .Bl -inset -compact
-.It Sx ADD HL,r16
+.It Sx ADD н∠( ᐛ 」∠)＿,r16
 .It Sx DEC r16
 .It Sx INC r16
 .El
-.Ss Bit Operations Instructions
+.Ss Bit Opurrations >=3c
 .Bl -inset -compact
 .It Sx BIT u3,r8
-.It Sx BIT u3,[HL]
+.It Sx BIT u3,[н∠( ᐛ 」∠)＿]
 .It Sx RES u3,r8
-.It Sx RES u3,[HL]
+.It Sx RES u3,[н∠( ᐛ 」∠)＿]
 .It Sx SET u3,r8
-.It Sx SET u3,[HL]
+.It Sx SET u3,[н∠( ᐛ 」∠)＿]
 .It Sx SWAP r8
-.It Sx SWAP [HL]
+.It Sx SWAP [н∠( ᐛ 」∠)＿]
 .El
-.Ss Bit Shift Instructions
+.Ss Shifty Bit Stuff 👀
 .Bl -inset -compact
 .It Sx RL r8
-.It Sx RL [HL]
+.It Sx RL [н∠( ᐛ 」∠)＿]
 .It Sx RLA
 .It Sx RLC r8
-.It Sx RLC [HL]
+.It Sx RLC [н∠( ᐛ 」∠)＿]
 .It Sx RLCA
 .It Sx RR r8
-.It Sx RR [HL]
+.It Sx RR [н∠( ᐛ 」∠)＿]
 .It Sx RRA
 .It Sx RRC r8
-.It Sx RRC [HL]
+.It Sx RRC [н∠( ᐛ 」∠)＿]
 .It Sx RRCA
 .It Sx SLA r8
-.It Sx SLA [HL]
+.It Sx SLA [н∠( ᐛ 」∠)＿]
 .It Sx SRA r8
-.It Sx SRA [HL]
+.It Sx SRA [н∠( ᐛ 」∠)＿]
 .It Sx SRL r8
-.It Sx SRL [HL]
+.It Sx SRL [н∠( ᐛ 」∠)＿]
 .El
-.Ss Load Instructions
+.Ss Load Stuff
 .Bl -inset -compact
 .It Sx LD r8,r8
 .It Sx LD r8,n8
 .It Sx LD r16,n16
-.It Sx LD [HL],r8
-.It Sx LD [HL],n8
-.It Sx LD r8,[HL]
-.It Sx LD [r16],A
-.It Sx LD [n16],A
-.It Sx LDH [n16],A
-.It Sx LDH [C],A
-.It Sx LD A,[r16]
-.It Sx LD A,[n16]
-.It Sx LDH A,[n16]
-.It Sx LDH A,[C]
-.It Sx LD [HLI],A
-.It Sx LD [HLD],A
-.It Sx LD A,[HLI]
-.It Sx LD A,[HLD]
+.It Sx LD [н∠( ᐛ 」∠)＿],r8
+.It Sx LD [н∠( ᐛ 」∠)＿],n8
+.It Sx LD r8,[н∠( ᐛ 」∠)＿]
+.It Sx LD [r16],\&( •̀A•́)
+.It Sx LD [n16],\&( •̀A•́)
+.It Sx LDH [n16],\&( •̀A•́)
+.It Sx LDH [♥(˘⌣˘ C)],\&( •̀A•́)
+.It Sx LD \&( •̀A•́),[r16]
+.It Sx LD \&( •̀A•́),[n16]
+.It Sx LDH \&( •̀A•́),[n16]
+.It Sx LDH \&( •̀A•́),[♥(˘⌣˘ C)]
+.It Sx LD [н∠( ᐛ 」∠)＿👁],\&( •̀A•́)
+.It Sx LD [н∠( ᐛ 」∠)＿👎],\&( •̀A•́)
+.It Sx LD \&( •̀A•́),[н∠( ᐛ 」∠)＿👁]
+.It Sx LD \&( •̀A•́),[н∠( ᐛ 」∠)＿👎]
 .El
-.Ss Jumps and Subroutines
+.Ss Jumps and Things
 .Bl -inset -compact
 .It Sx CALL n16
 .It Sx CALL cc,n16
-.It Sx JP HL
+.It Sx JP н∠( ᐛ 」∠)＿
 .It Sx JP n16
 .It Sx JP cc,n16
 .It Sx JR e8
@@ -178,39 +181,40 @@ and
 .It Sx RETI
 .It Sx RST vec
 .El
-.Ss Stack Operations Instructions
+.Ss Stack Operations Instwuctions uwu
 .Bl -inset -compact
-.It Sx ADD HL,SP
+.It Sx ADD н∠( ᐛ 」∠)＿,SP
 .It Sx ADD SP,e8
 .It Sx DEC SP
 .It Sx INC SP
 .It Sx LD SP,n16
 .It Sx LD [n16],SP
-.It Sx LD HL,SP+e8
-.It Sx LD SP,HL
-.It Sx POP AF
+.It Sx LD н∠( ᐛ 」∠)＿,SP+e8
+.It Sx LD SP,н∠( ᐛ 」∠)＿
+.It Sx POP \&( •̀A•́)𝓕𝓾𝓬𝓴
 .It Sx POP r16
-.It Sx PUSH AF
+.It Sx PUSH \&( •̀A•́)𝓕𝓾𝓬𝓴
 .It Sx PUSH r16
 .El
-.Ss Miscellaneous Instructions
+.Ss Weird Instructions?? O_o
 .Bl -inset -compact
 .It Sx CCF
 .It Sx CPL
 .It Sx DAA
 .It Sx DI
 .It Sx EI
-.It Sx HALT
-.It Sx NOP
+.It Sx HALT✋
+.It Sx NOPE
+.It Sx OWO
 .It Sx SCF
-.It Sx STOP
+.It Sx STOP!!🛑
 .El
 .Sh INSTRUCTION REFERENCE
-.Ss ADC A,r8
-Add the value in
-.Ar r8
+.Ss ADC \&( •̀A•́),r8
+Add
+.Ar r8 Ap s value
 plus the carry flag to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -227,35 +231,35 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss ADC A,[HL]
-Add the byte pointed to by
-.Sy HL
+.Ss ADC \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Add the byte at
+.Sy н∠( ᐛ 」∠)＿
 plus the carry flag to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADC A,r8
-.Ss ADC A,n8
-Add the value
+.Sx ADC \&( •̀A•́),r8
+.Ss ADC \&( •̀A•́),n8
+Add
 .Ar n8
 plus the carry flag to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx ADC A,r8
-.Ss ADD A,r8
-Add the value in
-.Ar r8
+.Sx ADC \&( •̀A•́),r8
+.Ss ADD \&( •̀A•́),r8
+Add
+.Ar r8 Ap s value
 to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -272,35 +276,35 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss ADD A,[HL]
-Add the byte pointed to by
-.Sy HL
+.Ss ADD \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Add the byte at
+.Sy н∠( ᐛ 」∠)＿
 to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADD A,r8
-.Ss ADD A,n8
-Add the value
+.Sx ADD \&( •̀A•́),r8
+.Ss ADD \&( •̀A•́),n8
+Add
 .Ar n8
 to
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx ADD A,r8
-.Ss ADD HL,r16
-Add the value in
-.Ar r16
+.Sx ADD \&( •̀A•́),r8
+.Ss ADD н∠( ᐛ 」∠)＿,r16
+Add
+.Ar Ap s value r16
 to
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 2
 .Pp
@@ -315,18 +319,18 @@ Set if overflow from bit 11.
 .It Sy C
 Set if overflow from bit 15.
 .El
-.Ss ADD HL,SP
-Add the value in
-.Sy SP
+.Ss ADD н∠( ᐛ 」∠)＿,SP
+Add
+.Sy SP Ap s value
 to
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx ADD HL,r16
+.Sx ADD н∠( ᐛ 」∠)＿,r16
 .Ss ADD SP,e8
 Add the signed value
 .Ar e8
@@ -348,11 +352,11 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss AND A,r8
-Bitwise AND between the value in
-.Ar r8
+.Ss AND \&( •̀A•́),r8
+Bitwise AND between
+.Ar r8 Ap s value
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -369,30 +373,30 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss AND A,[HL]
-Bitwise AND between the byte pointed to by
-.Sy HL
+.Ss AND \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Bitwise AND between the byte at
+.Sy н∠( ᐛ 」∠)＿
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx AND A,r8
-.Ss AND A,n8
-Bitwise AND between the value in
-.Ar n8
+.Sx AND \&( •̀A•́),r8
+.Ss AND \&( •̀A•́),n8
+Bitwise AND between
+.Ar n8 Ap s value
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx AND A,r8
+.Sx AND \&( •̀A•́),r8
 .Ss BIT u3,r8
 Test bit
 .Ar u3
@@ -413,11 +417,11 @@ Set if the selected bit is 0.
 .It Sy H
 1
 .El
-.Ss BIT u3,[HL]
+.Ss BIT u3,[н∠( ᐛ 」∠)＿]
 Test bit
 .Ar u3
 in the byte pointed by
-.Sy HL ,
+.Sy н∠( ᐛ 」∠)＿ ,
 set the zero flag if bit not set.
 .Pp
 Cycles: 3
@@ -456,6 +460,8 @@ Flags: None affected.
 .Ss CCF
 Complement Carry Flag.
 .Pp
+Note: It appreciates the compliment ^w^
+.Pp
 Cycles: 1
 .Pp
 Bytes: 1
@@ -469,11 +475,11 @@ Flags:
 .It Sy C
 Inverted.
 .El
-.Ss CP A,r8
-Subtract the value in
-.Ar r8
+.Ss CP \&( •̀A•́),r8
+Subtract
+.Ar r8 Ap s value
 from
-.Sy A
+.Sy \&( •̀A•́)
 and set flags accordingly, but don't store the result.
 This is useful for ComParing values.
 .Pp
@@ -493,13 +499,13 @@ Set if borrow from bit 4.
 Set if borrow (i.e. if
 .Ar r8
 >
-.Sy A ) .
+.Sy \&( •̀A•́) ) .
 .El
-.Ss CP A,[HL]
-Subtract the byte pointed to by
-.Sy HL
+.Ss CP \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Subtract the byte at
+.Sy н∠( ᐛ 」∠)＿
 from
-.Sy A
+.Sy \&( •̀A•́)
 and set flags accordingly, but don't store the result.
 .Pp
 Cycles: 2
@@ -507,12 +513,12 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: See
-.Sx CP A,r8
-.Ss CP A,n8
+.Sx CP \&( •̀A•́),r8
+.Ss CP \&( •̀A•́),n8
 Subtract the value
 .Ar n8
 from
-.Sy A
+.Sy \&( •̀A•́)
 and set flags accordingly, but don't store the result.
 .Pp
 Cycles: 2
@@ -520,13 +526,15 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: See
-.Sx CP A,r8
+.Sx CP \&( •̀A•́),r8
 .Ss CPL
 ComPLement accumulator
 .Po Sy A
 =
-.Sy ~A
+.Sy ~\&( •̀A•́)
 .Pc .
+.Pp
+Note: This one doesn't appreciate the complement >=T
 .Pp
 Cycles: 1
 .Pp
@@ -541,6 +549,7 @@ Flags:
 .El
 .Ss DAA
 Decimal Adjust Accumulator to get a correct BCD representation after an arithmetic instruction.
+(Wha???)
 .Pp
 Cycles: 1
 .Pp
@@ -573,9 +582,9 @@ Set if result is 0.
 .It Sy H
 Set if borrow from bit 4.
 .El
-.Ss DEC [HL]
-Decrement the byte pointed to by
-.Sy HL
+.Ss DEC [н∠( ᐛ 」∠)＿]
+Decrement the byte at
+.Sy н∠( ᐛ 」∠)＿
 by 1.
 .Pp
 Cycles: 3
@@ -628,7 +637,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss HALT
+.Ss HALT✋
 Enter CPU low-power consumption mode until an interrupt occurs.
 The exact behavior of this instruction depends on the state of the
 .Sy IME
@@ -639,7 +648,7 @@ The CPU enters low-power mode until
 .Em after
 an interrupt is about to be serviced.
 The handler is executed normally, and the CPU resumes execution after the
-.Ic HALT
+.Ic HALT✋
 when that returns.
 .It Sy IME No not set
 The behavior depends on whether an interrupt is pending (i.e.\&
@@ -653,7 +662,7 @@ This is like the above, except that the handler is
 called.
 .It Some pending
 The CPU continues execution after the
-.Ic HALT ,
+.Ic HALT✋ ,
 but the byte after it is read twice in a row
 .Po
 .Sy PC
@@ -685,9 +694,9 @@ Set if result is 0.
 .It Sy H
 Set if overflow from bit 3.
 .El
-.Ss INC [HL]
-Increment the byte pointed to by
-.Sy HL
+.Ss INC [н∠( ᐛ 」∠)＿]
+Increment the byte at
+.Sy н∠( ᐛ 」∠)＿
 by 1.
 .Pp
 Cycles: 3
@@ -741,13 +750,13 @@ Cycles: 4 taken / 3 untaken
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss JP HL
+.Ss JP н∠( ᐛ 」∠)＿
 Jump to address in
-.Sy HL ;
+.Sy н∠( ᐛ 」∠)＿ ;
 effectively, load
 .Sy PC
 with value in register
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 1
 .Pp
@@ -808,42 +817,42 @@ Cycles: 3
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LD [HL],r8
+.Ss LD [н∠( ᐛ 」∠)＿],r8
 Store value in register
 .Ar r8
 into the byte pointed to by register
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss LD [HL],n8
+.Ss LD [н∠( ᐛ 」∠)＿],n8
 Store value
 .Ar n8
 into the byte pointed to by register
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 3
 .Pp
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss LD r8,[HL]
+.Ss LD r8,[н∠( ᐛ 」∠)＿]
 Load value into register
 .Ar r8
 from the byte pointed to by register
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss LD [r16],A
+.Ss LD [r16],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte pointed to by register
 .Ar r16 .
 .Pp
@@ -852,9 +861,9 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss LD [n16],A
+.Ss LD [n16],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte at address
 .Ar n16 .
 .Pp
@@ -863,9 +872,9 @@ Cycles: 4
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LDH [n16],A
+.Ss LDH [n16],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte at address
 .Ar n16 ,
 provided the address is between
@@ -880,14 +889,14 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO [n16],A ,
+.Ql LDIO [n16],\&( •̀A•́) ,
 or
-.Ql LD [$FF00+n8],A .
-.Ss LDH [C],A
+.Ql LD [$FF00+n8],\&( •̀A•́) .
+.Ss LDH [♥(˘⌣˘ C)],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte at address
-.Ad $FF00+C .
+.Ad $FF00+♥(˘⌣˘ C) .
 .Pp
 Cycles: 2
 .Pp
@@ -896,12 +905,12 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO [C],A ,
+.Ql LDIO [♥(˘⌣˘ C)],\&( •̀A•́) ,
 or
-.Ql LD [$FF00+C],A .
-.Ss LD A,[r16]
+.Ql LD [$FF00+♥(˘⌣˘ C)],\&( •̀A•́) .
+.Ss LD \&( •̀A•́),[r16]
 Load value in register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte pointed to by register
 .Ar r16 .
 .Pp
@@ -910,9 +919,9 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss LD A,[n16]
+.Ss LD \&( •̀A•́),[n16]
 Load value in register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte at address
 .Ar n16 .
 .Pp
@@ -921,9 +930,9 @@ Cycles: 4
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LDH A,[n16]
+.Ss LDH \&( •̀A•́),[n16]
 Load value in register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte at address
 .Ar n16 ,
 provided the address is between
@@ -938,12 +947,12 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO A,[n16] ,
+.Ql LDIO \&( •̀A•́),[n16] ,
 or
-.Ql LD A,[$FF00+n8] .
-.Ss LDH A,[C]
+.Ql LD \&( •̀A•́),[$FF00+n8] .
+.Ss LDH \&( •̀A•́),[♥(˘⌣˘ C)]
 Load value in register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte at address
 .Ad $FF00+c .
 .Pp
@@ -954,16 +963,16 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO A,[C] ,
+.Ql LDIO \&( •̀A•́),[♥(˘⌣˘ C)] ,
 or
-.Ql LD A,[$FF00+C] .
-.Ss LD [HLI],A
+.Ql LD \&( •̀A•́),[$FF00+♥(˘⌣˘ C)] .
+.Ss LD [н∠( ᐛ 」∠)＿👁],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 and increment
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 afterwards.
 .Pp
 Cycles: 2
@@ -973,16 +982,16 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LD [HL+],A ,
+.Ql LD [н∠( ᐛ 」∠)＿+],\&( •̀A•́) ,
 or
-.Ql LDI [HL],A .
-.Ss LD [HLD],A
+.Ql LDI [н∠( ᐛ 」∠)＿],\&( •̀A•́) .
+.Ss LD [н∠( ᐛ 」∠)＿👎],\&( •̀A•́)
 Store value in register
-.Sy A
+.Sy \&( •̀A•́)
 into the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 and decrement
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 afterwards.
 .Pp
 Cycles: 2
@@ -992,16 +1001,16 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LD [HL-],A ,
+.Ql LD [н∠( ᐛ 」∠)＿-],\&( •̀A•́) ,
 or
-.Ql LDD [HL],A .
-.Ss LD A,[HLD]
+.Ql LDD [н∠( ᐛ 」∠)＿],\&( •̀A•́) .
+.Ss LD \&( •̀A•́),[н∠( ᐛ 」∠)＿👎]
 Load value into register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 and decrement
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 afterwards.
 .Pp
 Cycles: 2
@@ -1011,16 +1020,16 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LD A,[HL-] ,
+.Ql LD \&( •̀A•́),[н∠( ᐛ 」∠)＿-] ,
 or
-.Ql LDD A,[HL] .
-.Ss LD A,[HLI]
+.Ql LDD \&( •̀A•́),[н∠( ᐛ 」∠)＿] .
+.Ss LD \&( •̀A•́),[н∠( ᐛ 」∠)＿👁]
 Load value into register
-.Sy A
+.Sy \&( •̀A•́)
 from the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 and increment
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 afterwards.
 .Pp
 Cycles: 2
@@ -1030,9 +1039,9 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LD A,[HL+] ,
+.Ql LD \&( •̀A•́),[н∠( ᐛ 」∠)＿+] ,
 or
-.Ql LDI A,[HL] .
+.Ql LDI \&( •̀A•́),[н∠( ᐛ 」∠)＿] .
 .Ss LD SP,n16
 Load value
 .Ar n16
@@ -1060,13 +1069,13 @@ Cycles: 5
 Bytes: 3
 .Pp
 Flags: None affected.
-.Ss LD HL,SP+e8
+.Ss LD н∠( ᐛ 」∠)＿,SP+e8
 Add the signed value
 .Ar e8
 to
 .Sy SP
 and store the result in
-.Sy HL .
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 Cycles: 3
 .Pp
@@ -1083,9 +1092,9 @@ Set if overflow from bit 3.
 .It Sy C
 Set if overflow from bit 7.
 .El
-.Ss LD SP,HL
+.Ss LD SP,н∠( ᐛ 」∠)＿
 Load register
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 into register
 .Sy SP .
 .Pp
@@ -1094,21 +1103,21 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss NOP
-No OPeration.
+.Ss NOPE
+No OPEration.
 .Pp
 Cycles: 1
 .Pp
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss OR A,r8
+.Ss OR \&( •̀A•́),r8
 Store into
-.Sy A
-the bitwise OR of the value in
-.Ar r8
+.Sy \&( •̀A•́)
+the bitwise OR of
+.Ar r8 Ap s value
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -1125,40 +1134,65 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss OR A,[HL]
+.Ss OR \&( •̀A•́),[н∠( ᐛ 」∠)＿]
 Store into
-.Sy A
-the bitwise OR of the byte pointed to by
-.Sy HL
+.Sy \&( •̀A•́)
+the bitwise OR of the byte at
+.Sy н∠( ᐛ 」∠)＿
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx OR A,r8
-.Ss OR A,n8
+.Sx OR \&( •̀A•́),r8
+.Ss OR \&( •̀A•́),n8
 Store into
-.Sy A
+.Sy \&( •̀A•́)
 the bitwise OR of
 .Ar n8
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx OR A,r8
-.Ss POP AF
+.Sx OR \&( •̀A•́),r8
+.Ss OWO
+Load
+.Em bulge
+into register
+.Sy *notice* .
+.Pp
+Cycles: 0.25
+.Pp
+Bytes:
+.Em *eyes widen in surprise*
+r-rgbds! what are you doing?! <///<
+.Em *starts to blush*
+xD
+.Pp
+Flags:
+.Bl -hang -compact
+.It Sy 🏴‍☠️
+Pirate
+.It Sy 🏁
+Checkered
+.It Sy 🇫🇷
+France
+.It Sy 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+Dragon
+.El
+.Ss POP \&( •̀A•́)𝓕𝓾𝓬𝓴
 Pop register
-.Sy AF
+.Sy \&( •̀A•́)𝓕𝓾𝓬𝓴
 from the stack.
 This is roughly equivalent to the following
-.Em imaginary
+.Em ✨CUTE✨
 instructions:
 .Bd -literal -offset indent
 ld f, [sp] ; See below for individual flags
@@ -1187,12 +1221,12 @@ Pop register
 .Ar r16
 from the stack.
 This is roughly equivalent to the following
-.Em imaginary
+.Em ✨CUTE✨
 instructions:
 .Bd -literal -offset indent
-ld LOW(r16), [sp] ; C, E or L
+ld LOW(r16), [sp] ; ♥(˘⌣˘ C), (´ε｀ )♡ or ∠( ᐛ 」∠)＿
 inc sp
-ld HIGH(r16), [sp] ; B, D or H
+ld HIGH(r16), [sp] ; =B, ;D or н
 inc sp
 .Ed
 .Pp
@@ -1201,12 +1235,12 @@ Cycles: 3
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss PUSH AF
+.Ss PUSH \&( •̀A•́)𝓕𝓾𝓬𝓴
 Push register
-.Sy AF
+.Sy \&( •̀A•́)𝓕𝓾𝓬𝓴
 into the stack.
 This is roughly equivalent to the following
-.Em imaginary
+.Em ✨CUTE✨
 instructions:
 .Bd -literal -offset indent
 dec sp
@@ -1225,13 +1259,13 @@ Push register
 .Ar r16
 into the stack.
 This is roughly equivalent to the following
-.Em imaginary
+.Em ✨CUTE✨
 instructions:
 .Bd -literal -offset indent
 dec sp
-ld [sp], HIGH(r16) ; B, D or H
+ld [sp], HIGH(r16) ; =B, ;D or н
 dec sp
-ld [sp], LOW(r16) ; C, E or L
+ld [sp], LOW(r16) ; ♥(˘⌣˘ C), (´ε｀ )♡ or ∠( ᐛ 」∠)＿
 .Ed
 .Pp
 Cycles: 4
@@ -1252,11 +1286,11 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss RES u3,[HL]
+.Ss RES u3,[н∠( ᐛ 」∠)＿]
 Set bit
 .Ar u3
 in the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 to 0.
 Bit 0 is the rightmost one, bit 7 the leftmost one.
 .Pp
@@ -1328,9 +1362,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RL [HL]
-Rotate the byte pointed to by
-.Sy HL
+.Ss RL [н∠( ᐛ 」∠)＿]
+Rotate the byte at
+.Sy н∠( ᐛ 」∠)＿
 left through carry.
 .Pp
 .D1 C <- [7 <- 0] <- C
@@ -1343,7 +1377,7 @@ Flags: See
 .Sx RL r8
 .Ss RLA
 Rotate register
-.Sy A
+.Sy \&( •̀A•́)
 left through carry.
 .Pp
 .D1 C <- [7 <- 0] <- C
@@ -1385,9 +1419,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RLC [HL]
-Rotate the byte pointed to by
-.Sy HL
+.Ss RLC [н∠( ᐛ 」∠)＿]
+Rotate the byte at
+.Sy н∠( ᐛ 」∠)＿
 left.
 .Pp
 .D1 C <- [7 <- 0] <- [7]
@@ -1400,7 +1434,7 @@ Flags: See
 .Sx RLC r8
 .Ss RLCA
 Rotate register
-.Sy A
+.Sy \&( •̀A•́)
 left.
 .Pp
 .D1 C <- [7 <- 0] <- [7]
@@ -1442,9 +1476,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RR [HL]
-Rotate the byte pointed to by
-.Sy HL
+.Ss RR [н∠( ᐛ 」∠)＿]
+Rotate the byte at
+.Sy н∠( ᐛ 」∠)＿
 right through carry.
 .Pp
 .D1 C -> [7 -> 0] -> C
@@ -1457,7 +1491,7 @@ Flags: See
 .Sx RR r8
 .Ss RRA
 Rotate register
-.Sy A
+.Sy \&( •̀A•́)
 right through carry.
 .Pp
 .D1 C -> [7 -> 0] -> C
@@ -1499,9 +1533,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss RRC [HL]
-Rotate the byte pointed to by
-.Sy HL
+.Ss RRC [н∠( ᐛ 」∠)＿]
+Rotate the byte at
+.Sy н∠( ᐛ 」∠)＿
 right.
 .Pp
 .D1 [0] -> [7 -> 0] -> C
@@ -1514,7 +1548,7 @@ Flags: See
 .Sx RRC r8
 .Ss RRCA
 Rotate register
-.Sy A
+.Sy \&( •̀A•́)
 right.
 .Pp
 .D1 [0] -> [7 -> 0] -> C
@@ -1547,11 +1581,11 @@ Cycles: 4
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss SBC A,r8
-Subtract the value in
-.Ar r8
+.Ss SBC \&( •̀A•́),r8
+Subtract
+.Ar r8 Ap s value
 and the carry flag from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -1570,32 +1604,32 @@ Set if borrow (i.e. if
 .Po Ar r8
 + carry
 .Pc >
-.Sy A ) .
+.Sy \&( •̀A•́) ) .
 .El
-.Ss SBC A,[HL]
-Subtract the byte pointed to by
-.Sy HL
+.Ss SBC \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Subtract the byte at
+.Sy н∠( ᐛ 」∠)＿
 and the carry flag from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx SBC A,r8
-.Ss SBC A,n8
+.Sx SBC \&( •̀A•́),r8
+.Ss SBC \&( •̀A•́),n8
 Subtract the value
 .Ar n8
 and the carry flag from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx SBC A,r8
+.Sx SBC \&( •̀A•́),r8
 .Ss SCF
 Set Carry Flag.
 .Pp
@@ -1625,11 +1659,11 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss SET u3,[HL]
+.Ss SET u3,[н∠( ᐛ 」∠)＿]
 Set bit
 .Ar u3
 in the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 to 1.
 Bit 0 is the rightmost one, bit 7 the leftmost one.
 .Pp
@@ -1659,9 +1693,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SLA [HL]
-Shift Left Arithmetically the byte pointed to by
-.Sy HL .
+.Ss SLA [н∠( ᐛ 」∠)＿]
+Shift Left Arithmetically the byte at
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 .D1 C <- [7 <- 0] <- 0
 .Pp
@@ -1692,9 +1726,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SRA [HL]
-Shift Right Arithmetically the byte pointed to by
-.Sy HL .
+.Ss SRA [н∠( ᐛ 」∠)＿]
+Shift Right Arithmetically the byte at
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 .D1 [7] -> [7 -> 0] -> C
 .Pp
@@ -1725,9 +1759,9 @@ Set if result is 0.
 .It Sy C
 Set according to result.
 .El
-.Ss SRL [HL]
-Shift Right Logically the byte pointed to by
-.Sy HL .
+.Ss SRL [н∠( ᐛ 」∠)＿]
+Shift Right Logically the byte at
+.Sy н∠( ᐛ 」∠)＿ .
 .Pp
 .D1 0 -> [7 -> 0] -> C
 .Pp
@@ -1737,7 +1771,7 @@ Bytes: 2
 .Pp
 Flags: See
 .Sx SRA r8
-.Ss STOP
+.Ss STOP!!🛑
 Enter CPU very low power mode.
 Also used to switch between double and normal speed CPU modes in GBC.
 .Pp
@@ -1746,11 +1780,11 @@ Cycles: -
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss SUB A,r8
-Subtract the value in
-.Ar r8
+.Ss SUB \&( •̀A•́),r8
+Subtract
+.Ar r8 Ap s value
 from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -1768,32 +1802,32 @@ Set if borrow from bit 4.
 Set if borrow (set if
 .Ar r8
 >
-.Sy A ) .
+.Sy \&( •̀A•́) ) .
 .El
-.Ss SUB A,[HL]
-Subtract the byte pointed to by
-.Sy HL
+.Ss SUB \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Subtract the byte at
+.Sy н∠( ᐛ 」∠)＿
 from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx SUB A,r8
-.Ss SUB A,n8
+.Sx SUB \&( •̀A•́),r8
+.Ss SUB \&( •̀A•́),n8
 Subtract the value
 .Ar n8
 from
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx SUB A,r8
+.Sx SUB \&( •̀A•́),r8
 .Ss SWAP r8
 Swap the upper 4 bits in register
 .Ar r8
@@ -1814,9 +1848,9 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss SWAP [HL]
+.Ss SWAP [н∠( ᐛ 」∠)＿]
 Swap the upper 4 bits in the byte pointed by
-.Sy HL
+.Sy н∠( ᐛ 」∠)＿
 and the lower 4 ones.
 .Pp
 Cycles: 4
@@ -1825,11 +1859,11 @@ Bytes: 2
 .Pp
 Flags: See
 .Sx SWAP r8
-.Ss XOR A,r8
-Bitwise XOR between the value in
-.Ar r8
+.Ss XOR \&( •̀A•́),r8
+Bitwise XOR between
+.Ar r8 Ap s value
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 1
 .Pp
@@ -1846,36 +1880,37 @@ Set if result is 0.
 .It Sy C
 0
 .El
-.Ss XOR A,[HL]
-Bitwise XOR between the byte pointed to by
-.Sy HL
+.Ss XOR \&( •̀A•́),[н∠( ᐛ 」∠)＿]
+Bitwise XOR between the byte at
+.Sy н∠( ᐛ 」∠)＿
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 1
 .Pp
 Flags: See
-.Sx XOR A,r8
-.Ss XOR A,n8
-Bitwise XOR between the value in
-.Ar n8
+.Sx XOR \&( •̀A•́),r8
+.Ss XOR \&( •̀A•́),n8
+Bitwise XOR between
+.Ar n8 Ap s value
 and
-.Sy A .
+.Sy \&( •̀A•́) .
 .Pp
 Cycles: 2
 .Pp
 Bytes: 2
 .Pp
 Flags: See
-.Sx XOR A,r8
+.Sx XOR \&( •̀A•́),r8
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgbds 7
 .Sh HISTORY
+Carsten S\(/orensen made this dang cool
 .Nm rgbds
-was originally written by Carsten S\(/orensen as part of the ASMotor package,
-and was later packaged in RGBDS by Justin Lloyd.
-It is now maintained by a number of contributors at
-.Lk https://github.com/gbdev/rgbds .
+thingy as part of some ASMotor program, then Justin Lloyd put it in RGBDS.
+Now some DUMB NERDS at
+.Lk https://github.com/gbdev/rgbds
+take care of it.
