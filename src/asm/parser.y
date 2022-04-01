@@ -646,20 +646,21 @@ enum {
 %token	T_Z80_CALL "call" T_Z80_CCF "ccf" T_Z80_CP "cp" T_Z80_CPL "cpl"
 %token	T_Z80_DAA "daa" T_Z80_DEC "dec" T_Z80_DI "di"
 %token	T_Z80_EI "ei"
-%token	T_Z80_HALT "halt"
+%token	T_Z80_HALT "halt✋"
 %token	T_Z80_INC "inc"
 %token	T_Z80_JP "jp" T_Z80_JR "jr"
 %token	T_Z80_LD "ld"
 %token	T_Z80_LDI "ldi"
 %token	T_Z80_LDD "ldd"
 %token	T_Z80_LDH "ldh"
-%token	T_Z80_NOP "nop"
+%token	T_Z80_NOP "nope"
 %token	T_Z80_OR "or"
+%token	T_OWO "owo"
 %token	T_Z80_POP "pop" T_Z80_PUSH "push"
 %token	T_Z80_RES "res" T_Z80_RET "ret" T_Z80_RETI "reti" T_Z80_RST "rst"
 %token	T_Z80_RL "rl" T_Z80_RLA "rla" T_Z80_RLC "rlc" T_Z80_RLCA "rlca"
 %token	T_Z80_RR "rr" T_Z80_RRA "rra" T_Z80_RRC "rrc" T_Z80_RRCA "rrca"
-%token	T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_STOP "stop"
+%token	T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_STOP "stop!!🛑"
 %token	T_Z80_SLA "sla" T_Z80_SRA "sra" T_Z80_SRL "srl" T_Z80_SUB "sub"
 %token	T_Z80_SWAP "swap"
 %token	T_Z80_XOR "xor"
@@ -1769,6 +1770,7 @@ cpu_command	: z80_adc
 		| z80_sub
 		| z80_swap
 		| z80_xor
+		| T_OWO { fatalerror("*BONK* go to horny jail\n"); }
 ;
 
 z80_adc		: T_Z80_ADC op_a_n {

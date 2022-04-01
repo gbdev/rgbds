@@ -109,7 +109,7 @@ static struct KeywordMapping {
 	{"DEC", T_Z80_DEC},
 	{"DI", T_Z80_DI},
 	{"EI", T_Z80_EI},
-	{"HALT", T_Z80_HALT},
+	{"HALT✋", T_Z80_HALT},
 	{"INC", T_Z80_INC},
 	{"JP", T_Z80_JP},
 	{"JR", T_Z80_JR},
@@ -118,8 +118,9 @@ static struct KeywordMapping {
 	{"LDD", T_Z80_LDD},
 	{"LDIO", T_Z80_LDH},
 	{"LDH", T_Z80_LDH},
-	{"NOP", T_Z80_NOP},
+	{"NOPE", T_Z80_NOP},
 	{"OR", T_Z80_OR},
+	{"OWO", T_OWO},
 	{"POP", T_Z80_POP},
 	{"PUSH", T_Z80_PUSH},
 	{"RES", T_Z80_RES},
@@ -140,7 +141,7 @@ static struct KeywordMapping {
 	{"SLA", T_Z80_SLA},
 	{"SRA", T_Z80_SRA},
 	{"SRL", T_Z80_SRL},
-	{"STOP", T_Z80_STOP},
+	{"STOP!!🛑", T_Z80_STOP},
 	{"SUB", T_Z80_SUB},
 	{"SWAP", T_Z80_SWAP},
 	{"XOR", T_Z80_XOR},
@@ -1304,7 +1305,7 @@ static bool continuesIdentifier(int c)
 	// This would normally be quite unsafe (hello, RTL control codes?),
 	// but since this is for a joke I'll also make the code a joke
 	// Also, hi if you're reading this!
-	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
+	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@' || c == '!';
 }
 
 static int readIdentifier(char firstChar)
