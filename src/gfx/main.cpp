@@ -706,7 +706,8 @@ int main(int argc, char *argv[]) {
 
 	// Do not do anything if option parsing went wrong
 	if (nbErrors) {
-		return 0;
+		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+		return 1;
 	}
 
 	if (options.reverse()) {
@@ -715,6 +716,10 @@ int main(int argc, char *argv[]) {
 		process();
 	}
 
+	if (nbErrors) {
+		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+		return 1;
+	}
 	return 0;
 }
 
