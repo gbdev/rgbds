@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string_view>
 
 #include "extern/getopt.h"
 #include "platform.h"
@@ -33,6 +34,7 @@
 using namespace std::literals::string_view_literals;
 
 Options options;
+char const *externalPalSpec = nullptr;
 static uintmax_t nbErrors;
 
 void warning(char const *fmt, ...) {
@@ -222,21 +224,6 @@ static void skipWhitespace(char *&arg) {
 	arg += strcspn(arg, " \t");
 }
 
-static void parsePaletteSpec(char const *arg) {
-	if (arg[0] == '#') {
-		options.palSpecType = Options::EXPLICIT;
-		parseInlinePalSpec(arg);
-	} else if (strcasecmp(arg, "embedded") == 0) {
-		// Use PLTE, error out if missing
-		options.palSpecType = Options::EMBEDDED;
-	} else {
-		// `fmt:path`, parse the file according to the given format
-		// TODO: split both parts, error out if malformed or file not found
-		options.palSpecType = Options::EXPLICIT;
-		// TODO
-	}
-}
-
 static void registerInput(char const *arg) {
 	if (!options.input.empty()) {
 		fprintf(stderr,
@@ -375,7 +362,20 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			options.useColorCurve = true;
 			break;
 		case 'c':
-			parsePaletteSpec(musl_optarg);
+			if (musl_optarg[0] == '#') {
+				options.palSpecType = Options::EXPLICIT;
+				parseInlinePalSpec(musl_optarg);
+			} else if (strcasecmp(musl_optarg, "embedded") == 0) {
+				// Use PLTE, error out if missing
+				options.palSpecType = Options::EMBEDDED;
+			} else {
+				options.palSpecType = Options::EXPLICIT;
+				// Can't parse the file yet, as "flat" color collections need to know the palette
+				// size to be split; thus, we defer that
+				// TODO: this does not validate the `fmt` part of any external spec but the last
+				// one, but I guess that's okay
+				externalPalSpec = musl_optarg;
+			}
 			break;
 		case 'D':
 			warning("Ignoring retired option `-D`");
@@ -611,6 +611,11 @@ int main(int argc, char *argv[]) {
 	autoOutPath(autoTilemap, options.tilemap, ".tilemap");
 	autoOutPath(autoPalettes, options.palettes, ".pal");
 
+	// Execute deferred external pal spec parsing, now that all other params are known
+	if (externalPalSpec) {
+		parseExternalPalSpec(externalPalSpec);
+	}
+
 	if (options.verbosity >= Options::VERB_CFG) {
 		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
 
@@ -706,7 +711,8 @@ int main(int argc, char *argv[]) {
 
 	// Do not do anything if option parsing went wrong
 	if (nbErrors) {
-		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors,
+		        nbErrors == 1 ? "" : "s");
 		return 1;
 	}
 
@@ -717,7 +723,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (nbErrors) {
-		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors,
+		        nbErrors == 1 ? "" : "s");
 		return 1;
 	}
 	return 0;
