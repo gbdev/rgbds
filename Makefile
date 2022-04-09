@@ -108,6 +108,7 @@ rgbgfx_obj := \
 	src/gfx/main.o \
 	src/gfx/pal_packing.o \
 	src/gfx/pal_sorting.o \
+	src/gfx/pal_spec.o \
 	src/gfx/process.o \
 	src/gfx/proto_palette.o \
 	src/gfx/reverse.o \
