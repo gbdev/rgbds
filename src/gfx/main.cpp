@@ -26,6 +26,7 @@
 #include "platform.h"
 #include "version.h"
 
+#include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
 
@@ -223,9 +224,8 @@ static void skipWhitespace(char *&arg) {
 
 static void parsePaletteSpec(char const *arg) {
 	if (arg[0] == '#') {
-		// List of #rrggbb/#rgb colors, comma-separated, palettes are separated by colons
 		options.palSpecType = Options::EXPLICIT;
-		// TODO
+		parseInlinePalSpec(arg);
 	} else if (strcasecmp(arg, "embedded") == 0) {
 		// Use PLTE, error out if missing
 		options.palSpecType = Options::EMBEDDED;
@@ -668,6 +668,14 @@ int main(int argc, char *argv[]) {
 			}
 			return "???";
 		}());
+		if (options.palSpecType == Options::EXPLICIT) {
+			fputs("\t[\n", stderr);
+			for (std::array<Rgba, 4> const &pal : options.palSpec) {
+				fprintf(stderr, "\t\t#%06x, #%06x, #%06x, #%06x,\n", pal[0].toCSS() >> 8,
+				        pal[1].toCSS() >> 8, pal[2].toCSS() >> 8, pal[3].toCSS() >> 8);
+			}
+			fputs("\t]\n", stderr);
+		}
 		fprintf(stderr, "\tDedup unit: %" PRIu16 "x%" PRIu16 " tiles\n", options.unitSize[0],
 		        options.unitSize[1]);
 		fprintf(stderr,
