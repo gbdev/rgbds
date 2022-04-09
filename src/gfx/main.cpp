@@ -700,6 +700,10 @@ int main(int argc, char *argv[]) {
 		fputs("Ready.\n", stderr);
 	}
 
+	if (options.input.empty()) {
+		fatal("No input image specified");
+	}
+
 	// Do not do anything if option parsing went wrong
 	if (nbErrors) {
 		return 0;
