@@ -114,7 +114,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 		// Skip whitespace, if any
 		skipWhitespace(arg, n);
 
-		// Skip comma/colon, or end
+		// Skip comma/semicolon, or end
 		if (n == arg.length()) {
 			break;
 		}
@@ -124,11 +124,11 @@ void parseInlinePalSpec(char const * const rawArg) {
 
 			++nbColors;
 
-			// A trailing comma may be followed by a colon
+			// A trailing comma may be followed by a semicolon
 			skipWhitespace(arg, n);
 			if (n == arg.length()) {
 				break;
-			} else if (arg[n] != ':') {
+			} else if (arg[n] != ';') {
 				if (nbColors == 4) {
 					parseError(n, 1, "Each palette can only contain up to 4 colors");
 					return;
@@ -137,7 +137,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 			}
 			[[fallthrough]];
 
-		case ':':
+		case ';':
 			++n;
 			skipWhitespace(arg, n);
 
@@ -149,11 +149,11 @@ void parseInlinePalSpec(char const * const rawArg) {
 			break;
 
 		default:
-			parseError(n, 1, "Unexpected character, expected ',', ':', or end of argument");
+			parseError(n, 1, "Unexpected character, expected ',', ';', or end of argument");
 			return;
 		}
 
-		// Check again to allow trailing a comma/colon
+		// Check again to allow trailing a comma/semicolon
 		if (n == arg.length()) {
 			break;
 		}
