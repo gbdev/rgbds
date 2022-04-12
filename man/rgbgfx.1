@@ -435,15 +435,37 @@ chunk.
 Since few image editors (such as GIMP) expose that detail, this behavior is only kept for compatibility and should be considered deprecated.
 .Sh OUTPUT FILES
 .Ss Tile data
-TODO.
+Tile data is output like a binary dump of VRAM, following the Game Boy's native format.
+Each tile is 16 bytes, 2 per row of 8 pixels; the first byte
+.Pq or Dq bitplane
+contains the least significant bit of the color ID of each pixel, the second one the most significant bit.
+The most significant bits of each byte are for the leftmost pixel of its row, and so on, with the least significant bits describing the rightmost pixel.
+.Pp
+When the bit depth
+.Pq Fl d
+is set to 1, every other byte (being all zeros) is simply not output.
 .Ss Palette data
 Palette data is output like a dump of GBC palette memory: the output is a binary file.
-Each color is written as GBC-native little-endian RGB555 (that is, the first byte contains the red and the lower 3 bits of green).
+Each color is written as GBC-native little-endian RGB555 (that is, the first byte contains the red and the lower 3 bits of green, and the second byte the upper 2 bits of green and the 5 bits of blue, plus an unused bit set to 0).
 There is no padding between colors, nor between palettes; however, empty colors in the palettes are TODO.
-.Ss Tilemap data
-TODO.
-.Ss Attrmap data
-TODO.
+.Ss Tile map data
+Tile maps are output as binary files.
+A tile map is an array of tile IDs, with one byte per tile ID.
+The first byte always corresponds to the ID of the tile in top-left corner of the input image; the second byte is either the ID of the tile to its right (by default), or below it
+.Pq with Fl Z ;
+and so on.
+Rows / columns (respectively) are stored consecutively, with no padding.
+.Ss Attribute map data
+Attribute maps mirror the format of tile maps, like on the GBC, especially the order in which bytes are output.
+The contents of individual bytes follows the GBC's native format:
+.Bl -column "Bit 2\(en0" "Background Palette number"
+.It Bit 7 Ta BG-to-OAM Priority Ta Set to 0
+.It Bit 6 Ta Vertical Flip Ta 0=Normal, 1=Mirror vertically
+.It Bit 5 Ta Horizontal Flip Ta 0=Normal, 1=Mirror horizontally
+.It Bit 4 Ta Not used Ta Set to 0
+.It Bit 3 Ta Tile VRAM Bank number Ta 0=Bank 0, 1=Bank 1
+.It Bit 2\(en0 Ta Background Palette number Ta BGP0-7
+.El
 .Sh REVERSE MODE
 .Nm
 can produce a PNG image from valid data.
@@ -527,6 +549,10 @@ Please report bugs on
 .Xr rgblink 1 ,
 .Xr rgbfix 1 ,
 .Xr gbz80 7
+.Pp
+The Game Boy hardware reference
+.Lk https://gbdev.io/pandocs/Rendering.html Pan Docs ,
+particularly the section about graphics.
 .Sh HISTORY
 .Nm
 was originally created by
