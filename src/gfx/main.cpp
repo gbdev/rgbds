@@ -130,7 +130,7 @@ static struct option const longopts[] = {
 };
 
 static void printUsage(void) {
-	fputs("Usage: rgbgfx [-r] [-CfmuVZ] [-v [-v ...]] [-a <attr_map> | -A] [-b base_ids]\n"
+	fputs("Usage: rgbgfx [-r] [-CmuVZ] [-v [-v ...]] [-a <attr_map> | -A] [-b base_ids]\n"
 	      "       [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles] [-n nb_pals]\n"
 	      "	      [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors] [-t <tile_map> | -T]\n"
 	      "	      [-U unit_size] [-x <tiles>] <file>\n"
@@ -377,9 +377,6 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				externalPalSpec = musl_optarg;
 			}
 			break;
-		case 'D':
-			warning("Ignoring retired option `-D`");
-			break;
 		case 'd':
 			options.bitDepth = parseNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
@@ -388,12 +385,6 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				error("Bit depth must be 1 or 2, not %" PRIu8);
 				options.bitDepth = 2;
 			}
-			break;
-		case 'F':
-			warning("`-F` is now deprecated, and behaves like `-f`");
-			[[fallthrough]];
-		case 'f':
-			options.fixInput = true;
 			break;
 		case 'L':
 			options.inputSlice = {0, 0, 0, 0}; // TODO
@@ -505,6 +496,11 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			} else {
 				registerInput(musl_optarg);
 			}
+			break;
+		case 'D':
+		case 'F':
+		case 'f':
+			warning("Ignoring retired option `-%c`", opt);
 			break;
 		default:
 			printUsage();
@@ -647,8 +643,6 @@ int main(int argc, char *argv[]) {
 		}
 
 		fputs("Options:\n", stderr);
-		if (options.fixInput)
-			fputs("\tConvert input to indexed\n", stderr);
 		if (options.columnMajor)
 			fputs("\tVisit image in column-major order\n", stderr);
 		if (options.allowMirroring)

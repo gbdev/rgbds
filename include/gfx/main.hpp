@@ -24,7 +24,6 @@ struct Options {
 	bool reverse() const { return reversedWidth != 0; }
 
 	bool useColorCurve = false; // -C
-	bool fixInput = false; // -f
 	bool allowMirroring = false; // -m
 	bool allowDedup = false; // -u
 	bool columnMajor = false; // -Z, previously -h
