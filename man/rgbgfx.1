@@ -122,12 +122,12 @@ begins with a hash character
 .Ql # ,
 it is treated as an inline palette specification.
 It should contain a comma-separated list of hexadecimal colors, each beginning with a hash.
-Colors in are accepted in the following formats:
-.Ql #rgb ,
-.Ql #rrggbb ,
-and
-.Ql #rrggbbaa .
-Palettes must be separated by a semicolon (they may require quoting to avoid special handling by the shell), and spaces are allowed around semicolons and commas; trailing commas and semicolons are allowed.
+Colors in are accepted either as
+.Ql #rgb
+or
+.Ql #rrggbb
+format.
+Palettes must be separated by a colon or semicolon (the latter may require quoting to avoid special handling by the shell), and spaces are allowed around colons, semicolons and commas; trailing commas and semicolons are allowed.
 See
 .Sx EXAMPLES
 for an example of an inline palette specification.

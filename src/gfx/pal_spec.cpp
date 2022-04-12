@@ -128,7 +128,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 			skipWhitespace(arg, n);
 			if (n == arg.length()) {
 				break;
-			} else if (arg[n] != ';') {
+			} else if (arg[n] != ';' && arg[n] != ':') {
 				if (nbColors == 4) {
 					parseError(n, 1, "Each palette can only contain up to 4 colors");
 					return;
@@ -137,6 +137,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 			}
 			[[fallthrough]];
 
+		case ':':
 		case ';':
 			++n;
 			skipWhitespace(arg, n);
@@ -265,7 +266,6 @@ static void parsePSPFile(std::filebuf &file) {
 		readLine(file, line);
 		n = 0;
 
-		// TODO: parse R G B
 		uint8_t r = parseDec(line, n);
 		skipWhitespace(line, n);
 		if (n == line.length()) {
