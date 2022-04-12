@@ -15,7 +15,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl r Ar stride
-.Op Fl CfmuVZ
+.Op Fl CmuVZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl b Ar base_ids
@@ -156,17 +156,6 @@ for a list of formats and their descriptions.
 .It Fl d Ar depth , Fl Fl depth Ar depth
 Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 2 (the default).
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
-.It Fl f , Fl Fl fix
-Make the input image an
-.Em indexed
-PNG.
-.Sy TODO: before or after processing ?
-Due to some changes in
-.Nm Ap s behavior, this option does not really Dq fix
-the input PNG anymore, and so it may be removed in a future RGBDS release.
-To manipulate a PNG's format, using an external editor like GIMP or command-line tools like ImageMagick's
-.Xr convert 1
-program is recommended instead.
 .It Fl L Ar slice , Fl Fl slice Ar slice
 Only process a given rectangle of the image.
 .Sy TODO: arg format .
@@ -497,12 +486,10 @@ assumes that no tiles were mirrored.
 .El
 .Sh NOTES
 Some flags have had their functionality removed.
-.Fl D
-is now ignored,
-.Fl F
-now behaves like
-.Fl f ,
+.Fl D , f ,
 and
+.Fl F
+are now ignored, and
 .Fl h
 is an alias for the new (and less confusingly named)
 .Fl Z .
