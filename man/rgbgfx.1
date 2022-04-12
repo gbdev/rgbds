@@ -364,7 +364,15 @@ Note that while
 .Ql --
 can be used in an at-file (with identical semantics), it is only effective inside of it\(emnormal option processing continues in the parent scope.
 .Sh PALETTE SPECIFICATION FORMATS
-TODO.
+The following formats are supported:
+.Bl -tag -width Ds
+.It Sy act
+.Lk https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1070626 Adobe Photoshop color table .
+.It Sy aco
+.Lk https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1055819 Adobe Photoshop color swatch .
+.It Sy psp
+.Lk https://www.selapa.net/swatches/colors/fileformats.php#psp_pal Paint Shop Pro palette .
+.El
 .Sh PALETTE GENERATION
 .Nm
 must generate palettes from the colors in the input image, unless
