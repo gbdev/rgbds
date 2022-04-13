@@ -434,26 +434,32 @@ behavior depends on an internal detail of how the PNG is saved, specifically its
 chunk.
 Since few image editors (such as GIMP) expose that detail, this behavior is only kept for compatibility and should be considered deprecated.
 .Sh OUTPUT FILES
+All files output by
+.Nm
+are binary files, and designed to follow the Game Boy and Game Boy Color's native formats.
+What follows is succinct descriptions of those formats, including
+.Nm Ns -specific
+details.
+For more complete, beginner-friendly descriptions of the native formats with illustrations, please check out
+.Lk https://gbdev.io/pandocs/Rendering Pan Docs .
 .Ss Tile data
-Tile data is output like a binary dump of VRAM, following the Game Boy's native format.
-Each tile is 16 bytes, 2 per row of 8 pixels; the first byte
-.Pq or Dq bitplane
-contains the least significant bit of the color ID of each pixel, the second one the most significant bit.
-The most significant bits of each byte are for the leftmost pixel of its row, and so on, with the least significant bits describing the rightmost pixel.
+Tile data is output like a binary dump of VRAM, with no padding between tiles.
+Each tile is 16 bytes, 2 per row of 8 pixels; the bits of color IDs are split into each byte
+.Pq or Dq bitplane .
+The leftmost pixel's color ID is stored in the two bytes' most significant bits, and the rightmost pixel's color ID in their least significant bits.
 .Pp
 When the bit depth
 .Pq Fl d
-is set to 1, every other byte (being all zeros) is simply not output.
+is set to 1, the most significant bitplane (second byte) of each row, being all zeros, is simply not output.
 .Ss Palette data
-Palette data is output like a dump of GBC palette memory: the output is a binary file.
-Each color is written as GBC-native little-endian RGB555 (that is, the first byte contains the red and the lower 3 bits of green, and the second byte the upper 2 bits of green and the 5 bits of blue, plus an unused bit set to 0).
+Palette data is output like a dump of GBC palette memory.
+Each color is written as GBC-native little-endian RGB555, with the unused bit 15 set to 0.
 There is no padding between colors, nor between palettes; however, empty colors in the palettes are TODO.
 .Ss Tile map data
-Tile maps are output as binary files.
 A tile map is an array of tile IDs, with one byte per tile ID.
 The first byte always corresponds to the ID of the tile in top-left corner of the input image; the second byte is either the ID of the tile to its right (by default), or below it
 .Pq with Fl Z ;
-and so on.
+and so on, continuing in the same direction.
 Rows / columns (respectively) are stored consecutively, with no padding.
 .Ss Attribute map data
 Attribute maps mirror the format of tile maps, like on the GBC, especially the order in which bytes are output.
@@ -466,6 +472,8 @@ The contents of individual bytes follows the GBC's native format:
 .It Bit 3 Ta Tile VRAM Bank number Ta 0=Bank 0, 1=Bank 1
 .It Bit 2\(en0 Ta Background Palette number Ta BGP0-7
 .El
+.Pp
+Note that if more than 8 palettes are used, only the lowest 3 bits of the palette ID are output.
 .Sh REVERSE MODE
 .Nm
 can produce a PNG image from valid data.
