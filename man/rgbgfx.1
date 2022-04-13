@@ -189,8 +189,6 @@ Output the tile data in native 2bpp format or in 1bpp
 to this file.
 .It Fl p Ar pal_file , Fl Fl palette Ar pal_file
 Output the image's palette set to this file.
-Palettes are emitted in order, TODO.
-If the palette contains too few colors, the remaining entries are TODO.
 .It Fl P , Fl Fl output-palette
 Same as
 .Fl p Ar path ,
@@ -452,9 +450,21 @@ When the bit depth
 .Pq Fl d
 is set to 1, the most significant bitplane (second byte) of each row, being all zeros, is simply not output.
 .Ss Palette data
-Palette data is output like a dump of GBC palette memory.
+Palette data is output like a dump of palette memory.
 Each color is written as GBC-native little-endian RGB555, with the unused bit 15 set to 0.
-There is no padding between colors, nor between palettes; however, empty colors in the palettes are TODO.
+There is no padding between colors, nor between palettes; however, empty colors in the palettes are output as 0xFFFF.
+.EQ
+delim $$
+.EN
+For example, if 5 palettes are generated with
+.Fl s Cm 4 ,
+the palette data file will be $2 times 4 times 5 = 40$ bytes long, even if some palettes contain less than 3 colors.
+.EQ
+delim off
+.EN
+Note that
+.Fl n
+only puts a limit on the amount of palettes, but does not fix this file's size.
 .Ss Tile map data
 A tile map is an array of tile IDs, with one byte per tile ID.
 The first byte always corresponds to the ID of the tile in top-left corner of the input image; the second byte is either the ID of the tile to its right (by default), or below it
@@ -549,7 +559,7 @@ and the attribute map in
 .Pp
 TODO: more examples.
 .Sh BUGS
-Please report bugs on
+Please report bugs and mistakes in this man page on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .
 .Sh SEE ALSO
 .Xr rgbds 7 ,
