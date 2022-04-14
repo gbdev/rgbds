@@ -8,6 +8,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -446,9 +447,27 @@ void assign_AssignSections(void)
 
 	/* Overlaying requires only fully-constrained sections */
 	verbosePrint("Assigning other sections...\n");
-	if (overlayFileName)
-		errx("All sections must be fixed when using an overlay file; %" PRIu64 " %sn't",
-		     nbSectionsToAssign, nbSectionsToAssign == 1 ? "is" : "are");
+	if (overlayFileName) {
+		fprintf(stderr, "FATAL: All sections must be fixed when using an overlay file");
+		uint8_t nbSections = 0;
+		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0; constraints--) {
+			for (sectionPtr = unassignedSections[constraints];
+			     sectionPtr;
+			     sectionPtr = sectionPtr->next) {
+				fprintf(stderr, "%c \"%s\"",
+					nbSections == 0 ? ';': ',', sectionPtr->section->name);
+				nbSections++;
+				if (nbSections == 10)
+					goto max_out;
+			}
+		}
+
+max_out:
+		if (nbSectionsToAssign != nbSections)
+			fprintf(stderr, " and %" PRIu64 " more", nbSectionsToAssign - nbSections);
+		fprintf(stderr, " %sn't\n", nbSectionsToAssign == 1 ? "is" : "are");
+		exit(1);
+	}
 
 	/* Assign all remaining sections by decreasing constraint order */
 	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
