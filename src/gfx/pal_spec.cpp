@@ -345,7 +345,7 @@ void parseACTFile(std::filebuf &file) {
 }
 
 void parseACOFile(std::filebuf &file) {
-	// https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1055819
+	// rhttps://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1055819
 	// http://www.nomodes.com/aco.html
 
 	char buf[10];

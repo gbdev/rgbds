@@ -150,7 +150,7 @@ static void printUsage(void) {
  * Parses a number at the beginning of a string, moving the pointer to skip the parsed characters
  * Returns the provided errVal on error
  */
-static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = -1) {
+static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVal = UINT16_MAX) {
 	uint8_t base = 10;
 	if (*string == '\0') {
 		error("%s: expected number, but found nothing", errPrefix);
@@ -175,26 +175,26 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 	/**
 	 * Turns a digit into its numeric value in the current base, if it has one.
 	 * Maximum is inclusive. The string_view is modified to "consume" all digits.
-	 * Returns -1 (255) on parse failure (including wrong char for base), in which case
+	 * Returns 255 on parse failure (including wrong char for base), in which case
 	 * the string_view may be pointing on garbage.
 	 */
 	auto charIndex = [&base](unsigned char c) -> uint8_t {
 		unsigned char index = c - '0'; // Use wrapping semantics
 		if (base == 2 && index >= 2) {
-			return -1;
+			return 255;
 		} else if (index < 10) {
 			return index;
 		} else if (base != 16) {
-			return -1; // Letters are only valid in hex
+			return 255; // Letters are only valid in hex
 		}
 		index = tolower(c) - 'a'; // OK because we pass an `unsigned char`
 		if (index < 6) {
 			return index + 10;
 		}
-		return -1;
+		return 255;
 	};
 
-	if (charIndex(*string) == (uint8_t)-1) {
+	if (charIndex(*string) == 255) {
 		error("%s: expected digit%s, but found nothing", errPrefix,
 		      base != 10 ? " after base" : "");
 		return errVal;
@@ -204,7 +204,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 		// Read a character, and check if it's valid in the given base
 		number *= base;
 		uint8_t index = charIndex(*string);
-		if (index == (uint8_t)-1) {
+		if (index == 255) {
 			break; // Found an invalid character, end
 		}
 		++string;
@@ -381,7 +381,7 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			options.bitDepth = parseNumber(arg, "Bit depth", 2);
 			if (*arg != '\0') {
 				error("Bit depth (-b) argument must be a valid number, not \"%s\"", musl_optarg);
-			} else if (options.bitDepth != -1 && options.bitDepth != 1 && options.bitDepth != 2) {
+			} else if (options.bitDepth != 1 && options.bitDepth != 2) {
 				error("Bit depth must be 1 or 2, not %" PRIu8);
 				options.bitDepth = 2;
 			}
