@@ -308,7 +308,9 @@ public:
 
 		// Now that metadata has been read, we can process the image data
 
-		std::vector<png_byte> row(png_get_rowbytes(png, info));
+		size_t nbRowBytes = png_get_rowbytes(png, info);
+		assert(nbRowBytes != 0);
+		std::vector<png_byte> row(nbRowBytes);
 
 		if (interlaceType == PNG_INTERLACE_NONE) {
 			for (png_uint_32 y = 0; y < height; ++y) {
