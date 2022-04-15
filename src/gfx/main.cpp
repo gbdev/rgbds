@@ -132,14 +132,14 @@ static struct option const longopts[] = {
 static void printUsage(void) {
 	fputs("Usage: rgbgfx [-r stride] [-CmuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	      "       [-b base_ids] [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles]\n"
-	      "	      [-n nb_pals] [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors]\n"
-	      "	      [-t <tile_map> | -T] [-U unit_size] [-x <tiles>] <file>\n"
+	      "       [-n nb_pals] [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors]\n"
+	      "       [-t <tile_map> | -T] [-U unit_size] [-x <tiles>] <file>\n"
 	      "Useful options:\n"
 	      "    -m, --mirror-tiles    optimize out mirrored tiles\n"
 	      "    -o, --output <path>   set the output binary file\n"
 	      "    -t, --tilemap <path>  set the output tilemap file\n"
 	      "    -u, --unique-tiles    optimize out identical tiles\n"
-	      "    -V, --version	     print RGBGFX version and exit\n"
+	      "    -V, --version         print RGBGFX version and exit\n"
 	      "\n"
 	      "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
