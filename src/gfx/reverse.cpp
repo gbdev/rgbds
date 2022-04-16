@@ -115,11 +115,6 @@ void reverse() {
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
 	}
 
-	if (nbTileInstances % options.reversedWidth) {
-		fatal("Image size (%zu tiles) is not divisible by the provided stride (%zu tiles), cannot "
-		      "determine image dimensions",
-		      nbTileInstances, options.reversedWidth);
-	}
 	size_t width, height;
 	size_t usefulWidth = options.reversedWidth - options.inputSlice[1] - options.inputSlice[3];
 	if (usefulWidth % 8 != 0) {
