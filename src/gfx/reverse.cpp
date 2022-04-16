@@ -83,7 +83,7 @@ void reverse() {
 		fatal("Tile data must be provided when reversing an image!");
 	}
 
-	if (!options.allowDedup && options.tilemap.empty()) {
+	if (options.allowDedup && options.tilemap.empty()) {
 		warning("Tile deduplication is enabled, but no tilemap is provided?");
 	}
 
@@ -126,14 +126,14 @@ void reverse() {
 		fatal(
 		    "No input slice specified (`-L`), and specified image width (%zu) not a multiple of 8",
 		    usefulWidth);
-	} else {
-		width = usefulWidth / 8;
-		if (nbTileInstances % width != 0) {
-			fatal("Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
-			      nbTileInstances, width);
-		}
-		height = nbTileInstances / width;
 	}
+	width = usefulWidth / 8;
+	if (nbTileInstances % width != 0) {
+		fatal("Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
+		      nbTileInstances, width);
+	}
+	height = nbTileInstances / width;
+
 	options.verbosePrint(Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width,
 	                     height);
 
