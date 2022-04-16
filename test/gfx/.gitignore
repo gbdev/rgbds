@@ -1,1 +1,5 @@
 /randtilegen
+/rgbgfx_test
+/*.png
+/result*.2bpp
+/*.rng

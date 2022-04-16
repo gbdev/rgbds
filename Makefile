@@ -131,6 +131,9 @@ rgbgfx: ${rgbgfx_obj}
 test/gfx/randtilegen: test/gfx/randtilegen.c
 	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCFLAGS} -Wno-vla ${PNGCFLAGS} ${PNGLDLIBS}
 
+test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGLDLIBS}
+
 # Rules to process files
 
 # We want the Bison invocation to pass through our rules, not default ones
