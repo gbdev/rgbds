@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 fname=$(mktemp)
 
 for i in *.asm; do
