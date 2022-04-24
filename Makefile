@@ -128,7 +128,7 @@ rgbfix: ${rgbfix_obj}
 rgbgfx: ${rgbgfx_obj}
 	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} -x c++ src/version.c ${PNGLDLIBS}
 
-test/randtilegen: test/randtilegen.c
+test/gfx/randtilegen: test/gfx/randtilegen.c
 	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCFLAGS} -Wno-vla ${PNGCFLAGS} ${PNGLDLIBS}
 
 # Rules to process files
