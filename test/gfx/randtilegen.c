@@ -232,14 +232,14 @@ int main(int argc, char **argv) {
 			int len = sprintf(filename, "%s%" PRIu16 ".rng", argv[index], i);
 			rngRecorder = fopen(filename, "wb");
 			if (!rngRecorder) {
-				perror("RNG fopen");
+				perror(filename);
 				return 1;
 			}
 
 			filename[len - 3] = 'p'; // `.rng` -> `.png`
 			FILE *img = fopen(filename, "wb");
 			if (!img) {
-				perror("PNG fopen");
+				perror(filename);
 				return 1;
 			}
 			png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
