@@ -439,6 +439,11 @@ public:
 };
 
 struct AttrmapEntry {
+	/**
+	 * This field can either be a proto-palette ID, or `transparent` to indicate that the
+	 * corresponding tile is fully transparent. If you are looking to get the palette ID for this
+	 * attrmap entry while correctly handling the above, use `getPalID`.
+	 */
 	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
 	uint8_t tileID; // This is the ID as it will be output to the tilemap
 	bool bank;
@@ -446,6 +451,10 @@ struct AttrmapEntry {
 	bool xFlip;
 
 	static constexpr decltype(protoPaletteID) transparent = SIZE_MAX;
+
+	size_t getPalID(DefaultInitVec<size_t> const &mappings) const {
+		return protoPaletteID == transparent ? 0 : mappings[protoPaletteID];
+	}
 };
 
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
@@ -681,10 +690,8 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 
 	auto iter = attrmap.begin();
 	for (auto tile : png.visitAsTiles(options.columnMajor)) {
-		size_t protoPaletteID = iter->protoPaletteID;
 		// If the tile is fully transparent, default to palette 0
-		Palette const &palette =
-		    palettes[protoPaletteID != AttrmapEntry::transparent ? mappings[protoPaletteID] : 0];
+		Palette const &palette = palettes[iter->getPalID(mappings)];
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			output.sputc(bitplanes & 0xFF);
@@ -729,7 +736,7 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 			tilemapOutput->sputc(tileID + options.baseTileIDs[bank]);
 		}
 		if (attrmapOutput.has_value()) {
-			uint8_t palID = mappings[iter->protoPaletteID] & 7;
+			uint8_t palID = iter->getPalID(mappings) & 7;
 			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
 			++iter;
 		}
