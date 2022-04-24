@@ -359,17 +359,21 @@ int main(int argc, char **argv) {
 			Rgba px0 = image0.pixel(x, y);
 			Rgba px1 = image1.pixel(x, y);
 
-#define compare(WHAT, NAME)                                       \
-	if (px0.WHAT >> 3 != px1.WHAT >> 3) {                         \
-		error(NAME " component at (%" PRIu32 ", %" PRIu32         \
-		           ") does not match (source = %u, result = %u)", \
-		      x, y, px0.WHAT >> 3, px1.WHAT >> 3);                \
-	}
-			compare(red, "Red");
-			compare(green, "Green");
-			compare(blue, "Blue");
-			compare(alpha, "Alpha");
-#undef compare
+			auto cgbColor = [](Rgba const &rgba) {
+				auto field = [](uint16_t component, uint8_t shift) {
+					return (component & 0x1F) << shift;
+				};
+				return rgba.isTransparent()
+				           ? Rgba::transparent
+				           : field(rgba.red, 0) | field(rgba.green, 5) | field(rgba.blue, 10);
+			};
+
+			if (cgbColor(px0) != cgbColor(px1)) {
+				error("Color mismatch at (%" PRIu32 ", %" PRIu32
+				      "): (%u,%u,%u,%u) became (%u,%u,%u,%u) after round-tripping",
+				      x, y, px0.red, px0.green, px0.blue, px0.alpha, px1.red, px1.green, px1.blue,
+				      px1.alpha);
+			}
 		}
 	}
 
