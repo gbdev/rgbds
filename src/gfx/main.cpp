@@ -736,6 +736,9 @@ void Palette::addColor(uint16_t color) {
 	}
 }
 
+/**
+ * Returns the ID of the color in the palette, or `size()` if the color is not in
+ */
 uint8_t Palette::indexOf(uint16_t color) const {
 	return std::find(colors.begin(), colors.end(), color) - colors.begin();
 }
