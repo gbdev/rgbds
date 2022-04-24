@@ -11,12 +11,14 @@
 #include <algorithm>
 #include <assert.h>
 #include <cinttypes>
+#include <climits>
 #include <errno.h>
 #include <fstream>
 #include <memory>
 #include <optional>
 #include <png.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <string.h>
 #include <tuple>
 #include <unordered_set>
@@ -38,7 +40,12 @@ class ImagePalette {
 public:
 	ImagePalette() = default;
 
-	void registerColor(Rgba const &rgba) {
+	/**
+	 * Registers a color in the palette.
+	 * If the newly inserted color "conflicts" with another one (different color, but same CGB
+	 * color), then the other color is returned. Otherwise, `nullptr` is returned.
+	 */
+	[[nodiscard]] Rgba const *registerColor(Rgba const &rgba) {
 		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
 
 		if (rgba.cgbColor() == Rgba::transparent) {
@@ -48,9 +55,10 @@ public:
 		if (!slot.has_value()) {
 			slot.emplace(rgba);
 		} else if (*slot != rgba) {
-			warning("Different colors melded together (#%08x into #%08x as %04x)", rgba.toCSS(),
-			        slot->toCSS(), rgba.cgbColor()); // TODO: indicate position
+			assert(slot->cgbColor() != UINT16_MAX);
+			return &*slot;
 		}
+		return nullptr;
 	}
 
 	size_t size() const {
@@ -310,15 +318,36 @@ public:
 		size_t nbRowBytes = png_get_rowbytes(png, info);
 		assert(nbRowBytes != 0);
 		DefaultInitVec<png_byte> row(nbRowBytes);
+		// Holds known-conflicting color pairs to avoid warning about them twice.
+		// We don't need to worry about transitivity, as ImagePalette slots are immutable once
+		// assigned, and conflicts always occur between that and another color.
+		// For the same reason, we don't need to worry about order, either.
+		std::vector<std::tuple<uint32_t, uint32_t>> conflicts;
+
+		// Assign a color to the given position, and register it in the image palette as well
+		auto assignColor = [this, &conflicts](png_uint_32 x, png_uint_32 y, Rgba &&color) {
+			if (Rgba const *other = colors.registerColor(color); other) {
+				std::tuple conflicting{color.toCSS(), other->toCSS()};
+				// Do not report combinations twice
+				if (std::find(conflicts.begin(), conflicts.end(), conflicting) == conflicts.end()) {
+					warning("Fusing colors #%08x and #%08x into Game Boy color $%04x",
+					        std::get<0>(conflicting), std::get<1>(conflicting),
+					        color.cgbColor()); // TODO: indicate position
+					// Do not report this combination again
+					conflicts.emplace_back(conflicting);
+				}
+			}
+
+			pixel(x, y) = color;
+		};
 
 		if (interlaceType == PNG_INTERLACE_NONE) {
 			for (png_uint_32 y = 0; y < height; ++y) {
 				png_read_row(png, row.data(), nullptr);
 
 				for (png_uint_32 x = 0; x < width; ++x) {
-					Rgba rgba(row[x * 4], row[x * 4 + 1], row[x * 4 + 2], row[x * 4 + 3]);
-					colors.registerColor(rgba);
-					pixel(x, y) = rgba;
+					assignColor(x, y,
+					            Rgba(row[x * 4], row[x * 4 + 1], row[x * 4 + 2], row[x * 4 + 3]));
 				}
 			}
 		} else {
@@ -339,9 +368,7 @@ public:
 					png_read_row(png, ptr, nullptr);
 
 					for (png_uint_32 x = PNG_PASS_START_COL(pass); x < width; x += xStep) {
-						Rgba rgba(ptr[0], ptr[1], ptr[2], ptr[3]);
-						colors.registerColor(rgba);
-						pixel(x, y) = rgba;
+						assignColor(x, y, Rgba(ptr[0], ptr[1], ptr[2], ptr[3]));
 						ptr += 4;
 					}
 				}
