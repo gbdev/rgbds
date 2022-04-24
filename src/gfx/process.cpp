@@ -366,13 +366,13 @@ public:
 
 		class Tile {
 			Png const &_png;
-			uint32_t const _x, _y;
-
 		public:
-			Tile(Png const &png, uint32_t x, uint32_t y) : _png(png), _x(x), _y(y) {}
+			uint32_t const x, y;
+
+			Tile(Png const &png, uint32_t x_, uint32_t y_) : _png(png), x(x_), y(y_) {}
 
 			Rgba pixel(uint32_t xOfs, uint32_t yOfs) const {
-				return _png.pixel(_x + xOfs, _y + yOfs);
+				return _png.pixel(x + xOfs, y + yOfs);
 			}
 		};
 
@@ -922,8 +922,14 @@ void process() {
 				break; // Keep going
 			}
 		}
+
+		// TODO: nicer error message
+		if (tileColors.size() > options.maxOpaqueColors()) {
+			fatal("Too many colors in tile at (%" PRIu32 ", %" PRIu32 ")", tile.x, tile.y);
+		}
+
 		attrs.protoPaletteID = protoPalettes.size();
-		if (protoPalettes.size() == AttrmapEntry::transparent) {
+		if (protoPalettes.size() == AttrmapEntry::transparent) { // Check for overflow
 			abort(); // TODO: nice error message
 		}
 		protoPalettes.push_back(tileColors);
