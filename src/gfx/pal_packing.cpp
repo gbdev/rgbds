@@ -8,9 +8,11 @@
 
 #include "gfx/pal_packing.hpp"
 
+#include <algorithm>
 #include <assert.h>
 #include <bitset>
 #include <cinttypes>
+#include <deque>
 #include <numeric>
 #include <optional>
 #include <queue>
@@ -18,6 +20,8 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+
+#include "defaultinitalloc.hpp"
 
 #include "gfx/main.hpp"
 #include "gfx/proto_palette.hpp"
@@ -356,32 +360,16 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	options.verbosePrint(Options::VERB_LOG_ACT,
 	                     "Paginating palettes using \"overload-and-remove\" strategy...\n");
 
-	struct Iota {
-		using value_type = size_t;
-		using difference_type = size_t;
-		using pointer = value_type const *;
-		using reference = value_type const &;
-		using iterator_category = std::input_iterator_tag;
-
-		// Use aggregate init etc.
-		value_type i;
-
-		bool operator!=(Iota const &other) { return i != other.i; }
-		reference operator*() const { return i; }
-		pointer operator->() const { return &i; }
-		Iota operator++() {
-			++i;
-			return *this;
-		}
-		Iota operator++(int) {
-			Iota copy = *this;
-			++i;
-			return copy;
-		}
-	};
-
+	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
+	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
+	sortedProtoPalIDs.clear();
+	for (size_t i = 0; i < protoPalettes.size(); ++i) {
+		sortedProtoPalIDs.insert(
+		    std::lower_bound(sortedProtoPalIDs.begin(), sortedProtoPalIDs.end(), i), i);
+	}
 	// Begin with all proto-palettes queued up for insertion
-	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(Iota{0}, Iota{protoPalettes.size()}));
+	std::queue<ProtoPalAttrs> queue(
+	    std::deque<ProtoPalAttrs>(sortedProtoPalIDs.begin(), sortedProtoPalIDs.end()));
 	// Begin with no pages
 	std::vector<AssignedProtos> assignments{};
 

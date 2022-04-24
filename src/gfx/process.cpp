@@ -574,6 +574,7 @@ public:
 		for (uint32_t x = 0; x < 8; ++x) {
 			row <<= 1;
 			uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
+			assert(index < palette.size()); // The color should be in the palette
 			if (index & 1) {
 				row |= 1;
 			}
@@ -947,12 +948,6 @@ contained:;
 			fputs("]\n", stderr);
 		}
 	}
-
-	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
-	// We sort after all insertions to avoid moving items: https://stackoverflow.com/a/2710332
-	std::sort(
-	    protoPalettes.begin(), protoPalettes.end(),
-	    [](ProtoPalette const &lhs, ProtoPalette const &rhs) { return lhs.size() < rhs.size(); });
 
 	auto [mappings, palettes] = options.palSpecType == Options::NO_SPEC
 	                                ? generatePalettes(protoPalettes, png)
