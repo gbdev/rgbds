@@ -308,6 +308,8 @@ int main(int argc, char **argv) {
 			fatal("Failed to excute ./randtilegen (%s). Is it in the current working directory?",
 			      strerror(ret));
 		}
+
+		posix_spawn_file_actions_destroy(&action);
 	}
 
 	{
