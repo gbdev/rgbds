@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -41,6 +42,10 @@ bool ProtoPalette::add(uint16_t color) {
 }
 
 ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) const {
+	// This works because the sets are sorted numerically
+	assert(std::is_sorted(_colorIndices.begin(), _colorIndices.end()));
+	assert(std::is_sorted(other._colorIndices.begin(), other._colorIndices.end()));
+
 	auto ours = _colorIndices.begin(), theirs = other._colorIndices.begin();
 	bool weBigger = true, theyBigger = true;
 
@@ -56,8 +61,8 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 			weBigger = false;
 		}
 	}
-	weBigger &= ours == _colorIndices.end();
-	theyBigger &= theirs == other._colorIndices.end();
+	weBigger &= theirs == other._colorIndices.end();
+	theyBigger &= ours == _colorIndices.end();
 
 	return theyBigger ? THEY_BIGGER : (weBigger ? WE_BIGGER : NEITHER);
 }
