@@ -294,8 +294,7 @@ public:
 			png_set_packing(png);
 		}
 
-		// Set interlace handling (MUST be done before `png_read_update_info`)
-		int nbPasses = png_set_interlace_handling(png);
+		// Do NOT call `png_set_interlace_handling`. We want to expand the rows ourselves.
 
 		// Update `info` with the transformations
 		png_read_update_info(png, info);
@@ -323,8 +322,10 @@ public:
 				}
 			}
 		} else {
+			assert(interlaceType == PNG_INTERLACE_ADAM7);
+
 			// For interlace to work properly, we must read the image `nbPasses` times
-			for (int pass = 0; pass < nbPasses; ++pass) {
+			for (int pass = 0; pass < PNG_INTERLACE_ADAM7_PASSES; ++pass) {
 				// The interlacing pass must be skipped if its width or height is reported as zero
 				if (PNG_PASS_COLS(width, pass) == 0 || PNG_PASS_ROWS(height, pass) == 0) {
 					continue;
