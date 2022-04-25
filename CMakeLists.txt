@@ -77,12 +77,23 @@ else(GIT)
   message(STATUS "Cannot determine RGBDS version (Git not installed), falling back")
 endif(GIT)
 
+find_package(PkgConfig)
+if(MSVC OR NOT PKG_CONFIG_FOUND)
+  # fallback to find_package
+  find_package(PNG REQUIRED)
+else()
+  pkg_check_modules(LIBPNG REQUIRED libpng)
+endif()
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
+add_subdirectory(test)
 
 # By default, build in Release mode; Debug mode must be explicitly requested
 # (You may want to augment it with the options above)

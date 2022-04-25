@@ -14,14 +14,6 @@ set(common_src
     "_version.c"
     )
 
-find_package(PkgConfig)
-if(MSVC OR NOT PKG_CONFIG_FOUND)
-  # fallback to find_package
-  find_package(PNG REQUIRED)
-else()
-  pkg_check_modules(LIBPNG REQUIRED libpng)
-endif()
-
 find_package(BISON REQUIRED)
 set(BISON_FLAGS "-Wall")
 # Set sompe optimization flags on versions that support them
@@ -103,8 +95,6 @@ foreach(PROG "asm" "fix" "gfx" "link")
                  )
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
-
-set_target_properties(rgbgfx PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED True)
 
 if(LIBPNG_FOUND) # pkg-config
   target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})

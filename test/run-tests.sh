@@ -14,7 +14,7 @@ fi
 
 # Tests included with the repository
 
-for dir in asm link fix; do
+for dir in asm link fix gfx; do
 	pushd $dir
 	./test.sh
 	popd
