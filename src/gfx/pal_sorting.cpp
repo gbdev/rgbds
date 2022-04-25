@@ -76,7 +76,7 @@ void grayscale(std::vector<Palette> &palettes,
 	assert(palettes.size() == 1);
 
 	Palette &palette = palettes[0];
-	std::fill(palette.begin(), palette.end(), Rgba::transparent);
+	std::fill(palette.colors.begin(), palette.colors.end(), Rgba::transparent);
 	for (auto const &slot : colors) {
 		if (!slot.has_value() || slot->isTransparent()) {
 			continue;
