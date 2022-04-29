@@ -247,7 +247,7 @@ static void writeROM(void)
 			writeBank(sections[SECTTYPE_ROM0].banks[0].sections,
 				  startaddr[SECTTYPE_ROM0], maxsize[SECTTYPE_ROM0]);
 
-		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
+		for (uint32_t i = 0; i <= sections[SECTTYPE_ROMX].nbBanks; i++)
 			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
 				  startaddr[SECTTYPE_ROMX], maxsize[SECTTYPE_ROMX]);
 	}
