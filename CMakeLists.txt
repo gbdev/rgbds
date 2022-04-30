@@ -29,8 +29,18 @@ option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
 if(MSVC)
   # MSVC's standard library triggers warning C5105,
   # "macro expansion producing 'defined' has undefined behavior"
-  add_compile_options(/std:c11 /W1 /MP /wd5105)
+  add_compile_options(/MP /wd5105)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+  # Also, CMake appears not to pass the C11-enabling flag, so we must add it manually... but only for C!
+  if(NOT CMAKE_C_FLAGS MATCHES "std:c11") # The flag may already have been injected by an earlier CMake invocation, so don't add it twice
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std:c11" CACHE STRING "Flags used by the C compiler during all build types." FORCE)
+  endif()
+
+  if(SANITIZERS)
+    set(SAN_FLAGS /fsanitize=address)
+    add_compile_options(${SAN_FLAGS})
+    add_link_options(${SAN_FLAGS})
+  endif()
 else()
   add_compile_options(-Wall -pedantic)
   add_definitions(-D_POSIX_C_SOURCE=200809L -D_ISOC11_SOURCE)
@@ -41,7 +51,7 @@ else()
                   -fsanitize=object-size -fsanitize=bool -fsanitize=enum
                   -fsanitize=alignment -fsanitize=null -fsanitize=address)
     add_compile_options(${SAN_FLAGS})
-    link_libraries(${SAN_FLAGS})
+    add_link_options(${SAN_FLAGS})
     # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
     # TODO: this overrides anything previously set... that's a bit sloppy!
     set(CMAKE_C_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)

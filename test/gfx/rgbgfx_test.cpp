@@ -1,5 +1,18 @@
-#include <sys/stat.h>
-#include <sys/wait.h>
+
+// For `execProg` (Windows is its special little snowflake again)
+#ifndef _MSC_VER
+	#include <sys/stat.h>
+	#include <sys/wait.h>
+
+	#include <spawn.h>
+	#include <unistd.h>
+#else
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h` to avoid conflicts
+	#include <windows.h>
+	#include <errhandlingapi.h>
+	#include <processthreadsapi.h>
+	#undef max // This macro conflicts with `std::numeric_limits<...>::max()`
+#endif
 
 #include <algorithm>
 #include <array>
@@ -10,11 +23,10 @@
 #include <limits>
 #include <memory>
 #include <png.h>
-#include <spawn.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <string>
 #include <vector>
 
 #include "defaultinitalloc.hpp"
@@ -267,12 +279,12 @@ public:
 	~Png() { png_destroy_read_struct(&png, &info, nullptr); }
 };
 
-static int execProg(char const *name, char * const *argv,
-                    posix_spawn_file_actions_t const *actions = nullptr) {
+static char *execProg(char const *name, char * const *argv) {
+#ifndef _MSC_VER
 	pid_t pid;
-	int err = posix_spawn(&pid, argv[0], actions, nullptr, argv, nullptr);
+	int err = posix_spawn(&pid, argv[0], nullptr, nullptr, argv, nullptr);
 	if (err != 0) {
-		return err;
+		return strerror(err);
 	}
 
 	siginfo_t info;
@@ -286,7 +298,74 @@ static int execProg(char const *name, char * const *argv,
 		fatal("%s returned with status %d", name, info.si_status);
 	}
 
-	return 0;
+#else /* defined(_MSC_VER) */
+
+	auto winStrerror = [](DWORD errnum) {
+		LPTSTR buf;
+		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+		                      | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+		                  nullptr, errnum, 0, (LPTSTR)&buf, 0, nullptr)
+		    == 0) {
+			fatal("Failed to get error message for error 0x%x", errnum);
+		}
+		return buf;
+	};
+
+	char cmdLine[32768]; // Max command line size on Windows
+	char *ptr = cmdLine;
+	for (size_t i = 0; argv[i]; ++i) {
+		char const *src = argv[i];
+		// I miss you, `stpcpy`
+		while (*src) {
+			*ptr++ = *src++;
+		}
+		*ptr++ = ' ';
+	}
+	*ptr = '\0';
+
+	STARTUPINFOA startupInfo;
+	GetStartupInfoA(&startupInfo);
+	STARTUPINFOA childStartupInfo{sizeof(startupInfo),
+	                              nullptr,
+	                              nullptr,
+	                              nullptr,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              0,
+	                              nullptr,
+	                              0,
+	                              0,
+	                              0};
+
+	PROCESS_INFORMATION child;
+	if (CreateProcessA(nullptr, cmdLine, nullptr, nullptr, true, 0, nullptr, nullptr,
+	                   &childStartupInfo, &child)
+	    == 0) {
+		return winStrerror(GetLastError());
+	}
+
+	DWORD status;
+	do {
+		if (GetExitCodeProcess(child.hProcess, &status) == 0) {
+			fatal("Error waiting for %s: %ls", name, winStrerror(GetLastError()));
+		}
+	} while (status == STILL_ACTIVE);
+	CloseHandle(child.hProcess);
+	CloseHandle(child.hThread);
+
+	if (status != 0) {
+		fatal("%s returned with status %ld", name, status);
+	}
+#endif
+
+	return nullptr;
 }
 
 int main(int argc, char **argv) {
@@ -296,20 +375,13 @@ int main(int argc, char **argv) {
 	}
 
 	{
-		posix_spawn_file_actions_t action;
-		// Putting these directly in the array makes them const or something.
 		char path[] = "./randtilegen", file[] = "out";
-		char *args[] = {path, file, nullptr};
+		char *args[] = {path, argv[1], file, nullptr};
 
-		posix_spawn_file_actions_init(&action);
-		posix_spawn_file_actions_addopen(&action, 0, argv[1], O_RDONLY, 0);
-
-		if (int ret = execProg("randtilegen", args, &action); ret != 0) {
+		if (auto ret = execProg("randtilegen", args); ret != nullptr) {
 			fatal("Failed to excute ./randtilegen (%s). Is it in the current working directory?",
-			      strerror(ret));
+			      ret);
 		}
-
-		posix_spawn_file_actions_destroy(&action);
 	}
 
 	{
@@ -321,9 +393,8 @@ int main(int argc, char **argv) {
 		// Also copy the trailing `nullptr`
 		std::copy_n(&argv[2], argc - 1, std::back_inserter(args));
 
-		if (int ret = execProg("rgbgfx conversion", args.data()); ret != 0) {
-			fatal("Failed to execute ../../rgbgfx (%s). Is it in the parent directory?",
-			      strerror(ret));
+		if (auto ret = execProg("rgbgfx conversion", args.data()); ret != nullptr) {
+			fatal("Failed to execute ../../rgbgfx (%s). Is it in the parent directory?", ret);
 		}
 	}
 
@@ -340,8 +411,8 @@ int main(int argc, char **argv) {
 		// Also copy the trailing `nullptr`
 		std::copy_n(&argv[2], argc - 1, std::back_inserter(args));
 
-		if (int ret = execProg("rgbgfx reversal", args.data()); ret != 0) {
-			fatal("Failed to execute ../../rgbgfx -r (%s)", strerror(ret));
+		if (auto ret = execProg("rgbgfx reversal", args.data()); ret != nullptr) {
+			fatal("Failed to execute ../../rgbgfx -r (%s)", ret);
 		}
 	}
 

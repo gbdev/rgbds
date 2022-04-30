@@ -46,12 +46,14 @@
 # include <unistd.h>
 #endif
 
-/* MSVC doesn't support `[static N]` for array arguments from C99 */
+/* MSVC doesn't support `[static N]` for array arguments from C99 or C11 */
 #ifdef _MSC_VER
 # define MIN_NB_ELMS(N)
+# define ARR_QUALS(...)
 # define NONNULL(ptr) *ptr
 #else
 # define MIN_NB_ELMS(N) static (N)
+# define ARR_QUALS(...) __VA_ARGS__
 # define NONNULL(ptr) ptr[static 1]
 #endif
 
