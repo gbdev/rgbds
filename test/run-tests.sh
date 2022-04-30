@@ -50,7 +50,7 @@ if [ ! -d ucity ]; then
 fi
 pushd ucity
 git fetch
-git checkout 15be184b26b337110e1ec2998cd42f134f00f281
+git checkout d8878233da7a6569f09f87b144cb5bf140146a0f
 make clean
 make -j4 RGBDS=../../
 popd
