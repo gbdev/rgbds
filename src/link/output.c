@@ -39,7 +39,7 @@ struct SortedSymbol {
 };
 
 static struct {
-	uint32_t nbBanks;
+	uint32_t nbBanks; // Size of the array below (which may be NULL if this is 0)
 	struct SortedSections {
 		struct SortedSection *sections;
 		struct SortedSection *zeroLenSections;
@@ -243,9 +243,9 @@ static void writeROM(void)
 		coverOverlayBanks(nbOverlayBanks);
 
 	if (outputFile) {
-		if (sections[SECTTYPE_ROM0].nbBanks > 0)
-			writeBank(sections[SECTTYPE_ROM0].banks[0].sections,
-				  startaddr[SECTTYPE_ROM0], maxsize[SECTTYPE_ROM0]);
+		writeBank(sections[SECTTYPE_ROM0].banks ? sections[SECTTYPE_ROM0].banks[0].sections
+							: NULL,
+			  startaddr[SECTTYPE_ROM0], maxsize[SECTTYPE_ROM0]);
 
 		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
 			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
