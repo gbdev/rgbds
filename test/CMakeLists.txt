@@ -1,8 +1,5 @@
 
 add_executable(randtilegen gfx/randtilegen.c)
-if(NOT MSVC)
-  target_compile_options(randtilegen PRIVATE -Wno-vla)
-endif()
 
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
 
