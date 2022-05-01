@@ -174,6 +174,7 @@ clean:
 	$Qfind src/ -name "*.o" -exec rm {} \;
 	$Q${RM} rgbshim.sh
 	$Q${RM} src/asm/parser.c src/asm/parser.h
+	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
 
 # Target used to install the binaries and man pages.
 
