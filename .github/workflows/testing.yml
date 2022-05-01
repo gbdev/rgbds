@@ -142,6 +142,7 @@ jobs:
         shell: bash
         run: |
           cp bins/* .
+          cp bins/*.dll test/gfx
           test/run-tests.sh
 
   windows-xbuild:

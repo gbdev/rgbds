@@ -5,7 +5,8 @@
 
 rc=0
 for f in *.bin; do
-	./rgbgfx_test "$f" || rc=1
+	printf '%s...\n' "$f"
+	./rgbgfx_test "$f" || rc=$?
 done
 
 exit $rc
