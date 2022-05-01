@@ -33,19 +33,19 @@ jobs:
       # Apple's base version is severely outdated, not even supporting -Wall,
       # but it overrides Homebrew's version nonetheless...
       - name: Build & install using Make
+        if: matrix.buildsys == 'make'
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
           make develop -j Q= CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
           sudo make install -j Q=
-        if: matrix.buildsys == 'make'
       - name: Build & install using CMake
+        if: matrix.buildsys == 'cmake'
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
-          cmake --build build -j
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
+          cmake --build build -j --verbose
           cp build/src/rgb{asm,link,fix,gfx} .
-          sudo cmake --install build
-        if: matrix.buildsys == 'cmake'
+          sudo cmake --install build --verbose
       - name: Package binaries
         run: |
           mkdir bins
@@ -126,8 +126,8 @@ jobs:
       - name: Build Windows binaries
         run: |
           cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release -j
-          cmake --install build
+          cmake --build build --config Release -j --verbose
+          cmake --install build --verbose --prefix install_dir
       - name: Package binaries
         shell: bash
         run: |
