@@ -71,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Get zlib, libpng and bison
-        run: | # TODO: use an array
+        run: | # TODO: use an array; remember to update the versions being downloaded, *and* the paths being extracted! (`Move-Item`)
           $wc = New-Object System.Net.WebClient
           $wc.DownloadFile('https://www.zlib.net/zlib1212.zip', 'zlib.zip')
           $hash = (Get-FileHash "zlib.zip" -Algorithm SHA256).Hash
@@ -95,15 +95,28 @@ jobs:
           Expand-Archive -DestinationPath install_dir "winflexbison.zip"
           Move-Item zlib-1.2.12 zlib
           Move-Item lpng1637 libpng
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            zbuild
+            pngbuild
+          key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
           cmake -S zlib -B zbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install zlib
+        run: |
           cmake --install zbuild
       - name: Build libpng
         run: |
           cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
           cmake --build pngbuild --config Release -j
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install libpng
+        run: |
           cmake --install pngbuild
       - name: Build Windows binaries
         run: |
