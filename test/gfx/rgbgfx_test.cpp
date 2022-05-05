@@ -1,6 +1,6 @@
 
 // For `execProg` (Windows is its special little snowflake again)
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 	#include <sys/stat.h>
 	#include <sys/wait.h>
 
@@ -280,7 +280,7 @@ public:
 };
 
 static char *execProg(char const *name, char * const *argv) {
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 	pid_t pid;
 	int err = posix_spawn(&pid, argv[0], nullptr, nullptr, argv, nullptr);
 	if (err != 0) {
@@ -298,7 +298,7 @@ static char *execProg(char const *name, char * const *argv) {
 		fatal("%s returned with status %d", name, info.si_status);
 	}
 
-#else /* defined(_MSC_VER) */
+#else /* defined(_MSC_VER) || defined(__MINGW32__) */
 
 	auto winStrerror = [](DWORD errnum) {
 		LPTSTR buf;
