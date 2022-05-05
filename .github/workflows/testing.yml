@@ -51,7 +51,7 @@ jobs:
           mkdir bins
           cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.buildsys }}
           path: bins
@@ -134,7 +134,7 @@ jobs:
           mkdir bins
           cp install_dir/bin/{rgbasm.exe,rgblink.exe,rgbfix.exe,rgbgfx.exe,zlib1.dll,libpng16.dll} bins
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: rgbds-canary-win${{ matrix.bits }}
           path: bins
@@ -186,11 +186,20 @@ jobs:
           cp /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
           cp /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
           if [ ${{ matrix.bits }} -eq 32 ]; then cp /usr/lib/gcc/${{ matrix.triplet }}/7.3-win32/lib{gcc_s_sjlj-1,stdc++-6}.dll bins; fi
+          mv test/gfx/randtilegen{,.exe}
+          mv test/gfx/rgbgfx_test{,.exe}
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
+      - name: Upload Windows test binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: testing-programs-mingw-win${{ matrix.bits }}
+          path: |
+            test/gfx/randtilegen.exe
+            test/gfx/rgbgfx_test.exe
 
   windows-xtesting:
     needs: windows-xbuild
@@ -202,14 +211,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Retrieve binaries
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
+      - name: Retrieve test binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: testing-programs-mingw-win${{ matrix.bits }}
+          path: test/gfx
       - name: Extract binaries
         shell: bash
         run: |
           cp bins/* .
+          cp bins/*.dll test/gfx
       - name: Run tests
         shell: bash
         run: |
