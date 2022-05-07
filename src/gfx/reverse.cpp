@@ -236,13 +236,15 @@ void reverse() {
 	for (size_t ty = 0; ty < height; ++ty) {
 		for (size_t tx = 0; tx < width; ++tx) {
 			size_t index = options.columnMajor ? ty + tx * width : ty * width + tx;
-			// Get the tile ID at this location
-			uint8_t gbcTileID = tilemap.has_value() ? (*tilemap)[index] : index;
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
 			uint8_t attribute = attrmap.has_value() ? (*attrmap)[index] : 0x00;
 			bool bank = attribute & 0x08;
-			gbcTileID -= options.baseTileIDs[bank];
-			size_t tileID = gbcTileID + bank * options.maxNbTiles[0];
+			// Get the tile ID at this location
+			uint8_t tileID = index;
+			if (tilemap.has_value()) {
+				tileID =
+				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
+			}
 			assert(tileID < nbTileInstances); // Should have been checked earlier
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
