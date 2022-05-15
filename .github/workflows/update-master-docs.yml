@@ -5,15 +5,15 @@ on:
       - master
     paths:
       - .github/actions/get-pages.sh
-      - src/gbz80.7
-      - src/rgbds.5
-      - src/rgbds.7
-      - src/asm/rgbasm.1
-      - src/asm/rgbasm.5
-      - src/link/rgblink.1
-      - src/link/rgblink.5
-      - src/fix/rgbfix.1
-      - src/gfx/rgbgfx.1
+      - man/gbz80.7
+      - man/rgbds.5
+      - man/rgbds.7
+      - man/rgbasm.1
+      - man/rgbasm.5
+      - man/rgblink.1
+      - man/rgblink.5
+      - man/rgbfix.1
+      - man/rgbgfx.1
 
 jobs:
   build:
@@ -43,9 +43,9 @@ jobs:
           make
           sudo make install
       - name: Update pages
-        working-directory: rgbds
+        working-directory: rgbds/man
         run: |
-          ./.github/actions/get-pages.sh ../rgbds-www master
+          ../.github/actions/get-pages.sh ../../rgbds-www master
       - name: Push new pages
         working-directory: rgbds-www
         run: |

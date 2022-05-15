@@ -57,6 +57,8 @@ The RGBDS source code file structure somewhat resembles the following:
        │   └── ...
        ├── include/
        │   └── ...
+       ├── man/
+       │   └── ...
        ├── src/
        │   ├── asm/
        │   │   └── ...
@@ -96,7 +98,9 @@ The RGBDS source code file structure somewhat resembles the following:
 
 - ``include/`` - header files for each respective C files in `src`.
 
-- ``src/`` - source code and manual pages for RGBDS.
+- ``man/`` - manual pages.
+
+- ``src/`` - source code of RGBDS.
 
   * Note that the code unique to each RGBDS tool is stored in its respective subdirectory
     (rgbasm -> ``src/asm/``, for example). ``src/extern/`` contains code imported from external sources.

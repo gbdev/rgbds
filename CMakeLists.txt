@@ -97,3 +97,19 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(CHECK_FAIL "no")
   endif()
 endif()
+
+set(MANDIR "share/man")
+set(man1 "man/rgbasm.1"
+         "man/rgbfix.1"
+         "man/rgbgfx.1"
+         "man/rgblink.1")
+set(man5 "man/rgbasm.5"
+         "man/rgblink.5"
+         "man/rgbds.5")
+set(man7 "man/gbz80.7"
+         "man/rgbds.7")
+
+foreach(SECTION "man1" "man5" "man7")
+  set(DEST "${MANDIR}/${SECTION}")
+  install(FILES ${${SECTION}} DESTINATION ${DEST})
+endforeach()

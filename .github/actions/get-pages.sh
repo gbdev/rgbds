@@ -4,7 +4,7 @@ usage() {
 	cat <<EOF
 Usage: $0 [-h] [-r] <rgbds-www> <version>
 Copy renders from RGBDS repository to rgbds-www documentation
-Execute from the root folder of the RGBDS repo, checked out at the desired tag
+Execute from the \`man/\` folder in the RGBDS repo, checked out at the desired tag
 <rgbds-www> : Path to the rgbds-www repository
 <version>   : Version to be copied, such as 'v0.4.1' or 'master'
 
@@ -35,37 +35,34 @@ if [ $bad_usage -ne 0 ]; then
 	usage
 	exit 1
 fi
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 
-declare -A PAGES
+declare -a PAGES
 PAGES=(
-	[rgbasm.1.html]=src/asm/rgbasm.1
-	[rgbasm.5.html]=src/asm/rgbasm.5
-	[rgblink.1.html]=src/link/rgblink.1
-	[rgblink.5.html]=src/link/rgblink.5
-	[rgbfix.1.html]=src/fix/rgbfix.1
-	[rgbgfx.1.html]=src/gfx/rgbgfx.1
-	[rgbds.5.html]=src/rgbds.5
-	[rgbds.7.html]=src/rgbds.7
-	[gbz80.7.html]=src/gbz80.7
+	rgbasm.1
+	rgbasm.5
+	rgblink.1
+	rgblink.5
+	rgbfix.1
+	rgbgfx.1
+	rgbds.5
+	rgbds.7
+	gbz80.7
 )
 WWWPATH="/docs"
-mkdir -p "$1/_documentation/$2"
+OUTDIR="$1/_documentation/$2"
+mkdir -p "$OUTDIR"
 
 # `mandoc` uses a different format for referring to man pages present in the **current** directory.
 # We want that format for RGBDS man pages, and the other one for the rest;
-# we thus need to copy all pages to a temporary directory, and process them there.
+# this script must thus be run from the directory all man pages are in.
 
-# Copy all pages to current dir
-cp "${PAGES[@]}" .
+for page in "${PAGES[@]}"; do
+manpage="${page%.?}(${page#*.})" # "rgbasm(5)"
+descr="$(awk -v 'FS=.Nd ' '/.Nd/ { print $2; }' "$page")" # "language documentation"
 
-for page in "${!PAGES[@]}"; do
-stem="${page%.html}"
-manpage="${stem%.?}(${stem#*.})"
-descr="$(awk -v 'FS=.Nd ' '/.Nd/ { print $2; }' "${PAGES[$page]}")"
-
-	cat >"$1/_documentation/$2/$page" <<EOF
+	cat >"$OUTDIR/$page.html" <<EOF
 ---
 layout: doc
 title: $manpage [$2]
@@ -73,16 +70,16 @@ description: RGBDS $2 — $descr
 ---
 EOF
 	options=fragment,man='%N.%S;https://linux.die.net/man/%S/%N'
-	if [ $stem = rgbasm.5 ]; then
+	if [[ $page = rgbasm.5 ]]; then
 		options+=,toc
 	fi
-	mandoc -Thtml -I os=Linux -O$options "${PAGES[$page]##*/}" | .github/actions/doc_postproc.awk >> "$1/_documentation/$2/$page"
-	groff -Tpdf -mdoc -wall "${PAGES[$page]##*/}" >"$1/_documentation/$2/$stem.pdf"
-	if [ $is_release -ne 0 ]; then
-		cat - >"$1/_documentation/$page" <<EOF
+	mandoc -W warning -Thtml -I os=Linux -O$options "$page" | ../.github/actions/doc_postproc.awk >> "$OUTDIR/$page.html"
+	groff -Tpdf -mdoc -wall "$page" >"$OUTDIR/$page.pdf"
+	if [[ $is_release -ne 0 ]]; then
+		cat - >"$1/_documentation/$page.html" <<EOF
 ---
-redirect_to: $WWWPATH/$2/${page%.html}
-permalink: $WWWPATH/${page%.html}/
+redirect_to: $WWWPATH/$2/$page
+permalink: $WWWPATH/$page/
 title: $manpage [latest stable]
 description: RGBDS latest stable — $descr
 ---
@@ -90,7 +87,7 @@ EOF
 	fi
 done
 
-cat - >"$1/_documentation/$2/index.html" <<EOF
+cat - >"$OUTDIR/index.html" <<EOF
 ---
 layout: doc_index
 permalink: /docs/$2/
@@ -101,13 +98,9 @@ EOF
 
 
 # If making a release, add a new entry right after `master`
-if [ $is_release -ne 0 ]; then
+if [[ $is_release -ne 0 ]]; then
 	awk '{ print }
-/"name": "master"/ { print "\t\t{\"name\": \"'$2'\",  \"text\": \"'$2'\" }," }
+/"name": "master"/ { print "\t\t{\"name\": \"'"$2"'\",  \"text\": \"'"$2"'\" }," }
 ' "$1/_data/doc.json" >"$1/_data/doc.json.tmp"
 	mv "$1/_data/doc.json"{.tmp,}
 fi
-
-
-# Clean up
-rm "${PAGES[@]##*/}"
