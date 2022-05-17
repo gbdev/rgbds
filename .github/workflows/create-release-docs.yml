@@ -23,16 +23,16 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get install -yq groff zlib1g-dev
-          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz'
-          tar xf mandoc-1.14.5.tar.gz
-          cd mandoc-1.14.5
+          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz'
+          tar xf mandoc-1.14.6.tar.gz
+          cd mandoc-1.14.6
           ./configure
           make
           sudo make install
       - name: Update pages
-        working-directory: rgbds
+        working-directory: rgbds/man
         run: | # The ref appears to be in the format "refs/tags/<version>", so strip that
-          ./.github/actions/get-pages.sh -r ../rgbds-www ${GITHUB_REF##*/}
+          ../../rgbds-www/.github/actions/get-pages.sh ${GITHUB_REF##*/} *
       - name: Push new pages
         working-directory: rgbds-www
         run: |

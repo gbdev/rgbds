@@ -4,7 +4,6 @@ on:
     branches:
       - master
     paths:
-      - .github/actions/get-pages.sh
       - man/gbz80.7
       - man/rgbds.5
       - man/rgbds.7
@@ -36,16 +35,16 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get install -yq groff zlib1g-dev
-          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.5.tar.gz'
-          tar xf mandoc-1.14.5.tar.gz
-          cd mandoc-1.14.5
+          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz'
+          tar xf mandoc-1.14.6.tar.gz
+          cd mandoc-1.14.6
           ./configure
           make
           sudo make install
       - name: Update pages
         working-directory: rgbds/man
         run: |
-          ../.github/actions/get-pages.sh ../../rgbds-www master
+          ../../rgbds-www/maintainer/man_to_html.sh master *
       - name: Push new pages
         working-directory: rgbds-www
         run: |
@@ -56,7 +55,7 @@ jobs:
           ssh-add ~/.ssh/id_ed25519
           git config --global user.name "GitHub Action"
           git config --global user.email "community@gbdev.io"
-          git add .
+          git add -A
           git commit -m "Update RGBDS master documentation"
           if git remote | grep -q origin; then
             git remote set-url origin git@github.com:gbdev/rgbds-www.git
