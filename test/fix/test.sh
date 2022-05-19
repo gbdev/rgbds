@@ -80,22 +80,23 @@ echo "${bold}Checking padding...${resbold}"
 cp "$src"/padding{,-large,-larger}.bin .
 touch padding{,-large,-larger}.err
 progress=0
-for b in {0..254}; do
-	printf "\r$b..."
+for (( i=0; i < 10; ++i )); do
+	(( padding = RANDOM % 256 ))
+	echo "$padding..."
 	for suffix in '' -large -larger; do
-		cat <<<'-p $b' >padding$suffix.flags
-		tr '\377' \\$(($b / 64))$((($b / 8) % 8))$(($b % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb # OK because $FF bytes are only used for padding
+		cat <<<"-p $padding" >padding$suffix.flags
+		tr '\377' \\$((padding / 64))$(((padding / 8) % 8))$((padding % 8)) <"$src/padding$suffix.gb" >padding$suffix.gb # OK because $FF bytes are only used for padding
 		runTest padding${suffix} .
 	done
 done
-printf "\rDone! \n"
+echo "Done!"
 
 # TODO: check MBC names
 
 # Check that RGBFIX errors out when inputting a non-existent file...
 $RGBFIX noexist 2>out.err
-rc=$(($rc || $? != 1))
+rc=$((rc || $? != 1))
 tryDiff "$src/noexist.err" out.err noexist.err
-rc=$(($rc || $?))
+rc=$((rc || $?))
 
 exit $rc
