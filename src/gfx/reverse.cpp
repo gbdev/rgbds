@@ -178,9 +178,17 @@ void reverse() {
 		// We do this now for two reasons:
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
+		// TODO
 	}
 
-	// TODO: palette map (overrides attributes)
+	std::optional<DefaultInitVec<uint8_t>> palmap;
+	if (!options.palmap.empty()) {
+		palmap = readInto(options.palmap);
+		if (palmap->size() != nbTileInstances) {
+			fatal("Palette map size (%zu tiles) doesn't match image's (%zu)", palmap->size(),
+			      nbTileInstances);
+		}
+	}
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
 	std::filebuf pngFile;
@@ -246,6 +254,8 @@ void reverse() {
 				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
 			}
 			assert(tileID < nbTileInstances); // Should have been checked earlier
+			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
+			assert(palID < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
 			static std::array<uint8_t, 16> const trimmedTile{
@@ -255,8 +265,7 @@ void reverse() {
 			uint8_t const *tileData = tileID > nbTileInstances - options.trim
 			                              ? trimmedTile.data()
 			                              : &tiles[tileID * tileSize];
-			assert((attribute & 0b111) < palettes.size()); // Should be ensured on data read
-			auto const &palette = palettes[attribute & 0b111];
+			auto const &palette = palettes[palID];
 			for (uint8_t y = 0; y < 8; ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
 				uint8_t realY = attribute & 0x40 ? 7 - y : y;

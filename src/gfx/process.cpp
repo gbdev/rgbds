@@ -739,7 +739,7 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 
 static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
                        DefaultInitVec<size_t> const &mappings) {
-	std::optional<std::filebuf> tilemapOutput, attrmapOutput;
+	std::optional<std::filebuf> tilemapOutput, attrmapOutput, palmapOutput;
 	if (!options.tilemap.empty()) {
 		tilemapOutput.emplace();
 		tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary);
@@ -747,6 +747,10 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 	if (!options.attrmap.empty()) {
 		attrmapOutput.emplace();
 		attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+	}
+	if (!options.palmap.empty()) {
+		palmapOutput.emplace();
+		palmapOutput->open(options.palmap, std::ios_base::out | std::ios_base::binary);
 	}
 
 	uint8_t tileID = 0;
@@ -765,9 +769,12 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 		if (attrmapOutput.has_value()) {
 			uint8_t palID = iter->getPalID(mappings) & 7;
 			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
-			++iter;
+		}
+		if (palmapOutput.has_value()) {
+			palmapOutput->sputc(iter->getPalID(mappings));
 		}
 		++tileID;
+		++iter;
 	}
 	assert(iter == attrmap.end());
 }
@@ -874,8 +881,18 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 	for (AttrmapEntry const &entry : attrmap) {
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
 		attr |= entry.bank << 3;
-		attr |= mappings[entry.protoPaletteID] & 7;
+		attr |= entry.getPalID(mappings) & 7;
 		output.sputc(attr);
+	}
+}
+
+static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
+                         DefaultInitVec<size_t> const &mappings) {
+	std::filebuf output;
+	output.open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+
+	for (AttrmapEntry const &entry : attrmap) {
+		output.sputc(entry.getPalID(mappings));
 	}
 }
 
@@ -1023,9 +1040,10 @@ contained:;
 			unoptimized::outputTileData(png, attrmap, palettes, mappings);
 		}
 
-		if (!options.tilemap.empty() || !options.attrmap.empty()) {
-			options.verbosePrint(Options::VERB_LOG_ACT,
-			                     "Generating unoptimized tilemap and/or attrmap...\n");
+		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
+			options.verbosePrint(
+			    Options::VERB_LOG_ACT,
+			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n");
 			unoptimized::outputMaps(png, attrmap, mappings);
 		}
 	} else {
@@ -1051,6 +1069,11 @@ contained:;
 		if (!options.attrmap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
 			optimized::outputAttrmap(attrmap, mappings);
+		}
+
+		if (!options.palmap.empty()) {
+			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized palmap...\n");
+			optimized::outputPalmap(attrmap, mappings);
 		}
 	}
 }
