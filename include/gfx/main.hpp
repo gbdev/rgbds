@@ -43,6 +43,7 @@ struct Options {
 	uint8_t nbPalettes = 8; // -n
 	std::string output{}; // -o
 	std::string palettes{}; // -p, -P
+	std::string palmap{}; // -q, -Q
 	uint8_t nbColorsPerPal = 0; // -s; 0 means "auto" = 1 << bitDepth;
 	std::string tilemap{}; // -t, -T
 	std::array<uint16_t, 2> unitSize{1, 1}; // -U (in tiles)

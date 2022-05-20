@@ -87,7 +87,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:r:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:Qq:r:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -100,40 +100,42 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:r:s:Tt:U:uVvx:Z";
  * over short opt matching
  */
 static struct option const longopts[] = {
-    {"output-attr-map", no_argument,       NULL, 'A'},
-    {"attr-map",        required_argument, NULL, 'a'},
-    {"base-tiles",      required_argument, NULL, 'b'},
-    {"color-curve",     no_argument,       NULL, 'C'},
-    {"colors",          required_argument, NULL, 'c'},
-    {"debug",           no_argument,       NULL, 'D'}, // Ignored
-    {"depth",           required_argument, NULL, 'd'},
-    {"fix",             no_argument,       NULL, 'f'},
-    {"fix-and-save",    no_argument,       NULL, 'F'}, // Deprecated
-    {"horizontal",      no_argument,       NULL, 'h'}, // Deprecated
-    {"slice",           required_argument, NULL, 'L'},
-    {"mirror-tiles",    no_argument,       NULL, 'm'},
-    {"nb-tiles",        required_argument, NULL, 'N'},
-    {"nb-palettes",     required_argument, NULL, 'n'},
-    {"output",          required_argument, NULL, 'o'},
-    {"output-palette",  no_argument,       NULL, 'P'},
-    {"palette",         required_argument, NULL, 'p'},
-    {"reverse",         required_argument, NULL, 'r'},
-    {"output-tilemap",  no_argument,       NULL, 'T'},
-    {"tilemap",         required_argument, NULL, 't'},
-    {"unit-size",       required_argument, NULL, 'U'},
-    {"unique-tiles",    no_argument,       NULL, 'u'},
-    {"version",         no_argument,       NULL, 'V'},
-    {"verbose",         no_argument,       NULL, 'v'},
-    {"trim-end",        required_argument, NULL, 'x'},
-    {"columns",         no_argument,       NULL, 'Z'},
-    {NULL,              no_argument,       NULL, 0  }
+    {"output-attr-map",    no_argument,       NULL, 'A'},
+    {"attr-map",           required_argument, NULL, 'a'},
+    {"base-tiles",         required_argument, NULL, 'b'},
+    {"color-curve",        no_argument,       NULL, 'C'},
+    {"colors",             required_argument, NULL, 'c'},
+    {"debug",              no_argument,       NULL, 'D'}, // Ignored
+    {"depth",              required_argument, NULL, 'd'},
+    {"fix",                no_argument,       NULL, 'f'},
+    {"fix-and-save",       no_argument,       NULL, 'F'}, // Deprecated
+    {"horizontal",         no_argument,       NULL, 'h'}, // Deprecated
+    {"slice",              required_argument, NULL, 'L'},
+    {"mirror-tiles",       no_argument,       NULL, 'm'},
+    {"nb-tiles",           required_argument, NULL, 'N'},
+    {"nb-palettes",        required_argument, NULL, 'n'},
+    {"output",             required_argument, NULL, 'o'},
+    {"output-palette",     no_argument,       NULL, 'P'},
+    {"palette",            required_argument, NULL, 'p'},
+    {"output-palette-map", no_argument,       NULL, 'Q'},
+    {"palette-map",        required_argument, NULL, 'q'},
+    {"reverse",            required_argument, NULL, 'r'},
+    {"output-tilemap",     no_argument,       NULL, 'T'},
+    {"tilemap",            required_argument, NULL, 't'},
+    {"unit-size",          required_argument, NULL, 'U'},
+    {"unique-tiles",       no_argument,       NULL, 'u'},
+    {"version",            no_argument,       NULL, 'V'},
+    {"verbose",            no_argument,       NULL, 'v'},
+    {"trim-end",           required_argument, NULL, 'x'},
+    {"columns",            no_argument,       NULL, 'Z'},
+    {NULL,                 no_argument,       NULL, 0  }
 };
 
 static void printUsage(void) {
 	fputs("Usage: rgbgfx [-r stride] [-CmuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	      "       [-b base_ids] [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles]\n"
-	      "       [-n nb_pals] [-o <out_file>] [-p <pal_file> | -P] [-s nb_colors]\n"
-	      "       [-t <tile_map> | -T] [-U unit_size] [-x <tiles>] <file>\n"
+	      "       [-n nb_pals] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_mal> | -Q ]\n"
+	      "       [-s nb_colors] [-t <tile_map> | -T] [-U unit_size] [-x <tiles>] <file>\n"
 	      "Useful options:\n"
 	      "    -m, --mirror-tiles    optimize out mirrored tiles\n"
 	      "    -o, --output <path>   set the output binary file\n"
@@ -319,7 +321,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
  * "at-file" path if one is encountered.
  */
 static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilemap,
-                       bool &autoPalettes) {
+                       bool &autoPalettes, bool &autoPalmap) {
 	int opt;
 
 	while ((opt = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1) {
@@ -422,12 +424,12 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			}
 			break;
 		case 'n':
-			options.nbPalettes = parseNumber(arg, "Number of palettes", 8);
+			options.nbPalettes = parseNumber(arg, "Number of palettes", 256);
 			if (*arg != '\0') {
 				error("Number of palettes (-n) must be a valid number, not \"%s\"", musl_optarg);
 			}
-			if (options.nbPalettes > 8) {
-				error("Number of palettes (-n) must not exceed 8!");
+			if (options.nbPalettes > 256) {
+				error("Number of palettes (-n) must not exceed 256!");
 			} else if (options.nbPalettes == 0) {
 				error("Number of palettes (-n) may not be 0!");
 			}
@@ -441,6 +443,13 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 		case 'p':
 			autoPalettes = false;
 			options.palettes = musl_optarg;
+			break;
+		case 'Q':
+			autoPalmap = true;
+			break;
+		case 'q':
+			autoPalmap = false;
+			options.palmap = musl_optarg;
 			break;
 		case 'r':
 			options.reversedWidth = parseNumber(arg, "Reversed image stride");
@@ -512,7 +521,7 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 }
 
 int main(int argc, char *argv[]) {
-	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false;
+	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false, autoPalmap = false;
 
 	struct AtFileStackEntry {
 		int parentInd; // Saved offset into parent argv
@@ -527,7 +536,8 @@ int main(int argc, char *argv[]) {
 	int curArgc = argc;
 	char **curArgv = argv;
 	for (;;) {
-		char *atFileName = parseArgv(curArgc, curArgv, autoAttrmap, autoTilemap, autoPalettes);
+		char *atFileName =
+		    parseArgv(curArgc, curArgv, autoAttrmap, autoTilemap, autoPalettes, autoPalmap);
 		if (atFileName) {
 			// Copy `argv[0]` for error reporting, and because option parsing skips it
 			AtFileStackEntry &stackEntry =
@@ -606,6 +616,7 @@ int main(int argc, char *argv[]) {
 	autoOutPath(autoAttrmap, options.attrmap, ".attrmap");
 	autoOutPath(autoTilemap, options.tilemap, ".tilemap");
 	autoOutPath(autoPalettes, options.palettes, ".pal");
+	autoOutPath(autoPalmap, options.palmap, ".palmap");
 
 	// Execute deferred external pal spec parsing, now that all other params are known
 	if (externalPalSpec) {

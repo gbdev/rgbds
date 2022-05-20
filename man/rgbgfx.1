@@ -26,6 +26,7 @@
 .Op Fl n Ar nb_pals
 .Op Fl o Ar out_file
 .Op Fl p Ar pal_file | Fl P
+.Op Fl q Ar pal_map | Fl Q
 .Op Fl s Ar nb_colors
 .Op Fl t Ar tilemap | Fl T
 .Op Fl U Ar unit_size
@@ -71,8 +72,6 @@ All of these are equivalent:
 .Ql 0x2A ,
 .Ql 0X2A ,
 .Ql 0x2a .
-.Pp
-TODO: add "palette map" output.
 .Pp
 The following options are accepted:
 .Bl -tag -width Ds
@@ -182,7 +181,10 @@ is not specified, no limit will be set on the amount of tiles placed in bank 0, 
 Abort if more than
 .Ar nb_pals
 palettes are generated.
-Note that attribute map output only has 3 bits for the palette ID, so a limit higher than 8 may yield incomplete data.
+This may not be more than 256.
+.Pp
+Note that attribute map output only has 3 bits for the palette ID, so a limit higher than 8 may yield incomplete data unless relying on a palette map
+.Pq see Fl q .
 .It Fl o Ar out_file , Fl Fl output Ar out_file
 Output the tile data in native 2bpp format or in 1bpp
 .Pq depending on Fl d
@@ -196,6 +198,16 @@ where
 .Ar path
 is the input image's path with the extension set to
 .Pa .pal .
+.It Fl q Ar pal_file , Fl Fl palette-map Ar pal_file
+Output the image's palette map to this file.
+This is useful if the input image contains more than 8 palettes, as the attribute map only contains the lower 3 bits of the palette indices.
+.It Fl Q , Fl Fl output-palette-map
+Same as
+.Fl q Ar path ,
+where
+.Ar path
+is the input image's path with the extension set to
+.Pa .palmap .
 .It Fl s Ar nb_colors , Fl Fl palette-size Ar nb_colors
 Specify how many colors each palette contains, including the transparent one if any.
 .Ar nb_colors
