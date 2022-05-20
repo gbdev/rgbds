@@ -26,19 +26,15 @@ fail() {
 }
 
 
+# Draw a random tile offset and VRA0 size
+# Neither should change anything to how the image is displayed
+while [[ "$ofs" -eq 0 ]]; do (( ofs = RANDOM % 256 )); done
+while [[ "$size" -eq 0 ]]; do (( size = RANDOM % 256 )); done
 for f in *.bin; do
-	new_test ./rgbgfx_test "$f"
-	test || fail $?
-done
-
-# Re-run the tests, but this time, pass a random (non-zero) tile offset
-# A tile offset should not change anything to how the image is displayed
-while [[ "$ofs" -eq 0 ]]; do
-	ofs=$((RANDOM % 256))
-done
-for f in *.bin; do
-	new_test ./rgbgfx_test "$f" -b "$ofs"
-	test || fail $?
+	for flags in "" "-b $ofs" "-N $size,256" "-b $ofs -N $size,256"; do
+		new_test ./rgbgfx_test "$f" $flags
+		test || fail $?
+	done
 done
 
 # Remove temporaries (also ignored by Git) created by the above tests
