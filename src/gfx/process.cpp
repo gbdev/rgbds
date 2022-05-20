@@ -323,10 +323,22 @@ public:
 		// assigned, and conflicts always occur between that and another color.
 		// For the same reason, we don't need to worry about order, either.
 		std::vector<std::tuple<uint32_t, uint32_t>> conflicts;
+		// Holds colors whose alpha value is ambiguous
+		std::vector<uint32_t> indeterminates;
 
 		// Assign a color to the given position, and register it in the image palette as well
-		auto assignColor = [this, &conflicts](png_uint_32 x, png_uint_32 y, Rgba &&color) {
-			if (Rgba const *other = colors.registerColor(color); other) {
+		auto assignColor = [this, &conflicts, &indeterminates](png_uint_32 x, png_uint_32 y,
+		                                                       Rgba &&color) {
+			if (!color.isTransparent() && !color.isOpaque()) {
+				uint32_t css = color.toCSS();
+				if (std::find(indeterminates.begin(), indeterminates.end(), css)
+				    == indeterminates.end()) {
+					error(
+					    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= %u)",
+					    css, Rgba::transparency_threshold, Rgba::opacity_threshold);
+					indeterminates.push_back(css);
+				}
+			} else if (Rgba const *other = colors.registerColor(color); other) {
 				std::tuple conflicting{color.toCSS(), other->toCSS()};
 				// Do not report combinations twice
 				if (std::find(conflicts.begin(), conflicts.end(), conflicting) == conflicts.end()) {
