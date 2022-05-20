@@ -9,6 +9,7 @@
 #ifndef RGBDS_GFX_RGBA_HPP
 #define RGBDS_GFX_RGBA_HPP
 
+#include <cstdint>
 #include <stdint.h>
 
 struct Rgba {
@@ -50,12 +51,10 @@ struct Rgba {
 	 */
 	static constexpr uint16_t transparent = 0b1'00000'00000'00000;
 
-	/**
-	 * All alpha values strictly below this will be considered transparent
-	 */
-	static constexpr uint8_t opacity_threshold = 0xF0; // TODO: adjust this
-	// TODO: also a transparency threshold, and error out on "middle" values
-	bool isTransparent() const { return alpha < opacity_threshold; }
+	static constexpr uint8_t transparency_threshold = 0x10;
+	bool isTransparent() const { return alpha < transparency_threshold; }
+	static constexpr uint8_t opacity_threshold = 0xF0;
+	bool isOpaque() const { return alpha >= opacity_threshold; }
 	/**
 	 * Computes the equivalent CGB color, respects the color curve depending on options
 	 */

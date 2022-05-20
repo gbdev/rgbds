@@ -33,6 +33,7 @@ uint16_t Rgba::cgbColor() const {
 	if (isTransparent()) {
 		return transparent;
 	}
+	assert(isOpaque());
 
 	uint8_t r = red, g = green, b = blue;
 	if (options.useColorCurve) {
