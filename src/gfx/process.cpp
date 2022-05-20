@@ -333,18 +333,19 @@ public:
 				uint32_t css = color.toCSS();
 				if (std::find(indeterminates.begin(), indeterminates.end(), css)
 				    == indeterminates.end()) {
-					error(
-					    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= %u)",
-					    css, Rgba::transparency_threshold, Rgba::opacity_threshold);
+					error("Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
+					      "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
+					      css, Rgba::transparency_threshold, Rgba::opacity_threshold, x, y);
 					indeterminates.push_back(css);
 				}
 			} else if (Rgba const *other = colors.registerColor(color); other) {
 				std::tuple conflicting{color.toCSS(), other->toCSS()};
 				// Do not report combinations twice
 				if (std::find(conflicts.begin(), conflicts.end(), conflicting) == conflicts.end()) {
-					warning("Fusing colors #%08x and #%08x into Game Boy color $%04x",
-					        std::get<0>(conflicting), std::get<1>(conflicting),
-					        color.cgbColor()); // TODO: indicate position
+					warning("Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
+					        "at x: %" PRIu32 ", y: %" PRIu32 "]",
+					        std::get<0>(conflicting), std::get<1>(conflicting), color.cgbColor(), x,
+					        y);
 					// Do not report this combination again
 					conflicts.emplace_back(conflicting);
 				}
