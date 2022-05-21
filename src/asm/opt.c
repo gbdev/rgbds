@@ -17,7 +17,9 @@ struct OptStackEntry {
 	char gbgfx[4];
 	int32_t fillByte;
 	bool haltnop;
+	bool warnOnHaltNop;
 	bool optimizeLoads;
+	bool warnOnLdOpt;
 	bool warningsAreErrors;
 	size_t maxRecursionDepth;
 	// Don't be confused: we use the size of the **global variable** `warningStates`!
@@ -48,6 +50,11 @@ void opt_R(size_t newDepth)
 	lexer_CheckRecursionDepth();
 }
 
+void opt_H(bool warn)
+{
+	warnOnHaltNop = warn;
+}
+
 void opt_h(bool halt)
 {
 	haltnop = halt;
@@ -56,6 +63,11 @@ void opt_h(bool halt)
 void opt_L(bool optimize)
 {
 	optimizeLoads = optimize;
+}
+
+void opt_l(bool warn)
+{
+	warnOnLdOpt = warn;
 }
 
 void opt_W(char *flag)
@@ -118,6 +130,13 @@ void opt_Parse(char *s)
 		break;
 	}
 
+	case 'H':
+		if (s[1] == '\0')
+			opt_H(false);
+		else
+			error("Option 'H' does not take an argument\n");
+		break;
+
 	case 'h':
 		if (s[1] == '\0')
 			opt_h(false);
@@ -130,6 +149,13 @@ void opt_Parse(char *s)
 			opt_L(false);
 		else
 			error("Option 'L' does not take an argument\n");
+		break;
+
+	case 'l':
+		if (s[1] == '\0')
+			opt_l(false);
+		else
+			error("Option 'l' does not take an argument\n");
 		break;
 
 	case 'W':
@@ -186,8 +212,10 @@ void opt_Push(void)
 	entry->fillByte = fillByte; // Pulled from section.h
 
 	entry->haltnop = haltnop; // Pulled from main.h
+	entry->warnOnHaltNop = warnOnHaltNop;
 
 	entry->optimizeLoads = optimizeLoads; // Pulled from main.h
+	entry->warnOnLdOpt = warnOnLdOpt;
 
 	// Both of these pulled from warning.h
 	entry->warningsAreErrors = warningsAreErrors;
@@ -209,8 +237,10 @@ void opt_Pop(void)
 	opt_B(entry->binary);
 	opt_G(entry->gbgfx);
 	opt_P(entry->fillByte);
+	opt_H(entry->warnOnHaltNop);
 	opt_h(entry->haltnop);
 	opt_L(entry->optimizeLoads);
+	opt_l(entry->warnOnLdOpt);
 
 	// opt_W does not apply a whole warning state; it processes one flag string
 	warningsAreErrors = entry->warningsAreErrors;

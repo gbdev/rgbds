@@ -59,7 +59,9 @@ bool generatePhonyDeps;
 char *targetFileName;
 
 bool haltnop;
+bool warnOnHaltNop;
 bool optimizeLoads;
+bool warnOnLdOpt;
 bool verbose;
 bool warnings; /* True to enable warnings, false to disable them. */
 
@@ -84,7 +86,7 @@ static char *make_escape(char const *str)
 }
 
 /* Short options */
-static const char *optstring = "b:D:Eg:hi:LM:o:p:r:VvW:w";
+static const char *optstring = "b:D:Eg:Hhi:LlM:o:p:r:VvW:w";
 
 /* Variables for the long-only options */
 static int depType; /* Variants of `-M` */
@@ -104,9 +106,11 @@ static struct option const longopts[] = {
 	{ "define",           required_argument, NULL,     'D' },
 	{ "export-all",       no_argument,       NULL,     'E' },
 	{ "gfx-chars",        required_argument, NULL,     'g' },
+	{ "nop-after-halt",   no_argument,       NULL,     'H' },
 	{ "halt-without-nop", no_argument,       NULL,     'h' },
 	{ "include",          required_argument, NULL,     'i' },
 	{ "preserve-ld",      no_argument,       NULL,     'L' },
+	{ "auto-ldh",         no_argument,       NULL,     'l' },
 	{ "dependfile",       required_argument, NULL,     'M' },
 	{ "MG",               no_argument,       &depType, 'G' },
 	{ "MP",               no_argument,       &depType, 'P' },
@@ -170,8 +174,10 @@ int main(int argc, char *argv[])
 	opt_B("01");
 	opt_G("0123");
 	opt_P(0);
-	optimizeLoads = true;
 	haltnop = true;
+	warnOnHaltNop = true;
+	optimizeLoads = true;
+	warnOnLdOpt = true;
 	verbose = false;
 	warnings = true;
 	sym_SetExportAll(false);
@@ -209,7 +215,14 @@ int main(int argc, char *argv[])
 				errx("Must specify exactly 4 characters for option 'g'");
 			break;
 
+		case 'H':
+			if (!haltnop)
+				errx("`-H` and `-h` don't make sense together");
+			warnOnHaltNop = false;
+			break;
 		case 'h':
+			if (!warnOnHaltNop)
+				errx("`-H` and `-h` don't make sense together");
 			haltnop = false;
 			break;
 
@@ -218,7 +231,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
+			if (!warnOnLdOpt)
+				errx("`-L` and `-l` don't make sense together");
 			optimizeLoads = false;
+			break;
+		case 'l':
+			if (!optimizeLoads)
+				errx("`-L` and `-l` don't make sense together");
+			warnOnLdOpt = false;
 			break;
 
 		case 'M':

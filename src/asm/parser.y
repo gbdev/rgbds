@@ -1801,8 +1801,13 @@ z80_ei		: T_Z80_EI { sect_AbsByte(0xFB); }
 
 z80_halt	: T_Z80_HALT {
 			sect_AbsByte(0x76);
-			if (haltnop)
+			if (haltnop) {
+				if (warnOnHaltNop) {
+					warnOnHaltNop = false;
+					warning(WARNING_OBSOLETE, "`nop` after `halt` will stop being the default; pass `-H` to opt into it\n");
+				}
 				sect_AbsByte(0x00);
+			}
 		}
 ;
 
@@ -1910,6 +1915,10 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
 			if (optimizeLoads && rpn_isKnown(&$2)
 			 && $2.val >= 0xFF00) {
+				if (warnOnLdOpt) {
+					warnOnLdOpt = false;
+					warning(WARNING_OBSOLETE, "ld optimization will stop being the default; pass `-l` to opt into it\n");
+				}
 				sect_AbsByte(0xE0);
 				sect_AbsByte($2.val & 0xFF);
 				rpn_Free(&$2);
@@ -1958,6 +1967,10 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 			if ($2 == REG_A) {
 				if (optimizeLoads && rpn_isKnown(&$4)
 				 && $4.val >= 0xFF00) {
+					if (warnOnLdOpt) {
+						warnOnLdOpt = false;
+						warning(WARNING_OBSOLETE, "ld optimization will stop being the default; pass `-l` to opt into it\n");
+					}
 					sect_AbsByte(0xF0);
 					sect_AbsByte($4.val & 0xFF);
 					rpn_Free(&$4);

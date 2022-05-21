@@ -10,6 +10,8 @@ pusho
 	println $8000_0000 / -1
 popo
 
+	opt H, l
+
 	ds 1
 	ld [$ff88], a
 	halt
