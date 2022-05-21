@@ -37,6 +37,11 @@ Options options;
 char const *externalPalSpec = nullptr;
 static uintmax_t nbErrors;
 
+[[noreturn]] void giveUp() {
+	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
+	exit(1);
+}
+
 void warning(char const *fmt, ...) {
 	va_list ap;
 
@@ -72,8 +77,7 @@ void error(char const *fmt, ...) {
 	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
 		nbErrors++;
 
-	fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors, nbErrors == 1 ? "" : "s");
-	exit(1);
+	giveUp();
 }
 
 void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
@@ -718,9 +722,7 @@ int main(int argc, char *argv[]) {
 
 	// Do not do anything if option parsing went wrong
 	if (nbErrors) {
-		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors,
-		        nbErrors == 1 ? "" : "s");
-		return 1;
+		giveUp();
 	}
 
 	if (options.reverse()) {
@@ -730,9 +732,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (nbErrors) {
-		fprintf(stderr, "Conversion aborted after %ju error%s\n", nbErrors,
-		        nbErrors == 1 ? "" : "s");
-		return 1;
+		giveUp();
 	}
 	return 0;
 }

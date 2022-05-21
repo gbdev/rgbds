@@ -67,8 +67,21 @@ struct Options {
 
 extern Options options;
 
+/**
+ * Prints the error count, and exits with failure
+ */
+[[noreturn]] void giveUp();
+/**
+ * Prints a warning, and does not change the error count
+ */
 void warning(char const *fmt, ...);
+/**
+ * Prints an error, and increments the error count
+ */
 void error(char const *fmt, ...);
+/**
+ * Prints a fatal error, increments the error count, and gives up
+ */
 [[noreturn]] void fatal(char const *fmt, ...);
 
 struct Palette {
