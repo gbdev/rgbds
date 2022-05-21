@@ -22,6 +22,7 @@
 
 #include "defaultinitalloc.hpp"
 #include "helpers.h"
+#include "itertools.hpp"
 
 #include "gfx/main.hpp"
 
@@ -116,8 +117,6 @@ void reverse() {
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		nbTileInstances = tilemap->size();
-
-		// TODO: range check
 	}
 
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
@@ -181,7 +180,39 @@ void reverse() {
 		// We do this now for two reasons:
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
-		// TODO
+		bool bad = false;
+		for (auto attr : *attrmap) {
+			if ((attr & 0b111) > palettes.size()) {
+				error("Referencing palette %u, but there are only %zu!");
+				bad = true;
+			}
+			if (attr & 0x08 && !tilemap) {
+				warning("Tile in bank 1 but no tilemap specified; ignoring the bank bit");
+			}
+		}
+		if (bad) {
+			giveUp();
+		}
+	}
+
+	if (tilemap) {
+		if (attrmap) {
+			for (auto [id, attr] : zip(*tilemap, *attrmap)) {
+				bool bank = attr & 1 << 3;
+				if (id >= options.maxNbTiles[bank]) {
+					warning("Tile #%" PRIu8
+					        " was referenced, but the limit for bank %u is %" PRIu16,
+					        id, bank, options.maxNbTiles[bank]);
+				}
+			}
+		} else {
+			for (auto id : *tilemap) {
+				if (id >= options.maxNbTiles[0]) {
+					warning("Tile #%" PRIu8 " was referenced, but the limit is %" PRIu16, id,
+					        options.maxNbTiles[0]);
+				}
+			}
+		}
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> palmap;
