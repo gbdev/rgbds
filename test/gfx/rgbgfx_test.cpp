@@ -404,7 +404,7 @@ int main(int argc, char **argv) {
 		char path[] = "../../rgbgfx", reverse_opt[] = "-r", out_opt[] = "-o",
 		     out_file[] = "result.2bpp", pal_opt[] = "-p", pal_file[] = "result.pal",
 		     attr_opt[] = "-a", attr_file[] = "result.attrmap", in_file[] = "result.png";
-		auto width_string = std::to_string(image0.getWidth());
+		auto width_string = std::to_string(image0.getWidth() / 8);
 		std::vector<char *> args = {
 		    path,     reverse_opt, width_string.data(), out_opt, out_file, pal_opt,
 		    pal_file, attr_opt,    attr_file,           in_file};

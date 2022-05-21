@@ -157,8 +157,16 @@ Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
 .It Fl L Ar slice , Fl Fl slice Ar slice
 Only process a given rectangle of the image.
-.Sy TODO: arg format .
-This is useful for example if the input image is a sheet of some sort, and you want to convert each item individually.
+This is useful for example if the input image is a sheet of some sort, and you want to convert each cel individually.
+The default is to process the whole image as-is.
+.Pp
+.Ar slice
+must be two number pairs, separated by a colon.
+The numbers must be separated by commas; space is allowed around all punctuation.
+The first number pair specifies the X and Y coordinates of the top-left pixel that will be processed (anything above it or to its left will be ignored).
+The second number pair specifies how many tiles to process horizontally and vertically, respectively.
+.Pp
+.Sy Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl m , Fl Fl mirror-tiles
 Deduplicate tiles that are mirrors of each other.
 Tiles are checked for horizontal, vertical, and horizontal-vertical mirroring.

@@ -91,6 +91,16 @@ void reverse() {
 		warning("The color curve is not yet supported in reverse mode...");
 	}
 
+	if (options.inputSlice.left != 0 || options.inputSlice.top != 0
+	    || options.inputSlice.height != 0) {
+		warning("\"Sliced-off\" pixels are ignored in reverse mode");
+	}
+	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
+		warning("Specified input slice width (%" PRIu16
+		        ") doesn't match provided reversing width (%" PRIu8 " * 8)",
+		        options.inputSlice.width, options.reversedWidth);
+	}
+
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
 	auto const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
@@ -115,14 +125,7 @@ void reverse() {
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
 	}
 
-	size_t width, height;
-	size_t usefulWidth = options.reversedWidth - options.inputSlice[1] - options.inputSlice[3];
-	if (usefulWidth % 8 != 0) {
-		fatal(
-		    "No input slice specified (`-L`), and specified image width (%zu) not a multiple of 8",
-		    usefulWidth);
-	}
-	width = usefulWidth / 8;
+	size_t width = options.reversedWidth, height; // In tiles
 	if (nbTileInstances % width != 0) {
 		fatal("Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
 		      nbTileInstances, width);
@@ -207,10 +210,8 @@ void reverse() {
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
 	// TODO: if `-f` is passed, write the image indexed instead of RGB
-	png_set_IHDR(png, pngInfo, options.reversedWidth,
-	             height * 8 + options.inputSlice[0] + options.inputSlice[2], 8,
-	             PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-	             PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(png, pngInfo, options.reversedWidth * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+	             PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	png_write_info(png, pngInfo);
 
 	png_color_8 sbitChunk;
@@ -221,25 +222,14 @@ void reverse() {
 	png_set_sBIT(png, pngInfo, &sbitChunk);
 
 	constexpr uint8_t SIZEOF_PIXEL = 4; // Each pixel is 4 bytes (RGBA @ 8 bits/component)
-	size_t const SIZEOF_ROW = options.reversedWidth * SIZEOF_PIXEL;
+	size_t const SIZEOF_ROW = options.reversedWidth * 8 * SIZEOF_PIXEL;
 	std::vector<uint8_t> tileRow(8 * SIZEOF_ROW, 0xFF); // Data for 8 rows of pixels
 	uint8_t * const rowPtrs[8] = {
-	    &tileRow.data()[0 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[1 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[2 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[3 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[4 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[5 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[6 * SIZEOF_ROW + options.inputSlice[3]],
-	    &tileRow.data()[7 * SIZEOF_ROW + options.inputSlice[3]],
+	    &tileRow.data()[0 * SIZEOF_ROW], &tileRow.data()[1 * SIZEOF_ROW],
+	    &tileRow.data()[2 * SIZEOF_ROW], &tileRow.data()[3 * SIZEOF_ROW],
+	    &tileRow.data()[4 * SIZEOF_ROW], &tileRow.data()[5 * SIZEOF_ROW],
+	    &tileRow.data()[6 * SIZEOF_ROW], &tileRow.data()[7 * SIZEOF_ROW],
 	};
-
-	auto const fillRows = [&png, &tileRow](size_t nbRows) {
-		for (size_t _ = 0; _ < nbRows; ++_) {
-			png_write_row(png, tileRow.data());
-		}
-	};
-	fillRows(options.inputSlice[0]);
 
 	for (size_t ty = 0; ty < height; ++ty) {
 		for (size_t tx = 0; tx < width; ++tx) {
@@ -295,9 +285,6 @@ void reverse() {
 		// pointed-to data)
 		png_write_rows(png, const_cast<png_bytepp>(rowPtrs), 8);
 	}
-	// Clear the first row again for the function
-	std::fill(tileRow.begin(), tileRow.begin() + SIZEOF_ROW, 0xFF);
-	fillRows(options.inputSlice[2]);
 
 	// Finalize the write
 	png_write_end(png, pngInfo);
