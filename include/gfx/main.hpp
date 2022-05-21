@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "helpers.h"
@@ -87,12 +88,19 @@ struct Palette {
 	uint8_t size() const;
 };
 
-static constexpr uint8_t flip(uint8_t byte) {
-	// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
-	byte = (byte & 0b0000'1111) << 4 | (byte & 0b1111'0000) >> 4;
-	byte = (byte & 0b0011'0011) << 2 | (byte & 0b1100'1100) >> 2;
-	byte = (byte & 0b0101'0101) << 1 | (byte & 0b1010'1010) >> 1;
-	return byte;
+namespace detail {
+template<typename T, T... i>
+static constexpr auto flipTable(std::integer_sequence<T, i...>) {
+	return std::array{[](uint8_t byte) {
+		// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
+		byte = (byte & 0b0000'1111) << 4 | (byte & 0b1111'0000) >> 4;
+		byte = (byte & 0b0011'0011) << 2 | (byte & 0b1100'1100) >> 2;
+		byte = (byte & 0b0101'0101) << 1 | (byte & 0b1010'1010) >> 1;
+		return byte;
+	}(i)...};
 }
+}
+// Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
+static constexpr auto flipTable = detail::flipTable(std::make_integer_sequence<uint16_t, 256>());
 
 #endif /* RGBDS_GFX_MAIN_HPP */

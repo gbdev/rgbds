@@ -271,8 +271,8 @@ void reverse() {
 				uint8_t realY = attribute & 0x40 ? 7 - y : y;
 				uint8_t bitplane0 = tileData[realY * 2], bitplane1 = tileData[realY * 2 + 1];
 				if (attribute & 0x20) { // Handle horizontal flip
-					bitplane0 = flip(bitplane0);
-					bitplane1 = flip(bitplane1);
+					bitplane0 = flipTable[bitplane0];
+					bitplane1 = flipTable[bitplane1];
 				}
 				uint8_t *ptr = &rowPtrs[y][tx * 8 * SIZEOF_PIXEL];
 				for (uint8_t x = 0; x < 8; ++x) {
