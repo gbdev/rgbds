@@ -218,10 +218,10 @@ public:
 		png_get_IHDR(png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr,
 		             nullptr);
 
-		if (width % 8 != 0) {
+		if (options.inputSlice.width == 0 && width % 8 != 0) {
 			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", width);
 		}
-		if (height % 8 != 0) {
+		if (options.inputSlice.height == 0 && height % 8 != 0) {
 			fatal("Image height (%" PRIu32 " pixels) is not a multiple of 8!", height);
 		}
 
@@ -424,8 +424,12 @@ public:
 			uint32_t const limit;
 			uint32_t x, y;
 
-			std::pair<uint32_t, uint32_t> coords() const { return {x, y}; }
-			Tile operator*() const { return {parent._png, x, y}; }
+			std::pair<uint32_t, uint32_t> coords() const {
+				return {x + options.inputSlice.left, y + options.inputSlice.top};
+			}
+			Tile operator*() const {
+				return {parent._png, x + options.inputSlice.left, y + options.inputSlice.top};
+			}
 
 			iterator &operator++() {
 				auto [major, minor] = parent._columnMajor ? std::tie(y, x) : std::tie(x, y);
@@ -455,7 +459,8 @@ public:
 	};
 public:
 	TilesVisitor visitAsTiles(bool columnMajor) const {
-		return {*this, columnMajor, width, height};
+		return {*this, columnMajor, options.inputSlice.width ? options.inputSlice.width * 8 : width,
+		        options.inputSlice.height ? options.inputSlice.height * 8 : height};
 	}
 };
 
@@ -1010,7 +1015,8 @@ void process() {
 
 		attrs.protoPaletteID = protoPalettes.size();
 		if (protoPalettes.size() == AttrmapEntry::transparent) { // Check for overflow
-			fatal("Reached %zu proto-palettes... sorry, this image is too much for me to handle :(", AttrmapEntry::transparent);
+			fatal("Reached %zu proto-palettes... sorry, this image is too much for me to handle :(",
+			      AttrmapEntry::transparent);
 		}
 		protoPalettes.push_back(tileColors);
 contained:;

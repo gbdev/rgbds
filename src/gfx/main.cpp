@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <cinttypes>
+#include <cstdint>
 #include <ctype.h>
 #include <fstream>
 #include <ios>
@@ -394,7 +395,44 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			}
 			break;
 		case 'L':
-			options.inputSlice = {0, 0, 0, 0}; // TODO
+			options.inputSlice.left = parseNumber(arg, "Input slice left coordinate");
+			if (options.inputSlice.left > INT16_MAX) {
+				error("Input slice left coordinate is out of range!");
+				break;
+			}
+			skipWhitespace(arg);
+			if (*arg != ',') {
+				error("Missing comma after left coordinate in \"%s\"", musl_optarg);
+				break;
+			}
+			++arg;
+			skipWhitespace(arg);
+			options.inputSlice.top = parseNumber(arg, "Input slice upper coordinate");
+			skipWhitespace(arg);
+			if (*arg != ':') {
+				error("Missing colon after upper coordinate in \"%s\"", musl_optarg);
+				break;
+			}
+			++arg;
+			skipWhitespace(arg);
+			options.inputSlice.width = parseNumber(arg, "Input slice width");
+			skipWhitespace(arg);
+			if (options.inputSlice.width == 0) {
+				error("Input slice width may not be 0!");
+			}
+			if (*arg != ',') {
+				error("Missing comma after width in \"%s\"", musl_optarg);
+				break;
+			}
+			++arg;
+			skipWhitespace(arg);
+			options.inputSlice.height = parseNumber(arg, "Input slice height");
+			if (options.inputSlice.height == 0) {
+				error("Input slice height may not be 0!");
+			}
+			if (*arg != '\0') {
+				error("Unexpected extra characters after slice spec in \"%s\"", musl_optarg);
+			}
 			break;
 		case 'm':
 			options.allowMirroring = true;
@@ -695,10 +733,10 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "\tDedup unit: %" PRIu16 "x%" PRIu16 " tiles\n", options.unitSize[0],
 		        options.unitSize[1]);
 		fprintf(stderr,
-		        "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels from (%" PRIu32 ", %" PRIu32
-		        ")\n",
-		        options.inputSlice[2], options.inputSlice[3], options.inputSlice[0],
-		        options.inputSlice[1]);
+		        "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32
+		        ", %" PRIi32 ")\n",
+		        options.inputSlice.width, options.inputSlice.height, options.inputSlice.left,
+		        options.inputSlice.top);
 		fprintf(stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
 		        options.baseTileIDs[1]);
 		fprintf(stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
