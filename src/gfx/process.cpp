@@ -741,7 +741,6 @@ struct std::hash<TileData> {
 
 namespace unoptimized {
 
-// TODO: this is very redundant with `TileData::TileData`; try merging both?
 static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
                            std::vector<Palette> const &palettes,
                            DefaultInitVec<size_t> const &mappings) {
@@ -1004,9 +1003,9 @@ void process() {
 			}
 		}
 
-		// TODO: nicer error message
 		if (tileColors.size() > options.maxOpaqueColors()) {
-			fatal("Too many colors in tile at (%" PRIu32 ", %" PRIu32 ")", tile.x, tile.y);
+			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %zu opaque colors, more than %" PRIu8 "!",
+			      tile.x, tile.y, tileColors.size(), options.maxOpaqueColors());
 		}
 
 		attrs.protoPaletteID = protoPalettes.size();
