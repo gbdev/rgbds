@@ -27,6 +27,7 @@
 
 #include "defaultinitalloc.hpp"
 #include "helpers.h"
+#include "itertools.hpp"
 
 #include "gfx/main.hpp"
 #include "gfx/pal_packing.hpp"
@@ -435,8 +436,12 @@ public:
 				return *this;
 			}
 
-			bool operator!=(iterator const &rhs) const {
-				return coords() != rhs.coords(); // Compare the returned coord pairs
+			friend bool operator==(iterator const &lhs, iterator const &rhs) {
+				return lhs.coords() == rhs.coords(); // Compare the returned coord pairs
+			}
+
+			friend bool operator!=(iterator const &lhs, iterator const &rhs) {
+				return lhs.coords() != rhs.coords(); // Compare the returned coord pairs
 			}
 		};
 
@@ -565,12 +570,10 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
-	auto palIter = palettes.begin(); // TODO: `zip`
-	for (auto const &spec : options.palSpec) {
+	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
 		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
-			(*palIter)[i] = spec[i].cgbColor();
+			pal[i] = spec[i].cgbColor();
 		}
-		++palIter;
 	}
 
 	// Iterate through proto-palettes, and try mapping them to the specified palettes
@@ -728,10 +731,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 	}
 	remainingTiles -= options.trim;
 
-	auto iter = attrmap.begin();
-	for (auto tile : png.visitAsTiles(options.columnMajor)) {
+	for (auto [tile, attr] : zip(png.visitAsTiles(options.columnMajor), attrmap)) {
 		// If the tile is fully transparent, default to palette 0
-		Palette const &palette = palettes[iter->getPalID(mappings)];
+		Palette const &palette = palettes[attr.getPalID(mappings)];
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
 			output.sputc(bitplanes & 0xFF);
@@ -739,7 +741,6 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 				output.sputc(bitplanes >> 8);
 			}
 		}
-		++iter;
 
 		--remainingTiles;
 		if (remainingTiles == 0) {
@@ -747,10 +748,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 		}
 	}
 	assert(remainingTiles == 0);
-	assert(iter + options.trim == attrmap.end());
 }
 
-static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
+static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
                        DefaultInitVec<size_t> const &mappings) {
 	std::optional<std::filebuf> tilemapOutput, attrmapOutput, palmapOutput;
 	if (!options.tilemap.empty()) {
@@ -768,8 +768,7 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 
 	uint8_t tileID = 0;
 	uint8_t bank = 0;
-	auto iter = attrmap.begin();
-	for ([[maybe_unused]] auto tile : png.visitAsTiles(options.columnMajor)) {
+	for (auto attr : attrmap) {
 		if (tileID == options.maxNbTiles[bank]) {
 			assert(bank == 0);
 			bank = 1;
@@ -780,16 +779,14 @@ static void outputMaps(Png const &png, DefaultInitVec<AttrmapEntry> const &attrm
 			tilemapOutput->sputc(tileID + options.baseTileIDs[bank]);
 		}
 		if (attrmapOutput.has_value()) {
-			uint8_t palID = iter->getPalID(mappings) & 7;
+			uint8_t palID = attr.getPalID(mappings) & 7;
 			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
 		}
 		if (palmapOutput.has_value()) {
-			palmapOutput->sputc(iter->getPalID(mappings));
+			palmapOutput->sputc(attr.getPalID(mappings));
 		}
 		++tileID;
-		++iter;
 	}
-	assert(iter == attrmap.end());
 }
 
 } // namespace unoptimized
@@ -846,19 +843,15 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 	// by caching the full tile data anyway, so we might as well.)
 	UniqueTiles tiles;
 
-	auto iter = attrmap.begin();
-	for (auto tile : png.visitAsTiles(options.columnMajor)) {
-		auto [tileID, matchType] = tiles.addTile(tile, palettes[mappings[iter->protoPaletteID]]);
+	for (auto [tile, attr] : zip(png.visitAsTiles(options.columnMajor), attrmap)) {
+		auto [tileID, matchType] = tiles.addTile(tile, palettes[mappings[attr.protoPaletteID]]);
 
-		iter->xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
-		iter->yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
-		iter->bank = tileID >= options.maxNbTiles[0];
-		iter->tileID = (iter->bank ? tileID - options.maxNbTiles[0] : tileID)
-		               + options.baseTileIDs[iter->bank];
-
-		++iter;
+		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
+		attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
+		attr.bank = tileID >= options.maxNbTiles[0];
+		attr.tileID =
+		    (attr.bank ? tileID - options.maxNbTiles[0] : tileID) + options.baseTileIDs[attr.bank];
 	}
-	assert(iter == attrmap.end());
 
 	// Copy elision should prevent the contained `unordered_set` from being re-constructed
 	return tiles;
@@ -1057,7 +1050,7 @@ contained:;
 			options.verbosePrint(
 			    Options::VERB_LOG_ACT,
 			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n");
-			unoptimized::outputMaps(png, attrmap, mappings);
+			unoptimized::outputMaps(attrmap, mappings);
 		}
 	} else {
 		// All of these require the deduplication process to be performed to be output
