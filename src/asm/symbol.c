@@ -790,14 +790,4 @@ void sym_Init(time_t now)
 #undef addString
 
 	sym_SetCurrentSymbolScope(NULL);
-	anonLabelID = 0;
-
-	/* _PI is deprecated */
-	struct Symbol *_PISymbol = createBuiltinSymbol("_PI");
-
-	_PISymbol->type = SYM_EQU;
-	_PISymbol->src = NULL;
-	_PISymbol->fileLine = 0;
-	_PISymbol->hasCallback = true;
-	_PISymbol->numCallback = fix_Callback_PI;
-}
+	anonLabelID = 0;}

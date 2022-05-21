@@ -599,7 +599,6 @@ enum {
 
 %token	T_POP_INCLUDE "INCLUDE"
 %token	T_POP_PRINT "PRINT" T_POP_PRINTLN "PRINTLN"
-%token	T_POP_PRINTF "PRINTF" T_POP_PRINTT "PRINTT" T_POP_PRINTV "PRINTV" T_POP_PRINTI "PRINTI"
 %token	T_POP_IF "IF" T_POP_ELIF "ELIF" T_POP_ELSE "ELSE" T_POP_ENDC "ENDC"
 %token	T_POP_EXPORT "EXPORT"
 %token	T_POP_DB "DB" T_POP_DS "DS" T_POP_DW "DW" T_POP_DL "DL"
@@ -856,7 +855,7 @@ macroargs	: %empty {
 
 /* These commands start with a T_LABEL. */
 assignment_directive	: equ
-		| set
+		| assignment
 		| rb
 		| rw
 		| rl
@@ -866,10 +865,6 @@ assignment_directive	: equ
 directive	: endc
 		| print
 		| println
-		| printf
-		| printt
-		| printv
-		| printi
 		| export
 		| db
 		| dw
@@ -927,12 +922,8 @@ compoundeq	: T_POP_ADDEQ { $$ = RPN_ADD; }
 equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
 ;
 
-set		: T_LABEL T_POP_EQUAL const { sym_AddVar($1, $3); }
+assignment	: T_LABEL T_POP_EQUAL const { sym_AddVar($1, $3); }
 		| T_LABEL compoundeq const { compoundAssignment($1, $2, $3); }
-		| T_LABEL T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
-			sym_AddVar($1, $3);
-		}
 ;
 
 equs		: T_LABEL T_POP_EQUS string { sym_AddString($1, $3); }
@@ -1174,14 +1165,6 @@ def_set		: def_id T_POP_EQUAL const { sym_AddVar($1, $3); }
 		| redef_id T_POP_EQUAL const { sym_AddVar($1, $3); }
 		| def_id compoundeq const { compoundAssignment($1, $2, $3); }
 		| redef_id compoundeq const { compoundAssignment($1, $2, $3); }
-		| def_id T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
-			sym_AddVar($1, $3);
-		}
-		| redef_id T_POP_SET const {
-			warning(WARNING_OBSOLETE, "`SET` for variables is deprecated; use `=`\n");
-			sym_AddVar($1, $3);
-		}
 ;
 
 def_rb		: def_id T_POP_RB rs_uconst {
@@ -1293,30 +1276,6 @@ print_exprs	: print_expr
 
 print_expr	: const_no_str { printf("$%" PRIX32, $1); }
 		| string { printf("%s", $1); }
-;
-
-printt		: T_POP_PRINTT string {
-			warning(WARNING_OBSOLETE, "`PRINTT` is deprecated; use `PRINT`\n");
-			printf("%s", $2);
-		}
-;
-
-printv		: T_POP_PRINTV const {
-			warning(WARNING_OBSOLETE, "`PRINTV` is deprecated; use `PRINT`\n");
-			printf("$%" PRIX32, $2);
-		}
-;
-
-printi		: T_POP_PRINTI const {
-			warning(WARNING_OBSOLETE, "`PRINTI` is deprecated; use `PRINT` with `STRFMT` \"%%d\"\n");
-			printf("%" PRId32, $2);
-		}
-;
-
-printf		: T_POP_PRINTF const {
-			warning(WARNING_OBSOLETE, "`PRINTF` is deprecated; use `PRINT` with `STRFMT` \"%%f\"\n");
-			fix_Print($2);
-		}
 ;
 
 const_3bit	: const {

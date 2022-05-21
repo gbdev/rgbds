@@ -11,7 +11,6 @@
 
 #include <stdint.h>
 
-int32_t fix_Callback_PI(void);
 void fix_Print(int32_t i);
 int32_t fix_Sin(int32_t i);
 int32_t fix_Cos(int32_t i);

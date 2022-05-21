@@ -31,16 +31,6 @@
 #endif
 
 /*
- * Return the _PI symbol value
- */
-int32_t fix_Callback_PI(void)
-{
-	warning(WARNING_OBSOLETE, "`_PI` is deprecated; use 3.14159\n");
-
-	return double2fix(M_PI);
-}
-
-/*
  * Print a fixed point value
  */
 void fix_Print(int32_t i)
