@@ -1010,7 +1010,7 @@ void process() {
 
 		attrs.protoPaletteID = protoPalettes.size();
 		if (protoPalettes.size() == AttrmapEntry::transparent) { // Check for overflow
-			abort(); // TODO: nice error message
+			fatal("Reached %zu proto-palettes... sorry, this image is too much for me to handle :(", AttrmapEntry::transparent);
 		}
 		protoPalettes.push_back(tileColors);
 contained:;
