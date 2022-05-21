@@ -204,13 +204,13 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 	uint16_t number = 0;
 	do {
 		// Read a character, and check if it's valid in the given base
-		number *= base;
 		uint8_t index = charIndex(*string);
 		if (index == 255) {
 			break; // Found an invalid character, end
 		}
 		++string;
 
+		number *= base;
 		number += index;
 		// The lax check covers the addition on top of the multiplication
 		if (number >= UINT16_MAX / base) {
@@ -223,7 +223,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 }
 
 static void skipWhitespace(char *&arg) {
-	arg += strcspn(arg, " \t");
+	arg += strspn(arg, " \t");
 }
 
 static void registerInput(char const *arg) {
@@ -349,6 +349,7 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				      musl_optarg);
 				break;
 			}
+			++arg; // Skip comma
 			skipWhitespace(arg);
 			options.baseTileIDs[1] = parseNumber(arg, "Bank 1 base tile ID", 0);
 			if (options.baseTileIDs[1] >= 256) {
@@ -412,6 +413,7 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				      musl_optarg);
 				break;
 			}
+			++arg; // Skip comma
 			skipWhitespace(arg);
 			options.maxNbTiles[1] = parseNumber(arg, "Number of tiles in bank 1", 256);
 			if (options.maxNbTiles[1] > 256) {
