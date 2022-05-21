@@ -209,7 +209,6 @@ void reverse() {
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
-	// TODO: if `-f` is passed, write the image indexed instead of RGB
 	png_set_IHDR(png, pngInfo, options.reversedWidth * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
 	             PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	png_write_info(png, pngInfo);
