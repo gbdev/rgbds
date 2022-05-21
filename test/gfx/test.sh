@@ -31,7 +31,7 @@ fail() {
 while [[ "$ofs" -eq 0 ]]; do (( ofs = RANDOM % 256 )); done
 while [[ "$size" -eq 0 ]]; do (( size = RANDOM % 256 )); done
 for f in *.bin; do
-	for flags in "" "-b $ofs" "-N $size,256" "-b $ofs -N $size,256"; do
+	for flags in ""{," -b $ofs"}{," -N $size,256"}; do
 		new_test ./rgbgfx_test "$f" $flags
 		test || fail $?
 	done
