@@ -652,7 +652,7 @@ public:
 				// Count the line itself as mirrorred; vertical mirroring is
 				// already taken care of because the symmetric line will be XOR'd
 				// the same way. (...which is a problem, but probably benign.)
-				_hash ^= flip(bitplanes >> 8) << 8 | flip(bitplanes & 0xFF);
+				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 			}
 		}
 	}
@@ -680,7 +680,7 @@ public:
 
 		// Check if we have horizontal mirroring, which scans the array forward again
 		if (std::equal(_data.begin(), _data.end(), other._data.begin(),
-		               [](uint8_t lhs, uint8_t rhs) { return lhs == flip(rhs); })) {
+		               [](uint8_t lhs, uint8_t rhs) { return lhs == flipTable[rhs]; })) {
 			return MatchType::HFLIP;
 		}
 
@@ -694,7 +694,7 @@ public:
 			if (lhs != rhs) {
 				hasVFlip = false;
 			}
-			if (lhs != flip(rhs)) {
+			if (lhs != flipTable[rhs]) {
 				hasVHFlip = false;
 			}
 			if (!hasVFlip && !hasVHFlip) {
