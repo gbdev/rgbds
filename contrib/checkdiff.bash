@@ -25,7 +25,7 @@
 declare -A FILES
 while read -r -d '' file; do
 	FILES["$file"]="true"
-done < <(git diff --name-only -z $1 HEAD)
+done < <(git diff --name-only -z "$1" HEAD)
 
 edited () {
 	${FILES["$1"]:-"false"}
@@ -40,13 +40,13 @@ dependency () {
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
 
-dependency include/linkdefs.h    src/rgbds.5 \
+dependency include/linkdefs.h    man/rgbds.5 \
            "Was the object file format changed?"
 
-dependency src/asm/parser.y      src/asm/rgbasm.5 \
+dependency src/asm/parser.y      man/rgbasm.5 \
            "Was the rgbasm grammar changed?"
 
-dependency include/asm/warning.h src/asm/rgbasm.1 \
+dependency include/asm/warning.h man/rgbasm.1 \
            "Were the rgbasm warnings changed?"
 
 dependency src/asm/object.c      include/linkdefs.h \
@@ -59,25 +59,25 @@ dependency Makefile              CMakeLists.txt \
 dependency Makefile              src/CMakeLists.txt \
            "Did the build process change?"
 
-dependency src/asm/main.c        src/asm/rgbasm.1 \
+dependency src/asm/main.c        man/rgbasm.1 \
            "Did the rgbasm CLI change?"
 dependency src/asm/main.c        contrib/zsh_compl/_rgbasm \
            "Did the rgbasm CLI change?"
 dependency src/asm/main.c        contrib/bash_compl/_rgbasm.bash \
            "Did the rgbasm CLI change?"
-dependency src/link/main.c       src/link/rgblink.1 \
+dependency src/link/main.c       man/rgblink.1 \
            "Did the rgblink CLI change?"
 dependency src/link/main.c       contrib/zsh_compl/_rgblink \
            "Did the rgblink CLI change?"
 dependency src/link/main.c        contrib/bash_compl/_rgblink.bash \
            "Did the rgblink CLI change?"
-dependency src/fix/main.c        src/fix/rgbfix.1 \
+dependency src/fix/main.c        man/rgbfix.1 \
            "Did the rgbfix CLI change?"
 dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
            "Did the rgbfix CLI change?"
 dependency src/fix/main.c        contrib/bash_compl/_rgbfix.bash \
            "Did the rgbfix CLI change?"
-dependency src/gfx/main.c        src/gfx/rgbgfx.1 \
+dependency src/gfx/main.c        man/rgbgfx.1 \
            "Did the rgbgfx CLI change?"
 dependency src/gfx/main.c        contrib/zsh_compl/_rgbgfx \
            "Did the rgbgfx CLI change?"
