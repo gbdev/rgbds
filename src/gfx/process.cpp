@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <cinttypes>
 #include <climits>
+#include <cstdio>
 #include <errno.h>
 #include <fstream>
 #include <memory>
@@ -557,8 +558,6 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		// Fill in the palette spec
 		options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
 		assert(options.palSpec.size() == 1);
-		// TODO: abort if ignored colors are being used; do it now for a friendlier error
-		// message
 		if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
 			embPalSize = options.maxOpaqueColors();
 		}
@@ -571,13 +570,24 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
-		for (size_t i = 0; i < options.nbColorsPerPal; ++i) {
+		for (size_t i = 0; i < options.nbColorsPerPal && spec[i].isOpaque(); ++i) {
 			pal[i] = spec[i].cgbColor();
 		}
 	}
 
+	auto listColors = [](auto const &list) {
+		static char buf[sizeof(", $XXXX, $XXXX, $XXXX, $XXXX")];
+		char *ptr = buf;
+		for (uint16_t cgbColor : list) {
+			sprintf(ptr, ", $%04x", cgbColor);
+			ptr += 7;
+		}
+		return &buf[2];
+	};
+
 	// Iterate through proto-palettes, and try mapping them to the specified palettes
 	DefaultInitVec<size_t> mappings(protoPalettes.size());
+	bool bad = false;
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
 		ProtoPalette const &protoPal = protoPalettes[i];
 		// Find the palette...
@@ -587,8 +597,21 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 				return std::find(pal.begin(), pal.end(), color) != pal.end();
 			});
 		});
-		assert(iter != palettes.end()); // TODO: produce a proper error message
-		mappings[i] = iter - palettes.begin();
+
+		if (iter == palettes.end()) {
+			assert(!protoPal.empty());
+			error("Could not fit tile colors [%s] in specified palettes", listColors(protoPal));
+			bad = true;
+		}
+		mappings[i] = iter - palettes.begin(); // Bogus value, but whatever
+	}
+	if (bad) {
+		fprintf(stderr, "note: The following palette%s specified:\n",
+		        palettes.size() == 1 ? " was" : "s were");
+		for (Palette const &pal : palettes) {
+			fprintf(stderr, "        [%s]\n", listColors(pal));
+		}
+		giveUp();
 	}
 
 	return {mappings, palettes};
