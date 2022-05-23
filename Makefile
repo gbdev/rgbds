@@ -183,21 +183,11 @@ clean:
 # Target used to install the binaries and man pages.
 
 install: all
-	$Qmkdir -p ${DESTDIR}${bindir}
-	$Qinstall ${STRIP} -m ${BINMODE} rgbasm ${DESTDIR}${bindir}/rgbasm
-	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${DESTDIR}${bindir}/rgbfix
-	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${DESTDIR}${bindir}/rgblink
-	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${DESTDIR}${bindir}/rgbgfx
-	$Qmkdir -p ${DESTDIR}${mandir}/man1 ${DESTDIR}${mandir}/man5 ${DESTDIR}${mandir}/man7
-	$Qinstall -m ${MANMODE} man/rgbds.7 ${DESTDIR}${mandir}/man7/rgbds.7
-	$Qinstall -m ${MANMODE} man/gbz80.7 ${DESTDIR}${mandir}/man7/gbz80.7
-	$Qinstall -m ${MANMODE} man/rgbds.5 ${DESTDIR}${mandir}/man5/rgbds.5
-	$Qinstall -m ${MANMODE} man/rgbasm.1 ${DESTDIR}${mandir}/man1/rgbasm.1
-	$Qinstall -m ${MANMODE} man/rgbasm.5 ${DESTDIR}${mandir}/man5/rgbasm.5
-	$Qinstall -m ${MANMODE} man/rgbfix.1 ${DESTDIR}${mandir}/man1/rgbfix.1
-	$Qinstall -m ${MANMODE} man/rgblink.1 ${DESTDIR}${mandir}/man1/rgblink.1
-	$Qinstall -m ${MANMODE} man/rgblink.5 ${DESTDIR}${mandir}/man5/rgblink.5
-	$Qinstall -m ${MANMODE} man/rgbgfx.1 ${DESTDIR}${mandir}/man1/rgbgfx.1
+	$Qinstall -d ${DESTDIR}${bindir}/ ${DESTDIR}${mandir}/man1/ ${DESTDIR}${mandir}/man5/ ${DESTDIR}${mandir}/man7/
+	$Qinstall ${STRIP} -m ${BINMODE} rgbasm rgblink rgbfix rgbgfx ${DESTDIR}${bindir}/
+	$Qinstall -m ${MANMODE} man/rgbasm.1 man/rgblink.1 man/rgbfix.1 man/rgbgfx.1 ${DESTDIR}${mandir}/man1/
+	$Qinstall -m ${MANMODE} man/rgbds.5 man/rgbasm.5 man/rgblink.5 ${DESTDIR}${mandir}/man5/
+	$Qinstall -m ${MANMODE} man/rgbds.7 man/gbz80.7 ${DESTDIR}${mandir}/man7/
 
 # Target used to check the coding style of the whole codebase.
 # `extern/` is excluded, as it contains external code that should not be patched
