@@ -23,7 +23,7 @@ If you want to contribute or maintain RGBDS, and have questions regarding the co
 -------------------
 
 The `installation procedure <https://rgbds.gbdev.io/install>`__ is available
-online for various platforms. `Building from source <https://rgbds.gbdev.io/install/source>`__
+online for various platforms. `Building from source <https://rgbds.gbdev.io/install/#building-from-source>`__
 is possible using ``make`` or ``cmake``; follow the link for more detailed instructions.
 
 .. code:: sh
