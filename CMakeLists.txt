@@ -50,7 +50,7 @@ else()
   if(MORE_WARNINGS)
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wnull-dereference
+                        -Wfloat-equal -Wlogical-op -Wnested-externs -Wnull-dereference
                         -Wold-style-definition -Wshift-overflow=2 -Wstrict-overflow=5
                         -Wstrict-prototypes -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local ?

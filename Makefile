@@ -214,7 +214,7 @@ checkdiff:
 develop:
 	$Qenv ${MAKE} WARNFLAGS="-Werror -Wextra \
 		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond \
-		-Wfloat-equal -Winline -Wlogical-op -Wnested-externs -Wold-style-definition \
+		-Wfloat-equal -Wlogical-op -Wnested-externs -Wold-style-definition \
 		-Wshift-overflow=2 \
 		-Wstrict-overflow=5 -Wstrict-prototypes -Wundef -Wuninitialized -Wunused \
 		-Wshadow \
