@@ -2052,9 +2052,23 @@ static int yylex_RAW(void)
 	size_t i = 0;
 	int c;
 
-	/* Trim left whitespace (stops at a block comment or line continuation) */
-	while (isWhitespace(peek()))
-		shiftChar();
+	/* Trim left whitespace (stops at a block comment) */
+	for (;;) {
+		c = peek();
+		if (isWhitespace(c)) {
+			shiftChar();
+		} else if (c == '\\') {
+			shiftChar();
+			c = peek();
+			// If not a line continuation, handle as a normal char
+			if (!isWhitespace(c) && c != '\n' && c != '\r')
+				goto backslash;
+			// Line continuations count as "whitespace"
+			readLineContinuation();
+		} else {
+			break;
+		}
+	}
 
 	for (;;) {
 		c = peek();
@@ -2103,6 +2117,7 @@ static int yylex_RAW(void)
 			shiftChar();
 			c = peek();
 
+backslash:
 			switch (c) {
 			case ',': /* Escapes only valid inside a macro arg */
 			case '(':
