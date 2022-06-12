@@ -39,6 +39,8 @@
 	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
 	if (size >= 128) { /* If this wasn't enough, try again */ \
 		_expr->reason = realloc(_expr->reason, size + 1); \
+		if (!_expr->reason) \
+			fatalerror("Can't allocate err string: %s\n", strerror(errno)); \
 		sprintf(_expr->reason, __VA_ARGS__); \
 	} \
 } while (0)
