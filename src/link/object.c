@@ -151,8 +151,10 @@ static char *readstr(FILE *file)
 		/* Read char */
 		int byte = getc(file);
 
-		if (byte == EOF)
+		if (byte == EOF) {
+			free(str);
 			return NULL;
+		}
 		str[index] = byte;
 	} while (str[index]);
 	return str;
