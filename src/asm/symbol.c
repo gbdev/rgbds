@@ -743,8 +743,13 @@ void sym_Init(time_t now)
 
 	sym_AddVar("_RS", 0)->isBuiltin = true;
 
-#define addNumber(name, val) sym_AddEqu(name, val)->isBuiltin = true
-#define addString(name, val) sym_AddString(name, val)->isBuiltin = true
+#define addSym(fn, name, val) do { \
+	struct Symbol *sym = fn(name, val); \
+	assert(sym); \
+	sym->isBuiltin = true; \
+} while (0)
+#define addNumber(name, val) addSym(sym_AddEqu, name, val)
+#define addString(name, val) addSym(sym_AddString, name, val)
 
 	addString("__RGBDS_VERSION__", get_package_version_string());
 	addNumber("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
@@ -788,6 +793,7 @@ void sym_Init(time_t now)
 
 #undef addNumber
 #undef addString
+#undef addSym
 
 	sym_SetCurrentSymbolScope(NULL);
 	anonLabelID = 0;}
