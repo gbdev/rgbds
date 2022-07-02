@@ -215,12 +215,6 @@ where
 .Ar path
 is the input image's path with the extension set to
 .Pa .palmap .
-.It Fl s Ar nb_colors , Fl Fl palette-size Ar nb_colors
-Specify how many colors each palette contains, including the transparent one if any.
-.Ar nb_colors
-cannot be more than
-.Ql 1 << Ar depth
-.Pq see Fl d .
 .It Fl r Ar width , Fl Fl reverse Ar width
 Switches
 .Nm
@@ -237,6 +231,12 @@ below for details.
 .Ar width
 is the image's width, in tiles
 .Pq including any margins specified by Fl L .
+.It Fl s Ar nb_colors , Fl Fl palette-size Ar nb_colors
+Specify how many colors each palette contains, including the transparent one if any.
+.Ar nb_colors
+cannot be more than
+.Ql 1 << Ar depth
+.Pq see Fl d .
 .It Fl t Ar tilemap , Fl Fl tilemap Ar tilemap
 Generate a file of tile indices.
 For each square of the input image, its corresponding tile map byte contains the index of the associated tile in the tile data file.
@@ -364,9 +364,9 @@ The following formats are supported:
 .It Sy psp
 .Lk https://www.selapa.net/swatches/colors/fileformats.php#psp_pal Paint Shop Pro palette .
 .El
+.Pp
 If you wish for another format to be supported, please open an issue (see
 .Sx BUGS
-.Pp
 below) or contact us, and supply a few sample files.
 .Sh PALETTE GENERATION
 .Nm
