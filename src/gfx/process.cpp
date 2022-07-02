@@ -458,8 +458,9 @@ public:
 		}
 	};
 public:
-	TilesVisitor visitAsTiles(bool columnMajor) const {
-		return {*this, columnMajor, options.inputSlice.width ? options.inputSlice.width * 8 : width,
+	TilesVisitor visitAsTiles() const {
+		return {*this, options.columnMajor,
+		        options.inputSlice.width ? options.inputSlice.width * 8 : width,
 		        options.inputSlice.height ? options.inputSlice.height * 8 : height};
 	}
 };
@@ -758,7 +759,7 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 	}
 	remainingTiles -= options.trim;
 
-	for (auto [tile, attr] : zip(png.visitAsTiles(options.columnMajor), attrmap)) {
+	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		// If the tile is fully transparent, default to palette 0
 		Palette const &palette = palettes[attr.getPalID(mappings)];
 		for (uint32_t y = 0; y < 8; ++y) {
@@ -870,7 +871,7 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 	// by caching the full tile data anyway, so we might as well.)
 	UniqueTiles tiles;
 
-	for (auto [tile, attr] : zip(png.visitAsTiles(options.columnMajor), attrmap)) {
+	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		auto [tileID, matchType] = tiles.addTile(tile, palettes[mappings[attr.protoPaletteID]]);
 
 		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
@@ -959,7 +960,7 @@ void process() {
 	std::vector<ProtoPalette> protoPalettes;
 	DefaultInitVec<AttrmapEntry> attrmap{};
 
-	for (auto tile : png.visitAsTiles(options.columnMajor)) {
+	for (auto tile : png.visitAsTiles()) {
 		ProtoPalette tileColors;
 		AttrmapEntry &attrs = attrmap.emplace_back();
 
