@@ -138,13 +138,13 @@ static struct option const longopts[] = {
 
 static void printUsage(void) {
 	fputs("Usage: rgbgfx [-r stride] [-CmuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-	      "       [-b base_ids] [-c color_spec] [-d <depth>] [-L slice] [-N nb_tiles]\n"
-	      "       [-n nb_pals] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_mal> | -Q ]\n"
-	      "       [-s nb_colors] [-t <tile_map> | -T] [-U unit_size] [-x <tiles>] <file>\n"
+	      "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
+	      "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
+	      "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
 	      "Useful options:\n"
 	      "    -m, --mirror-tiles    optimize out mirrored tiles\n"
-	      "    -o, --output <path>   set the output binary file\n"
-	      "    -t, --tilemap <path>  set the output tilemap file\n"
+	      "    -o, --output <path>   output the tile data to this path\n"
+	      "    -t, --tilemap <path>  output the tile map to this path\n"
 	      "    -u, --unique-tiles    optimize out identical tiles\n"
 	      "    -V, --version         print RGBGFX version and exit\n"
 	      "\n"
@@ -730,8 +730,6 @@ int main(int argc, char *argv[]) {
 			}
 			fputs("\t]\n", stderr);
 		}
-		fprintf(stderr, "\tDedup unit: %" PRIu16 "x%" PRIu16 " tiles\n", options.unitSize[0],
-		        options.unitSize[1]);
 		fprintf(stderr,
 		        "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32
 		        ", %" PRIi32 ")\n",
