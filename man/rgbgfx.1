@@ -29,7 +29,6 @@
 .Op Fl q Ar pal_map | Fl Q
 .Op Fl s Ar nb_colors
 .Op Fl t Ar tilemap | Fl T
-.Op Fl U Ar unit_size
 .Op Fl x Ar quantity
 .Ar file
 .Sh DESCRIPTION
@@ -256,21 +255,6 @@ where
 .Ar path
 is the input image's path with the extension set to
 .Pa .tilemap .
-.It Fl U Ar unit_size , Fl Fl unit-size Ar unit_size
-Set the deduplication
-.Dq unit
-size to
-.Ar unit_size ,
-which should be two comma-separated tile counts (width then height).
-Defaults to
-.Ql 1,1 ,
-i.e. one tile.
-.Fl U Cm 1,2
-is particularly useful for the
-.Dq 8\[tmu]16
-OAM mode.
-.Pp
-.Sy TODO: describe how this affects the dedup process, and how the image is visited .
 .It Fl u , Fl Fl unique-tiles
 Deduplicate identical tiles, and omit the duplicates from the tile data file.
 Useful with a tile map
