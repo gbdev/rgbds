@@ -17,7 +17,6 @@
 #include "link/symbol.h"
 #include "link/object.h"
 #include "link/main.h"
-#include "link/script.h"
 #include "link/output.h"
 
 #include "error.h"
@@ -61,45 +60,6 @@ static void initFreeSpace(void)
 			memory[type][bank].next->prev    = &memory[type][bank];
 		}
 	}
-}
-
-/**
- * Alter sections' attributes based on the linker script
- */
-static void processLinkerScript(void)
-{
-	if (!linkerScriptName)
-		return;
-	verbosePrint("Reading linker script...\n");
-
-	linkerScript = openFile(linkerScriptName, "r");
-
-	/* Modify all sections according to the linker script */
-	struct SectionPlacement *placement;
-
-	while ((placement = script_NextSection())) {
-		struct Section *section = placement->section;
-
-		/* Check if this doesn't conflict with what the code says */
-		if (section->isBankFixed && placement->bank != section->bank)
-			error(NULL, 0, "Linker script contradicts \"%s\"'s bank placement",
-			      section->name);
-		if (section->isAddressFixed && placement->org != section->org)
-			error(NULL, 0, "Linker script contradicts \"%s\"'s address placement",
-			      section->name);
-		if (section->isAlignFixed
-		 && (placement->org & section->alignMask) != 0)
-			error(NULL, 0, "Linker script contradicts \"%s\"'s alignment",
-			      section->name);
-
-		section->isAddressFixed = true;
-		section->org = placement->org;
-		section->isBankFixed = true;
-		section->bank = placement->bank;
-		section->isAlignFixed = false; /* The alignment is satisfied */
-	}
-
-	fclose(linkerScript);
 }
 
 /**
@@ -423,9 +383,6 @@ void assign_AssignSections(void)
 
 	initFreeSpace();
 
-	/* Process linker script, if any */
-	processLinkerScript();
-
 	nbSectionsToAssign = 0;
 	sect_ForEach(categorizeSection, NULL);
 
@@ -505,6 +462,4 @@ void assign_Cleanup(void)
 	}
 
 	free(sections);
-
-	script_Cleanup();
 }
