@@ -220,8 +220,11 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	/* Sanity check the section's type */
 
-	if (section->type < 0 || section->type >= SECTTYPE_INVALID)
+	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {
 		fail("Section \"%s\" has an invalid type.", section->name);
+		return;
+	}
+
 	if (is32kMode && section->type == SECTTYPE_ROMX) {
 		if (section->isBankFixed && section->bank != 1)
 			fail("%s: ROMX sections must be in bank 1 (if any) with option -t",
