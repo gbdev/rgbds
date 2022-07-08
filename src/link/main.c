@@ -18,12 +18,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "link/object.h"
-#include "link/symbol.h"
-#include "link/section.h"
 #include "link/assign.h"
-#include "link/patch.h"
+#include "link/object.h"
 #include "link/output.h"
+#include "link/patch.h"
+#include "link/section.h"
+#include "link/script.h"
+#include "link/symbol.h"
 
 #include "extern/getopt.h"
 
@@ -443,6 +444,43 @@ int main(int argc, char *argv[])
 	/* Read all object files first, */
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
+
+	/* apply the linker script's modifications, */
+	if (linkerScriptName) {
+		verbosePrint("Reading linker script...\n");
+
+		linkerScript = openFile(linkerScriptName, "r");
+
+		/* Modify all sections according to the linker script */
+		struct SectionPlacement *placement;
+
+		while ((placement = script_NextSection())) {
+			struct Section *section = placement->section;
+
+			/* Check if this doesn't conflict with what the code says */
+			if (section->isBankFixed && placement->bank != section->bank)
+				error(NULL, 0, "Linker script contradicts \"%s\"'s bank placement",
+				      section->name);
+			if (section->isAddressFixed && placement->org != section->org)
+				error(NULL, 0, "Linker script contradicts \"%s\"'s address placement",
+				      section->name);
+			if (section->isAlignFixed
+			 && (placement->org & section->alignMask) != 0)
+				error(NULL, 0, "Linker script contradicts \"%s\"'s alignment",
+				      section->name);
+
+			section->isAddressFixed = true;
+			section->org = placement->org;
+			section->isBankFixed = true;
+			section->bank = placement->bank;
+			section->isAlignFixed = false; /* The alignment is satisfied */
+		}
+
+		fclose(linkerScript);
+
+		script_Cleanup();
+	}
+
 
 	/* then process them, */
 	obj_DoSanityChecks();
