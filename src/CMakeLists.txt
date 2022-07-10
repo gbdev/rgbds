@@ -81,6 +81,7 @@ set(rgblink_src
     "link/output.c"
     "link/patch.c"
     "link/script.c"
+    "link/sdas_obj.c"
     "link/section.c"
     "link/symbol.c"
     "hashmap.c"

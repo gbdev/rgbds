@@ -354,6 +354,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				;
 
 			sect = sect_GetSection(name);
+			assert(sect->offset == 0);
 
 			if (!sect) {
 				error(patch->src, patch->lineNo,
@@ -497,9 +498,6 @@ void patch_CheckAssertions(struct Assertion *assert)
  */
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
-	if (!sect_HasData(section->type))
-		return;
-
 	verbosePrint("Patching section \"%s\"...\n", section->name);
 	for (uint32_t patchID = 0; patchID < section->nbPatches; patchID++) {
 		struct Patch *patch = &section->patches[patchID];
@@ -512,8 +510,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 		if (patch->type == PATCHTYPE_JR) {
 			// Offset is relative to the byte *after* the operand
 			// PC as operand to `jr` is lower than reference PC by 2
-			uint16_t address = patch->pcSection->org
-							+ patch->pcOffset + 2;
+			uint16_t address = patch->pcSection->org + patch->pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
 			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
@@ -555,6 +552,9 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
  */
 static void applyPatches(struct Section *section, void *arg)
 {
+	if (!sect_HasData(section->type))
+		return;
+
 	(void)arg;
 	struct Section *dataSection = section;
 

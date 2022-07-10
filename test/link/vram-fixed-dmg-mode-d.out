@@ -1,2 +1,2 @@
-warning: v1: VRAM bank 1 can't be used with option -d
-error: Sanity checks failed
+error: v1: VRAM bank 1 can't be used with option -d
+Linking failed with 1 error

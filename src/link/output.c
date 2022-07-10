@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "link/output.h"
@@ -199,6 +200,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 	while (bankSections) {
 		struct Section const *section = bankSections->section;
 
+		assert(section->offset == 0);
 		/* Output padding up to the next SECTION */
 		while (offset + baseOffset < section->org) {
 			putc(overlayFile ? getc(overlayFile) : padValue,
@@ -381,6 +383,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 
 		used += sect->size;
 
+		assert(sect->offset == 0);
 		if (sect->size != 0)
 			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
 				" byte%s) [\"%s\"]\n",
@@ -394,6 +397,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		uint16_t org = sect->org;
 
 		while (sect) {
+			fprintf(mapFile, "    ; New %s\n", sect->modifier == SECTION_FRAGMENT ? "fragment": "union");
 			for (size_t i = 0; i < sect->nbSymbols; i++)
 				fprintf(mapFile, "           $%04" PRIx32 " = %s\n",
 					sect->symbols[i]->offset + org,

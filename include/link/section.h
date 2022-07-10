@@ -48,6 +48,8 @@ struct Section {
 	enum SectionType type;
 	enum SectionModifier modifier;
 	bool isAddressFixed;
+	// This `struct`'s address in ROM.
+	// Importantly for fragments, this does not include `offset`!
 	uint16_t org;
 	bool isBankFixed;
 	uint32_t bank;
@@ -60,7 +62,7 @@ struct Section {
 	/* Extra info computed during linking */
 	struct Symbol **fileSymbols;
 	uint32_t nbSymbols;
-	struct Symbol const **symbols;
+	struct Symbol **symbols;
 	struct Section *nextu; /* The next "component" of this unionized sect */
 };
 
