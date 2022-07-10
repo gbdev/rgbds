@@ -28,7 +28,9 @@
 
 static DefaultInitVec<uint8_t> readInto(std::string path) {
 	std::filebuf file;
-	file.open(path, std::ios::in | std::ios::binary);
+	if (!file.open(path, std::ios::in | std::ios::binary)) {
+		fatal("Failed to open \"%s\": %s", path.c_str(), strerror(errno));
+	}
 	DefaultInitVec<uint8_t> data(128 * 16); // Begin with some room pre-allocated
 
 	size_t curSize = 0;
@@ -117,6 +119,7 @@ void reverse() {
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
 		nbTileInstances = tilemap->size();
+		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", nbTileInstances);
 	}
 
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
