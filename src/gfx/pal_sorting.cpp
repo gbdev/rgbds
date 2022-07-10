@@ -97,7 +97,7 @@ void rgb(std::vector<Palette> &palettes) {
 
 	for (Palette &pal : palettes) {
 		std::sort(pal.begin(), pal.end(), [](uint16_t lhs, uint16_t rhs) {
-			return legacyLuminance(lhs) < legacyLuminance(rhs);
+			return legacyLuminance(lhs) > legacyLuminance(rhs);
 		});
 	}
 }
