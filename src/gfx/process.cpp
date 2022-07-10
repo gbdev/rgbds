@@ -254,8 +254,8 @@ public:
 			}
 		};
 		options.verbosePrint(Options::VERB_INTERM,
-		                     "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n", height,
-		                     width, bitDepth, colorTypeName(), interlaceTypeName());
+		                     "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n", width,
+		                     height, bitDepth, colorTypeName(), interlaceTypeName());
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
 			int nbTransparentEntries;
