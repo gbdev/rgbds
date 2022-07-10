@@ -91,6 +91,7 @@ rgblink_obj := \
 	src/link/output.o \
 	src/link/patch.o \
 	src/link/script.o \
+	src/link/sdas_obj.o \
 	src/link/section.o \
 	src/link/symbol.o \
 	src/extern/getopt.o \

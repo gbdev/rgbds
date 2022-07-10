@@ -29,6 +29,7 @@
 #include "extern/getopt.h"
 
 #include "error.h"
+#include "linkdefs.h"
 #include "platform.h"
 #include "version.h"
 
@@ -350,6 +351,12 @@ next:
 	}
 }
 
+_Noreturn void reportErrors(void) {
+	fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
+		nbErrors, nbErrors == 1 ? "" : "s");
+	exit(1);
+}
+
 int main(int argc, char *argv[])
 {
 	int optionChar;
@@ -457,7 +464,15 @@ int main(int argc, char *argv[])
 		while ((placement = script_NextSection())) {
 			struct Section *section = placement->section;
 
+			assert(section->offset == 0);
 			/* Check if this doesn't conflict with what the code says */
+			if (section->type == SECTTYPE_INVALID) {
+				for (struct Section *sect = section; sect; sect = sect->nextu)
+					sect->type = placement->type; // SDCC "unknown" sections
+			} else if (section->type != placement->type) {
+				error(NULL, 0, "Linker script contradicts \"%s\"'s type",
+				      section->name);
+			}
 			if (section->isBankFixed && placement->bank != section->bank)
 				error(NULL, 0, "Linker script contradicts \"%s\"'s bank placement",
 				      section->name);
@@ -479,22 +494,25 @@ int main(int argc, char *argv[])
 		fclose(linkerScript);
 
 		script_Cleanup();
+
+		// If the linker script produced any errors, some sections may be in an invalid state
+		if (nbErrors != 0)
+			reportErrors();
 	}
 
 
 	/* then process them, */
 	obj_DoSanityChecks();
+	if (nbErrors != 0)
+		reportErrors();
 	assign_AssignSections();
 	obj_CheckAssertions();
 	assign_Cleanup();
 
 	/* and finally output the result. */
 	patch_ApplyPatches();
-	if (nbErrors) {
-		fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
-			nbErrors, nbErrors == 1 ? "" : "s");
-		exit(1);
-	}
+	if (nbErrors != 0)
+		reportErrors();
 	out_WriteFiles();
 
 	/* Do cleanup before quitting, though. */

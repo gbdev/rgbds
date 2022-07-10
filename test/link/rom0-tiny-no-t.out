@@ -1,2 +1,2 @@
-warning: Section "rom" is bigger than the max size for that type: 0x8000 > 0x4000
-error: Sanity checks failed
+error: Section "rom" is bigger than the max size for that type: 0x8000 > 0x4000
+Linking failed with 1 error

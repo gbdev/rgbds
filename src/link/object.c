@@ -18,6 +18,7 @@
 #include "link/main.h"
 #include "link/object.h"
 #include "link/patch.h"
+#include "link/sdas_obj.h"
 #include "link/section.h"
 #include "link/symbol.h"
 
@@ -408,7 +409,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
  * @param symbol The symbol to link
  * @param section The section to link
  */
-static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
+static void linkSymToSect(struct Symbol *symbol, struct Section *section)
 {
 	uint32_t a = 0, b = section->nbSymbols;
 
@@ -421,7 +422,7 @@ static void linkSymToSect(struct Symbol const *symbol, struct Section *section)
 			a = c + 1;
 	}
 
-	struct Symbol const *tmp = symbol;
+	struct Symbol *tmp = symbol;
 
 	for (uint32_t i = a; i <= section->nbSymbols; i++) {
 		symbol = tmp;
@@ -466,6 +467,39 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	if (!file)
 		err("Could not open file %s", fileName);
 
+	// First, check if the object is a RGBDS object or a SDCC one. If the first byte is 'R',
+	// we'll assume it's a RGBDS object file, and otherwise, that it's a SDCC object file.
+	int c = getc(file);
+
+	ungetc(c, file); // Guaranteed to work
+	switch (c) {
+	case EOF:
+		fatal(NULL, 0, "File \"%s\" is empty!", fileName);
+
+	case 'R':
+		break;
+
+	default: // This is (probably) a SDCC object file, defer the rest of detection to it
+		// Since SDCC does not provide line info, everything will be reported as coming from the
+		// object file. It's better than nothing.
+		nodes[fileID].nbNodes = 1;
+		nodes[fileID].nodes = malloc(sizeof(nodes[fileID].nodes[0]) * nodes[fileID].nbNodes);
+		if (!nodes[fileID].nodes)
+			err("Failed to get memory for %s's nodes", fileName);
+		struct FileStackNode *where = &nodes[fileID].nodes[0];
+
+		if (!where)
+			fatal(NULL, 0, "Failed to alloc fstack node for \"%s\": %s", fileName, strerror(errno));
+		where->parent = NULL;
+		where->type = NODE_FILE;
+		where->name = strdup(fileName);
+		if (!where->name)
+			fatal(NULL, 0, "Failed to duplicate \"%s\"'s name: %s", fileName, strerror(errno));
+
+		sdobj_ReadFile(where, file);
+		return;
+	}
+
 	/* Begin by reading the magic bytes and version number */
 	unsigned versionNumber;
 	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
@@ -508,8 +542,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
 
 	/* This file's symbols, kept to link sections to them */
-	struct Symbol **fileSymbols =
-		malloc(sizeof(*fileSymbols) * nbSymbols + 1);
+	struct Symbol **fileSymbols = malloc(sizeof(*fileSymbols) * nbSymbols + 1);
 
 	if (!fileSymbols)
 		err("Failed to get memory for %s's symbols", fileName);

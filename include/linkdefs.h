@@ -9,6 +9,7 @@
 #ifndef RGBDS_LINKDEFS_H
 #define RGBDS_LINKDEFS_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -74,6 +75,8 @@ enum SectionType {
 	SECTTYPE_SRAM,
 	SECTTYPE_OAM,
 
+	// In RGBLINK, this is used for "indeterminate" sections; this is primarily for SDCC
+	// areas, which do not carry any section type info and must be told from the linker script
 	SECTTYPE_INVALID
 };
 
@@ -93,6 +96,7 @@ extern char const * const sectionModNames[];
  */
 static inline bool sect_HasData(enum SectionType type)
 {
+	assert(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 

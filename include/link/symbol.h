@@ -27,6 +27,7 @@ struct Symbol {
 	int32_t lineNo;
 	int32_t sectionID;
 	union {
+		// Both types must be identical
 		int32_t offset;
 		int32_t value;
 	};

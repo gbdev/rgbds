@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -153,18 +154,33 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 
 	case SECTION_FRAGMENT:
 		checkFragmentCompat(target, other);
+		// Append `other` to `target`
+		// Note that the order in which fragments are stored in the `nextu` list does not
+		// really matter, only that offsets are properly computed
+		other->offset = target->size;
 		target->size += other->size;
-		other->offset = target->size - other->size;
-		if (sect_HasData(target->type)) {
-			/* Ensure we're not allocating 0 bytes */
-			target->data = realloc(target->data,
-					       sizeof(*target->data) * target->size + 1);
-			if (!target->data)
-				errx("Failed to concatenate \"%s\"'s fragments", target->name);
-			memcpy(target->data + target->size - other->size, other->data, other->size);
+		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
+		// Note that if either fragment has data (= a non-NULL `data` pointer), then it's
+		// assumed that both fragments "have data", and thus should either have a non-NULL
+		// `data` pointer, or a size of 0.
+		if (other->data) {
+			if (target->data) {
+				/* Ensure we're not allocating 0 bytes */
+				target->data = realloc(target->data,
+						       sizeof(*target->data) * target->size + 1);
+				if (!target->data)
+					errx("Failed to concatenate \"%s\"'s fragments", target->name);
+				memcpy(&target->data[other->offset], other->data, other->size);
+			} else {
+				assert(target->size == other->size); // It has been increased just above
+				target->data = other->data;
+				other->data = NULL; // Prevent a double free()
+			}
 			/* Adjust patches' PC offsets */
 			for (uint32_t patchID = 0; patchID < other->nbPatches; patchID++)
 				other->patches[patchID].pcOffset += other->offset;
+		} else if (target->data) {
+			assert(other->size == 0);
 		}
 		break;
 
@@ -208,39 +224,33 @@ void sect_CleanupSections(void)
 	hash_EmptyMap(sections);
 }
 
-static bool sanityChecksFailed;
-
 static void doSanityChecks(struct Section *section, void *ptr)
 {
 	(void)ptr;
-#define fail(...) do { \
-	warnx(__VA_ARGS__); \
-	sanityChecksFailed = true; \
-} while (0)
 
 	/* Sanity check the section's type */
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {
-		fail("Section \"%s\" has an invalid type.", section->name);
+		error(NULL, 0, "Section \"%s\" has an invalid type", section->name);
 		return;
 	}
 
 	if (is32kMode && section->type == SECTTYPE_ROMX) {
 		if (section->isBankFixed && section->bank != 1)
-			fail("%s: ROMX sections must be in bank 1 (if any) with option -t",
+			error(NULL, 0, "%s: ROMX sections must be in bank 1 (if any) with option -t",
 			     section->name);
 		else
 			section->type = SECTTYPE_ROM0;
 	}
 	if (isWRA0Mode && section->type == SECTTYPE_WRAMX) {
 		if (section->isBankFixed && section->bank != 1)
-			fail("%s: WRAMX sections must be in bank 1 with options -w or -d",
+			error(NULL, 0, "%s: WRAMX sections must be in bank 1 with options -w or -d",
 			     section->name);
 		else
 			section->type = SECTTYPE_WRAMX;
 	}
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
-		fail("%s: VRAM bank 1 can't be used with option -d",
+		error(NULL, 0, "%s: VRAM bank 1 can't be used with option -d",
 		     section->name);
 
 	/*
@@ -252,20 +262,20 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	/* Too large an alignment may not be satisfiable */
 	if (section->isAlignFixed && (section->alignMask & startaddr[section->type]))
-		fail("%s: %s sections cannot be aligned to $%04x bytes",
+		error(NULL, 0, "%s: %s sections cannot be aligned to $%04x bytes",
 		     section->name, typeNames[section->type], section->alignMask + 1);
 
 	uint32_t minbank = bankranges[section->type][0], maxbank = bankranges[section->type][1];
 
 	if (section->isBankFixed && section->bank < minbank && section->bank > maxbank)
-		fail(minbank == maxbank
+		error(NULL, 0, minbank == maxbank
 			? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
 			: "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32 " and %" PRIu32,
 		     section->name, section->bank, minbank, maxbank);
 
 	/* Check if section has a chance to be placed */
 	if (section->size > maxsize[section->type])
-		fail("Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
+		error(NULL, 0, "Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
 		     section->name, section->size, maxsize[section->type]);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
@@ -279,7 +289,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* It doesn't make sense to have both org and alignment set */
 		if (section->isAlignFixed) {
 			if ((section->org & section->alignMask) != section->alignOfs)
-				fail("Section \"%s\"'s fixed address doesn't match its alignment",
+				error(NULL, 0, "Section \"%s\"'s fixed address doesn't match its alignment",
 				     section->name);
 			section->isAlignFixed = false;
 		}
@@ -287,12 +297,12 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		/* Ensure the target address is valid */
 		if (section->org < startaddr[section->type]
 		 || section->org > endaddr(section->type))
-			fail("Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"
+			error(NULL, 0, "Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"
 			     PRIx16 "; %#" PRIx16 "]", section->name, section->org,
 			     startaddr[section->type], endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			fail("Section \"%s\"'s end address %#x is greater than last address %#x",
+			error(NULL, 0, "Section \"%s\"'s end address %#x is greater than last address %#x",
 			     section->name, section->org + section->size,
 			     endaddr(section->type) + 1);
 	}
@@ -303,6 +313,4 @@ static void doSanityChecks(struct Section *section, void *ptr)
 void sect_DoSanityChecks(void)
 {
 	sect_ForEach(doSanityChecks, NULL);
-	if (sanityChecksFailed)
-		errx("Sanity checks failed");
 }
