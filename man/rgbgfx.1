@@ -472,7 +472,7 @@ delim off
 .EN
 Note that
 .Fl n
-only puts a limit on the amount of palettes, but does not fix this file's size.
+only caps how many palettes are generated (and thus this file's size), but fewer may be generated still.
 .Ss Tile map data
 A tile map is an array of tile IDs, with one byte per tile ID.
 The first byte always corresponds to the ID of the tile in top-left corner of the input image; the second byte is either the ID of the tile to its right (by default), or below it
