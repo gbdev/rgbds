@@ -945,9 +945,9 @@ assuming the section ends up at
 .Ad $80C0 :
 .Bd -literal -offset indent
 SECTION "Player tiles", VRAM
-PlayerTiles:
+vPlayerTiles:
     ds 6 * 16
-.end
+\&.end
 .Ed
 .Pp
 A label's location (and thus value) is usually not determined until the linking stage, so labels usually cannot be used as constants.
