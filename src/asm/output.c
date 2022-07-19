@@ -532,7 +532,7 @@ void out_WriteObject(void)
 	/* Also write symbols that weren't written above */
 	sym_ForEach(registerUnregisteredSymbol, NULL);
 
-	fprintf(f, RGBDS_OBJECT_VERSION_STRING, RGBDS_OBJECT_VERSION_NUMBER);
+	fprintf(f, RGBDS_OBJECT_VERSION_STRING);
 	putlong(RGBDS_OBJECT_REV, f);
 
 	putlong(nbSymbols, f);

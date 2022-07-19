@@ -13,8 +13,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define RGBDS_OBJECT_VERSION_STRING "RGB%1u"
-#define RGBDS_OBJECT_VERSION_NUMBER 9U
+#define RGBDS_OBJECT_VERSION_STRING "RGB9"
 #define RGBDS_OBJECT_REV 9U
 
 enum AssertionType {

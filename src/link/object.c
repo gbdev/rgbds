@@ -500,20 +500,15 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		return;
 	}
 
-	/* Begin by reading the magic bytes and version number */
-	unsigned versionNumber;
-	int matchedElems = fscanf(file, RGBDS_OBJECT_VERSION_STRING,
-				  &versionNumber);
+	/* Begin by reading the magic bytes */
+	int matchedElems;
 
-	if (matchedElems != 1)
+	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
+	 && matchedElems != strlen(RGBDS_OBJECT_VERSION_STRING))
 		errx("\"%s\" is not a RGBDS object file", fileName);
 
-	verbosePrint("Reading object file %s, version %u\n",
-		     fileName, versionNumber);
-
-	if (versionNumber != RGBDS_OBJECT_VERSION_NUMBER)
-		errx("\"%s\" is an incompatible version %u object file",
-		     fileName, versionNumber);
+	verbosePrint("Reading object file %s\n",
+		     fileName);
 
 	uint32_t revNum;
 
