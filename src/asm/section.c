@@ -16,6 +16,7 @@
 #include "asm/warning.h"
 
 #include "error.h"
+#include "linkdefs.h"
 #include "platform.h" // strdup
 
 uint8_t fillByte;
@@ -73,7 +74,7 @@ attr_(warn_unused_result) static bool checkcodesection(void)
 
 attr_(warn_unused_result) static bool checkSectionSize(struct Section const *sect, uint32_t size)
 {
-	uint32_t maxSize = maxsize[sect->type];
+	uint32_t maxSize = sectionTypeInfo[sect->type].size;
 
 	// If the new size is reasonable, keep going
 	if (size <= maxSize)
@@ -232,7 +233,7 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 	unsigned int nbSectErrors = 0;
 
 	if (type != sect->type)
-		fail("Section already exists but with type %s\n", typeNames[sect->type]);
+		fail("Section already exists but with type %s\n", sectionTypeInfo[sect->type].name);
 
 	if (sect->modifier != mod) {
 		fail("Section already declared as %s section\n", sectionModNames[sect->modifier]);
@@ -299,7 +300,7 @@ static struct Section *createSection(char const *name, enum SectionType type,
 
 	/* It is only needed to allocate memory for ROM sections. */
 	if (sect_HasData(type)) {
-		sect->data = malloc(maxsize[type]);
+		sect->data = malloc(sectionTypeInfo[type].size);
 		if (sect->data == NULL)
 			fatalerror("Not enough memory for section: %s\n", strerror(errno));
 	} else {
@@ -325,14 +326,13 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM
 		 && type != SECTTYPE_SRAM && type != SECTTYPE_WRAMX)
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
-		else if (bank < bankranges[type][0]
-		      || bank > bankranges[type][1])
+		else if (bank < sectionTypeInfo[type].firstBank || bank > sectionTypeInfo[type].lastBank)
 			error("%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04"
-				PRIx32 ")\n", typeNames[type], bank,
-				bankranges[type][0], bankranges[type][1]);
+				PRIx32 ")\n", sectionTypeInfo[type].name, bank,
+				sectionTypeInfo[type].firstBank, sectionTypeInfo[type].lastBank);
 	} else if (nbbanks(type) == 1) {
 		// If the section type only has a single bank, implicitly force it
-		bank = bankranges[type][0];
+		bank = sectionTypeInfo[type].firstBank;
 	}
 
 	if (alignOffset >= 1 << alignment) {
@@ -342,10 +342,10 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 	}
 
 	if (org != (uint32_t)-1) {
-		if (org < startaddr[type] || org > endaddr(type))
+		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
 			error("Section \"%s\"'s fixed address %#" PRIx32
 				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
-				name, org, startaddr[type], endaddr(type));
+				name, org, sectionTypeInfo[type].startAddr, endaddr(type));
 	}
 
 	if (alignment != 0) {
@@ -361,9 +361,9 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n",
 					name);
 			alignment = 0; /* Ignore it if it's satisfied */
-		} else if (startaddr[type] & mask) {
+		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error("Section \"%s\"'s alignment cannot be attained in %s\n",
-				name, typeNames[type]);
+				name, sectionTypeInfo[type].name);
 			alignment = 0; /* Ignore it if it's unattainable */
 			org = 0;
 		} else if (alignment == 16) {

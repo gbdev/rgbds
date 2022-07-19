@@ -21,6 +21,7 @@
 
 #include "error.h"
 #include "helpers.h"
+#include "linkdefs.h"
 
 struct MemoryLocation {
 	uint16_t address;
@@ -54,8 +55,8 @@ static void initFreeSpace(void)
 			if (!memory[type][bank].next)
 				err("Failed to init free space for region %d bank %" PRIu32,
 				    type, bank);
-			memory[type][bank].next->address = startaddr[type];
-			memory[type][bank].next->size    = maxsize[type];
+			memory[type][bank].next->address = sectionTypeInfo[type].startAddr;
+			memory[type][bank].next->size    = sectionTypeInfo[type].size;
 			memory[type][bank].next->next    = NULL;
 			memory[type][bank].next->prev    = &memory[type][bank];
 		}
@@ -140,13 +141,13 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 		if (curScrambleSRAM > scrambleSRAM)
 			curScrambleSRAM = 0;
 	} else {
-		location->bank = bankranges[section->type][0];
+		location->bank = sectionTypeInfo[section->type].firstBank;
 	}
 	struct FreeSpace *space;
 
 	for (;;) {
 		/* Switch to the beginning of the next bank */
-#define BANK_INDEX (location->bank - bankranges[section->type][0])
+#define BANK_INDEX (location->bank - sectionTypeInfo[section->type].firstBank)
 		space = memory[section->type][BANK_INDEX].next;
 		if (space)
 			location->address = space->address;
@@ -201,7 +202,7 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 
 		/* Try again in the next bank */
 		location->bank++;
-		if (location->bank > bankranges[section->type][1])
+		if (location->bank > sectionTypeInfo[section->type].lastBank)
 			return NULL;
 #undef BANK_INDEX
 	}
@@ -225,10 +226,10 @@ static void placeSection(struct Section *section)
 		 */
 		location.address = section->isAddressFixed
 						? section->org
-						: startaddr[section->type];
+						: sectionTypeInfo[section->type].startAddr;
 		location.bank = section->isBankFixed
 						? section->bank
-						: bankranges[section->type][0];
+						: sectionTypeInfo[section->type].firstBank;
 		assignSection(section, &location);
 		return;
 	}
@@ -314,16 +315,16 @@ static void placeSection(struct Section *section)
 	/* If a section failed to go to several places, nothing we can report */
 	if (!section->isBankFixed || !section->isAddressFixed)
 		errx("Unable to place \"%s\" (%s section) %s",
-		     section->name, typeNames[section->type], where);
+		     section->name, sectionTypeInfo[section->type].name, where);
 	/* If the section just can't fit the bank, report that */
 	else if (section->org + section->size > endaddr(section->type) + 1)
 		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
-		     section->name, typeNames[section->type], where,
+		     section->name, sectionTypeInfo[section->type].name, where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	/* Otherwise there is overlap with another section */
 	else
 		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		     section->name, typeNames[section->type], where,
+		     section->name, sectionTypeInfo[section->type].name, where,
 		     out_OverlappingSection(section)->name);
 }
 

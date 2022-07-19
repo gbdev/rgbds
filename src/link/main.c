@@ -440,13 +440,13 @@ int main(int argc, char *argv[])
 
 	/* Patch the size array depending on command-line options */
 	if (!is32kMode)
-		maxsize[SECTTYPE_ROM0] = 0x4000;
+		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
 	if (!isWRA0Mode)
-		maxsize[SECTTYPE_WRAM0] = 0x1000;
+		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
 
 	/* Patch the bank ranges array depending on command-line options */
 	if (isDmgMode)
-		bankranges[SECTTYPE_VRAM][1] = BANK_MIN_VRAM;
+		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
 
 	/* Read all object files first, */
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)

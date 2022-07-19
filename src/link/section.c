@@ -17,6 +17,7 @@
 
 #include "error.h"
 #include "hashmap.h"
+#include "linkdefs.h"
 
 HashMap sections;
 
@@ -133,7 +134,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 
 	if (target->type != other->type)
 		errx("Section \"%s\" is defined with conflicting types %s and %s",
-		     other->name, typeNames[target->type], typeNames[other->type]);
+		     other->name, sectionTypeInfo[target->type].name, sectionTypeInfo[other->type].name);
 
 	if (other->isBankFixed) {
 		if (!target->isBankFixed) {
@@ -207,7 +208,7 @@ void sect_AddSection(struct Section *section)
 			mergeSections(other, section, section->modifier);
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx("Section \"%s\" is of type %s, which cannot be unionized",
-		     section->name, typeNames[section->type]);
+		     section->name, sectionTypeInfo[section->type].name);
 	} else {
 		/* If not, add it */
 		hash_AddElement(sections, section->name, section);
@@ -261,11 +262,11 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		section->isAlignFixed = false;
 
 	/* Too large an alignment may not be satisfiable */
-	if (section->isAlignFixed && (section->alignMask & startaddr[section->type]))
+	if (section->isAlignFixed && (section->alignMask & sectionTypeInfo[section->type].startAddr))
 		error(NULL, 0, "%s: %s sections cannot be aligned to $%04x bytes",
-		     section->name, typeNames[section->type], section->alignMask + 1);
+		     section->name, sectionTypeInfo[section->type].name, section->alignMask + 1);
 
-	uint32_t minbank = bankranges[section->type][0], maxbank = bankranges[section->type][1];
+	uint32_t minbank = sectionTypeInfo[section->type].firstBank, maxbank = sectionTypeInfo[section->type].lastBank;
 
 	if (section->isBankFixed && section->bank < minbank && section->bank > maxbank)
 		error(NULL, 0, minbank == maxbank
@@ -274,9 +275,9 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		     section->name, section->bank, minbank, maxbank);
 
 	/* Check if section has a chance to be placed */
-	if (section->size > maxsize[section->type])
+	if (section->size > sectionTypeInfo[section->type].size)
 		error(NULL, 0, "Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
-		     section->name, section->size, maxsize[section->type]);
+		     section->name, section->size, sectionTypeInfo[section->type].size);
 
 	/* Translate loose constraints to strong ones when they're equivalent */
 
@@ -295,11 +296,11 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		}
 
 		/* Ensure the target address is valid */
-		if (section->org < startaddr[section->type]
+		if (section->org < sectionTypeInfo[section->type].startAddr
 		 || section->org > endaddr(section->type))
 			error(NULL, 0, "Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"
 			     PRIx16 "; %#" PRIx16 "]", section->name, section->org,
-			     startaddr[section->type], endaddr(section->type));
+			     sectionTypeInfo[section->type].startAddr, endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
 			error(NULL, 0, "Section \"%s\"'s end address %#x is greater than last address %#x",

@@ -79,13 +79,14 @@ enum SectionType {
 	SECTTYPE_INVALID
 };
 
-enum SectionModifier {
-	SECTION_NORMAL,
-	SECTION_UNION,
-	SECTION_FRAGMENT
-};
-
-extern char const * const sectionModNames[];
+// Nont-`const` members may be patched in RGBLINK depending on CLI flags
+extern struct SectionTypeInfo {
+	char const *const name;
+	uint16_t const startAddr;
+	uint16_t size;
+	uint32_t const firstBank;
+	uint32_t lastBank;
+} sectionTypeInfo[SECTTYPE_INVALID];
 
 /**
  * Tells whether a section has data in its object file definition,
@@ -98,6 +99,32 @@ static inline bool sect_HasData(enum SectionType type)
 	assert(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
+
+/**
+ * Computes a memory region's end address (last byte), eg. 0x7FFF
+ * @return The address of the last byte in that memory region
+ */
+static inline uint16_t endaddr(enum SectionType type)
+{
+	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
+}
+
+/**
+ * Computes a memory region's number of banks
+ * @return The number of banks, 1 for regions without banking
+ */
+static inline uint32_t nbbanks(enum SectionType type)
+{
+	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
+}
+
+enum SectionModifier {
+	SECTION_NORMAL,
+	SECTION_UNION,
+	SECTION_FRAGMENT
+};
+
+extern char const * const sectionModNames[];
 
 enum ExportLevel {
 	SYMTYPE_LOCAL,
@@ -113,46 +140,5 @@ enum PatchType {
 
 	PATCHTYPE_INVALID
 };
-
-#define BANK_MIN_ROM0  0
-#define BANK_MAX_ROM0  0
-#define BANK_MIN_ROMX  1
-#define BANK_MAX_ROMX  511
-#define BANK_MIN_VRAM  0
-#define BANK_MAX_VRAM  1
-#define BANK_MIN_SRAM  0
-#define BANK_MAX_SRAM  15
-#define BANK_MIN_WRAM0 0
-#define BANK_MAX_WRAM0 0
-#define BANK_MIN_WRAMX 1
-#define BANK_MAX_WRAMX 7
-#define BANK_MIN_OAM   0
-#define BANK_MAX_OAM   0
-#define BANK_MIN_HRAM  0
-#define BANK_MAX_HRAM  0
-
-extern uint16_t startaddr[];
-extern uint16_t maxsize[];
-extern uint32_t bankranges[][2];
-
-/**
- * Computes a memory region's end address (last byte), eg. 0x7FFF
- * @return The address of the last byte in that memory region
- */
-static inline uint16_t endaddr(enum SectionType type)
-{
-	return startaddr[type] + maxsize[type] - 1;
-}
-
-/**
- * Computes a memory region's number of banks
- * @return The number of banks, 1 for regions without banking
- */
-static inline uint32_t nbbanks(enum SectionType type)
-{
-	return bankranges[type][1] - bankranges[type][0] + 1;
-}
-
-extern char const * const typeNames[SECTTYPE_INVALID];
 
 #endif /* RGBDS_LINKDEFS_H */
