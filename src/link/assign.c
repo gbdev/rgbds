@@ -130,6 +130,7 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 		location->bank = section->bank;
 	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
 		if (scrambleROMX > 255) {
+			// alternate between low and high banks: $01, $100, $02, $101, $03, $102, ...
 			location->bank = (curScrambleROM + 1) / 2 + !(curScrambleROM % 2) * 255;
 			curScrambleROM++;
 		} else {
