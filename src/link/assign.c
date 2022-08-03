@@ -129,7 +129,12 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 	if (section->isBankFixed) {
 		location->bank = section->bank;
 	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
-		location->bank = curScrambleROM++;
+		if (scrambleROMX > 255) {
+			location->bank = (curScrambleROM + 1) / 2 + !(curScrambleROM % 2) * 255;
+			curScrambleROM++;
+		} else {
+			location->bank = curScrambleROM++;
+		}
 		if (curScrambleROM > scrambleROMX)
 			curScrambleROM = 1;
 	} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX) {
