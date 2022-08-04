@@ -21,7 +21,7 @@
 #include "gfx/rgba.hpp"
 
 struct Options {
-	uint16_t reversedWidth = 0; // -r, in pixels
+	uint16_t reversedWidth = 0; // -r, in tiles
 	bool reverse() const { return reversedWidth != 0; }
 
 	bool useColorCurve = false; // -C

@@ -122,6 +122,9 @@ void reverse() {
 		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", nbTileInstances);
 	}
 
+	if (nbTileInstances == 0) {
+		fatal("Cannot generate empty image");
+	}
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 		warning("Read %zu tiles, more than the limit of %zu + %zu", nbTileInstances,
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
