@@ -274,7 +274,7 @@ void reverse() {
 			uint8_t attribute = attrmap.has_value() ? (*attrmap)[index] : 0x00;
 			bool bank = attribute & 0x08;
 			// Get the tile ID at this location
-			uint8_t tileID = index;
+			size_t tileID = index;
 			if (tilemap.has_value()) {
 				tileID =
 				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
