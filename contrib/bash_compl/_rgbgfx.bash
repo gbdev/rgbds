@@ -3,8 +3,6 @@
 # Same notes as RGBASM
 
 _rgbgfx_completions() {
-	COMPREPLY=()
-
 	# Format: "long_opt:state_after"
 	# Empty long opt = it doesn't exit
 	# See the `state` variable below for info about `state_after`
@@ -62,7 +60,7 @@ _rgbgfx_completions() {
 		optlen=0
 	}
 
-	for (( i = 1; i < $COMP_CWORD; i++ )); do
+	for (( i = 1; i < COMP_CWORD; i++ )); do
 		local word="${COMP_WORDS[$i]}"
 
 		# If currently processing an argument, skip this word
@@ -78,7 +76,7 @@ _rgbgfx_completions() {
 		fi
 
 		# Check if it's a long option
-		if [[ "${word:0:2}" = '--' ]]; then
+		if [[ "$word" = '--'* ]]; then
 			# If the option is unknown, assume it takes no arguments: keep the state at "normal"
 			for long_opt in "${opts[@]}"; do
 				if [[ "$word" = "--${long_opt%%:*}" ]]; then
@@ -94,7 +92,7 @@ _rgbgfx_completions() {
 				fi
 			done
 		# Check if it's a short option
-		elif [[ "${word:0:1}" = '-' ]]; then
+		elif [[ "$word" = '-'* ]]; then
 			parse_short_opt "$word"
 			# The last option takes an argument...
 			if [[ "$state" != 'normal' ]]; then
@@ -114,22 +112,22 @@ _rgbgfx_completions() {
 	local cur_word="${COMP_WORDS[$COMP_CWORD]}"
 
 	# Process options, as short ones may change the state
-	if $opt_ena && [[ "$state" = 'normal' && "${cur_word:0:1}" = '-' ]]; then
+	if $opt_ena && [[ "$state" = 'normal' && "$cur_word" = '-'* ]]; then
 		# We might want to complete to an option or an arg to that option
 		# Parse the option word to check
 		# There's no whitespace in the option names, so we can ride a little dirty...
 
 		# Is this a long option?
-		if [[ "${cur_word:1:1}" = '-' ]]; then
+		if [[ "$cur_word" = '--'* ]]; then
 			# It is, try to complete one
-			COMPREPLY+=( $(compgen -W "${opts[*]%%:*}" -P '--' -- "${cur_word#--}") )
+			mapfile -t COMPREPLY < <(compgen -W "${opts[*]%%:*}" -P '--' -- "${cur_word#--}")
 			return 0
 		else
 			# Short options may be grouped, parse them to determine what to complete
 			parse_short_opt "$cur_word"
 
 			if [[ "$state" = 'normal' ]]; then
-				COMPREPLY+=( $(compgen -W "${!opts[*]}" -P "$cur_word" '') )
+				mapfile -t COMPREPLY < <(compgen -W "${!opts[*]}" -P "$cur_word" '')
 				return 0
 			elif [[ "$optlen" = "${#cur_word}" && "$state" != "warning" ]]; then
 				# This short option group only awaits its argument!
@@ -137,12 +135,13 @@ _rgbgfx_completions() {
 				# so that the next completion request switches to the argument
 				# An exception is made for warnings, since it's idiomatic to stick them to the
 				# `-W`, and it doesn't break anything.
-				COMPREPLY+=( "$cur_word" )
+				COMPREPLY=( "$cur_word" )
 				return 0
 			fi
 		fi
 	fi
 
+	COMPREPLY=()
 	case "$state" in
 		unk) # Return with no replies: no idea what to complete!
 			;;

@@ -11,7 +11,7 @@
 # - Directories are not completed as such in "coalesced" short-opt arguments. For example,
 #   `rgbasm -M d<tab>` can autocomplete to `rgbasm -M dir/` (no space), but
 #   `rgbasm -Md<tab>` would autocomplete to `rgbasm -Mdir ` (trailing space) instead.
-#   This is because dircetory handling is performed by Readline, whom we can't tell about the short
+#   This is because directory handling is performed by Readline, whom we can't tell about the short
 #   opt kerfuffle. The user can work around by separating the argument, as shown above.
 #   (Also, there might be more possible bugs if `-Mdir` is actually a directory. Ugh.)
 
@@ -20,8 +20,6 @@
 # Thus, we don't need to do much to handle that form of argument passing: skip '=' after long opts.
 
 _rgbasm_completions() {
-	COMPREPLY=()
-
 	# Format: "long_opt:state_after"
 	# Empty long opt = it doesn't exit
 	# See the `state` variable below for info about `state_after`
@@ -58,6 +56,18 @@ _rgbasm_completions() {
 	# "normal" is not returned, `optlen` will be set to the length (dash included) of the "option"
 	# part of the argument.
 	parse_short_opt() {
+		# These options act like a long option (= takes up the entire word), but only use a single dash
+		# So, they need some special handling
+		if [[ "$1" = "-M"[GP] ]]; then
+			state=normal
+			optlen=${#1}
+			return;
+		elif [[ "$1" = "-M"[QT] ]]; then
+			state='glob-*.d *.mk *.o'
+			optlen=${#1}
+			return;
+		fi
+
 		for (( i = 1; i < "${#1}"; i++ )); do
 			# If the option is not known, assume it doesn't take an argument
 			local opt="${opts["${1:$i:1}"]:-":normal"}"
@@ -71,7 +81,7 @@ _rgbasm_completions() {
 		optlen=0
 	}
 
-	for (( i = 1; i < $COMP_CWORD; i++ )); do
+	for (( i = 1; i < COMP_CWORD; i++ )); do
 		local word="${COMP_WORDS[$i]}"
 
 		# If currently processing an argument, skip this word
@@ -87,7 +97,7 @@ _rgbasm_completions() {
 		fi
 
 		# Check if it's a long option
-		if [[ "${word:0:2}" = '--' ]]; then
+		if [[ "$word" = '--'* ]]; then
 			# If the option is unknown, assume it takes no arguments: keep the state at "normal"
 			for long_opt in "${opts[@]}"; do
 				if [[ "$word" = "--${long_opt%%:*}" ]]; then
@@ -103,25 +113,16 @@ _rgbasm_completions() {
 				fi
 			done
 		# Check if it's a short option
-		elif [[ "${word:0:1}" = '-' ]]; then
-			# The `-M?` ones are a mix of short and long, augh
-			# They must match the *full* word, but only take a single dash
-			# So, handle them here
-			if [[ "$1" = "-M"[GP] ]]; then
-				state=normal
-			elif [[ "$1" = "-M"[TQ] ]]; then
-				state='glob-*.d *.mk *.o'
-			else
-				parse_short_opt "$word"
-				# The last option takes an argument...
-				if [[ "$state" != 'normal' ]]; then
-					if [[ "$optlen" -ne "${#word}" ]]; then
-						# If it's contained within the word, we won't complete it, revert to "normal"
-						state=normal
-					else
-						# Otherwise, complete it, but start at the beginning of *that* word
-						optlen=0
-					fi
+		elif [[ "$word" = '-'* ]]; then
+			parse_short_opt "$word"
+			# The last option takes an argument...
+			if [[ "$state" != 'normal' ]]; then
+				if [[ "$optlen" -ne "${#word}" ]]; then
+					# If it's contained within the word, we won't complete it, revert to "normal"
+					state=normal
+				else
+					# Otherwise, complete it, but start at the beginning of *that* word
+					optlen=0
 				fi
 			fi
 		fi
@@ -132,45 +133,45 @@ _rgbasm_completions() {
 	local cur_word="${COMP_WORDS[$COMP_CWORD]}"
 
 	# Process options, as short ones may change the state
-	if $opt_ena && [[ "$state" = 'normal' && "${cur_word:0:1}" = '-' ]]; then
+	if $opt_ena && [[ "$state" = 'normal' && "$cur_word" = '-'* ]]; then
 		# We might want to complete to an option or an arg to that option
 		# Parse the option word to check
 		# There's no whitespace in the option names, so we can ride a little dirty...
 
 		# Is this a long option?
-		if [[ "${cur_word:1:1}" = '-' ]]; then
+		if [[ "$cur_word" = '--'* ]]; then
 			# It is, try to complete one
-			COMPREPLY+=( $(compgen -W "${opts[*]%%:*}" -P '--' -- "${cur_word#--}") )
+			mapfile -t COMPREPLY < <(compgen -W "${opts[*]%%:*}" -P '--' -- "${cur_word#--}")
+			return 0
+		elif [[ "$cur_word" = '-M'[GPQT] ]]; then
+			# These options act like long opts with no arguments, so return them and exactly them
+			COMPREPLY=( "$cur_word" )
 			return 0
 		else
 			# Short options may be grouped, parse them to determine what to complete
-			# The `-M?` ones may not be followed by anything
-			if [[ "$1" != "-M"[GPTQ] ]]; then
-				parse_short_opt "$cur_word"
-				# We got some short options that behave like long ones
-				COMPREPLY+=( $(compgen -W '-MG -MP -MT -MQ' -- "$cur_word") )
+			parse_short_opt "$cur_word"
 
-				if [[ "$state" = 'normal' ]]; then
-					COMPREPLY+=( $(compgen -W "${!opts[*]}" -P "$cur_word" '') )
-					return 0
-				elif [[ "$optlen" = "${#cur_word}" && "$state" != "warning" ]]; then
-					# This short option group only awaits its argument!
-					# Post the option group as-is as a reply so that Readline inserts a space,
-					# so that the next completion request switches to the argument
-					# An exception is made for warnings, since it's idiomatic to stick them to the
-					# `-W`, and it doesn't break anything.
-					COMPREPLY+=( "$cur_word" )
-					return 0
-				fi
+			if [[ "$state" = 'normal' ]]; then
+				mapfile -t COMPREPLY < <(compgen -W "${!opts[*]}" -P "$cur_word" ''; compgen -W '-MG -MP -MQ -MT' "$cur_word")
+				return 0
+			elif [[ "$optlen" = "${#cur_word}" && "$state" != "warning" ]]; then
+				# This short option group only awaits its argument!
+				# Post the option group as-is as a reply so that Readline inserts a space,
+				# so that the next completion request switches to the argument
+				# An exception is made for warnings, since it's idiomatic to stick them to the
+				# `-W`, and it doesn't break anything.
+				COMPREPLY=( "$cur_word" )
+				return 0
 			fi
 		fi
 	fi
 
+	COMPREPLY=()
 	case "$state" in
 		unk) # Return with no replies: no idea what to complete!
 			;;
 		warning)
-			COMPREPLY+=( $(compgen -W "
+			mapfile -t COMPREPLY < <(compgen -W "
 				assert
 				backwards-for
 				builtin-args
@@ -192,7 +193,7 @@ _rgbasm_completions() {
 				all
 				extra
 				everything
-				error" -P "${cur_word:0:$optlen}" -- "${cur_word:$optlen}") )
+				error" -P "${cur_word:0:$optlen}" -- "${cur_word:$optlen}")
 			;;
 		normal) # Acts like a glob...
 			state="glob-*.asm *.inc *.sm83"
