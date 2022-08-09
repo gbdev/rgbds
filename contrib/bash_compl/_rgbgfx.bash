@@ -161,6 +161,10 @@ _rgbgfx_completions() {
 			done < <(compgen -A directory -- "${cur_word:$optlen}")
 			compopt -o filenames
 			;;
+		*)
+			echo >&2 "Internal completion error: invalid state \"$state\", please report this bug"
+			return 1
+			;;
 	esac
 }
 
