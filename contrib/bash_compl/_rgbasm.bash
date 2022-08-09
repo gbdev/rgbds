@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 # Known bugs:
 # - Newlines in file/directory names break this script
