@@ -130,7 +130,7 @@ _rgbasm_completions() {
 
 	# Parse current word
 	# Careful that it might look like an option, so use `--` aggressively!
-	local cur_word="${COMP_WORDS[$COMP_CWORD]}"
+	local cur_word="${COMP_WORDS[$i]}"
 
 	# Process options, as short ones may change the state
 	if $opt_ena && [[ "$state" = 'normal' && "$cur_word" = '-'* ]]; then
