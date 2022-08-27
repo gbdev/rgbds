@@ -11,6 +11,7 @@ local args=(
 	'(-x --nopad)'{-x,--nopad}'[Disable padding the end of the final file]'
 
 	'(-l --linkerscript)'{-l,--linkerscript}"+[Use a linker script]:linker script:_files -g '*.link'"
+	'(-M --no-sym-in-map)'{-M,--no-sym-in-map}'[Do not output symbol names in map file]'
 	'(-m --map)'{-m,--map}"+[Produce a map file]:map file:_files -g '*.map'"
 	'(-n --sym)'(-n,--sym)"+[Produce a symbol file]:sym file:_files -g '*.sym'"
 	'(-O --overlay)'{-O,--overlay}'+[Overlay sections over on top of bin file]:base overlay:_files'
