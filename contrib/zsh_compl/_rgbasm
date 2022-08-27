@@ -25,6 +25,7 @@ _rgbasm_warnings() {
 		'shift:Warn when shifting negative values'
 		'shift-amount:Warn when a shift'\''s operand it negative or \> 32'
 		'truncation:Warn when implicit truncation loses bits'
+		'unmapped-char:Warn on unmapped character'
 		'user:Warn when executing the WARN built-in'
 	)
 	# TODO: handle `no-` and `error=` somehow?

@@ -1,5 +1,5 @@
+opt Wno-unmapped-char
 charmap "<NULL>", $00
-
 
 SECTION "ROM", ROM0
 
