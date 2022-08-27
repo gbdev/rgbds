@@ -3,7 +3,7 @@ REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
 PRINTLN "{s}"
 
-list: MACRO
+MACRO list
 LIST_NAME EQUS "\1"
 REDEF {LIST_NAME} EQUS "["
 REPT _NARG - 1

@@ -1,4 +1,4 @@
-test: MACRO
+MACRO test
 v equs "X"
 X equs "" ; should not be expanded
 \1

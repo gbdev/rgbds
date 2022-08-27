@@ -1,5 +1,5 @@
-outer_ok: MACRO
-definition equs "inner_ok: MACRO\nPRINTLN \"Hello!\"\nENDM"
+MACRO outer_ok
+definition equs "MACRO inner_ok\nPRINTLN \"Hello!\"\nENDM"
 definition
 	PURGE definition
 ENDM
@@ -8,8 +8,8 @@ ENDM
 	inner_ok
 
 
-outer_arg: MACRO
-definition equs "inner_arg: MACRO\nPRINTLN \"outer: \1\\ninner: \\1\"\nENDM"
+MACRO outer_arg
+definition equs "MACRO inner_arg\nPRINTLN \"outer: \1\\ninner: \\1\"\nENDM"
 definition
 	PURGE definition
 ENDM
@@ -18,9 +18,9 @@ ENDM
 	inner_arg inside
 
 
-outer: MACRO
+MACRO outer
 	WARN "Nested macros shouldn't work, whose argument would be \\1?"
-inner: MACRO
+MACRO inner
 ENDM
 
 	outer

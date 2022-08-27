@@ -8,6 +8,6 @@ W equ 0 ; OK
 X equs "0" ; Not OK
 
 	db Y
-Y: macro ; Not ok
+macro Y ; Not ok
 	db 0
 endm

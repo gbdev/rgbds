@@ -13,7 +13,7 @@ SECTION "calls", ROM0[0]
 	rst rst38
 
 
-defRST: MACRO
+MACRO defRST
 	SECTION "rst\1", ROM0[$\1]
 	rst\1:
 ENDM

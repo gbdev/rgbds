@@ -16,7 +16,7 @@ End:
 SECTION UNION "test", WRAM0,ALIGN[9]
 
 
-check_label: MACRO
+MACRO check_label
 EXPECTED equ \2
 	IF \1 == EXPECTED
 RESULT equs "OK!"

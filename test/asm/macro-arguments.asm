@@ -1,4 +1,4 @@
-mac: MACRO
+MACRO mac
 	println "'mac \#':"
 	for i, _NARG
 		println strfmt("\\%d: <\1>", i+1)

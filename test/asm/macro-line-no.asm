@@ -1,6 +1,6 @@
 
 WARN "Line 2"
-m: macro
+macro m
 	WARN "Line 4"
 endm
 WARN "Line 6"

@@ -1,11 +1,11 @@
-m1: MACRO
+MACRO m1
 x\1
 ENDM
 
 S EQUS "y"
 S2 EQUS "yy"
 
-m2: MACRO
+MACRO m2
 S\1
 ENDM
 
@@ -20,7 +20,7 @@ ENDM
 	println yy
 
 
-test_char: MACRO
+MACRO test_char
 VAR_DEF equs "sizeof_\1something = 0"
 VAR_DEF
 sizeof_\1something = 1

@@ -1213,14 +1213,16 @@ The example above defines
 .Ql MyMacro
 as a new macro.
 String constants are not expanded within the name of the macro.
-You may use the older syntax
+.Pp
+(Using the
+.Em deprecated
+older syntax
 .Ql MyMacro: MACRO
 instead of
 .Ql MACRO MyMacro ,
 with a single colon
 .Ql \&:
-following the macro's name.
-With the older syntax, string constants may be expanded for the name.
+following the macro's name, string constants may be expanded for the name.)
 .Pp
 Macros can't be exported or imported.
 .Pp

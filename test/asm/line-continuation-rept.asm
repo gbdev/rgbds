@@ -1,4 +1,4 @@
-m: MACRO
+MACRO m
 ENDM
 
 REPT 1

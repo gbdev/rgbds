@@ -1,4 +1,4 @@
-def_sect: macro
+macro def_sect
 	IF _NARG == 2
 		SECTION "\1", \2
 	ELSE

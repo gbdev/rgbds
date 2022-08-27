@@ -15,7 +15,7 @@ can contain:
 
 PRINT """\n"""
 
-printarg: MACRO
+MACRO printarg
 	PRINTLN "arg <\1>"
 	PRINTLN """arg (\1)"""
 ENDM

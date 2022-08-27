@@ -11,7 +11,7 @@ rept 1
   break
   ; skips invalid code
   !@#$%
-elif: macro
+macro elif
   invalid
 endr
 warn "OK"

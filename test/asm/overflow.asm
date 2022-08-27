@@ -1,6 +1,6 @@
 SECTION "sec", ROM0
 
-print_x: MACRO
+MACRO print_x
 	println x
 ENDM
 

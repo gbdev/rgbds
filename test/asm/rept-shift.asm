@@ -1,4 +1,4 @@
-m: macro
+macro m
 	PRINT "\1 "
 	REPT 4
 		SHIFT

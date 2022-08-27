@@ -1,6 +1,6 @@
 X equ 0
 
-test: MACRO
+MACRO test
 ; Test RGBASM
 v equs "X +"
 	static_assert \#

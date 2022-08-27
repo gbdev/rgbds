@@ -2,7 +2,7 @@ SECTION "All instructions", ROM0[0]
 
     ; 8-bit Arithmetic and Logic Instructions
 
-alu_instruction_list: MACRO
+MACRO alu_instruction_list
     \1 a,a
     \1 a,b
     \1 a,c
@@ -23,7 +23,7 @@ ENDM
     alu_instruction_list sub
     alu_instruction_list xor
 
-incdec_8bit_instruction_list: MACRO
+MACRO incdec_8bit_instruction_list
     \1 a
     \1 b
     \1 c
@@ -56,7 +56,7 @@ ENDM
 
     ; Bit Operations Instructions
 
-bitop_u3_instruction_list: MACRO
+MACRO bitop_u3_instruction_list
 NBIT = 0
     REPT 8
         \1 NBIT,a
@@ -75,7 +75,7 @@ ENDM
     bitop_u3_instruction_list res
     bitop_u3_instruction_list set
 
-bitop_noarg_instruction_list: MACRO
+MACRO bitop_noarg_instruction_list
     \1 a
     \1 b
     \1 c
@@ -105,7 +105,7 @@ ENDM
 
     ; Load Instructions
 
-ld_r8_x_instruction_list: MACRO
+MACRO ld_r8_x_instruction_list
     ld \1,a
     ld \1,b
     ld \1,c
@@ -125,7 +125,7 @@ ENDM
     ld_r8_x_instruction_list [hl]
     ld_r8_x_instruction_list l
 
-ld_x_r8_instruction_list: MACRO
+MACRO ld_x_r8_instruction_list
     ld a,\1
     ld b,\1
     ld c,\1

@@ -1,6 +1,6 @@
 warn_unique EQUS "WARN \"\\@!\""
 
-m: macro
+macro m
     warn_unique
     REPT 2
     	warn_unique

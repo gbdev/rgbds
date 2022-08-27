@@ -1,6 +1,6 @@
 SECTION "test", ROM0
 
-mac: MACRO
+MACRO mac
 	println "\#"
 ENDM
 

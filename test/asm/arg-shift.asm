@@ -1,4 +1,4 @@
-print_all: MACRO
+MACRO print_all
 	REPT _NARG
 		PRINT " \1"
 		SHIFT
@@ -6,7 +6,7 @@ print_all: MACRO
 	PRINTLN
 ENDM
 
-print_some: MACRO
+MACRO print_some
 	PRINT "\1"
 	SHIFT 5
 	PRINT "\2\6\9"
@@ -15,12 +15,12 @@ print_some: MACRO
 	PRINT "\3\9"
 ENDM
 
-bad: MACRO
+MACRO bad
 	shift _NARG - 1
 	PRINTLN \1
 ENDM
 
-bad_rept: MACRO
+MACRO bad_rept
 	REPT _NARG - 2
 		REPT 1
 			shift

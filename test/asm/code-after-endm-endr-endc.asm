@@ -1,7 +1,7 @@
 println "start"
 
 ; will not define 'mac'
-mac: MACRO
+MACRO mac
 	println \1
 ENDM println "<_<"
 	mac "argument"

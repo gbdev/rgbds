@@ -1,6 +1,6 @@
 opt Wno-unmapped-char
 
-new_: MACRO
+MACRO new_
 	IF _NARG > 1
 	println "newcharmap \1, \2"
 	newcharmap \1, \2
@@ -10,22 +10,22 @@ new_: MACRO
 	ENDC
 ENDM
 
-set_: MACRO
+MACRO set_
 	println "setcharmap \1"
 	setcharmap \1
 ENDM
 
-push_: MACRO
+MACRO push_
 	println "pushc"
 	pushc
 ENDM
 
-pop_: MACRO
+MACRO pop_
 	println "popc"
 	popc
 ENDM
 
-print_mapped: MACRO
+MACRO print_mapped
 x = \1
 println "{x}"
 ENDM

@@ -1,7 +1,7 @@
-m: MACRO
+MACRO m
 ENDM
 
-m2: MACRO
+MACRO m2
 	m \
 ENDM
 

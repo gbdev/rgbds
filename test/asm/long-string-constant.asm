@@ -4,7 +4,7 @@ fifty-seven--characters altogether. That's just enough for its last
 two characters to be truncated by rgbasm's lexer, since it can't
 handle more than 255-character strings. The final two won't print: !?"""
 
-mac: MACRO
+MACRO mac
 	println "\1" ; x1
 	println "\1\1\1\1\1\1" ; x6
 ENDM

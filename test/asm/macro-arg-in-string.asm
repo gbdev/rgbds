@@ -1,4 +1,4 @@
-print1: MACRO
+MACRO print1
 	if _NARG == 2
 		assert !STRCMP("\1", \2)
 	endc
@@ -12,14 +12,14 @@ D
 	print1 E\!F ; illegal character escape
 
 
-iprint: MACRO
+MACRO iprint
 	PRINTLN "{\1}"
 ENDM
 
 s EQUS "hello"
 	iprint s
 
-symprint: MACRO
+MACRO symprint
 	PRINTLN {\1}
 ENDM
 
