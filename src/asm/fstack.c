@@ -37,7 +37,6 @@ struct Context {
 
 static struct Context *contextStack;
 static size_t contextDepth = 0;
-#define DEFAULT_MAX_DEPTH 64
 size_t maxRecursionDepth;
 
 static unsigned int nbIncPaths = 0;
@@ -510,7 +509,7 @@ bool fstk_Break(void)
 
 void fstk_NewRecursionDepth(size_t newDepth)
 {
-	if (contextDepth >= newDepth)
+	if (contextDepth > newDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", newDepth);
 	maxRecursionDepth = newDepth;
 }

@@ -48,6 +48,7 @@ struct FileStackNamedNode { /* NODE_FILE, NODE_MACRO */
 	char name[]; /* File name for files, file::macro name for macros */
 };
 
+#define DEFAULT_MAX_DEPTH 64
 extern size_t maxRecursionDepth;
 
 struct MacroArgs;

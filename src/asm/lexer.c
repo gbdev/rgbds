@@ -687,7 +687,7 @@ void lexer_CheckRecursionDepth(void)
 	size_t depth = 0;
 
 	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-		if (depth++ >= maxRecursionDepth)
+		if (depth++ > maxRecursionDepth)
 			fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 	}
 }
@@ -1335,7 +1335,7 @@ static int readIdentifier(char firstChar)
 
 static char const *readInterpolation(size_t depth)
 {
-	if (depth >= maxRecursionDepth)
+	if (depth > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
 	char symName[MAXSYMLEN + 1];

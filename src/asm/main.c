@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 	verbose = false;
 	warnings = true;
 	sym_SetExportAll(false);
-	uint32_t maxDepth = 64;
+	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
 	size_t targetFileNameLen = 0;
 
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
