@@ -1,0 +1,3 @@
+error: const-zero.asm(8):
+    Expected constant expression: 'Floating' is not constant at assembly time
+error: Assembly aborted (1 error)!

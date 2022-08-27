@@ -342,6 +342,22 @@ static bool isDiffConstant(struct Expression const *src1,
 }
 
 /**
+ * Attempts to compute a constant zero from binary AND or MUL with non-constant operands
+ * This is possible if one operand is itself zero.
+ *
+ * @return The constant zero result if it can be computed, or -1 otherwise.
+ */
+static int32_t tryConstZero(struct Expression const *lhs, struct Expression const *rhs)
+{
+	struct Expression const *expr = lhs;
+
+	if (!rpn_isKnown(expr))
+		expr = rhs;
+
+	return rpn_isKnown(expr) && expr->val == 0 ? 0 : -1;
+}
+
+/**
  * Attempts to compute a constant binary AND from non-constant operands
  * This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
  * a constant that only keeps (some of) the lower N bits.
@@ -385,11 +401,11 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		  const struct Expression *src1, const struct Expression *src2)
 {
 	expr->isSymbol = false;
-	int32_t constMaskVal;
+	int32_t value;
 
 	/* First, check if the expression is known */
-	expr->isKnown = src1->isKnown && src2->isKnown;
-	if (expr->isKnown) {
+	expr->isKnown = rpn_isKnown(src1) && rpn_isKnown(src2);
+	if (rpn_isKnown(expr)) {
 		rpn_Init(expr); /* Init the expression to something sane */
 
 		/* If both expressions are known, just compute the value */
@@ -533,14 +549,17 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 
 		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;
-	} else if (op == RPN_AND && (constMaskVal = tryConstMask(src1, src2)) != -1) {
-		expr->val = constMaskVal;
+	} else if ((op == RPN_MUL || op == RPN_AND) && (value = tryConstZero(src1, src2)) != -1) {
+		expr->val = value;
+		expr->isKnown = true;
+	} else if (op == RPN_AND && (value = tryConstMask(src1, src2)) != -1) {
+		expr->val = value;
 		expr->isKnown = true;
 	} else {
 		/* If it's not known, start computing the RPN expression */
 
 		/* Convert the left-hand expression if it's constant */
-		if (src1->isKnown) {
+		if (rpn_isKnown(src1)) {
 			uint32_t lval = src1->val;
 			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
 					   lval >> 16, lval >> 24};
@@ -573,7 +592,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		uint32_t rval = src2->val;
 		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
 				   rval >> 24};
-		if (src2->isKnown) {
+		if (rpn_isKnown(src2)) {
 			ptr = bytes;
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
