@@ -181,6 +181,7 @@ static struct KeywordMapping {
 	{"FLOOR", T_OP_FLOOR},
 	{"DIV", T_OP_FDIV},
 	{"MUL", T_OP_FMUL},
+	{"FMOD", T_OP_FMOD},
 	{"POW", T_OP_POW},
 	{"LOG", T_OP_LOG},
 	{"SIN", T_OP_SIN},

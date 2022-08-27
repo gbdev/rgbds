@@ -558,6 +558,7 @@ enum {
 %token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
 %token	T_OP_FDIV "FDIV"
 %token	T_OP_FMUL "FMUL"
+%token	T_OP_FMOD "FMOD"
 %token	T_OP_POW "POW"
 %token	T_OP_LOG "LOG"
 %token	T_OP_ROUND "ROUND"
@@ -1487,6 +1488,9 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		}
 		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
 			rpn_Number(&$$, fix_Mul($3, $5));
+		}
+		| T_OP_FMOD T_LPAREN const T_COMMA const T_RPAREN {
+			rpn_Number(&$$, fix_Mod($3, $5));
 		}
 		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
 			rpn_Number(&$$, fix_Pow($3, $5));

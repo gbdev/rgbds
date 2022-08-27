@@ -20,6 +20,7 @@ int32_t fix_ACos(int32_t i);
 int32_t fix_ATan(int32_t i);
 int32_t fix_ATan2(int32_t i, int32_t j);
 int32_t fix_Mul(int32_t i, int32_t j);
+int32_t fix_Mod(int32_t i, int32_t j);
 int32_t fix_Div(int32_t i, int32_t j);
 int32_t fix_Pow(int32_t i, int32_t j);
 int32_t fix_Log(int32_t i, int32_t j);
