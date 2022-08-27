@@ -375,6 +375,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		bank + sectionTypeInfo[type].firstBank);
 
 	uint16_t used = 0;
+	uint16_t prevEndAddr = sectionTypeInfo[type].startAddr;
 
 	while (section || zeroLenSection) {
 		struct SortedSection const **pickedSection =
@@ -382,12 +383,21 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		struct Section const *sect = (*pickedSection)->section;
 
 		used += sect->size;
-
 		assert(sect->offset == 0);
+
+		if (prevEndAddr < sect->org) {
+			uint16_t empty = sect->org - prevEndAddr;
+
+			fprintf(mapFile, "    EMPTY: $%04" PRIx16 " byte%s\n", empty,
+				empty == 1 ? "" : "s");
+		}
+
+		prevEndAddr = sect->org + sect->size;
+
 		if (sect->size != 0)
 			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
 				" byte%s) [\"%s\"]\n",
-				sect->org, sect->org + sect->size - 1,
+				sect->org, prevEndAddr - 1,
 				sect->size, sect->size == 1 ? "" : "s",
 				sect->name);
 		else
@@ -414,6 +424,14 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		*pickedSection = (*pickedSection)->next;
 	}
 
+	uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
+
+	if (prevEndAddr < bankEndAddr) {
+		uint16_t empty = bankEndAddr - prevEndAddr;
+
+		fprintf(mapFile, "    EMPTY: $%04" PRIx16 " byte%s\n", empty,
+			empty == 1 ? "" : "s");
+	}
 
 	if (used == 0) {
 		fputs("  EMPTY\n\n", mapFile);
