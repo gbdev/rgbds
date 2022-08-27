@@ -120,6 +120,14 @@ int32_t fix_Div(int32_t i, int32_t j)
 }
 
 /*
+ * Modulo
+ */
+int32_t fix_Mod(int32_t i, int32_t j)
+{
+	return double2fix(fmod(fix2double(i), fix2double(j)));
+}
+
+/*
  * Power
  */
 int32_t fix_Pow(int32_t i, int32_t j)

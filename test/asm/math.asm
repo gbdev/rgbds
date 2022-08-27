@@ -23,6 +23,10 @@ ENDM
 	assert MUL(10.0, 0.5) == 5.0
 	assert MUL(10.0, 0.0) == 0.0
 
+	assert FMOD(5.0, 2.0) == 1.0
+	assert FMOD(-5.0, 2.0) == -1.0
+	assert FMOD(-5.0, 0.0) == $8000_0000
+
 	assert POW(10.0, 2.0) == 100.0
 	assert POW(100.0, 0.5) == 10.0
 
