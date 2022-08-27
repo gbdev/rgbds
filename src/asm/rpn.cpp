@@ -197,6 +197,16 @@ void Expression::makeStartOfSectionType(SectionType type) {
 	*ptr = type;
 }
 
+static bool tryConstZero(Expression const &lhs, Expression const &rhs) {
+	Expression const &expr = lhs.isKnown() ? lhs : rhs;
+	return expr.isKnown() && expr.value() == 0;
+}
+
+static bool tryConstNonzero(Expression const &lhs, Expression const &rhs) {
+	Expression const &expr = lhs.isKnown() ? lhs : rhs;
+	return expr.isKnown() && expr.value() != 0;
+}
+
 /*
  * Attempts to compute a constant binary AND from non-constant operands
  * This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
@@ -422,6 +432,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		}
 	} else if (op == RPN_SUB && src1.isDiffConstant(src2.symbolOf())) {
 		data = src1.symbolOf()->getValue() - src2.symbolOf()->getValue();
+	} else if ((op == RPN_LOGAND || op == RPN_AND || op == RPN_MUL) && tryConstZero(src1, src2)) {
+		data = 0;
+	} else if (op == RPN_LOGOR && tryConstNonzero(src1, src2)) {
+		data = 1;
 	} else if (int32_t constVal; op == RPN_AND && (constVal = tryConstMask(src1, src2)) != -1) {
 		data = constVal;
 	} else {

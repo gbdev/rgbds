@@ -1,0 +1,5 @@
+error: const-zero.asm(21) -> const-zero.asm::test_or(14):
+    Expected constant expression: PC is not constant at assembly time
+error: const-zero.asm(32):
+    Expected constant expression: 'Floating' is not constant at assembly time
+error: Assembly aborted (2 errors)!
