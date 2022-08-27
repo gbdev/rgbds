@@ -13,7 +13,7 @@
 .Nd Game Boy linker
 .Sh SYNOPSIS
 .Nm
-.Op Fl dtVvwx
+.Op Fl dMtVvwx
 .Op Fl l Ar linker_script
 .Op Fl m Ar map_file
 .Op Fl n Ar sym_file
@@ -73,6 +73,8 @@ The attributes assigned in the linker script must be consistent with any assigne
 See
 .Xr rgblink 5
 for more information about the linker script format.
+.It Fl M , Fl Fl no-sym-in-map
+If specified, the map file will not list symbols, only sections.
 .It Fl m Ar map_file , Fl Fl map Ar map_file
 Write a map file to the given filename, listing how sections and symbols were assigned.
 .It Fl n Ar sym_file , Fl Fl sym Ar sym_file

@@ -14,6 +14,7 @@ _rgblink_completions() {
 		[w]="wramx:normal"
 		[x]="nopad:normal"
 		[l]="linkerscript:glob-*"
+		[M]="no-sym-in-map:normal"
 		[m]="map:glob-*.map"
 		[n]="sym:glob-*.sym"
 		[O]="overlay:glob-*.gb *.gbc *.sgb"

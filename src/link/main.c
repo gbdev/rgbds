@@ -36,6 +36,7 @@
 bool isDmgMode;               /* -d */
 char       *linkerScriptName; /* -l */
 char const *mapFileName;      /* -m */
+bool noSymInMap;              /* -M */
 char const *symFileName;      /* -n */
 char const *overlayFileName;  /* -O */
 char const *outputFileName;   /* -o */
@@ -165,7 +166,7 @@ FILE *openFile(char const *fileName, char const *mode)
 }
 
 /* Short options */
-static const char *optstring = "dl:m:n:O:o:p:S:s:tVvWwx";
+static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
 
 /*
  * Equivalent long options
@@ -181,6 +182,7 @@ static struct option const longopts[] = {
 	{ "dmg",           no_argument,       NULL, 'd' },
 	{ "linkerscript",  required_argument, NULL, 'l' },
 	{ "map",           required_argument, NULL, 'm' },
+	{ "no-sym-in-map", no_argument,       NULL, 'M' },
 	{ "sym",           required_argument, NULL, 'n' },
 	{ "overlay",       required_argument, NULL, 'O' },
 	{ "output",        required_argument, NULL, 'o' },
@@ -201,7 +203,7 @@ static struct option const longopts[] = {
 static void printUsage(void)
 {
 	fputs(
-"Usage: rgblink [-dtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+"Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
 "               [-S spec] [-s symbol] <file> ...\n"
 "Useful options:\n"
@@ -373,6 +375,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			linkerScriptName = musl_optarg;
+			break;
+		case 'M':
+			noSymInMap = true;
 			break;
 		case 'm':
 			mapFileName = musl_optarg;
