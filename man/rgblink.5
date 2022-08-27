@@ -14,18 +14,20 @@
 .Sh DESCRIPTION
 The linker script is an external file that allows the user to specify the order of sections at link time and in a centralized manner.
 .Pp
-A linker script consists on a series of banks followed by a list of sections and, optionally, commands.
-They can be lowercase or uppercase, it is ignored.
+A linker script consists of a series of bank declarations, each optionally followed by a list of section names (in double quotes) or commands.
+All reserved keywords (bank types and command names) are case-insensitive; all section names are case-sensitive.
 Any line can contain a comment starting with
 .Ql \&;
 that ends at the end of the line:
 .Bd -literal -offset indent
-ROMX $F ; This is a comment
-  "Functions to read array"
-  ALIGN 8
-  "Array aligned to 256 bytes"
+; This line is a comment
+ROMX $F            ; start a bank
+  "Some functions" ; a section name
+  ALIGN 8          ; a command
+  "Some array"
 
-WRAMX 2
+WRAMX 2            ; start another bank
+  org $d123        ; another command
   "Some variables"
 .Ed
 .Pp
