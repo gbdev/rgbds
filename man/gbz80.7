@@ -171,8 +171,8 @@ and
 .It Sx JP HL
 .It Sx JP n16
 .It Sx JP cc,n16
-.It Sx JR e8
-.It Sx JR cc,e8
+.It Sx JR n16
+.It Sx JR cc,n16
 .It Sx RET cc
 .It Sx RET
 .It Sx RETI
@@ -754,22 +754,34 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags: None affected.
-.Ss JR e8
-Relative Jump by adding
-.Ar e8
-to the address of the instruction following the
-.Sy JR .
-To clarify, an operand of 0 is equivalent to no jumping.
+.Ss JR n16
+Relative Jump to address
+.Ar n16 .
+The address is encoded as a signed 8-bit offset from the address immediately following the
+.Ic JR
+instruction, so the target address
+.Ar n16
+must be between
+.Sy -128
+and
+.Sy 127
+bytes away.
+For example:
+.Bd -literal -offset indent
+    JR Label  ; no-op; encoded offset of 0
+Label:
+    JR Label  ; infinite loop; encoded offset of -2
+.Ed
 .Pp
 Cycles: 3
 .Pp
 Bytes: 2
 .Pp
 Flags: None affected.
-.Ss JR cc,e8
-Relative Jump by adding
-.Ar e8
-to the current address if condition
+.Ss JR cc,n16
+Relative Jump to address
+.Ar n16
+if condition
 .Ar cc
 is met.
 .Pp
