@@ -1815,12 +1815,13 @@ The variable
 will be assigned this value at the beginning of each new iteration; any changes made to it within the
 .Ic FOR
 loop's body will be overwritten.
-So if the symbol
+So the symbol
 .Ar V
-is already defined before the
+need not be already defined before any iterations of the
 .Ic FOR
-loop begins, it must be a variable
-.Pq Sx Variables .
+loop, but it must be a variable
+.Pq Sx Variables
+if so.
 For example:
 .Bd -literal -offset indent
 FOR V, 4, 25, 5
