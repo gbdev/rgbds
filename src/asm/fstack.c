@@ -285,6 +285,9 @@ static void newContext(struct FileStackNode *fileInfo)
 	++contextDepth;
 	fstk_NewRecursionDepth(maxRecursionDepth); // Only checks if the max depth was exceeded
 
+	// Save the current `\@` value, to be restored when this context ends
+	contextStack->uniqueID = macro_GetUniqueID();
+
 	struct Context *context = malloc(sizeof(*context));
 
 	if (!context)

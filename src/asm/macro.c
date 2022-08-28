@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -145,17 +144,19 @@ uint32_t macro_GetUniqueID(void)
 
 char const *macro_GetUniqueIDStr(void)
 {
+	// Generate a new unique ID on the first use of `\@`
+	if (uniqueID == 0)
+		macro_SetUniqueID(++maxUniqueID);
+
 	return uniqueIDPtr;
 }
 
 void macro_SetUniqueID(uint32_t id)
 {
 	uniqueID = id;
-	if (id == 0) {
+	if (id == 0 || id == (uint32_t)-1) {
 		uniqueIDPtr = NULL;
 	} else {
-		if (uniqueID > maxUniqueID)
-			maxUniqueID = uniqueID;
 		// The buffer is guaranteed to be the correct size
 		// This is a valid label fragment, but not a valid numeric
 		sprintf(uniqueIDBuf, "_u%" PRIu32, id);
@@ -165,13 +166,15 @@ void macro_SetUniqueID(uint32_t id)
 
 uint32_t macro_UseNewUniqueID(void)
 {
-	macro_SetUniqueID(++maxUniqueID);
+	// A new ID will be generated on the first use of `\@`
+	macro_SetUniqueID(0);
 	return uniqueID;
 }
 
 uint32_t macro_UndefUniqueID(void)
 {
-	macro_SetUniqueID(0);
+	// No ID will be generated; use of `\@` is an error
+	macro_SetUniqueID((uint32_t)-1);
 	return uniqueID;
 }
 
