@@ -3,4 +3,4 @@ error: opt-r.asm(5):
 error: opt-r.asm(6):
     Invalid argument to option 'r' ("2a")
 FATAL: opt-r.asm(13):
-    Recursion limit (1) exceeded
+    Recursion limit (0) exceeded
