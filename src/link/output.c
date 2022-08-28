@@ -438,7 +438,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	} else {
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
-		fprintf(mapFile, "    SLACK: $%04" PRIx16 " byte%s\n\n", slack,
+		fprintf(mapFile, "  SLACK: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
 	}
 
