@@ -1804,11 +1804,29 @@ The
 value will be updated by
 .Ar step
 until it reaches or exceeds
-.Ar stop .
+.Ar stop ,
+i.e. it covers the half-open range from
+.Ar start
+(inclusive) to
+.Ar stop
+(exclusive).
+The variable
+.Ar V
+will be assigned this value at the beginning of each new iteration; any changes made to it within the
+.Ic FOR
+loop's body will be overwritten.
+So the symbol
+.Ar V
+need not be already defined before any iterations of the
+.Ic FOR
+loop, but it must be a variable
+.Pq Sx Variables
+if so.
 For example:
 .Bd -literal -offset indent
 FOR V, 4, 25, 5
       PRINT "{d:V} "
+      DEF V *= 2
 ENDR
       PRINTLN "done {d:V}"
 .Ed
