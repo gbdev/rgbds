@@ -1,4 +1,4 @@
-addargs: MACRO
+MACRO addargs
 sum = 0
 	rept _NARG
 sum = sum + \1

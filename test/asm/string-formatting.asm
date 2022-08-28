@@ -9,7 +9,7 @@ s equs "hello"
 	println "<{f:pi}> <{06.f:f}> <{.10f:f}>"
 	println "<{#-10s:s}> <{10s:s}>"
 
-foo: macro
+macro foo
 	println "<{\1}>"
 endm
 

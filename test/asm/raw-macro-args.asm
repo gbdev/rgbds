@@ -1,11 +1,11 @@
-printargs: MACRO
+MACRO printargs
 	rept _NARG
 		println \1
 		shift
 	endr
 ENDM
 
-printlit: MACRO
+MACRO printlit
 	rept _NARG
 		println "\1"
 		shift

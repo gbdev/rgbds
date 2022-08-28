@@ -1,6 +1,6 @@
 def _ASM equ 0
 
-test: MACRO
+MACRO test
 	; Test RGBASM
 	redef V equs "_ASM +"
 	static_assert \#
@@ -9,7 +9,7 @@ test: MACRO
 	assert \#
 ENDM
 
-test_mod: MACRO
+MACRO test_mod
 	def x = \1 ; dividend
 	def y = \2 ; divisor
 	shift 2
@@ -21,14 +21,14 @@ test_mod: MACRO
 	test (V (x - y) % y) == (V r)
 ENDM
 
-test_each_mod: MACRO
+MACRO test_each_mod
 	test_mod (\1), (\2)
 	test_mod (\1), -(\2)
 	test_mod -(\1), (\2)
 	test_mod -(\1), -(\2)
 ENDM
 
-test_pow: MACRO
+MACRO test_pow
 	def x = \1 ; dividend
 	def y = 2 ** \2 ; divisor
 	def r = x % y ; remainder
@@ -37,7 +37,7 @@ test_pow: MACRO
 	test (V r) == (V m)
 ENDM
 
-test_each_pow: MACRO
+MACRO test_each_pow
 	test_pow (\1), (\2)
 	test_pow -(\1), (\2)
 ENDM

@@ -16,7 +16,7 @@ SECTION "fixed 2", ROM0[69]
 Constant2: ; Same as above
 
 
-print_diff: MACRO
+MACRO print_diff
 	PRINTLN (\1) - (\2)
 	PRINTLN (\2) - (\1)
 ENDM

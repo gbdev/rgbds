@@ -1,4 +1,4 @@
-reverse: MACRO
+MACRO reverse
 	for i, _NARG
 i = _NARG - i - 1
 		shift i
@@ -9,7 +9,7 @@ ENDM
 
 	reverse $1, $2, $3
 
-m: MACRO
+MACRO m
 	shift 2
 	shift -3
 	shift 1

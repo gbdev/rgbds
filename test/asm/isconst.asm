@@ -1,7 +1,7 @@
 
 TEST_NUM = 0
 
-test_expr: MACRO
+MACRO test_expr
 TEST_NUM = TEST_NUM + 1
 
 IS_CONST = ISCONST(\1)

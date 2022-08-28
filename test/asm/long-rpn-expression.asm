@@ -2,7 +2,7 @@ SECTION "sec", ROM0
 
 X0 EQUS "0"
 
-m: MACRO
+MACRO m
 \1 EQUS STRCAT("{X\2}", "+1")
 ENDM
 

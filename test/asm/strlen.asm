@@ -1,6 +1,6 @@
 SECTION "sec", ROM0
 
-xstrlen: MACRO
+MACRO xstrlen
 	PRINTLN STRLEN(\1)
 ENDM
 

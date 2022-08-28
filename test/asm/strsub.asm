@@ -1,6 +1,6 @@
 SECTION "sec", ROM0
 
-xstrsub: MACRO
+MACRO xstrsub
 	PRINTLN STRSUB(\#)
 ENDM
 

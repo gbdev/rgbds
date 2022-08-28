@@ -1100,6 +1100,7 @@ macrodef	: T_POP_MACRO {
 					     captureBody.size);
 		}
 		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
+			warning(WARNING_OBSOLETE, "`%s: MACRO` is deprecated; use `MACRO %s`\n", $1, $1);
 			$<captureTerminated>$ = lexer_CaptureMacroBody(&captureBody);
 		} endofline {
 			if ($<captureTerminated>5)

@@ -1,6 +1,6 @@
 SECTION "Test", ROM0
 
-list: MACRO
+MACRO list
 	db _NARG
 if _NARG > 0
 	db \#
@@ -12,11 +12,11 @@ ENDM
 	list 42
 	list $aa, $bb, $cc, $dd, $ee
 
-person: MACRO
+MACRO person
 	db \1, \2, \3, \4, \5
 ENDM
 
-object: MACRO
+MACRO object
 x = \1
 y = \2
 	shift 2
@@ -26,7 +26,7 @@ ENDM
 	person  5, 10, $33, $44, $55
 	object 12,  6, $66, $77, $88
 
-echo: MACRO
+MACRO echo
 	println "\#"
 ENDM
 
@@ -36,7 +36,7 @@ R EQUS "S"
 	echo Q,R, {R},  T
 	echo 42,$2a
 
-printall: MACRO
+MACRO printall
 	println \#
 ENDM
 

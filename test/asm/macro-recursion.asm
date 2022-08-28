@@ -1,4 +1,4 @@
-recurse: MACRO
+MACRO recurse
 	recurse
 ENDM
 	recurse

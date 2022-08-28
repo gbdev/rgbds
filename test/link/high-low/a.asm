@@ -1,5 +1,5 @@
-ldhilo : MACRO
-    ld  HIGH(\1),LOW(\2)
+MACRO ldhilo
+    ld HIGH(\1),LOW(\2)
 ENDM
 
 SECTION "r0", ROM0[$0]

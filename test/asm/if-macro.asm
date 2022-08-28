@@ -1,4 +1,4 @@
-m: macro
+macro m
 	if 0
 		WARN "3"
 	else

@@ -1,6 +1,6 @@
 SECTION "sec", ROM0
     dw Sym
-m: MACRO
+MACRO m
 Sym::
 ENDM
     m

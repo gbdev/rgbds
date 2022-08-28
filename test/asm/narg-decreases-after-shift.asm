@@ -1,4 +1,4 @@
-testing: MACRO
+MACRO testing
 	db _NARG
 	shift
 	db _NARG

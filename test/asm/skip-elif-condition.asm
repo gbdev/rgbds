@@ -1,4 +1,4 @@
-mac: MACRO
+MACRO mac
 	if (\1) < 10
 		println "small \1"
 	elif (\1) > 100
