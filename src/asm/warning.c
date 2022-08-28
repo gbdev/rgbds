@@ -38,6 +38,7 @@ static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 	[WARNING_OBSOLETE]		= WARNING_ENABLED,
 	[WARNING_SHIFT]			= WARNING_DISABLED,
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
+	[WARNING_UNMAPPED_CHAR]		= WARNING_ENABLED,
 	[WARNING_USER]			= WARNING_ENABLED,
 
 	[WARNING_NUMERIC_STRING_1]	= WARNING_ENABLED,
@@ -85,6 +86,7 @@ static const char * const warningFlags[NB_WARNINGS] = {
 	"obsolete",
 	"shift",
 	"shift-amount",
+	"unmapped-char",
 	"user",
 
 	// Parametric warnings
@@ -160,6 +162,7 @@ static uint8_t const _wallCommands[] = {
 	WARNING_LONG_STR,
 	WARNING_NESTED_COMMENT,
 	WARNING_OBSOLETE,
+	WARNING_UNMAPPED_CHAR,
 	WARNING_NUMERIC_STRING_1,
 	META_WARNING_DONE
 };
@@ -191,6 +194,7 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
+	WARNING_UNMAPPED_CHAR,
 	WARNING_NUMERIC_STRING_1,
 	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,

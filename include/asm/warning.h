@@ -24,7 +24,7 @@ enum WarningID {
 	WARNING_ASSERT,		      // Assertions
 	WARNING_BACKWARDS_FOR,	      // `for` loop with backwards range
 	WARNING_BUILTIN_ARG,	      // Invalid args to builtins
-	WARNING_CHARMAP_REDEF,        // Charmap entry re-definition
+	WARNING_CHARMAP_REDEF,	      // Charmap entry re-definition
 	WARNING_DIV,		      // Division undefined behavior
 	WARNING_EMPTY_DATA_DIRECTIVE, // `db`, `dw` or `dl` directive without data in ROM
 	WARNING_EMPTY_MACRO_ARG,      // Empty macro argument
@@ -36,6 +36,7 @@ enum WarningID {
 	WARNING_OBSOLETE,	      // Obsolete things
 	WARNING_SHIFT,		      // Shifting undefined behavior
 	WARNING_SHIFT_AMOUNT,	      // Strange shift amount
+	WARNING_UNMAPPED_CHAR,	      // Character without charmap entry
 	WARNING_USER,		      // User warnings
 
 	NB_PLAIN_WARNINGS,

@@ -1,3 +1,5 @@
+opt Wno-unmapped-char
+
 new_: MACRO
 	IF _NARG > 1
 	println "newcharmap \1, \2"

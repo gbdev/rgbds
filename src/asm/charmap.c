@@ -242,6 +242,7 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 				return 1;
 
 			} else if (**input) { // No match found, but there is some input left
+				int firstChar = **input;
 				// This will write the codepoint's value to `output`, little-endian
 				size_t codepointLen = readUTF8Char(output ? *output : NULL,
 								   *input);
@@ -253,6 +254,12 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 				*input += codepointLen;
 				if (output)
 					*output += codepointLen;
+
+				// Check if the character map is not the default "main" one, or if
+				// it has any mappings defined
+				if (strcmp(charmap->name, "main") || charmap->usedNodes > 1)
+					warning(WARNING_UNMAPPED_CHAR,
+						"Unmapped character %s\n", printChar(firstChar));
 
 				return codepointLen;
 

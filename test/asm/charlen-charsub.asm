@@ -1,3 +1,4 @@
+	opt Wno-unmapped-char
 	charmap "<NULL>", $00
 	charmap "A", $10
 	charmap "B", $20

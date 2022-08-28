@@ -1,0 +1,4 @@
+warning: unmapped-char.asm(7): [-Wunmapped-char]
+    Unmapped character 'A'
+warning: unmapped-char.asm(13): [-Wunmapped-char]
+    Unmapped character 'A'
