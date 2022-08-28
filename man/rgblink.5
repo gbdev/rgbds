@@ -14,18 +14,22 @@
 .Sh DESCRIPTION
 The linker script is an external file that allows the user to specify the order of sections at link time and in a centralized manner.
 .Pp
-A linker script consists on a series of banks followed by a list of sections and, optionally, commands.
-They can be lowercase or uppercase, it is ignored.
+A linker script consists of a series of bank declarations, each optionally followed by a list of section names (in double quotes) or commands.
+All reserved keywords (bank types and command names) are case-insensitive; all section names are case-sensitive.
+.Pp
 Any line can contain a comment starting with
 .Ql \&;
-that ends at the end of the line:
+that ends at the end of the line.
+.Pp
 .Bd -literal -offset indent
-ROMX $F ; This is a comment
-  "Functions to read array"
-  ALIGN 8
-  "Array aligned to 256 bytes"
+; This line is a comment
+ROMX $F            ; start a bank
+  "Some functions" ; a section name
+  ALIGN 8          ; a command
+  "Some array"
 
-WRAMX 2
+WRAMX 2            ; start another bank
+  org $d123        ; another command
   "Some variables"
 .Ed
 .Pp
@@ -46,6 +50,19 @@ Unless there is a single bank, which can occur with types
 and
 .Cm WRAMX ,
 it is needed to specify a bank number after the type.
+.Pp
+Section names in double quotes support the same character escape sequences as strings in
+.Xr rgbasm 5 ,
+specifically
+.Ql \[rs]\[rs] ,
+.Ql \[rs]" ,
+.Ql \[rs]n ,
+.Ql \[rs]r ,
+and
+.Ql \[rs]t .
+Other backslash escape sequences in
+.Xr rgbasm 5
+are only relevant to assembly code and do not apply in section names.
 .Pp
 When a new bank statement is found, sections found after it will be placed right from the beginning of that bank.
 If the linker script switches to a different bank and then comes back to a previous one, it will continue from the last address that was used.
