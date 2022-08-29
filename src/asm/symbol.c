@@ -6,9 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/*
- * Symboltable and macroargs stuff
- */
+// Symboltable and macroargs stuff
 
 #include <assert.h>
 #include <errno.h>
@@ -36,7 +34,7 @@
 
 HashMap symbols;
 
-static char const *labelScope; /* Current section's label scope */
+static const char *labelScope; // Current section's label scope
 static struct Symbol *PCSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
@@ -85,36 +83,34 @@ static int32_t Callback__LINE__(void)
 
 static char const *Callback__FILE__(void)
 {
-	/*
-	 * FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
-	 * There are only two call sites for this; one copies the contents directly, the other is
-	 * EQUS expansions, which cannot straddle file boundaries. So this should be fine.
-	 */
+	// FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
+	// There are only two call sites for this; one copies the contents directly, the other is
+	// EQUS expansions, which cannot straddle file boundaries. So this should be fine.
 	static char *buf = NULL;
 	static size_t bufsize = 0;
 	char const *fileName = fstk_GetFileName();
 	size_t j = 1;
 
 	assert(fileName[0]);
-	/* The assertion above ensures the loop runs at least once */
+	// The assertion above ensures the loop runs at least once
 	for (size_t i = 0; fileName[i]; i++, j++) {
-		/* Account for the extra backslash inserted below */
+		// Account for the extra backslash inserted below
 		if (fileName[i] == '"')
 			j++;
-		/* Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!! */
-		if (j + 2 >= bufsize) { /* Always keep room for 2 tail chars */
+		// Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!!
+		if (j + 2 >= bufsize) { // Always keep room for 2 tail chars
 			bufsize = bufsize ? bufsize * 2 : 64;
 			buf = realloc(buf, bufsize);
 			if (!buf)
 				fatalerror("Failed to grow buffer for file name: %s\n",
 					   strerror(errno));
 		}
-		/* Escape quotes, since we're returning a string */
+		// Escape quotes, since we're returning a string
 		if (fileName[i] == '"')
 			buf[j - 1] = '\\';
 		buf[j] = fileName[i];
 	}
-	/* Write everything after the loop, to ensure the buffer has been allocated */
+	// Write everything after the loop, to ensure the buffer has been allocated
 	buf[0] = '"';
 	buf[j++] = '"';
 	buf[j] = '\0';
@@ -128,16 +124,14 @@ static int32_t CallbackPC(void)
 	return section ? section->org + sect_GetSymbolOffset() : 0;
 }
 
-/*
- * Get the value field of a symbol
- */
+// Get the value field of a symbol
 int32_t sym_GetValue(struct Symbol const *sym)
 {
 	if (sym_IsNumeric(sym) && sym->hasCallback)
 		return sym->numCallback();
 
 	if (sym->type == SYM_LABEL)
-		/* TODO: do not use section's org directly */
+		// TODO: do not use section's org directly
 		return sym->value + sym_GetSection(sym)->org;
 
 	return sym->value;
@@ -153,32 +147,26 @@ static void dumpFilename(struct Symbol const *sym)
 		fputs("<builtin>", stderr);
 }
 
-/*
- * Set a symbol's definition filename and line
- */
+// Set a symbol's definition filename and line
 static void setSymbolFilename(struct Symbol *sym)
 {
 	sym->src = fstk_GetFileStack();
 	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is (NULL, 1) for built-ins
 }
 
-/*
- * Update a symbol's definition filename and line
- */
+// Update a symbol's definition filename and line
 static void updateSymbolFilename(struct Symbol *sym)
 {
 	struct FileStackNode *oldSrc = sym->src;
 
 	setSymbolFilename(sym);
-	/* If the old node was referenced, ensure the new one is */
+	// If the old node was referenced, ensure the new one is
 	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
 		out_RegisterNode(sym->src);
-	/* TODO: unref the old node, and use `out_ReplaceNode` instead of deleting it */
+	// TODO: unref the old node, and use `out_ReplaceNode` instead of deleting it
 }
 
-/*
- * Create a new symbol by name
- */
+// Create a new symbol by name
 static struct Symbol *createsymbol(char const *symName)
 {
 	struct Symbol *sym = malloc(sizeof(*sym));
@@ -201,10 +189,8 @@ static struct Symbol *createsymbol(char const *symName)
 	return sym;
 }
 
-/*
- * Creates the full name of a local symbol in a given scope, by prepending
- * the name with the parent symbol's name.
- */
+// Creates the full name of a local symbol in a given scope, by prepending
+// the name with the parent symbol's name.
 static void fullSymbolName(char *output, size_t outputSize,
 			   char const *localName, char const *scopeName)
 {
@@ -250,8 +236,8 @@ struct Symbol *sym_FindScopedSymbol(char const *symName)
 		if (strchr(localName + 1, '.'))
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
 				   symName);
-		/* If auto-scoped local label, expand the name */
-		if (localName == symName) { /* Meaning, the name begins with the dot */
+		// If auto-scoped local label, expand the name
+		if (localName == symName) { // Meaning, the name begins with the dot
 			char fullName[MAXSYMLEN + 1];
 
 			fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
@@ -271,9 +257,7 @@ static bool isReferenced(struct Symbol const *sym)
 	return sym->ID != (uint32_t)-1;
 }
 
-/*
- * Purge a symbol
- */
+// Purge a symbol
 void sym_Purge(char const *symName)
 {
 	struct Symbol *sym = sym_FindScopedSymbol(symName);
@@ -285,16 +269,14 @@ void sym_Purge(char const *symName)
 	} else if (isReferenced(sym)) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
 	} else {
-		/* Do not keep a reference to the label's name after purging it */
+		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(NULL);
 
-		/*
-		 * FIXME: this leaks sym->macro for SYM_EQUS and SYM_MACRO, but this can't
-		 * free(sym->macro) because the expansion may be purging itself.
-		 */
+		// FIXME: this leaks sym->macro for SYM_EQUS and SYM_MACRO, but this can't
+		// free(sym->macro) because the expansion may be purging itself.
 		hash_RemoveElement(symbols, sym->name);
-		/* TODO: ideally, also unref the file stack nodes */
+		// TODO: ideally, also unref the file stack nodes
 		free(sym);
 	}
 }
@@ -312,9 +294,7 @@ uint32_t sym_GetPCValue(void)
 	return 0;
 }
 
-/*
- * Return a constant symbol's value, assuming it's defined
- */
+// Return a constant symbol's value, assuming it's defined
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
 {
 	if (sym == PCSymbol)
@@ -327,9 +307,7 @@ uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
 	return 0;
 }
 
-/*
- * Return a constant symbol's value
- */
+// Return a constant symbol's value
 uint32_t sym_GetConstantValue(char const *symName)
 {
 	struct Symbol const *sym = sym_FindScopedSymbol(symName);
@@ -381,9 +359,7 @@ static struct Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 	return sym;
 }
 
-/*
- * Add an equated symbol
- */
+// Add an equated symbol
 struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName, true);
@@ -465,18 +441,14 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 	}
 
 	updateSymbolFilename(sym);
-	/*
-	 * FIXME: this leaks the previous sym->macro value, but this can't
-	 * free(sym->macro) because the expansion may be redefining itself.
-	 */
+	// FIXME: this leaks the previous sym->macro value, but this can't
+	// free(sym->macro) because the expansion may be redefining itself.
 	assignStringSymbol(sym, value);
 
 	return sym;
 }
 
-/*
- * Alter a mutable symbol's value
- */
+// Alter a mutable symbol's value
 struct Symbol *sym_AddVar(char const *symName, int32_t value)
 {
 	struct Symbol *sym = sym_FindExactSymbol(symName);
@@ -506,7 +478,7 @@ struct Symbol *sym_AddVar(char const *symName, int32_t value)
  */
 static struct Symbol *addLabel(char const *symName)
 {
-	assert(symName[0] != '.'); /* The symbol name must have been expanded prior */
+	assert(symName[0] != '.'); // The symbol name must have been expanded prior
 	struct Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -519,7 +491,7 @@ static struct Symbol *addLabel(char const *symName)
 	} else {
 		updateSymbolFilename(sym);
 	}
-	/* If the symbol already exists as a ref, just "take over" it */
+	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
 	sym->value = sect_GetSymbolOffset();
 	if (exportall)
@@ -531,43 +503,41 @@ static struct Symbol *addLabel(char const *symName)
 	return sym;
 }
 
-/*
- * Add a local (`.name` or `Parent.name`) relocatable symbol
- */
+// Add a local (`.name` or `Parent.name`) relocatable symbol
 struct Symbol *sym_AddLocalLabel(char const *symName)
 {
 	if (!labelScope) {
 		error("Local label '%s' in main scope\n", symName);
 		return NULL;
 	}
-	assert(!strchr(labelScope, '.')); /* Assuming no dots in `labelScope` */
+	assert(!strchr(labelScope, '.')); // Assuming no dots in `labelScope`
 
 	char fullName[MAXSYMLEN + 1];
 	char const *localName = strchr(symName, '.');
 
-	assert(localName); /* There should be at least one dot in `symName` */
-	/* Check for something after the dot in `localName` */
+	assert(localName); // There should be at least one dot in `symName`
+	// Check for something after the dot in `localName`
 	if (localName[1] == '\0') {
 		fatalerror("'%s' is a nonsensical reference to an empty local label\n",
 			   symName);
 	}
-	/* Check for more than one dot in `localName` */
+	// Check for more than one dot in `localName`
 	if (strchr(localName + 1, '.'))
 		fatalerror("'%s' is a nonsensical reference to a nested local label\n",
 			   symName);
 
 	if (localName == symName) {
-		/* Expand `symName` to the full `labelScope.symName` name */
+		// Expand `symName` to the full `labelScope.symName` name
 		fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
 		symName = fullName;
 	} else {
 		size_t i = 0;
 
-		/* Find where `labelScope` and `symName` first differ */
+		// Find where `labelScope` and `symName` first differ
 		while (labelScope[i] && symName[i] == labelScope[i])
 			i++;
 
-		/* Check that `symName` starts with `labelScope` and then a '.' */
+		// Check that `symName` starts with `labelScope` and then a '.'
 		if (labelScope[i] != '\0' || symName[i] != '.') {
 			size_t parentLen = localName - symName;
 
@@ -579,14 +549,12 @@ struct Symbol *sym_AddLocalLabel(char const *symName)
 	return addLabel(symName);
 }
 
-/*
- * Add a relocatable symbol
- */
+// Add a relocatable symbol
 struct Symbol *sym_AddLabel(char const *symName)
 {
 	struct Symbol *sym = addLabel(symName);
 
-	/* Set the symbol as the new scope */
+	// Set the symbol as the new scope
 	if (sym)
 		sym_SetCurrentSymbolScope(sym->name);
 	return sym;
@@ -594,9 +562,7 @@ struct Symbol *sym_AddLabel(char const *symName)
 
 static uint32_t anonLabelID;
 
-/*
- * Add an anonymous label
- */
+// Add an anonymous label
 struct Symbol *sym_AddAnonLabel(void)
 {
 	if (anonLabelID == UINT32_MAX) {
@@ -610,9 +576,7 @@ struct Symbol *sym_AddAnonLabel(void)
 	return addLabel(name);
 }
 
-/*
- * Write an anonymous label's name to a buffer
- */
+// Write an anonymous label's name to a buffer
 void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg)
 {
 	uint32_t id = 0;
@@ -636,9 +600,7 @@ void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, 
 	sprintf(buf, "!%u", id);
 }
 
-/*
- * Export a symbol
- */
+// Export a symbol
 void sym_Export(char const *symName)
 {
 	if (symName[0] == '!') {
@@ -648,15 +610,13 @@ void sym_Export(char const *symName)
 
 	struct Symbol *sym = sym_FindScopedSymbol(symName);
 
-	/* If the symbol doesn't exist, create a ref that can be purged */
+	// If the symbol doesn't exist, create a ref that can be purged
 	if (!sym)
 		sym = sym_Ref(symName);
 	sym->isExported = true;
 }
 
-/*
- * Add a macro definition
- */
+// Add a macro definition
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
 {
 	struct Symbol *sym = createNonrelocSymbol(symName, false);
@@ -667,20 +627,16 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 	sym->type = SYM_MACRO;
 	sym->macroSize = size;
 	sym->macro = body;
-	setSymbolFilename(sym); /* TODO: is this really necessary? */
-	/*
-	 * The symbol is created at the line after the `endm`,
-	 * override this with the actual definition line
-	 */
+	setSymbolFilename(sym); // TODO: is this really necessary?
+	// The symbol is created at the line after the `endm`,
+	// override this with the actual definition line
 	sym->fileLine = defLineNo;
 
 	return sym;
 }
 
-/*
- * Flag that a symbol is referenced in an RPN expression
- * and create it if it doesn't exist yet
- */
+// Flag that a symbol is referenced in an RPN expression
+// and create it if it doesn't exist yet
 struct Symbol *sym_Ref(char const *symName)
 {
 	struct Symbol *sym = sym_FindScopedSymbol(symName);
@@ -702,9 +658,7 @@ struct Symbol *sym_Ref(char const *symName)
 	return sym;
 }
 
-/*
- * Set whether to export all relocatable symbols by default
- */
+// Set whether to export all relocatable symbols by default
 void sym_SetExportAll(bool set)
 {
 	exportall = set;
@@ -721,9 +675,7 @@ static struct Symbol *createBuiltinSymbol(char const *symName)
 	return sym;
 }
 
-/*
- * Initialize the symboltable
- */
+// Initialize the symboltable
 void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
@@ -761,7 +713,7 @@ void sym_Init(time_t now)
 
 	if (now == (time_t)-1) {
 		warn("Couldn't determine current time");
-		/* Fall back by pretending we are at the Epoch */
+		// Fall back by pretending we are at the Epoch
 		now = 0;
 	}
 

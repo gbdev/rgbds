@@ -27,17 +27,13 @@ struct Expression {
 	uint32_t rpnPatchSize; // Size the expression will take in the object file
 };
 
-/*
- * Determines if an expression is known at assembly time
- */
+// Determines if an expression is known at assembly time
 static inline bool rpn_isKnown(struct Expression const *expr)
 {
 	return expr->isKnown;
 }
 
-/*
- * Determines if an expression is a symbol suitable for const diffing
- */
+// Determines if an expression is a symbol suitable for const diffing
 static inline bool rpn_isSymbol(const struct Expression *expr)
 {
 	return expr->isSymbol;
@@ -67,4 +63,4 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src);
 void rpn_CheckNBit(struct Expression const *expr, uint8_t n);
 int32_t rpn_GetConstVal(struct Expression const *expr);
 
-#endif /* RGBDS_ASM_RPN_H */
+#endif // RGBDS_ASM_RPN_H

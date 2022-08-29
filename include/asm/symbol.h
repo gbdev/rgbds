@@ -32,28 +32,28 @@ enum SymbolType {
 struct Symbol {
 	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
-	bool isExported; /* Whether the symbol is to be exported */
-	bool isBuiltin;  /* Whether the symbol is a built-in */
+	bool isExported; // Whether the symbol is to be exported
+	bool isBuiltin;  // Whether the symbol is a built-in
 	struct Section *section;
-	struct FileStackNode *src; /* Where the symbol was defined */
-	uint32_t fileLine; /* Line where the symbol was defined */
+	struct FileStackNode *src; // Where the symbol was defined
+	uint32_t fileLine; // Line where the symbol was defined
 
 	bool hasCallback;
 	union {
-		/* If sym_IsNumeric */
+		// If sym_IsNumeric
 		int32_t value;
 		int32_t (*numCallback)(void);
-		/* For SYM_MACRO and SYM_EQUS; TODO: have separate fields */
+		// For SYM_MACRO and SYM_EQUS; TODO: have separate fields
 		struct {
 			size_t macroSize;
 			char *macro;
 		};
-		/* For SYM_EQUS */
+		// For SYM_EQUS
 		char const *(*strCallback)(void);
 	};
 
-	uint32_t ID; /* ID of the symbol in the object file (-1 if none) */
-	struct Symbol *next; /* Next object to output in the object file */
+	uint32_t ID; // ID of the symbol in the object file (-1 if none)
+	struct Symbol *next; // Next object to output in the object file
 };
 
 bool sym_IsPC(struct Symbol const *sym);
@@ -98,9 +98,7 @@ static inline bool sym_IsExported(struct Symbol const *sym)
 	return sym->isExported;
 }
 
-/*
- * Get a string equate's value
- */
+// Get a string equate's value
 static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
 	if (sym->hasCallback)
@@ -123,17 +121,11 @@ struct Symbol *sym_AddVar(char const *symName, int32_t value);
 uint32_t sym_GetPCValue(void);
 uint32_t sym_GetConstantSymValue(struct Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *symName);
-/*
- * Find a symbol by exact name, bypassing expansion checks
- */
+// Find a symbol by exact name, bypassing expansion checks
 struct Symbol *sym_FindExactSymbol(char const *symName);
-/*
- * Find a symbol by exact name; may not be scoped, produces an error if it is
- */
+// Find a symbol by exact name; may not be scoped, produces an error if it is
 struct Symbol *sym_FindUnscopedSymbol(char const *symName);
-/*
- * Find a symbol, possibly scoped, by name
- */
+// Find a symbol, possibly scoped, by name
 struct Symbol *sym_FindScopedSymbol(char const *symName);
 struct Symbol const *sym_GetPC(void);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
@@ -143,8 +135,8 @@ struct Symbol *sym_RedefString(char const *symName, char const *value);
 void sym_Purge(char const *symName);
 void sym_Init(time_t now);
 
-/* Functions to save and restore the current symbol scope. */
+// Functions to save and restore the current symbol scope.
 char const *sym_GetCurrentSymbolScope(void);
 void sym_SetCurrentSymbolScope(char const *newScope);
 
-#endif /* RGBDS_SYMBOL_H */
+#endif // RGBDS_SYMBOL_H

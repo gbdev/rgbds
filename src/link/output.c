@@ -47,7 +47,7 @@ static struct {
 	} *banks;
 } sections[SECTTYPE_INVALID];
 
-/* Defines the order in which types are output to the sym and map files */
+// Defines the order in which types are output to the sym and map files
 static enum SectionType typeMap[SECTTYPE_INVALID] = {
 	SECTTYPE_ROM0,
 	SECTTYPE_ROMX,
@@ -124,7 +124,7 @@ struct Section const *out_OverlappingSection(struct Section const *section)
 	return NULL;
 }
 
-/**
+/*
  * Performs sanity checks on the overlay file.
  * @return The number of ROM banks in the overlay file
  */
@@ -140,7 +140,7 @@ static uint32_t checkOverlaySize(void)
 
 	long overlaySize = ftell(overlayFile);
 
-	/* Reset back to beginning */
+	// Reset back to beginning
 	fseek(overlayFile, 0, SEEK_SET);
 
 	if (overlaySize % BANK_SIZE)
@@ -157,7 +157,7 @@ static uint32_t checkOverlaySize(void)
 	return nbOverlayBanks;
 }
 
-/**
+/*
  * Expand sections[SECTTYPE_ROMX].banks to cover all the overlay banks.
  * This ensures that writeROM will output each bank, even if some are not
  * covered by any sections.
@@ -165,9 +165,9 @@ static uint32_t checkOverlaySize(void)
  */
 static void coverOverlayBanks(uint32_t nbOverlayBanks)
 {
-	/* 2 if is32kMode, 1 otherwise */
+	// 2 if is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
-	/* Discount ROM0 banks to avoid outputting too much */
+	// Discount ROM0 banks to avoid outputting too much
 	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].nbBanks
 				    ? nbOverlayBanks - nbRom0Banks
 				    : 0;
@@ -186,7 +186,7 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks)
 	}
 }
 
-/**
+/*
  * Write a ROM bank's sections to the output file.
  * @param bankSections The bank's sections, ordered by increasing address
  * @param baseOffset The address of the bank's first byte in GB address space
@@ -201,18 +201,18 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		struct Section const *section = bankSections->section;
 
 		assert(section->offset == 0);
-		/* Output padding up to the next SECTION */
+		// Output padding up to the next SECTION
 		while (offset + baseOffset < section->org) {
 			putc(overlayFile ? getc(overlayFile) : padValue,
 			     outputFile);
 			offset++;
 		}
 
-		/* Output the section itself */
+		// Output the section itself
 		fwrite(section->data, sizeof(*section->data), section->size,
 		       outputFile);
 		if (overlayFile) {
-			/* Skip bytes even with pipes */
+			// Skip bytes even with pipes
 			for (uint16_t i = 0; i < section->size; i++)
 				getc(overlayFile);
 		}
@@ -231,9 +231,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 	}
 }
 
-/**
- * Writes a ROM file to the output.
- */
+// Writes a ROM file to the output.
 static void writeROM(void)
 {
 	outputFile = openFile(outputFileName, "wb");
@@ -258,7 +256,7 @@ static void writeROM(void)
 	closeFile(overlayFile);
 }
 
-/**
+/*
  * Get the lowest section by address out of the two
  * @param s1 One choice
  * @param s2 The other
@@ -275,10 +273,8 @@ static struct SortedSection const **nextSection(struct SortedSection const **s1,
 	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
-/*
- * Comparator function for `qsort` to sort symbols
- * Symbols are ordered by address, or else by original index for a stable sort
- */
+// Comparator function for `qsort` to sort symbols
+// Symbols are ordered by address, or else by original index for a stable sort
 static int compareSymbols(void const *a, void const *b)
 {
 	struct SortedSymbol const *sym1 = (struct SortedSymbol const *)a;
@@ -290,7 +286,7 @@ static int compareSymbols(void const *a, void const *b)
 	return sym1->idx < sym2->idx ? -1 : sym1->idx > sym2->idx ? 1 : 0;
 }
 
-/**
+/*
  * Write a bank's contents to the sym file
  * @param bankSections The bank's sections
  */
@@ -357,7 +353,7 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	free(symList);
 }
 
-/**
+/*
  * Write a bank's contents to the map file
  * @param bankSections The bank's sections
  * @return The bank's used space
@@ -445,7 +441,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	return used;
 }
 
-/**
+/*
  * Write the total used space by section type to the map file
  * @param usedMap The total used space by section type
  */
@@ -471,9 +467,7 @@ static void writeMapUsed(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
 	}
 }
 
-/**
- * Writes the sym and/or map files, if applicable.
- */
+// Writes the sym and/or map files, if applicable.
 static void writeSymAndMap(void)
 {
 	if (!symFileName && !mapFileName)

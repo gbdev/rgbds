@@ -165,7 +165,7 @@ void parseInlinePalSpec(char const * const rawArg) {
 	}
 }
 
-/**
+/*
  * Tries to read some magic bytes from the provided `file`.
  * Returns whether the magic was correctly read.
  */
@@ -191,7 +191,7 @@ static T readBE(U const *bytes) {
 	return val;
 }
 
-/**
+/*
  * **Appends** the first line read from `file` to the end of the provided `buffer`.
  */
 static void readLine(std::filebuf &file, std::string &buffer) {
@@ -214,7 +214,7 @@ static void readLine(std::filebuf &file, std::string &buffer) {
 }
 
 // FIXME: Normally we'd use `std::from_chars`, but that's not available with GCC 7
-/**
+/*
  * Parses the initial part of a string_view, advancing the "read index" as it does
  */
 static uint16_t parseDec(std::string const &str, std::string::size_type &n) {

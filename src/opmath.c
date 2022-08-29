@@ -6,9 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/*
- * Mathematical operators that don't reuse C's behavior
- */
+// Mathematical operators that don't reuse C's behavior
 
 #include <stdint.h>
 

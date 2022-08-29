@@ -6,9 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/*
- * Controls RPN expressions for objectfiles
- */
+// Controls RPN expressions for objectfiles
 
 #include <assert.h>
 #include <errno.h>
@@ -28,7 +26,7 @@
 
 #include "opmath.h"
 
-/* Makes an expression "not known", also setting its error message */
+// Makes an expression "not known", also setting its error message
 #define makeUnknown(expr_, ...) do { \
 	struct Expression *_expr = expr_; \
 	_expr->isKnown = false; \
@@ -47,17 +45,15 @@
 
 static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
-	/* This assumes the RPN length is always less than the capacity */
+	// This assumes the RPN length is always less than the capacity
 	if (expr->rpnCapacity - expr->rpnLength < size) {
-		/* If there isn't enough room to reserve the space, realloc */
+		// If there isn't enough room to reserve the space, realloc
 		if (!expr->rpn)
-			expr->rpnCapacity = 256; /* Initial size */
+			expr->rpnCapacity = 256; // Initial size
 		while (expr->rpnCapacity - expr->rpnLength < size) {
 			if (expr->rpnCapacity >= MAXRPNLEN)
-				/*
-				 * To avoid generating humongous object files, cap the
-				 * size of RPN expressions
-				 */
+				// To avoid generating humongous object files, cap the
+				// size of RPN expressions
 				fatalerror("RPN expression cannot grow larger than "
 					   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
 			else if (expr->rpnCapacity > MAXRPNLEN / 2)
@@ -77,9 +73,7 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 	return ptr;
 }
 
-/*
- * Init a RPN expression
- */
+// Init a RPN expression
 static void rpn_Init(struct Expression *expr)
 {
 	expr->reason = NULL;
@@ -91,9 +85,7 @@ static void rpn_Init(struct Expression *expr)
 	expr->rpnPatchSize = 0;
 }
 
-/*
- * Free the RPN expression
- */
+// Free the RPN expression
 void rpn_Free(struct Expression *expr)
 {
 	free(expr->rpn);
@@ -101,9 +93,7 @@ void rpn_Free(struct Expression *expr)
 	rpn_Init(expr);
 }
 
-/*
- * Add symbols, constants and operators to expression
- */
+// Add symbols, constants and operators to expression
 void rpn_Number(struct Expression *expr, uint32_t i)
 {
 	rpn_Init(expr);
@@ -124,9 +114,9 @@ void rpn_Symbol(struct Expression *expr, char const *symName)
 		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
 						: "'%s' is not constant at assembly time", symName);
 		sym = sym_Ref(symName);
-		expr->rpnPatchSize += 5; /* 1-byte opcode + 4-byte symbol ID */
+		expr->rpnPatchSize += 5; // 1-byte opcode + 4-byte symbol ID
 
-		size_t nameLen = strlen(sym->name) + 1; /* Don't forget NUL! */
+		size_t nameLen = strlen(sym->name) + 1; // Don't forget NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name, nameLen);
@@ -155,7 +145,7 @@ void rpn_BankSymbol(struct Expression *expr, char const *symName)
 {
 	struct Symbol const *sym = sym_FindScopedSymbol(symName);
 
-	/* The @ symbol is treated differently. */
+	// The @ symbol is treated differently.
 	if (sym_IsPC(sym)) {
 		rpn_BankSelf(expr);
 		return;
@@ -169,13 +159,13 @@ void rpn_BankSymbol(struct Expression *expr, char const *symName)
 		assert(sym); // If the symbol didn't exist, it should have been created
 
 		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != (uint32_t)-1) {
-			/* Symbol's section is known and bank is fixed */
+			// Symbol's section is known and bank is fixed
 			expr->val = sym_GetSection(sym)->bank;
 		} else {
 			makeUnknown(expr, "\"%s\"'s bank is not known", symName);
-			expr->rpnPatchSize += 5; /* opcode + 4-byte sect ID */
+			expr->rpnPatchSize += 5; // opcode + 4-byte sect ID
 
-			size_t nameLen = strlen(sym->name) + 1; /* Room for NUL! */
+			size_t nameLen = strlen(sym->name) + 1; // Room for NUL!
 			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 			*ptr++ = RPN_BANK_SYM;
 			memcpy(ptr, sym->name, nameLen);
@@ -194,7 +184,7 @@ void rpn_BankSection(struct Expression *expr, char const *sectionName)
 	} else {
 		makeUnknown(expr, "Section \"%s\"'s bank is not known", sectionName);
 
-		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
+		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr->rpnPatchSize += nameLen + 1;
@@ -214,7 +204,7 @@ void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
 	} else {
 		makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
 
-		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
+		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr->rpnPatchSize += nameLen + 1;
@@ -234,7 +224,7 @@ void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 	} else {
 		makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
 
-		size_t nameLen = strlen(sectionName) + 1; /* Room for NUL! */
+		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr->rpnPatchSize += nameLen + 1;
@@ -252,7 +242,7 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 		expr->rpnPatchSize++;
 		*reserveSpace(expr, 1) = RPN_HRAM;
 	} else if (expr->val >= 0xFF00 && expr->val <= 0xFFFF) {
-		/* That range is valid, but only keep the lower byte */
+		// That range is valid, but only keep the lower byte
 		expr->val &= 0xFF;
 	} else if (expr->val < 0 || expr->val > 0xFF) {
 		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", expr->val);
@@ -264,10 +254,10 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 	*expr = *src;
 
 	if (rpn_isKnown(expr)) {
-		/* A valid RST address must be masked with 0x38 */
+		// A valid RST address must be masked with 0x38
 		if (expr->val & ~0x38)
 			error("Invalid address $%" PRIx32 " for RST\n", expr->val);
-		/* The target is in the "0x38" bits, all other bits are set */
+		// The target is in the "0x38" bits, all other bits are set
 		expr->val |= 0xC7;
 	} else {
 		expr->rpnPatchSize++;
@@ -275,9 +265,7 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-/*
- * Checks that an RPN expression's value fits within N bits (signed or unsigned)
- */
+// Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
 {
 	assert(n != 0); // That doesn't make sense
@@ -324,7 +312,7 @@ struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 
 bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
 {
-	/* Check if both expressions only refer to a single symbol */
+	// Check if both expressions only refer to a single symbol
 	struct Symbol const *sym1 = rpn_SymbolOf(src);
 
 	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
@@ -341,7 +329,7 @@ static bool isDiffConstant(struct Expression const *src1,
 	return rpn_IsDiffConstant(src1, rpn_SymbolOf(src2));
 }
 
-/**
+/*
  * Attempts to compute a constant binary AND from non-constant operands
  * This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
  * a constant that only keeps (some of) the lower N bits.
@@ -387,12 +375,12 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	expr->isSymbol = false;
 	int32_t constMaskVal;
 
-	/* First, check if the expression is known */
+	// First, check if the expression is known
 	expr->isKnown = src1->isKnown && src2->isKnown;
 	if (expr->isKnown) {
-		rpn_Init(expr); /* Init the expression to something sane */
+		rpn_Init(expr); // Init the expression to something sane
 
-		/* If both expressions are known, just compute the value */
+		// If both expressions are known, just compute the value
 		uint32_t uleft = src1->val, uright = src2->val;
 
 		switch (op) {
@@ -537,9 +525,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		expr->val = constMaskVal;
 		expr->isKnown = true;
 	} else {
-		/* If it's not known, start computing the RPN expression */
+		// If it's not known, start computing the RPN expression
 
-		/* Convert the left-hand expression if it's constant */
+		// Convert the left-hand expression if it's constant
 		if (src1->isKnown) {
 			uint32_t lval = src1->val;
 			uint8_t bytes[] = {RPN_CONST, lval, lval >> 8,
@@ -551,11 +539,11 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
 			       sizeof(bytes));
 
-			/* Use the other expression's un-const reason */
+			// Use the other expression's un-const reason
 			expr->reason = src2->reason;
 			free(src1->reason);
 		} else {
-			/* Otherwise just reuse its RPN buffer */
+			// Otherwise just reuse its RPN buffer
 			expr->rpnPatchSize = src1->rpnPatchSize;
 			expr->rpn = src1->rpn;
 			expr->rpnCapacity = src1->rpnCapacity;
@@ -564,12 +552,12 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			free(src2->reason);
 		}
 
-		/* Now, merge the right expression into the left one */
-		uint8_t *ptr = src2->rpn; /* Pointer to the right RPN */
-		uint32_t len = src2->rpnLength; /* Size of the right RPN */
+		// Now, merge the right expression into the left one
+		uint8_t *ptr = src2->rpn; // Pointer to the right RPN
+		uint32_t len = src2->rpnLength; // Size of the right RPN
 		uint32_t patchSize = src2->rpnPatchSize;
 
-		/* If the right expression is constant, merge a shim instead */
+		// If the right expression is constant, merge a shim instead
 		uint32_t rval = src2->val;
 		uint8_t bytes[] = {RPN_CONST, rval, rval >> 8, rval >> 16,
 				   rval >> 24};
@@ -578,13 +566,13 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
 		}
-		/* Copy the right RPN and append the operator */
+		// Copy the right RPN and append the operator
 		uint8_t *buf = reserveSpace(expr, len + 1);
 
 		memcpy(buf, ptr, len);
 		buf[len] = op;
 
-		free(src2->rpn); /* If there was none, this is `free(NULL)` */
+		free(src2->rpn); // If there was none, this is `free(NULL)`
 		expr->rpnPatchSize += patchSize + 1;
 	}
 }

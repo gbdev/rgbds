@@ -34,4 +34,4 @@ uint32_t macro_UseNewUniqueID(void);
 void macro_ShiftCurrentArgs(int32_t count);
 uint32_t macro_NbArgs(void);
 
-#endif
+#endif // RGBDS_MACRO_H

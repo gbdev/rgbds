@@ -1,3 +1,10 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 // For `execProg` (Windows is its special little snowflake again)
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -125,7 +132,7 @@ public:
 
 	Rgba const &pixel(uint32_t x, uint32_t y) const { return pixels[y * width + x]; }
 
-	/**
+	/*
 	 * Reads a PNG and notes all of its colors
 	 *
 	 * This code is more complicated than strictly necessary, but that's because of the API
@@ -298,7 +305,7 @@ static char *execProg(char const *name, char * const *argv) {
 		fatal("%s returned with status %d", name, info.si_status);
 	}
 
-#else /* defined(_MSC_VER) || defined(__MINGW32__) */
+#else // defined(_MSC_VER) || defined(__MINGW32__)
 
 	auto winStrerror = [](DWORD errnum) {
 		LPTSTR buf;

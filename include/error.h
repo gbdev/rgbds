@@ -26,4 +26,4 @@ _Noreturn void errx(char const NONNULL(fmt), ...) format_(printf, 1, 2);
 }
 #endif
 
-#endif /* RGBDS_ERROR_H */
+#endif // RGBDS_ERROR_H

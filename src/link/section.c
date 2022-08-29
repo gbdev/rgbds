@@ -166,7 +166,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 		// `data` pointer, or a size of 0.
 		if (other->data) {
 			if (target->data) {
-				/* Ensure we're not allocating 0 bytes */
+				// Ensure we're not allocating 0 bytes
 				target->data = realloc(target->data,
 						       sizeof(*target->data) * target->size + 1);
 				if (!target->data)
@@ -177,7 +177,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 				target->data = other->data;
 				other->data = NULL; // Prevent a double free()
 			}
-			/* Adjust patches' PC offsets */
+			// Adjust patches' PC offsets
 			for (uint32_t patchID = 0; patchID < other->nbPatches; patchID++)
 				other->patches[patchID].pcOffset += other->offset;
 		} else if (target->data) {
@@ -195,7 +195,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 
 void sect_AddSection(struct Section *section)
 {
-	/* Check if the section already exists */
+	// Check if the section already exists
 	struct Section *other = hash_GetElement(sections, section->name);
 
 	if (other) {
@@ -210,7 +210,7 @@ void sect_AddSection(struct Section *section)
 		errx("Section \"%s\" is of type %s, which cannot be unionized",
 		     section->name, sectionTypeInfo[section->type].name);
 	} else {
-		/* If not, add it */
+		// If not, add it
 		hash_AddElement(sections, section->name, section);
 	}
 }
@@ -229,7 +229,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 {
 	(void)ptr;
 
-	/* Sanity check the section's type */
+	// Sanity check the section's type
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {
 		error(NULL, 0, "Section \"%s\" has an invalid type", section->name);
@@ -254,14 +254,12 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		error(NULL, 0, "%s: VRAM bank 1 can't be used with option -d",
 		     section->name);
 
-	/*
-	 * Check if alignment is reasonable, this is important to avoid UB
-	 * An alignment of zero is equivalent to no alignment, basically
-	 */
+	// Check if alignment is reasonable, this is important to avoid UB
+	// An alignment of zero is equivalent to no alignment, basically
 	if (section->isAlignFixed && section->alignMask == 0)
 		section->isAlignFixed = false;
 
-	/* Too large an alignment may not be satisfiable */
+	// Too large an alignment may not be satisfiable
 	if (section->isAlignFixed && (section->alignMask & sectionTypeInfo[section->type].startAddr))
 		error(NULL, 0, "%s: %s sections cannot be aligned to $%04x bytes",
 		     section->name, sectionTypeInfo[section->type].name, section->alignMask + 1);
@@ -274,12 +272,12 @@ static void doSanityChecks(struct Section *section, void *ptr)
 			: "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32 " and %" PRIu32,
 		     section->name, section->bank, minbank, maxbank);
 
-	/* Check if section has a chance to be placed */
+	// Check if section has a chance to be placed
 	if (section->size > sectionTypeInfo[section->type].size)
 		error(NULL, 0, "Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
 		     section->name, section->size, sectionTypeInfo[section->type].size);
 
-	/* Translate loose constraints to strong ones when they're equivalent */
+	// Translate loose constraints to strong ones when they're equivalent
 
 	if (minbank == maxbank) {
 		section->bank = minbank;
@@ -287,7 +285,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 	}
 
 	if (section->isAddressFixed) {
-		/* It doesn't make sense to have both org and alignment set */
+		// It doesn't make sense to have both org and alignment set
 		if (section->isAlignFixed) {
 			if ((section->org & section->alignMask) != section->alignOfs)
 				error(NULL, 0, "Section \"%s\"'s fixed address doesn't match its alignment",
@@ -295,7 +293,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 			section->isAlignFixed = false;
 		}
 
-		/* Ensure the target address is valid */
+		// Ensure the target address is valid
 		if (section->org < sectionTypeInfo[section->type].startAddr
 		 || section->org > endaddr(section->type))
 			error(NULL, 0, "Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"

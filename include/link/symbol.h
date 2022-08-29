@@ -6,11 +6,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-/* Declarations manipulating symbols */
+// Declarations manipulating symbols
 #ifndef RGBDS_LINK_SYMBOL_H
 #define RGBDS_LINK_SYMBOL_H
 
-/* GUIDELINE: external code MUST NOT BE AWARE of the data structure used!! */
+// GUIDELINE: external code MUST NOT BE AWARE of the data structure used!!
 
 #include <stdint.h>
 
@@ -19,7 +19,7 @@
 struct FileStackNode;
 
 struct Symbol {
-	/* Info contained in the object files */
+	// Info contained in the object files
 	char *name;
 	enum ExportLevel type;
 	char const *objFileName;
@@ -31,7 +31,7 @@ struct Symbol {
 		int32_t offset;
 		int32_t value;
 	};
-	/* Extra info computed during linking */
+	// Extra info computed during linking
 	struct Section *section;
 };
 
@@ -47,16 +47,16 @@ void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg);
 
 void sym_AddSymbol(struct Symbol *symbol);
 
-/**
+/*
  * Finds a symbol in all the defined symbols.
  * @param name The name of the symbol to look for
  * @return A pointer to the symbol, or NULL if not found.
  */
 struct Symbol *sym_GetSymbol(char const *name);
 
-/**
+/*
  * `free`s all symbol memory that was allocated.
  */
 void sym_CleanupSymbols(void);
 
-#endif /* RGBDS_LINK_SYMBOL_H */
+#endif // RGBDS_LINK_SYMBOL_H

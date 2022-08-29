@@ -23,8 +23,8 @@ struct Section {
 	char *name;
 	enum SectionType type;
 	enum SectionModifier modifier;
-	struct FileStackNode *src; /* Where the section was defined */
-	uint32_t fileLine; /* Line where the section was defined */
+	struct FileStackNode *src; // Where the section was defined
+	uint32_t fileLine; // Line where the section was defined
 	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
@@ -79,4 +79,4 @@ void sect_PopSection(void);
 
 bool sect_IsSizeKnown(struct Section const NONNULL(name));
 
-#endif
+#endif // RGBDS_SECTION_H

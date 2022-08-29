@@ -93,4 +93,4 @@
 // (Having two instances of `arr` is OK because the contents of `sizeof` are not evaluated.)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof *(arr))
 
-#endif /* HELPERS_H */
+#endif // HELPERS_H

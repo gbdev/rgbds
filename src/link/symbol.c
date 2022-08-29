@@ -40,7 +40,7 @@ void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg)
 
 void sym_AddSymbol(struct Symbol *symbol)
 {
-	/* Check if the symbol already exists */
+	// Check if the symbol already exists
 	struct Symbol *other = hash_GetElement(symbols, symbol->name);
 
 	if (other) {
@@ -53,7 +53,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 		exit(1);
 	}
 
-	/* If not, add it */
+	// If not, add it
 	hash_AddElement(symbols, symbol->name, symbol);
 }
 

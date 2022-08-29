@@ -60,4 +60,4 @@ void fmt_FinishCharacters(struct FormatSpec *fmt);
 void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value);
 void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value);
 
-#endif /* RGBDS_FORMAT_SPEC_H */
+#endif // RGBDS_FORMAT_SPEC_H

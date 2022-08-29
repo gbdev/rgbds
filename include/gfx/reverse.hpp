@@ -11,4 +11,4 @@
 
 void reverse();
 
-#endif /* RGBDS_GFX_REVERSE_HPP */
+#endif // RGBDS_GFX_REVERSE_HPP

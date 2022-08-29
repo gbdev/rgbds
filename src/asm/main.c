@@ -39,8 +39,8 @@
 #ifdef __clang__
 #if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
 #define __SANITIZE_ADDRESS__
-#endif /* __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__) */
-#endif /* __clang__ */
+#endif // __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
+#endif // __clang__
 
 #ifdef __SANITIZE_ADDRESS__
 // There are known, non-trivial to fix leaks. We would still like to have `make develop'
@@ -63,9 +63,9 @@ bool warnOnHaltNop;
 bool optimizeLoads;
 bool warnOnLdOpt;
 bool verbose;
-bool warnings; /* True to enable warnings, false to disable them. */
+bool warnings; // True to enable warnings, false to disable them.
 
-/* Escapes Make-special chars from a string */
+// Escapes Make-special chars from a string
 static char *make_escape(char const *str)
 {
 	char * const escaped_str = malloc(strlen(str) * 2 + 1);
@@ -75,7 +75,7 @@ static char *make_escape(char const *str)
 		err("%s: Failed to allocate memory", __func__);
 
 	while (*str) {
-		/* All dollars needs to be doubled */
+		// All dollars needs to be doubled
 		if (*str == '$')
 			*dest++ = '$';
 		*dest++ = *str++;
@@ -85,22 +85,20 @@ static char *make_escape(char const *str)
 	return escaped_str;
 }
 
-/* Short options */
+// Short options
 static const char *optstring = "b:D:Eg:Hhi:LlM:o:p:r:VvW:w";
 
-/* Variables for the long-only options */
-static int depType; /* Variants of `-M` */
+// Variables for the long-only options
+static int depType; // Variants of `-M`
 
-/*
- * Equivalent long options
- * Please keep in the same order as short opts
- *
- * Also, make sure long opts don't create ambiguity:
- * A long opt's name should start with the same letter as its short opt,
- * except if it doesn't create any ambiguity (`verbose` versus `version`).
- * This is because long opt matching, even to a single char, is prioritized
- * over short opt matching
- */
+// Equivalent long options
+// Please keep in the same order as short opts
+//
+// Also, make sure long opts don't create ambiguity:
+// A long opt's name should start with the same letter as its short opt,
+// except if it doesn't create any ambiguity (`verbose` versus `version`).
+// This is because long opt matching, even to a single char, is prioritized
+// over short opt matching
 static struct option const longopts[] = {
 	{ "binary-digits",    required_argument, NULL,     'b' },
 	{ "define",           required_argument, NULL,     'D' },
@@ -152,10 +150,8 @@ int main(int argc, char *argv[])
 	time_t now = time(NULL);
 	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
 
-	/*
-	 * Support SOURCE_DATE_EPOCH for reproducible builds
-	 * https://reproducible-builds.org/docs/source-date-epoch/
-	 */
+	// Support SOURCE_DATE_EPOCH for reproducible builds
+	// https://reproducible-builds.org/docs/source-date-epoch/
 	if (sourceDateEpoch)
 		now = (time_t)strtoul(sourceDateEpoch, NULL, 0);
 
@@ -289,7 +285,7 @@ int main(int argc, char *argv[])
 			warnings = false;
 			break;
 
-		/* Long-only options */
+		// Long-only options
 		case 0:
 			switch (depType) {
 			case 'G':
@@ -321,10 +317,10 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-		/* Unrecognized options */
+		// Unrecognized options
 		default:
 			print_usage();
-			/* NOTREACHED */
+			// NOTREACHED
 		}
 	}
 
@@ -376,7 +372,7 @@ int main(int argc, char *argv[])
 	if (failedOnMissingInclude)
 		return 0;
 
-	/* If no path specified, don't write file */
+	// If no path specified, don't write file
 	if (objectName != NULL)
 		out_WriteObject();
 	return 0;

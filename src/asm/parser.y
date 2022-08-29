@@ -36,7 +36,7 @@
 #include "linkdefs.h"
 #include "platform.h" // strncasecmp, strdup
 
-static struct CaptureBody captureBody; /* Captures a REPT/FOR or MACRO */
+static struct CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
 static void upperstring(char *dest, char const *src)
 {
@@ -104,14 +104,14 @@ static size_t strlenUTF8(char const *s)
 		case 1:
 			errorInvalidUTF8Byte(byte, "STRLEN");
 			state = 0;
-			/* fallthrough */
+			// fallthrough
 		case 0:
 			len++;
 			break;
 		}
 	}
 
-	/* Check for partial code point. */
+	// Check for partial code point.
 	if (state != 0)
 		error("STRLEN: Incomplete UTF-8 character\n");
 
@@ -127,13 +127,13 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 	uint32_t curLen = 0;
 	uint32_t curPos = 1;
 
-	/* Advance to starting position in source string. */
+	// Advance to starting position in source string.
 	while (src[srcIndex] && curPos < pos) {
 		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
 			state = 0;
-			/* fallthrough */
+			// fallthrough
 		case 0:
 			curPos++;
 			break;
@@ -141,21 +141,19 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 		srcIndex++;
 	}
 
-	/*
-	 * A position 1 past the end of the string is allowed, but will trigger the
-	 * "Length too big" warning below if the length is nonzero.
-	 */
+	// A position 1 past the end of the string is allowed, but will trigger the
+	// "Length too big" warning below if the length is nonzero.
 	if (!src[srcIndex] && pos > curPos)
 		warning(WARNING_BUILTIN_ARG,
 			"STRSUB: Position %" PRIu32 " is past the end of the string\n", pos);
 
-	/* Copy from source to destination. */
+	// Copy from source to destination.
 	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
 		switch (decode(&state, &codep, src[srcIndex])) {
 		case 1:
 			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
 			state = 0;
-			/* fallthrough */
+			// fallthrough
 		case 0:
 			curLen++;
 			break;
@@ -166,7 +164,7 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 	if (curLen < len)
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
 
-	/* Check for partial code point. */
+	// Check for partial code point.
 	if (state != 0)
 		error("STRSUB: Incomplete UTF-8 character\n");
 
@@ -187,7 +185,7 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos)
 {
 	size_t charLen = 1;
 
-	/* Advance to starting position in source string. */
+	// Advance to starting position in source string.
 	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
 		charLen = charmap_ConvertNext(&src, NULL);
 
@@ -197,7 +195,7 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos)
 		warning(WARNING_BUILTIN_ARG,
 			"CHARSUB: Position %" PRIu32 " is past the end of the string\n", pos);
 
-	/* Copy from source to destination. */
+	// Copy from source to destination.
 	memcpy(dest, start, src - start);
 
 	dest[src - start] = '\0';
@@ -205,10 +203,8 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos)
 
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName)
 {
-	/*
-	 * STRSUB and CHARSUB adjust negative `pos` arguments the same way,
-	 * such that position -1 is the last character of a string.
-	 */
+	// STRSUB and CHARSUB adjust negative `pos` arguments the same way,
+	// such that position -1 is the last character of a string.
 	if (pos < 0)
 		pos += len + 1;
 	if (pos < 1) {
@@ -545,7 +541,7 @@ enum {
 %left	T_OP_SHL T_OP_SHR T_OP_USHR
 %left	T_OP_MUL T_OP_DIV T_OP_MOD
 
-%precedence	NEG /* negation -- unary minus */
+%precedence	NEG // negation -- unary minus
 
 %token	T_OP_EXP "**"
 %left	T_OP_EXP
@@ -588,7 +584,6 @@ enum {
 %type	<symName> scoped_id
 %type	<symName> scoped_anon_id
 %token	T_POP_EQU "EQU"
-%token	T_POP_SET "SET"
 %token	T_POP_EQUAL "="
 %token	T_POP_EQUS "EQUS"
 
@@ -642,7 +637,7 @@ enum {
 %type	<forArgs> for_args
 
 %token	T_Z80_ADC "adc" T_Z80_ADD "add" T_Z80_AND "and"
-%token	T_Z80_BIT "bit" // There is no T_Z80_SET, only T_POP_SET
+%token	T_Z80_BIT "bit"
 %token	T_Z80_CALL "call" T_Z80_CCF "ccf" T_Z80_CP "cp" T_Z80_CPL "cpl"
 %token	T_Z80_DAA "daa" T_Z80_DEC "dec" T_Z80_DI "di"
 %token	T_Z80_EI "ei"
@@ -659,7 +654,7 @@ enum {
 %token	T_Z80_RES "res" T_Z80_RET "ret" T_Z80_RETI "reti" T_Z80_RST "rst"
 %token	T_Z80_RL "rl" T_Z80_RLA "rla" T_Z80_RLC "rlc" T_Z80_RLCA "rlca"
 %token	T_Z80_RR "rr" T_Z80_RRA "rra" T_Z80_RRC "rrc" T_Z80_RRCA "rrca"
-%token	T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_STOP "stop"
+%token	T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_SET "set" T_Z80_STOP "stop"
 %token	T_Z80_SLA "sla" T_Z80_SRA "sra" T_Z80_SRL "srl" T_Z80_SUB "sub"
 %token	T_Z80_SWAP "swap"
 %token	T_Z80_XOR "xor"
@@ -707,8 +702,8 @@ plain_directive	: label
 ;
 
 line		: plain_directive endofline
-		| line_directive /* Directives that manage newlines themselves */
-		/* Continue parsing the next line on a syntax error */
+		| line_directive // Directives that manage newlines themselves
+		// Continue parsing the next line on a syntax error
 		| error {
 			lexer_SetMode(LEXER_NORMAL);
 			lexer_ToggleStringExpansion(true);
@@ -716,7 +711,7 @@ line		: plain_directive endofline
 			fstk_StopRept();
 			yyerrok;
 		}
-		/* Hint about unindented macros parsed as labels */
+		// Hint about unindented macros parsed as labels
 		| T_LABEL error {
 			lexer_SetMode(LEXER_NORMAL);
 			lexer_ToggleStringExpansion(true);
@@ -731,19 +726,17 @@ line		: plain_directive endofline
 		}
 ;
 
-/*
- * For "logistical" reasons, these directives must manage newlines themselves.
- * This is because we need to switch the lexer's mode *after* the newline has been read,
- * and to avoid causing some grammar conflicts (token reducing is finicky).
- * This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
- */
+// For "logistical" reasons, these directives must manage newlines themselves.
+// This is because we need to switch the lexer's mode *after* the newline has been read,
+// and to avoid causing some grammar conflicts (token reducing is finicky).
+// This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
 line_directive	: macrodef
 		| rept
 		| for
 		| break
 		| include
 		| if
-		/* It's important that all of these require being at line start for `skipIfBlock` */
+		// It's important that all of these require being at line start for `skipIfBlock`
 		| elif
 		| else
 ;
@@ -854,7 +847,7 @@ macroargs	: %empty {
 		}
 ;
 
-/* These commands start with a T_LABEL. */
+// These commands start with a T_LABEL.
 assignment_directive	: equ
 		| assignment
 		| rb
@@ -1300,7 +1293,7 @@ constlist_8bit_entry : reloc_8bit_no_str {
 			sect_RelByte(&$1, 0);
 		}
 		| string {
-			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
+			uint8_t *output = malloc(strlen($1)); // Cannot be larger than that
 			size_t length = charmap_Convert($1, output);
 
 			sect_AbsByteGroup(output, length);
@@ -1316,7 +1309,7 @@ constlist_16bit_entry : reloc_16bit_no_str {
 			sect_RelWord(&$1, 0);
 		}
 		| string {
-			uint8_t *output = malloc(strlen($1)); /* Cannot be larger than that */
+			uint8_t *output = malloc(strlen($1)); // Cannot be larger than that
 			size_t length = charmap_Convert($1, output);
 
 			sect_AbsWordGroup(output, length);
@@ -1681,7 +1674,7 @@ sectattrs	: %empty {
 			$$.alignOfs = $7;
 		}
 		| sectattrs T_COMMA T_OP_BANK T_LBRACK uconst T_RBRACK {
-			/* We cannot check the validity of this now */
+			// We cannot check the validity of this now
 			$$.bank = $5;
 		}
 ;
@@ -1998,10 +1991,8 @@ z80_ld_ss	: T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
 			sect_AbsByte(0x01 | (REG_DE << 4));
 			sect_RelWord(&$4, 1);
 		}
-		/*
-		 * HL is taken care of in z80_ld_hl
-		 * SP is taken care of in z80_ld_sp
-		 */
+		// HL is taken care of in z80_ld_hl
+		// SP is taken care of in z80_ld_sp
 ;
 
 z80_nop		: T_Z80_NOP { sect_AbsByte(0x00); }
@@ -2089,7 +2080,7 @@ z80_sbc		: T_Z80_SBC op_a_n {
 z80_scf		: T_Z80_SCF { sect_AbsByte(0x37); }
 ;
 
-z80_set		: T_POP_SET const_3bit T_COMMA reg_r {
+z80_set		: T_Z80_SET const_3bit T_COMMA reg_r {
 			sect_AbsByte(0xCB);
 			sect_AbsByte(0xC0 | ($2 << 3) | $4);
 		}

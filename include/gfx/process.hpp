@@ -11,4 +11,4 @@
 
 void process();
 
-#endif /* RGBDS_GFX_CONVERT_HPP */
+#endif // RGBDS_GFX_CONVERT_HPP

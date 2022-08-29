@@ -153,7 +153,7 @@ static void printUsage(void) {
 	exit(1);
 }
 
-/**
+/*
  * Parses a number at the beginning of a string, moving the pointer to skip the parsed characters
  * Returns the provided errVal on error
  */
@@ -179,7 +179,7 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 		}
 	}
 
-	/**
+	/*
 	 * Turns a digit into its numeric value in the current base, if it has one.
 	 * Maximum is inclusive. The string_view is modified to "consume" all digits.
 	 * Returns 255 on parse failure (including wrong char for base), in which case
@@ -248,7 +248,7 @@ static void registerInput(char const *arg) {
 	}
 }
 
-/**
+/*
  * Turn an "at-file"'s contents into an argv that `getopt` can handle
  * @param argPool Argument characters will be appended to this vector, for storage purposes.
  */
@@ -317,7 +317,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 		} while (c != '\n' && c != EOF); // End if we reached EOL
 	}
 }
-/**
+/*
  * Parses an arg vector, modifying `options` as options are read.
  * The three booleans are for the "auto path" flags, since their processing must be deferred to the
  * end of option parsing.
@@ -785,7 +785,7 @@ void Palette::addColor(uint16_t color) {
 	}
 }
 
-/**
+/*
  * Returns the ID of the color in the palette, or `size()` if the color is not in
  */
 uint8_t Palette::indexOf(uint16_t color) const {

@@ -21,7 +21,7 @@ class ProtoPalette;
 
 namespace packing {
 
-/**
+/*
  * Returns which palette each proto-palette maps to, and how many palettes are necessary
  */
 std::tuple<DefaultInitVec<size_t>, size_t>
@@ -29,4 +29,4 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 }
 
-#endif /* RGBDS_GFX_PAL_PACKING_HPP */
+#endif // RGBDS_GFX_PAL_PACKING_HPP

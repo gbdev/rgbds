@@ -34,14 +34,12 @@ struct FreeSpace {
 	struct FreeSpace *next, *prev;
 };
 
-/* Table of free space for each bank */
+// Table of free space for each bank
 struct FreeSpace *memory[SECTTYPE_INVALID];
 
 uint64_t nbSectionsToAssign;
 
-/**
- * Init the free space-modelling structs
- */
+// Init the free space-modelling structs
 static void initFreeSpace(void)
 {
 	for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
@@ -63,7 +61,7 @@ static void initFreeSpace(void)
 	}
 }
 
-/**
+/*
  * Assigns a section to a given memory location
  * @param section The section to assign
  * @param location The location to assign the section to
@@ -85,7 +83,7 @@ static void assignSection(struct Section *section, struct MemoryLocation const *
 	out_AddSection(section);
 }
 
-/**
+/*
  * Checks whether a given location is suitable for placing a given section
  * This checks not only that the location has enough room for the section, but
  * also that the constraints (alignment...) are respected.
@@ -111,7 +109,7 @@ static bool isLocationSuitable(struct Section const *section,
 					<= freeSpace->address + freeSpace->size;
 }
 
-/**
+/*
  * Finds a suitable location to place a section at.
  * @param section The section to be placed
  * @param location A pointer to a location struct that will be filled
@@ -146,61 +144,57 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 	struct FreeSpace *space;
 
 	for (;;) {
-		/* Switch to the beginning of the next bank */
+		// Switch to the beginning of the next bank
 #define BANK_INDEX (location->bank - sectionTypeInfo[section->type].firstBank)
 		space = memory[section->type][BANK_INDEX].next;
 		if (space)
 			location->address = space->address;
 
-		/* Process locations in that bank */
+		// Process locations in that bank
 		while (space) {
-			/* If that location is OK, return it */
+			// If that location is OK, return it
 			if (isLocationSuitable(section, space, location))
 				return space;
 
-			/* Go to the next *possible* location */
+			// Go to the next *possible* location
 			if (section->isAddressFixed) {
-				/*
-				 * If the address is fixed, there can be only
-				 * one candidate block per bank; if we already
-				 * reached it, give up.
-				 */
+				// If the address is fixed, there can be only
+				// one candidate block per bank; if we already
+				// reached it, give up.
 				if (location->address < section->org)
 					location->address = section->org;
 				else
-					/* Try again in next bank */
+					// Try again in next bank
 					space = NULL;
 			} else if (section->isAlignFixed) {
-				/* Move to next aligned location */
-				/* Move back to alignment boundary */
+				// Move to next aligned location
+				// Move back to alignment boundary
 				location->address -= section->alignOfs;
-				/* Ensure we're there (e.g. on first check) */
+				// Ensure we're there (e.g. on first check)
 				location->address &= ~section->alignMask;
-				/* Go to next align boundary and add offset */
+				// Go to next align boundary and add offset
 				location->address += section->alignMask + 1
 							+ section->alignOfs;
 			} else {
-				/* Any location is fine, so, next free block */
+				// Any location is fine, so, next free block
 				space = space->next;
 				if (space)
 					location->address = space->address;
 			}
 
-			/*
-			 * If that location is past the current block's end,
-			 * go forwards until that is no longer the case.
-			 */
+			// If that location is past the current block's end,
+			// go forwards until that is no longer the case.
 			while (space && location->address >=
 						space->address + space->size)
 				space = space->next;
 
-			/* Try again with the new location/free space combo */
+			// Try again with the new location/free space combo
 		}
 
 		if (section->isBankFixed)
 			return NULL;
 
-		/* Try again in the next bank */
+		// Try again in the next bank
 		location->bank++;
 		if (location->bank > sectionTypeInfo[section->type].lastBank)
 			return NULL;
@@ -208,7 +202,7 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 	}
 }
 
-/**
+/*
  * Places a section in a suitable location, or error out if it fails to.
  * @warning Due to the implemented algorithm, this should be called with
  *          sections of decreasing size.
@@ -218,12 +212,10 @@ static void placeSection(struct Section *section)
 {
 	struct MemoryLocation location;
 
-	/* Specially handle 0-byte SECTIONs, as they can't overlap anything */
+	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section->size == 0) {
-		/*
-		 * Unless the SECTION's address was fixed, the starting address
-		 * is fine for any alignment, as checked in sect_DoSanityChecks.
-		 */
+		// Unless the SECTION's address was fixed, the starting address
+		// is fine for any alignment, as checked in sect_DoSanityChecks.
 		location.address = section->isAddressFixed
 						? section->org
 						: sectionTypeInfo[section->type].startAddr;
@@ -234,60 +226,56 @@ static void placeSection(struct Section *section)
 		return;
 	}
 
-	/*
-	 * Place section using first-fit decreasing algorithm
-	 * https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	 */
+	// Place section using first-fit decreasing algorithm
+	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
 	struct FreeSpace *freeSpace = getPlacement(section, &location);
 
 	if (freeSpace) {
 		assignSection(section, &location);
 
-		/* Split the free space */
+		// Split the free space
 		bool noLeftSpace  = freeSpace->address == section->org;
 		bool noRightSpace = freeSpace->address + freeSpace->size
 					== section->org + section->size;
 		if (noLeftSpace && noRightSpace) {
-			/* The free space is entirely deleted */
+			// The free space is entirely deleted
 			freeSpace->prev->next = freeSpace->next;
 			if (freeSpace->next)
 				freeSpace->next->prev = freeSpace->prev;
-			/*
-			 * If the space is the last one on the list, set its
-			 * size to 0 so it doesn't get picked, but don't free()
-			 * it as it will be freed when cleaning up
-			 */
+			// If the space is the last one on the list, set its
+			// size to 0 so it doesn't get picked, but don't free()
+			// it as it will be freed when cleaning up
 			free(freeSpace);
 		} else if (!noLeftSpace && !noRightSpace) {
-			/* The free space is split in two */
+			// The free space is split in two
 			struct FreeSpace *newSpace = malloc(sizeof(*newSpace));
 
 			if (!newSpace)
 				err("Failed to split new free space");
-			/* Append the new space after the chosen one */
+			// Append the new space after the chosen one
 			newSpace->prev = freeSpace;
 			newSpace->next = freeSpace->next;
 			if (freeSpace->next)
 				freeSpace->next->prev = newSpace;
 			freeSpace->next = newSpace;
-			/* Set its parameters */
+			// Set its parameters
 			newSpace->address = section->org + section->size;
 			newSpace->size = freeSpace->address + freeSpace->size -
 				newSpace->address;
-			/* Set the original space's new parameters */
+			// Set the original space's new parameters
 			freeSpace->size = section->org - freeSpace->address;
-			/* address is unmodified */
+			// address is unmodified
 		} else {
-			/* The amount of free spaces doesn't change: resize! */
+			// The amount of free spaces doesn't change: resize!
 			freeSpace->size -= section->size;
 			if (noLeftSpace)
-				/* The free space is moved *and* resized */
+				// The free space is moved *and* resized
 				freeSpace->address += section->size;
 		}
 		return;
 	}
 
-	/* Please adjust depending on longest message below */
+	// Please adjust depending on longest message below
 	char where[64];
 
 	if (section->isBankFixed && nbbanks(section->type) != 1) {
@@ -312,16 +300,16 @@ static void placeSection(struct Section *section)
 			strcpy(where, "anywhere");
 	}
 
-	/* If a section failed to go to several places, nothing we can report */
+	// If a section failed to go to several places, nothing we can report
 	if (!section->isBankFixed || !section->isAddressFixed)
 		errx("Unable to place \"%s\" (%s section) %s",
 		     section->name, sectionTypeInfo[section->type].name, where);
-	/* If the section just can't fit the bank, report that */
+	// If the section just can't fit the bank, report that
 	else if (section->org + section->size > endaddr(section->type) + 1)
 		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
 		     section->name, sectionTypeInfo[section->type].name, where,
 		     section->org + section->size, endaddr(section->type) + 1);
-	/* Otherwise there is overlap with another section */
+	// Otherwise there is overlap with another section
 	else
 		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
 		     section->name, sectionTypeInfo[section->type].name, where,
@@ -339,7 +327,7 @@ struct UnassignedSection {
 static struct UnassignedSection *unassignedSections[1 << 3] = {0};
 static struct UnassignedSection *sections;
 
-/**
+/*
  * Categorize a section depending on how constrained it is
  * This is so the most-constrained sections are placed first
  * @param section The section to categorize
@@ -354,13 +342,13 @@ static void categorizeSection(struct Section *section, void *arg)
 		constraints |= BANK_CONSTRAINED;
 	if (section->isAddressFixed)
 		constraints |= ORG_CONSTRAINED;
-	/* Can't have both! */
+	// Can't have both!
 	else if (section->isAlignFixed)
 		constraints |= ALIGN_CONSTRAINED;
 
 	struct UnassignedSection **ptr = &unassignedSections[constraints];
 
-	/* Insert section while keeping the list sorted by decreasing size */
+	// Insert section while keeping the list sorted by decreasing size
 	while (*ptr && (*ptr)->section->size > section->size)
 		ptr = &(*ptr)->next;
 
@@ -375,9 +363,9 @@ void assign_AssignSections(void)
 {
 	verbosePrint("Beginning assignment...\n");
 
-	/** Initialize assignment **/
+	// Initialize assignment
 
-	/* Generate linked lists of sections to assign */
+	// Generate linked lists of sections to assign
 	sections = malloc(sizeof(*sections) * nbSectionsToAssign + 1);
 	if (!sections)
 		err("Failed to allocate memory for section assignment");
@@ -387,9 +375,9 @@ void assign_AssignSections(void)
 	nbSectionsToAssign = 0;
 	sect_ForEach(categorizeSection, NULL);
 
-	/** Place sections, starting with the most constrained **/
+	// Place sections, starting with the most constrained
 
-	/* Specially process fully-constrained sections because of overlaying */
+	// Specially process fully-constrained sections because of overlaying
 	struct UnassignedSection *sectionPtr =
 		unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED];
 
@@ -399,11 +387,11 @@ void assign_AssignSections(void)
 		sectionPtr = sectionPtr->next;
 	}
 
-	/* If all sections were fully constrained, we have nothing left to do */
+	// If all sections were fully constrained, we have nothing left to do
 	if (!nbSectionsToAssign)
 		return;
 
-	/* Overlaying requires only fully-constrained sections */
+	// Overlaying requires only fully-constrained sections
 	verbosePrint("Assigning other sections...\n");
 	if (overlayFileName) {
 		fprintf(stderr, "FATAL: All sections must be fixed when using an overlay file");
@@ -427,7 +415,7 @@ max_out:
 		exit(1);
 	}
 
-	/* Assign all remaining sections by decreasing constraint order */
+	// Assign all remaining sections by decreasing constraint order
 	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
 	     constraints >= 0; constraints--) {
 		sectionPtr = unassignedSections[constraints];

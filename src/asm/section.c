@@ -1,3 +1,10 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2022, RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #include <assert.h>
 #include <errno.h>
@@ -30,7 +37,7 @@ struct UnionStackEntry {
 struct SectionStackEntry {
 	struct Section *section;
 	struct Section *loadSection;
-	char const *scope; /* Section's symbol scope */
+	char const *scope; // Section's symbol scope
 	uint32_t offset;
 	int32_t loadOffset;
 	struct UnionStackEntry *unionStack;
@@ -38,14 +45,12 @@ struct SectionStackEntry {
 };
 
 struct SectionStackEntry *sectionStack;
-uint32_t curOffset; /* Offset into the current section (see sect_GetSymbolOffset) */
+uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
-int32_t loadOffset; /* Offset into the LOAD section's parent (see sect_GetOutputOffset) */
+int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
-/*
- * A quick check to see if we have an initialized section
- */
+// A quick check to see if we have an initialized section
 attr_(warn_unused_result) static bool checksection(void)
 {
 	if (currentSection)
@@ -55,10 +60,8 @@ attr_(warn_unused_result) static bool checksection(void)
 	return false;
 }
 
-/*
- * A quick check to see if we have an initialized section that can contain
- * this much initialized data
- */
+// A quick check to see if we have an initialized section that can contain
+// this much initialized data
 attr_(warn_unused_result) static bool checkcodesection(void)
 {
 	if (!checksection())
@@ -85,17 +88,13 @@ attr_(warn_unused_result) static bool checkSectionSize(struct Section const *sec
 	return false;
 }
 
-/*
- * Check if the section has grown too much.
- */
+// Check if the section has grown too much.
 attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 {
-	/*
-	 * This check is here to trap broken code that generates sections that are too big and to
-	 * prevent the assembler from generating huge object files or trying to allocate too much
-	 * memory.
-	 * A check at the linking stage is still necessary.
-	 */
+	// This check is here to trap broken code that generates sections that are too big and to
+	// prevent the assembler from generating huge object files or trying to allocate too much
+	// memory.
+	// A check at the linking stage is still necessary.
 
 	// If the section has already overflowed, skip the check to avoid erroring out ad nauseam
 	if (currentSection->size != UINT32_MAX
@@ -133,15 +132,13 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
-	/*
-	 * Unionized sections only need "compatible" constraints, and they end up with the strictest
-	 * combination of both.
-	 */
+	// Unionized sections only need "compatible" constraints, and they end up with the strictest
+	// combination of both.
 	if (sect_HasData(type))
 		fail("Cannot declare ROM sections as UNION\n");
 
 	if (org != (uint32_t)-1) {
-		/* If both are fixed, they must be the same */
+		// If both are fixed, they must be the same
 		if (sect->org != (uint32_t)-1 && sect->org != org)
 			fail("Section already declared as fixed at different address $%04"
 			     PRIx32 "\n", sect->org);
@@ -149,16 +146,16 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 			fail("Section already declared as aligned to %u bytes (offset %"
 				   PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
 		else
-			/* Otherwise, just override */
+			// Otherwise, just override
 			sect->org = org;
 
 	} else if (alignment != 0) {
-		/* Make sure any fixed address given is compatible */
+		// Make sure any fixed address given is compatible
 		if (sect->org != (uint32_t)-1) {
 			if ((sect->org - alignOffset) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
 				     PRIx32 "\n", sect->org);
-		/* Check if alignment offsets are compatible */
+		// Check if alignment offsets are compatible
 		} else if ((alignOffset & mask(sect->align))
 			   != (sect->alignOfs & mask(alignment))) {
 			fail("Section already declared with incompatible %u"
@@ -181,15 +178,13 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
-	/*
-	 * Fragments only need "compatible" constraints, and they end up with the strictest
-	 * combination of both.
-	 * The merging is however performed at the *end* of the original section!
-	 */
+	// Fragments only need "compatible" constraints, and they end up with the strictest
+	// combination of both.
+	// The merging is however performed at the *end* of the original section!
 	if (org != (uint32_t)-1) {
 		uint16_t curOrg = org - sect->size;
 
-		/* If both are fixed, they must be the same */
+		// If both are fixed, they must be the same
 		if (sect->org != (uint32_t)-1 && sect->org != curOrg)
 			fail("Section already declared as fixed at incompatible address $%04"
 			     PRIx32 " (cur addr = %04" PRIx32 ")\n",
@@ -198,7 +193,7 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 			fail("Section already declared as aligned to %u bytes (offset %"
 			     PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
 		else
-			/* Otherwise, just override */
+			// Otherwise, just override
 			sect->org = curOrg;
 
 	} else if (alignment != 0) {
@@ -207,12 +202,12 @@ static unsigned int mergeFragments(struct Section *sect, enum SectionType type, 
 		if (curOfs < 0)
 			curOfs += 1U << alignment;
 
-		/* Make sure any fixed address given is compatible */
+		// Make sure any fixed address given is compatible
 		if (sect->org != (uint32_t)-1) {
 			if ((sect->org - curOfs) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
 				     PRIx32 "\n", sect->org);
-		/* Check if alignment offsets are compatible */
+		// Check if alignment offsets are compatible
 		} else if ((curOfs & mask(sect->align)) != (sect->alignOfs & mask(alignment))) {
 			fail("Section already declared with incompatible %u"
 			     "-byte alignment (offset %" PRIu16 ")\n",
@@ -246,10 +241,10 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 
 			// Common checks
 
-			/* If the section's bank is unspecified, override it */
+			// If the section's bank is unspecified, override it
 			if (sect->bank == (uint32_t)-1)
 				sect->bank = bank;
-			/* If both specify a bank, it must be the same one */
+			// If both specify a bank, it must be the same one
 			else if (bank != (uint32_t)-1 && sect->bank != bank)
 				fail("Section already declared with different bank %" PRIu32 "\n",
 				     sect->bank);
@@ -270,9 +265,7 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 
 #undef fail
 
-/*
- * Create a new section, not yet in the list.
- */
+// Create a new section, not yet in the list.
 static struct Section *createSection(char const *name, enum SectionType type,
 				     uint32_t org, uint32_t bank, uint8_t alignment,
 				     uint16_t alignOffset, enum SectionModifier mod)
@@ -298,7 +291,7 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	sect->next = NULL;
 	sect->patches = NULL;
 
-	/* It is only needed to allocate memory for ROM sections. */
+	// It is only needed to allocate memory for ROM sections.
 	if (sect_HasData(type)) {
 		sect->data = malloc(sectionTypeInfo[type].size);
 		if (sect->data == NULL)
@@ -310,9 +303,7 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	return sect;
 }
 
-/*
- * Find a section by name and type. If it doesn't exist, create it.
- */
+// Find a section by name and type. If it doesn't exist, create it.
 static struct Section *getSection(char const *name, enum SectionType type, uint32_t org,
 				  struct SectionSpec const *attrs, enum SectionModifier mod)
 {
@@ -353,18 +344,18 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 			error("Alignment must be between 0 and 16, not %u\n", alignment);
 			alignment = 16;
 		}
-		/* It doesn't make sense to have both alignment and org set */
+		// It doesn't make sense to have both alignment and org set
 		uint32_t mask = mask(alignment);
 
 		if (org != (uint32_t)-1) {
 			if ((org - alignOffset) & mask)
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n",
 					name);
-			alignment = 0; /* Ignore it if it's satisfied */
+			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error("Section \"%s\"'s alignment cannot be attained in %s\n",
 				name, sectionTypeInfo[type].name);
-			alignment = 0; /* Ignore it if it's unattainable */
+			alignment = 0; // Ignore it if it's unattainable
 			org = 0;
 		} else if (alignment == 16) {
 			// Treat an alignment of 16 as being fixed at address 0
@@ -390,9 +381,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 	return sect;
 }
 
-/*
- * Set the current section
- */
+// Set the current section
 static void changeSection(void)
 {
 	if (unionStack)
@@ -401,9 +390,7 @@ static void changeSection(void)
 	sym_SetCurrentSymbolScope(NULL);
 }
 
-/*
- * Set the current section by name and type
- */
+// Set the current section by name and type
 void sect_NewSection(char const *name, uint32_t type, uint32_t org,
 		     struct SectionSpec const *attribs, enum SectionModifier mod)
 {
@@ -423,9 +410,7 @@ void sect_NewSection(char const *name, uint32_t type, uint32_t org,
 	currentSection = sect;
 }
 
-/*
- * Set the current section by name and type
- */
+// Set the current section by name and type
 void sect_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 			 struct SectionSpec const *attribs, enum SectionModifier mod)
 {
@@ -478,9 +463,7 @@ struct Section *sect_GetSymbolSection(void)
 	return currentLoadSection ? currentLoadSection : currentSection;
 }
 
-/*
- * The offset into the section above
- */
+// The offset into the section above
 uint32_t sect_GetSymbolOffset(void)
 {
 	return curOffset;
@@ -615,9 +598,7 @@ void sect_CheckUnionClosed(void)
 		error("Unterminated UNION construct!\n");
 }
 
-/*
- * Output an absolute byte
- */
+// Output an absolute byte
 void sect_AbsByte(uint8_t b)
 {
 	if (!checkcodesection())
@@ -661,9 +642,7 @@ void sect_AbsLongGroup(uint8_t const *s, size_t length)
 		writelong(*s++);
 }
 
-/*
- * Skip this many bytes
- */
+// Skip this many bytes
 void sect_Skip(uint32_t skip, bool ds)
 {
 	if (!checksection())
@@ -683,9 +662,7 @@ void sect_Skip(uint32_t skip, bool ds)
 	}
 }
 
-/*
- * Output a NULL terminated string (excluding the NULL-character)
- */
+// Output a NULL terminated string (excluding the NULL-character)
 void sect_String(char const *s)
 {
 	if (!checkcodesection())
@@ -697,10 +674,8 @@ void sect_String(char const *s)
 		writebyte(*s++);
 }
 
-/*
- * Output a relocatable byte. Checking will be done to see if it
- * is an absolute value in disguise.
- */
+// Output a relocatable byte. Checking will be done to see if it
+// is an absolute value in disguise.
 void sect_RelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
@@ -717,10 +692,8 @@ void sect_RelByte(struct Expression *expr, uint32_t pcShift)
 	rpn_Free(expr);
 }
 
-/*
- * Output several copies of a relocatable byte. Checking will be done to see if
- * it is an absolute value in disguise.
- */
+// Output several copies of a relocatable byte. Checking will be done to see if
+// it is an absolute value in disguise.
 void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 {
 	if (!checkcodesection())
@@ -743,10 +716,8 @@ void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 		rpn_Free(&exprs[i]);
 }
 
-/*
- * Output a relocatable word. Checking will be done to see if
- * it's an absolute value in disguise.
- */
+// Output a relocatable word. Checking will be done to see if
+// it's an absolute value in disguise.
 void sect_RelWord(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
@@ -763,10 +734,8 @@ void sect_RelWord(struct Expression *expr, uint32_t pcShift)
 	rpn_Free(expr);
 }
 
-/*
- * Output a relocatable longword. Checking will be done to see if
- * is an absolute value in disguise.
- */
+// Output a relocatable longword. Checking will be done to see if
+// is an absolute value in disguise.
 void sect_RelLong(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
@@ -783,10 +752,8 @@ void sect_RelLong(struct Expression *expr, uint32_t pcShift)
 	rpn_Free(expr);
 }
 
-/*
- * Output a PC-relative relocatable byte. Checking will be done to see if it
- * is an absolute value in disguise.
- */
+// Output a PC-relative relocatable byte. Checking will be done to see if it
+// is an absolute value in disguise.
 void sect_PCRelByte(struct Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
@@ -800,12 +767,12 @@ void sect_PCRelByte(struct Expression *expr, uint32_t pcShift)
 		writebyte(0);
 	} else {
 		struct Symbol const *sym = rpn_SymbolOf(expr);
-		/* The offset wraps (jump from ROM to HRAM, for example) */
+		// The offset wraps (jump from ROM to HRAM, for example)
 		int16_t offset;
 
-		/* Offset is relative to the byte *after* the operand */
+		// Offset is relative to the byte *after* the operand
 		if (sym == pc)
-			offset = -2; /* PC as operand to `jr` is lower than reference PC by 2 */
+			offset = -2; // PC as operand to `jr` is lower than reference PC by 2
 		else
 			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
 
@@ -820,9 +787,7 @@ void sect_PCRelByte(struct Expression *expr, uint32_t pcShift)
 	rpn_Free(expr);
 }
 
-/*
- * Output a binary file
- */
+// Output a binary file
 void sect_BinaryFile(char const *s, int32_t startPos)
 {
 	if (startPos < 0) {
@@ -869,7 +834,7 @@ void sect_BinaryFile(char const *s, int32_t startPos)
 		if (errno != ESPIPE)
 			error("Error determining size of INCBIN file '%s': %s\n",
 			      s, strerror(errno));
-		/* The file isn't seekable, so we'll just skip bytes */
+		// The file isn't seekable, so we'll just skip bytes
 		while (startPos--)
 			(void)fgetc(f);
 	}
@@ -901,7 +866,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 
 	if (!checkcodesection())
 		return;
-	if (length == 0) /* Don't even bother with 0-byte slices */
+	if (length == 0) // Don't even bother with 0-byte slices
 		return;
 	if (!reserveSpace(length))
 		return;
@@ -946,7 +911,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		if (errno != ESPIPE)
 			error("Error determining size of INCBIN file '%s': %s\n",
 				s, strerror(errno));
-		/* The file isn't seekable, so we'll just skip bytes */
+		// The file isn't seekable, so we'll just skip bytes
 		while (start_pos--)
 			(void)fgetc(f);
 	}
@@ -968,9 +933,7 @@ cleanup:
 	fclose(f);
 }
 
-/*
- * Section stack routines
- */
+// Section stack routines
 void sect_PushSection(void)
 {
 	struct SectionStackEntry *entry = malloc(sizeof(*entry));

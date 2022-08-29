@@ -29,4 +29,4 @@ void rgb(std::vector<Palette> &palettes);
 
 }
 
-#endif /* RGBDS_GFX_PAL_SORTING_HPP */
+#endif // RGBDS_GFX_PAL_SORTING_HPP

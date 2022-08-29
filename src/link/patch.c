@@ -63,11 +63,9 @@ static void pushRPN(int32_t value, bool comesFromError)
 			realloc(stack.values, sizeof(*stack.values) * stack.capacity);
 		stack.errorFlags =
 			realloc(stack.errorFlags, sizeof(*stack.errorFlags) * stack.capacity);
-		/*
-		 * Static analysis tools complain that the capacity might become
-		 * zero due to overflow, but fail to realize that it's caught by
-		 * the overflow check above. Hence the stringent check below.
-		 */
+		// Static analysis tools complain that the capacity might become
+		// zero due to overflow, but fail to realize that it's caught by
+		// the overflow check above. Hence the stringent check below.
 		if (!stack.values || !stack.errorFlags || !stack.capacity)
 			err("Failed to resize RPN stack");
 	}
@@ -97,7 +95,7 @@ static void freeRPNStack(void)
 	free(stack.errorFlags);
 }
 
-/* RPN operators */
+// RPN operators
 
 static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 			   struct FileStackNode const *node, uint32_t lineNo)
@@ -111,17 +109,17 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
 				      uint32_t index)
 {
-	assert(index != (uint32_t)-1); /* PC needs to be handled specially, not here */
+	assert(index != (uint32_t)-1); // PC needs to be handled specially, not here
 	struct Symbol const *symbol = symbolList[index];
 
-	/* If the symbol is defined elsewhere... */
+	// If the symbol is defined elsewhere...
 	if (symbol->type == SYMTYPE_IMPORT)
 		return sym_GetSymbol(symbol->name);
 
 	return symbol;
 }
 
-/**
+/*
  * Compute a patch's value from its RPN string.
  * @param patch The patch to compute the value of
  * @param section The section the patch is contained in
@@ -132,7 +130,7 @@ static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
 static int32_t computeRPNExpr(struct Patch const *patch,
 			      struct Symbol const * const *fileSymbols)
 {
-/* Small shortcut to avoid a lot of repetition */
+// Small shortcut to avoid a lot of repetition
 #define popRPN() popRPN(patch->src, patch->lineNo)
 
 	uint8_t const *expression = patch->rpnExpression;
@@ -147,13 +145,10 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 		isError = false;
 
-		/*
-		 * Friendly reminder:
-		 * Be VERY careful with two `popRPN` in the same expression.
-		 * C does not guarantee order of evaluation of operands!!
-		 * So, if there are two `popRPN` in the same expression, make
-		 * sure the operation is commutative.
-		 */
+		// Be VERY careful with two `popRPN` in the same expression.
+		// C does not guarantee order of evaluation of operands!!
+		// So, if there are two `popRPN` in the same expression, make
+		// sure the operation is commutative.
 		switch (command) {
 			struct Symbol const *symbol;
 			char const *name;
@@ -295,11 +290,9 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_BANK_SECT:
-			/*
-			 * `expression` is not guaranteed to be '\0'-terminated. If it is not,
-			 * `getRPNByte` will have a fatal internal error.
-			 * In either case, `getRPNByte` will not free `expression`.
-			 */
+			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
+			// `getRPNByte` will have a fatal internal error.
+			// In either case, `getRPNByte` will not free `expression`.
 			name = (char const *)expression;
 			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
 				;
@@ -329,7 +322,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_SIZEOF_SECT:
-			/* This has assumptions commented in the `RPN_BANK_SECT` case above. */
+			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			name = (char const *)expression;
 			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
 				;
@@ -348,7 +341,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			break;
 
 		case RPN_STARTOF_SECT:
-			/* This has assumptions commented in the `RPN_BANK_SECT` case above. */
+			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			name = (char const *)expression;
 			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
 				;
@@ -381,9 +374,8 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 		case RPN_RST:
 			value = popRPN();
-			/* Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
-			 * They can be easily checked with a bitmask
-			 */
+			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
+			// They can be easily checked with a bitmask
 			if (value & ~0x38) {
 				if (!isError)
 					error(patch->src, patch->lineNo,
@@ -406,7 +398,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value |= getRPNByte(&expression, &size,
 						    patch->src, patch->lineNo) << shift;
 
-			if (value == -1) { /* PC */
+			if (value == -1) { // PC
 				if (!patch->pcSection) {
 					error(patch->src, patch->lineNo,
 					      "PC has no value outside a section");
@@ -424,7 +416,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 					isError = true;
 				} else {
 					value = symbol->value;
-					/* Symbols attached to sections have offsets */
+					// Symbols attached to sections have offsets
 					if (symbol->section)
 						value += symbol->section->org;
 				}
@@ -461,8 +453,8 @@ void patch_CheckAssertions(struct Assertion *assert)
 				fatal(assert->patch.src, assert->patch.lineNo, "%s",
 				      assert->message[0] ? assert->message
 							 : "assert failure");
-				/* Not reached */
-				break; /* Here so checkpatch doesn't complain */
+				// Not reached
+				break; // Here so checkpatch doesn't complain
 			case ASSERT_ERROR:
 				error(assert->patch.src, assert->patch.lineNo, "%s",
 				      assert->message[0] ? assert->message
@@ -491,7 +483,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 	freeRPNStack();
 }
 
-/**
+/*
  * Applies all of a section's patches
  * @param section The section to patch
  * @param arg Ignored callback arg
@@ -506,7 +498,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 							section->fileSymbols);
 		uint16_t offset = patch->offset + section->offset;
 
-		/* `jr` is quite unlike the others... */
+		// `jr` is quite unlike the others...
 		if (patch->type == PATCHTYPE_JR) {
 			// Offset is relative to the byte *after* the operand
 			// PC as operand to `jr` is lower than reference PC by 2
@@ -519,7 +511,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				      jumpOffset);
 			dataSection->data[offset] = jumpOffset & 0xFF;
 		} else {
-			/* Patch a certain number of bytes */
+			// Patch a certain number of bytes
 			struct {
 				uint8_t size;
 				int32_t min;
@@ -544,7 +536,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 	}
 }
 
-/**
+/*
  * Applies all of a section's patches, iterating over "components" of
  * unionized sections
  * @param section The section to patch

@@ -15,10 +15,8 @@
 #include "error.h"
 #include "hashmap.h"
 
-/*
- * The lower half of the hash is used to index the "master" table,
- * the upper half is used to help resolve collisions more quickly
- */
+// The lower half of the hash is used to index the "master" table,
+// the upper half is used to help resolve collisions more quickly
 #define UINT_BITS_(NB_BITS) uint##NB_BITS##_t
 #define UINT_BITS(NB_BITS)  UINT_BITS_(NB_BITS)
 typedef UINT_BITS(HASH_NB_BITS) HashType;
@@ -34,7 +32,7 @@ struct HashMapEntry {
 #define FNV_OFFSET_BASIS 0x811c9dc5
 #define FNV_PRIME 16777619
 
-/* FNV-1a hash */
+// FNV-1a hash
 static HashType hash(char const *str)
 {
 	HashType hash = FNV_OFFSET_BASIS;

@@ -24,7 +24,7 @@
 #include <unistd.h>
 #endif
 
-#include "platform.h" /* For `ssize_t` */
+#include "platform.h" // For `ssize_t`
 
 #include "asm/lexer.h"
 #include "asm/format.h"
@@ -35,10 +35,10 @@
 #include "asm/symbol.h"
 #include "asm/util.h"
 #include "asm/warning.h"
-/* Include this last so it gets all type & constant definitions */
-#include "parser.h" /* For token definitions, generated from parser.y */
+// Include this last so it gets all type & constant definitions
+#include "parser.h" // For token definitions, generated from parser.y
 
-/* Neither MSVC nor MinGW provide `mmap` */
+// Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
 # define WIN32_LEAN_AND_MEAN // include less from windows.h
 # include <windows.h> // target architecture
@@ -63,7 +63,7 @@
 } while (0)
 # define munmap(ptr, size)  UnmapViewOfFile((ptr))
 
-#else /* defined(_MSC_VER) || defined(__MINGW32__) */
+#else // defined(_MSC_VER) || defined(__MINGW32__)
 
 # include <sys/mman.h>
 # define mapFile(ptr, fd, path, size) do { \
@@ -80,23 +80,19 @@
 		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
 	} \
 } while (0)
-#endif /* !( defined(_MSC_VER) || defined(__MINGW32__) ) */
+#endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
-/*
- * Identifiers that are also keywords are listed here. This ONLY applies to ones
- * that would normally be matched as identifiers! Check out `yylex_NORMAL` to
- * see how this is used.
- * Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
- */
+// Identifiers that are also keywords are listed here. This ONLY applies to ones
+// that would normally be matched as identifiers! Check out `yylex_NORMAL` to
+// see how this is used.
+// Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
 static struct KeywordMapping {
 	char const *name;
 	int token;
 } const keywords[] = {
-	/*
-	 * CAUTION when editing this: adding keywords will probably require extra nodes in the
-	 * `keywordDict` array. If you forget to, you will probably trip up an assertion, anyways.
-	 * Also, all entries in this array must be in uppercase for the dict to build correctly.
-	 */
+	// CAUTION when editing this: adding keywords will probably require extra nodes in the
+	// `keywordDict` array. If you forget to, you will probably trip up an assertion, anyways.
+	// Also, all entries in this array must be in uppercase for the dict to build correctly.
 	{"ADC", T_Z80_ADC},
 	{"ADD", T_Z80_ADD},
 	{"AND", T_Z80_AND},
@@ -136,7 +132,7 @@ static struct KeywordMapping {
 	{"RST", T_Z80_RST},
 	{"SBC", T_Z80_SBC},
 	{"SCF", T_Z80_SCF},
-	{"SET", T_POP_SET},
+	{"SET", T_Z80_SET},
 	{"SLA", T_Z80_SLA},
 	{"SRA", T_Z80_SRA},
 	{"SRL", T_Z80_SRL},
@@ -148,8 +144,8 @@ static struct KeywordMapping {
 	{"NZ", T_CC_NZ},
 	{"Z", T_CC_Z},
 	{"NC", T_CC_NC},
-	/* Handled after as T_TOKEN_C */
-	/* { "C", T_CC_C }, */
+	// Handled after as T_TOKEN_C
+	// { "C", T_CC_C },
 
 	{"AF", T_MODE_AF},
 	{"BC", T_MODE_BC},
@@ -269,8 +265,8 @@ static struct KeywordMapping {
 
 	{"RB", T_POP_RB},
 	{"RW", T_POP_RW},
-	/* Handled before as T_Z80_RL */
-	/* {"RL", T_POP_RL}, */
+	// Handled before as T_Z80_RL
+	// {"RL", T_POP_RL},
 
 	{"EQU", T_POP_EQU},
 	{"EQUS", T_POP_EQUS},
@@ -291,10 +287,10 @@ static bool isWhitespace(int c)
 	return c == ' ' || c == '\t';
 }
 
-#define LEXER_BUF_SIZE 42 /* TODO: determine a sane value for this */
-/* The buffer needs to be large enough for the maximum `peekInternal` lookahead distance */
+#define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
+// The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
-/* This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB */
+// This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
 struct Expansion {
@@ -304,38 +300,38 @@ struct Expansion {
 		char const *unowned;
 		char *owned;
 	} contents;
-	size_t size; /* Length of the contents */
-	size_t offset; /* Cursor into the contents */
-	bool owned; /* Whether or not to free contents when this expansion is freed */
+	size_t size; // Length of the contents
+	size_t offset; // Cursor into the contents
+	bool owned; // Whether or not to free contents when this expansion is freed
 };
 
 struct IfStack {
 	struct IfStack *next;
-	bool ranIfBlock; /* Whether an IF/ELIF/ELSE block ran already */
-	bool reachedElseBlock; /* Whether an ELSE block ran already */
+	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
+	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
 struct LexerState {
 	char const *path;
 
-	/* mmap()-dependent IO state */
+	// mmap()-dependent IO state
 	bool isMmapped;
 	union {
-		struct { /* If mmap()ed */
-			char *ptr; /* Technically `const` during the lexer's execution */
+		struct { // If mmap()ed
+			char *ptr; // Technically `const` during the lexer's execution
 			size_t size;
 			size_t offset;
-			bool isReferenced; /* If a macro in this file requires not unmapping it */
+			bool isReferenced; // If a macro in this file requires not unmapping it
 		};
-		struct { /* Otherwise */
+		struct { // Otherwise
 			int fd;
-			size_t index; /* Read index into the buffer */
-			char buf[LEXER_BUF_SIZE]; /* Circular buffer */
-			size_t nbChars; /* Number of "fresh" chars in the buffer */
+			size_t index; // Read index into the buffer
+			char buf[LEXER_BUF_SIZE]; // Circular buffer
+			size_t nbChars; // Number of "fresh" chars in the buffer
 		};
 	};
 
-	/* Common state */
+	// Common state
 	bool isFile;
 
 	enum LexerMode mode;
@@ -346,16 +342,16 @@ struct LexerState {
 
 	struct IfStack *ifStack;
 
-	bool capturing; /* Whether the text being lexed should be captured */
-	size_t captureSize; /* Amount of text captured */
-	char *captureBuf; /* Buffer to send the captured text to if non-NULL */
-	size_t captureCapacity; /* Size of the buffer above */
+	bool capturing; // Whether the text being lexed should be captured
+	size_t captureSize; // Amount of text captured
+	char *captureBuf; // Buffer to send the captured text to if non-NULL
+	size_t captureCapacity; // Size of the buffer above
 
 	bool disableMacroArgs;
 	bool disableInterpolation;
-	size_t macroArgScanDistance; /* Max distance already scanned for macro args */
+	size_t macroArgScanDistance; // Max distance already scanned for macro args
 	bool expandStrings;
-	struct Expansion *expansions; /* Points to the innermost current expansion */
+	struct Expansion *expansions; // Points to the innermost current expansion
 };
 
 struct LexerState *lexerState = NULL;
@@ -364,7 +360,7 @@ struct LexerState *lexerStateEOL = NULL;
 static void initState(struct LexerState *state)
 {
 	state->mode = LEXER_NORMAL;
-	state->atLineStart = true; /* yylex() will init colNo due to this */
+	state->atLineStart = true; // yylex() will init colNo due to this
 	state->lastToken = T_EOF;
 
 	state->ifStack = NULL;
@@ -447,7 +443,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 	struct LexerState *state = malloc(sizeof(*state));
 	struct stat fileInfo;
 
-	/* Give stdin a nicer file name */
+	// Give stdin a nicer file name
 	if (isStdin)
 		path = "<stdin>";
 	if (!state) {
@@ -467,23 +463,21 @@ struct LexerState *lexer_OpenFile(char const *path)
 		free(state);
 		return NULL;
 	}
-	state->isMmapped = false; /* By default, assume it won't be mmap()ed */
+	state->isMmapped = false; // By default, assume it won't be mmap()ed
 	if (!isStdin && fileInfo.st_size > 0) {
-		/* Try using `mmap` for better performance */
+		// Try using `mmap` for better performance
 
-		/*
-		 * Important: do NOT assign to `state->ptr` directly, to avoid a cast that may
-		 * alter an eventual `MAP_FAILED` value. It would also invalidate `state->fd`,
-		 * being on the other side of the union.
-		 */
+		// Important: do NOT assign to `state->ptr` directly, to avoid a cast that may
+		// alter an eventual `MAP_FAILED` value. It would also invalidate `state->fd`,
+		// being on the other side of the union.
 		void *mappingAddr;
 
 		mapFile(mappingAddr, state->fd, state->path, fileInfo.st_size);
 		if (mappingAddr == MAP_FAILED) {
-			/* If mmap()ing failed, try again using another method (below) */
+			// If mmap()ing failed, try again using another method (below)
 			state->isMmapped = false;
 		} else {
-			/* IMPORTANT: the `union` mandates this is accessed before other members! */
+			// IMPORTANT: the `union` mandates this is accessed before other members!
 			close(state->fd);
 
 			state->isMmapped = true;
@@ -498,7 +492,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 		}
 	}
 	if (!state->isMmapped) {
-		/* Sometimes mmap() fails or isn't available, so have a fallback */
+		// Sometimes mmap() fails or isn't available, so have a fallback
 		if (verbose) {
 			if (isStdin)
 				printf("Opening stdin\n");
@@ -513,7 +507,7 @@ struct LexerState *lexer_OpenFile(char const *path)
 	}
 
 	initState(state);
-	state->lineNo = 0; /* Will be incremented at first line start */
+	state->lineNo = 0; // Will be incremented at first line start
 	return state;
 }
 
@@ -526,15 +520,15 @@ struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, 
 		return NULL;
 	}
 
-	state->path = path; /* Used to report read errors in `peekInternal` */
+	state->path = path; // Used to report read errors in `peekInternal`
 	state->isFile = false;
-	state->isMmapped = true; /* It's not *really* mmap()ed, but it behaves the same */
+	state->isMmapped = true; // It's not *really* mmap()ed, but it behaves the same
 	state->ptr = buf;
 	state->size = size;
 	state->offset = 0;
 
 	initState(state);
-	state->lineNo = lineNo; /* Will be incremented at first line start */
+	state->lineNo = lineNo; // Will be incremented at first line start
 	return state;
 }
 
@@ -568,22 +562,20 @@ void lexer_DeleteState(struct LexerState *state)
 }
 
 struct KeywordDictNode {
-	/*
-	 * The identifier charset is (currently) 44 characters big. By storing entries for the
-	 * entire printable ASCII charset, minus lower-case due to case-insensitivity,
-	 * we only waste (0x60 - 0x20) - 70 = 20 entries per node, which should be acceptable.
-	 * In turn, this allows greatly simplifying checking an index into this array,
-	 * which should help speed up the lexer.
-	 */
+	// The identifier charset is (currently) 44 characters big. By storing entries for the
+	// entire printable ASCII charset, minus lower-case due to case-insensitivity,
+	// we only waste (0x60 - 0x20) - 70 = 20 entries per node, which should be acceptable.
+	// In turn, this allows greatly simplifying checking an index into this array,
+	// which should help speed up the lexer.
 	uint16_t children[0x60 - ' '];
 	struct KeywordMapping const *keyword;
-/* Since the keyword structure is invariant, the min number of nodes is known at compile time */
-} keywordDict[365] = {0}; /* Make sure to keep this correct when adding keywords! */
+// Since the keyword structure is invariant, the min number of nodes is known at compile time
+} keywordDict[365] = {0}; // Make sure to keep this correct when adding keywords!
 
-/* Convert a char into its index into the dict */
+// Convert a char into its index into the dict
 static uint8_t dictIndex(char c)
 {
-	/* Translate uppercase to lowercase (roughly) */
+	// Translate uppercase to lowercase (roughly)
 	if (c > 0x60)
 		c = c - ('a' - 'A');
 	return c - ' ';
@@ -591,42 +583,38 @@ static uint8_t dictIndex(char c)
 
 void lexer_Init(void)
 {
-	/*
-	 * Build the dictionary of keywords. This could be done at compile time instead, however:
-	 *  - Doing so manually is a task nobody wants to undertake
-	 *  - It would be massively hard to read
-	 *  - Doing it within CC or CPP would be quite non-trivial
-	 *  - Doing it externally would require some extra work to use only POSIX tools
-	 *  - The startup overhead isn't much compared to the program's
-	 */
+	// Build the dictionary of keywords. This could be done at compile time instead, however:
+	// - Doing so manually is a task nobody wants to undertake
+	// - It would be massively hard to read
+	// - Doing it within CC or CPP would be quite non-trivial
+	// - Doing it externally would require some extra work to use only POSIX tools
+	// - The startup overhead isn't much compared to the program's
 	uint16_t usedNodes = 1;
 
 	for (size_t i = 0; i < ARRAY_SIZE(keywords); i++) {
 		uint16_t nodeID = 0;
 
-		/* Walk the dictionary, creating intermediate nodes for the keyword */
+		// Walk the dictionary, creating intermediate nodes for the keyword
 		for (char const *ptr = keywords[i].name; *ptr; ptr++) {
-			/* We should be able to assume all entries are well-formed */
+			// We should be able to assume all entries are well-formed
 			if (keywordDict[nodeID].children[*ptr - ' '] == 0) {
-				/*
-				 * If this gets tripped up, set the size of keywordDict to
-				 * something high, compile with `-DPRINT_NODE_COUNT` (see below),
-				 * and set the size to that.
-				 */
+				// If this gets tripped up, set the size of keywordDict to
+				// something high, compile with `-DPRINT_NODE_COUNT` (see below),
+				// and set the size to that.
 				assert(usedNodes < sizeof(keywordDict) / sizeof(*keywordDict));
 
-				/* There is no node at that location, grab one from the pool */
+				// There is no node at that location, grab one from the pool
 				keywordDict[nodeID].children[*ptr - ' '] = usedNodes;
 				usedNodes++;
 			}
 			nodeID = keywordDict[nodeID].children[*ptr - ' '];
 		}
 
-		/* This assumes that no two keywords have the same name */
+		// This assumes that no two keywords have the same name
 		keywordDict[nodeID].keyword = &keywords[i];
 	}
 
-#ifdef PRINT_NODE_COUNT /* For the maintainer to check how many nodes are needed */
+#ifdef PRINT_NODE_COUNT // For the maintainer to check how many nodes are needed
 	printf("Lexer keyword dictionary: %zu keywords in %u nodes (pool size %zu)\n",
 	       ARRAY_SIZE(keywords), usedNodes, ARRAY_SIZE(keywordDict));
 #endif
@@ -642,7 +630,7 @@ void lexer_ToggleStringExpansion(bool enable)
 	lexerState->expandStrings = enable;
 }
 
-/* Functions for the actual lexer to obtain characters */
+// Functions for the actual lexer to obtain characters
 
 static void reallocCaptureBuf(void)
 {
@@ -661,7 +649,7 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 {
 	size_t size = strlen(str);
 
-	/* Do not expand empty strings */
+	// Do not expand empty strings
 	if (!size)
 		return;
 
@@ -706,7 +694,7 @@ static bool isMacroChar(char c)
 	return c == '@' || c == '#' || c == '<' || (c >= '0' && c <= '9');
 }
 
-/* forward declarations for readBracketedMacroArgNum */
+// forward declarations for readBracketedMacroArgNum
 static int peek(void);
 static void shiftChar(void);
 static uint32_t readNumber(int radix, uint32_t baseValue);
@@ -822,14 +810,12 @@ static size_t readInternal(size_t bufIndex, size_t nbChars)
 	return (size_t)nbReadChars;
 }
 
-/* We only need one character of lookahead, for macro arguments */
+// We only need one character of lookahead, for macro arguments
 static int peekInternal(uint8_t distance)
 {
 	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-		/*
-		 * An expansion that has reached its end will have `exp->offset` == `exp->size`,
-		 * and `peekInternal` will continue with its parent
-		 */
+		// An expansion that has reached its end will have `exp->offset` == `exp->size`,
+		// and `peekInternal` will continue with its parent
 		assert(exp->offset <= exp->size);
 		if (distance < exp->size - exp->offset)
 			return exp->contents.unowned[exp->offset + distance];
@@ -848,13 +834,13 @@ static int peekInternal(uint8_t distance)
 	}
 
 	if (lexerState->nbChars <= distance) {
-		/* Buffer isn't full enough, read some chars in */
-		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; /* Aim: making the buf full */
+		// Buffer isn't full enough, read some chars in
+		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; // Aim: making the buf full
 
-		/* Compute the index we'll start writing to */
+		// Compute the index we'll start writing to
 		size_t writeIndex = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
 
-		/* If the range to fill passes over the buffer wrapping point, we need two reads */
+		// If the range to fill passes over the buffer wrapping point, we need two reads
 		if (writeIndex + target > LEXER_BUF_SIZE) {
 			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
 			size_t nbReadChars = readInternal(writeIndex, nbExpectedChars);
@@ -873,7 +859,7 @@ static int peekInternal(uint8_t distance)
 		if (target != 0)
 			lexerState->nbChars += readInternal(writeIndex, target);
 
-		/* If there aren't enough chars even after refilling, give up */
+		// If there aren't enough chars even after refilling, give up
 		if (lexerState->nbChars <= distance)
 			return EOF;
 	}
@@ -881,7 +867,7 @@ static int peekInternal(uint8_t distance)
 	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
 }
 
-/* forward declarations for peek */
+// forward declarations for peek
 static void shiftChar(void);
 static char const *readInterpolation(size_t depth);
 
@@ -892,10 +878,10 @@ static int peek(void)
 	if (lexerState->macroArgScanDistance > 0)
 		return c;
 
-	lexerState->macroArgScanDistance++; /* Do not consider again */
+	lexerState->macroArgScanDistance++; // Do not consider again
 
 	if (c == '\\' && !lexerState->disableMacroArgs) {
-		/* If character is a backslash, check for a macro arg */
+		// If character is a backslash, check for a macro arg
 		lexerState->macroArgScanDistance++;
 		c = peekInternal(1);
 		if (isMacroChar(c)) {
@@ -903,19 +889,15 @@ static int peek(void)
 			shiftChar();
 			char const *str = readMacroArg(c);
 
-			/*
-			 * If the macro arg is invalid or an empty string, it cannot be
-			 * expanded, so skip it and keep peeking.
-			 */
+			// If the macro arg is invalid or an empty string, it cannot be
+			// expanded, so skip it and keep peeking.
 			if (!str || !str[0])
 				return peek();
 
 			beginExpansion(str, c == '#', NULL);
 
-			/*
-			 * Assuming macro args can't be recursive (I'll be damned if a way
-			 * is found...), then we mark the entire macro arg as scanned.
-			 */
+			// Assuming macro args can't be recursive (I'll be damned if a way
+			// is found...), then we mark the entire macro arg as scanned.
 			lexerState->macroArgScanDistance += strlen(str);
 
 			c = str[0];
@@ -923,7 +905,7 @@ static int peek(void)
 			c = '\\';
 		}
 	} else if (c == '{' && !lexerState->disableInterpolation) {
-		/* If character is an open brace, do symbol interpolation */
+		// If character is an open brace, do symbol interpolation
 		shiftChar();
 		char const *str = readInterpolation(0);
 
@@ -941,7 +923,7 @@ static void shiftChar(void)
 		if (lexerState->captureBuf) {
 			if (lexerState->captureSize + 1 >= lexerState->captureCapacity)
 				reallocCaptureBuf();
-			/* TODO: improve this? */
+			// TODO: improve this?
 			lexerState->captureBuf[lexerState->captureSize] = peek();
 		}
 		lexerState->captureSize++;
@@ -951,14 +933,12 @@ static void shiftChar(void)
 
 restart:
 	if (lexerState->expansions) {
-		/* Advance within the current expansion */
+		// Advance within the current expansion
 		assert(lexerState->expansions->offset <= lexerState->expansions->size);
 		lexerState->expansions->offset++;
 		if (lexerState->expansions->offset > lexerState->expansions->size) {
-			/*
-			 * When advancing would go past an expansion's end, free it,
-			 * move up to its parent, and try again to advance
-			 */
+			// When advancing would go past an expansion's end, free it,
+			// move up to its parent, and try again to advance
 			struct Expansion *exp = lexerState->expansions;
 
 			lexerState->expansions = lexerState->expansions->parent;
@@ -966,7 +946,7 @@ restart:
 			goto restart;
 		}
 	} else {
-		/* Advance within the file contents */
+		// Advance within the file contents
 		lexerState->colNo++;
 		if (lexerState->isMmapped) {
 			lexerState->offset++;
@@ -974,7 +954,7 @@ restart:
 			assert(lexerState->index < LEXER_BUF_SIZE);
 			lexerState->index++;
 			if (lexerState->index == LEXER_BUF_SIZE)
-				lexerState->index = 0; /* Wrap around if necessary */
+				lexerState->index = 0; // Wrap around if necessary
 			assert(lexerState->nbChars > 0);
 			lexerState->nbChars--;
 		}
@@ -985,7 +965,7 @@ static int nextChar(void)
 {
 	int c = peek();
 
-	/* If not at EOF, advance read position */
+	// If not at EOF, advance read position
 	if (c != EOF)
 		shiftChar();
 	return c;
@@ -997,7 +977,7 @@ static void handleCRLF(int c)
 		shiftChar();
 }
 
-/* "Services" provided by the lexer to the rest of the program */
+// "Services" provided by the lexer to the rest of the program
 
 char const *lexer_GetFileName(void)
 {
@@ -1020,13 +1000,13 @@ void lexer_DumpStringExpansions(void)
 		return;
 
 	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-		/* Only register EQUS expansions, not string args */
+		// Only register EQUS expansions, not string args
 		if (exp->name)
 			fprintf(stderr, "while expanding symbol \"%s\"\n", exp->name);
 	}
 }
 
-/* Discards a block comment */
+// Discards a block comment
 static void discardBlockComment(void)
 {
 	lexerState->disableMacroArgs = true;
@@ -1039,9 +1019,9 @@ static void discardBlockComment(void)
 			error("Unterminated block comment\n");
 			goto finish;
 		case '\r':
-			/* Handle CRLF before nextLine() since shiftChar updates colNo */
+			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
-			/* fallthrough */
+			// fallthrough
 		case '\n':
 			if (!lexerState->expansions)
 				nextLine();
@@ -1057,7 +1037,7 @@ static void discardBlockComment(void)
 				shiftChar();
 				goto finish;
 			}
-			/* fallthrough */
+			// fallthrough
 		default:
 			continue;
 		}
@@ -1067,7 +1047,7 @@ finish:
 	lexerState->disableInterpolation = false;
 }
 
-/* Function to discard all of a line's comments */
+// Function to discard all of a line's comments
 
 static void discardComment(void)
 {
@@ -1083,7 +1063,7 @@ static void discardComment(void)
 	lexerState->disableInterpolation = false;
 }
 
-/* Function to read a line continuation */
+// Function to read a line continuation
 
 static void readLineContinuation(void)
 {
@@ -1094,7 +1074,7 @@ static void readLineContinuation(void)
 			shiftChar();
 		} else if (c == '\r' || c == '\n') {
 			shiftChar();
-			/* Handle CRLF before nextLine() since shiftChar updates colNo */
+			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			if (!lexerState->expansions)
 				nextLine();
@@ -1109,7 +1089,7 @@ static void readLineContinuation(void)
 	}
 }
 
-/* Function to read an anonymous label ref */
+// Function to read an anonymous label ref
 
 static void readAnonLabelRef(char c)
 {
@@ -1124,7 +1104,7 @@ static void readAnonLabelRef(char c)
 	sym_WriteAnonLabelName(yylval.symName, n, c == '-');
 }
 
-/* Functions to lex numbers of various radixes */
+// Functions to lex numbers of various radixes
 
 static uint32_t readNumber(int radix, uint32_t baseValue)
 {
@@ -1159,7 +1139,7 @@ static uint32_t readFractionalPart(int32_t integer)
 		if (divisor > (UINT32_MAX - (c - '0')) / 10) {
 			warning(WARNING_LARGE_CONSTANT,
 				"Precision of fixed-point constant is too large\n");
-			/* Discard any additional digits */
+			// Discard any additional digits
 			shiftChar();
 			while (c = peek(), (c >= '0' && c <= '9') || c == '_')
 				shiftChar();
@@ -1172,9 +1152,9 @@ static uint32_t readFractionalPart(int32_t integer)
 	if (integer > INT16_MAX || integer < INT16_MIN)
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
-	/* Cast to unsigned avoids UB if shifting discards bits */
+	// Cast to unsigned avoids UB if shifting discards bits
 	integer = (uint32_t)integer << 16;
-	/* Cast to unsigned avoids undefined overflow behavior */
+	// Cast to unsigned avoids undefined overflow behavior
 	uint16_t fractional = (uint16_t)round(value * 65536.0 / divisor);
 
 	return (uint32_t)integer | (fractional * (integer >= 0 ? 1 : -1));
@@ -1281,7 +1261,7 @@ static uint32_t readGfxConstant(void)
 	return bitPlaneUpper << 8 | bitPlaneLower;
 }
 
-/* Functions to read identifiers & keywords */
+// Functions to read identifiers & keywords
 
 static bool startsIdentifier(int c)
 {
@@ -1296,26 +1276,26 @@ static bool continuesIdentifier(int c)
 
 static int readIdentifier(char firstChar)
 {
-	/* Lex while checking for a keyword */
+	// Lex while checking for a keyword
 	yylval.symName[0] = firstChar;
 	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
 	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
 	size_t i = 1;
 
-	/* Continue reading while the char is in the symbol charset */
+	// Continue reading while the char is in the symbol charset
 	for (int c = peek(); continuesIdentifier(c); i++, c = peek()) {
 		shiftChar();
 
 		if (i < sizeof(yylval.symName) - 1) {
-			/* Write the char to the identifier's name */
+			// Write the char to the identifier's name
 			yylval.symName[i] = c;
 
-			/* If the char was a dot, mark the identifier as local */
+			// If the char was a dot, mark the identifier as local
 			if (c == '.')
 				tokenType = T_LOCAL_ID;
 
-			/* Attempt to traverse the tree to check for a keyword */
-			if (nodeID) /* Do nothing if matching already failed */
+			// Attempt to traverse the tree to check for a keyword
+			if (nodeID) // Do nothing if matching already failed
 				nodeID = keywordDict[nodeID].children[dictIndex(c)];
 		}
 	}
@@ -1324,7 +1304,7 @@ static int readIdentifier(char firstChar)
 		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
 		i = sizeof(yylval.symName) - 1;
 	}
-	yylval.symName[i] = '\0'; /* Terminate the string */
+	yylval.symName[i] = '\0'; // Terminate the string
 
 	if (keywordDict[nodeID].keyword)
 		return keywordDict[nodeID].keyword->token;
@@ -1332,7 +1312,7 @@ static int readIdentifier(char firstChar)
 	return tokenType;
 }
 
-/* Functions to read strings */
+// Functions to read strings
 
 static char const *readInterpolation(size_t depth)
 {
@@ -1344,30 +1324,28 @@ static char const *readInterpolation(size_t depth)
 	struct FormatSpec fmt = fmt_NewSpec();
 	bool disableInterpolation = lexerState->disableInterpolation;
 
-	/*
-	 * In a context where `lexerState->disableInterpolation` is true, `peek` will expand
-	 * nested interpolations itself, which can lead to stack overflow. This lets
-	 * `readInterpolation` handle its own nested expansions, increasing `depth` each time.
-	 */
+	// In a context where `lexerState->disableInterpolation` is true, `peek` will expand
+	// nested interpolations itself, which can lead to stack overflow. This lets
+	// `readInterpolation` handle its own nested expansions, increasing `depth` each time.
 	lexerState->disableInterpolation = true;
 
 	for (;;) {
 		int c = peek();
 
-		if (c == '{') { /* Nested interpolation */
+		if (c == '{') { // Nested interpolation
 			shiftChar();
 			char const *str = readInterpolation(depth + 1);
 
 			if (str && str[0])
 				beginExpansion(str, false, str);
-			continue; /* Restart, reading from the new buffer */
+			continue; // Restart, reading from the new buffer
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
 			break;
 		} else if (c == '}') {
 			shiftChar();
 			break;
-		} else if (c == ':' && !fmt_IsFinished(&fmt)) { /* Format spec, only once */
+		} else if (c == ':' && !fmt_IsFinished(&fmt)) { // Format spec, only once
 			shiftChar();
 			for (size_t j = 0; j < i; j++)
 				fmt_UseCharacter(&fmt, symName[j]);
@@ -1375,10 +1353,10 @@ static char const *readInterpolation(size_t depth)
 			symName[i] = '\0';
 			if (!fmt_IsValid(&fmt))
 				error("Invalid format spec '%s'\n", symName);
-			i = 0; /* Now that format has been set, restart at beginning of string */
+			i = 0; // Now that format has been set, restart at beginning of string
 		} else {
 			shiftChar();
-			if (i < sizeof(symName)) /* Allow writing an extra char to flag overflow */
+			if (i < sizeof(symName)) // Allow writing an extra char to flag overflow
 				symName[i++] = c;
 		}
 	}
@@ -1389,7 +1367,7 @@ static char const *readInterpolation(size_t depth)
 	}
 	symName[i] = '\0';
 
-	/* Don't return before `lexerState->disableInterpolation` is reset! */ 
+	// Don't return before `lexerState->disableInterpolation` is reset!
 	lexerState->disableInterpolation = disableInterpolation;
 
 	static char buf[MAXSTRLEN + 1];
@@ -1400,13 +1378,13 @@ static char const *readInterpolation(size_t depth)
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
 	} else if (sym->type == SYM_EQUS) {
 		if (fmt_IsEmpty(&fmt))
-			/* No format was specified */
+			// No format was specified
 			fmt.type = 's';
 		fmt_PrintString(buf, sizeof(buf), &fmt, sym_GetStringValue(sym));
 		return buf;
 	} else if (sym_IsNumeric(sym)) {
 		if (fmt_IsEmpty(&fmt)) {
-			/* No format was specified; default to uppercase $hex */
+			// No format was specified; default to uppercase $hex
 			fmt.type = 'X';
 			fmt.prefix = true;
 		}
@@ -1426,11 +1404,11 @@ static char const *readInterpolation(size_t depth)
 
 static size_t appendEscapedSubstring(char const *str, size_t i)
 {
-	/* Copy one extra to flag overflow */
+	// Copy one extra to flag overflow
 	while (*str) {
 		char c = *str++;
 
-		/* Escape characters that need escaping */
+		// Escape characters that need escaping
 		switch (c) {
 		case '\\':
 		case '"':
@@ -1493,7 +1471,7 @@ static void readString(void)
 
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
-			/* Handle CRLF before nextLine() since shiftChar updates colNo */
+			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			nextLine();
 			c = '\n';
@@ -1645,7 +1623,7 @@ static size_t appendStringLiteral(size_t i)
 
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
-			/* Handle CRLF before nextLine() since shiftChar updates colNo */
+			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			nextLine();
 			c = '\n';
@@ -1715,7 +1693,7 @@ static size_t appendStringLiteral(size_t i)
 				c = '\\';
 				break;
 
-			case ',': /* `\,` inside a macro arg string literal */
+			case ',': // `\,` inside a macro arg string literal
 				warning(WARNING_OBSOLETE,
 					"`\\,` is deprecated inside strings\n");
 				shiftChar();
@@ -1757,7 +1735,7 @@ finish:
 	return i;
 }
 
-/* Lexer core */
+// Lexer core
 
 static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
 
@@ -1768,16 +1746,16 @@ static int yylex_NORMAL(void)
 		char secondChar;
 
 		switch (c) {
-		/* Ignore whitespace and comments */
+		// Ignore whitespace and comments
 
 		case ';':
 			discardComment();
-			/* fallthrough */
+			// fallthrough
 		case ' ':
 		case '\t':
 			break;
 
-		/* Handle unambiguous single-char tokens */
+		// Handle unambiguous single-char tokens
 
 		case '~':
 			return T_OP_NOT;
@@ -1798,23 +1776,23 @@ static int yylex_NORMAL(void)
 		case ',':
 			return T_COMMA;
 
-		/* Handle ambiguous 1- or 2-char tokens */
+		// Handle ambiguous 1- or 2-char tokens
 
-		case '+': /* Either += or ADD */
+		case '+': // Either += or ADD
 			if (peek() == '=') {
 				shiftChar();
 				return T_POP_ADDEQ;
 			}
 			return T_OP_ADD;
 
-		case '-': /* Either -= or SUB */
+		case '-': // Either -= or SUB
 			if (peek() == '=') {
 				shiftChar();
 				return T_POP_SUBEQ;
 			}
 			return T_OP_SUB;
 
-		case '*': /* Either *=, MUL, or EXP */
+		case '*': // Either *=, MUL, or EXP
 			switch (peek()) {
 			case '=':
 				shiftChar();
@@ -1826,7 +1804,7 @@ static int yylex_NORMAL(void)
 				return T_OP_MUL;
 			}
 
-		case '/': /* Either /=, DIV, or a block comment */
+		case '/': // Either /=, DIV, or a block comment
 			switch (peek()) {
 			case '=':
 				shiftChar();
@@ -1840,7 +1818,7 @@ static int yylex_NORMAL(void)
 			}
 			break;
 
-		case '|': /* Either |=, binary OR, or logical OR */
+		case '|': // Either |=, binary OR, or logical OR
 			switch (peek()) {
 			case '=':
 				shiftChar();
@@ -1852,30 +1830,30 @@ static int yylex_NORMAL(void)
 				return T_OP_OR;
 			}
 
-		case '^': /* Either ^= or XOR */
+		case '^': // Either ^= or XOR
 			if (peek() == '=') {
 				shiftChar();
 				return T_POP_XOREQ;
 			}
 			return T_OP_XOR;
 
-		case '=': /* Either assignment or EQ */
+		case '=': // Either assignment or EQ
 			if (peek() == '=') {
 				shiftChar();
 				return T_OP_LOGICEQU;
 			}
 			return T_POP_EQUAL;
 
-		case '!': /* Either a NEQ or negation */
+		case '!': // Either a NEQ or negation
 			if (peek() == '=') {
 				shiftChar();
 				return T_OP_LOGICNE;
 			}
 			return T_OP_LOGICNOT;
 
-		/* Handle ambiguous 1-, 2-, or 3-char tokens */
+		// Handle ambiguous 1-, 2-, or 3-char tokens
 
-		case '<': /* Either <<=, LT, LTE, or left shift */
+		case '<': // Either <<=, LT, LTE, or left shift
 			switch (peek()) {
 			case '=':
 				shiftChar();
@@ -1891,7 +1869,7 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICLT;
 			}
 
-		case '>': /* Either >>=, GT, GTE, or either kind of right shift */
+		case '>': // Either >>=, GT, GTE, or either kind of right shift
 			switch (peek()) {
 			case '=':
 				shiftChar();
@@ -1912,7 +1890,7 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICGT;
 			}
 
-		/* Handle colon, which may begin an anonymous label ref */
+		// Handle colon, which may begin an anonymous label ref
 
 		case ':':
 			c = peek();
@@ -1922,9 +1900,9 @@ static int yylex_NORMAL(void)
 			readAnonLabelRef(c);
 			return T_ANON;
 
-		/* Handle numbers */
+		// Handle numbers
 
-		case '0': /* Decimal or fixed-point number */
+		case '0': // Decimal or fixed-point number
 		case '1':
 		case '2':
 		case '3':
@@ -1941,7 +1919,7 @@ static int yylex_NORMAL(void)
 			}
 			return T_NUMBER;
 
-		case '&': /* Either &=, binary AND, logical AND, or an octal constant */
+		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			secondChar = peek();
 			if (secondChar == '=') {
 				shiftChar();
@@ -1955,7 +1933,7 @@ static int yylex_NORMAL(void)
 			}
 			return T_OP_AND;
 
-		case '%': /* Either %=, MOD, or a binary constant */
+		case '%': // Either %=, MOD, or a binary constant
 			secondChar = peek();
 			if (secondChar == '=') {
 				shiftChar();
@@ -1966,32 +1944,32 @@ static int yylex_NORMAL(void)
 			}
 			return T_OP_MOD;
 
-		case '$': /* Hex constant */
+		case '$': // Hex constant
 			yylval.constValue = readHexNumber();
 			return T_NUMBER;
 
-		case '`': /* Gfx constant */
+		case '`': // Gfx constant
 			yylval.constValue = readGfxConstant();
 			return T_NUMBER;
 
-		/* Handle strings */
+		// Handle strings
 
 		case '"':
 			readString();
 			return T_STRING;
 
-		/* Handle newlines and EOF */
+		// Handle newlines and EOF
 
 		case '\r':
 			handleCRLF(c);
-			/* fallthrough */
+			// fallthrough
 		case '\n':
 			return T_NEWLINE;
 
 		case EOF:
 			return T_EOF;
 
-		/* Handle line continuations */
+		// Handle line continuations
 
 		case '\\':
 			// Macro args were handled by `peek`, and character escapes do not exist
@@ -1999,25 +1977,25 @@ static int yylex_NORMAL(void)
 			readLineContinuation();
 			break;
 
-		/* Handle identifiers... or report garbage characters */
+		// Handle identifiers... or report garbage characters
 
 		default:
 			if (startsIdentifier(c)) {
 				int tokenType = readIdentifier(c);
 
-				/* An ELIF after a taken IF needs to not evaluate its condition */
+				// An ELIF after a taken IF needs to not evaluate its condition
 				if (tokenType == T_POP_ELIF && lexerState->lastToken == T_NEWLINE
 				 && lexer_GetIFDepth() > 0 && lexer_RanIFBlock()
 				 && !lexer_ReachedELSEBlock())
 					return yylex_SKIP_TO_ENDC();
 
-				/* If a keyword, don't try to expand */
+				// If a keyword, don't try to expand
 				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
 					return tokenType;
 
-				/* Local symbols cannot be string expansions */
+				// Local symbols cannot be string expansions
 				if (tokenType == T_ID && lexerState->expandStrings) {
-					/* Attempt string expansion */
+					// Attempt string expansion
 					struct Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
@@ -2026,7 +2004,7 @@ static int yylex_NORMAL(void)
 						assert(s);
 						if (s[0])
 							beginExpansion(s, false, sym->name);
-						continue; /* Restart, reading from the new buffer */
+						continue; // Restart, reading from the new buffer
 					}
 				}
 
@@ -2036,9 +2014,9 @@ static int yylex_NORMAL(void)
 				return tokenType;
 			}
 
-			/* Do not report weird characters when capturing, it'll be done later */
+			// Do not report weird characters when capturing, it'll be done later
 			if (!lexerState->capturing) {
-				/* TODO: try to group reportings */
+				// TODO: try to group reportings
 				error("Unknown character %s\n", printChar(c));
 			}
 		}
@@ -2048,12 +2026,12 @@ static int yylex_NORMAL(void)
 
 static int yylex_RAW(void)
 {
-	/* This is essentially a modified `appendStringLiteral` */
+	// This is essentially a modified `appendStringLiteral`
 	size_t parenDepth = 0;
 	size_t i = 0;
 	int c;
 
-	/* Trim left whitespace (stops at a block comment) */
+	// Trim left whitespace (stops at a block comment)
 	for (;;) {
 		c = peek();
 		if (isWhitespace(c)) {
@@ -2075,55 +2053,55 @@ static int yylex_RAW(void)
 		c = peek();
 
 		switch (c) {
-		case '"': /* String literals inside macro args */
+		case '"': // String literals inside macro args
 			shiftChar();
 			i = appendStringLiteral(i);
 			break;
 
-		case ';': /* Comments inside macro args */
+		case ';': // Comments inside macro args
 			discardComment();
 			c = peek();
-			/* fallthrough */
-		case '\r': /* End of line */
+			// fallthrough
+		case '\r': // End of line
 		case '\n':
 		case EOF:
 			goto finish;
 
-		case '/': /* Block comments inside macro args */
+		case '/': // Block comments inside macro args
 			shiftChar();
 			if (peek() == '*') {
 				shiftChar();
 				discardBlockComment();
 				continue;
 			}
-			append_yylval_string(c); /* Append the slash */
+			append_yylval_string(c); // Append the slash
 			break;
 
-		case ',': /* End of macro arg */
+		case ',': // End of macro arg
 			if (parenDepth == 0)
 				goto finish;
 			goto append;
 
-		case '(': /* Open parentheses inside macro args */
+		case '(': // Open parentheses inside macro args
 			if (parenDepth < UINT_MAX)
 				parenDepth++;
 			goto append;
 
-		case ')': /* Close parentheses inside macro args */
+		case ')': // Close parentheses inside macro args
 			if (parenDepth > 0)
 				parenDepth--;
 			goto append;
 
-		case '\\': /* Character escape */
+		case '\\': // Character escape
 			shiftChar();
 			c = peek();
 
 backslash:
 			switch (c) {
-			case ',': /* Escapes only valid inside a macro arg */
+			case ',': // Escapes only valid inside a macro arg
 			case '(':
 			case ')':
-			case '\\': /* Escapes shared with string literals */
+			case '\\': // Escapes shared with string literals
 			case '"':
 			case '{':
 			case '}':
@@ -2145,23 +2123,21 @@ backslash:
 				readLineContinuation();
 				continue;
 
-			case EOF: /* Can't really print that one */
+			case EOF: // Can't really print that one
 				error("Illegal character escape at end of input\n");
 				c = '\\';
 				break;
 
-			/*
-			 * Macro args were already handled by peek, so '\@',
-			 * '\#', and '\0'-'\9' should not occur here.
-			 */
+			// Macro args were already handled by peek, so '\@',
+			// '\#', and '\0'-'\9' should not occur here.
 
 			default:
 				error("Illegal character escape %s\n", printChar(c));
 				break;
 			}
-			/* fallthrough */
+			// fallthrough
 
-		default: /* Regular characters will just get copied */
+		default: // Regular characters will just get copied
 append:
 			append_yylval_string(c);
 			shiftChar();
@@ -2174,7 +2150,7 @@ finish:
 		i--;
 		warning(WARNING_LONG_STR, "Macro argument too long\n");
 	}
-	/* Trim right whitespace */
+	// Trim right whitespace
 	while (i && isWhitespace(yylval.string[i - 1]))
 		i--;
 	yylval.string[i] = '\0';
@@ -2209,13 +2185,11 @@ finish:
 
 #undef append_yylval_string
 
-/*
- * This function uses the fact that `if`, etc. constructs are only valid when
- * there's nothing before them on their lines. This enables filtering
- * "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
- * It's especially important due to macro args not being handled in this
- * state, and lexing them in "normal" mode potentially producing such tokens.
- */
+// This function uses the fact that `if`, etc. constructs are only valid when
+// there's nothing before them on their lines. This enables filtering
+// "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
+// It's especially important due to macro args not being handled in this
+// state, and lexing them in "normal" mode potentially producing such tokens.
 static int skipIfBlock(bool toEndc)
 {
 	lexer_SetMode(LEXER_NORMAL);
@@ -2223,7 +2197,7 @@ static int skipIfBlock(bool toEndc)
 	int token;
 	bool atLineStart = lexerState->atLineStart;
 
-	/* Prevent expanding macro args and symbol interpolation in this state */
+	// Prevent expanding macro args and symbol interpolation in this state
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -2254,11 +2228,11 @@ static int skipIfBlock(bool toEndc)
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELSE after an ELSE block\n");
 					lexer_ReachELSEBlock();
-					/* fallthrough */
+					// fallthrough
 				maybeFinish:
-					if (toEndc) /* Ignore ELIF and ELSE, go to ENDC */
+					if (toEndc) // Ignore ELIF and ELSE, go to ENDC
 						break;
-					/* fallthrough */
+					// fallthrough
 				case T_POP_ENDC:
 					if (lexer_GetIFDepth() == startingDepth)
 						goto finish;
@@ -2269,7 +2243,7 @@ static int skipIfBlock(bool toEndc)
 			atLineStart = false;
 		}
 
-		/* Read chars until EOL */
+		// Read chars until EOL
 		do {
 			int c = nextChar();
 
@@ -2277,16 +2251,16 @@ static int skipIfBlock(bool toEndc)
 				token = T_EOF;
 				goto finish;
 			} else if (c == '\\') {
-				/* Unconditionally skip the next char, including line conts */
+				// Unconditionally skip the next char, including line conts
 				c = nextChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
 			}
 
 			if (c == '\r' || c == '\n') {
-				/* Handle CRLF before nextLine() since shiftChar updates colNo */
+				// Handle CRLF before nextLine() since shiftChar updates colNo
 				handleCRLF(c);
-				/* Do this both on line continuations and plain EOLs */
+				// Do this both on line continuations and plain EOLs
 				nextLine();
 			}
 		} while (!atLineStart);
@@ -2316,7 +2290,7 @@ static int yylex_SKIP_TO_ENDR(void)
 	int depth = 1;
 	bool atLineStart = lexerState->atLineStart;
 
-	/* Prevent expanding macro args and symbol interpolation in this state */
+	// Prevent expanding macro args and symbol interpolation in this state
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -2356,23 +2330,23 @@ static int yylex_SKIP_TO_ENDR(void)
 			atLineStart = false;
 		}
 
-		/* Read chars until EOL */
+		// Read chars until EOL
 		do {
 			int c = nextChar();
 
 			if (c == EOF) {
 				goto finish;
 			} else if (c == '\\') {
-				/* Unconditionally skip the next char, including line conts */
+				// Unconditionally skip the next char, including line conts
 				c = nextChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
 			}
 
 			if (c == '\r' || c == '\n') {
-				/* Handle CRLF before nextLine() since shiftChar updates colNo */
+				// Handle CRLF before nextLine() since shiftChar updates colNo
 				handleCRLF(c);
-				/* Do this both on line continuations and plain EOLs */
+				// Do this both on line continuations and plain EOLs
 				nextLine();
 			}
 		} while (!atLineStart);
@@ -2383,7 +2357,7 @@ finish:
 	lexerState->disableInterpolation = false;
 	lexerState->atLineStart = false;
 
-	/* yywrap() will finish the REPT/FOR loop */
+	// yywrap() will finish the REPT/FOR loop
 	return T_EOF;
 }
 
@@ -2393,10 +2367,10 @@ int yylex(void)
 		lexer_SetState(lexerStateEOL);
 		lexerStateEOL = NULL;
 	}
-	/* `lexer_SetState` updates `lexerState`, so check for EOF after it */
+	// `lexer_SetState` updates `lexerState`, so check for EOF after it
 	if (lexerState->lastToken == T_EOB && yywrap())
 		return T_EOF;
-	/* Newlines read within an expansion should not increase the line count */
+	// Newlines read within an expansion should not increase the line count
 	if (lexerState->atLineStart && !lexerState->expansions)
 		nextLine();
 
@@ -2409,7 +2383,7 @@ int yylex(void)
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
-	/* Captures end at their buffer's boundary no matter what */
+	// Captures end at their buffer's boundary no matter what
 	if (token == T_EOF && !lexerState->capturing)
 		token = T_EOB;
 	lexerState->lastToken = token;
@@ -2431,7 +2405,7 @@ static void startCapture(struct CaptureBody *capture)
 	if (lexerState->isMmapped && !lexerState->expansions) {
 		capture->body = &lexerState->ptr[lexerState->offset];
 	} else {
-		lexerState->captureCapacity = 128; /* The initial size will be twice that */
+		lexerState->captureCapacity = 128; // The initial size will be twice that
 		assert(lexerState->captureBuf == NULL);
 		reallocCaptureBuf();
 		capture->body = NULL; // Indicate to retrieve the capture buffer when done capturing
@@ -2459,33 +2433,29 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 	size_t depth = 0;
 	int c = EOF;
 
-	/*
-	 * Due to parser internals, it reads the EOL after the expression before calling this.
-	 * Thus, we don't need to keep one in the buffer afterwards.
-	 * The following assertion checks that.
-	 */
+	// Due to parser internals, it reads the EOL after the expression before calling this.
+	// Thus, we don't need to keep one in the buffer afterwards.
+	// The following assertion checks that.
 	assert(lexerState->atLineStart);
 	for (;;) {
 		nextLine();
-		/* We're at line start, so attempt to match a `REPT` or `ENDR` token */
-		do { /* Discard initial whitespace */
+		// We're at line start, so attempt to match a `REPT` or `ENDR` token
+		do { // Discard initial whitespace
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier */
+		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c)) {
 			case T_POP_REPT:
 			case T_POP_FOR:
 				depth++;
-				/* Ignore the rest of that line */
+				// Ignore the rest of that line
 				break;
 
 			case T_POP_ENDR:
 				if (!depth) {
-					/*
-					 * The final ENDR has been captured, but we don't want it!
-					 * We know we have read exactly "ENDR", not e.g. an EQUS
-					 */
+					// The final ENDR has been captured, but we don't want it!
+					// We know we have read exactly "ENDR", not e.g. an EQUS
 					lexerState->captureSize -= strlen("ENDR");
 					goto finish;
 				}
@@ -2493,7 +2463,7 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 			}
 		}
 
-		/* Just consume characters until EOL or EOF */
+		// Just consume characters until EOL or EOF
 		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
@@ -2507,10 +2477,10 @@ bool lexer_CaptureRept(struct CaptureBody *capture)
 
 finish:
 	endCapture(capture);
-	/* ENDR or EOF puts us past the start of the line */
+	// ENDR or EOF puts us past the start of the line
 	lexerState->atLineStart = false;
 
-	/* Returns true if an ENDR terminated the block, false if it reached EOF first */
+	// Returns true if an ENDR terminated the block, false if it reached EOF first
 	return c != EOF;
 }
 
@@ -2518,38 +2488,34 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 {
 	startCapture(capture);
 
-	/* If the file is `mmap`ed, we need not to unmap it to keep access to the macro */
+	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (lexerState->isMmapped)
 		lexerState->isReferenced = true;
 
 	int c = EOF;
 
-	/*
-	 * Due to parser internals, it reads the EOL after the expression before calling this.
-	 * Thus, we don't need to keep one in the buffer afterwards.
-	 * The following assertion checks that.
-	 */
+	// Due to parser internals, it reads the EOL after the expression before calling this.
+	// Thus, we don't need to keep one in the buffer afterwards.
+	// The following assertion checks that.
 	assert(lexerState->atLineStart);
 	for (;;) {
 		nextLine();
-		/* We're at line start, so attempt to match an `ENDM` token */
-		do { /* Discard initial whitespace */
+		// We're at line start, so attempt to match an `ENDM` token
+		do { // Discard initial whitespace
 			c = nextChar();
 		} while (isWhitespace(c));
-		/* Now, try to match `ENDM` as a **whole** identifier */
+		// Now, try to match `ENDM` as a **whole** identifier
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c)) {
 			case T_POP_ENDM:
-				/*
-				 * The ENDM has been captured, but we don't want it!
-				 * We know we have read exactly "ENDM", not e.g. an EQUS
-				 */
+				// The ENDM has been captured, but we don't want it!
+				// We know we have read exactly "ENDM", not e.g. an EQUS
 				lexerState->captureSize -= strlen("ENDM");
 				goto finish;
 			}
 		}
 
-		/* Just consume characters until EOL or EOF */
+		// Just consume characters until EOL or EOF
 		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
@@ -2563,9 +2529,9 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 
 finish:
 	endCapture(capture);
-	/* ENDM or EOF puts us past the start of the line */
+	// ENDM or EOF puts us past the start of the line
 	lexerState->atLineStart = false;
 
-	/* Returns true if an ENDM terminated the block, false if it reached EOF first */
+	// Returns true if an ENDM terminated the block, false if it reached EOF first
 	return c != EOF;
 }
