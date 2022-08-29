@@ -44,7 +44,7 @@ char const *printChar(int c)
 		buf[2] = 't';
 		break;
 
-	default: /* Print as hex */
+	default: // Print as hex
 		buf[0] = '0';
 		buf[1] = 'x';
 		snprintf(&buf[2], 3, "%02hhX", (uint8_t)c); // includes the '\0'

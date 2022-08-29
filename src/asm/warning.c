@@ -49,19 +49,19 @@ static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 
 enum WarningState warningStates[ARRAY_SIZE(warningStates)];
 
-bool warningsAreErrors; /* Set if `-Werror` was specified */
+bool warningsAreErrors; // Set if `-Werror` was specified
 
 static enum WarningState warningState(enum WarningID id)
 {
-	/* Check if warnings are globally disabled */
+	// Check if warnings are globally disabled
 	if (!warnings)
 		return WARNING_DISABLED;
 
-	/* Get the actual state */
+	// Get the actual state
 	enum WarningState state = warningStates[id];
 
 	if (state == WARNING_DEFAULT)
-		/* The state isn't set, grab its default state */
+		// The state isn't set, grab its default state
 		state = defaultWarnings[id];
 
 	if (warningsAreErrors && state == WARNING_ENABLED)
@@ -95,10 +95,10 @@ static const char * const warningFlags[NB_WARNINGS] = {
 	"truncation",
 	"truncation",
 
-	/* Meta warnings */
+	// Meta warnings
 	"all",
 	"extra",
-	"everything", /* Especially useful for testing */
+	"everything", // Especially useful for testing
 };
 
 static const struct {
@@ -151,7 +151,7 @@ enum MetaWarningCommand {
 	META_WARNING_DONE = NB_WARNINGS
 };
 
-/* Warnings that probably indicate an error */
+// Warnings that probably indicate an error
 static uint8_t const _wallCommands[] = {
 	WARNING_BACKWARDS_FOR,
 	WARNING_BUILTIN_ARG,
@@ -167,7 +167,7 @@ static uint8_t const _wallCommands[] = {
 	META_WARNING_DONE
 };
 
-/* Warnings that are less likely to indicate an error */
+// Warnings that are less likely to indicate an error
 static uint8_t const _wextraCommands[] = {
 	WARNING_EMPTY_MACRO_ARG,
 	WARNING_MACRO_SHIFT,
@@ -179,7 +179,7 @@ static uint8_t const _wextraCommands[] = {
 	META_WARNING_DONE
 };
 
-/* Literally everything. Notably useful for testing */
+// Literally everything. Notably useful for testing
 static uint8_t const _weverythingCommands[] = {
 	WARNING_BACKWARDS_FOR,
 	WARNING_BUILTIN_ARG,
@@ -199,7 +199,7 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
-	/* WARNING_USER, */
+	// WARNING_USER,
 	META_WARNING_DONE
 };
 
@@ -213,18 +213,18 @@ void processWarningFlag(char *flag)
 {
 	static bool setError = false;
 
-	/* First, try to match against a "meta" warning */
+	// First, try to match against a "meta" warning
 	for (enum WarningID id = META_WARNINGS_START; id < NB_WARNINGS; id++) {
-		/* TODO: improve the matching performance? */
+		// TODO: improve the matching performance?
 		if (!strcmp(flag, warningFlags[id])) {
-			/* We got a match! */
+			// We got a match!
 			if (setError)
 				errx("Cannot make meta warning \"%s\" into an error",
 				     flag);
 
 			for (uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];
 			     *ptr != META_WARNING_DONE; ptr++) {
-				/* Warning flag, set without override */
+				// Warning flag, set without override
 				if (warningStates[*ptr] == WARNING_DEFAULT)
 					warningStates[*ptr] = WARNING_ENABLED;
 			}
@@ -233,31 +233,31 @@ void processWarningFlag(char *flag)
 		}
 	}
 
-	/* If it's not a meta warning, specially check against `-Werror` */
+	// If it's not a meta warning, specially check against `-Werror`
 	if (!strncmp(flag, "error", strlen("error"))) {
 		char *errorFlag = flag + strlen("error");
 
 		switch (*errorFlag) {
 		case '\0':
-			/* `-Werror` */
+			// `-Werror`
 			warningsAreErrors = true;
 			return;
 
 		case '=':
-			/* `-Werror=XXX` */
+			// `-Werror=XXX`
 			setError = true;
-			processWarningFlag(errorFlag + 1); /* Skip the `=` */
+			processWarningFlag(errorFlag + 1); // Skip the `=`
 			setError = false;
 			return;
 
-		/* Otherwise, allow parsing as another flag */
+		// Otherwise, allow parsing as another flag
 		}
 	}
 
-	/* Well, it's either a normal warning or a mistake */
+	// Well, it's either a normal warning or a mistake
 
 	enum WarningState state = setError ? WARNING_ERROR :
-				  /* Not an error, then check if this is a negation */
+				  // Not an error, then check if this is a negation
 				  strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
 								      : WARNING_DISABLED;
 	char const *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
@@ -308,10 +308,10 @@ void processWarningFlag(char *flag)
 		}
 	}
 
-	/* Try to match the flag against a "normal" flag */
+	// Try to match the flag against a "normal" flag
 	for (enum WarningID id = 0; id < NB_PLAIN_WARNINGS; id++) {
 		if (!strcmp(rootFlag, warningFlags[id])) {
-			/* We got a match! */
+			// We got a match!
 			warningStates[id] = state;
 			return;
 		}
@@ -374,7 +374,7 @@ void warning(enum WarningID id, char const *fmt, ...)
 
 	case WARNING_DEFAULT:
 		unreachable_();
-		/* Not reached */
+		// Not reached
 
 	case WARNING_ENABLED:
 		break;

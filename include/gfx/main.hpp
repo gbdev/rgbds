@@ -71,19 +71,19 @@ struct Options {
 
 extern Options options;
 
-/**
+/*
  * Prints the error count, and exits with failure
  */
 [[noreturn]] void giveUp();
-/**
+/*
  * Prints a warning, and does not change the error count
  */
 void warning(char const *fmt, ...);
-/**
+/*
  * Prints an error, and increments the error count
  */
 void error(char const *fmt, ...);
-/**
+/*
  * Prints a fatal error, increments the error count, and gives up
  */
 [[noreturn]] void fatal(char const *fmt, ...);
@@ -120,4 +120,4 @@ static constexpr auto flipTable(std::integer_sequence<T, i...>) {
 // Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
 static constexpr auto flipTable = detail::flipTable(std::make_integer_sequence<uint16_t, 256>());
 
-#endif /* RGBDS_GFX_MAIN_HPP */
+#endif // RGBDS_GFX_MAIN_HPP

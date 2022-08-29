@@ -88,7 +88,7 @@ extern struct SectionTypeInfo {
 	uint32_t lastBank;
 } sectionTypeInfo[SECTTYPE_INVALID];
 
-/**
+/*
  * Tells whether a section has data in its object file definition,
  * depending on type.
  * @param type The section's type
@@ -100,7 +100,7 @@ static inline bool sect_HasData(enum SectionType type)
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 
-/**
+/*
  * Computes a memory region's end address (last byte), eg. 0x7FFF
  * @return The address of the last byte in that memory region
  */
@@ -109,7 +109,7 @@ static inline uint16_t endaddr(enum SectionType type)
 	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
 }
 
-/**
+/*
  * Computes a memory region's number of banks
  * @return The number of banks, 1 for regions without banking
  */
@@ -141,4 +141,4 @@ enum PatchType {
 	PATCHTYPE_INVALID
 };
 
-#endif /* RGBDS_LINKDEFS_H */
+#endif // RGBDS_LINKDEFS_H

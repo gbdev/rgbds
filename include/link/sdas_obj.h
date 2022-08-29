@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/* Assigning all sections a place */
+// Assigning all sections a place
 #ifndef RGBDS_LINK_SDAS_OBJ_H
 #define RGBDS_LINK_SDAS_OBJ_H
 
@@ -16,4 +16,4 @@ struct FileStackNode;
 
 void sdobj_ReadFile(struct FileStackNode const *fileName, FILE *file);
 
-#endif /* RGBDS_LINK_SDAS_OBJ_H */
+#endif // RGBDS_LINK_SDAS_OBJ_H

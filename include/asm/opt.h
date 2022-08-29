@@ -22,4 +22,4 @@ void opt_Parse(char const *option);
 void opt_Push(void);
 void opt_Pop(void);
 
-#endif
+#endif // RGBDS_OPT_H

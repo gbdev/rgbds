@@ -1,3 +1,10 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
 #include <assert.h>
 #include <errno.h>
@@ -12,13 +19,11 @@
 
 #define MAXMACROARGS 99999
 
-/*
- * Your average macro invocation does not go past the tens, but some go further
- * This ensures that sane and slightly insane invocations suffer no penalties,
- * and the rest is insane and thus will assume responsibility.
- * Additionally, ~300 bytes (on x64) of memory per level of nesting has been
- * deemed reasonable. (Halve that on x86.)
- */
+// Your average macro invocation does not go past the tens, but some go further
+// This ensures that sane and slightly insane invocations suffer no penalties,
+// and the rest is insane and thus will assume responsibility.
+// Additionally, ~300 bytes (on x64) of memory per level of nesting has been
+// deemed reasonable. (Halve that on x86.)
 #define INITIAL_ARG_SIZE 32
 struct MacroArgs {
 	unsigned int nbArgs;
@@ -33,11 +38,9 @@ struct MacroArgs {
 static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
-/*
- * The initialization is somewhat harmful, since it is never used, but it
- * guarantees the size of the buffer will be correct. I was unable to find a
- * better solution, but if you have one, please feel free!
- */
+// The initialization is somewhat harmful, since it is never used, but it
+// guarantees the size of the buffer will be correct. I was unable to find a
+// better solution, but if you have one, please feel free!
 static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
 static char *uniqueIDPtr = NULL;
 
@@ -68,7 +71,7 @@ void macro_AppendArg(struct MacroArgs **argPtr, char *s)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	if (macArgs->nbArgs >= macArgs->capacity) {
 		macArgs->capacity *= 2;
-		/* Check that overflow didn't roll us back */
+		// Check that overflow didn't roll us back
 		if (macArgs->capacity <= macArgs->nbArgs)
 			fatalerror("Failed to add new macro argument: capacity overflow\n");
 		macArgs = realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
@@ -112,9 +115,9 @@ char const *macro_GetAllArgs(void)
 	size_t len = 0;
 
 	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++)
-		len += strlen(macroArgs->args[i]) + 1; /* 1 for comma */
+		len += strlen(macroArgs->args[i]) + 1; // 1 for comma
 
-	char *str = malloc(len + 1); /* 1 for '\0' */
+	char *str = malloc(len + 1); // 1 for '\0'
 	char *ptr = str;
 
 	if (!str)
@@ -126,9 +129,9 @@ char const *macro_GetAllArgs(void)
 		memcpy(ptr, macroArgs->args[i], n);
 		ptr += n;
 
-		/* Commas go between args and after a last empty arg */
+		// Commas go between args and after a last empty arg
 		if (i < macroArgs->nbArgs - 1 || n == 0)
-			*ptr++ = ','; /* no space after comma */
+			*ptr++ = ','; // no space after comma
 	}
 	*ptr = '\0';
 
@@ -153,8 +156,8 @@ void macro_SetUniqueID(uint32_t id)
 	} else {
 		if (uniqueID > maxUniqueID)
 			maxUniqueID = uniqueID;
-		/* The buffer is guaranteed to be the correct size */
-		/* This is a valid label fragment, but not a valid numeric */
+		// The buffer is guaranteed to be the correct size
+		// This is a valid label fragment, but not a valid numeric
 		sprintf(uniqueIDBuf, "_u%" PRIu32, id);
 		uniqueIDPtr = uniqueIDBuf;
 	}

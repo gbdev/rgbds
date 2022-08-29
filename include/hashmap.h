@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/* Generic hashmap implementation (C++ templates are calling...) */
+// Generic hashmap implementation (C++ templates are calling...)
 #ifndef RGBDS_LINK_HASHMAP_H
 #define RGBDS_LINK_HASHMAP_H
 
@@ -18,10 +18,10 @@
 static_assert(HALF_HASH_NB_BITS * 2 == HASH_NB_BITS, "");
 #define HASHMAP_NB_BUCKETS (1 << HALF_HASH_NB_BITS)
 
-/* HashMapEntry is internal, please do not attempt to use it */
+// HashMapEntry is internal, please do not attempt to use it
 typedef struct HashMapEntry *HashMap[HASHMAP_NB_BUCKETS];
 
-/**
+/*
  * Adds an element to a hashmap.
  * @warning Adding a new element with an already-present key will not cause an
  *          error, this must be handled externally.
@@ -33,7 +33,7 @@ typedef struct HashMapEntry *HashMap[HASHMAP_NB_BUCKETS];
  */
 void **hash_AddElement(HashMap map, char const *key, void *element);
 
-/**
+/*
  * Removes an element from a hashmap.
  * @param map The HashMap to remove the element from
  * @param key The key to search the element with
@@ -41,7 +41,7 @@ void **hash_AddElement(HashMap map, char const *key, void *element);
  */
 bool hash_RemoveElement(HashMap map, char const *key);
 
-/**
+/*
  * Finds an element in a hashmap, and returns a pointer to its value field.
  * @param map The map to consider the elements of
  * @param key The key to search an element for
@@ -49,7 +49,7 @@ bool hash_RemoveElement(HashMap map, char const *key);
  */
 void **hash_GetNode(HashMap const map, char const *key);
 
-/**
+/*
  * Finds an element in a hashmap.
  * @param map The map to consider the elements of
  * @param key The key to search an element for
@@ -58,7 +58,7 @@ void **hash_GetNode(HashMap const map, char const *key);
  */
 void *hash_GetElement(HashMap const map, char const *key);
 
-/**
+/*
  * Executes a function on each element in a hashmap.
  * @param map The map to consider the elements of
  * @param func The function to run. The first argument will be the element,
@@ -67,11 +67,11 @@ void *hash_GetElement(HashMap const map, char const *key);
  */
 void hash_ForEach(HashMap const map, void (*func)(void *, void *), void *arg);
 
-/**
+/*
  * Cleanly empties a hashmap from its contents.
  * This does not `free` the data structure itself!
  * @param map The map to empty
  */
 void hash_EmptyMap(HashMap map);
 
-#endif /* RGBDS_LINK_HASHMAP_H */
+#endif // RGBDS_LINK_HASHMAP_H

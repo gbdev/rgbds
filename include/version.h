@@ -24,4 +24,4 @@ char const *get_package_version_string(void);
 }
 #endif
 
-#endif /* EXTERN_VERSION_H */
+#endif // EXTERN_VERSION_H

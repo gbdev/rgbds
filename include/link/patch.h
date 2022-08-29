@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/* Applying patches to SECTIONs */
+// Applying patches to SECTIONs
 #ifndef RGBDS_LINK_PATCH_H
 #define RGBDS_LINK_PATCH_H
 
@@ -27,15 +27,15 @@ struct Assertion {
 	struct Assertion *next;
 };
 
-/**
+/*
  * Checks all assertions
  * @return true if assertion failed
  */
 void patch_CheckAssertions(struct Assertion *assertion);
 
-/**
+/*
  * Applies all SECTIONs' patches to them
  */
 void patch_ApplyPatches(void);
 
-#endif /* RGBDS_LINK_PATCH_H */
+#endif // RGBDS_LINK_PATCH_H

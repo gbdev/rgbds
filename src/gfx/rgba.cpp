@@ -1,3 +1,11 @@
+/*
+ * This file is part of RGBDS.
+ *
+ * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "gfx/rgba.hpp"
 
 #include <assert.h>

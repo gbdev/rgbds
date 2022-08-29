@@ -91,4 +91,4 @@ _Noreturn void fatalerror(char const *fmt, ...) format_(printf, 1, 2);
  */
 void error(char const *fmt, ...) format_(printf, 1, 2);
 
-#endif
+#endif // WARNING_H

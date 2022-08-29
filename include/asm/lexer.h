@@ -11,7 +11,7 @@
 
 #include <stdbool.h>
 
-#define MAXSTRLEN	255
+#define MAXSTRLEN 255
 
 struct LexerState;
 extern struct LexerState *lexerState;
@@ -49,9 +49,7 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 	gfxDigits[3] = digits[3];
 }
 
-/*
- * `path` is referenced, but not held onto..!
- */
+// `path` is referenced, but not held onto..!
 struct LexerState *lexer_OpenFile(char const *path);
 struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
@@ -99,4 +97,4 @@ struct DsArgList {
 	struct Expression *args;
 };
 
-#endif /* RGBDS_ASM_LEXER_H */
+#endif // RGBDS_ASM_LEXER_H

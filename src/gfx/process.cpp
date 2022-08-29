@@ -42,7 +42,7 @@ class ImagePalette {
 public:
 	ImagePalette() = default;
 
-	/**
+	/*
 	 * Registers a color in the palette.
 	 * If the newly inserted color "conflicts" with another one (different color, but same CGB
 	 * color), then the other color is returned. Otherwise, `nullptr` is returned.
@@ -164,7 +164,7 @@ public:
 		return true;
 	}
 
-	/**
+	/*
 	 * Reads a PNG and notes all of its colors
 	 *
 	 * This code is more complicated than strictly necessary, but that's because of the API
@@ -466,7 +466,7 @@ public:
 };
 
 class RawTiles {
-	/**
+	/*
 	 * A tile which only contains indices into the image's global palette
 	 */
 	class RawTile {
@@ -481,7 +481,7 @@ private:
 	std::vector<RawTile> _tiles;
 
 public:
-	/**
+	/*
 	 * Creates a new raw tile, and returns a reference to it so it can be filled in
 	 */
 	RawTile &newTile() {
@@ -491,7 +491,7 @@ public:
 };
 
 struct AttrmapEntry {
-	/**
+	/*
 	 * This field can either be a proto-palette ID, or `transparent` to indicate that the
 	 * corresponding tile is fully transparent. If you are looking to get the palette ID for this
 	 * attrmap entry while correctly handling the above, use `getPalID`.
@@ -831,7 +831,7 @@ struct UniqueTiles {
 	UniqueTiles(UniqueTiles const &) = delete;
 	UniqueTiles(UniqueTiles &&) = default;
 
-	/**
+	/*
 	 * Adds a tile to the collection, and returns its ID
 	 */
 	std::tuple<uint16_t, TileData::MatchType> addTile(Png::TilesVisitor::Tile const &tile,
@@ -857,7 +857,7 @@ struct UniqueTiles {
 	auto end() const { return tiles.end(); }
 };
 
-/**
+/*
  * Generate tile data while deduplicating unique tiles (via mirroring if enabled)
  * Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
  * 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
@@ -986,16 +986,17 @@ void process() {
 				protoPalettes[n] = tileColors; // Override them
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
-				/* The following code does its job, except that references to the removed
+				/*
+				 * The following code does its job, except that references to the removed
 				 * proto-palettes are not updated, causing issues.
 				 * TODO: overlap might not be detrimental to the packing algorithm.
 				 * Investigation is necessary, especially if pathological cases are found.
-
-				for (size_t i = protoPalettes.size(); --i != n;) {
-				    if (tileColors.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
-				        protoPalettes.erase(protoPalettes.begin() + i);
-				    }
-				}
+				 *
+				 * for (size_t i = protoPalettes.size(); --i != n;) {
+				 *     if (tileColors.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
+				 *         protoPalettes.erase(protoPalettes.begin() + i);
+				 *     }
+				 * }
 				*/
 				[[fallthrough]];
 

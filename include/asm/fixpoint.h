@@ -28,4 +28,4 @@ int32_t fix_Round(int32_t i);
 int32_t fix_Ceil(int32_t i);
 int32_t fix_Floor(int32_t i);
 
-#endif /* RGBDS_ASM_FIXPOINT_H */
+#endif // RGBDS_ASM_FIXPOINT_H

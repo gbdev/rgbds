@@ -33,34 +33,33 @@
 #include "platform.h"
 #include "version.h"
 
-bool isDmgMode;               /* -d */
-char       *linkerScriptName; /* -l */
-char const *mapFileName;      /* -m */
-bool noSymInMap;              /* -M */
-char const *symFileName;      /* -n */
-char const *overlayFileName;  /* -O */
-char const *outputFileName;   /* -o */
-uint8_t padValue;             /* -p */
+bool isDmgMode;               // -d
+char       *linkerScriptName; // -l
+char const *mapFileName;      // -m
+bool noSymInMap;              // -M
+char const *symFileName;      // -n
+char const *overlayFileName;  // -O
+char const *outputFileName;   // -o
+uint8_t padValue;             // -p
 // Setting these three to 0 disables the functionality
-uint16_t scrambleROMX = 0;    /* -S */
+uint16_t scrambleROMX = 0;    // -S
 uint8_t scrambleWRAMX = 0;
 uint8_t scrambleSRAM = 0;
-bool is32kMode;               /* -t */
-bool beVerbose;               /* -v */
-bool isWRA0Mode;              /* -w */
-bool disablePadding;          /* -x */
+bool is32kMode;               // -t
+bool beVerbose;               // -v
+bool isWRA0Mode;              // -w
+bool disablePadding;          // -x
 
 static uint32_t nbErrors = 0;
 
-/***** Helper function to dump a file stack to stderr *****/
-
+// Helper function to dump a file stack to stderr
 char const *dumpFileStack(struct FileStackNode const *node)
 {
 	char const *lastName;
 
 	if (node->parent) {
 		lastName = dumpFileStack(node->parent);
-		/* REPT nodes use their parent's name */
+		// REPT nodes use their parent's name
 		if (node->type != NODE_REPT)
 			lastName = node->name;
 		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName);
@@ -165,7 +164,7 @@ FILE *openFile(char const *fileName, char const *mode)
 	return file;
 }
 
-/* Short options */
+// Short options
 static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
 
 /*
@@ -197,9 +196,7 @@ static struct option const longopts[] = {
 	{ NULL,            no_argument,       NULL, 0   }
 };
 
-/**
- * Prints the program's usage to stdout.
- */
+// Prints the program's usage to stdout.
 static void printUsage(void)
 {
 	fputs(
@@ -219,10 +216,8 @@ static void printUsage(void)
 	      stderr);
 }
 
-/**
- * Cleans up what has been done
- * Mostly here to please tools such as `valgrind` so actual errors can be seen
- */
+// Cleans up what has been done
+// Mostly here to please tools such as `valgrind` so actual errors can be seen
 static void cleanup(void)
 {
 	obj_Cleanup();
@@ -362,10 +357,10 @@ _Noreturn void reportErrors(void) {
 int main(int argc, char *argv[])
 {
 	int optionChar;
-	char *endptr; /* For error checking with `strtoul` */
-	unsigned long value; /* For storing `strtoul`'s return value */
+	char *endptr; // For error checking with `strtoul`
+	unsigned long value; // For storing `strtoul`'s return value
 
-	/* Parse options */
+	// Parse options
 	while ((optionChar = musl_getopt_long_only(argc, argv, optstring,
 						   longopts, NULL)) != -1) {
 		switch (optionChar) {
@@ -407,7 +402,7 @@ int main(int argc, char *argv[])
 			parseScrambleSpec(musl_optarg);
 			break;
 		case 's':
-			/* FIXME: nobody knows what this does, figure it out */
+			// FIXME: nobody knows what this does, figure it out
 			(void)musl_optarg;
 			warning(NULL, 0, "Nobody has any idea what `-s` does");
 			break;
@@ -425,7 +420,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'x':
 			disablePadding = true;
-			/* implies tiny mode */
+			// implies tiny mode
 			is32kMode = true;
 			break;
 		default:
@@ -436,41 +431,41 @@ int main(int argc, char *argv[])
 
 	int curArgIndex = musl_optind;
 
-	/* If no input files were specified, the user must have screwed up */
+	// If no input files were specified, the user must have screwed up
 	if (curArgIndex == argc) {
 		fputs("FATAL: no input files\n", stderr);
 		printUsage();
 		exit(1);
 	}
 
-	/* Patch the size array depending on command-line options */
+	// Patch the size array depending on command-line options
 	if (!is32kMode)
 		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
 	if (!isWRA0Mode)
 		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
 
-	/* Patch the bank ranges array depending on command-line options */
+	// Patch the bank ranges array depending on command-line options
 	if (isDmgMode)
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
 
-	/* Read all object files first, */
+	// Read all object files first,
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
 
-	/* apply the linker script's modifications, */
+	// apply the linker script's modifications,
 	if (linkerScriptName) {
 		verbosePrint("Reading linker script...\n");
 
 		linkerScript = openFile(linkerScriptName, "r");
 
-		/* Modify all sections according to the linker script */
+		// Modify all sections according to the linker script
 		struct SectionPlacement *placement;
 
 		while ((placement = script_NextSection())) {
 			struct Section *section = placement->section;
 
 			assert(section->offset == 0);
-			/* Check if this doesn't conflict with what the code says */
+			// Check if this doesn't conflict with what the code says
 			if (section->type == SECTTYPE_INVALID) {
 				for (struct Section *sect = section; sect; sect = sect->nextu)
 					sect->type = placement->type; // SDCC "unknown" sections
@@ -493,7 +488,7 @@ int main(int argc, char *argv[])
 			section->org = placement->org;
 			section->isBankFixed = true;
 			section->bank = placement->bank;
-			section->isAlignFixed = false; /* The alignment is satisfied */
+			section->isAlignFixed = false; // The alignment is satisfied
 		}
 
 		fclose(linkerScript);
@@ -506,7 +501,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	/* then process them, */
+	// then process them,
 	obj_DoSanityChecks();
 	if (nbErrors != 0)
 		reportErrors();
@@ -514,12 +509,12 @@ int main(int argc, char *argv[])
 	obj_CheckAssertions();
 	assign_Cleanup();
 
-	/* and finally output the result. */
+	// and finally output the result.
 	patch_ApplyPatches();
 	if (nbErrors != 0)
 		reportErrors();
 	out_WriteFiles();
 
-	/* Do cleanup before quitting, though. */
+	// Do cleanup before quitting, though.
 	cleanup();
 }

@@ -21,7 +21,7 @@ class ProtoPalette {
 	std::array<uint16_t, 4> _colorIndices{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
 
 public:
-	/**
+	/*
 	 * Adds the specified color to the set
 	 * Returns false if the set is full
 	 */
@@ -41,4 +41,4 @@ public:
 	decltype(_colorIndices)::const_iterator end() const;
 };
 
-#endif /* RGBDS_GFX_PROTO_PALETTE_HPP */
+#endif // RGBDS_GFX_PROTO_PALETTE_HPP

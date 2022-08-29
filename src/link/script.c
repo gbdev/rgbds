@@ -41,7 +41,7 @@ static void pushFile(char *newFileName)
 		     linkerScriptName, lineNo);
 
 	if (fileStackIndex == fileStackSize) {
-		if (!fileStackSize) /* Init file stack */
+		if (!fileStackSize) // Init file stack
 			fileStackSize = 4;
 		fileStackSize *= 2;
 		fileStack = realloc(fileStack, sizeof(*fileStack) * fileStackSize);
@@ -88,7 +88,7 @@ static bool isNewline(int c)
 	return c == '\r' || c == '\n';
 }
 
-/**
+/*
  * Try parsing a number, in base 16 if it begins with a dollar,
  * in base 10 otherwise
  * @param str The number to parse
@@ -108,7 +108,7 @@ static bool tryParseNumber(char const *str, uint32_t *number)
 		base = 16;
 	}
 
-	/* An empty string is not a number */
+	// An empty string is not a number
 	if (!*str)
 		return false;
 
@@ -188,16 +188,16 @@ static struct LinkerScriptToken *nextToken(void)
 	static struct LinkerScriptToken token;
 	int curchar;
 
-	/* If the token has a string, make sure to avoid leaking it */
+	// If the token has a string, make sure to avoid leaking it
 	if (token.type == TOKEN_STRING)
 		free(token.attr.string);
 
-	/* Skip initial whitespace... */
+	// Skip initial whitespace...
 	do
 		curchar = nextChar();
 	while (isWhiteSpace(curchar));
 
-	/* If this is a comment, skip to the end of the line */
+	// If this is a comment, skip to the end of the line
 	if (curchar == ';') {
 		do {
 			curchar = nextChar();
@@ -207,22 +207,22 @@ static struct LinkerScriptToken *nextToken(void)
 	if (curchar == EOF) {
 		token.type = TOKEN_EOF;
 	} else if (isNewline(curchar)) {
-		/* If we have a newline char, this is a newline token */
+		// If we have a newline char, this is a newline token
 		token.type = TOKEN_NEWLINE;
 
 		if (curchar == '\r') {
-			/* Handle CRLF */
+			// Handle CRLF
 			curchar = nextChar();
 			if (curchar != '\n')
 				ungetc(curchar, linkerScript);
 		}
 	} else if (curchar == '"') {
-		/* If we have a string start, this is a string */
+		// If we have a string start, this is a string
 		token.type = TOKEN_STRING;
-		token.attr.string = NULL; /* Force initial alloc */
+		token.attr.string = NULL; // Force initial alloc
 
 		size_t size = 0;
-		size_t capacity = 16; /* Half of the default capacity */
+		size_t capacity = 16; // Half of the default capacity
 
 		do {
 			curchar = nextChar();
@@ -230,10 +230,10 @@ static struct LinkerScriptToken *nextToken(void)
 				errx("%s(%" PRIu32 "): Unterminated string",
 				     linkerScriptName, lineNo);
 			} else if (curchar == '"') {
-				/* Quotes force a string termination */
+				// Quotes force a string termination
 				curchar = '\0';
 			} else if (curchar == '\\') {
-				/* Backslashes are escape sequences */
+				// Backslashes are escape sequences
 				curchar = nextChar();
 				if (curchar == EOF || isNewline(curchar))
 					errx("%s(%" PRIu32 "): Unterminated string",
@@ -259,10 +259,10 @@ static struct LinkerScriptToken *nextToken(void)
 			token.attr.string[size++] = curchar;
 		} while (curchar);
 	} else {
-		/* This is either a number, command or bank, that is: a word */
+		// This is either a number, command or bank, that is: a word
 		char *str = NULL;
 		size_t size = 0;
-		size_t capacity = 8; /* Half of the default capacity */
+		size_t capacity = 8; // Half of the default capacity
 
 		for (;;) {
 			if (size >= capacity || str == NULL) {
@@ -279,7 +279,7 @@ static struct LinkerScriptToken *nextToken(void)
 				break;
 
 			curchar = nextChar();
-			/* Whitespace, a newline or a comment end the token */
+			// Whitespace, a newline or a comment end the token
 			if (isWhiteSpace(curchar) || isNewline(curchar) || curchar == ';') {
 				ungetc(curchar, linkerScript);
 				curchar = '\0';
@@ -288,7 +288,7 @@ static struct LinkerScriptToken *nextToken(void)
 
 		token.type = TOKEN_INVALID;
 
-		/* Try to match a command */
+		// Try to match a command
 		for (enum LinkerScriptCommand i = 0; i < COMMAND_INVALID; i++) {
 			if (!strcmp(commands[i], str)) {
 				token.type = TOKEN_COMMAND;
@@ -298,7 +298,7 @@ static struct LinkerScriptToken *nextToken(void)
 		}
 
 		if (token.type == TOKEN_INVALID) {
-			/* Try to match a bank specifier */
+			// Try to match a bank specifier
 			for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
 				if (!strcmp(sectionTypeInfo[type].name, str)) {
 					token.type = TOKEN_BANK;
@@ -309,13 +309,13 @@ static struct LinkerScriptToken *nextToken(void)
 		}
 
 		if (token.type == TOKEN_INVALID) {
-			/* Try to match an include token */
+			// Try to match an include token
 			if (!strcmp("INCLUDE", str))
 				token.type = TOKEN_INCLUDE;
 		}
 
 		if (token.type == TOKEN_INVALID) {
-			/* None of the strings matched, do we have a number? */
+			// None of the strings matched, do we have a number?
 			if (tryParseNumber(str, &token.attr.number))
 				token.type = TOKEN_NUMBER;
 			else
@@ -354,14 +354,14 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg, uint1
 enum LinkerScriptParserState {
 	PARSER_FIRSTTIME,
 	PARSER_LINESTART,
-	PARSER_INCLUDE, /* After an INCLUDE token */
+	PARSER_INCLUDE, // After an INCLUDE token
 	PARSER_LINEEND
 };
 
-/* Part of internal state, but has data that needs to be freed */
+// Part of internal state, but has data that needs to be freed
 static uint16_t *curaddr[SECTTYPE_INVALID];
 
-/* Put as global to ensure it's initialized only once */
+// Put as global to ensure it's initialized only once
 static enum LinkerScriptParserState parserState = PARSER_FIRSTTIME;
 
 struct SectionPlacement *script_NextSection(void)
@@ -373,7 +373,7 @@ struct SectionPlacement *script_NextSection(void)
 	if (parserState == PARSER_FIRSTTIME) {
 		lineNo = 1;
 
-		/* Init PC for all banks */
+		// Init PC for all banks
 		for (enum SectionType i = 0; i < SECTTYPE_INVALID; i++) {
 			curaddr[i] = malloc(sizeof(*curaddr[i]) * nbbanks(i));
 			for (uint32_t b = 0; b < nbbanks(i); b++)
@@ -427,7 +427,7 @@ struct SectionPlacement *script_NextSection(void)
 				lineNo++;
 				break;
 
-			/* A stray string is a section name */
+			// A stray string is a section name
 			case TOKEN_STRING:
 				parserState = PARSER_LINEEND;
 
@@ -454,15 +454,11 @@ struct SectionPlacement *script_NextSection(void)
 
 				token = nextToken();
 				hasArg = token->type == TOKEN_NUMBER;
-				/*
-				 * Leaving `arg` uninitialized when `!hasArg`
-				 * causes GCC to warn about its use as an
-				 * argument to `processCommand`. This cannot
-				 * happen because `hasArg` has to be true, but
-				 * silence the warning anyways.
-				 * I dislike doing this because it could swallow
-				 * actual errors, but I don't have a choice.
-				 */
+				// Leaving `arg` uninitialized when `!hasArg` causes GCC to warn
+				// about its use as an argument to `processCommand`. This cannot
+				// happen because `hasArg` has to be true, but silence the warning
+				// anyways. I dislike doing this because it could swallow actual
+				// errors, but I don't have a choice.
 				arg = hasArg ? token->attr.number : 0;
 
 				if (tokType == TOKEN_COMMAND) {
@@ -474,12 +470,10 @@ struct SectionPlacement *script_NextSection(void)
 						     linkerScriptName, lineNo);
 
 					processCommand(attr.command, arg, &curaddr[placement.type][bankID]);
-				} else { /* TOKEN_BANK */
+				} else { // TOKEN_BANK
 					placement.type = attr.secttype;
-					/*
-					 * If there's only one bank,
-					 * specifying the number is optional.
-					 */
+					// If there's only one bank,
+					// specifying the number is optional.
 					if (!hasArg && nbbanks(placement.type) != 1)
 						errx("%s(%" PRIu32 "): Didn't specify a bank number",
 						     linkerScriptName, lineNo);
@@ -497,7 +491,7 @@ struct SectionPlacement *script_NextSection(void)
 					bankID = arg - sectionTypeInfo[placement.type].firstBank;
 				}
 
-				/* If we read a token we shouldn't have... */
+				// If we read a token we shouldn't have...
 				if (token->type != TOKEN_NUMBER)
 					goto lineend;
 				break;
@@ -513,9 +507,9 @@ struct SectionPlacement *script_NextSection(void)
 				errx("%s(%" PRIu32 "): Expected a file name after INCLUDE",
 				     linkerScriptName, lineNo);
 
-			/* Switch to that file */
+			// Switch to that file
 			pushFile(token->attr.string);
-			/* The file stack took ownership of the string */
+			// The file stack took ownership of the string
 			token->attr.string = NULL;
 
 			parserState = PARSER_LINESTART;

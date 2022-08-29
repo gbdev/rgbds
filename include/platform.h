@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/* platform-specific hacks */
+// platform-specific hacks
 
 #ifndef RGBDS_PLATFORM_H
 #define RGBDS_PLATFORM_H
@@ -20,20 +20,20 @@
 # include <strings.h>
 #endif
 
-/* MSVC has deprecated strdup in favor of _strdup */
+// MSVC has deprecated strdup in favor of _strdup
 #ifdef _MSC_VER
 # define strdup _strdup
 #endif
 
-/* MSVC prefixes the names of S_* macros with underscores,
-   and doesn't define any S_IS* macros. Define them ourselves */
+// MSVC prefixes the names of S_* macros with underscores,
+// and doesn't define any S_IS* macros; define them ourselves
 #ifdef _MSC_VER
 # define S_IFMT _S_IFMT
 # define S_IFDIR _S_IFDIR
 # define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 
-/* MSVC doesn't use POSIX types or defines for `read` */
+// MSVC doesn't use POSIX types or defines for `read`
 #ifdef _MSC_VER
 # include <io.h>
 # define STDIN_FILENO 0
@@ -46,7 +46,7 @@
 # include <unistd.h>
 #endif
 
-/* MSVC doesn't support `[static N]` for array arguments from C99 or C11 */
+// MSVC doesn't support `[static N]` for array arguments from C99 or C11
 #ifdef _MSC_VER
 # define MIN_NB_ELMS(N)
 # define ARR_QUALS(...)
@@ -75,4 +75,4 @@
 # define setmode(fd, mode) ((void)0)
 #endif
 
-#endif /* RGBDS_PLATFORM_H */
+#endif // RGBDS_PLATFORM_H

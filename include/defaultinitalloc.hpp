@@ -1,4 +1,4 @@
-/**
+/*
  * Allocator adaptor that interposes construct() calls to convert value-initialization
  * (which is what you get with e.g. `vector::resize`) into default-initialization (which does not
  * zero out non-class types).
@@ -36,4 +36,4 @@ public:
 template<typename T>
 using DefaultInitVec = std::vector<T, default_init_allocator<T>>;
 
-#endif
+#endif // DEFAULT_INIT_ALLOC_H

@@ -39,12 +39,12 @@ namespace packing {
 //  Tile | Proto-palette
 //  Page | Palette
 
-/**
+/*
  * A reference to a proto-palette, and attached attributes for sorting purposes
  */
 struct ProtoPalAttrs {
 	size_t const protoPalIndex;
-	/**
+	/*
 	 * Pages from which we are banned (to prevent infinite loops)
 	 * This is dynamic because we wish not to hard-cap the amount of palettes
 	 */
@@ -62,7 +62,7 @@ struct ProtoPalAttrs {
 	}
 };
 
-/**
+/*
  * A collection of proto-palettes assigned to a palette
  * Does not contain the actual color indices because we need to be able to remove elements
  */
@@ -139,7 +139,7 @@ public:
 	}
 	const_iterator end() const { return const_iterator{&_assigned, _assigned.end()}; }
 
-	/**
+	/*
 	 * Assigns a new ProtoPalAttrs in a free slot, assuming there is one
 	 * Args are passed to the `ProtoPalAttrs`'s constructor
 	 */
@@ -198,7 +198,7 @@ private:
 		return colors;
 	}
 public:
-	/**
+	/*
 	 * Returns the number of distinct colors
 	 */
 	size_t volume() const { return uniqueColors().size(); }
@@ -208,7 +208,7 @@ public:
 		return colors.size() <= options.maxOpaqueColors();
 	}
 
-	/**
+	/*
 	 * Computes the "relative size" of a proto-palette on this palette
 	 */
 	double relSizeOf(ProtoPalette const &protoPal) const {
@@ -227,7 +227,7 @@ public:
 		return relSize;
 	}
 
-	/**
+	/*
 	 * Computes the "relative size" of a set of proto-palettes on this palette
 	 */
 	template<typename Iter>
@@ -237,7 +237,7 @@ public:
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
 	}
-	/**
+	/*
 	 * Computes the "relative size" of a set of colors on this palette
 	 */
 	template<typename Iter>

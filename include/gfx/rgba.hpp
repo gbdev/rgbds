@@ -20,7 +20,7 @@ struct Rgba {
 
 	constexpr Rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 	    : red(r), green(g), blue(b), alpha(a) {}
-	/**
+	/*
 	 * Constructs the color from a "packed" RGBA representation (0xRRGGBBAA)
 	 */
 	explicit constexpr Rgba(uint32_t rgba = 0)
@@ -35,7 +35,7 @@ struct Rgba {
 		        (uint8_t)(cgbColor & 0x8000 ? 0x00 : 0xFF)};
 	}
 
-	/**
+	/*
 	 * Returns this RGBA as a 32-bit number that can be printed in hex (`%08x`) to yield its CSS
 	 * representation
 	 */
@@ -45,7 +45,7 @@ struct Rgba {
 	}
 	friend bool operator!=(Rgba const &lhs, Rgba const &rhs) { return lhs.toCSS() != rhs.toCSS(); }
 
-	/**
+	/*
 	 * CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead
 	 * Since the rest of the bits don't matter then, we return 0x8000 exactly.
 	 */
@@ -55,7 +55,7 @@ struct Rgba {
 	bool isTransparent() const { return alpha < transparency_threshold; }
 	static constexpr uint8_t opacity_threshold = 0xF0;
 	bool isOpaque() const { return alpha >= opacity_threshold; }
-	/**
+	/*
 	 * Computes the equivalent CGB color, respects the color curve depending on options
 	 */
 	uint16_t cgbColor() const;
@@ -64,4 +64,4 @@ struct Rgba {
 	uint8_t grayIndex() const;
 };
 
-#endif /* RGBDS_GFX_RGBA_HPP */
+#endif // RGBDS_GFX_RGBA_HPP

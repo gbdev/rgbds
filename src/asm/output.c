@@ -6,9 +6,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-/*
- * Outputs an objectfile
- */
+// Outputs an objectfile
 
 #include <assert.h>
 #include <errno.h>
@@ -54,18 +52,16 @@ char *objectName;
 
 struct Section *sectionList;
 
-/* Linked list of symbols to put in the object file */
+// Linked list of symbols to put in the object file
 static struct Symbol *objectSymbols = NULL;
 static struct Symbol **objectSymbolsTail = &objectSymbols;
-static uint32_t nbSymbols = 0; /* Length of the above list */
+static uint32_t nbSymbols = 0; // Length of the above list
 
 static struct Assertion *assertions = NULL;
 
 static struct FileStackNode *fileStackNodes = NULL;
 
-/*
- * Count the number of sections used in this object
- */
+// Count the number of sections used in this object
 static uint32_t countSections(void)
 {
 	uint32_t count = 0;
@@ -76,9 +72,7 @@ static uint32_t countSections(void)
 	return count;
 }
 
-/*
- * Count the number of patches used in this object
- */
+// Count the number of patches used in this object
 static uint32_t countPatches(struct Section const *sect)
 {
 	uint32_t r = 0;
@@ -90,9 +84,7 @@ static uint32_t countPatches(struct Section const *sect)
 	return r;
 }
 
-/**
- * Count the number of assertions used in this object
- */
+// Count the number of assertions used in this object
 static uint32_t countAsserts(void)
 {
 	struct Assertion *assert = assertions;
@@ -105,9 +97,7 @@ static uint32_t countAsserts(void)
 	return count;
 }
 
-/*
- * Write a long to a file (little-endian)
- */
+// Write a long to a file (little-endian)
 static void putlong(uint32_t i, FILE *f)
 {
 	putc(i, f);
@@ -116,9 +106,7 @@ static void putlong(uint32_t i, FILE *f)
 	putc(i >> 24, f);
 }
 
-/*
- * Write a NULL-terminated string to a file
- */
+// Write a NULL-terminated string to a file
 static void putstring(char const *s, FILE *f)
 {
 	while (*s)
@@ -133,7 +121,7 @@ static uint32_t getNbFileStackNodes(void)
 
 void out_RegisterNode(struct FileStackNode *node)
 {
-	/* If node is not already registered, register it (and parents), and give it a unique ID */
+	// If node is not already registered, register it (and parents), and give it a unique ID
 	while (node->ID == (uint32_t)-1) {
 		node->ID = getNbFileStackNodes();
 		if (node->ID == (uint32_t)-1)
@@ -141,7 +129,7 @@ void out_RegisterNode(struct FileStackNode *node)
 		node->next = fileStackNodes;
 		fileStackNodes = node;
 
-		/* Also register the node's parents */
+		// Also register the node's parents
 		node = node->parent;
 		if (!node)
 			break;
@@ -156,25 +144,21 @@ This is code intended to replace a node, which is pretty useless until ref count
 
 	struct FileStackNode **ptr = &fileStackNodes;
 
-	/*
-	 * The linked list is supposed to have decrementing IDs, so iterate with less memory reads,
-	 * to hopefully hit the cache less. A debug check is added after, in case a change is made
-	 * that breaks this assumption.
-	 */
+	// The linked list is supposed to have decrementing IDs, so iterate with less memory reads,
+	// to hopefully hit the cache less. A debug check is added after, in case a change is made
+	// that breaks this assumption.
 	for (uint32_t i = fileStackNodes->ID; i != node->ID; i--)
 		ptr = &(*ptr)->next;
 	assert((*ptr)->ID == node->ID);
 
 	node->next = (*ptr)->next;
-	assert(!node->next || node->next->ID == node->ID - 1); /* Catch inconsistencies early */
-	/* TODO: unreference the node */
+	assert(!node->next || node->next->ID == node->ID - 1); // Catch inconsistencies early
+	// TODO: unreference the node
 	*ptr = node;
 #endif
 }
 
-/*
- * Return a section's ID
- */
+// Return a section's ID
 static uint32_t getsectid(struct Section const *sect)
 {
 	struct Section const *sec = sectionList;
@@ -195,9 +179,7 @@ static uint32_t getSectIDIfAny(struct Section const *sect)
 	return sect ? getsectid(sect) : (uint32_t)-1;
 }
 
-/*
- * Write a patch to a file
- */
+// Write a patch to a file
 static void writepatch(struct Patch const *patch, FILE *f)
 {
 	assert(patch->src->ID != (uint32_t)-1);
@@ -211,9 +193,7 @@ static void writepatch(struct Patch const *patch, FILE *f)
 	fwrite(patch->rpn, 1, patch->rpnSize, f);
 }
 
-/*
- * Write a section to a file
- */
+// Write a section to a file
 static void writesection(struct Section const *sect, FILE *f)
 {
 	putstring(sect->name, f);
@@ -255,9 +235,7 @@ static void freesection(struct Section const *sect)
 	}
 }
 
-/*
- * Write a symbol to a file
- */
+// Write a symbol to a file
 static void writesymbol(struct Symbol const *sym, FILE *f)
 {
 	putstring(sym->name, f);
@@ -285,10 +263,8 @@ static void registerSymbol(struct Symbol *sym)
 	sym->ID = nbSymbols++;
 }
 
-/*
- * Returns a symbol's ID within the object file
- * If the symbol does not have one, one is assigned by registering the symbol
- */
+// Returns a symbol's ID within the object file
+// If the symbol does not have one, one is assigned by registering the symbol
 static uint32_t getSymbolID(struct Symbol *sym)
 {
 	if (sym->ID == (uint32_t)-1 && !sym_IsPC(sym))
@@ -392,10 +368,8 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 	}
 }
 
-/*
- * Allocate a new patch structure and link it into the list
- * WARNING: all patches are assumed to eventually be written, so the file stack node is registered
- */
+// Allocate a new patch structure and link it into the list
+// WARNING: all patches are assumed to eventually be written, so the file stack node is registered
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
 	struct Patch *patch = malloc(sizeof(struct Patch));
@@ -417,10 +391,10 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 	patch->pcSection = sect_GetSymbolSection();
 	patch->pcOffset = sect_GetSymbolOffset();
 
-	/* If the rpnSize's value is known, output a constant RPN rpnSize directly */
+	// If the rpnSize's value is known, output a constant RPN rpnSize directly
 	if (expr->isKnown) {
 		patch->rpnSize = rpnSize;
-		/* Make sure to update `rpnSize` above if modifying this! */
+		// Make sure to update `rpnSize` above if modifying this!
 		patch->rpn[0] = RPN_CONST;
 		patch->rpn[1] = (uint32_t)(expr->val) & 0xFF;
 		patch->rpn[2] = (uint32_t)(expr->val) >> 8;
@@ -435,9 +409,7 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 	return patch;
 }
 
-/*
- * Create a new patch (includes the rpn expr)
- */
+// Create a new patch (includes the rpn expr)
 void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, uint32_t pcShift)
 {
 	struct Patch *patch = allocpatch(type, expr, ofs);
@@ -451,9 +423,7 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
 	currentSection->patches = patch;
 }
 
-/**
- * Creates an assert that will be written to the object file
- */
+// Creates an assert that will be written to the object file
 bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		      char const *message, uint32_t ofs)
 {
@@ -499,7 +469,7 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
 		putlong(reptNode->reptDepth, f);
-		/* Iters are stored by decreasing depth, so reverse the order for output */
+		// Iters are stored by decreasing depth, so reverse the order for output
 		for (uint32_t i = reptNode->reptDepth; i--; )
 			putlong(reptNode->iters[i], f);
 	}
@@ -515,9 +485,7 @@ static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
 	}
 }
 
-/*
- * Write an objectfile
- */
+// Write an objectfile
 void out_WriteObject(void)
 {
 	FILE *f;
@@ -529,7 +497,7 @@ void out_WriteObject(void)
 	if (!f)
 		err("Couldn't write file '%s'", objectName);
 
-	/* Also write symbols that weren't written above */
+	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol, NULL);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING);
@@ -569,9 +537,7 @@ void out_WriteObject(void)
 	fclose(f);
 }
 
-/*
- * Set the objectfilename
- */
+// Set the objectfilename
 void out_SetFileName(char *s)
 {
 	objectName = s;

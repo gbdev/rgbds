@@ -29,7 +29,7 @@
 
 #define BANK_SIZE 0x4000
 
-/* Short options */
+// Short options
 static const char *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
 
 /*
@@ -191,7 +191,7 @@ static void printAcceptedMBCNames(void)
 
 static uint8_t tpp1Rev[2];
 
-/**
+/*
  * @return False on failure
  */
 static bool readMBCSlice(char const **name, char const *expected)
@@ -837,7 +837,7 @@ static ssize_t writeBytes(int fd, void *buf, size_t len)
 	return total;
 }
 
-/**
+/*
  * @param rom0 A pointer to rom0
  * @param addr What address to check
  * @param fixedByte The fixed byte at the address
@@ -853,7 +853,7 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
 	rom0[addr] = fixedByte;
 }
 
-/**
+/*
  * @param rom0 A pointer to rom0
  * @param startAddr What address to begin checking from
  * @param fixed The fixed bytes at the address
@@ -878,7 +878,7 @@ static void overwriteBytes(uint8_t *rom0, uint16_t startAddr, uint8_t const *fix
 	memcpy(&rom0[startAddr], fixed, size);
 }
 
-/**
+/*
  * @param input File descriptor to be used for reading
  * @param output File descriptor to be used for writing, may be equal to `input`
  * @param name The file's name, to be displayed for error output

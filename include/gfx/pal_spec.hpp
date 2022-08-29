@@ -12,4 +12,4 @@
 void parseInlinePalSpec(char const * const arg);
 void parseExternalPalSpec(char const *arg);
 
-#endif /* RGBDS_GFX_PAL_SPEC_HPP */
+#endif // RGBDS_GFX_PAL_SPEC_HPP

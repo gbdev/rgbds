@@ -21,33 +21,29 @@
 
 #include "hashmap.h"
 
-/*
- * Charmaps are stored using a structure known as "trie".
- * Essentially a tree, where each nodes stores a single character's worth of info:
- * whether there exists a mapping that ends at the current character,
- */
+// Charmaps are stored using a structure known as "trie".
+// Essentially a tree, where each nodes stores a single character's worth of info:
+// whether there exists a mapping that ends at the current character,
 struct Charnode {
-	bool isTerminal; /* Whether there exists a mapping that ends here */
-	uint8_t value; /* If the above is true, its corresponding value */
-	/* This MUST be indexes and not pointers, because pointers get invalidated by `realloc`!! */
-	size_t next[255]; /* Indexes of where to go next, 0 = nowhere */
+	bool isTerminal; // Whether there exists a mapping that ends here
+	uint8_t value; // If the above is true, its corresponding value
+	// This MUST be indexes and not pointers, because pointers get invalidated by `realloc`!!
+	size_t next[255]; // Indexes of where to go next, 0 = nowhere
 };
 
 #define INITIAL_CAPACITY 32
 
 struct Charmap {
 	char *name;
-	size_t usedNodes; /* How many nodes are being used */
-	size_t capacity; /* How many nodes have been allocated */
-	struct Charnode nodes[]; /* first node is reserved for the root node */
+	size_t usedNodes; // How many nodes are being used
+	size_t capacity; // How many nodes have been allocated
+	struct Charnode nodes[]; // first node is reserved for the root node
 };
 
 static HashMap charmaps;
 
-/*
- * Store pointers to hashmap nodes, so that there is only one pointer to the memory block
- * that gets reallocated.
- */
+// Store pointers to hashmap nodes, so that there is only one pointer to the memory block
+// that gets reallocated.
 static struct Charmap **currentCharmap;
 
 struct CharmapStackEntry {
@@ -96,7 +92,7 @@ struct Charmap *charmap_New(char const *name, char const *baseName)
 		return charmap;
 	}
 
-	/* Init the new charmap's fields */
+	// Init the new charmap's fields
 	if (base) {
 		resizeCharmap(&charmap, base->capacity);
 		charmap->usedNodes = base->usedNodes;
@@ -105,7 +101,7 @@ struct Charmap *charmap_New(char const *name, char const *baseName)
 	} else {
 		resizeCharmap(&charmap, INITIAL_CAPACITY);
 		charmap->usedNodes = 1;
-		initNode(&charmap->nodes[0]); /* Init the root node */
+		initNode(&charmap->nodes[0]); // Init the root node
 	}
 	charmap->name = strdup(name);
 
@@ -169,16 +165,16 @@ void charmap_Add(char *mapping, uint8_t value)
 		if (node->next[c]) {
 			node = &charmap->nodes[node->next[c]];
 		} else {
-			/* Register next available node */
+			// Register next available node
 			node->next[c] = charmap->usedNodes;
-			/* If no more nodes are available, get new ones */
+			// If no more nodes are available, get new ones
 			if (charmap->usedNodes == charmap->capacity) {
 				charmap->capacity *= 2;
 				resizeCharmap(currentCharmap, charmap->capacity);
 				charmap = *currentCharmap;
 			}
 
-			/* Switch to and init new node */
+			// Switch to and init new node
 			node = &charmap->nodes[charmap->usedNodes++];
 			initNode(node);
 		}
@@ -203,12 +199,10 @@ size_t charmap_Convert(char const *input, uint8_t *output)
 
 size_t charmap_ConvertNext(char const **input, uint8_t **output)
 {
-	/*
-	 * The goal is to match the longest mapping possible.
-	 * For that, advance through the trie with each character read.
-	 * If that would lead to a dead end, rewind characters until the last match, and output.
-	 * If no match, read a UTF-8 codepoint and output that.
-	 */
+	// The goal is to match the longest mapping possible.
+	// For that, advance through the trie with each character read.
+	// If that would lead to a dead end, rewind characters until the last match, and output.
+	// If no match, read a UTF-8 codepoint and output that.
 	struct Charmap const *charmap = *currentCharmap;
 	struct Charnode const *node = &charmap->nodes[0];
 	struct Charnode const *match = NULL;

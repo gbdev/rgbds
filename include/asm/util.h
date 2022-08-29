@@ -18,4 +18,4 @@ char const *printChar(int c);
  */
 size_t readUTF8Char(uint8_t *dest, char const *src);
 
-#endif /* RGBDS_UTIL_H */
+#endif // RGBDS_UTIL_H

@@ -46,7 +46,7 @@ void fmt_UseCharacter(struct FormatSpec *fmt, int c)
 		return;
 
 	switch (c) {
-	/* sign */
+	// sign
 	case ' ':
 	case '+':
 		if (fmt->state > FORMAT_SIGN)
@@ -55,7 +55,7 @@ void fmt_UseCharacter(struct FormatSpec *fmt, int c)
 		fmt->sign = c;
 		break;
 
-	/* prefix */
+	// prefix
 	case '#':
 		if (fmt->state > FORMAT_PREFIX)
 			goto invalid;
@@ -63,7 +63,7 @@ void fmt_UseCharacter(struct FormatSpec *fmt, int c)
 		fmt->prefix = true;
 		break;
 
-	/* align */
+	// align
 	case '-':
 		if (fmt->state > FORMAT_ALIGN)
 			goto invalid;
@@ -71,11 +71,11 @@ void fmt_UseCharacter(struct FormatSpec *fmt, int c)
 		fmt->alignLeft = true;
 		break;
 
-	/* pad and width */
+	// pad and width
 	case '0':
 		if (fmt->state < FORMAT_WIDTH)
 			fmt->padZero = true;
-		/* fallthrough */
+		// fallthrough
 	case '1':
 	case '2':
 	case '3':
@@ -104,7 +104,7 @@ void fmt_UseCharacter(struct FormatSpec *fmt, int c)
 		fmt->hasFrac = true;
 		break;
 
-	/* type */
+	// type
 	case 'd':
 	case 'u':
 	case 'X':
@@ -149,7 +149,7 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 	size_t len = strlen(value);
 	size_t totalLen = fmt->width > len ? fmt->width : len;
 
-	if (totalLen > bufLen - 1) { /* bufLen includes terminator */
+	if (totalLen > bufLen - 1) { // bufLen includes terminator
 		error("Formatted string value too long\n");
 		totalLen = bufLen - 1;
 		if (len > totalLen)
@@ -182,7 +182,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	if (fmt->type == 's')
 		error("Formatting number as type 's'\n");
 
-	char sign = fmt->sign; /* 0 or ' ' or '+' */
+	char sign = fmt->sign; // 0 or ' ' or '+'
 
 	if (fmt->type == 'd' || fmt->type == 'f') {
 		int32_t v = value;
@@ -200,10 +200,10 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 		: fmt->type == 'o' ? '&'
 		: 0;
 
-	char valueBuf[262]; /* Max 5 digits + decimal + 255 fraction digits + terminator */
+	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
 
 	if (fmt->type == 'b') {
-		/* Special case for binary */
+		// Special case for binary
 		char *ptr = valueBuf;
 
 		do {
@@ -213,7 +213,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 
 		*ptr = '\0';
 
-		/* Reverse the digits */
+		// Reverse the digits
 		size_t valueLen = ptr - valueBuf;
 
 		for (size_t i = 0, j = valueLen - 1; i < j; i++, j--) {
@@ -223,9 +223,9 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 			valueBuf[j] = c;
 		}
 	} else if (fmt->type == 'f') {
-		/* Special case for fixed-point */
+		// Special case for fixed-point
 
-		/* Default fractional width (C's is 6 for "%f"; here 5 is enough) */
+		// Default fractional width (C's is 6 for "%f"; here 5 is enough)
 		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
 
 		if (fracWidth > 255) {
@@ -250,7 +250,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	size_t numLen = !!sign + !!prefix + len;
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
 
-	if (totalLen > bufLen - 1) { /* bufLen includes terminator */
+	if (totalLen > bufLen - 1) { // bufLen includes terminator
 		error("Formatted numeric value too long\n");
 		totalLen = bufLen - 1;
 		if (numLen > totalLen) {
@@ -273,7 +273,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 			buf[i] = ' ';
 	} else {
 		if (fmt->padZero) {
-			/* sign, then prefix, then zero padding */
+			// sign, then prefix, then zero padding
 			if (sign)
 				buf[pos++] = sign;
 			if (prefix)
@@ -281,7 +281,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 			for (size_t i = 0; i < padLen; i++)
 				buf[pos++] = '0';
 		} else {
-			/* space padding, then sign, then prefix */
+			// space padding, then sign, then prefix
 			for (size_t i = 0; i < padLen; i++)
 				buf[pos++] = ' ';
 			if (sign)

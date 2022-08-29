@@ -27,4 +27,4 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		      char const *message, uint32_t ofs);
 void out_WriteObject(void);
 
-#endif /* RGBDS_ASM_OUTPUT_H */
+#endif // RGBDS_ASM_OUTPUT_H

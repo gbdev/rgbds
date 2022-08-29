@@ -39,12 +39,10 @@ static struct {
 } *nodes;
 static struct Assertion *assertions;
 
-/***** Helper functions for reading object files *****/
+// Helper functions for reading object files
 
-/*
- * Internal, DO NOT USE.
- * For helper wrapper macros defined below, such as `tryReadlong`
- */
+// Internal, DO NOT USE.
+// For helper wrapper macros defined below, such as `tryReadlong`
 #define tryRead(func, type, errval, var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
@@ -58,7 +56,7 @@ static struct Assertion *assertions;
 		var = tmpVal; \
 	} while (0)
 
-/**
+/*
  * Reads an unsigned long (32-bit) value from a file.
  * @param file The file to read from. This will read 4 bytes from the file.
  * @return The value read, cast to a int64_t, or -1 on failure.
@@ -67,25 +65,24 @@ static int64_t readlong(FILE *file)
 {
 	uint32_t value = 0;
 
-	/* Read the little-endian value byte by byte */
+	// Read the little-endian value byte by byte
 	for (uint8_t shift = 0; shift < sizeof(value) * CHAR_BIT; shift += 8) {
 		int byte = getc(file);
 
 		if (byte == EOF)
 			return INT64_MAX;
-		/* This must be casted to `unsigned`, not `uint8_t`. Rationale:
-		 * the type of the shift is the type of `byte` after undergoing
-		 * integer promotion, which would be `int` if this was casted to
-		 * `uint8_t`, because int is large enough to hold a byte. This
-		 * however causes values larger than 127 to be too large when
-		 * shifted, potentially triggering undefined behavior.
-		 */
+		// This must be casted to `unsigned`, not `uint8_t`. Rationale:
+		// the type of the shift is the type of `byte` after undergoing
+		// integer promotion, which would be `int` if this was casted to
+		// `uint8_t`, because int is large enough to hold a byte. This
+		// however causes values larger than 127 to be too large when
+		// shifted, potentially triggering undefined behavior.
 		value |= (unsigned int)byte << shift;
 	}
 	return value;
 }
 
-/**
+/*
  * Helper macro for reading longs from a file, and errors out if it fails to.
  * Not as a function to avoid overhead in the general case.
  * @param var The variable to stash the number into
@@ -96,9 +93,9 @@ static int64_t readlong(FILE *file)
 #define tryReadlong(var, file, ...) \
 	tryRead(readlong, int64_t, INT64_MAX, var, file, __VA_ARGS__)
 
-/* There is no `readbyte`, just use `fgetc` or `getc`. */
+// There is no `readbyte`, just use `fgetc` or `getc`.
 
-/**
+/*
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Differs from `tryGetc` in that the backing function is fgetc(1).
  * Not as a function to avoid overhead in the general case.
@@ -110,7 +107,7 @@ static int64_t readlong(FILE *file)
 #define tryFgetc(var, file, ...) \
 	tryRead(fgetc, int, EOF, var, file, __VA_ARGS__)
 
-/**
+/*
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Differs from `tryGetc` in that the backing function is fgetc(1).
  * Not as a function to avoid overhead in the general case.
@@ -122,7 +119,7 @@ static int64_t readlong(FILE *file)
 #define tryGetc(var, file, ...) \
 	tryRead(getc, int, EOF, var, file, __VA_ARGS__)
 
-/**
+/*
  * Reads a '\0'-terminated string from a file.
  * @param file The file to read from. The file position will be advanced.
  * @return The string read, or NULL on failure.
@@ -130,26 +127,26 @@ static int64_t readlong(FILE *file)
  */
 static char *readstr(FILE *file)
 {
-	/* Default buffer size, have it close to the average string length */
+	// Default buffer size, have it close to the average string length
 	size_t capacity = 32 / 2;
 	size_t index = -1;
-	/* Force the first iteration to allocate */
+	// Force the first iteration to allocate
 	char *str = NULL;
 
 	do {
-		/* Prepare going to next char */
+		// Prepare going to next char
 		index++;
 
-		/* If the buffer isn't suitable to write the next char... */
+		// If the buffer isn't suitable to write the next char...
 		if (index >= capacity || !str) {
 			capacity *= 2;
 			str = realloc(str, capacity);
-			/* End now in case of error */
+			// End now in case of error
 			if (!str)
 				return NULL;
 		}
 
-		/* Read char */
+		// Read char
 		int byte = getc(file);
 
 		if (byte == EOF) {
@@ -161,7 +158,7 @@ static char *readstr(FILE *file)
 	return str;
 }
 
-/**
+/*
  * Helper macro for reading bytes from a file, and errors out if it fails to.
  * Not as a function to avoid overhead in the general case.
  * @param var The variable to stash the string into
@@ -172,9 +169,9 @@ static char *readstr(FILE *file)
 #define tryReadstr(var, file, ...) \
 	tryRead(readstr, char*, NULL, var, file, __VA_ARGS__)
 
-/***** Functions to parse object files *****/
+// Functions to parse object files
 
-/**
+/*
  * Reads a file stack node form a file.
  * @param file The file to read from
  * @param nodes The file's array of nodes
@@ -217,7 +214,7 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 	}
 }
 
-/**
+/*
  * Reads a symbol from a file.
  * @param file The file to read from
  * @param symbol The struct to fill
@@ -230,7 +227,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
 		   fileName);
 	tryGetc(symbol->type, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, symbol->name);
-	/* If the symbol is defined in this file, read its definition */
+	// If the symbol is defined in this file, read its definition
 	if (symbol->type != SYMTYPE_IMPORT) {
 		symbol->objFileName = fileName;
 		uint32_t nodeID;
@@ -253,7 +250,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
 	}
 }
 
-/**
+/*
  * Reads a patch from a file.
  * @param file The file to read from
  * @param patch The struct to fill
@@ -303,7 +300,7 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
 }
 
-/**
+/*
  * Sets a patch's pcSection from its pcSectionID.
  * @param patch The struct to fix
  */
@@ -313,7 +310,7 @@ static void linkPatchToPCSect(struct Patch *patch, struct Section *fileSections[
 							      : fileSections[patch->pcSectionID];
 }
 
-/**
+/*
  * Reads a section from a file.
  * @param file The file to read from
  * @param section The struct to fill
@@ -372,7 +369,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	section->alignOfs = tmp;
 
 	if (sect_HasData(section->type)) {
-		/* Ensure we never allocate 0 bytes */
+		// Ensure we never allocate 0 bytes
 		uint8_t *data = malloc(sizeof(*data) * section->size + 1);
 
 		if (!data)
@@ -404,7 +401,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	}
 }
 
-/**
+/*
  * Links a symbol to a section, keeping the section's symbol list sorted.
  * @param symbol The symbol to link
  * @param section The section to link
@@ -433,7 +430,7 @@ static void linkSymToSect(struct Symbol *symbol, struct Section *section)
 	section->nbSymbols++;
 }
 
-/**
+/*
  * Reads an assertion from a file
  * @param file The file to read from
  * @param assert The struct to fill
@@ -500,7 +497,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		return;
 	}
 
-	/* Begin by reading the magic bytes */
+	// Begin by reading the magic bytes
 	int matchedElems;
 
 	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
@@ -536,7 +533,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	for (uint32_t i = nodes[fileID].nbNodes; i--; )
 		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
 
-	/* This file's symbols, kept to link sections to them */
+	// This file's symbols, kept to link sections to them
 	struct Symbol **fileSymbols = malloc(sizeof(*fileSymbols) * nbSymbols + 1);
 
 	if (!fileSymbols)
@@ -556,7 +553,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		/* Read symbol */
+		// Read symbol
 		struct Symbol *symbol = malloc(sizeof(*symbol));
 
 		if (!symbol)
@@ -570,13 +567,13 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			nbSymPerSect[symbol->sectionID]++;
 	}
 
-	/* This file's sections, stored in a table to link symbols to them */
+	// This file's sections, stored in a table to link symbols to them
 	struct Section **fileSections = malloc(sizeof(*fileSections)
 					    * (nbSections ? nbSections : 1));
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
-		/* Read section */
+		// Read section
 		fileSections[i] = malloc(sizeof(*fileSections[i]));
 		if (!fileSections[i])
 			err("%s: Couldn't create new section", fileName);
@@ -600,7 +597,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	free(nbSymPerSect);
 
-	/* Give patches' PC section pointers to their sections */
+	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
 		if (sect_HasData(fileSections[i]->type)) {
 			for (uint32_t j = 0; j < fileSections[i]->nbPatches; j++)
@@ -608,7 +605,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		}
 	}
 
-	/* Give symbols' section pointers to their sections */
+	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		int32_t sectionID = fileSymbols[i]->sectionID;
 
@@ -617,12 +614,12 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		} else {
 			struct Section *section = fileSections[sectionID];
 
-			/* Give the section a pointer to the symbol as well */
+			// Give the section a pointer to the symbol as well
 			linkSymToSect(fileSymbols[i], section);
 
 			if (section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT)
-					/* Add the fragment's offset to the symbol's */
+					// Add the fragment's offset to the symbol's
 					fileSymbols[i]->offset += section->offset;
 				section = getMainSection(section);
 			}

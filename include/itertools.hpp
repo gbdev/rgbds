@@ -79,12 +79,10 @@ using Holder = std::conditional_t<std::is_lvalue_reference_v<T>, T,
                                   std::remove_cv_t<std::remove_reference_t<T>>>;
 }
 
-/**
- * Does the same number of iterations as the first container's iterator!
- */
+// Does the same number of iterations as the first container's iterator!
 template<typename... Containers>
 static constexpr auto zip(Containers &&...cs) {
 	return detail::ZipContainer<detail::Holder<Containers>...>(std::forward<Containers>(cs)...);
 }
 
-#endif /* RGBDS_ITERTOOLS_HPP */
+#endif // RGBDS_ITERTOOLS_HPP
