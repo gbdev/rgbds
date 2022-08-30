@@ -336,8 +336,7 @@ void fstk_RunInclude(char const *path)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
 	// We're back at top-level, so most things are reset
-	contextStack->uniqueID = 0;
-	macro_SetUniqueID(0);
+	contextStack->uniqueID = macro_UndefUniqueID();
 }
 
 void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
@@ -539,8 +538,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 
 	context->parent = NULL;
 	context->lexerState = state;
-	context->uniqueID = 0;
-	macro_SetUniqueID(0);
+	context->uniqueID = macro_UndefUniqueID();
 	context->nbReptIters = 0;
 	context->forValue = 0;
 	context->forStep = 0;

@@ -166,7 +166,13 @@ void macro_SetUniqueID(uint32_t id)
 uint32_t macro_UseNewUniqueID(void)
 {
 	macro_SetUniqueID(++maxUniqueID);
-	return maxUniqueID;
+	return uniqueID;
+}
+
+uint32_t macro_UndefUniqueID(void)
+{
+	macro_SetUniqueID(0);
+	return uniqueID;
 }
 
 void macro_ShiftCurrentArgs(int32_t count)
