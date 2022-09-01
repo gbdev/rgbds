@@ -58,6 +58,7 @@ struct FileStackNode *fstk_GetFileStack(void);
 char const *fstk_GetFileName(void);
 
 void fstk_AddIncludePath(char const *s);
+void fstk_SetPreIncludeFile(char const *s);
 /*
  * @param path The user-provided file name
  * @param fullPath The address of a pointer, which will be made to point at the full path

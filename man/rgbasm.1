@@ -16,6 +16,7 @@
 .Op Fl EHhLlVvw
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
+.Op Fl f Ar include_file
 .Op Fl g Ar chars
 .Op Fl i Ar path
 .Op Fl M Ar depend_file
@@ -64,6 +65,10 @@ if
 is not specified.
 .It Fl E , Fl Fl export-all
 Export all labels, including unreferenced and local labels.
+.It Fl P Ar include_file , Fl Fl preinclude Ar include_file
+Pre-include a file. This acts like an
+.Ic INCLUDE
+has placed the file before the input file.
 .It Fl g Ar chars , Fl Fl gfx-chars Ar chars
 Change the four characters used for gfx constants.
 The defaults are 0123.
@@ -87,7 +92,12 @@ instruction immediately after any
 .Ic halt
 instruction.
 .It Fl i Ar path , Fl Fl include Ar path
-Add an include path.
+Add an include path. When
+.Ic INCLUDE ,
+.Ic INCBIN ,
+or a
+.Fl --preinclude
+is attempted, it will look in these paths.
 .It Fl L , Fl Fl preserve-ld
 By default,
 .Nm

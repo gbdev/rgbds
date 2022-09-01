@@ -42,6 +42,8 @@ size_t maxRecursionDepth;
 static unsigned int nbIncPaths = 0;
 static char const *includePaths[MAXINCPATHS];
 
+static const char *preIncludeName;
+
 static const char *dumpNodeAndParents(struct FileStackNode const *node)
 {
 	char const *name;
@@ -131,6 +133,11 @@ void fstk_AddIncludePath(char const *path)
 		*end++ = '/';
 	*end = '\0';
 	includePaths[nbIncPaths++] = str;
+}
+
+void fstk_SetPreIncludeFile(char const *path)
+{
+	preIncludeName = path;
 }
 
 static void printDep(char const *path)
@@ -274,6 +281,7 @@ bool yywrap(void)
 
 	lexer_SetState(contextStack->lexerState);
 	macro_SetUniqueID(contextStack->uniqueID);
+
 	return false;
 }
 
@@ -338,6 +346,41 @@ void fstk_RunInclude(char const *path)
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
+	// We're back at top-level, so most things are reset
+	contextStack->uniqueID = macro_UndefUniqueID();
+}
+
+// Similar to `fstk_RunInclude`, but not subject to `-MG`, and
+// calling `lexer_SetState` instead of `lexer_SetStateAtEOL`.
+static void runPreIncludeFile(void)
+{
+	if (!preIncludeName)
+		return;
+
+	char *fullPath = NULL;
+	size_t size = 0;
+
+	if (!fstk_FindFile(preIncludeName, &fullPath, &size)) {
+		free(fullPath);
+		error("Unable to open included file '%s': %s\n", preIncludeName, strerror(errno));
+		return;
+	}
+
+	struct FileStackNamedNode *fileInfo = malloc(sizeof(*fileInfo) + size);
+
+	if (!fileInfo) {
+		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
+		return;
+	}
+	fileInfo->node.type = NODE_FILE;
+	strcpy(fileInfo->name, fullPath);
+	free(fullPath);
+
+	newContext((struct FileStackNode *)fileInfo);
+	contextStack->lexerState = lexer_OpenFile(fileInfo->name);
+	if (!contextStack->lexerState)
+		fatalerror("Failed to set up lexer for file include\n");
+	lexer_SetState(contextStack->lexerState);
 	// We're back at top-level, so most things are reset
 	contextStack->uniqueID = macro_UndefUniqueID();
 }
@@ -563,4 +606,6 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	// Make sure that the default of 64 is OK, though
 	assert(DEPTH_LIMIT >= DEFAULT_MAX_DEPTH);
 #undef DEPTH_LIMIT
+
+	runPreIncludeFile();
 }

@@ -87,7 +87,7 @@ static char *make_escape(char const *str)
 }
 
 // Short options
-static const char *optstring = "b:D:Eg:Hhi:LlM:o:p:Q:r:VvW:w";
+static const char *optstring = "b:D:Eg:Hhi:LlM:o:P:p:Q:r:VvW:w";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -116,6 +116,7 @@ static struct option const longopts[] = {
 	{ "MT",               required_argument, &depType, 'T' },
 	{ "MQ",               required_argument, &depType, 'Q' },
 	{ "output",           required_argument, NULL,     'o' },
+	{ "preinclude",       required_argument, NULL,     'P' },
 	{ "pad-value",        required_argument, NULL,     'p' },
 	{ "q-precision",      required_argument, NULL,     'Q' },
 	{ "recursion-depth",  required_argument, NULL,     'r' },
@@ -130,8 +131,8 @@ static void print_usage(void)
 	fputs(
 "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-"              [-o out_file] [-p pad_value] [-Q precision] [-r depth]\n"
-"              [-W warning] <file>\n"
+"              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
+"              [-r depth] [-W warning] <file>\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -252,6 +253,10 @@ int main(int argc, char *argv[])
 
 		case 'o':
 			out_SetFileName(musl_optarg);
+			break;
+
+		case 'P':
+			fstk_SetPreIncludeFile(musl_optarg);
 			break;
 
 			unsigned long padByte;
