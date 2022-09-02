@@ -175,6 +175,13 @@ void opt_Parse(char *s)
 
 	case '!': // negates flag options that do not take an argument
 		switch (s[1]) {
+		case 'H':
+			if (s[2] == '\0')
+				opt_H(true);
+			else
+				error("Option '!H' does not take an argument\n");
+			break;
+
 		case 'h':
 			if (s[2] == '\0')
 				opt_h(true);
@@ -187,6 +194,13 @@ void opt_Parse(char *s)
 				opt_L(true);
 			else
 				error("Option '!L' does not take an argument\n");
+			break;
+
+		case 'l':
+			if (s[2] == '\0')
+				opt_l(true);
+			else
+				error("Option '!l' does not take an argument\n");
 			break;
 
 		default:

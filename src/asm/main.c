@@ -126,7 +126,7 @@ static struct option const longopts[] = {
 static void print_usage(void)
 {
 	fputs(
-"Usage: rgbasm [-EhLVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
+"Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 "              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file>\n"
 "Useful options:\n"
@@ -273,6 +273,7 @@ int main(int argc, char *argv[])
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
 			exit(0);
+
 		case 'v':
 			verbose = true;
 			break;
@@ -351,7 +352,7 @@ int main(int argc, char *argv[])
 
 	charmap_New("main", NULL);
 
-	// Init lexer and file stack, prodiving file info
+	// Init lexer and file stack, providing file info
 	lexer_Init();
 	fstk_Init(mainFileName, maxDepth);
 

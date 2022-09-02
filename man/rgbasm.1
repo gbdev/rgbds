@@ -13,7 +13,7 @@
 .Nd Game Boy assembler
 .Sh SYNOPSIS
 .Nm
-.Op Fl EhLVvw
+.Op Fl EHhLlVvw
 .Op Fl b Ar chars
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl g Ar chars
@@ -66,25 +66,43 @@ Export all labels, including unreferenced and local labels.
 .It Fl g Ar chars , Fl Fl gfx-chars Ar chars
 Change the four characters used for gfx constants.
 The defaults are 0123.
-.It Fl h , Fl Fl halt-without-nop
+.It Fl H , Fl Fl nop-after-halt
 By default,
 .Nm
 inserts a
 .Ic nop
 instruction immediately after any
 .Ic halt
-instruction.
+instruction,
+but this has been deprecated and prints a warning message the first time it occurs.
 The
-.Fl h
-option disables this behavior.
+.Fl H
+option opts into this insertion,
+so no warning will be printed.
+.It Fl h , Fl Fl halt-without-nop
+Disables inserting a
+.Ic nop
+instruction immediately after any
+.Ic halt
+instruction.
 .It Fl i Ar path , Fl Fl include Ar path
 Add an include path.
 .It Fl L , Fl Fl preserve-ld
-Disable the optimization that turns loads of the form
+By default,
+.Nm
+optimizes loads of the form
 .Ic LD [$FF00+n8],A
 into the opcode
-.Ic LDH [$FF00+n8],A
-in order to have full control of the result in the final ROM.
+.Ic LDH [$FF00+n8],A ,
+but this has been deprecated and prints a warning message the first time it occurs.
+The
+.Fl L
+option disables this optimization.
+.It Fl l , Fl Fl auto-ldh
+Optimize loads of the form
+.Ic LD [$FF00+n8],A
+into the opcode
+.Ic LDH [$FF00+n8],A .
 .It Fl M Ar depend_file , Fl Fl dependfile Ar depend_file
 Print
 .Xr make 1
