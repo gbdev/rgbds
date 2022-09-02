@@ -38,8 +38,10 @@ local args=(
 	'(- : * options)'{-V,--version}'[Print version number]'
 
 	'(-E --export-all)'{-E,--export-all}'[Export all symbols]'
-	'(-h --halt-without-nop)'{-h,--halt-without-nop}'[Avoid outputting a `nop` after `halt`]'
-	'(-L ---preserve-ld)'{-L,--preserve-ld}'[Prevent auto-optimizing `ld` into `ldh`]'
+	'(-H --nop-after-halt)'{-H,--nop-after-halt}'[Output a `nop` after `halt`]'
+	'(-h --halt-without-nop)'{-h,--halt-without-nop}'[Prevent outputting a `nop` after `halt`]'
+	'(-L --preserve-ld)'{-L,--preserve-ld}'[Prevent optimizing `ld` into `ldh`]'
+	'(-l --auto-ldh)'{-l,--auto-ldh}'[Optimize `ld` into `ldh`]'
 	'(-v --verbose)'{-v,--verbose}'[Print additional messages regarding progression]'
 	-w'[Disable all warnings]'
 
