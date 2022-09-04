@@ -11,6 +11,9 @@
 
 #include <stdint.h>
 
+extern uint8_t fixPrecision;
+
+double fix_PrecisionFactor(void);
 void fix_Print(int32_t i);
 int32_t fix_Sin(int32_t i);
 int32_t fix_Cos(int32_t i);

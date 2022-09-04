@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "asm/fixpoint.h"
 #include "asm/format.h"
 #include "asm/warning.h"
 
@@ -225,7 +226,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	} else if (fmt->type == 'f') {
 		// Special case for fixed-point
 
-		// Default fractional width (C's is 6 for "%f"; here 5 is enough)
+		// Default fractional width (C's is 6 for "%f"; here 5 is enough for Q16.16)
 		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
 
 		if (fracWidth > 255) {
@@ -234,7 +235,8 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 			fracWidth = 255;
 		}
 
-		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)fracWidth, value / 65536.0);
+		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)fracWidth,
+			 value / fix_PrecisionFactor());
 	} else {
 		char const *spec = fmt->type == 'd' ? "%" PRId32
 				 : fmt->type == 'u' ? "%" PRIu32

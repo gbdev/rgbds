@@ -25,6 +25,7 @@
 .Op Fl MQ Ar target_file
 .Op Fl o Ar out_file
 .Op Fl p Ar pad_value
+.Op Fl Q Ar fix_precision
 .Op Fl r Ar recursion_depth
 .Op Fl W Ar warning
 .Ar
@@ -148,6 +149,13 @@ Write an object file to the given filename.
 .It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
 When padding an image, pad with this value.
 The default is 0x00.
+.It Fl Q Ar fix_precision , Fl Fl q-precision Ar fix_precision
+Use this as the precision of fixed-point numbers after the decimal point, unless they specify their own precision.
+The default is 16, so fixed-point numbers are Q16.16 (since they are 32-bit integers).
+The argument may start with a
+.Ql \&.
+to match the Q notation, for example,
+.Ql Fl Q Ar .16 .
 .It Fl r Ar recursion_depth , Fl Fl recursion-depth Ar recursion_depth
 Specifies the recursion depth past which RGBASM will assume being in an infinite loop.
 The default is 64.

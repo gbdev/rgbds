@@ -39,6 +39,7 @@ _rgbasm_completions() {
 		[M]="dependfile:glob-*.mk *.d"
 		[o]="output:glob-*.o"
 		[p]="pad-value:unk"
+		[Q]="q-precision:unk"
 		[r]="recursion-depth:unk"
 		[W]="warning:warning"
 	)

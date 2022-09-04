@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "asm/fixpoint.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
 #include "asm/main.h"
@@ -23,7 +24,8 @@
 struct OptStackEntry {
 	char binary[2];
 	char gbgfx[4];
-	int32_t fillByte;
+	uint8_t fixPrecision;
+	uint8_t fillByte;
 	bool haltnop;
 	bool warnOnHaltNop;
 	bool optimizeLoads;
@@ -47,9 +49,14 @@ void opt_G(char const chars[4])
 	lexer_SetGfxDigits(chars);
 }
 
-void opt_P(uint8_t fill)
+void opt_P(uint8_t padByte)
 {
-	fillByte = fill;
+	fillByte = padByte;
+}
+
+void opt_Q(uint8_t precision)
+{
+	fixPrecision = precision;
 }
 
 void opt_R(size_t newDepth)
@@ -103,15 +110,38 @@ void opt_Parse(char *s)
 	case 'p':
 		if (strlen(&s[1]) <= 2) {
 			int result;
-			unsigned int fillchar;
+			unsigned int padByte;
 
-			result = sscanf(&s[1], "%x", &fillchar);
-			if (result != EOF && result != 1)
+			result = sscanf(&s[1], "%x", &padByte);
+			if (result != 1)
 				error("Invalid argument for option 'p'\n");
+			else if (padByte > 0xFF)
+				error("Argument for option 'p' must be between 0 and 0xFF\n");
 			else
-				opt_P(fillchar);
+				opt_P(padByte);
 		} else {
 			error("Invalid argument for option 'p'\n");
+		}
+		break;
+
+		const char *precisionArg;
+	case 'Q':
+		precisionArg = &s[1];
+		if (precisionArg[0] == '.')
+			precisionArg++;
+		if (strlen(precisionArg) <= 2) {
+			int result;
+			unsigned int precision;
+
+			result = sscanf(precisionArg, "%u", &precision);
+			if (result != 1)
+				error("Invalid argument for option 'Q'\n");
+			else if (precision < 1 || precision > 31)
+				error("Argument for option 'Q' must be between 1 and 31\n");
+			else
+				opt_Q(precision);
+		} else {
+			error("Invalid argument for option 'Q'\n");
 		}
 		break;
 
@@ -231,6 +261,8 @@ void opt_Push(void)
 	entry->gbgfx[2] = gfxDigits[2];
 	entry->gbgfx[3] = gfxDigits[3];
 
+	entry->fixPrecision = fixPrecision; // Pulled from fixpoint.h
+
 	entry->fillByte = fillByte; // Pulled from section.h
 
 	entry->haltnop = haltnop; // Pulled from main.h
@@ -259,6 +291,7 @@ void opt_Pop(void)
 	opt_B(entry->binary);
 	opt_G(entry->gbgfx);
 	opt_P(entry->fillByte);
+	opt_Q(entry->fixPrecision);
 	opt_H(entry->warnOnHaltNop);
 	opt_h(entry->haltnop);
 	opt_L(entry->optimizeLoads);

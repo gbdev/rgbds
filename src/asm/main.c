@@ -19,6 +19,7 @@
 #include <time.h>
 
 #include "asm/charmap.h"
+#include "asm/fixpoint.h"
 #include "asm/format.h"
 #include "asm/fstack.h"
 #include "asm/lexer.h"
@@ -86,7 +87,7 @@ static char *make_escape(char const *str)
 }
 
 // Short options
-static const char *optstring = "b:D:Eg:Hhi:LlM:o:p:r:VvW:w";
+static const char *optstring = "b:D:Eg:Hhi:LlM:o:p:Q:r:VvW:w";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -116,6 +117,7 @@ static struct option const longopts[] = {
 	{ "MQ",               required_argument, &depType, 'Q' },
 	{ "output",           required_argument, NULL,     'o' },
 	{ "pad-value",        required_argument, NULL,     'p' },
+	{ "q-precision",      required_argument, NULL,     'Q' },
 	{ "recursion-depth",  required_argument, NULL,     'r' },
 	{ "version",          no_argument,       NULL,     'V' },
 	{ "verbose",          no_argument,       NULL,     'v' },
@@ -128,7 +130,8 @@ static void print_usage(void)
 	fputs(
 "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-"              [-o out_file] [-p pad_value] [-r depth] [-W warning] <file>\n"
+"              [-o out_file] [-p pad_value] [-Q precision] [-r depth]\n"
+"              [-W warning] <file>\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -170,6 +173,7 @@ int main(int argc, char *argv[])
 	opt_B("01");
 	opt_G("0123");
 	opt_P(0);
+	opt_Q(16);
 	haltnop = true;
 	warnOnHaltNop = true;
 	optimizeLoads = true;
@@ -250,17 +254,34 @@ int main(int argc, char *argv[])
 			out_SetFileName(musl_optarg);
 			break;
 
-			unsigned long fill;
+			unsigned long padByte;
 		case 'p':
-			fill = strtoul(musl_optarg, &ep, 0);
+			padByte = strtoul(musl_optarg, &ep, 0);
 
 			if (musl_optarg[0] == '\0' || *ep != '\0')
 				errx("Invalid argument for option 'p'");
 
-			if (fill > 0xFF)
+			if (padByte > 0xFF)
 				errx("Argument for option 'p' must be between 0 and 0xFF");
 
-			opt_P(fill);
+			opt_P(padByte);
+			break;
+
+			unsigned long precision;
+			const char *precisionArg;
+		case 'Q':
+			precisionArg = musl_optarg;
+			if (precisionArg[0] == '.')
+				precisionArg++;
+			precision = strtoul(precisionArg, &ep, 0);
+
+			if (musl_optarg[0] == '\0' || *ep != '\0')
+				errx("Invalid argument for option 'Q'");
+
+			if (precision < 1 || precision > 31)
+				errx("Argument for option 'Q' must be between 1 and 31");
+
+			opt_Q(precision);
 			break;
 
 		case 'r':

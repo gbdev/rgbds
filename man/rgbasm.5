@@ -208,13 +208,14 @@ section.
 The instructions in the macro-language generally require constant expressions.
 .Ss Numeric formats
 There are a number of numeric formats.
-.Bl -column -offset indent "Fixed point (Q16.16)" "Prefix"
+.Bl -column -offset indent "Precise fixed-point" "Prefix"
 .It Sy Format type Ta Sy Prefix Ta Sy Accepted characters
 .It Hexadecimal Ta $ Ta 0123456789ABCDEF
 .It Decimal Ta none Ta 0123456789
 .It Octal Ta & Ta 01234567
 .It Binary Ta % Ta 01
-.It Fixed point (Q16.16) Ta none Ta 01234.56789
+.It Fixed-point Ta none Ta 01234.56789
+.It Precise fixed-point Ta none Ta 12.34q8
 .It Character constant Ta none Ta \(dqABYZ\(dq
 .It Gameboy graphics Ta \` Ta 0123
 .El
@@ -301,9 +302,19 @@ and
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.
 .Ss Fixed-point expressions
-Fixed-point numbers are basically normal (32-bit) integers, which count 65536ths instead of entire units, offering better precision than integers but limiting the range of values.
-The upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
-Since they are still akin to integers, you can use them in normal integer expressions, and some integer operators like
+Fixed-point numbers are basically normal (32-bit) integers, which count fractions instead of whole numbers.
+They offer better precision than integers but limit the range of values.
+By default, the upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
+The default number of fractional bits can be changed with the
+.Fl Q
+command-line option.
+You can also specify a precise fixed-point value by appending a
+.Dq q
+to it followed by the number of fractional bits, such as
+.Ql 12.34q8 .
+.Pp
+Since fixed-point values are still just integers, you can use them in normal integer expressions.
+Some integer operators like
 .Sq +
 and
 .Sq -
@@ -317,9 +328,9 @@ delim $$
 .EN
 .Bl -column -offset indent "ATAN2(x, y)"
 .It Sy Name Ta Sy Operation
-.It Fn DIV x y Ta $x \[di] y$
-.It Fn MUL x y Ta $x \[mu] y$
-.It Fn FMOD x y Ta $x % y$
+.It Fn DIV x y Ta Fixed-point division $( x \[di] y ) \[mu] ( 2 ^ precision )$
+.It Fn MUL x y Ta Fixed-point multiplication $( x \[mu] y ) \[di] ( 2 ^ precision )$
+.It Fn FMOD x y Ta Fixed-point modulo $( x % y ) \[di] ( 2 ^ precision )$
 .It Fn POW x y Ta $x$ to the $y$ power
 .It Fn LOG x y Ta Logarithm of $x$ to the base $y$
 .It Fn ROUND x Ta Round $x$ to the nearest integer
@@ -2034,7 +2045,7 @@ POPO
 The options that
 .Ic OPT
 can modify are currently:
-.Cm b , g , p , r , h , L ,
+.Cm b , g , p , Q , r , h , L ,
 and
 .Cm W .
 The Boolean flag options
