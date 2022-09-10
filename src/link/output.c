@@ -442,15 +442,15 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 }
 
 /*
- * Write the total used space by section type to the map file
+ * Write the total used and free space by section type to the map file
  * @param usedMap The total used space by section type
  */
-static void writeMapUsed(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
+static void writeMapSummary(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
 {
 	if (!mapFile)
 		return;
 
-	fputs("USED:\n", mapFile);
+	fputs("SUMMARY:\n", mapFile);
 
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
@@ -459,11 +459,18 @@ static void writeMapUsed(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
 		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
 			continue;
 
-		if (sections[type].nbBanks > 0) {
-			fprintf(mapFile, "    %s: $%04" PRIx32 " byte%s in %" PRIu32 " bank%s\n",
-				sectionTypeInfo[type].name, usedMap[type], usedMap[type] == 1 ? "" : "s",
-				sections[type].nbBanks, sections[type].nbBanks == 1 ? "" : "s");
-		}
+		// Do not output unused section types
+		if (sections[type].nbBanks == 0)
+			continue;
+
+		fprintf(mapFile, "  %s: %" PRId32 " byte%s used / %" PRId32 " free",
+			sectionTypeInfo[type].name, usedMap[type], usedMap[type] == 1 ? "" : "s",
+			sections[type].nbBanks * sectionTypeInfo[type].size - usedMap[type]);
+		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank ||
+		    sections[type].nbBanks > 1)
+			fprintf(mapFile, " in %d bank%s", sections[type].nbBanks,
+				sections[type].nbBanks == 1 ? "" : "s");
+		fputc('\n', mapFile);
 	}
 }
 
@@ -492,7 +499,7 @@ static void writeSymAndMap(void)
 		}
 	}
 
-	writeMapUsed(usedMap);
+	writeMapSummary(usedMap);
 
 	closeFile(symFile);
 	closeFile(mapFile);
