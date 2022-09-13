@@ -321,7 +321,22 @@ any command-line argument that begins with an at sign
 .Pq Ql @
 is interpreted as one.
 The rest of the argument (without the @, that is) is interpreted as the path to a file, whose contents are interpreted as if given on the command line.
-At-files can be stored right next to the corresponding image, for example.
+At-files can be stored right next to the corresponding image, for example:
+.Pp
+.Dl $ rgbgfx -o image.2bpp -t image.tilemap @image.flags image.png
+.Pp
+This will read additional flags from file
+.Ql image.flags ,
+which could contains for example
+.Ql -b 128
+to specify a base offset for the image's tiles.
+The above command could be generated from the following
+.Xr make 1
+rule, for example:
+.Bd -literal -offset indent
+%.2bpp %.tilemap: %.flags %.png
+	rgbgfx -o $*.2bpp -t $*.tilemap @$*.flags $*.png
+.Ed
 .Pp
 Since the contents of at-files are interpreted by
 .Nm ,
@@ -336,17 +351,19 @@ optionally preceded by whitespace, are considered comments and also ignored.
 Each line can contain any number of arguments, which are separated by whitespace.
 .Pq \&No quoting feature to prevent this is provided.
 .Pp
-Note that this special meaning given to arguments has less precedence than option arguments, and that the standard
+Note that a leading
+.Ql @
+has no special meaning on option arguments, and that the standard
 .Ql --
 to stop option processing also disables at-file processing.
-For example, the following command line processes
-.Ql @tilesets/town.png ,
-outputs tile data to
-.Ql @tilesets/town.2bpp ,
-and reads command-line options from
+For example, the following command line reads command-line options from
 .Ql tilesets/town.flags
 then
-.Ql tilesets.flags :
+.Ql tilesets.flags ,
+but processes
+.Ql @tilesets/town.png
+as the input image and outputs tile data to
+.Ql @tilesets/town.2bpp :
 .Pp
 .Dl $ rgbgfx -o @tilesets/town.2bpp @tilesets/town.flags @tilesets.flags -- @tilesets/town.png
 .Pp
