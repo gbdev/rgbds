@@ -71,13 +71,11 @@ To do so, put a backslash at the end of the line:
 world!"\ \ \ \ \ \ \ \ \ \ \ ;\ Any leading space is included
 .Ed
 .Ss Symbol interpolation
-A funky feature is
-.Ql {symbol}
-within a string, called
+A funky feature is writing a symbol between
+.Ql {braces} ,
+called
 .Dq symbol interpolation .
-This will paste the contents of
-.Ql symbol
-as if they were part of the source file.
+This will paste the symbol's contents as if they were part of the source file.
 If it is a string symbol, its characters are simply inserted as-is.
 If it is a numeric symbol, its value is converted to hexadecimal notation with a dollar sign
 .Sq $
