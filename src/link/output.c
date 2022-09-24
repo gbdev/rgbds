@@ -384,20 +384,20 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		if (prevEndAddr < sect->org) {
 			uint16_t empty = sect->org - prevEndAddr;
 
-			fprintf(mapFile, "    EMPTY: $%04" PRIx16 " byte%s\n", empty,
+			fprintf(mapFile, "\tEMPTY: $%04" PRIx16 " byte%s\n", empty,
 				empty == 1 ? "" : "s");
 		}
 
 		prevEndAddr = sect->org + sect->size;
 
 		if (sect->size != 0)
-			fprintf(mapFile, "  SECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
+			fprintf(mapFile, "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
 				" byte%s) [\"%s\"]\n",
 				sect->org, prevEndAddr - 1,
 				sect->size, sect->size == 1 ? "" : "s",
 				sect->name);
 		else
-			fprintf(mapFile, "  SECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
+			fprintf(mapFile, "\tSECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
 				sect->org, sect->name);
 
 		if (!noSymInMap) {
@@ -405,11 +405,12 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 
 			while (sect) {
 				if (sect->modifier == SECTION_UNION)
-					fprintf(mapFile, "    ; New union\n");
+					fprintf(mapFile, "\t\t; New union\n");
 				else if (sect->modifier == SECTION_FRAGMENT)
-					fprintf(mapFile, "    ; New fragment\n");
+					fprintf(mapFile, "\t\t; New fragment\n");
 				for (size_t i = 0; i < sect->nbSymbols; i++)
-					fprintf(mapFile, "           $%04" PRIx32 " = %s\n",
+					//               "\tSECTION: $xxxx ..."
+					fprintf(mapFile, "\t         $%04" PRIx32 " = %s\n",
 						sect->symbols[i]->offset + org,
 						sect->symbols[i]->name);
 
@@ -425,7 +426,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	if (prevEndAddr < bankEndAddr) {
 		uint16_t empty = bankEndAddr - prevEndAddr;
 
-		fprintf(mapFile, "    EMPTY: $%04" PRIx16 " byte%s\n", empty,
+		fprintf(mapFile, "\tEMPTY: $%04" PRIx16 " byte%s\n", empty,
 			empty == 1 ? "" : "s");
 	}
 
@@ -434,7 +435,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	} else {
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
-		fprintf(mapFile, "  SLACK: $%04" PRIx16 " byte%s\n\n", slack,
+		fprintf(mapFile, "\tSLACK: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
 	}
 
@@ -463,7 +464,7 @@ static void writeMapSummary(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
 		if (sections[type].nbBanks == 0)
 			continue;
 
-		fprintf(mapFile, "  %s: %" PRId32 " byte%s used / %" PRId32 " free",
+		fprintf(mapFile, "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
 			sectionTypeInfo[type].name, usedMap[type], usedMap[type] == 1 ? "" : "s",
 			sections[type].nbBanks * sectionTypeInfo[type].size - usedMap[type]);
 		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank ||
