@@ -337,6 +337,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'a':
 			autoAttrmap = false;
+			if (!options.attrmap.empty())
+				warning("Overriding attrmap file %s", options.attrmap.c_str());
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
@@ -479,6 +481,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			}
 			break;
 		case 'o':
+			if (!options.output.empty())
+				warning("Overriding tile data file %s", options.output.c_str());
 			options.output = musl_optarg;
 			break;
 		case 'P':
@@ -486,6 +490,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'p':
 			autoPalettes = false;
+			if (!options.palettes.empty())
+				warning("Overriding palettes file %s", options.palettes.c_str());
 			options.palettes = musl_optarg;
 			break;
 		case 'Q':
@@ -493,6 +499,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'q':
 			autoPalmap = false;
+			if (!options.palmap.empty())
+				warning("Overriding palette map file %s", options.palmap.c_str());
 			options.palmap = musl_optarg;
 			break;
 		case 'r':
@@ -520,6 +528,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 't':
 			autoTilemap = false;
+			if (!options.tilemap.empty())
+				warning("Overriding tilemap file %s", options.tilemap.c_str());
 			options.tilemap = musl_optarg;
 			break;
 		case 'V':

@@ -369,21 +369,31 @@ int main(int argc, char *argv[])
 			isWRA0Mode = true;
 			break;
 		case 'l':
+			if (linkerScriptName)
+				warnx("Overriding linkerscript %s", musl_optarg);
 			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
 			noSymInMap = true;
 			break;
 		case 'm':
+			if (mapFileName)
+				warnx("Overriding mapfile %s", musl_optarg);
 			mapFileName = musl_optarg;
 			break;
 		case 'n':
+			if (symFileName)
+				warnx("Overriding symfile %s", musl_optarg);
 			symFileName = musl_optarg;
 			break;
 		case 'O':
+			if (overlayFileName)
+				warnx("Overriding overlay file %s", musl_optarg);
 			overlayFileName = musl_optarg;
 			break;
 		case 'o':
+			if (outputFileName)
+				warnx("Overriding output file %s", musl_optarg);
 			outputFileName = musl_optarg;
 			break;
 		case 'p':

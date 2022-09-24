@@ -53,11 +53,11 @@ char const *__asan_default_options(void) { return "detect_leaks=0"; }
 // Unfortunately, macOS still ships 2.3, which is from 2008...
 int yyparse(void);
 
-FILE * dependfile;
-bool generatedMissingIncludes;
-bool failedOnMissingInclude;
-bool generatePhonyDeps;
-char *targetFileName;
+FILE *dependfile = NULL;
+bool generatedMissingIncludes = false;
+bool failedOnMissingInclude = false;
+bool generatePhonyDeps = false;
+char *targetFileName = NULL;
 
 bool haltnop;
 bool warnOnHaltNop;
@@ -148,9 +148,6 @@ static void print_usage(void)
 
 int main(int argc, char *argv[])
 {
-	int ch;
-	char *ep;
-
 	time_t now = time(NULL);
 	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
 
@@ -159,17 +156,10 @@ int main(int argc, char *argv[])
 	if (sourceDateEpoch)
 		now = (time_t)strtoul(sourceDateEpoch, NULL, 0);
 
-	dependfile = NULL;
-
 	// Perform some init for below
 	sym_Init(now);
 
 	// Set defaults
-
-	generatePhonyDeps = false;
-	generatedMissingIncludes = false;
-	failedOnMissingInclude = false;
-	targetFileName = NULL;
 
 	opt_B("01");
 	opt_G("0123");
@@ -183,8 +173,11 @@ int main(int argc, char *argv[])
 	warnings = true;
 	sym_SetExportAll(false);
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
+	char *dependFileName = NULL;
 	size_t targetFileNameLen = 0;
 
+	int ch;
+	char *ep;
 	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
@@ -243,12 +236,17 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'M':
-			if (!strcmp("-", musl_optarg))
+			if (dependfile)
+				warnx("Overriding dependfile %s", dependFileName);
+			if (!strcmp("-", musl_optarg)) {
 				dependfile = stdout;
-			else
+				dependFileName = "<stdout>";
+			} else {
 				dependfile = fopen(musl_optarg, "w");
+				dependFileName = musl_optarg;
+			}
 			if (dependfile == NULL)
-				err("Could not open dependfile %s", musl_optarg);
+				err("Could not open dependfile %s", dependFileName);
 			break;
 
 		case 'o':
