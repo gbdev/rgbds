@@ -76,6 +76,11 @@ if ! diff --strip-trailing-cr syntax-error.err $errput; then
 fi
 
 for i in *.asm; do
+	flags=${i%.asm}.flags
+	RGBASMFLAGS=-Weverything
+	if [ -f $flags ]; then
+		RGBASMFLAGS="$(head -n 1 "$flags")" # Allow other lines to serve as comments
+	fi
 	for variant in '' '.pipe'; do
 		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 		desired_errname=${i%.asm}.err
@@ -83,7 +88,7 @@ for i in *.asm; do
 			desired_errname=${i%.asm}.simple.err
 		fi
 		if [ -z "$variant" ]; then
-			$RGBASM -Weverything -o $o $i > $output 2> $errput
+			$RGBASM $RGBASMFLAGS -o $o $i > $output 2> $errput
 			desired_output=${i%.asm}.out
 			desired_errput=$desired_errname
 		else
@@ -97,7 +102,7 @@ for i in *.asm; do
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with and was broken when the feature was
 			# first implemented.
-			cat $i | $RGBASM -Weverything -o $o - > $output 2> $errput
+			cat $i | $RGBASM $RGBASMFLAGS -o $o - > $output 2> $errput
 
 			# Use two otherwise unused files for temp storage
 			desired_output=$input

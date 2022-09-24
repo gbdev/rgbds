@@ -38,6 +38,7 @@ _rgbasm_completions() {
 		[i]="include:dir"
 		[M]="dependfile:glob-*.mk *.d"
 		[o]="output:glob-*.o"
+		[P]="preinclude:glob-*.asm *.inc"
 		[p]="pad-value:unk"
 		[Q]="q-precision:unk"
 		[r]="recursion-depth:unk"

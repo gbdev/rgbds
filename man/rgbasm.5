@@ -1972,6 +1972,13 @@ calls infinitely (or until you run out of memory, whichever comes first).
 .Bd -literal -offset indent
     INCLUDE "irq.inc"
 .Ed
+.Pp
+You may also implicitly
+.Ic INCLUDE
+a file before the source file with the
+.Fl P
+option of
+.Xr rgbasm 1 .
 .Ss Conditional assembling
 The four commands
 .Ic IF , ELIF , ELSE ,
