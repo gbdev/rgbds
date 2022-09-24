@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			if (strlen(musl_optarg) == 2)
-				opt_B(&musl_optarg[1]);
+				opt_B(musl_optarg);
 			else
 				errx("Must specify exactly 2 characters for option 'b'");
 			break;
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 
 		case 'g':
 			if (strlen(musl_optarg) == 4)
-				opt_G(&musl_optarg[1]);
+				opt_G(musl_optarg);
 			else
 				errx("Must specify exactly 4 characters for option 'g'");
 			break;
