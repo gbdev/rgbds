@@ -492,7 +492,7 @@ void out_WriteObject(void)
 	if (strcmp(objectName, "-") != 0)
 		f = fopen(objectName, "wb");
 	else
-		f = fdopen(1, "wb");
+		f = fdopen(STDOUT_FILENO, "wb");
 
 	if (!f)
 		err("Couldn't write file '%s'", objectName);

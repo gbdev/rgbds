@@ -459,7 +459,12 @@ static struct Section *getMainSection(struct Section *section)
 
 void obj_ReadFile(char const *fileName, unsigned int fileID)
 {
-	FILE *file = strcmp("-", fileName) ? fopen(fileName, "rb") : stdin;
+	FILE *file;
+
+	if (strcmp("-", fileName) != 0)
+		file = fopen(fileName, "rb");
+	else
+		file = fdopen(STDIN_FILENO, "rb"); // `stdin` is in text mode by default
 
 	if (!file)
 		err("Could not open file %s", fileName);

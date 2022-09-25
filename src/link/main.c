@@ -154,9 +154,9 @@ FILE *openFile(char const *fileName, char const *mode)
 	if (strcmp(fileName, "-") != 0)
 		file = fopen(fileName, mode);
 	else if (mode[0] == 'r')
-		file = fdopen(0, mode);
+		file = fdopen(STDIN_FILENO, mode);
 	else
-		file = fdopen(1, mode);
+		file = fdopen(STDOUT_FILENO, mode);
 
 	if (!file)
 		err("Could not open file \"%s\"", fileName);
