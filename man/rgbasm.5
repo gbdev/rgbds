@@ -18,7 +18,7 @@ This is the full description of the language used by
 The description of the instructions supported by the Game Boy CPU is in
 .Xr gbz80 7 .
 .Pp
-It is strongly recommended to have some familiarity with the Game Boy hardware before reading this document.
+It is advisable to have some familiarity with the Game Boy hardware before reading this document.
 RGBDS is specifically targeted at the Game Boy, and thus a lot of its features tie directly to its concepts.
 This document is not intended to be a Game Boy hardware reference.
 .Pp
@@ -64,10 +64,10 @@ X = /* the value of x
 Sometimes lines can be too long and it may be necessary to split them.
 To do so, put a backslash at the end of the line:
 .Bd -literal -offset indent
-    DB 1, 2, 3,\ \[rs]
-       4, 5, 6,\ \[rs]\ ;\ Put it before any comments
+    DB 1, 2, 3,\ \e
+       4, 5, 6,\ \e\ ;\ Put it before any comments
        7, 8, 9
-    DB "Hello,\ \[rs]\ \ ;\ Space before the \[rs] is included
+    DB "Hello,\ \e\ \ ;\ Space before the \e is included
 world!"\ \ \ \ \ \ \ \ \ \ \ ;\ Any leading space is included
 .Ed
 .Ss Symbol interpolation
@@ -83,7 +83,7 @@ prepended.
 .Pp
 Symbol interpolations can be nested, too!
 .Bd -literal -offset indent
-DEF topic EQUS "life, the universe, and \[rs]"everything\[rs]""
+DEF topic EQUS "life, the universe, and \e"everything\e""
 DEF meaning EQUS "answer"
 ;\ Defines answer = 42
 DEF {meaning} = 42
@@ -367,23 +367,23 @@ ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
 The most basic string expression is any number of characters contained in double quotes
 .Pq Ql \&"for instance" .
 The backslash character
-.Ql \[rs]
+.Ql \e
 is special in that it causes the character following it to be
 .Dq escaped ,
 meaning that it is treated differently from normal.
 There are a number of escape sequences you can use within a string:
-.Bl -column -offset indent "Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc"
+.Bl -column -offset indent "Qo \e1 Qc \[en] Qo \e9 Qc"
 .It Sy String Ta Sy Meaning
-.It Ql \[rs]\[rs] Ta Produces a backslash
-.It Ql \[rs]" Ta Produces a double quote without terminating
-.It Ql \[rs]{ Ta Curly bracket left
-.It Ql \[rs]} Ta Curly bracket right
-.It Ql \[rs]n Ta Newline ($0A)
-.It Ql \[rs]r Ta Carriage return ($0D)
-.It Ql \[rs]t Ta Tab ($09)
-.It Qo \[rs]1 Qc \[en] Qo \[rs]9 Qc Ta Macro argument (Only in the body of a macro; see Sx Invoking macros )
-.It Ql \[rs]# Ta All Dv _NARG No macro arguments, separated by commas (Only in the body of a macro)
-.It Ql \[rs]@ Ta Label name suffix (Only in the body of a macro or a Ic REPT No block)
+.It Ql \e\e Ta Produces a backslash
+.It Ql \e" Ta Produces a double quote without terminating
+.It Ql \e{ Ta Curly bracket left
+.It Ql \e} Ta Curly bracket right
+.It Ql \en Ta Newline ($0A)
+.It Ql \er Ta Carriage return ($0D)
+.It Ql \et Ta Tab ($09)
+.It Qo \e1 Qc \[en] Qo \e9 Qc Ta Macro argument (Only in the body of a macro; see Sx Invoking macros )
+.It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas (Only in the body of a macro)
+.It Ql \e@ Ta Label name suffix (Only in the body of a macro or a Ic REPT No block)
 .El
 (Note that some of those can be used outside of strings, when noted further in this document.)
 .Pp
@@ -391,9 +391,9 @@ Multi-line strings are contained in triple quotes
 .Pq Ql \&"\&"\&"for instance\&"\&"\&" .
 Escape sequences work the same way in multi-line strings; however, literal newline
 characters will be included as-is, without needing to escape them with
-.Ql \[rs]r
+.Ql \er
 or
-.Ql \[rs]n .
+.Ql \en .
 .Pp
 The following functions operate on string expressions.
 Most of them return a string, however some of these functions actually return an integer and can be used as part of an integer expression!
@@ -1064,7 +1064,7 @@ This can be used, for example, to update a constant using a macro, without makin
     def NUM_ITEMS equ 0
 MACRO add_item
     redef NUM_ITEMS equ NUM_ITEMS + 1
-    def ITEM_{02x:NUM_ITEMS} equ \[rs]1
+    def ITEM_{02x:NUM_ITEMS} equ \e1
 ENDM
     add_item 1
     add_item 4
@@ -1129,7 +1129,7 @@ will not expand string constants in their names.
 DEF COUNTREG EQUS "[hl+]"
     ld a,COUNTREG
 
-DEF PLAYER_NAME EQUS "\[rs]"John\[rs]""
+DEF PLAYER_NAME EQUS "\e"John\e""
     db PLAYER_NAME
 .Ed
 .Pp
@@ -1141,7 +1141,7 @@ This will be interpreted as:
 .Pp
 String constants can also be used to define small one-line macros:
 .Bd -literal -offset indent
-DEF pusha EQUS "push af\[rs]npush bc\[rs]npush de\[rs]npush hl\[rs]n"
+DEF pusha EQUS "push af\enpush bc\enpush de\enpush hl\en"
 .Ed
 .Pp
 Note that colons
@@ -1250,18 +1250,18 @@ ENDM
 But this will:
 .Bd -literal -offset indent
 MACRO outer
-DEF definition EQUS "MACRO inner\[rs]nPRINTLN \[rs]"Hello!\[rs]"\[rs]nENDM"
+DEF definition EQUS "MACRO inner\enPRINTLN \e"Hello!\e"\enENDM"
     definition
     PURGE definition
 ENDM
 .Ed
 .Pp
 Macro arguments support all the escape sequences of strings, as well as
-.Ql \[rs],
+.Ql \e,
 to escape commas, as well as
-.Ql \[rs](
+.Ql \e(
 and
-.Ql \[rs])
+.Ql \e)
 to escape parentheses, since those otherwise separate and enclose arguments, respectively.
 .Ss Exporting and importing symbols
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.
@@ -1559,19 +1559,19 @@ ENDM
 .Pp
 This is fine, but only if you use the macro no more than once per scope.
 To get around this problem, there is the escape sequence
-.Ic \[rs]@
+.Ic \e@
 that expands to a unique string.
 .Pp
-.Ic \[rs]@
+.Ic \e@
 also works in
 .Ic REPT
 blocks.
 .Bd -literal -offset indent
 MACRO LoopyMacro
             xor  a,a
-\&.loop\[rs]@     ld   [hl+],a
+\&.loop\e@     ld   [hl+],a
             dec  c
-            jr   nz,.loop\[rs]@
+            jr   nz,.loop\e@
 ENDM
 .Ed
 .Pp
@@ -1591,18 +1591,18 @@ which references the same macro, which has the same problem.
 .Pp
 It's possible to pass arguments to macros as well!
 You retrieve the arguments by using the escape sequences
-.Ic \[rs]1
+.Ic \e1
 through
-.Ic \[rs]9 , \[rs]1
+.Ic \e9 , \e1
 being the first argument specified on the macro invocation.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            ld   hl,\[rs]1
-            ld   c,\[rs]2
+            ld   hl,\e1
+            ld   c,\e2
             xor  a,a
-\&.loop\[rs]@     ld   [hl+],a
+\&.loop\e@     ld   [hl+],a
             dec  c
-            jr   nz,.loop\[rs]@
+            jr   nz,.loop\e@
             ENDM
 .Ed
 .Pp
@@ -1615,14 +1615,14 @@ LoopyMacro MyVars,54
 Arguments are passed as string constants, although there's no need to enclose them in quotes.
 Thus, an expression will not be evaluated first but kind of copy-pasted.
 This means that it's probably a very good idea to use brackets around
-.Ic \[rs]1
+.Ic \e1
 to
-.Ic \[rs]9
+.Ic \e9
 if you perform further calculations on them.
 For instance, consider the following:
 .Bd -literal -offset indent
 MACRO print_double
-    PRINTLN \[rs]1 * 2
+    PRINTLN \e1 * 2
 ENDM
     print_double 1 + 2
 .Ed
@@ -1637,15 +1637,15 @@ Line continuations work as usual inside macros or lists of macro arguments.
 However, some characters need to be escaped, as in the following example:
 .Bd -literal -offset indent
 MACRO PrintMacro1
-    PRINTLN STRCAT(\[rs]1)
+    PRINTLN STRCAT(\e1)
 ENDM
-    PrintMacro1 "Hello "\[rs], \[rs]
+    PrintMacro1 "Hello "\e, \e
                        "world"
 MACRO PrintMacro2
-    PRINT \[rs]1
+    PRINT \e1
 ENDM
-    PrintMacro2 STRCAT("Hello ", \[rs]
-                       "world\[rs]n")
+    PrintMacro2 STRCAT("Hello ", \e
+                       "world\en")
 .Ed
 .Pp
 The comma in
@@ -1655,34 +1655,34 @@ The comma in
 .Ql PrintMacro2
 does not need escaping because it is inside parentheses, similar to macro arguments in C.
 The backslash in
-.Ql \[rs]n
+.Ql \en
 also does not need escaping because string literals work as usual inside macro arguments.
 .Pp
 Since there are only nine digits, you can only access the first nine macro arguments like this.
 To use the rest, you need to put the multi-digit argument number in angle brackets, like
-.Ql \[rs]<10> .
+.Ql \e<10> .
 This bracketed syntax supports decimal numbers and numeric constant symbols.
 For example,
-.Ql \[rs]<_NARG>
+.Ql \e<_NARG>
 will get the last argument.
 .Pp
 Other macro arguments and symbol interpolations will be expanded inside the angle brackets.
 For example, if
-.Ql \[rs]1
+.Ql \e1
 is
 .Ql 13 ,
 then
-.Ql \[rs]<\[rs]1>
+.Ql \e<\e1>
 will expand to
-.Ql \[rs]<13> .
+.Ql \e<13> .
 Or if
 .Ql v10 = 42
 and
 .Ql x = 10 ,
 then
-.Ql \[rs]<v{d:x}>
+.Ql \e<v{d:x}>
 will expand to
-.Ql \[rs]<42> .
+.Ql \e<42> .
 .Pp
 Another way to access more than nine macro arguments is the
 .Ic SHIFT
@@ -1690,11 +1690,11 @@ command, a special command only available in macros.
 It will shift the arguments by one to the left, and decrease
 .Dv _NARG
 by 1.
-.Ic \[rs]1
+.Ic \e1
 will get the value of
-.Ic \[rs]2 , \[rs]2
+.Ic \e2 , \e2
 will get the value of
-.Ic \[rs]3 ,
+.Ic \e3 ,
 and so forth.
 .Pp
 .Ic SHIFT
@@ -1713,9 +1713,9 @@ and
 commands print text and values to the standard output.
 Useful for debugging macros, or wherever you may feel the need to tell yourself some important information.
 .Bd -literal -offset indent
-PRINT "Hello world!\[rs]n"
+PRINT "Hello world!\en"
 PRINTLN "Hello world!"
-PRINT _NARG, " arguments\[rs]n"
+PRINT _NARG, " arguments\en"
 PRINTLN "sum: ", 2+3, " product: ", 2*3
 PRINTLN "Line #", __LINE__
 PRINTLN STRFMT("E = %f", 2.718)
@@ -1729,7 +1729,7 @@ For different formats, use
 .Ic STRFMT .
 .It Ic PRINTLN
 prints out each of its comma-separated arguments, if any, followed by a line feed
-.Pq Ql \[rs]n .
+.Pq Ql \en .
 .El
 .Ss Automatically repeating blocks of code
 Suppose you want to unroll a time consuming loop without copy-pasting it.
@@ -1763,7 +1763,7 @@ ANGLE = ANGLE + 256.0 ; 256.0 = 65536 degrees / 256 entries
 .Ed
 .Pp
 As in macros, you can also use the escape sequence
-.Ic \[rs]@ .
+.Ic \e@ .
 .Ic REPT
 blocks can be nested.
 .Pp
@@ -1851,7 +1851,7 @@ This will print:
 Just like with
 .Ic REPT
 blocks, you can use the escape sequence
-.Ic \[rs]@
+.Ic \e@
 inside of
 .Ic FOR
 blocks, and they can be nested.
