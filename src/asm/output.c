@@ -540,7 +540,9 @@ void out_WriteObject(void)
 // Set the objectfilename
 void out_SetFileName(char *s)
 {
+	if (objectName)
+		warnx("Overriding output filename %s", objectName);
 	objectName = s;
 	if (verbose)
-		printf("Output filename %s\n", s);
+		printf("Output filename %s\n", objectName);
 }

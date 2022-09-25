@@ -19,6 +19,7 @@
 #include "asm/main.h"
 #include "asm/symbol.h"
 #include "asm/warning.h"
+#include "error.h"
 #include "platform.h" // S_ISDIR (stat macro)
 
 #define MAXINCPATHS 128
@@ -137,7 +138,11 @@ void fstk_AddIncludePath(char const *path)
 
 void fstk_SetPreIncludeFile(char const *path)
 {
+	if (preIncludeName)
+		warnx("Overriding pre-included filename %s", preIncludeName);
 	preIncludeName = path;
+	if (verbose)
+		printf("Pre-included filename %s\n", preIncludeName);
 }
 
 static void printDep(char const *path)
