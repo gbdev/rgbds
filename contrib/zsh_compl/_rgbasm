@@ -48,7 +48,7 @@ local args=(
 	'(-b --binary-digits)'{-b,--binary-digits}'+[Change chars for binary constants]:digit spec:'
 	'*'{-D,--define}'+[Define a string symbol]:name + value (default 1):'
 	'(-g --gfx-chars)'{-g,--gfx-chars}'+[Change chars for gfx constants]:chars spec:'
-	'(-i --include)'{-i,--include}'+[Add an include directory]:include path:_files -/'
+	'(-I --include)'{-I,--include}'+[Add an include directory]:include path:_files -/'
 	'(-M --dependfile)'{-M,--dependfile}"+[List deps in make format]:output file:_files -g '*.{d,mk}'"
 	-MG'[Assume missing files should be generated]'
 	-MP'[Add phony targets to all deps]'

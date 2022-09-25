@@ -87,7 +87,7 @@ static char *make_escape(char const *str)
 }
 
 // Short options
-static const char *optstring = "b:D:Eg:Hhi:LlM:o:P:p:Q:r:VvW:w";
+static const char *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:w";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -107,7 +107,7 @@ static struct option const longopts[] = {
 	{ "gfx-chars",        required_argument, NULL,     'g' },
 	{ "nop-after-halt",   no_argument,       NULL,     'H' },
 	{ "halt-without-nop", no_argument,       NULL,     'h' },
-	{ "include",          required_argument, NULL,     'i' },
+	{ "include",          required_argument, NULL,     'I' },
 	{ "preserve-ld",      no_argument,       NULL,     'L' },
 	{ "auto-ldh",         no_argument,       NULL,     'l' },
 	{ "dependfile",       required_argument, NULL,     'M' },
@@ -129,7 +129,7 @@ static struct option const longopts[] = {
 static void print_usage(void)
 {
 	fputs(
-"Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-i path]\n"
+"Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
 "              [-r depth] [-W warning] <file>\n"
@@ -220,6 +220,7 @@ int main(int argc, char *argv[])
 			haltnop = false;
 			break;
 
+		case 'I':
 		case 'i':
 			fstk_AddIncludePath(musl_optarg);
 			break;

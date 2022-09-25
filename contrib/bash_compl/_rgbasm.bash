@@ -35,7 +35,7 @@ _rgbasm_completions() {
 		[b]="binary-digits:unk"
 		[D]="define:unk"
 		[g]="gfx-chars:unk"
-		[i]="include:dir"
+		[I]="include:dir"
 		[M]="dependfile:glob-*.mk *.d"
 		[o]="output:glob-*.o"
 		[P]="preinclude:glob-*.asm *.inc"
