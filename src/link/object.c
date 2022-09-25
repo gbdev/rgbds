@@ -464,7 +464,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	if (strcmp("-", fileName) != 0)
 		file = fopen(fileName, "rb");
 	else
-		file = fdopen(STDIN_FILENO, "rb");
+		file = fdopen(STDIN_FILENO, "rb"); // `stdin` is in text mode by default
 
 	if (!file)
 		err("Could not open file %s", fileName);
