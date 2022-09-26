@@ -249,9 +249,8 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 				if (output)
 					*output += codepointLen;
 
-				// Check if the character map is not the default "main" one, or if
-				// it has any mappings defined
-				if (strcmp(charmap->name, "main") || charmap->usedNodes > 1)
+				// Warn if this character is not mapped but any others are
+				if (charmap->usedNodes > 1)
 					warning(WARNING_UNMAPPED_CHAR,
 						"Unmapped character %s\n", printChar(firstChar));
 

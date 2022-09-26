@@ -4,7 +4,9 @@ SECTION "test", ROM0
 
 	pushc
 	newcharmap custom
-	db "A" ; unmapped in non-default charmap
+	db "A" ; OK, unmapped in non-default empty charmap
+	charmap "C", $99
+	db "A" ; unmapped in non-empty charmap
 	popc
 
 	db "A" ; OK, default empty charmap again
