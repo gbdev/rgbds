@@ -220,6 +220,9 @@ int main(int argc, char *argv[])
 			haltnop = false;
 			break;
 
+		// `-i` was the only short option for `--include` until `-I` was
+		// introduced to better match the `-I dir` option of gcc and clang.
+		// `-i` is now undocumented but still supported for now.
 		case 'I':
 		case 'i':
 			fstk_AddIncludePath(musl_optarg);
