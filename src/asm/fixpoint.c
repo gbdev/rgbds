@@ -24,7 +24,7 @@
 #define fix2double(i)	((double)((i) / fix_PrecisionFactor()))
 #define double2fix(d)	((int32_t)round((d) * fix_PrecisionFactor()))
 
-// pi*2 radians == 1.0 fixed-point turns
+// 2*pi radians == 1 turn
 #define turn2rad(f)	((f) * (M_PI * 2))
 #define rad2turn(r)	((r) / (M_PI * 2))
 

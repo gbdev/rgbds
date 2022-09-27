@@ -25,7 +25,7 @@ OPT Q.16
 ; amplitude scaled from [-1.0, 1.0] to [0.0, 128.0]
 DEF turns = 0.0
 REPT 256
-    db (MUL(64.0, SIN(turns)) + 64.0) >> 16
+    db (MUL(64.0, SIN(turns) + 1.0)) >> 16
     DEF turns += 1.0 / 256
 ENDR
 
