@@ -1589,6 +1589,17 @@ string		: T_STRING
 			strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
 			freeStrFmtArgList(&$3);
 		}
+		| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
+			struct Symbol *sym = sym_FindScopedSymbol($3);
+
+			if (!sym)
+				fatalerror("Unknown symbol \"%s\"\n", $3);
+			if (!sym_IsLabel(sym))
+				fatalerror("SECTION argument must be a label\n");
+			// Section names are capped by rgbasm's maximum string length,
+			// so this currently can't overflow.
+			strcpy($$, sym_GetSection(sym)->name);
+		}
 ;
 
 strcat_args	: string
