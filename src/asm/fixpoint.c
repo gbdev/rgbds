@@ -24,9 +24,9 @@
 #define fix2double(i)	((double)((i) / fix_PrecisionFactor()))
 #define double2fix(d)	((int32_t)round((d) * fix_PrecisionFactor()))
 
-// pi*2 radians == 2**fixPrecision fixed-point "degrees"
-#define fdeg2rad(f)	((f) * (M_PI * 2) / fix_PrecisionFactor())
-#define rad2fdeg(r)	((r) * fix_PrecisionFactor() / (M_PI * 2))
+// 2*pi radians == 1 turn
+#define turn2rad(f)	((f) * (M_PI * 2))
+#define rad2turn(r)	((r) / (M_PI * 2))
 
 uint8_t fixPrecision;
 
@@ -51,37 +51,37 @@ void fix_Print(int32_t i)
 
 int32_t fix_Sin(int32_t i)
 {
-	return double2fix(sin(fdeg2rad(fix2double(i))));
+	return double2fix(sin(turn2rad(fix2double(i))));
 }
 
 int32_t fix_Cos(int32_t i)
 {
-	return double2fix(cos(fdeg2rad(fix2double(i))));
+	return double2fix(cos(turn2rad(fix2double(i))));
 }
 
 int32_t fix_Tan(int32_t i)
 {
-	return double2fix(tan(fdeg2rad(fix2double(i))));
+	return double2fix(tan(turn2rad(fix2double(i))));
 }
 
 int32_t fix_ASin(int32_t i)
 {
-	return double2fix(rad2fdeg(asin(fix2double(i))));
+	return double2fix(rad2turn(asin(fix2double(i))));
 }
 
 int32_t fix_ACos(int32_t i)
 {
-	return double2fix(rad2fdeg(acos(fix2double(i))));
+	return double2fix(rad2turn(acos(fix2double(i))));
 }
 
 int32_t fix_ATan(int32_t i)
 {
-	return double2fix(rad2fdeg(atan(fix2double(i))));
+	return double2fix(rad2turn(atan(fix2double(i))));
 }
 
 int32_t fix_ATan2(int32_t i, int32_t j)
 {
-	return double2fix(rad2fdeg(atan2(fix2double(i), fix2double(j))));
+	return double2fix(rad2turn(atan2(fix2double(i), fix2double(j))));
 }
 
 int32_t fix_Mul(int32_t i, int32_t j)
