@@ -1594,11 +1594,13 @@ string		: T_STRING
 
 			if (!sym)
 				fatalerror("Unknown symbol \"%s\"\n", $3);
-			if (!sym_IsLabel(sym))
-				fatalerror("SECTION argument must be a label\n");
+			struct Section const *section = sym_GetSection(sym);
+
+			if (!section)
+				fatalerror("\"%s\" does not belong to any section\n", sym->name);
 			// Section names are capped by rgbasm's maximum string length,
 			// so this currently can't overflow.
-			strcpy($$, sym_GetSection(sym)->name);
+			strcpy($$, section->name);
 		}
 ;
 
