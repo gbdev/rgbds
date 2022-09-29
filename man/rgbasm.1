@@ -320,12 +320,19 @@ warns when an N-bit value's absolute value is 2**N or greater.
 or just
 .Fl Wtruncation
 also warns when an N-bit value is less than -2**(N-1), which will not fit in two's complement encoding.
-.It Fl Wunmapped-char
+.It Fl Wunmapped-char=
 Warn when a character goes through charmap conversion but has no defined mapping.
-This warning is always disabled if the active charmap is empty, and/or is the default charmap
+.Fl Wunmapped-char=0
+or
+.Fl Wunmapped-char
+disables this warning.
+.Fl Wunmapped-char=1
+or just
+.Fl Wunmapped-char
+only warns if the active charmap is not empty.
+.Fl Wunmapped-char=2
+warns if the active charmap is empty, and/or is not the default charmap
 .Sq main .
-This warning is enabled by
-.Fl Wall .
 .It Fl Wno-user
 Warn when the
 .Ic WARN

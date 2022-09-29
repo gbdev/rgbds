@@ -36,7 +36,6 @@ enum WarningID {
 	WARNING_OBSOLETE,	      // Obsolete things
 	WARNING_SHIFT,		      // Shifting undefined behavior
 	WARNING_SHIFT_AMOUNT,	      // Strange shift amount
-	WARNING_UNMAPPED_CHAR,	      // Character without charmap entry
 	WARNING_USER,		      // User warnings
 
 	NB_PLAIN_WARNINGS,
@@ -49,6 +48,9 @@ enum WarningID {
 	// Implicit truncation loses some bits
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
+	// Character without charmap entry
+	WARNING_UNMAPPED_CHAR_1,
+	WARNING_UNMAPPED_CHAR_2,
 
 	NB_PLAIN_AND_PARAM_WARNINGS,
 #define NB_PARAM_WARNINGS (NB_PLAIN_AND_PARAM_WARNINGS - PARAM_WARNINGS_START)
