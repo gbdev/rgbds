@@ -1,0 +1,2 @@
+FATAL: section-name-invalid.asm(7):
+    SECTION argument must be a label
