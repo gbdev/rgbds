@@ -38,13 +38,14 @@ static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 	[WARNING_OBSOLETE]		= WARNING_ENABLED,
 	[WARNING_SHIFT]			= WARNING_DISABLED,
 	[WARNING_SHIFT_AMOUNT]		= WARNING_DISABLED,
-	[WARNING_UNMAPPED_CHAR]		= WARNING_ENABLED,
 	[WARNING_USER]			= WARNING_ENABLED,
 
 	[WARNING_NUMERIC_STRING_1]	= WARNING_ENABLED,
 	[WARNING_NUMERIC_STRING_2]	= WARNING_DISABLED,
 	[WARNING_TRUNCATION_1]		= WARNING_ENABLED,
 	[WARNING_TRUNCATION_2]		= WARNING_DISABLED,
+	[WARNING_UNMAPPED_CHAR_1]	= WARNING_ENABLED,
+	[WARNING_UNMAPPED_CHAR_2]	= WARNING_DISABLED,
 };
 
 enum WarningState warningStates[ARRAY_SIZE(warningStates)];
@@ -86,7 +87,6 @@ static const char * const warningFlags[NB_WARNINGS] = {
 	"obsolete",
 	"shift",
 	"shift-amount",
-	"unmapped-char",
 	"user",
 
 	// Parametric warnings
@@ -94,6 +94,8 @@ static const char * const warningFlags[NB_WARNINGS] = {
 	"numeric-string",
 	"truncation",
 	"truncation",
+	"unmapped-char",
+	"unmapped-char",
 
 	// Meta warnings
 	"all",
@@ -108,6 +110,7 @@ static const struct {
 } paramWarnings[] = {
 	{ "numeric-string", 2, 1 },
 	{ "truncation", 2, 2 },
+	{ "unmapped-char", 2, 1 },
 };
 
 static bool tryProcessParamWarning(char const *flag, uint8_t param, enum WarningState state)
@@ -162,8 +165,8 @@ static uint8_t const _wallCommands[] = {
 	WARNING_LONG_STR,
 	WARNING_NESTED_COMMENT,
 	WARNING_OBSOLETE,
-	WARNING_UNMAPPED_CHAR,
 	WARNING_NUMERIC_STRING_1,
+	WARNING_UNMAPPED_CHAR_1,
 	META_WARNING_DONE
 };
 
@@ -176,6 +179,8 @@ static uint8_t const _wextraCommands[] = {
 	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
+	WARNING_UNMAPPED_CHAR_1,
+	WARNING_UNMAPPED_CHAR_2,
 	META_WARNING_DONE
 };
 
@@ -194,11 +199,12 @@ static uint8_t const _weverythingCommands[] = {
 	WARNING_OBSOLETE,
 	WARNING_SHIFT,
 	WARNING_SHIFT_AMOUNT,
-	WARNING_UNMAPPED_CHAR,
 	WARNING_NUMERIC_STRING_1,
 	WARNING_NUMERIC_STRING_2,
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,
+	WARNING_UNMAPPED_CHAR_1,
+	WARNING_UNMAPPED_CHAR_2,
 	// WARNING_USER,
 	META_WARNING_DONE
 };

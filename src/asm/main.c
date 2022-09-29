@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", targetFileName, mainFileName);
 	}
 
-	charmap_New("main", NULL);
+	charmap_New(DEFAULT_CHARMAP_NAME, NULL);
 
 	// Init lexer and file stack, providing file info
 	lexer_Init();

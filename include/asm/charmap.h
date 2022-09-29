@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#define DEFAULT_CHARMAP_NAME "main"
+
 struct Charmap *charmap_New(char const *name, char const *baseName);
 void charmap_Delete(struct Charmap *charmap);
 void charmap_Set(char const *name);

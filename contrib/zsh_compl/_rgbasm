@@ -29,7 +29,7 @@ _rgbasm_warnings() {
 		'user:Warn when executing the WARN built-in'
 	)
 	# TODO: handle `no-` and `error=` somehow?
-	# TODO: handle `=0|1|2` levels for `numeric-string` and `truncation`?
+	# TODO: handle `=0|1|2` levels for `numeric-string`, `truncation`, and `unmapped-char`?
 	_describe warning warnings
 }
 

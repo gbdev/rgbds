@@ -251,8 +251,12 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 
 				// Warn if this character is not mapped but any others are
 				if (charmap->usedNodes > 1)
-					warning(WARNING_UNMAPPED_CHAR,
+					warning(WARNING_UNMAPPED_CHAR_1,
 						"Unmapped character %s\n", printChar(firstChar));
+				else if (strcmp(charmap->name, DEFAULT_CHARMAP_NAME))
+					warning(WARNING_UNMAPPED_CHAR_2,
+						"Unmapped character %s not in " DEFAULT_CHARMAP_NAME
+						" charmap\n", printChar(firstChar));
 
 				return codepointLen;
 
