@@ -1,3 +1,0 @@
-error: narg-nosect.asm(1):
-    _NARG does not make sense outside of a macro
-error: Assembly aborted (1 error)!

@@ -733,7 +733,7 @@ static uint32_t readBracketedMacroArgNum(void)
 		}
 		symName[i] = '\0';
 
-		struct Symbol const *sym = sym_FindScopedSymbol(symName);
+		struct Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 		if (!sym) {
 			error("Bracketed symbol \"%s\" does not exist\n", symName);
@@ -1400,7 +1400,7 @@ static char const *readInterpolation(size_t depth)
 
 	static char buf[MAXSTRLEN + 1];
 
-	struct Symbol const *sym = sym_FindScopedSymbol(symName);
+	struct Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);

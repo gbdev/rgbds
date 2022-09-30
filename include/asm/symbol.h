@@ -127,6 +127,8 @@ struct Symbol *sym_FindExactSymbol(char const *symName);
 struct Symbol *sym_FindUnscopedSymbol(char const *symName);
 // Find a symbol, possibly scoped, by name
 struct Symbol *sym_FindScopedSymbol(char const *symName);
+// Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
+struct Symbol *sym_FindScopedValidSymbol(char const *symName);
 struct Symbol const *sym_GetPC(void);
 struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 struct Symbol *sym_Ref(char const *symName);

@@ -1462,9 +1462,7 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
-			struct Symbol const *sym = sym_FindScopedSymbol($4);
-
-			rpn_Number(&$$, !!sym);
+			rpn_Number(&$$, sym_FindScopedValidSymbol($4) != NULL);
 
 			lexer_ToggleStringExpansion(true);
 		}
@@ -1590,7 +1588,7 @@ string		: T_STRING
 			freeStrFmtArgList(&$3);
 		}
 		| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
-			struct Symbol *sym = sym_FindScopedSymbol($3);
+			struct Symbol *sym = sym_FindScopedValidSymbol($3);
 
 			if (!sym)
 				fatalerror("Unknown symbol \"%s\"\n", $3);

@@ -36,6 +36,7 @@ HashMap symbols;
 
 static const char *labelScope; // Current section's label scope
 static struct Symbol *PCSymbol;
+static struct Symbol *_NARGSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -250,6 +251,21 @@ struct Symbol *sym_FindScopedSymbol(char const *symName)
 	return sym_FindExactSymbol(symName);
 }
 
+struct Symbol *sym_FindScopedValidSymbol(char const *symName)
+{
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
+
+	// `@` has no value outside a section
+	if (sym == PCSymbol && !sect_GetSymbolSection()) {
+		return NULL;
+	}
+	// `_NARG` has no value outside a macro
+	if (sym == _NARGSymbol && !macro_GetCurrentArgs()) {
+		return NULL;
+	}
+	return sym;
+}
+
 struct Symbol const *sym_GetPC(void)
 {
 	return PCSymbol;
@@ -263,7 +279,7 @@ static bool isReferenced(struct Symbol const *sym)
 // Purge a symbol
 void sym_Purge(char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	struct Symbol *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
 		error("'%s' not defined\n", symName);
@@ -682,7 +698,7 @@ static struct Symbol *createBuiltinSymbol(char const *symName)
 void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
-	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
+	_NARGSymbol = createBuiltinSymbol("_NARG");
 	// __LINE__ is deprecated
 	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
 	// __FILE__ is deprecated
