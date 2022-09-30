@@ -39,5 +39,6 @@ PRINTLN \1
 endm
 
     ; Representative numeric and string builtins
-    tickle __LINE__, 1
-    tickle __FILE__, 0
+    ; (SOURCE_DATE_EPOCH in test.sh makes this reproducible)
+    tickle __UTC_YEAR__, 1
+    tickle __ISO_8601_UTC__, 0

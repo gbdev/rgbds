@@ -1,4 +1,4 @@
-warn "pre-include {__FILE__}"
+warn "pre-included file"
 
 def v1 = 12
 rept 3

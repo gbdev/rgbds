@@ -33,8 +33,5 @@ endm
 _RS += 100
 println _RS
 
-__LINE__ *= 200
-println __LINE__
-
 UnDeFiNeD ^= 300
 println UnDeFiNeD

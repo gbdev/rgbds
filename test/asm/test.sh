@@ -2,6 +2,9 @@
 
 export LC_ALL=C
 
+# Game Boy release date, 1989-04-21T12:34:56Z (for reproducible test results)
+export SOURCE_DATE_EPOCH=609165296
+
 o="$(mktemp)"
 gb="$(mktemp)"
 input="$(mktemp)"
@@ -50,20 +53,6 @@ EOF
 else
 	echo "${bold}${orange}Warning: cannot run version test!${rescolors}${resbold}"
 	rm -f version.asm
-fi
-
-# Add the quote test, except on Windows
-if uname | grep -viq mingw; then
-	cat > quote\"file.asm <<EOF
-WARN __FILE__
-EOF
-	cat > quote\"file.out <<EOF
-EOF
-	cat > quote\"file.err <<EOF
-warning: quote"file.asm(1): [-Wuser]
-    quote"file.asm
-while expanding symbol "__FILE__"
-EOF
 fi
 
 # Check whether to use '.simple.err' files if they exist
