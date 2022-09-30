@@ -84,6 +84,7 @@ set(rgblink_src
     "link/sdas_obj.c"
     "link/section.c"
     "link/symbol.c"
+    "extern/utf8decoder.c"
     "hashmap.c"
     "linkdefs.c"
     "opmath.c"

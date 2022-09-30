@@ -17,6 +17,8 @@
 #include "link/section.h"
 #include "link/symbol.h"
 
+#include "extern/utf8decoder.h"
+
 #include "error.h"
 #include "linkdefs.h"
 #include "platform.h" // MIN_NB_ELMS
@@ -279,6 +281,41 @@ static bool canStartSymName(char c)
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
 }
 
+static void printSymName(char const *name)
+{
+	for (char const *ptr = name; *ptr != '\0'; ) {
+		char c = *ptr;
+
+		if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+		 || c == '_' || c == '@' || c == '#' || c == '$' || c == '.') {
+			fputc(c, symFile);
+		++ptr;
+		} else {
+			// Decode the UTF-8 codepoint; or at least attempt to
+			uint32_t state = 0, codepoint;
+
+			do {
+				decode(&state, &codepoint, *ptr);
+				if (state == 1) {
+					// This sequence was invalid; emit a U+FFFD, and recover
+					codepoint = 0xFFFD;
+					// Skip continuation bytes
+					// A NUL byte does not qualify, so we're good
+					while ((*ptr & 0xC0) == 0x80)
+						++ptr;
+					break;
+				}
+				++ptr;
+			} while (state != 0);
+
+			if (codepoint <= 0xFFFF)
+				fprintf(symFile, "\\u%04" PRIx32, codepoint);
+			else
+				fprintf(symFile, "\\U%08" PRIx32, codepoint);
+		}
+	}
+}
+
 // Comparator function for `qsort` to sort symbols
 // Symbols are ordered by address, or else by original index for a stable sort
 static int compareSymbols(void const *a, void const *b)
@@ -355,8 +392,10 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		struct SortedSymbol *sym = &symList[i];
 
-		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " %s\n",
-			symBank, sym->addr, sym->sym->name);
+		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ",
+			symBank, sym->addr);
+		printSymName(sym->sym->name);
+		fputc('\n', symFile);
 	}
 
 	free(symList);

@@ -95,6 +95,7 @@ rgblink_obj := \
 	src/link/section.o \
 	src/link/symbol.o \
 	src/extern/getopt.o \
+	src/extern/utf8decoder.o \
 	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
@@ -246,7 +247,7 @@ develop:
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
 		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
-		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
+		CFLAGS="-ggdb3 -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Targets for the project maintainer to easily create Windows exes.
