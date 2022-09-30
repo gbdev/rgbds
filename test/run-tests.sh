@@ -25,32 +25,20 @@ done
 # When updating subprojects, change the commit being checked out, and set the `shallow-since`
 # to the day before, to reduce the amount of refs being transferred and thus speed up CI.
 
-if [ ! -d pokecrystal ]; then
-	git clone https://github.com/pret/pokecrystal.git --shallow-since=2022-03-12 --single-branch
-fi
-pushd pokecrystal
-git fetch
-git checkout a3e31d6463e6313aed12ebc733b3f772f2fc78d7
-make clean
-make -j4 compare RGBDS=../../
-popd
+test_downstream() { # owner/repo shallow-since commit make-target
+	if [ ! -d ${1##*/} ]; then
+		git clone https://github.com/$1.git --shallow-since=$2 --single-branch
+	fi
+	pushd ${1##*/}
+	git checkout -f $3
+	if [ -f ../patches/${1##*/}.patch ]; then
+		git apply --ignore-whitespace ../patches/${1##*/}.patch
+	fi
+	make clean
+	make -j4 $4 RGBDS=../../
+	popd
+}
 
-if [ ! -d pokered ]; then
-	git clone https://github.com/pret/pokered.git --shallow-since=2022-03-07 --single-branch
-fi
-pushd pokered
-git fetch
-git checkout a75dd222709c92ae136d835ff2451391d5a88e45
-make clean
-make -j4 compare RGBDS=../../
-popd
-
-if [ ! -d ucity ]; then
-	git clone https://github.com/AntonioND/ucity.git --shallow-since=2020-11-01 --single-branch
-fi
-pushd ucity
-git fetch
-git checkout d8878233da7a6569f09f87b144cb5bf140146a0f
-make clean
-make -j4 RGBDS=../../
-popd
+test_downstream pret/pokecrystal 2022-09-26 a9869f18962353b056559dc14dfc00fef0df5978 compare
+test_downstream pret/pokered     2022-09-25 22859c4bb70dba17994c9b47b07f657ea082875d compare
+test_downstream AntonioND/ucity  2022-04-20 d8878233da7a6569f09f87b144cb5bf140146a0f ''

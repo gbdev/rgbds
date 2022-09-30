@@ -1,0 +1,27 @@
+diff --git a/Makefile b/Makefile
+index 387c2cca1..856968189 100644
+--- a/Makefile
++++ b/Makefile
+@@ -104,7 +104,7 @@ tools:
+ 	$(MAKE) -C tools/
+ 
+ 
+-RGBASMFLAGS = -L -Weverything -Wnumeric-string=2 -Wtruncation=1
++RGBASMFLAGS = -L -Weverything -Wnumeric-string=2 -Wtruncation=1 -Q8
+ # Create a sym/map for debug purposes if `make` run with `DEBUG=1`
+ ifeq ($(DEBUG),1)
+ RGBASMFLAGS += -E
+diff --git a/macros/data.asm b/macros/data.asm
+index c2686c9f4..4dac70f3a 100644
+--- a/macros/data.asm
++++ b/macros/data.asm
+@@ -97,7 +97,7 @@ MACRO sine_table
+ ; \1 samples of sin(x) from x=0 to x<32768 (pi radians)
+ 	DEF x = 0
+ 	rept \1
+-		dw (sin(x) + (sin(x) & $ff)) >> 8 ; round up
+-		DEF x += DIV(32768, \1) ; a circle has 65536 "degrees"
++		dw sin(x)
++		DEF x += 0.5 / (\1)
+ 	endr
+ ENDM
