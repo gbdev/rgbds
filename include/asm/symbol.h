@@ -57,6 +57,7 @@ struct Symbol {
 };
 
 bool sym_IsPC(struct Symbol const *sym);
+bool sym_Is_NARG(struct Symbol const *sym);
 
 static inline bool sym_IsDefined(struct Symbol const *sym)
 {

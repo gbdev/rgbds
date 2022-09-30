@@ -1463,8 +1463,11 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
 			struct Symbol const *sym = sym_FindScopedSymbol($4);
+			uint32_t value = sym_IsPC(sym) ? !!sect_GetSymbolSection()
+					: sym_Is_NARG(sym) ? !!macro_GetCurrentArgs()
+					: !!sym;
 
-			rpn_Number(&$$, !!sym);
+			rpn_Number(&$$, value);
 
 			lexer_ToggleStringExpansion(true);
 		}

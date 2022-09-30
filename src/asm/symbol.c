@@ -36,6 +36,7 @@ HashMap symbols;
 
 static const char *labelScope; // Current section's label scope
 static struct Symbol *PCSymbol;
+static struct Symbol *_NARGSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -45,6 +46,11 @@ static bool exportall;
 bool sym_IsPC(struct Symbol const *sym)
 {
 	return sym == PCSymbol;
+}
+
+bool sym_Is_NARG(struct Symbol const *sym)
+{
+	return sym == _NARGSymbol;
 }
 
 struct ForEachArgs {
@@ -679,7 +685,7 @@ static struct Symbol *createBuiltinSymbol(char const *symName)
 void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
-	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
+	_NARGSymbol = createBuiltinSymbol("_NARG");
 	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
 	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
 

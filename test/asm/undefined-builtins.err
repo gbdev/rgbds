@@ -1,0 +1,5 @@
+error: undefined-builtins.asm(3):
+    PC has no value outside a section
+error: undefined-builtins.asm(7):
+    _NARG does not make sense outside of a macro
+error: Assembly aborted (2 errors)!
