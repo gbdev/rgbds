@@ -273,6 +273,12 @@ static struct SortedSection const **nextSection(struct SortedSection const **s1,
 	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
+// Checks whether a symbol is
+static bool canStartSymName(char c)
+{
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
+}
+
 // Comparator function for `qsort` to sort symbols
 // Symbols are ordered by address, or else by original index for a stable sort
 static int compareSymbols(void const *a, void const *b)
@@ -315,29 +321,32 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	if (!symList)
 		err("Failed to allocate symbol list");
 
-	uint32_t idx = 0;
+	nbSymbols = 0;
 
 	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
 			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
-				symList[idx].idx = idx;
-				symList[idx].sym = sect->symbols[i];
-				symList[idx].addr = symList[idx].sym->offset + sect->org;
-				idx++;
+				if (!canStartSymName(sect->symbols[i]->name[0]))
+					continue;
+				symList[nbSymbols].idx = nbSymbols;
+				symList[nbSymbols].sym = sect->symbols[i];
+				symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
+				nbSymbols++;
 			}
 		}
 	}
 	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
 		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
 			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
-				symList[idx].idx = idx;
-				symList[idx].sym = sect->symbols[i];
-				symList[idx].addr = symList[idx].sym->offset + sect->org;
-				idx++;
+				if (!canStartSymName(sect->symbols[i]->name[0]))
+					continue;
+				symList[nbSymbols].idx = nbSymbols;
+				symList[nbSymbols].sym = sect->symbols[i];
+				symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
+				nbSymbols++;
 			}
 		}
 	}
-	assert(idx == nbSymbols);
 
 	qsort(symList, nbSymbols, sizeof(*symList), compareSymbols);
 
