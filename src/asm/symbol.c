@@ -48,11 +48,6 @@ bool sym_IsPC(struct Symbol const *sym)
 	return sym == PCSymbol;
 }
 
-bool sym_Is_NARG(struct Symbol const *sym)
-{
-	return sym == _NARGSymbol;
-}
-
 struct ForEachArgs {
 	void (*func)(struct Symbol *sym, void *arg);
 	void *arg;
@@ -256,6 +251,21 @@ struct Symbol *sym_FindScopedSymbol(char const *symName)
 	return sym_FindExactSymbol(symName);
 }
 
+struct Symbol *sym_FindScopedValidSymbol(char const *symName)
+{
+	struct Symbol *sym = sym_FindScopedSymbol(symName);
+
+	// `@` has no value outside a section
+	if (sym == PCSymbol && !sect_GetSymbolSection()) {
+		return NULL;
+	}
+	// `_NARG` has no value outside a macro
+	if (sym == _NARGSymbol && !macro_GetCurrentArgs()) {
+		return NULL;
+	}
+	return sym;
+}
+
 struct Symbol const *sym_GetPC(void)
 {
 	return PCSymbol;
@@ -269,7 +279,7 @@ static bool isReferenced(struct Symbol const *sym)
 // Purge a symbol
 void sym_Purge(char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	struct Symbol *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
 		error("'%s' not defined\n", symName);
