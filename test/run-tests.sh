@@ -39,6 +39,6 @@ test_downstream() { # owner/repo shallow-since commit make-target
 	popd
 }
 
-test_downstream pret/pokecrystal 2022-09-26 a9869f18962353b056559dc14dfc00fef0df5978 compare
-test_downstream pret/pokered     2022-09-25 22859c4bb70dba17994c9b47b07f657ea082875d compare
+test_downstream pret/pokecrystal 2022-09-29 70a3ec1accb6de1c1c273470af0ddfa2edc1b0a9 compare
+test_downstream pret/pokered     2022-09-29 2b52ceb718b55dce038db24d177715ae4281d065 compare
 test_downstream AntonioND/ucity  2022-04-20 d8878233da7a6569f09f87b144cb5bf140146a0f ''
