@@ -78,12 +78,15 @@ static int32_t Callback_NARG(void)
 
 static int32_t Callback__LINE__(void)
 {
+	warning(WARNING_OBSOLETE, "`__LINE__` is deprecated\n");
+
 	return lexer_GetLineNo();
 }
 
 static char const *Callback__FILE__(void)
 {
-	// FIXME: this is dangerous, and here's why this is CURRENTLY okay. It's still bad, fix it.
+	warning(WARNING_OBSOLETE, "`__FILE__` is deprecated\n");
+
 	// There are only two call sites for this; one copies the contents directly, the other is
 	// EQUS expansions, which cannot straddle file boundaries. So this should be fine.
 	static char *buf = NULL;
@@ -680,7 +683,9 @@ void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
 	struct Symbol *_NARGSymbol = createBuiltinSymbol("_NARG");
+	// __LINE__ is deprecated
 	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
+	// __FILE__ is deprecated
 	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
 
 	PCSymbol->type = SYM_LABEL;

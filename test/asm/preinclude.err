@@ -1,4 +1,4 @@
 warning: preinclude.asm(0) -> preinclude.inc(1): [-Wuser]
-    pre-include "preinclude.inc"
+    pre-included file
 warning: preinclude.asm(1): [-Wuser]
-    main "preinclude.asm"
+    main file
