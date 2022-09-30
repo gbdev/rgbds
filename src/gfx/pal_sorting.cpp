@@ -28,31 +28,6 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 		return Rgba(c.red, c.green, c.blue, palAlpha ? palAlpha[index] : 0xFF);
 	};
 
-	// HACK: for compatibility with old versions, add unused colors if:
-	// - there is only one palette, and
-	// - only some of the first N colors are being used
-	if (palettes.size() == 1) {
-		Palette &palette = palettes[0];
-		// Build our candidate array of colors
-		decltype(palette.colors) colors{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
-		for (int i = 0; i < options.maxOpaqueColors(); ++i) {
-			colors[i + options.hasTransparentPixels] = pngToRgb(i).cgbColor();
-		}
-
-		// Check that the palette only uses those colors
-		if (std::all_of(palette.begin(), palette.end(), [&colors](uint16_t color) {
-			    return std::find(colors.begin(), colors.end(), color) != colors.end();
-		    })) {
-			if (palette.size() != options.maxOpaqueColors()) {
-				warning("Unused color in PNG embedded palette was re-added; please use `-c "
-				        "embedded` to get this in future versions");
-			}
-			// Overwrite the palette, and return with that (it's already sorted)
-			palette.colors = colors;
-			return;
-		}
-	}
-
 	for (Palette &pal : palettes) {
 		std::sort(pal.begin(), pal.end(), [&](uint16_t lhs, uint16_t rhs) {
 			// Iterate through the PNG's palette, looking for either of the two
