@@ -997,7 +997,7 @@ void process() {
 				 *         protoPalettes.erase(protoPalettes.begin() + i);
 				 *     }
 				 * }
-				*/
+				 */
 				[[fallthrough]];
 
 			case ProtoPalette::THEY_BIGGER:
