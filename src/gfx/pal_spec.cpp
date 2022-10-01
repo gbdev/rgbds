@@ -338,6 +338,7 @@ static void parseGPLFile(std::filebuf &file) {
 
 	std::string line;
 	readLine(file, line);
+	// C++20 will allow `!line.starts_with("GIMP Palette")`
 	if (line.rfind("GIMP Palette", 0)) {
 		error("Palette file does not appear to be a GPL palette file");
 		return;
