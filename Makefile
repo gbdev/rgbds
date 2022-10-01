@@ -9,6 +9,8 @@
 .SUFFIXES:
 .SUFFIXES: .h .y .c .cpp .o
 
+.PHONY: all clean install checkcodebase checkpatch checkdiff develop debug mingw32 mingw64 wine-shim dist
+
 # User-defined variables
 
 Q		:= @
@@ -246,6 +248,13 @@ develop:
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
 		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
+		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
+		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+
+# This target is used during development in order to more easily debug with gdb.
+
+debug:
+	$Qenv ${MAKE} \
 		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
