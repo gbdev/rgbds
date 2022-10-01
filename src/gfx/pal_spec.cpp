@@ -240,7 +240,8 @@ static std::optional<U> parseDec(std::string const &str, std::string::size_type 
 	return n > start ? std::optional<U>{value} : std::nullopt;
 }
 
-static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
+static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n,
+                                      uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid red component", i + 1,
@@ -509,8 +510,8 @@ static void parseGBCFile(std::filebuf &file) {
 			break;
 		} else if (len != sizeof(buf)) {
 			error("GBC palette dump contains %zu 8-byte palette%s, plus %zu byte%s",
-			      options.palSpec.size(), options.palSpec.size() == 1 ? "" : "s",
-			      len, len == 1 ? "" : "s");
+			      options.palSpec.size(), options.palSpec.size() == 1 ? "" : "s", len,
+			      len == 1 ? "" : "s");
 			break;
 		}
 
