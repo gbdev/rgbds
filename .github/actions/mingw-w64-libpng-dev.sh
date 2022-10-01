@@ -1,44 +1,34 @@
 #!/bin/sh
 
-# This script was written by ISSOtm while looking at Arch Linux's PKGBUILD for
-# the corresponding package. (And its dependencies)
-# https://aur.archlinux.org/packages/mingw-w64-libpng/
-
 set -e
 
 pngver=1.6.37
-_apngver=$pngver
-_arch="$1"
-
-
-## Install mingw-configure and mingw-env (both build dependencies)
-
-install -m 755 .github/actions/mingw-env.sh /usr/bin/mingw-env
-
-sed "s|@TRIPLE@|${_arch}|g" .github/actions/mingw-configure.sh > ${_arch}-configure
-install -m 755 ${_arch}-configure /usr/bin/
-
+arch="$1"
 
 ## Grab sources and check them
 
-wget http://downloads.sourceforge.net/sourceforge/libpng/libpng-$pngver.tar.xz
-wget http://downloads.sourceforge.net/project/apng/libpng/libpng16/libpng-$_apngver-apng.patch.gz
+wget http://downloads.sourceforge.net/project/libpng/libpng16/$pngver/libpng-$pngver.tar.xz
+wget http://downloads.sourceforge.net/project/apng/libpng/libpng16/libpng-$pngver-apng.patch.gz
 sha256sum -c .github/actions/mingw-w64-libpng-dev.sha256sums
 
-## Extract sources
+## Extract sources and patch them
 
 tar -xf libpng-$pngver.tar.xz
-gunzip libpng-$_apngver-apng.patch.gz
+gunzip libpng-$pngver-apng.patch.gz
 
+# Patch in apng support
+env -C libpng-$pngver patch -p0 ../libpng-$pngver-apng.patch
 
 ## Start building!
 
-cd libpng-$pngver
-# Patch in apng support
-patch -p0 ../libpng-$_apngver-apng.patch
-
-mkdir -p build-${_arch}
-cd build-${_arch}
-${_arch}-configure LDFLAGS=-static-libgcc
-make
+mkdir -p build
+cd build
+../libpng-$pngver/configure \
+	--host="$arch" --target="$arch" \
+	--prefix="/usr/$arch" \
+	--enable-shared --disable-static \
+	CPPFLAGS="-D_FORTIFY_SOURCE=2" \
+	CFLAGS="-O2 -pipe -fno-plt -fexceptions --param=ssp-buffer-size=4" \
+	LDFLAGS="-Wl,-O1,--sort-common,--as-needed -fstack-protector"
+make -kj
 make install
