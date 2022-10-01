@@ -275,22 +275,32 @@ static struct SortedSection const **nextSection(struct SortedSection const **s1,
 	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
-// Checks whether a symbol is
+// Checks whether this character is legal as the first character of a symbol's name in a sym file
 static bool canStartSymName(char c)
 {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
 }
 
+// Checks whether this character is legal in a symbol's name in a sym file
+static bool isLegalForSymName(char c)
+{
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+	       c == '_' || c == '@' || c == '#' || c == '$' || c == '.';
+}
+
+// Prints a symbol's name to `symFile`, assuming that the first character is legal.
+// Illegal characters are UTF-8-decoded (errors are replaced by U+FFFD) and emitted as `\u`/`\U`.
 static void printSymName(char const *name)
 {
 	for (char const *ptr = name; *ptr != '\0'; ) {
 		char c = *ptr;
 
-		if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
-		 || c == '_' || c == '@' || c == '#' || c == '$' || c == '.') {
+		if (isLegalForSymName(c)) {
+			// Output legal ASCII characters as-is
 			fputc(c, symFile);
-		++ptr;
+			++ptr;
 		} else {
+			// Output illegal characters using Unicode escapes
 			// Decode the UTF-8 codepoint; or at least attempt to
 			uint32_t state = 0, codepoint;
 
@@ -308,10 +318,8 @@ static void printSymName(char const *name)
 				++ptr;
 			} while (state != 0);
 
-			if (codepoint <= 0xFFFF)
-				fprintf(symFile, "\\u%04" PRIx32, codepoint);
-			else
-				fprintf(symFile, "\\U%08" PRIx32, codepoint);
+			fprintf(symFile, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32,
+				codepoint);
 		}
 	}
 }
@@ -339,16 +347,22 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	if (!symFile)
 		return;
 
+#define forEachSortedSection(sect, ...) do { \
+	for (struct SortedSection const *ssp = bankSections->zeroLenSections; ssp; ssp = ssp->next) { \
+		for (struct Section const *sect = ssp->section; sect; sect = sect->nextu) \
+			__VA_ARGS__ \
+	} \
+	for (struct SortedSection const *ssp = bankSections->sections; ssp; ssp = ssp->next) { \
+		for (struct Section const *sect = ssp->section; sect; sect = sect->nextu) \
+			__VA_ARGS__ \
+	} \
+} while (0)
+
 	uint32_t nbSymbols = 0;
 
-	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
-		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
-			nbSymbols += sect->nbSymbols;
-	}
-	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
-		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu)
-			nbSymbols += sect->nbSymbols;
-	}
+	forEachSortedSection(sect, {
+		nbSymbols += sect->nbSymbols;
+	});
 
 	if (!nbSymbols)
 		return;
@@ -360,30 +374,19 @@ static void writeSymBank(struct SortedSections const *bankSections,
 
 	nbSymbols = 0;
 
-	for (struct SortedSection const *ptr = bankSections->zeroLenSections; ptr; ptr = ptr->next) {
-		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
-			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
-				if (!canStartSymName(sect->symbols[i]->name[0]))
-					continue;
-				symList[nbSymbols].idx = nbSymbols;
-				symList[nbSymbols].sym = sect->symbols[i];
-				symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
-				nbSymbols++;
-			}
+	forEachSortedSection(sect, {
+		for (uint32_t i = 0; i < sect->nbSymbols; i++) {
+			if (!canStartSymName(sect->symbols[i]->name[0]))
+				// Don't output symbols that begin with an illegal character
+				continue;
+			symList[nbSymbols].idx = nbSymbols;
+			symList[nbSymbols].sym = sect->symbols[i];
+			symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
+			nbSymbols++;
 		}
-	}
-	for (struct SortedSection const *ptr = bankSections->sections; ptr; ptr = ptr->next) {
-		for (struct Section const *sect = ptr->section; sect; sect = sect->nextu) {
-			for (uint32_t i = 0; i < sect->nbSymbols; i++) {
-				if (!canStartSymName(sect->symbols[i]->name[0]))
-					continue;
-				symList[nbSymbols].idx = nbSymbols;
-				symList[nbSymbols].sym = sect->symbols[i];
-				symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
-				nbSymbols++;
-			}
-		}
-	}
+	});
+
+#undef forEachSortedSection
 
 	qsort(symList, nbSymbols, sizeof(*symList), compareSymbols);
 
@@ -392,13 +395,13 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		struct SortedSymbol *sym = &symList[i];
 
-		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ",
-			symBank, sym->addr);
+		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym->addr);
 		printSymName(sym->sym->name);
 		fputc('\n', symFile);
 	}
 
 	free(symList);
+
 }
 
 /*
