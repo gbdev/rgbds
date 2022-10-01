@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     if: github.repository_owner == 'gbdev'
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout rgbds@release
         uses: actions/checkout@v2
@@ -18,17 +18,10 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/rgbds-www
           path: rgbds-www
-      # `-O toc` was added in 1.14.5, but the repos only have 1.14.4
-      - name: Build and install mandoc + install groff
+      - name: Install groff and mandoc
         run: |
           sudo apt-get -qq update
-          sudo apt-get install -yq groff zlib1g-dev
-          wget 'http://mandoc.bsd.lv/snapshots/mandoc-1.14.6.tar.gz'
-          tar xf mandoc-1.14.6.tar.gz
-          cd mandoc-1.14.6
-          ./configure
-          make
-          sudo make install
+          sudo apt-get install -yq groff mandoc
       - name: Update pages
         working-directory: rgbds/man
         run: | # The ref appears to be in the format "refs/tags/<version>", so strip that
