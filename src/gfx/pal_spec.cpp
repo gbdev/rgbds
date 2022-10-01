@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <optional>
 #include <ostream>
 #include <streambuf>
@@ -231,17 +232,15 @@ template<typename T>
 static std::optional<T> parseDec(std::string const &str, std::string::size_type &n) {
 	std::string::size_type start = n;
 
-	uint64_t value = 0; // Use a larger type to handle overflow more easily
+	uintmax_t value = 0; // Use a larger type to handle overflow more easily
 	for (auto end = std::min(str.length(), str.find_first_not_of("0123456789", n)); n < end; ++n) {
-		value = std::min<uint32_t>(value * 10 + (str[n] - '0'), UINT16_MAX);
+		value = std::min(value * 10 + (str[n] - '0'), (uintmax_t)std::numeric_limits<T>::max);
 	}
 
 	return n > start ? std::optional<T>{value} : std::nullopt;
 }
 
 static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
-	n = 0;
-
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid red component", i + 1,
@@ -366,7 +365,7 @@ static void parseGPLFile(std::filebuf &file) {
 
 		++nbColors;
 		if (nbColors < maxNbColors) {
-			if (nbColors % options.nbColorsPerPal == 0) {
+			if (nbColors % options.nbColorsPerPal == 1) {
 				options.palSpec.emplace_back();
 			}
 			options.palSpec.back()[nbColors % options.nbColorsPerPal] = *color;
