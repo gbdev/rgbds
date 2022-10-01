@@ -97,6 +97,7 @@ rgblink_obj := \
 	src/link/section.o \
 	src/link/symbol.o \
 	src/extern/getopt.o \
+	src/extern/utf8decoder.o \
 	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
