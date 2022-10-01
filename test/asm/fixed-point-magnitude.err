@@ -1,0 +1,4 @@
+warning: fixed-point-magnitude.asm(12): [-Wlarge-constant]
+    Magnitude of fixed-point constant is too large
+warning: fixed-point-magnitude.asm(13): [-Wlarge-constant]
+    Magnitude of fixed-point constant is too large
