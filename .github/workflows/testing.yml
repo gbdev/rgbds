@@ -12,9 +12,9 @@ jobs:
         buildsys: [make, cmake]
         exclude:
           # `gcc` is just an alias to `clang` on macOS, don't bother
-          - os: macos-10.15
+          - os: macos-11
             cc: gcc
-          - os: macos-11.0
+          - os: macos-12
             cc: gcc
         include:
           - cc: gcc
