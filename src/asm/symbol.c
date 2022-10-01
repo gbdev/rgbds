@@ -101,7 +101,7 @@ static char const *Callback__FILE__(void)
 		// Account for the extra backslash inserted below
 		if (fileName[i] == '"')
 			j++;
-		// Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!!
+		// Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!
 		if (j + 2 >= bufsize) { // Always keep room for 2 tail chars
 			bufsize = bufsize ? bufsize * 2 : 64;
 			buf = realloc(buf, bufsize);
@@ -590,7 +590,7 @@ struct Symbol *sym_AddAnonLabel(void)
 	}
 	char name[MAXSYMLEN + 1];
 
-	sym_WriteAnonLabelName(name, 0, true); // The direction is important!!
+	sym_WriteAnonLabelName(name, 0, true); // The direction is important!
 	anonLabelID++;
 	return addLabel(name);
 }

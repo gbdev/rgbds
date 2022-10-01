@@ -249,7 +249,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	}
 
 	size_t len = strlen(valueBuf);
-	size_t numLen = !!sign + !!prefix + len;
+	size_t numLen = (sign != 0) + (prefix != 0) + len;
 	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
 
 	if (totalLen > bufLen - 1) { // bufLen includes terminator

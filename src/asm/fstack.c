@@ -291,7 +291,7 @@ bool yywrap(void)
 }
 
 // Make sure not to switch the lexer state before calling this, so the saved line no is correct.
-// BE CAREFUL!! This modifies the file stack directly, you should have set up the file info first.
+// BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
 // Callers should set contextStack->lexerState after this so it is not NULL.
 static void newContext(struct FileStackNode *fileInfo)
 {
@@ -313,7 +313,7 @@ static void newContext(struct FileStackNode *fileInfo)
 	context->forName = NULL;
 
 	// Link new entry to its parent so it's reachable later
-	// ERRORS SHOULD NOT OCCUR AFTER THIS!!
+	// ERRORS SHOULD NOT OCCUR AFTER THIS!
 	context->parent = contextStack;
 	contextStack = context;
 }

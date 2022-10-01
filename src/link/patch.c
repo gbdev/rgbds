@@ -146,7 +146,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		isError = false;
 
 		// Be VERY careful with two `popRPN` in the same expression.
-		// C does not guarantee order of evaluation of operands!!
+		// C does not guarantee order of evaluation of operands!
 		// So, if there are two `popRPN` in the same expression, make
 		// sure the operation is commutative.
 		switch (command) {

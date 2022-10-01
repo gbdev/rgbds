@@ -10,7 +10,7 @@
 #ifndef RGBDS_LINK_SYMBOL_H
 #define RGBDS_LINK_SYMBOL_H
 
-// GUIDELINE: external code MUST NOT BE AWARE of the data structure used!!
+// GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
 #include <stdint.h>
 
