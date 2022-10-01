@@ -1,0 +1,13 @@
+OPT Q.4
+println 1.0
+println -1.0
+println 0.0625
+println -0.0625
+println 7.25
+println -7.25
+println 12.25
+println -12.25
+println 15.9375
+println -15.9375
+println 20.0
+println -20.0

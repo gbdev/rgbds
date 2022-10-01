@@ -1179,7 +1179,7 @@ static uint32_t readFractionalPart(uint32_t integer)
 		precision = fixPrecision;
 	}
 
-	if (integer >= ((uint32_t)1 << (precision - 1)))
+	if (integer >= ((uint64_t)1 << precision))
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
 	// Cast to unsigned avoids undefined overflow behavior
