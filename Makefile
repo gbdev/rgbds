@@ -267,12 +267,12 @@ debug:
 mingw32:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
 		CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ \
-		BISON=bison PKG_CONFIG=i686-w64-mingw32-pkg-config -j
+		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
 
 mingw64:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
 		CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
-		BISON=bison PKG_CONFIG=x86_64-w64-mingw32-pkg-config -j
+		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
 
 wine-shim:
 	$Qecho '#!/bin/bash' > rgbshim.sh

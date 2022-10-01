@@ -158,7 +158,7 @@ jobs:
             arch: x86-64
             triplet: x86_64-w64-mingw32
       fail-fast: false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       DIST_DIR: win${{ matrix.bits }}
     steps:
@@ -168,8 +168,8 @@ jobs:
         run: |
           ./.github/actions/install_deps.sh ${{ matrix.os }}
       - name: Install MinGW
-        run: |
-          sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }} mingw-w64-tools libz-mingw-w64-dev
+        run: | # dpkg-dev is apparently required for pkg-config for cross-building
+          sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
       - name: Install libpng dev headers for MinGW
         run: |
           sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
@@ -177,17 +177,12 @@ jobs:
         run: |
           make mingw${{ matrix.bits }} -j Q=
       - name: Package binaries
-        run: |
+        run: | # DLL dependencies can be figured out using e.g. Dependency Walker
           mkdir bins
-          mv rgbasm bins/rgbasm.exe
-          mv rgblink bins/rgblink.exe
-          mv rgbfix bins/rgbfix.exe
-          mv rgbgfx bins/rgbgfx.exe
-          cp /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
-          cp /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
-          if [ ${{ matrix.bits }} -eq 32 ]; then cp /usr/lib/gcc/${{ matrix.triplet }}/7.3-win32/lib{gcc_s_sjlj-1,stdc++-6}.dll bins; fi
-          mv test/gfx/randtilegen{,.exe}
-          mv test/gfx/rgbgfx_test{,.exe}
+          mv -v rgb{asm,link,fix,gfx}.exe bins/
+          cp -v /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
+          cp -v /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
+          [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{gcc_s_dw2-1,ssp-0,stdc++-6}.dll bins
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v3
         with:
