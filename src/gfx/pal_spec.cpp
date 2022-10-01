@@ -55,7 +55,7 @@ constexpr uint8_t singleToHex(char c) {
 
 template<typename Str> // Should be std::string or std::string_view
 static void skipWhitespace(Str const &str, typename Str::size_type &pos) {
-	pos = std::min(str.find_first_not_of(" \t", pos), str.length());
+	pos = std::min(str.find_first_not_of(" \t"sv, pos), str.length());
 }
 
 void parseInlinePalSpec(char const * const rawArg) {
@@ -233,7 +233,8 @@ static std::optional<U> parseDec(std::string const &str, std::string::size_type 
 	std::string::size_type start = n;
 
 	uintmax_t value = 0; // Use a larger type to handle overflow more easily
-	for (auto end = std::min(str.length(), str.find_first_not_of("0123456789", n)); n < end; ++n) {
+	for (auto end = std::min(str.length(), str.find_first_not_of("0123456789"sv, n)); n < end;
+	     ++n) {
 		value = std::min(value * 10 + (str[n] - '0'), (uintmax_t)std::numeric_limits<U>::max);
 	}
 
@@ -377,6 +378,45 @@ static void parseGPLFile(std::filebuf &file) {
 
 	if (nbColors > maxNbColors) {
 		warning("GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		        "; ignoring extra",
+		        nbColors, maxNbColors);
+	}
+}
+
+static void parseHEXFile(std::filebuf &file) {
+	// https://lospec.com/palette-list/tag/gbc
+
+	uint16_t nbColors = 0;
+	uint16_t maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+
+	for (;;) {
+		std::string line;
+		readLine(file, line);
+		if (!line.length()) {
+			break;
+		}
+
+		if (line.length() != 6
+		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
+			error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid \"rrggbb\" line",
+			      nbColors + 1, line.c_str());
+			return;
+		}
+
+		Rgba color =
+		    Rgba(toHex(line[0], line[1]), toHex(line[2], line[3]), toHex(line[4], line[5]), 0xFF);
+
+		++nbColors;
+		if (nbColors < maxNbColors) {
+			if (nbColors % options.nbColorsPerPal == 1) {
+				options.palSpec.emplace_back();
+			}
+			options.palSpec.back()[nbColors % options.nbColorsPerPal] = color;
+		}
+	}
+
+	if (nbColors > maxNbColors) {
+		warning("HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		        "; ignoring extra",
 		        nbColors, maxNbColors);
 	}
@@ -536,6 +576,7 @@ void parseExternalPalSpec(char const *arg) {
 	static std::array parsers{
 	    std::tuple{"PSP", &parsePSPFile, std::ios::in    },
 	    std::tuple{"GPL", &parseGPLFile, std::ios::in    },
+	    std::tuple{"HEX", &parseHEXFile, std::ios::in    },
 	    std::tuple{"ACT", &parseACTFile, std::ios::binary},
 	    std::tuple{"ACO", &parseACOFile, std::ios::binary},
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
