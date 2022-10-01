@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <optional>
 #include <ostream>
 #include <streambuf>
 #include <string>
@@ -226,13 +227,53 @@ static void readLine(std::filebuf &file, std::string &buffer) {
 /*
  * Parses the initial part of a string_view, advancing the "read index" as it does
  */
-static uint16_t parseDec(std::string const &str, std::string::size_type &n) {
-	uint32_t value = 0; // Use a larger type to handle overflow more easily
+template<typename T>
+static std::optional<T> parseDec(std::string const &str, std::string::size_type &n) {
+	std::string::size_type start = n;
+
+	uint64_t value = 0; // Use a larger type to handle overflow more easily
 	for (auto end = std::min(str.length(), str.find_first_not_of("0123456789", n)); n < end; ++n) {
 		value = std::min<uint32_t>(value * 10 + (str[n] - '0'), UINT16_MAX);
 	}
 
-	return value;
+	return n > start ? std::optional<T>{value} : std::nullopt;
+}
+
+static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
+	n = 0;
+
+	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
+	if (!r) {
+		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid red component", i + 1,
+		      str.c_str());
+		return std::nullopt;
+	}
+	skipWhitespace(str, n);
+	if (n == str.length()) {
+		error("Failed to parse color #%" PRIu16 " (\"%s\"): missing green component", i + 1,
+		      str.c_str());
+		return std::nullopt;
+	}
+	std::optional<uint8_t> g = parseDec<uint8_t>(str, n);
+	if (!g) {
+		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid green component", i + 1,
+		      str.c_str());
+		return std::nullopt;
+	}
+	skipWhitespace(str, n);
+	if (n == str.length()) {
+		error("Failed to parse color #%" PRIu16 " (\"%s\"): missing blue component", i + 1,
+		      str.c_str());
+		return std::nullopt;
+	}
+	std::optional<uint8_t> b = parseDec<uint8_t>(str, n);
+	if (!b) {
+		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid blue component", i + 1,
+		      str.c_str());
+		return std::nullopt;
+	}
+
+	return std::optional<Rgba>{Rgba(*r, *g, *b, 0xFF)};
 }
 
 static void parsePSPFile(std::filebuf &file) {
@@ -255,41 +296,30 @@ static void parsePSPFile(std::filebuf &file) {
 	line.clear();
 	readLine(file, line);
 	std::string::size_type n = 0;
-	uint16_t nbColors = parseDec(line, n);
-	if (n != line.length()) {
+	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
+	if (!nbColors || n != line.length()) {
 		error("Invalid \"number of colors\" line in PSP file (%s)", line.c_str());
 		return;
 	}
 
-	if (nbColors > options.nbColorsPerPal * options.nbPalettes) {
+	if (*nbColors > options.nbColorsPerPal * options.nbPalettes) {
 		warning("PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		        "; ignoring extra",
-		        nbColors, options.nbColorsPerPal * options.nbPalettes);
+		        *nbColors, options.nbColorsPerPal * options.nbPalettes);
 		nbColors = options.nbColorsPerPal * options.nbPalettes;
 	}
 
 	options.palSpec.clear();
 
-	for (uint16_t i = 0; i < nbColors; ++i) {
+	for (uint16_t i = 0; i < *nbColors; ++i) {
 		line.clear();
 		readLine(file, line);
-		n = 0;
 
-		uint8_t r = parseDec(line, n);
-		skipWhitespace(line, n);
-		if (n == line.length()) {
-			error("Failed to parse color #%" PRIu16 " (\"%s\"): missing green component", i + 1,
-			      line.c_str());
+		n = 0;
+		std::optional<Rgba> color = parseColor(line, n, i + 1);
+		if (!color) {
 			return;
 		}
-		uint8_t g = parseDec(line, n);
-		if (n == line.length()) {
-			error("Failed to parse color #%" PRIu16 " (\"%s\"): missing green component", i + 1,
-			      line.c_str());
-			return;
-		}
-		skipWhitespace(line, n);
-		uint8_t b = parseDec(line, n);
 		if (n != line.length()) {
 			error("Failed to parse color #%" PRIu16
 			      " (\"%s\"): trailing characters after blue component",
@@ -300,7 +330,53 @@ static void parsePSPFile(std::filebuf &file) {
 		if (i % options.nbColorsPerPal == 0) {
 			options.palSpec.emplace_back();
 		}
-		options.palSpec.back()[i % options.nbColorsPerPal] = Rgba(r, g, b, 0xFF);
+		options.palSpec.back()[i % options.nbColorsPerPal] = *color;
+	}
+}
+
+static void parseGPLFile(std::filebuf &file) {
+	// https://gitlab.gnome.org/GNOME/gimp/-/blob/gimp-2-10/app/core/gimppalette-load.c#L39
+
+	std::string line;
+	readLine(file, line);
+	if (line.rfind("GIMP Palette", 0)) {
+		error("Palette file does not appear to be a GPL palette file");
+		return;
+	}
+
+	uint16_t nbColors = 0;
+	uint16_t maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+
+	for (;;) {
+		line.clear();
+		readLine(file, line);
+		if (!line.length()) {
+			break;
+		}
+
+		if (!line.rfind("#", 0) | !line.rfind("Name:", 0) || !line.rfind("Column:", 0)) {
+			continue;
+		}
+
+		std::string::size_type n = 0;
+		std::optional<Rgba> color = parseColor(line, n, nbColors + 1);
+		if (!color) {
+			return;
+		}
+
+		++nbColors;
+		if (nbColors < maxNbColors) {
+			if (nbColors % options.nbColorsPerPal == 0) {
+				options.palSpec.emplace_back();
+			}
+			options.palSpec.back()[nbColors % options.nbColorsPerPal] = *color;
+		}
+	}
+
+	if (nbColors > maxNbColors) {
+		warning("GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		        "; ignoring extra",
+		        nbColors, maxNbColors);
 	}
 }
 
@@ -457,6 +533,7 @@ void parseExternalPalSpec(char const *arg) {
 
 	static std::array parsers{
 	    std::tuple{"PSP", &parsePSPFile, std::ios::in    },
+	    std::tuple{"GPL", &parseGPLFile, std::ios::in    },
 	    std::tuple{"ACT", &parseACTFile, std::ios::binary},
 	    std::tuple{"ACO", &parseACOFile, std::ios::binary},
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
