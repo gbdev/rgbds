@@ -356,7 +356,7 @@ static void parseGPLFile(std::filebuf &file) {
 		}
 
 		// FIXME: C++20 will allow `line.starts_with` instead of `!line.rfind` with 0
-		if (!line.rfind("#", 0) | !line.rfind("Name:", 0) || !line.rfind("Column:", 0)) {
+		if (!line.rfind("#", 0) || !line.rfind("Name:", 0) || !line.rfind("Column:", 0)) {
 			continue;
 		}
 
