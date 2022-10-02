@@ -25,7 +25,7 @@ jobs:
       - name: Update pages
         working-directory: rgbds/man
         run: | # The ref appears to be in the format "refs/tags/<version>", so strip that
-          ../../rgbds-www/.github/actions/get-pages.sh ${GITHUB_REF##*/} *
+          ../../rgbds-www/maintainer/man_to_html.sh ${GITHUB_REF##*/} *
       - name: Push new pages
         working-directory: rgbds-www
         run: |
