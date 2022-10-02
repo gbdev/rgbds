@@ -550,6 +550,7 @@ enum {
 %token	T_OP_BANK "BANK"
 %token	T_OP_ALIGN "ALIGN"
 %token	T_OP_SIZEOF "SIZEOF" T_OP_STARTOF "STARTOF"
+
 %token	T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
 %token	T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
 %token	T_OP_FDIV "FDIV"
@@ -559,6 +560,7 @@ enum {
 %token	T_OP_LOG "LOG"
 %token	T_OP_ROUND "ROUND"
 %token	T_OP_CEIL "CEIL" T_OP_FLOOR "FLOOR"
+%type	<constValue> opt_q_arg
 
 %token	T_OP_HIGH "HIGH" T_OP_LOW "LOW"
 %token	T_OP_ISCONST "ISCONST"
@@ -1466,50 +1468,50 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 
 			lexer_ToggleStringExpansion(true);
 		}
-		| T_OP_ROUND T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Round($3));
+		| T_OP_ROUND T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Round($3, $4));
 		}
-		| T_OP_CEIL T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Ceil($3));
+		| T_OP_CEIL T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Ceil($3, $4));
 		}
-		| T_OP_FLOOR T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Floor($3));
+		| T_OP_FLOOR T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Floor($3, $4));
 		}
-		| T_OP_FDIV T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Div($3, $5));
+		| T_OP_FDIV T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Div($3, $5, $6));
 		}
-		| T_OP_FMUL T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Mul($3, $5));
+		| T_OP_FMUL T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Mul($3, $5, $6));
 		}
-		| T_OP_FMOD T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Mod($3, $5));
+		| T_OP_FMOD T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Mod($3, $5, $6));
 		}
-		| T_OP_POW T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Pow($3, $5));
+		| T_OP_POW T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Pow($3, $5, $6));
 		}
-		| T_OP_LOG T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_Log($3, $5));
+		| T_OP_LOG T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Log($3, $5, $6));
 		}
-		| T_OP_SIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Sin($3));
+		| T_OP_SIN T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Sin($3, $4));
 		}
-		| T_OP_COS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Cos($3));
+		| T_OP_COS T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Cos($3, $4));
 		}
-		| T_OP_TAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_Tan($3));
+		| T_OP_TAN T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_Tan($3, $4));
 		}
-		| T_OP_ASIN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ASin($3));
+		| T_OP_ASIN T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_ASin($3, $4));
 		}
-		| T_OP_ACOS T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ACos($3));
+		| T_OP_ACOS T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_ACos($3, $4));
 		}
-		| T_OP_ATAN T_LPAREN const T_RPAREN {
-			rpn_Number(&$$, fix_ATan($3));
+		| T_OP_ATAN T_LPAREN const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_ATan($3, $4));
 		}
-		| T_OP_ATAN2 T_LPAREN const T_COMMA const T_RPAREN {
-			rpn_Number(&$$, fix_ATan2($3, $5));
+		| T_OP_ATAN2 T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+			rpn_Number(&$$, fix_ATan2($3, $5, $6));
 		}
 		| T_OP_STRCMP T_LPAREN string T_COMMA string T_RPAREN {
 			rpn_Number(&$$, strcmp($3, $5));
@@ -1536,7 +1538,7 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 uconst		: const {
 			$$ = $1;
 			if ($$ < 0)
-				fatalerror("Constant mustn't be negative: %d\n", $1);
+				fatalerror("Constant must not be negative: %d\n", $1);
 		}
 ;
 
@@ -1547,6 +1549,17 @@ const_no_str	: relocexpr_no_str { $$ = rpn_GetConstVal(&$1); }
 ;
 
 const_8bit	: reloc_8bit { $$ = rpn_GetConstVal(&$1); }
+;
+
+opt_q_arg	: %empty { $$ = fix_Precision(); }
+		| T_COMMA const {
+			if ($2 >= 1 && $2 <= 31) {
+				$$ = $2;
+			} else {
+				error("Fixed-point precision must be between 1 and 31\n");
+				$$ = fix_Precision();
+			}
+		}
 ;
 
 string		: T_STRING

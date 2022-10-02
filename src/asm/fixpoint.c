@@ -11,7 +11,6 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "asm/fixpoint.h"
 #include "asm/symbol.h"
@@ -21,8 +20,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define fix2double(i)	((double)((i) / fix_PrecisionFactor()))
-#define double2fix(d)	((int32_t)round((d) * fix_PrecisionFactor()))
+#define fix2double(i, q)	((double)((i) / pow(2.0, q)))
+#define double2fix(d, q)	((int32_t)round((d) * pow(2.0, q)))
 
 // 2*pi radians == 1 turn
 #define turn2rad(f)	((f) * (M_PI * 2))
@@ -30,96 +29,87 @@
 
 uint8_t fixPrecision;
 
+uint8_t fix_Precision(void)
+{
+	return fixPrecision;
+}
+
 double fix_PrecisionFactor(void)
 {
 	return pow(2.0, fixPrecision);
 }
 
-void fix_Print(int32_t i)
+int32_t fix_Sin(int32_t i, int32_t q)
 {
-	uint32_t u = i;
-	char const *sign = "";
-
-	if (i < 0) {
-		u = -u;
-		sign = "-";
-	}
-
-	printf("%s%" PRIu32 ".%05" PRIu32, sign, u >> fixPrecision,
-	       ((uint32_t)(fix2double(u) * 100000 + 0.5)) % 100000);
+	return double2fix(sin(turn2rad(fix2double(i, q))), q);
 }
 
-int32_t fix_Sin(int32_t i)
+int32_t fix_Cos(int32_t i, int32_t q)
 {
-	return double2fix(sin(turn2rad(fix2double(i))));
+	return double2fix(cos(turn2rad(fix2double(i, q))), q);
 }
 
-int32_t fix_Cos(int32_t i)
+int32_t fix_Tan(int32_t i, int32_t q)
 {
-	return double2fix(cos(turn2rad(fix2double(i))));
+	return double2fix(tan(turn2rad(fix2double(i, q))), q);
 }
 
-int32_t fix_Tan(int32_t i)
+int32_t fix_ASin(int32_t i, int32_t q)
 {
-	return double2fix(tan(turn2rad(fix2double(i))));
+	return double2fix(rad2turn(asin(fix2double(i, q))), q);
 }
 
-int32_t fix_ASin(int32_t i)
+int32_t fix_ACos(int32_t i, int32_t q)
 {
-	return double2fix(rad2turn(asin(fix2double(i))));
+	return double2fix(rad2turn(acos(fix2double(i, q))), q);
 }
 
-int32_t fix_ACos(int32_t i)
+int32_t fix_ATan(int32_t i, int32_t q)
 {
-	return double2fix(rad2turn(acos(fix2double(i))));
+	return double2fix(rad2turn(atan(fix2double(i, q))), q);
 }
 
-int32_t fix_ATan(int32_t i)
+int32_t fix_ATan2(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(rad2turn(atan(fix2double(i))));
+	return double2fix(rad2turn(atan2(fix2double(i, q), fix2double(j, q))), q);
 }
 
-int32_t fix_ATan2(int32_t i, int32_t j)
+int32_t fix_Mul(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(rad2turn(atan2(fix2double(i), fix2double(j))));
+	return double2fix(fix2double(i, q) * fix2double(j, q), q);
 }
 
-int32_t fix_Mul(int32_t i, int32_t j)
+int32_t fix_Div(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(fix2double(i) * fix2double(j));
+	return double2fix(fix2double(i, q) / fix2double(j, q), q);
 }
 
-int32_t fix_Div(int32_t i, int32_t j)
+int32_t fix_Mod(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(fix2double(i) / fix2double(j));
+	return double2fix(fmod(fix2double(i, q), fix2double(j, q)), q);
 }
 
-int32_t fix_Mod(int32_t i, int32_t j)
+int32_t fix_Pow(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(fmod(fix2double(i), fix2double(j)));
+	return double2fix(pow(fix2double(i, q), fix2double(j, q)), q);
 }
 
-int32_t fix_Pow(int32_t i, int32_t j)
+int32_t fix_Log(int32_t i, int32_t j, int32_t q)
 {
-	return double2fix(pow(fix2double(i), fix2double(j)));
+	return double2fix(log(fix2double(i, q)) / log(fix2double(j, q)), q);
 }
 
-int32_t fix_Log(int32_t i, int32_t j)
+int32_t fix_Round(int32_t i, int32_t q)
 {
-	return double2fix(log(fix2double(i)) / log(fix2double(j)));
+	return double2fix(round(fix2double(i, q)), q);
 }
 
-int32_t fix_Round(int32_t i)
+int32_t fix_Ceil(int32_t i, int32_t q)
 {
-	return double2fix(round(fix2double(i)));
+	return double2fix(ceil(fix2double(i, q)), q);
 }
 
-int32_t fix_Ceil(int32_t i)
+int32_t fix_Floor(int32_t i, int32_t q)
 {
-	return double2fix(ceil(fix2double(i)));
-}
-
-int32_t fix_Floor(int32_t i)
-{
-	return double2fix(floor(fix2double(i)));
+	return double2fix(floor(fix2double(i, q)), q);
 }

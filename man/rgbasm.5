@@ -346,6 +346,15 @@ delim $$
 delim off
 .EN
 .Pp
+All of these fixed-point functions can take an optional final argument, which is the precision to use.
+For example,
+.Ql MUL(6.0q8, 7.0q8, 8)
+will evaluate to
+.Ql 42.0q8
+no matter what value is set as the current
+.Cm Q
+option.
+.Pp
 The trigonometry functions (
 .Ic SIN ,
 .Ic COS ,
