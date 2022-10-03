@@ -359,10 +359,10 @@ int main(int argc, char *argv[])
 		targetFileName[targetFileNameLen - 1] = '\0'; // Overwrite the last space
 
 	if (argc == musl_optind) {
-		fputs("FATAL: No input files\n", stderr);
+		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr);
 		print_usage();
 	} else if (argc != musl_optind + 1) {
-		fputs("FATAL: More than one input file given\n", stderr);
+		fputs("FATAL: More than one input file specified\n", stderr);
 		print_usage();
 	}
 
