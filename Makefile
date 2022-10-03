@@ -130,7 +130,7 @@ rgbfix: ${rgbfix_obj}
 	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCFLAGS} src/version.c
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} -x c++ src/version.c ${PNGLDLIBS}
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} ${PNGLDLIBS} -x c++ src/version.c
 
 test/gfx/randtilegen: test/gfx/randtilegen.c
 	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
