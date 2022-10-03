@@ -690,17 +690,19 @@ asmfile		: lines
 ;
 
 lines		: %empty
-		| lines line
+		| lines opt_diff_mark line
 ;
 
 endofline	: T_NEWLINE | T_EOB
 ;
 
-plain_directive	: label
-		| label cpu_command
-		| label macro
-		| label directive
-		| assignment_directive
+opt_diff_mark	: %empty // OK
+		| T_OP_ADD {
+			error("syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n");
+		}
+		| T_OP_SUB {
+			error("syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n");
+		}
 ;
 
 line		: plain_directive endofline
@@ -784,6 +786,13 @@ else		: T_POP_ELSE T_NEWLINE {
 				lexer_ReachELSEBlock();
 			}
 		}
+;
+
+plain_directive	: label
+		| label cpu_command
+		| label macro
+		| label directive
+		| assignment_directive
 ;
 
 endc		: T_POP_ENDC {
