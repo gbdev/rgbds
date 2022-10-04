@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Get version from tag
         shell: bash
-        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
+        run: | # Turn "vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
