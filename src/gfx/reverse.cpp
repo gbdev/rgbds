@@ -147,7 +147,9 @@ void reverse() {
     };
 	if (!options.palettes.empty()) {
 		std::filebuf file;
-		file.open(options.palettes, std::ios::in | std::ios::binary);
+		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
+			fatal("Failed to open \"%s\": %s", options.palettes.c_str(), strerror(errno));
+		}
 
 		palettes.clear();
 		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // 4 colors
@@ -232,7 +234,9 @@ void reverse() {
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
 	std::filebuf pngFile;
-	pngFile.open(options.input, std::ios::out | std::ios::binary);
+	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
+		fatal("Failed to create \"%s\": %s", options.input.c_str(), strerror(errno));
+	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
 	    const_cast<png_voidp>(static_cast<void const *>(options.input.c_str())), pngError,

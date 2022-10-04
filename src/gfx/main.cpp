@@ -254,7 +254,9 @@ static void registerInput(char const *arg) {
  */
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
 	std::filebuf file;
-	file.open(path, std::ios_base::in);
+	if (!file.open(path, std::ios_base::in)) {
+		fatal("Error reading @%s: %s", path.c_str(), strerror(errno));
+	}
 
 	static_assert(decltype(file)::traits_type::eof() == EOF,
 	              "isblank(char_traits<...>::eof()) is UB!");

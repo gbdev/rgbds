@@ -625,7 +625,9 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
 	std::filebuf output;
-	output.open(options.palettes, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to open \"%s\": %s", options.palettes.c_str(), strerror(errno));
+	}
 
 	for (Palette const &palette : palettes) {
 		for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
@@ -751,7 +753,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
                            std::vector<Palette> const &palettes,
                            DefaultInitVec<size_t> const &mappings) {
 	std::filebuf output;
-	output.open(options.output, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to open \"%s\": %s", options.output.c_str(), strerror(errno));
+	}
 
 	uint64_t remainingTiles = (png.getWidth() / 8) * (png.getHeight() / 8);
 	if (remainingTiles <= options.trim) {
@@ -783,15 +787,21 @@ static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
 	std::optional<std::filebuf> tilemapOutput, attrmapOutput, palmapOutput;
 	if (!options.tilemap.empty()) {
 		tilemapOutput.emplace();
-		tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary);
+		if (!tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
+			fatal("Failed to open \"%s\": %s", options.tilemap.c_str(), strerror(errno));
+		}
 	}
 	if (!options.attrmap.empty()) {
 		attrmapOutput.emplace();
-		attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+		if (!attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+			fatal("Failed to open \"%s\": %s", options.attrmap.c_str(), strerror(errno));
+		}
 	}
 	if (!options.palmap.empty()) {
 		palmapOutput.emplace();
-		palmapOutput->open(options.palmap, std::ios_base::out | std::ios_base::binary);
+		if (!palmapOutput->open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
+			fatal("Failed to open \"%s\": %s", options.palmap.c_str(), strerror(errno));
+		}
 	}
 
 	uint8_t tileID = 0;
@@ -887,7 +897,9 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 
 static void outputTileData(UniqueTiles const &tiles) {
 	std::filebuf output;
-	output.open(options.output, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", options.output.c_str(), strerror(errno));
+	}
 
 	uint16_t tileID = 0;
 	for (auto iter = tiles.begin(), end = tiles.end() - options.trim; iter != end; ++iter) {
@@ -900,7 +912,9 @@ static void outputTileData(UniqueTiles const &tiles) {
 
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	std::filebuf output;
-	output.open(options.tilemap, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", options.tilemap.c_str(), strerror(errno));
+	}
 
 	for (AttrmapEntry const &entry : attrmap) {
 		output.sputc(entry.tileID); // The tile ID has already been converted
@@ -910,7 +924,9 @@ static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                           DefaultInitVec<size_t> const &mappings) {
 	std::filebuf output;
-	output.open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", options.attrmap.c_str(), strerror(errno));
+	}
 
 	for (AttrmapEntry const &entry : attrmap) {
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
@@ -923,7 +939,9 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                          DefaultInitVec<size_t> const &mappings) {
 	std::filebuf output;
-	output.open(options.attrmap, std::ios_base::out | std::ios_base::binary);
+	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", options.attrmap.c_str(), strerror(errno));
+	}
 
 	for (AttrmapEntry const &entry : attrmap) {
 		output.sputc(entry.getPalID(mappings));
