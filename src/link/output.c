@@ -404,6 +404,16 @@ static void writeSymBank(struct SortedSections const *bankSections,
 
 }
 
+static void writeEmptySpace(uint16_t begin, uint16_t end)
+{
+	if (begin < end) {
+		uint16_t len = end - begin;
+
+		fprintf(mapFile, "\tEMPTY: $%04x-$%04x ($%04" PRIx16 " byte%s)\n",
+			begin, end - 1, len, len == 1 ? "" : "s");
+	}
+}
+
 /*
  * Write a bank's contents to the map file
  * @param bankSections The bank's sections
@@ -432,12 +442,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		used += sect->size;
 		assert(sect->offset == 0);
 
-		if (prevEndAddr < sect->org) {
-			uint16_t empty = sect->org - prevEndAddr;
-
-			fprintf(mapFile, "\tEMPTY: $%04" PRIx16 " byte%s\n", empty,
-				empty == 1 ? "" : "s");
-		}
+		writeEmptySpace(prevEndAddr, sect->org);
 
 		prevEndAddr = sect->org + sect->size;
 
@@ -474,19 +479,14 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 
 	uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
 
-	if (prevEndAddr < bankEndAddr) {
-		uint16_t empty = bankEndAddr - prevEndAddr;
-
-		fprintf(mapFile, "\tEMPTY: $%04" PRIx16 " byte%s\n", empty,
-			empty == 1 ? "" : "s");
-	}
+	writeEmptySpace(prevEndAddr, bankEndAddr);
 
 	if (used == 0) {
 		fputs("  EMPTY\n\n", mapFile);
 	} else {
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
-		fprintf(mapFile, "\tSLACK: $%04" PRIx16 " byte%s\n\n", slack,
+		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n\n", slack,
 			slack == 1 ? "" : "s");
 	}
 
