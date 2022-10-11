@@ -234,6 +234,7 @@ develop:
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \
 		-Wvla \
 		-Wno-unknown-warning-option \
+		-D_GLIBCXX_ASSERTIONS \
 		-fsanitize=shift -fsanitize=integer-divide-by-zero \
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
