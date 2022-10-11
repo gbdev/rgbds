@@ -142,7 +142,7 @@ public:
 		}
 		uint8_t bins = 0;
 		for (auto const &color : colors) {
-			if (color->isTransparent()) {
+			if (!color.has_value() || color->isTransparent()) {
 				continue;
 			}
 			if (!color->isGray()) {
