@@ -272,14 +272,12 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 			getToken(line, "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
-			curSection->name = strdup(token); // We need a pointer that will live longer
-			if (!curSection->name)
-				fatal(where, lineNo, "Failed to alloc new area's name: %s", strerror(errno));
 			// The following is required for fragment offsets to be reliably predicted
 			for (size_t i = 0; i < nbSections; ++i) {
 				if (!strcmp(token, fileSections[i].section->name))
 					fatal(where, lineNo, "Area \"%s\" already defined earlier", token);
 			}
+			char const *sectionName = token; // We'll deal with the section's name depending on type
 
 			expectToken("size", 'A');
 
@@ -299,6 +297,19 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			curSection->isBankFixed = curSection->isAddressFixed;
 			curSection->modifier = curSection->isAddressFixed || (tmp & (1 << AREA_TYPE))
 				? SECTION_NORMAL : SECTION_FRAGMENT;
+			// If the section is absolute, its name might not be unique; thus, mangle the name
+			if (curSection->modifier == SECTION_NORMAL) {
+				size_t len = strlen(where->name) + 1 + strlen(token);
+
+				curSection->name = malloc(len + 1);
+				if (!curSection->name)
+					fatal(where, lineNo, "Failed to alloc new area's name: %s", strerror(errno));
+				sprintf(curSection->name, "%s %s", where->name, sectionName);
+			} else {
+				curSection->name = strdup(sectionName); // We need a pointer that will live longer
+				if (!curSection->name)
+					fatal(where, lineNo, "Failed to alloc new area's name: %s", strerror(errno));
+			}
 
 			expectToken("addr", 'A');
 
