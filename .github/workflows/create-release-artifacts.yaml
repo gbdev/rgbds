@@ -28,9 +28,9 @@ jobs:
       - name: Get zlib, libpng and bison
         run: | # TODO: use an array; remember to update the versions being downloaded, *and* the paths being extracted! (`Move-Item`)
           $wc = New-Object System.Net.WebClient
-          $wc.DownloadFile('https://www.zlib.net/zlib1212.zip', 'zlib.zip')
+          $wc.DownloadFile('https://www.zlib.net/zlib1213.zip', 'zlib.zip')
           $hash = (Get-FileHash "zlib.zip" -Algorithm SHA256).Hash
-          if ($hash -ne '173e89893dcb8b4a150d7731cd72f0602f1d6b45e60e2a54efdf7f3fc3325fd7') {
+          if ($hash -ne 'd233fca7cf68db4c16dc5287af61f3cd01ab62495224c66639ca3da537701e42') {
             Write-Host "zlib SHA256 mismatch! ($hash)"
             exit 1
           }
@@ -48,7 +48,7 @@ jobs:
           Expand-Archive -DestinationPath .           "zlib.zip"
           Expand-Archive -DestinationPath .           "libpng.zip"
           Expand-Archive -DestinationPath install_dir "winflexbison.zip"
-          Move-Item zlib-1.2.12 zlib
+          Move-Item zlib-1.2.13 zlib
           Move-Item lpng1637 libpng
       - uses: actions/cache@v3
         id: cache
