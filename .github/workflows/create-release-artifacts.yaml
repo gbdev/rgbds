@@ -99,7 +99,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/actions/install_deps.sh macos-latest
+          ./.github/scripts/install_deps.sh macos-latest
       # We force linking libpng statically; the other libs are provided by macOS itself
       - name: Build binaries
         run: |
@@ -107,7 +107,7 @@ jobs:
           make -j WARNFLAGS="-Wall -Wextra -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
       - name: Package binaries
         run: |
-          zip --junk-paths rgbds-${{ env.version }}-macos-x86-64.zip rgb{asm,link,fix,gfx} man/* .github/actions/install.sh
+          zip --junk-paths rgbds-${{ env.version }}-macos-x86-64.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload macOS binaries
         uses: actions/upload-artifact@v3
         with:

@@ -28,7 +28,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/actions/install_deps.sh ${{ matrix.os }}
+          ./.github/scripts/install_deps.sh ${{ matrix.os }}
       # The `export` lines are to allow working on macOS...
       # Apple's base version is severely outdated, not even supporting -Wall,
       # but it overrides Homebrew's version nonetheless...
@@ -166,13 +166,13 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/actions/install_deps.sh ${{ matrix.os }}
+          ./.github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Install MinGW
         run: | # dpkg-dev is apparently required for pkg-config for cross-building
           sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
       - name: Install libpng dev headers for MinGW
         run: |
-          sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
+          sudo ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
       - name: Cross-build Windows binaries
         run: |
           make mingw${{ matrix.bits }} -j Q=
