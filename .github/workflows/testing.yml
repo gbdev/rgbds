@@ -87,7 +87,7 @@ jobs:
           key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
-          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
+          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install zlib
@@ -95,7 +95,7 @@ jobs:
           cmake --install zbuild
       - name: Build libpng
         run: |
-          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
+          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
           cmake --build pngbuild --config Release -j
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install libpng
