@@ -28,7 +28,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/actions/install_deps.sh ${{ matrix.os }}
+          ./.github/scripts/install_deps.sh ${{ matrix.os }}
       # The `export` lines are to allow working on macOS...
       # Apple's base version is severely outdated, not even supporting -Wall,
       # but it overrides Homebrew's version nonetheless...
@@ -76,31 +76,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: Get zlib, libpng and bison
-        run: | # TODO: use an array; remember to update the versions being downloaded, *and* the paths being extracted! (`Move-Item`)
-          $wc = New-Object System.Net.WebClient
-          $wc.DownloadFile('https://www.zlib.net/zlib1213.zip', 'zlib.zip')
-          $hash = (Get-FileHash "zlib.zip" -Algorithm SHA256).Hash
-          if ($hash -ne 'd233fca7cf68db4c16dc5287af61f3cd01ab62495224c66639ca3da537701e42') {
-            Write-Host "zlib SHA256 mismatch! ($hash)"
-            exit 1
-          }
-          $wc.DownloadFile('https://download.sourceforge.net/libpng/lpng1637.zip', 'libpng.zip')
-          $hash = (Get-FileHash "libpng.zip" -Algorithm SHA256).Hash
-          if ($hash -ne '3b4b1cbd0bae6822f749d39b1ccadd6297f05e2b85a83dd2ce6ecd7d09eabdf2') {
-            Write-Host "libpng SHA256 mismatch! ($hash)"
-            exit 1
-          }
-          $wc.DownloadFile('https://github.com/lexxmark/winflexbison/releases/download/v2.5.24/win_flex_bison-2.5.24.zip', 'winflexbison.zip')
-          $hash = (Get-FileHash "winflexbison.zip" -Algorithm SHA256).Hash
-          if ($hash -ne '39c6086ce211d5415500acc5ed2d8939861ca1696aee48909c7f6daf5122b505') {
-            Write-Host "bison SHA256 mismatch! ($hash)"
-          }
-          Expand-Archive -DestinationPath .           "zlib.zip"
-          Expand-Archive -DestinationPath .           "libpng.zip"
-          Expand-Archive -DestinationPath install_dir "winflexbison.zip"
-          Move-Item zlib-1.2.13 zlib
-          Move-Item lpng1637 libpng
+      - name: Install deps
+        run: .github/scripts/get_win_deps.ps1
       - uses: actions/cache@v3
         id: cache
         with:
@@ -110,7 +87,7 @@ jobs:
           key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
-          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
+          cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install zlib
@@ -118,7 +95,7 @@ jobs:
           cmake --install zbuild
       - name: Build libpng
         run: |
-          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
+          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
           cmake --build pngbuild --config Release -j
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install libpng
@@ -166,13 +143,13 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/actions/install_deps.sh ${{ matrix.os }}
+          ./.github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Install MinGW
         run: | # dpkg-dev is apparently required for pkg-config for cross-building
           sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
       - name: Install libpng dev headers for MinGW
         run: |
-          sudo ./.github/actions/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
+          sudo ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
       - name: Cross-build Windows binaries
         run: |
           make mingw${{ matrix.bits }} -j Q=

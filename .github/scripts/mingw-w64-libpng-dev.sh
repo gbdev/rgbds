@@ -9,7 +9,7 @@ arch="$1"
 
 wget http://downloads.sourceforge.net/project/libpng/libpng16/$pngver/libpng-$pngver.tar.xz
 wget http://downloads.sourceforge.net/project/apng/libpng/libpng16/libpng-$pngver-apng.patch.gz
-sha256sum -c .github/actions/mingw-w64-libpng-dev.sha256sums
+sha256sum -c .github/scripts/mingw-w64-libpng-dev.sha256sums
 
 ## Extract sources and patch them
 

@@ -14,21 +14,20 @@ set(common_src
     "_version.c"
     )
 
-find_package(BISON REQUIRED)
+find_package(BISON 3.0.0 REQUIRED)
 set(BISON_FLAGS "-Wall")
-# Set sompe optimization flags on versions that support them
+# Set some optimization flags on versions that support them
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
   set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
 endif()
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.6")
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=detailed")
-elseif(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
+else()
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=verbose")
 endif()
-if(BISON_VERSION VERSION_GREATER_EQUAL "3.0")
-  set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
-  set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
-endif()
+set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
+set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
+
 BISON_TARGET(PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
              COMPILE_FLAGS "${BISON_FLAGS}"
