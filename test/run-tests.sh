@@ -36,5 +36,5 @@ test_downstream() { # owner/repo make-target
 }
 
 test_downstream pret/pokecrystal compare
-test_downstream pret/pokered compare
-test_downstream AntonioND/ucity ''
+test_downstream pret/pokered     compare
+test_downstream AntonioND/ucity  ''
