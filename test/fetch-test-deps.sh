@@ -18,6 +18,6 @@ fetch_downstream() { # owner/repo shallow-since commit
 	popd
 }
 
-test_downstream pret/pokecrystal 2022-09-29 70a3ec1accb6de1c1c273470af0ddfa2edc1b0a9
-test_downstream pret/pokered     2022-09-29 2b52ceb718b55dce038db24d177715ae4281d065
-test_downstream AntonioND/ucity  2022-04-20 d8878233da7a6569f09f87b144cb5bf140146a0f
+fetch_downstream pret/pokecrystal 2022-09-29 70a3ec1accb6de1c1c273470af0ddfa2edc1b0a9
+fetch_downstream pret/pokered     2022-09-29 2b52ceb718b55dce038db24d177715ae4281d065
+fetch_downstream AntonioND/ucity  2022-04-20 d8878233da7a6569f09f87b144cb5bf140146a0f
