@@ -25,8 +25,11 @@ done
 # When updating subprojects, change the commit being checked out, and set the `shallow-since`
 # to the day before, to reduce the amount of refs being transferred and thus speed up CI.
 
-test_downstream() { # owner/repo shallow-since commit make-target
-	pushd ${1##*/}
+test_downstream() { # owner/repo make-target
+	if ! pushd ${1##*/}; then
+		echo >&2 'Please run `fetch-test-deps.sh` before running the test suite'
+		return 1
+	fi
 	make clean
 	make -j4 $2 RGBDS=../../
 	popd

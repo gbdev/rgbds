@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 
 echo "Fetching test dependency repositories"
 
-test_downstream() { # owner/repo shallow-since commit make-target
+fetch_downstream() { # owner/repo shallow-since commit
 	if [ ! -d ${1##*/} ]; then
 		git clone https://github.com/$1.git --shallow-since=$2 --single-branch
 	fi
