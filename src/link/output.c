@@ -482,7 +482,7 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 	writeEmptySpace(prevEndAddr, bankEndAddr);
 
 	if (used == 0) {
-		fputs("  EMPTY\n\n", mapFile);
+		fputs("\tEMPTY\n\n", mapFile);
 	} else {
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
