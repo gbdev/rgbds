@@ -55,6 +55,17 @@ jobs:
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.buildsys }}
           path: bins
+      - name: Check test dependency repositories cache
+        id: test-deps-cache
+        uses: actions/cache@v3
+        with:
+          path: test
+          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+        name: Fetch test dependency repositories
+        continue-on-error: true
+        run: |
+          test/fetch-test-deps.sh
       - name: Test
         shell: bash
         run: |
@@ -116,6 +127,18 @@ jobs:
         with:
           name: rgbds-canary-win${{ matrix.bits }}
           path: bins
+      - name: Check test dependency repositories cache
+        id: test-deps-cache
+        uses: actions/cache@v3
+        with:
+          path: test
+          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+        name: Fetch test dependency repositories
+        shell: bash
+        continue-on-error: true
+        run: |
+          test/fetch-test-deps.sh
       - name: Test
         shell: bash
         run: |
@@ -198,6 +221,18 @@ jobs:
         run: |
           cp bins/* .
           cp bins/*.dll test/gfx
+      - name: Check test dependency repositories cache
+        id: test-deps-cache
+        uses: actions/cache@v3
+        with:
+          path: test
+          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+        name: Fetch test dependency repositories
+        shell: bash
+        continue-on-error: true
+        run: |
+          test/fetch-test-deps.sh
       - name: Run tests
         shell: bash
         run: |
