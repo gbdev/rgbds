@@ -479,11 +479,11 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 
 	uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
 
-	writeEmptySpace(prevEndAddr, bankEndAddr);
-
 	if (used == 0) {
 		fputs("\tEMPTY\n\n", mapFile);
 	} else {
+		writeEmptySpace(prevEndAddr, bankEndAddr);
+
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
 		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n\n", slack,
