@@ -60,7 +60,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: test
-          key: ${{ ${{ matrix.os }}-hashFiles('test/fetch-test-deps.sh') }}
+          key: ${{ matrix.os }}-${{ hashFiles('test/fetch-test-deps.sh') }}
       - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
         name: Fetch test dependency repositories
         continue-on-error: true
