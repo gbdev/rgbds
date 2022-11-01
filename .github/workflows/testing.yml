@@ -60,7 +60,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: test
-          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+          key: ${{ matrix.os }}-${{ hashFiles('test/fetch-test-deps.sh') }}
       - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
         name: Fetch test dependency repositories
         continue-on-error: true
@@ -132,7 +132,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: test
-          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+          # Intentionally using matrix.bits instead matrix.arch as it's fine to share a cache
+          # with a different job below that also runs on Windows but doesn't have arch property
+          # defined.
+          key: ${{ matrix.os }}-${{ matrix.bits }}-${{ hashFiles('test/fetch-test-deps.sh') }}
       - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
         name: Fetch test dependency repositories
         shell: bash
@@ -226,7 +229,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: test
-          key: ${{ hashFiles('test/fetch-test-deps.sh') }}
+          key: ${{ matrix.os }}-${{ matrix.bits }}-${{ hashFiles('test/fetch-test-deps.sh') }}
       - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
         name: Fetch test dependency repositories
         shell: bash
