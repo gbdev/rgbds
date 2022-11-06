@@ -469,9 +469,11 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 				if (sect->nextu) {
 					// Announce the following "piece"
 					if (sect->nextu->modifier == SECTION_UNION)
-						fprintf(mapFile, "\t\t; Next union\n");
+						fprintf(mapFile,
+							"\t         ; Next union\n");
 					else if (sect->nextu->modifier == SECTION_FRAGMENT)
-						fprintf(mapFile, "\t\t; Next fragment\n");
+						fprintf(mapFile,
+							"\t         ; Next fragment\n");
 				}
 
 				sect = sect->nextu; // Also print symbols in the following "pieces"
