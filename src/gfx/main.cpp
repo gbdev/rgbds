@@ -257,7 +257,7 @@ static void registerInput(char const *arg) {
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {
-		fatal("Error reading @%s: %s", path.c_str(), strerror(errno));
+		fatal("Error reading @%s: %s", file.c_str(path), strerror(errno));
 	}
 
 	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!

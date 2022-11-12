@@ -78,6 +78,7 @@ public:
 		// See the `operator*` equivalent.
 		return const_cast<File *>(this)->operator->();
 	}
+
 	File *close() {
 		return std::visit(Visitor{[this](std::filebuf &file) {
 			                          // This is called by the destructor, and an explicit `close`
@@ -89,6 +90,14 @@ public:
 		                  _file)
 		           ? this
 		           : nullptr;
+	}
+
+	char const *c_str(std::string const &path) const {
+		return std::visit(Visitor{[&path](std::filebuf const &) { return path.c_str(); },
+		                          [](std::streambuf const *buf) {
+			                          return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
+		                          }},
+		                  _file);
 	}
 };
 
