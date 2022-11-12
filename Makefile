@@ -35,8 +35,8 @@ VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 WARNFLAGS	:= -Wall -pedantic
 
 # Overridable CFLAGS
-CFLAGS		?= -O3 -flto=auto -DNDEBUG
-CXXFLAGS	?= -O3 -flto=auto -DNDEBUG
+CFLAGS		?= -O3 -flto -DNDEBUG
+CXXFLAGS	?= -O3 -flto -DNDEBUG
 # Non-overridable CFLAGS
 # _ISOC11_SOURCE is required on certain platforms to get C11 on top of the C99-based POSIX 2008
 REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -I include \
