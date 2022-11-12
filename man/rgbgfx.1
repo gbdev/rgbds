@@ -72,6 +72,18 @@ All of these are equivalent:
 .Ql 0X2A ,
 .Ql 0x2a .
 .Pp
+Unless otherwise noted, passing
+.Ql -
+(a single dash) as a file name makes
+.Nm
+use standard input (for input files) or standard output (for output files).
+To suppress this behavior, and open a file in the current directory actually called
+.Ql - ,
+pass
+.Ql ./-
+instead.
+Using standard input or output more than once in a single command will likely produce unexpected results.
+.Pp
 The following options are accepted:
 .Bl -tag -width Ds
 .It Fl a Ar attrmap , Fl Fl attr-map Ar attrmap
@@ -145,7 +157,9 @@ The expected format is
 .Ql format:path ,
 where
 .Ar path
-is a path to a file, which will be processed according to the
+is a path to a file
+.Ql ( -
+is not treated specially), which will be processed according to the
 .Ar format .
 See
 .Sx PALETTE SPECIFICATION FORMATS

@@ -12,6 +12,8 @@ red="$(tput setaf 1)"
 green="$(tput setaf 2)"
 rescolors="$(tput op)"
 
+RGBGFX=../../rgbgfx
+
 rc=0
 new_test() {
 	cmdline="${*@Q}"
@@ -42,7 +44,7 @@ rm -f out*.png result.png
 
 for f in *.png; do
 	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
-	new_test ../../rgbgfx $flags "$f"
+	new_test "$RGBGFX" $flags "$f"
 
 	if [[ -e "${f%.png}.err" ]]; then
 		test 2>"$errtmp"

@@ -1174,8 +1174,8 @@ static bool processFilename(char const *name)
 {
 	nbErrors = 0;
 	if (!strcmp(name, "-")) {
-		setmode(STDIN_FILENO, O_BINARY);
-		setmode(STDOUT_FILENO, O_BINARY);
+		(void)setmode(STDIN_FILENO, O_BINARY);
+		(void)setmode(STDOUT_FILENO, O_BINARY);
 		name = "<stdin>";
 		processFile(STDIN_FILENO, STDOUT_FILENO, name, 0);
 

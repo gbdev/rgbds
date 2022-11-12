@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "defaultinitalloc.hpp"
+#include "file.hpp"
 #include "helpers.h"
 #include "itertools.hpp"
 
@@ -77,7 +78,7 @@ public:
 
 class Png {
 	std::string const &path;
-	std::filebuf file{};
+	File file{};
 	png_structp png = nullptr;
 	png_infop info = nullptr;
 
@@ -105,13 +106,14 @@ class Png {
 	static void readData(png_structp png, png_bytep data, size_t length) {
 		Png *self = reinterpret_cast<Png *>(png_get_io_ptr(png));
 		std::streamsize expectedLen = length;
-		std::streamsize nbBytesRead = self->file.sgetn(reinterpret_cast<char *>(data), expectedLen);
+		std::streamsize nbBytesRead =
+		    self->file->sgetn(reinterpret_cast<char *>(data), expectedLen);
 
 		if (nbBytesRead != expectedLen) {
 			fatal("Error reading input image (\"%s\"): file too short (expected at least %zd more "
 			      "bytes after reading %lld)",
 			      self->path.c_str(), length - nbBytesRead,
-			      self->file.pubseekoff(0, std::ios_base::cur));
+			      self->file->pubseekoff(0, std::ios_base::cur));
 		}
 	}
 
@@ -182,7 +184,7 @@ public:
 
 		std::array<unsigned char, 8> pngHeader;
 
-		if (file.sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
+		if (file->sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
 		        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
 		    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
 			fatal("Input file (\"%s\") is not a PNG image!", path.c_str());
@@ -624,7 +626,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to open \"%s\": %s", options.palettes.c_str(), strerror(errno));
 	}
@@ -632,8 +634,8 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	for (Palette const &palette : palettes) {
 		for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
 			uint16_t color = palette.colors[i]; // Will return `UINT16_MAX` for unused slots
-			output.sputc(color & 0xFF);
-			output.sputc(color >> 8);
+			output->sputc(color & 0xFF);
+			output->sputc(color >> 8);
 		}
 	}
 }
@@ -752,7 +754,7 @@ namespace unoptimized {
 static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
                            std::vector<Palette> const &palettes,
                            DefaultInitVec<size_t> const &mappings) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to open \"%s\": %s", options.output.c_str(), strerror(errno));
 	}
@@ -768,9 +770,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 		Palette const &palette = palettes[attr.getPalID(mappings)];
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = TileData::rowBitplanes(tile, palette, y);
-			output.sputc(bitplanes & 0xFF);
+			output->sputc(bitplanes & 0xFF);
 			if (options.bitDepth == 2) {
-				output.sputc(bitplanes >> 8);
+				output->sputc(bitplanes >> 8);
 			}
 		}
 
@@ -784,7 +786,7 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 
 static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
                        DefaultInitVec<size_t> const &mappings) {
-	std::optional<std::filebuf> tilemapOutput, attrmapOutput, palmapOutput;
+	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
 	if (!options.tilemap.empty()) {
 		tilemapOutput.emplace();
 		if (!tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
@@ -814,14 +816,14 @@ static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
 		}
 
 		if (tilemapOutput.has_value()) {
-			tilemapOutput->sputc(tileID + options.baseTileIDs[bank]);
+			(*tilemapOutput)->sputc(tileID + options.baseTileIDs[bank]);
 		}
 		if (attrmapOutput.has_value()) {
 			uint8_t palID = attr.getPalID(mappings) & 7;
-			attrmapOutput->sputc(palID | bank << 3); // The other flags are all 0
+			(*attrmapOutput)->sputc(palID | bank << 3); // The other flags are all 0
 		}
 		if (palmapOutput.has_value()) {
-			palmapOutput->sputc(attr.getPalID(mappings));
+			(*palmapOutput)->sputc(attr.getPalID(mappings));
 		}
 		++tileID;
 	}
@@ -896,7 +898,7 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 }
 
 static void outputTileData(UniqueTiles const &tiles) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to create \"%s\": %s", options.output.c_str(), strerror(errno));
 	}
@@ -906,24 +908,24 @@ static void outputTileData(UniqueTiles const &tiles) {
 		TileData const *tile = *iter;
 		assert(tile->tileID == tileID);
 		++tileID;
-		output.sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
+		output->sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
 	}
 }
 
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to create \"%s\": %s", options.tilemap.c_str(), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
-		output.sputc(entry.tileID); // The tile ID has already been converted
+		output->sputc(entry.tileID); // The tile ID has already been converted
 	}
 }
 
 static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                           DefaultInitVec<size_t> const &mappings) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to create \"%s\": %s", options.attrmap.c_str(), strerror(errno));
 	}
@@ -932,19 +934,19 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 		uint8_t attr = entry.xFlip << 5 | entry.yFlip << 6;
 		attr |= entry.bank << 3;
 		attr |= entry.getPalID(mappings) & 7;
-		output.sputc(attr);
+		output->sputc(attr);
 	}
 }
 
 static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                          DefaultInitVec<size_t> const &mappings) {
-	std::filebuf output;
+	File output;
 	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
 		fatal("Failed to create \"%s\": %s", options.attrmap.c_str(), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
-		output.sputc(entry.getPalID(mappings));
+		output->sputc(entry.getPalID(mappings));
 	}
 }
 
