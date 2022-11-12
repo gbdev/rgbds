@@ -55,13 +55,21 @@ jobs:
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.buildsys }}
           path: bins
+      - name: Compute test dependency cache params
+        id: test-deps-cache-params
+        shell: bash
+        run: |
+          paths=$(test/fetch-test-deps.sh --get-paths)
+          hash=$(test/fetch-test-deps.sh --get-hash)
+          tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
+          tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
         uses: actions/cache@v3
         with:
-          path: test
-          key: ${{ matrix.os }}-${{ hashFiles('test/fetch-test-deps.sh') }}
-      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+          path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
+          key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
+      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
         name: Fetch test dependency repositories
         continue-on-error: true
         run: |
@@ -127,16 +135,21 @@ jobs:
         with:
           name: rgbds-canary-win${{ matrix.bits }}
           path: bins
+      - name: Compute test dependency cache params
+        id: test-deps-cache-params
+        shell: bash
+        run: |
+          paths=$(test/fetch-test-deps.sh --get-paths)
+          hash=$(test/fetch-test-deps.sh --get-hash)
+          tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
+          tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
         uses: actions/cache@v3
         with:
-          path: test
-          # Intentionally using matrix.bits instead matrix.arch as it's fine to share a cache
-          # with a different job below that also runs on Windows but doesn't have arch property
-          # defined.
-          key: ${{ matrix.os }}-${{ matrix.bits }}-${{ hashFiles('test/fetch-test-deps.sh') }}
-      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+          path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
+          key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
+      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
         name: Fetch test dependency repositories
         shell: bash
         continue-on-error: true
@@ -224,13 +237,21 @@ jobs:
         run: |
           cp bins/* .
           cp bins/*.dll test/gfx
+      - name: Compute test dependency cache params
+        id: test-deps-cache-params
+        shell: bash
+        run: |
+          paths=$(test/fetch-test-deps.sh --get-paths)
+          hash=$(test/fetch-test-deps.sh --get-hash)
+          tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
+          tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
         uses: actions/cache@v3
         with:
-          path: test
-          key: ${{ matrix.os }}-${{ matrix.bits }}-${{ hashFiles('test/fetch-test-deps.sh') }}
-      - if: ${{ steps.test-deps-cache.outputs.cache-hit != 'true' }}
+          path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
+          key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
+      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
         name: Fetch test dependency repositories
         shell: bash
         continue-on-error: true
