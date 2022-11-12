@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-[[ -e ./rgbgfx_test ]] || make -C ../.. test/gfx/rgbgfx_test
-[[ -e ./randtilegen ]] || make -C ../.. test/gfx/randtilegen
+[[ -e ./rgbgfx_test ]] || make -C ../.. test/gfx/rgbgfx_test || exit
+[[ -e ./randtilegen ]] || make -C ../.. test/gfx/randtilegen || exit
 
 trap 'rm -f "$errtmp"' EXIT
 errtmp="$(mktemp)"
