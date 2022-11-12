@@ -63,8 +63,10 @@
 # define O_RDWR _O_RDWR
 # define S_ISREG(field) ((field) & _S_IFREG)
 # define O_BINARY _O_BINARY
+# define O_TEXT _O_TEXT
 #elif !defined(O_BINARY) // Cross-compilers define O_BINARY
 # define O_BINARY 0 // POSIX says we shouldn't care!
+# define O_TEXT 0 // Assume that it's not defined either
 #endif // _MSC_VER
 
 // Windows has stdin and stdout open as text by default, which we may not want
@@ -72,7 +74,7 @@
 # include <io.h>
 # define setmode(fd, mode) _setmode(fd, mode)
 #else
-# define setmode(fd, mode) ((void)0)
+# define setmode(fd, mode) (0)
 #endif
 
 #endif // RGBDS_PLATFORM_H

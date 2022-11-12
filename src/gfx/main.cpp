@@ -23,8 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string_view>
+#include <type_traits>
 
 #include "extern/getopt.h"
+#include "file.hpp"
 #include "platform.h"
 #include "version.h"
 
@@ -253,12 +255,13 @@ static void registerInput(char const *arg) {
  * @param argPool Argument characters will be appended to this vector, for storage purposes.
  */
 static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
-	std::filebuf file;
+	File file;
 	if (!file.open(path, std::ios_base::in)) {
 		fatal("Error reading @%s: %s", path.c_str(), strerror(errno));
 	}
 
-	static_assert(decltype(file)::traits_type::eof() == EOF,
+	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
+	static_assert(std::remove_reference_t<decltype(*file)>::traits_type::eof() == EOF,
 	              "isblank(char_traits<...>::eof()) is UB!");
 	std::vector<size_t> argvOfs;
 
@@ -267,7 +270,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 		// First, discard any leading whitespace
 		do {
-			c = file.sbumpc();
+			c = file->sbumpc();
 			if (c == EOF) {
 				return argvOfs;
 			}
@@ -275,7 +278,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 		switch (c) {
 		case '#': // If it's a comment, discard everything until EOL
-			while ((c = file.sbumpc()) != '\n') {
+			while ((c = file->sbumpc()) != '\n') {
 				if (c == EOF) {
 					return argvOfs;
 				}
@@ -283,7 +286,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 			continue; // Start processing the next line
 		// If it's an empty line, ignore it
 		case '\r': // Assuming CRLF here
-			file.sbumpc(); // Discard the upcoming '\n'
+			file->sbumpc(); // Discard the upcoming '\n'
 			[[fallthrough]];
 		case '\n':
 			continue; // Start processing the next line
@@ -298,11 +301,11 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 			// on `vector` and `sbumpc` to do the right thing here.
 			argPool.push_back(c); // Push the character we've already read
 			for (;;) {
-				c = file.sbumpc();
-				if (isblank(c) || c == '\n' || c == EOF) {
+				c = file->sbumpc();
+				if (c == EOF || c == '\n' || isblank(c)) {
 					break;
 				} else if (c == '\r') {
-					file.sbumpc(); // Discard the '\n'
+					file->sbumpc(); // Discard the '\n'
 					break;
 				}
 				argPool.push_back(c);
@@ -311,10 +314,10 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 
 			// Discard whitespace until the next argument (candidate)
 			while (isblank(c)) {
-				c = file.sbumpc();
+				c = file->sbumpc();
 			}
 			if (c == '\r') {
-				c = file.sbumpc(); // Skip the '\n'
+				c = file->sbumpc(); // Skip the '\n'
 			}
 		} while (c != '\n' && c != EOF); // End if we reached EOL
 	}

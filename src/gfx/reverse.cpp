@@ -21,13 +21,14 @@
 #include <vector>
 
 #include "defaultinitalloc.hpp"
+#include "file.hpp"
 #include "helpers.h"
 #include "itertools.hpp"
 
 #include "gfx/main.hpp"
 
 static DefaultInitVec<uint8_t> readInto(std::string path) {
-	std::filebuf file;
+	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
 		fatal("Failed to open \"%s\": %s", path.c_str(), strerror(errno));
 	}
@@ -40,7 +41,7 @@ static DefaultInitVec<uint8_t> readInto(std::string path) {
 
 		// Fill the new area ([oldSize; curSize[) with bytes
 		size_t nbRead =
-		    file.sgetn(reinterpret_cast<char *>(&data.data()[oldSize]), curSize - oldSize);
+		    file->sgetn(reinterpret_cast<char *>(&data.data()[oldSize]), curSize - oldSize);
 		if (nbRead != curSize - oldSize) {
 			// Shrink the vector to discard bytes that weren't read
 			data.resize(oldSize + nbRead);
@@ -68,13 +69,13 @@ static void pngWarning(png_structp png, char const *msg) {
 }
 
 void writePng(png_structp png, png_bytep data, size_t length) {
-	auto &pngFile = *static_cast<std::filebuf *>(png_get_io_ptr(png));
-	pngFile.sputn(reinterpret_cast<char *>(data), length);
+	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
+	pngFile->sputn(reinterpret_cast<char *>(data), length);
 }
 
 void flushPng(png_structp png) {
-	auto &pngFile = *static_cast<std::filebuf *>(png_get_io_ptr(png));
-	pngFile.pubsync();
+	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
+	pngFile->pubsync();
 }
 
 void reverse() {
@@ -146,7 +147,7 @@ void reverse() {
 	    {Rgba(0xffffffff), Rgba(0xaaaaaaff), Rgba(0x555555ff), Rgba(0x000000ff)}
     };
 	if (!options.palettes.empty()) {
-		std::filebuf file;
+		File file;
 		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
 			fatal("Failed to open \"%s\": %s", options.palettes.c_str(), strerror(errno));
 		}
@@ -155,7 +156,7 @@ void reverse() {
 		std::array<uint8_t, sizeof(uint16_t) * 4> buf; // 4 colors
 		size_t nbRead;
 		do {
-			nbRead = file.sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
+			nbRead = file->sgetn(reinterpret_cast<char *>(buf.data()), buf.size());
 			if (nbRead == buf.size()) {
 				// Expand the colors
 				auto &palette = palettes.emplace_back();
@@ -233,7 +234,7 @@ void reverse() {
 	}
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
-	std::filebuf pngFile;
+	File pngFile;
 	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
 		fatal("Failed to create \"%s\": %s", options.input.c_str(), strerror(errno));
 	}
