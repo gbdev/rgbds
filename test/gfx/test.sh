@@ -16,7 +16,7 @@ RGBGFX=../../rgbgfx
 
 rc=0
 new_test() {
-	cmdline="${*@Q}"
+	cmdline="$*"
 	echo "$bold${green}Testing: $cmdline$rescolors$resbold" >&2
 }
 test() {
@@ -44,11 +44,19 @@ rm -f out*.png result.png
 
 for f in *.png; do
 	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
-	new_test "$RGBGFX" $flags "$f"
 
+	new_test "$RGBGFX" $flags "$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		test 2>"$errtmp"
 		diff -u --strip-trailing-cr "${f%.png}.err" "$errtmp" || fail
+	else
+		test || fail $?
+	fi
+
+	new_test "$RGBGFX" $flags - "<$f"
+	if [[ -e "${f%.png}.err" ]]; then
+		test 2>"$errtmp"
+		diff -u --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || fail
 	else
 		test || fail $?
 	fi
