@@ -24,7 +24,7 @@ jobs:
         run: | # Turn "vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install deps
         run: .github/scripts/get_win_deps.ps1
       - uses: actions/cache@v3
@@ -72,7 +72,7 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install deps
         shell: bash
         run: |
@@ -100,7 +100,7 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Package sources
         run: |
           make dist Q=
