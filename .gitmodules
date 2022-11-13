@@ -1,0 +1,4 @@
+[submodule "contrib/rgbenv"]
+	path = contrib/rgbenv
+	url = https://github.com/ZoomTen/rgbenv
+	branch = master
