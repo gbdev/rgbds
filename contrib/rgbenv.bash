@@ -30,7 +30,7 @@ shopt -u nullglob
 RGBDS_GIT="https://github.com/gbdev/rgbds"
 
 # The version number is directly appended after these variables
-RGBDS_DOWNLOAD_BASE="https://codeload.github.com/gbdev/rgbds/tar.gz/refs/tags/v"
+RGBDS_DOWNLOAD_BASE="https://api.github.com/repos/gbdev/rgbds/tarball/v"
 RGBDS_PREFIX="rgbds-"
 
 # --------------- Var defines -------------------------------------------------
