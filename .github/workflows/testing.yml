@@ -113,16 +113,18 @@ jobs:
         run: |
           cmake --install zbuild
       - name: Build libpng
+        shell: bash
         run: |
-          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_TESTS=OFF
+          cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=OFF -DPNG_TESTS=OFF -DPNG_BUILD_ZLIB=ON -DZLIB_INCLUDE_DIR="$PWD"/install_dir/include -DZLIB_LIBRARY="$PWD"/install_dir/lib/zlib.lib
           cmake --build pngbuild --config Release -j
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install libpng
         run: |
           cmake --install pngbuild
       - name: Build Windows binaries
+        shell: bash
         run: |
-          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release -DZLIB_LIBRARY="$PWD"/install_dir/lib/zlib.lib -DZLIB_INCLUDE_DIR="$PWD"/install_dir/include -DPNG_LIBRARY="$PWD"/install_dir/lib/libpng16.lib -DPNG_INCLUDE_DIR="$PWD"/install_dir/include
           cmake --build build --config Release -j --verbose
           cmake --install build --verbose --prefix install_dir
       - name: Package binaries
