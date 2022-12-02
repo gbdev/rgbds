@@ -398,6 +398,8 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		for (uint32_t i = 0; i < section->nbPatches; i++)
 			readPatch(file, &patches[i], fileName, section->name, i, fileNodes);
 		section->patches = patches;
+	} else {
+		section->data = NULL; // `mergeSections()` expects to be able to always read the ptr
 	}
 }
 
