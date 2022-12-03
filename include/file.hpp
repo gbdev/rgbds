@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <cassert>
 #include <fcntl.h>
-#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -48,7 +47,7 @@ public:
 	 * This should only be called once, and before doing any `->` operations.
 	 * Returns `nullptr` on error, and a non-null pointer otherwise.
 	 */
-	File *open(std::filesystem::path const &path, std::ios_base::openmode mode) {
+	File *open(std::string const &path, std::ios_base::openmode mode) {
 		if (path != "-") {
 			return _file.emplace<std::filebuf>().open(path, mode) ? this : nullptr;
 		} else if (mode & std::ios_base::in) {
