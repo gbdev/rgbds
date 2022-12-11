@@ -351,8 +351,10 @@ void fstk_RunInclude(char const *path)
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(contextStack->lexerState);
-	// We're back at top-level, so most things are reset
-	contextStack->uniqueID = macro_UndefUniqueID();
+	// We're back at top-level, so most things are reset,
+	// but not the unique ID, since INCLUDE may be inside a
+	// MACRO or REPT/FOR loop
+	contextStack->uniqueID = contextStack->parent->uniqueID;
 }
 
 // Similar to `fstk_RunInclude`, but not subject to `-MG`, and
