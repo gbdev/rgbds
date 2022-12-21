@@ -248,7 +248,7 @@ static void doSanityChecks(struct Section *section, void *ptr)
 			error(NULL, 0, "%s: WRAMX sections must be in bank 1 with options -w or -d",
 			     section->name);
 		else
-			section->type = SECTTYPE_WRAMX;
+			section->type = SECTTYPE_WRAM0;
 	}
 	if (isDmgMode && section->type == SECTTYPE_VRAM && section->bank == 1)
 		error(NULL, 0, "%s: VRAM bank 1 can't be used with option -d",
