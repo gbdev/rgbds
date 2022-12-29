@@ -519,8 +519,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV) {
-		const char * oldTool = revNum < RGBDS_OBJECT_REV : "rgbasm" ? "rgblink";
-		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported. Try re-assembling this file or updating %s.",
+		const char *oldTool = revNum < RGBDS_OBJECT_REV ? "rgbasm" : "rgblink";
+		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported.\nTry re-assembling this file or updating %s.",
 		     fileName, revNum, RGBDS_OBJECT_REV, oldTool);
 	}
 
