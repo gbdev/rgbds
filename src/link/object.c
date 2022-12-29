@@ -519,7 +519,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV)
-		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
+		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported. Try re-assembling this file or ensuring rgbasm and rgblink are up to date.",
 		     fileName, revNum, RGBDS_OBJECT_REV);
 
 	uint32_t nbSymbols;
