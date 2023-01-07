@@ -1,0 +1,23 @@
+[*] Analyzing commit '2f5179a9fa2b8ec6eb9b9bcbd6d0ee0a1326385f'
+:522: WARNING: Missing commit description - Add an appropriate one
+[*] Analyzing commit '705320e25670b87726b8f494812699f76fc52438'
+:521: WARNING: Missing commit description - Add an appropriate one
+[*] Analyzing commit '823a5dd7d5c9fa05bb997f37c96176af3363800b'
+:519: WARNING: Non-standard signature: Co-authored-by:
+Co-authored-by: Rangi <35663410+Rangi42@users.noreply.github.com>
+
+src/link/object.c:523: WARNING: Missing a blank line after declarations
++		const char *oldTool = revNum < RGBDS_OBJECT_REV ? "rgbasm" : "rgblink";
++		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported.\nTry re-assembling this file or updating %s.",
+
+[*] Analyzing commit 'b3c11b90047bd52b5eea212d3a372ab15b5d50c9'
+:519: WARNING: Missing commit description - Add an appropriate one
+src/link/object.c:522: ERROR: "foo * bar" should be "foo *bar"
++		const char * oldTool = revNum < RGBDS_OBJECT_REV : "rgbasm" ? "rgblink";
+
+src/link/object.c:523: WARNING: Missing a blank line after declarations
++		const char * oldTool = revNum < RGBDS_OBJECT_REV : "rgbasm" ? "rgblink";
++		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported. Try re-assembling this file or updating %s.",
+
+[*] Analyzing commit 'b55c2c38f0ffc62d6e4d05184892e09ee97b91e0'
+:520: WARNING: Missing commit description - Add an appropriate one
