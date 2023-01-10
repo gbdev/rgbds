@@ -523,7 +523,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		const char *oldTool = revNum < RGBDS_OBJECT_REV ? "rgbasm" : "rgblink";
 
 		errx("%s cannot be linked because it was built with a different version of RGBDS; try rebuilding your project or updating %s.",
-		     fileName, revNum, RGBDS_OBJECT_REV, get_package_version_string(), oldTool);
+		     fileName, oldTool);
 	}
 
 	uint32_t nbSymbols;
