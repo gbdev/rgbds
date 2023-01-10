@@ -522,7 +522,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	if (revNum != RGBDS_OBJECT_REV) {
 		const char *oldTool = revNum < RGBDS_OBJECT_REV ? "rgbasm" : "rgblink";
 
-		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported.\nTry re-assembling rgbasm %s or updating %s.",
+		errx("%s cannot be linked because it was built with a different version of RGBDS; try rebuilding your project or updating %s.",
 		     fileName, revNum, RGBDS_OBJECT_REV, get_package_version_string(), oldTool);
 	}
 
