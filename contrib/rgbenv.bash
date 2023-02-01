@@ -267,7 +267,7 @@ _install () {
 	
 	# if so, download the tarball and extract it
 	echo "Downloading from $download_link..."
-	curl $download_link | tar -xz --directory $RGBENV_VERSIONS
+	curl -L $download_link | tar -xz --directory $RGBENV_VERSIONS
 	
 	# then build it
 	echo "Building RGBDS $version..."
