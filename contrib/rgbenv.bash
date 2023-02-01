@@ -91,6 +91,9 @@ help () {
 	echo
 	echo "        Use --online to list versions available"
 	echo "        for installation."
+	echo
+	echo "    remove"
+	echo "        Removes the rgbenv directories."
 }
 
 checkver () {
@@ -103,6 +106,36 @@ checkver () {
 		point_to_available_command
 		exit 1
 	fi
+}
+
+checkverinstall () {
+	local version=$1
+	local has_choice=0
+	checkver $version;
+	if [ -d $RGBENV_VERSIONS/$RGBDS_PREFIX$version ]; then
+		while [ $has_choice -eq 0 ]; do
+			read -p "Version $version is already installed. Do you want to reinstall? [y/n] " choice
+			case $choice in
+				[Yy]* ) has_choice=1; break;;
+				[Nn]* ) exit; break;;
+				* ) echo "Please answer y or n.";;
+			esac
+		done
+	else
+		echo "Version $version isn't installed yet."
+	fi
+}
+
+_remove () {
+	local has_choice=0
+	while [ $has_choice -eq 0 ]; do
+		read -p "Remove rgbenv directories? [y/n] " choice
+		case $choice in
+			[Yy]* ) rm -rv $RGBENV_DEFAULT; rm -rv $RGBENV_VERSIONS; has_choice=1; break;;
+			[Nn]* ) has_choice=1; exit;;
+			* ) echo "Please answer y or n.";;
+		esac
+	done
 }
 
 setup () {
@@ -247,7 +280,7 @@ _install () {
 		point_to_available_online
 		exit 1
 	fi
-	checkver $version
+	checkverinstall $version
 	
 	check_online_versions
 	local available=$ONLINE_VERSIONS
@@ -267,7 +300,12 @@ _install () {
 	
 	# if so, download the tarball and extract it
 	echo "Downloading from $download_link..."
-	curl -L $download_link | tar -xz --directory $RGBENV_VERSIONS
+	tempfile=$(mktemp)
+	curl -L $download_link > $tempfile
+	dirname=$(tar -tzf $tempfile | head -1 | cut -f1 -d'/')
+	tar -xzf $tempfile --directory $RGBENV_VERSIONS
+	mv $RGBENV_VERSIONS/$dirname $RGBENV_VERSIONS/$RGBDS_PREFIX$version
+	rm $tempfile
 	
 	# then build it
 	echo "Building RGBDS $version..."
@@ -294,10 +332,12 @@ _uninstall () {
 		if [ -d $RGBENV_VERSIONS/$RGBDS_PREFIX$version ]; then
 			rm -r $RGBENV_VERSIONS/$RGBDS_PREFIX$version
 			
-			if [ $(cat $RGBENV_DEFAULT/version) = $version ]; then
-				rm $RGBENV_DEFAULT/version
-				rm $RGBENV_DEFAULT/bin/*
-				echo "Removed current RGBDS version, RGBDS is now system-managed"
+			if [ -d $RGBENV_DEFAULT/version ]; then
+				if [ $(cat $RGBENV_DEFAULT/version) = $version ]; then
+					rm $RGBENV_DEFAULT/version
+					rm $RGBENV_DEFAULT/bin/*
+					echo "Removed current RGBDS version, RGBDS is now system-managed"
+				fi
 			fi
 			echo "Version $1 uninstalled."
 			
@@ -373,5 +413,6 @@ case $1 in
 	uninstall* ) shift; _uninstall $1;;
 	exec* ) shift; _exec $@;;
 	available* ) shift; _available $1;;
+	remove*) shift; _remove;;
 	*) if [ ! -z "$1" ]; then echo -e "Unknown command $1.\n"; fi; help;;
 esac
