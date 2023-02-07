@@ -986,12 +986,16 @@ void process() {
 	for (auto tile : png.visitAsTiles()) {
 		ProtoPalette tileColors;
 		AttrmapEntry &attrs = attrmap.emplace_back();
+		uint8_t nbColorsInTile = 0;
 
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
 				Rgba color = tile.pixel(x, y);
 				if (!color.isTransparent()) { // Do not count transparency in for packing
-					tileColors.add(color.cgbColor());
+					// Add the color to the proto-pal (if not full), and count it if it was unique.
+					if (tileColors.add(color.cgbColor())) {
+						++nbColorsInTile;
+					}
 				}
 			}
 		}
@@ -1033,9 +1037,9 @@ void process() {
 			}
 		}
 
-		if (tileColors.size() > options.maxOpaqueColors()) {
+		if (nbColorsInTile > options.maxOpaqueColors()) {
 			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %zu opaque colors, more than %" PRIu8 "!",
-			      tile.x, tile.y, tileColors.size(), options.maxOpaqueColors());
+			      tile.x, tile.y, nbColorsInTile, options.maxOpaqueColors());
 		}
 
 		attrs.protoPaletteID = protoPalettes.size();

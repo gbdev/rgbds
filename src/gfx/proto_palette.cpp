@@ -17,24 +17,29 @@
 bool ProtoPalette::add(uint16_t color) {
 	size_t i = 0;
 
-	// Seek the first slot greater than our color
+	// Seek the first slot greater than the new color
 	// (A linear search is better because we don't store the array size,
 	// and there are very few slots anyway)
 	while (_colorIndices[i] < color) {
 		++i;
-		if (i == _colorIndices.size())
-			return false;
+		if (i == _colorIndices.size()) {
+			// We reached the end of the array without finding the color, so it's a new one.
+			return true;
+		}
 	}
-	// If we found ourselves, great!
-	if (_colorIndices[i] == color)
-		return true;
+	// If we found it, great! Nothing else to do.
+	if (_colorIndices[i] == color) {
+		return false;
+	}
 
 	// Swap entries until the end
 	while (_colorIndices[i] != UINT16_MAX) {
 		std::swap(_colorIndices[i], color);
 		++i;
-		if (i == _colorIndices.size())
-			return false; // Oh well
+		if (i == _colorIndices.size()) {
+			// The set is full, but doesn't include the new color.
+			return true;
+		}
 	}
 	// Write that last one into the new slot
 	_colorIndices[i] = color;
