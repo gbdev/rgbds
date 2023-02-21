@@ -944,8 +944,8 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                          DefaultInitVec<size_t> const &mappings) {
 	File output;
-	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(options.attrmap), strerror(errno));
+	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", output.c_str(options.palmap), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
