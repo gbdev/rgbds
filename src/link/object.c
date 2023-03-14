@@ -25,6 +25,7 @@
 #include "error.h"
 #include "helpers.h"
 #include "linkdefs.h"
+#include "version.h"
 
 static struct SymbolList {
 	size_t nbSymbols;
@@ -518,9 +519,13 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
-	if (revNum != RGBDS_OBJECT_REV)
-		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
-		     fileName, revNum, RGBDS_OBJECT_REV);
+	if (revNum != RGBDS_OBJECT_REV) {
+		const char *oldTool = revNum < RGBDS_OBJECT_REV ? "rgbasm" : "rgblink";
+	
+		errx("%s cannot be linked because it was built with a version of RGBDS incompatible with %s; "
+		     "try rebuilding your project or updating %s. (Expected revision 0x%04" PRIx32 ", got 0x%04" PRIx32 ")",
+		     fileName, get_package_version_string(), oldTool, revNum, RGBDS_OBJECT_REV);
+	}
 
 	uint32_t nbSymbols;
 	uint32_t nbSections;
