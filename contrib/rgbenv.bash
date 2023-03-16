@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: MIT
 #
-# Copyright (c) 2022 Zumi Daxuya
+# Copyright (c) 2022-2023 Zumi Daxuya
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,12 +36,12 @@ RGBDS_PREFIX="rgbds-"
 # --------------- Var defines -------------------------------------------------
 
 # Set up XDG standard directories (Linux, etc.)
-RGBENV_DEFAULT=${XDG_DATA_HOME:-~/.local/share}/rgbenv/default
-RGBENV_VERSIONS=${XDG_DATA_HOME:-~/.local/share}/rgbenv/versions
+RGBENV_DEFAULT=${XDG_DATA_HOME:-$HOME/.local/share}/rgbenv/default
+RGBENV_VERSIONS=${XDG_DATA_HOME:-$HOME/.local/share}/rgbenv/versions
 
-if [[ ! -d ${XDG_DATA_HOME:-~/.local/share} ]]; then
-	RGBENV_DEFAULT=~/.rgbenv/default
-	RGBENV_VERSIONS=~/.rgbenv/versions
+if [[ ! -d ${XDG_DATA_HOME:-$HOME/.local/share} ]]; then
+	RGBENV_DEFAULT=$HOME/.rgbenv/default
+	RGBENV_VERSIONS=$HOME/.rgbenv/versions
 fi
 
 RGBDS_PREFIX_LEN=${#RGBDS_PREFIX}
