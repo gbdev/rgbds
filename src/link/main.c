@@ -310,7 +310,7 @@ static void parseScrambleSpec(char const *spec)
 			}
 			spec = endptr;
 
-			if (region != SCRAMBLE_UNK && limit >= scrambleSpecs[region].max) {
+			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
 				argErr('S', "Limit for region \"%.*s\" may not exceed %" PRIu16,
 				       regionNamePrintLen, regionName, scrambleSpecs[region].max);
 				limit = scrambleSpecs[region].max;
