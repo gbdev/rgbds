@@ -386,7 +386,7 @@ int main(int argc, char **argv) {
 		char *args[] = {path, argv[1], file, nullptr};
 
 		if (auto ret = execProg("randtilegen", args); ret != nullptr) {
-			fatal("Failed to excute ./randtilegen (%s). Is it in the current working directory?",
+			fatal("Failed to execute ./randtilegen (%s). Is it in the current working directory?",
 			      ret);
 		}
 	}
