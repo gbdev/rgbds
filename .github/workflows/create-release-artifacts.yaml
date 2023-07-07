@@ -145,7 +145,7 @@ jobs:
           files: |
             win32/rgbds-${{ env.version }}-win32.zip
             win64/rgbds-${{ env.version }}-win64.zip
-            macos/rgbds-${{ env.version }}-macos-x86-64.zip
+            macos/rgbds-${{ env.version }}-macos-x86_64.zip
             linux/rgbds-${{ env.version }}-linux-x86_64.tar.xz
             rgbds-${{ env.version }}.tar.gz
           fail_on_unmatched_files: true
