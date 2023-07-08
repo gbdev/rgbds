@@ -93,9 +93,34 @@ jobs:
           name: macos
           path: rgbds-${{ env.version }}-macos-x86-64.zip
 
+  linux:
+    runs-on: ubuntu-20.04 # Oldest supported, for best glibc compatibility.
+    steps:
+      - name: Get version from tag
+        shell: bash
+        run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
+          VERSION="${{ github.ref_name }}"
+          echo "version=${VERSION#v}" >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/scripts/install_deps.sh ubuntu-20.04
+      - name: Build binaries
+        run: |
+          make -j WARNFLAGS="-Wall -Wextra -pedantic  -static" PKG_CONFIG="pkg-config --static" Q=
+      - name: Package binaries
+        run: |
+          tar caf rgbds-${{ env.version }}-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+      - name: Upload Linux binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux
+          path: rgbds-${{ env.version }}-linux-x86_64.tar.xz
+
   release:
     runs-on: ubuntu-latest
-    needs: [windows, macos]
+    needs: [windows, macos, linux]
     steps:
       - name: Get version from tag
         shell: bash
@@ -112,7 +137,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: |
-            Please ensure that the three assets below work properly.
+            Please ensure that the four packages below work properly.
             Once that's done, replace this text with the changelog, un-draft the release, and update the `release` branch.
             By the way, if you forgot to update `include/version.h`, RGBASM's version test is gonna fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
           draft: true # Don't publish the release quite yet...
@@ -120,7 +145,8 @@ jobs:
           files: |
             win32/rgbds-${{ env.version }}-win32.zip
             win64/rgbds-${{ env.version }}-win64.zip
-            macos/rgbds-${{ env.version }}-macos-x86-64.zip
+            macos/rgbds-${{ env.version }}-macos-x86_64.zip
+            linux/rgbds-${{ env.version }}-linux-x86_64.tar.xz
             rgbds-${{ env.version }}.tar.gz
           fail_on_unmatched_files: true
         env:
