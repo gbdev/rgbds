@@ -525,16 +525,14 @@ static struct Symbol *addLabel(char const *symName)
 // Add a local (`.name` or `Parent.name`) relocatable symbol
 struct Symbol *sym_AddLocalLabel(char const *symName)
 {
-	if (!labelScope) {
-		error("Local label '%s' in main scope\n", symName);
-		return NULL;
-	}
-	assert(!strchr(labelScope, '.')); // Assuming no dots in `labelScope`
+	// Assuming no dots in `labelScope` if defined
+	assert(!labelScope || !strchr(labelScope, '.'));
 
 	char fullName[MAXSYMLEN + 1];
 	char const *localName = strchr(symName, '.');
 
 	assert(localName); // There should be at least one dot in `symName`
+
 	// Check for something after the dot in `localName`
 	if (localName[1] == '\0') {
 		fatalerror("'%s' is a nonsensical reference to an empty local label\n",
@@ -546,23 +544,13 @@ struct Symbol *sym_AddLocalLabel(char const *symName)
 			   symName);
 
 	if (localName == symName) {
+		if (!labelScope) {
+			error("Unqualified local label '%s' in main scope\n", symName);
+			return NULL;
+		}
 		// Expand `symName` to the full `labelScope.symName` name
 		fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
 		symName = fullName;
-	} else {
-		size_t i = 0;
-
-		// Find where `labelScope` and `symName` first differ
-		while (labelScope[i] && symName[i] == labelScope[i])
-			i++;
-
-		// Check that `symName` starts with `labelScope` and then a '.'
-		if (labelScope[i] != '\0' || symName[i] != '.') {
-			size_t parentLen = localName - symName;
-
-			assert(parentLen <= INT_MAX);
-			error("Not currently in the scope of '%.*s'\n", (int)parentLen, symName);
-		}
 	}
 
 	return addLabel(symName);
