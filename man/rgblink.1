@@ -81,9 +81,14 @@ Write a map file to the given filename, listing how sections and symbols were as
 Write a symbol file to the given filename, listing the address of all exported symbols.
 Several external programs can use this information, for example to help debugging ROMs.
 .It Fl O Ar overlay_file , Fl Fl overlay Ar overlay_file
-If specified, sections will be overlaid "on top" of the provided ROM image.
-In that case, all sections must be fixed.
-This may be used to patch an existing binary.
+If specified, sections will be overlaid "on top" of the ROM image
+.Ar overlay_file :
+empty space between sections will be filled by the corresponding bytes from
+.Ar overlay_file .
+This is useful to patch an existing ROM.
+Note that all sections must be fixed (forced bank
+.Sy and
+address)!
 .It Fl o Ar out_file , Fl Fl output Ar out_file
 Write the ROM image to the given file.
 .It Fl p Ar pad_value , Fl Fl pad Ar pad_value
