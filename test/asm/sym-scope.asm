@@ -1,8 +1,9 @@
 SECTION "Scopes", ROM0
 
-; Neither of these should be created
-.tooSoon
-Nice.try
+; Tests of injecting local labels into another label's scope.
+; This construction is useful to define a subroutine's local variables
+; in WRAM or HRAM.
+Valid.syntax
 
 Parent:
 .loc
@@ -11,8 +12,8 @@ Parent.explicit
 	dw .explicit ; This should expand to the above
 
 
-; None of the two locals below should manage to be created, being in the wrong scopes
-; Note however that `Parentheses` begins with `Parent`, which string checks may fail to handle
+; Note that `Parentheses` begins with `Parent`,
+; which string checks may fail to handle
 
 Parentheses.check
 
