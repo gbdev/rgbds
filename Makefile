@@ -230,7 +230,7 @@ develop:
 		-Wstringop-overflow=4 -Wstrict-overflow=5 -Wundef -Wuninitialized -Wunused \
 		-Wshadow \
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
-		-Wno-format-nonliteral \
+		-Wno-format-nonliteral -Wno-strict-overflow \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \
 		-Wvla \
 		-Wno-unknown-warning-option \
