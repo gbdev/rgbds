@@ -33,6 +33,7 @@
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
+#include "gfx/rgba.hpp"
 
 using namespace std::literals::string_view_literals;
 
@@ -804,7 +805,9 @@ void Palette::addColor(uint16_t color) {
  * Returns the ID of the color in the palette, or `size()` if the color is not in
  */
 uint8_t Palette::indexOf(uint16_t color) const {
-	return std::find(colors.begin(), colors.end(), color) - colors.begin();
+	return color == Rgba::transparent
+	           ? 0
+	           : std::find(begin(), colors.end(), color) - begin() + options.hasTransparentPixels;
 }
 
 auto Palette::begin() -> decltype(colors)::iterator {
