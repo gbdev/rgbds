@@ -1,7 +1,9 @@
 FROM debian:11-slim
+LABEL org.opencontainers.image.source=https://github.com/gbdev/rgbds
 ARG version=0.6.1
+WORKDIR /rgbds
 
-COPY ./rgbds .
+COPY . .
 
 RUN apt-get update && \
     apt-get install sudo make cmake gcc build-essential -y
