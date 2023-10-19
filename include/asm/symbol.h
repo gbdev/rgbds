@@ -135,6 +135,7 @@ struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
 struct Symbol *sym_RedefString(char const *symName, char const *value);
 void sym_Purge(char const *symName);
+void sym_FlushPurged(void);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.

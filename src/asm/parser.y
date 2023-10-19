@@ -1201,6 +1201,7 @@ purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
 		} purge_list trailing_comma {
 			lexer_ToggleStringExpansion(true);
+			sym_FlushPurged();
 		}
 ;
 

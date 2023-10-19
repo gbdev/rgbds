@@ -276,6 +276,13 @@ static bool isReferenced(struct Symbol const *sym)
 	return sym->ID != (uint32_t)-1;
 }
 
+struct SymbolListNode {
+	struct Symbol *sym;
+	struct SymbolListNode *next;
+};
+
+static struct SymbolListNode *purgeList = NULL;
+
 // Purge a symbol
 void sym_Purge(char const *symName)
 {
@@ -288,6 +295,25 @@ void sym_Purge(char const *symName)
 	} else if (isReferenced(sym)) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
 	} else {
+		struct SymbolListNode *node = malloc(sizeof(*node));
+
+		node->sym = sym;
+		node->next = purgeList;
+		purgeList = node;
+	}
+}
+
+// Remove purged symbols
+void sym_FlushPurged(void)
+{
+	while (purgeList) {
+		struct SymbolListNode *next = purgeList->next;
+		struct Symbol *sym = purgeList->sym;
+
+		free(purgeList);
+		purgeList = next;
+
+		assert(sym);
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(NULL);
