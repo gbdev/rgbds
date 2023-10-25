@@ -48,6 +48,7 @@ struct SectionStackEntry *sectionStack;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
+char const *currentLoadScope = NULL;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
@@ -439,6 +440,7 @@ void sect_SetLoadSection(char const *name, uint32_t type, uint32_t org,
 
 	struct Section *sect = getSection(name, type, org, attribs, mod);
 
+	currentLoadScope = sym_GetCurrentSymbolScope();
 	changeSection();
 	loadOffset = curOffset - (mod == SECTION_UNION ? 0 : sect->size);
 	curOffset -= loadOffset;
@@ -456,6 +458,7 @@ void sect_EndLoadSection(void)
 	curOffset += loadOffset;
 	loadOffset = 0;
 	currentLoadSection = NULL;
+	sym_SetCurrentSymbolScope(currentLoadScope);
 }
 
 struct Section *sect_GetSymbolSection(void)
