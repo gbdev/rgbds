@@ -126,7 +126,7 @@ static struct option const longopts[] = {
 	{ NULL,               no_argument,       NULL,     0   }
 };
 
-static void print_usage(void)
+static void printUsage(void)
 {
 	fputs(
 "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
@@ -143,7 +143,6 @@ static void print_usage(void)
 "\n"
 "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
-	exit(1);
 }
 
 int main(int argc, char *argv[])
@@ -176,10 +175,10 @@ int main(int argc, char *argv[])
 	char *dependFileName = NULL;
 	size_t targetFileNameLen = 0;
 
-	int ch;
-	char *ep;
-	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
 		switch (ch) {
+			char *endptr;
+
 		case 'b':
 			if (strlen(musl_optarg) == 2)
 				opt_B(musl_optarg);
@@ -263,9 +262,9 @@ int main(int argc, char *argv[])
 
 			unsigned long padByte;
 		case 'p':
-			padByte = strtoul(musl_optarg, &ep, 0);
+			padByte = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *ep != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0')
 				errx("Invalid argument for option 'p'");
 
 			if (padByte > 0xFF)
@@ -280,9 +279,9 @@ int main(int argc, char *argv[])
 			precisionArg = musl_optarg;
 			if (precisionArg[0] == '.')
 				precisionArg++;
-			precision = strtoul(precisionArg, &ep, 0);
+			precision = strtoul(precisionArg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *ep != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0')
 				errx("Invalid argument for option 'Q'");
 
 			if (precision < 1 || precision > 31)
@@ -292,9 +291,9 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'r':
-			maxDepth = strtoul(musl_optarg, &ep, 0);
+			maxDepth = strtoul(musl_optarg, &endptr, 0);
 
-			if (musl_optarg[0] == '\0' || *ep != '\0')
+			if (musl_optarg[0] == '\0' || *endptr != '\0')
 				errx("Invalid argument for option 'r'");
 			break;
 
@@ -348,8 +347,9 @@ int main(int argc, char *argv[])
 
 		// Unrecognized options
 		default:
-			print_usage();
-			// NOTREACHED
+			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
+			printUsage();
+			exit(1);
 		}
 	}
 
@@ -360,10 +360,12 @@ int main(int argc, char *argv[])
 
 	if (argc == musl_optind) {
 		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr);
-		print_usage();
+		printUsage();
+		exit(1);
 	} else if (argc != musl_optind + 1) {
 		fputs("FATAL: More than one input file specified\n", stderr);
-		print_usage();
+		printUsage();
+		exit(1);
 	}
 
 	char const *mainFileName = argv[musl_optind];

@@ -67,7 +67,7 @@ static void printUsage(void)
 	fputs(
 "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
 "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
-"              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] [<file> ...]\n"
+"              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] <file> ...\n"
 "Useful options:\n"
 "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
 "                                  to the man page for a list of values\n"
@@ -1220,9 +1220,8 @@ finish:
 int main(int argc, char *argv[])
 {
 	nbErrors = 0;
-	int ch;
 
-	while ((ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
 		switch (ch) {
 			size_t len;
 #define parseByte(output, name) \
@@ -1443,12 +1442,15 @@ do { \
 	bool failed = nbErrors;
 
 	if (!*argv) {
-		failed |= processFilename("-");
-	} else {
-		do {
-			failed |= processFilename(*argv);
-		} while (*++argv);
+		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
+		      stderr);
+		printUsage();
+		exit(1);
 	}
+
+	do {
+		failed |= processFilename(*argv);
+	} while (*++argv);
 
 	return failed;
 }
