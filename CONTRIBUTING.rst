@@ -12,14 +12,14 @@ Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
 
 1. Make sure that there isn't a similar issue already reported
-   `here <https://github.com/rednex/rgbds/issues>`__.
+   `here <https://github.com/gbdev/rgbds/issues>`__.
 
 2. Figure out a way of reproducing it reliably.
 
 3. If there is a piece of code that triggers the bug, try to reduce it to the
    smallest file you can.
 
-4. Create a new `issue <https://github.com/rednex/rgbds/issues>`__.
+4. Create a new `issue <https://github.com/gbdev/rgbds/issues>`__.
 
 Of course, it may not always be possible to give an accurate bug report, but it
 always helps to fix it.
@@ -30,7 +30,7 @@ Requesting new features
 If you come up with a good idea that could be implemented, you can propose it to
 be done.
 
-1. Create a new `issue <https://github.com/rednex/rgbds/issues>`__.
+1. Create a new `issue <https://github.com/gbdev/rgbds/issues>`__.
 
 2. Try to be as accurate as possible. Describe what you need and why you need
    it, maybe with examples.
@@ -49,7 +49,7 @@ if your change is going to be small (and likely to be accepted as-is) or big
 (and will have to go through some rework).
 
 Big changes will most likely require some discussion, so open an
-`issue <https://github.com/rednex/rgbds/issues>`__ and explain what you want to
+`issue <https://github.com/gbdev/rgbds/issues>`__ and explain what you want to
 do and how you intend to do it. If you already have a prototype, it's always a
 good idea to show it. Tests help, too.
 
