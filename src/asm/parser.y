@@ -398,6 +398,35 @@ static void freeDsArgList(struct DsArgList *args)
 	free(args->args);
 }
 
+static void initPurgeArgList(struct PurgeArgList *args)
+{
+	args->nbArgs = 0;
+	args->capacity = INITIAL_PURGE_ARG_SIZE;
+	args->args = malloc(args->capacity * sizeof(*args->args));
+	if (!args->args)
+		fatalerror("Failed to allocate memory for purge arg list: %s\n",
+			   strerror(errno));
+}
+
+static void appendPurgeArgList(struct PurgeArgList *args, char *arg)
+{
+	if (args->nbArgs == args->capacity) {
+		args->capacity = (args->capacity + 1) * 2;
+		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		if (!args->args)
+			fatalerror("realloc error while resizing purge arg list: %s\n",
+				   strerror(errno));
+	}
+	args->args[args->nbArgs++] = arg;
+}
+
+static void freePurgeArgList(struct PurgeArgList *args)
+{
+	for (size_t i = 0; i < args->nbArgs; i++)
+		free(args->args[i]);
+	free(args->args);
+}
+
 static void failAssert(enum AssertionType type)
 {
 	switch (type) {
@@ -481,6 +510,7 @@ enum {
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
 	struct DsArgList dsArgs;
+	struct PurgeArgList purgeArgs;
 	struct {
 		int32_t start;
 		int32_t stop;
@@ -635,6 +665,8 @@ enum {
 %type	<macroArg> macroargs
 
 %type	<dsArgs> ds_args
+
+%type	<purgeArgs> purge_args
 
 %type	<forArgs> for_args
 
@@ -1199,17 +1231,22 @@ redef_equs	: redef_id T_POP_EQUS string { sym_RedefString($1, $3); }
 
 purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
-		} purge_list trailing_comma {
+		} purge_args trailing_comma {
+			for (uint32_t i = 0; i < $3.nbArgs; i++)
+				sym_Purge($3.args[i]);
+			freePurgeArgList(&$3);
 			lexer_ToggleStringExpansion(true);
-			sym_FlushPurged();
 		}
 ;
 
-purge_list	: purge_list_entry
-		| purge_list T_COMMA purge_list_entry
-;
-
-purge_list_entry : scoped_id { sym_Purge($1); }
+purge_args	: scoped_id {
+			initPurgeArgList(&$$);
+			appendPurgeArgList(&$$, strdup($1));
+		}
+		| purge_args T_COMMA scoped_id {
+			appendPurgeArgList(&$1, strdup($3));
+			$$ = $1;
+		}
 ;
 
 export		: T_POP_EXPORT export_list trailing_comma
