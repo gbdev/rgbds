@@ -195,12 +195,13 @@ jobs:
         run: |
           make mingw${{ matrix.bits }} -j Q=
       - name: Package binaries
-        run: | # DLL dependencies can be figured out using e.g. Dependency Walker
+        run: | # DLL dependencies can be figured out using e.g. Dependency Walker or objdump -p
           mkdir bins
           mv -v rgb{asm,link,fix,gfx}.exe bins/
           cp -v /usr/${{ matrix.triplet }}/lib/zlib1.dll bins
           cp -v /usr/${{ matrix.triplet }}/bin/libpng16-16.dll bins
-          [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{gcc_s_dw2-1,ssp-0,stdc++-6}.dll bins
+          cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{ssp-0,stdc++-6}.dll bins
+          [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/libgcc_s_dw2-1.dll bins
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v3
         with:

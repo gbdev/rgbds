@@ -40,46 +40,46 @@ dependency () {
 # Pull requests that edit the first file without the second may be correct,
 # but are suspicious enough to require review.
 
-dependency include/linkdefs.h    man/rgbds.5 \
+dependency include/linkdefs.hpp    man/rgbds.5 \
            "Was the object file format changed?"
 
-dependency src/asm/parser.y      man/rgbasm.5 \
+dependency src/asm/parser.y        man/rgbasm.5 \
            "Was the rgbasm grammar changed?"
 
-dependency include/asm/warning.h man/rgbasm.1 \
+dependency include/asm/warning.hpp man/rgbasm.1 \
            "Were the rgbasm warnings changed?"
 
-dependency src/asm/object.c      include/linkdefs.h \
+dependency src/asm/object.cpp      include/linkdefs.hpp \
            "Should the object file revision be bumped?"
-dependency src/link/object.c     include/linkdefs.h \
+dependency src/link/object.cpp     include/linkdefs.hpp \
            "Should the object file revision be bumped?"
 
-dependency Makefile              CMakeLists.txt \
+dependency Makefile                CMakeLists.txt \
            "Did the build process change?"
-dependency Makefile              src/CMakeLists.txt \
+dependency Makefile                src/CMakeLists.txt \
            "Did the build process change?"
 
-dependency src/asm/main.c        man/rgbasm.1 \
+dependency src/asm/main.cpp        man/rgbasm.1 \
            "Did the rgbasm CLI change?"
-dependency src/asm/main.c        contrib/zsh_compl/_rgbasm \
+dependency src/asm/main.cpp        contrib/zsh_compl/_rgbasm \
            "Did the rgbasm CLI change?"
-dependency src/asm/main.c        contrib/bash_compl/_rgbasm.bash \
+dependency src/asm/main.cpp        contrib/bash_compl/_rgbasm.bash \
            "Did the rgbasm CLI change?"
-dependency src/link/main.c       man/rgblink.1 \
+dependency src/link/main.cpp       man/rgblink.1 \
            "Did the rgblink CLI change?"
-dependency src/link/main.c       contrib/zsh_compl/_rgblink \
+dependency src/link/main.cpp       contrib/zsh_compl/_rgblink \
            "Did the rgblink CLI change?"
-dependency src/link/main.c        contrib/bash_compl/_rgblink.bash \
+dependency src/link/main.cpp        contrib/bash_compl/_rgblink.bash \
            "Did the rgblink CLI change?"
-dependency src/fix/main.c        man/rgbfix.1 \
+dependency src/fix/main.cpp        man/rgbfix.1 \
            "Did the rgbfix CLI change?"
-dependency src/fix/main.c        contrib/zsh_compl/_rgbfix \
+dependency src/fix/main.cpp        contrib/zsh_compl/_rgbfix \
            "Did the rgbfix CLI change?"
-dependency src/fix/main.c        contrib/bash_compl/_rgbfix.bash \
+dependency src/fix/main.cpp        contrib/bash_compl/_rgbfix.bash \
            "Did the rgbfix CLI change?"
-dependency src/gfx/main.cpp      man/rgbgfx.1 \
+dependency src/gfx/main.cpp        man/rgbgfx.1 \
            "Did the rgbgfx CLI change?"
-dependency src/gfx/main.cpp      contrib/zsh_compl/_rgbgfx \
+dependency src/gfx/main.cpp        contrib/zsh_compl/_rgbgfx \
            "Did the rgbgfx CLI change?"
-dependency src/gfx/main.cpp      contrib/bash_compl/_rgbgfx.bash \
+dependency src/gfx/main.cpp        contrib/bash_compl/_rgbgfx.bash \
            "Did the rgbgfx CLI change?"

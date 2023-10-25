@@ -4,7 +4,7 @@ Releasing
 This describes for the maintainers of RGBDS how to publish a new release on
 GitHub.
 
-1. Update, commit, and push `include/version.h <include/version.h>`__ with
+1. Update, commit, and push `include/version.hpp <include/version.hpp>`__ with
    values for ``PACKAGE_VERSION_MAJOR``, ``PACKAGE_VERSION_MINOR``,
    ``PACKAGE_VERSION_PATCH``, and ``PACKAGE_VERSION_RC``, as well as
    `Dockerfile <Dockerfile>`__ with a value for ``ARG version``. Only define
@@ -14,7 +14,7 @@ GitHub.
 2. Create a Git tag formatted as ``v<MAJOR>.<MINOR>.<PATCH>``, or
    ``v<MAJOR>.<MINOR>.<PATCH>-rc<RC>`` for a release candidate. ``MAJOR``,
    ``MINOR``, ``PATCH``, and ``RC`` should match their values from
-   `include/version.h <include/version.h>`__. You can use ``git tag <tag>``.
+   `include/version.hpp <include/version.hpp>`__. You can use ``git tag <tag>``.
 
 3. Push the tag to GitHub. You can use ``git push origin <tag>``.
 

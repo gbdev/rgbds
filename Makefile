@@ -7,7 +7,7 @@
 #
 
 .SUFFIXES:
-.SUFFIXES: .h .y .c .cpp .o
+.SUFFIXES: .cpp .y .o
 
 .PHONY: all clean install checkcodebase checkpatch checkdiff develop debug mingw32 mingw64 wine-shim dist
 
@@ -29,19 +29,16 @@ PNGCFLAGS	:= `${PKG_CONFIG} --cflags libpng`
 PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
 PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 
-# Note: if this comes up empty, `version.c` will automatically fall back to last release number
+# Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
 VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Wall -pedantic
+# TODO: use -pedantic after non-C++ idioms are gone
+WARNFLAGS	:= -Wall -Wno-unknown-warning-option -Wno-c99-designator
 
-# Overridable CFLAGS
-CFLAGS		?= -O3 -flto -DNDEBUG
+# Overridable CXXFLAGS
 CXXFLAGS	?= -O3 -flto -DNDEBUG
-# Non-overridable CFLAGS
-# _ISOC11_SOURCE is required on certain platforms to get C11 on top of the C99-based POSIX 2008
-REALCFLAGS	:= ${CFLAGS} ${WARNFLAGS} -std=gnu11 -I include \
-		   -D_POSIX_C_SOURCE=200809L -D_ISOC11_SOURCE
-REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++17 -I include \
+# Non-overridable CXXFLAGS
+REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -x c++ -std=c++2a -I include \
 		   -D_POSIX_C_SOURCE=200809L -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS		?=
@@ -84,7 +81,7 @@ rgbasm_obj := \
 	src/linkdefs.o \
 	src/opmath.o
 
-src/asm/lexer.o src/asm/main.o: src/asm/parser.h
+src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 
 rgblink_obj := \
 	src/link/assign.o \
@@ -121,19 +118,19 @@ rgbgfx_obj := \
 	src/error.o
 
 rgbasm: ${rgbasm_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCFLAGS} src/version.c -lm
+	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbasm_obj} ${REALCXXFLAGS} src/version.cpp -lm
 
 rgblink: ${rgblink_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCFLAGS} src/version.c
+	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgblink_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgbfix: ${rgbfix_obj}
-	$Q${CC} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCFLAGS} src/version.c
+	$Q${CXX} ${REALLDFLAGS} -o $@ ${rgbfix_obj} ${REALCXXFLAGS} src/version.cpp
 
 rgbgfx: ${rgbgfx_obj}
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} ${PNGLDLIBS} -x c++ src/version.c
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ ${rgbgfx_obj} ${REALCXXFLAGS} ${PNGLDLIBS} src/version.cpp
 
-test/gfx/randtilegen: test/gfx/randtilegen.c
-	$Q${CC} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
+test/gfx/randtilegen: test/gfx/randtilegen.cpp
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
 
 test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGLDLIBS}
@@ -144,10 +141,10 @@ test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 .y.o:
 
 # Bison-generated C files have an accompanying header
-src/asm/parser.h: src/asm/parser.c
+src/asm/parser.hpp: src/asm/parser.cpp
 	$Qtouch $@
 
-src/asm/parser.c: src/asm/parser.y
+src/asm/parser.cpp: src/asm/parser.y
 	$QDEFS=; \
 	add_flag(){ \
 		if src/check_bison_ver.sh $$1 $$2; then \
@@ -180,9 +177,6 @@ src/gfx/reverse.o: src/gfx/reverse.cpp
 src/gfx/rgba.o: src/gfx/rgba.cpp
 	$Q${CXX} ${REALCXXFLAGS} ${PNGCFLAGS} -c -o $@ $<
 
-.c.o:
-	$Q${CC} ${REALCFLAGS} -c -o $@ $<
-
 .cpp.o:
 	$Q${CXX} ${REALCXXFLAGS} -c -o $@ $<
 
@@ -195,7 +189,7 @@ clean:
 	$Q${RM} rgbgfx rgbgfx.exe
 	$Qfind src/ -name "*.o" -exec rm {} \;
 	$Q${RM} rgbshim.sh
-	$Q${RM} src/asm/parser.c src/asm/parser.h
+	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp
 	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
 
 # Target used to install the binaries and man pages.
@@ -213,7 +207,7 @@ install: all
 # `.y` files aren't checked, unfortunately...
 
 checkcodebase:
-	$Qfor file in `git ls-files | grep -E '(\.c|\.h)$$' | grep -Ev '(src|include)/extern/'`; do	\
+	$Qfor file in `git ls-files | grep -E '(\.cpp|\.hpp)$$' | grep -Ev '(src|include)/extern/'`; do	\
 		${CHECKPATCH} -f "$$file";					\
 	done
 
@@ -251,21 +245,18 @@ develop:
 		-Wno-format-nonliteral -Wno-strict-overflow \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \
 		-Wvla \
-		-Wno-unknown-warning-option \
 		-D_GLIBCXX_ASSERTIONS \
 		-fsanitize=shift -fsanitize=integer-divide-by-zero \
 		-fsanitize=unreachable -fsanitize=vla-bound \
 		-fsanitize=signed-integer-overflow -fsanitize=bounds \
 		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
 		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
-		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # This target is used during development in order to more easily debug with gdb.
 
 debug:
 	$Qenv ${MAKE} \
-		CFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Targets for the project maintainer to easily create Windows exes.
@@ -275,12 +266,13 @@ debug:
 
 mingw32:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ \
+		CXX=i686-w64-mingw32-g++ \
+		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc" \
 		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
 
 mingw64:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
-		CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+		CXX=x86_64-w64-mingw32-g++ \
 		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
 
 wine-shim:

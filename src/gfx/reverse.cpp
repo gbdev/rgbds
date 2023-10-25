@@ -16,7 +16,7 @@
 
 #include "defaultinitalloc.hpp"
 #include "file.hpp"
-#include "helpers.h"
+#include "helpers.hpp"
 #include "itertools.hpp"
 
 #include "gfx/main.hpp"

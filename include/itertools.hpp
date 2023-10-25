@@ -6,7 +6,7 @@
 #include <tuple>
 #include <utility>
 
-#include "platform.h" // __PRETTY_FUNCTION__
+#include "platform.hpp" // __PRETTY_FUNCTION__
 
 template<typename... Ts>
 static inline void report() {

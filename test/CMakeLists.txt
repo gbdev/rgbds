@@ -1,5 +1,5 @@
 
-add_executable(randtilegen gfx/randtilegen.c)
+add_executable(randtilegen gfx/randtilegen.cpp)
 
 add_executable(rgbgfx_test gfx/rgbgfx_test.cpp)
 
