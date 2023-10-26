@@ -47,6 +47,7 @@ void sect_EndLoadSection(void);
 struct Section *sect_GetSymbolSection(void);
 uint32_t sect_GetSymbolOffset(void);
 uint32_t sect_GetOutputOffset(void);
+uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
 void sect_StartUnion(void);

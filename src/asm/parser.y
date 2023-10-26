@@ -503,6 +503,7 @@ enum {
 	struct SectionSpec sectSpec;
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
+	struct DsAlignment dsAlign;
 	struct DsArgList dsArgs;
 	struct PurgeArgList purgeArgs;
 	struct {
@@ -660,6 +661,7 @@ enum {
 %type	<sectMod> sectmod
 %type	<macroArg> macroargs
 
+%type	<dsAlign> ds_align
 %type	<dsArgs> ds_args
 
 %type	<purgeArgs> purge_args
@@ -1193,6 +1195,40 @@ ds		: T_POP_DS uconst { sect_Skip($2, true); }
 		| T_POP_DS uconst T_COMMA ds_args trailing_comma {
 			sect_RelBytes($2, $4.args, $4.nbArgs);
 			freeDsArgList(&$4);
+		}
+		| T_POP_DS ds_align trailing_comma {
+			uint32_t n = sect_GetAlignBytes($2.alignment, $2.alignOfs);
+
+			sect_Skip(n, true);
+			sect_AlignPC($2.alignment, $2.alignOfs);
+		}
+		| T_POP_DS ds_align T_COMMA ds_args trailing_comma {
+			uint32_t n = sect_GetAlignBytes($2.alignment, $2.alignOfs);
+
+			sect_RelBytes(n, $4.args, $4.nbArgs);
+			sect_AlignPC($2.alignment, $2.alignOfs);
+			freeDsArgList(&$4);
+		}
+;
+
+ds_align	: T_OP_ALIGN T_LBRACK uconst T_RBRACK {
+			if ($3 > 16) {
+				error("Alignment must be between 0 and 16, not %u\n", $3);
+			} else {
+				$$.alignment = $3;
+				$$.alignOfs = 0;
+			}
+		}
+		| T_OP_ALIGN T_LBRACK uconst T_COMMA uconst T_RBRACK {
+			if ($3 > 16) {
+				error("Alignment must be between 0 and 16, not %u\n", $3);
+			} else if ($5 >= 1 << $3) {
+				error("Offset must be between 0 and %u, not %u\n",
+					(1 << $3) - 1, $5);
+			} else {
+				$$.alignment = $3;
+				$$.alignOfs = $5;
+			}
 		}
 ;
 
