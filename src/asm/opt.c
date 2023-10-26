@@ -275,6 +275,8 @@ void opt_Push(void)
 	entry->warningsAreErrors = warningsAreErrors;
 	memcpy(entry->warningStates, warningStates, sizeof(warningStates));
 
+	entry->maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
+
 	entry->next = stack;
 	stack = entry;
 }
@@ -296,6 +298,7 @@ void opt_Pop(void)
 	opt_h(entry->haltnop);
 	opt_L(entry->optimizeLoads);
 	opt_l(entry->warnOnLdOpt);
+	opt_R(entry->maxRecursionDepth);
 
 	// opt_W does not apply a whole warning state; it processes one flag string
 	warningsAreErrors = entry->warningsAreErrors;
