@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "link/output.h"
 #include "link/main.h"
@@ -325,7 +326,7 @@ static void printSymName(char const *name)
 }
 
 // Comparator function for `qsort` to sort symbols
-// Symbols are ordered by address, or else by original index for a stable sort
+// Symbols are ordered by address, then by parentage, or else by original index for a stable sort
 static int compareSymbols(void const *a, void const *b)
 {
 	struct SortedSymbol const *sym1 = (struct SortedSymbol const *)a;
@@ -333,6 +334,24 @@ static int compareSymbols(void const *a, void const *b)
 
 	if (sym1->addr != sym2->addr)
 		return sym1->addr < sym2->addr ? -1 : 1;
+
+	char const *sym1_name = sym1->sym->name;
+	char const *sym2_name = sym2->sym->name;
+	bool sym1_local = !!strchr(sym1_name, '.');
+	bool sym2_local = !!strchr(sym2_name, '.');
+
+	if (sym1_local != sym2_local) {
+		size_t sym1_len = strlen(sym1_name);
+		size_t sym2_len = strlen(sym2_name);
+
+		// Sort parent labels before their child local labels
+		if (!strncmp(sym1_name, sym2_name, sym1_len) && sym2_name[sym1_len] == '.')
+			return -1;
+		if (!strncmp(sym2_name, sym1_name, sym2_len) && sym1_name[sym2_len] == '.')
+			return 1;
+		// Sort local labels before unrelated global labels
+		return sym1_local ? -1 : 1;
+	}
 
 	return sym1->idx < sym2->idx ? -1 : sym1->idx > sym2->idx ? 1 : 0;
 }
