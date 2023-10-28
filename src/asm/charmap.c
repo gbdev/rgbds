@@ -187,6 +187,22 @@ void charmap_Add(char *mapping, uint8_t value)
 	node->value = value;
 }
 
+bool charmap_HasChar(char const *input)
+{
+	struct Charmap const *charmap = *currentCharmap;
+	struct Charnode const *node = &charmap->nodes[0];
+
+	for (; *input; input++) {
+		size_t next = node->next[*input - 1];
+
+		if (!next)
+			return false;
+		node = &charmap->nodes[next];
+	}
+
+	return node->isTerminal;
+}
+
 size_t charmap_Convert(char const *input, uint8_t *output)
 {
 	uint8_t *start = output;

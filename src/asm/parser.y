@@ -606,6 +606,7 @@ enum {
 
 %token	T_OP_CHARLEN "CHARLEN"
 %token	T_OP_CHARSUB "CHARSUB"
+%token	T_OP_INCHARMAP "INCHARMAP"
 
 %token	<symName> T_LABEL "label"
 %token	<symName> T_ID "identifier"
@@ -1578,6 +1579,9 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		}
 		| T_OP_CHARLEN T_LPAREN string T_RPAREN {
 			rpn_Number(&$$, charlenUTF8($3));
+		}
+		| T_OP_INCHARMAP T_LPAREN string T_RPAREN {
+			rpn_Number(&$$, charmap_HasChar($3));
 		}
 		| T_LPAREN relocexpr T_RPAREN { $$ = $2; }
 ;
