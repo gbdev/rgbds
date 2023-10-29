@@ -82,7 +82,7 @@ static int getopt(int argc, char *argv[], char const *optstring)
 	k = mbtowc(&c, argv[musl_optind] + musl_optpos, MB_LEN_MAX);
 	if (k < 0) {
 		k = 1;
-		c = 0xfffd; /* replacement char */
+		c = 0xFFFD; /* replacement char */
 	}
 	optchar = argv[musl_optind] + musl_optpos;
 	musl_optpos += k;

@@ -43,8 +43,8 @@ uint32_t decode(uint32_t *state, uint32_t *codep, uint8_t byte)
 	uint32_t type = utf8d[byte];
 
 	*codep = (*state != 0) ?
-			(byte & 0x3fu) | (*codep << 6) :
-			(0xff >> type) & (byte);
+			(byte & 0x3FU) | (*codep << 6) :
+			(0xFF >> type) & (byte);
 
 	*state = utf8d[256 + *state * 16 + type];
 	return *state;

@@ -1945,7 +1945,7 @@ z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 
 c_ind		: T_LBRACK T_MODE_C T_RBRACK
 		| T_LBRACK relocexpr T_OP_ADD T_MODE_C T_RBRACK {
-			if (!rpn_isKnown(&$2) || $2.val != 0xff00)
+			if (!rpn_isKnown(&$2) || $2.val != 0xFF00)
 				error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
 		}
 ;
