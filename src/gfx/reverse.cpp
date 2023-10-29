@@ -144,7 +144,7 @@ void reverse() {
 	// TODO: -U
 
 	std::vector<std::array<Rgba, 4>> palettes{
-	    {Rgba(0xffffffff), Rgba(0xaaaaaaff), Rgba(0x555555ff), Rgba(0x000000ff)}
+	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
     };
 	if (!options.palettes.empty()) {
 		File file;

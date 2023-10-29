@@ -53,7 +53,7 @@ static unsigned long long getRandomBits(unsigned count) {
 		randbits |= (unsigned long long)data << randcount;
 		randcount += 8;
 	}
-	unsigned long long result = randbits & ((1ull << count) - 1);
+	unsigned long long result = randbits & ((1ULL << count) - 1);
 	randbits >>= count;
 	randcount -= count;
 	return result;

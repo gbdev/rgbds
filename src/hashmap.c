@@ -29,7 +29,7 @@ struct HashMapEntry {
 	struct HashMapEntry *next;
 };
 
-#define FNV_OFFSET_BASIS 0x811c9dc5
+#define FNV_OFFSET_BASIS 0x811C9DC5
 #define FNV_PRIME 16777619
 
 // FNV-1a hash
