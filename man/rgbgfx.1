@@ -181,9 +181,14 @@ The second number pair specifies how many tiles to process horizontally and vert
 .Pp
 .Sy Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl m , Fl Fl mirror-tiles
-Deduplicate tiles that are mirrors of each other.
+Deduplicate tiles that are symmetrical mirror images of each other.
+Only one of each unique tile will be saved in the tile data file, with mirror images counting as duplicates.
 Tiles are checked for horizontal, vertical, and horizontal-vertical mirroring.
-Useful with a tile map and attribute map together to keep track of the duplicated tiles and the dimension(s) mirrored.
+Useful with a tile map and attribute map together (see
+.Fl a
+and
+.Fl t )
+to keep track of the duplicated tiles and the dimension(s) mirrored.
 Implies
 .Fl u .
 .It Fl N Ar nb_tiles , Fl Fl nb-tiles Ar nb_tiles
@@ -270,7 +275,7 @@ where
 is the input image's path with the extension set to
 .Pa .tilemap .
 .It Fl u , Fl Fl unique-tiles
-Deduplicate identical tiles, and omit the duplicates from the tile data file.
+Deduplicate identical tiles. Only one of each unique tile will be saved in the tile data file.
 Useful with a tile map
 .Pq see Fl t
 to keep track of the duplicated tiles.
@@ -595,16 +600,29 @@ It is possible to compute the optimal solution externally (using a solver, for e
 via
 .Fl c .
 .Sh EXAMPLES
-The following will only validate the PNG (check its size, that all tiles have a suitable amount of colors, etc.), but output nothing:
+The following will only validate the
+.Ql tileset.png
+image (check its size, that all tiles have a suitable amount of colors, etc.), but output nothing:
 .Pp
 .Dl $ rgbgfx src/res/maps/overworld/tileset.png
 .Pp
-The following will convert the image using the two given palettes (and only those), and store the generated 2bpp tile data in
+The following will convert the
+.Ql tileset.png
+image using the two given palettes (and only those), and store the generated 2bpp tile data in
 .Ql tileset.2bpp ,
 and the attribute map in
 .Ql tileset.attrmap .
 .Pp
 .Dl $ rgbgfx -c '#ffffff,#8d05de, #dc7905,#000000 ; #fff,#8d05de, #7e0000 \&, #000' -A -o tileset.2bpp tileset.png
+.Pp
+The following will deduplicate the tiles in the
+.Ql title_screen.png
+image, keeping only one of each unique tile, and store the generated 2bpp tile data in
+.Ql title_screen.2bpp ,
+and the tile map in
+.Ql title_screen.tilemap .
+.Pp
+.Dl $ rgbgfx -u title_screen.png -o title_screen.2bpp -t title_screen.tilemap
 .Pp
 TODO: more examples.
 .Sh BUGS
