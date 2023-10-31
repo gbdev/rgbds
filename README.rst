@@ -17,7 +17,7 @@ This toolchain is maintained `on GitHub <https://github.com/gbdev/rgbds>`__.
 The documentation of this toolchain can be viewed online `here <https://rgbds.gbdev.io/docs/>`__, it is generated from the man pages found in this repository.
 The source code of the website itself is on GitHub as well under the repo `rgbds-www <https://github.com/gbdev/rgbds-www>`__.
 
-If you want to contribute or maintain RGBDS, and have questions regarding the code, its organisation, etc. you can find me `on GBDev <https://gbdev.io/chat>`__ or via mail at ``rgbds at eldred dot fr``.
+If you want to contribute or maintain RGBDS, and have questions regarding the code, its organisation, etc. you can find the maintainers `on GBDev <https://gbdev.io/chat>`__ or via mail at ``rgbds at gbdev dot io``.
 
 1. Installing RGBDS
 -------------------
