@@ -25,6 +25,7 @@
 #include "error.h"
 #include "helpers.h"
 #include "linkdefs.h"
+#include "version.h"
 
 static struct SymbolList {
 	size_t nbSymbols;
@@ -509,7 +510,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
 	 && matchedElems != strlen(RGBDS_OBJECT_VERSION_STRING))
-		errx("\"%s\" is not a RGBDS object file", fileName);
+		errx("%s: Not a RGBDS object file", fileName);
 
 	verbosePrint("Reading object file %s\n",
 		     fileName);
@@ -519,8 +520,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV)
-		errx("%s is a revision 0x%04" PRIx32 " object file; only 0x%04x is supported",
-		     fileName, revNum, RGBDS_OBJECT_REV);
+		errx("%s: Unsupported object file for rgblink %s; try rebuilding it%s"
+			" (expected revision %d, got %d)", fileName, get_package_version_string(),
+			revNum > RGBDS_OBJECT_REV ? " or updating rgblink" : "", RGBDS_OBJECT_REV,
+			revNum);
 
 	uint32_t nbSymbols;
 	uint32_t nbSections;
