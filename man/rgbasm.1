@@ -88,7 +88,8 @@ instruction immediately after any
 instruction.
 .It Fl I Ar path , Fl Fl include Ar path
 Add a new
-.Dq include path ; Ar path
+.Dq include path ;
+.Ar path
 must point to a directory.
 When a
 .Ic INCLUDE
@@ -166,7 +167,9 @@ This acts as if a
 was read before the input
 .Ar asmfile .
 .It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
-When padding an image, pad with this value.
+Use this as the fill value for
+.Ic DS
+directives in ROM sections, unless they specify their own value or values.
 The default is 0x00.
 .It Fl Q Ar fix_precision , Fl Fl q-precision Ar fix_precision
 Use this as the precision of fixed-point numbers after the decimal point, unless they specify their own precision.
