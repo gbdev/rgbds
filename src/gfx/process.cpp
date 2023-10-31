@@ -511,6 +511,25 @@ struct AttrmapEntry {
 	}
 };
 
+static void generatePalSpec(Png const &png) {
+	// Generate a palette spec from the first few colors in the embedded palette
+	auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
+	if (embPalRGB == nullptr) {
+		fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
+	}
+
+	// Fill in the palette spec
+	options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
+	assert(options.palSpec.size() == 1);
+	if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
+		embPalSize = options.maxOpaqueColors();
+	}
+	for (int i = 0; i < embPalSize; ++i) {
+		options.palSpec[0][i] = Rgba(embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
+		                             embPalAlpha ? embPalAlpha[i] : 0xFF);
+	}
+}
+
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	// Run a "pagination" problem solver
@@ -555,26 +574,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
-    makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
-	if (options.palSpecType == Options::EMBEDDED) {
-		// Generate a palette spec from the first few colors in the embedded palette
-		auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
-		if (embPalRGB == nullptr) {
-			fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
-		}
-
-		// Fill in the palette spec
-		options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
-		assert(options.palSpec.size() == 1);
-		if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
-			embPalSize = options.maxOpaqueColors();
-		}
-		for (int i = 0; i < embPalSize; ++i) {
-			options.palSpec[0][i] = Rgba(embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
-			                             embPalAlpha ? embPalAlpha[i] : 0xFF);
-		}
-	}
-
+    makePalsAsSpecified(std::vector<ProtoPalette> const &protoPalettes) {
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
@@ -626,16 +626,37 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 }
 
 static void outputPalettes(std::vector<Palette> const &palettes) {
-	File output;
-	if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to open \"%s\": %s", output.c_str(options.palettes), strerror(errno));
+	if (options.verbosity >= Options::VERB_INTERM) {
+		for (auto &&palette : palettes) {
+			fputs("{ ", stderr);
+			for (uint16_t colorIndex : palette) {
+				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
+			}
+			fputs("}\n", stderr);
+		}
 	}
 
-	for (Palette const &palette : palettes) {
-		for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
-			uint16_t color = palette.colors[i]; // Will return `UINT16_MAX` for unused slots
-			output->sputc(color & 0xFF);
-			output->sputc(color >> 8);
+	if (palettes.size() > options.nbPalettes) {
+		// If the palette generation is wrong, other (dependee) operations are likely to be
+		// nonsensical, so fatal-error outright
+		fatal("Generated %zu palettes, over the maximum of %" PRIu8, palettes.size(),
+		      options.nbPalettes);
+	}
+
+	if (!options.palettes.empty()) {
+		File output;
+		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
+			fatal("Failed to open \"%s\": %s", output.c_str(options.palettes),
+				strerror(errno));
+		}
+
+		for (Palette const &palette : palettes) {
+			for (uint8_t i = 0; i < options.nbColorsPerPal; ++i) {
+				// Will output `UINT16_MAX` for unused slots
+				uint16_t color = palette.colors[i];
+				output->sputc(color & 0xFF);
+				output->sputc(color >> 8);
+			}
 		}
 	}
 }
@@ -955,6 +976,16 @@ static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 
 } // namespace optimized
 
+void processPalettes() {
+	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
+
+	std::vector<ProtoPalette> protoPalettes;
+	std::vector<Palette> palettes;
+	std::tie(std::ignore, palettes) = makePalsAsSpecified(protoPalettes);
+
+	outputPalettes(palettes);
+}
+
 void process() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
@@ -1063,30 +1094,13 @@ contained:;
 		}
 	}
 
+	if (options.palSpecType == Options::EMBEDDED) {
+		generatePalSpec(png);
+	}
 	auto [mappings, palettes] = options.palSpecType == Options::NO_SPEC
 	                                ? generatePalettes(protoPalettes, png)
-	                                : makePalsAsSpecified(protoPalettes, png);
-
-	if (options.verbosity >= Options::VERB_INTERM) {
-		for (auto &&palette : palettes) {
-			fputs("{ ", stderr);
-			for (uint16_t colorIndex : palette) {
-				fprintf(stderr, "%04" PRIx16 ", ", colorIndex);
-			}
-			fputs("}\n", stderr);
-		}
-	}
-
-	if (palettes.size() > options.nbPalettes) {
-		// If the palette generation is wrong, other (dependee) operations are likely to be
-		// nonsensical, so fatal-error outright
-		fatal("Generated %zu palettes, over the maximum of %" PRIu8, palettes.size(),
-		      options.nbPalettes);
-	}
-
-	if (!options.palettes.empty()) {
-		outputPalettes(palettes);
-	}
+	                                : makePalsAsSpecified(protoPalettes);
+	outputPalettes(palettes);
 
 	// If deduplication is not happening, we just need to output the tile data and/or maps as-is
 	if (!options.allowDedup) {

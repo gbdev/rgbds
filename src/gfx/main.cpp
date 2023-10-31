@@ -766,21 +766,24 @@ int main(int argc, char *argv[]) {
 		fputs("Ready.\n", stderr);
 	}
 
-	if (options.input.empty()) {
-		fputs("FATAL: No input image specified\n", stderr);
-		printUsage();
-		exit(1);
-	}
-
 	// Do not do anything if option parsing went wrong
 	if (nbErrors) {
 		giveUp();
 	}
 
-	if (options.reverse()) {
-		reverse();
+	if (!options.input.empty()) {
+		if (options.reverse()) {
+			reverse();
+		} else {
+			process();
+		}
+	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
+		&& !options.reverse()) {
+		processPalettes();
 	} else {
-		process();
+		fputs("FATAL: No input image specified\n", stderr);
+		printUsage();
+		exit(1);
 	}
 
 	if (nbErrors) {
