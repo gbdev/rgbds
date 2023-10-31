@@ -1,8 +1,8 @@
 MACRO addargs
-sum = 0
+	def sum = 0
 	rept _NARG
-sum = sum + \1
-	shift
+		def sum = sum + \1
+		shift
 	endr
         dw sum & $FFFF
 	dw (sum >> 16) & $FFFF

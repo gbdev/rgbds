@@ -1,4 +1,4 @@
 SECTION "Test", ROM0[0]
 	db CONSTANT
 
-CONSTANT equ 42
+def CONSTANT equ 42

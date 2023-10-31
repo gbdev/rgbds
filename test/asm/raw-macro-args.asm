@@ -12,8 +12,8 @@ MACRO printlit
 	endr
 ENDM
 
-NUM EQU 42
-STR EQUS "str\"ing"
+DEF NUM EQU 42
+DEF STR EQUS "str\"ing"
 
 	printargs NUM
 	printargs "{d:NUM}"

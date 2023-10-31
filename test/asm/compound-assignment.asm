@@ -30,8 +30,8 @@ endm
   try "def ", q
   try "redef ", r
 
-_RS += 100
+def _RS += 100
 println _RS
 
-UnDeFiNeD ^= 300
+def UnDeFiNeD ^= 300
 println UnDeFiNeD

@@ -1,7 +1,7 @@
 IF !DEF(SECOND)
-ADDR = $BEEF
+	def ADDR = $BEEF
 ELSE
-ADDR = $BABE
+	def ADDR = $BABE
 ENDC
 
 SECTION UNION "conflicting address", SRAM[ADDR]

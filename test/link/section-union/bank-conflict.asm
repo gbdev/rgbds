@@ -1,5 +1,5 @@
 IF !DEF(SECOND)
-SECOND equs "4"
+	def SECOND equs "4"
 ENDC
 
 SECTION UNION "conflicting banks", WRAMX, BANK[SECOND]

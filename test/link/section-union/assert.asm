@@ -1,10 +1,10 @@
 IF !DEF(SECOND)
-OFS = 42
+	def OFS = 42
 ELSE
-OFS = 69
+	def OFS = 69
 ENDC
 
-BASE = $C0DE
+def BASE = $C0DE
 
 SECTION UNION "assertions in unions", WRAM0
 IF DEF(SECOND)

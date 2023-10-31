@@ -16,12 +16,12 @@ MACRO iprint
 	PRINTLN "{\1}"
 ENDM
 
-s EQUS "hello"
+DEF s EQUS "hello"
 	iprint s
 
 MACRO symprint
 	PRINTLN {\1}
 ENDM
 
-hello EQUS "\"goodbye\""
+DEF hello EQUS "\"goodbye\""
 	symprint s

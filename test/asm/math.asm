@@ -1,12 +1,12 @@
-X equ 0
+def X equ 0
 
 MACRO test
 ; Test RGBASM
-v equs "X +"
+	def v equs "X +"
 	static_assert \#
 	purge v
 ; Test RGBLINK
-v equs "Y +"
+	def v equs "Y +"
 	assert \#
 	purge v
 ENDM

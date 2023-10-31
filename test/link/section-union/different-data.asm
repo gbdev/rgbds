@@ -1,7 +1,7 @@
 IF !DEF(SECOND)
-DATA = 1
+	def DATA = 1
 ELSE
-DATA = 2
+	def DATA = 2
 ENDC
 
 SECTION UNION "different data", ROM0

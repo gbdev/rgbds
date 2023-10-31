@@ -1,6 +1,6 @@
 MACRO reverse
 	for i, _NARG
-i = _NARG - i - 1
+		def i = _NARG - i - 1
 		shift i
 		println \1
 		shift -i

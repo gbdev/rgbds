@@ -17,11 +17,11 @@ SECTION UNION "test", WRAM0,ALIGN[9]
 
 
 MACRO check_label
-EXPECTED equ \2
+	def EXPECTED equ \2
 	IF \1 == EXPECTED
-RESULT equs "OK!"
+		def RESULT equs "OK!"
 	ELSE
-RESULT equs "expected {EXPECTED}"
+		def RESULT equs "expected {EXPECTED}"
 	ENDC
 	PURGE EXPECTED
 

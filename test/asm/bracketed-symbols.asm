@@ -1,18 +1,18 @@
-X = 42
+DEF X = 42
 PRINTLN "{X}"
 PRINTLN "{x:X}"
 PRINTLN "{X:X}"
 PRINTLN "{d:X}"
 PRINTLN "{b:X}"
 
-Y equ 1337
+DEF Y EQU 1337
 PRINTLN "{b:Y}"
 
 rsreset
-R rb 0
+DEF R RB 0
 PRINTLN "{d:R}"
 
-S equs "You can't format me!"
+DEF S EQUS "You can't format me!"
 PRINTLN "{X:S}"
 
 SECTION "Test", ROM0

@@ -17,8 +17,8 @@ MACRO person
 ENDM
 
 MACRO object
-x = \1
-y = \2
+	DEF x = \1
+	DEF y = \2
 	shift 2
 	person y, x, \#
 ENDM
@@ -30,7 +30,7 @@ MACRO echo
 	println "\#"
 ENDM
 
-R EQUS "S"
+DEF R EQUS "S"
 
 	echo P
 	echo Q,R, {R},  T

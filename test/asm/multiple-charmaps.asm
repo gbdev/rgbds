@@ -26,8 +26,8 @@ MACRO pop_
 ENDM
 
 MACRO print_mapped
-x = \1
-println "{x}"
+	def x = \1
+	println "{x}"
 ENDM
 
 println "main charmap"

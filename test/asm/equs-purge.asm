@@ -1,2 +1,2 @@
-BYE equs "PURGE BYE\nWARN \"Crash?\"\n    \n"
+def BYE equs "PURGE BYE\nWARN \"Crash?\"\n    \n"
 BYE

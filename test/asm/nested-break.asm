@@ -1,4 +1,4 @@
-n=1
+def n=1
 rept 10
   print "A"
   for x, 10
@@ -12,6 +12,6 @@ rept 10
     break
   endc
   println "Z"
-n=n+1
+def n=n+1
 endr
 println "\nn={d:n} x={d:x}"

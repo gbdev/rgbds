@@ -1,6 +1,6 @@
-num equ 42
-fix equ 123.0
-str equs "hello"
+def num equ 42
+def fix equ 123.0
+def str equs "hello"
 
 println "{#0260x:num}"
 println "{#-260x:num}"
