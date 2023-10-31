@@ -41,7 +41,7 @@ static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
-static bool exportall;
+static bool exportAll;
 
 bool sym_IsPC(struct Symbol const *sym)
 {
@@ -513,7 +513,8 @@ static struct Symbol *addLabel(char const *symName)
 	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
 	sym->value = sect_GetSymbolOffset();
-	if (exportall)
+	// Don't export anonymous labels
+	if (exportAll && symName[0] != '!')
 		sym->isExported = true;
 	sym->section = sect_GetSymbolSection();
 
@@ -668,7 +669,7 @@ struct Symbol *sym_Ref(char const *symName)
 // Set whether to export all relocatable symbols by default
 void sym_SetExportAll(bool set)
 {
-	exportall = set;
+	exportAll = set;
 }
 
 static struct Symbol *createBuiltinSymbol(char const *symName)
