@@ -49,8 +49,12 @@ uint16_t Rgba::cgbColor() const {
 		r = reverse_curve[r];
 		g = reverse_curve[g];
 		b = reverse_curve[b];
+	} else {
+		r >>= 3;
+		g >>= 3;
+		b >>= 3;
 	}
-	return (r >> 3) | (g >> 3) << 5 | (b >> 3) << 10;
+	return r | g << 5 | b << 10;
 }
 
 uint8_t Rgba::grayIndex() const {
