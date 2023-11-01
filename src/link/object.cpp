@@ -503,10 +503,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
 		    fileName);
 	if (revNum != RGBDS_OBJECT_REV)
-		errx("%s: Unsupported object file for rgblink %s; try rebuilding it%s"
+		errx("%s: Unsupported object file for rgblink %s; try rebuilding \"%s\"%s"
 			" (expected revision %d, got %d)", fileName, get_package_version_string(),
-			revNum > RGBDS_OBJECT_REV ? " or updating rgblink" : "", RGBDS_OBJECT_REV,
-			revNum);
+			fileName, revNum > RGBDS_OBJECT_REV ? " or updating rgblink" : "",
+			RGBDS_OBJECT_REV, revNum);
 
 	uint32_t nbSymbols;
 	uint32_t nbSections;
