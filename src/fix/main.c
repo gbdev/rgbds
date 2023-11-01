@@ -967,6 +967,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (oldLicensee != UNSPECIFIED)
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
+	else if (sgb && rom0[0x14B] != 0x33)
+		fprintf(stderr,
+			"warning: SGB compatibility enabled, but old licensee was %#x, not 0x33\n",
+			rom0[0x14B]);
 
 	if (romVersion != UNSPECIFIED)
 		overwriteByte(rom0, 0x14C, romVersion, "mask ROM version number");

@@ -1,0 +1,2 @@
+warning: Overwrote a non-zero byte in the SGB flag
+warning: SGB compatibility enabled, but old licensee was 0xc5, not 0x33
