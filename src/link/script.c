@@ -154,6 +154,7 @@ char const *tokenTypes[] = {
 enum LinkerScriptCommand {
 	COMMAND_ORG,
 	COMMAND_ALIGN,
+	COMMAND_DS,
 
 	COMMAND_INVALID
 };
@@ -170,7 +171,8 @@ struct LinkerScriptToken {
 
 static char const * const commands[] = {
 	[COMMAND_ORG] = "ORG",
-	[COMMAND_ALIGN] = "ALIGN"
+	[COMMAND_ALIGN] = "ALIGN",
+	[COMMAND_DS] = "DS"
 };
 
 static int nextChar(void)
@@ -339,10 +341,17 @@ static void processCommand(enum LinkerScriptCommand command, uint16_t arg, uint1
 		break;
 
 	case COMMAND_ALIGN:
-		if (arg >= 16)
+		if (arg >= 16) {
 			arg = 0;
-		else
-			arg = (*pc + (1 << arg) - 1) & ~((1 << arg) - 1);
+		} else {
+			uint16_t mask = (1 << arg) - 1;
+
+			arg = (*pc + mask) & ~mask;
+		}
+		break;
+
+	case COMMAND_DS:
+		arg += *pc;
 	}
 
 	if (arg < *pc)
