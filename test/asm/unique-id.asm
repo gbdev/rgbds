@@ -1,4 +1,4 @@
-warn_unique EQUS "WARN \"\\@!\""
+DEF warn_unique EQUS "WARN \"\\@!\""
 
 macro m
     warn_unique

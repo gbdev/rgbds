@@ -26,7 +26,7 @@ endr
 
 for v, 10, -1, -1
 	print "{d:v} "
-v = 42
+	def v = 42
 endr
 	println "-> {d:v}"
 
@@ -36,7 +36,7 @@ purge q
 endr
 	println "-> {d:q}"
 
-s EQUS "x"
+DEF s EQUS "x"
 for {s}, 3, 30, 3
 	print "{d:x} "
 endr
@@ -46,7 +46,7 @@ for v, 10
 	println "{d:v}"
 if v == 3
 purge v
-v equ 42 ; causes a fatal error
+def v equ 42 ; causes a fatal error
 endc
 endr
 	println "-> {d:v}"

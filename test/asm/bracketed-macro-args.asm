@@ -10,9 +10,9 @@ ENDM
 
 MACRO mac
 	println \<2__> + \<1_2> + \<\1>
-x = 2
+	def x = 2
 	println \<{d:x}> + \<1_{d:x}> + \<\<\<13>>>
-y equs "NARG"
+	def y equs "NARG"
 	println \<x> + \<1_{d:x}_> + \<\<\<_{y}>>>
 ENDM
 

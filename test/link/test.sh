@@ -177,7 +177,7 @@ for i in section-union/*.asm; do
 	fi
 	echo --- >> $outtemp
 	# Ensure RGBASM also errors out
-	cat $i - $i <<<'SECOND equs "1"' | $RGBASM - 2>> $outtemp
+	cat $i - $i <<<'def SECOND equs "1"' | $RGBASM - 2>> $outtemp
 	tryDiff ${i%.asm}.out $outtemp
 	rc=$(($? || $rc))
 done

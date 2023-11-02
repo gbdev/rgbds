@@ -1,10 +1,10 @@
 
-TEST_NUM = 0
+DEF TEST_NUM = 0
 
 MACRO test_expr
-TEST_NUM = TEST_NUM + 1
+	DEF TEST_NUM = TEST_NUM + 1
 
-IS_CONST = ISCONST(\1)
+	DEF IS_CONST = ISCONST(\1)
 	PRINTLN "Test #{d:TEST_NUM}: ISCONST reports {IS_CONST}"
 	IF (\1) || 1 ; Only test if the expression can be evaluated
 		WARN "Test #{d:TEST_NUM}: Compile-time constant"

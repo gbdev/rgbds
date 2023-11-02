@@ -4,38 +4,38 @@ MACRO print_x
 	println x
 ENDM
 
-x = 2147483647
-x = x + 1
+def x = 2147483647
+def x = x + 1
 	dl 2147483647+1
 	print_x
 
-x = -2147483648
-x = x - 1
+def x = -2147483648
+def x = x - 1
 	dl -2147483648-1
 	print_x
 
-x = -2147483648
-x = x * -1
+def x = -2147483648
+def x = x * -1
 	dl -2147483648 * -1
 	print_x
 
-x = -2147483648
-x = x / -1
+def x = -2147483648
+def x = x / -1
 	dl -2147483648 / -1
 	print_x
 
-x = -2147483648
-x = x % -1
+def x = -2147483648
+def x = x % -1
 	dl -2147483648 % -1
 	print_x
 
-x = -1
-x = x << 1
+def x = -1
+def x = x << 1
 	dl -1 << 1
 	print_x
 
-x = 4294967295
-x = 4294967296
+def x = 4294967295
+def x = 4294967296
 
-x = `33333333
-x = `333333333
+def x = `33333333
+def x = `333333333

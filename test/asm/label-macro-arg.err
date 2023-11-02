@@ -1,21 +1,21 @@
+warning: label-macro-arg.asm(13) -> label-macro-arg.asm::m2(9): [-Wobsolete]
+    `y =` is deprecated; use `DEF y =`
+warning: label-macro-arg.asm(15) -> label-macro-arg.asm::m2(9): [-Wobsolete]
+    `yy =` is deprecated; use `DEF yy =`
 error: label-macro-arg.asm(38) -> label-macro-arg.asm::test_char(25):
-    syntax error, unexpected =
+    syntax error, unexpected local identifier, expecting identifier
 while expanding symbol "VAR_DEF"
 error: label-macro-arg.asm(38) -> label-macro-arg.asm::test_char(26):
-    syntax error, unexpected =
+    syntax error, unexpected local identifier, expecting identifier
 error: label-macro-arg.asm(38) -> label-macro-arg.asm::test_char(29):
     Interpolated symbol "sizeof_.something" does not exist
 error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(25):
-    Label "sizeof_" created outside of a SECTION
+    syntax error, unexpected label, expecting identifier
 while expanding symbol "VAR_DEF"
-error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(25):
-    Macro "something" not defined
 error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(26):
-    'sizeof_' already defined at label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(25)
-error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(26):
-    Macro "something" not defined
+    syntax error, unexpected label, expecting identifier
 error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(29):
     Invalid format spec 'sizeof_'
 error: label-macro-arg.asm(39) -> label-macro-arg.asm::test_char(29):
     Interpolated symbol "something" does not exist
-error: Assembly aborted (9 errors)!
+error: Assembly aborted (7 errors)!

@@ -1,4 +1,4 @@
-foo equs strupr("xii")
-bar equs strlwr("LOL")
+def foo equs strupr("xii")
+def bar equs strlwr("LOL")
 
 	println "foo={foo} bar={bar}"

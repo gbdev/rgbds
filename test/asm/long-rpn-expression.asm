@@ -1,18 +1,18 @@
 SECTION "sec", ROM0
 
-X0 EQUS "0"
+DEF X0 EQUS "0"
 
 MACRO m
-\1 EQUS STRCAT("{X\2}", "+1")
+DEF \1 EQUS STRCAT("{X\2}", "+1")
 ENDM
 
 FOR n, $7E
-n1 = n + 1
+DEF n1 = n + 1
     m X{X:n1}, {X:n}
 ENDR
 
 ; string of 127 zeros separated by plus signs
-X EQUS "{X7E}"
+DEF X EQUS "{X7E}"
 
     db x+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\
        X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+X+\

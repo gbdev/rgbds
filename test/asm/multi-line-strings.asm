@@ -1,4 +1,4 @@
-S EQUS "Hello"
+DEF S EQUS "Hello"
 
 PRINT "\"\"\"\n"
 
@@ -24,11 +24,11 @@ ENDM
 	printarg """multi-line
 string argument"""
 
-EMPTY1 EQUS ""
-EMPTY2 EQUS "\ ; comment
+DEF EMPTY1 EQUS ""
+DEF EMPTY2 EQUS "\ ; comment
 "
-EMPTY3 EQUS """"""
-EMPTY4 EQUS """\ ; comment
+DEF EMPTY3 EQUS """"""
+DEF EMPTY4 EQUS """\ ; comment
 """
 	PRINTLN STRCAT("(", "{EMPTY1}", "{EMPTY2}", "{EMPTY3}", "{EMPTY4}", ")")
 

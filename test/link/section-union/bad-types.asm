@@ -1,7 +1,7 @@
 IF !DEF(SECOND)
-TYPE equs "HRAM"
+	def TYPE equs "HRAM"
 ELSE
-TYPE equs "WRAM0"
+	def TYPE equs "WRAM0"
 ENDC
 
 SECTION UNION "conflicting types", TYPE

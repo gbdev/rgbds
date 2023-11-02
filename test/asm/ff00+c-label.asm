@@ -1,4 +1,4 @@
-CONSTANT equ 42
+def CONSTANT equ 42
 PRINTLN $ff00 + CONSTANT
 
 SECTION "Overreading much?", ROM0[0]

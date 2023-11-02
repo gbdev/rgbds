@@ -1,10 +1,10 @@
-s EQUS "Hello, "
+DEF s EQUS "Hello, "
 REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
 PRINTLN "{s}"
 
 MACRO list
-LIST_NAME EQUS "\1"
+DEF LIST_NAME EQUS "\1"
 REDEF {LIST_NAME} EQUS "["
 REPT _NARG - 1
 REDEF {LIST_NAME} EQUS "{{LIST_NAME}}\2;"
@@ -19,5 +19,5 @@ ENDM
 	list FOO, 1, A, 2, B
 	PRINTLN "{FOO}"
 
-N EQU 42
+DEF N EQU 42
 REDEF N EQUS "X"

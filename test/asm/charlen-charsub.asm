@@ -7,7 +7,7 @@
 
 SECTION "test", ROM0
 
-S EQUS "XBold<NULL>ABC"
+DEF S EQUS "XBold<NULL>ABC"
 
 	assert CHARLEN("{S}") == 6
 	println CHARSUB("{S}", 2)

@@ -1,2 +1,2 @@
-recurse EQUS "recurse"
+DEF recurse EQUS "recurse"
 recurse

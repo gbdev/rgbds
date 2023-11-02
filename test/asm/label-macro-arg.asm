@@ -1,12 +1,12 @@
 MACRO m1
-x\1
+def x\1
 ENDM
 
-S EQUS "y"
-S2 EQUS "yy"
+DEF S EQUS "y"
+DEF S2 EQUS "yy"
 
 MACRO m2
-S\1
+S\1 ; can't use DEF, so this will EQUS expand
 ENDM
 
 	m1 = 5
@@ -21,12 +21,12 @@ ENDM
 
 
 MACRO test_char
-VAR_DEF equs "sizeof_\1something = 0"
+DEF VAR_DEF equs "DEF sizeof_\1something = 0"
 VAR_DEF
-sizeof_\1something = 1
+DEF sizeof_\1something = 1
 	PURGE VAR_DEF
 
-VAR_PRINT equs "println \"sizeof_\1something equals {sizeof_\1something}\""
+DEF VAR_PRINT equs "println \"sizeof_\1something equals {sizeof_\1something}\""
 	VAR_PRINT
 	PURGE VAR_PRINT
 ENDM

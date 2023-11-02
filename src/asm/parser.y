@@ -956,29 +956,58 @@ compoundeq	: T_POP_ADDEQ { $$ = RPN_ADD; }
 		| T_POP_SHREQ { $$ = RPN_SHR; }
 ;
 
-equ		: T_LABEL T_POP_EQU const { sym_AddEqu($1, $3); }
+equ		: T_LABEL T_POP_EQU const {
+			warning(WARNING_OBSOLETE, "`%s EQU` is deprecated; use `DEF %s EQU`\n", $1, $1);
+			sym_AddEqu($1, $3);
+		}
 ;
 
-assignment	: T_LABEL T_POP_EQUAL const { sym_AddVar($1, $3); }
-		| T_LABEL compoundeq const { compoundAssignment($1, $2, $3); }
+assignment	: T_LABEL T_POP_EQUAL const {
+			warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1, $1);
+			sym_AddVar($1, $3);
+		}
+		| T_LABEL compoundeq const {
+			static const char *compoundEqOperators[] = {
+				[RPN_ADD] = "+=",
+				[RPN_SUB] = "-=",
+				[RPN_MUL] = "*=",
+				[RPN_DIV] = "/=",
+				[RPN_MOD] = "%=",
+				[RPN_XOR] = "^=",
+				[RPN_OR] = "|=",
+				[RPN_AND] = "&=",
+				[RPN_SHL] = "<<=",
+				[RPN_SHR] = ">>=",
+			};
+
+			warning(WARNING_OBSOLETE, "`%s %s` is deprecated; use `DEF %s %s`\n",
+				$1, compoundEqOperators[$2], $1, compoundEqOperators[$2]);
+			compoundAssignment($1, $2, $3);
+		}
 ;
 
-equs		: T_LABEL T_POP_EQUS string { sym_AddString($1, $3); }
+equs		: T_LABEL T_POP_EQUS string {
+			warning(WARNING_OBSOLETE, "`%s EQUS` is deprecated; use `DEF %s EQUS`\n", $1, $1);
+			sym_AddString($1, $3);
+		}
 ;
 
 rb		: T_LABEL T_POP_RB rs_uconst {
+			warning(WARNING_OBSOLETE, "`%s RB` is deprecated; use `DEF %s RB`\n", $1, $1);
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 		}
 ;
 
 rw		: T_LABEL T_POP_RW rs_uconst {
+			warning(WARNING_OBSOLETE, "`%s RW` is deprecated; use `DEF %s RW`\n", $1, $1);
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 		}
 ;
 
 rl		: T_LABEL T_Z80_RL rs_uconst {
+			warning(WARNING_OBSOLETE, "`%s RL` is deprecated; use `DEF %s RL`\n", $1, $1);
 			sym_AddEqu($1, sym_GetConstantValue("_RS"));
 			sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 		}

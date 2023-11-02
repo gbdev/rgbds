@@ -1,4 +1,4 @@
-newline equs "\n"
+def newline equs "\n"
 
 def x = 1 newline def y = 2
 println "x={d:x}, y={d:y}"

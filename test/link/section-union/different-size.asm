@@ -1,7 +1,7 @@
 IF !DEF(SECOND)
-SIZE = 69
+	def SIZE = 69
 ELSE
-SIZE = 420
+	def SIZE = 420
 ENDC
 
 SECTION UNION "different section sizes", ROM0

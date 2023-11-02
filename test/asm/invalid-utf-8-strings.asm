@@ -11,13 +11,13 @@
 ; 10: invalid bytes 0xE6 0xF0
 ; 11: invalid byte 0xA2
 ; 12: U+0021 !
-invalid EQUS "aÃ¤bæ¼¢,a£¤bæð¢!"
+DEF invalid EQUS "aÃ¤bæ¼¢,a£¤bæð¢!"
 
-n = STRLEN("{invalid}")
-copy EQUS STRSUB("{invalid}", 1)
+DEF n = STRLEN("{invalid}")
+DEF copy EQUS STRSUB("{invalid}", 1)
 
 println "\"{invalid}\" == \"{copy}\" ({d:n})"
 
-mid1 EQUS STRSUB("{invalid}", 5, 2)
-mid2 EQUS STRSUB("{invalid}", 9, 1)
+DEF mid1 EQUS STRSUB("{invalid}", 5, 2)
+DEF mid2 EQUS STRSUB("{invalid}", 9, 1)
 println "\"{mid2}{mid1}\""
