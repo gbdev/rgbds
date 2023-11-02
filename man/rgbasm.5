@@ -425,6 +425,7 @@ pattern replaced by interpolating the format
 with its corresponding argument in
 .Ar args
 .Pq So %% Sc is replaced by the So % Sc character .
+.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, and 0 otherwise.
 .It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
 .It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap.
 .El
