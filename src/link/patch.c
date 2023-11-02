@@ -525,7 +525,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 			if (!isError && (value < types[patch->type].min
 				      || value > types[patch->type].max))
 				error(patch->src, patch->lineNo,
-				      "Value %#" PRIx32 "%s is not %u-bit",
+				      "Value %" PRId32 "%s is not %u-bit",
 				      value, value < 0 ? " (maybe negative?)" : "",
 				      types[patch->type].size * 8U);
 			for (uint8_t i = 0; i < types[patch->type].size; i++) {

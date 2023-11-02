@@ -274,8 +274,9 @@ static void doSanityChecks(struct Section *section, void *ptr)
 
 	// Check if section has a chance to be placed
 	if (section->size > sectionTypeInfo[section->type].size)
-		error(NULL, 0, "Section \"%s\" is bigger than the max size for that type: %#" PRIx16 " > %#" PRIx16,
-		     section->name, section->size, sectionTypeInfo[section->type].size);
+		error(NULL, 0, "Section \"%s\" is bigger than the max size for that type: $%"
+		      PRIx16 " > $%" PRIx16,
+		      section->name, section->size, sectionTypeInfo[section->type].size);
 
 	// Translate loose constraints to strong ones when they're equivalent
 
@@ -296,14 +297,14 @@ static void doSanityChecks(struct Section *section, void *ptr)
 		// Ensure the target address is valid
 		if (section->org < sectionTypeInfo[section->type].startAddr
 		 || section->org > endaddr(section->type))
-			error(NULL, 0, "Section \"%s\"'s fixed address %#" PRIx16 " is outside of range [%#"
-			     PRIx16 "; %#" PRIx16 "]", section->name, section->org,
+			error(NULL, 0, "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04"
+			     PRIx16 "; $%04" PRIx16 "]", section->name, section->org,
 			     sectionTypeInfo[section->type].startAddr, endaddr(section->type));
 
 		if (section->org + section->size > endaddr(section->type) + 1)
-			error(NULL, 0, "Section \"%s\"'s end address %#x is greater than last address %#x",
-			     section->name, section->org + section->size,
-			     endaddr(section->type) + 1);
+			error(NULL, 0, "Section \"%s\"'s end address $%04x is greater than last address $%04x",
+			      section->name, section->org + section->size,
+			      endaddr(section->type) + 1);
 	}
 
 #undef fail
