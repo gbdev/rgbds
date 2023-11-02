@@ -335,8 +335,8 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	if (org != (uint32_t)-1) {
 		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
-			error("Section \"%s\"'s fixed address %#" PRIx32
-				" is outside of range [%#" PRIx16 "; %#" PRIx16 "]\n",
+			error("Section \"%s\"'s fixed address $%04" PRIx32
+				" is outside of range [$%04" PRIx16 "; $%04" PRIx16 "]\n",
 				name, org, sectionTypeInfo[type].startAddr, endaddr(type));
 	}
 

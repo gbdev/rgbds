@@ -57,7 +57,7 @@ diff <(xxd "$1") <(xxd "$2") | while read -r LINE; do
 			 while read -r SYMADDR SYM; do
 				SYMADDR=$((0x${SYMADDR#*:}))
 				if [[ $SYMADDR -le $ADDR ]]; then
-					printf " (%s+%#x)\n" "$SYM" $((ADDR - SYMADDR))
+					printf " (%s+0x%x)\n" "$SYM" $((ADDR - SYMADDR))
 				fi
 			# TODO: assumes sorted sym files
 			done | tail -n 1
