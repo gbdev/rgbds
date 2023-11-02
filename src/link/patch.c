@@ -360,6 +360,30 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			}
 			break;
 
+		case RPN_SIZEOF_SECTTYPE:
+			value = getRPNByte(&expression, &size, patch->src, patch->lineNo);
+			if (value < 0 || value >= SECTTYPE_INVALID) {
+				error(patch->src, patch->lineNo,
+				      "Requested SIZEOF() an invalid section type");
+				isError = true;
+				value = 0;
+			} else {
+				value = sectionTypeInfo[value].size;
+			}
+			break;
+
+		case RPN_STARTOF_SECTTYPE:
+			value = getRPNByte(&expression, &size, patch->src, patch->lineNo);
+			if (value < 0 || value >= SECTTYPE_INVALID) {
+				error(patch->src, patch->lineNo,
+				      "Requested STARTOF() an invalid section type");
+				isError = true;
+				value = 0;
+			} else {
+				value = sectionTypeInfo[value].startAddr;
+			}
+			break;
+
 		case RPN_HRAM:
 			value = popRPN();
 			if (!isError && (value < 0

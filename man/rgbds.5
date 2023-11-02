@@ -349,23 +349,33 @@ after it.
 .It Li $40 Ta Left shift operator Pq Ql <<
 .It Li $41 Ta Arithmetic/signed right shift operator Pq Ql >>
 .It Li $42 Ta Logical/unsigned right shift operator Pq Ql >>>
-.It Li $50 Ta Fn BANK symbol ,
+.It Li $50 Ta Fn BANK symbol ;
 followed by the
 .Ar symbol Ap s Cm LONG
 ID.
-.It Li $51 Ta Fn BANK section ,
+.It Li $51 Ta Fn BANK section ;
 followed by the
 .Ar section Ap s Cm STRING
 name.
 .It Li $52 Ta PC's Fn BANK Pq i.e. Ql BANK(@) .
-.It Li $53 Ta Fn SIZEOF section ,
+.It Li $53 Ta Fn SIZEOF section ;
 followed by the
 .Ar section Ap s Cm STRING
 name.
-.It Li $54 Ta Fn STARTOF section ,
+.It Li $54 Ta Fn STARTOF section ;
 followed by the
 .Ar section Ap s Cm STRING
 name.
+.It Li $55 Ta Fn SIZEOF sectiontype ;
+followed by the
+.Ar sectiontype Ap s Cm BYTE
+value
+.Pq see the Ar Type No values in Sx Sections .
+.It Li $56 Ta Fn STARTOF sectiontype ;
+followed by the
+.Ar sectiontype Ap s Cm BYTE
+value
+.Pq see the Ar Type No values in Sx Sections .
 .It Li $60 Ta Ql ldh
 check.
 Checks if the value is a valid
@@ -383,12 +393,10 @@ Checks if the value is a valid
 vector, that is one of $00, $08, $10, $18, $20, $28, $30, or $38.
 The value is then ORed with $C7
 .Pq Ql \&| $C7 .
-.It Li $80 Ta Integer literal.
-Followed by the
+.It Li $80 Ta Integer literal; followed by the
 .Cm LONG
 integer.
-.It Li $81 Ta A symbol's value.
-Followed by the symbol's
+.It Li $81 Ta A symbol's value; followed by the symbol's
 .Cm LONG
 ID.
 .El

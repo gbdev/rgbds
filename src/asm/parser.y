@@ -1537,6 +1537,8 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		| T_OP_BANK T_LPAREN string T_RPAREN { rpn_BankSection(&$$, $3); }
 		| T_OP_SIZEOF T_LPAREN string T_RPAREN { rpn_SizeOfSection(&$$, $3); }
 		| T_OP_STARTOF T_LPAREN string T_RPAREN { rpn_StartOfSection(&$$, $3); }
+		| T_OP_SIZEOF T_LPAREN sectiontype T_RPAREN { rpn_SizeOfSectionType(&$$, $3); }
+		| T_OP_STARTOF T_LPAREN sectiontype T_RPAREN { rpn_StartOfSectionType(&$$, $3); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {

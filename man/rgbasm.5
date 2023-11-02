@@ -486,11 +486,21 @@ is able to compute it.
 is in.
 .Ar symbol
 must have been defined already.
-.It Fn SIZEOF arg Ta Returns the size of the section named
+.It Fn SIZEOF arg Ta If
+.Ar arg
+is a string, this function returns the size of the section named
 .Ar arg .
+If
+.Ar arg
+is a section type keyword, it returns the size of that section type.
 The result is not constant, since only RGBLINK can compute its value.
-.It Fn STARTOF arg Ta Returns the starting address of the section named
+.It Fn STARTOF arg Ta If
+.Ar arg
+is a string, this function returns the starting address of the section named
 .Ar arg .
+If
+.Ar arg
+is a section type keyword, it returns the starting address of that section type.
 The result is not constant, since only RGBLINK can compute its value.
 .It Fn DEF symbol Ta Returns TRUE (1) if
 .Ar symbol

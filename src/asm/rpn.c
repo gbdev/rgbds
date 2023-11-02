@@ -233,6 +233,30 @@ void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 	}
 }
 
+void rpn_SizeOfSectionType(struct Expression *expr, enum SectionType type)
+{
+	rpn_Init(expr);
+	makeUnknown(expr, "Section type's size is not known");
+
+	uint8_t *ptr = reserveSpace(expr, 2);
+
+	expr->rpnPatchSize += 2;
+	*ptr++ = RPN_SIZEOF_SECTTYPE;
+	*ptr++ = type;
+}
+
+void rpn_StartOfSectionType(struct Expression *expr, enum SectionType type)
+{
+	rpn_Init(expr);
+	makeUnknown(expr, "Section type's start is not known");
+
+	uint8_t *ptr = reserveSpace(expr, 2);
+
+	expr->rpnPatchSize += 2;
+	*ptr++ = RPN_STARTOF_SECTTYPE;
+	*ptr++ = type;
+}
+
 void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
@@ -508,6 +532,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		case RPN_BANK_SELF:
 		case RPN_SIZEOF_SECT:
 		case RPN_STARTOF_SECT:
+		case RPN_SIZEOF_SECTTYPE:
+		case RPN_STARTOF_SECTTYPE:
 		case RPN_HRAM:
 		case RPN_RST:
 		case RPN_CONST:
