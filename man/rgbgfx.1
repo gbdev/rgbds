@@ -623,6 +623,12 @@ and the tile map in
 .Pp
 .Dl $ rgbgfx -u title_screen.png -o title_screen.2bpp -t title_screen.tilemap
 .Pp
+The following will convert the given inline palette specification to a palette set, and store the palette set in
+.Ql colors.pal ,
+without needing an input image.
+.Pp
+.Dl $ rgbgfx -c '#fff,#ff0,#f80,#000' -p colors.pal
+.Pp
 TODO: more examples.
 .Sh BUGS
 Please report bugs and mistakes in this man page on
