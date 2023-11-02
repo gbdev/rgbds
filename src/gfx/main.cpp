@@ -687,7 +687,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "rgbgfx %s\n", get_package_version_string());
 
 		if (options.verbosity >= Options::VERB_VVVVVV) {
-			fputc('\n', stderr);
+			putc('\n', stderr);
 			static std::array<uint16_t, 21> gfx{
 			    0x1FE, 0x3FF, 0x399, 0x399, 0x3FF, 0x3FF, 0x381, 0x3C3, 0x1FE, 0x078, 0x1FE,
 			    0x3FF, 0x3FF, 0x3FF, 0x37B, 0x37B, 0x0FC, 0x0CC, 0x1CE, 0x1CE, 0x1CE,
@@ -700,17 +700,17 @@ int main(int argc, char *argv[]) {
 				uint16_t row = gfx[i];
 				for (uint8_t _ = 0; _ < 10; ++_) {
 					unsigned char c = row & 1 ? '0' : ' ';
-					fputc(c, stderr);
+					putc(c, stderr);
 					// Double the pixel horizontally, otherwise the aspect ratio looks wrong
-					fputc(c, stderr);
+					putc(c, stderr);
 					row >>= 1;
 				}
 				if (i < textbox.size()) {
 					fputs(textbox[i], stderr);
 				}
-				fputc('\n', stderr);
+				putc('\n', stderr);
 			}
-			fputc('\n', stderr);
+			putc('\n', stderr);
 		}
 
 		fputs("Options:\n", stderr);

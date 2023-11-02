@@ -205,8 +205,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 		assert(section->offset == 0);
 		// Output padding up to the next SECTION
 		while (offset + baseOffset < section->org) {
-			putc(overlayFile ? getc(overlayFile) : padValue,
-			     outputFile);
+			putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
 			offset++;
 		}
 
@@ -225,9 +224,7 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 
 	if (!disablePadding) {
 		while (offset < size) {
-			putc(overlayFile ? getc(overlayFile)
-					 : padValue,
-			     outputFile);
+			putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
 			offset++;
 		}
 	}
@@ -297,7 +294,7 @@ static void printSymName(char const *name)
 
 		if (isLegalForSymName(c)) {
 			// Output legal ASCII characters as-is
-			fputc(c, symFile);
+			putc(c, symFile);
 			++ptr;
 		} else {
 			// Output illegal characters using Unicode escapes
@@ -344,9 +341,6 @@ static int compareSymbols(void const *a, void const *b)
 static void writeSymBank(struct SortedSections const *bankSections,
 			 enum SectionType type, uint32_t bank)
 {
-	if (!symFile)
-		return;
-
 #define forEachSortedSection(sect, ...) do { \
 	for (struct SortedSection const *ssp = bankSections->zeroLenSections; ssp; ssp = ssp->next) { \
 		for (struct Section const *sect = ssp->section; sect; sect = sect->nextu) \
@@ -397,7 +391,7 @@ static void writeSymBank(struct SortedSections const *bankSections,
 
 		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym->addr);
 		printSymName(sym->sym->name);
-		fputc('\n', symFile);
+		putc('\n', symFile);
 	}
 
 	free(symList);
@@ -416,22 +410,16 @@ static void writeEmptySpace(uint16_t begin, uint16_t end)
 
 /*
  * Write a bank's contents to the map file
- * @param bankSections The bank's sections
- * @return The bank's used space
  */
-static uint16_t writeMapBank(struct SortedSections const *sectList,
-			     enum SectionType type, uint32_t bank)
+static void writeMapBank(struct SortedSections const *sectList, enum SectionType type,
+			 uint32_t bank)
 {
-	if (!mapFile)
-		return 0;
-
-	struct SortedSection const *section        = sectList->sections;
-	struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
-
-	fprintf(mapFile, "%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name,
+	fprintf(mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name,
 		bank + sectionTypeInfo[type].firstBank);
 
 	uint16_t used = 0;
+	struct SortedSection const *section = sectList->sections;
+	struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
 	uint16_t prevEndAddr = sectionTypeInfo[type].startAddr;
 
 	while (section || zeroLenSection) {
@@ -483,83 +471,109 @@ static uint16_t writeMapBank(struct SortedSections const *sectList,
 		*pickedSection = (*pickedSection)->next;
 	}
 
-	uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
-
 	if (used == 0) {
-		fputs("\tEMPTY\n\n", mapFile);
+		fputs("\tEMPTY\n", mapFile);
 	} else {
+		uint16_t bankEndAddr = sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size;
+
 		writeEmptySpace(prevEndAddr, bankEndAddr);
 
 		uint16_t slack = sectionTypeInfo[type].size - used;
 
-		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n\n", slack,
+		fprintf(mapFile, "\tTOTAL EMPTY: $%04" PRIx16 " byte%s\n", slack,
 			slack == 1 ? "" : "s");
 	}
-
-	return used;
 }
 
 /*
  * Write the total used and free space by section type to the map file
- * @param usedMap The total used space by section type
  */
-static void writeMapSummary(uint32_t usedMap[MIN_NB_ELMS(SECTTYPE_INVALID)])
+static void writeMapSummary(void)
 {
-	if (!mapFile)
-		return;
-
 	fputs("SUMMARY:\n", mapFile);
 
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
+		uint32_t nbBanks = sections[type].nbBanks;
 
 		// Do not output used space for VRAM or OAM
 		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
 			continue;
 
 		// Do not output unused section types
-		if (sections[type].nbBanks == 0)
+		if (nbBanks == 0)
 			continue;
 
+		uint32_t usedTotal = 0;
+
+		for (uint32_t bank = 0; bank < nbBanks; bank++) {
+			uint16_t used = 0;
+			struct SortedSections const *sectList = &sections[type].banks[bank];
+			struct SortedSection const *section = sectList->sections;
+			struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
+
+			while (section || zeroLenSection) {
+				struct SortedSection const **pickedSection =
+					nextSection(&section, &zeroLenSection);
+
+				used += (*pickedSection)->section->size;
+				*pickedSection = (*pickedSection)->next;
+			}
+
+			usedTotal += used;
+		}
+
 		fprintf(mapFile, "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
-			sectionTypeInfo[type].name, usedMap[type], usedMap[type] == 1 ? "" : "s",
-			sections[type].nbBanks * sectionTypeInfo[type].size - usedMap[type]);
-		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank ||
-		    sections[type].nbBanks > 1)
-			fprintf(mapFile, " in %d bank%s", sections[type].nbBanks,
-				sections[type].nbBanks == 1 ? "" : "s");
-		fputc('\n', mapFile);
+			sectionTypeInfo[type].name, usedTotal, usedTotal == 1 ? "" : "s",
+			nbBanks * sectionTypeInfo[type].size - usedTotal);
+		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank
+		    || nbBanks > 1)
+			fprintf(mapFile, " in %d bank%s", nbBanks, nbBanks == 1 ? "" : "s");
+		putc('\n', mapFile);
 	}
 }
 
-// Writes the sym and/or map files, if applicable.
-static void writeSymAndMap(void)
+// Writes the sym file, if applicable.
+static void writeSym(void)
 {
-	if (!symFileName && !mapFileName)
+	if (!symFileName)
 		return;
 
-	uint32_t usedMap[SECTTYPE_INVALID] = {0};
-
 	symFile = openFile(symFileName, "w");
-	mapFile = openFile(mapFileName, "w");
+	if (!symFile)
+		err("Failed to open sym file \"%s\"", symFileName);
 
-	if (symFileName)
-		fputs("; File generated by rgblink\n", symFile);
+	fputs("; File generated by rgblink\n", symFile);
 
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
 
-		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++) {
-			struct SortedSections const *sect = &sections[type].banks[bank];
-
-			writeSymBank(sect, type, bank);
-			usedMap[type] += writeMapBank(sect, type, bank);
-		}
+		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++)
+			writeSymBank(&sections[type].banks[bank], type, bank);
 	}
 
-	writeMapSummary(usedMap);
-
 	closeFile(symFile);
+}
+
+// Writes the map file, if applicable.
+static void writeMap(void)
+{
+	if (!mapFileName)
+		return;
+
+	mapFile = openFile(mapFileName, "w");
+	if (!mapFile)
+		err("Failed to open map file \"%s\"", mapFileName);
+
+	writeMapSummary();
+
+	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
+		enum SectionType type = typeMap[i];
+
+		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++)
+			writeMapBank(&sections[type].banks[bank], type, bank);
+	}
+
 	closeFile(mapFile);
 }
 
@@ -576,23 +590,21 @@ static void cleanupSections(struct SortedSection *section)
 static void cleanup(void)
 {
 	for (enum SectionType type = 0; type < SECTTYPE_INVALID; type++) {
-		if (sections[type].nbBanks > 0) {
-			for (uint32_t i = 0; i < sections[type].nbBanks; i++) {
-				struct SortedSections *bank =
-					&sections[type].banks[i];
+		for (uint32_t i = 0; i < sections[type].nbBanks; i++) {
+			struct SortedSections *bank = &sections[type].banks[i];
 
-				cleanupSections(bank->sections);
-				cleanupSections(bank->zeroLenSections);
-			}
-			free(sections[type].banks);
+			cleanupSections(bank->sections);
+			cleanupSections(bank->zeroLenSections);
 		}
+		free(sections[type].banks);
 	}
 }
 
 void out_WriteFiles(void)
 {
 	writeROM();
-	writeSymAndMap();
+	writeSym();
+	writeMap();
 
 	cleanup();
 }
