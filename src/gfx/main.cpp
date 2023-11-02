@@ -153,7 +153,6 @@ static void printUsage(void) {
 	      "\n"
 	      "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
-	exit(1);
 }
 
 /*
@@ -333,11 +332,9 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
  */
 static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilemap,
                        bool &autoPalettes, bool &autoPalmap) {
-	int opt;
-
-	while ((opt = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
-		switch (opt) {
+		switch (ch) {
 		case 'A':
 			autoAttrmap = true;
 			break;
@@ -569,9 +566,10 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 		case 'D':
 		case 'F':
 		case 'f':
-			warning("Ignoring retired option `-%c`", opt);
+			warning("Ignoring retired option `-%c`", ch);
 			break;
 		default:
+			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}
@@ -769,7 +767,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (options.input.empty()) {
-		fatal("No input image specified");
+		fputs("FATAL: No input image specified\n", stderr);
+		printUsage();
+		exit(1);
 	}
 
 	// Do not do anything if option parsing went wrong

@@ -52,7 +52,7 @@ runTest () {
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with.
-			cat "$2/$1.bin" | eval $RGBFIX "$flags" '>out.gb' '2>out.err'
+			cat "$2/$1.bin" | eval $RGBFIX "$flags" - '>out.gb' '2>out.err'
 			subst='<stdin>'
 		fi
 

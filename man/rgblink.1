@@ -29,7 +29,7 @@ The
 program links RGB object files, typically created by
 .Xr rgbasm 1 ,
 into a single Game Boy ROM file.
-The format is documented in
+The object file format is documented in
 .Xr rgbds 5 .
 .Pp
 ROM0 sections are placed in the first 16 KiB of the output ROM, and ROMX sections are placed in any 16 KiB
@@ -51,6 +51,12 @@ Also, if your ROM is designed for a monochrome Game Boy, you can make sure that 
 option, which implies
 .Fl w
 but also prohibits the use of banked VRAM.
+.Pp
+The input
+.Ar asmfile
+can be a path to a file, or
+.Cm \-
+to read from standard input.
 .Pp
 Note that options can be abbreviated as long as the abbreviation is unambiguous:
 .Fl Fl verb

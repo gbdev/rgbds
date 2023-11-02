@@ -196,7 +196,6 @@ static struct option const longopts[] = {
 	{ NULL,            no_argument,       NULL, 0   }
 };
 
-// Prints the program's usage to stdout.
 static void printUsage(void)
 {
 	fputs(
@@ -356,14 +355,9 @@ _Noreturn void reportErrors(void) {
 
 int main(int argc, char *argv[])
 {
-	int optionChar;
-	char *endptr; // For error checking with `strtoul`
-	unsigned long value; // For storing `strtoul`'s return value
-
 	// Parse options
-	while ((optionChar = musl_getopt_long_only(argc, argv, optstring,
-						   longopts, NULL)) != -1) {
-		switch (optionChar) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
+		switch (ch) {
 		case 'd':
 			isDmgMode = true;
 			isWRA0Mode = true;
@@ -396,8 +390,10 @@ int main(int argc, char *argv[])
 				warnx("Overriding output file %s", musl_optarg);
 			outputFileName = musl_optarg;
 			break;
-		case 'p':
-			value = strtoul(musl_optarg, &endptr, 0);
+		case 'p': {
+			char *endptr;
+			unsigned long value = strtoul(musl_optarg, &endptr, 0);
+
 			if (musl_optarg[0] == '\0' || *endptr != '\0') {
 				argErr('p', "");
 				value = 0xFF;
@@ -408,6 +404,7 @@ int main(int argc, char *argv[])
 			}
 			padValue = value;
 			break;
+		}
 		case 'S':
 			parseScrambleSpec(musl_optarg);
 			break;
@@ -434,6 +431,7 @@ int main(int argc, char *argv[])
 			is32kMode = true;
 			break;
 		default:
+			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}
@@ -443,7 +441,8 @@ int main(int argc, char *argv[])
 
 	// If no input files were specified, the user must have screwed up
 	if (curArgIndex == argc) {
-		fputs("FATAL: no input files\n", stderr);
+		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
+		      stderr);
 		printUsage();
 		exit(1);
 	}
