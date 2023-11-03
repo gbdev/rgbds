@@ -67,10 +67,11 @@ are only relevant to assembly code and do not apply in section names.
 When a new bank statement is found, sections found after it will be placed right from the beginning of that bank.
 If the linker script switches to a different bank and then comes back to a previous one, it will continue from the last address that was used.
 .Pp
-The only two commands are
-.Ic ORG
+The only three commands are
+.Ic ORG ,
+.Ic ALIGN ,
 and
-.Ic ALIGN :
+.Ic DS :
 .Bl -bullet
 .It
 .Ic ORG
@@ -83,6 +84,9 @@ will increase the address until it is aligned to the specified boundary
 .Ql ALIGN 8
 will align to $100
 .Pc .
+.It
+.Ic DS
+will increase the address by the specified non-negative amount.
 .El
 .Pp
 .Sy Note:
