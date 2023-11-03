@@ -1,0 +1,3 @@
+error: endsection.asm(4):
+    Cannot output data outside of a SECTION
+error: Assembly aborted (1 error)!

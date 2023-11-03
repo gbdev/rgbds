@@ -109,8 +109,8 @@ void reverse() {
 	auto const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
-		fatal("Tile data size must be a multiple of %" PRIu8 " bytes! (Read %zu)", tileSize,
-		      tiles.size());
+		fatal("Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
+		      tiles.size(), tileSize);
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles

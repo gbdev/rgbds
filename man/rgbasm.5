@@ -714,6 +714,11 @@ SECTION "OAM Data",WRAM0,ALIGN[8] ;\ align to 256 bytes
 SECTION "VRAM Data",ROMX,BANK[2],ALIGN[4] ;\ align to 16 bytes
 .Ed
 .El
+.Pp
+The current section can be ended without starting a new section by using
+.Ic ENDSECTION .
+This directive will clear the section context, so you can no longer write code until you start another section.
+It can be useful to avoid accidentally defining code or data in the wrong section.
 .Ss Section stack
 .Ic POPS
 and
@@ -785,7 +790,7 @@ The former is situated in ROM, where the code is stored, the latter in RAM, wher
 .Pp
 You cannot nest
 .Ic LOAD
-blocks, nor can you change the current section within them.
+blocks, nor can you change or stop the current section within them.
 .Pp
 .Ic LOAD
 blocks can use the
