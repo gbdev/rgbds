@@ -1165,14 +1165,6 @@ macrodef	: T_POP_MACRO {
 				sym_AddMacro($3, captureBody.lineNo, captureBody.body,
 					     captureBody.size);
 		}
-		| T_LABEL T_COLON T_POP_MACRO T_NEWLINE {
-			warning(WARNING_OBSOLETE, "`%s: MACRO` is deprecated; use `MACRO %s`\n", $1, $1);
-			$<captureTerminated>$ = lexer_CaptureMacroBody(&captureBody);
-		} endofline {
-			if ($<captureTerminated>5)
-				sym_AddMacro($1, captureBody.lineNo, captureBody.body,
-					     captureBody.size);
-		}
 ;
 
 rsset		: T_POP_RSSET uconst { sym_AddVar("_RS", $2); }
@@ -1905,10 +1897,11 @@ z80_ei		: T_Z80_EI { sect_AbsByte(0xFB); }
 
 z80_halt	: T_Z80_HALT {
 			sect_AbsByte(0x76);
-			if (haltnop) {
+			if (haltNop) {
 				if (warnOnHaltNop) {
 					warnOnHaltNop = false;
-					warning(WARNING_OBSOLETE, "`nop` after `halt` will stop being the default; pass `-H` to opt into it\n");
+					warning(WARNING_OBSOLETE,
+						"Automatic `nop` after `halt` is deprecated\n");
 				}
 				sect_AbsByte(0x00);
 			}
@@ -2021,7 +2014,8 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 			 && $2.val >= 0xFF00) {
 				if (warnOnLdOpt) {
 					warnOnLdOpt = false;
-					warning(WARNING_OBSOLETE, "ld optimization will stop being the default; pass `-l` to opt into it\n");
+					warning(WARNING_OBSOLETE,
+						"Automatic `ld` to `ldh` optimization is deprecated\n");
 				}
 				sect_AbsByte(0xE0);
 				sect_AbsByte($2.val & 0xFF);
@@ -2073,7 +2067,8 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 				 && $4.val >= 0xFF00) {
 					if (warnOnLdOpt) {
 						warnOnLdOpt = false;
-						warning(WARNING_OBSOLETE, "ld optimization will stop being the default; pass `-l` to opt into it\n");
+						warning(WARNING_OBSOLETE,
+							"Automatic `ld` to `ldh` optimization is deprecated\n");
 					}
 					sect_AbsByte(0xF0);
 					sect_AbsByte($4.val & 0xFF);

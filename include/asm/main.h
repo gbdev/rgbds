@@ -15,7 +15,7 @@
 
 #include "helpers.h"
 
-extern bool haltnop;
+extern bool haltNop;
 extern bool warnOnHaltNop;
 extern bool optimizeLoads;
 extern bool warnOnLdOpt;

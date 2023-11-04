@@ -26,7 +26,7 @@ struct OptStackEntry {
 	char gbgfx[4];
 	uint8_t fixPrecision;
 	uint8_t fillByte;
-	bool haltnop;
+	bool haltNop;
 	bool warnOnHaltNop;
 	bool optimizeLoads;
 	bool warnOnLdOpt;
@@ -72,7 +72,7 @@ void opt_H(bool warn)
 
 void opt_h(bool halt)
 {
-	haltnop = halt;
+	haltNop = halt;
 }
 
 void opt_L(bool optimize)
@@ -265,7 +265,7 @@ void opt_Push(void)
 
 	entry->fillByte = fillByte; // Pulled from section.h
 
-	entry->haltnop = haltnop; // Pulled from main.h
+	entry->haltNop = haltNop; // Pulled from main.h
 	entry->warnOnHaltNop = warnOnHaltNop;
 
 	entry->optimizeLoads = optimizeLoads; // Pulled from main.h
@@ -295,7 +295,7 @@ void opt_Pop(void)
 	opt_P(entry->fillByte);
 	opt_Q(entry->fixPrecision);
 	opt_H(entry->warnOnHaltNop);
-	opt_h(entry->haltnop);
+	opt_h(entry->haltNop);
 	opt_L(entry->optimizeLoads);
 	opt_l(entry->warnOnLdOpt);
 	opt_R(entry->maxRecursionDepth);

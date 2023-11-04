@@ -77,50 +77,6 @@ static int32_t Callback_NARG(void)
 	return macro_NbArgs();
 }
 
-static int32_t Callback__LINE__(void)
-{
-	warning(WARNING_OBSOLETE, "`__LINE__` is deprecated\n");
-
-	return lexer_GetLineNo();
-}
-
-static char const *Callback__FILE__(void)
-{
-	warning(WARNING_OBSOLETE, "`__FILE__` is deprecated\n");
-
-	// There are only two call sites for this; one copies the contents directly, the other is
-	// EQUS expansions, which cannot straddle file boundaries. So this should be fine.
-	static char *buf = NULL;
-	static size_t bufsize = 0;
-	char const *fileName = fstk_GetFileName();
-	size_t j = 1;
-
-	assert(fileName[0]);
-	// The assertion above ensures the loop runs at least once
-	for (size_t i = 0; fileName[i]; i++, j++) {
-		// Account for the extra backslash inserted below
-		if (fileName[i] == '"')
-			j++;
-		// Ensure there will be enough room; DO NOT PRINT ANYTHING ABOVE THIS!
-		if (j + 2 >= bufsize) { // Always keep room for 2 tail chars
-			bufsize = bufsize ? bufsize * 2 : 64;
-			buf = realloc(buf, bufsize);
-			if (!buf)
-				fatalerror("Failed to grow buffer for file name: %s\n",
-					   strerror(errno));
-		}
-		// Escape quotes, since we're returning a string
-		if (fileName[i] == '"')
-			buf[j - 1] = '\\';
-		buf[j] = fileName[i];
-	}
-	// Write everything after the loop, to ensure the buffer has been allocated
-	buf[0] = '"';
-	buf[j++] = '"';
-	buf[j] = '\0';
-	return buf;
-}
-
 static int32_t CallbackPC(void)
 {
 	struct Section const *section = sect_GetSymbolSection();
@@ -687,21 +643,13 @@ static struct Symbol *createBuiltinSymbol(char const *symName)
 void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
-	_NARGSymbol = createBuiltinSymbol("_NARG");
-	// __LINE__ is deprecated
-	struct Symbol *__LINE__Symbol = createBuiltinSymbol("__LINE__");
-	// __FILE__ is deprecated
-	struct Symbol *__FILE__Symbol = createBuiltinSymbol("__FILE__");
-
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->section = NULL;
 	PCSymbol->numCallback = CallbackPC;
+
+	_NARGSymbol = createBuiltinSymbol("_NARG");
 	_NARGSymbol->type = SYM_EQU;
 	_NARGSymbol->numCallback = Callback_NARG;
-	__LINE__Symbol->type = SYM_EQU;
-	__LINE__Symbol->numCallback = Callback__LINE__;
-	__FILE__Symbol->type = SYM_EQUS;
-	__FILE__Symbol->strCallback = Callback__FILE__;
 
 	sym_AddVar("_RS", 0)->isBuiltin = true;
 
@@ -758,4 +706,5 @@ void sym_Init(time_t now)
 #undef addSym
 
 	sym_SetCurrentSymbolScope(NULL);
-	anonLabelID = 0;}
+	anonLabelID = 0;
+}
