@@ -242,6 +242,7 @@ jrlabel:
     ei
     halt
     nop
+    nop
     scf
     stop
 FOR BYTE, 256

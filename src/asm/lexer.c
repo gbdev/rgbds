@@ -1722,12 +1722,6 @@ static size_t appendStringLiteral(size_t i)
 				c = '\\';
 				break;
 
-			case ',': // `\,` inside a macro arg string literal
-				warning(WARNING_OBSOLETE,
-					"`\\,` is deprecated inside strings\n");
-				shiftChar();
-				break;
-
 			default:
 				error("Illegal character escape %s\n", printChar(c));
 				shiftChar();

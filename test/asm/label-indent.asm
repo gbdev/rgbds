@@ -1,4 +1,3 @@
-
 SECTION "Label testing", WRAMX
 
 	Lab:
@@ -7,7 +6,7 @@ SECTION "Label testing", WRAMX
 
 	: ; anonymous
 
-	mac: MACRO
+	MACRO mac
 		println "\1"
 	ENDM
 	mac :

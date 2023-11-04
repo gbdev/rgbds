@@ -71,24 +71,14 @@ Export all labels, including unreferenced and local labels.
 Change the four characters used for gfx constants.
 The defaults are 0123.
 .It Fl H , Fl Fl nop-after-halt
-By default,
-.Nm
-inserts a
-.Ic nop
-instruction immediately after any
-.Ic halt
-instruction,
-but this has been deprecated and prints a warning message the first time it occurs.
-The
-.Fl H
-option opts into this insertion,
-so no warning will be printed.
-.It Fl h , Fl Fl halt-without-nop
-Disables inserting a
+Inserts a
 .Ic nop
 instruction immediately after any
 .Ic halt
 instruction.
+This option is deprecated and will be removed in the next version.
+.It Fl h , Fl Fl halt-without-nop
+This option is redundant and will be removed in the next version.
 .It Fl I Ar path , Fl Fl include Ar path
 Add a new
 .Dq include path ;
@@ -105,21 +95,13 @@ first looks up the provided path from its working directory; if this fails, it t
 .Dq include path
 directories, in the order they were provided.
 .It Fl L , Fl Fl preserve-ld
-By default,
-.Nm
-optimizes loads of the form
-.Ic LD [$FF00+n8],A
-into the opcode
-.Ic LDH [$FF00+n8],A ,
-but this has been deprecated and prints a warning message the first time it occurs.
-The
-.Fl L
-option disables this optimization.
+This option is redundant and will be removed in the next version.
 .It Fl l , Fl Fl auto-ldh
 Optimize loads of the form
 .Ic LD [$FF00+n8],A
 into the opcode
 .Ic LDH [$FF00+n8],A .
+This option is deprecated and will be removed in the next version.
 .It Fl M Ar depend_file , Fl Fl dependfile Ar depend_file
 Print
 .Xr make 1

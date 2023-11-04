@@ -59,7 +59,7 @@ bool failedOnMissingInclude = false;
 bool generatePhonyDeps = false;
 char *targetFileName = NULL;
 
-bool haltnop;
+bool haltNop;
 bool warnOnHaltNop;
 bool optimizeLoads;
 bool warnOnLdOpt;
@@ -164,9 +164,9 @@ int main(int argc, char *argv[])
 	opt_G("0123");
 	opt_P(0);
 	opt_Q(16);
-	haltnop = true;
+	haltNop = false;
 	warnOnHaltNop = true;
-	optimizeLoads = true;
+	optimizeLoads = false;
 	warnOnLdOpt = true;
 	verbose = false;
 	warnings = true;
@@ -209,32 +209,39 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'H':
-			if (!haltnop)
+			if (warnOnHaltNop)
+				warning(WARNING_OBSOLETE,
+					"Automatic `nop` after `halt` is deprecated\n");
+			else
 				errx("`-H` and `-h` don't make sense together");
+			haltNop = true;
 			warnOnHaltNop = false;
 			break;
 		case 'h':
-			if (!warnOnHaltNop)
+			if (haltNop)
 				errx("`-H` and `-h` don't make sense together");
-			haltnop = false;
 			break;
 
 		// `-i` was the only short option for `--include` until `-I` was
 		// introduced to better match the `-I dir` option of gcc and clang.
-		// `-i` is now undocumented but still supported for now.
-		case 'I':
 		case 'i':
+			warning(WARNING_OBSOLETE, "`-i` is deprecated; use `-I`\n");
+			// fallthrough
+		case 'I':
 			fstk_AddIncludePath(musl_optarg);
 			break;
 
 		case 'L':
-			if (!warnOnLdOpt)
+			if (optimizeLoads)
 				errx("`-L` and `-l` don't make sense together");
-			optimizeLoads = false;
 			break;
 		case 'l':
-			if (!optimizeLoads)
+			if (warnOnLdOpt)
+				warning(WARNING_OBSOLETE,
+					"Automatic `ld` to `ldh` optimization is deprecated\n");
+			else
 				errx("`-L` and `-l` don't make sense together");
+			optimizeLoads = true;
 			warnOnLdOpt = false;
 			break;
 
