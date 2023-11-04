@@ -632,6 +632,7 @@ enum {
 %token	T_POP_EXPORT "EXPORT"
 %token	T_POP_DB "DB" T_POP_DS "DS" T_POP_DW "DW" T_POP_DL "DL"
 %token	T_POP_SECTION "SECTION" T_POP_FRAGMENT "FRAGMENT"
+%token	T_POP_ENDSECTION "ENDSECTION"
 %token	T_POP_RB "RB" T_POP_RW "RW" // There is no T_POP_RL, only T_Z80_RL
 %token	T_POP_MACRO "MACRO"
 %token	T_POP_ENDM "ENDM"
@@ -936,6 +937,7 @@ directive	: endc
 		| purge
 		| pops
 		| pushs
+		| endsection
 		| popo
 		| pusho
 		| opt
@@ -1054,6 +1056,9 @@ pops		: T_POP_POPS { sect_PopSection(); }
 ;
 
 pushs		: T_POP_PUSHS { sect_PushSection(); }
+;
+
+endsection	: T_POP_ENDSECTION { sect_EndSection(); }
 ;
 
 fail		: T_POP_FAIL string { fatalerror("%s\n", $2); }

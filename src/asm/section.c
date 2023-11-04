@@ -598,7 +598,7 @@ void sect_EndUnion(void)
 void sect_CheckUnionClosed(void)
 {
 	if (unionStack)
-		error("Unterminated UNION construct!\n");
+		error("Unterminated UNION construct\n");
 }
 
 // Output an absolute byte
@@ -965,7 +965,7 @@ void sect_PopSection(void)
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block!\n");
+		fatalerror("Cannot change the section within a `LOAD` block\n");
 
 	struct SectionStackEntry *entry = sectionStack;
 
@@ -979,6 +979,22 @@ void sect_PopSection(void)
 
 	sectionStack = entry->next;
 	free(entry);
+}
+
+void sect_EndSection(void)
+{
+	if (!currentSection)
+		fatalerror("Cannot end the section outside of a SECTION\n");
+
+	if (currentLoadSection)
+		fatalerror("Cannot end the section within a `LOAD` block\n");
+
+	if (unionStack)
+		fatalerror("Cannot end the section within a UNION\n");
+
+	// Reset the section scope
+	currentSection = NULL;
+	sym_SetCurrentSymbolScope(NULL);
 }
 
 bool sect_IsSizeKnown(struct Section const NONNULL(sect))

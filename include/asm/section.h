@@ -74,6 +74,7 @@ void sect_PCRelByte(struct Expression *expr, uint32_t pcShift);
 void sect_BinaryFile(char const *s, int32_t startPos);
 void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 
+void sect_EndSection(void);
 void sect_PushSection(void);
 void sect_PopSection(void);
 

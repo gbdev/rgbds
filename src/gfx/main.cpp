@@ -242,7 +242,7 @@ static void registerInput(char const *arg) {
 		printUsage();
 		exit(1);
 	} else if (arg[0] == '\0') { // Empty input path
-		fprintf(stderr, "FATAL: input image path cannot be empty!\n");
+		fprintf(stderr, "FATAL: input image path cannot be empty\n");
 		printUsage();
 		exit(1);
 	} else {

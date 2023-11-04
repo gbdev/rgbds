@@ -569,7 +569,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	struct LexerState *state = lexer_OpenFile(mainPath);
 
 	if (!state)
-		fatalerror("Failed to open main file!\n");
+		fatalerror("Failed to open main file\n");
 	lexer_SetState(state);
 	char const *fileName = lexer_GetFileName();
 	size_t len = strlen(fileName);

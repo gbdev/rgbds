@@ -258,7 +258,7 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 								   *input);
 
 				if (codepointLen == 0)
-					error("Input string is not valid UTF-8!\n");
+					error("Input string is not valid UTF-8\n");
 
 				// OK because UTF-8 has no NUL in multi-byte chars
 				*input += codepointLen;
