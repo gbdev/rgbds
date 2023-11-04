@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -e
 
 pngver=1.6.37
