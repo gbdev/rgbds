@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 #ifndef RGBDS_ITERTOOLS_HPP
 #define RGBDS_ITERTOOLS_HPP

@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2020, Eldred Habert and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 #include <sys/types.h>
 #include <sys/stat.h>

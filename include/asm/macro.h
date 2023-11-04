@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2020, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 #ifndef RGBDS_MACRO_H
 #define RGBDS_MACRO_H

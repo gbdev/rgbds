@@ -1,10 +1,4 @@
-#
-# This file is part of RGBDS.
-#
-# Copyright (c) 2020 RGBDS contributors.
-#
 # SPDX-License-Identifier: MIT
-#
 
 configure_file(version.c _version.c ESCAPE_QUOTES)
 

@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 // For `execProg` (Windows is its special little snowflake again)
 #if !defined(_MSC_VER) && !defined(__MINGW32__)

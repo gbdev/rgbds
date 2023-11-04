@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2017-2021, Antonio Nino Diaz and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 #ifndef EXTERN_VERSION_H
 #define EXTERN_VERSION_H
