@@ -386,7 +386,7 @@ static void changeSection(void)
 }
 
 // Set the current section by name and type
-void sect_NewSection(char const *name, uint32_t type, uint32_t org,
+void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 		     struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
@@ -406,7 +406,7 @@ void sect_NewSection(char const *name, uint32_t type, uint32_t org,
 }
 
 // Set the current section by name and type
-void sect_SetLoadSection(char const *name, uint32_t type, uint32_t org,
+void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
 			 struct SectionSpec const *attribs, enum SectionModifier mod)
 {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in

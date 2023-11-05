@@ -15,21 +15,21 @@
 
 HashMap sections;
 
-struct ForEachArg {
+struct ForEachSectionArg {
 	void (*callback)(struct Section *section, void *arg);
 	void *arg;
 };
 
 static void forEach(void *section, void *arg)
 {
-	struct ForEachArg *callbackArg = (struct ForEachArg *)arg;
+	struct ForEachSectionArg *callbackArg = (struct ForEachSectionArg *)arg;
 
 	callbackArg->callback((struct Section *)section, callbackArg->arg);
 }
 
 void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
 {
-	struct ForEachArg callbackArg = { .callback = callback, .arg = arg};
+	struct ForEachSectionArg callbackArg = { .callback = callback, .arg = arg};
 
 	hash_ForEach(sections, forEach, &callbackArg);
 }

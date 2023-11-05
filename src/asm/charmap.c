@@ -122,9 +122,8 @@ void charmap_Set(char const *name)
 
 void charmap_Push(void)
 {
-	struct CharmapStackEntry *stackEntry;
+	struct CharmapStackEntry *stackEntry = malloc(sizeof(*stackEntry));
 
-	stackEntry = malloc(sizeof(*stackEntry));
 	if (stackEntry == NULL)
 		fatalerror("Failed to alloc charmap stack entry: %s\n", strerror(errno));
 

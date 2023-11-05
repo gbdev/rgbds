@@ -260,7 +260,7 @@ void processWarningFlag(char *flag)
 				  // Not an error, then check if this is a negation
 				  strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
 								      : WARNING_DISABLED;
-	char const *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
+	char *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
 
 	// Is this a "parametric" warning?
 	if (state != WARNING_DISABLED) { // The `no-` form cannot be parametrized

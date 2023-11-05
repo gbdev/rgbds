@@ -28,7 +28,7 @@ static struct SymbolList {
 } *symbolLists;
 
 unsigned int nbObjFiles;
-static struct {
+static struct FileStackNodes {
 	struct FileStackNode *nodes;
 	uint32_t nbNodes;
 } *nodes;
@@ -92,19 +92,6 @@ static int64_t readlong(FILE *file)
 
 /*
  * Helper macro for reading bytes from a file, and errors out if it fails to.
- * Differs from `tryGetc` in that the backing function is fgetc(1).
- * Not as a function to avoid overhead in the general case.
- * @param var The variable to stash the number into
- * @param file The file to read from. Its position will be advanced
- * @param ... A format string and related arguments; note that an extra string
- *            argument is provided, the reason for failure
- */
-#define tryFgetc(var, file, ...) \
-	tryRead(fgetc, int, EOF, var, file, __VA_ARGS__)
-
-/*
- * Helper macro for reading bytes from a file, and errors out if it fails to.
- * Differs from `tryGetc` in that the backing function is fgetc(1).
  * Not as a function to avoid overhead in the general case.
  * @param var The variable to stash the number into
  * @param file The file to read from. Its position will be advanced

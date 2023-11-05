@@ -32,7 +32,7 @@ struct Attributes {
 static unsigned long long randbits = 0;
 static unsigned char randcount = 0;
 
-static _Noreturn void fatal(char const *error) {
+_Noreturn static void fatal(char const *error) {
 	fprintf(stderr, "FATAL: %s\n", error);
 	exit(1);
 }

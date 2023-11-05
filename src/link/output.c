@@ -36,12 +36,14 @@ struct SortedSymbol {
 	uint16_t addr;
 };
 
+struct SortedSections {
+	struct SortedSection *sections;
+	struct SortedSection *zeroLenSections;
+};
+
 static struct {
 	uint32_t nbBanks; // Size of the array below (which may be NULL if this is 0)
-	struct SortedSections {
-		struct SortedSection *sections;
-		struct SortedSection *zeroLenSections;
-	} *banks;
+	struct SortedSections *banks;
 } sections[SECTTYPE_INVALID];
 
 // Defines the order in which types are output to the sym and map files

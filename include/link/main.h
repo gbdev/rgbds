@@ -27,16 +27,18 @@ extern bool beVerbose;
 extern bool isWRA0Mode;
 extern bool disablePadding;
 
+enum FileStackNodeType {
+	NODE_REPT,
+	NODE_FILE,
+	NODE_MACRO,
+};
+
 struct FileStackNode {
 	struct FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
 
-	enum {
-		NODE_REPT,
-		NODE_FILE,
-		NODE_MACRO,
-	} type;
+	enum FileStackNodeType type;
 	union {
 		char *name; // NODE_FILE, NODE_MACRO
 		struct { // NODE_REPT

@@ -225,10 +225,11 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 	// Now, let's parse the rest of the lines as they come!
 
-	struct {
+	struct FileSection {
 		struct Section *section;
 		uint16_t writeIndex;
-	} *fileSections = NULL;
+	};
+	struct FileSection *fileSections = NULL;
 	struct Symbol **fileSymbols = malloc(sizeof(*fileSymbols) * expectedNbSymbols);
 	size_t nbSections = 0, nbSymbols = 0;
 
@@ -240,19 +241,18 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 	if (!data)
 		fatal(where, lineNo, "Failed to alloc data buffer: %s", strerror(errno));
+
 	for (;;) {
 		lineType = nextLine(&line, &bufLen, &lineNo, where, file);
 		if (lineType == EOF)
 			break;
 		switch (lineType) {
-			uint32_t tmp;
-
 		case 'M': // Module name
 		case 'O': // Assembler flags
 			// Ignored
 			break;
 
-		case 'A':
+		case 'A': {
 			if (nbSections == expectedNbAreas)
 				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32, expectedNbAreas);
 			fileSections = realloc(fileSections, sizeof(*fileSections) * (nbSections + 1));
@@ -276,7 +276,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			expectToken("size", 'A');
 
 			getToken(NULL, "'A' line is too short");
-			tmp = parseNumber(where, lineNo, token, numberType);
+
+			uint32_t tmp = parseNumber(where, lineNo, token, numberType);
+
 			if (tmp > UINT16_MAX)
 				fatal(where, lineNo, "Area \"%s\" is larger than the GB address space!?", curSection->name);
 			curSection->size = tmp;
@@ -353,6 +355,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 #undef curSection
 			++nbSections;
 			break;
+		}
 
 		case 'S':
 			if (nbSymbols == expectedNbSymbols)
@@ -465,7 +468,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			// Importantly, now we know that `nbBytes != 0`, which means "pending data"
 			break;
 
-		case 'R': // Supposed to directly follow `T`
+		case 'R': { // Supposed to directly follow `T`
 			if (nbBytes == 0) {
 				warning(where, lineNo, "'R' line with no 'T' line, ignoring");
 				break;
@@ -727,6 +730,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 			nbBytes = 0; // Do not allow two R lines to refer to the same T line
 			break;
+		}
 
 		case 'P':
 		default:
