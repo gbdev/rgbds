@@ -6,7 +6,8 @@ GitHub.
 
 1. Update, commit, and push `include/version.h <include/version.h>`__ with
    values for ``PACKAGE_VERSION_MAJOR``, ``PACKAGE_VERSION_MINOR``,
-   ``PACKAGE_VERSION_PATCH``, and ``PACKAGE_VERSION_RC``. Only define
+   ``PACKAGE_VERSION_PATCH``, and ``PACKAGE_VERSION_RC``, as well as
+   `Dockerfile <Dockerfile>`__ with a value for ``ARG version``. Only define
    ``PACKAGE_VERSION_RC`` if you are publishing a release candidate! You can
    use ``git commit -m "Release <version>"`` and ``git push origin master``.
 
