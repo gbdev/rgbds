@@ -11,6 +11,11 @@
 
 #include "asm/lexer.h"
 
+enum FileStackNodeType {
+	NODE_REPT,
+	NODE_FILE,
+	NODE_MACRO,
+};
 
 struct FileStackNode {
 	struct FileStackNode *parent; // Pointer to parent node, for error reporting
@@ -21,11 +26,7 @@ struct FileStackNode {
 	bool referenced; // If referenced, don't free!
 	uint32_t ID; // Set only if referenced: ID within the object file, -1 if not output yet
 
-	enum {
-		NODE_REPT,
-		NODE_FILE,
-		NODE_MACRO,
-	} type;
+	enum FileStackNodeType type;
 };
 
 struct FileStackReptNode { // NODE_REPT

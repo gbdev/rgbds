@@ -13,21 +13,21 @@
 
 HashMap symbols;
 
-struct ForEachArg {
+struct ForEachSymbolArg {
 	void (*callback)(struct Symbol *symbol, void *arg);
 	void *arg;
 };
 
 static void forEach(void *symbol, void *arg)
 {
-	struct ForEachArg *callbackArg = (struct ForEachArg *)arg;
+	struct ForEachSymbolArg *callbackArg = (struct ForEachSymbolArg *)arg;
 
 	callbackArg->callback((struct Symbol *)symbol, callbackArg->arg);
 }
 
 void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg)
 {
-	struct ForEachArg callbackArg = { .callback = callback, .arg = arg};
+	struct ForEachSymbolArg callbackArg = { .callback = callback, .arg = arg};
 
 	hash_ForEach(symbols, forEach, &callbackArg);
 }

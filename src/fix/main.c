@@ -325,7 +325,7 @@ do { \
 				tryReadSlice("MA5");
 				mbc = BANDAI_TAMA5;
 				break;
-			case 'P':
+			case 'P': {
 				tryReadSlice("P1");
 				// Parse version
 				while (*ptr == ' ' || *ptr == '_')
@@ -359,6 +359,7 @@ do { \
 				tpp1Rev[1] = val;
 				mbc = TPP1;
 				break;
+			}
 			default:
 				return MBC_BAD;
 			}
@@ -1376,7 +1377,7 @@ do { \
 			sgb = true;
 			break;
 
-		case 't':
+		case 't': {
 			title = musl_optarg;
 			len = strlen(title);
 			uint8_t maxLen = maxTitleLen();
@@ -1388,6 +1389,7 @@ do { \
 			}
 			titleLen = len;
 			break;
+		}
 
 		case 'V':
 			printf("rgbfix %s\n", get_package_version_string());

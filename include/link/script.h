@@ -5,6 +5,7 @@
 #define RGBDS_LINK_SCRIPT_H
 
 #include <stdint.h>
+
 #include "linkdefs.h"
 
 extern FILE * linkerScript;

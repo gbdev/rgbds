@@ -6,6 +6,8 @@
 #include <tuple>
 #include <utility>
 
+#include "platform.h" // __PRETTY_FUNCTION__
+
 template<typename... Ts>
 static inline void report() {
 	puts(__PRETTY_FUNCTION__);

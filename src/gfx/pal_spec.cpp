@@ -419,7 +419,7 @@ static void parseHEXFile(std::filebuf &file) {
 static void parseACTFile(std::filebuf &file) {
 	// https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_pgfId-1070626
 
-	std::array<char, 772> buf;
+	std::array<char, 772> buf{};
 	auto len = file.sgetn(buf.data(), buf.size());
 
 	uint16_t nbColors = 256;

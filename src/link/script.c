@@ -19,7 +19,7 @@ char *includeFileName;
 
 static uint32_t lineNo;
 
-static struct {
+static struct FileNode {
 	FILE *file;
 	uint32_t lineNo;
 	char *name;
@@ -153,14 +153,16 @@ enum LinkerScriptCommand {
 	COMMAND_INVALID
 };
 
+union LinkerScriptTokenAttr {
+	enum LinkerScriptCommand command;
+	enum SectionType secttype;
+	uint32_t number;
+	char *string;
+};
+
 struct LinkerScriptToken {
 	enum LinkerScriptTokenType type;
-	union LinkerScriptTokenAttr {
-		enum LinkerScriptCommand command;
-		enum SectionType secttype;
-		uint32_t number;
-		char *string;
-	} attr;
+	union LinkerScriptTokenAttr attr;
 };
 
 static char const * const commands[] = {
