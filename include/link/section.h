@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 // Declarations manipulating symbols
 #ifndef RGBDS_LINK_SECTION_H

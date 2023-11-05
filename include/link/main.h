@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 1997-2019, Carsten Sorensen and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 // Declarations that all modules use, as well as `main` and related
 #ifndef RGBDS_LINK_MAIN_H

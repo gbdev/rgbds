@@ -1,10 +1,4 @@
-/*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2020, RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 #ifndef RGBDS_FORMAT_SPEC_H
 #define RGBDS_FORMAT_SPEC_H

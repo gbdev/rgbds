@@ -1,13 +1,10 @@
+/* SPDX-License-Identifier: MIT */
+
 /*
- * This file is part of RGBDS.
- *
- * Copyright (c) 2022, Eldred Habert and RGBDS contributors.
- *
- * SPDX-License-Identifier: MIT
- *
  * Originally:
  * // This program is hereby released to the public domain.
  * // ~aaaaaa123456789, released 2022-03-15
+ *
  * https://gist.github.com/aaaaaa123456789/3feccf085ab4f82d144d9a47fb1b4bdf
  *
  * This was modified to use libpng instead of libplum, as well as comments and style changes.
