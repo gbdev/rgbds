@@ -542,7 +542,7 @@ enum {
 
 %token	T_PERIOD "."
 %token	T_COMMA ","
-%token	T_COLON ":"
+%token	T_COLON ":" T_DOUBLE_COLON "::"
 %token	T_LBRACK "[" T_RBRACK "]"
 %token	T_LPAREN "(" T_RPAREN ")"
 %token	T_NEWLINE "newline"
@@ -817,7 +817,7 @@ else		: T_POP_ELSE T_NEWLINE {
 ;
 
 plain_directive	: label
-		| label cpu_command
+		| label cpu_commands
 		| label macro
 		| label directive
 		| assignment_directive
@@ -844,7 +844,9 @@ redef_id	: T_POP_REDEF {
 		}
 ;
 
-scoped_id	: T_ID | T_LOCAL_ID;
+// T_LABEL covers identifiers followed by a double colon (e.g. `call Function::ret`,
+// to be read as `call Function :: ret`). This should not conflict with anything.
+scoped_id	: T_ID | T_LOCAL_ID | T_LABEL;
 scoped_anon_id	: scoped_id | T_ANON;
 
 label		: %empty
@@ -860,11 +862,11 @@ label		: %empty
 		| T_LABEL T_COLON {
 			sym_AddLabel($1);
 		}
-		| T_LOCAL_ID T_COLON T_COLON {
+		| T_LOCAL_ID T_DOUBLE_COLON {
 			sym_AddLocalLabel($1);
 			sym_Export($1);
 		}
-		| T_LABEL T_COLON T_COLON {
+		| T_LABEL T_DOUBLE_COLON {
 			sym_AddLabel($1);
 			sym_Export($1);
 		}
@@ -1776,6 +1778,9 @@ sectattrs	: %empty {
 		}
 ;
 
+cpu_commands	: cpu_command
+		| cpu_command T_DOUBLE_COLON cpu_commands
+;
 
 cpu_command	: z80_adc
 		| z80_add

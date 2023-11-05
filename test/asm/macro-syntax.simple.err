@@ -1,7 +1,9 @@
 error: macro-syntax.asm(7):
+    Label "old" created outside of a SECTION
+error: macro-syntax.asm(7):
     syntax error
 error: macro-syntax.asm(8):
     Macro argument '\1' not defined
 error: macro-syntax.asm(9):
     syntax error
-error: Assembly aborted (3 errors)!
+error: Assembly aborted (4 errors)!

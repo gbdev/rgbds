@@ -1759,11 +1759,8 @@ static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
 
 static int yylex_NORMAL(void)
 {
-	uint32_t num = 0;
-
 	for (;;) {
 		int c = nextChar();
-		char secondChar;
 
 		switch (c) {
 		// Ignore whitespace and comments
@@ -1910,15 +1907,19 @@ static int yylex_NORMAL(void)
 				return T_OP_LOGICGT;
 			}
 
-		// Handle colon, which may begin an anonymous label ref
-
-		case ':':
+		case ':': // Either :, ::, or an anonymous label ref
 			c = peek();
-			if (c != '+' && c != '-')
+			switch (c) {
+			case ':':
+				shiftChar();
+				return T_DOUBLE_COLON;
+			case '+':
+			case '-':
+				readAnonLabelRef(c);
+				return T_ANON;
+			default:
 				return T_COLON;
-
-			readAnonLabelRef(c);
-			return T_ANON;
+			}
 
 		// Handle numbers
 
@@ -1931,36 +1932,37 @@ static int yylex_NORMAL(void)
 		case '6':
 		case '7':
 		case '8':
-		case '9':
-			num = readNumber(10, c - '0');
+		case '9': {
+			uint32_t n = readNumber(10, c - '0');
+
 			if (peek() == '.') {
 				shiftChar();
-				yylval.constValue = readFractionalPart(num);
-			} else {
-				yylval.constValue = num;
+				n = readFractionalPart(n);
 			}
+			yylval.constValue = n;
 			return T_NUMBER;
+		}
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
-			secondChar = peek();
-			if (secondChar == '=') {
+			c = peek();
+			if (c == '=') {
 				shiftChar();
 				return T_POP_ANDEQ;
-			} else if (secondChar == '&') {
+			} else if (c == '&') {
 				shiftChar();
 				return T_OP_LOGICAND;
-			} else if (secondChar >= '0' && secondChar <= '7') {
+			} else if (c >= '0' && c <= '7') {
 				yylval.constValue = readNumber(8, 0);
 				return T_NUMBER;
 			}
 			return T_OP_AND;
 
 		case '%': // Either %=, MOD, or a binary constant
-			secondChar = peek();
-			if (secondChar == '=') {
+			c = peek();
+			if (c == '=') {
 				shiftChar();
 				return T_POP_MODEQ;
-			} else if (secondChar == binDigits[0] || secondChar == binDigits[1]) {
+			} else if (c == binDigits[0] || c == binDigits[1]) {
 				yylval.constValue = readBinaryNumber();
 				return T_NUMBER;
 			}

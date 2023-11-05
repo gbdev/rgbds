@@ -24,35 +24,55 @@ but any program that processes RGBDS object files (described in
 .Xr rgbds 5 )
 can be used in its place.
 .Sh SYNTAX
-The syntax is line-based, just as in any other assembler, meaning that you do one instruction or directive per line:
+The syntax is line-based, just as in any other assembler.
+Each line may have components in this order:
 .Pp
-.Dl Oo Ar label Oc Oo Ar instruction Oc Oo Ar ;\ comment Oc
+.Dl Oo Ar directive Oc Oo Ar ;\ comment Oc
+.Dl Oo Ar label: Oc Oo Ar instruction Oo Ar :: instruction ... Oc Oc Oo Ar ;\ comment Oc
 .Pp
-Example:
-.Bd -literal -offset indent
-John: ld a,87 ;Weee
-.Ed
+Directives are commands to the assembler itself, such as
+.Ic PRINTLN ,
+.Ic SECTION ,
+or
+.Ic OPT .
 .Pp
-All reserved keywords (directives, mnemonics, registers, etc.) are case-insensitive;
-all identifiers (symbol names) are case-sensitive.
+Labels tie a name to a specific location within a section (see
+.Sx Labels
+below).
+They must come first in the line.
+.Pp
+Instructions are assembled into Game Boy opcodes.
+Multiple instructions on one line can be separated by double colons
+.Ql :: .
+.Pp
+All reserved keywords (directives, register names, etc.) are case-insensitive;
+all identifiers (labels and other symbol names) are case-sensitive.
 .Pp
 Comments are used to give humans information about the code, such as explanations.
 The assembler
 .Em always
 ignores comments and their contents.
 .Pp
-There are two syntaxes for comments.
-The most common is that anything that follows a semicolon
+There are two kinds of comments, inline and block.
+Inline comments are anything that follows a semicolon
 .Ql \&;
-not inside a string, is a comment until the end of the line.
-The second is a block comment, beginning with
+not inside a string, until the end of the line.
+Block comments, beginning with
 .Ql /*
 and ending with
-.Ql */ .
-It can be split across multiple lines, or occur in the middle of an expression:
+.Ql */ ,
+can be split across multiple lines, or occur in the middle of an expression.
+.Pp
+An example demonstrating these syntax features:
 .Bd -literal -offset indent
-DEF X = /* the value of x
-           should be 3 */ 3
+SECTION "My Code", ROM0\ \ ;\ a directive
+MyFunction:\ \ \ \ \ \ \ \ \ \ \ \ \ \ ;\ a label
+    push hl\ \ \ \ \ \ \ \ \ \ \ \ \ \ ;\ an instruction
+    /* ...and multiple instructions,
+       with mixed case */
+    ld a, [hli] :: LD H, [HL] :: Ld l, a
+    pop /*wait for it*/ hl
+    ret
 .Ed
 .Pp
 Sometimes lines can be too long and it may be necessary to split them.
