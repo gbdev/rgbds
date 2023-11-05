@@ -780,7 +780,9 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 		fatal("Failed to open \"%s\": %s", output.c_str(options.output), strerror(errno));
 	}
 
-	uint64_t remainingTiles = (png.getWidth() / 8) * (png.getHeight() / 8);
+	uint16_t width = options.inputSlice.width ? options.inputSlice.width * 8 : png.getWidth();
+	uint16_t height = options.inputSlice.height ? options.inputSlice.height * 8 : png.getHeight();
+	uint64_t remainingTiles = (width / 8) * (height / 8);
 	if (remainingTiles <= options.trim) {
 		return;
 	}
