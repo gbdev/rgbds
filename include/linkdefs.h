@@ -75,6 +75,12 @@ enum SectionType {
 	SECTTYPE_INVALID
 };
 
+enum FileStackNodeType {
+	NODE_REPT,
+	NODE_FILE,
+	NODE_MACRO,
+};
+
 // Nont-`const` members may be patched in RGBLINK depending on CLI flags
 extern struct SectionTypeInfo {
 	char const *const name;

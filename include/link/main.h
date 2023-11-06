@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "helpers.h"
+#include "linkdefs.h"
 
 // Variables related to CLI options
 extern bool isDmgMode;
@@ -26,12 +27,6 @@ extern bool is32kMode;
 extern bool beVerbose;
 extern bool isWRA0Mode;
 extern bool disablePadding;
-
-enum FileStackNodeType {
-	NODE_REPT,
-	NODE_FILE,
-	NODE_MACRO,
-};
 
 struct FileStackNode {
 	struct FileStackNode *parent;
