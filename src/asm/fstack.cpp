@@ -240,7 +240,11 @@ bool yywrap(void)
 
 		// If this is a FOR, update the symbol value
 		if (contextStack->forName && fileInfo->iters[0] <= contextStack->nbReptIters) {
-			contextStack->forValue += contextStack->forStep;
+			// Avoid arithmetic overflow runtime error
+			uint32_t forValue = (uint32_t)contextStack->forValue +
+				(uint32_t)contextStack->forStep;
+			contextStack->forValue = forValue >= 0 ? (int32_t)forValue
+				: -(int32_t)~forValue - 1;
 			struct Symbol *sym = sym_AddVar(contextStack->forName,
 				contextStack->forValue);
 
@@ -513,9 +517,9 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	uint32_t count = 0;
 
 	if (step > 0 && start < stop)
-		count = (stop - start - 1) / step + 1;
+		count = ((int64_t)stop - start - 1) / step + 1;
 	else if (step < 0 && stop < start)
-		count = (start - stop - 1) / -step + 1;
+		count = ((int64_t)start - stop - 1) / -(int64_t)step + 1;
 	else if (step == 0)
 		error("FOR cannot have a step value of 0\n");
 
