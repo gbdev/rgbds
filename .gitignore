@@ -3,9 +3,13 @@
 /rgbfix
 /rgbgfx
 /rgbshim.sh
+/coverage/
 *.o
 *.exe
 *.dll
+*.gcno
+*.gcda
+*.gcov
 .checkpatch-camelcase.*
 CMakeCache.txt
 CMakeFiles/

@@ -9,7 +9,8 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkcodebase checkpatch checkdiff develop debug mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkcodebase checkpatch checkdiff \
+	develop debug coverage mingw32 mingw64 wine-shim dist
 
 # User-defined variables
 
@@ -188,6 +189,7 @@ clean:
 	$Q${RM} rgbfix rgbfix.exe
 	$Q${RM} rgbgfx rgbgfx.exe
 	$Qfind src/ -name "*.o" -exec rm {} \;
+	$Qfind . -type f \( -name "*.gcno" -o -name "*.gcda" -o -name "*.gcov" \) -exec rm {} \;
 	$Q${RM} rgbshim.sh
 	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp
 	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
@@ -258,6 +260,12 @@ develop:
 debug:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+
+# This target is used during development in order to inspect code coverage with gcov.
+
+coverage:
+	$Qenv ${MAKE} \
+		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
