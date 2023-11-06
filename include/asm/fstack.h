@@ -11,11 +11,7 @@
 
 #include "asm/lexer.h"
 
-enum FileStackNodeType {
-	NODE_REPT,
-	NODE_FILE,
-	NODE_MACRO,
-};
+#include "linkdefs.h"
 
 struct FileStackNode {
 	struct FileStackNode *parent; // Pointer to parent node, for error reporting
