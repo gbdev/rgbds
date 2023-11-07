@@ -1416,7 +1416,7 @@ do { \
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1)
-				fprintf(stderr, "warning: MBC \"%s\" should have 2kiB of RAM (-r 1)\n",
+				fprintf(stderr, "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
 					mbcName(cartridgeType));
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
@@ -1425,7 +1425,7 @@ do { \
 					mbcName(cartridgeType));
 			} else if (ramSize == 1) {
 				fprintf(stderr,
-					"warning: RAM size 1 (2 kiB) was specified for MBC \"%s\"\n",
+					"warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
 					mbcName(cartridgeType));
 			} // TODO: check possible values?
 		} else if (ramSize) {
