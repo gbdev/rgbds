@@ -23,6 +23,7 @@
 #include "extern/getopt.hpp"
 
 #include "error.hpp"
+#include "itertools.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
 #include "version.hpp"
@@ -249,7 +250,7 @@ static void parseScrambleSpec(char const *spec)
 		size_t regionNameLen = strcspn(spec, "=, \t");
 		// Length of region name string slice for printing, truncated if too long
 		int regionNamePrintLen = regionNameLen > INT_MAX ? INT_MAX : (int)regionNameLen;
-		enum ScrambledRegion region = (enum ScrambledRegion)0;
+		enum ScrambledRegion region = SCRAMBLE_UNK;
 
 		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assert
 		if (regionNameLen == 0) {
@@ -272,12 +273,14 @@ static void parseScrambleSpec(char const *spec)
 		}
 
 		// Now, determine which region type this is
-		for (; region < SCRAMBLE_UNK; region = (enum ScrambledRegion)(region + 1)) {
+		for (enum ScrambledRegion r : EnumSeq(SCRAMBLE_UNK)) {
 			// If the strings match (case-insensitively), we got it!
 			// `strncasecmp` must be used here since `regionName` points
 			// to the entire remaining argument.
-			if (!strncasecmp(scrambleSpecs[region].name, regionName, regionNameLen))
+			if (!strncasecmp(scrambleSpecs[r].name, regionName, regionNameLen)) {
+				region = r;
 				break;
+			}
 		}
 
 		if (region == SCRAMBLE_UNK)

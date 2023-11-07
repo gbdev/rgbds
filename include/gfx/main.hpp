@@ -110,7 +110,8 @@ static constexpr auto flipTable(std::integer_sequence<T, i...>) {
 		return byte;
 	}(i)...};
 }
-}
+} // namespace detail
+
 // Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
 static constexpr auto flipTable = detail::flipTable(std::make_integer_sequence<uint16_t, 256>());
 

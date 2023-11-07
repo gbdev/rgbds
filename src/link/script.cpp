@@ -12,6 +12,7 @@
 #include "link/section.hpp"
 
 #include "error.hpp"
+#include "itertools.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
 
@@ -292,7 +293,7 @@ static struct LinkerScriptToken *nextToken(void)
 		token.type = TOKEN_INVALID;
 
 		// Try to match a command
-		for (enum LinkerScriptCommand i = (enum LinkerScriptCommand)0; i < COMMAND_INVALID; i = (enum LinkerScriptCommand)(i + 1)) {
+		for (enum LinkerScriptCommand i : EnumSeq(COMMAND_INVALID)) {
 			if (!strcmp(commands[i], str)) {
 				token.type = TOKEN_COMMAND;
 				token.attr.command = i;
@@ -302,7 +303,7 @@ static struct LinkerScriptToken *nextToken(void)
 
 		if (token.type == TOKEN_INVALID) {
 			// Try to match a bank specifier
-			for (enum SectionType type = (enum SectionType)0; type < SECTTYPE_INVALID; type = (enum SectionType)(type + 1)) {
+			for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 				if (!strcmp(sectionTypeInfo[type].name, str)) {
 					token.type = TOKEN_BANK;
 					token.attr.secttype = type;
@@ -384,7 +385,7 @@ struct SectionPlacement *script_NextSection(void)
 		lineNo = 1;
 
 		// Init PC for all banks
-		for (enum SectionType i = (enum SectionType)0; i < SECTTYPE_INVALID; i = (enum SectionType)(i + 1)) {
+		for (enum SectionType i : EnumSeq(SECTTYPE_INVALID)) {
 			curaddr[i] = (uint16_t *)malloc(sizeof(*curaddr[i]) * nbbanks(i));
 			for (uint32_t b = 0; b < nbbanks(i); b++)
 				curaddr[i][b] = sectionTypeInfo[i].startAddr;
@@ -544,6 +545,6 @@ lineend:
 
 void script_Cleanup(void)
 {
-	for (enum SectionType type = (enum SectionType)0; type < SECTTYPE_INVALID; type = (enum SectionType)(type + 1))
+	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID))
 		free(curaddr[type]);
 }

@@ -15,6 +15,7 @@
 #include "extern/utf8decoder.hpp"
 
 #include "error.hpp"
+#include "itertools.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // For `MIN_NB_ELMS` and `AT`
 
@@ -604,7 +605,7 @@ static void cleanupSections(struct SortedSection *section)
 
 static void cleanup(void)
 {
-	for (enum SectionType type = (enum SectionType)0; type < SECTTYPE_INVALID; type = (enum SectionType)(type + 1)) {
+	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		for (uint32_t i = 0; i < sections[type].nbBanks; i++) {
 			struct SortedSections *bank = &sections[type].banks[i];
 
