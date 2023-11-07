@@ -1,0 +1,2 @@
+warning: for-loop-count.asm(19) -> for-loop-count.asm::test(12): [-Wbackwards-for]
+    FOR goes backwards from -2147483648 to -1 by -2147483648
