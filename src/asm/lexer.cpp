@@ -1459,7 +1459,7 @@ static size_t appendEscapedSubstring(char const *str, size_t i)
 	return i;
 }
 
-static void readString(void)
+static void readString(bool raw)
 {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -1517,6 +1517,8 @@ static void readString(void)
 			goto finish;
 
 		case '\\': // Character escape or macro arg
+			if (raw)
+				break;
 			c = peek();
 			switch (c) {
 			case '\\':
@@ -1581,6 +1583,8 @@ static void readString(void)
 			break;
 
 		case '{': // Symbol interpolation
+			if (raw)
+				break;
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
@@ -1609,7 +1613,7 @@ finish:
 	lexerState->disableInterpolation = false;
 }
 
-static size_t appendStringLiteral(size_t i)
+static size_t appendStringLiteral(size_t i, bool raw)
 {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -1670,6 +1674,8 @@ static size_t appendStringLiteral(size_t i)
 			goto finish;
 
 		case '\\': // Character escape or macro arg
+			if (raw)
+				break;
 			c = peek();
 			switch (c) {
 			// Character escape
@@ -1725,6 +1731,8 @@ static size_t appendStringLiteral(size_t i)
 			break;
 
 		case '{': // Symbol interpolation
+			if (raw)
+				break;
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
@@ -1979,7 +1987,7 @@ static int yylex_NORMAL(void)
 		// Handle strings
 
 		case '"':
-			readString();
+			readString(false);
 			return T_STRING;
 
 		// Handle newlines and EOF
@@ -2000,6 +2008,16 @@ static int yylex_NORMAL(void)
 			// outside of string literals, so this must be a line continuation.
 			readLineContinuation();
 			break;
+
+		// Handle raw strings... or fall through if '#' is not followed by '"'
+
+		case '#':
+			if (peek() == '"') {
+				shiftChar();
+				readString(true);
+				return T_STRING;
+			}
+			// fallthrough
 
 		// Handle identifiers... or report garbage characters
 
@@ -2079,7 +2097,16 @@ static int yylex_RAW(void)
 		switch (c) {
 		case '"': // String literals inside macro args
 			shiftChar();
-			i = appendStringLiteral(i);
+			i = appendStringLiteral(i, false);
+			break;
+
+		case '#': // Raw string literals inside macro args
+			append_yylval_string(c);
+			shiftChar();
+			if (peek() == '"') {
+				shiftChar();
+				i = appendStringLiteral(i, true);
+			}
 			break;
 
 		case ';': // Comments inside macro args

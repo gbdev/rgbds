@@ -414,11 +414,20 @@ There are a number of escape sequences you can use within a string:
 .Pp
 Multi-line strings are contained in triple quotes
 .Pq Ql \&"\&"\&"for instance\&"\&"\&" .
-Escape sequences work the same way in multi-line strings; however, literal newline
-characters will be included as-is, without needing to escape them with
+Escape sequences work the same way in multi-line strings; however, literal newline characters will be included as-is, without needing to escape them with
 .Ql \er
 or
 .Ql \en .
+.Pp
+Raw strings are prefixed by a hash
+.Sq # .
+Inside them, backslashes and braces are treated like regular characters, so they will not be expanded as macro arguments, interpolated symbols, or escape sequences.
+For example, the raw string
+.Ql #"\t\1{s}\"
+is equivalent to the regular string
+.Ql "\\t\\1\{s}\\" .
+(Note that this prevents raw strings from including the double quote character.)
+Raw strings also may be contained in triple quotes for them to be multi-line, so they can include literal newline or quote characters (although still not three quotes in a row).
 .Pp
 The following functions operate on string expressions.
 Most of them return a string, however some of these functions actually return an integer and can be used as part of an integer expression!
