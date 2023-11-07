@@ -1,10 +1,4 @@
-#
-# This file is part of RGBDS.
-#
-# Copyright (c) 1997-2018, Carsten Sorensen and RGBDS contributors.
-#
 # SPDX-License-Identifier: MIT
-#
 
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
@@ -140,7 +134,7 @@ test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 # We want the Bison invocation to pass through our rules, not default ones
 .y.o:
 
-# Bison-generated C files have an accompanying header
+# Bison-generated C++ files have an accompanying header
 src/asm/parser.hpp: src/asm/parser.cpp
 	$Qtouch $@
 

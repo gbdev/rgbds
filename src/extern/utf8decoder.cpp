@@ -1,12 +1,6 @@
-/*
- * Copyright (c) 2008-2009, Björn Höhrmann <bjoern@hoehrmann.de>
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
-/*
- * UTF-8 decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
- */
+/* UTF-8 decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ */
 
 #include <stdint.h>
 

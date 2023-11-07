@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
-// Mathematical operators that don't reuse C's behavior
+// Mathematical operators that don't reuse C++'s behavior
 
 #include <stdint.h>
 
@@ -74,7 +74,7 @@ int32_t op_shift_right(int32_t value, int32_t amount)
 	// 1->0x80000000, 2->0xC0000000, ..., 31->0xFFFFFFFE
 	uint32_t amount_high_bits = -(UINT32_C(1) << (32 - amount));
 
-	// The C standard leaves shifting right negative values
+	// The C++ standard leaves shifting right negative values
 	// undefined, so use a left shift manually sign-extended
 	return ((uint32_t)value >> amount) | amount_high_bits;
 }
