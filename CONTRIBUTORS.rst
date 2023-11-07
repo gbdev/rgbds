@@ -21,7 +21,7 @@ Main contributors
 
 - Eldred "ISSOtm" Habert <eldredhabert0@gmail.com>
 
-- Rangi <http://github.com/Rangi42>
+- Sylvie "Rangi" Oukaour <http://github.com/Rangi42>
 
 Other contributors
 ------------------

@@ -1,8 +1,4 @@
-/*
- * Copyright (c) 2005-2020 Rich Felker, et al.
- *
- * SPDX-License-Identifier: MIT
- */
+/* SPDX-License-Identifier: MIT */
 
 /* This implementation was taken from musl and modified for RGBDS */
 

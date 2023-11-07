@@ -95,7 +95,7 @@ The RGBDS source code file structure somewhat resembles the following:
 
   * ``bash_compl`` contains tab completion scripts for use with bash. Run them with ``source`` somewhere in your ``.bashrc``, and they should load every time you open a shell.
 
-- ``include/`` - header files for each respective C files in `src`.
+- ``include/`` - header files for the respective source files in `src`.
 
 - ``man/`` - manual pages.
 
@@ -106,13 +106,13 @@ The RGBDS source code file structure somewhat resembles the following:
 
 - ``test/`` - testing framework used to verify that changes to the code don't break or modify the behavior of RGBDS.
 
-- ``.clang-format`` - code style for automated formatting with |clang-format|_. The C code does not currently follow this style, but all C++ code should.
+- ``.clang-format`` - code style for automated C++ formatting with |clang-format|_.
 
 3. History
 ----------
 
 - Around 1997, Carsten Sørensen (AKA SurfSmurf) writes ASMotor as a
-  general-purpose assembler/linker system for DOS/Win32
+  general-purpose assembler/linker system for DOS/Win32.
 
 - Around 1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to read and
   produce GBZ80 assembly/machine code, and releases this version as RGBDS.
@@ -122,7 +122,7 @@ The RGBDS source code file structure somewhat resembles the following:
   `GitHub <https://github.com/vegard/rgbds-linux>`__.
 
 - 2010, Anthony J. Bentley forks that repository. The fork becomes the reference
-  implementation of rgbds.
+  implementation of RGBDS.
 
 - 2017, Bentley's repository is moved to a neutral name.
 
