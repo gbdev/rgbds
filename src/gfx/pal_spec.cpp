@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include "platform.h"
+#include "platform.hpp"
 
 #include "gfx/main.hpp"
 

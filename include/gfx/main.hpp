@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "helpers.h"
+#include "helpers.hpp"
 
 #include "gfx/rgba.hpp"
 

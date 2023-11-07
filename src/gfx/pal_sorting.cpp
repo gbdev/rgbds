@@ -6,7 +6,7 @@
 #include <png.h>
 #include <vector>
 
-#include "helpers.h"
+#include "helpers.hpp"
 
 #include "gfx/main.hpp"
 #include "gfx/process.hpp"

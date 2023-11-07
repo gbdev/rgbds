@@ -10,7 +10,7 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
 project(rgbds
-        LANGUAGES C CXX)
+        LANGUAGES CXX)
 
 # get real path of source and binary directories
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -31,10 +31,6 @@ if(MSVC)
   # "macro expansion producing 'defined' has undefined behavior"
   add_compile_options(/MP /wd5105)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
-  # Also, CMake appears not to pass the C11-enabling flag, so we must add it manually... but only for C!
-  if(NOT CMAKE_C_FLAGS MATCHES "std:c11") # The flag may already have been injected by an earlier CMake invocation, so don't add it twice
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std:c11" CACHE STRING "Flags used by the C compiler during all build types." FORCE)
-  endif()
 
   if(SANITIZERS)
     set(SAN_FLAGS /fsanitize=address)
@@ -42,8 +38,12 @@ if(MSVC)
     add_link_options(${SAN_FLAGS})
   endif()
 else()
-  add_compile_options(-Wall -pedantic)
-  add_definitions(-D_POSIX_C_SOURCE=200809L -D_ISOC11_SOURCE)
+  # TODO: use -pedantic after non-C++ idioms are gone
+  add_compile_options(-Wall)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_options(-Wno-c99-designator)
+  endif()
+  add_definitions(-D_POSIX_C_SOURCE=200809L)
   if(SANITIZERS)
     set(SAN_FLAGS -fsanitize=shift -fsanitize=integer-divide-by-zero
                   -fsanitize=unreachable -fsanitize=vla-bound
@@ -55,7 +55,6 @@ else()
     add_definitions(-D_GLIBCXX_ASSERTIONS)
     # A non-zero optimization level is desired in debug mode, but allow overriding it nonetheless
     # TODO: this overrides anything previously set... that's a bit sloppy!
-    set(CMAKE_C_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls" CACHE STRING "" FORCE)
   endif()
 
@@ -98,9 +97,7 @@ endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED True)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)

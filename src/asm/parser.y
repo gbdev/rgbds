@@ -10,25 +10,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/charmap.h"
-#include "asm/fixpoint.h"
-#include "asm/format.h"
-#include "asm/fstack.h"
-#include "asm/lexer.h"
-#include "asm/macro.h"
-#include "asm/main.h"
-#include "asm/opt.h"
-#include "asm/output.h"
-#include "asm/rpn.h"
-#include "asm/section.h"
-#include "asm/symbol.h"
-#include "asm/util.h"
-#include "asm/warning.h"
+#include "asm/charmap.hpp"
+#include "asm/fixpoint.hpp"
+#include "asm/format.hpp"
+#include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
+#include "asm/macro.hpp"
+#include "asm/main.hpp"
+#include "asm/opt.hpp"
+#include "asm/output.hpp"
+#include "asm/rpn.hpp"
+#include "asm/section.hpp"
+#include "asm/symbol.hpp"
+#include "asm/util.hpp"
+#include "asm/warning.hpp"
 
-#include "extern/utf8decoder.h"
+#include "extern/utf8decoder.hpp"
 
-#include "linkdefs.h"
-#include "platform.h" // strncasecmp, strdup
+#include "linkdefs.hpp"
+#include "platform.hpp" // strncasecmp, strdup
 
 static struct CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
@@ -257,7 +257,7 @@ static void initStrFmtArgList(struct StrFmtArgList *args)
 {
 	args->nbArgs = 0;
 	args->capacity = INITIAL_STRFMT_ARG_SIZE;
-	args->args = malloc(args->capacity * sizeof(*args->args));
+	args->args = (struct StrFmtArg *)malloc(args->capacity * sizeof(*args->args));
 	if (!args->args)
 		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
 			   strerror(errno));
@@ -267,7 +267,7 @@ static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args)
 {
 	if (args->nbArgs == args->capacity) {
 		args->capacity = (args->capacity + 1) * 2;
-		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		args->args = (struct StrFmtArg *)realloc(args->args, args->capacity * sizeof(*args->args));
 		if (!args->args)
 			fatalerror("realloc error while resizing STRFMT arg list: %s\n",
 				   strerror(errno));
@@ -369,7 +369,7 @@ static void initDsArgList(struct DsArgList *args)
 {
 	args->nbArgs = 0;
 	args->capacity = INITIAL_DS_ARG_SIZE;
-	args->args = malloc(args->capacity * sizeof(*args->args));
+	args->args = (struct Expression *)malloc(args->capacity * sizeof(*args->args));
 	if (!args->args)
 		fatalerror("Failed to allocate memory for ds arg list: %s\n",
 			   strerror(errno));
@@ -379,7 +379,7 @@ static void appendDsArgList(struct DsArgList *args, const struct Expression *exp
 {
 	if (args->nbArgs == args->capacity) {
 		args->capacity = (args->capacity + 1) * 2;
-		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		args->args = (struct Expression *)realloc(args->args, args->capacity * sizeof(*args->args));
 		if (!args->args)
 			fatalerror("realloc error while resizing ds arg list: %s\n",
 				   strerror(errno));
@@ -396,7 +396,7 @@ static void initPurgeArgList(struct PurgeArgList *args)
 {
 	args->nbArgs = 0;
 	args->capacity = INITIAL_PURGE_ARG_SIZE;
-	args->args = malloc(args->capacity * sizeof(*args->args));
+	args->args = (char **)malloc(args->capacity * sizeof(*args->args));
 	if (!args->args)
 		fatalerror("Failed to allocate memory for purge arg list: %s\n",
 			   strerror(errno));
@@ -406,7 +406,7 @@ static void appendPurgeArgList(struct PurgeArgList *args, char *arg)
 {
 	if (args->nbArgs == args->capacity) {
 		args->capacity = (args->capacity + 1) * 2;
-		args->args = realloc(args->args, args->capacity * sizeof(*args->args));
+		args->args = (char **)realloc(args->args, args->capacity * sizeof(*args->args));
 		if (!args->args)
 			fatalerror("realloc error while resizing purge arg list: %s\n",
 				   strerror(errno));
@@ -966,21 +966,23 @@ assignment	: T_LABEL T_POP_EQUAL const {
 			sym_AddVar($1, $3);
 		}
 		| T_LABEL compoundeq const {
-			static const char *compoundEqOperators[] = {
-				[RPN_ADD] = "+=",
-				[RPN_SUB] = "-=",
-				[RPN_MUL] = "*=",
-				[RPN_DIV] = "/=",
-				[RPN_MOD] = "%=",
-				[RPN_XOR] = "^=",
-				[RPN_OR] = "|=",
-				[RPN_AND] = "&=",
-				[RPN_SHL] = "<<=",
-				[RPN_SHR] = ">>=",
-			};
+			const char *compoundEqOperator = NULL;
+			switch ($2) {
+				case RPN_ADD: compoundEqOperator = "+="; break;
+				case RPN_SUB: compoundEqOperator = "-="; break;
+				case RPN_MUL: compoundEqOperator = "*="; break;
+				case RPN_DIV: compoundEqOperator = "/="; break;
+				case RPN_MOD: compoundEqOperator = "%="; break;
+				case RPN_XOR: compoundEqOperator = "^="; break;
+				case RPN_OR:  compoundEqOperator = "|="; break;
+				case RPN_AND: compoundEqOperator = "&="; break;
+				case RPN_SHL: compoundEqOperator = "<<="; break;
+				case RPN_SHR: compoundEqOperator = ">>="; break;
+				default: break;
+			}
 
 			warning(WARNING_OBSOLETE, "`%s %s` is deprecated; use `DEF %s %s`\n",
-				$1, compoundEqOperators[$2], $1, compoundEqOperators[$2]);
+				$1, compoundEqOperator, $1, compoundEqOperator);
 			compoundAssignment($1, $2, $3);
 		}
 ;
@@ -1106,7 +1108,7 @@ shift		: T_POP_SHIFT { macro_ShiftCurrentArgs(1); }
 ;
 
 load		: T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
-			sect_SetLoadSection($3, $5, $6, &$7, $2);
+			sect_SetLoadSection($3, (enum SectionType)$5, $6, &$7, $2);
 		}
 		| T_POP_ENDL { sect_EndLoadSection(); }
 ;
@@ -1365,7 +1367,7 @@ constlist_8bit_entry : reloc_8bit_no_str {
 			sect_RelByte(&$1, 0);
 		}
 		| string {
-			uint8_t *output = malloc(strlen($1)); // Cannot be larger than that
+			uint8_t *output = (uint8_t *)malloc(strlen($1)); // Cannot be larger than that
 			size_t length = charmap_Convert($1, output);
 
 			sect_AbsByteGroup(output, length);
@@ -1381,7 +1383,7 @@ constlist_16bit_entry : reloc_16bit_no_str {
 			sect_RelWord(&$1, 0);
 		}
 		| string {
-			uint8_t *output = malloc(strlen($1)); // Cannot be larger than that
+			uint8_t *output = (uint8_t *)malloc(strlen($1)); // Cannot be larger than that
 			size_t length = charmap_Convert($1, output);
 
 			sect_AbsWordGroup(output, length);
@@ -1398,7 +1400,7 @@ constlist_32bit_entry : relocexpr_no_str {
 		}
 		| string {
 			// Charmaps cannot increase the length of a string
-			uint8_t *output = malloc(strlen($1));
+			uint8_t *output = (uint8_t *)malloc(strlen($1));
 			size_t length = charmap_Convert($1, output);
 
 			sect_AbsLongGroup(output, length);
@@ -1444,7 +1446,7 @@ reloc_16bit_no_str : relocexpr_no_str {
 relocexpr	: relocexpr_no_str
 		| string {
 			// Charmaps cannot increase the length of a string
-			uint8_t *output = malloc(strlen($1));
+			uint8_t *output = (uint8_t *)malloc(strlen($1));
 			uint32_t length = charmap_Convert($1, output);
 			uint32_t r = str2int2(output, length);
 
@@ -1531,8 +1533,12 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		| T_OP_BANK T_LPAREN string T_RPAREN { rpn_BankSection(&$$, $3); }
 		| T_OP_SIZEOF T_LPAREN string T_RPAREN { rpn_SizeOfSection(&$$, $3); }
 		| T_OP_STARTOF T_LPAREN string T_RPAREN { rpn_StartOfSection(&$$, $3); }
-		| T_OP_SIZEOF T_LPAREN sectiontype T_RPAREN { rpn_SizeOfSectionType(&$$, $3); }
-		| T_OP_STARTOF T_LPAREN sectiontype T_RPAREN { rpn_StartOfSectionType(&$$, $3); }
+		| T_OP_SIZEOF T_LPAREN sectiontype T_RPAREN {
+			rpn_SizeOfSectionType(&$$, (enum SectionType)$3);
+		}
+		| T_OP_STARTOF T_LPAREN sectiontype T_RPAREN {
+			rpn_StartOfSectionType(&$$, (enum SectionType)$3);
+		}
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
@@ -1730,7 +1736,7 @@ strfmt_va_args	: %empty {
 ;
 
 section		: T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
-			sect_NewSection($3, $5, $6, &$7, $2);
+			sect_NewSection($3, (enum SectionType)$5, $6, &$7, $2);
 		}
 ;
 

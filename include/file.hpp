@@ -16,8 +16,8 @@
 #include <string_view>
 #include <variant>
 
-#include "helpers.h"
-#include "platform.h"
+#include "helpers.hpp"
+#include "platform.hpp"
 
 #include "gfx/main.hpp"
 

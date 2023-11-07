@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: MIT
 
-configure_file(version.c _version.c ESCAPE_QUOTES)
+configure_file(version.cpp _version.cpp ESCAPE_QUOTES)
 
 set(common_src
-    "error.c"
-    "extern/getopt.c"
-    "_version.c"
+    "error.cpp"
+    "extern/getopt.cpp"
+    "_version.cpp"
     )
 
 find_package(BISON 3.0.0 REQUIRED)
@@ -23,35 +23,35 @@ set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
 set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
 
 BISON_TARGET(PARSER "asm/parser.y"
-             "${PROJECT_SOURCE_DIR}/src/asm/parser.c"
+             "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}"
-             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.h"
+             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
              )
 
 set(rgbasm_src
     "${BISON_PARSER_OUTPUT_SOURCE}"
-    "asm/charmap.c"
-    "asm/fixpoint.c"
-    "asm/format.c"
-    "asm/fstack.c"
-    "asm/lexer.c"
-    "asm/macro.c"
-    "asm/main.c"
-    "asm/opt.c"
-    "asm/output.c"
-    "asm/rpn.c"
-    "asm/section.c"
-    "asm/symbol.c"
-    "asm/util.c"
-    "asm/warning.c"
-    "extern/utf8decoder.c"
-    "hashmap.c"
-    "linkdefs.c"
-    "opmath.c"
+    "asm/charmap.cpp"
+    "asm/fixpoint.cpp"
+    "asm/format.cpp"
+    "asm/fstack.cpp"
+    "asm/lexer.cpp"
+    "asm/macro.cpp"
+    "asm/main.cpp"
+    "asm/opt.cpp"
+    "asm/output.cpp"
+    "asm/rpn.cpp"
+    "asm/section.cpp"
+    "asm/symbol.cpp"
+    "asm/util.cpp"
+    "asm/warning.cpp"
+    "extern/utf8decoder.cpp"
+    "hashmap.cpp"
+    "linkdefs.cpp"
+    "opmath.cpp"
     )
 
 set(rgbfix_src
-    "fix/main.c"
+    "fix/main.cpp"
     )
 
 set(rgbgfx_src
@@ -63,24 +63,24 @@ set(rgbgfx_src
     "gfx/proto_palette.cpp"
     "gfx/reverse.cpp"
     "gfx/rgba.cpp"
-    "extern/getopt.c"
-    "error.c"
+    "extern/getopt.cpp"
+    "error.cpp"
     )
 
 set(rgblink_src
-    "link/assign.c"
-    "link/main.c"
-    "link/object.c"
-    "link/output.c"
-    "link/patch.c"
-    "link/script.c"
-    "link/sdas_obj.c"
-    "link/section.c"
-    "link/symbol.c"
-    "extern/utf8decoder.c"
-    "hashmap.c"
-    "linkdefs.c"
-    "opmath.c"
+    "link/assign.cpp"
+    "link/main.cpp"
+    "link/object.cpp"
+    "link/output.cpp"
+    "link/patch.cpp"
+    "link/script.cpp"
+    "link/sdas_obj.cpp"
+    "link/section.cpp"
+    "link/symbol.cpp"
+    "extern/utf8decoder.cpp"
+    "hashmap.cpp"
+    "linkdefs.cpp"
+    "opmath.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

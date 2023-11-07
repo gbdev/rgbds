@@ -19,10 +19,10 @@
 #include <string_view>
 #include <type_traits>
 
-#include "extern/getopt.h"
+#include "extern/getopt.hpp"
 #include "file.hpp"
-#include "platform.h"
-#include "version.h"
+#include "platform.hpp"
+#include "version.hpp"
 
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
