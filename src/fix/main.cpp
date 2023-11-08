@@ -1197,7 +1197,7 @@ static bool processFilename(char const *name)
 
 		if (fstat(input, &stat) == -1) {
 			report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
-		} else if (!S_ISREG(stat.st_mode)) { // FIXME: Do we want to support other types?
+		} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support other types?
 			report("FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
 				name);
 		} else if (stat.st_size < 0x150) {

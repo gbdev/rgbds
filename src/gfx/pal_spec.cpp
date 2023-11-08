@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <charconv>
 #include <cinttypes>
 #include <climits>
 #include <cstdint>
@@ -218,21 +219,18 @@ static void readLine(std::filebuf &file, std::string &buffer) {
 	}
 }
 
-// FIXME: Normally we'd use `std::from_chars`, but that's not available with GCC 7
 /*
  * Parses the initial part of a string_view, advancing the "read index" as it does
  */
 template<typename U> // Should be uint*_t
 static std::optional<U> parseDec(std::string const &str, std::string::size_type &n) {
-	std::string::size_type start = n;
-
-	uintmax_t value = 0; // Use a larger type to handle overflow more easily
-	for (auto end = std::min(str.length(), str.find_first_not_of("0123456789"sv, n)); n < end;
-	     ++n) {
-		value = std::min(value * 10 + (str[n] - '0'), (uintmax_t)std::numeric_limits<U>::max);
+	uintmax_t value = 0;
+	auto result = std::from_chars(str.data(), str.data() + str.size(), value);
+	if ((bool)result.ec) {
+		return std::nullopt;
 	}
-
-	return n > start ? std::optional<U>{value} : std::nullopt;
+	n += result.ptr - str.data();
+	return std::optional<U>{value};
 }
 
 static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n,
@@ -334,8 +332,7 @@ static void parseGPLFile(std::filebuf &file) {
 
 	std::string line;
 	readLine(file, line);
-	// FIXME: C++20 will allow `!line.starts_with` instead of `line.rfind` with 0
-	if (line.rfind("GIMP Palette", 0)) {
+	if (!line.starts_with("GIMP Palette")) {
 		error("Palette file does not appear to be a GPL palette file");
 		return;
 	}
@@ -350,8 +347,7 @@ static void parseGPLFile(std::filebuf &file) {
 			break;
 		}
 
-		// FIXME: C++20 will allow `line.starts_with` instead of `!line.rfind` with 0
-		if (!line.rfind("#", 0) || !line.rfind("Name:", 0) || !line.rfind("Column:", 0)) {
+		if (line.starts_with("#") || line.starts_with("Name:") || line.starts_with("Column:")) {
 			continue;
 		}
 

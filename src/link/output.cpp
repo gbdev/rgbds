@@ -330,8 +330,8 @@ static int compareSymbols(void const *a, void const *b)
 
 	char const *sym1_name = sym1->sym->name;
 	char const *sym2_name = sym2->sym->name;
-	bool sym1_local = !!strchr(sym1_name, '.');
-	bool sym2_local = !!strchr(sym2_name, '.');
+	bool sym1_local = strchr(sym1_name, '.');
+	bool sym2_local = strchr(sym2_name, '.');
 
 	if (sym1_local != sym2_local) {
 		size_t sym1_len = strlen(sym1_name);
