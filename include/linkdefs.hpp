@@ -22,17 +22,17 @@ enum RPNCommand {
 	RPN_MUL			= 0x02,
 	RPN_DIV			= 0x03,
 	RPN_MOD			= 0x04,
-	RPN_UNSUB		= 0x05, // FIXME: should be renamed to "NEG" for consistency
+	RPN_NEG			= 0x05,
 	RPN_EXP			= 0x06,
 
 	RPN_OR			= 0x10,
 	RPN_AND			= 0x11,
 	RPN_XOR			= 0x12,
-	RPN_UNNOT		= 0x13, // FIXME: should be renamed to "NOT" for consistency
+	RPN_NOT			= 0x13,
 
 	RPN_LOGAND		= 0x21,
 	RPN_LOGOR		= 0x22,
-	RPN_LOGUNNOT		= 0x23, // FIXME: should be renamed to "LOGNOT" for consistency
+	RPN_LOGNOT		= 0x23,
 
 	RPN_LOGEQ		= 0x30,
 	RPN_LOGNE		= 0x31,

@@ -44,8 +44,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 void rpn_HIGH(struct Expression *expr, const struct Expression *src);
 void rpn_LOW(struct Expression *expr, const struct Expression *src);
 void rpn_ISCONST(struct Expression *expr, const struct Expression *src);
-void rpn_UNNEG(struct Expression *expr, const struct Expression *src);
-void rpn_UNNOT(struct Expression *expr, const struct Expression *src);
+void rpn_NEG(struct Expression *expr, const struct Expression *src);
+void rpn_NOT(struct Expression *expr, const struct Expression *src);
 void rpn_BankSymbol(struct Expression *expr, char const *symName);
 void rpn_BankSection(struct Expression *expr, char const *sectionName);
 void rpn_BankSelf(struct Expression *expr);

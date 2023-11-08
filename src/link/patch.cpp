@@ -183,7 +183,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 				value = op_modulo(popRPN(), value);
 			}
 			break;
-		case RPN_UNSUB:
+		case RPN_NEG:
 			value = -popRPN();
 			break;
 		case RPN_EXP:
@@ -208,7 +208,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		case RPN_XOR:
 			value = popRPN() ^ popRPN();
 			break;
-		case RPN_UNNOT:
+		case RPN_NOT:
 			value = ~popRPN();
 			break;
 
@@ -220,7 +220,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			value = popRPN();
 			value = popRPN() || value;
 			break;
-		case RPN_LOGUNNOT:
+		case RPN_LOGNOT:
 			value = !popRPN();
 			break;
 
