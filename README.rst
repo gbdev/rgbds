@@ -14,10 +14,14 @@ other UNIX tools.
 
 This toolchain is maintained `on GitHub <https://github.com/gbdev/rgbds>`__.
 
-The documentation of this toolchain can be viewed online `here <https://rgbds.gbdev.io/docs/>`__, it is generated from the man pages found in this repository.
-The source code of the website itself is on GitHub as well under the repo `rgbds-www <https://github.com/gbdev/rgbds-www>`__.
+The documentation of this toolchain can be viewed online `here <https://rgbds.gbdev.io/docs/>`__.
+It is generated from the man pages found in this repository.
+The source code of the website itself is on GitHub as well under the repo
+`rgbds-www <https://github.com/gbdev/rgbds-www>`__.
 
-If you want to contribute or maintain RGBDS, and have questions regarding the code, its organisation, etc. you can find the maintainers `on GBDev <https://gbdev.io/chat>`__ or via mail at ``rgbds at gbdev dot io``.
+If you want to contribute or maintain RGBDS, and have questions regarding the code, its
+organisation, etc. you can find the maintainers `on GBDev <https://gbdev.io/chat>`__ or
+via mail at ``rgbds at gbdev dot io``.
 
 1. Installing RGBDS
 -------------------
@@ -91,9 +95,11 @@ The RGBDS source code file structure somewhat resembles the following:
 - ``contrib/`` - scripts and other resources which may be useful to users and developers of
   RGBDS.
 
-  * ``zsh_compl`` contains tab completion scripts for use with zsh. Put them somewhere in your ``fpath``, and they should auto-load.
+  * ``zsh_compl`` contains tab completion scripts for use with zsh. Put them somewhere in
+    your ``fpath``, and they should auto-load.
 
-  * ``bash_compl`` contains tab completion scripts for use with bash. Run them with ``source`` somewhere in your ``.bashrc``, and they should load every time you open a shell.
+  * ``bash_compl`` contains tab completion scripts for use with bash. Run them with ``source``
+    somewhere in your ``.bashrc``, and they should load every time you open a shell.
 
 - ``include/`` - header files for the respective source files in `src`.
 
@@ -102,33 +108,36 @@ The RGBDS source code file structure somewhat resembles the following:
 - ``src/`` - source code of RGBDS.
 
   * Note that the code unique to each RGBDS tool is stored in its respective subdirectory
-    (rgbasm -> ``src/asm/``, for example). ``src/extern/`` contains code imported from external sources.
+    (rgbasm -> ``src/asm/``, for example). ``src/extern/`` contains code imported from
+    external sources.
 
-- ``test/`` - testing framework used to verify that changes to the code don't break or modify the behavior of RGBDS.
+- ``test/`` - testing framework used to verify that changes to the code don't break or
+  modify the behavior of RGBDS.
 
 - ``.clang-format`` - code style for automated C++ formatting with |clang-format|_.
 
 3. History
 ----------
 
-- Around 1997, Carsten Sørensen (AKA SurfSmurf) writes ASMotor as a
+- 1997-07-03: Carsten Sørensen (a.k.a. SurfSmurf) writes ASMotor as a
   general-purpose assembler/linker system for DOS/Win32.
 
-- Around 1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to read and
+- 1999-08-01: Justin Lloyd (a.k.a. Otaku no Zoku) adapts ASMotor to read and
   produce GBZ80 assembly/machine code, and releases this version as RGBDS.
 
-- 2009, Vegard Nossum adapts the code to be more UNIX-like and releases
-  this version as rgbds-linux on
-  `GitHub <https://github.com/vegard/rgbds-linux>`__.
+- 2009-06-11: Vegard Nossum adapts the code to be more UNIX-like and releases
+  this version as rgbds-linux on `GitHub <https://github.com/vegard/rgbds-linux>`__.
 
-- 2010, Anthony J. Bentley forks that repository. The fork becomes the reference
+- 2010-01-12: Anthony J. Bentley forks that repository. The fork becomes the reference
   implementation of RGBDS.
 
-- 2017, Bentley's repository is moved to a neutral name.
+- 2017-02-23: Bentley's repository is moved to a neutral name, Rednex.
 
-- 2018, codebase relicensed under the MIT license.
+- 2018-01-26: The codebase relicensed under the MIT license.
 
-- 2020, repository is moved to the `gbdev <https://github.com/gbdev>`__ organisation. The `rgbds.gbdev.io <https://rgbds.gbdev.io>`__ website serving documentation and downloads is created.
+- 2020-09-15: The repository is moved to the `gbdev <https://github.com/gbdev>`__
+  organization. The `rgbds.gbdev.io <https://rgbds.gbdev.io>`__ website serving documentation
+  and downloads is created.
 
 4. Acknowledgements
 -------------------
