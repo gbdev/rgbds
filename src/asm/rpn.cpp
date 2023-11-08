@@ -317,7 +317,7 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 		expr->val = !expr->val;
 	} else {
 		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_LOGUNNOT;
+		*reserveSpace(expr, 1) = RPN_LOGNOT;
 	}
 }
 
@@ -518,9 +518,9 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 				expr->val = op_exponent(src1->val, src2->val);
 			break;
 
-		case RPN_UNSUB:
-		case RPN_UNNOT:
-		case RPN_LOGUNNOT:
+		case RPN_NEG:
+		case RPN_NOT:
+		case RPN_LOGNOT:
 		case RPN_BANK_SYM:
 		case RPN_BANK_SECT:
 		case RPN_BANK_SELF:
@@ -635,7 +635,7 @@ void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 }
 
-void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
+void rpn_NEG(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -644,11 +644,11 @@ void rpn_UNNEG(struct Expression *expr, const struct Expression *src)
 		expr->val = -(uint32_t)expr->val;
 	} else {
 		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_UNSUB;
+		*reserveSpace(expr, 1) = RPN_NEG;
 	}
 }
 
-void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
+void rpn_NOT(struct Expression *expr, const struct Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -657,6 +657,6 @@ void rpn_UNNOT(struct Expression *expr, const struct Expression *src)
 		expr->val = ~expr->val;
 	} else {
 		expr->rpnPatchSize++;
-		*reserveSpace(expr, 1) = RPN_UNNOT;
+		*reserveSpace(expr, 1) = RPN_NOT;
 	}
 }

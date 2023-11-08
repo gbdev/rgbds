@@ -1425,7 +1425,7 @@ reloc_8bit_offset : T_OP_ADD relocexpr {
 			$$ = $2;
 		}
 		| T_OP_SUB relocexpr {
-			rpn_UNNEG(&$$, &$2);
+			rpn_NEG(&$$, &$2);
 			rpn_CheckNBit(&$$, 8);
 		}
 ;
@@ -1521,8 +1521,8 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 			rpn_BinaryOp(RPN_EXP, &$$, &$1, &$3);
 		}
 		| T_OP_ADD relocexpr %prec NEG { $$ = $2; }
-		| T_OP_SUB relocexpr %prec NEG { rpn_UNNEG(&$$, &$2); }
-		| T_OP_NOT relocexpr %prec NEG { rpn_UNNOT(&$$, &$2); }
+		| T_OP_SUB relocexpr %prec NEG { rpn_NEG(&$$, &$2); }
+		| T_OP_NOT relocexpr %prec NEG { rpn_NOT(&$$, &$2); }
 		| T_OP_HIGH T_LPAREN relocexpr T_RPAREN { rpn_HIGH(&$$, &$3); }
 		| T_OP_LOW T_LPAREN relocexpr T_RPAREN { rpn_LOW(&$$, &$3); }
 		| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN { rpn_ISCONST(&$$, &$3); }
