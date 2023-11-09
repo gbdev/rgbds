@@ -8,19 +8,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-        cc: [gcc, clang]
+        cxx: [g++, clang++]
         buildsys: [make, cmake]
         exclude:
           # `gcc` is just an alias to `clang` on macOS, don't bother
           - os: macos-11
-            cc: gcc
-          - os: macos-12
-            cc: gcc
-        include:
-          - cc: gcc
             cxx: g++
-          - cc: clang
-            cxx: clang++
+          - os: macos-12
+            cxx: g++
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -36,13 +31,13 @@ jobs:
         if: matrix.buildsys == 'make'
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          make develop -j Q= CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
+          make develop -j Q= CXX=${{ matrix.cxx }}
           sudo make install -j Q=
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
           cmake --build build -j --verbose
           cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build --verbose
@@ -53,7 +48,7 @@ jobs:
       - name: Upload binaries
         uses: actions/upload-artifact@v3
         with:
-          name: rgbds-canary-${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.buildsys }}
+          name: rgbds-canary-${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.buildsys }}
           path: bins
       - name: Compute test dependency cache params
         id: test-deps-cache-params
@@ -187,7 +182,7 @@ jobs:
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
       - name: Install MinGW
         run: | # dpkg-dev is apparently required for pkg-config for cross-building
-          sudo apt-get install {gcc,g++}-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
+          sudo apt-get install g++-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
       - name: Install libpng dev headers for MinGW
         run: |
           sudo ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
