@@ -402,7 +402,7 @@ int main(int argc, char *argv[])
 			parseScrambleSpec(musl_optarg);
 			break;
 		case 's':
-			// FIXME: nobody knows what this does, figure it out
+			// TODO: implement "smart linking" with `-s`
 			(void)musl_optarg;
 			warning(NULL, 0, "Nobody has any idea what `-s` does");
 			break;
