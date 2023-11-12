@@ -804,27 +804,18 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
                        DefaultInitVec<size_t> const &mappings) {
 	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
-	if (!options.tilemap.empty()) {
-		tilemapOutput.emplace();
-		if (!tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", tilemapOutput->c_str(options.tilemap),
-			      strerror(errno));
+	auto autoOpenPath = [](std::string &path, std::optional<File> &file) {
+		if (!path.empty()) {
+			file.emplace();
+			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
+				fatal("Failed to open \"%s\": %s", file->c_str(path),
+				      strerror(errno));
+			}
 		}
-	}
-	if (!options.attrmap.empty()) {
-		attrmapOutput.emplace();
-		if (!attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", attrmapOutput->c_str(options.attrmap),
-			      strerror(errno));
-		}
-	}
-	if (!options.palmap.empty()) {
-		palmapOutput.emplace();
-		if (!palmapOutput->open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", palmapOutput->c_str(options.palmap),
-			      strerror(errno));
-		}
-	}
+	};
+	autoOpenPath(options.tilemap, tilemapOutput);
+	autoOpenPath(options.attrmap, attrmapOutput);
+	autoOpenPath(options.palmap, palmapOutput);
 
 	uint8_t tileID = 0;
 	uint8_t bank = 0;

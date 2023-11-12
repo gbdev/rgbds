@@ -316,6 +316,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 		} while (c != '\n' && c != EOF); // End if we reached EOL
 	}
 }
+
 /*
  * Parses an arg vector, modifying `options` as options are read.
  * The three booleans are for the "auto path" flags, since their processing must be deferred to the
@@ -644,6 +645,11 @@ int main(int argc, char *argv[]) {
 
 	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
 		if (autoOptEnabled) {
+			if (options.input.empty()) {
+				fputs("FATAL: No input image specified\n", stderr);
+				printUsage();
+				exit(1);
+			}
 			constexpr std::string_view chars =
 // Both must start with a dot!
 #if defined(_MSC_VER) || defined(__MINGW32__)
