@@ -7,11 +7,11 @@
 #include <assert.h>
 #include <cassert>
 #include <fcntl.h>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
 #include <streambuf>
-#include <string>
 #include <string.h>
 #include <string_view>
 #include <variant>
@@ -41,7 +41,7 @@ public:
 	 * This should only be called once, and before doing any `->` operations.
 	 * Returns `nullptr` on error, and a non-null pointer otherwise.
 	 */
-	File *open(std::string const &path, std::ios_base::openmode mode) {
+	File *open(std::filesystem::path const &path, std::ios_base::openmode mode) {
 		if (path != "-") {
 			return _file.emplace<std::filebuf>().open(path, mode) ? this : nullptr;
 		} else if (mode & std::ios_base::in) {
@@ -85,7 +85,7 @@ public:
 		           : nullptr;
 	}
 
-	char const *c_str(std::string const &path) const {
+	char const *c_str(std::filesystem::path const &path) const {
 		return std::visit(Visitor{[&path](std::filebuf const &) { return path.c_str(); },
 		                          [](std::streambuf const *buf) {
 			                          return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";

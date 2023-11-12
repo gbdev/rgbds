@@ -8,6 +8,7 @@
 #include <climits>
 #include <cstdio>
 #include <errno.h>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <optional>
@@ -71,7 +72,7 @@ public:
 };
 
 class Png {
-	std::string const &path;
+	std::filesystem::path const &path;
 	File file{};
 	png_structp png = nullptr;
 	png_infop info = nullptr;
@@ -169,7 +170,7 @@ public:
 	 * We also use that occasion to only read the PNG one line at a time, since we store all of
 	 * the pixel data in `pixels`, which saves on memory allocations.
 	 */
-	explicit Png(std::string const &filePath) : path(filePath), colors() {
+	explicit Png(std::filesystem::path const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
 			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
 		}
@@ -637,10 +638,10 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		      options.nbPalettes);
 	}
 
-	if (!options.palettes.empty()) {
+	if (options.palettes.has_value()) {
 		File output;
-		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", output.c_str(options.palettes),
+		if (!output.open(*options.palettes, std::ios_base::out | std::ios_base::binary)) {
+			fatal("Failed to open \"%s\": %s", output.c_str(*options.palettes),
 				strerror(errno));
 		}
 
@@ -770,8 +771,8 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
                            std::vector<Palette> const &palettes,
                            DefaultInitVec<size_t> const &mappings) {
 	File output;
-	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to open \"%s\": %s", output.c_str(options.output), strerror(errno));
+	if (!output.open(*options.output, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to open \"%s\": %s", output.c_str(*options.output), strerror(errno));
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
@@ -804,27 +805,18 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
                        DefaultInitVec<size_t> const &mappings) {
 	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
-	if (!options.tilemap.empty()) {
-		tilemapOutput.emplace();
-		if (!tilemapOutput->open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", tilemapOutput->c_str(options.tilemap),
-			      strerror(errno));
+	auto autoOpenPath = [](std::optional<std::filesystem::path> &path, std::optional<File> &file) {
+		if (path.has_value()) {
+			file.emplace();
+			if (!file->open(*path, std::ios_base::out | std::ios_base::binary)) {
+				fatal("Failed to open \"%s\": %s", file->c_str(*path),
+				      strerror(errno));
+			}
 		}
-	}
-	if (!options.attrmap.empty()) {
-		attrmapOutput.emplace();
-		if (!attrmapOutput->open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", attrmapOutput->c_str(options.attrmap),
-			      strerror(errno));
-		}
-	}
-	if (!options.palmap.empty()) {
-		palmapOutput.emplace();
-		if (!palmapOutput->open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", palmapOutput->c_str(options.palmap),
-			      strerror(errno));
-		}
-	}
+	};
+	autoOpenPath(options.tilemap, tilemapOutput);
+	autoOpenPath(options.attrmap, attrmapOutput);
+	autoOpenPath(options.palmap, palmapOutput);
 
 	uint8_t tileID = 0;
 	uint8_t bank = 0;
@@ -919,8 +911,8 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 
 static void outputTileData(UniqueTiles const &tiles) {
 	File output;
-	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
+	if (!output.open(*options.output, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", output.c_str(*options.output), strerror(errno));
 	}
 
 	uint16_t tileID = 0;
@@ -934,8 +926,8 @@ static void outputTileData(UniqueTiles const &tiles) {
 
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	File output;
-	if (!output.open(options.tilemap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(options.tilemap), strerror(errno));
+	if (!output.open(*options.tilemap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", output.c_str(*options.tilemap), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -946,8 +938,8 @@ static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                           DefaultInitVec<size_t> const &mappings) {
 	File output;
-	if (!output.open(options.attrmap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(options.attrmap), strerror(errno));
+	if (!output.open(*options.attrmap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", output.c_str(*options.attrmap), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -961,8 +953,8 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
 static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                          DefaultInitVec<size_t> const &mappings) {
 	File output;
-	if (!output.open(options.palmap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(options.palmap), strerror(errno));
+	if (!output.open(*options.palmap, std::ios_base::out | std::ios_base::binary)) {
+		fatal("Failed to create \"%s\": %s", output.c_str(*options.palmap), strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -986,7 +978,7 @@ void process() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
-	Png png(options.input); // This also sets `hasTransparentPixels` as a side effect
+	Png png(*options.input); // This also sets `hasTransparentPixels` as a side effect
 	ImagePalette const &colors = png.getColors();
 
 	// Now, we have all the image's colors in `colors`
@@ -1108,12 +1100,13 @@ contained:;
 			      nbTilesW * nbTilesH, options.maxNbTiles[0], options.maxNbTiles[1]);
 		}
 
-		if (!options.output.empty()) {
+		if (options.output.has_value()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
 			unoptimized::outputTileData(png, attrmap, palettes, mappings);
 		}
 
-		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
+		if (options.tilemap.has_value() || options.attrmap.has_value()
+		    || options.palmap.has_value()) {
 			options.verbosePrint(
 			    Options::VERB_LOG_ACT,
 			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n");
@@ -1129,22 +1122,22 @@ contained:;
 			      tiles.size(), options.maxNbTiles[0], options.maxNbTiles[1]);
 		}
 
-		if (!options.output.empty()) {
+		if (options.output.has_value()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tile data...\n");
 			optimized::outputTileData(tiles);
 		}
 
-		if (!options.tilemap.empty()) {
+		if (options.tilemap.has_value()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tilemap...\n");
 			optimized::outputTilemap(attrmap);
 		}
 
-		if (!options.attrmap.empty()) {
+		if (options.attrmap.has_value()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
 			optimized::outputAttrmap(attrmap, mappings);
 		}
 
-		if (!options.palmap.empty()) {
+		if (options.palmap.has_value()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized palmap...\n");
 			optimized::outputPalmap(attrmap, mappings);
 		}

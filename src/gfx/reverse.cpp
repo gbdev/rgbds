@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <cinttypes>
 #include <errno.h>
+#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <png.h>
@@ -21,7 +22,7 @@
 
 #include "gfx/main.hpp"
 
-static DefaultInitVec<uint8_t> readInto(std::string path) {
+static DefaultInitVec<uint8_t> readInto(std::filesystem::path path) {
 	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
 		fatal("Failed to open \"%s\": %s", file.c_str(path), strerror(errno));
@@ -77,11 +78,11 @@ void reverse() {
 
 	// Check for weird flag combinations
 
-	if (options.output.empty()) {
+	if (!options.output.has_value()) {
 		fatal("Tile data must be provided when reversing an image!");
 	}
 
-	if (options.allowDedup && options.tilemap.empty()) {
+	if (options.allowDedup && !options.tilemap.has_value()) {
 		warning("Tile deduplication is enabled, but no tilemap is provided?");
 	}
 
@@ -100,7 +101,7 @@ void reverse() {
 	}
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
-	auto const tiles = readInto(options.output);
+	auto const tiles = readInto(*options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
 		fatal("Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
@@ -111,8 +112,8 @@ void reverse() {
 	size_t nbTileInstances = tiles.size() / tileSize + options.trim; // Image size in tiles
 	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTileInstances);
 	std::optional<DefaultInitVec<uint8_t>> tilemap;
-	if (!options.tilemap.empty()) {
-		tilemap = readInto(options.tilemap);
+	if (options.tilemap.has_value()) {
+		tilemap = readInto(*options.tilemap);
 		nbTileInstances = tilemap->size();
 		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", nbTileInstances);
 	}
@@ -140,10 +141,10 @@ void reverse() {
 	std::vector<std::array<Rgba, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
     };
-	if (!options.palettes.empty()) {
+	if (options.palettes.has_value()) {
 		File file;
-		if (!file.open(options.palettes, std::ios::in | std::ios::binary)) {
-			fatal("Failed to open \"%s\": %s", file.c_str(options.palettes), strerror(errno));
+		if (!file.open(*options.palettes, std::ios::in | std::ios::binary)) {
+			fatal("Failed to open \"%s\": %s", file.c_str(*options.palettes), strerror(errno));
 		}
 
 		palettes.clear();
@@ -172,8 +173,8 @@ void reverse() {
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> attrmap;
-	if (!options.attrmap.empty()) {
-		attrmap = readInto(options.attrmap);
+	if (options.attrmap.has_value()) {
+		attrmap = readInto(*options.attrmap);
 		if (attrmap->size() != nbTileInstances) {
 			fatal("Attribute map size (%zu tiles) doesn't match image's (%zu)", attrmap->size(),
 			      nbTileInstances);
@@ -219,8 +220,8 @@ void reverse() {
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> palmap;
-	if (!options.palmap.empty()) {
-		palmap = readInto(options.palmap);
+	if (options.palmap.has_value()) {
+		palmap = readInto(*options.palmap);
 		if (palmap->size() != nbTileInstances) {
 			fatal("Palette map size (%zu tiles) doesn't match image's (%zu)", palmap->size(),
 			      nbTileInstances);
@@ -229,12 +230,12 @@ void reverse() {
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Writing image...\n");
 	File pngFile;
-	if (!pngFile.open(options.input, std::ios::out | std::ios::binary)) {
-		fatal("Failed to create \"%s\": %s", pngFile.c_str(options.input), strerror(errno));
+	if (!pngFile.open(*options.input, std::ios::out | std::ios::binary)) {
+		fatal("Failed to create \"%s\": %s", pngFile.c_str(*options.input), strerror(errno));
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
-	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(options.input))), pngError,
+	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(*options.input))), pngError,
 	    pngWarning);
 	if (!png) {
 		fatal("Couldn't create PNG write struct: %s", strerror(errno));
