@@ -21,6 +21,6 @@ void grayscale(std::vector<Palette> &palettes,
                std::array<std::optional<Rgba>, 0x8001> const &colors);
 void rgb(std::vector<Palette> &palettes);
 
-}
+} // namespace sorting
 
 #endif // RGBDS_GFX_PAL_SORTING_HPP

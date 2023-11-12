@@ -13,6 +13,42 @@ static inline void report() {
 	puts(__PRETTY_FUNCTION__);
 }
 
+template<typename T>
+class EnumSeqIterator {
+	T _value;
+
+public:
+	explicit EnumSeqIterator(T value) : _value(value) {}
+
+	EnumSeqIterator &operator++() {
+		_value = (T)(_value + 1);
+		return *this;
+	}
+
+	auto operator*() const { return _value; }
+
+	friend auto operator==(EnumSeqIterator const &lhs, EnumSeqIterator const &rhs) {
+		return lhs._value == rhs._value;
+	}
+
+	friend auto operator!=(EnumSeqIterator const &lhs, EnumSeqIterator const &rhs) {
+		return lhs._value != rhs._value;
+	}
+};
+
+template<typename T>
+class EnumSeq {
+	T _start;
+	T _stop;
+
+public:
+	explicit EnumSeq(T stop) : _start((T)0), _stop(stop) {}
+	explicit EnumSeq(T start, T stop) : _start(start), _stop(stop) {}
+
+	EnumSeqIterator<T> begin() { return EnumSeqIterator(_start); }
+	EnumSeqIterator<T> end() { return EnumSeqIterator(_stop); }
+};
+
 // This is not a fully generic implementation; its current use cases only require for-loop behavior.
 // We also assume that all iterators have the same length.
 template<typename... Iters>
@@ -73,7 +109,7 @@ public:
 template<typename T>
 using Holder = std::conditional_t<std::is_lvalue_reference_v<T>, T,
                                   std::remove_cv_t<std::remove_reference_t<T>>>;
-}
+} // namespace detail
 
 // Does the same number of iterations as the first container's iterator!
 template<typename... Containers>

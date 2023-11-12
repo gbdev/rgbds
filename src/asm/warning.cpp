@@ -13,6 +13,7 @@
 #include "asm/warning.hpp"
 
 #include "error.hpp"
+#include "itertools.hpp"
 
 unsigned int nbErrors = 0;
 
@@ -214,7 +215,7 @@ void processWarningFlag(char *flag)
 	static bool setError = false;
 
 	// First, try to match against a "meta" warning
-	for (enum WarningID id = META_WARNINGS_START; id < NB_WARNINGS; id = (enum WarningID)(id + 1)) {
+	for (enum WarningID id : EnumSeq(META_WARNINGS_START, NB_WARNINGS)) {
 		// TODO: improve the matching performance?
 		if (!strcmp(flag, warningFlags[id])) {
 			// We got a match!
@@ -309,8 +310,7 @@ void processWarningFlag(char *flag)
 	}
 
 	// Try to match the flag against a "normal" flag
-	for (enum WarningID id = (enum WarningID)0; id < NB_PLAIN_WARNINGS;
-			id = (enum WarningID)(id + 1)) {
+	for (enum WarningID id : EnumSeq(NB_PLAIN_WARNINGS)) {
 		if (!strcmp(rootFlag, warningFlags[id])) {
 			// We got a match!
 			warningStates[id] = state;

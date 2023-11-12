@@ -15,6 +15,7 @@
 
 #include "error.hpp"
 #include "helpers.hpp"
+#include "itertools.hpp"
 #include "linkdefs.hpp"
 
 struct MemoryLocation {
@@ -36,7 +37,7 @@ uint64_t nbSectionsToAssign;
 // Init the free space-modelling structs
 static void initFreeSpace(void)
 {
-	for (enum SectionType type = (enum SectionType)0; type < SECTTYPE_INVALID; type = (enum SectionType)(type + 1)) {
+	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		memory[type] = (struct FreeSpace *)malloc(sizeof(*memory[type]) * nbbanks(type));
 		if (!memory[type])
 			err("Failed to init free space for region %d", type);
@@ -428,7 +429,7 @@ max_out:
 
 void assign_Cleanup(void)
 {
-	for (enum SectionType type = (enum SectionType)0; type < SECTTYPE_INVALID; type = (enum SectionType)(type + 1)) {
+	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
 			struct FreeSpace *ptr =
 				memory[type][bank].next;

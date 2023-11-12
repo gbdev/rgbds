@@ -21,6 +21,6 @@ namespace packing {
 std::tuple<DefaultInitVec<size_t>, size_t>
     overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes);
 
-}
+} // namespace packing
 
 #endif // RGBDS_GFX_PAL_PACKING_HPP
