@@ -86,7 +86,14 @@ public:
 	}
 
 	char const *c_str(std::filesystem::path const &path) const {
-		return std::visit(Visitor{[&path](std::filebuf const &) { return path.c_str(); },
+		// FIXME: This is a hack to prevent the path string from being destroyed until
+		// `.c_str(path)` is called again. It's necessary because just `return path.c_str()`
+		// fails on Windows, where paths use `wchar_t`.
+		static std::string path_string;
+		return std::visit(Visitor{[&path](std::filebuf const &) {
+			                          path_string = path.string();
+			                          return path_string.c_str();
+		                          },
 		                          [](std::streambuf const *buf) {
 			                          return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
 		                          }},
