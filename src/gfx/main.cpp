@@ -7,10 +7,12 @@
 #include <cinttypes>
 #include <cstdint>
 #include <ctype.h>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -228,11 +230,11 @@ static void skipWhitespace(char *&arg) {
 }
 
 static void registerInput(char const *arg) {
-	if (!options.input.empty()) {
+	if (options.input.has_value()) {
 		fprintf(stderr,
 		        "FATAL: input image specified more than once! (first \"%s\", then "
 		        "\"%s\")\n",
-		        options.input.c_str(), arg);
+		        options.input->c_str(), arg);
 		printUsage();
 		exit(1);
 	} else if (arg[0] == '\0') { // Empty input path
@@ -240,7 +242,7 @@ static void registerInput(char const *arg) {
 		printUsage();
 		exit(1);
 	} else {
-		options.input = arg;
+		options.input.emplace(arg);
 	}
 }
 
@@ -248,7 +250,8 @@ static void registerInput(char const *arg) {
  * Turn an "at-file"'s contents into an argv that `getopt` can handle
  * @param argPool Argument characters will be appended to this vector, for storage purposes.
  */
-static std::vector<size_t> readAtFile(std::string const &path, std::vector<char> &argPool) {
+static std::vector<size_t> readAtFile(std::filesystem::path const &path,
+                                      std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {
 		fatal("Error reading @%s: %s", file.c_str(path), strerror(errno));
@@ -316,6 +319,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 		} while (c != '\n' && c != EOF); // End if we reached EOL
 	}
 }
+
 /*
  * Parses an arg vector, modifying `options` as options are read.
  * The three booleans are for the "auto path" flags, since their processing must be deferred to the
@@ -334,8 +338,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'a':
 			autoAttrmap = false;
-			if (!options.attrmap.empty())
-				warning("Overriding attrmap file %s", options.attrmap.c_str());
+			if (options.attrmap.has_value())
+				warning("Overriding attrmap file %s", options.attrmap->c_str());
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
@@ -478,8 +482,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			}
 			break;
 		case 'o':
-			if (!options.output.empty())
-				warning("Overriding tile data file %s", options.output.c_str());
+			if (options.output.has_value())
+				warning("Overriding tile data file %s", options.output->c_str());
 			options.output = musl_optarg;
 			break;
 		case 'P':
@@ -487,8 +491,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'p':
 			autoPalettes = false;
-			if (!options.palettes.empty())
-				warning("Overriding palettes file %s", options.palettes.c_str());
+			if (options.palettes.has_value())
+				warning("Overriding palettes file %s", options.palettes->c_str());
 			options.palettes = musl_optarg;
 			break;
 		case 'Q':
@@ -496,8 +500,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 'q':
 			autoPalmap = false;
-			if (!options.palmap.empty())
-				warning("Overriding palette map file %s", options.palmap.c_str());
+			if (options.palmap.has_value())
+				warning("Overriding palette map file %s", options.palmap->c_str());
 			options.palmap = musl_optarg;
 			break;
 		case 'r':
@@ -525,8 +529,8 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			break;
 		case 't':
 			autoTilemap = false;
-			if (!options.tilemap.empty())
-				warning("Overriding tilemap file %s", options.tilemap.c_str());
+			if (options.tilemap.has_value())
+				warning("Overriding tilemap file %s", options.tilemap->c_str());
 			options.tilemap = musl_optarg;
 			break;
 		case 'V':
@@ -642,27 +646,15 @@ int main(int argc, char *argv[]) {
 		      1u << options.bitDepth, options.nbColorsPerPal);
 	}
 
-	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
+	auto autoOutPath = [](bool autoOptEnabled, std::optional<std::filesystem::path> &path,
+	                      char const *extension) {
 		if (autoOptEnabled) {
-			constexpr std::string_view chars =
-// Both must start with a dot!
-#if defined(_MSC_VER) || defined(__MINGW32__)
-			    "./\\"sv;
-#else
-			    "./"sv;
-#endif
-			size_t len = options.input.npos;
-			size_t i = options.input.find_last_of(chars);
-			if (i != options.input.npos && options.input[i] == '.') {
-				// We found the last dot, but check if it's part of a stem
-				// (There must be a non-path separator character before it)
-				if (i != 0 && chars.find(options.input[i - 1], 1) == chars.npos) {
-					// We can replace the extension
-					len = i;
-				}
+			if (!options.input.has_value()) {
+				fputs("FATAL: No input image specified\n", stderr);
+				printUsage();
+				exit(1);
 			}
-			path.assign(options.input, 0, len);
-			path.append(extension);
+			path.emplace(*options.input).replace_extension(extension);
 		}
 	};
 	autoOutPath(autoAttrmap, options.attrmap, ".attrmap");
@@ -747,9 +739,10 @@ int main(int argc, char *argv[]) {
 		        options.baseTileIDs[1]);
 		fprintf(stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
 		        options.maxNbTiles[0], options.maxNbTiles[1]);
-		auto printPath = [](char const *name, std::string const &path) {
-			if (!path.empty()) {
-				fprintf(stderr, "\t%s: %s\n", name, path.c_str());
+		auto printPath = [](char const *name,
+		                    std::optional<std::filesystem::path> const &path) {
+			if (path.has_value()) {
+				fprintf(stderr, "\t%s: %s\n", name, path->c_str());
 			}
 		};
 		printPath("Input image", options.input);
@@ -765,13 +758,13 @@ int main(int argc, char *argv[]) {
 		giveUp();
 	}
 
-	if (!options.input.empty()) {
+	if (options.input.has_value()) {
 		if (options.reverse()) {
 			reverse();
 		} else {
 			process();
 		}
-	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
+	} else if (options.palettes.has_value() && options.palSpecType == Options::EXPLICIT
 		&& !options.reverse()) {
 		processPalettes();
 	} else {
