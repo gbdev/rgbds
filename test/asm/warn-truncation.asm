@@ -27,6 +27,8 @@ MACRO try
 	; warn at level 2
 	db ~(1 << BAR_F)
 	dw -wLabel
+	db ~$ff
+	dw ~$ffff
 ENDM
 
 	try Wno-truncation
