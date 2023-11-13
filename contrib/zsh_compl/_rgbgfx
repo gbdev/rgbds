@@ -16,6 +16,7 @@ local args=(
 	'(-a --attr-map -A --output-attr-map)'{-A,--output-attr-map}'[Shortcut for -a <file>.attrmap]'
 	'(-C --color-curve)'{-C,--color-curve}'[Generate palettes using GBC color curve]'
 	'(-m --mirror-tiles)'{-m,--mirror-tiles}'[Eliminate mirrored tiles from output]'
+	'(-O --group-outputs)'{-O,--group-outputs}'[Base "shortcut" options on the output path, not input]'
 	'(-p --palette -P --output-palette)'{-P,--output-palette}'[Shortcut for -p <file>.pal]'
 	'(-q --palette-map -Q --output-palette-map)'{-Q,--output-palette-map}'[Shortcut for -p <file>.palmap]'
 	'(-t --tilemap -T --output-tilemap)'{-T,--output-tilemap}'[Shortcut for -t <file>.tilemap]'
