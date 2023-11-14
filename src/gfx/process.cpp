@@ -89,13 +89,13 @@ class Png {
 	[[noreturn]] static void handleError(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
-		fatal("Error reading input image (\"%s\"): %s", self->file.c_str(self->path), msg);
+		fatal("Error reading input image (\"%s\"): %s", self->string().c_str(), msg);
 	}
 
 	static void handleWarning(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
-		warning("In input image (\"%s\"): %s", self->file.c_str(self->path), msg);
+		warning("In input image (\"%s\"): %s", self->string().c_str(), msg);
 	}
 
 	static void readData(png_structp png, png_bytep data, size_t length) {
@@ -107,7 +107,7 @@ class Png {
 		if (nbBytesRead != expectedLen) {
 			fatal("Error reading input image (\"%s\"): file too short (expected at least %zd more "
 			      "bytes after reading %lld)",
-			      self->file.c_str(self->path), length - nbBytesRead,
+			      self->string().c_str(), length - nbBytesRead,
 			      self->file->pubseekoff(0, std::ios_base::cur));
 		}
 	}
@@ -128,6 +128,8 @@ public:
 	Rgba &pixel(uint32_t x, uint32_t y) { return pixels[y * width + x]; }
 
 	Rgba const &pixel(uint32_t x, uint32_t y) const { return pixels[y * width + x]; }
+
+	std::string string() const { return file.string(path); }
 
 	bool isSuitableForGrayscale() const {
 		// Check that all of the grays don't fall into the same "bin"
@@ -172,7 +174,8 @@ public:
 	 */
 	explicit Png(std::filesystem::path const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
-			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
+			fatal("Failed to open input image (\"%s\"): %s", file.string(path).c_str(),
+			      strerror(errno));
 		}
 
 		options.verbosePrint(Options::VERB_LOG_ACT, "Opened input file\n");
@@ -182,7 +185,7 @@ public:
 		if (file->sgetn(reinterpret_cast<char *>(pngHeader.data()), pngHeader.size())
 		        != static_cast<std::streamsize>(pngHeader.size()) // Not enough bytes?
 		    || png_sig_cmp(pngHeader.data(), 0, pngHeader.size()) != 0) {
-			fatal("Input file (\"%s\") is not a PNG image!", file.c_str(path));
+			fatal("Input file (\"%s\") is not a PNG image!", file.string(path).c_str());
 		}
 
 		options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");
@@ -641,7 +644,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	if (options.palettes.has_value()) {
 		File output;
 		if (!output.open(*options.palettes, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", output.c_str(*options.palettes),
+			fatal("Failed to open \"%s\": %s", output.string(*options.palettes).c_str(),
 				strerror(errno));
 		}
 
@@ -772,7 +775,8 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
                            DefaultInitVec<size_t> const &mappings) {
 	File output;
 	if (!output.open(*options.output, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to open \"%s\": %s", output.c_str(*options.output), strerror(errno));
+		fatal("Failed to open \"%s\": %s", output.string(*options.output).c_str(),
+		      strerror(errno));
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
@@ -809,7 +813,7 @@ static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
 		if (path.has_value()) {
 			file.emplace();
 			if (!file->open(*path, std::ios_base::out | std::ios_base::binary)) {
-				fatal("Failed to open \"%s\": %s", file->c_str(*path),
+				fatal("Failed to open \"%s\": %s", file->string(*path).c_str(),
 				      strerror(errno));
 			}
 		}
@@ -912,7 +916,8 @@ static UniqueTiles dedupTiles(Png const &png, DefaultInitVec<AttrmapEntry> &attr
 static void outputTileData(UniqueTiles const &tiles) {
 	File output;
 	if (!output.open(*options.output, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(*options.output), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.string(*options.output).c_str(),
+		      strerror(errno));
 	}
 
 	uint16_t tileID = 0;
@@ -927,7 +932,8 @@ static void outputTileData(UniqueTiles const &tiles) {
 static void outputTilemap(DefaultInitVec<AttrmapEntry> const &attrmap) {
 	File output;
 	if (!output.open(*options.tilemap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(*options.tilemap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.string(*options.tilemap).c_str(),
+		      strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -939,7 +945,8 @@ static void outputAttrmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                           DefaultInitVec<size_t> const &mappings) {
 	File output;
 	if (!output.open(*options.attrmap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(*options.attrmap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.string(*options.attrmap).c_str(),
+		      strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
@@ -954,7 +961,8 @@ static void outputPalmap(DefaultInitVec<AttrmapEntry> const &attrmap,
                          DefaultInitVec<size_t> const &mappings) {
 	File output;
 	if (!output.open(*options.palmap, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to create \"%s\": %s", output.c_str(*options.palmap), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.string(*options.palmap).c_str(),
+		      strerror(errno));
 	}
 
 	for (AttrmapEntry const &entry : attrmap) {
