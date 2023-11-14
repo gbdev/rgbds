@@ -254,7 +254,7 @@ static std::vector<size_t> readAtFile(std::filesystem::path const &path,
                                       std::vector<char> &argPool) {
 	File file;
 	if (!file.open(path, std::ios_base::in)) {
-		fatal("Error reading @%s: %s", file.c_str(path), strerror(errno));
+		fatal("Error reading @%s: %s", file.string(path).c_str(), strerror(errno));
 	}
 
 	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
