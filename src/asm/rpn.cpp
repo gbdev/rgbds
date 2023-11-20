@@ -292,7 +292,7 @@ void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
 	if (rpn_isKnown(expr)) {
 		int32_t val = expr->val;
 
-		if (val <= -(1 << n) || val >= 1 << n)
+		if (val < -(1 << n) || val >= 1 << n)
 			warning(WARNING_TRUNCATION_1, "Expression must be %u-bit\n", n);
 		else if (val < -(1 << (n - 1)))
 			warning(WARNING_TRUNCATION_2, "Expression must be %u-bit\n", n);
