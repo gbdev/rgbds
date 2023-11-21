@@ -22,7 +22,7 @@ local args=(
 	'(-t --tilemap -T --auto-tilemap)'{-T,--auto-tilemap}'[Shortcut for -t <file>.tilemap]'
 	'(-u --unique-tiles)'{-u,--unique-tiles}'[Eliminate redundant tiles]'
 	{-v,--verbose}'[Enable verbose output]'
-	'(-h --horizontal -Z --columns)'{-Z,--columns}'[Read the image in column-major order]'
+	'(-Z --columns)'{-Z,--columns}'[Read the image in column-major order]'
 
 	'(-a --attr-map -A --auto-attr-map)'{-a,--attr-map}'+[Generate a map of tile attributes (mirroring)]:attrmap file:_files'
 	'(-b --base-tiles)'{-b,--base-tiles}'+[Base tile IDs for tile map output]:base tile IDs:'

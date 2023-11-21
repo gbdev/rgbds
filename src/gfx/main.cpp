@@ -119,11 +119,7 @@ static struct option const longopts[] = {
     {"base-tiles",         required_argument, NULL, 'b'},
     {"color-curve",        no_argument,       NULL, 'C'},
     {"colors",             required_argument, NULL, 'c'},
-    {"debug",              no_argument,       NULL, 'D'}, // Ignored
     {"depth",              required_argument, NULL, 'd'},
-    {"fix",                no_argument,       NULL, 'f'},
-    {"fix-and-save",       no_argument,       NULL, 'F'}, // Deprecated
-    {"horizontal",         no_argument,       NULL, 'h'}, // Deprecated
     {"slice",              required_argument, NULL, 'L'},
     {"mirror-tiles",       no_argument,       NULL, 'm'},
     {"nb-tiles",           required_argument, NULL, 'N'},
@@ -574,9 +570,6 @@ static char *parseArgv(int argc, char **argv) {
 				error("Tile trim (-x) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
 			break;
-		case 'h':
-			warning("`-h` is deprecated, use `-Z` instead");
-			[[fallthrough]];
 		case 'Z':
 			options.columnMajor = true;
 			break;
@@ -587,11 +580,6 @@ static char *parseArgv(int argc, char **argv) {
 			} else {
 				registerInput(musl_optarg);
 			}
-			break;
-		case 'D':
-		case 'F':
-		case 'f':
-			warning("Ignoring retired option `-%c`", ch);
 			break;
 		default:
 			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
