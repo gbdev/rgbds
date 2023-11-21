@@ -41,6 +41,7 @@ jobs:
           cmake --build build -j --verbose
           cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build --verbose
+          cmake --install build --verbose --component "Test support programs"
       - name: Package binaries
         run: |
           mkdir bins
