@@ -472,8 +472,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 				fatal(assert->patch.src, assert->patch.lineNo, "%s",
 				      assert->message[0] ? assert->message
 							 : "assert failure");
-				// Not reached
-				break; // Here so checkpatch doesn't complain
+				unreachable_();
 			case ASSERT_ERROR:
 				error(assert->patch.src, assert->patch.lineNo, "%s",
 				      assert->message[0] ? assert->message

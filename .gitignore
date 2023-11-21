@@ -10,7 +10,6 @@
 *.gcno
 *.gcda
 *.gcov
-.checkpatch-camelcase.*
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
