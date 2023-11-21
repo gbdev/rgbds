@@ -98,7 +98,7 @@ The output is written just like the tile map (see
 follows the same order
 .Pq Fl Z ,
 and has the same size.
-.It Fl A , Fl Fl output-attr-map
+.It Fl A , Fl Fl auto-attr-map
 Same as
 .Fl a Ar base_path Ns .attrmap
 .Pq see Sx Automatic output paths .
@@ -217,14 +217,14 @@ Output the tile data in native 2bpp format or in 1bpp
 to this file.
 .It Fl p Ar pal_file , Fl Fl palette Ar pal_file
 Output the image's palette set to this file.
-.It Fl P , Fl Fl output-palette
+.It Fl P , Fl Fl auto-palette
 Same as
 .Fl p Ar base_path Ns .pal
 .Pq see Sx Automatic output paths .
 .It Fl q Ar pal_file , Fl Fl palette-map Ar pal_file
 Output the image's palette map to this file.
 This is useful if the input image contains more than 8 palettes, as the attribute map only contains the lower 3 bits of the palette indices.
-.It Fl Q , Fl Fl output-palette-map
+.It Fl Q , Fl Fl auto-palette-map
 Same as
 .Fl q Ar base_path Ns .palmap
 .Pq see Sx Automatic output paths .
@@ -260,7 +260,7 @@ Useful in combination with
 and/or
 .Fl m
 to keep track of duplicate tiles.
-.It Fl T , Fl Fl output-tilemap
+.It Fl T , Fl Fl auto-tilemap
 Same as
 .Fl t Ar base_path Ns .tilemap
 .Pq see Sx Automatic output paths .

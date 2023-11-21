@@ -113,7 +113,8 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
  * over short opt matching
  */
 static struct option const longopts[] = {
-    {"output-attr-map",    no_argument,       NULL, 'A'},
+    {"auto-attr-map",      no_argument,       NULL, 'A'},
+    {"output-attr-map",    no_argument,       NULL, -'A'}, // Deprecated
     {"attr-map",           required_argument, NULL, 'a'},
     {"base-tiles",         required_argument, NULL, 'b'},
     {"color-curve",        no_argument,       NULL, 'C'},
@@ -129,12 +130,15 @@ static struct option const longopts[] = {
     {"nb-palettes",        required_argument, NULL, 'n'},
     {"group-outputs",      no_argument,       NULL, 'O'},
     {"output",             required_argument, NULL, 'o'},
-    {"output-palette",     no_argument,       NULL, 'P'},
+    {"auto-palette",       no_argument,       NULL, 'P'},
+    {"output-palette",     no_argument,       NULL, -'P'}, // Deprecated
     {"palette",            required_argument, NULL, 'p'},
-    {"output-palette-map", no_argument,       NULL, 'Q'},
+    {"auto-palette-map",   no_argument,       NULL, 'Q'},
+    {"output-palette-map", no_argument,       NULL, -'Q'}, // Deprecated
     {"palette-map",        required_argument, NULL, 'q'},
     {"reverse",            required_argument, NULL, 'r'},
-    {"output-tilemap",     no_argument,       NULL, 'T'},
+    {"auto-tilemap",       no_argument,       NULL, 'T'},
+    {"output-tilemap",     no_argument,       NULL, -'T'}, // Deprecated
     {"tilemap",            required_argument, NULL, 't'},
     {"unit-size",          required_argument, NULL, 'U'},
     {"unique-tiles",       no_argument,       NULL, 'u'},
@@ -341,6 +345,9 @@ static char *parseArgv(int argc, char **argv) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		switch (ch) {
+		case -'A':
+			warning("`--output-attr-map` is deprecated, use `--auto-attr-map` instead");
+			[[fallthrough]];
 		case 'A':
 			localOptions.autoAttrmap = true;
 			break;
@@ -497,6 +504,9 @@ static char *parseArgv(int argc, char **argv) {
 				warning("Overriding tile data file %s", options.output->c_str());
 			options.output = musl_optarg;
 			break;
+		case -'P':
+			warning("`--output-palette` is deprecated, use `--auto-palette` instead");
+			[[fallthrough]];
 		case 'P':
 			localOptions.autoPalettes = true;
 			break;
@@ -506,6 +516,9 @@ static char *parseArgv(int argc, char **argv) {
 				warning("Overriding palettes file %s", options.palettes->c_str());
 			options.palettes = musl_optarg;
 			break;
+		case -'Q':
+			warning("`--output-palette-map` is deprecated, use `--auto-palette-map` instead");
+			[[fallthrough]];
 		case 'Q':
 			localOptions.autoPalmap = true;
 			break;
@@ -535,6 +548,9 @@ static char *parseArgv(int argc, char **argv) {
 				error("Palette size (-s) may not be 0!");
 			}
 			break;
+		case -'T':
+			warning("`--output-tilemap` is deprecated, use `--auto-tilemap` instead");
+			[[fallthrough]];
 		case 'T':
 			localOptions.autoTilemap = true;
 			break;
