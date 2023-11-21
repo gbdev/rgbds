@@ -123,6 +123,7 @@ jobs:
           cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release -DZLIB_LIBRARY="$PWD"/install_dir/lib/zlib.lib -DZLIB_INCLUDE_DIR="$PWD"/install_dir/include -DPNG_LIBRARY="$PWD"/install_dir/lib/libpng16.lib -DPNG_INCLUDE_DIR="$PWD"/install_dir/include
           cmake --build build --config Release -j --verbose
           cmake --install build --verbose --prefix install_dir
+          cmake --install build --verbose --component "Test support programs"
       - name: Package binaries
         shell: bash
         run: |
