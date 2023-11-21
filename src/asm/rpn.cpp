@@ -394,8 +394,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	int32_t constMaskVal;
 
 	// First, check if the expression is known
-	expr->isKnown = src1->isKnown && src2->isKnown;
-	if (expr->isKnown) {
+	expr->isKnown = rpn_isKnown(src1) && rpn_isKnown(src2);
+	if (rpn_isKnown(expr)) {
 		rpn_Init(expr); // Init the expression to something sane
 
 		// If both expressions are known, just compute the value
@@ -548,7 +548,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		// If it's not known, start computing the RPN expression
 
 		// Convert the left-hand expression if it's constant
-		if (src1->isKnown) {
+		if (rpn_isKnown(src1)) {
 			uint32_t lval = src1->val;
 			uint8_t bytes[] = {RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8),
 					   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
@@ -581,7 +581,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		uint32_t rval = src2->val;
 		uint8_t bytes[] = {RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8),
 				   (uint8_t)(rval >> 16), (uint8_t)(rval >> 24)};
-		if (src2->isKnown) {
+		if (rpn_isKnown(src2)) {
 			ptr = bytes;
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
