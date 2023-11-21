@@ -34,7 +34,16 @@
 using namespace std::literals::string_view_literals;
 
 Options options;
-char const *externalPalSpec = nullptr;
+
+static struct LocalOptions {
+	char const *externalPalSpec;
+	bool autoAttrmap;
+	bool autoTilemap;
+	bool autoPalettes;
+	bool autoPalmap;
+	bool groupOutputs;
+} localOptions;
+
 static uintmax_t nbErrors;
 
 [[noreturn]] void giveUp() {
@@ -91,7 +100,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:o:Pp:Qq:r:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -118,6 +127,7 @@ static struct option const longopts[] = {
     {"mirror-tiles",       no_argument,       NULL, 'm'},
     {"nb-tiles",           required_argument, NULL, 'N'},
     {"nb-palettes",        required_argument, NULL, 'n'},
+    {"group-outputs",      no_argument,       NULL, 'O'},
     {"output",             required_argument, NULL, 'o'},
     {"output-palette",     no_argument,       NULL, 'P'},
     {"palette",            required_argument, NULL, 'p'},
@@ -136,7 +146,7 @@ static struct option const longopts[] = {
 };
 
 static void printUsage(void) {
-	fputs("Usage: rgbgfx [-r stride] [-CmuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
+	fputs("Usage: rgbgfx [-r stride] [-CmOuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	      "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
 	      "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
 	      "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
@@ -321,23 +331,21 @@ static std::vector<size_t> readAtFile(std::filesystem::path const &path,
 }
 
 /*
- * Parses an arg vector, modifying `options` as options are read.
- * The three booleans are for the "auto path" flags, since their processing must be deferred to the
- * end of option parsing.
+ * Parses an arg vector, modifying `options` and `localOptions` as options are read.
+ * The `localOptions` struct is for flags which must be processed after the option parsing finishes.
  *
  * Returns NULL if the vector was fully parsed, or a pointer (which is part of the arg vector) to an
  * "at-file" path if one is encountered.
  */
-static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilemap,
-                       bool &autoPalettes, bool &autoPalmap) {
+static char *parseArgv(int argc, char **argv) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		switch (ch) {
 		case 'A':
-			autoAttrmap = true;
+			localOptions.autoAttrmap = true;
 			break;
 		case 'a':
-			autoAttrmap = false;
+			localOptions.autoAttrmap = false;
 			if (options.attrmap.has_value())
 				warning("Overriding attrmap file %s", options.attrmap->c_str());
 			options.attrmap = musl_optarg;
@@ -385,7 +393,7 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				// size to be split; thus, we defer that
 				// TODO: this does not validate the `fmt` part of any external spec but the last
 				// one, but I guess that's okay
-				externalPalSpec = musl_optarg;
+				localOptions.externalPalSpec = musl_optarg;
 			}
 			break;
 		case 'd':
@@ -481,25 +489,28 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 				error("Number of palettes (-n) may not be 0!");
 			}
 			break;
+		case 'O':
+			localOptions.groupOutputs = true;
+			break;
 		case 'o':
 			if (options.output.has_value())
 				warning("Overriding tile data file %s", options.output->c_str());
 			options.output = musl_optarg;
 			break;
 		case 'P':
-			autoPalettes = true;
+			localOptions.autoPalettes = true;
 			break;
 		case 'p':
-			autoPalettes = false;
+			localOptions.autoPalettes = false;
 			if (options.palettes.has_value())
 				warning("Overriding palettes file %s", options.palettes->c_str());
 			options.palettes = musl_optarg;
 			break;
 		case 'Q':
-			autoPalmap = true;
+			localOptions.autoPalmap = true;
 			break;
 		case 'q':
-			autoPalmap = false;
+			localOptions.autoPalmap = false;
 			if (options.palmap.has_value())
 				warning("Overriding palette map file %s", options.palmap->c_str());
 			options.palmap = musl_optarg;
@@ -525,10 +536,10 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 			}
 			break;
 		case 'T':
-			autoTilemap = true;
+			localOptions.autoTilemap = true;
 			break;
 		case 't':
-			autoTilemap = false;
+			localOptions.autoTilemap = false;
 			if (options.tilemap.has_value())
 				warning("Overriding tilemap file %s", options.tilemap->c_str());
 			options.tilemap = musl_optarg;
@@ -577,8 +588,6 @@ static char *parseArgv(int argc, char **argv, bool &autoAttrmap, bool &autoTilem
 }
 
 int main(int argc, char *argv[]) {
-	bool autoAttrmap = false, autoTilemap = false, autoPalettes = false, autoPalmap = false;
-
 	struct AtFileStackEntry {
 		int parentInd; // Saved offset into parent argv
 		std::vector<char *> argv; // This context's arg pointer vec
@@ -592,8 +601,7 @@ int main(int argc, char *argv[]) {
 	int curArgc = argc;
 	char **curArgv = argv;
 	for (;;) {
-		char *atFileName =
-		    parseArgv(curArgc, curArgv, autoAttrmap, autoTilemap, autoPalettes, autoPalmap);
+		char *atFileName = parseArgv(curArgc, curArgv);
 		if (atFileName) {
 			// Copy `argv[0]` for error reporting, and because option parsing skips it
 			AtFileStackEntry &stackEntry =
@@ -649,22 +657,24 @@ int main(int argc, char *argv[]) {
 	auto autoOutPath = [](bool autoOptEnabled, std::optional<std::filesystem::path> &path,
 	                      char const *extension) {
 		if (autoOptEnabled) {
-			if (!options.input.has_value()) {
-				fputs("FATAL: No input image specified\n", stderr);
+			auto image = localOptions.groupOutputs ? options.output : options.input;
+			if (!image.has_value()) {
+				fprintf(stderr, "FATAL: No %s specified\n", localOptions.groupOutputs
+				      ? "output tile data file" : "input image");
 				printUsage();
 				exit(1);
 			}
-			path.emplace(*options.input).replace_extension(extension);
+			path.emplace(*image).replace_extension(extension);
 		}
 	};
-	autoOutPath(autoAttrmap, options.attrmap, ".attrmap");
-	autoOutPath(autoTilemap, options.tilemap, ".tilemap");
-	autoOutPath(autoPalettes, options.palettes, ".pal");
-	autoOutPath(autoPalmap, options.palmap, ".palmap");
+	autoOutPath(localOptions.autoAttrmap, options.attrmap, ".attrmap");
+	autoOutPath(localOptions.autoTilemap, options.tilemap, ".tilemap");
+	autoOutPath(localOptions.autoPalettes, options.palettes, ".pal");
+	autoOutPath(localOptions.autoPalmap, options.palmap, ".palmap");
 
 	// Execute deferred external pal spec parsing, now that all other params are known
-	if (externalPalSpec) {
-		parseExternalPalSpec(externalPalSpec);
+	if (localOptions.externalPalSpec) {
+		parseExternalPalSpec(localOptions.externalPalSpec);
 	}
 
 	if (options.verbosity >= Options::VERB_CFG) {

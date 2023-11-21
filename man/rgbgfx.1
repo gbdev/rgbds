@@ -10,7 +10,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
-.Op Fl CmuVZ
+.Op Fl CmOuVZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl b Ar base_ids
@@ -100,11 +100,8 @@ follows the same order
 and has the same size.
 .It Fl A , Fl Fl output-attr-map
 Same as
-.Fl a Ar path ,
-where
-.Ar path
-is the input image's path with the extension set to
-.Pa .attrmap .
+.Fl a Ar base_path Ns .attrmap
+.Pq see Sx Automatic output paths .
 .It Fl b Ar base_ids , Fl Fl base-tiles Ar base_ids
 Set the base IDs for tile map output.
 .Ar base_ids
@@ -207,6 +204,13 @@ This may not be more than 256.
 .Pp
 Note that attribute map output only has 3 bits for the palette ID, so a limit higher than 8 may yield incomplete data unless relying on a palette map
 .Pq see Fl q .
+.It Fl O , Fl Fl group-outputs
+Sets the
+.Sq base path
+to be the output tile data path from
+.Fl o
+instead of the input image path
+.Pq see Sx Automatic output paths .
 .It Fl o Ar out_file , Fl Fl output Ar out_file
 Output the tile data in native 2bpp format or in 1bpp
 .Pq depending on Fl d
@@ -215,21 +219,15 @@ to this file.
 Output the image's palette set to this file.
 .It Fl P , Fl Fl output-palette
 Same as
-.Fl p Ar path ,
-where
-.Ar path
-is the input image's path with the extension set to
-.Pa .pal .
+.Fl p Ar base_path Ns .pal
+.Pq see Sx Automatic output paths .
 .It Fl q Ar pal_file , Fl Fl palette-map Ar pal_file
 Output the image's palette map to this file.
 This is useful if the input image contains more than 8 palettes, as the attribute map only contains the lower 3 bits of the palette indices.
 .It Fl Q , Fl Fl output-palette-map
 Same as
-.Fl q Ar path ,
-where
-.Ar path
-is the input image's path with the extension set to
-.Pa .palmap .
+.Fl q Ar base_path Ns .palmap
+.Pq see Sx Automatic output paths .
 .It Fl r Ar width , Fl Fl reverse Ar width
 Switches
 .Nm
@@ -264,11 +262,8 @@ and/or
 to keep track of duplicate tiles.
 .It Fl T , Fl Fl output-tilemap
 Same as
-.Fl t Ar path ,
-where
-.Ar path
-is the input image's path with the extension set to
-.Pa .tilemap .
+.Fl t Ar base_path Ns .tilemap
+.Pq see Sx Automatic output paths .
 .It Fl u , Fl Fl unique-tiles
 Deduplicate identical tiles. Only one of each unique tile will be saved in the tile data file.
 Useful with a tile map
@@ -533,6 +528,28 @@ The contents of individual bytes follows the GBC's native format:
 .El
 .Pp
 Note that if more than 8 palettes are used, only the lowest 3 bits of the palette ID are output.
+.Ss Automatic output paths
+For convenience,
+.Nm
+provides shortcuts to generate all files in the same directory.
+This is done by using the uppercase version of a flag
+.Pq for example, Fl A No instead of Fl a .
+The
+.Ar base_path
+is the input image path
+.Pq or the output tile data path from Fl o , No if Fl O No was given
+with its extension, if any, removed.
+.Pp
+For example, these two are equivalent:
+.Bd -literal -indent Ds
+$ rgbgfx img/player.png -o build/player.2bpp -P
+$ rgbgfx img/player.png -o build/player.2bpp -p img/player.pal
+.Pp
+And so are these two:
+.Bd -literal -indent Ds
+$ rgbgfx img/player.png -o build/player.2bpp -O -P
+$ rgbgfx img/player.png -o build/player.2bpp -p build/player.pal
+.El
 .Sh REVERSE MODE
 .Nm
 can produce a PNG image from valid data.

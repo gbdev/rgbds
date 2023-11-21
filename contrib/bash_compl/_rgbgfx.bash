@@ -10,6 +10,7 @@ _rgbgfx_completions() {
 		[V]="version:normal"
 		[C]="color-curve:normal"
 		[m]="mirror-tiles:normal"
+		[O]="group-outputs:normal"
 		[u]="unique-tiles:normal"
 		[v]="verbose:normal"
 		[Z]="columns:normal"
