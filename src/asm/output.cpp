@@ -367,7 +367,7 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
 	struct Patch *patch = (struct Patch *)malloc(sizeof(*patch));
-	uint32_t rpnSize = expr->isKnown ? 5 : expr->rpnPatchSize;
+	uint32_t rpnSize = rpn_isKnown(expr) ? 5 : expr->rpnPatchSize;
 	struct FileStackNode *node = fstk_GetFileStack();
 
 	if (!patch)
@@ -386,7 +386,7 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 	patch->pcOffset = sect_GetSymbolOffset();
 
 	// If the rpnSize's value is known, output a constant RPN rpnSize directly
-	if (expr->isKnown) {
+	if (rpn_isKnown(expr)) {
 		patch->rpnSize = rpnSize;
 		// Make sure to update `rpnSize` above if modifying this!
 		patch->rpn[0] = RPN_CONST;
