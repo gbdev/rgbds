@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <algorithm>
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -471,6 +472,27 @@ uint32_t sect_GetOutputOffset(void)
 	return curOffset + loadOffset;
 }
 
+// Returns how many bytes need outputting for the specified alignment and offset to succeed
+uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset)
+{
+	struct Section *sect = sect_GetSymbolSection();
+	if (!sect)
+		return 0;
+
+	bool isFixed = sect->org != (uint32_t)-1;
+
+	// If the section is not aligned, no bytes are needed
+	// (fixed sections count as being maximally aligned for this purpose)
+	uint8_t curAlignment = isFixed ? 16 : sect->align;
+	if (curAlignment == 0)
+		return 0;
+
+	// We need `(pcValue + curOffset + return value) % (1 << alignment) == offset`
+	uint16_t pcValue = isFixed ? sect->org : sect->alignOfs;
+	return static_cast<uint16_t>(offset - curOffset - pcValue)
+		% (1u << std::min(alignment, curAlignment));
+}
+
 void sect_AlignPC(uint8_t alignment, uint16_t offset)
 {
 	if (!checksection())
@@ -480,20 +502,16 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 	uint16_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != (uint32_t)-1) {
-		if ((sym_GetPCValue() - offset) % alignSize)
+		if ((sect->org + curOffset - offset) % alignSize)
 			error("Section's fixed address fails required alignment (PC = $%04" PRIx32
-			      ")\n", sym_GetPCValue());
-	} else if (sect->align != 0) {
-		if ((((sect->alignOfs + curOffset) % (1 << sect->align)) - offset) % alignSize) {
-			error("Section's alignment fails required alignment (offset from section start = $%04"
-				PRIx32 ")\n", curOffset);
-		} else if (alignment > sect->align) {
-			sect->align = alignment;
-			sect->alignOfs = (offset - curOffset) % alignSize;
-		}
-	} else {
+			      ")\n", sect->org + curOffset);
+	} else if (sect->align != 0 && (((sect->alignOfs + curOffset) % (1u << sect->align))
+					- offset) % alignSize) {
+		error("Section's alignment fails required alignment (offset from section start = $%04"
+			PRIx32 ")\n", curOffset);
+	} else if (alignment > sect->align) {
 		sect->align = alignment;
-		// We need `(sect->alignOfs + curOffset) % alignSize == offset
+		// We need `(sect->alignOfs + curOffset) % alignSize == offset`
 		sect->alignOfs = (offset - curOffset) % alignSize;
 	}
 }

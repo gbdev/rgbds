@@ -84,6 +84,11 @@ int yylex(void);
 bool lexer_CaptureRept(struct CaptureBody *capture);
 bool lexer_CaptureMacroBody(struct CaptureBody *capture);
 
+struct DsAlignment {
+	uint8_t alignment;
+	uint16_t alignOfs;
+};
+
 #define INITIAL_DS_ARG_SIZE 2
 struct DsArgList {
 	size_t nbArgs;

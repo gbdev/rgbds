@@ -681,14 +681,14 @@ Place the section at an address whose
 .Ar align
 least-significant bits are equal to
 .Ar offset .
-(Note that
+Note that
 .Ic ALIGN Ns Bq Ar align
 is a shorthand for
-.Ic ALIGN Ns Bq Ar align , No 0 ) .
+.Ic ALIGN Ns Bq Ar align , No 0 .
 This option can be used with
 .Bq Ar addr ,
-as long as they don't contradict eachother.
-It's also possible to request alignment in the middle of a section, see
+as long as they don't contradict each other.
+It's also possible to request alignment in the middle of a section; see
 .Sx Requesting alignment
 below.
 .El
@@ -869,7 +869,7 @@ or
 .Ic ROMX .
 .El
 .Pp
-Different declarations of the same unionized section are not appended, but instead overlaid on top of eachother, just like
+Different declarations of the same unionized section are not appended, but instead overlaid on top of each other, just like
 .Sx Unions .
 Similarly, the size of an unionized section is the largest of all its declarations.
 .Ss Section fragments
@@ -1433,6 +1433,27 @@ In ROM sections, it will be filled with the value passed to the
 .Fl p
 command-line option, except when using overlays with
 .Fl O .
+.Pp
+Instead of an exact number of bytes, you can specify
+.Ic ALIGN Ns Bq Ar align , offset
+to allocate however many bytes are required to align the subsequent data.
+Thus,
+.Sq Ic DS ALIGN Ns Bo Ar align , offset Bc , No ...
+is equivalent to
+.Sq Ic DS Ar n , No ...
+followed by
+.Sq Ic ALIGN Ns Bq Ar align , offset ,
+where
+.Ar n
+is the minimum value needed to satisfy the
+.Ic ALIGN
+constraint (see
+.Sx Requesting alignment
+below).
+Note that
+.Ic ALIGN Ns Bq Ar align
+is a shorthand for
+.Ic ALIGN Ns Bq Ar align , No 0 .
 .Ss Defining constant data in ROM
 .Ic DB
 defines a list of bytes that will be stored in the final image.
@@ -2137,6 +2158,17 @@ Note that
 .Ic ALIGN Ar align
 is a shorthand for
 .Ic ALIGN Ar align , No 0 .
+.Pp
+There may be times when you don't just want to specify an alignment constraint at the current location, but also skip ahead until the constraint can be satisfied.
+In that case, you can use
+.Ic DS ALIGN Ns Bq Ar align , offset
+to allocate however many bytes are required to align the subsequent data.
+.Pp
+If the constraint cannot be met by skipping any amount of space, an error is produced.
+Note that
+.Ic ALIGN Ns Bq Ar align
+is a shorthand for
+.Ic ALIGN Ns Bq Ar align , No 0 .
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,
