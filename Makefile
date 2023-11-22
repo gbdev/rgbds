@@ -3,8 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkcodebase checkpatch checkdiff \
-	develop debug coverage mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkdiff develop debug coverage mingw32 mingw64 wine-shim dist
 
 # User-defined variables
 
@@ -15,7 +14,6 @@ mandir		:= ${PREFIX}/share/man
 STRIP		:= -s
 BINMODE		:= 755
 MANMODE		:= 644
-CHECKPATCH	:= ../linux/scripts/checkpatch.pl
 
 # Other variables
 
@@ -196,30 +194,6 @@ install: all
 	$Qinstall -m ${MANMODE} man/rgbasm.1 man/rgblink.1 man/rgbfix.1 man/rgbgfx.1 ${DESTDIR}${mandir}/man1/
 	$Qinstall -m ${MANMODE} man/rgbds.5 man/rgbasm.5 man/rgblink.5 ${DESTDIR}${mandir}/man5/
 	$Qinstall -m ${MANMODE} man/rgbds.7 man/gbz80.7 ${DESTDIR}${mandir}/man7/
-
-# Target used to check the coding style of the whole codebase.
-# `extern/` is excluded, as it contains external code that should not be patched
-# to meet our coding style, so applying upstream patches is easier.
-# `.y` files aren't checked, unfortunately...
-
-checkcodebase:
-	$Qfor file in `git ls-files | grep -E '(\.cpp|\.hpp)$$' | grep -Ev '(src|include)/extern/'`; do	\
-		${CHECKPATCH} -f "$$file";					\
-	done
-
-# Target used to check the coding style of the patches from the upstream branch
-# to the HEAD. Runs checkpatch once for each commit between the current HEAD and
-# the first common commit between the HEAD and origin/master.
-# `.y` files aren't checked, unfortunately...
-
-checkpatch:
-	$QCOMMON_COMMIT=`git merge-base HEAD ${BASE_REF}`;		\
-	for commit in `git rev-list $$COMMON_COMMIT..HEAD`; do		\
-		echo "[*] Analyzing commit '$$commit'";			\
-		git format-patch --stdout "$$commit~..$$commit"		\
-			-- src include '!src/extern' '!include/extern'	\
-			| ${CHECKPATCH} - || true;			\
-	done
 
 # Target used to check for suspiciously missing changed files.
 
