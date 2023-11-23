@@ -15,7 +15,6 @@ All reserved keywords (bank types and command names) are case-insensitive; all s
 Any line can contain a comment starting with
 .Ql \&;
 that ends at the end of the line.
-.Pp
 .Bd -literal -offset indent
 ; This line is a comment
 ROMX $F            ; start a bank
@@ -84,7 +83,7 @@ will align to $100
 will increase the address by the specified non-negative amount.
 .El
 .Pp
-.Sy Note:
+.Sy Note :
 The bank, alignment, address and type of sections can be specified both in the source code and in the linker script.
 For a section to be able to be placed with the linker script, the bank, address and alignment must be left unassigned in the source code or be compatible with what is specified in the linker script.
 For example,

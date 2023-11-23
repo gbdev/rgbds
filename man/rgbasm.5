@@ -29,8 +29,8 @@ can be used in its place.
 The syntax is line-based, just as in any other assembler.
 Each line may have components in this order:
 .Pp
-.Dl Oo Ar directive Oc Oo Ar ;\ comment Oc
-.Dl Oo Ar label: Oc Oo Ar instruction Oo Ar :: instruction ... Oc Oc Oo Ar ;\ comment Oc
+.Dl Oo Ar directive Oc Oo ;\  Ns Ar comment Oc
+.Dl Oo Ar label : Oc Oo Ar instruction Oo :: Ar instruction ... Oc Oc Oo ;\  Ns Ar comment Oc
 .Pp
 Directives are commands to the assembler itself, such as
 .Ic PRINTLN ,
@@ -406,9 +406,9 @@ There are a number of escape sequences you can use within a string:
 .It Ql \en Ta Newline ($0A)
 .It Ql \er Ta Carriage return ($0D)
 .It Ql \et Ta Tab ($09)
-.It Qo \e1 Qc \[en] Qo \e9 Qc Ta Macro argument (Only in the body of a macro; see Sx Invoking macros )
-.It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas (Only in the body of a macro)
-.It Ql \e@ Ta Label name suffix (Only in the body of a macro or a Ic REPT No block)
+.It Qo \e1 Qc \[en] Qo \e9 Qc Ta Macro argument Pq Only in the body of a macro; see Sx Invoking macros
+.It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas Pq Only in the body of a macro
+.It Ql \e@ Ta Label name suffix Pq Only in the body of a macro or a Ic REPT No block
 .El
 (Note that some of those can be used outside of strings, when noted further in this document.)
 .Pp
@@ -423,9 +423,9 @@ Raw strings are prefixed by a hash
 .Sq # .
 Inside them, backslashes and braces are treated like regular characters, so they will not be expanded as macro arguments, interpolated symbols, or escape sequences.
 For example, the raw string
-.Ql #"\t\1{s}\"
+.Ql #"\et\e1{s}\e"
 is equivalent to the regular string
-.Ql "\\t\\1\{s}\\" .
+.Ql "\e\et\e\e1\e{s}\e\e" .
 (Note that this prevents raw strings from including the double quote character.)
 Raw strings also may be contained in triple quotes for them to be multi-line, so they can include literal newline or quote characters (although still not three quotes in a row).
 .Pp
@@ -454,9 +454,9 @@ pattern replaced by interpolating the format
 with its corresponding argument in
 .Ar args
 .Pq So %% Sc is replaced by the So % Sc character .
-.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, and 0 otherwise.
-.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap.
-.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap.
+.It Fn INCHARMAP str Ta Returns 1 if Ar str No has an entry in the current charmap, and 0 otherwise .
+.It Fn CHARLEN str Ta Returns the number of charmap entries in Ar str No with the current charmap .
+.It Fn CHARSUB str pos Ta Returns the substring for the charmap entry at Ar pos No in Ar str No (first character is position 1, last is position -1) with the current charmap .
 .El
 .Ss Character maps
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
@@ -468,6 +468,7 @@ CHARMAP "<LF>", 10
 CHARMAP "&iacute", 20
 CHARMAP "A", 128
 .Ed
+.Pp
 This would result in
 .Ql db \(dqAmen<LF>\(dq
 being equivalent to
@@ -483,14 +484,14 @@ and it is automatically selected as the current character map from the beginning
 There is also a character map stack that can be used to save and restore which character map is currently active.
 .Bl -column "NEWCHARMAP name, basename"
 .It Sy Command Ta Sy Meaning
-.It Ic NEWCHARMAP Ar name Ta Creates a new, empty character map called Ar name No and switches to it.
-.It Ic NEWCHARMAP Ar name , basename Ta Creates a new character map called Ar name , No copied from character map Ar basename , No and switches to it.
+.It Ic NEWCHARMAP Ar name Ta Creates a new, empty character map called Ar name No and switches to it .
+.It Ic NEWCHARMAP Ar name , basename Ta Creates a new character map called Ar name , No copied from character map Ar basename , No and switches to it .
 .It Ic SETCHARMAP Ar name Ta Switch to character map Ar name .
 .It Ic PUSHC Ta Push the current character map onto the stack.
 .It Ic POPC Ta Pop a character map off the stack and switch to it.
 .El
 .Pp
-.Sy Note:
+.Sy Note :
 Modifications to a character map take effect immediately from that point onward.
 .Ss Other functions
 There are a few other functions that do various useful things:
@@ -536,7 +537,7 @@ The result is not constant, since only RGBLINK can compute its value.
 .Ar symbol
 has been defined, FALSE (0) otherwise.
 String constants are not expanded within the parentheses.
-.It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register.
+.It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register .
 .It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
 .Ic IF ) ,
@@ -2170,12 +2171,12 @@ Note that
 is a shorthand for
 .Ic ALIGN Ns Bq Ar align , No 0 .
 .Sh SEE ALSO
+.Xr gbz80 7 ,
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,
 .Xr rgblink 5 ,
 .Xr rgbds 5 ,
-.Xr rgbds 7 ,
-.Xr gbz80 7
+.Xr rgbds 7
 .Sh HISTORY
 .Nm
 was originally written by Carsten S\(/orensen as part of the ASMotor package,

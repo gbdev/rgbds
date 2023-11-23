@@ -1317,7 +1317,6 @@ Flags: None affected.
 Rotate bits in register
 .Ar r8
 left, through the carry flag.
-.Pp
 .Bd -literal
   ┏━ Flags ━┓ ┏━━━━━━━ r8 ━━━━━━┓
 ┌─╂─   C   ←╂─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1344,7 +1343,6 @@ Set according to result.
 Rotate the byte pointed to by
 .Sy HL
 left, through the carry flag.
-.Pp
 .Bd -literal
   ┏━ Flags ━┓ ┏━━━━━━ [HL] ━━━━━┓
 ┌─╂─   C   ←╂─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1362,7 +1360,6 @@ Flags: See
 Rotate register
 .Sy A
 left, through the carry flag.
-.Pp
 .Bd -literal
   ┏━ Flags ━┓ ┏━━━━━━━ A ━━━━━━━┓
 ┌─╂─   C   ←╂─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1389,7 +1386,6 @@ Set according to result.
 Rotate register
 .Ar r8
 left.
-.Pp
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━━ r8 ━━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1416,7 +1412,6 @@ Set according to result.
 Rotate the byte pointed to by
 .Sy HL
 left.
-.Pp
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━ [HL] ━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1434,7 +1429,6 @@ Flags: See
 Rotate register
 .Sy A
 left.
-.Pp
 .Bd -literal
 ┏━ Flags ━┓   ┏━━━━━━━ A ━━━━━━━┓
 ┃    C   ←╂─┬─╂─ b7 ← ... ← b0 ←╂─┐
@@ -1461,7 +1455,6 @@ Set according to result.
 Rotate register
 .Ar r8
 right, through the carry flag.
-.Pp
 .Bd -literal
   ┏━━━━━━━ r8 ━━━━━━┓ ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─╂→   C   ─╂─┐
@@ -1488,7 +1481,6 @@ Set according to result.
 Rotate the byte pointed to by
 .Sy HL
 right, through the carry flag.
-.Pp
 .Bd -literal
   ┏━━━━━━ [HL] ━━━━━┓ ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─╂→   C   ─╂─┐
@@ -1506,7 +1498,6 @@ Flags: See
 Rotate register
 .Sy A
 right, through the carry flag.
-.Pp
 .Bd -literal
   ┏━━━━━━━ A ━━━━━━━┓ ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─╂→   C   ─╂─┐
@@ -1533,7 +1524,6 @@ Set according to result.
 Rotate register
 .Ar r8
 right.
-.Pp
 .Bd -literal
   ┏━━━━━━━ r8 ━━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
@@ -1560,7 +1550,6 @@ Set according to result.
 Rotate the byte pointed to by
 .Sy HL
 right.
-.Pp
 .Bd -literal
   ┏━━━━━━ [HL] ━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
@@ -1578,7 +1567,6 @@ Flags: See
 Rotate register
 .Sy A
 right.
-.Pp
 .Bd -literal
   ┏━━━━━━━ A ━━━━━━━┓   ┏━ Flags ━┓
 ┌─╂→ b7 → ... → b0 ─╂─┬─╂→   C    ┃
@@ -1708,7 +1696,6 @@ Flags: None affected.
 .Ss SLA r8
 Shift Left Arithmetically register
 .Ar r8 .
-.Pp
 .Bd -literal
 ┏━ Flags ━┓ ┏━━━━━━━ r8 ━━━━━━┓
 ┃    C   ←╂─╂─ b7 ← ... ← b0 ←╂─ 0
@@ -1733,7 +1720,6 @@ Set according to result.
 .Ss SLA [HL]
 Shift Left Arithmetically the byte pointed to by
 .Sy HL .
-.Pp
 .Bd -literal
 ┏━ Flags ━┓ ┏━━━━━━ [HL] ━━━━━┓
 ┃    C   ←╂─╂─ b7 ← ... ← b0 ←╂─ 0
@@ -1750,7 +1736,6 @@ Flags: See
 Shift Right Arithmetically register
 .Ar r8
 .Pq bit 7 of Ar r8 No is unchanged .
-.Pp
 .Bd -literal
 ┏━━━━━━ r8 ━━━━━━┓ ┏━ Flags ━┓
 ┃ b7 → ... → b0 ─╂─╂→   C    ┃
@@ -1776,7 +1761,6 @@ Set according to result.
 Shift Right Arithmetically the byte pointed to by
 .Sy HL
 .Pq bit 7 of the byte pointed to by Sy HL No is unchanged .
-.Pp
 .Bd -literal
 ┏━━━━━ [HL] ━━━━━┓ ┏━ Flags ━┓
 ┃ b7 → ... → b0 ─╂─╂→   C    ┃
@@ -1792,7 +1776,6 @@ Flags: See
 .Ss SRL r8
 Shift Right Logically register
 .Ar r8 .
-.Pp
 .Bd -literal
    ┏━━━━━━━ r8 ━━━━━━┓ ┏━ Flags ━┓
 0 ─╂→ b7 → ... → b0 ─╂─╂→   C    ┃
@@ -1817,7 +1800,6 @@ Set according to result.
 .Ss SRL [HL]
 Shift Right Logically the byte pointed to by
 .Sy HL .
-.Pp
 .Bd -literal
    ┏━━━━━━ [HL] ━━━━━┓ ┏━ Flags ━┓
 0 ─╂→ b7 → ... → b0 ─╂─╂→   C    ┃

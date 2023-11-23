@@ -172,7 +172,7 @@ The numbers must be separated by commas; space is allowed around all punctuation
 The first number pair specifies the X and Y coordinates of the top-left pixel that will be processed (anything above it or to its left will be ignored).
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
 .Pp
-.Sy Fl L Sy is ignored in reverse mode , No no padding is inserted .
+.Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl m , Fl Fl mirror-tiles
 Deduplicate tiles that are symmetrical mirror images of each other.
 Only one of each unique tile will be saved in the tile data file, with mirror images counting as duplicates.
@@ -265,7 +265,8 @@ Same as
 .Fl t Ar base_path Ns .tilemap
 .Pq see Sx Automatic output paths .
 .It Fl u , Fl Fl unique-tiles
-Deduplicate identical tiles. Only one of each unique tile will be saved in the tile data file.
+Deduplicate identical tiles.
+Only one of each unique tile will be saved in the tile data file.
 Useful with a tile map
 .Pq see Fl t
 to keep track of the duplicated tiles.
@@ -540,16 +541,17 @@ is the input image path
 .Pq or the output tile data path from Fl o , No if Fl O No was given
 with its extension, if any, removed.
 .Pp
-For example, these two are equivalent:
-.Bd -literal -indent Ds
+For example, these two commands are equivalent:
+.Bd -literal -offset indent
 $ rgbgfx img/player.png -o build/player.2bpp -P
 $ rgbgfx img/player.png -o build/player.2bpp -p img/player.pal
+.Ed
 .Pp
 And so are these two:
-.Bd -literal -indent Ds
+.Bd -literal -offset indent
 $ rgbgfx img/player.png -o build/player.2bpp -O -P
 $ rgbgfx img/player.png -o build/player.2bpp -p build/player.pal
-.El
+.Ed
 .Sh REVERSE MODE
 .Nm
 can produce a PNG image from valid data.
