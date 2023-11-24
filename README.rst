@@ -44,13 +44,13 @@ is possible using ``make`` or ``cmake``; follow the link for more detailed instr
 2. RGBDS Folder Organization
 ----------------------------
 
-The RGBDS source code file structure somewhat resembles the following:
+The RGBDS source code file structure is as follows:
 
 ::
 
        .
        ├── .github/
-       │   ├── actions/
+       │   ├── scripts/
        │   │   └── ...
        │   └── workflows/
        │       └── ...
@@ -80,6 +80,7 @@ The RGBDS source code file structure somewhat resembles the following:
        │   └── run-tests.sh
        ├── .clang-format
        ├── CMakeLists.txt
+       ├── Dockerfile
        ├── Makefile
        └── README.rst
 
@@ -89,7 +90,7 @@ The RGBDS source code file structure somewhat resembles the following:
 - ``.github/`` - files and scripts related to the integration of the RGBDS codebase with
   GitHub.
 
-  * ``actions/`` - scripts used by workflow files.
+  * ``scripts/`` - scripts used by workflow files.
   * ``workflows/`` - CI workflow description files.
 
 - ``contrib/`` - scripts and other resources which may be useful to users and developers of
@@ -116,28 +117,48 @@ The RGBDS source code file structure somewhat resembles the following:
 
 - ``.clang-format`` - code style for automated C++ formatting with |clang-format|_.
 
+- ``Dockerfile`` - defines how to build RGBDS with Docker.
+
 3. History
 ----------
 
-- 1997-07-03: Carsten Sørensen (a.k.a. SurfSmurf) writes ASMotor as a
-  general-purpose assembler/linker system for DOS/Win32.
+- 1996-10-01: Carsten Sørensen (a.k.a. SurfSmurf) releases
+  `xAsm <http://otakunozoku.com/RGBDSdocs/asm.htm>`__,
+  `xLink <http://otakunozoku.com/RGBDSdocs/link.htm>`__, and
+  `RGBFix <http://otakunozoku.com/RGBDSdocs/fix.htm>`__,
+  a Game Boy SM83 (GBZ80) assembler/linker system for DOS/Win32.
 
-- 1999-08-01: Justin Lloyd (a.k.a. Otaku no Zoku) adapts ASMotor to read and
-  produce GBZ80 assembly/machine code, and releases this version as RGBDS.
+- 1997-07-03: Sørensen releases `ASMotor <http://otakunozoku.com/RGBDSdocs/geninfo.htm>`__,
+  packaging the three programs together and moving towards making them a
+  general-purpose target-independent system.
+
+- 1999-08-01: Justin Lloyd (a.k.a. Otaku no Zoku) adapts ASMotor to re-focus
+  on SM83 assembly/machine code, and releases this version as
+  `RGBDS <http://otakunozoku.com/rednex-gameboy-development-system/>`__.
 
 - 2009-06-11: Vegard Nossum adapts the code to be more UNIX-like and releases
-  this version as rgbds-linux on `GitHub <https://github.com/vegard/rgbds-linux>`__.
+  this version as `rgbds-linux <https://github.com/vegard/rgbds-linux>`__.
 
-- 2010-01-12: Anthony J. Bentley forks that repository. The fork becomes the reference
-  implementation of RGBDS.
+- 2010-01-12: Anthony J. Bentley `forks <https://github.com/bentley>`__ Nossum's
+  repository. The fork becomes the reference implementation of RGBDS.
 
-- 2017-02-23: Bentley's repository is moved to a neutral name, Rednex.
+- 2015-01-18: stag019 begins implementing `rgbgfx <https://github.com/stag019/rgbgfx>`__,
+  a PNG‐to‐Game Boy graphics converter, for eventual integration into RGBDS.
 
-- 2018-01-26: The codebase relicensed under the MIT license.
+- 2016-09-05: rgbgfx is `integrated <https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b>`__
+  into Bentley's repository.
 
-- 2020-09-15: The repository is moved to the `gbdev <https://github.com/gbdev>`__
-  organization. The `rgbds.gbdev.io <https://rgbds.gbdev.io>`__ website serving documentation
-  and downloads is created.
+- 2017-02-23: Bentley's repository is moved to the `rednex <https://github.com/rednex>`__
+  organization.
+
+- 2018-01-26: The codebase is `relicensed <https://github.com/gbdev/rgbds/issues/128>`__
+  under the MIT license.
+
+- 2020-09-15: The repository is `moved <https://github.com/gbdev/rgbds/issues/567>`__
+  to the `gbdev <https://github.com/gbdev>`__ organization.
+
+- 2022-05-17: The `rgbds.gbdev.io <https://rgbds.gbdev.io>`__ website for RGBDS
+  documentation and downloads is published.
 
 4. Acknowledgements
 -------------------
