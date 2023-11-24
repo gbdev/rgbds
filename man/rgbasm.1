@@ -39,19 +39,19 @@ can be a path to a file, or
 to read from standard input.
 .Pp
 Note that options can be abbreviated as long as the abbreviation is unambiguous:
-.Fl Fl verb
+.Fl \-verb
 is
-.Fl Fl verbose ,
+.Fl \-verbose ,
 but
-.Fl Fl ver
+.Fl \-ver
 is invalid because it could also be
-.Fl Fl version .
+.Fl \-version .
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl b Ar chars , Fl Fl binary-digits Ar chars
+.It Fl b Ar chars , Fl \-binary-digits Ar chars
 Change the two characters used for binary constants.
 The defaults are 01.
-.It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl Fl define Ar name Ns Oo = Ns Ar value Oc
+.It Fl D Ar name Ns Oo = Ns Ar value Oc , Fl \-define Ar name Ns Oo = Ns Ar value Oc
 Add a string symbol to the compiled source code.
 This is equivalent to
 .Ql Ar name Ic EQUS No \(dq Ns Ar value Ns \(dq
@@ -60,21 +60,21 @@ in code, or
 if
 .Ar value
 is not specified.
-.It Fl E , Fl Fl export-all
+.It Fl E , Fl \-export-all
 Export all labels, including unreferenced and local labels.
-.It Fl g Ar chars , Fl Fl gfx-chars Ar chars
+.It Fl g Ar chars , Fl \-gfx-chars Ar chars
 Change the four characters used for gfx constants.
 The defaults are 0123.
-.It Fl H , Fl Fl nop-after-halt
+.It Fl H , Fl \-nop-after-halt
 Inserts a
 .Ic nop
 instruction immediately after any
 .Ic halt
 instruction.
 This option is deprecated and will be removed in the next version.
-.It Fl h , Fl Fl halt-without-nop
+.It Fl h , Fl \-halt-without-nop
 This option is redundant and will be removed in the next version.
-.It Fl I Ar path , Fl Fl include Ar path
+.It Fl I Ar path , Fl \-include Ar path
 Add a new
 .Dq include path ;
 .Ar path
@@ -89,15 +89,15 @@ is attempted,
 first looks up the provided path from its working directory; if this fails, it tries again from each of the
 .Dq include path
 directories, in the order they were provided.
-.It Fl L , Fl Fl preserve-ld
+.It Fl L , Fl \-preserve-ld
 This option is redundant and will be removed in the next version.
-.It Fl l , Fl Fl auto-ldh
+.It Fl l , Fl \-auto-ldh
 Optimize loads of the form
 .Ic LD [$FF00+n8],A
 into the opcode
 .Ic LDH [$FF00+n8],A .
 This option is deprecated and will be removed in the next version.
-.It Fl M Ar depend_file , Fl Fl dependfile Ar depend_file
+.It Fl M Ar depend_file , Fl \-dependfile Ar depend_file
 Print
 .Xr make 1
 dependencies to
@@ -138,34 +138,34 @@ but additionally escapes any special
 .Xr make 1
 characters, essentially
 .Sq $ .
-.It Fl o Ar out_file , Fl Fl output Ar out_file
+.It Fl o Ar out_file , Fl \-output Ar out_file
 Write an object file to the given filename.
-.It Fl P Ar include_file , Fl Fl preinclude Ar include_file
+.It Fl P Ar include_file , Fl \-preinclude Ar include_file
 Pre-include a file.
 This acts as if a
 .Ql Ic INCLUDE Qq Ar include_file
 was read before the input
 .Ar asmfile .
-.It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
+.It Fl p Ar pad_value , Fl \-pad-value Ar pad_value
 Use this as the value for
 .Ic DS
 directives in ROM sections, unless overridden.
 The default is 0x00.
-.It Fl Q Ar fix_precision , Fl Fl q-precision Ar fix_precision
+.It Fl Q Ar fix_precision , Fl \-q-precision Ar fix_precision
 Use this as the precision of fixed-point numbers after the decimal point, unless they specify their own precision.
 The default is 16, so fixed-point numbers are Q16.16 (since they are 32-bit integers).
 The argument may start with a
 .Ql \&.
 to match the Q notation, for example,
 .Ql Fl Q Ar .16 .
-.It Fl r Ar recursion_depth , Fl Fl recursion-depth Ar recursion_depth
+.It Fl r Ar recursion_depth , Fl \-recursion-depth Ar recursion_depth
 Specifies the recursion depth past which RGBASM will assume being in an infinite loop.
 The default is 64.
-.It Fl V , Fl Fl version
+.It Fl V , Fl \-version
 Print the version of the program and exit.
-.It Fl v , Fl Fl verbose
+.It Fl v , Fl \-verbose
 Be verbose.
-.It Fl W Ar warning , Fl Fl warning Ar warning
+.It Fl W Ar warning , Fl \-warning Ar warning
 Set warning flag
 .Ar warning .
 A warning message will be printed if

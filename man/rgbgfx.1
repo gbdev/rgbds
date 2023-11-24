@@ -40,13 +40,13 @@ convert each of those squares into 1bpp or 2bpp tile data, and save all of the t
 It also has options to generate a tile map, attribute map, and/or palette set as well; more on that and how the conversion process can be tweaked below.
 .Sh ARGUMENTS
 Note that options can be abbreviated as long as the abbreviation is unambiguous:
-.Fl Fl verb
+.Fl \-verb
 is
-.Fl Fl verbose ,
+.Fl \-verbose ,
 but
-.Fl Fl ver
+.Fl \-ver
 is invalid because it could also be
-.Fl Fl version .
+.Fl \-version .
 .Pp
 .Nm
 accepts decimal, binary, and hexadecimal numbers in option arguments.
@@ -82,7 +82,7 @@ Using standard input or output more than once in a single command will likely pr
 .Pp
 The following options are accepted:
 .Bl -tag -width Ds
-.It Fl a Ar attrmap , Fl Fl attr-map Ar attrmap
+.It Fl a Ar attrmap , Fl \-attr-map Ar attrmap
 Generate an attribute map, which is a file containing tile
 .Dq attributes .
 For each square of the input image, its corresponding attribute map byte contains the mirroring bits (if
@@ -98,20 +98,20 @@ The output is written just like the tile map (see
 follows the same order
 .Pq Fl Z ,
 and has the same size.
-.It Fl A , Fl Fl auto-attr-map
+.It Fl A , Fl \-auto-attr-map
 Same as
 .Fl a Ar base_path Ns .attrmap
 .Pq see Sx Automatic output paths .
-.It Fl b Ar base_ids , Fl Fl base-tiles Ar base_ids
+.It Fl b Ar base_ids , Fl \-base-tiles Ar base_ids
 Set the base IDs for tile map output.
 .Ar base_ids
 should be one or two numbers between 0 and 255, separated by a comma; they are for bank 0 and bank 1 respectively.
 Both default to 0.
-.It Fl C , Fl Fl color-curve
+.It Fl C , Fl \-color-curve
 When generating palettes, use a color curve mimicking the Game Boy Color's screen.
 The resulting colors may look closer to the input image's
 .Sy on hardware and accurate emulators .
-.It Fl c Ar color_spec , Fl Fl colors Ar color_spec
+.It Fl c Ar color_spec , Fl \-colors Ar color_spec
 Use the specified color palettes instead of having
 .Nm
 automatically determine some.
@@ -158,10 +158,10 @@ See
 .Sx PALETTE SPECIFICATION FORMATS
 for a list of formats and their descriptions.
 .El
-.It Fl d Ar depth , Fl Fl depth Ar depth
+.It Fl d Ar depth , Fl \-depth Ar depth
 Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 2 (the default).
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
-.It Fl L Ar slice , Fl Fl slice Ar slice
+.It Fl L Ar slice , Fl \-slice Ar slice
 Only process a given rectangle of the image.
 This is useful for example if the input image is a sheet of some sort, and you want to convert each cel individually.
 The default is to process the whole image as-is.
@@ -173,7 +173,7 @@ The first number pair specifies the X and Y coordinates of the top-left pixel th
 The second number pair specifies how many tiles to process horizontally and vertically, respectively.
 .Pp
 .Fl L Sy is ignored in reverse mode , No no padding is inserted .
-.It Fl m , Fl Fl mirror-tiles
+.It Fl m , Fl \-mirror-tiles
 Deduplicate tiles that are symmetrical mirror images of each other.
 Only one of each unique tile will be saved in the tile data file, with mirror images counting as duplicates.
 Tiles are checked for horizontal, vertical, and horizontal-vertical mirroring.
@@ -184,7 +184,7 @@ and
 to keep track of the duplicated tiles and the dimension(s) mirrored.
 Implies
 .Fl u .
-.It Fl N Ar nb_tiles , Fl Fl nb-tiles Ar nb_tiles
+.It Fl N Ar nb_tiles , Fl \-nb-tiles Ar nb_tiles
 Set a maximum number of tiles that can be placed in each VRAM bank.
 .Ar nb_tiles
 should be one or two numbers between 0 and 256, separated by a comma; if the latter is omitted, it defaults to 0.
@@ -196,7 +196,7 @@ will abort.
 If
 .Fl N
 is not specified, no limit will be set on the amount of tiles placed in bank 0, and tiles will not be placed in bank 1.
-.It Fl n Ar nb_pals , Fl Fl nb-palettes Ar nb_pals
+.It Fl n Ar nb_pals , Fl \-nb-palettes Ar nb_pals
 Abort if more than
 .Ar nb_pals
 palettes are generated.
@@ -204,31 +204,31 @@ This may not be more than 256.
 .Pp
 Note that attribute map output only has 3 bits for the palette ID, so a limit higher than 8 may yield incomplete data unless relying on a palette map
 .Pq see Fl q .
-.It Fl O , Fl Fl group-outputs
+.It Fl O , Fl \-group-outputs
 Sets the
 .Sq base path
 to be the output tile data path from
 .Fl o
 instead of the input image path
 .Pq see Sx Automatic output paths .
-.It Fl o Ar out_file , Fl Fl output Ar out_file
+.It Fl o Ar out_file , Fl \-output Ar out_file
 Output the tile data in native 2bpp format or in 1bpp
 .Pq depending on Fl d
 to this file.
-.It Fl p Ar pal_file , Fl Fl palette Ar pal_file
+.It Fl p Ar pal_file , Fl \-palette Ar pal_file
 Output the image's palette set to this file.
-.It Fl P , Fl Fl auto-palette
+.It Fl P , Fl \-auto-palette
 Same as
 .Fl p Ar base_path Ns .pal
 .Pq see Sx Automatic output paths .
-.It Fl q Ar pal_file , Fl Fl palette-map Ar pal_file
+.It Fl q Ar pal_file , Fl \-palette-map Ar pal_file
 Output the image's palette map to this file.
 This is useful if the input image contains more than 8 palettes, as the attribute map only contains the lower 3 bits of the palette indices.
-.It Fl Q , Fl Fl auto-palette-map
+.It Fl Q , Fl \-auto-palette-map
 Same as
 .Fl q Ar base_path Ns .palmap
 .Pq see Sx Automatic output paths .
-.It Fl r Ar width , Fl Fl reverse Ar width
+.It Fl r Ar width , Fl \-reverse Ar width
 Switches
 .Nm
 into
@@ -243,13 +243,13 @@ below for details.
 .Pp
 .Ar width
 is the width of the image to generate, in tiles.
-.It Fl s Ar nb_colors , Fl Fl palette-size Ar nb_colors
+.It Fl s Ar nb_colors , Fl \-palette-size Ar nb_colors
 Specify how many colors each palette contains, including the transparent one if any.
 .Ar nb_colors
 cannot be more than
 .Ql 1 << Ar depth
 .Pq see Fl d .
-.It Fl t Ar tilemap , Fl Fl tilemap Ar tilemap
+.It Fl t Ar tilemap , Fl \-tilemap Ar tilemap
 Generate a file of tile indices.
 For each square of the input image, its corresponding tile map byte contains the index of the associated tile in the tile data file.
 The IDs wrap around from 255 back to 0, and do not include the bank bit; use
@@ -260,11 +260,11 @@ Useful in combination with
 and/or
 .Fl m
 to keep track of duplicate tiles.
-.It Fl T , Fl Fl auto-tilemap
+.It Fl T , Fl \-auto-tilemap
 Same as
 .Fl t Ar base_path Ns .tilemap
 .Pq see Sx Automatic output paths .
-.It Fl u , Fl Fl unique-tiles
+.It Fl u , Fl \-unique-tiles
 Deduplicate identical tiles.
 Only one of each unique tile will be saved in the tile data file.
 Useful with a tile map
@@ -276,9 +276,9 @@ Note that if this option is enabled, no guarantee is made on the order in which 
 be consistent across identical runs of a given
 .Nm
 release, the same is not true for different releases.
-.It Fl V , Fl Fl version
+.It Fl V , Fl \-version
 Print the version of the program and exit.
-.It Fl v , Fl Fl verbose
+.It Fl v , Fl \-verbose
 Be verbose.
 The verbosity level is increased by one each time the flag is specified, with each level including the previous:
 .Bl -enum -width 2n -compact
@@ -295,7 +295,7 @@ Some internal debug printing is enabled.
 The verbosity level does not go past 6.
 .Pp
 Note that verbose output is only intended to be consumed by humans, and may change without notice between RGBDS releases; relying on those for scripts is not advised.
-.It Fl x Ar quantity , Fl Fl trim-end Ar quantity
+.It Fl x Ar quantity , Fl \-trim-end Ar quantity
 Do not output the last
 .Ar quantity
 tiles to the tile data file; no other output is affected.
@@ -315,7 +315,7 @@ was enabled, so you probably don't want to use this option in combination with
 Note also that the tiles that don't get output will not count towards
 .Fl N Ap s
 limit.
-.It Fl Z , Fl Fl columns
+.It Fl Z , Fl \-columns
 Read squares from the PNG in column-major order (column by column), instead of the default row-major order (line by line).
 This primarily affects tile map and attribute map output, although it may also change generated tile data and palettes.
 .El

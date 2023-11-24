@@ -43,31 +43,31 @@ can be a path to a file, or
 to read from standard input.
 .Pp
 Note that options can be abbreviated as long as the abbreviation is unambiguous:
-.Fl Fl color-o
+.Fl \-color-o
 is
-.Fl Fl color-only ,
+.Fl \-color-only ,
 but
-.Fl Fl color
+.Fl \-color
 is invalid because it could also be
-.Fl Fl color-compatible .
+.Fl \-color-compatible .
 Options later in the command line override those set earlier.
 Accepted options are as follows:
 .Bl -tag -width Ds
-.It Fl C , Fl Fl color-only
+.It Fl C , Fl \-color-only
 Set the Game Boy Color\(enonly flag
 .Pq Ad 0x143
 to 0xC0.
 This overrides
 .Fl c
 if it was set prior.
-.It Fl c , Fl Fl color-compatible
+.It Fl c , Fl \-color-compatible
 Set the Game Boy Color\(encompatible flag:
 .Pq Ad 0x143
 to 0x80.
 This overrides
 .Fl c
 if it was set prior.
-.It Fl f Ar fix_spec , Fl Fl fix-spec Ar fix_spec
+.It Fl f Ar fix_spec , Fl \-fix-spec Ar fix_spec
 Fix certain header values that the Game Boy checks for correctness.
 Alternatively, intentionally trash these values by writing their binary inverse instead.
 .Ar fix_spec
@@ -90,26 +90,26 @@ Fix the global checksum
 .It Cm G
 Trash the global checksum.
 .El
-.It Fl i Ar game_id , Fl Fl game-id Ar game_id
+.It Fl i Ar game_id , Fl \-game-id Ar game_id
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142
 to a given string.
 If it's longer than 4 chars, it will be truncated, and a warning emitted.
-.It Fl j , Fl Fl non-japanese
+.It Fl j , Fl \-non-japanese
 Set the non-Japanese region flag
 .Pq Ad 0x14A
 to 0x01.
-.It Fl k Ar licensee_str , Fl Fl new-licensee Ar licensee_str
+.It Fl k Ar licensee_str , Fl \-new-licensee Ar licensee_str
 Set the new licensee string
 .Pq Ad 0x144 Ns \(en Ns Ad 0x145
 to a given string.
 If it's longer than 2 chars, it will be truncated, and a warning emitted.
-.It Fl l Ar licensee_id , Fl Fl old-licensee Ar licensee_id
+.It Fl l Ar licensee_id , Fl \-old-licensee Ar licensee_id
 Set the old licensee code
 .Pq Ad 0x14B
 to a given value from 0 to 0xFF.
 This value is deprecated and should be set to 0x33 in all new software.
-.It Fl m Ar mbc_type , Fl Fl mbc-type Ar mbc_type
+.It Fl m Ar mbc_type , Fl \-mbc-type Ar mbc_type
 Set the MBC type
 .Pq Ad 0x147
 to a given value from 0 to 0xFF.
@@ -122,13 +122,13 @@ Any amount of whitespace (space and tabs) is allowed around plus signs, and the 
 There are special considerations to take for the TPP1 mapper; see the
 .Sx TPP1
 section below.
-.It Fl n Ar rom_version , Fl Fl rom-version Ar rom_version
+.It Fl n Ar rom_version , Fl \-rom-version Ar rom_version
 Set the ROM version
 .Pq Ad 0x14C
 to a given value from 0 to 0xFF.
-.It Fl O , Fl Fl overwrite
+.It Fl O , Fl \-overwrite
 Allow overwriting different non-zero bytes in the header without a warning being emitted.
-.It Fl p Ar pad_value , Fl Fl pad-value Ar pad_value
+.It Fl p Ar pad_value , Fl \-pad-value Ar pad_value
 Pad the ROM image to a valid size with a given pad value from 0 to 255 (0xFF).
 .Nm
 will automatically pick a size from 32 KiB, 64 KiB, 128 KiB, ..., 8192 KiB.
@@ -136,11 +136,11 @@ The cartridge size byte
 .Pq Ad 0x148
 will be changed to reflect this new size.
 The recommended padding value is 0xFF, to speed up writing the ROM to flash chips, and to avoid "nop slides" into VRAM.
-.It Fl r Ar ram_size , Fl Fl ram-size Ar ram_size
+.It Fl r Ar ram_size , Fl \-ram-size Ar ram_size
 Set the RAM size
 .Pq Ad 0x149
 to a given value from 0 to 0xFF.
-.It Fl s , Fl Fl sgb-compatible
+.It Fl s , Fl \-sgb-compatible
 Set the SGB flag
 .Pq Ad 0x146
 to 0x03.
@@ -148,7 +148,7 @@ This flag will be ignored by the SGB unless the old licensee code is 0x33!
 If this is given as well as
 .Fl l ,
 but is not set to 0x33, a warning will be printed.
-.It Fl t Ar title , Fl Fl title Ar title
+.It Fl t Ar title , Fl \-title Ar title
 Set the title string
 .Pq Ad 0x134 Ns \(en Ns Ad 0x143
 to a given string.
@@ -160,9 +160,9 @@ is specified, 15 characters if the CGB flag
 or
 .Fl C )
 is specified but the game ID is not, and 16 characters otherwise.
-.It Fl V , Fl Fl version
+.It Fl V , Fl \-version
 Print the version of the program and exit.
-.It Fl v , Fl Fl validate
+.It Fl v , Fl \-validate
 Equivalent to
 .Fl f Cm lhg .
 .El
