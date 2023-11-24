@@ -140,7 +140,8 @@ void reverse() {
 
 	std::vector<std::array<Rgba, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
-    };
+	};
+	// If a palette file is used as input, it overrides the default colours.
 	if (options.palettes.has_value()) {
 		File file;
 		if (!file.open(*options.palettes, std::ios::in | std::ios::binary)) {
@@ -171,6 +172,14 @@ void reverse() {
 			warning("Read %zu palettes, more than the specified limit of %zu", palettes.size(),
 			        options.nbPalettes);
 		}
+
+		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
+			warning("Colors in the palette file do not match those specified with `-c`!");
+		}
+	} else if (options.palSpecType == Options::EMBEDDED) {
+		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
+	} else if (options.palSpecType == Options::EXPLICIT) {
+		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> attrmap;
