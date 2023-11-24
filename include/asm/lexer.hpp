@@ -84,7 +84,7 @@ int yylex(void);
 bool lexer_CaptureRept(struct CaptureBody *capture);
 bool lexer_CaptureMacroBody(struct CaptureBody *capture);
 
-struct DsAlignment {
+struct AlignmentSpec {
 	uint8_t alignment;
 	uint16_t alignOfs;
 };
