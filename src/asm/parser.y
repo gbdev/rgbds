@@ -1026,15 +1026,16 @@ align_spec	: uconst {
 				$$.alignOfs = 0;
 			}
 		}
-		| uconst T_COMMA uconst {
+		| uconst T_COMMA const {
 			if ($1 > 16) {
 				error("Alignment must be between 0 and 16, not %u\n", $1);
-			} else if ($3 >= 1 << $1) {
-				error("Alignment offset (%u) must be smaller than alignment size (%u)\n",
-					$3, 1 << $1);
+			} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
+				error("The absolute alignment offset (%" PRIu32
+				      ") must be less than alignment size (%d)\n",
+				      (uint32_t)($3 < 0 ? -$3 : $3), 1 << $1);
 			} else {
 				$$.alignment = $1;
-				$$.alignOfs = $3;
+				$$.alignOfs = $3 < 0 ? (1 << $1) + $3 : $3;
 			}
 		}
 ;

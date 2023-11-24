@@ -1,0 +1,5 @@
+error: align-offset.asm(4):
+    The absolute alignment offset (18) must be less than alignment size (16)
+error: align-offset.asm(6):
+    The absolute alignment offset (20) must be less than alignment size (16)
+error: Assembly aborted (2 errors)!
