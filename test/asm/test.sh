@@ -36,7 +36,7 @@ tryDiff () {
 tryCmp () {
 	if ! cmp "$1" "$2"; then
 		../../contrib/gbdiff.bash "$1" "$2"
-		echo "${bold}${red}${i%.asm}${variant}.out.bin mismatch!${rescolors}${resbold}"
+		echo "${bold}${red}${i%.asm}${variant}.$3 mismatch!${rescolors}${resbold}"
 		false
 	fi
 }
@@ -74,14 +74,22 @@ for i in *.asm; do
 	fi
 	for variant in '' '.pipe'; do
 		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
-		desired_errname=${i%.asm}.err
+		if [ -e "${i%.asm}.out" ]; then
+			desired_outname=${i%.asm}.out
+		else
+			desired_outname=/dev/null
+		fi
 		if [ "$simple_error" -eq 1 ] && [ -e "${i%.asm}.simple.err" ]; then
-			desired_errname="${i%.asm}.simple.err"
+			desired_errname=${i%.asm}.simple.err
+		elif [ -e "${i%.asm}.err" ]; then
+			desired_errname=${i%.asm}.err
+		else
+			desired_errname=/dev/null
 		fi
 		if [ -z "$variant" ]; then
-			$RGBASM $RGBASMFLAGS -o "$o" "$i" >"$output" 2>"$errput"
-			desired_output="${i%.asm}.out"
-			desired_errput="$desired_errname"
+			"$RGBASM" $RGBASMFLAGS -o "$o" "$i" >"$output" 2>"$errput"
+			desired_output=$desired_outname
+			desired_errput=$desired_errname
 		else
 			# `include-recursion.asm` refers to its own name inside the test code.
 			# Skip testing with stdin input for that file.
@@ -102,7 +110,7 @@ for i in *.asm; do
 			# Escape regex metacharacters
 			subst="$(printf '%s\n' "$i" | sed 's:[][\/.^$*]:\\&:g')"
 			# Replace the file name with a dash to match changed output
-			sed "s/$subst/<stdin>/g" "${i%.asm}.out" >"$desired_output"
+			sed "s/$subst/<stdin>/g" "$desired_outname" >"$desired_output"
 			sed "s/$subst/<stdin>/g" "$desired_errname" >"$desired_errput"
 		fi
 
@@ -111,13 +119,12 @@ for i in *.asm; do
 		tryDiff "$desired_errput" "$errput" err
 		(( our_rc = our_rc || $? ))
 
-		bin=${i%.asm}.out.bin
-		if [ -f "$bin" ]; then
+		desired_binname=${i%.asm}.out.bin
+		if [ -f "$desired_binname" ]; then
 			"$RGBLINK" -o "$gb" "$o"
-			# `printf` ensures we only capture the first word.
-			bin_size=$(printf %s $(wc -c <"$bin"))
-			dd "if=$gb" count=1 "bs=$bin_size" >"$output" 2>/dev/null
-			tryCmp "$bin" "$output"
+			rom_size=$(wc -c < "$desired_binname")
+			dd if="$gb" count=1 bs="$rom_size" >"$output" 2>/dev/null
+			tryCmp "$desired_binname" "$output" gb
 			(( our_rc = our_rc || $? ))
 		fi
 
