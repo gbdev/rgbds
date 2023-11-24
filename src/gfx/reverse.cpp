@@ -174,10 +174,10 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warning("Colors in the palette file do not match those specified with `-c`!\n");
+			warning("Colors in the palette file do not match those specified with `-c`!");
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warning("An embedded palette was requested, but no palette file was specified; ignoring request.\n");
+		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
