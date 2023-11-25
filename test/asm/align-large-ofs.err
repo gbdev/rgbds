@@ -1,3 +1,3 @@
 error: align-large-ofs.asm(2):
-    Alignment offset (2) must be smaller than alignment size (2)
+    The absolute alignment offset (2) must be less than alignment size (2)
 error: Assembly aborted (1 error)!
