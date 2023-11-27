@@ -167,3 +167,5 @@ RGBGFX generates palettes using algorithms found in the paper
 `"Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items" <http://arxiv.org/abs/1605.00558>`__
 (`GitHub <https://github.com/pagination-problem/pagination>`__, MIT license),
 by Aristide Grange, Imed Kacem, and Sébastien Martin.
+
+RGBGFX's colour palette was taken from `SameBoy <https://sameboy.github.io>`__, with permission and help by `LIJI <https://github.com/LIJI32>`__.
