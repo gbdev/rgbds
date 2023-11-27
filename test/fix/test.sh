@@ -8,7 +8,7 @@ rc=0
 
 cp ../../{rgbfix,contrib/gbdiff.bash} "$tmpdir"
 cd "$tmpdir" || exit
-# Immediate expansion is the desired behaviour.
+# Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "cd; rm -rf ${tmpdir@Q}" EXIT
 

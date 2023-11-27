@@ -12,7 +12,7 @@ output="$(mktemp)"
 errput="$(mktemp)"
 rc=0
 
-# Immediate expansion is the desired behaviour.
+# Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "rm -f ${o@Q} ${gb@Q} ${input@Q} ${output@Q} ${errput@Q}" EXIT
 

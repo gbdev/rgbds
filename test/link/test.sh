@@ -9,7 +9,7 @@ gbtemp2="$(mktemp)"
 outtemp="$(mktemp)"
 rc=0
 
-# Immediate expansion is the desired behaviour.
+# Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q}" EXIT
 
