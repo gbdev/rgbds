@@ -1,0 +1,7 @@
+error: def-scoped.asm(10):
+    syntax error, unexpected local identifier, expecting identifier
+error: def-scoped.asm(13):
+    syntax error, unexpected local identifier, expecting identifier
+error: def-scoped.asm(16):
+    syntax error, unexpected local identifier, expecting identifier
+error: Assembly aborted (3 errors)!
