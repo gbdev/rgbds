@@ -1,3 +1,7 @@
-error: line-continuation.asm(7):
+error: line-continuation.asm(3):
+    Begun line continuation, but encountered character 's'
+warning: line-continuation.asm(6) -> line-continuation.asm::spam(4): [-Wuser]
+    spam
+error: line-continuation.asm(14):
     Label "foo" created outside of a SECTION
-error: Assembly aborted (1 error)!
+error: Assembly aborted (2 errors)!

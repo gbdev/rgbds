@@ -15,6 +15,7 @@ macro elif
   invalid
 endr
 warn "OK"
+break ; not in a rept/for
 rept 1
   if 1
     break
