@@ -80,6 +80,12 @@ void macro_UseNewArgs(struct MacroArgs *args)
 	macroArgs = args;
 }
 
+void macro_FreeArgs(struct MacroArgs *args)
+{
+	for (uint32_t i = 0; i < macroArgs->nbArgs; i++)
+		free(args->args[i]);
+}
+
 char const *macro_GetArg(uint32_t i)
 {
 	if (!macroArgs)
