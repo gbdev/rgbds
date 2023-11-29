@@ -22,9 +22,9 @@ MACRO test_mod
 ENDM
 
 MACRO test_each_mod
-	test_mod (\1), (\2)
-	test_mod (\1), -(\2)
-	test_mod -(\1), (\2)
+	test_mod +(\1), +(\2)
+	test_mod +(\1), -(\2)
+	test_mod -(\1), +(\2)
 	test_mod -(\1), -(\2)
 ENDM
 
@@ -38,8 +38,8 @@ MACRO test_pow
 ENDM
 
 MACRO test_each_pow
-	test_pow (\1), (\2)
-	test_pow -(\1), (\2)
+	test_pow +(\1), +(\2)
+	test_pow -(\1), +(\2)
 ENDM
 
 	test_each_mod 0, 1

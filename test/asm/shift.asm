@@ -24,6 +24,16 @@ section "test", ROM0[0]
 	test -4 >> 2
 	test -1 >> -9001
 
+	test 100 << -2
+	test 1 >> -2
+
+	test 100 >>> 16
+	test 100 >>> -16
+	test 100 >>> 32
+	test 100 >>> -32
+	test -100 >>> 32
+	test -100 >>> -32
+
 	test $DEADBEEF >> 1
 	test $DEADBEEF >>> 1
 

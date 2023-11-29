@@ -21,3 +21,6 @@ SECTION "test", ROM0
 
 	; This uses 'foo' by deriving another charmap from it.
 	newcharmap bar, foo
+
+	; This is an error because 'eggs' does not exist.
+	newcharmap spam, eggs

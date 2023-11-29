@@ -173,15 +173,6 @@ struct Symbol *sym_FindExactSymbol(char const *symName)
 	return (struct Symbol *)hash_GetElement(symbols, symName);
 }
 
-struct Symbol *sym_FindUnscopedSymbol(char const *symName)
-{
-	if (strchr(symName, '.')) {
-		error("Expected non-scoped symbol name, not \"%s\"\n", symName);
-		return NULL;
-	}
-	return sym_FindExactSymbol(symName);
-}
-
 struct Symbol *sym_FindScopedSymbol(char const *symName)
 {
 	char const *localName = strchr(symName, '.');
