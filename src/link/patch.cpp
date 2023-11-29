@@ -503,7 +503,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 /*
  * Applies all of a section's patches
  * @param section The section to patch
- * @param arg Ignored callback arg
+ * @param dataSection 
  */
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
@@ -554,23 +554,17 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 }
 
 /*
- * Applies all of a section's patches, iterating over "components" of
- * unionized sections
+ * Applies all of a section's patches, iterating over "components" of unionized sections
  * @param section The section to patch
  * @param arg Ignored callback arg
  */
-static void applyPatches(struct Section *section, void *arg)
+static void applyPatches(struct Section *section, void *)
 {
 	if (!sect_HasData(section->type))
 		return;
 
-	(void)arg;
-	struct Section *dataSection = section;
-
-	do {
-		applyFilePatches(section, dataSection);
-		section = section->nextu;
-	} while (section);
+	for (struct Section *component = section; component; component = component->nextu)
+		applyFilePatches(component, section);
 }
 
 void patch_ApplyPatches(void)

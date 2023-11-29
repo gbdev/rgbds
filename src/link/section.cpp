@@ -219,10 +219,8 @@ void sect_CleanupSections(void)
 	hash_EmptyMap(sections);
 }
 
-static void doSanityChecks(struct Section *section, void *ptr)
+static void doSanityChecks(struct Section *section, void *)
 {
-	(void)ptr;
-
 	// Sanity check the section's type
 
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {

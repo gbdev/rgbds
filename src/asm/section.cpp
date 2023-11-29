@@ -168,10 +168,9 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 	return nbSectErrors;
 }
 
-static unsigned int mergeFragments(struct Section *sect, enum SectionType type, uint32_t org,
-				   uint8_t alignment, uint16_t alignOffset)
+static unsigned int mergeFragments(struct Section *sect, uint32_t org, uint8_t alignment,
+				   uint16_t alignOffset)
 {
-	(void)type;
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
@@ -233,8 +232,9 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 		switch (mod) {
 		case SECTION_UNION:
 		case SECTION_FRAGMENT:
-			nbSectErrors += (mod == SECTION_UNION ? mergeSectUnion : mergeFragments)
-						(sect, type, org, alignment, alignOffset);
+			nbSectErrors += mod == SECTION_UNION ?
+				mergeSectUnion(sect, type, org, alignment, alignOffset) :
+				mergeFragments(sect, org, alignment, alignOffset);
 
 			// Common checks
 
