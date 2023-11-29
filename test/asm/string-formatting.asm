@@ -10,7 +10,7 @@ def s equs "hello"
 	println "<{#-10s:s}> <{10s:s}>"
 
 macro foo
-	println "<{\1}>"
+	println "\1 <{\1}>"
 endm
 
 	foo  -6d:n ; space is trimmed

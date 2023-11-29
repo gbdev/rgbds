@@ -677,18 +677,6 @@ void sect_Skip(uint32_t skip, bool ds)
 	}
 }
 
-// Output a NULL terminated string (excluding the NULL-character)
-void sect_String(char const *s)
-{
-	if (!checkcodesection())
-		return;
-	if (!reserveSpace(strlen(s)))
-		return;
-
-	while (*s)
-		writebyte(*s++);
-}
-
 // Output a relocatable byte. Checking will be done to see if it
 // is an absolute value in disguise.
 void sect_RelByte(struct Expression *expr, uint32_t pcShift)

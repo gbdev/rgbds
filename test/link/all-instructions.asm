@@ -169,12 +169,16 @@ ENDM
 
     ld  [hl+],a
     ld  [hli],a
+    ldi [hl],a
     ld  [hl-],a
     ld  [hld],a
+    ldd [hl],a
     ld  a,[hl+]
     ld  a,[hli]
+    ldi a,[hl]
     ld  a,[hl-]
     ld  a,[hld]
+    ldd a,[hl]
 
     ; Jumps and Subroutines
 

@@ -13,9 +13,11 @@ for Q, 2, 31
 	if Q > 2 ; can't represent 0.125 in Q.2
 		assert tan(0.125) == 1.0
 		assert atan(1.0) == 0.125
+		assert atan2(1.0, 1.0) == 0.125
 	else
 		assert tan(0.0) == 0.0
 		assert atan(0.0) == 0.0
+		assert atan2(0.0, 1.0) == 0.0
 	endc
 endr
 

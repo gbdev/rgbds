@@ -1,5 +1,5 @@
 MACRO between
-	assert (\1) <= (\2) && (\2) <= (\3)
+	assert (\2) >= (\1)  && (\2) <= (\3)
 ENDM
 
 	between 0, __UTC_YEAR__, 9999 ; Y10K problem...

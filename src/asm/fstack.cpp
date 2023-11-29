@@ -272,8 +272,10 @@ bool yywrap(void)
 
 	lexer_DeleteState(context->lexerState);
 	// Restore args if a macro (not REPT) saved them
-	if (context->fileInfo->type == NODE_MACRO)
+	if (context->fileInfo->type == NODE_MACRO) {
+		macro_FreeArgs(macro_GetCurrentArgs());
 		macro_UseNewArgs(contextStack->macroArgs);
+	}
 	// Free the file stack node
 	if (!context->fileInfo->referenced)
 		free(context->fileInfo);

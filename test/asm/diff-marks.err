@@ -1,0 +1,5 @@
+error: diff-marks.asm(2):
+    syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)
+error: diff-marks.asm(3):
+    syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)
+error: Assembly aborted (2 errors)!

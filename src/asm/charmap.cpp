@@ -104,12 +104,6 @@ struct Charmap *charmap_New(char const *name, char const *baseName)
 	return charmap;
 }
 
-void charmap_Delete(struct Charmap *charmap)
-{
-	free(charmap->name);
-	free(charmap);
-}
-
 void charmap_Set(char const *name)
 {
 	struct Charmap **charmap = (struct Charmap **)hash_GetNode(charmaps, name);
