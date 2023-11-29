@@ -1,0 +1,2 @@
+FATAL: section-in-union.asm(3):
+    Cannot change the section within a UNION

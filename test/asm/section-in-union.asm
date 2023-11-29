@@ -1,0 +1,5 @@
+SECTION "outer", WRAM0
+UNION
+SECTION "inner", WRAM0
+NEXTU
+ENDU

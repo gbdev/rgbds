@@ -1,0 +1,5 @@
+error: data-in-ram.asm(2):
+    Section 'code' cannot contain code or data (not ROM0 or ROMX)
+error: data-in-ram.asm(4):
+    Section 'data' cannot contain code or data (not ROM0 or ROMX)
+error: Assembly aborted (2 errors)!

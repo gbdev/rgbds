@@ -6,3 +6,9 @@ REPT 3
 
 ENDR
 	WARN "Line 8"
+
+REPT 2
+	REPT 2
+		WARN "Line 12"
+	ENDR
+ENDR
