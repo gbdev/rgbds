@@ -22,3 +22,5 @@ endm
  def_sect WRAMX_bad,WRAMX
  def_sect OAM_ok,   OAM
  def_sect HRAM_ok,  HRAM
+
+	PRINTLN "def_sect: ", BANK(def_sect) ; not a label

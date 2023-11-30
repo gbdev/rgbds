@@ -1,0 +1,2 @@
+FATAL: negative-ds.asm(5):
+    Constant must not be negative: -1

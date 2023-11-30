@@ -18,4 +18,6 @@ error: bank.asm(22) -> bank.asm::def_sect(8):
     Expected constant expression: Section "WRAMX_bad"'s bank is not known
 error: bank.asm(22) -> bank.asm::def_sect(8):
     Expected constant expression: "Label_u12"'s bank is not known
-error: Assembly aborted (10 errors)!
+error: bank.asm(26):
+    BANK argument must be a label
+error: Assembly aborted (11 errors)!

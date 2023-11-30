@@ -1,0 +1,3 @@
+error: impossible-bank.asm(1):
+    BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections
+error: Assembly aborted (1 error)!

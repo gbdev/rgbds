@@ -20,11 +20,20 @@ ENDM
 
 	def nonnumeric equs "1"
 	def zero equ 0
+	def two equ 2
 
 MACRO bad
 	println "nonnumeric", \<nonnumeric>
 	println "zero", \<zero>
 	println "undefined", \<undefined>
+	println "two", \<two>
+	println "2", \<2>
 ENDM
 
 	bad 42
+
+MACRO toolong
+	println \<abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz>
+ENDM
+
+	toolong 42

@@ -7,3 +7,4 @@ Label:
 	ds 60, .last - Label     ; ...even if not constant
 .last
 	ds 11, $67, $89
+	ds 2, !Label, ~Label

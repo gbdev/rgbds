@@ -13,3 +13,8 @@ PRINTLN STRCAT("{NAME}_{d:INDEX}", " is ", {NAME}_{d:INDEX})
 ; Purges ITEM_100
 PURGE {NAME}_{d:INDEX}
 ASSERT !DEF({NAME}_{d:INDEX})
+
+; not string or number
+MACRO foo
+ENDM
+PRINTLN "foo {foo}"

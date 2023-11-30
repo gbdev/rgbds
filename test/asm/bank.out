@@ -12,3 +12,4 @@ WRAMX_ok (WRAMX): $7 == $7
 WRAMX_bad (WRAMX): $0 == $0
 OAM_ok (OAM): $0 == $0
 HRAM_ok (HRAM): $0 == $0
+def_sect: $4B4E4142

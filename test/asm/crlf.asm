@@ -4,6 +4,10 @@ DEF s EQUS "Hello, \
 world!"
 assert !strcmp("{s}", "Hello, world!")
 
+/*
+ * block comment
+ */
+
 DEF t EQUS """Hello,
 world!"""
 assert !strcmp("{t}", "Hello,\nworld!")
