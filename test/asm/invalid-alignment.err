@@ -1,23 +1,15 @@
-error: invalid-alignment.asm(3):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(3):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(3):
-    Section "a"'s fixed address doesn't match its alignment
-error: invalid-alignment.asm(5):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(5):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(7):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(7):
-    Alignment must be between 0 and 16, not 20
-error: invalid-alignment.asm(7):
-    Section "c"'s fixed address doesn't match its alignment
+error: invalid-alignment.asm(9):
+    Section's fixed address fails required alignment (PC = $4000)
 error: invalid-alignment.asm(11):
-    Section "d"'s fixed address doesn't match its alignment
+    Alignment must be between 0 and 16, not 20
 error: invalid-alignment.asm(13):
-    Section "e"'s fixed address doesn't match its alignment
+    Alignment must be between 0 and 16, not 20
 error: invalid-alignment.asm(15):
+    Alignment must be between 0 and 16, not 20
+error: invalid-alignment.asm(19):
+    Section "d"'s fixed address doesn't match its alignment
+error: invalid-alignment.asm(21):
+    Section "e"'s fixed address doesn't match its alignment
+error: invalid-alignment.asm(23):
     Section "f"'s fixed address doesn't match its alignment
-error: Assembly aborted (11 errors)!
+error: Assembly aborted (7 errors)!

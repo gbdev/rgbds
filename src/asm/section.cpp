@@ -499,7 +499,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 		return;
 
 	struct Section *sect = sect_GetSymbolSection();
-	uint16_t alignSize = 1 << alignment; // Size of an aligned "block"
+	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != (uint32_t)-1) {
 		if ((sect->org + curOffset - offset) % alignSize)

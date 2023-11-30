@@ -1,4 +1,12 @@
+; valid
+
+SECTION "valid", ROM0
+align 16 ; this is achievable at $0000
+
 ; invalid
+
+SECTION "invalid", ROMX[$4000]
+align 16
 
 SECTION "a", ROMX[$4000], ALIGN[20]
 
