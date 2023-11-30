@@ -18,7 +18,6 @@
 #include "asm/warning.hpp"
 
 #include "error.hpp"
-#include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // strdup
 
@@ -308,8 +307,6 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 	uint8_t alignment = attrs->alignment;
 	uint16_t alignOffset = attrs->alignOfs;
 
-	assert(alignment <= 16); // Should be ensured by the caller
-
 	// First, validate parameters, and normalize them if applicable
 
 	if (bank != (uint32_t)-1) {
@@ -325,6 +322,12 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		bank = sectionTypeInfo[type].firstBank;
 	}
 
+	if (alignOffset >= 1 << alignment) {
+		error("Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
+		      alignOffset, 1U << alignment);
+		alignOffset = 0;
+	}
+
 	if (org != (uint32_t)-1) {
 		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
 			error("Section \"%s\"'s fixed address $%04" PRIx32
@@ -332,12 +335,14 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 				name, org, sectionTypeInfo[type].startAddr, endaddr(type));
 	}
 
-	// If a valid alignment was specified, try to apply it
-
 	if (alignment != 0) {
+		if (alignment > 16) {
+			error("Alignment must be between 0 and 16, not %u\n", alignment);
+			alignment = 16;
+		}
+		// It doesn't make sense to have both alignment and org set
 		uint32_t mask = mask(alignment);
 
-		// It doesn't make sense to have both alignment and org set
 		if (org != (uint32_t)-1) {
 			if ((org - alignOffset) & mask)
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n",

@@ -1021,7 +1021,6 @@ align		: T_OP_ALIGN align_spec { sect_AlignPC($2.alignment, $2.alignOfs); }
 align_spec	: uconst {
 			if ($1 > 16) {
 				error("Alignment must be between 0 and 16, not %u\n", $1);
-				$$.alignment = $$.alignOfs = 0;
 			} else {
 				$$.alignment = $1;
 				$$.alignOfs = 0;
@@ -1030,12 +1029,10 @@ align_spec	: uconst {
 		| uconst T_COMMA const {
 			if ($1 > 16) {
 				error("Alignment must be between 0 and 16, not %u\n", $1);
-				$$.alignment = $$.alignOfs = 0;
 			} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
 				error("The absolute alignment offset (%" PRIu32
 				      ") must be less than alignment size (%d)\n",
 				      (uint32_t)($3 < 0 ? -$3 : $3), 1 << $1);
-				$$.alignment = $$.alignOfs = 0;
 			} else {
 				$$.alignment = $1;
 				$$.alignOfs = $3 < 0 ? (1 << $1) + $3 : $3;
