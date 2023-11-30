@@ -502,8 +502,8 @@ void patch_CheckAssertions(struct Assertion *assert)
 
 /*
  * Applies all of a section's patches
- * @param section The section to patch
- * @param dataSection 
+ * @param section The section component to patch
+ * @param dataSection The section to patch
  */
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {

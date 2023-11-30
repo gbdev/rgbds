@@ -182,8 +182,7 @@ static unsigned int mergeFragments(struct Section *sect, uint32_t org, uint8_t a
 		// If both are fixed, they must be the same
 		if (sect->org != (uint32_t)-1 && sect->org != curOrg)
 			fail("Section already declared as fixed at incompatible address $%04"
-			     PRIx32 " (cur addr = %04" PRIx32 ")\n",
-			     sect->org, sect->org + sect->size);
+			     PRIx32 "\n", sect->org);
 		else if (sect->align != 0 && (mask(sect->align) & (curOrg - sect->alignOfs)))
 			fail("Section already declared as aligned to %u bytes (offset %"
 			     PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
