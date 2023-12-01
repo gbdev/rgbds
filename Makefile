@@ -39,9 +39,9 @@ LDFLAGS		?=
 REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
 		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
-YFLAGS		?= -Wall
+# Wrapper around bison that passes flags depending on what the version supports
+BISON		:= src/bison.sh
 
-BISON		:= bison
 RM		:= rm -rf
 
 # Used for checking pull requests
@@ -138,19 +138,7 @@ src/asm/parser.hpp: src/asm/parser.cpp
 	$Qtouch $@
 
 src/asm/parser.cpp: src/asm/parser.y
-	$QDEFS=; \
-	add_flag(){ \
-		if src/check_bison_ver.sh $$1 $$2; then \
-			DEFS="-D$$3 $$DEFS"; \
-		fi \
-	}; \
-	add_flag 3 5 api.token.raw=true; \
-	add_flag 3 6 parse.error=detailed; \
-	add_flag 3 0 parse.error=verbose; \
-	add_flag 3 0 parse.lac=full; \
-	add_flag 3 0 lr.type=ielr; \
-	echo "DEFS=$$DEFS"; \
-	${BISON} $$DEFS -d ${YFLAGS} -o $@ $<
+	$Q${BISON} $@ $<
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
 src/gfx/main.o: src/gfx/main.cpp
@@ -244,12 +232,12 @@ mingw32:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
 		CXX=i686-w64-mingw32-g++ \
 		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc" \
-		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
+		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
 
 mingw64:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
 		CXX=x86_64-w64-mingw32-g++ \
-		BISON=bison PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
+		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
 
 wine-shim:
 	$Qecho '#!/usr/bin/env bash' > rgbshim.sh
