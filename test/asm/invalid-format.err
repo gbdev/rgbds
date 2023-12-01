@@ -1,0 +1,25 @@
+error: invalid-format.asm(1):
+    STRFMT: Invalid format spec for argument 2
+error: invalid-format.asm(2):
+    STRFMT: Invalid format spec for argument 2
+error: invalid-format.asm(3):
+    STRFMT: Invalid format spec for argument 2
+error: invalid-format.asm(4):
+    STRFMT: Invalid format spec for argument 2
+error: invalid-format.asm(7):
+    Invalid format spec '5d5'
+error: invalid-format.asm(8):
+    Invalid format spec 'xx'
+error: invalid-format.asm(10):
+    Formatting string with sign flag '+'
+error: invalid-format.asm(11):
+    Formatting string with prefix flag '#'
+error: invalid-format.asm(12):
+    Formatting string with padding flag '0'
+error: invalid-format.asm(13):
+    Formatting string with fractional width
+error: invalid-format.asm(15):
+    Formatting type 'd' with prefix flag '#'
+error: invalid-format.asm(16):
+    Formatting type 'd' with fractional width
+error: Assembly aborted (12 errors)!

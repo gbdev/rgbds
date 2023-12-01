@@ -1,0 +1,2 @@
+warning: invalid-charsub.asm(1): [-Wbuiltin-args]
+    CHARSUB: Position 4 is past the end of the string

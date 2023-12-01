@@ -406,7 +406,6 @@ int main(int argc, char *argv[])
 			break;
 		case 's':
 			// TODO: implement "smart linking" with `-s`
-			(void)musl_optarg;
 			warning(NULL, 0, "Nobody has any idea what `-s` does");
 			break;
 		case 't':

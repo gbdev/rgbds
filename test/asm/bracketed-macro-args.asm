@@ -17,3 +17,23 @@ MACRO mac
 ENDM
 
 	mac 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 1
+
+	def nonnumeric equs "1"
+	def zero equ 0
+	def two equ 2
+
+MACRO bad
+	println "nonnumeric", \<nonnumeric>
+	println "zero", \<zero>
+	println "undefined", \<undefined>
+	println "two", \<two>
+	println "2", \<2>
+ENDM
+
+	bad 42
+
+MACRO toolong
+	println \<abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz>
+ENDM
+
+	toolong 42

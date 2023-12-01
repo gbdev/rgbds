@@ -130,9 +130,8 @@ void out_RegisterNode(struct FileStackNode *node)
 	}
 }
 
-void out_ReplaceNode(struct FileStackNode *node)
+void out_ReplaceNode(struct FileStackNode * /* node */)
 {
-	(void)node;
 #if 0
 This is code intended to replace a node, which is pretty useless until ref counting is added...
 
@@ -469,10 +468,8 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	}
 }
 
-static void registerUnregisteredSymbol(struct Symbol *symbol, void *arg)
+static void registerUnregisteredSymbol(struct Symbol *symbol, void *)
 {
-	(void)arg; // sym_ForEach requires a void* parameter, but we are not using it.
-
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
 	if (symbol->src && symbol->ID == (uint32_t)-1) {
 		registerSymbol(symbol);

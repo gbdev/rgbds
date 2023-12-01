@@ -1,12 +1,15 @@
-$0
-$2A
-$0
-$1
-$0
-$4
-$0
-$0
-$7
-$0
-$0
-$0
+ROM0_ok1 (ROM0): $0 == $0
+ROM0_ok2 (ROM0[$2000]): $0 == $0
+ROMX_ok1 (ROMX[$4567]): $0 == $0
+ROMX_ok2 (ROMX): $2A == $2A
+ROMX_bad (ROMX): $0 == $0
+VRAM_ok (VRAM): $1 == $1
+VRAM_bad (VRAM): $0 == $0
+SRAM_ok (SRAM): $4 == $4
+SRAM_bad (SRAM): $0 == $0
+WRAM0_ok (WRAM0): $0 == $0
+WRAMX_ok (WRAMX): $7 == $7
+WRAMX_bad (WRAMX): $0 == $0
+OAM_ok (OAM): $0 == $0
+HRAM_ok (HRAM): $0 == $0
+def_sect: $4B4E4142

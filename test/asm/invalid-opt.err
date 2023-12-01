@@ -1,0 +1,13 @@
+error: invalid-opt.asm(1):
+    Must specify exactly 2 characters for option 'b'
+error: invalid-opt.asm(2):
+    Must specify exactly 4 characters for option 'g'
+error: invalid-opt.asm(3):
+    Invalid argument for option 'p'
+error: invalid-opt.asm(4):
+    Invalid argument for option 'Q'
+error: invalid-opt.asm(5):
+    Argument for option 'Q' must be between 1 and 31
+error: invalid-opt.asm(6):
+    Must specify an argument for option 'W'
+error: Assembly aborted (6 errors)!

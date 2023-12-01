@@ -1,0 +1,5 @@
+error: load-in-load.asm(3):
+    `LOAD` blocks cannot be nested
+error: load-in-load.asm(5):
+    Found `ENDL` outside of a `LOAD` block
+error: Assembly aborted (2 errors)!

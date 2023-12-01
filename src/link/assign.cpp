@@ -328,9 +328,8 @@ static struct UnassignedSection *sections;
  * @param section The section to categorize
  * @param arg Callback arg, unused
  */
-static void categorizeSection(struct Section *section, void *arg)
+static void categorizeSection(struct Section *section, void *)
 {
-	(void)arg;
 	uint8_t constraints = 0;
 
 	if (section->isBankFixed)

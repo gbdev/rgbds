@@ -1,0 +1,2 @@
+FATAL: endsection-in-union.asm(3):
+    Cannot end the section within a UNION

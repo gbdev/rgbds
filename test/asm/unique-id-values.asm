@@ -20,3 +20,14 @@ for p, 10
     println "p = {d:p}"
   endc
 endr
+
+rept 3
+  if def(m)
+    purge m
+  endc
+  MACRO m
+    println "go \1 \@"
+  ENDM
+  m \@
+endr
+  m outside

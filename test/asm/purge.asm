@@ -11,3 +11,5 @@ Label:
 Exported::
 	PURGE Exported
 Exported::
+
+	PURGE Undefined

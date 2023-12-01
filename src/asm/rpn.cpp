@@ -512,10 +512,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			if (src2->val < 0)
 				fatalerror("Exponentiation by negative power\n");
 
-			if (src1->val == INT32_MIN && src2->val == -1)
-				expr->val = 0;
-			else
-				expr->val = op_exponent(src1->val, src2->val);
+			expr->val = op_exponent(src1->val, src2->val);
 			break;
 
 		case RPN_NEG:

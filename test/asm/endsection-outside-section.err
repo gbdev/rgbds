@@ -1,0 +1,2 @@
+FATAL: endsection-outside-section.asm(1):
+    Cannot end the section outside of a SECTION

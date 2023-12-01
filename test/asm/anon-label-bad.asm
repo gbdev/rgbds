@@ -5,6 +5,10 @@ SECTION "Anonymous label errors test", ROM0
 
 	db :-- ; Reference goes too far back
 
+	: ; Can't EXPORT or PURGE anonymous labels
+	EXPORT :-
+	PURGE :-
+
 ; Uncomment this if you're a badass with a *lot* of RAM
 ; REPT 2147483647
 ; :

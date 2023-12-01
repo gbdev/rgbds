@@ -8,3 +8,11 @@ warning: rept-line-no.asm(3) -> rept-line-no.asm::REPT~3(5): [-Wuser]
     Line 5
 warning: rept-line-no.asm(8): [-Wuser]
     Line 8
+warning: rept-line-no.asm(10) -> rept-line-no.asm::REPT~1(11) -> rept-line-no.asm::REPT~1::REPT~1(12): [-Wuser]
+    Line 12
+warning: rept-line-no.asm(10) -> rept-line-no.asm::REPT~1(11) -> rept-line-no.asm::REPT~1::REPT~2(12): [-Wuser]
+    Line 12
+warning: rept-line-no.asm(10) -> rept-line-no.asm::REPT~2(11) -> rept-line-no.asm::REPT~2::REPT~1(12): [-Wuser]
+    Line 12
+warning: rept-line-no.asm(10) -> rept-line-no.asm::REPT~2(11) -> rept-line-no.asm::REPT~2::REPT~2(12): [-Wuser]
+    Line 12

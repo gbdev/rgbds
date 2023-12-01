@@ -1,0 +1,4 @@
+error: section-union-mismatch.asm(2):
+    Section already declared as fixed at different address $c000
+FATAL: section-union-mismatch.asm(2):
+    Cannot create section "test" (1 error)

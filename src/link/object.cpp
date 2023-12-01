@@ -669,10 +669,8 @@ static void freeNode(struct FileStackNode *node)
 		free(node->name);
 }
 
-static void freeSection(struct Section *section, void *arg)
+static void freeSection(struct Section *section, void *)
 {
-	(void)arg;
-
 	do {
 		struct Section *next = section->nextu;
 

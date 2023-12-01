@@ -1,0 +1,4 @@
+SECTION "outer", ROM0
+LOAD "ram", WRAM0
+SECTION "inner", ROM0
+ENDL

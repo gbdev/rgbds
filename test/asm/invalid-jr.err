@@ -1,0 +1,3 @@
+error: invalid-jr.asm(3):
+    jr target out of reach (expected -129 < -258 < 128)
+error: Assembly aborted (1 error)!

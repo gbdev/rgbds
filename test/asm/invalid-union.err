@@ -1,0 +1,9 @@
+error: invalid-union.asm(1):
+    Found ENDU outside of a UNION construct
+error: invalid-union.asm(2):
+    Found NEXTU outside of a UNION construct
+error: invalid-union.asm(3):
+    UNIONs must be inside a SECTION
+error: invalid-union.asm(7):
+    Unterminated UNION construct
+error: Assembly aborted (4 errors)!

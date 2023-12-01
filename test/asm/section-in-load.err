@@ -1,0 +1,2 @@
+FATAL: section-in-load.asm(3):
+    Cannot change the section within a `LOAD` block
