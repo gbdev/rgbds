@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			if (linkerScriptName)
-				warnx("Overriding linkerscript %s", musl_optarg);
+				warnx("Overriding linker script %s", musl_optarg);
 			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
@@ -368,12 +368,12 @@ int main(int argc, char *argv[])
 			break;
 		case 'm':
 			if (mapFileName)
-				warnx("Overriding mapfile %s", musl_optarg);
+				warnx("Overriding map file %s", musl_optarg);
 			mapFileName = musl_optarg;
 			break;
 		case 'n':
 			if (symFileName)
-				warnx("Overriding symfile %s", musl_optarg);
+				warnx("Overriding sym file %s", musl_optarg);
 			symFileName = musl_optarg;
 			break;
 		case 'O':
@@ -503,7 +503,6 @@ int main(int argc, char *argv[])
 		if (nbErrors != 0)
 			reportErrors();
 	}
-
 
 	// then process them,
 	obj_DoSanityChecks();
