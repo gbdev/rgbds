@@ -19,6 +19,7 @@
 #endif
 
 #include "platform.hpp" // For `ssize_t` and `AT`
+#include "util.hpp"
 
 #include "asm/lexer.hpp"
 #include "asm/fixpoint.hpp"
@@ -28,7 +29,6 @@
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
 #include "asm/symbol.hpp"
-#include "asm/util.hpp"
 #include "asm/warning.hpp"
 // Include this last so it gets all type & constant definitions
 #include "parser.hpp" // For token definitions, generated from parser.y

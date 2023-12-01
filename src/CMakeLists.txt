@@ -28,6 +28,12 @@ BISON_TARGET(PARSER "asm/parser.y"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
              )
 
+BISON_TARGET(PARSER "link/script.y"
+             "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
+             COMPILE_FLAGS "${BISON_FLAGS}"
+             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
+             )
+
 set(rgbasm_src
     "${BISON_PARSER_OUTPUT_SOURCE}"
     "asm/charmap.cpp"

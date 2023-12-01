@@ -136,8 +136,9 @@ test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 # Bison-generated C++ files have an accompanying header
 src/asm/parser.hpp: src/asm/parser.cpp
 	$Qtouch $@
+# The linkerscript parser contains its own lexer, though.
 
-src/asm/parser.cpp: src/asm/parser.y
+.y.cpp:
 	$Q${BISON} $@ $<
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)

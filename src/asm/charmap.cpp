@@ -10,10 +10,10 @@
 #include "asm/charmap.hpp"
 #include "asm/main.hpp"
 #include "asm/output.hpp"
-#include "asm/util.hpp"
 #include "asm/warning.hpp"
 
 #include "hashmap.hpp"
+#include "util.hpp"
 
 // Charmaps are stored using a structure known as "trie".
 // Essentially a tree, where each nodes stores a single character's worth of info:
