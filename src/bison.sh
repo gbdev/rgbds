@@ -3,8 +3,9 @@ set -e
 
 BISONFLAGS=-Wall
 
+readonly BISON_VER=$(bison -V)
 add_flag () {
-	if bison -V | awk -v major="$1" -v minor="$2" '
+	if awk <<<"$BISON_VER" -v major="$1" -v minor="$2" '
 	/^bison.*[0-9]+(\.[0-9]+)(\.[0-9]+)?$/ {
 		match($0, /[0-9]+(\.[0-9]+)(\.[0-9]+)?$/);
 		split(substr($0, RSTART), ver, ".");
