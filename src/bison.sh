@@ -22,4 +22,4 @@ add_flag 3 0 lr.type=ielr
 
 echo "BISONFLAGS=$BISONFLAGS"
 
-bison $BISONFLAGS -d -o "$1" "$2"
+exec bison $BISONFLAGS -d -o "$1" "$2"
