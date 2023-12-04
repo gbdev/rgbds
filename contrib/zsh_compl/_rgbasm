@@ -60,6 +60,7 @@ local args=(
 	'(-Q --q-precision)'{-Q,--q-precision}'+[Set fixed-point precision]:precision:'
 	'(-r --recursion-depth)'{-r,--recursion-depth}'+[Set maximum recursion depth]:depth:'
 	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbasm_warnings'
+	'(-X --max-errors)'{-X,--max-errors}'+[Set maximum errors before aborting]:maximum errors:'
 
 	":assembly sources:_files -g '*.asm'"
 )

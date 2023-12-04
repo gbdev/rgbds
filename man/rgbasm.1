@@ -24,6 +24,7 @@
 .Op Fl Q Ar fix_precision
 .Op Fl r Ar recursion_depth
 .Op Fl W Ar warning
+.Op Fl X Ar max_errors
 .Ar asmfile
 .Sh DESCRIPTION
 The
@@ -176,6 +177,11 @@ See the
 section for a list of warnings.
 .It Fl w
 Disable all warning output, even when turned into errors.
+.It Fl X Ar max_errors , Fl \-max-errors Ar max_errors
+If more than this number of errors (not warnings) occur, then abort the assembly process.
+.Fl X 0
+disables this behavior.
+The default is 0.
 .El
 .Sh DIAGNOSTICS
 Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the assembling process.

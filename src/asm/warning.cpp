@@ -16,6 +16,7 @@
 #include "itertools.hpp"
 
 unsigned int nbErrors = 0;
+unsigned int maxErrors = 0;
 
 static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 	AT(WARNING_ASSERT)               WARNING_ENABLED,
@@ -343,6 +344,9 @@ void error(char const *fmt, ...)
 	va_start(args, fmt);
 	printDiag(fmt, args, "error: ", ":\n    ", NULL);
 	va_end(args);
+
+	if (nbErrors + 1 == maxErrors)
+		errx("Reached %u error%s; assembly aborted!", maxErrors, maxErrors == 1 ? "" : "s");
 	nbErrors++;
 }
 

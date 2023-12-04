@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <float.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -83,7 +84,7 @@ static char *make_escape(char const *str)
 }
 
 // Short options
-static const char *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:w";
+static const char *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -110,6 +111,7 @@ static struct option const longopts[] = {
 	{ "MG",               no_argument,       &depType, 'G' },
 	{ "MP",               no_argument,       &depType, 'P' },
 	{ "MT",               required_argument, &depType, 'T' },
+	{ "warning",          required_argument, NULL,     'W' },
 	{ "MQ",               required_argument, &depType, 'Q' },
 	{ "output",           required_argument, NULL,     'o' },
 	{ "preinclude",       required_argument, NULL,     'P' },
@@ -119,6 +121,7 @@ static struct option const longopts[] = {
 	{ "version",          no_argument,       NULL,     'V' },
 	{ "verbose",          no_argument,       NULL,     'v' },
 	{ "warning",          required_argument, NULL,     'W' },
+	{ "max-errors",       required_argument, NULL,     'X' },
 	{ NULL,               no_argument,       NULL,     0   }
 };
 
@@ -128,7 +131,7 @@ static void printUsage(void)
 "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-"              [-r depth] [-W warning] <file>\n"
+"              [-r depth] [-W warning] [-X max_errors] <file>\n"
 "Useful options:\n"
 "    -E, --export-all         export all labels\n"
 "    -M, --dependfile <path>  set the output dependency file\n"
@@ -316,6 +319,19 @@ int main(int argc, char *argv[])
 			warnings = false;
 			break;
 
+			unsigned int maxValue;
+		case 'X':
+			maxValue = strtoul(musl_optarg, &endptr, 0);
+
+			if (musl_optarg[0] == '\0' || *endptr != '\0')
+				errx("Invalid argument for option 'X'");
+
+			if (maxValue > UINT_MAX)
+				errx("Argument for option 'X' must be between 0 and %u", UINT_MAX);
+
+			maxErrors = maxValue;
+			break;
+
 		// Long-only options
 		case 0:
 			switch (depType) {
@@ -399,8 +415,7 @@ int main(int argc, char *argv[])
 	sect_CheckUnionClosed();
 
 	if (nbErrors != 0)
-		errx("Assembly aborted (%u error%s)!", nbErrors,
-			nbErrors == 1 ? "" : "s");
+		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");
 
 	// If parse aborted due to missing an include, and `-MG` was given, exit normally
 	if (failedOnMissingInclude)
