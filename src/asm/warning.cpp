@@ -345,9 +345,11 @@ void error(char const *fmt, ...)
 	printDiag(fmt, args, "error: ", ":\n    ", NULL);
 	va_end(args);
 
-	if (nbErrors + 1 == maxErrors)
-		errx("Reached %u error%s; assembly aborted!", maxErrors, maxErrors == 1 ? "" : "s");
+	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
+	if (nbErrors == maxErrors)
+		errx("The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly aborted!",
+		     maxErrors, maxErrors == 1 ? "" : "s");
 }
 
 [[noreturn]] void fatalerror(char const *fmt, ...)
