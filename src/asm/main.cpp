@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	char const *dependFileName = NULL;
 	size_t targetFileNameLen = 0;
 
-	// Maximum of 100 errors only applies if rgbasm is running in a terminal.
+	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO))
 		maxErrors = 100;
 
