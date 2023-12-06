@@ -70,7 +70,11 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Test
+      - name: Install test dependency dependencies
+        shell: bash
+        run: |
+          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
+      - name: Run tests
         shell: bash
         run: |
           test/run-tests.sh
@@ -154,7 +158,11 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
-      - name: Test
+      - name: Install test dependency dependencies
+        shell: bash
+        run: |
+          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
+      - name: Run tests
         shell: bash
         run: |
           cp bins/* .
@@ -257,6 +265,10 @@ jobs:
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
+      - name: Install test dependency dependencies
+        shell: bash
+        run: |
+          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
       - name: Run tests
         shell: bash
         run: |

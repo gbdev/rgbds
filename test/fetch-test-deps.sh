@@ -8,6 +8,7 @@ usage() {
 	echo "Options:"
 	echo "    -h, --help      show this help message"
 	echo "    --only-free     download only freely licensed codebases"
+	echo "    --get-deps      install programs' own dependencies instead of themselves"
 	echo "    --get-hash      print programs' commit hashes instead of downloading them"
 	echo "    --get-paths     print programs' GitHub paths instead of downloading them"
 }
@@ -16,6 +17,7 @@ usage() {
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
 actionname=
+osname=
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		-h|--help)
@@ -24,6 +26,11 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
+			;;
+		--get-deps)
+			actionname="$1"
+			shift
+			osname="$1"
 			;;
 		--get-hash|--get-paths)
 			actionname="$1"
@@ -40,6 +47,25 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$actionname" in
+	--get-deps)
+		action() { # # owner/repo
+			# libbet depends on PIL to build
+			if [ "$1" = "pinobatch/libbet" ]; then
+				case "${osname%-*}" in
+					ubuntu|macos)
+						python3 -m pip install pillow
+						;;
+					windows)
+						py -3 -m pip install pillow
+						;;
+					*)
+						echo "WARNING: Cannot install Pillow for OS '$osname'"
+						;;
+				esac
+			fi
+		}
+		;;
+
 	--get-hash)
 		action() { # owner/repo shallow-since commit
 			printf "%s@%s-" "${1##*/}" "$3"
@@ -69,7 +95,8 @@ case "$actionname" in
 esac
 
 if "$nonfree"; then
-	action pret/pokecrystal 2023-10-22 38667169809b81eb39990b4341f9919332d27248
-	action pret/pokered     2023-10-10 b302e93674f376f2881cbd931a698345ad27bec3
+	action pret/pokecrystal 2023-11-22 9a917e35760210a1f34057ecada2148f1fefc390
+	action pret/pokered     2023-11-21 d4d7b91aecf651b06d1f466ecc22b65da234a299
 fi
-action         AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
+action AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
+action pinobatch/libbet 2023-11-30 9f56cf94883c58517c2cd41a752cfee5a5800e8d

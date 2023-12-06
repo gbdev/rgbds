@@ -69,3 +69,4 @@ if "$nonfree"; then
 	test_downstream pret/pokered     compare
 fi
 test_downstream AntonioND/ucity  ''
+test_downstream pinobatch/libbet all
