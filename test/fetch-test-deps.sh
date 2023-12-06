@@ -100,3 +100,4 @@ if "$nonfree"; then
 fi
 action AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
 action pinobatch/libbet 2023-11-30 9f56cf94883c58517c2cd41a752cfee5a5800e8d
+action LIJI32/SameBoy   2023-12-05 8642715a6d75520753196de96b73ada4451739a4

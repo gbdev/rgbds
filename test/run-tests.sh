@@ -70,3 +70,4 @@ if "$nonfree"; then
 fi
 test_downstream AntonioND/ucity  ''
 test_downstream pinobatch/libbet all
+test_downstream LIJI32/SameBoy   bootroms
