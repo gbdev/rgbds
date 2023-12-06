@@ -178,12 +178,12 @@ section for a list of warnings.
 .It Fl w
 Disable all warning output, even when turned into errors.
 .It Fl X Ar max_errors , Fl \-max-errors Ar max_errors
-If more than this number of errors (not warnings) occur, then abort the assembly process.
+If more than this number of errors (not warnings) occur, then abort the assembly process;
 .Fl X 0
 disables this behavior.
 The default is 100 if
 .Nm
-is running in a terminal, and 0 otherwise.
+is printing errors to a terminal, and 0 otherwise.
 .El
 .Sh DIAGNOSTICS
 Warnings are diagnostic messages that indicate possibly erroneous behavior that does not necessarily compromise the assembling process.
