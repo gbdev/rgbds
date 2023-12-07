@@ -65,8 +65,9 @@ test_downstream() { # owner/repo make-target
 }
 
 if "$nonfree"; then
-	test_downstream pret/pokecrystal compare
-	test_downstream pret/pokered     compare
+	test_downstream pret/pokecrystal       compare
+	test_downstream pret/pokered           compare
+	test_downstream zladx/LADX-Disassembly ''
 fi
 test_downstream AntonioND/ucity  ''
 test_downstream pinobatch/libbet all
