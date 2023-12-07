@@ -43,6 +43,7 @@ _rgbasm_completions() {
 		[Q]="q-precision:unk"
 		[r]="recursion-depth:unk"
 		[W]="warning:warning"
+		[X]="max-errors:unk"
 	)
 	# Parse command-line up to current word
 	local opt_ena=true

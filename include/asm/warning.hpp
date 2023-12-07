@@ -5,7 +5,7 @@
 
 #include "helpers.hpp"
 
-extern unsigned int nbErrors;
+extern unsigned int nbErrors, maxErrors;
 
 enum WarningState {
 	WARNING_DEFAULT,

@@ -16,6 +16,7 @@
 #include "itertools.hpp"
 
 unsigned int nbErrors = 0;
+unsigned int maxErrors = 0;
 
 static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
 	AT(WARNING_ASSERT)               WARNING_ENABLED,
@@ -343,7 +344,12 @@ void error(char const *fmt, ...)
 	va_start(args, fmt);
 	printDiag(fmt, args, "error: ", ":\n    ", NULL);
 	va_end(args);
+
+	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
+	if (nbErrors == maxErrors)
+		errx("The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly aborted!",
+		     maxErrors, maxErrors == 1 ? "" : "s");
 }
 
 [[noreturn]] void fatalerror(char const *fmt, ...)
