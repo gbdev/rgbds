@@ -44,6 +44,7 @@
 	};
 }
 
+%token YYEOF 0
 %token newline
 %token ORG "ORG"
        INCLUDE "INCLUDE"
