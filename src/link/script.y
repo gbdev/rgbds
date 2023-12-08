@@ -194,13 +194,13 @@ yy::parser::symbol_type yylex(void) {
 		}
 
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-			if (std::ranges::equal(ident, sectionTypeInfo[type].name, strCaseCmp)) {
+			if (std::equal(ident.begin(), ident.end(), sectionTypeInfo[type].name.begin(), strCaseCmp)) {
 				return yy::parser::make_section_type(type);
 			}
 		}
 
 		for (Keyword const &keyword : keywords) {
-			if (std::ranges::equal(ident, keyword.name, strCaseCmp)) {
+			if (std::equal(ident.begin(), ident.end(), keyword.name.begin(), strCaseCmp)) {
 				return keyword.tokenGen();
 			}
 		}
