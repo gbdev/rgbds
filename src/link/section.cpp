@@ -128,7 +128,8 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 
 	if (target->type != other->type)
 		errx("Section \"%s\" is defined with conflicting types %s and %s",
-		     other->name, sectionTypeInfo[target->type].name, sectionTypeInfo[other->type].name);
+		     other->name, sectionTypeInfo[target->type].name.c_str(),
+		     sectionTypeInfo[other->type].name.c_str());
 
 	if (other->isBankFixed) {
 		if (!target->isBankFixed) {
@@ -202,7 +203,7 @@ void sect_AddSection(struct Section *section)
 			mergeSections(other, section, section->modifier);
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx("Section \"%s\" is of type %s, which cannot be unionized",
-		     section->name, sectionTypeInfo[section->type].name);
+		     section->name, sectionTypeInfo[section->type].name.c_str());
 	} else {
 		// If not, add it
 		hash_AddElement(sections, section->name, section);
@@ -254,7 +255,7 @@ static void doSanityChecks(struct Section *section, void *)
 	// Too large an alignment may not be satisfiable
 	if (section->isAlignFixed && (section->alignMask & sectionTypeInfo[section->type].startAddr))
 		error(NULL, 0, "%s: %s sections cannot be aligned to $%04x bytes",
-		     section->name, sectionTypeInfo[section->type].name, section->alignMask + 1);
+		     section->name, sectionTypeInfo[section->type].name.c_str(), section->alignMask + 1);
 
 	uint32_t minbank = sectionTypeInfo[section->type].firstBank, maxbank = sectionTypeInfo[section->type].lastBank;
 

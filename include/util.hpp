@@ -3,6 +3,7 @@
 #ifndef RGBDS_UTIL_H
 #define RGBDS_UTIL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 char const *printChar(int c);

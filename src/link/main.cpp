@@ -29,7 +29,7 @@
 #include "version.hpp"
 
 bool isDmgMode;               // -d
-char       *linkerScriptName; // -l
+char *linkerScriptName;       // -l
 char const *mapFileName;      // -m
 bool noSymInMap;              // -M
 char const *symFileName;      // -n
@@ -44,6 +44,8 @@ bool is32kMode;               // -t
 bool beVerbose;               // -v
 bool isWRA0Mode;              // -w
 bool disablePadding;          // -x
+
+FILE *linkerScript;
 
 static uint32_t nbErrors = 0;
 

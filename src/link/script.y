@@ -67,7 +67,7 @@ lines: %empty
      | line lines
 ;
 
-line: "INCLUDE" string newline { includeFile(std::move($2)); } // Note: this additionally increments the line number!
+line: INCLUDE string newline { includeFile(std::move($2)); } // Note: this additionally increments the line number!
     | directive newline { incLineNo(); }
     | newline { incLineNo(); }
     | error newline { yyerrok; incLineNo(); } // Error recovery.
@@ -75,9 +75,9 @@ line: "INCLUDE" string newline { includeFile(std::move($2)); } // Note: this add
 
 directive: section_type { setSectionType($1); }
          | section_type number { setSectionType($1, $2); }
-         | "ORG" number { setAddr($2); }
-         | "ALIGN" number { alignTo($2, 0); }
-         | "DS" number { pad($2); }
+         | ORG number { setAddr($2); }
+         | ALIGN number { alignTo($2, 0); }
+         | DS number { pad($2); }
          | string { placeSection($1); }
 ;
 
@@ -100,21 +100,22 @@ struct LexerStackEntry {
 static std::vector<LexerStackEntry> lexerStack;
 
 void yy::parser::error(std::string const &msg) {
-	auto const &script = lexerStack.back();
-	scriptError(script, "%s", msg.c_str());
+	auto const &context = lexerStack.back();
+	scriptError(context, "%s", msg.c_str());
 }
 
 static void includeFile(std::string &&path) {
-	auto &newEntry = lexerStack.emplace_back(path);
-	auto &prevEntry = lexerStack[lexerStack.size() - 2];
+	auto &prevContext = lexerStack.back();
+	auto &newContext = lexerStack.emplace_back(std::move(path));
 
-	if (!newEntry.file.open(newEntry.path, std::ios_base::in)) {
-		scriptError(prevEntry, "Could not open included linker script \"%s\"", newEntry.path.c_str());
-		++prevEntry.lineNo; // Do this after reporting the error, but before modifying the stack!
+	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
+		// The order is important: report the error, increment the line number, modify the stack!
+		scriptError(prevContext, "Could not open included linker script \"%s\"", newContext.path.c_str());
+		++prevContext.lineNo;
 		lexerStack.pop_back();
 	} else {
 		// The lexer will use the new entry to lex the next token.
-		++prevEntry.lineNo;
+		++prevContext.lineNo;
 	}
 }
 
@@ -135,88 +136,89 @@ static bool isIdentChar(LexerStackEntry::int_type c) {
 }
 
 yy::parser::symbol_type yylex(void) {
-	do {
-		auto &context = lexerStack.back();
-		auto c = context.file.sbumpc();
+	auto &context = lexerStack.back();
+	auto c = context.file.sbumpc();
 
-		// First, skip leading whitespace.
-		while (isWhiteSpace(c)) {
+	// First, skip leading whitespace.
+	while (isWhiteSpace(c)) {
+		c = context.file.sbumpc();
+	}
+	// Then, skip a comment if applicable.
+	if (c == ';') {
+		while (!isNewline(c)) {
 			c = context.file.sbumpc();
 		}
-		// Then, skip a comment if applicable.
-		if (c == ';') {
-			while (!isNewline(c)) {
-				c = context.file.sbumpc();
+	}
+
+	// Alright, what token should we return?
+	if (c == LexerStackEntry::eof) {
+		// Basically yywrap().
+		lexerStack.pop_back();
+		if (!lexerStack.empty()) {
+			return yylex();
+		}
+		return yy::parser::make_YYEOF();
+	} else if (isNewline(c)) {
+		// Handle CRLF.
+		if (c == '\r' && context.file.sgetc() == '\n') {
+			context.file.sbumpc();
+		}
+		return yy::parser::make_newline();
+	} else if (c == '"') {
+		std::string str;
+
+		for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
+			if (c == LexerStackEntry::eof || isNewline(c)) {
+				scriptError(context, "Unterminated string");
+				break;
 			}
+			context.file.sbumpc();
+			str.push_back(c);
 		}
 
-		// Alright, what token should we return?
-		if (c == LexerStackEntry::eof) {
-			// Basically yywrap().
-			lexerStack.pop_back();
-			if (!lexerStack.empty()) {
-				continue;
-			}
-			return yy::parser::make_YYEOF();
-		} else if (isNewline(c)) {
-			// Handle CRLF.
-			if (c == '\r' && context.file.sgetc() == '\n') {
-				context.file.sbumpc();
-			}
-			return yy::parser::make_newline();
-		} else if (c == '"') {
-			std::string str;
+		return yy::parser::make_string(std::move(str));
+	} else if (isIdentChar(c)) {
+		std::string ident;
+		auto strCaseCmp = [](char cmp, char ref) {
+			// `locale::classic()` yields the "C" locale.
+			assert(std::use_facet<std::ctype<char>>(std::locale::classic())
+			       .is(std::ctype_base::upper, ref));
+			return std::use_facet<std::ctype<char>>(std::locale::classic())
+			       .toupper(cmp) == ref;
+		};
 
-			for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
-				if (c == LexerStackEntry::eof || isNewline(c)) {
-					scriptError(context, "Unterminated string");
-					break;
-				}
-				context.file.sbumpc();
-				str.push_back(c);
-			}
-
-			return yy::parser::make_string(std::move(str));
-		} else if (isIdentChar(c)) {
-			std::string ident;
-			auto strCaseCmp = [](char cmp, char ref) {
-				// `locale::classic()` yields the "C" locale.
-				assert(std::use_facet<std::ctype<char>>(std::locale::classic()).is(std::ctype_base::upper, ref));
-				return std::use_facet<std::ctype<char>>(std::locale::classic()).toupper(cmp) == ref;
-			};
-
+		ident.push_back(c);
+		for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
 			ident.push_back(c);
-			for (c = context.file.sgetc(); isIdentChar(c); c = context.file.snextc()) {
-				ident.push_back(c);
-			}
-
-			for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-				if (std::ranges::equal(ident, sectionTypeInfo[type].name, strCaseCmp)) {
-					return yy::parser::make_section_type(type);
-				}
-			}
-
-			for (Keyword const &keyword : keywords) {
-				if (std::ranges::equal(ident, keyword.name, strCaseCmp)) {
-					return keyword.tokenGen();
-				}
-			}
-
-			scriptError(context, "Unknown keyword \"%s\"", ident.c_str());
-			continue; // Try lexing another token.
-		} else if (c == '$') {
-			abort(); // TODO: hex number
-		} else if (c == '%') {
-			abort(); // TOOD: bin number
-		} else if (c >= '0' && c <= '9') {
-			abort(); // TODO: dec number
-		} else {
-			abort(); // TODO: UTF-8 decoding
-			scriptError(context, "Unexpected character '%s'", printChar(c));
-			// Keep reading characters until the EOL, to avoid reporting too many errors.
-			abort();
 		}
-	} while (0); // This will generate a warning if any codepath forgets to return a token or loop.
+
+		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
+			if (std::ranges::equal(ident, sectionTypeInfo[type].name, strCaseCmp)) {
+				return yy::parser::make_section_type(type);
+			}
+		}
+
+		for (Keyword const &keyword : keywords) {
+			if (std::ranges::equal(ident, keyword.name, strCaseCmp)) {
+				return keyword.tokenGen();
+			}
+		}
+
+		scriptError(context, "Unknown keyword \"%s\"", ident.c_str());
+		return yylex(); // Try lexing another token.
+	} else if (c == '$') {
+		abort(); // TODO: hex number
+	} else if (c == '%') {
+		abort(); // TOOD: bin number
+	} else if (c >= '0' && c <= '9') {
+		abort(); // TODO: dec number
+	} else {
+		abort(); // TODO: UTF-8 decoding
+		scriptError(context, "Unexpected character '%s'", printChar(c));
+		// Keep reading characters until the EOL, to avoid reporting too many errors.
+		abort();
+	}
+	// Not unreachable; this will generate a warning if any codepath forgets to return.
 }
 
 // Semantic actions.
@@ -301,7 +303,7 @@ static void pad(uint32_t length) {
 	auto &pc = curAddr[activeType][activeBankIdx];
 
 	assert(pc >= typeInfo.startAddr);
-	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
+	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
 		scriptError(context, "Cannot pad by %u bytes: only %u bytes to $%04" PRIx16,
 		            length, typeInfo.size - offset, endaddr(activeType) + 1);
 	} else {
@@ -336,7 +338,7 @@ static void placeSection(std::string const &name) {
 		            name.c_str(), sectionTypeInfo[activeType].name.c_str(), sectionTypeInfo[section->type].name.c_str());
 	}
 
-	uint32_t bank = activeBankIdx + sectionTypeInfo[activeType].firstBank;
+	//uint32_t bank = activeBankIdx + sectionTypeInfo[activeType].firstBank;
 	abort(); // TODO: the rest.
 }
 
@@ -346,13 +348,17 @@ void script_ProcessScript(char const *path) {
 	activeType = SECTTYPE_INVALID;
 
 	lexerStack.clear();
-	auto &newEntry = lexerStack.emplace_back(std::string(path));
+	auto &newContext = lexerStack.emplace_back(std::string(path));
 
-	if (!newEntry.file.open(newEntry.path, std::ios_base::in)) {
-		error(NULL, 0, "Could not open linker script \"%s\"", newEntry.path.c_str());
+	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
+		error(NULL, 0, "Could not open linker script \"%s\"", newContext.path.c_str());
 		lexerStack.clear();
 	} else {
 		yy::parser linkerScriptParser;
 		linkerScriptParser(); // TODO: check the return value
 	}
 }
+
+// TODO: implement or remove these (called in main.cpp)
+struct SectionPlacement *script_NextSection(void) { abort(); }
+void script_Cleanup(void) { abort(); }

@@ -222,7 +222,7 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 	unsigned int nbSectErrors = 0;
 
 	if (type != sect->type)
-		fail("Section already exists but with type %s\n", sectionTypeInfo[sect->type].name);
+		fail("Section already exists but with type %s\n", sectionTypeInfo[sect->type].name.c_str());
 
 	if (sect->modifier != mod) {
 		fail("Section already declared as %s section\n", sectionModNames[sect->modifier]);
@@ -314,7 +314,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
 		else if (bank < sectionTypeInfo[type].firstBank || bank > sectionTypeInfo[type].lastBank)
 			error("%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04"
-				PRIx32 ")\n", sectionTypeInfo[type].name, bank,
+				PRIx32 ")\n", sectionTypeInfo[type].name.c_str(), bank,
 				sectionTypeInfo[type].firstBank, sectionTypeInfo[type].lastBank);
 	} else if (nbbanks(type) == 1) {
 		// If the section type only has a single bank, implicitly force it
@@ -349,7 +349,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error("Section \"%s\"'s alignment cannot be attained in %s\n",
-				name, sectionTypeInfo[type].name);
+				name, sectionTypeInfo[type].name.c_str());
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;
 		} else if (alignment == 16) {
