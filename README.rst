@@ -20,8 +20,8 @@ The source code of the website itself is on GitHub as well under the repo
 `rgbds-www <https://github.com/gbdev/rgbds-www>`__.
 
 If you want to contribute or maintain RGBDS, and have questions regarding the code, its
-organisation, etc. you can find the maintainers `on GBDev <https://gbdev.io/chat>`__ or
-via mail at ``rgbds at gbdev dot io``.
+organisation, etc. you can find the maintainers `on the gbdev community channels <https://gbdev.io/chat>`__
+or via mail at ``rgbds at gbdev dot io``.
 
 1. Installing RGBDS
 -------------------
