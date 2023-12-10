@@ -112,6 +112,8 @@ void yy::parser::error(std::string const &msg) {
 }
 
 static void includeFile(std::string &&path) {
+	// `emplace_back` can invalidate references to the stack's elements!
+	// This is why `newContext` must be gotten before `prevContext`.
 	auto &newContext = lexerStack.emplace_back(std::move(path));
 	auto &prevContext = lexerStack[lexerStack.size() - 2];
 
