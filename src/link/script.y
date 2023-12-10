@@ -143,6 +143,14 @@ static bool isIdentChar(LexerStackEntry::int_type c) {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
 }
 
+static bool isDecDigit(LexerStackEntry::int_type c) {
+	return c >= '0' && c <= '9';
+}
+
+static bool isBinDigit(LexerStackEntry::int_type c) {
+	return c >= '0' && c <= '1';
+}
+
 static bool isHexDigit(LexerStackEntry::int_type c) {
 	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
@@ -235,21 +243,21 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		return yy::parser::make_number(number);
 	} else if (c == '%') {
 		c = context.file.sgetc();
-		if (!(c >= '0' && c <= '1')) {
+		if (!isBinDigit(c)) {
 			scriptError(context, "No binary digits found after '%%'");
 			return yy::parser::make_number(0);
 		}
 
 		uint32_t number = c - '0';
 		context.file.sbumpc();
-		for (c = context.file.sgetc(); c >= '0' && c <= '1'; c = context.file.sgetc()) {
+		for (c = context.file.sgetc(); isBinDigit(c); c = context.file.sgetc()) {
 			number = number * 2 + (c - '0');
 			context.file.sbumpc();
 		}
 		return yy::parser::make_number(number);
-	} else if (c >= '0' && c <= '9') {
+	} else if (isDecDigit(c)) {
 		uint32_t number = c - '0';
-		for (c = context.file.sgetc(); c >= '0' && c <= '9'; c = context.file.sgetc()) {
+		for (c = context.file.sgetc(); isDecDigit(c); c = context.file.sgetc()) {
 			number = number * 10 + (c - '0');
 		}
 		return yy::parser::make_number(number);
