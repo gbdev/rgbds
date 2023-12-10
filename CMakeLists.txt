@@ -23,7 +23,8 @@ option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
 if(MSVC)
   # MSVC's standard library triggers warning C5105,
   # "macro expansion producing 'defined' has undefined behavior"
-  add_compile_options(/MP /wd5105)
+  # We also opt into the C++20-conformant preprocessor.
+  add_compile_options(/MP /wd5105 /Zc:preprocessor)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 
   if(SANITIZERS)

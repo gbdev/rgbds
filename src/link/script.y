@@ -86,11 +86,9 @@ directive: section_type { setSectionType($1); }
 
 %%
 
-#define scriptError(context, fmt, ...) ::error(NULL, 0, "%s(%" PRIu32 "): " fmt, \
-                                               context.path.c_str(), context.lineNo, __VA_ARGS__)
-// MSVC doesn't support __VA_OPT__ yet.
-#define scriptErrorSimple(context, str) ::error(NULL, 0, "%s(%" PRIu32 "): " str, \
-                                               context.path.c_str(), context.lineNo)
+#define scriptError(context, fmt, ...) \
+	::error(NULL, 0, "%s(%" PRIu32 "): " fmt, \
+	        context.path.c_str(), context.lineNo __VA_OPT__(,) __VA_ARGS__)
 
 // Lexer.
 
@@ -196,14 +194,14 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 
 		for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
 			if (c == LexerStackEntry::eof || isNewline(c)) {
-				scriptErrorSimple(context, "Unterminated string");
+				scriptError(context, "Unterminated string");
 				break;
 			}
 			context.file.sbumpc();
 			if (c == '\\') {
 				c = context.file.sgetc();
 				if (c == LexerStackEntry::eof || isNewline(c)) {
-					scriptErrorSimple(context, "Unterminated string");
+					scriptError(context, "Unterminated string");
 					break;
 				} else if (c == 'n') {
 					c = '\n';
@@ -224,7 +222,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	} else if (c == '$') {
 		c = context.file.sgetc();
 		if (!isHexDigit(c)) {
-			scriptErrorSimple(context, "No hexadecimal digits found after '$'");
+			scriptError(context, "No hexadecimal digits found after '$'");
 			return yy::parser::make_number(0);
 		}
 
@@ -238,7 +236,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	} else if (c == '%') {
 		c = context.file.sgetc();
 		if (!(c >= '0' && c <= '1')) {
-			scriptErrorSimple(context, "No binary digits found after '%%'");
+			scriptError(context, "No binary digits found after '%%'");
 			return yy::parser::make_number(0);
 		}
 
