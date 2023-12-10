@@ -1,1 +1,2 @@
-error: ./linkerscript-escapes-test.link(4): Illegal character escape
+error: ./linkerscript-escapes-test.link(4): Cannot escape character '{'
+Linking failed with 1 error

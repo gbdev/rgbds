@@ -1,2 +1,2 @@
-error: Linker script contradicts "sec"'s alignment
+error: ./section-attributes-mismatch.link(3): Linker script wants section "sec" to go to address $0018, but that would be ALIGN[4, 8] instead of the ALIGN[4, 0] it requests
 Linking failed with 1 error

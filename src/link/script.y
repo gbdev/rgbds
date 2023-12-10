@@ -12,12 +12,14 @@
 	#include <algorithm>
 	#include <array>
 	#include <assert.h>
+	#include <bit>
 	#include <cinttypes>
 	#include <fstream>
 	#include <locale>
 	#include <string_view>
 	#include <vector>
 
+	#include "helpers.hpp"
 	#include "itertools.hpp"
 	#include "util.hpp"
 
@@ -84,7 +86,11 @@ directive: section_type { setSectionType($1); }
 
 %%
 
-#define scriptError(context, fmt, ...) ::error(NULL, 0, "%s(%" PRIu32 "): " fmt, context.path.c_str(), context.lineNo __VA_OPT__(,) __VA_ARGS__)
+#define scriptError(context, fmt, ...) ::error(NULL, 0, "%s(%" PRIu32 "): " fmt, \
+                                               context.path.c_str(), context.lineNo, __VA_ARGS__)
+// MSVC doesn't support __VA_OPT__ yet.
+#define scriptErrorSimple(context, str) ::error(NULL, 0, "%s(%" PRIu32 "): " str, \
+                                               context.path.c_str(), context.lineNo)
 
 // Lexer.
 
@@ -96,22 +102,23 @@ struct LexerStackEntry {
 	using int_type = decltype(file)::int_type;
 	static constexpr int_type eof = decltype(file)::traits_type::eof();
 
-	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(0) {}
+	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(1) {}
 };
 static std::vector<LexerStackEntry> lexerStack;
 
 void yy::parser::error(std::string const &msg) {
-	auto const &context = lexerStack.back();
-	scriptError(context, "%s", msg.c_str());
+	auto const &script = lexerStack.back();
+	scriptError(script, "%s", msg.c_str());
 }
 
 static void includeFile(std::string &&path) {
-	auto &prevContext = lexerStack.back();
 	auto &newContext = lexerStack.emplace_back(std::move(path));
+	auto &prevContext = lexerStack[lexerStack.size() - 2];
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		// The order is important: report the error, increment the line number, modify the stack!
-		scriptError(prevContext, "Could not open included linker script \"%s\"", newContext.path.c_str());
+		scriptError(prevContext, "Could not open included linker script \"%s\"",
+		            newContext.path.c_str());
 		++prevContext.lineNo;
 		lexerStack.pop_back();
 	} else {
@@ -133,10 +140,27 @@ static bool isNewline(LexerStackEntry::int_type c) {
 }
 
 static bool isIdentChar(LexerStackEntry::int_type c) {
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+}
+
+static bool isHexDigit(LexerStackEntry::int_type c) {
+	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+static uint8_t parseHexDigit(LexerStackEntry::int_type c) {
+	if (c >= '0' && c <= '9') {
+		return c - '0';
+	} else if (c >= 'A' && c <= 'F') {
+		return c - 'A' + 10;
+	} else if (c >= 'a' && c <= 'f') {
+		return c - 'a' + 10;
+	} else {
+		unreachable_();
+	}
 }
 
 yy::parser::symbol_type yylex(void) {
+try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) think it can end.
 	auto &context = lexerStack.back();
 	auto c = context.file.sbumpc();
 
@@ -156,7 +180,7 @@ yy::parser::symbol_type yylex(void) {
 		// Basically yywrap().
 		lexerStack.pop_back();
 		if (!lexerStack.empty()) {
-			return yylex();
+			goto try_again;
 		}
 		return yy::parser::make_YYEOF();
 	} else if (isNewline(c)) {
@@ -170,20 +194,71 @@ yy::parser::symbol_type yylex(void) {
 
 		for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
 			if (c == LexerStackEntry::eof || isNewline(c)) {
-				scriptError(context, "Unterminated string");
+				scriptErrorSimple(context, "Unterminated string");
 				break;
 			}
 			context.file.sbumpc();
+			if (c == '\\') {
+				c = context.file.sgetc();
+				if (c == LexerStackEntry::eof || isNewline(c)) {
+					scriptErrorSimple(context, "Unterminated string");
+					break;
+				} else if (c == 'n') {
+					c = '\n';
+				} else if (c == 'r') {
+					c = '\r';
+				} else if (c == 't') {
+					c = '\t';
+				} else if (c != '\\' && c != '"') {
+					scriptError(context, "Cannot escape character %s", printChar(c));
+				}
+				context.file.sbumpc();
+			}
 			str.push_back(c);
 		}
+		context.file.sbumpc(); // Consume the closing quote.
 
 		return yy::parser::make_string(std::move(str));
-	} else if (isIdentChar(c)) {
+	} else if (c == '$') {
+		c = context.file.sgetc();
+		if (!isHexDigit(c)) {
+			scriptErrorSimple(context, "No hexadecimal digits found after '$'");
+			return yy::parser::make_number(0);
+		}
+
+		uint32_t number = parseHexDigit(c);
+		context.file.sbumpc();
+		for (c = context.file.sgetc(); isHexDigit(c); c = context.file.sgetc()) {
+			number = number * 16 + parseHexDigit(c);
+			context.file.sbumpc();
+		}
+		return yy::parser::make_number(number);
+	} else if (c == '%') {
+		c = context.file.sgetc();
+		if (!(c >= '0' && c <= '1')) {
+			scriptErrorSimple(context, "No binary digits found after '%%'");
+			return yy::parser::make_number(0);
+		}
+
+		uint32_t number = c - '0';
+		context.file.sbumpc();
+		for (c = context.file.sgetc(); c >= '0' && c <= '1'; c = context.file.sgetc()) {
+			number = number * 2 + (c - '0');
+			context.file.sbumpc();
+		}
+		return yy::parser::make_number(number);
+	} else if (c >= '0' && c <= '9') {
+		uint32_t number = c - '0';
+		for (c = context.file.sgetc(); c >= '0' && c <= '9'; c = context.file.sgetc()) {
+			number = number * 10 + (c - '0');
+		}
+		return yy::parser::make_number(number);
+	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
 		std::string ident;
 		auto strCaseCmp = [](char cmp, char ref) {
 			// `locale::classic()` yields the "C" locale.
-			assert(std::use_facet<std::ctype<char>>(std::locale::classic())
-			       .is(std::ctype_base::upper, ref));
+			assert(!std::use_facet<std::ctype<char>>(std::locale::classic())
+			       .is(std::ctype_base::lower, ref));
 			return std::use_facet<std::ctype<char>>(std::locale::classic())
 			       .toupper(cmp) == ref;
 		};
@@ -194,32 +269,34 @@ yy::parser::symbol_type yylex(void) {
 		}
 
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-			if (std::equal(ident.begin(), ident.end(), sectionTypeInfo[type].name.begin(), strCaseCmp)) {
+			if (std::equal(ident.begin(), ident.end(),
+			               sectionTypeInfo[type].name.begin(), sectionTypeInfo[type].name.end(),
+			               strCaseCmp)) {
 				return yy::parser::make_section_type(type);
 			}
 		}
 
 		for (Keyword const &keyword : keywords) {
-			if (std::equal(ident.begin(), ident.end(), keyword.name.begin(), strCaseCmp)) {
+			if (std::equal(ident.begin(), ident.end(),
+			               keyword.name.begin(), keyword.name.end(),
+			               strCaseCmp)) {
 				return keyword.tokenGen();
 			}
 		}
 
 		scriptError(context, "Unknown keyword \"%s\"", ident.c_str());
-		return yylex(); // Try lexing another token.
-	} else if (c == '$') {
-		abort(); // TODO: hex number
-	} else if (c == '%') {
-		abort(); // TOOD: bin number
-	} else if (c >= '0' && c <= '9') {
-		abort(); // TODO: dec number
+		goto try_again; // Try lexing another token.
 	} else {
-		abort(); // TODO: UTF-8 decoding
 		scriptError(context, "Unexpected character '%s'", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
-		abort();
+		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
+			if (c == LexerStackEntry::eof) {
+				break;
+			}
+		}
+		goto try_again;
 	}
-	// Not unreachable; this will generate a warning if any codepath forgets to return.
+	// Not marking as unreachable; this will generate a warning if any codepath forgets to return.
 }
 
 // Semantic actions.
@@ -240,7 +317,8 @@ static void setSectionType(SectionType type) {
 	auto const &context = lexerStack.back();
 
 	if (nbbanks(type) != 1) {
-		scriptError(context, "A bank number must be specified for %s", sectionTypeInfo[type].name.c_str());
+		scriptError(context, "A bank number must be specified for %s",
+		            sectionTypeInfo[type].name.c_str());
 		// Keep going with a default value for the bank index.
 	}
 
@@ -271,7 +349,7 @@ static void setAddr(uint32_t addr) {
 	if (addr < pc) {
 		scriptError(context, "ORG cannot be used to go backwards (from $%04x to $%04x)", pc, addr);
 	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
-		scriptError(context, "Cannot go to $%04" PRIx16 ": %s ends at $%04" PRIx16 "",
+		scriptError(context, "Cannot go to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
 		            addr, typeInfo.name.c_str(), endaddr(activeType));
 		pc = endaddr(activeType);
 	} else {
@@ -292,7 +370,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	                                 : alignOfs - pc; // Let it wrap around, this'll trip the check.
 	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
 		scriptError(context, "Cannot align: the next suitable address after $%04" PRIx16 " is $%04" PRIx16 ", past $%04" PRIx16,
-		            pc, (uint16_t)(pc + length), endaddr(activeType) + 1);
+		            pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1));
 	} else {
 		pc += length;
 	}
@@ -306,7 +384,7 @@ static void pad(uint32_t length) {
 	assert(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
 		scriptError(context, "Cannot pad by %u bytes: only %u bytes to $%04" PRIx16,
-		            length, typeInfo.size - offset, endaddr(activeType) + 1);
+		            length, typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1));
 	} else {
 		pc += length;
 	}
@@ -314,10 +392,12 @@ static void pad(uint32_t length) {
 
 static void placeSection(std::string const &name) {
 	auto const &context = lexerStack.back();
+	auto const &typeInfo = sectionTypeInfo[activeType];
 
 	// A type *must* be active.
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "No memory region has been specified to place section \"%s\" in", name.c_str());
+		scriptError(context, "No memory region has been specified to place section \"%s\" in",
+		            name.c_str());
 		return;
 	}
 
@@ -336,14 +416,43 @@ static void placeSection(std::string const &name) {
 		}
 	} else if (section->type != activeType) {
 		scriptError(context, "\"%s\" is specified to be a %s section, but it is already a %s section",
-		            name.c_str(), sectionTypeInfo[activeType].name.c_str(), sectionTypeInfo[section->type].name.c_str());
+		            name.c_str(), typeInfo.name.c_str(), sectionTypeInfo[section->type].name.c_str());
 	}
 
-	//uint32_t bank = activeBankIdx + sectionTypeInfo[activeType].firstBank;
-	abort(); // TODO: the rest.
+	uint32_t bank = activeBankIdx + typeInfo.firstBank;
+	if (section->isBankFixed && bank != section->bank) {
+		scriptError(context, "Linker script wants section \"%s\" to go to %s bank %" PRIu32 ", but it is already in bank %" PRIu32,
+		            name.c_str(), sectionTypeInfo[section->type].name.c_str(), bank, section->bank);
+	}
+	section->isBankFixed = true;
+	section->bank = bank;
+
+	uint16_t &org = curAddr[activeType][activeBankIdx];
+	if (section->isAddressFixed && org != section->org) {
+		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but it is already at $%04" PRIx16,
+		            name.c_str(), org, section->org);
+	} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
+		uint8_t alignment = std::countr_one(section->alignMask);
+		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the ALIGN[%" PRIu8 ", %" PRIu16 "] it requests",
+		            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
+	}
+	section->isAddressFixed = true;
+	section->isAlignFixed = false; // This can't be set when the above is.
+	section->org = org;
+
+	uint16_t curOfs = org - typeInfo.startAddr;
+	if (section->size > typeInfo.size - curOfs) {
+		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
+		            name.c_str(), org, typeInfo.name.c_str(),
+		            (uint16_t)(section->size - (typeInfo.size - curOfs)));
+		// Fill as much as possible without going out of bounds.
+		org = typeInfo.startAddr + typeInfo.size;
+	} else {
+		org += section->size;
+	}
 }
 
-// TODO: external API
+// External API.
 
 void script_ProcessScript(char const *path) {
 	activeType = SECTTYPE_INVALID;
@@ -356,10 +465,13 @@ void script_ProcessScript(char const *path) {
 		lexerStack.clear();
 	} else {
 		yy::parser linkerScriptParser;
-		linkerScriptParser(); // TODO: check the return value
+		// We don't care about the return value, as any error increments the global error count,
+		// which is what `main` checks.
+		(void)linkerScriptParser.parse();
+
+		// Free up working memory.
+		for (auto &region : curAddr) {
+			region.clear();
+		}
 	}
 }
-
-// TODO: implement or remove these (called in main.cpp)
-struct SectionPlacement *script_NextSection(void) { abort(); }
-void script_Cleanup(void) { abort(); }
