@@ -430,7 +430,7 @@ static void writeEmptySpace(uint16_t begin, uint16_t end)
 static void writeMapBank(struct SortedSections const *sectList, enum SectionType type,
 			 uint32_t bank)
 {
-	fprintf(mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name,
+	fprintf(mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name.c_str(),
 		bank + sectionTypeInfo[type].firstBank);
 
 	uint16_t used = 0;
@@ -540,7 +540,7 @@ static void writeMapSummary(void)
 		}
 
 		fprintf(mapFile, "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
-			sectionTypeInfo[type].name, usedTotal, usedTotal == 1 ? "" : "s",
+			sectionTypeInfo[type].name.c_str(), usedTotal, usedTotal == 1 ? "" : "s",
 			nbBanks * sectionTypeInfo[type].size - usedTotal);
 		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank
 		    || nbBanks > 1)

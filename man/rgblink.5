@@ -9,8 +9,8 @@
 .Sh DESCRIPTION
 The linker script is an external file that allows the user to specify the order of sections at link time and in a centralized manner.
 .Pp
-A linker script consists of a series of bank declarations, each optionally followed by a list of section names (in double quotes) or commands.
-All reserved keywords (bank types and command names) are case-insensitive; all section names are case-sensitive.
+A linker script consists of a series of bank declarations, each optionally followed by a list of section names (in double quotes) or directives.
+All reserved keywords (bank types and directive names) are case-insensitive; all section names are case-sensitive.
 .Pp
 Any line can contain a comment starting with
 .Ql \&;
@@ -19,17 +19,17 @@ that ends at the end of the line.
 ; This line is a comment
 ROMX $F            ; start a bank
   "Some functions" ; a section name
-  ALIGN 8          ; a command
+  ALIGN 8          ; a directive
   "Some array"
 
 WRAMX 2            ; start another bank
-  org $d123        ; another command
+  org $d123        ; another directive
   "Some variables"
 .Ed
 .Pp
 Numbers can be in decimal or hexadecimal format
 .Pq the prefix is Ql $ .
-It is an error if any section name or command is found before setting a bank.
+It is an error if any section name or directive is found before setting a bank.
 .Pp
 Files can be included by using the
 .Ic INCLUDE
@@ -43,7 +43,7 @@ Unless there is a single bank, which can occur with types
 .Cm ROMX , VRAM , SRAM
 and
 .Cm WRAMX ,
-it is needed to specify a bank number after the type.
+it is mandatory to specify a bank number after the type.
 .Pp
 Section names in double quotes support the same character escape sequences as strings in
 .Xr rgbasm 5 ,
@@ -61,7 +61,7 @@ are only relevant to assembly code and do not apply in section names.
 When a new bank statement is found, sections found after it will be placed right from the beginning of that bank.
 If the linker script switches to a different bank and then comes back to a previous one, it will continue from the last address that was used.
 .Pp
-The only three commands are
+The only three directives are
 .Ic ORG ,
 .Ic ALIGN ,
 and
@@ -74,7 +74,7 @@ It can not be lower than the current address.
 .It
 .Ic ALIGN
 will increase the address until it is aligned to the specified boundary
-.Po it tries to set to 0 the number of bits specified after the command:
+.Po it tries to set to 0 the number of bits specified after the directive:
 .Ql ALIGN 8
 will align to $100
 .Pc .

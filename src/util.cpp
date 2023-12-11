@@ -2,10 +2,9 @@
 
 #include <ctype.h>
 #include <stdint.h>
+#include <stdio.h>
 
-#include "asm/main.hpp"
-#include "asm/util.hpp"
-#include "asm/warning.hpp"
+#include "util.hpp"
 
 #include "extern/utf8decoder.hpp"
 

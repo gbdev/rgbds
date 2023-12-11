@@ -29,7 +29,7 @@
 #include "version.hpp"
 
 bool isDmgMode;               // -d
-char       *linkerScriptName; // -l
+char *linkerScriptName;       // -l
 char const *mapFileName;      // -m
 bool noSymInMap;              // -M
 char const *symFileName;      // -n
@@ -44,6 +44,8 @@ bool is32kMode;               // -t
 bool beVerbose;               // -v
 bool isWRA0Mode;              // -w
 bool disablePadding;          // -x
+
+FILE *linkerScript;
 
 static uint32_t nbErrors = 0;
 
@@ -460,44 +462,7 @@ int main(int argc, char *argv[])
 	if (linkerScriptName) {
 		verbosePrint("Reading linker script...\n");
 
-		linkerScript = openFile(linkerScriptName, "r");
-
-		// Modify all sections according to the linker script
-		struct SectionPlacement *placement;
-
-		while ((placement = script_NextSection())) {
-			struct Section *section = placement->section;
-
-			assert(section->offset == 0);
-			// Check if this doesn't conflict with what the code says
-			if (section->type == SECTTYPE_INVALID) {
-				for (struct Section *sect = section; sect; sect = sect->nextu)
-					sect->type = placement->type; // SDCC "unknown" sections
-			} else if (section->type != placement->type) {
-				error(NULL, 0, "Linker script contradicts \"%s\"'s type",
-				      section->name);
-			}
-			if (section->isBankFixed && placement->bank != section->bank)
-				error(NULL, 0, "Linker script contradicts \"%s\"'s bank placement",
-				      section->name);
-			if (section->isAddressFixed && placement->org != section->org)
-				error(NULL, 0, "Linker script contradicts \"%s\"'s address placement",
-				      section->name);
-			if (section->isAlignFixed
-			 && (placement->org & section->alignMask) != 0)
-				error(NULL, 0, "Linker script contradicts \"%s\"'s alignment",
-				      section->name);
-
-			section->isAddressFixed = true;
-			section->org = placement->org;
-			section->isBankFixed = true;
-			section->bank = placement->bank;
-			section->isAlignFixed = false; // The alignment is satisfied
-		}
-
-		fclose(linkerScript);
-
-		script_Cleanup();
+		script_ProcessScript(linkerScriptName);
 
 		// If the linker script produced any errors, some sections may be in an invalid state
 		if (nbErrors != 0)

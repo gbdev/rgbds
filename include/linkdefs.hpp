@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string>
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB9"
 #define RGBDS_OBJECT_REV 9U
@@ -83,7 +84,7 @@ enum FileStackNodeType {
 
 // Nont-`const` members may be patched in RGBLINK depending on CLI flags
 extern struct SectionTypeInfo {
-	char const *const name;
+	std::string const name;
 	uint16_t const startAddr;
 	uint16_t size;
 	uint32_t const firstBank;

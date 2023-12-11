@@ -22,14 +22,20 @@ endif()
 set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
 set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
 
-BISON_TARGET(PARSER "asm/parser.y"
+BISON_TARGET(ASM_PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
              COMPILE_FLAGS "${BISON_FLAGS}"
              DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/asm/parser.hpp"
              )
 
+BISON_TARGET(LINKER_SCRIPT_PARSER "link/script.y"
+             "${PROJECT_SOURCE_DIR}/src/link/script.cpp"
+             COMPILE_FLAGS "${BISON_FLAGS}"
+             DEFINES_FILE "${PROJECT_SOURCE_DIR}/src/link/script.hpp"
+             )
+
 set(rgbasm_src
-    "${BISON_PARSER_OUTPUT_SOURCE}"
+    "${BISON_ASM_PARSER_OUTPUT_SOURCE}"
     "asm/charmap.cpp"
     "asm/fixpoint.cpp"
     "asm/format.cpp"
@@ -42,12 +48,12 @@ set(rgbasm_src
     "asm/rpn.cpp"
     "asm/section.cpp"
     "asm/symbol.cpp"
-    "asm/util.cpp"
     "asm/warning.cpp"
     "extern/utf8decoder.cpp"
     "hashmap.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
+    "util.cpp"
     )
 
 set(rgbfix_src
@@ -68,12 +74,12 @@ set(rgbgfx_src
     )
 
 set(rgblink_src
+    "${BISON_LINKER_SCRIPT_PARSER_OUTPUT_SOURCE}"
     "link/assign.cpp"
     "link/main.cpp"
     "link/object.cpp"
     "link/output.cpp"
     "link/patch.cpp"
-    "link/script.cpp"
     "link/sdas_obj.cpp"
     "link/section.cpp"
     "link/symbol.cpp"
@@ -81,6 +87,7 @@ set(rgblink_src
     "hashmap.cpp"
     "linkdefs.cpp"
     "opmath.cpp"
+    "util.cpp"
     )
 
 foreach(PROG "asm" "fix" "gfx" "link")

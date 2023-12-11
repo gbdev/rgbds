@@ -65,14 +65,14 @@ rgbasm_obj := \
 	src/asm/rpn.o \
 	src/asm/section.o \
 	src/asm/symbol.o \
-	src/asm/util.o \
 	src/asm/warning.o \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
-	src/opmath.o
+	src/opmath.o \
+	src/util.o
 
 src/asm/lexer.o src/asm/main.o: src/asm/parser.hpp
 
@@ -91,7 +91,8 @@ rgblink_obj := \
 	src/error.o \
 	src/hashmap.o \
 	src/linkdefs.o \
-	src/opmath.o
+	src/opmath.o \
+	src/util.o
 
 rgbfix_obj := \
 	src/fix/main.o \
@@ -133,12 +134,12 @@ test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 # We want the Bison invocation to pass through our rules, not default ones
 .y.o:
 
+.y.cpp:
+	$Q${BISON} $@ $<
+
 # Bison-generated C++ files have an accompanying header
 src/asm/parser.hpp: src/asm/parser.cpp
 	$Qtouch $@
-
-src/asm/parser.cpp: src/asm/parser.y
-	$Q${BISON} $@ $<
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
 src/gfx/main.o: src/gfx/main.cpp
@@ -172,6 +173,7 @@ clean:
 	$Qfind . -type f \( -name "*.gcno" -o -name "*.gcda" -o -name "*.gcov" \) -exec rm {} \;
 	$Q${RM} rgbshim.sh
 	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp
+	$Q${RM} src/link/script.cpp src/link/script.hpp src/link/stack.hh
 	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
 
 # Target used to install the binaries and man pages.

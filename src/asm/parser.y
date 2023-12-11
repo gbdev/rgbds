@@ -22,7 +22,7 @@
 #include "asm/rpn.hpp"
 #include "asm/section.hpp"
 #include "asm/symbol.hpp"
-#include "asm/util.hpp"
+#include "util.hpp"
 #include "asm/warning.hpp"
 
 #include "extern/utf8decoder.hpp"

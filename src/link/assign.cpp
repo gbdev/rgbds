@@ -298,16 +298,16 @@ static void placeSection(struct Section *section)
 	// If a section failed to go to several places, nothing we can report
 	if (!section->isBankFixed || !section->isAddressFixed)
 		errx("Unable to place \"%s\" (%s section) %s",
-		     section->name, sectionTypeInfo[section->type].name, where);
+		     section->name, sectionTypeInfo[section->type].name.c_str(), where);
 	// If the section just can't fit the bank, report that
 	else if (section->org + section->size > endaddr(section->type) + 1)
 		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
-		     section->name, sectionTypeInfo[section->type].name, where,
+		     section->name, sectionTypeInfo[section->type].name.c_str(), where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	// Otherwise there is overlap with another section
 	else
 		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		     section->name, sectionTypeInfo[section->type].name, where,
+		     section->name, sectionTypeInfo[section->type].name.c_str(), where,
 		     out_OverlappingSection(section)->name);
 }
 

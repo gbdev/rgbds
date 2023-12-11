@@ -26,6 +26,9 @@ dependency include/linkdefs.hpp    man/rgbds.5 \
 dependency src/asm/parser.y        man/rgbasm.5 \
            "Was the rgbasm grammar changed?"
 
+dependency src/link/script.y       man/rgblink.5 \
+           "Was the linker script grammar changed?"
+
 dependency include/asm/warning.hpp man/rgbasm.1 \
            "Were the rgbasm warnings changed?"
 
