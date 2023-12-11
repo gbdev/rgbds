@@ -427,7 +427,7 @@ static void placeSection(std::string const &name) {
 
 	uint32_t bank = activeBankIdx + typeInfo.firstBank;
 	if (section->isBankFixed && bank != section->bank) {
-		scriptError(context, "Linker script wants section \"%s\" to go to %s bank %" PRIu32 ", but it is already in bank %" PRIu32,
+		scriptError(context, "The linker script places section \"%s\" in %s bank %" PRIu32 ", but it was already defined in bank %" PRIu32,
 		            name.c_str(), sectionTypeInfo[section->type].name.c_str(), bank, section->bank);
 	}
 	section->isBankFixed = true;
@@ -435,11 +435,11 @@ static void placeSection(std::string const &name) {
 
 	uint16_t &org = curAddr[activeType][activeBankIdx];
 	if (section->isAddressFixed && org != section->org) {
-		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but it is already at $%04" PRIx16,
+		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
 		            name.c_str(), org, section->org);
 	} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
 		uint8_t alignment = std::countr_one(section->alignMask);
-		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the ALIGN[%" PRIu8 ", %" PRIu16 "] it requests",
+		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
 		            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
 	}
 	section->isAddressFixed = true;
@@ -448,7 +448,7 @@ static void placeSection(std::string const &name) {
 
 	uint16_t curOfs = org - typeInfo.startAddr;
 	if (section->size > typeInfo.size - curOfs) {
-		scriptError(context, "Linker script wants section \"%s\" to go to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
+		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
 		            name.c_str(), org, typeInfo.name.c_str(),
 		            (uint16_t)(section->size - (typeInfo.size - curOfs)));
 		// Fill as much as possible without going out of bounds.
