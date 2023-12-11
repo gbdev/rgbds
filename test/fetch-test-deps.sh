@@ -95,8 +95,9 @@ case "$actionname" in
 esac
 
 if "$nonfree"; then
-	action pret/pokecrystal 2023-11-22 9a917e35760210a1f34057ecada2148f1fefc390
-	action pret/pokered     2023-11-21 d4d7b91aecf651b06d1f466ecc22b65da234a299
+	action pret/pokecrystal       2023-11-22 9a917e35760210a1f34057ecada2148f1fefc390
+	action pret/pokered           2023-12-05 f6017ddbfd7e14ea39b81ce3393de9117e7310d9
+	action zladx/LADX-Disassembly 2023-12-10 e08773051fa75f0c02a85434196fd598642d2c2c
 fi
 action AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
 action pinobatch/libbet 2023-11-30 9f56cf94883c58517c2cd41a752cfee5a5800e8d
