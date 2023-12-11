@@ -309,9 +309,9 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 
 // Semantic actions.
 
-static SectionType activeType;
-static uint32_t activeBankIdx; // This is the index into the array, not
 static std::array<std::vector<uint16_t>, SECTTYPE_INVALID> curAddr;
+static SectionType activeType; // Index into curAddr
+static uint32_t activeBankIdx; // Index into curAddr[activeType]
 
 static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 	activeType = type;
