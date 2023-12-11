@@ -1,6 +1,7 @@
 ROM0
-	align 4
+	align 4, 2
 	"sec"
 	ds $18
 	org $20
+	align 5
 	"secfix"
