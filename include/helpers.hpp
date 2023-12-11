@@ -82,4 +82,7 @@
 // (Having two instances of `arr` is OK because the contents of `sizeof` are not evaluated.)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof *(arr))
 
+// For lack of <ranges>, this adds some more brevity
+#define RANGE(s) std::begin(s), std::end(s)
+
 #endif // HELPERS_H

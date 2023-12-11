@@ -572,7 +572,7 @@ void parseExternalPalSpec(char const *arg) {
 	    std::tuple{"GBC", &parseGBCFile, std::ios::binary},
 	};
 
-	auto iter = std::find_if(parsers.begin(), parsers.end(),
+	auto iter = std::find_if(RANGE(parsers),
 	                         [&arg, &ptr](decltype(parsers)::value_type const &parser) {
 		                         return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
 	                         });

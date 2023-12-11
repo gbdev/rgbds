@@ -281,17 +281,13 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		}
 
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-			if (std::equal(ident.begin(), ident.end(),
-			               sectionTypeInfo[type].name.begin(), sectionTypeInfo[type].name.end(),
-			               strUpperCmp)) {
+			if (std::equal(RANGE(ident), RANGE(sectionTypeInfo[type].name), strUpperCmp)) {
 				return yy::parser::make_section_type(type);
 			}
 		}
 
 		for (Keyword const &keyword : keywords) {
-			if (std::equal(ident.begin(), ident.end(),
-			               keyword.name.begin(), keyword.name.end(),
-			               strUpperCmp)) {
+			if (std::equal(RANGE(ident), RANGE(keyword.name), strUpperCmp)) {
 				return keyword.tokenGen();
 			}
 		}
