@@ -261,7 +261,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		return yy::parser::make_number(number);
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
 		std::string ident;
-		auto strCaseCmp = [](char cmp, char ref) {
+		auto strUpperCmp = [](char cmp, char ref) {
 			// `locale::classic()` yields the "C" locale.
 			assert(!std::use_facet<std::ctype<char>>(std::locale::classic())
 			       .is(std::ctype_base::lower, ref));
@@ -277,7 +277,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 			if (std::equal(ident.begin(), ident.end(),
 			               sectionTypeInfo[type].name.begin(), sectionTypeInfo[type].name.end(),
-			               strCaseCmp)) {
+			               strUpperCmp)) {
 				return yy::parser::make_section_type(type);
 			}
 		}
@@ -285,7 +285,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		for (Keyword const &keyword : keywords) {
 			if (std::equal(ident.begin(), ident.end(),
 			               keyword.name.begin(), keyword.name.end(),
-			               strCaseCmp)) {
+			               strUpperCmp)) {
 				return keyword.tokenGen();
 			}
 		}
