@@ -16,6 +16,7 @@
 	#include <cinttypes>
 	#include <fstream>
 	#include <locale>
+	#include <stdio.h>
 	#include <string_view>
 	#include <vector>
 
@@ -97,9 +98,6 @@ struct LexerStackEntry {
 	std::string path;
 	uint32_t lineNo;
 
-	using int_type = decltype(file)::int_type;
-	static constexpr int_type eof = decltype(file)::traits_type::eof();
-
 	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(1) {}
 };
 static std::vector<LexerStackEntry> lexerStack;
@@ -131,31 +129,31 @@ static void incLineNo(void) {
 	++lexerStack.back().lineNo;
 }
 
-static bool isWhiteSpace(LexerStackEntry::int_type c) {
+static bool isWhiteSpace(int c) {
 	return c == ' ' || c == '\t';
 }
 
-static bool isNewline(LexerStackEntry::int_type c) {
+static bool isNewline(int c) {
 	return c == '\r' || c == '\n';
 }
 
-static bool isIdentChar(LexerStackEntry::int_type c) {
+static bool isIdentChar(int c) {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
 }
 
-static bool isDecDigit(LexerStackEntry::int_type c) {
+static bool isDecDigit(int c) {
 	return c >= '0' && c <= '9';
 }
 
-static bool isBinDigit(LexerStackEntry::int_type c) {
+static bool isBinDigit(int c) {
 	return c >= '0' && c <= '1';
 }
 
-static bool isHexDigit(LexerStackEntry::int_type c) {
+static bool isHexDigit(int c) {
 	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
-static uint8_t parseHexDigit(LexerStackEntry::int_type c) {
+static uint8_t parseHexDigit(int c) {
 	if (c >= '0' && c <= '9') {
 		return c - '0';
 	} else if (c >= 'A' && c <= 'F') {
@@ -184,7 +182,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	}
 
 	// Alright, what token should we return?
-	if (c == LexerStackEntry::eof) {
+	if (c == EOF) {
 		// Basically yywrap().
 		lexerStack.pop_back();
 		if (!lexerStack.empty()) {
@@ -201,14 +199,14 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		std::string str;
 
 		for (c = context.file.sgetc(); c != '"'; c = context.file.sgetc()) {
-			if (c == LexerStackEntry::eof || isNewline(c)) {
+			if (c == EOF || isNewline(c)) {
 				scriptError(context, "Unterminated string");
 				break;
 			}
 			context.file.sbumpc();
 			if (c == '\\') {
 				c = context.file.sgetc();
-				if (c == LexerStackEntry::eof || isNewline(c)) {
+				if (c == EOF || isNewline(c)) {
 					scriptError(context, "Unterminated string");
 					break;
 				} else if (c == 'n') {
@@ -298,7 +296,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		scriptError(context, "Unexpected character '%s'", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
 		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
-			if (c == LexerStackEntry::eof) {
+			if (c == EOF) {
 				break;
 			}
 		}
