@@ -23,7 +23,7 @@ void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRG
 	};
 
 	for (Palette &pal : palettes) {
-		std::sort(pal.begin(), pal.end(), [&](uint16_t lhs, uint16_t rhs) {
+		std::sort(RANGE(pal), [&](uint16_t lhs, uint16_t rhs) {
 			// Iterate through the PNG's palette, looking for either of the two
 			for (int i = 0; i < palSize; ++i) {
 				uint16_t color = pngToRgb(i).cgbColor();
@@ -52,7 +52,7 @@ void grayscale(std::vector<Palette> &palettes,
 	assert(palettes.size() == 1);
 
 	Palette &palette = palettes[0];
-	std::fill(palette.colors.begin(), palette.colors.end(), Rgba::transparent);
+	std::fill(RANGE(palette.colors), Rgba::transparent);
 	for (auto const &slot : colors) {
 		if (!slot.has_value() || slot->isTransparent()) {
 			continue;
@@ -72,7 +72,7 @@ void rgb(std::vector<Palette> &palettes) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by \"\"\"luminance\"\"\"...\n");
 
 	for (Palette &pal : palettes) {
-		std::sort(pal.begin(), pal.end(), [](uint16_t lhs, uint16_t rhs) {
+		std::sort(RANGE(pal), [](uint16_t lhs, uint16_t rhs) {
 			return legacyLuminance(lhs) > legacyLuminance(rhs);
 		});
 	}

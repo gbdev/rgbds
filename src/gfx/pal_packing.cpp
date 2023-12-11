@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "defaultinitalloc.hpp"
+#include "helpers.hpp"
 
 #include "gfx/main.hpp"
 #include "gfx/proto_palette.hpp"
@@ -140,7 +141,7 @@ public:
 	template<typename... Ts>
 	void assign(Ts &&...args) {
 		auto freeSlot = std::find_if_not(
-		    _assigned.begin(), _assigned.end(),
+		    RANGE(_assigned),
 		    [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
 
 		if (freeSlot == _assigned.end()) { // We are full, use a new slot
@@ -156,11 +157,11 @@ public:
 
 	bool empty() const {
 		return std::find_if(
-		           _assigned.begin(), _assigned.end(),
+		           RANGE(_assigned),
 		           [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); })
 		       == _assigned.end();
 	}
-	size_t nbProtoPals() const { return std::distance(begin(), end()); }
+	size_t nbProtoPals() const { return std::distance(RANGE(*this)); }
 
 private:
 	template<typename Iter>
@@ -168,7 +169,7 @@ private:
 	                            std::vector<ProtoPalette> const &protoPals) {
 		for (; iter != end; ++iter) {
 			ProtoPalette const &protoPal = protoPals[iter->protoPalIndex];
-			colors.insert(protoPal.begin(), protoPal.end());
+			colors.insert(RANGE(protoPal));
 		}
 	}
 	// This function should stay private because it returns a reference to a unique object
@@ -188,7 +189,7 @@ private:
 		static std::unordered_set<uint16_t> colors;
 
 		colors.clear();
-		addUniqueColors(colors, begin(), end(), *_protoPals);
+		addUniqueColors(colors, RANGE(*this), *_protoPals);
 		return colors;
 	}
 public:
@@ -198,7 +199,7 @@ public:
 	size_t volume() const { return uniqueColors().size(); }
 	bool canFit(ProtoPalette const &protoPal) const {
 		auto &colors = uniqueColors();
-		colors.insert(protoPal.begin(), protoPal.end());
+		colors.insert(RANGE(protoPal));
 		return colors.size() <= options.maxOpaqueColors();
 	}
 
@@ -209,9 +210,9 @@ public:
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
 		double relSize = 0.;
 		for (uint16_t color : protoPal) {
-			auto n = std::count_if(begin(), end(), [this, &color](ProtoPalAttrs const &attrs) {
+			auto n = std::count_if(RANGE(*this), [this, &color](ProtoPalAttrs const &attrs) {
 				ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
-				return std::find(pal.begin(), pal.end(), color) != pal.end();
+				return std::find(RANGE(pal), color) != pal.end();
 			});
 			// NOTE: The paper and the associated code disagree on this: the code has
 			// this `1 +`, whereas the paper does not; its lack causes a division by 0
@@ -273,8 +274,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 	// Decant on palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
 		// If the entire palettes can be merged, move all of `from`'s proto-palettes
-		if (to.combinedVolume(from.begin(), from.end(), protoPalettes)
-		    <= options.maxOpaqueColors()) {
+		if (to.combinedVolume(RANGE(from), protoPalettes) <= options.maxOpaqueColors()) {
 			for (ProtoPalAttrs &attrs : from) {
 				to.assign(attrs.protoPalIndex);
 			}
@@ -294,7 +294,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 		std::unordered_set<uint16_t> colors;
 		std::vector<size_t> members;
 		while (true) {
-			auto iter = std::find(processed.begin(), processed.end(), true);
+			auto iter = std::find(RANGE(processed), true);
 			if (iter == processed.end()) { // Processed everything!
 				break;
 			}
@@ -309,10 +309,8 @@ static void decant(std::vector<AssignedProtos> &assignments,
 				ProtoPalette const &protoPal = protoPalettes[attrs->protoPalIndex];
 				// If this is the first proto-pal, or if at least one color matches, add it
 				if (members.empty()
-				    || std::find_first_of(colors.begin(), colors.end(), protoPal.begin(),
-				                          protoPal.end())
-				           != colors.end()) {
-					colors.insert(protoPal.begin(), protoPal.end());
+				    || std::find_first_of(RANGE(colors), RANGE(protoPal)) != colors.end()) {
+					colors.insert(RANGE(protoPal));
 					members.push_back(iter - processed.begin());
 					*iter = true; // Mark that proto-pal as processed
 				}
@@ -320,7 +318,7 @@ static void decant(std::vector<AssignedProtos> &assignments,
 				++attrs;
 			} while (iter != processed.end());
 
-			if (to.combinedVolume(colors.begin(), colors.end()) <= options.maxOpaqueColors()) {
+			if (to.combinedVolume(RANGE(colors)) <= options.maxOpaqueColors()) {
 				// Iterate through the component's proto-palettes, and transfer them
 				auto member = from.begin();
 				size_t curIndex = 0;
@@ -358,12 +356,10 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
 	sortedProtoPalIDs.clear();
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
-		sortedProtoPalIDs.insert(
-		    std::lower_bound(sortedProtoPalIDs.begin(), sortedProtoPalIDs.end(), i), i);
+		sortedProtoPalIDs.insert(std::lower_bound(RANGE(sortedProtoPalIDs), i), i);
 	}
 	// Begin with all proto-palettes queued up for insertion
-	std::queue<ProtoPalAttrs> queue(
-	    std::deque<ProtoPalAttrs>(sortedProtoPalIDs.begin(), sortedProtoPalIDs.end()));
+	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(RANGE(sortedProtoPalIDs)));
 	// Begin with no pages
 	std::vector<AssignedProtos> assignments{};
 
@@ -410,7 +406,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					return pal.size() / bestPal.relSizeOf(pal);
 				};
 				auto [minEfficiencyIter, maxEfficiencyIter] =
-				    std::minmax_element(bestPal.begin(), bestPal.end(),
+				    std::minmax_element(RANGE(bestPal),
 				                        [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
 				                                                      ProtoPalAttrs const &rhs) {
 					                        return efficiency(protoPalettes[lhs.protoPalIndex])
@@ -448,7 +444,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		ProtoPalAttrs const &attrs = queue.front();
 		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
 		auto iter =
-		    std::find_if(assignments.begin(), assignments.end(),
+		    std::find_if(RANGE(assignments),
 		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint(Options::VERB_DEBUG,

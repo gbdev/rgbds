@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "helpers.hpp"
+
 #include "gfx/proto_palette.hpp"
 
 #include <algorithm>
@@ -42,8 +44,8 @@ bool ProtoPalette::add(uint16_t color) {
 
 ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) const {
 	// This works because the sets are sorted numerically
-	assert(std::is_sorted(_colorIndices.begin(), _colorIndices.end()));
-	assert(std::is_sorted(other._colorIndices.begin(), other._colorIndices.end()));
+	assert(std::is_sorted(RANGE(_colorIndices)));
+	assert(std::is_sorted(RANGE(other._colorIndices)));
 
 	auto ours = _colorIndices.begin(), theirs = other._colorIndices.begin();
 	bool weBigger = true, theyBigger = true;
@@ -67,7 +69,7 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 }
 
 size_t ProtoPalette::size() const {
-	return std::distance(begin(), end());
+	return std::distance(RANGE(*this));
 }
 
 bool ProtoPalette::empty() const {
@@ -78,5 +80,5 @@ auto ProtoPalette::begin() const -> decltype(_colorIndices)::const_iterator {
 	return _colorIndices.begin();
 }
 auto ProtoPalette::end() const -> decltype(_colorIndices)::const_iterator {
-	return std::find(_colorIndices.begin(), _colorIndices.end(), UINT16_MAX);
+	return std::find(RANGE(_colorIndices), UINT16_MAX);
 }

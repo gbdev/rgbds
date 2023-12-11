@@ -60,7 +60,7 @@ public:
 	}
 
 	size_t size() const {
-		return std::count_if(_colors.begin(), _colors.end(),
+		return std::count_if(RANGE(_colors),
 		                     [](decltype(_colors)::value_type const &slot) {
 			                     return slot.has_value() && !slot->isTransparent();
 		                     });
@@ -333,7 +333,7 @@ public:
 		                                                       Rgba &&color) {
 			if (!color.isTransparent() && !color.isOpaque()) {
 				uint32_t css = color.toCSS();
-				if (std::find(indeterminates.begin(), indeterminates.end(), css)
+				if (std::find(RANGE(indeterminates), css)
 				    == indeterminates.end()) {
 					error("Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
 					      "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
@@ -343,7 +343,7 @@ public:
 			} else if (Rgba const *other = colors.registerColor(color); other) {
 				std::tuple conflicting{color.toCSS(), other->toCSS()};
 				// Do not report combinations twice
-				if (std::find(conflicts.begin(), conflicts.end(), conflicting) == conflicts.end()) {
+				if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
 					warning("Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
 					        "at x: %" PRIu32 ", y: %" PRIu32 "]",
 					        std::get<0>(conflicting), std::get<1>(conflicting), color.cgbColor(), x,
@@ -597,10 +597,10 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
 		ProtoPalette const &protoPal = protoPalettes[i];
 		// Find the palette...
-		auto iter = std::find_if(palettes.begin(), palettes.end(), [&protoPal](Palette const &pal) {
+		auto iter = std::find_if(RANGE(palettes), [&protoPal](Palette const &pal) {
 			// ...which contains all colors in this proto-pal
-			return std::all_of(protoPal.begin(), protoPal.end(), [&pal](uint16_t color) {
-				return std::find(pal.begin(), pal.end(), color) != pal.end();
+			return std::all_of(RANGE(protoPal), [&pal](uint16_t color) {
+				return std::find(RANGE(pal), color) != pal.end();
 			});
 		});
 
@@ -731,7 +731,7 @@ public:
 		}
 
 		// Check if we have horizontal mirroring, which scans the array forward again
-		if (std::equal(_data.begin(), _data.end(), other._data.begin(),
+		if (std::equal(RANGE(_data), other._data.begin(),
 		               [](uint8_t lhs, uint8_t rhs) { return lhs == flipTable[rhs]; })) {
 			return MatchType::HFLIP;
 		}
