@@ -47,7 +47,7 @@
 	};
 }
 
-%token YYEOF 0
+%token YYEOF 0 "end of file"
 %token newline
 %token ORG "ORG"
        INCLUDE "INCLUDE"
@@ -101,6 +101,7 @@ struct LexerStackEntry {
 	explicit LexerStackEntry(std::string &&path_) : file(), path(path_), lineNo(1) {}
 };
 static std::vector<LexerStackEntry> lexerStack;
+static bool atEof;
 
 void yy::parser::error(std::string const &msg) {
 	auto const &script = lexerStack.back();
@@ -184,11 +185,16 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	// Alright, what token should we return?
 	if (c == EOF) {
 		// Basically yywrap().
-		lexerStack.pop_back();
-		if (!lexerStack.empty()) {
+		if (lexerStack.size() != 1) {
+			lexerStack.pop_back();
 			goto try_again;
+		} else if (!atEof) {
+			// Inject a newline at EOF, to avoid errors for files that don't end with one.
+			atEof = true;
+			return yy::parser::make_newline();
+		} else {
+			return yy::parser::make_YYEOF();
 		}
-		return yy::parser::make_YYEOF();
 	} else if (isNewline(c)) {
 		// Handle CRLF.
 		if (c == '\r' && context.file.sgetc() == '\n') {
@@ -464,6 +470,7 @@ void script_ProcessScript(char const *path) {
 	activeType = SECTTYPE_INVALID;
 
 	lexerStack.clear();
+	atEof = false;
 	auto &newContext = lexerStack.emplace_back(std::string(path));
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {

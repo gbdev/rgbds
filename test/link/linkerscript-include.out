@@ -1,0 +1,2 @@
+error: linkerscript-include.inc(1): The linker script assigns section "test" to address $0000, but it was already at $002a
+Linking failed with 1 error
