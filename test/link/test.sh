@@ -41,7 +41,7 @@ tryCmp () {
 	fi
 }
 tryCmpRom () {
-	# `printf` lets us keep only the first returned word.
+	# `printf` lets us keep only the first returned word from `wc`.
 	rom_size=$(printf %s $(wc -c <"$1"))
 	dd if="$gbtemp" count=1 bs="$rom_size" >"$otemp" 2>/dev/null
 	tryCmp "$1" "$otemp"
@@ -144,6 +144,17 @@ tryDiff overlay/out.err "$outtemp"
 (( rc = rc || $? ))
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
 tryCmp overlay/out.gb "$gbtemp"
+(( rc = rc || $? ))
+
+i="scramble-romx.asm"
+startTest
+"$RGBASM" -o "$otemp" scramble-romx/a.asm
+rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" >"$outtemp" 2>&1
+tryDiff scramble-romx/out.err "$outtemp"
+(( rc = rc || $? ))
+# This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
+rom_size=$(printf %s $(wc -c <"$gbtemp"))
+test "$rom_size" = 65536 # Check for exactly 3 ROMX banks
 (( rc = rc || $? ))
 
 i="section-fragment/jr-offset.asm"

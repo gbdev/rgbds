@@ -122,7 +122,7 @@ for i in *.asm; do
 		desired_binname=${i%.asm}.out.bin
 		if [ -f "$desired_binname" ]; then
 			"$RGBLINK" -o "$gb" "$o"
-			rom_size=$(wc -c < "$desired_binname")
+			rom_size=$(printf %s $(wc -c <"$desired_binname"))
 			dd if="$gb" count=1 bs="$rom_size" >"$output" 2>/dev/null
 			tryCmp "$desired_binname" "$output" gb
 			(( our_rc = our_rc || $? ))

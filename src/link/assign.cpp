@@ -114,25 +114,25 @@ static bool isLocationSuitable(struct Section const *section,
 static struct FreeSpace *getPlacement(struct Section const *section,
 				      struct MemoryLocation *location)
 {
-	static uint16_t curScrambleROM = 1;
-	static uint8_t curScrambleWRAM = 1;
-	static uint8_t curScrambleSRAM = 1;
+	static uint16_t curScrambleROM = 0;
+	static uint8_t curScrambleWRAM = 0;
+	static int8_t curScrambleSRAM = 0;
 
 	// Determine which bank we should start searching in
 	if (section->isBankFixed) {
 		location->bank = section->bank;
 	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
-		location->bank = curScrambleROM++;
-		if (curScrambleROM > scrambleROMX)
-			curScrambleROM = 1;
+		if (curScrambleROM < 1)
+			curScrambleROM = scrambleROMX;
+		location->bank = curScrambleROM--;
 	} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX) {
-		location->bank = curScrambleWRAM++;
-		if (curScrambleWRAM > scrambleWRAMX)
-			curScrambleWRAM = 1;
+		if (curScrambleWRAM < 1)
+			curScrambleWRAM = scrambleWRAMX;
+		location->bank = curScrambleWRAM--;
 	} else if (scrambleSRAM && section->type == SECTTYPE_SRAM) {
-		location->bank = curScrambleSRAM++;
-		if (curScrambleSRAM > scrambleSRAM)
-			curScrambleSRAM = 0;
+		if (curScrambleSRAM < 0)
+			curScrambleSRAM = scrambleSRAM;
+		location->bank = curScrambleSRAM--;
 	} else {
 		location->bank = sectionTypeInfo[section->type].firstBank;
 	}
@@ -168,8 +168,7 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 				// Ensure we're there (e.g. on first check)
 				location->address &= ~section->alignMask;
 				// Go to next align boundary and add offset
-				location->address += section->alignMask + 1
-							+ section->alignOfs;
+				location->address += section->alignMask + 1 + section->alignOfs;
 			} else {
 				// Any location is fine, so, next free block
 				space = space->next;
@@ -179,20 +178,43 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 
 			// If that location is past the current block's end,
 			// go forwards until that is no longer the case.
-			while (space && location->address >=
-						space->address + space->size)
+			while (space && location->address >= space->address + space->size)
 				space = space->next;
 
 			// Try again with the new location/free space combo
 		}
 
-		if (section->isBankFixed)
+		// Try again in the next bank, if one is available.
+		// Try scrambled banks in descending order until no bank in the scrambled range is available.
+		// Otherwise, try in ascending order.
+		if (section->isBankFixed) {
 			return NULL;
-
-		// Try again in the next bank
-		location->bank++;
-		if (location->bank > sectionTypeInfo[section->type].lastBank)
+		} else if (scrambleROMX && section->type == SECTTYPE_ROMX && location->bank <= scrambleROMX) {
+			if (location->bank > sectionTypeInfo[section->type].firstBank)
+				location->bank--;
+			else if (scrambleROMX < sectionTypeInfo[section->type].lastBank)
+				location->bank = scrambleROMX + 1;
+			else
+				return NULL;
+		} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX && location->bank <= scrambleWRAMX) {
+			if (location->bank > sectionTypeInfo[section->type].firstBank)
+				location->bank--;
+			else if (scrambleWRAMX < sectionTypeInfo[section->type].lastBank)
+				location->bank = scrambleWRAMX + 1;
+			else
+				return NULL;
+		} else if (scrambleSRAM && section->type == SECTTYPE_SRAM && location->bank <= scrambleSRAM) {
+			if (location->bank > sectionTypeInfo[section->type].firstBank)
+				location->bank--;
+			else if (scrambleSRAM < sectionTypeInfo[section->type].lastBank)
+				location->bank = scrambleSRAM + 1;
+			else
+				return NULL;
+		} else if (location->bank < sectionTypeInfo[section->type].lastBank) {
+			location->bank++;
+		} else {
 			return NULL;
+		}
 #undef BANK_INDEX
 	}
 }
