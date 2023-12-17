@@ -94,6 +94,8 @@ rgblink_obj := \
 	src/opmath.o \
 	src/util.o
 
+src/link/main.o: src/link/script.hpp
+
 rgbfix_obj := \
 	src/fix/main.o \
 	src/extern/getopt.o \
@@ -139,6 +141,8 @@ test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 
 # Bison-generated C++ files have an accompanying header
 src/asm/parser.hpp: src/asm/parser.cpp
+	$Qtouch $@
+src/link/script.hpp: src/link/script.cpp
 	$Qtouch $@
 
 # Only RGBGFX uses libpng (POSIX make doesn't support pattern rules to cover all these)
