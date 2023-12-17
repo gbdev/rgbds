@@ -7,6 +7,8 @@
 	#include <string>
 
 	#include "linkdefs.hpp"
+
+	void script_ProcessScript(char const *path);
 }
 %code {
 	#include <algorithm>

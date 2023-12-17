@@ -17,7 +17,7 @@
 #include "link/output.hpp"
 #include "link/patch.hpp"
 #include "link/section.hpp"
-#include "link/script.hpp"
+#include "script.hpp"
 #include "link/symbol.hpp"
 
 #include "extern/getopt.hpp"
