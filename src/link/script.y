@@ -39,7 +39,7 @@
 	static void setAddr(uint32_t addr);
 	static void alignTo(uint32_t alignment, uint32_t offset);
 	static void pad(uint32_t length);
-	static void placeSection(std::string const &name);
+	static void placeSection(std::string const &name, bool isOptional);
 
 	static yy::parser::symbol_type yylex(void);
 
@@ -56,17 +56,21 @@
        INCLUDE "INCLUDE"
        ALIGN "ALIGN"
        DS "DS"
+       OPTIONAL "OPTIONAL"
 %code {
 	static std::array keywords{
-		Keyword{"ORG"sv,     yy::parser::make_ORG},
-		Keyword{"INCLUDE"sv, yy::parser::make_INCLUDE},
-		Keyword{"ALIGN"sv,   yy::parser::make_ALIGN},
-		Keyword{"DS"sv,      yy::parser::make_DS},
+		Keyword{"ORG"sv,      yy::parser::make_ORG},
+		Keyword{"INCLUDE"sv,  yy::parser::make_INCLUDE},
+		Keyword{"ALIGN"sv,    yy::parser::make_ALIGN},
+		Keyword{"DS"sv,       yy::parser::make_DS},
+		Keyword{"OPTIONAL"sv, yy::parser::make_OPTIONAL},
 	};
 }
 %token <std::string> string;
 %token <uint32_t> number;
 %token <SectionType> section_type;
+
+%type <bool> optional;
 
 %%
 
@@ -86,7 +90,11 @@ directive: section_type { setSectionType($1); }
          | ALIGN number { alignTo($2, 0); }
          | ALIGN number COMMA number { alignTo($2, $4); }
          | DS number { pad($2); }
-         | string { placeSection($1); }
+         | string optional { placeSection($1, $2); }
+;
+
+optional: %empty { $$ = false; }
+        | OPTIONAL { $$ = true; }
 ;
 
 %%
@@ -423,7 +431,7 @@ static void pad(uint32_t length) {
 	}
 }
 
-static void placeSection(std::string const &name) {
+static void placeSection(std::string const &name, bool isOptional) {
 	auto const &context = lexerStack.back();
 	auto const &typeInfo = sectionTypeInfo[activeType];
 
@@ -436,7 +444,9 @@ static void placeSection(std::string const &name) {
 
 	auto *section = sect_GetSection(name.c_str());
 	if (!section) {
-		scriptError(context, "Unknown section \"%s\"", name.c_str());
+		if (!isOptional) {
+			scriptError(context, "Unknown section \"%s\"", name.c_str());
+		}
 		return;
 	}
 
