@@ -365,6 +365,11 @@ static void setSectionType(SectionType type, uint32_t bank) {
 
 static void setAddr(uint32_t addr) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot set PC because no memory region is active");
+		return;
+	}
+
 	auto &pc = curAddr[activeType][activeBankIdx];
 	auto const &typeInfo = sectionTypeInfo[activeType];
 
@@ -381,6 +386,11 @@ static void setAddr(uint32_t addr) {
 
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot modify PC because no memory region is active");
+		return;
+	}
+
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
@@ -419,6 +429,11 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 
 static void pad(uint32_t length) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot modify PC because no memory region is active");
+		return;
+	}
+
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
@@ -433,9 +448,6 @@ static void pad(uint32_t length) {
 
 static void placeSection(std::string const &name, bool isOptional) {
 	auto const &context = lexerStack.back();
-	auto const &typeInfo = sectionTypeInfo[activeType];
-
-	// A type *must* be active.
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "No memory region has been specified to place section \"%s\" in",
 		            name.c_str());
@@ -450,6 +462,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 		return;
 	}
 
+	auto const &typeInfo = sectionTypeInfo[activeType];
 	assert(section->offset == 0);
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
