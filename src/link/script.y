@@ -37,6 +37,7 @@
 	static void setSectionType(SectionType type);
 	static void setSectionType(SectionType type, uint32_t bank);
 	static void setAddr(uint32_t addr);
+	static void makeAddrFloating(void);
 	static void alignTo(uint32_t alignment, uint32_t offset);
 	static void pad(uint32_t length);
 	static void placeSection(std::string const &name, bool isOptional);
@@ -53,6 +54,7 @@
 %token newline
 %token COMMA ","
 %token ORG "ORG"
+       FLOATING "FLOATING"
        INCLUDE "INCLUDE"
        ALIGN "ALIGN"
        DS "DS"
@@ -60,6 +62,7 @@
 %code {
 	static std::array keywords{
 		Keyword{"ORG"sv,      yy::parser::make_ORG},
+		Keyword{"FLOATING"sv, yy::parser::make_FLOATING},
 		Keyword{"INCLUDE"sv,  yy::parser::make_INCLUDE},
 		Keyword{"ALIGN"sv,    yy::parser::make_ALIGN},
 		Keyword{"DS"sv,       yy::parser::make_DS},
@@ -86,6 +89,7 @@ line: INCLUDE string newline { includeFile(std::move($2)); } // Note: this addit
 
 directive: section_type { setSectionType($1); }
          | section_type number { setSectionType($1, $2); }
+         | FLOATING { makeAddrFloating(); }
          | ORG number { setAddr($2); }
          | ALIGN number { alignTo($2, 0); }
          | ALIGN number COMMA number { alignTo($2, $4); }
@@ -326,10 +330,14 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 static std::array<std::vector<uint16_t>, SECTTYPE_INVALID> curAddr;
 static SectionType activeType; // Index into curAddr
 static uint32_t activeBankIdx; // Index into curAddr[activeType]
+static bool isPcFloating;
+static uint16_t alignMask; // Only used if PC is floating.
+static uint16_t alignOffset; // Ditto.
 
 static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 	activeType = type;
 	activeBankIdx = idx;
+	isPcFloating = false;
 	if (curAddr[activeType].size() <= activeBankIdx) {
 		curAddr[activeType].resize(activeBankIdx + 1, sectionTypeInfo[type].startAddr);
 	}
@@ -382,12 +390,35 @@ static void setAddr(uint32_t addr) {
 	} else {
 		pc = addr;
 	}
+	isPcFloating = false;
+}
+
+static void makeAddrFloating(void) {
+	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot make PC floating because no memory region is active");
+		return;
+	}
+
+	isPcFloating = true;
+	alignMask = 1;
+	alignOffset = 0;
 }
 
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot modify PC because no memory region is active");
+		return;
+	}
+
+	if (isPcFloating) {
+		if (alignment >= 16) {
+			setAddr(alignOffset);
+		} else {
+			alignMask = UINT16_C(1) << alignment;
+			alignOffset = alignOfs % alignMask; // TODO: maybe warn if truncating?
+		}
 		return;
 	}
 
@@ -431,6 +462,11 @@ static void pad(uint32_t length) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot modify PC because no memory region is active");
+		return;
+	}
+
+	if (isPcFloating) {
+		alignOffset = (alignOffset + length) % alignMask;
 		return;
 	}
 
@@ -483,28 +519,37 @@ static void placeSection(std::string const &name, bool isOptional) {
 	section->isBankFixed = true;
 	section->bank = bank;
 
-	uint16_t &org = curAddr[activeType][activeBankIdx];
-	if (section->isAddressFixed && org != section->org) {
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
-		            name.c_str(), org, section->org);
-	} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
-		uint8_t alignment = std::countr_one(section->alignMask);
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
-		            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
-	}
-	section->isAddressFixed = true;
-	section->isAlignFixed = false; // This can't be set when the above is.
-	section->org = org;
+	if (!isPcFloating) {
+		uint16_t &org = curAddr[activeType][activeBankIdx];
+		if (section->isAddressFixed && org != section->org) {
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
+			            name.c_str(), org, section->org);
+		} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
+			uint8_t alignment = std::countr_one(section->alignMask);
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
+			            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
+		}
+		section->isAddressFixed = true;
+		section->isAlignFixed = false; // This can't be set when the above is.
+		section->org = org;
 
-	uint16_t curOfs = org - typeInfo.startAddr;
-	if (section->size > typeInfo.size - curOfs) {
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
-		            name.c_str(), org, typeInfo.name.c_str(),
-		            (uint16_t)(section->size - (typeInfo.size - curOfs)));
-		// Fill as much as possible without going out of bounds.
-		org = typeInfo.startAddr + typeInfo.size;
+		uint16_t curOfs = org - typeInfo.startAddr;
+		if (section->size > typeInfo.size - curOfs) {
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
+			            name.c_str(), org, typeInfo.name.c_str(),
+			            (uint16_t)(section->size - (typeInfo.size - curOfs)));
+			// Fill as much as possible without going out of bounds.
+			org = typeInfo.startAddr + typeInfo.size;
+		} else {
+			org += section->size;
+		}
 	} else {
-		org += section->size;
+		section->isAddressFixed = false;
+		section->isAlignFixed = alignMask != 1;
+		section->alignMask = alignMask;
+		section->alignOfs = alignOffset;
+
+		alignOffset = (alignOffset + section->size) % alignMask;
 	}
 }
 
