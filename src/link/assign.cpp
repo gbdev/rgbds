@@ -297,22 +297,19 @@ static void placeSection(struct Section *section)
 
 	if (section->isBankFixed && nbbanks(section->type) != 1) {
 		if (section->isAddressFixed)
-			snprintf(where, 64, "at $%02" PRIx32 ":%04" PRIx16,
+			snprintf(where, sizeof(where), "at $%02" PRIx32 ":%04" PRIx16,
 				 section->bank, section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "in bank $%02" PRIx32 " with align mask %" PRIx16,
+			snprintf(where, sizeof(where), "in bank $%02" PRIx32 " with align mask %" PRIx16,
 				 section->bank, (uint16_t)~section->alignMask);
 		else
-			snprintf(where, 64, "in bank $%02" PRIx32,
-				 section->bank);
+			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section->bank);
 	} else {
 		if (section->isAddressFixed)
-			snprintf(where, 64, "at address $%04" PRIx16,
-				 section->org);
+			snprintf(where, sizeof(where), "at address $%04" PRIx16, section->org);
 		else if (section->isAlignFixed)
-			snprintf(where, 64, "with align mask %" PRIx16 " and offset %" PRIx16,
-				 (uint16_t)~section->alignMask,
-				 section->alignOfs);
+			snprintf(where, sizeof(where), "with align mask %" PRIx16 " and offset %" PRIx16,
+				 (uint16_t)~section->alignMask, section->alignOfs);
 		else
 			strcpy(where, "anywhere");
 	}

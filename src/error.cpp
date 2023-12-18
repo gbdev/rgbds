@@ -11,34 +11,33 @@
 
 static void vwarn(char const NONNULL(fmt), va_list ap)
 {
+	const char *error = strerror(errno);
+
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
-	fputs(": ", stderr);
-	perror(NULL);
+	fprintf(stderr, ": %s\n", error);
 }
 
 static void vwarnx(char const NONNULL(fmt), va_list ap)
 {
-	fprintf(stderr, "warning");
-	fputs(": ", stderr);
+	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
 }
 
 [[noreturn]] static void verr(char const NONNULL(fmt), va_list ap)
 {
+	const char *error = strerror(errno);
+
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
-	fputs(": ", stderr);
-	fputs(strerror(errno), stderr);
-	putc('\n', stderr);
+	fprintf(stderr, ": %s\n", error);
 	exit(1);
 }
 
 [[noreturn]] static void verrx(char const NONNULL(fmt), va_list ap)
 {
-	fprintf(stderr, "error");
-	fputs(": ", stderr);
+	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
 	exit(1);
