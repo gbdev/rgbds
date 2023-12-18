@@ -416,8 +416,17 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		if (alignment >= 16) {
 			setAddr(alignOffset);
 		} else {
-			alignMask = UINT16_C(1) << alignment;
-			alignOffset = alignOfs % alignMask; // TODO: maybe warn if truncating?
+			uint32_t alignSize = 1u << alignment;
+
+			if (alignOfs >= alignSize) {
+				scriptError(context, "Cannot align: The alignment offset (%" PRIu32
+						      ") must be less than alignment size (%" PRIu32 ")\n",
+					    alignOfs, alignSize);
+				return;
+			}
+
+			alignMask = alignSize;
+			alignOffset = alignOfs % alignMask;
 		}
 		return;
 	}
@@ -440,7 +449,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		if (alignOfs >= alignSize) {
 			scriptError(context, "Cannot align: The alignment offset (%" PRIu32
 					      ") must be less than alignment size (%" PRIu32 ")\n",
-				    alignOfs, 1 << alignment);
+				    alignOfs, alignSize);
 			return;
 		}
 
