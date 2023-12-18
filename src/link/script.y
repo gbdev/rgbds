@@ -51,6 +51,7 @@
 
 %token YYEOF 0 "end of file"
 %token newline
+%token COMMA ","
 %token ORG "ORG"
        INCLUDE "INCLUDE"
        ALIGN "ALIGN"
@@ -83,6 +84,7 @@ directive: section_type { setSectionType($1); }
          | section_type number { setSectionType($1, $2); }
          | ORG number { setAddr($2); }
          | ALIGN number { alignTo($2, 0); }
+         | ALIGN number COMMA number { alignTo($2, $4); }
          | DS number { pad($2); }
          | string { placeSection($1); }
 ;
@@ -197,6 +199,8 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		} else {
 			return yy::parser::make_YYEOF();
 		}
+	} else if (c == ',') {
+		return yy::parser::make_COMMA();
 	} else if (isNewline(c)) {
 		// Handle CRLF.
 		if (c == '\r' && context.file.sgetc() == '\n') {
@@ -372,18 +376,37 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
-	// TODO: maybe warn if truncating?
-	alignOfs %= 1 << alignment;
-
-	assert(pc >= typeInfo.startAddr);
-	uint16_t length = alignment < 16 ? (uint16_t)(alignOfs - pc) % (1u << alignment)
-	                                 : alignOfs - pc; // Let it wrap around, this'll trip the check.
-	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
-		scriptError(context, "Cannot align: the next suitable address after $%04" PRIx16 " is $%04" PRIx16 ", past $%04" PRIx16,
-		            pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1));
-	} else {
-		pc += length;
+	if (alignment > 16) {
+		scriptError(context, "Cannot align: The alignment (%" PRIu32 ") must be less than 16\n",
+			    alignment);
+		return;
 	}
+
+	// Let it wrap around, this'll trip the final check if alignment == 16.
+	uint16_t length = alignOfs - pc;
+
+	if (alignment < 16) {
+		uint32_t alignSize = 1u << alignment;
+
+		if (alignOfs >= alignSize) {
+			scriptError(context, "Cannot align: The alignment offset (%" PRIu32
+					      ") must be less than alignment size (%" PRIu32 ")\n",
+				    alignOfs, 1 << alignment);
+			return;
+		}
+
+		assert(pc >= typeInfo.startAddr);
+		length %= alignSize;
+	}
+
+	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
+		scriptError(context, "Cannot align: the next suitable address after $%04"
+				     PRIx16 " is $%04" PRIx16 ", past $%04" PRIx16,
+			    pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1));
+		return;
+	}
+
+	pc += length;
 }
 
 static void pad(uint32_t length) {

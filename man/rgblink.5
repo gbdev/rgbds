@@ -68,15 +68,25 @@ and
 .Ic DS :
 .Bl -bullet
 .It
-.Ic ORG
-sets the address in which new sections will be placed.
+.Ic ORG Ar addr
+sets the address in which new sections will be placed to
+.Ar addr .
 It can not be lower than the current address.
 .It
-.Ic ALIGN
+.Ic ALIGN Ar addr
+or
+.Ic ALIGN Ar addr , Ar offset
 will increase the address until it is aligned to the specified boundary
-.Po it tries to set to 0 the number of bits specified after the directive:
+.Po it tries to set to
+.Ar offset
+the number of bits specified by
+.Ar align :
+for example,
 .Ql ALIGN 8
-will align to $100
+will align to $100 ,
+and
+.Ql ALIGN 8 , 10
+will align to $10A
 .Pc .
 .It
 .Ic DS
