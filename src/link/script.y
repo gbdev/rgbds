@@ -331,8 +331,8 @@ static std::array<std::vector<uint16_t>, SECTTYPE_INVALID> curAddr;
 static SectionType activeType; // Index into curAddr
 static uint32_t activeBankIdx; // Index into curAddr[activeType]
 static bool isPcFloating;
-static uint16_t alignMask; // Only used if PC is floating.
-static uint16_t alignOffset; // Ditto.
+static uint16_t floatingAlignMask;
+static uint16_t floatingAlignOffset;
 
 static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 	activeType = type;
@@ -401,8 +401,8 @@ static void makeAddrFloating(void) {
 	}
 
 	isPcFloating = true;
-	alignMask = 1;
-	alignOffset = 0;
+	floatingAlignMask = 1;
+	floatingAlignOffset = 0;
 }
 
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
@@ -414,7 +414,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 
 	if (isPcFloating) {
 		if (alignment >= 16) {
-			setAddr(alignOffset);
+			setAddr(floatingAlignOffset);
 		} else {
 			uint32_t alignSize = 1u << alignment;
 
@@ -425,8 +425,8 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 				return;
 			}
 
-			alignMask = alignSize;
-			alignOffset = alignOfs % alignMask;
+			floatingAlignMask = alignSize;
+			floatingAlignOffset = alignOfs % alignSize;
 		}
 		return;
 	}
@@ -475,7 +475,7 @@ static void pad(uint32_t length) {
 	}
 
 	if (isPcFloating) {
-		alignOffset = (alignOffset + length) % alignMask;
+		floatingAlignOffset = (floatingAlignOffset + length) % floatingAlignMask;
 		return;
 	}
 
@@ -554,11 +554,11 @@ static void placeSection(std::string const &name, bool isOptional) {
 		}
 	} else {
 		section->isAddressFixed = false;
-		section->isAlignFixed = alignMask != 1;
-		section->alignMask = alignMask;
-		section->alignOfs = alignOffset;
+		section->isAlignFixed = floatingAlignMask != 1;
+		section->alignMask = floatingAlignMask;
+		section->alignOfs = floatingAlignOffset;
 
-		alignOffset = (alignOffset + section->size) % alignMask;
+		floatingAlignOffset = (floatingAlignOffset + section->size) % floatingAlignMask;
 	}
 }
 
