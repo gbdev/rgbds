@@ -401,7 +401,7 @@ static void makeAddrFloating(void) {
 	}
 
 	isPcFloating = true;
-	floatingAlignMask = 1;
+	floatingAlignMask = 0;
 	floatingAlignOffset = 0;
 }
 
@@ -425,7 +425,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 				return;
 			}
 
-			floatingAlignMask = alignSize;
+			floatingAlignMask = alignSize - 1;
 			floatingAlignOffset = alignOfs % alignSize;
 		}
 		return;
@@ -475,7 +475,7 @@ static void pad(uint32_t length) {
 	}
 
 	if (isPcFloating) {
-		floatingAlignOffset = (floatingAlignOffset + length) % floatingAlignMask;
+		floatingAlignOffset = (floatingAlignOffset + length) & floatingAlignMask;
 		return;
 	}
 
@@ -554,11 +554,11 @@ static void placeSection(std::string const &name, bool isOptional) {
 		}
 	} else {
 		section->isAddressFixed = false;
-		section->isAlignFixed = floatingAlignMask != 1;
+		section->isAlignFixed = floatingAlignMask != 0;
 		section->alignMask = floatingAlignMask;
 		section->alignOfs = floatingAlignOffset;
 
-		floatingAlignOffset = (floatingAlignOffset + section->size) % floatingAlignMask;
+		floatingAlignOffset = (floatingAlignOffset + section->size) & floatingAlignMask;
 	}
 }
 
