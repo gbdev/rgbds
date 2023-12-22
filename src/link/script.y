@@ -360,11 +360,11 @@ static void setSectionType(SectionType type, uint32_t bank) {
 	auto const &typeInfo = sectionTypeInfo[type];
 
 	if (bank < typeInfo.firstBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist, the minimum is %" PRIu32,
+		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
 		            typeInfo.name.c_str(), bank, typeInfo.firstBank);
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist, the maximum is %" PRIu32,
+		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
 		            typeInfo.name.c_str(), bank, typeInfo.lastBank);
 	}
 
@@ -374,7 +374,7 @@ static void setSectionType(SectionType type, uint32_t bank) {
 static void setAddr(uint32_t addr) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot set PC because no memory region is active");
+		scriptError(context, "Cannot set the current address: no memory region is active");
 		return;
 	}
 
@@ -382,9 +382,9 @@ static void setAddr(uint32_t addr) {
 	auto const &typeInfo = sectionTypeInfo[activeType];
 
 	if (addr < pc) {
-		scriptError(context, "ORG cannot be used to go backwards (from $%04x to $%04x)", pc, addr);
+		scriptError(context, "Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
 	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
-		scriptError(context, "Cannot go to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
+		scriptError(context, "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
 		            addr, typeInfo.name.c_str(), endaddr(activeType));
 		pc = endaddr(activeType);
 	} else {
@@ -396,7 +396,7 @@ static void setAddr(uint32_t addr) {
 static void makeAddrFloating(void) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot make PC floating because no memory region is active");
+		scriptError(context, "Cannot make the current address floating: no memory region is active");
 		return;
 	}
 
@@ -408,7 +408,7 @@ static void makeAddrFloating(void) {
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot modify PC because no memory region is active");
+		scriptError(context, "Cannot align: no memory region is active");
 		return;
 	}
 
@@ -470,7 +470,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 static void pad(uint32_t length) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot modify PC because no memory region is active");
+		scriptError(context, "Cannot pad: no memory region is active");
 		return;
 	}
 
