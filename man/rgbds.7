@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd March 28, 2021
+.Dd December 22, 2023
 .Dt RGBDS 7
 .Os
 .Sh NAME
@@ -9,44 +9,65 @@
 .Sh EXAMPLES
 To get a working ROM image from a single assembly source file:
 .Bd -literal -offset indent
-$ rgbasm \-o bar.o foo.asm
-$ rgblink \-o baz.gb bar.o
-$ rgbfix \-v \-p 0 baz.gb
+$ rgbasm \-o game.o game.asm
+$ rgblink \-o game.gb game.o
+$ rgbfix \-v \-p 0 game.gb
 .Ed
-Or in a single command line:
+.Pp
+Or in a single command line, without creating an intermediate object file:
 .Bd -literal -offset indent
-$ rgbasm \-o - foo.asm | rgblink \-o - - | rgbfix \-v \-p 0 - > baz.gb
+$ (rgbasm -o - - | rgblink -o - - | rgbfix -v -p 0) < game.asm > game.gb
 .Ed
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
-.Xr rgbfix 1 ,
+.Xr rgbasm 5 ,
 .Xr rgblink 1 ,
-.Xr rgbds 5 ,
-.Xr gbz80 7
+.Xr rgblink 5 ,
+.Xr rgbfix 1 ,
+.Xr rgbgfx 1 ,
+.Xr gbz80 7 ,
+.Xr rgbds 5
 .Sh HISTORY
 .Bl -item
 .It
-1997, Carsten S\(/orensen (AKA SurfSmurf) writes ASMotor as a general-purpose
-assembler/linker system for DOS/Win32.
+1996-10-01:
+.An Carsten S\(/orensen
+.Pq a.k.a. SurfSmurf
+releases xAsm, xLink, and RGBFix, a Game Boy SM83 (GBZ80) assembler/linker system for DOS/Win32.
 .It
-1999, Justin Lloyd (AKA Otaku no Zoku) adapts ASMotor to read and produce GBZ80
-assembly/machine code, and releases this version as RGBDS.
+1997-07-03: S\(/orensen releases ASMotor, packaging the three programs together and moving towards making them a general-purpose target-independent system.
 .It
-2009, Vegard Nossum adapts the code to be more UNIX-like and releases this
-version as rgbds-linux on GitHub.
+1999-08-01:
+.An Justin Lloyd
+.Pq a.k.a. Otaku no Zoku
+adapts ASMotor to re-focus on SM83 assembly/machine code, and releases this version as RGBDS.
 .It
-2010, Anthony J. Bentley forks that repository.
-The fork becomes the reference implementation of rgbds.
+2009-06-11:
+.An Vegard Nossum
+adapts the code to be more UNIX-like and releases this version as rgbds-linux.
 .It
-2017, Bentley's repository is moved to a neutral name.
-It is now maintained by a number of contributors at
-.Lk https://github.com/rednex/rgbds .
+2010-01-12:
+.An Anthony J. Bentley
+forks Nossum's repository.
+The fork becomes the reference implementation of RGBDS.
 .It
-2018, codebase relicensed under the MIT license.
+2015-01-18:
+.An stag019
+begins implementing rgbgfx, a PNG‐to‐Game Boy graphics converter, for eventual integration into RGBDS.
 .It
-2020, repository is moved to the gbdev organisation, at
-.Lk https://github.com/gbdev/rgbds .
-The
+2016-09-05: rgbgfx is integrated into Bentley's repository.
+.It
+2017-02-23: Bentley's repository is moved to the
+.Lk https://github.com/rednex/rgbds rednex
+organization.
+.It
+2018-01-26: The codebase is relicensed under the MIT license.
+.It
+2020-09-15: The repository is moved to the
+.Lk https://github.com/gbdev/rgbds gbdev
+organization.
+.It
+2022-05-17: The
 .Lk https://rgbds.gbdev.io
-website serving documentation and downloads is created.
+website for RGBDS documentation and downloads is published.
 .El
