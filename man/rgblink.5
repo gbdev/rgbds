@@ -7,28 +7,38 @@
 .Nm rgblink
 .Nd linker script file format
 .Sh DESCRIPTION
-The linker script is a self-contained file that allows specifying attributes for sections at link time, and in a centralized manner.
+The linker script is a file that allows specifying attributes for sections at link time, and in a centralized manner.
 There can only be one linker script per invocation of
 .Nm ,
 but it can be split into several files
 .Pq using the Ic INCLUDE No directive .
 .Ss Basic syntax
-A linker script follows a very line-oriented format: each line can contain up to one directive or section name, and up to one comment.
-Whitespace (space and tab characters) is used to separate elements, but is otherwise ignored.
+The linker script syntax is line-based.
+Each line may have a directive or section name, a comment, both, or neither.
+Whitespace (space and tab characters) is used to separate syntax elements, but is otherwise ignored.
 .Pp
 Comments begin with a semicolon
 .Ql \&;
-character, until the end of the line; they are simply ignored.
+character, until the end of the line.
+They are simply ignored.
 .Pp
 Keywords are composed of letters and digits (but they can't start with a digit); they are all case-insensitive.
 .Pp
-Numbers can be written in the usual decimal format, or in binary using the
+Numbers can be written in decimal format, or in binary using the
 .Ql %
 prefix, or in hexadecimal using the
 .Ql $
-prefix (both uppercase and lowercase letters are accepted).
+prefix (hexadecimal digits are case-insensitive).
+Note that unlike
+.Xr rgbasm 5 ,
+an octal
+.Ql &
+prefix is not supported, nor are
+.Ql _
+digit separators.
 .Pp
 Strings begin with a double quote, and end at the next (non-escaped) double quote.
+Strings must not contain literal newline characters.
 Most of the same character escapes as
 .Xr rgbasm 5
 are supported, specifically
@@ -52,16 +62,24 @@ were copy-pasted in place of the
 directive.
 .Ar path
 must be a string.
-.It Bank specification
+.It Specifying the active bank
 .Tg region
 The active bank can be set by specifying its type (memory region) and number.
 The possible types are:
 .Ic ROM0 , ROMX , VRAM , SRAM , WRAM0 , WRAMX , OAM ,
 and
 .Ic HRAM .
-However, if the type only contains a single bank
-.Pq Ic ROM0, Ic ROMX No if Fl t No is passed to Xr rgblink 1 , Ic VRAM No if Fl d No is passed to Xr rgblink 1 , Ic WRAM0 , Ic WRAMX No if Fl w No is passed to Xr rgblink 1 , Ic OAM , Ic HRAM ,
-then the number can be omitted.
+However, if the type only contains a single bank, then the number can be omitted.
+The applicable types are:
+.Ic ROM0 ,
+.Ic ROMX No if Fl t No is passed to Xr rgblink 1 ,
+.Ic VRAM No if Fl d No is passed to Xr rgblink 1 ,
+.Ic WRAM0 ,
+.Ic WRAMX No if Fl w No is passed to Xr rgblink 1 ,
+.Ic OAM ,
+and
+.Ic HRAM .
+.Pq Ic SRAM No is the only type that can never have its bank number omitted.
 .Pp
 After a bank specification, the
 .Dq current address
@@ -70,7 +88,7 @@ If the bank has never been active thus far, the
 .Dq current address
 defaults to the beginning of the bank
 .Pq e.g. Ad $4000 No for Ic ROMX No sections .
-.It Changing the Dq current address
+.It Changing the current address
 A bank must be active for any of these directives to be used.
 .Pp
 .Ql Ic ORG Ar addr
@@ -80,12 +98,10 @@ to
 .Ar addr .
 The new address cannot be less than the old one.
 .Pp
-.Ql Ic FLOATING :
-All sections between
-.Ic FLOATING
-and the next
+.Ql Ic FLOATING
+causes all sections between it and the next
 .Ic ORG
-or bank specification, will be placed at addresses automatically determined by
+or bank specification to be placed at addresses automatically determined by
 .Nm .
 .Pp
 .Ql Ic ALIGN Ar addr , Ar offset
@@ -116,12 +132,15 @@ by
 A section can be placed simply by naming it (with a string).
 Its bank is set to the active bank, and its address to the
 .Dq current address .
-Any properties the section already possesses must be consistent with what the linker script specifies: the section's type must match, (if set) the section's bank number must match the active bank's, etc.
+Any properties the section already possesses (whether from the linker script or the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
 .Pp
 Afterwards, the
 .Dq current address
 is increased by the section's size.
-This must not make it go past the end of the active memory region.
+This must not increase it past the end of the active memory region.
+.Pp
+The section must have been defined in the object files being linked, unless the section name is followed by the keyword
+.Ic OPTIONAL .
 .Sh EXAMPLES
 .Bd -literal -offset indent
 ; This line contains only a comment
