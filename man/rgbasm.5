@@ -1328,13 +1328,13 @@ and so on to be accessible to other files during the link process:
 For example, if you have the following three files:
 .Pp
 .Ql a.asm :
-.Bd -literal -compact
+.Bd -literal -offset indent -compact
 SECTION "a", WRAM0
 LabelA:
 .Ed
 .Pp
 .Ql b.asm :
-.Bd -literal -compact
+.Bd -literal -offset indent -compact
 SECTION "b", WRAM0
 ExportedLabelB1::
 ExportedLabelB2:
@@ -1342,7 +1342,7 @@ ExportedLabelB2:
 .Ed
 .Pp
 .Ql c.asm :
-.Bd -literal -compact
+.Bd -literal -offset indent -compact
 SECTION "C", ROM0[0]
 	dw LabelA
 	dw ExportedLabelB1
@@ -1358,7 +1358,7 @@ and
 but not
 .Ql LabelA ,
 so linking them together will fail:
-.Bd -literal
+.Bd -literal -offset indent
 $ rgbasm -o a.o a.asm
 $ rgbasm -o b.o b.asm
 $ rgbasm -o c.o c.asm
@@ -1372,7 +1372,7 @@ Note also that only exported symbols will appear in symbol and map files produce
 .Ss Purging symbols
 .Ic PURGE
 allows you to completely remove a symbol from the symbol table as if it had never existed.
-.Em USE WITH EXTREME CAUTION!
+.Em USE WITH EXTREME CAUTION !
 I can't stress this enough,
 .Sy you seriously need to know what you are doing .
 DON'T purge a symbol that you use in expressions the linker needs to calculate.

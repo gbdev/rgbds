@@ -628,7 +628,7 @@ Enter CPU low-power consumption mode until an interrupt occurs.
 The exact behavior of this instruction depends on the state of the
 .Sy IME
 flag.
-.Bl -tag -width indent
+.Bl -tag -width Ds
 .It Sy IME No set
 The CPU enters low-power mode until
 .Em after
@@ -640,7 +640,7 @@ when that returns.
 The behavior depends on whether an interrupt is pending (i.e.\&
 .Ql [IE] & [IF]
 is non-zero).
-.Bl -tag -width indent
+.Bl -tag -width Ds
 .It None pending
 As soon as an interrupt becomes pending, the CPU resumes execution.
 This is like the above, except that the handler is
