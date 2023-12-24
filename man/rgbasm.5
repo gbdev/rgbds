@@ -340,7 +340,7 @@ The following functions are designed to operate with fixed-point numbers:
 .EQ
 delim $$
 .EN
-.Bl -column -offset indent "ATAN2(x, y)"
+.Bl -column -offset indent "ATAN2(y, x)"
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta Fixed-point division $( x \[di] y ) \[mu] ( 2 ^ precision )$
 .It Fn MUL x y Ta Fixed-point multiplication $( x \[mu] y ) \[di] ( 2 ^ precision )$
@@ -356,7 +356,7 @@ delim $$
 .It Fn ASIN x Ta Inverse sine of $x$
 .It Fn ACOS x Ta Inverse cosine of $x$
 .It Fn ATAN x Ta Inverse tangent of $x$
-.It Fn ATAN2 x y Ta Angle between $( x , y )$ and $( 1 , 0 )$
+.It Fn ATAN2 y x Ta Angle between $( x , y )$ and $( 1 , 0 )$
 .El
 .EQ
 delim off
