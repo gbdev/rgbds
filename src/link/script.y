@@ -470,7 +470,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 static void pad(uint32_t length) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot pad: no memory region is active");
+		scriptError(context, "Cannot increase the current address: no memory region is active");
 		return;
 	}
 
@@ -484,7 +484,7 @@ static void pad(uint32_t length) {
 
 	assert(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
-		scriptError(context, "Cannot pad by %u bytes: only %u bytes to $%04" PRIx16,
+		scriptError(context, "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		            length, typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1));
 	} else {
 		pc += length;
