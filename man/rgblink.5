@@ -69,8 +69,7 @@ The possible types are:
 .Ic ROM0 , ROMX , VRAM , SRAM , WRAM0 , WRAMX , OAM ,
 and
 .Ic HRAM .
-If the type only contains a single bank, then the number can be omitted.
-The applicable types are:
+The bank number can be omitted from the types that only contain a single bank, which are:
 .Ic ROM0 ,
 .Ic ROMX No if Fl t No is passed to Xr rgblink 1 ,
 .Ic VRAM No if Fl d No is passed to Xr rgblink 1 ,
@@ -96,7 +95,7 @@ sets the
 .Dq current address
 to
 .Ar addr .
-THis directive cannot be used to move the address backwards:
+This directive cannot be used to move the address backwards:
 .Ar addr
 must be greater than or equal to the current address.
 .Pp
@@ -135,7 +134,8 @@ The gap is not allocated, thus smaller floating sections can later be placed the
 A section can be placed simply by naming it (with a string).
 Its bank is set to the active bank, and its address to the
 .Dq current address .
-Any properties the section already possesses (whether from the linker script or the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
+Any constraints the section already possesses (whether from the linker script or the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
+In particular, if the section has an alignment constraint, the address at which it is placed by the linker script must obey that constraint; otherwise, an error will occur.
 .Pp
 Afterwards, the
 .Dq current address
