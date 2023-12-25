@@ -7,47 +7,41 @@
 .Nm rgblink
 .Nd linker script file format
 .Sh DESCRIPTION
-The linker script is an external file that allows the user to specify the order of sections at link time and in a centralized manner.
+The linker script is a file that allows specifying attributes for sections at link time, and in a centralized manner.
+There can only be one linker script per invocation of
+.Nm ,
+but it can be split into several files
+.Pq using the Ic INCLUDE No directive .
+.Ss Basic syntax
+The linker script syntax is line-based.
+Each line may have a directive or section name, a comment, both, or neither.
+Whitespace (space and tab characters) is used to separate syntax elements, but is otherwise ignored.
 .Pp
-A linker script consists of a series of bank declarations, each optionally followed by a list of section names (in double quotes) or directives.
-All reserved keywords (bank types and directive names) are case-insensitive; all section names are case-sensitive.
-.Pp
-Any line can contain a comment starting with
+Comments begin with a semicolon
 .Ql \&;
-that ends at the end of the line.
-.Bd -literal -offset indent
-; This line is a comment
-ROMX $F            ; start a bank
-  "Some functions" ; a section name
-  ALIGN 8          ; a directive
-  "Some array"
-
-WRAMX 2            ; start another bank
-  org $d123        ; another directive
-  "Some variables"
-.Ed
+character, until the end of the line.
+They are simply ignored.
 .Pp
-Numbers can be in decimal or hexadecimal format
-.Pq the prefix is Ql $ .
-It is an error if any section name or directive is found before setting a bank.
+Keywords are composed of letters and digits (but they can't start with a digit); they are all case-insensitive.
 .Pp
-Files can be included by using the
-.Ic INCLUDE
-keyword, followed by a string with the path of the file that has to be included.
-.Pp
-The possible bank types are:
-.Cm ROM0 , ROMX , VRAM , SRAM , WRAM0 , WRAMX , OAM
-and
-.Cm HRAM .
-Unless there is a single bank, which can occur with types
-.Cm ROMX , VRAM , SRAM
-and
-.Cm WRAMX ,
-it is mandatory to specify a bank number after the type.
-.Pp
-Section names in double quotes support the same character escape sequences as strings in
+Numbers can be written in decimal format, or in binary using the
+.Ql %
+prefix, or in hexadecimal using the
+.Ql $
+prefix (hexadecimal digits are case-insensitive).
+Note that unlike
 .Xr rgbasm 5 ,
-specifically
+an octal
+.Ql &
+prefix is not supported, nor are
+.Ql _
+digit separators.
+.Pp
+Strings begin with a double quote, and end at the next (non-escaped) double quote.
+Strings must not contain literal newline characters.
+Most of the same character escapes as
+.Xr rgbasm 5
+are supported, specifically
 .Ql \e\e ,
 .Ql \e" ,
 .Ql \en ,
@@ -56,51 +50,113 @@ and
 .Ql \et .
 Other backslash escape sequences in
 .Xr rgbasm 5
-are only relevant to assembly code and do not apply in section names.
-.Pp
-When a new bank statement is found, sections found after it will be placed right from the beginning of that bank.
-If the linker script switches to a different bank and then comes back to a previous one, it will continue from the last address that was used.
-.Pp
-The only three directives are
-.Ic ORG ,
-.Ic ALIGN ,
+are only relevant to assembly code and do not apply in linker scripts.
+.Ss Directives
+.Bl -tag -width Ds
+.It Including other files
+.Ql Ic INCLUDE Ar path
+acts as if the contents of the file at
+.Ar path
+were copy-pasted in place of the
+.Ic INCLUDE
+directive.
+.Ar path
+must be a string.
+.It Specifying the active bank
+.Tg region
+The active bank can be set by specifying its type (memory region) and number.
+The possible types are:
+.Ic ROM0 , ROMX , VRAM , SRAM , WRAM0 , WRAMX , OAM ,
 and
-.Ic DS :
-.Bl -bullet
-.It
-.Ic ORG Ar addr
-sets the address in which new sections will be placed to
+.Ic HRAM .
+The bank number can be omitted from the types that only contain a single bank, which are:
+.Ic ROM0 ,
+.Ic ROMX No if Fl t No is passed to Xr rgblink 1 ,
+.Ic VRAM No if Fl d No is passed to Xr rgblink 1 ,
+.Ic WRAM0 ,
+.Ic WRAMX No if Fl w No is passed to Xr rgblink 1 ,
+.Ic OAM ,
+and
+.Ic HRAM .
+.Pq Ic SRAM No is the only type that can never have its bank number omitted.
+.Pp
+After a bank specification, the
+.Dq current address
+is set to the last value it had for that bank.
+If the bank has never been active thus far, the
+.Dq current address
+defaults to the beginning of the bank
+.Pq e.g. Ad $4000 No for Ic ROMX No sections .
+.It Changing the current address
+A bank must be active for any of these directives to be used.
+.Pp
+.Ql Ic ORG Ar addr
+sets the
+.Dq current address
+to
 .Ar addr .
-It can not be lower than the current address.
-.It
-.Ic ALIGN Ar addr
-or
-.Ic ALIGN Ar addr , Ar offset
-will increase the address until it is aligned to the specified boundary
-.Po it tries to set to
-.Ar offset
-the number of bits specified by
-.Ar align :
-for example,
-.Ql ALIGN 8
-will align to $100 ,
-and
-.Ql ALIGN 8 , 10
-will align to $10A
-.Pc .
-.It
-.Ic DS
-will increase the address by the specified non-negative amount.
-.El
+This directive cannot be used to move the address backwards:
+.Ar addr
+must be greater than or equal to the
+.Dq current address .
 .Pp
-.Sy Note :
-The bank, alignment, address and type of sections can be specified both in the source code and in the linker script.
-For a section to be able to be placed with the linker script, the bank, address and alignment must be left unassigned in the source code or be compatible with what is specified in the linker script.
-For example,
-.Ql ALIGN[8]
-in the source code is compatible with
-.Ql ORG $F00
-in the linker script.
+.Ql Ic FLOATING
+causes all sections between it and the next
+.Ic ORG
+or bank specification to be placed at addresses automatically determined by
+.Nm .
+.Pp
+.Ql Ic ALIGN Ar addr , Ar offset
+increases the
+.Dq current address
+until it is aligned to the specified boundary (i.e. the
+.Ar align
+lowest bits of the address are equal to
+.Ar offset ) .
+If
+.Ar offset
+is omitted, it is implied to be 0.
+For example, if the
+.Dq current address
+is $0007,
+.Ql ALIGN 8
+would set it to $0100, and
+.Ql ALIGN 8 , 10
+would set it to $000A.
+.Pp
+.Ql Ic DS Ar size
+increases the
+.Dq current address
+by
+.Ar size .
+The gap is not allocated, so smaller floating sections can later be placed there.
+.El
+.Ss Section placement
+A section can be placed simply by naming it (with a string).
+Its bank is set to the active bank, and its address to the
+.Dq current address .
+Any constraints the section already possesses (whether from earlier in the linker script, or from the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
+In particular, if the section has an alignment constraint, the address at which it is placed by the linker script must obey that constraint; otherwise, an error will occur.
+.Pp
+After a section is placed, the
+.Dq current address
+is increased by the section's size.
+This must not increase it past the end of the active memory region.
+.Pp
+The section must have been defined in the object files being linked, unless the section name is followed by the keyword
+.Ic OPTIONAL .
+.Sh EXAMPLES
+.Bd -literal -offset indent
+; This line contains only a comment
+ROMX $F            ; start a bank
+  "Some functions" ; a section name
+  ALIGN 8          ; a directive
+  "Some \e"array\e""
+
+WRAMX 2            ; start another bank
+  org $d123        ; another directive
+  "Some variables"
+.Ed
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgbasm 5 ,

@@ -37,9 +37,10 @@
 	static void setSectionType(SectionType type);
 	static void setSectionType(SectionType type, uint32_t bank);
 	static void setAddr(uint32_t addr);
+	static void makeAddrFloating(void);
 	static void alignTo(uint32_t alignment, uint32_t offset);
 	static void pad(uint32_t length);
-	static void placeSection(std::string const &name);
+	static void placeSection(std::string const &name, bool isOptional);
 
 	static yy::parser::symbol_type yylex(void);
 
@@ -53,20 +54,26 @@
 %token newline
 %token COMMA ","
 %token ORG "ORG"
+       FLOATING "FLOATING"
        INCLUDE "INCLUDE"
        ALIGN "ALIGN"
        DS "DS"
+       OPTIONAL "OPTIONAL"
 %code {
 	static std::array keywords{
-		Keyword{"ORG"sv,     yy::parser::make_ORG},
-		Keyword{"INCLUDE"sv, yy::parser::make_INCLUDE},
-		Keyword{"ALIGN"sv,   yy::parser::make_ALIGN},
-		Keyword{"DS"sv,      yy::parser::make_DS},
+		Keyword{"ORG"sv,      yy::parser::make_ORG},
+		Keyword{"FLOATING"sv, yy::parser::make_FLOATING},
+		Keyword{"INCLUDE"sv,  yy::parser::make_INCLUDE},
+		Keyword{"ALIGN"sv,    yy::parser::make_ALIGN},
+		Keyword{"DS"sv,       yy::parser::make_DS},
+		Keyword{"OPTIONAL"sv, yy::parser::make_OPTIONAL},
 	};
 }
 %token <std::string> string;
 %token <uint32_t> number;
 %token <SectionType> section_type;
+
+%type <bool> optional;
 
 %%
 
@@ -82,11 +89,16 @@ line: INCLUDE string newline { includeFile(std::move($2)); } // Note: this addit
 
 directive: section_type { setSectionType($1); }
          | section_type number { setSectionType($1, $2); }
+         | FLOATING { makeAddrFloating(); }
          | ORG number { setAddr($2); }
          | ALIGN number { alignTo($2, 0); }
          | ALIGN number COMMA number { alignTo($2, $4); }
          | DS number { pad($2); }
-         | string { placeSection($1); }
+         | string optional { placeSection($1, $2); }
+;
+
+optional: %empty { $$ = false; }
+        | OPTIONAL { $$ = true; }
 ;
 
 %%
@@ -318,10 +330,14 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 static std::array<std::vector<uint16_t>, SECTTYPE_INVALID> curAddr;
 static SectionType activeType; // Index into curAddr
 static uint32_t activeBankIdx; // Index into curAddr[activeType]
+static bool isPcFloating;
+static uint16_t floatingAlignMask;
+static uint16_t floatingAlignOffset;
 
 static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 	activeType = type;
 	activeBankIdx = idx;
+	isPcFloating = false;
 	if (curAddr[activeType].size() <= activeBankIdx) {
 		curAddr[activeType].resize(activeBankIdx + 1, sectionTypeInfo[type].startAddr);
 	}
@@ -344,11 +360,11 @@ static void setSectionType(SectionType type, uint32_t bank) {
 	auto const &typeInfo = sectionTypeInfo[type];
 
 	if (bank < typeInfo.firstBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist, the minimum is %" PRIu32,
+		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
 		            typeInfo.name.c_str(), bank, typeInfo.firstBank);
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist, the maximum is %" PRIu32,
+		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
 		            typeInfo.name.c_str(), bank, typeInfo.lastBank);
 	}
 
@@ -357,22 +373,64 @@ static void setSectionType(SectionType type, uint32_t bank) {
 
 static void setAddr(uint32_t addr) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot set the current address: no memory region is active");
+		return;
+	}
+
 	auto &pc = curAddr[activeType][activeBankIdx];
 	auto const &typeInfo = sectionTypeInfo[activeType];
 
 	if (addr < pc) {
-		scriptError(context, "ORG cannot be used to go backwards (from $%04x to $%04x)", pc, addr);
+		scriptError(context, "Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
 	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
-		scriptError(context, "Cannot go to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
+		scriptError(context, "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
 		            addr, typeInfo.name.c_str(), endaddr(activeType));
 		pc = endaddr(activeType);
 	} else {
 		pc = addr;
 	}
+	isPcFloating = false;
+}
+
+static void makeAddrFloating(void) {
+	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot make the current address floating: no memory region is active");
+		return;
+	}
+
+	isPcFloating = true;
+	floatingAlignMask = 0;
+	floatingAlignOffset = 0;
 }
 
 static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot align: no memory region is active");
+		return;
+	}
+
+	if (isPcFloating) {
+		if (alignment >= 16) {
+			setAddr(floatingAlignOffset);
+		} else {
+			uint32_t alignSize = 1u << alignment;
+
+			if (alignOfs >= alignSize) {
+				scriptError(context, "Cannot align: The alignment offset (%" PRIu32
+						      ") must be less than alignment size (%" PRIu32 ")\n",
+					    alignOfs, alignSize);
+				return;
+			}
+
+			floatingAlignMask = alignSize - 1;
+			floatingAlignOffset = alignOfs % alignSize;
+		}
+		return;
+	}
+
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
@@ -391,7 +449,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		if (alignOfs >= alignSize) {
 			scriptError(context, "Cannot align: The alignment offset (%" PRIu32
 					      ") must be less than alignment size (%" PRIu32 ")\n",
-				    alignOfs, 1 << alignment);
+				    alignOfs, alignSize);
 			return;
 		}
 
@@ -411,23 +469,30 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 
 static void pad(uint32_t length) {
 	auto const &context = lexerStack.back();
+	if (activeType == SECTTYPE_INVALID) {
+		scriptError(context, "Cannot increase the current address: no memory region is active");
+		return;
+	}
+
+	if (isPcFloating) {
+		floatingAlignOffset = (floatingAlignOffset + length) & floatingAlignMask;
+		return;
+	}
+
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
 	assert(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
-		scriptError(context, "Cannot pad by %u bytes: only %u bytes to $%04" PRIx16,
+		scriptError(context, "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		            length, typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1));
 	} else {
 		pc += length;
 	}
 }
 
-static void placeSection(std::string const &name) {
+static void placeSection(std::string const &name, bool isOptional) {
 	auto const &context = lexerStack.back();
-	auto const &typeInfo = sectionTypeInfo[activeType];
-
-	// A type *must* be active.
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "No memory region has been specified to place section \"%s\" in",
 		            name.c_str());
@@ -436,10 +501,13 @@ static void placeSection(std::string const &name) {
 
 	auto *section = sect_GetSection(name.c_str());
 	if (!section) {
-		scriptError(context, "Unknown section \"%s\"", name.c_str());
+		if (!isOptional) {
+			scriptError(context, "Unknown section \"%s\"", name.c_str());
+		}
 		return;
 	}
 
+	auto const &typeInfo = sectionTypeInfo[activeType];
 	assert(section->offset == 0);
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
@@ -460,28 +528,37 @@ static void placeSection(std::string const &name) {
 	section->isBankFixed = true;
 	section->bank = bank;
 
-	uint16_t &org = curAddr[activeType][activeBankIdx];
-	if (section->isAddressFixed && org != section->org) {
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
-		            name.c_str(), org, section->org);
-	} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
-		uint8_t alignment = std::countr_one(section->alignMask);
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
-		            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
-	}
-	section->isAddressFixed = true;
-	section->isAlignFixed = false; // This can't be set when the above is.
-	section->org = org;
+	if (!isPcFloating) {
+		uint16_t &org = curAddr[activeType][activeBankIdx];
+		if (section->isAddressFixed && org != section->org) {
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
+			            name.c_str(), org, section->org);
+		} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
+			uint8_t alignment = std::countr_one(section->alignMask);
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
+			            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
+		}
+		section->isAddressFixed = true;
+		section->isAlignFixed = false; // This can't be set when the above is.
+		section->org = org;
 
-	uint16_t curOfs = org - typeInfo.startAddr;
-	if (section->size > typeInfo.size - curOfs) {
-		scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
-		            name.c_str(), org, typeInfo.name.c_str(),
-		            (uint16_t)(section->size - (typeInfo.size - curOfs)));
-		// Fill as much as possible without going out of bounds.
-		org = typeInfo.startAddr + typeInfo.size;
+		uint16_t curOfs = org - typeInfo.startAddr;
+		if (section->size > typeInfo.size - curOfs) {
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
+			            name.c_str(), org, typeInfo.name.c_str(),
+			            (uint16_t)(section->size - (typeInfo.size - curOfs)));
+			// Fill as much as possible without going out of bounds.
+			org = typeInfo.startAddr + typeInfo.size;
+		} else {
+			org += section->size;
+		}
 	} else {
-		org += section->size;
+		section->isAddressFixed = false;
+		section->isAlignFixed = floatingAlignMask != 0;
+		section->alignMask = floatingAlignMask;
+		section->alignOfs = floatingAlignOffset;
+
+		floatingAlignOffset = (floatingAlignOffset + section->size) & floatingAlignMask;
 	}
 }
 
