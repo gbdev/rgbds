@@ -1,0 +1,32 @@
+/* SPDX-License-Identifier: MIT */
+
+#ifdef __APPLE__
+
+#include_next <__availability>
+
+/**
+ * This is a hack to make RGBDS build on macOS 10.14 and below. Without it, we get errors like:
+ *     error: 'path' is unavailable: introduced in macOS 10.15
+ * The hack weakens the `std::filesystem::path` availability error into a warning, by removing
+ * `strict` from the availability macros (for information on the `availability` attribute, see
+ * https://releases.llvm.org/17.0.1/tools/clang/docs/AttributeReference.html#availability). This is
+ * acceptable because what we need of `std::filesystem::path` was already supported in macOS 10.14
+ * (the last version to support 32-bit, hence in demand despite being superseded by 10.15 in 2019).
+ */
+
+#ifndef _LIBCPP_HAS_NO_VENDOR_AVAILABILITY_ANNOTATIONS
+# undef _LIBCPP_AVAILABILITY_FILESYSTEM_PUSH
+# define _LIBCPP_AVAILABILITY_FILESYSTEM_PUSH \
+         _Pragma("clang attribute push(__attribute__((availability(macosx,introduced=10.15))), apply_to=any(function,record))") \
+         _Pragma("clang attribute push(__attribute__((availability(ios,introduced=13.0))), apply_to=any(function,record))")     \
+         _Pragma("clang attribute push(__attribute__((availability(tvos,introduced=13.0))), apply_to=any(function,record))")    \
+         _Pragma("clang attribute push(__attribute__((availability(watchos,introduced=6.0))), apply_to=any(function,record))")
+
+# define _LIBCPP_AVAILABILITY_FILESYSTEM \
+         __attribute__((availability(macosx,introduced=10.15))) \
+         __attribute__((availability(ios,introduced=13.0)))     \
+         __attribute__((availability(tvos,introduced=13.0)))    \
+         __attribute__((availability(watchos,introduced=6.0)))
+#endif
+
+#endif // __APPLE__

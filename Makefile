@@ -31,7 +31,7 @@ WARNFLAGS	:= -Wall -Wno-unknown-warning-option -Wno-c99-designator
 # Overridable CXXFLAGS
 CXXFLAGS	?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -x c++ -std=c++2a -I include \
+REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include \
 		   -D_POSIX_C_SOURCE=200809L -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS		?=
@@ -200,7 +200,7 @@ checkdiff:
 # The rationale for some of the flags is documented in the CMakeLists.
 
 develop:
-	$Qenv ${MAKE} WARNFLAGS="${WARNFLAGS} -Werror -Wextra \
+	$Q${MAKE} WARNFLAGS="${WARNFLAGS} -Werror -Wextra \
 		-Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond \
 		-Wfloat-equal -Wlogical-op -Wnull-dereference -Wshift-overflow=2 \
 		-Wstringop-overflow=4 -Wstrict-overflow=5 -Wundef -Wuninitialized -Wunused \
