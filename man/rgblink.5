@@ -97,7 +97,8 @@ to
 .Ar addr .
 This directive cannot be used to move the address backwards:
 .Ar addr
-must be greater than or equal to the current address.
+must be greater than or equal to the
+.Dq current address .
 .Pp
 .Ql Ic FLOATING
 causes all sections between it and the next
@@ -128,16 +129,16 @@ increases the
 .Dq current address
 by
 .Ar size .
-The gap is not allocated, thus smaller floating sections can later be placed there.
+The gap is not allocated, so smaller floating sections can later be placed there.
 .El
 .Ss Section placement
 A section can be placed simply by naming it (with a string).
 Its bank is set to the active bank, and its address to the
 .Dq current address .
-Any constraints the section already possesses (whether from the linker script or the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
+Any constraints the section already possesses (whether from earlier in the linker script, or from the object files being linked) must be consistent with what the linker script specifies: the section's type must match, the section's bank number (if set) must match the active bank, etc.
 In particular, if the section has an alignment constraint, the address at which it is placed by the linker script must obey that constraint; otherwise, an error will occur.
 .Pp
-Afterwards, the
+After a section is placed, the
 .Dq current address
 is increased by the section's size.
 This must not increase it past the end of the active memory region.
