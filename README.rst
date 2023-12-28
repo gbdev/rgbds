@@ -27,7 +27,7 @@ or via mail at ``rgbds at gbdev dot io``.
 -------------------
 
 The `installation procedure <https://rgbds.gbdev.io/install>`__ is available
-online for various platforms. `Building from source <https://rgbds.gbdev.io/install/#building-from-source>`__
+online for various platforms. `Building from source <https://rgbds.gbdev.io/install/source>`__
 is possible using ``make`` or ``cmake``; follow the link for more detailed instructions.
 
 .. code:: sh
