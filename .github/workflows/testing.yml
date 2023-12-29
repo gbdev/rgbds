@@ -4,14 +4,14 @@ on:
   - pull_request
 
 jobs:
-  unix-testing:
+  unix:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
         cxx: [g++, clang++]
         buildsys: [make, cmake]
         exclude:
-          # `gcc` is just an alias to `clang` on macOS, don't bother
+          # Don't use `g++` on macOS; it's just an alias to `clang++`.
           - os: macos-11
             cxx: g++
           - os: macos-12
@@ -24,9 +24,9 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
-      # The `export` lines are to allow working on macOS...
-      # Apple's base version is severely outdated, not even supporting -Wall,
-      # but it overrides Homebrew's version nonetheless...
+      # Export `bison` to allow using the version we install from Homebrew,
+      # instead of the outdated one preinstalled on macOS (which doesn't
+      # even support `-Wall`...).
       - name: Build & install using Make
         if: matrix.buildsys == 'make'
         run: |
@@ -79,7 +79,64 @@ jobs:
         run: |
           test/run-tests.sh
 
-  windows-testing:
+  macos-static:
+    strategy:
+      matrix:
+        # Don't run on macOS 11; our setup makes clang segfault (YES).
+        os: [macos-12]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        shell: bash
+        run: |
+          ./.github/scripts/install_deps.sh ${{ matrix.os }}
+      # Export `bison` to allow using the version we install from Homebrew,
+      # instead of the outdated one preinstalled on macOS (which doesn't
+      # even support `-Wall`...).
+      - name: Build & install
+        run: |
+          export PATH="/usr/local/opt/bison/bin:$PATH"
+          make -j CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -I include/hacks" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
+      - name: Package binaries
+        run: |
+          mkdir bins
+          cp rgb{asm,link,fix,gfx} bins
+      - name: Upload binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: rgbds-canary-${{ matrix.os }}-${{ matrix.buildsys }}
+          path: bins
+      - name: Compute test dependency cache params
+        id: test-deps-cache-params
+        shell: bash
+        run: |
+          paths=$(test/fetch-test-deps.sh --get-paths)
+          hash=$(test/fetch-test-deps.sh --get-hash)
+          tee -a <<<"paths=\"${paths//,/\\n}\"" $GITHUB_OUTPUT
+          tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
+      - name: Check test dependency repositories cache
+        id: test-deps-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
+          key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
+      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
+        name: Fetch test dependency repositories
+        continue-on-error: true
+        run: |
+          test/fetch-test-deps.sh
+      - name: Install test dependency dependencies
+        shell: bash
+        run: |
+          test/fetch-test-deps.sh --get-deps ${{ matrix.os }}
+      - name: Run tests
+        shell: bash
+        run: |
+          test/run-tests.sh
+
+  windows:
     strategy:
       matrix:
         bits: [32, 64]
@@ -169,7 +226,7 @@ jobs:
           cp bins/*.dll test/gfx
           test/run-tests.sh
 
-  windows-xbuild:
+  windows-mingw-build:
     strategy:
       matrix:
         bits: [32, 64]
@@ -220,8 +277,8 @@ jobs:
             test/gfx/randtilegen.exe
             test/gfx/rgbgfx_test.exe
 
-  windows-xtesting:
-    needs: windows-xbuild
+  windows-mingw-testing:
+    needs: windows-mingw-build
     strategy:
       matrix:
         os: [windows-2019, windows-2022]
