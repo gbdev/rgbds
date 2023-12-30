@@ -4,9 +4,7 @@
 #define RGBDS_GFX_MAIN_HPP
 
 #include <array>
-#include <filesystem>
 #include <limits.h>
-#include <optional>
 #include <stdint.h>
 #include <string>
 #include <utility>
@@ -26,7 +24,7 @@ struct Options {
 	bool columnMajor = false; // -Z, previously -h
 	uint8_t verbosity = 0; // -v
 
-	std::optional<std::filesystem::path> attrmap{}; // -a, -A
+	std::string attrmap{}; // -a, -A
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	enum {
 		NO_SPEC,
@@ -43,14 +41,14 @@ struct Options {
 	} inputSlice{0, 0, 0, 0}; // -L (margins in clockwise order, like CSS)
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
 	uint8_t nbPalettes = 8; // -n
-	std::optional<std::filesystem::path> output{}; // -o
-	std::optional<std::filesystem::path> palettes{}; // -p, -P
-	std::optional<std::filesystem::path> palmap{}; // -q, -Q
+	std::string output{}; // -o
+	std::string palettes{}; // -p, -P
+	std::string palmap{}; // -q, -Q
 	uint8_t nbColorsPerPal = 0; // -s; 0 means "auto" = 1 << bitDepth;
-	std::optional<std::filesystem::path> tilemap{}; // -t, -T
+	std::string tilemap{}; // -t, -T
 	uint64_t trim = 0; // -x
 
-	std::optional<std::filesystem::path> input{}; // positional arg
+	std::string input{}; // positional arg
 
 	static constexpr uint8_t VERB_NONE = 0; // Normal, no extra output
 	static constexpr uint8_t VERB_CFG = 1; // Print configuration after parsing options
