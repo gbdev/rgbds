@@ -83,6 +83,7 @@ class Png {
 	int colorType;
 	int nbColors;
 	png_colorp embeddedPal = nullptr;
+	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
 	[[noreturn]] static void handleError(png_structp png, char const *msg) {
@@ -116,8 +117,8 @@ public:
 
 	int getColorType() const { return colorType; }
 
-	std::tuple<int, png_const_colorp, png_bytep> getEmbeddedPal() const {
-		return {nbColors, embeddedPal, transparencyPal};
+	std::tuple<int, png_const_colorp, int, png_bytep> getEmbeddedPal() const {
+		return {nbColors, embeddedPal, nbTransparentEntries, transparencyPal};
 	}
 
 	uint32_t getWidth() const { return width; }
@@ -257,9 +258,8 @@ public:
 		                     height, bitDepth, colorTypeName(), interlaceTypeName());
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
-			int nbTransparentEntries;
 			if (png_get_tRNS(png, info, &transparencyPal, &nbTransparentEntries, nullptr)) {
-				assert(nbTransparentEntries == nbColors);
+				assert(nbTransparentEntries <= nbColors);
 			}
 
 			options.verbosePrint(Options::VERB_INTERM, "Embedded palette has %d colors: [",
@@ -268,7 +268,8 @@ public:
 				auto const &color = embeddedPal[i];
 				options.verbosePrint(
 				    Options::VERB_INTERM, "#%02x%02x%02x%02x%s", color.red, color.green, color.blue,
-				    transparencyPal ? transparencyPal[i] : 0xFF, i != nbColors - 1 ? ", " : "]\n");
+				    transparencyPal && i < nbTransparentEntries ? transparencyPal[i] : 0xFF,
+				    i != nbColors - 1 ? ", " : "]\n");
 			}
 		} else {
 			options.verbosePrint(Options::VERB_INTERM, "No embedded palette\n");
@@ -510,7 +511,7 @@ struct AttrmapEntry {
 
 static void generatePalSpec(Png const &png) {
 	// Generate a palette spec from the first few colors in the embedded palette
-	auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
+	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
 	if (embPalRGB == nullptr) {
 		fatal("`-c embedded` was given, but the PNG does not have an embedded palette!");
 	}
@@ -523,7 +524,7 @@ static void generatePalSpec(Png const &png) {
 	}
 	for (int i = 0; i < embPalSize; ++i) {
 		options.palSpec[0][i] = Rgba(embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
-		                             embPalAlpha ? embPalAlpha[i] : 0xFF);
+		                             embPalAlpha && i < embPalAlphaSize ? embPalAlpha[i] : 0xFF);
 	}
 }
 
@@ -559,9 +560,9 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	}
 
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
-	auto [embPalSize, embPalRGB, embPalAlpha] = png.getEmbeddedPal();
+	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
 	if (embPalRGB != nullptr) {
-		sorting::indexed(palettes, embPalSize, embPalRGB, embPalAlpha);
+		sorting::indexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
 	} else if (png.isSuitableForGrayscale()) {
 		sorting::grayscale(palettes, png.getColors().raw());
 	} else {

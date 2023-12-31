@@ -90,6 +90,7 @@ class Png {
 	int colorType;
 	int nbColors;
 	png_colorp embeddedPal = nullptr;
+	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
 	[[noreturn]] static void handleError(png_structp png, char const *msg) {
@@ -186,9 +187,8 @@ public:
 		pixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
-			int nbTransparentEntries;
 			if (png_get_tRNS(png, info, &transparencyPal, &nbTransparentEntries, nullptr)) {
-				assert(nbTransparentEntries == nbColors);
+				assert(nbTransparentEntries <= nbColors);
 			}
 		}
 
