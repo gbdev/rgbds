@@ -16,7 +16,7 @@ struct Palette;
 namespace sorting {
 
 void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRGB,
-             png_byte *palAlpha);
+             int palAlphaSize, png_byte *palAlpha);
 void grayscale(std::vector<Palette> &palettes,
                std::array<std::optional<Rgba>, 0x8001> const &colors);
 void rgb(std::vector<Palette> &palettes);
