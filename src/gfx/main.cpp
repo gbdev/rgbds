@@ -337,6 +337,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 static char *parseArgv(int argc, char **argv) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
+		uint16_t number;
 		switch (ch) {
 		case -'A':
 			warning("`--output-attr-map` is deprecated, use `--auto-attr-map` instead");
@@ -351,9 +352,11 @@ static char *parseArgv(int argc, char **argv) {
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
-			options.baseTileIDs[0] = parseNumber(arg, "Bank 0 base tile ID", 0);
-			if (options.baseTileIDs[0] >= 256) {
+			number = parseNumber(arg, "Bank 0 base tile ID", 0);
+			if (number >= 256) {
 				error("Bank 0 base tile ID must be below 256");
+			} else {
+				options.baseTileIDs[0] = number;
 			}
 			if (*arg == '\0') {
 				options.baseTileIDs[1] = 0;
@@ -367,9 +370,11 @@ static char *parseArgv(int argc, char **argv) {
 			}
 			++arg; // Skip comma
 			skipWhitespace(arg);
-			options.baseTileIDs[1] = parseNumber(arg, "Bank 1 base tile ID", 0);
-			if (options.baseTileIDs[1] >= 256) {
+			number = parseNumber(arg, "Bank 1 base tile ID", 0);
+			if (number >= 256) {
 				error("Bank 1 base tile ID must be below 256");
+			} else {
+				options.baseTileIDs[1] = number;
 			}
 			if (*arg != '\0') {
 				error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
@@ -479,14 +484,16 @@ static char *parseArgv(int argc, char **argv) {
 			}
 			break;
 		case 'n':
-			options.nbPalettes = parseNumber(arg, "Number of palettes", 256);
+			number = parseNumber(arg, "Number of palettes", 256);
 			if (*arg != '\0') {
 				error("Number of palettes (-n) must be a valid number, not \"%s\"", musl_optarg);
 			}
-			if (options.nbPalettes > 256) {
+			if (number > 256) {
 				error("Number of palettes (-n) must not exceed 256!");
-			} else if (options.nbPalettes == 0) {
+			} else if (number == 0) {
 				error("Number of palettes (-n) may not be 0!");
+			} else {
+				options.nbPalettes = number;
 			}
 			break;
 		case 'O':

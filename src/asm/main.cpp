@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
 			warnings = false;
 			break;
 
-			unsigned int maxValue;
+			unsigned long maxValue;
 		case 'X':
 			maxValue = strtoul(musl_optarg, &endptr, 0);
 

@@ -372,22 +372,20 @@ void warning(enum WarningID id, char const *fmt, ...)
 
 	switch (warningState(id)) {
 	case WARNING_DISABLED:
-		return;
+		break;
+
+	case WARNING_ENABLED:
+		printDiag(fmt, args, "warning: ", ": [-W%s]\n    ", flag);
+		break;
 
 	case WARNING_ERROR:
 		printDiag(fmt, args, "error: ", ": [-Werror=%s]\n    ", flag);
-		va_end(args);
-		return;
+		break;
 
 	case WARNING_DEFAULT:
 		unreachable_();
 		// Not reached
-
-	case WARNING_ENABLED:
-		break;
 	}
-
-	printDiag(fmt, args, "warning: ", ": [-W%s]\n    ", flag);
 
 	va_end(args);
 }
