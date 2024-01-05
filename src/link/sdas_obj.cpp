@@ -569,7 +569,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 				patch->pcSection = section; // No need to fill `pcSectionID`, then
 				patch->pcOffset = patch->offset - 1; // For `jr`s
 
-				patch->type = flags & 1 << RELOC_SIZE ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
+				patch->type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
 				uint8_t nbBaseBytes = patch->type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
 				uint32_t baseValue = 0;
 
@@ -694,7 +694,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 						patch->rpnExpression[patch->rpnSize + 2] = 16 >> 8;
 						patch->rpnExpression[patch->rpnSize + 3] = 16 >> 16;
 						patch->rpnExpression[patch->rpnSize + 4] = 16 >> 24;
-						patch->rpnExpression[patch->rpnSize + 5] = flags & 1 << RELOC_SIGNED ? RPN_SHR : RPN_USHR;
+						patch->rpnExpression[patch->rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
 						patch->rpnSize += 5 + 1;
 					} else {
 						if (flags & 1 << RELOC_EXPR16 && flags & 1 << RELOC_WHICHBYTE) {
@@ -703,7 +703,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 							patch->rpnExpression[patch->rpnSize + 2] = 8 >> 8;
 							patch->rpnExpression[patch->rpnSize + 3] = 8 >> 16;
 							patch->rpnExpression[patch->rpnSize + 4] = 8 >> 24;
-							patch->rpnExpression[patch->rpnSize + 5] = flags & 1 << RELOC_SIGNED ? RPN_SHR : RPN_USHR;
+							patch->rpnExpression[patch->rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
 							patch->rpnSize += 5 + 1;
 						}
 						patch->rpnExpression[patch->rpnSize] = RPN_CONST;

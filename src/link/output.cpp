@@ -61,7 +61,7 @@ static enum SectionType typeMap[SECTTYPE_INVALID] = {
 
 void out_AddSection(struct Section const *section)
 {
-	static uint32_t maxNbBanks[] = {
+	static const uint32_t maxNbBanks[] = {
 		AT(SECTTYPE_WRAM0) 1,
 		AT(SECTTYPE_VRAM)  2,
 		AT(SECTTYPE_ROMX)  UINT32_MAX,
@@ -544,7 +544,7 @@ static void writeMapSummary(void)
 			nbBanks * sectionTypeInfo[type].size - usedTotal);
 		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank
 		    || nbBanks > 1)
-			fprintf(mapFile, " in %d bank%s", nbBanks, nbBanks == 1 ? "" : "s");
+			fprintf(mapFile, " in %u bank%s", nbBanks, nbBanks == 1 ? "" : "s");
 		putc('\n', mapFile);
 	}
 }

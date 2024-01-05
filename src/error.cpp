@@ -32,6 +32,7 @@ static void vwarnx(char const NONNULL(fmt), va_list ap)
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, ": %s\n", error);
+	va_end(ap);
 	exit(1);
 }
 
@@ -40,6 +41,7 @@ static void vwarnx(char const NONNULL(fmt), va_list ap)
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
+	va_end(ap);
 	exit(1);
 }
 
@@ -67,7 +69,6 @@ void warnx(char const NONNULL(fmt), ...)
 
 	va_start(ap, fmt);
 	verr(fmt, ap);
-	va_end(ap);
 }
 
 [[noreturn]] void errx(char const NONNULL(fmt), ...)
@@ -76,5 +77,4 @@ void warnx(char const NONNULL(fmt), ...)
 
 	va_start(ap, fmt);
 	verrx(fmt, ap);
-	va_end(ap);
 }

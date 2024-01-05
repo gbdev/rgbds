@@ -83,7 +83,7 @@ class ZipContainer {
 	std::tuple<Containers...> _containers;
 
 public:
-	ZipContainer(Containers &&...containers)
+	explicit ZipContainer(Containers &&...containers)
 	    : _containers(std::forward<Containers>(containers)...) {}
 
 	auto begin() {
