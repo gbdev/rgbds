@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <string>
 
-#define RGBDS_OBJECT_VERSION_STRING "RGB9"
-#define RGBDS_OBJECT_REV 9U
+#define RGBDS_OBJECT_VERSION_STRING "RGBA"
+#define RGBDS_OBJECT_REV 10U
 
 enum AssertionType {
 	ASSERT_WARN,
