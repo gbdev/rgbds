@@ -1421,8 +1421,9 @@ static char const *readInterpolation(size_t depth)
 }
 
 #define append_yylval_string(c) do { \
-	if (i < sizeof(yylval.string)) \
-		yylval.string[i++] = (c); \
+	/* Evaluate c exactly once in case it has side effects */ \
+	if (char v = (c); i < sizeof(yylval.string)) \
+		yylval.string[i++] = v; \
 } while (0)
 
 static size_t appendEscapedSubstring(char const *str, size_t i)
