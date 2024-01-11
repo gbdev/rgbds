@@ -243,7 +243,7 @@ bool yywrap(void)
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue = (uint32_t)contextStack->forValue +
 				(uint32_t)contextStack->forStep;
-			contextStack->forValue = forValue > 0 ? (int32_t)forValue
+			contextStack->forValue = forValue <= INT32_MAX ? forValue
 				: -(int32_t)~forValue - 1;
 			struct Symbol *sym = sym_AddVar(contextStack->forName,
 				contextStack->forValue);
