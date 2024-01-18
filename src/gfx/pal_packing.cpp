@@ -45,7 +45,7 @@ struct ProtoPalAttrs {
 	 */
 	std::vector<bool> bannedPages;
 
-	ProtoPalAttrs(size_t index) : protoPalIndex(index) {}
+	explicit ProtoPalAttrs(size_t index) : protoPalIndex(index) {}
 	bool isBannedFrom(size_t index) const {
 		return index < bannedPages.size() && bannedPages[index];
 	}

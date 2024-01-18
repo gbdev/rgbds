@@ -1421,8 +1421,8 @@ static char const *readInterpolation(size_t depth)
 }
 
 #define append_yylval_string(c) do { \
-	char v = (c); /* Evaluate c exactly once in case it has side effects. */ \
-	if (i < sizeof(yylval.string)) \
+	/* Evaluate c exactly once in case it has side effects */ \
+	if (char v = (c); i < sizeof(yylval.string)) \
 		yylval.string[i++] = v; \
 } while (0)
 

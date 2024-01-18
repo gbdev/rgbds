@@ -47,7 +47,7 @@ public:
 		} else if (mode & std::ios_base::in) {
 			assert(!(mode & std::ios_base::out));
 			_file.emplace<std::streambuf *>(std::cin.rdbuf());
-			if (setmode(STDIN_FILENO, mode & std::ios_base::binary ? O_BINARY : O_TEXT) == -1) {
+			if (setmode(STDIN_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
 				fatal("Failed to set stdin to %s mode: %s",
 				      mode & std::ios_base::binary ? "binary" : "text", strerror(errno));
 			}

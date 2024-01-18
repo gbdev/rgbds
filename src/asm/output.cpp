@@ -265,7 +265,7 @@ static uint32_t getSymbolID(struct Symbol *sym)
 	return sym->ID;
 }
 
-static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, uint8_t *rpn,
+static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, const uint8_t *rpn,
 		     uint32_t rpnlen)
 {
 	char symName[512];
