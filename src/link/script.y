@@ -281,6 +281,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		uint32_t number = c - '0';
 		for (c = context.file.sgetc(); isDecDigit(c); c = context.file.sgetc()) {
 			number = number * 10 + (c - '0');
+			context.file.sbumpc();
 		}
 		return yy::parser::make_number(number);
 	} else if (isIdentChar(c)) { // Note that we match these *after* digit characters!
@@ -315,7 +316,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	} else {
 		scriptError(context, "Unexpected character '%s'", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
-		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
+		for (c = context.file.sgetc(); !isNewline(c); c = context.file.snextc()) {
 			if (c == EOF) {
 				break;
 			}
