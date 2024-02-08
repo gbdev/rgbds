@@ -316,10 +316,11 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 	} else {
 		scriptError(context, "Unexpected character '%s'", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
-		for (c = context.file.sgetc(); !isNewline(c); c = context.file.snextc()) {
+		for (c = context.file.sgetc(); !isNewline(c); c = context.file.sgetc()) {
 			if (c == EOF) {
 				break;
 			}
+			context.file.sbumpc();
 		}
 		goto try_again;
 	}
