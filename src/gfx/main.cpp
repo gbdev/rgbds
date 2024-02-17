@@ -761,9 +761,16 @@ int main(int argc, char *argv[]) {
 		}());
 		if (options.palSpecType == Options::EXPLICIT) {
 			fputs("\t[\n", stderr);
-			for (std::array<Rgba, 4> const &pal : options.palSpec) {
-				fprintf(stderr, "\t\t#%06x, #%06x, #%06x, #%06x,\n", pal[0].toCSS() >> 8,
-				        pal[1].toCSS() >> 8, pal[2].toCSS() >> 8, pal[3].toCSS() >> 8);
+			for (std::array<std::optional<Rgba>, 4> const &pal : options.palSpec) {
+				fputs("\t\t", stderr);
+				for (auto& color : pal) {
+					if (color) {
+						fprintf(stderr, "#%06x, ", color.value().toCSS() >> 8);
+					} else {
+						fputs("#none, ", stderr);
+					}
+				}
+				fputc('\n', stderr);
 			}
 			fputs("\t]\n", stderr);
 		}
@@ -841,7 +848,7 @@ auto Palette::begin() -> decltype(colors)::iterator {
 	return colors.begin() + options.hasTransparentPixels;
 }
 auto Palette::end() -> decltype(colors)::iterator {
-	return std::find(begin(), colors.end(), UINT16_MAX);
+	return colors.end();
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
@@ -849,9 +856,9 @@ auto Palette::begin() const -> decltype(colors)::const_iterator {
 	return colors.begin() + options.hasTransparentPixels;
 }
 auto Palette::end() const -> decltype(colors)::const_iterator {
-	return std::find(begin(), colors.end(), UINT16_MAX);
+	return colors.end();
 }
 
 uint8_t Palette::size() const {
-	return indexOf(UINT16_MAX);
+	return 4;
 }

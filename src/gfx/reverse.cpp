@@ -171,13 +171,24 @@ void reverse() {
 			        options.nbPalettes);
 		}
 
-		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
-			warning("Colors in the palette file do not match those specified with `-c`!");
+		if (options.palSpecType == Options::EXPLICIT) {
+			for (auto& palette : palettes) {
+				for (auto& specPalette : options.palSpec) {
+					for (auto& color : palette) {
+						for (auto& specColor : specPalette) {
+							if (!specColor || color != specColor.value()) {
+								warning("Colors in the palette file do not match those specified with `-c`!");
+							}
+						}
+					}
+				}
+			}
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
 	} else if (options.palSpecType == Options::EXPLICIT) {
-		palettes = std::move(options.palSpec); // We won't be using it again.
+		// TODO: what was this for?
+		//palettes = std::move(options.palSpec); // We won't be using it again.
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> attrmap;

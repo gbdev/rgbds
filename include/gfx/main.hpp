@@ -5,6 +5,7 @@
 
 #include <array>
 #include <limits.h>
+#include <optional>
 #include <stdint.h>
 #include <string>
 #include <utility>
@@ -31,7 +32,7 @@ struct Options {
 		EXPLICIT,
 		EMBEDDED,
 	} palSpecType = NO_SPEC; // -c
-	std::vector<std::array<Rgba, 4>> palSpec{};
+	std::vector<std::array<std::optional<Rgba>, 4>> palSpec{};
 	uint8_t bitDepth = 2; // -d
 	struct {
 		uint16_t left;
