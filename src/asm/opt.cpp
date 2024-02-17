@@ -260,10 +260,12 @@ void opt_Push(void)
 
 	entry->fillByte = fillByte; // Pulled from section.hpp
 
-	entry->haltNop = haltNop; // Pulled from main.hpp
+	// Both of these are pulled from main.hpp
+	entry->haltNop = haltNop;
 	entry->warnOnHaltNop = warnOnHaltNop;
 
-	entry->optimizeLoads = optimizeLoads; // Pulled from main.hpp
+	// Both of these are pulled from main.hpp
+	entry->optimizeLoads = optimizeLoads;
 	entry->warnOnLdOpt = warnOnLdOpt;
 
 	// Both of these pulled from warning.hpp
