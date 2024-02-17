@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 				dependFileName = musl_optarg;
 			}
 			if (dependfile == NULL)
-				err("Failed to open dependfile %s", dependFileName);
+				err("Failed to open dependfile \"%s\"", dependFileName);
 			break;
 
 		case 'o':
@@ -362,8 +362,9 @@ int main(int argc, char *argv[])
 				memcpy(&targetFileName[targetFileNameLen], newTarget, newTargetLen);
 				if (depType == 'Q')
 					free(newTarget);
+				if (targetFileNameLen > 0)
+					targetFileName[targetFileNameLen - 1] = ' ';
 				targetFileNameLen += newTargetLen;
-				targetFileName[targetFileNameLen - 1] = ' ';
 				break;
 			}
 			break;
@@ -376,10 +377,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (targetFileName == NULL)
-		targetFileName = objectName;
-	else
-		targetFileName[targetFileNameLen - 1] = '\0'; // Overwrite the last space
+	if (!targetFileName && objectName)
+		targetFileName = strdup(objectName);
 
 	if (argc == musl_optind) {
 		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr);
@@ -415,6 +414,7 @@ int main(int argc, char *argv[])
 
 	if (dependfile)
 		fclose(dependfile);
+	free(targetFileName);
 
 	sect_CheckUnionClosed();
 

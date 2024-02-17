@@ -142,25 +142,6 @@ void argErr(char flag, char const *fmt, ...)
 	exit(1);
 }
 
-FILE *openFile(char const *fileName, char const *mode)
-{
-	if (!fileName)
-		return NULL;
-
-	FILE *file;
-	if (strcmp(fileName, "-") != 0)
-		file = fopen(fileName, mode);
-	else if (mode[0] == 'r')
-		file = fdopen(STDIN_FILENO, mode);
-	else
-		file = fdopen(STDOUT_FILENO, mode);
-
-	if (!file)
-		err("Failed to open file \"%s\"", fileName);
-
-	return file;
-}
-
 // Short options
 static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
 

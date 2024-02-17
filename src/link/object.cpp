@@ -446,13 +446,14 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 {
 	FILE *file;
 
-	if (strcmp("-", fileName) != 0)
+	if (strcmp(fileName, "-")) {
 		file = fopen(fileName, "rb");
-	else
+	} else {
+		fileName = "<stdin>";
 		file = fdopen(STDIN_FILENO, "rb"); // `stdin` is in text mode by default
-
+	}
 	if (!file)
-		err("Failed to open file %s", fileName);
+		err("Failed to open file \"%s\"", fileName);
 
 	// First, check if the object is a RGBDS object or a SDCC one. If the first byte is 'R',
 	// we'll assume it's a RGBDS object file, and otherwise, that it's a SDCC object file.
@@ -495,13 +496,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	 && matchedElems != strlen(RGBDS_OBJECT_VERSION_STRING))
 		errx("%s: Not a RGBDS object file", fileName);
 
-	verbosePrint("Reading object file %s\n",
-		     fileName);
+	verbosePrint("Reading object file %s\n", fileName);
 
 	uint32_t revNum;
 
-	tryReadlong(revNum, file, "%s: Cannot read revision number: %s",
-		    fileName);
+	tryReadlong(revNum, file, "%s: Cannot read revision number: %s", fileName);
 	if (revNum != RGBDS_OBJECT_REV)
 		errx("%s: Unsupported object file for rgblink %s; try rebuilding \"%s\"%s"
 			" (expected revision %d, got %d)", fileName, get_package_version_string(),
@@ -511,10 +510,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	uint32_t nbSymbols;
 	uint32_t nbSections;
 
-	tryReadlong(nbSymbols, file, "%s: Cannot read number of symbols: %s",
-		    fileName);
-	tryReadlong(nbSections, file, "%s: Cannot read number of sections: %s",
-		    fileName);
+	tryReadlong(nbSymbols, file, "%s: Cannot read number of symbols: %s", fileName);
+	tryReadlong(nbSections, file, "%s: Cannot read number of sections: %s", fileName);
 
 	nbSectionsToAssign += nbSections;
 
@@ -622,8 +619,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	uint32_t nbAsserts;
 
-	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s",
-		    fileName);
+	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
 		struct Assertion *assertion = (struct Assertion *)malloc(sizeof(*assertion));

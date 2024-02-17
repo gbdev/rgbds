@@ -231,8 +231,27 @@ static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
 // Writes a ROM file to the output.
 static void writeROM(void)
 {
-	outputFile = openFile(outputFileName, "wb");
-	overlayFile = openFile(overlayFileName, "rb");
+	if (outputFileName) {
+		if (strcmp(outputFileName, "-")) {
+			outputFile = fopen(outputFileName, "wb");
+		} else {
+			outputFileName = "<stdout>";
+			outputFile = fdopen(STDOUT_FILENO, "wb");
+		}
+		if (!outputFile)
+			err("Failed to open output file \"%s\"", outputFileName);
+	}
+
+	if (overlayFile) {
+		if (strcmp(overlayFileName, "-")) {
+			overlayFile = fopen(overlayFileName, "rb");
+		} else {
+			overlayFileName = "<stdin>";
+			overlayFile = fdopen(STDIN_FILENO, "rb");
+		}
+		if (!overlayFile)
+			err("Failed to open overlay file \"%s\"", overlayFileName);
+	}
 
 	uint32_t nbOverlayBanks = checkOverlaySize();
 
@@ -249,8 +268,10 @@ static void writeROM(void)
 				  sectionTypeInfo[SECTTYPE_ROMX].startAddr, sectionTypeInfo[SECTTYPE_ROMX].size);
 	}
 
-	closeFile(outputFile);
-	closeFile(overlayFile);
+	if (outputFile)
+		fclose(outputFile);
+	if (overlayFile)
+		fclose(overlayFile);
 }
 
 /*
@@ -555,7 +576,12 @@ static void writeSym(void)
 	if (!symFileName)
 		return;
 
-	symFile = openFile(symFileName, "w");
+	if (strcmp(symFileName, "-")) {
+		symFile = fopen(symFileName, "w");
+	} else {
+		symFileName = "<stdout>";
+		symFile = fdopen(STDOUT_FILENO, "w");
+	}
 	if (!symFile)
 		err("Failed to open sym file \"%s\"", symFileName);
 
@@ -568,7 +594,7 @@ static void writeSym(void)
 			writeSymBank(&sections[type].banks[bank], type, bank);
 	}
 
-	closeFile(symFile);
+	fclose(symFile);
 }
 
 // Writes the map file, if applicable.
@@ -577,7 +603,12 @@ static void writeMap(void)
 	if (!mapFileName)
 		return;
 
-	mapFile = openFile(mapFileName, "w");
+	if (strcmp(mapFileName, "-")) {
+		mapFile = fopen(mapFileName, "w");
+	} else {
+		mapFileName = "<stdout>";
+		mapFile = fdopen(STDOUT_FILENO, "w");
+	}
 	if (!mapFile)
 		err("Failed to open map file \"%s\"", mapFileName);
 
@@ -590,7 +621,7 @@ static void writeMap(void)
 			writeMapBank(&sections[type].banks[bank], type, bank);
 	}
 
-	closeFile(mapFile);
+	fclose(mapFile);
 }
 
 static void cleanupSections(struct SortedSection *section)
