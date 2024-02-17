@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 				dependFileName = musl_optarg;
 			}
 			if (dependfile == NULL)
-				err("Could not open dependfile %s", dependFileName);
+				err("Failed to open dependfile %s", dependFileName);
 			break;
 
 		case 'o':
