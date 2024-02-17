@@ -340,7 +340,7 @@ static char *parseArgv(int argc, char **argv) {
 		uint16_t number;
 		switch (ch) {
 		case -'A':
-			warning("`--output-attr-map` is deprecated, use `--auto-attr-map` instead");
+			warning("`--output-attr-map` is deprecated; use `--auto-attr-map` instead");
 			[[fallthrough]];
 		case 'A':
 			localOptions.autoAttrmap = true;
@@ -505,7 +505,7 @@ static char *parseArgv(int argc, char **argv) {
 			options.output = musl_optarg;
 			break;
 		case -'P':
-			warning("`--output-palette` is deprecated, use `--auto-palette` instead");
+			warning("`--output-palette` is deprecated; use `--auto-palette` instead");
 			[[fallthrough]];
 		case 'P':
 			localOptions.autoPalettes = true;
@@ -517,7 +517,7 @@ static char *parseArgv(int argc, char **argv) {
 			options.palettes = musl_optarg;
 			break;
 		case -'Q':
-			warning("`--output-palette-map` is deprecated, use `--auto-palette-map` instead");
+			warning("`--output-palette-map` is deprecated; use `--auto-palette-map` instead");
 			[[fallthrough]];
 		case 'Q':
 			localOptions.autoPalmap = true;
@@ -549,7 +549,7 @@ static char *parseArgv(int argc, char **argv) {
 			}
 			break;
 		case -'T':
-			warning("`--output-tilemap` is deprecated, use `--auto-tilemap` instead");
+			warning("`--output-tilemap` is deprecated; use `--auto-tilemap` instead");
 			[[fallthrough]];
 		case 'T':
 			localOptions.autoTilemap = true;
