@@ -281,6 +281,19 @@ public:
 };
 
 static char *execProg(char const *name, char * const *argv) {
+	auto formatArgv = [&argv] {
+		static std::string buf; // It's fine to use a static string:
+
+		buf.clear();
+		for (char * const *arg = argv; *arg != nullptr; ++arg) {
+			buf.push_back('"');
+			buf.append(*arg);
+			buf.append("\", ");
+		}
+		buf.resize(buf.length() - 2);
+		return buf.c_str();
+	};
+
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 	pid_t pid;
 	int err = posix_spawn(&pid, argv[0], nullptr, nullptr, argv, nullptr);
@@ -293,10 +306,10 @@ static char *execProg(char const *name, char * const *argv) {
 		fatal("Error waiting for %s: %s", name, strerror(errno));
 	} else if (info.si_code != CLD_EXITED) {
 		assert(info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
-		fatal("%s was terminated by signal %s%s", name, strsignal(info.si_status),
-		      info.si_code == CLD_DUMPED ? " (core dumped)" : "");
+		fatal("%s was terminated by signal %s%s\n\tThe command was: [%s]", name, strsignal(info.si_status),
+		      info.si_code == CLD_DUMPED ? " (core dumped)" : "", formatArgv());
 	} else if (info.si_status != 0) {
-		fatal("%s returned with status %d", name, info.si_status);
+		fatal("%s returned with status %d\n\tThe command was: [%s]", name, info.si_status, formatArgv());
 	}
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
@@ -362,7 +375,7 @@ static char *execProg(char const *name, char * const *argv) {
 	CloseHandle(child.hThread);
 
 	if (status != 0) {
-		fatal("%s returned with status %ld", name, status);
+		fatal("%s returned with status %ld\n\tThe command was: [%s]", name, status, formatArgv());
 	}
 #endif
 
