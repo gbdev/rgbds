@@ -847,18 +847,42 @@ auto Palette::begin() -> decltype(colors)::iterator {
 	// Skip the first slot if reserved for transparency
 	return colors.begin() + options.hasTransparentPixels;
 }
+
 auto Palette::end() -> decltype(colors)::iterator {
-	return colors.end();
+    // Since the palette may contain gaps, we must scan from the end.
+    for (auto it = colors.end(); ;) {
+        --it; // The array is not empty, so it's fine to decrement pre-emptively.
+        // If the iterator points at a non-empty element, then it is the end
+        // (being followed only by empty slots). Thus one past is is one past the end.
+        if (*it != UINT16_MAX) {
+            return ++it;
+        }
+        if (it == colors.begin()) { // Is it still safe to decrement?
+            return it; // No? Then the palette is empty.
+        }
+    }
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
 	// Skip the first slot if reserved for transparency
 	return colors.begin() + options.hasTransparentPixels;
 }
+
 auto Palette::end() const -> decltype(colors)::const_iterator {
-	return colors.end();
+    // Since the palette may contain gaps, we must scan from the end.
+    for (auto it = colors.end(); ;) {
+        --it; // The array is not empty, so it's fine to decrement pre-emptively.
+        // If the iterator points at a non-empty element, then it is the end
+        // (being followed only by empty slots). Thus one past is is one past the end.
+        if (*it != UINT16_MAX) {
+            return ++it;
+        }
+        if (it == colors.begin()) { // Is it still safe to decrement?
+            return it; // No? Then the palette is empty.
+        }
+    }
 }
 
 uint8_t Palette::size() const {
-	return 4;
+	return end() - begin();
 }
