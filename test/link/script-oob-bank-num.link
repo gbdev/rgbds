@@ -1,0 +1,8 @@
+rom0 1
+romx 0
+vram 2
+wram0 1
+wramx 0
+wramx 8
+oam 1
+hram 1

@@ -1,0 +1,9 @@
+error: script-oob-bank-num.link(1): ROM0 bank 1 doesn't exist (the maximum is 0)
+error: script-oob-bank-num.link(2): ROMX bank 0 doesn't exist (the minimum is 1)
+error: script-oob-bank-num.link(3): VRAM bank 2 doesn't exist (the maximum is 1)
+error: script-oob-bank-num.link(4): WRAM0 bank 1 doesn't exist (the maximum is 0)
+error: script-oob-bank-num.link(5): WRAMX bank 0 doesn't exist (the minimum is 1)
+error: script-oob-bank-num.link(6): WRAMX bank 8 doesn't exist (the maximum is 7)
+error: script-oob-bank-num.link(7): OAM bank 1 doesn't exist (the maximum is 0)
+error: script-oob-bank-num.link(8): HRAM bank 1 doesn't exist (the maximum is 0)
+Linking failed with 8 errors

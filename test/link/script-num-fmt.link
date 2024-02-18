@@ -1,0 +1,5 @@
+ROM0
+	org 42
+	org %101010
+	org $2A
+	org 41 ; Error!

@@ -1,0 +1,2 @@
+error: script-different-bank.link(2): The linker script places section "ROM1" in ROMX bank 2, but it was already defined in bank 1
+Linking failed with 1 error

@@ -1,0 +1,5 @@
+error: script-missing-bank-no.link(2): A bank number must be specified for ROMX
+error: script-missing-bank-no.link(3): A bank number must be specified for VRAM
+error: script-missing-bank-no.link(4): A bank number must be specified for SRAM
+error: script-missing-bank-no.link(6): A bank number must be specified for WRAMX
+Linking failed with 4 errors
