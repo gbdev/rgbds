@@ -1,0 +1,4 @@
+ROM0
+		org 3
+		align 16,3
+		"test"
