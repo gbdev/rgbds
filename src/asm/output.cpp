@@ -42,7 +42,7 @@ struct Assertion {
 	struct Assertion *next;
 };
 
-char *objectName;
+const char *objectName;
 
 struct Section *sectionList;
 
@@ -480,13 +480,15 @@ static void registerUnregisteredSymbol(struct Symbol *symbol, void *)
 void out_WriteObject(void)
 {
 	FILE *f;
-	if (strcmp(objectName, "-") != 0)
-		f = fopen(objectName, "wb");
-	else
-		f = fdopen(STDOUT_FILENO, "wb");
 
+	if (strcmp(objectName, "-")) {
+		f = fopen(objectName, "wb");
+	} else {
+		objectName = "<stdout>";
+		f = fdopen(STDOUT_FILENO, "wb");
+	}
 	if (!f)
-		err("Couldn't write file '%s'", objectName);
+		err("Failed to open object file '%s'", objectName);
 
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol, NULL);
