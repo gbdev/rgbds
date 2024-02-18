@@ -11,7 +11,7 @@
 - Anthony J. Bentley &lt;anthony@anjbe.name&gt;
 - stag019 &lt;stag019@gmail.com&gt;
 - Antonio Niño Díaz &lt;antonio_nd@outlook.com&gt;
-- Eldred "ISSOtm" Habert &lt;eldredhabert0@gmail.com&gt;
+- Eldred "ISSOtm" Habert &lt;me@eldred.fr&gt;
 - Sylvie "Rangi" Oukaour &lt;http://github.com/Rangi42&gt;
 
 ## Other contributors
@@ -20,8 +20,8 @@
 - Björn Höhrmann &lt;bjoern@hoehrmann.de&gt;
 - Christophe Staïesse &lt;chastai@skynet.be&gt;
 - David Brotz &lt;dbrotz007@gmail.com&gt;
-- Jakub Kądziołka &lt;kuba@kadziolka.net&gt;
 - James "JL2210" Larrowe &lt;https://github.com/JL2210&gt;
+- Maja Kądziołka &lt;github@compilercrim.es&gt;
 - The Musl C library &lt;http://www.musl-libc.org&gt;
 - obskyr &lt;powpowd@gmail.com&gt;
 - The OpenBSD Project &lt;http://www.openbsd.org&gt;
