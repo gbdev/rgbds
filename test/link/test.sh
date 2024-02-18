@@ -28,7 +28,7 @@ startTest () {
 
 tryDiff () {
 	if ! diff -u --strip-trailing-cr "$1" "$2"; then
-		echo "${bold}${red}${i%.asm}.out mismatch!${rescolors}${resbold}"
+		echo "${bold}${red}$1 mismatch!${rescolors}${resbold}"
 		false
 	fi
 }
