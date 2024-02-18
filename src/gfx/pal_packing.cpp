@@ -25,7 +25,7 @@ using std::swap;
 
 namespace packing {
 
-// The solvers here are picked from the paper at http://arxiv.org/abs/1605.00558:
+// The solvers here are picked from the paper at https://arxiv.org/abs/1605.00558:
 // "Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"
 // Their formulation of the problem consists in packing "tiles" into "pages"; here is a
 // correspondence table for our application of it:

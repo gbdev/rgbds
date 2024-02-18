@@ -136,7 +136,7 @@ The RGBDS source code file structure is as follows:
 ## 4. Acknowledgements
 
 RGBGFX generates palettes using algorithms found in the paper
-["Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"](http://arxiv.org/abs/1605.00558)
+["Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"](https://arxiv.org/abs/1605.00558)
 ([GitHub](https://github.com/pagination-problem/pagination), MIT license),
 by Aristide Grange, Imed Kacem, and Sébastien Martin.
 
