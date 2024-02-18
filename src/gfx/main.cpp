@@ -761,7 +761,7 @@ int main(int argc, char *argv[]) {
 		}());
 		if (options.palSpecType == Options::EXPLICIT) {
 			fputs("\t[\n", stderr);
-			for (std::array<std::optional<Rgba>, 4> const &pal : options.palSpec) {
+			for (const auto &pal : options.palSpec) {
 				fputs("\t\t", stderr);
 				for (auto& color : pal) {
 					if (color) {
