@@ -257,11 +257,11 @@ void reverse() {
 	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(options.input))), pngError,
 	    pngWarning);
 	if (!png) {
-		fatal("Couldn't create PNG write struct: %s", strerror(errno));
+		fatal("Failed to create PNG write struct: %s", strerror(errno));
 	}
 	png_infop pngInfo = png_create_info_struct(png);
 	if (!pngInfo) {
-		fatal("Couldn't create PNG info struct: %s", strerror(errno));
+		fatal("Failed to create PNG info struct: %s", strerror(errno));
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 

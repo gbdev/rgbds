@@ -64,18 +64,4 @@ void error(struct FileStackNode const *where, uint32_t lineNo,
 [[noreturn]] void fatal(struct FileStackNode const *where, uint32_t lineNo,
 		     char const *fmt, ...) format_(printf, 3, 4);
 
-/*
- * Opens a file if specified, and aborts on error.
- * @param fileName The name of the file to open; if NULL, no file will be opened
- * @param mode The mode to open the file with
- * @return A pointer to a valid FILE structure, or NULL if fileName was NULL
- */
-FILE *openFile(char const *fileName, char const *mode);
-
-#define closeFile(file) do { \
-				FILE *tmp = file; \
-				if (tmp) \
-					fclose(tmp); \
-			} while (0)
-
 #endif // RGBDS_LINK_MAIN_H

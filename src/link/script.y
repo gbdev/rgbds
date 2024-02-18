@@ -132,7 +132,7 @@ static void includeFile(std::string &&path) {
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		// The order is important: report the error, increment the line number, modify the stack!
-		scriptError(prevContext, "Could not open included linker script \"%s\"",
+		scriptError(prevContext, "Failed to open included linker script \"%s\"",
 		            newContext.path.c_str());
 		++prevContext.lineNo;
 		lexerStack.pop_back();
@@ -574,7 +574,7 @@ void script_ProcessScript(char const *path) {
 	auto &newContext = lexerStack.emplace_back(std::string(path));
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
-		error(NULL, 0, "Could not open linker script \"%s\"", newContext.path.c_str());
+		error(NULL, 0, "Failed to open linker script \"%s\"", newContext.path.c_str());
 		lexerStack.clear();
 	} else {
 		yy::parser linkerScriptParser;

@@ -609,7 +609,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 
 		if (iter == palettes.end()) {
 			assert(!protoPal.empty());
-			error("Could not fit tile colors [%s] in specified palettes", listColors(protoPal));
+			error("Failed to fit tile colors [%s] in specified palettes", listColors(protoPal));
 			bad = true;
 		}
 		mappings[i] = iter - palettes.begin(); // Bogus value, but whatever

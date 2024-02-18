@@ -655,7 +655,7 @@ void sym_Init(time_t now)
 #endif
 
 	if (now == (time_t)-1) {
-		warn("Couldn't determine current time");
+		warn("Failed to determine current time");
 		// Fall back by pretending we are at the Epoch
 		now = 0;
 	}

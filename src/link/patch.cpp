@@ -485,7 +485,7 @@ void patch_CheckAssertions(struct Assertion *assert)
 			}
 		} else if (isError && type == ASSERT_FATAL) {
 			fatal(assert->patch.src, assert->patch.lineNo,
-			      "couldn't evaluate assertion%s%s",
+			      "Failed to evaluate assertion%s%s",
 			      assert->message[0] ? ": " : "",
 			      assert->message);
 		}

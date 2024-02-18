@@ -370,7 +370,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 				if (!newFileSymbols)
 					fatal(where, lineNo, "Failed to alloc extra symbols: %s", strerror(errno));
 				if (newFileSymbols != fileSymbols)
-					fatal(where, lineNo, "Couldn't handle extra 'S' lines (pointer moved)");
+					fatal(where, lineNo, "Failed to handle extra 'S' lines (pointer moved)");
 				// No need to assign, obviously
 			}
 #define symbol (fileSymbols[nbSymbols])
