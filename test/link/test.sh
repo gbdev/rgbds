@@ -80,13 +80,15 @@ for i in *.asm; do
 	fi
 
 	# Other tests have several linker scripts
-	while read -rd '' script; do
+	for script in "${i%.asm}"*.link; do
+		[[ -e "$script" ]] || break # If the glob doesn't match, it just... doesn't expand!
+
 		rgblinkQuiet -l "$script" -o "$gbtemp" "$otemp" >"$outtemp" 2>&1
 		tryDiff "${script%.link}.out" "$outtemp"
 		(( rc = rc || $? ))
-		ran_flag=1
-	done < <(find . -name "${i%.asm}*.link" -print0)
-	if [ -n "$ran_flag" ]; then
+		ran_flag=true
+	done
+	if "$ran_flag"; then
 		continue
 	fi
 
