@@ -29,14 +29,14 @@ online for various platforms. [Building from source](https://rgbds.gbdev.io/inst
 is possible using `make` or `cmake`; follow the link for more detailed instructions.
 
 ```sh
-    make
-    sudo make install
+make
+sudo make install
 ```
 
 ```sh
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-    cmake --build build
-    cmake --install build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cmake --install build
 ```
 
 ## 2. RGBDS Folder Organization
@@ -44,41 +44,41 @@ is possible using `make` or `cmake`; follow the link for more detailed instructi
 The RGBDS source code file structure is as follows:
 
 ```
-       .
-       ├── .github/
-       │   ├── scripts/
-       │   │   └── ...
-       │   └── workflows/
-       │       └── ...
-       ├── contrib/
-       │   ├── zsh_compl/
-       │   │   └── ...
-       │   └── ...
-       ├── include/
-       │   └── ...
-       ├── man/
-       │   └── ...
-       ├── src/
-       │   ├── asm/
-       │   │   └── ...
-       │   ├── extern/
-       │   │   └── ...
-       │   ├── fix/
-       │   │   └── ...
-       │   ├── gfx/
-       │   │   └── ...
-       │   ├── link/
-       │   │   └── ...
-       │   ├── CMakeLists.txt
-       │   └── ...
-       ├── test/
-       │   ├── ...
-       │   └── run-tests.sh
-       ├── .clang-format
-       ├── CMakeLists.txt
-       ├── Dockerfile
-       ├── Makefile
-       └── README.md
+.
+├── .github/
+│   ├── scripts/
+│   │   └── ...
+│   └── workflows/
+│       └── ...
+├── contrib/
+│   ├── zsh_compl/
+│   │   └── ...
+│   └── ...
+├── include/
+│   └── ...
+├── man/
+│   └── ...
+├── src/
+│   ├── asm/
+│   │   └── ...
+│   ├── extern/
+│   │   └── ...
+│   ├── fix/
+│   │   └── ...
+│   ├── gfx/
+│   │   └── ...
+│   ├── link/
+│   │   └── ...
+│   ├── CMakeLists.txt
+│   └── ...
+├── test/
+│   ├── ...
+│   └── run-tests.sh
+├── .clang-format
+├── CMakeLists.txt
+├── Dockerfile
+├── Makefile
+└── README.md
 ```
 
 - `.github/` - files and scripts related to the integration of the RGBDS codebase with
