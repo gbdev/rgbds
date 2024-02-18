@@ -1,0 +1,2 @@
+error: script-huge-ds.link(2): Cannot increase the current address by 65536 bytes: only 16384 bytes to $4000
+Linking failed with 1 error

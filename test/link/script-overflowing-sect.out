@@ -1,0 +1,2 @@
+error: script-overflowing-sect.link(5): The linker script assigns section "ROM2 1" to address $8000, but then it would overflow ROMX by 1 byte
+Linking failed with 1 error

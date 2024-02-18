@@ -1,0 +1,7 @@
+rom0
+	ds $4000 ; OK
+	ds 1 ; Boom!
+
+hram
+	ds $7F ; OK
+	ds $FFFF ; Boom!

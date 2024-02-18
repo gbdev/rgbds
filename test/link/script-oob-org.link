@@ -1,0 +1,15 @@
+rom0
+	org $4000 ; OK
+	org $4001 ; Nope
+
+romx 1
+	org $3FFF ; Nope
+	org $8000 ; OK
+	org $8001 ; Nope
+
+hram
+	org 0 ; Nope
+	org $FF7F ; Nope
+	org $FF80 ; OK
+	org $FFFF ; OK
+	org $10000 ; Nope

@@ -1,0 +1,2 @@
+error: script-excess-align-ofs.link(2): Cannot align: The alignment offset (2) must be less than alignment size (2)
+Linking failed with 1 error

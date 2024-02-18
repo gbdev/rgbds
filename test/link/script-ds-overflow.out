@@ -1,0 +1,3 @@
+error: script-ds-overflow.link(3): Cannot increase the current address by 1 bytes: only 0 bytes to $4000
+error: script-ds-overflow.link(7): Cannot increase the current address by 65535 bytes: only 0 bytes to $ffff
+Linking failed with 2 errors

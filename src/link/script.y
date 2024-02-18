@@ -422,7 +422,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 
 			if (alignOfs >= alignSize) {
 				scriptError(context, "Cannot align: The alignment offset (%" PRIu32
-						      ") must be less than alignment size (%" PRIu32 ")\n",
+						      ") must be less than alignment size (%" PRIu32 ")",
 					    alignOfs, alignSize);
 				return;
 			}
@@ -437,7 +437,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto &pc = curAddr[activeType][activeBankIdx];
 
 	if (alignment > 16) {
-		scriptError(context, "Cannot align: The alignment (%" PRIu32 ") must be less than 16\n",
+		scriptError(context, "Cannot align: The alignment (%" PRIu32 ") must be less than 16",
 			    alignment);
 		return;
 	}
@@ -450,7 +450,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 
 		if (alignOfs >= alignSize) {
 			scriptError(context, "Cannot align: The alignment offset (%" PRIu32
-					      ") must be less than alignment size (%" PRIu32 ")\n",
+					      ") must be less than alignment size (%" PRIu32 ")",
 				    alignOfs, alignSize);
 			return;
 		}
@@ -546,9 +546,10 @@ static void placeSection(std::string const &name, bool isOptional) {
 
 		uint16_t curOfs = org - typeInfo.startAddr;
 		if (section->size > typeInfo.size - curOfs) {
-			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " bytes",
+			uint16_t overflowSize = section->size - (typeInfo.size - curOfs);
+			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " byte%s",
 			            name.c_str(), org, typeInfo.name.c_str(),
-			            (uint16_t)(section->size - (typeInfo.size - curOfs)));
+			            overflowSize, overflowSize == 1 ? "" : "s");
 			// Fill as much as possible without going out of bounds.
 			org = typeInfo.startAddr + typeInfo.size;
 		} else {

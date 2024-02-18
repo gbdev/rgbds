@@ -1,0 +1,5 @@
+
+romx 2
+	org $7000
+	"ROM2 1K" ; OK
+	"ROM2 1" ; Boom!

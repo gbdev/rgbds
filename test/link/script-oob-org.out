@@ -1,0 +1,10 @@
+error: script-oob-org.link(2): Cannot set the current address to $4000: ROM0 ends at $3fff
+error: script-oob-org.link(3): Cannot set the current address to $4001: ROM0 ends at $3fff
+error: script-oob-org.link(6): Cannot decrease the current address (from $4000 to $3fff)
+error: script-oob-org.link(7): Cannot set the current address to $8000: ROMX ends at $7fff
+error: script-oob-org.link(8): Cannot set the current address to $8001: ROMX ends at $7fff
+error: script-oob-org.link(11): Cannot decrease the current address (from $ff80 to $0000)
+error: script-oob-org.link(12): Cannot decrease the current address (from $ff80 to $ff7f)
+error: script-oob-org.link(14): Cannot set the current address to $ffff: HRAM ends at $fffe
+error: script-oob-org.link(15): Cannot set the current address to $10000: HRAM ends at $fffe
+Linking failed with 9 errors
