@@ -258,10 +258,10 @@ void processWarningFlag(char *flag)
 
 	// Well, it's either a normal warning or a mistake
 
-	enum WarningState state = setError ? WARNING_ERROR :
+	enum WarningState state = setError ? WARNING_ERROR
 				  // Not an error, then check if this is a negation
-				  strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
-								      : WARNING_DISABLED;
+				  : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
+				  : WARNING_DISABLED;
 	char *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
 
 	// Is this a "parametric" warning?

@@ -241,8 +241,7 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 			} else if (**input) { // No match found, but there is some input left
 				int firstChar = **input;
 				// This will write the codepoint's value to `output`, little-endian
-				size_t codepointLen = readUTF8Char(output ? *output : NULL,
-								   *input);
+				size_t codepointLen = readUTF8Char(output ? *output : NULL, *input);
 
 				if (codepointLen == 0)
 					error("Input string is not valid UTF-8\n");
