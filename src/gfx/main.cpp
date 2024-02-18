@@ -849,18 +849,18 @@ auto Palette::begin() -> decltype(colors)::iterator {
 }
 
 auto Palette::end() -> decltype(colors)::iterator {
-    // Since the palette may contain gaps, we must scan from the end.
-    for (auto it = colors.end(); ;) {
-        --it; // The array is not empty, so it's fine to decrement pre-emptively.
-        // If the iterator points at a non-empty element, then it is the end
-        // (being followed only by empty slots). Thus one past is is one past the end.
-        if (*it != UINT16_MAX) {
-            return ++it;
-        }
-        if (it == colors.begin()) { // Is it still safe to decrement?
-            return it; // No? Then the palette is empty.
-        }
-    }
+	// Since the palette may contain gaps, we must scan from the end.
+	for (auto it = colors.end(); ;) {
+		--it; // The array is not empty, so it's fine to decrement pre-emptively.
+		// If the iterator points at a non-empty element, then it is the end
+		// (being followed only by empty slots). Thus one past is is one past the end.
+		if (*it != UINT16_MAX) {
+			return ++it;
+		}
+		if (it == colors.begin()) { // Is it still safe to decrement?
+			return it; // No? Then the palette is empty.
+		}
+	}
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
@@ -869,18 +869,18 @@ auto Palette::begin() const -> decltype(colors)::const_iterator {
 }
 
 auto Palette::end() const -> decltype(colors)::const_iterator {
-    // Since the palette may contain gaps, we must scan from the end.
-    for (auto it = colors.end(); ;) {
-        --it; // The array is not empty, so it's fine to decrement pre-emptively.
-        // If the iterator points at a non-empty element, then it is the end
-        // (being followed only by empty slots). Thus one past is is one past the end.
-        if (*it != UINT16_MAX) {
-            return ++it;
-        }
-        if (it == colors.begin()) { // Is it still safe to decrement?
-            return it; // No? Then the palette is empty.
-        }
-    }
+	// Since the palette may contain gaps, we must scan from the end.
+	for (auto it = colors.end(); ;) {
+		--it; // The array is not empty, so it's fine to decrement pre-emptively.
+		// If the iterator points at a non-empty element, then it is the end
+		// (being followed only by empty slots). Thus one past is is one past the end.
+		if (*it != UINT16_MAX) {
+			return ++it;
+		}
+		if (it == colors.begin()) { // Is it still safe to decrement?
+			return it; // No? Then the palette is empty.
+		}
+	}
 }
 
 uint8_t Palette::size() const {
