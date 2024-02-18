@@ -11,9 +11,10 @@ for the Game Boy and Game Boy Color. It consists of:
 This is a fork of the original RGBDS which aims to make the programs more like
 other UNIX tools.
 
+
 This toolchain is maintained [on GitHub](https://github.com/gbdev/rgbds).
 
-The documentation of this toolchain can be viewed online [here](https://rgbds.gbdev.io/docs/).
+The documentation of this toolchain can be [viewed online](https://rgbds.gbdev.io/docs/).
 It is generated from the man pages found in this repository.
 The source code of the website itself is on GitHub as well under the repo
 [rgbds-www](https://github.com/gbdev/rgbds-www).

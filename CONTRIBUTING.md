@@ -9,8 +9,8 @@ without their work, and it is always open to the contributions of other people.
 Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
 
-1. Make sure that there isn't a similar issue already reported
-   [here](https://github.com/gbdev/rgbds/issues).
+1. Make sure that there isn't a similar issue
+   [already reported](https://github.com/gbdev/rgbds/issues).
 2. Figure out a way of reproducing it reliably.
 3. If there is a piece of code that triggers the bug, try to reduce it to the
    smallest file you can.
