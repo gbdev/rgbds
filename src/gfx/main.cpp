@@ -884,5 +884,5 @@ auto Palette::end() const -> decltype(colors)::const_iterator {
 }
 
 uint8_t Palette::size() const {
-	return end() - begin();
+	return end() - colors.begin();
 }
