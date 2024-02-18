@@ -12,7 +12,7 @@ for dir in asm link fix gfx; do
 done
 
 # Generate coverage logs
-gcov src/**/*.{c,cpp}
+gcov src/**/*.cpp
 mkdir -p coverage
 
 # Generate coverage report
