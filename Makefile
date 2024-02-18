@@ -23,7 +23,7 @@ PNGLDFLAGS	:= `${PKG_CONFIG} --libs-only-L libpng`
 PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
-VERSION_STRING	:= `git describe --tags --dirty --always 2>/dev/null`
+VERSION_STRING	:= `git --git-dir=.git describe --tags --dirty --always 2>/dev/null`
 
 # TODO: use -pedantic after non-C++ idioms are gone
 WARNFLAGS	:= -Wall -Wno-unknown-warning-option -Wno-c99-designator
