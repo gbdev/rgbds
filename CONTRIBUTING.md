@@ -1,37 +1,30 @@
-Contributing
-============
+# Contributing
 
 RGBDS was created in the late '90s and has received contributions from several
 developers since then. It wouldn't have been possible to get to this point
 without their work, and it is always open to the contributions of other people.
 
-Reporting Bugs
---------------
+## Reporting Bugs
 
 Bug reports are essential to improve RGBDS and they are always welcome. If you
 want to report a bug:
 
 1. Make sure that there isn't a similar issue already reported
-   `here <https://github.com/gbdev/rgbds/issues>`__.
-
+   [here](https://github.com/gbdev/rgbds/issues).
 2. Figure out a way of reproducing it reliably.
-
 3. If there is a piece of code that triggers the bug, try to reduce it to the
    smallest file you can.
-
-4. Create a new `issue <https://github.com/gbdev/rgbds/issues>`__.
+4. Create a new [issue](https://github.com/gbdev/rgbds/issues).
 
 Of course, it may not always be possible to give an accurate bug report, but it
 always helps to fix it.
 
-Requesting new features
------------------------
+## Requesting new features
 
 If you come up with a good idea that could be implemented, you can propose it to
 be done.
 
-1. Create a new `issue <https://github.com/gbdev/rgbds/issues>`__.
-
+1. Create a new [issue](https://github.com/gbdev/rgbds/issues).
 2. Try to be as accurate as possible. Describe what you need and why you need
    it, maybe with examples.
 
@@ -40,8 +33,7 @@ simple requests are more likely to catch the interest of a contributor than
 complicated ones. If you really need something to be done, and you think you can
 implement it yourself, you can always contribute to RGBDS with your own code.
 
-Contributing code
------------------
+## Contributing code
 
 If you want to contribute with your own code, whether it is to fix a current
 issue or to add something that nobody had requested, you should first consider
@@ -49,7 +41,7 @@ if your change is going to be small (and likely to be accepted as-is) or big
 (and will have to go through some rework).
 
 Big changes will most likely require some discussion, so open an
-`issue <https://github.com/gbdev/rgbds/issues>`__ and explain what you want to
+[issue](https://github.com/gbdev/rgbds/issues) and explain what you want to
 do and how you intend to do it. If you already have a prototype, it's always a
 good idea to show it. Tests help, too.
 
@@ -59,25 +51,19 @@ but doesn't know that there's someone working on it.
 
 Note that you must contribute all your changes under the MIT License. If you are
 just modifying a file, you don't need to do anything (maybe update the copyright
-years). If you are adding new files, you need to use the ``SPDX-License-Identifier: MIT``
+years). If you are adding new files, you need to use the `SPDX-License-Identifier: MIT`
 header.
 
 1. Fork this repository.
-
-2. Checkout the ``master`` branch.
-
-3. Create a new branch to work on. You could still work on ``master``, but it's
+2. Checkout the `master` branch.
+3. Create a new branch to work on. You could still work on `master`, but it's
    easier that way.
-
-4. Compile your changes with ``make develop`` instead of just ``make``. This
+4. Compile your changes with `make develop` instead of just `make`. This
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier).
-
-5. Format your changes according to ``clang-format``, which will reformat the
-   coding style according to our standards defined in ``.clang-format``.
-
-6. Create a pull request against the branch ``master``.
-
+5. Format your changes according to `clang-format`, which will reformat the
+   coding style according to our standards defined in `.clang-format`.
+6. Create a pull request against the branch `master`.
 7. Be prepared to get some comments about your code and to modify it. Tip: Use
-   ``git rebase -i origin/master`` to modify chains of commits.
+   `git rebase -i origin/master` to modify chains of commits.
