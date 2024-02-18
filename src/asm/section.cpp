@@ -355,7 +355,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		} else if (alignment == 16) {
 			// Treat an alignment of 16 as being fixed at address 0
 			alignment = 0;
-			org = 0;
+			org = alignOffset;
 			// The address is known to be valid, since the alignment is
 		}
 	}
