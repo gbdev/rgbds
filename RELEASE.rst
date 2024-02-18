@@ -65,4 +65,4 @@ GitHub.
 
 6. Click the "Publish release" button to publish it!
 
-7. Update the `release` branch. You can use ``git push origin release``.
+7. Update the ``release`` branch. You can use ``git push origin release``.

@@ -102,7 +102,7 @@ The RGBDS source code file structure is as follows:
   * ``bash_compl`` contains tab completion scripts for use with bash. Run them with ``source``
     somewhere in your ``.bashrc``, and they should load every time you open a shell.
 
-- ``include/`` - header files for the respective source files in `src`.
+- ``include/`` - header files for the respective source files in ``src``.
 
 - ``man/`` - manual pages.
 

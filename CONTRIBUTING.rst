@@ -59,8 +59,8 @@ but doesn't know that there's someone working on it.
 
 Note that you must contribute all your changes under the MIT License. If you are
 just modifying a file, you don't need to do anything (maybe update the copyright
-years). If you are adding new files, you need to use the correct header with the
-copyright and the reference to the MIT License.
+years). If you are adding new files, you need to use the ``SPDX-License-Identifier: MIT``
+header.
 
 1. Fork this repository.
 
@@ -80,4 +80,4 @@ copyright and the reference to the MIT License.
 6. Create a pull request against the branch ``master``.
 
 7. Be prepared to get some comments about your code and to modify it. Tip: Use
-    ``git rebase -i origin/master`` to modify chains of commits.
+   ``git rebase -i origin/master`` to modify chains of commits.
