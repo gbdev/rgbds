@@ -475,7 +475,7 @@ static void parseACOFile(std::filebuf &file) {
 	char buf[10];
 
 	if (file.sgetn(buf, 2) != 2) {
-		error("Couldn't read ACO file version");
+		error("Failed to read ACO file version");
 		return;
 	}
 	if (readBE<uint16_t>(buf) != 1) {
@@ -484,7 +484,7 @@ static void parseACOFile(std::filebuf &file) {
 	}
 
 	if (file.sgetn(buf, 2) != 2) {
-		error("Couldn't read number of colors in palette file");
+		error("Failed to read number of colors in palette file");
 		return;
 	}
 	uint16_t nbColors = readBE<uint16_t>(buf);

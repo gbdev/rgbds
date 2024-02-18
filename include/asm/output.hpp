@@ -10,7 +10,7 @@
 struct Expression;
 struct FileStackNode;
 
-extern char *objectName;
+extern const char *objectName;
 extern struct Section *sectionList;
 
 void out_RegisterNode(struct FileStackNode *node);
