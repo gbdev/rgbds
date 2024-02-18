@@ -353,10 +353,10 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;
 		} else if (alignment == 16) {
-			// Treat an alignment of 16 as being fixed at address 0
+			// Treat an alignment of 16 as fixing the address.
 			alignment = 0;
 			org = alignOffset;
-			// The address is known to be valid, since the alignment is
+			// The address is known to be valid, since the alignment itself is.
 		}
 	}
 
@@ -508,6 +508,14 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 					- offset) % alignSize) {
 		error("Section's alignment fails required alignment (offset from section start = $%04"
 			PRIx32 ")\n", curOffset);
+	} else if (alignment >= 16) {
+		// Treat an alignment large enough as fixing the address.
+		// Note that this also ensures that a section's alignment never becomes 16 or greater.
+		if (alignment > 16) {
+			error("Alignment must be between 0 and 16, not %u\n", alignment);
+		}
+		sect->align = 0; // Reset the alignment, since we're fixing the address.
+		sect->org = offset - curOffset;
 	} else if (alignment > sect->align) {
 		sect->align = alignment;
 		// We need `(sect->alignOfs + curOffset) % alignSize == offset`
