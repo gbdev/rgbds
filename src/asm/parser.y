@@ -1933,7 +1933,7 @@ z80_halt	: T_Z80_HALT {
 				if (warnOnHaltNop) {
 					warnOnHaltNop = false;
 					warning(WARNING_OBSOLETE,
-						"Automatic `nop` after `halt` is deprecated\n");
+						"Automatic `nop` after `halt` (option 'H') is deprecated\n");
 				}
 				sect_AbsByte(0x00);
 			}
@@ -2047,7 +2047,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 				if (warnOnLdOpt) {
 					warnOnLdOpt = false;
 					warning(WARNING_OBSOLETE,
-						"Automatic `ld` to `ldh` optimization is deprecated\n");
+						"Automatic `ld` to `ldh` optimization (option 'l') is deprecated\n");
 				}
 				sect_AbsByte(0xE0);
 				sect_AbsByte($2.val & 0xFF);
@@ -2100,7 +2100,7 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 					if (warnOnLdOpt) {
 						warnOnLdOpt = false;
 						warning(WARNING_OBSOLETE,
-							"Automatic `ld` to `ldh` optimization is deprecated\n");
+							"Automatic `ld` to `ldh` optimization (option 'l') is deprecated\n");
 					}
 					sect_AbsByte(0xF0);
 					sect_AbsByte($4.val & 0xFF);

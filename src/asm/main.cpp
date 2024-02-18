@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 		case 'H':
 			if (warnOnHaltNop)
 				warning(WARNING_OBSOLETE,
-					"Automatic `nop` after `halt` is deprecated\n");
+					"Automatic `nop` after `halt` (the `-H` flag) is deprecated\n");
 			else
 				errx("`-H` and `-h` don't make sense together");
 			haltNop = true;
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 		case 'l':
 			if (warnOnLdOpt)
 				warning(WARNING_OBSOLETE,
-					"Automatic `ld` to `ldh` optimization is deprecated\n");
+					"Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n");
 			else
 				errx("`-L` and `-l` don't make sense together");
 			optimizeLoads = true;
