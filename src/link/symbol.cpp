@@ -13,25 +13,6 @@
 
 HashMap symbols;
 
-struct ForEachSymbolArg {
-	void (*callback)(struct Symbol *symbol, void *arg);
-	void *arg;
-};
-
-static void forEach(void *symbol, void *arg)
-{
-	struct ForEachSymbolArg *callbackArg = (struct ForEachSymbolArg *)arg;
-
-	callbackArg->callback((struct Symbol *)symbol, callbackArg->arg);
-}
-
-void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg)
-{
-	struct ForEachSymbolArg callbackArg = { .callback = callback, .arg = arg };
-
-	hash_ForEach(symbols, forEach, &callbackArg);
-}
-
 void sym_AddSymbol(struct Symbol *symbol)
 {
 	// Check if the symbol already exists

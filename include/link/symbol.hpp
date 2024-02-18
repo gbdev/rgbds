@@ -29,16 +29,6 @@ struct Symbol {
 	struct Section *section;
 };
 
-/*
- * Execute a callback for each symbol currently registered.
- * This is done to avoid exposing the data structure in which symbol are stored.
- * @param callback The function to call for each symbol;
- *                 the first argument will be a pointer to the symbol,
- *                 the second argument will be the pointer `arg`.
- * @param arg A pointer which will be passed to all calls to `callback`.
- */
-void sym_ForEach(void (*callback)(struct Symbol *, void *), void *arg);
-
 void sym_AddSymbol(struct Symbol *symbol);
 
 /*
