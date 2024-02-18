@@ -724,7 +724,7 @@ static uint32_t readBracketedMacroArgNum(void)
 		}
 
 		if (i == sizeof(symName)) {
-			warning(WARNING_LONG_STR, "Bracketed symbol name too long\n");
+			warning(WARNING_LONG_STR, "Bracketed symbol name too long, got truncated\n");
 			i--;
 		}
 		symName[i] = '\0';
@@ -1371,10 +1371,14 @@ static char const *readInterpolation(size_t depth)
 			break;
 		} else if (c == ':' && !fmt_IsFinished(&fmt)) { // Format spec, only once
 			shiftChar();
+			if (i == sizeof(symName)) {
+				warning(WARNING_LONG_STR, "Format spec too long, got truncated\n");
+				i = sizeof(symName) - 1;
+			}
+			symName[i] = '\0';
 			for (size_t j = 0; j < i; j++)
 				fmt_UseCharacter(&fmt, symName[j]);
 			fmt_FinishCharacters(&fmt);
-			symName[i] = '\0';
 			if (!fmt_IsValid(&fmt))
 				error("Invalid format spec '%s'\n", symName);
 			i = 0; // Now that format has been set, restart at beginning of string
@@ -1386,7 +1390,7 @@ static char const *readInterpolation(size_t depth)
 	}
 
 	if (i == sizeof(symName)) {
-		warning(WARNING_LONG_STR, "Interpolated symbol name too long\n");
+		warning(WARNING_LONG_STR, "Interpolated symbol name too long, got truncated\n");
 		i--;
 	}
 	symName[i] = '\0';
