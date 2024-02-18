@@ -172,11 +172,11 @@ void reverse() {
 		}
 
 		if (options.palSpecType == Options::EXPLICIT) {
-			for (auto& palette : palettes) {
-				for (auto& specPalette : options.palSpec) {
-					for (auto& color : palette) {
-						for (auto& specColor : specPalette) {
-							if (!specColor || color != specColor.value()) {
+			for (auto &palette : palettes) {
+				for (auto &specPalette : options.palSpec) {
+					for (auto &color : palette) {
+						for (auto &specColor : specPalette) {
+							if (specColor && color != specColor.value()) {
 								warning("Colors in the palette file do not match those specified with `-c`!");
 							}
 						}

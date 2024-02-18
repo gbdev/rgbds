@@ -763,9 +763,9 @@ int main(int argc, char *argv[]) {
 			fputs("\t[\n", stderr);
 			for (const auto &pal : options.palSpec) {
 				fputs("\t\t", stderr);
-				for (auto& color : pal) {
+				for (auto &color : pal) {
 					if (color) {
-						fprintf(stderr, "#%06x, ", color.value().toCSS() >> 8);
+						fprintf(stderr, "#%06x, ", color->toCSS() >> 8);
 					} else {
 						fputs("#none, ", stderr);
 					}

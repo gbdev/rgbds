@@ -576,10 +576,10 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// Convert the palette spec to actual palettes
 	std::vector<Palette> palettes(options.palSpec.size());
 	for (auto [spec, pal] : zip(options.palSpec, palettes)) {
-		for (size_t i = 0; i < options.nbColorsPerPal && (!spec[i] || spec[i].value().isOpaque()); ++i) {
+		for (size_t i = 0; i < options.nbColorsPerPal && (!spec[i] || spec[i]->isOpaque()); ++i) {
 			// If the spec has a gap, there's no need to copy anything.
 			if (spec[i]) {
-				pal[i] = spec[i].value().cgbColor();
+				pal[i] = spec[i]->cgbColor();
 			}
 		}
 	}
