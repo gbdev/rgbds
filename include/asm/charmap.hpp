@@ -9,6 +9,7 @@
 #define DEFAULT_CHARMAP_NAME "main"
 
 struct Charmap *charmap_New(char const *name, char const *baseName);
+void charmap_Cleanup(void);
 void charmap_Set(char const *name);
 void charmap_Push(void);
 void charmap_Pop(void);

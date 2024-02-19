@@ -104,6 +104,19 @@ struct Charmap *charmap_New(char const *name, char const *baseName)
 	return charmap;
 }
 
+static void freeCharmap(void *_charmap, void *)
+{
+	struct Charmap *charmap = (struct Charmap *)_charmap;
+
+	free(charmap->name);
+	free(charmap);
+}
+
+void charmap_Cleanup(void)
+{
+	hash_ForEach(charmaps, freeCharmap, NULL);
+}
+
 void charmap_Set(char const *name)
 {
 	struct Charmap **charmap = (struct Charmap **)hash_GetNode(charmaps, name);

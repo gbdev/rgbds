@@ -193,13 +193,6 @@ static void printUsage(void)
 	      stderr);
 }
 
-// Cleans up what has been done
-// Mostly here to please tools such as `valgrind` so actual errors can be seen
-static void cleanup(void)
-{
-	obj_Cleanup();
-}
-
 enum ScrambledRegion {
 	SCRAMBLE_ROMX,
 	SCRAMBLE_SRAM,
@@ -465,5 +458,6 @@ int main(int argc, char *argv[])
 	out_WriteFiles();
 
 	// Do cleanup before quitting, though.
-	cleanup();
+	// Mostly here to please tools such as `valgrind` so actual errors can be seen
+	obj_Cleanup();
 }
