@@ -319,13 +319,13 @@ struct LexerState {
 			size_t size;
 			size_t offset;
 			bool isReferenced; // If a macro in this file requires not unmapping it
-		};
+		} mmap;
 		struct { // Otherwise
 			int fd;
 			size_t index; // Read index into the buffer
 			char buf[LEXER_BUF_SIZE]; // Circular buffer
 			size_t nbChars; // Number of "fresh" chars in the buffer
-		};
+		} cbuf;
 	};
 
 	// Common state
@@ -454,8 +454,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 	}
 	state->path = path;
 	state->isFile = true;
-	state->fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
-	if (state->fd < 0) {
+	state->cbuf.fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
+	if (state->cbuf.fd < 0) {
 		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
 		free(state);
 		return NULL;
@@ -464,25 +464,25 @@ struct LexerState *lexer_OpenFile(char const *path)
 	if (!isStdin && fileInfo.st_size > 0) {
 		// Try using `mmap` for better performance
 
-		// Important: do NOT assign to `state->ptr` directly, to avoid a cast that may
-		// alter an eventual `MAP_FAILED` value. It would also invalidate `state->fd`,
+		// Important: do NOT assign to `state->mmap.ptr` directly, to avoid a cast that may
+		// alter an eventual `MAP_FAILED` value. It would also invalidate `state->cbuf.fd`,
 		// being on the other side of the union.
 		void *mappingAddr;
 
-		mapFile(mappingAddr, state->fd, state->path, fileInfo.st_size);
+		mapFile(mappingAddr, state->cbuf.fd, state->path, fileInfo.st_size);
 		if (mappingAddr == MAP_FAILED) {
 			// If mmap()ing failed, try again using another method (below)
 			state->isMmapped = false;
 		} else {
 			// IMPORTANT: the `union` mandates this is accessed before other members!
-			close(state->fd);
+			close(state->cbuf.fd);
 
 			state->isMmapped = true;
-			state->isReferenced = false; // By default, a state isn't referenced
-			state->ptr = (char *)mappingAddr;
+			state->mmap.isReferenced = false; // By default, a state isn't referenced
+			state->mmap.ptr = (char *)mappingAddr;
 			assert(fileInfo.st_size >= 0);
-			state->size = (size_t)fileInfo.st_size;
-			state->offset = 0;
+			state->mmap.size = (size_t)fileInfo.st_size;
+			state->mmap.offset = 0;
 
 			if (verbose)
 				printf("File %s successfully mmap()ped\n", path);
@@ -499,8 +499,8 @@ struct LexerState *lexer_OpenFile(char const *path)
 				printf("File %s opened as regular, errno reports \"%s\"\n",
 				       path, strerror(errno));
 		}
-		state->index = 0;
-		state->nbChars = 0;
+		state->cbuf.index = 0;
+		state->cbuf.nbChars = 0;
 	}
 
 	initState(state);
@@ -520,9 +520,9 @@ struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, 
 	state->path = path; // Used to report read errors in `peekInternal`
 	state->isFile = false;
 	state->isMmapped = true; // It's not *really* mmap()ed, but it behaves the same
-	state->ptr = buf;
-	state->size = size;
-	state->offset = 0;
+	state->mmap.ptr = buf;
+	state->mmap.size = size;
+	state->mmap.offset = 0;
 
 	initState(state);
 	state->lineNo = lineNo; // Will be incremented at first line start
@@ -531,7 +531,7 @@ struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, 
 
 void lexer_RestartRept(uint32_t lineNo)
 {
-	lexerState->offset = 0;
+	lexerState->mmap.offset = 0;
 	initState(lexerState);
 	lexerState->lineNo = lineNo;
 }
@@ -552,9 +552,9 @@ void lexer_DeleteState(struct LexerState *state)
 	assert(state != lexerStateEOL);
 
 	if (!state->isMmapped)
-		close(state->fd);
-	else if (state->isFile && !state->isReferenced)
-		munmap(state->ptr, state->size);
+		close(state->cbuf.fd);
+	else if (state->isFile && !state->mmap.isReferenced)
+		munmap(state->mmap.ptr, state->mmap.size);
 	free(state);
 }
 
@@ -798,7 +798,7 @@ static size_t readInternal(size_t bufIndex, size_t nbChars)
 {
 	// This buffer overflow made me lose WEEKS of my life. Never again.
 	assert(bufIndex + nbChars <= LEXER_BUF_SIZE);
-	ssize_t nbReadChars = read(lexerState->fd, &lexerState->buf[bufIndex], nbChars);
+	ssize_t nbReadChars = read(lexerState->cbuf.fd, &lexerState->cbuf.buf[bufIndex], nbChars);
 
 	if (nbReadChars == -1)
 		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, strerror(errno));
@@ -824,25 +824,25 @@ static int peekInternal(uint8_t distance)
 			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
 
 	if (lexerState->isMmapped) {
-		if (lexerState->offset + distance >= lexerState->size)
+		if (lexerState->mmap.offset + distance >= lexerState->mmap.size)
 			return EOF;
 
-		return (unsigned char)lexerState->ptr[lexerState->offset + distance];
+		return (unsigned char)lexerState->mmap.ptr[lexerState->mmap.offset + distance];
 	}
 
-	if (lexerState->nbChars <= distance) {
+	if (lexerState->cbuf.nbChars <= distance) {
 		// Buffer isn't full enough, read some chars in
-		size_t target = LEXER_BUF_SIZE - lexerState->nbChars; // Aim: making the buf full
+		size_t target = LEXER_BUF_SIZE - lexerState->cbuf.nbChars; // Aim: making the buf full
 
 		// Compute the index we'll start writing to
-		size_t writeIndex = (lexerState->index + lexerState->nbChars) % LEXER_BUF_SIZE;
+		size_t writeIndex = (lexerState->cbuf.index + lexerState->cbuf.nbChars) % LEXER_BUF_SIZE;
 
 		// If the range to fill passes over the buffer wrapping point, we need two reads
 		if (writeIndex + target > LEXER_BUF_SIZE) {
 			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
 			size_t nbReadChars = readInternal(writeIndex, nbExpectedChars);
 
-			lexerState->nbChars += nbReadChars;
+			lexerState->cbuf.nbChars += nbReadChars;
 
 			writeIndex += nbReadChars;
 			if (writeIndex == LEXER_BUF_SIZE)
@@ -854,14 +854,14 @@ static int peekInternal(uint8_t distance)
 				target = 0;
 		}
 		if (target != 0)
-			lexerState->nbChars += readInternal(writeIndex, target);
+			lexerState->cbuf.nbChars += readInternal(writeIndex, target);
 
 		// If there aren't enough chars even after refilling, give up
-		if (lexerState->nbChars <= distance)
+		if (lexerState->cbuf.nbChars <= distance)
 			return EOF;
 	}
 
-	return (unsigned char)lexerState->buf[(lexerState->index + distance) % LEXER_BUF_SIZE];
+	return (unsigned char)lexerState->cbuf.buf[(lexerState->cbuf.index + distance) % LEXER_BUF_SIZE];
 }
 
 // forward declarations for peek
@@ -946,14 +946,14 @@ restart:
 		// Advance within the file contents
 		lexerState->colNo++;
 		if (lexerState->isMmapped) {
-			lexerState->offset++;
+			lexerState->mmap.offset++;
 		} else {
-			assert(lexerState->index < LEXER_BUF_SIZE);
-			lexerState->index++;
-			if (lexerState->index == LEXER_BUF_SIZE)
-				lexerState->index = 0; // Wrap around if necessary
-			assert(lexerState->nbChars > 0);
-			lexerState->nbChars--;
+			assert(lexerState->cbuf.index < LEXER_BUF_SIZE);
+			lexerState->cbuf.index++;
+			if (lexerState->cbuf.index == LEXER_BUF_SIZE)
+				lexerState->cbuf.index = 0; // Wrap around if necessary
+			assert(lexerState->cbuf.nbChars > 0);
+			lexerState->cbuf.nbChars--;
 		}
 	}
 }
@@ -2458,7 +2458,7 @@ static void startCapture(struct CaptureBody *capture)
 	capture->lineNo = lexer_GetLineNo();
 
 	if (lexerState->isMmapped && !lexerState->expansions) {
-		capture->body = &lexerState->ptr[lexerState->offset];
+		capture->body = &lexerState->mmap.ptr[lexerState->mmap.offset];
 	} else {
 		lexerState->captureCapacity = 128; // The initial size will be twice that
 		assert(lexerState->captureBuf == NULL);
@@ -2545,7 +2545,7 @@ bool lexer_CaptureMacroBody(struct CaptureBody *capture)
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (lexerState->isMmapped)
-		lexerState->isReferenced = true;
+		lexerState->mmap.isReferenced = true;
 
 	int c = EOF;
 

@@ -455,7 +455,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	memcpy(dest, macro->name, macroNameLen + 1);
 
 	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFileView("MACRO", macro->macro, macro->macroSize,
+	contextStack->lexerState = lexer_OpenFileView("MACRO", macro->macro.value, macro->macro.size,
 						      macro->fileLine);
 	if (!contextStack->lexerState)
 		fatalerror("Failed to set up lexer for macro invocation\n");

@@ -180,15 +180,15 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 		break;
 
 	case NODE_REPT:
-		tryReadlong(fileNodes[i].reptDepth, file,
+		tryReadlong(fileNodes[i].rept.depth, file,
 			    "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
-		fileNodes[i].iters =
-			(uint32_t *)malloc(sizeof(*fileNodes[i].iters) * fileNodes[i].reptDepth);
-		if (!fileNodes[i].iters)
+		fileNodes[i].rept.iters =
+			(uint32_t *)malloc(sizeof(*fileNodes[i].rept.iters) * fileNodes[i].rept.depth);
+		if (!fileNodes[i].rept.iters)
 			fatal(NULL, 0, "%s: Failed to alloc node #%" PRIu32 "'s iters: %s",
 			      fileName, i, strerror(errno));
-		for (uint32_t k = 0; k < fileNodes[i].reptDepth; k++)
-			tryReadlong(fileNodes[i].iters[k], file,
+		for (uint32_t k = 0; k < fileNodes[i].rept.depth; k++)
+			tryReadlong(fileNodes[i].rept.iters[k], file,
 				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 				    fileName, i, k);
 		if (!fileNodes[i].parent)
@@ -659,7 +659,7 @@ void obj_Setup(unsigned int nbFiles)
 static void freeNode(struct FileStackNode *node)
 {
 	if (node->type == NODE_REPT)
-		free(node->iters);
+		free(node->rept.iters);
 	else
 		free(node->name);
 }

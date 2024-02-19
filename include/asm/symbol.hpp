@@ -39,9 +39,9 @@ struct Symbol {
 		int32_t (*numCallback)(void);
 		// For SYM_MACRO and SYM_EQUS; TODO: have separate fields
 		struct {
-			size_t macroSize;
-			char *macro;
-		};
+			size_t size;
+			char *value;
+		} macro;
 		// For SYM_EQUS
 		char const *(*strCallback)(void);
 	};
@@ -97,7 +97,7 @@ static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
 	if (sym->hasCallback)
 		return sym->strCallback();
-	return sym->macro;
+	return sym->macro.value;
 }
 
 void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg);

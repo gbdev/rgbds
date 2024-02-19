@@ -61,8 +61,8 @@ char const *dumpFileStack(struct FileStackNode const *node)
 			lastName = node->name;
 		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName);
 		if (node->type == NODE_REPT) {
-			for (uint32_t i = 0; i < node->reptDepth; i++)
-				fprintf(stderr, "::REPT~%" PRIu32, node->iters[i]);
+			for (uint32_t i = 0; i < node->rept.depth; i++)
+				fprintf(stderr, "::REPT~%" PRIu32, node->rept.iters[i]);
 		}
 	} else {
 		assert(node->type != NODE_REPT);

@@ -56,7 +56,7 @@
 #define restrict
 
 // C++ doesn't support designated array initializers, but they're a gcc extension
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 # define AT(index) [index] =
 #else
 # define AT(index)
