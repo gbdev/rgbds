@@ -37,12 +37,16 @@ struct Symbol {
 		// If sym_IsNumeric
 		int32_t value;
 		int32_t (*numCallback)(void);
-		// For SYM_MACRO and SYM_EQUS; TODO: have separate fields
+		// For SYM_MACRO
 		struct {
 			size_t size;
 			char *value;
 		} macro;
 		// For SYM_EQUS
+		struct {
+			size_t size;
+			char *value;
+		} equs;
 		char const *(*strCallback)(void);
 	};
 
@@ -97,7 +101,7 @@ static inline char const *sym_GetStringValue(struct Symbol const *sym)
 {
 	if (sym->hasCallback)
 		return sym->strCallback();
-	return sym->macro.value;
+	return sym->equs.value;
 }
 
 void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg);
