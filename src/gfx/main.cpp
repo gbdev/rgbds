@@ -849,18 +849,11 @@ auto Palette::begin() -> decltype(colors)::iterator {
 }
 
 auto Palette::end() -> decltype(colors)::iterator {
+	// Return an iterator pointing past the last non-empty element.
 	// Since the palette may contain gaps, we must scan from the end.
-	for (auto it = colors.end(); ;) {
-		--it; // The array is not empty, so it's fine to decrement pre-emptively.
-		// If the iterator points at a non-empty element, then it is the end
-		// (being followed only by empty slots). Thus one past is is one past the end.
-		if (*it != UINT16_MAX) {
-			return ++it;
-		}
-		if (it == colors.begin()) { // Is it still safe to decrement?
-			return it; // No? Then the palette is empty.
-		}
-	}
+	return std::find_if(colors.rbegin(), colors.rend(),
+	                    [](uint16_t c) { return c != UINT16_MAX; })
+	       .base();
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
@@ -869,18 +862,10 @@ auto Palette::begin() const -> decltype(colors)::const_iterator {
 }
 
 auto Palette::end() const -> decltype(colors)::const_iterator {
-	// Since the palette may contain gaps, we must scan from the end.
-	for (auto it = colors.end(); ;) {
-		--it; // The array is not empty, so it's fine to decrement pre-emptively.
-		// If the iterator points at a non-empty element, then it is the end
-		// (being followed only by empty slots). Thus one past is is one past the end.
-		if (*it != UINT16_MAX) {
-			return ++it;
-		}
-		if (it == colors.begin()) { // Is it still safe to decrement?
-			return it; // No? Then the palette is empty.
-		}
-	}
+	// Same as the non-const end().
+	return std::find_if(colors.rbegin(), colors.rend(),
+	                    [](uint16_t c) { return c != UINT16_MAX; })
+	       .base();
 }
 
 uint8_t Palette::size() const {

@@ -171,18 +171,8 @@ void reverse() {
 			        options.nbPalettes);
 		}
 
-		if (options.palSpecType == Options::EXPLICIT) {
-			for (auto &palette : palettes) {
-				for (auto &specPalette : options.palSpec) {
-					for (auto &color : palette) {
-						for (auto &specColor : specPalette) {
-							if (specColor && color != specColor.value()) {
-								warning("Colors in the palette file do not match those specified with `-c`!");
-							}
-						}
-					}
-				}
-			}
+		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
+			warning("Colors in the palette file do not match those specified with `-c`!");
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
@@ -322,7 +312,7 @@ void reverse() {
 				uint8_t *ptr = &rowPtrs[y][tx * 8 * SIZEOF_PIXEL];
 				for (uint8_t x = 0; x < 8; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
-					Rgba const &pixel = palette[bit0 >> 7 | bit1 >> 6].value();
+					Rgba const &pixel = *palette[bit0 >> 7 | bit1 >> 6];
 					*ptr++ = pixel.red;
 					*ptr++ = pixel.green;
 					*ptr++ = pixel.blue;
