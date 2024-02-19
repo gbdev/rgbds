@@ -164,8 +164,8 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 		fatalerror("No memory for string equate: %s\n", strerror(errno));
 
 	sym->type = SYM_EQUS;
-	sym->macro = string;
-	sym->macroSize = strlen(string);
+	sym->macro.value = string;
+	sym->macro.size = strlen(string);
 }
 
 struct Symbol *sym_FindExactSymbol(char const *symName)
@@ -233,8 +233,8 @@ void sym_Purge(char const *symName)
 		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(NULL);
 
-		// FIXME: this leaks sym->macro for SYM_EQUS and SYM_MACRO, but this can't
-		// free(sym->macro) because the expansion may be purging itself.
+		// FIXME: this leaks sym->macro.value for SYM_EQUS and SYM_MACRO, but this can't
+		// free(sym->macro.value) because the expansion may be purging itself.
 		hash_RemoveElement(symbols, sym->name);
 		// TODO: ideally, also unref the file stack nodes
 		free(sym);
@@ -401,8 +401,8 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 	}
 
 	updateSymbolFilename(sym);
-	// FIXME: this leaks the previous sym->macro value, but this can't
-	// free(sym->macro) because the expansion may be redefining itself.
+	// FIXME: this leaks the previous sym->macro.value value, but this can't
+	// free(sym->macro.value) because the expansion may be redefining itself.
 	assignStringSymbol(sym, value);
 
 	return sym;
@@ -574,8 +574,8 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 		return NULL;
 
 	sym->type = SYM_MACRO;
-	sym->macroSize = size;
-	sym->macro = body;
+	sym->macro.size = size;
+	sym->macro.value = body;
 	setSymbolFilename(sym); // TODO: is this really necessary?
 	// The symbol is created at the line after the `endm`,
 	// override this with the actual definition line

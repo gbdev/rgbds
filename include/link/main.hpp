@@ -37,9 +37,9 @@ struct FileStackNode {
 	union {
 		char *name; // NODE_FILE, NODE_MACRO
 		struct { // NODE_REPT
-			uint32_t reptDepth;
+			uint32_t depth;
 			uint32_t *iters;
-		};
+		} rept;
 	};
 };
 
