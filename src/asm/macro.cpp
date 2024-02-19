@@ -22,11 +22,8 @@ struct MacroArgs {
 	unsigned int nbArgs;
 	unsigned int shift;
 	unsigned int capacity;
-	char *args[];
+	char **args;
 };
-
-#define SIZEOF_ARGS(nbArgs) (sizeof(struct MacroArgs) + \
-			    sizeof(((struct MacroArgs *)0)->args[0]) * (nbArgs))
 
 static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = 0;
@@ -44,9 +41,12 @@ struct MacroArgs *macro_GetCurrentArgs(void)
 
 struct MacroArgs *macro_NewArgs(void)
 {
-	struct MacroArgs *args = (struct MacroArgs *)malloc(SIZEOF_ARGS(INITIAL_ARG_SIZE));
+	struct MacroArgs *args = (struct MacroArgs *)malloc(sizeof(*args));
 
 	if (!args)
+		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
+	args->args = (char **)malloc(sizeof(*args->args) * INITIAL_ARG_SIZE);
+	if (!args->args)
 		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
 
 	args->nbArgs = 0;
@@ -55,24 +55,22 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **argPtr, char *s)
+void macro_AppendArg(struct MacroArgs *args, char *s)
 {
-#define macArgs (*argPtr)
 	if (s[0] == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (macArgs->nbArgs == MAXMACROARGS)
+	if (args->nbArgs == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	if (macArgs->nbArgs >= macArgs->capacity) {
-		macArgs->capacity *= 2;
+	if (args->nbArgs >= args->capacity) {
+		args->capacity *= 2;
 		// Check that overflow didn't roll us back
-		if (macArgs->capacity <= macArgs->nbArgs)
+		if (args->capacity <= args->nbArgs)
 			fatalerror("Failed to add new macro argument: capacity overflow\n");
-		macArgs = (struct MacroArgs *)realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
-		if (!macArgs)
+		args->args = (char **)realloc(args->args, sizeof(*args->args) * args->capacity);
+		if (!args->args)
 			fatalerror("Error adding new macro argument: %s\n", strerror(errno));
 	}
-	macArgs->args[macArgs->nbArgs++] = s;
-#undef macArgs
+	args->args[args->nbArgs++] = s;
 }
 
 void macro_UseNewArgs(struct MacroArgs *args)
@@ -84,6 +82,7 @@ void macro_FreeArgs(struct MacroArgs *args)
 {
 	for (uint32_t i = 0; i < macroArgs->nbArgs; i++)
 		free(args->args[i]);
+	free(args->args);
 }
 
 char const *macro_GetArg(uint32_t i)
@@ -93,8 +92,7 @@ char const *macro_GetArg(uint32_t i)
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->nbArgs ? NULL
-					      : macroArgs->args[realIndex];
+	return realIndex >= macroArgs->nbArgs ? NULL : macroArgs->args[realIndex];
 }
 
 char const *macro_GetAllArgs(void)

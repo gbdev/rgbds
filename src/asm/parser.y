@@ -885,7 +885,7 @@ macroargs	: %empty {
 			$$ = macro_NewArgs();
 		}
 		| macroargs T_STRING {
-			macro_AppendArg(&($$), strdup($2));
+			macro_AppendArg($$, strdup($2));
 		}
 ;
 
