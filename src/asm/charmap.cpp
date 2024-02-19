@@ -180,7 +180,7 @@ bool charmap_HasChar(char const *input)
 	struct Charnode const *node = &charmap->nodes[0];
 
 	for (; *input; input++) {
-		size_t next = node->next[*input - 1];
+		size_t next = node->next[(uint8_t)*input - 1];
 
 		if (!next)
 			return false;
@@ -212,7 +212,7 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 	size_t rewindDistance = 0;
 
 	for (;;) {
-		uint8_t c = **input - 1;
+		uint8_t c = (uint8_t)**input - 1;
 
 		if (**input && node->next[c]) {
 			// Consume that char
