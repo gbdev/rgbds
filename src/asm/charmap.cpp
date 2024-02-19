@@ -31,7 +31,7 @@ struct Charmap {
 	char *name;
 	size_t usedNodes; // How many nodes are being used
 	size_t capacity; // How many nodes have been allocated
-	struct Charnode nodes[]; // first node is reserved for the root node
+	struct Charnode *nodes; // first node is reserved for the root node
 };
 
 static HashMap charmaps;
@@ -52,14 +52,22 @@ static struct Charmap *charmap_Get(char const *name)
 	return (struct Charmap *)hash_GetElement(charmaps, name);
 }
 
-static void resizeCharmap(struct Charmap **map, size_t capacity)
+static void resizeCharmap(struct Charmap **mapPtr, size_t capacity)
 {
-	*map = (struct Charmap *)realloc(*map, sizeof(**map) + sizeof(*(*map)->nodes) * capacity);
+	struct Charmap *map = *mapPtr;
 
-	if (!*map)
-		fatalerror("Failed to %s charmap: %s\n",
-			   *map ? "create" : "resize", strerror(errno));
-	(**map).capacity = capacity;
+	if (!map) {
+		map = (struct Charmap *)malloc(sizeof(*map));
+		if (!map)
+			fatalerror("Failed to create charmap: %s\n", strerror(errno));
+		map->nodes = NULL;
+		*mapPtr = map;
+	}
+
+	map->nodes = (struct Charnode *)realloc(map->nodes, sizeof(*map->nodes) * capacity);
+	if (!map->nodes)
+		fatalerror("Failed to resize charmap: %s\n", strerror(errno));
+	map->capacity = capacity;
 }
 
 static void initNode(struct Charnode *node)
@@ -109,6 +117,7 @@ static void freeCharmap(void *_charmap, void *)
 	struct Charmap *charmap = (struct Charmap *)_charmap;
 
 	free(charmap->name);
+	free(charmap->nodes);
 	free(charmap);
 }
 
