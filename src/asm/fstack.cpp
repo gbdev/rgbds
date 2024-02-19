@@ -199,13 +199,17 @@ bool yywrap(void)
 
 		// If the node is referenced, we can't edit it; duplicate it
 		if (contextStack->fileInfo->referenced) {
-			size_t size = sizeof(*fileInfo) + sizeof(fileInfo->iters[0]) * fileInfo->reptDepth;
-			struct FileStackReptNode *copy = (struct FileStackReptNode *)malloc(size);
+			size_t size = sizeof(fileInfo->iters[0]) * fileInfo->reptDepth;
+			struct FileStackReptNode *copy = (struct FileStackReptNode *)malloc(sizeof(*copy));
 
-			if (!copy)
-				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
 			// Copy all info but the referencing
-			memcpy(copy, fileInfo, size);
+			if (copy) {
+				memcpy(copy, fileInfo, sizeof(*copy));
+				copy->iters = (uint32_t *)malloc(size);
+			}
+			if (!copy || !copy->iters)
+				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
+			memcpy(copy->iters, fileInfo->iters, size);
 			copy->node.next = NULL;
 			copy->node.referenced = false;
 
@@ -252,8 +256,13 @@ bool yywrap(void)
 		macro_UseNewArgs(contextStack->macroArgs);
 	}
 	// Free the file stack node
-	if (!context->fileInfo->referenced)
+	if (!context->fileInfo->referenced) {
+		if (context->fileInfo->type == NODE_REPT)
+			free(((struct FileStackReptNode *)context->fileInfo)->iters);
+		else
+			free(((struct FileStackNamedNode *)context->fileInfo)->name);
 		free(context->fileInfo);
+	}
 	// Free the FOR symbol name
 	free(context->forName);
 	// Free the entry and make its parent the current entry
@@ -309,10 +318,11 @@ void fstk_RunInclude(char const *path)
 		return;
 	}
 
-	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + fullPath->length() + 1);
+	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
-	if (!fileInfo) {
+	if (fileInfo)
+		fileInfo->name = (char *)malloc(fullPath->length() + 1);
+	if (!fileInfo || !fileInfo->name) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
 		return;
 	}
@@ -345,10 +355,11 @@ static void runPreIncludeFile(void)
 		return;
 	}
 
-	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + fullPath->length() + 1);
+	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
-	if (!fileInfo) {
+	if (fileInfo)
+		fileInfo->name = (char *)malloc(fullPath->length() + 1);
+	if (!fileInfo || !fileInfo->name) {
 		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
 		return;
 	}
@@ -396,10 +407,11 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	struct FileStackNamedNode const *baseNode = (struct FileStackNamedNode const *)node;
 	size_t baseLen = strlen(baseNode->name);
 	size_t macroNameLen = strlen(macro->name);
-	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo) +
-			baseLen + reptNameLen + 2 + macroNameLen + 1);
+	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
-	if (!fileInfo) {
+	if (fileInfo)
+		fileInfo->name = (char *)malloc(baseLen + reptNameLen + 2 + macroNameLen + 1);
+	if (!fileInfo || !fileInfo->name) {
 		error("Failed to alloc file info for \"%s\": %s\n", macro->name, strerror(errno));
 		return;
 	}
@@ -440,10 +452,11 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 	uint32_t reptDepth = contextStack->fileInfo->type == NODE_REPT
 				? ((struct FileStackReptNode *)contextStack->fileInfo)->reptDepth
 				: 0;
-	struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)malloc(sizeof(*fileInfo)
-			+ (reptDepth + 1) * sizeof(fileInfo->iters[0]));
+	struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)malloc(sizeof(*fileInfo));
 
-	if (!fileInfo) {
+	if (fileInfo)
+		fileInfo->iters = (uint32_t *)malloc((reptDepth + 1) * sizeof(fileInfo->iters[0]));
+	if (!fileInfo || !fileInfo->iters) {
 		error("Failed to alloc file info for REPT: %s\n", strerror(errno));
 		return false;
 	}
@@ -547,12 +560,13 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	char const *fileName = lexer_GetFileName();
 	size_t len = strlen(fileName);
 	struct Context *context = (struct Context *)malloc(sizeof(*contextStack));
-	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + len + 1);
+	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
 	if (!context)
 		fatalerror("Failed to allocate memory for main context: %s\n", strerror(errno));
-	if (!fileInfo)
+	if (fileInfo)
+		fileInfo->name = (char *)malloc(len + 1);
+	if (!fileInfo || !fileInfo->name)
 		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
 
 	context->fileInfo = (struct FileStackNode *)fileInfo;
@@ -576,7 +590,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 
 	// Check that max recursion depth won't allow overflowing node `malloc`s
 	// This assumes that the rept node is larger
-#define DEPTH_LIMIT ((SIZE_MAX - sizeof(struct FileStackReptNode)) / sizeof(uint32_t))
+#define DEPTH_LIMIT (SIZE_MAX / sizeof(uint32_t))
 	if (maxDepth > DEPTH_LIMIT) {
 		error("Recursion depth may not be higher than %zu, defaulting to "
 		      EXPAND_AND_STR(DEFAULT_MAX_DEPTH) "\n", DEPTH_LIMIT);
