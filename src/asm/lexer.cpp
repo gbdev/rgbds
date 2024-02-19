@@ -308,24 +308,28 @@ struct IfStack {
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
+struct MmappedLexerState {
+	char *ptr; // Technically `const` during the lexer's execution
+	size_t size;
+	size_t offset;
+	bool isReferenced; // If a macro in this file requires not unmapping it
+};
+
+struct BufferedLexerState {
+	int fd;
+	size_t index; // Read index into the buffer
+	char buf[LEXER_BUF_SIZE]; // Circular buffer
+	size_t nbChars; // Number of "fresh" chars in the buffer
+};
+
 struct LexerState {
 	char const *path;
 
 	// mmap()-dependent IO state
 	bool isMmapped;
 	union {
-		struct { // If mmap()ed
-			char *ptr; // Technically `const` during the lexer's execution
-			size_t size;
-			size_t offset;
-			bool isReferenced; // If a macro in this file requires not unmapping it
-		} mmap;
-		struct { // Otherwise
-			int fd;
-			size_t index; // Read index into the buffer
-			char buf[LEXER_BUF_SIZE]; // Circular buffer
-			size_t nbChars; // Number of "fresh" chars in the buffer
-		} cbuf;
+		struct MmappedLexerState mmap; // If mmap()ed
+		struct BufferedLexerState cbuf; // Otherwise
 	};
 
 	// Common state
