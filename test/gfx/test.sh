@@ -17,14 +17,14 @@ RGBGFX=../../rgbgfx
 rc=0
 new_test() {
 	cmdline="$*"
-	echo "$bold${green}Testing: $cmdline$rescolors$resbold" >&2
+	echo "${bold}${green}Testing: ${cmdline}${rescolors}${resbold}" >&2
 }
 test() {
 	eval "$cmdline"
 }
 fail() {
 	rc=1
-	echo "$bold${red}Test $cmdline failed!${1:+ (RC=$1)}$rescolors$resbold"
+	echo "${bold}${red}Test ${cmdline} failed!${1:+ (RC=$1)}${rescolors}${resbold}"
 }
 
 
