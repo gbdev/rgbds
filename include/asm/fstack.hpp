@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 #include "asm/lexer.hpp"
 
@@ -28,9 +29,8 @@ struct FileStackNode {
 
 struct FileStackReptNode { // NODE_REPT
 	struct FileStackNode node;
-	uint32_t reptDepth;
 	// WARNING: if changing this type, change overflow check in `fstk_Init`
-	uint32_t *iters; // REPT iteration counts since last named node, in reverse depth order
+	std::vector<uint32_t> *iters; // REPT iteration counts since last named node, in reverse depth order
 };
 
 struct FileStackNamedNode { // NODE_FILE, NODE_MACRO

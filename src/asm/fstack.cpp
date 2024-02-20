@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <sys/stat.h>
+#include <new>
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -9,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <vector>
 
 #include "asm/fstack.hpp"
 #include "asm/macro.hpp"
@@ -51,8 +53,8 @@ static const char *dumpNodeAndParents(struct FileStackNode const *node)
 
 		name = dumpNodeAndParents(node->parent);
 		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
-		for (uint32_t i = reptInfo->reptDepth; i--; )
-			fprintf(stderr, "::REPT~%" PRIu32, reptInfo->iters[i]);
+		for (uint32_t i = reptInfo->iters->size(); i--; )
+			fprintf(stderr, "::REPT~%" PRIu32, (*reptInfo->iters)[i]);
 	} else {
 		name = ((struct FileStackNamedNode const *)node)->name;
 		if (node->parent) {
@@ -199,17 +201,16 @@ bool yywrap(void)
 
 		// If the node is referenced, we can't edit it; duplicate it
 		if (contextStack->fileInfo->referenced) {
-			size_t size = sizeof(fileInfo->iters[0]) * fileInfo->reptDepth;
 			struct FileStackReptNode *copy = (struct FileStackReptNode *)malloc(sizeof(*copy));
 
 			// Copy all info but the referencing
 			if (copy) {
 				memcpy(copy, fileInfo, sizeof(*copy));
-				copy->iters = (uint32_t *)malloc(size);
+				copy->iters = new(std::nothrow) std::vector<uint32_t>();
 			}
 			if (!copy || !copy->iters)
 				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
-			memcpy(copy->iters, fileInfo->iters, size);
+			*copy->iters = *fileInfo->iters; // Copies `fileInfo->iters`
 			copy->node.next = NULL;
 			copy->node.referenced = false;
 
@@ -218,7 +219,7 @@ bool yywrap(void)
 		}
 
 		// If this is a FOR, update the symbol value
-		if (contextStack->forName && fileInfo->iters[0] <= contextStack->nbReptIters) {
+		if (contextStack->forName && fileInfo->iters->front() <= contextStack->nbReptIters) {
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue = (uint32_t)contextStack->forValue +
 				(uint32_t)contextStack->forStep;
@@ -232,9 +233,9 @@ bool yywrap(void)
 				fatalerror("Failed to update FOR symbol value\n");
 		}
 		// Advance to the next iteration
-		fileInfo->iters[0]++;
+		fileInfo->iters->front()++;
 		// If this wasn't the last iteration, wrap instead of popping
-		if (fileInfo->iters[0] <= contextStack->nbReptIters) {
+		if (fileInfo->iters->front() <= contextStack->nbReptIters) {
 			lexer_RestartRept(contextStack->fileInfo->lineNo);
 			contextStack->uniqueID = macro_UseNewUniqueID();
 			return false;
@@ -258,7 +259,7 @@ bool yywrap(void)
 	// Free the file stack node
 	if (!context->fileInfo->referenced) {
 		if (context->fileInfo->type == NODE_REPT)
-			free(((struct FileStackReptNode *)context->fileInfo)->iters);
+			delete ((struct FileStackReptNode *)context->fileInfo)->iters;
 		else
 			free(((struct FileStackNamedNode *)context->fileInfo)->name);
 		free(context->fileInfo);
@@ -398,7 +399,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
 		// 4294967295 = 2^32 - 1, aka UINT32_MAX
-		reptNameLen += reptNode->reptDepth * strlen("::REPT~4294967295");
+		reptNameLen += reptNode->iters->size() * strlen("::REPT~4294967295");
 		// Look for next named node
 		do {
 			node = node->parent;
@@ -424,8 +425,8 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	if (node->type == NODE_REPT) {
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
-		for (uint32_t i = reptNode->reptDepth; i--; ) {
-			int nbChars = sprintf(dest, "::REPT~%" PRIu32, reptNode->iters[i]);
+		for (uint32_t i = reptNode->iters->size(); i--; ) {
+			int nbChars = sprintf(dest, "::REPT~%" PRIu32, (*reptNode->iters)[i]);
 
 			if (nbChars < 0)
 				fatalerror("Failed to write macro invocation info: %s\n",
@@ -450,24 +451,22 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 {
 	uint32_t reptDepth = contextStack->fileInfo->type == NODE_REPT
-				? ((struct FileStackReptNode *)contextStack->fileInfo)->reptDepth
+				? ((struct FileStackReptNode *)contextStack->fileInfo)->iters->size()
 				: 0;
 	struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)malloc(sizeof(*fileInfo));
 
 	if (fileInfo)
-		fileInfo->iters = (uint32_t *)malloc((reptDepth + 1) * sizeof(fileInfo->iters[0]));
+		fileInfo->iters = new std::vector<uint32_t>();
 	if (!fileInfo || !fileInfo->iters) {
 		error("Failed to alloc file info for REPT: %s\n", strerror(errno));
 		return false;
 	}
 	fileInfo->node.type = NODE_REPT;
-	fileInfo->reptDepth = reptDepth + 1;
-	fileInfo->iters[0] = 1;
-	if (reptDepth)
+	if (reptDepth) {
 		// Copy all parent iter counts
-		memcpy(&fileInfo->iters[1],
-		       ((struct FileStackReptNode *)contextStack->fileInfo)->iters,
-		       reptDepth * sizeof(fileInfo->iters[0]));
+		*fileInfo->iters = *((struct FileStackReptNode *)contextStack->fileInfo)->iters;
+	}
+	fileInfo->iters->insert(fileInfo->iters->begin(), 1);
 
 	newContext((struct FileStackNode *)fileInfo);
 	// Correct our line number, which currently points to the `ENDR` line
