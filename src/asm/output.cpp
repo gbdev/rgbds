@@ -457,7 +457,7 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	putlong(node->lineNo, f);
 	putc(node->type, f);
 	if (node->type != NODE_REPT) {
-		putstring(((struct FileStackNamedNode const *)node)->name, f);
+		putstring(((struct FileStackNamedNode const *)node)->name->c_str(), f);
 	} else {
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 

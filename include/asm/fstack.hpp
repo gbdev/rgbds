@@ -35,7 +35,7 @@ struct FileStackReptNode { // NODE_REPT
 
 struct FileStackNamedNode { // NODE_FILE, NODE_MACRO
 	struct FileStackNode node;
-	char *name; // File name for files, file::macro name for macros
+	std::string *name; // File name for files, file::macro name for macros
 };
 
 #define DEFAULT_MAX_DEPTH 64
