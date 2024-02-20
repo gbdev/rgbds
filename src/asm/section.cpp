@@ -807,12 +807,9 @@ void sect_BinaryFile(char const *s, int32_t startPos)
 	if (!checkcodesection())
 		return;
 
-	char *fullPath = NULL;
-	size_t size = 0;
-	FILE *f = NULL;
+	char *fullPath = fstk_FindFile(s);
+	FILE *f = fullPath ? fopen(fullPath, "rb") : NULL;
 
-	if (fstk_FindFile(s, &fullPath, &size))
-		f = fopen(fullPath, "rb");
 	free(fullPath);
 
 	if (!f) {
@@ -881,12 +878,9 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	if (!reserveSpace(length))
 		return;
 
-	char *fullPath = NULL;
-	size_t size = 0;
-	FILE *f = NULL;
+	char *fullPath = fstk_FindFile(s);
+	FILE *f = fullPath ? fopen(fullPath, "rb") : NULL;
 
-	if (fstk_FindFile(s, &fullPath, &size))
-		f = fopen(fullPath, "rb");
 	free(fullPath);
 
 	if (!f) {

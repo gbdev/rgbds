@@ -159,20 +159,17 @@ static bool isPathValid(char const *path)
 	return !S_ISDIR(statbuf.st_mode);
 }
 
-bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
+char *fstk_FindFile(char const *path)
 {
-	if (!*size) {
-		*size = 64; // This is arbitrary, really
-		*fullPath = (char *)realloc(*fullPath, *size);
-		if (!*fullPath)
-			error("realloc error during include path search: %s\n",
-			      strerror(errno));
-	}
+	size_t size = 64; // This size is arbitrary, really
+	char *fullPath = (char *)malloc(size);
 
-	if (*fullPath) {
+	if (!fullPath) {
+		error("malloc error during include path search: %s\n", strerror(errno));
+	} else {
 		for (size_t i = 0; i <= nbIncPaths; ++i) {
 			char const *incPath = i ? includePaths[i - 1] : "";
-			int len = snprintf(*fullPath, *size, "%s%s", incPath, path);
+			int len = snprintf(fullPath, size, "%s%s", incPath, path);
 
 			if (len < 0) {
 				error("snprintf error during include path search: %s\n",
@@ -181,15 +178,15 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 			}
 
 			// Oh how I wish `asnprintf` was standard...
-			if ((size_t)len >= *size) { // `size` includes the terminator, `len` doesn't
-				*size = len + 1;
-				*fullPath = (char *)realloc(*fullPath, *size);
-				if (!*fullPath) {
+			if ((size_t)len >= size) { // `size` includes the terminator, `len` doesn't
+				size = len + 1;
+				fullPath = (char *)realloc(fullPath, size);
+				if (!fullPath) {
 					error("realloc error during include path search: %s\n",
 					      strerror(errno));
 					break;
 				}
-				len = sprintf(*fullPath, "%s%s", incPath, path);
+				len = sprintf(fullPath, "%s%s", incPath, path);
 				if (len < 0) {
 					error("sprintf error during include path search: %s\n",
 					       strerror(errno));
@@ -197,9 +194,9 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 				}
 			}
 
-			if (isPathValid(*fullPath)) {
-				printDep(*fullPath);
-				return true;
+			if (isPathValid(fullPath)) {
+				printDep(fullPath);
+				return fullPath;
 			}
 		}
 	}
@@ -207,7 +204,7 @@ bool fstk_FindFile(char const *path, char **fullPath, size_t *size)
 	errno = ENOENT;
 	if (generatedMissingIncludes)
 		printDep(path);
-	return false;
+	return NULL;
 }
 
 bool yywrap(void)
@@ -320,11 +317,9 @@ static void newContext(struct FileStackNode *fileInfo)
 
 void fstk_RunInclude(char const *path)
 {
-	char *fullPath = NULL;
-	size_t size = 0;
+	char *fullPath = fstk_FindFile(path);
 
-	if (!fstk_FindFile(path, &fullPath, &size)) {
-		free(fullPath);
+	if (!fullPath) {
 		if (generatedMissingIncludes) {
 			if (verbose)
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n",
@@ -337,7 +332,7 @@ void fstk_RunInclude(char const *path)
 	}
 
 	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + size);
+		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + strlen(fullPath) + 1);
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
@@ -365,17 +360,15 @@ static void runPreIncludeFile(void)
 	if (!preIncludeName)
 		return;
 
-	char *fullPath = NULL;
-	size_t size = 0;
+	char *fullPath = fstk_FindFile(preIncludeName);
 
-	if (!fstk_FindFile(preIncludeName, &fullPath, &size)) {
-		free(fullPath);
+	if (!fullPath) {
 		error("Unable to open included file '%s': %s\n", preIncludeName, strerror(errno));
 		return;
 	}
 
 	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + size);
+		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + strlen(fullPath) + 1);
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));

@@ -52,12 +52,9 @@ void fstk_AddIncludePath(char const *s);
 void fstk_SetPreIncludeFile(char const *s);
 /*
  * @param path The user-provided file name
- * @param fullPath The address of a pointer, which will be made to point at the full path
- *                 The pointer's value must be a valid argument to `realloc`, including NULL
- * @param size Current size of the buffer, or 0 if the pointer is NULL
- * @return True if the file was found, false if no path worked
+ * @return A pointer to the malloc'ed full path, or NULL if no path worked
  */
-bool fstk_FindFile(char const *path, char **fullPath, size_t *size);
+char *fstk_FindFile(char const *path);
 
 bool yywrap(void);
 void fstk_RunInclude(char const *path);
