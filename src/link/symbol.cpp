@@ -1,24 +1,23 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <inttypes.h>
+#include <map>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string>
 
 #include "link/object.hpp"
 #include "link/symbol.hpp"
 #include "link/main.hpp"
 
 #include "error.hpp"
-#include "hashmap.hpp"
 
-HashMap symbols;
+std::map<std::string, struct Symbol *> symbols;
 
 void sym_AddSymbol(struct Symbol *symbol)
 {
 	// Check if the symbol already exists
-	struct Symbol *other = (struct Symbol *)hash_GetElement(symbols, symbol->name);
-
-	if (other) {
+	if (struct Symbol *other = sym_GetSymbol(symbol->name); other) {
 		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name, symbol->objFileName);
 		dumpFileStack(symbol->src);
 		fprintf(stderr, "(%" PRIu32 ") and in %s from ",
@@ -29,15 +28,16 @@ void sym_AddSymbol(struct Symbol *symbol)
 	}
 
 	// If not, add it
-	hash_AddElement(symbols, symbol->name, symbol);
+	symbols[symbol->name] = symbol;
 }
 
 struct Symbol *sym_GetSymbol(char const *name)
 {
-	return (struct Symbol *)hash_GetElement(symbols, name);
+	auto search = symbols.find(name);
+	return search != symbols.end() ? search->second : NULL;
 }
 
 void sym_CleanupSymbols(void)
 {
-	hash_EmptyMap(symbols);
+	symbols.clear();
 }

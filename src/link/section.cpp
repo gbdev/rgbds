@@ -2,36 +2,24 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <map>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 
 #include "link/main.hpp"
 #include "link/section.hpp"
 
 #include "error.hpp"
-#include "hashmap.hpp"
 #include "linkdefs.hpp"
 
-HashMap sections;
+std::map<std::string, struct Section *> sections;
 
-struct ForEachSectionArg {
-	void (*callback)(struct Section *section, void *arg);
-	void *arg;
-};
-
-static void forEach(void *section, void *arg)
+void sect_ForEach(void (*callback)(struct Section *))
 {
-	struct ForEachSectionArg *callbackArg = (struct ForEachSectionArg *)arg;
-
-	callbackArg->callback((struct Section *)section, callbackArg->arg);
-}
-
-void sect_ForEach(void (*callback)(struct Section *, void *), void *arg)
-{
-	struct ForEachSectionArg callbackArg = { .callback = callback, .arg = arg};
-
-	hash_ForEach(sections, forEach, &callbackArg);
+	for (auto &it : sections)
+		callback(it.second);
 }
 
 static void checkSectUnionCompat(struct Section *target, struct Section *other)
@@ -191,9 +179,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 void sect_AddSection(struct Section *section)
 {
 	// Check if the section already exists
-	struct Section *other = (struct Section *)hash_GetElement(sections, section->name);
-
-	if (other) {
+	if (struct Section *other = sect_GetSection(section->name); other) {
 		if (section->modifier != other->modifier)
 			errx("Section \"%s\" defined as %s and %s", section->name,
 			     sectionModNames[section->modifier], sectionModNames[other->modifier]);
@@ -206,21 +192,22 @@ void sect_AddSection(struct Section *section)
 		     section->name, sectionTypeInfo[section->type].name.c_str());
 	} else {
 		// If not, add it
-		hash_AddElement(sections, section->name, section);
+		sections[section->name] = section;
 	}
 }
 
 struct Section *sect_GetSection(char const *name)
 {
-	return (struct Section *)hash_GetElement(sections, name);
+	auto search = sections.find(name);
+	return search != sections.end() ? search->second : NULL;
 }
 
 void sect_CleanupSections(void)
 {
-	hash_EmptyMap(sections);
+	sections.clear();
 }
 
-static void doSanityChecks(struct Section *section, void *)
+static void doSanityChecks(struct Section *section)
 {
 	// Sanity check the section's type
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {
@@ -302,5 +289,5 @@ static void doSanityChecks(struct Section *section, void *)
 
 void sect_DoSanityChecks(void)
 {
-	sect_ForEach(doSanityChecks, NULL);
+	sect_ForEach(doSanityChecks);
 }
