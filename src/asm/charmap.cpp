@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <new>
+#include <stack>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,12 +38,7 @@ static HashMap charmaps;
 // that gets reallocated.
 static struct Charmap **currentCharmap;
 
-struct CharmapStackEntry {
-	struct Charmap **charmap;
-	struct CharmapStackEntry *next;
-};
-
-struct CharmapStackEntry *charmapStack;
+std::stack<struct Charmap **> charmapStack;
 
 static struct Charmap *charmap_Get(char const *name)
 {
@@ -119,29 +115,18 @@ void charmap_Set(char const *name)
 
 void charmap_Push(void)
 {
-	struct CharmapStackEntry *stackEntry = (struct CharmapStackEntry *)malloc(sizeof(*stackEntry));
-
-	if (stackEntry == NULL)
-		fatalerror("Failed to alloc charmap stack entry: %s\n", strerror(errno));
-
-	stackEntry->charmap = currentCharmap;
-	stackEntry->next = charmapStack;
-
-	charmapStack = stackEntry;
+	charmapStack.push(currentCharmap);
 }
 
 void charmap_Pop(void)
 {
-	if (charmapStack == NULL) {
+	if (charmapStack.empty()) {
 		error("No entries in the charmap stack\n");
 		return;
 	}
 
-	struct CharmapStackEntry *top = charmapStack;
-
-	currentCharmap = top->charmap;
-	charmapStack = top->next;
-	free(top);
+	currentCharmap = charmapStack.top();
+	charmapStack.pop();
 }
 
 void charmap_Add(char *mapping, uint8_t value)
