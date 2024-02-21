@@ -34,7 +34,7 @@ static struct FileStackNodes {
 	struct FileStackNode *nodes;
 	uint32_t nbNodes;
 } *nodes;
-static struct Assertion *assertions;
+static std::deque<struct Assertion> assertions;
 
 // Helper functions for reading object files
 
@@ -617,15 +617,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
-		struct Assertion *assertion = (struct Assertion *)malloc(sizeof(*assertion));
+		struct Assertion &assertion = assertions.emplace_front();
 
-		if (!assertion)
-			err("%s: Failed to create new assertion", fileName);
-		readAssertion(file, assertion, fileName, i, nodes[fileID].nodes);
-		linkPatchToPCSect(&assertion->patch, fileSections);
-		assertion->fileSymbols = fileSymbols;
-		assertion->next = assertions;
-		assertions = assertion;
+		readAssertion(file, &assertion, fileName, i, nodes[fileID].nodes);
+		linkPatchToPCSect(&assertion.patch, fileSections);
+		assertion.fileSymbols = fileSymbols;
 	}
 
 	free(fileSections);
@@ -705,5 +701,10 @@ void obj_Cleanup(void)
 		for (size_t i = 0; i < list.nbSymbols; i++)
 			freeSymbol(list.symbolList[i]);
 		free(list.symbolList);
+	}
+
+	for (struct Assertion &assert : assertions) {
+		free(assert.patch.rpnExpression);
+		free(assert.message);
 	}
 }
