@@ -2,7 +2,9 @@
 
 // Outputs an objectfile
 
+#include <algorithm>
 #include <assert.h>
+#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -44,7 +46,7 @@ struct Assertion {
 
 const char *objectName;
 
-struct Section *sectionList;
+std::deque<struct Section *> sectionList;
 
 // Linked list of symbols to put in the object file
 static struct Symbol *objectSymbols = NULL;
@@ -54,17 +56,6 @@ static uint32_t nbSymbols = 0; // Length of the above list
 static struct Assertion *assertions = NULL;
 
 static struct FileStackNode *fileStackNodes = NULL;
-
-// Count the number of sections used in this object
-static uint32_t countSections(void)
-{
-	uint32_t count = 0;
-
-	for (struct Section const *sect = sectionList; sect; sect = sect->next)
-		count++;
-
-	return count;
-}
 
 // Count the number of patches used in this object
 static uint32_t countPatches(struct Section const *sect)
@@ -154,17 +145,12 @@ This is code intended to replace a node, which is pretty useless until ref count
 // Return a section's ID
 static uint32_t getsectid(struct Section const *sect)
 {
-	struct Section const *sec = sectionList;
-	uint32_t ID = 0;
+	auto search = std::find(RANGE(sectionList), sect);
 
-	while (sec) {
-		if (sec == sect)
-			return ID;
-		ID++;
-		sec = sec->next;
-	}
+	if (search == sectionList.end())
+		fatalerror("Unknown section '%s'\n", sect->name);
 
-	fatalerror("Unknown section '%s'\n", sect->name);
+	return search - sectionList.begin();
 }
 
 static uint32_t getSectIDIfAny(struct Section const *sect)
@@ -497,7 +483,7 @@ void out_WriteObject(void)
 	putlong(RGBDS_OBJECT_REV, f);
 
 	putlong(nbSymbols, f);
-	putlong(countSections(), f);
+	putlong(sectionList.size(), f);
 
 	putlong(getNbFileStackNodes(), f);
 	for (struct FileStackNode const *node = fileStackNodes; node; node = node->next) {
@@ -511,7 +497,7 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
 		writesymbol(sym, f);
 
-	for (struct Section *sect = sectionList; sect; sect = sect->next) {
+	for (struct Section *sect : sectionList) {
 		writesection(sect, f);
 		freesection(sect);
 	}
