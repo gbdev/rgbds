@@ -16,11 +16,6 @@
 struct FileStackNode;
 struct Section;
 
-struct AttachedSymbol {
-	struct Symbol *symbol;
-	struct AttachedSymbol *next;
-};
-
 struct Patch {
 	struct FileStackNode const *src;
 	uint32_t lineNo;
