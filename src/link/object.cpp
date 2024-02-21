@@ -472,7 +472,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		// object file. It's better than nothing.
 		nodes[fileID].nbNodes = 1;
 		nodes[fileID].nodes =
-			(struct FileStackNode *)malloc(sizeof(nodes[fileID].nodes[0]) * nodes[fileID].nbNodes);
+			(struct FileStackNode *)calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
 		if (!nodes[fileID].nodes)
 			err("Failed to get memory for %s's nodes", fileName);
 		struct FileStackNode *where = &nodes[fileID].nodes[0];
@@ -653,15 +653,17 @@ void obj_Setup(unsigned int nbFiles)
 
 	if (nbFiles > SIZE_MAX / sizeof(*nodes))
 		fatal(NULL, 0, "Impossible to link more than %zu files!", SIZE_MAX / sizeof(*nodes));
-	nodes = (struct FileStackNodes *)malloc(sizeof(*nodes) * nbFiles);
+	nodes = (struct FileStackNodes *)calloc(nbFiles, sizeof(*nodes));
 }
 
 static void freeNode(struct FileStackNode *node)
 {
-	if (node->type == NODE_REPT)
-		free(node->rept.iters);
-	else
-		free(node->name);
+	if (node) {
+		if (node->type == NODE_REPT)
+			free(node->rept.iters);
+		else
+			free(node->name);
+	}
 }
 
 static void freeSection(struct Section *section)
