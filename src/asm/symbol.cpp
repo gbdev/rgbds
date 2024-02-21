@@ -137,7 +137,6 @@ static struct Symbol *createsymbol(char const *symName)
 	sym->section = NULL;
 	setSymbolFilename(sym);
 	sym->ID = -1;
-	sym->next = NULL;
 
 	hash_AddElement(symbols, sym->name, sym);
 	return sym;
