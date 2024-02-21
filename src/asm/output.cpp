@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
@@ -48,10 +49,8 @@ const char *objectName;
 
 std::deque<struct Section *> sectionList;
 
-// Linked list of symbols to put in the object file
-static struct Symbol *objectSymbols = NULL;
-static struct Symbol **objectSymbolsTail = &objectSymbols;
-static uint32_t nbSymbols = 0; // Length of the above list
+// List of symbols to put in the object file
+static std::vector<struct Symbol *> objectSymbols;
 
 static struct Assertion *assertions = NULL;
 
@@ -233,13 +232,9 @@ static void writesymbol(struct Symbol const *sym, FILE *f)
 
 static void registerSymbol(struct Symbol *sym)
 {
-	*objectSymbolsTail = sym;
-	objectSymbolsTail = &sym->next;
+	sym->ID = objectSymbols.size();
+	objectSymbols.push_back(sym);
 	out_RegisterNode(sym->src);
-	if (nbSymbols == (uint32_t)-1)
-		fatalerror("Registered too many symbols (%" PRIu32
-			   "); try splitting up your files\n", (uint32_t)-1);
-	sym->ID = nbSymbols++;
 }
 
 // Returns a symbol's ID within the object file
@@ -482,7 +477,7 @@ void out_WriteObject(void)
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING);
 	putlong(RGBDS_OBJECT_REV, f);
 
-	putlong(nbSymbols, f);
+	putlong(objectSymbols.size(), f);
 	putlong(sectionList.size(), f);
 
 	putlong(getNbFileStackNodes(), f);
@@ -494,7 +489,7 @@ void out_WriteObject(void)
 				   node->next->ID, node->ID);
 	}
 
-	for (struct Symbol const *sym = objectSymbols; sym; sym = sym->next)
+	for (struct Symbol const *sym : objectSymbols)
 		writesymbol(sym, f);
 
 	for (struct Section *sect : sectionList) {
