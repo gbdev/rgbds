@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <algorithm>
 #include <assert.h>
 #include <deque>
 #include <inttypes.h>
@@ -7,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "link/output.hpp"
 #include "link/main.hpp"
@@ -29,7 +31,6 @@ FILE *mapFile;
 
 struct SortedSymbol {
 	struct Symbol const *sym;
-	uint32_t idx;
 	uint16_t addr;
 };
 
@@ -285,18 +286,15 @@ static void printSymName(char const *name)
 	}
 }
 
-// Comparator function for `qsort` to sort symbols
-// Symbols are ordered by address, then by parentage, or else by original index for a stable sort
-static int compareSymbols(void const *a, void const *b)
+// Comparator function for `std::stable_sort` to sort symbols
+// Symbols are ordered by address, then by parentage
+static int compareSymbols(struct SortedSymbol const &sym1, struct SortedSymbol const &sym2)
 {
-	struct SortedSymbol const *sym1 = (struct SortedSymbol const *)a;
-	struct SortedSymbol const *sym2 = (struct SortedSymbol const *)b;
+	if (sym1.addr != sym2.addr)
+		return sym1.addr < sym2.addr ? -1 : 1;
 
-	if (sym1->addr != sym2->addr)
-		return sym1->addr < sym2->addr ? -1 : 1;
-
-	char const *sym1_name = sym1->sym->name;
-	char const *sym2_name = sym2->sym->name;
+	char const *sym1_name = sym1.sym->name;
+	char const *sym2_name = sym2.sym->name;
 	bool sym1_local = strchr(sym1_name, '.');
 	bool sym2_local = strchr(sym2_name, '.');
 
@@ -313,7 +311,7 @@ static int compareSymbols(void const *a, void const *b)
 		return sym1_local ? -1 : 1;
 	}
 
-	return sym1->idx < sym2->idx ? -1 : sym1->idx > sym2->idx ? 1 : 0;
+	return 0;
 }
 
 /*
@@ -343,40 +341,31 @@ static void writeSymBank(struct SortedSections const &bankSections,
 	if (!nbSymbols)
 		return;
 
-	struct SortedSymbol *symList = (struct SortedSymbol *)malloc(sizeof(*symList) * nbSymbols);
+	std::vector<struct SortedSymbol> symList;
 
-	if (!symList)
-		err("Failed to allocate symbol list");
-
-	nbSymbols = 0;
+	symList.reserve(nbSymbols);
 
 	forEachSortedSection(sect, {
 		for (uint32_t i = 0; i < sect->nbSymbols; i++) {
-			if (!canStartSymName(sect->symbols[i]->name[0]))
-				// Don't output symbols that begin with an illegal character
-				continue;
-			symList[nbSymbols].idx = nbSymbols;
-			symList[nbSymbols].sym = sect->symbols[i];
-			symList[nbSymbols].addr = symList[nbSymbols].sym->offset + sect->org;
-			nbSymbols++;
+			struct Symbol const *sym = sect->symbols[i];
+
+			// Don't output symbols that begin with an illegal character
+			if (canStartSymName(sym->name[0]))
+				symList.push_back({ .sym = sym, .addr = (uint16_t)(sym->offset + sect->org) });
 		}
 	});
 
 #undef forEachSortedSection
 
-	qsort(symList, nbSymbols, sizeof(*symList), compareSymbols);
+	std::stable_sort(RANGE(symList), compareSymbols);
 
 	uint32_t symBank = bank + sectionTypeInfo[type].firstBank;
 
-	for (uint32_t i = 0; i < nbSymbols; i++) {
-		struct SortedSymbol *sym = &symList[i];
-
-		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym->addr);
-		printSymName(sym->sym->name);
+	for (struct SortedSymbol &sym : symList) {
+		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym.addr);
+		printSymName(sym.sym->name);
 		putc('\n', symFile);
 	}
-
-	free(symList);
 }
 
 static void writeEmptySpace(uint16_t begin, uint16_t end)
