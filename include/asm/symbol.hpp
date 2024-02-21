@@ -51,7 +51,6 @@ struct Symbol {
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
-	struct Symbol *next; // Next object to output in the object file
 };
 
 bool sym_IsPC(struct Symbol const *sym);
