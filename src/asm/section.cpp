@@ -38,11 +38,10 @@ struct SectionStackEntry {
 	uint32_t offset;
 	int32_t loadOffset;
 	std::stack<struct UnionStackEntry> *unionStack;
-	struct SectionStackEntry *next;
 };
 
 std::stack<struct UnionStackEntry> *currentUnionStack = NULL;
-struct SectionStackEntry *sectionStack;
+std::deque<struct SectionStackEntry> sectionStack;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
@@ -395,8 +394,8 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
-	for (struct SectionStackEntry *stack = sectionStack; stack; stack = stack->next) {
-		if (stack->section && !strcmp(name, stack->section->name))
+	for (struct SectionStackEntry &entry : sectionStack) {
+		if (entry.section && !strcmp(name, entry.section->name))
 			fatalerror("Section '%s' is already on the stack\n", name);
 	}
 
@@ -948,18 +947,14 @@ cleanup:
 // Section stack routines
 void sect_PushSection(void)
 {
-	struct SectionStackEntry *entry = (struct SectionStackEntry *)malloc(sizeof(*entry));
-
-	if (entry == NULL)
-		fatalerror("No memory for section stack: %s\n", strerror(errno));
-	entry->section = currentSection;
-	entry->loadSection = currentLoadSection;
-	entry->scope = sym_GetCurrentSymbolScope();
-	entry->offset = curOffset;
-	entry->loadOffset = loadOffset;
-	entry->unionStack = currentUnionStack;
-	entry->next = sectionStack;
-	sectionStack = entry;
+	sectionStack.push_front({
+		.section = currentSection,
+		.loadSection = currentLoadSection,
+		.scope = sym_GetCurrentSymbolScope(),
+		.offset = curOffset,
+		.loadOffset = loadOffset,
+		.unionStack = currentUnionStack,
+	});
 
 	// Reset the section scope
 	currentSection = NULL;
@@ -970,25 +965,23 @@ void sect_PushSection(void)
 
 void sect_PopSection(void)
 {
-	if (!sectionStack)
+	if (sectionStack.empty())
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
-	struct SectionStackEntry *entry = sectionStack;
+	struct SectionStackEntry entry = sectionStack.front();
+	sectionStack.pop_front();
 
 	changeSection();
-	currentSection = entry->section;
-	currentLoadSection = entry->loadSection;
-	sym_SetCurrentSymbolScope(entry->scope);
-	curOffset = entry->offset;
-	loadOffset = entry->loadOffset;
+	currentSection = entry.section;
+	currentLoadSection = entry.loadSection;
+	sym_SetCurrentSymbolScope(entry.scope);
+	curOffset = entry.offset;
+	loadOffset = entry.loadOffset;
 	delete currentUnionStack;
-	currentUnionStack = entry->unionStack;
-
-	sectionStack = entry->next;
-	free(entry);
+	currentUnionStack = entry.unionStack;
 }
 
 void sect_EndSection(void)
@@ -1018,8 +1011,8 @@ bool sect_IsSizeKnown(struct Section const NONNULL(sect))
 		return false;
 
 	// Any section on the stack is still growing
-	for (struct SectionStackEntry *stack = sectionStack; stack; stack = stack->next) {
-		if (stack->section && !strcmp(sect->name, stack->section->name))
+	for (struct SectionStackEntry &entry : sectionStack) {
+		if (entry.section && !strcmp(sect->name, entry.section->name))
 			return false;
 	}
 
