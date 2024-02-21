@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <new>
+#include <stack>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -28,8 +29,7 @@ uint8_t fillByte;
 struct UnionStackEntry {
 	uint32_t start;
 	uint32_t size;
-	struct UnionStackEntry *next;
-} *unionStack = NULL;
+};
 
 struct SectionStackEntry {
 	struct Section *section;
@@ -37,10 +37,11 @@ struct SectionStackEntry {
 	char const *scope; // Section's symbol scope
 	uint32_t offset;
 	int32_t loadOffset;
-	struct UnionStackEntry *unionStack;
+	std::stack<struct UnionStackEntry> *unionStack;
 	struct SectionStackEntry *next;
 };
 
+std::stack<struct UnionStackEntry> *currentUnionStack = NULL;
 struct SectionStackEntry *sectionStack;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 struct Section *currentSection = NULL;
@@ -381,7 +382,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 // Set the current section
 static void changeSection(void)
 {
-	if (unionStack)
+	if (currentUnionStack && !currentUnionStack->empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
 	sym_SetCurrentSymbolScope(NULL);
@@ -574,28 +575,28 @@ void sect_StartUnion(void)
 		error("Cannot use UNION inside of ROM0 or ROMX sections\n");
 		return;
 	}
-	struct UnionStackEntry *entry = (struct UnionStackEntry *)malloc(sizeof(*entry));
 
-	if (!entry)
-		fatalerror("Failed to allocate new union stack entry: %s\n", strerror(errno));
-	entry->start = curOffset;
-	entry->size = 0;
-	entry->next = unionStack;
-	unionStack = entry;
+	if (!currentUnionStack)
+		currentUnionStack = new(std::nothrow) std::stack<struct UnionStackEntry>();
+	if (!currentUnionStack)
+		fatalerror("No memory for union stack: %s\n", strerror(errno));
+
+	currentUnionStack->push({ .start = curOffset, .size = 0 });
 }
 
 static void endUnionMember(void)
 {
-	uint32_t memberSize = curOffset - unionStack->start;
+	struct UnionStackEntry &member = currentUnionStack->top();
+	uint32_t memberSize = curOffset - member.start;
 
-	if (memberSize > unionStack->size)
-		unionStack->size = memberSize;
-	curOffset = unionStack->start;
+	if (memberSize > member.size)
+		member.size = memberSize;
+	curOffset = member.start;
 }
 
 void sect_NextUnionMember(void)
 {
-	if (!unionStack) {
+	if (!currentUnionStack || currentUnionStack->empty()) {
 		error("Found NEXTU outside of a UNION construct\n");
 		return;
 	}
@@ -604,22 +605,21 @@ void sect_NextUnionMember(void)
 
 void sect_EndUnion(void)
 {
-	if (!unionStack) {
+	if (!currentUnionStack || currentUnionStack->empty()) {
 		error("Found ENDU outside of a UNION construct\n");
 		return;
 	}
 	endUnionMember();
-	curOffset += unionStack->size;
-	struct UnionStackEntry *next = unionStack->next;
-
-	free(unionStack);
-	unionStack = next;
+	curOffset += currentUnionStack->top().size;
+	currentUnionStack->pop();
 }
 
 void sect_CheckUnionClosed(void)
 {
-	if (unionStack)
+	if (currentUnionStack && !currentUnionStack->empty())
 		error("Unterminated UNION construct\n");
+	if (currentUnionStack)
+		delete currentUnionStack;
 }
 
 // Output an absolute byte
@@ -945,13 +945,13 @@ void sect_PushSection(void)
 	struct SectionStackEntry *entry = (struct SectionStackEntry *)malloc(sizeof(*entry));
 
 	if (entry == NULL)
-		fatalerror("No memory for section stack: %s\n",  strerror(errno));
+		fatalerror("No memory for section stack: %s\n", strerror(errno));
 	entry->section = currentSection;
 	entry->loadSection = currentLoadSection;
 	entry->scope = sym_GetCurrentSymbolScope();
 	entry->offset = curOffset;
 	entry->loadOffset = loadOffset;
-	entry->unionStack = unionStack;
+	entry->unionStack = currentUnionStack;
 	entry->next = sectionStack;
 	sectionStack = entry;
 
@@ -959,7 +959,7 @@ void sect_PushSection(void)
 	currentSection = NULL;
 	currentLoadSection = NULL;
 	sym_SetCurrentSymbolScope(NULL);
-	unionStack = NULL;
+	currentUnionStack = NULL;
 }
 
 void sect_PopSection(void)
@@ -978,7 +978,8 @@ void sect_PopSection(void)
 	sym_SetCurrentSymbolScope(entry->scope);
 	curOffset = entry->offset;
 	loadOffset = entry->loadOffset;
-	unionStack = entry->unionStack;
+	delete currentUnionStack;
+	currentUnionStack = entry->unionStack;
 
 	sectionStack = entry->next;
 	free(entry);
@@ -992,7 +993,7 @@ void sect_EndSection(void)
 	if (currentLoadSection)
 		fatalerror("Cannot end the section within a `LOAD` block\n");
 
-	if (unionStack)
+	if (currentUnionStack && !currentUnionStack->empty())
 		fatalerror("Cannot end the section within a UNION\n");
 
 	// Reset the section scope
