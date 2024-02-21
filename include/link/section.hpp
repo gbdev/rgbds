@@ -57,12 +57,9 @@ struct Section {
 /*
  * Execute a callback for each section currently registered.
  * This is to avoid exposing the data structure in which sections are stored.
- * @param callback The function to call for each structure;
- *                 the first argument will be a pointer to the structure,
- *                 the second argument will be the pointer `arg`.
- * @param arg A pointer which will be passed to all calls to `callback`.
+ * @param callback The function to call for each structure.
  */
-void sect_ForEach(void (*callback)(struct Section *, void *), void *arg);
+void sect_ForEach(void (*callback)(struct Section *));
 
 /*
  * Registers a section to be processed.

@@ -661,7 +661,7 @@ static void freeNode(struct FileStackNode *node)
 	}
 }
 
-static void freeSection(struct Section *section, void *)
+static void freeSection(struct Section *section)
 {
 	do {
 		struct Section *next = section->nextu;
@@ -698,7 +698,7 @@ void obj_Cleanup(void)
 
 	sym_CleanupSymbols();
 
-	sect_ForEach(freeSection, NULL);
+	sect_ForEach(freeSection);
 	sect_CleanupSections();
 
 	for (struct SymbolList &list : symbolLists) {
