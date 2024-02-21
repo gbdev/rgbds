@@ -3,6 +3,7 @@
 #ifndef RGBDS_ASM_OUTPUT_H
 #define RGBDS_ASM_OUTPUT_H
 
+#include <deque>
 #include <stdint.h>
 
 #include "linkdefs.hpp"
@@ -11,7 +12,7 @@ struct Expression;
 struct FileStackNode;
 
 extern const char *objectName;
-extern struct Section *sectionList;
+extern std::deque<struct Section *> sectionList;
 
 void out_RegisterNode(struct FileStackNode *node);
 void out_ReplaceNode(struct FileStackNode *node);
