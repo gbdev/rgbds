@@ -7,8 +7,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <math.h>
 #include <limits.h>
+#include <math.h>
+#include <new>
+#include <stack>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -301,8 +303,7 @@ struct Expansion {
 	bool owned; // Whether or not to free contents when this expansion is freed
 };
 
-struct IfStack {
-	struct IfStack *next;
+struct IfStackEntry {
 	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
@@ -340,7 +341,7 @@ struct LexerState {
 	uint32_t colNo;
 	int lastToken;
 
-	struct IfStack *ifStack;
+	std::stack<struct IfStackEntry> *ifStack;
 
 	bool capturing; // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
@@ -363,7 +364,9 @@ static void initState(struct LexerState *state)
 	state->atLineStart = true; // yylex() will init colNo due to this
 	state->lastToken = T_EOF;
 
-	state->ifStack = NULL;
+	state->ifStack = new(std::nothrow) std::stack<struct IfStackEntry>();
+	if (!state->ifStack)
+		fatalerror("Unable to allocate new IF stack: %s\n", strerror(errno));
 
 	state->capturing = false;
 	state->captureBuf = NULL;
@@ -383,58 +386,40 @@ static void nextLine(void)
 
 uint32_t lexer_GetIFDepth(void)
 {
-	uint32_t depth = 0;
-
-	for (struct IfStack *stack = lexerState->ifStack; stack != NULL; stack = stack->next)
-		depth++;
-
-	return depth;
+	return lexerState->ifStack->size();
 }
 
 void lexer_IncIFDepth(void)
 {
-	struct IfStack *ifStack = (struct IfStack *)malloc(sizeof(*ifStack));
-
-	if (!ifStack)
-		fatalerror("Unable to allocate new IF depth: %s\n", strerror(errno));
-
-	ifStack->ranIfBlock = false;
-	ifStack->reachedElseBlock = false;
-	ifStack->next = lexerState->ifStack;
-
-	lexerState->ifStack = ifStack;
+	lexerState->ifStack->push({ .ranIfBlock = false, .reachedElseBlock = false });
 }
 
 void lexer_DecIFDepth(void)
 {
-	if (!lexerState->ifStack)
+	if (lexerState->ifStack->empty())
 		fatalerror("Found ENDC outside an IF construct\n");
 
-	struct IfStack *top = lexerState->ifStack->next;
-
-	free(lexerState->ifStack);
-
-	lexerState->ifStack = top;
+	lexerState->ifStack->pop();
 }
 
 bool lexer_RanIFBlock(void)
 {
-	return lexerState->ifStack->ranIfBlock;
+	return lexerState->ifStack->top().ranIfBlock;
 }
 
 bool lexer_ReachedELSEBlock(void)
 {
-	return lexerState->ifStack->reachedElseBlock;
+	return lexerState->ifStack->top().reachedElseBlock;
 }
 
 void lexer_RunIFBlock(void)
 {
-	lexerState->ifStack->ranIfBlock = true;
+	lexerState->ifStack->top().ranIfBlock = true;
 }
 
 void lexer_ReachELSEBlock(void)
 {
-	lexerState->ifStack->reachedElseBlock = true;
+	lexerState->ifStack->top().reachedElseBlock = true;
 }
 
 struct LexerState *lexer_OpenFile(char const *path)
@@ -558,6 +543,7 @@ void lexer_DeleteState(struct LexerState *state)
 		close(state->cbuf.fd);
 	else if (state->isFile && !state->mmap.isReferenced)
 		munmap(state->mmap.ptr, state->mmap.size);
+	delete state->ifStack;
 	free(state);
 }
 
