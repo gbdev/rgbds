@@ -223,7 +223,6 @@ void sect_CleanupSections(void)
 static void doSanityChecks(struct Section *section, void *)
 {
 	// Sanity check the section's type
-
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {
 		error(NULL, 0, "Section \"%s\" has an invalid type", section->name);
 		return;
@@ -299,8 +298,6 @@ static void doSanityChecks(struct Section *section, void *)
 			      section->name, section->org + section->size,
 			      endaddr(section->type) + 1);
 	}
-
-#undef fail
 }
 
 void sect_DoSanityChecks(void)
