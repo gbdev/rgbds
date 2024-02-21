@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -21,11 +22,12 @@
 #include "linkdefs.hpp"
 #include "version.hpp"
 
-static struct SymbolList {
+struct SymbolList {
 	size_t nbSymbols;
 	struct Symbol **symbolList;
-	struct SymbolList *next;
-} *symbolLists;
+};
+
+static std::deque<struct SymbolList> symbolLists;
 
 unsigned int nbObjFiles;
 static struct FileStackNodes {
@@ -472,7 +474,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		// object file. It's better than nothing.
 		nodes[fileID].nbNodes = 1;
 		nodes[fileID].nodes =
-			(struct FileStackNode *)malloc(sizeof(nodes[fileID].nodes[0]) * nodes[fileID].nbNodes);
+			(struct FileStackNode *)calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
 		if (!nodes[fileID].nodes)
 			err("Failed to get memory for %s's nodes", fileName);
 		struct FileStackNode *where = &nodes[fileID].nodes[0];
@@ -530,14 +532,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	if (!fileSymbols)
 		err("Failed to get memory for %s's symbols", fileName);
 
-	struct SymbolList *symbolList = (struct SymbolList *)malloc(sizeof(*symbolList));
-
-	if (!symbolList)
-		err("Failed to register %s's symbol list", fileName);
-	symbolList->symbolList = fileSymbols;
-	symbolList->nbSymbols = nbSymbols;
-	symbolList->next = symbolLists;
-	symbolLists = symbolList;
+	symbolLists.push_front({ .nbSymbols = nbSymbols, .symbolList = fileSymbols });
 
 	uint32_t *nbSymPerSect = (uint32_t *)calloc(nbSections ? nbSections : 1,
 					sizeof(*nbSymPerSect));
@@ -653,15 +648,17 @@ void obj_Setup(unsigned int nbFiles)
 
 	if (nbFiles > SIZE_MAX / sizeof(*nodes))
 		fatal(NULL, 0, "Impossible to link more than %zu files!", SIZE_MAX / sizeof(*nodes));
-	nodes = (struct FileStackNodes *)malloc(sizeof(*nodes) * nbFiles);
+	nodes = (struct FileStackNodes *)calloc(nbFiles, sizeof(*nodes));
 }
 
 static void freeNode(struct FileStackNode *node)
 {
-	if (node->type == NODE_REPT)
-		free(node->rept.iters);
-	else
-		free(node->name);
+	if (node) {
+		if (node->type == NODE_REPT)
+			free(node->rept.iters);
+		else
+			free(node->name);
+	}
 }
 
 static void freeSection(struct Section *section, void *)
@@ -704,12 +701,9 @@ void obj_Cleanup(void)
 	sect_ForEach(freeSection, NULL);
 	sect_CleanupSections();
 
-	for (struct SymbolList *list = symbolLists, *next; list; list = next) {
-		next = list->next;
-
-		for (size_t i = 0; i < list->nbSymbols; i++)
-			freeSymbol(list->symbolList[i]);
-		free(list->symbolList);
-		free(list);
+	for (struct SymbolList &list : symbolLists) {
+		for (size_t i = 0; i < list.nbSymbols; i++)
+			freeSymbol(list.symbolList[i]);
+		free(list.symbolList);
 	}
 }

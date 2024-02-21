@@ -428,6 +428,10 @@ int main(int argc, char *argv[])
 	if (isDmgMode)
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
 
+	// Do cleanup before quitting, though.
+	// Mostly here to please tools such as `valgrind` so actual errors can be seen
+	atexit(obj_Cleanup);
+
 	// Read all object files first,
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
@@ -456,8 +460,4 @@ int main(int argc, char *argv[])
 	if (nbErrors != 0)
 		reportErrors();
 	out_WriteFiles();
-
-	// Do cleanup before quitting, though.
-	// Mostly here to please tools such as `valgrind` so actual errors can be seen
-	obj_Cleanup();
 }
