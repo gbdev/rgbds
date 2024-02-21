@@ -344,9 +344,8 @@ static struct UnassignedSection *sections;
  * Categorize a section depending on how constrained it is
  * This is so the most-constrained sections are placed first
  * @param section The section to categorize
- * @param arg Callback arg, unused
  */
-static void categorizeSection(struct Section *section, void *)
+static void categorizeSection(struct Section *section)
 {
 	uint8_t constraints = 0;
 
@@ -385,7 +384,7 @@ void assign_AssignSections(void)
 	initFreeSpace();
 
 	nbSectionsToAssign = 0;
-	sect_ForEach(categorizeSection, NULL);
+	sect_ForEach(categorizeSection);
 
 	// Place sections, starting with the most constrained
 

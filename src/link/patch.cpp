@@ -556,9 +556,8 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 /*
  * Applies all of a section's patches, iterating over "components" of unionized sections
  * @param section The section to patch
- * @param arg Ignored callback arg
  */
-static void applyPatches(struct Section *section, void *)
+static void applyPatches(struct Section *section)
 {
 	if (!sect_HasData(section->type))
 		return;
@@ -570,7 +569,7 @@ static void applyPatches(struct Section *section, void *)
 void patch_ApplyPatches(void)
 {
 	initRPNStack();
-	sect_ForEach(applyPatches, NULL);
+	sect_ForEach(applyPatches);
 	freeRPNStack();
 }
 
