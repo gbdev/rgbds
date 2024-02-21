@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <assert.h>
+#include <deque>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -26,11 +27,6 @@ FILE *overlayFile;
 FILE *symFile;
 FILE *mapFile;
 
-struct SortedSection {
-	struct Section const *section;
-	struct SortedSection *next;
-};
-
 struct SortedSymbol {
 	struct Symbol const *sym;
 	uint32_t idx;
@@ -38,14 +34,11 @@ struct SortedSymbol {
 };
 
 struct SortedSections {
-	struct SortedSection *sections;
-	struct SortedSection *zeroLenSections;
+	std::deque<struct Section const *> sections;
+	std::deque<struct Section const *> zeroLenSections;
 };
 
-static struct {
-	uint32_t nbBanks; // Size of the array below (which may be NULL if this is 0)
-	struct SortedSections *banks;
-} sections[SECTTYPE_INVALID];
+static std::deque<struct SortedSections> sections[SECTTYPE_INVALID];
 
 // Defines the order in which types are output to the sym and map files
 static enum SectionType typeMap[SECTTYPE_INVALID] = {
@@ -80,46 +73,27 @@ void out_AddSection(struct Section const *section)
 		     section->name, section->bank,
 		     maxNbBanks[section->type] - 1);
 
-	if (minNbBanks > sections[section->type].nbBanks) {
-		sections[section->type].banks =
-			(struct SortedSections *)realloc(sections[section->type].banks,
-				sizeof(*sections[0].banks) * minNbBanks);
-		for (uint32_t i = sections[section->type].nbBanks; i < minNbBanks; i++) {
-			sections[section->type].banks[i].sections = NULL;
-			sections[section->type].banks[i].zeroLenSections = NULL;
-		}
-		sections[section->type].nbBanks = minNbBanks;
-	}
-	if (!sections[section->type].banks)
-		err("Failed to realloc banks");
+	for (uint32_t i = sections[section->type].size(); i < minNbBanks; i++)
+		sections[section->type].emplace_back();
 
-	struct SortedSection *newSection = (struct SortedSection *)malloc(sizeof(*newSection));
-	struct SortedSection **ptr = section->size
-		? &sections[section->type].banks[targetBank].sections
-		: &sections[section->type].banks[targetBank].zeroLenSections;
+	std::deque<struct Section const *> *ptr = section->size
+		? &sections[section->type][targetBank].sections
+		: &sections[section->type][targetBank].zeroLenSections;
+	auto pos = ptr->begin();
 
-	if (!newSection)
-		err("Failed to add new section \"%s\"", section->name);
-	newSection->section = section;
+	while (pos != ptr->end() && (*pos)->org < section->org)
+		pos++;
 
-	while (*ptr && (*ptr)->section->org < section->org)
-		ptr = &(*ptr)->next;
-
-	newSection->next = *ptr;
-	*ptr = newSection;
+	ptr->insert(pos, section);
 }
 
 struct Section const *out_OverlappingSection(struct Section const *section)
 {
-	struct SortedSections *banks = sections[section->type].banks;
-	struct SortedSection *ptr =
-		banks[section->bank - sectionTypeInfo[section->type].firstBank].sections;
+	uint32_t bank = section->bank - sectionTypeInfo[section->type].firstBank;
 
-	while (ptr) {
-		if (ptr->section->org < section->org + section->size
-		 && section->org < ptr->section->org + ptr->section->size)
-			return ptr->section;
-		ptr = ptr->next;
+	for (struct Section const *ptr : sections[section->type][bank].sections) {
+		if (ptr->org < section->org + section->size && section->org < ptr->org + ptr->size)
+			return ptr;
 	}
 	return NULL;
 }
@@ -158,8 +132,8 @@ static uint32_t checkOverlaySize(void)
 }
 
 /*
- * Expand sections[SECTTYPE_ROMX].banks to cover all the overlay banks.
- * This ensures that writeROM will output each bank, even if some are not
+ * Expand `sections[SECTTYPE_ROMX]` to cover all the overlay banks.
+ * This ensures that `writeROM` will output each bank, even if some are not
  * covered by any sections.
  * @param nbOverlayBanks The number of banks in the overlay file
  */
@@ -168,21 +142,13 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks)
 	// 2 if is32kMode, 1 otherwise
 	uint32_t nbRom0Banks = sectionTypeInfo[SECTTYPE_ROM0].size / BANK_SIZE;
 	// Discount ROM0 banks to avoid outputting too much
-	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].nbBanks
+	uint32_t nbUncoveredBanks = nbOverlayBanks - nbRom0Banks > sections[SECTTYPE_ROMX].size()
 				    ? nbOverlayBanks - nbRom0Banks
 				    : 0;
 
-	if (nbUncoveredBanks > sections[SECTTYPE_ROMX].nbBanks) {
-		sections[SECTTYPE_ROMX].banks =
-			(struct SortedSections *)realloc(sections[SECTTYPE_ROMX].banks,
-				sizeof(*sections[SECTTYPE_ROMX].banks) * nbUncoveredBanks);
-		if (!sections[SECTTYPE_ROMX].banks)
-			err("Failed to realloc banks for overlay");
-		for (uint32_t i = sections[SECTTYPE_ROMX].nbBanks; i < nbUncoveredBanks; i++) {
-			sections[SECTTYPE_ROMX].banks[i].sections = NULL;
-			sections[SECTTYPE_ROMX].banks[i].zeroLenSections = NULL;
-		}
-		sections[SECTTYPE_ROMX].nbBanks = nbUncoveredBanks;
+	if (nbUncoveredBanks > sections[SECTTYPE_ROMX].size()) {
+		for (uint32_t i = sections[SECTTYPE_ROMX].size(); i < nbUncoveredBanks; i++)
+			sections[SECTTYPE_ROMX].emplace_back();
 	}
 }
 
@@ -192,32 +158,29 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks)
  * @param baseOffset The address of the bank's first byte in GB address space
  * @param size The size of the bank
  */
-static void writeBank(struct SortedSection *bankSections, uint16_t baseOffset,
+static void writeBank(std::deque<struct Section const *> *bankSections, uint16_t baseOffset,
 		      uint16_t size)
 {
 	uint16_t offset = 0;
 
-	while (bankSections) {
-		struct Section const *section = bankSections->section;
+	if (bankSections) {
+		for (struct Section const *section : *bankSections) {
+			assert(section->offset == 0);
+			// Output padding up to the next SECTION
+			while (offset + baseOffset < section->org) {
+				putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
+				offset++;
+			}
 
-		assert(section->offset == 0);
-		// Output padding up to the next SECTION
-		while (offset + baseOffset < section->org) {
-			putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
-			offset++;
+			// Output the section itself
+			fwrite(section->data, sizeof(*section->data), section->size, outputFile);
+			if (overlayFile) {
+				// Skip bytes even with pipes
+				for (uint16_t i = 0; i < section->size; i++)
+					getc(overlayFile);
+			}
+			offset += section->size;
 		}
-
-		// Output the section itself
-		fwrite(section->data, sizeof(*section->data), section->size,
-		       outputFile);
-		if (overlayFile) {
-			// Skip bytes even with pipes
-			for (uint16_t i = 0; i < section->size; i++)
-				getc(overlayFile);
-		}
-		offset += section->size;
-
-		bankSections = bankSections->next;
 	}
 
 	if (!disablePadding) {
@@ -259,12 +222,11 @@ static void writeROM(void)
 		coverOverlayBanks(nbOverlayBanks);
 
 	if (outputFile) {
-		writeBank(sections[SECTTYPE_ROM0].banks ? sections[SECTTYPE_ROM0].banks[0].sections
-							: NULL,
+		writeBank(!sections[SECTTYPE_ROM0].empty() ? &sections[SECTTYPE_ROM0][0].sections : NULL,
 			  sectionTypeInfo[SECTTYPE_ROM0].startAddr, sectionTypeInfo[SECTTYPE_ROM0].size);
 
-		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].nbBanks; i++)
-			writeBank(sections[SECTTYPE_ROMX].banks[i].sections,
+		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].size(); i++)
+			writeBank(&sections[SECTTYPE_ROMX][i].sections,
 				  sectionTypeInfo[SECTTYPE_ROMX].startAddr, sectionTypeInfo[SECTTYPE_ROMX].size);
 	}
 
@@ -272,23 +234,6 @@ static void writeROM(void)
 		fclose(outputFile);
 	if (overlayFile)
 		fclose(overlayFile);
-}
-
-/*
- * Get the lowest section by address out of the two
- * @param s1 One choice
- * @param s2 The other
- * @return The lowest section of the two, or the non-NULL one if applicable
- */
-static struct SortedSection const **nextSection(struct SortedSection const **s1,
-						struct SortedSection const **s2)
-{
-	if (!*s1)
-		return s2;
-	if (!*s2)
-		return s1;
-
-	return (*s1)->section->org < (*s2)->section->org ? s1 : s2;
 }
 
 // Checks whether this character is legal as the first character of a symbol's name in a sym file
@@ -375,16 +320,16 @@ static int compareSymbols(void const *a, void const *b)
  * Write a bank's contents to the sym file
  * @param bankSections The bank's sections
  */
-static void writeSymBank(struct SortedSections const *bankSections,
+static void writeSymBank(struct SortedSections const &bankSections,
 			 enum SectionType type, uint32_t bank)
 {
 #define forEachSortedSection(sect, ...) do { \
-	for (struct SortedSection const *ssp = bankSections->zeroLenSections; ssp; ssp = ssp->next) { \
-		for (struct Section const *sect = ssp->section; sect; sect = sect->nextu) \
+	for (auto it = bankSections.zeroLenSections.begin(); it != bankSections.zeroLenSections.end(); it++) { \
+		for (struct Section const *sect = *it; sect; sect = sect->nextu) \
 			__VA_ARGS__ \
 	} \
-	for (struct SortedSection const *ssp = bankSections->sections; ssp; ssp = ssp->next) { \
-		for (struct Section const *sect = ssp->section; sect; sect = sect->nextu) \
+	for (auto it = bankSections.sections.begin(); it != bankSections.sections.end(); it++) { \
+		for (struct Section const *sect = *it; sect; sect = sect->nextu) \
 			__VA_ARGS__ \
 	} \
 } while (0)
@@ -432,7 +377,6 @@ static void writeSymBank(struct SortedSections const *bankSections,
 	}
 
 	free(symList);
-
 }
 
 static void writeEmptySpace(uint16_t begin, uint16_t end)
@@ -448,21 +392,23 @@ static void writeEmptySpace(uint16_t begin, uint16_t end)
 /*
  * Write a bank's contents to the map file
  */
-static void writeMapBank(struct SortedSections const *sectList, enum SectionType type,
+static void writeMapBank(struct SortedSections const &sectList, enum SectionType type,
 			 uint32_t bank)
 {
 	fprintf(mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name.c_str(),
 		bank + sectionTypeInfo[type].firstBank);
 
 	uint16_t used = 0;
-	struct SortedSection const *section = sectList->sections;
-	struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
+	auto section = sectList.sections.begin();
+	auto zeroLenSection = sectList.zeroLenSections.begin();
 	uint16_t prevEndAddr = sectionTypeInfo[type].startAddr;
 
-	while (section || zeroLenSection) {
-		struct SortedSection const **pickedSection =
-			nextSection(&section, &zeroLenSection);
-		struct Section const *sect = (*pickedSection)->section;
+	while (section != sectList.sections.end() || zeroLenSection != sectList.zeroLenSections.end()) {
+		// Pick the lowest section by address out of the two
+		auto &pickedSection = section == sectList.sections.end() ? zeroLenSection
+			: zeroLenSection == sectList.zeroLenSections.end() ? section
+			: (*section)->org < (*zeroLenSection)->org ? section : zeroLenSection;
+		struct Section const *sect = *pickedSection;
 
 		used += sect->size;
 		assert(sect->offset == 0);
@@ -505,7 +451,7 @@ static void writeMapBank(struct SortedSections const *sectList, enum SectionType
 			}
 		}
 
-		*pickedSection = (*pickedSection)->next;
+		pickedSection++;
 	}
 
 	if (used == 0) {
@@ -531,7 +477,7 @@ static void writeMapSummary(void)
 
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
-		uint32_t nbBanks = sections[type].nbBanks;
+		uint32_t nbBanks = sections[type].size();
 
 		// Do not output used space for VRAM or OAM
 		if (type == SECTTYPE_VRAM || type == SECTTYPE_OAM)
@@ -545,16 +491,20 @@ static void writeMapSummary(void)
 
 		for (uint32_t bank = 0; bank < nbBanks; bank++) {
 			uint16_t used = 0;
-			struct SortedSections const *sectList = &sections[type].banks[bank];
-			struct SortedSection const *section = sectList->sections;
-			struct SortedSection const *zeroLenSection = sectList->zeroLenSections;
+			auto &sectList = sections[type][bank];
+			auto section = sectList.sections.begin();
+			auto zeroLenSection = sectList.zeroLenSections.begin();
 
-			while (section || zeroLenSection) {
-				struct SortedSection const **pickedSection =
-					nextSection(&section, &zeroLenSection);
+			while (section != sectList.sections.end()
+			       || zeroLenSection != sectList.zeroLenSections.end()) {
+				// Pick the lowest section by address out of the two
+				auto &pickedSection = section == sectList.sections.end() ? zeroLenSection
+					: zeroLenSection == sectList.zeroLenSections.end() ? section
+					: (*section)->org < (*zeroLenSection)->org ? section
+					: zeroLenSection;
 
-				used += (*pickedSection)->section->size;
-				*pickedSection = (*pickedSection)->next;
+				used += (*pickedSection)->size;
+				pickedSection++;
 			}
 
 			usedTotal += used;
@@ -590,8 +540,8 @@ static void writeSym(void)
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
 
-		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++)
-			writeSymBank(&sections[type].banks[bank], type, bank);
+		for (uint32_t bank = 0; bank < sections[type].size(); bank++)
+			writeSymBank(sections[type][bank], type, bank);
 	}
 
 	fclose(symFile);
@@ -617,34 +567,11 @@ static void writeMap(void)
 	for (uint8_t i = 0; i < SECTTYPE_INVALID; i++) {
 		enum SectionType type = typeMap[i];
 
-		for (uint32_t bank = 0; bank < sections[type].nbBanks; bank++)
-			writeMapBank(&sections[type].banks[bank], type, bank);
+		for (uint32_t bank = 0; bank < sections[type].size(); bank++)
+			writeMapBank(sections[type][bank], type, bank);
 	}
 
 	fclose(mapFile);
-}
-
-static void cleanupSections(struct SortedSection *section)
-{
-	while (section) {
-		struct SortedSection *next = section->next;
-
-		free(section);
-		section = next;
-	}
-}
-
-static void cleanup(void)
-{
-	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		for (uint32_t i = 0; i < sections[type].nbBanks; i++) {
-			struct SortedSections *bank = &sections[type].banks[i];
-
-			cleanupSections(bank->sections);
-			cleanupSections(bank->zeroLenSections);
-		}
-		free(sections[type].banks);
-	}
 }
 
 void out_WriteFiles(void)
@@ -652,6 +579,4 @@ void out_WriteFiles(void)
 	writeROM();
 	writeSym();
 	writeMap();
-
-	cleanup();
 }
