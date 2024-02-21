@@ -69,7 +69,6 @@ rgbasm_obj := \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/error.o \
-	src/hashmap.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o
@@ -89,7 +88,6 @@ rgblink_obj := \
 	src/extern/getopt.o \
 	src/extern/utf8decoder.o \
 	src/error.o \
-	src/hashmap.o \
 	src/linkdefs.o \
 	src/opmath.o \
 	src/util.o
