@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <algorithm>
+#include <deque>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -329,16 +331,10 @@ static void placeSection(struct Section *section)
 		     out_OverlappingSection(section)->name);
 }
 
-struct UnassignedSection {
-	struct Section *section;
-	struct UnassignedSection *next;
-};
-
 #define  BANK_CONSTRAINED (1 << 2)
 #define   ORG_CONSTRAINED (1 << 1)
 #define ALIGN_CONSTRAINED (1 << 0)
-static struct UnassignedSection *unassignedSections[1 << 3] = {};
-static struct UnassignedSection *sections;
+static std::deque<struct Section *> unassignedSections[1 << 3];
 
 /*
  * Categorize a section depending on how constrained it is
@@ -357,15 +353,13 @@ static void categorizeSection(struct Section *section)
 	else if (section->isAlignFixed)
 		constraints |= ALIGN_CONSTRAINED;
 
-	struct UnassignedSection **ptr = &unassignedSections[constraints];
+	std::deque<struct Section *> &sections = unassignedSections[constraints];
+	auto pos = sections.begin();
 
 	// Insert section while keeping the list sorted by decreasing size
-	while (*ptr && (*ptr)->section->size > section->size)
-		ptr = &(*ptr)->next;
-
-	sections[nbSectionsToAssign].section = section;
-	sections[nbSectionsToAssign].next = *ptr;
-	*ptr = &sections[nbSectionsToAssign];
+	while (pos != sections.end() && (*pos)->size > section->size)
+		pos++;
+	sections.insert(pos, section);
 
 	nbSectionsToAssign++;
 }
@@ -376,27 +370,18 @@ void assign_AssignSections(void)
 
 	// Initialize assignment
 
-	// Generate linked lists of sections to assign
-	sections = (struct UnassignedSection *)malloc(sizeof(*sections) * nbSectionsToAssign + 1);
-	if (!sections)
-		err("Failed to allocate memory for section assignment");
-
 	initFreeSpace();
 
+	// Generate linked lists of sections to assign
 	nbSectionsToAssign = 0;
 	sect_ForEach(categorizeSection);
 
 	// Place sections, starting with the most constrained
 
 	// Specially process fully-constrained sections because of overlaying
-	struct UnassignedSection *sectionPtr =
-		unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED];
-
 	verbosePrint("Assigning bank+org-constrained...\n");
-	while (sectionPtr) {
-		placeSection(sectionPtr->section);
-		sectionPtr = sectionPtr->next;
-	}
+	for (struct Section *section : unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED])
+		placeSection(section);
 
 	// If all sections were fully constrained, we have nothing left to do
 	if (!nbSectionsToAssign)
@@ -407,12 +392,11 @@ void assign_AssignSections(void)
 	if (overlayFileName) {
 		fprintf(stderr, "FATAL: All sections must be fixed when using an overlay file");
 		uint8_t nbSections = 0;
-		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0; constraints--) {
-			for (sectionPtr = unassignedSections[constraints];
-			     sectionPtr;
-			     sectionPtr = sectionPtr->next) {
-				fprintf(stderr, "%c \"%s\"",
-					nbSections == 0 ? ';': ',', sectionPtr->section->name);
+		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
+		     constraints >= 0; constraints--) {
+			for (struct Section *section : unassignedSections[constraints]) {
+				fprintf(stderr, "%c \"%s\"", nbSections == 0 ? ';': ',',
+					section->name);
 				nbSections++;
 				if (nbSections == 10)
 					goto max_out;
@@ -429,12 +413,8 @@ max_out:
 	// Assign all remaining sections by decreasing constraint order
 	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
 	     constraints >= 0; constraints--) {
-		sectionPtr = unassignedSections[constraints];
-
-		while (sectionPtr) {
-			placeSection(sectionPtr->section);
-			sectionPtr = sectionPtr->next;
-		}
+		for (struct Section *section : unassignedSections[constraints])
+			placeSection(section);
 
 		if (!nbSectionsToAssign)
 			return;
@@ -460,6 +440,4 @@ void assign_Cleanup(void)
 
 		free(memory[type]);
 	}
-
-	free(sections);
 }
