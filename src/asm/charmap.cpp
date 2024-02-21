@@ -2,10 +2,12 @@
 
 #include <errno.h>
 #include <new>
+#include <map>
 #include <stack>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include <vector>
 
@@ -14,7 +16,6 @@
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
 
-#include "hashmap.hpp"
 #include "util.hpp"
 
 // Charmaps are stored using a structure known as "trie".
@@ -32,9 +33,9 @@ struct Charmap {
 	std::vector<struct Charnode> *nodes; // first node is reserved for the root node
 };
 
-static HashMap charmaps;
+static std::map<std::string, struct Charmap *> charmaps;
 
-// Store pointers to hashmap nodes, so that there is only one pointer to the memory block
+// Store pointers to `charmaps` values, so that there is only one pointer to the memory block
 // that gets reallocated.
 static struct Charmap **currentCharmap;
 
@@ -42,7 +43,8 @@ std::stack<struct Charmap **> charmapStack;
 
 static struct Charmap *charmap_Get(char const *name)
 {
-	return (struct Charmap *)hash_GetElement(charmaps, name);
+	auto search = charmaps.find(name);
+	return search != charmaps.end() ? search->second : NULL;
 }
 
 static void initNode(struct Charnode *node)
@@ -84,33 +86,31 @@ struct Charmap *charmap_New(char const *name, char const *baseName)
 	}
 	charmap->name = strdup(name);
 
-	currentCharmap = (struct Charmap **)hash_AddElement(charmaps, charmap->name, charmap);
+	charmaps[charmap->name] = charmap;
+	currentCharmap = &charmaps[charmap->name];
 
 	return charmap;
 }
 
-static void freeCharmap(void *_charmap, void *)
-{
-	struct Charmap *charmap = (struct Charmap *)_charmap;
-
-	free(charmap->name);
-	delete charmap->nodes;
-	free(charmap);
-}
-
 void charmap_Cleanup(void)
 {
-	hash_ForEach(charmaps, freeCharmap, NULL);
+	for (auto &it : charmaps) {
+		struct Charmap *charmap = it.second;
+
+		free(charmap->name);
+		free(charmap);
+	}
+	charmaps.clear();
 }
 
 void charmap_Set(char const *name)
 {
-	struct Charmap **charmap = (struct Charmap **)hash_GetNode(charmaps, name);
+	auto search = charmaps.find(name);
 
-	if (charmap == NULL)
+	if (search == charmaps.end())
 		error("Charmap '%s' doesn't exist\n", name);
 	else
-		currentCharmap = charmap;
+		currentCharmap = &search->second;
 }
 
 void charmap_Push(void)
