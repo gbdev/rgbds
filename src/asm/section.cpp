@@ -108,7 +108,7 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 
 struct Section *sect_FindSectionByName(char const *name)
 {
-	for (struct Section *sect = sectionList; sect; sect = sect->next) {
+	for (struct Section *sect : sectionList) {
 		if (strcmp(name, sect->name) == 0)
 			return sect;
 	}
@@ -283,7 +283,6 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	sect->bank = bank;
 	sect->align = alignment;
 	sect->alignOfs = alignOffset;
-	sect->next = NULL;
 	sect->patches = NULL;
 
 	// It is only needed to allocate memory for ROM sections.
@@ -369,8 +368,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 	} else {
 		sect = createSection(name, type, org, bank, alignment, alignOffset, mod);
 		// Add the new section to the list (order doesn't matter)
-		sect->next = sectionList;
-		sectionList = sect;
+		sectionList.push_front(sect);
 	}
 
 	return sect;
