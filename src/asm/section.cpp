@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 
 #include "asm/fstack.hpp"
@@ -807,10 +808,10 @@ void sect_BinaryFile(char const *s, int32_t startPos)
 	if (!checkcodesection())
 		return;
 
-	char *fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath, "rb") : NULL;
+	std::string *fullPath = fstk_FindFile(s);
+	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : NULL;
 
-	free(fullPath);
+	delete fullPath;
 
 	if (!f) {
 		if (generatedMissingIncludes) {
@@ -878,10 +879,10 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 	if (!reserveSpace(length))
 		return;
 
-	char *fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath, "rb") : NULL;
+	std::string *fullPath = fstk_FindFile(s);
+	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : NULL;
 
-	free(fullPath);
+	delete fullPath;
 
 	if (!f) {
 		if (generatedMissingIncludes) {

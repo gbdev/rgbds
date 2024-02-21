@@ -4,9 +4,11 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <new>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 
 #include "asm/fstack.hpp"
 #include "asm/macro.hpp"
@@ -159,43 +161,19 @@ static bool isPathValid(char const *path)
 	return !S_ISDIR(statbuf.st_mode);
 }
 
-char *fstk_FindFile(char const *path)
+std::string *fstk_FindFile(char const *path)
 {
-	size_t size = 64; // This size is arbitrary, really
-	char *fullPath = (char *)malloc(size);
+	std::string *fullPath = new(std::nothrow) std::string();
 
 	if (!fullPath) {
-		error("malloc error during include path search: %s\n", strerror(errno));
+		error("Failed to allocate string during include path search: %s\n", strerror(errno));
 	} else {
 		for (size_t i = 0; i <= nbIncPaths; ++i) {
-			char const *incPath = i ? includePaths[i - 1] : "";
-			int len = snprintf(fullPath, size, "%s%s", incPath, path);
+			*fullPath = i ? includePaths[i - 1] : "";
+			*fullPath += path;
 
-			if (len < 0) {
-				error("snprintf error during include path search: %s\n",
-				      strerror(errno));
-				break;
-			}
-
-			// Oh how I wish `asnprintf` was standard...
-			if ((size_t)len >= size) { // `size` includes the terminator, `len` doesn't
-				size = len + 1;
-				fullPath = (char *)realloc(fullPath, size);
-				if (!fullPath) {
-					error("realloc error during include path search: %s\n",
-					      strerror(errno));
-					break;
-				}
-				len = sprintf(fullPath, "%s%s", incPath, path);
-				if (len < 0) {
-					error("sprintf error during include path search: %s\n",
-					       strerror(errno));
-					break;
-				}
-			}
-
-			if (isPathValid(fullPath)) {
-				printDep(fullPath);
+			if (isPathValid(fullPath->c_str())) {
+				printDep(fullPath->c_str());
 				return fullPath;
 			}
 		}
@@ -317,7 +295,7 @@ static void newContext(struct FileStackNode *fileInfo)
 
 void fstk_RunInclude(char const *path)
 {
-	char *fullPath = fstk_FindFile(path);
+	std::string *fullPath = fstk_FindFile(path);
 
 	if (!fullPath) {
 		if (generatedMissingIncludes) {
@@ -332,15 +310,15 @@ void fstk_RunInclude(char const *path)
 	}
 
 	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + strlen(fullPath) + 1);
+		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + fullPath->length() + 1);
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
 		return;
 	}
 	fileInfo->node.type = NODE_FILE;
-	strcpy(fileInfo->name, fullPath);
-	free(fullPath);
+	strcpy(fileInfo->name, fullPath->c_str());
+	delete fullPath;
 
 	newContext((struct FileStackNode *)fileInfo);
 	contextStack->lexerState = lexer_OpenFile(fileInfo->name);
@@ -360,7 +338,7 @@ static void runPreIncludeFile(void)
 	if (!preIncludeName)
 		return;
 
-	char *fullPath = fstk_FindFile(preIncludeName);
+	std::string *fullPath = fstk_FindFile(preIncludeName);
 
 	if (!fullPath) {
 		error("Unable to open included file '%s': %s\n", preIncludeName, strerror(errno));
@@ -368,15 +346,15 @@ static void runPreIncludeFile(void)
 	}
 
 	struct FileStackNamedNode *fileInfo =
-		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + strlen(fullPath) + 1);
+		(struct FileStackNamedNode *)malloc(sizeof(*fileInfo) + fullPath->length() + 1);
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
 		return;
 	}
 	fileInfo->node.type = NODE_FILE;
-	strcpy(fileInfo->name, fullPath);
-	free(fullPath);
+	strcpy(fileInfo->name, fullPath->c_str());
+	delete fullPath;
 
 	newContext((struct FileStackNode *)fileInfo);
 	contextStack->lexerState = lexer_OpenFile(fileInfo->name);

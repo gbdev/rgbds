@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 
 #include "asm/lexer.hpp"
 
@@ -52,9 +53,9 @@ void fstk_AddIncludePath(char const *s);
 void fstk_SetPreIncludeFile(char const *s);
 /*
  * @param path The user-provided file name
- * @return A pointer to the malloc'ed full path, or NULL if no path worked
+ * @return A pointer to the `new`-allocated full path, or NULL if no path worked
  */
-char *fstk_FindFile(char const *path);
+std::string *fstk_FindFile(char const *path);
 
 bool yywrap(void);
 void fstk_RunInclude(char const *path);
