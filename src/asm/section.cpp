@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <deque>
 #include <errno.h>
 #include <inttypes.h>
+#include <new>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -283,7 +285,9 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	sect->bank = bank;
 	sect->align = alignment;
 	sect->alignOfs = alignOffset;
-	sect->patches = NULL;
+	sect->patches = new(std::nothrow) std::deque<struct Patch *>();
+	if (sect->patches == NULL)
+		fatalerror("Not enough memory for section patches: %s\n", strerror(errno));
 
 	// It is only needed to allocate memory for ROM sections.
 	if (sect_HasData(type)) {

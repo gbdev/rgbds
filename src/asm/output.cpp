@@ -35,7 +35,6 @@ struct Patch {
 	uint8_t type;
 	uint32_t rpnSize;
 	uint8_t *rpn;
-	struct Patch *next;
 };
 
 struct Assertion {
@@ -54,18 +53,6 @@ static std::vector<struct Symbol *> objectSymbols;
 static std::deque<struct Assertion *> assertions;
 
 static struct FileStackNode *fileStackNodes = NULL;
-
-// Count the number of patches used in this object
-static uint32_t countPatches(struct Section const *sect)
-{
-	uint32_t r = 0;
-
-	for (struct Patch const *patch = sect->patches; patch != NULL;
-	     patch = patch->next)
-		r++;
-
-	return r;
-}
 
 // Write a long to a file (little-endian)
 static void putlong(uint32_t i, FILE *f)
@@ -176,10 +163,9 @@ static void writesection(struct Section const *sect, FILE *f)
 
 	if (sect_HasData(sect->type)) {
 		fwrite(sect->data, 1, sect->size, f);
-		putlong(countPatches(sect), f);
+		putlong(sect->patches->size(), f);
 
-		for (struct Patch const *patch = sect->patches; patch != NULL;
-		     patch = patch->next)
+		for (struct Patch const *patch : *sect->patches)
 			writepatch(patch, f);
 	}
 }
@@ -187,15 +173,11 @@ static void writesection(struct Section const *sect, FILE *f)
 static void freesection(struct Section const *sect)
 {
 	if (sect_HasData(sect->type)) {
-		struct Patch *patch = sect->patches;
-
-		while (patch != NULL) {
-			struct Patch *next = patch->next;
-
+		for (struct Patch *patch : *sect->patches) {
 			free(patch->rpn);
 			free(patch);
-			patch = next;
 		}
+		delete sect->patches;
 	}
 }
 
@@ -328,8 +310,6 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, const uint8_t *rpn,
 	}
 }
 
-// Allocate a new patch structure and link it into the list
-// WARNING: all patches are assumed to eventually be written, so the file stack node is registered
 static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
 	struct Patch *patch = (struct Patch *)malloc(sizeof(*patch));
@@ -345,6 +325,7 @@ static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, ui
 
 	patch->type = type;
 	patch->src = node;
+	// All patches are assumed to eventually be written, so the file stack node is registered
 	out_RegisterNode(node);
 	patch->lineNo = lexer_GetLineNo();
 	patch->offset = ofs;
@@ -379,8 +360,8 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
 	// before those bytes.
 	patch->pcOffset -= pcShift;
 
-	patch->next = currentSection->patches;
-	currentSection->patches = patch;
+	// Add the patch to the list
+	currentSection->patches->push_front(patch);
 }
 
 // Creates an assert that will be written to the object file

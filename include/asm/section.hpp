@@ -3,6 +3,7 @@
 #ifndef RGBDS_SECTION_H
 #define RGBDS_SECTION_H
 
+#include <deque>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -24,7 +25,7 @@ struct Section {
 	uint32_t bank;
 	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
-	struct Patch *patches;
+	std::deque<struct Patch *> *patches;
 	uint8_t *data;
 };
 
