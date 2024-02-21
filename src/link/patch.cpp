@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <assert.h>
+#include <deque>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -456,45 +457,39 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 #undef popRPN
 }
 
-void patch_CheckAssertions(struct Assertion *assert)
+void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 {
 	verbosePrint("Checking assertions...\n");
 	initRPNStack();
 
-	while (assert) {
-		int32_t value = computeRPNExpr(&assert->patch,
-			(struct Symbol const * const *)assert->fileSymbols);
-		enum AssertionType type = (enum AssertionType)assert->patch.type;
+	for (struct Assertion &assert : assertions) {
+		int32_t value = computeRPNExpr(&assert.patch,
+			(struct Symbol const * const *)assert.fileSymbols);
+		enum AssertionType type = (enum AssertionType)assert.patch.type;
 
 		if (!isError && !value) {
 			switch (type) {
 			case ASSERT_FATAL:
-				fatal(assert->patch.src, assert->patch.lineNo, "%s",
-				      assert->message[0] ? assert->message
+				fatal(assert.patch.src, assert.patch.lineNo, "%s",
+				      assert.message[0] ? assert.message
 							 : "assert failure");
 			case ASSERT_ERROR:
-				error(assert->patch.src, assert->patch.lineNo, "%s",
-				      assert->message[0] ? assert->message
+				error(assert.patch.src, assert.patch.lineNo, "%s",
+				      assert.message[0] ? assert.message
 							 : "assert failure");
 				break;
 			case ASSERT_WARN:
-				warning(assert->patch.src, assert->patch.lineNo, "%s",
-					assert->message[0] ? assert->message
+				warning(assert.patch.src, assert.patch.lineNo, "%s",
+					assert.message[0] ? assert.message
 							   : "assert failure");
 				break;
 			}
 		} else if (isError && type == ASSERT_FATAL) {
-			fatal(assert->patch.src, assert->patch.lineNo,
+			fatal(assert.patch.src, assert.patch.lineNo,
 			      "Failed to evaluate assertion%s%s",
-			      assert->message[0] ? ": " : "",
-			      assert->message);
+			      assert.message[0] ? ": " : "",
+			      assert.message);
 		}
-		struct Assertion *next = assert->next;
-
-		free(assert->patch.rpnExpression);
-		free(assert->message);
-		free(assert);
-		assert = next;
 	}
 
 	freeRPNStack();
