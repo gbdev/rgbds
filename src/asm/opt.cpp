@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stack>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -29,10 +30,9 @@ struct OptStackEntry {
 	bool warningsAreErrors;
 	size_t maxRecursionDepth;
 	enum WarningState warningStates[numWarningStates];
-	struct OptStackEntry *next;
 };
 
-static struct OptStackEntry *stack = NULL;
+static std::stack<struct OptStackEntry> stack;
 
 void opt_B(char const chars[2])
 {
@@ -242,65 +242,59 @@ void opt_Parse(char *s)
 
 void opt_Push(void)
 {
-	struct OptStackEntry *entry = (struct OptStackEntry *)malloc(sizeof(*entry));
+	struct OptStackEntry entry;
 
-	if (entry == NULL)
-		fatalerror("Failed to alloc option stack entry: %s\n", strerror(errno));
+	// Both of these are pulled from lexer.hpp
+	entry.binary[0] = binDigits[0];
+	entry.binary[1] = binDigits[1];
 
-	// Both of these pulled from lexer.hpp
-	entry->binary[0] = binDigits[0];
-	entry->binary[1] = binDigits[1];
+	entry.gbgfx[0] = gfxDigits[0];
+	entry.gbgfx[1] = gfxDigits[1];
+	entry.gbgfx[2] = gfxDigits[2];
+	entry.gbgfx[3] = gfxDigits[3];
 
-	entry->gbgfx[0] = gfxDigits[0];
-	entry->gbgfx[1] = gfxDigits[1];
-	entry->gbgfx[2] = gfxDigits[2];
-	entry->gbgfx[3] = gfxDigits[3];
+	entry.fixPrecision = fixPrecision; // Pulled from fixpoint.hpp
 
-	entry->fixPrecision = fixPrecision; // Pulled from fixpoint.hpp
-
-	entry->fillByte = fillByte; // Pulled from section.hpp
+	entry.fillByte = fillByte; // Pulled from section.hpp
 
 	// Both of these are pulled from main.hpp
-	entry->haltNop = haltNop;
-	entry->warnOnHaltNop = warnOnHaltNop;
+	entry.haltNop = haltNop;
+	entry.warnOnHaltNop = warnOnHaltNop;
 
 	// Both of these are pulled from main.hpp
-	entry->optimizeLoads = optimizeLoads;
-	entry->warnOnLdOpt = warnOnLdOpt;
+	entry.optimizeLoads = optimizeLoads;
+	entry.warnOnLdOpt = warnOnLdOpt;
 
 	// Both of these pulled from warning.hpp
-	entry->warningsAreErrors = warningsAreErrors;
-	memcpy(entry->warningStates, warningStates, numWarningStates);
+	entry.warningsAreErrors = warningsAreErrors;
+	memcpy(entry.warningStates, warningStates, numWarningStates);
 
-	entry->maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
+	entry.maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
 
-	entry->next = stack;
-	stack = entry;
+	stack.push(entry);
 }
 
 void opt_Pop(void)
 {
-	if (stack == NULL) {
+	if (stack.empty()) {
 		error("No entries in the option stack\n");
 		return;
 	}
 
-	struct OptStackEntry *entry = stack;
+	struct OptStackEntry entry = stack.top();
+	stack.pop();
 
-	opt_B(entry->binary);
-	opt_G(entry->gbgfx);
-	opt_P(entry->fillByte);
-	opt_Q(entry->fixPrecision);
-	opt_H(entry->warnOnHaltNop);
-	opt_h(entry->haltNop);
-	opt_L(entry->optimizeLoads);
-	opt_l(entry->warnOnLdOpt);
-	opt_R(entry->maxRecursionDepth);
+	opt_B(entry.binary);
+	opt_G(entry.gbgfx);
+	opt_P(entry.fillByte);
+	opt_Q(entry.fixPrecision);
+	opt_H(entry.warnOnHaltNop);
+	opt_h(entry.haltNop);
+	opt_L(entry.optimizeLoads);
+	opt_l(entry.warnOnLdOpt);
+	opt_R(entry.maxRecursionDepth);
 
 	// opt_W does not apply a whole warning state; it processes one flag string
-	warningsAreErrors = entry->warningsAreErrors;
-	memcpy(warningStates, entry->warningStates, numWarningStates);
-
-	stack = entry->next;
-	free(entry);
+	warningsAreErrors = entry.warningsAreErrors;
+	memcpy(warningStates, entry.warningStates, numWarningStates);
 }
