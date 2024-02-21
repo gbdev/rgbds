@@ -229,13 +229,13 @@ coverage:
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
-# If you're building on Windows with Cygwin or Mingw, just follow the Unix
+# If you're building on Windows with Cygwin or MinGW, just follow the Unix
 # install instructions instead.
 
 mingw32:
 	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
 		CXX=i686-w64-mingw32-g++ \
-		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc" \
+		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc -static-libstdc++" \
 		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
 
 mingw64:

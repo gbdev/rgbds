@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "extern/getopt.hpp"
 
@@ -806,7 +807,7 @@ static ssize_t readBytes(int fd, uint8_t *buf, size_t len)
 	return total;
 }
 
-static ssize_t writeBytes(int fd, void *buf, size_t len)
+static ssize_t writeBytes(int fd, uint8_t *buf, size_t len)
 {
 	// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
 	assert(len <= SSIZE_MAX);
@@ -975,11 +976,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	uint16_t globalSum = 0;
 
-	// To keep file sizes fairly reasonable, we'll cap the amount of banks at 65536
+	// To keep file sizes fairly reasonable, we'll cap the amount of banks at 65536.
 	// Official mappers only go up to 512 banks, but at least the TPP1 spec allows up to
 	// 65536 banks = 1 GiB.
 	// This should be reasonable for the time being, and may be extended later.
-	uint8_t *romx = NULL; // Pointer to ROMX banks when they've been buffered
+	std::vector<uint8_t> romx; // Buffer of ROMX bank data
 	uint32_t nbBanks = 1; // Number of banks *targeted*, including ROM0
 	size_t totalRomxLen = 0; // *Actual* size of ROMX data
 	uint8_t bank[BANK_SIZE]; // Temp buffer used to store a whole bank's worth of data
@@ -999,14 +1000,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	} else if (rom0Len == BANK_SIZE) {
 		// Copy ROMX when reading a pipe, and we're not at EOF yet
 		for (;;) {
-			romx = (uint8_t *)realloc(romx, nbBanks * BANK_SIZE);
-			if (!romx) {
-				report("FATAL: Failed to realloc ROMX buffer: %s\n",
-				       strerror(errno));
-				return;
-			}
-			ssize_t bankLen = readBytes(input, &romx[(nbBanks - 1) * BANK_SIZE],
-						    BANK_SIZE);
+			romx.resize(nbBanks * BANK_SIZE);
+			ssize_t bankLen = readBytes(input, &romx[(nbBanks - 1) * BANK_SIZE], BANK_SIZE);
 
 			// Update bank count, ONLY IF at least one byte was read
 			if (bankLen) {
@@ -1014,7 +1009,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 				static_assert(0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS");
 				if (nbBanks == 0x10000) {
 					report("FATAL: \"%s\" has more than 65536 banks\n", name);
-					goto cleanup;
+					return;
 				}
 				nbBanks++;
 
@@ -1081,11 +1076,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		// Pipes have already read ROMX and updated globalSum, but not regular files
 		if (input == output) {
 			for (;;) {
-				ssize_t romxLen = readBytes(input, bank, sizeof(bank));
+				ssize_t bankLen = readBytes(input, bank, sizeof(bank));
 
-				for (uint16_t i = 0; i < romxLen; i++)
+				for (uint16_t i = 0; i < bankLen; i++)
 					globalSum += bank[i];
-				if (romxLen != sizeof(bank))
+				if (bankLen != sizeof(bank))
 					break;
 			}
 		}
@@ -1105,7 +1100,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (input == output) {
 		if (lseek(output, 0, SEEK_SET) == (off_t)-1) {
 			report("FATAL: Failed to rewind \"%s\": %s\n", name, strerror(errno));
-			goto cleanup;
+			return;
 		}
 		// If modifying the file in-place, we only need to edit the header
 		// However, padding may have modified ROM0 (added padding), so don't in that case
@@ -1116,25 +1111,25 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (writeLen == -1) {
 		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
-		goto cleanup;
+		return;
 	} else if (writeLen < rom0Len) {
 		report("FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
 		       (intmax_t)writeLen, name, (intmax_t)rom0Len);
-		goto cleanup;
+		return;
 	}
 
 	// Output ROMX if it was buffered
-	if (romx) {
+	if (!romx.empty()) {
 		// The value returned is either -1, or smaller than `totalRomxLen`,
 		// so it's fine to cast to `size_t`
-		writeLen = writeBytes(output, romx, totalRomxLen);
+		writeLen = writeBytes(output, romx.data(), totalRomxLen);
 		if (writeLen == -1) {
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
-			goto cleanup;
+			return;
 		} else if ((size_t)writeLen < totalRomxLen) {
 			report("FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
 			       (intmax_t)writeLen, name, totalRomxLen);
-			goto cleanup;
+			return;
 		}
 	}
 
@@ -1144,7 +1139,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			if (lseek(output, 0, SEEK_END) == (off_t)-1) {
 				report("FATAL: Failed to seek to end of \"%s\": %s\n",
 				       name, strerror(errno));
-				goto cleanup;
+				return;
 			}
 		}
 		memset(bank, padValue, sizeof(bank));
@@ -1165,9 +1160,6 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			len -= thisLen;
 		}
 	}
-
-cleanup:
-	free(romx);
 }
 
 static bool processFilename(char const *name)
