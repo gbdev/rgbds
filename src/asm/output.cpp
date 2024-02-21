@@ -52,7 +52,7 @@ static std::vector<struct Symbol *> objectSymbols;
 
 static std::deque<struct Assertion *> assertions;
 
-static struct FileStackNode *fileStackNodes = NULL;
+static std::deque<struct FileStackNode *> fileStackNodes;
 
 // Write a long to a file (little-endian)
 static void putlong(uint32_t i, FILE *f)
@@ -71,20 +71,12 @@ static void putstring(char const *s, FILE *f)
 	putc(0, f);
 }
 
-static uint32_t getNbFileStackNodes(void)
-{
-	return fileStackNodes ? fileStackNodes->ID + 1 : 0;
-}
-
 void out_RegisterNode(struct FileStackNode *node)
 {
 	// If node is not already registered, register it (and parents), and give it a unique ID
 	while (node->ID == (uint32_t)-1) {
-		node->ID = getNbFileStackNodes();
-		if (node->ID == (uint32_t)-1)
-			fatalerror("Reached too many file stack nodes; try splitting the file up\n");
-		node->next = fileStackNodes;
-		fileStackNodes = node;
+		node->ID = fileStackNodes.size();
+		fileStackNodes.push_front(node);
 
 		// Also register the node's parents
 		node = node->parent;
@@ -98,19 +90,14 @@ void out_ReplaceNode(struct FileStackNode * /* node */)
 #if 0
 This is code intended to replace a node, which is pretty useless until ref counting is added...
 
-	struct FileStackNode **ptr = &fileStackNodes;
+	auto search = std::find(RANGE(fileStackNodes), node);
+	assert(search != fileStackNodes.end());
+	// The list is supposed to have decrementing IDs; catch inconsistencies early
+	assert(search->ID == node->ID);
+	assert(search + 1 == fileStackNodes.end() || (search + 1)->ID == node->ID - 1);
 
-	// The linked list is supposed to have decrementing IDs, so iterate with less memory reads,
-	// to hopefully hit the cache less. A debug check is added after, in case a change is made
-	// that breaks this assumption.
-	for (uint32_t i = fileStackNodes->ID; i != node->ID; i--)
-		ptr = &(*ptr)->next;
-	assert((*ptr)->ID == node->ID);
-
-	node->next = (*ptr)->next;
-	assert(!node->next || node->next->ID == node->ID - 1); // Catch inconsistencies early
 	// TODO: unreference the node
-	*ptr = node;
+	*search = node;
 #endif
 }
 
@@ -446,13 +433,17 @@ void out_WriteObject(void)
 	putlong(objectSymbols.size(), f);
 	putlong(sectionList.size(), f);
 
-	putlong(getNbFileStackNodes(), f);
-	for (struct FileStackNode const *node = fileStackNodes; node; node = node->next) {
+	putlong(fileStackNodes.size(), f);
+	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
+		struct FileStackNode const *node = *it;
+
 		writeFileStackNode(node, f);
-		if (node->next && node->next->ID != node->ID - 1)
+
+		// The list is supposed to have decrementing IDs
+		if (it + 1 != fileStackNodes.end() && it[1]->ID != node->ID - 1)
 			fatalerror("Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
 				   ". Please report this to the developers!\n",
-				   node->next->ID, node->ID);
+				   it[1]->ID, node->ID);
 	}
 
 	for (struct Symbol const *sym : objectSymbols)

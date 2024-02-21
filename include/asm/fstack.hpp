@@ -19,7 +19,6 @@ struct FileStackNode {
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
 
-	struct FileStackNode *next; // Next node in the output linked list
 	bool referenced; // If referenced, don't free!
 	uint32_t ID; // Set only if referenced: ID within the object file, -1 if not output yet
 

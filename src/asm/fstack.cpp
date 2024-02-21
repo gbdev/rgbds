@@ -211,7 +211,6 @@ bool yywrap(void)
 			if (!copy || !copy->iters)
 				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
 			*copy->iters = *fileInfo->iters; // Copies `fileInfo->iters`
-			copy->node.next = NULL;
 			copy->node.referenced = false;
 
 			fileInfo = copy;
