@@ -415,7 +415,7 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	}
 }
 
-static void registerUnregisteredSymbol(struct Symbol *symbol, void *)
+static void registerUnregisteredSymbol(struct Symbol *symbol)
 {
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
 	if (symbol->src && symbol->ID == (uint32_t)-1) {
@@ -438,7 +438,7 @@ void out_WriteObject(void)
 		err("Failed to open object file '%s'", objectName);
 
 	// Also write symbols that weren't written above
-	sym_ForEach(registerUnregisteredSymbol, NULL);
+	sym_ForEach(registerUnregisteredSymbol);
 
 	fprintf(f, RGBDS_OBJECT_VERSION_STRING);
 	putlong(RGBDS_OBJECT_REV, f);
