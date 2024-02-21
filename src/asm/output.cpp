@@ -42,7 +42,6 @@ struct Assertion {
 	struct Patch *patch;
 	struct Section *section;
 	char *message;
-	struct Assertion *next;
 };
 
 const char *objectName;
@@ -52,7 +51,7 @@ std::deque<struct Section *> sectionList;
 // List of symbols to put in the object file
 static std::vector<struct Symbol *> objectSymbols;
 
-static struct Assertion *assertions = NULL;
+static std::deque<struct Assertion *> assertions;
 
 static struct FileStackNode *fileStackNodes = NULL;
 
@@ -66,19 +65,6 @@ static uint32_t countPatches(struct Section const *sect)
 		r++;
 
 	return r;
-}
-
-// Count the number of assertions used in this object
-static uint32_t countAsserts(void)
-{
-	struct Assertion *assert = assertions;
-	uint32_t count = 0;
-
-	while (assert) {
-		count++;
-		assert = assert->next;
-	}
-	return count;
 }
 
 // Write a long to a file (little-endian)
@@ -413,8 +399,7 @@ bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		return false;
 	}
 
-	assertion->next = assertions;
-	assertions = assertion;
+	assertions.push_front(assertion);
 
 	return true;
 }
@@ -497,15 +482,11 @@ void out_WriteObject(void)
 		freesection(sect);
 	}
 
-	putlong(countAsserts(), f);
-	struct Assertion *assert = assertions;
+	putlong(assertions.size(), f);
 
-	while (assert != NULL) {
-		struct Assertion *next = assert->next;
-
+	for (struct Assertion *assert : assertions) {
 		writeassert(assert, f);
 		freeassert(assert);
-		assert = next;
 	}
 
 	fclose(f);
