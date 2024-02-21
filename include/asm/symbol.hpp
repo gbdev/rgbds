@@ -104,7 +104,7 @@ static inline char const *sym_GetStringValue(struct Symbol const *sym)
 	return sym->equs.value;
 }
 
-void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg);
+void sym_ForEach(void (*func)(struct Symbol *));
 
 int32_t sym_GetValue(struct Symbol const *sym);
 void sym_SetExportAll(bool set);

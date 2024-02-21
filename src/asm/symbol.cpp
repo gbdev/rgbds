@@ -6,8 +6,10 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <map>
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include <time.h>
 
@@ -22,11 +24,10 @@
 #include "asm/warning.hpp"
 
 #include "error.hpp"
-#include "hashmap.hpp"
 #include "helpers.hpp"
 #include "version.hpp"
 
-HashMap symbols;
+std::map<std::string, struct Symbol *> symbols;
 
 static const char *labelScope; // Current section's label scope
 static struct Symbol *PCSymbol;
@@ -42,24 +43,10 @@ bool sym_IsPC(struct Symbol const *sym)
 	return sym == PCSymbol;
 }
 
-struct ForEachArgs {
-	void (*func)(struct Symbol *sym, void *arg);
-	void *arg;
-};
-
-static void forEachWrapper(void *_sym, void *_argWrapper)
+void sym_ForEach(void (*callback)(struct Symbol *))
 {
-	struct ForEachArgs *argWrapper = (struct ForEachArgs *)_argWrapper;
-	struct Symbol *sym = (struct Symbol *)_sym;
-
-	argWrapper->func(sym, argWrapper->arg);
-}
-
-void sym_ForEach(void (*func)(struct Symbol *, void *), void *arg)
-{
-	struct ForEachArgs argWrapper = { .func = func, .arg = arg };
-
-	hash_ForEach(symbols, forEachWrapper, &argWrapper);
+	for (auto &it : symbols)
+		callback(it.second);
 }
 
 static int32_t Callback_NARG(void)
@@ -139,7 +126,7 @@ static struct Symbol *createsymbol(char const *symName)
 	sym->ID = -1;
 	sym->next = NULL;
 
-	hash_AddElement(symbols, sym->name, sym);
+	symbols[sym->name] = sym;
 	return sym;
 }
 
@@ -170,7 +157,8 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 
 struct Symbol *sym_FindExactSymbol(char const *symName)
 {
-	return (struct Symbol *)hash_GetElement(symbols, symName);
+	auto search = symbols.find(symName);
+	return search != symbols.end() ? search->second : NULL;
 }
 
 struct Symbol *sym_FindScopedSymbol(char const *symName)
@@ -235,7 +223,7 @@ void sym_Purge(char const *symName)
 
 		// FIXME: this leaks sym->equs.value for SYM_EQUS and sym->macro.value for SYM_MACRO,
 		// but this can't free either of them because the expansion may be purging itself.
-		hash_RemoveElement(symbols, sym->name);
+		symbols.erase(sym->name);
 		// TODO: ideally, also unref the file stack nodes
 		free(sym);
 	}
