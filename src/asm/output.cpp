@@ -27,26 +27,13 @@
 #include "linkdefs.hpp"
 #include "platform.hpp" // strdup
 
-struct Patch {
-	struct FileStackNode const *src;
-	uint32_t lineNo;
-	uint32_t offset;
-	struct Section *pcSection;
-	uint32_t pcOffset;
-	uint8_t type;
-	uint32_t rpnSize;
-	uint8_t *rpn;
-};
-
 struct Assertion {
-	struct Patch *patch;
+	struct Patch patch;
 	struct Section *section;
 	std::string message;
 };
 
 const char *objectName;
-
-std::deque<struct Section> sectionList;
 
 // List of symbols to put in the object file
 static std::vector<struct Symbol *> objectSymbols;
@@ -117,17 +104,17 @@ static uint32_t getSectIDIfAny(struct Section *sect)
 }
 
 // Write a patch to a file
-static void writepatch(struct Patch const *patch, FILE *f)
+static void writepatch(struct Patch const &patch, FILE *f)
 {
-	assert(patch->src->ID != (uint32_t)-1);
-	putlong(patch->src->ID, f);
-	putlong(patch->lineNo, f);
-	putlong(patch->offset, f);
-	putlong(getSectIDIfAny(patch->pcSection), f);
-	putlong(patch->pcOffset, f);
-	putc(patch->type, f);
-	putlong(patch->rpnSize, f);
-	fwrite(patch->rpn, 1, patch->rpnSize, f);
+	assert(patch.src->ID != (uint32_t)-1);
+	putlong(patch.src->ID, f);
+	putlong(patch.lineNo, f);
+	putlong(patch.offset, f);
+	putlong(getSectIDIfAny(patch.pcSection), f);
+	putlong(patch.pcOffset, f);
+	putc(patch.type, f);
+	putlong(patch.rpnSize, f);
+	fwrite(patch.rpn, 1, patch.rpnSize, f);
 }
 
 // Write a section to a file
@@ -149,21 +136,18 @@ static void writesection(struct Section const &sect, FILE *f)
 
 	if (sect_HasData(sect.type)) {
 		fwrite(sect.data, 1, sect.size, f);
-		putlong(sect.patches->size(), f);
+		putlong(sect.patches.size(), f);
 
-		for (struct Patch const *patch : *sect.patches)
+		for (struct Patch const &patch : sect.patches)
 			writepatch(patch, f);
 	}
 }
 
-static void freesection(struct Section const &sect)
+static void freesection(struct Section &sect)
 {
 	if (sect_HasData(sect.type)) {
-		for (struct Patch *patch : *sect.patches) {
-			free(patch->rpn);
-			free(patch);
-		}
-		delete sect.patches;
+		for (struct Patch &patch : sect.patches)
+			free(patch.rpn);
 	}
 }
 
@@ -296,69 +280,62 @@ static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, const uint8_t *rpn,
 	}
 }
 
-static struct Patch *allocpatch(uint32_t type, struct Expression const *expr, uint32_t ofs)
+static void initpatch(struct Patch &patch, uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
-	struct Patch *patch = (struct Patch *)malloc(sizeof(*patch));
 	uint32_t rpnSize = rpn_isKnown(expr) ? 5 : expr->rpnPatchSize;
 	struct FileStackNode *node = fstk_GetFileStack();
 
-	if (!patch)
-		fatalerror("No memory for patch: %s\n", strerror(errno));
-
-	patch->rpn = (uint8_t *)malloc(sizeof(*patch->rpn) * rpnSize);
-	if (!patch->rpn)
+	patch.rpn = (uint8_t *)malloc(sizeof(*patch.rpn) * rpnSize);
+	if (!patch.rpn)
 		fatalerror("No memory for patch's RPN rpnSize: %s\n", strerror(errno));
 
-	patch->type = type;
-	patch->src = node;
+	patch.type = type;
+	patch.src = node;
 	// All patches are assumed to eventually be written, so the file stack node is registered
 	out_RegisterNode(node);
-	patch->lineNo = lexer_GetLineNo();
-	patch->offset = ofs;
-	patch->pcSection = sect_GetSymbolSection();
-	patch->pcOffset = sect_GetSymbolOffset();
+	patch.lineNo = lexer_GetLineNo();
+	patch.offset = ofs;
+	patch.pcSection = sect_GetSymbolSection();
+	patch.pcOffset = sect_GetSymbolOffset();
 
 	// If the rpnSize's value is known, output a constant RPN rpnSize directly
 	if (rpn_isKnown(expr)) {
-		patch->rpnSize = rpnSize;
+		patch.rpnSize = rpnSize;
 		// Make sure to update `rpnSize` above if modifying this!
-		patch->rpn[0] = RPN_CONST;
-		patch->rpn[1] = (uint32_t)(expr->val) & 0xFF;
-		patch->rpn[2] = (uint32_t)(expr->val) >> 8;
-		patch->rpn[3] = (uint32_t)(expr->val) >> 16;
-		patch->rpn[4] = (uint32_t)(expr->val) >> 24;
+		patch.rpn[0] = RPN_CONST;
+		patch.rpn[1] = (uint32_t)(expr->val) & 0xFF;
+		patch.rpn[2] = (uint32_t)(expr->val) >> 8;
+		patch.rpn[3] = (uint32_t)(expr->val) >> 16;
+		patch.rpn[4] = (uint32_t)(expr->val) >> 24;
 	} else {
-		patch->rpnSize = 0;
-		writerpn(patch->rpn, &patch->rpnSize, expr->rpn, expr->rpnLength);
+		patch.rpnSize = 0;
+		writerpn(patch.rpn, &patch.rpnSize, expr->rpn, expr->rpnLength);
 	}
-	assert(patch->rpnSize == rpnSize);
-
-	return patch;
+	assert(patch.rpnSize == rpnSize);
 }
 
 // Create a new patch (includes the rpn expr)
 void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, uint32_t pcShift)
 {
-	struct Patch *patch = allocpatch(type, expr, ofs);
+	// Add the patch to the list
+	struct Patch &patch = currentSection->patches.emplace_front();
+
+	initpatch(patch, type, expr, ofs);
 
 	// If the patch had a quantity of bytes output before it,
 	// PC is not at the patch's location, but at the location
 	// before those bytes.
-	patch->pcOffset -= pcShift;
-
-	// Add the patch to the list
-	currentSection->patches->push_front(patch);
+	patch.pcOffset -= pcShift;
 }
 
 // Creates an assert that will be written to the object file
 void out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		      char const *message, uint32_t ofs)
 {
-	assertions.push_front({
-		.patch = allocpatch(type, expr, ofs),
-		.section = NULL,
-		.message = message,
-	});
+	struct Assertion &assertion = assertions.emplace_front();
+
+	initpatch(assertion.patch, type, expr, ofs);
+	assertion.message = message;
 }
 
 static void writeassert(struct Assertion &assert, FILE *f)
@@ -369,8 +346,7 @@ static void writeassert(struct Assertion &assert, FILE *f)
 
 static void freeassert(struct Assertion &assert)
 {
-	free(assert.patch->rpn);
-	free(assert.patch);
+	free(assert.patch.rpn);
 }
 
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
