@@ -1089,10 +1089,7 @@ assert_type	: %empty { $$ = ASSERT_ERROR; }
 
 assert		: T_POP_ASSERT assert_type relocexpr {
 			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, "",
-						      sect_GetOutputOffset()))
-					error("Assertion creation failed: %s\n",
-						strerror(errno));
+				out_CreateAssert($2, &$3, "", sect_GetOutputOffset());
 			} else if ($3.val == 0) {
 				failAssert($2);
 			}
@@ -1100,10 +1097,7 @@ assert		: T_POP_ASSERT assert_type relocexpr {
 		}
 		| T_POP_ASSERT assert_type relocexpr T_COMMA string {
 			if (!rpn_isKnown(&$3)) {
-				if (!out_CreateAssert($2, &$3, $5,
-						      sect_GetOutputOffset()))
-					error("Assertion creation failed: %s\n",
-						strerror(errno));
+				out_CreateAssert($2, &$3, $5, sect_GetOutputOffset());
 			} else if ($3.val == 0) {
 				failAssertMsg($2, $5);
 			}
