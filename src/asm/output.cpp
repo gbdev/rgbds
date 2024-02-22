@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 #include <vector>
 
@@ -40,7 +41,7 @@ struct Patch {
 struct Assertion {
 	struct Patch *patch;
 	struct Section *section;
-	char *message;
+	std::string message;
 };
 
 const char *objectName;
@@ -50,7 +51,7 @@ std::deque<struct Section *> sectionList;
 // List of symbols to put in the object file
 static std::vector<struct Symbol *> objectSymbols;
 
-static std::deque<struct Assertion *> assertions;
+static std::deque<struct Assertion> assertions;
 
 static std::deque<struct FileStackNode *> fileStackNodes;
 
@@ -352,37 +353,26 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
 }
 
 // Creates an assert that will be written to the object file
-bool out_CreateAssert(enum AssertionType type, struct Expression const *expr,
+void out_CreateAssert(enum AssertionType type, struct Expression const *expr,
 		      char const *message, uint32_t ofs)
 {
-	struct Assertion *assertion = (struct Assertion *)malloc(sizeof(*assertion));
-
-	if (!assertion)
-		return false;
-
-	assertion->patch = allocpatch(type, expr, ofs);
-	assertion->message = strdup(message);
-	if (!assertion->message) {
-		free(assertion);
-		return false;
-	}
-
-	assertions.push_front(assertion);
-
-	return true;
+	assertions.push_front({
+		.patch = allocpatch(type, expr, ofs),
+		.section = NULL,
+		.message = message,
+	});
 }
 
-static void writeassert(struct Assertion *assert, FILE *f)
+static void writeassert(struct Assertion &assert, FILE *f)
 {
-	writepatch(assert->patch, f);
-	putstring(assert->message, f);
+	writepatch(assert.patch, f);
+	putstring(assert.message.c_str(), f);
 }
 
-static void freeassert(struct Assertion *assert)
+static void freeassert(struct Assertion &assert)
 {
-	free(assert->patch->rpn);
-	free(assert->patch);
-	free(assert);
+	free(assert.patch->rpn);
+	free(assert.patch);
 }
 
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
@@ -456,7 +446,7 @@ void out_WriteObject(void)
 
 	putlong(assertions.size(), f);
 
-	for (struct Assertion *assert : assertions) {
+	for (struct Assertion &assert : assertions) {
 		writeassert(assert, f);
 		freeassert(assert);
 	}
