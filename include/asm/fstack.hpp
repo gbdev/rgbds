@@ -29,7 +29,6 @@ struct FileStackNode {
 
 struct FileStackReptNode { // NODE_REPT
 	struct FileStackNode node;
-	// WARNING: if changing this type, change overflow check in `fstk_Init`
 	std::vector<uint32_t> *iters; // REPT iteration counts since last named node, in reverse depth order
 };
 

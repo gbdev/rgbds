@@ -389,7 +389,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	size_t reptNameLen = 0;
 	struct FileStackNode const *node = macro->src;
 
-	 if (node->type == NODE_REPT) {
+	if (node->type == NODE_REPT) {
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
 		// 4294967295 = 2^32 - 1, aka UINT32_MAX
@@ -576,19 +576,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	// Now that it's set up properly, register the context
 	contextStack = context;
 
-	// Check that max recursion depth won't allow overflowing node `malloc`s
-	// This assumes that the rept node is larger
-#define DEPTH_LIMIT (SIZE_MAX / sizeof(uint32_t))
-	if (maxDepth > DEPTH_LIMIT) {
-		error("Recursion depth may not be higher than %zu, defaulting to "
-		      EXPAND_AND_STR(DEFAULT_MAX_DEPTH) "\n", DEPTH_LIMIT);
-		maxRecursionDepth = DEFAULT_MAX_DEPTH;
-	} else {
-		maxRecursionDepth = maxDepth;
-	}
-	// Make sure that the default of 64 is OK, though
-	assert(DEPTH_LIMIT >= DEFAULT_MAX_DEPTH);
-#undef DEPTH_LIMIT
+	maxRecursionDepth = maxDepth;
 
 	runPreIncludeFile();
 }
