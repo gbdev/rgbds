@@ -390,7 +390,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	struct FileStackNode const *node = macro->src;
 
 	 if (node->type == NODE_REPT) {
-	 	struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
+		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
 		// 4294967295 = 2^32 - 1, aka UINT32_MAX
 		reptNameLen += reptNode->iters->size() * strlen("::REPT~4294967295");
