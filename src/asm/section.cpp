@@ -42,6 +42,7 @@ struct SectionStackEntry {
 
 std::stack<struct UnionStackEntry> *currentUnionStack = NULL;
 std::deque<struct SectionStackEntry> sectionStack;
+std::deque<struct Section> sectionList;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 struct Section *currentSection = NULL;
 static struct Section *currentLoadSection = NULL;
@@ -283,9 +284,6 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	sect.bank = bank;
 	sect.align = alignment;
 	sect.alignOfs = alignOffset;
-	sect.patches = new(std::nothrow) std::deque<struct Patch *>();
-	if (sect.patches == NULL)
-		fatalerror("Not enough memory for section patches: %s\n", strerror(errno));
 
 	// It is only needed to allocate memory for ROM sections.
 	if (sect_HasData(type)) {

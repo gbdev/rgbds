@@ -12,6 +12,19 @@
 extern uint8_t fillByte;
 
 struct Expression;
+struct FileStackNode;
+struct Section;
+
+struct Patch {
+	struct FileStackNode const *src;
+	uint32_t lineNo;
+	uint32_t offset;
+	struct Section *pcSection;
+	uint32_t pcOffset;
+	uint8_t type;
+	uint32_t rpnSize;
+	uint8_t *rpn;
+};
 
 struct Section {
 	char *name;
@@ -24,7 +37,7 @@ struct Section {
 	uint32_t bank;
 	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
-	std::deque<struct Patch *> *patches;
+	std::deque<struct Patch> patches;
 	uint8_t *data;
 };
 
@@ -34,6 +47,7 @@ struct SectionSpec {
 	uint16_t alignOfs;
 };
 
+extern std::deque<struct Section> sectionList;
 extern struct Section *currentSection;
 
 struct Section *sect_FindSectionByName(char const *name);
