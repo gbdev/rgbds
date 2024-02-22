@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 %language "c++"
 %define api.value.type variant
 %define api.token.constructor
