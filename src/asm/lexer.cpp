@@ -292,7 +292,6 @@ static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
 struct Expansion {
-	struct Expansion *parent;
 	char *name;
 	union {
 		char const *unowned;
@@ -352,7 +351,7 @@ struct LexerState {
 	bool disableInterpolation;
 	size_t macroArgScanDistance; // Max distance already scanned for macro args
 	bool expandStrings;
-	struct Expansion *expansions; // Points to the innermost current expansion
+	std::deque<struct Expansion> *expansions; // Front is the innermost current expansion
 };
 
 struct LexerState *lexerState = NULL;
@@ -375,7 +374,10 @@ static void initState(struct LexerState *state)
 	state->disableInterpolation = false;
 	state->macroArgScanDistance = 0;
 	state->expandStrings = true;
-	state->expansions = NULL;
+
+	state->expansions = new(std::nothrow) std::deque<struct Expansion>();
+	if (!state->expansions)
+		fatalerror("Unable to allocate new expansion stack: %s\n", strerror(errno));
 }
 
 static void nextLine(void)
@@ -544,6 +546,7 @@ void lexer_DeleteState(struct LexerState *state)
 	else if (state->isFile && !state->mmap.isReferenced)
 		munmap(state->mmap.ptr, state->mmap.size);
 	delete state->ifStack;
+	delete state->expansions;
 	free(state);
 }
 
@@ -642,37 +645,26 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 	if (name)
 		lexer_CheckRecursionDepth();
 
-	struct Expansion *exp = (struct Expansion *)malloc(sizeof(*exp));
-
-	if (!exp)
-		fatalerror("Unable to allocate new expansion: %s\n", strerror(errno));
-
-	exp->parent = lexerState->expansions;
-	exp->name = name ? strdup(name) : NULL;
-	exp->contents.unowned = str;
-	exp->size = size;
-	exp->offset = 0;
-	exp->owned = owned;
-
-	lexerState->expansions = exp;
+	lexerState->expansions->push_front({
+		.name = name ? strdup(name) : NULL,
+		.contents = { .unowned = str },
+		.size = size,
+		.offset = 0,
+		.owned = owned,
+	});
 }
 
 void lexer_CheckRecursionDepth(void)
 {
-	size_t depth = 0;
-
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
-		if (depth++ > maxRecursionDepth)
-			fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
-	}
+	if (lexerState->expansions->size() > maxRecursionDepth + 1)
+		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 }
 
-static void freeExpansion(struct Expansion *expansion)
+static void freeExpansion(struct Expansion &expansion)
 {
-	free(expansion->name);
-	if (expansion->owned)
-		free(expansion->contents.owned);
-	free(expansion);
+	free(expansion.name);
+	if (expansion.owned)
+		free(expansion.contents.owned);
 }
 
 static bool isMacroChar(char c)
@@ -799,13 +791,13 @@ static size_t readInternal(size_t bufIndex, size_t nbChars)
 // We only need one character of lookahead, for macro arguments
 static int peekInternal(uint8_t distance)
 {
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
+	for (struct Expansion &exp : *lexerState->expansions) {
 		// An expansion that has reached its end will have `exp->offset` == `exp->size`,
 		// and `peekInternal` will continue with its parent
-		assert(exp->offset <= exp->size);
-		if (distance < exp->size - exp->offset)
-			return exp->contents.unowned[exp->offset + distance];
-		distance -= exp->size - exp->offset;
+		assert(exp.offset <= exp.size);
+		if (distance < exp.size - exp.offset)
+			return exp.contents.unowned[exp.offset + distance];
+		distance -= exp.size - exp.offset;
 	}
 
 	if (distance >= LEXER_BUF_SIZE)
@@ -918,17 +910,17 @@ static void shiftChar(void)
 	lexerState->macroArgScanDistance--;
 
 restart:
-	if (lexerState->expansions) {
+	if (!lexerState->expansions->empty()) {
 		// Advance within the current expansion
-		assert(lexerState->expansions->offset <= lexerState->expansions->size);
-		lexerState->expansions->offset++;
-		if (lexerState->expansions->offset > lexerState->expansions->size) {
+		struct Expansion &expansion = lexerState->expansions->front();
+
+		assert(expansion.offset <= expansion.size);
+		expansion.offset++;
+		if (expansion.offset > expansion.size) {
 			// When advancing would go past an expansion's end, free it,
 			// move up to its parent, and try again to advance
-			struct Expansion *exp = lexerState->expansions;
-
-			lexerState->expansions = lexerState->expansions->parent;
-			freeExpansion(exp);
+			freeExpansion(expansion);
+			lexerState->expansions->pop_front();
 			goto restart;
 		}
 	} else {
@@ -985,10 +977,10 @@ void lexer_DumpStringExpansions(void)
 	if (!lexerState)
 		return;
 
-	for (struct Expansion *exp = lexerState->expansions; exp; exp = exp->parent) {
+	for (struct Expansion &exp : *lexerState->expansions) {
 		// Only register EQUS expansions, not string args
-		if (exp->name)
-			fprintf(stderr, "while expanding symbol \"%s\"\n", exp->name);
+		if (exp.name)
+			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name);
 	}
 }
 
@@ -1009,7 +1001,7 @@ static void discardBlockComment(void)
 			handleCRLF(c);
 			// fallthrough
 		case '\n':
-			if (!lexerState->expansions)
+			if (lexerState->expansions->empty())
 				nextLine();
 			continue;
 		case '/':
@@ -1062,7 +1054,7 @@ static void readLineContinuation(void)
 			shiftChar();
 			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
-			if (!lexerState->expansions)
+			if (lexerState->expansions->empty())
 				nextLine();
 			break;
 		} else if (c == ';') {
@@ -2415,7 +2407,7 @@ int yylex(void)
 	if (lexerState->lastToken == T_EOB && yywrap())
 		return T_EOF;
 	// Newlines read within an expansion should not increase the line count
-	if (lexerState->atLineStart && !lexerState->expansions)
+	if (lexerState->atLineStart && lexerState->expansions->empty())
 		nextLine();
 
 	static int (* const lexerModeFuncs[NB_LEXER_MODES])(void) = {
@@ -2446,7 +2438,7 @@ static void startCapture(struct CaptureBody *capture)
 
 	capture->lineNo = lexer_GetLineNo();
 
-	if (lexerState->isMmapped && !lexerState->expansions) {
+	if (lexerState->isMmapped && lexerState->expansions->empty()) {
 		capture->body = &lexerState->mmap.ptr[lexerState->mmap.offset];
 	} else {
 		lexerState->captureCapacity = 128; // The initial size will be twice that
