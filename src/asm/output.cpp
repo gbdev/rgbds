@@ -46,7 +46,7 @@ struct Assertion {
 
 const char *objectName;
 
-std::deque<struct Section *> sectionList;
+std::deque<struct Section> sectionList;
 
 // List of symbols to put in the object file
 static std::vector<struct Symbol *> objectSymbols;
@@ -102,20 +102,18 @@ This is code intended to replace a node, which is pretty useless until ref count
 #endif
 }
 
-// Return a section's ID
-static uint32_t getsectid(struct Section const *sect)
+// Return a section's ID, or -1 if the section is not in the list
+static uint32_t getSectIDIfAny(struct Section *sect)
 {
-	auto search = std::find(RANGE(sectionList), sect);
+	if (!sect)
+		return (uint32_t)-1;
 
-	if (search == sectionList.end())
-		fatalerror("Unknown section '%s'\n", sect->name);
+	for (auto it = sectionList.begin(); it != sectionList.end(); it++) {
+		if (&*it == sect)
+			return it - sectionList.begin();
+	}
 
-	return search - sectionList.begin();
-}
-
-static uint32_t getSectIDIfAny(struct Section const *sect)
-{
-	return sect ? getsectid(sect) : (uint32_t)-1;
+	fatalerror("Unknown section '%s'\n", sect->name);
 }
 
 // Write a patch to a file
@@ -133,39 +131,39 @@ static void writepatch(struct Patch const *patch, FILE *f)
 }
 
 // Write a section to a file
-static void writesection(struct Section const *sect, FILE *f)
+static void writesection(struct Section const &sect, FILE *f)
 {
-	putstring(sect->name, f);
+	putstring(sect.name, f);
 
-	putlong(sect->size, f);
+	putlong(sect.size, f);
 
-	bool isUnion = sect->modifier == SECTION_UNION;
-	bool isFragment = sect->modifier == SECTION_FRAGMENT;
+	bool isUnion = sect.modifier == SECTION_UNION;
+	bool isFragment = sect.modifier == SECTION_FRAGMENT;
 
-	putc(sect->type | isUnion << 7 | isFragment << 6, f);
+	putc(sect.type | isUnion << 7 | isFragment << 6, f);
 
-	putlong(sect->org, f);
-	putlong(sect->bank, f);
-	putc(sect->align, f);
-	putlong(sect->alignOfs, f);
+	putlong(sect.org, f);
+	putlong(sect.bank, f);
+	putc(sect.align, f);
+	putlong(sect.alignOfs, f);
 
-	if (sect_HasData(sect->type)) {
-		fwrite(sect->data, 1, sect->size, f);
-		putlong(sect->patches->size(), f);
+	if (sect_HasData(sect.type)) {
+		fwrite(sect.data, 1, sect.size, f);
+		putlong(sect.patches->size(), f);
 
-		for (struct Patch const *patch : *sect->patches)
+		for (struct Patch const *patch : *sect.patches)
 			writepatch(patch, f);
 	}
 }
 
-static void freesection(struct Section const *sect)
+static void freesection(struct Section const &sect)
 {
-	if (sect_HasData(sect->type)) {
-		for (struct Patch *patch : *sect->patches) {
+	if (sect_HasData(sect.type)) {
+		for (struct Patch *patch : *sect.patches) {
 			free(patch->rpn);
 			free(patch);
 		}
-		delete sect->patches;
+		delete sect.patches;
 	}
 }
 
@@ -439,7 +437,7 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym : objectSymbols)
 		writesymbol(sym, f);
 
-	for (struct Section *sect : sectionList) {
+	for (struct Section &sect : sectionList) {
 		writesection(sect, f);
 		freesection(sect);
 	}

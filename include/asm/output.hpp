@@ -12,7 +12,7 @@ struct Expression;
 struct FileStackNode;
 
 extern const char *objectName;
-extern std::deque<struct Section *> sectionList;
+extern std::deque<struct Section> sectionList;
 
 void out_RegisterNode(struct FileStackNode *node);
 void out_ReplaceNode(struct FileStackNode *node);
