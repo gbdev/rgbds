@@ -110,9 +110,9 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 
 struct Section *sect_FindSectionByName(char const *name)
 {
-	for (struct Section *sect : sectionList) {
-		if (strcmp(name, sect->name) == 0)
-			return sect;
+	for (struct Section &sect : sectionList) {
+		if (strcmp(name, sect.name) == 0)
+			return &sect;
 	}
 	return NULL;
 }
@@ -267,38 +267,36 @@ static struct Section *createSection(char const *name, enum SectionType type,
 				     uint32_t org, uint32_t bank, uint8_t alignment,
 				     uint16_t alignOffset, enum SectionModifier mod)
 {
-	struct Section *sect = (struct Section *)malloc(sizeof(*sect));
+	// Add the new section to the list (order doesn't matter)
+	struct Section &sect = sectionList.emplace_front();
 
-	if (sect == NULL)
-		fatalerror("Not enough memory for section: %s\n", strerror(errno));
-
-	sect->name = strdup(name);
-	if (sect->name == NULL)
+	sect.name = strdup(name);
+	if (sect.name == NULL)
 		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
 
-	sect->type = type;
-	sect->modifier = mod;
-	sect->src = fstk_GetFileStack();
-	sect->fileLine = lexer_GetLineNo();
-	sect->size = 0;
-	sect->org = org;
-	sect->bank = bank;
-	sect->align = alignment;
-	sect->alignOfs = alignOffset;
-	sect->patches = new(std::nothrow) std::deque<struct Patch *>();
-	if (sect->patches == NULL)
+	sect.type = type;
+	sect.modifier = mod;
+	sect.src = fstk_GetFileStack();
+	sect.fileLine = lexer_GetLineNo();
+	sect.size = 0;
+	sect.org = org;
+	sect.bank = bank;
+	sect.align = alignment;
+	sect.alignOfs = alignOffset;
+	sect.patches = new(std::nothrow) std::deque<struct Patch *>();
+	if (sect.patches == NULL)
 		fatalerror("Not enough memory for section patches: %s\n", strerror(errno));
 
 	// It is only needed to allocate memory for ROM sections.
 	if (sect_HasData(type)) {
-		sect->data = (uint8_t *)malloc(sectionTypeInfo[type].size);
-		if (sect->data == NULL)
+		sect.data = (uint8_t *)malloc(sectionTypeInfo[type].size);
+		if (sect.data == NULL)
 			fatalerror("Not enough memory for section: %s\n", strerror(errno));
 	} else {
-		sect->data = NULL;
+		sect.data = NULL;
 	}
 
-	return sect;
+	return &sect;
 }
 
 // Find a section by name and type. If it doesn't exist, create it.
@@ -371,8 +369,6 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
 	} else {
 		sect = createSection(name, type, org, bank, alignment, alignOffset, mod);
-		// Add the new section to the list (order doesn't matter)
-		sectionList.push_front(sect);
 	}
 
 	return sect;
