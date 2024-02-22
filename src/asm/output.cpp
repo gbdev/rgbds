@@ -113,8 +113,8 @@ static void writepatch(struct Patch const &patch, FILE *f)
 	putlong(getSectIDIfAny(patch.pcSection), f);
 	putlong(patch.pcOffset, f);
 	putc(patch.type, f);
-	putlong(patch.rpnSize, f);
-	fwrite(patch.rpn, 1, patch.rpnSize, f);
+	putlong(patch.rpn.size(), f);
+	fwrite(patch.rpn.data(), 1, patch.rpn.size(), f);
 }
 
 // Write a section to a file
@@ -140,14 +140,6 @@ static void writesection(struct Section const &sect, FILE *f)
 
 		for (struct Patch const &patch : sect.patches)
 			writepatch(patch, f);
-	}
-}
-
-static void freesection(struct Section &sect)
-{
-	if (sect_HasData(sect.type)) {
-		for (struct Patch &patch : sect.patches)
-			free(patch.rpn);
 	}
 }
 
@@ -184,14 +176,14 @@ static uint32_t getSymbolID(struct Symbol *sym)
 	return sym->ID;
 }
 
-static void writerpn(uint8_t *rpnexpr, uint32_t *rpnptr, const uint8_t *rpn,
-		     uint32_t rpnlen)
+static void writerpn(std::vector<uint8_t> &rpnexpr, const uint8_t *rpn, uint32_t rpnlen)
 {
 	char symName[512];
+	size_t rpnptr = 0;
 
 	for (size_t offset = 0; offset < rpnlen; ) {
 #define popbyte() rpn[offset++]
-#define writebyte(byte)	rpnexpr[(*rpnptr)++] = byte
+#define writebyte(byte)	rpnexpr[rpnptr++] = byte
 		uint8_t rpndata = popbyte();
 
 		switch (rpndata) {
@@ -285,10 +277,7 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 	uint32_t rpnSize = rpn_isKnown(expr) ? 5 : expr->rpnPatchSize;
 	struct FileStackNode *node = fstk_GetFileStack();
 
-	patch.rpn = (uint8_t *)malloc(sizeof(*patch.rpn) * rpnSize);
-	if (!patch.rpn)
-		fatalerror("No memory for patch's RPN rpnSize: %s\n", strerror(errno));
-
+	patch.rpn.resize(rpnSize);
 	patch.type = type;
 	patch.src = node;
 	// All patches are assumed to eventually be written, so the file stack node is registered
@@ -300,7 +289,6 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 
 	// If the rpnSize's value is known, output a constant RPN rpnSize directly
 	if (rpn_isKnown(expr)) {
-		patch.rpnSize = rpnSize;
 		// Make sure to update `rpnSize` above if modifying this!
 		patch.rpn[0] = RPN_CONST;
 		patch.rpn[1] = (uint32_t)(expr->val) & 0xFF;
@@ -308,10 +296,8 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 		patch.rpn[3] = (uint32_t)(expr->val) >> 16;
 		patch.rpn[4] = (uint32_t)(expr->val) >> 24;
 	} else {
-		patch.rpnSize = 0;
-		writerpn(patch.rpn, &patch.rpnSize, expr->rpn, expr->rpnLength);
+		writerpn(patch.rpn, expr->rpn, expr->rpnLength);
 	}
-	assert(patch.rpnSize == rpnSize);
 }
 
 // Create a new patch (includes the rpn expr)
@@ -342,11 +328,6 @@ static void writeassert(struct Assertion &assert, FILE *f)
 {
 	writepatch(assert.patch, f);
 	putstring(assert.message.c_str(), f);
-}
-
-static void freeassert(struct Assertion &assert)
-{
-	free(assert.patch.rpn);
 }
 
 static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
@@ -413,17 +394,13 @@ void out_WriteObject(void)
 	for (struct Symbol const *sym : objectSymbols)
 		writesymbol(sym, f);
 
-	for (struct Section &sect : sectionList) {
+	for (struct Section &sect : sectionList)
 		writesection(sect, f);
-		freesection(sect);
-	}
 
 	putlong(assertions.size(), f);
 
-	for (struct Assertion &assert : assertions) {
+	for (struct Assertion &assert : assertions)
 		writeassert(assert, f);
-		freeassert(assert);
-	}
 
 	fclose(f);
 }
