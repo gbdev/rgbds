@@ -416,7 +416,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					// definition is in a floating section
 					if ((other->section && !other->section->isAddressFixed)
 					 || (symbol->section && !symbol->section->isAddressFixed)) {
-					 	sym_AddSymbol(symbol); // This will error out
+						sym_AddSymbol(symbol); // This will error out
 					} else if (other->value != symbol->value) {
 						error(where, lineNo,
 						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32 " != %" PRId32 ")",

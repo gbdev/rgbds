@@ -492,6 +492,15 @@ enum {
 
 %}
 
+%code requires {
+	// Only used in the %union
+	struct ForArgs {
+		int32_t start;
+		int32_t stop;
+		int32_t step;
+	};
+}
+
 %union
 {
 	char symName[MAXSYMLEN + 1];
@@ -506,11 +515,7 @@ enum {
 	struct AlignmentSpec alignSpec;
 	struct DsArgList dsArgs;
 	struct PurgeArgList purgeArgs;
-	struct {
-		int32_t start;
-		int32_t stop;
-		int32_t step;
-	} forArgs;
+	struct ForArgs forArgs;
 	struct StrFmtArgList strfmtArgs;
 	bool captureTerminated;
 }
@@ -885,7 +890,7 @@ macroargs	: %empty {
 			$$ = macro_NewArgs();
 		}
 		| macroargs T_STRING {
-			macro_AppendArg(&($$), strdup($2));
+			macro_AppendArg($$, strdup($2));
 		}
 ;
 

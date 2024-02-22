@@ -23,6 +23,12 @@ enum SymbolType {
 	SYM_REF // Forward reference to a label
 };
 
+// Only used in an anonymous union by `struct Symbol`
+struct strValue {
+	size_t size;
+	char *value;
+};
+
 struct Symbol {
 	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
@@ -36,18 +42,12 @@ struct Symbol {
 	union {
 		// If sym_IsNumeric
 		int32_t value;
-		int32_t (*numCallback)(void);
+		int32_t (*numCallback)(void); // If hasCallback
 		// For SYM_MACRO
-		struct {
-			size_t size;
-			char *value;
-		} macro;
+		struct strValue macro;
 		// For SYM_EQUS
-		struct {
-			size_t size;
-			char *value;
-		} equs;
-		char const *(*strCallback)(void);
+		struct strValue equs;
+		char const *(*strCallback)(void); // If hasCallback
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)

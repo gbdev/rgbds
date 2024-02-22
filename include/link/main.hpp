@@ -28,6 +28,12 @@ extern bool beVerbose;
 extern bool isWRA0Mode;
 extern bool disablePadding;
 
+// Only used in an anonymous union by `struct FileStackNode`
+struct reptNodeData {
+	uint32_t depth;
+	uint32_t *iters;
+};
+
 struct FileStackNode {
 	struct FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
@@ -36,10 +42,7 @@ struct FileStackNode {
 	enum FileStackNodeType type;
 	union {
 		char *name; // NODE_FILE, NODE_MACRO
-		struct { // NODE_REPT
-			uint32_t depth;
-			uint32_t *iters;
-		} rept;
+		struct reptNodeData rept; // NODE_REPT
 	};
 };
 

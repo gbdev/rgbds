@@ -1,32 +1,23 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <errno.h>
+#include <new>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "asm/macro.hpp"
 #include "asm/warning.hpp"
 
 #define MAXMACROARGS 99999
 
-// Your average macro invocation does not go past the tens, but some go further
-// This ensures that sane and slightly insane invocations suffer no penalties,
-// and the rest is insane and thus will assume responsibility.
-// Additionally, ~300 bytes (on x64) of memory per level of nesting has been
-// deemed reasonable. (Halve that on x86.)
-#define INITIAL_ARG_SIZE 32
 struct MacroArgs {
-	unsigned int nbArgs;
 	unsigned int shift;
-	unsigned int capacity;
-	char *args[];
+	std::vector<char *> *args;
 };
-
-#define SIZEOF_ARGS(nbArgs) (sizeof(struct MacroArgs) + \
-			    sizeof(((struct MacroArgs *)0)->args[0]) * (nbArgs))
 
 static struct MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = 0;
@@ -44,35 +35,24 @@ struct MacroArgs *macro_GetCurrentArgs(void)
 
 struct MacroArgs *macro_NewArgs(void)
 {
-	struct MacroArgs *args = (struct MacroArgs *)malloc(SIZEOF_ARGS(INITIAL_ARG_SIZE));
+	struct MacroArgs *args = (struct MacroArgs *)malloc(sizeof(*args));
 
-	if (!args)
+	if (args)
+		args->args = new(std::nothrow) std::vector<char *>();
+	if (!args || !args->args)
 		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
 
-	args->nbArgs = 0;
 	args->shift = 0;
-	args->capacity = INITIAL_ARG_SIZE;
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs **argPtr, char *s)
+void macro_AppendArg(struct MacroArgs *args, char *s)
 {
-#define macArgs (*argPtr)
 	if (s[0] == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (macArgs->nbArgs == MAXMACROARGS)
+	if (args->args->size() == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	if (macArgs->nbArgs >= macArgs->capacity) {
-		macArgs->capacity *= 2;
-		// Check that overflow didn't roll us back
-		if (macArgs->capacity <= macArgs->nbArgs)
-			fatalerror("Failed to add new macro argument: capacity overflow\n");
-		macArgs = (struct MacroArgs *)realloc(macArgs, SIZEOF_ARGS(macArgs->capacity));
-		if (!macArgs)
-			fatalerror("Error adding new macro argument: %s\n", strerror(errno));
-	}
-	macArgs->args[macArgs->nbArgs++] = s;
-#undef macArgs
+	args->args->push_back(s);
 }
 
 void macro_UseNewArgs(struct MacroArgs *args)
@@ -82,8 +62,9 @@ void macro_UseNewArgs(struct MacroArgs *args)
 
 void macro_FreeArgs(struct MacroArgs *args)
 {
-	for (uint32_t i = 0; i < macroArgs->nbArgs; i++)
-		free(args->args[i]);
+	for (char *arg : *macroArgs->args)
+		free(arg);
+	delete args->args;
 }
 
 char const *macro_GetArg(uint32_t i)
@@ -93,8 +74,7 @@ char const *macro_GetArg(uint32_t i)
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->nbArgs ? NULL
-					      : macroArgs->args[realIndex];
+	return realIndex >= macroArgs->args->size() ? NULL : (*macroArgs->args)[realIndex];
 }
 
 char const *macro_GetAllArgs(void)
@@ -102,13 +82,15 @@ char const *macro_GetAllArgs(void)
 	if (!macroArgs)
 		return NULL;
 
-	if (macroArgs->shift >= macroArgs->nbArgs)
+	size_t nbArgs = macroArgs->args->size();
+
+	if (macroArgs->shift >= nbArgs)
 		return "";
 
 	size_t len = 0;
 
-	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++)
-		len += strlen(macroArgs->args[i]) + 1; // 1 for comma
+	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
+		len += strlen((*macroArgs->args)[i]) + 1; // 1 for comma
 
 	char *str = (char *)malloc(len + 1); // 1 for '\0'
 	char *ptr = str;
@@ -116,14 +98,15 @@ char const *macro_GetAllArgs(void)
 	if (!str)
 		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
 
-	for (uint32_t i = macroArgs->shift; i < macroArgs->nbArgs; i++) {
-		size_t n = strlen(macroArgs->args[i]);
+	for (uint32_t i = macroArgs->shift; i < nbArgs; i++) {
+		char *arg = (*macroArgs->args)[i];
+		size_t n = strlen(arg);
 
-		memcpy(ptr, macroArgs->args[i], n);
+		memcpy(ptr, arg, n);
 		ptr += n;
 
 		// Commas go between args and after a last empty arg
-		if (i < macroArgs->nbArgs - 1 || n == 0)
+		if (i < nbArgs - 1 || n == 0)
 			*ptr++ = ','; // no space after comma
 	}
 	*ptr = '\0';
@@ -176,14 +159,12 @@ void macro_ShiftCurrentArgs(int32_t count)
 {
 	if (!macroArgs) {
 		error("Cannot shift macro arguments outside of a macro\n");
-	} else if (count > 0 && ((uint32_t)count > macroArgs->nbArgs
-		   || macroArgs->shift > macroArgs->nbArgs - count)) {
-		warning(WARNING_MACRO_SHIFT,
-			"Cannot shift macro arguments past their end\n");
-		macroArgs->shift = macroArgs->nbArgs;
+	} else if (size_t nbArgs = macroArgs->args->size();
+		   count > 0 && ((uint32_t)count > nbArgs || macroArgs->shift > nbArgs - count)) {
+		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
+		macroArgs->shift = nbArgs;
 	} else if (count < 0 && macroArgs->shift < (uint32_t)-count) {
-		warning(WARNING_MACRO_SHIFT,
-			"Cannot shift macro arguments past their beginning\n");
+		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning\n");
 		macroArgs->shift = 0;
 	} else {
 		macroArgs->shift += count;
@@ -192,5 +173,5 @@ void macro_ShiftCurrentArgs(int32_t count)
 
 uint32_t macro_NbArgs(void)
 {
-	return macroArgs->nbArgs - macroArgs->shift;
+	return macroArgs->args->size() - macroArgs->shift;
 }
