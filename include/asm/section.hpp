@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <stdint.h>
+#include <vector>
 
 #include "linkdefs.hpp"
 #include "platform.hpp" // NONNULL
@@ -38,7 +39,7 @@ struct Section {
 	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
 	std::deque<struct Patch> patches;
-	uint8_t *data;
+	std::vector<uint8_t> data;
 };
 
 struct SectionSpec {

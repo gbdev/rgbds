@@ -286,13 +286,8 @@ static struct Section *createSection(char const *name, enum SectionType type,
 	sect.alignOfs = alignOffset;
 
 	// It is only needed to allocate memory for ROM sections.
-	if (sect_HasData(type)) {
-		sect.data = (uint8_t *)malloc(sectionTypeInfo[type].size);
-		if (sect.data == NULL)
-			fatalerror("Not enough memory for section: %s\n", strerror(errno));
-	} else {
-		sect.data = NULL;
-	}
+	if (sect_HasData(type))
+		sect.data.resize(sectionTypeInfo[type].size);
 
 	return &sect;
 }

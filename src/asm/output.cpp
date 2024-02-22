@@ -135,7 +135,7 @@ static void writesection(struct Section const &sect, FILE *f)
 	putlong(sect.alignOfs, f);
 
 	if (sect_HasData(sect.type)) {
-		fwrite(sect.data, 1, sect.size, f);
+		fwrite(sect.data.data(), 1, sect.size, f);
 		putlong(sect.patches.size(), f);
 
 		for (struct Patch const &patch : sect.patches)
