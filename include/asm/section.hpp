@@ -23,8 +23,7 @@ struct Patch {
 	struct Section *pcSection;
 	uint32_t pcOffset;
 	uint8_t type;
-	uint32_t rpnSize;
-	uint8_t *rpn;
+	std::vector<uint8_t> rpn;
 };
 
 struct Section {
