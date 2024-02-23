@@ -21,7 +21,7 @@
 // Charmaps are stored using a structure known as "trie".
 // Essentially a tree, where each nodes stores a single character's worth of info:
 // whether there exists a mapping that ends at the current character,
-struct Charnode {
+struct CharmapNode {
 	bool isTerminal; // Whether there exists a mapping that ends here
 	uint8_t value; // If the above is true, its corresponding value
 	// This MUST be indexes and not pointers, because pointers get invalidated by `realloc`!
@@ -29,78 +29,43 @@ struct Charnode {
 };
 
 struct Charmap {
-	char *name;
-	std::vector<struct Charnode> *nodes; // first node is reserved for the root node
+	std::string name;
+	std::vector<struct CharmapNode> nodes; // first node is reserved for the root node
 };
 
-static std::map<std::string, struct Charmap *> charmaps;
+static std::map<std::string, struct Charmap> charmaps;
 
-// Store pointers to `charmaps` values, so that there is only one pointer to the memory block
-// that gets reallocated.
-static struct Charmap **currentCharmap;
+static struct Charmap *currentCharmap;
+std::stack<struct Charmap *> charmapStack;
 
-std::stack<struct Charmap **> charmapStack;
-
-static struct Charmap *charmap_Get(char const *name)
-{
-	auto search = charmaps.find(name);
-	return search != charmaps.end() ? search->second : NULL;
-}
-
-static void initNode(struct Charnode *node)
-{
-	node->isTerminal = false;
-	memset(node->next, 0, sizeof(node->next));
-}
-
-struct Charmap *charmap_New(char const *name, char const *baseName)
+void charmap_New(char const *name, char const *baseName)
 {
 	struct Charmap *base = NULL;
 
 	if (baseName != NULL) {
-		base = charmap_Get(baseName);
+		auto search = charmaps.find(baseName);
 
-		if (base == NULL)
+		if (search == charmaps.end())
 			error("Base charmap '%s' doesn't exist\n", baseName);
+		else
+			base = &search->second;
 	}
 
-	struct Charmap *charmap = charmap_Get(name);
-
-	if (charmap) {
+	if (charmaps.find(name) != charmaps.end()) {
 		error("Charmap '%s' already exists\n", name);
-		return charmap;
+		return;
 	}
 
 	// Init the new charmap's fields
-	charmap = (struct Charmap *)malloc(sizeof(*charmap));
-	if (charmap)
-		charmap->nodes = new(std::nothrow) std::vector<struct Charnode>();
-	if (!charmap || !charmap->nodes)
-		fatalerror("Failed to create charmap: %s\n", strerror(errno));
+	struct Charmap &charmap = charmaps[name];
 
-	if (base) {
-		*charmap->nodes = *base->nodes; // Copies `base->nodes`
-	} else {
-		charmap->nodes->emplace_back();
-		initNode(&charmap->nodes->back()); // Init the root node
-	}
-	charmap->name = strdup(name);
+	if (base)
+		charmap.nodes = base->nodes; // Copies `base->nodes`
+	else
+		charmap.nodes.emplace_back(); // Zero-init the root node
+	charmap.name = name;
 
-	charmaps[charmap->name] = charmap;
-	currentCharmap = &charmaps[charmap->name];
-
-	return charmap;
-}
-
-void charmap_Cleanup(void)
-{
-	for (auto &it : charmaps) {
-		struct Charmap *charmap = it.second;
-
-		free(charmap->name);
-		free(charmap);
-	}
-	charmaps.clear();
+	currentCharmap = &charmap;
 }
 
 void charmap_Set(char const *name)
@@ -131,45 +96,47 @@ void charmap_Pop(void)
 
 void charmap_Add(char *mapping, uint8_t value)
 {
-	struct Charmap *charmap = *currentCharmap;
-	struct Charnode *node = &charmap->nodes->front();
+	struct Charmap &charmap = *currentCharmap;
+	size_t nodeIdx = 0;
 
-	for (uint8_t c; *mapping; mapping++) {
-		c = *mapping - 1;
+	for (; *mapping; mapping++) {
+		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)*mapping - 1];
+		size_t nextIdx = nextIdxRef;
 
-		if (node->next[c]) {
-			node = &(*charmap->nodes)[node->next[c]];
-		} else {
-			// Register next available node
-			node->next[c] = charmap->nodes->size();
-
-			// Switch to and init new node
-			node = &charmap->nodes->emplace_back();
-			initNode(node);
+		if (!nextIdx) {
+			// Switch to and zero-init the new node
+			nextIdxRef = charmap.nodes.size();
+			nextIdx = nextIdxRef;
+			// This may reallocate `charmap.nodes` and invalidate `nextIdxRef`,
+			// which is why we keep the actual value in `nextIdx`
+			charmap.nodes.emplace_back();
 		}
+
+		nodeIdx = nextIdx;
 	}
 
-	if (node->isTerminal)
+	struct CharmapNode &node = charmap.nodes[nodeIdx];
+
+	if (node.isTerminal)
 		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
 
-	node->isTerminal = true;
-	node->value = value;
+	node.isTerminal = true;
+	node.value = value;
 }
 
 bool charmap_HasChar(char const *input)
 {
-	struct Charmap const *charmap = *currentCharmap;
-	struct Charnode const *node = &charmap->nodes->front();
+	struct Charmap const &charmap = *currentCharmap;
+	size_t nodeIdx = 0;
 
 	for (; *input; input++) {
-		size_t next = node->next[(uint8_t)*input - 1];
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)*input - 1];
 
-		if (!next)
+		if (!nodeIdx)
 			return false;
-		node = &(*charmap->nodes)[next];
 	}
 
-	return node->isTerminal;
+	return charmap.nodes[nodeIdx].isTerminal;
 }
 
 size_t charmap_Convert(char const *input, uint8_t *output)
@@ -188,65 +155,60 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 	// For that, advance through the trie with each character read.
 	// If that would lead to a dead end, rewind characters until the last match, and output.
 	// If no match, read a UTF-8 codepoint and output that.
-	struct Charmap const *charmap = *currentCharmap;
-	struct Charnode const *node = &charmap->nodes->front();
-	struct Charnode const *match = NULL;
+	struct Charmap const &charmap = *currentCharmap;
+	size_t matchIdx = 0;
 	size_t rewindDistance = 0;
 
-	for (;;) {
-		uint8_t c = (uint8_t)**input - 1;
+	for (size_t nodeIdx = 0; **input;) {
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)**input - 1];
 
-		if (**input && node->next[c]) {
-			// Consume that char
-			(*input)++;
-			rewindDistance++;
+		if (!nodeIdx)
+			break;
 
-			// Advance to next node (index starts at 1)
-			node = &(*charmap->nodes)[node->next[c]];
-			if (node->isTerminal) {
-				// This node matches, register it
-				match = node;
-				rewindDistance = 0; // If no longer match is found, rewind here
-			}
+		(*input)++; // Consume that char
 
+		if (charmap.nodes[nodeIdx].isTerminal) {
+			matchIdx = nodeIdx; // This node matches, register it
+			rewindDistance = 0; // If no longer match is found, rewind here
 		} else {
-			// We are at a dead end (either because we reached the end of input, or of
-			// the trie), so rewind up to the last match, and output.
-			*input -= rewindDistance; // This will rewind all the way if no match found
-
-			if (match) { // A match was found, use it
-				if (output)
-					*(*output)++ = match->value;
-
-				return 1;
-
-			} else if (**input) { // No match found, but there is some input left
-				int firstChar = **input;
-				// This will write the codepoint's value to `output`, little-endian
-				size_t codepointLen = readUTF8Char(output ? *output : NULL, *input);
-
-				if (codepointLen == 0)
-					error("Input string is not valid UTF-8\n");
-
-				// OK because UTF-8 has no NUL in multi-byte chars
-				*input += codepointLen;
-				if (output)
-					*output += codepointLen;
-
-				// Warn if this character is not mapped but any others are
-				if (charmap->nodes->size() > 1)
-					warning(WARNING_UNMAPPED_CHAR_1,
-						"Unmapped character %s\n", printChar(firstChar));
-				else if (strcmp(charmap->name, DEFAULT_CHARMAP_NAME))
-					warning(WARNING_UNMAPPED_CHAR_2,
-						"Unmapped character %s not in " DEFAULT_CHARMAP_NAME
-						" charmap\n", printChar(firstChar));
-
-				return codepointLen;
-
-			} else { // End of input
-				return 0;
-			}
+			rewindDistance++;
 		}
+	}
+
+	// We are at a dead end (either because we reached the end of input, or of the trie),
+	// so rewind up to the last match, and output.
+	*input -= rewindDistance; // This will rewind all the way if no match found
+
+	if (matchIdx) { // A match was found, use it
+		if (output)
+			*(*output)++ = charmap.nodes[matchIdx].value;
+
+		return 1;
+
+	} else if (**input) { // No match found, but there is some input left
+		int firstChar = **input;
+		// This will write the codepoint's value to `output`, little-endian
+		size_t codepointLen = readUTF8Char(output ? *output : NULL, *input);
+
+		if (codepointLen == 0)
+			error("Input string is not valid UTF-8\n");
+
+		// OK because UTF-8 has no NUL in multi-byte chars
+		*input += codepointLen;
+		if (output)
+			*output += codepointLen;
+
+		// Warn if this character is not mapped but any others are
+		if (charmap.nodes.size() > 1)
+			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n",
+				printChar(firstChar));
+		else if (charmap.name != DEFAULT_CHARMAP_NAME)
+			warning(WARNING_UNMAPPED_CHAR_2, "Unmapped character %s not in "
+				DEFAULT_CHARMAP_NAME " charmap\n", printChar(firstChar));
+
+		return codepointLen;
+
+	} else { // End of input
+		return 0;
 	}
 }

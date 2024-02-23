@@ -412,9 +412,6 @@ int main(int argc, char *argv[])
 	if (yyparse() != 0 && nbErrors == 0)
 		nbErrors = 1;
 
-	// Free all charmaps (they're not needed after parsing)
-	charmap_Cleanup();
-
 	if (dependfile)
 		fclose(dependfile);
 	free(targetFileName);
