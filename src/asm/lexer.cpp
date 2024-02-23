@@ -2433,12 +2433,12 @@ int yylex(void)
 	if (lexerState->atLineStart && !lexerState->expansions)
 		nextLine();
 
-	static int (* const lexerModeFuncs[])(void) = {
-		AT(LEXER_NORMAL)       yylex_NORMAL,
-		AT(LEXER_RAW)          yylex_RAW,
-		AT(LEXER_SKIP_TO_ELIF) yylex_SKIP_TO_ELIF,
-		AT(LEXER_SKIP_TO_ENDC) yylex_SKIP_TO_ENDC,
-		AT(LEXER_SKIP_TO_ENDR) yylex_SKIP_TO_ENDR,
+	static int (* const lexerModeFuncs[NB_LEXER_MODES])(void) = {
+		yylex_NORMAL,
+		yylex_RAW,
+		yylex_SKIP_TO_ELIF,
+		yylex_SKIP_TO_ENDC,
+		yylex_SKIP_TO_ENDR,
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 

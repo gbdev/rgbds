@@ -205,9 +205,9 @@ struct {
 	char const *name;
 	uint16_t max;
 } scrambleSpecs[SCRAMBLE_UNK] = {
-	AT(SCRAMBLE_ROMX)  { "romx",  65535 },
-	AT(SCRAMBLE_SRAM)  { "sram",  255 },
-	AT(SCRAMBLE_WRAMX) { "wramx", 7 },
+	{ "romx",  65535 }, // SCRAMBLE_ROMX
+	{ "sram",  255   }, // SCRAMBLE_SRAM
+	{ "wramx", 7     }, // SCRAMBLE_WRAMX
 };
 
 static void parseScrambleSpec(char const *spec)
