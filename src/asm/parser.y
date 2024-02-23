@@ -352,39 +352,18 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	sym_AddVar(symName, newValue);
 }
 
-static void initDsArgList(struct DsArgList *args)
+static void initDsArgList(std::vector<struct Expression> *&args)
 {
-	args->nbArgs = 0;
-	args->capacity = INITIAL_DS_ARG_SIZE;
-	args->args = (struct Expression *)malloc(args->capacity * sizeof(*args->args));
-	if (!args->args)
-		fatalerror("Failed to allocate memory for ds arg list: %s\n",
-			   strerror(errno));
-}
-
-static void appendDsArgList(struct DsArgList *args, const struct Expression *expr)
-{
-	if (args->nbArgs == args->capacity) {
-		args->capacity = (args->capacity + 1) * 2;
-		args->args = (struct Expression *)realloc(args->args, args->capacity * sizeof(*args->args));
-		if (!args->args)
-			fatalerror("realloc error while resizing ds arg list: %s\n",
-				   strerror(errno));
-	}
-	args->args[args->nbArgs++] = *expr;
-}
-
-static void freeDsArgList(struct DsArgList *args)
-{
-	free(args->args);
+	args = new(std::nothrow) std::vector<struct Expression>();
+	if (!args)
+		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
 }
 
 static void initPurgeArgList(std::vector<char *> *&args)
 {
 	args = new(std::nothrow) std::vector<char *>();
 	if (!args)
-		fatalerror("Failed to allocate memory for purge arg list: %s\n",
-			   strerror(errno));
+		fatalerror("Failed to allocate memory for purge arg list: %s\n", strerror(errno));
 }
 
 static void freePurgeArgList(std::vector<char *> *&args)
@@ -486,7 +465,7 @@ enum {
 	struct MacroArgs *macroArg;
 	enum AssertionType assertType;
 	struct AlignmentSpec alignSpec;
-	struct DsArgList dsArgs;
+	std::vector<struct Expression> *dsArgs;
 	std::vector<char *> *purgeArgs;
 	struct ForArgs forArgs;
 	struct StrFmtArgList strfmtArgs;
@@ -1175,8 +1154,8 @@ endu		: T_POP_ENDU { sect_EndUnion(); }
 
 ds		: T_POP_DS uconst { sect_Skip($2, true); }
 		| T_POP_DS uconst T_COMMA ds_args trailing_comma {
-			sect_RelBytes($2, $4.args, $4.nbArgs);
-			freeDsArgList(&$4);
+			sect_RelBytes($2, *$4);
+			delete $4;
 		}
 		| T_POP_DS T_OP_ALIGN T_LBRACK align_spec T_RBRACK trailing_comma {
 			uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
@@ -1187,18 +1166,18 @@ ds		: T_POP_DS uconst { sect_Skip($2, true); }
 		| T_POP_DS T_OP_ALIGN T_LBRACK align_spec T_RBRACK T_COMMA ds_args trailing_comma {
 			uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
-			sect_RelBytes(n, $7.args, $7.nbArgs);
+			sect_RelBytes(n, *$7);
 			sect_AlignPC($4.alignment, $4.alignOfs);
-			freeDsArgList(&$7);
+			delete $7;
 		}
 ;
 
 ds_args		: reloc_8bit {
-			initDsArgList(&$$);
-			appendDsArgList(&$$, &$1);
+			initDsArgList($$);
+			$$->push_back($1);
 		}
 		| ds_args T_COMMA reloc_8bit {
-			appendDsArgList(&$1, &$3);
+			$1->push_back($3);
 			$$ = $1;
 		}
 ;
