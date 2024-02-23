@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "linkdefs.hpp"
 #include "platform.hpp"
@@ -229,7 +230,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 		struct Section *section;
 		uint16_t writeIndex;
 	};
-	struct FileSection *fileSections = NULL;
+	std::vector<struct FileSection> fileSections;
 	struct Symbol **fileSymbols = (struct Symbol **)malloc(sizeof(*fileSymbols) * expectedNbSymbols);
 	size_t nbSections = 0, nbSymbols = 0;
 
@@ -255,10 +256,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 		case 'A': {
 			if (nbSections == expectedNbAreas)
 				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32, expectedNbAreas);
-			fileSections = (struct FileSection *)realloc(fileSections,
-				sizeof(*fileSections) * (nbSections + 1));
-			if (!fileSections)
-				fatal(where, lineNo, "Failed to realloc file areas: %s", strerror(errno));
+			fileSections.resize(nbSections + 1);
 			fileSections[nbSections].writeIndex = 0;
 #define curSection (fileSections[nbSections].section)
 			curSection = (struct Section *)malloc(sizeof(*curSection));
@@ -384,7 +382,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			symbol->lineNo = lineNo;
 
 			// No need to set the `sectionID`, since we can directly set the pointer
-			symbol->section = fileSections ? fileSections[nbSections - 1].section : NULL;
+			symbol->section = nbSections != 0 ? fileSections[nbSections - 1].section : NULL;
 
 			getToken(line, "'S' line is too short");
 			symbol->name = strdup(token);
@@ -489,7 +487,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			areaIdx |= (uint16_t)parseByte(where, lineNo, token, numberType) << 8;
 			if (areaIdx >= nbSections)
 				fatal(where, lineNo, "'R' line references area #%" PRIu16 ", but there are only %zu (so far)", areaIdx, nbSections);
-			assert(fileSections); // There should be at least one, from the above check
+			assert(!fileSections.empty()); // There should be at least one, from the above check
 			struct Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
 			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to ->data
@@ -774,7 +772,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 #undef expectToken
 #undef getToken
 
-	free(fileSections);
 	free(data);
 	fclose(file);
 }
