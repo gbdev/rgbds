@@ -95,11 +95,4 @@ struct DsArgList {
 	struct Expression *args;
 };
 
-#define INITIAL_PURGE_ARG_SIZE 2
-struct PurgeArgList {
-	size_t nbArgs;
-	size_t capacity;
-	char **args;
-};
-
 #endif // RGBDS_ASM_LEXER_H
