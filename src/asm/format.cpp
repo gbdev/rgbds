@@ -219,7 +219,7 @@ void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uin
 	} else if (fmt->type == 'f') {
 		// Special case for fixed-point
 
-		// Default fractional width (C's is 6 for "%f"; here 5 is enough for Q16.16)
+		// Default fractional width (C++'s is 6 for "%f"; here 5 is enough for Q16.16)
 		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
 
 		if (fracWidth > 255) {
