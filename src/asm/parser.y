@@ -379,33 +379,19 @@ static void freeDsArgList(struct DsArgList *args)
 	free(args->args);
 }
 
-static void initPurgeArgList(struct PurgeArgList *args)
+static void initPurgeArgList(std::vector<char *> *&args)
 {
-	args->nbArgs = 0;
-	args->capacity = INITIAL_PURGE_ARG_SIZE;
-	args->args = (char **)malloc(args->capacity * sizeof(*args->args));
-	if (!args->args)
+	args = new(std::nothrow) std::vector<char *>();
+	if (!args)
 		fatalerror("Failed to allocate memory for purge arg list: %s\n",
 			   strerror(errno));
 }
 
-static void appendPurgeArgList(struct PurgeArgList *args, char *arg)
+static void freePurgeArgList(std::vector<char *> *&args)
 {
-	if (args->nbArgs == args->capacity) {
-		args->capacity = (args->capacity + 1) * 2;
-		args->args = (char **)realloc(args->args, args->capacity * sizeof(*args->args));
-		if (!args->args)
-			fatalerror("realloc error while resizing purge arg list: %s\n",
-				   strerror(errno));
-	}
-	args->args[args->nbArgs++] = arg;
-}
-
-static void freePurgeArgList(struct PurgeArgList *args)
-{
-	for (size_t i = 0; i < args->nbArgs; i++)
-		free(args->args[i]);
-	free(args->args);
+	for (char *arg : *args)
+		free(arg);
+	delete args;
 }
 
 static void failAssert(enum AssertionType type)
@@ -501,7 +487,7 @@ enum {
 	enum AssertionType assertType;
 	struct AlignmentSpec alignSpec;
 	struct DsArgList dsArgs;
-	struct PurgeArgList purgeArgs;
+	std::vector<char *> *purgeArgs;
 	struct ForArgs forArgs;
 	struct StrFmtArgList strfmtArgs;
 	bool captureTerminated;
@@ -1268,19 +1254,19 @@ redef_equs	: redef_id T_POP_EQUS string { sym_RedefString($1, $3); }
 purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
 		} purge_args trailing_comma {
-			for (uint32_t i = 0; i < $3.nbArgs; i++)
-				sym_Purge($3.args[i]);
-			freePurgeArgList(&$3);
+			for (char *arg : *$3)
+				sym_Purge(arg);
+			freePurgeArgList($3);
 			lexer_ToggleStringExpansion(true);
 		}
 ;
 
 purge_args	: scoped_id {
-			initPurgeArgList(&$$);
-			appendPurgeArgList(&$$, strdup($1));
+			initPurgeArgList($$);
+			$$->push_back(strdup($1));
 		}
 		| purge_args T_COMMA scoped_id {
-			appendPurgeArgList(&$1, strdup($3));
+			$1->push_back(strdup($3));
 			$$ = $1;
 		}
 ;
@@ -1628,9 +1614,9 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 ;
 
 uconst		: const {
-			$$ = $1;
-			if ($$ < 0)
+			if ($1 < 0)
 				fatalerror("Constant must not be negative: %d\n", $1);
+			$$ = $1;
 		}
 ;
 
