@@ -55,7 +55,8 @@ enum LexerMode {
 	LEXER_RAW,
 	LEXER_SKIP_TO_ELIF,
 	LEXER_SKIP_TO_ENDC,
-	LEXER_SKIP_TO_ENDR
+	LEXER_SKIP_TO_ENDR,
+	NB_LEXER_MODES
 };
 
 void lexer_SetMode(enum LexerMode mode);

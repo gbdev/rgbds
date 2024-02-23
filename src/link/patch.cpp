@@ -534,9 +534,9 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				int32_t min;
 				int32_t max;
 			} const types[PATCHTYPE_INVALID] = {
-				AT(PATCHTYPE_BYTE) { 1,      -128,       255 },
-				AT(PATCHTYPE_WORD) { 2,    -32768,     65536 },
-				AT(PATCHTYPE_LONG) { 4, INT32_MIN, INT32_MAX },
+				{ 1,      -128,       255 }, // PATCHTYPE_BYTE
+				{ 2,    -32768,     65536 }, // PATCHTYPE_WORD
+				{ 4, INT32_MIN, INT32_MAX }, // PATCHTYPE_LONG
 			};
 
 			if (!isError && (value < types[patch->type].min

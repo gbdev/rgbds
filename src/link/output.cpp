@@ -61,15 +61,15 @@ static enum SectionType typeMap[SECTTYPE_INVALID] = {
 
 void out_AddSection(struct Section const *section)
 {
-	static const uint32_t maxNbBanks[] = {
-		AT(SECTTYPE_WRAM0) 1,
-		AT(SECTTYPE_VRAM)  2,
-		AT(SECTTYPE_ROMX)  UINT32_MAX,
-		AT(SECTTYPE_ROM0)  1,
-		AT(SECTTYPE_HRAM)  1,
-		AT(SECTTYPE_WRAMX) 7,
-		AT(SECTTYPE_SRAM)  UINT32_MAX,
-		AT(SECTTYPE_OAM)   1,
+	static const uint32_t maxNbBanks[SECTTYPE_INVALID] = {
+		1,          // SECTTYPE_WRAM0
+		2,          // SECTTYPE_VRAM
+		UINT32_MAX, // SECTTYPE_ROMX
+		1,          // SECTTYPE_ROM0
+		1,          // SECTTYPE_HRAM
+		7,          // SECTTYPE_WRAMX
+		UINT32_MAX, // SECTTYPE_SRAM
+		1,          // SECTTYPE_OAM
 	};
 
 	uint32_t targetBank = section->bank - sectionTypeInfo[section->type].firstBank;
