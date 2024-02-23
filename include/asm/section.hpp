@@ -74,7 +74,7 @@ void sect_AbsWordGroup(uint8_t const *s, size_t length);
 void sect_AbsLongGroup(uint8_t const *s, size_t length);
 void sect_Skip(uint32_t skip, bool ds);
 void sect_RelByte(struct Expression *expr, uint32_t pcShift);
-void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size);
+void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs);
 void sect_RelWord(struct Expression *expr, uint32_t pcShift);
 void sect_RelLong(struct Expression *expr, uint32_t pcShift);
 void sect_PCRelByte(struct Expression *expr, uint32_t pcShift);

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string>
 #include <string.h>
+#include <vector>
 
 #include "asm/fstack.hpp"
 #include "asm/main.hpp"
@@ -694,7 +695,7 @@ void sect_RelByte(struct Expression *expr, uint32_t pcShift)
 
 // Output several copies of a relocatable byte. Checking will be done to see if
 // it is an absolute value in disguise.
-void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
+void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs)
 {
 	if (!checkcodesection())
 		return;
@@ -702,18 +703,18 @@ void sect_RelBytes(uint32_t n, struct Expression *exprs, size_t size)
 		return;
 
 	for (uint32_t i = 0; i < n; i++) {
-		struct Expression *expr = &exprs[i % size];
+		struct Expression &expr = exprs[i % exprs.size()];
 
-		if (!rpn_isKnown(expr)) {
-			createPatch(PATCHTYPE_BYTE, expr, i);
+		if (!rpn_isKnown(&expr)) {
+			createPatch(PATCHTYPE_BYTE, &expr, i);
 			writebyte(0);
 		} else {
-			writebyte(expr->val);
+			writebyte(expr.val);
 		}
 	}
 
-	for (size_t i = 0; i < size; i++)
-		rpn_Free(&exprs[i]);
+	for (struct Expression &expr : exprs)
+		rpn_Free(&expr);
 }
 
 // Output a relocatable word. Checking will be done to see if
