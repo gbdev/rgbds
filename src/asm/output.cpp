@@ -176,12 +176,12 @@ static uint32_t getSymbolID(struct Symbol *sym)
 	return sym->ID;
 }
 
-static void writerpn(std::vector<uint8_t> &rpnexpr, const uint8_t *rpn, uint32_t rpnlen)
+static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn)
 {
 	char symName[512];
 	size_t rpnptr = 0;
 
-	for (size_t offset = 0; offset < rpnlen; ) {
+	for (size_t offset = 0; offset < rpn.size(); ) {
 #define popbyte() rpn[offset++]
 #define writebyte(byte)	rpnexpr[rpnptr++] = byte
 		uint8_t rpndata = popbyte();
@@ -296,7 +296,7 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 		patch.rpn[3] = (uint32_t)(expr->val) >> 16;
 		patch.rpn[4] = (uint32_t)(expr->val) >> 24;
 	} else {
-		writerpn(patch.rpn, expr->rpn, expr->rpnLength);
+		writerpn(patch.rpn, *expr->rpn);
 	}
 }
 

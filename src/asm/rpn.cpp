@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "asm/main.hpp"
 #include "asm/output.hpp"
@@ -39,32 +40,16 @@
 
 static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
-	// This assumes the RPN length is always less than the capacity
-	if (expr->rpnCapacity - expr->rpnLength < size) {
-		// If there isn't enough room to reserve the space, realloc
+	if (!expr->rpn) {
+		expr->rpn = new(std::nothrow) std::vector<uint8_t>();
 		if (!expr->rpn)
-			expr->rpnCapacity = 256; // Initial size
-		while (expr->rpnCapacity - expr->rpnLength < size) {
-			if (expr->rpnCapacity >= MAXRPNLEN)
-				// To avoid generating humongous object files, cap the
-				// size of RPN expressions
-				fatalerror("RPN expression cannot grow larger than "
-					   EXPAND_AND_STR(MAXRPNLEN) " bytes\n");
-			else if (expr->rpnCapacity > MAXRPNLEN / 2)
-				expr->rpnCapacity = MAXRPNLEN;
-			else
-				expr->rpnCapacity *= 2;
-		}
-		expr->rpn = (uint8_t *)realloc(expr->rpn, expr->rpnCapacity);
-
-		if (!expr->rpn)
-			fatalerror("Failed to grow RPN expression: %s\n", strerror(errno));
+			fatalerror("Failed to allocate RPN expression: %s\n", strerror(errno));
 	}
 
-	uint8_t *ptr = expr->rpn + expr->rpnLength;
+	size_t curSize = expr->rpn->size();
 
-	expr->rpnLength += size;
-	return ptr;
+	expr->rpn->resize(curSize + size);
+	return &(*expr->rpn)[curSize];
 }
 
 // Init a RPN expression
@@ -74,15 +59,13 @@ static void rpn_Init(struct Expression *expr)
 	expr->isKnown = true;
 	expr->isSymbol = false;
 	expr->rpn = NULL;
-	expr->rpnCapacity = 0;
-	expr->rpnLength = 0;
 	expr->rpnPatchSize = 0;
 }
 
 // Free the RPN expression
 void rpn_Free(struct Expression *expr)
 {
-	free(expr->rpn);
+	delete expr->rpn;
 	free(expr->reason);
 	rpn_Init(expr);
 }
@@ -325,7 +308,7 @@ struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
-	return sym_FindScopedSymbol((char const *)expr->rpn + 1);
+	return sym_FindScopedSymbol((char const *)&(*expr->rpn)[1]);
 }
 
 bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
@@ -551,10 +534,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 					   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
 			expr->rpnPatchSize = sizeof(bytes);
 			expr->rpn = NULL;
-			expr->rpnCapacity = 0;
-			expr->rpnLength = 0;
-			memcpy(reserveSpace(expr, sizeof(bytes)), bytes,
-			       sizeof(bytes));
+			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 
 			// Use the other expression's un-const reason
 			expr->reason = src2->reason;
@@ -563,16 +543,14 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			// Otherwise just reuse its RPN buffer
 			expr->rpnPatchSize = src1->rpnPatchSize;
 			expr->rpn = src1->rpn;
-			expr->rpnCapacity = src1->rpnCapacity;
-			expr->rpnLength = src1->rpnLength;
 			expr->reason = src1->reason;
 			free(src2->reason);
 		}
 
 		// Now, merge the right expression into the left one
-		uint8_t *ptr = src2->rpn; // Pointer to the right RPN
-		uint32_t len = src2->rpnLength; // Size of the right RPN
-		uint32_t patchSize = src2->rpnPatchSize;
+		uint8_t const *ptr = NULL;
+		uint32_t len = 0;
+		uint32_t patchSize = 0;
 
 		// If the right expression is constant, merge a shim instead
 		uint32_t rval = src2->val;
@@ -582,14 +560,20 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			ptr = bytes;
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
+		} else {
+			ptr = &(*src2->rpn)[0]; // Pointer to the right RPN
+			len = src2->rpn->size(); // Size of the right RPN
+			patchSize = src2->rpnPatchSize;
 		}
 		// Copy the right RPN and append the operator
 		uint8_t *buf = reserveSpace(expr, len + 1);
 
-		memcpy(buf, ptr, len);
+		if (ptr)
+			// If there was none, `memcpy(buf, NULL, 0)` would be UB
+			memcpy(buf, ptr, len);
 		buf[len] = op;
 
-		free(src2->rpn); // If there was none, this is `free(NULL)`
+		delete src2->rpn; // If there was none, this is `delete NULL`
 		expr->rpnPatchSize += patchSize + 1;
 	}
 }

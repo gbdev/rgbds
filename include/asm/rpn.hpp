@@ -7,16 +7,12 @@
 
 #include "linkdefs.hpp"
 
-#define MAXRPNLEN 1048576
-
 struct Expression {
-	int32_t  val;          // If the expression's value is known, it's here
-	char     *reason;      // Why the expression is not known, if it isn't
-	bool     isKnown;      // Whether the expression's value is known
-	bool     isSymbol;     // Whether the expression represents a symbol
-	uint8_t  *rpn;         // Array of bytes serializing the RPN expression
-	uint32_t rpnCapacity;  // Size of the `rpn` buffer
-	uint32_t rpnLength;    // Used size of the `rpn` buffer
+	int32_t val; // If the expression's value is known, it's here
+	char *reason; // Why the expression is not known, if it isn't
+	bool isKnown; // Whether the expression's value is known
+	bool isSymbol; // Whether the expression represents a symbol
+	std::vector<uint8_t> *rpn; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize; // Size the expression will take in the object file
 };
 
