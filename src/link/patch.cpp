@@ -17,58 +17,16 @@
 #include "opmath.hpp"
 #include "platform.hpp"
 
-/*
- * This is an "empty"-type stack. Apart from the actual values, we also remember
- * whether the value is a placeholder inserted for error recovery. This allows
- * us to avoid cascading errors.
- *
- * The best way to think about this is a stack of (value, errorFlag) pairs.
- * They are only separated for reasons of memory efficiency.
- */
-struct RPNStack {
-	int32_t *values;
-	bool *errorFlags;
-	size_t size;
-	size_t capacity;
-} stack;
+struct RPNStackEntry {
+	int32_t value;
+	bool errorFlag; // Whether the value is a placeholder inserted for error recovery
+};
 
-static void initRPNStack(void)
-{
-	stack.capacity = 64;
-	stack.values = (int32_t *)malloc(sizeof(*stack.values) * stack.capacity);
-	stack.errorFlags = (bool *)malloc(sizeof(*stack.errorFlags) * stack.capacity);
-	if (!stack.values || !stack.errorFlags)
-		err("Failed to init RPN stack");
-}
-
-static void clearRPNStack(void)
-{
-	stack.size = 0;
-}
+std::deque<struct RPNStackEntry> rpnStack;
 
 static void pushRPN(int32_t value, bool comesFromError)
 {
-	if (stack.size >= stack.capacity) {
-		static const size_t increase_factor = 2;
-
-		if (stack.capacity > SIZE_MAX / increase_factor)
-			errx("Overflow in RPN stack resize");
-
-		stack.capacity *= increase_factor;
-		stack.values =
-			(int32_t *)realloc(stack.values, sizeof(*stack.values) * stack.capacity);
-		stack.errorFlags =
-			(bool *)realloc(stack.errorFlags, sizeof(*stack.errorFlags) * stack.capacity);
-		// Static analysis tools complain that the capacity might become
-		// zero due to overflow, but fail to realize that it's caught by
-		// the overflow check above. Hence the stringent check below.
-		if (!stack.values || !stack.errorFlags || !stack.capacity)
-			err("Failed to resize RPN stack");
-	}
-
-	stack.values[stack.size] = value;
-	stack.errorFlags[stack.size] = comesFromError;
-	stack.size++;
+	rpnStack.push_front({ .value = value, .errorFlag = comesFromError });
 }
 
 // This flag tracks whether the RPN op that is currently being evaluated
@@ -77,18 +35,14 @@ static bool isError = false;
 
 static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
 {
-	if (stack.size == 0)
+	if (rpnStack.empty())
 		fatal(node, lineNo, "Internal error, RPN stack empty");
 
-	stack.size--;
-	isError |= stack.errorFlags[stack.size];
-	return stack.values[stack.size];
-}
+	struct RPNStackEntry entry = rpnStack.front();
 
-static void freeRPNStack(void)
-{
-	free(stack.values);
-	free(stack.errorFlags);
+	rpnStack.pop_front();
+	isError |= entry.errorFlag;
+	return entry.value;
 }
 
 // RPN operators
@@ -132,7 +86,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 	uint8_t const *expression = patch->rpnExpression;
 	int32_t size = patch->rpnSize;
 
-	clearRPNStack();
+	rpnStack.clear();
 
 	while (size > 0) {
 		enum RPNCommand command = (enum RPNCommand)getRPNByte(&expression, &size,
@@ -142,7 +96,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		isError = false;
 
 		// Be VERY careful with two `popRPN` in the same expression.
-		// C does not guarantee order of evaluation of operands!
+		// C++ does not guarantee order of evaluation of operands!
 		// So, if there are two `popRPN` in the same expression, make
 		// sure the operation is commutative.
 		switch (command) {
@@ -447,9 +401,9 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		pushRPN(value, isError);
 	}
 
-	if (stack.size > 1)
+	if (rpnStack.size() > 1)
 		error(patch->src, patch->lineNo,
-		      "RPN stack has %zu entries on exit, not 1", stack.size);
+		      "RPN stack has %zu entries on exit, not 1", rpnStack.size());
 
 	isError = false;
 	return popRPN();
@@ -460,7 +414,6 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 {
 	verbosePrint("Checking assertions...\n");
-	initRPNStack();
 
 	for (struct Assertion &assert : assertions) {
 		int32_t value = computeRPNExpr(&assert.patch,
@@ -491,8 +444,6 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 			      assert.message);
 		}
 	}
-
-	freeRPNStack();
 }
 
 /*
@@ -563,8 +514,5 @@ static void applyPatches(struct Section *section)
 
 void patch_ApplyPatches(void)
 {
-	initRPNStack();
 	sect_ForEach(applyPatches);
-	freeRPNStack();
 }
-
