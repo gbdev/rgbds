@@ -15,7 +15,7 @@
 
 struct MacroArgs {
 	unsigned int shift;
-	std::vector<char *> *args;
+	std::vector<char *> args;
 };
 
 static struct MacroArgs *macroArgs = NULL;
@@ -34,11 +34,9 @@ struct MacroArgs *macro_GetCurrentArgs(void)
 
 struct MacroArgs *macro_NewArgs(void)
 {
-	struct MacroArgs *args = (struct MacroArgs *)malloc(sizeof(*args));
+	struct MacroArgs *args = new(std::nothrow) struct MacroArgs();
 
-	if (args)
-		args->args = new(std::nothrow) std::vector<char *>();
-	if (!args || !args->args)
+	if (!args)
 		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
 
 	args->shift = 0;
@@ -49,9 +47,9 @@ void macro_AppendArg(struct MacroArgs *args, char *s)
 {
 	if (s[0] == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (args->args->size() == MAXMACROARGS)
+	if (args->args.size() == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	args->args->push_back(s);
+	args->args.push_back(s);
 }
 
 void macro_UseNewArgs(struct MacroArgs *args)
@@ -61,9 +59,8 @@ void macro_UseNewArgs(struct MacroArgs *args)
 
 void macro_FreeArgs(struct MacroArgs *args)
 {
-	for (char *arg : *macroArgs->args)
+	for (char *arg : args->args)
 		free(arg);
-	delete args->args;
 }
 
 char const *macro_GetArg(uint32_t i)
@@ -73,7 +70,7 @@ char const *macro_GetArg(uint32_t i)
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->args->size() ? NULL : (*macroArgs->args)[realIndex];
+	return realIndex >= macroArgs->args.size() ? NULL : macroArgs->args[realIndex];
 }
 
 char const *macro_GetAllArgs(void)
@@ -81,7 +78,7 @@ char const *macro_GetAllArgs(void)
 	if (!macroArgs)
 		return NULL;
 
-	size_t nbArgs = macroArgs->args->size();
+	size_t nbArgs = macroArgs->args.size();
 
 	if (macroArgs->shift >= nbArgs)
 		return "";
@@ -89,7 +86,7 @@ char const *macro_GetAllArgs(void)
 	size_t len = 0;
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
-		len += strlen((*macroArgs->args)[i]) + 1; // 1 for comma
+		len += strlen(macroArgs->args[i]) + 1; // 1 for comma
 
 	char *str = (char *)malloc(len + 1); // 1 for '\0'
 	char *ptr = str;
@@ -98,7 +95,7 @@ char const *macro_GetAllArgs(void)
 		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++) {
-		char *arg = (*macroArgs->args)[i];
+		char *arg = macroArgs->args[i];
 		size_t n = strlen(arg);
 
 		memcpy(ptr, arg, n);
@@ -158,7 +155,7 @@ void macro_ShiftCurrentArgs(int32_t count)
 {
 	if (!macroArgs) {
 		error("Cannot shift macro arguments outside of a macro\n");
-	} else if (size_t nbArgs = macroArgs->args->size();
+	} else if (size_t nbArgs = macroArgs->args.size();
 		   count > 0 && ((uint32_t)count > nbArgs || macroArgs->shift > nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
 		macroArgs->shift = nbArgs;
@@ -172,5 +169,5 @@ void macro_ShiftCurrentArgs(int32_t count)
 
 uint32_t macro_NbArgs(void)
 {
-	return macroArgs->args->size() - macroArgs->shift;
+	return macroArgs->args.size() - macroArgs->shift;
 }
