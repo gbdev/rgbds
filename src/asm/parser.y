@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <new>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -254,36 +255,22 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 
 static void initStrFmtArgList(struct StrFmtArgList *args)
 {
-	args->nbArgs = 0;
-	args->capacity = INITIAL_STRFMT_ARG_SIZE;
-	args->args = (struct StrFmtArg *)malloc(args->capacity * sizeof(*args->args));
+	args->args = new(std::nothrow) std::vector<struct StrFmtArg>();
 	if (!args->args)
 		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
 			   strerror(errno));
 }
 
-static size_t nextStrFmtArgListIndex(struct StrFmtArgList *args)
-{
-	if (args->nbArgs == args->capacity) {
-		args->capacity = (args->capacity + 1) * 2;
-		args->args = (struct StrFmtArg *)realloc(args->args, args->capacity * sizeof(*args->args));
-		if (!args->args)
-			fatalerror("realloc error while resizing STRFMT arg list: %s\n",
-				   strerror(errno));
-	}
-	return args->nbArgs++;
-}
-
 static void freeStrFmtArgList(struct StrFmtArgList *args)
 {
 	free(args->format);
-	for (size_t i = 0; i < args->nbArgs; i++)
-		if (!args->args[i].isNumeric)
-			free(args->args[i].string);
-	free(args->args);
+	for (struct StrFmtArg &arg : *args->args)
+		if (!arg.isNumeric)
+			free(arg.string);
+	delete args->args;
 }
 
-static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, struct StrFmtArg *args)
+static void strfmt(char *dest, size_t destLen, char const *fmt, std::vector<struct StrFmtArg> &args)
 {
 	size_t a = 0;
 	size_t i = 0;
@@ -323,28 +310,29 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, size_t nbArgs, s
 			dest[i++] = '%';
 			a++;
 			continue;
-		} else if (a >= nbArgs) {
+		} else if (a >= args.size()) {
 			// Will warn after formatting is done.
 			dest[i++] = '%';
 			a++;
 			continue;
 		}
 
-		struct StrFmtArg *arg = &args[a++];
+		struct StrFmtArg &arg = args[a++];
 		static char buf[MAXSTRLEN + 1];
 
-		if (arg->isNumeric)
-			fmt_PrintNumber(buf, sizeof(buf), &spec, arg->number);
+		if (arg.isNumeric)
+			fmt_PrintNumber(buf, sizeof(buf), &spec, arg.number);
 		else
-			fmt_PrintString(buf, sizeof(buf), &spec, arg->string);
+			fmt_PrintString(buf, sizeof(buf), &spec, arg.string);
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
 	}
 
-	if (a < nbArgs)
-		error("STRFMT: %zu unformatted argument(s)\n", nbArgs - a);
-	else if (a > nbArgs)
-		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n", nbArgs, a);
+	if (a < args.size())
+		error("STRFMT: %zu unformatted argument(s)\n", args.size() - a);
+	else if (a > args.size())
+		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
+		      args.size(), a);
 
 	if (i > destLen - 1) {
 		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
@@ -1701,7 +1689,7 @@ string		: T_STRING
 			strrpl($$, sizeof($$), $3, $5, $7);
 		}
 		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
-			strfmt($$, sizeof($$), $3.format, $3.nbArgs, $3.args);
+			strfmt($$, sizeof($$), $3.format, *$3.args);
 			freeStrFmtArgList(&$3);
 		}
 		| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
@@ -1733,8 +1721,6 @@ strcat_args	: string
 
 strfmt_args	: string strfmt_va_args {
 			$$.format = strdup($1);
-			$$.capacity = $2.capacity;
-			$$.nbArgs = $2.nbArgs;
 			$$.args = $2.args;
 		}
 ;
@@ -1743,17 +1729,17 @@ strfmt_va_args	: %empty {
 			initStrFmtArgList(&$$);
 		}
 		| strfmt_va_args T_COMMA const_no_str {
-			size_t i = nextStrFmtArgListIndex(&$1);
+			struct StrFmtArg &arg = $1.args->emplace_back();
 
-			$1.args[i].number = $3;
-			$1.args[i].isNumeric = true;
+			arg.number = $3;
+			arg.isNumeric = true;
 			$$ = $1;
 		}
 		| strfmt_va_args T_COMMA string {
-			size_t i = nextStrFmtArgListIndex(&$1);
+			struct StrFmtArg &arg = $1.args->emplace_back();
 
-			$1.args[i].string = strdup($3);
-			$1.args[i].isNumeric = false;
+			arg.string = strdup($3);
+			arg.isNumeric = false;
 			$$ = $1;
 		}
 ;

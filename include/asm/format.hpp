@@ -4,6 +4,7 @@
 #define RGBDS_FORMAT_SPEC_H
 
 #include <stdint.h>
+#include <vector>
 
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
@@ -36,12 +37,9 @@ struct StrFmtArg {
 	bool isNumeric;
 };
 
-#define INITIAL_STRFMT_ARG_SIZE 4
 struct StrFmtArgList {
 	char *format;
-	size_t nbArgs;
-	size_t capacity;
-	struct StrFmtArg *args;
+	std::vector<struct StrFmtArg> *args;
 };
 
 struct FormatSpec fmt_NewSpec(void);
