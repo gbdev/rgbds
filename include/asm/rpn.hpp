@@ -4,7 +4,6 @@
 #define RGBDS_ASM_RPN_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "linkdefs.hpp"
 

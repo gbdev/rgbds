@@ -3,7 +3,6 @@
 #ifndef RGBDS_FORMAT_SPEC_H
 #define RGBDS_FORMAT_SPEC_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 enum FormatState {

@@ -4,7 +4,6 @@
 #define RGBDS_LINKDEFS_H
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <string>
 

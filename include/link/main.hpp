@@ -5,7 +5,6 @@
 #define RGBDS_LINK_MAIN_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include "helpers.hpp"

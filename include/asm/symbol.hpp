@@ -3,7 +3,6 @@
 #ifndef RGBDS_SYMBOL_H
 #define RGBDS_SYMBOL_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>

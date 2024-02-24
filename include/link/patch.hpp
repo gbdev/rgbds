@@ -4,7 +4,6 @@
 #ifndef RGBDS_LINK_PATCH_H
 #define RGBDS_LINK_PATCH_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "link/section.hpp"

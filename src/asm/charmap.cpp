@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <new>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>

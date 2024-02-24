@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "link/object.hpp"

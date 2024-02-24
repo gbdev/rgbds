@@ -4,7 +4,6 @@
 #define RGBDS_MACRO_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "asm/warning.hpp"

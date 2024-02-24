@@ -3,8 +3,6 @@
 #ifndef RGBDS_ASM_LEXER_H
 #define RGBDS_ASM_LEXER_H
 
-#include <stdbool.h>
-
 #define MAXSTRLEN 255
 
 struct LexerState;

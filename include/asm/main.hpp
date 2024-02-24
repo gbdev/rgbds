@@ -3,7 +3,6 @@
 #ifndef RGBDS_MAIN_H
 #define RGBDS_MAIN_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 

@@ -4,7 +4,6 @@
 #define RGBDS_SECTION_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "linkdefs.hpp"
 #include "platform.hpp" // NONNULL

@@ -3,7 +3,6 @@
 #ifndef RGBDS_ASM_CHARMAP_H
 #define RGBDS_ASM_CHARMAP_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #define DEFAULT_CHARMAP_NAME "main"
