@@ -27,7 +27,7 @@
 #include "helpers.hpp"
 #include "version.hpp"
 
-std::map<std::string, struct Symbol *> symbols;
+std::map<std::string, struct Symbol> symbols;
 
 static const char *labelScope; // Current section's label scope
 static struct Symbol *PCSymbol;
@@ -46,7 +46,7 @@ bool sym_IsPC(struct Symbol const *sym)
 void sym_ForEach(void (*callback)(struct Symbol *))
 {
 	for (auto &it : symbols)
-		callback(it.second);
+		callback(&it.second);
 }
 
 static int32_t Callback_NARG(void)
@@ -110,23 +110,19 @@ static void updateSymbolFilename(struct Symbol *sym)
 // Create a new symbol by name
 static struct Symbol *createsymbol(char const *symName)
 {
-	struct Symbol *sym = (struct Symbol *)malloc(sizeof(*sym));
+	struct Symbol &sym = symbols[symName];
 
-	if (!sym)
-		fatalerror("Failed to create symbol '%s': %s\n", symName, strerror(errno));
-
-	if (snprintf(sym->name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
+	if (snprintf(sym.name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
 		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", symName);
 
-	sym->isExported = false;
-	sym->isBuiltin = false;
-	sym->hasCallback = false;
-	sym->section = NULL;
-	setSymbolFilename(sym);
-	sym->ID = -1;
+	sym.isExported = false;
+	sym.isBuiltin = false;
+	sym.hasCallback = false;
+	sym.section = NULL;
+	setSymbolFilename(&sym);
+	sym.ID = -1;
 
-	symbols[sym->name] = sym;
-	return sym;
+	return &sym;
 }
 
 // Creates the full name of a local symbol in a given scope, by prepending
@@ -157,14 +153,12 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 struct Symbol *sym_FindExactSymbol(char const *symName)
 {
 	auto search = symbols.find(symName);
-	return search != symbols.end() ? search->second : NULL;
+	return search != symbols.end() ? &search->second : NULL;
 }
 
 struct Symbol *sym_FindScopedSymbol(char const *symName)
 {
-	char const *localName = strchr(symName, '.');
-
-	if (localName) {
+	if (char const *localName = strchr(symName, '.'); localName) {
 		if (strchr(localName + 1, '.'))
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n",
 				   symName);
@@ -224,7 +218,6 @@ void sym_Purge(char const *symName)
 		// but this can't free either of them because the expansion may be purging itself.
 		symbols.erase(sym->name);
 		// TODO: ideally, also unref the file stack nodes
-		free(sym);
 	}
 }
 
@@ -388,7 +381,7 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 	}
 
 	updateSymbolFilename(sym);
-	// FIXME: this leaks the previous sym->equs.value, but this can't free(sym->equs.value)
+	// FIXME: this leaks the previous `sym->equs.value`, but this can't `free(sym->equs.value)`
 	// because the expansion may be redefining itself.
 	assignStringSymbol(sym, value);
 
@@ -608,15 +601,16 @@ static struct Symbol *createBuiltinSymbol(char const *symName)
 	sym->hasCallback = true;
 	sym->src = NULL;
 	sym->fileLine = 1; // This is 0 for CLI-defined symbols
+
 	return sym;
 }
 
 // Initialize the symboltable
 void sym_Init(time_t now)
 {
+
 	PCSymbol = createBuiltinSymbol("@");
 	PCSymbol->type = SYM_LABEL;
-	PCSymbol->section = NULL;
 	PCSymbol->numCallback = CallbackPC;
 
 	_NARGSymbol = createBuiltinSymbol("_NARG");
