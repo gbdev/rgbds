@@ -21,8 +21,6 @@
 #include "error.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
 
-#define MAXINCPATHS 128
-
 struct Context {
 	struct FileStackNode *fileInfo;
 	struct LexerState *lexerState;
@@ -37,8 +35,8 @@ struct Context {
 static std::stack<struct Context> contextStack;
 size_t maxRecursionDepth;
 
-static unsigned int nbIncPaths = 0;
-static char const *includePaths[MAXINCPATHS];
+// The first include path for `fstk_FindFile` to try is none at all
+static std::vector<std::string> includePaths = { "" };
 
 static const char *preIncludeName;
 
@@ -110,26 +108,11 @@ void fstk_AddIncludePath(char const *path)
 {
 	if (path[0] == '\0')
 		return;
-	if (nbIncPaths >= MAXINCPATHS) {
-		error("Too many include directories passed from command line\n");
-		return;
-	}
-	size_t len = strlen(path);
-	size_t allocSize = len + (path[len - 1] != '/') + 1;
-	char *str = (char *)malloc(allocSize);
 
-	if (!str) {
-		// Attempt to continue without that path
-		error("Failed to allocate new include path: %s\n", strerror(errno));
-		return;
-	}
-	memcpy(str, path, len);
-	char *end = str + len - 1;
+	std::string &str = includePaths.emplace_back(path);
 
-	if (*end++ != '/')
-		*end++ = '/';
-	*end = '\0';
-	includePaths[nbIncPaths++] = str;
+	if (str.back() != '/')
+		str += '/';
 }
 
 void fstk_SetPreIncludeFile(char const *path)
@@ -168,10 +151,8 @@ std::string *fstk_FindFile(char const *path)
 	if (!fullPath) {
 		error("Failed to allocate string during include path search: %s\n", strerror(errno));
 	} else {
-		for (size_t i = 0; i <= nbIncPaths; ++i) {
-			*fullPath = i ? includePaths[i - 1] : "";
-			*fullPath += path;
-
+		for (std::string &str : includePaths) {
+			*fullPath = str + path;
 			if (isPathValid(fullPath->c_str())) {
 				printDep(fullPath->c_str());
 				return fullPath;
