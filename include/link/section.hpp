@@ -23,8 +23,7 @@ struct Patch {
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	enum PatchType type;
-	uint32_t rpnSize;
-	uint8_t *rpnExpression;
+	std::vector<uint8_t> rpnExpression;
 
 	struct Section const *pcSection;
 };
