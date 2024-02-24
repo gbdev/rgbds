@@ -7,7 +7,6 @@
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "link/main.hpp"
 
