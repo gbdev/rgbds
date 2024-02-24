@@ -454,22 +454,21 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
 	verbosePrint("Patching section \"%s\"...\n", section->name);
-	for (uint32_t patchID = 0; patchID < section->nbPatches; patchID++) {
-		struct Patch *patch = &section->patches[patchID];
-		int32_t value = computeRPNExpr(patch,
+	for (struct Patch &patch : *section->patches) {
+		int32_t value = computeRPNExpr(&patch,
 					       (struct Symbol const * const *)
 							section->fileSymbols);
-		uint16_t offset = patch->offset + section->offset;
+		uint16_t offset = patch.offset + section->offset;
 
 		// `jr` is quite unlike the others...
-		if (patch->type == PATCHTYPE_JR) {
+		if (patch.type == PATCHTYPE_JR) {
 			// Offset is relative to the byte *after* the operand
 			// PC as operand to `jr` is lower than reference PC by 2
-			uint16_t address = patch->pcSection->org + patch->pcOffset + 2;
+			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
 			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
-				error(patch->src, patch->lineNo,
+				error(patch.src, patch.lineNo,
 				      "jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				      jumpOffset);
 			dataSection->data[offset] = jumpOffset & 0xFF;
@@ -485,13 +484,13 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				{ 4, INT32_MIN, INT32_MAX }, // PATCHTYPE_LONG
 			};
 
-			if (!isError && (value < types[patch->type].min
-				      || value > types[patch->type].max))
-				error(patch->src, patch->lineNo,
+			if (!isError && (value < types[patch.type].min
+				      || value > types[patch.type].max))
+				error(patch.src, patch.lineNo,
 				      "Value %" PRId32 "%s is not %u-bit",
 				      value, value < 0 ? " (maybe negative?)" : "",
-				      types[patch->type].size * 8U);
-			for (uint8_t i = 0; i < types[patch->type].size; i++) {
+				      types[patch.type].size * 8U);
+			for (uint8_t i = 0; i < types[patch.type].size; i++) {
 				dataSection->data[offset + i] = value & 0xFF;
 				value >>= 8;
 			}

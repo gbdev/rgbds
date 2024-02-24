@@ -7,6 +7,7 @@
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
 #include <stdint.h>
+#include <vector>
 
 #include "link/main.hpp"
 
@@ -45,8 +46,7 @@ struct Section {
 	uint16_t alignMask;
 	uint16_t alignOfs;
 	uint8_t *data; // Array of size `size`
-	uint32_t nbPatches;
-	struct Patch *patches;
+	std::vector<struct Patch> *patches;
 	// Extra info computed during linking
 	struct Symbol **fileSymbols;
 	uint32_t nbSymbols;
