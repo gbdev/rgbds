@@ -32,7 +32,8 @@ static void consumeLF(struct FileStackNode const *where, uint32_t lineNo, FILE *
 
 static char const *delim = " \f\n\r\t\v"; // Whitespace according to the C and POSIX locales
 
-static int nextLine(char **restrict lineBuf, size_t *restrict bufLen, uint32_t *restrict lineNo, struct FileStackNode const *where, FILE *file) {
+static int nextLine(char **restrict lineBuf, size_t *restrict bufLen, uint32_t *restrict lineNo,
+		    struct FileStackNode const *where, FILE *file) {
 retry:
 	++*lineNo;
 	int firstChar = getc(file);
@@ -161,7 +162,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 #define expectToken(expected, lineType) do { \
 	getToken(NULL, "'%c' line is too short", (lineType)); \
 	if (strcasecmp(token, (expected)) != 0) \
-		fatal(where, lineNo, "Malformed '%c' line: expected \"%s\", got \"%s\"", (lineType), (expected), token); \
+		fatal(where, lineNo, "Malformed '%c' line: expected \"%s\", got \"%s\"", \
+		      (lineType), (expected), token); \
 } while (0)
 
 	if (!line)
@@ -184,7 +186,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 		numberType = OCT;
 		break;
 	default:
-		fatal(where, lineNo, "This does not look like a SDCC object file (unknown integer format '%c')", lineType);
+		fatal(where, lineNo, "This does not look like a SDCC object file (unknown integer format '%c')",
+		      lineType);
 	}
 
 	switch (line[0]) {
@@ -255,7 +258,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 		case 'A': {
 			if (nbSections == expectedNbAreas)
-				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32, expectedNbAreas);
+				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32,
+					expectedNbAreas);
 			fileSections.resize(nbSections + 1);
 			fileSections[nbSections].writeIndex = 0;
 #define curSection (fileSections[nbSections].section)
@@ -268,7 +272,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			// The following is required for fragment offsets to be reliably predicted
 			for (size_t i = 0; i < nbSections; ++i) {
 				if (!strcmp(token, fileSections[i].section->name))
-					fatal(where, lineNo, "Area \"%s\" already defined earlier", token);
+					fatal(where, lineNo, "Area \"%s\" already defined earlier",
+					      token);
 			}
 			char const *sectionName = token; // We'll deal with the section's name depending on type
 
@@ -279,7 +284,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			uint32_t tmp = parseNumber(where, lineNo, token, numberType);
 
 			if (tmp > UINT16_MAX)
-				fatal(where, lineNo, "Area \"%s\" is larger than the GB address space!?", curSection->name);
+				fatal(where, lineNo, "Area \"%s\" is larger than the GB address space!?",
+				      curSection->name);
 			curSection->size = tmp;
 
 			expectToken("flags", 'A');
@@ -298,12 +304,14 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 				curSection->name = (char *)malloc(len + 1);
 				if (!curSection->name)
-					fatal(where, lineNo, "Failed to alloc new area's name: %s", strerror(errno));
+					fatal(where, lineNo, "Failed to alloc new area's name: %s",
+					      strerror(errno));
 				sprintf(curSection->name, "%s %s", where->name, sectionName);
 			} else {
 				curSection->name = strdup(sectionName); // We need a pointer that will live longer
 				if (!curSection->name)
-					fatal(where, lineNo, "Failed to alloc new area's name: %s", strerror(errno));
+					fatal(where, lineNo, "Failed to alloc new area's name: %s",
+					      strerror(errno));
 			}
 
 			expectToken("addr", 'A');
@@ -345,8 +353,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			curSection->isAlignFixed = false; // No such concept!
 			// The array will be allocated if the section does contain data
 			curSection->data = NULL;
-			curSection->nbPatches = 0;
-			curSection->patches = NULL; // Same as `data`
+			curSection->patches = new(std::nothrow) std::vector<struct Patch>();
+			if (!curSection->patches)
+				fatal(where, lineNo, "Failed to alloc new area's patches: %s",
+				      strerror(errno));
 			curSection->fileSymbols = fileSymbols; // IDs are instead per-section
 			curSection->nbSymbols = 0;
 			curSection->symbols = NULL; // Will be allocated on demand as well
@@ -358,7 +368,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 		case 'S':
 			if (nbSymbols == expectedNbSymbols)
-				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32, expectedNbSymbols);
+				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
+					expectedNbSymbols);
 			// `realloc` is dangerous, as sections contain a pointer to `fileSymbols`.
 			// We can try to be nice, but if the pointer moves, it's game over!
 			if (nbSymbols >= expectedNbSymbols) {
@@ -366,7 +377,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					sizeof(*fileSymbols) * (nbSymbols + 1));
 
 				if (!newFileSymbols)
-					fatal(where, lineNo, "Failed to alloc extra symbols: %s", strerror(errno));
+					fatal(where, lineNo, "Failed to alloc extra symbols: %s",
+					      strerror(errno));
 				if (newFileSymbols != fileSymbols)
 					fatal(where, lineNo, "Failed to handle extra 'S' lines (pointer moved)");
 				// No need to assign, obviously
@@ -437,7 +449,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 				section->symbols = (struct Symbol **)realloc(section->symbols,
 					sizeof(section->symbols[0]) * section->nbSymbols);
 				if (!section->symbols)
-					fatal(where, lineNo, "Failed to realloc \"%s\"'s symbol list: %s", section->name, strerror(errno));
+					fatal(where, lineNo, "Failed to realloc \"%s\"'s symbol list: %s",
+					      section->name, strerror(errno));
 				section->symbols[section->nbSymbols - 1] = symbol;
 			}
 #undef symbol
@@ -458,7 +471,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					dataCapacity *= 2;
 					data = (uint8_t *)realloc(data, sizeof(*data) * dataCapacity);
 					if (!data)
-						fatal(where, lineNo, "Failed to realloc data buffer: %s", strerror(errno));
+						fatal(where, lineNo, "Failed to realloc data buffer: %s",
+						      strerror(errno));
 				}
 				data[nbBytes] = parseByte(where, lineNo, token, numberType);
 				++nbBytes;
@@ -486,7 +500,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			getToken(NULL, "'R' line is too short");
 			areaIdx |= (uint16_t)parseByte(where, lineNo, token, numberType) << 8;
 			if (areaIdx >= nbSections)
-				fatal(where, lineNo, "'R' line references area #%" PRIu16 ", but there are only %zu (so far)", areaIdx, nbSections);
+				fatal(where, lineNo, "'R' line references area #%" PRIu16 ", but there are only %zu (so far)",
+				      areaIdx, nbSections);
 			assert(!fileSections.empty()); // There should be at least one, from the above check
 			struct Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
@@ -495,19 +510,22 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 			if (section->isAddressFixed) {
 				if (addr < section->org)
-					fatal(where, lineNo, "'T' line reports address $%04" PRIx16 " in \"%s\", which starts at $%04" PRIx16, addr, section->name, section->org);
+					fatal(where, lineNo, "'T' line reports address $%04" PRIx16 " in \"%s\", which starts at $%04" PRIx16,
+					      addr, section->name, section->org);
 				addr -= section->org;
 			}
 			// Lines are emitted that violate this check but contain no "payload";
 			// ignore those. "Empty" lines shouldn't trigger allocation, either.
 			if (nbBytes != ADDR_SIZE) {
 				if (addr != *writeIndex)
-					fatal(where, lineNo, "'T' lines which don't append to their section are not supported (%" PRIu16 " != %" PRIu16 ")", addr, *writeIndex);
+					fatal(where, lineNo, "'T' lines which don't append to their section are not supported (%" PRIu16 " != %" PRIu16 ")",
+					      addr, *writeIndex);
 				if (!section->data) {
 					assert(section->size != 0);
 					section->data = (uint8_t *)malloc(section->size);
 					if (!section->data)
-						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s", section->name, strerror(errno));
+						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s",
+						      section->name, strerror(errno));
 				}
 			}
 
@@ -536,9 +554,11 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 				uint8_t offset = parseByte(where, lineNo, token, numberType);
 
 				if (offset < ADDR_SIZE)
-					fatal(where, lineNo, "Relocation index cannot point to header (%" PRIu16 " < %u)", offset, ADDR_SIZE);
+					fatal(where, lineNo, "Relocation index cannot point to header (%" PRIu16 " < %u)",
+					      offset, ADDR_SIZE);
 				if (offset >= nbBytes)
-					fatal(where, lineNo, "Relocation index is out of bounds (%" PRIu16 " >= %zu)", offset, nbBytes);
+					fatal(where, lineNo, "Relocation index is out of bounds (%" PRIu16 " >= %zu)",
+					      offset, nbBytes);
 
 				getToken(NULL, "Incomplete relocation");
 				uint16_t idx = parseByte(where, lineNo, token, numberType);
@@ -553,43 +573,45 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					warning(where, lineNo, "Unknown reloc flags 0x%x", flags & ~RELOC_ALL_FLAGS);
 
 				// Turn this into a Patch
-				section->patches = (struct Patch *)realloc(section->patches,
-					sizeof(section->patches[0]) * (section->nbPatches + 1));
-				if (!section->patches)
-					fatal(where, lineNo, "Failed to alloc extra patch for \"%s\"", section->name);
-				struct Patch *patch = &section->patches[section->nbPatches];
+				struct Patch &patch = section->patches->emplace_back();
 
-				patch->lineNo = lineNo;
-				patch->src = where;
-				patch->offset = offset - writtenOfs + *writeIndex;
-				if (section->nbPatches != 0 && section->patches[section->nbPatches - 1].offset >= patch->offset)
-					fatal(where, lineNo, "Relocs not sorted by offset are not supported (%" PRIu32 " >= %" PRIu32 ")", section->patches[section->nbPatches - 1].offset, patch->offset);
-				patch->pcSection = section; // No need to fill `pcSectionID`, then
-				patch->pcOffset = patch->offset - 1; // For `jr`s
+				patch.lineNo = lineNo;
+				patch.src = where;
+				patch.offset = offset - writtenOfs + *writeIndex;
+				if (section->patches->size() > 1) {
+					uint32_t prevOffset = (*section->patches)[section->patches->size() - 2].offset;
+					if (prevOffset>= patch.offset)
+						fatal(where, lineNo, "Relocs not sorted by offset are not supported (%" PRIu32 " >= %" PRIu32 ")",
+						      prevOffset, patch.offset);
+				}
+				patch.pcSection = section; // No need to fill `pcSectionID`, then
+				patch.pcOffset = patch.offset - 1; // For `jr`s
 
-				patch->type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
-				uint8_t nbBaseBytes = patch->type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
+				patch.type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;
+				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
 				uint32_t baseValue = 0;
 
 				assert(offset < nbBytes);
 				if (nbBytes - offset < nbBaseBytes)
-					fatal(where, lineNo, "Reloc would patch out of bounds (%" PRIu8 " > %zu)", nbBaseBytes, nbBytes - offset);
+					fatal(where, lineNo, "Reloc would patch out of bounds (%" PRIu8 " > %zu)",
+					      nbBaseBytes, nbBytes - offset);
 				for (uint8_t i = 0; i < nbBaseBytes; ++i)
 					baseValue = baseValue | data[offset + i] << (8 * i);
 
 // Extra size that must be reserved for additional operators
 #define RPN_EXTRA_SIZE (5 + 1 + 5 + 1 + 5 + 1) // >> 8 & $FF, then + <baseValue>
 #define allocPatch(size) do { \
-	patch->rpnSize = (size); \
-	patch->rpnExpression = (uint8_t *)malloc(patch->rpnSize + RPN_EXTRA_SIZE); \
-	if (!patch->rpnExpression) \
+	patch.rpnSize = (size); \
+	patch.rpnExpression = (uint8_t *)malloc(patch.rpnSize + RPN_EXTRA_SIZE); \
+	if (!patch.rpnExpression) \
 		fatal(where, lineNo, "Failed to alloc RPN expression: %s", strerror(errno)); \
 } while (0)
 				// Bit 4 specifies signedness, but I don't think that matters?
 				// Generate a RPN expression from the info and flags
 				if (flags & 1 << RELOC_ISSYM) {
 					if (idx >= nbSymbols)
-						fatal(where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu", idx, nbSymbols);
+						fatal(where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu",
+						      idx, nbSymbols);
 					struct Symbol const *sym = fileSymbols[idx];
 
 					// SDCC has a bunch of "magic symbols" that start with a
@@ -602,32 +624,34 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 								break;
 						}
 						if (idx == nbSymbols)
-							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"", sym->name, &sym->name[1]);
+							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
+							      sym->name, &sym->name[1]);
 						allocPatch(5);
-						patch->rpnExpression[0] = RPN_BANK_SYM;
-						patch->rpnExpression[1] = idx;
-						patch->rpnExpression[2] = idx >> 8;
-						patch->rpnExpression[3] = idx >> 16;
-						patch->rpnExpression[4] = idx >> 24;
+						patch.rpnExpression[0] = RPN_BANK_SYM;
+						patch.rpnExpression[1] = idx;
+						patch.rpnExpression[2] = idx >> 8;
+						patch.rpnExpression[3] = idx >> 16;
+						patch.rpnExpression[4] = idx >> 24;
 					} else if (sym->name[0] == 'l' && sym->name[1] == '_') {
 						allocPatch(1 + strlen(&sym->name[2]) + 1);
-						patch->rpnExpression[0] = RPN_SIZEOF_SECT;
-						strcpy((char *)&patch->rpnExpression[1], &sym->name[2]);
+						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
+						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
 					} else if (sym->name[0] == 's' && sym->name[1] == '_') {
 						allocPatch(1 + strlen(&sym->name[2]) + 1);
-						patch->rpnExpression[0] = RPN_STARTOF_SECT;
-						strcpy((char *)&patch->rpnExpression[1], &sym->name[2]);
+						patch.rpnExpression[0] = RPN_STARTOF_SECT;
+						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
 					} else {
 						allocPatch(5);
-						patch->rpnExpression[0] = RPN_SYM;
-						patch->rpnExpression[1] = idx;
-						patch->rpnExpression[2] = idx >> 8;
-						patch->rpnExpression[3] = idx >> 16;
-						patch->rpnExpression[4] = idx >> 24;
+						patch.rpnExpression[0] = RPN_SYM;
+						patch.rpnExpression[1] = idx;
+						patch.rpnExpression[2] = idx >> 8;
+						patch.rpnExpression[3] = idx >> 16;
+						patch.rpnExpression[4] = idx >> 24;
 					}
 				} else {
 					if (idx >= nbSections)
-						fatal(where, lineNo, "Reloc refers to area #%" PRIu16 " out of %zu", idx, nbSections);
+						fatal(where, lineNo, "Reloc refers to area #%" PRIu16 " out of %zu",
+						      idx, nbSections);
 					// It gets funky. If the area is absolute, *actually*, we
 					// must not add its base address, as the assembler will
 					// already have added it in `baseValue`.
@@ -651,30 +675,32 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					if (other)
 						baseValue += other->size;
 					allocPatch(1 + strlen(name) + 1);
-					patch->rpnSize = 1 + strlen(name) + 1;
-					patch->rpnExpression = (uint8_t *)malloc(patch->rpnSize + RPN_EXTRA_SIZE);
-					if (!patch->rpnExpression)
-						fatal(where, lineNo, "Failed to alloc RPN expression: %s", strerror(errno));
-					patch->rpnExpression[0] = RPN_STARTOF_SECT;
+					patch.rpnSize = 1 + strlen(name) + 1;
+					patch.rpnExpression = (uint8_t *)malloc(patch.rpnSize + RPN_EXTRA_SIZE);
+					if (!patch.rpnExpression)
+						fatal(where, lineNo, "Failed to alloc RPN expression: %s",
+						      strerror(errno));
+					patch.rpnExpression[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
-					strcpy((char *)&patch->rpnExpression[1], name);
+					strcpy((char *)&patch.rpnExpression[1], name);
 				}
 #undef allocPatch
 
-				patch->rpnExpression[patch->rpnSize] = RPN_CONST;
-				patch->rpnExpression[patch->rpnSize + 1] = baseValue;
-				patch->rpnExpression[patch->rpnSize + 2] = baseValue >> 8;
-				patch->rpnExpression[patch->rpnSize + 3] = baseValue >> 16;
-				patch->rpnExpression[patch->rpnSize + 4] = baseValue >> 24;
-				patch->rpnExpression[patch->rpnSize + 5] = RPN_ADD;
-				patch->rpnSize += 5 + 1;
+				patch.rpnExpression[patch.rpnSize] = RPN_CONST;
+				patch.rpnExpression[patch.rpnSize + 1] = baseValue;
+				patch.rpnExpression[patch.rpnSize + 2] = baseValue >> 8;
+				patch.rpnExpression[patch.rpnSize + 3] = baseValue >> 16;
+				patch.rpnExpression[patch.rpnSize + 4] = baseValue >> 24;
+				patch.rpnExpression[patch.rpnSize + 5] = RPN_ADD;
+				patch.rpnSize += 5 + 1;
 
-				if (patch->type == PATCHTYPE_BYTE) {
+				if (patch.type == PATCHTYPE_BYTE) {
 					// Despite the flag's name, as soon as it is set, 3 bytes
 					// are present, so we must skip two of them
 					if (flags & 1 << RELOC_EXPR16) {
 						if (*writeIndex + (offset - writtenOfs) > section->size)
-							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")", section->name, *writeIndex + (offset - writtenOfs), section->size);
+							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
+							      section->name, *writeIndex + (offset - writtenOfs), section->size);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
 						memcpy(&section->data[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
 						*writeIndex += offset - writtenOfs + 1;
@@ -684,49 +710,49 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					// Append the necessary operations...
 					if (flags & 1 << RELOC_ISPCREL) {
 						// The result must *not* be truncated for those!
-						patch->type = PATCHTYPE_JR;
+						patch.type = PATCHTYPE_JR;
 						// TODO: check the other flags?
 					} else if (flags & 1 << RELOC_EXPR24 && flags & 1 << RELOC_BANKBYTE) {
-						patch->rpnExpression[patch->rpnSize] = RPN_CONST;
-						patch->rpnExpression[patch->rpnSize + 1] = 16;
-						patch->rpnExpression[patch->rpnSize + 2] = 16 >> 8;
-						patch->rpnExpression[patch->rpnSize + 3] = 16 >> 16;
-						patch->rpnExpression[patch->rpnSize + 4] = 16 >> 24;
-						patch->rpnExpression[patch->rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
-						patch->rpnSize += 5 + 1;
+						patch.rpnExpression[patch.rpnSize] = RPN_CONST;
+						patch.rpnExpression[patch.rpnSize + 1] = 16;
+						patch.rpnExpression[patch.rpnSize + 2] = 16 >> 8;
+						patch.rpnExpression[patch.rpnSize + 3] = 16 >> 16;
+						patch.rpnExpression[patch.rpnSize + 4] = 16 >> 24;
+						patch.rpnExpression[patch.rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
+						patch.rpnSize += 5 + 1;
 					} else {
 						if (flags & 1 << RELOC_EXPR16 && flags & 1 << RELOC_WHICHBYTE) {
-							patch->rpnExpression[patch->rpnSize] = RPN_CONST;
-							patch->rpnExpression[patch->rpnSize + 1] = 8;
-							patch->rpnExpression[patch->rpnSize + 2] = 8 >> 8;
-							patch->rpnExpression[patch->rpnSize + 3] = 8 >> 16;
-							patch->rpnExpression[patch->rpnSize + 4] = 8 >> 24;
-							patch->rpnExpression[patch->rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
-							patch->rpnSize += 5 + 1;
+							patch.rpnExpression[patch.rpnSize] = RPN_CONST;
+							patch.rpnExpression[patch.rpnSize + 1] = 8;
+							patch.rpnExpression[patch.rpnSize + 2] = 8 >> 8;
+							patch.rpnExpression[patch.rpnSize + 3] = 8 >> 16;
+							patch.rpnExpression[patch.rpnSize + 4] = 8 >> 24;
+							patch.rpnExpression[patch.rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
+							patch.rpnSize += 5 + 1;
 						}
-						patch->rpnExpression[patch->rpnSize] = RPN_CONST;
-						patch->rpnExpression[patch->rpnSize + 1] = 0xFF;
-						patch->rpnExpression[patch->rpnSize + 2] = 0xFF >> 8;
-						patch->rpnExpression[patch->rpnSize + 3] = 0xFF >> 16;
-						patch->rpnExpression[patch->rpnSize + 4] = 0xFF >> 24;
-						patch->rpnExpression[patch->rpnSize + 5] = RPN_AND;
-						patch->rpnSize += 5 + 1;
+						patch.rpnExpression[patch.rpnSize] = RPN_CONST;
+						patch.rpnExpression[patch.rpnSize + 1] = 0xFF;
+						patch.rpnExpression[patch.rpnSize + 2] = 0xFF >> 8;
+						patch.rpnExpression[patch.rpnSize + 3] = 0xFF >> 16;
+						patch.rpnExpression[patch.rpnSize + 4] = 0xFF >> 24;
+						patch.rpnExpression[patch.rpnSize + 5] = RPN_AND;
+						patch.rpnSize += 5 + 1;
 					}
 				} else if (flags & 1 << RELOC_ISPCREL) {
-					assert(patch->type == PATCHTYPE_WORD);
+					assert(patch.type == PATCHTYPE_WORD);
 					fatal(where, lineNo, "16-bit PC-relative relocations are not supported");
 				} else if (flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24)) {
-					fatal(where, lineNo, "Flags 0x%x are not supported for 16-bit relocs", flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24));
+					fatal(where, lineNo, "Flags 0x%x are not supported for 16-bit relocs",
+					      flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24));
 				}
-
-				++section->nbPatches;
 			}
 
 			// If there is some data left to append, do so
 			if (writtenOfs != nbBytes) {
 				assert(nbBytes > writtenOfs);
 				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
-					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")", section->name, *writeIndex + (nbBytes - writtenOfs), section->size);
+					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
+					      section->name, *writeIndex + (nbBytes - writtenOfs), section->size);
 				memcpy(&section->data[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
 				*writeIndex += nbBytes - writtenOfs;
 			}
@@ -756,7 +782,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (fileSections[i].writeIndex != section->size && fileSections[i].writeIndex != 0)
-			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")", section->name, fileSections[i].writeIndex, section->size);
+			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
+			      section->name, fileSections[i].writeIndex, section->size);
 
 		// This must be done last, so that `->data` is not NULL anymore
 		sect_AddSection(section);

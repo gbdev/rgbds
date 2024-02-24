@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <new>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -373,18 +374,18 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		}
 		section->data = data;
 
-		tryReadlong(section->nbPatches, file,
+		uint32_t nbPatches;
+
+		tryReadlong(nbPatches, file,
 			    "%s: Cannot read \"%s\"'s number of patches: %s",
 			    fileName, section->name);
 
-		struct Patch *patches =
-			(struct Patch *)malloc(sizeof(*patches) * section->nbPatches + 1);
-
-		if (!patches)
+		section->patches = new(std::nothrow) std::vector<struct Patch>();
+		if (!section->patches)
 			err("%s: Unable to read \"%s\"'s patches", fileName, section->name);
-		for (uint32_t i = 0; i < section->nbPatches; i++)
-			readPatch(file, &patches[i], fileName, section->name, i, fileNodes);
-		section->patches = patches;
+		section->patches->resize(nbPatches);
+		for (uint32_t i = 0; i < nbPatches; i++)
+			readPatch(file, &(*section->patches)[i], fileName, section->name, i, fileNodes);
 	} else {
 		section->data = NULL; // `mergeSections()` expects to be able to always read the ptr
 	}
@@ -587,8 +588,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
 		if (sect_HasData(fileSections[i]->type)) {
-			for (uint32_t j = 0; j < fileSections[i]->nbPatches; j++)
-				linkPatchToPCSect(&fileSections[i]->patches[j], fileSections);
+			for (struct Patch &patch : *fileSections[i]->patches)
+				linkPatchToPCSect(&patch, fileSections);
 		}
 	}
 
@@ -667,9 +668,9 @@ static void freeSection(struct Section *section)
 		free(section->name);
 		if (sect_HasData(section->type)) {
 			free(section->data);
-			for (uint32_t i = 0; i < section->nbPatches; i++)
-				free(section->patches[i].rpnExpression);
-			free(section->patches);
+			for (struct Patch &patch : *section->patches)
+				free(patch.rpnExpression);
+			delete section->patches;
 		}
 		free(section->symbols);
 		free(section);

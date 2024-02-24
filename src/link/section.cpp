@@ -160,8 +160,8 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 				other->data = NULL; // Prevent a double free()
 			}
 			// Adjust patches' PC offsets
-			for (uint32_t patchID = 0; patchID < other->nbPatches; patchID++)
-				other->patches[patchID].pcOffset += other->offset;
+			for (struct Patch &patch : *other->patches)
+				patch.pcOffset += other->offset;
 		} else if (target->data) {
 			assert(other->size == 0);
 		}
