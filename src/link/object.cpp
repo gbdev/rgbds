@@ -248,7 +248,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
 static void readPatch(FILE *file, struct Patch *patch, char const *fileName, char const *sectName,
 		      uint32_t i, struct FileStackNode fileNodes[])
 {
-	uint32_t nodeID;
+	uint32_t nodeID, rpnSize;
 	enum PatchType type;
 
 	tryReadlong(nodeID, file,
@@ -271,18 +271,15 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 		"%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
 		fileName, sectName, i);
 	patch->type = type;
-	tryReadlong(patch->rpnSize, file,
+	tryReadlong(rpnSize, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
 		    fileName, sectName, i);
 
-	patch->rpnExpression = (uint8_t *)malloc(sizeof(*patch->rpnExpression) * patch->rpnSize);
-	if (!patch->rpnExpression)
-		err("%s: Failed to alloc \"%s\"'s patch #%" PRIu32 "'s RPN expression",
-		    fileName, sectName, i);
-	size_t nbElementsRead = fread(patch->rpnExpression, sizeof(*patch->rpnExpression),
-				      patch->rpnSize, file);
+	patch->rpnExpression.resize(rpnSize);
+	size_t nbElementsRead = fread(&patch->rpnExpression[0], sizeof(patch->rpnExpression[0]),
+				      rpnSize, file);
 
-	if (nbElementsRead != patch->rpnSize)
+	if (nbElementsRead != rpnSize)
 		errx("%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		     fileName, sectName, i,
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
@@ -668,8 +665,6 @@ static void freeSection(struct Section *section)
 		free(section->name);
 		if (sect_HasData(section->type)) {
 			free(section->data);
-			for (struct Patch &patch : *section->patches)
-				free(patch.rpnExpression);
 			delete section->patches;
 		}
 		free(section->symbols);
@@ -706,8 +701,6 @@ void obj_Cleanup(void)
 		free(list.symbolList);
 	}
 
-	for (struct Assertion &assert : assertions) {
-		free(assert.patch.rpnExpression);
+	for (struct Assertion &assert : assertions)
 		free(assert.message);
-	}
 }

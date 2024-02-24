@@ -598,14 +598,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 				for (uint8_t i = 0; i < nbBaseBytes; ++i)
 					baseValue = baseValue | data[offset + i] << (8 * i);
 
-// Extra size that must be reserved for additional operators
-#define RPN_EXTRA_SIZE (5 + 1 + 5 + 1 + 5 + 1) // >> 8 & $FF, then + <baseValue>
-#define allocPatch(size) do { \
-	patch.rpnSize = (size); \
-	patch.rpnExpression = (uint8_t *)malloc(patch.rpnSize + RPN_EXTRA_SIZE); \
-	if (!patch.rpnExpression) \
-		fatal(where, lineNo, "Failed to alloc RPN expression: %s", strerror(errno)); \
-} while (0)
 				// Bit 4 specifies signedness, but I don't think that matters?
 				// Generate a RPN expression from the info and flags
 				if (flags & 1 << RELOC_ISSYM) {
@@ -626,22 +618,22 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 						if (idx == nbSymbols)
 							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
 							      sym->name, &sym->name[1]);
-						allocPatch(5);
+						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
 						patch.rpnExpression[3] = idx >> 16;
 						patch.rpnExpression[4] = idx >> 24;
 					} else if (sym->name[0] == 'l' && sym->name[1] == '_') {
-						allocPatch(1 + strlen(&sym->name[2]) + 1);
+						patch.rpnExpression.resize(1 + strlen(&sym->name[2]) + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
 						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
 					} else if (sym->name[0] == 's' && sym->name[1] == '_') {
-						allocPatch(1 + strlen(&sym->name[2]) + 1);
+						patch.rpnExpression.resize(1 + strlen(&sym->name[2]) + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
 						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
 					} else {
-						allocPatch(5);
+						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
@@ -674,25 +666,18 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					// current size.
 					if (other)
 						baseValue += other->size;
-					allocPatch(1 + strlen(name) + 1);
-					patch.rpnSize = 1 + strlen(name) + 1;
-					patch.rpnExpression = (uint8_t *)malloc(patch.rpnSize + RPN_EXTRA_SIZE);
-					if (!patch.rpnExpression)
-						fatal(where, lineNo, "Failed to alloc RPN expression: %s",
-						      strerror(errno));
+					patch.rpnExpression.resize(1 + strlen(name) + 1);
 					patch.rpnExpression[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
 					strcpy((char *)&patch.rpnExpression[1], name);
 				}
-#undef allocPatch
 
-				patch.rpnExpression[patch.rpnSize] = RPN_CONST;
-				patch.rpnExpression[patch.rpnSize + 1] = baseValue;
-				patch.rpnExpression[patch.rpnSize + 2] = baseValue >> 8;
-				patch.rpnExpression[patch.rpnSize + 3] = baseValue >> 16;
-				patch.rpnExpression[patch.rpnSize + 4] = baseValue >> 24;
-				patch.rpnExpression[patch.rpnSize + 5] = RPN_ADD;
-				patch.rpnSize += 5 + 1;
+				patch.rpnExpression.push_back(RPN_CONST);
+				patch.rpnExpression.push_back(baseValue);
+				patch.rpnExpression.push_back(baseValue >> 8);
+				patch.rpnExpression.push_back(baseValue >> 16);
+				patch.rpnExpression.push_back(baseValue >> 24);
+				patch.rpnExpression.push_back(RPN_ADD);
 
 				if (patch.type == PATCHTYPE_BYTE) {
 					// Despite the flag's name, as soon as it is set, 3 bytes
@@ -713,30 +698,27 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 						patch.type = PATCHTYPE_JR;
 						// TODO: check the other flags?
 					} else if (flags & 1 << RELOC_EXPR24 && flags & 1 << RELOC_BANKBYTE) {
-						patch.rpnExpression[patch.rpnSize] = RPN_CONST;
-						patch.rpnExpression[patch.rpnSize + 1] = 16;
-						patch.rpnExpression[patch.rpnSize + 2] = 16 >> 8;
-						patch.rpnExpression[patch.rpnSize + 3] = 16 >> 16;
-						patch.rpnExpression[patch.rpnSize + 4] = 16 >> 24;
-						patch.rpnExpression[patch.rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
-						patch.rpnSize += 5 + 1;
+						patch.rpnExpression.push_back(RPN_CONST);
+						patch.rpnExpression.push_back(16);
+						patch.rpnExpression.push_back(16 >> 8);
+						patch.rpnExpression.push_back(16 >> 16);
+						patch.rpnExpression.push_back(16 >> 24);
+						patch.rpnExpression.push_back((flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR);
 					} else {
 						if (flags & 1 << RELOC_EXPR16 && flags & 1 << RELOC_WHICHBYTE) {
-							patch.rpnExpression[patch.rpnSize] = RPN_CONST;
-							patch.rpnExpression[patch.rpnSize + 1] = 8;
-							patch.rpnExpression[patch.rpnSize + 2] = 8 >> 8;
-							patch.rpnExpression[patch.rpnSize + 3] = 8 >> 16;
-							patch.rpnExpression[patch.rpnSize + 4] = 8 >> 24;
-							patch.rpnExpression[patch.rpnSize + 5] = (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR;
-							patch.rpnSize += 5 + 1;
+							patch.rpnExpression.push_back(RPN_CONST);
+							patch.rpnExpression.push_back(8);
+							patch.rpnExpression.push_back(8 >> 8);
+							patch.rpnExpression.push_back(8 >> 16);
+							patch.rpnExpression.push_back(8 >> 24);
+							patch.rpnExpression.push_back((flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR);
 						}
-						patch.rpnExpression[patch.rpnSize] = RPN_CONST;
-						patch.rpnExpression[patch.rpnSize + 1] = 0xFF;
-						patch.rpnExpression[patch.rpnSize + 2] = 0xFF >> 8;
-						patch.rpnExpression[patch.rpnSize + 3] = 0xFF >> 16;
-						patch.rpnExpression[patch.rpnSize + 4] = 0xFF >> 24;
-						patch.rpnExpression[patch.rpnSize + 5] = RPN_AND;
-						patch.rpnSize += 5 + 1;
+						patch.rpnExpression.push_back(RPN_CONST);
+						patch.rpnExpression.push_back(0xFF);
+						patch.rpnExpression.push_back(0xFF >> 8);
+						patch.rpnExpression.push_back(0xFF >> 16);
+						patch.rpnExpression.push_back(0xFF >> 24);
+						patch.rpnExpression.push_back(RPN_AND);
 					}
 				} else if (flags & 1 << RELOC_ISPCREL) {
 					assert(patch.type == PATCHTYPE_WORD);
