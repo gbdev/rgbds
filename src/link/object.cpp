@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <vector>
 
 #include "link/assign.hpp"
 #include "link/main.hpp"
@@ -181,16 +182,17 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 			   "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i);
 		break;
 
+		uint32_t depth;
 	case NODE_REPT:
-		tryReadlong(fileNodes[i].rept.depth, file,
+		tryReadlong(depth, file,
 			    "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
-		fileNodes[i].rept.iters =
-			(uint32_t *)malloc(sizeof(*fileNodes[i].rept.iters) * fileNodes[i].rept.depth);
-		if (!fileNodes[i].rept.iters)
+		fileNodes[i].iters = new(std::nothrow) std::vector<uint32_t>();
+		if (!fileNodes[i].iters)
 			fatal(NULL, 0, "%s: Failed to alloc node #%" PRIu32 "'s iters: %s",
 			      fileName, i, strerror(errno));
-		for (uint32_t k = 0; k < fileNodes[i].rept.depth; k++)
-			tryReadlong(fileNodes[i].rept.iters[k], file,
+		fileNodes[i].iters->resize(depth);
+		for (uint32_t k = 0; k < depth; k++)
+			tryReadlong((*fileNodes[i].iters)[k], file,
 				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 				    fileName, i, k);
 		if (!fileNodes[i].parent)
@@ -651,7 +653,7 @@ static void freeNode(struct FileStackNode *node)
 {
 	if (node) {
 		if (node->type == NODE_REPT)
-			free(node->rept.iters);
+			delete node->iters;
 		else
 			free(node->name);
 	}
