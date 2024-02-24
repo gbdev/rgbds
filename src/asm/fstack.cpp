@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <new>
+#include <stack>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +24,6 @@
 #define MAXINCPATHS 128
 
 struct Context {
-	struct Context *parent;
 	struct FileStackNode *fileInfo;
 	struct LexerState *lexerState;
 	uint32_t uniqueID;
@@ -34,8 +34,7 @@ struct Context {
 	char *forName;
 };
 
-static struct Context *contextStack;
-static size_t contextDepth = 0;
+static std::stack<struct Context> contextStack;
 size_t maxRecursionDepth;
 
 static unsigned int nbIncPaths = 0;
@@ -75,33 +74,32 @@ void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo)
 
 void fstk_DumpCurrent(void)
 {
-	if (!contextStack) {
+	if (contextStack.empty()) {
 		fputs("at top level", stderr);
 		return;
 	}
-	fstk_Dump(contextStack->fileInfo, lexer_GetLineNo());
+	fstk_Dump(contextStack.top().fileInfo, lexer_GetLineNo());
 }
 
 struct FileStackNode *fstk_GetFileStack(void)
 {
-	if (!contextStack)
+	if (contextStack.empty())
 		return NULL;
 
-	struct FileStackNode *node = contextStack->fileInfo;
+	struct FileStackNode *topNode = contextStack.top().fileInfo;
 
 	// Mark node and all of its parents as referenced if not already so they don't get freed
-	while (node && !node->referenced) {
+	for (struct FileStackNode *node = topNode; node && !node->referenced; node = node->parent) {
 		node->ID = -1;
 		node->referenced = true;
-		node = node->parent;
 	}
-	return contextStack->fileInfo;
+	return topNode;
 }
 
 char const *fstk_GetFileName(void)
 {
 	// Iterating via the nodes themselves skips nested REPTs
-	struct FileStackNode const *node = contextStack->fileInfo;
+	struct FileStackNode const *node = contextStack.top().fileInfo;
 
 	while (node->type != NODE_FILE)
 		node = node->parent;
@@ -195,12 +193,12 @@ bool yywrap(void)
 		fatalerror("Ended block with %" PRIu32 " unterminated IF construct%s\n",
 			   ifDepth, ifDepth == 1 ? "" : "s");
 
-	if (contextStack->fileInfo->type == NODE_REPT) {
+	if (struct Context &context = contextStack.top(); context.fileInfo->type == NODE_REPT) {
 		// The context is a REPT or FOR block, which may loop
-		struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)contextStack->fileInfo;
+		struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)context.fileInfo;
 
 		// If the node is referenced, we can't edit it; duplicate it
-		if (contextStack->fileInfo->referenced) {
+		if (context.fileInfo->referenced) {
 			struct FileStackReptNode *copy = (struct FileStackReptNode *)malloc(sizeof(*copy));
 
 			// Copy all info but the referencing
@@ -214,18 +212,15 @@ bool yywrap(void)
 			copy->node.referenced = false;
 
 			fileInfo = copy;
-			contextStack->fileInfo = (struct FileStackNode *)fileInfo;
+			context.fileInfo = (struct FileStackNode *)fileInfo;
 		}
 
 		// If this is a FOR, update the symbol value
-		if (contextStack->forName && fileInfo->iters->front() <= contextStack->nbReptIters) {
+		if (context.forName && fileInfo->iters->front() <= context.nbReptIters) {
 			// Avoid arithmetic overflow runtime error
-			uint32_t forValue = (uint32_t)contextStack->forValue +
-				(uint32_t)contextStack->forStep;
-			contextStack->forValue = forValue <= INT32_MAX ? forValue
-				: -(int32_t)~forValue - 1;
-			struct Symbol *sym = sym_AddVar(contextStack->forName,
-				contextStack->forValue);
+			uint32_t forValue = (uint32_t)context.forValue + (uint32_t)context.forStep;
+			context.forValue = forValue <= INT32_MAX ? forValue : -(int32_t)~forValue - 1;
+			struct Symbol *sym = sym_AddVar(context.forName, context.forValue);
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR)
@@ -234,72 +229,66 @@ bool yywrap(void)
 		// Advance to the next iteration
 		fileInfo->iters->front()++;
 		// If this wasn't the last iteration, wrap instead of popping
-		if (fileInfo->iters->front() <= contextStack->nbReptIters) {
-			lexer_RestartRept(contextStack->fileInfo->lineNo);
-			contextStack->uniqueID = macro_UseNewUniqueID();
+		if (fileInfo->iters->front() <= context.nbReptIters) {
+			lexer_RestartRept(context.fileInfo->lineNo);
+			context.uniqueID = macro_UseNewUniqueID();
 			return false;
 		}
-	} else if (!contextStack->parent) {
+	} else if (contextStack.size() == 1) {
 		return true;
 	}
 
-	struct Context *context = contextStack;
+	struct Context oldContext = contextStack.top();
 
-	contextStack = contextStack->parent;
-	assert(contextDepth != 0); // This is never supposed to underflow
-	contextDepth--;
+	contextStack.pop();
 
-	lexer_DeleteState(context->lexerState);
+	lexer_DeleteState(oldContext.lexerState);
 	// Restore args if a macro (not REPT) saved them
-	if (context->fileInfo->type == NODE_MACRO) {
+	if (oldContext.fileInfo->type == NODE_MACRO) {
 		macro_FreeArgs(macro_GetCurrentArgs());
-		macro_UseNewArgs(contextStack->macroArgs);
+		macro_UseNewArgs(contextStack.top().macroArgs);
 	}
 	// Free the file stack node
-	if (!context->fileInfo->referenced) {
-		if (context->fileInfo->type == NODE_REPT)
-			delete ((struct FileStackReptNode *)context->fileInfo)->iters;
+	if (!oldContext.fileInfo->referenced) {
+		if (oldContext.fileInfo->type == NODE_REPT)
+			delete ((struct FileStackReptNode *)oldContext.fileInfo)->iters;
 		else
-			delete ((struct FileStackNamedNode *)context->fileInfo)->name;
-		free(context->fileInfo);
+			delete ((struct FileStackNamedNode *)oldContext.fileInfo)->name;
+		free(oldContext.fileInfo);
 	}
 	// Free the FOR symbol name
-	free(context->forName);
-	// Free the entry and make its parent the current entry
-	free(context);
+	free(oldContext.forName);
 
-	lexer_SetState(contextStack->lexerState);
-	macro_SetUniqueID(contextStack->uniqueID);
+	lexer_SetState(contextStack.top().lexerState);
+	macro_SetUniqueID(contextStack.top().uniqueID);
 
 	return false;
 }
 
 // Make sure not to switch the lexer state before calling this, so the saved line no is correct.
 // BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
-// Callers should set contextStack->lexerState after this so it is not NULL.
-static void newContext(struct FileStackNode *fileInfo)
+// Callers should set `contextStack.top().lexerState` after this so it is not NULL.
+static struct Context &newContext(struct FileStackNode *fileInfo)
 {
-	++contextDepth;
-	fstk_NewRecursionDepth(maxRecursionDepth); // Only checks if the max depth was exceeded
+	if (contextStack.size() > maxRecursionDepth)
+		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
 	// Save the current `\@` value, to be restored when this context ends
-	contextStack->uniqueID = macro_GetUniqueID();
+	contextStack.top().uniqueID = macro_GetUniqueID();
 
-	struct Context *context = (struct Context *)malloc(sizeof(*context));
+	struct FileStackNode *parent = contextStack.top().fileInfo;
 
-	if (!context)
-		fatalerror("Failed to allocate memory for new context: %s\n", strerror(errno));
-	fileInfo->parent = contextStack->fileInfo;
+	fileInfo->parent = parent;
 	fileInfo->lineNo = 0; // Init to a default value, see struct definition for info
 	fileInfo->referenced = false;
 	fileInfo->lineNo = lexer_GetLineNo();
-	context->fileInfo = fileInfo;
-	context->forName = NULL;
 
-	// Link new entry to its parent so it's reachable later
-	// ERRORS SHOULD NOT OCCUR AFTER THIS!
-	context->parent = contextStack;
-	contextStack = context;
+	struct Context &context = contextStack.emplace();
+
+	context.fileInfo = fileInfo;
+	context.forName = NULL;
+
+	return context;
 }
 
 void fstk_RunInclude(char const *path)
@@ -327,15 +316,17 @@ void fstk_RunInclude(char const *path)
 	fileInfo->node.type = NODE_FILE;
 	fileInfo->name = fullPath; // `fullPath` is already `new`-allocated, so just point to it
 
-	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFile(fileInfo->name->c_str());
-	if (!contextStack->lexerState)
+	uint32_t uniqueID = contextStack.top().uniqueID;
+	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+
+	context.lexerState = lexer_OpenFile(fileInfo->name->c_str());
+	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetStateAtEOL(contextStack->lexerState);
+	lexer_SetStateAtEOL(context.lexerState);
 	// We're back at top-level, so most things are reset,
 	// but not the unique ID, since INCLUDE may be inside a
 	// MACRO or REPT/FOR loop
-	contextStack->uniqueID = contextStack->parent->uniqueID;
+	context.uniqueID = uniqueID;
 }
 
 // Similar to `fstk_RunInclude`, but not subject to `-MG`, and
@@ -361,13 +352,14 @@ static void runPreIncludeFile(void)
 	fileInfo->node.type = NODE_FILE;
 	fileInfo->name = fullPath; // `fullPath` is already `new`-allocated, so just point to it
 
-	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFile(fileInfo->name->c_str());
-	if (!contextStack->lexerState)
+	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+
+	context.lexerState = lexer_OpenFile(fileInfo->name->c_str());
+	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetState(contextStack->lexerState);
+	lexer_SetState(context.lexerState);
 	// We're back at top-level, so most things are reset
-	contextStack->uniqueID = macro_UndefUniqueID();
+	context.uniqueID = macro_UndefUniqueID();
 }
 
 void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
@@ -382,7 +374,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 		error("\"%s\" is not a macro\n", macroName);
 		return;
 	}
-	contextStack->macroArgs = macro_GetCurrentArgs();
+	contextStack.top().macroArgs = macro_GetCurrentArgs();
 
 	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
@@ -416,20 +408,20 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	fileInfo->name->append("::");
 	fileInfo->name->append(macro->name);
 
-	newContext((struct FileStackNode *)fileInfo);
-	contextStack->lexerState = lexer_OpenFileView("MACRO", macro->macro.value, macro->macro.size,
-						      macro->fileLine);
-	if (!contextStack->lexerState)
+	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+	context.lexerState = lexer_OpenFileView("MACRO", macro->macro.value, macro->macro.size,
+						macro->fileLine);
+	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for macro invocation\n");
-	lexer_SetStateAtEOL(contextStack->lexerState);
-	contextStack->uniqueID = macro_UseNewUniqueID();
+	lexer_SetStateAtEOL(context.lexerState);
+	context.uniqueID = macro_UseNewUniqueID();
 	macro_UseNewArgs(args);
 }
 
 static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 {
-	uint32_t reptDepth = contextStack->fileInfo->type == NODE_REPT
-				? ((struct FileStackReptNode *)contextStack->fileInfo)->iters->size()
+	uint32_t reptDepth = contextStack.top().fileInfo->type == NODE_REPT
+				? ((struct FileStackReptNode *)contextStack.top().fileInfo)->iters->size()
 				: 0;
 	struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)malloc(sizeof(*fileInfo));
 
@@ -442,19 +434,20 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 	fileInfo->node.type = NODE_REPT;
 	if (reptDepth) {
 		// Copy all parent iter counts
-		*fileInfo->iters = *((struct FileStackReptNode *)contextStack->fileInfo)->iters;
+		*fileInfo->iters = *((struct FileStackReptNode *)contextStack.top().fileInfo)->iters;
 	}
 	fileInfo->iters->insert(fileInfo->iters->begin(), 1);
 
-	newContext((struct FileStackNode *)fileInfo);
-	// Correct our line number, which currently points to the `ENDR` line
-	contextStack->fileInfo->lineNo = reptLineNo;
+	struct Context &context = newContext((struct FileStackNode *)fileInfo);
 
-	contextStack->lexerState = lexer_OpenFileView("REPT", body, size, reptLineNo);
-	if (!contextStack->lexerState)
+	// Correct our line number, which currently points to the `ENDR` line
+	context.fileInfo->lineNo = reptLineNo;
+
+	context.lexerState = lexer_OpenFileView("REPT", body, size, reptLineNo);
+	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for REPT block\n");
-	lexer_SetStateAtEOL(contextStack->lexerState);
-	contextStack->uniqueID = macro_UseNewUniqueID();
+	lexer_SetStateAtEOL(context.lexerState);
+	context.uniqueID = macro_UseNewUniqueID();
 	return true;
 }
 
@@ -465,8 +458,8 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 	if (!newReptContext(reptLineNo, body, size))
 		return;
 
-	contextStack->nbReptIters = count;
-	contextStack->forName = NULL;
+	contextStack.top().nbReptIters = count;
+	contextStack.top().forName = NULL;
 }
 
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
@@ -495,23 +488,25 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	if (!newReptContext(reptLineNo, body, size))
 		return;
 
-	contextStack->nbReptIters = count;
-	contextStack->forValue = start;
-	contextStack->forStep = step;
-	contextStack->forName = strdup(symName);
-	if (!contextStack->forName)
+	struct Context &context = contextStack.top();
+
+	context.nbReptIters = count;
+	context.forValue = start;
+	context.forStep = step;
+	context.forName = strdup(symName);
+	if (!context.forName)
 		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
 }
 
 void fstk_StopRept(void)
 {
 	// Prevent more iterations
-	contextStack->nbReptIters = 0;
+	contextStack.top().nbReptIters = 0;
 }
 
 bool fstk_Break(void)
 {
-	if (contextStack->fileInfo->type != NODE_REPT) {
+	if (contextStack.top().fileInfo->type != NODE_REPT) {
 		error("BREAK can only be used inside a REPT/FOR block\n");
 		return false;
 	}
@@ -522,7 +517,7 @@ bool fstk_Break(void)
 
 void fstk_NewRecursionDepth(size_t newDepth)
 {
-	if (contextDepth > newDepth)
+	if (contextStack.size() > newDepth + 1)
 		fatalerror("Recursion limit (%zu) exceeded\n", newDepth);
 	maxRecursionDepth = newDepth;
 }
@@ -535,33 +530,28 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(state);
 	char const *fileName = lexer_GetFileName();
-	struct Context *context = (struct Context *)malloc(sizeof(*contextStack));
 	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
-	if (!context)
-		fatalerror("Failed to allocate memory for main context: %s\n", strerror(errno));
 	if (fileInfo)
 		fileInfo->name = new(std::nothrow) std::string(fileName);
 	if (!fileInfo || !fileInfo->name)
 		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
 
-	context->fileInfo = (struct FileStackNode *)fileInfo;
+	struct Context &context = contextStack.emplace();
+
+	context.fileInfo = (struct FileStackNode *)fileInfo;
 	// lineNo and nbReptIters are unused on the top-level context
-	context->fileInfo->parent = NULL;
-	context->fileInfo->lineNo = 0; // This still gets written to the object file, so init it
-	context->fileInfo->referenced = false;
-	context->fileInfo->type = NODE_FILE;
+	context.fileInfo->parent = NULL;
+	context.fileInfo->lineNo = 0; // This still gets written to the object file, so init it
+	context.fileInfo->referenced = false;
+	context.fileInfo->type = NODE_FILE;
 
-	context->parent = NULL;
-	context->lexerState = state;
-	context->uniqueID = macro_UndefUniqueID();
-	context->nbReptIters = 0;
-	context->forValue = 0;
-	context->forStep = 0;
-	context->forName = NULL;
-
-	// Now that it's set up properly, register the context
-	contextStack = context;
+	context.lexerState = state;
+	context.uniqueID = macro_UndefUniqueID();
+	context.nbReptIters = 0;
+	context.forValue = 0;
+	context.forStep = 0;
+	context.forName = NULL;
 
 	maxRecursionDepth = maxDepth;
 
