@@ -72,34 +72,35 @@ char const *dumpFileStack(struct FileStackNode const *node)
 	return lastName;
 }
 
-void warning(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+void printDiag(char const *fmt, va_list args, char const *type,
+	       struct FileStackNode const *where, uint32_t lineNo)
 {
-	va_list ap;
-
-	fputs("warning: ", stderr);
+	fputs(type, stderr);
+	fputs(": ", stderr);
 	if (where) {
 		dumpFileStack(where);
 		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
 	}
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);
+}
+
+void warning(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	printDiag(fmt, args, "warning", where, lineNo);
+	va_end(args);
 }
 
 void error(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
-	va_list ap;
+	va_list args;
 
-	fputs("error: ", stderr);
-	if (where) {
-		dumpFileStack(where);
-		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
-	}
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
+	va_start(args, fmt);
+	printDiag(fmt, args, "error", where, lineNo);
+	va_end(args);
 
 	if (nbErrors != UINT32_MAX)
 		nbErrors++;
@@ -107,12 +108,12 @@ void error(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, 
 
 void argErr(char flag, char const *fmt, ...)
 {
-	va_list ap;
+	va_list args;
 
 	fprintf(stderr, "error: Invalid argument for option '%c': ", flag);
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
 	putc('\n', stderr);
 
 	if (nbErrors != UINT32_MAX)
@@ -121,17 +122,11 @@ void argErr(char flag, char const *fmt, ...)
 
 [[noreturn]] void fatal(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
-	va_list ap;
+	va_list args;
 
-	fputs("FATAL: ", stderr);
-	if (where) {
-		dumpFileStack(where);
-		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
-	}
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	putc('\n', stderr);
+	va_start(args, fmt);
+	printDiag(fmt, args, "FATAL", where, lineNo);
+	va_end(args);
 
 	if (nbErrors != UINT32_MAX)
 		nbErrors++;
