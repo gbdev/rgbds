@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 #include <time.h>
 
@@ -54,7 +55,7 @@ FILE *dependfile = NULL;
 bool generatedMissingIncludes = false;
 bool failedOnMissingInclude = false;
 bool generatePhonyDeps = false;
-char *targetFileName = NULL;
+std::string targetFileName;
 
 bool haltNop;
 bool warnOnHaltNop;
@@ -64,23 +65,22 @@ bool verbose;
 bool warnings; // True to enable warnings, false to disable them.
 
 // Escapes Make-special chars from a string
-static char *make_escape(char const *str)
+static std::string make_escape(std::string &str)
 {
-	char *escaped_str = (char *)malloc(strlen(str) * 2 + 1);
-	char *dest = escaped_str;
+	std::string escaped;
+	size_t pos = 0;
 
-	if (escaped_str == NULL)
-		err("%s: Failed to allocate memory", __func__);
-
-	while (*str) {
+	for (;;) {
 		// All dollars needs to be doubled
-		if (*str == '$')
-			*dest++ = '$';
-		*dest++ = *str++;
+		size_t nextPos = str.find("$", pos);
+		if (nextPos == std::string::npos)
+			break;
+		escaped.append(str, pos, nextPos - pos);
+		escaped.append("$$");
+		pos = nextPos + sizeof("$") - 1;
 	}
-	*dest = '\0';
-
-	return escaped_str;
+	escaped.append(str, pos, str.length() - pos);
+	return escaped;
 }
 
 // Short options
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 	sym_SetExportAll(false);
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
 	char const *dependFileName = NULL;
-	size_t targetFileNameLen = 0;
+	std::string newTarget;
 
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO))
@@ -347,24 +347,14 @@ int main(int argc, char *argv[])
 				generatePhonyDeps = true;
 				break;
 
-				char *newTarget;
 			case 'Q':
 			case 'T':
 				newTarget = musl_optarg;
 				if (depType == 'Q')
 					newTarget = make_escape(newTarget);
-				size_t newTargetLen = strlen(newTarget) + 1; // Plus the space
-
-				targetFileName = (char *)realloc(targetFileName,
-							 targetFileNameLen + newTargetLen + 1);
-				if (targetFileName == NULL)
-					err("Cannot append new file to target file list");
-				memcpy(&targetFileName[targetFileNameLen], newTarget, newTargetLen);
-				if (depType == 'Q')
-					free(newTarget);
-				if (targetFileNameLen > 0)
-					targetFileName[targetFileNameLen - 1] = ' ';
-				targetFileNameLen += newTargetLen;
+				if (!targetFileName.empty())
+					targetFileName += ' ';
+				targetFileName += newTarget;
 				break;
 			}
 			break;
@@ -377,8 +367,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!targetFileName && objectName)
-		targetFileName = strdup(objectName);
+	if (targetFileName.empty() && objectName)
+		targetFileName = objectName;
 
 	if (argc == musl_optind) {
 		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr);
@@ -396,10 +386,10 @@ int main(int argc, char *argv[])
 		printf("Assembling %s\n", mainFileName);
 
 	if (dependfile) {
-		if (!targetFileName)
+		if (targetFileName.empty())
 			errx("Dependency files can only be created if a target file is specified with either -o, -MQ or -MT");
 
-		fprintf(dependfile, "%s: %s\n", targetFileName, mainFileName);
+		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName);
 	}
 
 	charmap_New(DEFAULT_CHARMAP_NAME, NULL);
@@ -414,7 +404,6 @@ int main(int argc, char *argv[])
 
 	if (dependfile)
 		fclose(dependfile);
-	free(targetFileName);
 
 	sect_CheckUnionClosed();
 
