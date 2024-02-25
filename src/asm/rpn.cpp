@@ -22,21 +22,15 @@
 #include "opmath.hpp"
 
 // Makes an expression "not known", also setting its error message
-#define makeUnknown(expr_, ...) do { \
-	struct Expression *_expr = expr_; \
-	_expr->isKnown = false; \
-	/* If we had `asprintf` this would be great, but alas. */ \
-	_expr->reason = (char *)malloc(128); /* Use an initial reasonable size */ \
-	if (!_expr->reason) \
-		fatalerror("Can't allocate err string: %s\n", strerror(errno)); \
-	int size = snprintf(_expr->reason, 128, __VA_ARGS__); \
-	if (size >= 128) { /* If this wasn't enough, try again */ \
-		_expr->reason = (char *)realloc(_expr->reason, size + 1); \
-		if (!_expr->reason) \
-			fatalerror("Can't allocate err string: %s\n", strerror(errno)); \
-		sprintf(_expr->reason, __VA_ARGS__); \
-	} \
-} while (0)
+template<typename... Ts>
+static void makeUnknown(struct Expression *expr, Ts ...parts)
+{
+	expr->isKnown = false;
+	expr->reason = new std::string();
+	if (!expr->reason)
+		fatalerror("Failed to allocate RPN error string: %s\n", strerror(errno));
+	(expr->reason->append(parts), ...);
+}
 
 static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 {
@@ -66,7 +60,7 @@ static void rpn_Init(struct Expression *expr)
 void rpn_Free(struct Expression *expr)
 {
 	delete expr->rpn;
-	free(expr->reason);
+	delete expr->reason;
 	rpn_Init(expr);
 }
 
@@ -88,8 +82,10 @@ void rpn_Symbol(struct Expression *expr, char const *symName)
 		rpn_Init(expr);
 		expr->isSymbol = true;
 
-		makeUnknown(expr, sym_IsPC(sym) ? "PC is not constant at assembly time"
-						: "'%s' is not constant at assembly time", symName);
+		if (sym_IsPC(sym))
+			makeUnknown(expr, "PC is not constant at assembly time");
+		else
+			makeUnknown(expr, "'", symName, "' is not constant at assembly time");
 		sym = sym_Ref(symName);
 		expr->rpnPatchSize += 5; // 1-byte opcode + 4-byte symbol ID
 
@@ -139,7 +135,7 @@ void rpn_BankSymbol(struct Expression *expr, char const *symName)
 			// Symbol's section is known and bank is fixed
 			expr->val = sym_GetSection(sym)->bank;
 		} else {
-			makeUnknown(expr, "\"%s\"'s bank is not known", symName);
+			makeUnknown(expr, "\"", symName, "\"'s bank is not known");
 			expr->rpnPatchSize += 5; // opcode + 4-byte sect ID
 
 			size_t nameLen = strlen(sym->name) + 1; // Room for NUL!
@@ -159,7 +155,7 @@ void rpn_BankSection(struct Expression *expr, char const *sectionName)
 	if (section && section->bank != (uint32_t)-1) {
 		expr->val = section->bank;
 	} else {
-		makeUnknown(expr, "Section \"%s\"'s bank is not known", sectionName);
+		makeUnknown(expr, "Section \"", sectionName, "\"'s bank is not known");
 
 		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -179,7 +175,7 @@ void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
 	if (section && sect_IsSizeKnown(section)) {
 		expr->val = section->size;
 	} else {
-		makeUnknown(expr, "Section \"%s\"'s size is not known", sectionName);
+		makeUnknown(expr, "Section \"", sectionName, "\"'s size is not known");
 
 		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -199,7 +195,7 @@ void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 	if (section && section->org != (uint32_t)-1) {
 		expr->val = section->org;
 	} else {
-		makeUnknown(expr, "Section \"%s\"'s start is not known", sectionName);
+		makeUnknown(expr, "Section \"", sectionName, "\"'s start is not known");
 
 		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
@@ -285,7 +281,7 @@ void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
 int32_t rpn_GetConstVal(struct Expression const *expr)
 {
 	if (!rpn_isKnown(expr)) {
-		error("Expected constant expression: %s\n", expr->reason);
+		error("Expected constant expression: %s\n", expr->reason->c_str());
 		return 0;
 	}
 	return expr->val;
@@ -538,13 +534,13 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 
 			// Use the other expression's un-const reason
 			expr->reason = src2->reason;
-			free(src1->reason);
+			delete src1->reason;
 		} else {
 			// Otherwise just reuse its RPN buffer
 			expr->rpnPatchSize = src1->rpnPatchSize;
 			expr->rpn = src1->rpn;
 			expr->reason = src1->reason;
-			free(src2->reason);
+			delete src2->reason;
 		}
 
 		// Now, merge the right expression into the left one

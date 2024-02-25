@@ -4,12 +4,13 @@
 #define RGBDS_ASM_RPN_H
 
 #include <stdint.h>
+#include <string>
 
 #include "linkdefs.hpp"
 
 struct Expression {
 	int32_t val; // If the expression's value is known, it's here
-	char *reason; // Why the expression is not known, if it isn't
+	std::string *reason; // Why the expression is not known, if it isn't
 	bool isKnown; // Whether the expression's value is known
 	bool isSymbol; // Whether the expression represents a symbol
 	std::vector<uint8_t> *rpn; // Bytes serializing the RPN expression
