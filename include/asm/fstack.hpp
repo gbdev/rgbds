@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "asm/lexer.hpp"
@@ -23,16 +24,18 @@ struct FileStackNode {
 	uint32_t ID; // Set only if referenced: ID within the object file, -1 if not output yet
 
 	enum FileStackNodeType type;
-};
+	std::variant<
+		std::monostate, // Default constructed; `.type` and `.data` must be set manually
+		std::vector<uint32_t>, // NODE_REPT
+		std::string // NODE_FILE, NODE_MACRO
+	> data;
 
-struct FileStackReptNode { // NODE_REPT
-	struct FileStackNode node;
-	std::vector<uint32_t> iters; // REPT iteration counts since last named node, in reverse depth order
-};
-
-struct FileStackNamedNode { // NODE_FILE, NODE_MACRO
-	struct FileStackNode node;
-	std::string name; // File name for files, file::macro name for macros
+	// REPT iteration counts since last named node, in reverse depth order
+	std::vector<uint32_t> &iters();
+	std::vector<uint32_t> const &iters() const;
+	// File name for files, file::macro name for macros
+	std::string &name();
+	std::string const &name() const;
 };
 
 #define DEFAULT_MAX_DEPTH 64

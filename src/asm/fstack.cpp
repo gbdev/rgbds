@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "asm/fstack.hpp"
@@ -46,14 +47,14 @@ static const char *dumpNodeAndParents(struct FileStackNode const *node)
 
 	if (node->type == NODE_REPT) {
 		assert(node->parent); // REPT nodes should always have a parent
-		struct FileStackReptNode const *reptInfo = (struct FileStackReptNode const *)node;
+		std::vector<uint32_t> const &nodeIters = node->iters();
 
 		name = dumpNodeAndParents(node->parent);
 		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
-		for (uint32_t i = reptInfo->iters.size(); i--; )
-			fprintf(stderr, "::REPT~%" PRIu32, reptInfo->iters[i]);
+		for (uint32_t i = nodeIters.size(); i--; )
+			fprintf(stderr, "::REPT~%" PRIu32, nodeIters[i]);
 	} else {
-		name = ((struct FileStackNamedNode const *)node)->name.c_str();
+		name = node->name().c_str();
 		if (node->parent) {
 			dumpNodeAndParents(node->parent);
 			fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
@@ -62,6 +63,26 @@ static const char *dumpNodeAndParents(struct FileStackNode const *node)
 		}
 	}
 	return name;
+}
+
+std::vector<uint32_t> &FileStackNode::iters() {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::vector<uint32_t> const &FileStackNode::iters() const {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::string &FileStackNode::name() {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
+}
+
+std::string const &FileStackNode::name() const {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
 }
 
 void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo)
@@ -101,7 +122,7 @@ char const *fstk_GetFileName(void)
 
 	while (node->type != NODE_FILE)
 		node = node->parent;
-	return ((struct FileStackNamedNode const *)node)->name.c_str();
+	return node->name().c_str();
 }
 
 void fstk_AddIncludePath(char const *path)
@@ -176,25 +197,24 @@ bool yywrap(void)
 
 	if (struct Context &context = contextStack.top(); context.fileInfo->type == NODE_REPT) {
 		// The context is a REPT or FOR block, which may loop
-		struct FileStackReptNode *fileInfo = (struct FileStackReptNode *)context.fileInfo;
 
 		// If the node is referenced, we can't edit it; duplicate it
 		if (context.fileInfo->referenced) {
-			struct FileStackReptNode *copy = new(std::nothrow) struct FileStackReptNode();
+			struct FileStackNode *copy = new(std::nothrow) struct FileStackNode();
 
 			if (!copy)
 				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
 			// Copy all info but the referencing
-			memcpy(&copy->node, &fileInfo->node, sizeof(copy->node));
-			copy->iters = fileInfo->iters; // Copies `fileInfo->iters`
-			copy->node.referenced = false;
+			*copy = *context.fileInfo; // Also copies `context.fileInfo->iters()`
+			copy->referenced = false;
 
-			fileInfo = copy;
-			context.fileInfo = (struct FileStackNode *)fileInfo;
+			context.fileInfo = copy;
 		}
 
+		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();
+
 		// If this is a FOR, update the symbol value
-		if (context.forName && fileInfo->iters.front() <= context.nbReptIters) {
+		if (context.forName && fileInfoIters.front() <= context.nbReptIters) {
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue = (uint32_t)context.forValue + (uint32_t)context.forStep;
 			context.forValue = forValue <= INT32_MAX ? forValue : -(int32_t)~forValue - 1;
@@ -205,9 +225,9 @@ bool yywrap(void)
 				fatalerror("Failed to update FOR symbol value\n");
 		}
 		// Advance to the next iteration
-		fileInfo->iters.front()++;
+		fileInfoIters.front()++;
 		// If this wasn't the last iteration, wrap instead of popping
-		if (fileInfo->iters.front() <= context.nbReptIters) {
+		if (fileInfoIters.front() <= context.nbReptIters) {
 			lexer_RestartRept(context.fileInfo->lineNo);
 			context.uniqueID = macro_UseNewUniqueID();
 			return false;
@@ -227,12 +247,8 @@ bool yywrap(void)
 		macro_UseNewArgs(contextStack.top().macroArgs);
 	}
 	// Free the file stack node
-	if (!oldContext.fileInfo->referenced) {
-		if (oldContext.fileInfo->type == NODE_REPT)
-			delete (struct FileStackReptNode *)oldContext.fileInfo;
-		else
-			delete (struct FileStackNamedNode *)oldContext.fileInfo;
-	}
+	if (!oldContext.fileInfo->referenced)
+		delete oldContext.fileInfo;
 	// Free the FOR symbol name
 	free(oldContext.forName);
 
@@ -256,9 +272,8 @@ static struct Context &newContext(struct FileStackNode *fileInfo)
 	struct FileStackNode *parent = contextStack.top().fileInfo;
 
 	fileInfo->parent = parent;
-	fileInfo->lineNo = 0; // Init to a default value, see struct definition for info
-	fileInfo->referenced = false;
 	fileInfo->lineNo = lexer_GetLineNo();
+	fileInfo->referenced = false;
 
 	struct Context &context = contextStack.emplace();
 
@@ -284,20 +299,20 @@ void fstk_RunInclude(char const *path)
 		return;
 	}
 
-	struct FileStackNamedNode *fileInfo = new(std::nothrow) struct FileStackNamedNode();
+	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
 		return;
 	}
-	fileInfo->node.type = NODE_FILE;
-	fileInfo->name = *fullPath;
+	fileInfo->type = NODE_FILE;
+	fileInfo->data = *fullPath;
 	delete fullPath;
 
 	uint32_t uniqueID = contextStack.top().uniqueID;
-	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+	struct Context &context = newContext(fileInfo);
 
-	context.lexerState = lexer_OpenFile(fileInfo->name.c_str());
+	context.lexerState = lexer_OpenFile(fileInfo->name().c_str());
 	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(context.lexerState);
@@ -321,19 +336,19 @@ static void runPreIncludeFile(void)
 		return;
 	}
 
-	struct FileStackNamedNode *fileInfo = new(std::nothrow) struct FileStackNamedNode();
+	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
 		return;
 	}
-	fileInfo->node.type = NODE_FILE;
-	fileInfo->name = *fullPath;
+	fileInfo->type = NODE_FILE;
+	fileInfo->data = *fullPath;
 	delete fullPath;
 
-	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+	struct Context &context = newContext(fileInfo);
 
-	context.lexerState = lexer_OpenFile(fileInfo->name.c_str());
+	context.lexerState = lexer_OpenFile(fileInfo->name().c_str());
 	if (!context.lexerState)
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetState(context.lexerState);
@@ -355,37 +370,40 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	}
 	contextStack.top().macroArgs = macro_GetCurrentArgs();
 
-	struct FileStackNamedNode *fileInfo = new(std::nothrow) struct FileStackNamedNode();
+	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for \"%s\": %s\n", macro->name, strerror(errno));
 		return;
 	}
-	fileInfo->node.type = NODE_MACRO;
+	fileInfo->type = NODE_MACRO;
+	fileInfo->data = "";
 
 	// Print the name...
+	std::string &fileInfoName = fileInfo->name();
+
 	for (struct FileStackNode const *node = macro->src; node; node = node->parent) {
 		if (node->type != NODE_REPT) {
-			fileInfo->name.append(((struct FileStackNamedNode const *)node)->name);
+			fileInfoName.append(node->name());
 			break;
 		}
 	}
 	if (macro->src->type == NODE_REPT) {
-		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)macro->src;
+		std::vector<uint32_t> &srcIters = macro->src->iters();
 
-		for (uint32_t i = reptNode->iters.size(); i--; ) {
+		for (uint32_t i = srcIters.size(); i--; ) {
 			char buf[sizeof("::REPT~4294967295")]; // UINT32_MAX
 
-			if (sprintf(buf, "::REPT~%" PRIu32, reptNode->iters[i]) < 0)
+			if (sprintf(buf, "::REPT~%" PRIu32, srcIters[i]) < 0)
 				fatalerror("Failed to write macro invocation info: %s\n",
 					   strerror(errno));
-			fileInfo->name.append(buf);
+			fileInfoName.append(buf);
 		}
 	}
-	fileInfo->name.append("::");
-	fileInfo->name.append(macro->name);
+	fileInfoName.append("::");
+	fileInfoName.append(macro->name);
 
-	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+	struct Context &context = newContext(fileInfo);
 	context.lexerState = lexer_OpenFileView("MACRO", macro->macro.value, macro->macro.size,
 						macro->fileLine);
 	if (!context.lexerState)
@@ -398,22 +416,22 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 {
 	uint32_t reptDepth = contextStack.top().fileInfo->type == NODE_REPT
-				? ((struct FileStackReptNode *)contextStack.top().fileInfo)->iters.size()
+				? contextStack.top().fileInfo->iters().size()
 				: 0;
-	struct FileStackReptNode *fileInfo = new(std::nothrow) struct FileStackReptNode();
+	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo) {
 		error("Failed to alloc file info for REPT: %s\n", strerror(errno));
 		return false;
 	}
-	fileInfo->node.type = NODE_REPT;
+	fileInfo->type = NODE_REPT;
+	fileInfo->data = std::vector<uint32_t>{1};
 	if (reptDepth) {
-		// Copy all parent iter counts
-		fileInfo->iters = ((struct FileStackReptNode *)contextStack.top().fileInfo)->iters;
+		// Append all parent iter counts
+		fileInfo->iters().insert(fileInfo->iters().end(), RANGE(contextStack.top().fileInfo->iters()));
 	}
-	fileInfo->iters.insert(fileInfo->iters.begin(), 1);
 
-	struct Context &context = newContext((struct FileStackNode *)fileInfo);
+	struct Context &context = newContext(fileInfo);
 
 	// Correct our line number, which currently points to the `ENDR` line
 	context.fileInfo->lineNo = reptLineNo;
@@ -505,21 +523,21 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(state);
 	char const *fileName = lexer_GetFileName();
-	struct FileStackNamedNode *fileInfo = new(std::nothrow) struct FileStackNamedNode();
+	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo)
 		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
-	fileInfo->name = fileName;
+	fileInfo->type = NODE_FILE;
+	fileInfo->data = fileName;
+
+	// lineNo and nbReptIters are unused on the top-level context
+	fileInfo->parent = NULL;
+	fileInfo->lineNo = 0; // This still gets written to the object file, so init it
+	fileInfo->referenced = false;
 
 	struct Context &context = contextStack.emplace();
 
-	context.fileInfo = (struct FileStackNode *)fileInfo;
-	// lineNo and nbReptIters are unused on the top-level context
-	context.fileInfo->parent = NULL;
-	context.fileInfo->lineNo = 0; // This still gets written to the object file, so init it
-	context.fileInfo->referenced = false;
-	context.fileInfo->type = NODE_FILE;
-
+	context.fileInfo = fileInfo;
 	context.lexerState = state;
 	context.uniqueID = macro_UndefUniqueID();
 	context.nbReptIters = 0;

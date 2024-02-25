@@ -62,14 +62,9 @@ static void putstring(char const *s, FILE *f)
 void out_RegisterNode(struct FileStackNode *node)
 {
 	// If node is not already registered, register it (and parents), and give it a unique ID
-	while (node->ID == (uint32_t)-1) {
+	for (; node && node->ID == (uint32_t)-1; node = node->parent) {
 		node->ID = fileStackNodes.size();
 		fileStackNodes.push_front(node);
-
-		// Also register the node's parents
-		node = node->parent;
-		if (!node)
-			break;
 	}
 }
 
@@ -336,14 +331,14 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	putlong(node->lineNo, f);
 	putc(node->type, f);
 	if (node->type != NODE_REPT) {
-		putstring(((struct FileStackNamedNode const *)node)->name.c_str(), f);
+		putstring(node->name().c_str(), f);
 	} else {
-		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
+		std::vector<uint32_t> const &nodeIters = node->iters();
 
-		putlong(reptNode->iters.size(), f);
+		putlong(nodeIters.size(), f);
 		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t i = reptNode->iters.size(); i--; )
-			putlong(reptNode->iters[i], f);
+		for (uint32_t i = nodeIters.size(); i--; )
+			putlong(nodeIters[i], f);
 	}
 }
 
