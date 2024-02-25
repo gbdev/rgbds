@@ -336,14 +336,14 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	putlong(node->lineNo, f);
 	putc(node->type, f);
 	if (node->type != NODE_REPT) {
-		putstring(((struct FileStackNamedNode const *)node)->name->c_str(), f);
+		putstring(((struct FileStackNamedNode const *)node)->name.c_str(), f);
 	} else {
 		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
 
-		putlong(reptNode->iters->size(), f);
+		putlong(reptNode->iters.size(), f);
 		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t i = reptNode->iters->size(); i--; )
-			putlong((*reptNode->iters)[i], f);
+		for (uint32_t i = reptNode->iters.size(); i--; )
+			putlong(reptNode->iters[i], f);
 	}
 }
 
