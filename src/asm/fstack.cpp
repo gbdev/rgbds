@@ -385,22 +385,6 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	}
 	contextStack->macroArgs = macro_GetCurrentArgs();
 
-	// Compute total length of this node's name: <base name>::<macro>
-	size_t reptNameLen = 0;
-	struct FileStackNode const *node = macro->src;
-
-	if (node->type == NODE_REPT) {
-		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
-
-		// 4294967295 = 2^32 - 1, aka UINT32_MAX
-		reptNameLen += reptNode->iters->size() * strlen("::REPT~4294967295");
-		// Look for next named node
-		do {
-			node = node->parent;
-		} while (node->type == NODE_REPT);
-	}
-
-	struct FileStackNamedNode const *baseNode = (struct FileStackNamedNode const *)node;
 	struct FileStackNamedNode *fileInfo = (struct FileStackNamedNode *)malloc(sizeof(*fileInfo));
 
 	if (fileInfo)
@@ -412,10 +396,14 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	fileInfo->node.type = NODE_MACRO;
 
 	// Print the name...
-	fileInfo->name->reserve(baseNode->name->length() + reptNameLen + 2 + strlen(macro->name));
-	fileInfo->name->append(*baseNode->name);
-	if (node->type == NODE_REPT) {
-		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)node;
+	for (struct FileStackNode const *node = macro->src; node; node = node->parent) {
+		if (node->type != NODE_REPT) {
+			fileInfo->name->append(*((struct FileStackNamedNode const *)node)->name);
+			break;
+		}
+	}
+	if (macro->src->type == NODE_REPT) {
+		struct FileStackReptNode const *reptNode = (struct FileStackReptNode const *)macro->src;
 
 		for (uint32_t i = reptNode->iters->size(); i--; ) {
 			char buf[sizeof("::REPT~4294967295")]; // UINT32_MAX
