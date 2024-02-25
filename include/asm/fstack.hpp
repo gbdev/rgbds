@@ -27,12 +27,12 @@ struct FileStackNode {
 
 struct FileStackReptNode { // NODE_REPT
 	struct FileStackNode node;
-	std::vector<uint32_t> *iters; // REPT iteration counts since last named node, in reverse depth order
+	std::vector<uint32_t> iters; // REPT iteration counts since last named node, in reverse depth order
 };
 
 struct FileStackNamedNode { // NODE_FILE, NODE_MACRO
 	struct FileStackNode node;
-	std::string *name; // File name for files, file::macro name for macros
+	std::string name; // File name for files, file::macro name for macros
 };
 
 #define DEFAULT_MAX_DEPTH 64
