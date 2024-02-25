@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 
 #include "helpers.hpp"
 
@@ -16,7 +17,7 @@ extern bool verbose;
 extern bool warnings; // True to enable warnings, false to disable them.
 
 extern FILE *dependfile;
-extern char *targetFileName;
+extern std::string targetFileName;
 extern bool generatedMissingIncludes;
 extern bool failedOnMissingInclude;
 extern bool generatePhonyDeps;
