@@ -4,7 +4,6 @@
 #define RGBDS_ASM_LEXER_H
 
 #include <deque>
-#include <stack>
 
 #include "platform.hpp" // SSIZE_MAX
 
@@ -74,7 +73,7 @@ struct LexerState {
 	uint32_t colNo;
 	int lastToken;
 
-	std::stack<struct IfStackEntry> *ifStack;
+	std::deque<struct IfStackEntry> ifStack;
 
 	bool capturing; // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
@@ -85,7 +84,7 @@ struct LexerState {
 	bool disableInterpolation;
 	size_t macroArgScanDistance; // Max distance already scanned for macro args
 	bool expandStrings;
-	std::deque<struct Expansion> *expansions; // Front is the innermost current expansion
+	std::deque<struct Expansion> expansions; // Front is the innermost current expansion
 };
 
 extern struct LexerState *lexerState;
