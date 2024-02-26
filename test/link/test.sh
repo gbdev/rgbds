@@ -51,6 +51,14 @@ tryCmpRom () {
 	tryCmp "$1" "$otemp"
 }
 
+tryCmpRomSize () {
+	rom_size=$(printf %s $(wc -c <"$1"))
+	if [ "$rom_size" -ne "$2" ]; then
+		echo "$bold${red}${i%.asm} binary size mismatch! ${rescolors}${resbold}"
+		false
+	fi
+}
+
 rgblinkQuiet () {
 	out="$(env $RGBLINK "$@")" || return $?
 	if [[ -n "$out" ]]; then
@@ -168,8 +176,7 @@ rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" >"$outtemp" 2>&1
 tryDiff scramble-romx/out.err "$outtemp"
 (( rc = rc || $? ))
 # This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
-rom_size=$(printf %s $(wc -c <"$gbtemp"))
-test "$rom_size" = 65536 # Check for exactly 3 ROMX banks
+tryCmpRomSize "$gbtemp" 65536
 (( rc = rc || $? ))
 
 i="section-fragment/jr-offset.asm"
