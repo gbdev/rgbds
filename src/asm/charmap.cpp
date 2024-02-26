@@ -187,17 +187,13 @@ bool charmap_HasChar(char const *input)
 	return node->isTerminal;
 }
 
-size_t charmap_Convert(char const *input, uint8_t *output)
+void charmap_Convert(char const *input, std::vector<uint8_t> &output)
 {
-	uint8_t *start = output;
-
 	while (charmap_ConvertNext(&input, &output))
 		;
-
-	return output - start;
 }
 
-size_t charmap_ConvertNext(char const **input, uint8_t **output)
+size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
 {
 	// The goal is to match the longest mapping possible.
 	// For that, advance through the trie with each character read.
@@ -231,22 +227,20 @@ size_t charmap_ConvertNext(char const **input, uint8_t **output)
 
 			if (match) { // A match was found, use it
 				if (output)
-					*(*output)++ = match->value;
+					output->push_back(match->value);
 
 				return 1;
 
 			} else if (**input) { // No match found, but there is some input left
 				int firstChar = **input;
 				// This will write the codepoint's value to `output`, little-endian
-				size_t codepointLen = readUTF8Char(output ? *output : NULL, *input);
+				size_t codepointLen = readUTF8Char(output, *input);
 
 				if (codepointLen == 0)
 					error("Input string is not valid UTF-8\n");
 
 				// OK because UTF-8 has no NUL in multi-byte chars
 				*input += codepointLen;
-				if (output)
-					*output += codepointLen;
 
 				// Warn if this character is not mapped but any others are
 				if (charmap->nodes->size() > 1)
