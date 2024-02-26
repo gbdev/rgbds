@@ -24,7 +24,7 @@
 
 struct Context {
 	struct FileStackNode *fileInfo;
-	struct LexerState *lexerState;
+	struct LexerState lexerState;
 	uint32_t uniqueID;
 	struct MacroArgs *macroArgs; // Macro args are *saved* here
 	uint32_t nbReptIters;
@@ -252,7 +252,7 @@ bool yywrap(void)
 	// Free the FOR symbol name
 	free(oldContext.forName);
 
-	lexer_SetState(contextStack.top().lexerState);
+	lexer_SetState(&contextStack.top().lexerState);
 	macro_SetUniqueID(contextStack.top().uniqueID);
 
 	return false;
@@ -312,10 +312,9 @@ void fstk_RunInclude(char const *path)
 	uint32_t uniqueID = contextStack.top().uniqueID;
 	struct Context &context = newContext(fileInfo);
 
-	context.lexerState = lexer_OpenFile(fileInfo->name().c_str());
-	if (!context.lexerState)
+	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
 		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetStateAtEOL(context.lexerState);
+	lexer_SetStateAtEOL(&context.lexerState);
 	// We're back at top-level, so most things are reset,
 	// but not the unique ID, since INCLUDE may be inside a
 	// MACRO or REPT/FOR loop
@@ -348,10 +347,9 @@ static void runPreIncludeFile(void)
 
 	struct Context &context = newContext(fileInfo);
 
-	context.lexerState = lexer_OpenFile(fileInfo->name().c_str());
-	if (!context.lexerState)
+	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
 		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetState(context.lexerState);
+	lexer_SetState(&context.lexerState);
 	// We're back at top-level, so most things are reset
 	context.uniqueID = macro_UndefUniqueID();
 }
@@ -404,11 +402,10 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 	fileInfoName.append(macro->name);
 
 	struct Context &context = newContext(fileInfo);
-	context.lexerState = lexer_OpenFileView("MACRO", macro->macro.value, macro->macro.size,
-						macro->fileLine);
-	if (!context.lexerState)
-		fatalerror("Failed to set up lexer for macro invocation\n");
-	lexer_SetStateAtEOL(context.lexerState);
+
+	lexer_OpenFileView(context.lexerState, "MACRO", macro->macro.value, macro->macro.size,
+	                   macro->fileLine);
+	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();
 	macro_UseNewArgs(args);
 }
@@ -436,10 +433,8 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 	// Correct our line number, which currently points to the `ENDR` line
 	context.fileInfo->lineNo = reptLineNo;
 
-	context.lexerState = lexer_OpenFileView("REPT", body, size, reptLineNo);
-	if (!context.lexerState)
-		fatalerror("Failed to set up lexer for REPT block\n");
-	lexer_SetStateAtEOL(context.lexerState);
+	lexer_OpenFileView(context.lexerState, "REPT", body, size, reptLineNo);
+	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();
 	return true;
 }
@@ -517,28 +512,24 @@ void fstk_NewRecursionDepth(size_t newDepth)
 
 void fstk_Init(char const *mainPath, size_t maxDepth)
 {
-	struct LexerState *state = lexer_OpenFile(mainPath);
+	struct Context &context = contextStack.emplace();
 
-	if (!state)
+	if (!lexer_OpenFile(context.lexerState, mainPath))
 		fatalerror("Failed to open main file\n");
-	lexer_SetState(state);
-	char const *fileName = lexer_GetFileName();
+	lexer_SetState(&context.lexerState);
+
 	struct FileStackNode *fileInfo = new(std::nothrow) struct FileStackNode();
 
 	if (!fileInfo)
 		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
 	fileInfo->type = NODE_FILE;
-	fileInfo->data = fileName;
-
+	fileInfo->data = lexer_GetFileName();
 	// lineNo and nbReptIters are unused on the top-level context
 	fileInfo->parent = NULL;
 	fileInfo->lineNo = 0; // This still gets written to the object file, so init it
 	fileInfo->referenced = false;
 
-	struct Context &context = contextStack.emplace();
-
 	context.fileInfo = fileInfo;
-	context.lexerState = state;
 	context.uniqueID = macro_UndefUniqueID();
 	context.nbReptIters = 0;
 	context.forValue = 0;

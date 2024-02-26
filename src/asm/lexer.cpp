@@ -285,98 +285,29 @@ static bool isWhitespace(int c)
 	return c == ' ' || c == '\t';
 }
 
-#define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
-// The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
-static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
-// This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
-static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
-
-struct Expansion {
-	char *name;
-	union {
-		char const *unowned;
-		char *owned;
-	} contents;
-	size_t size; // Length of the contents
-	size_t offset; // Cursor into the contents
-	bool owned; // Whether or not to free contents when this expansion is freed
-};
-
-struct IfStackEntry {
-	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
-	bool reachedElseBlock; // Whether an ELSE block ran already
-};
-
-struct MmappedLexerState {
-	char *ptr; // Technically `const` during the lexer's execution
-	size_t size;
-	size_t offset;
-	bool isReferenced; // If a macro in this file requires not unmapping it
-};
-
-struct BufferedLexerState {
-	int fd;
-	size_t index; // Read index into the buffer
-	char buf[LEXER_BUF_SIZE]; // Circular buffer
-	size_t nbChars; // Number of "fresh" chars in the buffer
-};
-
-struct LexerState {
-	char const *path;
-
-	// mmap()-dependent IO state
-	bool isMmapped;
-	union {
-		struct MmappedLexerState mmap; // If mmap()ed
-		struct BufferedLexerState cbuf; // Otherwise
-	};
-
-	// Common state
-	bool isFile;
-
-	enum LexerMode mode;
-	bool atLineStart;
-	uint32_t lineNo;
-	uint32_t colNo;
-	int lastToken;
-
-	std::stack<struct IfStackEntry> *ifStack;
-
-	bool capturing; // Whether the text being lexed should be captured
-	size_t captureSize; // Amount of text captured
-	char *captureBuf; // Buffer to send the captured text to if non-NULL
-	size_t captureCapacity; // Size of the buffer above
-
-	bool disableMacroArgs;
-	bool disableInterpolation;
-	size_t macroArgScanDistance; // Max distance already scanned for macro args
-	bool expandStrings;
-	std::deque<struct Expansion> *expansions; // Front is the innermost current expansion
-};
-
 struct LexerState *lexerState = NULL;
 struct LexerState *lexerStateEOL = NULL;
 
-static void initState(struct LexerState *state)
+static void initState(struct LexerState &state)
 {
-	state->mode = LEXER_NORMAL;
-	state->atLineStart = true; // yylex() will init colNo due to this
-	state->lastToken = T_EOF;
+	state.mode = LEXER_NORMAL;
+	state.atLineStart = true; // yylex() will init colNo due to this
+	state.lastToken = T_EOF;
 
-	state->ifStack = new(std::nothrow) std::stack<struct IfStackEntry>();
-	if (!state->ifStack)
+	state.ifStack = new(std::nothrow) std::stack<struct IfStackEntry>();
+	if (!state.ifStack)
 		fatalerror("Unable to allocate new IF stack: %s\n", strerror(errno));
 
-	state->capturing = false;
-	state->captureBuf = NULL;
+	state.capturing = false;
+	state.captureBuf = NULL;
 
-	state->disableMacroArgs = false;
-	state->disableInterpolation = false;
-	state->macroArgScanDistance = 0;
-	state->expandStrings = true;
+	state.disableMacroArgs = false;
+	state.disableInterpolation = false;
+	state.macroArgScanDistance = 0;
+	state.expandStrings = true;
 
-	state->expansions = new(std::nothrow) std::deque<struct Expansion>();
-	if (!state->expansions)
+	state.expansions = new(std::nothrow) std::deque<struct Expansion>();
+	if (!state.expansions)
 		fatalerror("Unable to allocate new expansion stack: %s\n", strerror(errno));
 }
 
@@ -424,61 +355,54 @@ void lexer_ReachELSEBlock(void)
 	lexerState->ifStack->top().reachedElseBlock = true;
 }
 
-struct LexerState *lexer_OpenFile(char const *path)
+bool lexer_OpenFile(struct LexerState &state, char const *path)
 {
 	bool isStdin = !strcmp(path, "-");
-	struct LexerState *state = (struct LexerState *)malloc(sizeof(*state));
 	struct stat fileInfo;
 
 	// Give stdin a nicer file name
 	if (isStdin)
 		path = "<stdin>";
-	if (!state) {
-		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
-		return NULL;
-	}
 	if (!isStdin && stat(path, &fileInfo) != 0) {
 		error("Failed to stat file \"%s\": %s\n", path, strerror(errno));
-		free(state);
-		return NULL;
+		return false;
 	}
-	state->path = path;
-	state->isFile = true;
-	state->cbuf.fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
-	if (state->cbuf.fd < 0) {
+	state.path = path;
+	state.isFile = true;
+	state.cbuf.fd = isStdin ? STDIN_FILENO : open(path, O_RDONLY);
+	if (state.cbuf.fd < 0) {
 		error("Failed to open file \"%s\": %s\n", path, strerror(errno));
-		free(state);
-		return NULL;
+		return false;
 	}
-	state->isMmapped = false; // By default, assume it won't be mmap()ed
+	state.isMmapped = false; // By default, assume it won't be mmap()ed
 	if (!isStdin && fileInfo.st_size > 0) {
 		// Try using `mmap` for better performance
 
-		// Important: do NOT assign to `state->mmap.ptr` directly, to avoid a cast that may
-		// alter an eventual `MAP_FAILED` value. It would also invalidate `state->cbuf.fd`,
+		// Important: do NOT assign to `state.mmap.ptr` directly, to avoid a cast that may
+		// alter an eventual `MAP_FAILED` value. It would also invalidate `state.cbuf.fd`,
 		// being on the other side of the union.
 		void *mappingAddr;
 
-		mapFile(mappingAddr, state->cbuf.fd, state->path, fileInfo.st_size);
+		mapFile(mappingAddr, state.cbuf.fd, state.path, fileInfo.st_size);
 		if (mappingAddr == MAP_FAILED) {
 			// If mmap()ing failed, try again using another method (below)
-			state->isMmapped = false;
+			state.isMmapped = false;
 		} else {
 			// IMPORTANT: the `union` mandates this is accessed before other members!
-			close(state->cbuf.fd);
+			close(state.cbuf.fd);
 
-			state->isMmapped = true;
-			state->mmap.isReferenced = false; // By default, a state isn't referenced
-			state->mmap.ptr = (char *)mappingAddr;
+			state.isMmapped = true;
+			state.mmap.isReferenced = false; // By default, a state isn't referenced
+			state.mmap.ptr = (char *)mappingAddr;
 			assert(fileInfo.st_size >= 0);
-			state->mmap.size = (size_t)fileInfo.st_size;
-			state->mmap.offset = 0;
+			state.mmap.size = (size_t)fileInfo.st_size;
+			state.mmap.offset = 0;
 
 			if (verbose)
 				printf("File %s successfully mmap()ped\n", path);
 		}
 	}
-	if (!state->isMmapped) {
+	if (!state.isMmapped) {
 		// Sometimes mmap() fails or isn't available, so have a fallback
 		if (verbose) {
 			if (isStdin)
@@ -489,44 +413,36 @@ struct LexerState *lexer_OpenFile(char const *path)
 				printf("File %s opened as regular, errno reports \"%s\"\n",
 				       path, strerror(errno));
 		}
-		state->cbuf.index = 0;
-		state->cbuf.nbChars = 0;
+		state.cbuf.index = 0;
+		state.cbuf.nbChars = 0;
 	}
 
 	initState(state);
-	state->lineNo = 0; // Will be incremented at first line start
-	return state;
+	state.lineNo = 0; // Will be incremented at first line start
+	return true;
 }
 
-struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo)
+void lexer_OpenFileView(struct LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo)
 {
-	struct LexerState *state = (struct LexerState *)malloc(sizeof(*state));
-
-	if (!state) {
-		error("Failed to allocate memory for lexer state: %s\n", strerror(errno));
-		return NULL;
-	}
-
-	state->path = path; // Used to report read errors in `peekInternal`
-	state->isFile = false;
-	state->isMmapped = true; // It's not *really* mmap()ed, but it behaves the same
-	state->mmap.ptr = buf;
-	state->mmap.size = size;
-	state->mmap.offset = 0;
+	state.path = path; // Used to report read errors in `peekInternal`
+	state.isFile = false;
+	state.isMmapped = true; // It's not *really* mmap()ed, but it behaves the same
+	state.mmap.ptr = buf;
+	state.mmap.size = size;
+	state.mmap.offset = 0;
 
 	initState(state);
-	state->lineNo = lineNo; // Will be incremented at first line start
-	return state;
+	state.lineNo = lineNo; // Will be incremented at first line start
 }
 
 void lexer_RestartRept(uint32_t lineNo)
 {
 	lexerState->mmap.offset = 0;
-	initState(lexerState);
+	initState(*lexerState);
 	lexerState->lineNo = lineNo;
 }
 
-void lexer_DeleteState(struct LexerState *state)
+void lexer_DeleteState(struct LexerState &state)
 {
 	// A big chunk of the lexer state soundness is the file stack ("fstack").
 	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
@@ -539,15 +455,14 @@ void lexer_DeleteState(struct LexerState *state)
 	// This assertion checks that this doesn't happen again.
 	// It could be argued that deleting a state that's scheduled for EOF could simply clear
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
-	assert(state != lexerStateEOL);
+	assert(&state != lexerStateEOL);
 
-	if (!state->isMmapped)
-		close(state->cbuf.fd);
-	else if (state->isFile && !state->mmap.isReferenced)
-		munmap(state->mmap.ptr, state->mmap.size);
-	delete state->ifStack;
-	delete state->expansions;
-	free(state);
+	if (!state.isMmapped)
+		close(state.cbuf.fd);
+	else if (state.isFile && !state.mmap.isReferenced)
+		munmap(state.mmap.ptr, state.mmap.size);
+	delete state.ifStack;
+	delete state.expansions;
 }
 
 struct KeywordDictNode {
