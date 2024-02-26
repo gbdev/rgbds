@@ -46,8 +46,10 @@ static void lowerstring(char *dest, char const *src)
 	*dest = '\0';
 }
 
-static uint32_t str2int2(uint8_t *s, uint32_t length)
+static uint32_t str2int2(std::vector<uint8_t> const &s)
 {
+	uint32_t length = s.size();
+
 	if (length > 4)
 		warning(WARNING_NUMERIC_STRING_1,
 			"Treating string as a number ignores first %" PRIu32 " character%s\n",
@@ -1343,11 +1345,10 @@ constlist_8bit_entry : reloc_8bit_no_str {
 			sect_RelByte(&$1, 0);
 		}
 		| string {
-			uint8_t *output = (uint8_t *)malloc(strlen($1)); // Cannot be larger than that
-			size_t length = charmap_Convert($1, output);
+			std::vector<uint8_t> output;
 
-			sect_AbsByteGroup(output, length);
-			free(output);
+			charmap_Convert($1, output);
+			sect_AbsByteGroup(output.data(), output.size());
 		}
 ;
 
@@ -1359,11 +1360,10 @@ constlist_16bit_entry : reloc_16bit_no_str {
 			sect_RelWord(&$1, 0);
 		}
 		| string {
-			uint8_t *output = (uint8_t *)malloc(strlen($1)); // Cannot be larger than that
-			size_t length = charmap_Convert($1, output);
+			std::vector<uint8_t> output;
 
-			sect_AbsWordGroup(output, length);
-			free(output);
+			charmap_Convert($1, output);
+			sect_AbsWordGroup(output.data(), output.size());
 		}
 ;
 
@@ -1375,12 +1375,10 @@ constlist_32bit_entry : relocexpr_no_str {
 			sect_RelLong(&$1, 0);
 		}
 		| string {
-			// Charmaps cannot increase the length of a string
-			uint8_t *output = (uint8_t *)malloc(strlen($1));
-			size_t length = charmap_Convert($1, output);
+			std::vector<uint8_t> output;
 
-			sect_AbsLongGroup(output, length);
-			free(output);
+			charmap_Convert($1, output);
+			sect_AbsLongGroup(output.data(), output.size());
 		}
 ;
 
@@ -1421,13 +1419,10 @@ reloc_16bit_no_str : relocexpr_no_str {
 
 relocexpr	: relocexpr_no_str
 		| string {
-			// Charmaps cannot increase the length of a string
-			uint8_t *output = (uint8_t *)malloc(strlen($1));
-			uint32_t length = charmap_Convert($1, output);
-			uint32_t r = str2int2(output, length);
+			std::vector<uint8_t> output;
 
-			free(output);
-			rpn_Number(&$$, r);
+			charmap_Convert($1, output);
+			rpn_Number(&$$, str2int2(output));
 		}
 ;
 
