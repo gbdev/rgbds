@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <vector>
 
 #include "util.hpp"
 
@@ -50,7 +51,7 @@ char const *printChar(int c)
 	return buf;
 }
 
-size_t readUTF8Char(uint8_t *dest, char const *src)
+size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src)
 {
 	uint32_t state = 0;
 	uint32_t codep;
@@ -61,7 +62,7 @@ size_t readUTF8Char(uint8_t *dest, char const *src)
 			return 0;
 
 		if (dest)
-			dest[i] = src[i];
+			dest->push_back(src[i]);
 		i++;
 
 		if (state == 0)
