@@ -3,16 +3,93 @@
 #ifndef RGBDS_ASM_LEXER_H
 #define RGBDS_ASM_LEXER_H
 
+#include <deque>
+#include <stack>
+
+#include "platform.hpp" // SSIZE_MAX
+
 #define MAXSTRLEN 255
 
-struct LexerState;
+#define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
+// The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
+static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
+// This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
+static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
+
+enum LexerMode {
+	LEXER_NORMAL,
+	LEXER_RAW,
+	LEXER_SKIP_TO_ELIF,
+	LEXER_SKIP_TO_ENDC,
+	LEXER_SKIP_TO_ENDR,
+	NB_LEXER_MODES
+};
+
+struct Expansion {
+	char *name;
+	union {
+		char const *unowned;
+		char *owned;
+	} contents;
+	size_t size; // Length of the contents
+	size_t offset; // Cursor into the contents
+	bool owned; // Whether or not to free contents when this expansion is freed
+};
+
+struct IfStackEntry {
+	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
+	bool reachedElseBlock; // Whether an ELSE block ran already
+};
+
+struct MmappedLexerState {
+	char *ptr; // Technically `const` during the lexer's execution
+	size_t size;
+	size_t offset;
+	bool isReferenced; // If a macro in this file requires not unmapping it
+};
+
+struct BufferedLexerState {
+	int fd;
+	size_t index; // Read index into the buffer
+	char buf[LEXER_BUF_SIZE]; // Circular buffer
+	size_t nbChars; // Number of "fresh" chars in the buffer
+};
+
+struct LexerState {
+	char const *path;
+
+	// mmap()-dependent IO state
+	bool isMmapped;
+	union {
+		struct MmappedLexerState mmap; // If mmap()ed
+		struct BufferedLexerState cbuf; // Otherwise
+	};
+
+	// Common state
+	bool isFile;
+
+	enum LexerMode mode;
+	bool atLineStart;
+	uint32_t lineNo;
+	uint32_t colNo;
+	int lastToken;
+
+	std::stack<struct IfStackEntry> *ifStack;
+
+	bool capturing; // Whether the text being lexed should be captured
+	size_t captureSize; // Amount of text captured
+	char *captureBuf; // Buffer to send the captured text to if non-NULL
+	size_t captureCapacity; // Size of the buffer above
+
+	bool disableMacroArgs;
+	bool disableInterpolation;
+	size_t macroArgScanDistance; // Max distance already scanned for macro args
+	bool expandStrings;
+	std::deque<struct Expansion> *expansions; // Front is the innermost current expansion
+};
+
 extern struct LexerState *lexerState;
 extern struct LexerState *lexerStateEOL;
-
-static inline struct LexerState *lexer_GetState(void)
-{
-	return lexerState;
-}
 
 static inline void lexer_SetState(struct LexerState *state)
 {
@@ -42,21 +119,12 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 }
 
 // `path` is referenced, but not held onto..!
-struct LexerState *lexer_OpenFile(char const *path);
-struct LexerState *lexer_OpenFileView(char const *path, char *buf, size_t size, uint32_t lineNo);
+bool lexer_OpenFile(struct LexerState &state, char const *path);
+void lexer_OpenFileView(struct LexerState &state, char const *path, char *buf, size_t size,
+                        uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
-void lexer_DeleteState(struct LexerState *state);
+void lexer_DeleteState(struct LexerState &state);
 void lexer_Init(void);
-
-enum LexerMode {
-	LEXER_NORMAL,
-	LEXER_RAW,
-	LEXER_SKIP_TO_ELIF,
-	LEXER_SKIP_TO_ENDC,
-	LEXER_SKIP_TO_ENDR,
-	NB_LEXER_MODES
-};
-
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 

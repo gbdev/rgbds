@@ -46,6 +46,7 @@
 # define SSIZE_MAX INT_MAX
 #else
 # include <fcntl.h>
+# include <limits.h>
 # include <unistd.h>
 #endif
 
