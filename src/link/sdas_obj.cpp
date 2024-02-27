@@ -355,8 +355,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				fatal(where, lineNo, "Failed to alloc new area's patches: %s",
 				      strerror(errno));
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
-			curSection->nbSymbols = 0;
-			curSection->symbols = NULL; // Will be allocated on demand as well
+			curSection->symbols = new(std::nothrow) std::vector<struct Symbol *>();
+			if (!curSection->symbols)
+				fatal(where, lineNo, "Failed to alloc new area's symbol list: %s",
+				      strerror(errno));
 			curSection->nextu = NULL;
 
 			++nbSections;
@@ -427,17 +429,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (strncasecmp(&token[1], "ef", 2) != 0)
 				fatal(where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 
-			if (nbSections != 0) {
-				struct Section *section = fileSections[nbSections - 1].section;
-
-				++section->nbSymbols;
-				section->symbols = (struct Symbol **)realloc(section->symbols,
-					sizeof(section->symbols[0]) * section->nbSymbols);
-				if (!section->symbols)
-					fatal(where, lineNo, "Failed to realloc \"%s\"'s symbol list: %s",
-					      section->name, strerror(errno));
-				section->symbols[section->nbSymbols - 1] = symbol;
-			}
+			if (nbSections != 0)
+				fileSections[nbSections - 1].section->symbols->push_back(symbol);
 
 			expectEol("'S' line is too long");
 
@@ -757,8 +750,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
-			for (uint32_t j = 0; j < section->nbSymbols; ++j)
-				section->symbols[j]->offset += section->offset;
+			for (struct Symbol *symbol : *section->symbols)
+				symbol->offset += section->offset;
 		}
 	}
 

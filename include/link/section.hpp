@@ -48,8 +48,7 @@ struct Section {
 	std::vector<struct Patch> *patches;
 	// Extra info computed during linking
 	std::vector<struct Symbol *> *fileSymbols;
-	uint32_t nbSymbols;
-	struct Symbol **symbols;
+	std::vector<struct Symbol *> *symbols;
 	struct Section *nextu; // The next "component" of this unionized sect
 };
 
