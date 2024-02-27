@@ -49,16 +49,16 @@ FILE *linkerScript;
 static uint32_t nbErrors = 0;
 
 // Helper function to dump a file stack to stderr
-char const *dumpFileStack(struct FileStackNode const *node)
+std::string const *dumpFileStack(struct FileStackNode const *node)
 {
-	char const *lastName;
+	std::string const *lastName;
 
 	if (node->parent) {
 		lastName = dumpFileStack(node->parent);
 		// REPT nodes use their parent's name
 		if (node->type != NODE_REPT)
 			lastName = node->name;
-		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName);
+		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName->c_str());
 		if (node->type == NODE_REPT) {
 			for (uint32_t iter : *node->iters)
 				fprintf(stderr, "::REPT~%" PRIu32, iter);
@@ -66,7 +66,7 @@ char const *dumpFileStack(struct FileStackNode const *node)
 	} else {
 		assert(node->type != NODE_REPT);
 		lastName = node->name;
-		fputs(lastName, stderr);
+		fputs(lastName->c_str(), stderr);
 	}
 
 	return lastName;

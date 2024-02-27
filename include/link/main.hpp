@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 #include <vector>
 
 #include "helpers.hpp"
@@ -35,7 +36,7 @@ struct FileStackNode {
 
 	enum FileStackNodeType type;
 	union {
-		char *name; // NODE_FILE, NODE_MACRO
+		std::string *name; // NODE_FILE, NODE_MACRO
 		std::vector<uint32_t> *iters; // NODE_REPT
 	};
 };
@@ -50,7 +51,7 @@ struct FileStackNode {
  * Dump a file stack to stderr
  * @param node The leaf node to dump the context of
  */
-char const *dumpFileStack(struct FileStackNode const *node);
+std::string const *dumpFileStack(struct FileStackNode const *node);
 
 void warning(struct FileStackNode const *where, uint32_t lineNo,
 	     char const *fmt, ...) format_(printf, 3, 4);

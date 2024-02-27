@@ -7,6 +7,7 @@
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
 #include <stdint.h>
+#include <string>
 #include <vector>
 
 #include "link/main.hpp"
@@ -30,7 +31,7 @@ struct Patch {
 
 struct Section {
 	// Info contained in the object files
-	char *name;
+	std::string *name;
 	uint16_t size;
 	uint16_t offset;
 	enum SectionType type;
@@ -70,7 +71,7 @@ void sect_AddSection(struct Section *section);
  * @param name The name of the section to look for
  * @return A pointer to the section, or NULL if it wasn't found
  */
-struct Section *sect_GetSection(char const *name);
+struct Section *sect_GetSection(std::string const &name);
 
 /*
  * `free`s all section memory that was allocated.

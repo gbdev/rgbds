@@ -7,6 +7,7 @@
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
 #include <stdint.h>
+#include <string>
 
 #include "linkdefs.hpp"
 
@@ -14,7 +15,7 @@ struct FileStackNode;
 
 struct Symbol {
 	// Info contained in the object files
-	char *name;
+	std::string *name;
 	enum ExportLevel type;
 	char const *objFileName;
 	struct FileStackNode const *src;
@@ -36,7 +37,7 @@ void sym_AddSymbol(struct Symbol *symbol);
  * @param name The name of the symbol to look for
  * @return A pointer to the symbol, or NULL if not found.
  */
-struct Symbol *sym_GetSymbol(char const *name);
+struct Symbol *sym_GetSymbol(std::string const &name);
 
 /*
  * `free`s all symbol memory that was allocated.
