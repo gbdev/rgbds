@@ -479,7 +479,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			assert(!fileSections.empty()); // There should be at least one, from the above check
 			struct Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
-			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to ->data
+			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to `->data`
 			uint16_t addr = data[0] | data[1] << 8;
 
 			if (section->isAddressFixed) {
@@ -496,7 +496,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					      addr, *writeIndex);
 				if (!section->data) {
 					assert(section->size != 0);
-					section->data = (uint8_t *)malloc(section->size);
+					section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
 					if (!section->data)
 						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s",
 						      section->name, strerror(errno));
@@ -661,7 +661,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
 							      section->name, *writeIndex + (offset - writtenOfs), section->size);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
-						memcpy(&section->data[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
+						memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
 						*writeIndex += offset - writtenOfs + 1;
 						writtenOfs = offset + 3; // Skip all three `baseValue` bytes, though
 					}
@@ -709,7 +709,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
 					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
 					      section->name, *writeIndex + (nbBytes - writtenOfs), section->size);
-				memcpy(&section->data[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
+				memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
 				*writeIndex += nbBytes - writtenOfs;
 			}
 

@@ -268,8 +268,7 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 		    fileName, sectName, i);
 
 	patch->rpnExpression.resize(rpnSize);
-	size_t nbElementsRead = fread(&patch->rpnExpression[0], sizeof(patch->rpnExpression[0]),
-				      rpnSize, file);
+	size_t nbElementsRead = fread(&patch->rpnExpression[0], 1, rpnSize, file);
 
 	if (nbElementsRead != rpnSize)
 		errx("%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
@@ -346,22 +345,15 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	section->alignOfs = tmp;
 
 	if (sect_HasData(section->type)) {
-		// Ensure we never allocate 0 bytes
-		uint8_t *data = (uint8_t *)malloc(sizeof(*data) * section->size + 1);
-
-		if (!data)
-			err("%s: Unable to read \"%s\"'s data", fileName,
-			    section->name);
+		section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
+		if (!section->data)
+			err("%s: Unable to read \"%s\"'s data", fileName, section->name);
 		if (section->size) {
-			size_t nbElementsRead = fread(data, sizeof(*data),
-						      section->size, file);
-			if (nbElementsRead != section->size)
-				errx("%s: Cannot read \"%s\"'s data: %s",
-				     fileName, section->name,
-				     feof(file) ? "Unexpected end of file"
-						: strerror(errno));
+			if (size_t nbRead = fread(&(*section->data)[0], 1, section->size, file);
+			    nbRead != section->size)
+				errx("%s: Cannot read \"%s\"'s data: %s", fileName, section->name,
+				     feof(file) ? "Unexpected end of file" : strerror(errno));
 		}
-		section->data = data;
 
 		uint32_t nbPatches;
 
@@ -617,7 +609,7 @@ static void freeSection(struct Section *section)
 
 		free(section->name);
 		if (sect_HasData(section->type)) {
-			free(section->data);
+			delete section->data;
 			delete section->patches;
 		}
 		delete section->symbols;
