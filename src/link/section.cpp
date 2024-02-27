@@ -148,16 +148,11 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 		// `data` pointer, or a size of 0.
 		if (other->data) {
 			if (target->data) {
-				// Ensure we're not allocating 0 bytes
-				target->data = (uint8_t *)realloc(target->data,
-						       sizeof(*target->data) * target->size + 1);
-				if (!target->data)
-					errx("Failed to concatenate \"%s\"'s fragments", target->name);
-				memcpy(&target->data[other->offset], other->data, other->size);
+				target->data->insert(target->data->end(), RANGE(*other->data));
 			} else {
 				assert(target->size == other->size); // It has been increased just above
 				target->data = other->data;
-				other->data = NULL; // Prevent a double free()
+				other->data = NULL; // Prevent a double `delete`
 			}
 			// Adjust patches' PC offsets
 			for (struct Patch &patch : *other->patches)

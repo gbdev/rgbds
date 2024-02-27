@@ -467,7 +467,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				error(patch.src, patch.lineNo,
 				      "jr target out of reach (expected -129 < %" PRId16 " < 128)",
 				      jumpOffset);
-			dataSection->data[offset] = jumpOffset & 0xFF;
+			(*dataSection->data)[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
 			struct {
@@ -487,7 +487,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 				      value, value < 0 ? " (maybe negative?)" : "",
 				      types[patch.type].size * 8U);
 			for (uint8_t i = 0; i < types[patch.type].size; i++) {
-				dataSection->data[offset + i] = value & 0xFF;
+				(*dataSection->data)[offset + i] = value & 0xFF;
 				value >>= 8;
 			}
 		}

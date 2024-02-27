@@ -174,7 +174,7 @@ static void writeBank(std::deque<struct Section const *> *bankSections, uint16_t
 			}
 
 			// Output the section itself
-			fwrite(section->data, sizeof(*section->data), section->size, outputFile);
+			fwrite(&(*section->data)[0], 1, section->size, outputFile);
 			if (overlayFile) {
 				// Skip bytes even with pipes
 				for (uint16_t i = 0; i < section->size; i++)
