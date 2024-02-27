@@ -56,16 +56,16 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
-static struct Symbol const *getSymbol(std::vector<struct Symbol *> const &symbolList, uint32_t index)
+static struct Symbol const *getSymbol(std::vector<struct Symbol> const &symbolList, uint32_t index)
 {
 	assert(index != (uint32_t)-1); // PC needs to be handled specially, not here
-	struct Symbol *symbol = symbolList[index];
+	struct Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
-	if (symbol->type == SYMTYPE_IMPORT)
-		return sym_GetSymbol(symbol->name);
+	if (symbol.type == SYMTYPE_IMPORT)
+		return sym_GetSymbol(symbol.name);
 
-	return symbol;
+	return &symbol;
 }
 
 /*
@@ -77,7 +77,7 @@ static struct Symbol const *getSymbol(std::vector<struct Symbol *> const &symbol
  *                 errors caused by the value should be suppressed.
  */
 static int32_t computeRPNExpr(struct Patch const *patch,
-			      std::vector<struct Symbol *> const &fileSymbols)
+			      std::vector<struct Symbol> const &fileSymbols)
 {
 // Small shortcut to avoid a lot of repetition
 #define popRPN() popRPN(patch->src, patch->lineNo)
@@ -224,13 +224,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (!symbol) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of symbol \"%s\", which was not found",
-				      fileSymbols[value]->name);
+				      fileSymbols[value].name);
 				isError = true;
 				value = 1;
 			} else if (!symbol->section) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
-				      fileSymbols[value]->name);
+				      fileSymbols[value].name);
 				isError = true;
 				value = 1;
 			} else {
@@ -385,7 +385,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 				if (!symbol) {
 					error(patch->src, patch->lineNo,
-					      "Unknown symbol \"%s\"", fileSymbols[value]->name);
+					      "Unknown symbol \"%s\"", fileSymbols[value].name);
 					isError = true;
 				} else {
 					value = symbol->value;

@@ -25,7 +25,7 @@
 #include "linkdefs.hpp"
 #include "version.hpp"
 
-static std::deque<std::vector<struct Symbol *>> symbolLists;
+static std::deque<std::vector<struct Symbol>> symbolLists;
 static std::vector<std::vector<struct FileStackNode>> nodes;
 static std::deque<struct Assertion> assertions;
 
@@ -385,20 +385,20 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
  * @param symbol The symbol to link
  * @param section The section to link
  */
-static void linkSymToSect(struct Symbol *symbol, struct Section *section)
+static void linkSymToSect(struct Symbol &symbol, struct Section *section)
 {
 	uint32_t a = 0, b = section->symbols->size();
 
 	while (a != b) {
 		uint32_t c = (a + b) / 2;
 
-		if ((*section->symbols)[c]->offset > symbol->offset)
+		if ((*section->symbols)[c]->offset > symbol.offset)
 			b = c;
 		else
 			a = c + 1;
 	}
 
-	section->symbols->insert(section->symbols->begin() + a, symbol);
+	section->symbols->insert(section->symbols->begin() + a, &symbol);
 }
 
 /*
@@ -465,7 +465,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		if (!where.name)
 			fatal(NULL, 0, "Failed to duplicate \"%s\"'s name: %s", fileName, strerror(errno));
 
-		std::vector<struct Symbol *> &fileSymbols = symbolLists.emplace_front();
+		std::vector<struct Symbol> &fileSymbols = symbolLists.emplace_front();
 
 		sdobj_ReadFile(&where, file, fileSymbols);
 		return;
@@ -505,23 +505,20 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		readFileStackNode(file, nodes[fileID], i, fileName);
 
 	// This file's symbols, kept to link sections to them
-	std::vector<struct Symbol *> &fileSymbols = symbolLists.emplace_front(nbSymbols);
+	std::vector<struct Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		// Read symbol
-		struct Symbol *symbol = (struct Symbol *)malloc(sizeof(*symbol));
+		struct Symbol &symbol = fileSymbols[i];
 
-		if (!symbol)
-			err("%s: Failed to create new symbol", fileName);
-		readSymbol(file, symbol, fileName, nodes[fileID]);
+		readSymbol(file, &symbol, fileName, nodes[fileID]);
 
-		fileSymbols[i] = symbol;
-		if (symbol->type == SYMTYPE_EXPORT)
-			sym_AddSymbol(symbol);
-		if (symbol->sectionID != -1)
-			nbSymPerSect[symbol->sectionID]++;
+		if (symbol.type == SYMTYPE_EXPORT)
+			sym_AddSymbol(&symbol);
+		if (symbol.sectionID != -1)
+			nbSymPerSect[symbol.sectionID]++;
 	}
 
 	// This file's sections, stored in a table to link symbols to them
@@ -555,10 +552,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		int32_t sectionID = fileSymbols[i]->sectionID;
+		int32_t sectionID = fileSymbols[i].sectionID;
 
 		if (sectionID == -1) {
-			fileSymbols[i]->section = NULL;
+			fileSymbols[i].section = NULL;
 		} else {
 			struct Section *section = fileSections[sectionID];
 
@@ -568,10 +565,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			if (section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT)
 					// Add the fragment's offset to the symbol's
-					fileSymbols[i]->offset += section->offset;
+					fileSymbols[i].offset += section->offset;
 				section = getMainSection(section);
 			}
-			fileSymbols[i]->section = section;
+			fileSymbols[i].section = section;
 		}
 	}
 
@@ -630,12 +627,6 @@ static void freeSection(struct Section *section)
 	} while (section);
 }
 
-static void freeSymbol(struct Symbol *symbol)
-{
-	free(symbol->name);
-	free(symbol);
-}
-
 void obj_Cleanup(void)
 {
 	for (std::vector<struct FileStackNode> &fileNodes : nodes) {
@@ -648,9 +639,9 @@ void obj_Cleanup(void)
 	sect_ForEach(freeSection);
 	sect_CleanupSections();
 
-	for (std::vector<struct Symbol *> &fileSymbols : symbolLists) {
-		for (struct Symbol *symbol : fileSymbols)
-			freeSymbol(symbol);
+	for (std::vector<struct Symbol> &fileSymbols : symbolLists) {
+		for (struct Symbol &symbol : fileSymbols)
+			free(symbol.name);
 	}
 
 	for (struct Assertion &assert : assertions)
