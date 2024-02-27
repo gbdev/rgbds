@@ -144,7 +144,7 @@ enum RelocFlags {
 		| 1 << RELOC_EXPR24 | 1 << RELOC_BANKBYTE,
 };
 
-void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<struct Symbol *> &fileSymbols) {
+void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<struct Symbol> &fileSymbols) {
 	size_t bufLen = 256;
 	char *line = (char *)malloc(bufLen);
 	char const *token;
@@ -369,59 +369,55 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (nbSymbols == expectedNbSymbols)
 				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
 					expectedNbSymbols);
-			struct Symbol *symbol = (struct Symbol *)malloc(sizeof(*symbol));
-
-			if (!symbol)
-				fatal(where, lineNo, "Failed to alloc symbol: %s", strerror(errno));
-			fileSymbols.push_back(symbol);
+			struct Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
-			symbol->objFileName = where->name;
-			symbol->src = where;
-			symbol->lineNo = lineNo;
+			symbol.objFileName = where->name;
+			symbol.src = where;
+			symbol.lineNo = lineNo;
 
 			// No need to set the `sectionID`, since we can directly set the pointer
-			symbol->section = nbSections != 0 ? fileSections[nbSections - 1].section : NULL;
+			symbol.section = nbSections != 0 ? fileSections[nbSections - 1].section : NULL;
 
 			getToken(line, "'S' line is too short");
-			symbol->name = strdup(token);
-			if (!symbol->name)
+			symbol.name = strdup(token);
+			if (!symbol.name)
 				fatal(where, lineNo, "Failed to alloc symbol name: %s", strerror(errno));
 
 			getToken(NULL, "'S' line is too short");
 			// It might be an `offset`, but both types are the same so type punning is fine
-			symbol->value = parseNumber(where, lineNo, &token[3], numberType);
-			if (symbol->section && symbol->section->isAddressFixed) {
-				assert(symbol->offset >= symbol->section->org);
-				symbol->offset -= symbol->section->org;
-				assert(symbol->offset <= symbol->section->size);
+			symbol.value = parseNumber(where, lineNo, &token[3], numberType);
+			if (symbol.section && symbol.section->isAddressFixed) {
+				assert(symbol.offset >= symbol.section->org);
+				symbol.offset -= symbol.section->org;
+				assert(symbol.offset <= symbol.section->size);
 			}
 
 			// Expected format: /[DR]ef[0-9A-F]+/i
 			if (token[0] == 'R' || token[0] == 'r') {
-				symbol->type = SYMTYPE_IMPORT;
+				symbol.type = SYMTYPE_IMPORT;
 				// TODO: hard error if the rest is not zero
 			} else if (token[0] != 'D' && token[0] != 'd') {
 				fatal(where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 			} else {
 				// All symbols are exported
-				symbol->type = SYMTYPE_EXPORT;
-				struct Symbol const *other = sym_GetSymbol(symbol->name);
+				symbol.type = SYMTYPE_EXPORT;
+				struct Symbol const *other = sym_GetSymbol(symbol.name);
 
 				if (other) {
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
 					if ((other->section && !other->section->isAddressFixed)
-					 || (symbol->section && !symbol->section->isAddressFixed)) {
-						sym_AddSymbol(symbol); // This will error out
-					} else if (other->value != symbol->value) {
+					 || (symbol.section && !symbol.section->isAddressFixed)) {
+						sym_AddSymbol(&symbol); // This will error out
+					} else if (other->value != symbol.value) {
 						error(where, lineNo,
 						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32 " != %" PRId32 ")",
-						      symbol->name, other->objFileName, symbol->value, other->value);
+						      symbol.name, other->objFileName, symbol.value, other->value);
 					}
 				} else {
 					// Add a new definition
-					sym_AddSymbol(symbol);
+					sym_AddSymbol(&symbol);
 				}
 				// It's fine to keep modifying the symbol after `AddSymbol`, only
 				// the name must not be modified
@@ -430,7 +426,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				fatal(where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 
 			if (nbSections != 0)
-				fileSections[nbSections - 1].section->symbols->push_back(symbol);
+				fileSections[nbSections - 1].section->symbols->push_back(&symbol);
 
 			expectEol("'S' line is too long");
 
@@ -582,34 +578,34 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					if (idx >= nbSymbols)
 						fatal(where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu",
 						      idx, nbSymbols);
-					struct Symbol const *sym = fileSymbols[idx];
+					struct Symbol const &sym = fileSymbols[idx];
 
 					// SDCC has a bunch of "magic symbols" that start with a
 					// letter and an underscore. These are not compatibility
 					// hacks, this is how SDLD actually works.
-					if (sym->name[0] == 'b' && sym->name[1] == '_') {
+					if (sym.name[0] == 'b' && sym.name[1] == '_') {
 						// Look for the symbol being referenced, and use its index instead
 						for (idx = 0; idx < nbSymbols; ++idx) {
-							if (strcmp(&sym->name[1], fileSymbols[idx]->name) == 0)
+							if (strcmp(&sym.name[1], fileSymbols[idx].name) == 0)
 								break;
 						}
 						if (idx == nbSymbols)
 							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
-							      sym->name, &sym->name[1]);
+							      sym.name, &sym.name[1]);
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
 						patch.rpnExpression[3] = idx >> 16;
 						patch.rpnExpression[4] = idx >> 24;
-					} else if (sym->name[0] == 'l' && sym->name[1] == '_') {
-						patch.rpnExpression.resize(1 + strlen(&sym->name[2]) + 1);
+					} else if (sym.name[0] == 'l' && sym.name[1] == '_') {
+						patch.rpnExpression.resize(1 + strlen(&sym.name[2]) + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
-						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
-					} else if (sym->name[0] == 's' && sym->name[1] == '_') {
-						patch.rpnExpression.resize(1 + strlen(&sym->name[2]) + 1);
+						strcpy((char *)&patch.rpnExpression[1], &sym.name[2]);
+					} else if (sym.name[0] == 's' && sym.name[1] == '_') {
+						patch.rpnExpression.resize(1 + strlen(&sym.name[2]) + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
-						strcpy((char *)&patch.rpnExpression[1], &sym->name[2]);
+						strcpy((char *)&patch.rpnExpression[1], &sym.name[2]);
 					} else {
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_SYM;

@@ -47,7 +47,7 @@ struct Section {
 	uint8_t *data; // Array of size `size`
 	std::vector<struct Patch> *patches;
 	// Extra info computed during linking
-	std::vector<struct Symbol *> *fileSymbols;
+	std::vector<struct Symbol> *fileSymbols;
 	std::vector<struct Symbol *> *symbols;
 	struct Section *nextu; // The next "component" of this unionized sect
 };
