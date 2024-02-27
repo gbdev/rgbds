@@ -144,7 +144,7 @@ enum RelocFlags {
 		| 1 << RELOC_EXPR24 | 1 << RELOC_BANKBYTE,
 };
 
-void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
+void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<struct Symbol *> &fileSymbols) {
 	size_t bufLen = 256;
 	char *line = (char *)malloc(bufLen);
 	char const *token;
@@ -234,11 +234,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 		uint16_t writeIndex;
 	};
 	std::vector<struct FileSection> fileSections;
-	struct Symbol **fileSymbols = (struct Symbol **)malloc(sizeof(*fileSymbols) * expectedNbSymbols);
 	size_t nbSections = 0, nbSymbols = 0;
-
-	if (!fileSymbols)
-		fatal(where, lineNo, "Failed to alloc file symbols table: %s", strerror(errno));
 	size_t nbBytes = 0; // How many bytes are in `data`, including the ADDR_SIZE "header" bytes
 	size_t dataCapacity = 16 + ADDR_SIZE; // SDCC object files usually contain 16 bytes per T line
 	uint8_t *data = (uint8_t *)malloc(sizeof(*data) * dataCapacity);
@@ -262,10 +258,11 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					expectedNbAreas);
 			fileSections.resize(nbSections + 1);
 			fileSections[nbSections].writeIndex = 0;
-#define curSection (fileSections[nbSections].section)
-			curSection = (struct Section *)malloc(sizeof(*curSection));
+			struct Section *curSection = (struct Section *)malloc(sizeof(*curSection));
+
 			if (!curSection)
 				fatal(where, lineNo, "Failed to alloc new area: %s", strerror(errno));
+			fileSections[nbSections].section = curSection;
 
 			getToken(line, "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
@@ -357,36 +354,24 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 			if (!curSection->patches)
 				fatal(where, lineNo, "Failed to alloc new area's patches: %s",
 				      strerror(errno));
-			curSection->fileSymbols = fileSymbols; // IDs are instead per-section
+			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
 			curSection->nbSymbols = 0;
 			curSection->symbols = NULL; // Will be allocated on demand as well
 			curSection->nextu = NULL;
-#undef curSection
+
 			++nbSections;
 			break;
 		}
 
-		case 'S':
+		case 'S': {
 			if (nbSymbols == expectedNbSymbols)
 				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
 					expectedNbSymbols);
-			// `realloc` is dangerous, as sections contain a pointer to `fileSymbols`.
-			// We can try to be nice, but if the pointer moves, it's game over!
-			if (nbSymbols >= expectedNbSymbols) {
-				struct Symbol **newFileSymbols = (struct Symbol **)realloc(fileSymbols,
-					sizeof(*fileSymbols) * (nbSymbols + 1));
+			struct Symbol *symbol = (struct Symbol *)malloc(sizeof(*symbol));
 
-				if (!newFileSymbols)
-					fatal(where, lineNo, "Failed to alloc extra symbols: %s",
-					      strerror(errno));
-				if (newFileSymbols != fileSymbols)
-					fatal(where, lineNo, "Failed to handle extra 'S' lines (pointer moved)");
-				// No need to assign, obviously
-			}
-#define symbol (fileSymbols[nbSymbols])
-			symbol = (struct Symbol *)malloc(sizeof(*symbol));
 			if (!symbol)
 				fatal(where, lineNo, "Failed to alloc symbol: %s", strerror(errno));
+			fileSymbols.push_back(symbol);
 
 			// Init other members
 			symbol->objFileName = where->name;
@@ -453,12 +438,12 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file) {
 					      section->name, strerror(errno));
 				section->symbols[section->nbSymbols - 1] = symbol;
 			}
-#undef symbol
 
 			expectEol("'S' line is too long");
 
 			++nbSymbols;
 			break;
+		}
 
 		case 'T':
 			// Now, time to parse the data!

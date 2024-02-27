@@ -6,6 +6,7 @@
 
 #include <deque>
 #include <stdint.h>
+#include <vector>
 
 #include "link/section.hpp"
 
@@ -15,7 +16,7 @@ struct Assertion {
 	struct Patch patch; // Also used for its `.type`
 	char *message;
 	// This would be redundant with `.section->fileSymbols`... but `section` is sometimes NULL!
-	struct Symbol **fileSymbols;
+	std::vector<struct Symbol *> *fileSymbols;
 };
 
 /*

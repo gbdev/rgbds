@@ -24,13 +24,7 @@
 #include "linkdefs.hpp"
 #include "version.hpp"
 
-struct SymbolList {
-	size_t nbSymbols;
-	struct Symbol **symbolList;
-};
-
-static std::deque<struct SymbolList> symbolLists;
-
+static std::deque<std::vector<struct Symbol *>> symbolLists;
 static std::vector<std::vector<struct FileStackNode>> nodes;
 static std::deque<struct Assertion> assertions;
 
@@ -478,7 +472,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		if (!where.name)
 			fatal(NULL, 0, "Failed to duplicate \"%s\"'s name: %s", fileName, strerror(errno));
 
-		sdobj_ReadFile(&where, file);
+		std::vector<struct Symbol *> &fileSymbols = symbolLists.emplace_front();
+
+		sdobj_ReadFile(&where, file, fileSymbols);
 		return;
 	}
 
@@ -516,13 +512,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		readFileStackNode(file, nodes[fileID], i, fileName);
 
 	// This file's symbols, kept to link sections to them
-	struct Symbol **fileSymbols = (struct Symbol **)malloc(sizeof(*fileSymbols) * nbSymbols + 1);
-
-	if (!fileSymbols)
-		err("Failed to get memory for %s's symbols", fileName);
-
-	symbolLists.push_front({ .nbSymbols = nbSymbols, .symbolList = fileSymbols });
-
+	std::vector<struct Symbol *> &fileSymbols = symbolLists.emplace_front(nbSymbols);
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
@@ -553,7 +543,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		fileSections[i]->nextu = NULL;
 		readSection(file, fileSections[i], fileName, nodes[fileID]);
-		fileSections[i]->fileSymbols = fileSymbols;
+		fileSections[i]->fileSymbols = &fileSymbols;
 		if (nbSymPerSect[i]) {
 			fileSections[i]->symbols =
 				(struct Symbol **)malloc(nbSymPerSect[i] * sizeof(*fileSections[i]->symbols));
@@ -606,7 +596,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		readAssertion(file, &assertion, fileName, i, nodes[fileID]);
 		linkPatchToPCSect(&assertion.patch, fileSections);
-		assertion.fileSymbols = fileSymbols;
+		assertion.fileSymbols = &fileSymbols;
 	}
 
 	fclose(file);
@@ -670,10 +660,9 @@ void obj_Cleanup(void)
 	sect_ForEach(freeSection);
 	sect_CleanupSections();
 
-	for (struct SymbolList &list : symbolLists) {
-		for (size_t i = 0; i < list.nbSymbols; i++)
-			freeSymbol(list.symbolList[i]);
-		free(list.symbolList);
+	for (std::vector<struct Symbol *> &fileSymbols : symbolLists) {
+		for (struct Symbol *symbol : fileSymbols)
+			freeSymbol(symbol);
 	}
 
 	for (struct Assertion &assert : assertions)
