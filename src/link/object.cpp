@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <algorithm>
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
@@ -386,26 +387,18 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
  */
 static void linkSymToSect(struct Symbol *symbol, struct Section *section)
 {
-	uint32_t a = 0, b = section->nbSymbols;
+	uint32_t a = 0, b = section->symbols->size();
 
 	while (a != b) {
 		uint32_t c = (a + b) / 2;
 
-		if (section->symbols[c]->offset > symbol->offset)
+		if ((*section->symbols)[c]->offset > symbol->offset)
 			b = c;
 		else
 			a = c + 1;
 	}
 
-	struct Symbol *tmp = symbol;
-
-	for (uint32_t i = a; i <= section->nbSymbols; i++) {
-		symbol = tmp;
-		tmp = section->symbols[i];
-		section->symbols[i] = symbol;
-	}
-
-	section->nbSymbols++;
+	section->symbols->insert(section->symbols->begin() + a, symbol);
 }
 
 /*
@@ -544,15 +537,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		fileSections[i]->nextu = NULL;
 		readSection(file, fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = &fileSymbols;
-		if (nbSymPerSect[i]) {
-			fileSections[i]->symbols =
-				(struct Symbol **)malloc(nbSymPerSect[i] * sizeof(*fileSections[i]->symbols));
-			if (!fileSections[i]->symbols)
-				err("%s: Failed to link to symbols", fileName);
-		} else {
-			fileSections[i]->symbols = NULL;
-		}
-		fileSections[i]->nbSymbols = 0;
+		fileSections[i]->symbols = new(std::nothrow) std::vector<struct Symbol *>();
+		if (!fileSections[i]->symbols)
+			err("%s: Failed to link to symbols", fileName);
+		fileSections[i]->symbols->reserve(nbSymPerSect[i]);
 
 		sect_AddSection(fileSections[i]);
 	}
@@ -635,7 +623,7 @@ static void freeSection(struct Section *section)
 			free(section->data);
 			delete section->patches;
 		}
-		free(section->symbols);
+		delete section->symbols;
 		free(section);
 
 		section = next;
