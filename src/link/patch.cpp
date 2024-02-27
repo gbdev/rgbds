@@ -63,7 +63,7 @@ static struct Symbol const *getSymbol(std::vector<struct Symbol> const &symbolLi
 
 	// If the symbol is defined elsewhere...
 	if (symbol.type == SYMTYPE_IMPORT)
-		return sym_GetSymbol(symbol.name);
+		return sym_GetSymbol(*symbol.name);
 
 	return &symbol;
 }
@@ -224,13 +224,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (!symbol) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of symbol \"%s\", which was not found",
-				      fileSymbols[value].name);
+				      fileSymbols[value].name->c_str());
 				isError = true;
 				value = 1;
 			} else if (!symbol->section) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
-				      fileSymbols[value].name);
+				      fileSymbols[value].name->c_str());
 				isError = true;
 				value = 1;
 			} else {
@@ -385,7 +385,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 				if (!symbol) {
 					error(patch->src, patch->lineNo,
-					      "Unknown symbol \"%s\"", fileSymbols[value].name);
+					      "Unknown symbol \"%s\"", fileSymbols[value].name->c_str());
 					isError = true;
 				} else {
 					value = symbol->value;
@@ -422,24 +422,24 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 			switch (type) {
 			case ASSERT_FATAL:
 				fatal(assert.patch.src, assert.patch.lineNo, "%s",
-				      assert.message[0] ? assert.message
-							 : "assert failure");
+				      !assert.message->empty() ? assert.message->c_str()
+							       : "assert failure");
 			case ASSERT_ERROR:
 				error(assert.patch.src, assert.patch.lineNo, "%s",
-				      assert.message[0] ? assert.message
-							 : "assert failure");
+				      !assert.message->empty() ? assert.message->c_str()
+							       : "assert failure");
 				break;
 			case ASSERT_WARN:
 				warning(assert.patch.src, assert.patch.lineNo, "%s",
-					assert.message[0] ? assert.message
-							   : "assert failure");
+					!assert.message->empty() ? assert.message->c_str()
+								 : "assert failure");
 				break;
 			}
 		} else if (isError && type == ASSERT_FATAL) {
 			fatal(assert.patch.src, assert.patch.lineNo,
 			      "Failed to evaluate assertion%s%s",
-			      assert.message[0] ? ": " : "",
-			      assert.message);
+			      !assert.message->empty() ? ": " : "",
+			      assert.message->c_str());
 		}
 	}
 }
@@ -451,7 +451,7 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
  */
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
-	verbosePrint("Patching section \"%s\"...\n", section->name);
+	verbosePrint("Patching section \"%s\"...\n", section->name->c_str());
 	for (struct Patch &patch : *section->patches) {
 		int32_t value = computeRPNExpr(&patch, *section->fileSymbols);
 		uint16_t offset = patch.offset + section->offset;

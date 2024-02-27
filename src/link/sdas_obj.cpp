@@ -268,7 +268,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
 			for (size_t i = 0; i < nbSections; ++i) {
-				if (!strcmp(token, fileSections[i].section->name))
+				if (!strcmp(token, fileSections[i].section->name->c_str()))
 					fatal(where, lineNo, "Area \"%s\" already defined earlier",
 					      token);
 			}
@@ -282,7 +282,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 			if (tmp > UINT16_MAX)
 				fatal(where, lineNo, "Area \"%s\" is larger than the GB address space!?",
-				      curSection->name);
+				      curSection->name->c_str());
 			curSection->size = tmp;
 
 			expectToken("flags", 'A');
@@ -295,21 +295,16 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			curSection->isBankFixed = curSection->isAddressFixed;
 			curSection->modifier = curSection->isAddressFixed || (tmp & (1 << AREA_TYPE))
 				? SECTION_NORMAL : SECTION_FRAGMENT;
+			curSection->name = new(std::nothrow) std::string();
+			if (!curSection->name)
+				fatal(where, lineNo, "Failed to alloc new area's name: %s",
+				      strerror(errno));
 			// If the section is absolute, its name might not be unique; thus, mangle the name
 			if (curSection->modifier == SECTION_NORMAL) {
-				size_t len = strlen(where->name) + 1 + strlen(token);
-
-				curSection->name = (char *)malloc(len + 1);
-				if (!curSection->name)
-					fatal(where, lineNo, "Failed to alloc new area's name: %s",
-					      strerror(errno));
-				sprintf(curSection->name, "%s %s", where->name, sectionName);
-			} else {
-				curSection->name = strdup(sectionName); // We need a pointer that will live longer
-				if (!curSection->name)
-					fatal(where, lineNo, "Failed to alloc new area's name: %s",
-					      strerror(errno));
+				curSection->name->append(*where->name);
+				curSection->name->append(" ");
 			}
+			curSection->name->append(sectionName);
 
 			expectToken("addr", 'A');
 
@@ -372,7 +367,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			struct Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
-			symbol.objFileName = where->name;
+			symbol.objFileName = where->name->c_str();
 			symbol.src = where;
 			symbol.lineNo = lineNo;
 
@@ -380,7 +375,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			symbol.section = nbSections != 0 ? fileSections[nbSections - 1].section : NULL;
 
 			getToken(line, "'S' line is too short");
-			symbol.name = strdup(token);
+			symbol.name = new(std::nothrow) std::string(token);
 			if (!symbol.name)
 				fatal(where, lineNo, "Failed to alloc symbol name: %s", strerror(errno));
 
@@ -402,7 +397,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			} else {
 				// All symbols are exported
 				symbol.type = SYMTYPE_EXPORT;
-				struct Symbol const *other = sym_GetSymbol(symbol.name);
+				struct Symbol const *other = sym_GetSymbol(*symbol.name);
 
 				if (other) {
 					// The same symbol can only be defined twice if neither
@@ -413,7 +408,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					} else if (other->value != symbol.value) {
 						error(where, lineNo,
 						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32 " != %" PRId32 ")",
-						      symbol.name, other->objFileName, symbol.value, other->value);
+						      symbol.name->c_str(), other->objFileName, symbol.value, other->value);
 					}
 				} else {
 					// Add a new definition
@@ -485,7 +480,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (section->isAddressFixed) {
 				if (addr < section->org)
 					fatal(where, lineNo, "'T' line reports address $%04" PRIx16 " in \"%s\", which starts at $%04" PRIx16,
-					      addr, section->name, section->org);
+					      addr, section->name->c_str(), section->org);
 				addr -= section->org;
 			}
 			// Lines are emitted that violate this check but contain no "payload";
@@ -499,7 +494,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
 					if (!section->data)
 						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s",
-						      section->name, strerror(errno));
+						      section->name->c_str(), strerror(errno));
 				}
 			}
 
@@ -583,29 +578,30 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// SDCC has a bunch of "magic symbols" that start with a
 					// letter and an underscore. These are not compatibility
 					// hacks, this is how SDLD actually works.
-					if (sym.name[0] == 'b' && sym.name[1] == '_') {
+					if (sym.name->starts_with("b_")) {
 						// Look for the symbol being referenced, and use its index instead
 						for (idx = 0; idx < nbSymbols; ++idx) {
-							if (strcmp(&sym.name[1], fileSymbols[idx].name) == 0)
+							if (sym.name->ends_with(*fileSymbols[idx].name) &&
+							    1 + sym.name->length() == fileSymbols[idx].name->length())
 								break;
 						}
 						if (idx == nbSymbols)
 							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
-							      sym.name, &sym.name[1]);
+							      sym.name->c_str(), &sym.name->c_str()[1]);
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
 						patch.rpnExpression[3] = idx >> 16;
 						patch.rpnExpression[4] = idx >> 24;
-					} else if (sym.name[0] == 'l' && sym.name[1] == '_') {
-						patch.rpnExpression.resize(1 + strlen(&sym.name[2]) + 1);
+					} else if (sym.name->starts_with("l_")) {
+						patch.rpnExpression.resize(1 + sym.name->length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
-						strcpy((char *)&patch.rpnExpression[1], &sym.name[2]);
-					} else if (sym.name[0] == 's' && sym.name[1] == '_') {
-						patch.rpnExpression.resize(1 + strlen(&sym.name[2]) + 1);
+						memcpy((char *)&patch.rpnExpression[1], &sym.name->c_str()[2], sym.name->length() - 2 + 1);
+					} else if (sym.name->starts_with("s_")) {
+						patch.rpnExpression.resize(1 + sym.name->length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
-						strcpy((char *)&patch.rpnExpression[1], &sym.name[2]);
+						memcpy((char *)&patch.rpnExpression[1], &sym.name->c_str()[2], sym.name->length() - 2 + 1);
 					} else {
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_SYM;
@@ -627,8 +623,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// the section gets moved for any reason.
 					if (fileSections[idx].section->isAddressFixed)
 						baseValue -= fileSections[idx].section->org;
-					char const *name = fileSections[idx].section->name;
-					struct Section const *other = sect_GetSection(name);
+					std::string const *name = fileSections[idx].section->name;
+					struct Section const *other = sect_GetSection(*name);
 
 					// Unlike with `s_<AREA>`, referencing an area in this way
 					// wants the beginning of this fragment, so we must add the
@@ -640,10 +636,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// current size.
 					if (other)
 						baseValue += other->size;
-					patch.rpnExpression.resize(1 + strlen(name) + 1);
+					patch.rpnExpression.resize(1 + name->length() + 1);
 					patch.rpnExpression[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
-					strcpy((char *)&patch.rpnExpression[1], name);
+					memcpy((char *)&patch.rpnExpression[1], name->c_str(), name->length() + 1);
 				}
 
 				patch.rpnExpression.push_back(RPN_CONST);
@@ -659,7 +655,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					if (flags & 1 << RELOC_EXPR16) {
 						if (*writeIndex + (offset - writtenOfs) > section->size)
 							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
-							      section->name, *writeIndex + (offset - writtenOfs), section->size);
+							      section->name->c_str(), *writeIndex + (offset - writtenOfs), section->size);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
 						memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
 						*writeIndex += offset - writtenOfs + 1;
@@ -708,7 +704,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				assert(nbBytes > writtenOfs);
 				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
 					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
-					      section->name, *writeIndex + (nbBytes - writtenOfs), section->size);
+					      section->name->c_str(), *writeIndex + (nbBytes - writtenOfs), section->size);
 				memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
 				*writeIndex += nbBytes - writtenOfs;
 			}
@@ -739,7 +735,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (fileSections[i].writeIndex != section->size && fileSections[i].writeIndex != 0)
 			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
-			      section->name, fileSections[i].writeIndex, section->size);
+			      section->name->c_str(), fileSections[i].writeIndex, section->size);
 
 		// This must be done last, so that `->data` is not NULL anymore
 		sect_AddSection(section);

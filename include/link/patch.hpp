@@ -14,7 +14,7 @@
 
 struct Assertion {
 	struct Patch patch; // Also used for its `.type`
-	char *message;
+	std::string *message;
 	// This would be redundant with `.section->fileSymbols`... but `section` is sometimes NULL!
 	std::vector<struct Symbol> *fileSymbols;
 };
