@@ -171,7 +171,7 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 
 	tryReadlong(parentID, file,
 		    "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
-	fileNodes[i].parent = parentID == (uint32_t)-1 ? NULL : &fileNodes[parentID];
+	fileNodes[i].parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : NULL;
 	tryReadlong(fileNodes[i].lineNo, file,
 		    "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i);
 	tryGetc(enum FileStackNodeType, fileNodes[i].type, file,
@@ -289,10 +289,10 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
  * Sets a patch's pcSection from its pcSectionID.
  * @param patch The struct to fix
  */
-static void linkPatchToPCSect(struct Patch *patch, struct Section *fileSections[])
+static void linkPatchToPCSect(struct Patch *patch, std::vector<struct Section *> const &fileSections)
 {
-	patch->pcSection = patch->pcSectionID == (uint32_t)-1 ? NULL
-							      : fileSections[patch->pcSectionID];
+	patch->pcSection = patch->pcSectionID != (uint32_t)-1 ? fileSections[patch->pcSectionID]
+							      : NULL;
 }
 
 /*
@@ -534,8 +534,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	symbolLists.push_front({ .nbSymbols = nbSymbols, .symbolList = fileSymbols });
 
-	uint32_t *nbSymPerSect = (uint32_t *)calloc(nbSections ? nbSections : 1,
-					sizeof(*nbSymPerSect));
+	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
@@ -554,8 +553,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	}
 
 	// This file's sections, stored in a table to link symbols to them
-	struct Section **fileSections =
-		(struct Section **)malloc(sizeof(*fileSections) * (nbSections ? nbSections : 1));
+	std::vector<struct Section *> fileSections(nbSections, NULL);
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
@@ -579,8 +577,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		sect_AddSection(fileSections[i]);
 	}
-
-	free(nbSymPerSect);
 
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
@@ -624,7 +620,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		assertion.fileSymbols = fileSymbols;
 	}
 
-	free(fileSections);
 	fclose(file);
 }
 
