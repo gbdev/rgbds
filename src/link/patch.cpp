@@ -56,11 +56,10 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
-static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
-				      uint32_t index)
+static struct Symbol const *getSymbol(std::vector<struct Symbol *> const &symbolList, uint32_t index)
 {
 	assert(index != (uint32_t)-1); // PC needs to be handled specially, not here
-	struct Symbol const *symbol = symbolList[index];
+	struct Symbol *symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
 	if (symbol->type == SYMTYPE_IMPORT)
@@ -78,7 +77,7 @@ static struct Symbol const *getSymbol(struct Symbol const * const *symbolList,
  *                 errors caused by the value should be suppressed.
  */
 static int32_t computeRPNExpr(struct Patch const *patch,
-			      struct Symbol const * const *fileSymbols)
+			      std::vector<struct Symbol *> const &fileSymbols)
 {
 // Small shortcut to avoid a lot of repetition
 #define popRPN() popRPN(patch->src, patch->lineNo)
@@ -416,8 +415,7 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 	verbosePrint("Checking assertions...\n");
 
 	for (struct Assertion &assert : assertions) {
-		int32_t value = computeRPNExpr(&assert.patch,
-			(struct Symbol const * const *)assert.fileSymbols);
+		int32_t value = computeRPNExpr(&assert.patch, *assert.fileSymbols);
 		enum AssertionType type = (enum AssertionType)assert.patch.type;
 
 		if (!isError && !value) {
@@ -455,9 +453,7 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
 {
 	verbosePrint("Patching section \"%s\"...\n", section->name);
 	for (struct Patch &patch : *section->patches) {
-		int32_t value = computeRPNExpr(&patch,
-					       (struct Symbol const * const *)
-							section->fileSymbols);
+		int32_t value = computeRPNExpr(&patch, *section->fileSymbols);
 		uint16_t offset = patch.offset + section->offset;
 
 		// `jr` is quite unlike the others...
