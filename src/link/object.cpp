@@ -31,11 +31,7 @@ struct SymbolList {
 
 static std::deque<struct SymbolList> symbolLists;
 
-unsigned int nbObjFiles;
-static struct FileStackNodes {
-	struct FileStackNode *nodes;
-	uint32_t nbNodes;
-} *nodes;
+static std::vector<std::vector<struct FileStackNode>> nodes;
 static std::deque<struct Assertion> assertions;
 
 // Helper functions for reading object files
@@ -164,22 +160,23 @@ static char *readstr(FILE *file)
  * @param i The ID of the node in the array
  * @param fileName The filename to report in errors
  */
-static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint32_t i,
+static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fileNodes, uint32_t i,
 			      char const *fileName)
 {
+	struct FileStackNode &node = fileNodes[i];
 	uint32_t parentID;
 
 	tryReadlong(parentID, file,
 		    "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
-	fileNodes[i].parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : NULL;
-	tryReadlong(fileNodes[i].lineNo, file,
+	node.parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : NULL;
+	tryReadlong(node.lineNo, file,
 		    "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i);
-	tryGetc(enum FileStackNodeType, fileNodes[i].type, file,
+	tryGetc(enum FileStackNodeType, node.type, file,
 		"%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, i);
-	switch (fileNodes[i].type) {
+	switch (node.type) {
 	case NODE_FILE:
 	case NODE_MACRO:
-		tryReadstr(fileNodes[i].name, file,
+		tryReadstr(node.name, file,
 			   "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i);
 		break;
 
@@ -187,16 +184,16 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
 	case NODE_REPT:
 		tryReadlong(depth, file,
 			    "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
-		fileNodes[i].iters = new(std::nothrow) std::vector<uint32_t>();
-		if (!fileNodes[i].iters)
+		node.iters = new(std::nothrow) std::vector<uint32_t>();
+		if (!node.iters)
 			fatal(NULL, 0, "%s: Failed to alloc node #%" PRIu32 "'s iters: %s",
 			      fileName, i, strerror(errno));
-		fileNodes[i].iters->resize(depth);
+		node.iters->resize(depth);
 		for (uint32_t k = 0; k < depth; k++)
-			tryReadlong((*fileNodes[i].iters)[k], file,
+			tryReadlong((*node.iters)[k], file,
 				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 				    fileName, i, k);
-		if (!fileNodes[i].parent)
+		if (!node.parent)
 			fatal(NULL, 0, "%s is not a valid object file: root node (#%"
 			      PRIu32 ") may not be REPT", fileName, i);
 	}
@@ -208,8 +205,8 @@ static void readFileStackNode(FILE *file, struct FileStackNode fileNodes[], uint
  * @param symbol The struct to fill
  * @param fileName The filename to report in errors
  */
-static void readSymbol(FILE *file, struct Symbol *symbol,
-		       char const *fileName, struct FileStackNode fileNodes[])
+static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
+		       std::vector<struct FileStackNode> const &fileNodes)
 {
 	tryReadstr(symbol->name, file, "%s: Cannot read symbol name: %s",
 		   fileName);
@@ -246,7 +243,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol,
  * @param i The number of the patch to report in errors
  */
 static void readPatch(FILE *file, struct Patch *patch, char const *fileName, char const *sectName,
-		      uint32_t i, struct FileStackNode fileNodes[])
+		      uint32_t i, std::vector<struct FileStackNode> const &fileNodes)
 {
 	uint32_t nodeID, rpnSize;
 	enum PatchType type;
@@ -302,7 +299,7 @@ static void linkPatchToPCSect(struct Patch *patch, std::vector<struct Section *>
  * @param fileName The filename to report in errors
  */
 static void readSection(FILE *file, struct Section *section, char const *fileName,
-			struct FileStackNode fileNodes[])
+			std::vector<struct FileStackNode> const &fileNodes)
 {
 	int32_t tmp;
 	uint8_t byte;
@@ -425,7 +422,7 @@ static void linkSymToSect(struct Symbol *symbol, struct Section *section)
  */
 static void readAssertion(FILE *file, struct Assertion *assert,
 			  char const *fileName, uint32_t i,
-			  struct FileStackNode fileNodes[])
+			  std::vector<struct FileStackNode> const &fileNodes)
 {
 	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
 
@@ -472,22 +469,16 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	default: // This is (probably) a SDCC object file, defer the rest of detection to it
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
-		nodes[fileID].nbNodes = 1;
-		nodes[fileID].nodes =
-			(struct FileStackNode *)calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
-		if (!nodes[fileID].nodes)
-			err("Failed to get memory for %s's nodes", fileName);
-		struct FileStackNode *where = &nodes[fileID].nodes[0];
+		nodes[fileID].resize(1);
+		struct FileStackNode &where = nodes[fileID][0];
 
-		if (!where)
-			fatal(NULL, 0, "Failed to alloc fstack node for \"%s\": %s", fileName, strerror(errno));
-		where->parent = NULL;
-		where->type = NODE_FILE;
-		where->name = strdup(fileName);
-		if (!where->name)
+		where.parent = NULL;
+		where.type = NODE_FILE;
+		where.name = strdup(fileName);
+		if (!where.name)
 			fatal(NULL, 0, "Failed to duplicate \"%s\"'s name: %s", fileName, strerror(errno));
 
-		sdobj_ReadFile(where, file);
+		sdobj_ReadFile(&where, file);
 		return;
 	}
 
@@ -509,6 +500,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			fileName, revNum > RGBDS_OBJECT_REV ? " or updating rgblink" : "",
 			RGBDS_OBJECT_REV, revNum);
 
+	uint32_t nbNodes;
 	uint32_t nbSymbols;
 	uint32_t nbSections;
 
@@ -517,14 +509,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	nbSectionsToAssign += nbSections;
 
-	tryReadlong(nodes[fileID].nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
-	nodes[fileID].nodes =
-		(struct FileStackNode *)calloc(nodes[fileID].nbNodes, sizeof(nodes[fileID].nodes[0]));
-	if (!nodes[fileID].nodes)
-		err("Failed to get memory for %s's nodes", fileName);
-	verbosePrint("Reading %u nodes...\n", nodes[fileID].nbNodes);
-	for (uint32_t i = nodes[fileID].nbNodes; i--; )
-		readFileStackNode(file, nodes[fileID].nodes, i, fileName);
+	tryReadlong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
+	nodes[fileID].resize(nbNodes);
+	verbosePrint("Reading %u nodes...\n", nbNodes);
+	for (uint32_t i = nbNodes; i--; )
+		readFileStackNode(file, nodes[fileID], i, fileName);
 
 	// This file's symbols, kept to link sections to them
 	struct Symbol **fileSymbols = (struct Symbol **)malloc(sizeof(*fileSymbols) * nbSymbols + 1);
@@ -543,7 +532,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		if (!symbol)
 			err("%s: Failed to create new symbol", fileName);
-		readSymbol(file, symbol, fileName, nodes[fileID].nodes);
+		readSymbol(file, symbol, fileName, nodes[fileID]);
 
 		fileSymbols[i] = symbol;
 		if (symbol->type == SYMTYPE_EXPORT)
@@ -563,7 +552,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			err("%s: Failed to create new section", fileName);
 
 		fileSections[i]->nextu = NULL;
-		readSection(file, fileSections[i], fileName, nodes[fileID].nodes);
+		readSection(file, fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = fileSymbols;
 		if (nbSymPerSect[i]) {
 			fileSections[i]->symbols =
@@ -615,7 +604,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	for (uint32_t i = 0; i < nbAsserts; i++) {
 		struct Assertion &assertion = assertions.emplace_front();
 
-		readAssertion(file, &assertion, fileName, i, nodes[fileID].nodes);
+		readAssertion(file, &assertion, fileName, i, nodes[fileID]);
 		linkPatchToPCSect(&assertion.patch, fileSections);
 		assertion.fileSymbols = fileSymbols;
 	}
@@ -635,21 +624,15 @@ void obj_CheckAssertions(void)
 
 void obj_Setup(unsigned int nbFiles)
 {
-	nbObjFiles = nbFiles;
-
-	if (nbFiles > SIZE_MAX / sizeof(*nodes))
-		fatal(NULL, 0, "Impossible to link more than %zu files!", SIZE_MAX / sizeof(*nodes));
-	nodes = (struct FileStackNodes *)calloc(nbFiles, sizeof(*nodes));
+	nodes.resize(nbFiles);
 }
 
-static void freeNode(struct FileStackNode *node)
+static void freeNode(struct FileStackNode &node)
 {
-	if (node) {
-		if (node->type == NODE_REPT)
-			delete node->iters;
-		else
-			free(node->name);
-	}
+	if (node.type == NODE_REPT)
+		delete node.iters;
+	else
+		free(node.name);
 }
 
 static void freeSection(struct Section *section)
@@ -677,13 +660,10 @@ static void freeSymbol(struct Symbol *symbol)
 
 void obj_Cleanup(void)
 {
-	for (unsigned int i = 0; i < nbObjFiles; i++) {
-		for (uint32_t j = 0; j < nodes[i].nbNodes; j++) {
-			freeNode(&nodes[i].nodes[j]);
-		}
-		free(nodes[i].nodes);
+	for (std::vector<struct FileStackNode> &fileNodes : nodes) {
+		for (struct FileStackNode &node : fileNodes)
+			freeNode(node);
 	}
-	free(nodes);
 
 	sym_CleanupSymbols();
 
