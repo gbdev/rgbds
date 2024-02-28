@@ -234,7 +234,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		uint16_t writeIndex;
 	};
 	std::vector<struct FileSection> fileSections;
-	size_t nbSections = 0, nbSymbols = 0;
 	size_t nbBytes = 0; // How many bytes are in `data`, including the ADDR_SIZE "header" bytes
 	size_t dataCapacity = 16 + ADDR_SIZE; // SDCC object files usually contain 16 bytes per T line
 	uint8_t *data = (uint8_t *)malloc(sizeof(*data) * dataCapacity);
@@ -253,26 +252,25 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			break;
 
 		case 'A': {
-			if (nbSections == expectedNbAreas)
+			if (fileSections.size() == expectedNbAreas)
 				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32,
 					expectedNbAreas);
-			fileSections.resize(nbSections + 1);
-			fileSections[nbSections].writeIndex = 0;
 			struct Section *curSection = (struct Section *)malloc(sizeof(*curSection));
 
 			if (!curSection)
 				fatal(where, lineNo, "Failed to alloc new area: %s", strerror(errno));
-			fileSections[nbSections].section = curSection;
 
 			getToken(line, "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
-			for (size_t i = 0; i < nbSections; ++i) {
-				if (!strcmp(token, fileSections[i].section->name->c_str()))
+			for (struct FileSection &entry : fileSections) {
+				if (!strcmp(token, entry.section->name->c_str()))
 					fatal(where, lineNo, "Area \"%s\" already defined earlier",
 					      token);
 			}
 			char const *sectionName = token; // We'll deal with the section's name depending on type
+
+			fileSections.push_back({ .section = curSection, .writeIndex = 0 });
 
 			expectToken("size", 'A');
 
@@ -355,13 +353,11 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				fatal(where, lineNo, "Failed to alloc new area's symbol list: %s",
 				      strerror(errno));
 			curSection->nextu = NULL;
-
-			++nbSections;
 			break;
 		}
 
 		case 'S': {
-			if (nbSymbols == expectedNbSymbols)
+			if (fileSymbols.size() == expectedNbSymbols)
 				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
 					expectedNbSymbols);
 			struct Symbol &symbol = fileSymbols.emplace_back();
@@ -372,7 +368,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			symbol.lineNo = lineNo;
 
 			// No need to set the `sectionID`, since we can directly set the pointer
-			symbol.section = nbSections != 0 ? fileSections[nbSections - 1].section : NULL;
+			symbol.section = !fileSections.empty() ? fileSections.back().section : NULL;
 
 			getToken(line, "'S' line is too short");
 			symbol.name = new(std::nothrow) std::string(token);
@@ -420,12 +416,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (strncasecmp(&token[1], "ef", 2) != 0)
 				fatal(where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 
-			if (nbSections != 0)
-				fileSections[nbSections - 1].section->symbols->push_back(&symbol);
+			if (!fileSections.empty())
+				fileSections.back().section->symbols->push_back(&symbol);
 
 			expectEol("'S' line is too long");
-
-			++nbSymbols;
 			break;
 		}
 
@@ -468,9 +462,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			areaIdx = parseByte(where, lineNo, token, numberType);
 			getToken(NULL, "'R' line is too short");
 			areaIdx |= (uint16_t)parseByte(where, lineNo, token, numberType) << 8;
-			if (areaIdx >= nbSections)
+			if (areaIdx >= fileSections.size())
 				fatal(where, lineNo, "'R' line references area #%" PRIu16 ", but there are only %zu (so far)",
-				      areaIdx, nbSections);
+				      areaIdx, fileSections.size());
 			assert(!fileSections.empty()); // There should be at least one, from the above check
 			struct Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
@@ -570,9 +564,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				// Bit 4 specifies signedness, but I don't think that matters?
 				// Generate a RPN expression from the info and flags
 				if (flags & 1 << RELOC_ISSYM) {
-					if (idx >= nbSymbols)
+					if (idx >= fileSymbols.size())
 						fatal(where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu",
-						      idx, nbSymbols);
+						      idx, fileSymbols.size());
 					struct Symbol const &sym = fileSymbols[idx];
 
 					// SDCC has a bunch of "magic symbols" that start with a
@@ -580,12 +574,12 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// hacks, this is how SDLD actually works.
 					if (sym.name->starts_with("b_")) {
 						// Look for the symbol being referenced, and use its index instead
-						for (idx = 0; idx < nbSymbols; ++idx) {
+						for (idx = 0; idx < fileSymbols.size(); ++idx) {
 							if (sym.name->ends_with(*fileSymbols[idx].name) &&
 							    1 + sym.name->length() == fileSymbols[idx].name->length())
 								break;
 						}
-						if (idx == nbSymbols)
+						if (idx == fileSymbols.size())
 							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
 							      sym.name->c_str(), &sym.name->c_str()[1]);
 						patch.rpnExpression.resize(5);
@@ -611,9 +605,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 						patch.rpnExpression[4] = idx >> 24;
 					}
 				} else {
-					if (idx >= nbSections)
+					if (idx >= fileSections.size())
 						fatal(where, lineNo, "Reloc refers to area #%" PRIu16 " out of %zu",
-						      idx, nbSections);
+						      idx, fileSections.size());
 					// It gets funky. If the area is absolute, *actually*, we
 					// must not add its base address, as the assembler will
 					// already have added it in `baseValue`.
@@ -722,20 +716,22 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 	if (nbBytes != 0)
 		warning(where, lineNo, "Last 'T' line had no 'R' line (ignored)");
-	if (nbSections < expectedNbAreas)
-		warning(where, lineNo, "Expected %" PRIu32 " 'A' lines, got only %zu", expectedNbAreas, nbSections);
-	if (nbSymbols < expectedNbSymbols)
-		warning(where, lineNo, "Expected %" PRIu32 " 'S' lines, got only %zu", expectedNbSymbols, nbSymbols);
+	if (fileSections.size() < expectedNbAreas)
+		warning(where, lineNo, "Expected %" PRIu32 " 'A' lines, got only %zu", expectedNbAreas,
+			fileSections.size());
+	if (fileSymbols.size() < expectedNbSymbols)
+		warning(where, lineNo, "Expected %" PRIu32 " 'S' lines, got only %zu", expectedNbSymbols,
+			fileSymbols.size());
 
-	nbSectionsToAssign += nbSections;
+	nbSectionsToAssign += fileSections.size();
 
-	for (size_t i = 0; i < nbSections; ++i) {
-		struct Section *section = fileSections[i].section;
+	for (struct FileSection &entry : fileSections) {
+		struct Section *section = entry.section;
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
-		if (fileSections[i].writeIndex != section->size && fileSections[i].writeIndex != 0)
+		if (entry.writeIndex != section->size && entry.writeIndex != 0)
 			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
-			      section->name->c_str(), fileSections[i].writeIndex, section->size);
+			      section->name->c_str(), entry.writeIndex, section->size);
 
 		// This must be done last, so that `->data` is not NULL anymore
 		sect_AddSection(section);
