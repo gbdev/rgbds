@@ -361,18 +361,11 @@ static void initDsArgList(std::vector<struct Expression> *&args)
 		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
 }
 
-static void initPurgeArgList(std::vector<char *> *&args)
+static void initPurgeArgList(std::vector<std::string> *&args)
 {
-	args = new(std::nothrow) std::vector<char *>();
+	args = new(std::nothrow) std::vector<std::string>();
 	if (!args)
 		fatalerror("Failed to allocate memory for purge arg list: %s\n", strerror(errno));
-}
-
-static void freePurgeArgList(std::vector<char *> *&args)
-{
-	for (char *arg : *args)
-		free(arg);
-	delete args;
 }
 
 static void failAssert(enum AssertionType type)
@@ -468,7 +461,7 @@ enum {
 	enum AssertionType assertType;
 	struct AlignmentSpec alignSpec;
 	std::vector<struct Expression> *dsArgs;
-	std::vector<char *> *purgeArgs;
+	std::vector<std::string> *purgeArgs;
 	struct ForArgs forArgs;
 	struct StrFmtArgList strfmtArgs;
 	bool captureTerminated;
@@ -1235,19 +1228,19 @@ redef_equs	: redef_id T_POP_EQUS string { sym_RedefString($1, $3); }
 purge		: T_POP_PURGE {
 			lexer_ToggleStringExpansion(false);
 		} purge_args trailing_comma {
-			for (char *arg : *$3)
+			for (std::string &arg : *$3)
 				sym_Purge(arg);
-			freePurgeArgList($3);
+			delete $3;
 			lexer_ToggleStringExpansion(true);
 		}
 ;
 
 purge_args	: scoped_id {
 			initPurgeArgList($$);
-			$$->push_back(strdup($1));
+			$$->push_back($1);
 		}
 		| purge_args T_COMMA scoped_id {
-			$1->push_back(strdup($3));
+			$1->push_back($3);
 			$$ = $1;
 		}
 ;
