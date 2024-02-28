@@ -201,15 +201,11 @@ bool yywrap(void)
 
 		// If the node is referenced, we can't edit it; duplicate it
 		if (context.fileInfo->referenced) {
-			struct FileStackNode *copy = new(std::nothrow) struct FileStackNode();
-
-			if (!copy)
+			context.fileInfo = new(std::nothrow) struct FileStackNode(*context.fileInfo);
+			if (!context.fileInfo)
 				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
 			// Copy all info but the referencing
-			*copy = *context.fileInfo; // Also copies `context.fileInfo->iters()`
-			copy->referenced = false;
-
-			context.fileInfo = copy;
+			context.fileInfo->referenced = false;
 		}
 
 		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();
