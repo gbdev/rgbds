@@ -21,12 +21,11 @@ struct Patch {
 	struct FileStackNode const *src;
 	uint32_t lineNo;
 	uint32_t offset;
+	struct Section const *pcSection;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	enum PatchType type;
 	std::vector<uint8_t> rpnExpression;
-
-	struct Section const *pcSection;
 };
 
 struct Section {
@@ -46,7 +45,7 @@ struct Section {
 	uint16_t alignMask;
 	uint16_t alignOfs;
 	std::vector<uint8_t> *data; // Array of size `size`
-	std::vector<struct Patch> *patches;
+	std::vector<struct Patch> patches;
 	// Extra info computed during linking
 	std::vector<struct Symbol> *fileSymbols;
 	std::vector<struct Symbol *> *symbols;

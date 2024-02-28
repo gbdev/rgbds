@@ -255,7 +255,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (fileSections.size() == expectedNbAreas)
 				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32,
 					expectedNbAreas);
-			struct Section *curSection = (struct Section *)malloc(sizeof(*curSection));
+			struct Section *curSection = new(std::nothrow) struct Section();
 
 			if (!curSection)
 				fatal(where, lineNo, "Failed to alloc new area: %s", strerror(errno));
@@ -343,10 +343,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			curSection->isAlignFixed = false; // No such concept!
 			// The array will be allocated if the section does contain data
 			curSection->data = NULL;
-			curSection->patches = new(std::nothrow) std::vector<struct Patch>();
-			if (!curSection->patches)
-				fatal(where, lineNo, "Failed to alloc new area's patches: %s",
-				      strerror(errno));
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
 			curSection->symbols = new(std::nothrow) std::vector<struct Symbol *>();
 			if (!curSection->symbols)
@@ -536,13 +532,13 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					warning(where, lineNo, "Unknown reloc flags 0x%x", flags & ~RELOC_ALL_FLAGS);
 
 				// Turn this into a Patch
-				struct Patch &patch = section->patches->emplace_back();
+				struct Patch &patch = section->patches.emplace_back();
 
 				patch.lineNo = lineNo;
 				patch.src = where;
 				patch.offset = offset - writtenOfs + *writeIndex;
-				if (section->patches->size() > 1) {
-					uint32_t prevOffset = (*section->patches)[section->patches->size() - 2].offset;
+				if (section->patches.size() > 1) {
+					uint32_t prevOffset = section->patches[section->patches.size() - 2].offset;
 					if (prevOffset>= patch.offset)
 						fatal(where, lineNo, "Relocs not sorted by offset are not supported (%" PRIu32 " >= %" PRIu32 ")",
 						      prevOffset, patch.offset);
