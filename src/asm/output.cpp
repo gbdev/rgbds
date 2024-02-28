@@ -269,10 +269,8 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 
 static void initpatch(struct Patch &patch, uint32_t type, struct Expression const *expr, uint32_t ofs)
 {
-	uint32_t rpnSize = rpn_isKnown(expr) ? 5 : expr->rpnPatchSize;
 	struct FileStackNode *node = fstk_GetFileStack();
 
-	patch.rpn.resize(rpnSize);
 	patch.type = type;
 	patch.src = node;
 	// All patches are assumed to eventually be written, so the file stack node is registered
@@ -282,15 +280,16 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 
-	// If the rpnSize's value is known, output a constant RPN rpnSize directly
 	if (rpn_isKnown(expr)) {
-		// Make sure to update `rpnSize` above if modifying this!
+		// If the RPN expr's value is known, output a constant directly
+		patch.rpn.resize(5);
 		patch.rpn[0] = RPN_CONST;
 		patch.rpn[1] = (uint32_t)(expr->val) & 0xFF;
 		patch.rpn[2] = (uint32_t)(expr->val) >> 8;
 		patch.rpn[3] = (uint32_t)(expr->val) >> 16;
 		patch.rpn[4] = (uint32_t)(expr->val) >> 24;
 	} else {
+		patch.rpn.resize(expr->rpnPatchSize);
 		writerpn(patch.rpn, *expr->rpn);
 	}
 }
