@@ -28,9 +28,10 @@ struct Context {
 	uint32_t uniqueID;
 	struct MacroArgs *macroArgs; // Macro args are *saved* here
 	uint32_t nbReptIters;
+	bool isForLoop;
 	int32_t forValue;
 	int32_t forStep;
-	char *forName;
+	std::string forName;
 };
 
 static std::stack<struct Context> contextStack;
@@ -214,11 +215,11 @@ bool yywrap(void)
 		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();
 
 		// If this is a FOR, update the symbol value
-		if (context.forName && fileInfoIters.front() <= context.nbReptIters) {
+		if (context.isForLoop && fileInfoIters.front() <= context.nbReptIters) {
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue = (uint32_t)context.forValue + (uint32_t)context.forStep;
 			context.forValue = forValue <= INT32_MAX ? forValue : -(int32_t)~forValue - 1;
-			struct Symbol *sym = sym_AddVar(context.forName, context.forValue);
+			struct Symbol *sym = sym_AddVar(context.forName.c_str(), context.forValue);
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR)
@@ -249,8 +250,6 @@ bool yywrap(void)
 	// Free the file stack node
 	if (!oldContext.fileInfo->referenced)
 		delete oldContext.fileInfo;
-	// Free the FOR symbol name
-	free(oldContext.forName);
 
 	lexer_SetState(&contextStack.top().lexerState);
 	macro_SetUniqueID(contextStack.top().uniqueID);
@@ -278,7 +277,7 @@ static struct Context &newContext(struct FileStackNode *fileInfo)
 	struct Context &context = contextStack.emplace();
 
 	context.fileInfo = fileInfo;
-	context.forName = NULL;
+	context.isForLoop = false;
 
 	return context;
 }
@@ -447,7 +446,6 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 		return;
 
 	contextStack.top().nbReptIters = count;
-	contextStack.top().forName = NULL;
 }
 
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
@@ -479,11 +477,10 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	struct Context &context = contextStack.top();
 
 	context.nbReptIters = count;
+	context.isForLoop = true;
 	context.forValue = start;
 	context.forStep = step;
-	context.forName = strdup(symName);
-	if (!context.forName)
-		fatalerror("Not enough memory for FOR symbol name: %s\n", strerror(errno));
+	context.forName = symName;
 }
 
 void fstk_StopRept(void)
@@ -534,7 +531,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	context.nbReptIters = 0;
 	context.forValue = 0;
 	context.forStep = 0;
-	context.forName = NULL;
+	context.isForLoop = false;
 
 	maxRecursionDepth = maxDepth;
 
