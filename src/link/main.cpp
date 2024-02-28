@@ -7,9 +7,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <variant>
+#include <vector>
 
 #include "link/assign.hpp"
 #include "link/object.hpp"
@@ -48,6 +51,26 @@ FILE *linkerScript;
 
 static uint32_t nbErrors = 0;
 
+std::vector<uint32_t> &FileStackNode::iters() {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::vector<uint32_t> const &FileStackNode::iters() const {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::string &FileStackNode::name() {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
+}
+
+std::string const &FileStackNode::name() const {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
+}
+
 // Helper function to dump a file stack to stderr
 std::string const *dumpFileStack(struct FileStackNode const *node)
 {
@@ -57,15 +80,15 @@ std::string const *dumpFileStack(struct FileStackNode const *node)
 		lastName = dumpFileStack(node->parent);
 		// REPT nodes use their parent's name
 		if (node->type != NODE_REPT)
-			lastName = node->name;
+			lastName = &node->name();
 		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName->c_str());
 		if (node->type == NODE_REPT) {
-			for (uint32_t iter : *node->iters)
+			for (uint32_t iter : node->iters())
 				fprintf(stderr, "::REPT~%" PRIu32, iter);
 		}
 	} else {
 		assert(node->type != NODE_REPT);
-		lastName = node->name;
+		lastName = &node->name();
 		fputs(lastName->c_str(), stderr);
 	}
 

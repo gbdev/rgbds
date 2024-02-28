@@ -157,23 +157,22 @@ static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fil
 	tryGetc(enum FileStackNodeType, node.type, file,
 		"%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, i);
 	switch (node.type) {
+		std::string *name;
 	case NODE_FILE:
 	case NODE_MACRO:
-		tryReadstring(node.name, file,
+		tryReadstring(name, file,
 			      "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i);
+		node.data = *name;
+		delete name;
 		break;
 
 		uint32_t depth;
 	case NODE_REPT:
 		tryReadlong(depth, file,
 			    "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
-		node.iters = new(std::nothrow) std::vector<uint32_t>();
-		if (!node.iters)
-			fatal(NULL, 0, "%s: Failed to alloc node #%" PRIu32 "'s iters: %s",
-			      fileName, i, strerror(errno));
-		node.iters->resize(depth);
+		node.data = std::vector<uint32_t>(depth);
 		for (uint32_t k = 0; k < depth; k++)
-			tryReadlong((*node.iters)[k], file,
+			tryReadlong(node.iters()[k], file,
 				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 				    fileName, i, k);
 		if (!node.parent)
@@ -424,18 +423,16 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	default: // This is (probably) a SDCC object file, defer the rest of detection to it
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
-		nodes[fileID].resize(1);
-		struct FileStackNode &where = nodes[fileID][0];
-
-		where.parent = NULL;
-		where.type = NODE_FILE;
-		where.name = new(std::nothrow) std::string(fileName);
-		if (!where.name)
-			fatal(NULL, 0, "Failed to duplicate \"%s\"'s name: %s", fileName, strerror(errno));
+		nodes[fileID].push_back({
+			.parent = NULL,
+			.lineNo = 0,
+			.type = NODE_FILE,
+			.data = fileName
+		});
 
 		std::vector<struct Symbol> &fileSymbols = symbolLists.emplace_front();
 
-		sdobj_ReadFile(&where, file, fileSymbols);
+		sdobj_ReadFile(&nodes[fileID].back(), file, fileSymbols);
 		return;
 	}
 
@@ -570,14 +567,6 @@ void obj_Setup(unsigned int nbFiles)
 	nodes.resize(nbFiles);
 }
 
-static void freeNode(struct FileStackNode &node)
-{
-	if (node.type == NODE_REPT)
-		delete node.iters;
-	else
-		delete node.name;
-}
-
 static void freeSection(struct Section *section)
 {
 	do {
@@ -597,11 +586,6 @@ static void freeSection(struct Section *section)
 
 void obj_Cleanup(void)
 {
-	for (std::vector<struct FileStackNode> &fileNodes : nodes) {
-		for (struct FileStackNode &node : fileNodes)
-			freeNode(node);
-	}
-
 	sym_CleanupSymbols();
 
 	sect_ForEach(freeSection);
