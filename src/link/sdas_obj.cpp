@@ -299,7 +299,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				      strerror(errno));
 			// If the section is absolute, its name might not be unique; thus, mangle the name
 			if (curSection->modifier == SECTION_NORMAL) {
-				curSection->name->append(*where->name);
+				curSection->name->append(where->name());
 				curSection->name->append(" ");
 			}
 			curSection->name->append(sectionName);
@@ -363,7 +363,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			struct Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
-			symbol.objFileName = where->name->c_str();
+			symbol.objFileName = where->name().c_str();
 			symbol.src = where;
 			symbol.lineNo = lineNo;
 

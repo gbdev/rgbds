@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "helpers.hpp"
@@ -35,10 +36,18 @@ struct FileStackNode {
 	uint32_t lineNo;
 
 	enum FileStackNodeType type;
-	union {
-		std::string *name; // NODE_FILE, NODE_MACRO
-		std::vector<uint32_t> *iters; // NODE_REPT
-	};
+	std::variant<
+		std::monostate, // Default constructed; `.type` and `.data` must be set manually
+		std::vector<uint32_t>, // NODE_REPT
+		std::string // NODE_FILE, NODE_MACRO
+	> data;
+
+	// REPT iteration counts since last named node, in reverse depth order
+	std::vector<uint32_t> &iters();
+	std::vector<uint32_t> const &iters() const;
+	// File name for files, file::macro name for macros
+	std::string &name();
+	std::string const &name() const;
 };
 
 // Helper macro for printing verbose-mode messages
