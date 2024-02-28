@@ -382,7 +382,7 @@ void fstk_RunMacro(char const *macroName, struct MacroArgs *args)
 		}
 	}
 	if (macro->src->type == NODE_REPT) {
-		std::vector<uint32_t> &srcIters = macro->src->iters();
+		std::vector<uint32_t> const &srcIters = macro->src->iters();
 
 		for (uint32_t i = srcIters.size(); i--; ) {
 			char buf[sizeof("::REPT~4294967295")]; // UINT32_MAX
