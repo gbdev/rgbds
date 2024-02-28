@@ -4,6 +4,7 @@
 #define RGBDS_SYMBOL_H
 
 #include <stdint.h>
+#include <string>
 #include <string.h>
 #include <time.h>
 
@@ -128,7 +129,7 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 struct Symbol *sym_Ref(char const *symName);
 struct Symbol *sym_AddString(char const *symName, char const *value);
 struct Symbol *sym_RedefString(char const *symName, char const *value);
-void sym_Purge(char const *symName);
+void sym_Purge(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.

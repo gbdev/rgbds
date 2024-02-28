@@ -199,16 +199,16 @@ static bool isReferenced(struct Symbol const *sym)
 }
 
 // Purge a symbol
-void sym_Purge(char const *symName)
+void sym_Purge(std::string const &symName)
 {
-	struct Symbol *sym = sym_FindScopedValidSymbol(symName);
+	struct Symbol *sym = sym_FindScopedValidSymbol(symName.c_str());
 
 	if (!sym) {
-		error("'%s' not defined\n", symName);
+		error("'%s' not defined\n", symName.c_str());
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be purged\n", symName);
+		error("Built-in symbol '%s' cannot be purged\n", symName.c_str());
 	} else if (isReferenced(sym)) {
-		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName);
+		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
