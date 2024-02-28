@@ -38,10 +38,10 @@ struct SectionStackEntry {
 	char const *scope; // Section's symbol scope
 	uint32_t offset;
 	int32_t loadOffset;
-	std::stack<struct UnionStackEntry> *unionStack;
+	std::stack<struct UnionStackEntry> unionStack;
 };
 
-std::stack<struct UnionStackEntry> *currentUnionStack = NULL;
+std::stack<struct UnionStackEntry> currentUnionStack;
 std::deque<struct SectionStackEntry> sectionStack;
 std::deque<struct Section> sectionList;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
@@ -371,7 +371,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 // Set the current section
 static void changeSection(void)
 {
-	if (currentUnionStack && !currentUnionStack->empty())
+	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
 	sym_SetCurrentSymbolScope(NULL);
@@ -565,17 +565,12 @@ void sect_StartUnion(void)
 		return;
 	}
 
-	if (!currentUnionStack)
-		currentUnionStack = new(std::nothrow) std::stack<struct UnionStackEntry>();
-	if (!currentUnionStack)
-		fatalerror("No memory for union stack: %s\n", strerror(errno));
-
-	currentUnionStack->push({ .start = curOffset, .size = 0 });
+	currentUnionStack.push({ .start = curOffset, .size = 0 });
 }
 
 static void endUnionMember(void)
 {
-	struct UnionStackEntry &member = currentUnionStack->top();
+	struct UnionStackEntry &member = currentUnionStack.top();
 	uint32_t memberSize = curOffset - member.start;
 
 	if (memberSize > member.size)
@@ -585,7 +580,7 @@ static void endUnionMember(void)
 
 void sect_NextUnionMember(void)
 {
-	if (!currentUnionStack || currentUnionStack->empty()) {
+	if (currentUnionStack.empty()) {
 		error("Found NEXTU outside of a UNION construct\n");
 		return;
 	}
@@ -594,21 +589,19 @@ void sect_NextUnionMember(void)
 
 void sect_EndUnion(void)
 {
-	if (!currentUnionStack || currentUnionStack->empty()) {
+	if (currentUnionStack.empty()) {
 		error("Found ENDU outside of a UNION construct\n");
 		return;
 	}
 	endUnionMember();
-	curOffset += currentUnionStack->top().size;
-	currentUnionStack->pop();
+	curOffset += currentUnionStack.top().size;
+	currentUnionStack.pop();
 }
 
 void sect_CheckUnionClosed(void)
 {
-	if (currentUnionStack && !currentUnionStack->empty())
+	if (!currentUnionStack.empty())
 		error("Unterminated UNION construct\n");
-	if (currentUnionStack)
-		delete currentUnionStack;
 }
 
 // Output an absolute byte
@@ -937,14 +930,14 @@ void sect_PushSection(void)
 		.scope = sym_GetCurrentSymbolScope(),
 		.offset = curOffset,
 		.loadOffset = loadOffset,
-		.unionStack = currentUnionStack,
+		.unionStack = {},
 	});
 
 	// Reset the section scope
 	currentSection = NULL;
 	currentLoadSection = NULL;
 	sym_SetCurrentSymbolScope(NULL);
-	currentUnionStack = NULL;
+	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
 void sect_PopSection(void)
@@ -964,8 +957,7 @@ void sect_PopSection(void)
 	sym_SetCurrentSymbolScope(entry.scope);
 	curOffset = entry.offset;
 	loadOffset = entry.loadOffset;
-	delete currentUnionStack;
-	currentUnionStack = entry.unionStack;
+	std::swap(currentUnionStack, entry.unionStack);
 }
 
 void sect_EndSection(void)
@@ -976,7 +968,7 @@ void sect_EndSection(void)
 	if (currentLoadSection)
 		fatalerror("Cannot end the section within a `LOAD` block\n");
 
-	if (currentUnionStack && !currentUnionStack->empty())
+	if (!currentUnionStack.empty())
 		fatalerror("Cannot end the section within a UNION\n");
 
 	// Reset the section scope
