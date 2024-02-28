@@ -257,7 +257,7 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 
 static void initStrFmtArgList(struct StrFmtArgList *args)
 {
-	args->args = new(std::nothrow) std::vector<struct StrFmtArg>();
+	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, char *>>();
 	if (!args->args)
 		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
 			   strerror(errno));
@@ -266,13 +266,15 @@ static void initStrFmtArgList(struct StrFmtArgList *args)
 static void freeStrFmtArgList(struct StrFmtArgList *args)
 {
 	free(args->format);
-	for (struct StrFmtArg &arg : *args->args)
-		if (!arg.isNumeric)
-			free(arg.string);
+	for (std::variant<uint32_t, char *> &arg : *args->args) {
+		if (char **str = std::get_if<char *>(&arg); str)
+			free(*str);
+	}
 	delete args->args;
 }
 
-static void strfmt(char *dest, size_t destLen, char const *fmt, std::vector<struct StrFmtArg> &args)
+static void strfmt(char *dest, size_t destLen, char const *fmt,
+		   std::vector<std::variant<uint32_t, char *>> &args)
 {
 	size_t a = 0;
 	size_t i = 0;
@@ -319,13 +321,13 @@ static void strfmt(char *dest, size_t destLen, char const *fmt, std::vector<stru
 			continue;
 		}
 
-		struct StrFmtArg &arg = args[a++];
+		std::variant<uint32_t, char *> &arg = args[a++];
 		static char buf[MAXSTRLEN + 1];
 
-		if (arg.isNumeric)
-			fmt_PrintNumber(buf, sizeof(buf), &spec, arg.number);
+		if (std::holds_alternative<uint32_t>(arg))
+			fmt_PrintNumber(buf, sizeof(buf), &spec, std::get<uint32_t>(arg));
 		else
-			fmt_PrintString(buf, sizeof(buf), &spec, arg.string);
+			fmt_PrintString(buf, sizeof(buf), &spec, std::get<char *>(arg));
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
 	}
@@ -1682,17 +1684,11 @@ strfmt_va_args	: %empty {
 			initStrFmtArgList(&$$);
 		}
 		| strfmt_va_args T_COMMA const_no_str {
-			struct StrFmtArg &arg = $1.args->emplace_back();
-
-			arg.number = $3;
-			arg.isNumeric = true;
+			$1.args->push_back((uint32_t)$3);
 			$$ = $1;
 		}
 		| strfmt_va_args T_COMMA string {
-			struct StrFmtArg &arg = $1.args->emplace_back();
-
-			arg.string = strdup($3);
-			arg.isNumeric = false;
+			$1.args->push_back(strdup($3));
 			$$ = $1;
 		}
 ;
