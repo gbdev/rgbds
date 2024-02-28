@@ -30,7 +30,7 @@ struct Section {
 	char *name;
 	enum SectionType type;
 	enum SectionModifier modifier;
-	struct FileStackNode *src; // Where the section was defined
+	struct FileStackNode const *src; // Where the section was defined
 	uint32_t fileLine; // Line where the section was defined
 	uint32_t size;
 	uint32_t org;
