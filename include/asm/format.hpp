@@ -4,6 +4,7 @@
 #define RGBDS_FORMAT_SPEC_H
 
 #include <stdint.h>
+#include <variant>
 #include <vector>
 
 enum FormatState {
@@ -29,17 +30,9 @@ struct FormatSpec {
 	bool valid;
 };
 
-struct StrFmtArg {
-	union {
-		uint32_t number;
-		char *string;
-	};
-	bool isNumeric;
-};
-
 struct StrFmtArgList {
 	char *format;
-	std::vector<struct StrFmtArg> *args;
+	std::vector<std::variant<uint32_t, char *>> *args;
 };
 
 struct FormatSpec fmt_NewSpec(void);
