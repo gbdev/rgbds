@@ -395,7 +395,6 @@ int main(int argc, char *argv[])
 	charmap_New(DEFAULT_CHARMAP_NAME, NULL);
 
 	// Init lexer and file stack, providing file info
-	lexer_Init();
 	fstk_Init(mainFileName, maxDepth);
 
 	// Perform parse (yyparse is auto-generated from `parser.y`)

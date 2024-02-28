@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unordered_map>
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
@@ -77,17 +78,30 @@
 } while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
+struct CaseInsensitive {
+	// FNV-1a hash of an uppercased string
+	size_t operator()(std::string const &str) const {
+		size_t hash = 0x811C9DC5;
+
+		for (char const &c : str)
+			hash = (hash ^ toupper(c)) * 16777619;
+		return hash;
+	}
+
+	// Compare two strings without case-sensitivity (by converting to uppercase)
+	bool operator()(std::string const &str1, std::string const &str2) const {
+		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
+			return toupper(c1) == toupper(c2);
+		});
+	}
+};
+
 // Identifiers that are also keywords are listed here. This ONLY applies to ones
 // that would normally be matched as identifiers! Check out `yylex_NORMAL` to
 // see how this is used.
 // Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
-static struct KeywordMapping {
-	char const *name;
-	int token;
-} const keywords[] = {
-	// CAUTION when editing this: adding keywords will probably require extra nodes in the
-	// `keywordDict` array. If you forget to, you will probably trip up an assertion, anyways.
-	// Also, all entries in this array must be in uppercase for the dict to build correctly.
+// This assumes that no two keywords have the same name.
+static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
 	{"ADC", T_Z80_ADC},
 	{"ADD", T_Z80_ADD},
 	{"AND", T_Z80_AND},
@@ -456,65 +470,6 @@ void lexer_DeleteState(struct LexerState &state)
 		close(state.cbuf.fd);
 	else if (state.isFile && !state.mmap.isReferenced)
 		munmap(state.mmap.ptr, state.mmap.size);
-}
-
-struct KeywordDictNode {
-	// The identifier charset is (currently) 44 characters big. By storing entries for the
-	// entire printable ASCII charset, minus lower-case due to case-insensitivity,
-	// we only waste (0x60 - 0x20) - 70 = 20 entries per node, which should be acceptable.
-	// In turn, this allows greatly simplifying checking an index into this array,
-	// which should help speed up the lexer.
-	uint16_t children[0x60 - ' '];
-	struct KeywordMapping const *keyword;
-// Since the keyword structure is invariant, the min number of nodes is known at compile time
-} keywordDict[377] = {}; // Make sure to keep this correct when adding keywords!
-
-// Convert a char into its index into the dict
-static uint8_t dictIndex(char c)
-{
-	// Translate uppercase to lowercase (roughly)
-	if (c > 0x60)
-		c = c - ('a' - 'A');
-	return c - ' ';
-}
-
-void lexer_Init(void)
-{
-	// Build the dictionary of keywords. This could be done at compile time instead, however:
-	// - Doing so manually is a task nobody wants to undertake
-	// - It would be massively hard to read
-	// - Doing it within CC or CPP would be quite non-trivial
-	// - Doing it externally would require some extra work to use only POSIX tools
-	// - The startup overhead isn't much compared to the program's
-	uint16_t usedNodes = 1;
-
-	for (size_t i = 0; i < ARRAY_SIZE(keywords); i++) {
-		uint16_t nodeID = 0;
-
-		// Walk the dictionary, creating intermediate nodes for the keyword
-		for (char const *ptr = keywords[i].name; *ptr; ptr++) {
-			// We should be able to assume all entries are well-formed
-			if (keywordDict[nodeID].children[*ptr - ' '] == 0) {
-				// If this gets tripped up, set the size of keywordDict to
-				// something high, compile with `-DPRINT_NODE_COUNT` (see below),
-				// and set the size to that.
-				assert(usedNodes < sizeof(keywordDict) / sizeof(*keywordDict));
-
-				// There is no node at that location, grab one from the pool
-				keywordDict[nodeID].children[*ptr - ' '] = usedNodes;
-				usedNodes++;
-			}
-			nodeID = keywordDict[nodeID].children[*ptr - ' '];
-		}
-
-		// This assumes that no two keywords have the same name
-		keywordDict[nodeID].keyword = &keywords[i];
-	}
-
-#ifdef PRINT_NODE_COUNT // For the maintainer to check how many nodes are needed
-	printf("Lexer keyword dictionary: %zu keywords in %u nodes (pool size %zu)\n",
-	       ARRAY_SIZE(keywords), usedNodes, ARRAY_SIZE(keywordDict));
-#endif
 }
 
 void lexer_SetMode(enum LexerMode mode)
@@ -1191,7 +1146,6 @@ static int readIdentifier(char firstChar)
 {
 	// Lex while checking for a keyword
 	yylval.symName[0] = firstChar;
-	uint16_t nodeID = keywordDict[0].children[dictIndex(firstChar)];
 	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
 	size_t i = 1;
 
@@ -1206,10 +1160,6 @@ static int readIdentifier(char firstChar)
 			// If the char was a dot, mark the identifier as local
 			if (c == '.')
 				tokenType = T_LOCAL_ID;
-
-			// Attempt to traverse the tree to check for a keyword
-			if (nodeID) // Do nothing if matching already failed
-				nodeID = keywordDict[nodeID].children[dictIndex(c)];
 		}
 	}
 
@@ -1219,10 +1169,10 @@ static int readIdentifier(char firstChar)
 	}
 	yylval.symName[i] = '\0'; // Terminate the string
 
-	if (keywordDict[nodeID].keyword)
-		return keywordDict[nodeID].keyword->token;
+	// Attempt to check for a keyword
+	auto search = keywordDict.find(yylval.symName);
 
-	return tokenType;
+	return search != keywordDict.end() ? search->second : tokenType;
 }
 
 // Functions to read strings
