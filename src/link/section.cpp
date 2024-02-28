@@ -153,7 +153,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 				other->data = NULL; // Prevent a double `delete`
 			}
 			// Adjust patches' PC offsets
-			for (struct Patch &patch : *other->patches)
+			for (struct Patch &patch : other->patches)
 				patch.pcOffset += other->offset;
 		} else if (target->data) {
 			assert(other->size == 0);

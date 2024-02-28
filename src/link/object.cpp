@@ -337,12 +337,9 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 			    "%s: Cannot read \"%s\"'s number of patches: %s", fileName,
 			    section->name->c_str());
 
-		section->patches = new(std::nothrow) std::vector<struct Patch>();
-		if (!section->patches)
-			err("%s: Unable to read \"%s\"'s patches", fileName, section->name->c_str());
-		section->patches->resize(nbPatches);
+		section->patches.resize(nbPatches);
 		for (uint32_t i = 0; i < nbPatches; i++)
-			readPatch(file, &(*section->patches)[i], fileName, section->name->c_str(),
+			readPatch(file, &section->patches[i], fileName, section->name->c_str(),
 				  i, fileNodes);
 	} else {
 		section->data = NULL; // `mergeSections()` expects to be able to always read the ptr
@@ -492,7 +489,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
 		// Read section
-		fileSections[i] = (struct Section *)malloc(sizeof(*fileSections[i]));
+		fileSections[i] = new(std::nothrow) struct Section();
 		if (!fileSections[i])
 			err("%s: Failed to create new section", fileName);
 
@@ -510,7 +507,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
 		if (sect_HasData(fileSections[i]->type)) {
-			for (struct Patch &patch : *fileSections[i]->patches)
+			for (struct Patch &patch : fileSections[i]->patches)
 				linkPatchToPCSect(&patch, fileSections);
 		}
 	}
@@ -573,12 +570,10 @@ static void freeSection(struct Section *section)
 		struct Section *next = section->nextu;
 
 		delete section->name;
-		if (sect_HasData(section->type)) {
+		if (sect_HasData(section->type))
 			delete section->data;
-			delete section->patches;
-		}
 		delete section->symbols;
-		free(section);
+		delete section;
 
 		section = next;
 	} while (section);
