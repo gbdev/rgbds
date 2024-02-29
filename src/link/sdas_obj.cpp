@@ -220,12 +220,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		uint16_t writeIndex;
 	};
 	std::vector<struct FileSection> fileSections;
-	size_t nbBytes = 0; // How many bytes are in `data`, including the ADDR_SIZE "header" bytes
-	size_t dataCapacity = 16 + ADDR_SIZE; // SDCC object files usually contain 16 bytes per T line
-	uint8_t *data = (uint8_t *)malloc(sizeof(*data) * dataCapacity);
-
-	if (!data)
-		fatal(where, lineNo, "Failed to alloc data buffer: %s", strerror(errno));
+	std::vector<uint8_t> data;
 
 	for (;;) {
 		lineType = nextLine(line, lineNo, where, file);
@@ -395,30 +390,21 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 		case 'T':
 			// Now, time to parse the data!
-			if (nbBytes != 0)
+			if (!data.empty())
 				warning(where, lineNo, "Previous 'T' line had no 'R' line (ignored)");
 
-			nbBytes = 0;
-			for (token = strtok(line.data(), delim); token; token = strtok(NULL, delim)) {
-				if (dataCapacity == nbBytes) {
-					dataCapacity *= 2;
-					data = (uint8_t *)realloc(data, sizeof(*data) * dataCapacity);
-					if (!data)
-						fatal(where, lineNo, "Failed to realloc data buffer: %s",
-						      strerror(errno));
-				}
-				data[nbBytes] = parseByte(where, lineNo, token, numberType);
-				++nbBytes;
-			}
+			data.clear();
+			for (token = strtok(line.data(), delim); token; token = strtok(NULL, delim))
+				data.push_back(parseByte(where, lineNo, token, numberType));
 
-			if (nbBytes < ADDR_SIZE)
+			if (data.size() < ADDR_SIZE)
 				fatal(where, lineNo, "'T' line is too short");
-			// Importantly, now we know that `nbBytes != 0`, which means "pending data"
+			// Importantly, now we know that there is "pending data" in `data`
 			break;
 
 		case 'R': {
 			// Supposed to directly follow `T`
-			if (nbBytes == 0) {
+			if (data.empty()) {
 				warning(where, lineNo, "'R' line with no 'T' line, ignoring");
 				break;
 			}
@@ -449,7 +435,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			}
 			// Lines are emitted that violate this check but contain no "payload";
 			// ignore those. "Empty" lines shouldn't trigger allocation, either.
-			if (nbBytes != ADDR_SIZE) {
+			if (data.size() != ADDR_SIZE) {
 				if (addr != *writeIndex)
 					fatal(where, lineNo, "'T' lines which don't append to their section are not supported (%" PRIu16 " != %" PRIu16 ")",
 					      addr, *writeIndex);
@@ -486,9 +472,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				if (offset < ADDR_SIZE)
 					fatal(where, lineNo, "Relocation index cannot point to header (%" PRIu16 " < %u)",
 					      offset, ADDR_SIZE);
-				if (offset >= nbBytes)
+				if (offset >= data.size())
 					fatal(where, lineNo, "Relocation index is out of bounds (%" PRIu16 " >= %zu)",
-					      offset, nbBytes);
+					      offset, data.size());
 
 				getToken(NULL, "Incomplete relocation");
 				uint16_t idx = parseByte(where, lineNo, token, numberType);
@@ -521,10 +507,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
 				uint32_t baseValue = 0;
 
-				assert(offset < nbBytes);
-				if (nbBytes - offset < nbBaseBytes)
+				assert(offset < data.size());
+				if (data.size() - offset < nbBaseBytes)
 					fatal(where, lineNo, "Reloc would patch out of bounds (%" PRIu8 " > %zu)",
-					      nbBaseBytes, nbBytes - offset);
+					      nbBaseBytes, data.size() - offset);
 				for (uint8_t i = 0; i < nbBaseBytes; ++i)
 					baseValue = baseValue | data[offset + i] << (8 * i);
 
@@ -661,16 +647,16 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			}
 
 			// If there is some data left to append, do so
-			if (writtenOfs != nbBytes) {
-				assert(nbBytes > writtenOfs);
-				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
+			if (writtenOfs != data.size()) {
+				assert(data.size() > writtenOfs);
+				if (*writeIndex + (data.size() - writtenOfs) > section->size)
 					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
-					      section->name.c_str(), *writeIndex + (nbBytes - writtenOfs), section->size);
-				memcpy(&section->data[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
-				*writeIndex += nbBytes - writtenOfs;
+					      section->name.c_str(), *writeIndex + (data.size() - writtenOfs), section->size);
+				memcpy(&section->data[*writeIndex], &data[writtenOfs], data.size() - writtenOfs);
+				*writeIndex += data.size() - writtenOfs;
 			}
 
-			nbBytes = 0; // Do not allow two R lines to refer to the same T line
+			data.clear(); // Do not allow two R lines to refer to the same T line
 			break;
 		}
 
@@ -681,7 +667,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		}
 	}
 
-	if (nbBytes != 0)
+	if (!data.empty())
 		warning(where, lineNo, "Last 'T' line had no 'R' line (ignored)");
 	if (fileSections.size() < expectedNbAreas)
 		warning(where, lineNo, "Expected %" PRIu32 " 'A' lines, got only %zu", expectedNbAreas,
