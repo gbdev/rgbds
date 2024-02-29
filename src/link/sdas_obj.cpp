@@ -359,9 +359,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			symbol.section = !fileSections.empty() ? fileSections.back().section : NULL;
 
 			getToken(line, "'S' line is too short");
-			symbol.name = new(std::nothrow) std::string(token);
-			if (!symbol.name)
-				fatal(where, lineNo, "Failed to alloc symbol name: %s", strerror(errno));
+			symbol.name = token;
 
 			getToken(NULL, "'S' line is too short");
 			// It might be an `offset`, but both types are the same so type punning is fine
@@ -381,7 +379,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			} else {
 				// All symbols are exported
 				symbol.type = SYMTYPE_EXPORT;
-				struct Symbol const *other = sym_GetSymbol(*symbol.name);
+				struct Symbol const *other = sym_GetSymbol(symbol.name);
 
 				if (other) {
 					// The same symbol can only be defined twice if neither
@@ -392,7 +390,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					} else if (other->value != symbol.value) {
 						error(where, lineNo,
 						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32 " != %" PRId32 ")",
-						      symbol.name->c_str(), other->objFileName, symbol.value, other->value);
+						      symbol.name.c_str(), other->objFileName, symbol.value, other->value);
 					}
 				} else {
 					// Add a new definition
@@ -560,30 +558,30 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// SDCC has a bunch of "magic symbols" that start with a
 					// letter and an underscore. These are not compatibility
 					// hacks, this is how SDLD actually works.
-					if (sym.name->starts_with("b_")) {
+					if (sym.name.starts_with("b_")) {
 						// Look for the symbol being referenced, and use its index instead
 						for (idx = 0; idx < fileSymbols.size(); ++idx) {
-							if (sym.name->ends_with(*fileSymbols[idx].name) &&
-							    1 + sym.name->length() == fileSymbols[idx].name->length())
+							if (sym.name.ends_with(fileSymbols[idx].name) &&
+							    1 + sym.name.length() == fileSymbols[idx].name.length())
 								break;
 						}
 						if (idx == fileSymbols.size())
 							fatal(where, lineNo, "\"%s\" is missing a reference to \"%s\"",
-							      sym.name->c_str(), &sym.name->c_str()[1]);
+							      sym.name.c_str(), &sym.name.c_str()[1]);
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
 						patch.rpnExpression[2] = idx >> 8;
 						patch.rpnExpression[3] = idx >> 16;
 						patch.rpnExpression[4] = idx >> 24;
-					} else if (sym.name->starts_with("l_")) {
-						patch.rpnExpression.resize(1 + sym.name->length() - 2 + 1);
+					} else if (sym.name.starts_with("l_")) {
+						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
-						memcpy((char *)&patch.rpnExpression[1], &sym.name->c_str()[2], sym.name->length() - 2 + 1);
-					} else if (sym.name->starts_with("s_")) {
-						patch.rpnExpression.resize(1 + sym.name->length() - 2 + 1);
+						memcpy((char *)&patch.rpnExpression[1], &sym.name.c_str()[2], sym.name.length() - 2 + 1);
+					} else if (sym.name.starts_with("s_")) {
+						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
-						memcpy((char *)&patch.rpnExpression[1], &sym.name->c_str()[2], sym.name->length() - 2 + 1);
+						memcpy((char *)&patch.rpnExpression[1], &sym.name.c_str()[2], sym.name.length() - 2 + 1);
 					} else {
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_SYM;

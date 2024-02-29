@@ -15,7 +15,7 @@ struct FileStackNode;
 
 struct Symbol {
 	// Info contained in the object files
-	std::string *name;
+	std::string name;
 	enum ExportLevel type;
 	char const *objFileName;
 	struct FileStackNode const *src;

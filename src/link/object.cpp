@@ -190,23 +190,27 @@ static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fil
 static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
 		       std::vector<struct FileStackNode> const &fileNodes)
 {
-	tryReadstring(symbol->name, file, "%s: Cannot read symbol name: %s", fileName);
+	std::string *name;
+
+	tryReadstring(name, file, "%s: Cannot read symbol name: %s", fileName);
+	symbol->name = *name;
+	delete name;
 	tryGetc(enum ExportLevel, symbol->type, file, "%s: Cannot read \"%s\"'s type: %s",
-		fileName, symbol->name->c_str());
+		fileName, symbol->name.c_str());
 	// If the symbol is defined in this file, read its definition
 	if (symbol->type != SYMTYPE_IMPORT) {
 		symbol->objFileName = fileName;
 		uint32_t nodeID;
 
 		tryReadlong(nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s",
-			   fileName, symbol->name->c_str());
+			   fileName, symbol->name.c_str());
 		symbol->src = &fileNodes[nodeID];
 		tryReadlong(symbol->lineNo, file, "%s: Cannot read \"%s\"'s line number: %s",
-			    fileName, symbol->name->c_str());
+			    fileName, symbol->name.c_str());
 		tryReadlong(symbol->sectionID, file, "%s: Cannot read \"%s\"'s section ID: %s",
-			    fileName, symbol->name->c_str());
+			    fileName, symbol->name.c_str());
 		tryReadlong(symbol->offset, file, "%s: Cannot read \"%s\"'s value: %s",
-			    fileName, symbol->name->c_str());
+			    fileName, symbol->name.c_str());
 	} else {
 		symbol->sectionID = -1;
 	}
@@ -583,11 +587,6 @@ void obj_Cleanup(void)
 
 	sect_ForEach(freeSection);
 	sect_CleanupSections();
-
-	for (std::vector<struct Symbol> &fileSymbols : symbolLists) {
-		for (struct Symbol &symbol : fileSymbols)
-			delete symbol.name;
-	}
 
 	for (struct Assertion &assert : assertions)
 		delete assert.message;

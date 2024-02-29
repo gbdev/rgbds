@@ -293,19 +293,19 @@ static int compareSymbols(struct SortedSymbol const &sym1, struct SortedSymbol c
 	if (sym1.addr != sym2.addr)
 		return sym1.addr < sym2.addr ? -1 : 1;
 
-	std::string const *sym1_name = sym1.sym->name;
-	std::string const *sym2_name = sym2.sym->name;
-	bool sym1_local = sym1_name->find(".") != std::string::npos;
-	bool sym2_local = sym2_name->find(".") != std::string::npos;
+	std::string const &sym1_name = sym1.sym->name;
+	std::string const &sym2_name = sym2.sym->name;
+	bool sym1_local = sym1_name.find(".") != std::string::npos;
+	bool sym2_local = sym2_name.find(".") != std::string::npos;
 
 	if (sym1_local != sym2_local) {
-		size_t sym1_len = sym1_name->length();
-		size_t sym2_len = sym2_name->length();
+		size_t sym1_len = sym1_name.length();
+		size_t sym2_len = sym2_name.length();
 
 		// Sort parent labels before their child local labels
-		if (sym2_name->starts_with(*sym1_name) && (*sym2_name)[sym1_len] == '.')
+		if (sym2_name.starts_with(sym1_name) && sym2_name[sym1_len] == '.')
 			return -1;
-		if (sym1_name->starts_with(*sym2_name) && (*sym1_name)[sym2_len] == '.')
+		if (sym1_name.starts_with(sym2_name) && sym1_name[sym2_len] == '.')
 			return 1;
 		// Sort local labels before unrelated global labels
 		return sym1_local ? -1 : 1;
@@ -348,7 +348,7 @@ static void writeSymBank(struct SortedSections const &bankSections,
 	forEachSortedSection(sect, {
 		for (struct Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
-			if (!sym->name->empty() && canStartSymName((*sym->name)[0]))
+			if (!sym->name.empty() && canStartSymName(sym->name[0]))
 				symList.push_back({ .sym = sym, .addr = (uint16_t)(sym->offset + sect->org) });
 		}
 	});
@@ -361,7 +361,7 @@ static void writeSymBank(struct SortedSections const &bankSections,
 
 	for (struct SortedSymbol &sym : symList) {
 		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym.addr);
-		printSymName(sym.sym->name->c_str());
+		printSymName(sym.sym->name.c_str());
 		putc('\n', symFile);
 	}
 }
@@ -419,7 +419,7 @@ static void writeMapBank(struct SortedSections const &sectList, enum SectionType
 				for (struct Symbol *sym : sect->symbols)
 					// Space matches "\tSECTION: $xxxx ..."
 					fprintf(mapFile, "\t         $%04" PRIx32 " = %s\n",
-						sym->offset + org, sym->name->c_str());
+						sym->offset + org, sym->name.c_str());
 
 				if (sect->nextu) {
 					// Announce the following "piece"
