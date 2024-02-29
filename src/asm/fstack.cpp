@@ -237,7 +237,7 @@ bool yywrap(void)
 
 	contextStack.pop();
 
-	lexer_DeleteState(oldContext.lexerState);
+	lexer_CleanupState(oldContext.lexerState);
 	// Restore args if a macro (not REPT) saved them
 	if (oldContext.fileInfo->type == NODE_MACRO) {
 		macro_FreeArgs(macro_GetCurrentArgs());

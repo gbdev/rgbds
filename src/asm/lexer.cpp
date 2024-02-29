@@ -451,7 +451,7 @@ void lexer_RestartRept(uint32_t lineNo)
 	lexerState->lineNo = lineNo;
 }
 
-void lexer_DeleteState(struct LexerState &state)
+void lexer_CleanupState(struct LexerState &state)
 {
 	// A big chunk of the lexer state soundness is the file stack ("fstack").
 	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
