@@ -97,34 +97,7 @@ static int64_t readlong(FILE *file)
 	tryRead(getc, int, EOF, type, var, file, __VA_ARGS__)
 
 /*
- * Reads a '\0'-terminated string from a file.
- * @param file The file to read from. The file position will be advanced.
- * @return The string read, or NULL on failure.
- *         If a non-NULL pointer is returned, make sure to `free` it when done!
- */
-static std::string *readstring(FILE *file)
-{
-	std::string *str = new(std::nothrow) std::string();
-
-	if (!str)
-		return NULL;
-	for (;;) {
-		// Read char
-		int byte = getc(file);
-
-		if (byte == EOF) {
-			delete str;
-			return NULL;
-		} else if (byte == '\0') {
-			return str;
-		} else {
-			str->push_back(byte);
-		}
-	};
-}
-
-/*
- * Helper macro for reading bytes from a file, and errors out if it fails to.
+ * Helper macro for readings '\0'-terminated strings from a file, and errors out if it fails to.
  * Not as a function to avoid overhead in the general case.
  * @param var The variable to stash the string into
  * @param file The file to read from. Its position will be advanced
@@ -132,7 +105,19 @@ static std::string *readstring(FILE *file)
  *            argument is provided, the reason for failure
  */
 #define tryReadstring(var, file, ...) \
-	tryRead(readstring, std::string *, NULL, std::string *, var, file, __VA_ARGS__)
+	do { \
+		FILE *tmpFile = file; \
+		std::string &tmpVal = var; \
+		for (int tmpByte = getc(tmpFile); tmpByte != '\0'; tmpByte = getc(tmpFile)) { \
+			if (tmpByte == EOF) { \
+				errx(__VA_ARGS__, feof(tmpFile) \
+						  ? "Unexpected end of file" \
+						  : strerror(errno)); \
+			} else { \
+				tmpVal.push_back(tmpByte); \
+			} \
+		}; \
+	} while (0)
 
 // Functions to parse object files
 
@@ -157,13 +142,11 @@ static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fil
 	tryGetc(enum FileStackNodeType, node.type, file,
 		"%s: Cannot read node #%" PRIu32 "'s type: %s", fileName, i);
 	switch (node.type) {
-		std::string *name;
 	case NODE_FILE:
 	case NODE_MACRO:
-		tryReadstring(name, file,
+		node.data = "";
+		tryReadstring(node.name(), file,
 			      "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i);
-		node.data = *name;
-		delete name;
 		break;
 
 		uint32_t depth;
@@ -190,11 +173,7 @@ static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fil
 static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
 		       std::vector<struct FileStackNode> const &fileNodes)
 {
-	std::string *name;
-
-	tryReadstring(name, file, "%s: Cannot read symbol name: %s", fileName);
-	symbol->name = *name;
-	delete name;
+	tryReadstring(symbol->name, file, "%s: Cannot read symbol name: %s", fileName);
 	tryGetc(enum ExportLevel, symbol->type, file, "%s: Cannot read \"%s\"'s type: %s",
 		fileName, symbol->name.c_str());
 	// If the symbol is defined in this file, read its definition
@@ -283,11 +262,8 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 {
 	int32_t tmp;
 	uint8_t byte;
-	std::string *str;
 
-	tryReadstring(str, file, "%s: Cannot read section name: %s", fileName);
-	section->name = *str;
-	delete str;
+	tryReadstring(section->name, file, "%s: Cannot read section name: %s", fileName);
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section->name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX)
 		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section->name.c_str(), tmp);
@@ -384,14 +360,11 @@ static void readAssertion(FILE *file, struct Assertion *assert, char const *file
 			  std::vector<struct FileStackNode> const &fileNodes)
 {
 	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
-	std::string *name;
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
 	readPatch(file, &assert->patch, fileName, assertName, 0, fileNodes);
-	tryReadstring(name, file, "%s: Cannot read assertion's message: %s", fileName);
-	assert->message = *name;
-	delete name;
+	tryReadstring(assert->message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
 
 static struct Section *getMainSection(struct Section *section)
