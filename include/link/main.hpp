@@ -27,7 +27,7 @@ extern uint8_t scrambleWRAMX;
 extern uint8_t scrambleSRAM;
 extern bool is32kMode;
 extern bool beVerbose;
-extern bool isWRA0Mode;
+extern bool isWRAM0Mode;
 extern bool disablePadding;
 
 struct FileStackNode {
