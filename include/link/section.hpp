@@ -44,7 +44,7 @@ struct Section {
 	bool isAlignFixed;
 	uint16_t alignMask;
 	uint16_t alignOfs;
-	std::vector<uint8_t> *data; // Array of size `size`
+	std::vector<uint8_t> data; // Array of size `size`, or 0 if `type` does not have data
 	std::vector<struct Patch> patches;
 	// Extra info computed during linking
 	std::vector<struct Symbol> *fileSymbols;

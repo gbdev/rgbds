@@ -141,21 +141,12 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 		other->offset = target->size;
 		target->size += other->size;
 		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
-		// Note that if either fragment has data (= a non-NULL `data` pointer), then it's
-		// assumed that both fragments "have data", and thus should either have a non-NULL
-		// `data` pointer, or a size of 0.
-		if (other->data) {
-			if (target->data) {
-				target->data->insert(target->data->end(), RANGE(*other->data));
-			} else {
-				assert(target->size == other->size); // It has been increased just above
-				target->data = other->data;
-				other->data = NULL; // Prevent a double `delete`
-			}
+		if (!other->data.empty()) {
+			target->data.insert(target->data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
 			for (struct Patch &patch : other->patches)
 				patch.pcOffset += other->offset;
-		} else if (target->data) {
+		} else if (!target->data.empty()) {
 			assert(other->size == 0);
 		}
 		break;
