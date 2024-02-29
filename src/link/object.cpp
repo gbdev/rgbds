@@ -219,7 +219,7 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
  * @param fileName The filename to report in errors
  * @param i The number of the patch to report in errors
  */
-static void readPatch(FILE *file, struct Patch *patch, char const *fileName, char const *sectName,
+static void readPatch(FILE *file, struct Patch *patch, char const *fileName, std::string const &sectName,
 		      uint32_t i, std::vector<struct FileStackNode> const &fileNodes)
 {
 	uint32_t nodeID, rpnSize;
@@ -227,34 +227,34 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, cha
 
 	tryReadlong(nodeID, file,
 		   "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
-		   fileName, sectName, i);
+		   fileName, sectName.c_str(), i);
 	patch->src = &fileNodes[nodeID];
 	tryReadlong(patch->lineNo, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
-		    fileName, sectName, i);
+		    fileName, sectName.c_str(), i);
 	tryReadlong(patch->offset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
-		    fileName, sectName, i);
+		    fileName, sectName.c_str(), i);
 	tryReadlong(patch->pcSectionID, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
-		    fileName, sectName, i);
+		    fileName, sectName.c_str(), i);
 	tryReadlong(patch->pcOffset, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
-		    fileName, sectName, i);
+		    fileName, sectName.c_str(), i);
 	tryGetc(enum PatchType, type, file,
 		"%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
-		fileName, sectName, i);
+		fileName, sectName.c_str(), i);
 	patch->type = type;
 	tryReadlong(rpnSize, file,
 		    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
-		    fileName, sectName, i);
+		    fileName, sectName.c_str(), i);
 
 	patch->rpnExpression.resize(rpnSize);
 	size_t nbElementsRead = fread(&patch->rpnExpression[0], 1, rpnSize, file);
 
 	if (nbElementsRead != rpnSize)
 		errx("%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
-		     fileName, sectName, i,
+		     fileName, sectName.c_str(), i,
 		     feof(file) ? "Unexpected end of file" : strerror(errno));
 }
 
@@ -279,15 +279,18 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 {
 	int32_t tmp;
 	uint8_t byte;
+	std::string *str;
 
-	tryReadstring(section->name, file, "%s: Cannot read section name: %s", fileName);
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section->name->c_str());
+	tryReadstring(str, file, "%s: Cannot read section name: %s", fileName);
+	section->name = *str;
+	delete str;
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section->name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section->name->c_str(), tmp);
+		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section->name.c_str(), tmp);
 	section->size = tmp;
 	section->offset = 0;
 	tryGetc(uint8_t, byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName,
-		section->name->c_str());
+		section->name.c_str());
 	section->type = (enum SectionType)(byte & 0x3F);
 	if (byte >> 7)
 		section->modifier = SECTION_UNION;
@@ -295,27 +298,27 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		section->modifier = SECTION_FRAGMENT;
 	else
 		section->modifier = SECTION_NORMAL;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section->name->c_str());
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section->name.c_str());
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")", section->name->c_str(), tmp);
+		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")", section->name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section->org = tmp;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s", fileName, section->name->c_str());
+	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s", fileName, section->name.c_str());
 	section->isBankFixed = tmp >= 0;
 	section->bank = tmp;
 	tryGetc(uint8_t, byte, file, "%s: Cannot read \"%s\"'s alignment: %s", fileName,
-		section->name->c_str());
+		section->name.c_str());
 	if (byte > 16)
 		byte = 16;
 	section->isAlignFixed = byte != 0;
 	section->alignMask = (1 << byte) - 1;
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s", fileName,
-		    section->name->c_str());
+		    section->name.c_str());
 	if (tmp > UINT16_MAX) {
 		error(NULL, 0, "\"%s\"'s alignment offset is too large (%" PRId32 ")",
-		      section->name->c_str(), tmp);
+		      section->name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section->alignOfs = tmp;
@@ -323,11 +326,11 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	if (sect_HasData(section->type)) {
 		section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
 		if (!section->data)
-			err("%s: Unable to read \"%s\"'s data", fileName, section->name->c_str());
+			err("%s: Unable to read \"%s\"'s data", fileName, section->name.c_str());
 		if (section->size) {
 			if (size_t nbRead = fread(&(*section->data)[0], 1, section->size, file);
 			    nbRead != section->size)
-				errx("%s: Cannot read \"%s\"'s data: %s", fileName, section->name->c_str(),
+				errx("%s: Cannot read \"%s\"'s data: %s", fileName, section->name.c_str(),
 				     feof(file) ? "Unexpected end of file" : strerror(errno));
 		}
 
@@ -335,12 +338,12 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 
 		tryReadlong(nbPatches, file,
 			    "%s: Cannot read \"%s\"'s number of patches: %s", fileName,
-			    section->name->c_str());
+			    section->name.c_str());
 
 		section->patches.resize(nbPatches);
 		for (uint32_t i = 0; i < nbPatches; i++)
-			readPatch(file, &section->patches[i], fileName, section->name->c_str(),
-				  i, fileNodes);
+			readPatch(file, &section->patches[i], fileName, section->name, i,
+				  fileNodes);
 	} else {
 		section->data = NULL; // `mergeSections()` expects to be able to always read the ptr
 	}
@@ -387,7 +390,7 @@ static void readAssertion(FILE *file, struct Assertion *assert, char const *file
 static struct Section *getMainSection(struct Section *section)
 {
 	if (section->modifier != SECTION_NORMAL)
-		section = sect_GetSection(*section->name);
+		section = sect_GetSection(section->name);
 
 	return section;
 }
@@ -569,7 +572,6 @@ static void freeSection(struct Section *section)
 	do {
 		struct Section *next = section->nextu;
 
-		delete section->name;
 		if (sect_HasData(section->type))
 			delete section->data;
 		delete section->symbols;

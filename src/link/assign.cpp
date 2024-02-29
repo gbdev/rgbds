@@ -318,17 +318,17 @@ static void placeSection(struct Section *section)
 	// If a section failed to go to several places, nothing we can report
 	if (!section->isBankFixed || !section->isAddressFixed)
 		errx("Unable to place \"%s\" (%s section) %s",
-		     section->name->c_str(), sectionTypeInfo[section->type].name.c_str(), where);
+		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where);
 	// If the section just can't fit the bank, report that
 	else if (section->org + section->size > endaddr(section->type) + 1)
 		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
-		     section->name->c_str(), sectionTypeInfo[section->type].name.c_str(), where,
+		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where,
 		     section->org + section->size, endaddr(section->type) + 1);
 	// Otherwise there is overlap with another section
 	else
 		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		     section->name->c_str(), sectionTypeInfo[section->type].name.c_str(), where,
-		     out_OverlappingSection(section)->name->c_str());
+		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where,
+		     out_OverlappingSection(section)->name.c_str());
 }
 
 #define  BANK_CONSTRAINED (1 << 2)
@@ -396,7 +396,7 @@ void assign_AssignSections(void)
 		     constraints >= 0; constraints--) {
 			for (struct Section *section : unassignedSections[constraints]) {
 				fprintf(stderr, "%c \"%s\"", nbSections == 0 ? ';': ',',
-					section->name->c_str());
+					section->name.c_str());
 				nbSections++;
 				if (nbSections == 10)
 					goto max_out;

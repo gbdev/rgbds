@@ -451,7 +451,7 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
  */
 static void applyFilePatches(struct Section *section, struct Section *dataSection)
 {
-	verbosePrint("Patching section \"%s\"...\n", section->name->c_str());
+	verbosePrint("Patching section \"%s\"...\n", section->name.c_str());
 	for (struct Patch &patch : section->patches) {
 		int32_t value = computeRPNExpr(&patch, *section->fileSymbols);
 		uint16_t offset = patch.offset + section->offset;
