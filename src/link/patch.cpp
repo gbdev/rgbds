@@ -422,24 +422,23 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
 			switch (type) {
 			case ASSERT_FATAL:
 				fatal(assert.patch.src, assert.patch.lineNo, "%s",
-				      !assert.message->empty() ? assert.message->c_str()
-							       : "assert failure");
+				      !assert.message.empty() ? assert.message.c_str()
+							      : "assert failure");
 			case ASSERT_ERROR:
 				error(assert.patch.src, assert.patch.lineNo, "%s",
-				      !assert.message->empty() ? assert.message->c_str()
-							       : "assert failure");
+				      !assert.message.empty() ? assert.message.c_str()
+							      : "assert failure");
 				break;
 			case ASSERT_WARN:
 				warning(assert.patch.src, assert.patch.lineNo, "%s",
-					!assert.message->empty() ? assert.message->c_str()
-								 : "assert failure");
+					!assert.message.empty() ? assert.message.c_str()
+							 : "assert failure");
 				break;
 			}
 		} else if (isError && type == ASSERT_FATAL) {
 			fatal(assert.patch.src, assert.patch.lineNo,
 			      "Failed to evaluate assertion%s%s",
-			      !assert.message->empty() ? ": " : "",
-			      assert.message->c_str());
+			      !assert.message.empty() ? ": " : "", assert.message.c_str());
 		}
 	}
 }
