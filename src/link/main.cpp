@@ -44,7 +44,7 @@ uint8_t scrambleWRAMX = 0;
 uint8_t scrambleSRAM = 0;
 bool is32kMode;               // -t
 bool beVerbose;               // -v
-bool isWRA0Mode;              // -w
+bool isWRAM0Mode;             // -w
 bool disablePadding;          // -x
 
 FILE *linkerScript;
@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
 		switch (ch) {
 		case 'd':
 			isDmgMode = true;
-			isWRA0Mode = true;
+			isWRAM0Mode = true;
 			break;
 		case 'l':
 			if (linkerScriptName)
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
 			beVerbose = true;
 			break;
 		case 'w':
-			isWRA0Mode = true;
+			isWRAM0Mode = true;
 			break;
 		case 'x':
 			disablePadding = true;
@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
 	// Patch the size array depending on command-line options
 	if (!is32kMode)
 		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
-	if (!isWRA0Mode)
+	if (!isWRAM0Mode)
 		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
 
 	// Patch the bank ranges array depending on command-line options

@@ -11,7 +11,7 @@ struct SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
 	{ // SECTTYPE_WRAM0
 		.name = "WRAM0"s,
 		.startAddr = 0xC000,
-		.size = 0x2000, // Patched to 0x1000 if !isWRA0Mode
+		.size = 0x2000, // Patched to 0x1000 if !isWRAM0Mode
 		.firstBank = 0,
 		.lastBank = 0,
 	},

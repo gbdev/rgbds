@@ -28,7 +28,7 @@ fail() {
 }
 
 
-# Draw a random tile offset and VRA0 size
+# Draw a random tile offset and VRAM0 size
 # Neither should change anything to how the image is displayed
 while [[ "$ofs" -eq 0 ]]; do (( ofs = RANDOM % 256 )); done
 while [[ "$size" -eq 0 ]]; do (( size = RANDOM % 256 )); done

@@ -200,7 +200,7 @@ static void doSanityChecks(struct Section *section)
 		else
 			section->type = SECTTYPE_ROM0;
 	}
-	if (isWRA0Mode && section->type == SECTTYPE_WRAMX) {
+	if (isWRAM0Mode && section->type == SECTTYPE_WRAMX) {
 		if (section->isBankFixed && section->bank != 1)
 			error(NULL, 0, "%s: WRAMX sections must be in bank 1 with options -w or -d",
 			     section->name.c_str());
