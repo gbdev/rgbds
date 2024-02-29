@@ -51,7 +51,7 @@ static void initFreeSpace(void)
 				    type, bank);
 			memory[type][bank].next->address = sectionTypeInfo[type].startAddr;
 			memory[type][bank].next->size    = sectionTypeInfo[type].size;
-			memory[type][bank].next->next    = NULL;
+			memory[type][bank].next->next    = nullptr;
 			memory[type][bank].next->prev    = &memory[type][bank];
 		}
 	}
@@ -69,7 +69,7 @@ static void assignSection(Section *section, MemoryLocation const *location)
 
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
-	for (Section *next = section->nextu; next != NULL; next = next->nextu) {
+	for (Section *next = section->nextu; next != nullptr; next = next->nextu) {
 		next->org = section->org;
 		next->bank = section->bank;
 	}
@@ -94,22 +94,20 @@ static bool isLocationSuitable(Section const *section, FreeSpace const *freeSpac
 	if (section->isAddressFixed && section->org != location->address)
 		return false;
 
-	if (section->isAlignFixed
-	 && ((location->address - section->alignOfs) & section->alignMask))
+	if (section->isAlignFixed && ((location->address - section->alignOfs) & section->alignMask))
 		return false;
 
 	if (location->address < freeSpace->address)
 		return false;
-	return location->address + section->size
-					<= freeSpace->address + freeSpace->size;
+
+	return location->address + section->size <= freeSpace->address + freeSpace->size;
 }
 
 /*
  * Finds a suitable location to place a section at.
  * @param section The section to be placed
  * @param location A pointer to a memory location that will be filled
- * @return A pointer to the free space encompassing the location, or NULL if
- *         none was found
+ * @return A pointer to the free space encompassing the location, or `nullptr` if none was found
  */
 static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 {
@@ -159,7 +157,7 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 					location->address = section->org;
 				else
 					// Try again in next bank
-					space = NULL;
+					space = nullptr;
 			} else if (section->isAlignFixed) {
 				// Move to next aligned location
 				// Move back to alignment boundary
@@ -187,32 +185,32 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 		// Try scrambled banks in descending order until no bank in the scrambled range is available.
 		// Otherwise, try in ascending order.
 		if (section->isBankFixed) {
-			return NULL;
+			return nullptr;
 		} else if (scrambleROMX && section->type == SECTTYPE_ROMX && location->bank <= scrambleROMX) {
 			if (location->bank > sectionTypeInfo[section->type].firstBank)
 				location->bank--;
 			else if (scrambleROMX < sectionTypeInfo[section->type].lastBank)
 				location->bank = scrambleROMX + 1;
 			else
-				return NULL;
+				return nullptr;
 		} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX && location->bank <= scrambleWRAMX) {
 			if (location->bank > sectionTypeInfo[section->type].firstBank)
 				location->bank--;
 			else if (scrambleWRAMX < sectionTypeInfo[section->type].lastBank)
 				location->bank = scrambleWRAMX + 1;
 			else
-				return NULL;
+				return nullptr;
 		} else if (scrambleSRAM && section->type == SECTTYPE_SRAM && location->bank <= scrambleSRAM) {
 			if (location->bank > sectionTypeInfo[section->type].firstBank)
 				location->bank--;
 			else if (scrambleSRAM < sectionTypeInfo[section->type].lastBank)
 				location->bank = scrambleSRAM + 1;
 			else
-				return NULL;
+				return nullptr;
 		} else if (location->bank < sectionTypeInfo[section->type].lastBank) {
 			location->bank++;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 #undef BANK_INDEX
 	}

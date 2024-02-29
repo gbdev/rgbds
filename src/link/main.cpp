@@ -173,22 +173,22 @@ static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
  * over short opt matching
  */
 static option const longopts[] = {
-	{ "dmg",           no_argument,       NULL, 'd' },
-	{ "linkerscript",  required_argument, NULL, 'l' },
-	{ "map",           required_argument, NULL, 'm' },
-	{ "no-sym-in-map", no_argument,       NULL, 'M' },
-	{ "sym",           required_argument, NULL, 'n' },
-	{ "overlay",       required_argument, NULL, 'O' },
-	{ "output",        required_argument, NULL, 'o' },
-	{ "pad",           required_argument, NULL, 'p' },
-	{ "scramble",      required_argument, NULL, 'S' },
-	{ "smart",         required_argument, NULL, 's' },
-	{ "tiny",          no_argument,       NULL, 't' },
-	{ "version",       no_argument,       NULL, 'V' },
-	{ "verbose",       no_argument,       NULL, 'v' },
-	{ "wramx",         no_argument,       NULL, 'w' },
-	{ "nopad",         no_argument,       NULL, 'x' },
-	{ NULL,            no_argument,       NULL, 0   }
+	{ "dmg",           no_argument,       nullptr, 'd' },
+	{ "linkerscript",  required_argument, nullptr, 'l' },
+	{ "map",           required_argument, nullptr, 'm' },
+	{ "no-sym-in-map", no_argument,       nullptr, 'M' },
+	{ "sym",           required_argument, nullptr, 'n' },
+	{ "overlay",       required_argument, nullptr, 'O' },
+	{ "output",        required_argument, nullptr, 'o' },
+	{ "pad",           required_argument, nullptr, 'p' },
+	{ "scramble",      required_argument, nullptr, 'S' },
+	{ "smart",         required_argument, nullptr, 's' },
+	{ "tiny",          no_argument,       nullptr, 't' },
+	{ "version",       no_argument,       nullptr, 'V' },
+	{ "verbose",       no_argument,       nullptr, 'v' },
+	{ "wramx",         no_argument,       nullptr, 'w' },
+	{ "nopad",         no_argument,       nullptr, 'x' },
+	{ nullptr,         no_argument,       nullptr, 0   }
 };
 
 static void printUsage(void)
@@ -345,7 +345,7 @@ next:
 int main(int argc, char *argv[])
 {
 	// Parse options
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 		case 'd':
 			isDmgMode = true;
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
 			break;
 		case 's':
 			// TODO: implement "smart linking" with `-s`
-			warning(NULL, 0, "Nobody has any idea what `-s` does");
+			warning(nullptr, 0, "Nobody has any idea what `-s` does");
 			break;
 		case 't':
 			is32kMode = true;

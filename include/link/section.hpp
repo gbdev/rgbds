@@ -69,7 +69,7 @@ void sect_AddSection(Section *section);
 /*
  * Finds a section by its name.
  * @param name The name of the section to look for
- * @return A pointer to the section, or NULL if it wasn't found
+ * @return A pointer to the section, or `nullptr` if it wasn't found
  */
 Section *sect_GetSection(std::string const &name);
 

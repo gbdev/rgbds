@@ -77,7 +77,7 @@ struct LexerState {
 
 	bool capturing; // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
-	char *captureBuf; // Buffer to send the captured text to if non-NULL
+	char *captureBuf; // Buffer to send the captured text to if non-null
 	size_t captureCapacity; // Size of the buffer above
 
 	bool disableMacroArgs;

@@ -344,7 +344,7 @@ void error(char const *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "error", ":", NULL);
+	printDiag(fmt, args, "error", ":", nullptr);
 	va_end(args);
 
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
@@ -359,7 +359,7 @@ void error(char const *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	printDiag(fmt, args, "FATAL", ":", NULL);
+	printDiag(fmt, args, "FATAL", ":", nullptr);
 	va_end(args);
 
 	exit(1);

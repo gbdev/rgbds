@@ -40,9 +40,9 @@ std::stack<Charmap *> charmapStack;
 
 void charmap_New(char const *name, char const *baseName)
 {
-	Charmap *base = NULL;
+	Charmap *base = nullptr;
 
-	if (baseName != NULL) {
+	if (baseName != nullptr) {
 		auto search = charmaps.find(baseName);
 
 		if (search == charmaps.end())

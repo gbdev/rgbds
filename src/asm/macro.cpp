@@ -18,14 +18,14 @@ struct MacroArgs {
 	std::vector<char *> args;
 };
 
-static MacroArgs *macroArgs = NULL;
+static MacroArgs *macroArgs = nullptr;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
 // The initialization is somewhat harmful, since it is never used, but it
 // guarantees the size of the buffer will be correct. I was unable to find a
 // better solution, but if you have one, please feel free!
 static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
-static char *uniqueIDPtr = NULL;
+static char *uniqueIDPtr = nullptr;
 
 MacroArgs *macro_GetCurrentArgs(void)
 {
@@ -66,17 +66,17 @@ void macro_FreeArgs(MacroArgs *args)
 char const *macro_GetArg(uint32_t i)
 {
 	if (!macroArgs)
-		return NULL;
+		return nullptr;
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->args.size() ? NULL : macroArgs->args[realIndex];
+	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex];
 }
 
 char const *macro_GetAllArgs(void)
 {
 	if (!macroArgs)
-		return NULL;
+		return nullptr;
 
 	size_t nbArgs = macroArgs->args.size();
 
@@ -128,7 +128,7 @@ void macro_SetUniqueID(uint32_t id)
 {
 	uniqueID = id;
 	if (id == 0 || id == (uint32_t)-1) {
-		uniqueIDPtr = NULL;
+		uniqueIDPtr = nullptr;
 	} else {
 		// The buffer is guaranteed to be the correct size
 		// This is a valid label fragment, but not a valid numeric

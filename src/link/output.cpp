@@ -96,7 +96,7 @@ Section const *out_OverlappingSection(Section const *section)
 		if (ptr->org < section->org + section->size && section->org < ptr->org + ptr->size)
 			return ptr;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -222,7 +222,7 @@ static void writeROM(void)
 		coverOverlayBanks(nbOverlayBanks);
 
 	if (outputFile) {
-		writeBank(!sections[SECTTYPE_ROM0].empty() ? &sections[SECTTYPE_ROM0][0].sections : NULL,
+		writeBank(!sections[SECTTYPE_ROM0].empty() ? &sections[SECTTYPE_ROM0][0].sections : nullptr,
 			  sectionTypeInfo[SECTTYPE_ROM0].startAddr, sectionTypeInfo[SECTTYPE_ROM0].size);
 
 		for (uint32_t i = 0 ; i < sections[SECTTYPE_ROMX].size(); i++)

@@ -49,10 +49,10 @@ static uint8_t *reserveSpace(Expression *expr, uint32_t size)
 // Init a RPN expression
 static void rpn_Init(Expression *expr)
 {
-	expr->reason = NULL;
+	expr->reason = nullptr;
 	expr->isKnown = true;
 	expr->isSymbol = false;
-	expr->rpn = NULL;
+	expr->rpn = nullptr;
 	expr->rpnPatchSize = 0;
 }
 
@@ -303,7 +303,7 @@ void rpn_LOGNOT(Expression *expr, const Expression *src)
 Symbol const *rpn_SymbolOf(Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
-		return NULL;
+		return nullptr;
 	return sym_FindScopedSymbol((char const *)&(*expr->rpn)[1]);
 }
 
@@ -527,7 +527,7 @@ void rpn_BinaryOp(enum RPNCommand op, Expression *expr, const Expression *src1, 
 			uint8_t bytes[] = {RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8),
 					   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
 			expr->rpnPatchSize = sizeof(bytes);
-			expr->rpn = NULL;
+			expr->rpn = nullptr;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 
 			// Use the other expression's un-const reason
@@ -542,7 +542,7 @@ void rpn_BinaryOp(enum RPNCommand op, Expression *expr, const Expression *src1, 
 		}
 
 		// Now, merge the right expression into the left one
-		uint8_t const *ptr = NULL;
+		uint8_t const *ptr = nullptr;
 		uint32_t len = 0;
 		uint32_t patchSize = 0;
 
@@ -563,11 +563,11 @@ void rpn_BinaryOp(enum RPNCommand op, Expression *expr, const Expression *src1, 
 		uint8_t *buf = reserveSpace(expr, len + 1);
 
 		if (ptr)
-			// If there was none, `memcpy(buf, NULL, 0)` would be UB
+			// If there was none, `memcpy(buf, nullptr, 0)` would be UB
 			memcpy(buf, ptr, len);
 		buf[len] = op;
 
-		delete src2->rpn; // If there was none, this is `delete NULL`
+		delete src2->rpn; // If there was none, this is `delete nullptr`
 		expr->rpnPatchSize += patchSize + 1;
 	}
 }

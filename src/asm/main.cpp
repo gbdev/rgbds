@@ -51,7 +51,7 @@ char const *__asan_default_options(void) { return "detect_leaks=0"; }
 // Unfortunately, macOS still ships 2.3, which is from 2008...
 int yyparse(void);
 
-FILE *dependfile = NULL;
+FILE *dependfile = nullptr;
 bool generatedMissingIncludes = false;
 bool failedOnMissingInclude = false;
 bool generatePhonyDeps = false;
@@ -98,31 +98,31 @@ static int depType; // Variants of `-M`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching
 static option const longopts[] = {
-	{ "binary-digits",    required_argument, NULL,     'b' },
-	{ "define",           required_argument, NULL,     'D' },
-	{ "export-all",       no_argument,       NULL,     'E' },
-	{ "gfx-chars",        required_argument, NULL,     'g' },
-	{ "nop-after-halt",   no_argument,       NULL,     'H' },
-	{ "halt-without-nop", no_argument,       NULL,     'h' },
-	{ "include",          required_argument, NULL,     'I' },
-	{ "preserve-ld",      no_argument,       NULL,     'L' },
-	{ "auto-ldh",         no_argument,       NULL,     'l' },
-	{ "dependfile",       required_argument, NULL,     'M' },
+	{ "binary-digits",    required_argument, nullptr,  'b' },
+	{ "define",           required_argument, nullptr,  'D' },
+	{ "export-all",       no_argument,       nullptr,  'E' },
+	{ "gfx-chars",        required_argument, nullptr,  'g' },
+	{ "nop-after-halt",   no_argument,       nullptr,  'H' },
+	{ "halt-without-nop", no_argument,       nullptr,  'h' },
+	{ "include",          required_argument, nullptr,  'I' },
+	{ "preserve-ld",      no_argument,       nullptr,  'L' },
+	{ "auto-ldh",         no_argument,       nullptr,  'l' },
+	{ "dependfile",       required_argument, nullptr,  'M' },
 	{ "MG",               no_argument,       &depType, 'G' },
 	{ "MP",               no_argument,       &depType, 'P' },
 	{ "MT",               required_argument, &depType, 'T' },
-	{ "warning",          required_argument, NULL,     'W' },
+	{ "warning",          required_argument, nullptr,  'W' },
 	{ "MQ",               required_argument, &depType, 'Q' },
-	{ "output",           required_argument, NULL,     'o' },
-	{ "preinclude",       required_argument, NULL,     'P' },
-	{ "pad-value",        required_argument, NULL,     'p' },
-	{ "q-precision",      required_argument, NULL,     'Q' },
-	{ "recursion-depth",  required_argument, NULL,     'r' },
-	{ "version",          no_argument,       NULL,     'V' },
-	{ "verbose",          no_argument,       NULL,     'v' },
-	{ "warning",          required_argument, NULL,     'W' },
-	{ "max-errors",       required_argument, NULL,     'X' },
-	{ NULL,               no_argument,       NULL,     0   }
+	{ "output",           required_argument, nullptr,  'o' },
+	{ "preinclude",       required_argument, nullptr,  'P' },
+	{ "pad-value",        required_argument, nullptr,  'p' },
+	{ "q-precision",      required_argument, nullptr,  'Q' },
+	{ "recursion-depth",  required_argument, nullptr,  'r' },
+	{ "version",          no_argument,       nullptr,  'V' },
+	{ "verbose",          no_argument,       nullptr,  'v' },
+	{ "warning",          required_argument, nullptr,  'W' },
+	{ "max-errors",       required_argument, nullptr,  'X' },
+	{ nullptr,            no_argument,       nullptr,  0   }
 };
 
 static void printUsage(void)
@@ -146,13 +146,13 @@ static void printUsage(void)
 
 int main(int argc, char *argv[])
 {
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
 
 	// Support SOURCE_DATE_EPOCH for reproducible builds
 	// https://reproducible-builds.org/docs/source-date-epoch/
 	if (sourceDateEpoch)
-		now = (time_t)strtoul(sourceDateEpoch, NULL, 0);
+		now = (time_t)strtoul(sourceDateEpoch, nullptr, 0);
 
 	// Perform some init for below
 	sym_Init(now);
@@ -171,14 +171,14 @@ int main(int argc, char *argv[])
 	warnings = true;
 	sym_SetExportAll(false);
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
-	char const *dependFileName = NULL;
+	char const *dependFileName = nullptr;
 	std::string newTarget;
 
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO))
 		maxErrors = 100;
 
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			char *endptr;
 
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
 				dependfile = fopen(musl_optarg, "w");
 				dependFileName = musl_optarg;
 			}
-			if (dependfile == NULL)
+			if (dependfile == nullptr)
 				err("Failed to open dependfile \"%s\"", dependFileName);
 			break;
 
@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
 		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName);
 	}
 
-	charmap_New(DEFAULT_CHARMAP_NAME, NULL);
+	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
 
 	// Init lexer and file stack, providing file info
 	fstk_Init(mainFileName, maxDepth);
@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
 		return 0;
 
 	// If no path specified, don't write file
-	if (objectName != NULL)
+	if (objectName != nullptr)
 		out_WriteObject();
 	return 0;
 }

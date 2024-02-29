@@ -37,23 +37,23 @@ static const char *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
  * over short opt matching
  */
 static option const longopts[] = {
-	{ "color-only",       no_argument,       NULL, 'C' },
-	{ "color-compatible", no_argument,       NULL, 'c' },
-	{ "fix-spec",         required_argument, NULL, 'f' },
-	{ "game-id",          required_argument, NULL, 'i' },
-	{ "non-japanese",     no_argument,       NULL, 'j' },
-	{ "new-licensee",     required_argument, NULL, 'k' },
-	{ "old-licensee",     required_argument, NULL, 'l' },
-	{ "mbc-type",         required_argument, NULL, 'm' },
-	{ "rom-version",      required_argument, NULL, 'n' },
-	{ "overwrite",        no_argument,       NULL, 'O' },
-	{ "pad-value",        required_argument, NULL, 'p' },
-	{ "ram-size",         required_argument, NULL, 'r' },
-	{ "sgb-compatible",   no_argument,       NULL, 's' },
-	{ "title",            required_argument, NULL, 't' },
-	{ "version",          no_argument,       NULL, 'V' },
-	{ "validate",         no_argument,       NULL, 'v' },
-	{ NULL,               no_argument,       NULL, 0   }
+	{ "color-only",       no_argument,       nullptr, 'C' },
+	{ "color-compatible", no_argument,       nullptr, 'c' },
+	{ "fix-spec",         required_argument, nullptr, 'f' },
+	{ "game-id",          required_argument, nullptr, 'i' },
+	{ "non-japanese",     no_argument,       nullptr, 'j' },
+	{ "new-licensee",     required_argument, nullptr, 'k' },
+	{ "old-licensee",     required_argument, nullptr, 'l' },
+	{ "mbc-type",         required_argument, nullptr, 'm' },
+	{ "rom-version",      required_argument, nullptr, 'n' },
+	{ "overwrite",        no_argument,       nullptr, 'O' },
+	{ "pad-value",        required_argument, nullptr, 'p' },
+	{ "ram-size",         required_argument, nullptr, 'r' },
+	{ "sgb-compatible",   no_argument,       nullptr, 's' },
+	{ "title",            required_argument, nullptr, 't' },
+	{ "version",          no_argument,       nullptr, 'V' },
+	{ "validate",         no_argument,       nullptr, 'v' },
+	{ nullptr,            no_argument,       nullptr, 0   }
 };
 
 static void printUsage(void)
@@ -761,10 +761,10 @@ static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 #define   FIX_GLOBAL_SUM  0x08
 #define TRASH_GLOBAL_SUM  0x04
 static uint8_t fixSpec = 0;
-static const char *gameID = NULL;
+static const char *gameID = nullptr;
 static uint8_t gameIDLen;
 static bool japanese = true;
-static const char *newLicensee = NULL;
+static const char *newLicensee = nullptr;
 static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
 static enum MbcType cartridgeType = MBC_NONE;
@@ -773,7 +773,7 @@ static bool overwriteRom = false; // If false, warn when overwriting non-zero no
 static uint16_t padValue = UNSPECIFIED;
 static uint16_t ramSize = UNSPECIFIED;
 static bool sgb = false; // If false, SGB flags are left alone
-static const char *title = NULL;
+static const char *title = nullptr;
 static uint8_t titleLen;
 
 static uint8_t maxTitleLen(void)
@@ -1213,7 +1213,7 @@ int main(int argc, char *argv[])
 {
 	nbErrors = 0;
 
-	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, NULL)) != -1;) {
+	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			size_t len;
 #define parseByte(output, name) \
