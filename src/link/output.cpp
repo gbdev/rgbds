@@ -335,7 +335,7 @@ static void writeSymBank(struct SortedSections const &bankSections,
 	uint32_t nbSymbols = 0;
 
 	forEachSortedSection(sect, {
-		nbSymbols += sect->symbols->size();
+		nbSymbols += sect->symbols.size();
 	});
 
 	if (!nbSymbols)
@@ -346,7 +346,7 @@ static void writeSymBank(struct SortedSections const &bankSections,
 	symList.reserve(nbSymbols);
 
 	forEachSortedSection(sect, {
-		for (struct Symbol const *sym : *sect->symbols) {
+		for (struct Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (!sym->name->empty() && canStartSymName((*sym->name)[0]))
 				symList.push_back({ .sym = sym, .addr = (uint16_t)(sym->offset + sect->org) });
@@ -416,7 +416,7 @@ static void writeMapBank(struct SortedSections const &sectList, enum SectionType
 		if (!noSymInMap) {
 			// Also print symbols in the following "pieces"
 			for (uint16_t org = sect->org; sect; sect = sect->nextu) {
-				for (struct Symbol *sym : *sect->symbols)
+				for (struct Symbol *sym : sect->symbols)
 					// Space matches "\tSECTION: $xxxx ..."
 					fprintf(mapFile, "\t         $%04" PRIx32 " = %s\n",
 						sym->offset + org, sym->name->c_str());

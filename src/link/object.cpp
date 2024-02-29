@@ -356,18 +356,18 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
  */
 static void linkSymToSect(struct Symbol &symbol, struct Section *section)
 {
-	uint32_t a = 0, b = section->symbols->size();
+	uint32_t a = 0, b = section->symbols.size();
 
 	while (a != b) {
 		uint32_t c = (a + b) / 2;
 
-		if ((*section->symbols)[c]->offset > symbol.offset)
+		if (section->symbols[c]->offset > symbol.offset)
 			b = c;
 		else
 			a = c + 1;
 	}
 
-	section->symbols->insert(section->symbols->begin() + a, &symbol);
+	section->symbols.insert(section->symbols.begin() + a, &symbol);
 }
 
 /*
@@ -499,10 +499,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		fileSections[i]->nextu = NULL;
 		readSection(file, fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = &fileSymbols;
-		fileSections[i]->symbols = new(std::nothrow) std::vector<struct Symbol *>();
-		if (!fileSections[i]->symbols)
-			err("%s: Failed to link to symbols", fileName);
-		fileSections[i]->symbols->reserve(nbSymPerSect[i]);
+		fileSections[i]->symbols.reserve(nbSymPerSect[i]);
 
 		sect_AddSection(fileSections[i]);
 	}
@@ -574,7 +571,6 @@ static void freeSection(struct Section *section)
 
 		if (sect_HasData(section->type))
 			delete section->data;
-		delete section->symbols;
 		delete section;
 
 		section = next;

@@ -340,10 +340,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			// The array will be allocated if the section does contain data
 			curSection->data = NULL;
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
-			curSection->symbols = new(std::nothrow) std::vector<struct Symbol *>();
-			if (!curSection->symbols)
-				fatal(where, lineNo, "Failed to alloc new area's symbol list: %s",
-				      strerror(errno));
 			curSection->nextu = NULL;
 			break;
 		}
@@ -409,7 +405,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				fatal(where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
 
 			if (!fileSections.empty())
-				fileSections.back().section->symbols->push_back(&symbol);
+				fileSections.back().section->symbols.push_back(&symbol);
 
 			expectEol("'S' line is too long");
 			break;
@@ -730,7 +726,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
-			for (struct Symbol *symbol : *section->symbols)
+			for (struct Symbol *symbol : section->symbols)
 				symbol->offset += section->offset;
 		}
 	}
