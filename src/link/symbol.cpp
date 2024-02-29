@@ -32,5 +32,5 @@ void sym_AddSymbol(Symbol *symbol)
 Symbol *sym_GetSymbol(std::string const &name)
 {
 	auto search = symbols.find(name);
-	return search != symbols.end() ? search->second : NULL;
+	return search != symbols.end() ? search->second : nullptr;
 }

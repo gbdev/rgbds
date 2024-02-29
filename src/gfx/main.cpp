@@ -111,36 +111,36 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
  * over short opt matching
  */
 static option const longopts[] = {
-    {"auto-attr-map",      no_argument,       NULL, 'A'},
-    {"output-attr-map",    no_argument,       NULL, -'A'}, // Deprecated
-    {"attr-map",           required_argument, NULL, 'a'},
-    {"base-tiles",         required_argument, NULL, 'b'},
-    {"color-curve",        no_argument,       NULL, 'C'},
-    {"colors",             required_argument, NULL, 'c'},
-    {"depth",              required_argument, NULL, 'd'},
-    {"slice",              required_argument, NULL, 'L'},
-    {"mirror-tiles",       no_argument,       NULL, 'm'},
-    {"nb-tiles",           required_argument, NULL, 'N'},
-    {"nb-palettes",        required_argument, NULL, 'n'},
-    {"group-outputs",      no_argument,       NULL, 'O'},
-    {"output",             required_argument, NULL, 'o'},
-    {"auto-palette",       no_argument,       NULL, 'P'},
-    {"output-palette",     no_argument,       NULL, -'P'}, // Deprecated
-    {"palette",            required_argument, NULL, 'p'},
-    {"auto-palette-map",   no_argument,       NULL, 'Q'},
-    {"output-palette-map", no_argument,       NULL, -'Q'}, // Deprecated
-    {"palette-map",        required_argument, NULL, 'q'},
-    {"reverse",            required_argument, NULL, 'r'},
-    {"auto-tilemap",       no_argument,       NULL, 'T'},
-    {"output-tilemap",     no_argument,       NULL, -'T'}, // Deprecated
-    {"tilemap",            required_argument, NULL, 't'},
-    {"unit-size",          required_argument, NULL, 'U'},
-    {"unique-tiles",       no_argument,       NULL, 'u'},
-    {"version",            no_argument,       NULL, 'V'},
-    {"verbose",            no_argument,       NULL, 'v'},
-    {"trim-end",           required_argument, NULL, 'x'},
-    {"columns",            no_argument,       NULL, 'Z'},
-    {NULL,                 no_argument,       NULL, 0  }
+    {"auto-attr-map",      no_argument,       nullptr, 'A'},
+    {"output-attr-map",    no_argument,       nullptr, -'A'}, // Deprecated
+    {"attr-map",           required_argument, nullptr, 'a'},
+    {"base-tiles",         required_argument, nullptr, 'b'},
+    {"color-curve",        no_argument,       nullptr, 'C'},
+    {"colors",             required_argument, nullptr, 'c'},
+    {"depth",              required_argument, nullptr, 'd'},
+    {"slice",              required_argument, nullptr, 'L'},
+    {"mirror-tiles",       no_argument,       nullptr, 'm'},
+    {"nb-tiles",           required_argument, nullptr, 'N'},
+    {"nb-palettes",        required_argument, nullptr, 'n'},
+    {"group-outputs",      no_argument,       nullptr, 'O'},
+    {"output",             required_argument, nullptr, 'o'},
+    {"auto-palette",       no_argument,       nullptr, 'P'},
+    {"output-palette",     no_argument,       nullptr, -'P'}, // Deprecated
+    {"palette",            required_argument, nullptr, 'p'},
+    {"auto-palette-map",   no_argument,       nullptr, 'Q'},
+    {"output-palette-map", no_argument,       nullptr, -'Q'}, // Deprecated
+    {"palette-map",        required_argument, nullptr, 'q'},
+    {"reverse",            required_argument, nullptr, 'r'},
+    {"auto-tilemap",       no_argument,       nullptr, 'T'},
+    {"output-tilemap",     no_argument,       nullptr, -'T'}, // Deprecated
+    {"tilemap",            required_argument, nullptr, 't'},
+    {"unit-size",          required_argument, nullptr, 'U'},
+    {"unique-tiles",       no_argument,       nullptr, 'u'},
+    {"version",            no_argument,       nullptr, 'V'},
+    {"verbose",            no_argument,       nullptr, 'v'},
+    {"trim-end",           required_argument, nullptr, 'x'},
+    {"columns",            no_argument,       nullptr, 'Z'},
+    {nullptr,              no_argument,       nullptr, 0  }
 };
 
 static void printUsage(void) {
@@ -331,8 +331,8 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
  * Parses an arg vector, modifying `options` and `localOptions` as options are read.
  * The `localOptions` struct is for flags which must be processed after the option parsing finishes.
  *
- * Returns NULL if the vector was fully parsed, or a pointer (which is part of the arg vector) to an
- * "at-file" path if one is encountered.
+ * Returns `nullptr` if the vector was fully parsed, or a pointer (which is part of the arg vector)
+ * to an "at-file" path if one is encountered.
  */
 static char *parseArgv(int argc, char **argv) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {

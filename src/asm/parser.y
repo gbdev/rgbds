@@ -75,13 +75,13 @@ static const char *strrstr(char const *s1, char const *s2)
 	size_t len2 = strlen(s2);
 
 	if (len2 > len1)
-		return NULL;
+		return nullptr;
 
 	for (char const *p = s1 + len1 - len2; p >= s1; p--)
 		if (!strncmp(p, s2, len2))
 			return p;
 
-	return NULL;
+	return nullptr;
 }
 
 static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName)
@@ -172,7 +172,7 @@ static size_t charlenUTF8(char const *s)
 {
 	size_t len;
 
-	for (len = 0; charmap_ConvertNext(&s, NULL); len++)
+	for (len = 0; charmap_ConvertNext(&s, nullptr); len++)
 		;
 
 	return len;
@@ -184,11 +184,11 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos)
 
 	// Advance to starting position in source string.
 	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
-		charLen = charmap_ConvertNext(&src, NULL);
+		charLen = charmap_ConvertNext(&src, nullptr);
 
 	char const *start = src;
 
-	if (!charmap_ConvertNext(&src, NULL))
+	if (!charmap_ConvertNext(&src, nullptr))
 		warning(WARNING_BUILTIN_ARG,
 			"CHARSUB: Position %" PRIu32 " is past the end of the string\n", pos);
 
@@ -922,7 +922,7 @@ assignment	: T_LABEL T_POP_EQUAL const {
 			sym_AddVar($1, $3);
 		}
 		| T_LABEL compoundeq const {
-			const char *compoundEqOperator = NULL;
+			const char *compoundEqOperator = nullptr;
 			switch ($2) {
 				case RPN_ADD: compoundEqOperator = "+="; break;
 				case RPN_SUB: compoundEqOperator = "-="; break;
@@ -1287,7 +1287,7 @@ charmap		: T_POP_CHARMAP string T_COMMA const_8bit {
 		}
 ;
 
-newcharmap	: T_POP_NEWCHARMAP T_ID { charmap_New($2, NULL); }
+newcharmap	: T_POP_NEWCHARMAP T_ID { charmap_New($2, nullptr); }
 		| T_POP_NEWCHARMAP T_ID T_COMMA T_ID { charmap_New($2, $4); }
 ;
 
@@ -1509,7 +1509,7 @@ relocexpr_no_str : scoped_anon_id { rpn_Symbol(&$$, $1); }
 		| T_OP_DEF {
 			lexer_ToggleStringExpansion(false);
 		} T_LPAREN scoped_anon_id T_RPAREN {
-			rpn_Number(&$$, sym_FindScopedValidSymbol($4) != NULL);
+			rpn_Number(&$$, sym_FindScopedValidSymbol($4) != nullptr);
 
 			lexer_ToggleStringExpansion(true);
 		}

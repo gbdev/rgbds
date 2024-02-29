@@ -51,7 +51,7 @@ static void putlong(uint32_t i, FILE *f)
 	putc(i >> 24, f);
 }
 
-// Write a NULL-terminated string to a file
+// Write a NUL-terminated string to a file
 static void putstring(char const *s, FILE *f)
 {
 	while (*s)

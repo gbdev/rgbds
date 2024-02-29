@@ -91,8 +91,8 @@ static void dumpFilename(Symbol const *sym)
 // Set a symbol's definition filename and line
 static void setSymbolFilename(Symbol *sym)
 {
-	sym->src = fstk_GetFileStack();
-	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is (NULL, 1) for built-ins
+	sym->src = fstk_GetFileStack(); // This is `nullptr` for built-ins
+	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is 1 for built-ins
 }
 
 // Update a symbol's definition filename and line
@@ -118,7 +118,7 @@ static Symbol *createsymbol(char const *symName)
 	sym.isExported = false;
 	sym.isBuiltin = false;
 	sym.hasCallback = false;
-	sym.section = NULL;
+	sym.section = nullptr;
 	setSymbolFilename(&sym);
 	sym.ID = -1;
 
@@ -153,7 +153,7 @@ static void assignStringSymbol(Symbol *sym, char const *value)
 Symbol *sym_FindExactSymbol(char const *symName)
 {
 	auto search = symbols.find(symName);
-	return search != symbols.end() ? &search->second : NULL;
+	return search != symbols.end() ? &search->second : nullptr;
 }
 
 Symbol *sym_FindScopedSymbol(char const *symName)
@@ -179,11 +179,11 @@ Symbol *sym_FindScopedValidSymbol(char const *symName)
 
 	// `@` has no value outside a section
 	if (sym == PCSymbol && !sect_GetSymbolSection()) {
-		return NULL;
+		return nullptr;
 	}
 	// `_NARG` has no value outside a macro
 	if (sym == _NARGSymbol && !macro_GetCurrentArgs()) {
-		return NULL;
+		return nullptr;
 	}
 	return sym;
 }
@@ -212,7 +212,7 @@ void sym_Purge(std::string const &symName)
 	} else {
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
-			sym_SetCurrentSymbolScope(NULL);
+			sym_SetCurrentSymbolScope(nullptr);
 
 		// FIXME: this leaks sym->equs.value for SYM_EQUS and sym->macro.value for SYM_MACRO,
 		// but this can't free either of them because the expansion may be purging itself.
@@ -287,13 +287,13 @@ static Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 		error("'%s' already defined at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
-		return NULL; // Don't allow overriding the symbol, that'd be bad!
+		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		error("'%s' already referenced at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
-		return NULL; // Don't allow overriding the symbol, that'd be bad!
+		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	}
 
 	return sym;
@@ -305,7 +305,7 @@ Symbol *sym_AddEqu(char const *symName, int32_t value)
 	Symbol *sym = createNonrelocSymbol(symName, true);
 
 	if (!sym)
-		return NULL;
+		return nullptr;
 
 	sym->type = SYM_EQU;
 	sym->value = value;
@@ -324,10 +324,10 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value)
 		error("'%s' already defined as non-EQU at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
-		return NULL;
+		return nullptr;
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be redefined\n", symName);
-		return NULL;
+		return nullptr;
 	}
 
 	updateSymbolFilename(sym);
@@ -354,7 +354,7 @@ Symbol *sym_AddString(char const *symName, char const *value)
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
-		return NULL;
+		return nullptr;
 
 	assignStringSymbol(sym, value);
 	return sym;
@@ -374,10 +374,10 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 			error("'%s' already referenced at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
-		return NULL;
+		return nullptr;
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be redefined\n", symName);
-		return NULL;
+		return nullptr;
 	}
 
 	updateSymbolFilename(sym);
@@ -427,7 +427,7 @@ static Symbol *addLabel(char const *symName)
 		error("'%s' already defined at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
-		return NULL;
+		return nullptr;
 	} else {
 		updateSymbolFilename(sym);
 	}
@@ -468,7 +468,7 @@ Symbol *sym_AddLocalLabel(char const *symName)
 	if (localName == symName) {
 		if (!labelScope) {
 			error("Unqualified local label '%s' in main scope\n", symName);
-			return NULL;
+			return nullptr;
 		}
 		// Expand `symName` to the full `labelScope.symName` name
 		fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
@@ -496,7 +496,7 @@ Symbol *sym_AddAnonLabel(void)
 {
 	if (anonLabelID == UINT32_MAX) {
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
-		return NULL;
+		return nullptr;
 	}
 	char name[MAXSYMLEN + 1];
 
@@ -551,7 +551,7 @@ Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t 
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
-		return NULL;
+		return nullptr;
 
 	sym->type = SYM_MACRO;
 	sym->macro.size = size;
@@ -599,7 +599,7 @@ static Symbol *createBuiltinSymbol(char const *symName)
 
 	sym->isBuiltin = true;
 	sym->hasCallback = true;
-	sym->src = NULL;
+	sym->src = nullptr;
 	sym->fileLine = 1; // This is 0 for CLI-defined symbols
 
 	return sym;
@@ -671,6 +671,6 @@ void sym_Init(time_t now)
 #undef addString
 #undef addSym
 
-	sym_SetCurrentSymbolScope(NULL);
+	sym_SetCurrentSymbolScope(nullptr);
 	anonLabelID = 0;
 }

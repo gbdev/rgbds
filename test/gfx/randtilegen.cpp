@@ -165,7 +165,7 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
                         unsigned char /* const */ (*tileData)[8][8], Attributes const *attributes,
                         uint8_t width, uint8_t height) {
 	uint8_t const nbTiles = width * height;
-	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	png_infop pngInfo = png_create_info_struct(png);
 
 	if (setjmp(png_jmpbuf(png))) {
@@ -174,7 +174,7 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 	}
 
 	FILE *file = fopen(filename, "wb");
-	if (file == NULL) {
+	if (file == nullptr) {
 		fprintf(stderr, "FATAL: Failed to open \"%s\": %s\n", filename, strerror(errno));
 		exit(1);
 	}
@@ -191,7 +191,7 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 	assert(height != 0);
 	uint8_t *data = (uint8_t *)malloc(height * 8 * width * 8 * SIZEOF_PIXEL);
 	uint8_t **rowPtrs = (uint8_t **)malloc(height * 8 * sizeof(*rowPtrs));
-	if (data == NULL || rowPtrs == NULL) {
+	if (data == nullptr || rowPtrs == nullptr) {
 		fatal("Out of memory");
 	}
 	for (uint8_t y = 0; y < height * 8; ++y) {
@@ -214,7 +214,7 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 	}
 
 	png_set_rows(png, pngInfo, rowPtrs);
-	png_write_png(png, pngInfo, PNG_TRANSFORM_IDENTITY, NULL);
+	png_write_png(png, pngInfo, PNG_TRANSFORM_IDENTITY, nullptr);
 	fclose(file);
 	free(rowPtrs);
 	free(data);

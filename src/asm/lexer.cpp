@@ -42,16 +42,16 @@
 # include <winbase.h> // CreateFileMappingA
 # include <memoryapi.h> // MapViewOfFile
 # include <handleapi.h> // CloseHandle
-# define MAP_FAILED NULL
+# define MAP_FAILED nullptr
 # define mapFile(ptr, fd, path, size) do { \
 	(ptr) = MAP_FAILED; \
-	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, \
-				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, NULL); \
+	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
+				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr); \
 	HANDLE mappingObj; \
 	\
 	if (file == INVALID_HANDLE_VALUE) \
 		break; \
-	mappingObj  = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL); \
+	mappingObj  = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr); \
 	if (mappingObj != INVALID_HANDLE_VALUE) \
 		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
 	CloseHandle(mappingObj); \
@@ -63,7 +63,7 @@
 
 # include <sys/mman.h>
 # define mapFile(ptr, fd, path, size) do { \
-	(ptr) = mmap(NULL, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
+	(ptr) = mmap(nullptr, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
 	\
 	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
 		/*
@@ -73,7 +73,7 @@
 		 */ \
 		if (verbose) \
 			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
-		(ptr) = mmap(NULL, (size), PROT_READ, MAP_SHARED, (fd), 0); \
+		(ptr) = mmap(nullptr, (size), PROT_READ, MAP_SHARED, (fd), 0); \
 	} \
 } while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
@@ -298,8 +298,8 @@ static bool isWhitespace(int c)
 	return c == ' ' || c == '\t';
 }
 
-LexerState *lexerState = NULL;
-LexerState *lexerStateEOL = NULL;
+LexerState *lexerState = nullptr;
+LexerState *lexerStateEOL = nullptr;
 
 static void initState(LexerState &state)
 {
@@ -310,7 +310,7 @@ static void initState(LexerState &state)
 	state.ifStack.clear();
 
 	state.capturing = false;
-	state.captureBuf = NULL;
+	state.captureBuf = nullptr;
 
 	state.disableMacroArgs = false;
 	state.disableInterpolation = false;
@@ -509,7 +509,7 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		lexer_CheckRecursionDepth();
 
 	lexerState->expansions.push_front({
-		.name = name ? strdup(name) : NULL,
+		.name = name ? strdup(name) : nullptr,
 		.contents = { .unowned = str },
 		.size = size,
 		.offset = 0,
@@ -610,7 +610,7 @@ static uint32_t readBracketedMacroArgNum(void)
 
 static char const *readMacroArg(char name)
 {
-	char const *str = NULL;
+	char const *str = nullptr;
 
 	if (name == '@') {
 		str = macro_GetUniqueIDStr();
@@ -620,14 +620,14 @@ static char const *readMacroArg(char name)
 		uint32_t num = readBracketedMacroArgNum();
 
 		if (num == 0)
-			return NULL;
+			return nullptr;
 		str = macro_GetArg(num);
 		if (!str)
 			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
 		return str;
 	} else if (name == '0') {
 		error("Invalid macro argument '\\0'\n");
-		return NULL;
+		return nullptr;
 	} else {
 		assert(name > '0' && name <= '9');
 		str = macro_GetArg(name - '0');
@@ -735,7 +735,7 @@ static int peek(void)
 			if (!str || !str[0])
 				return peek();
 
-			beginExpansion(str, c == '#', NULL);
+			beginExpansion(str, c == '#', nullptr);
 
 			// Assuming macro args can't be recursive (I'll be damned if a way
 			// is found...), then we mark the entire macro arg as scanned.
@@ -822,7 +822,7 @@ static void handleCRLF(int c)
 
 char const *lexer_GetFileName(void)
 {
-	return lexerState ? lexerState->path : NULL;
+	return lexerState ? lexerState->path : nullptr;
 }
 
 uint32_t lexer_GetLineNo(void)
@@ -1260,7 +1260,7 @@ static char const *readInterpolation(size_t depth)
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");
 	}
-	return NULL;
+	return nullptr;
 }
 
 #define append_yylval_string(c) do { \
@@ -2259,7 +2259,7 @@ int yylex(void)
 {
 	if (lexerState->atLineStart && lexerStateEOL) {
 		lexer_SetState(lexerStateEOL);
-		lexerStateEOL = NULL;
+		lexerStateEOL = nullptr;
 	}
 	// `lexer_SetState` updates `lexerState`, so check for EOF after it
 	if (lexerState->lastToken == T_EOB && yywrap())
@@ -2300,22 +2300,22 @@ static void startCapture(CaptureBody *capture)
 		capture->body = &lexerState->mmap.ptr[lexerState->mmap.offset];
 	} else {
 		lexerState->captureCapacity = 128; // The initial size will be twice that
-		assert(lexerState->captureBuf == NULL);
+		assert(lexerState->captureBuf == nullptr);
 		reallocCaptureBuf();
-		capture->body = NULL; // Indicate to retrieve the capture buffer when done capturing
+		capture->body = nullptr; // Indicate to retrieve the capture buffer when done capturing
 	}
 }
 
 static void endCapture(CaptureBody *capture)
 {
-	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
-	// the whole capture process, and so MUST be retrieved at the end
+	// This being `nullptr` means we're capturing from the capture buf, which is `realloc`ed
+	// during the whole capture process, and so MUST be retrieved at the end
 	if (!capture->body)
 		capture->body = lexerState->captureBuf;
 	capture->size = lexerState->captureSize;
 
 	lexerState->capturing = false;
-	lexerState->captureBuf = NULL;
+	lexerState->captureBuf = nullptr;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }

@@ -136,7 +136,7 @@ static void readFileStackNode(FILE *file, std::vector<FileStackNode> &fileNodes,
 
 	tryReadlong(parentID, file,
 		    "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
-	node.parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : NULL;
+	node.parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : nullptr;
 	tryReadlong(node.lineNo, file,
 		    "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i);
 	tryGetc(enum FileStackNodeType, node.type, file,
@@ -159,7 +159,7 @@ static void readFileStackNode(FILE *file, std::vector<FileStackNode> &fileNodes,
 				    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
 				    fileName, i, k);
 		if (!node.parent)
-			fatal(NULL, 0, "%s is not a valid object file: root node (#%"
+			fatal(nullptr, 0, "%s is not a valid object file: root node (#%"
 			      PRIu32 ") may not be REPT", fileName, i);
 	}
 }
@@ -248,7 +248,7 @@ static void readPatch(FILE *file, Patch *patch, char const *fileName, std::strin
 static void linkPatchToPCSect(Patch *patch, std::vector<Section *> const &fileSections)
 {
 	patch->pcSection = patch->pcSectionID != (uint32_t)-1 ? fileSections[patch->pcSectionID]
-							      : NULL;
+							      : nullptr;
 }
 
 /*
@@ -281,7 +281,7 @@ static void readSection(FILE *file, Section *section, char const *fileName,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section->name.c_str());
 	section->isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error(NULL, 0, "\"%s\"'s org is too large (%" PRId32 ")", section->name.c_str(), tmp);
+		error(nullptr, 0, "\"%s\"'s org is too large (%" PRId32 ")", section->name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section->org = tmp;
@@ -297,7 +297,7 @@ static void readSection(FILE *file, Section *section, char const *fileName,
 	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s", fileName,
 		    section->name.c_str());
 	if (tmp > UINT16_MAX) {
-		error(NULL, 0, "\"%s\"'s alignment offset is too large (%" PRId32 ")",
+		error(nullptr, 0, "\"%s\"'s alignment offset is too large (%" PRId32 ")",
 		      section->name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
@@ -391,7 +391,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	ungetc(c, file); // Guaranteed to work
 	switch (c) {
 	case EOF:
-		fatal(NULL, 0, "File \"%s\" is empty!", fileName);
+		fatal(nullptr, 0, "File \"%s\" is empty!", fileName);
 
 	case 'R':
 		break;
@@ -400,7 +400,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
 		nodes[fileID].push_back({
-			.parent = NULL,
+			.parent = nullptr,
 			.lineNo = 0,
 			.type = NODE_FILE,
 			.data = fileName
@@ -463,7 +463,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	}
 
 	// This file's sections, stored in a table to link symbols to them
-	std::vector<Section *> fileSections(nbSections, NULL);
+	std::vector<Section *> fileSections(nbSections, nullptr);
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
@@ -472,7 +472,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		if (!fileSections[i])
 			err("%s: Failed to create new section", fileName);
 
-		fileSections[i]->nextu = NULL;
+		fileSections[i]->nextu = nullptr;
 		readSection(file, fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = &fileSymbols;
 		fileSections[i]->symbols.reserve(nbSymPerSect[i]);
@@ -493,7 +493,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		int32_t sectionID = fileSymbols[i].sectionID;
 
 		if (sectionID == -1) {
-			fileSymbols[i].section = NULL;
+			fileSymbols[i].section = nullptr;
 		} else {
 			Section *section = fileSections[sectionID];
 

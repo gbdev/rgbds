@@ -104,7 +104,7 @@ void fstk_DumpCurrent(void)
 FileStackNode *fstk_GetFileStack(void)
 {
 	if (contextStack.empty())
-		return NULL;
+		return nullptr;
 
 	FileStackNode *topNode = contextStack.top().fileInfo;
 
@@ -185,7 +185,7 @@ std::string *fstk_FindFile(char const *path)
 	errno = ENOENT;
 	if (generatedMissingIncludes)
 		printDep(path);
-	return NULL;
+	return nullptr;
 }
 
 bool yywrap(void)
@@ -255,7 +255,7 @@ bool yywrap(void)
 
 // Make sure not to switch the lexer state before calling this, so the saved line no is correct.
 // BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
-// Callers should set `contextStack.top().lexerState` after this so it is not NULL.
+// Callers should set `contextStack.top().lexerState` after this so it is not `nullptr`.
 static Context &newContext(FileStackNode *fileInfo)
 {
 	if (contextStack.size() > maxRecursionDepth)
@@ -518,7 +518,7 @@ void fstk_Init(char const *mainPath, size_t maxDepth)
 	fileInfo->type = NODE_FILE;
 	fileInfo->data = lexer_GetFileName();
 	// lineNo and nbReptIters are unused on the top-level context
-	fileInfo->parent = NULL;
+	fileInfo->parent = nullptr;
 	fileInfo->lineNo = 0; // This still gets written to the object file, so init it
 	fileInfo->referenced = false;
 

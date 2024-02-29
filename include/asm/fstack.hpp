@@ -53,7 +53,7 @@ void fstk_AddIncludePath(char const *s);
 void fstk_SetPreIncludeFile(char const *s);
 /*
  * @param path The user-provided file name
- * @return A pointer to the `new`-allocated full path, or NULL if no path worked
+ * @return A pointer to the `new`-allocated full path, or `nullptr` if no path worked
  */
 std::string *fstk_FindFile(char const *path);
 

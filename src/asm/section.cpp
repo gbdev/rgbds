@@ -45,9 +45,9 @@ std::stack<UnionStackEntry> currentUnionStack;
 std::deque<SectionStackEntry> sectionStack;
 std::deque<Section> sectionList;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
-Section *currentSection = NULL;
-static Section *currentLoadSection = NULL;
-char const *currentLoadScope = NULL;
+Section *currentSection = nullptr;
+static Section *currentLoadSection = nullptr;
+char const *currentLoadScope = nullptr;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
@@ -116,7 +116,7 @@ Section *sect_FindSectionByName(char const *name)
 		if (strcmp(name, sect.name) == 0)
 			return &sect;
 	}
-	return NULL;
+	return nullptr;
 }
 
 #define mask(align) ((1U << (align)) - 1)
@@ -271,7 +271,7 @@ static Section *createSection(char const *name, enum SectionType type, uint32_t 
 	Section &sect = sectionList.emplace_front();
 
 	sect.name = strdup(name);
-	if (sect.name == NULL)
+	if (sect.name == nullptr)
 		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
 
 	sect.type = type;
@@ -372,7 +372,7 @@ static void changeSection(void)
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
-	sym_SetCurrentSymbolScope(NULL);
+	sym_SetCurrentSymbolScope(nullptr);
 }
 
 // Set the current section by name and type
@@ -441,7 +441,7 @@ void sect_EndLoadSection(void)
 	changeSection();
 	curOffset += loadOffset;
 	loadOffset = 0;
-	currentLoadSection = NULL;
+	currentLoadSection = nullptr;
 	sym_SetCurrentSymbolScope(currentLoadScope);
 }
 
@@ -790,7 +790,7 @@ void sect_BinaryFile(char const *s, int32_t startPos)
 		return;
 
 	std::string *fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : NULL;
+	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
 
 	delete fullPath;
 
@@ -861,7 +861,7 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length)
 		return;
 
 	std::string *fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : NULL;
+	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
 
 	delete fullPath;
 
@@ -932,9 +932,9 @@ void sect_PushSection(void)
 	});
 
 	// Reset the section scope
-	currentSection = NULL;
-	currentLoadSection = NULL;
-	sym_SetCurrentSymbolScope(NULL);
+	currentSection = nullptr;
+	currentLoadSection = nullptr;
+	sym_SetCurrentSymbolScope(nullptr);
 	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
@@ -970,8 +970,8 @@ void sect_EndSection(void)
 		fatalerror("Cannot end the section within a UNION\n");
 
 	// Reset the section scope
-	currentSection = NULL;
-	sym_SetCurrentSymbolScope(NULL);
+	currentSection = nullptr;
+	sym_SetCurrentSymbolScope(nullptr);
 }
 
 bool sect_IsSizeKnown(Section const NONNULL(sect))
