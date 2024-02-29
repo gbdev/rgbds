@@ -1,0 +1,2 @@
+FATAL: inline-fragment-in-load.asm(7):
+    `LOAD` blocks cannot contain inline fragments

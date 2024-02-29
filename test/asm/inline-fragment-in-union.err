@@ -1,0 +1,2 @@
+FATAL: inline-fragment-in-union.asm(3):
+    `SECTION UNION` cannot contain inline fragments
