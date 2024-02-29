@@ -62,6 +62,8 @@ header.
    target checks for additional warnings. Your patches shouldn't introduce any
    new warning (but it may be possible to remove some warning checks if it makes
    the code much easier).
+5. Test your changes by running `./run-tests.sh` in the `test` directory.
+   (You must run `./fetch-test-deps.sh` first; if you forget to, the test suite will fail and remind you mid-way.)
 5. Format your changes according to `clang-format`, which will reformat the
    coding style according to our standards defined in `.clang-format`.
 6. Create a pull request against the branch `master`.
