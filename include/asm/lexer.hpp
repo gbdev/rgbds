@@ -122,7 +122,7 @@ bool lexer_OpenFile(struct LexerState &state, char const *path);
 void lexer_OpenFileView(struct LexerState &state, char const *path, char *buf, size_t size,
                         uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
-void lexer_DeleteState(struct LexerState &state);
+void lexer_CleanupState(struct LexerState &state);
 void lexer_Init(void);
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
