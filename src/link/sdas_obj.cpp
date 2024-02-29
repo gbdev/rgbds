@@ -32,10 +32,10 @@ static void consumeLF(struct FileStackNode const *where, uint32_t lineNo, FILE *
 
 static char const *delim = " \f\n\r\t\v"; // Whitespace according to the C and POSIX locales
 
-static int nextLine(char **restrict lineBuf, size_t *restrict bufLen, uint32_t *restrict lineNo,
+static int nextLine(std::vector<char> &lineBuf, uint32_t &lineNo,
 		    struct FileStackNode const *where, FILE *file) {
 retry:
-	++*lineNo;
+	++lineNo;
 	int firstChar = getc(file);
 
 	switch (firstChar) {
@@ -50,36 +50,25 @@ retry:
 		// fallthrough
 	case '\r':
 		if (firstChar == '\r' && getc(file) != '\n')
-			consumeLF(where, *lineNo, file);
+			consumeLF(where, lineNo, file);
 		// fallthrough
 	case '\n':
 		goto retry;
 	}
 
-	size_t i = 0;
-
 	for (;;) {
-		if (i >= *bufLen) {
-			assert(*bufLen != 0);
-			*bufLen *= 2;
-			*lineBuf = (char *)realloc(*lineBuf, *bufLen);
-			if (!*lineBuf)
-				fatal(where, *lineNo, "Failed to realloc: %s", strerror(errno));
-		}
-
 		int c = getc(file);
 
 		switch (c) {
 		case '\r':
-			consumeLF(where, *lineNo, file);
+			consumeLF(where, lineNo, file);
 			// fallthrough
 		case '\n':
 		case EOF:
-			(*lineBuf)[i] = '\0'; // Terminate the string (space was ensured above)
+			lineBuf.push_back('\0'); // Terminate the string (space was ensured above)
 			return firstChar;
 		}
-		(*lineBuf)[i] = c;
-		++i;
+		lineBuf.push_back(c);
 	}
 }
 
@@ -145,8 +134,7 @@ enum RelocFlags {
 };
 
 void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<struct Symbol> &fileSymbols) {
-	size_t bufLen = 256;
-	char *line = (char *)malloc(bufLen);
+	std::vector<char> line(256);
 	char const *token;
 
 #define getToken(ptr, ...) do { \
@@ -166,10 +154,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		      (lineType), (expected), token); \
 } while (0)
 
-	if (!line)
-		fatal(where, 0, "Failed to alloc a line buffer: %s", strerror(errno));
 	uint32_t lineNo = 0;
-	int lineType = nextLine(&line, &bufLen, &lineNo, where, file);
+	int lineType = nextLine(line, lineNo, where, file);
 	enum NumberType numberType;
 
 	// The first letter (thus, the line type) identifies the integer type
@@ -208,12 +194,12 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 	// Header line
 
-	lineType = nextLine(&line, &bufLen, &lineNo, where, file);
+	lineType = nextLine(line, lineNo, where, file);
 	if (lineType != 'H')
 		fatal(where, lineNo, "Expected header line, got '%c' line", lineType);
 	// Expected format: "A areas S global symbols"
 
-	getToken(line, "Empty 'H' line");
+	getToken(line.data(), "Empty 'H' line");
 	uint32_t expectedNbAreas = parseNumber(where, lineNo, token, numberType);
 
 	expectToken("areas", 'H');
@@ -242,7 +228,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		fatal(where, lineNo, "Failed to alloc data buffer: %s", strerror(errno));
 
 	for (;;) {
-		lineType = nextLine(&line, &bufLen, &lineNo, where, file);
+		lineType = nextLine(line, lineNo, where, file);
 		if (lineType == EOF)
 			break;
 		switch (lineType) {
@@ -260,7 +246,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (!curSection)
 				fatal(where, lineNo, "Failed to alloc new area: %s", strerror(errno));
 
-			getToken(line, "'A' line is too short");
+			getToken(line.data(), "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
 			for (struct FileSection &entry : fileSections) {
@@ -356,7 +342,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			// No need to set the `sectionID`, since we can directly set the pointer
 			symbol.section = !fileSections.empty() ? fileSections.back().section : NULL;
 
-			getToken(line, "'S' line is too short");
+			getToken(line.data(), "'S' line is too short");
 			symbol.name = token;
 
 			getToken(NULL, "'S' line is too short");
@@ -413,7 +399,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				warning(where, lineNo, "Previous 'T' line had no 'R' line (ignored)");
 
 			nbBytes = 0;
-			for (token = strtok(line, delim); token; token = strtok(NULL, delim)) {
+			for (token = strtok(line.data(), delim); token; token = strtok(NULL, delim)) {
 				if (dataCapacity == nbBytes) {
 					dataCapacity *= 2;
 					data = (uint8_t *)realloc(data, sizeof(*data) * dataCapacity);
@@ -438,7 +424,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			}
 
 			// First two bytes are ignored
-			getToken(line, "'R' line is too short");
+			getToken(line.data(), "'R' line is too short");
 			getToken(NULL, "'R' line is too short");
 			uint16_t areaIdx;
 
@@ -727,6 +713,5 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 #undef expectToken
 #undef getToken
 
-	free(data);
 	fclose(file);
 }
