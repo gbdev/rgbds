@@ -28,19 +28,19 @@
 #include "platform.hpp" // strdup
 
 struct Assertion {
-	struct Patch patch;
-	struct Section *section;
+	Patch patch;
+	Section *section;
 	std::string message;
 };
 
 const char *objectName;
 
 // List of symbols to put in the object file
-static std::vector<struct Symbol *> objectSymbols;
+static std::vector<Symbol *> objectSymbols;
 
-static std::deque<struct Assertion> assertions;
+static std::deque<Assertion> assertions;
 
-static std::deque<struct FileStackNode *> fileStackNodes;
+static std::deque<FileStackNode *> fileStackNodes;
 
 // Write a long to a file (little-endian)
 static void putlong(uint32_t i, FILE *f)
@@ -59,7 +59,7 @@ static void putstring(char const *s, FILE *f)
 	putc(0, f);
 }
 
-void out_RegisterNode(struct FileStackNode *node)
+void out_RegisterNode(FileStackNode *node)
 {
 	// If node is not already registered, register it (and parents), and give it a unique ID
 	for (; node && node->ID == (uint32_t)-1; node = node->parent) {
@@ -68,7 +68,7 @@ void out_RegisterNode(struct FileStackNode *node)
 	}
 }
 
-void out_ReplaceNode(struct FileStackNode * /* node */)
+void out_ReplaceNode(FileStackNode * /* node */)
 {
 #if 0
 This is code intended to replace a node, which is pretty useless until ref counting is added...
@@ -85,7 +85,7 @@ This is code intended to replace a node, which is pretty useless until ref count
 }
 
 // Return a section's ID, or -1 if the section is not in the list
-static uint32_t getSectIDIfAny(struct Section *sect)
+static uint32_t getSectIDIfAny(Section *sect)
 {
 	if (!sect)
 		return (uint32_t)-1;
@@ -99,7 +99,7 @@ static uint32_t getSectIDIfAny(struct Section *sect)
 }
 
 // Write a patch to a file
-static void writepatch(struct Patch const &patch, FILE *f)
+static void writepatch(Patch const &patch, FILE *f)
 {
 	assert(patch.src->ID != (uint32_t)-1);
 	putlong(patch.src->ID, f);
@@ -113,7 +113,7 @@ static void writepatch(struct Patch const &patch, FILE *f)
 }
 
 // Write a section to a file
-static void writesection(struct Section const &sect, FILE *f)
+static void writesection(Section const &sect, FILE *f)
 {
 	putstring(sect.name, f);
 
@@ -133,13 +133,13 @@ static void writesection(struct Section const &sect, FILE *f)
 		fwrite(sect.data.data(), 1, sect.size, f);
 		putlong(sect.patches.size(), f);
 
-		for (struct Patch const &patch : sect.patches)
+		for (Patch const &patch : sect.patches)
 			writepatch(patch, f);
 	}
 }
 
 // Write a symbol to a file
-static void writesymbol(struct Symbol const *sym, FILE *f)
+static void writesymbol(Symbol const *sym, FILE *f)
 {
 	putstring(sym->name, f);
 	if (!sym_IsDefined(sym)) {
@@ -155,7 +155,7 @@ static void writesymbol(struct Symbol const *sym, FILE *f)
 	}
 }
 
-static void registerSymbol(struct Symbol *sym)
+static void registerSymbol(Symbol *sym)
 {
 	sym->ID = objectSymbols.size();
 	objectSymbols.push_back(sym);
@@ -164,7 +164,7 @@ static void registerSymbol(struct Symbol *sym)
 
 // Returns a symbol's ID within the object file
 // If the symbol does not have one, one is assigned by registering the symbol
-static uint32_t getSymbolID(struct Symbol *sym)
+static uint32_t getSymbolID(Symbol *sym)
 {
 	if (sym->ID == (uint32_t)-1 && !sym_IsPC(sym))
 		registerSymbol(sym);
@@ -182,7 +182,7 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 		uint8_t rpndata = popbyte();
 
 		switch (rpndata) {
-			struct Symbol *sym;
+			Symbol *sym;
 			uint32_t value;
 			uint8_t b;
 			size_t i;
@@ -267,9 +267,9 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 	}
 }
 
-static void initpatch(struct Patch &patch, uint32_t type, struct Expression const *expr, uint32_t ofs)
+static void initpatch(Patch &patch, uint32_t type, Expression const *expr, uint32_t ofs)
 {
-	struct FileStackNode *node = fstk_GetFileStack();
+	FileStackNode *node = fstk_GetFileStack();
 
 	patch.type = type;
 	patch.src = node;
@@ -295,10 +295,10 @@ static void initpatch(struct Patch &patch, uint32_t type, struct Expression cons
 }
 
 // Create a new patch (includes the rpn expr)
-void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs, uint32_t pcShift)
+void out_CreatePatch(uint32_t type, Expression const *expr, uint32_t ofs, uint32_t pcShift)
 {
 	// Add the patch to the list
-	struct Patch &patch = currentSection->patches.emplace_front();
+	Patch &patch = currentSection->patches.emplace_front();
 
 	initpatch(patch, type, expr, ofs);
 
@@ -309,22 +309,21 @@ void out_CreatePatch(uint32_t type, struct Expression const *expr, uint32_t ofs,
 }
 
 // Creates an assert that will be written to the object file
-void out_CreateAssert(enum AssertionType type, struct Expression const *expr,
-		      char const *message, uint32_t ofs)
+void out_CreateAssert(enum AssertionType type, Expression const *expr, char const *message, uint32_t ofs)
 {
-	struct Assertion &assertion = assertions.emplace_front();
+	Assertion &assertion = assertions.emplace_front();
 
 	initpatch(assertion.patch, type, expr, ofs);
 	assertion.message = message;
 }
 
-static void writeassert(struct Assertion &assert, FILE *f)
+static void writeassert(Assertion &assert, FILE *f)
 {
 	writepatch(assert.patch, f);
 	putstring(assert.message.c_str(), f);
 }
 
-static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
+static void writeFileStackNode(FileStackNode const *node, FILE *f)
 {
 	putlong(node->parent ? node->parent->ID : (uint32_t)-1, f);
 	putlong(node->lineNo, f);
@@ -341,7 +340,7 @@ static void writeFileStackNode(struct FileStackNode const *node, FILE *f)
 	}
 }
 
-static void registerUnregisteredSymbol(struct Symbol *symbol)
+static void registerUnregisteredSymbol(Symbol *symbol)
 {
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
 	if (symbol->src && symbol->ID == (uint32_t)-1) {
@@ -374,7 +373,7 @@ void out_WriteObject(void)
 
 	putlong(fileStackNodes.size(), f);
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
-		struct FileStackNode const *node = *it;
+		FileStackNode const *node = *it;
 
 		writeFileStackNode(node, f);
 
@@ -385,15 +384,15 @@ void out_WriteObject(void)
 				   it[1]->ID, node->ID);
 	}
 
-	for (struct Symbol const *sym : objectSymbols)
+	for (Symbol const *sym : objectSymbols)
 		writesymbol(sym, f);
 
-	for (struct Section &sect : sectionList)
+	for (Section &sect : sectionList)
 		writesection(sect, f);
 
 	putlong(assertions.size(), f);
 
-	for (struct Assertion &assert : assertions)
+	for (Assertion &assert : assertions)
 		writeassert(assert, f);
 
 	fclose(f);

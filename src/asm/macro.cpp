@@ -18,7 +18,7 @@ struct MacroArgs {
 	std::vector<char *> args;
 };
 
-static struct MacroArgs *macroArgs = NULL;
+static MacroArgs *macroArgs = NULL;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
 // The initialization is somewhat harmful, since it is never used, but it
@@ -27,14 +27,14 @@ static uint32_t maxUniqueID = 0;
 static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
 static char *uniqueIDPtr = NULL;
 
-struct MacroArgs *macro_GetCurrentArgs(void)
+MacroArgs *macro_GetCurrentArgs(void)
 {
 	return macroArgs;
 }
 
-struct MacroArgs *macro_NewArgs(void)
+MacroArgs *macro_NewArgs(void)
 {
-	struct MacroArgs *args = new(std::nothrow) struct MacroArgs();
+	MacroArgs *args = new(std::nothrow) MacroArgs();
 
 	if (!args)
 		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
@@ -43,7 +43,7 @@ struct MacroArgs *macro_NewArgs(void)
 	return args;
 }
 
-void macro_AppendArg(struct MacroArgs *args, char *s)
+void macro_AppendArg(MacroArgs *args, char *s)
 {
 	if (s[0] == '\0')
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
@@ -52,12 +52,12 @@ void macro_AppendArg(struct MacroArgs *args, char *s)
 	args->args.push_back(s);
 }
 
-void macro_UseNewArgs(struct MacroArgs *args)
+void macro_UseNewArgs(MacroArgs *args)
 {
 	macroArgs = args;
 }
 
-void macro_FreeArgs(struct MacroArgs *args)
+void macro_FreeArgs(MacroArgs *args)
 {
 	for (char *arg : args->args)
 		free(arg);

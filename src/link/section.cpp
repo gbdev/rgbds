@@ -13,15 +13,15 @@
 #include "error.hpp"
 #include "linkdefs.hpp"
 
-std::map<std::string, struct Section *> sections;
+std::map<std::string, Section *> sections;
 
-void sect_ForEach(void (*callback)(struct Section *))
+void sect_ForEach(void (*callback)(Section *))
 {
 	for (auto &it : sections)
 		callback(it.second);
 }
 
-static void checkSectUnionCompat(struct Section *target, struct Section *other)
+static void checkSectUnionCompat(Section *target, Section *other)
 {
 	if (other->isAddressFixed) {
 		if (target->isAddressFixed) {
@@ -59,7 +59,7 @@ static void checkSectUnionCompat(struct Section *target, struct Section *other)
 	}
 }
 
-static void checkFragmentCompat(struct Section *target, struct Section *other)
+static void checkFragmentCompat(Section *target, Section *other)
 {
 	if (other->isAddressFixed) {
 		uint16_t org = other->org - target->size;
@@ -107,7 +107,7 @@ static void checkFragmentCompat(struct Section *target, struct Section *other)
 	}
 }
 
-static void mergeSections(struct Section *target, struct Section *other, enum SectionModifier mod)
+static void mergeSections(Section *target, Section *other, enum SectionModifier mod)
 {
 	// Common checks
 
@@ -144,7 +144,7 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 		if (!other->data.empty()) {
 			target->data.insert(target->data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
-			for (struct Patch &patch : other->patches)
+			for (Patch &patch : other->patches)
 				patch.pcOffset += other->offset;
 		} else if (!target->data.empty()) {
 			assert(other->size == 0);
@@ -159,10 +159,10 @@ static void mergeSections(struct Section *target, struct Section *other, enum Se
 	target->nextu = other;
 }
 
-void sect_AddSection(struct Section *section)
+void sect_AddSection(Section *section)
 {
 	// Check if the section already exists
-	if (struct Section *other = sect_GetSection(section->name); other) {
+	if (Section *other = sect_GetSection(section->name); other) {
 		if (section->modifier != other->modifier)
 			errx("Section \"%s\" defined as %s and %s", section->name.c_str(),
 			     sectionModNames[section->modifier], sectionModNames[other->modifier]);
@@ -179,13 +179,13 @@ void sect_AddSection(struct Section *section)
 	}
 }
 
-struct Section *sect_GetSection(std::string const &name)
+Section *sect_GetSection(std::string const &name)
 {
 	auto search = sections.find(name);
 	return search != sections.end() ? search->second : NULL;
 }
 
-static void doSanityChecks(struct Section *section)
+static void doSanityChecks(Section *section)
 {
 	// Sanity check the section's type
 	if (section->type < 0 || section->type >= SECTTYPE_INVALID) {

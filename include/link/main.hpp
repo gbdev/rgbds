@@ -31,7 +31,7 @@ extern bool isWRAM0Mode;
 extern bool disablePadding;
 
 struct FileStackNode {
-	struct FileStackNode *parent;
+	FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
 
@@ -60,15 +60,12 @@ struct FileStackNode {
  * Dump a file stack to stderr
  * @param node The leaf node to dump the context of
  */
-std::string const *dumpFileStack(struct FileStackNode const *node);
+std::string const *dumpFileStack(FileStackNode const *node);
 
-void warning(struct FileStackNode const *where, uint32_t lineNo,
-	     char const *fmt, ...) format_(printf, 3, 4);
+void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
 
-void error(struct FileStackNode const *where, uint32_t lineNo,
-	   char const *fmt, ...) format_(printf, 3, 4);
+void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
 
-[[noreturn]] void fatal(struct FileStackNode const *where, uint32_t lineNo,
-		     char const *fmt, ...) format_(printf, 3, 4);
+[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
 
 #endif // RGBDS_LINK_MAIN_H

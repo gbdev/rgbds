@@ -13,17 +13,17 @@
 #include "linkdefs.hpp"
 
 struct Assertion {
-	struct Patch patch; // Also used for its `.type`
+	Patch patch; // Also used for its `.type`
 	std::string message;
 	// This would be redundant with `.section->fileSymbols`... but `section` is sometimes NULL!
-	std::vector<struct Symbol> *fileSymbols;
+	std::vector<Symbol> *fileSymbols;
 };
 
 /*
  * Checks all assertions
  * @return true if assertion failed
  */
-void patch_CheckAssertions(std::deque<struct Assertion> &assertions);
+void patch_CheckAssertions(std::deque<Assertion> &assertions);
 
 /*
  * Applies all SECTIONs' patches to them

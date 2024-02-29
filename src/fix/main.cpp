@@ -36,7 +36,7 @@ static const char *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
  * This is because long opt matching, even to a single char, is prioritized
  * over short opt matching
  */
-static struct option const longopts[] = {
+static option const longopts[] = {
 	{ "color-only",       no_argument,       NULL, 'C' },
 	{ "color-compatible", no_argument,       NULL, 'c' },
 	{ "fix-spec",         required_argument, NULL, 'f' },

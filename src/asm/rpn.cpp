@@ -23,7 +23,7 @@
 
 // Makes an expression "not known", also setting its error message
 template<typename... Ts>
-static void makeUnknown(struct Expression *expr, Ts ...parts)
+static void makeUnknown(Expression *expr, Ts ...parts)
 {
 	expr->isKnown = false;
 	expr->reason = new std::string();
@@ -32,7 +32,7 @@ static void makeUnknown(struct Expression *expr, Ts ...parts)
 	(expr->reason->append(parts), ...);
 }
 
-static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
+static uint8_t *reserveSpace(Expression *expr, uint32_t size)
 {
 	if (!expr->rpn) {
 		expr->rpn = new(std::nothrow) std::vector<uint8_t>();
@@ -47,7 +47,7 @@ static uint8_t *reserveSpace(struct Expression *expr, uint32_t size)
 }
 
 // Init a RPN expression
-static void rpn_Init(struct Expression *expr)
+static void rpn_Init(Expression *expr)
 {
 	expr->reason = NULL;
 	expr->isKnown = true;
@@ -57,7 +57,7 @@ static void rpn_Init(struct Expression *expr)
 }
 
 // Free the RPN expression
-void rpn_Free(struct Expression *expr)
+void rpn_Free(Expression *expr)
 {
 	delete expr->rpn;
 	delete expr->reason;
@@ -65,15 +65,15 @@ void rpn_Free(struct Expression *expr)
 }
 
 // Add symbols, constants and operators to expression
-void rpn_Number(struct Expression *expr, uint32_t i)
+void rpn_Number(Expression *expr, uint32_t i)
 {
 	rpn_Init(expr);
 	expr->val = i;
 }
 
-void rpn_Symbol(struct Expression *expr, char const *symName)
+void rpn_Symbol(Expression *expr, char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
@@ -98,7 +98,7 @@ void rpn_Symbol(struct Expression *expr, char const *symName)
 	}
 }
 
-void rpn_BankSelf(struct Expression *expr)
+void rpn_BankSelf(Expression *expr)
 {
 	rpn_Init(expr);
 
@@ -114,9 +114,9 @@ void rpn_BankSelf(struct Expression *expr)
 	}
 }
 
-void rpn_BankSymbol(struct Expression *expr, char const *symName)
+void rpn_BankSymbol(Expression *expr, char const *symName)
 {
-	struct Symbol const *sym = sym_FindScopedSymbol(symName);
+	Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	// The @ symbol is treated differently.
 	if (sym_IsPC(sym)) {
@@ -146,11 +146,11 @@ void rpn_BankSymbol(struct Expression *expr, char const *symName)
 	}
 }
 
-void rpn_BankSection(struct Expression *expr, char const *sectionName)
+void rpn_BankSection(Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	struct Section *section = sect_FindSectionByName(sectionName);
+	Section *section = sect_FindSectionByName(sectionName);
 
 	if (section && section->bank != (uint32_t)-1) {
 		expr->val = section->bank;
@@ -166,11 +166,11 @@ void rpn_BankSection(struct Expression *expr, char const *sectionName)
 	}
 }
 
-void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
+void rpn_SizeOfSection(Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	struct Section *section = sect_FindSectionByName(sectionName);
+	Section *section = sect_FindSectionByName(sectionName);
 
 	if (section && sect_IsSizeKnown(section)) {
 		expr->val = section->size;
@@ -186,11 +186,11 @@ void rpn_SizeOfSection(struct Expression *expr, char const *sectionName)
 	}
 }
 
-void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
+void rpn_StartOfSection(Expression *expr, char const *sectionName)
 {
 	rpn_Init(expr);
 
-	struct Section *section = sect_FindSectionByName(sectionName);
+	Section *section = sect_FindSectionByName(sectionName);
 
 	if (section && section->org != (uint32_t)-1) {
 		expr->val = section->org;
@@ -206,7 +206,7 @@ void rpn_StartOfSection(struct Expression *expr, char const *sectionName)
 	}
 }
 
-void rpn_SizeOfSectionType(struct Expression *expr, enum SectionType type)
+void rpn_SizeOfSectionType(Expression *expr, enum SectionType type)
 {
 	rpn_Init(expr);
 	makeUnknown(expr, "Section type's size is not known");
@@ -218,7 +218,7 @@ void rpn_SizeOfSectionType(struct Expression *expr, enum SectionType type)
 	*ptr++ = type;
 }
 
-void rpn_StartOfSectionType(struct Expression *expr, enum SectionType type)
+void rpn_StartOfSectionType(Expression *expr, enum SectionType type)
 {
 	rpn_Init(expr);
 	makeUnknown(expr, "Section type's start is not known");
@@ -230,7 +230,7 @@ void rpn_StartOfSectionType(struct Expression *expr, enum SectionType type)
 	*ptr++ = type;
 }
 
-void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
+void rpn_CheckHRAM(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -246,7 +246,7 @@ void rpn_CheckHRAM(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
+void rpn_CheckRST(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 
@@ -263,7 +263,7 @@ void rpn_CheckRST(struct Expression *expr, const struct Expression *src)
 }
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
-void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
+void rpn_CheckNBit(Expression const *expr, uint8_t n)
 {
 	assert(n != 0); // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
@@ -278,7 +278,7 @@ void rpn_CheckNBit(struct Expression const *expr, uint8_t n)
 	}
 }
 
-int32_t rpn_GetConstVal(struct Expression const *expr)
+int32_t rpn_GetConstVal(Expression const *expr)
 {
 	if (!rpn_isKnown(expr)) {
 		error("Expected constant expression: %s\n", expr->reason->c_str());
@@ -287,7 +287,7 @@ int32_t rpn_GetConstVal(struct Expression const *expr)
 	return expr->val;
 }
 
-void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
+void rpn_LOGNOT(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -300,28 +300,27 @@ void rpn_LOGNOT(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-struct Symbol const *rpn_SymbolOf(struct Expression const *expr)
+Symbol const *rpn_SymbolOf(Expression const *expr)
 {
 	if (!rpn_isSymbol(expr))
 		return NULL;
 	return sym_FindScopedSymbol((char const *)&(*expr->rpn)[1]);
 }
 
-bool rpn_IsDiffConstant(struct Expression const *src, struct Symbol const *sym)
+bool rpn_IsDiffConstant(Expression const *src, Symbol const *sym)
 {
 	// Check if both expressions only refer to a single symbol
-	struct Symbol const *sym1 = rpn_SymbolOf(src);
+	Symbol const *sym1 = rpn_SymbolOf(src);
 
 	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
 		return false;
 
-	struct Section const *section1 = sym_GetSection(sym1);
-	struct Section const *section2 = sym_GetSection(sym);
+	Section const *section1 = sym_GetSection(sym1);
+	Section const *section2 = sym_GetSection(sym);
 	return section1 && (section1 == section2);
 }
 
-static bool isDiffConstant(struct Expression const *src1,
-			   struct Expression const *src2)
+static bool isDiffConstant(Expression const *src1, Expression const *src2)
 {
 	return rpn_IsDiffConstant(src1, rpn_SymbolOf(src2));
 }
@@ -333,10 +332,10 @@ static bool isDiffConstant(struct Expression const *src1,
  *
  * @return The constant result if it can be computed, or -1 otherwise.
  */
-static int32_t tryConstMask(struct Expression const *lhs, struct Expression const *rhs)
+static int32_t tryConstMask(Expression const *lhs, Expression const *rhs)
 {
-	struct Symbol const *sym = rpn_SymbolOf(lhs);
-	struct Expression const *expr = rhs;
+	Symbol const *sym = rpn_SymbolOf(lhs);
+	Expression const *expr = rhs;
 
 	if (!sym || !sym_GetSection(sym)) {
 		// If the lhs isn't a symbol, try again the other way around
@@ -351,7 +350,7 @@ static int32_t tryConstMask(struct Expression const *lhs, struct Expression cons
 	if (!rpn_isKnown(expr))
 		return -1;
 	// We can now safely use `expr->val`
-	struct Section const *sect = sym_GetSection(sym);
+	Section const *sect = sym_GetSection(sym);
 	int32_t unknownBits = (1 << 16) - (1 << sect->align); // The max alignment is 16
 
 	// The mask must ignore all unknown bits
@@ -366,8 +365,7 @@ static int32_t tryConstMask(struct Expression const *lhs, struct Expression cons
 	return (symbolOfs + sect->alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
-		  const struct Expression *src1, const struct Expression *src2)
+void rpn_BinaryOp(enum RPNCommand op, Expression *expr, const Expression *src1, const Expression *src2)
 {
 	expr->isSymbol = false;
 	int32_t constMaskVal;
@@ -512,8 +510,8 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 		}
 
 	} else if (op == RPN_SUB && isDiffConstant(src1, src2)) {
-		struct Symbol const *symbol1 = rpn_SymbolOf(src1);
-		struct Symbol const *symbol2 = rpn_SymbolOf(src2);
+		Symbol const *symbol1 = rpn_SymbolOf(src1);
+		Symbol const *symbol2 = rpn_SymbolOf(src2);
 
 		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
 		expr->isKnown = true;
@@ -574,7 +572,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 	}
 }
 
-void rpn_HIGH(struct Expression *expr, const struct Expression *src)
+void rpn_HIGH(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -589,7 +587,7 @@ void rpn_HIGH(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-void rpn_LOW(struct Expression *expr, const struct Expression *src)
+void rpn_LOW(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -604,7 +602,7 @@ void rpn_LOW(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
+void rpn_ISCONST(Expression *expr, const Expression *src)
 {
 	rpn_Init(expr);
 	expr->val = rpn_isKnown(src);
@@ -612,7 +610,7 @@ void rpn_ISCONST(struct Expression *expr, const struct Expression *src)
 	expr->isSymbol = false;
 }
 
-void rpn_NEG(struct Expression *expr, const struct Expression *src)
+void rpn_NEG(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;
@@ -625,7 +623,7 @@ void rpn_NEG(struct Expression *expr, const struct Expression *src)
 	}
 }
 
-void rpn_NOT(struct Expression *expr, const struct Expression *src)
+void rpn_NOT(Expression *expr, const Expression *src)
 {
 	*expr = *src;
 	expr->isSymbol = false;

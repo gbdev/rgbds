@@ -12,13 +12,14 @@
 #include "linkdefs.hpp"
 
 struct FileStackNode;
+struct Section;
 
 struct Symbol {
 	// Info contained in the object files
 	std::string name;
 	enum ExportLevel type;
 	char const *objFileName;
-	struct FileStackNode const *src;
+	FileStackNode const *src;
 	int32_t lineNo;
 	int32_t sectionID;
 	union {
@@ -27,16 +28,16 @@ struct Symbol {
 		int32_t value;
 	};
 	// Extra info computed during linking
-	struct Section *section;
+	Section *section;
 };
 
-void sym_AddSymbol(struct Symbol *symbol);
+void sym_AddSymbol(Symbol *symbol);
 
 /*
  * Finds a symbol in all the defined symbols.
  * @param name The name of the symbol to look for
  * @return A pointer to the symbol, or NULL if not found.
  */
-struct Symbol *sym_GetSymbol(std::string const &name);
+Symbol *sym_GetSymbol(std::string const &name);
 
 #endif // RGBDS_LINK_SYMBOL_H

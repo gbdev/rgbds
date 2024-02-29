@@ -7,7 +7,7 @@ using namespace std::literals;
 
 // The default values are the most lax, as they are used as-is by RGBASM; only RGBLINK has the full info,
 // so RGBASM's job is only to catch unconditional errors earlier.
-struct SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
+SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
 	{ // SECTTYPE_WRAM0
 		.name = "WRAM0"s,
 		.startAddr = 0xC000,

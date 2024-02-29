@@ -22,7 +22,7 @@ struct RPNStackEntry {
 	bool errorFlag; // Whether the value is a placeholder inserted for error recovery
 };
 
-std::deque<struct RPNStackEntry> rpnStack;
+std::deque<RPNStackEntry> rpnStack;
 
 static void pushRPN(int32_t value, bool comesFromError)
 {
@@ -33,12 +33,12 @@ static void pushRPN(int32_t value, bool comesFromError)
 // has popped any values with the error flag set.
 static bool isError = false;
 
-static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
+static int32_t popRPN(FileStackNode const *node, uint32_t lineNo)
 {
 	if (rpnStack.empty())
 		fatal(node, lineNo, "Internal error, RPN stack empty");
 
-	struct RPNStackEntry entry = rpnStack.front();
+	RPNStackEntry entry = rpnStack.front();
 
 	rpnStack.pop_front();
 	isError |= entry.errorFlag;
@@ -48,7 +48,7 @@ static int32_t popRPN(struct FileStackNode const *node, uint32_t lineNo)
 // RPN operators
 
 static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
-			   struct FileStackNode const *node, uint32_t lineNo)
+			   FileStackNode const *node, uint32_t lineNo)
 {
 	if (!(*size)--)
 		fatal(node, lineNo, "Internal error, RPN expression overread");
@@ -56,10 +56,10 @@ static uint32_t getRPNByte(uint8_t const **expression, int32_t *size,
 	return *(*expression)++;
 }
 
-static struct Symbol const *getSymbol(std::vector<struct Symbol> const &symbolList, uint32_t index)
+static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t index)
 {
 	assert(index != (uint32_t)-1); // PC needs to be handled specially, not here
-	struct Symbol const &symbol = symbolList[index];
+	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
 	if (symbol.type == SYMTYPE_IMPORT)
@@ -76,8 +76,7 @@ static struct Symbol const *getSymbol(std::vector<struct Symbol> const &symbolLi
  * @return isError Set if an error occurred during evaluation, and further
  *                 errors caused by the value should be suppressed.
  */
-static int32_t computeRPNExpr(struct Patch const *patch,
-			      std::vector<struct Symbol> const &fileSymbols)
+static int32_t computeRPNExpr(Patch const *patch, std::vector<Symbol> const &fileSymbols)
 {
 // Small shortcut to avoid a lot of repetition
 #define popRPN() popRPN(patch->src, patch->lineNo)
@@ -99,9 +98,9 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 		// So, if there are two `popRPN` in the same expression, make
 		// sure the operation is commutative.
 		switch (command) {
-			struct Symbol const *symbol;
+			Symbol const *symbol;
 			char const *name;
-			struct Section const *sect;
+			Section const *sect;
 
 		case RPN_ADD:
 			value = popRPN() + popRPN();
@@ -410,11 +409,11 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 #undef popRPN
 }
 
-void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
+void patch_CheckAssertions(std::deque<Assertion> &assertions)
 {
 	verbosePrint("Checking assertions...\n");
 
-	for (struct Assertion &assert : assertions) {
+	for (Assertion &assert : assertions) {
 		int32_t value = computeRPNExpr(&assert.patch, *assert.fileSymbols);
 		enum AssertionType type = (enum AssertionType)assert.patch.type;
 
@@ -448,10 +447,10 @@ void patch_CheckAssertions(std::deque<struct Assertion> &assertions)
  * @param section The section component to patch
  * @param dataSection The section to patch
  */
-static void applyFilePatches(struct Section *section, struct Section *dataSection)
+static void applyFilePatches(Section *section, Section *dataSection)
 {
 	verbosePrint("Patching section \"%s\"...\n", section->name.c_str());
-	for (struct Patch &patch : section->patches) {
+	for (Patch &patch : section->patches) {
 		int32_t value = computeRPNExpr(&patch, *section->fileSymbols);
 		uint16_t offset = patch.offset + section->offset;
 
@@ -497,12 +496,12 @@ static void applyFilePatches(struct Section *section, struct Section *dataSectio
  * Applies all of a section's patches, iterating over "components" of unionized sections
  * @param section The section to patch
  */
-static void applyPatches(struct Section *section)
+static void applyPatches(Section *section)
 {
 	if (!sect_HasData(section->type))
 		return;
 
-	for (struct Section *component = section; component; component = component->nextu)
+	for (Section *component = section; component; component = component->nextu)
 		applyFilePatches(component, section);
 }
 

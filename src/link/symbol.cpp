@@ -11,12 +11,12 @@
 
 #include "error.hpp"
 
-std::map<std::string, struct Symbol *> symbols;
+std::map<std::string, Symbol *> symbols;
 
-void sym_AddSymbol(struct Symbol *symbol)
+void sym_AddSymbol(Symbol *symbol)
 {
 	// Check if the symbol already exists
-	if (struct Symbol *other = sym_GetSymbol(symbol->name); other) {
+	if (Symbol *other = sym_GetSymbol(symbol->name); other) {
 		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name.c_str(), symbol->objFileName);
 		dumpFileStack(symbol->src);
 		fprintf(stderr, "(%" PRIu32 ") and in %s from ", symbol->lineNo, other->objFileName);
@@ -29,7 +29,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 	symbols[symbol->name] = symbol;
 }
 
-struct Symbol *sym_GetSymbol(std::string const &name)
+Symbol *sym_GetSymbol(std::string const &name)
 {
 	auto search = symbols.find(name);
 	return search != symbols.end() ? search->second : NULL;

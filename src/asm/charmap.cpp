@@ -30,17 +30,17 @@ struct CharmapNode {
 
 struct Charmap {
 	std::string name;
-	std::vector<struct CharmapNode> nodes; // first node is reserved for the root node
+	std::vector<CharmapNode> nodes; // first node is reserved for the root node
 };
 
-static std::map<std::string, struct Charmap> charmaps;
+static std::map<std::string, Charmap> charmaps;
 
-static struct Charmap *currentCharmap;
-std::stack<struct Charmap *> charmapStack;
+static Charmap *currentCharmap;
+std::stack<Charmap *> charmapStack;
 
 void charmap_New(char const *name, char const *baseName)
 {
-	struct Charmap *base = NULL;
+	Charmap *base = NULL;
 
 	if (baseName != NULL) {
 		auto search = charmaps.find(baseName);
@@ -57,7 +57,7 @@ void charmap_New(char const *name, char const *baseName)
 	}
 
 	// Init the new charmap's fields
-	struct Charmap &charmap = charmaps[name];
+	Charmap &charmap = charmaps[name];
 
 	if (base)
 		charmap.nodes = base->nodes; // Copies `base->nodes`
@@ -96,7 +96,7 @@ void charmap_Pop(void)
 
 void charmap_Add(char *mapping, uint8_t value)
 {
-	struct Charmap &charmap = *currentCharmap;
+	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
 	for (; *mapping; mapping++) {
@@ -115,7 +115,7 @@ void charmap_Add(char *mapping, uint8_t value)
 		nodeIdx = nextIdx;
 	}
 
-	struct CharmapNode &node = charmap.nodes[nodeIdx];
+	CharmapNode &node = charmap.nodes[nodeIdx];
 
 	if (node.isTerminal)
 		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
@@ -126,7 +126,7 @@ void charmap_Add(char *mapping, uint8_t value)
 
 bool charmap_HasChar(char const *input)
 {
-	struct Charmap const &charmap = *currentCharmap;
+	Charmap const &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
 	for (; *input; input++) {
@@ -151,7 +151,7 @@ size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
 	// For that, advance through the trie with each character read.
 	// If that would lead to a dead end, rewind characters until the last match, and output.
 	// If no match, read a UTF-8 codepoint and output that.
-	struct Charmap const &charmap = *currentCharmap;
+	Charmap const &charmap = *currentCharmap;
 	size_t matchIdx = 0;
 	size_t rewindDistance = 0;
 

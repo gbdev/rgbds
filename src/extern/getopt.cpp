@@ -120,10 +120,10 @@ static void permute(char **argv, int dest, int src)
 }
 
 static int musl_getopt_long_core(int argc, char **argv, char const *optstring,
-				 const struct option *longopts, int *idx, int longonly);
+				 const option *longopts, int *idx, int longonly);
 
 static int musl_getopt_long(int argc, char **argv, char const *optstring,
-			    const struct option *longopts, int *idx, int longonly)
+			    const option *longopts, int *idx, int longonly)
 {
 	int ret, skipped, resumed;
 
@@ -160,7 +160,7 @@ static int musl_getopt_long(int argc, char **argv, char const *optstring,
 }
 
 static int musl_getopt_long_core(int argc, char **argv, char const *optstring,
-				 const struct option *longopts, int *idx, int longonly)
+				 const option *longopts, int *idx, int longonly)
 {
 	musl_optarg = 0;
 	if (longopts && argv[musl_optind][0] == '-' &&
@@ -260,7 +260,7 @@ static int musl_getopt_long_core(int argc, char **argv, char const *optstring,
 }
 
 int musl_getopt_long_only(int argc, char **argv, char const *optstring,
-			  const struct option *longopts, int *idx)
+			  const option *longopts, int *idx)
 {
 	return musl_getopt_long(argc, argv, optstring, longopts, idx, 1);
 }
