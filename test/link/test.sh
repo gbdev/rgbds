@@ -110,10 +110,8 @@ for i in *.asm; do
 	# The rest of the tests just links a file, and maybe checks the binary
 	continueTest
 	rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
-	if [ -f "${i%.asm}.out" ]; then
-		tryDiff "${i%.asm}.out" "$outtemp"
-		(( rc = rc || $? ))
-	fi
+	tryDiff "${i%.asm}.out" "$outtemp"
+	(( rc = rc || $? ))
 
 	bin=${i%.asm}.out.bin
 	if [ -f "$bin" ]; then
