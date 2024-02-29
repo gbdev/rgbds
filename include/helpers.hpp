@@ -85,4 +85,12 @@
 // For lack of <ranges>, this adds some more brevity
 #define RANGE(s) std::begin(s), std::end(s)
 
+// Convenience feature for visiting variants.
+template<typename... Ts>
+struct Visitor : Ts... {
+	using Ts::operator()...;
+};
+template<typename... Ts>
+Visitor(Ts...) -> Visitor<Ts...>;
+
 #endif // HELPERS_H
