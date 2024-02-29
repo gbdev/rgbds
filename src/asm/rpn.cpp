@@ -557,7 +557,7 @@ void rpn_BinaryOp(enum RPNCommand op, struct Expression *expr,
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
 		} else {
-			ptr = &(*src2->rpn)[0]; // Pointer to the right RPN
+			ptr = src2->rpn->data(); // Pointer to the right RPN
 			len = src2->rpn->size(); // Size of the right RPN
 			patchSize = src2->rpnPatchSize;
 		}

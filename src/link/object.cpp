@@ -233,7 +233,7 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, std
 		    fileName, sectName.c_str(), i);
 
 	patch->rpnExpression.resize(rpnSize);
-	size_t nbElementsRead = fread(&patch->rpnExpression[0], 1, rpnSize, file);
+	size_t nbElementsRead = fread(patch->rpnExpression.data(), 1, rpnSize, file);
 
 	if (nbElementsRead != rpnSize)
 		errx("%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
@@ -306,7 +306,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	if (sect_HasData(section->type)) {
 		if (section->size) {
 			section->data.resize(section->size);
-			if (size_t nbRead = fread(&section->data[0], 1, section->size, file);
+			if (size_t nbRead = fread(section->data.data(), 1, section->size, file);
 			    nbRead != section->size)
 				errx("%s: Cannot read \"%s\"'s data: %s", fileName, section->name.c_str(),
 				     feof(file) ? "Unexpected end of file" : strerror(errno));

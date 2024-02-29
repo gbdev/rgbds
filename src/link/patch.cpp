@@ -82,7 +82,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 // Small shortcut to avoid a lot of repetition
 #define popRPN() popRPN(patch->src, patch->lineNo)
 
-	uint8_t const *expression = &patch->rpnExpression[0];
+	uint8_t const *expression = patch->rpnExpression.data();
 	int32_t size = (int32_t)patch->rpnExpression.size();
 
 	rpnStack.clear();
