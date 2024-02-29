@@ -76,14 +76,14 @@ for i in *.asm; do
 	for flag in '-d' '-t' '-w'; do
 		if [ -f "${i%.asm}-no${flag}.out" ]; then
 			continueTest "-no${flag}"
-			rgblinkQuiet -o "$gbtemp" "$otemp" >"$outtemp" 2>&1
+			rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${i%.asm}-no${flag}.out" "$outtemp"
 			(( rc = rc || $? ))
 			ran_flag=true
 		fi
 		if [ -f "${i%.asm}${flag}.out" ]; then
 			continueTest "$flag"
-			rgblinkQuiet ${flag} -o "$gbtemp" "$otemp" >"$outtemp" 2>&1
+			rgblinkQuiet ${flag} -o "$gbtemp" "$otemp" 2>"$outtemp"
 			tryDiff "${i%.asm}${flag}.out" "$outtemp"
 			(( rc = rc || $? ))
 			ran_flag=true
@@ -98,7 +98,7 @@ for i in *.asm; do
 		[[ -e "$script" ]] || break # If the glob doesn't match, it just... doesn't expand!
 
 		continueTest "${script#${i%.asm}}"
-		rgblinkQuiet -l "$script" -o "$gbtemp" "$otemp" >"$outtemp" 2>&1
+		rgblinkQuiet -l "$script" -o "$gbtemp" "$otemp" 2>"$outtemp"
 		tryDiff "${script%.link}.out" "$outtemp"
 		(( rc = rc || $? ))
 		ran_flag=true
@@ -109,7 +109,7 @@ for i in *.asm; do
 
 	# The rest of the tests just links a file, and maybe checks the binary
 	continueTest
-	rgblinkQuiet -o "$gbtemp" "$otemp" >"$outtemp" 2>&1
+	rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
 	if [ -f "${i%.asm}.out" ]; then
 		tryDiff "${i%.asm}.out" "$outtemp"
 		(( rc = rc || $? ))
@@ -129,7 +129,7 @@ startTest
 "$RGBASM" -o "$otemp" bank-const/a.asm
 "$RGBASM" -o "$gbtemp2" bank-const/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" >"$outtemp" 2>&1
+rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
 tryDiff bank-const/out.err "$outtemp"
 (( rc = rc || $? ))
 
@@ -161,7 +161,7 @@ i="overlay.asm"
 startTest
 "$RGBASM" -o "$otemp" overlay/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -t -O overlay/overlay.gb "$otemp" >"$outtemp" 2>&1
+rgblinkQuiet -o "$gbtemp" -t -O overlay/overlay.gb "$otemp" 2>"$outtemp"
 tryDiff overlay/out.err "$outtemp"
 (( rc = rc || $? ))
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
@@ -172,7 +172,7 @@ i="scramble-romx.asm"
 startTest
 "$RGBASM" -o "$otemp" scramble-romx/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" >"$outtemp" 2>&1
+rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" 2>"$outtemp"
 tryDiff scramble-romx/out.err "$outtemp"
 (( rc = rc || $? ))
 # This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
