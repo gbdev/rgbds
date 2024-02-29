@@ -27,6 +27,7 @@
 
 #include "extern/utf8decoder.hpp"
 
+#include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp" // strncasecmp, strdup
 
@@ -324,10 +325,10 @@ static void strfmt(char *dest, size_t destLen, char const *fmt,
 		std::variant<uint32_t, char *> &arg = args[a++];
 		static char buf[MAXSTRLEN + 1];
 
-		if (std::holds_alternative<uint32_t>(arg))
-			fmt_PrintNumber(buf, sizeof(buf), &spec, std::get<uint32_t>(arg));
-		else
-			fmt_PrintString(buf, sizeof(buf), &spec, std::get<char *>(arg));
+		std::visit(Visitor{
+			[&](uint32_t num) { fmt_PrintNumber(buf, sizeof(buf), &spec, num); },
+			[&](char *str) { fmt_PrintString(buf, sizeof(buf), &spec, str); },
+		}, arg);
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
 	}

@@ -21,14 +21,6 @@
 
 #include "gfx/main.hpp"
 
-// Convenience feature for visiting the below.
-template<typename... Ts>
-struct Visitor : Ts... {
-	using Ts::operator()...;
-};
-template<typename... Ts>
-Visitor(Ts...) -> Visitor<Ts...>;
-
 class File {
 	// Construct a `std::streambuf *` by default, since it's probably lighter than a `filebuf`.
 	std::variant<std::streambuf *, std::filebuf> _file;
