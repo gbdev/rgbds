@@ -16,8 +16,8 @@ std::map<std::string, struct Symbol *> symbols;
 void sym_AddSymbol(struct Symbol *symbol)
 {
 	// Check if the symbol already exists
-	if (struct Symbol *other = sym_GetSymbol(*symbol->name); other) {
-		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name->c_str(),
+	if (struct Symbol *other = sym_GetSymbol(symbol->name); other) {
+		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name.c_str(),
 			symbol->objFileName);
 		dumpFileStack(symbol->src);
 		fprintf(stderr, "(%" PRIu32 ") and in %s from ",
@@ -28,7 +28,7 @@ void sym_AddSymbol(struct Symbol *symbol)
 	}
 
 	// If not, add it
-	symbols[*symbol->name] = symbol;
+	symbols[symbol->name] = symbol;
 }
 
 struct Symbol *sym_GetSymbol(std::string const &name)

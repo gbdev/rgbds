@@ -63,7 +63,7 @@ static struct Symbol const *getSymbol(std::vector<struct Symbol> const &symbolLi
 
 	// If the symbol is defined elsewhere...
 	if (symbol.type == SYMTYPE_IMPORT)
-		return sym_GetSymbol(*symbol.name);
+		return sym_GetSymbol(symbol.name);
 
 	return &symbol;
 }
@@ -224,13 +224,13 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 			if (!symbol) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of symbol \"%s\", which was not found",
-				      fileSymbols[value].name->c_str());
+				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
 			} else if (!symbol->section) {
 				error(patch->src, patch->lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
-				      fileSymbols[value].name->c_str());
+				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
 			} else {
@@ -385,7 +385,7 @@ static int32_t computeRPNExpr(struct Patch const *patch,
 
 				if (!symbol) {
 					error(patch->src, patch->lineNo,
-					      "Unknown symbol \"%s\"", fileSymbols[value].name->c_str());
+					      "Unknown symbol \"%s\"", fileSymbols[value].name.c_str());
 					isError = true;
 				} else {
 					value = symbol->value;
