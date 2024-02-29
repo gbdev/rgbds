@@ -73,11 +73,6 @@ void sect_AddSection(struct Section *section);
 struct Section *sect_GetSection(std::string const &name);
 
 /*
- * `free`s all section memory that was allocated.
- */
-void sect_CleanupSections(void);
-
-/*
  * Checks if all sections meet reasonable criteria, such as max size
  */
 void sect_DoSanityChecks(void);
