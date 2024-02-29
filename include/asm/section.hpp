@@ -17,10 +17,10 @@ struct FileStackNode;
 struct Section;
 
 struct Patch {
-	struct FileStackNode const *src;
+	FileStackNode const *src;
 	uint32_t lineNo;
 	uint32_t offset;
-	struct Section *pcSection;
+	Section *pcSection;
 	uint32_t pcOffset;
 	uint8_t type;
 	std::vector<uint8_t> rpn;
@@ -30,14 +30,14 @@ struct Section {
 	char *name;
 	enum SectionType type;
 	enum SectionModifier modifier;
-	struct FileStackNode const *src; // Where the section was defined
+	FileStackNode const *src; // Where the section was defined
 	uint32_t fileLine; // Line where the section was defined
 	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
 	uint8_t align; // Exactly as specified in `ALIGN[]`
 	uint16_t alignOfs;
-	std::deque<struct Patch> patches;
+	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
 };
 
@@ -47,17 +47,17 @@ struct SectionSpec {
 	uint16_t alignOfs;
 };
 
-extern std::deque<struct Section> sectionList;
-extern struct Section *currentSection;
+extern std::deque<Section> sectionList;
+extern Section *currentSection;
 
-struct Section *sect_FindSectionByName(char const *name);
+Section *sect_FindSectionByName(char const *name);
 void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-		     struct SectionSpec const *attributes, enum SectionModifier mod);
+		     SectionSpec const *attributes, enum SectionModifier mod);
 void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-			 struct SectionSpec const *attributes, enum SectionModifier mod);
+			 SectionSpec const *attributes, enum SectionModifier mod);
 void sect_EndLoadSection(void);
 
-struct Section *sect_GetSymbolSection(void);
+Section *sect_GetSymbolSection(void);
 uint32_t sect_GetSymbolOffset(void);
 uint32_t sect_GetOutputOffset(void);
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
@@ -73,11 +73,11 @@ void sect_AbsByteGroup(uint8_t const *s, size_t length);
 void sect_AbsWordGroup(uint8_t const *s, size_t length);
 void sect_AbsLongGroup(uint8_t const *s, size_t length);
 void sect_Skip(uint32_t skip, bool ds);
-void sect_RelByte(struct Expression *expr, uint32_t pcShift);
-void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs);
-void sect_RelWord(struct Expression *expr, uint32_t pcShift);
-void sect_RelLong(struct Expression *expr, uint32_t pcShift);
-void sect_PCRelByte(struct Expression *expr, uint32_t pcShift);
+void sect_RelByte(Expression *expr, uint32_t pcShift);
+void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs);
+void sect_RelWord(Expression *expr, uint32_t pcShift);
+void sect_RelLong(Expression *expr, uint32_t pcShift);
+void sect_PCRelByte(Expression *expr, uint32_t pcShift);
 void sect_BinaryFile(char const *s, int32_t startPos);
 void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 
@@ -85,6 +85,6 @@ void sect_EndSection(void);
 void sect_PushSection(void);
 void sect_PopSection(void);
 
-bool sect_IsSizeKnown(struct Section const NONNULL(name));
+bool sect_IsSizeKnown(Section const NONNULL(name));
 
 #endif // RGBDS_SECTION_H

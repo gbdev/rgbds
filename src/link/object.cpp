@@ -25,9 +25,9 @@
 #include "linkdefs.hpp"
 #include "version.hpp"
 
-static std::deque<std::vector<struct Symbol>> symbolLists;
-static std::vector<std::vector<struct FileStackNode>> nodes;
-static std::deque<struct Assertion> assertions;
+static std::deque<std::vector<Symbol>> symbolLists;
+static std::vector<std::vector<FileStackNode>> nodes;
+static std::deque<Assertion> assertions;
 
 // Helper functions for reading object files
 
@@ -128,10 +128,10 @@ static int64_t readlong(FILE *file)
  * @param i The ID of the node in the array
  * @param fileName The filename to report in errors
  */
-static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fileNodes, uint32_t i,
+static void readFileStackNode(FILE *file, std::vector<FileStackNode> &fileNodes, uint32_t i,
 			      char const *fileName)
 {
-	struct FileStackNode &node = fileNodes[i];
+	FileStackNode &node = fileNodes[i];
 	uint32_t parentID;
 
 	tryReadlong(parentID, file,
@@ -167,11 +167,11 @@ static void readFileStackNode(FILE *file, std::vector<struct FileStackNode> &fil
 /*
  * Reads a symbol from a file.
  * @param file The file to read from
- * @param symbol The struct to fill
+ * @param symbol The symbol to fill
  * @param fileName The filename to report in errors
  */
-static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
-		       std::vector<struct FileStackNode> const &fileNodes)
+static void readSymbol(FILE *file, Symbol *symbol, char const *fileName,
+		       std::vector<FileStackNode> const &fileNodes)
 {
 	tryReadstring(symbol->name, file, "%s: Cannot read symbol name: %s", fileName);
 	tryGetc(enum ExportLevel, symbol->type, file, "%s: Cannot read \"%s\"'s type: %s",
@@ -198,12 +198,12 @@ static void readSymbol(FILE *file, struct Symbol *symbol, char const *fileName,
 /*
  * Reads a patch from a file.
  * @param file The file to read from
- * @param patch The struct to fill
+ * @param patch The patch to fill
  * @param fileName The filename to report in errors
  * @param i The number of the patch to report in errors
  */
-static void readPatch(FILE *file, struct Patch *patch, char const *fileName, std::string const &sectName,
-		      uint32_t i, std::vector<struct FileStackNode> const &fileNodes)
+static void readPatch(FILE *file, Patch *patch, char const *fileName, std::string const &sectName,
+		      uint32_t i, std::vector<FileStackNode> const &fileNodes)
 {
 	uint32_t nodeID, rpnSize;
 	enum PatchType type;
@@ -243,9 +243,9 @@ static void readPatch(FILE *file, struct Patch *patch, char const *fileName, std
 
 /*
  * Sets a patch's pcSection from its pcSectionID.
- * @param patch The struct to fix
+ * @param patch The patch to fix
  */
-static void linkPatchToPCSect(struct Patch *patch, std::vector<struct Section *> const &fileSections)
+static void linkPatchToPCSect(Patch *patch, std::vector<Section *> const &fileSections)
 {
 	patch->pcSection = patch->pcSectionID != (uint32_t)-1 ? fileSections[patch->pcSectionID]
 							      : NULL;
@@ -254,11 +254,11 @@ static void linkPatchToPCSect(struct Patch *patch, std::vector<struct Section *>
 /*
  * Reads a section from a file.
  * @param file The file to read from
- * @param section The struct to fill
+ * @param section The section to fill
  * @param fileName The filename to report in errors
  */
-static void readSection(FILE *file, struct Section *section, char const *fileName,
-			std::vector<struct FileStackNode> const &fileNodes)
+static void readSection(FILE *file, Section *section, char const *fileName,
+			std::vector<FileStackNode> const &fileNodes)
 {
 	int32_t tmp;
 	uint8_t byte;
@@ -330,7 +330,7 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
  * @param symbol The symbol to link
  * @param section The section to link
  */
-static void linkSymToSect(struct Symbol &symbol, struct Section *section)
+static void linkSymToSect(Symbol &symbol, Section *section)
 {
 	uint32_t a = 0, b = section->symbols.size();
 
@@ -349,11 +349,11 @@ static void linkSymToSect(struct Symbol &symbol, struct Section *section)
 /*
  * Reads an assertion from a file
  * @param file The file to read from
- * @param assert The struct to fill
+ * @param assert The assertion to fill
  * @param fileName The filename to report in errors
  */
-static void readAssertion(FILE *file, struct Assertion *assert, char const *fileName, uint32_t i,
-			  std::vector<struct FileStackNode> const &fileNodes)
+static void readAssertion(FILE *file, Assertion *assert, char const *fileName, uint32_t i,
+			  std::vector<FileStackNode> const &fileNodes)
 {
 	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
 
@@ -363,7 +363,7 @@ static void readAssertion(FILE *file, struct Assertion *assert, char const *file
 	tryReadstring(assert->message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
 
-static struct Section *getMainSection(struct Section *section)
+static Section *getMainSection(Section *section)
 {
 	if (section->modifier != SECTION_NORMAL)
 		section = sect_GetSection(section->name);
@@ -406,7 +406,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			.data = fileName
 		});
 
-		std::vector<struct Symbol> &fileSymbols = symbolLists.emplace_front();
+		std::vector<Symbol> &fileSymbols = symbolLists.emplace_front();
 
 		sdobj_ReadFile(&nodes[fileID].back(), file, fileSymbols);
 		return;
@@ -446,13 +446,13 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		readFileStackNode(file, nodes[fileID], i, fileName);
 
 	// This file's symbols, kept to link sections to them
-	std::vector<struct Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);
+	std::vector<Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);
 	std::vector<uint32_t> nbSymPerSect(nbSections, 0);
 
 	verbosePrint("Reading %" PRIu32 " symbols...\n", nbSymbols);
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		// Read symbol
-		struct Symbol &symbol = fileSymbols[i];
+		Symbol &symbol = fileSymbols[i];
 
 		readSymbol(file, &symbol, fileName, nodes[fileID]);
 
@@ -463,12 +463,12 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	}
 
 	// This file's sections, stored in a table to link symbols to them
-	std::vector<struct Section *> fileSections(nbSections, NULL);
+	std::vector<Section *> fileSections(nbSections, NULL);
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
 		// Read section
-		fileSections[i] = new(std::nothrow) struct Section();
+		fileSections[i] = new(std::nothrow) Section();
 		if (!fileSections[i])
 			err("%s: Failed to create new section", fileName);
 
@@ -483,7 +483,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
 		if (sect_HasData(fileSections[i]->type)) {
-			for (struct Patch &patch : fileSections[i]->patches)
+			for (Patch &patch : fileSections[i]->patches)
 				linkPatchToPCSect(&patch, fileSections);
 		}
 	}
@@ -495,7 +495,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 		if (sectionID == -1) {
 			fileSymbols[i].section = NULL;
 		} else {
-			struct Section *section = fileSections[sectionID];
+			Section *section = fileSections[sectionID];
 
 			// Give the section a pointer to the symbol as well
 			linkSymToSect(fileSymbols[i], section);
@@ -515,7 +515,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
-		struct Assertion &assertion = assertions.emplace_front();
+		Assertion &assertion = assertions.emplace_front();
 
 		readAssertion(file, &assertion, fileName, i, nodes[fileID]);
 		linkPatchToPCSect(&assertion.patch, fileSections);
@@ -540,9 +540,9 @@ void obj_Setup(unsigned int nbFiles)
 	nodes.resize(nbFiles);
 }
 
-static void freeSection(struct Section *section)
+static void freeSection(Section *section)
 {
-	for (struct Section *next; section; section = next) {
+	for (Section *next; section; section = next) {
 		next = section->nextu;
 		delete section;
 	};

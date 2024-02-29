@@ -16,7 +16,7 @@
 #include "linkdefs.hpp"
 
 struct FileStackNode {
-	struct FileStackNode *parent; // Pointer to parent node, for error reporting
+	FileStackNode *parent; // Pointer to parent node, for error reporting
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
 
@@ -43,9 +43,9 @@ extern size_t maxRecursionDepth;
 
 struct MacroArgs;
 
-void fstk_Dump(struct FileStackNode const *node, uint32_t lineNo);
+void fstk_Dump(FileStackNode const *node, uint32_t lineNo);
 void fstk_DumpCurrent(void);
-struct FileStackNode *fstk_GetFileStack(void);
+FileStackNode *fstk_GetFileStack(void);
 // The lifetime of the returned chars is until reaching the end of that file
 char const *fstk_GetFileName(void);
 
@@ -59,7 +59,7 @@ std::string *fstk_FindFile(char const *path);
 
 bool yywrap(void);
 void fstk_RunInclude(char const *path);
-void fstk_RunMacro(char const *macroName, struct MacroArgs *args);
+void fstk_RunMacro(char const *macroName, MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size);
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size);

@@ -12,11 +12,11 @@
 
 struct MacroArgs;
 
-struct MacroArgs *macro_GetCurrentArgs(void);
-struct MacroArgs *macro_NewArgs(void);
-void macro_AppendArg(struct MacroArgs *args, char *s);
-void macro_UseNewArgs(struct MacroArgs *args);
-void macro_FreeArgs(struct MacroArgs *args);
+MacroArgs *macro_GetCurrentArgs(void);
+MacroArgs *macro_NewArgs(void);
+void macro_AppendArg(MacroArgs *args, char *s);
+void macro_UseNewArgs(MacroArgs *args);
+void macro_FreeArgs(MacroArgs *args);
 char const *macro_GetArg(uint32_t i);
 char const *macro_GetAllArgs(void);
 

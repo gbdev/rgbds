@@ -56,7 +56,7 @@ static unsigned long long getRandomBits(unsigned count) {
 	return result;
 }
 
-static void generate_tile_attributes(struct Attributes * restrict attributes) {
+static void generate_tile_attributes(Attributes * restrict attributes) {
 	/*
 	 * Images have ten colors, grouped into two groups of 5 colors. The palette index indicates two
 	 * things: which one of those groups will be used, and which colors out of those 5 will be used
@@ -162,8 +162,8 @@ static uint8_t _5to8(uint8_t five) {
 
 // Can't mark as `const`, as the array type is otherwise not compatible (augh)
 static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_NB_ELMS(60)][4],
-                        unsigned char /* const */ (*tileData)[8][8],
-                        struct Attributes const *attributes, uint8_t width, uint8_t height) {
+                        unsigned char /* const */ (*tileData)[8][8], Attributes const *attributes,
+                        uint8_t width, uint8_t height) {
 	uint8_t const nbTiles = width * height;
 	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	png_infop pngInfo = png_create_info_struct(png);
@@ -224,7 +224,7 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 static void generate_random_image(char const *filename) {
 #define MIN_TILES_PER_SIDE 3
 #define MAX_TILES          ((MIN_TILES_PER_SIDE + 7) * (MIN_TILES_PER_SIDE + 7))
-	struct Attributes attributes[MAX_TILES];
+	Attributes attributes[MAX_TILES];
 	unsigned char tileData[MAX_TILES][8][8];
 	uint8_t width = getRandomBits(3) + MIN_TILES_PER_SIDE,
 	        height = getRandomBits(3) + MIN_TILES_PER_SIDE;

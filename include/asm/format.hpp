@@ -35,13 +35,13 @@ struct StrFmtArgList {
 	std::vector<std::variant<uint32_t, char *>> *args;
 };
 
-struct FormatSpec fmt_NewSpec(void);
-bool fmt_IsEmpty(struct FormatSpec const *fmt);
-bool fmt_IsValid(struct FormatSpec const *fmt);
-bool fmt_IsFinished(struct FormatSpec const *fmt);
-void fmt_UseCharacter(struct FormatSpec *fmt, int c);
-void fmt_FinishCharacters(struct FormatSpec *fmt);
-void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value);
-void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value);
+FormatSpec fmt_NewSpec(void);
+bool fmt_IsEmpty(FormatSpec const *fmt);
+bool fmt_IsValid(FormatSpec const *fmt);
+bool fmt_IsFinished(FormatSpec const *fmt);
+void fmt_UseCharacter(FormatSpec *fmt, int c);
+void fmt_FinishCharacters(FormatSpec *fmt);
+void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const *value);
+void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t value);
 
 #endif // RGBDS_FORMAT_SPEC_H

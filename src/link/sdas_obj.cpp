@@ -25,7 +25,7 @@ enum NumberType {
 	OCT = 8, // Q
 };
 
-static void consumeLF(struct FileStackNode const *where, uint32_t lineNo, FILE *file) {
+static void consumeLF(FileStackNode const *where, uint32_t lineNo, FILE *file) {
 	if (getc(file) != '\n')
 		fatal(where, lineNo, "Bad line ending (CR without LF)");
 }
@@ -33,7 +33,7 @@ static void consumeLF(struct FileStackNode const *where, uint32_t lineNo, FILE *
 static char const *delim = " \f\n\r\t\v"; // Whitespace according to the C and POSIX locales
 
 static int nextLine(std::vector<char> &lineBuf, uint32_t &lineNo,
-		    struct FileStackNode const *where, FILE *file) {
+		    FileStackNode const *where, FILE *file) {
 retry:
 	++lineNo;
 	int firstChar = getc(file);
@@ -88,7 +88,7 @@ static uint32_t readNumber(char const *restrict str, char const **endptr, enum N
 	}
 }
 
-static uint32_t parseNumber(struct FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
+static uint32_t parseNumber(FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
 	if (str[0] == '\0')
 		fatal(where, lineNo, "Expected number, got empty string");
 
@@ -100,7 +100,7 @@ static uint32_t parseNumber(struct FileStackNode const *where, uint32_t lineNo, 
 	return res;
 }
 
-static uint8_t parseByte(struct FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
+static uint8_t parseByte(FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
 	uint32_t num = parseNumber(where, lineNo, str, base);
 
 	if (num > UINT8_MAX)
@@ -133,7 +133,7 @@ enum RelocFlags {
 		| 1 << RELOC_EXPR24 | 1 << RELOC_BANKBYTE,
 };
 
-void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<struct Symbol> &fileSymbols) {
+void sdobj_ReadFile(FileStackNode const *where, FILE *file, std::vector<Symbol> &fileSymbols) {
 	std::vector<char> line(256);
 	char const *token;
 
@@ -216,10 +216,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 	// Now, let's parse the rest of the lines as they come!
 
 	struct FileSection {
-		struct Section *section;
+		Section *section;
 		uint16_t writeIndex;
 	};
-	std::vector<struct FileSection> fileSections;
+	std::vector<FileSection> fileSections;
 	std::vector<uint8_t> data;
 
 	for (;;) {
@@ -236,7 +236,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (fileSections.size() == expectedNbAreas)
 				warning(where, lineNo, "Got more 'A' lines than the expected %" PRIu32,
 					expectedNbAreas);
-			struct Section *curSection = new(std::nothrow) struct Section();
+			Section *curSection = new(std::nothrow) Section();
 
 			if (!curSection)
 				fatal(where, lineNo, "Failed to alloc new area: %s", strerror(errno));
@@ -244,7 +244,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			getToken(line.data(), "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
-			for (struct FileSection &entry : fileSections) {
+			for (FileSection &entry : fileSections) {
 				if (!strcmp(token, entry.section->name.c_str()))
 					fatal(where, lineNo, "Area \"%s\" already defined earlier",
 					      token);
@@ -327,7 +327,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (fileSymbols.size() == expectedNbSymbols)
 				warning(where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
 					expectedNbSymbols);
-			struct Symbol &symbol = fileSymbols.emplace_back();
+			Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
 			symbol.objFileName = where->name().c_str();
@@ -358,7 +358,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			} else {
 				// All symbols are exported
 				symbol.type = SYMTYPE_EXPORT;
-				struct Symbol const *other = sym_GetSymbol(symbol.name);
+				Symbol const *other = sym_GetSymbol(symbol.name);
 
 				if (other) {
 					// The same symbol can only be defined twice if neither
@@ -422,7 +422,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				fatal(where, lineNo, "'R' line references area #%" PRIu16 ", but there are only %zu (so far)",
 				      areaIdx, fileSections.size());
 			assert(!fileSections.empty()); // There should be at least one, from the above check
-			struct Section *section = fileSections[areaIdx].section;
+			Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
 			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to `->data`
 			uint16_t addr = data[0] | data[1] << 8;
@@ -489,7 +489,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					warning(where, lineNo, "Unknown reloc flags 0x%x", flags & ~RELOC_ALL_FLAGS);
 
 				// Turn this into a Patch
-				struct Patch &patch = section->patches.emplace_back();
+				Patch &patch = section->patches.emplace_back();
 
 				patch.lineNo = lineNo;
 				patch.src = where;
@@ -520,7 +520,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					if (idx >= fileSymbols.size())
 						fatal(where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu",
 						      idx, fileSymbols.size());
-					struct Symbol const &sym = fileSymbols[idx];
+					Symbol const &sym = fileSymbols[idx];
 
 					// SDCC has a bunch of "magic symbols" that start with a
 					// letter and an underscore. These are not compatibility
@@ -571,7 +571,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					if (fileSections[idx].section->isAddressFixed)
 						baseValue -= fileSections[idx].section->org;
 					std::string const &name = fileSections[idx].section->name;
-					struct Section const *other = sect_GetSection(name);
+					Section const *other = sect_GetSection(name);
 
 					// Unlike with `s_<AREA>`, referencing an area in this way
 					// wants the beginning of this fragment, so we must add the
@@ -678,8 +678,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 	nbSectionsToAssign += fileSections.size();
 
-	for (struct FileSection &entry : fileSections) {
-		struct Section *section = entry.section;
+	for (FileSection &entry : fileSections) {
+		Section *section = entry.section;
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (entry.writeIndex != section->size && entry.writeIndex != 0)
@@ -690,7 +690,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
-			for (struct Symbol *symbol : section->symbols)
+			for (Symbol *symbol : section->symbols)
 				symbol->offset += section->offset;
 		}
 	}

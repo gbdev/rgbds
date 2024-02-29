@@ -31,7 +31,7 @@
 #include "linkdefs.hpp"
 #include "platform.hpp" // strncasecmp, strdup
 
-static struct CaptureBody captureBody; // Captures a REPT/FOR or MACRO
+static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
 static void upperstring(char *dest, char const *src)
 {
@@ -256,7 +256,7 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 	dest[i] = '\0';
 }
 
-static void initStrFmtArgList(struct StrFmtArgList *args)
+static void initStrFmtArgList(StrFmtArgList *args)
 {
 	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, char *>>();
 	if (!args->args)
@@ -264,7 +264,7 @@ static void initStrFmtArgList(struct StrFmtArgList *args)
 			   strerror(errno));
 }
 
-static void freeStrFmtArgList(struct StrFmtArgList *args)
+static void freeStrFmtArgList(StrFmtArgList *args)
 {
 	free(args->format);
 	for (std::variant<uint32_t, char *> &arg : *args->args) {
@@ -297,7 +297,7 @@ static void strfmt(char *dest, size_t destLen, char const *fmt,
 			continue;
 		}
 
-		struct FormatSpec spec = fmt_NewSpec();
+		FormatSpec spec = fmt_NewSpec();
 
 		while (c != '\0') {
 			fmt_UseCharacter(&spec, c);
@@ -347,7 +347,7 @@ static void strfmt(char *dest, size_t destLen, char const *fmt,
 }
 
 static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue) {
-	struct Expression oldExpr, constExpr, newExpr;
+	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 
 	rpn_Symbol(&oldExpr, symName);
@@ -357,9 +357,9 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	sym_AddVar(symName, newValue);
 }
 
-static void initDsArgList(std::vector<struct Expression> *&args)
+static void initDsArgList(std::vector<Expression> *&args)
 {
-	args = new(std::nothrow) std::vector<struct Expression>();
+	args = new(std::nothrow) std::vector<Expression>();
 	if (!args)
 		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
 }
@@ -455,18 +455,18 @@ enum {
 {
 	char symName[MAXSYMLEN + 1];
 	char string[MAXSTRLEN + 1];
-	struct Expression expr;
+	Expression expr;
 	int32_t constValue;
 	enum RPNCommand compoundEqual;
 	enum SectionModifier sectMod;
-	struct SectionSpec sectSpec;
-	struct MacroArgs *macroArg;
+	SectionSpec sectSpec;
+	MacroArgs *macroArg;
 	enum AssertionType assertType;
-	struct AlignmentSpec alignSpec;
-	std::vector<struct Expression> *dsArgs;
+	AlignmentSpec alignSpec;
+	std::vector<Expression> *dsArgs;
 	std::vector<std::string> *purgeArgs;
-	struct ForArgs forArgs;
-	struct StrFmtArgList strfmtArgs;
+	ForArgs forArgs;
+	StrFmtArgList strfmtArgs;
 	bool captureTerminated;
 }
 
@@ -704,7 +704,7 @@ line		: plain_directive endofline
 			lexer_SetMode(LEXER_NORMAL);
 			lexer_ToggleStringExpansion(true);
 		} endofline {
-			struct Symbol *macro = sym_FindExactSymbol($1);
+			Symbol *macro = sym_FindExactSymbol($1);
 
 			if (macro && macro->type == SYM_MACRO)
 				fprintf(stderr,
@@ -1649,11 +1649,11 @@ string		: T_STRING
 			freeStrFmtArgList(&$3);
 		}
 		| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
-			struct Symbol *sym = sym_FindScopedValidSymbol($3);
+			Symbol *sym = sym_FindScopedValidSymbol($3);
 
 			if (!sym)
 				fatalerror("Unknown symbol \"%s\"\n", $3);
-			struct Section const *section = sym_GetSection(sym);
+			Section const *section = sym_GetSection(sym);
 
 			if (!section)
 				fatalerror("\"%s\" does not belong to any section\n", sym->name);

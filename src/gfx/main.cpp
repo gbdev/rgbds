@@ -110,7 +110,7 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
  * This is because long opt matching, even to a single char, is prioritized
  * over short opt matching
  */
-static struct option const longopts[] = {
+static option const longopts[] = {
     {"auto-attr-map",      no_argument,       NULL, 'A'},
     {"output-attr-map",    no_argument,       NULL, -'A'}, // Deprecated
     {"attr-map",           required_argument, NULL, 'a'},

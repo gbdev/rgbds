@@ -12,29 +12,29 @@
 #include "asm/format.hpp"
 #include "asm/warning.hpp"
 
-struct FormatSpec fmt_NewSpec(void)
+FormatSpec fmt_NewSpec(void)
 {
-	struct FormatSpec fmt = {};
+	FormatSpec fmt = {};
 
 	return fmt;
 }
 
-bool fmt_IsEmpty(struct FormatSpec const *fmt)
+bool fmt_IsEmpty(FormatSpec const *fmt)
 {
 	return !fmt->state;
 }
 
-bool fmt_IsValid(struct FormatSpec const *fmt)
+bool fmt_IsValid(FormatSpec const *fmt)
 {
 	return fmt->valid || fmt->state == FORMAT_DONE;
 }
 
-bool fmt_IsFinished(struct FormatSpec const *fmt)
+bool fmt_IsFinished(FormatSpec const *fmt)
 {
 	return fmt->state >= FORMAT_DONE;
 }
 
-void fmt_UseCharacter(struct FormatSpec *fmt, int c)
+void fmt_UseCharacter(FormatSpec *fmt, int c)
 {
 	if (fmt->state == FORMAT_INVALID)
 		return;
@@ -121,13 +121,13 @@ invalid:
 	}
 }
 
-void fmt_FinishCharacters(struct FormatSpec *fmt)
+void fmt_FinishCharacters(FormatSpec *fmt)
 {
 	if (!fmt_IsValid(fmt))
 		fmt->state = FORMAT_INVALID;
 }
 
-void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, char const *value)
+void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const *value)
 {
 	if (fmt->sign)
 		error("Formatting string with sign flag '%c'\n", fmt->sign);
@@ -166,7 +166,7 @@ void fmt_PrintString(char *buf, size_t bufLen, struct FormatSpec const *fmt, cha
 	buf[totalLen] = '\0';
 }
 
-void fmt_PrintNumber(char *buf, size_t bufLen, struct FormatSpec const *fmt, uint32_t value)
+void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t value)
 {
 	if (fmt->type != 'X' && fmt->type != 'x' && fmt->type != 'b' && fmt->type != 'o'
 	    && fmt->prefix)

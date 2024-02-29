@@ -60,8 +60,8 @@ struct LexerState {
 	// mmap()-dependent IO state
 	bool isMmapped;
 	union {
-		struct MmappedLexerState mmap; // If mmap()ed
-		struct BufferedLexerState cbuf; // Otherwise
+		MmappedLexerState mmap; // If mmap()ed
+		BufferedLexerState cbuf; // Otherwise
 	};
 
 	// Common state
@@ -73,7 +73,7 @@ struct LexerState {
 	uint32_t colNo;
 	int lastToken;
 
-	std::deque<struct IfStackEntry> ifStack;
+	std::deque<IfStackEntry> ifStack;
 
 	bool capturing; // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
@@ -84,18 +84,18 @@ struct LexerState {
 	bool disableInterpolation;
 	size_t macroArgScanDistance; // Max distance already scanned for macro args
 	bool expandStrings;
-	std::deque<struct Expansion> expansions; // Front is the innermost current expansion
+	std::deque<Expansion> expansions; // Front is the innermost current expansion
 };
 
-extern struct LexerState *lexerState;
-extern struct LexerState *lexerStateEOL;
+extern LexerState *lexerState;
+extern LexerState *lexerStateEOL;
 
-static inline void lexer_SetState(struct LexerState *state)
+static inline void lexer_SetState(LexerState *state)
 {
 	lexerState = state;
 }
 
-static inline void lexer_SetStateAtEOL(struct LexerState *state)
+static inline void lexer_SetStateAtEOL(LexerState *state)
 {
 	lexerStateEOL = state;
 }
@@ -118,11 +118,10 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 }
 
 // `path` is referenced, but not held onto..!
-bool lexer_OpenFile(struct LexerState &state, char const *path);
-void lexer_OpenFileView(struct LexerState &state, char const *path, char *buf, size_t size,
-                        uint32_t lineNo);
+bool lexer_OpenFile(LexerState &state, char const *path);
+void lexer_OpenFileView(LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
-void lexer_CleanupState(struct LexerState &state);
+void lexer_CleanupState(LexerState &state);
 void lexer_Init(void);
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
@@ -147,8 +146,8 @@ uint32_t lexer_GetLineNo(void);
 uint32_t lexer_GetColNo(void);
 void lexer_DumpStringExpansions(void);
 int yylex(void);
-bool lexer_CaptureRept(struct CaptureBody *capture);
-bool lexer_CaptureMacroBody(struct CaptureBody *capture);
+bool lexer_CaptureRept(CaptureBody *capture);
+bool lexer_CaptureMacroBody(CaptureBody *capture);
 
 struct AlignmentSpec {
 	uint8_t alignment;

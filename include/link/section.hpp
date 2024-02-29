@@ -16,12 +16,13 @@
 
 struct FileStackNode;
 struct Section;
+struct Symbol;
 
 struct Patch {
-	struct FileStackNode const *src;
+	FileStackNode const *src;
 	uint32_t lineNo;
 	uint32_t offset;
-	struct Section const *pcSection;
+	Section const *pcSection;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
 	enum PatchType type;
@@ -45,11 +46,11 @@ struct Section {
 	uint16_t alignMask;
 	uint16_t alignOfs;
 	std::vector<uint8_t> data; // Array of size `size`, or 0 if `type` does not have data
-	std::vector<struct Patch> patches;
+	std::vector<Patch> patches;
 	// Extra info computed during linking
-	std::vector<struct Symbol> *fileSymbols;
-	std::vector<struct Symbol *> symbols;
-	struct Section *nextu; // The next "component" of this unionized sect
+	std::vector<Symbol> *fileSymbols;
+	std::vector<Symbol *> symbols;
+	Section *nextu; // The next "component" of this unionized sect
 };
 
 /*
@@ -57,20 +58,20 @@ struct Section {
  * This is to avoid exposing the data structure in which sections are stored.
  * @param callback The function to call for each structure.
  */
-void sect_ForEach(void (*callback)(struct Section *));
+void sect_ForEach(void (*callback)(Section *));
 
 /*
  * Registers a section to be processed.
  * @param section The section to register.
  */
-void sect_AddSection(struct Section *section);
+void sect_AddSection(Section *section);
 
 /*
  * Finds a section by its name.
  * @param name The name of the section to look for
  * @return A pointer to the section, or NULL if it wasn't found
  */
-struct Section *sect_GetSection(std::string const &name);
+Section *sect_GetSection(std::string const &name);
 
 /*
  * Checks if all sections meet reasonable criteria, such as max size

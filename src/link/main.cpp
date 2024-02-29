@@ -72,7 +72,7 @@ std::string const &FileStackNode::name() const {
 }
 
 // Helper function to dump a file stack to stderr
-std::string const *dumpFileStack(struct FileStackNode const *node)
+std::string const *dumpFileStack(FileStackNode const *node)
 {
 	std::string const *lastName;
 
@@ -96,7 +96,7 @@ std::string const *dumpFileStack(struct FileStackNode const *node)
 }
 
 void printDiag(char const *fmt, va_list args, char const *type,
-	       struct FileStackNode const *where, uint32_t lineNo)
+	       FileStackNode const *where, uint32_t lineNo)
 {
 	fputs(type, stderr);
 	fputs(": ", stderr);
@@ -108,7 +108,7 @@ void printDiag(char const *fmt, va_list args, char const *type,
 	putc('\n', stderr);
 }
 
-void warning(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list args;
 
@@ -117,7 +117,7 @@ void warning(struct FileStackNode const *where, uint32_t lineNo, char const *fmt
 	va_end(args);
 }
 
-void error(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list args;
 
@@ -143,7 +143,7 @@ void argErr(char flag, char const *fmt, ...)
 		nbErrors++;
 }
 
-[[noreturn]] void fatal(struct FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 {
 	va_list args;
 
@@ -172,7 +172,7 @@ static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
  * This is because long opt matching, even to a single char, is prioritized
  * over short opt matching
  */
-static struct option const longopts[] = {
+static option const longopts[] = {
 	{ "dmg",           no_argument,       NULL, 'd' },
 	{ "linkerscript",  required_argument, NULL, 'l' },
 	{ "map",           required_argument, NULL, 'm' },

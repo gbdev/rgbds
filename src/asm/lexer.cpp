@@ -298,10 +298,10 @@ static bool isWhitespace(int c)
 	return c == ' ' || c == '\t';
 }
 
-struct LexerState *lexerState = NULL;
-struct LexerState *lexerStateEOL = NULL;
+LexerState *lexerState = NULL;
+LexerState *lexerStateEOL = NULL;
 
-static void initState(struct LexerState &state)
+static void initState(LexerState &state)
 {
 	state.mode = LEXER_NORMAL;
 	state.atLineStart = true; // yylex() will init colNo due to this
@@ -364,7 +364,7 @@ void lexer_ReachELSEBlock(void)
 	lexerState->ifStack.front().reachedElseBlock = true;
 }
 
-bool lexer_OpenFile(struct LexerState &state, char const *path)
+bool lexer_OpenFile(LexerState &state, char const *path)
 {
 	bool isStdin = !strcmp(path, "-");
 	struct stat fileInfo;
@@ -431,7 +431,7 @@ bool lexer_OpenFile(struct LexerState &state, char const *path)
 	return true;
 }
 
-void lexer_OpenFileView(struct LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo)
+void lexer_OpenFileView(LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo)
 {
 	state.path = path; // Used to report read errors in `peekInternal`
 	state.isFile = false;
@@ -451,7 +451,7 @@ void lexer_RestartRept(uint32_t lineNo)
 	lexerState->lineNo = lineNo;
 }
 
-void lexer_CleanupState(struct LexerState &state)
+void lexer_CleanupState(LexerState &state)
 {
 	// A big chunk of the lexer state soundness is the file stack ("fstack").
 	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
@@ -523,7 +523,7 @@ void lexer_CheckRecursionDepth(void)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 }
 
-static void freeExpansion(struct Expansion &expansion)
+static void freeExpansion(Expansion &expansion)
 {
 	free(expansion.name);
 	if (expansion.owned)
@@ -573,7 +573,7 @@ static uint32_t readBracketedMacroArgNum(void)
 		}
 		symName[i] = '\0';
 
-		struct Symbol const *sym = sym_FindScopedValidSymbol(symName);
+		Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 		if (!sym) {
 			error("Bracketed symbol \"%s\" does not exist\n", symName);
@@ -654,7 +654,7 @@ static size_t readInternal(size_t bufIndex, size_t nbChars)
 // We only need one character of lookahead, for macro arguments
 static int peekInternal(uint8_t distance)
 {
-	for (struct Expansion &exp : lexerState->expansions) {
+	for (Expansion &exp : lexerState->expansions) {
 		// An expansion that has reached its end will have `exp->offset` == `exp->size`,
 		// and `peekInternal` will continue with its parent
 		assert(exp.offset <= exp.size);
@@ -775,7 +775,7 @@ static void shiftChar(void)
 restart:
 	if (!lexerState->expansions.empty()) {
 		// Advance within the current expansion
-		struct Expansion &expansion = lexerState->expansions.front();
+		Expansion &expansion = lexerState->expansions.front();
 
 		assert(expansion.offset <= expansion.size);
 		expansion.offset++;
@@ -840,7 +840,7 @@ void lexer_DumpStringExpansions(void)
 	if (!lexerState)
 		return;
 
-	for (struct Expansion &exp : lexerState->expansions) {
+	for (Expansion &exp : lexerState->expansions) {
 		// Only register EQUS expansions, not string args
 		if (exp.name)
 			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name);
@@ -1184,7 +1184,7 @@ static char const *readInterpolation(size_t depth)
 
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
-	struct FormatSpec fmt = fmt_NewSpec();
+	FormatSpec fmt = fmt_NewSpec();
 	bool disableInterpolation = lexerState->disableInterpolation;
 
 	// In a context where `lexerState->disableInterpolation` is true, `peek` will expand
@@ -1239,7 +1239,7 @@ static char const *readInterpolation(size_t depth)
 
 	static char buf[MAXSTRLEN + 1];
 
-	struct Symbol const *sym = sym_FindScopedValidSymbol(symName);
+	Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
@@ -1881,7 +1881,7 @@ static int yylex_NORMAL(void)
 				// Local symbols cannot be string expansions
 				if (tokenType == T_ID && lexerState->expandStrings) {
 					// Attempt string expansion
-					struct Symbol const *sym = sym_FindExactSymbol(yylval.symName);
+					Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *s = sym_GetStringValue(sym);
@@ -2286,7 +2286,7 @@ int yylex(void)
 	return token;
 }
 
-static void startCapture(struct CaptureBody *capture)
+static void startCapture(CaptureBody *capture)
 {
 	assert(!lexerState->capturing);
 	lexerState->capturing = true;
@@ -2306,7 +2306,7 @@ static void startCapture(struct CaptureBody *capture)
 	}
 }
 
-static void endCapture(struct CaptureBody *capture)
+static void endCapture(CaptureBody *capture)
 {
 	// This being NULL means we're capturing from the capture buf, which is `realloc`'d during
 	// the whole capture process, and so MUST be retrieved at the end
@@ -2320,7 +2320,7 @@ static void endCapture(struct CaptureBody *capture)
 	lexerState->disableInterpolation = false;
 }
 
-bool lexer_CaptureRept(struct CaptureBody *capture)
+bool lexer_CaptureRept(CaptureBody *capture)
 {
 	startCapture(capture);
 
@@ -2378,7 +2378,7 @@ finish:
 	return c != EOF;
 }
 
-bool lexer_CaptureMacroBody(struct CaptureBody *capture)
+bool lexer_CaptureMacroBody(CaptureBody *capture)
 {
 	startCapture(capture);
 

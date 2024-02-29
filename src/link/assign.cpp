@@ -27,11 +27,11 @@ struct MemoryLocation {
 struct FreeSpace {
 	uint16_t address;
 	uint16_t size;
-	struct FreeSpace *next, *prev;
+	FreeSpace *next, *prev;
 };
 
 // Table of free space for each bank
-struct FreeSpace *memory[SECTTYPE_INVALID];
+FreeSpace *memory[SECTTYPE_INVALID];
 
 uint64_t nbSectionsToAssign;
 
@@ -39,13 +39,13 @@ uint64_t nbSectionsToAssign;
 static void initFreeSpace(void)
 {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type] = (struct FreeSpace *)malloc(sizeof(*memory[type]) * nbbanks(type));
+		memory[type] = (FreeSpace *)malloc(sizeof(*memory[type]) * nbbanks(type));
 		if (!memory[type])
 			err("Failed to init free space for region %d", type);
 
 		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
 			memory[type][bank].next =
-				(struct FreeSpace *)malloc(sizeof(*memory[type][0].next));
+				(FreeSpace *)malloc(sizeof(*memory[type][0].next));
 			if (!memory[type][bank].next)
 				err("Failed to init free space for region %d bank %" PRIu32,
 				    type, bank);
@@ -62,14 +62,14 @@ static void initFreeSpace(void)
  * @param section The section to assign
  * @param location The location to assign the section to
  */
-static void assignSection(struct Section *section, struct MemoryLocation const *location)
+static void assignSection(Section *section, MemoryLocation const *location)
 {
 	section->org = location->address;
 	section->bank = location->bank;
 
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
-	for (struct Section *next = section->nextu; next != NULL; next = next->nextu) {
+	for (Section *next = section->nextu; next != NULL; next = next->nextu) {
 		next->org = section->org;
 		next->bank = section->bank;
 	}
@@ -88,9 +88,8 @@ static void assignSection(struct Section *section, struct MemoryLocation const *
  * @param location The location to attempt placing the section at
  * @return True if the location is suitable, false otherwise.
  */
-static bool isLocationSuitable(struct Section const *section,
-			       struct FreeSpace const *freeSpace,
-			       struct MemoryLocation const *location)
+static bool isLocationSuitable(Section const *section, FreeSpace const *freeSpace,
+			       MemoryLocation const *location)
 {
 	if (section->isAddressFixed && section->org != location->address)
 		return false;
@@ -108,12 +107,11 @@ static bool isLocationSuitable(struct Section const *section,
 /*
  * Finds a suitable location to place a section at.
  * @param section The section to be placed
- * @param location A pointer to a location struct that will be filled
+ * @param location A pointer to a memory location that will be filled
  * @return A pointer to the free space encompassing the location, or NULL if
  *         none was found
  */
-static struct FreeSpace *getPlacement(struct Section const *section,
-				      struct MemoryLocation *location)
+static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 {
 	static uint16_t curScrambleROM = 0;
 	static uint8_t curScrambleWRAM = 0;
@@ -137,7 +135,7 @@ static struct FreeSpace *getPlacement(struct Section const *section,
 	} else {
 		location->bank = sectionTypeInfo[section->type].firstBank;
 	}
-	struct FreeSpace *space;
+	FreeSpace *space;
 
 	for (;;) {
 		// Switch to the beginning of the next bank
@@ -226,9 +224,9 @@ static struct FreeSpace *getPlacement(struct Section const *section,
  *          sections of decreasing size.
  * @param section The section to place
  */
-static void placeSection(struct Section *section)
+static void placeSection(Section *section)
 {
-	struct MemoryLocation location;
+	MemoryLocation location;
 
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
 	if (section->size == 0) {
@@ -246,7 +244,7 @@ static void placeSection(struct Section *section)
 
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	struct FreeSpace *freeSpace = getPlacement(section, &location);
+	FreeSpace *freeSpace = getPlacement(section, &location);
 
 	if (freeSpace) {
 		assignSection(section, &location);
@@ -266,7 +264,7 @@ static void placeSection(struct Section *section)
 			free(freeSpace);
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
-			struct FreeSpace *newSpace = (struct FreeSpace *)malloc(sizeof(*newSpace));
+			FreeSpace *newSpace = (FreeSpace *)malloc(sizeof(*newSpace));
 
 			if (!newSpace)
 				err("Failed to split new free space");
@@ -334,14 +332,14 @@ static void placeSection(struct Section *section)
 #define  BANK_CONSTRAINED (1 << 2)
 #define   ORG_CONSTRAINED (1 << 1)
 #define ALIGN_CONSTRAINED (1 << 0)
-static std::deque<struct Section *> unassignedSections[1 << 3];
+static std::deque<Section *> unassignedSections[1 << 3];
 
 /*
  * Categorize a section depending on how constrained it is
  * This is so the most-constrained sections are placed first
  * @param section The section to categorize
  */
-static void categorizeSection(struct Section *section)
+static void categorizeSection(Section *section)
 {
 	uint8_t constraints = 0;
 
@@ -353,7 +351,7 @@ static void categorizeSection(struct Section *section)
 	else if (section->isAlignFixed)
 		constraints |= ALIGN_CONSTRAINED;
 
-	std::deque<struct Section *> &sections = unassignedSections[constraints];
+	std::deque<Section *> &sections = unassignedSections[constraints];
 	auto pos = sections.begin();
 
 	// Insert section while keeping the list sorted by decreasing size
@@ -380,7 +378,7 @@ void assign_AssignSections(void)
 
 	// Specially process fully-constrained sections because of overlaying
 	verbosePrint("Assigning bank+org-constrained...\n");
-	for (struct Section *section : unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED])
+	for (Section *section : unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED])
 		placeSection(section);
 
 	// If all sections were fully constrained, we have nothing left to do
@@ -392,9 +390,9 @@ void assign_AssignSections(void)
 	if (overlayFileName) {
 		fprintf(stderr, "FATAL: All sections must be fixed when using an overlay file");
 		uint8_t nbSections = 0;
-		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
-		     constraints >= 0; constraints--) {
-			for (struct Section *section : unassignedSections[constraints]) {
+		for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0;
+		     constraints--) {
+			for (Section *section : unassignedSections[constraints]) {
 				fprintf(stderr, "%c \"%s\"", nbSections == 0 ? ';': ',',
 					section->name.c_str());
 				nbSections++;
@@ -411,9 +409,8 @@ max_out:
 	}
 
 	// Assign all remaining sections by decreasing constraint order
-	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED;
-	     constraints >= 0; constraints--) {
-		for (struct Section *section : unassignedSections[constraints])
+	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0; constraints--) {
+		for (Section *section : unassignedSections[constraints])
 			placeSection(section);
 
 		if (!nbSectionsToAssign)
@@ -427,11 +424,10 @@ void assign_Cleanup(void)
 {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
-			struct FreeSpace *ptr =
-				memory[type][bank].next;
+			FreeSpace *ptr = memory[type][bank].next;
 
 			while (ptr) {
-				struct FreeSpace *next = ptr->next;
+				FreeSpace *next = ptr->next;
 
 				free(ptr);
 				ptr = next;

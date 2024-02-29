@@ -30,16 +30,16 @@ FILE *symFile;
 FILE *mapFile;
 
 struct SortedSymbol {
-	struct Symbol const *sym;
+	Symbol const *sym;
 	uint16_t addr;
 };
 
 struct SortedSections {
-	std::deque<struct Section const *> sections;
-	std::deque<struct Section const *> zeroLenSections;
+	std::deque<Section const *> sections;
+	std::deque<Section const *> zeroLenSections;
 };
 
-static std::deque<struct SortedSections> sections[SECTTYPE_INVALID];
+static std::deque<SortedSections> sections[SECTTYPE_INVALID];
 
 // Defines the order in which types are output to the sym and map files
 static enum SectionType typeMap[SECTTYPE_INVALID] = {
@@ -53,7 +53,7 @@ static enum SectionType typeMap[SECTTYPE_INVALID] = {
 	SECTTYPE_HRAM
 };
 
-void out_AddSection(struct Section const *section)
+void out_AddSection(Section const *section)
 {
 	static const uint32_t maxNbBanks[SECTTYPE_INVALID] = {
 		1,          // SECTTYPE_WRAM0
@@ -77,7 +77,7 @@ void out_AddSection(struct Section const *section)
 	for (uint32_t i = sections[section->type].size(); i < minNbBanks; i++)
 		sections[section->type].emplace_back();
 
-	std::deque<struct Section const *> *ptr = section->size
+	std::deque<Section const *> *ptr = section->size
 		? &sections[section->type][targetBank].sections
 		: &sections[section->type][targetBank].zeroLenSections;
 	auto pos = ptr->begin();
@@ -88,11 +88,11 @@ void out_AddSection(struct Section const *section)
 	ptr->insert(pos, section);
 }
 
-struct Section const *out_OverlappingSection(struct Section const *section)
+Section const *out_OverlappingSection(Section const *section)
 {
 	uint32_t bank = section->bank - sectionTypeInfo[section->type].firstBank;
 
-	for (struct Section const *ptr : sections[section->type][bank].sections) {
+	for (Section const *ptr : sections[section->type][bank].sections) {
 		if (ptr->org < section->org + section->size && section->org < ptr->org + ptr->size)
 			return ptr;
 	}
@@ -159,13 +159,12 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks)
  * @param baseOffset The address of the bank's first byte in GB address space
  * @param size The size of the bank
  */
-static void writeBank(std::deque<struct Section const *> *bankSections, uint16_t baseOffset,
-		      uint16_t size)
+static void writeBank(std::deque<Section const *> *bankSections, uint16_t baseOffset, uint16_t size)
 {
 	uint16_t offset = 0;
 
 	if (bankSections) {
-		for (struct Section const *section : *bankSections) {
+		for (Section const *section : *bankSections) {
 			assert(section->offset == 0);
 			// Output padding up to the next SECTION
 			while (offset + baseOffset < section->org) {
@@ -288,7 +287,7 @@ static void printSymName(char const *name)
 
 // Comparator function for `std::stable_sort` to sort symbols
 // Symbols are ordered by address, then by parentage
-static int compareSymbols(struct SortedSymbol const &sym1, struct SortedSymbol const &sym2)
+static int compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2)
 {
 	if (sym1.addr != sym2.addr)
 		return sym1.addr < sym2.addr ? -1 : 1;
@@ -318,16 +317,15 @@ static int compareSymbols(struct SortedSymbol const &sym1, struct SortedSymbol c
  * Write a bank's contents to the sym file
  * @param bankSections The bank's sections
  */
-static void writeSymBank(struct SortedSections const &bankSections,
-			 enum SectionType type, uint32_t bank)
+static void writeSymBank(SortedSections const &bankSections, enum SectionType type, uint32_t bank)
 {
 #define forEachSortedSection(sect, ...) do { \
 	for (auto it = bankSections.zeroLenSections.begin(); it != bankSections.zeroLenSections.end(); it++) { \
-		for (struct Section const *sect = *it; sect; sect = sect->nextu) \
+		for (Section const *sect = *it; sect; sect = sect->nextu) \
 			__VA_ARGS__ \
 	} \
 	for (auto it = bankSections.sections.begin(); it != bankSections.sections.end(); it++) { \
-		for (struct Section const *sect = *it; sect; sect = sect->nextu) \
+		for (Section const *sect = *it; sect; sect = sect->nextu) \
 			__VA_ARGS__ \
 	} \
 } while (0)
@@ -341,12 +339,12 @@ static void writeSymBank(struct SortedSections const &bankSections,
 	if (!nbSymbols)
 		return;
 
-	std::vector<struct SortedSymbol> symList;
+	std::vector<SortedSymbol> symList;
 
 	symList.reserve(nbSymbols);
 
 	forEachSortedSection(sect, {
-		for (struct Symbol const *sym : sect->symbols) {
+		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (!sym->name.empty() && canStartSymName(sym->name[0]))
 				symList.push_back({ .sym = sym, .addr = (uint16_t)(sym->offset + sect->org) });
@@ -359,7 +357,7 @@ static void writeSymBank(struct SortedSections const &bankSections,
 
 	uint32_t symBank = bank + sectionTypeInfo[type].firstBank;
 
-	for (struct SortedSymbol &sym : symList) {
+	for (SortedSymbol &sym : symList) {
 		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym.addr);
 		printSymName(sym.sym->name.c_str());
 		putc('\n', symFile);
@@ -379,8 +377,7 @@ static void writeEmptySpace(uint16_t begin, uint16_t end)
 /*
  * Write a bank's contents to the map file
  */
-static void writeMapBank(struct SortedSections const &sectList, enum SectionType type,
-			 uint32_t bank)
+static void writeMapBank(SortedSections const &sectList, enum SectionType type, uint32_t bank)
 {
 	fprintf(mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name.c_str(),
 		bank + sectionTypeInfo[type].firstBank);
@@ -395,7 +392,7 @@ static void writeMapBank(struct SortedSections const &sectList, enum SectionType
 		auto &pickedSection = section == sectList.sections.end() ? zeroLenSection
 			: zeroLenSection == sectList.zeroLenSections.end() ? section
 			: (*section)->org < (*zeroLenSection)->org ? section : zeroLenSection;
-		struct Section const *sect = *pickedSection;
+		Section const *sect = *pickedSection;
 
 		used += sect->size;
 		assert(sect->offset == 0);
@@ -416,7 +413,7 @@ static void writeMapBank(struct SortedSections const &sectList, enum SectionType
 		if (!noSymInMap) {
 			// Also print symbols in the following "pieces"
 			for (uint16_t org = sect->org; sect; sect = sect->nextu) {
-				for (struct Symbol *sym : sect->symbols)
+				for (Symbol *sym : sect->symbols)
 					// Space matches "\tSECTION: $xxxx ..."
 					fprintf(mapFile, "\t         $%04" PRIx32 " = %s\n",
 						sym->offset + org, sym->name.c_str());

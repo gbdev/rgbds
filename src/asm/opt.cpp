@@ -31,7 +31,7 @@ struct OptStackEntry {
 	enum WarningState warningStates[numWarningStates];
 };
 
-static std::stack<struct OptStackEntry> stack;
+static std::stack<OptStackEntry> stack;
 
 void opt_B(char const chars[2])
 {
@@ -241,7 +241,7 @@ void opt_Parse(char *s)
 
 void opt_Push(void)
 {
-	struct OptStackEntry entry;
+	OptStackEntry entry;
 
 	// Both of these are pulled from lexer.hpp
 	entry.binary[0] = binDigits[0];
@@ -280,7 +280,7 @@ void opt_Pop(void)
 		return;
 	}
 
-	struct OptStackEntry entry = stack.top();
+	OptStackEntry entry = stack.top();
 	stack.pop();
 
 	opt_B(entry.binary);

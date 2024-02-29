@@ -97,7 +97,7 @@ static int depType; // Variants of `-M`
 // except if it doesn't create any ambiguity (`verbose` versus `version`).
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching
-static struct option const longopts[] = {
+static option const longopts[] = {
 	{ "binary-digits",    required_argument, NULL,     'b' },
 	{ "define",           required_argument, NULL,     'D' },
 	{ "export-all",       no_argument,       NULL,     'E' },

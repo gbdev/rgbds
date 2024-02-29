@@ -33,20 +33,20 @@ struct UnionStackEntry {
 };
 
 struct SectionStackEntry {
-	struct Section *section;
-	struct Section *loadSection;
+	Section *section;
+	Section *loadSection;
 	char const *scope; // Section's symbol scope
 	uint32_t offset;
 	int32_t loadOffset;
-	std::stack<struct UnionStackEntry> unionStack;
+	std::stack<UnionStackEntry> unionStack;
 };
 
-std::stack<struct UnionStackEntry> currentUnionStack;
-std::deque<struct SectionStackEntry> sectionStack;
-std::deque<struct Section> sectionList;
+std::stack<UnionStackEntry> currentUnionStack;
+std::deque<SectionStackEntry> sectionStack;
+std::deque<Section> sectionList;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
-struct Section *currentSection = NULL;
-static struct Section *currentLoadSection = NULL;
+Section *currentSection = NULL;
+static Section *currentLoadSection = NULL;
 char const *currentLoadScope = NULL;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
@@ -75,7 +75,7 @@ attr_(warn_unused_result) static bool checkcodesection(void)
 	return false;
 }
 
-attr_(warn_unused_result) static bool checkSectionSize(struct Section const *sect, uint32_t size)
+attr_(warn_unused_result) static bool checkSectionSize(Section const *sect, uint32_t size)
 {
 	uint32_t maxSize = sectionTypeInfo[sect->type].size;
 
@@ -110,9 +110,9 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 		&& (!currentLoadSection || currentLoadSection->size != UINT32_MAX);
 }
 
-struct Section *sect_FindSectionByName(char const *name)
+Section *sect_FindSectionByName(char const *name)
 {
-	for (struct Section &sect : sectionList) {
+	for (Section &sect : sectionList) {
 		if (strcmp(name, sect.name) == 0)
 			return &sect;
 	}
@@ -126,7 +126,7 @@ do { \
 	nbSectErrors++; \
 } while (0)
 
-static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, uint32_t org,
+static unsigned int mergeSectUnion(Section *sect, enum SectionType type, uint32_t org,
 				   uint8_t alignment, uint16_t alignOffset)
 {
 	assert(alignment < 16); // Should be ensured by the caller
@@ -171,8 +171,7 @@ static unsigned int mergeSectUnion(struct Section *sect, enum SectionType type, 
 	return nbSectErrors;
 }
 
-static unsigned int mergeFragments(struct Section *sect, uint32_t org, uint8_t alignment,
-				   uint16_t alignOffset)
+static unsigned int mergeFragments(Section *sect, uint32_t org, uint8_t alignment, uint16_t alignOffset)
 {
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
@@ -220,7 +219,7 @@ static unsigned int mergeFragments(struct Section *sect, uint32_t org, uint8_t a
 	return nbSectErrors;
 }
 
-static void mergeSections(struct Section *sect, enum SectionType type, uint32_t org, uint32_t bank,
+static void mergeSections(Section *sect, enum SectionType type, uint32_t org, uint32_t bank,
 			  uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod)
 {
 	unsigned int nbSectErrors = 0;
@@ -265,12 +264,11 @@ static void mergeSections(struct Section *sect, enum SectionType type, uint32_t 
 #undef fail
 
 // Create a new section, not yet in the list.
-static struct Section *createSection(char const *name, enum SectionType type,
-				     uint32_t org, uint32_t bank, uint8_t alignment,
-				     uint16_t alignOffset, enum SectionModifier mod)
+static Section *createSection(char const *name, enum SectionType type, uint32_t org, uint32_t bank,
+			      uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod)
 {
 	// Add the new section to the list (order doesn't matter)
-	struct Section &sect = sectionList.emplace_front();
+	Section &sect = sectionList.emplace_front();
 
 	sect.name = strdup(name);
 	if (sect.name == NULL)
@@ -294,8 +292,8 @@ static struct Section *createSection(char const *name, enum SectionType type,
 }
 
 // Find a section by name and type. If it doesn't exist, create it.
-static struct Section *getSection(char const *name, enum SectionType type, uint32_t org,
-				  struct SectionSpec const *attrs, enum SectionModifier mod)
+static Section *getSection(char const *name, enum SectionType type, uint32_t org,
+			   SectionSpec const *attrs, enum SectionModifier mod)
 {
 	uint32_t bank = attrs->bank;
 	uint8_t alignment = attrs->alignment;
@@ -357,7 +355,7 @@ static struct Section *getSection(char const *name, enum SectionType type, uint3
 
 	// Check if another section exists with the same name; merge if yes, otherwise create one
 
-	struct Section *sect = sect_FindSectionByName(name);
+	Section *sect = sect_FindSectionByName(name);
 
 	if (sect) {
 		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
@@ -379,17 +377,17 @@ static void changeSection(void)
 
 // Set the current section by name and type
 void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-		     struct SectionSpec const *attribs, enum SectionModifier mod)
+		     SectionSpec const *attribs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
-	for (struct SectionStackEntry &entry : sectionStack) {
+	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && !strcmp(name, entry.section->name))
 			fatalerror("Section '%s' is already on the stack\n", name);
 	}
 
-	struct Section *sect = getSection(name, type, org, attribs, mod);
+	Section *sect = getSection(name, type, org, attribs, mod);
 
 	changeSection();
 	curOffset = mod == SECTION_UNION ? 0 : sect->size;
@@ -399,7 +397,7 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 
 // Set the current section by name and type
 void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-			 struct SectionSpec const *attribs, enum SectionModifier mod)
+			 SectionSpec const *attribs, enum SectionModifier mod)
 {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
@@ -424,7 +422,7 @@ void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
 		return;
 	}
 
-	struct Section *sect = getSection(name, type, org, attribs, mod);
+	Section *sect = getSection(name, type, org, attribs, mod);
 
 	currentLoadScope = sym_GetCurrentSymbolScope();
 	changeSection();
@@ -447,7 +445,7 @@ void sect_EndLoadSection(void)
 	sym_SetCurrentSymbolScope(currentLoadScope);
 }
 
-struct Section *sect_GetSymbolSection(void)
+Section *sect_GetSymbolSection(void)
 {
 	return currentLoadSection ? currentLoadSection : currentSection;
 }
@@ -466,7 +464,7 @@ uint32_t sect_GetOutputOffset(void)
 // Returns how many bytes need outputting for the specified alignment and offset to succeed
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset)
 {
-	struct Section *sect = sect_GetSymbolSection();
+	Section *sect = sect_GetSymbolSection();
 	if (!sect)
 		return 0;
 
@@ -489,7 +487,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset)
 	if (!checksection())
 		return;
 
-	struct Section *sect = sect_GetSymbolSection();
+	Section *sect = sect_GetSymbolSection();
 	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
 
 	if (sect->org != (uint32_t)-1) {
@@ -544,7 +542,7 @@ static void writelong(uint32_t b)
 	writebyte(b >> 24);
 }
 
-static void createPatch(enum PatchType type, struct Expression const *expr, uint32_t pcShift)
+static void createPatch(enum PatchType type, Expression const *expr, uint32_t pcShift)
 {
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
@@ -570,7 +568,7 @@ void sect_StartUnion(void)
 
 static void endUnionMember(void)
 {
-	struct UnionStackEntry &member = currentUnionStack.top();
+	UnionStackEntry &member = currentUnionStack.top();
 	uint32_t memberSize = curOffset - member.start;
 
 	if (memberSize > member.size)
@@ -670,7 +668,7 @@ void sect_Skip(uint32_t skip, bool ds)
 
 // Output a relocatable byte. Checking will be done to see if it
 // is an absolute value in disguise.
-void sect_RelByte(struct Expression *expr, uint32_t pcShift)
+void sect_RelByte(Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -688,7 +686,7 @@ void sect_RelByte(struct Expression *expr, uint32_t pcShift)
 
 // Output several copies of a relocatable byte. Checking will be done to see if
 // it is an absolute value in disguise.
-void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs)
+void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs)
 {
 	if (!checkcodesection())
 		return;
@@ -696,7 +694,7 @@ void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs)
 		return;
 
 	for (uint32_t i = 0; i < n; i++) {
-		struct Expression &expr = exprs[i % exprs.size()];
+		Expression &expr = exprs[i % exprs.size()];
 
 		if (!rpn_isKnown(&expr)) {
 			createPatch(PATCHTYPE_BYTE, &expr, i);
@@ -706,13 +704,13 @@ void sect_RelBytes(uint32_t n, std::vector<struct Expression> &exprs)
 		}
 	}
 
-	for (struct Expression &expr : exprs)
+	for (Expression &expr : exprs)
 		rpn_Free(&expr);
 }
 
 // Output a relocatable word. Checking will be done to see if
 // it's an absolute value in disguise.
-void sect_RelWord(struct Expression *expr, uint32_t pcShift)
+void sect_RelWord(Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -730,7 +728,7 @@ void sect_RelWord(struct Expression *expr, uint32_t pcShift)
 
 // Output a relocatable longword. Checking will be done to see if
 // is an absolute value in disguise.
-void sect_RelLong(struct Expression *expr, uint32_t pcShift)
+void sect_RelLong(Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -748,19 +746,19 @@ void sect_RelLong(struct Expression *expr, uint32_t pcShift)
 
 // Output a PC-relative relocatable byte. Checking will be done to see if it
 // is an absolute value in disguise.
-void sect_PCRelByte(struct Expression *expr, uint32_t pcShift)
+void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(1))
 		return;
-	struct Symbol const *pc = sym_GetPC();
+	Symbol const *pc = sym_GetPC();
 
 	if (!rpn_IsDiffConstant(expr, pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
-		struct Symbol const *sym = rpn_SymbolOf(expr);
+		Symbol const *sym = rpn_SymbolOf(expr);
 		// The offset wraps (jump from ROM to HRAM, for example)
 		int16_t offset;
 
@@ -948,7 +946,7 @@ void sect_PopSection(void)
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
-	struct SectionStackEntry entry = sectionStack.front();
+	SectionStackEntry entry = sectionStack.front();
 	sectionStack.pop_front();
 
 	changeSection();
@@ -976,7 +974,7 @@ void sect_EndSection(void)
 	sym_SetCurrentSymbolScope(NULL);
 }
 
-bool sect_IsSizeKnown(struct Section const NONNULL(sect))
+bool sect_IsSizeKnown(Section const NONNULL(sect))
 {
 	// SECTION UNION and SECTION FRAGMENT can still grow
 	if (sect->modifier != SECTION_NORMAL)
@@ -987,7 +985,7 @@ bool sect_IsSizeKnown(struct Section const NONNULL(sect))
 		return false;
 
 	// Any section on the stack is still growing
-	for (struct SectionStackEntry &entry : sectionStack) {
+	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && !strcmp(sect->name, entry.section->name))
 			return false;
 	}

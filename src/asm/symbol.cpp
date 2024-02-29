@@ -27,23 +27,23 @@
 #include "helpers.hpp"
 #include "version.hpp"
 
-std::map<std::string, struct Symbol> symbols;
+std::map<std::string, Symbol> symbols;
 
 static const char *labelScope; // Current section's label scope
-static struct Symbol *PCSymbol;
-static struct Symbol *_NARGSymbol;
+static Symbol *PCSymbol;
+static Symbol *_NARGSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
 static char savedTIMESTAMP_ISO8601_UTC[256];
 static bool exportAll;
 
-bool sym_IsPC(struct Symbol const *sym)
+bool sym_IsPC(Symbol const *sym)
 {
 	return sym == PCSymbol;
 }
 
-void sym_ForEach(void (*callback)(struct Symbol *))
+void sym_ForEach(void (*callback)(Symbol *))
 {
 	for (auto &it : symbols)
 		callback(&it.second);
@@ -60,13 +60,13 @@ static int32_t Callback_NARG(void)
 
 static int32_t CallbackPC(void)
 {
-	struct Section const *section = sect_GetSymbolSection();
+	Section const *section = sect_GetSymbolSection();
 
 	return section ? section->org + sect_GetSymbolOffset() : 0;
 }
 
 // Get the value field of a symbol
-int32_t sym_GetValue(struct Symbol const *sym)
+int32_t sym_GetValue(Symbol const *sym)
 {
 	if (sym_IsNumeric(sym) && sym->hasCallback)
 		return sym->numCallback();
@@ -78,7 +78,7 @@ int32_t sym_GetValue(struct Symbol const *sym)
 	return sym->value;
 }
 
-static void dumpFilename(struct Symbol const *sym)
+static void dumpFilename(Symbol const *sym)
 {
 	if (sym->src)
 		fstk_Dump(sym->src, sym->fileLine);
@@ -89,16 +89,16 @@ static void dumpFilename(struct Symbol const *sym)
 }
 
 // Set a symbol's definition filename and line
-static void setSymbolFilename(struct Symbol *sym)
+static void setSymbolFilename(Symbol *sym)
 {
 	sym->src = fstk_GetFileStack();
 	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is (NULL, 1) for built-ins
 }
 
 // Update a symbol's definition filename and line
-static void updateSymbolFilename(struct Symbol *sym)
+static void updateSymbolFilename(Symbol *sym)
 {
-	struct FileStackNode *oldSrc = sym->src;
+	FileStackNode *oldSrc = sym->src;
 
 	setSymbolFilename(sym);
 	// If the old node was referenced, ensure the new one is
@@ -108,9 +108,9 @@ static void updateSymbolFilename(struct Symbol *sym)
 }
 
 // Create a new symbol by name
-static struct Symbol *createsymbol(char const *symName)
+static Symbol *createsymbol(char const *symName)
 {
-	struct Symbol &sym = symbols[symName];
+	Symbol &sym = symbols[symName];
 
 	if (snprintf(sym.name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
 		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", symName);
@@ -138,7 +138,7 @@ static void fullSymbolName(char *output, size_t outputSize,
 		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
-static void assignStringSymbol(struct Symbol *sym, char const *value)
+static void assignStringSymbol(Symbol *sym, char const *value)
 {
 	char *string = strdup(value);
 
@@ -150,13 +150,13 @@ static void assignStringSymbol(struct Symbol *sym, char const *value)
 	sym->equs.size = strlen(string);
 }
 
-struct Symbol *sym_FindExactSymbol(char const *symName)
+Symbol *sym_FindExactSymbol(char const *symName)
 {
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : NULL;
 }
 
-struct Symbol *sym_FindScopedSymbol(char const *symName)
+Symbol *sym_FindScopedSymbol(char const *symName)
 {
 	if (char const *localName = strchr(symName, '.'); localName) {
 		if (strchr(localName + 1, '.'))
@@ -173,9 +173,9 @@ struct Symbol *sym_FindScopedSymbol(char const *symName)
 	return sym_FindExactSymbol(symName);
 }
 
-struct Symbol *sym_FindScopedValidSymbol(char const *symName)
+Symbol *sym_FindScopedValidSymbol(char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// `@` has no value outside a section
 	if (sym == PCSymbol && !sect_GetSymbolSection()) {
@@ -188,12 +188,12 @@ struct Symbol *sym_FindScopedValidSymbol(char const *symName)
 	return sym;
 }
 
-struct Symbol const *sym_GetPC(void)
+Symbol const *sym_GetPC(void)
 {
 	return PCSymbol;
 }
 
-static bool isReferenced(struct Symbol const *sym)
+static bool isReferenced(Symbol const *sym)
 {
 	return sym->ID != (uint32_t)-1;
 }
@@ -201,7 +201,7 @@ static bool isReferenced(struct Symbol const *sym)
 // Purge a symbol
 void sym_Purge(std::string const &symName)
 {
-	struct Symbol *sym = sym_FindScopedValidSymbol(symName.c_str());
+	Symbol *sym = sym_FindScopedValidSymbol(symName.c_str());
 
 	if (!sym) {
 		error("'%s' not defined\n", symName.c_str());
@@ -223,7 +223,7 @@ void sym_Purge(std::string const &symName)
 
 uint32_t sym_GetPCValue(void)
 {
-	struct Section const *sect = sect_GetSymbolSection();
+	Section const *sect = sect_GetSymbolSection();
 
 	if (!sect)
 		error("PC has no value outside a section\n");
@@ -235,7 +235,7 @@ uint32_t sym_GetPCValue(void)
 }
 
 // Return a constant symbol's value, assuming it's defined
-uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
+uint32_t sym_GetConstantSymValue(Symbol const *sym)
 {
 	if (sym == PCSymbol)
 		return sym_GetPCValue();
@@ -250,7 +250,7 @@ uint32_t sym_GetConstantSymValue(struct Symbol const *sym)
 // Return a constant symbol's value
 uint32_t sym_GetConstantValue(char const *symName)
 {
-	struct Symbol const *sym = sym_FindScopedSymbol(symName);
+	Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym)
 		error("'%s' not defined\n", symName);
@@ -277,9 +277,9 @@ void sym_SetCurrentSymbolScope(char const *newScope)
  * @param symName The name of the symbol to create
  * @param numeric If false, the symbol may not have been referenced earlier
  */
-static struct Symbol *createNonrelocSymbol(char const *symName, bool numeric)
+static Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 {
-	struct Symbol *sym = sym_FindExactSymbol(symName);
+	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
@@ -300,9 +300,9 @@ static struct Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 }
 
 // Add an equated symbol
-struct Symbol *sym_AddEqu(char const *symName, int32_t value)
+Symbol *sym_AddEqu(char const *symName, int32_t value)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName, true);
+	Symbol *sym = createNonrelocSymbol(symName, true);
 
 	if (!sym)
 		return NULL;
@@ -313,9 +313,9 @@ struct Symbol *sym_AddEqu(char const *symName, int32_t value)
 	return sym;
 }
 
-struct Symbol *sym_RedefEqu(char const *symName, int32_t value)
+Symbol *sym_RedefEqu(char const *symName, int32_t value)
 {
-	struct Symbol *sym = sym_FindExactSymbol(symName);
+	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym)
 		return sym_AddEqu(symName, value);
@@ -349,9 +349,9 @@ struct Symbol *sym_RedefEqu(char const *symName, int32_t value)
  * of the string are enough: sym_AddString("M_PI", "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-struct Symbol *sym_AddString(char const *symName, char const *value)
+Symbol *sym_AddString(char const *symName, char const *value)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName, false);
+	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
 		return NULL;
@@ -360,9 +360,9 @@ struct Symbol *sym_AddString(char const *symName, char const *value)
 	return sym;
 }
 
-struct Symbol *sym_RedefString(char const *symName, char const *value)
+Symbol *sym_RedefString(char const *symName, char const *value)
 {
-	struct Symbol *sym = sym_FindExactSymbol(symName);
+	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym)
 		return sym_AddString(symName, value);
@@ -389,9 +389,9 @@ struct Symbol *sym_RedefString(char const *symName, char const *value)
 }
 
 // Alter a mutable symbol's value
-struct Symbol *sym_AddVar(char const *symName, int32_t value)
+Symbol *sym_AddVar(char const *symName, int32_t value)
 {
-	struct Symbol *sym = sym_FindExactSymbol(symName);
+	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
@@ -416,10 +416,10 @@ struct Symbol *sym_AddVar(char const *symName, int32_t value)
  * @param symName The label's full name (so `.name` is invalid)
  * @return The created symbol
  */
-static struct Symbol *addLabel(char const *symName)
+static Symbol *addLabel(char const *symName)
 {
 	assert(symName[0] != '.'); // The symbol name must have been expanded prior
-	struct Symbol *sym = sym_FindExactSymbol(symName);
+	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = createsymbol(symName);
@@ -445,7 +445,7 @@ static struct Symbol *addLabel(char const *symName)
 }
 
 // Add a local (`.name` or `Parent.name`) relocatable symbol
-struct Symbol *sym_AddLocalLabel(char const *symName)
+Symbol *sym_AddLocalLabel(char const *symName)
 {
 	// Assuming no dots in `labelScope` if defined
 	assert(!labelScope || !strchr(labelScope, '.'));
@@ -479,9 +479,9 @@ struct Symbol *sym_AddLocalLabel(char const *symName)
 }
 
 // Add a relocatable symbol
-struct Symbol *sym_AddLabel(char const *symName)
+Symbol *sym_AddLabel(char const *symName)
 {
-	struct Symbol *sym = addLabel(symName);
+	Symbol *sym = addLabel(symName);
 
 	// Set the symbol as the new scope
 	if (sym)
@@ -492,7 +492,7 @@ struct Symbol *sym_AddLabel(char const *symName)
 static uint32_t anonLabelID;
 
 // Add an anonymous label
-struct Symbol *sym_AddAnonLabel(void)
+Symbol *sym_AddAnonLabel(void)
 {
 	if (anonLabelID == UINT32_MAX) {
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
@@ -537,7 +537,7 @@ void sym_Export(char const *symName)
 		return;
 	}
 
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// If the symbol doesn't exist, create a ref that can be purged
 	if (!sym)
@@ -546,9 +546,9 @@ void sym_Export(char const *symName)
 }
 
 // Add a macro definition
-struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
+Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
 {
-	struct Symbol *sym = createNonrelocSymbol(symName, false);
+	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
 		return NULL;
@@ -566,9 +566,9 @@ struct Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, 
 
 // Flag that a symbol is referenced in an RPN expression
 // and create it if it doesn't exist yet
-struct Symbol *sym_Ref(char const *symName)
+Symbol *sym_Ref(char const *symName)
 {
-	struct Symbol *sym = sym_FindScopedSymbol(symName);
+	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
 		char fullname[MAXSYMLEN + 1];
@@ -593,9 +593,9 @@ void sym_SetExportAll(bool set)
 	exportAll = set;
 }
 
-static struct Symbol *createBuiltinSymbol(char const *symName)
+static Symbol *createBuiltinSymbol(char const *symName)
 {
-	struct Symbol *sym = createsymbol(symName);
+	Symbol *sym = createsymbol(symName);
 
 	sym->isBuiltin = true;
 	sym->hasCallback = true;
@@ -620,7 +620,7 @@ void sym_Init(time_t now)
 	sym_AddVar("_RS", 0)->isBuiltin = true;
 
 #define addSym(fn, name, val) do { \
-	struct Symbol *sym = fn(name, val); \
+	Symbol *sym = fn(name, val); \
 	assert(sym); \
 	sym->isBuiltin = true; \
 } while (0)
@@ -641,7 +641,7 @@ void sym_Init(time_t now)
 		now = 0;
 	}
 
-	const struct tm *time_local = localtime(&now);
+	const tm *time_local = localtime(&now);
 
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
 	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
@@ -649,7 +649,7 @@ void sym_Init(time_t now)
 		 sizeof(savedTIMESTAMP_ISO8601_LOCAL), "\"%Y-%m-%dT%H:%M:%S%z\"",
 		 time_local);
 
-	const struct tm *time_utc = gmtime(&now);
+	const tm *time_utc = gmtime(&now);
 
 	strftime(savedTIMESTAMP_ISO8601_UTC,
 		 sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
