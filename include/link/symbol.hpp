@@ -39,9 +39,4 @@ void sym_AddSymbol(struct Symbol *symbol);
  */
 struct Symbol *sym_GetSymbol(std::string const &name);
 
-/*
- * `free`s all symbol memory that was allocated.
- */
-void sym_CleanupSymbols(void);
-
 #endif // RGBDS_LINK_SYMBOL_H

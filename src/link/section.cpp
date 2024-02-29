@@ -185,11 +185,6 @@ struct Section *sect_GetSection(std::string const &name)
 	return search != sections.end() ? search->second : NULL;
 }
 
-void sect_CleanupSections(void)
-{
-	sections.clear();
-}
-
 static void doSanityChecks(struct Section *section)
 {
 	// Sanity check the section's type

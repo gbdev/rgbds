@@ -550,8 +550,5 @@ static void freeSection(struct Section *section)
 
 void obj_Cleanup(void)
 {
-	sym_CleanupSymbols();
-
 	sect_ForEach(freeSection);
-	sect_CleanupSections();
 }
