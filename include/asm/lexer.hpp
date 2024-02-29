@@ -149,9 +149,4 @@ int yylex(void);
 bool lexer_CaptureRept(CaptureBody *capture);
 bool lexer_CaptureMacroBody(CaptureBody *capture);
 
-struct AlignmentSpec {
-	uint8_t alignment;
-	uint16_t alignOfs;
-};
-
 #endif // RGBDS_ASM_LEXER_H

@@ -4,8 +4,6 @@
 #define RGBDS_FORMAT_SPEC_H
 
 #include <stdint.h>
-#include <variant>
-#include <vector>
 
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
@@ -28,11 +26,6 @@ struct FormatSpec {
 	size_t fracWidth;
 	int type;
 	bool valid;
-};
-
-struct StrFmtArgList {
-	char *format;
-	std::vector<std::variant<uint32_t, char *>> *args;
 };
 
 FormatSpec fmt_NewSpec(void);

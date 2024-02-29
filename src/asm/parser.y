@@ -1,453 +1,119 @@
 /* SPDX-License-Identifier: MIT */
 
-%{
-#include <ctype.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <new>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "asm/charmap.hpp"
-#include "asm/fixpoint.hpp"
-#include "asm/format.hpp"
-#include "asm/fstack.hpp"
-#include "asm/lexer.hpp"
-#include "asm/macro.hpp"
-#include "asm/main.hpp"
-#include "asm/opt.hpp"
-#include "asm/output.hpp"
-#include "asm/rpn.hpp"
-#include "asm/section.hpp"
-#include "asm/symbol.hpp"
-#include "util.hpp"
-#include "asm/warning.hpp"
-
-#include "extern/utf8decoder.hpp"
-
-#include "helpers.hpp"
-#include "linkdefs.hpp"
-#include "platform.hpp" // strncasecmp, strdup
-
-static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
-
-static void upperstring(char *dest, char const *src)
-{
-	while (*src)
-		*dest++ = toupper(*src++);
-	*dest = '\0';
-}
-
-static void lowerstring(char *dest, char const *src)
-{
-	while (*src)
-		*dest++ = tolower(*src++);
-	*dest = '\0';
-}
-
-static uint32_t str2int2(std::vector<uint8_t> const &s)
-{
-	uint32_t length = s.size();
-
-	if (length > 4)
-		warning(WARNING_NUMERIC_STRING_1,
-			"Treating string as a number ignores first %" PRIu32 " character%s\n",
-			length - 4, length == 5 ? "" : "s");
-	else if (length > 1)
-		warning(WARNING_NUMERIC_STRING_2,
-			"Treating %" PRIu32 "-character string as a number\n", length);
-
-	uint32_t r = 0;
-
-	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; i++) {
-		r <<= 8;
-		r |= s[i];
-	}
-
-	return r;
-}
-
-static const char *strrstr(char const *s1, char const *s2)
-{
-	size_t len1 = strlen(s1);
-	size_t len2 = strlen(s2);
-
-	if (len2 > len1)
-		return nullptr;
-
-	for (char const *p = s1 + len1 - len2; p >= s1; p--)
-		if (!strncmp(p, s2, len2))
-			return p;
-
-	return nullptr;
-}
-
-static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName)
-{
-	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
-}
-
-static size_t strlenUTF8(char const *s)
-{
-	size_t len = 0;
-	uint32_t state = 0;
-
-	for (uint32_t codep = 0; *s; s++) {
-		uint8_t byte = *s;
-
-		switch (decode(&state, &codep, byte)) {
-		case 1:
-			errorInvalidUTF8Byte(byte, "STRLEN");
-			state = 0;
-			// fallthrough
-		case 0:
-			len++;
-			break;
-		}
-	}
-
-	// Check for partial code point.
-	if (state != 0)
-		error("STRLEN: Incomplete UTF-8 character\n");
-
-	return len;
-}
-
-static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len)
-{
-	size_t srcIndex = 0;
-	size_t destIndex = 0;
-	uint32_t state = 0;
-	uint32_t codep = 0;
-	uint32_t curLen = 0;
-	uint32_t curPos = 1;
-
-	// Advance to starting position in source string.
-	while (src[srcIndex] && curPos < pos) {
-		switch (decode(&state, &codep, src[srcIndex])) {
-		case 1:
-			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
-			state = 0;
-			// fallthrough
-		case 0:
-			curPos++;
-			break;
-		}
-		srcIndex++;
-	}
-
-	// A position 1 past the end of the string is allowed, but will trigger the
-	// "Length too big" warning below if the length is nonzero.
-	if (!src[srcIndex] && pos > curPos)
-		warning(WARNING_BUILTIN_ARG,
-			"STRSUB: Position %" PRIu32 " is past the end of the string\n", pos);
-
-	// Copy from source to destination.
-	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
-		switch (decode(&state, &codep, src[srcIndex])) {
-		case 1:
-			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
-			state = 0;
-			// fallthrough
-		case 0:
-			curLen++;
-			break;
-		}
-		dest[destIndex++] = src[srcIndex++];
-	}
-
-	if (curLen < len)
-		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
-
-	// Check for partial code point.
-	if (state != 0)
-		error("STRSUB: Incomplete UTF-8 character\n");
-
-	dest[destIndex] = '\0';
-}
-
-static size_t charlenUTF8(char const *s)
-{
-	size_t len;
-
-	for (len = 0; charmap_ConvertNext(&s, nullptr); len++)
-		;
-
-	return len;
-}
-
-static void charsubUTF8(char *dest, char const *src, uint32_t pos)
-{
-	size_t charLen = 1;
-
-	// Advance to starting position in source string.
-	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
-		charLen = charmap_ConvertNext(&src, nullptr);
-
-	char const *start = src;
-
-	if (!charmap_ConvertNext(&src, nullptr))
-		warning(WARNING_BUILTIN_ARG,
-			"CHARSUB: Position %" PRIu32 " is past the end of the string\n", pos);
-
-	// Copy from source to destination.
-	memcpy(dest, start, src - start);
-
-	dest[src - start] = '\0';
-}
-
-static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName)
-{
-	// STRSUB and CHARSUB adjust negative `pos` arguments the same way,
-	// such that position -1 is the last character of a string.
-	if (pos < 0)
-		pos += len + 1;
-	if (pos < 1) {
-		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
-		pos = 1;
-	}
-	return (uint32_t)pos;
-}
-
-static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *rep)
-{
-	size_t oldLen = strlen(old);
-	size_t repLen = strlen(rep);
-	size_t i = 0;
-
-	if (!oldLen) {
-		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string\n");
-		strcpy(dest, src);
-		return;
-	}
-
-	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
-		// Copy anything before the substring to replace
-		unsigned int lenBefore = next - src;
-
-		memcpy(dest + i, src, lenBefore < destLen - i ? lenBefore : destLen - i);
-		i += next - src;
-		if (i >= destLen)
-			break;
-
-		// Copy the replacement substring
-		memcpy(dest + i, rep, repLen < destLen - i ? repLen : destLen - i);
-		i += repLen;
-		if (i >= destLen)
-			break;
-
-		src = next + oldLen;
-	}
-
-	if (i < destLen) {
-		size_t srcLen = strlen(src);
-
-		// Copy anything after the last replaced substring
-		memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
-		i += srcLen;
-	}
-
-	if (i >= destLen) {
-		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
-		i = destLen - 1;
-	}
-	dest[i] = '\0';
-}
-
-static void initStrFmtArgList(StrFmtArgList *args)
-{
-	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, char *>>();
-	if (!args->args)
-		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
-			   strerror(errno));
-}
-
-static void freeStrFmtArgList(StrFmtArgList *args)
-{
-	free(args->format);
-	for (std::variant<uint32_t, char *> &arg : *args->args) {
-		if (char **str = std::get_if<char *>(&arg); str)
-			free(*str);
-	}
-	delete args->args;
-}
-
-static void strfmt(char *dest, size_t destLen, char const *fmt,
-		   std::vector<std::variant<uint32_t, char *>> &args)
-{
-	size_t a = 0;
-	size_t i = 0;
-
-	while (i < destLen) {
-		int c = *fmt++;
-
-		if (c == '\0') {
-			break;
-		} else if (c != '%') {
-			dest[i++] = c;
-			continue;
-		}
-
-		c = *fmt++;
-
-		if (c == '%') {
-			dest[i++] = c;
-			continue;
-		}
-
-		FormatSpec spec = fmt_NewSpec();
-
-		while (c != '\0') {
-			fmt_UseCharacter(&spec, c);
-			if (fmt_IsFinished(&spec))
-				break;
-			c = *fmt++;
-		}
-
-		if (fmt_IsEmpty(&spec)) {
-			error("STRFMT: Illegal '%%' at end of format string\n");
-			dest[i++] = '%';
-			break;
-		} else if (!fmt_IsValid(&spec)) {
-			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
-			dest[i++] = '%';
-			a++;
-			continue;
-		} else if (a >= args.size()) {
-			// Will warn after formatting is done.
-			dest[i++] = '%';
-			a++;
-			continue;
-		}
-
-		std::variant<uint32_t, char *> &arg = args[a++];
-		static char buf[MAXSTRLEN + 1];
-
-		std::visit(Visitor{
-			[&](uint32_t num) { fmt_PrintNumber(buf, sizeof(buf), &spec, num); },
-			[&](char *str) { fmt_PrintString(buf, sizeof(buf), &spec, str); },
-		}, arg);
-
-		i += snprintf(&dest[i], destLen - i, "%s", buf);
-	}
-
-	if (a < args.size())
-		error("STRFMT: %zu unformatted argument(s)\n", args.size() - a);
-	else if (a > args.size())
-		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
-		      args.size(), a);
-
-	if (i > destLen - 1) {
-		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
-		i = destLen - 1;
-	}
-	dest[i] = '\0';
-}
-
-static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue) {
-	Expression oldExpr, constExpr, newExpr;
-	int32_t newValue;
-
-	rpn_Symbol(&oldExpr, symName);
-	rpn_Number(&constExpr, constValue);
-	rpn_BinaryOp(op, &newExpr, &oldExpr, &constExpr);
-	newValue = rpn_GetConstVal(&newExpr);
-	sym_AddVar(symName, newValue);
-}
-
-static void initDsArgList(std::vector<Expression> *&args)
-{
-	args = new(std::nothrow) std::vector<Expression>();
-	if (!args)
-		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
-}
-
-static void initPurgeArgList(std::vector<std::string> *&args)
-{
-	args = new(std::nothrow) std::vector<std::string>();
-	if (!args)
-		fatalerror("Failed to allocate memory for purge arg list: %s\n", strerror(errno));
-}
-
-static void failAssert(enum AssertionType type)
-{
-	switch (type) {
-		case ASSERT_FATAL:
-			fatalerror("Assertion failed\n");
-		case ASSERT_ERROR:
-			error("Assertion failed\n");
-			break;
-		case ASSERT_WARN:
-			warning(WARNING_ASSERT, "Assertion failed\n");
-			break;
-	}
-}
-
-static void failAssertMsg(enum AssertionType type, char const *msg)
-{
-	switch (type) {
-		case ASSERT_FATAL:
-			fatalerror("Assertion failed: %s\n", msg);
-		case ASSERT_ERROR:
-			error("Assertion failed: %s\n", msg);
-			break;
-		case ASSERT_WARN:
-			warning(WARNING_ASSERT, "Assertion failed: %s\n", msg);
-			break;
-	}
-}
-
-void yyerror(char const *str)
-{
-	error("%s\n", str);
-}
-
-// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
-// These enums thus help with bit twiddling to compute opcodes
-enum {
-	REG_B = 0,
-	REG_C,
-	REG_D,
-	REG_E,
-	REG_H,
-	REG_L,
-	REG_HL_IND,
-	REG_A
-};
-
-enum {
-	REG_BC_IND = 0,
-	REG_DE_IND,
-	REG_HL_INDINC,
-	REG_HL_INDDEC,
-};
-
-enum {
-	REG_BC = 0,
-	REG_DE = 1,
-	REG_HL = 2,
-	// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
-	REG_SP = 3,
-	REG_AF = 3
-};
-
-enum {
-	CC_NZ = 0,
-	CC_Z,
-	CC_NC,
-	CC_C
-};
-
-%}
-
 %code requires {
-	// Only used in the %union
+	#include <stdint.h>
+	#include <inttypes.h>
+	#include <string>
+	#include <variant>
+	#include <vector>
+
+	#include "asm/format.hpp"
+	#include "asm/lexer.hpp"
+	#include "asm/macro.hpp"
+	#include "asm/rpn.hpp"
+	#include "asm/symbol.hpp"
+
+	#include "linkdefs.hpp"
+
+	struct AlignmentSpec {
+		uint8_t alignment;
+		uint16_t alignOfs;
+	};
+
 	struct ForArgs {
 		int32_t start;
 		int32_t stop;
 		int32_t step;
+	};
+
+	struct StrFmtArgList {
+		char *format;
+		std::vector<std::variant<uint32_t, char *>> *args;
+	};
+}
+%code {
+	#include <ctype.h>
+	#include <errno.h>
+	#include <new>
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	#include "asm/charmap.hpp"
+	#include "asm/fixpoint.hpp"
+	#include "asm/fstack.hpp"
+	#include "asm/main.hpp"
+	#include "asm/opt.hpp"
+	#include "asm/output.hpp"
+	#include "asm/section.hpp"
+	#include "util.hpp"
+	#include "asm/warning.hpp"
+
+	#include "extern/utf8decoder.hpp"
+
+	#include "helpers.hpp"
+	#include "platform.hpp" // strncasecmp, strdup
+
+	static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
+
+	static void upperstring(char *dest, char const *src);
+	static void lowerstring(char *dest, char const *src);
+	static uint32_t str2int2(std::vector<uint8_t> const &s);
+	static const char *strrstr(char const *s1, char const *s2);
+	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
+	static size_t strlenUTF8(char const *s);
+	static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos,
+			       uint32_t len);
+	static size_t charlenUTF8(char const *s);
+	static void charsubUTF8(char *dest, char const *src, uint32_t pos);
+	static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName);
+	static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
+			   char const *rep);
+	static void initStrFmtArgList(StrFmtArgList *args);
+	static void freeStrFmtArgList(StrFmtArgList *args);
+	static void strfmt(char *dest, size_t destLen, char const *fmt,
+			   std::vector<std::variant<uint32_t, char *>> &args);
+	static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue);
+	static void initDsArgList(std::vector<Expression> *&args);
+	static void initPurgeArgList(std::vector<std::string> *&args);
+	static void failAssert(enum AssertionType type);
+	static void failAssertMsg(enum AssertionType type, char const *msg);
+	void yyerror(char const *str);
+
+	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
+	// These enums thus help with bit twiddling to compute opcodes
+	enum {
+		REG_B = 0,
+		REG_C,
+		REG_D,
+		REG_E,
+		REG_H,
+		REG_L,
+		REG_HL_IND,
+		REG_A
+	};
+
+	enum {
+		REG_BC_IND = 0,
+		REG_DE_IND,
+		REG_HL_INDINC,
+		REG_HL_INDDEC,
+	};
+
+	enum {
+		REG_BC = 0,
+		REG_DE = 1,
+		REG_HL = 2,
+		// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
+		REG_SP = 3,
+		REG_AF = 3
+	};
+
+	enum {
+		CC_NZ = 0,
+		CC_Z,
+		CC_NC,
+		CC_C
 	};
 }
 
@@ -2289,3 +1955,375 @@ hl_ind_dec	: T_LBRACK T_MODE_HL_DEC T_RBRACK
 ;
 
 %%
+
+static void upperstring(char *dest, char const *src)
+{
+	while (*src)
+		*dest++ = toupper(*src++);
+	*dest = '\0';
+}
+
+static void lowerstring(char *dest, char const *src)
+{
+	while (*src)
+		*dest++ = tolower(*src++);
+	*dest = '\0';
+}
+
+static uint32_t str2int2(std::vector<uint8_t> const &s)
+{
+	uint32_t length = s.size();
+
+	if (length > 4)
+		warning(WARNING_NUMERIC_STRING_1,
+			"Treating string as a number ignores first %" PRIu32 " character%s\n",
+			length - 4, length == 5 ? "" : "s");
+	else if (length > 1)
+		warning(WARNING_NUMERIC_STRING_2,
+			"Treating %" PRIu32 "-character string as a number\n", length);
+
+	uint32_t r = 0;
+
+	for (uint32_t i = length < 4 ? 0 : length - 4; i < length; i++) {
+		r <<= 8;
+		r |= s[i];
+	}
+
+	return r;
+}
+
+static const char *strrstr(char const *s1, char const *s2)
+{
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+
+	if (len2 > len1)
+		return nullptr;
+
+	for (char const *p = s1 + len1 - len2; p >= s1; p--)
+		if (!strncmp(p, s2, len2))
+			return p;
+
+	return nullptr;
+}
+
+static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName)
+{
+	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
+}
+
+static size_t strlenUTF8(char const *s)
+{
+	size_t len = 0;
+	uint32_t state = 0;
+
+	for (uint32_t codep = 0; *s; s++) {
+		uint8_t byte = *s;
+
+		switch (decode(&state, &codep, byte)) {
+		case 1:
+			errorInvalidUTF8Byte(byte, "STRLEN");
+			state = 0;
+			// fallthrough
+		case 0:
+			len++;
+			break;
+		}
+	}
+
+	// Check for partial code point.
+	if (state != 0)
+		error("STRLEN: Incomplete UTF-8 character\n");
+
+	return len;
+}
+
+static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len)
+{
+	size_t srcIndex = 0;
+	size_t destIndex = 0;
+	uint32_t state = 0;
+	uint32_t codep = 0;
+	uint32_t curLen = 0;
+	uint32_t curPos = 1;
+
+	// Advance to starting position in source string.
+	while (src[srcIndex] && curPos < pos) {
+		switch (decode(&state, &codep, src[srcIndex])) {
+		case 1:
+			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			state = 0;
+			// fallthrough
+		case 0:
+			curPos++;
+			break;
+		}
+		srcIndex++;
+	}
+
+	// A position 1 past the end of the string is allowed, but will trigger the
+	// "Length too big" warning below if the length is nonzero.
+	if (!src[srcIndex] && pos > curPos)
+		warning(WARNING_BUILTIN_ARG,
+			"STRSUB: Position %" PRIu32 " is past the end of the string\n", pos);
+
+	// Copy from source to destination.
+	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
+		switch (decode(&state, &codep, src[srcIndex])) {
+		case 1:
+			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			state = 0;
+			// fallthrough
+		case 0:
+			curLen++;
+			break;
+		}
+		dest[destIndex++] = src[srcIndex++];
+	}
+
+	if (curLen < len)
+		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
+
+	// Check for partial code point.
+	if (state != 0)
+		error("STRSUB: Incomplete UTF-8 character\n");
+
+	dest[destIndex] = '\0';
+}
+
+static size_t charlenUTF8(char const *s)
+{
+	size_t len;
+
+	for (len = 0; charmap_ConvertNext(&s, nullptr); len++)
+		;
+
+	return len;
+}
+
+static void charsubUTF8(char *dest, char const *src, uint32_t pos)
+{
+	size_t charLen = 1;
+
+	// Advance to starting position in source string.
+	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
+		charLen = charmap_ConvertNext(&src, nullptr);
+
+	char const *start = src;
+
+	if (!charmap_ConvertNext(&src, nullptr))
+		warning(WARNING_BUILTIN_ARG,
+			"CHARSUB: Position %" PRIu32 " is past the end of the string\n", pos);
+
+	// Copy from source to destination.
+	memcpy(dest, start, src - start);
+
+	dest[src - start] = '\0';
+}
+
+static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName)
+{
+	// STRSUB and CHARSUB adjust negative `pos` arguments the same way,
+	// such that position -1 is the last character of a string.
+	if (pos < 0)
+		pos += len + 1;
+	if (pos < 1) {
+		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
+		pos = 1;
+	}
+	return (uint32_t)pos;
+}
+
+static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *rep)
+{
+	size_t oldLen = strlen(old);
+	size_t repLen = strlen(rep);
+	size_t i = 0;
+
+	if (!oldLen) {
+		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string\n");
+		strcpy(dest, src);
+		return;
+	}
+
+	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
+		// Copy anything before the substring to replace
+		unsigned int lenBefore = next - src;
+
+		memcpy(dest + i, src, lenBefore < destLen - i ? lenBefore : destLen - i);
+		i += next - src;
+		if (i >= destLen)
+			break;
+
+		// Copy the replacement substring
+		memcpy(dest + i, rep, repLen < destLen - i ? repLen : destLen - i);
+		i += repLen;
+		if (i >= destLen)
+			break;
+
+		src = next + oldLen;
+	}
+
+	if (i < destLen) {
+		size_t srcLen = strlen(src);
+
+		// Copy anything after the last replaced substring
+		memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
+		i += srcLen;
+	}
+
+	if (i >= destLen) {
+		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
+		i = destLen - 1;
+	}
+	dest[i] = '\0';
+}
+
+static void initStrFmtArgList(StrFmtArgList *args)
+{
+	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, char *>>();
+	if (!args->args)
+		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
+			   strerror(errno));
+}
+
+static void freeStrFmtArgList(StrFmtArgList *args)
+{
+	free(args->format);
+	for (std::variant<uint32_t, char *> &arg : *args->args) {
+		if (char **str = std::get_if<char *>(&arg); str)
+			free(*str);
+	}
+	delete args->args;
+}
+
+static void strfmt(char *dest, size_t destLen, char const *fmt,
+		   std::vector<std::variant<uint32_t, char *>> &args)
+{
+	size_t a = 0;
+	size_t i = 0;
+
+	while (i < destLen) {
+		int c = *fmt++;
+
+		if (c == '\0') {
+			break;
+		} else if (c != '%') {
+			dest[i++] = c;
+			continue;
+		}
+
+		c = *fmt++;
+
+		if (c == '%') {
+			dest[i++] = c;
+			continue;
+		}
+
+		FormatSpec spec = fmt_NewSpec();
+
+		while (c != '\0') {
+			fmt_UseCharacter(&spec, c);
+			if (fmt_IsFinished(&spec))
+				break;
+			c = *fmt++;
+		}
+
+		if (fmt_IsEmpty(&spec)) {
+			error("STRFMT: Illegal '%%' at end of format string\n");
+			dest[i++] = '%';
+			break;
+		} else if (!fmt_IsValid(&spec)) {
+			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
+			dest[i++] = '%';
+			a++;
+			continue;
+		} else if (a >= args.size()) {
+			// Will warn after formatting is done.
+			dest[i++] = '%';
+			a++;
+			continue;
+		}
+
+		std::variant<uint32_t, char *> &arg = args[a++];
+		static char buf[MAXSTRLEN + 1];
+
+		std::visit(Visitor{
+			[&](uint32_t num) { fmt_PrintNumber(buf, sizeof(buf), &spec, num); },
+			[&](char *str) { fmt_PrintString(buf, sizeof(buf), &spec, str); },
+		}, arg);
+
+		i += snprintf(&dest[i], destLen - i, "%s", buf);
+	}
+
+	if (a < args.size())
+		error("STRFMT: %zu unformatted argument(s)\n", args.size() - a);
+	else if (a > args.size())
+		error("STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
+		      args.size(), a);
+
+	if (i > destLen - 1) {
+		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
+		i = destLen - 1;
+	}
+	dest[i] = '\0';
+}
+
+static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue)
+{
+	Expression oldExpr, constExpr, newExpr;
+	int32_t newValue;
+
+	rpn_Symbol(&oldExpr, symName);
+	rpn_Number(&constExpr, constValue);
+	rpn_BinaryOp(op, &newExpr, &oldExpr, &constExpr);
+	newValue = rpn_GetConstVal(&newExpr);
+	sym_AddVar(symName, newValue);
+}
+
+static void initDsArgList(std::vector<Expression> *&args)
+{
+	args = new(std::nothrow) std::vector<Expression>();
+	if (!args)
+		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
+}
+
+static void initPurgeArgList(std::vector<std::string> *&args)
+{
+	args = new(std::nothrow) std::vector<std::string>();
+	if (!args)
+		fatalerror("Failed to allocate memory for purge arg list: %s\n", strerror(errno));
+}
+
+static void failAssert(enum AssertionType type)
+{
+	switch (type) {
+		case ASSERT_FATAL:
+			fatalerror("Assertion failed\n");
+		case ASSERT_ERROR:
+			error("Assertion failed\n");
+			break;
+		case ASSERT_WARN:
+			warning(WARNING_ASSERT, "Assertion failed\n");
+			break;
+	}
+}
+
+static void failAssertMsg(enum AssertionType type, char const *msg)
+{
+	switch (type) {
+		case ASSERT_FATAL:
+			fatalerror("Assertion failed: %s\n", msg);
+		case ASSERT_ERROR:
+			error("Assertion failed: %s\n", msg);
+			break;
+		case ASSERT_WARN:
+			warning(WARNING_ASSERT, "Assertion failed: %s\n", msg);
+			break;
+	}
+}
+
+void yyerror(char const *str)
+{
+	error("%s\n", str);
+}
