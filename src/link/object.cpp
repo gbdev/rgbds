@@ -304,11 +304,9 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 	section->alignOfs = tmp;
 
 	if (sect_HasData(section->type)) {
-		section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
-		if (!section->data)
-			err("%s: Unable to read \"%s\"'s data", fileName, section->name.c_str());
 		if (section->size) {
-			if (size_t nbRead = fread(&(*section->data)[0], 1, section->size, file);
+			section->data.resize(section->size);
+			if (size_t nbRead = fread(&section->data[0], 1, section->size, file);
 			    nbRead != section->size)
 				errx("%s: Cannot read \"%s\"'s data: %s", fileName, section->name.c_str(),
 				     feof(file) ? "Unexpected end of file" : strerror(errno));
@@ -324,8 +322,6 @@ static void readSection(FILE *file, struct Section *section, char const *fileNam
 		for (uint32_t i = 0; i < nbPatches; i++)
 			readPatch(file, &section->patches[i], fileName, section->name, i,
 				  fileNodes);
-	} else {
-		section->data = NULL; // `mergeSections()` expects to be able to always read the ptr
 	}
 }
 
@@ -546,15 +542,10 @@ void obj_Setup(unsigned int nbFiles)
 
 static void freeSection(struct Section *section)
 {
-	do {
-		struct Section *next = section->nextu;
-
-		if (sect_HasData(section->type))
-			delete section->data;
+	for (struct Section *next; section; section = next) {
+		next = section->nextu;
 		delete section;
-
-		section = next;
-	} while (section);
+	};
 }
 
 void obj_Cleanup(void)

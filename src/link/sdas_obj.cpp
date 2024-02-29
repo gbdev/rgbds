@@ -337,8 +337,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				curSection->type = SECTTYPE_INVALID; // This means "indeterminate"
 			}
 			curSection->isAlignFixed = false; // No such concept!
-			// The array will be allocated if the section does contain data
-			curSection->data = NULL;
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
 			curSection->nextu = NULL;
 			break;
@@ -469,12 +467,9 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				if (addr != *writeIndex)
 					fatal(where, lineNo, "'T' lines which don't append to their section are not supported (%" PRIu16 " != %" PRIu16 ")",
 					      addr, *writeIndex);
-				if (!section->data) {
+				if (section->data.empty()) {
 					assert(section->size != 0);
-					section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
-					if (!section->data)
-						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s",
-						      section->name.c_str(), strerror(errno));
+					section->data.resize(section->size);
 				}
 			}
 
@@ -637,7 +632,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
 							      section->name.c_str(), *writeIndex + (offset - writtenOfs), section->size);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
-						memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
+						memcpy(&section->data[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
 						*writeIndex += offset - writtenOfs + 1;
 						writtenOfs = offset + 3; // Skip all three `baseValue` bytes, though
 					}
@@ -685,7 +680,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
 					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
 					      section->name.c_str(), *writeIndex + (nbBytes - writtenOfs), section->size);
-				memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
+				memcpy(&section->data[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
 				*writeIndex += nbBytes - writtenOfs;
 			}
 
@@ -719,7 +714,6 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
 			      section->name.c_str(), entry.writeIndex, section->size);
 
-		// This must be done last, so that `->data` is not NULL anymore
 		sect_AddSection(section);
 
 		if (section->modifier == SECTION_FRAGMENT) {
