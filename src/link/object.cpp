@@ -384,11 +384,14 @@ static void readAssertion(FILE *file, struct Assertion *assert, char const *file
 			  std::vector<struct FileStackNode> const &fileNodes)
 {
 	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
+	std::string *name;
 
 	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
 
 	readPatch(file, &assert->patch, fileName, assertName, 0, fileNodes);
-	tryReadstring(assert->message, file, "%s: Cannot read assertion's message: %s", fileName);
+	tryReadstring(name, file, "%s: Cannot read assertion's message: %s", fileName);
+	assert->message = *name;
+	delete name;
 }
 
 static struct Section *getMainSection(struct Section *section)
@@ -587,7 +590,4 @@ void obj_Cleanup(void)
 
 	sect_ForEach(freeSection);
 	sect_CleanupSections();
-
-	for (struct Assertion &assert : assertions)
-		delete assert.message;
 }
