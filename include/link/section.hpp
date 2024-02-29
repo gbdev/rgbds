@@ -30,7 +30,7 @@ struct Patch {
 
 struct Section {
 	// Info contained in the object files
-	std::string *name;
+	std::string name;
 	uint16_t size;
 	uint16_t offset;
 	enum SectionType type;

@@ -264,7 +264,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
 			for (struct FileSection &entry : fileSections) {
-				if (!strcmp(token, entry.section->name->c_str()))
+				if (!strcmp(token, entry.section->name.c_str()))
 					fatal(where, lineNo, "Area \"%s\" already defined earlier",
 					      token);
 			}
@@ -280,7 +280,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 
 			if (tmp > UINT16_MAX)
 				fatal(where, lineNo, "Area \"%s\" is larger than the GB address space!?",
-				      curSection->name->c_str());
+				      curSection->name.c_str());
 			curSection->size = tmp;
 
 			expectToken("flags", 'A');
@@ -293,16 +293,12 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			curSection->isBankFixed = curSection->isAddressFixed;
 			curSection->modifier = curSection->isAddressFixed || (tmp & (1 << AREA_TYPE))
 				? SECTION_NORMAL : SECTION_FRAGMENT;
-			curSection->name = new(std::nothrow) std::string();
-			if (!curSection->name)
-				fatal(where, lineNo, "Failed to alloc new area's name: %s",
-				      strerror(errno));
 			// If the section is absolute, its name might not be unique; thus, mangle the name
 			if (curSection->modifier == SECTION_NORMAL) {
-				curSection->name->append(where->name());
-				curSection->name->append(" ");
+				curSection->name.append(where->name());
+				curSection->name.append(" ");
 			}
-			curSection->name->append(sectionName);
+			curSection->name.append(sectionName);
 
 			expectToken("addr", 'A');
 
@@ -470,7 +466,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 			if (section->isAddressFixed) {
 				if (addr < section->org)
 					fatal(where, lineNo, "'T' line reports address $%04" PRIx16 " in \"%s\", which starts at $%04" PRIx16,
-					      addr, section->name->c_str(), section->org);
+					      addr, section->name.c_str(), section->org);
 				addr -= section->org;
 			}
 			// Lines are emitted that violate this check but contain no "payload";
@@ -484,7 +480,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					section->data = new(std::nothrow) std::vector<uint8_t>(section->size);
 					if (!section->data)
 						fatal(where, lineNo, "Failed to alloc data for \"%s\": %s",
-						      section->name->c_str(), strerror(errno));
+						      section->name.c_str(), strerror(errno));
 				}
 			}
 
@@ -613,8 +609,8 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// the section gets moved for any reason.
 					if (fileSections[idx].section->isAddressFixed)
 						baseValue -= fileSections[idx].section->org;
-					std::string const *name = fileSections[idx].section->name;
-					struct Section const *other = sect_GetSection(*name);
+					std::string const &name = fileSections[idx].section->name;
+					struct Section const *other = sect_GetSection(name);
 
 					// Unlike with `s_<AREA>`, referencing an area in this way
 					// wants the beginning of this fragment, so we must add the
@@ -626,10 +622,10 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					// current size.
 					if (other)
 						baseValue += other->size;
-					patch.rpnExpression.resize(1 + name->length() + 1);
+					patch.rpnExpression.resize(1 + name.length() + 1);
 					patch.rpnExpression[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
-					memcpy((char *)&patch.rpnExpression[1], name->c_str(), name->length() + 1);
+					memcpy((char *)&patch.rpnExpression[1], name.c_str(), name.length() + 1);
 				}
 
 				patch.rpnExpression.push_back(RPN_CONST);
@@ -645,7 +641,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 					if (flags & 1 << RELOC_EXPR16) {
 						if (*writeIndex + (offset - writtenOfs) > section->size)
 							fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
-							      section->name->c_str(), *writeIndex + (offset - writtenOfs), section->size);
+							      section->name.c_str(), *writeIndex + (offset - writtenOfs), section->size);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
 						memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1);
 						*writeIndex += offset - writtenOfs + 1;
@@ -694,7 +690,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 				assert(nbBytes > writtenOfs);
 				if (*writeIndex + (nbBytes - writtenOfs) > section->size)
 					fatal(where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
-					      section->name->c_str(), *writeIndex + (nbBytes - writtenOfs), section->size);
+					      section->name.c_str(), *writeIndex + (nbBytes - writtenOfs), section->size);
 				memcpy(&(*section->data)[*writeIndex], &data[writtenOfs], nbBytes - writtenOfs);
 				*writeIndex += nbBytes - writtenOfs;
 			}
@@ -727,7 +723,7 @@ void sdobj_ReadFile(struct FileStackNode const *where, FILE *file, std::vector<s
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (entry.writeIndex != section->size && entry.writeIndex != 0)
 			fatal(where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
-			      section->name->c_str(), entry.writeIndex, section->size);
+			      section->name.c_str(), entry.writeIndex, section->size);
 
 		// This must be done last, so that `->data` is not NULL anymore
 		sect_AddSection(section);

@@ -71,7 +71,7 @@ void out_AddSection(struct Section const *section)
 
 	if (minNbBanks > maxNbBanks[section->type])
 		errx("Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
-		     section->name->c_str(), section->bank,
+		     section->name.c_str(), section->bank,
 		     maxNbBanks[section->type] - 1);
 
 	for (uint32_t i = sections[section->type].size(); i < minNbBanks; i++)
@@ -408,10 +408,10 @@ static void writeMapBank(struct SortedSections const &sectList, enum SectionType
 			fprintf(mapFile, "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16
 				" byte%s) [\"%s\"]\n",
 				sect->org, prevEndAddr - 1, sect->size, sect->size == 1 ? "" : "s",
-				sect->name->c_str());
+				sect->name.c_str());
 		else
 			fprintf(mapFile, "\tSECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
-				sect->org, sect->name->c_str());
+				sect->org, sect->name.c_str());
 
 		if (!noSymInMap) {
 			// Also print symbols in the following "pieces"
