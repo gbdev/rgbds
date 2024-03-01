@@ -1184,7 +1184,7 @@ static char const *readInterpolation(size_t depth)
 
 	char symName[MAXSYMLEN + 1];
 	size_t i = 0;
-	FormatSpec fmt = fmt_NewSpec();
+	FormatSpec fmt{};
 	bool disableInterpolation = lexerState->disableInterpolation;
 
 	// In a context where `lexerState->disableInterpolation` is true, `peek` will expand
@@ -1208,7 +1208,7 @@ static char const *readInterpolation(size_t depth)
 		} else if (c == '}') {
 			shiftChar();
 			break;
-		} else if (c == ':' && !fmt_IsFinished(&fmt)) { // Format spec, only once
+		} else if (c == ':' && !fmt.isFinished()) { // Format spec, only once
 			shiftChar();
 			if (i == sizeof(symName)) {
 				warning(WARNING_LONG_STR, "Format spec too long, got truncated\n");
@@ -1216,9 +1216,9 @@ static char const *readInterpolation(size_t depth)
 			}
 			symName[i] = '\0';
 			for (size_t j = 0; j < i; j++)
-				fmt_UseCharacter(&fmt, symName[j]);
-			fmt_FinishCharacters(&fmt);
-			if (!fmt_IsValid(&fmt))
+				fmt.useCharacter(symName[j]);
+			fmt.finishCharacters();
+			if (!fmt.isValid())
 				error("Invalid format spec '%s'\n", symName);
 			i = 0; // Now that format has been set, restart at beginning of string
 		} else {
@@ -1244,18 +1244,10 @@ static char const *readInterpolation(size_t depth)
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
 	} else if (sym->type == SYM_EQUS) {
-		if (fmt_IsEmpty(&fmt))
-			// No format was specified
-			fmt.type = 's';
-		fmt_PrintString(buf, sizeof(buf), &fmt, sym_GetStringValue(sym));
+		fmt.printString(buf, sizeof(buf), sym_GetStringValue(sym));
 		return buf;
 	} else if (sym_IsNumeric(sym)) {
-		if (fmt_IsEmpty(&fmt)) {
-			// No format was specified; default to uppercase $hex
-			fmt.type = 'X';
-			fmt.prefix = true;
-		}
-		fmt_PrintNumber(buf, sizeof(buf), &fmt, sym_GetConstantSymValue(sym));
+		fmt.printNumber(buf, sizeof(buf), sym_GetConstantSymValue(sym));
 		return buf;
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");

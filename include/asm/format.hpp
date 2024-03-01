@@ -15,7 +15,7 @@ enum FormatState {
 	FORMAT_INVALID, // got unexpected character
 };
 
-struct FormatSpec {
+class FormatSpec {
 	enum FormatState state;
 	int sign;
 	bool prefix;
@@ -26,15 +26,16 @@ struct FormatSpec {
 	size_t fracWidth;
 	int type;
 	bool valid;
-};
 
-FormatSpec fmt_NewSpec();
-bool fmt_IsEmpty(FormatSpec const *fmt);
-bool fmt_IsValid(FormatSpec const *fmt);
-bool fmt_IsFinished(FormatSpec const *fmt);
-void fmt_UseCharacter(FormatSpec *fmt, int c);
-void fmt_FinishCharacters(FormatSpec *fmt);
-void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const *value);
-void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t value);
+public:
+	bool isEmpty() const { return !state; }
+	bool isValid() const { return valid || state == FORMAT_DONE; }
+	bool isFinished() const { return state >= FORMAT_DONE;}
+
+	void useCharacter(int c);
+	void finishCharacters();
+	void printString(char *buf, size_t bufLen, char const *value);
+	void printNumber(char *buf, size_t bufLen, uint32_t value);
+};
 
 #endif // RGBDS_FORMAT_SPEC_H
