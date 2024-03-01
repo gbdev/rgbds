@@ -81,7 +81,7 @@ int32_t sym_GetValue(Symbol const *sym)
 static void dumpFilename(Symbol const *sym)
 {
 	if (sym->src)
-		fstk_Dump(sym->src, sym->fileLine);
+		sym->src->dump(sym->fileLine);
 	else if (sym->fileLine == 0)
 		fputs("<command-line>", stderr);
 	else

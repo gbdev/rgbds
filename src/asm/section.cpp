@@ -250,7 +250,7 @@ static void mergeSections(Section *sect, enum SectionType type, uint32_t org, ui
 
 		case SECTION_NORMAL:
 			fail("Section already defined previously at ");
-			fstk_Dump(sect->src, sect->fileLine);
+			sect->src->dump(sect->fileLine);
 			putc('\n', stderr);
 			break;
 		}
