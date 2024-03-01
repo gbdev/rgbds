@@ -785,7 +785,7 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 		if (sym == pc)
 			offset = -2; // PC as operand to `jr` is lower than reference PC by 2
 		else
-			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
+			offset = sym->getValue() - (pc->getValue() + 1);
 
 		if (offset < -128 || offset > 127) {
 			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n",

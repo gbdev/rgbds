@@ -66,16 +66,16 @@ static int32_t CallbackPC()
 }
 
 // Get the value field of a symbol
-int32_t sym_GetValue(Symbol const *sym)
+int32_t Symbol::getValue() const
 {
-	if (sym_IsNumeric(sym) && sym->hasCallback)
-		return sym->numCallback();
+	if (isNumeric() && hasCallback)
+		return numCallback();
 
-	if (sym->type == SYM_LABEL)
+	if (type == SYM_LABEL)
 		// TODO: do not use section's org directly
-		return sym->value + sym_GetSection(sym)->org;
+		return value + getSection()->org;
 
-	return sym->value;
+	return value;
 }
 
 static void dumpFilename(Symbol const *sym)
@@ -178,7 +178,7 @@ Symbol *sym_FindScopedValidSymbol(char const *symName)
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// `@` has no value outside a section
-	if (sym == PCSymbol && !sect_GetSymbolSection()) {
+	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		return nullptr;
 	}
 	// `_NARG` has no value outside a macro
@@ -235,28 +235,25 @@ uint32_t sym_GetPCValue()
 }
 
 // Return a constant symbol's value, assuming it's defined
-uint32_t sym_GetConstantSymValue(Symbol const *sym)
+uint32_t Symbol::getConstantValue() const
 {
-	if (sym == PCSymbol)
+	if (sym_IsPC(this))
 		return sym_GetPCValue();
-	else if (!sym_IsConstant(sym))
-		error("\"%s\" does not have a constant value\n", sym->name);
-	else
-		return sym_GetValue(sym);
 
+	if (isConstant())
+		return getValue();
+
+	error("\"%s\" does not have a constant value\n", name);
 	return 0;
 }
 
 // Return a constant symbol's value
 uint32_t sym_GetConstantValue(char const *symName)
 {
-	Symbol const *sym = sym_FindScopedSymbol(symName);
+	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym)
+		return sym->getConstantValue();
 
-	if (!sym)
-		error("'%s' not defined\n", symName);
-	else
-		return sym_GetConstantSymValue(sym);
-
+	error("'%s' not defined\n", symName);
 	return 0;
 }
 
@@ -283,7 +280,7 @@ static Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 
 	if (!sym) {
 		sym = createsymbol(symName);
-	} else if (sym_IsDefined(sym)) {
+	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
@@ -320,7 +317,7 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value)
 	if (!sym)
 		return sym_AddEqu(symName, value);
 
-	if (sym_IsDefined(sym) && sym->type != SYM_EQU) {
+	if (sym->isDefined() && sym->type != SYM_EQU) {
 		error("'%s' already defined as non-EQU at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);
@@ -368,7 +365,7 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 		return sym_AddString(symName, value);
 
 	if (sym->type != SYM_EQUS) {
-		if (sym_IsDefined(sym))
+		if (sym->isDefined())
 			error("'%s' already defined as non-EQUS at ", symName);
 		else
 			error("'%s' already referenced at ", symName);
@@ -395,7 +392,7 @@ Symbol *sym_AddVar(char const *symName, int32_t value)
 
 	if (!sym) {
 		sym = createsymbol(symName);
-	} else if (sym_IsDefined(sym) && sym->type != SYM_VAR) {
+	} else if (sym->isDefined() && sym->type != SYM_VAR) {
 		error("'%s' already defined as %s at ",
 		      symName, sym->type == SYM_LABEL ? "label" : "constant");
 		dumpFilename(sym);
@@ -423,7 +420,7 @@ static Symbol *addLabel(char const *symName)
 
 	if (!sym) {
 		sym = createsymbol(symName);
-	} else if (sym_IsDefined(sym)) {
+	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName);
 		dumpFilename(sym);
 		putc('\n', stderr);

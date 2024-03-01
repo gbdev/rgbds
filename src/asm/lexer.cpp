@@ -579,12 +579,12 @@ static uint32_t readBracketedMacroArgNum()
 			error("Bracketed symbol \"%s\" does not exist\n", symName);
 			num = 0;
 			symbolError = true;
-		} else if (!sym_IsNumeric(sym)) {
+		} else if (!sym->isNumeric()) {
 			error("Bracketed symbol \"%s\" is not numeric\n", symName);
 			num = 0;
 			symbolError = true;
 		} else {
-			num = sym_GetConstantSymValue(sym);
+			num = sym->getConstantValue();
 		}
 	} else {
 		empty = true;
@@ -1244,10 +1244,10 @@ static char const *readInterpolation(size_t depth)
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
 	} else if (sym->type == SYM_EQUS) {
-		fmt.printString(buf, sizeof(buf), sym_GetStringValue(sym));
+		fmt.printString(buf, sizeof(buf), sym->getStringValue());
 		return buf;
-	} else if (sym_IsNumeric(sym)) {
-		fmt.printNumber(buf, sizeof(buf), sym_GetConstantSymValue(sym));
+	} else if (sym->isNumeric()) {
+		fmt.printNumber(buf, sizeof(buf), sym->getConstantValue());
 		return buf;
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");
@@ -1876,7 +1876,7 @@ static int yylex_NORMAL()
 					Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
-						char const *s = sym_GetStringValue(sym);
+						char const *s = sym->getStringValue();
 
 						assert(s);
 						if (s[0])

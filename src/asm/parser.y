@@ -1319,7 +1319,7 @@ string		: T_STRING
 
 			if (!sym)
 				fatalerror("Unknown symbol \"%s\"\n", $3);
-			Section const *section = sym_GetSection(sym);
+			Section const *section = sym->getSection();
 
 			if (!section)
 				fatalerror("\"%s\" does not belong to any section\n", sym->name);

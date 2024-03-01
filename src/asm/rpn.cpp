@@ -78,7 +78,7 @@ void rpn_Symbol(Expression *expr, char const *symName)
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
 		rpn_Number(expr, 0);
-	} else if (!sym || !sym_IsConstant(sym)) {
+	} else if (!sym || !sym->isConstant()) {
 		rpn_Init(expr);
 		expr->isSymbol = true;
 
@@ -125,15 +125,15 @@ void rpn_BankSymbol(Expression *expr, char const *symName)
 	}
 
 	rpn_Init(expr);
-	if (sym && !sym_IsLabel(sym)) {
+	if (sym && !sym->isLabel()) {
 		error("BANK argument must be a label\n");
 	} else {
 		sym = sym_Ref(symName);
 		assert(sym); // If the symbol didn't exist, it should have been created
 
-		if (sym_GetSection(sym) && sym_GetSection(sym)->bank != (uint32_t)-1) {
+		if (sym->getSection() && sym->getSection()->bank != (uint32_t)-1) {
 			// Symbol's section is known and bank is fixed
-			expr->val = sym_GetSection(sym)->bank;
+			expr->val = sym->getSection()->bank;
 		} else {
 			makeUnknown(expr, "\"", symName, "\"'s bank is not known");
 			expr->rpnPatchSize += 5; // opcode + 4-byte sect ID
@@ -315,8 +315,8 @@ bool rpn_IsDiffConstant(Expression const *src, Symbol const *sym)
 	if (!sym1 || !sym || sym1->type != SYM_LABEL || sym->type != SYM_LABEL)
 		return false;
 
-	Section const *section1 = sym_GetSection(sym1);
-	Section const *section2 = sym_GetSection(sym);
+	Section const *section1 = sym1->getSection();
+	Section const *section2 = sym->getSection();
 	return section1 && (section1 == section2);
 }
 
@@ -337,30 +337,30 @@ static int32_t tryConstMask(Expression const *lhs, Expression const *rhs)
 	Symbol const *sym = rpn_SymbolOf(lhs);
 	Expression const *expr = rhs;
 
-	if (!sym || !sym_GetSection(sym)) {
+	if (!sym || !sym->getSection()) {
 		// If the lhs isn't a symbol, try again the other way around
 		sym = rpn_SymbolOf(rhs);
 		expr = lhs;
 
-		if (!sym || !sym_GetSection(sym))
+		if (!sym || !sym->getSection())
 			return -1;
 	}
-	assert(sym_IsNumeric(sym));
+	assert(sym->isNumeric());
 
 	if (!rpn_isKnown(expr))
 		return -1;
 	// We can now safely use `expr->val`
-	Section const *sect = sym_GetSection(sym);
+	Section const *sect = sym->getSection();
 	int32_t unknownBits = (1 << 16) - (1 << sect->align); // The max alignment is 16
 
 	// The mask must ignore all unknown bits
 	if ((expr->val & unknownBits) != 0)
 		return -1;
 
-	// `sym_GetValue()` attempts to add the section's address,
-	// but that's "-1" because the section is floating (otherwise we wouldn't be here)
+	// `sym->getValue()` attempts to add the section's address, but that's "-1"
+	// because the section is floating (otherwise we wouldn't be here)
 	assert(sect->org == (uint32_t)-1);
-	int32_t symbolOfs = sym_GetValue(sym) + 1;
+	int32_t symbolOfs = sym->getValue() + 1;
 
 	return (symbolOfs + sect->alignOfs) & ~unknownBits;
 }
@@ -513,7 +513,7 @@ void rpn_BinaryOp(enum RPNCommand op, Expression *expr, const Expression *src1, 
 		Symbol const *symbol1 = rpn_SymbolOf(src1);
 		Symbol const *symbol2 = rpn_SymbolOf(src2);
 
-		expr->val = sym_GetValue(symbol1) - sym_GetValue(symbol2);
+		expr->val = symbol1->getValue() - symbol2->getValue();
 		expr->isKnown = true;
 	} else if (op == RPN_AND && (constMaskVal = tryConstMask(src1, src2)) != -1) {
 		expr->val = constMaskVal;
