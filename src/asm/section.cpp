@@ -694,7 +694,7 @@ void sect_RelByte(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(1))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
 	} else {
@@ -715,7 +715,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs)
 	for (uint32_t i = 0; i < n; i++) {
 		Expression &expr = exprs[i % exprs.size()];
 
-		if (!rpn_isKnown(&expr)) {
+		if (!expr.isKnown) {
 			createPatch(PATCHTYPE_BYTE, &expr, i);
 			writebyte(0);
 		} else {
@@ -736,7 +736,7 @@ void sect_RelWord(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(2))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
 	} else {
@@ -754,7 +754,7 @@ void sect_RelLong(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(2))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
 	} else {
@@ -773,11 +773,11 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 		return;
 	Symbol const *pc = sym_GetPC();
 
-	if (!rpn_IsDiffConstant(expr, pc)) {
+	if (!expr->isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
-		Symbol const *sym = rpn_SymbolOf(expr);
+		Symbol const *sym = expr->symbolOf();
 		// The offset wraps (jump from ROM to HRAM, for example)
 		int16_t offset;
 

@@ -280,7 +280,7 @@ static void initpatch(Patch &patch, uint32_t type, Expression const *expr, uint3
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 
-	if (rpn_isKnown(expr)) {
+	if (expr->isKnown) {
 		// If the RPN expr's value is known, output a constant directly
 		patch.rpn.resize(5);
 		patch.rpn[0] = RPN_CONST;
