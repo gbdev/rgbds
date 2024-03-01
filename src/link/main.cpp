@@ -72,23 +72,23 @@ std::string const &FileStackNode::name() const {
 }
 
 // Helper function to dump a file stack to stderr
-std::string const *dumpFileStack(FileStackNode const *node)
+std::string const *FileStackNode::dumpFileStack() const
 {
 	std::string const *lastName;
 
-	if (node->parent) {
-		lastName = dumpFileStack(node->parent);
+	if (parent) {
+		lastName = parent->dumpFileStack();
 		// REPT nodes use their parent's name
-		if (node->type != NODE_REPT)
-			lastName = &node->name();
-		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, lastName->c_str());
-		if (node->type == NODE_REPT) {
-			for (uint32_t iter : node->iters())
+		if (type != NODE_REPT)
+			lastName = &name();
+		fprintf(stderr, "(%" PRIu32 ") -> %s", lineNo, lastName->c_str());
+		if (type == NODE_REPT) {
+			for (uint32_t iter : iters())
 				fprintf(stderr, "::REPT~%" PRIu32, iter);
 		}
 	} else {
-		assert(node->type != NODE_REPT);
-		lastName = &node->name();
+		assert(type != NODE_REPT);
+		lastName = &name();
 		fputs(lastName->c_str(), stderr);
 	}
 
@@ -101,7 +101,7 @@ void printDiag(char const *fmt, va_list args, char const *type,
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	if (where) {
-		dumpFileStack(where);
+		where->dumpFileStack();
 		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
 	}
 	vfprintf(stderr, fmt, args);

@@ -18,9 +18,9 @@ void sym_AddSymbol(Symbol *symbol)
 	// Check if the symbol already exists
 	if (Symbol *other = sym_GetSymbol(symbol->name); other) {
 		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name.c_str(), symbol->objFileName);
-		dumpFileStack(symbol->src);
+		symbol->src->dumpFileStack();
 		fprintf(stderr, "(%" PRIu32 ") and in %s from ", symbol->lineNo, other->objFileName);
-		dumpFileStack(other->src);
+		other->src->dumpFileStack();
 		fprintf(stderr, "(%" PRIu32 ")\n", other->lineNo);
 		exit(1);
 	}
