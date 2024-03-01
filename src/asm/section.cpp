@@ -250,7 +250,7 @@ static void mergeSections(Section *sect, enum SectionType type, uint32_t org, ui
 
 		case SECTION_NORMAL:
 			fail("Section already defined previously at ");
-			fstk_Dump(sect->src, sect->fileLine);
+			sect->src->dump(sect->fileLine);
 			putc('\n', stderr);
 			break;
 		}
@@ -373,6 +373,25 @@ static void changeSection()
 		fatalerror("Cannot change the section within a UNION\n");
 
 	sym_SetCurrentSymbolScope(nullptr);
+}
+
+bool Section::isSizeKnown() const
+{
+	// SECTION UNION and SECTION FRAGMENT can still grow
+	if (modifier != SECTION_NORMAL)
+		return false;
+
+	// The current section (or current load section if within one) is still growing
+	if (this == currentSection || this == currentLoadSection)
+		return false;
+
+	// Any section on the stack is still growing
+	for (SectionStackEntry &entry : sectionStack) {
+		if (entry.section && !strcmp(name, entry.section->name))
+			return false;
+	}
+
+	return true;
 }
 
 // Set the current section by name and type
@@ -675,7 +694,7 @@ void sect_RelByte(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(1))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
 	} else {
@@ -696,7 +715,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs)
 	for (uint32_t i = 0; i < n; i++) {
 		Expression &expr = exprs[i % exprs.size()];
 
-		if (!rpn_isKnown(&expr)) {
+		if (!expr.isKnown) {
 			createPatch(PATCHTYPE_BYTE, &expr, i);
 			writebyte(0);
 		} else {
@@ -717,7 +736,7 @@ void sect_RelWord(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(2))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
 	} else {
@@ -735,7 +754,7 @@ void sect_RelLong(Expression *expr, uint32_t pcShift)
 	if (!reserveSpace(2))
 		return;
 
-	if (!rpn_isKnown(expr)) {
+	if (!expr->isKnown) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
 	} else {
@@ -754,11 +773,11 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 		return;
 	Symbol const *pc = sym_GetPC();
 
-	if (!rpn_IsDiffConstant(expr, pc)) {
+	if (!expr->isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
-		Symbol const *sym = rpn_SymbolOf(expr);
+		Symbol const *sym = expr->symbolOf();
 		// The offset wraps (jump from ROM to HRAM, for example)
 		int16_t offset;
 
@@ -766,7 +785,7 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 		if (sym == pc)
 			offset = -2; // PC as operand to `jr` is lower than reference PC by 2
 		else
-			offset = sym_GetValue(sym) - (sym_GetValue(pc) + 1);
+			offset = sym->getValue() - (pc->getValue() + 1);
 
 		if (offset < -128 || offset > 127) {
 			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n",
@@ -972,23 +991,4 @@ void sect_EndSection()
 	// Reset the section scope
 	currentSection = nullptr;
 	sym_SetCurrentSymbolScope(nullptr);
-}
-
-bool sect_IsSizeKnown(Section const NONNULL(sect))
-{
-	// SECTION UNION and SECTION FRAGMENT can still grow
-	if (sect->modifier != SECTION_NORMAL)
-		return false;
-
-	// The current section (or current load section if within one) is still growing
-	if (sect == currentSection || sect == currentLoadSection)
-		return false;
-
-	// Any section on the stack is still growing
-	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && !strcmp(sect->name, entry.section->name))
-			return false;
-	}
-
-	return true;
 }

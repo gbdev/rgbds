@@ -71,7 +71,7 @@
 			   char const *rep);
 	static void initStrFmtArgList(StrFmtArgList *args);
 	static void freeStrFmtArgList(StrFmtArgList *args);
-	static void strfmt(char *dest, size_t destLen, char const *fmt,
+	static void strfmt(char *dest, size_t destLen, char const *spec,
 			   std::vector<std::variant<uint32_t, char *>> &args);
 	static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue);
 	static void initDsArgList(std::vector<Expression> *&args);
@@ -503,10 +503,14 @@ macro		: T_ID {
 ;
 
 macroargs	: %empty {
-			$$ = macro_NewArgs();
+			$$ = new(std::nothrow) MacroArgs();
+			if (!$$)
+				fatalerror("Failed to allocate memory for macro arguments: %s\n",
+					   strerror(errno));
+			$$->shift = 0;
 		}
 		| macroargs T_STRING {
-			macro_AppendArg($$, strdup($2));
+			$$->append(strdup($2));
 		}
 ;
 
@@ -705,7 +709,7 @@ assert_type	: %empty { $$ = ASSERT_ERROR; }
 ;
 
 assert		: T_POP_ASSERT assert_type relocexpr {
-			if (!rpn_isKnown(&$3)) {
+			if (!$3.isKnown) {
 				out_CreateAssert($2, &$3, "", sect_GetOutputOffset());
 			} else if ($3.val == 0) {
 				failAssert($2);
@@ -713,7 +717,7 @@ assert		: T_POP_ASSERT assert_type relocexpr {
 			rpn_Free(&$3);
 		}
 		| T_POP_ASSERT assert_type relocexpr T_COMMA string {
-			if (!rpn_isKnown(&$3)) {
+			if (!$3.isKnown) {
 				out_CreateAssert($2, &$3, $5, sect_GetOutputOffset());
 			} else if ($3.val == 0) {
 				failAssertMsg($2, $5);
@@ -1256,13 +1260,13 @@ uconst		: const {
 		}
 ;
 
-const		: relocexpr { $$ = rpn_GetConstVal(&$1); }
+const		: relocexpr { $$ = $1.getConstVal(); }
 ;
 
-const_no_str	: relocexpr_no_str { $$ = rpn_GetConstVal(&$1); }
+const_no_str	: relocexpr_no_str { $$ = $1.getConstVal(); }
 ;
 
-const_8bit	: reloc_8bit { $$ = rpn_GetConstVal(&$1); }
+const_8bit	: reloc_8bit { $$ = $1.getConstVal(); }
 ;
 
 opt_q_arg	: %empty { $$ = fix_Precision(); }
@@ -1319,7 +1323,7 @@ string		: T_STRING
 
 			if (!sym)
 				fatalerror("Unknown symbol \"%s\"\n", $3);
-			Section const *section = sym_GetSection(sym);
+			Section const *section = sym->getSection();
 
 			if (!section)
 				fatalerror("\"%s\" does not belong to any section\n", sym->name);
@@ -1605,7 +1609,7 @@ z80_ldio	: T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
 
 c_ind		: T_LBRACK T_MODE_C T_RBRACK
 		| T_LBRACK relocexpr T_OP_ADD T_MODE_C T_RBRACK {
-			if (!rpn_isKnown(&$2) || $2.val != 0xFF00)
+			if (!$2.isKnown || $2.val != 0xFF00)
 				error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
 		}
 ;
@@ -1642,7 +1646,7 @@ z80_ld_mem	: T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
 			sect_RelWord(&$2, 1);
 		}
 		| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
-			if (optimizeLoads && rpn_isKnown(&$2)
+			if (optimizeLoads && $2.isKnown
 			 && $2.val >= 0xFF00) {
 				if (warnOnLdOpt) {
 					warnOnLdOpt = false;
@@ -1695,8 +1699,7 @@ z80_ld_a	: T_Z80_LD reg_r T_COMMA c_ind {
 		}
 		| T_Z80_LD reg_r T_COMMA op_mem_ind {
 			if ($2 == REG_A) {
-				if (optimizeLoads && rpn_isKnown(&$4)
-				 && $4.val >= 0xFF00) {
+				if (optimizeLoads && $4.isKnown && $4.val >= 0xFF00) {
 					if (warnOnLdOpt) {
 						warnOnLdOpt = false;
 						warning(WARNING_OBSOLETE,
@@ -1795,7 +1798,7 @@ z80_rrca	: T_Z80_RRCA { sect_AbsByte(0x0F); }
 
 z80_rst		: T_Z80_RST reloc_8bit {
 			rpn_CheckRST(&$2, &$2);
-			if (!rpn_isKnown(&$2))
+			if (!$2.isKnown)
 				sect_RelByte(&$2, 0);
 			else
 				sect_AbsByte(0xC7 | $2.val);
@@ -2197,14 +2200,14 @@ static void freeStrFmtArgList(StrFmtArgList *args)
 	delete args->args;
 }
 
-static void strfmt(char *dest, size_t destLen, char const *fmt,
+static void strfmt(char *dest, size_t destLen, char const *spec,
 		   std::vector<std::variant<uint32_t, char *>> &args)
 {
 	size_t a = 0;
 	size_t i = 0;
 
 	while (i < destLen) {
-		int c = *fmt++;
+		int c = *spec++;
 
 		if (c == '\0') {
 			break;
@@ -2213,27 +2216,27 @@ static void strfmt(char *dest, size_t destLen, char const *fmt,
 			continue;
 		}
 
-		c = *fmt++;
+		c = *spec++;
 
 		if (c == '%') {
 			dest[i++] = c;
 			continue;
 		}
 
-		FormatSpec spec = fmt_NewSpec();
+		FormatSpec fmt{};
 
 		while (c != '\0') {
-			fmt_UseCharacter(&spec, c);
-			if (fmt_IsFinished(&spec))
+			fmt.useCharacter(c);
+			if (fmt.isFinished())
 				break;
-			c = *fmt++;
+			c = *spec++;
 		}
 
-		if (fmt_IsEmpty(&spec)) {
+		if (fmt.isEmpty()) {
 			error("STRFMT: Illegal '%%' at end of format string\n");
 			dest[i++] = '%';
 			break;
-		} else if (!fmt_IsValid(&spec)) {
+		} else if (!fmt.isValid()) {
 			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
 			dest[i++] = '%';
 			a++;
@@ -2249,8 +2252,8 @@ static void strfmt(char *dest, size_t destLen, char const *fmt,
 		static char buf[MAXSTRLEN + 1];
 
 		std::visit(Visitor{
-			[&](uint32_t num) { fmt_PrintNumber(buf, sizeof(buf), &spec, num); },
-			[&](char *str) { fmt_PrintString(buf, sizeof(buf), &spec, str); },
+			[&](uint32_t num) { fmt.printNumber(buf, sizeof(buf), num); },
+			[&](char *str) { fmt.printString(buf, sizeof(buf), str); },
 		}, arg);
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
@@ -2277,7 +2280,7 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	rpn_Symbol(&oldExpr, symName);
 	rpn_Number(&constExpr, constValue);
 	rpn_BinaryOp(op, &newExpr, &oldExpr, &constExpr);
-	newValue = rpn_GetConstVal(&newExpr);
+	newValue = newExpr.getConstVal();
 	sym_AddVar(symName, newValue);
 }
 

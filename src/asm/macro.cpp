@@ -13,11 +13,6 @@
 
 #define MAXMACROARGS 99999
 
-struct MacroArgs {
-	unsigned int shift;
-	std::vector<char *> args;
-};
-
 static MacroArgs *macroArgs = nullptr;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
@@ -27,40 +22,29 @@ static uint32_t maxUniqueID = 0;
 static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
 static char *uniqueIDPtr = nullptr;
 
+void MacroArgs::append(char *s)
+{
+	if (s[0] == '\0')
+		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
+	if (args.size() == MAXMACROARGS)
+		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
+	args.push_back(s);
+}
+
+void MacroArgs::clear()
+{
+	for (char *arg : args)
+		free(arg);
+}
+
 MacroArgs *macro_GetCurrentArgs()
 {
 	return macroArgs;
 }
 
-MacroArgs *macro_NewArgs()
-{
-	MacroArgs *args = new(std::nothrow) MacroArgs();
-
-	if (!args)
-		fatalerror("Unable to register macro arguments: %s\n", strerror(errno));
-
-	args->shift = 0;
-	return args;
-}
-
-void macro_AppendArg(MacroArgs *args, char *s)
-{
-	if (s[0] == '\0')
-		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (args->args.size() == MAXMACROARGS)
-		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	args->args.push_back(s);
-}
-
 void macro_UseNewArgs(MacroArgs *args)
 {
 	macroArgs = args;
-}
-
-void macro_FreeArgs(MacroArgs *args)
-{
-	for (char *arg : args->args)
-		free(arg);
 }
 
 char const *macro_GetArg(uint32_t i)

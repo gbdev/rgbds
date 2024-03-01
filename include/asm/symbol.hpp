@@ -29,6 +29,9 @@ struct strValue {
 	char *value;
 };
 
+struct Symbol; // For the `sym_IsPC` forward declaration
+bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
+
 struct Symbol {
 	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
@@ -40,7 +43,7 @@ struct Symbol {
 
 	bool hasCallback;
 	union {
-		// If sym_IsNumeric
+		// If isNumeric()
 		int32_t value;
 		int32_t (*numCallback)(); // If hasCallback
 		// For SYM_MACRO
@@ -51,61 +54,28 @@ struct Symbol {
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
-};
 
-bool sym_IsPC(Symbol const *sym);
+	bool isDefined() const { return type != SYM_REF; }
+	bool isNumeric() const { return type == SYM_LABEL || type == SYM_EQU || type == SYM_VAR; }
+	bool isLabel() const { return type == SYM_LABEL || type == SYM_REF; }
 
-static inline bool sym_IsDefined(Symbol const *sym)
-{
-	return sym->type != SYM_REF;
-}
-
-static inline Section *sym_GetSection(Symbol const *sym)
-{
-	return sym_IsPC(sym) ? sect_GetSymbolSection() : sym->section;
-}
-
-static inline bool sym_IsConstant(Symbol const *sym)
-{
-	if (sym->type == SYM_LABEL) {
-		Section const *sect = sym_GetSection(sym);
-
-		return sect && sect->org != (uint32_t)-1;
+	bool isConstant() const {
+		if (type == SYM_LABEL) {
+			Section const *sect = getSection();
+			return sect && sect->org != (uint32_t)-1;
+		}
+		return type == SYM_EQU || type == SYM_VAR;
 	}
-	return sym->type == SYM_EQU || sym->type == SYM_VAR;
-}
 
-static inline bool sym_IsNumeric(Symbol const *sym)
-{
-	return sym->type == SYM_LABEL || sym->type == SYM_EQU || sym->type == SYM_VAR;
-}
+	Section *getSection() const { return sym_IsPC(this) ? sect_GetSymbolSection() : section; }
 
-static inline bool sym_IsLabel(Symbol const *sym)
-{
-	return sym->type == SYM_LABEL || sym->type == SYM_REF;
-}
-
-static inline bool sym_IsLocal(Symbol const *sym)
-{
-	return sym_IsLabel(sym) && strchr(sym->name, '.');
-}
-
-static inline bool sym_IsExported(Symbol const *sym)
-{
-	return sym->isExported;
-}
-
-// Get a string equate's value
-static inline char const *sym_GetStringValue(Symbol const *sym)
-{
-	if (sym->hasCallback)
-		return sym->strCallback();
-	return sym->equs.value;
-}
+	int32_t getValue() const;
+	uint32_t getConstantValue() const;
+	char const *getStringValue() const { return hasCallback ? strCallback() : equs.value; }
+};
 
 void sym_ForEach(void (*func)(Symbol *));
 
-int32_t sym_GetValue(Symbol const *sym);
 void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(char const *symName);
 Symbol *sym_AddLabel(char const *symName);
@@ -116,7 +86,6 @@ Symbol *sym_AddEqu(char const *symName, int32_t value);
 Symbol *sym_RedefEqu(char const *symName, int32_t value);
 Symbol *sym_AddVar(char const *symName, int32_t value);
 uint32_t sym_GetPCValue();
-uint32_t sym_GetConstantSymValue(Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *symName);
 // Find a symbol by exact name, bypassing expansion checks
 Symbol *sym_FindExactSymbol(char const *symName);

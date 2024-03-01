@@ -30,6 +30,12 @@ extern bool beVerbose;
 extern bool isWRAM0Mode;
 extern bool disablePadding;
 
+// Helper macro for printing verbose-mode messages
+#define verbosePrint(...) do { \
+	if (beVerbose) \
+		fprintf(stderr, __VA_ARGS__); \
+} while (0)
+
 struct FileStackNode {
 	FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
@@ -48,24 +54,12 @@ struct FileStackNode {
 	// File name for files, file::macro name for macros
 	std::string &name();
 	std::string const &name() const;
+
+	std::string const *dumpFileStack() const;
 };
 
-// Helper macro for printing verbose-mode messages
-#define verbosePrint(...)   do { \
-					if (beVerbose) \
-						fprintf(stderr, __VA_ARGS__); \
-				} while (0)
-
-/*
- * Dump a file stack to stderr
- * @param node The leaf node to dump the context of
- */
-std::string const *dumpFileStack(FileStackNode const *node);
-
 void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
-
 void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
-
 [[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
 
 #endif // RGBDS_LINK_MAIN_H

@@ -142,7 +142,7 @@ static void writesection(Section const &sect, FILE *f)
 static void writesymbol(Symbol const *sym, FILE *f)
 {
 	putstring(sym->name, f);
-	if (!sym_IsDefined(sym)) {
+	if (!sym->isDefined()) {
 		putc(SYMTYPE_IMPORT, f);
 	} else {
 		assert(sym->src->ID != (uint32_t)-1);
@@ -150,7 +150,7 @@ static void writesymbol(Symbol const *sym, FILE *f)
 		putc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
 		putlong(sym->src->ID, f);
 		putlong(sym->fileLine, f);
-		putlong(getSectIDIfAny(sym_GetSection(sym)), f);
+		putlong(getSectIDIfAny(sym->getSection()), f);
 		putlong(sym->value, f);
 	}
 }
@@ -203,7 +203,7 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 
 			// The symbol name is always written expanded
 			sym = sym_FindExactSymbol(symName);
-			if (sym_IsConstant(sym)) {
+			if (sym->isConstant()) {
 				writebyte(RPN_CONST);
 				value = sym_GetConstantValue(symName);
 			} else {
@@ -280,7 +280,7 @@ static void initpatch(Patch &patch, uint32_t type, Expression const *expr, uint3
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 
-	if (rpn_isKnown(expr)) {
+	if (expr->isKnown) {
 		// If the RPN expr's value is known, output a constant directly
 		patch.rpn.resize(5);
 		patch.rpn[0] = RPN_CONST;

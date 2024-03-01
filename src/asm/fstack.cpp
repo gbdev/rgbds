@@ -42,6 +42,26 @@ static std::vector<std::string> includePaths = { "" };
 
 static const char *preIncludeName;
 
+std::vector<uint32_t> &FileStackNode::iters() {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::vector<uint32_t> const &FileStackNode::iters() const {
+	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	return std::get<std::vector<uint32_t>>(data);
+}
+
+std::string &FileStackNode::name() {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
+}
+
+std::string const &FileStackNode::name() const {
+	assert(std::holds_alternative<std::string>(data));
+	return std::get<std::string>(data);
+}
+
 static const char *dumpNodeAndParents(FileStackNode const *node)
 {
 	char const *name;
@@ -66,30 +86,10 @@ static const char *dumpNodeAndParents(FileStackNode const *node)
 	return name;
 }
 
-std::vector<uint32_t> &FileStackNode::iters() {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
-	return std::get<std::vector<uint32_t>>(data);
-}
-
-std::vector<uint32_t> const &FileStackNode::iters() const {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
-	return std::get<std::vector<uint32_t>>(data);
-}
-
-std::string &FileStackNode::name() {
-	assert(std::holds_alternative<std::string>(data));
-	return std::get<std::string>(data);
-}
-
-std::string const &FileStackNode::name() const {
-	assert(std::holds_alternative<std::string>(data));
-	return std::get<std::string>(data);
-}
-
-void fstk_Dump(FileStackNode const *node, uint32_t lineNo)
+void FileStackNode::dump(uint32_t curLineNo) const
 {
-	dumpNodeAndParents(node);
-	fprintf(stderr, "(%" PRIu32 ")", lineNo);
+	dumpNodeAndParents(this);
+	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 }
 
 void fstk_DumpCurrent()
@@ -98,7 +98,7 @@ void fstk_DumpCurrent()
 		fputs("at top level", stderr);
 		return;
 	}
-	fstk_Dump(contextStack.top().fileInfo, lexer_GetLineNo());
+	contextStack.top().fileInfo->dump(lexer_GetLineNo());
 }
 
 FileStackNode *fstk_GetFileStack()
@@ -240,7 +240,7 @@ bool yywrap()
 	lexer_CleanupState(oldContext.lexerState);
 	// Restore args if a macro (not REPT) saved them
 	if (oldContext.fileInfo->type == NODE_MACRO) {
-		macro_FreeArgs(macro_GetCurrentArgs());
+		macro_GetCurrentArgs()->clear();
 		macro_UseNewArgs(contextStack.top().macroArgs);
 	}
 	// Free the file stack node

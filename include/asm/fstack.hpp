@@ -36,6 +36,8 @@ struct FileStackNode {
 	// File name for files, file::macro name for macros
 	std::string &name();
 	std::string const &name() const;
+
+	void dump(uint32_t curLineNo) const;
 };
 
 #define DEFAULT_MAX_DEPTH 64
@@ -43,7 +45,6 @@ extern size_t maxRecursionDepth;
 
 struct MacroArgs;
 
-void fstk_Dump(FileStackNode const *node, uint32_t lineNo);
 void fstk_DumpCurrent();
 FileStackNode *fstk_GetFileStack();
 // The lifetime of the returned chars is until reaching the end of that file

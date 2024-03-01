@@ -12,63 +12,41 @@
 #include "asm/format.hpp"
 #include "asm/warning.hpp"
 
-FormatSpec fmt_NewSpec()
+void FormatSpec::useCharacter(int c)
 {
-	FormatSpec fmt = {};
-
-	return fmt;
-}
-
-bool fmt_IsEmpty(FormatSpec const *fmt)
-{
-	return !fmt->state;
-}
-
-bool fmt_IsValid(FormatSpec const *fmt)
-{
-	return fmt->valid || fmt->state == FORMAT_DONE;
-}
-
-bool fmt_IsFinished(FormatSpec const *fmt)
-{
-	return fmt->state >= FORMAT_DONE;
-}
-
-void fmt_UseCharacter(FormatSpec *fmt, int c)
-{
-	if (fmt->state == FORMAT_INVALID)
+	if (state == FORMAT_INVALID)
 		return;
 
 	switch (c) {
 	// sign
 	case ' ':
 	case '+':
-		if (fmt->state > FORMAT_SIGN)
+		if (state > FORMAT_SIGN)
 			goto invalid;
-		fmt->state = FORMAT_PREFIX;
-		fmt->sign = c;
+		state = FORMAT_PREFIX;
+		sign = c;
 		break;
 
 	// prefix
 	case '#':
-		if (fmt->state > FORMAT_PREFIX)
+		if (state > FORMAT_PREFIX)
 			goto invalid;
-		fmt->state = FORMAT_ALIGN;
-		fmt->prefix = true;
+		state = FORMAT_ALIGN;
+		prefix = true;
 		break;
 
 	// align
 	case '-':
-		if (fmt->state > FORMAT_ALIGN)
+		if (state > FORMAT_ALIGN)
 			goto invalid;
-		fmt->state = FORMAT_WIDTH;
-		fmt->alignLeft = true;
+		state = FORMAT_WIDTH;
+		alignLeft = true;
 		break;
 
 	// pad and width
 	case '0':
-		if (fmt->state < FORMAT_WIDTH)
-			fmt->padZero = true;
+		if (state < FORMAT_WIDTH)
+			padZero = true;
 		// fallthrough
 	case '1':
 	case '2':
@@ -79,23 +57,23 @@ void fmt_UseCharacter(FormatSpec *fmt, int c)
 	case '7':
 	case '8':
 	case '9':
-		if (fmt->state < FORMAT_WIDTH) {
-			fmt->state = FORMAT_WIDTH;
-			fmt->width = c - '0';
-		} else if (fmt->state == FORMAT_WIDTH) {
-			fmt->width = fmt->width * 10 + (c - '0');
-		} else if (fmt->state == FORMAT_FRAC) {
-			fmt->fracWidth = fmt->fracWidth * 10 + (c - '0');
+		if (state < FORMAT_WIDTH) {
+			state = FORMAT_WIDTH;
+			width = c - '0';
+		} else if (state == FORMAT_WIDTH) {
+			width = width * 10 + (c - '0');
+		} else if (state == FORMAT_FRAC) {
+			fracWidth = fracWidth * 10 + (c - '0');
 		} else {
 			goto invalid;
 		}
 		break;
 
 	case '.':
-		if (fmt->state > FORMAT_WIDTH)
+		if (state > FORMAT_WIDTH)
 			goto invalid;
-		fmt->state = FORMAT_FRAC;
-		fmt->hasFrac = true;
+		state = FORMAT_FRAC;
+		hasFrac = true;
 		break;
 
 	// type
@@ -107,41 +85,46 @@ void fmt_UseCharacter(FormatSpec *fmt, int c)
 	case 'o':
 	case 'f':
 	case 's':
-		if (fmt->state >= FORMAT_DONE)
+		if (state >= FORMAT_DONE)
 			goto invalid;
-		fmt->state = FORMAT_DONE;
-		fmt->valid = true;
-		fmt->type = c;
+		state = FORMAT_DONE;
+		valid = true;
+		type = c;
 		break;
 
 	default:
 invalid:
-		fmt->state = FORMAT_INVALID;
-		fmt->valid = false;
+		state = FORMAT_INVALID;
+		valid = false;
 	}
 }
 
-void fmt_FinishCharacters(FormatSpec *fmt)
+void FormatSpec::finishCharacters()
 {
-	if (!fmt_IsValid(fmt))
-		fmt->state = FORMAT_INVALID;
+	if (!isValid())
+		state = FORMAT_INVALID;
 }
 
-void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const *value)
+void FormatSpec::printString(char *buf, size_t bufLen, char const *value)
 {
-	if (fmt->sign)
-		error("Formatting string with sign flag '%c'\n", fmt->sign);
-	if (fmt->prefix)
+	if (isEmpty()) {
+		// No format was specified
+		type = 's';
+	}
+
+	if (sign)
+		error("Formatting string with sign flag '%c'\n", sign);
+	if (prefix)
 		error("Formatting string with prefix flag '#'\n");
-	if (fmt->padZero)
+	if (padZero)
 		error("Formatting string with padding flag '0'\n");
-	if (fmt->hasFrac)
+	if (hasFrac)
 		error("Formatting string with fractional width\n");
-	if (fmt->type != 's')
-		error("Formatting string as type '%c'\n", fmt->type);
+	if (type != 's')
+		error("Formatting string as type '%c'\n", type);
 
 	size_t len = strlen(value);
-	size_t totalLen = fmt->width > len ? fmt->width : len;
+	size_t totalLen = width > len ? width : len;
 
 	if (totalLen > bufLen - 1) { // bufLen includes terminator
 		error("Formatted string value too long\n");
@@ -153,7 +136,7 @@ void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const
 
 	size_t padLen = totalLen - len;
 
-	if (fmt->alignLeft) {
+	if (alignLeft) {
 		memcpy(buf, value, len);
 		for (size_t i = len; i < totalLen; i++)
 			buf[i] = ' ';
@@ -166,37 +149,42 @@ void fmt_PrintString(char *buf, size_t bufLen, FormatSpec const *fmt, char const
 	buf[totalLen] = '\0';
 }
 
-void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t value)
+void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value)
 {
-	if (fmt->type != 'X' && fmt->type != 'x' && fmt->type != 'b' && fmt->type != 'o'
-	    && fmt->prefix)
-		error("Formatting type '%c' with prefix flag '#'\n", fmt->type);
-	if (fmt->type != 'f' && fmt->hasFrac)
-		error("Formatting type '%c' with fractional width\n", fmt->type);
-	if (fmt->type == 's')
+	if (isEmpty()) {
+		// No format was specified; default to uppercase $hex
+		type = 'X';
+		prefix = true;
+	}
+
+	if (type != 'X' && type != 'x' && type != 'b' && type != 'o' && prefix)
+		error("Formatting type '%c' with prefix flag '#'\n", type);
+	if (type != 'f' && hasFrac)
+		error("Formatting type '%c' with fractional width\n", type);
+	if (type == 's')
 		error("Formatting number as type 's'\n");
 
-	char sign = fmt->sign; // 0 or ' ' or '+'
+	char signChar = sign; // 0 or ' ' or '+'
 
-	if (fmt->type == 'd' || fmt->type == 'f') {
+	if (type == 'd' || type == 'f') {
 		int32_t v = value;
 
 		if (v < 0 && v != INT32_MIN) {
-			sign = '-';
+			signChar = '-';
 			value = -v;
 		}
 	}
 
-	char prefix = !fmt->prefix ? 0
-		: fmt->type == 'X' ? '$'
-		: fmt->type == 'x' ? '$'
-		: fmt->type == 'b' ? '%'
-		: fmt->type == 'o' ? '&'
+	char prefixChar = !prefix ? 0
+		: type == 'X' ? '$'
+		: type == 'x' ? '$'
+		: type == 'b' ? '%'
+		: type == 'o' ? '&'
 		: 0;
 
 	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
 
-	if (fmt->type == 'b') {
+	if (type == 'b') {
 		// Special case for binary
 		char *ptr = valueBuf;
 
@@ -216,34 +204,33 @@ void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t v
 			valueBuf[i] = valueBuf[j];
 			valueBuf[j] = c;
 		}
-	} else if (fmt->type == 'f') {
+	} else if (type == 'f') {
 		// Special case for fixed-point
 
 		// Default fractional width (C++'s is 6 for "%f"; here 5 is enough for Q16.16)
-		size_t fracWidth = fmt->hasFrac ? fmt->fracWidth : 5;
+		size_t cappedFracWidth = hasFrac ? fracWidth : 5;
 
-		if (fracWidth > 255) {
-			error("Fractional width %zu too long, limiting to 255\n",
-			      fracWidth);
-			fracWidth = 255;
+		if (cappedFracWidth > 255) {
+			error("Fractional width %zu too long, limiting to 255\n", cappedFracWidth);
+			cappedFracWidth = 255;
 		}
 
-		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)fracWidth,
+		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth,
 			 value / fix_PrecisionFactor());
 	} else {
-		char const *spec = fmt->type == 'd' ? "%" PRId32
-				 : fmt->type == 'u' ? "%" PRIu32
-				 : fmt->type == 'X' ? "%" PRIX32
-				 : fmt->type == 'x' ? "%" PRIx32
-				 : fmt->type == 'o' ? "%" PRIo32
+		char const *spec = type == 'd' ? "%" PRId32
+				 : type == 'u' ? "%" PRIu32
+				 : type == 'X' ? "%" PRIX32
+				 : type == 'x' ? "%" PRIx32
+				 : type == 'o' ? "%" PRIo32
 				 : "%" PRId32;
 
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}
 
 	size_t len = strlen(valueBuf);
-	size_t numLen = (sign != 0) + (prefix != 0) + len;
-	size_t totalLen = fmt->width > numLen ? fmt->width : numLen;
+	size_t numLen = (signChar != 0) + (prefixChar != 0) + len;
+	size_t totalLen = width > numLen ? width : numLen;
 
 	if (totalLen > bufLen - 1) { // bufLen includes terminator
 		error("Formatted numeric value too long\n");
@@ -258,31 +245,31 @@ void fmt_PrintNumber(char *buf, size_t bufLen, FormatSpec const *fmt, uint32_t v
 	size_t padLen = totalLen - numLen;
 	size_t pos = 0;
 
-	if (fmt->alignLeft) {
-		if (sign)
-			buf[pos++] = sign;
-		if (prefix)
-			buf[pos++] = prefix;
+	if (alignLeft) {
+		if (signChar)
+			buf[pos++] = signChar;
+		if (prefixChar)
+			buf[pos++] = prefixChar;
 		memcpy(buf + pos, valueBuf, len);
 		for (size_t i = pos + len; i < totalLen; i++)
 			buf[i] = ' ';
 	} else {
-		if (fmt->padZero) {
+		if (padZero) {
 			// sign, then prefix, then zero padding
-			if (sign)
-				buf[pos++] = sign;
-			if (prefix)
-				buf[pos++] = prefix;
+			if (signChar)
+				buf[pos++] = signChar;
+			if (prefixChar)
+				buf[pos++] = prefixChar;
 			for (size_t i = 0; i < padLen; i++)
 				buf[pos++] = '0';
 		} else {
 			// space padding, then sign, then prefix
 			for (size_t i = 0; i < padLen; i++)
 				buf[pos++] = ' ';
-			if (sign)
-				buf[pos++] = sign;
-			if (prefix)
-				buf[pos++] = prefix;
+			if (signChar)
+				buf[pos++] = signChar;
+			if (prefixChar)
+				buf[pos++] = prefixChar;
 		}
 		memcpy(buf + pos, valueBuf, len);
 	}
