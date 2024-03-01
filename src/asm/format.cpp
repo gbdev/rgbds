@@ -12,7 +12,7 @@
 #include "asm/format.hpp"
 #include "asm/warning.hpp"
 
-FormatSpec fmt_NewSpec(void)
+FormatSpec fmt_NewSpec()
 {
 	FormatSpec fmt = {};
 

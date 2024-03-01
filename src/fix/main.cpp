@@ -56,7 +56,7 @@ static option const longopts[] = {
 	{ nullptr,            no_argument,       nullptr, 0   }
 };
 
-static void printUsage(void)
+static void printUsage()
 {
 	fputs(
 "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
@@ -158,7 +158,7 @@ enum MbcType {
 	MBC_BAD_RANGE, // MBC number out of range
 };
 
-static void printAcceptedMBCNames(void)
+static void printAcceptedMBCNames()
 {
 	fputs("\tROM ($00) [aka ROM_ONLY]\n", stderr);
 	fputs("\tMBC1 ($01), MBC1+RAM ($02), MBC1+RAM+BATTERY ($03)\n", stderr);
@@ -776,7 +776,7 @@ static bool sgb = false; // If false, SGB flags are left alone
 static const char *title = nullptr;
 static uint8_t titleLen;
 
-static uint8_t maxTitleLen(void)
+static uint8_t maxTitleLen()
 {
 	return gameID ? 11 : model != DMG ? 15 : 16;
 }

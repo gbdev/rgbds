@@ -28,7 +28,7 @@ struct FormatSpec {
 	bool valid;
 };
 
-FormatSpec fmt_NewSpec(void);
+FormatSpec fmt_NewSpec();
 bool fmt_IsEmpty(FormatSpec const *fmt);
 bool fmt_IsValid(FormatSpec const *fmt);
 bool fmt_IsFinished(FormatSpec const *fmt);

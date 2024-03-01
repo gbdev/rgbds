@@ -92,7 +92,7 @@ void fstk_Dump(FileStackNode const *node, uint32_t lineNo)
 	fprintf(stderr, "(%" PRIu32 ")", lineNo);
 }
 
-void fstk_DumpCurrent(void)
+void fstk_DumpCurrent()
 {
 	if (contextStack.empty()) {
 		fputs("at top level", stderr);
@@ -101,7 +101,7 @@ void fstk_DumpCurrent(void)
 	fstk_Dump(contextStack.top().fileInfo, lexer_GetLineNo());
 }
 
-FileStackNode *fstk_GetFileStack(void)
+FileStackNode *fstk_GetFileStack()
 {
 	if (contextStack.empty())
 		return nullptr;
@@ -116,7 +116,7 @@ FileStackNode *fstk_GetFileStack(void)
 	return topNode;
 }
 
-char const *fstk_GetFileName(void)
+char const *fstk_GetFileName()
 {
 	// Iterating via the nodes themselves skips nested REPTs
 	FileStackNode const *node = contextStack.top().fileInfo;
@@ -188,7 +188,7 @@ std::string *fstk_FindFile(char const *path)
 	return nullptr;
 }
 
-bool yywrap(void)
+bool yywrap()
 {
 	uint32_t ifDepth = lexer_GetIFDepth();
 
@@ -318,7 +318,7 @@ void fstk_RunInclude(char const *path)
 
 // Similar to `fstk_RunInclude`, but not subject to `-MG`, and
 // calling `lexer_SetState` instead of `lexer_SetStateAtEOL`.
-static void runPreIncludeFile(void)
+static void runPreIncludeFile()
 {
 	if (!preIncludeName)
 		return;
@@ -479,13 +479,13 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 	context.forName = symName;
 }
 
-void fstk_StopRept(void)
+void fstk_StopRept()
 {
 	// Prevent more iterations
 	contextStack.top().nbReptIters = 0;
 }
 
-bool fstk_Break(void)
+bool fstk_Break()
 {
 	if (contextStack.top().fileInfo->type != NODE_REPT) {
 		error("BREAK can only be used inside a REPT/FOR block\n");

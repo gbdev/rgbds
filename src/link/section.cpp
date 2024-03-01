@@ -266,7 +266,7 @@ static void doSanityChecks(Section *section)
 	}
 }
 
-void sect_DoSanityChecks(void)
+void sect_DoSanityChecks()
 {
 	sect_ForEach(doSanityChecks);
 }

@@ -23,12 +23,12 @@
 
 uint8_t fixPrecision;
 
-uint8_t fix_Precision(void)
+uint8_t fix_Precision()
 {
 	return fixPrecision;
 }
 
-double fix_PrecisionFactor(void)
+double fix_PrecisionFactor()
 {
 	return pow(2.0, fixPrecision);
 }

@@ -122,17 +122,17 @@ bool lexer_OpenFile(LexerState &state, char const *path);
 void lexer_OpenFileView(LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
-void lexer_Init(void);
+void lexer_Init();
 void lexer_SetMode(enum LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 
-uint32_t lexer_GetIFDepth(void);
-void lexer_IncIFDepth(void);
-void lexer_DecIFDepth(void);
-bool lexer_RanIFBlock(void);
-bool lexer_ReachedELSEBlock(void);
-void lexer_RunIFBlock(void);
-void lexer_ReachELSEBlock(void);
+uint32_t lexer_GetIFDepth();
+void lexer_IncIFDepth();
+void lexer_DecIFDepth();
+bool lexer_RanIFBlock();
+bool lexer_ReachedELSEBlock();
+void lexer_RunIFBlock();
+void lexer_ReachELSEBlock();
 
 struct CaptureBody {
 	uint32_t lineNo;
@@ -140,12 +140,12 @@ struct CaptureBody {
 	size_t size;
 };
 
-void lexer_CheckRecursionDepth(void);
-char const *lexer_GetFileName(void);
-uint32_t lexer_GetLineNo(void);
-uint32_t lexer_GetColNo(void);
-void lexer_DumpStringExpansions(void);
-int yylex(void);
+void lexer_CheckRecursionDepth();
+char const *lexer_GetFileName();
+uint32_t lexer_GetLineNo();
+uint32_t lexer_GetColNo();
+void lexer_DumpStringExpansions();
+int yylex();
 bool lexer_CaptureRept(CaptureBody *capture);
 bool lexer_CaptureMacroBody(CaptureBody *capture);
 

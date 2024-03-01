@@ -9,9 +9,9 @@
 extern uint64_t nbSectionsToAssign;
 
 // Assigns all sections a slice of the address space
-void assign_AssignSections(void);
+void assign_AssignSections();
 
 // `free`s all assignment memory that was allocated
-void assign_Cleanup(void);
+void assign_Cleanup();
 
 #endif // RGBDS_LINK_ASSIGN_H

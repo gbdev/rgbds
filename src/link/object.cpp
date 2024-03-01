@@ -525,12 +525,12 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 	fclose(file);
 }
 
-void obj_DoSanityChecks(void)
+void obj_DoSanityChecks()
 {
 	sect_DoSanityChecks();
 }
 
-void obj_CheckAssertions(void)
+void obj_CheckAssertions()
 {
 	patch_CheckAssertions(assertions);
 }
@@ -548,7 +548,7 @@ static void freeSection(Section *section)
 	};
 }
 
-void obj_Cleanup(void)
+void obj_Cleanup()
 {
 	sect_ForEach(freeSection);
 }

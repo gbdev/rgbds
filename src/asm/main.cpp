@@ -43,13 +43,13 @@
 // There are known, non-trivial to fix leaks. We would still like to have `make develop'
 // detect memory corruption, though.
 extern "C" {
-char const *__asan_default_options(void) { return "detect_leaks=0"; }
+char const *__asan_default_options() { return "detect_leaks=0"; }
 }
 #endif
 
 // Old Bison versions (confirmed for 2.3) do not forward-declare `yyparse` in the generated header
 // Unfortunately, macOS still ships 2.3, which is from 2008...
-int yyparse(void);
+int yyparse();
 
 FILE *dependfile = nullptr;
 bool generatedMissingIncludes = false;
@@ -125,7 +125,7 @@ static option const longopts[] = {
 	{ nullptr,            no_argument,       nullptr,  0   }
 };
 
-static void printUsage(void)
+static void printUsage()
 {
 	fputs(
 "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"

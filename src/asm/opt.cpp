@@ -239,7 +239,7 @@ void opt_Parse(char *s)
 	}
 }
 
-void opt_Push(void)
+void opt_Push()
 {
 	OptStackEntry entry;
 
@@ -273,7 +273,7 @@ void opt_Push(void)
 	stack.push(entry);
 }
 
-void opt_Pop(void)
+void opt_Pop()
 {
 	if (stack.empty()) {
 		error("No entries in the option stack\n");

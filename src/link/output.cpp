@@ -103,7 +103,7 @@ Section const *out_OverlappingSection(Section const *section)
  * Performs sanity checks on the overlay file.
  * @return The number of ROM banks in the overlay file
  */
-static uint32_t checkOverlaySize(void)
+static uint32_t checkOverlaySize()
 {
 	if (!overlayFile)
 		return 0;
@@ -192,7 +192,7 @@ static void writeBank(std::deque<Section const *> *bankSections, uint16_t baseOf
 }
 
 // Writes a ROM file to the output.
-static void writeROM(void)
+static void writeROM()
 {
 	if (outputFileName) {
 		if (strcmp(outputFileName, "-")) {
@@ -450,7 +450,7 @@ static void writeMapBank(SortedSections const &sectList, enum SectionType type, 
 /*
  * Write the total used and free space by section type to the map file
  */
-static void writeMapSummary(void)
+static void writeMapSummary()
 {
 	fputs("SUMMARY:\n", mapFile);
 
@@ -500,7 +500,7 @@ static void writeMapSummary(void)
 }
 
 // Writes the sym file, if applicable.
-static void writeSym(void)
+static void writeSym()
 {
 	if (!symFileName)
 		return;
@@ -527,7 +527,7 @@ static void writeSym(void)
 }
 
 // Writes the map file, if applicable.
-static void writeMap(void)
+static void writeMap()
 {
 	if (!mapFileName)
 		return;
@@ -553,7 +553,7 @@ static void writeMap(void)
 	fclose(mapFile);
 }
 
-void out_WriteFiles(void)
+void out_WriteFiles()
 {
 	writeROM();
 	writeSym();

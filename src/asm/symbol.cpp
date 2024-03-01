@@ -49,7 +49,7 @@ void sym_ForEach(void (*callback)(Symbol *))
 		callback(&it.second);
 }
 
-static int32_t Callback_NARG(void)
+static int32_t Callback_NARG()
 {
 	if (!macro_GetCurrentArgs()) {
 		error("_NARG does not make sense outside of a macro\n");
@@ -58,7 +58,7 @@ static int32_t Callback_NARG(void)
 	return macro_NbArgs();
 }
 
-static int32_t CallbackPC(void)
+static int32_t CallbackPC()
 {
 	Section const *section = sect_GetSymbolSection();
 
@@ -188,7 +188,7 @@ Symbol *sym_FindScopedValidSymbol(char const *symName)
 	return sym;
 }
 
-Symbol const *sym_GetPC(void)
+Symbol const *sym_GetPC()
 {
 	return PCSymbol;
 }
@@ -221,7 +221,7 @@ void sym_Purge(std::string const &symName)
 	}
 }
 
-uint32_t sym_GetPCValue(void)
+uint32_t sym_GetPCValue()
 {
 	Section const *sect = sect_GetSymbolSection();
 
@@ -260,7 +260,7 @@ uint32_t sym_GetConstantValue(char const *symName)
 	return 0;
 }
 
-char const *sym_GetCurrentSymbolScope(void)
+char const *sym_GetCurrentSymbolScope()
 {
 	return labelScope;
 }
@@ -492,7 +492,7 @@ Symbol *sym_AddLabel(char const *symName)
 static uint32_t anonLabelID;
 
 // Add an anonymous label
-Symbol *sym_AddAnonLabel(void)
+Symbol *sym_AddAnonLabel()
 {
 	if (anonLabelID == UINT32_MAX) {
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);

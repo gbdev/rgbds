@@ -24,6 +24,6 @@ Section const *out_OverlappingSection(Section const *section);
 /*
  * Writes all output (bin, sym, map) files.
  */
-void out_WriteFiles(void);
+void out_WriteFiles();
 
 #endif // RGBDS_LINK_OUTPUT_H

@@ -27,12 +27,12 @@ static uint32_t maxUniqueID = 0;
 static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
 static char *uniqueIDPtr = nullptr;
 
-MacroArgs *macro_GetCurrentArgs(void)
+MacroArgs *macro_GetCurrentArgs()
 {
 	return macroArgs;
 }
 
-MacroArgs *macro_NewArgs(void)
+MacroArgs *macro_NewArgs()
 {
 	MacroArgs *args = new(std::nothrow) MacroArgs();
 
@@ -73,7 +73,7 @@ char const *macro_GetArg(uint32_t i)
 	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex];
 }
 
-char const *macro_GetAllArgs(void)
+char const *macro_GetAllArgs()
 {
 	if (!macroArgs)
 		return nullptr;
@@ -110,12 +110,12 @@ char const *macro_GetAllArgs(void)
 	return str;
 }
 
-uint32_t macro_GetUniqueID(void)
+uint32_t macro_GetUniqueID()
 {
 	return uniqueID;
 }
 
-char const *macro_GetUniqueIDStr(void)
+char const *macro_GetUniqueIDStr()
 {
 	// Generate a new unique ID on the first use of `\@`
 	if (uniqueID == 0)
@@ -137,14 +137,14 @@ void macro_SetUniqueID(uint32_t id)
 	}
 }
 
-uint32_t macro_UseNewUniqueID(void)
+uint32_t macro_UseNewUniqueID()
 {
 	// A new ID will be generated on the first use of `\@`
 	macro_SetUniqueID(0);
 	return uniqueID;
 }
 
-uint32_t macro_UndefUniqueID(void)
+uint32_t macro_UndefUniqueID()
 {
 	// No ID will be generated; use of `\@` is an error
 	macro_SetUniqueID((uint32_t)-1);
@@ -167,7 +167,7 @@ void macro_ShiftCurrentArgs(int32_t count)
 	}
 }
 
-uint32_t macro_NbArgs(void)
+uint32_t macro_NbArgs()
 {
 	return macroArgs->args.size() - macroArgs->shift;
 }

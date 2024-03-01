@@ -505,7 +505,7 @@ static void applyPatches(Section *section)
 		applyFilePatches(component, section);
 }
 
-void patch_ApplyPatches(void)
+void patch_ApplyPatches()
 {
 	sect_ForEach(applyPatches);
 }

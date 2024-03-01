@@ -143,7 +143,7 @@ static option const longopts[] = {
     {nullptr,              no_argument,       nullptr, 0  }
 };
 
-static void printUsage(void) {
+static void printUsage() {
 	fputs("Usage: rgbgfx [-r stride] [-CmOuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	      "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
 	      "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"

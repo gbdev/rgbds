@@ -36,7 +36,7 @@ FreeSpace *memory[SECTTYPE_INVALID];
 uint64_t nbSectionsToAssign;
 
 // Init the free space-modelling structs
-static void initFreeSpace(void)
+static void initFreeSpace()
 {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		memory[type] = (FreeSpace *)malloc(sizeof(*memory[type]) * nbbanks(type));
@@ -360,7 +360,7 @@ static void categorizeSection(Section *section)
 	nbSectionsToAssign++;
 }
 
-void assign_AssignSections(void)
+void assign_AssignSections()
 {
 	verbosePrint("Beginning assignment...\n");
 
@@ -418,7 +418,7 @@ max_out:
 	unreachable_();
 }
 
-void assign_Cleanup(void)
+void assign_Cleanup()
 {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {

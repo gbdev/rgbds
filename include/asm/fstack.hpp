@@ -44,10 +44,10 @@ extern size_t maxRecursionDepth;
 struct MacroArgs;
 
 void fstk_Dump(FileStackNode const *node, uint32_t lineNo);
-void fstk_DumpCurrent(void);
-FileStackNode *fstk_GetFileStack(void);
+void fstk_DumpCurrent();
+FileStackNode *fstk_GetFileStack();
 // The lifetime of the returned chars is until reaching the end of that file
-char const *fstk_GetFileName(void);
+char const *fstk_GetFileName();
 
 void fstk_AddIncludePath(char const *s);
 void fstk_SetPreIncludeFile(char const *s);
@@ -57,14 +57,14 @@ void fstk_SetPreIncludeFile(char const *s);
  */
 std::string *fstk_FindFile(char const *path);
 
-bool yywrap(void);
+bool yywrap();
 void fstk_RunInclude(char const *path);
 void fstk_RunMacro(char const *macroName, MacroArgs *args);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size);
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char *body, size_t size);
-void fstk_StopRept(void);
-bool fstk_Break(void);
+void fstk_StopRept();
+bool fstk_Break();
 
 void fstk_NewRecursionDepth(size_t newDepth);
 void fstk_Init(char const *mainPath, size_t maxDepth);

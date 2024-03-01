@@ -51,7 +51,7 @@ char const *currentLoadScope = nullptr;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
-attr_(warn_unused_result) static bool checksection(void)
+attr_(warn_unused_result) static bool checksection()
 {
 	if (currentSection)
 		return true;
@@ -62,7 +62,7 @@ attr_(warn_unused_result) static bool checksection(void)
 
 // A quick check to see if we have an initialized section that can contain
 // this much initialized data
-attr_(warn_unused_result) static bool checkcodesection(void)
+attr_(warn_unused_result) static bool checkcodesection()
 {
 	if (!checksection())
 		return false;
@@ -367,7 +367,7 @@ static Section *getSection(char const *name, enum SectionType type, uint32_t org
 }
 
 // Set the current section
-static void changeSection(void)
+static void changeSection()
 {
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
@@ -431,7 +431,7 @@ void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
 	currentLoadSection = sect;
 }
 
-void sect_EndLoadSection(void)
+void sect_EndLoadSection()
 {
 	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
@@ -445,18 +445,18 @@ void sect_EndLoadSection(void)
 	sym_SetCurrentSymbolScope(currentLoadScope);
 }
 
-Section *sect_GetSymbolSection(void)
+Section *sect_GetSymbolSection()
 {
 	return currentLoadSection ? currentLoadSection : currentSection;
 }
 
 // The offset into the section above
-uint32_t sect_GetSymbolOffset(void)
+uint32_t sect_GetSymbolOffset()
 {
 	return curOffset;
 }
 
-uint32_t sect_GetOutputOffset(void)
+uint32_t sect_GetOutputOffset()
 {
 	return curOffset + loadOffset;
 }
@@ -547,7 +547,7 @@ static void createPatch(enum PatchType type, Expression const *expr, uint32_t pc
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
 
-void sect_StartUnion(void)
+void sect_StartUnion()
 {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
@@ -566,7 +566,7 @@ void sect_StartUnion(void)
 	currentUnionStack.push({ .start = curOffset, .size = 0 });
 }
 
-static void endUnionMember(void)
+static void endUnionMember()
 {
 	UnionStackEntry &member = currentUnionStack.top();
 	uint32_t memberSize = curOffset - member.start;
@@ -576,7 +576,7 @@ static void endUnionMember(void)
 	curOffset = member.start;
 }
 
-void sect_NextUnionMember(void)
+void sect_NextUnionMember()
 {
 	if (currentUnionStack.empty()) {
 		error("Found NEXTU outside of a UNION construct\n");
@@ -585,7 +585,7 @@ void sect_NextUnionMember(void)
 	endUnionMember();
 }
 
-void sect_EndUnion(void)
+void sect_EndUnion()
 {
 	if (currentUnionStack.empty()) {
 		error("Found ENDU outside of a UNION construct\n");
@@ -596,7 +596,7 @@ void sect_EndUnion(void)
 	currentUnionStack.pop();
 }
 
-void sect_CheckUnionClosed(void)
+void sect_CheckUnionClosed()
 {
 	if (!currentUnionStack.empty())
 		error("Unterminated UNION construct\n");
@@ -920,7 +920,7 @@ cleanup:
 }
 
 // Section stack routines
-void sect_PushSection(void)
+void sect_PushSection()
 {
 	sectionStack.push_front({
 		.section = currentSection,
@@ -938,7 +938,7 @@ void sect_PushSection(void)
 	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
-void sect_PopSection(void)
+void sect_PopSection()
 {
 	if (sectionStack.empty())
 		fatalerror("No entries in the section stack\n");
@@ -958,7 +958,7 @@ void sect_PopSection(void)
 	std::swap(currentUnionStack, entry.unionStack);
 }
 
-void sect_EndSection(void)
+void sect_EndSection()
 {
 	if (!currentSection)
 		fatalerror("Cannot end the section outside of a SECTION\n");

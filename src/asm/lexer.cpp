@@ -320,23 +320,23 @@ static void initState(LexerState &state)
 	state.expansions.clear();
 }
 
-static void nextLine(void)
+static void nextLine()
 {
 	lexerState->lineNo++;
 	lexerState->colNo = 1;
 }
 
-uint32_t lexer_GetIFDepth(void)
+uint32_t lexer_GetIFDepth()
 {
 	return lexerState->ifStack.size();
 }
 
-void lexer_IncIFDepth(void)
+void lexer_IncIFDepth()
 {
 	lexerState->ifStack.push_front({ .ranIfBlock = false, .reachedElseBlock = false });
 }
 
-void lexer_DecIFDepth(void)
+void lexer_DecIFDepth()
 {
 	if (lexerState->ifStack.empty())
 		fatalerror("Found ENDC outside an IF construct\n");
@@ -344,22 +344,22 @@ void lexer_DecIFDepth(void)
 	lexerState->ifStack.pop_front();
 }
 
-bool lexer_RanIFBlock(void)
+bool lexer_RanIFBlock()
 {
 	return lexerState->ifStack.front().ranIfBlock;
 }
 
-bool lexer_ReachedELSEBlock(void)
+bool lexer_ReachedELSEBlock()
 {
 	return lexerState->ifStack.front().reachedElseBlock;
 }
 
-void lexer_RunIFBlock(void)
+void lexer_RunIFBlock()
 {
 	lexerState->ifStack.front().ranIfBlock = true;
 }
 
-void lexer_ReachELSEBlock(void)
+void lexer_ReachELSEBlock()
 {
 	lexerState->ifStack.front().reachedElseBlock = true;
 }
@@ -484,7 +484,7 @@ void lexer_ToggleStringExpansion(bool enable)
 
 // Functions for the actual lexer to obtain characters
 
-static void reallocCaptureBuf(void)
+static void reallocCaptureBuf()
 {
 	if (lexerState->captureCapacity == SIZE_MAX)
 		fatalerror("Cannot grow capture buffer past %zu bytes\n", SIZE_MAX);
@@ -517,7 +517,7 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 	});
 }
 
-void lexer_CheckRecursionDepth(void)
+void lexer_CheckRecursionDepth()
 {
 	if (lexerState->expansions.size() > maxRecursionDepth + 1)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
@@ -536,13 +536,13 @@ static bool isMacroChar(char c)
 }
 
 // forward declarations for readBracketedMacroArgNum
-static int peek(void);
-static void shiftChar(void);
+static int peek();
+static void shiftChar();
 static uint32_t readNumber(int radix, uint32_t baseValue);
 static bool startsIdentifier(int c);
 static bool continuesIdentifier(int c);
 
-static uint32_t readBracketedMacroArgNum(void)
+static uint32_t readBracketedMacroArgNum()
 {
 	bool disableMacroArgs = lexerState->disableMacroArgs;
 	bool disableInterpolation = lexerState->disableInterpolation;
@@ -709,10 +709,10 @@ static int peekInternal(uint8_t distance)
 }
 
 // forward declarations for peek
-static void shiftChar(void);
+static void shiftChar();
 static char const *readInterpolation(size_t depth);
 
-static int peek(void)
+static int peek()
 {
 	int c = peekInternal(0);
 
@@ -758,7 +758,7 @@ static int peek(void)
 	return c;
 }
 
-static void shiftChar(void)
+static void shiftChar()
 {
 	if (lexerState->capturing) {
 		if (lexerState->captureBuf) {
@@ -802,7 +802,7 @@ restart:
 	}
 }
 
-static int nextChar(void)
+static int nextChar()
 {
 	int c = peek();
 
@@ -820,22 +820,22 @@ static void handleCRLF(int c)
 
 // "Services" provided by the lexer to the rest of the program
 
-char const *lexer_GetFileName(void)
+char const *lexer_GetFileName()
 {
 	return lexerState ? lexerState->path : nullptr;
 }
 
-uint32_t lexer_GetLineNo(void)
+uint32_t lexer_GetLineNo()
 {
 	return lexerState->lineNo;
 }
 
-uint32_t lexer_GetColNo(void)
+uint32_t lexer_GetColNo()
 {
 	return lexerState->colNo;
 }
 
-void lexer_DumpStringExpansions(void)
+void lexer_DumpStringExpansions()
 {
 	if (!lexerState)
 		return;
@@ -848,7 +848,7 @@ void lexer_DumpStringExpansions(void)
 }
 
 // Discards a block comment
-static void discardBlockComment(void)
+static void discardBlockComment()
 {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -890,7 +890,7 @@ finish:
 
 // Function to discard all of a line's comments
 
-static void discardComment(void)
+static void discardComment()
 {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -906,7 +906,7 @@ static void discardComment(void)
 
 // Function to read a line continuation
 
-static void readLineContinuation(void)
+static void readLineContinuation()
 {
 	for (;;) {
 		int c = peek();
@@ -1030,7 +1030,7 @@ static uint32_t readFractionalPart(uint32_t integer)
 
 char binDigits[2];
 
-static uint32_t readBinaryNumber(void)
+static uint32_t readBinaryNumber()
 {
 	uint32_t value = 0;
 
@@ -1055,7 +1055,7 @@ static uint32_t readBinaryNumber(void)
 	return value;
 }
 
-static uint32_t readHexNumber(void)
+static uint32_t readHexNumber()
 {
 	uint32_t value = 0;
 	bool empty = true;
@@ -1089,7 +1089,7 @@ static uint32_t readHexNumber(void)
 
 char gfxDigits[4];
 
-static uint32_t readGfxConstant(void)
+static uint32_t readGfxConstant()
 {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
@@ -1606,9 +1606,9 @@ finish:
 
 // Lexer core
 
-static int yylex_SKIP_TO_ENDC(void); // forward declaration for yylex_NORMAL
+static int yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
 
-static int yylex_NORMAL(void)
+static int yylex_NORMAL()
 {
 	for (;;) {
 		int c = nextChar();
@@ -1909,7 +1909,7 @@ static int yylex_NORMAL(void)
 	}
 }
 
-static int yylex_RAW(void)
+static int yylex_RAW()
 {
 	// This is essentially a modified `appendStringLiteral`
 	size_t parenDepth = 0;
@@ -2168,17 +2168,17 @@ finish:
 	return token;
 }
 
-static int yylex_SKIP_TO_ELIF(void)
+static int yylex_SKIP_TO_ELIF()
 {
 	return skipIfBlock(false);
 }
 
-static int yylex_SKIP_TO_ENDC(void)
+static int yylex_SKIP_TO_ENDC()
 {
 	return skipIfBlock(true);
 }
 
-static int yylex_SKIP_TO_ENDR(void)
+static int yylex_SKIP_TO_ENDR()
 {
 	lexer_SetMode(LEXER_NORMAL);
 	int depth = 1;
@@ -2255,7 +2255,7 @@ finish:
 	return T_EOF;
 }
 
-int yylex(void)
+int yylex()
 {
 	if (lexerState->atLineStart && lexerStateEOL) {
 		lexer_SetState(lexerStateEOL);
@@ -2268,7 +2268,7 @@ int yylex(void)
 	if (lexerState->atLineStart && lexerState->expansions.empty())
 		nextLine();
 
-	static int (* const lexerModeFuncs[NB_LEXER_MODES])(void) = {
+	static int (* const lexerModeFuncs[NB_LEXER_MODES])() = {
 		yylex_NORMAL,
 		yylex_RAW,
 		yylex_SKIP_TO_ELIF,

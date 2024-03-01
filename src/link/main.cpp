@@ -191,7 +191,7 @@ static option const longopts[] = {
 	{ nullptr,         no_argument,       nullptr, 0   }
 };
 
-static void printUsage(void)
+static void printUsage()
 {
 	fputs(
 "Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
@@ -336,7 +336,7 @@ next:
 	}
 }
 
-[[noreturn]] void reportErrors(void) {
+[[noreturn]] void reportErrors() {
 	fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
 		nbErrors, nbErrors == 1 ? "" : "s");
 	exit(1);

@@ -15,12 +15,12 @@ void obj_ReadFile(char const *fileName, unsigned int i);
 /*
  * Perform validation on the object files' contents
  */
-void obj_DoSanityChecks(void);
+void obj_DoSanityChecks();
 
 /*
  * Evaluate all assertions
  */
-void obj_CheckAssertions(void);
+void obj_CheckAssertions();
 
 /*
  * Sets up object file reading
@@ -31,6 +31,6 @@ void obj_Setup(unsigned int nbFiles);
 /*
  * `free`s all object memory that was allocated.
  */
-void obj_Cleanup(void);
+void obj_Cleanup();
 
 #endif // RGBDS_LINK_OBJECT_H

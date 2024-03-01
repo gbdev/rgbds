@@ -13,7 +13,7 @@ void opt_L(bool optimize);
 void opt_W(char *flag);
 void opt_Parse(char *option);
 
-void opt_Push(void);
-void opt_Pop(void);
+void opt_Push();
+void opt_Pop();
 
 #endif // RGBDS_OPT_H

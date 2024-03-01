@@ -28,6 +28,6 @@ void patch_CheckAssertions(std::deque<Assertion> &assertions);
 /*
  * Applies all SECTIONs' patches to them
  */
-void patch_ApplyPatches(void);
+void patch_ApplyPatches();
 
 #endif // RGBDS_LINK_PATCH_H

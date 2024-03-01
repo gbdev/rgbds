@@ -13,7 +13,7 @@
 #define BUILD_VERSION_STRING "@GIT_REV@"
 #endif
 
-char const *get_package_version_string(void)
+char const *get_package_version_string()
 {
 	// The following conditional should be simplified by the compiler.
 	if (strlen(BUILD_VERSION_STRING) == 0) {

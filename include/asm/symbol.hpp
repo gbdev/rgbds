@@ -42,12 +42,12 @@ struct Symbol {
 	union {
 		// If sym_IsNumeric
 		int32_t value;
-		int32_t (*numCallback)(void); // If hasCallback
+		int32_t (*numCallback)(); // If hasCallback
 		// For SYM_MACRO
 		strValue macro;
 		// For SYM_EQUS
 		strValue equs;
-		char const *(*strCallback)(void); // If hasCallback
+		char const *(*strCallback)(); // If hasCallback
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
@@ -109,13 +109,13 @@ int32_t sym_GetValue(Symbol const *sym);
 void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(char const *symName);
 Symbol *sym_AddLabel(char const *symName);
-Symbol *sym_AddAnonLabel(void);
+Symbol *sym_AddAnonLabel();
 void sym_WriteAnonLabelName(char buf[MIN_NB_ELMS(MAXSYMLEN + 1)], uint32_t ofs, bool neg);
 void sym_Export(char const *symName);
 Symbol *sym_AddEqu(char const *symName, int32_t value);
 Symbol *sym_RedefEqu(char const *symName, int32_t value);
 Symbol *sym_AddVar(char const *symName, int32_t value);
-uint32_t sym_GetPCValue(void);
+uint32_t sym_GetPCValue();
 uint32_t sym_GetConstantSymValue(Symbol const *sym);
 uint32_t sym_GetConstantValue(char const *symName);
 // Find a symbol by exact name, bypassing expansion checks
@@ -124,7 +124,7 @@ Symbol *sym_FindExactSymbol(char const *symName);
 Symbol *sym_FindScopedSymbol(char const *symName);
 // Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
 Symbol *sym_FindScopedValidSymbol(char const *symName);
-Symbol const *sym_GetPC(void);
+Symbol const *sym_GetPC();
 Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
 Symbol *sym_Ref(char const *symName);
 Symbol *sym_AddString(char const *symName, char const *value);
@@ -133,7 +133,7 @@ void sym_Purge(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.
-char const *sym_GetCurrentSymbolScope(void);
+char const *sym_GetCurrentSymbolScope();
 void sym_SetCurrentSymbolScope(char const *newScope);
 
 #endif // RGBDS_SYMBOL_H

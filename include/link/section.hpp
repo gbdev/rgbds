@@ -76,6 +76,6 @@ Section *sect_GetSection(std::string const &name);
 /*
  * Checks if all sections meet reasonable criteria, such as max size
  */
-void sect_DoSanityChecks(void);
+void sect_DoSanityChecks();
 
 #endif // RGBDS_LINK_SECTION_H

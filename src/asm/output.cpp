@@ -349,7 +349,7 @@ static void registerUnregisteredSymbol(Symbol *symbol)
 }
 
 // Write an objectfile
-void out_WriteObject(void)
+void out_WriteObject()
 {
 	FILE *f;
 

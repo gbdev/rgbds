@@ -34,21 +34,21 @@
 	using namespace std::literals;
 
 	static void includeFile(std::string &&path);
-	static void incLineNo(void);
+	static void incLineNo();
 
 	static void setSectionType(SectionType type);
 	static void setSectionType(SectionType type, uint32_t bank);
 	static void setAddr(uint32_t addr);
-	static void makeAddrFloating(void);
+	static void makeAddrFloating();
 	static void alignTo(uint32_t alignment, uint32_t offset);
 	static void pad(uint32_t length);
 	static void placeSection(std::string const &name, bool isOptional);
 
-	static yy::parser::symbol_type yylex(void);
+	static yy::parser::symbol_type yylex();
 
 	struct Keyword {
 		std::string_view name;
-		yy::parser::symbol_type (* tokenGen)(void);
+		yy::parser::symbol_type (* tokenGen)();
 	};
 }
 
@@ -144,7 +144,7 @@ static void includeFile(std::string &&path) {
 	}
 }
 
-static void incLineNo(void) {
+static void incLineNo() {
 	++lexerStack.back().lineNo;
 }
 
@@ -184,7 +184,7 @@ static uint8_t parseHexDigit(int c) {
 	}
 }
 
-yy::parser::symbol_type yylex(void) {
+yy::parser::symbol_type yylex() {
 try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) think it can end.
 	auto &context = lexerStack.back();
 	auto c = context.file.sbumpc();
@@ -397,7 +397,7 @@ static void setAddr(uint32_t addr) {
 	isPcFloating = false;
 }
 
-static void makeAddrFloating(void) {
+static void makeAddrFloating() {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot make the current address floating: no memory region is active");

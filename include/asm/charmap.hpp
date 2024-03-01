@@ -10,8 +10,8 @@
 
 void charmap_New(char const *name, char const *baseName);
 void charmap_Set(char const *name);
-void charmap_Push(void);
-void charmap_Pop(void);
+void charmap_Push();
+void charmap_Pop();
 void charmap_Add(char *mapping, uint8_t value);
 bool charmap_HasChar(char const *input);
 void charmap_Convert(char const *input, std::vector<uint8_t> &output);

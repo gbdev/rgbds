@@ -78,12 +78,12 @@ void charmap_Set(char const *name)
 		currentCharmap = &search->second;
 }
 
-void charmap_Push(void)
+void charmap_Push()
 {
 	charmapStack.push(currentCharmap);
 }
 
-void charmap_Pop(void)
+void charmap_Pop()
 {
 	if (charmapStack.empty()) {
 		error("No entries in the charmap stack\n");
