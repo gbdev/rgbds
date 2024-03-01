@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 #include "link/assign.hpp"
 #include "link/section.hpp"
@@ -27,11 +28,10 @@ struct MemoryLocation {
 struct FreeSpace {
 	uint16_t address;
 	uint16_t size;
-	FreeSpace *next, *prev;
 };
 
 // Table of free space for each bank
-FreeSpace *memory[SECTTYPE_INVALID];
+std::vector<std::deque<FreeSpace>> memory[SECTTYPE_INVALID];
 
 uint64_t nbSectionsToAssign;
 
@@ -39,20 +39,12 @@ uint64_t nbSectionsToAssign;
 static void initFreeSpace()
 {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		memory[type] = (FreeSpace *)malloc(sizeof(*memory[type]) * nbbanks(type));
-		if (!memory[type])
-			err("Failed to init free space for region %d", type);
-
-		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
-			memory[type][bank].next =
-				(FreeSpace *)malloc(sizeof(*memory[type][0].next));
-			if (!memory[type][bank].next)
-				err("Failed to init free space for region %d bank %" PRIu32,
-				    type, bank);
-			memory[type][bank].next->address = sectionTypeInfo[type].startAddr;
-			memory[type][bank].next->size    = sectionTypeInfo[type].size;
-			memory[type][bank].next->next    = nullptr;
-			memory[type][bank].next->prev    = &memory[type][bank];
+		memory[type].resize(nbbanks(type));
+		for (std::deque<FreeSpace> &bankMem : memory[type]) {
+			bankMem.push_back({
+				.address = sectionTypeInfo[type].startAddr,
+				.size = sectionTypeInfo[type].size
+			});
 		}
 	}
 }
@@ -88,7 +80,7 @@ static void assignSection(Section *section, MemoryLocation const *location)
  * @param location The location to attempt placing the section at
  * @return True if the location is suitable, false otherwise.
  */
-static bool isLocationSuitable(Section const *section, FreeSpace const *freeSpace,
+static bool isLocationSuitable(Section const *section, FreeSpace const &freeSpace,
 			       MemoryLocation const *location)
 {
 	if (section->isAddressFixed && section->org != location->address)
@@ -97,20 +89,23 @@ static bool isLocationSuitable(Section const *section, FreeSpace const *freeSpac
 	if (section->isAlignFixed && ((location->address - section->alignOfs) & section->alignMask))
 		return false;
 
-	if (location->address < freeSpace->address)
+	if (location->address < freeSpace.address)
 		return false;
 
-	return location->address + section->size <= freeSpace->address + freeSpace->size;
+	return location->address + section->size <= freeSpace.address + freeSpace.size;
 }
 
 /*
  * Finds a suitable location to place a section at.
  * @param section The section to be placed
  * @param location A pointer to a memory location that will be filled
- * @return A pointer to the free space encompassing the location, or `nullptr` if none was found
+ * @return The index into `memory[section->type]` of the free space encompassing the location,
+ *         or -1 if none was found
  */
-static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
+static ssize_t getPlacement(Section const *section, MemoryLocation *location)
 {
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[section->type];
+
 	static uint16_t curScrambleROM = 0;
 	static uint8_t curScrambleWRAM = 0;
 	static int8_t curScrambleSRAM = 0;
@@ -131,22 +126,22 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 			curScrambleSRAM = scrambleSRAM;
 		location->bank = curScrambleSRAM--;
 	} else {
-		location->bank = sectionTypeInfo[section->type].firstBank;
+		location->bank = typeInfo.firstBank;
 	}
-	FreeSpace *space;
 
 	for (;;) {
 		// Switch to the beginning of the next bank
-#define BANK_INDEX (location->bank - sectionTypeInfo[section->type].firstBank)
-		space = memory[section->type][BANK_INDEX].next;
-		if (space)
-			location->address = space->address;
+		std::deque<FreeSpace> &bankMem = memory[section->type][location->bank - typeInfo.firstBank];
+		size_t spaceIdx = 0;
+
+		if (spaceIdx < bankMem.size())
+			location->address = bankMem[spaceIdx].address;
 
 		// Process locations in that bank
-		while (space) {
+		while (spaceIdx < bankMem.size()) {
 			// If that location is OK, return it
-			if (isLocationSuitable(section, space, location))
-				return space;
+			if (isLocationSuitable(section, bankMem[spaceIdx], location))
+				return spaceIdx;
 
 			// Go to the next *possible* location
 			if (section->isAddressFixed) {
@@ -156,8 +151,7 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 				if (location->address < section->org)
 					location->address = section->org;
 				else
-					// Try again in next bank
-					space = nullptr;
+					break; // Try again in next bank
 			} else if (section->isAlignFixed) {
 				// Move to next aligned location
 				// Move back to alignment boundary
@@ -168,15 +162,16 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 				location->address += section->alignMask + 1 + section->alignOfs;
 			} else {
 				// Any location is fine, so, next free block
-				space = space->next;
-				if (space)
-					location->address = space->address;
+				spaceIdx++;
+				if (spaceIdx < bankMem.size())
+					location->address = bankMem[spaceIdx].address;
 			}
 
 			// If that location is past the current block's end,
 			// go forwards until that is no longer the case.
-			while (space && location->address >= space->address + space->size)
-				space = space->next;
+			while (spaceIdx < bankMem.size() && location->address >=
+			       bankMem[spaceIdx].address + bankMem[spaceIdx].size)
+				spaceIdx++;
 
 			// Try again with the new location/free space combo
 		}
@@ -185,34 +180,33 @@ static FreeSpace *getPlacement(Section const *section, MemoryLocation *location)
 		// Try scrambled banks in descending order until no bank in the scrambled range is available.
 		// Otherwise, try in ascending order.
 		if (section->isBankFixed) {
-			return nullptr;
+			return -1;
 		} else if (scrambleROMX && section->type == SECTTYPE_ROMX && location->bank <= scrambleROMX) {
-			if (location->bank > sectionTypeInfo[section->type].firstBank)
+			if (location->bank > typeInfo.firstBank)
 				location->bank--;
-			else if (scrambleROMX < sectionTypeInfo[section->type].lastBank)
+			else if (scrambleROMX < typeInfo.lastBank)
 				location->bank = scrambleROMX + 1;
 			else
-				return nullptr;
+				return -1;
 		} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX && location->bank <= scrambleWRAMX) {
-			if (location->bank > sectionTypeInfo[section->type].firstBank)
+			if (location->bank > typeInfo.firstBank)
 				location->bank--;
-			else if (scrambleWRAMX < sectionTypeInfo[section->type].lastBank)
+			else if (scrambleWRAMX < typeInfo.lastBank)
 				location->bank = scrambleWRAMX + 1;
 			else
-				return nullptr;
+				return -1;
 		} else if (scrambleSRAM && section->type == SECTTYPE_SRAM && location->bank <= scrambleSRAM) {
-			if (location->bank > sectionTypeInfo[section->type].firstBank)
+			if (location->bank > typeInfo.firstBank)
 				location->bank--;
-			else if (scrambleSRAM < sectionTypeInfo[section->type].lastBank)
+			else if (scrambleSRAM < typeInfo.lastBank)
 				location->bank = scrambleSRAM + 1;
 			else
-				return nullptr;
-		} else if (location->bank < sectionTypeInfo[section->type].lastBank) {
+				return -1;
+		} else if (location->bank < typeInfo.lastBank) {
 			location->bank++;
 		} else {
-			return nullptr;
+			return -1;
 		}
-#undef BANK_INDEX
 	}
 }
 
@@ -242,49 +236,35 @@ static void placeSection(Section *section)
 
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	FreeSpace *freeSpace = getPlacement(section, &location);
+	if (ssize_t spaceIdx = getPlacement(section, &location); spaceIdx != -1) {
+		std::deque<FreeSpace> &bankMem = memory[section->type][location.bank -
+				sectionTypeInfo[section->type].firstBank];
+		FreeSpace &freeSpace = bankMem[spaceIdx];
 
-	if (freeSpace) {
 		assignSection(section, &location);
 
-		// Split the free space
-		bool noLeftSpace  = freeSpace->address == section->org;
-		bool noRightSpace = freeSpace->address + freeSpace->size
-					== section->org + section->size;
+		// Update the free space
+		bool noLeftSpace  = freeSpace.address == section->org;
+		bool noRightSpace = freeSpace.address + freeSpace.size == section->org + section->size;
 		if (noLeftSpace && noRightSpace) {
 			// The free space is entirely deleted
-			freeSpace->prev->next = freeSpace->next;
-			if (freeSpace->next)
-				freeSpace->next->prev = freeSpace->prev;
-			// If the space is the last one on the list, set its
-			// size to 0 so it doesn't get picked, but don't free()
-			// it as it will be freed when cleaning up
-			free(freeSpace);
+			bankMem.erase(bankMem.begin() + spaceIdx);
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
-			FreeSpace *newSpace = (FreeSpace *)malloc(sizeof(*newSpace));
-
-			if (!newSpace)
-				err("Failed to split new free space");
-			// Append the new space after the chosen one
-			newSpace->prev = freeSpace;
-			newSpace->next = freeSpace->next;
-			if (freeSpace->next)
-				freeSpace->next->prev = newSpace;
-			freeSpace->next = newSpace;
-			// Set its parameters
-			newSpace->address = section->org + section->size;
-			newSpace->size = freeSpace->address + freeSpace->size -
-				newSpace->address;
-			// Set the original space's new parameters
-			freeSpace->size = section->org - freeSpace->address;
-			// address is unmodified
+			// Append the new space after the original one
+			bankMem.insert(bankMem.begin() + spaceIdx + 1, {
+				.address = (uint16_t)(section->org + section->size),
+				.size = (uint16_t)(freeSpace.address + freeSpace.size -
+						   section->org - section->size)
+			});
+			// Resize the original space (address is unmodified)
+			freeSpace.size = section->org - freeSpace.address;
 		} else {
 			// The amount of free spaces doesn't change: resize!
-			freeSpace->size -= section->size;
+			freeSpace.size -= section->size;
 			if (noLeftSpace)
 				// The free space is moved *and* resized
-				freeSpace->address += section->size;
+				freeSpace.address += section->size;
 		}
 		return;
 	}
@@ -416,22 +396,4 @@ max_out:
 	}
 
 	unreachable_();
-}
-
-void assign_Cleanup()
-{
-	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
-		for (uint32_t bank = 0; bank < nbbanks(type); bank++) {
-			FreeSpace *ptr = memory[type][bank].next;
-
-			while (ptr) {
-				FreeSpace *next = ptr->next;
-
-				free(ptr);
-				ptr = next;
-			}
-		}
-
-		free(memory[type]);
-	}
 }

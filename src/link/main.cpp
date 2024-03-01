@@ -470,7 +470,6 @@ int main(int argc, char *argv[])
 		reportErrors();
 	assign_AssignSections();
 	obj_CheckAssertions();
-	assign_Cleanup();
 
 	// and finally output the result.
 	patch_ApplyPatches();
