@@ -5,18 +5,22 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <vector>
 
 #include "asm/warning.hpp"
 
 #include "helpers.hpp"
 
-struct MacroArgs;
+struct MacroArgs {
+	unsigned int shift;
+	std::vector<char *> args;
+
+	void append(char *s);
+	void clear();
+};
 
 MacroArgs *macro_GetCurrentArgs();
-MacroArgs *macro_NewArgs();
-void macro_AppendArg(MacroArgs *args, char *s);
 void macro_UseNewArgs(MacroArgs *args);
-void macro_FreeArgs(MacroArgs *args);
 char const *macro_GetArg(uint32_t i);
 char const *macro_GetAllArgs();
 

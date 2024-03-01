@@ -503,10 +503,14 @@ macro		: T_ID {
 ;
 
 macroargs	: %empty {
-			$$ = macro_NewArgs();
+			$$ = new(std::nothrow) MacroArgs();
+			if (!$$)
+				fatalerror("Failed to allocate memory for macro arguments: %s\n",
+					   strerror(errno));
+			$$->shift = 0;
 		}
 		| macroargs T_STRING {
-			macro_AppendArg($$, strdup($2));
+			$$->append(strdup($2));
 		}
 ;
 
