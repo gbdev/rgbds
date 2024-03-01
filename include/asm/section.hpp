@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "linkdefs.hpp"
-#include "platform.hpp" // NONNULL
 
 extern uint8_t fillByte;
 
@@ -39,6 +38,8 @@ struct Section {
 	uint16_t alignOfs;
 	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
+
+	bool isSizeKnown() const;
 };
 
 struct SectionSpec {
@@ -84,7 +85,5 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 void sect_EndSection();
 void sect_PushSection();
 void sect_PopSection();
-
-bool sect_IsSizeKnown(Section const NONNULL(name));
 
 #endif // RGBDS_SECTION_H

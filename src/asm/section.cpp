@@ -375,6 +375,25 @@ static void changeSection()
 	sym_SetCurrentSymbolScope(nullptr);
 }
 
+bool Section::isSizeKnown() const
+{
+	// SECTION UNION and SECTION FRAGMENT can still grow
+	if (modifier != SECTION_NORMAL)
+		return false;
+
+	// The current section (or current load section if within one) is still growing
+	if (this == currentSection || this == currentLoadSection)
+		return false;
+
+	// Any section on the stack is still growing
+	for (SectionStackEntry &entry : sectionStack) {
+		if (entry.section && !strcmp(name, entry.section->name))
+			return false;
+	}
+
+	return true;
+}
+
 // Set the current section by name and type
 void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 		     SectionSpec const *attribs, enum SectionModifier mod)
@@ -972,23 +991,4 @@ void sect_EndSection()
 	// Reset the section scope
 	currentSection = nullptr;
 	sym_SetCurrentSymbolScope(nullptr);
-}
-
-bool sect_IsSizeKnown(Section const NONNULL(sect))
-{
-	// SECTION UNION and SECTION FRAGMENT can still grow
-	if (sect->modifier != SECTION_NORMAL)
-		return false;
-
-	// The current section (or current load section if within one) is still growing
-	if (sect == currentSection || sect == currentLoadSection)
-		return false;
-
-	// Any section on the stack is still growing
-	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && !strcmp(sect->name, entry.section->name))
-			return false;
-	}
-
-	return true;
 }

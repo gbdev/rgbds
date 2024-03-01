@@ -172,7 +172,7 @@ void rpn_SizeOfSection(Expression *expr, char const *sectionName)
 
 	Section *section = sect_FindSectionByName(sectionName);
 
-	if (section && sect_IsSizeKnown(section)) {
+	if (section && section->isSizeKnown()) {
 		expr->val = section->size;
 	} else {
 		makeUnknown(expr, "Section \"", sectionName, "\"'s size is not known");
