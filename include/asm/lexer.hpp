@@ -4,6 +4,8 @@
 #define RGBDS_ASM_LEXER_H
 
 #include <deque>
+#include <optional>
+#include <string>
 
 #include "platform.hpp" // SSIZE_MAX
 
@@ -25,7 +27,7 @@ enum LexerMode {
 };
 
 struct Expansion {
-	char *name;
+	std::optional<std::string> name;
 	union {
 		char const *unowned;
 		char *owned;

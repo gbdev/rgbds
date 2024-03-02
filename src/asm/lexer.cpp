@@ -10,9 +10,11 @@
 #include <limits.h>
 #include <math.h>
 #include <new>
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 #include <unordered_map>
 #ifndef _MSC_VER
@@ -509,7 +511,7 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		lexer_CheckRecursionDepth();
 
 	lexerState->expansions.push_front({
-		.name = name ? strdup(name) : nullptr,
+		.name = name ? std::optional<std::string>(name) : std::nullopt,
 		.contents = { .unowned = str },
 		.size = size,
 		.offset = 0,
@@ -525,7 +527,6 @@ void lexer_CheckRecursionDepth()
 
 static void freeExpansion(Expansion &expansion)
 {
-	free(expansion.name);
 	if (expansion.owned)
 		free(expansion.contents.owned);
 }
@@ -843,7 +844,7 @@ void lexer_DumpStringExpansions()
 	for (Expansion &exp : lexerState->expansions) {
 		// Only register EQUS expansions, not string args
 		if (exp.name)
-			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name);
+			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name->c_str());
 	}
 }
 
