@@ -110,7 +110,7 @@ Each `.link` linker script **must** be accompanied by a `.out` file, and RGBLINK
 #### Variant tests
 
 These allow testing RGBLINK's `-d`, `-t`, and `-w` flags.
-If one or more files called `<asm file name>-<flag>.out` or `<asm file name>-no-<flag>.out` exist, then each of them corresponds to one test.
+If one or more files called <code><var>&lt;asm file name&gt;</var>-<var>&lt;flag&gt;</var>.out</code> or <code><var>&lt;asm file name&gt;</var>-no-<var>&lt;flag&gt;</var>.out</code> exist, then each of them corresponds to one test.
 
 The object file will be linked with and without said flag, respectively; and in each case, RGBLINK's output must match the `.out` file's contents.
 
@@ -130,14 +130,14 @@ Additionally, if a `.gb` file exists, the output of RGBFIX must match the `.gb`.
 
 Each `.png` file corresponds to one test.
 RGBGFX will be invoked on the file.
-If a `.flags` file exists, it will be used as part of the RGBGFX invocation (`@<file>.flags`).
+If a `.flags` file exists, it will be used as part of the RGBGFX invocation (<code>@<var>&lt;file&gt;</var>.flags</code>).
 
 If no `.err` file exists, RGBGFX is simply expected to be able to process the file normally.
 If one *does* exist, RGBGFX's return status is ignored, but its output **must** match the `.err` file's contents.
 
 ### Downstream projects
 
-1. Make sure the downstream project supports `make <target> RGBDS=<path to RGBDS>`.
+1. Make sure the downstream project supports <code>make <var>&lt;target&gt;</var> RGBDS=<var>&lt;path to RGBDS&gt;</var></code>.
    While the test suite supports any Make target name, only [Make](//gnu.org/software/make) is currently supported, and the Makefile must support a `RGBDS` variable to use a non-system RGBDS.
 
    Only projects hosted on GitHub are currently supported, too.
