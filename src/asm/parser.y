@@ -1329,7 +1329,7 @@ string		: T_STRING
 				fatalerror("\"%s\" does not belong to any section\n", sym->name);
 			// Section names are capped by rgbasm's maximum string length,
 			// so this currently can't overflow.
-			strcpy($$, section->name);
+			strcpy($$, section->name.c_str());
 		}
 ;
 

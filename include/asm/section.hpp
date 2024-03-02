@@ -26,7 +26,7 @@ struct Patch {
 };
 
 struct Section {
-	char *name;
+	std::string name;
 	enum SectionType type;
 	enum SectionModifier modifier;
 	FileStackNode const *src; // Where the section was defined

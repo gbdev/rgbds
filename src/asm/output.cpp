@@ -25,7 +25,6 @@
 
 #include "error.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp" // strdup
 
 struct Assertion {
 	Patch patch;
@@ -95,7 +94,7 @@ static uint32_t getSectIDIfAny(Section *sect)
 			return it - sectionList.begin();
 	}
 
-	fatalerror("Unknown section '%s'\n", sect->name);
+	fatalerror("Unknown section '%s'\n", sect->name.c_str());
 }
 
 // Write a patch to a file
@@ -115,7 +114,7 @@ static void writepatch(Patch const &patch, FILE *f)
 // Write a section to a file
 static void writesection(Section const &sect, FILE *f)
 {
-	putstring(sect.name, f);
+	putstring(sect.name.c_str(), f);
 
 	putlong(sect.size, f);
 

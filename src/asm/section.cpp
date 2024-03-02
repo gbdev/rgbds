@@ -23,7 +23,6 @@
 
 #include "error.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp" // strdup
 
 uint8_t fillByte;
 
@@ -71,7 +70,7 @@ attr_(warn_unused_result) static bool checkcodesection()
 		return true;
 
 	error("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
-	      currentSection->name);
+	      currentSection->name.c_str());
 	return false;
 }
 
@@ -84,7 +83,7 @@ attr_(warn_unused_result) static bool checkSectionSize(Section const *sect, uint
 		return true;
 
 	error("Section '%s' grew too big (max size = 0x%" PRIX32
-	      " bytes, reached 0x%" PRIX32 ").\n", sect->name, maxSize, size);
+	      " bytes, reached 0x%" PRIX32 ").\n", sect->name.c_str(), maxSize, size);
 	return false;
 }
 
@@ -113,7 +112,7 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 Section *sect_FindSectionByName(char const *name)
 {
 	for (Section &sect : sectionList) {
-		if (strcmp(name, sect.name) == 0)
+		if (sect.name == name)
 			return &sect;
 	}
 	return nullptr;
@@ -258,7 +257,7 @@ static void mergeSections(Section *sect, enum SectionType type, uint32_t org, ui
 
 	if (nbSectErrors)
 		fatalerror("Cannot create section \"%s\" (%u error%s)\n",
-			   sect->name, nbSectErrors, nbSectErrors == 1 ? "" : "s");
+			   sect->name.c_str(), nbSectErrors, nbSectErrors == 1 ? "" : "s");
 }
 
 #undef fail
@@ -270,10 +269,7 @@ static Section *createSection(char const *name, enum SectionType type, uint32_t 
 	// Add the new section to the list (order doesn't matter)
 	Section &sect = sectionList.emplace_front();
 
-	sect.name = strdup(name);
-	if (sect.name == nullptr)
-		fatalerror("Not enough memory for section name: %s\n", strerror(errno));
-
+	sect.name = name;
 	sect.type = type;
 	sect.modifier = mod;
 	sect.src = fstk_GetFileStack();
@@ -387,7 +383,7 @@ bool Section::isSizeKnown() const
 
 	// Any section on the stack is still growing
 	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && !strcmp(name, entry.section->name))
+		if (entry.section && entry.section->name == name)
 			return false;
 	}
 
@@ -402,7 +398,7 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
 	for (SectionStackEntry &entry : sectionStack) {
-		if (entry.section && !strcmp(name, entry.section->name))
+		if (entry.section && entry.section->name == name)
 			fatalerror("Section '%s' is already on the stack\n", name);
 	}
 
