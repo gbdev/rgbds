@@ -12,17 +12,14 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <limits.h>
 #include <png.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <string>
 #include <string.h>
+#include <vector>
 
 #include "platform.hpp"
-
-#define STR(x)  #x
-#define XSTR(x) STR(x)
 
 struct Attributes {
 	unsigned char palette;
@@ -31,11 +28,6 @@ struct Attributes {
 
 static unsigned long long randbits = 0;
 static unsigned char randcount = 0;
-
-[[noreturn]] static void fatal(char const *error) {
-	fprintf(stderr, "FATAL: %s\n", error);
-	exit(1);
-}
 
 static FILE *seed;
 
@@ -189,11 +181,8 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 	uint8_t const SIZEOF_PIXEL = 4; // Each pixel is 4 bytes (RGBA @ 8 bits/component)
 	assert(width != 0);
 	assert(height != 0);
-	uint8_t *data = (uint8_t *)malloc(height * 8 * width * 8 * SIZEOF_PIXEL);
-	uint8_t **rowPtrs = (uint8_t **)malloc(height * 8 * sizeof(*rowPtrs));
-	if (data == nullptr || rowPtrs == nullptr) {
-		fatal("Out of memory");
-	}
+	std::vector<uint8_t> data(height * 8 * width * 8 * SIZEOF_PIXEL);
+	std::vector<uint8_t *> rowPtrs(height * 8);
 	for (uint8_t y = 0; y < height * 8; ++y) {
 		rowPtrs[y] = &data[y * width * 8 * SIZEOF_PIXEL];
 	}
@@ -213,11 +202,9 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_
 		}
 	}
 
-	png_set_rows(png, pngInfo, rowPtrs);
+	png_set_rows(png, pngInfo, rowPtrs.data());
 	png_write_png(png, pngInfo, PNG_TRANSFORM_IDENTITY, nullptr);
 	fclose(file);
-	free(rowPtrs);
-	free(data);
 	png_destroy_write_struct(&png, &pngInfo);
 }
 
@@ -289,25 +276,21 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	size_t const nameLen = strlen(argv[2]);
 	unsigned long long maxcount = ULLONG_MAX;
 	if (argc > 3) {
 		char *error;
 		maxcount = strtoull(argv[3], &error, 0);
 		if (*error != '\0') {
-			fatal("invalid count");
+			fputs("FATAL: invalid count\n", stderr);
+			return 1;
 		}
 	}
 
-	char *filename = (char *)malloc(nameLen + sizeof(XSTR(ULLONG_MAX) ".png"));
-	if (!filename) {
-		fatal("out of memory");
-	}
-	memcpy(filename, argv[2], nameLen);
-
 	for (unsigned long long count = 0; count < maxcount; count++) {
-		sprintf(&filename[nameLen], "%llu.png", count);
-		generate_random_image(filename);
+		std::string filename(argv[2]);
+		filename.append(std::to_string(count));
+		filename.append(".png");
+		generate_random_image(filename.c_str());
 		// Reset the global random state so that subsequent images don't share a random byte
 		randbits = 0;
 		randcount = 0;
