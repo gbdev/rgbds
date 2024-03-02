@@ -27,8 +27,8 @@
 	};
 
 	struct StrFmtArgList {
-		char *format;
-		std::vector<std::variant<uint32_t, char *>> *args;
+		std::string *format;
+		std::vector<std::variant<uint32_t, std::string>> *args;
 	};
 }
 %code {
@@ -72,7 +72,7 @@
 	static void initStrFmtArgList(StrFmtArgList *args);
 	static void freeStrFmtArgList(StrFmtArgList *args);
 	static void strfmt(char *dest, size_t destLen, char const *spec,
-			   std::vector<std::variant<uint32_t, char *>> &args);
+			   std::vector<std::variant<uint32_t, std::string>> &args);
 	static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue);
 	static void initDsArgList(std::vector<Expression> *&args);
 	static void initPurgeArgList(std::vector<std::string> *&args);
@@ -1315,7 +1315,7 @@ string		: T_STRING
 			strrpl($$, sizeof($$), $3, $5, $7);
 		}
 		| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
-			strfmt($$, sizeof($$), $3.format, *$3.args);
+			strfmt($$, sizeof($$), $3.format->c_str(), *$3.args);
 			freeStrFmtArgList(&$3);
 		}
 		| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
@@ -1346,8 +1346,8 @@ strcat_args	: string
 ;
 
 strfmt_args	: string strfmt_va_args {
-			$$.format = strdup($1);
-			$$.args = $2.args;
+			$$ = $2;
+			*$$.format = $1;
 		}
 ;
 
@@ -1359,7 +1359,7 @@ strfmt_va_args	: %empty {
 			$$ = $1;
 		}
 		| strfmt_va_args T_COMMA string {
-			$1.args->push_back(strdup($3));
+			$1.args->push_back($3);
 			$$ = $1;
 		}
 ;
@@ -2184,7 +2184,11 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 
 static void initStrFmtArgList(StrFmtArgList *args)
 {
-	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, char *>>();
+	args->format = new(std::nothrow) std::string();
+	if (!args->format)
+		fatalerror("Failed to allocate memory for STRFMT format string: %s\n",
+			   strerror(errno));
+	args->args = new(std::nothrow) std::vector<std::variant<uint32_t, std::string>>();
 	if (!args->args)
 		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n",
 			   strerror(errno));
@@ -2192,16 +2196,12 @@ static void initStrFmtArgList(StrFmtArgList *args)
 
 static void freeStrFmtArgList(StrFmtArgList *args)
 {
-	free(args->format);
-	for (std::variant<uint32_t, char *> &arg : *args->args) {
-		if (char **str = std::get_if<char *>(&arg); str)
-			free(*str);
-	}
+	delete args->format;
 	delete args->args;
 }
 
 static void strfmt(char *dest, size_t destLen, char const *spec,
-		   std::vector<std::variant<uint32_t, char *>> &args)
+		   std::vector<std::variant<uint32_t, std::string>> &args)
 {
 	size_t a = 0;
 	size_t i = 0;
@@ -2248,12 +2248,12 @@ static void strfmt(char *dest, size_t destLen, char const *spec,
 			continue;
 		}
 
-		std::variant<uint32_t, char *> &arg = args[a++];
+		std::variant<uint32_t, std::string> &arg = args[a++];
 		static char buf[MAXSTRLEN + 1];
 
 		std::visit(Visitor{
 			[&](uint32_t num) { fmt.printNumber(buf, sizeof(buf), num); },
-			[&](char *str) { fmt.printString(buf, sizeof(buf), str); },
+			[&](std::string &str) { fmt.printString(buf, sizeof(buf), str.c_str()); },
 		}, arg);
 
 		i += snprintf(&dest[i], destLen - i, "%s", buf);
