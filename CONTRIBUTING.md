@@ -79,7 +79,7 @@ Feel free to modify how the test scripts work,
 ### RGBASM
 
 Each `.asm` file corresponds to one test.
-RGBASM will be invoked on the `.asm` file.
+RGBASM will be invoked on the `.asm` file with all warnings enabled.
 
 If a `.out` file exists, RGBASM's output (`println` etc.) must match its contents.
 If a `.err` file exists, RGBASM's errors (`warn`, errors, etc.) must match its contents.
