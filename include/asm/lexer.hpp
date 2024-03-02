@@ -31,7 +31,7 @@ struct Expansion {
 	std::optional<std::string> name;
 	union {
 		char const *unowned;
-		char *owned; // Non-`const` only so it can be `free()`d
+		char *owned; // Non-`const` only so it can be `delete []`d
 	} contents;
 	size_t size; // Length of the contents
 	size_t offset; // Cursor into the contents

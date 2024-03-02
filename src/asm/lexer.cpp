@@ -517,7 +517,7 @@ void lexer_CheckRecursionDepth()
 static void freeExpansion(Expansion &expansion)
 {
 	if (expansion.owned)
-		free(expansion.contents.owned);
+		delete [] expansion.contents.owned;
 }
 
 static bool isMacroChar(char c)
