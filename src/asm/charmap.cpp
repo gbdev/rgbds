@@ -24,7 +24,7 @@
 struct CharmapNode {
 	bool isTerminal; // Whether there exists a mapping that ends here
 	uint8_t value; // If the above is true, its corresponding value
-	// This MUST be indexes and not pointers, because pointers get invalidated by `realloc`!
+	// This MUST be indexes and not pointers, because pointers get invalidated by reallocation!
 	size_t next[255]; // Indexes of where to go next, 0 = nowhere
 };
 

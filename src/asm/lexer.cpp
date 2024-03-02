@@ -17,6 +17,7 @@
 #include <string>
 #include <string.h>
 #include <unordered_map>
+#include <vector>
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
@@ -487,19 +488,6 @@ void lexer_ToggleStringExpansion(bool enable)
 
 // Functions for the actual lexer to obtain characters
 
-static void reallocCaptureBuf()
-{
-	if (lexerState->captureCapacity == SIZE_MAX)
-		fatalerror("Cannot grow capture buffer past %zu bytes\n", SIZE_MAX);
-	else if (lexerState->captureCapacity > SIZE_MAX / 2)
-		lexerState->captureCapacity = SIZE_MAX;
-	else
-		lexerState->captureCapacity *= 2;
-	lexerState->captureBuf = (char *)realloc(lexerState->captureBuf, lexerState->captureCapacity);
-	if (!lexerState->captureBuf)
-		fatalerror("realloc error while resizing capture buffer: %s\n", strerror(errno));
-}
-
 static void beginExpansion(char const *str, bool owned, char const *name)
 {
 	size_t size = strlen(str);
@@ -763,12 +751,8 @@ static int peek()
 static void shiftChar()
 {
 	if (lexerState->capturing) {
-		if (lexerState->captureBuf) {
-			if (lexerState->captureSize + 1 >= lexerState->captureCapacity)
-				reallocCaptureBuf();
-			// TODO: improve this?
-			lexerState->captureBuf[lexerState->captureSize] = peek();
-		}
+		if (lexerState->captureBuf)
+			lexerState->captureBuf->push_back(peek());
 		lexerState->captureSize++;
 	}
 
@@ -2293,19 +2277,20 @@ static void startCapture(CaptureBody *capture)
 	if (lexerState->isMmapped && lexerState->expansions.empty()) {
 		capture->body = &lexerState->mmap.ptr.unreferenced[lexerState->mmap.offset];
 	} else {
-		lexerState->captureCapacity = 128; // The initial size will be twice that
 		assert(lexerState->captureBuf == nullptr);
-		reallocCaptureBuf();
+		lexerState->captureBuf = new(std::nothrow) std::vector<char>();
+		if (!lexerState->captureBuf)
+			fatalerror("Failed to allocate capture buffer: %s\n", strerror(errno));
 		capture->body = nullptr; // Indicate to retrieve the capture buffer when done capturing
 	}
 }
 
 static void endCapture(CaptureBody *capture)
 {
-	// This being `nullptr` means we're capturing from the capture buf, which is `realloc`ed
+	// This being `nullptr` means we're capturing from the capture buf, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
 	if (!capture->body)
-		capture->body = lexerState->captureBuf;
+		capture->body = lexerState->captureBuf->data();
 	capture->size = lexerState->captureSize;
 
 	lexerState->capturing = false;
