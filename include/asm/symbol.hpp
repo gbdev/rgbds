@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string>
 #include <string.h>
+#include <string_view>
 #include <time.h>
 
 #include "asm/section.hpp"
@@ -23,12 +24,6 @@ enum SymbolType {
 	SYM_REF // Forward reference to a label
 };
 
-// Only used in an anonymous union by `Symbol`
-struct strValue {
-	size_t size;
-	char *value;
-};
-
 struct Symbol; // For the `sym_IsPC` forward declaration
 bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
 
@@ -43,14 +38,11 @@ struct Symbol {
 
 	bool hasCallback;
 	union {
-		// If isNumeric()
-		int32_t value;
-		int32_t (*numCallback)(); // If hasCallback
-		// For SYM_MACRO
-		strValue macro;
-		// For SYM_EQUS
-		strValue equs;
-		char const *(*strCallback)(); // If hasCallback
+		int32_t value; // If isNumeric()
+		int32_t (*numCallback)(); // If isNumeric() and hasCallback
+		std::string_view *macro; // For SYM_MACRO
+		std::string *equs; // For SYM_EQUS
+		char const *(*strCallback)(); // For SYM_EQUS if hasCallback
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
@@ -71,7 +63,7 @@ struct Symbol {
 
 	int32_t getValue() const;
 	uint32_t getConstantValue() const;
-	char const *getStringValue() const { return hasCallback ? strCallback() : equs.value; }
+	char const *getStringValue() const { return hasCallback ? strCallback() : equs->c_str(); }
 };
 
 void sym_ForEach(void (*func)(Symbol *));
@@ -94,7 +86,7 @@ Symbol *sym_FindScopedSymbol(char const *symName);
 // Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
 Symbol *sym_FindScopedValidSymbol(char const *symName);
 Symbol const *sym_GetPC();
-Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size);
+Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size);
 Symbol *sym_Ref(char const *symName);
 Symbol *sym_AddString(char const *symName, char const *value);
 Symbol *sym_RedefString(char const *symName, char const *value);
