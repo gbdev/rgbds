@@ -389,9 +389,9 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 	if (!isStdin && fileInfo.st_size > 0) {
 		// Try using `mmap` for better performance
 
-		// Important: do NOT assign to `state.mmap.ptr` directly, to avoid a cast that may
-		// alter an eventual `MAP_FAILED` value. It would also invalidate `state.cbuf.fd`,
-		// being on the other side of the union.
+		// Important: do NOT assign to `state.mmap.ptr.referenced` directly, to avoid a
+		// cast that may alter an eventual `MAP_FAILED` value. It would also invalidate
+		// `state.cbuf.fd`, being on the other side of the union.
 		void *mappingAddr;
 
 		mapFile(mappingAddr, state.cbuf.fd, state.path, fileInfo.st_size);
@@ -404,7 +404,7 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 
 			state.isMmapped = true;
 			state.mmap.isReferenced = false; // By default, a state isn't referenced
-			state.mmap.ptr = (char *)mappingAddr;
+			state.mmap.ptr.referenced = (char *)mappingAddr;
 			assert(fileInfo.st_size >= 0);
 			state.mmap.size = (size_t)fileInfo.st_size;
 			state.mmap.offset = 0;
@@ -433,12 +433,13 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 	return true;
 }
 
-void lexer_OpenFileView(LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo)
+void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
+			uint32_t lineNo)
 {
 	state.path = path; // Used to report read errors in `peekInternal`
 	state.isFile = false;
 	state.isMmapped = true; // It's not *really* mmap()ed, but it behaves the same
-	state.mmap.ptr = buf;
+	state.mmap.ptr.unreferenced = buf;
 	state.mmap.size = size;
 	state.mmap.offset = 0;
 
@@ -471,7 +472,7 @@ void lexer_CleanupState(LexerState &state)
 	if (!state.isMmapped)
 		close(state.cbuf.fd);
 	else if (state.isFile && !state.mmap.isReferenced)
-		munmap(state.mmap.ptr, state.mmap.size);
+		munmap(state.mmap.ptr.referenced, state.mmap.size);
 }
 
 void lexer_SetMode(enum LexerMode mode)
@@ -669,10 +670,10 @@ static int peekInternal(uint8_t distance)
 			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
 
 	if (lexerState->isMmapped) {
-		if (lexerState->mmap.offset + distance >= lexerState->mmap.size)
-			return EOF;
+		size_t index = lexerState->mmap.offset + distance;
 
-		return (unsigned char)lexerState->mmap.ptr[lexerState->mmap.offset + distance];
+		return index < lexerState->mmap.size ?
+			(uint8_t)lexerState->mmap.ptr.unreferenced[index] : EOF;
 	}
 
 	if (lexerState->cbuf.nbChars <= distance) {
@@ -2290,7 +2291,7 @@ static void startCapture(CaptureBody *capture)
 	capture->lineNo = lexer_GetLineNo();
 
 	if (lexerState->isMmapped && lexerState->expansions.empty()) {
-		capture->body = &lexerState->mmap.ptr[lexerState->mmap.offset];
+		capture->body = &lexerState->mmap.ptr.unreferenced[lexerState->mmap.offset];
 	} else {
 		lexerState->captureCapacity = 128; // The initial size will be twice that
 		assert(lexerState->captureBuf == nullptr);

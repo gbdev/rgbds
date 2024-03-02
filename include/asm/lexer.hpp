@@ -30,7 +30,7 @@ struct Expansion {
 	std::optional<std::string> name;
 	union {
 		char const *unowned;
-		char *owned;
+		char *owned; // Non-`const` only so it can be `free()`d
 	} contents;
 	size_t size; // Length of the contents
 	size_t offset; // Cursor into the contents
@@ -43,7 +43,10 @@ struct IfStackEntry {
 };
 
 struct MmappedLexerState {
-	char *ptr; // Technically `const` during the lexer's execution
+	union {
+		char const *unreferenced;
+		char *referenced; // Non-`const` only so it can be `munmap()`ped
+	} ptr;
 	size_t size;
 	size_t offset;
 	bool isReferenced; // If a macro in this file requires not unmapping it
@@ -121,7 +124,8 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 
 // `path` is referenced, but not held onto..!
 bool lexer_OpenFile(LexerState &state, char const *path);
-void lexer_OpenFileView(LexerState &state, char const *path, char *buf, size_t size, uint32_t lineNo);
+void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
+			uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
 void lexer_Init();
@@ -138,7 +142,7 @@ void lexer_ReachELSEBlock();
 
 struct CaptureBody {
 	uint32_t lineNo;
-	char *body;
+	char const *body;
 	size_t size;
 };
 

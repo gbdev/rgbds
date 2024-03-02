@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Symboltable and macroargs stuff
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -11,6 +9,7 @@
 #include <stdio.h>
 #include <string>
 #include <string.h>
+#include <string_view>
 #include <time.h>
 
 #include "asm/fixpoint.hpp"
@@ -25,7 +24,6 @@
 
 #include "error.hpp"
 #include "helpers.hpp"
-#include "platform.hpp" // strdup
 #include "version.hpp"
 
 std::map<std::string, Symbol> symbols;
@@ -141,14 +139,10 @@ static void fullSymbolName(char *output, size_t outputSize,
 
 static void assignStringSymbol(Symbol *sym, char const *value)
 {
-	char *string = strdup(value);
-
-	if (!string)
-		fatalerror("No memory for string equate: %s\n", strerror(errno));
-
 	sym->type = SYM_EQUS;
-	sym->equs.value = string;
-	sym->equs.size = strlen(string);
+	sym->equs = new(std::nothrow) std::string(value);
+	if (!sym->equs)
+		fatalerror("No memory for string equate: %s\n", strerror(errno));
 }
 
 Symbol *sym_FindExactSymbol(char const *symName)
@@ -215,8 +209,8 @@ void sym_Purge(std::string const &symName)
 		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(nullptr);
 
-		// FIXME: this leaks sym->equs.value for SYM_EQUS and sym->macro.value for SYM_MACRO,
-		// but this can't free either of them because the expansion may be purging itself.
+		// FIXME: this leaks `sym->equs` for SYM_EQUS and `sym->macro` for SYM_MACRO, but
+		// this can't delete either of them because the expansion may be purging itself.
 		symbols.erase(sym->name);
 		// TODO: ideally, also unref the file stack nodes
 	}
@@ -379,8 +373,8 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 	}
 
 	updateSymbolFilename(sym);
-	// FIXME: this leaks the previous `sym->equs.value`, but this can't `free(sym->equs.value)`
-	// because the expansion may be redefining itself.
+	// FIXME: this leaks the previous `sym->equs`, but this can't delete it because the
+	// expansion may be redefining itself.
 	assignStringSymbol(sym, value);
 
 	return sym;
@@ -544,7 +538,7 @@ void sym_Export(char const *symName)
 }
 
 // Add a macro definition
-Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t size)
+Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size)
 {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
@@ -552,8 +546,10 @@ Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char *body, size_t 
 		return nullptr;
 
 	sym->type = SYM_MACRO;
-	sym->macro.size = size;
-	sym->macro.value = body;
+	sym->macro = new(std::nothrow) std::string_view(body, size);
+	if (!sym->macro)
+		fatalerror("No memory for macro: %s\n", strerror(errno));
+
 	setSymbolFilename(sym); // TODO: is this really necessary?
 	// The symbol is created at the line after the `endm`,
 	// override this with the actual definition line

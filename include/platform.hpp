@@ -14,11 +14,6 @@
 # include <strings.h>
 #endif
 
-// MSVC has deprecated strdup in favor of _strdup
-#ifdef _MSC_VER
-# define strdup _strdup
-#endif
-
 // MSVC prefixes the names of S_* macros with underscores,
 // and doesn't define any S_IS* macros; define them ourselves
 #ifdef _MSC_VER

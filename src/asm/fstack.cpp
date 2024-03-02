@@ -396,14 +396,14 @@ void fstk_RunMacro(char const *macroName, MacroArgs *args)
 
 	Context &context = newContext(fileInfo);
 
-	lexer_OpenFileView(context.lexerState, "MACRO", macro->macro.value, macro->macro.size,
+	lexer_OpenFileView(context.lexerState, "MACRO", macro->macro->data(), macro->macro->size(),
 	                   macro->fileLine);
 	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();
 	macro_UseNewArgs(args);
 }
 
-static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
+static bool newReptContext(int32_t reptLineNo, char const *body, size_t size)
 {
 	uint32_t reptDepth = contextStack.top().fileInfo->type == NODE_REPT
 				? contextStack.top().fileInfo->iters().size()
@@ -432,7 +432,7 @@ static bool newReptContext(int32_t reptLineNo, char *body, size_t size)
 	return true;
 }
 
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size)
 {
 	if (count == 0)
 		return;
@@ -443,7 +443,7 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char *body, size_t size)
 }
 
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
-		     int32_t reptLineNo, char *body, size_t size)
+		     int32_t reptLineNo, char const *body, size_t size)
 {
 	Symbol *sym = sym_AddVar(symName, start);
 
