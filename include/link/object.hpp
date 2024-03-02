@@ -28,9 +28,4 @@ void obj_CheckAssertions();
  */
 void obj_Setup(unsigned int nbFiles);
 
-/*
- * `free`s all object memory that was allocated.
- */
-void obj_Cleanup();
-
 #endif // RGBDS_LINK_OBJECT_H

@@ -240,7 +240,6 @@ static int32_t computeRPNExpr(Patch const *patch, std::vector<Symbol> const &fil
 		case RPN_BANK_SECT:
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
-			// In either case, `getRPNByte` will not free `expression`.
 			name = (char const *)expression;
 			while (getRPNByte(&expression, &size, patch->src, patch->lineNo))
 				;

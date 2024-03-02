@@ -539,16 +539,3 @@ void obj_Setup(unsigned int nbFiles)
 {
 	nodes.resize(nbFiles);
 }
-
-static void freeSection(Section *section)
-{
-	for (Section *next; section; section = next) {
-		next = section->nextu;
-		delete section;
-	};
-}
-
-void obj_Cleanup()
-{
-	sect_ForEach(freeSection);
-}

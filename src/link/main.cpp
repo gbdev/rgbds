@@ -342,6 +342,19 @@ next:
 	exit(1);
 }
 
+static void freeSection(Section *section)
+{
+	for (Section *next; section; section = next) {
+		next = section->nextu;
+		delete section;
+	};
+}
+
+static void freeSections()
+{
+	sect_ForEach(freeSection);
+}
+
 int main(int argc, char *argv[])
 {
 	// Parse options
@@ -447,7 +460,7 @@ int main(int argc, char *argv[])
 
 	// Do cleanup before quitting, though.
 	// Mostly here to please tools such as `valgrind` so actual errors can be seen
-	atexit(obj_Cleanup);
+	atexit(freeSections);
 
 	// Read all object files first,
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
