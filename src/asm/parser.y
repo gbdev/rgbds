@@ -52,7 +52,6 @@
 	#include "extern/utf8decoder.hpp"
 
 	#include "helpers.hpp"
-	#include "platform.hpp" // strncasecmp, strdup
 
 	static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
@@ -507,10 +506,9 @@ macroargs	: %empty {
 			if (!$$)
 				fatalerror("Failed to allocate memory for macro arguments: %s\n",
 					   strerror(errno));
-			$$->shift = 0;
 		}
 		| macroargs T_STRING {
-			$$->append(strdup($2));
+			$$->append($2);
 		}
 ;
 

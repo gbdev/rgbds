@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <vector>
 
 #include "asm/warning.hpp"
@@ -13,10 +14,9 @@
 
 struct MacroArgs {
 	unsigned int shift;
-	std::vector<char *> args;
+	std::vector<std::string> args;
 
-	void append(char *s);
-	void clear();
+	void append(std::string s);
 };
 
 MacroArgs *macro_GetCurrentArgs();

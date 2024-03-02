@@ -25,6 +25,7 @@
 
 #include "error.hpp"
 #include "helpers.hpp"
+#include "platform.hpp" // strdup
 #include "version.hpp"
 
 std::map<std::string, Symbol> symbols;

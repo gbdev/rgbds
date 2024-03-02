@@ -16,25 +16,16 @@
 static MacroArgs *macroArgs = nullptr;
 static uint32_t uniqueID = 0;
 static uint32_t maxUniqueID = 0;
-// The initialization is somewhat harmful, since it is never used, but it
-// guarantees the size of the buffer will be correct. I was unable to find a
-// better solution, but if you have one, please feel free!
-static char uniqueIDBuf[] = "_u4294967295"; // UINT32_MAX
+static char uniqueIDBuf[sizeof("_u4294967295")] = {}; // UINT32_MAX
 static char *uniqueIDPtr = nullptr;
 
-void MacroArgs::append(char *s)
+void MacroArgs::append(std::string s)
 {
-	if (s[0] == '\0')
+	if (s.empty())
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
 	if (args.size() == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	args.push_back(s);
-}
-
-void MacroArgs::clear()
-{
-	for (char *arg : args)
-		free(arg);
 }
 
 MacroArgs *macro_GetCurrentArgs()
@@ -54,7 +45,7 @@ char const *macro_GetArg(uint32_t i)
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex];
+	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex].c_str();
 }
 
 char const *macro_GetAllArgs()
@@ -70,7 +61,7 @@ char const *macro_GetAllArgs()
 	size_t len = 0;
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
-		len += strlen(macroArgs->args[i]) + 1; // 1 for comma
+		len += macroArgs->args[i].length() + 1; // 1 for comma
 
 	char *str = (char *)malloc(len + 1); // 1 for '\0'
 	char *ptr = str;
@@ -79,10 +70,10 @@ char const *macro_GetAllArgs()
 		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++) {
-		char *arg = macroArgs->args[i];
-		size_t n = strlen(arg);
+		std::string const &arg = macroArgs->args[i];
+		size_t n = arg.length();
 
-		memcpy(ptr, arg, n);
+		memcpy(ptr, arg.c_str(), n);
 		ptr += n;
 
 		// Commas go between args and after a last empty arg
