@@ -6,6 +6,7 @@
 #include <deque>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "platform.hpp" // SSIZE_MAX
@@ -44,13 +45,16 @@ struct IfStackEntry {
 };
 
 struct MmappedLexerState {
-	union {
-		char const *unreferenced;
-		char *referenced; // Non-`const` only so it can be `munmap()`ped
-	} ptr;
+	char *ptr;
 	size_t size;
 	size_t offset;
 	bool isReferenced; // If a macro in this file requires not unmapping it
+};
+
+struct ViewedLexerState {
+	char const *ptr;
+	size_t size;
+	size_t offset;
 };
 
 struct BufferedLexerState {
@@ -62,16 +66,6 @@ struct BufferedLexerState {
 
 struct LexerState {
 	char const *path;
-
-	// mmap()-dependent IO state
-	bool isMmapped;
-	union {
-		MmappedLexerState mmap; // If mmap()ed
-		BufferedLexerState cbuf; // Otherwise
-	};
-
-	// Common state
-	bool isFile;
 
 	enum LexerMode mode;
 	bool atLineStart;
@@ -90,6 +84,13 @@ struct LexerState {
 	size_t macroArgScanDistance; // Max distance already scanned for macro args
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
+
+	std::variant<
+		std::monostate,
+		MmappedLexerState,
+		ViewedLexerState,
+		BufferedLexerState
+	> content;
 };
 
 extern LexerState *lexerState;
