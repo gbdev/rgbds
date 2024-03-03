@@ -141,11 +141,11 @@ bool charmap_HasChar(char const *input)
 
 void charmap_Convert(char const *input, std::vector<uint8_t> &output)
 {
-	while (charmap_ConvertNext(&input, &output))
+	while (charmap_ConvertNext(input, &output))
 		;
 }
 
-size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
+size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output)
 {
 	// The goal is to match the longest mapping possible.
 	// For that, advance through the trie with each character read.
@@ -155,13 +155,13 @@ size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
 	size_t matchIdx = 0;
 	size_t rewindDistance = 0;
 
-	for (size_t nodeIdx = 0; **input;) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)**input - 1];
+	for (size_t nodeIdx = 0; *input;) {
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)*input - 1];
 
 		if (!nodeIdx)
 			break;
 
-		(*input)++; // Consume that char
+		input++; // Consume that char
 
 		if (charmap.nodes[nodeIdx].isTerminal) {
 			matchIdx = nodeIdx; // This node matches, register it
@@ -173,7 +173,7 @@ size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
 
 	// We are at a dead end (either because we reached the end of input, or of the trie),
 	// so rewind up to the last match, and output.
-	*input -= rewindDistance; // This will rewind all the way if no match found
+	input -= rewindDistance; // This will rewind all the way if no match found
 
 	if (matchIdx) { // A match was found, use it
 		if (output)
@@ -181,16 +181,16 @@ size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output)
 
 		return 1;
 
-	} else if (**input) { // No match found, but there is some input left
-		int firstChar = **input;
+	} else if (*input) { // No match found, but there is some input left
+		int firstChar = *input;
 		// This will write the codepoint's value to `output`, little-endian
-		size_t codepointLen = readUTF8Char(output, *input);
+		size_t codepointLen = readUTF8Char(output, input);
 
 		if (codepointLen == 0)
 			error("Input string is not valid UTF-8\n");
 
 		// OK because UTF-8 has no NUL in multi-byte chars
-		*input += codepointLen;
+		input += codepointLen;
 
 		// Warn if this character is not mapped but any others are
 		if (charmap.nodes.size() > 1)

@@ -15,6 +15,6 @@ void charmap_Pop();
 void charmap_Add(char *mapping, uint8_t value);
 bool charmap_HasChar(char const *input);
 void charmap_Convert(char const *input, std::vector<uint8_t> &output);
-size_t charmap_ConvertNext(char const **input, std::vector<uint8_t> *output);
+size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output);
 
 #endif // RGBDS_ASM_CHARMAP_H

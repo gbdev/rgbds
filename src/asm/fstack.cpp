@@ -62,23 +62,23 @@ std::string const &FileStackNode::name() const {
 	return std::get<std::string>(data);
 }
 
-static const char *dumpNodeAndParents(FileStackNode const *node)
+static const char *dumpNodeAndParents(FileStackNode const &node)
 {
 	char const *name;
 
-	if (node->type == NODE_REPT) {
-		assert(node->parent); // REPT nodes should always have a parent
-		std::vector<uint32_t> const &nodeIters = node->iters();
+	if (node.type == NODE_REPT) {
+		assert(node.parent); // REPT nodes should always have a parent
+		std::vector<uint32_t> const &nodeIters = node.iters();
 
-		name = dumpNodeAndParents(node->parent);
-		fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
+		name = dumpNodeAndParents(*node.parent);
+		fprintf(stderr, "(%" PRIu32 ") -> %s", node.lineNo, name);
 		for (uint32_t i = nodeIters.size(); i--; )
 			fprintf(stderr, "::REPT~%" PRIu32, nodeIters[i]);
 	} else {
-		name = node->name().c_str();
-		if (node->parent) {
-			dumpNodeAndParents(node->parent);
-			fprintf(stderr, "(%" PRIu32 ") -> %s", node->lineNo, name);
+		name = node.name().c_str();
+		if (node.parent) {
+			dumpNodeAndParents(*node.parent);
+			fprintf(stderr, "(%" PRIu32 ") -> %s", node.lineNo, name);
 		} else {
 			fputs(name, stderr);
 		}
@@ -88,7 +88,7 @@ static const char *dumpNodeAndParents(FileStackNode const *node)
 
 void FileStackNode::dump(uint32_t curLineNo) const
 {
-	dumpNodeAndParents(this);
+	dumpNodeAndParents(*this);
 	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 }
 
@@ -254,7 +254,7 @@ bool yywrap()
 // Make sure not to switch the lexer state before calling this, so the saved line no is correct.
 // BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
 // Callers should set `contextStack.top().lexerState` after this so it is not `nullptr`.
-static Context &newContext(FileStackNode *fileInfo)
+static Context &newContext(FileStackNode &fileInfo)
 {
 	if (contextStack.size() > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
@@ -264,13 +264,13 @@ static Context &newContext(FileStackNode *fileInfo)
 
 	FileStackNode *parent = contextStack.top().fileInfo;
 
-	fileInfo->parent = parent;
-	fileInfo->lineNo = lexer_GetLineNo();
-	fileInfo->referenced = false;
+	fileInfo.parent = parent;
+	fileInfo.lineNo = lexer_GetLineNo();
+	fileInfo.referenced = false;
 
 	Context &context = contextStack.emplace();
 
-	context.fileInfo = fileInfo;
+	context.fileInfo = &fileInfo;
 	context.isForLoop = false;
 
 	return context;
@@ -303,7 +303,7 @@ void fstk_RunInclude(char const *path)
 	delete fullPath;
 
 	uint32_t uniqueID = contextStack.top().uniqueID;
-	Context &context = newContext(fileInfo);
+	Context &context = newContext(*fileInfo);
 
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
 		fatalerror("Failed to set up lexer for file include\n");
@@ -338,7 +338,7 @@ static void runPreIncludeFile()
 	fileInfo->data = *fullPath;
 	delete fullPath;
 
-	Context &context = newContext(fileInfo);
+	Context &context = newContext(*fileInfo);
 
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
 		fatalerror("Failed to set up lexer for file include\n");
@@ -347,7 +347,7 @@ static void runPreIncludeFile()
 	context.uniqueID = macro_UndefUniqueID();
 }
 
-void fstk_RunMacro(char const *macroName, MacroArgs *args)
+void fstk_RunMacro(char const *macroName, MacroArgs &args)
 {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
@@ -394,13 +394,13 @@ void fstk_RunMacro(char const *macroName, MacroArgs *args)
 	fileInfoName.append("::");
 	fileInfoName.append(macro->name);
 
-	Context &context = newContext(fileInfo);
+	Context &context = newContext(*fileInfo);
 
 	lexer_OpenFileView(context.lexerState, "MACRO", macro->macro->data(), macro->macro->size(),
 	                   macro->fileLine);
 	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();
-	macro_UseNewArgs(args);
+	macro_UseNewArgs(&args);
 }
 
 static bool newReptContext(int32_t reptLineNo, char const *body, size_t size)
@@ -421,7 +421,7 @@ static bool newReptContext(int32_t reptLineNo, char const *body, size_t size)
 		fileInfo->iters().insert(fileInfo->iters().end(), RANGE(contextStack.top().fileInfo->iters()));
 	}
 
-	Context &context = newContext(fileInfo);
+	Context &context = newContext(*fileInfo);
 
 	// Correct our line number, which currently points to the `ENDR` line
 	context.fileInfo->lineNo = reptLineNo;

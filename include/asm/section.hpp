@@ -53,9 +53,9 @@ extern Section *currentSection;
 
 Section *sect_FindSectionByName(char const *name);
 void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-		     SectionSpec const *attributes, enum SectionModifier mod);
+		     SectionSpec const &attrs, enum SectionModifier mod);
 void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-			 SectionSpec const *attributes, enum SectionModifier mod);
+			 SectionSpec const &attrs, enum SectionModifier mod);
 void sect_EndLoadSection();
 
 Section *sect_GetSymbolSection();
@@ -74,11 +74,11 @@ void sect_AbsByteGroup(uint8_t const *s, size_t length);
 void sect_AbsWordGroup(uint8_t const *s, size_t length);
 void sect_AbsLongGroup(uint8_t const *s, size_t length);
 void sect_Skip(uint32_t skip, bool ds);
-void sect_RelByte(Expression *expr, uint32_t pcShift);
+void sect_RelByte(Expression &expr, uint32_t pcShift);
 void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs);
-void sect_RelWord(Expression *expr, uint32_t pcShift);
-void sect_RelLong(Expression *expr, uint32_t pcShift);
-void sect_PCRelByte(Expression *expr, uint32_t pcShift);
+void sect_RelWord(Expression &expr, uint32_t pcShift);
+void sect_RelLong(Expression &expr, uint32_t pcShift);
+void sect_PCRelByte(Expression &expr, uint32_t pcShift);
 void sect_BinaryFile(char const *s, int32_t startPos);
 void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
 

@@ -60,7 +60,7 @@ std::string *fstk_FindFile(char const *path);
 
 bool yywrap();
 void fstk_RunInclude(char const *path);
-void fstk_RunMacro(char const *macroName, MacroArgs *args);
+void fstk_RunMacro(char const *macroName, MacroArgs &args);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size);
 void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		     int32_t reptLineNo, char const *body, size_t size);

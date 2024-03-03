@@ -2264,7 +2264,7 @@ int yylex()
 	return token;
 }
 
-static void startCapture(CaptureBody *capture)
+static void startCapture(CaptureBody &capture)
 {
 	assert(!lexerState->capturing);
 	lexerState->capturing = true;
@@ -2272,26 +2272,26 @@ static void startCapture(CaptureBody *capture)
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
-	capture->lineNo = lexer_GetLineNo();
+	capture.lineNo = lexer_GetLineNo();
 
 	if (lexerState->isMmapped && lexerState->expansions.empty()) {
-		capture->body = &lexerState->mmap.ptr.unreferenced[lexerState->mmap.offset];
+		capture.body = &lexerState->mmap.ptr.unreferenced[lexerState->mmap.offset];
 	} else {
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = new(std::nothrow) std::vector<char>();
 		if (!lexerState->captureBuf)
 			fatalerror("Failed to allocate capture buffer: %s\n", strerror(errno));
-		capture->body = nullptr; // Indicate to retrieve the capture buffer when done capturing
+		capture.body = nullptr; // Indicate to retrieve the capture buffer when done capturing
 	}
 }
 
-static void endCapture(CaptureBody *capture)
+static void endCapture(CaptureBody &capture)
 {
 	// This being `nullptr` means we're capturing from the capture buf, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
-	if (!capture->body)
-		capture->body = lexerState->captureBuf->data();
-	capture->size = lexerState->captureSize;
+	if (!capture.body)
+		capture.body = lexerState->captureBuf->data();
+	capture.size = lexerState->captureSize;
 
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
@@ -2299,7 +2299,7 @@ static void endCapture(CaptureBody *capture)
 	lexerState->disableInterpolation = false;
 }
 
-bool lexer_CaptureRept(CaptureBody *capture)
+bool lexer_CaptureRept(CaptureBody &capture)
 {
 	startCapture(capture);
 
@@ -2357,7 +2357,7 @@ finish:
 	return c != EOF;
 }
 
-bool lexer_CaptureMacroBody(CaptureBody *capture)
+bool lexer_CaptureMacroBody(CaptureBody &capture)
 {
 	startCapture(capture);
 

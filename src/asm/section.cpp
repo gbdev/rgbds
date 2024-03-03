@@ -74,16 +74,16 @@ attr_(warn_unused_result) static bool checkcodesection()
 	return false;
 }
 
-attr_(warn_unused_result) static bool checkSectionSize(Section const *sect, uint32_t size)
+attr_(warn_unused_result) static bool checkSectionSize(Section const &sect, uint32_t size)
 {
-	uint32_t maxSize = sectionTypeInfo[sect->type].size;
+	uint32_t maxSize = sectionTypeInfo[sect.type].size;
 
 	// If the new size is reasonable, keep going
 	if (size <= maxSize)
 		return true;
 
 	error("Section '%s' grew too big (max size = 0x%" PRIX32
-	      " bytes, reached 0x%" PRIX32 ").\n", sect->name.c_str(), maxSize, size);
+	      " bytes, reached 0x%" PRIX32 ").\n", sect.name.c_str(), maxSize, size);
 	return false;
 }
 
@@ -97,12 +97,12 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size)
 
 	// If the section has already overflowed, skip the check to avoid erroring out ad nauseam
 	if (currentSection->size != UINT32_MAX
-	 && !checkSectionSize(currentSection, curOffset + loadOffset + delta_size))
+	 && !checkSectionSize(*currentSection, curOffset + loadOffset + delta_size))
 		// Mark the section as overflowed, to avoid repeating the error
 		currentSection->size = UINT32_MAX;
 
 	if (currentLoadSection && currentLoadSection->size != UINT32_MAX
-	 && !checkSectionSize(currentLoadSection, curOffset + delta_size))
+	 && !checkSectionSize(*currentLoadSection, curOffset + delta_size))
 		currentLoadSection->size = UINT32_MAX;
 
 	return currentSection->size != UINT32_MAX
@@ -119,13 +119,12 @@ Section *sect_FindSectionByName(char const *name)
 }
 
 #define mask(align) ((1U << (align)) - 1)
-#define fail(...) \
-do { \
+#define fail(...) do { \
 	error(__VA_ARGS__); \
 	nbSectErrors++; \
 } while (0)
 
-static unsigned int mergeSectUnion(Section *sect, enum SectionType type, uint32_t org,
+static unsigned int mergeSectUnion(Section &sect, enum SectionType type, uint32_t org,
 				   uint8_t alignment, uint16_t alignOffset)
 {
 	assert(alignment < 16); // Should be ensured by the caller
@@ -138,39 +137,38 @@ static unsigned int mergeSectUnion(Section *sect, enum SectionType type, uint32_
 
 	if (org != (uint32_t)-1) {
 		// If both are fixed, they must be the same
-		if (sect->org != (uint32_t)-1 && sect->org != org)
+		if (sect.org != (uint32_t)-1 && sect.org != org)
 			fail("Section already declared as fixed at different address $%04"
-			     PRIx32 "\n", sect->org);
-		else if (sect->align != 0 && (mask(sect->align) & (org - sect->alignOfs)))
+			     PRIx32 "\n", sect.org);
+		else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs)))
 			fail("Section already declared as aligned to %u bytes (offset %"
-				   PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
+				   PRIu16 ")\n", 1U << sect.align, sect.alignOfs);
 		else
 			// Otherwise, just override
-			sect->org = org;
+			sect.org = org;
 
 	} else if (alignment != 0) {
 		// Make sure any fixed address given is compatible
-		if (sect->org != (uint32_t)-1) {
-			if ((sect->org - alignOffset) & mask(alignment))
+		if (sect.org != (uint32_t)-1) {
+			if ((sect.org - alignOffset) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
-				     PRIx32 "\n", sect->org);
+				     PRIx32 "\n", sect.org);
 		// Check if alignment offsets are compatible
-		} else if ((alignOffset & mask(sect->align))
-			   != (sect->alignOfs & mask(alignment))) {
+		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			fail("Section already declared with incompatible %u"
 			     "-byte alignment (offset %" PRIu16 ")\n",
-			     1U << sect->align, sect->alignOfs);
-		} else if (alignment > sect->align) {
+			     1U << sect.align, sect.alignOfs);
+		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
-			sect->align = alignment;
-			sect->alignOfs = alignOffset;
+			sect.align = alignment;
+			sect.alignOfs = alignOffset;
 		}
 	}
 
 	return nbSectErrors;
 }
 
-static unsigned int mergeFragments(Section *sect, uint32_t org, uint8_t alignment, uint16_t alignOffset)
+static unsigned int mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset)
 {
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
@@ -179,55 +177,55 @@ static unsigned int mergeFragments(Section *sect, uint32_t org, uint8_t alignmen
 	// combination of both.
 	// The merging is however performed at the *end* of the original section!
 	if (org != (uint32_t)-1) {
-		uint16_t curOrg = org - sect->size;
+		uint16_t curOrg = org - sect.size;
 
 		// If both are fixed, they must be the same
-		if (sect->org != (uint32_t)-1 && sect->org != curOrg)
+		if (sect.org != (uint32_t)-1 && sect.org != curOrg)
 			fail("Section already declared as fixed at incompatible address $%04"
-			     PRIx32 "\n", sect->org);
-		else if (sect->align != 0 && (mask(sect->align) & (curOrg - sect->alignOfs)))
+			     PRIx32 "\n", sect.org);
+		else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs)))
 			fail("Section already declared as aligned to %u bytes (offset %"
-			     PRIu16 ")\n", 1U << sect->align, sect->alignOfs);
+			     PRIu16 ")\n", 1U << sect.align, sect.alignOfs);
 		else
 			// Otherwise, just override
-			sect->org = curOrg;
+			sect.org = curOrg;
 
 	} else if (alignment != 0) {
-		int32_t curOfs = (alignOffset - sect->size) % (1U << alignment);
+		int32_t curOfs = (alignOffset - sect.size) % (1U << alignment);
 
 		if (curOfs < 0)
 			curOfs += 1U << alignment;
 
 		// Make sure any fixed address given is compatible
-		if (sect->org != (uint32_t)-1) {
-			if ((sect->org - curOfs) & mask(alignment))
+		if (sect.org != (uint32_t)-1) {
+			if ((sect.org - curOfs) & mask(alignment))
 				fail("Section already declared as fixed at incompatible address $%04"
-				     PRIx32 "\n", sect->org);
+				     PRIx32 "\n", sect.org);
 		// Check if alignment offsets are compatible
-		} else if ((curOfs & mask(sect->align)) != (sect->alignOfs & mask(alignment))) {
+		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
 			fail("Section already declared with incompatible %u"
 			     "-byte alignment (offset %" PRIu16 ")\n",
-			     1U << sect->align, sect->alignOfs);
-		} else if (alignment > sect->align) {
+			     1U << sect.align, sect.alignOfs);
+		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
-			sect->align = alignment;
-			sect->alignOfs = curOfs;
+			sect.align = alignment;
+			sect.alignOfs = curOfs;
 		}
 	}
 
 	return nbSectErrors;
 }
 
-static void mergeSections(Section *sect, enum SectionType type, uint32_t org, uint32_t bank,
+static void mergeSections(Section &sect, enum SectionType type, uint32_t org, uint32_t bank,
 			  uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod)
 {
 	unsigned int nbSectErrors = 0;
 
-	if (type != sect->type)
-		fail("Section already exists but with type %s\n", sectionTypeInfo[sect->type].name.c_str());
+	if (type != sect.type)
+		fail("Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str());
 
-	if (sect->modifier != mod) {
-		fail("Section already declared as %s section\n", sectionModNames[sect->modifier]);
+	if (sect.modifier != mod) {
+		fail("Section already declared as %s section\n", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -239,17 +237,17 @@ static void mergeSections(Section *sect, enum SectionType type, uint32_t org, ui
 			// Common checks
 
 			// If the section's bank is unspecified, override it
-			if (sect->bank == (uint32_t)-1)
-				sect->bank = bank;
+			if (sect.bank == (uint32_t)-1)
+				sect.bank = bank;
 			// If both specify a bank, it must be the same one
-			else if (bank != (uint32_t)-1 && sect->bank != bank)
+			else if (bank != (uint32_t)-1 && sect.bank != bank)
 				fail("Section already declared with different bank %" PRIu32 "\n",
-				     sect->bank);
+				     sect.bank);
 			break;
 
 		case SECTION_NORMAL:
 			fail("Section already defined previously at ");
-			sect->src->dump(sect->fileLine);
+			sect.src->dump(sect.fileLine);
 			putc('\n', stderr);
 			break;
 		}
@@ -257,7 +255,7 @@ static void mergeSections(Section *sect, enum SectionType type, uint32_t org, ui
 
 	if (nbSectErrors)
 		fatalerror("Cannot create section \"%s\" (%u error%s)\n",
-			   sect->name.c_str(), nbSectErrors, nbSectErrors == 1 ? "" : "s");
+			   sect.name.c_str(), nbSectErrors, nbSectErrors == 1 ? "" : "s");
 }
 
 #undef fail
@@ -289,11 +287,11 @@ static Section *createSection(char const *name, enum SectionType type, uint32_t 
 
 // Find a section by name and type. If it doesn't exist, create it.
 static Section *getSection(char const *name, enum SectionType type, uint32_t org,
-			   SectionSpec const *attrs, enum SectionModifier mod)
+			   SectionSpec const &attrs, enum SectionModifier mod)
 {
-	uint32_t bank = attrs->bank;
-	uint8_t alignment = attrs->alignment;
-	uint16_t alignOffset = attrs->alignOfs;
+	uint32_t bank = attrs.bank;
+	uint8_t alignment = attrs.alignment;
+	uint16_t alignOffset = attrs.alignOfs;
 
 	// First, validate parameters, and normalize them if applicable
 
@@ -354,7 +352,7 @@ static Section *getSection(char const *name, enum SectionType type, uint32_t org
 	Section *sect = sect_FindSectionByName(name);
 
 	if (sect) {
-		mergeSections(sect, type, org, bank, alignment, alignOffset, mod);
+		mergeSections(*sect, type, org, bank, alignment, alignOffset, mod);
 	} else {
 		sect = createSection(name, type, org, bank, alignment, alignOffset, mod);
 	}
@@ -392,7 +390,7 @@ bool Section::isSizeKnown() const
 
 // Set the current section by name and type
 void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-		     SectionSpec const *attribs, enum SectionModifier mod)
+		     SectionSpec const &attrs, enum SectionModifier mod)
 {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
@@ -402,7 +400,7 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 			fatalerror("Section '%s' is already on the stack\n", name);
 	}
 
-	Section *sect = getSection(name, type, org, attribs, mod);
+	Section *sect = getSection(name, type, org, attrs, mod);
 
 	changeSection();
 	curOffset = mod == SECTION_UNION ? 0 : sect->size;
@@ -412,7 +410,7 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 
 // Set the current section by name and type
 void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-			 SectionSpec const *attribs, enum SectionModifier mod)
+			 SectionSpec const &attrs, enum SectionModifier mod)
 {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
@@ -437,7 +435,7 @@ void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
 		return;
 	}
 
-	Section *sect = getSection(name, type, org, attribs, mod);
+	Section *sect = getSection(name, type, org, attrs, mod);
 
 	currentLoadScope = sym_GetCurrentSymbolScope();
 	changeSection();
@@ -557,7 +555,7 @@ static void writelong(uint32_t b)
 	writebyte(b >> 24);
 }
 
-static void createPatch(enum PatchType type, Expression const *expr, uint32_t pcShift)
+static void createPatch(enum PatchType type, Expression const &expr, uint32_t pcShift)
 {
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
@@ -683,18 +681,18 @@ void sect_Skip(uint32_t skip, bool ds)
 
 // Output a relocatable byte. Checking will be done to see if it
 // is an absolute value in disguise.
-void sect_RelByte(Expression *expr, uint32_t pcShift)
+void sect_RelByte(Expression &expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(1))
 		return;
 
-	if (!expr->isKnown) {
+	if (!expr.isKnown) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
 	} else {
-		writebyte(expr->val);
+		writebyte(expr.val);
 	}
 	rpn_Free(expr);
 }
@@ -712,7 +710,7 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs)
 		Expression &expr = exprs[i % exprs.size()];
 
 		if (!expr.isKnown) {
-			createPatch(PATCHTYPE_BYTE, &expr, i);
+			createPatch(PATCHTYPE_BYTE, expr, i);
 			writebyte(0);
 		} else {
 			writebyte(expr.val);
@@ -720,48 +718,48 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs)
 	}
 
 	for (Expression &expr : exprs)
-		rpn_Free(&expr);
+		rpn_Free(expr);
 }
 
 // Output a relocatable word. Checking will be done to see if
 // it's an absolute value in disguise.
-void sect_RelWord(Expression *expr, uint32_t pcShift)
+void sect_RelWord(Expression &expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(2))
 		return;
 
-	if (!expr->isKnown) {
+	if (!expr.isKnown) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
 	} else {
-		writeword(expr->val);
+		writeword(expr.val);
 	}
 	rpn_Free(expr);
 }
 
 // Output a relocatable longword. Checking will be done to see if
 // is an absolute value in disguise.
-void sect_RelLong(Expression *expr, uint32_t pcShift)
+void sect_RelLong(Expression &expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(2))
 		return;
 
-	if (!expr->isKnown) {
+	if (!expr.isKnown) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
 	} else {
-		writelong(expr->val);
+		writelong(expr.val);
 	}
 	rpn_Free(expr);
 }
 
 // Output a PC-relative relocatable byte. Checking will be done to see if it
 // is an absolute value in disguise.
-void sect_PCRelByte(Expression *expr, uint32_t pcShift)
+void sect_PCRelByte(Expression &expr, uint32_t pcShift)
 {
 	if (!checkcodesection())
 		return;
@@ -769,11 +767,11 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 		return;
 	Symbol const *pc = sym_GetPC();
 
-	if (!expr->isDiffConstant(pc)) {
+	if (!expr.isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
-		Symbol const *sym = expr->symbolOf();
+		Symbol const *sym = expr.symbolOf();
 		// The offset wraps (jump from ROM to HRAM, for example)
 		int16_t offset;
 
@@ -785,7 +783,7 @@ void sect_PCRelByte(Expression *expr, uint32_t pcShift)
 
 		if (offset < -128 || offset > 127) {
 			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n",
-				offset);
+			      offset);
 			writebyte(0);
 		} else {
 			writebyte(offset);

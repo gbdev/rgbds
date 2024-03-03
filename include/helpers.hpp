@@ -10,9 +10,9 @@
 	#define attr_(...) __attribute__ ((__VA_ARGS__))
 	// In release builds, define "unreachable" as such, but trap in debug builds
 	#ifdef NDEBUG
-		#define unreachable_	__builtin_unreachable
+		#define unreachable_ __builtin_unreachable
 	#else
-		#define unreachable_	__builtin_trap
+		#define unreachable_ __builtin_trap
 	#endif
 #else
 	// Unsupported, but no need to throw a fit

@@ -42,10 +42,10 @@ bool sym_IsPC(Symbol const *sym)
 	return sym == PCSymbol;
 }
 
-void sym_ForEach(void (*callback)(Symbol *))
+void sym_ForEach(void (*callback)(Symbol &))
 {
 	for (auto &it : symbols)
-		callback(&it.second);
+		callback(it.second);
 }
 
 static int32_t Callback_NARG()
@@ -77,37 +77,37 @@ int32_t Symbol::getValue() const
 	return value;
 }
 
-static void dumpFilename(Symbol const *sym)
+static void dumpFilename(Symbol const &sym)
 {
-	if (sym->src)
-		sym->src->dump(sym->fileLine);
-	else if (sym->fileLine == 0)
+	if (sym.src)
+		sym.src->dump(sym.fileLine);
+	else if (sym.fileLine == 0)
 		fputs("<command-line>", stderr);
 	else
 		fputs("<builtin>", stderr);
 }
 
 // Set a symbol's definition filename and line
-static void setSymbolFilename(Symbol *sym)
+static void setSymbolFilename(Symbol &sym)
 {
-	sym->src = fstk_GetFileStack(); // This is `nullptr` for built-ins
-	sym->fileLine = sym->src ? lexer_GetLineNo() : 0; // This is 1 for built-ins
+	sym.src = fstk_GetFileStack(); // This is `nullptr` for built-ins
+	sym.fileLine = sym.src ? lexer_GetLineNo() : 0; // This is 1 for built-ins
 }
 
 // Update a symbol's definition filename and line
-static void updateSymbolFilename(Symbol *sym)
+static void updateSymbolFilename(Symbol &sym)
 {
-	FileStackNode *oldSrc = sym->src;
+	FileStackNode *oldSrc = sym.src;
 
 	setSymbolFilename(sym);
 	// If the old node was referenced, ensure the new one is
 	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
-		out_RegisterNode(sym->src);
+		out_RegisterNode(sym.src);
 	// TODO: unref the old node, and use `out_ReplaceNode` instead of deleting it
 }
 
 // Create a new symbol by name
-static Symbol *createsymbol(char const *symName)
+static Symbol &createsymbol(char const *symName)
 {
 	Symbol &sym = symbols[symName];
 
@@ -118,10 +118,10 @@ static Symbol *createsymbol(char const *symName)
 	sym.isBuiltin = false;
 	sym.hasCallback = false;
 	sym.section = nullptr;
-	setSymbolFilename(&sym);
+	setSymbolFilename(sym);
 	sym.ID = -1;
 
-	return &sym;
+	return sym;
 }
 
 // Creates the full name of a local symbol in a given scope, by prepending
@@ -137,11 +137,11 @@ static void fullSymbolName(char *output, size_t outputSize,
 		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
-static void assignStringSymbol(Symbol *sym, char const *value)
+static void assignStringSymbol(Symbol &sym, char const *value)
 {
-	sym->type = SYM_EQUS;
-	sym->equs = new(std::nothrow) std::string(value);
-	if (!sym->equs)
+	sym.type = SYM_EQUS;
+	sym.equs = new(std::nothrow) std::string(value);
+	if (!sym.equs)
 		fatalerror("No memory for string equate: %s\n", strerror(errno));
 }
 
@@ -188,11 +188,6 @@ Symbol const *sym_GetPC()
 	return PCSymbol;
 }
 
-static bool isReferenced(Symbol const *sym)
-{
-	return sym->ID != (uint32_t)-1;
-}
-
 // Purge a symbol
 void sym_Purge(std::string const &symName)
 {
@@ -202,7 +197,7 @@ void sym_Purge(std::string const &symName)
 		error("'%s' not defined\n", symName.c_str());
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be purged\n", symName.c_str());
-	} else if (isReferenced(sym)) {
+	} else if (sym->ID != (uint32_t)-1) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
 		// Do not keep a reference to the label's name after purging it
@@ -274,16 +269,16 @@ static Symbol *createNonrelocSymbol(char const *symName, bool numeric)
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = createsymbol(symName);
+		sym = &createsymbol(symName);
 	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName);
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		error("'%s' already referenced at ", symName);
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	}
@@ -314,7 +309,7 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value)
 
 	if (sym->isDefined() && sym->type != SYM_EQU) {
 		error("'%s' already defined as non-EQU at ", symName);
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
@@ -322,7 +317,7 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value)
 		return nullptr;
 	}
 
-	updateSymbolFilename(sym);
+	updateSymbolFilename(*sym);
 	sym->type = SYM_EQU;
 	sym->value = value;
 
@@ -348,7 +343,7 @@ Symbol *sym_AddString(char const *symName, char const *value)
 	if (!sym)
 		return nullptr;
 
-	assignStringSymbol(sym, value);
+	assignStringSymbol(*sym, value);
 	return sym;
 }
 
@@ -364,7 +359,7 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 			error("'%s' already defined as non-EQUS at ", symName);
 		else
 			error("'%s' already referenced at ", symName);
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
@@ -372,10 +367,10 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 		return nullptr;
 	}
 
-	updateSymbolFilename(sym);
+	updateSymbolFilename(*sym);
 	// FIXME: this leaks the previous `sym->equs`, but this can't delete it because the
 	// expansion may be redefining itself.
-	assignStringSymbol(sym, value);
+	assignStringSymbol(*sym, value);
 
 	return sym;
 }
@@ -386,15 +381,15 @@ Symbol *sym_AddVar(char const *symName, int32_t value)
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = createsymbol(symName);
+		sym = &createsymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
 		error("'%s' already defined as %s at ",
 		      symName, sym->type == SYM_LABEL ? "label" : "constant");
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return sym;
 	} else {
-		updateSymbolFilename(sym);
+		updateSymbolFilename(*sym);
 	}
 
 	sym->type = SYM_VAR;
@@ -414,14 +409,14 @@ static Symbol *addLabel(char const *symName)
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = createsymbol(symName);
+		sym = &createsymbol(symName);
 	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName);
-		dumpFilename(sym);
+		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
 	} else {
-		updateSymbolFilename(sym);
+		updateSymbolFilename(*sym);
 	}
 	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
@@ -550,7 +545,7 @@ Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, s
 	if (!sym->macro)
 		fatalerror("No memory for macro: %s\n", strerror(errno));
 
-	setSymbolFilename(sym); // TODO: is this really necessary?
+	setSymbolFilename(*sym); // TODO: is this really necessary?
 	// The symbol is created at the line after the `endm`,
 	// override this with the actual definition line
 	sym->fileLine = defLineNo;
@@ -574,7 +569,7 @@ Symbol *sym_Ref(char const *symName)
 			symName = fullname;
 		}
 
-		sym = createsymbol(symName);
+		sym = &createsymbol(symName);
 		sym->type = SYM_REF;
 	}
 
@@ -589,7 +584,7 @@ void sym_SetExportAll(bool set)
 
 static Symbol *createBuiltinSymbol(char const *symName)
 {
-	Symbol *sym = createsymbol(symName);
+	Symbol *sym = &createsymbol(symName);
 
 	sym->isBuiltin = true;
 	sym->hasCallback = true;
@@ -602,7 +597,6 @@ static Symbol *createBuiltinSymbol(char const *symName)
 // Initialize the symboltable
 void sym_Init(time_t now)
 {
-
 	PCSymbol = createBuiltinSymbol("@");
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->numCallback = CallbackPC;

@@ -152,7 +152,7 @@ uint32_t lexer_GetLineNo();
 uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
 int yylex();
-bool lexer_CaptureRept(CaptureBody *capture);
-bool lexer_CaptureMacroBody(CaptureBody *capture);
+bool lexer_CaptureRept(CaptureBody &capture);
+bool lexer_CaptureMacroBody(CaptureBody &capture);
 
 #endif // RGBDS_ASM_LEXER_H
