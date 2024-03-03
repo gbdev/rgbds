@@ -45,12 +45,6 @@
 # include <unistd.h>
 #endif
 
-// C++ doesn't support `[static N]` for array arguments from C99 or C11
-#define MIN_NB_ELMS(N) // static (N)
-#define ARR_QUALS(...) // __VA_ARGS__
-#define NONNULL(ptr) *ptr // ptr[static 1]
-#define restrict
-
 // MSVC uses a different name for O_RDWR, and needs an additional _O_BINARY flag
 #ifdef _MSC_VER
 # include <fcntl.h>

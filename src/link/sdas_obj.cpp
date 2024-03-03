@@ -72,7 +72,7 @@ retry:
 	}
 }
 
-static uint32_t readNumber(char const *restrict str, char const **endptr, enum NumberType base) {
+static uint32_t readNumber(char const *str, char const **endptr, enum NumberType base) {
 	uint32_t res = 0;
 
 	for (;;) {
@@ -88,7 +88,7 @@ static uint32_t readNumber(char const *restrict str, char const **endptr, enum N
 	}
 }
 
-static uint32_t parseNumber(FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
+static uint32_t parseNumber(FileStackNode const *where, uint32_t lineNo, char const *str, enum NumberType base) {
 	if (str[0] == '\0')
 		fatal(where, lineNo, "Expected number, got empty string");
 
@@ -100,7 +100,7 @@ static uint32_t parseNumber(FileStackNode const *where, uint32_t lineNo, char co
 	return res;
 }
 
-static uint8_t parseByte(FileStackNode const *where, uint32_t lineNo, char const *restrict str, enum NumberType base) {
+static uint8_t parseByte(FileStackNode const *where, uint32_t lineNo, char const *str, enum NumberType base) {
 	uint32_t num = parseNumber(where, lineNo, str, base);
 
 	if (num > UINT8_MAX)

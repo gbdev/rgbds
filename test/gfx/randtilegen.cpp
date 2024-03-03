@@ -19,8 +19,6 @@
 #include <string.h>
 #include <vector>
 
-#include "platform.hpp"
-
 struct Attributes {
 	unsigned char palette;
 	unsigned char nbColors;
@@ -48,7 +46,7 @@ static unsigned long long getRandomBits(unsigned count) {
 	return result;
 }
 
-static void generate_tile_attributes(Attributes * restrict attributes) {
+static void generate_tile_attributes(Attributes *attributes) {
 	/*
 	 * Images have ten colors, grouped into two groups of 5 colors. The palette index indicates two
 	 * things: which one of those groups will be used, and which colors out of those 5 will be used
@@ -77,8 +75,7 @@ static void generate_tile_attributes(Attributes * restrict attributes) {
 	attributes->nbColors = popcount[pal];
 }
 
-static void generate_tile_data(unsigned char tiledata[ARR_QUALS(restrict) MIN_NB_ELMS(8)][8],
-                               unsigned colorcount) {
+static void generate_tile_data(unsigned char tiledata[/* 8 */][8], unsigned colorcount) {
 	switch (colorcount) {
 	case 2: // 1bpp
 		for (uint8_t y = 0; y < 8; y++) {
@@ -109,8 +106,7 @@ static void generate_tile_data(unsigned char tiledata[ARR_QUALS(restrict) MIN_NB
 
 // Can't mark as `const`, as the array type is otherwise not compatible (augh)
 static void
-    copy_tile_data(unsigned char destination[ARR_QUALS(restrict) MIN_NB_ELMS(8)][8],
-                   unsigned char /* const */ source[ARR_QUALS(restrict) MIN_NB_ELMS(8)][8]) {
+    copy_tile_data(unsigned char destination[/* 8 */][8], unsigned char /* const */ source[/* 8 */][8]) {
 	// Apply a random rotation to the copy
 	// coord ^ 7 = inverted coordinate; coord ^ 0 = regular coordinate
 	unsigned xmask = getRandomBits(1) * 7;
@@ -122,7 +118,7 @@ static void
 	}
 }
 
-static void generate_palettes(uint16_t palettes[ARR_QUALS(restrict) MIN_NB_ELMS(60)][4]) {
+static void generate_palettes(uint16_t palettes[/* 60 */][4]) {
 	uint16_t colors[10];
 	// Generate 10 random colors (two groups of 5 colors)
 	for (unsigned p = 0; p < 10; p++) {
@@ -153,7 +149,7 @@ static uint8_t _5to8(uint8_t five) {
 }
 
 // Can't mark as `const`, as the array type is otherwise not compatible (augh)
-static void write_image(char const *filename, uint16_t /* const */ palettes[MIN_NB_ELMS(60)][4],
+static void write_image(char const *filename, uint16_t /* const */ palettes[/* 60 */][4],
                         unsigned char /* const */ (*tileData)[8][8], Attributes const *attributes,
                         uint8_t width, uint8_t height) {
 	uint8_t const nbTiles = width * height;

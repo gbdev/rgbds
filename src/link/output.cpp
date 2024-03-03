@@ -20,7 +20,6 @@
 #include "error.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
-#include "platform.hpp" // For `MIN_NB_ELMS` and `AT`
 
 #define BANK_SIZE 0x4000
 

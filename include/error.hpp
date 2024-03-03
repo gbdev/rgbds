@@ -8,11 +8,11 @@
 
 extern "C" {
 
-void warn(char const NONNULL(fmt), ...) format_(printf, 1, 2);
-void warnx(char const NONNULL(fmt), ...) format_(printf, 1, 2);
+void warn(char const *fmt ...) format_(printf, 1, 2);
+void warnx(char const *fmt, ...) format_(printf, 1, 2);
 
-[[noreturn]] void err(char const NONNULL(fmt), ...) format_(printf, 1, 2);
-[[noreturn]] void errx(char const NONNULL(fmt), ...) format_(printf, 1, 2);
+[[noreturn]] void err(char const *fmt, ...) format_(printf, 1, 2);
+[[noreturn]] void errx(char const *fmt, ...) format_(printf, 1, 2);
 
 }
 
