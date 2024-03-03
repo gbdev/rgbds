@@ -82,7 +82,7 @@ Each `.asm` file corresponds to one test.
 RGBASM will be invoked on the `.asm` file with all warnings enabled.
 
 If a `.out` file exists, RGBASM's output (`println` etc.) must match its contents.
-If a `.err` file exists, RGBASM's errors (`warn`, errors, etc.) must match its contents.
+If a `.err` file exists, RGBASM's error output (`warn`, errors, etc.) must match its contents.
 
 If a `.out.bin` file exists, the object file will be linked, and the generated ROM truncated to the length of the `.out.bin` file.
 After that, the ROM must match the `.out.bin` file.
@@ -110,7 +110,7 @@ Each `.link` linker script **must** be accompanied by a `.out` file, and RGBLINK
 #### Variant tests
 
 These allow testing RGBLINK's `-d`, `-t`, and `-w` flags.
-If one or more files called <code><var>&lt;asm file name&gt;</var>-<var>&lt;flag&gt;</var>.out</code> or <code><var>&lt;asm file name&gt;</var>-no-<var>&lt;flag&gt;</var>.out</code> exist, then each of them corresponds to one test.
+If one or more <code>-<var>&lt;flag&gt;</var>.out</code> or <code>-no-<var>&lt;flag&gt;</var>.out</code> files exist, then each of them corresponds to one test.
 
 The object file will be linked with and without said flag, respectively; and in each case, RGBLINK's output must match the `.out` file's contents.
 
@@ -119,7 +119,7 @@ The object file will be linked with and without said flag, respectively; and in 
 Each `.bin` file corresponds to one test, and **must** be accompanied by a `.flags` file and a `.err` file.
 
 The `.flags` file is a text file whose first line contains flags to pass to RGBFIX.
-(There may be more lines, which will be ignored; they can serve as commentsto explain what the test is about.)
+(There may be more lines, which will be ignored; they can serve as comments to explain what the test is about.)
 
 RGBFIX will be invoked on the `.bin` file, and its error output must match the contents of the `.err` file.
 (If no errors ought to be printed, then the `.err` file should just be empty.)
@@ -144,12 +144,12 @@ If one *does* exist, RGBGFX's return status is ignored, but its output **must** 
 2. Add the project to `test/fetch-test-deps.sh`: add a new `action` line at the bottom, following the existing pattern:
    
    ```sh
-   action <owner>/<repo>   <date of last commit>   <hash of last commit>
+   action  <owner>/<repo>  <date of last commit>  <hash of last commit>
    ```
 
    (The date is used to avoid fetching too much history when cloning the repositories.)
 3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at the bottom, following the existing pattern:
 
    ```sh
-   test_downstream <repo>  <Make target>
+   test_downstream <repo>  <makefile target>
    ```
