@@ -138,36 +138,36 @@ static void writesection(Section const &sect, FILE *f)
 }
 
 // Write a symbol to a file
-static void writesymbol(Symbol const *sym, FILE *f)
+static void writesymbol(Symbol const &sym, FILE *f)
 {
-	putstring(sym->name, f);
-	if (!sym->isDefined()) {
+	putstring(sym.name, f);
+	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, f);
 	} else {
-		assert(sym->src->ID != (uint32_t)-1);
+		assert(sym.src->ID != (uint32_t)-1);
 
-		putc(sym->isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
-		putlong(sym->src->ID, f);
-		putlong(sym->fileLine, f);
-		putlong(getSectIDIfAny(sym->getSection()), f);
-		putlong(sym->value, f);
+		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
+		putlong(sym.src->ID, f);
+		putlong(sym.fileLine, f);
+		putlong(getSectIDIfAny(sym.getSection()), f);
+		putlong(sym.value, f);
 	}
 }
 
-static void registerSymbol(Symbol *sym)
+static void registerSymbol(Symbol &sym)
 {
-	sym->ID = objectSymbols.size();
-	objectSymbols.push_back(sym);
-	out_RegisterNode(sym->src);
+	sym.ID = objectSymbols.size();
+	objectSymbols.push_back(&sym);
+	out_RegisterNode(sym.src);
 }
 
 // Returns a symbol's ID within the object file
 // If the symbol does not have one, one is assigned by registering the symbol
-static uint32_t getSymbolID(Symbol *sym)
+static uint32_t getSymbolID(Symbol &sym)
 {
-	if (sym->ID == (uint32_t)-1 && !sym_IsPC(sym))
+	if (sym.ID == (uint32_t)-1 && !sym_IsPC(&sym))
 		registerSymbol(sym);
-	return sym->ID;
+	return sym.ID;
 }
 
 static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn)
@@ -176,9 +176,7 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 	size_t rpnptr = 0;
 
 	for (size_t offset = 0; offset < rpn.size(); ) {
-#define popbyte() rpn[offset++]
-#define writebyte(byte)	rpnexpr[rpnptr++] = byte
-		uint8_t rpndata = popbyte();
+		uint8_t rpndata = rpn[offset++];
 
 		switch (rpndata) {
 			Symbol *sym;
@@ -187,86 +185,84 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 			size_t i;
 
 		case RPN_CONST:
-			writebyte(RPN_CONST);
-			writebyte(popbyte());
-			writebyte(popbyte());
-			writebyte(popbyte());
-			writebyte(popbyte());
+			rpnexpr[rpnptr++] = RPN_CONST;
+			rpnexpr[rpnptr++] = rpn[offset++];
+			rpnexpr[rpnptr++] = rpn[offset++];
+			rpnexpr[rpnptr++] = rpn[offset++];
+			rpnexpr[rpnptr++] = rpn[offset++];
 			break;
 
 		case RPN_SYM:
 			i = 0;
 			do {
-				symName[i] = popbyte();
+				symName[i] = rpn[offset++];
 			} while (symName[i++]);
 
 			// The symbol name is always written expanded
 			sym = sym_FindExactSymbol(symName);
 			if (sym->isConstant()) {
-				writebyte(RPN_CONST);
+				rpnexpr[rpnptr++] = RPN_CONST;
 				value = sym_GetConstantValue(symName);
 			} else {
-				writebyte(RPN_SYM);
-				value = getSymbolID(sym);
+				rpnexpr[rpnptr++] = RPN_SYM;
+				value = getSymbolID(*sym);
 			}
 
-			writebyte(value & 0xFF);
-			writebyte(value >> 8);
-			writebyte(value >> 16);
-			writebyte(value >> 24);
+			rpnexpr[rpnptr++] = value & 0xFF;
+			rpnexpr[rpnptr++] = value >> 8;
+			rpnexpr[rpnptr++] = value >> 16;
+			rpnexpr[rpnptr++] = value >> 24;
 			break;
 
 		case RPN_BANK_SYM:
 			i = 0;
 			do {
-				symName[i] = popbyte();
+				symName[i] = rpn[offset++];
 			} while (symName[i++]);
 
 			// The symbol name is always written expanded
 			sym = sym_FindExactSymbol(symName);
-			value = getSymbolID(sym);
+			value = getSymbolID(*sym);
 
-			writebyte(RPN_BANK_SYM);
-			writebyte(value & 0xFF);
-			writebyte(value >> 8);
-			writebyte(value >> 16);
-			writebyte(value >> 24);
+			rpnexpr[rpnptr++] = RPN_BANK_SYM;
+			rpnexpr[rpnptr++] = value & 0xFF;
+			rpnexpr[rpnptr++] = value >> 8;
+			rpnexpr[rpnptr++] = value >> 16;
+			rpnexpr[rpnptr++] = value >> 24;
 			break;
 
 		case RPN_BANK_SECT:
-			writebyte(RPN_BANK_SECT);
+			rpnexpr[rpnptr++] = RPN_BANK_SECT;
 			do {
-				b = popbyte();
-				writebyte(b);
+				b = rpn[offset++];
+				rpnexpr[rpnptr++] = b;
 			} while (b != 0);
 			break;
 
 		case RPN_SIZEOF_SECT:
-			writebyte(RPN_SIZEOF_SECT);
+			rpnexpr[rpnptr++] = RPN_SIZEOF_SECT;
 			do {
-				b = popbyte();
-				writebyte(b);
+				b = rpn[offset++];
+				rpnexpr[rpnptr++] = b;
 			} while (b != 0);
 			break;
 
 		case RPN_STARTOF_SECT:
-			writebyte(RPN_STARTOF_SECT);
+			rpnexpr[rpnptr++] = RPN_STARTOF_SECT;
 			do {
-				b = popbyte();
-				writebyte(b);
+				b = rpn[offset++];
+				rpnexpr[rpnptr++] = b;
 			} while (b != 0);
 			break;
 
 		default:
-			writebyte(rpndata);
+			rpnexpr[rpnptr++] = rpndata;
 			break;
 		}
-#undef popbyte
-#undef writebyte
 	}
 }
 
-static void initpatch(Patch &patch, uint32_t type, Expression const *expr, uint32_t ofs)
+static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs)
 {
 	FileStackNode *node = fstk_GetFileStack();
 
@@ -279,22 +275,22 @@ static void initpatch(Patch &patch, uint32_t type, Expression const *expr, uint3
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 
-	if (expr->isKnown) {
+	if (expr.isKnown) {
 		// If the RPN expr's value is known, output a constant directly
 		patch.rpn.resize(5);
 		patch.rpn[0] = RPN_CONST;
-		patch.rpn[1] = (uint32_t)(expr->val) & 0xFF;
-		patch.rpn[2] = (uint32_t)(expr->val) >> 8;
-		patch.rpn[3] = (uint32_t)(expr->val) >> 16;
-		patch.rpn[4] = (uint32_t)(expr->val) >> 24;
+		patch.rpn[1] = (uint32_t)expr.val & 0xFF;
+		patch.rpn[2] = (uint32_t)expr.val >> 8;
+		patch.rpn[3] = (uint32_t)expr.val >> 16;
+		patch.rpn[4] = (uint32_t)expr.val >> 24;
 	} else {
-		patch.rpn.resize(expr->rpnPatchSize);
-		writerpn(patch.rpn, *expr->rpn);
+		patch.rpn.resize(expr.rpnPatchSize);
+		writerpn(patch.rpn, *expr.rpn);
 	}
 }
 
 // Create a new patch (includes the rpn expr)
-void out_CreatePatch(uint32_t type, Expression const *expr, uint32_t ofs, uint32_t pcShift)
+void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift)
 {
 	// Add the patch to the list
 	Patch &patch = currentSection->patches.emplace_front();
@@ -308,7 +304,7 @@ void out_CreatePatch(uint32_t type, Expression const *expr, uint32_t ofs, uint32
 }
 
 // Creates an assert that will be written to the object file
-void out_CreateAssert(enum AssertionType type, Expression const *expr, char const *message, uint32_t ofs)
+void out_CreateAssert(enum AssertionType type, Expression const &expr, char const *message, uint32_t ofs)
 {
 	Assertion &assertion = assertions.emplace_front();
 
@@ -322,15 +318,15 @@ static void writeassert(Assertion &assert, FILE *f)
 	putstring(assert.message.c_str(), f);
 }
 
-static void writeFileStackNode(FileStackNode const *node, FILE *f)
+static void writeFileStackNode(FileStackNode const &node, FILE *f)
 {
-	putlong(node->parent ? node->parent->ID : (uint32_t)-1, f);
-	putlong(node->lineNo, f);
-	putc(node->type, f);
-	if (node->type != NODE_REPT) {
-		putstring(node->name().c_str(), f);
+	putlong(node.parent ? node.parent->ID : (uint32_t)-1, f);
+	putlong(node.lineNo, f);
+	putc(node.type, f);
+	if (node.type != NODE_REPT) {
+		putstring(node.name().c_str(), f);
 	} else {
-		std::vector<uint32_t> const &nodeIters = node->iters();
+		std::vector<uint32_t> const &nodeIters = node.iters();
 
 		putlong(nodeIters.size(), f);
 		// Iters are stored by decreasing depth, so reverse the order for output
@@ -339,11 +335,11 @@ static void writeFileStackNode(FileStackNode const *node, FILE *f)
 	}
 }
 
-static void registerUnregisteredSymbol(Symbol *symbol)
+static void registerUnregisteredSymbol(Symbol &sym)
 {
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
-	if (symbol->src && symbol->ID == (uint32_t)-1) {
-		registerSymbol(symbol);
+	if (sym.src && sym.ID == (uint32_t)-1) {
+		registerSymbol(sym);
 	}
 }
 
@@ -374,7 +370,7 @@ void out_WriteObject()
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
 		FileStackNode const *node = *it;
 
-		writeFileStackNode(node, f);
+		writeFileStackNode(*node, f);
 
 		// The list is supposed to have decrementing IDs
 		if (it + 1 != fileStackNodes.end() && it[1]->ID != node->ID - 1)
@@ -384,7 +380,7 @@ void out_WriteObject()
 	}
 
 	for (Symbol const *sym : objectSymbols)
-		writesymbol(sym, f);
+		writesymbol(*sym, f);
 
 	for (Section &sect : sectionList)
 		writesection(sect, f);

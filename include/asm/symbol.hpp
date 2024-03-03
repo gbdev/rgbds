@@ -64,7 +64,7 @@ struct Symbol {
 	char const *getStringValue() const { return hasCallback ? strCallback() : equs->c_str(); }
 };
 
-void sym_ForEach(void (*func)(Symbol *));
+void sym_ForEach(void (*func)(Symbol &));
 
 void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(char const *symName);
