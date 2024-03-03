@@ -31,7 +31,7 @@ struct Symbol {
 	Section *section;
 };
 
-void sym_AddSymbol(Symbol *symbol);
+void sym_AddSymbol(Symbol &symbol);
 
 /*
  * Finds a symbol in all the defined symbols.

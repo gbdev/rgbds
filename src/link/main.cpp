@@ -342,11 +342,13 @@ next:
 	exit(1);
 }
 
-static void freeSection(Section *section)
+static void freeSection(Section &section)
 {
-	for (Section *next; section; section = next) {
-		next = section->nextu;
-		delete section;
+	Section *next = &section;
+
+	for (Section *nextu; next; next = nextu) {
+		nextu = next->nextu;
+		delete next;
 	};
 }
 
@@ -478,7 +480,7 @@ int main(int argc, char *argv[])
 	}
 
 	// then process them,
-	obj_DoSanityChecks();
+	sect_DoSanityChecks();
 	if (nbErrors != 0)
 		reportErrors();
 	assign_AssignSections();

@@ -58,13 +58,13 @@ struct Section {
  * This is to avoid exposing the data structure in which sections are stored.
  * @param callback The function to call for each structure.
  */
-void sect_ForEach(void (*callback)(Section *));
+void sect_ForEach(void (*callback)(Section &));
 
 /*
  * Registers a section to be processed.
  * @param section The section to register.
  */
-void sect_AddSection(Section *section);
+void sect_AddSection(Section &section);
 
 /*
  * Finds a section by its name.

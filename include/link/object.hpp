@@ -13,11 +13,6 @@
 void obj_ReadFile(char const *fileName, unsigned int i);
 
 /*
- * Perform validation on the object files' contents
- */
-void obj_DoSanityChecks();
-
-/*
  * Evaluate all assertions
  */
 void obj_CheckAssertions();

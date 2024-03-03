@@ -54,16 +54,13 @@ static void initFreeSpace()
  * @param section The section to assign
  * @param location The location to assign the section to
  */
-static void assignSection(Section *section, MemoryLocation const *location)
+static void assignSection(Section &section, MemoryLocation const &location)
 {
-	section->org = location->address;
-	section->bank = location->bank;
-
 	// Propagate the assigned location to all UNIONs/FRAGMENTs
 	// so `jr` patches in them will have the correct offset
-	for (Section *next = section->nextu; next != nullptr; next = next->nextu) {
-		next->org = section->org;
-		next->bank = section->bank;
+	for (Section *next = &section; next != nullptr; next = next->nextu) {
+		next->org = location.address;
+		next->bank = location.bank;
 	}
 
 	nbSectionsToAssign--;
@@ -80,19 +77,19 @@ static void assignSection(Section *section, MemoryLocation const *location)
  * @param location The location to attempt placing the section at
  * @return True if the location is suitable, false otherwise.
  */
-static bool isLocationSuitable(Section const *section, FreeSpace const &freeSpace,
-			       MemoryLocation const *location)
+static bool isLocationSuitable(Section const &section, FreeSpace const &freeSpace,
+			       MemoryLocation const &location)
 {
-	if (section->isAddressFixed && section->org != location->address)
+	if (section.isAddressFixed && section.org != location.address)
 		return false;
 
-	if (section->isAlignFixed && ((location->address - section->alignOfs) & section->alignMask))
+	if (section.isAlignFixed && ((location.address - section.alignOfs) & section.alignMask))
 		return false;
 
-	if (location->address < freeSpace.address)
+	if (location.address < freeSpace.address)
 		return false;
 
-	return location->address + section->size <= freeSpace.address + freeSpace.size;
+	return location.address + section.size <= freeSpace.address + freeSpace.size;
 }
 
 /*
@@ -102,40 +99,40 @@ static bool isLocationSuitable(Section const *section, FreeSpace const &freeSpac
  * @return The index into `memory[section->type]` of the free space encompassing the location,
  *         or -1 if none was found
  */
-static ssize_t getPlacement(Section const *section, MemoryLocation *location)
+static ssize_t getPlacement(Section const &section, MemoryLocation &location)
 {
-	SectionTypeInfo const &typeInfo = sectionTypeInfo[section->type];
+	SectionTypeInfo const &typeInfo = sectionTypeInfo[section.type];
 
 	static uint16_t curScrambleROM = 0;
 	static uint8_t curScrambleWRAM = 0;
 	static int8_t curScrambleSRAM = 0;
 
 	// Determine which bank we should start searching in
-	if (section->isBankFixed) {
-		location->bank = section->bank;
-	} else if (scrambleROMX && section->type == SECTTYPE_ROMX) {
+	if (section.isBankFixed) {
+		location.bank = section.bank;
+	} else if (scrambleROMX && section.type == SECTTYPE_ROMX) {
 		if (curScrambleROM < 1)
 			curScrambleROM = scrambleROMX;
-		location->bank = curScrambleROM--;
-	} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX) {
+		location.bank = curScrambleROM--;
+	} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX) {
 		if (curScrambleWRAM < 1)
 			curScrambleWRAM = scrambleWRAMX;
-		location->bank = curScrambleWRAM--;
-	} else if (scrambleSRAM && section->type == SECTTYPE_SRAM) {
+		location.bank = curScrambleWRAM--;
+	} else if (scrambleSRAM && section.type == SECTTYPE_SRAM) {
 		if (curScrambleSRAM < 0)
 			curScrambleSRAM = scrambleSRAM;
-		location->bank = curScrambleSRAM--;
+		location.bank = curScrambleSRAM--;
 	} else {
-		location->bank = typeInfo.firstBank;
+		location.bank = typeInfo.firstBank;
 	}
 
 	for (;;) {
 		// Switch to the beginning of the next bank
-		std::deque<FreeSpace> &bankMem = memory[section->type][location->bank - typeInfo.firstBank];
+		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank - typeInfo.firstBank];
 		size_t spaceIdx = 0;
 
 		if (spaceIdx < bankMem.size())
-			location->address = bankMem[spaceIdx].address;
+			location.address = bankMem[spaceIdx].address;
 
 		// Process locations in that bank
 		while (spaceIdx < bankMem.size()) {
@@ -144,32 +141,32 @@ static ssize_t getPlacement(Section const *section, MemoryLocation *location)
 				return spaceIdx;
 
 			// Go to the next *possible* location
-			if (section->isAddressFixed) {
+			if (section.isAddressFixed) {
 				// If the address is fixed, there can be only
 				// one candidate block per bank; if we already
 				// reached it, give up.
-				if (location->address < section->org)
-					location->address = section->org;
+				if (location.address < section.org)
+					location.address = section.org;
 				else
 					break; // Try again in next bank
-			} else if (section->isAlignFixed) {
+			} else if (section.isAlignFixed) {
 				// Move to next aligned location
 				// Move back to alignment boundary
-				location->address -= section->alignOfs;
+				location.address -= section.alignOfs;
 				// Ensure we're there (e.g. on first check)
-				location->address &= ~section->alignMask;
+				location.address &= ~section.alignMask;
 				// Go to next align boundary and add offset
-				location->address += section->alignMask + 1 + section->alignOfs;
+				location.address += section.alignMask + 1 + section.alignOfs;
 			} else {
 				// Any location is fine, so, next free block
 				spaceIdx++;
 				if (spaceIdx < bankMem.size())
-					location->address = bankMem[spaceIdx].address;
+					location.address = bankMem[spaceIdx].address;
 			}
 
 			// If that location is past the current block's end,
 			// go forwards until that is no longer the case.
-			while (spaceIdx < bankMem.size() && location->address >=
+			while (spaceIdx < bankMem.size() && location.address >=
 			       bankMem[spaceIdx].address + bankMem[spaceIdx].size)
 				spaceIdx++;
 
@@ -179,31 +176,31 @@ static ssize_t getPlacement(Section const *section, MemoryLocation *location)
 		// Try again in the next bank, if one is available.
 		// Try scrambled banks in descending order until no bank in the scrambled range is available.
 		// Otherwise, try in ascending order.
-		if (section->isBankFixed) {
+		if (section.isBankFixed) {
 			return -1;
-		} else if (scrambleROMX && section->type == SECTTYPE_ROMX && location->bank <= scrambleROMX) {
-			if (location->bank > typeInfo.firstBank)
-				location->bank--;
+		} else if (scrambleROMX && section.type == SECTTYPE_ROMX && location.bank <= scrambleROMX) {
+			if (location.bank > typeInfo.firstBank)
+				location.bank--;
 			else if (scrambleROMX < typeInfo.lastBank)
-				location->bank = scrambleROMX + 1;
+				location.bank = scrambleROMX + 1;
 			else
 				return -1;
-		} else if (scrambleWRAMX && section->type == SECTTYPE_WRAMX && location->bank <= scrambleWRAMX) {
-			if (location->bank > typeInfo.firstBank)
-				location->bank--;
+		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX && location.bank <= scrambleWRAMX) {
+			if (location.bank > typeInfo.firstBank)
+				location.bank--;
 			else if (scrambleWRAMX < typeInfo.lastBank)
-				location->bank = scrambleWRAMX + 1;
+				location.bank = scrambleWRAMX + 1;
 			else
 				return -1;
-		} else if (scrambleSRAM && section->type == SECTTYPE_SRAM && location->bank <= scrambleSRAM) {
-			if (location->bank > typeInfo.firstBank)
-				location->bank--;
+		} else if (scrambleSRAM && section.type == SECTTYPE_SRAM && location.bank <= scrambleSRAM) {
+			if (location.bank > typeInfo.firstBank)
+				location.bank--;
 			else if (scrambleSRAM < typeInfo.lastBank)
-				location->bank = scrambleSRAM + 1;
+				location.bank = scrambleSRAM + 1;
 			else
 				return -1;
-		} else if (location->bank < typeInfo.lastBank) {
-			location->bank++;
+		} else if (location.bank < typeInfo.lastBank) {
+			location.bank++;
 		} else {
 			return -1;
 		}
@@ -216,36 +213,36 @@ static ssize_t getPlacement(Section const *section, MemoryLocation *location)
  *          sections of decreasing size.
  * @param section The section to place
  */
-static void placeSection(Section *section)
+static void placeSection(Section &section)
 {
 	MemoryLocation location;
 
 	// Specially handle 0-byte SECTIONs, as they can't overlap anything
-	if (section->size == 0) {
+	if (section.size == 0) {
 		// Unless the SECTION's address was fixed, the starting address
 		// is fine for any alignment, as checked in sect_DoSanityChecks.
-		location.address = section->isAddressFixed
-						? section->org
-						: sectionTypeInfo[section->type].startAddr;
-		location.bank = section->isBankFixed
-						? section->bank
-						: sectionTypeInfo[section->type].firstBank;
-		assignSection(section, &location);
+		location.address = section.isAddressFixed
+						? section.org
+						: sectionTypeInfo[section.type].startAddr;
+		location.bank = section.isBankFixed
+						? section.bank
+						: sectionTypeInfo[section.type].firstBank;
+		assignSection(section, location);
 		return;
 	}
 
 	// Place section using first-fit decreasing algorithm
 	// https://en.wikipedia.org/wiki/Bin_packing_problem#First-fit_algorithm
-	if (ssize_t spaceIdx = getPlacement(section, &location); spaceIdx != -1) {
-		std::deque<FreeSpace> &bankMem = memory[section->type][location.bank -
-				sectionTypeInfo[section->type].firstBank];
+	if (ssize_t spaceIdx = getPlacement(section, location); spaceIdx != -1) {
+		std::deque<FreeSpace> &bankMem = memory[section.type][location.bank -
+				sectionTypeInfo[section.type].firstBank];
 		FreeSpace &freeSpace = bankMem[spaceIdx];
 
-		assignSection(section, &location);
+		assignSection(section, location);
 
 		// Update the free space
-		bool noLeftSpace  = freeSpace.address == section->org;
-		bool noRightSpace = freeSpace.address + freeSpace.size == section->org + section->size;
+		bool noLeftSpace  = freeSpace.address == section.org;
+		bool noRightSpace = freeSpace.address + freeSpace.size == section.org + section.size;
 		if (noLeftSpace && noRightSpace) {
 			// The free space is entirely deleted
 			bankMem.erase(bankMem.begin() + spaceIdx);
@@ -253,18 +250,18 @@ static void placeSection(Section *section)
 			// The free space is split in two
 			// Append the new space after the original one
 			bankMem.insert(bankMem.begin() + spaceIdx + 1, {
-				.address = (uint16_t)(section->org + section->size),
+				.address = (uint16_t)(section.org + section.size),
 				.size = (uint16_t)(freeSpace.address + freeSpace.size -
-						   section->org - section->size)
+						   section.org - section.size)
 			});
 			// Resize the original space (address is unmodified)
-			freeSpace.size = section->org - freeSpace.address;
+			freeSpace.size = section.org - freeSpace.address;
 		} else {
 			// The amount of free spaces doesn't change: resize!
-			freeSpace.size -= section->size;
+			freeSpace.size -= section.size;
 			if (noLeftSpace)
 				// The free space is moved *and* resized
-				freeSpace.address += section->size;
+				freeSpace.address += section.size;
 		}
 		return;
 	}
@@ -272,38 +269,38 @@ static void placeSection(Section *section)
 	// Please adjust depending on longest message below
 	char where[64];
 
-	if (section->isBankFixed && nbbanks(section->type) != 1) {
-		if (section->isAddressFixed)
+	if (section.isBankFixed && nbbanks(section.type) != 1) {
+		if (section.isAddressFixed)
 			snprintf(where, sizeof(where), "at $%02" PRIx32 ":%04" PRIx16,
-				 section->bank, section->org);
-		else if (section->isAlignFixed)
+				 section.bank, section.org);
+		else if (section.isAlignFixed)
 			snprintf(where, sizeof(where), "in bank $%02" PRIx32 " with align mask %" PRIx16,
-				 section->bank, (uint16_t)~section->alignMask);
+				 section.bank, (uint16_t)~section.alignMask);
 		else
-			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section->bank);
+			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section.bank);
 	} else {
-		if (section->isAddressFixed)
-			snprintf(where, sizeof(where), "at address $%04" PRIx16, section->org);
-		else if (section->isAlignFixed)
+		if (section.isAddressFixed)
+			snprintf(where, sizeof(where), "at address $%04" PRIx16, section.org);
+		else if (section.isAlignFixed)
 			snprintf(where, sizeof(where), "with align mask %" PRIx16 " and offset %" PRIx16,
-				 (uint16_t)~section->alignMask, section->alignOfs);
+				 (uint16_t)~section.alignMask, section.alignOfs);
 		else
 			strcpy(where, "anywhere");
 	}
 
 	// If a section failed to go to several places, nothing we can report
-	if (!section->isBankFixed || !section->isAddressFixed)
+	if (!section.isBankFixed || !section.isAddressFixed)
 		errx("Unable to place \"%s\" (%s section) %s",
-		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where);
+		     section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where);
 	// If the section just can't fit the bank, report that
-	else if (section->org + section->size > endaddr(section->type) + 1)
+	else if (section.org + section.size > endaddr(section.type) + 1)
 		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > $%04x)",
-		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where,
-		     section->org + section->size, endaddr(section->type) + 1);
+		     section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
+		     section.org + section.size, endaddr(section.type) + 1);
 	// Otherwise there is overlap with another section
 	else
 		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		     section->name.c_str(), sectionTypeInfo[section->type].name.c_str(), where,
+		     section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
 		     out_OverlappingSection(section)->name.c_str());
 }
 
@@ -317,25 +314,25 @@ static std::deque<Section *> unassignedSections[1 << 3];
  * This is so the most-constrained sections are placed first
  * @param section The section to categorize
  */
-static void categorizeSection(Section *section)
+static void categorizeSection(Section &section)
 {
 	uint8_t constraints = 0;
 
-	if (section->isBankFixed)
+	if (section.isBankFixed)
 		constraints |= BANK_CONSTRAINED;
-	if (section->isAddressFixed)
+	if (section.isAddressFixed)
 		constraints |= ORG_CONSTRAINED;
 	// Can't have both!
-	else if (section->isAlignFixed)
+	else if (section.isAlignFixed)
 		constraints |= ALIGN_CONSTRAINED;
 
 	std::deque<Section *> &sections = unassignedSections[constraints];
 	auto pos = sections.begin();
 
 	// Insert section while keeping the list sorted by decreasing size
-	while (pos != sections.end() && (*pos)->size > section->size)
+	while (pos != sections.end() && (*pos)->size > section.size)
 		pos++;
-	sections.insert(pos, section);
+	sections.insert(pos, &section);
 
 	nbSectionsToAssign++;
 }
@@ -357,7 +354,7 @@ void assign_AssignSections()
 	// Specially process fully-constrained sections because of overlaying
 	verbosePrint("Assigning bank+org-constrained...\n");
 	for (Section *section : unassignedSections[BANK_CONSTRAINED | ORG_CONSTRAINED])
-		placeSection(section);
+		placeSection(*section);
 
 	// If all sections were fully constrained, we have nothing left to do
 	if (!nbSectionsToAssign)
@@ -389,7 +386,7 @@ max_out:
 	// Assign all remaining sections by decreasing constraint order
 	for (int8_t constraints = BANK_CONSTRAINED | ALIGN_CONSTRAINED; constraints >= 0; constraints--) {
 		for (Section *section : unassignedSections[constraints])
-			placeSection(section);
+			placeSection(*section);
 
 		if (!nbSectionsToAssign)
 			return;
