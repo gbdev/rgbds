@@ -1,0 +1,4 @@
+error: Unexpected character, expected ',', ';', or end of argument
+In inline palette spec: #000,#none#fff
+                                  ^
+Conversion aborted after 1 error
