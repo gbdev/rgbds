@@ -10,6 +10,6 @@
 struct FileStackNode;
 struct Symbol;
 
-void sdobj_ReadFile(FileStackNode const *fileName, FILE *file, std::vector<Symbol> &fileSymbols);
+void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> &fileSymbols);
 
 #endif // RGBDS_LINK_SDAS_OBJ_H

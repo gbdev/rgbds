@@ -13,20 +13,20 @@
 
 std::map<std::string, Symbol *> symbols;
 
-void sym_AddSymbol(Symbol *symbol)
+void sym_AddSymbol(Symbol &symbol)
 {
 	// Check if the symbol already exists
-	if (Symbol *other = sym_GetSymbol(symbol->name); other) {
-		fprintf(stderr, "error: \"%s\" both in %s from ", symbol->name.c_str(), symbol->objFileName);
-		symbol->src->dumpFileStack();
-		fprintf(stderr, "(%" PRIu32 ") and in %s from ", symbol->lineNo, other->objFileName);
+	if (Symbol *other = sym_GetSymbol(symbol.name); other) {
+		fprintf(stderr, "error: \"%s\" both in %s from ", symbol.name.c_str(), symbol.objFileName);
+		symbol.src->dumpFileStack();
+		fprintf(stderr, "(%" PRIu32 ") and in %s from ", symbol.lineNo, other->objFileName);
 		other->src->dumpFileStack();
 		fprintf(stderr, "(%" PRIu32 ")\n", other->lineNo);
 		exit(1);
 	}
 
 	// If not, add it
-	symbols[symbol->name] = symbol;
+	symbols[symbol.name] = &symbol;
 }
 
 Symbol *sym_GetSymbol(std::string const &name)

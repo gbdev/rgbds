@@ -52,7 +52,7 @@ static enum SectionType typeMap[SECTTYPE_INVALID] = {
 	SECTTYPE_HRAM
 };
 
-void out_AddSection(Section const *section)
+void out_AddSection(Section const &section)
 {
 	static const uint32_t maxNbBanks[SECTTYPE_INVALID] = {
 		1,          // SECTTYPE_WRAM0
@@ -65,34 +65,33 @@ void out_AddSection(Section const *section)
 		1,          // SECTTYPE_OAM
 	};
 
-	uint32_t targetBank = section->bank - sectionTypeInfo[section->type].firstBank;
+	uint32_t targetBank = section.bank - sectionTypeInfo[section.type].firstBank;
 	uint32_t minNbBanks = targetBank + 1;
 
-	if (minNbBanks > maxNbBanks[section->type])
+	if (minNbBanks > maxNbBanks[section.type])
 		errx("Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
-		     section->name.c_str(), section->bank,
-		     maxNbBanks[section->type] - 1);
+		     section.name.c_str(), section.bank, maxNbBanks[section.type] - 1);
 
-	for (uint32_t i = sections[section->type].size(); i < minNbBanks; i++)
-		sections[section->type].emplace_back();
+	for (uint32_t i = sections[section.type].size(); i < minNbBanks; i++)
+		sections[section.type].emplace_back();
 
-	std::deque<Section const *> *ptr = section->size
-		? &sections[section->type][targetBank].sections
-		: &sections[section->type][targetBank].zeroLenSections;
-	auto pos = ptr->begin();
+	std::deque<Section const *> &bankSections = section.size
+		? sections[section.type][targetBank].sections
+		: sections[section.type][targetBank].zeroLenSections;
+	auto pos = bankSections.begin();
 
-	while (pos != ptr->end() && (*pos)->org < section->org)
+	while (pos != bankSections.end() && (*pos)->org < section.org)
 		pos++;
 
-	ptr->insert(pos, section);
+	bankSections.insert(pos, &section);
 }
 
-Section const *out_OverlappingSection(Section const *section)
+Section const *out_OverlappingSection(Section const &section)
 {
-	uint32_t bank = section->bank - sectionTypeInfo[section->type].firstBank;
+	uint32_t bank = section.bank - sectionTypeInfo[section.type].firstBank;
 
-	for (Section const *ptr : sections[section->type][bank].sections) {
-		if (ptr->org < section->org + section->size && section->org < ptr->org + ptr->size)
+	for (Section const *ptr : sections[section.type][bank].sections) {
+		if (ptr->org < section.org + section.size && section.org < ptr->org + ptr->size)
 			return ptr;
 	}
 	return nullptr;
