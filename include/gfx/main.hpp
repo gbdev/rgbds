@@ -72,15 +72,21 @@ extern Options options;
 /*
  * Prints a warning, and does not change the error count
  */
-void warning(char const *fmt, ...);
+void warning(char const *fmt, ...) format_(printf, 1, 2);
 /*
  * Prints an error, and increments the error count
  */
-void error(char const *fmt, ...);
+void error(char const *fmt, ...) format_(printf, 1, 2);
+/*
+ * Prints an error, and increments the error count
+ * Does not take format arguments so `format_` and `-Wformat-security` won't complain about
+ * calling `errorMessage(msg)`.
+ */
+void errorMessage(char const *msg);
 /*
  * Prints a fatal error, increments the error count, and gives up
  */
-[[noreturn]] void fatal(char const *fmt, ...);
+[[noreturn]] void fatal(char const *fmt, ...) format_(printf, 1, 2);
 
 struct Palette {
 	// An array of 4 GBC-native (RGB555) colors

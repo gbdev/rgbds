@@ -95,7 +95,7 @@ void reverse() {
 	}
 	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
 		warning("Specified input slice width (%" PRIu16
-		        ") doesn't match provided reversing width (%" PRIu8 " * 8)",
+		        ") doesn't match provided reversing width (%" PRIu16 " * 8)",
 		        options.inputSlice.width, options.reversedWidth);
 	}
 
@@ -121,8 +121,8 @@ void reverse() {
 		fatal("Cannot generate empty image");
 	}
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
-		warning("Read %zu tiles, more than the limit of %zu + %zu", nbTileInstances,
-		        options.maxNbTiles[0], options.maxNbTiles[1]);
+		warning("Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16,
+		        nbTileInstances, options.maxNbTiles[0], options.maxNbTiles[1]);
 	}
 
 	size_t width = options.reversedWidth, height; // In tiles
@@ -167,8 +167,8 @@ void reverse() {
 		} while (nbRead != 0);
 
 		if (palettes.size() > options.nbPalettes) {
-			warning("Read %zu palettes, more than the specified limit of %zu", palettes.size(),
-			        options.nbPalettes);
+			warning("Read %zu palettes, more than the specified limit of %" PRIu8,
+			        palettes.size(), options.nbPalettes);
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
@@ -195,7 +195,8 @@ void reverse() {
 		bool bad = false;
 		for (auto attr : *attrmap) {
 			if ((attr & 0b111) > palettes.size()) {
-				error("Referencing palette %u, but there are only %zu!");
+				error("Referencing palette %u, but there are only %zu!",
+					attr & 0b111, palettes.size());
 				bad = true;
 			}
 			if (attr & 0x08 && !tilemap) {

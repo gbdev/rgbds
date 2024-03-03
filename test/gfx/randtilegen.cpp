@@ -260,7 +260,7 @@ static void generate_random_image(char const *filename) {
 	write_image(filename, palettes, tileData, attributes, width, height);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
 	if (argc < 3 || argc > 4) {
 		fprintf(stderr, "usage: %s <input file> <basename> [<maxcount>]\n", argv[0]);
 		return 2;

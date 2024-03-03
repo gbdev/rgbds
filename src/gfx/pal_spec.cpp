@@ -59,13 +59,12 @@ void parseInlinePalSpec(char const * const rawArg) {
 	std::string_view arg(rawArg);
 	using size_type = decltype(arg)::size_type;
 
-	auto parseError = [&rawArg, &arg](size_type ofs, size_type len, char const *fmt,
-	                                  auto &&...args) {
+	auto parseError = [&rawArg, &arg](size_type ofs, size_type len, char const *msg) {
 		(void)arg; // With NDEBUG, `arg` is otherwise not used
 		assert(ofs <= arg.length());
 		assert(len <= arg.length());
 
-		error(fmt, args...);
+		errorMessage(msg);
 		fprintf(stderr,
 		        "In inline palette spec: %s\n"
 		        "                        ",
@@ -237,31 +236,31 @@ static std::optional<Rgba> parseColor(std::string const &str, std::string::size_
                                       uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
-		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid red component", i + 1,
+		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1,
 		      str.c_str());
 		return std::nullopt;
 	}
 	skipWhitespace(str, n);
 	if (n == str.length()) {
-		error("Failed to parse color #%" PRIu16 " (\"%s\"): missing green component", i + 1,
+		error("Failed to parse color #%d (\"%s\"): missing green component", i + 1,
 		      str.c_str());
 		return std::nullopt;
 	}
 	std::optional<uint8_t> g = parseDec<uint8_t>(str, n);
 	if (!g) {
-		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid green component", i + 1,
+		error("Failed to parse color #%d (\"%s\"): invalid green component", i + 1,
 		      str.c_str());
 		return std::nullopt;
 	}
 	skipWhitespace(str, n);
 	if (n == str.length()) {
-		error("Failed to parse color #%" PRIu16 " (\"%s\"): missing blue component", i + 1,
+		error("Failed to parse color #%d (\"%s\"): missing blue component", i + 1,
 		      str.c_str());
 		return std::nullopt;
 	}
 	std::optional<uint8_t> b = parseDec<uint8_t>(str, n);
 	if (!b) {
-		error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid blue component", i + 1,
+		error("Failed to parse color #%d (\"%s\"): invalid blue component", i + 1,
 		      str.c_str());
 		return std::nullopt;
 	}
@@ -295,11 +294,11 @@ static void parsePSPFile(std::filebuf &file) {
 		return;
 	}
 
-	if (*nbColors > options.nbColorsPerPal * options.nbPalettes) {
+	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes; *nbColors > nbPalColors) {
 		warning("PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		        "; ignoring extra",
-		        *nbColors, options.nbColorsPerPal * options.nbPalettes);
-		nbColors = options.nbColorsPerPal * options.nbPalettes;
+		        *nbColors, nbPalColors);
+		nbColors = nbPalColors;
 	}
 
 	options.palSpec.clear();
@@ -314,8 +313,7 @@ static void parsePSPFile(std::filebuf &file) {
 			return;
 		}
 		if (n != line.length()) {
-			error("Failed to parse color #%" PRIu16
-			      " (\"%s\"): trailing characters after blue component",
+			error("Failed to parse color #%d (\"%s\"): trailing characters after blue component",
 			      i + 1, line.c_str());
 			return;
 		}
@@ -388,7 +386,7 @@ static void parseHEXFile(std::filebuf &file) {
 
 		if (line.length() != 6
 		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
-			error("Failed to parse color #%" PRIu16 " (\"%s\"): invalid \"rrggbb\" line",
+			error("Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line",
 			      nbColors + 1, line.c_str());
 			return;
 		}
@@ -431,11 +429,11 @@ static void parseACTFile(std::filebuf &file) {
 		return;
 	}
 
-	if (nbColors > options.nbColorsPerPal * options.nbPalettes) {
+	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes; nbColors > nbPalColors) {
 		warning("ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		        "; ignoring extra",
-		        nbColors, options.nbColorsPerPal * options.nbPalettes);
-		nbColors = options.nbColorsPerPal * options.nbPalettes;
+		        nbColors, nbPalColors);
+		nbColors = nbPalColors;
 	}
 
 	options.palSpec.clear();
@@ -481,18 +479,18 @@ static void parseACOFile(std::filebuf &file) {
 	}
 	uint16_t nbColors = readBE<uint16_t>(buf);
 
-	if (nbColors > options.nbColorsPerPal * options.nbPalettes) {
+	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes; nbColors > nbPalColors) {
 		warning("ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		        "; ignoring extra",
-		        nbColors, options.nbColorsPerPal * options.nbPalettes);
-		nbColors = options.nbColorsPerPal * options.nbPalettes;
+		        nbColors, nbPalColors);
+		nbColors = nbPalColors;
 	}
 
 	options.palSpec.clear();
 
 	for (uint16_t i = 0; i < nbColors; ++i) {
 		if (file.sgetn(buf, 10) != 10) {
-			error("Failed to read color #%" PRIu16 " from palette file", i + 1);
+			error("Failed to read color #%d from palette file", i + 1);
 			return;
 		}
 

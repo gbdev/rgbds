@@ -72,6 +72,13 @@ void error(char const *fmt, ...) {
 		nbErrors++;
 }
 
+void errorMessage(char const *msg) {
+	fprintf(stderr, "error: %s\n", msg);
+
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+		nbErrors++;
+}
+
 [[noreturn]] void fatal(char const *fmt, ...) {
 	va_list ap;
 
@@ -111,36 +118,36 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
  * over short opt matching
  */
 static option const longopts[] = {
-    {"auto-attr-map",      no_argument,       nullptr, 'A'},
-    {"output-attr-map",    no_argument,       nullptr, -'A'}, // Deprecated
-    {"attr-map",           required_argument, nullptr, 'a'},
-    {"base-tiles",         required_argument, nullptr, 'b'},
-    {"color-curve",        no_argument,       nullptr, 'C'},
-    {"colors",             required_argument, nullptr, 'c'},
-    {"depth",              required_argument, nullptr, 'd'},
-    {"slice",              required_argument, nullptr, 'L'},
-    {"mirror-tiles",       no_argument,       nullptr, 'm'},
-    {"nb-tiles",           required_argument, nullptr, 'N'},
-    {"nb-palettes",        required_argument, nullptr, 'n'},
-    {"group-outputs",      no_argument,       nullptr, 'O'},
-    {"output",             required_argument, nullptr, 'o'},
-    {"auto-palette",       no_argument,       nullptr, 'P'},
-    {"output-palette",     no_argument,       nullptr, -'P'}, // Deprecated
-    {"palette",            required_argument, nullptr, 'p'},
-    {"auto-palette-map",   no_argument,       nullptr, 'Q'},
-    {"output-palette-map", no_argument,       nullptr, -'Q'}, // Deprecated
-    {"palette-map",        required_argument, nullptr, 'q'},
-    {"reverse",            required_argument, nullptr, 'r'},
-    {"auto-tilemap",       no_argument,       nullptr, 'T'},
-    {"output-tilemap",     no_argument,       nullptr, -'T'}, // Deprecated
-    {"tilemap",            required_argument, nullptr, 't'},
-    {"unit-size",          required_argument, nullptr, 'U'},
-    {"unique-tiles",       no_argument,       nullptr, 'u'},
-    {"version",            no_argument,       nullptr, 'V'},
-    {"verbose",            no_argument,       nullptr, 'v'},
-    {"trim-end",           required_argument, nullptr, 'x'},
-    {"columns",            no_argument,       nullptr, 'Z'},
-    {nullptr,              no_argument,       nullptr, 0  }
+	{"auto-attr-map",      no_argument,       nullptr, 'A'},
+	{"output-attr-map",    no_argument,       nullptr, -'A'}, // Deprecated
+	{"attr-map",           required_argument, nullptr, 'a'},
+	{"base-tiles",         required_argument, nullptr, 'b'},
+	{"color-curve",        no_argument,       nullptr, 'C'},
+	{"colors",             required_argument, nullptr, 'c'},
+	{"depth",              required_argument, nullptr, 'd'},
+	{"slice",              required_argument, nullptr, 'L'},
+	{"mirror-tiles",       no_argument,       nullptr, 'm'},
+	{"nb-tiles",           required_argument, nullptr, 'N'},
+	{"nb-palettes",        required_argument, nullptr, 'n'},
+	{"group-outputs",      no_argument,       nullptr, 'O'},
+	{"output",             required_argument, nullptr, 'o'},
+	{"auto-palette",       no_argument,       nullptr, 'P'},
+	{"output-palette",     no_argument,       nullptr, -'P'}, // Deprecated
+	{"palette",            required_argument, nullptr, 'p'},
+	{"auto-palette-map",   no_argument,       nullptr, 'Q'},
+	{"output-palette-map", no_argument,       nullptr, -'Q'}, // Deprecated
+	{"palette-map",        required_argument, nullptr, 'q'},
+	{"reverse",            required_argument, nullptr, 'r'},
+	{"auto-tilemap",       no_argument,       nullptr, 'T'},
+	{"output-tilemap",     no_argument,       nullptr, -'T'}, // Deprecated
+	{"tilemap",            required_argument, nullptr, 't'},
+	{"unit-size",          required_argument, nullptr, 'U'},
+	{"unique-tiles",       no_argument,       nullptr, 'u'},
+	{"version",            no_argument,       nullptr, 'V'},
+	{"verbose",            no_argument,       nullptr, 'v'},
+	{"trim-end",           required_argument, nullptr, 'x'},
+	{"columns",            no_argument,       nullptr, 'Z'},
+	{nullptr,              no_argument,       nullptr, 0  }
 };
 
 static void printUsage() {
@@ -334,7 +341,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
  * Returns `nullptr` if the vector was fully parsed, or a pointer (which is part of the arg vector)
  * to an "at-file" path if one is encountered.
  */
-static char *parseArgv(int argc, char **argv) {
+static char *parseArgv(int argc, char *argv[]) {
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		uint16_t number;
@@ -406,7 +413,7 @@ static char *parseArgv(int argc, char **argv) {
 			if (*arg != '\0') {
 				error("Bit depth (-b) argument must be a valid number, not \"%s\"", musl_optarg);
 			} else if (options.bitDepth != 1 && options.bitDepth != 2) {
-				error("Bit depth must be 1 or 2, not %" PRIu8);
+				error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
 				options.bitDepth = 2;
 			}
 			break;

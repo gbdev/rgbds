@@ -106,9 +106,9 @@ class Png {
 
 		if (nbBytesRead != expectedLen) {
 			fatal("Error reading input image (\"%s\"): file too short (expected at least %zd more "
-			      "bytes after reading %lld)",
+			      "bytes after reading %zu)",
 			      self->c_str(), length - nbBytesRead,
-			      self->file->pubseekoff(0, std::ios_base::cur));
+			      (size_t)self->file->pubseekoff(0, std::ios_base::cur));
 		}
 	}
 
@@ -1060,7 +1060,7 @@ void process() {
 		}
 
 		if (nbColorsInTile > options.maxOpaqueColors()) {
-			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %zu opaque colors, more than %" PRIu8 "!",
+			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %" PRIu8 " opaque colors, more than %" PRIu8 "!",
 			      tile.x, tile.y, nbColorsInTile, options.maxOpaqueColors());
 		}
 

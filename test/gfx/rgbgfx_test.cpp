@@ -112,9 +112,9 @@ class Png {
 
 		if (nbBytesRead != expectedLen) {
 			fatal("Error reading input image (\"%s\"): file too short (expected at least %zd more "
-			      "bytes after reading %lld)",
+			      "bytes after reading %zu)",
 			      self->path.c_str(), length - nbBytesRead,
-			      self->file.pubseekoff(0, std::ios_base::cur));
+			      (size_t)self->file.pubseekoff(0, std::ios_base::cur));
 		}
 	}
 
@@ -369,7 +369,7 @@ static char *execProg(char const *name, char * const *argv) {
 	return nullptr;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "usage: %s <rng file> [rgbgfx flags]\n", argv[0]);
 		exit(0);
