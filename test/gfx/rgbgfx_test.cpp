@@ -282,7 +282,9 @@ public:
 
 static char *execProg(char const *name, char * const *argv) {
 	auto formatArgv = [&argv] {
-		static std::string buf; // It's fine to use a static string:
+		// This is `static` so that the returned `buf.c_str()` will live long enough
+		// for `fatal()` to use it below.
+		static std::string buf;
 
 		buf.clear();
 		for (char * const *arg = argv; *arg != nullptr; ++arg) {
