@@ -42,6 +42,14 @@ done
 # Remove temporaries (also ignored by Git) created by the above tests
 rm -f out*.png result.png
 
+# Test round-tripping with -c #none
+reverse_cmd="\"$RGBGFX\" \"-c#none,#fff,#000\" -o none_round_trip.2bpp -r 1 out.png"
+reconvert_cmd="\"$RGBGFX\" \"-c#none,#fff,#000\" -o result.2bpp out.png"
+new_test "$reverse_cmd && $reconvert_cmd && cmp none_round_trip.2bpp result.2bpp"
+test || fail $?
+
+rm -f result.2bpp out.png
+
 for f in *.png; do
 	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
 
