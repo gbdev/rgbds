@@ -74,7 +74,7 @@ header.
 
 The test suite is a little ad-hoc, so the way tests work is different for each program being tested.
 
-Feel free to modify how the test scripts work, 
+Feel free to modify how the test scripts work, if the thing you want to test doesn't fit the existing scheme(s).
 
 ### RGBASM
 
