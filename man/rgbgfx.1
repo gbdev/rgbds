@@ -125,11 +125,14 @@ begins with a hash character
 .Ql # ,
 it is treated as an inline palette specification.
 It should contain a comma-separated list of hexadecimal colors, each beginning with a hash.
-Colors in are accepted either as
+Colors are accepted either as
 .Ql #rgb
 or
 .Ql #rrggbb
 format.
+To leave one or more gaps in the palette,
+.Ql #none
+can be used instead of any color.
 Palettes must be separated by a colon or semicolon (the latter may require quoting to avoid special handling by the shell), and spaces are allowed around colons, semicolons and commas; trailing commas and semicolons are allowed.
 See
 .Sx EXAMPLES

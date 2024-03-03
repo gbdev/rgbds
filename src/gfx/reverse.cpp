@@ -137,7 +137,7 @@ void reverse() {
 
 	// TODO: `-U` to configure tile size beyond 8x8px ("deduplication units")
 
-	std::vector<std::array<Rgba, 4>> palettes{
+	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
 	};
 	// If a palette file is used as input, it overrides the default colors.
@@ -313,7 +313,7 @@ void reverse() {
 				uint8_t *ptr = &rowPtrs[y][tx * 8 * SIZEOF_PIXEL];
 				for (uint8_t x = 0; x < 8; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
-					Rgba const &pixel = palette[bit0 >> 7 | bit1 >> 6];
+					Rgba const &pixel = *palette[bit0 >> 7 | bit1 >> 6];
 					*ptr++ = pixel.red;
 					*ptr++ = pixel.green;
 					*ptr++ = pixel.blue;

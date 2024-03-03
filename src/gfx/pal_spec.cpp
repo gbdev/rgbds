@@ -54,7 +54,8 @@ static void skipWhitespace(Str const &str, typename Str::size_type &pos) {
 }
 
 void parseInlinePalSpec(char const * const rawArg) {
-	// List of #rrggbb/#rgb colors, comma-separated, palettes are separated by colons
+	// List of #rrggbb/#rgb colors (or #none); comma-separated.
+	// Palettes are separated by colons.
 
 	std::string_view arg(rawArg);
 	using size_type = decltype(arg)::size_type;
@@ -87,25 +88,31 @@ void parseInlinePalSpec(char const * const rawArg) {
 	for (;;) {
 		++n; // Ignore the '#' (checked either by caller or previous loop iteration)
 
-		Rgba &color = options.palSpec.back()[nbColors];
-		auto pos = std::min(arg.find_first_not_of("0123456789ABCDEFabcdef"sv, n), arg.length());
-		switch (pos - n) {
-		case 3:
-			color = Rgba(singleToHex(arg[n + 0]), singleToHex(arg[n + 1]), singleToHex(arg[n + 2]),
-			             0xFF);
-			break;
-		case 6:
-			color = Rgba(toHex(arg[n + 0], arg[n + 1]), toHex(arg[n + 2], arg[n + 3]),
-			             toHex(arg[n + 4], arg[n + 5]), 0xFF);
-			break;
-		case 0:
-			parseError(n - 1, 1, "Missing color after '#'");
-			return;
-		default:
-			parseError(n, pos - n, "Unknown color specification");
-			return;
+		std::optional<Rgba> &color = options.palSpec.back()[nbColors];
+		// Check for #none first.
+		if (arg.compare(n, 4, "none"sv) == 0 || arg.compare(n, 4, "NONE"sv) == 0) {
+			color = {};
+			n += 4;
+		} else {
+			auto pos = std::min(arg.find_first_not_of("0123456789ABCDEFabcdef"sv, n), arg.length());
+			switch (pos - n) {
+			case 3:
+				color = Rgba(singleToHex(arg[n + 0]), singleToHex(arg[n + 1]), singleToHex(arg[n + 2]),
+				             0xFF);
+				break;
+			case 6:
+				color = Rgba(toHex(arg[n + 0], arg[n + 1]), toHex(arg[n + 2], arg[n + 3]),
+				             toHex(arg[n + 4], arg[n + 5]), 0xFF);
+				break;
+			case 0:
+				parseError(n - 1, 1, "Missing color after '#'");
+				return;
+			default:
+				parseError(n, pos - n, "Unknown color specification");
+				return;
+			}
+			n = pos;
 		}
-		n = pos;
 
 		// Skip whitespace, if any
 		skipWhitespace(arg, n);
@@ -442,7 +449,7 @@ static void parseACTFile(std::filebuf &file) {
 	char const *ptr = buf.data();
 	size_t colorIdx = 0;
 	for (uint16_t i = 0; i < nbColors; ++i) {
-		Rgba &color = options.palSpec.back()[colorIdx];
+		std::optional<Rgba> &color = options.palSpec.back()[colorIdx];
 		color = Rgba(ptr[0], ptr[1], ptr[2], 0xFF);
 
 		ptr += 3;
@@ -498,7 +505,7 @@ static void parseACOFile(std::filebuf &file) {
 			options.palSpec.emplace_back();
 		}
 
-		Rgba &color = options.palSpec.back()[i % options.nbColorsPerPal];
+		std::optional<Rgba> &color = options.palSpec.back()[i % options.nbColorsPerPal];
 		uint16_t colorType = readBE<uint16_t>(buf);
 		switch (colorType) {
 		case 0: // RGB
