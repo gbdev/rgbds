@@ -188,10 +188,10 @@ static uint8_t tpp1Rev[2];
 /*
  * @return False on failure
  */
-static bool readMBCSlice(char const **name, char const *expected)
+static bool readMBCSlice(char const *&name, char const *expected)
 {
 	while (*expected) {
-		char c = *(*name)++;
+		char c = *name++;
 
 		if (c == '\0') // Name too short
 			return false;
@@ -243,7 +243,7 @@ static enum MbcType parseMBC(char const *name)
 
 #define tryReadSlice(expected) \
 do { \
-	if (!readMBCSlice(&ptr, expected)) \
+	if (!readMBCSlice(ptr, expected)) \
 		return MBC_BAD; \
 } while (0)
 
