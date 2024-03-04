@@ -23,22 +23,22 @@ enum SymbolType {
 	SYM_REF // Forward reference to a label
 };
 
-struct Symbol; // For the `sym_IsPC` forward declaration
+struct Symbol;                    // For the `sym_IsPC` forward declaration
 bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
 
 struct Symbol {
 	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
 	bool isExported; // Whether the symbol is to be exported
-	bool isBuiltin; // Whether the symbol is a built-in
+	bool isBuiltin;  // Whether the symbol is a built-in
 	Section *section;
 	FileStackNode *src; // Where the symbol was defined
-	uint32_t fileLine; // Line where the symbol was defined
+	uint32_t fileLine;  // Line where the symbol was defined
 
-	std::variant<int32_t, // If isNumeric()
-	             int32_t (*)(), // If isNumeric() and has a callback
+	std::variant<int32_t,            // If isNumeric()
+	             int32_t (*)(),      // If isNumeric() and has a callback
 	             std::string_view *, // For SYM_MACRO
-	             std::string * // For SYM_EQUS
+	             std::string *       // For SYM_EQUS
 	             >
 	    data;
 

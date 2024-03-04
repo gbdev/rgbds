@@ -150,9 +150,9 @@ enum MbcType {
 
 	// Error values
 	MBC_NONE = UNSPECIFIED, // No MBC specified, do not act on it
-	MBC_BAD, // Specified MBC does not exist / syntax error
-	MBC_WRONG_FEATURES, // MBC incompatible with specified features
-	MBC_BAD_RANGE, // MBC number out of range
+	MBC_BAD,                // Specified MBC does not exist / syntax error
+	MBC_WRONG_FEATURES,     // MBC incompatible with specified features
+	MBC_BAD_RANGE,          // MBC number out of range
 };
 
 static void printAcceptedMBCNames() {
@@ -676,7 +676,7 @@ static bool hasRAM(enum MbcType type) {
 	case MBC3_TIMER_BATTERY:
 	case MBC5:
 	case MBC5_RUMBLE:
-	case MBC6: // TODO: not sure
+	case MBC6:         // TODO: not sure
 	case BANDAI_TAMA5: // TODO: not sure
 	case MBC_NONE:
 	case MBC_BAD:
@@ -961,9 +961,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// 65536 banks = 1 GiB.
 	// This should be reasonable for the time being, and may be extended later.
 	std::vector<uint8_t> romx; // Buffer of ROMX bank data
-	uint32_t nbBanks = 1; // Number of banks *targeted*, including ROM0
-	size_t totalRomxLen = 0; // *Actual* size of ROMX data
-	uint8_t bank[BANK_SIZE]; // Temp buffer used to store a whole bank's worth of data
+	uint32_t nbBanks = 1;      // Number of banks *targeted*, including ROM0
+	size_t totalRomxLen = 0;   // *Actual* size of ROMX data
+	uint8_t bank[BANK_SIZE];   // Temp buffer used to store a whole bank's worth of data
 
 	// Handle ROMX
 	if (input == output) {

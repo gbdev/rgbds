@@ -30,21 +30,21 @@
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 
-bool isDmgMode; // -d
-char *linkerScriptName; // -l
-char const *mapFileName; // -m
-bool noSymInMap; // -M
-char const *symFileName; // -n
+bool isDmgMode;              // -d
+char *linkerScriptName;      // -l
+char const *mapFileName;     // -m
+bool noSymInMap;             // -M
+char const *symFileName;     // -n
 char const *overlayFileName; // -O
-char const *outputFileName; // -o
-uint8_t padValue; // -p
+char const *outputFileName;  // -o
+uint8_t padValue;            // -p
 // Setting these three to 0 disables the functionality
 uint16_t scrambleROMX = 0; // -S
 uint8_t scrambleWRAMX = 0;
 uint8_t scrambleSRAM = 0;
-bool is32kMode; // -t
-bool beVerbose; // -v
-bool isWRAM0Mode; // -w
+bool is32kMode;      // -t
+bool beVerbose;      // -v
+bool isWRAM0Mode;    // -w
 bool disablePadding; // -x
 
 FILE *linkerScript;
@@ -242,7 +242,7 @@ static void parseScrambleSpec(char const *spec) {
 
 			if (*spec == '\0')
 				break;
-			if (*spec == '=') // Skip the limit, too
+			if (*spec == '=')                 // Skip the limit, too
 				spec = strchr(&spec[1], ','); // Skip to next comma, if any
 			goto next;
 		}

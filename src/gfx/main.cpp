@@ -296,7 +296,7 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 			}
 			continue; // Start processing the next line
 		// If it's an empty line, ignore it
-		case '\r': // Assuming CRLF here
+		case '\r':          // Assuming CRLF here
 			file->sbumpc(); // Discard the upcoming '\n'
 			[[fallthrough]];
 		case '\n':
@@ -604,7 +604,7 @@ static char *parseArgv(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	struct AtFileStackEntry {
-		int parentInd; // Saved offset into parent argv
+		int parentInd;            // Saved offset into parent argv
 		std::vector<char *> argv; // This context's arg pointer vec
 		std::vector<char> argPool;
 
@@ -633,7 +633,7 @@ int main(int argc, char *argv[]) {
 			curArgc = stackEntry.argv.size() - 1;
 			curArgv = stackEntry.argv.data();
 			musl_optind = 1; // Don't use 0 because we're not scanning a different argv per se
-			continue; // Begin scanning that arg vector
+			continue;        // Begin scanning that arg vector
 		}
 
 		if (musl_optind != curArgc) {
@@ -832,7 +832,7 @@ int main(int argc, char *argv[]) {
 void Palette::addColor(uint16_t color) {
 	for (size_t i = 0; true; ++i) {
 		assert(i < colors.size()); // The packing should guarantee this
-		if (colors[i] == color) { // The color is already present
+		if (colors[i] == color) {  // The color is already present
 			break;
 		} else if (colors[i] == UINT16_MAX) { // Empty slot
 			colors[i] = color;

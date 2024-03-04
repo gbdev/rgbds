@@ -10,22 +10,22 @@ extern unsigned int nbErrors, maxErrors;
 enum WarningState { WARNING_DEFAULT, WARNING_DISABLED, WARNING_ENABLED, WARNING_ERROR };
 
 enum WarningID {
-	WARNING_ASSERT, // Assertions
-	WARNING_BACKWARDS_FOR, // `for` loop with backwards range
-	WARNING_BUILTIN_ARG, // Invalid args to builtins
-	WARNING_CHARMAP_REDEF, // Charmap entry re-definition
-	WARNING_DIV, // Division undefined behavior
+	WARNING_ASSERT,               // Assertions
+	WARNING_BACKWARDS_FOR,        // `for` loop with backwards range
+	WARNING_BUILTIN_ARG,          // Invalid args to builtins
+	WARNING_CHARMAP_REDEF,        // Charmap entry re-definition
+	WARNING_DIV,                  // Division undefined behavior
 	WARNING_EMPTY_DATA_DIRECTIVE, // `db`, `dw` or `dl` directive without data in ROM
-	WARNING_EMPTY_MACRO_ARG, // Empty macro argument
-	WARNING_EMPTY_STRRPL, // Empty second argument in `STRRPL`
-	WARNING_LARGE_CONSTANT, // Constants too large
-	WARNING_LONG_STR, // String too long for internal buffers
-	WARNING_MACRO_SHIFT, // Shift past available arguments in macro
-	WARNING_NESTED_COMMENT, // Comment-start delimiter in a block comment
-	WARNING_OBSOLETE, // Obsolete things
-	WARNING_SHIFT, // Shifting undefined behavior
-	WARNING_SHIFT_AMOUNT, // Strange shift amount
-	WARNING_USER, // User warnings
+	WARNING_EMPTY_MACRO_ARG,      // Empty macro argument
+	WARNING_EMPTY_STRRPL,         // Empty second argument in `STRRPL`
+	WARNING_LARGE_CONSTANT,       // Constants too large
+	WARNING_LONG_STR,             // String too long for internal buffers
+	WARNING_MACRO_SHIFT,          // Shift past available arguments in macro
+	WARNING_NESTED_COMMENT,       // Comment-start delimiter in a block comment
+	WARNING_OBSOLETE,             // Obsolete things
+	WARNING_SHIFT,                // Shifting undefined behavior
+	WARNING_SHIFT_AMOUNT,         // Strange shift amount
+	WARNING_USER,                 // User warnings
 
 	NB_PLAIN_WARNINGS,
 

@@ -37,7 +37,7 @@
 	#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
 		#define __SANITIZE_ADDRESS__
 	#endif // __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-#endif // __clang__
+#endif     // __clang__
 
 #ifdef __SANITIZE_ADDRESS__
 // There are known, non-trivial to fix leaks. We would still like to have `make develop'

@@ -99,7 +99,7 @@ static void dumpFilename(Symbol const &sym) {
 
 // Set a symbol's definition filename and line
 static void setSymbolFilename(Symbol &sym) {
-	sym.src = fstk_GetFileStack(); // This is `nullptr` for built-ins
+	sym.src = fstk_GetFileStack();                  // This is `nullptr` for built-ins
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0; // This is 1 for built-ins
 }
 

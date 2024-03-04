@@ -26,7 +26,7 @@
 enum NumberType {
 	HEX = 16, // X
 	DEC = 10, // D
-	OCT = 8, // Q
+	OCT = 8,  // Q
 };
 
 static void consumeLF(FileStackNode const &where, uint32_t lineNo, FILE *file) {
@@ -116,23 +116,23 @@ static uint8_t parseByte(FileStackNode const &where, uint32_t lineNo, char const
 
 enum AreaFlags {
 	AREA_TYPE = 2, // 0: Concatenate, 1: overlay
-	AREA_ISABS, // 0: Relative (???) address, 1: absolute address
-	AREA_PAGING, // Unsupported
+	AREA_ISABS,    // 0: Relative (???) address, 1: absolute address
+	AREA_PAGING,   // Unsupported
 
 	AREA_ALL_FLAGS = 1 << AREA_TYPE | 1 << AREA_ISABS | 1 << AREA_PAGING,
 };
 
 enum RelocFlags {
-	RELOC_SIZE, // 0: 16-bit, 1: 8-bit
-	RELOC_ISSYM, // 0: Area, 1: Symbol
-	RELOC_ISPCREL, // 0: Normal, 1: PC-relative
-	RELOC_EXPR16, // Only for 8-bit size; 0: 8-bit expr, 1: 16-bit expr
-	RELOC_SIGNED, // 0: signed, 1: unsigned
-	RELOC_ZPAGE, // Unsupported
-	RELOC_NPAGE, // Unsupported
+	RELOC_SIZE,      // 0: 16-bit, 1: 8-bit
+	RELOC_ISSYM,     // 0: Area, 1: Symbol
+	RELOC_ISPCREL,   // 0: Normal, 1: PC-relative
+	RELOC_EXPR16,    // Only for 8-bit size; 0: 8-bit expr, 1: 16-bit expr
+	RELOC_SIGNED,    // 0: signed, 1: unsigned
+	RELOC_ZPAGE,     // Unsupported
+	RELOC_NPAGE,     // Unsupported
 	RELOC_WHICHBYTE, // 8-bit size with 16-bit expr only; 0: LOW(), 1: HIGH()
-	RELOC_EXPR24, // Only for 8-bit size; 0: follow RELOC_EXPR16, 1: 24-bit expr
-	RELOC_BANKBYTE, // 8-bit size with 24-bit expr only; 0: follow RELOC_WHICHBYTE, 1: BANK()
+	RELOC_EXPR24,    // Only for 8-bit size; 0: follow RELOC_EXPR16, 1: 24-bit expr
+	RELOC_BANKBYTE,  // 8-bit size with 24-bit expr only; 0: follow RELOC_WHICHBYTE, 1: BANK()
 
 	RELOC_ALL_FLAGS = 1 << RELOC_SIZE | 1 << RELOC_ISSYM | 1 << RELOC_ISPCREL | 1 << RELOC_EXPR16
 	                  | 1 << RELOC_SIGNED | 1 << RELOC_ZPAGE | 1 << RELOC_NPAGE
@@ -326,7 +326,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			} else {
 				curSection->type = SECTTYPE_INVALID; // This means "indeterminate"
 			}
-			curSection->isAlignFixed = false; // No such concept!
+			curSection->isAlignFixed = false;       // No such concept!
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
 			curSection->nextu = nullptr;
 			break;
@@ -536,7 +536,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						      " >= %" PRIu32 ")",
 						      prevOffset, patch.offset);
 				}
-				patch.pcSection = section; // No need to fill `pcSectionID`, then
+				patch.pcSection = section;         // No need to fill `pcSectionID`, then
 				patch.pcOffset = patch.offset - 1; // For `jr`s
 
 				patch.type = (flags & 1 << RELOC_SIZE) ? PATCHTYPE_BYTE : PATCHTYPE_WORD;

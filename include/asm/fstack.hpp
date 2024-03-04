@@ -21,12 +21,12 @@ struct FileStackNode {
 	uint32_t lineNo;
 
 	bool referenced; // If referenced by a Symbol, Section, or Patch's `src`, don't `delete`!
-	uint32_t ID; // Set only if referenced: ID within the object file, -1 if not output yet
+	uint32_t ID;     // Set only if referenced: ID within the object file, -1 if not output yet
 
 	enum FileStackNodeType type;
 	std::variant<std::monostate, // Default constructed; `.type` and `.data` must be set manually
 	             std::vector<uint32_t>, // NODE_REPT
-	             std::string // NODE_FILE, NODE_MACRO
+	             std::string            // NODE_FILE, NODE_MACRO
 	             >
 	    data;
 

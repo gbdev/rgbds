@@ -76,7 +76,7 @@ SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
 };
 
 char const * const sectionModNames[] = {
-    "regular", // SECTION_NORMAL
-    "union", // SECTION_UNION
+    "regular",  // SECTION_NORMAL
+    "union",    // SECTION_UNION
     "fragment", // SECTION_FRAGMENT
 };

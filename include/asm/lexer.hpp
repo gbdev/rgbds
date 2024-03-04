@@ -34,13 +34,13 @@ struct Expansion {
 		char const *unowned;
 		char *owned; // Non-`const` only so it can be `delete []`d
 	} contents;
-	size_t size; // Length of the contents
+	size_t size;   // Length of the contents
 	size_t offset; // Cursor into the contents
-	bool owned; // Whether or not to free contents when this expansion is freed
+	bool owned;    // Whether or not to free contents when this expansion is freed
 };
 
 struct IfStackEntry {
-	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
+	bool ranIfBlock;       // Whether an IF/ELIF/ELSE block ran already
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
@@ -59,9 +59,9 @@ struct ViewedLexerState {
 
 struct BufferedLexerState {
 	int fd;
-	size_t index; // Read index into the buffer
+	size_t index;             // Read index into the buffer
 	char buf[LEXER_BUF_SIZE]; // Circular buffer
-	size_t nbChars; // Number of "fresh" chars in the buffer
+	size_t nbChars;           // Number of "fresh" chars in the buffer
 };
 
 struct LexerState {
@@ -75,8 +75,8 @@ struct LexerState {
 
 	std::deque<IfStackEntry> ifStack;
 
-	bool capturing; // Whether the text being lexed should be captured
-	size_t captureSize; // Amount of text captured
+	bool capturing;                // Whether the text being lexed should be captured
+	size_t captureSize;            // Amount of text captured
 	std::vector<char> *captureBuf; // Buffer to send the captured text to if non-null
 
 	bool disableMacroArgs;

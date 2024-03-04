@@ -30,7 +30,7 @@ struct Symbol {
 	FileStackNode const *src;
 	int32_t lineNo;
 	std::variant<int32_t, // Constants just have a numeric value
-	             Label // Label values refer to an offset within a specific section
+	             Label    // Label values refer to an offset within a specific section
 	             >
 	    data;
 

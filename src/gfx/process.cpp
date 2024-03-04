@@ -451,7 +451,7 @@ public:
 		iterator begin() const { return {*this, _limit, 0, 0}; }
 		iterator end() const {
 			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
-			return ++it; // ...now one-past-last!
+			return ++it;                                         // ...now one-past-last!
 		}
 	};
 public:
@@ -494,7 +494,7 @@ struct AttrmapEntry {
 	 * attrmap entry while correctly handling the above, use `getPalID`.
 	 */
 	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
-	uint8_t tileID; // This is the ID as it will be output to the tilemap
+	uint8_t tileID;        // This is the ID as it will be output to the tilemap
 	bool bank;
 	bool yFlip;
 	bool xFlip;

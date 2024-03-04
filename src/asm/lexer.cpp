@@ -42,11 +42,11 @@
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define WIN32_LEAN_AND_MEAN // include less from windows.h
-	#include <fileapi.h> // CreateFileA
-	#include <handleapi.h> // CloseHandle
-	#include <memoryapi.h> // MapViewOfFile
-	#include <winbase.h> // CreateFileMappingA
-	#include <windows.h> // target architecture
+	#include <fileapi.h>        // CreateFileA
+	#include <handleapi.h>      // CloseHandle
+	#include <memoryapi.h>      // MapViewOfFile
+	#include <winbase.h>        // CreateFileMappingA
+	#include <windows.h>        // target architecture
 	#define MAP_FAILED nullptr
 	#define mapFile(ptr, fd, path, size) \
 		do { \

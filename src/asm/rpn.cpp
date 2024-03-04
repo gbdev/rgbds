@@ -251,7 +251,7 @@ void rpn_CheckRST(Expression &expr, const Expression &src) {
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void rpn_CheckNBit(Expression const &expr, uint8_t n) {
-	assert(n != 0); // That doesn't make sense
+	assert(n != 0);                     // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
 	if (expr.isKnown) {

@@ -12,12 +12,12 @@
 struct Symbol;
 
 struct Expression {
-	int32_t val; // If the expression's value is known, it's here
+	int32_t val;         // If the expression's value is known, it's here
 	std::string *reason; // Why the expression is not known, if it isn't
-	bool isKnown; // Whether the expression's value is known at assembly time
-	bool isSymbol; // Whether the expression represents a symbol suitable for const diffing
+	bool isKnown;        // Whether the expression's value is known at assembly time
+	bool isSymbol;       // Whether the expression represents a symbol suitable for const diffing
 	std::vector<uint8_t> *rpn; // Bytes serializing the RPN expression
-	uint32_t rpnPatchSize; // Size the expression will take in the object file
+	uint32_t rpnPatchSize;     // Size the expression will take in the object file
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;
