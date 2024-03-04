@@ -288,7 +288,9 @@ static void parseScrambleSpec(char const *spec) {
 			endptr += strspn(endptr, " \t");
 			if (*endptr != '\0' && *endptr != ',') {
 				argErr(
-				    'S', "Invalid non-numeric limit for region \"%.*s\"", regionNamePrintLen,
+				    'S',
+				    "Invalid non-numeric limit for region \"%.*s\"",
+				    regionNamePrintLen,
 				    regionName
 				);
 				endptr = strchr(endptr, ',');
@@ -297,8 +299,11 @@ static void parseScrambleSpec(char const *spec) {
 
 			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
 				argErr(
-				    'S', "Limit for region \"%.*s\" may not exceed %" PRIu16, regionNamePrintLen,
-				    regionName, scrambleSpecs[region].max
+				    'S',
+				    "Limit for region \"%.*s\" may not exceed %" PRIu16,
+				    regionNamePrintLen,
+				    regionName,
+				    scrambleSpecs[region].max
 				);
 				limit = scrambleSpecs[region].max;
 			}

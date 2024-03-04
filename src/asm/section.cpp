@@ -84,7 +84,9 @@ attr_(warn_unused_result) static bool checkSectionSize(Section const &sect, uint
 
 	error(
 	    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").\n",
-	    sect.name.c_str(), maxSize, size
+	    sect.name.c_str(),
+	    maxSize,
+	    size
 	);
 	return false;
 }
@@ -145,7 +147,8 @@ static unsigned int mergeSectUnion(
 		else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs)))
 			fail(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
-			    1U << sect.align, sect.alignOfs
+			    1U << sect.align,
+			    sect.alignOfs
 			);
 		else
 			// Otherwise, just override
@@ -164,7 +167,8 @@ static unsigned int mergeSectUnion(
 			fail(
 			    "Section already declared with incompatible %u"
 			    "-byte alignment (offset %" PRIu16 ")\n",
-			    1U << sect.align, sect.alignOfs
+			    1U << sect.align,
+			    sect.alignOfs
 			);
 		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
@@ -196,7 +200,8 @@ static unsigned int
 		else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs)))
 			fail(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
-			    1U << sect.align, sect.alignOfs
+			    1U << sect.align,
+			    sect.alignOfs
 			);
 		else
 			// Otherwise, just override
@@ -220,7 +225,8 @@ static unsigned int
 			fail(
 			    "Section already declared with incompatible %u"
 			    "-byte alignment (offset %" PRIu16 ")\n",
-			    1U << sect.align, sect.alignOfs
+			    1U << sect.align,
+			    sect.alignOfs
 			);
 		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
@@ -233,8 +239,13 @@ static unsigned int
 }
 
 static void mergeSections(
-    Section &sect, enum SectionType type, uint32_t org, uint32_t bank, uint8_t alignment,
-    uint16_t alignOffset, enum SectionModifier mod
+    Section &sect,
+    enum SectionType type,
+    uint32_t org,
+    uint32_t bank,
+    uint8_t alignment,
+    uint16_t alignOffset,
+    enum SectionModifier mod
 ) {
 	unsigned int nbSectErrors = 0;
 
@@ -271,7 +282,9 @@ static void mergeSections(
 
 	if (nbSectErrors)
 		fatalerror(
-		    "Cannot create section \"%s\" (%u error%s)\n", sect.name.c_str(), nbSectErrors,
+		    "Cannot create section \"%s\" (%u error%s)\n",
+		    sect.name.c_str(),
+		    nbSectErrors,
 		    nbSectErrors == 1 ? "" : "s"
 		);
 }
@@ -280,8 +293,13 @@ static void mergeSections(
 
 // Create a new section, not yet in the list.
 static Section *createSection(
-    char const *name, enum SectionType type, uint32_t org, uint32_t bank, uint8_t alignment,
-    uint16_t alignOffset, enum SectionModifier mod
+    char const *name,
+    enum SectionType type,
+    uint32_t org,
+    uint32_t bank,
+    uint8_t alignment,
+    uint16_t alignOffset,
+    enum SectionModifier mod
 ) {
 	// Add the new section to the list (order doesn't matter)
 	Section &sect = sectionList.emplace_front();
@@ -306,7 +324,10 @@ static Section *createSection(
 
 // Find a section by name and type. If it doesn't exist, create it.
 static Section *getSection(
-    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    char const *name,
+    enum SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
     enum SectionModifier mod
 ) {
 	uint32_t bank = attrs.bank;
@@ -322,7 +343,9 @@ static Section *getSection(
 		else if (bank < sectionTypeInfo[type].firstBank || bank > sectionTypeInfo[type].lastBank)
 			error(
 			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")\n",
-			    sectionTypeInfo[type].name.c_str(), bank, sectionTypeInfo[type].firstBank,
+			    sectionTypeInfo[type].name.c_str(),
+			    bank,
+			    sectionTypeInfo[type].firstBank,
 			    sectionTypeInfo[type].lastBank
 			);
 	} else if (nbbanks(type) == 1) {
@@ -333,7 +356,8 @@ static Section *getSection(
 	if (alignOffset >= 1 << alignment) {
 		error(
 		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
-		    alignOffset, 1U << alignment
+		    alignOffset,
+		    1U << alignment
 		);
 		alignOffset = 0;
 	}
@@ -343,7 +367,10 @@ static Section *getSection(
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]\n",
-			    name, org, sectionTypeInfo[type].startAddr, endaddr(type)
+			    name,
+			    org,
+			    sectionTypeInfo[type].startAddr,
+			    endaddr(type)
 			);
 	}
 
@@ -361,7 +388,8 @@ static Section *getSection(
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error(
-			    "Section \"%s\"'s alignment cannot be attained in %s\n", name,
+			    "Section \"%s\"'s alignment cannot be attained in %s\n",
+			    name,
 			    sectionTypeInfo[type].name.c_str()
 			);
 			alignment = 0; // Ignore it if it's unattainable
@@ -415,7 +443,10 @@ bool Section::isSizeKnown() const {
 
 // Set the current section by name and type
 void sect_NewSection(
-    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    char const *name,
+    enum SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
     enum SectionModifier mod
 ) {
 	if (currentLoadSection)
@@ -436,7 +467,10 @@ void sect_NewSection(
 
 // Set the current section by name and type
 void sect_SetLoadSection(
-    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    char const *name,
+    enum SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
     enum SectionModifier mod
 ) {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
@@ -682,7 +716,8 @@ void sect_Skip(uint32_t skip, bool ds) {
 	} else {
 		if (!ds)
 			warning(
-			    WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
+			    WARNING_EMPTY_DATA_DIRECTIVE,
+			    "%s directive without data in ROM\n",
 			    (skip == 4)   ? "DL"
 			    : (skip == 2) ? "DW"
 			                  : "DB"
@@ -908,7 +943,9 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length) {
 			error(
 			    "Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32 " > %" PRIu32
 			    ")\n",
-			    start_pos, length, fsize
+			    start_pos,
+			    length,
+			    fsize
 			);
 			goto cleanup;
 		}

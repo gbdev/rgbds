@@ -41,9 +41,16 @@ struct SortedSections {
 static std::deque<SortedSections> sections[SECTTYPE_INVALID];
 
 // Defines the order in which types are output to the sym and map files
-static enum SectionType typeMap[SECTTYPE_INVALID] = {SECTTYPE_ROM0, SECTTYPE_ROMX,  SECTTYPE_VRAM,
-                                                     SECTTYPE_SRAM, SECTTYPE_WRAM0, SECTTYPE_WRAMX,
-                                                     SECTTYPE_OAM,  SECTTYPE_HRAM};
+static enum SectionType typeMap[SECTTYPE_INVALID] = {
+    SECTTYPE_ROM0,
+    SECTTYPE_ROMX,
+    SECTTYPE_VRAM,
+    SECTTYPE_SRAM,
+    SECTTYPE_WRAM0,
+    SECTTYPE_WRAMX,
+    SECTTYPE_OAM,
+    SECTTYPE_HRAM,
+};
 
 void out_AddSection(Section const &section) {
 	static const uint32_t maxNbBanks[SECTTYPE_INVALID] = {
@@ -63,7 +70,9 @@ void out_AddSection(Section const &section) {
 	if (minNbBanks > maxNbBanks[section.type])
 		errx(
 		    "Section \"%s\" has an invalid bank range (%" PRIu32 " > %" PRIu32 ")",
-		    section.name.c_str(), section.bank, maxNbBanks[section.type] - 1
+		    section.name.c_str(),
+		    section.bank,
+		    maxNbBanks[section.type] - 1
 		);
 
 	for (uint32_t i = sections[section.type].size(); i < minNbBanks; i++)
@@ -212,12 +221,14 @@ static void writeROM() {
 	if (outputFile) {
 		writeBank(
 		    !sections[SECTTYPE_ROM0].empty() ? &sections[SECTTYPE_ROM0][0].sections : nullptr,
-		    sectionTypeInfo[SECTTYPE_ROM0].startAddr, sectionTypeInfo[SECTTYPE_ROM0].size
+		    sectionTypeInfo[SECTTYPE_ROM0].startAddr,
+		    sectionTypeInfo[SECTTYPE_ROM0].size
 		);
 
 		for (uint32_t i = 0; i < sections[SECTTYPE_ROMX].size(); i++)
 			writeBank(
-			    &sections[SECTTYPE_ROMX][i].sections, sectionTypeInfo[SECTTYPE_ROMX].startAddr,
+			    &sections[SECTTYPE_ROMX][i].sections,
+			    sectionTypeInfo[SECTTYPE_ROMX].startAddr,
 			    sectionTypeInfo[SECTTYPE_ROMX].size
 			);
 	}
@@ -308,7 +319,8 @@ static void writeSymBank(SortedSections const &bankSections, enum SectionType ty
 #define forEachSortedSection(sect, ...) \
 	do { \
 		for (auto it = bankSections.zeroLenSections.begin(); \
-		     it != bankSections.zeroLenSections.end(); it++) { \
+		     it != bankSections.zeroLenSections.end(); \
+		     it++) { \
 			for (Section const *sect = *it; sect; sect = sect->nextu) \
 				__VA_ARGS__ \
 		} \
@@ -356,7 +368,11 @@ static void writeEmptySpace(uint16_t begin, uint16_t end) {
 		uint16_t len = end - begin;
 
 		fprintf(
-		    mapFile, "\tEMPTY: $%04x-$%04x ($%04" PRIx16 " byte%s)\n", begin, end - 1, len,
+		    mapFile,
+		    "\tEMPTY: $%04x-$%04x ($%04" PRIx16 " byte%s)\n",
+		    begin,
+		    end - 1,
+		    len,
 		    len == 1 ? "" : "s"
 		);
 	}
@@ -367,7 +383,9 @@ static void writeEmptySpace(uint16_t begin, uint16_t end) {
  */
 static void writeMapBank(SortedSections const &sectList, enum SectionType type, uint32_t bank) {
 	fprintf(
-	    mapFile, "\n%s bank #%" PRIu32 ":\n", sectionTypeInfo[type].name.c_str(),
+	    mapFile,
+	    "\n%s bank #%" PRIu32 ":\n",
+	    sectionTypeInfo[type].name.c_str(),
 	    bank + sectionTypeInfo[type].firstBank
 	);
 
@@ -393,13 +411,19 @@ static void writeMapBank(SortedSections const &sectList, enum SectionType type, 
 
 		if (sect->size != 0)
 			fprintf(
-			    mapFile, "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16 " byte%s) [\"%s\"]\n",
-			    sect->org, prevEndAddr - 1, sect->size, sect->size == 1 ? "" : "s",
+			    mapFile,
+			    "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16 " byte%s) [\"%s\"]\n",
+			    sect->org,
+			    prevEndAddr - 1,
+			    sect->size,
+			    sect->size == 1 ? "" : "s",
 			    sect->name.c_str()
 			);
 		else
 			fprintf(
-			    mapFile, "\tSECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n", sect->org,
+			    mapFile,
+			    "\tSECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
+			    sect->org,
 			    sect->name.c_str()
 			);
 
@@ -409,7 +433,9 @@ static void writeMapBank(SortedSections const &sectList, enum SectionType type, 
 				for (Symbol *sym : sect->symbols)
 					// Space matches "\tSECTION: $xxxx ..."
 					fprintf(
-					    mapFile, "\t         $%04" PRIx32 " = %s\n", sym->label().offset + org,
+					    mapFile,
+					    "\t         $%04" PRIx32 " = %s\n",
+					    sym->label().offset + org,
 					    sym->name.c_str()
 					);
 
@@ -481,8 +507,11 @@ static void writeMapSummary() {
 		}
 
 		fprintf(
-		    mapFile, "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
-		    sectionTypeInfo[type].name.c_str(), usedTotal, usedTotal == 1 ? "" : "s",
+		    mapFile,
+		    "\t%s: %" PRId32 " byte%s used / %" PRId32 " free",
+		    sectionTypeInfo[type].name.c_str(),
+		    usedTotal,
+		    usedTotal == 1 ? "" : "s",
 		    nbBanks * sectionTypeInfo[type].size - usedTotal
 		);
 		if (sectionTypeInfo[type].firstBank != sectionTypeInfo[type].lastBank || nbBanks > 1)

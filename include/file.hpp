@@ -42,7 +42,8 @@ public:
 			if (setmode(STDIN_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
 				fatal(
 				    "Failed to set stdin to %s mode: %s",
-				    mode & std::ios_base::binary ? "binary" : "text", strerror(errno)
+				    mode & std::ios_base::binary ? "binary" : "text",
+				    strerror(errno)
 				);
 			}
 		} else {

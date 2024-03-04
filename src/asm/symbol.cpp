@@ -488,7 +488,9 @@ void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg) {
 			error(
 			    "Reference to anonymous label %" PRIu32 " before, when only %" PRIu32
 			    " ha%s been created so far\n",
-			    ofs, anonLabelID, anonLabelID == 1 ? "s" : "ve"
+			    ofs,
+			    anonLabelID,
+			    anonLabelID == 1 ? "s" : "ve"
 			);
 		else
 			id = anonLabelID - ofs;
@@ -498,7 +500,8 @@ void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg) {
 			error(
 			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
 			    " may still be created\n",
-			    ofs + 1, UINT32_MAX - anonLabelID
+			    ofs + 1,
+			    UINT32_MAX - anonLabelID
 			);
 		else
 			id = anonLabelID + ofs;
@@ -620,14 +623,18 @@ void sym_Init(time_t now) {
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
 	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
 	strftime(
-	    savedTIMESTAMP_ISO8601_LOCAL, sizeof(savedTIMESTAMP_ISO8601_LOCAL),
-	    "\"%Y-%m-%dT%H:%M:%S%z\"", time_local
+	    savedTIMESTAMP_ISO8601_LOCAL,
+	    sizeof(savedTIMESTAMP_ISO8601_LOCAL),
+	    "\"%Y-%m-%dT%H:%M:%S%z\"",
+	    time_local
 	);
 
 	const tm *time_utc = gmtime(&now);
 
 	strftime(
-	    savedTIMESTAMP_ISO8601_UTC, sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
+	    savedTIMESTAMP_ISO8601_UTC,
+	    sizeof(savedTIMESTAMP_ISO8601_UTC),
+	    "\"%Y-%m-%dT%H:%M:%SZ\"",
 	    time_utc
 	);
 

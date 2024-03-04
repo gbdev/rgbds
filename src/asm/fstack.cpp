@@ -185,7 +185,8 @@ bool yywrap() {
 
 	if (ifDepth != 0)
 		fatalerror(
-		    "Ended block with %" PRIu32 " unterminated IF construct%s\n", ifDepth,
+		    "Ended block with %" PRIu32 " unterminated IF construct%s\n",
+		    ifDepth,
 		    ifDepth == 1 ? "" : "s"
 		);
 
@@ -432,8 +433,13 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t s
 }
 
 void fstk_RunFor(
-    char const *symName, int32_t start, int32_t stop, int32_t step, int32_t reptLineNo,
-    char const *body, size_t size
+    char const *symName,
+    int32_t start,
+    int32_t stop,
+    int32_t step,
+    int32_t reptLineNo,
+    char const *body,
+    size_t size
 ) {
 	Symbol *sym = sym_AddVar(symName, start);
 

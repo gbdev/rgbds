@@ -168,7 +168,9 @@ public:
 private:
 	template<typename Iter>
 	static void addUniqueColors(
-	    std::unordered_set<uint16_t> &colors, Iter iter, Iter const &end,
+	    std::unordered_set<uint16_t> &colors,
+	    Iter iter,
+	    Iter const &end,
 	    std::vector<ProtoPalette> const &protoPals
 	) {
 		for (; iter != end; ++iter) {
@@ -390,8 +392,12 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			}
 
 			options.verbosePrint(
-			    Options::VERB_DEBUG, "%zu/%zu: Rel size: %f (size = %zu)\n", i + 1,
-			    assignments.size(), assignments[i].relSizeOf(protoPal), protoPal.size()
+			    Options::VERB_DEBUG,
+			    "%zu/%zu: Rel size: %f (size = %zu)\n",
+			    i + 1,
+			    assignments.size(),
+			    assignments[i].relSizeOf(protoPal),
+			    protoPal.size()
 			);
 			if (assignments[i].relSizeOf(protoPal) < bestRelSize) {
 				bestPalIndex = i;
@@ -409,8 +415,11 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			// If this overloads the palette, get it back to normal (if possible)
 			while (bestPal.volume() > options.maxOpaqueColors()) {
 				options.verbosePrint(
-				    Options::VERB_DEBUG, "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
-				    bestPalIndex, bestPal.volume(), options.maxOpaqueColors()
+				    Options::VERB_DEBUG,
+				    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
+				    bestPalIndex,
+				    bestPal.volume(),
+				    options.maxOpaqueColors()
 				);
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
@@ -461,14 +470,18 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		});
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint(
-			    Options::VERB_DEBUG, "Adding new palette (%zu) for overflowing proto-pal %zu\n",
-			    assignments.size(), attrs.protoPalIndex
+			    Options::VERB_DEBUG,
+			    "Adding new palette (%zu) for overflowing proto-pal %zu\n",
+			    assignments.size(),
+			    attrs.protoPalIndex
 			);
 			assignments.emplace_back(protoPalettes, std::move(attrs));
 		} else {
 			options.verbosePrint(
-			    Options::VERB_DEBUG, "Assigning overflowing proto-pal %zu to palette %zu\n",
-			    attrs.protoPalIndex, iter - assignments.begin()
+			    Options::VERB_DEBUG,
+			    "Assigning overflowing proto-pal %zu to palette %zu\n",
+			    attrs.protoPalIndex,
+			    iter - assignments.begin()
 			);
 			iter->assign(std::move(attrs));
 		}

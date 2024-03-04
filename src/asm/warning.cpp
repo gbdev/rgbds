@@ -68,16 +68,34 @@ static enum WarningState warningState(enum WarningID id) {
 }
 
 static const char * const warningFlags[NB_WARNINGS] = {
-    "assert", "backwards-for", "builtin-args", "charmap-redef", "div", "empty-data-directive",
-    "empty-macro-arg", "empty-strrpl", "large-constant", "long-string", "macro-shift",
-    "nested-comment", "obsolete", "shift", "shift-amount", "user",
+    "assert",
+    "backwards-for",
+    "builtin-args",
+    "charmap-redef",
+    "div",
+    "empty-data-directive",
+    "empty-macro-arg",
+    "empty-strrpl",
+    "large-constant",
+    "long-string",
+    "macro-shift",
+    "nested-comment",
+    "obsolete",
+    "shift",
+    "shift-amount",
+    "user",
 
     // Parametric warnings
-    "numeric-string", "numeric-string", "truncation", "truncation", "unmapped-char",
+    "numeric-string",
+    "numeric-string",
+    "truncation",
+    "truncation",
+    "unmapped-char",
     "unmapped-char",
 
     // Meta warnings
-    "all", "extra",
+    "all",
+    "extra",
     "everything", // Especially useful for testing
 };
 
@@ -110,7 +128,9 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 					warnx(
 					    "Got parameter %" PRIu8
 					    " for warning flag \"%s\", but the maximum is %" PRIu8 "; capping.\n",
-					    param, flag, maxParam
+					    param,
+					    flag,
+					    maxParam
 					);
 				param = maxParam;
 			}
@@ -130,28 +150,59 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 enum MetaWarningCommand { META_WARNING_DONE = NB_WARNINGS };
 
 // Warnings that probably indicate an error
-static uint8_t const _wallCommands[] = {WARNING_BACKWARDS_FOR,   WARNING_BUILTIN_ARG,
-                                        WARNING_CHARMAP_REDEF,   WARNING_EMPTY_DATA_DIRECTIVE,
-                                        WARNING_EMPTY_STRRPL,    WARNING_LARGE_CONSTANT,
-                                        WARNING_LONG_STR,        WARNING_NESTED_COMMENT,
-                                        WARNING_OBSOLETE,        WARNING_NUMERIC_STRING_1,
-                                        WARNING_UNMAPPED_CHAR_1, META_WARNING_DONE};
+static uint8_t const _wallCommands[] = {
+    WARNING_BACKWARDS_FOR,
+    WARNING_BUILTIN_ARG,
+    WARNING_CHARMAP_REDEF,
+    WARNING_EMPTY_DATA_DIRECTIVE,
+    WARNING_EMPTY_STRRPL,
+    WARNING_LARGE_CONSTANT,
+    WARNING_LONG_STR,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_NUMERIC_STRING_1,
+    WARNING_UNMAPPED_CHAR_1,
+    META_WARNING_DONE,
+};
 
 // Warnings that are less likely to indicate an error
 static uint8_t const _wextraCommands[] = {
-    WARNING_EMPTY_MACRO_ARG,  WARNING_MACRO_SHIFT,  WARNING_NESTED_COMMENT, WARNING_OBSOLETE,
-    WARNING_NUMERIC_STRING_2, WARNING_TRUNCATION_1, WARNING_TRUNCATION_2,   WARNING_UNMAPPED_CHAR_1,
-    WARNING_UNMAPPED_CHAR_2,  META_WARNING_DONE};
+    WARNING_EMPTY_MACRO_ARG,
+    WARNING_MACRO_SHIFT,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_NUMERIC_STRING_2,
+    WARNING_TRUNCATION_1,
+    WARNING_TRUNCATION_2,
+    WARNING_UNMAPPED_CHAR_1,
+    WARNING_UNMAPPED_CHAR_2,
+    META_WARNING_DONE,
+};
 
 // Literally everything. Notably useful for testing
 static uint8_t const _weverythingCommands[] = {
-    WARNING_BACKWARDS_FOR, WARNING_BUILTIN_ARG, WARNING_DIV, WARNING_EMPTY_DATA_DIRECTIVE,
-    WARNING_EMPTY_MACRO_ARG, WARNING_EMPTY_STRRPL, WARNING_LARGE_CONSTANT, WARNING_LONG_STR,
-    WARNING_MACRO_SHIFT, WARNING_NESTED_COMMENT, WARNING_OBSOLETE, WARNING_SHIFT,
-    WARNING_SHIFT_AMOUNT, WARNING_NUMERIC_STRING_1, WARNING_NUMERIC_STRING_2, WARNING_TRUNCATION_1,
-    WARNING_TRUNCATION_2, WARNING_UNMAPPED_CHAR_1, WARNING_UNMAPPED_CHAR_2,
+    WARNING_BACKWARDS_FOR,
+    WARNING_BUILTIN_ARG,
+    WARNING_DIV,
+    WARNING_EMPTY_DATA_DIRECTIVE,
+    WARNING_EMPTY_MACRO_ARG,
+    WARNING_EMPTY_STRRPL,
+    WARNING_LARGE_CONSTANT,
+    WARNING_LONG_STR,
+    WARNING_MACRO_SHIFT,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_SHIFT,
+    WARNING_SHIFT_AMOUNT,
+    WARNING_NUMERIC_STRING_1,
+    WARNING_NUMERIC_STRING_2,
+    WARNING_TRUNCATION_1,
+    WARNING_TRUNCATION_2,
+    WARNING_UNMAPPED_CHAR_1,
+    WARNING_UNMAPPED_CHAR_2,
     // WARNING_USER,
-    META_WARNING_DONE};
+    META_WARNING_DONE,
+};
 
 static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {
     _wallCommands, _wextraCommands, _weverythingCommands};
@@ -168,7 +219,8 @@ void processWarningFlag(char *flag) {
 				errx("Cannot make meta warning \"%s\" into an error", flag);
 
 			for (uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];
-			     *ptr != META_WARNING_DONE; ptr++) {
+			     *ptr != META_WARNING_DONE;
+			     ptr++) {
 				// Warning flag, set without override
 				if (warningStates[*ptr] == WARNING_DEFAULT)
 					warningStates[*ptr] = WARNING_ENABLED;
@@ -293,7 +345,8 @@ void error(char const *fmt, ...) {
 		errx(
 		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
 		    "aborted!",
-		    maxErrors, maxErrors == 1 ? "" : "s"
+		    maxErrors,
+		    maxErrors == 1 ? "" : "s"
 		);
 }
 

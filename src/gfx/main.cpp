@@ -253,7 +253,8 @@ static void registerInput(char const *arg) {
 		    stderr,
 		    "FATAL: input image specified more than once! (first \"%s\", then "
 		    "\"%s\")\n",
-		    options.input.c_str(), arg
+		    options.input.c_str(),
+		    arg
 		);
 		printUsage();
 		exit(1);
@@ -681,8 +682,10 @@ int main(int argc, char *argv[]) {
 		options.nbColorsPerPal = 1u << options.bitDepth;
 	} else if (options.nbColorsPerPal > 1u << options.bitDepth) {
 		error(
-		    "%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8, options.bitDepth,
-		    1u << options.bitDepth, options.nbColorsPerPal
+		    "%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8,
+		    options.bitDepth,
+		    1u << options.bitDepth,
+		    options.nbColorsPerPal
 		);
 	}
 
@@ -691,7 +694,8 @@ int main(int argc, char *argv[]) {
 			auto &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
 				fprintf(
-				    stderr, "FATAL: No %s specified\n",
+				    stderr,
+				    "FATAL: No %s specified\n",
 				    localOptions.groupOutputs ? "output tile data file" : "input image"
 				);
 				printUsage();
@@ -804,16 +808,22 @@ int main(int argc, char *argv[]) {
 		    stderr,
 		    "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32 ", %" PRIi32
 		    ")\n",
-		    options.inputSlice.width, options.inputSlice.height, options.inputSlice.left,
+		    options.inputSlice.width,
+		    options.inputSlice.height,
+		    options.inputSlice.left,
 		    options.inputSlice.top
 		);
 		fprintf(
-		    stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
+		    stderr,
+		    "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n",
+		    options.baseTileIDs[0],
 		    options.baseTileIDs[1]
 		);
 		fprintf(
-		    stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
-		    options.maxNbTiles[0], options.maxNbTiles[1]
+		    stderr,
+		    "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
+		    options.maxNbTiles[0],
+		    options.maxNbTiles[1]
 		);
 		auto printPath = [](char const *name, std::string const &path) {
 			if (!path.empty()) {

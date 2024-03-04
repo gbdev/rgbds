@@ -105,8 +105,10 @@ void parseInlinePalSpec(char const * const rawArg) {
 				break;
 			case 6:
 				color = Rgba(
-				    toHex(arg[n + 0], arg[n + 1]), toHex(arg[n + 2], arg[n + 3]),
-				    toHex(arg[n + 4], arg[n + 5]), 0xFF
+				    toHex(arg[n + 0], arg[n + 1]),
+				    toHex(arg[n + 2], arg[n + 3]),
+				    toHex(arg[n + 4], arg[n + 5]),
+				    0xFF
 				);
 				break;
 			case 0:
@@ -306,7 +308,8 @@ static void parsePSPFile(std::filebuf &file) {
 		warning(
 		    "PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
-		    *nbColors, nbPalColors
+		    *nbColors,
+		    nbPalColors
 		);
 		nbColors = nbPalColors;
 	}
@@ -325,7 +328,8 @@ static void parsePSPFile(std::filebuf &file) {
 		if (n != line.length()) {
 			error(
 			    "Failed to parse color #%d (\"%s\"): trailing characters after blue component",
-			    i + 1, line.c_str()
+			    i + 1,
+			    line.c_str()
 			);
 			return;
 		}
@@ -380,7 +384,8 @@ static void parseGPLFile(std::filebuf &file) {
 		warning(
 		    "GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
-		    nbColors, maxNbColors
+		    nbColors,
+		    maxNbColors
 		);
 	}
 }
@@ -401,7 +406,8 @@ static void parseHEXFile(std::filebuf &file) {
 		if (line.length() != 6
 		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
 			error(
-			    "Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line", nbColors + 1,
+			    "Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line",
+			    nbColors + 1,
 			    line.c_str()
 			);
 			return;
@@ -423,7 +429,8 @@ static void parseHEXFile(std::filebuf &file) {
 		warning(
 		    "HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
-		    nbColors, maxNbColors
+		    nbColors,
+		    maxNbColors
 		);
 	}
 }
@@ -452,7 +459,8 @@ static void parseACTFile(std::filebuf &file) {
 		warning(
 		    "ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
-		    nbColors, nbPalColors
+		    nbColors,
+		    nbPalColors
 		);
 		nbColors = nbPalColors;
 	}
@@ -505,7 +513,8 @@ static void parseACOFile(std::filebuf &file) {
 		warning(
 		    "ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
 		    "; ignoring extra",
-		    nbColors, nbPalColors
+		    nbColors,
+		    nbPalColors
 		);
 		nbColors = nbPalColors;
 	}
@@ -562,7 +571,9 @@ static void parseGBCFile(std::filebuf &file) {
 		} else if (len != sizeof(buf)) {
 			error(
 			    "GBC palette dump contains %zu 8-byte palette%s, plus %zu byte%s",
-			    options.palSpec.size(), options.palSpec.size() == 1 ? "" : "s", len,
+			    options.palSpec.size(),
+			    options.palSpec.size() == 1 ? "" : "s",
+			    len,
 			    len == 1 ? "" : "s"
 			);
 			break;
@@ -604,7 +615,8 @@ void parseExternalPalSpec(char const *arg) {
 	if (iter == parsers.end()) {
 		error(
 		    "Unknown external palette format \"%.*s\"",
-		    static_cast<int>(std::min(ptr - arg, static_cast<decltype(ptr - arg)>(INT_MAX))), arg
+		    static_cast<int>(std::min(ptr - arg, static_cast<decltype(ptr - arg)>(INT_MAX))),
+		    arg
 		);
 		return;
 	}

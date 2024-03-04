@@ -415,7 +415,8 @@ void rpn_BinaryOp(
 
 			if (src2.val < 0)
 				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				    WARNING_SHIFT_AMOUNT,
+				    "Shifting right by negative amount %" PRId32 "\n",
 				    src2.val
 				);
 
@@ -429,7 +430,8 @@ void rpn_BinaryOp(
 		case RPN_USHR:
 			if (src2.val < 0)
 				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				    WARNING_SHIFT_AMOUNT,
+				    "Shifting right by negative amount %" PRId32 "\n",
 				    src2.val
 				);
 
@@ -449,7 +451,9 @@ void rpn_BinaryOp(
 
 			if (src1.val == INT32_MIN && src2.val == -1) {
 				warning(
-				    WARNING_DIV, "Division of %" PRId32 " by -1 yields %" PRId32 "\n", INT32_MIN,
+				    WARNING_DIV,
+				    "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
+				    INT32_MIN,
 				    INT32_MIN
 				);
 				expr.val = INT32_MIN;
@@ -506,7 +510,10 @@ void rpn_BinaryOp(
 		if (src1.isKnown) {
 			uint32_t lval = src1.val;
 			uint8_t bytes[] = {
-			    RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8), (uint8_t)(lval >> 16),
+			    RPN_CONST,
+			    (uint8_t)lval,
+			    (uint8_t)(lval >> 8),
+			    (uint8_t)(lval >> 16),
 			    (uint8_t)(lval >> 24)};
 			expr.rpnPatchSize = sizeof(bytes);
 			expr.rpn = nullptr;
@@ -531,7 +538,10 @@ void rpn_BinaryOp(
 		// If the right expression is constant, merge a shim instead
 		uint32_t rval = src2.val;
 		uint8_t bytes[] = {
-		    RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8), (uint8_t)(rval >> 16),
+		    RPN_CONST,
+		    (uint8_t)rval,
+		    (uint8_t)(rval >> 8),
+		    (uint8_t)(rval >> 16),
 		    (uint8_t)(rval >> 24)};
 		if (src2.isKnown) {
 			ptr = bytes;

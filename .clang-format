@@ -21,8 +21,8 @@ AlwaysBreakTemplateDeclarations: Yes
 AttributeMacros:
   - format_
   - attr_
-BinPackArguments: true
-BinPackParameters: true
+BinPackArguments: false
+BinPackParameters: false
 BitFieldColonSpacing: Both
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Attach
@@ -60,8 +60,7 @@ IndentPPDirectives: BeforeHash
 IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
-# Only support for Javascript as of clang-format 13...
-# InsertTrailingCommas: true
+InsertTrailingCommas: Wrapped
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 Language: Cpp

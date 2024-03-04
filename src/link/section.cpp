@@ -28,14 +28,19 @@ static void checkSectUnionCompat(Section &target, Section &other) {
 				errx(
 				    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
 				    " and $%04" PRIx16,
-				    other.name.c_str(), target.org, other.org
+				    other.name.c_str(),
+				    target.org,
+				    other.org
 				);
 		} else if (target.isAlignFixed) {
 			if ((other.org - target.alignOfs) & target.alignMask)
 				errx(
 				    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
 				    ") and address $%04" PRIx16,
-				    other.name.c_str(), target.alignMask + 1, target.alignOfs, other.org
+				    other.name.c_str(),
+				    target.alignMask + 1,
+				    target.alignOfs,
+				    other.org
 				);
 		}
 		target.isAddressFixed = true;
@@ -47,14 +52,20 @@ static void checkSectUnionCompat(Section &target, Section &other) {
 				errx(
 				    "Section \"%s\" is defined with conflicting address $%04" PRIx16
 				    " and %d-byte alignment (offset %" PRIu16 ")",
-				    other.name.c_str(), target.org, other.alignMask + 1, other.alignOfs
+				    other.name.c_str(),
+				    target.org,
+				    other.alignMask + 1,
+				    other.alignOfs
 				);
 		} else if (target.isAlignFixed
 		           && (other.alignMask & target.alignOfs) != (target.alignMask & other.alignOfs)) {
 			errx(
 			    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
 			    ") and %d-byte alignment (offset %" PRIu16 ")",
-			    other.name.c_str(), target.alignMask + 1, target.alignOfs, other.alignMask + 1,
+			    other.name.c_str(),
+			    target.alignMask + 1,
+			    target.alignOfs,
+			    other.alignMask + 1,
 			    other.alignOfs
 			);
 		} else if (!target.isAlignFixed || (other.alignMask > target.alignMask)) {
@@ -73,7 +84,9 @@ static void checkFragmentCompat(Section &target, Section &other) {
 				errx(
 				    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
 				    " and $%04" PRIx16,
-				    other.name.c_str(), target.org, other.org
+				    other.name.c_str(),
+				    target.org,
+				    other.org
 				);
 
 		} else if (target.isAlignFixed) {
@@ -81,7 +94,10 @@ static void checkFragmentCompat(Section &target, Section &other) {
 				errx(
 				    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
 				    ") and address $%04" PRIx16,
-				    other.name.c_str(), target.alignMask + 1, target.alignOfs, other.org
+				    other.name.c_str(),
+				    target.alignMask + 1,
+				    target.alignOfs,
+				    other.org
 				);
 		}
 		target.isAddressFixed = true;
@@ -98,14 +114,20 @@ static void checkFragmentCompat(Section &target, Section &other) {
 				errx(
 				    "Section \"%s\" is defined with conflicting address $%04" PRIx16
 				    " and %d-byte alignment (offset %" PRIu16 ")",
-				    other.name.c_str(), target.org, other.alignMask + 1, other.alignOfs
+				    other.name.c_str(),
+				    target.org,
+				    other.alignMask + 1,
+				    other.alignOfs
 				);
 
 		} else if (target.isAlignFixed && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
 			errx(
 			    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
 			    ") and %d-byte alignment (offset %" PRIu16 ")",
-			    other.name.c_str(), target.alignMask + 1, target.alignOfs, other.alignMask + 1,
+			    other.name.c_str(),
+			    target.alignMask + 1,
+			    target.alignOfs,
+			    other.alignMask + 1,
 			    other.alignOfs
 			);
 
@@ -122,8 +144,10 @@ static void mergeSections(Section &target, Section &other, enum SectionModifier 
 
 	if (target.type != other.type)
 		errx(
-		    "Section \"%s\" is defined with conflicting types %s and %s", other.name.c_str(),
-		    sectionTypeInfo[target.type].name.c_str(), sectionTypeInfo[other.type].name.c_str()
+		    "Section \"%s\" is defined with conflicting types %s and %s",
+		    other.name.c_str(),
+		    sectionTypeInfo[target.type].name.c_str(),
+		    sectionTypeInfo[other.type].name.c_str()
 		);
 
 	if (other.isBankFixed) {
@@ -133,7 +157,9 @@ static void mergeSections(Section &target, Section &other, enum SectionModifier 
 		} else if (target.bank != other.bank) {
 			errx(
 			    "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %" PRIu32,
-			    other.name.c_str(), target.bank, other.bank
+			    other.name.c_str(),
+			    target.bank,
+			    other.bank
 			);
 		}
 	}
@@ -176,8 +202,10 @@ void sect_AddSection(Section &section) {
 	if (Section *other = sect_GetSection(section.name); other) {
 		if (section.modifier != other->modifier)
 			errx(
-			    "Section \"%s\" defined as %s and %s", section.name.c_str(),
-			    sectionModNames[section.modifier], sectionModNames[other->modifier]
+			    "Section \"%s\" defined as %s and %s",
+			    section.name.c_str(),
+			    sectionModNames[section.modifier],
+			    sectionModNames[other->modifier]
 			);
 		else if (section.modifier == SECTION_NORMAL)
 			errx("Section name \"%s\" is already in use", section.name.c_str());
@@ -185,7 +213,8 @@ void sect_AddSection(Section &section) {
 			mergeSections(*other, section, section.modifier);
 	} else if (section.modifier == SECTION_UNION && sect_HasData(section.type)) {
 		errx(
-		    "Section \"%s\" is of type %s, which cannot be unionized", section.name.c_str(),
+		    "Section \"%s\" is of type %s, which cannot be unionized",
+		    section.name.c_str(),
 		    sectionTypeInfo[section.type].name.c_str()
 		);
 	} else {
@@ -209,7 +238,9 @@ static void doSanityChecks(Section &section) {
 	if (is32kMode && section.type == SECTTYPE_ROMX) {
 		if (section.isBankFixed && section.bank != 1)
 			error(
-			    nullptr, 0, "%s: ROMX sections must be in bank 1 (if any) with option -t",
+			    nullptr,
+			    0,
+			    "%s: ROMX sections must be in bank 1 (if any) with option -t",
 			    section.name.c_str()
 			);
 		else
@@ -218,7 +249,9 @@ static void doSanityChecks(Section &section) {
 	if (isWRAM0Mode && section.type == SECTTYPE_WRAMX) {
 		if (section.isBankFixed && section.bank != 1)
 			error(
-			    nullptr, 0, "%s: WRAMX sections must be in bank 1 with options -w or -d",
+			    nullptr,
+			    0,
+			    "%s: WRAMX sections must be in bank 1 with options -w or -d",
 			    section.name.c_str()
 			);
 		else
@@ -235,8 +268,12 @@ static void doSanityChecks(Section &section) {
 	// Too large an alignment may not be satisfiable
 	if (section.isAlignFixed && (section.alignMask & sectionTypeInfo[section.type].startAddr))
 		error(
-		    nullptr, 0, "%s: %s sections cannot be aligned to $%04x bytes", section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(), section.alignMask + 1
+		    nullptr,
+		    0,
+		    "%s: %s sections cannot be aligned to $%04x bytes",
+		    section.name.c_str(),
+		    sectionTypeInfo[section.type].name.c_str(),
+		    section.alignMask + 1
 		);
 
 	uint32_t minbank = sectionTypeInfo[section.type].firstBank,
@@ -244,20 +281,27 @@ static void doSanityChecks(Section &section) {
 
 	if (section.isBankFixed && section.bank < minbank && section.bank > maxbank)
 		error(
-		    nullptr, 0,
+		    nullptr,
+		    0,
 		    minbank == maxbank
 		        ? "Cannot place section \"%s\" in bank %" PRIu32 ", it must be %" PRIu32
 		        : "Cannot place section \"%s\" in bank %" PRIu32 ", it must be between %" PRIu32
 		          " and %" PRIu32,
-		    section.name.c_str(), section.bank, minbank, maxbank
+		    section.name.c_str(),
+		    section.bank,
+		    minbank,
+		    maxbank
 		);
 
 	// Check if section has a chance to be placed
 	if (section.size > sectionTypeInfo[section.type].size)
 		error(
-		    nullptr, 0,
+		    nullptr,
+		    0,
 		    "Section \"%s\" is bigger than the max size for that type: $%" PRIx16 " > $%" PRIx16,
-		    section.name.c_str(), section.size, sectionTypeInfo[section.type].size
+		    section.name.c_str(),
+		    section.size,
+		    sectionTypeInfo[section.type].size
 		);
 
 	// Translate loose constraints to strong ones when they're equivalent
@@ -272,7 +316,9 @@ static void doSanityChecks(Section &section) {
 		if (section.isAlignFixed) {
 			if ((section.org & section.alignMask) != section.alignOfs)
 				error(
-				    nullptr, 0, "Section \"%s\"'s fixed address doesn't match its alignment",
+				    nullptr,
+				    0,
+				    "Section \"%s\"'s fixed address doesn't match its alignment",
 				    section.name.c_str()
 				);
 			section.isAlignFixed = false;
@@ -282,17 +328,24 @@ static void doSanityChecks(Section &section) {
 		if (section.org < sectionTypeInfo[section.type].startAddr
 		    || section.org > endaddr(section.type))
 			error(
-			    nullptr, 0,
+			    nullptr,
+			    0,
 			    "Section \"%s\"'s fixed address $%04" PRIx16 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]",
-			    section.name.c_str(), section.org, sectionTypeInfo[section.type].startAddr,
+			    section.name.c_str(),
+			    section.org,
+			    sectionTypeInfo[section.type].startAddr,
 			    endaddr(section.type)
 			);
 
 		if (section.org + section.size > endaddr(section.type) + 1)
 			error(
-			    nullptr, 0, "Section \"%s\"'s end address $%04x is greater than last address $%04x",
-			    section.name.c_str(), section.org + section.size, endaddr(section.type) + 1
+			    nullptr,
+			    0,
+			    "Section \"%s\"'s end address $%04x is greater than last address $%04x",
+			    section.name.c_str(),
+			    section.org + section.size,
+			    endaddr(section.type) + 1
 			);
 	}
 }

@@ -271,8 +271,11 @@ static void placeSection(Section &section) {
 			);
 		else if (section.isAlignFixed)
 			snprintf(
-			    where, sizeof(where), "in bank $%02" PRIx32 " with align mask %" PRIx16,
-			    section.bank, (uint16_t)~section.alignMask
+			    where,
+			    sizeof(where),
+			    "in bank $%02" PRIx32 " with align mask %" PRIx16,
+			    section.bank,
+			    (uint16_t)~section.alignMask
 			);
 		else
 			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section.bank);
@@ -281,8 +284,11 @@ static void placeSection(Section &section) {
 			snprintf(where, sizeof(where), "at address $%04" PRIx16, section.org);
 		else if (section.isAlignFixed)
 			snprintf(
-			    where, sizeof(where), "with align mask %" PRIx16 " and offset %" PRIx16,
-			    (uint16_t)~section.alignMask, section.alignOfs
+			    where,
+			    sizeof(where),
+			    "with align mask %" PRIx16 " and offset %" PRIx16,
+			    (uint16_t)~section.alignMask,
+			    section.alignOfs
 			);
 		else
 			strcpy(where, "anywhere");
@@ -291,22 +297,29 @@ static void placeSection(Section &section) {
 	// If a section failed to go to several places, nothing we can report
 	if (!section.isBankFixed || !section.isAddressFixed)
 		errx(
-		    "Unable to place \"%s\" (%s section) %s", section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str(), where
+		    "Unable to place \"%s\" (%s section) %s",
+		    section.name.c_str(),
+		    sectionTypeInfo[section.type].name.c_str(),
+		    where
 		);
 	// If the section just can't fit the bank, report that
 	else if (section.org + section.size > endaddr(section.type) + 1)
 		errx(
 		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
 		    "$%04x)",
-		    section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
-		    section.org + section.size, endaddr(section.type) + 1
+		    section.name.c_str(),
+		    sectionTypeInfo[section.type].name.c_str(),
+		    where,
+		    section.org + section.size,
+		    endaddr(section.type) + 1
 		);
 	// Otherwise there is overlap with another section
 	else
 		errx(
 		    "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		    section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
+		    section.name.c_str(),
+		    sectionTypeInfo[section.type].name.c_str(),
+		    where,
 		    out_OverlappingSection(section)->name.c_str()
 		);
 }

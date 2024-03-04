@@ -209,7 +209,9 @@ static int musl_getopt_long_core(
 					if (colon || !musl_opterr)
 						return '?';
 					musl_getopt_msg(
-					    argv[0], ": option does not take an argument: ", longopts[i].name,
+					    argv[0],
+					    ": option does not take an argument: ",
+					    longopts[i].name,
 					    strlen(longopts[i].name)
 					);
 					return '?';
@@ -224,7 +226,9 @@ static int musl_getopt_long_core(
 					if (!musl_opterr)
 						return '?';
 					musl_getopt_msg(
-					    argv[0], ": option requires an argument: ", longopts[i].name,
+					    argv[0],
+					    ": option requires an argument: ",
+					    longopts[i].name,
 					    strlen(longopts[i].name)
 					);
 					return '?';
@@ -243,8 +247,10 @@ static int musl_getopt_long_core(
 			musl_optopt = 0;
 			if (!colon && musl_opterr)
 				musl_getopt_msg(
-				    argv[0], cnt ? ": option is ambiguous: " : ": unrecognized option: ",
-				    argv[musl_optind] + 2, strlen(argv[musl_optind] + 2)
+				    argv[0],
+				    cnt ? ": option is ambiguous: " : ": unrecognized option: ",
+				    argv[musl_optind] + 2,
+				    strlen(argv[musl_optind] + 2)
 				);
 			musl_optind++;
 			return '?';

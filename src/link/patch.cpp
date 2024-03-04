@@ -220,7 +220,8 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 			if (!symbol) {
 				error(
-				    patch.src, patch.lineNo,
+				    patch.src,
+				    patch.lineNo,
 				    "Requested BANK() of symbol \"%s\", which was not found",
 				    fileSymbols[value].name.c_str()
 				);
@@ -230,7 +231,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				value = label->section->bank;
 			} else {
 				error(
-				    patch.src, patch.lineNo, "Requested BANK() of non-label symbol \"%s\"",
+				    patch.src,
+				    patch.lineNo,
+				    "Requested BANK() of non-label symbol \"%s\"",
 				    fileSymbols[value].name.c_str()
 				);
 				isError = true;
@@ -249,8 +252,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 			if (!sect) {
 				error(
-				    patch.src, patch.lineNo,
-				    "Requested BANK() of section \"%s\", which was not found", name
+				    patch.src,
+				    patch.lineNo,
+				    "Requested BANK() of section \"%s\", which was not found",
+				    name
 				);
 				isError = true;
 				value = 1;
@@ -279,8 +284,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 			if (!sect) {
 				error(
-				    patch.src, patch.lineNo,
-				    "Requested SIZEOF() of section \"%s\", which was not found", name
+				    patch.src,
+				    patch.lineNo,
+				    "Requested SIZEOF() of section \"%s\", which was not found",
+				    name
 				);
 				isError = true;
 				value = 1;
@@ -300,8 +307,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 			if (!sect) {
 				error(
-				    patch.src, patch.lineNo,
-				    "Requested STARTOF() of section \"%s\", which was not found", name
+				    patch.src,
+				    patch.lineNo,
+				    "Requested STARTOF() of section \"%s\", which was not found",
+				    name
 				);
 				isError = true;
 				value = 1;
@@ -377,7 +386,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 				if (!symbol) {
 					error(
-					    patch.src, patch.lineNo, "Unknown symbol \"%s\"",
+					    patch.src,
+					    patch.lineNo,
+					    "Unknown symbol \"%s\"",
 					    fileSymbols[value].name.c_str()
 					);
 					isError = true;
@@ -418,26 +429,35 @@ void patch_CheckAssertions(std::deque<Assertion> &assertions) {
 			switch (type) {
 			case ASSERT_FATAL:
 				fatal(
-				    assert.patch.src, assert.patch.lineNo, "%s",
+				    assert.patch.src,
+				    assert.patch.lineNo,
+				    "%s",
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
 				);
 			case ASSERT_ERROR:
 				error(
-				    assert.patch.src, assert.patch.lineNo, "%s",
+				    assert.patch.src,
+				    assert.patch.lineNo,
+				    "%s",
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
 				);
 				break;
 			case ASSERT_WARN:
 				warning(
-				    assert.patch.src, assert.patch.lineNo, "%s",
+				    assert.patch.src,
+				    assert.patch.lineNo,
+				    "%s",
 				    !assert.message.empty() ? assert.message.c_str() : "assert failure"
 				);
 				break;
 			}
 		} else if (isError && type == ASSERT_FATAL) {
 			fatal(
-			    assert.patch.src, assert.patch.lineNo, "Failed to evaluate assertion%s%s",
-			    !assert.message.empty() ? ": " : "", assert.message.c_str()
+			    assert.patch.src,
+			    assert.patch.lineNo,
+			    "Failed to evaluate assertion%s%s",
+			    !assert.message.empty() ? ": " : "",
+			    assert.message.c_str()
 			);
 		}
 	}
@@ -463,8 +483,10 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 
 			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
 				error(
-				    patch.src, patch.lineNo,
-				    "jr target out of reach (expected -129 < %" PRId16 " < 128)", jumpOffset
+				    patch.src,
+				    patch.lineNo,
+				    "jr target out of reach (expected -129 < %" PRId16 " < 128)",
+				    jumpOffset
 				);
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
@@ -481,8 +503,12 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 
 			if (!isError && (value < types[patch.type].min || value > types[patch.type].max))
 				error(
-				    patch.src, patch.lineNo, "Value %" PRId32 "%s is not %u-bit", value,
-				    value < 0 ? " (maybe negative?)" : "", types[patch.type].size * 8U
+				    patch.src,
+				    patch.lineNo,
+				    "Value %" PRId32 "%s is not %u-bit",
+				    value,
+				    value < 0 ? " (maybe negative?)" : "",
+				    types[patch.type].size * 8U
 				);
 			for (uint8_t i = 0; i < types[patch.type].size; i++) {
 				dataSection.data[offset + i] = value & 0xFF;

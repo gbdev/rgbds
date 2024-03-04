@@ -107,7 +107,8 @@ class Png {
 			fatal(
 			    "Error reading input image (\"%s\"): file too short (expected at least %zd more "
 			    "bytes after reading %zu)",
-			    self->c_str(), length - nbBytesRead,
+			    self->c_str(),
+			    length - nbBytesRead,
 			    (size_t)self->file->pubseekoff(0, std::ios_base::cur)
 			);
 		}
@@ -136,8 +137,10 @@ public:
 		// Check that all of the grays don't fall into the same "bin"
 		if (colors.size() > options.maxOpaqueColors()) { // Apply the Pigeonhole Principle
 			options.verbosePrint(
-			    Options::VERB_DEBUG, "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
-			    colors.size(), options.maxOpaqueColors()
+			    Options::VERB_DEBUG,
+			    "Too many colors for grayscale sorting (%zu > %" PRIu8 ")\n",
+			    colors.size(),
+			    options.maxOpaqueColors()
 			);
 			return false;
 		}
@@ -149,7 +152,8 @@ public:
 			if (!color->isGray()) {
 				options.verbosePrint(
 				    Options::VERB_DEBUG,
-				    "Found non-gray color #%08x, not using grayscale sorting\n", color->toCSS()
+				    "Found non-gray color #%08x, not using grayscale sorting\n",
+				    color->toCSS()
 				);
 				return false;
 			}
@@ -259,8 +263,13 @@ public:
 			}
 		};
 		options.verbosePrint(
-		    Options::VERB_INTERM, "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n",
-		    width, height, bitDepth, colorTypeName(), interlaceTypeName()
+		    Options::VERB_INTERM,
+		    "Input image: %" PRIu32 "x%" PRIu32 " pixels, %dbpp %s, %s\n",
+		    width,
+		    height,
+		    bitDepth,
+		    colorTypeName(),
+		    interlaceTypeName()
 		);
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
@@ -274,7 +283,11 @@ public:
 			for (int i = 0; i < nbColors; ++i) {
 				auto const &color = embeddedPal[i];
 				options.verbosePrint(
-				    Options::VERB_INTERM, "#%02x%02x%02x%02x%s", color.red, color.green, color.blue,
+				    Options::VERB_INTERM,
+				    "#%02x%02x%02x%02x%s",
+				    color.red,
+				    color.green,
+				    color.blue,
 				    transparencyPal && i < nbTransparentEntries ? transparencyPal[i] : 0xFF,
 				    i != nbColors - 1 ? ", " : "]\n"
 				);
@@ -337,34 +350,42 @@ public:
 		std::vector<uint32_t> indeterminates;
 
 		// Assign a color to the given position, and register it in the image palette as well
-		auto assignColor = [this, &conflicts,
-		                    &indeterminates](png_uint_32 x, png_uint_32 y, Rgba &&color) {
-			if (!color.isTransparent() && !color.isOpaque()) {
-				uint32_t css = color.toCSS();
-				if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
-					error(
-					    "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
-					    "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
-					    css, Rgba::transparency_threshold, Rgba::opacity_threshold, x, y
-					);
-					indeterminates.push_back(css);
-				}
-			} else if (Rgba const *other = colors.registerColor(color); other) {
-				std::tuple conflicting{color.toCSS(), other->toCSS()};
-				// Do not report combinations twice
-				if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
-					warning(
-					    "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
-					    "at x: %" PRIu32 ", y: %" PRIu32 "]",
-					    std::get<0>(conflicting), std::get<1>(conflicting), color.cgbColor(), x, y
-					);
-					// Do not report this combination again
-					conflicts.emplace_back(conflicting);
-				}
-			}
+		auto assignColor =
+		    [this, &conflicts, &indeterminates](png_uint_32 x, png_uint_32 y, Rgba &&color) {
+			    if (!color.isTransparent() && !color.isOpaque()) {
+				    uint32_t css = color.toCSS();
+				    if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
+					    error(
+					        "Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
+					        "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
+					        css,
+					        Rgba::transparency_threshold,
+					        Rgba::opacity_threshold,
+					        x,
+					        y
+					    );
+					    indeterminates.push_back(css);
+				    }
+			    } else if (Rgba const *other = colors.registerColor(color); other) {
+				    std::tuple conflicting{color.toCSS(), other->toCSS()};
+				    // Do not report combinations twice
+				    if (std::find(RANGE(conflicts), conflicting) == conflicts.end()) {
+					    warning(
+					        "Fusing colors #%08x and #%08x into Game Boy color $%04x [first seen "
+					        "at x: %" PRIu32 ", y: %" PRIu32 "]",
+					        std::get<0>(conflicting),
+					        std::get<1>(conflicting),
+					        color.cgbColor(),
+					        x,
+					        y
+					    );
+					    // Do not report this combination again
+					    conflicts.emplace_back(conflicting);
+				    }
+			    }
 
-			pixel(x, y) = color;
-		};
+			    pixel(x, y) = color;
+		    };
 
 		if (interlaceType == PNG_INTERLACE_NONE) {
 			for (png_uint_32 y = 0; y < height; ++y) {
@@ -471,7 +492,8 @@ public:
 public:
 	TilesVisitor visitAsTiles() const {
 		return {
-		    *this, options.columnMajor,
+		    *this,
+		    options.columnMajor,
 		    options.inputSlice.width ? options.inputSlice.width * 8 : width,
 		    options.inputSlice.height ? options.inputSlice.height * 8 : height};
 	}
@@ -536,7 +558,9 @@ static void generatePalSpec(Png const &png) {
 	}
 	for (int i = 0; i < embPalSize; ++i) {
 		options.palSpec[0][i] = Rgba(
-		    embPalRGB[i].red, embPalRGB[i].green, embPalRGB[i].blue,
+		    embPalRGB[i].red,
+		    embPalRGB[i].green,
+		    embPalRGB[i].blue,
 		    embPalAlpha && i < embPalAlphaSize ? embPalAlpha[i] : 0xFF
 		);
 	}
@@ -551,7 +575,9 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fprintf(
-		    stderr, "Proto-palette mappings: (%zu palette%s)\n", nbPalettes,
+		    stderr,
+		    "Proto-palette mappings: (%zu palette%s)\n",
+		    nbPalettes,
 		    nbPalettes != 1 ? "s" : ""
 		);
 		for (size_t i = 0; i < mappings.size(); ++i) {
@@ -632,7 +658,8 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	}
 	if (bad) {
 		fprintf(
-		    stderr, "note: The following palette%s specified:\n",
+		    stderr,
+		    "note: The following palette%s specified:\n",
 		    palettes.size() == 1 ? " was" : "s were"
 		);
 		for (Palette const &pal : palettes) {
@@ -659,7 +686,8 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
 		// nonsensical, so fatal-error outright
 		fatal(
-		    "Generated %zu palettes, over the maximum of %" PRIu8, palettes.size(),
+		    "Generated %zu palettes, over the maximum of %" PRIu8,
+		    palettes.size(),
 		    options.nbPalettes
 		);
 	}
@@ -794,8 +822,10 @@ struct std::hash<TileData> {
 namespace unoptimized {
 
 static void outputTileData(
-    Png const &png, DefaultInitVec<AttrmapEntry> const &attrmap,
-    std::vector<Palette> const &palettes, DefaultInitVec<size_t> const &mappings
+    Png const &png,
+    DefaultInitVec<AttrmapEntry> const &attrmap,
+    std::vector<Palette> const &palettes,
+    DefaultInitVec<size_t> const &mappings
 ) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
@@ -916,7 +946,9 @@ struct UniqueTiles {
  * twice)
  */
 static UniqueTiles dedupTiles(
-    Png const &png, DefaultInitVec<AttrmapEntry> &attrmap, std::vector<Palette> const &palettes,
+    Png const &png,
+    DefaultInitVec<AttrmapEntry> &attrmap,
+    std::vector<Palette> const &palettes,
     DefaultInitVec<size_t> const &mappings
 ) {
 	// Iterate throughout the image, generating tile data as we go
@@ -1091,7 +1123,10 @@ void process() {
 			fatal(
 			    "Tile at (%" PRIu32 ", %" PRIu32 ") has %" PRIu8 " opaque colors, more than %" PRIu8
 			    "!",
-			    tile.x, tile.y, nbColorsInTile, options.maxOpaqueColors()
+			    tile.x,
+			    tile.y,
+			    nbColorsInTile,
+			    options.maxOpaqueColors()
 			);
 		}
 
@@ -1107,7 +1142,9 @@ contained:;
 	}
 
 	options.verbosePrint(
-	    Options::VERB_INTERM, "Image contains %zu proto-palette%s\n", protoPalettes.size(),
+	    Options::VERB_INTERM,
+	    "Image contains %zu proto-palette%s\n",
+	    protoPalettes.size(),
 	    protoPalettes.size() != 1 ? "s" : ""
 	);
 	if (options.verbosity >= Options::VERB_INTERM) {
@@ -1136,7 +1173,9 @@ contained:;
 		if (nbTilesW * nbTilesH > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %" PRIu32 " tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
-			    nbTilesW * nbTilesH, options.maxNbTiles[0], options.maxNbTiles[1]
+			    nbTilesW * nbTilesH,
+			    options.maxNbTiles[0],
+			    options.maxNbTiles[1]
 			);
 		}
 
@@ -1160,7 +1199,9 @@ contained:;
 		if (tiles.size() > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
 			    "Image contains %zu tiles, exceeding the limit of %" PRIu16 " + %" PRIu16,
-			    tiles.size(), options.maxNbTiles[0], options.maxNbTiles[1]
+			    tiles.size(),
+			    options.maxNbTiles[0],
+			    options.maxNbTiles[1]
 			);
 		}
 

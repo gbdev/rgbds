@@ -14,7 +14,10 @@
 namespace sorting {
 
 void indexed(
-    std::vector<Palette> &palettes, int palSize, png_color const *palRGB, int palAlphaSize,
+    std::vector<Palette> &palettes,
+    int palSize,
+    png_color const *palRGB,
+    int palAlphaSize,
     png_byte *palAlpha
 ) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");

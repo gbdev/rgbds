@@ -42,21 +42,26 @@
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define WIN32_LEAN_AND_MEAN // include less from windows.h
-    // clang-format off
+                                // clang-format off
 	// (we need these `include`s in this order)
 	#include <windows.h>        // target architecture
 	#include <fileapi.h>        // CreateFileA
 	#include <winbase.h>        // CreateFileMappingA
 	#include <memoryapi.h>      // MapViewOfFile
 	#include <handleapi.h>      // CloseHandle
-    // clang-format on
+                                // clang-format on
 	#define MAP_FAILED nullptr
 	#define mapFile(ptr, fd, path, size) \
 		do { \
 			(ptr) = MAP_FAILED; \
 			HANDLE file = CreateFileA( \
-			    path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
-			    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr \
+			    path, \
+			    GENERIC_READ, \
+			    FILE_SHARE_READ, \
+			    nullptr, \
+			    OPEN_EXISTING, \
+			    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, \
+			    nullptr \
 			); \
 			HANDLE mappingObj; \
 			if (file == INVALID_HANDLE_VALUE) \
@@ -642,7 +647,8 @@ static int peekInternal(uint8_t distance) {
 	if (distance >= LEXER_BUF_SIZE)
 		fatalerror(
 		    "Internal lexer error: buffer has insufficient size for peeking (%" PRIu8 " >= %u)\n",
-		    distance, LEXER_BUF_SIZE
+		    distance,
+		    LEXER_BUF_SIZE
 		);
 
 	return std::visit(
@@ -2219,7 +2225,11 @@ int yylex() {
 		nextLine();
 
 	static int (* const lexerModeFuncs[NB_LEXER_MODES])() = {
-	    yylex_NORMAL, yylex_RAW, yylex_SKIP_TO_ELIF, yylex_SKIP_TO_ENDC, yylex_SKIP_TO_ENDR,
+	    yylex_NORMAL,
+	    yylex_RAW,
+	    yylex_SKIP_TO_ELIF,
+	    yylex_SKIP_TO_ENDC,
+	    yylex_SKIP_TO_ENDR,
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 

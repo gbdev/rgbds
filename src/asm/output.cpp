@@ -362,7 +362,8 @@ void out_WriteObject() {
 			fatalerror(
 			    "Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
 			    ". Please report this to the developers!\n",
-			    it[1]->ID, node->ID
+			    it[1]->ID,
+			    node->ID
 			);
 	}
 

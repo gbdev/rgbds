@@ -882,8 +882,11 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		return;
 	} else if (rom0Len < headerSize) {
 		report(
-		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n", name,
-		    (intmax_t)headerSize, (intmax_t)headerSize, (intmax_t)rom0Len
+		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n",
+		    name,
+		    (intmax_t)headerSize,
+		    (intmax_t)headerSize,
+		    (intmax_t)rom0Len
 		);
 		return;
 	}
@@ -952,7 +955,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	else if (sgb && rom0[0x14B] != 0x33)
 		fprintf(
-		    stderr, "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
+		    stderr,
+		    "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
 		    rom0[0x14B]
 		);
 
@@ -1104,7 +1108,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		return;
 	} else if (writeLen < rom0Len) {
 		report(
-		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n", (intmax_t)writeLen, name,
+		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
+		    (intmax_t)writeLen,
+		    name,
 		    (intmax_t)rom0Len
 		);
 		return;
@@ -1120,8 +1126,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			return;
 		} else if ((size_t)writeLen < totalRomxLen) {
 			report(
-			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n", (intmax_t)writeLen,
-			    name, totalRomxLen
+			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
+			    (intmax_t)writeLen,
+			    name,
+			    totalRomxLen
 			);
 			return;
 		}
@@ -1186,7 +1194,8 @@ static bool processFilename(char const *name) {
 			// This check is in theory redundant with the one in `processFile`, but it
 			// prevents passing a file size of 0, which usually indicates pipes
 			report(
-			    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n", name,
+			    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
+			    name,
 			    (intmax_t)stat.st_size
 			);
 		} else {
@@ -1198,7 +1207,10 @@ static bool processFilename(char const *name) {
 finish:
 	if (nbErrors)
 		fprintf(
-		    stderr, "Fixing \"%s\" failed with %u error%s\n", name, nbErrors,
+		    stderr,
+		    "Fixing \"%s\" failed with %u error%s\n",
+		    name,
+		    nbErrors,
 		    nbErrors == 1 ? "" : "s"
 		);
 	return nbErrors;
@@ -1338,8 +1350,9 @@ int main(int argc, char *argv[]) {
 				report("error: Specified MBC ID out of range 0-255: %s\n", musl_optarg);
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 				fprintf(
-				    stderr, "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly "
-				            "supported\n"
+				    stderr,
+				    "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly "
+				    "supported\n"
 				);
 			}
 			break;
@@ -1404,32 +1417,38 @@ int main(int argc, char *argv[]) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1)
 				fprintf(
-				    stderr, "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
+				    stderr,
+				    "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
 				    mbcName(cartridgeType)
 				);
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
 				fprintf(
-				    stderr, "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
+				    stderr,
+				    "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
 				    mbcName(cartridgeType)
 				);
 			} else if (ramSize == 1) {
 				fprintf(
-				    stderr, "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
+				    stderr,
+				    "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
 				    mbcName(cartridgeType)
 				);
 			} // TODO: check possible values?
 		} else if (ramSize) {
 			fprintf(
-			    stderr, "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
-			    mbcName(cartridgeType), ramSize
+			    stderr,
+			    "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
+			    mbcName(cartridgeType),
+			    ramSize
 			);
 		}
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33)
 		fprintf(
-		    stderr, "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
+		    stderr,
+		    "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
 		    oldLicensee
 		);
 

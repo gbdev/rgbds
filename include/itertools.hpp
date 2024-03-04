@@ -110,8 +110,8 @@ public:
 
 // Take ownership of objects and rvalue refs passed to us, but not lvalue refs
 template<typename T>
-using Holder = std::conditional_t<
-    std::is_lvalue_reference_v<T>, T, std::remove_cv_t<std::remove_reference_t<T>>>;
+using Holder = std::
+    conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_cv_t<std::remove_reference_t<T>>>;
 } // namespace detail
 
 // Does the same number of iterations as the first container's iterator!
