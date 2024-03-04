@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -14,22 +15,22 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
 #ifndef _MSC_VER
-#include <unistd.h>
+	#include <unistd.h>
 #endif
 
 #include "platform.hpp" // For `ssize_t` and `AT`
 #include "util.hpp"
 
-#include "asm/lexer.hpp"
 #include "asm/fixpoint.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
@@ -40,46 +41,57 @@
 
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
-# define WIN32_LEAN_AND_MEAN // include less from windows.h
-# include <windows.h> // target architecture
-# include <fileapi.h> // CreateFileA
-# include <winbase.h> // CreateFileMappingA
-# include <memoryapi.h> // MapViewOfFile
-# include <handleapi.h> // CloseHandle
-# define MAP_FAILED nullptr
-# define mapFile(ptr, fd, path, size) do { \
-	(ptr) = MAP_FAILED; \
-	HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
-				  FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr); \
-	HANDLE mappingObj; \
-	\
-	if (file == INVALID_HANDLE_VALUE) \
-		break; \
-	mappingObj  = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr); \
-	if (mappingObj != INVALID_HANDLE_VALUE) \
-		(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
-	CloseHandle(mappingObj); \
-	CloseHandle(file); \
-} while (0)
-# define munmap(ptr, size)  UnmapViewOfFile((ptr))
+    // clang-format off
+	// (we need these `include`s in this order)
+	#define WIN32_LEAN_AND_MEAN // include less from windows.h
+	#include <windows.h>   // target architecture
+	#include <fileapi.h>   // CreateFileA
+	#include <winbase.h>   // CreateFileMappingA
+	#include <memoryapi.h> // MapViewOfFile
+	#include <handleapi.h> // CloseHandle
+    // clang-format on
+	#define MAP_FAILED nullptr
+	#define mapFile(ptr, fd, path, size) \
+		do { \
+			(ptr) = MAP_FAILED; \
+			HANDLE file = CreateFileA( \
+			    path, \
+			    GENERIC_READ, \
+			    FILE_SHARE_READ, \
+			    nullptr, \
+			    OPEN_EXISTING, \
+			    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, \
+			    nullptr \
+			); \
+			HANDLE mappingObj; \
+			if (file == INVALID_HANDLE_VALUE) \
+				break; \
+			mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr); \
+			if (mappingObj != INVALID_HANDLE_VALUE) \
+				(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
+			CloseHandle(mappingObj); \
+			CloseHandle(file); \
+		} while (0)
+	#define munmap(ptr, size) UnmapViewOfFile((ptr))
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
 
-# include <sys/mman.h>
-# define mapFile(ptr, fd, path, size) do { \
-	(ptr) = mmap(nullptr, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
-	\
-	if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
-		/*
-		 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
-		 * instead, offering, I believe, weaker guarantees about external modifications to
-		 * the file while reading it. That's still better than not opening it at all, though
-		 */ \
-		if (verbose) \
-			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
-		(ptr) = mmap(nullptr, (size), PROT_READ, MAP_SHARED, (fd), 0); \
-	} \
-} while (0)
+	#include <sys/mman.h>
+	#define mapFile(ptr, fd, path, size) \
+		do { \
+			(ptr) = mmap(nullptr, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
+			if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
+				/* \
+				 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED \
+				 * instead, offering, I believe, weaker guarantees about external modifications to \
+				 * the file while reading it. That's still better than not opening it at all, \
+				 * though \
+				 */ \
+				if (verbose) \
+					printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
+				(ptr) = mmap(nullptr, (size), PROT_READ, MAP_SHARED, (fd), 0); \
+			} \
+		} while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
 struct CaseInsensitive {
@@ -106,207 +118,205 @@ struct CaseInsensitive {
 // Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
 // This assumes that no two keywords have the same name.
 static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
-	{"ADC", T_Z80_ADC},
-	{"ADD", T_Z80_ADD},
-	{"AND", T_Z80_AND},
-	{"BIT", T_Z80_BIT},
-	{"CALL", T_Z80_CALL},
-	{"CCF", T_Z80_CCF},
-	{"CPL", T_Z80_CPL},
-	{"CP", T_Z80_CP},
-	{"DAA", T_Z80_DAA},
-	{"DEC", T_Z80_DEC},
-	{"DI", T_Z80_DI},
-	{"EI", T_Z80_EI},
-	{"HALT", T_Z80_HALT},
-	{"INC", T_Z80_INC},
-	{"JP", T_Z80_JP},
-	{"JR", T_Z80_JR},
-	{"LD", T_Z80_LD},
-	{"LDI", T_Z80_LDI},
-	{"LDD", T_Z80_LDD},
-	{"LDIO", T_Z80_LDH},
-	{"LDH", T_Z80_LDH},
-	{"NOP", T_Z80_NOP},
-	{"OR", T_Z80_OR},
-	{"POP", T_Z80_POP},
-	{"PUSH", T_Z80_PUSH},
-	{"RES", T_Z80_RES},
-	{"RETI", T_Z80_RETI},
-	{"RET", T_Z80_RET},
-	{"RLCA", T_Z80_RLCA},
-	{"RLC", T_Z80_RLC},
-	{"RLA", T_Z80_RLA},
-	{"RL", T_Z80_RL},
-	{"RRC", T_Z80_RRC},
-	{"RRCA", T_Z80_RRCA},
-	{"RRA", T_Z80_RRA},
-	{"RR", T_Z80_RR},
-	{"RST", T_Z80_RST},
-	{"SBC", T_Z80_SBC},
-	{"SCF", T_Z80_SCF},
-	{"SET", T_Z80_SET},
-	{"SLA", T_Z80_SLA},
-	{"SRA", T_Z80_SRA},
-	{"SRL", T_Z80_SRL},
-	{"STOP", T_Z80_STOP},
-	{"SUB", T_Z80_SUB},
-	{"SWAP", T_Z80_SWAP},
-	{"XOR", T_Z80_XOR},
+    {"ADC",           T_Z80_ADC          },
+    {"ADD",           T_Z80_ADD          },
+    {"AND",           T_Z80_AND          },
+    {"BIT",           T_Z80_BIT          },
+    {"CALL",          T_Z80_CALL         },
+    {"CCF",           T_Z80_CCF          },
+    {"CPL",           T_Z80_CPL          },
+    {"CP",            T_Z80_CP           },
+    {"DAA",           T_Z80_DAA          },
+    {"DEC",           T_Z80_DEC          },
+    {"DI",            T_Z80_DI           },
+    {"EI",            T_Z80_EI           },
+    {"HALT",          T_Z80_HALT         },
+    {"INC",           T_Z80_INC          },
+    {"JP",            T_Z80_JP           },
+    {"JR",            T_Z80_JR           },
+    {"LD",            T_Z80_LD           },
+    {"LDI",           T_Z80_LDI          },
+    {"LDD",           T_Z80_LDD          },
+    {"LDIO",          T_Z80_LDH          },
+    {"LDH",           T_Z80_LDH          },
+    {"NOP",           T_Z80_NOP          },
+    {"OR",            T_Z80_OR           },
+    {"POP",           T_Z80_POP          },
+    {"PUSH",          T_Z80_PUSH         },
+    {"RES",           T_Z80_RES          },
+    {"RETI",          T_Z80_RETI         },
+    {"RET",           T_Z80_RET          },
+    {"RLCA",          T_Z80_RLCA         },
+    {"RLC",           T_Z80_RLC          },
+    {"RLA",           T_Z80_RLA          },
+    {"RL",            T_Z80_RL           },
+    {"RRC",           T_Z80_RRC          },
+    {"RRCA",          T_Z80_RRCA         },
+    {"RRA",           T_Z80_RRA          },
+    {"RR",            T_Z80_RR           },
+    {"RST",           T_Z80_RST          },
+    {"SBC",           T_Z80_SBC          },
+    {"SCF",           T_Z80_SCF          },
+    {"SET",           T_Z80_SET          },
+    {"SLA",           T_Z80_SLA          },
+    {"SRA",           T_Z80_SRA          },
+    {"SRL",           T_Z80_SRL          },
+    {"STOP",          T_Z80_STOP         },
+    {"SUB",           T_Z80_SUB          },
+    {"SWAP",          T_Z80_SWAP         },
+    {"XOR",           T_Z80_XOR          },
 
-	{"NZ", T_CC_NZ},
-	{"Z", T_CC_Z},
-	{"NC", T_CC_NC},
-	// Handled after as T_TOKEN_C
-	// { "C", T_CC_C },
+    {"NZ",            T_CC_NZ            },
+    {"Z",             T_CC_Z             },
+    {"NC",            T_CC_NC            },
+ // Handled after as T_TOKEN_C
+  // { "C", T_CC_C },
 
-	{"AF", T_MODE_AF},
-	{"BC", T_MODE_BC},
-	{"DE", T_MODE_DE},
-	{"HL", T_MODE_HL},
-	{"SP", T_MODE_SP},
-	{"HLD", T_MODE_HL_DEC},
-	{"HLI", T_MODE_HL_INC},
+    {"AF",            T_MODE_AF          },
+    {"BC",            T_MODE_BC          },
+    {"DE",            T_MODE_DE          },
+    {"HL",            T_MODE_HL          },
+    {"SP",            T_MODE_SP          },
+    {"HLD",           T_MODE_HL_DEC      },
+    {"HLI",           T_MODE_HL_INC      },
 
-	{"A", T_TOKEN_A},
-	{"B", T_TOKEN_B},
-	{"C", T_TOKEN_C},
-	{"D", T_TOKEN_D},
-	{"E", T_TOKEN_E},
-	{"H", T_TOKEN_H},
-	{"L", T_TOKEN_L},
+    {"A",             T_TOKEN_A          },
+    {"B",             T_TOKEN_B          },
+    {"C",             T_TOKEN_C          },
+    {"D",             T_TOKEN_D          },
+    {"E",             T_TOKEN_E          },
+    {"H",             T_TOKEN_H          },
+    {"L",             T_TOKEN_L          },
 
-	{"DEF", T_OP_DEF},
+    {"DEF",           T_OP_DEF           },
 
-	{"FRAGMENT", T_POP_FRAGMENT},
-	{"BANK", T_OP_BANK},
-	{"ALIGN", T_OP_ALIGN},
+    {"FRAGMENT",      T_POP_FRAGMENT     },
+    {"BANK",          T_OP_BANK          },
+    {"ALIGN",         T_OP_ALIGN         },
 
-	{"SIZEOF", T_OP_SIZEOF},
-	{"STARTOF", T_OP_STARTOF},
+    {"SIZEOF",        T_OP_SIZEOF        },
+    {"STARTOF",       T_OP_STARTOF       },
 
-	{"ROUND", T_OP_ROUND},
-	{"CEIL", T_OP_CEIL},
-	{"FLOOR", T_OP_FLOOR},
-	{"DIV", T_OP_FDIV},
-	{"MUL", T_OP_FMUL},
-	{"FMOD", T_OP_FMOD},
-	{"POW", T_OP_POW},
-	{"LOG", T_OP_LOG},
-	{"SIN", T_OP_SIN},
-	{"COS", T_OP_COS},
-	{"TAN", T_OP_TAN},
-	{"ASIN", T_OP_ASIN},
-	{"ACOS", T_OP_ACOS},
-	{"ATAN", T_OP_ATAN},
-	{"ATAN2", T_OP_ATAN2},
+    {"ROUND",         T_OP_ROUND         },
+    {"CEIL",          T_OP_CEIL          },
+    {"FLOOR",         T_OP_FLOOR         },
+    {"DIV",           T_OP_FDIV          },
+    {"MUL",           T_OP_FMUL          },
+    {"FMOD",          T_OP_FMOD          },
+    {"POW",           T_OP_POW           },
+    {"LOG",           T_OP_LOG           },
+    {"SIN",           T_OP_SIN           },
+    {"COS",           T_OP_COS           },
+    {"TAN",           T_OP_TAN           },
+    {"ASIN",          T_OP_ASIN          },
+    {"ACOS",          T_OP_ACOS          },
+    {"ATAN",          T_OP_ATAN          },
+    {"ATAN2",         T_OP_ATAN2         },
 
-	{"HIGH", T_OP_HIGH},
-	{"LOW", T_OP_LOW},
-	{"ISCONST", T_OP_ISCONST},
+    {"HIGH",          T_OP_HIGH          },
+    {"LOW",           T_OP_LOW           },
+    {"ISCONST",       T_OP_ISCONST       },
 
-	{"STRCMP", T_OP_STRCMP},
-	{"STRIN", T_OP_STRIN},
-	{"STRRIN", T_OP_STRRIN},
-	{"STRSUB", T_OP_STRSUB},
-	{"STRLEN", T_OP_STRLEN},
-	{"STRCAT", T_OP_STRCAT},
-	{"STRUPR", T_OP_STRUPR},
-	{"STRLWR", T_OP_STRLWR},
-	{"STRRPL", T_OP_STRRPL},
-	{"STRFMT", T_OP_STRFMT},
+    {"STRCMP",        T_OP_STRCMP        },
+    {"STRIN",         T_OP_STRIN         },
+    {"STRRIN",        T_OP_STRRIN        },
+    {"STRSUB",        T_OP_STRSUB        },
+    {"STRLEN",        T_OP_STRLEN        },
+    {"STRCAT",        T_OP_STRCAT        },
+    {"STRUPR",        T_OP_STRUPR        },
+    {"STRLWR",        T_OP_STRLWR        },
+    {"STRRPL",        T_OP_STRRPL        },
+    {"STRFMT",        T_OP_STRFMT        },
 
-	{"CHARLEN", T_OP_CHARLEN},
-	{"CHARSUB", T_OP_CHARSUB},
-	{"INCHARMAP", T_OP_INCHARMAP},
+    {"CHARLEN",       T_OP_CHARLEN       },
+    {"CHARSUB",       T_OP_CHARSUB       },
+    {"INCHARMAP",     T_OP_INCHARMAP     },
 
-	{"INCLUDE", T_POP_INCLUDE},
-	{"PRINT", T_POP_PRINT},
-	{"PRINTLN", T_POP_PRINTLN},
-	{"EXPORT", T_POP_EXPORT},
-	{"DS", T_POP_DS},
-	{"DB", T_POP_DB},
-	{"DW", T_POP_DW},
-	{"DL", T_POP_DL},
-	{"SECTION", T_POP_SECTION},
-	{"ENDSECTION", T_POP_ENDSECTION},
-	{"PURGE", T_POP_PURGE},
+    {"INCLUDE",       T_POP_INCLUDE      },
+    {"PRINT",         T_POP_PRINT        },
+    {"PRINTLN",       T_POP_PRINTLN      },
+    {"EXPORT",        T_POP_EXPORT       },
+    {"DS",            T_POP_DS           },
+    {"DB",            T_POP_DB           },
+    {"DW",            T_POP_DW           },
+    {"DL",            T_POP_DL           },
+    {"SECTION",       T_POP_SECTION      },
+    {"ENDSECTION",    T_POP_ENDSECTION   },
+    {"PURGE",         T_POP_PURGE        },
 
-	{"RSRESET", T_POP_RSRESET},
-	{"RSSET", T_POP_RSSET},
+    {"RSRESET",       T_POP_RSRESET      },
+    {"RSSET",         T_POP_RSSET        },
 
-	{"INCBIN", T_POP_INCBIN},
-	{"CHARMAP", T_POP_CHARMAP},
-	{"NEWCHARMAP", T_POP_NEWCHARMAP},
-	{"SETCHARMAP", T_POP_SETCHARMAP},
-	{"PUSHC", T_POP_PUSHC},
-	{"POPC", T_POP_POPC},
+    {"INCBIN",        T_POP_INCBIN       },
+    {"CHARMAP",       T_POP_CHARMAP      },
+    {"NEWCHARMAP",    T_POP_NEWCHARMAP   },
+    {"SETCHARMAP",    T_POP_SETCHARMAP   },
+    {"PUSHC",         T_POP_PUSHC        },
+    {"POPC",          T_POP_POPC         },
 
-	{"FAIL", T_POP_FAIL},
-	{"WARN", T_POP_WARN},
-	{"FATAL", T_POP_FATAL},
-	{"ASSERT", T_POP_ASSERT},
-	{"STATIC_ASSERT", T_POP_STATIC_ASSERT},
+    {"FAIL",          T_POP_FAIL         },
+    {"WARN",          T_POP_WARN         },
+    {"FATAL",         T_POP_FATAL        },
+    {"ASSERT",        T_POP_ASSERT       },
+    {"STATIC_ASSERT", T_POP_STATIC_ASSERT},
 
-	{"MACRO", T_POP_MACRO},
-	{"ENDM", T_POP_ENDM},
-	{"SHIFT", T_POP_SHIFT},
+    {"MACRO",         T_POP_MACRO        },
+    {"ENDM",          T_POP_ENDM         },
+    {"SHIFT",         T_POP_SHIFT        },
 
-	{"REPT", T_POP_REPT},
-	{"FOR", T_POP_FOR},
-	{"ENDR", T_POP_ENDR},
-	{"BREAK", T_POP_BREAK},
+    {"REPT",          T_POP_REPT         },
+    {"FOR",           T_POP_FOR          },
+    {"ENDR",          T_POP_ENDR         },
+    {"BREAK",         T_POP_BREAK        },
 
-	{"LOAD", T_POP_LOAD},
-	{"ENDL", T_POP_ENDL},
+    {"LOAD",          T_POP_LOAD         },
+    {"ENDL",          T_POP_ENDL         },
 
-	{"IF", T_POP_IF},
-	{"ELSE", T_POP_ELSE},
-	{"ELIF", T_POP_ELIF},
-	{"ENDC", T_POP_ENDC},
+    {"IF",            T_POP_IF           },
+    {"ELSE",          T_POP_ELSE         },
+    {"ELIF",          T_POP_ELIF         },
+    {"ENDC",          T_POP_ENDC         },
 
-	{"UNION", T_POP_UNION},
-	{"NEXTU", T_POP_NEXTU},
-	{"ENDU", T_POP_ENDU},
+    {"UNION",         T_POP_UNION        },
+    {"NEXTU",         T_POP_NEXTU        },
+    {"ENDU",          T_POP_ENDU         },
 
-	{"WRAM0", T_SECT_WRAM0},
-	{"VRAM", T_SECT_VRAM},
-	{"ROMX", T_SECT_ROMX},
-	{"ROM0", T_SECT_ROM0},
-	{"HRAM", T_SECT_HRAM},
-	{"WRAMX", T_SECT_WRAMX},
-	{"SRAM", T_SECT_SRAM},
-	{"OAM", T_SECT_OAM},
+    {"WRAM0",         T_SECT_WRAM0       },
+    {"VRAM",          T_SECT_VRAM        },
+    {"ROMX",          T_SECT_ROMX        },
+    {"ROM0",          T_SECT_ROM0        },
+    {"HRAM",          T_SECT_HRAM        },
+    {"WRAMX",         T_SECT_WRAMX       },
+    {"SRAM",          T_SECT_SRAM        },
+    {"OAM",           T_SECT_OAM         },
 
-	{"RB", T_POP_RB},
-	{"RW", T_POP_RW},
-	// Handled before as T_Z80_RL
-	// {"RL", T_POP_RL},
+    {"RB",            T_POP_RB           },
+    {"RW",            T_POP_RW           },
+ // Handled before as T_Z80_RL
+  // {"RL", T_POP_RL},
 
-	{"EQU", T_POP_EQU},
-	{"EQUS", T_POP_EQUS},
-	{"REDEF", T_POP_REDEF},
+    {"EQU",           T_POP_EQU          },
+    {"EQUS",          T_POP_EQUS         },
+    {"REDEF",         T_POP_REDEF        },
 
-	{"PUSHS", T_POP_PUSHS},
-	{"POPS", T_POP_POPS},
-	{"PUSHO", T_POP_PUSHO},
-	{"POPO", T_POP_POPO},
+    {"PUSHS",         T_POP_PUSHS        },
+    {"POPS",          T_POP_POPS         },
+    {"PUSHO",         T_POP_PUSHO        },
+    {"POPO",          T_POP_POPO         },
 
-	{"OPT", T_POP_OPT},
+    {"OPT",           T_POP_OPT          },
 
-	{".", T_PERIOD},
+    {".",             T_PERIOD           },
 };
 
-static bool isWhitespace(int c)
-{
+static bool isWhitespace(int c) {
 	return c == ' ' || c == '\t';
 }
 
 LexerState *lexerState = nullptr;
 LexerState *lexerStateEOL = nullptr;
 
-static void initState(LexerState &state)
-{
+static void initState(LexerState &state) {
 	state.mode = LEXER_NORMAL;
 	state.atLineStart = true; // yylex() will init colNo due to this
 	state.lastToken = T_EOF;
@@ -324,60 +334,46 @@ static void initState(LexerState &state)
 	state.expansions.clear();
 }
 
-static void nextLine()
-{
+static void nextLine() {
 	lexerState->lineNo++;
 	lexerState->colNo = 1;
 }
 
-uint32_t lexer_GetIFDepth()
-{
+uint32_t lexer_GetIFDepth() {
 	return lexerState->ifStack.size();
 }
 
-void lexer_IncIFDepth()
-{
-	lexerState->ifStack.push_front({ .ranIfBlock = false, .reachedElseBlock = false });
+void lexer_IncIFDepth() {
+	lexerState->ifStack.push_front({.ranIfBlock = false, .reachedElseBlock = false});
 }
 
-void lexer_DecIFDepth()
-{
+void lexer_DecIFDepth() {
 	if (lexerState->ifStack.empty())
 		fatalerror("Found ENDC outside an IF construct\n");
 
 	lexerState->ifStack.pop_front();
 }
 
-bool lexer_RanIFBlock()
-{
+bool lexer_RanIFBlock() {
 	return lexerState->ifStack.front().ranIfBlock;
 }
 
-bool lexer_ReachedELSEBlock()
-{
+bool lexer_ReachedELSEBlock() {
 	return lexerState->ifStack.front().reachedElseBlock;
 }
 
-void lexer_RunIFBlock()
-{
+void lexer_RunIFBlock() {
 	lexerState->ifStack.front().ranIfBlock = true;
 }
 
-void lexer_ReachELSEBlock()
-{
+void lexer_ReachELSEBlock() {
 	lexerState->ifStack.front().reachedElseBlock = true;
 }
 
-bool lexer_OpenFile(LexerState &state, char const *path)
-{
+bool lexer_OpenFile(LexerState &state, char const *path) {
 	if (!strcmp(path, "-")) {
 		state.path = "<stdin>";
-		state.content = BufferedLexerState{
-			.fd = STDIN_FILENO,
-			.index = 0,
-			.buf = {},
-			.nbChars = 0
-		};
+		state.content = BufferedLexerState{.fd = STDIN_FILENO, .index = 0, .buf = {}, .nbChars = 0};
 		if (verbose)
 			printf("Opening stdin\n");
 	} else {
@@ -404,10 +400,10 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
 				state.content = MmappedLexerState{
-					.ptr = (char *)mappingAddr,
-					.size = (size_t)fileInfo.st_size,
-					.offset = 0,
-					.isReferenced = false
+				    .ptr = (char *)mappingAddr,
+				    .size = (size_t)fileInfo.st_size,
+				    .offset = 0,
+				    .isReferenced = false,
 				};
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path);
@@ -417,18 +413,12 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 
 		if (!isMmapped) {
 			// Sometimes mmap() fails or isn't available, so have a fallback
-			state.content = BufferedLexerState{
-				.fd = fd,
-				.index = 0,
-				.buf = {},
-				.nbChars = 0
-			};
+			state.content = BufferedLexerState{.fd = fd, .index = 0, .buf = {}, .nbChars = 0};
 			if (verbose) {
 				if (fileInfo.st_size == 0) {
 					printf("File \"%s\" is empty\n", path);
 				} else {
-					printf("File \"%s\" is opened; errno reports: %s\n",
-					       path, strerror(errno));
+					printf("File \"%s\" is opened; errno reports: %s\n", path, strerror(errno));
 				}
 			}
 		}
@@ -439,32 +429,29 @@ bool lexer_OpenFile(LexerState &state, char const *path)
 	return true;
 }
 
-void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
-			uint32_t lineNo)
-{
+void lexer_OpenFileView(
+    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
+) {
 	state.path = path; // Used to report read errors in `peekInternal`
-	state.content = ViewedLexerState{
-		.ptr = buf,
-		.size = size,
-		.offset = 0
-	};
+	state.content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
 	initState(state);
 	state.lineNo = lineNo; // Will be incremented at first line start
 }
 
-void lexer_RestartRept(uint32_t lineNo)
-{
-	std::visit(Visitor{
-		[](MmappedLexerState &mmap) { mmap.offset = 0; },
-		[](ViewedLexerState &view) { view.offset = 0; },
-		[](auto &) {},
-	}, lexerState->content);
+void lexer_RestartRept(uint32_t lineNo) {
+	std::visit(
+	    Visitor{
+	        [](MmappedLexerState &mmap) { mmap.offset = 0; },
+	        [](ViewedLexerState &view) { view.offset = 0; },
+	        [](auto &) {},
+	    },
+	    lexerState->content
+	);
 	initState(*lexerState);
 	lexerState->lineNo = lineNo;
 }
 
-void lexer_CleanupState(LexerState &state)
-{
+void lexer_CleanupState(LexerState &state) {
 	// A big chunk of the lexer state soundness is the file stack ("fstack").
 	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
 	// that lexer states lifetimes are always properly managed, since they're handled solely
@@ -478,32 +465,30 @@ void lexer_CleanupState(LexerState &state)
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
 	assert(&state != lexerStateEOL);
 
-	std::visit(Visitor{
-		[](MmappedLexerState &mmap) {
-			if (!mmap.isReferenced)
-				munmap(mmap.ptr, mmap.size);
-		},
-		[](BufferedLexerState &cbuf) {
-			close(cbuf.fd);
-		},
-		[](auto &) {},
-	}, state.content);
+	std::visit(
+	    Visitor{
+	        [](MmappedLexerState &mmap) {
+		        if (!mmap.isReferenced)
+			        munmap(mmap.ptr, mmap.size);
+	        },
+	        [](BufferedLexerState &cbuf) { close(cbuf.fd); },
+	        [](auto &) {},
+	    },
+	    state.content
+	);
 }
 
-void lexer_SetMode(enum LexerMode mode)
-{
+void lexer_SetMode(enum LexerMode mode) {
 	lexerState->mode = mode;
 }
 
-void lexer_ToggleStringExpansion(bool enable)
-{
+void lexer_ToggleStringExpansion(bool enable) {
 	lexerState->expandStrings = enable;
 }
 
 // Functions for the actual lexer to obtain characters
 
-static void beginExpansion(char const *str, bool owned, char const *name)
-{
+static void beginExpansion(char const *str, bool owned, char const *name) {
 	size_t size = strlen(str);
 
 	// Do not expand empty strings
@@ -514,28 +499,25 @@ static void beginExpansion(char const *str, bool owned, char const *name)
 		lexer_CheckRecursionDepth();
 
 	lexerState->expansions.push_front({
-		.name = name ? std::optional<std::string>(name) : std::nullopt,
-		.contents = { .unowned = str },
-		.size = size,
-		.offset = 0,
-		.owned = owned,
+	    .name = name ? std::optional<std::string>(name) : std::nullopt,
+	    .contents = {.unowned = str},
+	    .size = size,
+	    .offset = 0,
+	    .owned = owned,
 	});
 }
 
-void lexer_CheckRecursionDepth()
-{
+void lexer_CheckRecursionDepth() {
 	if (lexerState->expansions.size() > maxRecursionDepth + 1)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 }
 
-static void freeExpansion(Expansion &expansion)
-{
+static void freeExpansion(Expansion &expansion) {
 	if (expansion.owned)
-		delete [] expansion.contents.owned;
+		delete[] expansion.contents.owned;
 }
 
-static bool isMacroChar(char c)
-{
+static bool isMacroChar(char c) {
 	return c == '@' || c == '#' || c == '<' || (c >= '0' && c <= '9');
 }
 
@@ -546,8 +528,7 @@ static uint32_t readNumber(int radix, uint32_t baseValue);
 static bool startsIdentifier(int c);
 static bool continuesIdentifier(int c);
 
-static uint32_t readBracketedMacroArgNum()
-{
+static uint32_t readBracketedMacroArgNum() {
 	bool disableMacroArgs = lexerState->disableMacroArgs;
 	bool disableInterpolation = lexerState->disableInterpolation;
 
@@ -612,8 +593,7 @@ static uint32_t readBracketedMacroArgNum()
 	return num;
 }
 
-static char const *readMacroArg(char name)
-{
+static char const *readMacroArg(char name) {
 	char const *str = nullptr;
 
 	if (name == '@') {
@@ -642,8 +622,7 @@ static char const *readMacroArg(char name)
 	return str;
 }
 
-static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbChars)
-{
+static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbChars) {
 	// This buffer overflow made me lose WEEKS of my life. Never again.
 	assert(bufIndex + nbChars <= LEXER_BUF_SIZE);
 	ssize_t nbReadChars = read(cbuf.fd, &cbuf.buf[bufIndex], nbChars);
@@ -656,8 +635,7 @@ static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbC
 }
 
 // We only need one character of lookahead, for macro arguments
-static int peekInternal(uint8_t distance)
-{
+static int peekInternal(uint8_t distance) {
 	for (Expansion &exp : lexerState->expansions) {
 		// An expansion that has reached its end will have `exp->offset` == `exp->size`,
 		// and `peekInternal` will continue with its parent
@@ -668,67 +646,70 @@ static int peekInternal(uint8_t distance)
 	}
 
 	if (distance >= LEXER_BUF_SIZE)
-		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%"
-			   PRIu8 " >= %u)\n", distance, LEXER_BUF_SIZE);
+		fatalerror(
+		    "Internal lexer error: buffer has insufficient size for peeking (%" PRIu8 " >= %u)\n",
+		    distance,
+		    LEXER_BUF_SIZE
+		);
 
-	return std::visit(Visitor{
-		[&distance](MmappedLexerState &mmap) -> int {
-			if (size_t idx = mmap.offset + distance; idx < mmap.size)
-				return (uint8_t)mmap.ptr[idx];
-			return EOF;
-		},
-		[&distance](ViewedLexerState &view) -> int {
-			if (size_t idx = view.offset + distance; idx < view.size)
-				return (uint8_t)view.ptr[idx];
-			return EOF;
-		},
-		[&distance](BufferedLexerState &cbuf) -> int {
-			if (cbuf.nbChars > distance)
-				return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+	return std::visit(
+	    Visitor{
+	        [&distance](MmappedLexerState &mmap) -> int {
+		        if (size_t idx = mmap.offset + distance; idx < mmap.size)
+			        return (uint8_t)mmap.ptr[idx];
+		        return EOF;
+	        },
+	        [&distance](ViewedLexerState &view) -> int {
+		        if (size_t idx = view.offset + distance; idx < view.size)
+			        return (uint8_t)view.ptr[idx];
+		        return EOF;
+	        },
+	        [&distance](BufferedLexerState &cbuf) -> int {
+		        if (cbuf.nbChars > distance)
+			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
 
-			// Buffer isn't full enough, read some chars in
-			size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
+		        // Buffer isn't full enough, read some chars in
+		        size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
 
-			// Compute the index we'll start writing to
-			size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
+		        // Compute the index we'll start writing to
+		        size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
 
-			// If the range to fill passes over the buffer wrapping point, we need two reads
-			if (writeIndex + target > LEXER_BUF_SIZE) {
-				size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
-				size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
+		        // If the range to fill passes over the buffer wrapping point, we need two reads
+		        if (writeIndex + target > LEXER_BUF_SIZE) {
+			        size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+			        size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
 
-				cbuf.nbChars += nbReadChars;
+			        cbuf.nbChars += nbReadChars;
 
-				writeIndex += nbReadChars;
-				if (writeIndex == LEXER_BUF_SIZE)
-					writeIndex = 0;
+			        writeIndex += nbReadChars;
+			        if (writeIndex == LEXER_BUF_SIZE)
+				        writeIndex = 0;
 
-				// If the read was incomplete, don't perform a second read
-				target -= nbReadChars;
-				if (nbReadChars < nbExpectedChars)
-					target = 0;
-			}
-			if (target != 0)
-				cbuf.nbChars += readInternal(cbuf, writeIndex, target);
+			        // If the read was incomplete, don't perform a second read
+			        target -= nbReadChars;
+			        if (nbReadChars < nbExpectedChars)
+				        target = 0;
+		        }
+		        if (target != 0)
+			        cbuf.nbChars += readInternal(cbuf, writeIndex, target);
 
-			if (cbuf.nbChars > distance)
-				return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+		        if (cbuf.nbChars > distance)
+			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
 
-			// If there aren't enough chars even after refilling, give up
-			return EOF;
-		},
-		[](std::monostate) -> int {
-			return EOF;
-		}
-	}, lexerState->content);
+		        // If there aren't enough chars even after refilling, give up
+		        return EOF;
+	        },
+	        [](std::monostate) -> int { return EOF; },
+	    },
+	    lexerState->content
+	);
 }
 
 // forward declarations for peek
 static void shiftChar();
 static char const *readInterpolation(size_t depth);
 
-static int peek()
-{
+static int peek() {
 	int c = peekInternal(0);
 
 	if (lexerState->macroArgScanDistance > 0)
@@ -773,8 +754,7 @@ static int peek()
 	return c;
 }
 
-static void shiftChar()
-{
+static void shiftChar() {
 	if (lexerState->capturing) {
 		if (lexerState->captureBuf)
 			lexerState->captureBuf->push_back(peek());
@@ -800,28 +780,26 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		std::visit(Visitor{
-			[](MmappedLexerState &mmap) {
-				mmap.offset++;
-			},
-			[](ViewedLexerState &view) {
-				view.offset++;
-			},
-			[](BufferedLexerState &cbuf) {
-				assert(cbuf.index < LEXER_BUF_SIZE);
-				cbuf.index++;
-				if (cbuf.index == LEXER_BUF_SIZE)
-					cbuf.index = 0; // Wrap around if necessary
-				assert(cbuf.nbChars > 0);
-				cbuf.nbChars--;
-			},
-			[](std::monostate) {}
-		}, lexerState->content);
+		std::visit(
+		    Visitor{
+		        [](MmappedLexerState &mmap) { mmap.offset++; },
+		        [](ViewedLexerState &view) { view.offset++; },
+		        [](BufferedLexerState &cbuf) {
+			        assert(cbuf.index < LEXER_BUF_SIZE);
+			        cbuf.index++;
+			        if (cbuf.index == LEXER_BUF_SIZE)
+				        cbuf.index = 0; // Wrap around if necessary
+			        assert(cbuf.nbChars > 0);
+			        cbuf.nbChars--;
+		        },
+		        [](std::monostate) {},
+		    },
+		    lexerState->content
+		);
 	}
 }
 
-static int nextChar()
-{
+static int nextChar() {
 	int c = peek();
 
 	// If not at EOF, advance read position
@@ -830,31 +808,26 @@ static int nextChar()
 	return c;
 }
 
-static void handleCRLF(int c)
-{
+static void handleCRLF(int c) {
 	if (c == '\r' && peek() == '\n')
 		shiftChar();
 }
 
 // "Services" provided by the lexer to the rest of the program
 
-char const *lexer_GetFileName()
-{
+char const *lexer_GetFileName() {
 	return lexerState ? lexerState->path : nullptr;
 }
 
-uint32_t lexer_GetLineNo()
-{
+uint32_t lexer_GetLineNo() {
 	return lexerState->lineNo;
 }
 
-uint32_t lexer_GetColNo()
-{
+uint32_t lexer_GetColNo() {
 	return lexerState->colNo;
 }
 
-void lexer_DumpStringExpansions()
-{
+void lexer_DumpStringExpansions() {
 	if (!lexerState)
 		return;
 
@@ -866,8 +839,7 @@ void lexer_DumpStringExpansions()
 }
 
 // Discards a block comment
-static void discardBlockComment()
-{
+static void discardBlockComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;;) {
@@ -887,8 +859,7 @@ static void discardBlockComment()
 			continue;
 		case '/':
 			if (peek() == '*') {
-				warning(WARNING_NESTED_COMMENT,
-					"/* in block comment\n");
+				warning(WARNING_NESTED_COMMENT, "/* in block comment\n");
 			}
 			continue;
 		case '*':
@@ -908,8 +879,7 @@ finish:
 
 // Function to discard all of a line's comments
 
-static void discardComment()
-{
+static void discardComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 	for (;; shiftChar()) {
@@ -924,8 +894,7 @@ static void discardComment()
 
 // Function to read a line continuation
 
-static void readLineContinuation()
-{
+static void readLineContinuation() {
 	for (;;) {
 		int c = peek();
 
@@ -941,8 +910,7 @@ static void readLineContinuation()
 		} else if (c == ';') {
 			discardComment();
 		} else {
-			error("Begun line continuation, but encountered character %s\n",
-			      printChar(c));
+			error("Begun line continuation, but encountered character %s\n", printChar(c));
 			break;
 		}
 	}
@@ -950,8 +918,7 @@ static void readLineContinuation()
 
 // Function to read an anonymous label ref
 
-static void readAnonLabelRef(char c)
-{
+static void readAnonLabelRef(char c) {
 	uint32_t n = 0;
 
 	// We come here having already peeked at one char, so no need to do it again
@@ -965,8 +932,7 @@ static void readAnonLabelRef(char c)
 
 // Functions to lex numbers of various radixes
 
-static uint32_t readNumber(int radix, uint32_t baseValue)
-{
+static uint32_t readNumber(int radix, uint32_t baseValue) {
 	uint32_t value = baseValue;
 
 	for (;; shiftChar()) {
@@ -984,8 +950,7 @@ static uint32_t readNumber(int radix, uint32_t baseValue)
 	return value;
 }
 
-static uint32_t readFractionalPart(uint32_t integer)
-{
+static uint32_t readFractionalPart(uint32_t integer) {
 	uint32_t value = 0, divisor = 1;
 	uint8_t precision = 0;
 	enum {
@@ -1007,8 +972,7 @@ static uint32_t readFractionalPart(uint32_t integer)
 				break;
 			}
 			if (divisor > (UINT32_MAX - (c - '0')) / 10) {
-				warning(WARNING_LARGE_CONSTANT,
-					"Precision of fixed-point constant is too large\n");
+				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large\n");
 				// Discard any additional digits
 				shiftChar();
 				while (c = peek(), (c >= '0' && c <= '9') || c == '_')
@@ -1048,8 +1012,7 @@ static uint32_t readFractionalPart(uint32_t integer)
 
 char binDigits[2];
 
-static uint32_t readBinaryNumber()
-{
+static uint32_t readBinaryNumber() {
 	uint32_t value = 0;
 
 	for (;; shiftChar()) {
@@ -1073,8 +1036,7 @@ static uint32_t readBinaryNumber()
 	return value;
 }
 
-static uint32_t readHexNumber()
-{
+static uint32_t readHexNumber() {
 	uint32_t value = 0;
 	bool empty = true;
 
@@ -1107,8 +1069,7 @@ static uint32_t readHexNumber()
 
 char gfxDigits[4];
 
-static uint32_t readGfxConstant()
-{
+static uint32_t readGfxConstant() {
 	uint32_t bitPlaneLower = 0, bitPlaneUpper = 0;
 	uint8_t width = 0;
 
@@ -1141,27 +1102,26 @@ static uint32_t readGfxConstant()
 	if (width == 0)
 		error("Invalid graphics constant, no digits after '`'\n");
 	else if (width == 9)
-		warning(WARNING_LARGE_CONSTANT,
-			"Graphics constant is too long, only first 8 pixels considered\n");
+		warning(
+		    WARNING_LARGE_CONSTANT,
+		    "Graphics constant is too long, only first 8 pixels considered\n"
+		);
 
 	return bitPlaneUpper << 8 | bitPlaneLower;
 }
 
 // Functions to read identifiers & keywords
 
-static bool startsIdentifier(int c)
-{
+static bool startsIdentifier(int c) {
 	// Anonymous labels internally start with '!'
 	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
 }
 
-static bool continuesIdentifier(int c)
-{
+static bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
 }
 
-static int readIdentifier(char firstChar)
-{
+static int readIdentifier(char firstChar) {
 	// Lex while checking for a keyword
 	yylval.symName[0] = firstChar;
 	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
@@ -1195,8 +1155,7 @@ static int readIdentifier(char firstChar)
 
 // Functions to read strings
 
-static char const *readInterpolation(size_t depth)
-{
+static char const *readInterpolation(size_t depth) {
 	if (depth > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
@@ -1273,14 +1232,14 @@ static char const *readInterpolation(size_t depth)
 	return nullptr;
 }
 
-#define append_yylval_string(c) do { \
-	/* Evaluate c exactly once in case it has side effects */ \
-	if (char v = (c); i < sizeof(yylval.string)) \
-		yylval.string[i++] = v; \
-} while (0)
+#define append_yylval_string(c) \
+	do { \
+		/* Evaluate c exactly once in case it has side effects */ \
+		if (char v = (c); i < sizeof(yylval.string)) \
+			yylval.string[i++] = v; \
+	} while (0)
 
-static size_t appendEscapedSubstring(char const *str, size_t i)
-{
+static size_t appendEscapedSubstring(char const *str, size_t i) {
 	// Copy one extra to flag overflow
 	while (*str) {
 		char c = *str++;
@@ -1312,8 +1271,7 @@ static size_t appendEscapedSubstring(char const *str, size_t i)
 	return i;
 }
 
-static void readString(bool raw)
-{
+static void readString(bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1449,7 +1407,7 @@ static void readString(bool raw)
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
-		// Regular characters will just get copied
+			// Regular characters will just get copied
 		}
 
 		append_yylval_string(c);
@@ -1466,8 +1424,7 @@ finish:
 	lexerState->disableInterpolation = false;
 }
 
-static size_t appendStringLiteral(size_t i, bool raw)
-{
+static size_t appendStringLiteral(size_t i, bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1595,7 +1552,7 @@ static size_t appendStringLiteral(size_t i, bool raw)
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
-		// Regular characters will just get copied
+			// Regular characters will just get copied
 		}
 
 		append_yylval_string(c);
@@ -1618,13 +1575,12 @@ finish:
 
 static int yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
 
-static int yylex_NORMAL()
-{
+static int yylex_NORMAL() {
 	for (;;) {
 		int c = nextChar();
 
 		switch (c) {
-		// Ignore whitespace and comments
+			// Ignore whitespace and comments
 
 		case ';':
 			discardComment();
@@ -1633,7 +1589,7 @@ static int yylex_NORMAL()
 		case '\t':
 			break;
 
-		// Handle unambiguous single-char tokens
+			// Handle unambiguous single-char tokens
 
 		case '~':
 			return T_OP_NOT;
@@ -1654,7 +1610,7 @@ static int yylex_NORMAL()
 		case ',':
 			return T_COMMA;
 
-		// Handle ambiguous 1- or 2-char tokens
+			// Handle ambiguous 1- or 2-char tokens
 
 		case '+': // Either += or ADD
 			if (peek() == '=') {
@@ -1729,7 +1685,7 @@ static int yylex_NORMAL()
 			}
 			return T_OP_LOGICNOT;
 
-		// Handle ambiguous 1-, 2-, or 3-char tokens
+			// Handle ambiguous 1-, 2-, or 3-char tokens
 
 		case '<': // Either <<=, LT, LTE, or left shift
 			switch (peek()) {
@@ -1782,7 +1738,7 @@ static int yylex_NORMAL()
 				return T_COLON;
 			}
 
-		// Handle numbers
+			// Handle numbers
 
 		case '0': // Decimal or fixed-point number
 		case '1':
@@ -1837,13 +1793,13 @@ static int yylex_NORMAL()
 			yylval.constValue = readGfxConstant();
 			return T_NUMBER;
 
-		// Handle strings
+			// Handle strings
 
 		case '"':
 			readString(false);
 			return T_STRING;
 
-		// Handle newlines and EOF
+			// Handle newlines and EOF
 
 		case '\r':
 			handleCRLF(c);
@@ -1854,7 +1810,7 @@ static int yylex_NORMAL()
 		case EOF:
 			return T_EOF;
 
-		// Handle line continuations
+			// Handle line continuations
 
 		case '\\':
 			// Macro args were handled by `peek`, and character escapes do not exist
@@ -1862,7 +1818,7 @@ static int yylex_NORMAL()
 			readLineContinuation();
 			break;
 
-		// Handle raw strings... or fall through if '#' is not followed by '"'
+			// Handle raw strings... or fall through if '#' is not followed by '"'
 
 		case '#':
 			if (peek() == '"') {
@@ -1872,7 +1828,7 @@ static int yylex_NORMAL()
 			}
 			// fallthrough
 
-		// Handle identifiers... or report garbage characters
+			// Handle identifiers... or report garbage characters
 
 		default:
 			if (startsIdentifier(c)) {
@@ -1880,8 +1836,7 @@ static int yylex_NORMAL()
 
 				// An ELIF after a taken IF needs to not evaluate its condition
 				if (tokenType == T_POP_ELIF && lexerState->lastToken == T_NEWLINE
-				 && lexer_GetIFDepth() > 0 && lexer_RanIFBlock()
-				 && !lexer_ReachedELSEBlock())
+				    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock())
 					return yylex_SKIP_TO_ENDC();
 
 				// If a keyword, don't try to expand
@@ -1919,8 +1874,7 @@ static int yylex_NORMAL()
 	}
 }
 
-static int yylex_RAW()
-{
+static int yylex_RAW() {
 	// This is essentially a modified `appendStringLiteral`
 	size_t parenDepth = 0;
 	size_t i = 0;
@@ -2032,8 +1986,8 @@ backslash:
 				c = '\\';
 				break;
 
-			// Macro args were already handled by peek, so '\@',
-			// '\#', and '\0'-'\9' should not occur here.
+				// Macro args were already handled by peek, so '\@',
+				// '\#', and '\0'-'\9' should not occur here.
 
 			default:
 				error("Illegal character escape %s\n", printChar(c));
@@ -2094,8 +2048,7 @@ finish:
 // "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
 // It's especially important due to macro args not being handled in this
 // state, and lexing them in "normal" mode potentially producing such tokens.
-static int skipIfBlock(bool toEndc)
-{
+static int skipIfBlock(bool toEndc) {
 	lexer_SetMode(LEXER_NORMAL);
 	uint32_t startingDepth = lexer_GetIFDepth();
 	int token;
@@ -2133,7 +2086,7 @@ static int skipIfBlock(bool toEndc)
 						fatalerror("Found ELSE after an ELSE block\n");
 					lexer_ReachELSEBlock();
 					// fallthrough
-				maybeFinish:
+maybeFinish:
 					if (toEndc) // Ignore ELIF and ELSE, go to ENDC
 						break;
 					// fallthrough
@@ -2178,18 +2131,15 @@ finish:
 	return token;
 }
 
-static int yylex_SKIP_TO_ELIF()
-{
+static int yylex_SKIP_TO_ELIF() {
 	return skipIfBlock(false);
 }
 
-static int yylex_SKIP_TO_ENDC()
-{
+static int yylex_SKIP_TO_ENDC() {
 	return skipIfBlock(true);
 }
 
-static int yylex_SKIP_TO_ENDR()
-{
+static int yylex_SKIP_TO_ENDR() {
 	lexer_SetMode(LEXER_NORMAL);
 	int depth = 1;
 	bool atLineStart = lexerState->atLineStart;
@@ -2265,8 +2215,7 @@ finish:
 	return T_EOF;
 }
 
-int yylex()
-{
+int yylex() {
 	if (lexerState->atLineStart && lexerStateEOL) {
 		lexer_SetState(lexerStateEOL);
 		lexerStateEOL = nullptr;
@@ -2279,11 +2228,11 @@ int yylex()
 		nextLine();
 
 	static int (* const lexerModeFuncs[NB_LEXER_MODES])() = {
-		yylex_NORMAL,
-		yylex_RAW,
-		yylex_SKIP_TO_ELIF,
-		yylex_SKIP_TO_ENDC,
-		yylex_SKIP_TO_ENDR,
+	    yylex_NORMAL,
+	    yylex_RAW,
+	    yylex_SKIP_TO_ELIF,
+	    yylex_SKIP_TO_ENDC,
+	    yylex_SKIP_TO_ENDR,
 	};
 	int token = lexerModeFuncs[lexerState->mode]();
 
@@ -2296,8 +2245,7 @@ int yylex()
 	return token;
 }
 
-static void startCapture(CaptureBody &capture)
-{
+static void startCapture(CaptureBody &capture) {
 	assert(!lexerState->capturing);
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
@@ -2305,29 +2253,29 @@ static void startCapture(CaptureBody &capture)
 	lexerState->disableInterpolation = true;
 
 	capture.lineNo = lexer_GetLineNo();
-	capture.body = std::visit(Visitor{
-		[](MmappedLexerState &mmap) -> char const * {
-			return lexerState->expansions.empty() ? &mmap.ptr[mmap.offset] : nullptr;
-		},
-		[](ViewedLexerState &view) -> char const * {
-			return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
-		},
-		[](auto &) -> char const * {
-			return nullptr;
-		}
-	}, lexerState->content);
+	capture.body = std::visit(
+	    Visitor{
+	        [](MmappedLexerState &mmap) -> char const * {
+		        return lexerState->expansions.empty() ? &mmap.ptr[mmap.offset] : nullptr;
+	        },
+	        [](ViewedLexerState &view) -> char const * {
+		        return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
+	        },
+	        [](auto &) -> char const * { return nullptr; },
+	    },
+	    lexerState->content
+	);
 
 	if (capture.body == nullptr) {
 		// Indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
-		lexerState->captureBuf = new(std::nothrow) std::vector<char>();
+		lexerState->captureBuf = new (std::nothrow) std::vector<char>();
 		if (!lexerState->captureBuf)
 			fatalerror("Failed to allocate capture buffer: %s\n", strerror(errno));
 	}
 }
 
-static void endCapture(CaptureBody &capture)
-{
+static void endCapture(CaptureBody &capture) {
 	// This being `nullptr` means we're capturing from the capture buf, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
 	if (!capture.body)
@@ -2340,8 +2288,7 @@ static void endCapture(CaptureBody &capture)
 	lexerState->disableInterpolation = false;
 }
 
-bool lexer_CaptureRept(CaptureBody &capture)
-{
+bool lexer_CaptureRept(CaptureBody &capture) {
 	startCapture(capture);
 
 	size_t depth = 0;
@@ -2398,8 +2345,7 @@ finish:
 	return c != EOF;
 }
 
-bool lexer_CaptureMacroBody(CaptureBody &capture)
-{
+bool lexer_CaptureMacroBody(CaptureBody &capture) {
 	startCapture(capture);
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro

@@ -1,15 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "error.hpp"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.hpp"
-
-static void vwarn(char const *fmt, va_list ap)
-{
+static void vwarn(char const *fmt, va_list ap) {
 	const char *error = strerror(errno);
 
 	fprintf(stderr, "warning: ");
@@ -17,15 +16,13 @@ static void vwarn(char const *fmt, va_list ap)
 	fprintf(stderr, ": %s\n", error);
 }
 
-static void vwarnx(char const *fmt, va_list ap)
-{
+static void vwarnx(char const *fmt, va_list ap) {
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
 }
 
-[[noreturn]] static void verr(char const *fmt, va_list ap)
-{
+[[noreturn]] static void verr(char const *fmt, va_list ap) {
 	const char *error = strerror(errno);
 
 	fprintf(stderr, "error: ");
@@ -35,8 +32,7 @@ static void vwarnx(char const *fmt, va_list ap)
 	exit(1);
 }
 
-[[noreturn]] static void verrx(char const *fmt, va_list ap)
-{
+[[noreturn]] static void verrx(char const *fmt, va_list ap) {
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);
 	putc('\n', stderr);
@@ -44,8 +40,7 @@ static void vwarnx(char const *fmt, va_list ap)
 	exit(1);
 }
 
-void warn(char const *fmt, ...)
-{
+void warn(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -53,8 +48,7 @@ void warn(char const *fmt, ...)
 	va_end(ap);
 }
 
-void warnx(char const *fmt, ...)
-{
+void warnx(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -62,16 +56,14 @@ void warnx(char const *fmt, ...)
 	va_end(ap);
 }
 
-[[noreturn]] void err(char const *fmt, ...)
-{
+[[noreturn]] void err(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
 	verr(fmt, ap);
 }
 
-[[noreturn]] void errx(char const *fmt, ...)
-{
+[[noreturn]] void errx(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);

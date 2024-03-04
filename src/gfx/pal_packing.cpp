@@ -140,9 +140,10 @@ public:
 	 */
 	template<typename... Ts>
 	void assign(Ts &&...args) {
-		auto freeSlot = std::find_if_not(
-		    RANGE(_assigned),
-		    [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
+		auto freeSlot =
+		    std::find_if_not(RANGE(_assigned), [](std::optional<ProtoPalAttrs> const &slot) {
+			    return slot.has_value();
+		    });
 
 		if (freeSlot == _assigned.end()) { // We are full, use a new slot
 			_assigned.emplace_back(std::forward<Ts>(args)...);
@@ -158,15 +159,20 @@ public:
 	bool empty() const {
 		return std::find_if(
 		           RANGE(_assigned),
-		           [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); })
+		           [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); }
+		       )
 		       == _assigned.end();
 	}
 	size_t nbProtoPals() const { return std::distance(RANGE(*this)); }
 
 private:
 	template<typename Iter>
-	static void addUniqueColors(std::unordered_set<uint16_t> &colors, Iter iter, Iter const &end,
-	                            std::vector<ProtoPalette> const &protoPals) {
+	static void addUniqueColors(
+	    std::unordered_set<uint16_t> &colors,
+	    Iter iter,
+	    Iter const &end,
+	    std::vector<ProtoPalette> const &protoPals
+	) {
 		for (; iter != end; ++iter) {
 			ProtoPalette const &protoPal = protoPals[iter->protoPalIndex];
 			colors.insert(RANGE(protoPal));
@@ -226,8 +232,8 @@ public:
 	 * Computes the "relative size" of a set of proto-palettes on this palette
 	 */
 	template<typename Iter>
-	auto combinedVolume(Iter &&begin, Iter const &end,
-	                    std::vector<ProtoPalette> const &protoPals) const {
+	auto combinedVolume(Iter &&begin, Iter const &end, std::vector<ProtoPalette> const &protoPals)
+	    const {
 		auto &colors = uniqueColors();
 		addUniqueColors(colors, std::forward<Iter>(begin), end, protoPals);
 		return colors.size();
@@ -243,8 +249,9 @@ public:
 	}
 };
 
-static void decant(std::vector<AssignedProtos> &assignments,
-                   std::vector<ProtoPalette> const &protoPalettes) {
+static void decant(
+    std::vector<AssignedProtos> &assignments, std::vector<ProtoPalette> const &protoPalettes
+) {
 	// "Decanting" is the process of moving all *things* that can fit in a lower index there
 	auto decantOn = [&assignments](auto const &tryDecanting) {
 		// No need to attempt decanting on palette #0, as there are no palettes to decant to
@@ -268,8 +275,9 @@ static void decant(std::vector<AssignedProtos> &assignments,
 		}
 	};
 
-	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes before decanting\n",
-	                     assignments.size());
+	options.verbosePrint(
+	    Options::VERB_DEBUG, "%zu palettes before decanting\n", assignments.size()
+	);
 
 	// Decant on palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
@@ -281,8 +289,9 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			from.clear();
 		}
 	});
-	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n",
-	                     assignments.size());
+	options.verbosePrint(
+	    Options::VERB_DEBUG, "%zu palettes after decanting on palettes\n", assignments.size()
+	);
 
 	// Decant on "components" (= proto-pals sharing colors)
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
@@ -331,8 +340,9 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			}
 		}
 	});
-	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on \"components\"\n",
-	                     assignments.size());
+	options.verbosePrint(
+	    Options::VERB_DEBUG, "%zu palettes after decanting on \"components\"\n", assignments.size()
+	);
 
 	// Decant on individual proto-palettes
 	decantOn([&protoPalettes](AssignedProtos &to, AssignedProtos &from) {
@@ -343,14 +353,16 @@ static void decant(std::vector<AssignedProtos> &assignments,
 			}
 		}
 	});
-	options.verbosePrint(Options::VERB_DEBUG, "%zu palettes after decanting on proto-palettes\n",
-	                     assignments.size());
+	options.verbosePrint(
+	    Options::VERB_DEBUG, "%zu palettes after decanting on proto-palettes\n", assignments.size()
+	);
 }
 
 std::tuple<DefaultInitVec<size_t>, size_t>
     overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes) {
-	options.verbosePrint(Options::VERB_LOG_ACT,
-	                     "Paginating palettes using \"overload-and-remove\" strategy...\n");
+	options.verbosePrint(
+	    Options::VERB_LOG_ACT, "Paginating palettes using \"overload-and-remove\" strategy...\n"
+	);
 
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
 	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
@@ -379,9 +391,14 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				continue;
 			}
 
-			options.verbosePrint(Options::VERB_DEBUG, "%zu/%zu: Rel size: %f (size = %zu)\n", i + 1,
-			                     assignments.size(), assignments[i].relSizeOf(protoPal),
-			                     protoPal.size());
+			options.verbosePrint(
+			    Options::VERB_DEBUG,
+			    "%zu/%zu: Rel size: %f (size = %zu)\n",
+			    i + 1,
+			    assignments.size(),
+			    assignments[i].relSizeOf(protoPal),
+			    protoPal.size()
+			);
 			if (assignments[i].relSizeOf(protoPal) < bestRelSize) {
 				bestPalIndex = i;
 			}
@@ -397,21 +414,26 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 			// If this overloads the palette, get it back to normal (if possible)
 			while (bestPal.volume() > options.maxOpaqueColors()) {
-				options.verbosePrint(Options::VERB_DEBUG,
-				                     "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
-				                     bestPalIndex, bestPal.volume(), options.maxOpaqueColors());
+				options.verbosePrint(
+				    Options::VERB_DEBUG,
+				    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
+				    bestPalIndex,
+				    bestPal.volume(),
+				    options.maxOpaqueColors()
+				);
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
 				auto efficiency = [&bestPal](ProtoPalette const &pal) {
 					return pal.size() / bestPal.relSizeOf(pal);
 				};
-				auto [minEfficiencyIter, maxEfficiencyIter] =
-				    std::minmax_element(RANGE(bestPal),
-				                        [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
-				                                                      ProtoPalAttrs const &rhs) {
-					                        return efficiency(protoPalettes[lhs.protoPalIndex])
-					                               < efficiency(protoPalettes[rhs.protoPalIndex]);
-				                        });
+				auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
+				    RANGE(bestPal),
+				    [&efficiency,
+				     &protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
+					    return efficiency(protoPalettes[lhs.protoPalIndex])
+					           < efficiency(protoPalettes[rhs.protoPalIndex]);
+				    }
+				);
 
 				// All efficiencies are identical iff min equals max
 				// TODO: maybe not ideal to re-compute these two?
@@ -443,18 +465,24 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	while (!queue.empty()) {
 		ProtoPalAttrs const &attrs = queue.front();
 		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
-		auto iter =
-		    std::find_if(RANGE(assignments),
-		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
+		auto iter = std::find_if(RANGE(assignments), [&protoPal](AssignedProtos const &pal) {
+			return pal.canFit(protoPal);
+		});
 		if (iter == assignments.end()) { // No such page, create a new one
-			options.verbosePrint(Options::VERB_DEBUG,
-			                     "Adding new palette (%zu) for overflowing proto-pal %zu\n",
-			                     assignments.size(), attrs.protoPalIndex);
+			options.verbosePrint(
+			    Options::VERB_DEBUG,
+			    "Adding new palette (%zu) for overflowing proto-pal %zu\n",
+			    assignments.size(),
+			    attrs.protoPalIndex
+			);
 			assignments.emplace_back(protoPalettes, std::move(attrs));
 		} else {
-			options.verbosePrint(Options::VERB_DEBUG,
-			                     "Assigning overflowing proto-pal %zu to palette %zu\n",
-			                     attrs.protoPalIndex, iter - assignments.begin());
+			options.verbosePrint(
+			    Options::VERB_DEBUG,
+			    "Assigning overflowing proto-pal %zu to palette %zu\n",
+			    attrs.protoPalIndex,
+			    iter - assignments.begin()
+			);
 			iter->assign(std::move(attrs));
 		}
 		queue.pop();

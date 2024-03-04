@@ -6,8 +6,8 @@
 // Ideally, we'd use `__has_attribute` and `__has_builtin`, but these were only introduced in GCC 9
 #ifdef __GNUC__ // GCC or compatible
 	#define format_(archetype, str_index, first_arg) \
-		__attribute__ ((format (archetype, str_index, first_arg)))
-	#define attr_(...) __attribute__ ((__VA_ARGS__))
+		__attribute__((format(archetype, str_index, first_arg)))
+	#define attr_(...) __attribute__((__VA_ARGS__))
 	// In release builds, define "unreachable" as such, but trap in debug builds
 	#ifdef NDEBUG
 		#define unreachable_ __builtin_unreachable
@@ -18,9 +18,10 @@
 	// Unsupported, but no need to throw a fit
 	#define format_(archetype, str_index, first_arg)
 	#define attr_(...)
-	// This seems to generate similar code to __builtin_unreachable, despite different semantics
-	// Note that executing this is undefined behavior (declared [[noreturn]], but does return)
-	[[noreturn]] static inline void unreachable_() {}
+// This seems to generate similar code to __builtin_unreachable, despite different semantics
+// Note that executing this is undefined behavior (declared [[noreturn]], but does return)
+[[noreturn]] static inline void unreachable_() {
+}
 #endif
 
 // Use builtins whenever possible, and shim them otherwise
@@ -32,50 +33,46 @@
 	#include <assert.h>
 	#include <intrin.h>
 	#pragma intrinsic(_BitScanReverse, _BitScanForward)
-	static inline int ctz(unsigned int x)
-	{
-		unsigned long cnt;
+static inline int ctz(unsigned int x) {
+	unsigned long cnt;
 
-		assert(x != 0);
-		_BitScanForward(&cnt, x);
-		return cnt;
-	}
-	static inline int clz(unsigned int x)
-	{
-		unsigned long cnt;
+	assert(x != 0);
+	_BitScanForward(&cnt, x);
+	return cnt;
+}
+static inline int clz(unsigned int x) {
+	unsigned long cnt;
 
-		assert(x != 0);
-		_BitScanReverse(&cnt, x);
-		return 31 - cnt;
-	}
+	assert(x != 0);
+	_BitScanReverse(&cnt, x);
+	return 31 - cnt;
+}
 
 #else
 	#include <limits.h>
-	static inline int ctz(unsigned int x)
-	{
-		int cnt = 0;
+static inline int ctz(unsigned int x) {
+	int cnt = 0;
 
-		while (!(x & 1)) {
-			x >>= 1;
-			cnt++;
-		}
-		return cnt;
+	while (!(x & 1)) {
+		x >>= 1;
+		cnt++;
 	}
+	return cnt;
+}
 
-	static inline int clz(unsigned int x)
-	{
-		int cnt = 0;
+static inline int clz(unsigned int x) {
+	int cnt = 0;
 
-		while (x <= UINT_MAX / 2) {
-			x <<= 1;
-			cnt++;
-		}
-		return cnt;
+	while (x <= UINT_MAX / 2) {
+		x <<= 1;
+		cnt++;
 	}
+	return cnt;
+}
 #endif
 
 // Macros for stringification
-#define STR(x) #x
+#define STR(x)            #x
 #define EXPAND_AND_STR(x) STR(x)
 
 // Obtaining the size of an array; `arr` must be an expression, not a type!

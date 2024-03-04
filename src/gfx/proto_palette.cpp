@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-#include "helpers.hpp"
-
 #include "gfx/proto_palette.hpp"
 
 #include <algorithm>
@@ -9,6 +7,8 @@
 #include <cassert>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "helpers.hpp"
 
 bool ProtoPalette::add(uint16_t color) {
 	size_t i = 0;

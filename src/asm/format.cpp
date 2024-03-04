@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/format.hpp"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
@@ -9,11 +11,9 @@
 #include <string.h>
 
 #include "asm/fixpoint.hpp"
-#include "asm/format.hpp"
 #include "asm/warning.hpp"
 
-void FormatSpec::useCharacter(int c)
-{
+void FormatSpec::useCharacter(int c) {
 	if (state == FORMAT_INVALID)
 		return;
 
@@ -99,14 +99,12 @@ invalid:
 	}
 }
 
-void FormatSpec::finishCharacters()
-{
+void FormatSpec::finishCharacters() {
 	if (!isValid())
 		state = FORMAT_INVALID;
 }
 
-void FormatSpec::printString(char *buf, size_t bufLen, char const *value)
-{
+void FormatSpec::printString(char *buf, size_t bufLen, char const *value) {
 	if (isEmpty()) {
 		// No format was specified
 		type = 's';
@@ -149,8 +147,7 @@ void FormatSpec::printString(char *buf, size_t bufLen, char const *value)
 	buf[totalLen] = '\0';
 }
 
-void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value)
-{
+void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 	if (isEmpty()) {
 		// No format was specified; default to uppercase $hex
 		type = 'X';
@@ -175,12 +172,12 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value)
 		}
 	}
 
-	char prefixChar = !prefix ? 0
-		: type == 'X' ? '$'
-		: type == 'x' ? '$'
-		: type == 'b' ? '%'
-		: type == 'o' ? '&'
-		: 0;
+	char prefixChar = !prefix       ? 0
+	                  : type == 'X' ? '$'
+	                  : type == 'x' ? '$'
+	                  : type == 'b' ? '%'
+	                  : type == 'o' ? '&'
+	                                : 0;
 
 	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
 
@@ -215,15 +212,16 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value)
 			cappedFracWidth = 255;
 		}
 
-		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth,
-			 value / fix_PrecisionFactor());
+		snprintf(
+		    valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth, value / fix_PrecisionFactor()
+		);
 	} else {
-		char const *spec = type == 'd' ? "%" PRId32
-				 : type == 'u' ? "%" PRIu32
-				 : type == 'X' ? "%" PRIX32
-				 : type == 'x' ? "%" PRIx32
-				 : type == 'o' ? "%" PRIo32
-				 : "%" PRId32;
+		char const *spec = type == 'd'   ? "%" PRId32
+		                   : type == 'u' ? "%" PRIu32
+		                   : type == 'X' ? "%" PRIX32
+		                   : type == 'x' ? "%" PRIx32
+		                   : type == 'o' ? "%" PRIo32
+		                                 : "%" PRId32;
 
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}

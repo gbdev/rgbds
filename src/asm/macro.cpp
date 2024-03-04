@@ -1,14 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/macro.hpp"
+
 #include <errno.h>
-#include <new>
 #include <inttypes.h>
+#include <new>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
 
-#include "asm/macro.hpp"
 #include "asm/warning.hpp"
 
 #define MAXMACROARGS 99999
@@ -19,8 +20,7 @@ static uint32_t maxUniqueID = 0;
 static char uniqueIDBuf[sizeof("_u4294967295")] = {}; // UINT32_MAX
 static char *uniqueIDPtr = nullptr;
 
-void MacroArgs::append(std::string s)
-{
+void MacroArgs::append(std::string s) {
 	if (s.empty())
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
 	if (args.size() == MAXMACROARGS)
@@ -28,18 +28,15 @@ void MacroArgs::append(std::string s)
 	args.push_back(s);
 }
 
-MacroArgs *macro_GetCurrentArgs()
-{
+MacroArgs *macro_GetCurrentArgs() {
 	return macroArgs;
 }
 
-void macro_UseNewArgs(MacroArgs *args)
-{
+void macro_UseNewArgs(MacroArgs *args) {
 	macroArgs = args;
 }
 
-char const *macro_GetArg(uint32_t i)
-{
+char const *macro_GetArg(uint32_t i) {
 	if (!macroArgs)
 		return nullptr;
 
@@ -48,8 +45,7 @@ char const *macro_GetArg(uint32_t i)
 	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex].c_str();
 }
 
-char const *macro_GetAllArgs()
-{
+char const *macro_GetAllArgs() {
 	if (!macroArgs)
 		return nullptr;
 
@@ -85,13 +81,11 @@ char const *macro_GetAllArgs()
 	return str;
 }
 
-uint32_t macro_GetUniqueID()
-{
+uint32_t macro_GetUniqueID() {
 	return uniqueID;
 }
 
-char const *macro_GetUniqueIDStr()
-{
+char const *macro_GetUniqueIDStr() {
 	// Generate a new unique ID on the first use of `\@`
 	if (uniqueID == 0)
 		macro_SetUniqueID(++maxUniqueID);
@@ -99,8 +93,7 @@ char const *macro_GetUniqueIDStr()
 	return uniqueIDPtr;
 }
 
-void macro_SetUniqueID(uint32_t id)
-{
+void macro_SetUniqueID(uint32_t id) {
 	uniqueID = id;
 	if (id == 0 || id == (uint32_t)-1) {
 		uniqueIDPtr = nullptr;
@@ -112,26 +105,23 @@ void macro_SetUniqueID(uint32_t id)
 	}
 }
 
-uint32_t macro_UseNewUniqueID()
-{
+uint32_t macro_UseNewUniqueID() {
 	// A new ID will be generated on the first use of `\@`
 	macro_SetUniqueID(0);
 	return uniqueID;
 }
 
-uint32_t macro_UndefUniqueID()
-{
+uint32_t macro_UndefUniqueID() {
 	// No ID will be generated; use of `\@` is an error
 	macro_SetUniqueID((uint32_t)-1);
 	return uniqueID;
 }
 
-void macro_ShiftCurrentArgs(int32_t count)
-{
+void macro_ShiftCurrentArgs(int32_t count) {
 	if (!macroArgs) {
 		error("Cannot shift macro arguments outside of a macro\n");
 	} else if (size_t nbArgs = macroArgs->args.size();
-		   count > 0 && ((uint32_t)count > nbArgs || macroArgs->shift > nbArgs - count)) {
+	           count > 0 && ((uint32_t)count > nbArgs || macroArgs->shift > nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
 		macroArgs->shift = nbArgs;
 	} else if (count < 0 && macroArgs->shift < (uint32_t)-count) {
@@ -142,7 +132,6 @@ void macro_ShiftCurrentArgs(int32_t count)
 	}
 }
 
-uint32_t macro_NbArgs()
-{
+uint32_t macro_NbArgs() {
 	return macroArgs->args.size() - macroArgs->shift;
 }

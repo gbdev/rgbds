@@ -111,10 +111,13 @@ class Png {
 		std::streamsize nbBytesRead = self->file.sgetn(reinterpret_cast<char *>(data), expectedLen);
 
 		if (nbBytesRead != expectedLen) {
-			fatal("Error reading input image (\"%s\"): file too short (expected at least %zd more "
-			      "bytes after reading %zu)",
-			      self->path.c_str(), length - nbBytesRead,
-			      (size_t)self->file.pubseekoff(0, std::ios_base::cur));
+			fatal(
+			    "Error reading input image (\"%s\"): file too short (expected at least %zd more "
+			    "bytes after reading %zu)",
+			    self->path.c_str(),
+			    length - nbBytesRead,
+			    (size_t)self->file.pubseekoff(0, std::ios_base::cur)
+			);
 		}
 	}
 
@@ -149,8 +152,9 @@ public:
 			fatal("Input file (\"%s\") is not a PNG image!", path.c_str());
 		}
 
-		png = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)this, handleError,
-		                             handleWarning);
+		png = png_create_read_struct(
+		    PNG_LIBPNG_VER_STRING, (png_voidp)this, handleError, handleWarning
+		);
 		if (!png) {
 			fatal("Failed to allocate PNG structure: %s", strerror(errno));
 		}
@@ -174,8 +178,9 @@ public:
 
 		int bitDepth, interlaceType; //, compressionType, filterMethod;
 
-		png_get_IHDR(png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr,
-		             nullptr);
+		png_get_IHDR(
+		    png, info, &width, &height, &bitDepth, &colorType, &interlaceType, nullptr, nullptr
+		);
 
 		if (width % 8 != 0) {
 			fatal("Image width (%" PRIu32 " pixels) is not a multiple of 8!", width);
@@ -308,19 +313,36 @@ static char *execProg(char const *name, char * const *argv) {
 		fatal("Error waiting for %s: %s", name, strerror(errno));
 	} else if (info.si_code != CLD_EXITED) {
 		assert(info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
-		fatal("%s was terminated by signal %s%s\n\tThe command was: [%s]", name, strsignal(info.si_status),
-		      info.si_code == CLD_DUMPED ? " (core dumped)" : "", formatArgv());
+		fatal(
+		    "%s was terminated by signal %s%s\n\tThe command was: [%s]",
+		    name,
+		    strsignal(info.si_status),
+		    info.si_code == CLD_DUMPED ? " (core dumped)" : "",
+		    formatArgv()
+		);
 	} else if (info.si_status != 0) {
-		fatal("%s returned with status %d\n\tThe command was: [%s]", name, info.si_status, formatArgv());
+		fatal(
+		    "%s returned with status %d\n\tThe command was: [%s]",
+		    name,
+		    info.si_status,
+		    formatArgv()
+		);
 	}
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
 
 	auto winStrerror = [](DWORD errnum) {
 		LPTSTR buf;
-		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-		                      | FORMAT_MESSAGE_MAX_WIDTH_MASK,
-		                  nullptr, errnum, 0, (LPTSTR)&buf, 0, nullptr)
+		if (FormatMessage(
+		        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+		            | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+		        nullptr,
+		        errnum,
+		        0,
+		        (LPTSTR)&buf,
+		        0,
+		        nullptr
+		    )
 		    == 0) {
 			fatal("Failed to get error message for error 0x%x", errnum);
 		}
@@ -341,28 +363,31 @@ static char *execProg(char const *name, char * const *argv) {
 
 	STARTUPINFOA startupInfo;
 	GetStartupInfoA(&startupInfo);
-	STARTUPINFOA childStartupInfo{sizeof(startupInfo),
-	                              nullptr,
-	                              nullptr,
-	                              nullptr,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              0,
-	                              nullptr,
-	                              0,
-	                              0,
-	                              0};
+	STARTUPINFOA childStartupInfo{
+	    sizeof(startupInfo),
+	    nullptr,
+	    nullptr,
+	    nullptr,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    0,
+	    nullptr,
+	    0,
+	    0,
+	    0,
+	};
 
 	PROCESS_INFORMATION child;
-	if (CreateProcessA(nullptr, cmdLine, nullptr, nullptr, true, 0, nullptr, nullptr,
-	                   &childStartupInfo, &child)
+	if (CreateProcessA(
+	        nullptr, cmdLine, nullptr, nullptr, true, 0, nullptr, nullptr, &childStartupInfo, &child
+	    )
 	    == 0) {
 		return winStrerror(GetLastError());
 	}
@@ -395,8 +420,9 @@ int main(int argc, char *argv[]) {
 		char *args[] = {path, argv[1], file, nullptr};
 
 		if (auto ret = execProg("randtilegen", args); ret != nullptr) {
-			fatal("Failed to execute ./randtilegen (%s). Is it in the current working directory?",
-			      ret);
+			fatal(
+			    "Failed to execute ./randtilegen (%s). Is it in the current working directory?", ret
+			);
 		}
 	}
 
@@ -405,7 +431,8 @@ int main(int argc, char *argv[]) {
 		     pal_opt[] = "-p", pal_file[] = "result.pal", attr_opt[] = "-a",
 		     attr_file[] = "result.attrmap", in_file[] = "out0.png";
 		std::vector<char *> args(
-		    {path, out_opt, out_file, pal_opt, pal_file, attr_opt, attr_file, in_file});
+		    {path, out_opt, out_file, pal_opt, pal_file, attr_opt, attr_file, in_file}
+		);
 		// Also copy the trailing `nullptr`
 		std::copy_n(&argv[2], argc - 1, std::back_inserter(args));
 
@@ -422,8 +449,17 @@ int main(int argc, char *argv[]) {
 		     attr_opt[] = "-a", attr_file[] = "result.attrmap", in_file[] = "result.png";
 		auto width_string = std::to_string(image0.getWidth() / 8);
 		std::vector<char *> args = {
-		    path,     reverse_opt, width_string.data(), out_opt, out_file, pal_opt,
-		    pal_file, attr_opt,    attr_file,           in_file};
+		    path,
+		    reverse_opt,
+		    width_string.data(),
+		    out_opt,
+		    out_file,
+		    pal_opt,
+		    pal_file,
+		    attr_opt,
+		    attr_file,
+		    in_file,
+		};
 		// Also copy the trailing `nullptr`
 		std::copy_n(&argv[2], argc - 1, std::back_inserter(args));
 
@@ -456,10 +492,20 @@ int main(int argc, char *argv[]) {
 			};
 
 			if (cgbColor(px0) != cgbColor(px1)) {
-				error("Color mismatch at (%" PRIu32 ", %" PRIu32
-				      "): (%u,%u,%u,%u) became (%u,%u,%u,%u) after round-tripping",
-				      x, y, px0.red, px0.green, px0.blue, px0.alpha, px1.red, px1.green, px1.blue,
-				      px1.alpha);
+				error(
+				    "Color mismatch at (%" PRIu32 ", %" PRIu32
+				    "): (%u,%u,%u,%u) became (%u,%u,%u,%u) after round-tripping",
+				    x,
+				    y,
+				    px0.red,
+				    px0.green,
+				    px0.blue,
+				    px0.alpha,
+				    px1.red,
+				    px1.green,
+				    px1.blue,
+				    px1.alpha
+				);
 			}
 		}
 	}

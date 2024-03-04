@@ -10,7 +10,6 @@ extern "C" {
 #define PACKAGE_VERSION_PATCH 0
 
 char const *get_package_version_string();
-
 }
 
 #endif // EXTERN_VERSION_H

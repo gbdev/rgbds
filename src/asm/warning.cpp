@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/warning.hpp"
+
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -8,48 +10,46 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "asm/fstack.hpp"
-#include "asm/main.hpp"
-#include "asm/warning.hpp"
-
 #include "error.hpp"
 #include "itertools.hpp"
+
+#include "asm/fstack.hpp"
+#include "asm/main.hpp"
 
 unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
 static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
-	WARNING_ENABLED,  // WARNING_ASSERT
-	WARNING_DISABLED, // WARNING_BACKWARDS_FOR
-	WARNING_DISABLED, // WARNING_BUILTIN_ARG
-	WARNING_DISABLED, // WARNING_CHARMAP_REDEF
-	WARNING_DISABLED, // WARNING_DIV
-	WARNING_DISABLED, // WARNING_EMPTY_DATA_DIRECTIVE
-	WARNING_DISABLED, // WARNING_EMPTY_MACRO_ARG
-	WARNING_DISABLED, // WARNING_EMPTY_STRRPL
-	WARNING_DISABLED, // WARNING_LARGE_CONSTANT
-	WARNING_DISABLED, // WARNING_LONG_STR
-	WARNING_DISABLED, // WARNING_MACRO_SHIFT
-	WARNING_ENABLED,  // WARNING_NESTED_COMMENT
-	WARNING_ENABLED,  // WARNING_OBSOLETE
-	WARNING_DISABLED, // WARNING_SHIFT
-	WARNING_DISABLED, // WARNING_SHIFT_AMOUNT
-	WARNING_ENABLED,  // WARNING_USER
+    WARNING_ENABLED,  // WARNING_ASSERT
+    WARNING_DISABLED, // WARNING_BACKWARDS_FOR
+    WARNING_DISABLED, // WARNING_BUILTIN_ARG
+    WARNING_DISABLED, // WARNING_CHARMAP_REDEF
+    WARNING_DISABLED, // WARNING_DIV
+    WARNING_DISABLED, // WARNING_EMPTY_DATA_DIRECTIVE
+    WARNING_DISABLED, // WARNING_EMPTY_MACRO_ARG
+    WARNING_DISABLED, // WARNING_EMPTY_STRRPL
+    WARNING_DISABLED, // WARNING_LARGE_CONSTANT
+    WARNING_DISABLED, // WARNING_LONG_STR
+    WARNING_DISABLED, // WARNING_MACRO_SHIFT
+    WARNING_ENABLED,  // WARNING_NESTED_COMMENT
+    WARNING_ENABLED,  // WARNING_OBSOLETE
+    WARNING_DISABLED, // WARNING_SHIFT
+    WARNING_DISABLED, // WARNING_SHIFT_AMOUNT
+    WARNING_ENABLED,  // WARNING_USER
 
-	WARNING_ENABLED,  // WARNING_NUMERIC_STRING_1
-	WARNING_DISABLED, // WARNING_NUMERIC_STRING_2
-	WARNING_ENABLED,  // WARNING_TRUNCATION_1
-	WARNING_DISABLED, // WARNING_TRUNCATION_2
-	WARNING_ENABLED,  // WARNING_UNMAPPED_CHAR_1
-	WARNING_DISABLED, // WARNING_UNMAPPED_CHAR_2
+    WARNING_ENABLED,  // WARNING_NUMERIC_STRING_1
+    WARNING_DISABLED, // WARNING_NUMERIC_STRING_2
+    WARNING_ENABLED,  // WARNING_TRUNCATION_1
+    WARNING_DISABLED, // WARNING_TRUNCATION_2
+    WARNING_ENABLED,  // WARNING_UNMAPPED_CHAR_1
+    WARNING_DISABLED, // WARNING_UNMAPPED_CHAR_2
 };
 
 enum WarningState warningStates[ARRAY_SIZE(warningStates)];
 
 bool warningsAreErrors; // Set if `-Werror` was specified
 
-static enum WarningState warningState(enum WarningID id)
-{
+static enum WarningState warningState(enum WarningID id) {
 	// Check if warnings are globally disabled
 	if (!warnings)
 		return WARNING_DISABLED;
@@ -68,35 +68,35 @@ static enum WarningState warningState(enum WarningID id)
 }
 
 static const char * const warningFlags[NB_WARNINGS] = {
-	"assert",
-	"backwards-for",
-	"builtin-args",
-	"charmap-redef",
-	"div",
-	"empty-data-directive",
-	"empty-macro-arg",
-	"empty-strrpl",
-	"large-constant",
-	"long-string",
-	"macro-shift",
-	"nested-comment",
-	"obsolete",
-	"shift",
-	"shift-amount",
-	"user",
+    "assert",
+    "backwards-for",
+    "builtin-args",
+    "charmap-redef",
+    "div",
+    "empty-data-directive",
+    "empty-macro-arg",
+    "empty-strrpl",
+    "large-constant",
+    "long-string",
+    "macro-shift",
+    "nested-comment",
+    "obsolete",
+    "shift",
+    "shift-amount",
+    "user",
 
-	// Parametric warnings
-	"numeric-string",
-	"numeric-string",
-	"truncation",
-	"truncation",
-	"unmapped-char",
-	"unmapped-char",
+    // Parametric warnings
+    "numeric-string",
+    "numeric-string",
+    "truncation",
+    "truncation",
+    "unmapped-char",
+    "unmapped-char",
 
-	// Meta warnings
-	"all",
-	"extra",
-	"everything", // Especially useful for testing
+    // Meta warnings
+    "all",
+    "extra",
+    "everything", // Especially useful for testing
 };
 
 static const struct {
@@ -104,13 +104,12 @@ static const struct {
 	uint8_t nbLevels;
 	uint8_t defaultLevel;
 } paramWarnings[] = {
-	{ "numeric-string", 2, 1 },
-	{ "truncation", 2, 2 },
-	{ "unmapped-char", 2, 1 },
+    {"numeric-string", 2, 1},
+    {"truncation",     2, 2},
+    {"unmapped-char",  2, 1},
 };
 
-static bool tryProcessParamWarning(char const *flag, uint8_t param, enum WarningState state)
-{
+static bool tryProcessParamWarning(char const *flag, uint8_t param, enum WarningState state) {
 	enum WarningID baseID = PARAM_WARNINGS_START;
 
 	for (size_t i = 0; i < ARRAY_SIZE(paramWarnings); i++) {
@@ -126,17 +125,19 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 				param = paramWarnings[i].defaultLevel;
 			} else if (param > maxParam) {
 				if (param != 255) // Don't  warn if already capped
-					warnx("Got parameter %" PRIu8
-					      " for warning flag \"%s\", but the maximum is %"
-					      PRIu8 "; capping.\n",
-					      param, flag, maxParam);
+					warnx(
+					    "Got parameter %" PRIu8
+					    " for warning flag \"%s\", but the maximum is %" PRIu8 "; capping.\n",
+					    param,
+					    flag,
+					    maxParam
+					);
 				param = maxParam;
 			}
 
 			// Set the first <param> to enabled/error, and disable the rest
 			for (uint8_t ofs = 0; ofs < maxParam; ofs++) {
-				warningStates[baseID + ofs] =
-					ofs < param ? state : WARNING_DISABLED;
+				warningStates[baseID + ofs] = ofs < param ? state : WARNING_DISABLED;
 			}
 			return true;
 		}
@@ -146,73 +147,70 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 	return false;
 }
 
-enum MetaWarningCommand {
-	META_WARNING_DONE = NB_WARNINGS
-};
+enum MetaWarningCommand { META_WARNING_DONE = NB_WARNINGS };
 
 // Warnings that probably indicate an error
 static uint8_t const _wallCommands[] = {
-	WARNING_BACKWARDS_FOR,
-	WARNING_BUILTIN_ARG,
-	WARNING_CHARMAP_REDEF,
-	WARNING_EMPTY_DATA_DIRECTIVE,
-	WARNING_EMPTY_STRRPL,
-	WARNING_LARGE_CONSTANT,
-	WARNING_LONG_STR,
-	WARNING_NESTED_COMMENT,
-	WARNING_OBSOLETE,
-	WARNING_NUMERIC_STRING_1,
-	WARNING_UNMAPPED_CHAR_1,
-	META_WARNING_DONE
+    WARNING_BACKWARDS_FOR,
+    WARNING_BUILTIN_ARG,
+    WARNING_CHARMAP_REDEF,
+    WARNING_EMPTY_DATA_DIRECTIVE,
+    WARNING_EMPTY_STRRPL,
+    WARNING_LARGE_CONSTANT,
+    WARNING_LONG_STR,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_NUMERIC_STRING_1,
+    WARNING_UNMAPPED_CHAR_1,
+    META_WARNING_DONE,
 };
 
 // Warnings that are less likely to indicate an error
 static uint8_t const _wextraCommands[] = {
-	WARNING_EMPTY_MACRO_ARG,
-	WARNING_MACRO_SHIFT,
-	WARNING_NESTED_COMMENT,
-	WARNING_OBSOLETE,
-	WARNING_NUMERIC_STRING_2,
-	WARNING_TRUNCATION_1,
-	WARNING_TRUNCATION_2,
-	WARNING_UNMAPPED_CHAR_1,
-	WARNING_UNMAPPED_CHAR_2,
-	META_WARNING_DONE
+    WARNING_EMPTY_MACRO_ARG,
+    WARNING_MACRO_SHIFT,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_NUMERIC_STRING_2,
+    WARNING_TRUNCATION_1,
+    WARNING_TRUNCATION_2,
+    WARNING_UNMAPPED_CHAR_1,
+    WARNING_UNMAPPED_CHAR_2,
+    META_WARNING_DONE,
 };
 
 // Literally everything. Notably useful for testing
 static uint8_t const _weverythingCommands[] = {
-	WARNING_BACKWARDS_FOR,
-	WARNING_BUILTIN_ARG,
-	WARNING_DIV,
-	WARNING_EMPTY_DATA_DIRECTIVE,
-	WARNING_EMPTY_MACRO_ARG,
-	WARNING_EMPTY_STRRPL,
-	WARNING_LARGE_CONSTANT,
-	WARNING_LONG_STR,
-	WARNING_MACRO_SHIFT,
-	WARNING_NESTED_COMMENT,
-	WARNING_OBSOLETE,
-	WARNING_SHIFT,
-	WARNING_SHIFT_AMOUNT,
-	WARNING_NUMERIC_STRING_1,
-	WARNING_NUMERIC_STRING_2,
-	WARNING_TRUNCATION_1,
-	WARNING_TRUNCATION_2,
-	WARNING_UNMAPPED_CHAR_1,
-	WARNING_UNMAPPED_CHAR_2,
-	// WARNING_USER,
-	META_WARNING_DONE
+    WARNING_BACKWARDS_FOR,
+    WARNING_BUILTIN_ARG,
+    WARNING_DIV,
+    WARNING_EMPTY_DATA_DIRECTIVE,
+    WARNING_EMPTY_MACRO_ARG,
+    WARNING_EMPTY_STRRPL,
+    WARNING_LARGE_CONSTANT,
+    WARNING_LONG_STR,
+    WARNING_MACRO_SHIFT,
+    WARNING_NESTED_COMMENT,
+    WARNING_OBSOLETE,
+    WARNING_SHIFT,
+    WARNING_SHIFT_AMOUNT,
+    WARNING_NUMERIC_STRING_1,
+    WARNING_NUMERIC_STRING_2,
+    WARNING_TRUNCATION_1,
+    WARNING_TRUNCATION_2,
+    WARNING_UNMAPPED_CHAR_1,
+    WARNING_UNMAPPED_CHAR_2,
+    // WARNING_USER,
+    META_WARNING_DONE,
 };
 
 static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {
-	_wallCommands,
-	_wextraCommands,
-	_weverythingCommands
+    _wallCommands,
+    _wextraCommands,
+    _weverythingCommands,
 };
 
-void processWarningFlag(char *flag)
-{
+void processWarningFlag(char *flag) {
 	static bool setError = false;
 
 	// First, try to match against a "meta" warning
@@ -221,11 +219,11 @@ void processWarningFlag(char *flag)
 		if (!strcmp(flag, warningFlags[id])) {
 			// We got a match!
 			if (setError)
-				errx("Cannot make meta warning \"%s\" into an error",
-				     flag);
+				errx("Cannot make meta warning \"%s\" into an error", flag);
 
 			for (uint8_t const *ptr = metaWarningCommands[id - META_WARNINGS_START];
-			     *ptr != META_WARNING_DONE; ptr++) {
+			     *ptr != META_WARNING_DONE;
+			     ptr++) {
 				// Warning flag, set without override
 				if (warningStates[*ptr] == WARNING_DEFAULT)
 					warningStates[*ptr] = WARNING_ENABLED;
@@ -252,16 +250,16 @@ void processWarningFlag(char *flag)
 			setError = false;
 			return;
 
-		// Otherwise, allow parsing as another flag
+			// Otherwise, allow parsing as another flag
 		}
 	}
 
 	// Well, it's either a normal warning or a mistake
 
 	enum WarningState state = setError ? WARNING_ERROR
-				  // Not an error, then check if this is a negation
-				  : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
-				  : WARNING_DISABLED;
+	                          // Not an error, then check if this is a negation
+	                          : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
+	                                                                : WARNING_DISABLED;
 	char *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
 
 	// Is this a "parametric" warning?
@@ -284,8 +282,7 @@ void processWarningFlag(char *flag)
 				// Avoid overflowing!
 				if (param > UINT8_MAX - (*ptr - '0')) {
 					if (!warned)
-						warnx("Invalid warning flag \"%s\": capping parameter at 255\n",
-						      flag);
+						warnx("Invalid warning flag \"%s\": capping parameter at 255\n", flag);
 					warned = true; // Only warn once, cap always
 					param = 255;
 					continue;
@@ -303,8 +300,7 @@ void processWarningFlag(char *flag)
 					return;
 				}
 				*equals = '\0'; // Truncate the param at the '='
-				if (tryProcessParamWarning(rootFlag, param,
-							   param == 0 ? WARNING_DISABLED : state))
+				if (tryProcessParamWarning(rootFlag, param, param == 0 ? WARNING_DISABLED : state))
 					return;
 			}
 		}
@@ -327,9 +323,9 @@ void processWarningFlag(char *flag)
 	warnx("Unknown warning `%s`", flag);
 }
 
-void printDiag(char const *fmt, va_list args, char const *type,
-	       char const *flagfmt, char const *flag)
-{
+void printDiag(
+    char const *fmt, va_list args, char const *type, char const *flagfmt, char const *flag
+) {
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	fstk_DumpCurrent();
@@ -339,8 +335,7 @@ void printDiag(char const *fmt, va_list args, char const *type,
 	lexer_DumpStringExpansions();
 }
 
-void error(char const *fmt, ...)
-{
+void error(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -350,12 +345,15 @@ void error(char const *fmt, ...)
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
 	if (nbErrors == maxErrors)
-		errx("The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly aborted!",
-		     maxErrors, maxErrors == 1 ? "" : "s");
+		errx(
+		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
+		    "aborted!",
+		    maxErrors,
+		    maxErrors == 1 ? "" : "s"
+		);
 }
 
-[[noreturn]] void fatalerror(char const *fmt, ...)
-{
+[[noreturn]] void fatalerror(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -365,8 +363,7 @@ void error(char const *fmt, ...)
 	exit(1);
 }
 
-void warning(enum WarningID id, char const *fmt, ...)
-{
+void warning(enum WarningID id, char const *fmt, ...) {
 	char const *flag = warningFlags[id];
 	va_list args;
 

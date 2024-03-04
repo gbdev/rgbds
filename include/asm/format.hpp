@@ -3,6 +3,7 @@
 #ifndef RGBDS_FORMAT_SPEC_H
 #define RGBDS_FORMAT_SPEC_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 enum FormatState {
@@ -30,7 +31,7 @@ class FormatSpec {
 public:
 	bool isEmpty() const { return !state; }
 	bool isValid() const { return valid || state == FORMAT_DONE; }
-	bool isFinished() const { return state >= FORMAT_DONE;}
+	bool isFinished() const { return state >= FORMAT_DONE; }
 
 	void useCharacter(int c);
 	void finishCharacters();

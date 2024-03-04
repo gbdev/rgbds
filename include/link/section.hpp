@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "link/main.hpp"
-
 #include "linkdefs.hpp"
+
+#include "link/main.hpp"
 
 struct FileStackNode;
 struct Section;

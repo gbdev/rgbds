@@ -33,59 +33,48 @@ struct OptStackEntry {
 
 static std::stack<OptStackEntry> stack;
 
-void opt_B(char const chars[2])
-{
+void opt_B(char const chars[2]) {
 	lexer_SetBinDigits(chars);
 }
 
-void opt_G(char const chars[4])
-{
+void opt_G(char const chars[4]) {
 	lexer_SetGfxDigits(chars);
 }
 
-void opt_P(uint8_t padByte)
-{
+void opt_P(uint8_t padByte) {
 	fillByte = padByte;
 }
 
-void opt_Q(uint8_t precision)
-{
+void opt_Q(uint8_t precision) {
 	fixPrecision = precision;
 }
 
-void opt_R(size_t newDepth)
-{
+void opt_R(size_t newDepth) {
 	fstk_NewRecursionDepth(newDepth);
 	lexer_CheckRecursionDepth();
 }
 
-void opt_H(bool warn)
-{
+void opt_H(bool warn) {
 	warnOnHaltNop = warn;
 }
 
-void opt_h(bool halt)
-{
+void opt_h(bool halt) {
 	haltNop = halt;
 }
 
-void opt_L(bool optimize)
-{
+void opt_L(bool optimize) {
 	optimizeLoads = optimize;
 }
 
-void opt_l(bool warn)
-{
+void opt_l(bool warn) {
 	warnOnLdOpt = warn;
 }
 
-void opt_W(char *flag)
-{
+void opt_W(char *flag) {
 	processWarningFlag(flag);
 }
 
-void opt_Parse(char *s)
-{
+void opt_Parse(char *s) {
 	switch (s[0]) {
 	case 'b':
 		if (strlen(&s[1]) == 2)
@@ -239,8 +228,7 @@ void opt_Parse(char *s)
 	}
 }
 
-void opt_Push()
-{
+void opt_Push() {
 	OptStackEntry entry;
 
 	// Both of these are pulled from lexer.hpp
@@ -273,8 +261,7 @@ void opt_Push()
 	stack.push(entry);
 }
 
-void opt_Pop()
-{
+void opt_Pop() {
 	if (stack.empty()) {
 		error("No entries in the option stack\n");
 		return;

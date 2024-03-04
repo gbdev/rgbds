@@ -34,13 +34,13 @@ struct Expansion {
 		char const *unowned;
 		char *owned; // Non-`const` only so it can be `delete []`d
 	} contents;
-	size_t size; // Length of the contents
+	size_t size;   // Length of the contents
 	size_t offset; // Cursor into the contents
-	bool owned; // Whether or not to free contents when this expansion is freed
+	bool owned;    // Whether or not to free contents when this expansion is freed
 };
 
 struct IfStackEntry {
-	bool ranIfBlock; // Whether an IF/ELIF/ELSE block ran already
+	bool ranIfBlock;       // Whether an IF/ELIF/ELSE block ran already
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
@@ -59,9 +59,9 @@ struct ViewedLexerState {
 
 struct BufferedLexerState {
 	int fd;
-	size_t index; // Read index into the buffer
+	size_t index;             // Read index into the buffer
 	char buf[LEXER_BUF_SIZE]; // Circular buffer
-	size_t nbChars; // Number of "fresh" chars in the buffer
+	size_t nbChars;           // Number of "fresh" chars in the buffer
 };
 
 struct LexerState {
@@ -75,8 +75,8 @@ struct LexerState {
 
 	std::deque<IfStackEntry> ifStack;
 
-	bool capturing; // Whether the text being lexed should be captured
-	size_t captureSize; // Amount of text captured
+	bool capturing;                // Whether the text being lexed should be captured
+	size_t captureSize;            // Amount of text captured
 	std::vector<char> *captureBuf; // Buffer to send the captured text to if non-null
 
 	bool disableMacroArgs;
@@ -85,38 +85,29 @@ struct LexerState {
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
-	std::variant<
-		std::monostate,
-		MmappedLexerState,
-		ViewedLexerState,
-		BufferedLexerState
-	> content;
+	std::variant<std::monostate, MmappedLexerState, ViewedLexerState, BufferedLexerState> content;
 };
 
 extern LexerState *lexerState;
 extern LexerState *lexerStateEOL;
 
-static inline void lexer_SetState(LexerState *state)
-{
+static inline void lexer_SetState(LexerState *state) {
 	lexerState = state;
 }
 
-static inline void lexer_SetStateAtEOL(LexerState *state)
-{
+static inline void lexer_SetStateAtEOL(LexerState *state) {
 	lexerStateEOL = state;
 }
 
 extern char binDigits[2];
 extern char gfxDigits[4];
 
-static inline void lexer_SetBinDigits(char const digits[2])
-{
+static inline void lexer_SetBinDigits(char const digits[2]) {
 	binDigits[0] = digits[0];
 	binDigits[1] = digits[1];
 }
 
-static inline void lexer_SetGfxDigits(char const digits[4])
-{
+static inline void lexer_SetGfxDigits(char const digits[4]) {
 	gfxDigits[0] = digits[0];
 	gfxDigits[1] = digits[1];
 	gfxDigits[2] = digits[2];
@@ -125,8 +116,9 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 
 // `path` is referenced, but not held onto..!
 bool lexer_OpenFile(LexerState &state, char const *path);
-void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
-			uint32_t lineNo);
+void lexer_OpenFileView(
+    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
+);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
 void lexer_Init();

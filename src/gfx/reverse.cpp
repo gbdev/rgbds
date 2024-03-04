@@ -53,13 +53,19 @@ static DefaultInitVec<uint8_t> readInto(const std::string &path) {
 }
 
 [[noreturn]] static void pngError(png_structp png, char const *msg) {
-	fatal("Error writing reversed image (\"%s\"): %s",
-	      static_cast<char const *>(png_get_error_ptr(png)), msg);
+	fatal(
+	    "Error writing reversed image (\"%s\"): %s",
+	    static_cast<char const *>(png_get_error_ptr(png)),
+	    msg
+	);
 }
 
 static void pngWarning(png_structp png, char const *msg) {
-	warning("While writing reversed image (\"%s\"): %s",
-	        static_cast<char const *>(png_get_error_ptr(png)), msg);
+	warning(
+	    "While writing reversed image (\"%s\"): %s",
+	    static_cast<char const *>(png_get_error_ptr(png)),
+	    msg
+	);
 }
 
 void writePng(png_structp png, png_bytep data, size_t length) {
@@ -94,17 +100,23 @@ void reverse() {
 		warning("\"Sliced-off\" pixels are ignored in reverse mode");
 	}
 	if (options.inputSlice.width != 0 && options.inputSlice.width != options.reversedWidth * 8) {
-		warning("Specified input slice width (%" PRIu16
-		        ") doesn't match provided reversing width (%" PRIu16 " * 8)",
-		        options.inputSlice.width, options.reversedWidth);
+		warning(
+		    "Specified input slice width (%" PRIu16
+		    ") doesn't match provided reversing width (%" PRIu16 " * 8)",
+		    options.inputSlice.width,
+		    options.reversedWidth
+		);
 	}
 
 	options.verbosePrint(Options::VERB_LOG_ACT, "Reading tiles...\n");
 	auto const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
-		fatal("Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
-		      tiles.size(), tileSize);
+		fatal(
+		    "Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
+		    tiles.size(),
+		    tileSize
+		);
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
@@ -121,25 +133,33 @@ void reverse() {
 		fatal("Cannot generate empty image");
 	}
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
-		warning("Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16,
-		        nbTileInstances, options.maxNbTiles[0], options.maxNbTiles[1]);
+		warning(
+		    "Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16,
+		    nbTileInstances,
+		    options.maxNbTiles[0],
+		    options.maxNbTiles[1]
+		);
 	}
 
 	size_t width = options.reversedWidth, height; // In tiles
 	if (nbTileInstances % width != 0) {
-		fatal("Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
-		      nbTileInstances, width);
+		fatal(
+		    "Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
+		    nbTileInstances,
+		    width
+		);
 	}
 	height = nbTileInstances / width;
 
-	options.verbosePrint(Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width,
-	                     height);
+	options.verbosePrint(
+	    Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width, height
+	);
 
 	// TODO: `-U` to configure tile size beyond 8x8px ("deduplication units")
 
 	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
-	};
+    };
 	// If a palette file is used as input, it overrides the default colors.
 	if (!options.palettes.empty()) {
 		File file;
@@ -155,27 +175,37 @@ void reverse() {
 			if (nbRead == buf.size()) {
 				// Expand the colors
 				auto &palette = palettes.emplace_back();
-				std::generate(palette.begin(), palette.begin() + options.nbColorsPerPal,
-				              [&buf, i = 0]() mutable {
-					              i += 2;
-					              return Rgba::fromCGBColor(buf[i - 2] + (buf[i - 1] << 8));
-				              });
+				std::generate(
+				    palette.begin(),
+				    palette.begin() + options.nbColorsPerPal,
+				    [&buf, i = 0]() mutable {
+					    i += 2;
+					    return Rgba::fromCGBColor(buf[i - 2] + (buf[i - 1] << 8));
+				    }
+				);
 			} else if (nbRead != 0) {
-				fatal("Palette data size (%zu) is not a multiple of %zu bytes!\n",
-				      palettes.size() * buf.size() + nbRead, buf.size());
+				fatal(
+				    "Palette data size (%zu) is not a multiple of %zu bytes!\n",
+				    palettes.size() * buf.size() + nbRead,
+				    buf.size()
+				);
 			}
 		} while (nbRead != 0);
 
 		if (palettes.size() > options.nbPalettes) {
-			warning("Read %zu palettes, more than the specified limit of %" PRIu8,
-			        palettes.size(), options.nbPalettes);
+			warning(
+			    "Read %zu palettes, more than the specified limit of %" PRIu8,
+			    palettes.size(),
+			    options.nbPalettes
+			);
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
 			warning("Colors in the palette file do not match those specified with `-c`!");
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
+		warning("An embedded palette was requested, but no palette file was specified; ignoring "
+		        "request.");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
@@ -184,8 +214,11 @@ void reverse() {
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != nbTileInstances) {
-			fatal("Attribute map size (%zu tiles) doesn't match image's (%zu)", attrmap->size(),
-			      nbTileInstances);
+			fatal(
+			    "Attribute map size (%zu tiles) doesn't match image's (%zu)",
+			    attrmap->size(),
+			    nbTileInstances
+			);
 		}
 
 		// Scan through the attributes for inconsistencies
@@ -195,8 +228,9 @@ void reverse() {
 		bool bad = false;
 		for (auto attr : *attrmap) {
 			if ((attr & 0b111) > palettes.size()) {
-				error("Referencing palette %u, but there are only %zu!",
-					attr & 0b111, palettes.size());
+				error(
+				    "Referencing palette %u, but there are only %zu!", attr & 0b111, palettes.size()
+				);
 				bad = true;
 			}
 			if (attr & 0x08 && !tilemap) {
@@ -213,16 +247,22 @@ void reverse() {
 			for (auto [id, attr] : zip(*tilemap, *attrmap)) {
 				bool bank = attr & 1 << 3;
 				if (id >= options.maxNbTiles[bank]) {
-					warning("Tile #%" PRIu8
-					        " was referenced, but the limit for bank %u is %" PRIu16,
-					        id, bank, options.maxNbTiles[bank]);
+					warning(
+					    "Tile #%" PRIu8 " was referenced, but the limit for bank %u is %" PRIu16,
+					    id,
+					    bank,
+					    options.maxNbTiles[bank]
+					);
 				}
 			}
 		} else {
 			for (auto id : *tilemap) {
 				if (id >= options.maxNbTiles[0]) {
-					warning("Tile #%" PRIu8 " was referenced, but the limit is %" PRIu16, id,
-					        options.maxNbTiles[0]);
+					warning(
+					    "Tile #%" PRIu8 " was referenced, but the limit is %" PRIu16,
+					    id,
+					    options.maxNbTiles[0]
+					);
 				}
 			}
 		}
@@ -232,8 +272,11 @@ void reverse() {
 	if (!options.palmap.empty()) {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != nbTileInstances) {
-			fatal("Palette map size (%zu tiles) doesn't match image's (%zu)", palmap->size(),
-			      nbTileInstances);
+			fatal(
+			    "Palette map size (%zu tiles) doesn't match image's (%zu)",
+			    palmap->size(),
+			    nbTileInstances
+			);
 		}
 	}
 
@@ -244,8 +287,10 @@ void reverse() {
 	}
 	png_structp png = png_create_write_struct(
 	    PNG_LIBPNG_VER_STRING,
-	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(options.input))), pngError,
-	    pngWarning);
+	    const_cast<png_voidp>(static_cast<void const *>(pngFile.c_str(options.input))),
+	    pngError,
+	    pngWarning
+	);
 	if (!png) {
 		fatal("Failed to create PNG write struct: %s", strerror(errno));
 	}
@@ -255,8 +300,17 @@ void reverse() {
 	}
 	png_set_write_fn(png, &pngFile, writePng, flushPng);
 
-	png_set_IHDR(png, pngInfo, options.reversedWidth * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
-	             PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(
+	    png,
+	    pngInfo,
+	    options.reversedWidth * 8,
+	    height * 8,
+	    8,
+	    PNG_COLOR_TYPE_RGB_ALPHA,
+	    PNG_INTERLACE_NONE,
+	    PNG_COMPRESSION_TYPE_DEFAULT,
+	    PNG_FILTER_TYPE_DEFAULT
+	);
 	png_write_info(png, pngInfo);
 
 	png_color_8 sbitChunk;
@@ -270,10 +324,14 @@ void reverse() {
 	size_t const SIZEOF_ROW = options.reversedWidth * 8 * SIZEOF_PIXEL;
 	std::vector<uint8_t> tileRow(8 * SIZEOF_ROW, 0xFF); // Data for 8 rows of pixels
 	uint8_t * const rowPtrs[8] = {
-	    &tileRow.data()[0 * SIZEOF_ROW], &tileRow.data()[1 * SIZEOF_ROW],
-	    &tileRow.data()[2 * SIZEOF_ROW], &tileRow.data()[3 * SIZEOF_ROW],
-	    &tileRow.data()[4 * SIZEOF_ROW], &tileRow.data()[5 * SIZEOF_ROW],
-	    &tileRow.data()[6 * SIZEOF_ROW], &tileRow.data()[7 * SIZEOF_ROW],
+	    &tileRow.data()[0 * SIZEOF_ROW],
+	    &tileRow.data()[1 * SIZEOF_ROW],
+	    &tileRow.data()[2 * SIZEOF_ROW],
+	    &tileRow.data()[3 * SIZEOF_ROW],
+	    &tileRow.data()[4 * SIZEOF_ROW],
+	    &tileRow.data()[5 * SIZEOF_ROW],
+	    &tileRow.data()[6 * SIZEOF_ROW],
+	    &tileRow.data()[7 * SIZEOF_ROW],
 	};
 
 	for (size_t ty = 0; ty < height; ++ty) {
@@ -294,8 +352,22 @@ void reverse() {
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
 			static std::array<uint8_t, 16> const trimmedTile{
-			    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
+			    0x00,
 			};
 			uint8_t const *tileData = tileID > nbTileInstances - options.trim
 			                              ? trimmedTile.data()
