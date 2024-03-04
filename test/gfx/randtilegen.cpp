@@ -15,8 +15,8 @@
 #include <png.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
 
 struct Attributes {
@@ -70,8 +70,9 @@ static void generate_tile_attributes(Attributes *attributes) {
 
 	// Use an array to look up the number of colors in the palette; this is faster (and simpler)
 	// than doing a population count over the bits
-	static char const popcount[] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3,
-	                                4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4};
+	static char const popcount[] = {
+	    0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4,
+	};
 	attributes->nbColors = popcount[pal];
 }
 
@@ -104,8 +105,7 @@ static void generate_tile_data(unsigned char tiledata[8][8], unsigned colorcount
 	}
 }
 
-static void
-    copy_tile_data(unsigned char destination[8][8], unsigned char const source[8][8]) {
+static void copy_tile_data(unsigned char destination[8][8], unsigned char const source[8][8]) {
 	// Apply a random rotation to the copy
 	// coord ^ 7 = inverted coordinate; coord ^ 0 = regular coordinate
 	unsigned xmask = getRandomBits(1) * 7;
@@ -148,9 +148,14 @@ static uint8_t _5to8(uint8_t five) {
 }
 
 // Can't mark as `const`, as the array type is otherwise not compatible (augh)
-static void write_image(char const *filename, uint16_t /* const */ palettes[/* 60 */][4],
-                        unsigned char /* const */ (*tileData)[8][8], Attributes const *attributes,
-                        uint8_t width, uint8_t height) {
+static void write_image(
+    char const *filename,
+    uint16_t /* const */ palettes[/* 60 */][4],
+    unsigned char /* const */ (*tileData)[8][8],
+    Attributes const *attributes,
+    uint8_t width,
+    uint8_t height
+) {
 	uint8_t const nbTiles = width * height;
 	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	png_infop pngInfo = png_create_info_struct(png);
@@ -167,9 +172,17 @@ static void write_image(char const *filename, uint16_t /* const */ palettes[/* 6
 	}
 	png_init_io(png, file);
 
-	png_set_IHDR(png, pngInfo, width * 8, height * 8, 8, PNG_COLOR_TYPE_RGB_ALPHA,
-	             getRandomBits(1) ? PNG_INTERLACE_NONE : PNG_INTERLACE_ADAM7,
-	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR(
+	    png,
+	    pngInfo,
+	    width * 8,
+	    height * 8,
+	    8,
+	    PNG_COLOR_TYPE_RGB_ALPHA,
+	    getRandomBits(1) ? PNG_INTERLACE_NONE : PNG_INTERLACE_ADAM7,
+	    PNG_COMPRESSION_TYPE_DEFAULT,
+	    PNG_FILTER_TYPE_DEFAULT
+	);
 
 	// While it would be nice to write the image little by little, I really don't want to handle
 	// interlacing myself. (We're doing interlacing to test that RGBGFX correctly handles it.)
