@@ -178,18 +178,28 @@ static void readSymbol(FILE *file, Symbol &symbol, char const *fileName,
 	if (symbol.type != SYMTYPE_IMPORT) {
 		symbol.objFileName = fileName;
 		uint32_t nodeID;
-
 		tryReadlong(nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s",
 			   fileName, symbol.name.c_str());
 		symbol.src = &fileNodes[nodeID];
 		tryReadlong(symbol.lineNo, file, "%s: Cannot read \"%s\"'s line number: %s",
 			    fileName, symbol.name.c_str());
-		tryReadlong(symbol.sectionID, file, "%s: Cannot read \"%s\"'s section ID: %s",
+		int32_t sectionID, value;
+		tryReadlong(sectionID, file, "%s: Cannot read \"%s\"'s section ID: %s",
 			    fileName, symbol.name.c_str());
-		tryReadlong(symbol.offset, file, "%s: Cannot read \"%s\"'s value: %s",
+		tryReadlong(value, file, "%s: Cannot read \"%s\"'s value: %s",
 			    fileName, symbol.name.c_str());
+		if (sectionID == -1) {
+			symbol.data = value;
+		} else {
+			symbol.data = Label{
+				.sectionID = sectionID,
+				.offset = value,
+				// Set the `.section` later based on the `.sectionID`
+				.section = nullptr,
+			};
+		}
 	} else {
-		symbol.sectionID = -1;
+		symbol.data = -1;
 	}
 }
 
@@ -330,11 +340,13 @@ static void readSection(FILE *file, Section &section, char const *fileName,
 static void linkSymToSect(Symbol &symbol, Section &section)
 {
 	uint32_t a = 0, b = section.symbols.size();
+	int32_t symbolOffset = std::get<Label>(symbol.data).offset;
 
 	while (a != b) {
 		uint32_t c = (a + b) / 2;
+		int32_t otherOffset = std::get<Label>(section.symbols[c]->data).offset;
 
-		if (section.symbols[c]->offset > symbol.offset)
+		if (otherOffset > symbolOffset)
 			b = c;
 		else
 			a = c + 1;
@@ -452,8 +464,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 		if (symbol.type == SYMTYPE_EXPORT)
 			sym_AddSymbol(symbol);
-		if (symbol.sectionID != -1)
-			nbSymPerSect[symbol.sectionID]++;
+		if (Label *label = std::get_if<Label>(&symbol.data); label)
+			nbSymPerSect[label->sectionID]++;
 	}
 
 	// This file's sections, stored in a table to link symbols to them
@@ -484,12 +496,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		int32_t sectionID = fileSymbols[i].sectionID;
-
-		if (sectionID == -1) {
-			fileSymbols[i].section = nullptr;
-		} else {
-			Section *section = fileSections[sectionID];
+		if (Label *label = std::get_if<Label>(&fileSymbols[i].data); label) {
+			Section *section = fileSections[label->sectionID];
 
 			// Give the section a pointer to the symbol as well
 			linkSymToSect(fileSymbols[i], *section);
@@ -497,10 +505,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID)
 			if (section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT)
 					// Add the fragment's offset to the symbol's
-					fileSymbols[i].offset += section->offset;
+					label->offset += section->offset;
 				section = getMainSection(*section);
 			}
-			fileSymbols[i].section = section;
+			label->section = section;
 		}
 	}
 
