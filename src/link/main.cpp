@@ -1,51 +1,51 @@
 /* SPDX-License-Identifier: MIT */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <string>
 #include <variant>
 #include <vector>
+
+#include "error.hpp"
+#include "extern/getopt.hpp"
+#include "itertools.hpp"
+#include "linkdefs.hpp"
+#include "platform.hpp"
+#include "script.hpp"
+#include "version.hpp"
 
 #include "link/assign.hpp"
 #include "link/object.hpp"
 #include "link/output.hpp"
 #include "link/patch.hpp"
 #include "link/section.hpp"
-#include "script.hpp"
 #include "link/symbol.hpp"
 
-#include "extern/getopt.hpp"
-
-#include "error.hpp"
-#include "itertools.hpp"
-#include "linkdefs.hpp"
-#include "platform.hpp"
-#include "version.hpp"
-
-bool isDmgMode;               // -d
-char *linkerScriptName;       // -l
-char const *mapFileName;      // -m
-bool noSymInMap;              // -M
-char const *symFileName;      // -n
-char const *overlayFileName;  // -O
-char const *outputFileName;   // -o
-uint8_t padValue;             // -p
+bool isDmgMode; // -d
+char *linkerScriptName; // -l
+char const *mapFileName; // -m
+bool noSymInMap; // -M
+char const *symFileName; // -n
+char const *overlayFileName; // -O
+char const *outputFileName; // -o
+uint8_t padValue; // -p
 // Setting these three to 0 disables the functionality
-uint16_t scrambleROMX = 0;    // -S
+uint16_t scrambleROMX = 0; // -S
 uint8_t scrambleWRAMX = 0;
 uint8_t scrambleSRAM = 0;
-bool is32kMode;               // -t
-bool beVerbose;               // -v
-bool isWRAM0Mode;             // -w
-bool disablePadding;          // -x
+bool is32kMode; // -t
+bool beVerbose; // -v
+bool isWRAM0Mode; // -w
+bool disablePadding; // -x
 
 FILE *linkerScript;
 
@@ -72,8 +72,7 @@ std::string const &FileStackNode::name() const {
 }
 
 // Helper function to dump a file stack to stderr
-std::string const *FileStackNode::dumpFileStack() const
-{
+std::string const *FileStackNode::dumpFileStack() const {
 	std::string const *lastName;
 
 	if (parent) {
@@ -95,9 +94,8 @@ std::string const *FileStackNode::dumpFileStack() const
 	return lastName;
 }
 
-void printDiag(char const *fmt, va_list args, char const *type,
-	       FileStackNode const *where, uint32_t lineNo)
-{
+void printDiag(char const *fmt, va_list args, char const *type, FileStackNode const *where,
+               uint32_t lineNo) {
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	if (where) {
@@ -108,8 +106,7 @@ void printDiag(char const *fmt, va_list args, char const *type,
 	putc('\n', stderr);
 }
 
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
-{
+void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -117,8 +114,7 @@ void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 	va_end(args);
 }
 
-void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
-{
+void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -129,8 +125,7 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
 		nbErrors++;
 }
 
-void argErr(char flag, char const *fmt, ...)
-{
+void argErr(char flag, char const *fmt, ...) {
 	va_list args;
 
 	fprintf(stderr, "error: Invalid argument for option '%c': ", flag);
@@ -143,8 +138,7 @@ void argErr(char flag, char const *fmt, ...)
 		nbErrors++;
 }
 
-[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
-{
+[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -155,7 +149,7 @@ void argErr(char flag, char const *fmt, ...)
 		nbErrors++;
 
 	fprintf(stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors,
-		nbErrors == 1 ? "" : "s");
+	        nbErrors == 1 ? "" : "s");
 	exit(1);
 }
 
@@ -173,40 +167,38 @@ static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
  * over short opt matching
  */
 static option const longopts[] = {
-	{ "dmg",           no_argument,       nullptr, 'd' },
-	{ "linkerscript",  required_argument, nullptr, 'l' },
-	{ "map",           required_argument, nullptr, 'm' },
-	{ "no-sym-in-map", no_argument,       nullptr, 'M' },
-	{ "sym",           required_argument, nullptr, 'n' },
-	{ "overlay",       required_argument, nullptr, 'O' },
-	{ "output",        required_argument, nullptr, 'o' },
-	{ "pad",           required_argument, nullptr, 'p' },
-	{ "scramble",      required_argument, nullptr, 'S' },
-	{ "smart",         required_argument, nullptr, 's' },
-	{ "tiny",          no_argument,       nullptr, 't' },
-	{ "version",       no_argument,       nullptr, 'V' },
-	{ "verbose",       no_argument,       nullptr, 'v' },
-	{ "wramx",         no_argument,       nullptr, 'w' },
-	{ "nopad",         no_argument,       nullptr, 'x' },
-	{ nullptr,         no_argument,       nullptr, 0   }
+    {"dmg",           no_argument,       nullptr, 'd'},
+    {"linkerscript",  required_argument, nullptr, 'l'},
+    {"map",           required_argument, nullptr, 'm'},
+    {"no-sym-in-map", no_argument,       nullptr, 'M'},
+    {"sym",           required_argument, nullptr, 'n'},
+    {"overlay",       required_argument, nullptr, 'O'},
+    {"output",        required_argument, nullptr, 'o'},
+    {"pad",           required_argument, nullptr, 'p'},
+    {"scramble",      required_argument, nullptr, 'S'},
+    {"smart",         required_argument, nullptr, 's'},
+    {"tiny",          no_argument,       nullptr, 't'},
+    {"version",       no_argument,       nullptr, 'V'},
+    {"verbose",       no_argument,       nullptr, 'v'},
+    {"wramx",         no_argument,       nullptr, 'w'},
+    {"nopad",         no_argument,       nullptr, 'x'},
+    {nullptr,         no_argument,       nullptr, 0  }
 };
 
-static void printUsage()
-{
-	fputs(
-"Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
-"               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-"               [-S spec] [-s symbol] <file> ...\n"
-"Useful options:\n"
-"    -l, --linkerscript <path>  set the input linker script\n"
-"    -m, --map <path>           set the output map file\n"
-"    -n, --sym <path>           set the output symbol list file\n"
-"    -o, --output <path>        set the output file\n"
-"    -p, --pad <value>          set the value to pad between sections with\n"
-"    -x, --nopad                disable padding of output binary\n"
-"    -V, --version              print RGBLINK version and exits\n"
-"\n"
-"For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
+static void printUsage() {
+	fputs("Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+	      "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
+	      "               [-S spec] [-s symbol] <file> ...\n"
+	      "Useful options:\n"
+	      "    -l, --linkerscript <path>  set the input linker script\n"
+	      "    -m, --map <path>           set the output map file\n"
+	      "    -n, --sym <path>           set the output symbol list file\n"
+	      "    -o, --output <path>        set the output file\n"
+	      "    -p, --pad <value>          set the value to pad between sections with\n"
+	      "    -x, --nopad                disable padding of output binary\n"
+	      "    -V, --version              print RGBLINK version and exits\n"
+	      "\n"
+	      "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 }
 
@@ -222,13 +214,12 @@ struct {
 	char const *name;
 	uint16_t max;
 } scrambleSpecs[SCRAMBLE_UNK] = {
-	{ "romx",  65535 }, // SCRAMBLE_ROMX
-	{ "sram",  255   }, // SCRAMBLE_SRAM
-	{ "wramx", 7     }, // SCRAMBLE_WRAMX
+    {"romx",  65535}, // SCRAMBLE_ROMX
+    {"sram",  255  }, // SCRAMBLE_SRAM
+    {"wramx", 7    }, // SCRAMBLE_WRAMX
 };
 
-static void parseScrambleSpec(char const *spec)
-{
+static void parseScrambleSpec(char const *spec) {
 	// Skip any leading whitespace
 	spec += strspn(spec, " \t");
 
@@ -259,8 +250,8 @@ static void parseScrambleSpec(char const *spec)
 		// Find the next non-blank char after the region name's end
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argErr('S', "Unexpected '%c' after region name \"%.*s\"",
-			       regionNamePrintLen, regionName);
+			argErr('S', "Unexpected '%c' after region name \"%.*s\"", regionNamePrintLen,
+			       regionName);
 			// Skip to next ',' or '=' (or NUL) and keep parsing
 			spec += 1 + strcspn(&spec[1], ",=");
 		}
@@ -285,22 +276,21 @@ static void parseScrambleSpec(char const *spec)
 			char *endptr;
 
 			if (*spec == '\0' || *spec == ',') {
-				argErr('S', "Empty limit for region \"%.*s\"",
-				       regionNamePrintLen, regionName);
+				argErr('S', "Empty limit for region \"%.*s\"", regionNamePrintLen, regionName);
 				goto next;
 			}
 			limit = strtoul(spec, &endptr, 10);
 			endptr += strspn(endptr, " \t");
 			if (*endptr != '\0' && *endptr != ',') {
-				argErr('S', "Invalid non-numeric limit for region \"%.*s\"",
-				       regionNamePrintLen, regionName);
+				argErr('S', "Invalid non-numeric limit for region \"%.*s\"", regionNamePrintLen,
+				       regionName);
 				endptr = strchr(endptr, ',');
 			}
 			spec = endptr;
 
 			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
-				argErr('S', "Limit for region \"%.*s\" may not exceed %" PRIu16,
-				       regionNamePrintLen, regionName, scrambleSpecs[region].max);
+				argErr('S', "Limit for region \"%.*s\" may not exceed %" PRIu16, regionNamePrintLen,
+				       regionName, scrambleSpecs[region].max);
 				limit = scrambleSpecs[region].max;
 			}
 
@@ -321,8 +311,7 @@ static void parseScrambleSpec(char const *spec)
 			// Only WRAMX can be implied, since ROMX and SRAM size may vary
 			scrambleWRAMX = 7;
 		} else {
-			argErr('S', "Cannot imply limit for region \"%.*s\"",
-			       regionNamePrintLen, regionName);
+			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNamePrintLen, regionName);
 		}
 
 next:
@@ -337,13 +326,12 @@ next:
 }
 
 [[noreturn]] void reportErrors() {
-	fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n",
-		nbErrors, nbErrors == 1 ? "" : "s");
+	fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors,
+	        nbErrors == 1 ? "" : "s");
 	exit(1);
 }
 
-static void freeSection(Section &section)
-{
+static void freeSection(Section &section) {
 	Section *next = &section;
 
 	for (Section *nextu; next; next = nextu) {
@@ -352,13 +340,11 @@ static void freeSection(Section &section)
 	};
 }
 
-static void freeSections()
-{
+static void freeSections() {
 	sect_ForEach(freeSection);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {

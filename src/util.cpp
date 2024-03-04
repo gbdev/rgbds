@@ -1,16 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "util.hpp"
+
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <vector>
 
-#include "util.hpp"
-
 #include "extern/utf8decoder.hpp"
 
-char const *printChar(int c)
-{
+char const *printChar(int c) {
 	// "'A'" + '\0': 4 bytes
 	// "'\\n'" + '\0': 5 bytes
 	// "0xFF" + '\0': 5 bytes
@@ -51,8 +50,7 @@ char const *printChar(int c)
 	return buf;
 }
 
-size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src)
-{
+size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src) {
 	uint32_t state = 0;
 	uint32_t codep;
 	size_t i = 0;

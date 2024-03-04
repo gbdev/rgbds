@@ -5,7 +5,7 @@ AlignConsecutiveAssignments: None
 AlignConsecutiveBitFields: Consecutive
 AlignConsecutiveDeclarations: None
 AlignConsecutiveMacros: Consecutive
-AlignEscapedNewlines: Left
+AlignEscapedNewlines: DontAlign
 AlignOperands: Align
 AlignTrailingComments: false
 AllowShortBlocksOnASingleLine: Empty

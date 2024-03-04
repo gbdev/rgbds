@@ -2,19 +2,17 @@
 
 // Mathematical operators that don't reuse C++'s behavior
 
-#include <stdint.h>
-
 #include "opmath.hpp"
 
-int32_t op_divide(int32_t dividend, int32_t divisor)
-{
+#include <stdint.h>
+
+int32_t op_divide(int32_t dividend, int32_t divisor) {
 	// Adjust division to floor toward negative infinity,
 	// not truncate toward zero
 	return dividend / divisor - ((dividend % divisor < 0) != (divisor < 0));
 }
 
-int32_t op_modulo(int32_t dividend, int32_t divisor)
-{
+int32_t op_modulo(int32_t dividend, int32_t divisor) {
 	int32_t remainder = dividend % divisor;
 
 	// Adjust modulo to have the sign of the divisor,
@@ -22,8 +20,7 @@ int32_t op_modulo(int32_t dividend, int32_t divisor)
 	return remainder + divisor * ((remainder < 0) != (divisor < 0));
 }
 
-int32_t op_exponent(int32_t base, uint32_t power)
-{
+int32_t op_exponent(int32_t base, uint32_t power) {
 	int32_t result = 1;
 
 	for (;;) {
@@ -38,8 +35,7 @@ int32_t op_exponent(int32_t base, uint32_t power)
 	return result;
 }
 
-int32_t op_shift_left(int32_t value, int32_t amount)
-{
+int32_t op_shift_left(int32_t value, int32_t amount) {
 	// Get the easy cases out of the way
 	if (amount == 0)
 		return value;
@@ -55,8 +51,7 @@ int32_t op_shift_left(int32_t value, int32_t amount)
 	return (uint32_t)value << amount;
 }
 
-int32_t op_shift_right(int32_t value, int32_t amount)
-{
+int32_t op_shift_right(int32_t value, int32_t amount) {
 	// Repeat the easy cases here to avoid INT_MIN funny business
 	if (amount == 0)
 		return value;
@@ -79,8 +74,7 @@ int32_t op_shift_right(int32_t value, int32_t amount)
 	return ((uint32_t)value >> amount) | amount_high_bits;
 }
 
-int32_t op_shift_right_unsigned(int32_t value, int32_t amount)
-{
+int32_t op_shift_right_unsigned(int32_t value, int32_t amount) {
 	// Repeat the easy cases here to avoid INT_MIN funny business
 	if (amount == 0)
 		return value;

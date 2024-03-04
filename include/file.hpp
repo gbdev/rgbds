@@ -11,8 +11,8 @@
 #include <ios>
 #include <iostream>
 #include <streambuf>
-#include <string>
 #include <string.h>
+#include <string>
 #include <string_view>
 #include <variant>
 
@@ -80,8 +80,7 @@ public:
 	char const *c_str(std::string const &path) const {
 		return std::visit(Visitor{[&path](std::filebuf const &) { return path.c_str(); },
 		                          [](std::streambuf const *buf) {
-			                          return buf == std::cin.rdbuf()
-			                                 ? "<stdin>" : "<stdout>";
+			                          return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
 		                          }},
 		                  _file);
 	}

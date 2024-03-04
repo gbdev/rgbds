@@ -1,22 +1,23 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/charmap.hpp"
+
 #include <errno.h>
-#include <new>
 #include <map>
+#include <new>
 #include <stack>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string>
+#include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
-#include "asm/charmap.hpp"
+#include "util.hpp"
+
 #include "asm/main.hpp"
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
-
-#include "util.hpp"
 
 // Charmaps are stored using a structure known as "trie".
 // Essentially a tree, where each nodes stores a single character's worth of info:
@@ -38,8 +39,7 @@ static std::map<std::string, Charmap> charmaps;
 static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
 
-void charmap_New(char const *name, char const *baseName)
-{
+void charmap_New(char const *name, char const *baseName) {
 	Charmap *base = nullptr;
 
 	if (baseName != nullptr) {
@@ -68,8 +68,7 @@ void charmap_New(char const *name, char const *baseName)
 	currentCharmap = &charmap;
 }
 
-void charmap_Set(char const *name)
-{
+void charmap_Set(char const *name) {
 	auto search = charmaps.find(name);
 
 	if (search == charmaps.end())
@@ -78,13 +77,11 @@ void charmap_Set(char const *name)
 		currentCharmap = &search->second;
 }
 
-void charmap_Push()
-{
+void charmap_Push() {
 	charmapStack.push(currentCharmap);
 }
 
-void charmap_Pop()
-{
+void charmap_Pop() {
 	if (charmapStack.empty()) {
 		error("No entries in the charmap stack\n");
 		return;
@@ -94,8 +91,7 @@ void charmap_Pop()
 	charmapStack.pop();
 }
 
-void charmap_Add(char *mapping, uint8_t value)
-{
+void charmap_Add(char *mapping, uint8_t value) {
 	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
@@ -124,8 +120,7 @@ void charmap_Add(char *mapping, uint8_t value)
 	node.value = value;
 }
 
-bool charmap_HasChar(char const *input)
-{
+bool charmap_HasChar(char const *input) {
 	Charmap const &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
@@ -139,14 +134,12 @@ bool charmap_HasChar(char const *input)
 	return charmap.nodes[nodeIdx].isTerminal;
 }
 
-void charmap_Convert(char const *input, std::vector<uint8_t> &output)
-{
+void charmap_Convert(char const *input, std::vector<uint8_t> &output) {
 	while (charmap_ConvertNext(input, &output))
 		;
 }
 
-size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output)
-{
+size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
 	// The goal is to match the longest mapping possible.
 	// For that, advance through the trie with each character read.
 	// If that would lead to a dead end, rewind characters until the last match, and output.
@@ -194,11 +187,11 @@ size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output)
 
 		// Warn if this character is not mapped but any others are
 		if (charmap.nodes.size() > 1)
-			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n",
-				printChar(firstChar));
+			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n", printChar(firstChar));
 		else if (charmap.name != DEFAULT_CHARMAP_NAME)
-			warning(WARNING_UNMAPPED_CHAR_2, "Unmapped character %s not in "
-				DEFAULT_CHARMAP_NAME " charmap\n", printChar(firstChar));
+			warning(WARNING_UNMAPPED_CHAR_2,
+			        "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap\n",
+			        printChar(firstChar));
 
 		return codepointLen;
 

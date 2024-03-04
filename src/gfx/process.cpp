@@ -59,10 +59,9 @@ public:
 	}
 
 	size_t size() const {
-		return std::count_if(RANGE(_colors),
-		                     [](decltype(_colors)::value_type const &slot) {
-			                     return slot.has_value() && !slot->isTransparent();
-		                     });
+		return std::count_if(RANGE(_colors), [](decltype(_colors)::value_type const &slot) {
+			return slot.has_value() && !slot->isTransparent();
+		});
 	}
 	decltype(_colors) const &raw() const { return _colors; }
 
@@ -174,8 +173,7 @@ public:
 	 */
 	explicit Png(std::string const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
-			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path),
-			      strerror(errno));
+			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
 		}
 
 		options.verbosePrint(Options::VERB_LOG_ACT, "Opened input file\n");
@@ -333,8 +331,7 @@ public:
 		                                                       Rgba &&color) {
 			if (!color.isTransparent() && !color.isOpaque()) {
 				uint32_t css = color.toCSS();
-				if (std::find(RANGE(indeterminates), css)
-				    == indeterminates.end()) {
+				if (std::find(RANGE(indeterminates), css) == indeterminates.end()) {
 					error("Color #%08x is neither transparent (alpha < %u) nor opaque (alpha >= "
 					      "%u) [first seen at x: %" PRIu32 ", y: %" PRIu32 "]",
 					      css, Rgba::transparency_threshold, Rgba::opacity_threshold, x, y);
@@ -647,8 +644,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	if (!options.palettes.empty()) {
 		File output;
 		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", output.c_str(options.palettes),
-				strerror(errno));
+			fatal("Failed to open \"%s\": %s", output.c_str(options.palettes), strerror(errno));
 		}
 
 		for (Palette const &palette : palettes) {
@@ -782,7 +778,8 @@ static void outputTileData(Png const &png, DefaultInitVec<AttrmapEntry> const &a
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
-	uint16_t heightTiles = options.inputSlice.height ? options.inputSlice.height : png.getHeight() / 8;
+	uint16_t heightTiles =
+	    options.inputSlice.height ? options.inputSlice.height : png.getHeight() / 8;
 	uint64_t remainingTiles = widthTiles * heightTiles;
 	if (remainingTiles <= options.trim) {
 		return;
@@ -815,8 +812,7 @@ static void outputMaps(DefaultInitVec<AttrmapEntry> const &attrmap,
 		if (!path.empty()) {
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
-				fatal("Failed to open \"%s\": %s", file->c_str(options.tilemap),
-				      strerror(errno));
+				fatal("Failed to open \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
 			}
 		}
 	};
@@ -1063,7 +1059,8 @@ void process() {
 		}
 
 		if (nbColorsInTile > options.maxOpaqueColors()) {
-			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %" PRIu8 " opaque colors, more than %" PRIu8 "!",
+			fatal("Tile at (%" PRIu32 ", %" PRIu32 ") has %" PRIu8
+			      " opaque colors, more than %" PRIu8 "!",
 			      tile.x, tile.y, nbColorsInTile, options.maxOpaqueColors());
 		}
 

@@ -31,10 +31,11 @@ extern bool isWRAM0Mode;
 extern bool disablePadding;
 
 // Helper macro for printing verbose-mode messages
-#define verbosePrint(...) do { \
-	if (beVerbose) \
-		fprintf(stderr, __VA_ARGS__); \
-} while (0)
+#define verbosePrint(...) \
+	do { \
+		if (beVerbose) \
+			fprintf(stderr, __VA_ARGS__); \
+	} while (0)
 
 struct FileStackNode {
 	FileStackNode *parent;
@@ -42,11 +43,11 @@ struct FileStackNode {
 	uint32_t lineNo;
 
 	enum FileStackNodeType type;
-	std::variant<
-		std::monostate, // Default constructed; `.type` and `.data` must be set manually
-		std::vector<uint32_t>, // NODE_REPT
-		std::string // NODE_FILE, NODE_MACRO
-	> data;
+	std::variant<std::monostate, // Default constructed; `.type` and `.data` must be set manually
+	             std::vector<uint32_t>, // NODE_REPT
+	             std::string // NODE_FILE, NODE_MACRO
+	             >
+	    data;
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters();
@@ -58,8 +59,10 @@ struct FileStackNode {
 	std::string const *dumpFileStack() const;
 };
 
-void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
+void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+    format_(printf, 3, 4);
 void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
-[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) format_(printf, 3, 4);
+[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)
+    format_(printf, 3, 4);
 
 #endif // RGBDS_LINK_MAIN_H

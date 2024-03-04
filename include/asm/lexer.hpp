@@ -85,38 +85,29 @@ struct LexerState {
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
-	std::variant<
-		std::monostate,
-		MmappedLexerState,
-		ViewedLexerState,
-		BufferedLexerState
-	> content;
+	std::variant<std::monostate, MmappedLexerState, ViewedLexerState, BufferedLexerState> content;
 };
 
 extern LexerState *lexerState;
 extern LexerState *lexerStateEOL;
 
-static inline void lexer_SetState(LexerState *state)
-{
+static inline void lexer_SetState(LexerState *state) {
 	lexerState = state;
 }
 
-static inline void lexer_SetStateAtEOL(LexerState *state)
-{
+static inline void lexer_SetStateAtEOL(LexerState *state) {
 	lexerStateEOL = state;
 }
 
 extern char binDigits[2];
 extern char gfxDigits[4];
 
-static inline void lexer_SetBinDigits(char const digits[2])
-{
+static inline void lexer_SetBinDigits(char const digits[2]) {
 	binDigits[0] = digits[0];
 	binDigits[1] = digits[1];
 }
 
-static inline void lexer_SetGfxDigits(char const digits[4])
-{
+static inline void lexer_SetGfxDigits(char const digits[4]) {
 	gfxDigits[0] = digits[0];
 	gfxDigits[1] = digits[1];
 	gfxDigits[2] = digits[2];
@@ -126,7 +117,7 @@ static inline void lexer_SetGfxDigits(char const digits[4])
 // `path` is referenced, but not held onto..!
 bool lexer_OpenFile(LexerState &state, char const *path);
 void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
-			uint32_t lineNo);
+                        uint32_t lineNo);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
 void lexer_Init();

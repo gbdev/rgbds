@@ -13,13 +13,14 @@
 
 namespace sorting {
 
-void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRGB,
-             int palAlphaSize, png_byte *palAlpha) {
+void indexed(std::vector<Palette> &palettes, int palSize, png_color const *palRGB, int palAlphaSize,
+             png_byte *palAlpha) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes using embedded palette...\n");
 
 	auto pngToRgb = [&palRGB, &palAlphaSize, &palAlpha](int index) {
 		auto const &c = palRGB[index];
-		return Rgba(c.red, c.green, c.blue, palAlpha && index < palAlphaSize ? palAlpha[index] : 0xFF);
+		return Rgba(c.red, c.green, c.blue,
+		            palAlpha && index < palAlphaSize ? palAlpha[index] : 0xFF);
 	};
 
 	for (Palette &pal : palettes) {

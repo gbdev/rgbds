@@ -8,9 +8,9 @@
 #include <stdint.h>
 #include <vector>
 
-#include "link/section.hpp"
-
 #include "linkdefs.hpp"
+
+#include "link/section.hpp"
 
 struct Assertion {
 	Patch patch; // Also used for its `.type`

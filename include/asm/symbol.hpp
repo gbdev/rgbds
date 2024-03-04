@@ -4,8 +4,8 @@
 #define RGBDS_SYMBOL_H
 
 #include <stdint.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <string_view>
 #include <time.h>
 #include <variant>
@@ -30,17 +30,17 @@ struct Symbol {
 	char name[MAXSYMLEN + 1];
 	enum SymbolType type;
 	bool isExported; // Whether the symbol is to be exported
-	bool isBuiltin;  // Whether the symbol is a built-in
+	bool isBuiltin; // Whether the symbol is a built-in
 	Section *section;
 	FileStackNode *src; // Where the symbol was defined
 	uint32_t fileLine; // Line where the symbol was defined
 
-	std::variant<
-		int32_t, // If isNumeric()
-		int32_t (*)(), // If isNumeric() and has a callback
-		std::string_view *, // For SYM_MACRO
-		std::string * // For SYM_EQUS
-	> data;
+	std::variant<int32_t, // If isNumeric()
+	             int32_t (*)(), // If isNumeric() and has a callback
+	             std::string_view *, // For SYM_MACRO
+	             std::string * // For SYM_EQUS
+	             >
+	    data;
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
 

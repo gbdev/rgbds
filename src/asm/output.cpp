@@ -2,29 +2,30 @@
 
 // Outputs an objectfile
 
+#include "asm/output.hpp"
+
 #include <algorithm>
 #include <assert.h>
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
+
+#include "error.hpp"
+#include "linkdefs.hpp"
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
 #include "asm/main.hpp"
-#include "asm/output.hpp"
 #include "asm/rpn.hpp"
 #include "asm/section.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
-
-#include "error.hpp"
-#include "linkdefs.hpp"
 
 struct Assertion {
 	Patch patch;
@@ -42,8 +43,7 @@ static std::deque<Assertion> assertions;
 static std::deque<FileStackNode *> fileStackNodes;
 
 // Write a long to a file (little-endian)
-static void putlong(uint32_t i, FILE *f)
-{
+static void putlong(uint32_t i, FILE *f) {
 	putc(i, f);
 	putc(i >> 8, f);
 	putc(i >> 16, f);
@@ -51,15 +51,13 @@ static void putlong(uint32_t i, FILE *f)
 }
 
 // Write a NUL-terminated string to a file
-static void putstring(char const *s, FILE *f)
-{
+static void putstring(char const *s, FILE *f) {
 	while (*s)
 		putc(*s++, f);
 	putc(0, f);
 }
 
-void out_RegisterNode(FileStackNode *node)
-{
+void out_RegisterNode(FileStackNode *node) {
 	// If node is not already registered, register it (and parents), and give it a unique ID
 	for (; node && node->ID == (uint32_t)-1; node = node->parent) {
 		node->ID = fileStackNodes.size();
@@ -67,8 +65,7 @@ void out_RegisterNode(FileStackNode *node)
 	}
 }
 
-void out_ReplaceNode(FileStackNode * /* node */)
-{
+void out_ReplaceNode(FileStackNode * /* node */) {
 #if 0
 This is code intended to replace a node, which is pretty useless until ref counting is added...
 
@@ -84,8 +81,7 @@ This is code intended to replace a node, which is pretty useless until ref count
 }
 
 // Return a section's ID, or -1 if the section is not in the list
-static uint32_t getSectIDIfAny(Section *sect)
-{
+static uint32_t getSectIDIfAny(Section *sect) {
 	if (!sect)
 		return (uint32_t)-1;
 
@@ -98,8 +94,7 @@ static uint32_t getSectIDIfAny(Section *sect)
 }
 
 // Write a patch to a file
-static void writepatch(Patch const &patch, FILE *f)
-{
+static void writepatch(Patch const &patch, FILE *f) {
 	assert(patch.src->ID != (uint32_t)-1);
 	putlong(patch.src->ID, f);
 	putlong(patch.lineNo, f);
@@ -112,8 +107,7 @@ static void writepatch(Patch const &patch, FILE *f)
 }
 
 // Write a section to a file
-static void writesection(Section const &sect, FILE *f)
-{
+static void writesection(Section const &sect, FILE *f) {
 	putstring(sect.name.c_str(), f);
 
 	putlong(sect.size, f);
@@ -138,8 +132,7 @@ static void writesection(Section const &sect, FILE *f)
 }
 
 // Write a symbol to a file
-static void writesymbol(Symbol const &sym, FILE *f)
-{
+static void writesymbol(Symbol const &sym, FILE *f) {
 	putstring(sym.name, f);
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, f);
@@ -154,8 +147,7 @@ static void writesymbol(Symbol const &sym, FILE *f)
 	}
 }
 
-static void registerSymbol(Symbol &sym)
-{
+static void registerSymbol(Symbol &sym) {
 	sym.ID = objectSymbols.size();
 	objectSymbols.push_back(&sym);
 	out_RegisterNode(sym.src);
@@ -163,19 +155,17 @@ static void registerSymbol(Symbol &sym)
 
 // Returns a symbol's ID within the object file
 // If the symbol does not have one, one is assigned by registering the symbol
-static uint32_t getSymbolID(Symbol &sym)
-{
+static uint32_t getSymbolID(Symbol &sym) {
 	if (sym.ID == (uint32_t)-1 && !sym_IsPC(&sym))
 		registerSymbol(sym);
 	return sym.ID;
 }
 
-static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn)
-{
+static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn) {
 	char symName[512];
 	size_t rpnptr = 0;
 
-	for (size_t offset = 0; offset < rpn.size(); ) {
+	for (size_t offset = 0; offset < rpn.size();) {
 		uint8_t rpndata = rpn[offset++];
 
 		switch (rpndata) {
@@ -262,8 +252,7 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 	}
 }
 
-static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs)
-{
+static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs) {
 	FileStackNode *node = fstk_GetFileStack();
 
 	patch.type = type;
@@ -290,8 +279,7 @@ static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 }
 
 // Create a new patch (includes the rpn expr)
-void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift)
-{
+void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
 	// Add the patch to the list
 	Patch &patch = currentSection->patches.emplace_front();
 
@@ -304,22 +292,20 @@ void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32
 }
 
 // Creates an assert that will be written to the object file
-void out_CreateAssert(enum AssertionType type, Expression const &expr, char const *message, uint32_t ofs)
-{
+void out_CreateAssert(enum AssertionType type, Expression const &expr, char const *message,
+                      uint32_t ofs) {
 	Assertion &assertion = assertions.emplace_front();
 
 	initpatch(assertion.patch, type, expr, ofs);
 	assertion.message = message;
 }
 
-static void writeassert(Assertion &assert, FILE *f)
-{
+static void writeassert(Assertion &assert, FILE *f) {
 	writepatch(assert.patch, f);
 	putstring(assert.message.c_str(), f);
 }
 
-static void writeFileStackNode(FileStackNode const &node, FILE *f)
-{
+static void writeFileStackNode(FileStackNode const &node, FILE *f) {
 	putlong(node.parent ? node.parent->ID : (uint32_t)-1, f);
 	putlong(node.lineNo, f);
 	putc(node.type, f);
@@ -330,13 +316,12 @@ static void writeFileStackNode(FileStackNode const &node, FILE *f)
 
 		putlong(nodeIters.size(), f);
 		// Iters are stored by decreasing depth, so reverse the order for output
-		for (uint32_t i = nodeIters.size(); i--; )
+		for (uint32_t i = nodeIters.size(); i--;)
 			putlong(nodeIters[i], f);
 	}
 }
 
-static void registerUnregisteredSymbol(Symbol &sym)
-{
+static void registerUnregisteredSymbol(Symbol &sym) {
 	// Check for symbol->src, to skip any built-in symbol from rgbasm
 	if (sym.src && sym.ID == (uint32_t)-1) {
 		registerSymbol(sym);
@@ -344,8 +329,7 @@ static void registerUnregisteredSymbol(Symbol &sym)
 }
 
 // Write an objectfile
-void out_WriteObject()
-{
+void out_WriteObject() {
 	FILE *f;
 
 	if (strcmp(objectName, "-")) {
@@ -375,8 +359,8 @@ void out_WriteObject()
 		// The list is supposed to have decrementing IDs
 		if (it + 1 != fileStackNodes.end() && it[1]->ID != node->ID - 1)
 			fatalerror("Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
-				   ". Please report this to the developers!\n",
-				   it[1]->ID, node->ID);
+			           ". Please report this to the developers!\n",
+			           it[1]->ID, node->ID);
 	}
 
 	for (Symbol const *sym : objectSymbols)
@@ -394,8 +378,7 @@ void out_WriteObject()
 }
 
 // Set the objectfilename
-void out_SetFileName(char *s)
-{
+void out_SetFileName(char *s) {
 	if (objectName)
 		warnx("Overriding output filename %s", objectName);
 	objectName = s;

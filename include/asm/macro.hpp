@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "asm/warning.hpp"
-
 #include "helpers.hpp"
+
+#include "asm/warning.hpp"
 
 struct MacroArgs {
 	unsigned int shift;

@@ -103,8 +103,8 @@ void reverse() {
 	auto const tiles = readInto(options.output);
 	uint8_t tileSize = 8 * options.bitDepth;
 	if (tiles.size() % tileSize != 0) {
-		fatal("Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes",
-		      tiles.size(), tileSize);
+		fatal("Tile data size (%zu bytes) is not a multiple of %" PRIu8 " bytes", tiles.size(),
+		      tileSize);
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
@@ -121,8 +121,8 @@ void reverse() {
 		fatal("Cannot generate empty image");
 	}
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
-		warning("Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16,
-		        nbTileInstances, options.maxNbTiles[0], options.maxNbTiles[1]);
+		warning("Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16, nbTileInstances,
+		        options.maxNbTiles[0], options.maxNbTiles[1]);
 	}
 
 	size_t width = options.reversedWidth, height; // In tiles
@@ -139,7 +139,7 @@ void reverse() {
 
 	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
-	};
+    };
 	// If a palette file is used as input, it overrides the default colors.
 	if (!options.palettes.empty()) {
 		File file;
@@ -167,15 +167,16 @@ void reverse() {
 		} while (nbRead != 0);
 
 		if (palettes.size() > options.nbPalettes) {
-			warning("Read %zu palettes, more than the specified limit of %" PRIu8,
-			        palettes.size(), options.nbPalettes);
+			warning("Read %zu palettes, more than the specified limit of %" PRIu8, palettes.size(),
+			        options.nbPalettes);
 		}
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
 			warning("Colors in the palette file do not match those specified with `-c`!");
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
-		warning("An embedded palette was requested, but no palette file was specified; ignoring request.");
+		warning("An embedded palette was requested, but no palette file was specified; ignoring "
+		        "request.");
 	} else if (options.palSpecType == Options::EXPLICIT) {
 		palettes = std::move(options.palSpec); // We won't be using it again.
 	}
@@ -195,8 +196,8 @@ void reverse() {
 		bool bad = false;
 		for (auto attr : *attrmap) {
 			if ((attr & 0b111) > palettes.size()) {
-				error("Referencing palette %u, but there are only %zu!",
-					attr & 0b111, palettes.size());
+				error("Referencing palette %u, but there are only %zu!", attr & 0b111,
+				      palettes.size());
 				bad = true;
 			}
 			if (attr & 0x08 && !tilemap) {

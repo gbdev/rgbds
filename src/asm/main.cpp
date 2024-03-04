@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/main.hpp"
+
 #include <ctype.h>
 #include <errno.h>
 #include <float.h>
@@ -7,43 +9,43 @@
 #include <limits.h>
 #include <math.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <time.h>
+
+#include "error.hpp"
+#include "extern/getopt.hpp"
+#include "helpers.hpp"
+#include "parser.hpp"
+#include "version.hpp"
 
 #include "asm/charmap.hpp"
 #include "asm/fixpoint.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
-#include "asm/main.hpp"
 #include "asm/opt.hpp"
 #include "asm/output.hpp"
 #include "asm/rpn.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
-#include "parser.hpp"
-
-#include "extern/getopt.hpp"
-
-#include "helpers.hpp"
-#include "error.hpp"
-#include "version.hpp"
 
 #ifdef __clang__
-#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-#define __SANITIZE_ADDRESS__
-#endif // __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
+	#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
+		#define __SANITIZE_ADDRESS__
+	#endif // __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
 #endif // __clang__
 
 #ifdef __SANITIZE_ADDRESS__
 // There are known, non-trivial to fix leaks. We would still like to have `make develop'
 // detect memory corruption, though.
 extern "C" {
-char const *__asan_default_options() { return "detect_leaks=0"; }
+char const *__asan_default_options() {
+	return "detect_leaks=0";
+}
 }
 #endif
 
@@ -65,8 +67,7 @@ bool verbose;
 bool warnings; // True to enable warnings, false to disable them.
 
 // Escapes Make-special chars from a string
-static std::string make_escape(std::string &str)
-{
+static std::string make_escape(std::string &str) {
 	std::string escaped;
 	size_t pos = 0;
 
@@ -98,54 +99,51 @@ static int depType; // Variants of `-M`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching
 static option const longopts[] = {
-	{ "binary-digits",    required_argument, nullptr,  'b' },
-	{ "define",           required_argument, nullptr,  'D' },
-	{ "export-all",       no_argument,       nullptr,  'E' },
-	{ "gfx-chars",        required_argument, nullptr,  'g' },
-	{ "nop-after-halt",   no_argument,       nullptr,  'H' },
-	{ "halt-without-nop", no_argument,       nullptr,  'h' },
-	{ "include",          required_argument, nullptr,  'I' },
-	{ "preserve-ld",      no_argument,       nullptr,  'L' },
-	{ "auto-ldh",         no_argument,       nullptr,  'l' },
-	{ "dependfile",       required_argument, nullptr,  'M' },
-	{ "MG",               no_argument,       &depType, 'G' },
-	{ "MP",               no_argument,       &depType, 'P' },
-	{ "MT",               required_argument, &depType, 'T' },
-	{ "warning",          required_argument, nullptr,  'W' },
-	{ "MQ",               required_argument, &depType, 'Q' },
-	{ "output",           required_argument, nullptr,  'o' },
-	{ "preinclude",       required_argument, nullptr,  'P' },
-	{ "pad-value",        required_argument, nullptr,  'p' },
-	{ "q-precision",      required_argument, nullptr,  'Q' },
-	{ "recursion-depth",  required_argument, nullptr,  'r' },
-	{ "version",          no_argument,       nullptr,  'V' },
-	{ "verbose",          no_argument,       nullptr,  'v' },
-	{ "warning",          required_argument, nullptr,  'W' },
-	{ "max-errors",       required_argument, nullptr,  'X' },
-	{ nullptr,            no_argument,       nullptr,  0   }
+    {"binary-digits",    required_argument, nullptr,  'b'},
+    {"define",           required_argument, nullptr,  'D'},
+    {"export-all",       no_argument,       nullptr,  'E'},
+    {"gfx-chars",        required_argument, nullptr,  'g'},
+    {"nop-after-halt",   no_argument,       nullptr,  'H'},
+    {"halt-without-nop", no_argument,       nullptr,  'h'},
+    {"include",          required_argument, nullptr,  'I'},
+    {"preserve-ld",      no_argument,       nullptr,  'L'},
+    {"auto-ldh",         no_argument,       nullptr,  'l'},
+    {"dependfile",       required_argument, nullptr,  'M'},
+    {"MG",               no_argument,       &depType, 'G'},
+    {"MP",               no_argument,       &depType, 'P'},
+    {"MT",               required_argument, &depType, 'T'},
+    {"warning",          required_argument, nullptr,  'W'},
+    {"MQ",               required_argument, &depType, 'Q'},
+    {"output",           required_argument, nullptr,  'o'},
+    {"preinclude",       required_argument, nullptr,  'P'},
+    {"pad-value",        required_argument, nullptr,  'p'},
+    {"q-precision",      required_argument, nullptr,  'Q'},
+    {"recursion-depth",  required_argument, nullptr,  'r'},
+    {"version",          no_argument,       nullptr,  'V'},
+    {"verbose",          no_argument,       nullptr,  'v'},
+    {"warning",          required_argument, nullptr,  'W'},
+    {"max-errors",       required_argument, nullptr,  'X'},
+    {nullptr,            no_argument,       nullptr,  0  }
 };
 
-static void printUsage()
-{
-	fputs(
-"Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-"              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-"              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-"              [-r depth] [-W warning] [-X max_errors] <file>\n"
-"Useful options:\n"
-"    -E, --export-all         export all labels\n"
-"    -M, --dependfile <path>  set the output dependency file\n"
-"    -o, --output <path>      set the output object file\n"
-"    -p, --pad-value <value>  set the value to use for `ds'\n"
-"    -V, --version            print RGBASM version and exit\n"
-"    -W, --warning <warning>  enable or disable warnings\n"
-"\n"
-"For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
+static void printUsage() {
+	fputs("Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+	      "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
+	      "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
+	      "              [-r depth] [-W warning] [-X max_errors] <file>\n"
+	      "Useful options:\n"
+	      "    -E, --export-all         export all labels\n"
+	      "    -M, --dependfile <path>  set the output dependency file\n"
+	      "    -o, --output <path>      set the output object file\n"
+	      "    -p, --pad-value <value>  set the value to use for `ds'\n"
+	      "    -V, --version            print RGBASM version and exit\n"
+	      "    -W, --warning <warning>  enable or disable warnings\n"
+	      "\n"
+	      "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
 	      stderr);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
 	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
 
@@ -214,7 +212,7 @@ int main(int argc, char *argv[])
 		case 'H':
 			if (warnOnHaltNop)
 				warning(WARNING_OBSOLETE,
-					"Automatic `nop` after `halt` (the `-H` flag) is deprecated\n");
+				        "Automatic `nop` after `halt` (the `-H` flag) is deprecated\n");
 			else
 				errx("`-H` and `-h` don't make sense together");
 			haltNop = true;
@@ -241,7 +239,7 @@ int main(int argc, char *argv[])
 		case 'l':
 			if (warnOnLdOpt)
 				warning(WARNING_OBSOLETE,
-					"Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n");
+				        "Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n");
 			else
 				errx("`-L` and `-l` don't make sense together");
 			optimizeLoads = true;
@@ -371,7 +369,8 @@ int main(int argc, char *argv[])
 		targetFileName = objectName;
 
 	if (argc == musl_optind) {
-		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr);
+		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
+		      stderr);
 		printUsage();
 		exit(1);
 	} else if (argc != musl_optind + 1) {
@@ -387,7 +386,8 @@ int main(int argc, char *argv[])
 
 	if (dependfile) {
 		if (targetFileName.empty())
-			errx("Dependency files can only be created if a target file is specified with either -o, -MQ or -MT");
+			errx("Dependency files can only be created if a target file is specified with either "
+			     "-o, -MQ or -MT");
 
 		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName);
 	}

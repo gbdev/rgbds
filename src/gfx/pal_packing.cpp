@@ -140,9 +140,10 @@ public:
 	 */
 	template<typename... Ts>
 	void assign(Ts &&...args) {
-		auto freeSlot = std::find_if_not(
-		    RANGE(_assigned),
-		    [](std::optional<ProtoPalAttrs> const &slot) { return slot.has_value(); });
+		auto freeSlot =
+		    std::find_if_not(RANGE(_assigned), [](std::optional<ProtoPalAttrs> const &slot) {
+			    return slot.has_value();
+		    });
 
 		if (freeSlot == _assigned.end()) { // We are full, use a new slot
 			_assigned.emplace_back(std::forward<Ts>(args)...);
@@ -405,13 +406,12 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				auto efficiency = [&bestPal](ProtoPalette const &pal) {
 					return pal.size() / bestPal.relSizeOf(pal);
 				};
-				auto [minEfficiencyIter, maxEfficiencyIter] =
-				    std::minmax_element(RANGE(bestPal),
-				                        [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
-				                                                      ProtoPalAttrs const &rhs) {
-					                        return efficiency(protoPalettes[lhs.protoPalIndex])
-					                               < efficiency(protoPalettes[rhs.protoPalIndex]);
-				                        });
+				auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
+				    RANGE(bestPal), [&efficiency, &protoPalettes](ProtoPalAttrs const &lhs,
+				                                                  ProtoPalAttrs const &rhs) {
+					    return efficiency(protoPalettes[lhs.protoPalIndex])
+					           < efficiency(protoPalettes[rhs.protoPalIndex]);
+				    });
 
 				// All efficiencies are identical iff min equals max
 				// TODO: maybe not ideal to re-compute these two?
@@ -443,9 +443,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	while (!queue.empty()) {
 		ProtoPalAttrs const &attrs = queue.front();
 		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
-		auto iter =
-		    std::find_if(RANGE(assignments),
-		                 [&protoPal](AssignedProtos const &pal) { return pal.canFit(protoPal); });
+		auto iter = std::find_if(RANGE(assignments), [&protoPal](AssignedProtos const &pal) {
+			return pal.canFit(protoPal);
+		});
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint(Options::VERB_DEBUG,
 			                     "Adding new palette (%zu) for overflowing proto-pal %zu\n",

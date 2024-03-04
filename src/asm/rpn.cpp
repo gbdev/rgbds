@@ -2,6 +2,8 @@
 
 // Controls RPN expressions for objectfiles
 
+#include "asm/rpn.hpp"
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -12,18 +14,16 @@
 #include <string.h>
 #include <vector>
 
+#include "opmath.hpp"
+
 #include "asm/main.hpp"
 #include "asm/output.hpp"
-#include "asm/rpn.hpp"
 #include "asm/section.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-#include "opmath.hpp"
-
 // Init a RPN expression
-static void initExpression(Expression &expr)
-{
+static void initExpression(Expression &expr) {
 	expr.reason = nullptr;
 	expr.isKnown = true;
 	expr.isSymbol = false;
@@ -33,8 +33,7 @@ static void initExpression(Expression &expr)
 
 // Makes an expression "not known", also setting its error message
 template<typename... Ts>
-static void makeUnknown(Expression &expr, Ts ...parts)
-{
+static void makeUnknown(Expression &expr, Ts... parts) {
 	expr.isKnown = false;
 	expr.reason = new std::string();
 	if (!expr.reason)
@@ -42,10 +41,9 @@ static void makeUnknown(Expression &expr, Ts ...parts)
 	(expr.reason->append(parts), ...);
 }
 
-static uint8_t *reserveSpace(Expression &expr, uint32_t size)
-{
+static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
 	if (!expr.rpn) {
-		expr.rpn = new(std::nothrow) std::vector<uint8_t>();
+		expr.rpn = new (std::nothrow) std::vector<uint8_t>();
 		if (!expr.rpn)
 			fatalerror("Failed to allocate RPN expression: %s\n", strerror(errno));
 	}
@@ -57,22 +55,19 @@ static uint8_t *reserveSpace(Expression &expr, uint32_t size)
 }
 
 // Free the RPN expression
-void rpn_Free(Expression &expr)
-{
+void rpn_Free(Expression &expr) {
 	delete expr.rpn;
 	delete expr.reason;
 	initExpression(expr);
 }
 
 // Add symbols, constants and operators to expression
-void rpn_Number(Expression &expr, uint32_t val)
-{
+void rpn_Number(Expression &expr, uint32_t val) {
 	initExpression(expr);
 	expr.val = val;
 }
 
-void rpn_Symbol(Expression &expr, char const *symName)
-{
+void rpn_Symbol(Expression &expr, char const *symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
@@ -98,8 +93,7 @@ void rpn_Symbol(Expression &expr, char const *symName)
 	}
 }
 
-static void bankSelf(Expression &expr)
-{
+static void bankSelf(Expression &expr) {
 	initExpression(expr);
 
 	if (!currentSection) {
@@ -114,8 +108,7 @@ static void bankSelf(Expression &expr)
 	}
 }
 
-void rpn_BankSymbol(Expression &expr, char const *symName)
-{
+void rpn_BankSymbol(Expression &expr, char const *symName) {
 	Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	// The @ symbol is treated differently.
@@ -147,8 +140,7 @@ void rpn_BankSymbol(Expression &expr, char const *symName)
 	}
 }
 
-void rpn_BankSection(Expression &expr, char const *sectionName)
-{
+void rpn_BankSection(Expression &expr, char const *sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -167,8 +159,7 @@ void rpn_BankSection(Expression &expr, char const *sectionName)
 	}
 }
 
-void rpn_SizeOfSection(Expression &expr, char const *sectionName)
-{
+void rpn_SizeOfSection(Expression &expr, char const *sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -187,8 +178,7 @@ void rpn_SizeOfSection(Expression &expr, char const *sectionName)
 	}
 }
 
-void rpn_StartOfSection(Expression &expr, char const *sectionName)
-{
+void rpn_StartOfSection(Expression &expr, char const *sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -207,8 +197,7 @@ void rpn_StartOfSection(Expression &expr, char const *sectionName)
 	}
 }
 
-void rpn_SizeOfSectionType(Expression &expr, enum SectionType type)
-{
+void rpn_SizeOfSectionType(Expression &expr, enum SectionType type) {
 	initExpression(expr);
 	makeUnknown(expr, "Section type's size is not known");
 
@@ -219,8 +208,7 @@ void rpn_SizeOfSectionType(Expression &expr, enum SectionType type)
 	*ptr++ = type;
 }
 
-void rpn_StartOfSectionType(Expression &expr, enum SectionType type)
-{
+void rpn_StartOfSectionType(Expression &expr, enum SectionType type) {
 	initExpression(expr);
 	makeUnknown(expr, "Section type's start is not known");
 
@@ -231,8 +219,7 @@ void rpn_StartOfSectionType(Expression &expr, enum SectionType type)
 	*ptr++ = type;
 }
 
-void rpn_CheckHRAM(Expression &expr, const Expression &src)
-{
+void rpn_CheckHRAM(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
@@ -247,8 +234,7 @@ void rpn_CheckHRAM(Expression &expr, const Expression &src)
 	}
 }
 
-void rpn_CheckRST(Expression &expr, const Expression &src)
-{
+void rpn_CheckRST(Expression &expr, const Expression &src) {
 	expr = src;
 
 	if (expr.isKnown) {
@@ -264,8 +250,7 @@ void rpn_CheckRST(Expression &expr, const Expression &src)
 }
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
-void rpn_CheckNBit(Expression const &expr, uint8_t n)
-{
+void rpn_CheckNBit(Expression const &expr, uint8_t n) {
 	assert(n != 0); // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
@@ -279,8 +264,7 @@ void rpn_CheckNBit(Expression const &expr, uint8_t n)
 	}
 }
 
-int32_t Expression::getConstVal() const
-{
+int32_t Expression::getConstVal() const {
 	if (!isKnown) {
 		error("Expected constant expression: %s\n", reason->c_str());
 		return 0;
@@ -288,8 +272,7 @@ int32_t Expression::getConstVal() const
 	return val;
 }
 
-void rpn_LOGNOT(Expression &expr, const Expression &src)
-{
+void rpn_LOGNOT(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
@@ -301,15 +284,13 @@ void rpn_LOGNOT(Expression &expr, const Expression &src)
 	}
 }
 
-Symbol const *Expression::symbolOf() const
-{
+Symbol const *Expression::symbolOf() const {
 	if (!isSymbol)
 		return nullptr;
 	return sym_FindScopedSymbol((char const *)&(*rpn)[1]);
 }
 
-bool Expression::isDiffConstant(Symbol const *sym) const
-{
+bool Expression::isDiffConstant(Symbol const *sym) const {
 	// Check if both expressions only refer to a single symbol
 	Symbol const *sym1 = symbolOf();
 
@@ -328,8 +309,7 @@ bool Expression::isDiffConstant(Symbol const *sym) const
  *
  * @return The constant result if it can be computed, or -1 otherwise.
  */
-static int32_t tryConstMask(Expression const &lhs, Expression const &rhs)
-{
+static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	Symbol const *lhsSymbol = lhs.symbolOf();
 	Symbol const *rhsSymbol = lhsSymbol ? nullptr : rhs.symbolOf();
 	bool lhsIsSymbol = lhsSymbol && lhsSymbol->getSection();
@@ -362,8 +342,8 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs)
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2)
-{
+void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
+                  const Expression &src2) {
 	expr.isSymbol = false;
 	int32_t constMaskVal;
 
@@ -417,43 +397,37 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, 
 			break;
 		case RPN_SHL:
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting left by negative amount %" PRId32 "\n",
-					src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n",
+				        src2.val);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting left by large amount %" PRId32 "\n", src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n",
+				        src2.val);
 
 			expr.val = op_shift_left(src1.val, src2.val);
 			break;
 		case RPN_SHR:
 			if (src1.val < 0)
-				warning(WARNING_SHIFT,
-					"Shifting right negative value %" PRId32 "\n", src1.val);
+				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", src1.val);
 
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by negative amount %" PRId32 "\n",
-					src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				        src2.val);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by large amount %" PRId32 "\n",
-					src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n",
+				        src2.val);
 
 			expr.val = op_shift_right(src1.val, src2.val);
 			break;
 		case RPN_USHR:
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by negative amount %" PRId32 "\n",
-					src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				        src2.val);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT,
-					"Shifting right by large amount %" PRId32 "\n",
-					src2.val);
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n",
+				        src2.val);
 
 			expr.val = op_shift_right_unsigned(src1.val, src2.val);
 			break;
@@ -465,9 +439,8 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, 
 				fatalerror("Division by zero\n");
 
 			if (src1.val == INT32_MIN && src2.val == -1) {
-				warning(WARNING_DIV,
-					"Division of %" PRId32 " by -1 yields %" PRId32 "\n",
-					INT32_MIN, INT32_MIN);
+				warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
+				        INT32_MIN, INT32_MIN);
 				expr.val = INT32_MIN;
 			} else {
 				expr.val = op_divide(src1.val, src2.val);
@@ -522,7 +495,7 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, 
 		if (src1.isKnown) {
 			uint32_t lval = src1.val;
 			uint8_t bytes[] = {RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8),
-					   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
+			                   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
 			expr.rpnPatchSize = sizeof(bytes);
 			expr.rpn = nullptr;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
@@ -545,8 +518,8 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, 
 
 		// If the right expression is constant, merge a shim instead
 		uint32_t rval = src2.val;
-		uint8_t bytes[] = {RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8),
-				   (uint8_t)(rval >> 16), (uint8_t)(rval >> 24)};
+		uint8_t bytes[] = {RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8), (uint8_t)(rval >> 16),
+		                   (uint8_t)(rval >> 24)};
 		if (src2.isKnown) {
 			ptr = bytes;
 			len = sizeof(bytes);
@@ -569,23 +542,20 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1, 
 	}
 }
 
-void rpn_HIGH(Expression &expr, const Expression &src)
-{
+void rpn_HIGH(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
 		expr.val = (uint32_t)expr.val >> 8 & 0xFF;
 	} else {
-		uint8_t bytes[] = {RPN_CONST,    8, 0, 0, 0, RPN_SHR,
-				   RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
+		uint8_t bytes[] = {RPN_CONST, 8, 0, 0, 0, RPN_SHR, RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 		expr.rpnPatchSize += sizeof(bytes);
 		memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 	}
 }
 
-void rpn_LOW(Expression &expr, const Expression &src)
-{
+void rpn_LOW(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
@@ -599,16 +569,14 @@ void rpn_LOW(Expression &expr, const Expression &src)
 	}
 }
 
-void rpn_ISCONST(Expression &expr, const Expression &src)
-{
+void rpn_ISCONST(Expression &expr, const Expression &src) {
 	initExpression(expr);
 	expr.val = src.isKnown;
 	expr.isKnown = true;
 	expr.isSymbol = false;
 }
 
-void rpn_NEG(Expression &expr, const Expression &src)
-{
+void rpn_NEG(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
@@ -620,8 +588,7 @@ void rpn_NEG(Expression &expr, const Expression &src)
 	}
 }
 
-void rpn_NOT(Expression &expr, const Expression &src)
-{
+void rpn_NOT(Expression &expr, const Expression &src) {
 	expr = src;
 	expr.isSymbol = false;
 
