@@ -40,7 +40,6 @@ struct Symbol {
 		int32_t (*numCallback)(); // If isNumeric() and hasCallback
 		std::string_view *macro; // For SYM_MACRO
 		std::string *equs; // For SYM_EQUS
-		char const *(*strCallback)(); // For SYM_EQUS if hasCallback
 	};
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
@@ -61,7 +60,6 @@ struct Symbol {
 
 	int32_t getValue() const;
 	uint32_t getConstantValue() const;
-	char const *getStringValue() const { return hasCallback ? strCallback() : equs->c_str(); }
 };
 
 void sym_ForEach(void (*func)(Symbol &));
