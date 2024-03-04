@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -395,8 +396,9 @@ void fstk_RunMacro(char const *macroName, MacroArgs &args)
 	fileInfoName.append(macro->name);
 
 	Context &context = newContext(*fileInfo);
+	std::string_view *macroView = macro->getMacro();
 
-	lexer_OpenFileView(context.lexerState, "MACRO", macro->macro->data(), macro->macro->size(),
+	lexer_OpenFileView(context.lexerState, "MACRO", macroView->data(), macroView->size(),
 	                   macro->fileLine);
 	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();

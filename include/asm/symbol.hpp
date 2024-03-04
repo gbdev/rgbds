@@ -8,6 +8,7 @@
 #include <string.h>
 #include <string_view>
 #include <time.h>
+#include <variant>
 
 #include "asm/section.hpp"
 
@@ -34,13 +35,12 @@ struct Symbol {
 	FileStackNode *src; // Where the symbol was defined
 	uint32_t fileLine; // Line where the symbol was defined
 
-	bool hasCallback;
-	union {
-		int32_t value; // If isNumeric()
-		int32_t (*numCallback)(); // If isNumeric() and hasCallback
-		std::string_view *macro; // For SYM_MACRO
-		std::string *equs; // For SYM_EQUS
-	};
+	std::variant<
+		int32_t, // If isNumeric()
+		int32_t (*)(), // If isNumeric() and has a callback
+		std::string_view *, // For SYM_MACRO
+		std::string * // For SYM_EQUS
+	> data;
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)
 
@@ -59,6 +59,9 @@ struct Symbol {
 	Section *getSection() const { return sym_IsPC(this) ? sect_GetSymbolSection() : section; }
 
 	int32_t getValue() const;
+	int32_t getOutputValue() const;
+	std::string_view *getMacro() const;
+	std::string *getEqus() const;
 	uint32_t getConstantValue() const;
 };
 
