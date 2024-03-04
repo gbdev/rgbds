@@ -42,11 +42,14 @@
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define WIN32_LEAN_AND_MEAN // include less from windows.h
-	#include <fileapi.h>        // CreateFileA
-	#include <handleapi.h>      // CloseHandle
-	#include <memoryapi.h>      // MapViewOfFile
-	#include <winbase.h>        // CreateFileMappingA
+	// clang-format off
+	// (we need these `include`s in this order)
 	#include <windows.h>        // target architecture
+	#include <fileapi.h>        // CreateFileA
+	#include <winbase.h>        // CreateFileMappingA
+	#include <memoryapi.h>      // MapViewOfFile
+	#include <handleapi.h>      // CloseHandle
+	// clang-format on
 	#define MAP_FAILED nullptr
 	#define mapFile(ptr, fd, path, size) \
 		do { \
@@ -55,7 +58,6 @@
 			    CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
 			                FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr); \
 			HANDLE mappingObj; \
-\
 			if (file == INVALID_HANDLE_VALUE) \
 				break; \
 			mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr); \
@@ -72,7 +74,6 @@
 	#define mapFile(ptr, fd, path, size) \
 		do { \
 			(ptr) = mmap(nullptr, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
-\
 			if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
 				/* \
 				 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED \
