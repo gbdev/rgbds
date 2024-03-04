@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <variant>
 
 #include "link/object.hpp"
 #include "link/patch.hpp"
@@ -13,6 +14,7 @@
 #include "link/symbol.hpp"
 
 #include "error.hpp"
+#include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "opmath.hpp"
 #include "platform.hpp"
@@ -226,14 +228,14 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
-			} else if (!symbol->section) {
+			} else if (!std::holds_alternative<Label>(symbol->data)) {
 				error(patch.src, patch.lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
 				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
 			} else {
-				value = symbol->section->bank;
+				value = std::get<Label>(symbol->data).section->bank;
 			}
 			break;
 
@@ -386,10 +388,12 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					      "Unknown symbol \"%s\"", fileSymbols[value].name.c_str());
 					isError = true;
 				} else {
-					value = symbol->value;
-					// Symbols attached to sections have offsets
-					if (symbol->section)
-						value += symbol->section->org;
+					value = std::visit(Visitor{
+						[](int32_t val) -> int32_t { return val; },
+						[](Label label) -> int32_t {
+							return label.section->org + label.offset;
+						}
+					}, symbol->data);
 				}
 			}
 			break;

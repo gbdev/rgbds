@@ -4,12 +4,15 @@
 #include <map>
 #include <stdlib.h>
 #include <string>
+#include <variant>
 
 #include "link/object.hpp"
+#include "link/section.hpp"
 #include "link/symbol.hpp"
 #include "link/main.hpp"
 
 #include "error.hpp"
+#include "helpers.hpp"
 
 std::map<std::string, Symbol *> symbols;
 

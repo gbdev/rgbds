@@ -345,7 +345,10 @@ static void writeSymBank(SortedSections const &bankSections, enum SectionType ty
 		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (!sym->name.empty() && canStartSymName(sym->name[0]))
-				symList.push_back({ .sym = sym, .addr = (uint16_t)(sym->offset + sect->org) });
+				symList.push_back({
+					.sym = sym,
+					.addr = (uint16_t)(std::get<Label>(sym->data).offset + sect->org)
+				});
 		}
 	});
 
@@ -414,7 +417,8 @@ static void writeMapBank(SortedSections const &sectList, enum SectionType type, 
 				for (Symbol *sym : sect->symbols)
 					// Space matches "\tSECTION: $xxxx ..."
 					fprintf(mapFile, "\t         $%04" PRIx32 " = %s\n",
-						sym->offset + org, sym->name.c_str());
+						std::get<Label>(sym->data).offset + org,
+						sym->name.c_str());
 
 				if (sect->nextu) {
 					// Announce the following "piece"

@@ -8,9 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tuple>
+#include <variant>
 #include <vector>
 
 #include "linkdefs.hpp"
+#include "helpers.hpp"
 #include "platform.hpp"
 
 #include "link/assign.hpp"
@@ -334,19 +337,29 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			symbol.src = &where;
 			symbol.lineNo = lineNo;
 
-			// No need to set the `sectionID`, since we can directly set the pointer
-			symbol.section = !fileSections.empty() ? fileSections.back().section : nullptr;
-
 			getToken(line.data(), "'S' line is too short");
 			symbol.name = token;
 
 			getToken(nullptr, "'S' line is too short");
-			// It might be an `offset`, but both types are the same so type punning is fine
-			symbol.value = parseNumber(where, lineNo, &token[3], numberType);
-			if (symbol.section && symbol.section->isAddressFixed) {
-				assert(symbol.offset >= symbol.section->org);
-				symbol.offset -= symbol.section->org;
-				assert(symbol.offset <= symbol.section->size);
+
+			if (int32_t value = parseNumber(where, lineNo, &token[3], numberType);
+			    fileSections.empty()) {
+				// Symbols in sections are labels; their value is an offset
+				Section *section = fileSections.back().section;
+				if (section->isAddressFixed) {
+					assert(value >= section->org &&
+					       value <= section->org + section->size);
+					value -= section->org;
+				}
+				symbol.data = Label{
+					// No need to set the `sectionID`, since we set the pointer
+					.sectionID = 0,
+					.offset = value,
+					.section = section
+				};
+			} else {
+				// Symbols without sections are just constants
+				symbol.data = value;
 			}
 
 			// Expected format: /[DR]ef[0-9A-F]+/i
@@ -363,13 +376,24 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				if (other) {
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
-					if ((other->section && !other->section->isAddressFixed)
-					 || (symbol.section && !symbol.section->isAddressFixed)) {
+					auto visitor = Visitor{
+						[](int32_t value) -> std::tuple<Section *, int32_t> {
+							return {nullptr, value};
+						},
+						[](Label label) -> std::tuple<Section *, int32_t> {
+							return {label.section, label.offset};
+						}
+					};
+					auto [symbolSection, symbolValue] = std::visit(visitor, symbol.data);
+					auto [otherSection, otherValue] = std::visit(visitor, other->data);
+					
+					if ((otherSection && !otherSection->isAddressFixed)
+					    || (symbolSection && !symbolSection->isAddressFixed)) {
 						sym_AddSymbol(symbol); // This will error out
-					} else if (other->value != symbol.value) {
+					} else if (otherValue != symbolValue) {
 						error(&where, lineNo,
 						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32 " != %" PRId32 ")",
-						      symbol.name.c_str(), other->objFileName, symbol.value, other->value);
+						      symbol.name.c_str(), other->objFileName, symbolValue, otherValue);
 					}
 				} else {
 					// Add a new definition
@@ -691,7 +715,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
 			for (Symbol *symbol : section->symbols)
-				symbol->offset += section->offset;
+				std::get<Label>(symbol->data).offset += section->offset;
 		}
 	}
 

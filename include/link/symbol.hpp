@@ -8,11 +8,19 @@
 
 #include <stdint.h>
 #include <string>
+#include <variant>
 
 #include "linkdefs.hpp"
 
 struct FileStackNode;
 struct Section;
+
+struct Label {
+	int32_t sectionID;
+	int32_t offset;
+	// Extra info computed during linking
+	Section *section;
+};
 
 struct Symbol {
 	// Info contained in the object files
@@ -21,14 +29,10 @@ struct Symbol {
 	char const *objFileName;
 	FileStackNode const *src;
 	int32_t lineNo;
-	int32_t sectionID;
-	union {
-		// Both types must be identical
-		int32_t offset;
-		int32_t value;
-	};
-	// Extra info computed during linking
-	Section *section;
+	std::variant<
+		int32_t, // Constants just have a numeric value
+		Label // Label values refer to an offset within a specific section
+	> data;
 };
 
 void sym_AddSymbol(Symbol &symbol);
