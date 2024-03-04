@@ -20,6 +20,7 @@
 - Björn Höhrmann &lt;bjoern@hoehrmann.de&gt;
 - Christophe Staïesse &lt;chastai@skynet.be&gt;
 - David Brotz &lt;dbrotz007@gmail.com&gt;
+- Evie &lt;https://evie.gbdev.io&gt;
 - James "JL2210" Larrowe &lt;https://github.com/JL2210&gt;
 - Maja Kądziołka &lt;github@compilercrim.es&gt;
 - The Musl C library &lt;https://musl.libc.org/&gt;
