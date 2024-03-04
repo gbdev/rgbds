@@ -70,7 +70,7 @@ void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(char const *symName);
 Symbol *sym_AddLabel(char const *symName);
 Symbol *sym_AddAnonLabel();
-void sym_WriteAnonLabelName(char buf[/* MAXSYMLEN + 1 */], uint32_t ofs, bool neg);
+void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg);
 void sym_Export(char const *symName);
 Symbol *sym_AddEqu(char const *symName, int32_t value);
 Symbol *sym_RedefEqu(char const *symName, int32_t value);

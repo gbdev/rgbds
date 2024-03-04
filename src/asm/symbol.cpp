@@ -493,7 +493,7 @@ Symbol *sym_AddAnonLabel()
 }
 
 // Write an anonymous label's name to a buffer
-void sym_WriteAnonLabelName(char buf[/* MAXSYMLEN + 1 */], uint32_t ofs, bool neg)
+void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg)
 {
 	uint32_t id = 0;
 

@@ -75,7 +75,7 @@ static void generate_tile_attributes(Attributes *attributes) {
 	attributes->nbColors = popcount[pal];
 }
 
-static void generate_tile_data(unsigned char tiledata[/* 8 */][8], unsigned colorcount) {
+static void generate_tile_data(unsigned char tiledata[8][8], unsigned colorcount) {
 	switch (colorcount) {
 	case 2: // 1bpp
 		for (uint8_t y = 0; y < 8; y++) {
@@ -104,9 +104,8 @@ static void generate_tile_data(unsigned char tiledata[/* 8 */][8], unsigned colo
 	}
 }
 
-// Can't mark as `const`, as the array type is otherwise not compatible (augh)
 static void
-    copy_tile_data(unsigned char destination[/* 8 */][8], unsigned char /* const */ source[/* 8 */][8]) {
+    copy_tile_data(unsigned char destination[8][8], unsigned char const source[8][8]) {
 	// Apply a random rotation to the copy
 	// coord ^ 7 = inverted coordinate; coord ^ 0 = regular coordinate
 	unsigned xmask = getRandomBits(1) * 7;
