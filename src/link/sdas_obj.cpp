@@ -366,10 +366,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					assert(value >= section->org && value <= section->org + section->size);
 					value -= section->org;
 				}
-				symbol.data = Label{// No need to set the `sectionID`, since we set the pointer
-				                    .sectionID = 0,
-				                    .offset = value,
-				                    .section = section};
+				// No need to set the `sectionID`, since we set the pointer
+				symbol.data = Label{.sectionID = 0, .offset = value, .section = section};
 			} else {
 				// Symbols without sections are just constants
 				symbol.data = value;
