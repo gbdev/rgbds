@@ -35,11 +35,12 @@ struct Symbol {
 	FileStackNode *src; // Where the symbol was defined
 	uint32_t fileLine;  // Line where the symbol was defined
 
-	std::variant<int32_t,            // If isNumeric()
-	             int32_t (*)(),      // If isNumeric() and has a callback
-	             std::string_view *, // For SYM_MACRO
-	             std::string *       // For SYM_EQUS
-	             >
+	std::variant<
+	    int32_t,            // If isNumeric()
+	    int32_t (*)(),      // If isNumeric() and has a callback
+	    std::string_view *, // For SYM_MACRO
+	    std::string *       // For SYM_EQUS
+	    >
 	    data;
 
 	uint32_t ID; // ID of the symbol in the object file (-1 if none)

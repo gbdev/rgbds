@@ -57,19 +57,21 @@ static option const longopts[] = {
 };
 
 static void printUsage() {
-	fputs("Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
-	      "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
-	      "              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] <file> ...\n"
-	      "Useful options:\n"
-	      "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
-	      "                                  to the man page for a list of values\n"
-	      "    -p, --pad-value <value>     pad to the next valid size using this value\n"
-	      "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
-	      "    -V, --version               print RGBFIX version and exit\n"
-	      "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
-	      "\n"
-	      "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n",
-	      stderr);
+	fputs(
+	    "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+	    "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
+	    "              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] <file> ...\n"
+	    "Useful options:\n"
+	    "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
+	    "                                  to the man page for a list of values\n"
+	    "    -p, --pad-value <value>     pad to the next valid size using this value\n"
+	    "    -r, --ram-size <code>       set the cart RAM size byte to this value\n"
+	    "    -V, --version               print RGBFIX version and exit\n"
+	    "    -v, --validate              fix the header logo and both checksums (-f lhg)\n"
+	    "\n"
+	    "For help, use `man rgbfix' or go to https://rgbds.gbdev.io/docs/\n",
+	    stderr
+	);
 }
 
 static uint8_t nbErrors;
@@ -492,8 +494,9 @@ static enum MbcType parseMBC(char const *name) {
 			}
 			static_assert(MBC3 + 1 == MBC3_RAM, "Enum sanity check failed!");
 			static_assert(MBC3 + 2 == MBC3_RAM_BATTERY, "Enum sanity check failed!");
-			static_assert(MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY,
-			              "Enum sanity check failed!");
+			static_assert(
+			    MBC3_TIMER_BATTERY + 1 == MBC3_TIMER_RAM_BATTERY, "Enum sanity check failed!"
+			);
 			if (features == RAM)
 				mbc++;
 			else if (features == (RAM | BATTERY))
@@ -540,8 +543,9 @@ static enum MbcType parseMBC(char const *name) {
 
 		case TPP1:
 			if (features & RAM)
-				fprintf(stderr,
-				        "warning: TPP1 requests RAM implicitly if given a non-zero RAM size");
+				fprintf(
+				    stderr, "warning: TPP1 requests RAM implicitly if given a non-zero RAM size"
+				);
 			if (features & BATTERY)
 				mbc |= 0x08;
 			if (features & TIMER)
@@ -838,8 +842,9 @@ static void overwriteByte(uint8_t *rom0, uint16_t addr, uint8_t fixedByte, char 
  * @param size How many bytes to check
  * @param areaName Name to be displayed in the warning message
  */
-static void overwriteBytes(uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size,
-                           char const *areaName) {
+static void overwriteBytes(
+    uint8_t *rom0, uint16_t startAddr, uint8_t const *fixed, uint8_t size, char const *areaName
+) {
 	if (!overwriteRom) {
 		for (uint8_t i = 0; i < size; i++) {
 			uint8_t origByte = rom0[i + startAddr];
@@ -876,8 +881,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		report("FATAL: Failed to read \"%s\"'s header: %s\n", name, strerror(errno));
 		return;
 	} else if (rom0Len < headerSize) {
-		report("FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n", name,
-		       (intmax_t)headerSize, (intmax_t)headerSize, (intmax_t)rom0Len);
+		report(
+		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n", name,
+		    (intmax_t)headerSize, (intmax_t)headerSize, (intmax_t)rom0Len
+		);
 		return;
 	}
 	// Accept partial reads if the file contains at least the header
@@ -899,8 +906,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		overwriteByte(rom0, 0x143, model == BOTH ? 0x80 : 0xC0, "CGB flag");
 
 	if (newLicensee)
-		overwriteBytes(rom0, 0x144, (uint8_t const *)newLicensee, newLicenseeLen,
-		               "new licensee code");
+		overwriteBytes(
+		    rom0, 0x144, (uint8_t const *)newLicensee, newLicenseeLen, "new licensee code"
+		);
 
 	if (sgb)
 		overwriteByte(rom0, 0x146, 0x03, "SGB flag");
@@ -943,9 +951,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	if (oldLicensee != UNSPECIFIED)
 		overwriteByte(rom0, 0x14B, oldLicensee, "old licensee code");
 	else if (sgb && rom0[0x14B] != 0x33)
-		fprintf(stderr,
-		        "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
-		        rom0[0x14B]);
+		fprintf(
+		    stderr, "warning: SGB compatibility enabled, but old licensee was 0x%02x, not 0x33\n",
+		    rom0[0x14B]
+		);
 
 	if (romVersion != UNSPECIFIED)
 		overwriteByte(rom0, 0x14C, romVersion, "mask ROM version number");
@@ -986,8 +995,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			// Update bank count, ONLY IF at least one byte was read
 			if (bankLen) {
 				// We're gonna read another bank, check that it won't be too much
-				static_assert(0x10000 * BANK_SIZE <= SSIZE_MAX,
-				              "Max input file size too large for OS");
+				static_assert(
+				    0x10000 * BANK_SIZE <= SSIZE_MAX, "Max input file size too large for OS"
+				);
 				if (nbBanks == 0x10000) {
 					report("FATAL: \"%s\" has more than 65536 banks\n", name);
 					return;
@@ -1093,8 +1103,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		report("FATAL: Failed to write \"%s\"'s ROM0: %s\n", name, strerror(errno));
 		return;
 	} else if (writeLen < rom0Len) {
-		report("FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n", (intmax_t)writeLen, name,
-		       (intmax_t)rom0Len);
+		report(
+		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n", (intmax_t)writeLen, name,
+		    (intmax_t)rom0Len
+		);
 		return;
 	}
 
@@ -1107,8 +1119,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
 			return;
 		} else if ((size_t)writeLen < totalRomxLen) {
-			report("FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n", (intmax_t)writeLen,
-			       name, totalRomxLen);
+			report(
+			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n", (intmax_t)writeLen,
+			    name, totalRomxLen
+			);
 			return;
 		}
 	}
@@ -1165,13 +1179,16 @@ static bool processFilename(char const *name) {
 		if (fstat(input, &stat) == -1) {
 			report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
 		} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support other types?
-			report("FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
-			       name);
+			report(
+			    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n", name
+			);
 		} else if (stat.st_size < 0x150) {
 			// This check is in theory redundant with the one in `processFile`, but it
 			// prevents passing a file size of 0, which usually indicates pipes
-			report("FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
-			       name, (intmax_t)stat.st_size);
+			report(
+			    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n", name,
+			    (intmax_t)stat.st_size
+			);
 		} else {
 			processFile(input, input, name, stat.st_size);
 		}
@@ -1180,8 +1197,10 @@ static bool processFilename(char const *name) {
 	}
 finish:
 	if (nbErrors)
-		fprintf(stderr, "Fixing \"%s\" failed with %u error%s\n", name, nbErrors,
-		        nbErrors == 1 ? "" : "s");
+		fprintf(
+		    stderr, "Fixing \"%s\" failed with %u error%s\n", name, nbErrors,
+		    nbErrors == 1 ? "" : "s"
+		);
 	return nbErrors;
 }
 
@@ -1205,8 +1224,10 @@ int main(int argc, char *argv[]) {
 				tmp = strtoul(musl_optarg, &endptr, 0); \
 			} \
 			if (*endptr) \
-				report("error: Expected number as argument to option '" name "', got %s\n", \
-				       musl_optarg); \
+				report( \
+				    "error: Expected number as argument to option '" name "', got %s\n", \
+				    musl_optarg \
+				); \
 			else if (tmp > 0xFF) \
 				report("error: Argument to option '" name "' is larger than 255: %lu\n", tmp); \
 			else \
@@ -1291,8 +1312,9 @@ int main(int argc, char *argv[]) {
 			len = strlen(newLicensee);
 			if (len > 2) {
 				len = 2;
-				fprintf(stderr, "warning: Truncating new licensee \"%s\" to 2 chars\n",
-				        newLicensee);
+				fprintf(
+				    stderr, "warning: Truncating new licensee \"%s\" to 2 chars\n", newLicensee
+				);
 			}
 			newLicenseeLen = len;
 			break;
@@ -1307,14 +1329,18 @@ int main(int argc, char *argv[]) {
 				report("error: Unknown MBC \"%s\"\nAccepted MBC names:\n", musl_optarg);
 				printAcceptedMBCNames();
 			} else if (cartridgeType == MBC_WRONG_FEATURES) {
-				report("error: Features incompatible with MBC (\"%s\")\nAccepted combinations:\n",
-				       musl_optarg);
+				report(
+				    "error: Features incompatible with MBC (\"%s\")\nAccepted combinations:\n",
+				    musl_optarg
+				);
 				printAcceptedMBCNames();
 			} else if (cartridgeType == MBC_BAD_RANGE) {
 				report("error: Specified MBC ID out of range 0-255: %s\n", musl_optarg);
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
-				fprintf(stderr, "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly "
-				                "supported\n");
+				fprintf(
+				    stderr, "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly "
+				            "supported\n"
+				);
 			}
 			break;
 
@@ -1370,39 +1396,50 @@ int main(int argc, char *argv[]) {
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese)
 		fprintf(
 		    stderr,
-		    "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n");
+		    "warning: TPP1 overwrites region flag for its identification code, ignoring `-j`\n"
+		);
 
 	// Check that RAM size is correct for "standard" mappers
 	if (ramSize != UNSPECIFIED && (cartridgeType & 0xFF00) == 0) {
 		if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 			if (ramSize != 1)
-				fprintf(stderr, "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
-				        mbcName(cartridgeType));
+				fprintf(
+				    stderr, "warning: MBC \"%s\" should have 2 KiB of RAM (-r 1)\n",
+				    mbcName(cartridgeType)
+				);
 		} else if (hasRAM(cartridgeType)) {
 			if (!ramSize) {
-				fprintf(stderr, "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
-				        mbcName(cartridgeType));
+				fprintf(
+				    stderr, "warning: MBC \"%s\" has RAM, but RAM size was set to 0\n",
+				    mbcName(cartridgeType)
+				);
 			} else if (ramSize == 1) {
-				fprintf(stderr, "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
-				        mbcName(cartridgeType));
+				fprintf(
+				    stderr, "warning: RAM size 1 (2 KiB) was specified for MBC \"%s\"\n",
+				    mbcName(cartridgeType)
+				);
 			} // TODO: check possible values?
 		} else if (ramSize) {
-			fprintf(stderr, "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
-			        mbcName(cartridgeType), ramSize);
+			fprintf(
+			    stderr, "warning: MBC \"%s\" has no RAM, but RAM size was set to %u\n",
+			    mbcName(cartridgeType), ramSize
+			);
 		}
 	}
 
 	if (sgb && oldLicensee != UNSPECIFIED && oldLicensee != 0x33)
-		fprintf(stderr,
-		        "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
-		        oldLicensee);
+		fprintf(
+		    stderr, "warning: SGB compatibility enabled, but old licensee is 0x%02x, not 0x33\n",
+		    oldLicensee
+		);
 
 	argv += musl_optind;
 	bool failed = nbErrors;
 
 	if (!*argv) {
-		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
-		      stderr);
+		fputs(
+		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
+		);
 		printUsage();
 		exit(1);
 	}

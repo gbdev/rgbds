@@ -116,8 +116,9 @@ static inline void lexer_SetGfxDigits(char const digits[4]) {
 
 // `path` is referenced, but not held onto..!
 bool lexer_OpenFile(LexerState &state, char const *path);
-void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
-                        uint32_t lineNo);
+void lexer_OpenFileView(
+    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
+);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
 void lexer_Init();

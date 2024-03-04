@@ -127,20 +127,22 @@ static option const longopts[] = {
 };
 
 static void printUsage() {
-	fputs("Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
-	      "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-	      "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-	      "              [-r depth] [-W warning] [-X max_errors] <file>\n"
-	      "Useful options:\n"
-	      "    -E, --export-all         export all labels\n"
-	      "    -M, --dependfile <path>  set the output dependency file\n"
-	      "    -o, --output <path>      set the output object file\n"
-	      "    -p, --pad-value <value>  set the value to use for `ds'\n"
-	      "    -V, --version            print RGBASM version and exit\n"
-	      "    -W, --warning <warning>  enable or disable warnings\n"
-	      "\n"
-	      "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
-	      stderr);
+	fputs(
+	    "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
+	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
+	    "              [-r depth] [-W warning] [-X max_errors] <file>\n"
+	    "Useful options:\n"
+	    "    -E, --export-all         export all labels\n"
+	    "    -M, --dependfile <path>  set the output dependency file\n"
+	    "    -o, --output <path>      set the output object file\n"
+	    "    -p, --pad-value <value>  set the value to use for `ds'\n"
+	    "    -V, --version            print RGBASM version and exit\n"
+	    "    -W, --warning <warning>  enable or disable warnings\n"
+	    "\n"
+	    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
+	    stderr
+	);
 }
 
 int main(int argc, char *argv[]) {
@@ -211,8 +213,9 @@ int main(int argc, char *argv[]) {
 
 		case 'H':
 			if (warnOnHaltNop)
-				warning(WARNING_OBSOLETE,
-				        "Automatic `nop` after `halt` (the `-H` flag) is deprecated\n");
+				warning(
+				    WARNING_OBSOLETE, "Automatic `nop` after `halt` (the `-H` flag) is deprecated\n"
+				);
 			else
 				errx("`-H` and `-h` don't make sense together");
 			haltNop = true;
@@ -238,8 +241,10 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'l':
 			if (warnOnLdOpt)
-				warning(WARNING_OBSOLETE,
-				        "Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n");
+				warning(
+				    WARNING_OBSOLETE,
+				    "Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n"
+				);
 			else
 				errx("`-L` and `-l` don't make sense together");
 			optimizeLoads = true;
@@ -369,8 +374,9 @@ int main(int argc, char *argv[]) {
 		targetFileName = objectName;
 
 	if (argc == musl_optind) {
-		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
-		      stderr);
+		fputs(
+		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
+		);
 		printUsage();
 		exit(1);
 	} else if (argc != musl_optind + 1) {

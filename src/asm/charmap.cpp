@@ -189,9 +189,11 @@ size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
 		if (charmap.nodes.size() > 1)
 			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n", printChar(firstChar));
 		else if (charmap.name != DEFAULT_CHARMAP_NAME)
-			warning(WARNING_UNMAPPED_CHAR_2,
-			        "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap\n",
-			        printChar(firstChar));
+			warning(
+			    WARNING_UNMAPPED_CHAR_2,
+			    "Unmapped character %s not in " DEFAULT_CHARMAP_NAME " charmap\n",
+			    printChar(firstChar)
+			);
 
 		return codepointLen;
 

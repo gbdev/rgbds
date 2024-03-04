@@ -64,8 +64,9 @@ public:
 	}
 
 	auto operator*() const {
-		return std::apply([](auto &&...it) { return std::tuple<decltype(*it)...>(*it...); },
-		                  _iters);
+		return std::apply(
+		    [](auto &&...it) { return std::tuple<decltype(*it)...>(*it...); }, _iters
+		);
 	}
 
 	friend auto operator==(Zip const &lhs, Zip const &rhs) {
@@ -92,7 +93,8 @@ public:
 			    using std::begin;
 			    return std::make_tuple(begin(containers)...);
 		    },
-		    _containers));
+		    _containers
+		));
 	}
 
 	auto end() {
@@ -101,14 +103,15 @@ public:
 			    using std::end;
 			    return std::make_tuple(end(containers)...);
 		    },
-		    _containers));
+		    _containers
+		));
 	}
 };
 
 // Take ownership of objects and rvalue refs passed to us, but not lvalue refs
 template<typename T>
-using Holder = std::conditional_t<std::is_lvalue_reference_v<T>, T,
-                                  std::remove_cv_t<std::remove_reference_t<T>>>;
+using Holder = std::conditional_t<
+    std::is_lvalue_reference_v<T>, T, std::remove_cv_t<std::remove_reference_t<T>>>;
 } // namespace detail
 
 // Does the same number of iterations as the first container's iterator!

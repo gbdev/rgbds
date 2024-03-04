@@ -66,10 +66,12 @@ void parseInlinePalSpec(char const * const rawArg) {
 		assert(len <= arg.length());
 
 		errorMessage(msg);
-		fprintf(stderr,
-		        "In inline palette spec: %s\n"
-		        "                        ",
-		        rawArg);
+		fprintf(
+		    stderr,
+		    "In inline palette spec: %s\n"
+		    "                        ",
+		    rawArg
+		);
 		for (auto i = ofs; i; --i) {
 			putc(' ', stderr);
 		}
@@ -97,12 +99,15 @@ void parseInlinePalSpec(char const * const rawArg) {
 			auto pos = std::min(arg.find_first_not_of("0123456789ABCDEFabcdef"sv, n), arg.length());
 			switch (pos - n) {
 			case 3:
-				color = Rgba(singleToHex(arg[n + 0]), singleToHex(arg[n + 1]),
-				             singleToHex(arg[n + 2]), 0xFF);
+				color = Rgba(
+				    singleToHex(arg[n + 0]), singleToHex(arg[n + 1]), singleToHex(arg[n + 2]), 0xFF
+				);
 				break;
 			case 6:
-				color = Rgba(toHex(arg[n + 0], arg[n + 1]), toHex(arg[n + 2], arg[n + 3]),
-				             toHex(arg[n + 4], arg[n + 5]), 0xFF);
+				color = Rgba(
+				    toHex(arg[n + 0], arg[n + 1]), toHex(arg[n + 2], arg[n + 3]),
+				    toHex(arg[n + 4], arg[n + 5]), 0xFF
+				);
 				break;
 			case 0:
 				parseError(n - 1, 1, "Missing color after '#'");
@@ -239,8 +244,8 @@ static std::optional<U> parseDec(std::string const &str, std::string::size_type 
 	return std::optional<U>{value};
 }
 
-static std::optional<Rgba> parseColor(std::string const &str, std::string::size_type &n,
-                                      uint16_t i) {
+static std::optional<Rgba>
+    parseColor(std::string const &str, std::string::size_type &n, uint16_t i) {
 	std::optional<uint8_t> r = parseDec<uint8_t>(str, n);
 	if (!r) {
 		error("Failed to parse color #%d (\"%s\"): invalid red component", i + 1, str.c_str());
@@ -298,9 +303,11 @@ static void parsePSPFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    *nbColors > nbPalColors) {
-		warning("PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		        "; ignoring extra",
-		        *nbColors, nbPalColors);
+		warning(
+		    "PSP file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    *nbColors, nbPalColors
+		);
 		nbColors = nbPalColors;
 	}
 
@@ -316,8 +323,10 @@ static void parsePSPFile(std::filebuf &file) {
 			return;
 		}
 		if (n != line.length()) {
-			error("Failed to parse color #%d (\"%s\"): trailing characters after blue component",
-			      i + 1, line.c_str());
+			error(
+			    "Failed to parse color #%d (\"%s\"): trailing characters after blue component",
+			    i + 1, line.c_str()
+			);
 			return;
 		}
 
@@ -368,9 +377,11 @@ static void parseGPLFile(std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warning("GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		        "; ignoring extra",
-		        nbColors, maxNbColors);
+		warning(
+		    "GPL file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbColors, maxNbColors
+		);
 	}
 }
 
@@ -389,8 +400,10 @@ static void parseHEXFile(std::filebuf &file) {
 
 		if (line.length() != 6
 		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
-			error("Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line", nbColors + 1,
-			      line.c_str());
+			error(
+			    "Failed to parse color #%d (\"%s\"): invalid \"rrggbb\" line", nbColors + 1,
+			    line.c_str()
+			);
 			return;
 		}
 
@@ -407,9 +420,11 @@ static void parseHEXFile(std::filebuf &file) {
 	}
 
 	if (nbColors > maxNbColors) {
-		warning("HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		        "; ignoring extra",
-		        nbColors, maxNbColors);
+		warning(
+		    "HEX file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbColors, maxNbColors
+		);
 	}
 }
 
@@ -434,9 +449,11 @@ static void parseACTFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    nbColors > nbPalColors) {
-		warning("ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		        "; ignoring extra",
-		        nbColors, nbPalColors);
+		warning(
+		    "ACT file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbColors, nbPalColors
+		);
 		nbColors = nbPalColors;
 	}
 
@@ -485,9 +502,11 @@ static void parseACOFile(std::filebuf &file) {
 
 	if (uint16_t nbPalColors = options.nbColorsPerPal * options.nbPalettes;
 	    nbColors > nbPalColors) {
-		warning("ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
-		        "; ignoring extra",
-		        nbColors, nbPalColors);
+		warning(
+		    "ACO file contains %" PRIu16 " colors, but there can only be %" PRIu16
+		    "; ignoring extra",
+		    nbColors, nbPalColors
+		);
 		nbColors = nbPalColors;
 	}
 
@@ -541,16 +560,20 @@ static void parseGBCFile(std::filebuf &file) {
 		if (len == 0) {
 			break;
 		} else if (len != sizeof(buf)) {
-			error("GBC palette dump contains %zu 8-byte palette%s, plus %zu byte%s",
-			      options.palSpec.size(), options.palSpec.size() == 1 ? "" : "s", len,
-			      len == 1 ? "" : "s");
+			error(
+			    "GBC palette dump contains %zu 8-byte palette%s, plus %zu byte%s",
+			    options.palSpec.size(), options.palSpec.size() == 1 ? "" : "s", len,
+			    len == 1 ? "" : "s"
+			);
 			break;
 		}
 
-		options.palSpec.push_back({Rgba::fromCGBColor(readLE<uint16_t>(&buf[0])),
-		                           Rgba::fromCGBColor(readLE<uint16_t>(&buf[2])),
-		                           Rgba::fromCGBColor(readLE<uint16_t>(&buf[4])),
-		                           Rgba::fromCGBColor(readLE<uint16_t>(&buf[6]))});
+		options.palSpec.push_back(
+		    {Rgba::fromCGBColor(readLE<uint16_t>(&buf[0])),
+		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[2])),
+		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[4])),
+		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[6]))}
+		);
 	}
 }
 
@@ -579,9 +602,10 @@ void parseExternalPalSpec(char const *arg) {
 		    return strncasecmp(arg, std::get<0>(parser), ptr - arg) == 0;
 	    });
 	if (iter == parsers.end()) {
-		error("Unknown external palette format \"%.*s\"",
-		      static_cast<int>(std::min(ptr - arg, static_cast<decltype(ptr - arg)>(INT_MAX))),
-		      arg);
+		error(
+		    "Unknown external palette format \"%.*s\"",
+		    static_cast<int>(std::min(ptr - arg, static_cast<decltype(ptr - arg)>(INT_MAX))), arg
+		);
 		return;
 	}
 

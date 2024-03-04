@@ -151,19 +151,21 @@ static option const longopts[] = {
 };
 
 static void printUsage() {
-	fputs("Usage: rgbgfx [-r stride] [-CmOuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-	      "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
-	      "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
-	      "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
-	      "Useful options:\n"
-	      "    -m, --mirror-tiles    optimize out mirrored tiles\n"
-	      "    -o, --output <path>   output the tile data to this path\n"
-	      "    -t, --tilemap <path>  output the tile map to this path\n"
-	      "    -u, --unique-tiles    optimize out identical tiles\n"
-	      "    -V, --version         print RGBGFX version and exit\n"
-	      "\n"
-	      "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
-	      stderr);
+	fputs(
+	    "Usage: rgbgfx [-r stride] [-CmOuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
+	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
+	    "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
+	    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
+	    "Useful options:\n"
+	    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
+	    "    -o, --output <path>   output the tile data to this path\n"
+	    "    -t, --tilemap <path>  output the tile map to this path\n"
+	    "    -u, --unique-tiles    optimize out identical tiles\n"
+	    "    -V, --version         print RGBGFX version and exit\n"
+	    "\n"
+	    "For help, use `man rgbgfx' or go to https://rgbds.gbdev.io/docs/\n",
+	    stderr
+	);
 }
 
 /*
@@ -215,8 +217,9 @@ static uint16_t parseNumber(char *&string, char const *errPrefix, uint16_t errVa
 	};
 
 	if (charIndex(*string) == 255) {
-		error("%s: expected digit%s, but found nothing", errPrefix,
-		      base != 10 ? " after base" : "");
+		error(
+		    "%s: expected digit%s, but found nothing", errPrefix, base != 10 ? " after base" : ""
+		);
 		return errVal;
 	}
 	uint16_t number = 0;
@@ -246,10 +249,12 @@ static void skipWhitespace(char *&arg) {
 
 static void registerInput(char const *arg) {
 	if (!options.input.empty()) {
-		fprintf(stderr,
-		        "FATAL: input image specified more than once! (first \"%s\", then "
-		        "\"%s\")\n",
-		        options.input.c_str(), arg);
+		fprintf(
+		    stderr,
+		    "FATAL: input image specified more than once! (first \"%s\", then "
+		    "\"%s\")\n",
+		    options.input.c_str(), arg
+		);
 		printUsage();
 		exit(1);
 	} else if (arg[0] == '\0') { // Empty input path
@@ -272,8 +277,10 @@ static std::vector<size_t> readAtFile(std::string const &path, std::vector<char>
 	}
 
 	// We only filter out `EOF`, but calling `isblank()` on anything else is UB!
-	static_assert(std::remove_reference_t<decltype(*file)>::traits_type::eof() == EOF,
-	              "isblank(char_traits<...>::eof()) is UB!");
+	static_assert(
+	    std::remove_reference_t<decltype(*file)>::traits_type::eof() == EOF,
+	    "isblank(char_traits<...>::eof()) is UB!"
+	);
 	std::vector<size_t> argvOfs;
 
 	for (;;) {
@@ -371,8 +378,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			skipWhitespace(arg);
 			if (*arg != ',') {
-				error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
-				      musl_optarg);
+				error(
+				    "Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
+				    musl_optarg
+				);
 				break;
 			}
 			++arg; // Skip comma
@@ -384,8 +393,10 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.baseTileIDs[1] = number;
 			}
 			if (*arg != '\0') {
-				error("Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
-				      musl_optarg);
+				error(
+				    "Base tile IDs must be one or two comma-separated numbers, not \"%s\"",
+				    musl_optarg
+				);
 				break;
 			}
 			break;
@@ -474,8 +485,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			skipWhitespace(arg);
 			if (*arg != ',') {
-				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"",
-				      musl_optarg);
+				error(
+				    "Bank capacity must be one or two comma-separated numbers, not \"%s\"",
+				    musl_optarg
+				);
 				break;
 			}
 			++arg; // Skip comma
@@ -485,8 +498,10 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Bank 1 cannot contain more than 256 tiles");
 			}
 			if (*arg != '\0') {
-				error("Bank capacity must be one or two comma-separated numbers, not \"%s\"",
-				      musl_optarg);
+				error(
+				    "Bank capacity must be one or two comma-separated numbers, not \"%s\"",
+				    musl_optarg
+				);
 				break;
 			}
 			break;
@@ -665,16 +680,20 @@ int main(int argc, char *argv[]) {
 	if (options.nbColorsPerPal == 0) {
 		options.nbColorsPerPal = 1u << options.bitDepth;
 	} else if (options.nbColorsPerPal > 1u << options.bitDepth) {
-		error("%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8, options.bitDepth,
-		      1u << options.bitDepth, options.nbColorsPerPal);
+		error(
+		    "%" PRIu8 "bpp palettes can only contain %u colors, not %" PRIu8, options.bitDepth,
+		    1u << options.bitDepth, options.nbColorsPerPal
+		);
 	}
 
 	auto autoOutPath = [](bool autoOptEnabled, std::string &path, char const *extension) {
 		if (autoOptEnabled) {
 			auto &image = localOptions.groupOutputs ? options.output : options.input;
 			if (image.empty()) {
-				fprintf(stderr, "FATAL: No %s specified\n",
-				        localOptions.groupOutputs ? "output tile data file" : "input image");
+				fprintf(
+				    stderr, "FATAL: No %s specified\n",
+				    localOptions.groupOutputs ? "output tile data file" : "input image"
+				);
 				printUsage();
 				exit(1);
 			}
@@ -781,15 +800,21 @@ int main(int argc, char *argv[]) {
 			}
 			fputs("\t]\n", stderr);
 		}
-		fprintf(stderr,
-		        "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32
-		        ", %" PRIi32 ")\n",
-		        options.inputSlice.width, options.inputSlice.height, options.inputSlice.left,
-		        options.inputSlice.top);
-		fprintf(stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
-		        options.baseTileIDs[1]);
-		fprintf(stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
-		        options.maxNbTiles[0], options.maxNbTiles[1]);
+		fprintf(
+		    stderr,
+		    "\tInput image slice: %" PRIu32 "x%" PRIu32 " pixels starting at (%" PRIi32 ", %" PRIi32
+		    ")\n",
+		    options.inputSlice.width, options.inputSlice.height, options.inputSlice.left,
+		    options.inputSlice.top
+		);
+		fprintf(
+		    stderr, "\tBase tile IDs: [%" PRIu8 ", %" PRIu8 "]\n", options.baseTileIDs[0],
+		    options.baseTileIDs[1]
+		);
+		fprintf(
+		    stderr, "\tMaximum %" PRIu16 " tiles in bank 0, %" PRIu16 " in bank 1\n",
+		    options.maxNbTiles[0], options.maxNbTiles[1]
+		);
 		auto printPath = [](char const *name, std::string const &path) {
 			if (!path.empty()) {
 				fprintf(stderr, "\t%s: %s\n", name, path.c_str());
@@ -814,8 +839,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			process();
 		}
-	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
-	           && !options.reverse()) {
+	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT && !options.reverse()) {
 		processPalettes();
 	} else {
 		fputs("FATAL: No input image specified\n", stderr);
@@ -858,8 +882,9 @@ auto Palette::begin() -> decltype(colors)::iterator {
 auto Palette::end() -> decltype(colors)::iterator {
 	// Return an iterator pointing past the last non-empty element.
 	// Since the palette may contain gaps, we must scan from the end.
-	return std::find_if(colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; })
-	    .base();
+	return std::find_if(
+	           colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; }
+	).base();
 }
 
 auto Palette::begin() const -> decltype(colors)::const_iterator {
@@ -869,8 +894,9 @@ auto Palette::begin() const -> decltype(colors)::const_iterator {
 
 auto Palette::end() const -> decltype(colors)::const_iterator {
 	// Same as the non-const end().
-	return std::find_if(colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; })
-	    .base();
+	return std::find_if(
+	           colors.rbegin(), colors.rend(), [](uint16_t c) { return c != UINT16_MAX; }
+	).base();
 }
 
 uint8_t Palette::size() const {

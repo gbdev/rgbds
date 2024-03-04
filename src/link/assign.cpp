@@ -42,7 +42,8 @@ static void initFreeSpace() {
 		memory[type].resize(nbbanks(type));
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
 			bankMem.push_back(
-			    {.address = sectionTypeInfo[type].startAddr, .size = sectionTypeInfo[type].size});
+			    {.address = sectionTypeInfo[type].startAddr, .size = sectionTypeInfo[type].size}
+			);
 		}
 	}
 }
@@ -74,8 +75,9 @@ static void assignSection(Section &section, MemoryLocation const &location) {
  * @param location The location to attempt placing the section at
  * @return True if the location is suitable, false otherwise.
  */
-static bool isLocationSuitable(Section const &section, FreeSpace const &freeSpace,
-                               MemoryLocation const &location) {
+static bool isLocationSuitable(
+    Section const &section, FreeSpace const &freeSpace, MemoryLocation const &location
+) {
 	if (section.isAddressFixed && section.org != location.address)
 		return false;
 
@@ -180,8 +182,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 				location.bank = scrambleROMX + 1;
 			else
 				return -1;
-		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX
-		           && location.bank <= scrambleWRAMX) {
+		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX && location.bank <= scrambleWRAMX) {
 			if (location.bank > typeInfo.firstBank)
 				location.bank--;
 			else if (scrambleWRAMX < typeInfo.lastBank)
@@ -242,10 +243,12 @@ static void placeSection(Section &section) {
 		} else if (!noLeftSpace && !noRightSpace) {
 			// The free space is split in two
 			// Append the new space after the original one
-			bankMem.insert(bankMem.begin() + spaceIdx + 1,
-			               {.address = (uint16_t)(section.org + section.size),
-			                .size = (uint16_t)(freeSpace.address + freeSpace.size - section.org
-			                                   - section.size)});
+			bankMem.insert(
+			    bankMem.begin() + spaceIdx + 1,
+			    {.address = (uint16_t)(section.org + section.size),
+			     .size =
+			         (uint16_t)(freeSpace.address + freeSpace.size - section.org - section.size)}
+			);
 			// Resize the original space (address is unmodified)
 			freeSpace.size = section.org - freeSpace.address;
 		} else {
@@ -263,38 +266,49 @@ static void placeSection(Section &section) {
 
 	if (section.isBankFixed && nbbanks(section.type) != 1) {
 		if (section.isAddressFixed)
-			snprintf(where, sizeof(where), "at $%02" PRIx32 ":%04" PRIx16, section.bank,
-			         section.org);
+			snprintf(
+			    where, sizeof(where), "at $%02" PRIx32 ":%04" PRIx16, section.bank, section.org
+			);
 		else if (section.isAlignFixed)
-			snprintf(where, sizeof(where), "in bank $%02" PRIx32 " with align mask %" PRIx16,
-			         section.bank, (uint16_t)~section.alignMask);
+			snprintf(
+			    where, sizeof(where), "in bank $%02" PRIx32 " with align mask %" PRIx16,
+			    section.bank, (uint16_t)~section.alignMask
+			);
 		else
 			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section.bank);
 	} else {
 		if (section.isAddressFixed)
 			snprintf(where, sizeof(where), "at address $%04" PRIx16, section.org);
 		else if (section.isAlignFixed)
-			snprintf(where, sizeof(where), "with align mask %" PRIx16 " and offset %" PRIx16,
-			         (uint16_t)~section.alignMask, section.alignOfs);
+			snprintf(
+			    where, sizeof(where), "with align mask %" PRIx16 " and offset %" PRIx16,
+			    (uint16_t)~section.alignMask, section.alignOfs
+			);
 		else
 			strcpy(where, "anywhere");
 	}
 
 	// If a section failed to go to several places, nothing we can report
 	if (!section.isBankFixed || !section.isAddressFixed)
-		errx("Unable to place \"%s\" (%s section) %s", section.name.c_str(),
-		     sectionTypeInfo[section.type].name.c_str(), where);
+		errx(
+		    "Unable to place \"%s\" (%s section) %s", section.name.c_str(),
+		    sectionTypeInfo[section.type].name.c_str(), where
+		);
 	// If the section just can't fit the bank, report that
 	else if (section.org + section.size > endaddr(section.type) + 1)
-		errx("Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
-		     "$%04x)",
-		     section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
-		     section.org + section.size, endaddr(section.type) + 1);
+		errx(
+		    "Unable to place \"%s\" (%s section) %s: section runs past end of region ($%04x > "
+		    "$%04x)",
+		    section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
+		    section.org + section.size, endaddr(section.type) + 1
+		);
 	// Otherwise there is overlap with another section
 	else
-		errx("Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
-		     section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
-		     out_OverlappingSection(section)->name.c_str());
+		errx(
+		    "Unable to place \"%s\" (%s section) %s: section overlaps with \"%s\"",
+		    section.name.c_str(), sectionTypeInfo[section.type].name.c_str(), where,
+		    out_OverlappingSection(section)->name.c_str()
+		);
 }
 
 #define BANK_CONSTRAINED  (1 << 2)

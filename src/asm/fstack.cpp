@@ -184,8 +184,10 @@ bool yywrap() {
 	uint32_t ifDepth = lexer_GetIFDepth();
 
 	if (ifDepth != 0)
-		fatalerror("Ended block with %" PRIu32 " unterminated IF construct%s\n", ifDepth,
-		           ifDepth == 1 ? "" : "s");
+		fatalerror(
+		    "Ended block with %" PRIu32 " unterminated IF construct%s\n", ifDepth,
+		    ifDepth == 1 ? "" : "s"
+		);
 
 	if (Context &context = contextStack.top(); context.fileInfo->type == NODE_REPT) {
 		// The context is a REPT or FOR block, which may loop
@@ -382,8 +384,9 @@ void fstk_RunMacro(char const *macroName, MacroArgs &args) {
 	Context &context = newContext(*fileInfo);
 	std::string_view *macroView = macro->getMacro();
 
-	lexer_OpenFileView(context.lexerState, "MACRO", macroView->data(), macroView->size(),
-	                   macro->fileLine);
+	lexer_OpenFileView(
+	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
+	);
 	lexer_SetStateAtEOL(&context.lexerState);
 	context.uniqueID = macro_UseNewUniqueID();
 	macro_UseNewArgs(&args);
@@ -403,8 +406,9 @@ static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {
 	fileInfo->data = std::vector<uint32_t>{1};
 	if (reptDepth) {
 		// Append all parent iter counts
-		fileInfo->iters().insert(fileInfo->iters().end(),
-		                         RANGE(contextStack.top().fileInfo->iters()));
+		fileInfo->iters().insert(
+		    fileInfo->iters().end(), RANGE(contextStack.top().fileInfo->iters())
+		);
 	}
 
 	Context &context = newContext(*fileInfo);
@@ -427,8 +431,10 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t s
 	contextStack.top().nbReptIters = count;
 }
 
-void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step, int32_t reptLineNo,
-                 char const *body, size_t size) {
+void fstk_RunFor(
+    char const *symName, int32_t start, int32_t stop, int32_t step, int32_t reptLineNo,
+    char const *body, size_t size
+) {
 	Symbol *sym = sym_AddVar(symName, start);
 
 	if (sym->type != SYM_VAR)
@@ -444,8 +450,9 @@ void fstk_RunFor(char const *symName, int32_t start, int32_t stop, int32_t step,
 		error("FOR cannot have a step value of 0\n");
 
 	if ((step > 0 && start > stop) || (step < 0 && start < stop))
-		warning(WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d\n", start, stop,
-		        step);
+		warning(
+		    WARNING_BACKWARDS_FOR, "FOR goes backwards from %d to %d by %d\n", start, stop, step
+		);
 
 	if (count == 0)
 		return;

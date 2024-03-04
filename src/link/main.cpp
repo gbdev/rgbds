@@ -94,8 +94,9 @@ std::string const *FileStackNode::dumpFileStack() const {
 	return lastName;
 }
 
-void printDiag(char const *fmt, va_list args, char const *type, FileStackNode const *where,
-               uint32_t lineNo) {
+void printDiag(
+    char const *fmt, va_list args, char const *type, FileStackNode const *where, uint32_t lineNo
+) {
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	if (where) {
@@ -148,8 +149,9 @@ void argErr(char flag, char const *fmt, ...) {
 	if (nbErrors != UINT32_MAX)
 		nbErrors++;
 
-	fprintf(stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors,
-	        nbErrors == 1 ? "" : "s");
+	fprintf(
+	    stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
+	);
 	exit(1);
 }
 
@@ -186,20 +188,22 @@ static option const longopts[] = {
 };
 
 static void printUsage() {
-	fputs("Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
-	      "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-	      "               [-S spec] [-s symbol] <file> ...\n"
-	      "Useful options:\n"
-	      "    -l, --linkerscript <path>  set the input linker script\n"
-	      "    -m, --map <path>           set the output map file\n"
-	      "    -n, --sym <path>           set the output symbol list file\n"
-	      "    -o, --output <path>        set the output file\n"
-	      "    -p, --pad <value>          set the value to pad between sections with\n"
-	      "    -x, --nopad                disable padding of output binary\n"
-	      "    -V, --version              print RGBLINK version and exits\n"
-	      "\n"
-	      "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
-	      stderr);
+	fputs(
+	    "Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+	    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
+	    "               [-S spec] [-s symbol] <file> ...\n"
+	    "Useful options:\n"
+	    "    -l, --linkerscript <path>  set the input linker script\n"
+	    "    -m, --map <path>           set the output map file\n"
+	    "    -n, --sym <path>           set the output symbol list file\n"
+	    "    -o, --output <path>        set the output file\n"
+	    "    -p, --pad <value>          set the value to pad between sections with\n"
+	    "    -x, --nopad                disable padding of output binary\n"
+	    "    -V, --version              print RGBLINK version and exits\n"
+	    "\n"
+	    "For help, use `man rgblink' or go to https://rgbds.gbdev.io/docs/\n",
+	    stderr
+	);
 }
 
 enum ScrambledRegion {
@@ -250,8 +254,9 @@ static void parseScrambleSpec(char const *spec) {
 		// Find the next non-blank char after the region name's end
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
-			argErr('S', "Unexpected '%c' after region name \"%.*s\"", regionNamePrintLen,
-			       regionName);
+			argErr(
+			    'S', "Unexpected '%c' after region name \"%.*s\"", regionNamePrintLen, regionName
+			);
 			// Skip to next ',' or '=' (or NUL) and keep parsing
 			spec += 1 + strcspn(&spec[1], ",=");
 		}
@@ -282,15 +287,19 @@ static void parseScrambleSpec(char const *spec) {
 			limit = strtoul(spec, &endptr, 10);
 			endptr += strspn(endptr, " \t");
 			if (*endptr != '\0' && *endptr != ',') {
-				argErr('S', "Invalid non-numeric limit for region \"%.*s\"", regionNamePrintLen,
-				       regionName);
+				argErr(
+				    'S', "Invalid non-numeric limit for region \"%.*s\"", regionNamePrintLen,
+				    regionName
+				);
 				endptr = strchr(endptr, ',');
 			}
 			spec = endptr;
 
 			if (region != SCRAMBLE_UNK && limit > scrambleSpecs[region].max) {
-				argErr('S', "Limit for region \"%.*s\" may not exceed %" PRIu16, regionNamePrintLen,
-				       regionName, scrambleSpecs[region].max);
+				argErr(
+				    'S', "Limit for region \"%.*s\" may not exceed %" PRIu16, regionNamePrintLen,
+				    regionName, scrambleSpecs[region].max
+				);
 				limit = scrambleSpecs[region].max;
 			}
 
@@ -326,8 +335,9 @@ next:
 }
 
 [[noreturn]] void reportErrors() {
-	fprintf(stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors,
-	        nbErrors == 1 ? "" : "s");
+	fprintf(
+	    stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
+	);
 	exit(1);
 }
 
@@ -430,8 +440,9 @@ int main(int argc, char *argv[]) {
 
 	// If no input files were specified, the user must have screwed up
 	if (curArgIndex == argc) {
-		fputs("FATAL: Please specify an input file (pass `-` to read from standard input)\n",
-		      stderr);
+		fputs(
+		    "FATAL: Please specify an input file (pass `-` to read from standard input)\n", stderr
+		);
 		printUsage();
 		exit(1);
 	}

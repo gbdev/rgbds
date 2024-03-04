@@ -40,8 +40,10 @@ public:
 			assert(!(mode & std::ios_base::out));
 			_file.emplace<std::streambuf *>(std::cin.rdbuf());
 			if (setmode(STDIN_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
-				fatal("Failed to set stdin to %s mode: %s",
-				      mode & std::ios_base::binary ? "binary" : "text", strerror(errno));
+				fatal(
+				    "Failed to set stdin to %s mode: %s",
+				    mode & std::ios_base::binary ? "binary" : "text", strerror(errno)
+				);
 			}
 		} else {
 			assert(mode & std::ios_base::out);
@@ -50,9 +52,12 @@ public:
 		return this;
 	}
 	std::streambuf &operator*() {
-		return std::visit(Visitor{[](std::filebuf &file) -> std::streambuf & { return file; },
-		                          [](std::streambuf *buf) -> std::streambuf & { return *buf; }},
-		                  _file);
+		return std::visit(
+		    Visitor{
+		        [](std::filebuf &file) -> std::streambuf & { return file; },
+		        [](std::streambuf *buf) -> std::streambuf & { return *buf; }},
+		    _file
+		);
 	}
 	std::streambuf const &operator*() const {
 		// The non-`const` version does not perform any modifications, so it's okay.
@@ -65,24 +70,30 @@ public:
 	}
 
 	File *close() {
-		return std::visit(Visitor{[this](std::filebuf &file) {
-			                          // This is called by the destructor, and an explicit `close`
-			                          // shouldn't close twice.
-			                          _file.emplace<std::streambuf *>(nullptr);
-			                          return file.close() != nullptr;
-		                          },
-		                          [](std::streambuf *buf) { return buf != nullptr; }},
-		                  _file)
+		return std::visit(
+		           Visitor{
+		               [this](std::filebuf &file) {
+			               // This is called by the destructor, and an explicit `close`
+			               // shouldn't close twice.
+			               _file.emplace<std::streambuf *>(nullptr);
+			               return file.close() != nullptr;
+		               },
+		               [](std::streambuf *buf) { return buf != nullptr; }},
+		           _file
+		       )
 		           ? this
 		           : nullptr;
 	}
 
 	char const *c_str(std::string const &path) const {
-		return std::visit(Visitor{[&path](std::filebuf const &) { return path.c_str(); },
-		                          [](std::streambuf const *buf) {
-			                          return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
-		                          }},
-		                  _file);
+		return std::visit(
+		    Visitor{
+		        [&path](std::filebuf const &) { return path.c_str(); },
+		        [](std::streambuf const *buf) {
+			        return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
+		        }},
+		    _file
+		);
 	}
 };
 

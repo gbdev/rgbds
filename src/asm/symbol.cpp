@@ -72,10 +72,13 @@ int32_t Symbol::getValue() const {
 }
 
 int32_t Symbol::getOutputValue() const {
-	return std::visit(Visitor{[](int32_t value) -> int32_t { return value; },
-	                          [](int32_t (*callback)()) -> int32_t { return callback(); },
-	                          [](auto &) -> int32_t { return 0; }},
-	                  data);
+	return std::visit(
+	    Visitor{
+	        [](int32_t value) -> int32_t { return value; },
+	        [](int32_t (*callback)()) -> int32_t { return callback(); },
+	        [](auto &) -> int32_t { return 0; }},
+	    data
+	);
 }
 
 std::string_view *Symbol::getMacro() const {
@@ -132,8 +135,8 @@ static Symbol &createsymbol(char const *symName) {
 
 // Creates the full name of a local symbol in a given scope, by prepending
 // the name with the parent symbol's name.
-static void fullSymbolName(char *output, size_t outputSize, char const *localName,
-                           char const *scopeName) {
+static void
+    fullSymbolName(char *output, size_t outputSize, char const *localName, char const *scopeName) {
 	int ret = snprintf(output, outputSize, "%s%s", scopeName, localName);
 
 	if (ret < 0)
@@ -371,8 +374,9 @@ Symbol *sym_AddVar(char const *symName, int32_t value) {
 	if (!sym) {
 		sym = &createsymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
-		error("'%s' already defined as %s at ", symName,
-		      sym->type == SYM_LABEL ? "label" : "constant");
+		error(
+		    "'%s' already defined as %s at ", symName, sym->type == SYM_LABEL ? "label" : "constant"
+		);
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return sym;
@@ -481,17 +485,21 @@ void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg) {
 
 	if (neg) {
 		if (ofs > anonLabelID)
-			error("Reference to anonymous label %" PRIu32 " before, when only %" PRIu32
-			      " ha%s been created so far\n",
-			      ofs, anonLabelID, anonLabelID == 1 ? "s" : "ve");
+			error(
+			    "Reference to anonymous label %" PRIu32 " before, when only %" PRIu32
+			    " ha%s been created so far\n",
+			    ofs, anonLabelID, anonLabelID == 1 ? "s" : "ve"
+			);
 		else
 			id = anonLabelID - ofs;
 	} else {
 		ofs--; // We're referencing symbols that haven't been created yet...
 		if (ofs > UINT32_MAX - anonLabelID)
-			error("Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
-			      " may still be created\n",
-			      ofs + 1, UINT32_MAX - anonLabelID);
+			error(
+			    "Reference to anonymous label %" PRIu32 " after, when only %" PRIu32
+			    " may still be created\n",
+			    ofs + 1, UINT32_MAX - anonLabelID
+			);
 		else
 			id = anonLabelID + ofs;
 	}
@@ -611,13 +619,17 @@ void sym_Init(time_t now) {
 
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
 	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
-	strftime(savedTIMESTAMP_ISO8601_LOCAL, sizeof(savedTIMESTAMP_ISO8601_LOCAL),
-	         "\"%Y-%m-%dT%H:%M:%S%z\"", time_local);
+	strftime(
+	    savedTIMESTAMP_ISO8601_LOCAL, sizeof(savedTIMESTAMP_ISO8601_LOCAL),
+	    "\"%Y-%m-%dT%H:%M:%S%z\"", time_local
+	);
 
 	const tm *time_utc = gmtime(&now);
 
-	strftime(savedTIMESTAMP_ISO8601_UTC, sizeof(savedTIMESTAMP_ISO8601_UTC),
-	         "\"%Y-%m-%dT%H:%M:%SZ\"", time_utc);
+	strftime(
+	    savedTIMESTAMP_ISO8601_UTC, sizeof(savedTIMESTAMP_ISO8601_UTC), "\"%Y-%m-%dT%H:%M:%SZ\"",
+	    time_utc
+	);
 
 	addString("__TIME__", savedTIME);
 	addString("__DATE__", savedDATE);

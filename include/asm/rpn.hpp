@@ -27,8 +27,9 @@ struct Expression {
 void rpn_Number(Expression &expr, uint32_t val);
 void rpn_Symbol(Expression &expr, char const *symName);
 void rpn_LOGNOT(Expression &expr, const Expression &src);
-void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
-                  const Expression &src2);
+void rpn_BinaryOp(
+    enum RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2
+);
 void rpn_HIGH(Expression &expr, const Expression &src);
 void rpn_LOW(Expression &expr, const Expression &src);
 void rpn_ISCONST(Expression &expr, const Expression &src);

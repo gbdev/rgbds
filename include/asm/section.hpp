@@ -52,10 +52,14 @@ extern std::deque<Section> sectionList;
 extern Section *currentSection;
 
 Section *sect_FindSectionByName(char const *name);
-void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-                     SectionSpec const &attrs, enum SectionModifier mod);
-void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-                         SectionSpec const &attrs, enum SectionModifier mod);
+void sect_NewSection(
+    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    enum SectionModifier mod
+);
+void sect_SetLoadSection(
+    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    enum SectionModifier mod
+);
 void sect_EndLoadSection();
 
 Section *sect_GetSymbolSection();

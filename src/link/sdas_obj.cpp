@@ -36,8 +36,8 @@ static void consumeLF(FileStackNode const &where, uint32_t lineNo, FILE *file) {
 
 static char const *delim = " \f\n\r\t\v"; // Whitespace according to the C and POSIX locales
 
-static int nextLine(std::vector<char> &lineBuf, uint32_t &lineNo, FileStackNode const &where,
-                    FILE *file) {
+static int
+    nextLine(std::vector<char> &lineBuf, uint32_t &lineNo, FileStackNode const &where, FILE *file) {
 retry:
 	++lineNo;
 	int firstChar = getc(file);
@@ -92,8 +92,9 @@ static uint32_t readNumber(char const *str, char const *&endptr, enum NumberType
 	}
 }
 
-static uint32_t parseNumber(FileStackNode const &where, uint32_t lineNo, char const *str,
-                            enum NumberType base) {
+static uint32_t parseNumber(
+    FileStackNode const &where, uint32_t lineNo, char const *str, enum NumberType base
+) {
 	if (str[0] == '\0')
 		fatal(&where, lineNo, "Expected number, got empty string");
 
@@ -105,8 +106,8 @@ static uint32_t parseNumber(FileStackNode const &where, uint32_t lineNo, char co
 	return res;
 }
 
-static uint8_t parseByte(FileStackNode const &where, uint32_t lineNo, char const *str,
-                         enum NumberType base) {
+static uint8_t
+    parseByte(FileStackNode const &where, uint32_t lineNo, char const *str, enum NumberType base) {
 	uint32_t num = parseNumber(where, lineNo, str, base);
 
 	if (num > UINT8_MAX)
@@ -159,8 +160,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 	do { \
 		getToken(nullptr, "'%c' line is too short", (lineType)); \
 		if (strcasecmp(token, (expected)) != 0) \
-			fatal(&where, lineNo, "Malformed '%c' line: expected \"%s\", got \"%s\"", (lineType), \
-			      (expected), token); \
+			fatal( \
+			    &where, lineNo, "Malformed '%c' line: expected \"%s\", got \"%s\"", (lineType), \
+			    (expected), token \
+			); \
 	} while (0)
 
 	uint32_t lineNo = 0;
@@ -181,8 +184,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		numberType = OCT;
 		break;
 	default:
-		fatal(&where, lineNo,
-		      "This does not look like a SDCC object file (unknown integer format '%c')", lineType);
+		fatal(
+		    &where, lineNo,
+		    "This does not look like a SDCC object file (unknown integer format '%c')", lineType
+		);
 	}
 
 	switch (line[0]) {
@@ -243,8 +248,9 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 		case 'A': {
 			if (fileSections.size() == expectedNbAreas)
-				warning(&where, lineNo, "Got more 'A' lines than the expected %" PRIu32,
-				        expectedNbAreas);
+				warning(
+				    &where, lineNo, "Got more 'A' lines than the expected %" PRIu32, expectedNbAreas
+				);
 			Section *curSection = new (std::nothrow) Section();
 
 			if (!curSection)
@@ -268,8 +274,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			uint32_t tmp = parseNumber(where, lineNo, token, numberType);
 
 			if (tmp > UINT16_MAX)
-				fatal(&where, lineNo, "Area \"%s\" is larger than the GB address space!?",
-				      curSection->name.c_str());
+				fatal(
+				    &where, lineNo, "Area \"%s\" is larger than the GB address space!?",
+				    curSection->name.c_str()
+				);
 			curSection->size = tmp;
 
 			expectToken("flags", 'A');
@@ -334,8 +342,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 		case 'S': {
 			if (fileSymbols.size() == expectedNbSymbols)
-				warning(&where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
-				        expectedNbSymbols);
+				warning(
+				    &where, lineNo, "Got more 'S' lines than the expected %" PRIu32,
+				    expectedNbSymbols
+				);
 			Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
@@ -379,12 +389,13 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				if (other) {
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
-					auto visitor = Visitor{[](int32_t value) -> std::tuple<Section *, int32_t> {
-						                       return {nullptr, value};
-					                       },
-					                       [](Label label) -> std::tuple<Section *, int32_t> {
-						                       return {label.section, label.offset};
-					                       }};
+					auto visitor = Visitor{
+					    [](int32_t value) -> std::tuple<Section *, int32_t> {
+						    return {nullptr, value};
+					    },
+					    [](Label label) -> std::tuple<Section *, int32_t> {
+						    return {label.section, label.offset};
+					    }};
 					auto [symbolSection, symbolValue] = std::visit(visitor, symbol.data);
 					auto [otherSection, otherValue] = std::visit(visitor, other->data);
 
@@ -392,10 +403,12 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    || (symbolSection && !symbolSection->isAddressFixed)) {
 						sym_AddSymbol(symbol); // This will error out
 					} else if (otherValue != symbolValue) {
-						error(&where, lineNo,
-						      "Definition of \"%s\" conflicts with definition in %s (%" PRId32
-						      " != %" PRId32 ")",
-						      symbol.name.c_str(), other->objFileName, symbolValue, otherValue);
+						error(
+						    &where, lineNo,
+						    "Definition of \"%s\" conflicts with definition in %s (%" PRId32
+						    " != %" PRId32 ")",
+						    symbol.name.c_str(), other->objFileName, symbolValue, otherValue
+						);
 					}
 				} else {
 					// Add a new definition
@@ -445,9 +458,11 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			getToken(nullptr, "'R' line is too short");
 			areaIdx |= (uint16_t)parseByte(where, lineNo, token, numberType) << 8;
 			if (areaIdx >= fileSections.size())
-				fatal(&where, lineNo,
-				      "'R' line references area #%" PRIu16 ", but there are only %zu (so far)",
-				      areaIdx, fileSections.size());
+				fatal(
+				    &where, lineNo,
+				    "'R' line references area #%" PRIu16 ", but there are only %zu (so far)",
+				    areaIdx, fileSections.size()
+				);
 			assert(!fileSections.empty()); // There should be at least one, from the above check
 			Section *section = fileSections[areaIdx].section;
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
@@ -456,10 +471,12 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 			if (section->isAddressFixed) {
 				if (addr < section->org)
-					fatal(&where, lineNo,
-					      "'T' line reports address $%04" PRIx16
-					      " in \"%s\", which starts at $%04" PRIx16,
-					      addr, section->name.c_str(), section->org);
+					fatal(
+					    &where, lineNo,
+					    "'T' line reports address $%04" PRIx16
+					    " in \"%s\", which starts at $%04" PRIx16,
+					    addr, section->name.c_str(), section->org
+					);
 				addr -= section->org;
 			}
 			// Lines are emitted that violate this check but contain no "payload";
@@ -470,7 +487,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    &where, lineNo,
 					    "'T' lines which don't append to their section are not supported (%" PRIu16
 					    " != %" PRIu16 ")",
-					    addr, *writeIndex);
+					    addr, *writeIndex
+					);
 				if (section->data.empty()) {
 					assert(section->size != 0);
 					section->data.resize(section->size);
@@ -503,12 +521,16 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				uint8_t offset = parseByte(where, lineNo, token, numberType);
 
 				if (offset < ADDR_SIZE)
-					fatal(&where, lineNo,
-					      "Relocation index cannot point to header (%" PRIu16 " < %u)", offset,
-					      ADDR_SIZE);
+					fatal(
+					    &where, lineNo,
+					    "Relocation index cannot point to header (%" PRIu16 " < %u)", offset,
+					    ADDR_SIZE
+					);
 				if (offset >= data.size())
-					fatal(&where, lineNo, "Relocation index is out of bounds (%" PRIu16 " >= %zu)",
-					      offset, data.size());
+					fatal(
+					    &where, lineNo, "Relocation index is out of bounds (%" PRIu16 " >= %zu)",
+					    offset, data.size()
+					);
 
 				getToken(nullptr, "Incomplete relocation");
 				uint16_t idx = parseByte(where, lineNo, token, numberType);
@@ -531,10 +553,12 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				if (section->patches.size() > 1) {
 					uint32_t prevOffset = section->patches[section->patches.size() - 2].offset;
 					if (prevOffset >= patch.offset)
-						fatal(&where, lineNo,
-						      "Relocs not sorted by offset are not supported (%" PRIu32
-						      " >= %" PRIu32 ")",
-						      prevOffset, patch.offset);
+						fatal(
+						    &where, lineNo,
+						    "Relocs not sorted by offset are not supported (%" PRIu32 " >= %" PRIu32
+						    ")",
+						    prevOffset, patch.offset
+						);
 				}
 				patch.pcSection = section;         // No need to fill `pcSectionID`, then
 				patch.pcOffset = patch.offset - 1; // For `jr`s
@@ -545,8 +569,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 				assert(offset < data.size());
 				if (data.size() - offset < nbBaseBytes)
-					fatal(&where, lineNo, "Reloc would patch out of bounds (%" PRIu8 " > %zu)",
-					      nbBaseBytes, data.size() - offset);
+					fatal(
+					    &where, lineNo, "Reloc would patch out of bounds (%" PRIu8 " > %zu)",
+					    nbBaseBytes, data.size() - offset
+					);
 				for (uint8_t i = 0; i < nbBaseBytes; ++i)
 					baseValue = baseValue | data[offset + i] << (8 * i);
 
@@ -554,8 +580,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				// Generate a RPN expression from the info and flags
 				if (flags & 1 << RELOC_ISSYM) {
 					if (idx >= fileSymbols.size())
-						fatal(&where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu", idx,
-						      fileSymbols.size());
+						fatal(
+						    &where, lineNo, "Reloc refers to symbol #%" PRIu16 " out of %zu", idx,
+						    fileSymbols.size()
+						);
 					Symbol const &sym = fileSymbols[idx];
 
 					// SDCC has a bunch of "magic symbols" that start with a
@@ -569,8 +597,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 								break;
 						}
 						if (idx == fileSymbols.size())
-							fatal(&where, lineNo, "\"%s\" is missing a reference to \"%s\"",
-							      sym.name.c_str(), &sym.name.c_str()[1]);
+							fatal(
+							    &where, lineNo, "\"%s\" is missing a reference to \"%s\"",
+							    sym.name.c_str(), &sym.name.c_str()[1]
+							);
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_BANK_SYM;
 						patch.rpnExpression[1] = idx;
@@ -580,13 +610,17 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					} else if (sym.name.starts_with("l_")) {
 						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
-						memcpy((char *)&patch.rpnExpression[1], &sym.name.c_str()[2],
-						       sym.name.length() - 2 + 1);
+						memcpy(
+						    (char *)&patch.rpnExpression[1], &sym.name.c_str()[2],
+						    sym.name.length() - 2 + 1
+						);
 					} else if (sym.name.starts_with("s_")) {
 						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
-						memcpy((char *)&patch.rpnExpression[1], &sym.name.c_str()[2],
-						       sym.name.length() - 2 + 1);
+						memcpy(
+						    (char *)&patch.rpnExpression[1], &sym.name.c_str()[2],
+						    sym.name.length() - 2 + 1
+						);
 					} else {
 						patch.rpnExpression.resize(5);
 						patch.rpnExpression[0] = RPN_SYM;
@@ -597,8 +631,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					}
 				} else {
 					if (idx >= fileSections.size())
-						fatal(&where, lineNo, "Reloc refers to area #%" PRIu16 " out of %zu", idx,
-						      fileSections.size());
+						fatal(
+						    &where, lineNo, "Reloc refers to area #%" PRIu16 " out of %zu", idx,
+						    fileSections.size()
+						);
 					// It gets funky. If the area is absolute, *actually*, we
 					// must not add its base address, as the assembler will
 					// already have added it in `baseValue`.
@@ -639,13 +675,16 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					// are present, so we must skip two of them
 					if (flags & 1 << RELOC_EXPR16) {
 						if (*writeIndex + (offset - writtenOfs) > section->size)
-							fatal(&where, lineNo,
-							      "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
-							      section->name.c_str(), *writeIndex + (offset - writtenOfs),
-							      section->size);
+							fatal(
+							    &where, lineNo,
+							    "'T' line writes past \"%s\"'s end (%u > %" PRIu16 ")",
+							    section->name.c_str(), *writeIndex + (offset - writtenOfs),
+							    section->size
+							);
 						// Copy all bytes up to those (plus the byte that we'll overwrite)
-						memcpy(&section->data[*writeIndex], &data[writtenOfs],
-						       offset - writtenOfs + 1);
+						memcpy(
+						    &section->data[*writeIndex], &data[writtenOfs], offset - writtenOfs + 1
+						);
 						*writeIndex += offset - writtenOfs + 1;
 						writtenOfs = offset + 3; // Skip all three `baseValue` bytes, though
 					}
@@ -661,8 +700,9 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						patch.rpnExpression.push_back(16 >> 8);
 						patch.rpnExpression.push_back(16 >> 16);
 						patch.rpnExpression.push_back(16 >> 24);
-						patch.rpnExpression.push_back((flags & 1 << RELOC_SIGNED) ? RPN_SHR
-						                                                          : RPN_USHR);
+						patch.rpnExpression.push_back(
+						    (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR
+						);
 					} else {
 						if (flags & 1 << RELOC_EXPR16 && flags & 1 << RELOC_WHICHBYTE) {
 							patch.rpnExpression.push_back(RPN_CONST);
@@ -670,8 +710,9 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 							patch.rpnExpression.push_back(8 >> 8);
 							patch.rpnExpression.push_back(8 >> 16);
 							patch.rpnExpression.push_back(8 >> 24);
-							patch.rpnExpression.push_back((flags & 1 << RELOC_SIGNED) ? RPN_SHR
-							                                                          : RPN_USHR);
+							patch.rpnExpression.push_back(
+							    (flags & 1 << RELOC_SIGNED) ? RPN_SHR : RPN_USHR
+							);
 						}
 						patch.rpnExpression.push_back(RPN_CONST);
 						patch.rpnExpression.push_back(0xFF);
@@ -684,8 +725,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					assert(patch.type == PATCHTYPE_WORD);
 					fatal(&where, lineNo, "16-bit PC-relative relocations are not supported");
 				} else if (flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24)) {
-					fatal(&where, lineNo, "Flags 0x%x are not supported for 16-bit relocs",
-					      flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24));
+					fatal(
+					    &where, lineNo, "Flags 0x%x are not supported for 16-bit relocs",
+					    flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24)
+					);
 				}
 			}
 
@@ -693,9 +736,11 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			if (writtenOfs != data.size()) {
 				assert(data.size() > writtenOfs);
 				if (*writeIndex + (data.size() - writtenOfs) > section->size)
-					fatal(&where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
-					      section->name.c_str(), *writeIndex + (data.size() - writtenOfs),
-					      section->size);
+					fatal(
+					    &where, lineNo, "'T' line writes past \"%s\"'s end (%zu > %" PRIu16 ")",
+					    section->name.c_str(), *writeIndex + (data.size() - writtenOfs),
+					    section->size
+					);
 				memcpy(&section->data[*writeIndex], &data[writtenOfs], data.size() - writtenOfs);
 				*writeIndex += data.size() - writtenOfs;
 			}
@@ -714,11 +759,15 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 	if (!data.empty())
 		warning(&where, lineNo, "Last 'T' line had no 'R' line (ignored)");
 	if (fileSections.size() < expectedNbAreas)
-		warning(&where, lineNo, "Expected %" PRIu32 " 'A' lines, got only %zu", expectedNbAreas,
-		        fileSections.size());
+		warning(
+		    &where, lineNo, "Expected %" PRIu32 " 'A' lines, got only %zu", expectedNbAreas,
+		    fileSections.size()
+		);
 	if (fileSymbols.size() < expectedNbSymbols)
-		warning(&where, lineNo, "Expected %" PRIu32 " 'S' lines, got only %zu", expectedNbSymbols,
-		        fileSymbols.size());
+		warning(
+		    &where, lineNo, "Expected %" PRIu32 " 'S' lines, got only %zu", expectedNbSymbols,
+		    fileSymbols.size()
+		);
 
 	nbSectionsToAssign += fileSections.size();
 
@@ -727,8 +776,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (entry.writeIndex != section->size && entry.writeIndex != 0)
-			fatal(&where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
-			      section->name.c_str(), entry.writeIndex, section->size);
+			fatal(
+			    &where, lineNo, "\"%s\" was not fully written (%" PRIu16 " < %" PRIu16 ")",
+			    section->name.c_str(), entry.writeIndex, section->size
+			);
 
 		sect_AddSection(*section);
 

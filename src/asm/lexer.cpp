@@ -42,21 +42,22 @@
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define WIN32_LEAN_AND_MEAN // include less from windows.h
-	// clang-format off
+    // clang-format off
 	// (we need these `include`s in this order)
 	#include <windows.h>        // target architecture
 	#include <fileapi.h>        // CreateFileA
 	#include <winbase.h>        // CreateFileMappingA
 	#include <memoryapi.h>      // MapViewOfFile
 	#include <handleapi.h>      // CloseHandle
-	// clang-format on
+    // clang-format on
 	#define MAP_FAILED nullptr
 	#define mapFile(ptr, fd, path, size) \
 		do { \
 			(ptr) = MAP_FAILED; \
-			HANDLE file = \
-			    CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
-			                FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr); \
+			HANDLE file = CreateFileA( \
+			    path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, \
+			    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, nullptr \
+			); \
 			HANDLE mappingObj; \
 			if (file == INVALID_HANDLE_VALUE) \
 				break; \
@@ -100,8 +101,9 @@ struct CaseInsensitive {
 
 	// Compare two strings without case-sensitivity (by converting to uppercase)
 	bool operator()(std::string const &str1, std::string const &str2) const {
-		return std::equal(RANGE(str1), RANGE(str2),
-		                  [](char c1, char c2) { return toupper(c1) == toupper(c2); });
+		return std::equal(RANGE(str1), RANGE(str2), [](char c1, char c2) {
+			return toupper(c1) == toupper(c2);
+		});
 	}
 };
 
@@ -392,10 +394,11 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
-				state.content = MmappedLexerState{.ptr = (char *)mappingAddr,
-				                                  .size = (size_t)fileInfo.st_size,
-				                                  .offset = 0,
-				                                  .isReferenced = false};
+				state.content = MmappedLexerState{
+				    .ptr = (char *)mappingAddr,
+				    .size = (size_t)fileInfo.st_size,
+				    .offset = 0,
+				    .isReferenced = false};
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path);
 				isMmapped = true;
@@ -420,8 +423,9 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 	return true;
 }
 
-void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, size_t size,
-                        uint32_t lineNo) {
+void lexer_OpenFileView(
+    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
+) {
 	state.path = path; // Used to report read errors in `peekInternal`
 	state.content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
 	initState(state);
@@ -429,12 +433,14 @@ void lexer_OpenFileView(LexerState &state, char const *path, char const *buf, si
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	std::visit(Visitor{
-	               [](MmappedLexerState &mmap) { mmap.offset = 0; },
-	               [](ViewedLexerState &view) { view.offset = 0; },
-	               [](auto &) {},
-	           },
-	           lexerState->content);
+	std::visit(
+	    Visitor{
+	        [](MmappedLexerState &mmap) { mmap.offset = 0; },
+	        [](ViewedLexerState &view) { view.offset = 0; },
+	        [](auto &) {},
+	    },
+	    lexerState->content
+	);
 	initState(*lexerState);
 	lexerState->lineNo = lineNo;
 }
@@ -453,15 +459,17 @@ void lexer_CleanupState(LexerState &state) {
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
 	assert(&state != lexerStateEOL);
 
-	std::visit(Visitor{
-	               [](MmappedLexerState &mmap) {
-		               if (!mmap.isReferenced)
-			               munmap(mmap.ptr, mmap.size);
-	               },
-	               [](BufferedLexerState &cbuf) { close(cbuf.fd); },
-	               [](auto &) {},
-	           },
-	           state.content);
+	std::visit(
+	    Visitor{
+	        [](MmappedLexerState &mmap) {
+		        if (!mmap.isReferenced)
+			        munmap(mmap.ptr, mmap.size);
+	        },
+	        [](BufferedLexerState &cbuf) { close(cbuf.fd); },
+	        [](auto &) {},
+	    },
+	    state.content
+	);
 }
 
 void lexer_SetMode(enum LexerMode mode) {
@@ -632,58 +640,61 @@ static int peekInternal(uint8_t distance) {
 	}
 
 	if (distance >= LEXER_BUF_SIZE)
-		fatalerror("Internal lexer error: buffer has insufficient size for peeking (%" PRIu8
-		           " >= %u)\n",
-		           distance, LEXER_BUF_SIZE);
+		fatalerror(
+		    "Internal lexer error: buffer has insufficient size for peeking (%" PRIu8 " >= %u)\n",
+		    distance, LEXER_BUF_SIZE
+		);
 
 	return std::visit(
-	    Visitor{[&distance](MmappedLexerState &mmap) -> int {
-		            if (size_t idx = mmap.offset + distance; idx < mmap.size)
-			            return (uint8_t)mmap.ptr[idx];
-		            return EOF;
-	            },
-	            [&distance](ViewedLexerState &view) -> int {
-		            if (size_t idx = view.offset + distance; idx < view.size)
-			            return (uint8_t)view.ptr[idx];
-		            return EOF;
-	            },
-	            [&distance](BufferedLexerState &cbuf) -> int {
-		            if (cbuf.nbChars > distance)
-			            return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+	    Visitor{
+	        [&distance](MmappedLexerState &mmap) -> int {
+		        if (size_t idx = mmap.offset + distance; idx < mmap.size)
+			        return (uint8_t)mmap.ptr[idx];
+		        return EOF;
+	        },
+	        [&distance](ViewedLexerState &view) -> int {
+		        if (size_t idx = view.offset + distance; idx < view.size)
+			        return (uint8_t)view.ptr[idx];
+		        return EOF;
+	        },
+	        [&distance](BufferedLexerState &cbuf) -> int {
+		        if (cbuf.nbChars > distance)
+			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
 
-		            // Buffer isn't full enough, read some chars in
-		            size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
+		        // Buffer isn't full enough, read some chars in
+		        size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
 
-		            // Compute the index we'll start writing to
-		            size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
+		        // Compute the index we'll start writing to
+		        size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
 
-		            // If the range to fill passes over the buffer wrapping point, we need two reads
-		            if (writeIndex + target > LEXER_BUF_SIZE) {
-			            size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
-			            size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
+		        // If the range to fill passes over the buffer wrapping point, we need two reads
+		        if (writeIndex + target > LEXER_BUF_SIZE) {
+			        size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+			        size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
 
-			            cbuf.nbChars += nbReadChars;
+			        cbuf.nbChars += nbReadChars;
 
-			            writeIndex += nbReadChars;
-			            if (writeIndex == LEXER_BUF_SIZE)
-				            writeIndex = 0;
+			        writeIndex += nbReadChars;
+			        if (writeIndex == LEXER_BUF_SIZE)
+				        writeIndex = 0;
 
-			            // If the read was incomplete, don't perform a second read
-			            target -= nbReadChars;
-			            if (nbReadChars < nbExpectedChars)
-				            target = 0;
-		            }
-		            if (target != 0)
-			            cbuf.nbChars += readInternal(cbuf, writeIndex, target);
+			        // If the read was incomplete, don't perform a second read
+			        target -= nbReadChars;
+			        if (nbReadChars < nbExpectedChars)
+				        target = 0;
+		        }
+		        if (target != 0)
+			        cbuf.nbChars += readInternal(cbuf, writeIndex, target);
 
-		            if (cbuf.nbChars > distance)
-			            return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+		        if (cbuf.nbChars > distance)
+			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
 
-		            // If there aren't enough chars even after refilling, give up
-		            return EOF;
-	            },
-	            [](std::monostate) -> int { return EOF; }},
-	    lexerState->content);
+		        // If there aren't enough chars even after refilling, give up
+		        return EOF;
+	        },
+	        [](std::monostate) -> int { return EOF; }},
+	    lexerState->content
+	);
 }
 
 // forward declarations for peek
@@ -761,18 +772,21 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		std::visit(Visitor{[](MmappedLexerState &mmap) { mmap.offset++; },
-		                   [](ViewedLexerState &view) { view.offset++; },
-		                   [](BufferedLexerState &cbuf) {
-			                   assert(cbuf.index < LEXER_BUF_SIZE);
-			                   cbuf.index++;
-			                   if (cbuf.index == LEXER_BUF_SIZE)
-				                   cbuf.index = 0; // Wrap around if necessary
-			                   assert(cbuf.nbChars > 0);
-			                   cbuf.nbChars--;
-		                   },
-		                   [](std::monostate) {}},
-		           lexerState->content);
+		std::visit(
+		    Visitor{
+		        [](MmappedLexerState &mmap) { mmap.offset++; },
+		        [](ViewedLexerState &view) { view.offset++; },
+		        [](BufferedLexerState &cbuf) {
+			        assert(cbuf.index < LEXER_BUF_SIZE);
+			        cbuf.index++;
+			        if (cbuf.index == LEXER_BUF_SIZE)
+				        cbuf.index = 0; // Wrap around if necessary
+			        assert(cbuf.nbChars > 0);
+			        cbuf.nbChars--;
+		        },
+		        [](std::monostate) {}},
+		    lexerState->content
+		);
 	}
 }
 
@@ -1079,8 +1093,10 @@ static uint32_t readGfxConstant() {
 	if (width == 0)
 		error("Invalid graphics constant, no digits after '`'\n");
 	else if (width == 9)
-		warning(WARNING_LARGE_CONSTANT,
-		        "Graphics constant is too long, only first 8 pixels considered\n");
+		warning(
+		    WARNING_LARGE_CONSTANT,
+		    "Graphics constant is too long, only first 8 pixels considered\n"
+		);
 
 	return bitPlaneUpper << 8 | bitPlaneLower;
 }
@@ -2225,14 +2241,16 @@ static void startCapture(CaptureBody &capture) {
 
 	capture.lineNo = lexer_GetLineNo();
 	capture.body = std::visit(
-	    Visitor{[](MmappedLexerState &mmap) -> char const * {
-		            return lexerState->expansions.empty() ? &mmap.ptr[mmap.offset] : nullptr;
-	            },
-	            [](ViewedLexerState &view) -> char const * {
-		            return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
-	            },
-	            [](auto &) -> char const * { return nullptr; }},
-	    lexerState->content);
+	    Visitor{
+	        [](MmappedLexerState &mmap) -> char const * {
+		        return lexerState->expansions.empty() ? &mmap.ptr[mmap.offset] : nullptr;
+	        },
+	        [](ViewedLexerState &view) -> char const * {
+		        return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
+	        },
+	        [](auto &) -> char const * { return nullptr; }},
+	    lexerState->content
+	);
 
 	if (capture.body == nullptr) {
 		// Indicates to retrieve the capture buffer when done capturing

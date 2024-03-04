@@ -342,8 +342,9 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
-                  const Expression &src2) {
+void rpn_BinaryOp(
+    enum RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2
+) {
 	expr.isSymbol = false;
 	int32_t constMaskVal;
 
@@ -397,12 +398,14 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
 			break;
 		case RPN_SHL:
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n", src2.val
+				);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n", src2.val
+				);
 
 			expr.val = op_shift_left(src1.val, src2.val);
 			break;
@@ -411,23 +414,29 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
 				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", src1.val);
 
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				    src2.val
+				);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", src2.val
+				);
 
 			expr.val = op_shift_right(src1.val, src2.val);
 			break;
 		case RPN_USHR:
 			if (src2.val < 0)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n",
+				    src2.val
+				);
 
 			if (src2.val >= 32)
-				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n",
-				        src2.val);
+				warning(
+				    WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", src2.val
+				);
 
 			expr.val = op_shift_right_unsigned(src1.val, src2.val);
 			break;
@@ -439,8 +448,10 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
 				fatalerror("Division by zero\n");
 
 			if (src1.val == INT32_MIN && src2.val == -1) {
-				warning(WARNING_DIV, "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
-				        INT32_MIN, INT32_MIN);
+				warning(
+				    WARNING_DIV, "Division of %" PRId32 " by -1 yields %" PRId32 "\n", INT32_MIN,
+				    INT32_MIN
+				);
 				expr.val = INT32_MIN;
 			} else {
 				expr.val = op_divide(src1.val, src2.val);
@@ -494,8 +505,9 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
 		// Convert the left-hand expression if it's constant
 		if (src1.isKnown) {
 			uint32_t lval = src1.val;
-			uint8_t bytes[] = {RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8),
-			                   (uint8_t)(lval >> 16), (uint8_t)(lval >> 24)};
+			uint8_t bytes[] = {
+			    RPN_CONST, (uint8_t)lval, (uint8_t)(lval >> 8), (uint8_t)(lval >> 16),
+			    (uint8_t)(lval >> 24)};
 			expr.rpnPatchSize = sizeof(bytes);
 			expr.rpn = nullptr;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
@@ -518,8 +530,9 @@ void rpn_BinaryOp(enum RPNCommand op, Expression &expr, const Expression &src1,
 
 		// If the right expression is constant, merge a shim instead
 		uint32_t rval = src2.val;
-		uint8_t bytes[] = {RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8), (uint8_t)(rval >> 16),
-		                   (uint8_t)(rval >> 24)};
+		uint8_t bytes[] = {
+		    RPN_CONST, (uint8_t)rval, (uint8_t)(rval >> 8), (uint8_t)(rval >> 16),
+		    (uint8_t)(rval >> 24)};
 		if (src2.isKnown) {
 			ptr = bytes;
 			len = sizeof(bytes);

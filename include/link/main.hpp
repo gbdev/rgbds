@@ -43,10 +43,11 @@ struct FileStackNode {
 	uint32_t lineNo;
 
 	enum FileStackNodeType type;
-	std::variant<std::monostate, // Default constructed; `.type` and `.data` must be set manually
-	             std::vector<uint32_t>, // NODE_REPT
-	             std::string            // NODE_FILE, NODE_MACRO
-	             >
+	std::variant<
+	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
+	    std::vector<uint32_t>, // NODE_REPT
+	    std::string            // NODE_FILE, NODE_MACRO
+	    >
 	    data;
 
 	// REPT iteration counts since last named node, in reverse depth order

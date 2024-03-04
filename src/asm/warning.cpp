@@ -107,9 +107,11 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 				param = paramWarnings[i].defaultLevel;
 			} else if (param > maxParam) {
 				if (param != 255) // Don't  warn if already capped
-					warnx("Got parameter %" PRIu8
-					      " for warning flag \"%s\", but the maximum is %" PRIu8 "; capping.\n",
-					      param, flag, maxParam);
+					warnx(
+					    "Got parameter %" PRIu8
+					    " for warning flag \"%s\", but the maximum is %" PRIu8 "; capping.\n",
+					    param, flag, maxParam
+					);
 				param = maxParam;
 			}
 
@@ -151,8 +153,8 @@ static uint8_t const _weverythingCommands[] = {
     // WARNING_USER,
     META_WARNING_DONE};
 
-static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {_wallCommands, _wextraCommands,
-                                                               _weverythingCommands};
+static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {
+    _wallCommands, _wextraCommands, _weverythingCommands};
 
 void processWarningFlag(char *flag) {
 	static bool setError = false;
@@ -266,8 +268,9 @@ void processWarningFlag(char *flag) {
 	warnx("Unknown warning `%s`", flag);
 }
 
-void printDiag(char const *fmt, va_list args, char const *type, char const *flagfmt,
-               char const *flag) {
+void printDiag(
+    char const *fmt, va_list args, char const *type, char const *flagfmt, char const *flag
+) {
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	fstk_DumpCurrent();
@@ -287,9 +290,11 @@ void error(char const *fmt, ...) {
 	// This intentionally makes 0 act as "unlimited" (or at least "limited to sizeof(unsigned)")
 	nbErrors++;
 	if (nbErrors == maxErrors)
-		errx("The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
-		     "aborted!",
-		     maxErrors, maxErrors == 1 ? "" : "s");
+		errx(
+		    "The maximum of %u error%s was reached (configure with \"-X/--max-errors\"); assembly "
+		    "aborted!",
+		    maxErrors, maxErrors == 1 ? "" : "s"
+		);
 }
 
 [[noreturn]] void fatalerror(char const *fmt, ...) {

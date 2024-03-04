@@ -212,8 +212,9 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 			cappedFracWidth = 255;
 		}
 
-		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth,
-		         value / fix_PrecisionFactor());
+		snprintf(
+		    valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth, value / fix_PrecisionFactor()
+		);
 	} else {
 		char const *spec = type == 'd'   ? "%" PRId32
 		                   : type == 'u' ? "%" PRIu32

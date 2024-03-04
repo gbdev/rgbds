@@ -68,8 +68,10 @@ attr_(warn_unused_result) static bool checkcodesection() {
 	if (sect_HasData(currentSection->type))
 		return true;
 
-	error("Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
-	      currentSection->name.c_str());
+	error(
+	    "Section '%s' cannot contain code or data (not ROM0 or ROMX)\n",
+	    currentSection->name.c_str()
+	);
 	return false;
 }
 
@@ -80,8 +82,10 @@ attr_(warn_unused_result) static bool checkSectionSize(Section const &sect, uint
 	if (size <= maxSize)
 		return true;
 
-	error("Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").\n",
-	      sect.name.c_str(), maxSize, size);
+	error(
+	    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").\n",
+	    sect.name.c_str(), maxSize, size
+	);
 	return false;
 }
 
@@ -121,8 +125,9 @@ Section *sect_FindSectionByName(char const *name) {
 		nbSectErrors++; \
 	} while (0)
 
-static unsigned int mergeSectUnion(Section &sect, enum SectionType type, uint32_t org,
-                                   uint8_t alignment, uint16_t alignOffset) {
+static unsigned int mergeSectUnion(
+    Section &sect, enum SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
+) {
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
@@ -134,11 +139,14 @@ static unsigned int mergeSectUnion(Section &sect, enum SectionType type, uint32_
 	if (org != (uint32_t)-1) {
 		// If both are fixed, they must be the same
 		if (sect.org != (uint32_t)-1 && sect.org != org)
-			fail("Section already declared as fixed at different address $%04" PRIx32 "\n",
-			     sect.org);
+			fail(
+			    "Section already declared as fixed at different address $%04" PRIx32 "\n", sect.org
+			);
 		else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs)))
-			fail("Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
-			     1U << sect.align, sect.alignOfs);
+			fail(
+			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
+			    1U << sect.align, sect.alignOfs
+			);
 		else
 			// Otherwise, just override
 			sect.org = org;
@@ -147,13 +155,17 @@ static unsigned int mergeSectUnion(Section &sect, enum SectionType type, uint32_
 		// Make sure any fixed address given is compatible
 		if (sect.org != (uint32_t)-1) {
 			if ((sect.org - alignOffset) & mask(alignment))
-				fail("Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
-				     sect.org);
+				fail(
+				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+				    sect.org
+				);
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
-			fail("Section already declared with incompatible %u"
-			     "-byte alignment (offset %" PRIu16 ")\n",
-			     1U << sect.align, sect.alignOfs);
+			fail(
+			    "Section already declared with incompatible %u"
+			    "-byte alignment (offset %" PRIu16 ")\n",
+			    1U << sect.align, sect.alignOfs
+			);
 		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
 			sect.align = alignment;
@@ -164,8 +176,8 @@ static unsigned int mergeSectUnion(Section &sect, enum SectionType type, uint32_
 	return nbSectErrors;
 }
 
-static unsigned int mergeFragments(Section &sect, uint32_t org, uint8_t alignment,
-                                   uint16_t alignOffset) {
+static unsigned int
+    mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
@@ -177,11 +189,15 @@ static unsigned int mergeFragments(Section &sect, uint32_t org, uint8_t alignmen
 
 		// If both are fixed, they must be the same
 		if (sect.org != (uint32_t)-1 && sect.org != curOrg)
-			fail("Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
-			     sect.org);
+			fail(
+			    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+			    sect.org
+			);
 		else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs)))
-			fail("Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
-			     1U << sect.align, sect.alignOfs);
+			fail(
+			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
+			    1U << sect.align, sect.alignOfs
+			);
 		else
 			// Otherwise, just override
 			sect.org = curOrg;
@@ -195,13 +211,17 @@ static unsigned int mergeFragments(Section &sect, uint32_t org, uint8_t alignmen
 		// Make sure any fixed address given is compatible
 		if (sect.org != (uint32_t)-1) {
 			if ((sect.org - curOfs) & mask(alignment))
-				fail("Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
-				     sect.org);
+				fail(
+				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
+				    sect.org
+				);
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
-			fail("Section already declared with incompatible %u"
-			     "-byte alignment (offset %" PRIu16 ")\n",
-			     1U << sect.align, sect.alignOfs);
+			fail(
+			    "Section already declared with incompatible %u"
+			    "-byte alignment (offset %" PRIu16 ")\n",
+			    1U << sect.align, sect.alignOfs
+			);
 		} else if (alignment > sect.align) {
 			// If the section is not fixed, its alignment is the largest of both
 			sect.align = alignment;
@@ -212,8 +232,10 @@ static unsigned int mergeFragments(Section &sect, uint32_t org, uint8_t alignmen
 	return nbSectErrors;
 }
 
-static void mergeSections(Section &sect, enum SectionType type, uint32_t org, uint32_t bank,
-                          uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod) {
+static void mergeSections(
+    Section &sect, enum SectionType type, uint32_t org, uint32_t bank, uint8_t alignment,
+    uint16_t alignOffset, enum SectionModifier mod
+) {
 	unsigned int nbSectErrors = 0;
 
 	if (type != sect.type)
@@ -248,15 +270,19 @@ static void mergeSections(Section &sect, enum SectionType type, uint32_t org, ui
 	}
 
 	if (nbSectErrors)
-		fatalerror("Cannot create section \"%s\" (%u error%s)\n", sect.name.c_str(), nbSectErrors,
-		           nbSectErrors == 1 ? "" : "s");
+		fatalerror(
+		    "Cannot create section \"%s\" (%u error%s)\n", sect.name.c_str(), nbSectErrors,
+		    nbSectErrors == 1 ? "" : "s"
+		);
 }
 
 #undef fail
 
 // Create a new section, not yet in the list.
-static Section *createSection(char const *name, enum SectionType type, uint32_t org, uint32_t bank,
-                              uint8_t alignment, uint16_t alignOffset, enum SectionModifier mod) {
+static Section *createSection(
+    char const *name, enum SectionType type, uint32_t org, uint32_t bank, uint8_t alignment,
+    uint16_t alignOffset, enum SectionModifier mod
+) {
 	// Add the new section to the list (order doesn't matter)
 	Section &sect = sectionList.emplace_front();
 
@@ -279,8 +305,10 @@ static Section *createSection(char const *name, enum SectionType type, uint32_t 
 }
 
 // Find a section by name and type. If it doesn't exist, create it.
-static Section *getSection(char const *name, enum SectionType type, uint32_t org,
-                           SectionSpec const &attrs, enum SectionModifier mod) {
+static Section *getSection(
+    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    enum SectionModifier mod
+) {
 	uint32_t bank = attrs.bank;
 	uint8_t alignment = attrs.alignment;
 	uint16_t alignOffset = attrs.alignOfs;
@@ -292,25 +320,31 @@ static Section *getSection(char const *name, enum SectionType type, uint32_t org
 		    && type != SECTTYPE_WRAMX)
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
 		else if (bank < sectionTypeInfo[type].firstBank || bank > sectionTypeInfo[type].lastBank)
-			error("%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")\n",
-			      sectionTypeInfo[type].name.c_str(), bank, sectionTypeInfo[type].firstBank,
-			      sectionTypeInfo[type].lastBank);
+			error(
+			    "%s bank value $%04" PRIx32 " out of range ($%04" PRIx32 " to $%04" PRIx32 ")\n",
+			    sectionTypeInfo[type].name.c_str(), bank, sectionTypeInfo[type].firstBank,
+			    sectionTypeInfo[type].lastBank
+			);
 	} else if (nbbanks(type) == 1) {
 		// If the section type only has a single bank, implicitly force it
 		bank = sectionTypeInfo[type].firstBank;
 	}
 
 	if (alignOffset >= 1 << alignment) {
-		error("Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
-		      alignOffset, 1U << alignment);
+		error(
+		    "Alignment offset (%" PRIu16 ") must be smaller than alignment size (%u)\n",
+		    alignOffset, 1U << alignment
+		);
 		alignOffset = 0;
 	}
 
 	if (org != (uint32_t)-1) {
 		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
-			error("Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
-			      "; $%04" PRIx16 "]\n",
-			      name, org, sectionTypeInfo[type].startAddr, endaddr(type));
+			error(
+			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
+			    "; $%04" PRIx16 "]\n",
+			    name, org, sectionTypeInfo[type].startAddr, endaddr(type)
+			);
 	}
 
 	if (alignment != 0) {
@@ -326,8 +360,10 @@ static Section *getSection(char const *name, enum SectionType type, uint32_t org
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name);
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
-			error("Section \"%s\"'s alignment cannot be attained in %s\n", name,
-			      sectionTypeInfo[type].name.c_str());
+			error(
+			    "Section \"%s\"'s alignment cannot be attained in %s\n", name,
+			    sectionTypeInfo[type].name.c_str()
+			);
 			alignment = 0; // Ignore it if it's unattainable
 			org = 0;
 		} else if (alignment == 16) {
@@ -378,8 +414,10 @@ bool Section::isSizeKnown() const {
 }
 
 // Set the current section by name and type
-void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
-                     SectionSpec const &attrs, enum SectionModifier mod) {
+void sect_NewSection(
+    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    enum SectionModifier mod
+) {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
@@ -397,8 +435,10 @@ void sect_NewSection(char const *name, enum SectionType type, uint32_t org,
 }
 
 // Set the current section by name and type
-void sect_SetLoadSection(char const *name, enum SectionType type, uint32_t org,
-                         SectionSpec const &attrs, enum SectionModifier mod) {
+void sect_SetLoadSection(
+    char const *name, enum SectionType type, uint32_t org, SectionSpec const &attrs,
+    enum SectionModifier mod
+) {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
 	// Therefore, any interactions are NOT TESTED, so lift either of those restrictions at
@@ -486,14 +526,16 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 
 	if (sect->org != (uint32_t)-1) {
 		if ((sect->org + curOffset - offset) % alignSize)
-			error("Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",
-			      sect->org + curOffset);
-	} else if (sect->align != 0
-	           && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
+			error(
+			    "Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",
+			    sect->org + curOffset
+			);
+	} else if (sect->align != 0 && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
 		error(
 		    "Section's alignment fails required alignment (offset from section start = $%04" PRIx32
 		    ")\n",
-		    curOffset);
+		    curOffset
+		);
 	} else if (alignment >= 16) {
 		// Treat an alignment large enough as fixing the address.
 		// Note that this also ensures that a section's alignment never becomes 16 or greater.
@@ -639,10 +681,12 @@ void sect_Skip(uint32_t skip, bool ds) {
 		growSection(skip);
 	} else {
 		if (!ds)
-			warning(WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
-			        (skip == 4)   ? "DL"
-			        : (skip == 2) ? "DW"
-			                      : "DB");
+			warning(
+			    WARNING_EMPTY_DATA_DIRECTIVE, "%s directive without data in ROM\n",
+			    (skip == 4)   ? "DL"
+			    : (skip == 2) ? "DW"
+			                  : "DB"
+			);
 		// We know we're in a code SECTION
 		while (skip--)
 			writebyte(fillByte);
@@ -861,9 +905,11 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length) {
 		}
 
 		if ((start_pos + length) > fsize) {
-			error("Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32 " > %" PRIu32
-			      ")\n",
-			      start_pos, length, fsize);
+			error(
+			    "Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32 " > %" PRIu32
+			    ")\n",
+			    start_pos, length, fsize
+			);
 			goto cleanup;
 		}
 
