@@ -48,7 +48,7 @@
 
 	struct Keyword {
 		std::string_view name;
-		yy::parser::symbol_type (* tokenGen)();
+		yy::parser::symbol_type (*tokenGen)();
 	};
 }
 
@@ -106,8 +106,10 @@ optional: %empty { $$ = false; }
 %%
 
 #define scriptError(context, fmt, ...) \
-	::error(nullptr, 0, "%s(%" PRIu32 "): " fmt, \
-	        context.path.c_str(), context.lineNo __VA_OPT__(,) __VA_ARGS__)
+	::error( \
+	    nullptr, 0, "%s(%" PRIu32 "): " fmt, context.path.c_str(), \
+	    context.lineNo __VA_OPT__(, ) __VA_ARGS__ \
+	)
 
 // Lexer.
 
@@ -134,8 +136,9 @@ static void includeFile(std::string &&path) {
 
 	if (!newContext.file.open(newContext.path, std::ios_base::in)) {
 		// The order is important: report the error, increment the line number, modify the stack!
-		scriptError(prevContext, "Failed to open included linker script \"%s\"",
-		            newContext.path.c_str());
+		scriptError(
+		    prevContext, "Failed to open included linker script \"%s\"", newContext.path.c_str()
+		);
 		++prevContext.lineNo;
 		lexerStack.pop_back();
 	} else {
@@ -291,9 +294,8 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		auto strUpperCmp = [](char cmp, char ref) {
 			// `locale::classic()` yields the "C" locale.
 			assert(!std::use_facet<std::ctype<char>>(std::locale::classic())
-			       .is(std::ctype_base::lower, ref));
-			return std::use_facet<std::ctype<char>>(std::locale::classic())
-			       .toupper(cmp) == ref;
+			            .is(std::ctype_base::lower, ref));
+			return std::use_facet<std::ctype<char>>(std::locale::classic()).toupper(cmp) == ref;
 		};
 
 		ident.push_back(c);
@@ -351,8 +353,9 @@ static void setSectionType(SectionType type) {
 	auto const &context = lexerStack.back();
 
 	if (nbbanks(type) != 1) {
-		scriptError(context, "A bank number must be specified for %s",
-		            sectionTypeInfo[type].name.c_str());
+		scriptError(
+		    context, "A bank number must be specified for %s", sectionTypeInfo[type].name.c_str()
+		);
 		// Keep going with a default value for the bank index.
 	}
 
@@ -364,12 +367,16 @@ static void setSectionType(SectionType type, uint32_t bank) {
 	auto const &typeInfo = sectionTypeInfo[type];
 
 	if (bank < typeInfo.firstBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
-		            typeInfo.name.c_str(), bank, typeInfo.firstBank);
+		scriptError(
+		    context, "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
+		    typeInfo.name.c_str(), bank, typeInfo.firstBank
+		);
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
-		scriptError(context, "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
-		            typeInfo.name.c_str(), bank, typeInfo.lastBank);
+		scriptError(
+		    context, "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
+		    typeInfo.name.c_str(), bank, typeInfo.lastBank
+		);
 	}
 
 	setActiveTypeAndIdx(type, bank - typeInfo.firstBank);
@@ -388,8 +395,10 @@ static void setAddr(uint32_t addr) {
 	if (addr < pc) {
 		scriptError(context, "Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
 	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
-		scriptError(context, "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
-		            addr, typeInfo.name.c_str(), endaddr(activeType));
+		scriptError(
+		    context, "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
+		    addr, typeInfo.name.c_str(), endaddr(activeType)
+		);
 		pc = endaddr(activeType);
 	} else {
 		pc = addr;
@@ -400,7 +409,9 @@ static void setAddr(uint32_t addr) {
 static void makeAddrFloating() {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "Cannot make the current address floating: no memory region is active");
+		scriptError(
+		    context, "Cannot make the current address floating: no memory region is active"
+		);
 		return;
 	}
 
@@ -423,9 +434,12 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 			uint32_t alignSize = 1u << alignment;
 
 			if (alignOfs >= alignSize) {
-				scriptError(context, "Cannot align: The alignment offset (%" PRIu32
-						      ") must be less than alignment size (%" PRIu32 ")",
-					    alignOfs, alignSize);
+				scriptError(
+				    context,
+				    "Cannot align: The alignment offset (%" PRIu32
+				    ") must be less than alignment size (%" PRIu32 ")",
+				    alignOfs, alignSize
+				);
 				return;
 			}
 
@@ -439,8 +453,9 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	auto &pc = curAddr[activeType][activeBankIdx];
 
 	if (alignment > 16) {
-		scriptError(context, "Cannot align: The alignment (%" PRIu32 ") must be less than 16",
-			    alignment);
+		scriptError(
+		    context, "Cannot align: The alignment (%" PRIu32 ") must be less than 16", alignment
+		);
 		return;
 	}
 
@@ -451,9 +466,12 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		uint32_t alignSize = 1u << alignment;
 
 		if (alignOfs >= alignSize) {
-			scriptError(context, "Cannot align: The alignment offset (%" PRIu32
-					      ") must be less than alignment size (%" PRIu32 ")",
-				    alignOfs, alignSize);
+			scriptError(
+			    context,
+			    "Cannot align: The alignment offset (%" PRIu32
+			    ") must be less than alignment size (%" PRIu32 ")",
+			    alignOfs, alignSize
+			);
 			return;
 		}
 
@@ -462,9 +480,12 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 	}
 
 	if (uint16_t offset = pc - typeInfo.startAddr; length > typeInfo.size - offset) {
-		scriptError(context, "Cannot align: the next suitable address after $%04"
-				     PRIx16 " is $%04" PRIx16 ", past $%04" PRIx16,
-			    pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1));
+		scriptError(
+		    context,
+		    "Cannot align: the next suitable address after $%04" PRIx16 " is $%04" PRIx16
+		    ", past $%04" PRIx16,
+		    pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1)
+		);
 		return;
 	}
 
@@ -488,8 +509,11 @@ static void pad(uint32_t length) {
 
 	assert(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
-		scriptError(context, "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
-		            length, typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1));
+		scriptError(
+		    context,
+		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16, length,
+		    typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1)
+		);
 	} else {
 		pc += length;
 	}
@@ -498,8 +522,9 @@ static void pad(uint32_t length) {
 static void placeSection(std::string const &name, bool isOptional) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
-		scriptError(context, "No memory region has been specified to place section \"%s\" in",
-		            name.c_str());
+		scriptError(
+		    context, "No memory region has been specified to place section \"%s\" in", name.c_str()
+		);
 		return;
 	}
 
@@ -520,14 +545,20 @@ static void placeSection(std::string const &name, bool isOptional) {
 			fragment->type = activeType;
 		}
 	} else if (section->type != activeType) {
-		scriptError(context, "\"%s\" is specified to be a %s section, but it is already a %s section",
-		            name.c_str(), typeInfo.name.c_str(), sectionTypeInfo[section->type].name.c_str());
+		scriptError(
+		    context, "\"%s\" is specified to be a %s section, but it is already a %s section",
+		    name.c_str(), typeInfo.name.c_str(), sectionTypeInfo[section->type].name.c_str()
+		);
 	}
 
 	uint32_t bank = activeBankIdx + typeInfo.firstBank;
 	if (section->isBankFixed && bank != section->bank) {
-		scriptError(context, "The linker script places section \"%s\" in %s bank %" PRIu32 ", but it was already defined in bank %" PRIu32,
-		            name.c_str(), sectionTypeInfo[section->type].name.c_str(), bank, section->bank);
+		scriptError(
+		    context,
+		    "The linker script places section \"%s\" in %s bank %" PRIu32
+		    ", but it was already defined in bank %" PRIu32,
+		    name.c_str(), sectionTypeInfo[section->type].name.c_str(), bank, section->bank
+		);
 	}
 	section->isBankFixed = true;
 	section->bank = bank;
@@ -535,12 +566,22 @@ static void placeSection(std::string const &name, bool isOptional) {
 	if (!isPcFloating) {
 		uint16_t &org = curAddr[activeType][activeBankIdx];
 		if (section->isAddressFixed && org != section->org) {
-			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but it was already at $%04" PRIx16,
-			            name.c_str(), org, section->org);
+			scriptError(
+			    context,
+			    "The linker script assigns section \"%s\" to address $%04" PRIx16
+			    ", but it was already at $%04" PRIx16,
+			    name.c_str(), org, section->org
+			);
 		} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
 			uint8_t alignment = std::countr_one(section->alignMask);
-			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but that would be ALIGN[%" PRIu8 ", %" PRIu16 "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
-			            name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment, section->alignOfs);
+			scriptError(
+			    context,
+			    "The linker script assigns section \"%s\" to address $%04" PRIx16
+			    ", but that would be ALIGN[%" PRIu8 ", %" PRIu16
+			    "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
+			    name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment,
+			    section->alignOfs
+			);
 		}
 		section->isAddressFixed = true;
 		section->isAlignFixed = false; // This can't be set when the above is.
@@ -549,9 +590,12 @@ static void placeSection(std::string const &name, bool isOptional) {
 		uint16_t curOfs = org - typeInfo.startAddr;
 		if (section->size > typeInfo.size - curOfs) {
 			uint16_t overflowSize = section->size - (typeInfo.size - curOfs);
-			scriptError(context, "The linker script assigns section \"%s\" to address $%04" PRIx16 ", but then it would overflow %s by %" PRIx16 " byte%s",
-			            name.c_str(), org, typeInfo.name.c_str(),
-			            overflowSize, overflowSize == 1 ? "" : "s");
+			scriptError(
+			    context,
+			    "The linker script assigns section \"%s\" to address $%04" PRIx16
+			    ", but then it would overflow %s by %" PRIx16 " byte%s",
+			    name.c_str(), org, typeInfo.name.c_str(), overflowSize, overflowSize == 1 ? "" : "s"
+			);
 			// Fill as much as possible without going out of bounds.
 			org = typeInfo.startAddr + typeInfo.size;
 		} else {
