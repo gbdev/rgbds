@@ -715,7 +715,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
 			for (Symbol *symbol : section->symbols)
-				std::get<Label>(symbol->data).offset += section->offset;
+				symbol->label().offset += section->offset;
 		}
 	}
 

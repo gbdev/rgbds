@@ -340,11 +340,11 @@ static void readSection(FILE *file, Section &section, char const *fileName,
 static void linkSymToSect(Symbol &symbol, Section &section)
 {
 	uint32_t a = 0, b = section.symbols.size();
-	int32_t symbolOffset = std::get<Label>(symbol.data).offset;
+	int32_t symbolOffset = symbol.label().offset;
 
 	while (a != b) {
 		uint32_t c = (a + b) / 2;
-		int32_t otherOffset = std::get<Label>(section.symbols[c]->data).offset;
+		int32_t otherOffset = section.symbols[c]->label().offset;
 
 		if (otherOffset > symbolOffset)
 			b = c;

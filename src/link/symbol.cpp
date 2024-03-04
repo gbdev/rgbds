@@ -16,6 +16,18 @@
 
 std::map<std::string, Symbol *> symbols;
 
+Label &Symbol::label()
+{
+	assert(std::holds_alternative<Label>(data));
+	return std::get<Label>(data);
+}
+
+Label const &Symbol::label() const
+{
+	assert(std::holds_alternative<Label>(data));
+	return std::get<Label>(data);
+}
+
 void sym_AddSymbol(Symbol &symbol)
 {
 	// Check if the symbol already exists

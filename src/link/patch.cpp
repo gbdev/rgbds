@@ -228,14 +228,14 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
-			} else if (!std::holds_alternative<Label>(symbol->data)) {
+			} else if (Label const *label = std::get_if<Label>(&symbol->data); label) {
+				value = label->section->bank;
+			} else {
 				error(patch.src, patch.lineNo,
 				      "Requested BANK() of non-label symbol \"%s\"",
 				      fileSymbols[value].name.c_str());
 				isError = true;
 				value = 1;
-			} else {
-				value = std::get<Label>(symbol->data).section->bank;
 			}
 			break;
 

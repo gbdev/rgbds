@@ -33,6 +33,9 @@ struct Symbol {
 		int32_t, // Constants just have a numeric value
 		Label // Label values refer to an offset within a specific section
 	> data;
+
+	Label &label();
+	Label const &label() const;
 };
 
 void sym_AddSymbol(Symbol &symbol);
