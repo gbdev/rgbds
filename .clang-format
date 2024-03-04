@@ -60,7 +60,8 @@ IndentPPDirectives: BeforeHash
 IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
-InsertTrailingCommas: Wrapped
+# Only support for Javascript as of clang-format 14...
+# InsertTrailingCommas: Wrapped
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 Language: Cpp

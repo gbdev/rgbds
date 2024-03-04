@@ -398,7 +398,8 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					        [](int32_t val) -> int32_t { return val; },
 					        [](Label label) -> int32_t {
 						        return label.section->org + label.offset;
-					        }},
+					        },
+					    },
 					    symbol->data
 					);
 				}

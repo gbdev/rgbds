@@ -403,7 +403,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    },
 					    [](Label label) -> std::tuple<Section *, int32_t> {
 						    return {label.section, label.offset};
-					    }};
+					    },
+					};
 					auto [symbolSection, symbolValue] = std::visit(visitor, symbol.data);
 					auto [otherSection, otherValue] = std::visit(visitor, other->data);
 

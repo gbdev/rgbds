@@ -746,7 +746,8 @@ int main(int argc, char *argv[]) {
 			static std::array<char const *, 3> textbox{
 			    "  ,----------------------------------------.",
 			    "  | Augh, dimensional interference again?! |",
-			    "  `----------------------------------------'"};
+			    "  `----------------------------------------'",
+			};
 			for (size_t i = 0; i < gfx.size(); ++i) {
 				uint16_t row = gfx[i];
 				for (uint8_t _ = 0; _ < 10; ++_) {

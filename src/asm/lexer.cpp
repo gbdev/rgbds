@@ -41,15 +41,15 @@
 
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
-	#define WIN32_LEAN_AND_MEAN // include less from windows.h
-                                // clang-format off
+    // clang-format off
 	// (we need these `include`s in this order)
-	#include <windows.h>        // target architecture
-	#include <fileapi.h>        // CreateFileA
-	#include <winbase.h>        // CreateFileMappingA
-	#include <memoryapi.h>      // MapViewOfFile
-	#include <handleapi.h>      // CloseHandle
-                                // clang-format on
+	#define WIN32_LEAN_AND_MEAN // include less from windows.h
+	#include <windows.h>   // target architecture
+	#include <fileapi.h>   // CreateFileA
+	#include <winbase.h>   // CreateFileMappingA
+	#include <memoryapi.h> // MapViewOfFile
+	#include <handleapi.h> // CloseHandle
+    // clang-format on
 	#define MAP_FAILED nullptr
 	#define mapFile(ptr, fd, path, size) \
 		do { \
@@ -403,7 +403,8 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 				    .ptr = (char *)mappingAddr,
 				    .size = (size_t)fileInfo.st_size,
 				    .offset = 0,
-				    .isReferenced = false};
+				    .isReferenced = false,
+				};
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path);
 				isMmapped = true;
@@ -698,7 +699,8 @@ static int peekInternal(uint8_t distance) {
 		        // If there aren't enough chars even after refilling, give up
 		        return EOF;
 	        },
-	        [](std::monostate) -> int { return EOF; }},
+	        [](std::monostate) -> int { return EOF; },
+	    },
 	    lexerState->content
 	);
 }
@@ -790,7 +792,8 @@ restart:
 			        assert(cbuf.nbChars > 0);
 			        cbuf.nbChars--;
 		        },
-		        [](std::monostate) {}},
+		        [](std::monostate) {},
+		    },
 		    lexerState->content
 		);
 	}
@@ -2258,7 +2261,8 @@ static void startCapture(CaptureBody &capture) {
 	        [](ViewedLexerState &view) -> char const * {
 		        return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
 	        },
-	        [](auto &) -> char const * { return nullptr; }},
+	        [](auto &) -> char const * { return nullptr; },
+	    },
 	    lexerState->content
 	);
 

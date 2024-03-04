@@ -76,7 +76,8 @@ int32_t Symbol::getOutputValue() const {
 	    Visitor{
 	        [](int32_t value) -> int32_t { return value; },
 	        [](int32_t (*callback)()) -> int32_t { return callback(); },
-	        [](auto &) -> int32_t { return 0; }},
+	        [](auto &) -> int32_t { return 0; },
+	    },
 	    data
 	);
 }

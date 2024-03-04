@@ -79,7 +79,8 @@ public:
 			               _file.emplace<std::streambuf *>(nullptr);
 			               return file.close() != nullptr;
 		               },
-		               [](std::streambuf *buf) { return buf != nullptr; }},
+		               [](std::streambuf *buf) { return buf != nullptr; },
+		           },
 		           _file
 		       )
 		           ? this
@@ -92,7 +93,8 @@ public:
 		        [&path](std::filebuf const &) { return path.c_str(); },
 		        [](std::streambuf const *buf) {
 			        return buf == std::cin.rdbuf() ? "<stdin>" : "<stdout>";
-		        }},
+		        },
+		    },
 		    _file
 		);
 	}

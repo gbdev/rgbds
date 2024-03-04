@@ -495,7 +495,8 @@ public:
 		    *this,
 		    options.columnMajor,
 		    options.inputSlice.width ? options.inputSlice.width * 8 : width,
-		    options.inputSlice.height ? options.inputSlice.height * 8 : height};
+		    options.inputSlice.height ? options.inputSlice.height * 8 : height,
+		};
 	}
 };
 

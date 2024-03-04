@@ -514,7 +514,8 @@ void rpn_BinaryOp(
 			    (uint8_t)lval,
 			    (uint8_t)(lval >> 8),
 			    (uint8_t)(lval >> 16),
-			    (uint8_t)(lval >> 24)};
+			    (uint8_t)(lval >> 24),
+			};
 			expr.rpnPatchSize = sizeof(bytes);
 			expr.rpn = nullptr;
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
@@ -542,7 +543,8 @@ void rpn_BinaryOp(
 		    (uint8_t)rval,
 		    (uint8_t)(rval >> 8),
 		    (uint8_t)(rval >> 16),
-		    (uint8_t)(rval >> 24)};
+		    (uint8_t)(rval >> 24),
+		};
 		if (src2.isKnown) {
 			ptr = bytes;
 			len = sizeof(bytes);

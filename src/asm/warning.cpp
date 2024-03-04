@@ -205,7 +205,10 @@ static uint8_t const _weverythingCommands[] = {
 };
 
 static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {
-    _wallCommands, _wextraCommands, _weverythingCommands};
+    _wallCommands,
+    _wextraCommands,
+    _weverythingCommands,
+};
 
 void processWarningFlag(char *flag) {
 	static bool setError = false;
