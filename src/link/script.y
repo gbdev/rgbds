@@ -79,36 +79,74 @@
 
 %%
 
-lines: %empty
-     | line lines
+lines:
+	  %empty
+	| line lines
 ;
 
-line: INCLUDE string newline { includeFile(std::move($2)); } // Note: this additionally increments the line number!
-    | directive newline { incLineNo(); }
-    | newline { incLineNo(); }
-    | error newline { yyerrok; incLineNo(); } // Error recovery.
+line:
+	INCLUDE string newline {
+		includeFile(std::move($2)); // Note: this additionally increments the line number!
+	}
+	| directive newline {
+		incLineNo();
+	}
+	| newline {
+		incLineNo();
+	}
+	// Error recovery.
+	| error newline {
+		yyerrok;
+		incLineNo();
+	}
 ;
 
-directive: section_type { setSectionType($1); }
-         | section_type number { setSectionType($1, $2); }
-         | FLOATING { makeAddrFloating(); }
-         | ORG number { setAddr($2); }
-         | ALIGN number { alignTo($2, 0); }
-         | ALIGN number COMMA number { alignTo($2, $4); }
-         | DS number { pad($2); }
-         | string optional { placeSection($1, $2); }
+directive:
+	section_type {
+	  	setSectionType($1);
+	}
+	| section_type number {
+		setSectionType($1, $2);
+	}
+	| FLOATING {
+		makeAddrFloating();
+	}
+	| ORG number {
+		setAddr($2);
+	}
+	| ALIGN number {
+		alignTo($2, 0);
+	}
+	| ALIGN number COMMA number {
+		alignTo($2, $4);
+	}
+	| DS number {
+		pad($2);
+	}
+	| string optional {
+		placeSection($1, $2);
+	}
 ;
 
-optional: %empty { $$ = false; }
-        | OPTIONAL { $$ = true; }
+optional:
+	%empty {
+		$$ = false;
+	}
+	| OPTIONAL {
+		$$ = true;
+	}
 ;
 
 %%
 
 #define scriptError(context, fmt, ...) \
 	::error( \
-	    nullptr, 0, "%s(%" PRIu32 "): " fmt, context.path.c_str(), \
-	    context.lineNo __VA_OPT__(, ) __VA_ARGS__ \
+	    nullptr, \
+	    0, \
+	    "%s(%" PRIu32 "): " fmt, \
+	    context.path.c_str(), \
+	    context.lineNo __VA_OPT__(, ) \
+	    __VA_ARGS__ \
 	)
 
 // Lexer.
