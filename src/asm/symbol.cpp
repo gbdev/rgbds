@@ -11,6 +11,7 @@
 #include <string.h>
 #include <string_view>
 #include <time.h>
+#include <variant>
 
 #include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
@@ -64,17 +65,35 @@ static int32_t CallbackPC()
 	return section ? section->org + sect_GetSymbolOffset() : 0;
 }
 
-// Get the value field of a symbol
 int32_t Symbol::getValue() const
 {
-	if (isNumeric() && hasCallback)
-		return numCallback();
-
-	if (type == SYM_LABEL)
+	assert(std::holds_alternative<int32_t>(data) || std::holds_alternative<int32_t (*)()>(data));
+	if (int32_t const *value = std::get_if<int32_t>(&data); value) {
 		// TODO: do not use section's org directly
-		return value + getSection()->org;
+		return type == SYM_LABEL ? *value + getSection()->org : *value;
+	}
+	return getOutputValue();
+}
 
-	return value;
+int32_t Symbol::getOutputValue() const
+{
+	return std::visit(Visitor{
+		[](int32_t value) -> int32_t { return value; },
+		[](int32_t (*callback)()) -> int32_t { return callback(); },
+		[](auto &) -> int32_t { return 0; }
+	}, data);
+}
+
+std::string_view *Symbol::getMacro() const
+{
+	assert(std::holds_alternative<std::string_view *>(data));
+	return std::get<std::string_view *>(data);
+}
+
+std::string *Symbol::getEqus() const
+{
+	assert(std::holds_alternative<std::string *>(data));
+	return std::get<std::string *>(data);
 }
 
 static void dumpFilename(Symbol const &sym)
@@ -116,7 +135,6 @@ static Symbol &createsymbol(char const *symName)
 
 	sym.isExported = false;
 	sym.isBuiltin = false;
-	sym.hasCallback = false;
 	sym.section = nullptr;
 	setSymbolFilename(sym);
 	sym.ID = -1;
@@ -139,10 +157,11 @@ static void fullSymbolName(char *output, size_t outputSize,
 
 static void assignStringSymbol(Symbol &sym, char const *value)
 {
-	sym.type = SYM_EQUS;
-	sym.equs = new(std::nothrow) std::string(value);
-	if (!sym.equs)
+	std::string *equs = new(std::nothrow) std::string(value);
+	if (!equs)
 		fatalerror("No memory for string equate: %s\n", strerror(errno));
+	sym.type = SYM_EQUS;
+	sym.data = equs;
 }
 
 Symbol *sym_FindExactSymbol(char const *symName)
@@ -204,8 +223,8 @@ void sym_Purge(std::string const &symName)
 		if (sym->name == labelScope)
 			sym_SetCurrentSymbolScope(nullptr);
 
-		// FIXME: this leaks `sym->equs` for SYM_EQUS and `sym->macro` for SYM_MACRO, but
-		// this can't delete either of them because the expansion may be purging itself.
+		// FIXME: this leaks `sym->getEqus()` for SYM_EQUS and `sym->getMacro()` for SYM_MACRO,
+		// but this can't delete either of them because the expansion may be purging itself.
 		symbols.erase(sym->name);
 		// TODO: ideally, also unref the file stack nodes
 	}
@@ -295,7 +314,7 @@ Symbol *sym_AddEqu(char const *symName, int32_t value)
 		return nullptr;
 
 	sym->type = SYM_EQU;
-	sym->value = value;
+	sym->data = value;
 
 	return sym;
 }
@@ -319,7 +338,7 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value)
 
 	updateSymbolFilename(*sym);
 	sym->type = SYM_EQU;
-	sym->value = value;
+	sym->data = value;
 
 	return sym;
 }
@@ -368,7 +387,7 @@ Symbol *sym_RedefString(char const *symName, char const *value)
 	}
 
 	updateSymbolFilename(*sym);
-	// FIXME: this leaks the previous `sym->equs`, but this can't delete it because the
+	// FIXME: this leaks the previous `sym->getEqus()`, but this can't delete it because the
 	// expansion may be redefining itself.
 	assignStringSymbol(*sym, value);
 
@@ -393,7 +412,7 @@ Symbol *sym_AddVar(char const *symName, int32_t value)
 	}
 
 	sym->type = SYM_VAR;
-	sym->value = value;
+	sym->data = value;
 
 	return sym;
 }
@@ -420,7 +439,7 @@ static Symbol *addLabel(char const *symName)
 	}
 	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
-	sym->value = sect_GetSymbolOffset();
+	sym->data = (int32_t)sect_GetSymbolOffset();
 	// Don't export anonymous labels
 	if (exportAll && symName[0] != '!')
 		sym->isExported = true;
@@ -428,6 +447,7 @@ static Symbol *addLabel(char const *symName)
 
 	if (sym && !sym->section)
 		error("Label \"%s\" created outside of a SECTION\n", symName);
+
 	return sym;
 }
 
@@ -540,10 +560,11 @@ Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, s
 	if (!sym)
 		return nullptr;
 
-	sym->type = SYM_MACRO;
-	sym->macro = new(std::nothrow) std::string_view(body, size);
-	if (!sym->macro)
+	std::string_view *macro = new(std::nothrow) std::string_view(body, size);
+	if (!macro)
 		fatalerror("No memory for macro: %s\n", strerror(errno));
+	sym->type = SYM_MACRO;
+	sym->data = macro;
 
 	setSymbolFilename(*sym); // TODO: is this really necessary?
 	// The symbol is created at the line after the `endm`,
@@ -587,7 +608,6 @@ static Symbol *createBuiltinSymbol(char const *symName)
 	Symbol *sym = &createsymbol(symName);
 
 	sym->isBuiltin = true;
-	sym->hasCallback = true;
 	sym->src = nullptr;
 	sym->fileLine = 1; // This is 0 for CLI-defined symbols
 
@@ -599,11 +619,11 @@ void sym_Init(time_t now)
 {
 	PCSymbol = createBuiltinSymbol("@");
 	PCSymbol->type = SYM_LABEL;
-	PCSymbol->numCallback = CallbackPC;
+	PCSymbol->data = CallbackPC;
 
 	_NARGSymbol = createBuiltinSymbol("_NARG");
 	_NARGSymbol->type = SYM_EQU;
-	_NARGSymbol->numCallback = Callback_NARG;
+	_NARGSymbol->data = Callback_NARG;
 
 	sym_AddVar("_RS", 0)->isBuiltin = true;
 

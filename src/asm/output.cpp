@@ -150,7 +150,7 @@ static void writesymbol(Symbol const &sym, FILE *f)
 		putlong(sym.src->ID, f);
 		putlong(sym.fileLine, f);
 		putlong(getSectIDIfAny(sym.getSection()), f);
-		putlong(sym.value, f);
+		putlong(sym.getOutputValue(), f);
 	}
 }
 

@@ -1262,7 +1262,7 @@ static char const *readInterpolation(size_t depth)
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", symName);
 	} else if (sym->type == SYM_EQUS) {
-		fmt.printString(buf, sizeof(buf), sym->equs->c_str());
+		fmt.printString(buf, sizeof(buf), sym->getEqus()->c_str());
 		return buf;
 	} else if (sym->isNumeric()) {
 		fmt.printNumber(buf, sizeof(buf), sym->getConstantValue());
@@ -1894,7 +1894,7 @@ static int yylex_NORMAL()
 					Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
-						char const *s = sym->equs->c_str();
+						char const *s = sym->getEqus()->c_str();
 
 						assert(s);
 						if (s[0])
