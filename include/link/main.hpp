@@ -38,10 +38,6 @@ extern bool disablePadding;
 	} while (0)
 
 struct FileStackNode {
-	FileStackNode *parent;
-	// Line at which the parent context was exited; meaningless for the root level
-	uint32_t lineNo;
-
 	enum FileStackNodeType type;
 	std::variant<
 	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
@@ -49,6 +45,10 @@ struct FileStackNode {
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
+
+	FileStackNode *parent;
+	// Line at which the parent context was exited; meaningless for the root level
+	uint32_t lineNo;
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters();

@@ -16,20 +16,21 @@
 #include "asm/lexer.hpp"
 
 struct FileStackNode {
-	FileStackNode *parent; // Pointer to parent node, for error reporting
-	// Line at which the parent context was exited; meaningless for the root level
-	uint32_t lineNo;
-
-	bool referenced; // If referenced by a Symbol, Section, or Patch's `src`, don't `delete`!
-	uint32_t ID;     // Set only if referenced: ID within the object file, -1 if not output yet
-
 	enum FileStackNodeType type;
 	std::variant<
-	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
+
+	FileStackNode *parent; // Pointer to parent node, for error reporting
+	// Line at which the parent context was exited; meaningless for the root level
+	uint32_t lineNo;
+
+	// If referenced by a Symbol, Section, or Patch's `src`, don't `delete`!
+	bool referenced = false;
+	// Set only if referenced: ID within the object file, -1 if not output yet
+	uint32_t ID = -1;
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters();
@@ -37,6 +38,11 @@ struct FileStackNode {
 	// File name for files, file::macro name for macros
 	std::string &name();
 	std::string const &name() const;
+
+	FileStackNode(
+	    enum FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_
+	)
+	    : type(type_), data(data_) {};
 
 	void dump(uint32_t curLineNo) const;
 };
