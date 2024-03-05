@@ -579,12 +579,12 @@ static void parseGBCFile(std::filebuf &file) {
 			break;
 		}
 
-		options.palSpec.push_back(
-		    {Rgba::fromCGBColor(readLE<uint16_t>(&buf[0])),
-		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[2])),
-		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[4])),
-		     Rgba::fromCGBColor(readLE<uint16_t>(&buf[6]))}
-		);
+		options.palSpec.push_back({
+		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[0])),
+		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[2])),
+		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[4])),
+		    Rgba::fromCGBColor(readLE<uint16_t>(&buf[6])),
+		});
 	}
 }
 

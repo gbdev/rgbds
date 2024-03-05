@@ -41,9 +41,10 @@ static void initFreeSpace() {
 	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		memory[type].resize(nbbanks(type));
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
-			bankMem.push_back(
-			    {.address = sectionTypeInfo[type].startAddr, .size = sectionTypeInfo[type].size}
-			);
+			bankMem.push_back({
+			    .address = sectionTypeInfo[type].startAddr,
+			    .size = sectionTypeInfo[type].size,
+			});
 		}
 	}
 }

@@ -498,12 +498,16 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	case 'R':
 		break;
 
-	default: // This is (probably) a SDCC object file, defer the rest of detection to it
+	default:
+		// This is (probably) a SDCC object file, defer the rest of detection to it.
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
-		nodes[fileID].push_back(
-		    {.parent = nullptr, .lineNo = 0, .type = NODE_FILE, .data = fileName}
-		);
+		nodes[fileID].push_back({
+		    .parent = nullptr,
+		    .lineNo = 0,
+		    .type = NODE_FILE,
+		    .data = fileName,
+		});
 
 		std::vector<Symbol> &fileSymbols = symbolLists.emplace_front();
 

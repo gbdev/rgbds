@@ -345,8 +345,10 @@ static void writeSymBank(SortedSections const &bankSections, enum SectionType ty
 		for (Symbol const *sym : sect->symbols) {
 			// Don't output symbols that begin with an illegal character
 			if (!sym->name.empty() && canStartSymName(sym->name[0]))
-				symList.push_back({.sym = sym, .addr = (uint16_t)(sym->label().offset + sect->org)}
-				);
+				symList.push_back({
+				    .sym = sym,
+				    .addr = (uint16_t)(sym->label().offset + sect->org),
+				});
 		}
 	});
 
