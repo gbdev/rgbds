@@ -121,7 +121,7 @@ Section *sect_FindSectionByName(char const *name) {
 }
 
 #define mask(align) ((1U << (align)) - 1)
-#define fail(...) \
+#define sectError(...) \
 	do { \
 		error(__VA_ARGS__); \
 		nbSectErrors++; \
@@ -136,16 +136,16 @@ static unsigned int mergeSectUnion(
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
 	if (sect_HasData(type))
-		fail("Cannot declare ROM sections as UNION\n");
+		sectError("Cannot declare ROM sections as UNION\n");
 
 	if (org != (uint32_t)-1) {
 		// If both are fixed, they must be the same
 		if (sect.org != (uint32_t)-1 && sect.org != org)
-			fail(
+			sectError(
 			    "Section already declared as fixed at different address $%04" PRIx32 "\n", sect.org
 			);
 		else if (sect.align != 0 && (mask(sect.align) & (org - sect.alignOfs)))
-			fail(
+			sectError(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
 			    1U << sect.align,
 			    sect.alignOfs
@@ -158,13 +158,13 @@ static unsigned int mergeSectUnion(
 		// Make sure any fixed address given is compatible
 		if (sect.org != (uint32_t)-1) {
 			if ((sect.org - alignOffset) & mask(alignment))
-				fail(
+				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 				    sect.org
 				);
 			// Check if alignment offsets are compatible
 		} else if ((alignOffset & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
-			fail(
+			sectError(
 			    "Section already declared with incompatible %u"
 			    "-byte alignment (offset %" PRIu16 ")\n",
 			    1U << sect.align,
@@ -193,12 +193,12 @@ static unsigned int
 
 		// If both are fixed, they must be the same
 		if (sect.org != (uint32_t)-1 && sect.org != curOrg)
-			fail(
+			sectError(
 			    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 			    sect.org
 			);
 		else if (sect.align != 0 && (mask(sect.align) & (curOrg - sect.alignOfs)))
-			fail(
+			sectError(
 			    "Section already declared as aligned to %u bytes (offset %" PRIu16 ")\n",
 			    1U << sect.align,
 			    sect.alignOfs
@@ -216,13 +216,13 @@ static unsigned int
 		// Make sure any fixed address given is compatible
 		if (sect.org != (uint32_t)-1) {
 			if ((sect.org - curOfs) & mask(alignment))
-				fail(
+				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 				    sect.org
 				);
 			// Check if alignment offsets are compatible
 		} else if ((curOfs & mask(sect.align)) != (sect.alignOfs & mask(alignment))) {
-			fail(
+			sectError(
 			    "Section already declared with incompatible %u"
 			    "-byte alignment (offset %" PRIu16 ")\n",
 			    1U << sect.align,
@@ -250,10 +250,10 @@ static void mergeSections(
 	unsigned int nbSectErrors = 0;
 
 	if (type != sect.type)
-		fail("Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str());
+		sectError("Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str());
 
 	if (sect.modifier != mod) {
-		fail("Section already declared as %s section\n", sectionModNames[sect.modifier]);
+		sectError("Section already declared as %s section\n", sectionModNames[sect.modifier]);
 	} else {
 		switch (mod) {
 		case SECTION_UNION:
@@ -269,11 +269,11 @@ static void mergeSections(
 				sect.bank = bank;
 			// If both specify a bank, it must be the same one
 			else if (bank != (uint32_t)-1 && sect.bank != bank)
-				fail("Section already declared with different bank %" PRIu32 "\n", sect.bank);
+				sectError("Section already declared with different bank %" PRIu32 "\n", sect.bank);
 			break;
 
 		case SECTION_NORMAL:
-			fail("Section already defined previously at ");
+			sectError("Section already defined previously at ");
 			sect.src->dump(sect.fileLine);
 			putc('\n', stderr);
 			break;
@@ -289,7 +289,7 @@ static void mergeSections(
 		);
 }
 
-#undef fail
+#undef sectError
 
 // Create a new section, not yet in the list.
 static Section *createSection(
