@@ -525,7 +525,8 @@ macroargs:
 			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
 	}
 	| macroargs T_STRING {
-		$$->append($2);
+		$1->append($2);
+		$$ = $1;
 	}
 ;
 
