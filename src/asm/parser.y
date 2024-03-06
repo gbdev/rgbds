@@ -266,6 +266,9 @@
 %token T_SECT_WRAM0 "WRAM0" T_SECT_WRAMX "WRAMX" T_SECT_HRAM "HRAM"
 %token T_SECT_VRAM "VRAM" T_SECT_SRAM "SRAM" T_SECT_OAM "OAM"
 
+%type <captureTerminated> capture_rept
+%type <captureTerminated> capture_macro
+
 %type <sectMod> sectmod
 %type <macroArg> macroargs
 
@@ -834,10 +837,8 @@ load:
 ;
 
 rept:
-	T_POP_REPT uconst T_NEWLINE {
-		$<captureTerminated>$ = lexer_CaptureRept(captureBody);
-	} endofline {
-		if ($<captureTerminated>4)
+	T_POP_REPT uconst T_NEWLINE capture_rept endofline {
+		if ($4)
 			fstk_RunRept($2, captureBody.lineNo, captureBody.body, captureBody.size);
 	}
 ;
@@ -847,10 +848,8 @@ for:
 		lexer_ToggleStringExpansion(false);
 	} T_ID {
 		lexer_ToggleStringExpansion(true);
-	} T_COMMA for_args T_NEWLINE {
-		$<captureTerminated>$ = lexer_CaptureRept(captureBody);
-	} endofline {
-		if ($<captureTerminated>8)
+	} T_COMMA for_args T_NEWLINE capture_rept endofline {
+		if ($8)
 			fstk_RunFor(
 				$3,
 				$6.start,
@@ -860,6 +859,12 @@ for:
 				captureBody.body,
 				captureBody.size
 			);
+	}
+;
+
+capture_rept:
+	%empty {
+		$$ = lexer_CaptureRept(captureBody);
 	}
 ;
 
@@ -893,11 +898,15 @@ macrodef:
 		lexer_ToggleStringExpansion(false);
 	} T_ID {
 		lexer_ToggleStringExpansion(true);
-	} T_NEWLINE {
-		$<captureTerminated>$ = lexer_CaptureMacroBody(captureBody);
-	} endofline {
-		if ($<captureTerminated>6)
+	} T_NEWLINE capture_macro endofline {
+		if ($6)
 			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
+	}
+;
+
+capture_macro:
+	%empty {
+		$$ = lexer_CaptureMacroBody(captureBody);
 	}
 ;
 
@@ -1170,7 +1179,7 @@ print_expr:
 		printf("$%" PRIX32, $1);
 	}
 	| string {
-		printf("%s", $1);
+		fputs($1, stdout);
 	}
 ;
 
