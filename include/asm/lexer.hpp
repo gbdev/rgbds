@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+#include "asm/symbol.hpp" // MAXSYMLEN
+
 #include "platform.hpp" // SSIZE_MAX
 
 #define MAXSTRLEN 255
@@ -139,12 +141,19 @@ struct CaptureBody {
 	size_t size;
 };
 
+struct String {
+	char string[MAXSTRLEN + 1];
+};
+
+struct SymName {
+	char symName[MAXSYMLEN + 1];
+};
+
 void lexer_CheckRecursionDepth();
 char const *lexer_GetFileName();
 uint32_t lexer_GetLineNo();
 uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
-int yylex();
 bool lexer_CaptureRept(CaptureBody &capture);
 bool lexer_CaptureMacroBody(CaptureBody &capture);
 

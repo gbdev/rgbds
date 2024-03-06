@@ -399,8 +399,9 @@ int main(int argc, char *argv[]) {
 	// Init lexer and file stack, providing file info
 	fstk_Init(mainFileName, maxDepth);
 
-	// Perform parse (yyparse is auto-generated from `parser.y`)
-	if (yyparse() != 0 && nbErrors == 0)
+	// Perform parse
+	yy::parser parser;
+	if (parser.parse() != 0 && nbErrors == 0)
 		nbErrors = 1;
 
 	if (dependfile)
