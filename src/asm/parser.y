@@ -1676,12 +1676,13 @@ sectattrs:
 		$$.bank = -1;
 	}
 	| sectattrs T_COMMA T_OP_ALIGN T_LBRACK align_spec T_RBRACK {
+		$$ = $1;
 		$$.alignment = $5.alignment;
 		$$.alignOfs = $5.alignOfs;
 	}
 	| sectattrs T_COMMA T_OP_BANK T_LBRACK uconst T_RBRACK {
-		// We cannot check the validity of this now
-		$$.bank = $5;
+		$$ = $1;
+		$$.bank = $5; // We cannot check the validity of this yet
 	}
 ;
 

@@ -24,6 +24,7 @@
 
 // Init a RPN expression
 static void initExpression(Expression &expr) {
+	expr.val = 0;
 	expr.reason = nullptr;
 	expr.isKnown = true;
 	expr.isSymbol = false;
@@ -68,13 +69,14 @@ void rpn_Number(Expression &expr, uint32_t val) {
 }
 
 void rpn_Symbol(Expression &expr, char const *symName) {
+	initExpression(expr);
+
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
-		rpn_Number(expr, 0);
+		expr.val = 0;
 	} else if (!sym || !sym->isConstant()) {
-		initExpression(expr);
 		expr.isSymbol = true;
 
 		if (sym_IsPC(sym))
@@ -89,7 +91,7 @@ void rpn_Symbol(Expression &expr, char const *symName) {
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name, nameLen);
 	} else {
-		rpn_Number(expr, sym_GetConstantValue(symName));
+		expr.val = sym_GetConstantValue(symName);
 	}
 }
 
@@ -120,6 +122,7 @@ void rpn_BankSymbol(Expression &expr, char const *symName) {
 	initExpression(expr);
 	if (sym && !sym->isLabel()) {
 		error("BANK argument must be a label\n");
+		expr.val = 1;
 	} else {
 		sym = sym_Ref(symName);
 		assert(sym); // If the symbol didn't exist, it should have been created
@@ -345,13 +348,13 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 void rpn_BinaryOp(
     enum RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2
 ) {
+	initExpression(expr);
 	expr.isSymbol = false;
 	int32_t constMaskVal;
 
 	// First, check if the expression is known
 	expr.isKnown = src1.isKnown && src2.isKnown;
 	if (expr.isKnown) {
-		initExpression(expr); // Init the expression to something sane
 
 		// If both expressions are known, just compute the value
 		uint32_t uleft = src1.val, uright = src2.val;
