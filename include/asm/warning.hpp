@@ -57,7 +57,7 @@ enum WarningID {
 extern enum WarningState warningStates[NB_PLAIN_AND_PARAM_WARNINGS];
 extern bool warningsAreErrors;
 
-void processWarningFlag(char *flag);
+void processWarningFlag(char const *flag);
 
 /*
  * Used to warn the user about problems that don't prevent the generation of

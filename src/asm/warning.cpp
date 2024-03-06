@@ -210,7 +210,7 @@ static uint8_t const *metaWarningCommands[NB_META_WARNINGS] = {
     _weverythingCommands,
 };
 
-void processWarningFlag(char *flag) {
+void processWarningFlag(char const *flag) {
 	static bool setError = false;
 
 	// First, try to match against a "meta" warning
@@ -235,7 +235,7 @@ void processWarningFlag(char *flag) {
 
 	// If it's not a meta warning, specially check against `-Werror`
 	if (!strncmp(flag, "error", strlen("error"))) {
-		char *errorFlag = flag + strlen("error");
+		char const *errorFlag = flag + strlen("error");
 
 		switch (*errorFlag) {
 		case '\0':
@@ -260,12 +260,12 @@ void processWarningFlag(char *flag) {
 	                          // Not an error, then check if this is a negation
 	                          : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
 	                                                                : WARNING_DISABLED;
-	char *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
+	char const *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
 
 	// Is this a "parametric" warning?
 	if (state != WARNING_DISABLED) { // The `no-` form cannot be parametrized
 		// First, check if there is an "equals" sign followed by a decimal number
-		char *equals = strchr(rootFlag, '=');
+		char const *equals = strchr(rootFlag, '=');
 
 		if (equals && equals[1] != '\0') { // Ignore an equal sign at the very end as well
 			// Is the rest of the string a decimal number?
@@ -299,8 +299,13 @@ void processWarningFlag(char *flag) {
 					warnx("Ignoring nonsensical warning flag \"%s\"\n", flag);
 					return;
 				}
-				*equals = '\0'; // Truncate the param at the '='
-				if (tryProcessParamWarning(rootFlag, param, param == 0 ? WARNING_DISABLED : state))
+
+				std::string truncFlag = rootFlag;
+
+				truncFlag.resize(equals - rootFlag); // Truncate the param at the '='
+				if (tryProcessParamWarning(
+				        truncFlag.c_str(), param, param == 0 ? WARNING_DISABLED : state
+				    ))
 					return;
 			}
 		}

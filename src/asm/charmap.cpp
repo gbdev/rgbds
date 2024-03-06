@@ -91,7 +91,7 @@ void charmap_Pop() {
 	charmapStack.pop();
 }
 
-void charmap_Add(char *mapping, uint8_t value) {
+void charmap_Add(char const *mapping, uint8_t value) {
 	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 

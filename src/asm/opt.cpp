@@ -70,11 +70,11 @@ void opt_l(bool warn) {
 	warnOnLdOpt = warn;
 }
 
-void opt_W(char *flag) {
+void opt_W(char const *flag) {
 	processWarningFlag(flag);
 }
 
-void opt_Parse(char *s) {
+void opt_Parse(char const *s) {
 	switch (s[0]) {
 	case 'b':
 		if (strlen(&s[1]) == 2)

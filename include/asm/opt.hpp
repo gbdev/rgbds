@@ -10,8 +10,8 @@ void opt_G(char const chars[4]);
 void opt_P(uint8_t padByte);
 void opt_Q(uint8_t precision);
 void opt_L(bool optimize);
-void opt_W(char *flag);
-void opt_Parse(char *option);
+void opt_W(char const *flag);
+void opt_Parse(char const *option);
 
 void opt_Push();
 void opt_Pop();
