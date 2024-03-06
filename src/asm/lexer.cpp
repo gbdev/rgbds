@@ -838,7 +838,8 @@ void lexer_DumpStringExpansions() {
 	}
 }
 
-// Discards a block comment
+// Functions to discard non-tokenized characters
+
 static void discardBlockComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -877,8 +878,6 @@ finish:
 	lexerState->disableInterpolation = false;
 }
 
-// Function to discard all of a line's comments
-
 static void discardComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
@@ -892,9 +891,7 @@ static void discardComment() {
 	lexerState->disableInterpolation = false;
 }
 
-// Function to read a line continuation
-
-static void readLineContinuation() {
+static void discardLineContinuation() {
 	for (;;) {
 		int c = peek();
 
@@ -916,7 +913,7 @@ static void readLineContinuation() {
 	}
 }
 
-// Function to read an anonymous label ref
+// Functions to read tokenizable values
 
 static void readAnonLabelRef(char c) {
 	uint32_t n = 0;
@@ -929,8 +926,6 @@ static void readAnonLabelRef(char c) {
 
 	sym_WriteAnonLabelName(yylval.symName, n, c == '-');
 }
-
-// Functions to lex numbers of various radixes
 
 static uint32_t readNumber(int radix, uint32_t baseValue) {
 	uint32_t value = baseValue;
@@ -1356,7 +1351,7 @@ static void readString(bool raw) {
 			case ' ':
 			case '\r':
 			case '\n':
-				readLineContinuation();
+				discardLineContinuation();
 				continue;
 
 			// Macro arg
@@ -1505,7 +1500,7 @@ static size_t appendStringLiteral(size_t i, bool raw) {
 			case ' ':
 			case '\r':
 			case '\n':
-				readLineContinuation();
+				discardLineContinuation();
 				continue;
 
 			// Macro arg
@@ -1815,7 +1810,7 @@ static int yylex_NORMAL() {
 		case '\\':
 			// Macro args were handled by `peek`, and character escapes do not exist
 			// outside of string literals, so this must be a line continuation.
-			readLineContinuation();
+			discardLineContinuation();
 			break;
 
 			// Handle raw strings... or fall through if '#' is not followed by '"'
@@ -1849,11 +1844,11 @@ static int yylex_NORMAL() {
 					Symbol const *sym = sym_FindExactSymbol(yylval.symName);
 
 					if (sym && sym->type == SYM_EQUS) {
-						char const *s = sym->getEqus()->c_str();
+						char const *str = sym->getEqus()->c_str();
 
-						assert(s);
-						if (s[0])
-							beginExpansion(s, false, sym->name);
+						assert(str);
+						if (str[0])
+							beginExpansion(str, false, sym->name);
 						continue; // Restart, reading from the new buffer
 					}
 				}
@@ -1892,7 +1887,7 @@ static int yylex_RAW() {
 			if (!isWhitespace(c) && c != '\n' && c != '\r')
 				goto backslash;
 			// Line continuations count as "whitespace"
-			readLineContinuation();
+			discardLineContinuation();
 		} else {
 			break;
 		}
@@ -1978,7 +1973,7 @@ backslash:
 			case ' ':
 			case '\r':
 			case '\n':
-				readLineContinuation();
+				discardLineContinuation();
 				continue;
 
 			case EOF: // Can't really print that one
@@ -2079,22 +2074,22 @@ static int skipIfBlock(bool toEndc) {
 				case T_POP_ELIF:
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELIF after an ELSE block\n");
-					goto maybeFinish;
+					if (!toEndc && lexer_GetIFDepth() == startingDepth)
+						goto finish;
+					break;
 
 				case T_POP_ELSE:
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELSE after an ELSE block\n");
 					lexer_ReachELSEBlock();
-					// fallthrough
-maybeFinish:
-					if (toEndc) // Ignore ELIF and ELSE, go to ENDC
-						break;
-					// fallthrough
+					if (!toEndc && lexer_GetIFDepth() == startingDepth)
+						goto finish;
+					break;
+
 				case T_POP_ENDC:
 					if (lexer_GetIFDepth() == startingDepth)
 						goto finish;
-					if (token == T_POP_ENDC)
-						lexer_DecIFDepth();
+					lexer_DecIFDepth();
 				}
 			}
 			atLineStart = false;
@@ -2108,7 +2103,7 @@ maybeFinish:
 				token = T_EOF;
 				goto finish;
 			} else if (c == '\\') {
-				// Unconditionally skip the next char, including line conts
+				// Unconditionally skip the next char, including line continuations
 				c = nextChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
@@ -2191,7 +2186,7 @@ static int yylex_SKIP_TO_ENDR() {
 			if (c == EOF) {
 				goto finish;
 			} else if (c == '\\') {
-				// Unconditionally skip the next char, including line conts
+				// Unconditionally skip the next char, including line continuations
 				c = nextChar();
 			} else if (c == '\r' || c == '\n') {
 				atLineStart = true;
