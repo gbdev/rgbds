@@ -49,10 +49,6 @@ char const *__asan_default_options() {
 }
 #endif
 
-// Old Bison versions (confirmed for 2.3) do not forward-declare `yyparse` in the generated header
-// Unfortunately, macOS still ships 2.3, which is from 2008...
-int yyparse();
-
 FILE *dependfile = nullptr;
 bool generatedMissingIncludes = false;
 bool failedOnMissingInclude = false;
