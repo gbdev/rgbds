@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-pngver=1.6.37
+pngver=1.6.43
 arch="$1"
 
 ## Grab sources and check them
