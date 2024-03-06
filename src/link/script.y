@@ -631,7 +631,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 			scriptError(
 			    context,
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
-			    ", but then it would overflow %s by %" PRIx16 " byte%s",
+			    ", but then it would overflow %s by %" PRIu16 " byte%s",
 			    name.c_str(), org, typeInfo.name.c_str(), overflowSize, overflowSize == 1 ? "" : "s"
 			);
 			// Fill as much as possible without going out of bounds.

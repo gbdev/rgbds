@@ -274,7 +274,7 @@ static void placeSection(Section &section) {
 			snprintf(
 			    where,
 			    sizeof(where),
-			    "in bank $%02" PRIx32 " with align mask %" PRIx16,
+			    "in bank $%02" PRIx32 " with align mask $%" PRIx16,
 			    section.bank,
 			    (uint16_t)~section.alignMask
 			);
@@ -287,7 +287,7 @@ static void placeSection(Section &section) {
 			snprintf(
 			    where,
 			    sizeof(where),
-			    "with align mask %" PRIx16 " and offset %" PRIx16,
+			    "with align mask $%" PRIx16 " and offset $%" PRIx16,
 			    (uint16_t)~section.alignMask,
 			    section.alignOfs
 			);
