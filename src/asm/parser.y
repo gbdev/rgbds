@@ -31,8 +31,8 @@
 	};
 
 	struct StrFmtArgList {
-		std::string *format;
-		std::vector<std::variant<uint32_t, std::string>> *args;
+		std::string format;
+		std::vector<std::variant<uint32_t, std::string>> args;
 	};
 }
 %code {
@@ -74,15 +74,11 @@
 	static void strrpl(
 	    char *dest, size_t destLen, char const *src, char const *old, char const *rep
 	);
-	static void initStrFmtArgList(StrFmtArgList & args);
-	static void freeStrFmtArgList(StrFmtArgList & args);
 	static void strfmt(
 	    char *dest, size_t destLen, char const *spec,
 	    std::vector<std::variant<uint32_t, std::string>> &args
 	);
 	static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue);
-	static void initDsArgList(std::vector<Expression> * &args);
-	static void initPurgeArgList(std::vector<std::string> * &args);
 	static void failAssert(enum AssertionType type);
 	static void failAssertMsg(enum AssertionType type, char const *msg);
 	void yyerror(char const *str);
@@ -261,8 +257,8 @@
 
 %type <AlignmentSpec> align_spec
 
-%type <std::vector<Expression> *> ds_args
-%type <std::vector<std::string> *> purge_args
+%type <std::vector<Expression>> ds_args
+%type <std::vector<std::string>> purge_args
 %type <ForArgs> for_args
 
 %token Z80_ADC "adc" Z80_ADD "add" Z80_AND "and"
@@ -507,7 +503,7 @@ macro:
 
 macroargs:
 	%empty {
-		$$ = new(std::nothrow) MacroArgs();
+		$$ = new (std::nothrow) MacroArgs();
 		if (!$$)
 			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
 	}
@@ -861,7 +857,6 @@ for:
 		lexer_ToggleStringExpansion(false);
 	} ID {
 		lexer_ToggleStringExpansion(true);
-
 	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8)
 			fstk_RunFor(
@@ -966,8 +961,7 @@ ds:
 		sect_Skip($2, true);
 	}
 	| POP_DS uconst COMMA ds_args trailing_comma {
-		sect_RelBytes($2, *$4);
-		delete $4;
+		sect_RelBytes($2, $4);
 	}
 	| POP_DS OP_ALIGN LBRACK align_spec RBRACK trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
@@ -978,19 +972,17 @@ ds:
 	| POP_DS OP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
-		sect_RelBytes(n, *$7);
+		sect_RelBytes(n, $7);
 		sect_AlignPC($4.alignment, $4.alignOfs);
-		delete $7;
 	}
 ;
 
 ds_args:
 	reloc_8bit {
-		initDsArgList($$);
-		$$->push_back($1);
+		$$.push_back($1);
 	}
 	| ds_args COMMA reloc_8bit {
-		$1->push_back($3);
+		$1.push_back($3);
 		$$ = $1;
 	}
 ;
@@ -1080,20 +1072,18 @@ purge:
 	POP_PURGE {
 		lexer_ToggleStringExpansion(false);
 	} purge_args trailing_comma {
-		for (std::string &arg : *$3)
+		for (std::string &arg : $3)
 			sym_Purge(arg);
-		delete $3;
 		lexer_ToggleStringExpansion(true);
 	}
 ;
 
 purge_args:
 	scoped_id {
-		initPurgeArgList($$);
-		$$->push_back($1.symName);
+		$$.push_back($1.symName);
 	}
 	| purge_args COMMA scoped_id {
-		$1->push_back($3.symName);
+		$1.push_back($3.symName);
 		$$ = $1;
 	}
 ;
@@ -1421,7 +1411,6 @@ relocexpr_no_str:
 		lexer_ToggleStringExpansion(false);
 	} LPAREN scoped_anon_id RPAREN {
 		rpn_Number($$, sym_FindScopedValidSymbol($4.symName) != nullptr);
-
 		lexer_ToggleStringExpansion(true);
 	}
 	| OP_ROUND LPAREN const opt_q_arg RPAREN {
@@ -1572,8 +1561,7 @@ string:
 		strrpl($$.string, sizeof($$.string), $3.string, $5.string, $7.string);
 	}
 	| OP_STRFMT LPAREN strfmt_args RPAREN {
-		strfmt($$.string, sizeof($$.string), $3.format->c_str(), *$3.args);
-		freeStrFmtArgList($3);
+		strfmt($$.string, sizeof($$.string), $3.format.c_str(), $3.args);
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3.symName);
@@ -1605,20 +1593,18 @@ strcat_args:
 strfmt_args:
 	string strfmt_va_args {
 		$$ = $2;
-		*$$.format = $1.string;
+		$$.format = $1.string;
 	}
 ;
 
 strfmt_va_args:
-	%empty {
-		initStrFmtArgList($$);
-	}
+	  %empty {}
 	| strfmt_va_args COMMA const_no_str {
-		$1.args->push_back((uint32_t)$3);
+		$1.args.push_back((uint32_t)$3);
 		$$ = $1;
 	}
 	| strfmt_va_args COMMA string {
-		$1.args->push_back($3.string);
+		$1.args.push_back($3.string);
 		$$ = $1;
 	}
 ;
@@ -2667,20 +2653,6 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 	dest[i] = '\0';
 }
 
-static void initStrFmtArgList(StrFmtArgList &args) {
-	args.format = new (std::nothrow) std::string();
-	if (!args.format)
-		fatalerror("Failed to allocate memory for STRFMT format string: %s\n", strerror(errno));
-	args.args = new (std::nothrow) std::vector<std::variant<uint32_t, std::string>>();
-	if (!args.args)
-		fatalerror("Failed to allocate memory for STRFMT arg list: %s\n", strerror(errno));
-}
-
-static void freeStrFmtArgList(StrFmtArgList &args) {
-	delete args.format;
-	delete args.args;
-}
-
 static void strfmt(
     char *dest, size_t destLen, char const *spec,
     std::vector<std::variant<uint32_t, std::string>> &args
@@ -2767,18 +2739,6 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	rpn_BinaryOp(op, newExpr, oldExpr, constExpr);
 	newValue = newExpr.getConstVal();
 	sym_AddVar(symName, newValue);
-}
-
-static void initDsArgList(std::vector<Expression> *&args) {
-	args = new (std::nothrow) std::vector<Expression>();
-	if (!args)
-		fatalerror("Failed to allocate memory for ds arg list: %s\n", strerror(errno));
-}
-
-static void initPurgeArgList(std::vector<std::string> *&args) {
-	args = new (std::nothrow) std::vector<std::string>();
-	if (!args)
-		fatalerror("Failed to allocate memory for purge arg list: %s\n", strerror(errno));
 }
 
 static void failAssert(enum AssertionType type) {
