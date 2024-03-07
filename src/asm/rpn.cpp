@@ -353,7 +353,6 @@ void rpn_BinaryOp(
 	// First, check if the expression is known
 	expr.isKnown = src1.isKnown && src2.isKnown;
 	if (expr.isKnown) {
-
 		// If both expressions are known, just compute the value
 		uint32_t uleft = src1.val, uright = src2.val;
 

@@ -9,9 +9,9 @@
 #include <variant>
 #include <vector>
 
-#include "asm/symbol.hpp" // MAXSYMLEN
-
 #include "platform.hpp" // SSIZE_MAX
+
+#include "asm/symbol.hpp" // MAXSYMLEN
 
 #define MAXSTRLEN 255
 

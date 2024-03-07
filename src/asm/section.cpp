@@ -249,7 +249,9 @@ static void mergeSections(
 	unsigned int nbSectErrors = 0;
 
 	if (type != sect.type)
-		sectError("Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str());
+		sectError(
+		    "Section already exists but with type %s\n", sectionTypeInfo[sect.type].name.c_str()
+		);
 
 	if (sect.modifier != mod) {
 		sectError("Section already declared as %s section\n", sectionModNames[sect.modifier]);
