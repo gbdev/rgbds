@@ -94,9 +94,6 @@
 		} while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
-// FIXME: get rid of this limitation
-#define MAXSYMLEN 255
-
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
 #define T_(name) (int)yy::parser::token::name
 
@@ -563,11 +560,6 @@ static uint32_t readBracketedMacroArgNum() {
 		for (; continuesIdentifier(c); c = peek()) {
 			symName += c;
 			shiftChar();
-		}
-
-		if (symName.length() > MAXSYMLEN) {
-			warning(WARNING_LONG_STR, "Bracketed symbol name too long, got truncated\n");
-			symName.resize(MAXSYMLEN);
 		}
 
 		Symbol const *sym = sym_FindScopedValidSymbol(symName.c_str());
@@ -1130,20 +1122,15 @@ static bool continuesIdentifier(int c) {
 
 static Token readIdentifier(char firstChar) {
 	// Lex while checking for a keyword
-	std::string yylval(1, firstChar);
+	std::string identifier(1, firstChar);
 	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
 
 	// Continue reading while the char is in the symbol charset
 	for (int c = peek(); continuesIdentifier(c); c = peek()) {
 		shiftChar();
 
-		if (yylval.length() == MAXSYMLEN) {
-			warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
-			break;
-		}
-
 		// Write the char to the identifier's name
-		yylval += c;
+		identifier += c;
 
 		// If the char was a dot, mark the identifier as local
 		if (c == '.')
@@ -1151,8 +1138,8 @@ static Token readIdentifier(char firstChar) {
 	}
 
 	// Attempt to check for a keyword
-	auto search = keywordDict.find(yylval.c_str());
-	return search != keywordDict.end() ? Token(search->second) : Token(tokenType, yylval);
+	auto search = keywordDict.find(identifier.c_str());
+	return search != keywordDict.end() ? Token(search->second) : Token(tokenType, identifier);
 }
 
 // Functions to read strings
@@ -1188,10 +1175,6 @@ static char const *readInterpolation(size_t depth) {
 			break;
 		} else if (c == ':' && !fmt.isFinished()) { // Format spec, only once
 			shiftChar();
-			if (fmtBuf.length() > MAXSTRLEN) {
-				warning(WARNING_LONG_STR, "Format spec too long, got truncated\n");
-				fmtBuf.resize(MAXSTRLEN);
-			}
 			for (char f : fmtBuf)
 				fmt.useCharacter(f);
 			fmt.finishCharacters();
@@ -1202,11 +1185,6 @@ static char const *readInterpolation(size_t depth) {
 			shiftChar();
 			fmtBuf += c;
 		}
-	}
-
-	if (fmtBuf.length() > MAXSYMLEN) {
-		warning(WARNING_LONG_STR, "Interpolated symbol name too long, got truncated\n");
-		fmtBuf.resize(MAXSYMLEN);
 	}
 
 	// Don't return before `lexerState->disableInterpolation` is reset!
