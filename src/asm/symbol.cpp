@@ -583,21 +583,12 @@ void sym_Init(time_t now) {
 
 	sym_AddVar("_RS", 0)->isBuiltin = true;
 
-#define addSym(fn, name, val) \
-	do { \
-		Symbol *sym = fn(name, val); \
-		assert(sym); \
-		sym->isBuiltin = true; \
-	} while (0)
-#define addNumber(name, val) addSym(sym_AddEqu, name, val)
-#define addString(name, val) addSym(sym_AddString, name, val)
-
-	addString("__RGBDS_VERSION__", get_package_version_string());
-	addNumber("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR);
-	addNumber("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR);
-	addNumber("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH);
+	sym_AddString("__RGBDS_VERSION__", get_package_version_string())->isBuiltin = true;
+	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;
+	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR)->isBuiltin = true;
+	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH)->isBuiltin = true;
 #ifdef PACKAGE_VERSION_RC
-	addNumber("__RGBDS_RC__", PACKAGE_VERSION_RC);
+	sym_AddEqu("__RGBDS_RC__", PACKAGE_VERSION_RC)->isBuiltin = true;
 #endif
 
 	if (now == (time_t)-1) {
@@ -626,21 +617,17 @@ void sym_Init(time_t now) {
 	    time_utc
 	);
 
-	addString("__TIME__", savedTIME);
-	addString("__DATE__", savedDATE);
-	addString("__ISO_8601_LOCAL__", savedTIMESTAMP_ISO8601_LOCAL);
-	addString("__ISO_8601_UTC__", savedTIMESTAMP_ISO8601_UTC);
+	sym_AddString("__TIME__", savedTIME)->isBuiltin = true;
+	sym_AddString("__DATE__", savedDATE)->isBuiltin = true;
+	sym_AddString("__ISO_8601_LOCAL__", savedTIMESTAMP_ISO8601_LOCAL)->isBuiltin = true;
+	sym_AddString("__ISO_8601_UTC__", savedTIMESTAMP_ISO8601_UTC)->isBuiltin = true;
 
-	addNumber("__UTC_YEAR__", time_utc->tm_year + 1900);
-	addNumber("__UTC_MONTH__", time_utc->tm_mon + 1);
-	addNumber("__UTC_DAY__", time_utc->tm_mday);
-	addNumber("__UTC_HOUR__", time_utc->tm_hour);
-	addNumber("__UTC_MINUTE__", time_utc->tm_min);
-	addNumber("__UTC_SECOND__", time_utc->tm_sec);
-
-#undef addNumber
-#undef addString
-#undef addSym
+	sym_AddEqu("__UTC_YEAR__", time_utc->tm_year + 1900)->isBuiltin = true;
+	sym_AddEqu("__UTC_MONTH__", time_utc->tm_mon + 1)->isBuiltin = true;
+	sym_AddEqu("__UTC_DAY__", time_utc->tm_mday)->isBuiltin = true;
+	sym_AddEqu("__UTC_HOUR__", time_utc->tm_hour)->isBuiltin = true;
+	sym_AddEqu("__UTC_MINUTE__", time_utc->tm_min)->isBuiltin = true;
+	sym_AddEqu("__UTC_SECOND__", time_utc->tm_sec)->isBuiltin = true;
 
 	labelScope = std::nullopt;
 	anonLabelID = 0;

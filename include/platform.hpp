@@ -19,7 +19,7 @@
 #ifdef _MSC_VER
 	#define S_IFMT        _S_IFMT
 	#define S_IFDIR       _S_IFDIR
-	#define S_ISDIR(mode) (((mode)&S_IFMT) == S_IFDIR)
+	#define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 
 // gcc has __PRETTY_FUNCTION__, MSVC has __FUNCSIG__, __func__ is standard
@@ -49,7 +49,7 @@
 #ifdef _MSC_VER
 	#include <fcntl.h>
 	#define O_RDWR         _O_RDWR
-	#define S_ISREG(field) ((field)&_S_IFREG)
+	#define S_ISREG(field) ((field) & _S_IFREG)
 	#define O_BINARY       _O_BINARY
 	#define O_TEXT         _O_TEXT
 #elif !defined(O_BINARY) // Cross-compilers define O_BINARY

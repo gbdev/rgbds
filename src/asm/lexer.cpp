@@ -50,48 +50,49 @@
 	#include <memoryapi.h> // MapViewOfFile
 	#include <handleapi.h> // CloseHandle
     // clang-format on
+
 	#define MAP_FAILED nullptr
-	#define mapFile(ptr, fd, path, size) \
-		do { \
-			(ptr) = MAP_FAILED; \
-			HANDLE file = CreateFileA( \
-			    path, \
-			    GENERIC_READ, \
-			    FILE_SHARE_READ, \
-			    nullptr, \
-			    OPEN_EXISTING, \
-			    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS, \
-			    nullptr \
-			); \
-			HANDLE mappingObj; \
-			if (file == INVALID_HANDLE_VALUE) \
-				break; \
-			mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr); \
-			if (mappingObj != INVALID_HANDLE_VALUE) \
-				(ptr) = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0); \
-			CloseHandle(mappingObj); \
-			CloseHandle(file); \
-		} while (0)
-	#define munmap(ptr, size) UnmapViewOfFile((ptr))
+
+static void mapFile(void *&mappingAddr, int fd, char const *path, size_t) {
+	mappingAddr = MAP_FAILED;
+	HANDLE file = CreateFileA(
+	    path,
+	    GENERIC_READ,
+	    FILE_SHARE_READ,
+	    nullptr,
+	    OPEN_EXISTING,
+	    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS,
+	    nullptr
+	);
+	HANDLE mappingObj;
+	if (file == INVALID_HANDLE_VALUE)
+		return;
+	mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+	if (mappingObj != INVALID_HANDLE_VALUE)
+		mappingAddr = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0);
+	CloseHandle(mappingObj);
+	CloseHandle(file);
+}
+
+static int munmap(void *mappingAddr, size_t) {
+	return UnmapViewOfFile(mappingAddr) == 0 ? -1 : 0;
+}
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
-
 	#include <sys/mman.h>
-	#define mapFile(ptr, fd, path, size) \
-		do { \
-			(ptr) = mmap(nullptr, (size), PROT_READ, MAP_PRIVATE, (fd), 0); \
-			if ((ptr) == MAP_FAILED && errno == ENOTSUP) { \
-				/* \
-				 * The implementation may not support MAP_PRIVATE; try again with MAP_SHARED \
-				 * instead, offering, I believe, weaker guarantees about external modifications to \
-				 * the file while reading it. That's still better than not opening it at all, \
-				 * though \
-				 */ \
-				if (verbose) \
-					printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path); \
-				(ptr) = mmap(nullptr, (size), PROT_READ, MAP_SHARED, (fd), 0); \
-			} \
-		} while (0)
+
+static void mapFile(void *&mappingAddr, int fd, char const *path, size_t size) {
+	mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (mappingAddr == MAP_FAILED && errno == ENOTSUP) {
+		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
+		// instead, offering, I believe, weaker guarantees about external modifications to
+		// the file while reading it. That's still better than not opening it at all, though.
+		if (verbose)
+			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path);
+		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
+	}
+}
+
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility

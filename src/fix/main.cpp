@@ -1218,36 +1218,38 @@ finish:
 	return nbErrors;
 }
 
+static void parseByte(uint16_t &output, char name) {
+	if (musl_optarg[0] == 0) {
+		report("error: Argument to option '%c' may not be empty\n", name);
+	} else {
+		char *endptr;
+		unsigned long value;
+
+		if (musl_optarg[0] == '$') {
+			value = strtoul(&musl_optarg[1], &endptr, 16);
+		} else {
+			value = strtoul(musl_optarg, &endptr, 0);
+		}
+		if (*endptr) {
+			report(
+			    "error: Expected number as argument to option '%c', got %s\n",
+			    name,
+			    musl_optarg
+			);
+		} else if (value > 0xFF) {
+			report("error: Argument to option '%c' is larger than 255: %lu\n", name, value);
+		} else {
+			output = value;
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
 	nbErrors = 0;
 
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
 		switch (ch) {
 			size_t len;
-#define parseByte(output, name) \
-	do { \
-		char *endptr; \
-		unsigned long tmp; \
-\
-		if (musl_optarg[0] == 0) { \
-			report("error: Argument to option '" name "' may not be empty\n"); \
-		} else { \
-			if (musl_optarg[0] == '$') { \
-				tmp = strtoul(&musl_optarg[1], &endptr, 16); \
-			} else { \
-				tmp = strtoul(musl_optarg, &endptr, 0); \
-			} \
-			if (*endptr) \
-				report( \
-				    "error: Expected number as argument to option '" name "', got %s\n", \
-				    musl_optarg \
-				); \
-			else if (tmp > 0xFF) \
-				report("error: Argument to option '" name "' is larger than 255: %lu\n", tmp); \
-			else \
-				output = tmp; \
-		} \
-	} while (0)
 
 		case 'C':
 		case 'c':
@@ -1334,7 +1336,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'l':
-			parseByte(oldLicensee, "l");
+			parseByte(oldLicensee, 'l');
 			break;
 
 		case 'm':
@@ -1360,7 +1362,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'n':
-			parseByte(romVersion, "n");
+			parseByte(romVersion, 'n');
 			break;
 
 		case 'O':
@@ -1368,11 +1370,11 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'p':
-			parseByte(padValue, "p");
+			parseByte(padValue, 'p');
 			break;
 
 		case 'r':
-			parseByte(ramSize, "r");
+			parseByte(ramSize, 'r');
 			break;
 
 		case 's':
@@ -1405,7 +1407,6 @@ int main(int argc, char *argv[]) {
 			printUsage();
 			exit(1);
 		}
-#undef parseByte
 	}
 
 	if ((cartridgeType & 0xFF00) == TPP1 && !japanese)

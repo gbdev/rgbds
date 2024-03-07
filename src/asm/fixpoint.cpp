@@ -15,13 +15,6 @@
 	#define M_PI 3.14159265358979323846
 #endif
 
-#define fix2double(i, q) ((double)((i) / pow(2.0, q)))
-#define double2fix(d, q) ((int32_t)round((d)*pow(2.0, q)))
-
-// 2*pi radians == 1 turn
-#define turn2rad(f) ((f) * (M_PI * 2))
-#define rad2turn(r) ((r) / (M_PI * 2))
-
 uint8_t fixPrecision;
 
 uint8_t fix_Precision() {
@@ -30,6 +23,22 @@ uint8_t fix_Precision() {
 
 double fix_PrecisionFactor() {
 	return pow(2.0, fixPrecision);
+}
+
+static double fix2double(int32_t i, int32_t q) {
+	return i / pow(2.0, q);
+}
+
+static int32_t double2fix(double d, int32_t q) {
+	return (int32_t)round(d * pow(2.0, q));
+}
+
+static double turn2rad(double t) {
+	return t * (M_PI * 2);
+}
+
+static double rad2turn(double r) {
+	return r / (M_PI * 2);
 }
 
 int32_t fix_Sin(int32_t i, int32_t q) {

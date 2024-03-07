@@ -35,9 +35,9 @@ static void pushRPN(int32_t value, bool comesFromError) {
 // has popped any values with the error flag set.
 static bool isError = false;
 
-static int32_t popRPN(FileStackNode const *node, uint32_t lineNo) {
+static int32_t popRPN(Patch const &patch) {
 	if (rpnStack.empty())
-		fatal(node, lineNo, "Internal error, RPN stack empty");
+		fatal(patch.src, patch.lineNo, "Internal error, RPN stack empty");
 
 	RPNStackEntry entry = rpnStack.front();
 
@@ -48,11 +48,9 @@ static int32_t popRPN(FileStackNode const *node, uint32_t lineNo) {
 
 // RPN operators
 
-static uint32_t getRPNByte(
-    uint8_t const *&expression, int32_t &size, FileStackNode const *node, uint32_t lineNo
-) {
+static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch const &patch) {
 	if (!size--)
-		fatal(node, lineNo, "Internal error, RPN expression overread");
+		fatal(patch.src, patch.lineNo, "Internal error, RPN expression overread");
 
 	return *expression++;
 }
@@ -77,8 +75,6 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
  *                 errors caused by the value should be suppressed.
  */
 static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fileSymbols) {
-// Small shortcut to avoid a lot of repetition
-#define popRPN() popRPN(patch.src, patch.lineNo)
 
 	uint8_t const *expression = patch.rpnExpression.data();
 	int32_t size = (int32_t)patch.rpnExpression.size();
@@ -87,7 +83,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 	while (size > 0) {
 		enum RPNCommand command =
-		    (enum RPNCommand)getRPNByte(expression, size, patch.src, patch.lineNo);
+		    (enum RPNCommand)getRPNByte(expression, size, patch);
 		int32_t value;
 
 		isError = false;
@@ -102,120 +98,120 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			Section const *sect;
 
 		case RPN_ADD:
-			value = popRPN() + popRPN();
+			value = popRPN(patch) + popRPN(patch);
 			break;
 		case RPN_SUB:
-			value = popRPN();
-			value = popRPN() - value;
+			value = popRPN(patch);
+			value = popRPN(patch) - value;
 			break;
 		case RPN_MUL:
-			value = popRPN() * popRPN();
+			value = popRPN(patch) * popRPN(patch);
 			break;
 		case RPN_DIV:
-			value = popRPN();
+			value = popRPN(patch);
 			if (value == 0) {
 				if (!isError)
 					error(patch.src, patch.lineNo, "Division by 0");
 				isError = true;
-				popRPN();
+				popRPN(patch);
 				value = INT32_MAX;
 			} else {
-				value = op_divide(popRPN(), value);
+				value = op_divide(popRPN(patch), value);
 			}
 			break;
 		case RPN_MOD:
-			value = popRPN();
+			value = popRPN(patch);
 			if (value == 0) {
 				if (!isError)
 					error(patch.src, patch.lineNo, "Modulo by 0");
 				isError = true;
-				popRPN();
+				popRPN(patch);
 				value = 0;
 			} else {
-				value = op_modulo(popRPN(), value);
+				value = op_modulo(popRPN(patch), value);
 			}
 			break;
 		case RPN_NEG:
-			value = -popRPN();
+			value = -popRPN(patch);
 			break;
 		case RPN_EXP:
-			value = popRPN();
+			value = popRPN(patch);
 			if (value < 0) {
 				if (!isError)
 					error(patch.src, patch.lineNo, "Exponent by negative");
 				isError = true;
-				popRPN();
+				popRPN(patch);
 				value = 0;
 			} else {
-				value = op_exponent(popRPN(), value);
+				value = op_exponent(popRPN(patch), value);
 			}
 			break;
 
 		case RPN_OR:
-			value = popRPN() | popRPN();
+			value = popRPN(patch) | popRPN(patch);
 			break;
 		case RPN_AND:
-			value = popRPN() & popRPN();
+			value = popRPN(patch) & popRPN(patch);
 			break;
 		case RPN_XOR:
-			value = popRPN() ^ popRPN();
+			value = popRPN(patch) ^ popRPN(patch);
 			break;
 		case RPN_NOT:
-			value = ~popRPN();
+			value = ~popRPN(patch);
 			break;
 
 		case RPN_LOGAND:
-			value = popRPN();
-			value = popRPN() && value;
+			value = popRPN(patch);
+			value = popRPN(patch) && value;
 			break;
 		case RPN_LOGOR:
-			value = popRPN();
-			value = popRPN() || value;
+			value = popRPN(patch);
+			value = popRPN(patch) || value;
 			break;
 		case RPN_LOGNOT:
-			value = !popRPN();
+			value = !popRPN(patch);
 			break;
 
 		case RPN_LOGEQ:
-			value = popRPN() == popRPN();
+			value = popRPN(patch) == popRPN(patch);
 			break;
 		case RPN_LOGNE:
-			value = popRPN() != popRPN();
+			value = popRPN(patch) != popRPN(patch);
 			break;
 		case RPN_LOGGT:
-			value = popRPN();
-			value = popRPN() > value;
+			value = popRPN(patch);
+			value = popRPN(patch) > value;
 			break;
 		case RPN_LOGLT:
-			value = popRPN();
-			value = popRPN() < value;
+			value = popRPN(patch);
+			value = popRPN(patch) < value;
 			break;
 		case RPN_LOGGE:
-			value = popRPN();
-			value = popRPN() >= value;
+			value = popRPN(patch);
+			value = popRPN(patch) >= value;
 			break;
 		case RPN_LOGLE:
-			value = popRPN();
-			value = popRPN() <= value;
+			value = popRPN(patch);
+			value = popRPN(patch) <= value;
 			break;
 
 		case RPN_SHL:
-			value = popRPN();
-			value = op_shift_left(popRPN(), value);
+			value = popRPN(patch);
+			value = op_shift_left(popRPN(patch), value);
 			break;
 		case RPN_SHR:
-			value = popRPN();
-			value = op_shift_right(popRPN(), value);
+			value = popRPN(patch);
+			value = op_shift_right(popRPN(patch), value);
 			break;
 		case RPN_USHR:
-			value = popRPN();
-			value = op_shift_right_unsigned(popRPN(), value);
+			value = popRPN(patch);
+			value = op_shift_right_unsigned(popRPN(patch), value);
 			break;
 
 		case RPN_BANK_SYM:
 			value = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)
-				value |= getRPNByte(expression, size, patch.src, patch.lineNo) << shift;
+				value |= getRPNByte(expression, size, patch) << shift;
 			symbol = getSymbol(fileSymbols, value);
 
 			if (!symbol) {
@@ -245,7 +241,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
 			name = (char const *)expression;
-			while (getRPNByte(expression, size, patch.src, patch.lineNo))
+			while (getRPNByte(expression, size, patch))
 				;
 
 			sect = sect_GetSection(name);
@@ -277,7 +273,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_SIZEOF_SECT:
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			name = (char const *)expression;
-			while (getRPNByte(expression, size, patch.src, patch.lineNo))
+			while (getRPNByte(expression, size, patch))
 				;
 
 			sect = sect_GetSection(name);
@@ -299,7 +295,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_STARTOF_SECT:
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			name = (char const *)expression;
-			while (getRPNByte(expression, size, patch.src, patch.lineNo))
+			while (getRPNByte(expression, size, patch))
 				;
 
 			sect = sect_GetSection(name);
@@ -320,7 +316,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 
 		case RPN_SIZEOF_SECTTYPE:
-			value = getRPNByte(expression, size, patch.src, patch.lineNo);
+			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
 				error(patch.src, patch.lineNo, "Requested SIZEOF() an invalid section type");
 				isError = true;
@@ -331,7 +327,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 
 		case RPN_STARTOF_SECTTYPE:
-			value = getRPNByte(expression, size, patch.src, patch.lineNo);
+			value = getRPNByte(expression, size, patch);
 			if (value < 0 || value >= SECTTYPE_INVALID) {
 				error(patch.src, patch.lineNo, "Requested STARTOF() an invalid section type");
 				isError = true;
@@ -342,7 +338,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 
 		case RPN_HRAM:
-			value = popRPN();
+			value = popRPN(patch);
 			if (!isError && (value < 0 || (value > 0xFF && value < 0xFF00) || value > 0xFFFF)) {
 				error(patch.src, patch.lineNo, "Value %" PRId32 " is not in HRAM range", value);
 				isError = true;
@@ -351,7 +347,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 
 		case RPN_RST:
-			value = popRPN();
+			value = popRPN(patch);
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			// They can be easily checked with a bitmask
 			if (value & ~0x38) {
@@ -365,13 +361,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_CONST:
 			value = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)
-				value |= getRPNByte(expression, size, patch.src, patch.lineNo) << shift;
+				value |= getRPNByte(expression, size, patch) << shift;
 			break;
 
 		case RPN_SYM:
 			value = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)
-				value |= getRPNByte(expression, size, patch.src, patch.lineNo) << shift;
+				value |= getRPNByte(expression, size, patch) << shift;
 
 			if (value == -1) { // PC
 				if (!patch.pcSection) {
@@ -414,9 +410,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		error(patch.src, patch.lineNo, "RPN stack has %zu entries on exit, not 1", rpnStack.size());
 
 	isError = false;
-	return popRPN();
-
-#undef popRPN
+	return popRPN(patch);
 }
 
 void patch_CheckAssertions(std::deque<Assertion> &assertions) {
