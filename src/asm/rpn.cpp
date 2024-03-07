@@ -26,7 +26,7 @@
 // Init a RPN expression
 static void initExpression(Expression &expr) {
 	expr.val = 0;
-	expr.reason = nullptr;
+	expr.reason.clear();
 	expr.isKnown = true;
 	expr.isSymbol = false;
 	expr.rpn = nullptr;
@@ -37,10 +37,8 @@ static void initExpression(Expression &expr) {
 template<typename... Ts>
 static void makeUnknown(Expression &expr, Ts... parts) {
 	expr.isKnown = false;
-	expr.reason = new std::string();
-	if (!expr.reason)
-		fatalerror("Failed to allocate RPN error string: %s\n", strerror(errno));
-	(expr.reason->append(parts), ...);
+	expr.reason.clear();
+	(expr.reason.append(parts), ...);
 }
 
 static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
@@ -59,7 +57,6 @@ static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
 // Free the RPN expression
 void rpn_Free(Expression &expr) {
 	delete expr.rpn;
-	delete expr.reason;
 	initExpression(expr);
 }
 
@@ -270,7 +267,7 @@ void rpn_CheckNBit(Expression const &expr, uint8_t n) {
 
 int32_t Expression::getConstVal() const {
 	if (!isKnown) {
-		error("Expected constant expression: %s\n", reason->c_str());
+		error("Expected constant expression: %s\n", reason.c_str());
 		return 0;
 	}
 	return val;
@@ -526,13 +523,11 @@ void rpn_BinaryOp(
 
 			// Use the other expression's un-const reason
 			expr.reason = src2.reason;
-			delete src1.reason;
 		} else {
 			// Otherwise just reuse its RPN buffer
 			expr.rpnPatchSize = src1.rpnPatchSize;
 			expr.rpn = src1.rpn;
 			expr.reason = src1.reason;
-			delete src2.reason;
 		}
 
 		// Now, merge the right expression into the left one
