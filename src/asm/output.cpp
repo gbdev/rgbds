@@ -43,18 +43,20 @@ static std::deque<Assertion> assertions;
 static std::deque<FileStackNode *> fileStackNodes;
 
 // Write a long to a file (little-endian)
-static void putlong(uint32_t i, FILE *f) {
-	putc(i, f);
-	putc(i >> 8, f);
-	putc(i >> 16, f);
-	putc(i >> 24, f);
+static void putlong(uint32_t n, FILE *f) {
+	uint8_t bytes[] = {
+	    (uint8_t)n,
+	    (uint8_t)(n >> 8),
+	    (uint8_t)(n >> 16),
+	    (uint8_t)(n >> 24),
+	};
+	fwrite(bytes, 1, sizeof(bytes), f);
 }
 
 // Write a NUL-terminated string to a file
 static void putstring(std::string const &s, FILE *f) {
-	for (char c : s)
-		putc(c, f);
-	putc(0, f);
+	fputs(s.c_str(), f);
+	putc('\0', f);
 }
 
 void out_RegisterNode(FileStackNode *node) {
