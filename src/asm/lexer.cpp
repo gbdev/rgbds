@@ -94,6 +94,20 @@
 		} while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
+// Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
+#define T_(name) (int)yy::parser::token::name
+
+struct Token {
+	int type;
+	std::variant<std::monostate, uint32_t, String, SymName> value;
+
+	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
+	Token(int type_) : type(type_), value(std::monostate{}) {}
+	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
+	Token(int type_, String &value_) : type(type_), value(value_) {}
+	Token(int type_, SymName &value_) : type(type_), value(value_) {}
+};
+
 struct CaseInsensitive {
 	// FNV-1a hash of an uppercased string
 	size_t operator()(std::string const &str) const {
@@ -118,195 +132,193 @@ struct CaseInsensitive {
 // Tokens / keywords not handled here are handled in `yylex_NORMAL`'s switch.
 // This assumes that no two keywords have the same name.
 static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> keywordDict = {
-    {"ADC",           T_Z80_ADC          },
-    {"ADD",           T_Z80_ADD          },
-    {"AND",           T_Z80_AND          },
-    {"BIT",           T_Z80_BIT          },
-    {"CALL",          T_Z80_CALL         },
-    {"CCF",           T_Z80_CCF          },
-    {"CPL",           T_Z80_CPL          },
-    {"CP",            T_Z80_CP           },
-    {"DAA",           T_Z80_DAA          },
-    {"DEC",           T_Z80_DEC          },
-    {"DI",            T_Z80_DI           },
-    {"EI",            T_Z80_EI           },
-    {"HALT",          T_Z80_HALT         },
-    {"INC",           T_Z80_INC          },
-    {"JP",            T_Z80_JP           },
-    {"JR",            T_Z80_JR           },
-    {"LD",            T_Z80_LD           },
-    {"LDI",           T_Z80_LDI          },
-    {"LDD",           T_Z80_LDD          },
-    {"LDIO",          T_Z80_LDH          },
-    {"LDH",           T_Z80_LDH          },
-    {"NOP",           T_Z80_NOP          },
-    {"OR",            T_Z80_OR           },
-    {"POP",           T_Z80_POP          },
-    {"PUSH",          T_Z80_PUSH         },
-    {"RES",           T_Z80_RES          },
-    {"RETI",          T_Z80_RETI         },
-    {"RET",           T_Z80_RET          },
-    {"RLCA",          T_Z80_RLCA         },
-    {"RLC",           T_Z80_RLC          },
-    {"RLA",           T_Z80_RLA          },
-    {"RL",            T_Z80_RL           },
-    {"RRC",           T_Z80_RRC          },
-    {"RRCA",          T_Z80_RRCA         },
-    {"RRA",           T_Z80_RRA          },
-    {"RR",            T_Z80_RR           },
-    {"RST",           T_Z80_RST          },
-    {"SBC",           T_Z80_SBC          },
-    {"SCF",           T_Z80_SCF          },
-    {"SET",           T_Z80_SET          },
-    {"SLA",           T_Z80_SLA          },
-    {"SRA",           T_Z80_SRA          },
-    {"SRL",           T_Z80_SRL          },
-    {"STOP",          T_Z80_STOP         },
-    {"SUB",           T_Z80_SUB          },
-    {"SWAP",          T_Z80_SWAP         },
-    {"XOR",           T_Z80_XOR          },
+    {"ADC",           T_(Z80_ADC)          },
+    {"ADD",           T_(Z80_ADD)          },
+    {"AND",           T_(Z80_AND)          },
+    {"BIT",           T_(Z80_BIT)          },
+    {"CALL",          T_(Z80_CALL)         },
+    {"CCF",           T_(Z80_CCF)          },
+    {"CPL",           T_(Z80_CPL)          },
+    {"CP",            T_(Z80_CP)           },
+    {"DAA",           T_(Z80_DAA)          },
+    {"DEC",           T_(Z80_DEC)          },
+    {"DI",            T_(Z80_DI)           },
+    {"EI",            T_(Z80_EI)           },
+    {"HALT",          T_(Z80_HALT)         },
+    {"INC",           T_(Z80_INC)          },
+    {"JP",            T_(Z80_JP)           },
+    {"JR",            T_(Z80_JR)           },
+    {"LD",            T_(Z80_LD)           },
+    {"LDI",           T_(Z80_LDI)          },
+    {"LDD",           T_(Z80_LDD)          },
+    {"LDIO",          T_(Z80_LDH)          },
+    {"LDH",           T_(Z80_LDH)          },
+    {"NOP",           T_(Z80_NOP)          },
+    {"OR",            T_(Z80_OR)           },
+    {"POP",           T_(Z80_POP)          },
+    {"PUSH",          T_(Z80_PUSH)         },
+    {"RES",           T_(Z80_RES)          },
+    {"RETI",          T_(Z80_RETI)         },
+    {"RET",           T_(Z80_RET)          },
+    {"RLCA",          T_(Z80_RLCA)         },
+    {"RLC",           T_(Z80_RLC)          },
+    {"RLA",           T_(Z80_RLA)          },
+    {"RL",            T_(Z80_RL)           },
+    {"RRC",           T_(Z80_RRC)          },
+    {"RRCA",          T_(Z80_RRCA)         },
+    {"RRA",           T_(Z80_RRA)          },
+    {"RR",            T_(Z80_RR)           },
+    {"RST",           T_(Z80_RST)          },
+    {"SBC",           T_(Z80_SBC)          },
+    {"SCF",           T_(Z80_SCF)          },
+    {"SET",           T_(Z80_SET)          },
+    {"SLA",           T_(Z80_SLA)          },
+    {"SRA",           T_(Z80_SRA)          },
+    {"SRL",           T_(Z80_SRL)          },
+    {"STOP",          T_(Z80_STOP)         },
+    {"SUB",           T_(Z80_SUB)          },
+    {"SWAP",          T_(Z80_SWAP)         },
+    {"XOR",           T_(Z80_XOR)          },
 
-    {"NZ",            T_CC_NZ            },
-    {"Z",             T_CC_Z             },
-    {"NC",            T_CC_NC            },
- // Handled after as T_TOKEN_C
-  // { "C", T_CC_C },
+    {"NZ",            T_(CC_NZ)            },
+    {"Z",             T_(CC_Z)             },
+    {"NC",            T_(CC_NC)            },
+ // There is no `T_(CC_C)`; it's handled before as `T_(TOKEN_C)`
 
-    {"AF",            T_MODE_AF          },
-    {"BC",            T_MODE_BC          },
-    {"DE",            T_MODE_DE          },
-    {"HL",            T_MODE_HL          },
-    {"SP",            T_MODE_SP          },
-    {"HLD",           T_MODE_HL_DEC      },
-    {"HLI",           T_MODE_HL_INC      },
+    {"AF",            T_(MODE_AF)          },
+    {"BC",            T_(MODE_BC)          },
+    {"DE",            T_(MODE_DE)          },
+    {"HL",            T_(MODE_HL)          },
+    {"SP",            T_(MODE_SP)          },
+    {"HLD",           T_(MODE_HL_DEC)      },
+    {"HLI",           T_(MODE_HL_INC)      },
 
-    {"A",             T_TOKEN_A          },
-    {"B",             T_TOKEN_B          },
-    {"C",             T_TOKEN_C          },
-    {"D",             T_TOKEN_D          },
-    {"E",             T_TOKEN_E          },
-    {"H",             T_TOKEN_H          },
-    {"L",             T_TOKEN_L          },
+    {"A",             T_(TOKEN_A)          },
+    {"B",             T_(TOKEN_B)          },
+    {"C",             T_(TOKEN_C)          },
+    {"D",             T_(TOKEN_D)          },
+    {"E",             T_(TOKEN_E)          },
+    {"H",             T_(TOKEN_H)          },
+    {"L",             T_(TOKEN_L)          },
 
-    {"DEF",           T_OP_DEF           },
+    {"DEF",           T_(OP_DEF)           },
 
-    {"FRAGMENT",      T_POP_FRAGMENT     },
-    {"BANK",          T_OP_BANK          },
-    {"ALIGN",         T_OP_ALIGN         },
+    {"FRAGMENT",      T_(POP_FRAGMENT)     },
+    {"BANK",          T_(OP_BANK)          },
+    {"ALIGN",         T_(OP_ALIGN)         },
 
-    {"SIZEOF",        T_OP_SIZEOF        },
-    {"STARTOF",       T_OP_STARTOF       },
+    {"SIZEOF",        T_(OP_SIZEOF)        },
+    {"STARTOF",       T_(OP_STARTOF)       },
 
-    {"ROUND",         T_OP_ROUND         },
-    {"CEIL",          T_OP_CEIL          },
-    {"FLOOR",         T_OP_FLOOR         },
-    {"DIV",           T_OP_FDIV          },
-    {"MUL",           T_OP_FMUL          },
-    {"FMOD",          T_OP_FMOD          },
-    {"POW",           T_OP_POW           },
-    {"LOG",           T_OP_LOG           },
-    {"SIN",           T_OP_SIN           },
-    {"COS",           T_OP_COS           },
-    {"TAN",           T_OP_TAN           },
-    {"ASIN",          T_OP_ASIN          },
-    {"ACOS",          T_OP_ACOS          },
-    {"ATAN",          T_OP_ATAN          },
-    {"ATAN2",         T_OP_ATAN2         },
+    {"ROUND",         T_(OP_ROUND)         },
+    {"CEIL",          T_(OP_CEIL)          },
+    {"FLOOR",         T_(OP_FLOOR)         },
+    {"DIV",           T_(OP_FDIV)          },
+    {"MUL",           T_(OP_FMUL)          },
+    {"FMOD",          T_(OP_FMOD)          },
+    {"POW",           T_(OP_POW)           },
+    {"LOG",           T_(OP_LOG)           },
+    {"SIN",           T_(OP_SIN)           },
+    {"COS",           T_(OP_COS)           },
+    {"TAN",           T_(OP_TAN)           },
+    {"ASIN",          T_(OP_ASIN)          },
+    {"ACOS",          T_(OP_ACOS)          },
+    {"ATAN",          T_(OP_ATAN)          },
+    {"ATAN2",         T_(OP_ATAN2)         },
 
-    {"HIGH",          T_OP_HIGH          },
-    {"LOW",           T_OP_LOW           },
-    {"ISCONST",       T_OP_ISCONST       },
+    {"HIGH",          T_(OP_HIGH)          },
+    {"LOW",           T_(OP_LOW)           },
+    {"ISCONST",       T_(OP_ISCONST)       },
 
-    {"STRCMP",        T_OP_STRCMP        },
-    {"STRIN",         T_OP_STRIN         },
-    {"STRRIN",        T_OP_STRRIN        },
-    {"STRSUB",        T_OP_STRSUB        },
-    {"STRLEN",        T_OP_STRLEN        },
-    {"STRCAT",        T_OP_STRCAT        },
-    {"STRUPR",        T_OP_STRUPR        },
-    {"STRLWR",        T_OP_STRLWR        },
-    {"STRRPL",        T_OP_STRRPL        },
-    {"STRFMT",        T_OP_STRFMT        },
+    {"STRCMP",        T_(OP_STRCMP)        },
+    {"STRIN",         T_(OP_STRIN)         },
+    {"STRRIN",        T_(OP_STRRIN)        },
+    {"STRSUB",        T_(OP_STRSUB)        },
+    {"STRLEN",        T_(OP_STRLEN)        },
+    {"STRCAT",        T_(OP_STRCAT)        },
+    {"STRUPR",        T_(OP_STRUPR)        },
+    {"STRLWR",        T_(OP_STRLWR)        },
+    {"STRRPL",        T_(OP_STRRPL)        },
+    {"STRFMT",        T_(OP_STRFMT)        },
 
-    {"CHARLEN",       T_OP_CHARLEN       },
-    {"CHARSUB",       T_OP_CHARSUB       },
-    {"INCHARMAP",     T_OP_INCHARMAP     },
+    {"CHARLEN",       T_(OP_CHARLEN)       },
+    {"CHARSUB",       T_(OP_CHARSUB)       },
+    {"INCHARMAP",     T_(OP_INCHARMAP)     },
 
-    {"INCLUDE",       T_POP_INCLUDE      },
-    {"PRINT",         T_POP_PRINT        },
-    {"PRINTLN",       T_POP_PRINTLN      },
-    {"EXPORT",        T_POP_EXPORT       },
-    {"DS",            T_POP_DS           },
-    {"DB",            T_POP_DB           },
-    {"DW",            T_POP_DW           },
-    {"DL",            T_POP_DL           },
-    {"SECTION",       T_POP_SECTION      },
-    {"ENDSECTION",    T_POP_ENDSECTION   },
-    {"PURGE",         T_POP_PURGE        },
+    {"INCLUDE",       T_(POP_INCLUDE)      },
+    {"PRINT",         T_(POP_PRINT)        },
+    {"PRINTLN",       T_(POP_PRINTLN)      },
+    {"EXPORT",        T_(POP_EXPORT)       },
+    {"DS",            T_(POP_DS)           },
+    {"DB",            T_(POP_DB)           },
+    {"DW",            T_(POP_DW)           },
+    {"DL",            T_(POP_DL)           },
+    {"SECTION",       T_(POP_SECTION)      },
+    {"ENDSECTION",    T_(POP_ENDSECTION)   },
+    {"PURGE",         T_(POP_PURGE)        },
 
-    {"RSRESET",       T_POP_RSRESET      },
-    {"RSSET",         T_POP_RSSET        },
+    {"RSRESET",       T_(POP_RSRESET)      },
+    {"RSSET",         T_(POP_RSSET)        },
 
-    {"INCBIN",        T_POP_INCBIN       },
-    {"CHARMAP",       T_POP_CHARMAP      },
-    {"NEWCHARMAP",    T_POP_NEWCHARMAP   },
-    {"SETCHARMAP",    T_POP_SETCHARMAP   },
-    {"PUSHC",         T_POP_PUSHC        },
-    {"POPC",          T_POP_POPC         },
+    {"INCBIN",        T_(POP_INCBIN)       },
+    {"CHARMAP",       T_(POP_CHARMAP)      },
+    {"NEWCHARMAP",    T_(POP_NEWCHARMAP)   },
+    {"SETCHARMAP",    T_(POP_SETCHARMAP)   },
+    {"PUSHC",         T_(POP_PUSHC)        },
+    {"POPC",          T_(POP_POPC)         },
 
-    {"FAIL",          T_POP_FAIL         },
-    {"WARN",          T_POP_WARN         },
-    {"FATAL",         T_POP_FATAL        },
-    {"ASSERT",        T_POP_ASSERT       },
-    {"STATIC_ASSERT", T_POP_STATIC_ASSERT},
+    {"FAIL",          T_(POP_FAIL)         },
+    {"WARN",          T_(POP_WARN)         },
+    {"FATAL",         T_(POP_FATAL)        },
+    {"ASSERT",        T_(POP_ASSERT)       },
+    {"STATIC_ASSERT", T_(POP_STATIC_ASSERT)},
 
-    {"MACRO",         T_POP_MACRO        },
-    {"ENDM",          T_POP_ENDM         },
-    {"SHIFT",         T_POP_SHIFT        },
+    {"MACRO",         T_(POP_MACRO)        },
+    {"ENDM",          T_(POP_ENDM)         },
+    {"SHIFT",         T_(POP_SHIFT)        },
 
-    {"REPT",          T_POP_REPT         },
-    {"FOR",           T_POP_FOR          },
-    {"ENDR",          T_POP_ENDR         },
-    {"BREAK",         T_POP_BREAK        },
+    {"REPT",          T_(POP_REPT)         },
+    {"FOR",           T_(POP_FOR)          },
+    {"ENDR",          T_(POP_ENDR)         },
+    {"BREAK",         T_(POP_BREAK)        },
 
-    {"LOAD",          T_POP_LOAD         },
-    {"ENDL",          T_POP_ENDL         },
+    {"LOAD",          T_(POP_LOAD)         },
+    {"ENDL",          T_(POP_ENDL)         },
 
-    {"IF",            T_POP_IF           },
-    {"ELSE",          T_POP_ELSE         },
-    {"ELIF",          T_POP_ELIF         },
-    {"ENDC",          T_POP_ENDC         },
+    {"IF",            T_(POP_IF)           },
+    {"ELSE",          T_(POP_ELSE)         },
+    {"ELIF",          T_(POP_ELIF)         },
+    {"ENDC",          T_(POP_ENDC)         },
 
-    {"UNION",         T_POP_UNION        },
-    {"NEXTU",         T_POP_NEXTU        },
-    {"ENDU",          T_POP_ENDU         },
+    {"UNION",         T_(POP_UNION)        },
+    {"NEXTU",         T_(POP_NEXTU)        },
+    {"ENDU",          T_(POP_ENDU)         },
 
-    {"WRAM0",         T_SECT_WRAM0       },
-    {"VRAM",          T_SECT_VRAM        },
-    {"ROMX",          T_SECT_ROMX        },
-    {"ROM0",          T_SECT_ROM0        },
-    {"HRAM",          T_SECT_HRAM        },
-    {"WRAMX",         T_SECT_WRAMX       },
-    {"SRAM",          T_SECT_SRAM        },
-    {"OAM",           T_SECT_OAM         },
+    {"WRAM0",         T_(SECT_WRAM0)       },
+    {"VRAM",          T_(SECT_VRAM)        },
+    {"ROMX",          T_(SECT_ROMX)        },
+    {"ROM0",          T_(SECT_ROM0)        },
+    {"HRAM",          T_(SECT_HRAM)        },
+    {"WRAMX",         T_(SECT_WRAMX)       },
+    {"SRAM",          T_(SECT_SRAM)        },
+    {"OAM",           T_(SECT_OAM)         },
 
-    {"RB",            T_POP_RB           },
-    {"RW",            T_POP_RW           },
- // Handled before as T_Z80_RL
-  // {"RL", T_POP_RL},
+    {"RB",            T_(POP_RB)           },
+    {"RW",            T_(POP_RW)           },
+ // There is no `T_(POP_RL)`; it's handled before as `T_(Z80_RL)`
 
-    {"EQU",           T_POP_EQU          },
-    {"EQUS",          T_POP_EQUS         },
-    {"REDEF",         T_POP_REDEF        },
+    {"EQU",           T_(POP_EQU)          },
+    {"EQUS",          T_(POP_EQUS)         },
+    {"REDEF",         T_(POP_REDEF)        },
 
-    {"PUSHS",         T_POP_PUSHS        },
-    {"POPS",          T_POP_POPS         },
-    {"PUSHO",         T_POP_PUSHO        },
-    {"POPO",          T_POP_POPO         },
+    {"PUSHS",         T_(POP_PUSHS)        },
+    {"POPS",          T_(POP_POPS)         },
+    {"PUSHO",         T_(POP_PUSHO)        },
+    {"POPO",          T_(POP_POPO)         },
 
-    {"OPT",           T_POP_OPT          },
+    {"OPT",           T_(POP_OPT)          },
 
-    {".",             T_PERIOD           },
+    {".",             T_(PERIOD)           },
 };
 
 static bool isWhitespace(int c) {
@@ -319,7 +331,7 @@ LexerState *lexerStateEOL = nullptr;
 static void initState(LexerState &state) {
 	state.mode = LEXER_NORMAL;
 	state.atLineStart = true; // yylex() will init colNo due to this
-	state.lastToken = T_EOF;
+	state.lastToken = T_(YYEOF);
 
 	state.ifStack.clear();
 
@@ -915,7 +927,7 @@ static void discardLineContinuation() {
 
 // Functions to read tokenizable values
 
-static void readAnonLabelRef(char c) {
+static void readAnonLabelRef(SymName &yylval, char c) {
 	uint32_t n = 0;
 
 	// We come here having already peeked at one char, so no need to do it again
@@ -1116,10 +1128,11 @@ static bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
 }
 
-static int readIdentifier(char firstChar) {
+static Token readIdentifier(char firstChar) {
 	// Lex while checking for a keyword
+	SymName yylval;
 	yylval.symName[0] = firstChar;
-	int tokenType = firstChar == '.' ? T_LOCAL_ID : T_ID;
+	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
 	size_t i = 1;
 
 	// Continue reading while the char is in the symbol charset
@@ -1132,7 +1145,7 @@ static int readIdentifier(char firstChar) {
 
 			// If the char was a dot, mark the identifier as local
 			if (c == '.')
-				tokenType = T_LOCAL_ID;
+				tokenType = T_(LOCAL_ID);
 		}
 	}
 
@@ -1144,8 +1157,7 @@ static int readIdentifier(char firstChar) {
 
 	// Attempt to check for a keyword
 	auto search = keywordDict.find(yylval.symName);
-
-	return search != keywordDict.end() ? search->second : tokenType;
+	return search != keywordDict.end() ? Token(search->second) : Token(tokenType, yylval);
 }
 
 // Functions to read strings
@@ -1234,7 +1246,7 @@ static char const *readInterpolation(size_t depth) {
 			yylval.string[i++] = v; \
 	} while (0)
 
-static size_t appendEscapedSubstring(char const *str, size_t i) {
+static size_t appendEscapedSubstring(String &yylval, char const *str, size_t i) {
 	// Copy one extra to flag overflow
 	while (*str) {
 		char c = *str++;
@@ -1266,7 +1278,7 @@ static size_t appendEscapedSubstring(char const *str, size_t i) {
 	return i;
 }
 
-static void readString(bool raw) {
+static void readString(String &yylval, bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1419,7 +1431,7 @@ finish:
 	lexerState->disableInterpolation = false;
 }
 
-static size_t appendStringLiteral(size_t i, bool raw) {
+static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
@@ -1520,7 +1532,7 @@ static size_t appendStringLiteral(size_t i, bool raw) {
 				shiftChar();
 				str = readMacroArg(c);
 				if (str && str[0])
-					i = appendEscapedSubstring(str, i);
+					i = appendEscapedSubstring(yylval, str, i);
 				continue; // Do not copy an additional character
 
 			case EOF: // Can't really print that one
@@ -1543,7 +1555,7 @@ static size_t appendStringLiteral(size_t i, bool raw) {
 			lexerState->disableMacroArgs = false;
 			str = readInterpolation(0);
 			if (str && str[0])
-				i = appendEscapedSubstring(str, i);
+				i = appendEscapedSubstring(yylval, str, i);
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
@@ -1568,9 +1580,9 @@ finish:
 
 // Lexer core
 
-static int yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
+static Token yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
 
-static int yylex_NORMAL() {
+static Token yylex_NORMAL() {
 	for (;;) {
 		int c = nextChar();
 
@@ -1587,63 +1599,65 @@ static int yylex_NORMAL() {
 			// Handle unambiguous single-char tokens
 
 		case '~':
-			return T_OP_NOT;
+			return Token(T_(OP_NOT));
 
-		case '@':
+		case '@': {
+			SymName yylval;
 			yylval.symName[0] = '@';
 			yylval.symName[1] = '\0';
-			return T_ID;
+			return Token(T_(ID), yylval);
+		}
 
 		case '[':
-			return T_LBRACK;
+			return Token(T_(LBRACK));
 		case ']':
-			return T_RBRACK;
+			return Token(T_(RBRACK));
 		case '(':
-			return T_LPAREN;
+			return Token(T_(LPAREN));
 		case ')':
-			return T_RPAREN;
+			return Token(T_(RPAREN));
 		case ',':
-			return T_COMMA;
+			return Token(T_(COMMA));
 
 			// Handle ambiguous 1- or 2-char tokens
 
 		case '+': // Either += or ADD
 			if (peek() == '=') {
 				shiftChar();
-				return T_POP_ADDEQ;
+				return Token(T_(POP_ADDEQ));
 			}
-			return T_OP_ADD;
+			return Token(T_(OP_ADD));
 
 		case '-': // Either -= or SUB
 			if (peek() == '=') {
 				shiftChar();
-				return T_POP_SUBEQ;
+				return Token(T_(POP_SUBEQ));
 			}
-			return T_OP_SUB;
+			return Token(T_(OP_SUB));
 
 		case '*': // Either *=, MUL, or EXP
 			switch (peek()) {
 			case '=':
 				shiftChar();
-				return T_POP_MULEQ;
+				return Token(T_(POP_MULEQ));
 			case '*':
 				shiftChar();
-				return T_OP_EXP;
+				return Token(T_(OP_EXP));
 			default:
-				return T_OP_MUL;
+				return Token(T_(OP_MUL));
 			}
 
 		case '/': // Either /=, DIV, or a block comment
 			switch (peek()) {
 			case '=':
 				shiftChar();
-				return T_POP_DIVEQ;
+				return Token(T_(POP_DIVEQ));
 			case '*':
 				shiftChar();
 				discardBlockComment();
 				break;
 			default:
-				return T_OP_DIV;
+				return Token(T_(OP_DIV));
 			}
 			break;
 
@@ -1651,34 +1665,34 @@ static int yylex_NORMAL() {
 			switch (peek()) {
 			case '=':
 				shiftChar();
-				return T_POP_OREQ;
+				return Token(T_(POP_OREQ));
 			case '|':
 				shiftChar();
-				return T_OP_LOGICOR;
+				return Token(T_(OP_LOGICOR));
 			default:
-				return T_OP_OR;
+				return Token(T_(OP_OR));
 			}
 
 		case '^': // Either ^= or XOR
 			if (peek() == '=') {
 				shiftChar();
-				return T_POP_XOREQ;
+				return Token(T_(POP_XOREQ));
 			}
-			return T_OP_XOR;
+			return Token(T_(OP_XOR));
 
 		case '=': // Either assignment or EQ
 			if (peek() == '=') {
 				shiftChar();
-				return T_OP_LOGICEQU;
+				return Token(T_(OP_LOGICEQU));
 			}
-			return T_POP_EQUAL;
+			return Token(T_(POP_EQUAL));
 
 		case '!': // Either a NEQ or negation
 			if (peek() == '=') {
 				shiftChar();
-				return T_OP_LOGICNE;
+				return Token(T_(OP_LOGICNE));
 			}
-			return T_OP_LOGICNOT;
+			return Token(T_(OP_LOGICNOT));
 
 			// Handle ambiguous 1-, 2-, or 3-char tokens
 
@@ -1686,37 +1700,37 @@ static int yylex_NORMAL() {
 			switch (peek()) {
 			case '=':
 				shiftChar();
-				return T_OP_LOGICLE;
+				return Token(T_(OP_LOGICLE));
 			case '<':
 				shiftChar();
 				if (peek() == '=') {
 					shiftChar();
-					return T_POP_SHLEQ;
+					return Token(T_(POP_SHLEQ));
 				}
-				return T_OP_SHL;
+				return Token(T_(OP_SHL));
 			default:
-				return T_OP_LOGICLT;
+				return Token(T_(OP_LOGICLT));
 			}
 
 		case '>': // Either >>=, GT, GTE, or either kind of right shift
 			switch (peek()) {
 			case '=':
 				shiftChar();
-				return T_OP_LOGICGE;
+				return Token(T_(OP_LOGICGE));
 			case '>':
 				shiftChar();
 				switch (peek()) {
 				case '=':
 					shiftChar();
-					return T_POP_SHREQ;
+					return Token(T_(POP_SHREQ));
 				case '>':
 					shiftChar();
-					return T_OP_USHR;
+					return Token(T_(OP_USHR));
 				default:
-					return T_OP_SHR;
+					return Token(T_(OP_SHR));
 				}
 			default:
-				return T_OP_LOGICGT;
+				return Token(T_(OP_LOGICGT));
 			}
 
 		case ':': // Either :, ::, or an anonymous label ref
@@ -1724,13 +1738,15 @@ static int yylex_NORMAL() {
 			switch (c) {
 			case ':':
 				shiftChar();
-				return T_DOUBLE_COLON;
+				return Token(T_(DOUBLE_COLON));
 			case '+':
-			case '-':
-				readAnonLabelRef(c);
-				return T_ANON;
+			case '-': {
+				SymName yylval;
+				readAnonLabelRef(yylval, c);
+				return Token(T_(ANON), yylval);
+			}
 			default:
-				return T_COLON;
+				return Token(T_(COLON));
 			}
 
 			// Handle numbers
@@ -1751,48 +1767,45 @@ static int yylex_NORMAL() {
 				shiftChar();
 				n = readFractionalPart(n);
 			}
-			yylval.constValue = n;
-			return T_NUMBER;
+			return Token(T_(NUMBER), n);
 		}
 
 		case '&': // Either &=, binary AND, logical AND, or an octal constant
 			c = peek();
 			if (c == '=') {
 				shiftChar();
-				return T_POP_ANDEQ;
+				return Token(T_(POP_ANDEQ));
 			} else if (c == '&') {
 				shiftChar();
-				return T_OP_LOGICAND;
+				return Token(T_(OP_LOGICAND));
 			} else if (c >= '0' && c <= '7') {
-				yylval.constValue = readNumber(8, 0);
-				return T_NUMBER;
+				return Token(T_(NUMBER), readNumber(8, 0));
 			}
-			return T_OP_AND;
+			return Token(T_(OP_AND));
 
 		case '%': // Either %=, MOD, or a binary constant
 			c = peek();
 			if (c == '=') {
 				shiftChar();
-				return T_POP_MODEQ;
+				return Token(T_(POP_MODEQ));
 			} else if (c == binDigits[0] || c == binDigits[1]) {
-				yylval.constValue = readBinaryNumber();
-				return T_NUMBER;
+				return Token(T_(NUMBER), readBinaryNumber());
 			}
-			return T_OP_MOD;
+			return Token(T_(OP_MOD));
 
 		case '$': // Hex constant
-			yylval.constValue = readHexNumber();
-			return T_NUMBER;
+			return Token(T_(NUMBER), readHexNumber());
 
 		case '`': // Gfx constant
-			yylval.constValue = readGfxConstant();
-			return T_NUMBER;
+			return Token(T_(NUMBER), readGfxConstant());
 
 			// Handle strings
 
-		case '"':
-			readString(false);
-			return T_STRING;
+		case '"': {
+			String yylval;
+			readString(yylval, false);
+			return Token(T_(STRING), yylval);
+		}
 
 			// Handle newlines and EOF
 
@@ -1800,10 +1813,10 @@ static int yylex_NORMAL() {
 			handleCRLF(c);
 			// fallthrough
 		case '\n':
-			return T_NEWLINE;
+			return Token(T_(NEWLINE));
 
 		case EOF:
-			return T_EOF;
+			return Token(T_(YYEOF));
 
 			// Handle line continuations
 
@@ -1818,8 +1831,9 @@ static int yylex_NORMAL() {
 		case '#':
 			if (peek() == '"') {
 				shiftChar();
-				readString(true);
-				return T_STRING;
+				String yylval;
+				readString(yylval, true);
+				return Token(T_(STRING), yylval);
 			}
 			// fallthrough
 
@@ -1827,21 +1841,24 @@ static int yylex_NORMAL() {
 
 		default:
 			if (startsIdentifier(c)) {
-				int tokenType = readIdentifier(c);
+				Token token = readIdentifier(c);
 
 				// An ELIF after a taken IF needs to not evaluate its condition
-				if (tokenType == T_POP_ELIF && lexerState->lastToken == T_NEWLINE
+				if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
 				    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock())
 					return yylex_SKIP_TO_ENDC();
 
 				// If a keyword, don't try to expand
-				if (tokenType != T_ID && tokenType != T_LOCAL_ID)
-					return tokenType;
+				if (token.type != T_(ID) && token.type != T_(LOCAL_ID))
+					return token;
+
+				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `SymName` value.
+				assert(std::holds_alternative<SymName>(token.value));
 
 				// Local symbols cannot be string expansions
-				if (tokenType == T_ID && lexerState->expandStrings) {
+				if (token.type == T_(ID) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(yylval.symName);
+					Symbol const *sym = sym_FindExactSymbol(std::get<SymName>(token.value).symName);
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *str = sym->getEqus()->c_str();
@@ -1853,10 +1870,10 @@ static int yylex_NORMAL() {
 					}
 				}
 
-				if (tokenType == T_ID && (lexerState->atLineStart || peek() == ':'))
-					return T_LABEL;
+				if (token.type == T_(ID) && (lexerState->atLineStart || peek() == ':'))
+					token.type = T_(LABEL);
 
-				return tokenType;
+				return token;
 			}
 
 			// Do not report weird characters when capturing, it'll be done later
@@ -1869,8 +1886,9 @@ static int yylex_NORMAL() {
 	}
 }
 
-static int yylex_RAW() {
+static Token yylex_RAW() {
 	// This is essentially a modified `appendStringLiteral`
+	String yylval;
 	size_t parenDepth = 0;
 	size_t i = 0;
 	int c;
@@ -1899,7 +1917,7 @@ static int yylex_RAW() {
 		switch (c) {
 		case '"': // String literals inside macro args
 			shiftChar();
-			i = appendStringLiteral(i, false);
+			i = appendStringLiteral(yylval, i, false);
 			break;
 
 		case '#': // Raw string literals inside macro args
@@ -1907,7 +1925,7 @@ static int yylex_RAW() {
 			shiftChar();
 			if (peek() == '"') {
 				shiftChar();
-				i = appendStringLiteral(i, true);
+				i = appendStringLiteral(yylval, i, true);
 			}
 			break;
 
@@ -2008,13 +2026,13 @@ finish:
 		i--;
 	yylval.string[i] = '\0';
 
-	// Returning T_COMMAs to the parser would mean that two consecutive commas
-	// (i.e. an empty argument) need to return two different tokens (T_STRING
-	// then T_COMMA) without advancing the read. To avoid this, commas in raw
+	// Returning COMMAs to the parser would mean that two consecutive commas
+	// (i.e. an empty argument) need to return two different tokens (STRING
+	// then COMMA) without advancing the read. To avoid this, commas in raw
 	// mode end the current macro argument but are not tokenized themselves.
 	if (c == ',') {
 		shiftChar();
-		return T_STRING;
+		return Token(T_(STRING), yylval);
 	}
 
 	// The last argument may end in a trailing comma, newline, or EOF.
@@ -2024,16 +2042,16 @@ finish:
 	// macro argument. To pass an empty last argument, use a second
 	// trailing comma.
 	if (i > 0)
-		return T_STRING;
+		return Token(T_(STRING), yylval);
 	lexer_SetMode(LEXER_NORMAL);
 
 	if (c == '\r' || c == '\n') {
 		shiftChar();
 		handleCRLF(c);
-		return T_NEWLINE;
+		return Token(T_(NEWLINE));
 	}
 
-	return T_EOF;
+	return Token(T_(YYEOF));
 }
 
 #undef append_yylval_string
@@ -2043,10 +2061,10 @@ finish:
 // "meaningful" (= at line start) vs. "meaningless" (everything else) tokens.
 // It's especially important due to macro args not being handled in this
 // state, and lexing them in "normal" mode potentially producing such tokens.
-static int skipIfBlock(bool toEndc) {
+static Token skipIfBlock(bool toEndc) {
 	lexer_SetMode(LEXER_NORMAL);
 	uint32_t startingDepth = lexer_GetIFDepth();
-	int token;
+	Token token;
 	bool atLineStart = lexerState->atLineStart;
 
 	// Prevent expanding macro args and symbol interpolation in this state
@@ -2066,19 +2084,19 @@ static int skipIfBlock(bool toEndc) {
 			if (startsIdentifier(c)) {
 				shiftChar();
 				token = readIdentifier(c);
-				switch (token) {
-				case T_POP_IF:
+				switch (token.type) {
+				case T_(POP_IF):
 					lexer_IncIFDepth();
 					break;
 
-				case T_POP_ELIF:
+				case T_(POP_ELIF):
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELIF after an ELSE block\n");
 					if (!toEndc && lexer_GetIFDepth() == startingDepth)
 						goto finish;
 					break;
 
-				case T_POP_ELSE:
+				case T_(POP_ELSE):
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELSE after an ELSE block\n");
 					lexer_ReachELSEBlock();
@@ -2086,10 +2104,14 @@ static int skipIfBlock(bool toEndc) {
 						goto finish;
 					break;
 
-				case T_POP_ENDC:
+				case T_(POP_ENDC):
 					if (lexer_GetIFDepth() == startingDepth)
 						goto finish;
 					lexer_DecIFDepth();
+					break;
+
+				default:
+					break;
 				}
 			}
 			atLineStart = false;
@@ -2100,7 +2122,7 @@ static int skipIfBlock(bool toEndc) {
 			int c = nextChar();
 
 			if (c == EOF) {
-				token = T_EOF;
+				token = Token(T_(YYEOF));
 				goto finish;
 			} else if (c == '\\') {
 				// Unconditionally skip the next char, including line continuations
@@ -2126,15 +2148,15 @@ finish:
 	return token;
 }
 
-static int yylex_SKIP_TO_ELIF() {
+static Token yylex_SKIP_TO_ELIF() {
 	return skipIfBlock(false);
 }
 
-static int yylex_SKIP_TO_ENDC() {
+static Token yylex_SKIP_TO_ENDC() {
 	return skipIfBlock(true);
 }
 
-static int yylex_SKIP_TO_ENDR() {
+static Token yylex_SKIP_TO_ENDR() {
 	lexer_SetMode(LEXER_NORMAL);
 	int depth = 1;
 	bool atLineStart = lexerState->atLineStart;
@@ -2156,24 +2178,28 @@ static int yylex_SKIP_TO_ENDR() {
 
 			if (startsIdentifier(c)) {
 				shiftChar();
-				switch (readIdentifier(c)) {
-				case T_POP_FOR:
-				case T_POP_REPT:
+				switch (readIdentifier(c).type) {
+				case T_(POP_FOR):
+				case T_(POP_REPT):
 					depth++;
 					break;
 
-				case T_POP_ENDR:
+				case T_(POP_ENDR):
 					depth--;
 					if (!depth)
 						goto finish;
 					break;
 
-				case T_POP_IF:
+				case T_(POP_IF):
 					lexer_IncIFDepth();
 					break;
 
-				case T_POP_ENDC:
+				case T_(POP_ENDC):
 					lexer_DecIFDepth();
+					break;
+
+				default:
+					break;
 				}
 			}
 			atLineStart = false;
@@ -2207,37 +2233,43 @@ finish:
 	lexerState->atLineStart = false;
 
 	// yywrap() will finish the REPT/FOR loop
-	return T_EOF;
+	return Token(T_(YYEOF));
 }
 
-int yylex() {
+yy::parser::symbol_type yylex() {
 	if (lexerState->atLineStart && lexerStateEOL) {
 		lexer_SetState(lexerStateEOL);
 		lexerStateEOL = nullptr;
 	}
 	// `lexer_SetState` updates `lexerState`, so check for EOF after it
-	if (lexerState->lastToken == T_EOB && yywrap())
-		return T_EOF;
+	if (lexerState->lastToken == T_(EOB) && yywrap())
+		return yy::parser::make_YYEOF();
 	// Newlines read within an expansion should not increase the line count
 	if (lexerState->atLineStart && lexerState->expansions.empty())
 		nextLine();
 
-	static int (* const lexerModeFuncs[NB_LEXER_MODES])() = {
+	static Token (* const lexerModeFuncs[NB_LEXER_MODES])() = {
 	    yylex_NORMAL,
 	    yylex_RAW,
 	    yylex_SKIP_TO_ELIF,
 	    yylex_SKIP_TO_ENDC,
 	    yylex_SKIP_TO_ENDR,
 	};
-	int token = lexerModeFuncs[lexerState->mode]();
+	Token token = lexerModeFuncs[lexerState->mode]();
 
 	// Captures end at their buffer's boundary no matter what
-	if (token == T_EOF && !lexerState->capturing)
-		token = T_EOB;
-	lexerState->lastToken = token;
-	lexerState->atLineStart = token == T_NEWLINE || token == T_EOB;
+	if (token.type == T_(YYEOF) && !lexerState->capturing)
+		token = Token(T_(EOB));
+	lexerState->lastToken = token.type;
+	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	return token;
+	return std::visit(
+	    Visitor{
+	        [&token](std::monostate) { return yy::parser::symbol_type(token.type); },
+	        [&token](auto &&value) { return yy::parser::symbol_type(token.type, value); },
+	    },
+	    token.value
+	);
 }
 
 static void startCapture(CaptureBody &capture) {
@@ -2301,14 +2333,14 @@ bool lexer_CaptureRept(CaptureBody &capture) {
 		} while (isWhitespace(c));
 		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier
 		if (startsIdentifier(c)) {
-			switch (readIdentifier(c)) {
-			case T_POP_REPT:
-			case T_POP_FOR:
+			switch (readIdentifier(c).type) {
+			case T_(POP_REPT):
+			case T_(POP_FOR):
 				depth++;
 				// Ignore the rest of that line
 				break;
 
-			case T_POP_ENDR:
+			case T_(POP_ENDR):
 				if (!depth) {
 					// The final ENDR has been captured, but we don't want it!
 					// We know we have read exactly "ENDR", not e.g. an EQUS
@@ -2316,6 +2348,10 @@ bool lexer_CaptureRept(CaptureBody &capture) {
 					goto finish;
 				}
 				depth--;
+				break;
+
+			default:
+				break;
 			}
 		}
 
@@ -2361,12 +2397,15 @@ bool lexer_CaptureMacroBody(CaptureBody &capture) {
 		} while (isWhitespace(c));
 		// Now, try to match `ENDM` as a **whole** identifier
 		if (startsIdentifier(c)) {
-			switch (readIdentifier(c)) {
-			case T_POP_ENDM:
+			switch (readIdentifier(c).type) {
+			case T_(POP_ENDM):
 				// The ENDM has been captured, but we don't want it!
 				// We know we have read exactly "ENDM", not e.g. an EQUS
 				lexerState->captureSize -= strlen("ENDM");
 				goto finish;
+
+			default:
+				break;
 			}
 		}
 

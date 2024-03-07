@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 
+%language "c++"
+%define api.value.type variant
+%define api.token.constructor
+
 %code requires {
 	#include <stdint.h>
 	#include <inttypes.h>
@@ -55,6 +59,8 @@
 
 	static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
+	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
+
 	static void upperstring(char *dest, char const *src);
 	static void lowerstring(char *dest, char const *src);
 	static uint32_t str2int2(std::vector<uint8_t> const &s);
@@ -104,224 +110,205 @@
 	enum { CC_NZ = 0, CC_Z, CC_NC, CC_C };
 }
 
-%union
-{
-	char symName[MAXSYMLEN + 1];
-	char string[MAXSTRLEN + 1];
-	Expression expr;
-	int32_t constValue;
-	enum RPNCommand compoundEqual;
-	enum SectionModifier sectMod;
-	SectionSpec sectSpec;
-	MacroArgs *macroArg;
-	enum AssertionType assertType;
-	AlignmentSpec alignSpec;
-	std::vector<Expression> *dsArgs;
-	std::vector<std::string> *purgeArgs;
-	ForArgs forArgs;
-	StrFmtArgList strfmtArgs;
-	bool captureTerminated;
-}
+%type <Expression> relocexpr
+%type <Expression> relocexpr_no_str
+%type <int32_t> const
+%type <int32_t> const_no_str
+%type <int32_t> const_8bit
+%type <int32_t> uconst
+%type <int32_t> rs_uconst
+%type <int32_t> const_3bit
+%type <Expression> reloc_8bit
+%type <Expression> reloc_8bit_no_str
+%type <Expression> reloc_8bit_offset
+%type <Expression> reloc_16bit
+%type <Expression> reloc_16bit_no_str
+%type <int32_t> sectiontype
 
-%type <expr> relocexpr
-%type <expr> relocexpr_no_str
-%type <constValue> const
-%type <constValue> const_no_str
-%type <constValue> const_8bit
-%type <constValue> uconst
-%type <constValue> rs_uconst
-%type <constValue> const_3bit
-%type <expr> reloc_8bit
-%type <expr> reloc_8bit_no_str
-%type <expr> reloc_8bit_offset
-%type <expr> reloc_16bit
-%type <expr> reloc_16bit_no_str
-%type <constValue> sectiontype
+%type <String> string
+%type <String> strcat_args
+%type <StrFmtArgList> strfmt_args
+%type <StrFmtArgList> strfmt_va_args
 
-%type <string> string
-%type <string> strcat_args
-%type <strfmtArgs> strfmt_args
-%type <strfmtArgs> strfmt_va_args
+%type <int32_t> sectorg
+%type <SectionSpec> sectattrs
 
-%type <constValue> sectorg
-%type <sectSpec> sectattrs
+%token <int32_t> NUMBER "number"
+%token <String> STRING "string"
 
-%token <constValue> T_NUMBER "number"
-%token <string> T_STRING "string"
+%token PERIOD "."
+%token COMMA ","
+%token COLON ":" DOUBLE_COLON "::"
+%token LBRACK "[" RBRACK "]"
+%token LPAREN "(" RPAREN ")"
+%token NEWLINE "newline"
 
-%token T_PERIOD "."
-%token T_COMMA ","
-%token T_COLON ":" T_DOUBLE_COLON "::"
-%token T_LBRACK "[" T_RBRACK "]"
-%token T_LPAREN "(" T_RPAREN ")"
-%token T_NEWLINE "newline"
-
-%token T_OP_LOGICNOT "!"
-%token T_OP_LOGICAND "&&" T_OP_LOGICOR "||"
-%token T_OP_LOGICGT ">" T_OP_LOGICLT "<"
-%token T_OP_LOGICGE ">=" T_OP_LOGICLE "<="
-%token T_OP_LOGICNE "!=" T_OP_LOGICEQU "=="
-%token T_OP_ADD "+" T_OP_SUB "-"
-%token T_OP_OR "|" T_OP_XOR "^" T_OP_AND "&"
-%token T_OP_SHL "<<" T_OP_SHR ">>" T_OP_USHR ">>>"
-%token T_OP_MUL "*" T_OP_DIV "/" T_OP_MOD "%"
-%token T_OP_NOT "~"
-%left T_OP_LOGICOR
-%left T_OP_LOGICAND
-%left T_OP_LOGICGT T_OP_LOGICLT T_OP_LOGICGE T_OP_LOGICLE T_OP_LOGICNE T_OP_LOGICEQU
-%left T_OP_ADD T_OP_SUB
-%left T_OP_OR T_OP_XOR T_OP_AND
-%left T_OP_SHL T_OP_SHR T_OP_USHR
-%left T_OP_MUL T_OP_DIV T_OP_MOD
+%token OP_LOGICNOT "!"
+%token OP_LOGICAND "&&" OP_LOGICOR "||"
+%token OP_LOGICGT ">" OP_LOGICLT "<"
+%token OP_LOGICGE ">=" OP_LOGICLE "<="
+%token OP_LOGICNE "!=" OP_LOGICEQU "=="
+%token OP_ADD "+" OP_SUB "-"
+%token OP_OR "|" OP_XOR "^" OP_AND "&"
+%token OP_SHL "<<" OP_SHR ">>" OP_USHR ">>>"
+%token OP_MUL "*" OP_DIV "/" OP_MOD "%"
+%token OP_NOT "~"
+%left OP_LOGICOR
+%left OP_LOGICAND
+%left OP_LOGICGT OP_LOGICLT OP_LOGICGE OP_LOGICLE OP_LOGICNE OP_LOGICEQU
+%left OP_ADD OP_SUB
+%left OP_OR OP_XOR OP_AND
+%left OP_SHL OP_SHR OP_USHR
+%left OP_MUL OP_DIV OP_MOD
 
 %precedence NEG // negation -- unary minus
 
-%token T_OP_EXP "**"
-%left T_OP_EXP
+%token OP_EXP "**"
+%left OP_EXP
 
-%token T_OP_DEF "DEF"
-%token T_OP_BANK "BANK"
-%token T_OP_ALIGN "ALIGN"
-%token T_OP_SIZEOF "SIZEOF" T_OP_STARTOF "STARTOF"
+%token OP_DEF "DEF"
+%token OP_BANK "BANK"
+%token OP_ALIGN "ALIGN"
+%token OP_SIZEOF "SIZEOF" OP_STARTOF "STARTOF"
 
-%token T_OP_SIN "SIN" T_OP_COS "COS" T_OP_TAN "TAN"
-%token T_OP_ASIN "ASIN" T_OP_ACOS "ACOS" T_OP_ATAN "ATAN" T_OP_ATAN2 "ATAN2"
-%token T_OP_FDIV "FDIV"
-%token T_OP_FMUL "FMUL"
-%token T_OP_FMOD "FMOD"
-%token T_OP_POW "POW"
-%token T_OP_LOG "LOG"
-%token T_OP_ROUND "ROUND"
-%token T_OP_CEIL "CEIL" T_OP_FLOOR "FLOOR"
-%type <constValue> opt_q_arg
+%token OP_SIN "SIN" OP_COS "COS" OP_TAN "TAN"
+%token OP_ASIN "ASIN" OP_ACOS "ACOS" OP_ATAN "ATAN" OP_ATAN2 "ATAN2"
+%token OP_FDIV "FDIV"
+%token OP_FMUL "FMUL"
+%token OP_FMOD "FMOD"
+%token OP_POW "POW"
+%token OP_LOG "LOG"
+%token OP_ROUND "ROUND"
+%token OP_CEIL "CEIL" OP_FLOOR "FLOOR"
+%type <int32_t> opt_q_arg
 
-%token T_OP_HIGH "HIGH" T_OP_LOW "LOW"
-%token T_OP_ISCONST "ISCONST"
+%token OP_HIGH "HIGH" OP_LOW "LOW"
+%token OP_ISCONST "ISCONST"
 
-%token T_OP_STRCMP "STRCMP"
-%token T_OP_STRIN "STRIN" T_OP_STRRIN "STRRIN"
-%token T_OP_STRSUB "STRSUB"
-%token T_OP_STRLEN "STRLEN"
-%token T_OP_STRCAT "STRCAT"
-%token T_OP_STRUPR "STRUPR" T_OP_STRLWR "STRLWR"
-%token T_OP_STRRPL "STRRPL"
-%token T_OP_STRFMT "STRFMT"
+%token OP_STRCMP "STRCMP"
+%token OP_STRIN "STRIN" OP_STRRIN "STRRIN"
+%token OP_STRSUB "STRSUB"
+%token OP_STRLEN "STRLEN"
+%token OP_STRCAT "STRCAT"
+%token OP_STRUPR "STRUPR" OP_STRLWR "STRLWR"
+%token OP_STRRPL "STRRPL"
+%token OP_STRFMT "STRFMT"
 
-%token T_OP_CHARLEN "CHARLEN"
-%token T_OP_CHARSUB "CHARSUB"
-%token T_OP_INCHARMAP "INCHARMAP"
+%token OP_CHARLEN "CHARLEN"
+%token OP_CHARSUB "CHARSUB"
+%token OP_INCHARMAP "INCHARMAP"
 
-%token <symName> T_LABEL "label"
-%token <symName> T_ID "identifier"
-%token <symName> T_LOCAL_ID "local identifier"
-%token <symName> T_ANON "anonymous label"
-%type <symName> def_id
-%type <symName> redef_id
-%type <symName> scoped_id
-%type <symName> scoped_anon_id
-%token T_POP_EQU "EQU"
-%token T_POP_EQUAL "="
-%token T_POP_EQUS "EQUS"
+%token <SymName> LABEL "label"
+%token <SymName> ID "identifier"
+%token <SymName> LOCAL_ID "local identifier"
+%token <SymName> ANON "anonymous label"
+%type <SymName> def_id
+%type <SymName> redef_id
+%type <SymName> scoped_id
+%type <SymName> scoped_anon_id
+%token POP_EQU "EQU"
+%token POP_EQUAL "="
+%token POP_EQUS "EQUS"
 
-%token T_POP_ADDEQ "+=" T_POP_SUBEQ "-="
-%token T_POP_MULEQ "*=" T_POP_DIVEQ "/=" T_POP_MODEQ "%="
-%token T_POP_OREQ "|=" T_POP_XOREQ "^=" T_POP_ANDEQ "&="
-%token T_POP_SHLEQ "<<=" T_POP_SHREQ ">>="
-%type <compoundEqual> compoundeq
+%token POP_ADDEQ "+=" POP_SUBEQ "-="
+%token POP_MULEQ "*=" POP_DIVEQ "/=" POP_MODEQ "%="
+%token POP_OREQ "|=" POP_XOREQ "^=" POP_ANDEQ "&="
+%token POP_SHLEQ "<<=" POP_SHREQ ">>="
+%type <RPNCommand> compoundeq
 
-%token T_POP_INCLUDE "INCLUDE"
-%token T_POP_PRINT "PRINT" T_POP_PRINTLN "PRINTLN"
-%token T_POP_IF "IF" T_POP_ELIF "ELIF" T_POP_ELSE "ELSE" T_POP_ENDC "ENDC"
-%token T_POP_EXPORT "EXPORT"
-%token T_POP_DB "DB" T_POP_DS "DS" T_POP_DW "DW" T_POP_DL "DL"
-%token T_POP_SECTION "SECTION" T_POP_FRAGMENT "FRAGMENT"
-%token T_POP_ENDSECTION "ENDSECTION"
-%token T_POP_RB "RB" T_POP_RW "RW" // There is no T_POP_RL, only T_Z80_RL
-%token T_POP_MACRO "MACRO"
-%token T_POP_ENDM "ENDM"
-%token T_POP_RSRESET "RSRESET" T_POP_RSSET "RSSET"
-%token T_POP_UNION "UNION" T_POP_NEXTU "NEXTU" T_POP_ENDU "ENDU"
-%token T_POP_INCBIN "INCBIN" T_POP_REPT "REPT" T_POP_FOR "FOR"
-%token T_POP_CHARMAP "CHARMAP"
-%token T_POP_NEWCHARMAP "NEWCHARMAP"
-%token T_POP_SETCHARMAP "SETCHARMAP"
-%token T_POP_PUSHC "PUSHC"
-%token T_POP_POPC "POPC"
-%token T_POP_SHIFT "SHIFT"
-%token T_POP_ENDR "ENDR"
-%token T_POP_BREAK "BREAK"
-%token T_POP_LOAD "LOAD" T_POP_ENDL "ENDL"
-%token T_POP_FAIL "FAIL"
-%token T_POP_WARN "WARN"
-%token T_POP_FATAL "FATAL"
-%token T_POP_ASSERT "ASSERT" T_POP_STATIC_ASSERT "STATIC_ASSERT"
-%token T_POP_PURGE "PURGE"
-%token T_POP_REDEF "REDEF"
-%token T_POP_POPS "POPS"
-%token T_POP_PUSHS "PUSHS"
-%token T_POP_POPO "POPO"
-%token T_POP_PUSHO "PUSHO"
-%token T_POP_OPT "OPT"
-%token T_SECT_ROM0 "ROM0" T_SECT_ROMX "ROMX"
-%token T_SECT_WRAM0 "WRAM0" T_SECT_WRAMX "WRAMX" T_SECT_HRAM "HRAM"
-%token T_SECT_VRAM "VRAM" T_SECT_SRAM "SRAM" T_SECT_OAM "OAM"
+%token POP_INCLUDE "INCLUDE"
+%token POP_PRINT "PRINT" POP_PRINTLN "PRINTLN"
+%token POP_IF "IF" POP_ELIF "ELIF" POP_ELSE "ELSE" POP_ENDC "ENDC"
+%token POP_EXPORT "EXPORT"
+%token POP_DB "DB" POP_DS "DS" POP_DW "DW" POP_DL "DL"
+%token POP_SECTION "SECTION" POP_FRAGMENT "FRAGMENT"
+%token POP_ENDSECTION "ENDSECTION"
+%token POP_RB "RB" POP_RW "RW" // There is no POP_RL, only Z80_RL
+%token POP_MACRO "MACRO"
+%token POP_ENDM "ENDM"
+%token POP_RSRESET "RSRESET" POP_RSSET "RSSET"
+%token POP_UNION "UNION" POP_NEXTU "NEXTU" POP_ENDU "ENDU"
+%token POP_INCBIN "INCBIN" POP_REPT "REPT" POP_FOR "FOR"
+%token POP_CHARMAP "CHARMAP"
+%token POP_NEWCHARMAP "NEWCHARMAP"
+%token POP_SETCHARMAP "SETCHARMAP"
+%token POP_PUSHC "PUSHC"
+%token POP_POPC "POPC"
+%token POP_SHIFT "SHIFT"
+%token POP_ENDR "ENDR"
+%token POP_BREAK "BREAK"
+%token POP_LOAD "LOAD" POP_ENDL "ENDL"
+%token POP_FAIL "FAIL"
+%token POP_WARN "WARN"
+%token POP_FATAL "FATAL"
+%token POP_ASSERT "ASSERT" POP_STATIC_ASSERT "STATIC_ASSERT"
+%token POP_PURGE "PURGE"
+%token POP_REDEF "REDEF"
+%token POP_POPS "POPS"
+%token POP_PUSHS "PUSHS"
+%token POP_POPO "POPO"
+%token POP_PUSHO "PUSHO"
+%token POP_OPT "OPT"
+%token SECT_ROM0 "ROM0" SECT_ROMX "ROMX"
+%token SECT_WRAM0 "WRAM0" SECT_WRAMX "WRAMX" SECT_HRAM "HRAM"
+%token SECT_VRAM "VRAM" SECT_SRAM "SRAM" SECT_OAM "OAM"
 
-%type <captureTerminated> capture_rept
-%type <captureTerminated> capture_macro
+%type <bool> capture_rept
+%type <bool> capture_macro
 
-%type <sectMod> sectmod
-%type <macroArg> macroargs
+%type <SectionModifier> sectmod
+%type <MacroArgs *> macroargs
 
-%type <alignSpec> align_spec
+%type <AlignmentSpec> align_spec
 
-%type <dsArgs> ds_args
-%type <purgeArgs> purge_args
-%type <forArgs> for_args
+%type <std::vector<Expression> *> ds_args
+%type <std::vector<std::string> *> purge_args
+%type <ForArgs> for_args
 
-%token T_Z80_ADC "adc" T_Z80_ADD "add" T_Z80_AND "and"
-%token T_Z80_BIT "bit"
-%token T_Z80_CALL "call" T_Z80_CCF "ccf" T_Z80_CP "cp" T_Z80_CPL "cpl"
-%token T_Z80_DAA "daa" T_Z80_DEC "dec" T_Z80_DI "di"
-%token T_Z80_EI "ei"
-%token T_Z80_HALT "halt"
-%token T_Z80_INC "inc"
-%token T_Z80_JP "jp" T_Z80_JR "jr"
-%token T_Z80_LD "ld"
-%token T_Z80_LDI "ldi"
-%token T_Z80_LDD "ldd"
-%token T_Z80_LDH "ldh"
-%token T_Z80_NOP "nop"
-%token T_Z80_OR "or"
-%token T_Z80_POP "pop" T_Z80_PUSH "push"
-%token T_Z80_RES "res" T_Z80_RET "ret" T_Z80_RETI "reti" T_Z80_RST "rst"
-%token T_Z80_RL "rl" T_Z80_RLA "rla" T_Z80_RLC "rlc" T_Z80_RLCA "rlca"
-%token T_Z80_RR "rr" T_Z80_RRA "rra" T_Z80_RRC "rrc" T_Z80_RRCA "rrca"
-%token T_Z80_SBC "sbc" T_Z80_SCF "scf" T_Z80_SET "set" T_Z80_STOP "stop"
-%token T_Z80_SLA "sla" T_Z80_SRA "sra" T_Z80_SRL "srl" T_Z80_SUB "sub"
-%token T_Z80_SWAP "swap"
-%token T_Z80_XOR "xor"
+%token Z80_ADC "adc" Z80_ADD "add" Z80_AND "and"
+%token Z80_BIT "bit"
+%token Z80_CALL "call" Z80_CCF "ccf" Z80_CP "cp" Z80_CPL "cpl"
+%token Z80_DAA "daa" Z80_DEC "dec" Z80_DI "di"
+%token Z80_EI "ei"
+%token Z80_HALT "halt"
+%token Z80_INC "inc"
+%token Z80_JP "jp" Z80_JR "jr"
+%token Z80_LD "ld"
+%token Z80_LDI "ldi"
+%token Z80_LDD "ldd"
+%token Z80_LDH "ldh"
+%token Z80_NOP "nop"
+%token Z80_OR "or"
+%token Z80_POP "pop" Z80_PUSH "push"
+%token Z80_RES "res" Z80_RET "ret" Z80_RETI "reti" Z80_RST "rst"
+%token Z80_RL "rl" Z80_RLA "rla" Z80_RLC "rlc" Z80_RLCA "rlca"
+%token Z80_RR "rr" Z80_RRA "rra" Z80_RRC "rrc" Z80_RRCA "rrca"
+%token Z80_SBC "sbc" Z80_SCF "scf" Z80_SET "set" Z80_STOP "stop"
+%token Z80_SLA "sla" Z80_SRA "sra" Z80_SRL "srl" Z80_SUB "sub"
+%token Z80_SWAP "swap"
+%token Z80_XOR "xor"
 
-%token T_TOKEN_A "a"
-%token T_TOKEN_B "b" T_TOKEN_C "c"
-%token T_TOKEN_D "d" T_TOKEN_E "e"
-%token T_TOKEN_H "h" T_TOKEN_L "l"
-%token T_MODE_AF "af" T_MODE_BC "bc" T_MODE_DE "de" T_MODE_SP "sp"
-%token T_MODE_HL "hl" T_MODE_HL_DEC "hld/hl-" T_MODE_HL_INC "hli/hl+"
-%token T_CC_NZ "nz" T_CC_Z "z" T_CC_NC "nc" // There is no T_CC_C, only T_TOKEN_C
+%token TOKEN_A "a"
+%token TOKEN_B "b" TOKEN_C "c"
+%token TOKEN_D "d" TOKEN_E "e"
+%token TOKEN_H "h" TOKEN_L "l"
+%token MODE_AF "af" MODE_BC "bc" MODE_DE "de" MODE_SP "sp"
+%token MODE_HL "hl" MODE_HL_DEC "hld/hl-" MODE_HL_INC "hli/hl+"
+%token CC_NZ "nz" CC_Z "z" CC_NC "nc" // There is no CC_C, only TOKEN_C
 
-%type <constValue> reg_r
-%type <constValue> reg_ss
-%type <constValue> reg_rr
-%type <constValue> reg_tt
-%type <constValue> ccode_expr
-%type <constValue> ccode
-%type <expr> op_a_n
-%type <constValue> op_a_r
-%type <expr> op_mem_ind
-%type <assertType> assert_type
+%type <int32_t> reg_r
+%type <int32_t> reg_ss
+%type <int32_t> reg_rr
+%type <int32_t> reg_tt
+%type <int32_t> ccode_expr
+%type <int32_t> ccode
+%type <Expression> op_a_n
+%type <int32_t> op_a_r
+%type <Expression> op_mem_ind
+%type <AssertionType> assert_type
 
-%token T_EOB "end of buffer"
-%token T_EOF 0 "end of file"
+%token EOB "end of buffer"
+%token YYEOF 0 "end of file"
 %start asmfile
 
 %%
@@ -336,18 +323,18 @@ lines:
 	| lines opt_diff_mark line
 ;
 
-endofline: T_NEWLINE | T_EOB
+endofline: NEWLINE | EOB
 ;
 
 opt_diff_mark:
 	  %empty // OK
-	| T_OP_ADD {
-		error(
+	| OP_ADD {
+		::error(
 			"syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
-	| T_OP_SUB {
-		error(
+	| OP_SUB {
+		::error(
 			"syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)\n"
 		);
 	}
@@ -367,17 +354,17 @@ line:
 		yyerrok;
 	}
 	// Hint about unindented macros parsed as labels
-	| T_LABEL error {
+	| LABEL error {
 		lexer_SetMode(LEXER_NORMAL);
 		lexer_ToggleStringExpansion(true);
 	} endofline {
-		Symbol *macro = sym_FindExactSymbol($1);
+		Symbol *macro = sym_FindExactSymbol($1.symName);
 
 		if (macro && macro->type == SYM_MACRO)
 		fprintf(
 			stderr,
 			"    To invoke `%s` as a macro it must be indented\n",
-			$1
+			$1.symName
 		);
 		fstk_StopRept();
 		yyerrok;
@@ -401,7 +388,7 @@ line_directive:
 ;
 
 if:
-	T_POP_IF const T_NEWLINE {
+	POP_IF const NEWLINE {
 		lexer_IncIFDepth();
 
 		if ($2)
@@ -412,7 +399,7 @@ if:
 ;
 
 elif:
-	T_POP_ELIF const T_NEWLINE {
+	POP_ELIF const NEWLINE {
 		if (lexer_GetIFDepth() == 0)
 			fatalerror("Found ELIF outside an IF construct\n");
 
@@ -430,7 +417,7 @@ elif:
 ;
 
 else:
-	T_POP_ELSE T_NEWLINE {
+	POP_ELSE NEWLINE {
 		if (lexer_GetIFDepth() == 0)
 			fatalerror("Found ELSE outside an IF construct\n");
 
@@ -457,64 +444,64 @@ plain_directive:
 ;
 
 endc:
-	T_POP_ENDC {
+	POP_ENDC {
 		lexer_DecIFDepth();
 	}
 ;
 
 def_id:
-	T_OP_DEF {
+	OP_DEF {
 		lexer_ToggleStringExpansion(false);
-	} T_ID {
+	} ID {
 		lexer_ToggleStringExpansion(true);
-		strcpy($$, $3);
+		$$ = $3;
 	}
 ;
 
 redef_id:
-	T_POP_REDEF {
+	POP_REDEF {
 		lexer_ToggleStringExpansion(false);
-	} T_ID {
+	} ID {
 		lexer_ToggleStringExpansion(true);
-		strcpy($$, $3);
+		$$ = $3;
 	}
 ;
 
-// T_LABEL covers identifiers followed by a double colon (e.g. `call Function::ret`,
+// LABEL covers identifiers followed by a double colon (e.g. `call Function::ret`,
 // to be read as `call Function :: ret`). This should not conflict with anything.
-scoped_id: T_ID | T_LOCAL_ID | T_LABEL;
-scoped_anon_id: scoped_id | T_ANON;
+scoped_id: ID | LOCAL_ID | LABEL;
+scoped_anon_id: scoped_id | ANON;
 
 label:
 	  %empty
-	| T_COLON {
+	| COLON {
 		sym_AddAnonLabel();
 	}
-	| T_LOCAL_ID {
-		sym_AddLocalLabel($1);
+	| LOCAL_ID {
+		sym_AddLocalLabel($1.symName);
 	}
-	| T_LOCAL_ID T_COLON {
-		sym_AddLocalLabel($1);
+	| LOCAL_ID COLON {
+		sym_AddLocalLabel($1.symName);
 	}
-	| T_LABEL T_COLON {
-		sym_AddLabel($1);
+	| LABEL COLON {
+		sym_AddLabel($1.symName);
 	}
-	| T_LOCAL_ID T_DOUBLE_COLON {
-		sym_AddLocalLabel($1);
-		sym_Export($1);
+	| LOCAL_ID DOUBLE_COLON {
+		sym_AddLocalLabel($1.symName);
+		sym_Export($1.symName);
 	}
-	| T_LABEL T_DOUBLE_COLON {
-		sym_AddLabel($1);
-		sym_Export($1);
+	| LABEL DOUBLE_COLON {
+		sym_AddLabel($1.symName);
+		sym_Export($1.symName);
 	}
 ;
 
 macro:
-	T_ID {
+	ID {
 		// Parsing 'macroargs' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macroargs {
-		fstk_RunMacro($1, *$3);
+		fstk_RunMacro($1.symName, *$3);
 	}
 ;
 
@@ -524,13 +511,13 @@ macroargs:
 		if (!$$)
 			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
 	}
-	| macroargs T_STRING {
-		$1->append($2);
+	| macroargs STRING {
+		$1->append($2.string);
 		$$ = $1;
 	}
 ;
 
-// These commands start with a T_LABEL.
+// These commands start with a LABEL.
 assignment_directive: equ | assignment | rb | rw | rl | equs;
 
 directive:
@@ -577,54 +564,59 @@ directive:
 	| align
 ;
 
-trailing_comma: %empty | T_COMMA;
+trailing_comma: %empty | COMMA;
 
 compoundeq:
-	T_POP_ADDEQ {
+	POP_ADDEQ {
 		$$ = RPN_ADD;
 	}
-	| T_POP_SUBEQ {
+	| POP_SUBEQ {
 		$$ = RPN_SUB;
 	}
-	| T_POP_MULEQ {
+	| POP_MULEQ {
 		$$ = RPN_MUL;
 	}
-	| T_POP_DIVEQ {
+	| POP_DIVEQ {
 		$$ = RPN_DIV;
 	}
-	| T_POP_MODEQ {
+	| POP_MODEQ {
 		$$ = RPN_MOD;
 	}
-	| T_POP_XOREQ {
+	| POP_XOREQ {
 		$$ = RPN_XOR;
 	}
-	| T_POP_OREQ {
+	| POP_OREQ {
 		$$ = RPN_OR;
 	}
-	| T_POP_ANDEQ {
+	| POP_ANDEQ {
 		$$ = RPN_AND;
 	}
-	| T_POP_SHLEQ {
+	| POP_SHLEQ {
 		$$ = RPN_SHL;
 	}
-	| T_POP_SHREQ {
+	| POP_SHREQ {
 		$$ = RPN_SHR;
 	}
 ;
 
 equ:
-	T_LABEL T_POP_EQU const {
-		warning(WARNING_OBSOLETE, "`%s EQU` is deprecated; use `DEF %s EQU`\n", $1, $1);
-		sym_AddEqu($1, $3);
+	LABEL POP_EQU const {
+		warning(
+		    WARNING_OBSOLETE,
+		    "`%s EQU` is deprecated; use `DEF %s EQU`\n",
+		    $1.symName,
+		    $1.symName
+		);
+		sym_AddEqu($1.symName, $3);
 	}
 ;
 
 assignment:
-	T_LABEL T_POP_EQUAL const {
-		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1, $1);
-		sym_AddVar($1, $3);
+	LABEL POP_EQUAL const {
+		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.symName, $1.symName);
+		sym_AddVar($1.symName, $3);
 	}
-	| T_LABEL compoundeq const {
+	| LABEL compoundeq const {
 		const char *compoundEqOperator = nullptr;
 		switch ($2) {
 			case RPN_ADD: compoundEqOperator = "+="; break;
@@ -643,48 +635,68 @@ assignment:
 		warning(
 			WARNING_OBSOLETE,
 			"`%s %s` is deprecated; use `DEF %s %s`\n",
-			$1,
+			$1.symName,
 			compoundEqOperator,
-			$1,
+			$1.symName,
 			compoundEqOperator
 		);
-		compoundAssignment($1, $2, $3);
+		compoundAssignment($1.symName, $2, $3);
 	}
 ;
 
 equs:
-	T_LABEL T_POP_EQUS string {
-		warning(WARNING_OBSOLETE, "`%s EQUS` is deprecated; use `DEF %s EQUS`\n", $1, $1);
-		sym_AddString($1, $3);
+	LABEL POP_EQUS string {
+		warning(
+		    WARNING_OBSOLETE,
+		    "`%s EQUS` is deprecated; use `DEF %s EQUS`\n",
+		    $1.symName,
+		    $1.symName
+		);
+		sym_AddString($1.symName, $3.string);
 	}
 ;
 
 rb:
-	T_LABEL T_POP_RB rs_uconst {
-		warning(WARNING_OBSOLETE, "`%s RB` is deprecated; use `DEF %s RB`\n", $1, $1);
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	LABEL POP_RB rs_uconst {
+		warning(
+		    WARNING_OBSOLETE,
+		    "`%s RB` is deprecated; use `DEF %s RB`\n",
+		    $1.symName,
+		    $1.symName
+		);
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 	}
 ;
 
 rw:
-	T_LABEL T_POP_RW rs_uconst {
-		warning(WARNING_OBSOLETE, "`%s RW` is deprecated; use `DEF %s RW`\n", $1, $1);
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	LABEL POP_RW rs_uconst {
+		warning(
+		    WARNING_OBSOLETE,
+		    "`%s RW` is deprecated; use `DEF %s RW`\n",
+		    $1.symName,
+		    $1.symName
+		);
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 	}
 ;
 
 rl:
-	T_LABEL T_Z80_RL rs_uconst {
-		warning(WARNING_OBSOLETE, "`%s RL` is deprecated; use `DEF %s RL`\n", $1, $1);
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	LABEL Z80_RL rs_uconst {
+		warning(
+			WARNING_OBSOLETE,
+			"`%s RL` is deprecated; use `DEF %s RL`\n",
+			$1.symName,
+			$1.symName
+		);
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 	}
 ;
 
 align:
-	T_OP_ALIGN align_spec {
+	OP_ALIGN align_spec {
 		sect_AlignPC($2.alignment, $2.alignOfs);
 	}
 ;
@@ -692,19 +704,19 @@ align:
 align_spec:
 	uconst {
 		if ($1 > 16) {
-			error("Alignment must be between 0 and 16, not %u\n", $1);
+			::error("Alignment must be between 0 and 16, not %u\n", $1);
 			$$.alignment = $$.alignOfs = 0;
 		} else {
 			$$.alignment = $1;
 			$$.alignOfs = 0;
 		}
 	}
-	| uconst T_COMMA const {
+	| uconst COMMA const {
 		if ($1 > 16) {
-			error("Alignment must be between 0 and 16, not %u\n", $1);
+			::error("Alignment must be between 0 and 16, not %u\n", $1);
 			$$.alignment = $$.alignOfs = 0;
 		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
-			error(
+			::error(
 				"The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
 				(uint32_t)($3 < 0 ? -$3 : $3),
 				1 << $1
@@ -718,7 +730,7 @@ align_spec:
 ;
 
 opt:
-	T_POP_OPT {
+	POP_OPT {
 		// Parsing 'opt_list' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} opt_list
@@ -730,50 +742,50 @@ opt_list:
 ;
 
 opt_list_entry:
-	T_STRING {
-		opt_Parse($1);
+	STRING {
+		opt_Parse($1.string);
 	}
 ;
 
 popo:
-	T_POP_POPO {
+	POP_POPO {
 		opt_Pop();
 	}
 ;
 
 pusho:
-	T_POP_PUSHO {
+	POP_PUSHO {
 		opt_Push();
 	}
 ;
 
 pops:
-	T_POP_POPS {
+	POP_POPS {
 		sect_PopSection();
 	}
 ;
 
 pushs:
-	T_POP_PUSHS {
+	POP_PUSHS {
 		sect_PushSection();
 	}
 ;
 
 endsection:
-	T_POP_ENDSECTION {
+	POP_ENDSECTION {
 		sect_EndSection();
 	}
 ;
 
 fail:
-	T_POP_FAIL string {
-		fatalerror("%s\n", $2);
+	POP_FAIL string {
+		fatalerror("%s\n", $2.string);
 	}
 ;
 
 warn:
-	T_POP_WARN string {
-		warning(WARNING_USER, "%s\n", $2);
+	POP_WARN string {
+		warning(WARNING_USER, "%s\n", $2.string);
 	}
 ;
 
@@ -781,19 +793,19 @@ assert_type:
 	%empty {
 		$$ = ASSERT_ERROR;
 	}
-	| T_POP_WARN T_COMMA {
+	| POP_WARN COMMA {
 		$$ = ASSERT_WARN;
 	}
-	| T_POP_FAIL T_COMMA {
+	| POP_FAIL COMMA {
 		$$ = ASSERT_ERROR;
 	}
-	| T_POP_FATAL T_COMMA {
+	| POP_FATAL COMMA {
 		$$ = ASSERT_FATAL;
 	}
 ;
 
 assert:
-	T_POP_ASSERT assert_type relocexpr {
+	POP_ASSERT assert_type relocexpr {
 		if (!$3.isKnown) {
 			out_CreateAssert($2, $3, "", sect_GetOutputOffset());
 		} else if ($3.val == 0) {
@@ -801,58 +813,59 @@ assert:
 		}
 		rpn_Free($3);
 	}
-	| T_POP_ASSERT assert_type relocexpr T_COMMA string {
+	| POP_ASSERT assert_type relocexpr COMMA string {
 		if (!$3.isKnown) {
-			out_CreateAssert($2, $3, $5, sect_GetOutputOffset());
+			out_CreateAssert($2, $3, $5.string, sect_GetOutputOffset());
 		} else if ($3.val == 0) {
-			failAssertMsg($2, $5);
+			failAssertMsg($2, $5.string);
 		}
 		rpn_Free($3);
 	}
-	| T_POP_STATIC_ASSERT assert_type const {
+	| POP_STATIC_ASSERT assert_type const {
 		if ($3 == 0)
 			failAssert($2);
 	}
-	| T_POP_STATIC_ASSERT assert_type const T_COMMA string {
+	| POP_STATIC_ASSERT assert_type const COMMA string {
 		if ($3 == 0)
-			failAssertMsg($2, $5);
+			failAssertMsg($2, $5.string);
 	}
 ;
 
 shift:
-	T_POP_SHIFT {
+	POP_SHIFT {
 		macro_ShiftCurrentArgs(1);
 	}
-	| T_POP_SHIFT const {
+	| POP_SHIFT const {
 		macro_ShiftCurrentArgs($2);
 	}
 ;
 
 load:
-	T_POP_LOAD sectmod string T_COMMA sectiontype sectorg sectattrs {
-		sect_SetLoadSection($3, (enum SectionType)$5, $6, $7, $2);
+	POP_LOAD sectmod string COMMA sectiontype sectorg sectattrs {
+		sect_SetLoadSection($3.string, (enum SectionType)$5, $6, $7, $2);
 	}
-	| T_POP_ENDL {
+	| POP_ENDL {
 		sect_EndLoadSection();
 	}
 ;
 
 rept:
-	T_POP_REPT uconst T_NEWLINE capture_rept endofline {
+	POP_REPT uconst NEWLINE capture_rept endofline {
 		if ($4)
 			fstk_RunRept($2, captureBody.lineNo, captureBody.body, captureBody.size);
 	}
 ;
 
 for:
-	T_POP_FOR {
+	POP_FOR {
 		lexer_ToggleStringExpansion(false);
-	} T_ID {
+	} ID {
 		lexer_ToggleStringExpansion(true);
-	} T_COMMA for_args T_NEWLINE capture_rept endofline {
+
+	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8)
 			fstk_RunFor(
-				$3,
+				$3.symName,
 				$6.start,
 				$6.stop,
 				$6.step,
@@ -875,12 +888,12 @@ for_args:
 		$$.stop = $1;
 		$$.step = 1;
 	}
-	| const T_COMMA const {
+	| const COMMA const {
 		$$.start = $1;
 		$$.stop = $3;
 		$$.step = 1;
 	}
-	| const T_COMMA const T_COMMA const {
+	| const COMMA const COMMA const {
 		$$.start = $1;
 		$$.stop = $3;
 		$$.step = $5;
@@ -888,20 +901,20 @@ for_args:
 ;
 
 break:
-	label T_POP_BREAK endofline {
+	label POP_BREAK endofline {
 		if (fstk_Break())
 			lexer_SetMode(LEXER_SKIP_TO_ENDR);
 	}
 ;
 
 macrodef:
-	T_POP_MACRO {
+	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
-	} T_ID {
+	} ID {
 		lexer_ToggleStringExpansion(true);
-	} T_NEWLINE capture_macro endofline {
+	} NEWLINE capture_macro endofline {
 		if ($6)
-			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
+			sym_AddMacro($3.symName, captureBody.lineNo, captureBody.body, captureBody.size);
 	}
 ;
 
@@ -912,13 +925,13 @@ capture_macro:
 ;
 
 rsset:
-	T_POP_RSSET uconst {
+	POP_RSSET uconst {
 		sym_AddVar("_RS", $2);
 	}
 ;
 
 rsreset:
-	T_POP_RSRESET {
+	POP_RSRESET {
 		sym_AddVar("_RS", 0);
 	}
 ;
@@ -931,38 +944,38 @@ rs_uconst:
 ;
 
 union:
-	T_POP_UNION {
+	POP_UNION {
 		sect_StartUnion();
 	}
 ;
 
 nextu:
-	T_POP_NEXTU {
+	POP_NEXTU {
 		sect_NextUnionMember();
 	}
 ;
 
 endu:
-	T_POP_ENDU {
+	POP_ENDU {
 		sect_EndUnion();
 	}
 ;
 
 ds:
-	T_POP_DS uconst {
+	POP_DS uconst {
 		sect_Skip($2, true);
 	}
-	| T_POP_DS uconst T_COMMA ds_args trailing_comma {
+	| POP_DS uconst COMMA ds_args trailing_comma {
 		sect_RelBytes($2, *$4);
 		delete $4;
 	}
-	| T_POP_DS T_OP_ALIGN T_LBRACK align_spec T_RBRACK trailing_comma {
+	| POP_DS OP_ALIGN LBRACK align_spec RBRACK trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
 		sect_Skip(n, true);
 		sect_AlignPC($4.alignment, $4.alignOfs);
 	}
-	| T_POP_DS T_OP_ALIGN T_LBRACK align_spec T_RBRACK T_COMMA ds_args trailing_comma {
+	| POP_DS OP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
 		sect_RelBytes(n, *$7);
@@ -976,95 +989,95 @@ ds_args:
 		initDsArgList($$);
 		$$->push_back($1);
 	}
-	| ds_args T_COMMA reloc_8bit {
+	| ds_args COMMA reloc_8bit {
 		$1->push_back($3);
 		$$ = $1;
 	}
 ;
 
 db:
-	T_POP_DB {
+	POP_DB {
 		sect_Skip(1, false);
 	}
-	| T_POP_DB constlist_8bit trailing_comma
+	| POP_DB constlist_8bit trailing_comma
 ;
 
 dw:
-	T_POP_DW {
+	POP_DW {
 		sect_Skip(2, false);
 	}
-	| T_POP_DW constlist_16bit trailing_comma
+	| POP_DW constlist_16bit trailing_comma
 ;
 
 dl:
-	T_POP_DL {
+	POP_DL {
 		sect_Skip(4, false);
 	}
-	| T_POP_DL constlist_32bit trailing_comma
+	| POP_DL constlist_32bit trailing_comma
 ;
 
 def_equ:
-	def_id T_POP_EQU const {
-		sym_AddEqu($1, $3);
+	def_id POP_EQU const {
+		sym_AddEqu($1.symName, $3);
 	}
 ;
 
 redef_equ:
-	redef_id T_POP_EQU const {
-		sym_RedefEqu($1, $3);
+	redef_id POP_EQU const {
+		sym_RedefEqu($1.symName, $3);
 	}
 ;
 
 def_set:
-	def_id T_POP_EQUAL const {
-		sym_AddVar($1, $3);
+	def_id POP_EQUAL const {
+		sym_AddVar($1.symName, $3);
 	}
-	| redef_id T_POP_EQUAL const {
-		sym_AddVar($1, $3);
+	| redef_id POP_EQUAL const {
+		sym_AddVar($1.symName, $3);
 	}
 	| def_id compoundeq const {
-		compoundAssignment($1, $2, $3);
+		compoundAssignment($1.symName, $2, $3);
 	}
 	| redef_id compoundeq const {
-		compoundAssignment($1, $2, $3);
+		compoundAssignment($1.symName, $2, $3);
 	}
 ;
 
 def_rb:
-	def_id T_POP_RB rs_uconst {
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	def_id POP_RB rs_uconst {
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 	}
 ;
 
 def_rw:
-	def_id T_POP_RW rs_uconst {
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	def_id POP_RW rs_uconst {
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 	}
 ;
 
 def_rl:
-	def_id T_Z80_RL rs_uconst {
-		sym_AddEqu($1, sym_GetConstantValue("_RS"));
+	def_id Z80_RL rs_uconst {
+		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 	}
 ;
 
 def_equs:
-	def_id T_POP_EQUS string {
-		sym_AddString($1, $3);
+	def_id POP_EQUS string {
+		sym_AddString($1.symName, $3.string);
 	}
 ;
 
 redef_equs:
-	redef_id T_POP_EQUS string {
-		sym_RedefString($1, $3);
+	redef_id POP_EQUS string {
+		sym_RedefString($1.symName, $3.string);
 	}
 ;
 
 purge:
-	T_POP_PURGE {
+	POP_PURGE {
 		lexer_ToggleStringExpansion(false);
 	} purge_args trailing_comma {
 		for (std::string &arg : *$3)
@@ -1077,94 +1090,94 @@ purge:
 purge_args:
 	scoped_id {
 		initPurgeArgList($$);
-		$$->push_back($1);
+		$$->push_back($1.symName);
 	}
-	| purge_args T_COMMA scoped_id {
-		$1->push_back($3);
+	| purge_args COMMA scoped_id {
+		$1->push_back($3.symName);
 		$$ = $1;
 	}
 ;
 
-export: T_POP_EXPORT export_list trailing_comma;
+export: POP_EXPORT export_list trailing_comma;
 
 export_list:
 	  export_list_entry
-	| export_list T_COMMA export_list_entry
+	| export_list COMMA export_list_entry
 ;
 
 export_list_entry:
 	scoped_id {
-		sym_Export($1);
+		sym_Export($1.symName);
 	}
 ;
 
 include:
-	label T_POP_INCLUDE string endofline {
-		fstk_RunInclude($3);
+	label POP_INCLUDE string endofline {
+		fstk_RunInclude($3.string);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 ;
 
 incbin:
-	T_POP_INCBIN string {
-		sect_BinaryFile($2, 0);
+	POP_INCBIN string {
+		sect_BinaryFile($2.string, 0);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
-	| T_POP_INCBIN string T_COMMA const {
-		sect_BinaryFile($2, $4);
+	| POP_INCBIN string COMMA const {
+		sect_BinaryFile($2.string, $4);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
-	| T_POP_INCBIN string T_COMMA const T_COMMA const {
-		sect_BinaryFileSlice($2, $4, $6);
+	| POP_INCBIN string COMMA const COMMA const {
+		sect_BinaryFileSlice($2.string, $4, $6);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 ;
 
 charmap:
-	T_POP_CHARMAP string T_COMMA const_8bit {
-		charmap_Add($2, (uint8_t)$4);
+	POP_CHARMAP string COMMA const_8bit {
+		charmap_Add($2.string, (uint8_t)$4);
 	}
 ;
 
 newcharmap:
-	T_POP_NEWCHARMAP T_ID {
-		charmap_New($2, nullptr);
+	POP_NEWCHARMAP ID {
+		charmap_New($2.symName, nullptr);
 	}
-	| T_POP_NEWCHARMAP T_ID T_COMMA T_ID {
-		charmap_New($2, $4);
+	| POP_NEWCHARMAP ID COMMA ID {
+		charmap_New($2.symName, $4.symName);
 	}
 ;
 
 setcharmap:
-	T_POP_SETCHARMAP T_ID {
-		charmap_Set($2);
+	POP_SETCHARMAP ID {
+		charmap_Set($2.symName);
 	}
 ;
 
 pushc:
-	T_POP_PUSHC {
+	POP_PUSHC {
 		charmap_Push();
 	}
 ;
 
 popc:
-	T_POP_POPC {
+	POP_POPC {
 		charmap_Pop();
 	}
 ;
 
-print: T_POP_PRINT print_exprs trailing_comma;
+print: POP_PRINT print_exprs trailing_comma;
 
 println:
-	T_POP_PRINTLN {
+	POP_PRINTLN {
 		putchar('\n');
 		fflush(stdout);
 	}
-	| T_POP_PRINTLN print_exprs trailing_comma {
+	| POP_PRINTLN print_exprs trailing_comma {
 		putchar('\n');
 		fflush(stdout);
 	}
@@ -1172,7 +1185,7 @@ println:
 
 print_exprs:
 	  print_expr
-	| print_exprs T_COMMA print_expr
+	| print_exprs COMMA print_expr
 ;
 
 print_expr:
@@ -1180,7 +1193,7 @@ print_expr:
 		printf("$%" PRIX32, $1);
 	}
 	| string {
-		fputs($1, stdout);
+		fputs($1.string, stdout);
 	}
 ;
 
@@ -1189,7 +1202,7 @@ const_3bit:
 		int32_t value = $1;
 
 		if ((value < 0) || (value > 7)) {
-			error("Immediate value must be 3-bit\n");
+			::error("Immediate value must be 3-bit\n");
 			$$ = 0;
 		} else {
 			$$ = value & 0x7;
@@ -1199,7 +1212,7 @@ const_3bit:
 
 constlist_8bit:
 	  constlist_8bit_entry
-	| constlist_8bit T_COMMA constlist_8bit_entry
+	| constlist_8bit COMMA constlist_8bit_entry
 ;
 
 constlist_8bit_entry:
@@ -1209,14 +1222,14 @@ constlist_8bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1, output);
+		charmap_Convert($1.string, output);
 		sect_AbsByteGroup(output.data(), output.size());
 	}
 ;
 
 constlist_16bit:
 	  constlist_16bit_entry
-	| constlist_16bit T_COMMA constlist_16bit_entry
+	| constlist_16bit COMMA constlist_16bit_entry
 ;
 
 constlist_16bit_entry:
@@ -1226,14 +1239,14 @@ constlist_16bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1, output);
+		charmap_Convert($1.string, output);
 		sect_AbsWordGroup(output.data(), output.size());
 	}
 ;
 
 constlist_32bit:
 	  constlist_32bit_entry
-	| constlist_32bit T_COMMA constlist_32bit_entry
+	| constlist_32bit COMMA constlist_32bit_entry
 ;
 
 constlist_32bit_entry:
@@ -1243,7 +1256,7 @@ constlist_32bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1, output);
+		charmap_Convert($1.string, output);
 		sect_AbsLongGroup(output.data(), output.size());
 	}
 ;
@@ -1263,11 +1276,11 @@ reloc_8bit_no_str:
 ;
 
 reloc_8bit_offset:
-	T_OP_ADD relocexpr {
+	OP_ADD relocexpr {
 		rpn_CheckNBit($2, 8);
 		$$ = $2;
 	}
-	| T_OP_SUB relocexpr {
+	| OP_SUB relocexpr {
 		rpn_NEG($$, $2);
 		rpn_CheckNBit($$, 8);
 	}
@@ -1292,193 +1305,193 @@ relocexpr:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1, output);
+		charmap_Convert($1.string, output);
 		rpn_Number($$, str2int2(output));
 	}
 ;
 
 relocexpr_no_str:
 	scoped_anon_id {
-		rpn_Symbol($$, $1);
+		rpn_Symbol($$, $1.symName);
 	}
-	| T_NUMBER {
+	| NUMBER {
 		rpn_Number($$, $1);
 	}
-	| T_OP_LOGICNOT relocexpr %prec NEG {
+	| OP_LOGICNOT relocexpr %prec NEG {
 		rpn_LOGNOT($$, $2);
 	}
-	| relocexpr T_OP_LOGICOR relocexpr {
+	| relocexpr OP_LOGICOR relocexpr {
 		rpn_BinaryOp(RPN_LOGOR, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICAND relocexpr {
+	| relocexpr OP_LOGICAND relocexpr {
 		rpn_BinaryOp(RPN_LOGAND, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICEQU relocexpr {
+	| relocexpr OP_LOGICEQU relocexpr {
 		rpn_BinaryOp(RPN_LOGEQ, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICGT relocexpr {
+	| relocexpr OP_LOGICGT relocexpr {
 		rpn_BinaryOp(RPN_LOGGT, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICLT relocexpr {
+	| relocexpr OP_LOGICLT relocexpr {
 		rpn_BinaryOp(RPN_LOGLT, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICGE relocexpr {
+	| relocexpr OP_LOGICGE relocexpr {
 		rpn_BinaryOp(RPN_LOGGE, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICLE relocexpr {
+	| relocexpr OP_LOGICLE relocexpr {
 		rpn_BinaryOp(RPN_LOGLE, $$, $1, $3);
 	}
-	| relocexpr T_OP_LOGICNE relocexpr {
+	| relocexpr OP_LOGICNE relocexpr {
 		rpn_BinaryOp(RPN_LOGNE, $$, $1, $3);
 	}
-	| relocexpr T_OP_ADD relocexpr {
+	| relocexpr OP_ADD relocexpr {
 		rpn_BinaryOp(RPN_ADD, $$, $1, $3);
 	}
-	| relocexpr T_OP_SUB relocexpr {
+	| relocexpr OP_SUB relocexpr {
 		rpn_BinaryOp(RPN_SUB, $$, $1, $3);
 	}
-	| relocexpr T_OP_XOR relocexpr {
+	| relocexpr OP_XOR relocexpr {
 		rpn_BinaryOp(RPN_XOR, $$, $1, $3);
 	}
-	| relocexpr T_OP_OR relocexpr {
+	| relocexpr OP_OR relocexpr {
 		rpn_BinaryOp(RPN_OR, $$, $1, $3);
 	}
-	| relocexpr T_OP_AND relocexpr {
+	| relocexpr OP_AND relocexpr {
 		rpn_BinaryOp(RPN_AND, $$, $1, $3);
 	}
-	| relocexpr T_OP_SHL relocexpr {
+	| relocexpr OP_SHL relocexpr {
 		rpn_BinaryOp(RPN_SHL, $$, $1, $3);
 	}
-	| relocexpr T_OP_SHR relocexpr {
+	| relocexpr OP_SHR relocexpr {
 		rpn_BinaryOp(RPN_SHR, $$, $1, $3);
 	}
-	| relocexpr T_OP_USHR relocexpr {
+	| relocexpr OP_USHR relocexpr {
 		rpn_BinaryOp(RPN_USHR, $$, $1, $3);
 	}
-	| relocexpr T_OP_MUL relocexpr {
+	| relocexpr OP_MUL relocexpr {
 		rpn_BinaryOp(RPN_MUL, $$, $1, $3);
 	}
-	| relocexpr T_OP_DIV relocexpr {
+	| relocexpr OP_DIV relocexpr {
 		rpn_BinaryOp(RPN_DIV, $$, $1, $3);
 	}
-	| relocexpr T_OP_MOD relocexpr {
+	| relocexpr OP_MOD relocexpr {
 		rpn_BinaryOp(RPN_MOD, $$, $1, $3);
 	}
-	| relocexpr T_OP_EXP relocexpr {
+	| relocexpr OP_EXP relocexpr {
 		rpn_BinaryOp(RPN_EXP, $$, $1, $3);
 	}
-	| T_OP_ADD relocexpr %prec NEG {
+	| OP_ADD relocexpr %prec NEG {
 		$$ = $2;
 	}
-	| T_OP_SUB relocexpr %prec NEG {
+	| OP_SUB relocexpr %prec NEG {
 		rpn_NEG($$, $2);
 	}
-	| T_OP_NOT relocexpr %prec NEG {
+	| OP_NOT relocexpr %prec NEG {
 		rpn_NOT($$, $2);
 	}
-	| T_OP_HIGH T_LPAREN relocexpr T_RPAREN {
+	| OP_HIGH LPAREN relocexpr RPAREN {
 		rpn_HIGH($$, $3);
 	}
-	| T_OP_LOW T_LPAREN relocexpr T_RPAREN {
+	| OP_LOW LPAREN relocexpr RPAREN {
 		rpn_LOW($$, $3);
 	}
-	| T_OP_ISCONST T_LPAREN relocexpr T_RPAREN {
+	| OP_ISCONST LPAREN relocexpr RPAREN {
 		rpn_ISCONST($$, $3);
 	}
-	| T_OP_BANK T_LPAREN scoped_anon_id T_RPAREN {
-		// '@' is also a T_ID; it is handled here
-		rpn_BankSymbol($$, $3);
+	| OP_BANK LPAREN scoped_anon_id RPAREN {
+		// '@' is also an ID; it is handled here
+		rpn_BankSymbol($$, $3.symName);
 	}
-	| T_OP_BANK T_LPAREN string T_RPAREN {
-		rpn_BankSection($$, $3);
+	| OP_BANK LPAREN string RPAREN {
+		rpn_BankSection($$, $3.string);
 	}
-	| T_OP_SIZEOF T_LPAREN string T_RPAREN {
-		rpn_SizeOfSection($$, $3);
+	| OP_SIZEOF LPAREN string RPAREN {
+		rpn_SizeOfSection($$, $3.string);
 	}
-	| T_OP_STARTOF T_LPAREN string T_RPAREN {
-		rpn_StartOfSection($$, $3);
+	| OP_STARTOF LPAREN string RPAREN {
+		rpn_StartOfSection($$, $3.string);
 	}
-	| T_OP_SIZEOF T_LPAREN sectiontype T_RPAREN {
+	| OP_SIZEOF LPAREN sectiontype RPAREN {
 		rpn_SizeOfSectionType($$, (enum SectionType)$3);
 	}
-	| T_OP_STARTOF T_LPAREN sectiontype T_RPAREN {
+	| OP_STARTOF LPAREN sectiontype RPAREN {
 		rpn_StartOfSectionType($$, (enum SectionType)$3);
 	}
-	| T_OP_DEF {
+	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
-	} T_LPAREN scoped_anon_id T_RPAREN {
-		rpn_Number($$, sym_FindScopedValidSymbol($4) != nullptr);
+	} LPAREN scoped_anon_id RPAREN {
+		rpn_Number($$, sym_FindScopedValidSymbol($4.symName) != nullptr);
 
 		lexer_ToggleStringExpansion(true);
 	}
-	| T_OP_ROUND T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_ROUND LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Round($3, $4));
 	}
-	| T_OP_CEIL T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_CEIL LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Ceil($3, $4));
 	}
-	| T_OP_FLOOR T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_FLOOR LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Floor($3, $4));
 	}
-	| T_OP_FDIV T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_FDIV LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Div($3, $5, $6));
 	}
-	| T_OP_FMUL T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_FMUL LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Mul($3, $5, $6));
 	}
-	| T_OP_FMOD T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_FMOD LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Mod($3, $5, $6));
 	}
-	| T_OP_POW T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_POW LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Pow($3, $5, $6));
 	}
-	| T_OP_LOG T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_LOG LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Log($3, $5, $6));
 	}
-	| T_OP_SIN T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_SIN LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Sin($3, $4));
 	}
-	| T_OP_COS T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_COS LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Cos($3, $4));
 	}
-	| T_OP_TAN T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_TAN LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_Tan($3, $4));
 	}
-	| T_OP_ASIN T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_ASIN LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_ASin($3, $4));
 	}
-	| T_OP_ACOS T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_ACOS LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_ACos($3, $4));
 	}
-	| T_OP_ATAN T_LPAREN const opt_q_arg T_RPAREN {
+	| OP_ATAN LPAREN const opt_q_arg RPAREN {
 		rpn_Number($$, fix_ATan($3, $4));
 	}
-	| T_OP_ATAN2 T_LPAREN const T_COMMA const opt_q_arg T_RPAREN {
+	| OP_ATAN2 LPAREN const COMMA const opt_q_arg RPAREN {
 		rpn_Number($$, fix_ATan2($3, $5, $6));
 	}
-	| T_OP_STRCMP T_LPAREN string T_COMMA string T_RPAREN {
-		rpn_Number($$, strcmp($3, $5));
+	| OP_STRCMP LPAREN string COMMA string RPAREN {
+		rpn_Number($$, strcmp($3.string, $5.string));
 	}
-	| T_OP_STRIN T_LPAREN string T_COMMA string T_RPAREN {
-		char const *p = strstr($3, $5);
+	| OP_STRIN LPAREN string COMMA string RPAREN {
+		char const *p = strstr($3.string, $5.string);
 
-		rpn_Number($$, p ? p - $3 + 1 : 0);
+		rpn_Number($$, p ? p - $3.string + 1 : 0);
 	}
-	| T_OP_STRRIN T_LPAREN string T_COMMA string T_RPAREN {
-		char const *p = strrstr($3, $5);
+	| OP_STRRIN LPAREN string COMMA string RPAREN {
+		char const *p = strrstr($3.string, $5.string);
 
-		rpn_Number($$, p ? p - $3 + 1 : 0);
+		rpn_Number($$, p ? p - $3.string + 1 : 0);
 	}
-	| T_OP_STRLEN T_LPAREN string T_RPAREN {
-		rpn_Number($$, strlenUTF8($3));
+	| OP_STRLEN LPAREN string RPAREN {
+		rpn_Number($$, strlenUTF8($3.string));
 	}
-	| T_OP_CHARLEN T_LPAREN string T_RPAREN {
-		rpn_Number($$, charlenUTF8($3));
+	| OP_CHARLEN LPAREN string RPAREN {
+		rpn_Number($$, charlenUTF8($3.string));
 	}
-	| T_OP_INCHARMAP T_LPAREN string T_RPAREN {
-		rpn_Number($$, charmap_HasChar($3));
+	| OP_INCHARMAP LPAREN string RPAREN {
+		rpn_Number($$, charmap_HasChar($3.string));
 	}
-	| T_LPAREN relocexpr T_RPAREN {
+	| LPAREN relocexpr RPAREN {
 		$$ = $2;
 	}
 ;
@@ -1513,86 +1526,86 @@ opt_q_arg:
 	%empty {
 		$$ = fix_Precision();
 	}
-	| T_COMMA const {
+	| COMMA const {
 		if ($2 >= 1 && $2 <= 31) {
 			$$ = $2;
 		} else {
-			error("Fixed-point precision must be between 1 and 31\n");
+			::error("Fixed-point precision must be between 1 and 31\n");
 			$$ = fix_Precision();
 		}
 	}
 ;
 
 string:
-	  T_STRING
-	| T_OP_STRSUB T_LPAREN string T_COMMA const T_COMMA uconst T_RPAREN {
-		size_t len = strlenUTF8($3);
+	  STRING
+	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
+		size_t len = strlenUTF8($3.string);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		strsubUTF8($$, sizeof($$), $3, pos, $7);
+		strsubUTF8($$.string, sizeof($$.string), $3.string, pos, $7);
 	}
-	| T_OP_STRSUB T_LPAREN string T_COMMA const T_RPAREN {
-		size_t len = strlenUTF8($3);
+	| OP_STRSUB LPAREN string COMMA const RPAREN {
+		size_t len = strlenUTF8($3.string);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		strsubUTF8($$, sizeof($$), $3, pos, pos > len ? 0 : len + 1 - pos);
+		strsubUTF8($$.string, sizeof($$.string), $3.string, pos, pos > len ? 0 : len + 1 - pos);
 	}
-	| T_OP_CHARSUB T_LPAREN string T_COMMA const T_RPAREN {
-		size_t len = charlenUTF8($3);
+	| OP_CHARSUB LPAREN string COMMA const RPAREN {
+		size_t len = charlenUTF8($3.string);
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
 
-		charsubUTF8($$, $3, pos);
+		charsubUTF8($$.string, $3.string, pos);
 	}
-	| T_OP_STRCAT T_LPAREN T_RPAREN {
-		$$[0] = '\0';
+	| OP_STRCAT LPAREN RPAREN {
+		$$.string[0] = '\0';
 	}
-	| T_OP_STRCAT T_LPAREN strcat_args T_RPAREN {
-		strcpy($$, $3);
+	| OP_STRCAT LPAREN strcat_args RPAREN {
+		$$ = $3;
 	}
-	| T_OP_STRUPR T_LPAREN string T_RPAREN {
-		upperstring($$, $3);
+	| OP_STRUPR LPAREN string RPAREN {
+		upperstring($$.string, $3.string);
 	}
-	| T_OP_STRLWR T_LPAREN string T_RPAREN {
-		lowerstring($$, $3);
+	| OP_STRLWR LPAREN string RPAREN {
+		lowerstring($$.string, $3.string);
 	}
-	| T_OP_STRRPL T_LPAREN string T_COMMA string T_COMMA string T_RPAREN {
-		strrpl($$, sizeof($$), $3, $5, $7);
+	| OP_STRRPL LPAREN string COMMA string COMMA string RPAREN {
+		strrpl($$.string, sizeof($$.string), $3.string, $5.string, $7.string);
 	}
-	| T_OP_STRFMT T_LPAREN strfmt_args T_RPAREN {
-		strfmt($$, sizeof($$), $3.format->c_str(), *$3.args);
+	| OP_STRFMT LPAREN strfmt_args RPAREN {
+		strfmt($$.string, sizeof($$.string), $3.format->c_str(), *$3.args);
 		freeStrFmtArgList($3);
 	}
-	| T_POP_SECTION T_LPAREN scoped_anon_id T_RPAREN {
-		Symbol *sym = sym_FindScopedValidSymbol($3);
+	| POP_SECTION LPAREN scoped_anon_id RPAREN {
+		Symbol *sym = sym_FindScopedValidSymbol($3.symName);
 
 		if (!sym)
-			fatalerror("Unknown symbol \"%s\"\n", $3);
+			fatalerror("Unknown symbol \"%s\"\n", $3.symName);
 		Section const *section = sym->getSection();
 
 		if (!section)
 			fatalerror("\"%s\" does not belong to any section\n", sym->name);
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
-		strcpy($$, section->name.c_str());
+		strcpy($$.string, section->name.c_str());
 	}
 ;
 
 strcat_args:
 	  string
-	| strcat_args T_COMMA string {
-		int ret = snprintf($$, sizeof($$), "%s%s", $1, $3);
+	| strcat_args COMMA string {
+		int ret = snprintf($$.string, sizeof($$.string), "%s%s", $1.string, $3.string);
 
 		if (ret == -1)
 			fatalerror("snprintf error in STRCAT: %s\n", strerror(errno));
-		else if ((unsigned int)ret >= sizeof($$))
-			warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n", $1, $3);
+		else if ((unsigned int)ret >= sizeof($$.string))
+			warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n", $1.string, $3.string);
 	}
 ;
 
 strfmt_args:
 	string strfmt_va_args {
 		$$ = $2;
-		*$$.format = $1;
+		*$$.format = $1.string;
 	}
 ;
 
@@ -1600,19 +1613,19 @@ strfmt_va_args:
 	%empty {
 		initStrFmtArgList($$);
 	}
-	| strfmt_va_args T_COMMA const_no_str {
+	| strfmt_va_args COMMA const_no_str {
 		$1.args->push_back((uint32_t)$3);
 		$$ = $1;
 	}
-	| strfmt_va_args T_COMMA string {
-		$1.args->push_back($3);
+	| strfmt_va_args COMMA string {
+		$1.args->push_back($3.string);
 		$$ = $1;
 	}
 ;
 
 section:
-	T_POP_SECTION sectmod string T_COMMA sectiontype sectorg sectattrs {
-		sect_NewSection($3, (enum SectionType)$5, $6, $7, $2);
+	POP_SECTION sectmod string COMMA sectiontype sectorg sectattrs {
+		sect_NewSection($3.string, (enum SectionType)$5, $6, $7, $2);
 	}
 ;
 
@@ -1620,37 +1633,37 @@ sectmod:
 	%empty {
 		$$ = SECTION_NORMAL;
 	}
-	| T_POP_UNION {
+	| POP_UNION {
 		$$ = SECTION_UNION;
 	}
-	| T_POP_FRAGMENT {
+	| POP_FRAGMENT {
 		$$ = SECTION_FRAGMENT;
 	}
 ;
 
 sectiontype:
-	T_SECT_WRAM0 {
+	SECT_WRAM0 {
 		$$ = SECTTYPE_WRAM0;
 	}
-	| T_SECT_VRAM {
+	| SECT_VRAM {
 		$$ = SECTTYPE_VRAM;
 	}
-	| T_SECT_ROMX {
+	| SECT_ROMX {
 		$$ = SECTTYPE_ROMX;
 	}
-	| T_SECT_ROM0 {
+	| SECT_ROM0 {
 		$$ = SECTTYPE_ROM0;
 	}
-	| T_SECT_HRAM {
+	| SECT_HRAM {
 		$$ = SECTTYPE_HRAM;
 	}
-	| T_SECT_WRAMX {
+	| SECT_WRAMX {
 		$$ = SECTTYPE_WRAMX;
 	}
-	| T_SECT_SRAM {
+	| SECT_SRAM {
 		$$ = SECTTYPE_SRAM;
 	}
-	| T_SECT_OAM {
+	| SECT_OAM {
 		$$ = SECTTYPE_OAM;
 	}
 ;
@@ -1659,9 +1672,9 @@ sectorg:
 	%empty {
 		$$ = -1;
 	}
-	| T_LBRACK uconst T_RBRACK {
+	| LBRACK uconst RBRACK {
 		if ($2 < 0 || $2 >= 0x10000) {
-			error("Address $%x is not 16-bit\n", $2);
+			::error("Address $%x is not 16-bit\n", $2);
 			$$ = -1;
 		} else {
 			$$ = $2;
@@ -1675,12 +1688,12 @@ sectattrs:
 		$$.alignOfs = 0;
 		$$.bank = -1;
 	}
-	| sectattrs T_COMMA T_OP_ALIGN T_LBRACK align_spec T_RBRACK {
+	| sectattrs COMMA OP_ALIGN LBRACK align_spec RBRACK {
 		$$ = $1;
 		$$.alignment = $5.alignment;
 		$$.alignOfs = $5.alignOfs;
 	}
-	| sectattrs T_COMMA T_OP_BANK T_LBRACK uconst T_RBRACK {
+	| sectattrs COMMA OP_BANK LBRACK uconst RBRACK {
 		$$ = $1;
 		$$.bank = $5; // We cannot check the validity of this yet
 	}
@@ -1690,7 +1703,7 @@ sectattrs:
 
 cpu_commands:
 	  cpu_command
-	| cpu_command T_DOUBLE_COLON cpu_commands
+	| cpu_command DOUBLE_COLON cpu_commands
 ;
 
 cpu_command:
@@ -1743,111 +1756,111 @@ cpu_command:
 ;
 
 z80_adc:
-	T_Z80_ADC op_a_n {
+	Z80_ADC op_a_n {
 		sect_AbsByte(0xCE);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_ADC op_a_r {
+	| Z80_ADC op_a_r {
 		sect_AbsByte(0x88 | $2);
 	}
 ;
 
 z80_add:
-	T_Z80_ADD op_a_n {
+	Z80_ADD op_a_n {
 		sect_AbsByte(0xC6);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_ADD op_a_r {
+	| Z80_ADD op_a_r {
 		sect_AbsByte(0x80 | $2);
 	}
-	| T_Z80_ADD T_MODE_HL T_COMMA reg_ss {
+	| Z80_ADD MODE_HL COMMA reg_ss {
 		sect_AbsByte(0x09 | ($4 << 4));
 	}
-	| T_Z80_ADD T_MODE_SP T_COMMA reloc_8bit {
+	| Z80_ADD MODE_SP COMMA reloc_8bit {
 		sect_AbsByte(0xE8);
 		sect_RelByte($4, 1);
 	}
 ;
 
 z80_and:
-	T_Z80_AND op_a_n {
+	Z80_AND op_a_n {
 		sect_AbsByte(0xE6);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_AND op_a_r {
+	| Z80_AND op_a_r {
 		sect_AbsByte(0xA0 | $2);
 	}
 ;
 
 z80_bit:
-	T_Z80_BIT const_3bit T_COMMA reg_r {
+	Z80_BIT const_3bit COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x40 | ($2 << 3) | $4);
 	}
 ;
 
 z80_call:
-	T_Z80_CALL reloc_16bit {
+	Z80_CALL reloc_16bit {
 		sect_AbsByte(0xCD);
 		sect_RelWord($2, 1);
 	}
-	| T_Z80_CALL ccode_expr T_COMMA reloc_16bit {
+	| Z80_CALL ccode_expr COMMA reloc_16bit {
 		sect_AbsByte(0xC4 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ccf:
-	T_Z80_CCF {
+	Z80_CCF {
 		sect_AbsByte(0x3F);
 	}
 ;
 
 z80_cp:
-	T_Z80_CP op_a_n {
+	Z80_CP op_a_n {
 		sect_AbsByte(0xFE);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_CP op_a_r {
+	| Z80_CP op_a_r {
 		sect_AbsByte(0xB8 | $2);
 	}
 ;
 
 z80_cpl:
-	T_Z80_CPL {
+	Z80_CPL {
 		sect_AbsByte(0x2F);
 	}
 ;
 
 z80_daa:
-	T_Z80_DAA {
+	Z80_DAA {
 		sect_AbsByte(0x27);
 	}
 ;
 
 z80_dec:
-	T_Z80_DEC reg_r {
+	Z80_DEC reg_r {
 		sect_AbsByte(0x05 | ($2 << 3));
 	}
-	| T_Z80_DEC reg_ss {
+	| Z80_DEC reg_ss {
 		sect_AbsByte(0x0B | ($2 << 4));
 	}
 ;
 
 z80_di:
-	T_Z80_DI {
+	Z80_DI {
 		sect_AbsByte(0xF3);
 	}
 ;
 
 z80_ei:
-	T_Z80_EI {
+	Z80_EI {
 		sect_AbsByte(0xFB);
 	}
 ;
 
 z80_halt:
-	T_Z80_HALT {
+	Z80_HALT {
 		sect_AbsByte(0x76);
 		if (haltNop) {
 			if (warnOnHaltNop) {
@@ -1863,83 +1876,83 @@ z80_halt:
 ;
 
 z80_inc:
-	T_Z80_INC reg_r {
+	Z80_INC reg_r {
 		sect_AbsByte(0x04 | ($2 << 3));
 	}
-	| T_Z80_INC reg_ss {
+	| Z80_INC reg_ss {
 		sect_AbsByte(0x03 | ($2 << 4));
 	}
 ;
 
 z80_jp:
-	T_Z80_JP reloc_16bit {
+	Z80_JP reloc_16bit {
 		sect_AbsByte(0xC3);
 		sect_RelWord($2, 1);
 	}
-	| T_Z80_JP ccode_expr T_COMMA reloc_16bit {
+	| Z80_JP ccode_expr COMMA reloc_16bit {
 		sect_AbsByte(0xC2 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
-	| T_Z80_JP T_MODE_HL {
+	| Z80_JP MODE_HL {
 		sect_AbsByte(0xE9);
 	}
 ;
 
 z80_jr:
-	T_Z80_JR reloc_16bit {
+	Z80_JR reloc_16bit {
 		sect_AbsByte(0x18);
 		sect_PCRelByte($2, 1);
 	}
-	| T_Z80_JR ccode_expr T_COMMA reloc_16bit {
+	| Z80_JR ccode_expr COMMA reloc_16bit {
 		sect_AbsByte(0x20 | ($2 << 3));
 		sect_PCRelByte($4, 1);
 	}
 ;
 
 z80_ldi:
-	T_Z80_LDI T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
+	Z80_LDI LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_AbsByte(0x02 | (2 << 4));
 	}
-	| T_Z80_LDI T_MODE_A T_COMMA T_LBRACK T_MODE_HL T_RBRACK {
+	| Z80_LDI MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_AbsByte(0x0A | (2 << 4));
 	}
 ;
 
 z80_ldd:
-	T_Z80_LDD T_LBRACK T_MODE_HL T_RBRACK T_COMMA T_MODE_A {
+	Z80_LDD LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_AbsByte(0x02 | (3 << 4));
 	}
-	| T_Z80_LDD T_MODE_A T_COMMA T_LBRACK T_MODE_HL T_RBRACK {
+	| Z80_LDD MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_AbsByte(0x0A | (3 << 4));
 	}
 ;
 
 z80_ldio:
-	T_Z80_LDH T_MODE_A T_COMMA op_mem_ind {
+	Z80_LDH MODE_A COMMA op_mem_ind {
 		rpn_CheckHRAM($4, $4);
 
 		sect_AbsByte(0xF0);
 		sect_RelByte($4, 1);
 	}
-	| T_Z80_LDH op_mem_ind T_COMMA T_MODE_A {
+	| Z80_LDH op_mem_ind COMMA MODE_A {
 		rpn_CheckHRAM($2, $2);
 
 		sect_AbsByte(0xE0);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_LDH T_MODE_A T_COMMA c_ind {
+	| Z80_LDH MODE_A COMMA c_ind {
 		sect_AbsByte(0xF2);
 	}
-	| T_Z80_LDH c_ind T_COMMA T_MODE_A {
+	| Z80_LDH c_ind COMMA MODE_A {
 		sect_AbsByte(0xE2);
 	}
 ;
 
 c_ind:
-	  T_LBRACK T_MODE_C T_RBRACK
-	| T_LBRACK relocexpr T_OP_ADD T_MODE_C T_RBRACK {
+	  LBRACK MODE_C RBRACK
+	| LBRACK relocexpr OP_ADD MODE_C RBRACK {
 		if (!$2.isKnown || $2.val != 0xFF00)
-			error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
+			::error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
 	}
 ;
 
@@ -1955,32 +1968,32 @@ z80_ld:
 ;
 
 z80_ld_hl:
-	T_Z80_LD T_MODE_HL T_COMMA T_MODE_SP reloc_8bit_offset {
+	Z80_LD MODE_HL COMMA MODE_SP reloc_8bit_offset {
 		sect_AbsByte(0xF8);
 		sect_RelByte($5, 1);
 	}
-	| T_Z80_LD T_MODE_HL T_COMMA reloc_16bit {
+	| Z80_LD MODE_HL COMMA reloc_16bit {
 		sect_AbsByte(0x01 | (REG_HL << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ld_sp:
-	T_Z80_LD T_MODE_SP T_COMMA T_MODE_HL {
+	Z80_LD MODE_SP COMMA MODE_HL {
 		sect_AbsByte(0xF9);
 	}
-	| T_Z80_LD T_MODE_SP T_COMMA reloc_16bit {
+	| Z80_LD MODE_SP COMMA reloc_16bit {
 		sect_AbsByte(0x01 | (REG_SP << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ld_mem:
-	T_Z80_LD op_mem_ind T_COMMA T_MODE_SP {
+	Z80_LD op_mem_ind COMMA MODE_SP {
 		sect_AbsByte(0x08);
 		sect_RelWord($2, 1);
 	}
-	| T_Z80_LD op_mem_ind T_COMMA T_MODE_A {
+	| Z80_LD op_mem_ind COMMA MODE_A {
 		if (optimizeLoads && $2.isKnown && $2.val >= 0xFF00) {
 			if (warnOnLdOpt) {
 				warnOnLdOpt = false;
@@ -2000,44 +2013,44 @@ z80_ld_mem:
 ;
 
 z80_ld_cind:
-	T_Z80_LD c_ind T_COMMA T_MODE_A {
+	Z80_LD c_ind COMMA MODE_A {
 		sect_AbsByte(0xE2);
 	}
 ;
 
 z80_ld_rr:
-	T_Z80_LD reg_rr T_COMMA T_MODE_A {
+	Z80_LD reg_rr COMMA MODE_A {
 		sect_AbsByte(0x02 | ($2 << 4));
 	}
 ;
 
 z80_ld_r:
-	T_Z80_LD reg_r T_COMMA reloc_8bit {
+	Z80_LD reg_r COMMA reloc_8bit {
 		sect_AbsByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
-	| T_Z80_LD reg_r T_COMMA reg_r {
+	| Z80_LD reg_r COMMA reg_r {
 		if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
-			error("LD [HL],[HL] not a valid instruction\n");
+			::error("LD [HL],[HL] not a valid instruction\n");
 		else
 			sect_AbsByte(0x40 | ($2 << 3) | $4);
 	}
 ;
 
 z80_ld_a:
-	T_Z80_LD reg_r T_COMMA c_ind {
+	Z80_LD reg_r COMMA c_ind {
 		if ($2 == REG_A)
 			sect_AbsByte(0xF2);
 		else
-			error("Destination operand must be A\n");
+			::error("Destination operand must be A\n");
 	}
-	| T_Z80_LD reg_r T_COMMA reg_rr {
+	| Z80_LD reg_r COMMA reg_rr {
 		if ($2 == REG_A)
 			sect_AbsByte(0x0A | ($4 << 4));
 		else
-			error("Destination operand must be A\n");
+			::error("Destination operand must be A\n");
 	}
-	| T_Z80_LD reg_r T_COMMA op_mem_ind {
+	| Z80_LD reg_r COMMA op_mem_ind {
 		if ($2 == REG_A) {
 			if (optimizeLoads && $4.isKnown && $4.val >= 0xFF00) {
 				if (warnOnLdOpt) {
@@ -2055,18 +2068,18 @@ z80_ld_a:
 				sect_RelWord($4, 1);
 			}
 		} else {
-			error("Destination operand must be A\n");
+			::error("Destination operand must be A\n");
 			rpn_Free($4);
 		}
 	}
 ;
 
 z80_ld_ss:
-	T_Z80_LD T_MODE_BC T_COMMA reloc_16bit {
+	Z80_LD MODE_BC COMMA reloc_16bit {
 		sect_AbsByte(0x01 | (REG_BC << 4));
 		sect_RelWord($4, 1);
 	}
-	| T_Z80_LD T_MODE_DE T_COMMA reloc_16bit {
+	| Z80_LD MODE_DE COMMA reloc_16bit {
 		sect_AbsByte(0x01 | (REG_DE << 4));
 		sect_RelWord($4, 1);
 	}
@@ -2075,109 +2088,109 @@ z80_ld_ss:
 ;
 
 z80_nop:
-	T_Z80_NOP {
+	Z80_NOP {
 		sect_AbsByte(0x00);
 	}
 ;
 
 z80_or:
-	T_Z80_OR op_a_n {
+	Z80_OR op_a_n {
 		sect_AbsByte(0xF6);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_OR op_a_r {
+	| Z80_OR op_a_r {
 		sect_AbsByte(0xB0 | $2);
 	}
 ;
 
 z80_pop:
-	T_Z80_POP reg_tt {
+	Z80_POP reg_tt {
 		sect_AbsByte(0xC1 | ($2 << 4));
 	}
 ;
 
 z80_push:
-	T_Z80_PUSH reg_tt {
+	Z80_PUSH reg_tt {
 		sect_AbsByte(0xC5 | ($2 << 4));
 	}
 ;
 
 z80_res:
-	T_Z80_RES const_3bit T_COMMA reg_r {
+	Z80_RES const_3bit COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x80 | ($2 << 3) | $4);
 	}
 ;
 
 z80_ret:
-	T_Z80_RET {
+	Z80_RET {
 		sect_AbsByte(0xC9);
 	}
-	| T_Z80_RET ccode_expr {
+	| Z80_RET ccode_expr {
 		sect_AbsByte(0xC0 | ($2 << 3));
 	}
 ;
 
 z80_reti:
-	T_Z80_RETI {
+	Z80_RETI {
 		sect_AbsByte(0xD9);
 	}
 ;
 
 z80_rl:
-	T_Z80_RL reg_r {
+	Z80_RL reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x10 | $2);
 	}
 ;
 
 z80_rla:
-	T_Z80_RLA {
+	Z80_RLA {
 		sect_AbsByte(0x17);
 	}
 ;
 
 z80_rlc:
-	T_Z80_RLC reg_r {
+	Z80_RLC reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x00 | $2);
 	}
 ;
 
 z80_rlca:
-	T_Z80_RLCA {
+	Z80_RLCA {
 		sect_AbsByte(0x07);
 	}
 ;
 
 z80_rr:
-	T_Z80_RR reg_r {
+	Z80_RR reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x18 | $2);
 	}
 ;
 
 z80_rra:
-	T_Z80_RRA {
+	Z80_RRA {
 		sect_AbsByte(0x1F);
 	}
 ;
 
 z80_rrc:
-	T_Z80_RRC reg_r {
+	Z80_RRC reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x08 | $2);
 	}
 ;
 
 z80_rrca:
-	T_Z80_RRCA {
+	Z80_RRCA {
 		sect_AbsByte(0x0F);
 	}
 ;
 
 z80_rst:
-	T_Z80_RST reloc_8bit {
+	Z80_RST reloc_8bit {
 		rpn_CheckRST($2, $2);
 		if (!$2.isKnown)
 			sect_RelByte($2, 0);
@@ -2188,83 +2201,83 @@ z80_rst:
 ;
 
 z80_sbc:
-	T_Z80_SBC op_a_n {
+	Z80_SBC op_a_n {
 		sect_AbsByte(0xDE);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_SBC op_a_r {
+	| Z80_SBC op_a_r {
 		sect_AbsByte(0x98 | $2);
 	}
 ;
 
 z80_scf:
-	T_Z80_SCF {
+	Z80_SCF {
 		sect_AbsByte(0x37);
 	}
 ;
 
 z80_set:
-	T_Z80_SET const_3bit T_COMMA reg_r {
+	Z80_SET const_3bit COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0xC0 | ($2 << 3) | $4);
 	}
 ;
 
 z80_sla:
-	T_Z80_SLA reg_r {
+	Z80_SLA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x20 | $2);
 	}
 ;
 
 z80_sra:
-	T_Z80_SRA reg_r {
+	Z80_SRA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x28 | $2);
 	}
 ;
 
 z80_srl:
-	T_Z80_SRL reg_r {
+	Z80_SRL reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x38 | $2);
 	}
 ;
 
 z80_stop:
-	T_Z80_STOP {
+	Z80_STOP {
 		sect_AbsByte(0x10);
 		sect_AbsByte(0x00);
 	}
-	| T_Z80_STOP reloc_8bit {
+	| Z80_STOP reloc_8bit {
 		sect_AbsByte(0x10);
 		sect_RelByte($2, 1);
 	}
 ;
 
 z80_sub:
-	T_Z80_SUB op_a_n {
+	Z80_SUB op_a_n {
 		sect_AbsByte(0xD6);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_SUB op_a_r {
+	| Z80_SUB op_a_r {
 		sect_AbsByte(0x90 | $2);
 	}
 ;
 
 z80_swap:
-	T_Z80_SWAP reg_r {
+	Z80_SWAP reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x30 | $2);
 	}
 ;
 
 z80_xor:
-	T_Z80_XOR op_a_n {
+	Z80_XOR op_a_n {
 		sect_AbsByte(0xEE);
 		sect_RelByte($2, 1);
 	}
-	| T_Z80_XOR op_a_r {
+	| Z80_XOR op_a_r {
 		sect_AbsByte(0xA8 | $2);
 	}
 ;
@@ -2272,146 +2285,146 @@ z80_xor:
 // Registers or values.
 
 op_mem_ind:
-	T_LBRACK reloc_16bit T_RBRACK {
+	LBRACK reloc_16bit RBRACK {
 		$$ = $2;
 	}
 ;
 
 op_a_r:
 	  reg_r
-	| T_MODE_A T_COMMA reg_r {
+	| MODE_A COMMA reg_r {
 		$$ = $3;
 	}
 ;
 
 op_a_n:
 	  reloc_8bit
-	| T_MODE_A T_COMMA reloc_8bit {
+	| MODE_A COMMA reloc_8bit {
 		$$ = $3;
 	}
 ;
 
 // Registers and condition codes.
 
-T_MODE_A:
-	  T_TOKEN_A
-	| T_OP_HIGH T_LPAREN T_MODE_AF T_RPAREN
+MODE_A:
+	  TOKEN_A
+	| OP_HIGH LPAREN MODE_AF RPAREN
 ;
 
-T_MODE_B:
-	  T_TOKEN_B
-	| T_OP_HIGH T_LPAREN T_MODE_BC T_RPAREN
+MODE_B:
+	  TOKEN_B
+	| OP_HIGH LPAREN MODE_BC RPAREN
 ;
 
-T_MODE_C:
-	  T_TOKEN_C
-	| T_OP_LOW T_LPAREN T_MODE_BC T_RPAREN
+MODE_C:
+	  TOKEN_C
+	| OP_LOW LPAREN MODE_BC RPAREN
 ;
 
-T_MODE_D:
-	  T_TOKEN_D
-	| T_OP_HIGH T_LPAREN T_MODE_DE T_RPAREN
+MODE_D:
+	  TOKEN_D
+	| OP_HIGH LPAREN MODE_DE RPAREN
 ;
 
-T_MODE_E:
-	  T_TOKEN_E
-	| T_OP_LOW T_LPAREN T_MODE_DE T_RPAREN
+MODE_E:
+	  TOKEN_E
+	| OP_LOW LPAREN MODE_DE RPAREN
 ;
 
-T_MODE_H:
-	  T_TOKEN_H
-	| T_OP_HIGH T_LPAREN T_MODE_HL T_RPAREN
+MODE_H:
+	  TOKEN_H
+	| OP_HIGH LPAREN MODE_HL RPAREN
 ;
 
-T_MODE_L:
-	  T_TOKEN_L
-	| T_OP_LOW T_LPAREN T_MODE_HL T_RPAREN
+MODE_L:
+	  TOKEN_L
+	| OP_LOW LPAREN MODE_HL RPAREN
 ;
 
 ccode_expr:
 	  ccode
-	| T_OP_LOGICNOT ccode_expr {
+	| OP_LOGICNOT ccode_expr {
 		$$ = $2 ^ 1;
 	}
 ;
 
 ccode:
-	T_CC_NZ {
+	CC_NZ {
 		$$ = CC_NZ;
 	}
-	| T_CC_Z {
+	| CC_Z {
 		$$ = CC_Z;
 	}
-	| T_CC_NC {
+	| CC_NC {
 		$$ = CC_NC;
 	}
-	| T_TOKEN_C {
+	| TOKEN_C {
 		$$ = CC_C;
 	}
 ;
 
 reg_r:
-	T_MODE_B {
+	MODE_B {
 		$$ = REG_B;
 	}
-	| T_MODE_C {
+	| MODE_C {
 		$$ = REG_C;
 	}
-	| T_MODE_D {
+	| MODE_D {
 		$$ = REG_D;
 	}
-	| T_MODE_E {
+	| MODE_E {
 		$$ = REG_E;
 	}
-	| T_MODE_H {
+	| MODE_H {
 		$$ = REG_H;
 	}
-	| T_MODE_L {
+	| MODE_L {
 		$$ = REG_L;
 	}
-	| T_LBRACK T_MODE_HL T_RBRACK {
+	| LBRACK MODE_HL RBRACK {
 		$$ = REG_HL_IND;
 	}
-	| T_MODE_A {
+	| MODE_A {
 		$$ = REG_A;
 	}
 ;
 
 reg_tt:
-	T_MODE_BC {
+	MODE_BC {
 		$$ = REG_BC;
 	}
-	| T_MODE_DE {
+	| MODE_DE {
 		$$ = REG_DE;
 	}
-	| T_MODE_HL {
+	| MODE_HL {
 		$$ = REG_HL;
 	}
-	| T_MODE_AF {
+	| MODE_AF {
 		$$ = REG_AF;
 	}
 ;
 
 reg_ss:
-	T_MODE_BC {
+	MODE_BC {
 		$$ = REG_BC;
 	}
-	| T_MODE_DE {
+	| MODE_DE {
 		$$ = REG_DE;
 	}
-	| T_MODE_HL {
+	| MODE_HL {
 		$$ = REG_HL;
 	}
-	| T_MODE_SP {
+	| MODE_SP {
 		$$ = REG_SP;
 	}
 ;
 
 reg_rr:
-	T_LBRACK T_MODE_BC T_RBRACK {
+	LBRACK MODE_BC RBRACK {
 		$$ = REG_BC_IND;
 	}
-	| T_LBRACK T_MODE_DE T_RBRACK {
+	| LBRACK MODE_DE RBRACK {
 		$$ = REG_DE_IND;
 	}
 	| hl_ind_inc {
@@ -2423,13 +2436,13 @@ reg_rr:
 ;
 
 hl_ind_inc:
-	  T_LBRACK T_MODE_HL_INC T_RBRACK
-	| T_LBRACK T_MODE_HL T_OP_ADD T_RBRACK
+	  LBRACK MODE_HL_INC RBRACK
+	| LBRACK MODE_HL OP_ADD RBRACK
 ;
 
 hl_ind_dec:
-	  T_LBRACK T_MODE_HL_DEC T_RBRACK
-	| T_LBRACK T_MODE_HL T_OP_SUB T_RBRACK
+	  LBRACK MODE_HL_DEC RBRACK
+	| LBRACK MODE_HL OP_SUB RBRACK
 ;
 
 %%
@@ -2794,6 +2807,6 @@ static void failAssertMsg(enum AssertionType type, char const *msg) {
 	}
 }
 
-void yyerror(char const *str) {
-	error("%s\n", str);
+void yy::parser::error(std::string const &str) {
+	::error("%s\n", str.c_str());
 }

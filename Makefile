@@ -174,7 +174,7 @@ clean:
 	$Qfind src/ -name "*.o" -exec rm {} \;
 	$Qfind . -type f \( -name "*.gcno" -o -name "*.gcda" -o -name "*.gcov" \) -exec rm {} \;
 	$Q${RM} rgbshim.sh
-	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp
+	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp src/asm/stack.hh
 	$Q${RM} src/link/script.cpp src/link/script.hpp src/link/stack.hh
 	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
 
