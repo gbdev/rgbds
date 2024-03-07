@@ -13,3 +13,4 @@
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
+callgrind.out.*
