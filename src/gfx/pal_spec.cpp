@@ -187,11 +187,6 @@ static bool readMagic(std::filebuf &file, char const *magic) {
 	return file.sgetn(magicBuf, n) == n && memcmp(magicBuf, magic, n);
 }
 
-// Like `readMagic`, but automatically determines the size from the string literal's length.
-// Don't worry if you make a mistake, an `assert`'s got your back!
-#define READ_MAGIC(file, magic) \
-	readMagic<sizeof(magic) - 1>(file, magic) // Don't count the terminator
-
 template<typename T, typename U>
 static T readBE(U const *bytes) {
 	T val = 0;
