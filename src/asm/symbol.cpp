@@ -153,7 +153,7 @@ Symbol *sym_FindScopedSymbol(char const *symName) {
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n", symName);
 		// If auto-scoped local label, expand the name
 		if (localName == symName) { // Meaning, the name begins with the dot
-			std::string fullName = labelScope.value_or(std::string()) + symName;
+			std::string fullName = labelScope ? *labelScope + symName : symName;
 
 			return sym_FindExactSymbol(fullName.c_str());
 		}
