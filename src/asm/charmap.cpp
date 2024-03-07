@@ -4,7 +4,6 @@
 
 #include <errno.h>
 #include <map>
-#include <new>
 #include <stack>
 #include <stdint.h>
 #include <stdio.h>

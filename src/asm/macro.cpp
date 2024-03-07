@@ -59,7 +59,7 @@ char const *macro_GetAllArgs() {
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
 		len += macroArgs->args[i].length() + 1; // 1 for comma
 
-	char *str = new char[len + 1]; // 1 for '\0'
+	char *str = new (std::nothrow) char[len + 1]; // 1 for '\0'
 	char *ptr = str;
 
 	if (!str)

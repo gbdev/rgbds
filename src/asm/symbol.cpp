@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <map>
+#include <new>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

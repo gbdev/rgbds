@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <new>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

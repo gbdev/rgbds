@@ -7,7 +7,6 @@
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
-#include <new>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
