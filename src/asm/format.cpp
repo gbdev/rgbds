@@ -2,6 +2,7 @@
 
 #include "asm/format.hpp"
 
+#include <algorithm>
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
@@ -190,17 +191,10 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 			value >>= 1;
 		} while (value);
 
-		*ptr = '\0';
-
 		// Reverse the digits
-		size_t valueLen = ptr - valueBuf;
+		std::reverse(valueBuf, ptr);
 
-		for (size_t i = 0, j = valueLen - 1; i < j; i++, j--) {
-			char c = valueBuf[i];
-
-			valueBuf[i] = valueBuf[j];
-			valueBuf[j] = c;
-		}
+		*ptr = '\0';
 	} else if (type == 'f') {
 		// Special case for fixed-point
 
