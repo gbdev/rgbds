@@ -4,6 +4,8 @@ export LC_ALL=C
 
 tmpdir="$(mktemp -d)"
 src="$PWD"
+tests=0
+failed=0
 rc=0
 
 cp ../../{rgbfix,contrib/gbdiff.bash} "$tmpdir"
@@ -39,6 +41,7 @@ runTest () {
 	flags="$(head -n 1 "$2/$1.flags")" # Allow other lines to serve as comments
 
 	for variant in '' ' piped'; do
+		(( tests++ ))
 		our_rc=0
 		if [[ $progress -ne 0 ]]; then
 			echo "${bold}${green}$1${variant}...${rescolors}${resbold}"
@@ -67,7 +70,10 @@ runTest () {
 		fi
 
 		(( rc = rc || our_rc ))
-		if [[ $our_rc -ne 0 ]]; then break; fi
+		if [[ $our_rc -ne 0 ]]; then
+			(( failed++ ))
+			break
+		fi
 	done
 }
 
@@ -101,5 +107,12 @@ $RGBFIX noexist 2>out.err
 rc=$((rc || $? != 1))
 tryDiff "$src/noexist.err" out.err noexist.err
 rc=$((rc || $?))
+
+
+if [[ "$failed" -eq 0 ]]; then
+	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
+else
+	echo "${bold}${red}${failed} of the tests failed!${rescolors}${resbold}"
+fi
 
 exit $rc

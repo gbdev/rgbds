@@ -14,16 +14,21 @@ rescolors="$(tput op)"
 
 RGBGFX=../../rgbgfx
 
+tests=0
+failed=0
 rc=0
+
 new_test() {
 	cmdline="$*"
 	echo "${bold}${green}Testing: ${cmdline}${rescolors}${resbold}" >&2
 }
 test() {
+	(( tests++ ))
 	eval "$cmdline"
 }
 fail() {
 	rc=1
+	(( failed++ ))
 	echo "${bold}${red}Test ${cmdline} failed!${1:+ (RC=$1)}${rescolors}${resbold}"
 }
 
@@ -68,5 +73,11 @@ for f in *.png; do
 		test || fail $?
 	fi
 done
+
+if [[ "$failed" -eq 0 ]]; then
+	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
+else
+	echo "${bold}${red}${failed} of the tests failed!${rescolors}${resbold}"
+fi
 
 exit $rc

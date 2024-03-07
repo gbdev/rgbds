@@ -10,6 +10,8 @@ gb="$(mktemp)"
 input="$(mktemp)"
 output="$(mktemp)"
 errput="$(mktemp)"
+tests=0
+failed=0
 rc=0
 
 # Immediate expansion is the desired behavior.
@@ -73,6 +75,7 @@ for i in *.asm; do
 		RGBASMFLAGS="$(head -n 1 "$flags")" # Allow other lines to serve as comments
 	fi
 	for variant in '' '.pipe'; do
+		(( tests++ ))
 		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 		if [ -e "${i%.asm}.out" ]; then
 			desired_outname=${i%.asm}.out
@@ -129,8 +132,17 @@ for i in *.asm; do
 		fi
 
 		(( rc = rc || our_rc ))
-		if [ $our_rc -ne 0 ]; then break; fi
+		if [[ $our_rc -ne 0 ]]; then
+			(( failed++ ))
+			break
+		fi
 	done
 done
+
+if [[ "$failed" -eq 0 ]]; then
+	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
+else
+	echo "${bold}${red}${failed} of the tests failed!${rescolors}${resbold}"
+fi
 
 exit $rc
