@@ -11,8 +11,6 @@
 
 #include "platform.hpp" // SSIZE_MAX
 
-#include "asm/symbol.hpp" // MAXSYMLEN
-
 #define MAXSTRLEN 255
 
 #define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
@@ -143,10 +141,6 @@ struct CaptureBody {
 
 struct String {
 	char string[MAXSTRLEN + 1];
-};
-
-struct SymName {
-	char symName[MAXSYMLEN + 1];
 };
 
 void lexer_CheckRecursionDepth();

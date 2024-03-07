@@ -3,6 +3,7 @@
 #ifndef RGBDS_SYMBOL_H
 #define RGBDS_SYMBOL_H
 
+#include <optional>
 #include <stdint.h>
 #include <string.h>
 #include <string>
@@ -11,8 +12,6 @@
 #include <variant>
 
 #include "asm/section.hpp"
-
-#define MAXSYMLEN 255
 
 enum SymbolType {
 	SYM_LABEL,
@@ -27,7 +26,7 @@ struct Symbol;                    // For the `sym_IsPC` forward declaration
 bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
 
 struct Symbol {
-	char name[MAXSYMLEN + 1];
+	std::string name;
 	enum SymbolType type;
 	bool isExported; // Whether the symbol is to be exported
 	bool isBuiltin;  // Whether the symbol is a built-in
@@ -72,7 +71,7 @@ void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(char const *symName);
 Symbol *sym_AddLabel(char const *symName);
 Symbol *sym_AddAnonLabel();
-void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg);
+std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg);
 void sym_Export(char const *symName);
 Symbol *sym_AddEqu(char const *symName, int32_t value);
 Symbol *sym_RedefEqu(char const *symName, int32_t value);
@@ -94,7 +93,7 @@ void sym_Purge(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.
-char const *sym_GetCurrentSymbolScope();
-void sym_SetCurrentSymbolScope(char const *newScope);
+std::optional<std::string> const &sym_GetCurrentSymbolScope();
+void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope);
 
 #endif // RGBDS_SYMBOL_H

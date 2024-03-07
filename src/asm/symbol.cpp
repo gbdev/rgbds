@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <map>
 #include <new>
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +32,7 @@
 
 std::map<std::string, Symbol> symbols;
 
-static const char *labelScope; // Current section's label scope
+static std::optional<std::string> labelScope = std::nullopt; // Current section's label scope
 static Symbol *PCSymbol;
 static Symbol *_NARGSymbol;
 static char savedTIME[256];
@@ -123,9 +124,7 @@ static void updateSymbolFilename(Symbol &sym) {
 static Symbol &createsymbol(char const *symName) {
 	Symbol &sym = symbols[symName];
 
-	if (snprintf(sym.name, MAXSYMLEN + 1, "%s", symName) > MAXSYMLEN)
-		warning(WARNING_LONG_STR, "Symbol name is too long: '%s'\n", symName);
-
+	sym.name = symName;
 	sym.isExported = false;
 	sym.isBuiltin = false;
 	sym.section = nullptr;
@@ -133,18 +132,6 @@ static Symbol &createsymbol(char const *symName) {
 	sym.ID = -1;
 
 	return sym;
-}
-
-// Creates the full name of a local symbol in a given scope, by prepending
-// the name with the parent symbol's name.
-static void
-    fullSymbolName(char *output, size_t outputSize, char const *localName, char const *scopeName) {
-	int ret = snprintf(output, outputSize, "%s%s", scopeName, localName);
-
-	if (ret < 0)
-		fatalerror("snprintf error when expanding symbol name: %s", strerror(errno));
-	else if ((size_t)ret >= outputSize)
-		fatalerror("Symbol name is too long: '%s%s'\n", scopeName, localName);
 }
 
 static void assignStringSymbol(Symbol &sym, char const *value) {
@@ -166,10 +153,9 @@ Symbol *sym_FindScopedSymbol(char const *symName) {
 			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n", symName);
 		// If auto-scoped local label, expand the name
 		if (localName == symName) { // Meaning, the name begins with the dot
-			char fullName[MAXSYMLEN + 1];
+			std::string fullName = labelScope.value_or(std::string()) + symName;
 
-			fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
-			return sym_FindExactSymbol(fullName);
+			return sym_FindExactSymbol(fullName.c_str());
 		}
 	}
 	return sym_FindExactSymbol(symName);
@@ -206,7 +192,7 @@ void sym_Purge(std::string const &symName) {
 	} else {
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
-			sym_SetCurrentSymbolScope(nullptr);
+			labelScope = std::nullopt;
 
 		// FIXME: this leaks `sym->getEqus()` for SYM_EQUS and `sym->getMacro()` for SYM_MACRO,
 		// but this can't delete either of them because the expansion may be purging itself.
@@ -235,7 +221,7 @@ uint32_t Symbol::getConstantValue() const {
 	if (isConstant())
 		return getValue();
 
-	error("\"%s\" does not have a constant value\n", name);
+	error("\"%s\" does not have a constant value\n", name.c_str());
 	return 0;
 }
 
@@ -248,11 +234,11 @@ uint32_t sym_GetConstantValue(char const *symName) {
 	return 0;
 }
 
-char const *sym_GetCurrentSymbolScope() {
+std::optional<std::string> const &sym_GetCurrentSymbolScope() {
 	return labelScope;
 }
 
-void sym_SetCurrentSymbolScope(char const *newScope) {
+void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope) {
 	labelScope = newScope;
 }
 
@@ -428,9 +414,8 @@ static Symbol *addLabel(char const *symName) {
 // Add a local (`.name` or `Parent.name`) relocatable symbol
 Symbol *sym_AddLocalLabel(char const *symName) {
 	// Assuming no dots in `labelScope` if defined
-	assert(!labelScope || !strchr(labelScope, '.'));
+	assert(!labelScope.has_value() || labelScope->find('.') == std::string::npos);
 
-	char fullName[MAXSYMLEN + 1];
 	char const *localName = strchr(symName, '.');
 
 	assert(localName); // There should be at least one dot in `symName`
@@ -444,16 +429,16 @@ Symbol *sym_AddLocalLabel(char const *symName) {
 		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName);
 
 	if (localName == symName) {
-		if (!labelScope) {
+		if (!labelScope.has_value()) {
 			error("Unqualified local label '%s' in main scope\n", symName);
 			return nullptr;
 		}
-		// Expand `symName` to the full `labelScope.symName` name
-		fullSymbolName(fullName, sizeof(fullName), symName, labelScope);
-		symName = fullName;
-	}
+		std::string fullName = *labelScope + symName;
 
-	return addLabel(symName);
+		return addLabel(fullName.c_str());
+	} else {
+		return addLabel(symName);
+	}
 }
 
 // Add a relocatable symbol
@@ -462,7 +447,7 @@ Symbol *sym_AddLabel(char const *symName) {
 
 	// Set the symbol as the new scope
 	if (sym)
-		sym_SetCurrentSymbolScope(sym->name);
+		labelScope = sym->name;
 	return sym;
 }
 
@@ -474,15 +459,14 @@ Symbol *sym_AddAnonLabel() {
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
 		return nullptr;
 	}
-	char name[MAXSYMLEN + 1];
 
-	sym_WriteAnonLabelName(name, 0, true); // The direction is important!
+	std::string anon = sym_MakeAnonLabelName(0, true); // The direction is important!
 	anonLabelID++;
-	return addLabel(name);
+	return addLabel(anon.c_str());
 }
 
 // Write an anonymous label's name to a buffer
-void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg) {
+std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	uint32_t id = 0;
 
 	if (neg) {
@@ -509,7 +493,9 @@ void sym_WriteAnonLabelName(char buf[MAXSYMLEN + 1], uint32_t ofs, bool neg) {
 			id = anonLabelID + ofs;
 	}
 
-	sprintf(buf, "!%u", id);
+	std::string anon("!");
+	anon += std::to_string(id);
+	return anon;
 }
 
 // Export a symbol
@@ -554,16 +540,16 @@ Symbol *sym_Ref(char const *symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		char fullname[MAXSYMLEN + 1];
-
 		if (symName[0] == '.') {
-			if (!labelScope)
+			if (!labelScope.has_value())
 				fatalerror("Local label reference '%s' in main scope\n", symName);
-			fullSymbolName(fullname, sizeof(fullname), symName, labelScope);
-			symName = fullname;
+			std::string fullName = *labelScope + symName;
+
+			sym = &createsymbol(fullName.c_str());
+		} else {
+			sym = &createsymbol(symName);
 		}
 
-		sym = &createsymbol(symName);
 		sym->type = SYM_REF;
 	}
 
@@ -656,6 +642,6 @@ void sym_Init(time_t now) {
 #undef addString
 #undef addSym
 
-	sym_SetCurrentSymbolScope(nullptr);
+	labelScope = std::nullopt;
 	anonLabelID = 0;
 }

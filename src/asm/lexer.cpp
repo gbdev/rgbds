@@ -94,18 +94,21 @@
 		} while (0)
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
+// FIXME: get rid of this limitation
+#define MAXSYMLEN 255
+
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
 #define T_(name) (int)yy::parser::token::name
 
 struct Token {
 	int type;
-	std::variant<std::monostate, uint32_t, String, SymName> value;
+	std::variant<std::monostate, uint32_t, String, std::string> value;
 
 	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
 	Token(int type_) : type(type_), value(std::monostate{}) {}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
 	Token(int type_, String &value_) : type(type_), value(value_) {}
-	Token(int type_, SymName &value_) : type(type_), value(value_) {}
+	Token(int type_, std::string &value_) : type(type_), value(value_) {}
 };
 
 struct CaseInsensitive {
@@ -555,29 +558,26 @@ static uint32_t readBracketedMacroArgNum() {
 	if (c >= '0' && c <= '9') {
 		num = readNumber(10, 0);
 	} else if (startsIdentifier(c)) {
-		char symName[MAXSYMLEN + 1];
-		size_t i = 0;
+		std::string symName;
 
 		for (; continuesIdentifier(c); c = peek()) {
-			if (i < sizeof(symName))
-				symName[i++] = c;
+			symName += c;
 			shiftChar();
 		}
 
-		if (i == sizeof(symName)) {
+		if (symName.length() > MAXSYMLEN) {
 			warning(WARNING_LONG_STR, "Bracketed symbol name too long, got truncated\n");
-			i--;
+			symName.resize(MAXSYMLEN);
 		}
-		symName[i] = '\0';
 
-		Symbol const *sym = sym_FindScopedValidSymbol(symName);
+		Symbol const *sym = sym_FindScopedValidSymbol(symName.c_str());
 
 		if (!sym) {
-			error("Bracketed symbol \"%s\" does not exist\n", symName);
+			error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
 			num = 0;
 			symbolError = true;
 		} else if (!sym->isNumeric()) {
-			error("Bracketed symbol \"%s\" is not numeric\n", symName);
+			error("Bracketed symbol \"%s\" is not numeric\n", symName.c_str());
 			num = 0;
 			symbolError = true;
 		} else {
@@ -927,7 +927,7 @@ static void discardLineContinuation() {
 
 // Functions to read tokenizable values
 
-static void readAnonLabelRef(SymName &yylval, char c) {
+static std::string readAnonLabelRef(char c) {
 	uint32_t n = 0;
 
 	// We come here having already peeked at one char, so no need to do it again
@@ -936,7 +936,7 @@ static void readAnonLabelRef(SymName &yylval, char c) {
 		n++;
 	} while (peek() == c);
 
-	sym_WriteAnonLabelName(yylval.symName, n, c == '-');
+	return sym_MakeAnonLabelName(n, c == '-');
 }
 
 static uint32_t readNumber(int radix, uint32_t baseValue) {
@@ -1130,33 +1130,28 @@ static bool continuesIdentifier(int c) {
 
 static Token readIdentifier(char firstChar) {
 	// Lex while checking for a keyword
-	SymName yylval;
-	yylval.symName[0] = firstChar;
+	std::string yylval(1, firstChar);
 	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
-	size_t i = 1;
 
 	// Continue reading while the char is in the symbol charset
-	for (int c = peek(); continuesIdentifier(c); i++, c = peek()) {
+	for (int c = peek(); continuesIdentifier(c); c = peek()) {
 		shiftChar();
 
-		if (i < sizeof(yylval.symName) - 1) {
-			// Write the char to the identifier's name
-			yylval.symName[i] = c;
-
-			// If the char was a dot, mark the identifier as local
-			if (c == '.')
-				tokenType = T_(LOCAL_ID);
+		if (yylval.length() == MAXSYMLEN) {
+			warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
+			break;
 		}
-	}
 
-	if (i > sizeof(yylval.symName) - 1) {
-		warning(WARNING_LONG_STR, "Symbol name too long, got truncated\n");
-		i = sizeof(yylval.symName) - 1;
+		// Write the char to the identifier's name
+		yylval += c;
+
+		// If the char was a dot, mark the identifier as local
+		if (c == '.')
+			tokenType = T_(LOCAL_ID);
 	}
-	yylval.symName[i] = '\0'; // Terminate the string
 
 	// Attempt to check for a keyword
-	auto search = keywordDict.find(yylval.symName);
+	auto search = keywordDict.find(yylval.c_str());
 	return search != keywordDict.end() ? Token(search->second) : Token(tokenType, yylval);
 }
 
@@ -1166,8 +1161,7 @@ static char const *readInterpolation(size_t depth) {
 	if (depth > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
-	char symName[MAXSYMLEN + 1];
-	size_t i = 0;
+	std::string fmtBuf;
 	FormatSpec fmt{};
 	bool disableInterpolation = lexerState->disableInterpolation;
 
@@ -1194,39 +1188,36 @@ static char const *readInterpolation(size_t depth) {
 			break;
 		} else if (c == ':' && !fmt.isFinished()) { // Format spec, only once
 			shiftChar();
-			if (i == sizeof(symName)) {
+			if (fmtBuf.length() > MAXSTRLEN) {
 				warning(WARNING_LONG_STR, "Format spec too long, got truncated\n");
-				i = sizeof(symName) - 1;
+				fmtBuf.resize(MAXSTRLEN);
 			}
-			symName[i] = '\0';
-			for (size_t j = 0; j < i; j++)
-				fmt.useCharacter(symName[j]);
+			for (char f : fmtBuf)
+				fmt.useCharacter(f);
 			fmt.finishCharacters();
 			if (!fmt.isValid())
-				error("Invalid format spec '%s'\n", symName);
-			i = 0; // Now that format has been set, restart at beginning of string
+				error("Invalid format spec '%s'\n", fmtBuf.c_str());
+			fmtBuf.clear(); // Now that format has been set, restart at beginning of string
 		} else {
 			shiftChar();
-			if (i < sizeof(symName)) // Allow writing an extra char to flag overflow
-				symName[i++] = c;
+			fmtBuf += c;
 		}
 	}
 
-	if (i == sizeof(symName)) {
+	if (fmtBuf.length() > MAXSYMLEN) {
 		warning(WARNING_LONG_STR, "Interpolated symbol name too long, got truncated\n");
-		i--;
+		fmtBuf.resize(MAXSYMLEN);
 	}
-	symName[i] = '\0';
 
 	// Don't return before `lexerState->disableInterpolation` is reset!
 	lexerState->disableInterpolation = disableInterpolation;
 
 	static char buf[MAXSTRLEN + 1];
 
-	Symbol const *sym = sym_FindScopedValidSymbol(symName);
+	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf.c_str());
 
 	if (!sym) {
-		error("Interpolated symbol \"%s\" does not exist\n", symName);
+		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
 		fmt.printString(buf, sizeof(buf), sym->getEqus()->c_str());
 		return buf;
@@ -1602,10 +1593,8 @@ static Token yylex_NORMAL() {
 			return Token(T_(OP_NOT));
 
 		case '@': {
-			SymName yylval;
-			yylval.symName[0] = '@';
-			yylval.symName[1] = '\0';
-			return Token(T_(ID), yylval);
+			std::string symName("@");
+			return Token(T_(ID), symName);
 		}
 
 		case '[':
@@ -1741,9 +1730,8 @@ static Token yylex_NORMAL() {
 				return Token(T_(DOUBLE_COLON));
 			case '+':
 			case '-': {
-				SymName yylval;
-				readAnonLabelRef(yylval, c);
-				return Token(T_(ANON), yylval);
+				std::string symName = readAnonLabelRef(c);
+				return Token(T_(ANON), symName);
 			}
 			default:
 				return Token(T_(COLON));
@@ -1852,20 +1840,22 @@ static Token yylex_NORMAL() {
 				if (token.type != T_(ID) && token.type != T_(LOCAL_ID))
 					return token;
 
-				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `SymName` value.
-				assert(std::holds_alternative<SymName>(token.value));
+				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `std::string` value.
+				assert(std::holds_alternative<std::string>(token.value));
 
 				// Local symbols cannot be string expansions
 				if (token.type == T_(ID) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(std::get<SymName>(token.value).symName);
+					Symbol const *sym = sym_FindExactSymbol(
+					    std::get<std::string>(token.value).c_str()
+					);
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *str = sym->getEqus()->c_str();
 
 						assert(str);
 						if (str[0])
-							beginExpansion(str, false, sym->name);
+							beginExpansion(str, false, sym->name.c_str());
 						continue; // Restart, reading from the new buffer
 					}
 				}

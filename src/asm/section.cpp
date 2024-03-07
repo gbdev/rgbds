@@ -7,6 +7,7 @@
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
+#include <optional>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,7 @@ struct UnionStackEntry {
 struct SectionStackEntry {
 	Section *section;
 	Section *loadSection;
-	char const *scope; // Section's symbol scope
+	std::optional<std::string> scope; // Section's symbol scope
 	uint32_t offset;
 	int32_t loadOffset;
 	std::stack<UnionStackEntry> unionStack;
@@ -46,7 +47,7 @@ std::deque<Section> sectionList;
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 Section *currentSection = nullptr;
 static Section *currentLoadSection = nullptr;
-char const *currentLoadScope = nullptr;
+std::optional<std::string> currentLoadScope = std::nullopt;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
@@ -421,7 +422,7 @@ static void changeSection() {
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentSymbolScope(std::nullopt);
 }
 
 bool Section::isSizeKnown() const {
@@ -990,7 +991,7 @@ void sect_PushSection() {
 	// Reset the section scope
 	currentSection = nullptr;
 	currentLoadSection = nullptr;
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentSymbolScope(std::nullopt);
 	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
@@ -1025,5 +1026,5 @@ void sect_EndSection() {
 
 	// Reset the section scope
 	currentSection = nullptr;
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentSymbolScope(std::nullopt);
 }

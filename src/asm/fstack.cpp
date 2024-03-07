@@ -340,7 +340,7 @@ void fstk_RunMacro(char const *macroName, MacroArgs &args) {
 
 	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_MACRO, "");
 	if (!fileInfo) {
-		error("Failed to alloc file info for \"%s\": %s\n", macro->name, strerror(errno));
+		error("Failed to alloc file info for \"%s\": %s\n", macro->name.c_str(), strerror(errno));
 		return;
 	}
 

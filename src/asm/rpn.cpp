@@ -84,10 +84,10 @@ void rpn_Symbol(Expression &expr, char const *symName) {
 		sym = sym_Ref(symName);
 		expr.rpnPatchSize += 5; // 1-byte opcode + 4-byte symbol ID
 
-		size_t nameLen = strlen(sym->name) + 1; // Don't forget NUL!
+		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 		*ptr++ = RPN_SYM;
-		memcpy(ptr, sym->name, nameLen);
+		memcpy(ptr, sym->name.c_str(), nameLen);
 	} else {
 		expr.val = sym_GetConstantValue(symName);
 	}
@@ -132,11 +132,11 @@ void rpn_BankSymbol(Expression &expr, char const *symName) {
 			makeUnknown(expr, "\"", symName, "\"'s bank is not known");
 			expr.rpnPatchSize += 5; // opcode + 4-byte sect ID
 
-			size_t nameLen = strlen(sym->name) + 1; // Room for NUL!
+			size_t nameLen = sym->name.length() + 1; // Room for NUL!
 			uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 			*ptr++ = RPN_BANK_SYM;
-			memcpy(ptr, sym->name, nameLen);
+			memcpy(ptr, sym->name.c_str(), nameLen);
 		}
 	}
 }

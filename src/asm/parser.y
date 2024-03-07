@@ -194,14 +194,14 @@
 %token OP_CHARSUB "CHARSUB"
 %token OP_INCHARMAP "INCHARMAP"
 
-%token <SymName> LABEL "label"
-%token <SymName> ID "identifier"
-%token <SymName> LOCAL_ID "local identifier"
-%token <SymName> ANON "anonymous label"
-%type <SymName> def_id
-%type <SymName> redef_id
-%type <SymName> scoped_id
-%type <SymName> scoped_anon_id
+%token <std::string> LABEL "label"
+%token <std::string> ID "identifier"
+%token <std::string> LOCAL_ID "local identifier"
+%token <std::string> ANON "anonymous label"
+%type <std::string> def_id
+%type <std::string> redef_id
+%type <std::string> scoped_id
+%type <std::string> scoped_anon_id
 %token POP_EQU "EQU"
 %token POP_EQUAL "="
 %token POP_EQUS "EQUS"
@@ -354,13 +354,13 @@ line:
 		lexer_SetMode(LEXER_NORMAL);
 		lexer_ToggleStringExpansion(true);
 	} endofline {
-		Symbol *macro = sym_FindExactSymbol($1.symName);
+		Symbol *macro = sym_FindExactSymbol($1.c_str());
 
 		if (macro && macro->type == SYM_MACRO)
 		fprintf(
 			stderr,
 			"    To invoke `%s` as a macro it must be indented\n",
-			$1.symName
+			$1.c_str()
 		);
 		fstk_StopRept();
 		yyerrok;
@@ -474,21 +474,21 @@ label:
 		sym_AddAnonLabel();
 	}
 	| LOCAL_ID {
-		sym_AddLocalLabel($1.symName);
+		sym_AddLocalLabel($1.c_str());
 	}
 	| LOCAL_ID COLON {
-		sym_AddLocalLabel($1.symName);
+		sym_AddLocalLabel($1.c_str());
 	}
 	| LABEL COLON {
-		sym_AddLabel($1.symName);
+		sym_AddLabel($1.c_str());
 	}
 	| LOCAL_ID DOUBLE_COLON {
-		sym_AddLocalLabel($1.symName);
-		sym_Export($1.symName);
+		sym_AddLocalLabel($1.c_str());
+		sym_Export($1.c_str());
 	}
 	| LABEL DOUBLE_COLON {
-		sym_AddLabel($1.symName);
-		sym_Export($1.symName);
+		sym_AddLabel($1.c_str());
+		sym_Export($1.c_str());
 	}
 ;
 
@@ -497,7 +497,7 @@ macro:
 		// Parsing 'macroargs' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macroargs {
-		fstk_RunMacro($1.symName, *$3);
+		fstk_RunMacro($1.c_str(), *$3);
 	}
 ;
 
@@ -600,17 +600,17 @@ equ:
 		warning(
 		    WARNING_OBSOLETE,
 		    "`%s EQU` is deprecated; use `DEF %s EQU`\n",
-		    $1.symName,
-		    $1.symName
+		    $1.c_str(),
+		    $1.c_str()
 		);
-		sym_AddEqu($1.symName, $3);
+		sym_AddEqu($1.c_str(), $3);
 	}
 ;
 
 assignment:
 	LABEL POP_EQUAL const {
-		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.symName, $1.symName);
-		sym_AddVar($1.symName, $3);
+		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.c_str(), $1.c_str());
+		sym_AddVar($1.c_str(), $3);
 	}
 	| LABEL compoundeq const {
 		const char *compoundEqOperator = nullptr;
@@ -631,12 +631,12 @@ assignment:
 		warning(
 			WARNING_OBSOLETE,
 			"`%s %s` is deprecated; use `DEF %s %s`\n",
-			$1.symName,
+			$1.c_str(),
 			compoundEqOperator,
-			$1.symName,
+			$1.c_str(),
 			compoundEqOperator
 		);
-		compoundAssignment($1.symName, $2, $3);
+		compoundAssignment($1.c_str(), $2, $3);
 	}
 ;
 
@@ -645,10 +645,10 @@ equs:
 		warning(
 		    WARNING_OBSOLETE,
 		    "`%s EQUS` is deprecated; use `DEF %s EQUS`\n",
-		    $1.symName,
-		    $1.symName
+		    $1.c_str(),
+		    $1.c_str()
 		);
-		sym_AddString($1.symName, $3.string);
+		sym_AddString($1.c_str(), $3.string);
 	}
 ;
 
@@ -657,10 +657,10 @@ rb:
 		warning(
 		    WARNING_OBSOLETE,
 		    "`%s RB` is deprecated; use `DEF %s RB`\n",
-		    $1.symName,
-		    $1.symName
+		    $1.c_str(),
+		    $1.c_str()
 		);
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 	}
 ;
@@ -670,10 +670,10 @@ rw:
 		warning(
 		    WARNING_OBSOLETE,
 		    "`%s RW` is deprecated; use `DEF %s RW`\n",
-		    $1.symName,
-		    $1.symName
+		    $1.c_str(),
+		    $1.c_str()
 		);
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 	}
 ;
@@ -683,10 +683,10 @@ rl:
 		warning(
 			WARNING_OBSOLETE,
 			"`%s RL` is deprecated; use `DEF %s RL`\n",
-			$1.symName,
-			$1.symName
+			$1.c_str(),
+			$1.c_str()
 		);
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 	}
 ;
@@ -860,7 +860,7 @@ for:
 	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8)
 			fstk_RunFor(
-				$3.symName,
+				$3.c_str(),
 				$6.start,
 				$6.stop,
 				$6.step,
@@ -909,7 +909,7 @@ macrodef:
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
 		if ($6)
-			sym_AddMacro($3.symName, captureBody.lineNo, captureBody.body, captureBody.size);
+			sym_AddMacro($3.c_str(), captureBody.lineNo, captureBody.body, captureBody.size);
 	}
 ;
 
@@ -1010,61 +1010,61 @@ dl:
 
 def_equ:
 	def_id POP_EQU const {
-		sym_AddEqu($1.symName, $3);
+		sym_AddEqu($1.c_str(), $3);
 	}
 ;
 
 redef_equ:
 	redef_id POP_EQU const {
-		sym_RedefEqu($1.symName, $3);
+		sym_RedefEqu($1.c_str(), $3);
 	}
 ;
 
 def_set:
 	def_id POP_EQUAL const {
-		sym_AddVar($1.symName, $3);
+		sym_AddVar($1.c_str(), $3);
 	}
 	| redef_id POP_EQUAL const {
-		sym_AddVar($1.symName, $3);
+		sym_AddVar($1.c_str(), $3);
 	}
 	| def_id compoundeq const {
-		compoundAssignment($1.symName, $2, $3);
+		compoundAssignment($1.c_str(), $2, $3);
 	}
 	| redef_id compoundeq const {
-		compoundAssignment($1.symName, $2, $3);
+		compoundAssignment($1.c_str(), $2, $3);
 	}
 ;
 
 def_rb:
 	def_id POP_RB rs_uconst {
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
 	}
 ;
 
 def_rw:
 	def_id POP_RW rs_uconst {
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
 	}
 ;
 
 def_rl:
 	def_id Z80_RL rs_uconst {
-		sym_AddEqu($1.symName, sym_GetConstantValue("_RS"));
+		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
 		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
 	}
 ;
 
 def_equs:
 	def_id POP_EQUS string {
-		sym_AddString($1.symName, $3.string);
+		sym_AddString($1.c_str(), $3.string);
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		sym_RedefString($1.symName, $3.string);
+		sym_RedefString($1.c_str(), $3.string);
 	}
 ;
 
@@ -1080,10 +1080,10 @@ purge:
 
 purge_args:
 	scoped_id {
-		$$.push_back($1.symName);
+		$$.push_back($1.c_str());
 	}
 	| purge_args COMMA scoped_id {
-		$1.push_back($3.symName);
+		$1.push_back($3.c_str());
 		$$ = $1;
 	}
 ;
@@ -1097,7 +1097,7 @@ export_list:
 
 export_list_entry:
 	scoped_id {
-		sym_Export($1.symName);
+		sym_Export($1.c_str());
 	}
 ;
 
@@ -1135,16 +1135,16 @@ charmap:
 
 newcharmap:
 	POP_NEWCHARMAP ID {
-		charmap_New($2.symName, nullptr);
+		charmap_New($2.c_str(), nullptr);
 	}
 	| POP_NEWCHARMAP ID COMMA ID {
-		charmap_New($2.symName, $4.symName);
+		charmap_New($2.c_str(), $4.c_str());
 	}
 ;
 
 setcharmap:
 	POP_SETCHARMAP ID {
-		charmap_Set($2.symName);
+		charmap_Set($2.c_str());
 	}
 ;
 
@@ -1302,7 +1302,7 @@ relocexpr:
 
 relocexpr_no_str:
 	scoped_anon_id {
-		rpn_Symbol($$, $1.symName);
+		rpn_Symbol($$, $1.c_str());
 	}
 	| NUMBER {
 		rpn_Number($$, $1);
@@ -1390,7 +1390,7 @@ relocexpr_no_str:
 	}
 	| OP_BANK LPAREN scoped_anon_id RPAREN {
 		// '@' is also an ID; it is handled here
-		rpn_BankSymbol($$, $3.symName);
+		rpn_BankSymbol($$, $3.c_str());
 	}
 	| OP_BANK LPAREN string RPAREN {
 		rpn_BankSection($$, $3.string);
@@ -1410,7 +1410,7 @@ relocexpr_no_str:
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
 	} LPAREN scoped_anon_id RPAREN {
-		rpn_Number($$, sym_FindScopedValidSymbol($4.symName) != nullptr);
+		rpn_Number($$, sym_FindScopedValidSymbol($4.c_str()) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
 	| OP_ROUND LPAREN const opt_q_arg RPAREN {
@@ -1564,14 +1564,14 @@ string:
 		strfmt($$.string, sizeof($$.string), $3.format.c_str(), $3.args);
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
-		Symbol *sym = sym_FindScopedValidSymbol($3.symName);
+		Symbol *sym = sym_FindScopedValidSymbol($3.c_str());
 
 		if (!sym)
-			fatalerror("Unknown symbol \"%s\"\n", $3.symName);
+			fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
 		Section const *section = sym->getSection();
 
 		if (!section)
-			fatalerror("\"%s\" does not belong to any section\n", sym->name);
+			fatalerror("\"%s\" does not belong to any section\n", sym->name.c_str());
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
 		strcpy($$.string, section->name.c_str());

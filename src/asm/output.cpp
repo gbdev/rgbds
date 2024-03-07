@@ -51,9 +51,9 @@ static void putlong(uint32_t i, FILE *f) {
 }
 
 // Write a NUL-terminated string to a file
-static void putstring(char const *s, FILE *f) {
-	while (*s)
-		putc(*s++, f);
+static void putstring(std::string const &s, FILE *f) {
+	for (char c : s)
+		putc(c, f);
 	putc(0, f);
 }
 
@@ -108,7 +108,7 @@ static void writepatch(Patch const &patch, FILE *f) {
 
 // Write a section to a file
 static void writesection(Section const &sect, FILE *f) {
-	putstring(sect.name.c_str(), f);
+	putstring(sect.name, f);
 
 	putlong(sect.size, f);
 
@@ -303,7 +303,7 @@ void out_CreateAssert(
 
 static void writeassert(Assertion &assert, FILE *f) {
 	writepatch(assert.patch, f);
-	putstring(assert.message.c_str(), f);
+	putstring(assert.message, f);
 }
 
 static void writeFileStackNode(FileStackNode const &node, FILE *f) {
@@ -311,7 +311,7 @@ static void writeFileStackNode(FileStackNode const &node, FILE *f) {
 	putlong(node.lineNo, f);
 	putc(node.type, f);
 	if (node.type != NODE_REPT) {
-		putstring(node.name().c_str(), f);
+		putstring(node.name(), f);
 	} else {
 		std::vector<uint32_t> const &nodeIters = node.iters();
 
