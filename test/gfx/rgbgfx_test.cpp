@@ -349,17 +349,13 @@ static char *execProg(char const *name, char * const *argv) {
 		return buf;
 	};
 
-	char cmdLine[32768]; // Max command line size on Windows
-	char *ptr = cmdLine;
+	std::vector<char> cmdLine;
 	for (size_t i = 0; argv[i]; ++i) {
-		char const *src = argv[i];
-		// I miss you, `stpcpy`
-		while (*src) {
-			*ptr++ = *src++;
-		}
-		*ptr++ = ' ';
+		if (i > 0)
+			cmdLine.push_back(' ');
+		cmdLine.insert(cmdLine.end(), argv[i], argv[i] + strlen(argv[i]));
 	}
-	*ptr = '\0';
+	cmdLine.push_back('\0');
 
 	STARTUPINFOA startupInfo;
 	GetStartupInfoA(&startupInfo);
@@ -386,7 +382,16 @@ static char *execProg(char const *name, char * const *argv) {
 
 	PROCESS_INFORMATION child;
 	if (CreateProcessA(
-	        nullptr, cmdLine, nullptr, nullptr, true, 0, nullptr, nullptr, &childStartupInfo, &child
+	        nullptr,
+	        cmdLine.data(),
+	        nullptr,
+	        nullptr,
+	        true,
+	        0,
+	        nullptr,
+	        nullptr,
+	        &childStartupInfo,
+	        &child
 	    )
 	    == 0) {
 		return winStrerror(GetLastError());

@@ -356,11 +356,8 @@ void fstk_RunMacro(char const *macroName, MacroArgs &args) {
 		std::vector<uint32_t> const &srcIters = macro->src->iters();
 
 		for (uint32_t i = srcIters.size(); i--;) {
-			char buf[sizeof("::REPT~4294967295")]; // UINT32_MAX
-
-			if (sprintf(buf, "::REPT~%" PRIu32, srcIters[i]) < 0)
-				fatalerror("Failed to write macro invocation info: %s\n", strerror(errno));
-			fileInfoName.append(buf);
+			fileInfoName.append("::REPT~");
+			fileInfoName.append(std::to_string(srcIters[i]));
 		}
 	}
 	fileInfoName.append("::");

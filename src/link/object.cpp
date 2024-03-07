@@ -462,10 +462,9 @@ static void readAssertion(
     uint32_t i,
     std::vector<FileStackNode> const &fileNodes
 ) {
-	char assertName[sizeof("Assertion #4294967295")]; // UINT32_MAX
+	std::string assertName("Assertion #");
 
-	snprintf(assertName, sizeof(assertName), "Assertion #%" PRIu32, i);
-
+	assertName += std::to_string(i);
 	readPatch(file, assert.patch, fileName, assertName, 0, fileNodes);
 	tryReadstring(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
