@@ -1260,7 +1260,7 @@ reloc_8bit_offset:
 		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr {
-		rpn_NEG($$, $2);
+		rpn_NEG($$, std::move($2));
 		rpn_CheckNBit($$, 8);
 	}
 ;
@@ -1299,82 +1299,82 @@ relocexpr_no_str:
 		rpn_Number($$, $1);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
-		rpn_LOGNOT($$, $2);
+		rpn_LOGNOT($$, std::move($2));
 	}
 	| relocexpr OP_LOGICOR relocexpr {
-		rpn_BinaryOp(RPN_LOGOR, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGOR, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICAND relocexpr {
-		rpn_BinaryOp(RPN_LOGAND, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGAND, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICEQU relocexpr {
-		rpn_BinaryOp(RPN_LOGEQ, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGEQ, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICGT relocexpr {
-		rpn_BinaryOp(RPN_LOGGT, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGGT, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICLT relocexpr {
-		rpn_BinaryOp(RPN_LOGLT, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGLT, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICGE relocexpr {
-		rpn_BinaryOp(RPN_LOGGE, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGGE, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICLE relocexpr {
-		rpn_BinaryOp(RPN_LOGLE, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGLE, $$, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICNE relocexpr {
-		rpn_BinaryOp(RPN_LOGNE, $$, $1, $3);
+		rpn_BinaryOp(RPN_LOGNE, $$, std::move($1), $3);
 	}
 	| relocexpr OP_ADD relocexpr {
-		rpn_BinaryOp(RPN_ADD, $$, $1, $3);
+		rpn_BinaryOp(RPN_ADD, $$, std::move($1), $3);
 	}
 	| relocexpr OP_SUB relocexpr {
-		rpn_BinaryOp(RPN_SUB, $$, $1, $3);
+		rpn_BinaryOp(RPN_SUB, $$, std::move($1), $3);
 	}
 	| relocexpr OP_XOR relocexpr {
-		rpn_BinaryOp(RPN_XOR, $$, $1, $3);
+		rpn_BinaryOp(RPN_XOR, $$, std::move($1), $3);
 	}
 	| relocexpr OP_OR relocexpr {
-		rpn_BinaryOp(RPN_OR, $$, $1, $3);
+		rpn_BinaryOp(RPN_OR, $$, std::move($1), $3);
 	}
 	| relocexpr OP_AND relocexpr {
-		rpn_BinaryOp(RPN_AND, $$, $1, $3);
+		rpn_BinaryOp(RPN_AND, $$, std::move($1), $3);
 	}
 	| relocexpr OP_SHL relocexpr {
-		rpn_BinaryOp(RPN_SHL, $$, $1, $3);
+		rpn_BinaryOp(RPN_SHL, $$, std::move($1), $3);
 	}
 	| relocexpr OP_SHR relocexpr {
-		rpn_BinaryOp(RPN_SHR, $$, $1, $3);
+		rpn_BinaryOp(RPN_SHR, $$, std::move($1), $3);
 	}
 	| relocexpr OP_USHR relocexpr {
-		rpn_BinaryOp(RPN_USHR, $$, $1, $3);
+		rpn_BinaryOp(RPN_USHR, $$, std::move($1), $3);
 	}
 	| relocexpr OP_MUL relocexpr {
-		rpn_BinaryOp(RPN_MUL, $$, $1, $3);
+		rpn_BinaryOp(RPN_MUL, $$, std::move($1), $3);
 	}
 	| relocexpr OP_DIV relocexpr {
-		rpn_BinaryOp(RPN_DIV, $$, $1, $3);
+		rpn_BinaryOp(RPN_DIV, $$, std::move($1), $3);
 	}
 	| relocexpr OP_MOD relocexpr {
-		rpn_BinaryOp(RPN_MOD, $$, $1, $3);
+		rpn_BinaryOp(RPN_MOD, $$, std::move($1), $3);
 	}
 	| relocexpr OP_EXP relocexpr {
-		rpn_BinaryOp(RPN_EXP, $$, $1, $3);
+		rpn_BinaryOp(RPN_EXP, $$, std::move($1), $3);
 	}
 	| OP_ADD relocexpr %prec NEG {
 		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr %prec NEG {
-		rpn_NEG($$, $2);
+		rpn_NEG($$, std::move($2));
 	}
 	| OP_NOT relocexpr %prec NEG {
-		rpn_NOT($$, $2);
+		rpn_NOT($$, std::move($2));
 	}
 	| OP_HIGH LPAREN relocexpr RPAREN {
-		rpn_HIGH($$, $3);
+		rpn_HIGH($$, std::move($3));
 	}
 	| OP_LOW LPAREN relocexpr RPAREN {
-		rpn_LOW($$, $3);
+		rpn_LOW($$, std::move($3));
 	}
 	| OP_ISCONST LPAREN relocexpr RPAREN {
 		rpn_ISCONST($$, $3);
@@ -2733,7 +2733,7 @@ static void compoundAssignment(const char *symName, RPNCommand op, int32_t const
 
 	rpn_Symbol(oldExpr, symName);
 	rpn_Number(constExpr, constValue);
-	rpn_BinaryOp(op, newExpr, oldExpr, constExpr);
+	rpn_BinaryOp(op, newExpr, std::move(oldExpr), constExpr);
 	newValue = newExpr.getConstVal();
 	sym_AddVar(symName, newValue);
 }

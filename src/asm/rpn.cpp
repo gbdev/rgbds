@@ -267,7 +267,7 @@ int32_t Expression::getConstVal() const {
 	return val;
 }
 
-void rpn_LOGNOT(Expression &expr, Expression &src) {
+void rpn_LOGNOT(Expression &expr, Expression &&src) {
 	expr = std::move(src);
 	expr.isSymbol = false;
 
@@ -337,7 +337,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &src1, const Expression &src2) {
+void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expression &src2) {
 	initExpression(expr);
 	expr.isSymbol = false;
 	int32_t constMaskVal;
@@ -556,7 +556,7 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &src1, const Expre
 	}
 }
 
-void rpn_HIGH(Expression &expr, Expression &src) {
+void rpn_HIGH(Expression &expr, Expression &&src) {
 	expr = std::move(src);
 	expr.isSymbol = false;
 
@@ -569,7 +569,7 @@ void rpn_HIGH(Expression &expr, Expression &src) {
 	}
 }
 
-void rpn_LOW(Expression &expr, Expression &src) {
+void rpn_LOW(Expression &expr, Expression &&src) {
 	expr = std::move(src);
 	expr.isSymbol = false;
 
@@ -590,7 +590,7 @@ void rpn_ISCONST(Expression &expr, const Expression &src) {
 	expr.isSymbol = false;
 }
 
-void rpn_NEG(Expression &expr, Expression &src) {
+void rpn_NEG(Expression &expr, Expression &&src) {
 	expr = std::move(src);
 	expr.isSymbol = false;
 
@@ -602,7 +602,7 @@ void rpn_NEG(Expression &expr, Expression &src) {
 	}
 }
 
-void rpn_NOT(Expression &expr, Expression &src) {
+void rpn_NOT(Expression &expr, Expression &&src) {
 	expr = std::move(src);
 	expr.isSymbol = false;
 
