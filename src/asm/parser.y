@@ -968,11 +968,11 @@ ds:
 
 ds_args:
 	reloc_8bit {
-		$$.push_back($1);
+		$$.push_back(std::move($1));
 	}
 	| ds_args COMMA reloc_8bit {
-		$1.push_back($3);
-		$$ = $1;
+		$1.push_back(std::move($3));
+		$$ = std::move($1);
 	}
 ;
 
@@ -1243,21 +1243,21 @@ constlist_32bit_entry:
 reloc_8bit:
 	relocexpr {
 		rpn_CheckNBit($1, 8);
-		$$ = $1;
+		$$ = std::move($1);
 	}
 ;
 
 reloc_8bit_no_str:
 	relocexpr_no_str {
 		rpn_CheckNBit($1, 8);
-		$$ = $1;
+		$$ = std::move($1);
 	}
 ;
 
 reloc_8bit_offset:
 	OP_ADD relocexpr {
 		rpn_CheckNBit($2, 8);
-		$$ = $2;
+		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr {
 		rpn_NEG($$, $2);
@@ -1268,19 +1268,21 @@ reloc_8bit_offset:
 reloc_16bit:
 	relocexpr {
 		rpn_CheckNBit($1, 16);
-		$$ = $1;
+		$$ = std::move($1);
 	}
 ;
 
 reloc_16bit_no_str:
 	relocexpr_no_str {
 		rpn_CheckNBit($1, 16);
-		$$ = $1;
+		$$ = std::move($1);
 	}
 ;
 
 relocexpr:
-	  relocexpr_no_str
+	relocexpr_no_str {
+		$$ = std::move($1);
+	}
 	| string {
 		std::vector<uint8_t> output;
 
@@ -1360,7 +1362,7 @@ relocexpr_no_str:
 		rpn_BinaryOp(RPN_EXP, $$, $1, $3);
 	}
 	| OP_ADD relocexpr %prec NEG {
-		$$ = $2;
+		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr %prec NEG {
 		rpn_NEG($$, $2);
@@ -1470,7 +1472,7 @@ relocexpr_no_str:
 		rpn_Number($$, charmap_HasChar($3.string));
 	}
 	| LPAREN relocexpr RPAREN {
-		$$ = $2;
+		$$ = std::move($2);
 	}
 ;
 
@@ -1904,13 +1906,13 @@ z80_ldd:
 
 z80_ldio:
 	Z80_LDH MODE_A COMMA op_mem_ind {
-		rpn_CheckHRAM($4, $4);
+		rpn_CheckHRAM($4);
 
 		sect_AbsByte(0xF0);
 		sect_RelByte($4, 1);
 	}
 	| Z80_LDH op_mem_ind COMMA MODE_A {
-		rpn_CheckHRAM($2, $2);
+		rpn_CheckHRAM($2);
 
 		sect_AbsByte(0xE0);
 		sect_RelByte($2, 1);
@@ -2166,7 +2168,7 @@ z80_rrca:
 
 z80_rst:
 	Z80_RST reloc_8bit {
-		rpn_CheckRST($2, $2);
+		rpn_CheckRST($2);
 		if (!$2.isKnown)
 			sect_RelByte($2, 0);
 		else
@@ -2261,7 +2263,7 @@ z80_xor:
 
 op_mem_ind:
 	LBRACK reloc_16bit RBRACK {
-		$$ = $2;
+		$$ = std::move($2);
 	}
 ;
 
@@ -2273,9 +2275,11 @@ op_a_r:
 ;
 
 op_a_n:
-	  reloc_8bit
+	reloc_8bit {
+		$$ = std::move($1);
+	}
 	| MODE_A COMMA reloc_8bit {
-		$$ = $3;
+		$$ = std::move($3);
 	}
 ;
 

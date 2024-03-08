@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <memory>
 #include <new>
 #include <stdint.h>
 #include <stdio.h>
@@ -42,11 +43,8 @@ static void makeUnknown(Expression &expr, Ts... parts) {
 }
 
 static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
-	if (!expr.rpn) {
-		expr.rpn = new (std::nothrow) std::vector<uint8_t>();
-		if (!expr.rpn)
-			fatalerror("Failed to allocate RPN expression: %s\n", strerror(errno));
-	}
+	if (!expr.rpn)
+		expr.rpn = std::make_unique<std::vector<uint8_t>>();
 
 	size_t curSize = expr.rpn->size();
 
@@ -56,7 +54,6 @@ static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
 
 // Free the RPN expression
 void rpn_Free(Expression &expr) {
-	delete expr.rpn;
 	initExpression(expr);
 }
 
@@ -220,8 +217,7 @@ void rpn_StartOfSectionType(Expression &expr, SectionType type) {
 	*ptr++ = type;
 }
 
-void rpn_CheckHRAM(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_CheckHRAM(Expression &expr) {
 	expr.isSymbol = false;
 
 	if (!expr.isKnown) {
@@ -235,9 +231,7 @@ void rpn_CheckHRAM(Expression &expr, const Expression &src) {
 	}
 }
 
-void rpn_CheckRST(Expression &expr, const Expression &src) {
-	expr = src;
-
+void rpn_CheckRST(Expression &expr) {
 	if (expr.isKnown) {
 		// A valid RST address must be masked with 0x38
 		if (expr.val & ~0x38)
@@ -251,7 +245,7 @@ void rpn_CheckRST(Expression &expr, const Expression &src) {
 }
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
-void rpn_CheckNBit(Expression const &expr, uint8_t n) {
+void rpn_CheckNBit(const Expression &expr, uint8_t n) {
 	assert(n != 0);                     // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
@@ -273,8 +267,8 @@ int32_t Expression::getConstVal() const {
 	return val;
 }
 
-void rpn_LOGNOT(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_LOGNOT(Expression &expr, Expression &src) {
+	expr = std::move(src);
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
@@ -343,7 +337,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2) {
+void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &src1, const Expression &src2) {
 	initExpression(expr);
 	expr.isSymbol = false;
 	int32_t constMaskVal;
@@ -523,7 +517,7 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, const Expression &src1, const
 		} else {
 			// Otherwise just reuse its RPN buffer
 			expr.rpnPatchSize = src1.rpnPatchSize;
-			expr.rpn = src1.rpn;
+			expr.rpn = std::move(src1.rpn);
 			expr.reason = src1.reason;
 		}
 
@@ -558,13 +552,12 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, const Expression &src1, const
 			memcpy(buf, ptr, len);
 		buf[len] = op;
 
-		delete src2.rpn; // If there was none, this is `delete nullptr`
 		expr.rpnPatchSize += patchSize + 1;
 	}
 }
 
-void rpn_HIGH(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_HIGH(Expression &expr, Expression &src) {
+	expr = std::move(src);
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
@@ -576,8 +569,8 @@ void rpn_HIGH(Expression &expr, const Expression &src) {
 	}
 }
 
-void rpn_LOW(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_LOW(Expression &expr, Expression &src) {
+	expr = std::move(src);
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
@@ -597,8 +590,8 @@ void rpn_ISCONST(Expression &expr, const Expression &src) {
 	expr.isSymbol = false;
 }
 
-void rpn_NEG(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_NEG(Expression &expr, Expression &src) {
+	expr = std::move(src);
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
@@ -609,8 +602,8 @@ void rpn_NEG(Expression &expr, const Expression &src) {
 	}
 }
 
-void rpn_NOT(Expression &expr, const Expression &src) {
-	expr = src;
+void rpn_NOT(Expression &expr, Expression &src) {
+	expr = std::move(src);
 	expr.isSymbol = false;
 
 	if (expr.isKnown) {
