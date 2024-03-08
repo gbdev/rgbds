@@ -25,6 +25,10 @@ struct Expression {
 
 	Expression() = default;
 	Expression(Expression &&) = default;
+#ifdef _MSC_VER
+	// MSVC and WinFlexBison won't build without this...
+	Expression(const Expression &) = default;
+#endif
 
 	Expression &operator=(Expression &&) = default;
 };
