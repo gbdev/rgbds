@@ -579,7 +579,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
 		// SDCC areas don't have a type assigned yet, so the linker script is used to give them one.
-		for (Section *fragment = section; fragment; fragment = fragment->nextu) {
+		for (Section *fragment = section; fragment; fragment = fragment->nextu.get()) {
 			fragment->type = activeType;
 		}
 	} else if (section->type != activeType) {

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <map>
+#include <memory>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -14,7 +15,7 @@
 
 #include "link/main.hpp"
 
-std::map<std::string, Section *> sections;
+std::map<std::string, std::unique_ptr<Section>> sections;
 
 void sect_ForEach(void (*callback)(Section &)) {
 	for (auto &it : sections)
@@ -139,53 +140,53 @@ static void checkFragmentCompat(Section &target, Section &other) {
 	}
 }
 
-static void mergeSections(Section &target, Section &other, SectionModifier mod) {
+static void mergeSections(Section &target, std::unique_ptr<Section> &&other, SectionModifier mod) {
 	// Common checks
 
-	if (target.type != other.type)
+	if (target.type != other->type)
 		errx(
 		    "Section \"%s\" is defined with conflicting types %s and %s",
-		    other.name.c_str(),
+		    other->name.c_str(),
 		    sectionTypeInfo[target.type].name.c_str(),
-		    sectionTypeInfo[other.type].name.c_str()
+		    sectionTypeInfo[other->type].name.c_str()
 		);
 
-	if (other.isBankFixed) {
+	if (other->isBankFixed) {
 		if (!target.isBankFixed) {
 			target.isBankFixed = true;
-			target.bank = other.bank;
-		} else if (target.bank != other.bank) {
+			target.bank = other->bank;
+		} else if (target.bank != other->bank) {
 			errx(
 			    "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %" PRIu32,
-			    other.name.c_str(),
+			    other->name.c_str(),
 			    target.bank,
-			    other.bank
+			    other->bank
 			);
 		}
 	}
 
 	switch (mod) {
 	case SECTION_UNION:
-		checkSectUnionCompat(target, other);
-		if (other.size > target.size)
-			target.size = other.size;
+		checkSectUnionCompat(target, *other);
+		if (other->size > target.size)
+			target.size = other->size;
 		break;
 
 	case SECTION_FRAGMENT:
-		checkFragmentCompat(target, other);
+		checkFragmentCompat(target, *other);
 		// Append `other` to `target`
 		// Note that the order in which fragments are stored in the `nextu` list does not
 		// really matter, only that offsets are properly computed
-		other.offset = target.size;
-		target.size += other.size;
+		other->offset = target.size;
+		target.size += other->size;
 		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
-		if (!other.data.empty()) {
-			target.data.insert(target.data.end(), RANGE(other.data));
+		if (!other->data.empty()) {
+			target.data.insert(target.data.end(), RANGE(other->data));
 			// Adjust patches' PC offsets
-			for (Patch &patch : other.patches)
-				patch.pcOffset += other.offset;
+			for (Patch &patch : other->patches)
+				patch.pcOffset += other->offset;
 		} else if (!target.data.empty()) {
-			assert(other.size == 0);
+			assert(other->size == 0);
 		}
 		break;
 
@@ -193,39 +194,39 @@ static void mergeSections(Section &target, Section &other, SectionModifier mod) 
 		unreachable_();
 	}
 
-	other.nextu = target.nextu;
-	target.nextu = &other;
+	other->nextu = std::move(target.nextu);
+	target.nextu = std::move(other);
 }
 
-void sect_AddSection(Section &section) {
+void sect_AddSection(std::unique_ptr<Section> &&section) {
 	// Check if the section already exists
-	if (Section *other = sect_GetSection(section.name); other) {
-		if (section.modifier != other->modifier)
+	if (Section *other = sect_GetSection(section->name); other) {
+		if (section->modifier != other->modifier)
 			errx(
 			    "Section \"%s\" defined as %s and %s",
-			    section.name.c_str(),
-			    sectionModNames[section.modifier],
+			    section->name.c_str(),
+			    sectionModNames[section->modifier],
 			    sectionModNames[other->modifier]
 			);
-		else if (section.modifier == SECTION_NORMAL)
-			errx("Section name \"%s\" is already in use", section.name.c_str());
+		else if (section->modifier == SECTION_NORMAL)
+			errx("Section name \"%s\" is already in use", section->name.c_str());
 		else
-			mergeSections(*other, section, section.modifier);
-	} else if (section.modifier == SECTION_UNION && sect_HasData(section.type)) {
+			mergeSections(*other, std::move(section), section->modifier);
+	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx(
 		    "Section \"%s\" is of type %s, which cannot be unionized",
-		    section.name.c_str(),
-		    sectionTypeInfo[section.type].name.c_str()
+		    section->name.c_str(),
+		    sectionTypeInfo[section->type].name.c_str()
 		);
 	} else {
 		// If not, add it
-		sections[section.name] = &section;
+		sections.emplace(section->name, std::move(section));
 	}
 }
 
 Section *sect_GetSection(std::string const &name) {
 	auto search = sections.find(name);
-	return search != sections.end() ? search->second : nullptr;
+	return search != sections.end() ? search->second.get() : nullptr;
 }
 
 static void doSanityChecks(Section &section) {

@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <new>
+#include <memory>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -329,8 +329,10 @@ static void readPatch(
  * Sets a patch's pcSection from its pcSectionID.
  * @param patch The patch to fix
  */
-static void linkPatchToPCSect(Patch &patch, std::vector<Section *> const &fileSections) {
-	patch.pcSection = patch.pcSectionID != (uint32_t)-1 ? fileSections[patch.pcSectionID] : nullptr;
+static void
+    linkPatchToPCSect(Patch &patch, std::vector<std::unique_ptr<Section>> const &fileSections) {
+	patch.pcSection =
+	    patch.pcSectionID != (uint32_t)-1 ? fileSections[patch.pcSectionID].get() : nullptr;
 }
 
 /*
@@ -469,10 +471,6 @@ static void readAssertion(
 	tryReadstring(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
 
-static Section *getMainSection(Section &section) {
-	return section.modifier != SECTION_NORMAL ? sect_GetSection(section.name) : &section;
-}
-
 void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	FILE *file;
 
@@ -571,21 +569,28 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// This file's sections, stored in a table to link symbols to them
-	std::vector<Section *> fileSections(nbSections, nullptr);
+	std::vector<std::unique_ptr<Section>> fileSections(nbSections);
 
 	verbosePrint("Reading %" PRIu32 " sections...\n", nbSections);
 	for (uint32_t i = 0; i < nbSections; i++) {
 		// Read section
-		fileSections[i] = new (std::nothrow) Section();
-		if (!fileSections[i])
-			err("%s: Failed to create new section", fileName);
-
+		fileSections[i] = std::make_unique<Section>();
 		fileSections[i]->nextu = nullptr;
 		readSection(file, *fileSections[i], fileName, nodes[fileID]);
 		fileSections[i]->fileSymbols = &fileSymbols;
 		fileSections[i]->symbols.reserve(nbSymPerSect[i]);
+	}
 
-		sect_AddSection(*fileSections[i]);
+	uint32_t nbAsserts;
+
+	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
+	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
+	for (uint32_t i = 0; i < nbAsserts; i++) {
+		Assertion &assertion = assertions.emplace_front();
+
+		readAssertion(file, assertion, fileName, i, nodes[fileID]);
+		linkPatchToPCSect(assertion.patch, fileSections);
+		assertion.fileSymbols = &fileSymbols;
 	}
 
 	// Give patches' PC section pointers to their sections
@@ -599,31 +604,31 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
 		if (Label *label = std::get_if<Label>(&fileSymbols[i].data); label) {
-			Section *section = fileSections[label->sectionID];
+			Section *section = fileSections[label->sectionID].get();
 
+			label->section = section;
 			// Give the section a pointer to the symbol as well
 			linkSymToSect(fileSymbols[i], *section);
-
-			if (section->modifier != SECTION_NORMAL) {
-				if (section->modifier == SECTION_FRAGMENT)
-					// Add the fragment's offset to the symbol's
-					label->offset += section->offset;
-				section = getMainSection(*section);
-			}
-			label->section = section;
 		}
 	}
 
-	uint32_t nbAsserts;
+	// Calling `sect_AddSection` invalidates the contents of `fileSections`!
+	for (uint32_t i = 0; i < nbSections; i++)
+		sect_AddSection(std::move(fileSections[i]));
 
-	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
-	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
-	for (uint32_t i = 0; i < nbAsserts; i++) {
-		Assertion &assertion = assertions.emplace_front();
-
-		readAssertion(file, assertion, fileName, i, nodes[fileID]);
-		linkPatchToPCSect(assertion.patch, fileSections);
-		assertion.fileSymbols = &fileSymbols;
+	// Fix symbols' section pointers to component sections
+	// This has to run **after** all the `sect_AddSection()` calls,
+	// so that `sect_GetSection()` will work
+	for (uint32_t i = 0; i < nbSymbols; i++) {
+		if (Label *label = std::get_if<Label>(&fileSymbols[i].data); label) {
+			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
+				if (section->modifier == SECTION_FRAGMENT)
+					// Add the fragment's offset to the symbol's
+					label->offset += section->offset;
+				// Associate the symbol with the main section, not the "component" one
+				label->section = sect_GetSection(section->name);
+			}
+		}
 	}
 
 	fclose(file);

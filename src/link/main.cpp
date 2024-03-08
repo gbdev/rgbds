@@ -346,19 +346,6 @@ next:
 	exit(1);
 }
 
-static void freeSection(Section &section) {
-	Section *next = &section;
-
-	for (Section *nextu; next; next = nextu) {
-		nextu = next->nextu;
-		delete next;
-	};
-}
-
-static void freeSections() {
-	sect_ForEach(freeSection);
-}
-
 int main(int argc, char *argv[]) {
 	// Parse options
 	for (int ch; (ch = musl_getopt_long_only(argc, argv, optstring, longopts, nullptr)) != -1;) {
@@ -461,10 +448,6 @@ int main(int argc, char *argv[]) {
 	// Patch the bank ranges array depending on command-line options
 	if (isDmgMode)
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
-
-	// Do cleanup before quitting, though.
-	// Mostly here to please tools such as `valgrind` so actual errors can be seen
-	atexit(freeSections);
 
 	// Read all object files first,
 	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)

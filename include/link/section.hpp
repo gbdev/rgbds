@@ -6,6 +6,7 @@
 
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
+#include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -50,7 +51,7 @@ struct Section {
 	// Extra info computed during linking
 	std::vector<Symbol> *fileSymbols;
 	std::vector<Symbol *> symbols;
-	Section *nextu; // The next "component" of this unionized sect
+	std::unique_ptr<Section> nextu; // The next "component" of this unionized sect
 };
 
 /*
@@ -64,7 +65,7 @@ void sect_ForEach(void (*callback)(Section &));
  * Registers a section to be processed.
  * @param section The section to register.
  */
-void sect_AddSection(Section &section);
+void sect_AddSection(std::unique_ptr<Section> &&section);
 
 /*
  * Finds a section by its name.

@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <new>
+#include <memory>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,7 +236,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 	// Now, let's parse the rest of the lines as they come!
 
 	struct FileSection {
-		Section *section;
+		std::unique_ptr<Section> section;
 		uint16_t writeIndex;
 	};
 	std::vector<FileSection> fileSections;
@@ -257,10 +257,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				warning(
 				    &where, lineNo, "Got more 'A' lines than the expected %" PRIu32, expectedNbAreas
 				);
-			Section *curSection = new (std::nothrow) Section();
-
-			if (!curSection)
-				fatal(&where, lineNo, "Failed to alloc new area: %s", strerror(errno));
+			std::unique_ptr<Section> curSection = std::make_unique<Section>();
 
 			getToken(line.data(), "'A' line is too short");
 			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
@@ -270,8 +267,6 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					fatal(&where, lineNo, "Area \"%s\" already defined earlier", token);
 			}
 			char const *sectionName = token; // We'll deal with the section's name depending on type
-
-			fileSections.push_back({.section = curSection, .writeIndex = 0});
 
 			expectToken("size", 'A');
 
@@ -345,6 +340,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			curSection->isAlignFixed = false;       // No such concept!
 			curSection->fileSymbols = &fileSymbols; // IDs are instead per-section
 			curSection->nextu = nullptr;
+
+			fileSections.push_back({.section = std::move(curSection), .writeIndex = 0});
 			break;
 		}
 
@@ -371,7 +368,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			if (int32_t value = parseNumber(where, lineNo, &token[3], numberType);
 			    !fileSections.empty()) {
 				// Symbols in sections are labels; their value is an offset
-				Section *section = fileSections.back().section;
+				Section *section = fileSections.back().section.get();
 				if (section->isAddressFixed) {
 					assert(value >= section->org && value <= section->org + section->size);
 					value -= section->org;
@@ -479,7 +476,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				    fileSections.size()
 				);
 			assert(!fileSections.empty()); // There should be at least one, from the above check
-			Section *section = fileSections[areaIdx].section;
+			Section *section = fileSections[areaIdx].section.get();
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
 			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to `->data`
 			uint16_t addr = data[0] | data[1] << 8;
@@ -826,7 +823,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 	nbSectionsToAssign += fileSections.size();
 
 	for (FileSection &entry : fileSections) {
-		Section *section = entry.section;
+		std::unique_ptr<Section> &section = entry.section;
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
 		if (entry.writeIndex != section->size && entry.writeIndex != 0)
@@ -839,13 +836,14 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			    section->size
 			);
 
-		sect_AddSection(*section);
-
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
 			for (Symbol *symbol : section->symbols)
 				symbol->label().offset += section->offset;
 		}
+
+		// Calling `sect_AddSection` invalidates the contents of `fileSections`!
+		sect_AddSection(std::move(section));
 	}
 
 #undef expectEol
