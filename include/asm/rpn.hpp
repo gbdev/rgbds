@@ -3,7 +3,6 @@
 #ifndef RGBDS_ASM_RPN_H
 #define RGBDS_ASM_RPN_H
 
-#include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -17,12 +16,17 @@ struct Expression {
 	std::string reason; // Why the expression is not known, if it isn't
 	bool isKnown;       // Whether the expression's value is known at assembly time
 	bool isSymbol;      // Whether the expression represents a symbol suitable for const diffing
-	std::unique_ptr<std::vector<uint8_t>> rpn; // Bytes serializing the RPN expression
-	uint32_t rpnPatchSize;                     // Size the expression will take in the object file
+	std::vector<uint8_t> rpn; // Bytes serializing the RPN expression
+	uint32_t rpnPatchSize;    // Size the expression will take in the object file
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;
 	bool isDiffConstant(Symbol const *symName) const;
+
+	Expression() = default;
+	Expression(Expression &&) = default;
+
+	Expression &operator=(Expression &&) = default;
 };
 
 void rpn_Number(Expression &expr, uint32_t val);

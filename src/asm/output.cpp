@@ -276,7 +276,7 @@ static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 		patch.rpn[4] = (uint32_t)expr.val >> 24;
 	} else {
 		patch.rpn.resize(expr.rpnPatchSize);
-		writerpn(patch.rpn, *expr.rpn);
+		writerpn(patch.rpn, expr.rpn);
 	}
 }
 

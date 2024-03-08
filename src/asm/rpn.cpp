@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <memory>
 #include <new>
 #include <stdint.h>
 #include <stdio.h>
@@ -30,7 +29,7 @@ static void initExpression(Expression &expr) {
 	expr.reason.clear();
 	expr.isKnown = true;
 	expr.isSymbol = false;
-	expr.rpn = nullptr;
+	expr.rpn.clear();
 	expr.rpnPatchSize = 0;
 }
 
@@ -43,13 +42,10 @@ static void makeUnknown(Expression &expr, Ts... parts) {
 }
 
 static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
-	if (!expr.rpn)
-		expr.rpn = std::make_unique<std::vector<uint8_t>>();
+	size_t curSize = expr.rpn.size();
 
-	size_t curSize = expr.rpn->size();
-
-	expr.rpn->resize(curSize + size);
-	return &(*expr.rpn)[curSize];
+	expr.rpn.resize(curSize + size);
+	return &expr.rpn[curSize];
 }
 
 // Free the RPN expression
@@ -282,7 +278,7 @@ void rpn_LOGNOT(Expression &expr, Expression &&src) {
 Symbol const *Expression::symbolOf() const {
 	if (!isSymbol)
 		return nullptr;
-	return sym_FindScopedSymbol((char const *)&(*rpn)[1]);
+	return sym_FindScopedSymbol((char const *)&rpn[1]);
 }
 
 bool Expression::isDiffConstant(Symbol const *sym) const {
@@ -509,7 +505,7 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expr
 			    (uint8_t)(lval >> 24),
 			};
 			expr.rpnPatchSize = sizeof(bytes);
-			expr.rpn = nullptr;
+			expr.rpn.clear();
 			memcpy(reserveSpace(expr, sizeof(bytes)), bytes, sizeof(bytes));
 
 			// Use the other expression's un-const reason
@@ -517,7 +513,7 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expr
 		} else {
 			// Otherwise just reuse its RPN buffer
 			expr.rpnPatchSize = src1.rpnPatchSize;
-			expr.rpn = std::move(src1.rpn);
+			std::swap(expr.rpn, src1.rpn);
 			expr.reason = src1.reason;
 		}
 
@@ -540,8 +536,8 @@ void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expr
 			len = sizeof(bytes);
 			patchSize = sizeof(bytes);
 		} else {
-			ptr = src2.rpn->data(); // Pointer to the right RPN
-			len = src2.rpn->size(); // Size of the right RPN
+			ptr = src2.rpn.data(); // Pointer to the right RPN
+			len = src2.rpn.size(); // Size of the right RPN
 			patchSize = src2.rpnPatchSize;
 		}
 		// Copy the right RPN and append the operator
