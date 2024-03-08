@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <new>
+#include <optional>
 #include <stack>
 #include <stdint.h>
 #include <stdio.h>
@@ -159,25 +160,19 @@ static bool isPathValid(char const *path) {
 	return !S_ISDIR(statbuf.st_mode);
 }
 
-std::string *fstk_FindFile(char const *path) {
-	std::string *fullPath = new (std::nothrow) std::string();
-
-	if (!fullPath) {
-		error("Failed to allocate string during include path search: %s\n", strerror(errno));
-	} else {
-		for (std::string &str : includePaths) {
-			*fullPath = str + path;
-			if (isPathValid(fullPath->c_str())) {
-				printDep(fullPath->c_str());
-				return fullPath;
-			}
+std::optional<std::string> fstk_FindFile(char const *path) {
+	for (std::string &str : includePaths) {
+		std::string fullPath = str + path;
+		if (isPathValid(fullPath.c_str())) {
+			printDep(fullPath.c_str());
+			return fullPath;
 		}
 	}
 
 	errno = ENOENT;
 	if (generatedMissingIncludes)
 		printDep(path);
-	return nullptr;
+	return std::nullopt;
 }
 
 bool yywrap() {
@@ -265,8 +260,7 @@ static Context &newContext(FileStackNode &fileInfo) {
 }
 
 void fstk_RunInclude(char const *path) {
-	std::string *fullPath = fstk_FindFile(path);
-
+	std::optional<std::string> fullPath = fstk_FindFile(path);
 	if (!fullPath) {
 		if (generatedMissingIncludes) {
 			if (verbose)
@@ -279,7 +273,6 @@ void fstk_RunInclude(char const *path) {
 	}
 
 	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, *fullPath);
-	delete fullPath;
 	if (!fileInfo) {
 		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
 		return;
@@ -303,15 +296,13 @@ static void runPreIncludeFile() {
 	if (!preIncludeName)
 		return;
 
-	std::string *fullPath = fstk_FindFile(preIncludeName);
-
+	std::optional<std::string> fullPath = fstk_FindFile(preIncludeName);
 	if (!fullPath) {
 		error("Unable to open included file '%s': %s\n", preIncludeName, strerror(errno));
 		return;
 	}
 
 	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, *fullPath);
-	delete fullPath;
 	if (!fileInfo) {
 		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
 		return;

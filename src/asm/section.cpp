@@ -846,11 +846,8 @@ void sect_BinaryFile(char const *s, int32_t startPos) {
 	if (!checkcodesection())
 		return;
 
-	std::string *fullPath = fstk_FindFile(s);
+	std::optional<std::string> fullPath = fstk_FindFile(s);
 	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
-
-	delete fullPath;
-
 	if (!f) {
 		if (generatedMissingIncludes) {
 			if (verbose)
@@ -915,11 +912,8 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length) {
 	if (!reserveSpace(length))
 		return;
 
-	std::string *fullPath = fstk_FindFile(s);
+	std::optional<std::string> fullPath = fstk_FindFile(s);
 	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
-
-	delete fullPath;
-
 	if (!f) {
 		if (generatedMissingIncludes) {
 			if (verbose)
