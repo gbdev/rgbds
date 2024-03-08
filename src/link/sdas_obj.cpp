@@ -370,7 +370,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			getToken(nullptr, "'S' line is too short");
 
 			if (int32_t value = parseNumber(where, lineNo, &token[3], numberType);
-			    fileSections.empty()) {
+			    !fileSections.empty()) {
 				// Symbols in sections are labels; their value is an offset
 				Section *section = fileSections.back().section;
 				if (section->isAddressFixed) {
