@@ -139,7 +139,7 @@ static void checkFragmentCompat(Section &target, Section &other) {
 	}
 }
 
-static void mergeSections(Section &target, Section &other, enum SectionModifier mod) {
+static void mergeSections(Section &target, Section &other, SectionModifier mod) {
 	// Common checks
 
 	if (target.type != other.type)

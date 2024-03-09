@@ -204,7 +204,7 @@ static bool readMBCSlice(char const *&name, char const *expected) {
 	return true;
 }
 
-static enum MbcType parseMBC(char const *name) {
+static MbcType parseMBC(char const *name) {
 	if (!strcasecmp(name, "help")) {
 		fputs("Accepted MBC names:\n", stderr);
 		printAcceptedMBCNames();
@@ -226,7 +226,7 @@ static enum MbcType parseMBC(char const *name) {
 			return MBC_BAD;
 		if (mbc > 0xFF)
 			return MBC_BAD_RANGE;
-		return (enum MbcType)mbc;
+		return (MbcType)mbc;
 
 	} else {
 		// Begin by reading the MBC type:
@@ -567,11 +567,11 @@ static enum MbcType parseMBC(char const *name) {
 		if (*ptr)
 			return MBC_BAD;
 
-		return (enum MbcType)mbc;
+		return (MbcType)mbc;
 	}
 }
 
-static char const *mbcName(enum MbcType type) {
+static char const *mbcName(MbcType type) {
 	switch (type) {
 	case ROM:
 		return "ROM";
@@ -669,7 +669,7 @@ static char const *mbcName(enum MbcType type) {
 	unreachable_();
 }
 
-static bool hasRAM(enum MbcType type) {
+static bool hasRAM(MbcType type) {
 	switch (type) {
 	case ROM:
 	case MBC1:
@@ -760,7 +760,7 @@ static bool japanese = true;
 static const char *newLicensee = nullptr;
 static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
-static enum MbcType cartridgeType = MBC_NONE;
+static MbcType cartridgeType = MBC_NONE;
 static uint16_t romVersion = UNSPECIFIED;
 static bool overwriteRom = false; // If false, warn when overwriting non-zero non-identical bytes
 static uint16_t padValue = UNSPECIFIED;
@@ -1232,9 +1232,7 @@ static void parseByte(uint16_t &output, char name) {
 		}
 		if (*endptr) {
 			report(
-			    "error: Expected number as argument to option '%c', got %s\n",
-			    name,
-			    musl_optarg
+			    "error: Expected number as argument to option '%c', got %s\n", name, musl_optarg
 			);
 		} else if (value > 0xFF) {
 			report("error: Argument to option '%c' is larger than 255: %lu\n", name, value);

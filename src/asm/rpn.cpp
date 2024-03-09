@@ -198,7 +198,7 @@ void rpn_StartOfSection(Expression &expr, char const *sectionName) {
 	}
 }
 
-void rpn_SizeOfSectionType(Expression &expr, enum SectionType type) {
+void rpn_SizeOfSectionType(Expression &expr, SectionType type) {
 	initExpression(expr);
 	makeUnknown(expr, "Section type's size is not known");
 
@@ -209,7 +209,7 @@ void rpn_SizeOfSectionType(Expression &expr, enum SectionType type) {
 	*ptr++ = type;
 }
 
-void rpn_StartOfSectionType(Expression &expr, enum SectionType type) {
+void rpn_StartOfSectionType(Expression &expr, SectionType type) {
 	initExpression(expr);
 	makeUnknown(expr, "Section type's start is not known");
 
@@ -343,9 +343,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(
-    enum RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2
-) {
+void rpn_BinaryOp(RPNCommand op, Expression &expr, const Expression &src1, const Expression &src2) {
 	initExpression(expr);
 	expr.isSymbol = false;
 	int32_t constMaskVal;

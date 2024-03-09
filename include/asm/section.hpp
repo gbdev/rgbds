@@ -27,8 +27,8 @@ struct Patch {
 
 struct Section {
 	std::string name;
-	enum SectionType type;
-	enum SectionModifier modifier;
+	SectionType type;
+	SectionModifier modifier;
 	FileStackNode const *src; // Where the section was defined
 	uint32_t fileLine;        // Line where the section was defined
 	uint32_t size;
@@ -53,18 +53,10 @@ extern Section *currentSection;
 
 Section *sect_FindSectionByName(char const *name);
 void sect_NewSection(
-    char const *name,
-    enum SectionType type,
-    uint32_t org,
-    SectionSpec const &attrs,
-    enum SectionModifier mod
+    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
 );
 void sect_SetLoadSection(
-    char const *name,
-    enum SectionType type,
-    uint32_t org,
-    SectionSpec const &attrs,
-    enum SectionModifier mod
+    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
 );
 void sect_EndLoadSection();
 

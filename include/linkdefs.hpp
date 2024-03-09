@@ -92,7 +92,7 @@ extern struct SectionTypeInfo {
  * @param type The section's type
  * @return `true` if the section's definition includes data
  */
-static inline bool sect_HasData(enum SectionType type) {
+static inline bool sect_HasData(SectionType type) {
 	assert(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
@@ -101,7 +101,7 @@ static inline bool sect_HasData(enum SectionType type) {
  * Computes a memory region's end address (last byte), eg. 0x7FFF
  * @return The address of the last byte in that memory region
  */
-static inline uint16_t endaddr(enum SectionType type) {
+static inline uint16_t endaddr(SectionType type) {
 	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
 }
 
@@ -109,7 +109,7 @@ static inline uint16_t endaddr(enum SectionType type) {
  * Computes a memory region's number of banks
  * @return The number of banks, 1 for regions without banking
  */
-static inline uint32_t nbbanks(enum SectionType type) {
+static inline uint32_t nbbanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }
 

@@ -78,9 +78,9 @@
 	    char *dest, size_t destLen, char const *spec,
 	    std::vector<std::variant<uint32_t, std::string>> &args
 	);
-	static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue);
-	static void failAssert(enum AssertionType type);
-	static void failAssertMsg(enum AssertionType type, char const *msg);
+	static void compoundAssignment(const char *symName, RPNCommand op, int32_t constValue);
+	static void failAssert(AssertionType type);
+	static void failAssertMsg(AssertionType type, char const *msg);
 	void yyerror(char const *str);
 
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
@@ -838,7 +838,7 @@ shift:
 
 load:
 	POP_LOAD sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_SetLoadSection($3.string, (enum SectionType)$5, $6, $7, $2);
+		sect_SetLoadSection($3.string, (SectionType)$5, $6, $7, $2);
 	}
 	| POP_ENDL {
 		sect_EndLoadSection();
@@ -1402,10 +1402,10 @@ relocexpr_no_str:
 		rpn_StartOfSection($$, $3.string);
 	}
 	| OP_SIZEOF LPAREN sectiontype RPAREN {
-		rpn_SizeOfSectionType($$, (enum SectionType)$3);
+		rpn_SizeOfSectionType($$, (SectionType)$3);
 	}
 	| OP_STARTOF LPAREN sectiontype RPAREN {
-		rpn_StartOfSectionType($$, (enum SectionType)$3);
+		rpn_StartOfSectionType($$, (SectionType)$3);
 	}
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
@@ -1611,7 +1611,7 @@ strfmt_va_args:
 
 section:
 	POP_SECTION sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_NewSection($3.string, (enum SectionType)$5, $6, $7, $2);
+		sect_NewSection($3.string, (SectionType)$5, $6, $7, $2);
 	}
 ;
 
@@ -2730,7 +2730,7 @@ static void strfmt(
 	dest[i] = '\0';
 }
 
-static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t constValue) {
+static void compoundAssignment(const char *symName, RPNCommand op, int32_t constValue) {
 	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 
@@ -2741,7 +2741,7 @@ static void compoundAssignment(const char *symName, enum RPNCommand op, int32_t 
 	sym_AddVar(symName, newValue);
 }
 
-static void failAssert(enum AssertionType type) {
+static void failAssert(AssertionType type) {
 	switch (type) {
 	case ASSERT_FATAL:
 		fatalerror("Assertion failed\n");
@@ -2754,7 +2754,7 @@ static void failAssert(enum AssertionType type) {
 	}
 }
 
-static void failAssertMsg(enum AssertionType type, char const *msg) {
+static void failAssertMsg(AssertionType type, char const *msg) {
 	switch (type) {
 	case ASSERT_FATAL:
 		fatalerror("Assertion failed: %s\n", msg);

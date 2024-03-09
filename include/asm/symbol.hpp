@@ -27,7 +27,7 @@ bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
 
 struct Symbol {
 	std::string name;
-	enum SymbolType type;
+	SymbolType type;
 	bool isExported; // Whether the symbol is to be exported
 	bool isBuiltin;  // Whether the symbol is a built-in
 	Section *section;

@@ -49,7 +49,7 @@
 	#include <winbase.h>   // CreateFileMappingA
 	#include <memoryapi.h> // MapViewOfFile
 	#include <handleapi.h> // CloseHandle
-    // clang-format on
+// clang-format on
 
 	#define MAP_FAILED nullptr
 
@@ -491,7 +491,7 @@ void lexer_CleanupState(LexerState &state) {
 	);
 }
 
-void lexer_SetMode(enum LexerMode mode) {
+void lexer_SetMode(LexerMode mode) {
 	lexerState->mode = mode;
 }
 
@@ -1825,9 +1825,8 @@ static Token yylex_NORMAL() {
 				// Local symbols cannot be string expansions
 				if (token.type == T_(ID) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(
-					    std::get<std::string>(token.value).c_str()
-					);
+					Symbol const *sym =
+					    sym_FindExactSymbol(std::get<std::string>(token.value).c_str());
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *str = sym->getEqus()->c_str();

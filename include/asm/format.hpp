@@ -17,7 +17,7 @@ enum FormatState {
 };
 
 class FormatSpec {
-	enum FormatState state;
+	FormatState state;
 	int sign;
 	bool prefix;
 	bool alignLeft;

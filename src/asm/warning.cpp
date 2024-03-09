@@ -19,7 +19,7 @@
 unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
-static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
+static const WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_ENABLED,  // WARNING_ASSERT
     WARNING_DISABLED, // WARNING_BACKWARDS_FOR
     WARNING_DISABLED, // WARNING_BUILTIN_ARG
@@ -45,17 +45,17 @@ static const enum WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_DISABLED, // WARNING_UNMAPPED_CHAR_2
 };
 
-enum WarningState warningStates[ARRAY_SIZE(warningStates)];
+WarningState warningStates[ARRAY_SIZE(warningStates)];
 
 bool warningsAreErrors; // Set if `-Werror` was specified
 
-static enum WarningState warningState(enum WarningID id) {
+static WarningState warningState(WarningID id) {
 	// Check if warnings are globally disabled
 	if (!warnings)
 		return WARNING_DISABLED;
 
 	// Get the actual state
-	enum WarningState state = warningStates[id];
+	WarningState state = warningStates[id];
 
 	if (state == WARNING_DEFAULT)
 		// The state isn't set, grab its default state
@@ -109,8 +109,8 @@ static const struct {
     {"unmapped-char",  2, 1},
 };
 
-static bool tryProcessParamWarning(char const *flag, uint8_t param, enum WarningState state) {
-	enum WarningID baseID = PARAM_WARNINGS_START;
+static bool tryProcessParamWarning(char const *flag, uint8_t param, WarningState state) {
+	WarningID baseID = PARAM_WARNINGS_START;
 
 	for (size_t i = 0; i < ARRAY_SIZE(paramWarnings); i++) {
 		uint8_t maxParam = paramWarnings[i].nbLevels;
@@ -142,7 +142,7 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, enum Warning
 			return true;
 		}
 
-		baseID = (enum WarningID)(baseID + maxParam);
+		baseID = (WarningID)(baseID + maxParam);
 	}
 	return false;
 }
@@ -214,7 +214,7 @@ void processWarningFlag(char const *flag) {
 	static bool setError = false;
 
 	// First, try to match against a "meta" warning
-	for (enum WarningID id : EnumSeq(META_WARNINGS_START, NB_WARNINGS)) {
+	for (WarningID id : EnumSeq(META_WARNINGS_START, NB_WARNINGS)) {
 		// TODO: improve the matching performance?
 		if (!strcmp(flag, warningFlags[id])) {
 			// We got a match!
@@ -256,10 +256,10 @@ void processWarningFlag(char const *flag) {
 
 	// Well, it's either a normal warning or a mistake
 
-	enum WarningState state = setError ? WARNING_ERROR
-	                          // Not an error, then check if this is a negation
-	                          : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
-	                                                                : WARNING_DISABLED;
+	WarningState state = setError ? WARNING_ERROR
+	                     // Not an error, then check if this is a negation
+	                     : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
+	                                                           : WARNING_DISABLED;
 	char const *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
 
 	// Is this a "parametric" warning?
@@ -312,7 +312,7 @@ void processWarningFlag(char const *flag) {
 	}
 
 	// Try to match the flag against a "normal" flag
-	for (enum WarningID id : EnumSeq(NB_PLAIN_WARNINGS)) {
+	for (WarningID id : EnumSeq(NB_PLAIN_WARNINGS)) {
 		if (!strcmp(rootFlag, warningFlags[id])) {
 			// We got a match!
 			warningStates[id] = state;
@@ -368,7 +368,7 @@ void error(char const *fmt, ...) {
 	exit(1);
 }
 
-void warning(enum WarningID id, char const *fmt, ...) {
+void warning(WarningID id, char const *fmt, ...) {
 	char const *flag = warningFlags[id];
 	va_list args;
 

@@ -54,7 +54,7 @@ enum WarningID {
 #define NB_META_WARNINGS (NB_WARNINGS - META_WARNINGS_START)
 };
 
-extern enum WarningState warningStates[NB_PLAIN_AND_PARAM_WARNINGS];
+extern WarningState warningStates[NB_PLAIN_AND_PARAM_WARNINGS];
 extern bool warningsAreErrors;
 
 void processWarningFlag(char const *flag);
@@ -63,7 +63,7 @@ void processWarningFlag(char const *flag);
  * Used to warn the user about problems that don't prevent the generation of
  * valid code.
  */
-void warning(enum WarningID id, char const *fmt, ...) format_(printf, 2, 3);
+void warning(WarningID id, char const *fmt, ...) format_(printf, 2, 3);
 
 /*
  * Used for errors that compromise the whole assembly process by affecting the

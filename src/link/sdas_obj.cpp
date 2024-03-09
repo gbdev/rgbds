@@ -77,7 +77,7 @@ retry:
 	}
 }
 
-static uint32_t readNumber(char const *str, char const *&endptr, enum NumberType base) {
+static uint32_t readNumber(char const *str, char const *&endptr, NumberType base) {
 	uint32_t res = 0;
 
 	for (;;) {
@@ -93,9 +93,8 @@ static uint32_t readNumber(char const *str, char const *&endptr, enum NumberType
 	}
 }
 
-static uint32_t parseNumber(
-    FileStackNode const &where, uint32_t lineNo, char const *str, enum NumberType base
-) {
+static uint32_t
+    parseNumber(FileStackNode const &where, uint32_t lineNo, char const *str, NumberType base) {
 	if (str[0] == '\0')
 		fatal(&where, lineNo, "Expected number, got empty string");
 
@@ -108,7 +107,7 @@ static uint32_t parseNumber(
 }
 
 static uint8_t
-    parseByte(FileStackNode const &where, uint32_t lineNo, char const *str, enum NumberType base) {
+    parseByte(FileStackNode const &where, uint32_t lineNo, char const *str, NumberType base) {
 	uint32_t num = parseNumber(where, lineNo, str, base);
 
 	if (num > UINT8_MAX)
@@ -173,7 +172,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 	uint32_t lineNo = 0;
 	int lineType = nextLine(line, lineNo, where, file);
-	enum NumberType numberType;
+	NumberType numberType;
 
 	// The first letter (thus, the line type) identifies the integer type
 	switch (lineType) {

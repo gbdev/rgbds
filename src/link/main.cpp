@@ -238,7 +238,7 @@ static void parseScrambleSpec(char const *spec) {
 		size_t regionNameLen = strcspn(spec, "=, \t");
 		// Length of region name string slice for printing, truncated if too long
 		int regionNamePrintLen = regionNameLen > INT_MAX ? INT_MAX : (int)regionNameLen;
-		enum ScrambledRegion region = SCRAMBLE_UNK;
+		ScrambledRegion region = SCRAMBLE_UNK;
 
 		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assert
 		if (regionNameLen == 0) {
@@ -262,7 +262,7 @@ static void parseScrambleSpec(char const *spec) {
 		}
 
 		// Now, determine which region type this is
-		for (enum ScrambledRegion r : EnumSeq(SCRAMBLE_UNK)) {
+		for (ScrambledRegion r : EnumSeq(SCRAMBLE_UNK)) {
 			// If the strings match (case-insensitively), we got it!
 			// `strncasecmp` must be used here since `regionName` points
 			// to the entire remaining argument.
