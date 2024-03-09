@@ -88,10 +88,10 @@
 
 	enum { REG_BC_IND, REG_DE_IND, REG_HL_INDINC, REG_HL_INDDEC };
 
-	// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
-	enum { REG_BC = 0, REG_DE = 1, REG_HL = 2, REG_SP = 3, REG_AF = 3 };
+	// REG_AF == REG_SP since LD/INC/ADD/DEC allow SP, while PUSH/POP allow AF
+	enum { REG_BC, REG_DE, REG_HL, REG_SP, REG_AF = REG_SP };
 
-	// CC_NZ == CC_Z ^ 1, and CC_NC == CC_C ^ 1
+	// CC_NZ == CC_Z ^ 1, and CC_NC == CC_C ^ 1, so `!` can toggle them
 	enum { CC_NZ, CC_Z, CC_NC, CC_C };
 }
 
