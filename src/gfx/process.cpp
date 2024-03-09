@@ -4,16 +4,16 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <cinttypes>
-#include <climits>
-#include <cstdio>
 #include <errno.h>
 #include <fstream>
+#include <inttypes.h>
+#include <limits.h>
 #include <memory>
 #include <optional>
 #include <png.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <tuple>
 #include <unordered_set>

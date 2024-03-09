@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Declarations manipulating symbols
 #ifndef RGBDS_LINK_SECTION_H
 #define RGBDS_LINK_SECTION_H
 

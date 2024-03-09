@@ -11,20 +11,15 @@
 #include <limits.h>
 #include <math.h>
 #include <new>
-#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <unordered_map>
-#include <variant>
-#include <vector>
 #ifndef _MSC_VER
 	#include <unistd.h>
 #endif
 
-#include "platform.hpp" // For `ssize_t` and `AT`
 #include "util.hpp"
 
 #include "asm/fixpoint.hpp"

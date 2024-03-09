@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Assigning all sections a place
 #ifndef RGBDS_LINK_ASSIGN_H
 #define RGBDS_LINK_ASSIGN_H
 

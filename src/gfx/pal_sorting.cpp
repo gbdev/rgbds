@@ -3,8 +3,6 @@
 #include "gfx/pal_sorting.hpp"
 
 #include <algorithm>
-#include <png.h>
-#include <vector>
 
 #include "helpers.hpp"
 

@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Applying patches to SECTIONs
 #ifndef RGBDS_LINK_PATCH_H
 #define RGBDS_LINK_PATCH_H
 

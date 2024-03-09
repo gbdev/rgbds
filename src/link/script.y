@@ -17,8 +17,8 @@
 	#include <array>
 	#include <assert.h>
 	#include <bit>
-	#include <cinttypes>
 	#include <fstream>
+	#include <inttypes.h>
 	#include <locale>
 	#include <stdio.h>
 	#include <string_view>

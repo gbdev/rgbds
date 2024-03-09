@@ -3,7 +3,6 @@
 #include "link/patch.hpp"
 
 #include <assert.h>
-#include <deque>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -12,12 +11,10 @@
 
 #include "error.hpp"
 #include "helpers.hpp"
-#include "linkdefs.hpp"
 #include "opmath.hpp"
 #include "platform.hpp"
 
 #include "link/object.hpp"
-#include "link/section.hpp"
 #include "link/symbol.hpp"
 
 struct RPNStackEntry {

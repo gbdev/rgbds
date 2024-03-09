@@ -2,7 +2,7 @@
 
 /* UTF-8 decoder: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ */
 
-#include <stdint.h>
+#include "extern/utf8decoder.hpp"
 
 static const uint8_t utf8d[] = {
     0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 00..0f */

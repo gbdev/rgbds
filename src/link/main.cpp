@@ -7,18 +7,12 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
-#include <variant>
-#include <vector>
 
 #include "error.hpp"
 #include "extern/getopt.hpp"
 #include "itertools.hpp"
-#include "linkdefs.hpp"
 #include "platform.hpp"
 #include "script.hpp"
 #include "version.hpp"

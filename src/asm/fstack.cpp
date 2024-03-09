@@ -8,13 +8,8 @@
 #include <new>
 #include <optional>
 #include <stack>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string_view>
-#include <variant>
-#include <vector>
 
 #include "error.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)

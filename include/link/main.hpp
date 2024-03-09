@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Declarations that all modules use, as well as `main` and related
 #ifndef RGBDS_LINK_MAIN_H
 #define RGBDS_LINK_MAIN_H
 

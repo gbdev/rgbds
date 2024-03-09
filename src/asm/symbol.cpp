@@ -8,14 +8,7 @@
 #include <limits.h>
 #include <map>
 #include <new>
-#include <optional>
-#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
-#include <string>
-#include <string_view>
-#include <time.h>
-#include <variant>
 
 #include "error.hpp"
 #include "helpers.hpp"
@@ -27,7 +20,6 @@
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/output.hpp"
-#include "asm/section.hpp"
 #include "asm/warning.hpp"
 
 std::map<std::string, Symbol> symbols;

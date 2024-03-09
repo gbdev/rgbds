@@ -4,15 +4,13 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <cinttypes>
-#include <cstdint>
 #include <ctype.h>
 #include <fstream>
+#include <inttypes.h>
 #include <ios>
 #include <limits>
 #include <numeric>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +25,6 @@
 #include "gfx/pal_spec.hpp"
 #include "gfx/process.hpp"
 #include "gfx/reverse.hpp"
-#include "gfx/rgba.hpp"
 
 using namespace std::literals::string_view_literals;
 

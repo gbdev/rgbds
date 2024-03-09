@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Outputs an objectfile
-
 #include "asm/output.hpp"
 
 #include <algorithm>
@@ -9,7 +7,6 @@
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +14,6 @@
 #include <vector>
 
 #include "error.hpp"
-#include "linkdefs.hpp"
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
