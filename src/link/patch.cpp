@@ -519,7 +519,7 @@ static void applyPatches(Section &section) {
 	if (!sect_HasData(section.type))
 		return;
 
-	for (Section *component = &section; component; component = component->nextu)
+	for (Section *component = &section; component; component = component->nextu.get())
 		applyFilePatches(*component, section);
 }
 
