@@ -22,15 +22,6 @@
 	#define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 
-// gcc has __PRETTY_FUNCTION__, MSVC has __FUNCSIG__, __func__ is standard
-#ifndef __PRETTY_FUNCTION__
-	#ifdef __FUNCSIG__
-		#define __PRETTY_FUNCTION__ __FUNCSIG__
-	#else
-		#define __PRETTY_FUNCTION__ __func__
-	#endif
-#endif
-
 // MSVC doesn't use POSIX types or defines for `read`
 #ifdef _MSC_VER
 	#include <io.h>

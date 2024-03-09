@@ -3,16 +3,8 @@
 #ifndef RGBDS_ITERTOOLS_HPP
 #define RGBDS_ITERTOOLS_HPP
 
-#include <stdio.h>
 #include <tuple>
 #include <utility>
-
-#include "platform.hpp" // __PRETTY_FUNCTION__
-
-template<typename... Ts>
-static inline void report() {
-	puts(__PRETTY_FUNCTION__);
-}
 
 template<typename T>
 class EnumSeqIterator {
