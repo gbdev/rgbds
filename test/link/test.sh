@@ -190,6 +190,15 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
+test="same-consts"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="scramble-romx"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

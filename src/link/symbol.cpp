@@ -26,8 +26,12 @@ Label const &Symbol::label() const {
 }
 
 void sym_AddSymbol(Symbol &symbol) {
-	// Check if the symbol already exists
-	if (Symbol *other = sym_GetSymbol(symbol.name); other) {
+	Symbol *other = sym_GetSymbol(symbol.name);
+	int32_t const *symValue = std::get_if<int32_t>(&symbol.data);
+	int32_t const *otherValue = other ? std::get_if<int32_t>(&other->data) : nullptr;
+
+	// Check if the symbol already exists with a different value
+	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
 		fprintf(stderr, "error: \"%s\" both in %s from ", symbol.name.c_str(), symbol.objFileName);
 		symbol.src->dump(symbol.lineNo);
 		fprintf(stderr, " and in %s from ", other->objFileName);
@@ -36,7 +40,7 @@ void sym_AddSymbol(Symbol &symbol) {
 		exit(1);
 	}
 
-	// If not, add it
+	// If not, add it (potentially replacing the previous same-value symbol)
 	symbols[symbol.name] = &symbol;
 }
 
