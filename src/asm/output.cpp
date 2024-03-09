@@ -160,7 +160,7 @@ static uint32_t getSymbolID(Symbol &sym) {
 }
 
 static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn) {
-	char symName[512];
+	std::string symName;
 	size_t rpnptr = 0;
 
 	for (size_t offset = 0; offset < rpn.size();) {
@@ -170,7 +170,6 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 			Symbol *sym;
 			uint32_t value;
 			uint8_t b;
-			size_t i;
 
 		case RPN_CONST:
 			rpnexpr[rpnptr++] = RPN_CONST;
@@ -181,16 +180,19 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 			break;
 
 		case RPN_SYM:
-			i = 0;
-			do {
-				symName[i] = rpn[offset++];
-			} while (symName[i++]);
+			symName.clear();
+			for (;;) {
+				uint8_t c = rpn[offset++];
+				if (c == 0)
+					break;
+				symName += c;
+			}
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName);
+			sym = sym_FindExactSymbol(symName.c_str());
 			if (sym->isConstant()) {
 				rpnexpr[rpnptr++] = RPN_CONST;
-				value = sym_GetConstantValue(symName);
+				value = sym_GetConstantValue(symName.c_str());
 			} else {
 				rpnexpr[rpnptr++] = RPN_SYM;
 				value = getSymbolID(*sym);
@@ -203,13 +205,16 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &
 			break;
 
 		case RPN_BANK_SYM:
-			i = 0;
-			do {
-				symName[i] = rpn[offset++];
-			} while (symName[i++]);
+			symName.clear();
+			for (;;) {
+				uint8_t c = rpn[offset++];
+				if (c == 0)
+					break;
+				symName += c;
+			}
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName);
+			sym = sym_FindExactSymbol(symName.c_str());
 			value = getSymbolID(*sym);
 
 			rpnexpr[rpnptr++] = RPN_BANK_SYM;
