@@ -28,7 +28,7 @@ struct OptStackEntry {
 	bool warnOnLdOpt;
 	bool warningsAreErrors;
 	size_t maxRecursionDepth;
-	enum WarningState warningStates[numWarningStates];
+	WarningState warningStates[numWarningStates];
 };
 
 static std::stack<OptStackEntry> stack;

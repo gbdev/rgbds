@@ -128,7 +128,7 @@ Section *sect_FindSectionByName(char const *name) {
 	} while (0)
 
 static unsigned int mergeSectUnion(
-    Section &sect, enum SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
+    Section &sect, SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
 ) {
 	assert(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
@@ -240,12 +240,12 @@ static unsigned int
 
 static void mergeSections(
     Section &sect,
-    enum SectionType type,
+    SectionType type,
     uint32_t org,
     uint32_t bank,
     uint8_t alignment,
     uint16_t alignOffset,
-    enum SectionModifier mod
+    SectionModifier mod
 ) {
 	unsigned int nbSectErrors = 0;
 
@@ -296,12 +296,12 @@ static void mergeSections(
 // Create a new section, not yet in the list.
 static Section *createSection(
     char const *name,
-    enum SectionType type,
+    SectionType type,
     uint32_t org,
     uint32_t bank,
     uint8_t alignment,
     uint16_t alignOffset,
-    enum SectionModifier mod
+    SectionModifier mod
 ) {
 	// Add the new section to the list (order doesn't matter)
 	Section &sect = sectionList.emplace_front();
@@ -326,11 +326,7 @@ static Section *createSection(
 
 // Find a section by name and type. If it doesn't exist, create it.
 static Section *getSection(
-    char const *name,
-    enum SectionType type,
-    uint32_t org,
-    SectionSpec const &attrs,
-    enum SectionModifier mod
+    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
 ) {
 	uint32_t bank = attrs.bank;
 	uint8_t alignment = attrs.alignment;
@@ -445,11 +441,7 @@ bool Section::isSizeKnown() const {
 
 // Set the current section by name and type
 void sect_NewSection(
-    char const *name,
-    enum SectionType type,
-    uint32_t org,
-    SectionSpec const &attrs,
-    enum SectionModifier mod
+    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
 ) {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
@@ -469,11 +461,7 @@ void sect_NewSection(
 
 // Set the current section by name and type
 void sect_SetLoadSection(
-    char const *name,
-    enum SectionType type,
-    uint32_t org,
-    SectionSpec const &attrs,
-    enum SectionModifier mod
+    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
 ) {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
@@ -612,7 +600,7 @@ static void writelong(uint32_t b) {
 	writebyte(b >> 24);
 }
 
-static void createPatch(enum PatchType type, Expression const &expr, uint32_t pcShift) {
+static void createPatch(PatchType type, Expression const &expr, uint32_t pcShift) {
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
 

@@ -16,7 +16,7 @@
 #include "asm/lexer.hpp"
 
 struct FileStackNode {
-	enum FileStackNodeType type;
+	FileStackNodeType type;
 	std::variant<
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
@@ -39,9 +39,7 @@ struct FileStackNode {
 	std::string &name();
 	std::string const &name() const;
 
-	FileStackNode(
-	    enum FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_
-	)
+	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
 	    : type(type_), data(data_) {};
 
 	void dump(uint32_t curLineNo) const;

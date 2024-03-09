@@ -67,7 +67,7 @@ struct BufferedLexerState {
 struct LexerState {
 	char const *path;
 
-	enum LexerMode mode;
+	LexerMode mode;
 	bool atLineStart;
 	uint32_t lineNo;
 	uint32_t colNo;
@@ -122,7 +122,7 @@ void lexer_OpenFileView(
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_CleanupState(LexerState &state);
 void lexer_Init();
-void lexer_SetMode(enum LexerMode mode);
+void lexer_SetMode(LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
 
 uint32_t lexer_GetIFDepth();

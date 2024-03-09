@@ -135,7 +135,7 @@ static void readFileStackNode(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i
 	);
 	tryGetc(
-	    enum FileStackNodeType,
+	    FileStackNodeType,
 	    node.type,
 	    file,
 	    "%s: Cannot read node #%" PRIu32 "'s type: %s",
@@ -186,7 +186,7 @@ static void readSymbol(
 ) {
 	tryReadstring(symbol.name, file, "%s: Cannot read symbol name: %s", fileName);
 	tryGetc(
-	    enum ExportLevel,
+	    ExportLevel,
 	    symbol.type,
 	    file,
 	    "%s: Cannot read \"%s\"'s type: %s",
@@ -250,7 +250,7 @@ static void readPatch(
     std::vector<FileStackNode> const &fileNodes
 ) {
 	uint32_t nodeID, rpnSize;
-	enum PatchType type;
+	PatchType type;
 
 	tryReadlong(
 	    nodeID,
@@ -294,7 +294,7 @@ static void readPatch(
 	    i
 	);
 	tryGetc(
-	    enum PatchType,
+	    PatchType,
 	    type,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s type: %s",
@@ -354,7 +354,7 @@ static void readSection(
 	tryGetc(
 	    uint8_t, byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName, section.name.c_str()
 	);
-	section.type = (enum SectionType)(byte & 0x3F);
+	section.type = (SectionType)(byte & 0x3F);
 	if (byte >> 7)
 		section.modifier = SECTION_UNION;
 	else if (byte >> 6)

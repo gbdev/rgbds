@@ -75,15 +75,13 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
  *                 errors caused by the value should be suppressed.
  */
 static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fileSymbols) {
-
 	uint8_t const *expression = patch.rpnExpression.data();
 	int32_t size = (int32_t)patch.rpnExpression.size();
 
 	rpnStack.clear();
 
 	while (size > 0) {
-		enum RPNCommand command =
-		    (enum RPNCommand)getRPNByte(expression, size, patch);
+		RPNCommand command = (RPNCommand)getRPNByte(expression, size, patch);
 		int32_t value;
 
 		isError = false;
@@ -418,7 +416,7 @@ void patch_CheckAssertions(std::deque<Assertion> &assertions) {
 
 	for (Assertion &assert : assertions) {
 		int32_t value = computeRPNExpr(assert.patch, *assert.fileSymbols);
-		enum AssertionType type = (enum AssertionType)assert.patch.type;
+		AssertionType type = (AssertionType)assert.patch.type;
 
 		if (!isError && !value) {
 			switch (type) {

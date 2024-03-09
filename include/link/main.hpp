@@ -38,7 +38,7 @@ extern bool disablePadding;
 	} while (0)
 
 struct FileStackNode {
-	enum FileStackNodeType type;
+	FileStackNodeType type;
 	std::variant<
 	    std::monostate,        // Default constructed; `.type` and `.data` must be set manually
 	    std::vector<uint32_t>, // NODE_REPT

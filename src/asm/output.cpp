@@ -295,7 +295,7 @@ void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32
 
 // Creates an assert that will be written to the object file
 void out_CreateAssert(
-    enum AssertionType type, Expression const &expr, char const *message, uint32_t ofs
+    AssertionType type, Expression const &expr, char const *message, uint32_t ofs
 ) {
 	Assertion &assertion = assertions.emplace_front();
 

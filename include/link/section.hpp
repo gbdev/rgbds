@@ -25,7 +25,7 @@ struct Patch {
 	Section const *pcSection;
 	uint32_t pcSectionID;
 	uint32_t pcOffset;
-	enum PatchType type;
+	PatchType type;
 	std::vector<uint8_t> rpnExpression;
 };
 
@@ -34,8 +34,8 @@ struct Section {
 	std::string name;
 	uint16_t size;
 	uint16_t offset;
-	enum SectionType type;
-	enum SectionModifier modifier;
+	SectionType type;
+	SectionModifier modifier;
 	bool isAddressFixed;
 	// This `struct`'s address in ROM.
 	// Importantly for fragments, this does not include `offset`!

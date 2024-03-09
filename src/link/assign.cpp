@@ -38,7 +38,7 @@ uint64_t nbSectionsToAssign;
 
 // Init the free space-modelling structs
 static void initFreeSpace() {
-	for (enum SectionType type : EnumSeq(SECTTYPE_INVALID)) {
+	for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 		memory[type].resize(nbbanks(type));
 		for (std::deque<FreeSpace> &bankMem : memory[type]) {
 			bankMem.push_back({
