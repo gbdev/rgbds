@@ -81,29 +81,18 @@
 	static void compoundAssignment(const char *symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, char const *msg);
-	void yyerror(char const *str);
 
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
-	// These enums thus help with bit twiddling to compute opcodes
-	enum { REG_B = 0, REG_C, REG_D, REG_E, REG_H, REG_L, REG_HL_IND, REG_A };
+	// These enums thus help with bit twiddling to compute opcodes.
+	enum { REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, REG_HL_IND, REG_A };
 
-	enum {
-		REG_BC_IND = 0,
-		REG_DE_IND,
-		REG_HL_INDINC,
-		REG_HL_INDDEC,
-	};
+	enum { REG_BC_IND, REG_DE_IND, REG_HL_INDINC, REG_HL_INDDEC };
 
-	enum {
-		REG_BC = 0,
-		REG_DE = 1,
-		REG_HL = 2,
-		// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
-		REG_SP = 3,
-		REG_AF = 3
-	};
+	// LD/INC/ADD/DEC allow SP, PUSH/POP allow AF
+	enum { REG_BC, REG_DE, REG_HL, REG_SP, REG_AF };
 
-	enum { CC_NZ = 0, CC_Z, CC_NC, CC_C };
+	// CC_NZ == CC_Z ^ 1, and CC_NC == CC_C ^ 1
+	enum { CC_NZ, CC_Z, CC_NC, CC_C };
 }
 
 %type <Expression> relocexpr
@@ -2435,6 +2424,10 @@ hl_ind_dec:
 
 // Semantic actions.
 
+void yy::parser::error(std::string const &str) {
+	::error("%s\n", str.c_str());
+}
+
 static void upperstring(char *dest, char const *src) {
 	while (*src)
 		*dest++ = toupper(*src++);
@@ -2765,8 +2758,4 @@ static void failAssertMsg(AssertionType type, char const *msg) {
 		warning(WARNING_ASSERT, "Assertion failed: %s\n", msg);
 		break;
 	}
-}
-
-void yy::parser::error(std::string const &str) {
-	::error("%s\n", str.c_str());
 }
