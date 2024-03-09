@@ -408,5 +408,4 @@ void reverse() {
 	png_write_end(png, pngInfo);
 
 	png_destroy_write_struct(&png, &pngInfo);
-	pngFile.close();
 }
