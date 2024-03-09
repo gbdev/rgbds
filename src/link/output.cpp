@@ -202,7 +202,7 @@ static void writeROM() {
 			err("Failed to open output file \"%s\"", outputFileName);
 	}
 
-	if (overlayFile) {
+	if (overlayFileName) {
 		if (strcmp(overlayFileName, "-")) {
 			overlayFile = fopen(overlayFileName, "rb");
 		} else {
