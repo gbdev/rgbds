@@ -9,16 +9,12 @@
 #include <limits.h>
 #include <math.h>
 #include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <time.h>
 
 #include "error.hpp"
 #include "extern/getopt.hpp"
-#include "helpers.hpp"
 #include "parser.hpp"
 #include "version.hpp"
 

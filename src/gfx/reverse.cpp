@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <array>
 #include <assert.h>
-#include <cinttypes>
 #include <errno.h>
 #include <fstream>
+#include <inttypes.h>
 #include <optional>
 #include <png.h>
 #include <string.h>

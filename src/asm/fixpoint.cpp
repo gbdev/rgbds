@@ -4,9 +4,7 @@
 
 #include "asm/fixpoint.hpp"
 
-#include <inttypes.h>
 #include <math.h>
-#include <stdint.h>
 
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"

@@ -5,15 +5,10 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <map>
-#include <memory>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 
 #include "error.hpp"
-#include "linkdefs.hpp"
-
-#include "link/main.hpp"
 
 std::map<std::string, std::unique_ptr<Section>> sections;
 

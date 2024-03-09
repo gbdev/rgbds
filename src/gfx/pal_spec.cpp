@@ -3,20 +3,19 @@
 #include "gfx/pal_spec.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <assert.h>
 #include <charconv>
-#include <cinttypes>
-#include <climits>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
 #include <fstream>
-#include <limits>
+#include <inttypes.h>
+#include <limits.h>
 #include <optional>
 #include <ostream>
+#include <stdint.h>
+#include <stdio.h>
 #include <streambuf>
-#include <string>
+#include <string.h>
 #include <string_view>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>

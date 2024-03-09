@@ -3,7 +3,6 @@
 #ifndef RGBDS_GFX_RGBA_HPP
 #define RGBDS_GFX_RGBA_HPP
 
-#include <cstdint>
 #include <stdint.h>
 
 struct Rgba {

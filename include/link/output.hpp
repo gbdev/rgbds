@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Outputting the result of linking
 #ifndef RGBDS_LINK_OUTPUT_H
 #define RGBDS_LINK_OUTPUT_H
 

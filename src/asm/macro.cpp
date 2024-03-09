@@ -6,11 +6,7 @@
 #include <inttypes.h>
 #include <new>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <vector>
-
-#include "asm/warning.hpp"
 
 #define MAXMACROARGS 99999
 

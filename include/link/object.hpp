@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Declarations related to processing of object (.o) files
-
 #ifndef RGBDS_LINK_OBJECT_H
 #define RGBDS_LINK_OBJECT_H
 

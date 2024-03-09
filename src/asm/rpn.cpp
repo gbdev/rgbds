@@ -1,7 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 
-// Controls RPN expressions for objectfiles
-
 #include "asm/rpn.hpp"
 
 #include <assert.h>
@@ -9,11 +7,9 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <new>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 
 #include "opmath.hpp"
 

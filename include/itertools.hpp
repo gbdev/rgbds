@@ -3,6 +3,7 @@
 #ifndef RGBDS_ITERTOOLS_HPP
 #define RGBDS_ITERTOOLS_HPP
 
+#include <stdio.h>
 #include <tuple>
 #include <utility>
 

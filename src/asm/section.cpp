@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <deque>
 #include <errno.h>
 #include <inttypes.h>
 #include <optional>
@@ -13,10 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <vector>
 
 #include "error.hpp"
-#include "linkdefs.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/main.hpp"

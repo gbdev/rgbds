@@ -5,20 +5,16 @@
 #include <algorithm>
 #include <assert.h>
 #include <bitset>
-#include <cinttypes>
 #include <deque>
+#include <inttypes.h>
 #include <numeric>
 #include <optional>
 #include <queue>
-#include <tuple>
 #include <type_traits>
 #include <unordered_set>
-#include <vector>
 
-#include "defaultinitalloc.hpp"
 #include "helpers.hpp"
 
-#include "gfx/main.hpp"
 #include "gfx/proto_palette.hpp"
 
 using std::swap;
