@@ -50,8 +50,6 @@ void rpn_StartOfSection(Expression &expr, char const *sectionName);
 void rpn_SizeOfSectionType(Expression &expr, SectionType type);
 void rpn_StartOfSectionType(Expression &expr, SectionType type);
 
-void rpn_Free(Expression &expr);
-
 void rpn_CheckHRAM(Expression &expr);
 void rpn_CheckRST(Expression &expr);
 void rpn_CheckNBit(const Expression &expr, uint8_t n);

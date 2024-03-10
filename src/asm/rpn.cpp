@@ -44,11 +44,6 @@ static uint8_t *reserveSpace(Expression &expr, uint32_t size) {
 	return &expr.rpn[curSize];
 }
 
-// Free the RPN expression
-void rpn_Free(Expression &expr) {
-	initExpression(expr);
-}
-
 // Add symbols, constants and operators to expression
 void rpn_Number(Expression &expr, uint32_t val) {
 	initExpression(expr);

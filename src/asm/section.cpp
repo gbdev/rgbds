@@ -729,7 +729,6 @@ void sect_RelByte(Expression &expr, uint32_t pcShift) {
 	} else {
 		writebyte(expr.val);
 	}
-	rpn_Free(expr);
 }
 
 // Output several copies of a relocatable byte. Checking will be done to see if
@@ -750,9 +749,6 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 			writebyte(expr.val);
 		}
 	}
-
-	for (Expression &expr : exprs)
-		rpn_Free(expr);
 }
 
 // Output a relocatable word. Checking will be done to see if
@@ -769,7 +765,6 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 	} else {
 		writeword(expr.val);
 	}
-	rpn_Free(expr);
 }
 
 // Output a relocatable longword. Checking will be done to see if
@@ -786,7 +781,6 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 	} else {
 		writelong(expr.val);
 	}
-	rpn_Free(expr);
 }
 
 // Output a PC-relative relocatable byte. Checking will be done to see if it
@@ -819,7 +813,6 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 			writebyte(offset);
 		}
 	}
-	rpn_Free(expr);
 }
 
 // Output a binary file

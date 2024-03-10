@@ -796,7 +796,6 @@ assert:
 		} else if ($3.val == 0) {
 			failAssert($2);
 		}
-		rpn_Free($3);
 	}
 	| POP_ASSERT assert_type relocexpr COMMA string {
 		if (!$3.isKnown) {
@@ -804,7 +803,6 @@ assert:
 		} else if ($3.val == 0) {
 			failAssertMsg($2, $5.string);
 		}
-		rpn_Free($3);
 	}
 	| POP_STATIC_ASSERT assert_type const {
 		if ($3 == 0)
@@ -1981,7 +1979,6 @@ z80_ld_mem:
 			}
 			sect_AbsByte(0xE0);
 			sect_AbsByte($2.val & 0xFF);
-			rpn_Free($2);
 		} else {
 			sect_AbsByte(0xEA);
 			sect_RelWord($2, 1);
@@ -2039,14 +2036,12 @@ z80_ld_a:
 				}
 				sect_AbsByte(0xF0);
 				sect_AbsByte($4.val & 0xFF);
-				rpn_Free($4);
 			} else {
 				sect_AbsByte(0xFA);
 				sect_RelWord($4, 1);
 			}
 		} else {
 			::error("Destination operand must be A\n");
-			rpn_Free($4);
 		}
 	}
 ;
@@ -2173,7 +2168,6 @@ z80_rst:
 			sect_RelByte($2, 0);
 		else
 			sect_AbsByte(0xC7 | $2.val);
-		rpn_Free($2);
 	}
 ;
 
