@@ -121,8 +121,8 @@
 %type <Expression> reloc_16bit_no_str
 %type <int32_t> sectiontype
 
-%type <String> string
-%type <String> strcat_args
+%type <std::string> string
+%type <std::string> strcat_args
 %type <StrFmtArgList> strfmt_args
 %type <StrFmtArgList> strfmt_va_args
 
@@ -665,7 +665,7 @@ equs:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddString($1.c_str(), $3.string);
+		sym_AddString($1.c_str(), $3.c_str());
 	}
 ;
 
@@ -792,13 +792,13 @@ endsection:
 
 fail:
 	POP_FAIL string {
-		fatalerror("%s\n", $2.string);
+		fatalerror("%s\n", $2.c_str());
 	}
 ;
 
 warn:
 	POP_WARN string {
-		warning(WARNING_USER, "%s\n", $2.string);
+		warning(WARNING_USER, "%s\n", $2.c_str());
 	}
 ;
 
@@ -827,9 +827,9 @@ assert:
 	}
 	| POP_ASSERT assert_type relocexpr COMMA string {
 		if (!$3.isKnown) {
-			out_CreateAssert($2, $3, $5.string, sect_GetOutputOffset());
+			out_CreateAssert($2, $3, $5.c_str(), sect_GetOutputOffset());
 		} else if ($3.val == 0) {
-			failAssertMsg($2, $5.string);
+			failAssertMsg($2, $5.c_str());
 		}
 	}
 	| POP_STATIC_ASSERT assert_type const {
@@ -838,7 +838,7 @@ assert:
 	}
 	| POP_STATIC_ASSERT assert_type const COMMA string {
 		if ($3 == 0)
-			failAssertMsg($2, $5.string);
+			failAssertMsg($2, $5.c_str());
 	}
 ;
 
@@ -853,7 +853,7 @@ shift:
 
 load:
 	POP_LOAD sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_SetLoadSection($3.string, (SectionType)$5, $6, $7, $2);
+		sect_SetLoadSection($3.c_str(), (SectionType)$5, $6, $7, $2);
 	}
 	| POP_ENDL {
 		sect_EndLoadSection();
@@ -1073,13 +1073,13 @@ def_rl:
 
 def_equs:
 	def_id POP_EQUS string {
-		sym_AddString($1.c_str(), $3.string);
+		sym_AddString($1.c_str(), $3.c_str());
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		sym_RedefString($1.c_str(), $3.string);
+		sym_RedefString($1.c_str(), $3.c_str());
 	}
 ;
 
@@ -1118,7 +1118,7 @@ export_list_entry:
 
 include:
 	label POP_INCLUDE string endofline {
-		fstk_RunInclude($3.string);
+		fstk_RunInclude($3.c_str());
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
@@ -1126,17 +1126,17 @@ include:
 
 incbin:
 	POP_INCBIN string {
-		sect_BinaryFile($2.string, 0);
+		sect_BinaryFile($2.c_str(), 0);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 	| POP_INCBIN string COMMA const {
-		sect_BinaryFile($2.string, $4);
+		sect_BinaryFile($2.c_str(), $4);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 	| POP_INCBIN string COMMA const COMMA const {
-		sect_BinaryFileSlice($2.string, $4, $6);
+		sect_BinaryFileSlice($2.c_str(), $4, $6);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
@@ -1144,7 +1144,7 @@ incbin:
 
 charmap:
 	POP_CHARMAP string COMMA const_8bit {
-		charmap_Add($2.string, (uint8_t)$4);
+		charmap_Add($2.c_str(), (uint8_t)$4);
 	}
 ;
 
@@ -1198,7 +1198,7 @@ print_expr:
 		printf("$%" PRIX32, $1);
 	}
 	| string {
-		fputs($1.string, stdout);
+		fputs($1.c_str(), stdout);
 	}
 ;
 
@@ -1227,7 +1227,7 @@ constlist_8bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.string, output);
+		charmap_Convert($1.c_str(), output);
 		sect_AbsByteGroup(output.data(), output.size());
 	}
 ;
@@ -1244,7 +1244,7 @@ constlist_16bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.string, output);
+		charmap_Convert($1.c_str(), output);
 		sect_AbsWordGroup(output.data(), output.size());
 	}
 ;
@@ -1261,7 +1261,7 @@ constlist_32bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.string, output);
+		charmap_Convert($1.c_str(), output);
 		sect_AbsLongGroup(output.data(), output.size());
 	}
 ;
@@ -1312,7 +1312,7 @@ relocexpr:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.string, output);
+		charmap_Convert($1.c_str(), output);
 		rpn_Number($$, str2int2(output));
 	}
 ;
@@ -1410,13 +1410,13 @@ relocexpr_no_str:
 		rpn_BankSymbol($$, $3.c_str());
 	}
 	| OP_BANK LPAREN string RPAREN {
-		rpn_BankSection($$, $3.string);
+		rpn_BankSection($$, $3.c_str());
 	}
 	| OP_SIZEOF LPAREN string RPAREN {
-		rpn_SizeOfSection($$, $3.string);
+		rpn_SizeOfSection($$, $3.c_str());
 	}
 	| OP_STARTOF LPAREN string RPAREN {
-		rpn_StartOfSection($$, $3.string);
+		rpn_StartOfSection($$, $3.c_str());
 	}
 	| OP_SIZEOF LPAREN sectiontype RPAREN {
 		rpn_SizeOfSectionType($$, (SectionType)$3);
@@ -1476,26 +1476,26 @@ relocexpr_no_str:
 		rpn_Number($$, fix_ATan2($3, $5, $6));
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
-		rpn_Number($$, strcmp($3.string, $5.string));
+		rpn_Number($$, $3.compare($5));
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
-		char const *p = strstr($3.string, $5.string);
+		char const *p = strstr($3.c_str(), $5.c_str());
 
-		rpn_Number($$, p ? p - $3.string + 1 : 0);
+		rpn_Number($$, p ? p - $3.c_str() + 1 : 0);
 	}
 	| OP_STRRIN LPAREN string COMMA string RPAREN {
-		char const *p = strrstr($3.string, $5.string);
+		char const *p = strrstr($3.c_str(), $5.c_str());
 
-		rpn_Number($$, p ? p - $3.string + 1 : 0);
+		rpn_Number($$, p ? p - $3.c_str() + 1 : 0);
 	}
 	| OP_STRLEN LPAREN string RPAREN {
-		rpn_Number($$, strlenUTF8($3.string));
+		rpn_Number($$, strlenUTF8($3.c_str()));
 	}
 	| OP_CHARLEN LPAREN string RPAREN {
-		rpn_Number($$, charlenUTF8($3.string));
+		rpn_Number($$, charlenUTF8($3.c_str()));
 	}
 	| OP_INCHARMAP LPAREN string RPAREN {
-		rpn_Number($$, charmap_HasChar($3.string));
+		rpn_Number($$, charmap_HasChar($3.c_str()));
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
@@ -1543,44 +1543,58 @@ opt_q_arg:
 
 string:
 	STRING {
-		$$ = std::move($1);
+		$$ = $1.string;
 	}
 	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
-		size_t len = strlenUTF8($3.string);
+		size_t len = strlenUTF8($3.c_str());
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		strsubUTF8($$.string, sizeof($$.string), $3.string, pos, $7);
+		String tmp;
+		strsubUTF8(tmp.string, sizeof(tmp.string), $3.c_str(), pos, $7);
+		$$ = tmp.string;
 	}
 	| OP_STRSUB LPAREN string COMMA const RPAREN {
-		size_t len = strlenUTF8($3.string);
+		size_t len = strlenUTF8($3.c_str());
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		strsubUTF8($$.string, sizeof($$.string), $3.string, pos, pos > len ? 0 : len + 1 - pos);
+		String tmp;
+		strsubUTF8(tmp.string, sizeof(tmp.string), $3.c_str(), pos, pos > len ? 0 : len + 1 - pos);
+		$$ = tmp.string;
 	}
 	| OP_CHARSUB LPAREN string COMMA const RPAREN {
-		size_t len = charlenUTF8($3.string);
+		size_t len = charlenUTF8($3.c_str());
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
 
-		charsubUTF8($$.string, $3.string, pos);
+		String tmp;
+		charsubUTF8(tmp.string, $3.c_str(), pos);
+		$$ = tmp.string;
 	}
 	| OP_STRCAT LPAREN RPAREN {
-		$$.string[0] = '\0';
+		$$.clear();
 	}
 	| OP_STRCAT LPAREN strcat_args RPAREN {
 		$$ = std::move($3);
 	}
 	| OP_STRUPR LPAREN string RPAREN {
-		upperstring($$.string, $3.string);
+		String tmp;
+		upperstring(tmp.string, $3.c_str());
+		$$ = tmp.string;
 	}
 	| OP_STRLWR LPAREN string RPAREN {
-		lowerstring($$.string, $3.string);
+		String tmp;
+		lowerstring(tmp.string, $3.c_str());
+		$$ = tmp.string;
 	}
 	| OP_STRRPL LPAREN string COMMA string COMMA string RPAREN {
-		strrpl($$.string, sizeof($$.string), $3.string, $5.string, $7.string);
+		String tmp;
+		strrpl(tmp.string, sizeof(tmp.string), $3.c_str(), $5.c_str(), $7.c_str());
+		$$ = tmp.string;
 	}
 	| OP_STRFMT LPAREN strfmt_args RPAREN {
 		StrFmtArgList args = std::move($3);
-		strfmt($$.string, sizeof($$.string), args.format.c_str(), args.args);
+		String tmp;
+		strfmt(tmp.string, sizeof(tmp.string), args.format.c_str(), args.args);
+		$$ = tmp.string;
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3.c_str());
@@ -1593,7 +1607,7 @@ string:
 			fatalerror("\"%s\" does not belong to any section\n", sym->name.c_str());
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
-		strcpy($$.string, section->name.c_str());
+		$$ = section->name;
 	}
 ;
 
@@ -1602,17 +1616,19 @@ strcat_args:
 		$$ = std::move($1);
 	}
 	| strcat_args COMMA string {
-		if (int r = snprintf($$.string, sizeof($$.string), "%s%s", $1.string, $3.string); r == -1)
-			fatalerror("snprintf error in STRCAT: %s\n", strerror(errno));
-		else if ((unsigned int)r >= sizeof($$.string))
-			warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n", $1.string, $3.string);
+		$$ = std::move($1);
+		$$.append($3);
+		if ($$.length() > MAXSTRLEN) {
+			warning(WARNING_LONG_STR, "STRCAT: String too long '%s'\n", $$.c_str());
+			$$.resize(MAXSTRLEN);
+		}
 	}
 ;
 
 strfmt_args:
 	string strfmt_va_args {
 		$$ = std::move($2);
-		$$.format = $1.string;
+		$$.format = std::move($1);
 	}
 ;
 
@@ -1624,13 +1640,13 @@ strfmt_va_args:
 	}
 	| strfmt_va_args COMMA string {
 		$$ = std::move($1);
-		$$.args.push_back($3.string);
+		$$.args.push_back(std::move($3));
 	}
 ;
 
 section:
 	POP_SECTION sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_NewSection($3.string, (SectionType)$5, $6, $7, $2);
+		sect_NewSection($3.c_str(), (SectionType)$5, $6, $7, $2);
 	}
 ;
 
