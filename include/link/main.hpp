@@ -56,7 +56,7 @@ struct FileStackNode {
 	std::string &name();
 	std::string const &name() const;
 
-	std::string const *dumpFileStack() const;
+	std::string const &dump(uint32_t curLineNo) const;
 };
 
 void warning(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...)

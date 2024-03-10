@@ -65,27 +65,31 @@ std::string const &FileStackNode::name() const {
 	return std::get<std::string>(data);
 }
 
-// Helper function to dump a file stack to stderr
-std::string const *FileStackNode::dumpFileStack() const {
-	std::string const *lastName;
-
-	if (parent) {
-		lastName = parent->dumpFileStack();
-		// REPT nodes use their parent's name
-		if (type != NODE_REPT)
-			lastName = &name();
-		fprintf(stderr, "(%" PRIu32 ") -> %s", lineNo, lastName->c_str());
-		if (type == NODE_REPT) {
-			for (uint32_t iter : iters())
+std::string const &FileStackNode::dump(uint32_t curLineNo) const {
+	std::string const &topName = std::visit(Visitor{
+		[this](std::vector<uint32_t> const &iters) -> std::string const & {
+			assert(this->parent); // REPT nodes use their parent's name
+			std::string const &lastName = this->parent->dump(this->lineNo);
+			fprintf(stderr, " -> %s", lastName.c_str());
+			for (uint32_t iter : iters)
 				fprintf(stderr, "::REPT~%" PRIu32, iter);
-		}
-	} else {
-		assert(type != NODE_REPT);
-		lastName = &name();
-		fputs(lastName->c_str(), stderr);
-	}
-
-	return lastName;
+			return lastName;
+		},
+		[this](std::string const &name) -> std::string const & {
+			if (this->parent) {
+				this->parent->dump(this->lineNo);
+				fprintf(stderr, " -> %s", name.c_str());
+			} else {
+				fputs(name.c_str(), stderr);
+			}
+			return name;
+		},
+		[](std::monostate) -> std::string const & {
+			unreachable_(); // This should not be possible
+		},
+	}, data);
+	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+	return topName;
 }
 
 void printDiag(
@@ -94,8 +98,8 @@ void printDiag(
 	fputs(type, stderr);
 	fputs(": ", stderr);
 	if (where) {
-		where->dumpFileStack();
-		fprintf(stderr, "(%" PRIu32 "): ", lineNo);
+		where->dump(lineNo);
+		fputs(": ", stderr);
 	}
 	vfprintf(stderr, fmt, args);
 	putc('\n', stderr);

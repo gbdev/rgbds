@@ -12,6 +12,7 @@
 #include <string_view>
 
 #include "error.hpp"
+#include "helpers.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
 
 #include "asm/fstack.hpp"
@@ -60,32 +61,28 @@ std::string const &FileStackNode::name() const {
 	return std::get<std::string>(data);
 }
 
-static char const *dumpNodeAndParents(FileStackNode const &node) {
-	char const *name;
-
-	if (node.type == NODE_REPT) {
-		assert(node.parent); // REPT nodes should always have a parent
-		std::vector<uint32_t> const &nodeIters = node.iters();
-
-		name = dumpNodeAndParents(*node.parent);
-		fprintf(stderr, "(%" PRIu32 ") -> %s", node.lineNo, name);
-		for (uint32_t i = nodeIters.size(); i--;)
-			fprintf(stderr, "::REPT~%" PRIu32, nodeIters[i]);
-	} else {
-		name = node.name().c_str();
-		if (node.parent) {
-			dumpNodeAndParents(*node.parent);
-			fprintf(stderr, "(%" PRIu32 ") -> %s", node.lineNo, name);
-		} else {
-			fputs(name, stderr);
-		}
-	}
-	return name;
-}
-
-void FileStackNode::dump(uint32_t curLineNo) const {
-	dumpNodeAndParents(*this);
+std::string const &FileStackNode::dump(uint32_t curLineNo) const {
+	std::string const &topName = std::visit(Visitor{
+		[this](std::vector<uint32_t> const &iters) -> std::string const & {
+			assert(this->parent); // REPT nodes use their parent's name
+			std::string const &lastName = this->parent->dump(this->lineNo);
+			fprintf(stderr, " -> %s", lastName.c_str());
+			for (uint32_t i = iters.size(); i--;)
+				fprintf(stderr, "::REPT~%" PRIu32, iters[i]);
+			return lastName;
+		},
+		[this](std::string const &name) -> std::string const & {
+			if (this->parent) {
+				this->parent->dump(this->lineNo);
+				fprintf(stderr, " -> %s", name.c_str());
+			} else {
+				fputs(name.c_str(), stderr);
+			}
+			return name;
+		},
+	}, data);
 	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+	return topName;
 }
 
 void fstk_DumpCurrent() {

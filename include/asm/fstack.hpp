@@ -42,7 +42,7 @@ struct FileStackNode {
 	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
 	    : type(type_), data(data_){};
 
-	void dump(uint32_t curLineNo) const;
+	std::string const &dump(uint32_t curLineNo) const;
 };
 
 #define DEFAULT_MAX_DEPTH 64
