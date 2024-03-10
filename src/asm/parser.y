@@ -33,6 +33,15 @@
 	struct StrFmtArgList {
 		std::string format;
 		std::vector<std::variant<uint32_t, std::string>> args;
+
+		StrFmtArgList() = default;
+		StrFmtArgList(StrFmtArgList &&) = default;
+	#ifdef _MSC_VER
+		// MSVC and WinFlexBison won't build without this...
+		StrFmtArgList(const StrFmtArgList &) = default;
+	#endif
+
+		StrFmtArgList &operator=(StrFmtArgList &&) = default;
 	};
 }
 %code {
@@ -439,7 +448,7 @@ def_id:
 		lexer_ToggleStringExpansion(false);
 	} ID {
 		lexer_ToggleStringExpansion(true);
-		$$ = $3;
+		$$ = std::move($3);
 	}
 ;
 
@@ -448,14 +457,31 @@ redef_id:
 		lexer_ToggleStringExpansion(false);
 	} ID {
 		lexer_ToggleStringExpansion(true);
-		$$ = $3;
+		$$ = std::move($3);
 	}
 ;
 
 // LABEL covers identifiers followed by a double colon (e.g. `call Function::ret`,
 // to be read as `call Function :: ret`). This should not conflict with anything.
-scoped_id: ID | LOCAL_ID | LABEL;
-scoped_anon_id: scoped_id | ANON;
+scoped_id:
+	ID {
+		$$ = std::move($1);
+	}
+	| LOCAL_ID {
+		$$ = std::move($1);
+	}
+	| LABEL {
+		$$ = std::move($1);
+	}
+;
+scoped_anon_id:
+	scoped_id {
+		$$ = std::move($1);
+	}
+	| ANON {
+		$$ = std::move($1);
+	}
+;
 
 label:
 	  %empty
@@ -497,8 +523,8 @@ macroargs:
 			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
 	}
 	| macroargs STRING {
-		$1->append($2.string);
 		$$ = $1;
+		$$->append($2.string);
 	}
 ;
 
@@ -969,8 +995,8 @@ ds_args:
 		$$.push_back(std::move($1));
 	}
 	| ds_args COMMA reloc_8bit {
-		$1.push_back(std::move($3));
 		$$ = std::move($1);
+		$$.push_back(std::move($3));
 	}
 ;
 
@@ -1070,8 +1096,8 @@ purge_args:
 		$$.push_back($1.c_str());
 	}
 	| purge_args COMMA scoped_id {
-		$1.push_back($3.c_str());
-		$$ = $1;
+		$$ = std::move($1);
+		$$.push_back($3.c_str());
 	}
 ;
 
@@ -1476,9 +1502,9 @@ relocexpr_no_str:
 
 uconst:
 	const {
-		if ($1 < 0)
-			fatalerror("Constant must not be negative: %d\n", $1);
 		$$ = $1;
+		if ($$ < 0)
+			fatalerror("Constant must not be negative: %d\n", $$);
 	}
 ;
 
@@ -1505,9 +1531,8 @@ opt_q_arg:
 		$$ = fix_Precision();
 	}
 	| COMMA const {
-		if ($2 >= 1 && $2 <= 31) {
-			$$ = $2;
-		} else {
+		$$ = $2;
+		if ($$ < 1 || $$ > 31) {
 			::error("Fixed-point precision must be between 1 and 31\n");
 			$$ = fix_Precision();
 		}
@@ -1515,7 +1540,9 @@ opt_q_arg:
 ;
 
 string:
-	  STRING
+	STRING {
+		$$ = std::move($1);
+	}
 	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3.string);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
@@ -1538,7 +1565,7 @@ string:
 		$$.string[0] = '\0';
 	}
 	| OP_STRCAT LPAREN strcat_args RPAREN {
-		$$ = $3;
+		$$ = std::move($3);
 	}
 	| OP_STRUPR LPAREN string RPAREN {
 		upperstring($$.string, $3.string);
@@ -1550,7 +1577,8 @@ string:
 		strrpl($$.string, sizeof($$.string), $3.string, $5.string, $7.string);
 	}
 	| OP_STRFMT LPAREN strfmt_args RPAREN {
-		strfmt($$.string, sizeof($$.string), $3.format.c_str(), $3.args);
+		StrFmtArgList args = std::move($3);
+		strfmt($$.string, sizeof($$.string), args.format.c_str(), args.args);
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3.c_str());
@@ -1568,20 +1596,20 @@ string:
 ;
 
 strcat_args:
-	  string
+	string {
+		$$ = std::move($1);
+	}
 	| strcat_args COMMA string {
-		int ret = snprintf($$.string, sizeof($$.string), "%s%s", $1.string, $3.string);
-
-		if (ret == -1)
+		if (int r = snprintf($$.string, sizeof($$.string), "%s%s", $1.string, $3.string); r == -1)
 			fatalerror("snprintf error in STRCAT: %s\n", strerror(errno));
-		else if ((unsigned int)ret >= sizeof($$.string))
+		else if ((unsigned int)r >= sizeof($$.string))
 			warning(WARNING_LONG_STR, "STRCAT: String too long '%s%s'\n", $1.string, $3.string);
 	}
 ;
 
 strfmt_args:
 	string strfmt_va_args {
-		$$ = $2;
+		$$ = std::move($2);
 		$$.format = $1.string;
 	}
 ;
@@ -1589,12 +1617,12 @@ strfmt_args:
 strfmt_va_args:
 	  %empty {}
 	| strfmt_va_args COMMA const_no_str {
-		$1.args.push_back((uint32_t)$3);
-		$$ = $1;
+		$$ = std::move($1);
+		$$.args.push_back((uint32_t)$3);
 	}
 	| strfmt_va_args COMMA string {
-		$1.args.push_back($3.string);
-		$$ = $1;
+		$$ = std::move($1);
+		$$.args.push_back($3.string);
 	}
 ;
 
@@ -1648,11 +1676,10 @@ sectorg:
 		$$ = -1;
 	}
 	| LBRACK uconst RBRACK {
-		if ($2 < 0 || $2 >= 0x10000) {
-			::error("Address $%x is not 16-bit\n", $2);
+		$$ = $2;
+		if ($$ < 0 || $$ >= 0x10000) {
+			::error("Address $%x is not 16-bit\n", $$);
 			$$ = -1;
-		} else {
-			$$ = $2;
 		}
 	}
 ;
