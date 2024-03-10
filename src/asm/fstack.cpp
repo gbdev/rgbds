@@ -38,7 +38,7 @@ size_t maxRecursionDepth;
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
 
-static const char *preIncludeName;
+static char const *preIncludeName;
 
 std::vector<uint32_t> &FileStackNode::iters() {
 	assert(std::holds_alternative<std::vector<uint32_t>>(data));
@@ -60,7 +60,7 @@ std::string const &FileStackNode::name() const {
 	return std::get<std::string>(data);
 }
 
-static const char *dumpNodeAndParents(FileStackNode const &node) {
+static char const *dumpNodeAndParents(FileStackNode const &node) {
 	char const *name;
 
 	if (node.type == NODE_REPT) {

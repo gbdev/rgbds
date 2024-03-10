@@ -77,7 +77,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static const char *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:wX:";
+static char const *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 			unsigned long precision;
-			const char *precisionArg;
+			char const *precisionArg;
 		case 'Q':
 			precisionArg = musl_optarg;
 			if (precisionArg[0] == '.')

@@ -18,7 +18,7 @@ struct option {
 };
 
 int musl_getopt_long_only(
-    int argc, char **argv, char const *optstring, const option *longopts, int *idx
+    int argc, char **argv, char const *optstring, option const *longopts, int *idx
 );
 
 #define no_argument       0

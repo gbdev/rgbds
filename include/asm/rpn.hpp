@@ -27,7 +27,7 @@ struct Expression {
 	Expression(Expression &&) = default;
 #ifdef _MSC_VER
 	// MSVC and WinFlexBison won't build without this...
-	Expression(const Expression &) = default;
+	Expression(Expression const &) = default;
 #endif
 
 	Expression &operator=(Expression &&) = default;
@@ -36,10 +36,10 @@ struct Expression {
 void rpn_Number(Expression &expr, uint32_t val);
 void rpn_Symbol(Expression &expr, char const *symName);
 void rpn_LOGNOT(Expression &expr, Expression &&src);
-void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expression &src2);
+void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, Expression const &src2);
 void rpn_HIGH(Expression &expr, Expression &&src);
 void rpn_LOW(Expression &expr, Expression &&src);
-void rpn_ISCONST(Expression &expr, const Expression &src);
+void rpn_ISCONST(Expression &expr, Expression const &src);
 void rpn_NEG(Expression &expr, Expression &&src);
 void rpn_NOT(Expression &expr, Expression &&src);
 void rpn_BankSymbol(Expression &expr, char const *symName);
@@ -52,6 +52,6 @@ void rpn_StartOfSectionType(Expression &expr, SectionType type);
 
 void rpn_CheckHRAM(Expression &expr);
 void rpn_CheckRST(Expression &expr);
-void rpn_CheckNBit(const Expression &expr, uint8_t n);
+void rpn_CheckNBit(Expression const &expr, uint8_t n);
 
 #endif // RGBDS_ASM_RPN_H

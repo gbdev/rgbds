@@ -29,7 +29,7 @@ struct Assertion {
 	std::string message;
 };
 
-const char *objectName;
+char const *objectName;
 
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
@@ -159,7 +159,7 @@ static uint32_t getSymbolID(Symbol &sym) {
 	return sym.ID;
 }
 
-static void writerpn(std::vector<uint8_t> &rpnexpr, const std::vector<uint8_t> &rpn) {
+static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &rpn) {
 	std::string symName;
 	size_t rpnptr = 0;
 

@@ -9,7 +9,7 @@
 #include <string.h>
 
 static void vwarn(char const *fmt, va_list ap) {
-	const char *error = strerror(errno);
+	char const *error = strerror(errno);
 
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
@@ -23,7 +23,7 @@ static void vwarnx(char const *fmt, va_list ap) {
 }
 
 [[noreturn]] static void verr(char const *fmt, va_list ap) {
-	const char *error = strerror(errno);
+	char const *error = strerror(errno);
 
 	fprintf(stderr, "error: ");
 	vfprintf(stderr, fmt, ap);

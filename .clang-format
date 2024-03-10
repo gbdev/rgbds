@@ -69,6 +69,7 @@ MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 PPIndentWidth: -1
 PointerAlignment: Right
+QualifierAlignment: Right
 ReflowComments: true
 SortIncludes: CaseSensitive
 SortUsingDeclarations: true
