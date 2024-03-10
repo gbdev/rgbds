@@ -50,23 +50,23 @@
 
 static void mapFile(void *&mappingAddr, int fd, char const *path, size_t) {
 	mappingAddr = MAP_FAILED;
-	HANDLE file = CreateFileA(
-	    path,
-	    GENERIC_READ,
-	    FILE_SHARE_READ,
-	    nullptr,
-	    OPEN_EXISTING,
-	    FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS,
-	    nullptr
-	);
-	HANDLE mappingObj;
-	if (file == INVALID_HANDLE_VALUE)
-		return;
-	mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
-	if (mappingObj != INVALID_HANDLE_VALUE)
-		mappingAddr = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0);
-	CloseHandle(mappingObj);
-	CloseHandle(file);
+	if (HANDLE file = CreateFileA(
+	        path,
+	        GENERIC_READ,
+	        FILE_SHARE_READ,
+	        nullptr,
+	        OPEN_EXISTING,
+	        FILE_FLAG_POSIX_SEMANTICS | FILE_FLAG_RANDOM_ACCESS,
+	        nullptr
+	    );
+	    file != INVALID_HANDLE_VALUE) {
+		if (HANDLE mappingObj = CreateFileMappingA(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+		    mappingObj != INVALID_HANDLE_VALUE) {
+			mappingAddr = MapViewOfFile(mappingObj, FILE_MAP_READ, 0, 0, 0);
+			CloseHandle(mappingObj);
+		}
+		CloseHandle(file);
+	}
 }
 
 static int munmap(void *mappingAddr, size_t) {
