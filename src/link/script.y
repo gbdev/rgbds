@@ -33,7 +33,7 @@
 
 	using namespace std::literals;
 
-	static void includeFile(std::string && path);
+	static void includeFile(std::string &&path);
 	static void incLineNo();
 
 	static void setSectionType(SectionType type);
