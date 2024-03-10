@@ -33,7 +33,7 @@
 
 	using namespace std::literals;
 
-	static void includeFile(std::string &&path);
+	static void includeFile(std::string && path);
 	static void incLineNo();
 
 	static void setSectionType(SectionType type);
@@ -145,8 +145,7 @@ optional:
 	    0, \
 	    "%s(%" PRIu32 "): " fmt, \
 	    context.path.c_str(), \
-	    context.lineNo __VA_OPT__(, ) \
-	    __VA_ARGS__ \
+	    context.lineNo __VA_OPT__(, ) __VA_ARGS__ \
 	)
 
 // Lexer.
@@ -406,14 +405,20 @@ static void setSectionType(SectionType type, uint32_t bank) {
 
 	if (bank < typeInfo.firstBank) {
 		scriptError(
-		    context, "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
-		    typeInfo.name.c_str(), bank, typeInfo.firstBank
+		    context,
+		    "%s bank %" PRIu32 " doesn't exist (the minimum is %" PRIu32 ")",
+		    typeInfo.name.c_str(),
+		    bank,
+		    typeInfo.firstBank
 		);
 		bank = typeInfo.firstBank;
 	} else if (bank > typeInfo.lastBank) {
 		scriptError(
-		    context, "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
-		    typeInfo.name.c_str(), bank, typeInfo.lastBank
+		    context,
+		    "%s bank %" PRIu32 " doesn't exist (the maximum is %" PRIu32 ")",
+		    typeInfo.name.c_str(),
+		    bank,
+		    typeInfo.lastBank
 		);
 	}
 
@@ -434,8 +439,11 @@ static void setAddr(uint32_t addr) {
 		scriptError(context, "Cannot decrease the current address (from $%04x to $%04x)", pc, addr);
 	} else if (addr > endaddr(activeType)) { // Allow "one past the end" sections.
 		scriptError(
-		    context, "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
-		    addr, typeInfo.name.c_str(), endaddr(activeType)
+		    context,
+		    "Cannot set the current address to $%04" PRIx32 ": %s ends at $%04" PRIx16 "",
+		    addr,
+		    typeInfo.name.c_str(),
+		    endaddr(activeType)
 		);
 		pc = endaddr(activeType);
 	} else {
@@ -476,7 +484,8 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 				    context,
 				    "Cannot align: The alignment offset (%" PRIu32
 				    ") must be less than alignment size (%" PRIu32 ")",
-				    alignOfs, alignSize
+				    alignOfs,
+				    alignSize
 				);
 				return;
 			}
@@ -508,7 +517,8 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 			    context,
 			    "Cannot align: The alignment offset (%" PRIu32
 			    ") must be less than alignment size (%" PRIu32 ")",
-			    alignOfs, alignSize
+			    alignOfs,
+			    alignSize
 			);
 			return;
 		}
@@ -522,7 +532,9 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		    context,
 		    "Cannot align: the next suitable address after $%04" PRIx16 " is $%04" PRIx16
 		    ", past $%04" PRIx16,
-		    pc, (uint16_t)(pc + length), (uint16_t)(endaddr(activeType) + 1)
+		    pc,
+		    (uint16_t)(pc + length),
+		    (uint16_t)(endaddr(activeType) + 1)
 		);
 		return;
 	}
@@ -549,8 +561,10 @@ static void pad(uint32_t length) {
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
 		scriptError(
 		    context,
-		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16, length,
-		    typeInfo.size - offset, (uint16_t)(endaddr(activeType) + 1)
+		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
+		    length,
+		    typeInfo.size - offset,
+		    (uint16_t)(endaddr(activeType) + 1)
 		);
 	} else {
 		pc += length;
@@ -584,8 +598,11 @@ static void placeSection(std::string const &name, bool isOptional) {
 		}
 	} else if (section->type != activeType) {
 		scriptError(
-		    context, "\"%s\" is specified to be a %s section, but it is already a %s section",
-		    name.c_str(), typeInfo.name.c_str(), sectionTypeInfo[section->type].name.c_str()
+		    context,
+		    "\"%s\" is specified to be a %s section, but it is already a %s section",
+		    name.c_str(),
+		    typeInfo.name.c_str(),
+		    sectionTypeInfo[section->type].name.c_str()
 		);
 	}
 
@@ -595,7 +612,10 @@ static void placeSection(std::string const &name, bool isOptional) {
 		    context,
 		    "The linker script places section \"%s\" in %s bank %" PRIu32
 		    ", but it was already defined in bank %" PRIu32,
-		    name.c_str(), sectionTypeInfo[section->type].name.c_str(), bank, section->bank
+		    name.c_str(),
+		    sectionTypeInfo[section->type].name.c_str(),
+		    bank,
+		    section->bank
 		);
 	}
 	section->isBankFixed = true;
@@ -608,7 +628,9 @@ static void placeSection(std::string const &name, bool isOptional) {
 			    context,
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
 			    ", but it was already at $%04" PRIx16,
-			    name.c_str(), org, section->org
+			    name.c_str(),
+			    org,
+			    section->org
 			);
 		} else if (section->isAlignFixed && (org & section->alignMask) != section->alignOfs) {
 			uint8_t alignment = std::countr_one(section->alignMask);
@@ -617,7 +639,11 @@ static void placeSection(std::string const &name, bool isOptional) {
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
 			    ", but that would be ALIGN[%" PRIu8 ", %" PRIu16
 			    "] instead of the requested ALIGN[%" PRIu8 ", %" PRIu16 "]",
-			    name.c_str(), org, alignment, (uint16_t)(org & section->alignMask), alignment,
+			    name.c_str(),
+			    org,
+			    alignment,
+			    (uint16_t)(org & section->alignMask),
+			    alignment,
 			    section->alignOfs
 			);
 		}
@@ -632,7 +658,11 @@ static void placeSection(std::string const &name, bool isOptional) {
 			    context,
 			    "The linker script assigns section \"%s\" to address $%04" PRIx16
 			    ", but then it would overflow %s by %" PRIu16 " byte%s",
-			    name.c_str(), org, typeInfo.name.c_str(), overflowSize, overflowSize == 1 ? "" : "s"
+			    name.c_str(),
+			    org,
+			    typeInfo.name.c_str(),
+			    overflowSize,
+			    overflowSize == 1 ? "" : "s"
 			);
 			// Fill as much as possible without going out of bounds.
 			org = typeInfo.startAddr + typeInfo.size;

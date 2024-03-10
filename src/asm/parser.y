@@ -38,7 +38,7 @@
 		StrFmtArgList(StrFmtArgList &&) = default;
 	#ifdef _MSC_VER
 		// MSVC and WinFlexBison won't build without this...
-		StrFmtArgList(const StrFmtArgList &) = default;
+		StrFmtArgList(StrFmtArgList const &) = default;
 	#endif
 
 		StrFmtArgList &operator=(StrFmtArgList &&) = default;
@@ -73,7 +73,7 @@
 	static void upperstring(char *dest, char const *src);
 	static void lowerstring(char *dest, char const *src);
 	static uint32_t str2int2(std::vector<uint8_t> const &s);
-	static const char *strrstr(char const *s1, char const *s2);
+	static char const *strrstr(char const *s1, char const *s2);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
 	static size_t strlenUTF8(char const *s);
 	static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len);
@@ -84,10 +84,12 @@
 	    char *dest, size_t destLen, char const *src, char const *old, char const *rep
 	);
 	static void strfmt(
-	    char *dest, size_t destLen, char const *spec,
+	    char *dest,
+	    size_t destLen,
+	    char const *spec,
 	    std::vector<std::variant<uint32_t, std::string>> &args
 	);
-	static void compoundAssignment(const char *symName, RPNCommand op, int32_t constValue);
+	static void compoundAssignment(char const *symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, char const *msg);
 
@@ -628,7 +630,7 @@ assignment:
 		sym_AddVar($1.c_str(), $3);
 	}
 	| LABEL compoundeq const {
-		const char *compoundEqOperator = nullptr;
+		char const *compoundEqOperator = nullptr;
 		switch ($2) {
 			case RPN_ADD: compoundEqOperator = "+="; break;
 			case RPN_SUB: compoundEqOperator = "-="; break;
@@ -2471,7 +2473,8 @@ static uint32_t str2int2(std::vector<uint8_t> const &s) {
 	if (length > 4)
 		warning(
 		    WARNING_NUMERIC_STRING_1,
-		    "Treating string as a number ignores first %" PRIu32 " character%s\n", length - 4,
+		    "Treating string as a number ignores first %" PRIu32 " character%s\n",
+		    length - 4,
 		    length == 5 ? "" : "s"
 		);
 	else if (length > 1)
@@ -2489,7 +2492,7 @@ static uint32_t str2int2(std::vector<uint8_t> const &s) {
 	return r;
 }
 
-static const char *strrstr(char const *s1, char const *s2) {
+static char const *strrstr(char const *s1, char const *s2) {
 	size_t len1 = strlen(s1);
 	size_t len2 = strlen(s2);
 
@@ -2605,7 +2608,8 @@ static void charsubUTF8(char *dest, char const *src, uint32_t pos) {
 
 	if (!charmap_ConvertNext(src, nullptr))
 		warning(
-		    WARNING_BUILTIN_ARG, "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
+		    WARNING_BUILTIN_ARG,
+		    "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
 		    pos
 		);
 
@@ -2672,7 +2676,9 @@ static void strrpl(char *dest, size_t destLen, char const *src, char const *old,
 }
 
 static void strfmt(
-    char *dest, size_t destLen, char const *spec,
+    char *dest,
+    size_t destLen,
+    char const *spec,
     std::vector<std::variant<uint32_t, std::string>> &args
 ) {
 	size_t a = 0;
@@ -2748,7 +2754,7 @@ static void strfmt(
 	dest[i] = '\0';
 }
 
-static void compoundAssignment(const char *symName, RPNCommand op, int32_t constValue) {
+static void compoundAssignment(char const *symName, RPNCommand op, int32_t constValue) {
 	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 

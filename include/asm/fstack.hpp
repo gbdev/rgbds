@@ -40,7 +40,7 @@ struct FileStackNode {
 	std::string const &name() const;
 
 	FileStackNode(FileStackNodeType type_, std::variant<std::vector<uint32_t>, std::string> data_)
-	    : type(type_), data(data_) {};
+	    : type(type_), data(data_){};
 
 	void dump(uint32_t curLineNo) const;
 };

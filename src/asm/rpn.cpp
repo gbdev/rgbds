@@ -232,7 +232,7 @@ void rpn_CheckRST(Expression &expr) {
 }
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
-void rpn_CheckNBit(const Expression &expr, uint8_t n) {
+void rpn_CheckNBit(Expression const &expr, uint8_t n) {
 	assert(n != 0);                     // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
@@ -324,7 +324,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
 }
 
-void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, const Expression &src2) {
+void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, Expression const &src2) {
 	initExpression(expr);
 	expr.isSymbol = false;
 	int32_t constMaskVal;
@@ -570,7 +570,7 @@ void rpn_LOW(Expression &expr, Expression &&src) {
 	}
 }
 
-void rpn_ISCONST(Expression &expr, const Expression &src) {
+void rpn_ISCONST(Expression &expr, Expression const &src) {
 	initExpression(expr);
 	expr.val = src.isKnown;
 	expr.isKnown = true;

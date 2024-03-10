@@ -106,7 +106,7 @@ void opt_Parse(char const *s) {
 		}
 		break;
 
-		const char *precisionArg;
+		char const *precisionArg;
 	case 'Q':
 		precisionArg = &s[1];
 		if (precisionArg[0] == '.')

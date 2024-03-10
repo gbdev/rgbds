@@ -150,7 +150,7 @@ void argErr(char flag, char const *fmt, ...) {
 }
 
 // Short options
-static const char *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
+static char const *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
 
 /*
  * Equivalent long options

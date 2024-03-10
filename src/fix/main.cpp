@@ -24,7 +24,7 @@
 #define BANK_SIZE 0x4000
 
 // Short options
-static const char *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
+static char const *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
 
 /*
  * Equivalent long options
@@ -754,10 +754,10 @@ static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 #define FIX_GLOBAL_SUM   0x08
 #define TRASH_GLOBAL_SUM 0x04
 static uint8_t fixSpec = 0;
-static const char *gameID = nullptr;
+static char const *gameID = nullptr;
 static uint8_t gameIDLen;
 static bool japanese = true;
-static const char *newLicensee = nullptr;
+static char const *newLicensee = nullptr;
 static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
 static MbcType cartridgeType = MBC_NONE;
@@ -766,7 +766,7 @@ static bool overwriteRom = false; // If false, warn when overwriting non-zero no
 static uint16_t padValue = UNSPECIFIED;
 static uint16_t ramSize = UNSPECIFIED;
 static bool sgb = false; // If false, SGB flags are left alone
-static const char *title = nullptr;
+static char const *title = nullptr;
 static uint8_t titleLen;
 
 static uint8_t maxTitleLen() {

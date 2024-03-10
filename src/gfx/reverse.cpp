@@ -21,7 +21,7 @@
 
 #include "gfx/main.hpp"
 
-static DefaultInitVec<uint8_t> readInto(const std::string &path) {
+static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 	File file;
 	if (!file.open(path, std::ios::in | std::ios::binary)) {
 		fatal("Failed to open \"%s\": %s", file.c_str(path), strerror(errno));

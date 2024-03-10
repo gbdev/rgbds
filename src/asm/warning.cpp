@@ -67,7 +67,7 @@ static WarningState warningState(WarningID id) {
 	return state;
 }
 
-static const char * const warningFlags[NB_WARNINGS] = {
+static char const * const warningFlags[NB_WARNINGS] = {
     "assert",
     "backwards-for",
     "builtin-args",

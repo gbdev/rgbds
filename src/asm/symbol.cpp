@@ -589,7 +589,7 @@ void sym_Init(time_t now) {
 		now = 0;
 	}
 
-	const tm *time_local = localtime(&now);
+	tm const *time_local = localtime(&now);
 
 	strftime(savedTIME, sizeof(savedTIME), "\"%H:%M:%S\"", time_local);
 	strftime(savedDATE, sizeof(savedDATE), "\"%d %B %Y\"", time_local);
@@ -600,7 +600,7 @@ void sym_Init(time_t now) {
 	    time_local
 	);
 
-	const tm *time_utc = gmtime(&now);
+	tm const *time_utc = gmtime(&now);
 
 	strftime(
 	    savedTIMESTAMP_ISO8601_UTC,

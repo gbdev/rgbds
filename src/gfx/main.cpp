@@ -789,7 +789,7 @@ int main(int argc, char *argv[]) {
 		}());
 		if (options.palSpecType == Options::EXPLICIT) {
 			fputs("\t[\n", stderr);
-			for (const auto &pal : options.palSpec) {
+			for (auto const &pal : options.palSpec) {
 				fputs("\t\t", stderr);
 				for (auto &color : pal) {
 					if (color) {
