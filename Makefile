@@ -129,6 +129,9 @@ test/gfx/randtilegen: test/gfx/randtilegen.cpp
 test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
 	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGLDLIBS}
 
+test/link/unmangle: test/link/unmangle.cpp
+	$Q${CXX} ${REALLDFLAGS} -o $@ $^ ${REALCXXFLAGS}
+
 # Rules to process files
 
 # We want the Bison invocation to pass through our rules, not default ones
@@ -176,7 +179,7 @@ clean:
 	$Q${RM} rgbshim.sh
 	$Q${RM} src/asm/parser.cpp src/asm/parser.hpp src/asm/stack.hh
 	$Q${RM} src/link/script.cpp src/link/script.hpp src/link/stack.hh
-	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test
+	$Q${RM} test/gfx/randtilegen test/gfx/rgbgfx_test test/link/unmangle
 
 # Target used to install the binaries and man pages.
 
@@ -233,13 +236,13 @@ coverage:
 # install instructions instead.
 
 mingw32:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
+	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test test/link/unmangle \
 		CXX=i686-w64-mingw32-g++ \
 		CXXFLAGS="-O3 -flto -DNDEBUG -static-libgcc -static-libstdc++" \
 		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/i686-w64-mingw32 pkg-config"
 
 mingw64:
-	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test \
+	$Q${MAKE} all test/gfx/randtilegen test/gfx/rgbgfx_test test/link/unmangle \
 		CXX=x86_64-w64-mingw32-g++ \
 		PKG_CONFIG="PKG_CONFIG_SYSROOT_DIR=/usr/x86_64-w64-mingw32 pkg-config"
 

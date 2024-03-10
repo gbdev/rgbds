@@ -3,6 +3,8 @@
 export LC_ALL=C
 set -o pipefail
 
+[[ -e ./unmangle ]] || make -C ../.. test/link/unmangle || exit
+
 otemp="$(mktemp)"
 gbtemp="$(mktemp)"
 gbtemp2="$(mktemp)"
@@ -80,6 +82,16 @@ evaluateTest () {
 		(( failed++ ))
 		rc=1
 	fi
+}
+
+substPath () {
+	# Escape regex metacharacters
+	subst="$(printf '%s\n' "$1" | sed 's:[][\/.^$*]:\\&:g')"
+	# Replace the file name with a different one to match changed output
+	sed -i'' -e "s|$subst|$2|g" "$3"
+	# Escape regex metacharacters in the un-MinGW-mangled path
+	subst="$(./unmangle "$1" | sed 's:[][\/.^$*]:\\&:g')"
+	sed -i'' -e "s|$subst|$2|g" "$3"
 }
 
 for i in *.asm; do
@@ -213,6 +225,28 @@ startTest
 continueTest
 rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
 tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
+test="section-union/same-export"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet "$gbtemp2" "$otemp" 2>"$outtemp"
+substPath "$otemp" "$test/a.o" "$outtemp"
+substPath "$gbtemp2" "$test/b.o" "$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
+test="section-union/same-label"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet "$gbtemp2" "$otemp" 2>"$outtemp"
+substPath "$otemp" "$test/a.o" "$outtemp"
+substPath "$gbtemp2" "$test/b.o" "$outtemp"
+tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
 for i in section-union/*.asm; do

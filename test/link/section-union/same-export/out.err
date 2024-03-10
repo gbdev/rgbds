@@ -1,0 +1,1 @@
+error: "Same" both in section-union/same-export/a.o from section-union/same-export/a.asm(2) and in section-union/same-export/b.o from section-union/same-export/b.asm(2)
