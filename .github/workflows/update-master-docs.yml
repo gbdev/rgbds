@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout rgbds@master
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: gbdev/rgbds
           ref: master
           path: rgbds
       - name: Checkout rgbds-www@master
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: gbdev/rgbds-www
           ref: master

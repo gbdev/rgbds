@@ -24,10 +24,10 @@ jobs:
         run: | # Turn "vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         run: .github/scripts/get_win_deps.ps1
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache
         with:
           path: |
@@ -61,7 +61,7 @@ jobs:
         run: |
           Compress-Archive -LiteralPath @("install_dir/bin/rgbasm.exe", "install_dir/bin/rgblink.exe", "install_dir/bin/rgbfix.exe", "install_dir/bin/rgbgfx.exe", "install_dir/bin/zlib1.dll", "install_dir/bin/libpng16.dll") "rgbds-${{ env.version }}-win${{ matrix.bits }}.zip"
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: win${{ matrix.bits }}
           path: rgbds-${{ env.version }}-win${{ matrix.bits }}.zip
@@ -74,7 +74,7 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -88,7 +88,7 @@ jobs:
         run: |
           zip --junk-paths rgbds-${{ env.version }}-macos-x86_64.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload macOS binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos
           path: rgbds-${{ env.version }}-macos-x86_64.zip
@@ -101,7 +101,7 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -113,7 +113,7 @@ jobs:
         run: |
           tar caf rgbds-${{ env.version }}-linux-x86_64.tar.xz --transform='s#.*/##' rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload Linux binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux
           path: rgbds-${{ env.version }}-linux-x86_64.tar.xz
@@ -127,14 +127,14 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Package sources
         run: |
           make dist Q=
           ls
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body: |
             Please ensure that the four packages below work properly.

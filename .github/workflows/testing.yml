@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -47,7 +47,7 @@ jobs:
           mkdir bins
           cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.cxx }}-${{ matrix.buildsys }}
           path: bins
@@ -61,7 +61,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -87,7 +87,7 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -104,7 +104,7 @@ jobs:
           mkdir bins
           cp rgb{asm,link,fix,gfx} bins
       - name: Upload binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rgbds-canary-${{ matrix.os }}-${{ matrix.buildsys }}
           path: bins
@@ -118,7 +118,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -151,10 +151,10 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         run: .github/scripts/get_win_deps.ps1
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache
         with:
           path: |
@@ -191,7 +191,7 @@ jobs:
           mkdir bins
           cp install_dir/bin/{rgbasm.exe,rgblink.exe,rgbfix.exe,rgbgfx.exe,zlib1.dll,libpng16.dll} bins
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rgbds-canary-win${{ matrix.bits }}
           path: bins
@@ -205,7 +205,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
@@ -242,7 +242,7 @@ jobs:
     env:
       DIST_DIR: win${{ matrix.bits }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -265,12 +265,12 @@ jobs:
           cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/lib{ssp-0,stdc++-6}.dll bins
           [ "${{ matrix.bits }}" -ne 32 ] || cp -v /usr/lib/gcc/${{ matrix.triplet }}/10-win32/libgcc_s_dw2-1.dll bins
       - name: Upload Windows binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
       - name: Upload Windows test binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: |
@@ -286,14 +286,14 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Retrieve binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: rgbds-canary-mingw-win${{ matrix.bits }}
           path: bins
       - name: Retrieve test binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
           path: test/gfx
@@ -312,7 +312,7 @@ jobs:
           tee -a <<<"hash=${hash%-}" $GITHUB_OUTPUT
       - name: Check test dependency repositories cache
         id: test-deps-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
