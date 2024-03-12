@@ -204,7 +204,7 @@ develop:
 		-Wstringop-overflow=4 -Wstrict-overflow=5 -Wundef -Wuninitialized -Wunused \
 		-Wshadow \
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
-		-Wno-format-nonliteral -Wno-strict-overflow \
+		-Wno-format-nonliteral -Wno-strict-overflow -Wno-unused-but-set-variable \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare \
 		-Wvla \
 		-D_GLIBCXX_ASSERTIONS \
