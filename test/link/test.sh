@@ -209,6 +209,15 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmpRomSize "$gbtemp" 65536
 evaluateTest
 
+test="section-fragment/good"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
 test="section-fragment/jr-offset"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
@@ -224,15 +233,6 @@ startTest
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2"
-tryCmpRom "$test"/ref.out.bin
-evaluateTest
-
-test="section-union/fragments"
-startTest
-"$RGBASM" -o "$otemp" "$test"/a.asm
-"$RGBASM" -o "$gbtemp2" "$test"/b.asm
-continueTest
-rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
@@ -252,10 +252,11 @@ startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet "$gbtemp2" "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
 substPath "$otemp" "$test/a.o" "$outtemp"
 substPath "$gbtemp2" "$test/b.o" "$outtemp"
 tryDiff "$test"/out.err "$outtemp"
+tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
 for i in section-union/*.asm; do
