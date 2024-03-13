@@ -9,13 +9,14 @@ otemp="$(mktemp)"
 gbtemp="$(mktemp)"
 gbtemp2="$(mktemp)"
 outtemp="$(mktemp)"
+outtemp2="$(mktemp)"
 tests=0
 failed=0
 rc=0
 
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
-trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q}" EXIT
+trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q}" EXIT
 
 bold="$(tput bold)"
 resbold="$(tput sgr0)"
@@ -275,6 +276,17 @@ for i in section-union/*.asm; do
 	tryDiff "${test}.out" "$outtemp"
 	evaluateTest
 done
+
+test="symbols"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$gbtemp2" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryDiff "$test"/ref.out.sym "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
 
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
