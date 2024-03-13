@@ -250,8 +250,11 @@ static void placeSection(Section &section) {
 			     .size =
 			         (uint16_t)(freeSpace.address + freeSpace.size - section.org - section.size)}
 			);
+			// **`freeSpace` cannot be reused from this point on**, because `bankMem.insert`
+			// invalidates all references to itself!
+
 			// Resize the original space (address is unmodified)
-			freeSpace.size = section.org - freeSpace.address;
+			bankMem[spaceIdx].size = section.org - bankMem[spaceIdx].address;
 		} else {
 			// The amount of free spaces doesn't change: resize!
 			freeSpace.size -= section.size;
