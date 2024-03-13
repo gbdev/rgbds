@@ -284,9 +284,9 @@ static void printSymName(char const *name) {
 
 // Comparator function for `std::stable_sort` to sort symbols
 // Symbols are ordered by address, then by parentage
-static int compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
+static bool compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 	if (sym1.addr != sym2.addr)
-		return sym1.addr < sym2.addr ? -1 : 1;
+		return sym1.addr < sym2.addr;
 
 	std::string const &sym1_name = sym1.sym->name;
 	std::string const &sym2_name = sym2.sym->name;
@@ -299,14 +299,14 @@ static int compareSymbols(SortedSymbol const &sym1, SortedSymbol const &sym2) {
 
 		// Sort parent labels before their child local labels
 		if (sym2_name.starts_with(sym1_name) && sym2_name[sym1_len] == '.')
-			return -1;
+			return true;
 		if (sym1_name.starts_with(sym2_name) && sym1_name[sym2_len] == '.')
-			return 1;
+			return false;
 		// Sort local labels before unrelated global labels
-		return sym1_local ? -1 : 1;
+		return sym1_local;
 	}
 
-	return 0;
+	return false;
 }
 
 /*
