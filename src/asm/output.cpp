@@ -83,10 +83,8 @@ static uint32_t getSectIDIfAny(Section *sect) {
 	if (!sect)
 		return (uint32_t)-1;
 
-	for (auto it = sectionList.begin(); it != sectionList.end(); it++) {
-		if (&*it == sect)
-			return it - sectionList.begin();
-	}
+	if (auto search = sectionMap.find(sect->name); search != sectionMap.end())
+		return (uint32_t)(sectionMap.size() - search->second - 1);
 
 	fatalerror("Unknown section '%s'\n", sect->name.c_str());
 }
@@ -373,8 +371,8 @@ void out_WriteObject() {
 	for (Symbol const *sym : objectSymbols)
 		writesymbol(*sym, f);
 
-	for (Section &sect : sectionList)
-		writesection(sect, f);
+	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
+		writesection(*it, f);
 
 	putlong(assertions.size(), f);
 
