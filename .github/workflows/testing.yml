@@ -276,6 +276,7 @@ jobs:
           path: |
             test/gfx/randtilegen.exe
             test/gfx/rgbgfx_test.exe
+            test/link/unmangle.exe
 
   windows-mingw-testing:
     needs: windows-mingw-build
@@ -296,7 +297,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
-          path: test/gfx
+          path: test
       - name: Extract binaries
         shell: bash
         run: |
