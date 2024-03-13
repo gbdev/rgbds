@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 
 #include "error.hpp"
 
@@ -41,6 +40,7 @@ struct SectionStackEntry {
 std::stack<UnionStackEntry> currentUnionStack;
 std::deque<SectionStackEntry> sectionStack;
 std::deque<Section> sectionList;
+std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 Section *currentSection = nullptr;
 static Section *currentLoadSection = nullptr;
@@ -110,11 +110,8 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size) {
 }
 
 Section *sect_FindSectionByName(char const *name) {
-	for (Section &sect : sectionList) {
-		if (sect.name == name)
-			return &sect;
-	}
-	return nullptr;
+	auto search = sectionMap.find(name);
+	return search != sectionMap.end() ? &sectionList[search->second] : nullptr;
 }
 
 #define mask(align) ((1U << (align)) - 1)
@@ -300,8 +297,9 @@ static Section *createSection(
     uint16_t alignOffset,
     SectionModifier mod
 ) {
-	// Add the new section to the list (order doesn't matter)
-	Section &sect = sectionList.emplace_front();
+	// Add the new section to the list
+	Section &sect = sectionList.emplace_back();
+	sectionMap.emplace(name, sectionMap.size());
 
 	sect.name = name;
 	sect.type = type;

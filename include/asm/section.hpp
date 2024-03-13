@@ -5,6 +5,8 @@
 
 #include <deque>
 #include <stdint.h>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "linkdefs.hpp"
@@ -49,6 +51,7 @@ struct SectionSpec {
 };
 
 extern std::deque<Section> sectionList;
+extern std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 extern Section *currentSection;
 
 Section *sect_FindSectionByName(char const *name);
