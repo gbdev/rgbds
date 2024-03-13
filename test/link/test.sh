@@ -25,13 +25,13 @@ RGBASM=../../rgbasm
 RGBLINK=../../rgblink
 
 startTest () {
-	echo "${bold}${green}${i%.asm} assembling...${rescolors}${resbold}"
+	echo "${bold}${green}${test} assembling...${rescolors}${resbold}"
 }
 
 continueTest () {
 	(( tests++ ))
 	our_rc=0
-	echo "${bold}${green}${i%.asm}$1...${rescolors}${resbold}"
+	echo "${bold}${green}${test}$1...${rescolors}${resbold}"
 }
 
 tryDiff () {
@@ -45,7 +45,7 @@ tryDiff () {
 tryCmp () {
 	if ! cmp "$1" "$2"; then
 		../../contrib/gbdiff.bash "$1" "$2"
-		echo "${bold}${red}${i%.asm}.out.bin mismatch!${rescolors}${resbold}"
+		echo "${bold}${red}${test}.out.bin mismatch!${rescolors}${resbold}"
 		false
 	fi
 	(( our_rc = our_rc || $? ))
@@ -60,7 +60,7 @@ tryCmpRom () {
 tryCmpRomSize () {
 	rom_size=$(printf %s $(wc -c <"$1"))
 	if [ "$rom_size" -ne "$2" ]; then
-		echo "$bold${red}${i%.asm} binary size mismatch! ${rescolors}${resbold}"
+		echo "$bold${red}${test} binary size mismatch! ${rescolors}${resbold}"
 		false
 	fi
 	(( our_rc = our_rc || $? ))
@@ -83,23 +83,24 @@ evaluateTest () {
 }
 
 for i in *.asm; do
+	test=${i%.asm}
 	startTest
-	"$RGBASM" -o "$otemp" "$i"
+	"$RGBASM" -o "$otemp" "${test}.asm"
 
 	# Some tests have variants depending on flags
 	ran_flag=false
 	for flag in '-d' '-t' '-w'; do
-		if [ -f "${i%.asm}-no${flag}.out" ]; then
+		if [ -f "${test}-no${flag}.out" ]; then
 			continueTest "-no${flag}"
 			rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
-			tryDiff "${i%.asm}-no${flag}.out" "$outtemp"
+			tryDiff "${test}-no${flag}.out" "$outtemp"
 			evaluateTest
 			ran_flag=true
 		fi
-		if [ -f "${i%.asm}${flag}.out" ]; then
+		if [ -f "${test}${flag}.out" ]; then
 			continueTest "$flag"
 			rgblinkQuiet ${flag} -o "$gbtemp" "$otemp" 2>"$outtemp"
-			tryDiff "${i%.asm}${flag}.out" "$outtemp"
+			tryDiff "${test}${flag}.out" "$outtemp"
 			evaluateTest
 			ran_flag=true
 		fi
@@ -109,10 +110,10 @@ for i in *.asm; do
 	fi
 
 	# Other tests have several linker scripts
-	for script in "${i%.asm}"*.link; do
+	for script in "$test"*.link; do
 		[[ -e "$script" ]] || break # If the glob doesn't match, it just... doesn't expand!
 
-		continueTest "${script#${i%.asm}}"
+		continueTest "${script#${test}}"
 		rgblinkQuiet -l "$script" -o "$gbtemp" "$otemp" 2>"$outtemp"
 		tryDiff "${script%.link}.out" "$outtemp"
 		evaluateTest
@@ -125,8 +126,8 @@ for i in *.asm; do
 	# The rest of the tests just links a file, and maybe checks the binary
 	continueTest
 	rgblinkQuiet -o "$gbtemp" "$otemp" 2>"$outtemp"
-	tryDiff "${i%.asm}.out" "$outtemp"
-	bin=${i%.asm}.out.bin
+	tryDiff "${test}.out" "$outtemp"
+	bin=${test}.out.bin
 	if [ -f "$bin" ]; then
 		tryCmpRom "$bin"
 	fi
@@ -135,98 +136,99 @@ done
 
 # These tests do their own thing
 
-i="bank-const.asm"
+test="bank-const"
 startTest
-"$RGBASM" -o "$otemp" bank-const/a.asm
-"$RGBASM" -o "$gbtemp2" bank-const/b.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
-tryDiff bank-const/out.err "$outtemp"
+tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
-for i in fragment-align/*; do
+for test in fragment-align/*; do
 	startTest
-	"$RGBASM" -o "$otemp" "$i"/a.asm
-	"$RGBASM" -o "$gbtemp2" "$i"/b.asm
+	"$RGBASM" -o "$otemp" "$test"/a.asm
+	"$RGBASM" -o "$gbtemp2" "$test"/b.asm
 	continueTest
 	rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2" 2>"$outtemp"
-	tryDiff "$i"/out.err "$outtemp"
-	if [[ -f "$i"/out.gb ]]; then
-		tryCmpRom "$i"/out.gb
+	tryDiff "$test"/out.err "$outtemp"
+	if [[ -f "$test"/out.gb ]]; then
+		tryCmpRom "$test"/out.gb
 	fi
 	evaluateTest
 done
 
-i="high-low.asm"
+test="high-low"
 startTest
-"$RGBASM" -o "$otemp" high-low/a.asm
-"$RGBASM" -o "$outtemp" high-low/b.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$outtemp" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" "$otemp"
 rgblinkQuiet -o "$gbtemp2" "$outtemp"
 tryCmp "$gbtemp" "$gbtemp2"
 evaluateTest
 
-i="overlay.asm"
+test="overlay"
 startTest
-"$RGBASM" -o "$otemp" overlay/a.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -t -O overlay/overlay.gb "$otemp" 2>"$outtemp"
-tryDiff overlay/out.err "$outtemp"
+rgblinkQuiet -o "$gbtemp" -t -O "$test"/overlay.gb "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
 # This test does not trim its output with 'dd' because it needs to verify the correct output size
-tryCmp overlay/out.gb "$gbtemp"
+tryCmp "$test"/out.gb "$gbtemp"
 evaluateTest
 
-i="scramble-romx.asm"
+test="scramble-romx"
 startTest
-"$RGBASM" -o "$otemp" scramble-romx/a.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" 2>"$outtemp"
-tryDiff scramble-romx/out.err "$outtemp"
+tryDiff "$test"/out.err "$outtemp"
 # This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
 tryCmpRomSize "$gbtemp" 65536
 evaluateTest
 
-i="section-fragment/jr-offset.asm"
+test="section-fragment/jr-offset"
 startTest
-"$RGBASM" -o "$otemp" section-fragment/jr-offset/a.asm
-"$RGBASM" -o "$gbtemp2" section-fragment/jr-offset/b.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
-tryCmpRom section-fragment/jr-offset/ref.out.bin
+tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
-i="section-union/good.asm"
+test="section-union/good"
 startTest
-"$RGBASM" -o "$otemp" section-union/good/a.asm
-"$RGBASM" -o "$gbtemp2" section-union/good/b.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -l section-union/good/script.link "$otemp" "$gbtemp2"
-tryCmpRom section-union/good/ref.out.bin
+rgblinkQuiet -o "$gbtemp" -l "$test"/script.link "$otemp" "$gbtemp2"
+tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
-i="section-union/fragments.asm"
+test="section-union/fragments"
 startTest
-"$RGBASM" -o "$otemp" section-union/fragments/a.asm
-"$RGBASM" -o "$gbtemp2" section-union/fragments/b.asm
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
-tryCmpRom section-union/fragments/ref.out.bin
+tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
 for i in section-union/*.asm; do
+	test=${i%.asm}
 	startTest
-	"$RGBASM" -o "$otemp" "$i"
-	"$RGBASM" -o "$gbtemp2" "$i" -DSECOND
+	"$RGBASM" -o "$otemp" "${test}.asm"
+	"$RGBASM" -o "$gbtemp2" "${test}.asm" -DSECOND
 	continueTest
 	if rgblinkQuiet "$otemp" "$gbtemp2" 2>"$outtemp"; then
-		echo -e "${bold}${red}$i didn't fail to link!${rescolors}${resbold}"
+		echo -e "${bold}${red}${test}.asm didn't fail to link!${rescolors}${resbold}"
 		our_rc=1
 	fi
 	echo --- >>"$outtemp"
 	# Ensure RGBASM also errors out
-	cat "$i" - "$i" <<<'def SECOND equs "1"' | "$RGBASM" - 2>>"$outtemp"
-	tryDiff "${i%.asm}.out" "$outtemp"
+	cat "${test}.asm" - "${test}.asm" <<<'def SECOND equs "1"' | "$RGBASM" - 2>>"$outtemp"
+	tryDiff "${test}.out" "$outtemp"
 	evaluateTest
 done
 
