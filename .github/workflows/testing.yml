@@ -193,7 +193,7 @@ jobs:
       - name: Upload Windows binaries
         uses: actions/upload-artifact@v4
         with:
-          name: rgbds-canary-win${{ matrix.bits }}
+          name: rgbds-canary-w${{ matrix.bits }}-${{ matrix.os }}
           path: bins
       - name: Compute test dependency cache params
         id: test-deps-cache-params
