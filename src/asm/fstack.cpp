@@ -62,7 +62,7 @@ std::string const &FileStackNode::name() const {
 }
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	std::string const &topName = std::visit(Visitor{
+	Visitor visitor{
 		[this](std::vector<uint32_t> const &iters) -> std::string const & {
 			assert(this->parent); // REPT nodes use their parent's name
 			std::string const &lastName = this->parent->dump(this->lineNo);
@@ -80,7 +80,8 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 			}
 			return name;
 		},
-	}, data);
+	};
+	std::string const &topName = std::visit(visitor, data);
 	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 	return topName;
 }
