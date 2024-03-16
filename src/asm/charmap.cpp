@@ -3,12 +3,12 @@
 #include "asm/charmap.hpp"
 
 #include <errno.h>
-#include <map>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <unordered_map>
 
 #include "util.hpp"
 
@@ -31,7 +31,7 @@ struct Charmap {
 	std::vector<CharmapNode> nodes; // first node is reserved for the root node
 };
 
-static std::map<std::string, Charmap> charmaps;
+static std::unordered_map<std::string, Charmap> charmaps;
 
 static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
