@@ -6,9 +6,9 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <map>
 #include <new>
 #include <stdio.h>
+#include <unordered_map>
 
 #include "error.hpp"
 #include "helpers.hpp"
@@ -22,7 +22,7 @@
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
 
-std::map<std::string, Symbol> symbols;
+std::unordered_map<std::string, Symbol> symbols;
 
 static std::optional<std::string> labelScope = std::nullopt; // Current section's label scope
 static Symbol *PCSymbol;

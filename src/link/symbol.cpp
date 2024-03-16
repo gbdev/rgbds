@@ -3,8 +3,8 @@
 #include "link/symbol.hpp"
 
 #include <inttypes.h>
-#include <map>
 #include <stdlib.h>
+#include <unordered_map>
 
 #include "error.hpp"
 #include "helpers.hpp"
@@ -13,7 +13,7 @@
 #include "link/object.hpp"
 #include "link/section.hpp"
 
-std::map<std::string, Symbol *> symbols;
+std::unordered_map<std::string, Symbol *> symbols;
 
 Label &Symbol::label() {
 	assert(std::holds_alternative<Label>(data));
