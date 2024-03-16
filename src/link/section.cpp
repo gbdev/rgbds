@@ -3,18 +3,20 @@
 #include "link/section.hpp"
 
 #include <assert.h>
+#include <deque>
 #include <inttypes.h>
-#include <map>
 #include <stdlib.h>
 #include <string.h>
+#include <unordered_map>
 
 #include "error.hpp"
 
-std::map<std::string, std::unique_ptr<Section>> sections;
+std::vector<std::unique_ptr<Section>> sectionList;
+std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (auto &it : sections)
-		callback(*it.second);
+	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
+		callback(*it->get());
 }
 
 static void checkSectUnionCompat(Section &target, Section &other) {
@@ -215,13 +217,14 @@ void sect_AddSection(std::unique_ptr<Section> &&section) {
 		);
 	} else {
 		// If not, add it
-		sections.emplace(section->name, std::move(section));
+		sectionMap.emplace(section->name, sectionList.size());
+		sectionList.push_back(std::move(section));
 	}
 }
 
 Section *sect_GetSection(std::string const &name) {
-	auto search = sections.find(name);
-	return search != sections.end() ? search->second.get() : nullptr;
+	auto search = sectionMap.find(name);
+	return search != sectionMap.end() ? sectionList[search->second].get() : nullptr;
 }
 
 static void doSanityChecks(Section &section) {

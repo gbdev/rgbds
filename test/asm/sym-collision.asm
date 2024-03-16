@@ -2,7 +2,7 @@ SECTION "Collision course", OAM[$FE00]
 
 ; All the following symbols used to collide with our custom hashmap,
 ; which at some point caused `PURGE` to malfunction with them.
-; We now use C++ `std::map` which reliably handles collisions.
+; We now use C++ `std::unordered_map` which reliably handles collisions.
 aqfj: ds 1 ; Give them different addresses
 cxje: ds 1
 dgsd: ds 1

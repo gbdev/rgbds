@@ -13,7 +13,7 @@ SECTION "test", ROM0
 	charmap "<FAR>",    $08
 
 	; At this point, enough nodes were allocated for 'foo' to be reallocated.
-	; Its value in the charmaps' std::map should have been updated too,
+	; Its value in the charmaps' `std::unordered_map` should have been updated too,
 	; so that usages of 'foo' will not segfault.
 
 	; This uses 'foo; by switching to it.
