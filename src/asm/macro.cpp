@@ -2,22 +2,24 @@
 
 #include "asm/macro.hpp"
 
-#include <errno.h>
-#include <inttypes.h>
-#include <new>
 #include <stdio.h>
 #include <string.h>
+#include <string>
+
+#include "helpers.hpp"
+
+#include "asm/warning.hpp"
 
 #define MAXMACROARGS 99999
 
 static MacroArgs *macroArgs = nullptr;
 
-void MacroArgs::append(std::string s) {
-	if (s.empty())
+void MacroArgs::append(std::shared_ptr<std::string> arg) {
+	if (arg->empty())
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
 	if (args.size() == MAXMACROARGS)
 		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	args.push_back(s);
+	args.push_back(arg);
 }
 
 MacroArgs *macro_GetCurrentArgs() {
@@ -28,47 +30,41 @@ void macro_UseNewArgs(MacroArgs *args) {
 	macroArgs = args;
 }
 
-char const *macro_GetArg(uint32_t i) {
+std::shared_ptr<std::string> macro_GetArg(uint32_t i) {
 	if (!macroArgs)
 		return nullptr;
 
 	uint32_t realIndex = i + macroArgs->shift - 1;
 
-	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex].c_str();
+	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex];
 }
 
-char const *macro_GetAllArgs() {
+std::shared_ptr<std::string> macro_GetAllArgs() {
 	if (!macroArgs)
 		return nullptr;
 
 	size_t nbArgs = macroArgs->args.size();
 
 	if (macroArgs->shift >= nbArgs)
-		return "";
+		return std::make_shared<std::string>("");
 
 	size_t len = 0;
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
-		len += macroArgs->args[i].length() + 1; // 1 for comma
+		len += macroArgs->args[i]->length() + 1; // 1 for comma
 
-	char *str = new (std::nothrow) char[len + 1]; // 1 for '\0'
-	char *ptr = str;
-
-	if (!str)
-		fatalerror("Failed to allocate memory for expanding '\\#': %s\n", strerror(errno));
+	auto str = std::make_shared<std::string>();
+	str->reserve(len + 1); // 1 for comma
 
 	for (uint32_t i = macroArgs->shift; i < nbArgs; i++) {
-		std::string const &arg = macroArgs->args[i];
-		size_t n = arg.length();
+		auto const &arg = macroArgs->args[i];
 
-		memcpy(ptr, arg.c_str(), n);
-		ptr += n;
+		str->append(*arg);
 
 		// Commas go between args and after a last empty arg
-		if (i < nbArgs - 1 || n == 0)
-			*ptr++ = ','; // no space after comma
+		if (i < nbArgs - 1 || arg->empty())
+			str->push_back(','); // no space after comma
 	}
-	*ptr = '\0';
 
 	return str;
 }

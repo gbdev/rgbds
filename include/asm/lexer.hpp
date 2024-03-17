@@ -4,6 +4,7 @@
 #define RGBDS_ASM_LEXER_H
 
 #include <deque>
+#include <memory>
 #include <optional>
 #include <stdint.h>
 #include <string>
@@ -31,13 +32,10 @@ enum LexerMode {
 
 struct Expansion {
 	std::optional<std::string> name;
-	union {
-		char const *unowned;
-		char *owned; // Non-`const` only so it can be `delete []`d
-	} contents;
-	size_t size;   // Length of the contents
+	std::shared_ptr<std::string> contents;
 	size_t offset; // Cursor into the contents
-	bool owned;    // Whether or not to free contents when this expansion is freed
+
+	size_t size() const { return contents->size(); }
 };
 
 struct IfStackEntry {
@@ -138,10 +136,6 @@ struct CaptureBody {
 	uint32_t lineNo;
 	char const *body;
 	size_t size;
-};
-
-struct String {
-	char string[MAXSTRLEN + 1];
 };
 
 void lexer_CheckRecursionDepth();

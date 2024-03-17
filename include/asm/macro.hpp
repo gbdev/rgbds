@@ -3,26 +3,22 @@
 #ifndef RGBDS_MACRO_H
 #define RGBDS_MACRO_H
 
+#include <memory>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string>
 #include <vector>
 
-#include "helpers.hpp"
-
-#include "asm/warning.hpp"
-
 struct MacroArgs {
 	unsigned int shift;
-	std::vector<std::string> args;
+	std::vector<std::shared_ptr<std::string>> args;
 
-	void append(std::string s);
+	void append(std::shared_ptr<std::string> arg);
 };
 
 MacroArgs *macro_GetCurrentArgs();
 void macro_UseNewArgs(MacroArgs *args);
-char const *macro_GetArg(uint32_t i);
-char const *macro_GetAllArgs();
+std::shared_ptr<std::string> macro_GetArg(uint32_t i);
+std::shared_ptr<std::string> macro_GetAllArgs();
 
 void macro_ShiftCurrentArgs(int32_t count);
 uint32_t macro_NbArgs();

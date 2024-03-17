@@ -2,13 +2,8 @@
 
 #include "asm/main.hpp"
 
-#include <ctype.h>
-#include <errno.h>
-#include <float.h>
-#include <inttypes.h>
 #include <limits.h>
-#include <math.h>
-#include <stdarg.h>
+#include <memory>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -19,13 +14,9 @@
 #include "version.hpp"
 
 #include "asm/charmap.hpp"
-#include "asm/fixpoint.hpp"
-#include "asm/format.hpp"
 #include "asm/fstack.hpp"
-#include "asm/lexer.hpp"
 #include "asm/opt.hpp"
 #include "asm/output.hpp"
-#include "asm/rpn.hpp"
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
@@ -186,9 +177,9 @@ int main(int argc, char *argv[]) {
 			equals = strchr(musl_optarg, '=');
 			if (equals) {
 				*equals = '\0';
-				sym_AddString(musl_optarg, equals + 1);
+				sym_AddString(musl_optarg, std::make_shared<std::string>(equals + 1));
 			} else {
-				sym_AddString(musl_optarg, "1");
+				sym_AddString(musl_optarg, std::make_shared<std::string>("1"));
 			}
 			break;
 

@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <algorithm>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -95,13 +96,13 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t 
 
 struct Token {
 	int type;
-	std::variant<std::monostate, uint32_t, String, std::string> value;
+	std::variant<std::monostate, uint32_t, std::string> value;
 
 	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
 	Token(int type_) : type(type_), value(std::monostate{}) {}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
-	Token(int type_, String &value_) : type(type_), value(value_) {}
-	Token(int type_, std::string &value_) : type(type_), value(value_) {}
+	Token(int type_, std::string const &value_) : type(type_), value(value_) {}
+	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
 };
 
 struct CaseInsensitive {
@@ -490,33 +491,20 @@ void lexer_ToggleStringExpansion(bool enable) {
 
 // Functions for the actual lexer to obtain characters
 
-static void beginExpansion(char const *str, bool owned, char const *name) {
-	size_t size = strlen(str);
-
-	// Do not expand empty strings
-	if (!size)
-		return;
-
+static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::string> name) {
 	if (name)
 		lexer_CheckRecursionDepth();
 
-	lexerState->expansions.push_front({
-	    .name = name ? std::optional<std::string>(name) : std::nullopt,
-	    .contents = {.unowned = str},
-	    .size = size,
-	    .offset = 0,
-	    .owned = owned,
-	});
+	// Do not expand empty strings
+	if (str->empty())
+		return;
+
+	lexerState->expansions.push_front({.name = name, .contents = str, .offset = 0});
 }
 
 void lexer_CheckRecursionDepth() {
 	if (lexerState->expansions.size() > maxRecursionDepth + 1)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
-}
-
-static void freeExpansion(Expansion &expansion) {
-	if (expansion.owned)
-		delete[] expansion.contents.owned;
 }
 
 static bool isMacroChar(char c) {
@@ -587,34 +575,42 @@ static uint32_t readBracketedMacroArgNum() {
 	return num;
 }
 
-static char const *readMacroArg(char name) {
-	char const *str = nullptr;
-
+static std::shared_ptr<std::string> readMacroArg(char name) {
 	if (name == '@') {
-		auto maybeStr = fstk_GetUniqueIDStr();
-		str = maybeStr ? maybeStr->c_str() : nullptr;
+		auto str = fstk_GetUniqueIDStr();
+		if (!str) {
+			error("'\\@' cannot be used outside of a macro or REPT/FOR block\n");
+		}
+		return str;
 	} else if (name == '#') {
-		str = macro_GetAllArgs();
+		auto str = macro_GetAllArgs();
+		if (!str) {
+			error("'\\#' cannot be used outside of a macro");
+		}
+		return str;
 	} else if (name == '<') {
 		uint32_t num = readBracketedMacroArgNum();
-
-		if (num == 0)
+		if (num == 0) {
+			// The error was already reported by `readBracketedMacroArgNum`.
 			return nullptr;
-		str = macro_GetArg(num);
-		if (!str)
+		}
+
+		auto str = macro_GetArg(num);
+		if (!str) {
 			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
+		}
 		return str;
 	} else if (name == '0') {
 		error("Invalid macro argument '\\0'\n");
 		return nullptr;
 	} else {
 		assert(name > '0' && name <= '9');
-		str = macro_GetArg(name - '0');
+		auto str = macro_GetArg(name - '0');
+		if (!str) {
+			error("Macro argument '\\%c' not defined\n", name);
+		}
+		return str;
 	}
-
-	if (!str)
-		error("Macro argument '\\%c' not defined\n", name);
-	return str;
 }
 
 static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbChars) {
@@ -632,12 +628,12 @@ static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbC
 // We only need one character of lookahead, for macro arguments
 static int peekInternal(uint8_t distance) {
 	for (Expansion &exp : lexerState->expansions) {
-		// An expansion that has reached its end will have `exp->offset` == `exp->size`,
+		// An expansion that has reached its end will have `exp->offset` == `exp->size()`,
 		// and `peekInternal` will continue with its parent
-		assert(exp.offset <= exp.size);
-		if (distance < exp.size - exp.offset)
-			return exp.contents.unowned[exp.offset + distance];
-		distance -= exp.size - exp.offset;
+		assert(exp.offset <= exp.size());
+		if (distance < exp.size() - exp.offset)
+			return (*exp.contents)[exp.offset + distance];
+		distance -= exp.size() - exp.offset;
 	}
 
 	if (distance >= LEXER_BUF_SIZE)
@@ -697,7 +693,7 @@ static int peekInternal(uint8_t distance) {
 
 // forward declarations for peek
 static void shiftChar();
-static char const *readInterpolation(size_t depth);
+static std::shared_ptr<std::string> readInterpolation(size_t depth);
 
 static int peek() {
 	int c = peekInternal(0);
@@ -714,30 +710,32 @@ static int peek() {
 		if (isMacroChar(c)) {
 			shiftChar();
 			shiftChar();
-			char const *str = readMacroArg(c);
 
-			// If the macro arg is invalid or an empty string, it cannot be
-			// expanded, so skip it and keep peeking.
-			if (!str || !str[0])
+			std::shared_ptr<std::string> str = readMacroArg(c);
+			// If the macro arg is invalid or an empty string, it cannot be expanded,
+			// so skip it and keep peeking.
+			if (!str || str->empty()) {
 				return peek();
+			}
 
-			beginExpansion(str, c == '#', nullptr);
+			beginExpansion(str, std::nullopt);
 
 			// Assuming macro args can't be recursive (I'll be damned if a way
 			// is found...), then we mark the entire macro arg as scanned.
-			lexerState->macroArgScanDistance += strlen(str);
+			lexerState->macroArgScanDistance += str->length();
 
-			c = str[0];
+			c = str->front();
 		} else {
 			c = '\\';
 		}
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
-		char const *str = readInterpolation(0);
 
-		if (str && str[0])
-			beginExpansion(str, false, str);
+		if (auto str = readInterpolation(0); str) {
+			beginExpansion(str, *str);
+		}
+
 		return peek();
 	}
 
@@ -758,12 +756,11 @@ restart:
 		// Advance within the current expansion
 		Expansion &expansion = lexerState->expansions.front();
 
-		assert(expansion.offset <= expansion.size);
+		assert(expansion.offset <= expansion.size());
 		expansion.offset++;
-		if (expansion.offset > expansion.size) {
-			// When advancing would go past an expansion's end, free it,
-			// move up to its parent, and try again to advance
-			freeExpansion(expansion);
+		if (expansion.offset > expansion.size()) {
+			// When advancing would go past an expansion's end,
+			// move up to its parent and try again to advance
 			lexerState->expansions.pop_front();
 			goto restart;
 		}
@@ -1124,7 +1121,7 @@ static Token readIdentifier(char firstChar) {
 
 // Functions to read strings
 
-static char const *readInterpolation(size_t depth) {
+static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	if (depth > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
@@ -1142,10 +1139,9 @@ static char const *readInterpolation(size_t depth) {
 
 		if (c == '{') { // Nested interpolation
 			shiftChar();
-			char const *str = readInterpolation(depth + 1);
+			auto str = readInterpolation(depth + 1);
 
-			if (str && str[0])
-				beginExpansion(str, false, str);
+			beginExpansion(str, *str);
 			continue; // Restart, reading from the new buffer
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
@@ -1175,67 +1171,50 @@ static char const *readInterpolation(size_t depth) {
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
-		static std::string buf;
-		buf.clear();
-		fmt.appendString(buf, *sym->getEqus());
-		return buf.c_str();
+		auto buf = std::make_shared<std::string>();
+		fmt.appendString(*buf, *sym->getEqus());
+		return buf;
 	} else if (sym->isNumeric()) {
-		static std::string buf;
-		buf.clear();
-		fmt.appendNumber(buf, sym->getConstantValue());
-		return buf.c_str();
+		auto buf = std::make_shared<std::string>();
+		fmt.appendNumber(*buf, sym->getConstantValue());
+		return buf;
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");
 	}
 	return nullptr;
 }
 
-#define append_yylval_string(c) \
-	do { \
-		/* Evaluate c exactly once in case it has side effects */ \
-		if (char v = (c); i < sizeof(yylval.string)) \
-			yylval.string[i++] = v; \
-	} while (0)
-
-static size_t appendEscapedSubstring(String &yylval, char const *str, size_t i) {
-	// Copy one extra to flag overflow
-	while (*str) {
-		char c = *str++;
-
+static void appendEscapedSubstring(std::string &yylval, std::string const &str) {
+	for (char c : str) {
 		// Escape characters that need escaping
 		switch (c) {
 		case '\\':
 		case '"':
 		case '{':
-			append_yylval_string('\\');
+			yylval += '\\';
+			// fallthrough
+		default:
+			yylval += c;
 			break;
 		case '\n':
-			append_yylval_string('\\');
-			c = 'n';
+			yylval += "\\n";
 			break;
 		case '\r':
-			append_yylval_string('\\');
-			c = 'r';
+			yylval += "\\r";
 			break;
 		case '\t':
-			append_yylval_string('\\');
-			c = 't';
+			yylval += "\\t";
 			break;
 		}
-
-		append_yylval_string(c);
 	}
-
-	return i;
 }
 
-static void readString(String &yylval, bool raw) {
+static std::string readString(bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
-	size_t i = 0;
+	std::string yylval;
 	bool multiline = false;
-	char const *str;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	if (peek() == '"') {
@@ -1278,7 +1257,7 @@ static void readString(String &yylval, bool raw) {
 					break;
 				shiftChar();
 				if (peek() != '"') {
-					append_yylval_string('"');
+					yylval += '"';
 					break;
 				}
 				shiftChar();
@@ -1332,10 +1311,8 @@ static void readString(String &yylval, bool raw) {
 			case '9':
 			case '<':
 				shiftChar();
-				str = readMacroArg(c);
-				if (str) {
-					while (*str)
-						append_yylval_string(*str++);
+				if (auto str = readMacroArg(c); str) {
+					yylval.append(*str);
 				}
 				continue; // Do not copy an additional character
 
@@ -1357,10 +1334,8 @@ static void readString(String &yylval, bool raw) {
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			str = readInterpolation(0);
-			if (str) {
-				while (*str)
-					append_yylval_string(*str++);
+			if (auto interpolation = readInterpolation(0); interpolation) {
+				yylval.append(*interpolation);
 			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
@@ -1368,35 +1343,35 @@ static void readString(String &yylval, bool raw) {
 			// Regular characters will just get copied
 		}
 
-		append_yylval_string(c);
+		yylval += c;
 	}
 
 finish:
-	if (i == sizeof(yylval.string)) {
-		i--;
+	if (yylval.length() > MAXSTRLEN) {
 		warning(WARNING_LONG_STR, "String constant too long\n");
+		yylval.resize(MAXSTRLEN);
 	}
-	yylval.string[i] = '\0';
 
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+
+	return yylval;
 }
 
-static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
+static void appendStringLiteral(std::string &yylval, bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
 	bool multiline = false;
-	char const *str;
 
 	// We reach this function after reading a single quote, but we also support triple quotes
-	append_yylval_string('"');
+	yylval += '"';
 	if (peek() == '"') {
-		append_yylval_string('"');
+		yylval += '"';
 		shiftChar();
 		if (peek() == '"') {
 			// """ begins a multi-line string
-			append_yylval_string('"');
+			yylval += '"';
 			shiftChar();
 			multiline = true;
 		} else {
@@ -1431,14 +1406,14 @@ static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
 				// Only """ ends a multi-line string
 				if (peek() != '"')
 					break;
-				append_yylval_string('"');
+				yylval += '"';
 				shiftChar();
 				if (peek() != '"')
 					break;
-				append_yylval_string('"');
+				yylval += '"';
 				shiftChar();
 			}
-			append_yylval_string('"');
+			yylval += '"';
 			goto finish;
 
 		case '\\': // Character escape or macro arg
@@ -1455,7 +1430,7 @@ static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
 			case 'r':
 			case 't':
 				// Return that character unchanged
-				append_yylval_string('\\');
+				yylval += '\\';
 				shiftChar();
 				break;
 
@@ -1479,12 +1454,14 @@ static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
 			case '7':
 			case '8':
 			case '9':
-			case '<':
+			case '<': {
 				shiftChar();
-				str = readMacroArg(c);
-				if (str && str[0])
-					i = appendEscapedSubstring(yylval, str, i);
+				auto str = readMacroArg(c);
+				if (str) {
+					appendEscapedSubstring(yylval, *str);
+				}
 				continue; // Do not copy an additional character
+			}
 
 			case EOF: // Can't really print that one
 				error("Illegal character escape at end of input\n");
@@ -1504,29 +1481,27 @@ static size_t appendStringLiteral(String &yylval, size_t i, bool raw) {
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			str = readInterpolation(0);
-			if (str && str[0])
-				i = appendEscapedSubstring(yylval, str, i);
+			auto str = readInterpolation(0);
+			if (str) {
+				appendEscapedSubstring(yylval, *str);
+			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
 
 			// Regular characters will just get copied
 		}
 
-		append_yylval_string(c);
+		yylval += c;
 	}
 
 finish:
-	if (i == sizeof(yylval.string)) {
-		i--;
+	if (yylval.length() > MAXSTRLEN) {
 		warning(WARNING_LONG_STR, "String constant too long\n");
+		yylval.resize(MAXSTRLEN);
 	}
-	yylval.string[i] = '\0';
 
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
-
-	return i;
 }
 
 // Lexer core
@@ -1749,11 +1724,8 @@ static Token yylex_NORMAL() {
 
 			// Handle strings
 
-		case '"': {
-			String yylval;
-			readString(yylval, false);
-			return Token(T_(STRING), yylval);
-		}
+		case '"':
+			return Token(T_(STRING), readString(false));
 
 			// Handle newlines and EOF
 
@@ -1779,9 +1751,7 @@ static Token yylex_NORMAL() {
 		case '#':
 			if (peek() == '"') {
 				shiftChar();
-				String yylval;
-				readString(yylval, true);
-				return Token(T_(STRING), yylval);
+				return Token(T_(STRING), readString(true));
 			}
 			// fallthrough
 
@@ -1809,11 +1779,10 @@ static Token yylex_NORMAL() {
 					Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 
 					if (sym && sym->type == SYM_EQUS) {
-						char const *str = sym->getEqus()->c_str();
+						std::shared_ptr<std::string> str = sym->getEqus();
 
 						assert(str);
-						if (str[0])
-							beginExpansion(str, false, sym->name.c_str());
+						beginExpansion(str, sym->name);
 						continue; // Restart, reading from the new buffer
 					}
 				}
@@ -1836,9 +1805,8 @@ static Token yylex_NORMAL() {
 
 static Token yylex_RAW() {
 	// This is essentially a modified `appendStringLiteral`
-	String yylval;
+	std::string yylval;
 	size_t parenDepth = 0;
-	size_t i = 0;
 	int c;
 
 	// Trim left whitespace (stops at a block comment)
@@ -1865,15 +1833,15 @@ static Token yylex_RAW() {
 		switch (c) {
 		case '"': // String literals inside macro args
 			shiftChar();
-			i = appendStringLiteral(yylval, i, false);
+			appendStringLiteral(yylval, false);
 			break;
 
 		case '#': // Raw string literals inside macro args
-			append_yylval_string(c);
+			yylval += c;
 			shiftChar();
 			if (peek() == '"') {
 				shiftChar();
-				i = appendStringLiteral(yylval, i, true);
+				appendStringLiteral(yylval, true);
 			}
 			break;
 
@@ -1893,7 +1861,7 @@ static Token yylex_RAW() {
 				discardBlockComment();
 				continue;
 			}
-			append_yylval_string(c); // Append the slash
+			yylval += c; // Append the slash
 			break;
 
 		case ',': // End of macro arg
@@ -1958,21 +1926,20 @@ backslash:
 
 		default: // Regular characters will just get copied
 append:
-			append_yylval_string(c);
+			yylval += c;
 			shiftChar();
 			break;
 		}
 	}
 
 finish:
-	if (i == sizeof(yylval.string)) {
-		i--;
+	if (yylval.length() > MAXSTRLEN) {
 		warning(WARNING_LONG_STR, "Macro argument too long\n");
+		yylval.resize(MAXSTRLEN);
 	}
 	// Trim right whitespace
-	while (i && isWhitespace(yylval.string[i - 1]))
-		i--;
-	yylval.string[i] = '\0';
+	auto rightPos = std::find_if_not(yylval.rbegin(), yylval.rend(), isWhitespace);
+	yylval.resize(rightPos.base() - yylval.begin());
 
 	// Returning COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (STRING
@@ -1989,7 +1956,7 @@ finish:
 	// an empty raw string before it). This will not be treated as a
 	// macro argument. To pass an empty last argument, use a second
 	// trailing comma.
-	if (i > 0)
+	if (!yylval.empty())
 		return Token(T_(STRING), yylval);
 	lexer_SetMode(LEXER_NORMAL);
 
@@ -2001,8 +1968,6 @@ finish:
 
 	return Token(T_(YYEOF));
 }
-
-#undef append_yylval_string
 
 // This function uses the fact that `if`, etc. constructs are only valid when
 // there's nothing before them on their lines. This enables filtering
@@ -2213,8 +2178,6 @@ yy::parser::symbol_type yylex() {
 
 	if (auto *numValue = std::get_if<uint32_t>(&token.value); numValue) {
 		return yy::parser::symbol_type(token.type, *numValue);
-	} else if (auto *stringValue = std::get_if<String>(&token.value); stringValue) {
-		return yy::parser::symbol_type(token.type, *stringValue);
 	} else if (auto *strValue = std::get_if<std::string>(&token.value); strValue) {
 		return yy::parser::symbol_type(token.type, *strValue);
 	} else {
