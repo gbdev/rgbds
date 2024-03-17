@@ -45,12 +45,14 @@
 	};
 }
 %code {
+	#include <algorithm>
 	#include <ctype.h>
 	#include <errno.h>
 	#include <new>
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
+	#include <string_view>
 
 	#include "asm/charmap.hpp"
 	#include "asm/fixpoint.hpp"
@@ -70,26 +72,21 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
-	static void upperstring(char *dest, char const *src);
-	static void lowerstring(char *dest, char const *src);
 	static uint32_t str2int2(std::vector<uint8_t> const &s);
-	static char const *strrstr(char const *s1, char const *s2);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
-	static size_t strlenUTF8(char const *s);
-	static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len);
-	static size_t charlenUTF8(char const *str);
-	static void charsubUTF8(char *dest, char const *src, uint32_t pos);
+	static size_t strlenUTF8(std::string const &str);
+	static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len);
+	static size_t charlenUTF8(std::string const &str);
+	static std::string charsubUTF8(std::string const &str, uint32_t pos);
 	static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName);
-	static void strrpl(
-	    char *dest, size_t destLen, char const *src, char const *old, char const *rep
+	static std::string strrpl(
+	    std::string_view str, std::string const &old, std::string const &rep
 	);
-	static void strfmt(
-	    char *dest,
-	    size_t destLen,
-	    char const *spec,
-	    std::vector<std::variant<uint32_t, std::string>> &args
+	static std::string strfmt(
+	    std::string const &spec,
+	    std::vector<std::variant<uint32_t, std::string>> const &args
 	);
-	static void compoundAssignment(char const *symName, RPNCommand op, int32_t constValue);
+	static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
 	static void failAssertMsg(AssertionType type, char const *msg);
 
@@ -653,7 +650,7 @@ assignment:
 			$1.c_str(),
 			compoundEqOperator
 		);
-		compoundAssignment($1.c_str(), $2, $3);
+		compoundAssignment($1, $2, $3);
 	}
 ;
 
@@ -1043,10 +1040,10 @@ def_set:
 		sym_AddVar($1.c_str(), $3);
 	}
 	| def_id compoundeq const {
-		compoundAssignment($1.c_str(), $2, $3);
+		compoundAssignment($1, $2, $3);
 	}
 	| redef_id compoundeq const {
-		compoundAssignment($1.c_str(), $2, $3);
+		compoundAssignment($1, $2, $3);
 	}
 ;
 
@@ -1095,11 +1092,11 @@ purge:
 
 purge_args:
 	scoped_id {
-		$$.push_back($1.c_str());
+		$$.push_back($1);
 	}
 	| purge_args COMMA scoped_id {
 		$$ = std::move($1);
-		$$.push_back($3.c_str());
+		$$.push_back($3);
 	}
 ;
 
@@ -1479,20 +1476,20 @@ relocexpr_no_str:
 		rpn_Number($$, $3.compare($5));
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
-		char const *p = strstr($3.c_str(), $5.c_str());
+		auto pos = $3.find($5);
 
-		rpn_Number($$, p ? p - $3.c_str() + 1 : 0);
+		rpn_Number($$, pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRRIN LPAREN string COMMA string RPAREN {
-		char const *p = strrstr($3.c_str(), $5.c_str());
+		auto pos = $3.rfind($5);
 
-		rpn_Number($$, p ? p - $3.c_str() + 1 : 0);
+		rpn_Number($$, pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRLEN LPAREN string RPAREN {
-		rpn_Number($$, strlenUTF8($3.c_str()));
+		rpn_Number($$, strlenUTF8($3));
 	}
 	| OP_CHARLEN LPAREN string RPAREN {
-		rpn_Number($$, charlenUTF8($3.c_str()));
+		rpn_Number($$, charlenUTF8($3));
 	}
 	| OP_INCHARMAP LPAREN string RPAREN {
 		rpn_Number($$, charmap_HasChar($3.c_str()));
@@ -1546,28 +1543,22 @@ string:
 		$$ = $1.string;
 	}
 	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
-		size_t len = strlenUTF8($3.c_str());
+		size_t len = strlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		String tmp;
-		strsubUTF8(tmp.string, sizeof(tmp.string), $3.c_str(), pos, $7);
-		$$ = tmp.string;
+		$$ = strsubUTF8($3, pos, $7);
 	}
 	| OP_STRSUB LPAREN string COMMA const RPAREN {
-		size_t len = strlenUTF8($3.c_str());
+		size_t len = strlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
-		String tmp;
-		strsubUTF8(tmp.string, sizeof(tmp.string), $3.c_str(), pos, pos > len ? 0 : len + 1 - pos);
-		$$ = tmp.string;
+		$$ = strsubUTF8($3, pos, pos > len ? 0 : len + 1 - pos);
 	}
 	| OP_CHARSUB LPAREN string COMMA const RPAREN {
-		size_t len = charlenUTF8($3.c_str());
+		size_t len = charlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
 
-		String tmp;
-		charsubUTF8(tmp.string, $3.c_str(), pos);
-		$$ = tmp.string;
+		$$ = charsubUTF8($3, pos);
 	}
 	| OP_STRCAT LPAREN RPAREN {
 		$$.clear();
@@ -1576,25 +1567,18 @@ string:
 		$$ = std::move($3);
 	}
 	| OP_STRUPR LPAREN string RPAREN {
-		String tmp;
-		upperstring(tmp.string, $3.c_str());
-		$$ = tmp.string;
+		$$ = std::move($3);
+		std::transform(RANGE($$), $$.begin(), [](char c) { return toupper(c); });
 	}
 	| OP_STRLWR LPAREN string RPAREN {
-		String tmp;
-		lowerstring(tmp.string, $3.c_str());
-		$$ = tmp.string;
+		$$ = std::move($3);
+		std::transform(RANGE($$), $$.begin(), [](char c) { return tolower(c); });
 	}
 	| OP_STRRPL LPAREN string COMMA string COMMA string RPAREN {
-		String tmp;
-		strrpl(tmp.string, sizeof(tmp.string), $3.c_str(), $5.c_str(), $7.c_str());
-		$$ = tmp.string;
+		$$ = strrpl($3, $5, $7);
 	}
 	| OP_STRFMT LPAREN strfmt_args RPAREN {
-		StrFmtArgList args = std::move($3);
-		String tmp;
-		strfmt(tmp.string, sizeof(tmp.string), args.format.c_str(), args.args);
-		$$ = tmp.string;
+		$$ = strfmt($3.format, $3.args);
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3.c_str());
@@ -2471,18 +2455,6 @@ void yy::parser::error(std::string const &str) {
 	::error("%s\n", str.c_str());
 }
 
-static void upperstring(char *dest, char const *src) {
-	while (*src)
-		*dest++ = toupper(*src++);
-	*dest = '\0';
-}
-
-static void lowerstring(char *dest, char const *src) {
-	while (*src)
-		*dest++ = tolower(*src++);
-	*dest = '\0';
-}
-
 static uint32_t str2int2(std::vector<uint8_t> const &s) {
 	uint32_t length = s.size();
 
@@ -2508,30 +2480,17 @@ static uint32_t str2int2(std::vector<uint8_t> const &s) {
 	return r;
 }
 
-static char const *strrstr(char const *s1, char const *s2) {
-	size_t len1 = strlen(s1);
-	size_t len2 = strlen(s2);
-
-	if (len2 > len1)
-		return nullptr;
-
-	for (char const *p = s1 + len1 - len2; p >= s1; p--)
-		if (!strncmp(p, s2, len2))
-			return p;
-
-	return nullptr;
-}
-
 static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
 	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
 }
 
-static size_t strlenUTF8(char const *s) {
+static size_t strlenUTF8(std::string const &str) {
+	char const *ptr = str.c_str();
 	size_t len = 0;
 	uint32_t state = 0;
 
-	for (uint32_t codep = 0; *s; s++) {
-		uint8_t byte = *s;
+	for (uint32_t codep = 0; *ptr; ptr++) {
+		uint8_t byte = *ptr;
 
 		switch (decode(&state, &codep, byte)) {
 		case 1:
@@ -2551,49 +2510,52 @@ static size_t strlenUTF8(char const *s) {
 	return len;
 }
 
-static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos, uint32_t len) {
-	size_t srcIndex = 0;
-	size_t destIndex = 0;
+static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len) {
+	char const *ptr = str.c_str();
+	size_t index = 0;
 	uint32_t state = 0;
 	uint32_t codep = 0;
-	uint32_t curLen = 0;
-	uint32_t curPos = 1;
+	uint32_t curPos = 1; // RGBASM strings are 1-indexed!
 
 	// Advance to starting position in source string.
-	while (src[srcIndex] && curPos < pos) {
-		switch (decode(&state, &codep, src[srcIndex])) {
+	while (ptr[index] && curPos < pos) {
+		switch (decode(&state, &codep, ptr[index])) {
 		case 1:
-			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			errorInvalidUTF8Byte(ptr[index], "STRSUB");
 			state = 0;
 			// fallthrough
 		case 0:
 			curPos++;
 			break;
 		}
-		srcIndex++;
+		index++;
 	}
 
 	// A position 1 past the end of the string is allowed, but will trigger the
 	// "Length too big" warning below if the length is nonzero.
-	if (!src[srcIndex] && pos > curPos)
+	if (!ptr[index] && pos > curPos)
 		warning(
 		    WARNING_BUILTIN_ARG, "STRSUB: Position %" PRIu32 " is past the end of the string\n", pos
 		);
 
-	// Copy from source to destination.
-	while (src[srcIndex] && destIndex < destLen - 1 && curLen < len) {
-		switch (decode(&state, &codep, src[srcIndex])) {
+	size_t startIndex = index;
+	uint32_t curLen = 0;
+
+	// Compute the result length in bytes.
+	while (ptr[index] && index - startIndex < MAXSTRLEN && curLen < len) {
+		switch (decode(&state, &codep, ptr[index])) {
 		case 1:
-			errorInvalidUTF8Byte(src[srcIndex], "STRSUB");
+			errorInvalidUTF8Byte(ptr[index], "STRSUB");
 			state = 0;
 			// fallthrough
 		case 0:
 			curLen++;
 			break;
 		}
-		dest[destIndex++] = src[srcIndex++];
+		index++;
 	}
 
+	// Check if `index - startIndex == MAXSTRLEN` before `curLen == len`.
 	if (curLen < len)
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
 
@@ -2601,38 +2563,37 @@ static void strsubUTF8(char *dest, size_t destLen, char const *src, uint32_t pos
 	if (state != 0)
 		error("STRSUB: Incomplete UTF-8 character\n");
 
-	dest[destIndex] = '\0';
+	return std::string(ptr + startIndex, ptr + index);
 }
 
-static size_t charlenUTF8(char const *str) {
+static size_t charlenUTF8(std::string const &str) {
+	char const *ptr = str.c_str();
 	size_t len;
 
-	for (len = 0; charmap_ConvertNext(str, nullptr); len++)
+	for (len = 0; charmap_ConvertNext(ptr, nullptr); len++)
 		;
 
 	return len;
 }
 
-static void charsubUTF8(char *dest, char const *src, uint32_t pos) {
+static std::string charsubUTF8(std::string const &str, uint32_t pos) {
+	char const *ptr = str.c_str();
 	size_t charLen = 1;
 
 	// Advance to starting position in source string.
 	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
-		charLen = charmap_ConvertNext(src, nullptr);
+		charLen = charmap_ConvertNext(ptr, nullptr);
 
-	char const *start = src;
+	char const *start = ptr;
 
-	if (!charmap_ConvertNext(src, nullptr))
+	if (!charmap_ConvertNext(ptr, nullptr))
 		warning(
 		    WARNING_BUILTIN_ARG,
 		    "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
 		    pos
 		);
 
-	// Copy from source to destination.
-	memcpy(dest, start, src - start);
-
-	dest[src - start] = '\0';
+	return std::string(start, ptr - start);
 }
 
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {
@@ -2647,73 +2608,55 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 	return (uint32_t)pos;
 }
 
-static void strrpl(char *dest, size_t destLen, char const *src, char const *old, char const *rep) {
-	size_t oldLen = strlen(old);
-	size_t repLen = strlen(rep);
-	size_t i = 0;
-
-	if (!oldLen) {
+static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep) {
+	if (old.empty()) {
 		warning(WARNING_EMPTY_STRRPL, "STRRPL: Cannot replace an empty string\n");
-		strcpy(dest, src);
-		return;
+		return std::string(str);
 	}
 
-	for (char const *next = strstr(src, old); next && *next; next = strstr(src, old)) {
-		// Copy anything before the substring to replace
-		unsigned int lenBefore = next - src;
+	std::string rpl;
 
-		memcpy(dest + i, src, lenBefore < destLen - i ? lenBefore : destLen - i);
-		i += next - src;
-		if (i >= destLen)
+	while (!str.empty()) {
+		auto pos = str.find(old);
+		if (pos == str.npos) {
+			rpl.append(str);
 			break;
-
-		// Copy the replacement substring
-		memcpy(dest + i, rep, repLen < destLen - i ? repLen : destLen - i);
-		i += repLen;
-		if (i >= destLen)
-			break;
-
-		src = next + oldLen;
+		}
+		rpl.append(str, 0, pos);
+		rpl.append(rep);
+		str.remove_prefix(pos + old.size());
 	}
 
-	if (i < destLen) {
-		size_t srcLen = strlen(src);
-
-		// Copy anything after the last replaced substring
-		memcpy(dest + i, src, srcLen < destLen - i ? srcLen : destLen - i);
-		i += srcLen;
-	}
-
-	if (i >= destLen) {
+	if (rpl.length() > MAXSTRLEN) {
 		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
-		i = destLen - 1;
+		rpl.resize(MAXSTRLEN);
 	}
-	dest[i] = '\0';
+
+	return rpl;
 }
 
-static void strfmt(
-    char *dest,
-    size_t destLen,
-    char const *spec,
-    std::vector<std::variant<uint32_t, std::string>> &args
+static std::string strfmt(
+    std::string const &spec,
+    std::vector<std::variant<uint32_t, std::string>> const &args
 ) {
-	size_t a = 0;
-	size_t i = 0;
+	std::string str;
+	size_t argIndex = 0;
+	char const *ptr = spec.c_str();
 
-	while (i < destLen) {
-		int c = *spec++;
+	while (str.length() <= MAXSTRLEN) {
+		int c = *ptr++;
 
 		if (c == '\0') {
 			break;
 		} else if (c != '%') {
-			dest[i++] = c;
+			str += c;
 			continue;
 		}
 
-		c = *spec++;
+		c = *ptr++;
 
 		if (c == '%') {
-			dest[i++] = c;
+			str += c;
 			continue;
 		}
 
@@ -2723,62 +2666,61 @@ static void strfmt(
 			fmt.useCharacter(c);
 			if (fmt.isFinished())
 				break;
-			c = *spec++;
+			c = *ptr++;
 		}
 
 		if (fmt.isEmpty()) {
 			error("STRFMT: Illegal '%%' at end of format string\n");
-			dest[i++] = '%';
+			str += '%';
 			break;
-		} else if (!fmt.isValid()) {
-			error("STRFMT: Invalid format spec for argument %zu\n", a + 1);
-			dest[i++] = '%';
-			a++;
-			continue;
-		} else if (a >= args.size()) {
-			// Will warn after formatting is done.
-			dest[i++] = '%';
-			a++;
-			continue;
 		}
 
-		std::variant<uint32_t, std::string> &arg = args[a++];
-		static char buf[MAXSTRLEN + 1];
+		if (!fmt.isValid()) {
+			error("STRFMT: Invalid format spec for argument %zu\n", argIndex + 1);
+			str += '%';
+		} else if (argIndex >= args.size()) {
+			// Will warn after formatting is done.
+			str += '%';
+		} else {
+			static char buf[MAXSTRLEN + 1];
+			std::visit(
+			    Visitor{
+			        [&](uint32_t n) { fmt.printNumber(buf, sizeof(buf), n); },
+			        [&](std::string const &s) { fmt.printString(buf, sizeof(buf), s.c_str()); },
+			    },
+			    args[argIndex]
+			);
+			str.append(buf);
+		}
 
-		std::visit(
-		    Visitor{
-		        [&](uint32_t num) { fmt.printNumber(buf, sizeof(buf), num); },
-		        [&](std::string &str) { fmt.printString(buf, sizeof(buf), str.c_str()); },
-		    },
-		    arg
-		);
-
-		i += snprintf(&dest[i], destLen - i, "%s", buf);
+		argIndex++;
 	}
 
-	if (a < args.size())
-		error("STRFMT: %zu unformatted argument(s)\n", args.size() - a);
-	else if (a > args.size())
+	if (argIndex < args.size())
+		error("STRFMT: %zu unformatted argument(s)\n", args.size() - argIndex);
+	else if (argIndex > args.size())
 		error(
-		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n", args.size(), a
+		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
+		    args.size(),
+		    argIndex
 		);
 
-	if (i > destLen - 1) {
+	if (str.length() > MAXSTRLEN) {
 		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
-		i = destLen - 1;
+		str.resize(MAXSTRLEN);
 	}
-	dest[i] = '\0';
+	return str;
 }
 
-static void compoundAssignment(char const *symName, RPNCommand op, int32_t constValue) {
+static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue) {
 	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 
-	rpn_Symbol(oldExpr, symName);
+	rpn_Symbol(oldExpr, symName.c_str());
 	rpn_Number(constExpr, constValue);
 	rpn_BinaryOp(op, newExpr, std::move(oldExpr), constExpr);
 	newValue = newExpr.getConstVal();
-	sym_AddVar(symName, newValue);
+	sym_AddVar(symName.c_str(), newValue);
 }
 
 static void failAssert(AssertionType type) {
