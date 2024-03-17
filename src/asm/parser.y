@@ -6,16 +6,13 @@
 
 %code requires {
 	#include <stdint.h>
-	#include <inttypes.h>
 	#include <string>
 	#include <variant>
 	#include <vector>
 
-	#include "asm/format.hpp"
-	#include "asm/lexer.hpp"
 	#include "asm/macro.hpp"
 	#include "asm/rpn.hpp"
-	#include "asm/symbol.hpp"
+	#include "asm/section.hpp"
 
 	#include "linkdefs.hpp"
 
@@ -48,6 +45,7 @@
 	#include <algorithm>
 	#include <ctype.h>
 	#include <errno.h>
+	#include <inttypes.h>
 	#include <new>
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -56,12 +54,14 @@
 
 	#include "asm/charmap.hpp"
 	#include "asm/fixpoint.hpp"
+	#include "asm/format.hpp"
 	#include "asm/fstack.hpp"
+	#include "asm/lexer.hpp"
 	#include "asm/main.hpp"
 	#include "asm/opt.hpp"
 	#include "asm/output.hpp"
 	#include "asm/section.hpp"
-	#include "util.hpp"
+	#include "asm/symbol.hpp"
 	#include "asm/warning.hpp"
 
 	#include "extern/utf8decoder.hpp"
@@ -129,7 +129,7 @@
 %type <SectionSpec> sect_attrs
 
 %token <int32_t> NUMBER "number"
-%token <String> STRING "string"
+%token <std::string> STRING "string"
 
 %token PERIOD "."
 %token COMMA ","
@@ -524,7 +524,7 @@ macro_args:
 	}
 	| macro_args STRING {
 		$$ = $1;
-		$$->append($2.string);
+		$$->append(std::make_shared<std::string>($2));
 	}
 ;
 
@@ -663,7 +663,7 @@ equs:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddString($1, $3.c_str());
+		sym_AddString($1, std::make_shared<std::string>($3));
 	}
 ;
 
@@ -757,7 +757,7 @@ opt_list:
 
 opt_list_entry:
 	STRING {
-		opt_Parse($1.string);
+		opt_Parse($1.c_str());
 	}
 ;
 
@@ -1077,13 +1077,13 @@ def_rl:
 
 def_equs:
 	def_id POP_EQUS string {
-		sym_AddString($1, $3.c_str());
+		sym_AddString($1, std::make_shared<std::string>($3));
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		sym_RedefString($1, $3.c_str());
+		sym_RedefString($1, std::make_shared<std::string>($3));
 	}
 ;
 
@@ -1553,7 +1553,7 @@ opt_q_arg:
 
 string:
 	STRING {
-		$$ = $1.string;
+		$$ = std::move($1);
 	}
 	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3);
@@ -2655,19 +2655,16 @@ static std::string strfmt(
 ) {
 	std::string str;
 	size_t argIndex = 0;
-	char const *ptr = spec.c_str();
 
-	while (str.length() <= MAXSTRLEN) {
-		int c = *ptr++;
+	for (size_t i = 0; spec[i] != '\0' && str.length() <= MAXSTRLEN; ++i) {
+		int c = spec[i];
 
-		if (c == '\0') {
-			break;
-		} else if (c != '%') {
+		if (c != '%') {
 			str += c;
 			continue;
 		}
 
-		c = *ptr++;
+		c = spec[++i];
 
 		if (c == '%') {
 			str += c;
@@ -2680,7 +2677,7 @@ static std::string strfmt(
 			fmt.useCharacter(c);
 			if (fmt.isFinished())
 				break;
-			c = *ptr++;
+			c = spec[++i];
 		}
 
 		if (fmt.isEmpty()) {

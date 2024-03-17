@@ -79,9 +79,9 @@ std::string_view *Symbol::getMacro() const {
 	return std::get<std::string_view *>(data);
 }
 
-std::string *Symbol::getEqus() const {
-	assert(std::holds_alternative<std::string *>(data));
-	return std::get<std::string *>(data);
+std::shared_ptr<std::string> Symbol::getEqus() const {
+	assert(std::holds_alternative<std::shared_ptr<std::string>>(data));
+	return std::get<std::shared_ptr<std::string>>(data);
 }
 
 static void dumpFilename(Symbol const &sym) {
@@ -119,14 +119,6 @@ static Symbol &createSymbol(std::string const &symName) {
 	sym.ID = -1;
 
 	return sym;
-}
-
-static void assignStringSymbol(Symbol &sym, char const *value) {
-	std::string *equs = new (std::nothrow) std::string(value);
-	if (!equs)
-		fatalerror("No memory for string equate: %s\n", strerror(errno));
-	sym.type = SYM_EQUS;
-	sym.data = equs;
 }
 
 Symbol *sym_FindExactSymbol(std::string const &symName) {
@@ -310,21 +302,22 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
  * of the string are enough: sym_AddString("M_PI"s, "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-Symbol *sym_AddString(std::string const &symName, char const *value) {
+Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
 		return nullptr;
 
-	assignStringSymbol(*sym, value);
+	sym->type = SYM_EQUS;
+	sym->data = str;
 	return sym;
 }
 
-Symbol *sym_RedefString(std::string const &symName, char const *value) {
+Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym)
-		return sym_AddString(symName, value);
+		return sym_AddString(symName, str);
 
 	if (sym->type != SYM_EQUS) {
 		if (sym->isDefined())
@@ -339,9 +332,7 @@ Symbol *sym_RedefString(std::string const &symName, char const *value) {
 	}
 
 	updateSymbolFilename(*sym);
-	// FIXME: this leaks the previous `sym->getEqus()`, but this can't delete it because the
-	// expansion may be redefining itself.
-	assignStringSymbol(*sym, value);
+	sym->data = str;
 
 	return sym;
 }
@@ -564,7 +555,8 @@ void sym_Init(time_t now) {
 	_RSSymbol = sym_AddVar("_RS"s, 0);
 	_RSSymbol->isBuiltin = true;
 
-	sym_AddString("__RGBDS_VERSION__"s, get_package_version_string())->isBuiltin = true;
+	sym_AddString("__RGBDS_VERSION__"s, std::make_shared<std::string>(get_package_version_string()))
+	    ->isBuiltin = true;
 	sym_AddEqu("__RGBDS_MAJOR__"s, PACKAGE_VERSION_MAJOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_MINOR__"s, PACKAGE_VERSION_MINOR)->isBuiltin = true;
 	sym_AddEqu("__RGBDS_PATCH__"s, PACKAGE_VERSION_PATCH)->isBuiltin = true;
@@ -598,10 +590,16 @@ void sym_Init(time_t now) {
 	    time_utc
 	);
 
-	sym_AddString("__TIME__"s, savedTIME)->isBuiltin = true;
-	sym_AddString("__DATE__"s, savedDATE)->isBuiltin = true;
-	sym_AddString("__ISO_8601_LOCAL__"s, savedTIMESTAMP_ISO8601_LOCAL)->isBuiltin = true;
-	sym_AddString("__ISO_8601_UTC__"s, savedTIMESTAMP_ISO8601_UTC)->isBuiltin = true;
+	sym_AddString("__TIME__"s, std::make_shared<std::string>(savedTIME))->isBuiltin = true;
+	sym_AddString("__DATE__"s, std::make_shared<std::string>(savedDATE))->isBuiltin = true;
+	sym_AddString(
+	    "__ISO_8601_LOCAL__"s,
+	    std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
+	)->isBuiltin = true;
+	sym_AddString(
+	    "__ISO_8601_UTC__"s,
+	    std::make_shared<std::string>(savedTIMESTAMP_ISO8601_UTC)
+	)->isBuiltin = true;
 
 	sym_AddEqu("__UTC_YEAR__"s, time_utc->tm_year + 1900)->isBuiltin = true;
 	sym_AddEqu("__UTC_MONTH__"s, time_utc->tm_mon + 1)->isBuiltin = true;

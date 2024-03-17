@@ -36,10 +36,10 @@ struct Symbol {
 	uint32_t fileLine;                  // Line where the symbol was defined
 
 	std::variant<
-	    int32_t,            // If isNumeric()
-	    int32_t (*)(),      // If isNumeric() and has a callback
-	    std::string_view *, // For SYM_MACRO
-	    std::string *       // For SYM_EQUS
+	    int32_t,                     // If isNumeric()
+	    int32_t (*)(),               // If isNumeric() and has a callback
+	    std::string_view *,          // For SYM_MACRO
+	    std::shared_ptr<std::string> // For SYM_EQUS
 	    >
 	    data;
 
@@ -62,7 +62,7 @@ struct Symbol {
 	int32_t getValue() const;
 	int32_t getOutputValue() const;
 	std::string_view *getMacro() const;
-	std::string *getEqus() const;
+	std::shared_ptr<std::string> getEqus() const;
 	uint32_t getConstantValue() const;
 };
 
@@ -90,8 +90,8 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName);
 Symbol const *sym_GetPC();
 Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, char const *body, size_t size);
 Symbol *sym_Ref(std::string const &symName);
-Symbol *sym_AddString(std::string const &symName, char const *value);
-Symbol *sym_RedefString(std::string const &symName, char const *value);
+Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> value);
+Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> value);
 void sym_Purge(std::string const &symName);
 void sym_Init(time_t now);
 

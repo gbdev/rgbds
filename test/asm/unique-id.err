@@ -23,7 +23,7 @@ warning: unique-id.asm(14) -> unique-id.asm::m(8): [-Wuser]
     _u4!
 while expanding symbol "warn_unique"
 error: unique-id.asm(15):
-    Macro argument '\@' not defined
+    '\@' cannot be used outside of a macro or REPT/FOR block
 while expanding symbol "warn_unique"
 warning: unique-id.asm(15): [-Wuser]
     !
