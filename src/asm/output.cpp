@@ -29,7 +29,7 @@ struct Assertion {
 	std::string message;
 };
 
-char const *objectName;
+std::string objectName;
 
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
@@ -39,20 +39,20 @@ static std::deque<Assertion> assertions;
 static std::deque<FileStackNode *> fileStackNodes;
 
 // Write a long to a file (little-endian)
-static void putlong(uint32_t n, FILE *f) {
+static void putlong(uint32_t n, FILE *file) {
 	uint8_t bytes[] = {
 	    (uint8_t)n,
 	    (uint8_t)(n >> 8),
 	    (uint8_t)(n >> 16),
 	    (uint8_t)(n >> 24),
 	};
-	fwrite(bytes, 1, sizeof(bytes), f);
+	fwrite(bytes, 1, sizeof(bytes), file);
 }
 
 // Write a NUL-terminated string to a file
-static void putstring(std::string const &s, FILE *f) {
-	fputs(s.c_str(), f);
-	putc('\0', f);
+static void putstring(std::string const &s, FILE *file) {
+	fputs(s.c_str(), file);
+	putc('\0', file);
 }
 
 void out_RegisterNode(FileStackNode *node) {
@@ -90,56 +90,56 @@ static uint32_t getSectIDIfAny(Section *sect) {
 }
 
 // Write a patch to a file
-static void writepatch(Patch const &patch, FILE *f) {
+static void writepatch(Patch const &patch, FILE *file) {
 	assert(patch.src->ID != (uint32_t)-1);
-	putlong(patch.src->ID, f);
-	putlong(patch.lineNo, f);
-	putlong(patch.offset, f);
-	putlong(getSectIDIfAny(patch.pcSection), f);
-	putlong(patch.pcOffset, f);
-	putc(patch.type, f);
-	putlong(patch.rpn.size(), f);
-	fwrite(patch.rpn.data(), 1, patch.rpn.size(), f);
+	putlong(patch.src->ID, file);
+	putlong(patch.lineNo, file);
+	putlong(patch.offset, file);
+	putlong(getSectIDIfAny(patch.pcSection), file);
+	putlong(patch.pcOffset, file);
+	putc(patch.type, file);
+	putlong(patch.rpn.size(), file);
+	fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
 }
 
 // Write a section to a file
-static void writesection(Section const &sect, FILE *f) {
-	putstring(sect.name, f);
+static void writesection(Section const &sect, FILE *file) {
+	putstring(sect.name, file);
 
-	putlong(sect.size, f);
+	putlong(sect.size, file);
 
 	bool isUnion = sect.modifier == SECTION_UNION;
 	bool isFragment = sect.modifier == SECTION_FRAGMENT;
 
-	putc(sect.type | isUnion << 7 | isFragment << 6, f);
+	putc(sect.type | isUnion << 7 | isFragment << 6, file);
 
-	putlong(sect.org, f);
-	putlong(sect.bank, f);
-	putc(sect.align, f);
-	putlong(sect.alignOfs, f);
+	putlong(sect.org, file);
+	putlong(sect.bank, file);
+	putc(sect.align, file);
+	putlong(sect.alignOfs, file);
 
 	if (sect_HasData(sect.type)) {
-		fwrite(sect.data.data(), 1, sect.size, f);
-		putlong(sect.patches.size(), f);
+		fwrite(sect.data.data(), 1, sect.size, file);
+		putlong(sect.patches.size(), file);
 
 		for (Patch const &patch : sect.patches)
-			writepatch(patch, f);
+			writepatch(patch, file);
 	}
 }
 
 // Write a symbol to a file
-static void writesymbol(Symbol const &sym, FILE *f) {
-	putstring(sym.name, f);
+static void writesymbol(Symbol const &sym, FILE *file) {
+	putstring(sym.name, file);
 	if (!sym.isDefined()) {
-		putc(SYMTYPE_IMPORT, f);
+		putc(SYMTYPE_IMPORT, file);
 	} else {
 		assert(sym.src->ID != (uint32_t)-1);
 
-		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, f);
-		putlong(sym.src->ID, f);
-		putlong(sym.fileLine, f);
-		putlong(getSectIDIfAny(sym.getSection()), f);
-		putlong(sym.getOutputValue(), f);
+		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, file);
+		putlong(sym.src->ID, file);
+		putlong(sym.fileLine, file);
+		putlong(getSectIDIfAny(sym.getSection()), file);
+		putlong(sym.getOutputValue(), file);
 	}
 }
 
@@ -294,7 +294,7 @@ void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32
 
 // Creates an assert that will be written to the object file
 void out_CreateAssert(
-    AssertionType type, Expression const &expr, char const *message, uint32_t ofs
+    AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 ) {
 	Assertion &assertion = assertions.emplace_front();
 
@@ -302,24 +302,24 @@ void out_CreateAssert(
 	assertion.message = message;
 }
 
-static void writeassert(Assertion &assert, FILE *f) {
-	writepatch(assert.patch, f);
-	putstring(assert.message, f);
+static void writeassert(Assertion &assert, FILE *file) {
+	writepatch(assert.patch, file);
+	putstring(assert.message, file);
 }
 
-static void writeFileStackNode(FileStackNode const &node, FILE *f) {
-	putlong(node.parent ? node.parent->ID : (uint32_t)-1, f);
-	putlong(node.lineNo, f);
-	putc(node.type, f);
+static void writeFileStackNode(FileStackNode const &node, FILE *file) {
+	putlong(node.parent ? node.parent->ID : (uint32_t)-1, file);
+	putlong(node.lineNo, file);
+	putc(node.type, file);
 	if (node.type != NODE_REPT) {
-		putstring(node.name(), f);
+		putstring(node.name(), file);
 	} else {
 		std::vector<uint32_t> const &nodeIters = node.iters();
 
-		putlong(nodeIters.size(), f);
+		putlong(nodeIters.size(), file);
 		// Iters are stored by decreasing depth, so reverse the order for output
 		for (uint32_t i = nodeIters.size(); i--;)
-			putlong(nodeIters[i], f);
+			putlong(nodeIters[i], file);
 	}
 }
 
@@ -332,31 +332,31 @@ static void registerUnregisteredSymbol(Symbol &sym) {
 
 // Write an objectfile
 void out_WriteObject() {
-	FILE *f;
+	FILE *file;
 
-	if (strcmp(objectName, "-")) {
-		f = fopen(objectName, "wb");
+	if (objectName != "-") {
+		file = fopen(objectName.c_str(), "wb");
 	} else {
 		objectName = "<stdout>";
-		f = fdopen(STDOUT_FILENO, "wb");
+		file = fdopen(STDOUT_FILENO, "wb");
 	}
-	if (!f)
-		err("Failed to open object file '%s'", objectName);
+	if (!file)
+		err("Failed to open object file '%s'", objectName.c_str());
 
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol);
 
-	fprintf(f, RGBDS_OBJECT_VERSION_STRING);
-	putlong(RGBDS_OBJECT_REV, f);
+	fprintf(file, RGBDS_OBJECT_VERSION_STRING);
+	putlong(RGBDS_OBJECT_REV, file);
 
-	putlong(objectSymbols.size(), f);
-	putlong(sectionList.size(), f);
+	putlong(objectSymbols.size(), file);
+	putlong(sectionList.size(), file);
 
-	putlong(fileStackNodes.size(), f);
+	putlong(fileStackNodes.size(), file);
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
 		FileStackNode const *node = *it;
 
-		writeFileStackNode(*node, f);
+		writeFileStackNode(*node, file);
 
 		// The list is supposed to have decrementing IDs
 		if (it + 1 != fileStackNodes.end() && it[1]->ID != node->ID - 1)
@@ -369,24 +369,24 @@ void out_WriteObject() {
 	}
 
 	for (Symbol const *sym : objectSymbols)
-		writesymbol(*sym, f);
+		writesymbol(*sym, file);
 
 	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
-		writesection(*it, f);
+		writesection(*it, file);
 
-	putlong(assertions.size(), f);
+	putlong(assertions.size(), file);
 
 	for (Assertion &assert : assertions)
-		writeassert(assert, f);
+		writeassert(assert, file);
 
-	fclose(f);
+	fclose(file);
 }
 
 // Set the objectfilename
-void out_SetFileName(char *s) {
-	if (objectName)
-		warnx("Overriding output filename %s", objectName);
-	objectName = s;
+void out_SetFileName(std::string const &name) {
+	if (!objectName.empty())
+		warnx("Overriding output filename %s", objectName.c_str());
+	objectName = name;
 	if (verbose)
-		printf("Output filename %s\n", objectName);
+		printf("Output filename %s\n", objectName.c_str());
 }
