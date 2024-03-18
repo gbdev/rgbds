@@ -39,7 +39,7 @@ size_t maxRecursionDepth;
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
 
-static char const *preIncludeName;
+static std::string preIncludeName;
 
 std::vector<uint32_t> &FileStackNode::iters() {
 	assert(std::holds_alternative<std::vector<uint32_t>>(data));
@@ -108,56 +108,47 @@ FileStackNode *fstk_GetFileStack() {
 	return topNode;
 }
 
-char const *fstk_GetFileName() {
-	// Iterating via the nodes themselves skips nested REPTs
-	FileStackNode const *node = contextStack.top().fileInfo;
-
-	while (node->type != NODE_FILE)
-		node = node->parent;
-	return node->name().c_str();
-}
-
-void fstk_AddIncludePath(char const *path) {
-	if (path[0] == '\0')
+void fstk_AddIncludePath(std::string const &path) {
+	if (path.empty())
 		return;
 
-	std::string &str = includePaths.emplace_back(path);
+	std::string &includePath = includePaths.emplace_back(path);
 
-	if (str.back() != '/')
-		str += '/';
+	if (includePath.back() != '/')
+		includePath += '/';
 }
 
-void fstk_SetPreIncludeFile(char const *path) {
-	if (preIncludeName)
-		warnx("Overriding pre-included filename %s", preIncludeName);
+void fstk_SetPreIncludeFile(std::string const &path) {
+	if (!preIncludeName.empty())
+		warnx("Overriding pre-included filename %s", preIncludeName.c_str());
 	preIncludeName = path;
 	if (verbose)
-		printf("Pre-included filename %s\n", preIncludeName);
+		printf("Pre-included filename %s\n", preIncludeName.c_str());
 }
 
-static void printDep(char const *path) {
+static void printDep(std::string const &path) {
 	if (dependfile) {
-		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), path);
+		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), path.c_str());
 		if (generatePhonyDeps)
-			fprintf(dependfile, "%s:\n", path);
+			fprintf(dependfile, "%s:\n", path.c_str());
 	}
 }
 
-static bool isPathValid(char const *path) {
+static bool isPathValid(std::string const &path) {
 	struct stat statbuf;
 
-	if (stat(path, &statbuf) != 0)
+	if (stat(path.c_str(), &statbuf) != 0)
 		return false;
 
 	// Reject directories
 	return !S_ISDIR(statbuf.st_mode);
 }
 
-std::optional<std::string> fstk_FindFile(char const *path) {
+std::optional<std::string> fstk_FindFile(std::string const &path) {
 	for (std::string &str : includePaths) {
 		std::string fullPath = str + path;
-		if (isPathValid(fullPath.c_str())) {
-			printDep(fullPath.c_str());
+		if (isPathValid(fullPath)) {
+			printDep(fullPath);
 			return fullPath;
 		}
 	}
@@ -252,15 +243,15 @@ static Context &newContext(FileStackNode &fileInfo) {
 	return context;
 }
 
-void fstk_RunInclude(char const *path) {
+void fstk_RunInclude(std::string const &path) {
 	std::optional<std::string> fullPath = fstk_FindFile(path);
 	if (!fullPath) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path, strerror(errno));
+				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
 		} else {
-			error("Unable to open included file '%s': %s\n", path, strerror(errno));
+			error("Unable to open included file '%s': %s\n", path.c_str(), strerror(errno));
 		}
 		return;
 	}
@@ -286,12 +277,12 @@ void fstk_RunInclude(char const *path) {
 // Similar to `fstk_RunInclude`, but not subject to `-MG`, and
 // calling `lexer_SetState` instead of `lexer_SetStateAtEOL`.
 static void runPreIncludeFile() {
-	if (!preIncludeName)
+	if (preIncludeName.empty())
 		return;
 
 	std::optional<std::string> fullPath = fstk_FindFile(preIncludeName);
 	if (!fullPath) {
-		error("Unable to open included file '%s': %s\n", preIncludeName, strerror(errno));
+		error("Unable to open included file '%s': %s\n", preIncludeName.c_str(), strerror(errno));
 		return;
 	}
 
@@ -454,9 +445,9 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 	maxRecursionDepth = newDepth;
 }
 
-void fstk_Init(char const *mainPath, size_t maxDepth) {
+void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	Context &context = contextStack.emplace();
-	if (!lexer_OpenFile(context.lexerState, mainPath))
+	if (!lexer_OpenFile(context.lexerState, mainPath.c_str()))
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(&context.lexerState);
 

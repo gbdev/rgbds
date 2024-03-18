@@ -377,17 +377,17 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	char const *mainFileName = argv[musl_optind];
+	std::string mainFileName = argv[musl_optind];
 
 	if (verbose)
-		printf("Assembling %s\n", mainFileName);
+		printf("Assembling %s\n", mainFileName.c_str());
 
 	if (dependfile) {
 		if (targetFileName.empty())
 			errx("Dependency files can only be created if a target file is specified with either "
 			     "-o, -MQ or -MT");
 
-		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName);
+		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
 	}
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
