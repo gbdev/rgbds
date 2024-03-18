@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <unordered_map>
 
 #include "util.hpp"
@@ -36,20 +35,20 @@ static std::unordered_map<std::string, Charmap> charmaps;
 static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
 
-void charmap_New(char const *name, char const *baseName) {
+void charmap_New(std::string const &name, std::string const *baseName) {
 	Charmap *base = nullptr;
 
 	if (baseName != nullptr) {
-		auto search = charmaps.find(baseName);
+		auto search = charmaps.find(*baseName);
 
 		if (search == charmaps.end())
-			error("Base charmap '%s' doesn't exist\n", baseName);
+			error("Base charmap '%s' doesn't exist\n", baseName->c_str());
 		else
 			base = &search->second;
 	}
 
 	if (charmaps.find(name) != charmaps.end()) {
-		error("Charmap '%s' already exists\n", name);
+		error("Charmap '%s' already exists\n", name.c_str());
 		return;
 	}
 
@@ -65,11 +64,11 @@ void charmap_New(char const *name, char const *baseName) {
 	currentCharmap = &charmap;
 }
 
-void charmap_Set(char const *name) {
+void charmap_Set(std::string const &name) {
 	auto search = charmaps.find(name);
 
 	if (search == charmaps.end())
-		error("Charmap '%s' doesn't exist\n", name);
+		error("Charmap '%s' doesn't exist\n", name.c_str());
 	else
 		currentCharmap = &search->second;
 }
@@ -88,12 +87,12 @@ void charmap_Pop() {
 	charmapStack.pop();
 }
 
-void charmap_Add(char const *mapping, uint8_t value) {
+void charmap_Add(std::string const &mapping, uint8_t value) {
 	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
-	for (; *mapping; mapping++) {
-		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)*mapping - 1];
+	for (char c : mapping) {
+		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)c - 1];
 		size_t nextIdx = nextIdxRef;
 
 		if (!nextIdx) {
@@ -117,12 +116,12 @@ void charmap_Add(char const *mapping, uint8_t value) {
 	node.value = value;
 }
 
-bool charmap_HasChar(char const *input) {
+bool charmap_HasChar(std::string const &input) {
 	Charmap const &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
-	for (; *input; input++) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)*input - 1];
+	for (char c : input) {
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)c - 1];
 
 		if (!nodeIdx)
 			return false;
@@ -131,8 +130,9 @@ bool charmap_HasChar(char const *input) {
 	return charmap.nodes[nodeIdx].isTerminal;
 }
 
-void charmap_Convert(char const *input, std::vector<uint8_t> &output) {
-	while (charmap_ConvertNext(input, &output))
+void charmap_Convert(std::string const &input, std::vector<uint8_t> &output) {
+	char const *ptr = input.c_str();
+	while (charmap_ConvertNext(ptr, &output))
 		;
 }
 

@@ -1141,22 +1141,22 @@ incbin:
 
 charmap:
 	POP_CHARMAP string COMMA const_8bit {
-		charmap_Add($2.c_str(), (uint8_t)$4);
+		charmap_Add($2, (uint8_t)$4);
 	}
 ;
 
 newcharmap:
 	POP_NEWCHARMAP ID {
-		charmap_New($2.c_str(), nullptr);
+		charmap_New($2, nullptr);
 	}
 	| POP_NEWCHARMAP ID COMMA ID {
-		charmap_New($2.c_str(), $4.c_str());
+		charmap_New($2, &$4);
 	}
 ;
 
 setcharmap:
 	POP_SETCHARMAP ID {
-		charmap_Set($2.c_str());
+		charmap_Set($2);
 	}
 ;
 
@@ -1224,7 +1224,7 @@ constlist_8bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.c_str(), output);
+		charmap_Convert($1, output);
 		sect_AbsByteGroup(output.data(), output.size());
 	}
 ;
@@ -1241,7 +1241,7 @@ constlist_16bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.c_str(), output);
+		charmap_Convert($1, output);
 		sect_AbsWordGroup(output.data(), output.size());
 	}
 ;
@@ -1258,7 +1258,7 @@ constlist_32bit_entry:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.c_str(), output);
+		charmap_Convert($1, output);
 		sect_AbsLongGroup(output.data(), output.size());
 	}
 ;
@@ -1309,7 +1309,7 @@ relocexpr:
 	| string {
 		std::vector<uint8_t> output;
 
-		charmap_Convert($1.c_str(), output);
+		charmap_Convert($1, output);
 		rpn_Number($$, str2int2(output));
 	}
 ;
@@ -1492,7 +1492,7 @@ relocexpr_no_str:
 		rpn_Number($$, charlenUTF8($3));
 	}
 	| OP_INCHARMAP LPAREN string RPAREN {
-		rpn_Number($$, charmap_HasChar($3.c_str()));
+		rpn_Number($$, charmap_HasChar($3));
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
