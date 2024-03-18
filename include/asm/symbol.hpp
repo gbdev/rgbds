@@ -68,27 +68,29 @@ struct Symbol {
 void sym_ForEach(void (*func)(Symbol &));
 
 void sym_SetExportAll(bool set);
-Symbol *sym_AddLocalLabel(char const *symName);
-Symbol *sym_AddLabel(char const *symName);
+Symbol *sym_AddLocalLabel(std::string const &symName);
+Symbol *sym_AddLabel(std::string const &symName);
 Symbol *sym_AddAnonLabel();
 std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg);
-void sym_Export(char const *symName);
-Symbol *sym_AddEqu(char const *symName, int32_t value);
-Symbol *sym_RedefEqu(char const *symName, int32_t value);
-Symbol *sym_AddVar(char const *symName, int32_t value);
+void sym_Export(std::string const &symName);
+Symbol *sym_AddEqu(std::string const &symName, int32_t value);
+Symbol *sym_RedefEqu(std::string const &symName, int32_t value);
+Symbol *sym_AddVar(std::string const &symName, int32_t value);
 uint32_t sym_GetPCValue();
-uint32_t sym_GetConstantValue(char const *symName);
+int32_t sym_GetRSValue();
+void sym_SetRSValue(int32_t value);
+uint32_t sym_GetConstantValue(std::string const &symName);
 // Find a symbol by exact name, bypassing expansion checks
-Symbol *sym_FindExactSymbol(char const *symName);
+Symbol *sym_FindExactSymbol(std::string const &symName);
 // Find a symbol, possibly scoped, by name
-Symbol *sym_FindScopedSymbol(char const *symName);
+Symbol *sym_FindScopedSymbol(std::string const &symName);
 // Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
-Symbol *sym_FindScopedValidSymbol(char const *symName);
+Symbol *sym_FindScopedValidSymbol(std::string const &symName);
 Symbol const *sym_GetPC();
-Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size);
-Symbol *sym_Ref(char const *symName);
-Symbol *sym_AddString(char const *symName, char const *value);
-Symbol *sym_RedefString(char const *symName, char const *value);
+Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, char const *body, size_t size);
+Symbol *sym_Ref(std::string const &symName);
+Symbol *sym_AddString(std::string const &symName, char const *value);
+Symbol *sym_RedefString(std::string const &symName, char const *value);
 void sym_Purge(std::string const &symName);
 void sym_Init(time_t now);
 

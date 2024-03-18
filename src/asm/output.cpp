@@ -187,10 +187,10 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			}
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName.c_str());
+			sym = sym_FindExactSymbol(symName);
 			if (sym->isConstant()) {
 				rpnexpr[rpnptr++] = RPN_CONST;
-				value = sym_GetConstantValue(symName.c_str());
+				value = sym_GetConstantValue(symName);
 			} else {
 				rpnexpr[rpnptr++] = RPN_SYM;
 				value = getSymbolID(*sym);
@@ -212,7 +212,7 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 			}
 
 			// The symbol name is always written expanded
-			sym = sym_FindExactSymbol(symName.c_str());
+			sym = sym_FindExactSymbol(symName);
 			value = getSymbolID(*sym);
 
 			rpnexpr[rpnptr++] = RPN_BANK_SYM;
