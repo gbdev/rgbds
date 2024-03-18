@@ -88,7 +88,7 @@
 	);
 	static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
-	static void failAssertMsg(AssertionType type, char const *msg);
+	static void failAssertMsg(AssertionType type, std::string const &message);
 
 	// The CPU encodes instructions in a logical way, so most instructions actually follow patterns.
 	// These enums thus help with bit twiddling to compute opcodes.
@@ -824,9 +824,9 @@ assert:
 	}
 	| POP_ASSERT assert_type relocexpr COMMA string {
 		if (!$3.isKnown) {
-			out_CreateAssert($2, $3, $5.c_str(), sect_GetOutputOffset());
+			out_CreateAssert($2, $3, $5, sect_GetOutputOffset());
 		} else if ($3.val == 0) {
-			failAssertMsg($2, $5.c_str());
+			failAssertMsg($2, $5);
 		}
 	}
 	| POP_STATIC_ASSERT assert_type const {
@@ -835,7 +835,7 @@ assert:
 	}
 	| POP_STATIC_ASSERT assert_type const COMMA string {
 		if ($3 == 0)
-			failAssertMsg($2, $5.c_str());
+			failAssertMsg($2, $5);
 	}
 ;
 
@@ -2736,15 +2736,15 @@ static void failAssert(AssertionType type) {
 	}
 }
 
-static void failAssertMsg(AssertionType type, char const *msg) {
+static void failAssertMsg(AssertionType type, std::string const &message) {
 	switch (type) {
 	case ASSERT_FATAL:
-		fatalerror("Assertion failed: %s\n", msg);
+		fatalerror("Assertion failed: %s\n", message.c_str());
 	case ASSERT_ERROR:
-		error("Assertion failed: %s\n", msg);
+		error("Assertion failed: %s\n", message.c_str());
 		break;
 	case ASSERT_WARN:
-		warning(WARNING_ASSERT, "Assertion failed: %s\n", msg);
+		warning(WARNING_ASSERT, "Assertion failed: %s\n", message.c_str());
 		break;
 	}
 }

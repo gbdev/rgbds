@@ -362,7 +362,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (targetFileName.empty() && objectName)
+	if (targetFileName.empty() && !objectName.empty())
 		targetFileName = objectName;
 
 	if (argc == musl_optind) {
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 
 	// If no path specified, don't write file
-	if (objectName != nullptr)
+	if (!objectName.empty())
 		out_WriteObject();
 	return 0;
 }
