@@ -56,10 +56,18 @@ extern Section *currentSection;
 
 Section *sect_FindSectionByName(char const *name);
 void sect_NewSection(
-    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
+    std::string const &name,
+    SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
+    SectionModifier mod
 );
 void sect_SetLoadSection(
-    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
+    std::string const &name,
+    SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
+    SectionModifier mod
 );
 void sect_EndLoadSection();
 
@@ -84,8 +92,8 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs);
 void sect_RelWord(Expression &expr, uint32_t pcShift);
 void sect_RelLong(Expression &expr, uint32_t pcShift);
 void sect_PCRelByte(Expression &expr, uint32_t pcShift);
-void sect_BinaryFile(char const *s, int32_t startPos);
-void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length);
+void sect_BinaryFile(std::string const &name, int32_t startPos);
+void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length);
 
 void sect_EndSection();
 void sect_PushSection();
