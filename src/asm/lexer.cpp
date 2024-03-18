@@ -48,10 +48,10 @@
 
 	#define MAP_FAILED nullptr
 
-static void mapFile(void *&mappingAddr, int fd, char const *path, size_t) {
+static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t) {
 	mappingAddr = MAP_FAILED;
 	if (HANDLE file = CreateFileA(
-	        path,
+	        path.c_str(),
 	        GENERIC_READ,
 	        FILE_SHARE_READ,
 	        nullptr,
@@ -76,14 +76,14 @@ static int munmap(void *mappingAddr, size_t) {
 #else // defined(_MSC_VER) || defined(__MINGW32__)
 	#include <sys/mman.h>
 
-static void mapFile(void *&mappingAddr, int fd, char const *path, size_t size) {
+static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t size) {
 	mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (mappingAddr == MAP_FAILED && errno == ENOTSUP) {
 		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
 		// instead, offering, I believe, weaker guarantees about external modifications to
 		// the file while reading it. That's still better than not opening it at all, though.
 		if (verbose)
-			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path);
+			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
 }
@@ -378,23 +378,23 @@ void lexer_ReachELSEBlock() {
 	lexerState->ifStack.front().reachedElseBlock = true;
 }
 
-bool lexer_OpenFile(LexerState &state, char const *path) {
-	if (!strcmp(path, "-")) {
+bool lexer_OpenFile(LexerState &state, std::string const &path) {
+	if (path == "-") {
 		state.path = "<stdin>";
 		state.content = BufferedLexerState{.fd = STDIN_FILENO, .index = 0, .buf = {}, .nbChars = 0};
 		if (verbose)
 			printf("Opening stdin\n");
 	} else {
 		struct stat fileInfo;
-		if (stat(path, &fileInfo) != 0) {
-			error("Failed to stat file \"%s\": %s\n", path, strerror(errno));
+		if (stat(path.c_str(), &fileInfo) != 0) {
+			error("Failed to stat file \"%s\": %s\n", path.c_str(), strerror(errno));
 			return false;
 		}
 		state.path = path;
 
-		int fd = open(path, O_RDONLY);
+		int fd = open(path.c_str(), O_RDONLY);
 		if (fd < 0) {
-			error("Failed to open file \"%s\": %s\n", path, strerror(errno));
+			error("Failed to open file \"%s\": %s\n", path.c_str(), strerror(errno));
 			return false;
 		}
 
@@ -403,7 +403,7 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 		if (fileInfo.st_size > 0) {
 			// Try using `mmap` for better performance
 			void *mappingAddr;
-			mapFile(mappingAddr, fd, state.path, fileInfo.st_size);
+			mapFile(mappingAddr, fd, path, fileInfo.st_size);
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
@@ -414,7 +414,7 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 				    .isReferenced = false,
 				};
 				if (verbose)
-					printf("File \"%s\" is mmap()ped\n", path);
+					printf("File \"%s\" is mmap()ped\n", path.c_str());
 				isMmapped = true;
 			}
 		}
@@ -424,9 +424,11 @@ bool lexer_OpenFile(LexerState &state, char const *path) {
 			state.content = BufferedLexerState{.fd = fd, .index = 0, .buf = {}, .nbChars = 0};
 			if (verbose) {
 				if (fileInfo.st_size == 0) {
-					printf("File \"%s\" is empty\n", path);
+					printf("File \"%s\" is empty\n", path.c_str());
 				} else {
-					printf("File \"%s\" is opened; errno reports: %s\n", path, strerror(errno));
+					printf(
+					    "File \"%s\" is opened; errno reports: %s\n", path.c_str(), strerror(errno)
+					);
 				}
 			}
 		}
@@ -628,7 +630,7 @@ static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbC
 	ssize_t nbReadChars = read(cbuf.fd, &cbuf.buf[bufIndex], nbChars);
 
 	if (nbReadChars == -1)
-		fatalerror("Error while reading \"%s\": %s\n", lexerState->path, strerror(errno));
+		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
 
 	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
 	return (size_t)nbReadChars;
@@ -814,10 +816,6 @@ static void handleCRLF(int c) {
 }
 
 // "Services" provided by the lexer to the rest of the program
-
-char const *lexer_GetFileName() {
-	return lexerState ? lexerState->path : nullptr;
-}
 
 uint32_t lexer_GetLineNo() {
 	return lexerState->lineNo;

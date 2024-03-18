@@ -65,7 +65,7 @@ struct BufferedLexerState {
 };
 
 struct LexerState {
-	char const *path;
+	std::string path;
 
 	LexerMode mode;
 	bool atLineStart;
@@ -115,7 +115,7 @@ static inline void lexer_SetGfxDigits(char const digits[4]) {
 }
 
 // `path` is referenced, but not held onto..!
-bool lexer_OpenFile(LexerState &state, char const *path);
+bool lexer_OpenFile(LexerState &state, std::string const &path);
 void lexer_OpenFileView(
     LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
 );
@@ -144,7 +144,6 @@ struct String {
 };
 
 void lexer_CheckRecursionDepth();
-char const *lexer_GetFileName();
 uint32_t lexer_GetLineNo();
 uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
