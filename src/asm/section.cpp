@@ -109,7 +109,7 @@ attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size) {
 	       && (!currentLoadSection || currentLoadSection->size != UINT32_MAX);
 }
 
-Section *sect_FindSectionByName(char const *name) {
+Section *sect_FindSectionByName(std::string const &name) {
 	auto search = sectionMap.find(name);
 	return search != sectionMap.end() ? &sectionList[search->second] : nullptr;
 }
@@ -401,7 +401,7 @@ static Section *getSection(
 
 	// Check if another section exists with the same name; merge if yes, otherwise create one
 
-	Section *sect = sect_FindSectionByName(name.c_str());
+	Section *sect = sect_FindSectionByName(name);
 
 	if (sect) {
 		mergeSections(*sect, type, org, bank, alignment, alignOffset, mod);

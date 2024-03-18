@@ -54,7 +54,7 @@ extern std::deque<Section> sectionList;
 extern std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 extern Section *currentSection;
 
-Section *sect_FindSectionByName(char const *name);
+Section *sect_FindSectionByName(std::string const &name);
 void sect_NewSection(
     std::string const &name,
     SectionType type,

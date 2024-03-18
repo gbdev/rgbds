@@ -1415,13 +1415,13 @@ relocexpr_no_str:
 		rpn_BankSymbol($$, $3);
 	}
 	| OP_BANK LPAREN string RPAREN {
-		rpn_BankSection($$, $3.c_str());
+		rpn_BankSection($$, $3);
 	}
 	| OP_SIZEOF LPAREN string RPAREN {
-		rpn_SizeOfSection($$, $3.c_str());
+		rpn_SizeOfSection($$, $3);
 	}
 	| OP_STARTOF LPAREN string RPAREN {
-		rpn_StartOfSection($$, $3.c_str());
+		rpn_StartOfSection($$, $3);
 	}
 	| OP_SIZEOF LPAREN sectiontype RPAREN {
 		rpn_SizeOfSectionType($$, (SectionType)$3);

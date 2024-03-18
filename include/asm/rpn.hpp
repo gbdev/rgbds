@@ -43,10 +43,10 @@ void rpn_ISCONST(Expression &expr, Expression const &src);
 void rpn_NEG(Expression &expr, Expression &&src);
 void rpn_NOT(Expression &expr, Expression &&src);
 void rpn_BankSymbol(Expression &expr, std::string const &symName);
-void rpn_BankSection(Expression &expr, char const *sectionName);
+void rpn_BankSection(Expression &expr, std::string const &sectionName);
 void rpn_BankSelf(Expression &expr);
-void rpn_SizeOfSection(Expression &expr, char const *sectionName);
-void rpn_StartOfSection(Expression &expr, char const *sectionName);
+void rpn_SizeOfSection(Expression &expr, std::string const &sectionName);
+void rpn_StartOfSection(Expression &expr, std::string const &sectionName);
 void rpn_SizeOfSectionType(Expression &expr, SectionType type);
 void rpn_StartOfSectionType(Expression &expr, SectionType type);
 
