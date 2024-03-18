@@ -289,7 +289,7 @@ static void mergeSections(
 
 // Create a new section, not yet in the list.
 static Section *createSection(
-    char const *name,
+    std::string const &name,
     SectionType type,
     uint32_t org,
     uint32_t bank,
@@ -321,7 +321,11 @@ static Section *createSection(
 
 // Find a section by name and type. If it doesn't exist, create it.
 static Section *getSection(
-    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
+    std::string const &name,
+    SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
+    SectionModifier mod
 ) {
 	uint32_t bank = attrs.bank;
 	uint8_t alignment = attrs.alignment;
@@ -360,7 +364,7 @@ static Section *getSection(
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
 			    "; $%04" PRIx16 "]\n",
-			    name,
+			    name.c_str(),
 			    org,
 			    sectionTypeInfo[type].startAddr,
 			    endaddr(type)
@@ -377,12 +381,12 @@ static Section *getSection(
 
 		if (org != (uint32_t)-1) {
 			if ((org - alignOffset) & mask)
-				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name);
+				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name.c_str());
 			alignment = 0; // Ignore it if it's satisfied
 		} else if (sectionTypeInfo[type].startAddr & mask) {
 			error(
 			    "Section \"%s\"'s alignment cannot be attained in %s\n",
-			    name,
+			    name.c_str(),
 			    sectionTypeInfo[type].name.c_str()
 			);
 			alignment = 0; // Ignore it if it's unattainable
@@ -397,7 +401,7 @@ static Section *getSection(
 
 	// Check if another section exists with the same name; merge if yes, otherwise create one
 
-	Section *sect = sect_FindSectionByName(name);
+	Section *sect = sect_FindSectionByName(name.c_str());
 
 	if (sect) {
 		mergeSections(*sect, type, org, bank, alignment, alignOffset, mod);
@@ -436,14 +440,18 @@ bool Section::isSizeKnown() const {
 
 // Set the current section by name and type
 void sect_NewSection(
-    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
+    std::string const &name,
+    SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
+    SectionModifier mod
 ) {
 	if (currentLoadSection)
 		fatalerror("Cannot change the section within a `LOAD` block\n");
 
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name)
-			fatalerror("Section '%s' is already on the stack\n", name);
+			fatalerror("Section '%s' is already on the stack\n", name.c_str());
 	}
 
 	Section *sect = getSection(name, type, org, attrs, mod);
@@ -456,7 +464,11 @@ void sect_NewSection(
 
 // Set the current section by name and type
 void sect_SetLoadSection(
-    char const *name, SectionType type, uint32_t org, SectionSpec const &attrs, SectionModifier mod
+    std::string const &name,
+    SectionType type,
+    uint32_t org,
+    SectionSpec const &attrs,
+    SectionModifier mod
 ) {
 	// Important info: currently, UNION and LOAD cannot interact, since UNION is prohibited in
 	// "code" sections, whereas LOAD is restricted to them.
@@ -814,7 +826,7 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 }
 
 // Output a binary file
-void sect_BinaryFile(char const *s, int32_t startPos) {
+void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	if (startPos < 0) {
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
@@ -822,58 +834,60 @@ void sect_BinaryFile(char const *s, int32_t startPos) {
 	if (!checkcodesection())
 		return;
 
-	std::optional<std::string> fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
-	if (!f) {
+	std::optional<std::string> fullPath = fstk_FindFile(name.c_str());
+	FILE *file = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
+	if (!file) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
+				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
 			return;
 		}
-		error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+		error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		return;
 	}
 
 	int32_t fsize = -1;
 	int byte;
 
-	if (fseek(f, 0, SEEK_END) != -1) {
-		fsize = ftell(f);
+	if (fseek(file, 0, SEEK_END) != -1) {
+		fsize = ftell(file);
 
 		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
 			goto cleanup;
 		}
 
-		fseek(f, startPos, SEEK_SET);
+		fseek(file, startPos, SEEK_SET);
 		if (!reserveSpace(fsize - startPos))
 			goto cleanup;
 	} else {
 		if (errno != ESPIPE)
-			error("Error determining size of INCBIN file '%s': %s\n", s, strerror(errno));
+			error(
+			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
+			);
 		// The file isn't seekable, so we'll just skip bytes
 		while (startPos--)
-			(void)fgetc(f);
+			(void)fgetc(file);
 	}
 
-	while ((byte = fgetc(f)) != EOF) {
+	while ((byte = fgetc(file)) != EOF) {
 		if (fsize == -1)
 			growSection(1);
 		writebyte(byte);
 	}
 
-	if (ferror(f))
-		error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
+	if (ferror(file))
+		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 
 cleanup:
-	fclose(f);
+	fclose(file);
 }
 
-void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length) {
-	if (start_pos < 0) {
-		error("Start position cannot be negative (%" PRId32 ")\n", start_pos);
-		start_pos = 0;
+void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length) {
+	if (startPos < 0) {
+		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
+		startPos = 0;
 	}
 
 	if (length < 0) {
@@ -888,63 +902,65 @@ void sect_BinaryFileSlice(char const *s, int32_t start_pos, int32_t length) {
 	if (!reserveSpace(length))
 		return;
 
-	std::optional<std::string> fullPath = fstk_FindFile(s);
-	FILE *f = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
-	if (!f) {
+	std::optional<std::string> fullPath = fstk_FindFile(name.c_str());
+	FILE *file = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
+	if (!file) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", s, strerror(errno));
+				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
 		} else {
-			error("Error opening INCBIN file '%s': %s\n", s, strerror(errno));
+			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		}
 		return;
 	}
 
 	int32_t fsize;
 
-	if (fseek(f, 0, SEEK_END) != -1) {
-		fsize = ftell(f);
+	if (fseek(file, 0, SEEK_END) != -1) {
+		fsize = ftell(file);
 
-		if (start_pos > fsize) {
+		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
 			goto cleanup;
 		}
 
-		if ((start_pos + length) > fsize) {
+		if ((startPos + length) > fsize) {
 			error(
 			    "Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32 " > %" PRIu32
 			    ")\n",
-			    start_pos,
+			    startPos,
 			    length,
 			    fsize
 			);
 			goto cleanup;
 		}
 
-		fseek(f, start_pos, SEEK_SET);
+		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE)
-			error("Error determining size of INCBIN file '%s': %s\n", s, strerror(errno));
+			error(
+			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
+			);
 		// The file isn't seekable, so we'll just skip bytes
-		while (start_pos--)
-			(void)fgetc(f);
+		while (startPos--)
+			(void)fgetc(file);
 	}
 
 	while (length--) {
-		int byte = fgetc(f);
+		int byte = fgetc(file);
 
 		if (byte != EOF) {
 			writebyte(byte);
-		} else if (ferror(f)) {
-			error("Error reading INCBIN file '%s': %s\n", s, strerror(errno));
+		} else if (ferror(file)) {
+			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		} else {
 			error("Premature end of file (%" PRId32 " bytes left to read)\n", length + 1);
 		}
 	}
 
 cleanup:
-	fclose(f);
+	fclose(file);
 }
 
 // Section stack routines

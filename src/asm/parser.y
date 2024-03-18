@@ -850,7 +850,7 @@ shift:
 
 load:
 	POP_LOAD sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_SetLoadSection($3.c_str(), (SectionType)$5, $6, $7, $2);
+		sect_SetLoadSection($3, (SectionType)$5, $6, $7, $2);
 	}
 	| POP_ENDL {
 		sect_EndLoadSection();
@@ -1123,17 +1123,17 @@ include:
 
 incbin:
 	POP_INCBIN string {
-		sect_BinaryFile($2.c_str(), 0);
+		sect_BinaryFile($2, 0);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 	| POP_INCBIN string COMMA const {
-		sect_BinaryFile($2.c_str(), $4);
+		sect_BinaryFile($2, $4);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
 	| POP_INCBIN string COMMA const COMMA const {
-		sect_BinaryFileSlice($2.c_str(), $4, $6);
+		sect_BinaryFileSlice($2, $4, $6);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
@@ -1630,7 +1630,7 @@ strfmt_va_args:
 
 section:
 	POP_SECTION sectmod string COMMA sectiontype sectorg sectattrs {
-		sect_NewSection($3.c_str(), (SectionType)$5, $6, $7, $2);
+		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
 	}
 ;
 
