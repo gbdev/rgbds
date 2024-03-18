@@ -126,7 +126,7 @@ void rpn_BankSymbol(Expression &expr, std::string const &symName) {
 	}
 }
 
-void rpn_BankSection(Expression &expr, char const *sectionName) {
+void rpn_BankSection(Expression &expr, std::string const &sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -136,16 +136,16 @@ void rpn_BankSection(Expression &expr, char const *sectionName) {
 	} else {
 		makeUnknown(expr, "Section \"", sectionName, "\"'s bank is not known");
 
-		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
+		size_t nameLen = sectionName.length() + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr.rpnPatchSize += nameLen + 1;
 		*ptr++ = RPN_BANK_SECT;
-		memcpy(ptr, sectionName, nameLen);
+		memcpy(ptr, sectionName.data(), nameLen);
 	}
 }
 
-void rpn_SizeOfSection(Expression &expr, char const *sectionName) {
+void rpn_SizeOfSection(Expression &expr, std::string const &sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -155,16 +155,16 @@ void rpn_SizeOfSection(Expression &expr, char const *sectionName) {
 	} else {
 		makeUnknown(expr, "Section \"", sectionName, "\"'s size is not known");
 
-		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
+		size_t nameLen = sectionName.length() + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr.rpnPatchSize += nameLen + 1;
 		*ptr++ = RPN_SIZEOF_SECT;
-		memcpy(ptr, sectionName, nameLen);
+		memcpy(ptr, sectionName.data(), nameLen);
 	}
 }
 
-void rpn_StartOfSection(Expression &expr, char const *sectionName) {
+void rpn_StartOfSection(Expression &expr, std::string const &sectionName) {
 	initExpression(expr);
 
 	Section *section = sect_FindSectionByName(sectionName);
@@ -174,12 +174,12 @@ void rpn_StartOfSection(Expression &expr, char const *sectionName) {
 	} else {
 		makeUnknown(expr, "Section \"", sectionName, "\"'s start is not known");
 
-		size_t nameLen = strlen(sectionName) + 1; // Room for NUL!
+		size_t nameLen = sectionName.length() + 1; // Room for NUL!
 		uint8_t *ptr = reserveSpace(expr, nameLen + 1);
 
 		expr.rpnPatchSize += nameLen + 1;
 		*ptr++ = RPN_STARTOF_SECT;
-		memcpy(ptr, sectionName, nameLen);
+		memcpy(ptr, sectionName.data(), nameLen);
 	}
 }
 
