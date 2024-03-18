@@ -265,7 +265,7 @@ void fstk_RunInclude(std::string const &path) {
 	uint32_t uniqueID = contextStack.top().uniqueID;
 
 	Context &context = newContext(*fileInfo);
-	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
+	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(&context.lexerState);
 	// We're back at top-level, so most things are reset,
@@ -293,7 +293,7 @@ static void runPreIncludeFile() {
 	}
 
 	Context &context = newContext(*fileInfo);
-	if (!lexer_OpenFile(context.lexerState, fileInfo->name().c_str()))
+	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetState(&context.lexerState);
 	// We're back at top-level, so most things are reset
@@ -447,11 +447,11 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	Context &context = contextStack.emplace();
-	if (!lexer_OpenFile(context.lexerState, mainPath.c_str()))
+	if (!lexer_OpenFile(context.lexerState, mainPath))
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(&context.lexerState);
 
-	context.fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, lexer_GetFileName());
+	context.fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, context.lexerState.path);
 	if (!context.fileInfo)
 		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
 	// lineNo and nbReptIters are unused on the top-level context
