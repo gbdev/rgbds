@@ -52,15 +52,13 @@ struct MacroArgs;
 
 void fstk_DumpCurrent();
 FileStackNode *fstk_GetFileStack();
-// The lifetime of the returned chars is until reaching the end of that file
-char const *fstk_GetFileName();
 
-void fstk_AddIncludePath(char const *s);
-void fstk_SetPreIncludeFile(char const *s);
-std::optional<std::string> fstk_FindFile(char const *path);
+void fstk_AddIncludePath(std::string const &path);
+void fstk_SetPreIncludeFile(std::string const &path);
+std::optional<std::string> fstk_FindFile(std::string const &path);
 
 bool yywrap();
-void fstk_RunInclude(char const *path);
+void fstk_RunInclude(std::string const &path);
 void fstk_RunMacro(std::string const &macroName, MacroArgs &args);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size);
 void fstk_RunFor(
@@ -76,6 +74,6 @@ void fstk_StopRept();
 bool fstk_Break();
 
 void fstk_NewRecursionDepth(size_t newDepth);
-void fstk_Init(char const *mainPath, size_t maxDepth);
+void fstk_Init(std::string const &mainPath, size_t maxDepth);
 
 #endif // RGBDS_ASM_FSTACK_H
