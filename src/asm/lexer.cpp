@@ -558,7 +558,7 @@ static uint32_t readBracketedMacroArgNum() {
 			shiftChar();
 		}
 
-		Symbol const *sym = sym_FindScopedValidSymbol(symName.c_str());
+		Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 		if (!sym) {
 			error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
@@ -1188,7 +1188,7 @@ static char const *readInterpolation(size_t depth) {
 
 	static char buf[MAXSTRLEN + 1];
 
-	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf.c_str());
+	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
@@ -1820,8 +1820,7 @@ static Token yylex_NORMAL() {
 				// Local symbols cannot be string expansions
 				if (token.type == T_(ID) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym =
-					    sym_FindExactSymbol(std::get<std::string>(token.value).c_str());
+					Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
 
 					if (sym && sym->type == SYM_EQUS) {
 						char const *str = sym->getEqus()->c_str();

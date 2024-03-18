@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string_view>
 
 #include "opmath.hpp"
 
@@ -50,7 +51,7 @@ void rpn_Number(Expression &expr, uint32_t val) {
 	expr.val = val;
 }
 
-void rpn_Symbol(Expression &expr, char const *symName) {
+void rpn_Symbol(Expression &expr, std::string const &symName) {
 	initExpression(expr);
 
 	Symbol *sym = sym_FindScopedSymbol(symName);
@@ -92,7 +93,7 @@ static void bankSelf(Expression &expr) {
 	}
 }
 
-void rpn_BankSymbol(Expression &expr, char const *symName) {
+void rpn_BankSymbol(Expression &expr, std::string const &symName) {
 	Symbol const *sym = sym_FindScopedSymbol(symName);
 
 	// The @ symbol is treated differently.

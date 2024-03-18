@@ -198,7 +198,7 @@ bool yywrap() {
 			// Avoid arithmetic overflow runtime error
 			uint32_t forValue = (uint32_t)context.forValue + (uint32_t)context.forStep;
 			context.forValue = forValue <= INT32_MAX ? forValue : -(int32_t)~forValue - 1;
-			Symbol *sym = sym_AddVar(context.forName.c_str(), context.forValue);
+			Symbol *sym = sym_AddVar(context.forName, context.forValue);
 
 			// This error message will refer to the current iteration
 			if (sym->type != SYM_VAR)
@@ -309,15 +309,15 @@ static void runPreIncludeFile() {
 	context.uniqueID = macro_UndefUniqueID();
 }
 
-void fstk_RunMacro(char const *macroName, MacroArgs &args) {
+void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
-		error("Macro \"%s\" not defined\n", macroName);
+		error("Macro \"%s\" not defined\n", macroName.c_str());
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
-		error("\"%s\" is not a macro\n", macroName);
+		error("\"%s\" is not a macro\n", macroName.c_str());
 		return;
 	}
 	contextStack.top().macroArgs = macro_GetCurrentArgs();
@@ -392,7 +392,7 @@ void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t s
 }
 
 void fstk_RunFor(
-    char const *symName,
+    std::string const &symName,
     int32_t start,
     int32_t stop,
     int32_t step,

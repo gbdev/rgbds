@@ -34,7 +34,7 @@ struct Expression {
 };
 
 void rpn_Number(Expression &expr, uint32_t val);
-void rpn_Symbol(Expression &expr, char const *symName);
+void rpn_Symbol(Expression &expr, std::string const &symName);
 void rpn_LOGNOT(Expression &expr, Expression &&src);
 void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, Expression const &src2);
 void rpn_HIGH(Expression &expr, Expression &&src);
@@ -42,7 +42,7 @@ void rpn_LOW(Expression &expr, Expression &&src);
 void rpn_ISCONST(Expression &expr, Expression const &src);
 void rpn_NEG(Expression &expr, Expression &&src);
 void rpn_NOT(Expression &expr, Expression &&src);
-void rpn_BankSymbol(Expression &expr, char const *symName);
+void rpn_BankSymbol(Expression &expr, std::string const &symName);
 void rpn_BankSection(Expression &expr, char const *sectionName);
 void rpn_BankSelf(Expression &expr);
 void rpn_SizeOfSection(Expression &expr, char const *sectionName);

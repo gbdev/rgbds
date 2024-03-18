@@ -68,6 +68,8 @@
 
 	#include "helpers.hpp"
 
+	using namespace std::literals;
+
 	static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
@@ -351,7 +353,7 @@ line:
 		lexer_SetMode(LEXER_NORMAL);
 		lexer_ToggleStringExpansion(true);
 	} endofline {
-		Symbol *macro = sym_FindExactSymbol($1.c_str());
+		Symbol *macro = sym_FindExactSymbol($1);
 
 		if (macro && macro->type == SYM_MACRO)
 		fprintf(
@@ -488,21 +490,21 @@ label:
 		sym_AddAnonLabel();
 	}
 	| LOCAL_ID {
-		sym_AddLocalLabel($1.c_str());
+		sym_AddLocalLabel($1);
 	}
 	| LOCAL_ID COLON {
-		sym_AddLocalLabel($1.c_str());
+		sym_AddLocalLabel($1);
 	}
 	| LABEL COLON {
-		sym_AddLabel($1.c_str());
+		sym_AddLabel($1);
 	}
 	| LOCAL_ID DOUBLE_COLON {
-		sym_AddLocalLabel($1.c_str());
-		sym_Export($1.c_str());
+		sym_AddLocalLabel($1);
+		sym_Export($1);
 	}
 	| LABEL DOUBLE_COLON {
-		sym_AddLabel($1.c_str());
-		sym_Export($1.c_str());
+		sym_AddLabel($1);
+		sym_Export($1);
 	}
 ;
 
@@ -511,7 +513,7 @@ macro:
 		// Parsing 'macroargs' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macroargs {
-		fstk_RunMacro($1.c_str(), *$3);
+		fstk_RunMacro($1, *$3);
 	}
 ;
 
@@ -617,14 +619,14 @@ equ:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddEqu($1.c_str(), $3);
+		sym_AddEqu($1, $3);
 	}
 ;
 
 assignment:
 	LABEL POP_EQUAL const {
 		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.c_str(), $1.c_str());
-		sym_AddVar($1.c_str(), $3);
+		sym_AddVar($1, $3);
 	}
 	| LABEL compoundeq const {
 		char const *compoundEqOperator = nullptr;
@@ -662,7 +664,7 @@ equs:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddString($1.c_str(), $3.c_str());
+		sym_AddString($1, $3.c_str());
 	}
 ;
 
@@ -674,8 +676,9 @@ rb:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + $3);
 	}
 ;
 
@@ -687,8 +690,9 @@ rw:
 		    $1.c_str(),
 		    $1.c_str()
 		);
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + 2 * $3);
 	}
 ;
 
@@ -700,8 +704,9 @@ rl:
 			$1.c_str(),
 			$1.c_str()
 		);
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + 4 * $3);
 	}
 ;
 
@@ -872,7 +877,7 @@ for:
 	} COMMA for_args NEWLINE capture_rept endofline {
 		if ($8)
 			fstk_RunFor(
-				$3.c_str(),
+				$3,
 				$6.start,
 				$6.stop,
 				$6.step,
@@ -921,7 +926,7 @@ macrodef:
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
 		if ($6)
-			sym_AddMacro($3.c_str(), captureBody.lineNo, captureBody.body, captureBody.size);
+			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
 	}
 ;
 
@@ -933,13 +938,13 @@ capture_macro:
 
 rsset:
 	POP_RSSET uconst {
-		sym_AddVar("_RS", $2);
+		sym_SetRSValue($2);
 	}
 ;
 
 rsreset:
 	POP_RSRESET {
-		sym_AddVar("_RS", 0);
+		sym_SetRSValue(0);
 	}
 ;
 
@@ -1022,22 +1027,22 @@ dl:
 
 def_equ:
 	def_id POP_EQU const {
-		sym_AddEqu($1.c_str(), $3);
+		sym_AddEqu($1, $3);
 	}
 ;
 
 redef_equ:
 	redef_id POP_EQU const {
-		sym_RedefEqu($1.c_str(), $3);
+		sym_RedefEqu($1, $3);
 	}
 ;
 
 def_set:
 	def_id POP_EQUAL const {
-		sym_AddVar($1.c_str(), $3);
+		sym_AddVar($1, $3);
 	}
 	| redef_id POP_EQUAL const {
-		sym_AddVar($1.c_str(), $3);
+		sym_AddVar($1, $3);
 	}
 	| def_id compoundeq const {
 		compoundAssignment($1, $2, $3);
@@ -1049,34 +1054,37 @@ def_set:
 
 def_rb:
 	def_id POP_RB rs_uconst {
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + $3);
 	}
 ;
 
 def_rw:
 	def_id POP_RW rs_uconst {
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 2 * $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + 2 * $3);
 	}
 ;
 
 def_rl:
 	def_id Z80_RL rs_uconst {
-		sym_AddEqu($1.c_str(), sym_GetConstantValue("_RS"));
-		sym_AddVar("_RS", sym_GetConstantValue("_RS") + 4 * $3);
+		uint32_t rs = sym_GetRSValue();
+		sym_AddEqu($1, rs);
+		sym_SetRSValue(rs + 4 * $3);
 	}
 ;
 
 def_equs:
 	def_id POP_EQUS string {
-		sym_AddString($1.c_str(), $3.c_str());
+		sym_AddString($1, $3.c_str());
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		sym_RedefString($1.c_str(), $3.c_str());
+		sym_RedefString($1, $3.c_str());
 	}
 ;
 
@@ -1109,7 +1117,7 @@ export_list:
 
 export_list_entry:
 	scoped_id {
-		sym_Export($1.c_str());
+		sym_Export($1);
 	}
 ;
 
@@ -1316,7 +1324,7 @@ relocexpr:
 
 relocexpr_no_str:
 	scoped_anon_id {
-		rpn_Symbol($$, $1.c_str());
+		rpn_Symbol($$, $1);
 	}
 	| NUMBER {
 		rpn_Number($$, $1);
@@ -1404,7 +1412,7 @@ relocexpr_no_str:
 	}
 	| OP_BANK LPAREN scoped_anon_id RPAREN {
 		// '@' is also an ID; it is handled here
-		rpn_BankSymbol($$, $3.c_str());
+		rpn_BankSymbol($$, $3);
 	}
 	| OP_BANK LPAREN string RPAREN {
 		rpn_BankSection($$, $3.c_str());
@@ -1424,7 +1432,7 @@ relocexpr_no_str:
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
 	} LPAREN scoped_anon_id RPAREN {
-		rpn_Number($$, sym_FindScopedValidSymbol($4.c_str()) != nullptr);
+		rpn_Number($$, sym_FindScopedValidSymbol($4) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
 	| OP_ROUND LPAREN const opt_q_arg RPAREN {
@@ -1581,7 +1589,7 @@ string:
 		$$ = strfmt($3.format, $3.args);
 	}
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
-		Symbol *sym = sym_FindScopedValidSymbol($3.c_str());
+		Symbol *sym = sym_FindScopedValidSymbol($3);
 
 		if (!sym)
 			fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
@@ -2716,11 +2724,11 @@ static void compoundAssignment(std::string const &symName, RPNCommand op, int32_
 	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 
-	rpn_Symbol(oldExpr, symName.c_str());
+	rpn_Symbol(oldExpr, symName);
 	rpn_Number(constExpr, constValue);
 	rpn_BinaryOp(op, newExpr, std::move(oldExpr), constExpr);
 	newValue = newExpr.getConstVal();
-	sym_AddVar(symName.c_str(), newValue);
+	sym_AddVar(symName, newValue);
 }
 
 static void failAssert(AssertionType type) {

@@ -22,11 +22,14 @@
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
 
+using namespace std::literals;
+
 std::unordered_map<std::string, Symbol> symbols;
 
 static std::optional<std::string> labelScope = std::nullopt; // Current section's label scope
 static Symbol *PCSymbol;
 static Symbol *_NARGSymbol;
+static Symbol *_RSSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -113,7 +116,7 @@ static void updateSymbolFilename(Symbol &sym) {
 }
 
 // Create a new symbol by name
-static Symbol &createsymbol(char const *symName) {
+static Symbol &createsymbol(std::string const &symName) {
 	Symbol &sym = symbols[symName];
 
 	sym.name = symName;
@@ -134,26 +137,25 @@ static void assignStringSymbol(Symbol &sym, char const *value) {
 	sym.data = equs;
 }
 
-Symbol *sym_FindExactSymbol(char const *symName) {
+Symbol *sym_FindExactSymbol(std::string const &symName) {
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
 }
 
-Symbol *sym_FindScopedSymbol(char const *symName) {
-	if (char const *localName = strchr(symName, '.'); localName) {
-		if (strchr(localName + 1, '.'))
-			fatalerror("'%s' is a nonsensical reference to a nested local symbol\n", symName);
+Symbol *sym_FindScopedSymbol(std::string const &symName) {
+	if (size_t dotPos = symName.find('.'); dotPos != std::string::npos) {
+		if (symName.find('.', dotPos + 1) != std::string::npos)
+			fatalerror(
+			    "'%s' is a nonsensical reference to a nested local symbol\n", symName.c_str()
+			);
 		// If auto-scoped local label, expand the name
-		if (localName == symName) { // Meaning, the name begins with the dot
-			std::string fullName = labelScope ? *labelScope + symName : symName;
-
-			return sym_FindExactSymbol(fullName.c_str());
-		}
+		if (dotPos == 0 && labelScope)
+			return sym_FindExactSymbol(*labelScope + symName);
 	}
 	return sym_FindExactSymbol(symName);
 }
 
-Symbol *sym_FindScopedValidSymbol(char const *symName) {
+Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	// `@` has no value outside a section
@@ -173,7 +175,7 @@ Symbol const *sym_GetPC() {
 
 // Purge a symbol
 void sym_Purge(std::string const &symName) {
-	Symbol *sym = sym_FindScopedValidSymbol(symName.c_str());
+	Symbol *sym = sym_FindScopedValidSymbol(symName);
 
 	if (!sym) {
 		error("'%s' not defined\n", symName.c_str());
@@ -205,6 +207,15 @@ uint32_t sym_GetPCValue() {
 	return 0;
 }
 
+int32_t sym_GetRSValue() {
+	return _RSSymbol->getOutputValue();
+}
+
+void sym_SetRSValue(int32_t value) {
+	updateSymbolFilename(*_RSSymbol);
+	_RSSymbol->data = value;
+}
+
 // Return a constant symbol's value, assuming it's defined
 uint32_t Symbol::getConstantValue() const {
 	if (sym_IsPC(this))
@@ -218,11 +229,11 @@ uint32_t Symbol::getConstantValue() const {
 }
 
 // Return a constant symbol's value
-uint32_t sym_GetConstantValue(char const *symName) {
+uint32_t sym_GetConstantValue(std::string const &symName) {
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym)
 		return sym->getConstantValue();
 
-	error("'%s' not defined\n", symName);
+	error("'%s' not defined\n", symName.c_str());
 	return 0;
 }
 
@@ -241,19 +252,19 @@ void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope) {
  * @param symName The name of the symbol to create
  * @param numeric If false, the symbol may not have been referenced earlier
  */
-static Symbol *createNonrelocSymbol(char const *symName, bool numeric) {
+static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = &createsymbol(symName);
 	} else if (sym->isDefined()) {
-		error("'%s' already defined at ", symName);
+		error("'%s' already defined at ", symName.c_str());
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
-		error("'%s' already referenced at ", symName);
+		error("'%s' already referenced at ", symName.c_str());
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
@@ -263,7 +274,7 @@ static Symbol *createNonrelocSymbol(char const *symName, bool numeric) {
 }
 
 // Add an equated symbol
-Symbol *sym_AddEqu(char const *symName, int32_t value) {
+Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
 	Symbol *sym = createNonrelocSymbol(symName, true);
 
 	if (!sym)
@@ -275,19 +286,19 @@ Symbol *sym_AddEqu(char const *symName, int32_t value) {
 	return sym;
 }
 
-Symbol *sym_RedefEqu(char const *symName, int32_t value) {
+Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym)
 		return sym_AddEqu(symName, value);
 
 	if (sym->isDefined() && sym->type != SYM_EQU) {
-		error("'%s' already defined as non-EQU at ", symName);
+		error("'%s' already defined as non-EQU at ", symName.c_str());
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be redefined\n", symName);
+		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
 		return nullptr;
 	}
 
@@ -302,15 +313,15 @@ Symbol *sym_RedefEqu(char const *symName, int32_t value) {
  * Add a string equated symbol.
  *
  * If the desired symbol is a string it needs to be passed to this function with
- * quotes inside the string, like sym_AddString("name", "\"test\"), or the
+ * quotes inside the string, like sym_AddString("name"s, "\"test\"), or the
  * assembler won't be able to use it with DB and similar. This is equivalent to
  * ``` name EQUS "\"test\"" ```
  *
  * If the desired symbol is a register or a number, just the terminator quotes
- * of the string are enough: sym_AddString("M_PI", "3.1415"). This is the same
+ * of the string are enough: sym_AddString("M_PI"s, "3.1415"). This is the same
  * as ``` M_PI EQUS "3.1415" ```
  */
-Symbol *sym_AddString(char const *symName, char const *value) {
+Symbol *sym_AddString(std::string const &symName, char const *value) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
@@ -320,7 +331,7 @@ Symbol *sym_AddString(char const *symName, char const *value) {
 	return sym;
 }
 
-Symbol *sym_RedefString(char const *symName, char const *value) {
+Symbol *sym_RedefString(std::string const &symName, char const *value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym)
@@ -328,14 +339,14 @@ Symbol *sym_RedefString(char const *symName, char const *value) {
 
 	if (sym->type != SYM_EQUS) {
 		if (sym->isDefined())
-			error("'%s' already defined as non-EQUS at ", symName);
+			error("'%s' already defined as non-EQUS at ", symName.c_str());
 		else
-			error("'%s' already referenced at ", symName);
+			error("'%s' already referenced at ", symName.c_str());
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be redefined\n", symName);
+		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
 		return nullptr;
 	}
 
@@ -348,14 +359,16 @@ Symbol *sym_RedefString(char const *symName, char const *value) {
 }
 
 // Alter a mutable symbol's value
-Symbol *sym_AddVar(char const *symName, int32_t value) {
+Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = &createsymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
 		error(
-		    "'%s' already defined as %s at ", symName, sym->type == SYM_LABEL ? "label" : "constant"
+		    "'%s' already defined as %s at ",
+		    symName.c_str(),
+		    sym->type == SYM_LABEL ? "label" : "constant"
 		);
 		dumpFilename(*sym);
 		putc('\n', stderr);
@@ -375,14 +388,14 @@ Symbol *sym_AddVar(char const *symName, int32_t value) {
  * @param symName The label's full name (so `.name` is invalid)
  * @return The created symbol
  */
-static Symbol *addLabel(char const *symName) {
-	assert(symName[0] != '.'); // The symbol name must have been expanded prior
+static Symbol *addLabel(std::string const &symName) {
+	assert(!symName.starts_with('.')); // The symbol name must have been expanded prior
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
 		sym = &createsymbol(symName);
 	} else if (sym->isDefined()) {
-		error("'%s' already defined at ", symName);
+		error("'%s' already defined at ", symName.c_str());
 		dumpFilename(*sym);
 		putc('\n', stderr);
 		return nullptr;
@@ -393,48 +406,45 @@ static Symbol *addLabel(char const *symName) {
 	sym->type = SYM_LABEL;
 	sym->data = (int32_t)sect_GetSymbolOffset();
 	// Don't export anonymous labels
-	if (exportAll && symName[0] != '!')
+	if (exportAll && !symName.starts_with('!'))
 		sym->isExported = true;
 	sym->section = sect_GetSymbolSection();
 
 	if (sym && !sym->section)
-		error("Label \"%s\" created outside of a SECTION\n", symName);
+		error("Label \"%s\" created outside of a SECTION\n", symName.c_str());
 
 	return sym;
 }
 
 // Add a local (`.name` or `Parent.name`) relocatable symbol
-Symbol *sym_AddLocalLabel(char const *symName) {
+Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// Assuming no dots in `labelScope` if defined
 	assert(!labelScope.has_value() || labelScope->find('.') == std::string::npos);
 
-	char const *localName = strchr(symName, '.');
+	size_t dotPos = symName.find('.');
 
-	assert(localName); // There should be at least one dot in `symName`
+	assert(dotPos != std::string::npos); // There should be at least one dot in `symName`
 
-	// Check for something after the dot in `localName`
-	if (localName[1] == '\0') {
-		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName);
+	// Check for something after the dot
+	if (dotPos == symName.length() - 1) {
+		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName.c_str());
 	}
-	// Check for more than one dot in `localName`
-	if (strchr(localName + 1, '.'))
-		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName);
+	// Check for more than one dot
+	if (symName.find('.', dotPos + 1) != std::string::npos)
+		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName.c_str());
 
-	if (localName == symName) {
+	if (dotPos == 0) {
 		if (!labelScope.has_value()) {
-			error("Unqualified local label '%s' in main scope\n", symName);
+			error("Unqualified local label '%s' in main scope\n", symName.c_str());
 			return nullptr;
 		}
-		std::string fullName = *labelScope + symName;
-
-		return addLabel(fullName.c_str());
-	} else {
-		return addLabel(symName);
+		return addLabel(*labelScope + symName);
 	}
+	return addLabel(symName);
 }
 
 // Add a relocatable symbol
-Symbol *sym_AddLabel(char const *symName) {
+Symbol *sym_AddLabel(std::string const &symName) {
 	Symbol *sym = addLabel(symName);
 
 	// Set the symbol as the new scope
@@ -454,7 +464,7 @@ Symbol *sym_AddAnonLabel() {
 
 	std::string anon = sym_MakeAnonLabelName(0, true); // The direction is important!
 	anonLabelID++;
-	return addLabel(anon.c_str());
+	return addLabel(anon);
 }
 
 // Write an anonymous label's name to a buffer
@@ -491,8 +501,8 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 }
 
 // Export a symbol
-void sym_Export(char const *symName) {
-	if (symName[0] == '!') {
+void sym_Export(std::string const &symName) {
+	if (symName.starts_with('!')) {
 		error("Anonymous labels cannot be exported\n");
 		return;
 	}
@@ -506,7 +516,7 @@ void sym_Export(char const *symName) {
 }
 
 // Add a macro definition
-Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, size_t size) {
+Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, char const *body, size_t size) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
@@ -528,16 +538,16 @@ Symbol *sym_AddMacro(char const *symName, int32_t defLineNo, char const *body, s
 
 // Flag that a symbol is referenced in an RPN expression
 // and create it if it doesn't exist yet
-Symbol *sym_Ref(char const *symName) {
+Symbol *sym_Ref(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		if (symName[0] == '.') {
+		if (symName.starts_with('.')) {
 			if (!labelScope.has_value())
-				fatalerror("Local label reference '%s' in main scope\n", symName);
+				fatalerror("Local label reference '%s' in main scope\n", symName.c_str());
 			std::string fullName = *labelScope + symName;
 
-			sym = &createsymbol(fullName.c_str());
+			sym = &createsymbol(fullName);
 		} else {
 			sym = &createsymbol(symName);
 		}
@@ -553,7 +563,7 @@ void sym_SetExportAll(bool set) {
 	exportAll = set;
 }
 
-static Symbol *createBuiltinSymbol(char const *symName) {
+static Symbol *createBuiltinSymbol(std::string const &symName) {
 	Symbol *sym = &createsymbol(symName);
 
 	sym->isBuiltin = true;
@@ -565,22 +575,23 @@ static Symbol *createBuiltinSymbol(char const *symName) {
 
 // Initialize the symboltable
 void sym_Init(time_t now) {
-	PCSymbol = createBuiltinSymbol("@");
+	PCSymbol = createBuiltinSymbol("@"s);
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->data = CallbackPC;
 
-	_NARGSymbol = createBuiltinSymbol("_NARG");
+	_NARGSymbol = createBuiltinSymbol("_NARG"s);
 	_NARGSymbol->type = SYM_EQU;
 	_NARGSymbol->data = Callback_NARG;
 
-	sym_AddVar("_RS", 0)->isBuiltin = true;
+	_RSSymbol = sym_AddVar("_RS"s, 0);
+	_RSSymbol->isBuiltin = true;
 
-	sym_AddString("__RGBDS_VERSION__", get_package_version_string())->isBuiltin = true;
-	sym_AddEqu("__RGBDS_MAJOR__", PACKAGE_VERSION_MAJOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_MINOR__", PACKAGE_VERSION_MINOR)->isBuiltin = true;
-	sym_AddEqu("__RGBDS_PATCH__", PACKAGE_VERSION_PATCH)->isBuiltin = true;
+	sym_AddString("__RGBDS_VERSION__"s, get_package_version_string())->isBuiltin = true;
+	sym_AddEqu("__RGBDS_MAJOR__"s, PACKAGE_VERSION_MAJOR)->isBuiltin = true;
+	sym_AddEqu("__RGBDS_MINOR__"s, PACKAGE_VERSION_MINOR)->isBuiltin = true;
+	sym_AddEqu("__RGBDS_PATCH__"s, PACKAGE_VERSION_PATCH)->isBuiltin = true;
 #ifdef PACKAGE_VERSION_RC
-	sym_AddEqu("__RGBDS_RC__", PACKAGE_VERSION_RC)->isBuiltin = true;
+	sym_AddEqu("__RGBDS_RC__"s, PACKAGE_VERSION_RC)->isBuiltin = true;
 #endif
 
 	if (now == (time_t)-1) {
@@ -609,17 +620,17 @@ void sym_Init(time_t now) {
 	    time_utc
 	);
 
-	sym_AddString("__TIME__", savedTIME)->isBuiltin = true;
-	sym_AddString("__DATE__", savedDATE)->isBuiltin = true;
-	sym_AddString("__ISO_8601_LOCAL__", savedTIMESTAMP_ISO8601_LOCAL)->isBuiltin = true;
-	sym_AddString("__ISO_8601_UTC__", savedTIMESTAMP_ISO8601_UTC)->isBuiltin = true;
+	sym_AddString("__TIME__"s, savedTIME)->isBuiltin = true;
+	sym_AddString("__DATE__"s, savedDATE)->isBuiltin = true;
+	sym_AddString("__ISO_8601_LOCAL__"s, savedTIMESTAMP_ISO8601_LOCAL)->isBuiltin = true;
+	sym_AddString("__ISO_8601_UTC__"s, savedTIMESTAMP_ISO8601_UTC)->isBuiltin = true;
 
-	sym_AddEqu("__UTC_YEAR__", time_utc->tm_year + 1900)->isBuiltin = true;
-	sym_AddEqu("__UTC_MONTH__", time_utc->tm_mon + 1)->isBuiltin = true;
-	sym_AddEqu("__UTC_DAY__", time_utc->tm_mday)->isBuiltin = true;
-	sym_AddEqu("__UTC_HOUR__", time_utc->tm_hour)->isBuiltin = true;
-	sym_AddEqu("__UTC_MINUTE__", time_utc->tm_min)->isBuiltin = true;
-	sym_AddEqu("__UTC_SECOND__", time_utc->tm_sec)->isBuiltin = true;
+	sym_AddEqu("__UTC_YEAR__"s, time_utc->tm_year + 1900)->isBuiltin = true;
+	sym_AddEqu("__UTC_MONTH__"s, time_utc->tm_mon + 1)->isBuiltin = true;
+	sym_AddEqu("__UTC_DAY__"s, time_utc->tm_mday)->isBuiltin = true;
+	sym_AddEqu("__UTC_HOUR__"s, time_utc->tm_hour)->isBuiltin = true;
+	sym_AddEqu("__UTC_MINUTE__"s, time_utc->tm_min)->isBuiltin = true;
+	sym_AddEqu("__UTC_SECOND__"s, time_utc->tm_sec)->isBuiltin = true;
 
 	labelScope = std::nullopt;
 	anonLabelID = 0;
