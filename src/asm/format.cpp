@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "asm/fixpoint.hpp"
+#include "asm/lexer.hpp" // MAXSTRLEN
 #include "asm/warning.hpp"
 
 void FormatSpec::useCharacter(int c) {
@@ -104,7 +105,7 @@ void FormatSpec::finishCharacters() {
 		state = FORMAT_INVALID;
 }
 
-void FormatSpec::printString(char *buf, size_t bufLen, char const *value) {
+std::string FormatSpec::formatString(std::string const &value) {
 	if (isEmpty()) {
 		// No format was specified
 		type = 's';
@@ -121,33 +122,29 @@ void FormatSpec::printString(char *buf, size_t bufLen, char const *value) {
 	if (type != 's')
 		error("Formatting string as type '%c'\n", type);
 
-	size_t len = strlen(value);
-	size_t totalLen = width > len ? width : len;
+	size_t valueLen = value.length();
+	size_t totalLen = width > valueLen ? width : valueLen;
+	size_t padLen = totalLen - valueLen;
 
-	if (totalLen > bufLen - 1) { // bufLen includes terminator
-		error("Formatted string value too long\n");
-		totalLen = bufLen - 1;
-		if (len > totalLen)
-			len = totalLen;
-	}
-	assert(len < bufLen && totalLen < bufLen && len <= totalLen);
-
-	size_t padLen = totalLen - len;
-
+	std::string str;
+	str.reserve(totalLen);
 	if (alignLeft) {
-		memcpy(buf, value, len);
-		for (size_t i = len; i < totalLen; i++)
-			buf[i] = ' ';
+		str.append(value);
+		str.append(padLen, ' ');
 	} else {
-		for (size_t i = 0; i < padLen; i++)
-			buf[i] = ' ';
-		memcpy(buf + padLen, value, len);
+		str.append(padLen, ' ');
+		str.append(value);
 	}
 
-	buf[totalLen] = '\0';
+	if (str.length() > MAXSTRLEN) {
+		error("Formatted string value too long\n");
+		str.resize(MAXSTRLEN);
+	}
+
+	return str;
 }
 
-void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
+std::string FormatSpec::formatNumber(uint32_t value) {
 	if (isEmpty()) {
 		// No format was specified; default to uppercase $hex
 		type = 'X';
@@ -219,51 +216,43 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}
 
-	size_t len = strlen(valueBuf);
-	size_t numLen = (signChar != 0) + (prefixChar != 0) + len;
+	size_t valueLen = strlen(valueBuf);
+	size_t numLen = (signChar != 0) + (prefixChar != 0) + valueLen;
 	size_t totalLen = width > numLen ? width : numLen;
-
-	if (totalLen > bufLen - 1) { // bufLen includes terminator
-		error("Formatted numeric value too long\n");
-		totalLen = bufLen - 1;
-		if (numLen > totalLen) {
-			len -= numLen - totalLen;
-			numLen = totalLen;
-		}
-	}
-	assert(numLen < bufLen && totalLen < bufLen && numLen <= totalLen && len <= numLen);
-
 	size_t padLen = totalLen - numLen;
-	size_t pos = 0;
 
+	std::string str;
+	str.reserve(totalLen);
 	if (alignLeft) {
 		if (signChar)
-			buf[pos++] = signChar;
+			str += signChar;
 		if (prefixChar)
-			buf[pos++] = prefixChar;
-		memcpy(buf + pos, valueBuf, len);
-		for (size_t i = pos + len; i < totalLen; i++)
-			buf[i] = ' ';
+			str += prefixChar;
+		str.append(valueBuf);
+		str.append(padLen, ' ');
 	} else {
 		if (padZero) {
 			// sign, then prefix, then zero padding
 			if (signChar)
-				buf[pos++] = signChar;
+				str += signChar;
 			if (prefixChar)
-				buf[pos++] = prefixChar;
-			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = '0';
+				str += prefixChar;
+			str.append(padLen, '0');
 		} else {
 			// space padding, then sign, then prefix
-			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = ' ';
+			str.append(padLen, ' ');
 			if (signChar)
-				buf[pos++] = signChar;
+				str += signChar;
 			if (prefixChar)
-				buf[pos++] = prefixChar;
+				str += prefixChar;
 		}
-		memcpy(buf + pos, valueBuf, len);
+		str.append(valueBuf);
 	}
 
-	buf[totalLen] = '\0';
+	if (str.length() > MAXSTRLEN) {
+		error("Formatted numeric value too long\n");
+		str.resize(MAXSTRLEN);
+	}
+
+	return str;
 }

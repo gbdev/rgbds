@@ -2690,15 +2690,13 @@ static std::string strfmt(
 			// Will warn after formatting is done.
 			str += '%';
 		} else {
-			static char buf[MAXSTRLEN + 1];
-			std::visit(
+			str.append(std::visit(
 			    Visitor{
-			        [&](uint32_t n) { fmt.printNumber(buf, sizeof(buf), n); },
-			        [&](std::string const &s) { fmt.printString(buf, sizeof(buf), s.c_str()); },
+			        [&fmt](uint32_t n) { return fmt.formatNumber(n); },
+			        [&fmt](std::string const &s) { return fmt.formatString(s); },
 			    },
 			    args[argIndex]
-			);
-			str.append(buf);
+			));
 		}
 
 		argIndex++;

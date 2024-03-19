@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string>
 
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
@@ -35,8 +36,9 @@ public:
 
 	void useCharacter(int c);
 	void finishCharacters();
-	void printString(char *buf, size_t bufLen, char const *value);
-	void printNumber(char *buf, size_t bufLen, uint32_t value);
+
+	std::string formatString(std::string const &value);
+	std::string formatNumber(uint32_t value);
 };
 
 #endif // RGBDS_FORMAT_SPEC_H

@@ -1191,10 +1191,12 @@ static char const *readInterpolation(size_t depth) {
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
-		fmt.printString(buf, sizeof(buf), sym->getEqus()->c_str());
+		std::string str = fmt.formatString(*sym->getEqus());
+		memcpy(buf, str.c_str(), str.length() + 1);
 		return buf;
 	} else if (sym->isNumeric()) {
-		fmt.printNumber(buf, sizeof(buf), sym->getConstantValue());
+		std::string str = fmt.formatNumber(sym->getConstantValue());
+		memcpy(buf, str.c_str(), str.length() + 1);
 		return buf;
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");
