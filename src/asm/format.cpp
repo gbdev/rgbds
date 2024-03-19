@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "asm/fixpoint.hpp"
+#include "asm/lexer.hpp" // MAXSTRLEN
 #include "asm/warning.hpp"
 
 void FormatSpec::useCharacter(int c) {
@@ -104,10 +105,11 @@ void FormatSpec::finishCharacters() {
 		state = FORMAT_INVALID;
 }
 
-void FormatSpec::printString(char *buf, size_t bufLen, char const *value) {
+std::string FormatSpec::formatString(std::string const &value) const {
+	int useType = type;
 	if (isEmpty()) {
 		// No format was specified
-		type = 's';
+		useType = 's';
 	}
 
 	if (sign)
@@ -118,52 +120,50 @@ void FormatSpec::printString(char *buf, size_t bufLen, char const *value) {
 		error("Formatting string with padding flag '0'\n");
 	if (hasFrac)
 		error("Formatting string with fractional width\n");
-	if (type != 's')
-		error("Formatting string as type '%c'\n", type);
+	if (useType != 's')
+		error("Formatting string as type '%c'\n", useType);
 
-	size_t len = strlen(value);
-	size_t totalLen = width > len ? width : len;
+	size_t valueLen = value.length();
+	size_t totalLen = width > valueLen ? width : valueLen;
+	size_t padLen = totalLen - valueLen;
 
-	if (totalLen > bufLen - 1) { // bufLen includes terminator
-		error("Formatted string value too long\n");
-		totalLen = bufLen - 1;
-		if (len > totalLen)
-			len = totalLen;
-	}
-	assert(len < bufLen && totalLen < bufLen && len <= totalLen);
-
-	size_t padLen = totalLen - len;
-
+	std::string str;
+	str.reserve(totalLen);
 	if (alignLeft) {
-		memcpy(buf, value, len);
-		for (size_t i = len; i < totalLen; i++)
-			buf[i] = ' ';
+		str.append(value);
+		str.append(padLen, ' ');
 	} else {
-		for (size_t i = 0; i < padLen; i++)
-			buf[i] = ' ';
-		memcpy(buf + padLen, value, len);
+		str.append(padLen, ' ');
+		str.append(value);
 	}
 
-	buf[totalLen] = '\0';
+	if (str.length() > MAXSTRLEN) {
+		error("Formatted string value too long\n");
+		str.resize(MAXSTRLEN);
+	}
+
+	return str;
 }
 
-void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
+std::string FormatSpec::formatNumber(uint32_t value) const {
+	int useType = type;
+	bool usePrefix = prefix;
 	if (isEmpty()) {
 		// No format was specified; default to uppercase $hex
-		type = 'X';
-		prefix = true;
+		useType = 'X';
+		usePrefix = true;
 	}
 
-	if (type != 'X' && type != 'x' && type != 'b' && type != 'o' && prefix)
-		error("Formatting type '%c' with prefix flag '#'\n", type);
-	if (type != 'f' && hasFrac)
-		error("Formatting type '%c' with fractional width\n", type);
-	if (type == 's')
+	if (useType != 'X' && useType != 'x' && useType != 'b' && useType != 'o' && usePrefix)
+		error("Formatting type '%c' with prefix flag '#'\n", useType);
+	if (useType != 'f' && hasFrac)
+		error("Formatting type '%c' with fractional width\n", useType);
+	if (useType == 's')
 		error("Formatting number as type 's'\n");
 
 	char signChar = sign; // 0 or ' ' or '+'
 
-	if (type == 'd' || type == 'f') {
+	if (useType == 'd' || useType == 'f') {
 		int32_t v = value;
 
 		if (v < 0 && v != INT32_MIN) {
@@ -172,16 +172,16 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 		}
 	}
 
-	char prefixChar = !prefix       ? 0
-	                  : type == 'X' ? '$'
-	                  : type == 'x' ? '$'
-	                  : type == 'b' ? '%'
-	                  : type == 'o' ? '&'
-	                                : 0;
+	char prefixChar = !usePrefix       ? 0
+	                  : useType == 'X' ? '$'
+	                  : useType == 'x' ? '$'
+	                  : useType == 'b' ? '%'
+	                  : useType == 'o' ? '&'
+	                                   : 0;
 
 	char valueBuf[262]; // Max 5 digits + decimal + 255 fraction digits + terminator
 
-	if (type == 'b') {
+	if (useType == 'b') {
 		// Special case for binary
 		char *ptr = valueBuf;
 
@@ -194,76 +194,68 @@ void FormatSpec::printNumber(char *buf, size_t bufLen, uint32_t value) {
 		std::reverse(valueBuf, ptr);
 
 		*ptr = '\0';
-	} else if (type == 'f') {
+	} else if (useType == 'f') {
 		// Special case for fixed-point
 
 		// Default fractional width (C++'s is 6 for "%f"; here 5 is enough for Q16.16)
-		size_t cappedFracWidth = hasFrac ? fracWidth : 5;
+		size_t useFracWidth = hasFrac ? fracWidth : 5;
 
-		if (cappedFracWidth > 255) {
-			error("Fractional width %zu too long, limiting to 255\n", cappedFracWidth);
-			cappedFracWidth = 255;
+		if (useFracWidth > 255) {
+			error("Fractional width %zu too long, limiting to 255\n", useFracWidth);
+			useFracWidth = 255;
 		}
 
 		snprintf(
-		    valueBuf, sizeof(valueBuf), "%.*f", (int)cappedFracWidth, value / fix_PrecisionFactor()
+		    valueBuf, sizeof(valueBuf), "%.*f", (int)useFracWidth, value / fix_PrecisionFactor()
 		);
 	} else {
-		char const *spec = type == 'd'   ? "%" PRId32
-		                   : type == 'u' ? "%" PRIu32
-		                   : type == 'X' ? "%" PRIX32
-		                   : type == 'x' ? "%" PRIx32
-		                   : type == 'o' ? "%" PRIo32
-		                                 : "%" PRId32;
+		char const *spec = useType == 'd'   ? "%" PRId32
+		                   : useType == 'u' ? "%" PRIu32
+		                   : useType == 'X' ? "%" PRIX32
+		                   : useType == 'x' ? "%" PRIx32
+		                   : useType == 'o' ? "%" PRIo32
+		                                    : "%" PRId32;
 
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}
 
-	size_t len = strlen(valueBuf);
-	size_t numLen = (signChar != 0) + (prefixChar != 0) + len;
+	size_t valueLen = strlen(valueBuf);
+	size_t numLen = (signChar != 0) + (prefixChar != 0) + valueLen;
 	size_t totalLen = width > numLen ? width : numLen;
-
-	if (totalLen > bufLen - 1) { // bufLen includes terminator
-		error("Formatted numeric value too long\n");
-		totalLen = bufLen - 1;
-		if (numLen > totalLen) {
-			len -= numLen - totalLen;
-			numLen = totalLen;
-		}
-	}
-	assert(numLen < bufLen && totalLen < bufLen && numLen <= totalLen && len <= numLen);
-
 	size_t padLen = totalLen - numLen;
-	size_t pos = 0;
 
+	std::string str;
+	str.reserve(totalLen);
 	if (alignLeft) {
 		if (signChar)
-			buf[pos++] = signChar;
+			str += signChar;
 		if (prefixChar)
-			buf[pos++] = prefixChar;
-		memcpy(buf + pos, valueBuf, len);
-		for (size_t i = pos + len; i < totalLen; i++)
-			buf[i] = ' ';
+			str += prefixChar;
+		str.append(valueBuf);
+		str.append(padLen, ' ');
 	} else {
 		if (padZero) {
 			// sign, then prefix, then zero padding
 			if (signChar)
-				buf[pos++] = signChar;
+				str += signChar;
 			if (prefixChar)
-				buf[pos++] = prefixChar;
-			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = '0';
+				str += prefixChar;
+			str.append(padLen, '0');
 		} else {
 			// space padding, then sign, then prefix
-			for (size_t i = 0; i < padLen; i++)
-				buf[pos++] = ' ';
+			str.append(padLen, ' ');
 			if (signChar)
-				buf[pos++] = signChar;
+				str += signChar;
 			if (prefixChar)
-				buf[pos++] = prefixChar;
+				str += prefixChar;
 		}
-		memcpy(buf + pos, valueBuf, len);
+		str.append(valueBuf);
 	}
 
-	buf[totalLen] = '\0';
+	if (str.length() > MAXSTRLEN) {
+		error("Formatted numeric value too long\n");
+		str.resize(MAXSTRLEN);
+	}
+
+	return str;
 }
