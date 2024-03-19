@@ -143,18 +143,13 @@ static void writesymbol(Symbol const &sym, FILE *file) {
 	}
 }
 
-static void registerSymbol(Symbol &sym) {
-	sym.ID = objectSymbols.size();
-	objectSymbols.push_back(&sym);
-	out_RegisterNode(sym.src);
-}
-
-// Returns a symbol's ID within the object file
-// If the symbol does not have one, one is assigned by registering the symbol
-static uint32_t getSymbolID(Symbol &sym) {
-	if (sym.ID == (uint32_t)-1 && !sym_IsPC(&sym))
-		registerSymbol(sym);
-	return sym.ID;
+static void registerUnregisteredSymbol(Symbol &sym) {
+	// Check for `sym.src`, to skip any built-in symbol from rgbasm
+	if (sym.src && sym.ID == (uint32_t)-1 && !sym_IsPC(&sym)) {
+		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
+		objectSymbols.push_back(&sym);
+		out_RegisterNode(sym.src);
+	}
 }
 
 static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &rpn) {
@@ -193,7 +188,8 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 				value = sym_GetConstantValue(symName);
 			} else {
 				rpnexpr[rpnptr++] = RPN_SYM;
-				value = getSymbolID(*sym);
+				registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
+				value = sym->ID;
 			}
 
 			rpnexpr[rpnptr++] = value & 0xFF;
@@ -213,7 +209,8 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 
 			// The symbol name is always written expanded
 			sym = sym_FindExactSymbol(symName);
-			value = getSymbolID(*sym);
+			registerUnregisteredSymbol(*sym); // Ensure that `sym->ID` is set
+			value = sym->ID;
 
 			rpnexpr[rpnptr++] = RPN_BANK_SYM;
 			rpnexpr[rpnptr++] = value & 0xFF;
@@ -320,13 +317,6 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 		// Iters are stored by decreasing depth, so reverse the order for output
 		for (uint32_t i = nodeIters.size(); i--;)
 			putlong(nodeIters[i], file);
-	}
-}
-
-static void registerUnregisteredSymbol(Symbol &sym) {
-	// Check for symbol->src, to skip any built-in symbol from rgbasm
-	if (sym.src && sym.ID == (uint32_t)-1) {
-		registerSymbol(sym);
 	}
 }
 
