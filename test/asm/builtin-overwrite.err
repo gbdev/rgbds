@@ -3,53 +3,53 @@ error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(5):
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(6):
     Built-in symbol '__UTC_YEAR__' cannot be purged
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(9):
-    '__UTC_YEAR__' already defined at <command-line>
+    '__UTC_YEAR__' already defined at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(10):
-    '__UTC_YEAR__' already defined at <command-line>
+    '__UTC_YEAR__' already defined at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(13):
-    '__UTC_YEAR__' already defined as constant at <command-line>
+    '__UTC_YEAR__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(14):
-    '__UTC_YEAR__' already defined as constant at <command-line>
+    '__UTC_YEAR__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(17):
-    '__UTC_YEAR__' already defined at <command-line>
+    '__UTC_YEAR__' already defined at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(18):
-    '__UTC_YEAR__' already defined at <command-line>
+    '__UTC_YEAR__' already defined at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(21):
-    '__UTC_YEAR__' already defined as constant at <command-line>
+    '__UTC_YEAR__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(22):
-    '__UTC_YEAR__' already defined as constant at <command-line>
+    '__UTC_YEAR__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(25):
     Built-in symbol '__UTC_YEAR__' cannot be redefined
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(26):
     Built-in symbol '__UTC_YEAR__' cannot be redefined
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(29):
-    '__UTC_YEAR__' already defined as non-EQUS at <command-line>
+    '__UTC_YEAR__' already defined as non-EQUS at <builtin>
 error: builtin-overwrite.asm(36) -> builtin-overwrite.asm::tickle(30):
-    '__UTC_YEAR__' already defined as non-EQUS at <command-line>
+    '__UTC_YEAR__' already defined as non-EQUS at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(5):
     Built-in symbol '__ISO_8601_UTC__' cannot be purged
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(6):
     Built-in symbol '__ISO_8601_UTC__' cannot be purged
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(9):
-    '__ISO_8601_UTC__' already defined at <command-line>
+    '__ISO_8601_UTC__' already defined at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(10):
-    '__ISO_8601_UTC__' already defined at <command-line>
+    '__ISO_8601_UTC__' already defined at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(13):
-    '__ISO_8601_UTC__' already defined as constant at <command-line>
+    '__ISO_8601_UTC__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(14):
-    '__ISO_8601_UTC__' already defined as constant at <command-line>
+    '__ISO_8601_UTC__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(17):
-    '__ISO_8601_UTC__' already defined at <command-line>
+    '__ISO_8601_UTC__' already defined at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(18):
-    '__ISO_8601_UTC__' already defined at <command-line>
+    '__ISO_8601_UTC__' already defined at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(21):
-    '__ISO_8601_UTC__' already defined as constant at <command-line>
+    '__ISO_8601_UTC__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(22):
-    '__ISO_8601_UTC__' already defined as constant at <command-line>
+    '__ISO_8601_UTC__' already defined as constant at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(25):
-    '__ISO_8601_UTC__' already defined as non-EQU at <command-line>
+    '__ISO_8601_UTC__' already defined as non-EQU at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(26):
-    '__ISO_8601_UTC__' already defined as non-EQU at <command-line>
+    '__ISO_8601_UTC__' already defined as non-EQU at <builtin>
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(29):
     Built-in symbol '__ISO_8601_UTC__' cannot be redefined
 error: builtin-overwrite.asm(37) -> builtin-overwrite.asm::tickle(30):

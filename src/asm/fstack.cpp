@@ -101,10 +101,9 @@ FileStackNode *fstk_GetFileStack() {
 	FileStackNode *topNode = contextStack.top().fileInfo;
 
 	// Mark node and all of its parents as referenced if not already so they don't get freed
-	for (FileStackNode *node = topNode; node && !node->referenced; node = node->parent) {
+	for (FileStackNode *node = topNode; node && !node->referenced; node = node->parent)
 		node->referenced = true;
-		node->ID = -1;
-	}
+
 	return topNode;
 }
 

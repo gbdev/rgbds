@@ -62,7 +62,6 @@ static int32_t CallbackPC() {
 int32_t Symbol::getValue() const {
 	assert(std::holds_alternative<int32_t>(data) || std::holds_alternative<int32_t (*)()>(data));
 	if (int32_t const *value = std::get_if<int32_t>(&data); value) {
-		// TODO: do not use section's org directly
 		return type == SYM_LABEL ? *value + getSection()->org : *value;
 	}
 	return getOutputValue();
@@ -90,25 +89,23 @@ std::string *Symbol::getEqus() const {
 }
 
 static void dumpFilename(Symbol const &sym) {
-	if (sym.src)
+	if (sym.src) {
 		sym.src->dump(sym.fileLine);
-	else if (sym.fileLine == 0)
-		fputs("<command-line>", stderr);
-	else
-		fputs("<builtin>", stderr);
-}
-
-// Set a symbol's definition filename and line
-static void setSymbolFilename(Symbol &sym) {
-	sym.src = fstk_GetFileStack();                  // This is `nullptr` for built-ins
-	sym.fileLine = sym.src ? lexer_GetLineNo() : 0; // This is 1 for built-ins
+		putc('\n', stderr);
+	} else if (sym.isBuiltin) {
+		fputs("<builtin>\n", stderr);
+	} else {
+		fputs("<command-line>\n", stderr);
+	}
 }
 
 // Update a symbol's definition filename and line
 static void updateSymbolFilename(Symbol &sym) {
 	FileStackNode *oldSrc = sym.src;
 
-	setSymbolFilename(sym);
+	sym.src = fstk_GetFileStack();
+	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
+
 	// If the old node was referenced, ensure the new one is
 	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
 		out_RegisterNode(sym.src);
@@ -116,14 +113,15 @@ static void updateSymbolFilename(Symbol &sym) {
 }
 
 // Create a new symbol by name
-static Symbol &createsymbol(std::string const &symName) {
+static Symbol &createSymbol(std::string const &symName) {
 	Symbol &sym = symbols[symName];
 
 	sym.name = symName;
 	sym.isExported = false;
 	sym.isBuiltin = false;
 	sym.section = nullptr;
-	setSymbolFilename(sym);
+	sym.src = fstk_GetFileStack();
+	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 	sym.ID = -1;
 
 	return sym;
@@ -256,17 +254,15 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = &createsymbol(symName);
+		sym = &createSymbol(symName);
 	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName.c_str());
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
 		error("'%s' already referenced at ", symName.c_str());
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	}
 
@@ -295,7 +291,6 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	if (sym->isDefined() && sym->type != SYM_EQU) {
 		error("'%s' already defined as non-EQU at ", symName.c_str());
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
@@ -343,7 +338,6 @@ Symbol *sym_RedefString(std::string const &symName, char const *value) {
 		else
 			error("'%s' already referenced at ", symName.c_str());
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return nullptr;
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
@@ -363,7 +357,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = &createsymbol(symName);
+		sym = &createSymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
 		error(
 		    "'%s' already defined as %s at ",
@@ -371,7 +365,6 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 		    sym->type == SYM_LABEL ? "label" : "constant"
 		);
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return sym;
 	} else {
 		updateSymbolFilename(*sym);
@@ -393,11 +386,10 @@ static Symbol *addLabel(std::string const &symName) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
-		sym = &createsymbol(symName);
+		sym = &createSymbol(symName);
 	} else if (sym->isDefined()) {
 		error("'%s' already defined at ", symName.c_str());
 		dumpFilename(*sym);
-		putc('\n', stderr);
 		return nullptr;
 	} else {
 		updateSymbolFilename(*sym);
@@ -528,8 +520,8 @@ Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, char const *
 	sym->type = SYM_MACRO;
 	sym->data = macro;
 
-	setSymbolFilename(*sym); // TODO: is this really necessary?
-	// The symbol is created at the line after the `endm`,
+	sym->src = fstk_GetFileStack();
+	// The symbol is created at the line after the `ENDM`,
 	// override this with the actual definition line
 	sym->fileLine = defLineNo;
 
@@ -547,9 +539,9 @@ Symbol *sym_Ref(std::string const &symName) {
 				fatalerror("Local label reference '%s' in main scope\n", symName.c_str());
 			std::string fullName = *labelScope + symName;
 
-			sym = &createsymbol(fullName);
+			sym = &createSymbol(fullName);
 		} else {
-			sym = &createsymbol(symName);
+			sym = &createSymbol(symName);
 		}
 
 		sym->type = SYM_REF;
@@ -563,25 +555,17 @@ void sym_SetExportAll(bool set) {
 	exportAll = set;
 }
 
-static Symbol *createBuiltinSymbol(std::string const &symName) {
-	Symbol *sym = &createsymbol(symName);
-
-	sym->isBuiltin = true;
-	sym->src = nullptr;
-	sym->fileLine = 1; // This is 0 for CLI-defined symbols
-
-	return sym;
-}
-
 // Initialize the symboltable
 void sym_Init(time_t now) {
-	PCSymbol = createBuiltinSymbol("@"s);
+	PCSymbol = &createSymbol("@"s);
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->data = CallbackPC;
+	PCSymbol->isBuiltin = true;
 
-	_NARGSymbol = createBuiltinSymbol("_NARG"s);
+	_NARGSymbol = &createSymbol("_NARG"s);
 	_NARGSymbol->type = SYM_EQU;
 	_NARGSymbol->data = Callback_NARG;
+	_NARGSymbol->isBuiltin = true;
 
 	_RSSymbol = sym_AddVar("_RS"s, 0);
 	_RSSymbol->isBuiltin = true;
