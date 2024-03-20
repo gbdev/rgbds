@@ -7,8 +7,10 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <memory>
 #include <new>
 #include <stack>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string_view>
 
@@ -23,10 +25,17 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
+using namespace std::literals;
+
 struct Context {
 	FileStackNode *fileInfo;
 	LexerState lexerState{};
-	uint32_t uniqueID = 0;
+	// If the shared_ptr is empty, `\@` is not permitted for this context.
+	// Otherwise, if the pointee string is empty, it means that a unique ID has not been requested
+	// for this context yet, and it should be generated.
+	// Note that several contexts can share the same unique ID (since `INCLUDE` preserves its
+	// parent's, and likewise "back-propagates" a unique ID if requested), hence using `shared_ptr`.
+	std::shared_ptr<std::string> uniqueIDStr;
 	MacroArgs *macroArgs = nullptr; // Macro args are *saved* here
 	uint32_t nbReptIters = 0;
 	bool isForLoop = false;
@@ -106,6 +115,18 @@ FileStackNode *fstk_GetFileStack() {
 		node->referenced = true;
 
 	return topNode;
+}
+
+std::shared_ptr<std::string> fstk_GetUniqueIDStr() {
+	static uint64_t nextUniqueID = 1;
+
+	std::shared_ptr<std::string> &str = contextStack.top().uniqueIDStr;
+
+	// If a unique ID is allowed but has not been generated yet, generate one now.
+	if (str && str->empty())
+		*str = "_u"s + std::to_string(nextUniqueID++);
+
+	return str;
 }
 
 void fstk_AddIncludePath(std::string const &path) {
@@ -200,15 +221,14 @@ bool yywrap() {
 		// If this wasn't the last iteration, wrap instead of popping
 		if (fileInfoIters.front() <= context.nbReptIters) {
 			lexer_RestartRept(context.fileInfo->lineNo);
-			context.uniqueID = macro_UseNewUniqueID();
+			context.uniqueIDStr->clear(); // Invalidate the current unique ID (if any).
 			return false;
 		}
 	} else if (contextStack.size() == 1) {
 		return true;
 	}
 
-	Context oldContext = contextStack.top();
-
+	Context oldContext = std::move(contextStack.top());
 	contextStack.pop();
 
 	lexer_CleanupState(oldContext.lexerState);
@@ -220,7 +240,6 @@ bool yywrap() {
 		delete oldContext.fileInfo;
 
 	lexer_SetState(&contextStack.top().lexerState);
-	macro_SetUniqueID(contextStack.top().uniqueID);
 
 	return false;
 }
@@ -232,13 +251,15 @@ static Context &newContext(FileStackNode &fileInfo) {
 	if (contextStack.size() > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
-	// Save the current `\@` value, to be restored when this context ends
-	contextStack.top().uniqueID = macro_GetUniqueID();
-
 	fileInfo.parent = contextStack.top().fileInfo;
 	fileInfo.lineNo = lexer_GetLineNo();
 
-	return contextStack.emplace(Context{.fileInfo = &fileInfo});
+	return contextStack.emplace(Context{
+	    .fileInfo = &fileInfo,
+	    .uniqueIDStr = fileInfo.generatesUniqueID()
+	                       ? std::make_shared<std::string>() // Create a new, not-yet-generated ID.
+	                       : contextStack.top().uniqueIDStr, // Make a copy.
+	});
 }
 
 void fstk_RunInclude(std::string const &path) {
@@ -260,16 +281,10 @@ void fstk_RunInclude(std::string const &path) {
 		return;
 	}
 
-	uint32_t uniqueID = contextStack.top().uniqueID;
-
 	Context &context = newContext(*fileInfo);
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(&context.lexerState);
-	// We're back at top-level, so most things are reset,
-	// but not the unique ID, since INCLUDE may be inside a
-	// MACRO or REPT/FOR loop
-	context.uniqueID = uniqueID;
 }
 
 // Similar to `fstk_RunInclude`, but not subject to `-MG`, and
@@ -294,8 +309,6 @@ static void runPreIncludeFile() {
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetState(&context.lexerState);
-	// We're back at top-level, so most things are reset
-	context.uniqueID = macro_UndefUniqueID();
 }
 
 void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
@@ -342,7 +355,6 @@ void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
 	);
 	lexer_SetStateAtEOL(&context.lexerState);
-	context.uniqueID = macro_UseNewUniqueID();
 	macro_UseNewArgs(&args);
 }
 
@@ -366,7 +378,6 @@ static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {
 	context.fileInfo->lineNo = reptLineNo;
 	lexer_OpenFileView(context.lexerState, "REPT", body, size, reptLineNo);
 	lexer_SetStateAtEOL(&context.lexerState);
-	context.uniqueID = macro_UseNewUniqueID();
 
 	return true;
 }
@@ -444,7 +455,10 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
-	Context &context = contextStack.emplace();
+	Context &context = contextStack.emplace(Context{
+	    .fileInfo = nullptr,    // We're going to init it just below.
+	    .uniqueIDStr = nullptr, // `\@` is not allowed at top level.
+	});
 	if (!lexer_OpenFile(context.lexerState, mainPath))
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(&context.lexerState);
@@ -455,8 +469,6 @@ void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	// lineNo and nbReptIters are unused on the top-level context
 	context.fileInfo->parent = nullptr;
 	context.fileInfo->lineNo = 0; // This still gets written to the object file, so init it
-
-	context.uniqueID = macro_UndefUniqueID();
 
 	maxRecursionDepth = maxDepth;
 

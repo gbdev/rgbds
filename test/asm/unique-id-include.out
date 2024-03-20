@@ -1,0 +1,19 @@
+Within REPT
+Within INCLUDE: _u1
+Outside INCLUDE: _u1
+Within REPT
+Within INCLUDE: _u2
+Outside INCLUDE: _u2
+Within MACRO
+Within INCLUDE: _u3
+Outside INCLUDE: _u3
+
+Within REPT: _u4
+Within INCLUDE: _u4
+Outside INCLUDE: _u4
+Within REPT: _u5
+Within INCLUDE: _u5
+Outside INCLUDE: _u5
+Within MACRO: _u6
+Within INCLUDE: _u6
+Outside INCLUDE: _u6

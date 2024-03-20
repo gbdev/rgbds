@@ -11,10 +11,6 @@
 #define MAXMACROARGS 99999
 
 static MacroArgs *macroArgs = nullptr;
-static uint32_t uniqueID = 0;
-static uint32_t maxUniqueID = 0;
-static char uniqueIDBuf[sizeof("_u4294967295")] = {}; // UINT32_MAX
-static char *uniqueIDPtr = nullptr;
 
 void MacroArgs::append(std::string s) {
 	if (s.empty())
@@ -75,42 +71,6 @@ char const *macro_GetAllArgs() {
 	*ptr = '\0';
 
 	return str;
-}
-
-uint32_t macro_GetUniqueID() {
-	return uniqueID;
-}
-
-char const *macro_GetUniqueIDStr() {
-	// Generate a new unique ID on the first use of `\@`
-	if (uniqueID == 0)
-		macro_SetUniqueID(++maxUniqueID);
-
-	return uniqueIDPtr;
-}
-
-void macro_SetUniqueID(uint32_t id) {
-	uniqueID = id;
-	if (id == 0 || id == (uint32_t)-1) {
-		uniqueIDPtr = nullptr;
-	} else {
-		// The buffer is guaranteed to be the correct size
-		// This is a valid label fragment, but not a valid numeric
-		sprintf(uniqueIDBuf, "_u%" PRIu32, id);
-		uniqueIDPtr = uniqueIDBuf;
-	}
-}
-
-uint32_t macro_UseNewUniqueID() {
-	// A new ID will be generated on the first use of `\@`
-	macro_SetUniqueID(0);
-	return uniqueID;
-}
-
-uint32_t macro_UndefUniqueID() {
-	// No ID will be generated; use of `\@` is an error
-	macro_SetUniqueID((uint32_t)-1);
-	return uniqueID;
 }
 
 void macro_ShiftCurrentArgs(int32_t count) {
