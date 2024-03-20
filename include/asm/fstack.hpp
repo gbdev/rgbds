@@ -41,6 +41,9 @@ struct FileStackNode {
 	    : type(type_), data(data_){};
 
 	std::string const &dump(uint32_t curLineNo) const;
+
+	// If true, entering this context generates a new unique ID.
+	bool generatesUniqueID() const { return type == NODE_REPT || type == NODE_MACRO; }
 };
 
 #define DEFAULT_MAX_DEPTH 64
@@ -50,6 +53,7 @@ struct MacroArgs;
 
 void fstk_DumpCurrent();
 std::shared_ptr<FileStackNode> fstk_GetFileStack();
+std::shared_ptr<std::string> fstk_GetUniqueIDStr();
 
 void fstk_AddIncludePath(std::string const &path);
 void fstk_SetPreIncludeFile(std::string const &path);

@@ -591,7 +591,8 @@ static char const *readMacroArg(char name) {
 	char const *str = nullptr;
 
 	if (name == '@') {
-		str = macro_GetUniqueIDStr();
+		auto maybeStr = fstk_GetUniqueIDStr();
+		str = maybeStr ? maybeStr->c_str() : nullptr;
 	} else if (name == '#') {
 		str = macro_GetAllArgs();
 	} else if (name == '<') {
