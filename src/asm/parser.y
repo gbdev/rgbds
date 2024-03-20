@@ -2689,14 +2689,12 @@ static std::string strfmt(
 		} else if (argIndex >= args.size()) {
 			// Will warn after formatting is done.
 			str += '%';
+		} else if (auto *n = std::get_if<uint32_t>(&args[argIndex]); n) {
+			str.append(fmt.formatNumber(*n));
 		} else {
-			str.append(std::visit(
-			    Visitor{
-			        [&fmt](uint32_t n) { return fmt.formatNumber(n); },
-			        [&fmt](std::string const &s) { return fmt.formatString(s); },
-			    },
-			    args[argIndex]
-			));
+			assert(std::holds_alternative<std::string>(args[argIndex]));
+			auto &s = std::get<std::string>(args[argIndex]);
+			str.append(fmt.formatString(s));
 		}
 
 		argIndex++;

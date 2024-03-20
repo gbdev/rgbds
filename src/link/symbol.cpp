@@ -27,8 +27,8 @@ Label const &Symbol::label() const {
 
 void sym_AddSymbol(Symbol &symbol) {
 	Symbol *other = sym_GetSymbol(symbol.name);
-	int32_t const *symValue = std::get_if<int32_t>(&symbol.data);
-	int32_t const *otherValue = other ? std::get_if<int32_t>(&other->data) : nullptr;
+	auto *symValue = std::get_if<int32_t>(&symbol.data);
+	auto *otherValue = other ? std::get_if<int32_t>(&other->data) : nullptr;
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {

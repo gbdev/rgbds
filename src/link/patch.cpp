@@ -218,7 +218,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				);
 				isError = true;
 				value = 1;
-			} else if (Label const *label = std::get_if<Label>(&symbol->data); label) {
+			} else if (auto *label = std::get_if<Label>(&symbol->data); label) {
 				value = label->section->bank;
 			} else {
 				error(
@@ -383,16 +383,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					    fileSymbols[value].name.c_str()
 					);
 					isError = true;
+				} else if (auto *label = std::get_if<Label>(&symbol->data); label) {
+					value = label->section->org + label->offset;
 				} else {
-					value = std::visit(
-					    Visitor{
-					        [](int32_t val) -> int32_t { return val; },
-					        [](Label label) -> int32_t {
-						        return label.section->org + label.offset;
-					        },
-					    },
-					    symbol->data
-					);
+					assert(std::holds_alternative<int32_t>(symbol->data));
+					value = std::get<int32_t>(symbol->data);
 				}
 			}
 			break;
