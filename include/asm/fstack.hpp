@@ -14,8 +14,6 @@
 
 #include "linkdefs.hpp"
 
-#include "asm/lexer.hpp"
-
 struct FileStackNode {
 	FileStackNodeType type;
 	std::variant<

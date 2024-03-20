@@ -1,0 +1,21 @@
+Begin REPT
+Begin MACRO
+Within nested MACRO: _u1
+Within MACRO: _u2
+Within REPT: _u3
+Begin REPT
+Begin MACRO
+Within nested MACRO: _u4
+Within MACRO: _u5
+Within REPT: _u6
+
+Begin REPT: _u7
+Begin MACRO: _u8
+Within nested MACRO: _u9
+Within MACRO: _u8
+Within REPT: _u7
+Begin REPT: _u10
+Begin MACRO: _u11
+Within nested MACRO: _u12
+Within MACRO: _u11
+Within REPT: _u10
