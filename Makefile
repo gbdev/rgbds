@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkdiff develop debug coverage mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkdiff develop debug profile coverage mingw32 mingw64 wine-shim dist
 
 # User-defined variables
 
@@ -223,6 +223,12 @@ develop:
 debug:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+
+# This target is used during development in order to more easily profile with callgrind.
+
+profile:
+	$Qenv ${MAKE} \
+		CXXFLAGS="-ggdb3 -O3 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # This target is used during development in order to inspect code coverage with gcov.
 
