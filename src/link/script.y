@@ -73,7 +73,7 @@
 }
 %token <std::string> string;
 %token <uint32_t> number;
-%token <SectionType> section_type;
+%token <SectionType> sect_type;
 
 %type <bool> optional;
 
@@ -102,10 +102,10 @@ line:
 ;
 
 directive:
-	section_type {
+	sect_type {
 	  	setSectionType($1);
 	}
-	| section_type number {
+	| sect_type number {
 		setSectionType($1, $2);
 	}
 	| FLOATING {
@@ -342,7 +342,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 
 		for (SectionType type : EnumSeq(SECTTYPE_INVALID)) {
 			if (std::equal(RANGE(ident), RANGE(sectionTypeInfo[type].name), strUpperCmp)) {
-				return yy::parser::make_section_type(type);
+				return yy::parser::make_sect_type(type);
 			}
 		}
 

@@ -118,15 +118,15 @@
 %type <Expression> reloc_8bit_offset
 %type <Expression> reloc_16bit
 %type <Expression> reloc_16bit_no_str
-%type <int32_t> sectiontype
+%type <int32_t> sect_type
 
 %type <std::string> string
 %type <std::string> strcat_args
 %type <StrFmtArgList> strfmt_args
 %type <StrFmtArgList> strfmt_va_args
 
-%type <int32_t> sectorg
-%type <SectionSpec> sectattrs
+%type <int32_t> sect_org
+%type <SectionSpec> sect_attrs
 
 %token <int32_t> NUMBER "number"
 %token <String> STRING "string"
@@ -209,7 +209,7 @@
 %token POP_MULEQ "*=" POP_DIVEQ "/=" POP_MODEQ "%="
 %token POP_OREQ "|=" POP_XOREQ "^=" POP_ANDEQ "&="
 %token POP_SHLEQ "<<=" POP_SHREQ ">>="
-%type <RPNCommand> compoundeq
+%type <RPNCommand> compound_eq
 
 %token POP_INCLUDE "INCLUDE"
 %token POP_PRINT "PRINT" POP_PRINTLN "PRINTLN"
@@ -251,8 +251,8 @@
 %type <bool> capture_rept
 %type <bool> capture_macro
 
-%type <SectionModifier> sectmod
-%type <MacroArgs *> macroargs
+%type <SectionModifier> sect_mod
+%type <MacroArgs *> macro_args
 
 %type <AlignmentSpec> align_spec
 
@@ -304,22 +304,20 @@
 
 %token EOB "end of buffer"
 %token YYEOF 0 "end of file"
-%start asmfile
+%start asm_file
 
 %%
 
 // Assembly files.
 
-asmfile: lines
-;
+asm_file: lines;
 
 lines:
 	  %empty
 	| lines opt_diff_mark line
 ;
 
-endofline: NEWLINE | EOB
-;
+endofline: NEWLINE | EOB;
 
 opt_diff_mark:
 	  %empty // OK
@@ -356,11 +354,11 @@ line:
 		Symbol *macro = sym_FindExactSymbol($1);
 
 		if (macro && macro->type == SYM_MACRO)
-		fprintf(
-			stderr,
-			"    To invoke `%s` as a macro it must be indented\n",
-			$1.c_str()
-		);
+			fprintf(
+			    stderr,
+			    "    To invoke `%s` as a macro it must be indented\n",
+			    $1.c_str()
+			);
 		fstk_StopRept();
 		yyerrok;
 	}
@@ -371,7 +369,7 @@ line:
 // and to avoid causing some grammar conflicts (token reducing is finicky).
 // This is DEFINITELY one of the more FRAGILE parts of the codebase, handle with care.
 line_directive:
-	  macrodef
+	  def_macro
 	| rept
 	| for
 	| break
@@ -475,6 +473,7 @@ scoped_id:
 		$$ = std::move($1);
 	}
 ;
+
 scoped_anon_id:
 	scoped_id {
 		$$ = std::move($1);
@@ -512,18 +511,18 @@ macro:
 	ID {
 		// Parsing 'macroargs' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
-	} macroargs {
+	} macro_args {
 		fstk_RunMacro($1, *$3);
 	}
 ;
 
-macroargs:
+macro_args:
 	%empty {
 		$$ = new (std::nothrow) MacroArgs();
 		if (!$$)
 			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
 	}
-	| macroargs STRING {
+	| macro_args STRING {
 		$$ = $1;
 		$$->append($2.string);
 	}
@@ -578,7 +577,7 @@ directive:
 
 trailing_comma: %empty | COMMA;
 
-compoundeq:
+compound_eq:
 	POP_ADDEQ {
 		$$ = RPN_ADD;
 	}
@@ -628,7 +627,7 @@ assignment:
 		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.c_str(), $1.c_str());
 		sym_AddVar($1, $3);
 	}
-	| LABEL compoundeq const {
+	| LABEL compound_eq const {
 		char const *compoundEqOperator = nullptr;
 		switch ($2) {
 			case RPN_ADD: compoundEqOperator = "+="; break;
@@ -854,7 +853,7 @@ shift:
 ;
 
 load:
-	POP_LOAD sectmod string COMMA sectiontype sectorg sectattrs {
+	POP_LOAD sect_mod string COMMA sect_type sect_org sect_attrs {
 		sect_SetLoadSection($3, (SectionType)$5, $6, $7, $2);
 	}
 	| POP_ENDL {
@@ -919,7 +918,7 @@ break:
 	}
 ;
 
-macrodef:
+def_macro:
 	POP_MACRO {
 		lexer_ToggleStringExpansion(false);
 	} ID {
@@ -1044,10 +1043,10 @@ def_set:
 	| redef_id POP_EQUAL const {
 		sym_AddVar($1, $3);
 	}
-	| def_id compoundeq const {
+	| def_id compound_eq const {
 		compoundAssignment($1, $2, $3);
 	}
-	| redef_id compoundeq const {
+	| redef_id compound_eq const {
 		compoundAssignment($1, $2, $3);
 	}
 ;
@@ -1423,10 +1422,10 @@ relocexpr_no_str:
 	| OP_STARTOF LPAREN string RPAREN {
 		rpn_StartOfSection($$, $3);
 	}
-	| OP_SIZEOF LPAREN sectiontype RPAREN {
+	| OP_SIZEOF LPAREN sect_type RPAREN {
 		rpn_SizeOfSectionType($$, (SectionType)$3);
 	}
-	| OP_STARTOF LPAREN sectiontype RPAREN {
+	| OP_STARTOF LPAREN sect_type RPAREN {
 		rpn_StartOfSectionType($$, (SectionType)$3);
 	}
 	| OP_DEF {
@@ -1618,7 +1617,8 @@ strcat_args:
 ;
 
 strfmt_args:
-	string strfmt_va_args {
+	  %empty {}
+	| string strfmt_va_args {
 		$$ = std::move($2);
 		$$.format = std::move($1);
 	}
@@ -1637,12 +1637,12 @@ strfmt_va_args:
 ;
 
 section:
-	POP_SECTION sectmod string COMMA sectiontype sectorg sectattrs {
+	POP_SECTION sect_mod string COMMA sect_type sect_org sect_attrs {
 		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
 	}
 ;
 
-sectmod:
+sect_mod:
 	%empty {
 		$$ = SECTION_NORMAL;
 	}
@@ -1654,7 +1654,7 @@ sectmod:
 	}
 ;
 
-sectiontype:
+sect_type:
 	SECT_WRAM0 {
 		$$ = SECTTYPE_WRAM0;
 	}
@@ -1681,7 +1681,7 @@ sectiontype:
 	}
 ;
 
-sectorg:
+sect_org:
 	%empty {
 		$$ = -1;
 	}
@@ -1694,18 +1694,18 @@ sectorg:
 	}
 ;
 
-sectattrs:
+sect_attrs:
 	%empty {
 		$$.alignment = 0;
 		$$.alignOfs = 0;
 		$$.bank = -1;
 	}
-	| sectattrs COMMA OP_ALIGN LBRACK align_spec RBRACK {
+	| sect_attrs COMMA OP_ALIGN LBRACK align_spec RBRACK {
 		$$ = $1;
 		$$.alignment = $5.alignment;
 		$$.alignOfs = $5.alignOfs;
 	}
-	| sectattrs COMMA OP_BANK LBRACK uconst RBRACK {
+	| sect_attrs COMMA OP_BANK LBRACK uconst RBRACK {
 		$$ = $1;
 		$$.bank = $5; // We cannot check the validity of this yet
 	}
