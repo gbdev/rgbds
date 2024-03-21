@@ -61,21 +61,20 @@ static int32_t CallbackPC() {
 
 int32_t Symbol::getValue() const {
 	assert(std::holds_alternative<int32_t>(data) || std::holds_alternative<int32_t (*)()>(data));
-	if (int32_t const *value = std::get_if<int32_t>(&data); value) {
+	if (auto *value = std::get_if<int32_t>(&data); value) {
 		return type == SYM_LABEL ? *value + getSection()->org : *value;
 	}
 	return getOutputValue();
 }
 
 int32_t Symbol::getOutputValue() const {
-	return std::visit(
-	    Visitor{
-	        [](int32_t value) -> int32_t { return value; },
-	        [](int32_t (*callback)()) -> int32_t { return callback(); },
-	        [](auto &) -> int32_t { return 0; },
-	    },
-	    data
-	);
+	if (auto *value = std::get_if<int32_t>(&data); value) {
+		return *value;
+	} else if (auto *callback = std::get_if<int32_t (*)()>(&data); callback) {
+		return (*callback)();
+	} else {
+		return 0;
+	}
 }
 
 std::string_view *Symbol::getMacro() const {

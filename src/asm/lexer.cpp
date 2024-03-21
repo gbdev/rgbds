@@ -449,14 +449,11 @@ void lexer_OpenFileView(
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	std::visit(
-	    Visitor{
-	        [](MmappedLexerState &mmap) { mmap.offset = 0; },
-	        [](ViewedLexerState &view) { view.offset = 0; },
-	        [](auto &) {},
-	    },
-	    lexerState->content
-	);
+	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+		mmap->offset = 0;
+	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+		view->offset = 0;
+	}
 	initState(*lexerState);
 	lexerState->lineNo = lineNo;
 }
@@ -475,17 +472,12 @@ void lexer_CleanupState(LexerState &state) {
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
 	assert(&state != lexerStateEOL);
 
-	std::visit(
-	    Visitor{
-	        [](MmappedLexerState &mmap) {
-		        if (!mmap.isReferenced)
-			        munmap(mmap.ptr, mmap.size);
-	        },
-	        [](BufferedLexerState &cbuf) { close(cbuf.fd); },
-	        [](auto &) {},
-	    },
-	    state.content
-	);
+	if (auto *mmap = std::get_if<MmappedLexerState>(&state.content); mmap) {
+		if (!mmap->isReferenced)
+			munmap(mmap->ptr, mmap->size);
+	} else if (auto *cbuf = std::get_if<BufferedLexerState>(&state.content); cbuf) {
+		close(cbuf->fd);
+	}
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -654,57 +646,52 @@ static int peekInternal(uint8_t distance) {
 		    LEXER_BUF_SIZE
 		);
 
-	return std::visit(
-	    Visitor{
-	        [&distance](MmappedLexerState &mmap) -> int {
-		        if (size_t idx = mmap.offset + distance; idx < mmap.size)
-			        return (uint8_t)mmap.ptr[idx];
-		        return EOF;
-	        },
-	        [&distance](ViewedLexerState &view) -> int {
-		        if (size_t idx = view.offset + distance; idx < view.size)
-			        return (uint8_t)view.ptr[idx];
-		        return EOF;
-	        },
-	        [&distance](BufferedLexerState &cbuf) -> int {
-		        if (cbuf.nbChars > distance)
-			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+		if (size_t idx = mmap->offset + distance; idx < mmap->size)
+			return (uint8_t)mmap->ptr[idx];
+		return EOF;
+	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+		if (size_t idx = view->offset + distance; idx < view->size)
+			return (uint8_t)view->ptr[idx];
+		return EOF;
+	} else {
+		assert(std::holds_alternative<BufferedLexerState>(lexerState->content));
+		auto &cbuf = std::get<BufferedLexerState>(lexerState->content);
 
-		        // Buffer isn't full enough, read some chars in
-		        size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
+		if (cbuf.nbChars > distance)
+			return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
 
-		        // Compute the index we'll start writing to
-		        size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
+		// Buffer isn't full enough, read some chars in
+		size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
 
-		        // If the range to fill passes over the buffer wrapping point, we need two reads
-		        if (writeIndex + target > LEXER_BUF_SIZE) {
-			        size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
-			        size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
+		// Compute the index we'll start writing to
+		size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
 
-			        cbuf.nbChars += nbReadChars;
+		// If the range to fill passes over the buffer wrapping point, we need two reads
+		if (writeIndex + target > LEXER_BUF_SIZE) {
+			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
+			size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
 
-			        writeIndex += nbReadChars;
-			        if (writeIndex == LEXER_BUF_SIZE)
-				        writeIndex = 0;
+			cbuf.nbChars += nbReadChars;
 
-			        // If the read was incomplete, don't perform a second read
-			        target -= nbReadChars;
-			        if (nbReadChars < nbExpectedChars)
-				        target = 0;
-		        }
-		        if (target != 0)
-			        cbuf.nbChars += readInternal(cbuf, writeIndex, target);
+			writeIndex += nbReadChars;
+			if (writeIndex == LEXER_BUF_SIZE)
+				writeIndex = 0;
 
-		        if (cbuf.nbChars > distance)
-			        return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+			// If the read was incomplete, don't perform a second read
+			target -= nbReadChars;
+			if (nbReadChars < nbExpectedChars)
+				target = 0;
+		}
+		if (target != 0)
+			cbuf.nbChars += readInternal(cbuf, writeIndex, target);
 
-		        // If there aren't enough chars even after refilling, give up
-		        return EOF;
-	        },
-	        [](std::monostate) -> int { return EOF; },
-	    },
-	    lexerState->content
-	);
+		if (cbuf.nbChars > distance)
+			return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
+
+		// If there aren't enough chars even after refilling, give up
+		return EOF;
+	}
 }
 
 // forward declarations for peek
@@ -782,22 +769,20 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		std::visit(
-		    Visitor{
-		        [](MmappedLexerState &mmap) { mmap.offset++; },
-		        [](ViewedLexerState &view) { view.offset++; },
-		        [](BufferedLexerState &cbuf) {
-			        assert(cbuf.index < LEXER_BUF_SIZE);
-			        cbuf.index++;
-			        if (cbuf.index == LEXER_BUF_SIZE)
-				        cbuf.index = 0; // Wrap around if necessary
-			        assert(cbuf.nbChars > 0);
-			        cbuf.nbChars--;
-		        },
-		        [](std::monostate) {},
-		    },
-		    lexerState->content
-		);
+		if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+			mmap->offset++;
+		} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+			view->offset++;
+		} else {
+			assert(std::holds_alternative<BufferedLexerState>(lexerState->content));
+			auto &cbuf = std::get<BufferedLexerState>(lexerState->content);
+			assert(cbuf.index < LEXER_BUF_SIZE);
+			cbuf.index++;
+			if (cbuf.index == LEXER_BUF_SIZE)
+				cbuf.index = 0; // Wrap around if necessary
+			assert(cbuf.nbChars > 0);
+			cbuf.nbChars--;
+		}
 	}
 }
 
@@ -2225,13 +2210,16 @@ yy::parser::symbol_type yylex() {
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	return std::visit(
-	    Visitor{
-	        [&token](std::monostate) { return yy::parser::symbol_type(token.type); },
-	        [&token](auto &&value) { return yy::parser::symbol_type(token.type, value); },
-	    },
-	    token.value
-	);
+	if (auto *numValue = std::get_if<uint32_t>(&token.value); numValue) {
+		return yy::parser::symbol_type(token.type, *numValue);
+	} else if (auto *stringValue = std::get_if<String>(&token.value); stringValue) {
+		return yy::parser::symbol_type(token.type, *stringValue);
+	} else if (auto *strValue = std::get_if<std::string>(&token.value); strValue) {
+		return yy::parser::symbol_type(token.type, *strValue);
+	} else {
+		assert(std::holds_alternative<std::monostate>(token.value));
+		return yy::parser::symbol_type(token.type);
+	}
 }
 
 static void startCapture(CaptureBody &capture) {
@@ -2242,21 +2230,14 @@ static void startCapture(CaptureBody &capture) {
 	lexerState->disableInterpolation = true;
 
 	capture.lineNo = lexer_GetLineNo();
-	capture.body = std::visit(
-	    Visitor{
-	        [](MmappedLexerState &mmap) -> char const * {
-		        return lexerState->expansions.empty() ? &mmap.ptr[mmap.offset] : nullptr;
-	        },
-	        [](ViewedLexerState &view) -> char const * {
-		        return lexerState->expansions.empty() ? &view.ptr[view.offset] : nullptr;
-	        },
-	        [](auto &) -> char const * { return nullptr; },
-	    },
-	    lexerState->content
-	);
-
-	if (capture.body == nullptr) {
-		// Indicates to retrieve the capture buffer when done capturing
+	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content);
+	    mmap && lexerState->expansions.empty()) {
+		capture.body = &mmap->ptr[mmap->offset];
+	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content);
+	           view && lexerState->expansions.empty()) {
+		capture.body = &view->ptr[view->offset];
+	} else {
+		capture.body = nullptr; // Indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = new (std::nothrow) std::vector<char>();
 		if (!lexerState->captureBuf)
@@ -2342,7 +2323,7 @@ bool lexer_CaptureMacroBody(CaptureBody &capture) {
 	startCapture(capture);
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
-	if (MmappedLexerState *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap)
+	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap)
 		mmap->isReferenced = true;
 
 	int c = EOF;

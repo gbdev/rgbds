@@ -564,7 +564,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 		if (symbol.type == SYMTYPE_EXPORT)
 			sym_AddSymbol(symbol);
-		if (Label *label = std::get_if<Label>(&symbol.data); label)
+		if (auto *label = std::get_if<Label>(&symbol.data); label)
 			nbSymPerSect[label->sectionID]++;
 	}
 
@@ -603,7 +603,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (Label *label = std::get_if<Label>(&fileSymbols[i].data); label) {
+		if (auto *label = std::get_if<Label>(&fileSymbols[i].data); label) {
 			Section *section = fileSections[label->sectionID].get();
 
 			label->section = section;
@@ -620,7 +620,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (Label *label = std::get_if<Label>(&fileSymbols[i].data); label) {
+		if (auto *label = std::get_if<Label>(&fileSymbols[i].data); label) {
 			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT)
 					// Add the fragment's offset to the symbol's

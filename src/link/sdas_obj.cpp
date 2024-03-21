@@ -392,16 +392,14 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				if (other) {
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
-					auto visitor = Visitor{
-					    [](int32_t value) -> std::tuple<Section *, int32_t> {
-						    return {nullptr, value};
-					    },
-					    [](Label label) -> std::tuple<Section *, int32_t> {
-						    return {label.section, label.offset};
-					    },
+					auto checkSymbol = [](Symbol const &sym) -> std::tuple<Section *, int32_t> {
+						if (auto *label = std::get_if<Label>(&sym.data); label)
+							return {label->section, label->offset};
+						assert(std::holds_alternative<int32_t>(sym.data));
+						return {nullptr, std::get<int32_t>(sym.data)};
 					};
-					auto [symbolSection, symbolValue] = std::visit(visitor, symbol.data);
-					auto [otherSection, otherValue] = std::visit(visitor, other->data);
+					auto [symbolSection, symbolValue] = checkSymbol(symbol);
+					auto [otherSection, otherValue] = checkSymbol(*other);
 
 					if ((otherSection && !otherSection->isAddressFixed)
 					    || (symbolSection && !symbolSection->isAddressFixed)) {

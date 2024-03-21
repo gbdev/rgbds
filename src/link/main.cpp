@@ -66,31 +66,25 @@ std::string const &FileStackNode::name() const {
 }
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	Visitor visitor{
-	    [this](std::vector<uint32_t> const &iters) -> std::string const & {
-		    assert(this->parent); // REPT nodes use their parent's name
-		    std::string const &lastName = this->parent->dump(this->lineNo);
-		    fprintf(stderr, " -> %s", lastName.c_str());
-		    for (uint32_t iter : iters)
-			    fprintf(stderr, "::REPT~%" PRIu32, iter);
-		    return lastName;
-	    },
-	    [this](std::string const &name) -> std::string const & {
-		    if (this->parent) {
-			    this->parent->dump(this->lineNo);
-			    fprintf(stderr, " -> %s", name.c_str());
-		    } else {
-			    fputs(name.c_str(), stderr);
-		    }
-		    return name;
-	    },
-	    [](std::monostate) -> std::string const & {
-		    unreachable_(); // This should not be possible
-	    },
-	};
-	std::string const &topName = std::visit(visitor, data);
-	fprintf(stderr, "(%" PRIu32 ")", curLineNo);
-	return topName;
+	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
+		assert(parent); // REPT nodes use their parent's name
+		std::string const &lastName = parent->dump(lineNo);
+		fputs(" -> ", stderr);
+		fputs(lastName.c_str(), stderr);
+		for (uint32_t iter : iters())
+			fprintf(stderr, "::REPT~%" PRIu32, iter);
+		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		return lastName;
+	} else {
+		if (parent) {
+			parent->dump(lineNo);
+			fputs(" -> ", stderr);
+		}
+		std::string const &nodeName = name();
+		fputs(nodeName.c_str(), stderr);
+		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
+		return nodeName;
+	}
 }
 
 void printDiag(
