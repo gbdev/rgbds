@@ -21,8 +21,9 @@ add_flag 3 0 lr.type=ielr
 add_flag 3 5 api.token.raw=true
 add_flag 3 6 parse.error=detailed
 
-printf 'BISONFLAGS=%s\n' "'$BISONFLAGS'"
+echo "BISONFLAGS='$BISONFLAGS'"
 
+# Replace our own arguments ($@) with the ones in $BISONFLAGS
 eval "set -- $BISONFLAGS"
 
-exec bison "$@" -d -o "$INPUT_CPP" "$OUTPUT_Y"
+exec bison $@ -d -o "$INPUT_CPP" "$OUTPUT_Y"
