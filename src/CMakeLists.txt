@@ -9,7 +9,7 @@ set(common_src
     )
 
 find_package(BISON 3.0.0 REQUIRED)
-set(BISON_FLAGS "-Wall")
+set(BISON_FLAGS "-Wall -Dparse.lac=full -Dlr.type=ielr")
 # Set some optimization flags on versions that support them
 if(BISON_VERSION VERSION_GREATER_EQUAL "3.5")
   set(BISON_FLAGS "${BISON_FLAGS} -Dapi.token.raw=true")
@@ -19,8 +19,6 @@ if(BISON_VERSION VERSION_GREATER_EQUAL "3.6")
 else()
   set(BISON_FLAGS "${BISON_FLAGS} -Dparse.error=verbose")
 endif()
-set(BISON_FLAGS "${BISON_FLAGS} -Dparse.lac=full")
-set(BISON_FLAGS "${BISON_FLAGS} -Dlr.type=ielr")
 
 BISON_TARGET(ASM_PARSER "asm/parser.y"
              "${PROJECT_SOURCE_DIR}/src/asm/parser.cpp"
