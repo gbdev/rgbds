@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <optional>
+#include <stdint.h>
 #include <string>
 #include <variant>
 #include <vector>

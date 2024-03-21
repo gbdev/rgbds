@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/lexer.hpp"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -11,7 +13,6 @@
 #include <limits.h>
 #include <math.h>
 #include <new>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +26,6 @@
 #include "asm/fixpoint.hpp"
 #include "asm/format.hpp"
 #include "asm/fstack.hpp"
-#include "asm/lexer.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"

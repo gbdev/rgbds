@@ -5,20 +5,17 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <new>
 #include <stdio.h>
 #include <unordered_map>
 
 #include "error.hpp"
 #include "helpers.hpp"
-#include "util.hpp"
 #include "version.hpp"
 
-#include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/macro.hpp"
-#include "asm/main.hpp"
 #include "asm/output.hpp"
 #include "asm/warning.hpp"
 

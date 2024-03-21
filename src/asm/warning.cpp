@@ -3,7 +3,6 @@
 #include "asm/warning.hpp"
 
 #include <inttypes.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,6 +13,7 @@
 #include "itertools.hpp"
 
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/main.hpp"
 
 unsigned int nbErrors = 0;

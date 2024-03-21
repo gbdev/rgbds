@@ -2,10 +2,8 @@
 
 #include "asm/output.hpp"
 
-#include <algorithm>
 #include <assert.h>
 #include <deque>
-#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,8 +13,8 @@
 
 #include "error.hpp"
 
-#include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/main.hpp"
 #include "asm/rpn.hpp"
 #include "asm/section.hpp"

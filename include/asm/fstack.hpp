@@ -5,6 +5,7 @@
 #ifndef RGBDS_ASM_FSTACK_H
 #define RGBDS_ASM_FSTACK_H
 
+#include <optional>
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
