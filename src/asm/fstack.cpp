@@ -1,21 +1,23 @@
 /* SPDX-License-Identifier: MIT */
 
+#include "asm/fstack.hpp"
+
 #include <sys/stat.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <new>
-#include <optional>
 #include <stack>
 #include <stdlib.h>
 #include <string_view>
 
 #include "error.hpp"
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 #include "platform.hpp" // S_ISDIR (stat macro)
 
-#include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/macro.hpp"
 #include "asm/main.hpp"
 #include "asm/symbol.hpp"
@@ -23,14 +25,14 @@
 
 struct Context {
 	FileStackNode *fileInfo;
-	LexerState lexerState;
-	uint32_t uniqueID;
-	MacroArgs *macroArgs; // Macro args are *saved* here
+	LexerState lexerState{};
+	uint32_t uniqueID = 0;
+	MacroArgs *macroArgs = nullptr; // Macro args are *saved* here
 	uint32_t nbReptIters = 0;
 	bool isForLoop = false;
 	int32_t forValue = 0;
 	int32_t forStep = 0;
-	std::string forName;
+	std::string forName{};
 };
 
 static std::stack<Context> contextStack;
@@ -236,9 +238,7 @@ static Context &newContext(FileStackNode &fileInfo) {
 	fileInfo.parent = contextStack.top().fileInfo;
 	fileInfo.lineNo = lexer_GetLineNo();
 
-	Context &context = contextStack.emplace();
-	context.fileInfo = &fileInfo;
-	return context;
+	return contextStack.emplace(Context{.fileInfo = &fileInfo});
 }
 
 void fstk_RunInclude(std::string const &path) {

@@ -12,9 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "error.hpp"
-
 #include "asm/fstack.hpp"
+#include "asm/lexer.hpp"
 #include "asm/main.hpp"
 #include "asm/output.hpp"
 #include "asm/rpn.hpp"
