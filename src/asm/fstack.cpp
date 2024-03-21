@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <new>
 #include <stack>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string_view>
 
@@ -207,20 +208,23 @@ bool yywrap() {
 		return true;
 	}
 
-	Context oldContext = contextStack.top();
-
+	Context oldContext = std::move(contextStack.top());
 	contextStack.pop();
 
 	lexer_CleanupState(oldContext.lexerState);
 	// Restore args if a macro (not REPT) saved them
 	if (oldContext.fileInfo->type == NODE_MACRO)
 		macro_UseNewArgs(contextStack.top().macroArgs);
+	// Restore the `\@` value if the old context was supposed to define one
+	// (i.e. it either is a macro or REPT, or it initialized `\@` for its parent)
+	if (oldContext.fileInfo->type == NODE_REPT || oldContext.fileInfo->type == NODE_MACRO
+	    || contextStack.top().uniqueID > 0)
+		macro_SetUniqueID(contextStack.top().uniqueID);
 	// Free the file stack node
 	if (!oldContext.fileInfo->referenced)
 		delete oldContext.fileInfo;
 
 	lexer_SetState(&contextStack.top().lexerState);
-	macro_SetUniqueID(contextStack.top().uniqueID);
 
 	return false;
 }
