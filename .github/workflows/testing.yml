@@ -24,13 +24,6 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
-      # Ubuntu 22.04 provides LLVM 14, which links an ASan version incompatible with
-      # high-entropy ASLR in newer Linux kernels that GitHub Actions runners use.
-      # https://github.com/actions/runner-images/issues/9491
-      - name: Fix Ubuntu 22.04 ASLR for LLVM 14
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo sysctl vm.mmap_rnd_bits=28
       # Export `bison` to allow using the version we install from Homebrew,
       # instead of the outdated 2.3 one preinstalled on macOS.
       - name: Build & install using Make
