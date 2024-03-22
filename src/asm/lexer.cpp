@@ -459,7 +459,7 @@ void lexer_RestartRept(uint32_t lineNo) {
 	lexerState->lineNo = lineNo;
 }
 
-void lexer_CleanupState(LexerState &state) {
+LexerState::~LexerState() {
 	// A big chunk of the lexer state soundness is the file stack ("fstack").
 	// Each context in the fstack has its own *unique* lexer state; thus, we always guarantee
 	// that lexer states lifetimes are always properly managed, since they're handled solely
@@ -471,12 +471,12 @@ void lexer_CleanupState(LexerState &state) {
 	// This assertion checks that this doesn't happen again.
 	// It could be argued that deleting a state that's scheduled for EOF could simply clear
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
-	assert(&state != lexerStateEOL);
+	assert(this != lexerStateEOL);
 
-	if (auto *mmap = std::get_if<MmappedLexerState>(&state.content); mmap) {
+	if (auto *mmap = std::get_if<MmappedLexerState>(&content); mmap) {
 		if (!mmap->isReferenced)
 			munmap(mmap->ptr, mmap->size);
-	} else if (auto *cbuf = std::get_if<BufferedLexerState>(&state.content); cbuf) {
+	} else if (auto *cbuf = std::get_if<BufferedLexerState>(&content); cbuf) {
 		close(cbuf->fd);
 	}
 }
