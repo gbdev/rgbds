@@ -48,7 +48,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:i:I:M:o:P:p:Q:r:VvW:wX:";
+static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -167,11 +167,6 @@ int main(int argc, char *argv[]) {
 				errx("Must specify exactly 4 characters for option 'g'");
 			break;
 
-		// `-i` was the only short option for `--include` until `-I` was
-		// introduced to better match the `-I dir` option of gcc and clang.
-		case 'i':
-			warning(WARNING_OBSOLETE, "`-i` is deprecated; use `-I`\n");
-			[[fallthrough]];
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
 			break;
