@@ -3,6 +3,7 @@
 #ifndef RGBDS_SYMBOL_H
 #define RGBDS_SYMBOL_H
 
+#include <memory>
 #include <optional>
 #include <stdint.h>
 #include <string.h>
@@ -31,8 +32,8 @@ struct Symbol {
 	bool isExported; // Whether the symbol is to be exported
 	bool isBuiltin;  // Whether the symbol is a built-in
 	Section *section;
-	FileStackNode *src; // Where the symbol was defined
-	uint32_t fileLine;  // Line where the symbol was defined
+	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
+	uint32_t fileLine;                  // Line where the symbol was defined
 
 	std::variant<
 	    int32_t,            // If isNumeric()

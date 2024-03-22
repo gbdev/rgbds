@@ -97,15 +97,13 @@ static void dumpFilename(Symbol const &sym) {
 
 // Update a symbol's definition filename and line
 static void updateSymbolFilename(Symbol &sym) {
-	FileStackNode *oldSrc = sym.src;
-
+	std::shared_ptr<FileStackNode> oldSrc = std::move(sym.src);
 	sym.src = fstk_GetFileStack();
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 
-	// If the old node was referenced, ensure the new one is
-	if (oldSrc && oldSrc->referenced && oldSrc->ID != (uint32_t)-1)
+	// If the old node was registered, ensure the new one is too
+	if (oldSrc && oldSrc->ID != (uint32_t)-1)
 		out_RegisterNode(sym.src);
-	// TODO: unref the old node, and use `out_ReplaceNode` instead of deleting it
 }
 
 // Create a new symbol by name

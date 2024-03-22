@@ -34,7 +34,7 @@ static std::vector<Symbol *> objectSymbols;
 
 static std::deque<Assertion> assertions;
 
-static std::deque<FileStackNode *> fileStackNodes;
+static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
 
 // Write a long to a file (little-endian)
 static void putlong(uint32_t n, FILE *file) {
@@ -53,27 +53,12 @@ static void putstring(std::string const &s, FILE *file) {
 	putc('\0', file);
 }
 
-void out_RegisterNode(FileStackNode *node) {
+void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	// If node is not already registered, register it (and parents), and give it a unique ID
 	for (; node && node->ID == (uint32_t)-1; node = node->parent) {
 		node->ID = fileStackNodes.size();
 		fileStackNodes.push_front(node);
 	}
-}
-
-void out_ReplaceNode(FileStackNode * /* node */) {
-#if 0
-This is code intended to replace a node, which is pretty useless until ref counting is added...
-
-	auto search = std::find(RANGE(fileStackNodes), node);
-	assert(search != fileStackNodes.end());
-	// The list is supposed to have decrementing IDs; catch inconsistencies early
-	assert(search->ID == node->ID);
-	assert(search + 1 == fileStackNodes.end() || (search + 1)->ID == node->ID - 1);
-
-	// TODO: unreference the node
-	*search = node;
-#endif
 }
 
 // Return a section's ID, or -1 if the section is not in the list
@@ -249,12 +234,10 @@ static void writerpn(std::vector<uint8_t> &rpnexpr, std::vector<uint8_t> const &
 }
 
 static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint32_t ofs) {
-	FileStackNode *node = fstk_GetFileStack();
-
 	patch.type = type;
-	patch.src = node;
+	patch.src = fstk_GetFileStack();
 	// All patches are assumed to eventually be written, so the file stack node is registered
-	out_RegisterNode(node);
+	out_RegisterNode(patch.src);
 	patch.lineNo = lexer_GetLineNo();
 	patch.offset = ofs;
 	patch.pcSection = sect_GetSymbolSection();
@@ -342,17 +325,17 @@ void out_WriteObject() {
 
 	putlong(fileStackNodes.size(), file);
 	for (auto it = fileStackNodes.begin(); it != fileStackNodes.end(); it++) {
-		FileStackNode const *node = *it;
+		FileStackNode const &node = **it;
 
-		writeFileStackNode(*node, file);
+		writeFileStackNode(node, file);
 
 		// The list is supposed to have decrementing IDs
-		if (it + 1 != fileStackNodes.end() && it[1]->ID != node->ID - 1)
+		if (it + 1 != fileStackNodes.end() && it[1]->ID != node.ID - 1)
 			fatalerror(
 			    "Internal error: fstack node #%" PRIu32 " follows #%" PRIu32
 			    ". Please report this to the developers!\n",
 			    it[1]->ID,
-			    node->ID
+			    node.ID
 			);
 	}
 
