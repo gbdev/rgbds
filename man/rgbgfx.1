@@ -479,6 +479,14 @@ behavior depends on an internal detail of how the PNG is saved, specifically its
 .Ql PLTE
 chunk.
 Since few image editors (such as GIMP) expose that detail, this behavior is only kept for compatibility and should be considered deprecated.
+.Pp
+It turns out that palette generation is an NP-complete problem, so
+.Nm
+does not attempt to find the optimal solution, but instead to find a good one in a reasonable amount of time.
+It is possible to compute the optimal solution externally (using a solver, for example), and then provide it to
+.Nm
+via
+.Fl c .
 .Sh OUTPUT FILES
 All files output by
 .Nm
@@ -595,27 +603,6 @@ assume that tiles were not deduplicated, and should be laid out in the order the
 .Nm
 assumes that no tiles were mirrored.
 .El
-.Sh NOTES
-Some flags have had their functionality removed.
-.Fl D , f ,
-and
-.Fl F
-are now ignored, and
-.Fl h
-is an alias for the new (and less confusingly named)
-.Fl Z .
-These will be removed and/or repurposed in future versions of
-.Nm ,
-so relying on them is not recommended.
-The same applies to the corresponding long options.
-.Pp
-If you are curious, you may find out that palette generation is an NP-complete problem, so
-.Nm
-does not attempt to find the optimal solution, but instead to find a good one in a reasonable amount of time.
-It is possible to compute the optimal solution externally (using a solver, for example), and then provide it to
-.Nm
-via
-.Fl c .
 .Sh EXAMPLES
 The following will only validate the
 .Ql tileset.png
