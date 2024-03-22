@@ -1,10 +1,10 @@
 error: syntax-error-after-syntax-error.asm(6):
-    syntax error, unexpected newline
+    syntax error, unexpected newline, expecting : or ::
 error: syntax-error-after-syntax-error.asm(7):
-    syntax error, unexpected newline
+    syntax error, unexpected newline, expecting : or ::
     To invoke `mac` as a macro it must be indented
 error: syntax-error-after-syntax-error.asm(8):
-    syntax error, unexpected number
+    syntax error, unexpected number, expecting : or ::
     To invoke `mac` as a macro it must be indented
 error: syntax-error-after-syntax-error.asm(9):
     'mac' already defined at syntax-error-after-syntax-error.asm(1)
