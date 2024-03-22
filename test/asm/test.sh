@@ -59,15 +59,6 @@ else
 	rm -f version.asm
 fi
 
-# Check whether to use '.simple.err' files if they exist
-# (rgbasm with pre-3.0 Bison just reports "syntax error")
-$RGBASM -Weverything -o "$o" syntax-error.asm >"$output" 2>"$errput"
-simple_error=0
-if ! diff --strip-trailing-cr syntax-error.err "$errput"; then
-	echo "${bold}${orange}Warning: using .simple.err files when available.${rescolors}${resbold}"
-	simple_error=1
-fi
-
 for i in *.asm; do
 	flags=${i%.asm}.flags
 	RGBASMFLAGS=-Weverything
@@ -82,9 +73,7 @@ for i in *.asm; do
 		else
 			desired_outname=/dev/null
 		fi
-		if [ "$simple_error" -eq 1 ] && [ -e "${i%.asm}.simple.err" ]; then
-			desired_errname=${i%.asm}.simple.err
-		elif [ -e "${i%.asm}.err" ]; then
+		if [ -e "${i%.asm}.err" ]; then
 			desired_errname=${i%.asm}.err
 		else
 			desired_errname=/dev/null
