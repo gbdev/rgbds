@@ -1216,40 +1216,6 @@ See the
 command-line option in
 .Xr rgbasm 1 .
 The same problem can occur if the expansion of a macro invokes another macro, recursively.
-.Pp
-The examples above for
-.Ql EQU ,
-.Ql = ,
-.Ql RB ,
-.Ql RW ,
-.Ql RL ,
-and
-.Ql EQUS
-all start with
-.Ql DEF .
-(A variable definition may start with
-.Ql REDEF
-instead, since they are redefinable.)
-You may use the older syntax without
-.Ql DEF ,
-but then the name being defined
-.Em must not
-have any whitespace before it;
-otherwise
-.Nm
-will treat it as a macro invocation.
-Furthermore, without the
-.Ql DEF
-keyword,
-string constants may be expanded for the name.
-This can lead to surprising results:
-.Bd -literal -offset indent
-X EQUS "Y"
-; this defines Y, not X!
-X EQU 42
-; prints "Y $2A"
-PRINTLN "{X} {Y}"
-.Ed
 .Ss Macros
 One of the best features of an assembler is the ability to write macros for it.
 Macros can be called with arguments, and can react depending on input using

@@ -28,22 +28,3 @@ redef string equs "there"
 
 redef constant equ 6*9
 	println constant
-
-old_constant EQU 42
-old_string EQUS "hello"
-
-old_variable = 2 + 2
-old_variable += 3
-old_variable *= 4
-old_variable -= 1
-old_variable /= 5
-old_variable %= 7
-old_variable &= $ffff
-old_variable |= %1010
-old_variable ^= &123
-old_variable <<= 2
-old_variable >>= 1
-
-old_byte rb
-old_word rw
-old_long rl

@@ -429,7 +429,6 @@ plain_directive:
 	| label cpu_commands
 	| label macro
 	| label directive
-	| assignment_directive
 ;
 
 endc:
@@ -522,9 +521,6 @@ macro_args:
 	}
 ;
 
-// These commands start with a LABEL.
-assignment_directive: equ | assignment | rb | rw | rl | equs;
-
 directive:
 	  endc
 	| print
@@ -601,105 +597,6 @@ compound_eq:
 	}
 	| POP_SHREQ {
 		$$ = RPN_SHR;
-	}
-;
-
-equ:
-	LABEL POP_EQU const {
-		warning(
-		    WARNING_OBSOLETE,
-		    "`%s EQU` is deprecated; use `DEF %s EQU`\n",
-		    $1.c_str(),
-		    $1.c_str()
-		);
-		sym_AddEqu($1, $3);
-	}
-;
-
-assignment:
-	LABEL POP_EQUAL const {
-		warning(WARNING_OBSOLETE, "`%s =` is deprecated; use `DEF %s =`\n", $1.c_str(), $1.c_str());
-		sym_AddVar($1, $3);
-	}
-	| LABEL compound_eq const {
-		char const *compoundEqOperator = nullptr;
-		switch ($2) {
-			case RPN_ADD: compoundEqOperator = "+="; break;
-			case RPN_SUB: compoundEqOperator = "-="; break;
-			case RPN_MUL: compoundEqOperator = "*="; break;
-			case RPN_DIV: compoundEqOperator = "/="; break;
-			case RPN_MOD: compoundEqOperator = "%="; break;
-			case RPN_XOR: compoundEqOperator = "^="; break;
-			case RPN_OR:  compoundEqOperator = "|="; break;
-			case RPN_AND: compoundEqOperator = "&="; break;
-			case RPN_SHL: compoundEqOperator = "<<="; break;
-			case RPN_SHR: compoundEqOperator = ">>="; break;
-			default: break;
-		}
-
-		warning(
-			WARNING_OBSOLETE,
-			"`%s %s` is deprecated; use `DEF %s %s`\n",
-			$1.c_str(),
-			compoundEqOperator,
-			$1.c_str(),
-			compoundEqOperator
-		);
-		compoundAssignment($1, $2, $3);
-	}
-;
-
-equs:
-	LABEL POP_EQUS string {
-		warning(
-		    WARNING_OBSOLETE,
-		    "`%s EQUS` is deprecated; use `DEF %s EQUS`\n",
-		    $1.c_str(),
-		    $1.c_str()
-		);
-		sym_AddString($1, std::make_shared<std::string>($3));
-	}
-;
-
-rb:
-	LABEL POP_RB rs_uconst {
-		warning(
-		    WARNING_OBSOLETE,
-		    "`%s RB` is deprecated; use `DEF %s RB`\n",
-		    $1.c_str(),
-		    $1.c_str()
-		);
-		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
-		sym_SetRSValue(rs + $3);
-	}
-;
-
-rw:
-	LABEL POP_RW rs_uconst {
-		warning(
-		    WARNING_OBSOLETE,
-		    "`%s RW` is deprecated; use `DEF %s RW`\n",
-		    $1.c_str(),
-		    $1.c_str()
-		);
-		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
-		sym_SetRSValue(rs + 2 * $3);
-	}
-;
-
-rl:
-	LABEL Z80_RL rs_uconst {
-		warning(
-			WARNING_OBSOLETE,
-			"`%s RL` is deprecated; use `DEF %s RL`\n",
-			$1.c_str(),
-			$1.c_str()
-		);
-		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
-		sym_SetRSValue(rs + 4 * $3);
 	}
 ;
 
