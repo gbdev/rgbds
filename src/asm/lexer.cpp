@@ -1170,20 +1170,20 @@ static char const *readInterpolation(size_t depth) {
 	// Don't return before `lexerState->disableInterpolation` is reset!
 	lexerState->disableInterpolation = disableInterpolation;
 
-	static char buf[MAXSTRLEN + 1];
-
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
 	if (!sym) {
 		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
-		std::string str = fmt.formatString(*sym->getEqus());
-		memcpy(buf, str.c_str(), str.length() + 1);
-		return buf;
+		static std::string buf;
+		buf.clear();
+		fmt.appendString(buf, *sym->getEqus());
+		return buf.c_str();
 	} else if (sym->isNumeric()) {
-		std::string str = fmt.formatNumber(sym->getConstantValue());
-		memcpy(buf, str.c_str(), str.length() + 1);
-		return buf;
+		static std::string buf;
+		buf.clear();
+		fmt.appendNumber(buf, sym->getConstantValue());
+		return buf.c_str();
 	} else {
 		error("Only numerical and string symbols can be interpolated\n");
 	}
