@@ -1,12 +1,12 @@
 MACRO m1
-def x\1
+	def x\1
 ENDM
 
 DEF S EQUS "y"
 DEF S2 EQUS "yy"
 
 MACRO m2
-S\1 ; can't use DEF, so this will EQUS expand
+	def {S}\1
 ENDM
 
 	m1 = 5
@@ -17,7 +17,7 @@ ENDM
 	println x
 	println y
 	println xx
-	println yy
+	println y2
 
 
 MACRO test_char
