@@ -15,7 +15,7 @@ ENDM
 	mac 1, 2 + /* another ;
 		; comment */ 2, 3
 
-	mac           a                                                                                                                                                                                                                                                               b           ; truncated
+	mac           a                                                                                                                                                                                                                                                               b           ; long
 
 	mac
 	mac ,

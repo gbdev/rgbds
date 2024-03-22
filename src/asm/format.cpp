@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "asm/fixpoint.hpp"
-#include "asm/lexer.hpp" // MAXSTRLEN
 #include "asm/warning.hpp"
 
 void FormatSpec::useCharacter(int c) {
@@ -133,11 +132,6 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 		str.append(padLen, ' ');
 		str.append(value);
 	}
-
-	if (str.length() > MAXSTRLEN) {
-		error("Formatted string value too long\n");
-		str.resize(MAXSTRLEN);
-	}
 }
 
 void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
@@ -244,10 +238,5 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 				str += prefixChar;
 		}
 		str.append(valueBuf);
-	}
-
-	if (str.length() > MAXSTRLEN) {
-		error("Formatted numeric value too long\n");
-		str.resize(MAXSTRLEN);
 	}
 }

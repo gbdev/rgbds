@@ -13,8 +13,6 @@
 
 #include "platform.hpp" // SSIZE_MAX
 
-#define MAXSTRLEN 255
-
 #define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
 // The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");

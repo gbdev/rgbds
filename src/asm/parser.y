@@ -1615,10 +1615,6 @@ strcat_args:
 	| strcat_args COMMA string {
 		$$ = std::move($1);
 		$$.append($3);
-		if ($$.length() > MAXSTRLEN) {
-			warning(WARNING_LONG_STR, "STRCAT: String too long '%s'\n", $$.c_str());
-			$$.resize(MAXSTRLEN);
-		}
 	}
 ;
 
@@ -2556,7 +2552,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	uint32_t curLen = 0;
 
 	// Compute the result length in bytes.
-	while (ptr[index] && index - startIndex < MAXSTRLEN && curLen < len) {
+	while (ptr[index] && curLen < len) {
 		switch (decode(&state, &codep, ptr[index])) {
 		case 1:
 			errorInvalidUTF8Byte(ptr[index], "STRSUB");
@@ -2569,7 +2565,6 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 		index++;
 	}
 
-	// Check if `index - startIndex == MAXSTRLEN` before `curLen == len`.
 	if (curLen < len)
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
 
@@ -2641,11 +2636,6 @@ static std::string strrpl(std::string_view str, std::string const &old, std::str
 		str.remove_prefix(pos + old.size());
 	}
 
-	if (rpl.length() > MAXSTRLEN) {
-		warning(WARNING_LONG_STR, "STRRPL: String too long, got truncated\n");
-		rpl.resize(MAXSTRLEN);
-	}
-
 	return rpl;
 }
 
@@ -2656,7 +2646,7 @@ static std::string strfmt(
 	std::string str;
 	size_t argIndex = 0;
 
-	for (size_t i = 0; spec[i] != '\0' && str.length() <= MAXSTRLEN; ++i) {
+	for (size_t i = 0; spec[i] != '\0'; ++i) {
 		int c = spec[i];
 
 		if (c != '%') {
@@ -2712,10 +2702,6 @@ static std::string strfmt(
 		    argIndex
 		);
 
-	if (str.length() > MAXSTRLEN) {
-		warning(WARNING_LONG_STR, "STRFMT: String too long, got truncated\n");
-		str.resize(MAXSTRLEN);
-	}
 	return str;
 }
 
