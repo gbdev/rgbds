@@ -209,11 +209,6 @@ int main(int argc, char *argv[]) {
 				errx("`-H` and `-h` don't make sense together");
 			break;
 
-		// `-i` was the only short option for `--include` until `-I` was
-		// introduced to better match the `-I dir` option of gcc and clang.
-		case 'i':
-			warning(WARNING_OBSOLETE, "`-i` is deprecated; use `-I`\n");
-			// fallthrough
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
 			break;
