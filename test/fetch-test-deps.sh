@@ -95,10 +95,10 @@ case "$actionname" in
 esac
 
 if "$nonfree"; then
-	action pret/pokecrystal       2023-11-22 9a917e35760210a1f34057ecada2148f1fefc390
-	action pret/pokered           2023-12-05 f6017ddbfd7e14ea39b81ce3393de9117e7310d9
-	action zladx/LADX-Disassembly 2023-12-10 e08773051fa75f0c02a85434196fd598642d2c2c
+	action pret/pokecrystal       2024-03-03 c1da20e2f12f95c935500151d15f455e7e7eb213
+	action pret/pokered           2024-01-02 fabe2b3fb3fb5a849c5220298acabbdc9ad30f3b
+	action zladx/LADX-Disassembly 2024-02-25 583c78d2f2a5258b87bf133f75b7129228255650
 fi
 action AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
-action pinobatch/libbet 2023-11-30 9f56cf94883c58517c2cd41a752cfee5a5800e8d
-action LIJI32/SameBoy   2023-12-05 8642715a6d75520753196de96b73ada4451739a4
+action pinobatch/libbet 2024-03-09 c98c7574d94f3e1a977bd7e98899f30a1ecbbb17
+action LIJI32/SameBoy   2024-03-08 e7792c16b24c08f55a370973f0beaecb7bd0ab92
