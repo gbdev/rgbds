@@ -35,7 +35,7 @@ struct Context {
 	// Note that several contexts can share the same unique ID (since `INCLUDE` preserves its
 	// parent's, and likewise "back-propagates" a unique ID if requested), hence using `shared_ptr`.
 	std::shared_ptr<std::string> uniqueIDStr;
-	MacroArgs *macroArgs = nullptr; // Macro args are *saved* here
+	std::shared_ptr<MacroArgs> macroArgs = nullptr; // Macro args are *saved* here
 	uint32_t nbReptIters = 0;
 	bool isForLoop = false;
 	int32_t forValue = 0;
@@ -285,7 +285,7 @@ static void runPreIncludeFile() {
 	lexer_SetState(&context.lexerState);
 }
 
-void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
+void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> args) {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
@@ -325,7 +325,7 @@ void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
 	);
 	lexer_SetStateAtEOL(&context.lexerState);
-	macro_UseNewArgs(&args);
+	macro_UseNewArgs(args);
 }
 
 static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {

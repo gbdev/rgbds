@@ -15,12 +15,12 @@ struct MacroArgs {
 	void append(std::shared_ptr<std::string> arg);
 };
 
-MacroArgs *macro_GetCurrentArgs();
-void macro_UseNewArgs(MacroArgs *args);
+bool macro_HasCurrentArgs();
+std::shared_ptr<MacroArgs> macro_GetCurrentArgs();
+void macro_UseNewArgs(std::shared_ptr<MacroArgs> args);
+uint32_t macro_NbArgs();
 std::shared_ptr<std::string> macro_GetArg(uint32_t i);
 std::shared_ptr<std::string> macro_GetAllArgs();
-
 void macro_ShiftCurrentArgs(int32_t count);
-uint32_t macro_NbArgs();
 
 #endif // RGBDS_MACRO_H

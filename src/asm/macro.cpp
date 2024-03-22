@@ -12,7 +12,7 @@
 
 #define MAXMACROARGS 99999
 
-static MacroArgs *macroArgs = nullptr;
+static std::shared_ptr<MacroArgs> macroArgs = nullptr;
 
 void MacroArgs::append(std::shared_ptr<std::string> arg) {
 	if (arg->empty())
@@ -22,12 +22,20 @@ void MacroArgs::append(std::shared_ptr<std::string> arg) {
 	args.push_back(arg);
 }
 
-MacroArgs *macro_GetCurrentArgs() {
+bool macro_HasCurrentArgs() {
+	return macroArgs != nullptr;
+}
+
+std::shared_ptr<MacroArgs> macro_GetCurrentArgs() {
 	return macroArgs;
 }
 
-void macro_UseNewArgs(MacroArgs *args) {
+void macro_UseNewArgs(std::shared_ptr<MacroArgs> args) {
 	macroArgs = args;
+}
+
+uint32_t macro_NbArgs() {
+	return macroArgs->args.size() - macroArgs->shift;
 }
 
 std::shared_ptr<std::string> macro_GetArg(uint32_t i) {
@@ -82,8 +90,4 @@ void macro_ShiftCurrentArgs(int32_t count) {
 	} else {
 		macroArgs->shift += count;
 	}
-}
-
-uint32_t macro_NbArgs() {
-	return macroArgs->args.size() - macroArgs->shift;
 }

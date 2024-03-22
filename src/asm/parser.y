@@ -252,7 +252,7 @@
 %type <bool> capture_macro
 
 %type <SectionModifier> sect_mod
-%type <MacroArgs *> macro_args
+%type <std::shared_ptr<MacroArgs>> macro_args
 
 %type <AlignmentSpec> align_spec
 
@@ -512,18 +512,16 @@ macro:
 		// Parsing 'macroargs' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macro_args {
-		fstk_RunMacro($1, *$3);
+		fstk_RunMacro($1, $3);
 	}
 ;
 
 macro_args:
 	%empty {
-		$$ = new (std::nothrow) MacroArgs();
-		if (!$$)
-			fatalerror("Failed to allocate memory for macro arguments: %s\n", strerror(errno));
+		$$ = std::make_shared<MacroArgs>();
 	}
 	| macro_args STRING {
-		$$ = $1;
+		$$ = std::move($1);
 		$$->append(std::make_shared<std::string>($2));
 	}
 ;

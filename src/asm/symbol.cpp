@@ -43,7 +43,7 @@ void sym_ForEach(void (*callback)(Symbol &)) {
 }
 
 static int32_t Callback_NARG() {
-	if (!macro_GetCurrentArgs()) {
+	if (!macro_HasCurrentArgs()) {
 		error("_NARG does not make sense outside of a macro\n");
 		return 0;
 	}
@@ -147,7 +147,7 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 		return nullptr;
 	}
 	// `_NARG` has no value outside a macro
-	if (sym == _NARGSymbol && !macro_GetCurrentArgs()) {
+	if (sym == _NARGSymbol && !macro_HasCurrentArgs()) {
 		return nullptr;
 	}
 	return sym;
