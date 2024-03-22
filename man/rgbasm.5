@@ -641,23 +641,6 @@ can range from
 .Ad $FF80
 to
 .Ad $FFFE .
-.Pp
-.Sy Note :
-While
-.Nm
-will automatically optimize
-.Ic ld
-instructions to the smaller and faster
-.Ic ldh
-(see
-.Xr gbz80 7 )
-whenever possible, it is generally unable to do so when a label is involved.
-Using the
-.Ic ldh
-instruction directly is recommended.
-This forces the assembler to emit a
-.Ic ldh
-instruction and the linker to check if the value is in the correct range.
 .El
 .Pp
 Since RGBDS produces ROMs, code and data can only be placed in
@@ -2105,29 +2088,20 @@ can be used to change some of the options during assembling from within the sour
 takes a comma-separated list of options as its argument:
 .Bd -literal -offset indent
 PUSHO
-    OPT g.oOX, Wdiv, L    ; acts like command-line -g.oOX -Wdiv -L
+    OPT g.oOX, Wdiv       ; acts like command-line -g.oOX -Wdiv
     DW `..ooOOXX          ; uses the graphics constant characters from OPT g
     PRINTLN $80000000/-1  ; prints a warning about division
-    LD [$FF88], A         ; encoded as LD, not LDH
 POPO
     DW `00112233          ; uses the default graphics constant characters
     PRINTLN $80000000/-1  ; no warning by default
-    LD [$FF88], A         ; optimized to use LDH by default
 .Ed
 .Pp
 The options that
 .Ic OPT
 can modify are currently:
-.Cm b , g , p , Q , r , h , L ,
+.Cm b , g , p , Q ,
 and
-.Cm W .
-The Boolean flag options
-.Cm H , h , L ,
-and
-.Cm l
-can be negated like
-.Ql OPT !H
-to act like omitting them from the command-line.
+.Cm r .
 .Pp
 .Ic POPO
 and

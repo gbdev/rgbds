@@ -26,10 +26,6 @@ _rgbasm_completions() {
 	declare -A opts=(
 		[V]="version:normal"
 		[E]="export-all:normal"
-		[H]="nop-after-halt:normal"
-		[h]="halt-without-nop:normal"
-		[L]="preserve-ld:normal"
-		[l]="auto-ldh:normal"
 		[v]="verbose:normal"
 		[w]=":normal"
 		[b]="binary-digits:unk"

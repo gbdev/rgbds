@@ -21,10 +21,6 @@ struct OptStackEntry {
 	char gbgfx[4];
 	uint8_t fixPrecision;
 	uint8_t fillByte;
-	bool haltNop;
-	bool warnOnHaltNop;
-	bool optimizeLoads;
-	bool warnOnLdOpt;
 	bool warningsAreErrors;
 	size_t maxRecursionDepth;
 	WarningState warningStates[numWarningStates];
@@ -51,22 +47,6 @@ void opt_Q(uint8_t precision) {
 void opt_R(size_t newDepth) {
 	fstk_NewRecursionDepth(newDepth);
 	lexer_CheckRecursionDepth();
-}
-
-void opt_H(bool warn) {
-	warnOnHaltNop = warn;
-}
-
-void opt_h(bool halt) {
-	haltNop = halt;
-}
-
-void opt_L(bool optimize) {
-	optimizeLoads = optimize;
-}
-
-void opt_l(bool warn) {
-	warnOnLdOpt = warn;
 }
 
 void opt_W(char const *flag) {
@@ -150,75 +130,11 @@ void opt_Parse(char const *s) {
 		break;
 	}
 
-	case 'H':
-		if (s[1] == '\0')
-			opt_H(false);
-		else
-			error("Option 'H' does not take an argument\n");
-		break;
-
-	case 'h':
-		if (s[1] == '\0')
-			opt_h(false);
-		else
-			error("Option 'h' does not take an argument\n");
-		break;
-
-	case 'L':
-		if (s[1] == '\0')
-			opt_L(false);
-		else
-			error("Option 'L' does not take an argument\n");
-		break;
-
-	case 'l':
-		if (s[1] == '\0')
-			opt_l(false);
-		else
-			error("Option 'l' does not take an argument\n");
-		break;
-
 	case 'W':
 		if (strlen(&s[1]) > 0)
 			opt_W(&s[1]);
 		else
 			error("Must specify an argument for option 'W'\n");
-		break;
-
-	case '!': // negates flag options that do not take an argument
-		switch (s[1]) {
-		case 'H':
-			if (s[2] == '\0')
-				opt_H(true);
-			else
-				error("Option '!H' does not take an argument\n");
-			break;
-
-		case 'h':
-			if (s[2] == '\0')
-				opt_h(true);
-			else
-				error("Option '!h' does not take an argument\n");
-			break;
-
-		case 'L':
-			if (s[2] == '\0')
-				opt_L(true);
-			else
-				error("Option '!L' does not take an argument\n");
-			break;
-
-		case 'l':
-			if (s[2] == '\0')
-				opt_l(true);
-			else
-				error("Option '!l' does not take an argument\n");
-			break;
-
-		default:
-			error("Unknown option '!%c'\n", s[1]);
-			break;
-		}
 		break;
 
 	default:
@@ -243,14 +159,6 @@ void opt_Push() {
 
 	entry.fillByte = fillByte; // Pulled from section.hpp
 
-	// Both of these are pulled from main.hpp
-	entry.haltNop = haltNop;
-	entry.warnOnHaltNop = warnOnHaltNop;
-
-	// Both of these are pulled from main.hpp
-	entry.optimizeLoads = optimizeLoads;
-	entry.warnOnLdOpt = warnOnLdOpt;
-
 	// Both of these pulled from warning.hpp
 	entry.warningsAreErrors = warningsAreErrors;
 	memcpy(entry.warningStates, warningStates, numWarningStates);
@@ -273,10 +181,6 @@ void opt_Pop() {
 	opt_G(entry.gbgfx);
 	opt_P(entry.fillByte);
 	opt_Q(entry.fixPrecision);
-	opt_H(entry.warnOnHaltNop);
-	opt_h(entry.haltNop);
-	opt_L(entry.optimizeLoads);
-	opt_l(entry.warnOnLdOpt);
 	opt_R(entry.maxRecursionDepth);
 
 	// opt_W does not apply a whole warning state; it processes one flag string
