@@ -12,60 +12,28 @@
 
 #define MAXMACROARGS 99999
 
-static std::shared_ptr<MacroArgs> macroArgs = nullptr;
+std::shared_ptr<std::string> MacroArgs::getArg(uint32_t i) const {
+	uint32_t realIndex = i + shift - 1;
 
-void MacroArgs::append(std::shared_ptr<std::string> arg) {
-	if (arg->empty())
-		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (args.size() == MAXMACROARGS)
-		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
-	args.push_back(arg);
+	return realIndex >= args.size() ? nullptr : args[realIndex];
 }
 
-bool macro_HasCurrentArgs() {
-	return macroArgs != nullptr;
-}
+std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
+	size_t nbArgs = args.size();
 
-std::shared_ptr<MacroArgs> macro_GetCurrentArgs() {
-	return macroArgs;
-}
-
-void macro_UseNewArgs(std::shared_ptr<MacroArgs> args) {
-	macroArgs = args;
-}
-
-uint32_t macro_NbArgs() {
-	return macroArgs->args.size() - macroArgs->shift;
-}
-
-std::shared_ptr<std::string> macro_GetArg(uint32_t i) {
-	if (!macroArgs)
-		return nullptr;
-
-	uint32_t realIndex = i + macroArgs->shift - 1;
-
-	return realIndex >= macroArgs->args.size() ? nullptr : macroArgs->args[realIndex];
-}
-
-std::shared_ptr<std::string> macro_GetAllArgs() {
-	if (!macroArgs)
-		return nullptr;
-
-	size_t nbArgs = macroArgs->args.size();
-
-	if (macroArgs->shift >= nbArgs)
+	if (shift >= nbArgs)
 		return std::make_shared<std::string>("");
 
 	size_t len = 0;
 
-	for (uint32_t i = macroArgs->shift; i < nbArgs; i++)
-		len += macroArgs->args[i]->length() + 1; // 1 for comma
+	for (uint32_t i = shift; i < nbArgs; i++)
+		len += args[i]->length() + 1; // 1 for comma
 
 	auto str = std::make_shared<std::string>();
 	str->reserve(len + 1); // 1 for comma
 
-	for (uint32_t i = macroArgs->shift; i < nbArgs; i++) {
-		auto const &arg = macroArgs->args[i];
+	for (uint32_t i = shift; i < nbArgs; i++) {
+		auto const &arg = args[i];
 
 		str->append(*arg);
 
@@ -77,17 +45,22 @@ std::shared_ptr<std::string> macro_GetAllArgs() {
 	return str;
 }
 
-void macro_ShiftCurrentArgs(int32_t count) {
-	if (!macroArgs) {
-		error("Cannot shift macro arguments outside of a macro\n");
-	} else if (size_t nbArgs = macroArgs->args.size();
-	           count > 0 && ((uint32_t)count > nbArgs || macroArgs->shift > nbArgs - count)) {
+void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
+	if (arg->empty())
+		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
+	if (args.size() == MAXMACROARGS)
+		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
+	args.push_back(arg);
+}
+
+void MacroArgs::shiftArgs(int32_t count) {
+	if (size_t nbArgs = args.size(); count > 0 && ((uint32_t)count > nbArgs || shift > nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
-		macroArgs->shift = nbArgs;
-	} else if (count < 0 && macroArgs->shift < (uint32_t)-count) {
+		shift = nbArgs;
+	} else if (count < 0 && shift < (uint32_t)-count) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning\n");
-		macroArgs->shift = 0;
+		shift = 0;
 	} else {
-		macroArgs->shift += count;
+		shift += count;
 	}
 }

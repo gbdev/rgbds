@@ -583,9 +583,10 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		}
 		return str;
 	} else if (name == '#') {
-		auto str = macro_GetAllArgs();
+		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
+		auto str = macroArgs ? macroArgs->getAllArgs() : nullptr;
 		if (!str) {
-			error("'\\#' cannot be used outside of a macro");
+			error("'\\#' cannot be used outside of a macro\n");
 		}
 		return str;
 	} else if (name == '<') {
@@ -595,7 +596,13 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 			return nullptr;
 		}
 
-		auto str = macro_GetArg(num);
+		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
+		if (!macroArgs) {
+			error("'\\<%" PRIu32 ">' cannot be used outside of a macro\n", num);
+			return nullptr;
+		}
+
+		auto str = macroArgs->getArg(num);
 		if (!str) {
 			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
 		}
@@ -605,7 +612,14 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		return nullptr;
 	} else {
 		assert(name > '0' && name <= '9');
-		auto str = macro_GetArg(name - '0');
+
+		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
+		if (!macroArgs) {
+			error("'\\%c' cannot be used outside of a macro\n", name);
+			return nullptr;
+		}
+
+		auto str = macroArgs->getArg(name - '0');
 		if (!str) {
 			error("Macro argument '\\%c' not defined\n", name);
 		}

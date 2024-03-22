@@ -119,6 +119,12 @@ std::shared_ptr<std::string> fstk_GetUniqueIDStr() {
 	return str;
 }
 
+MacroArgs *fstk_GetCurrentMacroArgs() {
+	// This returns a raw pointer, *not* a shared pointer, so its returned value
+	// does *not* keep the current macro args alive!
+	return contextStack.top().macroArgs.get();
+}
+
 void fstk_AddIncludePath(std::string const &path) {
 	if (path.empty())
 		return;
@@ -214,15 +220,8 @@ bool yywrap() {
 		return true;
 	}
 
-	Context oldContext = std::move(contextStack.top());
+	lexer_CleanupState(contextStack.top().lexerState);
 	contextStack.pop();
-
-	lexer_CleanupState(oldContext.lexerState);
-
-	// Restore args if a macro (not REPT) saved them
-	if (oldContext.fileInfo->type == NODE_MACRO)
-		macro_UseNewArgs(contextStack.top().macroArgs);
-
 	lexer_SetState(&contextStack.top().lexerState);
 
 	return false;
@@ -243,6 +242,7 @@ static Context &newContext(std::shared_ptr<FileStackNode> fileInfo) {
 	    .uniqueIDStr = fileInfo->generatesUniqueID()
 	                       ? std::make_shared<std::string>() // Create a new, not-yet-generated ID.
 	                       : contextStack.top().uniqueIDStr, // Make a copy.
+	    .macroArgs = contextStack.top().macroArgs,
 	});
 }
 
@@ -285,7 +285,7 @@ static void runPreIncludeFile() {
 	lexer_SetState(&context.lexerState);
 }
 
-void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> args) {
+void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
@@ -296,7 +296,6 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> args
 		error("\"%s\" is not a macro\n", macroName.c_str());
 		return;
 	}
-	contextStack.top().macroArgs = macro_GetCurrentArgs();
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, "");
 
@@ -325,7 +324,7 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> args
 	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
 	);
 	lexer_SetStateAtEOL(&context.lexerState);
-	macro_UseNewArgs(args);
+	context.macroArgs = macroArgs;
 }
 
 static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {

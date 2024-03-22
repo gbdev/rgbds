@@ -54,6 +54,7 @@ struct MacroArgs;
 void fstk_DumpCurrent();
 std::shared_ptr<FileStackNode> fstk_GetFileStack();
 std::shared_ptr<std::string> fstk_GetUniqueIDStr();
+MacroArgs *fstk_GetCurrentMacroArgs();
 
 void fstk_AddIncludePath(std::string const &path);
 void fstk_SetPreIncludeFile(std::string const &path);
@@ -61,7 +62,7 @@ std::optional<std::string> fstk_FindFile(std::string const &path);
 
 bool yywrap();
 void fstk_RunInclude(std::string const &path);
-void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> args);
+void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size);
 void fstk_RunFor(
     std::string const &symName,
