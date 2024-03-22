@@ -3,9 +3,7 @@
 #include "asm/format.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <inttypes.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +103,7 @@ void FormatSpec::finishCharacters() {
 		state = FORMAT_INVALID;
 }
 
-std::string FormatSpec::formatString(std::string const &value) const {
+void FormatSpec::appendString(std::string &str, std::string const &value) const {
 	int useType = type;
 	if (isEmpty()) {
 		// No format was specified
@@ -127,8 +125,7 @@ std::string FormatSpec::formatString(std::string const &value) const {
 	size_t totalLen = width > valueLen ? width : valueLen;
 	size_t padLen = totalLen - valueLen;
 
-	std::string str;
-	str.reserve(totalLen);
+	str.reserve(str.length() + totalLen);
 	if (alignLeft) {
 		str.append(value);
 		str.append(padLen, ' ');
@@ -141,11 +138,9 @@ std::string FormatSpec::formatString(std::string const &value) const {
 		error("Formatted string value too long\n");
 		str.resize(MAXSTRLEN);
 	}
-
-	return str;
 }
 
-std::string FormatSpec::formatNumber(uint32_t value) const {
+void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	int useType = type;
 	bool usePrefix = prefix;
 	if (isEmpty()) {
@@ -224,8 +219,7 @@ std::string FormatSpec::formatNumber(uint32_t value) const {
 	size_t totalLen = width > numLen ? width : numLen;
 	size_t padLen = totalLen - numLen;
 
-	std::string str;
-	str.reserve(totalLen);
+	str.reserve(str.length() + totalLen);
 	if (alignLeft) {
 		if (signChar)
 			str += signChar;
@@ -256,6 +250,4 @@ std::string FormatSpec::formatNumber(uint32_t value) const {
 		error("Formatted numeric value too long\n");
 		str.resize(MAXSTRLEN);
 	}
-
-	return str;
 }

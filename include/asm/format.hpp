@@ -37,8 +37,8 @@ public:
 	void useCharacter(int c);
 	void finishCharacters();
 
-	std::string formatString(std::string const &value) const;
-	std::string formatNumber(uint32_t value) const;
+	void appendString(std::string &str, std::string const &value) const;
+	void appendNumber(std::string &str, uint32_t value) const;
 };
 
 #endif // RGBDS_FORMAT_SPEC_H

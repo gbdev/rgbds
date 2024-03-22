@@ -2696,11 +2696,11 @@ static std::string strfmt(
 			// Will warn after formatting is done.
 			str += '%';
 		} else if (auto *n = std::get_if<uint32_t>(&args[argIndex]); n) {
-			str.append(fmt.formatNumber(*n));
+			fmt.appendNumber(str, *n);
 		} else {
 			assert(std::holds_alternative<std::string>(args[argIndex]));
 			auto &s = std::get<std::string>(args[argIndex]);
-			str.append(fmt.formatString(s));
+			fmt.appendString(str, s);
 		}
 
 		argIndex++;
