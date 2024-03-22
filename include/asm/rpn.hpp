@@ -12,16 +12,12 @@
 struct Symbol;
 
 struct Expression {
-	int32_t val;        // If the expression's value is known, it's here
-	std::string reason; // Why the expression is not known, if it isn't
-	bool isKnown;       // Whether the expression's value is known at assembly time
-	bool isSymbol;      // Whether the expression represents a symbol suitable for const diffing
-	std::vector<uint8_t> rpn; // Bytes serializing the RPN expression
-	uint32_t rpnPatchSize;    // Size the expression will take in the object file
-
-	int32_t getConstVal() const;
-	Symbol const *symbolOf() const;
-	bool isDiffConstant(Symbol const *symName) const;
+	int32_t val = 0;       // If the expression's value is known, it's here
+	std::string reason{};  // Why the expression is not known, if it isn't
+	bool isKnown = true;   // Whether the expression's value is known at assembly time
+	bool isSymbol = false; // Whether the expression represents a symbol suitable for const diffing
+	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
+	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
 
 	Expression() = default;
 	Expression(Expression &&) = default;
@@ -31,27 +27,43 @@ struct Expression {
 #endif
 
 	Expression &operator=(Expression &&) = default;
+
+	int32_t getConstVal() const;
+	Symbol const *symbolOf() const;
+	bool isDiffConstant(Symbol const *symName) const;
+
+	void makeNumber(uint32_t value);
+	void makeSymbol(std::string const &symName);
+	void makeBankSymbol(std::string const &symName);
+	void makeBankSection(std::string const &sectName);
+	void makeSizeOfSection(std::string const &sectName);
+	void makeStartOfSection(std::string const &sectName);
+	void makeSizeOfSectionType(SectionType type);
+	void makeStartOfSectionType(SectionType type);
+	void makeHigh();
+	void makeLow();
+	void makeNeg();
+	void makeNot();
+	void makeLogicNot();
+	void makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2);
+
+	void makeCheckHRAM();
+	void makeCheckRST();
+
+	void checkNBit(uint8_t n) const;
+
+private:
+	void clear();
+	uint8_t *reserveSpace(uint32_t size);
+	uint8_t *reserveSpace(uint32_t size, uint32_t patchSize);
+
+	// Makes an expression "not known", also setting its error message
+	template<typename... Ts>
+	void makeUnknown(Ts... parts) {
+		isKnown = false;
+		reason.clear();
+		(reason.append(parts), ...);
+	}
 };
-
-void rpn_Number(Expression &expr, uint32_t val);
-void rpn_Symbol(Expression &expr, std::string const &symName);
-void rpn_LOGNOT(Expression &expr, Expression &&src);
-void rpn_BinaryOp(RPNCommand op, Expression &expr, Expression &&src1, Expression const &src2);
-void rpn_HIGH(Expression &expr, Expression &&src);
-void rpn_LOW(Expression &expr, Expression &&src);
-void rpn_ISCONST(Expression &expr, Expression const &src);
-void rpn_NEG(Expression &expr, Expression &&src);
-void rpn_NOT(Expression &expr, Expression &&src);
-void rpn_BankSymbol(Expression &expr, std::string const &symName);
-void rpn_BankSection(Expression &expr, std::string const &sectionName);
-void rpn_BankSelf(Expression &expr);
-void rpn_SizeOfSection(Expression &expr, std::string const &sectionName);
-void rpn_StartOfSection(Expression &expr, std::string const &sectionName);
-void rpn_SizeOfSectionType(Expression &expr, SectionType type);
-void rpn_StartOfSectionType(Expression &expr, SectionType type);
-
-void rpn_CheckHRAM(Expression &expr);
-void rpn_CheckRST(Expression &expr);
-void rpn_CheckNBit(Expression const &expr, uint8_t n);
 
 #endif // RGBDS_ASM_RPN_H

@@ -264,7 +264,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				if (!strcmp(token, entry.section->name.c_str()))
 					fatal(&where, lineNo, "Area \"%s\" already defined earlier", token);
 			}
-			char const *sectionName = token; // We'll deal with the section's name depending on type
+			char const *sectName = token; // We'll deal with the section's name depending on type
 
 			expectToken("size", 'A');
 
@@ -297,7 +297,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				curSection->name.append(where.name());
 				curSection->name.append(" ");
 			}
-			curSection->name.append(sectionName);
+			curSection->name.append(sectName);
 
 			expectToken("addr", 'A');
 
