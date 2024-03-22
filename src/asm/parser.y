@@ -1272,40 +1272,41 @@ constlist_32bit_entry:
 
 reloc_8bit:
 	relocexpr {
-		rpn_CheckNBit($1, 8);
 		$$ = std::move($1);
+		$$.checkNBit(8);
 	}
 ;
 
 reloc_8bit_no_str:
 	relocexpr_no_str {
-		rpn_CheckNBit($1, 8);
 		$$ = std::move($1);
+		$$.checkNBit(8);
 	}
 ;
 
 reloc_8bit_offset:
 	OP_ADD relocexpr {
-		rpn_CheckNBit($2, 8);
 		$$ = std::move($2);
+		$$.checkNBit(8);
 	}
 	| OP_SUB relocexpr {
-		rpn_NEG($$, std::move($2));
-		rpn_CheckNBit($$, 8);
+		$$ = std::move($2);
+		$$.makeNeg();
+		$$.checkNBit(8);
 	}
 ;
 
 reloc_16bit:
 	relocexpr {
-		rpn_CheckNBit($1, 16);
 		$$ = std::move($1);
+		$$.checkNBit(16);
 	}
 ;
 
 reloc_16bit_no_str:
 	relocexpr_no_str {
-		rpn_CheckNBit($1, 16);
 		$$ = std::move($1);
+		$$.checkNBit(16);
 	}
 ;
 
@@ -1317,189 +1318,194 @@ relocexpr:
 		std::vector<uint8_t> output;
 
 		charmap_Convert($1, output);
-		rpn_Number($$, str2int2(output));
+		$$.makeNumber(str2int2(output));
 	}
 ;
 
 relocexpr_no_str:
 	scoped_anon_id {
-		rpn_Symbol($$, $1);
+		$$.makeSymbol($1);
 	}
 	| NUMBER {
-		rpn_Number($$, $1);
+		$$.makeNumber($1);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
-		rpn_LOGNOT($$, std::move($2));
+		$$ = std::move($2);
+		$$.makeLogicNot();
 	}
 	| relocexpr OP_LOGICOR relocexpr {
-		rpn_BinaryOp(RPN_LOGOR, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGOR, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICAND relocexpr {
-		rpn_BinaryOp(RPN_LOGAND, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGAND, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICEQU relocexpr {
-		rpn_BinaryOp(RPN_LOGEQ, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGEQ, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICGT relocexpr {
-		rpn_BinaryOp(RPN_LOGGT, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGGT, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICLT relocexpr {
-		rpn_BinaryOp(RPN_LOGLT, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGLT, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICGE relocexpr {
-		rpn_BinaryOp(RPN_LOGGE, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGGE, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICLE relocexpr {
-		rpn_BinaryOp(RPN_LOGLE, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGLE, std::move($1), $3);
 	}
 	| relocexpr OP_LOGICNE relocexpr {
-		rpn_BinaryOp(RPN_LOGNE, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_LOGNE, std::move($1), $3);
 	}
 	| relocexpr OP_ADD relocexpr {
-		rpn_BinaryOp(RPN_ADD, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_ADD, std::move($1), $3);
 	}
 	| relocexpr OP_SUB relocexpr {
-		rpn_BinaryOp(RPN_SUB, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_SUB, std::move($1), $3);
 	}
 	| relocexpr OP_XOR relocexpr {
-		rpn_BinaryOp(RPN_XOR, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_XOR, std::move($1), $3);
 	}
 	| relocexpr OP_OR relocexpr {
-		rpn_BinaryOp(RPN_OR, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_OR, std::move($1), $3);
 	}
 	| relocexpr OP_AND relocexpr {
-		rpn_BinaryOp(RPN_AND, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_AND, std::move($1), $3);
 	}
 	| relocexpr OP_SHL relocexpr {
-		rpn_BinaryOp(RPN_SHL, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_SHL, std::move($1), $3);
 	}
 	| relocexpr OP_SHR relocexpr {
-		rpn_BinaryOp(RPN_SHR, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_SHR, std::move($1), $3);
 	}
 	| relocexpr OP_USHR relocexpr {
-		rpn_BinaryOp(RPN_USHR, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_USHR, std::move($1), $3);
 	}
 	| relocexpr OP_MUL relocexpr {
-		rpn_BinaryOp(RPN_MUL, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_MUL, std::move($1), $3);
 	}
 	| relocexpr OP_DIV relocexpr {
-		rpn_BinaryOp(RPN_DIV, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_DIV, std::move($1), $3);
 	}
 	| relocexpr OP_MOD relocexpr {
-		rpn_BinaryOp(RPN_MOD, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_MOD, std::move($1), $3);
 	}
 	| relocexpr OP_EXP relocexpr {
-		rpn_BinaryOp(RPN_EXP, $$, std::move($1), $3);
+		$$.makeBinaryOp(RPN_EXP, std::move($1), $3);
 	}
 	| OP_ADD relocexpr %prec NEG {
 		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr %prec NEG {
-		rpn_NEG($$, std::move($2));
+		$$ = std::move($2);
+		$$.makeNeg();
 	}
 	| OP_NOT relocexpr %prec NEG {
-		rpn_NOT($$, std::move($2));
+		$$ = std::move($2);
+		$$.makeNot();
 	}
 	| OP_HIGH LPAREN relocexpr RPAREN {
-		rpn_HIGH($$, std::move($3));
+		$$ = std::move($3);
+		$$.makeHigh();
 	}
 	| OP_LOW LPAREN relocexpr RPAREN {
-		rpn_LOW($$, std::move($3));
+		$$ = std::move($3);
+		$$.makeLow();
 	}
 	| OP_ISCONST LPAREN relocexpr RPAREN {
-		rpn_ISCONST($$, $3);
+		$$.makeNumber($3.isKnown);
 	}
 	| OP_BANK LPAREN scoped_anon_id RPAREN {
 		// '@' is also an ID; it is handled here
-		rpn_BankSymbol($$, $3);
+		$$.makeBankSymbol($3);
 	}
 	| OP_BANK LPAREN string RPAREN {
-		rpn_BankSection($$, $3);
+		$$.makeBankSection($3);
 	}
 	| OP_SIZEOF LPAREN string RPAREN {
-		rpn_SizeOfSection($$, $3);
+		$$.makeSizeOfSection($3);
 	}
 	| OP_STARTOF LPAREN string RPAREN {
-		rpn_StartOfSection($$, $3);
+		$$.makeStartOfSection($3);
 	}
 	| OP_SIZEOF LPAREN sect_type RPAREN {
-		rpn_SizeOfSectionType($$, (SectionType)$3);
+		$$.makeSizeOfSectionType((SectionType)$3);
 	}
 	| OP_STARTOF LPAREN sect_type RPAREN {
-		rpn_StartOfSectionType($$, (SectionType)$3);
+		$$.makeStartOfSectionType((SectionType)$3);
 	}
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
 	} LPAREN scoped_anon_id RPAREN {
-		rpn_Number($$, sym_FindScopedValidSymbol($4) != nullptr);
+		$$.makeNumber(sym_FindScopedValidSymbol($4) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
 	| OP_ROUND LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Round($3, $4));
+		$$.makeNumber(fix_Round($3, $4));
 	}
 	| OP_CEIL LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Ceil($3, $4));
+		$$.makeNumber(fix_Ceil($3, $4));
 	}
 	| OP_FLOOR LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Floor($3, $4));
+		$$.makeNumber(fix_Floor($3, $4));
 	}
 	| OP_FDIV LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Div($3, $5, $6));
+		$$.makeNumber(fix_Div($3, $5, $6));
 	}
 	| OP_FMUL LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Mul($3, $5, $6));
+		$$.makeNumber(fix_Mul($3, $5, $6));
 	}
 	| OP_FMOD LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Mod($3, $5, $6));
+		$$.makeNumber(fix_Mod($3, $5, $6));
 	}
 	| OP_POW LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Pow($3, $5, $6));
+		$$.makeNumber(fix_Pow($3, $5, $6));
 	}
 	| OP_LOG LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Log($3, $5, $6));
+		$$.makeNumber(fix_Log($3, $5, $6));
 	}
 	| OP_SIN LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Sin($3, $4));
+		$$.makeNumber(fix_Sin($3, $4));
 	}
 	| OP_COS LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Cos($3, $4));
+		$$.makeNumber(fix_Cos($3, $4));
 	}
 	| OP_TAN LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_Tan($3, $4));
+		$$.makeNumber(fix_Tan($3, $4));
 	}
 	| OP_ASIN LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_ASin($3, $4));
+		$$.makeNumber(fix_ASin($3, $4));
 	}
 	| OP_ACOS LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_ACos($3, $4));
+		$$.makeNumber(fix_ACos($3, $4));
 	}
 	| OP_ATAN LPAREN const opt_q_arg RPAREN {
-		rpn_Number($$, fix_ATan($3, $4));
+		$$.makeNumber(fix_ATan($3, $4));
 	}
 	| OP_ATAN2 LPAREN const COMMA const opt_q_arg RPAREN {
-		rpn_Number($$, fix_ATan2($3, $5, $6));
+		$$.makeNumber(fix_ATan2($3, $5, $6));
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
-		rpn_Number($$, $3.compare($5));
+		$$.makeNumber($3.compare($5));
 	}
 	| OP_STRIN LPAREN string COMMA string RPAREN {
 		auto pos = $3.find($5);
 
-		rpn_Number($$, pos != std::string::npos ? pos + 1 : 0);
+		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRRIN LPAREN string COMMA string RPAREN {
 		auto pos = $3.rfind($5);
 
-		rpn_Number($$, pos != std::string::npos ? pos + 1 : 0);
+		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRLEN LPAREN string RPAREN {
-		rpn_Number($$, strlenUTF8($3));
+		$$.makeNumber(strlenUTF8($3));
 	}
 	| OP_CHARLEN LPAREN string RPAREN {
-		rpn_Number($$, charlenUTF8($3));
+		$$.makeNumber(charlenUTF8($3));
 	}
 	| OP_INCHARMAP LPAREN string RPAREN {
-		rpn_Number($$, charmap_HasChar($3));
+		$$.makeNumber(charmap_HasChar($3));
 	}
 	| LPAREN relocexpr RPAREN {
 		$$ = std::move($2);
@@ -1941,13 +1947,13 @@ z80_ldd:
 
 z80_ldio:
 	Z80_LDH MODE_A COMMA op_mem_ind {
-		rpn_CheckHRAM($4);
+		$4.makeCheckHRAM();
 
 		sect_AbsByte(0xF0);
 		sect_RelByte($4, 1);
 	}
 	| Z80_LDH op_mem_ind COMMA MODE_A {
-		rpn_CheckHRAM($2);
+		$2.makeCheckHRAM();
 
 		sect_AbsByte(0xE0);
 		sect_RelByte($2, 1);
@@ -2200,7 +2206,7 @@ z80_rrca:
 
 z80_rst:
 	Z80_RST reloc_8bit {
-		rpn_CheckRST($2);
+		$2.makeCheckRST();
 		if (!$2.isKnown)
 			sect_RelByte($2, 0);
 		else
@@ -2720,9 +2726,9 @@ static void compoundAssignment(std::string const &symName, RPNCommand op, int32_
 	Expression oldExpr, constExpr, newExpr;
 	int32_t newValue;
 
-	rpn_Symbol(oldExpr, symName);
-	rpn_Number(constExpr, constValue);
-	rpn_BinaryOp(op, newExpr, std::move(oldExpr), constExpr);
+	oldExpr.makeSymbol(symName);
+	constExpr.makeNumber(constValue);
+	newExpr.makeBinaryOp(op, std::move(oldExpr), constExpr);
 	newValue = newExpr.getConstVal();
 	sym_AddVar(symName, newValue);
 }
