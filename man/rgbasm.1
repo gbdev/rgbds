@@ -66,15 +66,6 @@ Export all labels, including unreferenced and local labels.
 .It Fl g Ar chars , Fl \-gfx-chars Ar chars
 Change the four characters used for gfx constants.
 The defaults are 0123.
-.It Fl H , Fl \-nop-after-halt
-Inserts a
-.Ic nop
-instruction immediately after any
-.Ic halt
-instruction.
-This option is deprecated and will be removed in the next version.
-.It Fl h , Fl \-halt-without-nop
-This option is redundant and will be removed in the next version.
 .It Fl I Ar path , Fl \-include Ar path
 Add a new
 .Dq include path ;
@@ -90,14 +81,6 @@ is attempted,
 first looks up the provided path from its working directory; if this fails, it tries again from each of the
 .Dq include path
 directories, in the order they were provided.
-.It Fl L , Fl \-preserve-ld
-This option is redundant and will be removed in the next version.
-.It Fl l , Fl \-auto-ldh
-Optimize loads of the form
-.Ic LD [$FF00+n8],A
-into the opcode
-.Ic LDH [$FF00+n8],A .
-This option is deprecated and will be removed in the next version.
 .It Fl M Ar depend_file , Fl \-dependfile Ar depend_file
 Print
 .Xr make 1

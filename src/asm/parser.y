@@ -1882,16 +1882,6 @@ z80_ei:
 z80_halt:
 	Z80_HALT {
 		sect_AbsByte(0x76);
-		if (haltNop) {
-			if (warnOnHaltNop) {
-				warnOnHaltNop = false;
-				warning(
-					WARNING_OBSOLETE,
-					"Automatic `nop` after `halt` (option 'H') is deprecated\n"
-				);
-			}
-			sect_AbsByte(0x00);
-		}
 	}
 ;
 
@@ -2014,20 +2004,8 @@ z80_ld_mem:
 		sect_RelWord($2, 1);
 	}
 	| Z80_LD op_mem_ind COMMA MODE_A {
-		if (optimizeLoads && $2.isKnown && $2.val >= 0xFF00) {
-			if (warnOnLdOpt) {
-				warnOnLdOpt = false;
-				warning(
-					WARNING_OBSOLETE,
-					"Automatic `ld` to `ldh` optimization (option 'l') is deprecated\n"
-				);
-			}
-			sect_AbsByte(0xE0);
-			sect_AbsByte($2.val & 0xFF);
-		} else {
-			sect_AbsByte(0xEA);
-			sect_RelWord($2, 1);
-		}
+		sect_AbsByte(0xEA);
+		sect_RelWord($2, 1);
 	}
 ;
 
@@ -2071,20 +2049,8 @@ z80_ld_a:
 	}
 	| Z80_LD reg_r COMMA op_mem_ind {
 		if ($2 == REG_A) {
-			if (optimizeLoads && $4.isKnown && $4.val >= 0xFF00) {
-				if (warnOnLdOpt) {
-					warnOnLdOpt = false;
-					warning(
-						WARNING_OBSOLETE,
-						"Automatic `ld` to `ldh` optimization (option 'l') is deprecated\n"
-					);
-				}
-				sect_AbsByte(0xF0);
-				sect_AbsByte($4.val & 0xFF);
-			} else {
-				sect_AbsByte(0xFA);
-				sect_RelWord($4, 1);
-			}
+			sect_AbsByte(0xFA);
+			sect_RelWord($4, 1);
 		} else {
 			::error("Destination operand must be A\n");
 		}

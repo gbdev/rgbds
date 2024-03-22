@@ -42,10 +42,6 @@ bool failedOnMissingInclude = false;
 bool generatePhonyDeps = false;
 std::string targetFileName;
 
-bool haltNop;
-bool warnOnHaltNop;
-bool optimizeLoads;
-bool warnOnLdOpt;
 bool verbose;
 bool warnings; // True to enable warnings, false to disable them.
 
@@ -68,7 +64,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:Hhi:I:LlM:o:P:p:Q:r:VvW:wX:";
+static char const *optstring = "b:D:Eg:i:I:M:o:P:p:Q:r:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -86,11 +82,7 @@ static option const longopts[] = {
     {"define",           required_argument, nullptr,  'D'},
     {"export-all",       no_argument,       nullptr,  'E'},
     {"gfx-chars",        required_argument, nullptr,  'g'},
-    {"nop-after-halt",   no_argument,       nullptr,  'H'},
-    {"halt-without-nop", no_argument,       nullptr,  'h'},
     {"include",          required_argument, nullptr,  'I'},
-    {"preserve-ld",      no_argument,       nullptr,  'L'},
-    {"auto-ldh",         no_argument,       nullptr,  'l'},
     {"dependfile",       required_argument, nullptr,  'M'},
     {"MG",               no_argument,       &depType, 'G'},
     {"MP",               no_argument,       &depType, 'P'},
@@ -111,7 +103,7 @@ static option const longopts[] = {
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgbasm [-EHhLlVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+	    "Usage: rgbasm [-EVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
 	    "              [-r depth] [-W warning] [-X max_errors] <file>\n"
@@ -146,10 +138,6 @@ int main(int argc, char *argv[]) {
 	opt_G("0123");
 	opt_P(0);
 	opt_Q(16);
-	haltNop = false;
-	warnOnHaltNop = true;
-	optimizeLoads = false;
-	warnOnLdOpt = true;
 	verbose = false;
 	warnings = true;
 	sym_SetExportAll(false);
@@ -194,21 +182,6 @@ int main(int argc, char *argv[]) {
 				errx("Must specify exactly 4 characters for option 'g'");
 			break;
 
-		case 'H':
-			if (warnOnHaltNop)
-				warning(
-				    WARNING_OBSOLETE, "Automatic `nop` after `halt` (the `-H` flag) is deprecated\n"
-				);
-			else
-				errx("`-H` and `-h` don't make sense together");
-			haltNop = true;
-			warnOnHaltNop = false;
-			break;
-		case 'h':
-			if (haltNop)
-				errx("`-H` and `-h` don't make sense together");
-			break;
-
 		// `-i` was the only short option for `--include` until `-I` was
 		// introduced to better match the `-I dir` option of gcc and clang.
 		case 'i':
@@ -216,22 +189,6 @@ int main(int argc, char *argv[]) {
 			// fallthrough
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
-			break;
-
-		case 'L':
-			if (optimizeLoads)
-				errx("`-L` and `-l` don't make sense together");
-			break;
-		case 'l':
-			if (warnOnLdOpt)
-				warning(
-				    WARNING_OBSOLETE,
-				    "Automatic `ld` to `ldh` optimization (the `-l` flag) is deprecated\n"
-				);
-			else
-				errx("`-L` and `-l` don't make sense together");
-			optimizeLoads = true;
-			warnOnLdOpt = false;
 			break;
 
 		case 'M':
