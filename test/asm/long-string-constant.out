@@ -1,8 +1,15 @@
-This paragraph has exactly 257--that's two hundred and
-fifty-seven--characters altogether. That's just enough for its last
-two characters to be truncated by rgbasm's lexer, since it can't
-handle more than 255-character strings. The final two won't print: 
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dol-
+oremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore verita-
+tis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam vol-
+uptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur
+magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam
+est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed
+quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam
+quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam
+corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis
+autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil mole-
+stiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
 Hello!
-Hello!Hello!Hello!Hello!Hello!Hello!
+Hello!Hello!Hello!Hello!Hello!Hello!Hello!
 This sentence spans forty-three characters.
-This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characte
+This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.This sentence spans forty-three characters.

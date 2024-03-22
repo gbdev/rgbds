@@ -1347,11 +1347,6 @@ static std::string readString(bool raw) {
 	}
 
 finish:
-	if (yylval.length() > MAXSTRLEN) {
-		warning(WARNING_LONG_STR, "String constant too long\n");
-		yylval.resize(MAXSTRLEN);
-	}
-
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 
@@ -1495,11 +1490,6 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 	}
 
 finish:
-	if (yylval.length() > MAXSTRLEN) {
-		warning(WARNING_LONG_STR, "String constant too long\n");
-		yylval.resize(MAXSTRLEN);
-	}
-
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
 }
@@ -1933,10 +1923,6 @@ append:
 	}
 
 finish:
-	if (yylval.length() > MAXSTRLEN) {
-		warning(WARNING_LONG_STR, "Macro argument too long\n");
-		yylval.resize(MAXSTRLEN);
-	}
 	// Trim right whitespace
 	auto rightPos = std::find_if_not(yylval.rbegin(), yylval.rend(), isWhitespace);
 	yylval.resize(rightPos.base() - yylval.begin());

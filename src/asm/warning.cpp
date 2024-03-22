@@ -29,7 +29,6 @@ static const WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_DISABLED, // WARNING_EMPTY_MACRO_ARG
     WARNING_DISABLED, // WARNING_EMPTY_STRRPL
     WARNING_DISABLED, // WARNING_LARGE_CONSTANT
-    WARNING_DISABLED, // WARNING_LONG_STR
     WARNING_DISABLED, // WARNING_MACRO_SHIFT
     WARNING_ENABLED,  // WARNING_NESTED_COMMENT
     WARNING_ENABLED,  // WARNING_OBSOLETE
@@ -77,7 +76,6 @@ static char const * const warningFlags[NB_WARNINGS] = {
     "empty-macro-arg",
     "empty-strrpl",
     "large-constant",
-    "long-string",
     "macro-shift",
     "nested-comment",
     "obsolete",
@@ -157,7 +155,6 @@ static uint8_t const _wallCommands[] = {
     WARNING_EMPTY_DATA_DIRECTIVE,
     WARNING_EMPTY_STRRPL,
     WARNING_LARGE_CONSTANT,
-    WARNING_LONG_STR,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
     WARNING_NUMERIC_STRING_1,
@@ -188,7 +185,6 @@ static uint8_t const _weverythingCommands[] = {
     WARNING_EMPTY_MACRO_ARG,
     WARNING_EMPTY_STRRPL,
     WARNING_LARGE_CONSTANT,
-    WARNING_LONG_STR,
     WARNING_MACRO_SHIFT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,

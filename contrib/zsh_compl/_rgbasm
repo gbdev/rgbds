@@ -17,7 +17,6 @@ _rgbasm_warnings() {
 		'empty-macro-arg:Warn on empty macro arg'
 		'empty-strrpl:Warn on calling STRRPL with empty pattern'
 		'large-constant:Warn on constants too large for a signed 32-bit int'
-		'long-string:Warn on strings too long'
 		'macro-shift:Warn when shifting macro args part their limits'
 		'nested-comment:Warn on "/*" inside block comments'
 		'numeric-string:Warn when a multi-character string is treated as a number'

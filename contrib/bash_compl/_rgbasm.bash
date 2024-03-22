@@ -186,7 +186,6 @@ _rgbasm_completions() {
 				empty-macro-arg
 				empty-strrpl
 				large-constant
-				long-string
 				macro-shift
 				nested-comment
 				numeric-string
