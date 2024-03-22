@@ -220,7 +220,6 @@ bool yywrap() {
 		return true;
 	}
 
-	lexer_CleanupState(contextStack.top().lexerState);
 	contextStack.pop();
 	lexer_SetState(&contextStack.top().lexerState);
 

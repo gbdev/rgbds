@@ -83,6 +83,17 @@ struct LexerState {
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
 	std::variant<std::monostate, MmappedLexerState, ViewedLexerState, BufferedLexerState> content;
+
+	LexerState() = default;
+	LexerState(LexerState &&) = default;
+	LexerState(LexerState const &) = delete;
+
+	// This destructor unmaps or closes the content file if applicable.
+	// As such, lexer states should not be copyable.
+	~LexerState();
+
+	LexerState &operator=(LexerState &&) = default;
+	LexerState &operator=(LexerState const &) = delete;
 };
 
 extern LexerState *lexerState;
@@ -117,7 +128,6 @@ void lexer_OpenFileView(
     LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
 );
 void lexer_RestartRept(uint32_t lineNo);
-void lexer_CleanupState(LexerState &state);
 void lexer_Init();
 void lexer_SetMode(LexerMode mode);
 void lexer_ToggleStringExpansion(bool enable);
