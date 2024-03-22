@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <new>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +24,7 @@
 #include "asm/warning.hpp"
 
 struct Context {
-	FileStackNode *fileInfo;
+	std::shared_ptr<FileStackNode> fileInfo;
 	LexerState lexerState{};
 	uint32_t uniqueID = 0;
 	MacroArgs *macroArgs = nullptr; // Macro args are *saved* here
@@ -96,17 +95,8 @@ void fstk_DumpCurrent() {
 	contextStack.top().fileInfo->dump(lexer_GetLineNo());
 }
 
-FileStackNode *fstk_GetFileStack() {
-	if (contextStack.empty())
-		return nullptr;
-
-	FileStackNode *topNode = contextStack.top().fileInfo;
-
-	// Mark node and all of its parents as referenced if not already so they don't get freed
-	for (FileStackNode *node = topNode; node && !node->referenced; node = node->parent)
-		node->referenced = true;
-
-	return topNode;
+std::shared_ptr<FileStackNode> fstk_GetFileStack() {
+	return contextStack.empty() ? nullptr : contextStack.top().fileInfo;
 }
 
 void fstk_AddIncludePath(std::string const &path) {
@@ -173,14 +163,10 @@ bool yywrap() {
 	if (Context &context = contextStack.top(); context.fileInfo->type == NODE_REPT) {
 		// The context is a REPT or FOR block, which may loop
 
-		// If the node is referenced, we can't edit it; duplicate it
-		if (context.fileInfo->referenced) {
-			context.fileInfo = new (std::nothrow) FileStackNode(*context.fileInfo);
-			if (!context.fileInfo)
-				fatalerror("Failed to duplicate REPT file node: %s\n", strerror(errno));
-			// Copy all info but the referencing
-			context.fileInfo->referenced = false;
-			context.fileInfo->ID = -1;
+		// If the node is referenced outside this context, we can't edit it, so duplicate it
+		if (context.fileInfo.use_count() > 1) {
+			context.fileInfo = std::make_shared<FileStackNode>(*context.fileInfo);
+			context.fileInfo->ID = -1; // The copy is not yet registered
 		}
 
 		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();
@@ -212,6 +198,7 @@ bool yywrap() {
 	contextStack.pop();
 
 	lexer_CleanupState(oldContext.lexerState);
+
 	// Restore args if a macro (not REPT) saved them
 	if (oldContext.fileInfo->type == NODE_MACRO)
 		macro_UseNewArgs(contextStack.top().macroArgs);
@@ -220,9 +207,6 @@ bool yywrap() {
 	if (oldContext.fileInfo->type == NODE_REPT || oldContext.fileInfo->type == NODE_MACRO
 	    || contextStack.top().uniqueID > 0)
 		macro_SetUniqueID(contextStack.top().uniqueID);
-	// Free the file stack node
-	if (!oldContext.fileInfo->referenced)
-		delete oldContext.fileInfo;
 
 	lexer_SetState(&contextStack.top().lexerState);
 
@@ -232,17 +216,17 @@ bool yywrap() {
 // Make sure not to switch the lexer state before calling this, so the saved line no is correct.
 // BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
 // Callers should set `contextStack.top().lexerState` after this so it is not `nullptr`.
-static Context &newContext(FileStackNode &fileInfo) {
+static Context &newContext(std::shared_ptr<FileStackNode> fileInfo) {
 	if (contextStack.size() > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
 
 	// Save the current `\@` value, to be restored when this context ends
 	contextStack.top().uniqueID = macro_GetUniqueID();
 
-	fileInfo.parent = contextStack.top().fileInfo;
-	fileInfo.lineNo = lexer_GetLineNo();
+	fileInfo->parent = contextStack.top().fileInfo;
+	fileInfo->lineNo = lexer_GetLineNo();
 
-	return contextStack.emplace(Context{.fileInfo = &fileInfo});
+	return contextStack.emplace(Context{.fileInfo = fileInfo});
 }
 
 void fstk_RunInclude(std::string const &path) {
@@ -258,15 +242,10 @@ void fstk_RunInclude(std::string const &path) {
 		return;
 	}
 
-	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, *fullPath);
-	if (!fileInfo) {
-		error("Failed to alloc file info for INCLUDE: %s\n", strerror(errno));
-		return;
-	}
-
 	uint32_t uniqueID = contextStack.top().uniqueID;
 
-	Context &context = newContext(*fileInfo);
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_FILE, *fullPath);
+	Context &context = newContext(fileInfo);
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetStateAtEOL(&context.lexerState);
@@ -288,13 +267,8 @@ static void runPreIncludeFile() {
 		return;
 	}
 
-	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, *fullPath);
-	if (!fileInfo) {
-		error("Failed to alloc file info for pre-include: %s\n", strerror(errno));
-		return;
-	}
-
-	Context &context = newContext(*fileInfo);
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_FILE, *fullPath);
+	Context &context = newContext(fileInfo);
 	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
 		fatalerror("Failed to set up lexer for file include\n");
 	lexer_SetState(&context.lexerState);
@@ -315,15 +289,11 @@ void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 	}
 	contextStack.top().macroArgs = macro_GetCurrentArgs();
 
-	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_MACRO, "");
-	if (!fileInfo) {
-		error("Failed to alloc file info for \"%s\": %s\n", macro->name.c_str(), strerror(errno));
-		return;
-	}
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, "");
 
 	// Print the name...
 	std::string &fileInfoName = fileInfo->name();
-	for (FileStackNode const *node = macro->src; node; node = node->parent) {
+	for (FileStackNode const *node = macro->src.get(); node; node = node->parent.get()) {
 		if (node->type != NODE_REPT) {
 			fileInfoName.append(node->name());
 			break;
@@ -340,7 +310,7 @@ void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 	fileInfoName.append("::");
 	fileInfoName.append(macro->name);
 
-	Context &context = newContext(*fileInfo);
+	Context &context = newContext(fileInfo);
 	std::string_view *macroView = macro->getMacro();
 	lexer_OpenFileView(
 	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
@@ -351,11 +321,7 @@ void fstk_RunMacro(std::string const &macroName, MacroArgs &args) {
 }
 
 static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {
-	FileStackNode *fileInfo = new (std::nothrow) FileStackNode(NODE_REPT, std::vector<uint32_t>{1});
-	if (!fileInfo) {
-		error("Failed to alloc file info for REPT: %s\n", strerror(errno));
-		return false;
-	}
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, std::vector<uint32_t>{1});
 
 	if (contextStack.top().fileInfo->type == NODE_REPT
 	    && !contextStack.top().fileInfo->iters().empty()) {
@@ -365,7 +331,7 @@ static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {
 		);
 	}
 
-	Context &context = newContext(*fileInfo);
+	Context &context = newContext(fileInfo);
 	// Correct our line number, which currently points to the `ENDR` line
 	context.fileInfo->lineNo = reptLineNo;
 	lexer_OpenFileView(context.lexerState, "REPT", body, size, reptLineNo);
@@ -453,9 +419,7 @@ void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 		fatalerror("Failed to open main file\n");
 	lexer_SetState(&context.lexerState);
 
-	context.fileInfo = new (std::nothrow) FileStackNode(NODE_FILE, context.lexerState.path);
-	if (!context.fileInfo)
-		fatalerror("Failed to allocate memory for main file info: %s\n", strerror(errno));
+	context.fileInfo = std::make_shared<FileStackNode>(NODE_FILE, context.lexerState.path);
 	// lineNo and nbReptIters are unused on the top-level context
 	context.fileInfo->parent = nullptr;
 	context.fileInfo->lineNo = 0; // This still gets written to the object file, so init it

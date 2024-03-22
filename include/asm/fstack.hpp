@@ -5,6 +5,7 @@
 #ifndef RGBDS_ASM_FSTACK_H
 #define RGBDS_ASM_FSTACK_H
 
+#include <memory>
 #include <optional>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,12 +23,10 @@ struct FileStackNode {
 	    >
 	    data;
 
-	FileStackNode *parent; // Pointer to parent node, for error reporting
+	std::shared_ptr<FileStackNode> parent; // Pointer to parent node, for error reporting
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
 
-	// If referenced by a Symbol, Section, or Patch's `src`, don't `delete`!
-	bool referenced = false;
 	// Set only if referenced: ID within the object file, -1 if not output yet
 	uint32_t ID = -1;
 
@@ -50,7 +49,7 @@ extern size_t maxRecursionDepth;
 struct MacroArgs;
 
 void fstk_DumpCurrent();
-FileStackNode *fstk_GetFileStack();
+std::shared_ptr<FileStackNode> fstk_GetFileStack();
 
 void fstk_AddIncludePath(std::string const &path);
 void fstk_SetPreIncludeFile(std::string const &path);

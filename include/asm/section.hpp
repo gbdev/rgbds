@@ -4,6 +4,7 @@
 #define RGBDS_SECTION_H
 
 #include <deque>
+#include <memory>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
@@ -18,7 +19,7 @@ struct FileStackNode;
 struct Section;
 
 struct Patch {
-	FileStackNode const *src;
+	std::shared_ptr<FileStackNode> src;
 	uint32_t lineNo;
 	uint32_t offset;
 	Section *pcSection;
@@ -31,8 +32,8 @@ struct Section {
 	std::string name;
 	SectionType type;
 	SectionModifier modifier;
-	FileStackNode const *src; // Where the section was defined
-	uint32_t fileLine;        // Line where the section was defined
+	std::shared_ptr<FileStackNode> src; // Where the section was defined
+	uint32_t fileLine;                  // Line where the section was defined
 	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
