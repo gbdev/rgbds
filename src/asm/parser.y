@@ -522,7 +522,7 @@ macro_args:
 	}
 	| macro_args STRING {
 		$$ = std::move($1);
-		$$->append(std::make_shared<std::string>($2));
+		$$->appendArg(std::make_shared<std::string>($2));
 	}
 ;
 
@@ -843,10 +843,18 @@ assert:
 
 shift:
 	POP_SHIFT {
-		macro_ShiftCurrentArgs(1);
+		if (MacroArgs *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
+			macroArgs->shiftArgs(1);
+		} else {
+			::error("Cannot shift macro arguments outside of a macro\n");
+		}
 	}
 	| POP_SHIFT const {
-		macro_ShiftCurrentArgs($2);
+		if (MacroArgs *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
+			macroArgs->shiftArgs($2);
+		} else {
+			::error("Cannot shift macro arguments outside of a macro\n");
+		}
 	}
 ;
 

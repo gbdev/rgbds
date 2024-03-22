@@ -43,11 +43,12 @@ void sym_ForEach(void (*callback)(Symbol &)) {
 }
 
 static int32_t Callback_NARG() {
-	if (!macro_HasCurrentArgs()) {
+	if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
+		return macroArgs->nbArgs();
+	} else {
 		error("_NARG does not make sense outside of a macro\n");
 		return 0;
 	}
-	return macro_NbArgs();
 }
 
 static int32_t CallbackPC() {
@@ -147,7 +148,7 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 		return nullptr;
 	}
 	// `_NARG` has no value outside a macro
-	if (sym == _NARGSymbol && !macro_HasCurrentArgs()) {
+	if (sym == _NARGSymbol && !fstk_GetCurrentMacroArgs()) {
 		return nullptr;
 	}
 	return sym;
