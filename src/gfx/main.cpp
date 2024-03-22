@@ -114,7 +114,6 @@ static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
  */
 static option const longopts[] = {
     {"auto-attr-map",      no_argument,       nullptr, 'A' },
-    {"output-attr-map",    no_argument,       nullptr, -'A'}, // Deprecated
     {"attr-map",           required_argument, nullptr, 'a' },
     {"base-tiles",         required_argument, nullptr, 'b' },
     {"color-curve",        no_argument,       nullptr, 'C' },
@@ -127,14 +126,11 @@ static option const longopts[] = {
     {"group-outputs",      no_argument,       nullptr, 'O' },
     {"output",             required_argument, nullptr, 'o' },
     {"auto-palette",       no_argument,       nullptr, 'P' },
-    {"output-palette",     no_argument,       nullptr, -'P'}, // Deprecated
     {"palette",            required_argument, nullptr, 'p' },
     {"auto-palette-map",   no_argument,       nullptr, 'Q' },
-    {"output-palette-map", no_argument,       nullptr, -'Q'}, // Deprecated
     {"palette-map",        required_argument, nullptr, 'q' },
     {"reverse",            required_argument, nullptr, 'r' },
     {"auto-tilemap",       no_argument,       nullptr, 'T' },
-    {"output-tilemap",     no_argument,       nullptr, -'T'}, // Deprecated
     {"tilemap",            required_argument, nullptr, 't' },
     {"unit-size",          required_argument, nullptr, 'U' },
     {"unique-tiles",       no_argument,       nullptr, 'u' },
@@ -349,9 +345,6 @@ static char *parseArgv(int argc, char *argv[]) {
 		char *arg = musl_optarg; // Make a copy for scanning
 		uint16_t number;
 		switch (ch) {
-		case -'A':
-			warning("`--output-attr-map` is deprecated; use `--auto-attr-map` instead");
-			[[fallthrough]];
 		case 'A':
 			localOptions.autoAttrmap = true;
 			break;
@@ -522,9 +515,6 @@ static char *parseArgv(int argc, char *argv[]) {
 				warning("Overriding tile data file %s", options.output.c_str());
 			options.output = musl_optarg;
 			break;
-		case -'P':
-			warning("`--output-palette` is deprecated; use `--auto-palette` instead");
-			[[fallthrough]];
 		case 'P':
 			localOptions.autoPalettes = true;
 			break;
@@ -534,9 +524,6 @@ static char *parseArgv(int argc, char *argv[]) {
 				warning("Overriding palettes file %s", options.palettes.c_str());
 			options.palettes = musl_optarg;
 			break;
-		case -'Q':
-			warning("`--output-palette-map` is deprecated; use `--auto-palette-map` instead");
-			[[fallthrough]];
 		case 'Q':
 			localOptions.autoPalmap = true;
 			break;
@@ -566,9 +553,6 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Palette size (-s) may not be 0!");
 			}
 			break;
-		case -'T':
-			warning("`--output-tilemap` is deprecated; use `--auto-tilemap` instead");
-			[[fallthrough]];
 		case 'T':
 			localOptions.autoTilemap = true;
 			break;
