@@ -1,25 +1,3 @@
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(4): [-Wobsolete]
-    `p =` is deprecated; use `DEF p =`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(6): [-Wobsolete]
-    `p +=` is deprecated; use `DEF p +=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(8): [-Wobsolete]
-    `p -=` is deprecated; use `DEF p -=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(10): [-Wobsolete]
-    `p *=` is deprecated; use `DEF p *=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(12): [-Wobsolete]
-    `p /=` is deprecated; use `DEF p /=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(14): [-Wobsolete]
-    `p %=` is deprecated; use `DEF p %=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(16): [-Wobsolete]
-    `p |=` is deprecated; use `DEF p |=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(18): [-Wobsolete]
-    `p ^=` is deprecated; use `DEF p ^=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(20): [-Wobsolete]
-    `p &=` is deprecated; use `DEF p &=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(22): [-Wobsolete]
-    `p <<=` is deprecated; use `DEF p <<=`
-warning: compound-assignment.asm(29) -> compound-assignment.asm::try(24): [-Wobsolete]
-    `p >>=` is deprecated; use `DEF p >>=`
-error: compound-assignment.asm(36):
+error: compound-assignment.asm(35):
     Expected constant expression: 'UnDeFiNeD' is not constant at assembly time
 error: Assembly aborted (1 error)!

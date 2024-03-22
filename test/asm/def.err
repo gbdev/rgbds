@@ -1,35 +1,3 @@
 error: def.asm(23):
     'constant' already defined at def.asm(10)
-warning: def.asm(32): [-Wobsolete]
-    `old_constant EQU` is deprecated; use `DEF old_constant EQU`
-warning: def.asm(33): [-Wobsolete]
-    `old_string EQUS` is deprecated; use `DEF old_string EQUS`
-warning: def.asm(35): [-Wobsolete]
-    `old_variable =` is deprecated; use `DEF old_variable =`
-warning: def.asm(36): [-Wobsolete]
-    `old_variable +=` is deprecated; use `DEF old_variable +=`
-warning: def.asm(37): [-Wobsolete]
-    `old_variable *=` is deprecated; use `DEF old_variable *=`
-warning: def.asm(38): [-Wobsolete]
-    `old_variable -=` is deprecated; use `DEF old_variable -=`
-warning: def.asm(39): [-Wobsolete]
-    `old_variable /=` is deprecated; use `DEF old_variable /=`
-warning: def.asm(40): [-Wobsolete]
-    `old_variable %=` is deprecated; use `DEF old_variable %=`
-warning: def.asm(41): [-Wobsolete]
-    `old_variable &=` is deprecated; use `DEF old_variable &=`
-warning: def.asm(42): [-Wobsolete]
-    `old_variable |=` is deprecated; use `DEF old_variable |=`
-warning: def.asm(43): [-Wobsolete]
-    `old_variable ^=` is deprecated; use `DEF old_variable ^=`
-warning: def.asm(44): [-Wobsolete]
-    `old_variable <<=` is deprecated; use `DEF old_variable <<=`
-warning: def.asm(45): [-Wobsolete]
-    `old_variable >>=` is deprecated; use `DEF old_variable >>=`
-warning: def.asm(47): [-Wobsolete]
-    `old_byte RB` is deprecated; use `DEF old_byte RB`
-warning: def.asm(48): [-Wobsolete]
-    `old_word RW` is deprecated; use `DEF old_word RW`
-warning: def.asm(49): [-Wobsolete]
-    `old_long RL` is deprecated; use `DEF old_long RL`
 error: Assembly aborted (1 error)!
