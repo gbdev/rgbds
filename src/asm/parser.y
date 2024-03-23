@@ -10,6 +10,7 @@
 	#include <variant>
 	#include <vector>
 
+	#include "asm/lexer.hpp"
 	#include "asm/macro.hpp"
 	#include "asm/rpn.hpp"
 	#include "asm/section.hpp"
@@ -56,7 +57,6 @@
 	#include "asm/fixpoint.hpp"
 	#include "asm/format.hpp"
 	#include "asm/fstack.hpp"
-	#include "asm/lexer.hpp"
 	#include "asm/main.hpp"
 	#include "asm/opt.hpp"
 	#include "asm/output.hpp"
@@ -69,8 +69,6 @@
 	#include "helpers.hpp"
 
 	using namespace std::literals;
-
-	static CaptureBody captureBody; // Captures a REPT/FOR or MACRO
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
@@ -248,8 +246,8 @@
 %token SECT_WRAM0 "WRAM0" SECT_WRAMX "WRAMX" SECT_HRAM "HRAM"
 %token SECT_VRAM "VRAM" SECT_SRAM "SRAM" SECT_OAM "OAM"
 
-%type <bool> capture_rept
-%type <bool> capture_macro
+%type <CaptureBody> capture_rept
+%type <CaptureBody> capture_macro
 
 %type <SectionModifier> sect_mod
 %type <std::shared_ptr<MacroArgs>> macro_args
@@ -869,8 +867,8 @@ load:
 
 rept:
 	POP_REPT uconst NEWLINE capture_rept endofline {
-		if ($4)
-			fstk_RunRept($2, captureBody.lineNo, captureBody.body, captureBody.size);
+		if ($4.body)
+			fstk_RunRept($2, $4.lineNo, $4.body, $4.size);
 	}
 ;
 
@@ -880,22 +878,14 @@ for:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
-		if ($8)
-			fstk_RunFor(
-				$3,
-				$6.start,
-				$6.stop,
-				$6.step,
-				captureBody.lineNo,
-				captureBody.body,
-				captureBody.size
-			);
+		if ($8.body)
+			fstk_RunFor($3, $6.start, $6.stop, $6.step, $8.lineNo, $8.body, $8.size);
 	}
 ;
 
 capture_rept:
 	%empty {
-		$$ = lexer_CaptureRept(captureBody);
+		$$ = lexer_CaptureRept();
 	}
 ;
 
@@ -930,14 +920,14 @@ def_macro:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
-		if ($6)
-			sym_AddMacro($3, captureBody.lineNo, captureBody.body, captureBody.size);
+		if ($6.body)
+			sym_AddMacro($3, $6.lineNo, $6.body, $6.size);
 	}
 ;
 
 capture_macro:
 	%empty {
-		$$ = lexer_CaptureMacroBody(captureBody);
+		$$ = lexer_CaptureMacroBody();
 	}
 ;
 

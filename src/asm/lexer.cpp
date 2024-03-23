@@ -2193,22 +2193,27 @@ yy::parser::symbol_type yylex() {
 	}
 }
 
-static void startCapture(CaptureBody &capture) {
+void CaptureBody::startCapture() {
+	// Due to parser internals, it reads the EOL after the expression before calling this.
+	// Thus, we don't need to keep one in the buffer afterwards.
+	// The following assertion checks that.
+	assert(lexerState->atLineStart);
+
 	assert(!lexerState->capturing);
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
-	capture.lineNo = lexer_GetLineNo();
+	lineNo = lexer_GetLineNo();
 	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content);
 	    mmap && lexerState->expansions.empty()) {
-		capture.body = &mmap->ptr[mmap->offset];
+		body = &mmap->ptr[mmap->offset];
 	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content);
 	           view && lexerState->expansions.empty()) {
-		capture.body = &view->ptr[view->offset];
+		body = &view->ptr[view->offset];
 	} else {
-		capture.body = nullptr; // Indicates to retrieve the capture buffer when done capturing
+		body = nullptr; // Indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = new (std::nothrow) std::vector<char>();
 		if (!lexerState->captureBuf)
@@ -2216,12 +2221,15 @@ static void startCapture(CaptureBody &capture) {
 	}
 }
 
-static void endCapture(CaptureBody &capture) {
-	// This being `nullptr` means we're capturing from the capture buf, which is reallocated
+void CaptureBody::endCapture() {
+	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
-	if (!capture.body)
-		capture.body = lexerState->captureBuf->data();
-	capture.size = lexerState->captureSize;
+	if (!body)
+		body = lexerState->captureBuf->data();
+	size = lexerState->captureSize;
+
+	// ENDR/ENDM or EOF puts us past the start of the line
+	lexerState->atLineStart = false;
 
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
@@ -2229,16 +2237,13 @@ static void endCapture(CaptureBody &capture) {
 	lexerState->disableInterpolation = false;
 }
 
-bool lexer_CaptureRept(CaptureBody &capture) {
-	startCapture(capture);
+CaptureBody lexer_CaptureRept() {
+	CaptureBody capture;
+	capture.startCapture();
 
 	size_t depth = 0;
 	int c = EOF;
 
-	// Due to parser internals, it reads the EOL after the expression before calling this.
-	// Thus, we don't need to keep one in the buffer afterwards.
-	// The following assertion checks that.
-	assert(lexerState->atLineStart);
 	for (;;) {
 		nextLine();
 		// We're at line start, so attempt to match a `REPT` or `ENDR` token
@@ -2282,16 +2287,17 @@ bool lexer_CaptureRept(CaptureBody &capture) {
 	}
 
 finish:
-	endCapture(capture);
-	// ENDR or EOF puts us past the start of the line
-	lexerState->atLineStart = false;
+	capture.endCapture();
 
-	// Returns true if an ENDR terminated the block, false if it reached EOF first
-	return c != EOF;
+	if (c == EOF)
+		capture.body = nullptr; // Indicates that it reached EOF before an ENDR terminated it
+
+	return capture;
 }
 
-bool lexer_CaptureMacroBody(CaptureBody &capture) {
-	startCapture(capture);
+CaptureBody lexer_CaptureMacroBody() {
+	CaptureBody capture;
+	capture.startCapture();
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap)
@@ -2299,10 +2305,6 @@ bool lexer_CaptureMacroBody(CaptureBody &capture) {
 
 	int c = EOF;
 
-	// Due to parser internals, it reads the EOL after the expression before calling this.
-	// Thus, we don't need to keep one in the buffer afterwards.
-	// The following assertion checks that.
-	assert(lexerState->atLineStart);
 	for (;;) {
 		nextLine();
 		// We're at line start, so attempt to match an `ENDM` token
@@ -2336,10 +2338,10 @@ bool lexer_CaptureMacroBody(CaptureBody &capture) {
 	}
 
 finish:
-	endCapture(capture);
-	// ENDM or EOF puts us past the start of the line
-	lexerState->atLineStart = false;
+	capture.endCapture();
 
-	// Returns true if an ENDM terminated the block, false if it reached EOF first
-	return c != EOF;
+	if (c == EOF)
+		capture.body = nullptr; // Indicates that it reached EOF before an ENDM terminated it
+
+	return capture;
 }

@@ -134,13 +134,16 @@ struct CaptureBody {
 	uint32_t lineNo;
 	char const *body;
 	size_t size;
+
+	void startCapture();
+	void endCapture();
 };
 
 void lexer_CheckRecursionDepth();
 uint32_t lexer_GetLineNo();
 uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
-bool lexer_CaptureRept(CaptureBody &capture);
-bool lexer_CaptureMacroBody(CaptureBody &capture);
+CaptureBody lexer_CaptureRept();
+CaptureBody lexer_CaptureMacroBody();
 
 #endif // RGBDS_ASM_LEXER_H
