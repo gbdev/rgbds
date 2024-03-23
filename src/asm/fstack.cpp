@@ -34,7 +34,7 @@ struct Context {
 	// for this context yet, and it should be generated.
 	// Note that several contexts can share the same unique ID (since `INCLUDE` preserves its
 	// parent's, and likewise "back-propagates" a unique ID if requested), hence using `shared_ptr`.
-	std::shared_ptr<std::string> uniqueIDStr;
+	std::shared_ptr<std::string> uniqueIDStr = nullptr;
 	std::shared_ptr<MacroArgs> macroArgs = nullptr; // Macro args are *saved* here
 	uint32_t nbReptIters = 0;
 	bool isForLoop = false;
@@ -130,7 +130,6 @@ void fstk_AddIncludePath(std::string const &path) {
 		return;
 
 	std::string &includePath = includePaths.emplace_back(path);
-
 	if (includePath.back() != '/')
 		includePath += '/';
 }
@@ -151,20 +150,14 @@ static void printDep(std::string const &path) {
 	}
 }
 
-static bool isPathValid(std::string const &path) {
-	struct stat statbuf;
-
-	if (stat(path.c_str(), &statbuf) != 0)
-		return false;
-
-	// Reject directories
-	return !S_ISDIR(statbuf.st_mode);
+static bool isValidFilePath(std::string const &path) {
+	struct stat statBuf;
+	return stat(path.c_str(), &statBuf) == 0 && !S_ISDIR(statBuf.st_mode); // Reject directories
 }
 
 std::optional<std::string> fstk_FindFile(std::string const &path) {
-	for (std::string &str : includePaths) {
-		std::string fullPath = str + path;
-		if (isPathValid(fullPath)) {
+	for (std::string &incPath : includePaths) {
+		if (std::string fullPath = incPath + path; isValidFilePath(fullPath)) {
 			printDep(fullPath);
 			return fullPath;
 		}
@@ -221,34 +214,114 @@ bool yywrap() {
 	}
 
 	contextStack.pop();
-	lexer_SetState(&contextStack.top().lexerState);
+	contextStack.top().lexerState.setAsCurrentState();
 
 	return false;
 }
 
-// Make sure not to switch the lexer state before calling this, so the saved line no is correct.
-// BE CAREFUL! This modifies the file stack directly, you should have set up the file info first.
-// Callers should set `contextStack.top().lexerState` after this so it is not `nullptr`.
-static Context &newContext(std::shared_ptr<FileStackNode> fileInfo) {
+static void checkRecursionDepth() {
 	if (contextStack.size() > maxRecursionDepth)
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
-
-	fileInfo->parent = contextStack.top().fileInfo;
-	fileInfo->lineNo = lexer_GetLineNo();
-
-	return contextStack.emplace(Context{
-	    .fileInfo = fileInfo,
-	    .uniqueIDStr = fileInfo->generatesUniqueID()
-	                       ? std::make_shared<std::string>() // Create a new, not-yet-generated ID.
-	                       : contextStack.top().uniqueIDStr, // Make a copy.
-	    .macroArgs = contextStack.top().macroArgs,
-	});
 }
 
-void fstk_RunInclude(std::string const &path) {
+static bool newFileContext(std::string const &filePath, bool updateStateNow) {
+	checkRecursionDepth();
+
+	std::shared_ptr<std::string> uniqueIDStr = nullptr;
+	std::shared_ptr<MacroArgs> macroArgs = nullptr;
+
+	auto fileInfo =
+	    std::make_shared<FileStackNode>(NODE_MACRO, filePath == "-" ? "<stdin>" : filePath);
+	if (!contextStack.empty()) {
+		Context &oldContext = contextStack.top();
+		fileInfo->parent = oldContext.fileInfo;
+		fileInfo->lineNo = lexer_GetLineNo(); // Called before setting the lexer state
+		uniqueIDStr = oldContext.uniqueIDStr; // Make a copy of the ID
+		macroArgs = oldContext.macroArgs;
+	}
+
+	Context &context = contextStack.emplace(Context{
+	    .fileInfo = fileInfo,
+	    .uniqueIDStr = uniqueIDStr,
+	    .macroArgs = macroArgs,
+	});
+
+	return context.lexerState.setFileAsNextState(filePath, updateStateNow);
+}
+
+static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macroArgs) {
+	checkRecursionDepth();
+
+	Context &oldContext = contextStack.top();
+
+	std::string fileInfoName;
+	for (FileStackNode const *node = macro.src.get(); node; node = node->parent.get()) {
+		if (node->type != NODE_REPT) {
+			fileInfoName.append(node->name());
+			break;
+		}
+	}
+	if (macro.src->type == NODE_REPT) {
+		std::vector<uint32_t> const &srcIters = macro.src->iters();
+		for (uint32_t i = srcIters.size(); i--;) {
+			fileInfoName.append("::REPT~");
+			fileInfoName.append(std::to_string(srcIters[i]));
+		}
+	}
+	fileInfoName.append("::");
+	fileInfoName.append(macro.name);
+
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName);
+	assert(!contextStack.empty()); // The top level context cannot be a MACRO
+	fileInfo->parent = oldContext.fileInfo;
+	fileInfo->lineNo = lexer_GetLineNo();
+
+	Context &context = contextStack.emplace(Context{
+	    .fileInfo = fileInfo,
+	    .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
+	    .macroArgs = macroArgs,
+	});
+
+	std::string_view *macroView = macro.getMacro();
+	context.lexerState.setViewAsNextState(
+	    "MACRO", macroView->data(), macroView->size(), macro.fileLine
+	);
+}
+
+static Context &newReptContext(int32_t reptLineNo, char const *body, size_t size, uint32_t count) {
+	checkRecursionDepth();
+
+	Context &oldContext = contextStack.top();
+
+	std::vector<uint32_t> fileInfoIters{1};
+	if (oldContext.fileInfo->type == NODE_REPT && !oldContext.fileInfo->iters().empty()) {
+		// Append all parent iter counts
+		fileInfoIters.insert(fileInfoIters.end(), RANGE(oldContext.fileInfo->iters()));
+	}
+
+	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, fileInfoIters);
+	assert(!contextStack.empty()); // The top level context cannot be a REPT
+	fileInfo->parent = oldContext.fileInfo;
+	fileInfo->lineNo = reptLineNo;
+
+	Context &context = contextStack.emplace(Context{
+	    .fileInfo = fileInfo,
+	    .uniqueIDStr = std::make_shared<std::string>(), // Create a new, not-yet-generated ID
+	    .macroArgs = oldContext.macroArgs,
+	});
+
+	context.lexerState.setViewAsNextState("REPT", body, size, reptLineNo);
+
+	context.nbReptIters = count;
+
+	return context;
+}
+
+void fstk_RunInclude(std::string const &path, bool preInclude) {
 	std::optional<std::string> fullPath = fstk_FindFile(path);
+
 	if (!fullPath) {
-		if (generatedMissingIncludes) {
+		if (generatedMissingIncludes && !preInclude) {
 			if (verbose)
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
@@ -258,30 +331,8 @@ void fstk_RunInclude(std::string const &path) {
 		return;
 	}
 
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_FILE, *fullPath);
-	Context &context = newContext(fileInfo);
-	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
+	if (!newFileContext(*fullPath, false))
 		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetStateAtEOL(&context.lexerState);
-}
-
-// Similar to `fstk_RunInclude`, but not subject to `-MG`, and
-// calling `lexer_SetState` instead of `lexer_SetStateAtEOL`.
-static void runPreIncludeFile() {
-	if (preIncludeName.empty())
-		return;
-
-	std::optional<std::string> fullPath = fstk_FindFile(preIncludeName);
-	if (!fullPath) {
-		error("Unable to open included file '%s': %s\n", preIncludeName.c_str(), strerror(errno));
-		return;
-	}
-
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_FILE, *fullPath);
-	Context &context = newContext(fileInfo);
-	if (!lexer_OpenFile(context.lexerState, fileInfo->name()))
-		fatalerror("Failed to set up lexer for file include\n");
-	lexer_SetState(&context.lexerState);
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
@@ -296,63 +347,14 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 		return;
 	}
 
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, "");
-
-	// Print the name...
-	std::string &fileInfoName = fileInfo->name();
-	for (FileStackNode const *node = macro->src.get(); node; node = node->parent.get()) {
-		if (node->type != NODE_REPT) {
-			fileInfoName.append(node->name());
-			break;
-		}
-	}
-	if (macro->src->type == NODE_REPT) {
-		std::vector<uint32_t> const &srcIters = macro->src->iters();
-
-		for (uint32_t i = srcIters.size(); i--;) {
-			fileInfoName.append("::REPT~");
-			fileInfoName.append(std::to_string(srcIters[i]));
-		}
-	}
-	fileInfoName.append("::");
-	fileInfoName.append(macro->name);
-
-	Context &context = newContext(fileInfo);
-	std::string_view *macroView = macro->getMacro();
-	lexer_OpenFileView(
-	    context.lexerState, "MACRO", macroView->data(), macroView->size(), macro->fileLine
-	);
-	lexer_SetStateAtEOL(&context.lexerState);
-	context.macroArgs = macroArgs;
-}
-
-static bool newReptContext(int32_t reptLineNo, char const *body, size_t size) {
-	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, std::vector<uint32_t>{1});
-
-	if (contextStack.top().fileInfo->type == NODE_REPT
-	    && !contextStack.top().fileInfo->iters().empty()) {
-		// Append all parent iter counts
-		fileInfo->iters().insert(
-		    fileInfo->iters().end(), RANGE(contextStack.top().fileInfo->iters())
-		);
-	}
-
-	Context &context = newContext(fileInfo);
-	// Correct our line number, which currently points to the `ENDR` line
-	context.fileInfo->lineNo = reptLineNo;
-	lexer_OpenFileView(context.lexerState, "REPT", body, size, reptLineNo);
-	lexer_SetStateAtEOL(&context.lexerState);
-
-	return true;
+	newMacroContext(*macro, macroArgs);
 }
 
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size) {
 	if (count == 0)
 		return;
-	if (!newReptContext(reptLineNo, body, size))
-		return;
 
-	contextStack.top().nbReptIters = count;
+	newReptContext(reptLineNo, body, size, count);
 }
 
 void fstk_RunFor(
@@ -364,13 +366,10 @@ void fstk_RunFor(
     char const *body,
     size_t size
 ) {
-	Symbol *sym = sym_AddVar(symName, start);
-
-	if (sym->type != SYM_VAR)
+	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR)
 		return;
 
 	uint32_t count = 0;
-
 	if (step > 0 && start < stop)
 		count = ((int64_t)stop - start - 1) / step + 1;
 	else if (step < 0 && stop < start)
@@ -385,12 +384,8 @@ void fstk_RunFor(
 
 	if (count == 0)
 		return;
-	if (!newReptContext(reptLineNo, body, size))
-		return;
 
-	Context &context = contextStack.top();
-
-	context.nbReptIters = count;
+	Context &context = newReptContext(reptLineNo, body, size, count);
 	context.isForLoop = true;
 	context.forValue = start;
 	context.forStep = step;
@@ -398,8 +393,7 @@ void fstk_RunFor(
 }
 
 void fstk_StopRept() {
-	// Prevent more iterations
-	contextStack.top().nbReptIters = 0;
+	contextStack.top().nbReptIters = 0; // Prevent more iterations
 }
 
 bool fstk_Break() {
@@ -419,20 +413,11 @@ void fstk_NewRecursionDepth(size_t newDepth) {
 }
 
 void fstk_Init(std::string const &mainPath, size_t maxDepth) {
-	Context &context = contextStack.emplace(Context{
-	    .fileInfo = nullptr,    // We're going to init it just below.
-	    .uniqueIDStr = nullptr, // `\@` is not allowed at top level.
-	});
-	if (!lexer_OpenFile(context.lexerState, mainPath))
+	if (!newFileContext(mainPath, true))
 		fatalerror("Failed to open main file\n");
-	lexer_SetState(&context.lexerState);
-
-	context.fileInfo = std::make_shared<FileStackNode>(NODE_FILE, context.lexerState.path);
-	// lineNo and nbReptIters are unused on the top-level context
-	context.fileInfo->parent = nullptr;
-	context.fileInfo->lineNo = 0; // This still gets written to the object file, so init it
 
 	maxRecursionDepth = maxDepth;
 
-	runPreIncludeFile();
+	if (!preIncludeName.empty())
+		fstk_RunInclude(preIncludeName, true);
 }

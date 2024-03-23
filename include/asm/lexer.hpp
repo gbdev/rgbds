@@ -94,18 +94,13 @@ struct LexerState {
 
 	LexerState &operator=(LexerState &&) = default;
 	LexerState &operator=(LexerState const &) = delete;
+
+	void setAsCurrentState();
+	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
+	void setViewAsNextState(char const *filePath, char const *buf, size_t size, uint32_t lineNo_);
+
+	void clear(uint32_t lineNo_);
 };
-
-extern LexerState *lexerState;
-extern LexerState *lexerStateEOL;
-
-static inline void lexer_SetState(LexerState *state) {
-	lexerState = state;
-}
-
-static inline void lexer_SetStateAtEOL(LexerState *state) {
-	lexerStateEOL = state;
-}
 
 extern char binDigits[2];
 extern char gfxDigits[4];
@@ -122,11 +117,6 @@ static inline void lexer_SetGfxDigits(char const digits[4]) {
 	gfxDigits[3] = digits[3];
 }
 
-// `path` is referenced, but not held onto..!
-bool lexer_OpenFile(LexerState &state, std::string const &path);
-void lexer_OpenFileView(
-    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
-);
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_Init();
 void lexer_SetMode(LexerMode mode);

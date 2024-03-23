@@ -594,13 +594,11 @@ void sym_Init(time_t now) {
 	sym_AddString("__TIME__"s, std::make_shared<std::string>(savedTIME))->isBuiltin = true;
 	sym_AddString("__DATE__"s, std::make_shared<std::string>(savedDATE))->isBuiltin = true;
 	sym_AddString(
-	    "__ISO_8601_LOCAL__"s,
-	    std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
-	)->isBuiltin = true;
-	sym_AddString(
-	    "__ISO_8601_UTC__"s,
-	    std::make_shared<std::string>(savedTIMESTAMP_ISO8601_UTC)
-	)->isBuiltin = true;
+	    "__ISO_8601_LOCAL__"s, std::make_shared<std::string>(savedTIMESTAMP_ISO8601_LOCAL)
+	)
+	    ->isBuiltin = true;
+	sym_AddString("__ISO_8601_UTC__"s, std::make_shared<std::string>(savedTIMESTAMP_ISO8601_UTC))
+	    ->isBuiltin = true;
 
 	sym_AddEqu("__UTC_YEAR__"s, time_utc->tm_year + 1900)->isBuiltin = true;
 	sym_AddEqu("__UTC_MONTH__"s, time_utc->tm_mon + 1)->isBuiltin = true;

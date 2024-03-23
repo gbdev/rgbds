@@ -24,8 +24,9 @@ struct FileStackNode {
 	    data;
 
 	std::shared_ptr<FileStackNode> parent; // Pointer to parent node, for error reporting
-	// Line at which the parent context was exited; meaningless for the root level
-	uint32_t lineNo;
+	// Line at which the parent context was exited
+	// Meaningless at the root level, but gets written to the object file anyway, so init it
+	uint32_t lineNo = 0;
 
 	// Set only if referenced: ID within the object file, -1 if not output yet
 	uint32_t ID = -1;
@@ -61,7 +62,7 @@ void fstk_SetPreIncludeFile(std::string const &path);
 std::optional<std::string> fstk_FindFile(std::string const &path);
 
 bool yywrap();
-void fstk_RunInclude(std::string const &path);
+void fstk_RunInclude(std::string const &path, bool updateStateNow);
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size);
 void fstk_RunFor(

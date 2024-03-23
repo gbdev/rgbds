@@ -1128,7 +1128,7 @@ export_list_entry:
 
 include:
 	label POP_INCLUDE string endofline {
-		fstk_RunInclude($3);
+		fstk_RunInclude($3, false);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}

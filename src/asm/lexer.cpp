@@ -322,25 +322,27 @@ static bool isWhitespace(int c) {
 	return c == ' ' || c == '\t';
 }
 
-LexerState *lexerState = nullptr;
-LexerState *lexerStateEOL = nullptr;
+static LexerState *lexerState = nullptr;
+static LexerState *lexerStateEOL = nullptr;
 
-static void initState(LexerState &state) {
-	state.mode = LEXER_NORMAL;
-	state.atLineStart = true; // yylex() will init colNo due to this
-	state.lastToken = T_(YYEOF);
+void LexerState::clear(uint32_t lineNo_) {
+	mode = LEXER_NORMAL;
+	atLineStart = true; // yylex() will init colNo due to this
+	lastToken = T_(YYEOF);
 
-	state.ifStack.clear();
+	ifStack.clear();
 
-	state.capturing = false;
-	state.captureBuf = nullptr;
+	capturing = false;
+	captureBuf = nullptr;
 
-	state.disableMacroArgs = false;
-	state.disableInterpolation = false;
-	state.macroArgScanDistance = 0;
-	state.expandStrings = true;
+	disableMacroArgs = false;
+	disableInterpolation = false;
+	macroArgScanDistance = 0;
+	expandStrings = true;
 
-	state.expansions.clear();
+	expansions.clear();
+
+	lineNo = lineNo_; // Will be incremented at next line start
 }
 
 static void nextLine() {
@@ -379,19 +381,23 @@ void lexer_ReachELSEBlock() {
 	lexerState->ifStack.front().reachedElseBlock = true;
 }
 
-bool lexer_OpenFile(LexerState &state, std::string const &path) {
-	if (path == "-") {
-		state.path = "<stdin>";
-		state.content = BufferedLexerState{.fd = STDIN_FILENO, .index = 0, .buf = {}, .nbChars = 0};
+void LexerState::setAsCurrentState() {
+	lexerState = this;
+}
+
+bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
+	if (filePath == "-") {
+		path = "<stdin>";
+		content = BufferedLexerState{.fd = STDIN_FILENO, .index = 0, .buf = {}, .nbChars = 0};
 		if (verbose)
 			printf("Opening stdin\n");
 	} else {
-		struct stat fileInfo;
-		if (stat(path.c_str(), &fileInfo) != 0) {
-			error("Failed to stat file \"%s\": %s\n", path.c_str(), strerror(errno));
+		struct stat statBuf;
+		if (stat(filePath.c_str(), &statBuf) != 0) {
+			error("Failed to stat file \"%s\": %s\n", filePath.c_str(), strerror(errno));
 			return false;
 		}
-		state.path = path;
+		path = filePath;
 
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd < 0) {
@@ -401,16 +407,16 @@ bool lexer_OpenFile(LexerState &state, std::string const &path) {
 
 		bool isMmapped = false;
 
-		if (fileInfo.st_size > 0) {
+		if (statBuf.st_size > 0) {
 			// Try using `mmap` for better performance
 			void *mappingAddr;
-			mapFile(mappingAddr, fd, path, fileInfo.st_size);
+			mapFile(mappingAddr, fd, path, statBuf.st_size);
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
-				state.content = MmappedLexerState{
+				content = MmappedLexerState{
 				    .ptr = (char *)mappingAddr,
-				    .size = (size_t)fileInfo.st_size,
+				    .size = (size_t)statBuf.st_size,
 				    .offset = 0,
 				    .isReferenced = false,
 				};
@@ -422,9 +428,9 @@ bool lexer_OpenFile(LexerState &state, std::string const &path) {
 
 		if (!isMmapped) {
 			// Sometimes mmap() fails or isn't available, so have a fallback
-			state.content = BufferedLexerState{.fd = fd, .index = 0, .buf = {}, .nbChars = 0};
+			content = BufferedLexerState{.fd = fd, .index = 0, .buf = {}, .nbChars = 0};
 			if (verbose) {
-				if (fileInfo.st_size == 0) {
+				if (statBuf.st_size == 0) {
 					printf("File \"%s\" is empty\n", path.c_str());
 				} else {
 					printf(
@@ -435,18 +441,21 @@ bool lexer_OpenFile(LexerState &state, std::string const &path) {
 		}
 	}
 
-	initState(state);
-	state.lineNo = 0; // Will be incremented at first line start
+	clear(0);
+	if (updateStateNow)
+		lexerState = this;
+	else
+		lexerStateEOL = this;
 	return true;
 }
 
-void lexer_OpenFileView(
-    LexerState &state, char const *path, char const *buf, size_t size, uint32_t lineNo
+void LexerState::setViewAsNextState(
+    char const *filePath, char const *buf, size_t size, uint32_t lineNo_
 ) {
-	state.path = path; // Used to report read errors in `peekInternal`
-	state.content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
-	initState(state);
-	state.lineNo = lineNo; // Will be incremented at first line start
+	path = filePath; // Used to report read errors in `peekInternal`
+	content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
+	clear(lineNo_);
+	lexerStateEOL = this;
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
@@ -455,8 +464,7 @@ void lexer_RestartRept(uint32_t lineNo) {
 	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
 		view->offset = 0;
 	}
-	initState(*lexerState);
-	lexerState->lineNo = lineNo;
+	lexerState->clear(lineNo);
 }
 
 LexerState::~LexerState() {
@@ -2151,10 +2159,9 @@ finish:
 
 yy::parser::symbol_type yylex() {
 	if (lexerState->atLineStart && lexerStateEOL) {
-		lexer_SetState(lexerStateEOL);
+		lexerState = lexerStateEOL;
 		lexerStateEOL = nullptr;
 	}
-	// `lexer_SetState` updates `lexerState`, so check for EOF after it
 	if (lexerState->lastToken == T_(EOB) && yywrap())
 		return yy::parser::make_YYEOF();
 	// Newlines read within an expansion should not increase the line count

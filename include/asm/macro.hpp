@@ -20,5 +20,4 @@ struct MacroArgs {
 	void shiftArgs(int32_t count);
 };
 
-
 #endif // RGBDS_MACRO_H

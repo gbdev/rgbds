@@ -485,7 +485,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			srcPatchSize = sizeof(bytes);
 		} else {
 			srcBytes = src2.rpn.data(); // Pointer to the right RPN
-			srcLen = src2.rpn.size();      // Size of the right RPN
+			srcLen = src2.rpn.size();   // Size of the right RPN
 			srcPatchSize = src2.rpnPatchSize;
 		}
 		// Copy the right RPN and append the operator
