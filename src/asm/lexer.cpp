@@ -90,6 +90,8 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t 
 
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
+using namespace std::literals;
+
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
 #define T_(name) (int)yy::parser::token::name
 
@@ -526,9 +528,10 @@ static bool continuesIdentifier(int c);
 static uint32_t readBracketedMacroArgNum() {
 	bool disableMacroArgs = lexerState->disableMacroArgs;
 	bool disableInterpolation = lexerState->disableInterpolation;
-
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
+	DEFER({ lexerState->disableMacroArgs = disableMacroArgs; });
+	DEFER({ lexerState->disableInterpolation = disableInterpolation; });
 
 	uint32_t num = 0;
 	int c = peek();
@@ -573,11 +576,9 @@ static uint32_t readBracketedMacroArgNum() {
 	} else if (num == 0 && !symbolError) {
 		error("Invalid bracketed macro argument '\\<0>'\n");
 		return 0;
+	} else {
+		return num;
 	}
-
-	lexerState->disableMacroArgs = disableMacroArgs;
-	lexerState->disableInterpolation = disableInterpolation;
-	return num;
 }
 
 static std::shared_ptr<std::string> readMacroArg(char name) {
@@ -843,13 +844,15 @@ void lexer_DumpStringExpansions() {
 static void discardBlockComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 	for (;;) {
 		int c = nextChar();
 
 		switch (c) {
 		case EOF:
 			error("Unterminated block comment\n");
-			goto finish;
+			return;
 		case '\r':
 			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
@@ -866,29 +869,26 @@ static void discardBlockComment() {
 		case '*':
 			if (peek() == '/') {
 				shiftChar();
-				goto finish;
+				return;
 			}
 			// fallthrough
 		default:
 			continue;
 		}
 	}
-finish:
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
 }
 
 static void discardComment() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 	for (;; shiftChar()) {
 		int c = peek();
 
 		if (c == EOF || c == '\r' || c == '\n')
 			break;
 	}
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
 }
 
 static void discardLineContinuation() {
@@ -1231,11 +1231,11 @@ static void appendEscapedSubstring(std::string &yylval, std::string const &str) 
 static std::string readString(bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
-
-	std::string yylval;
-	bool multiline = false;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	// We reach this function after reading a single quote, but we also support triple quotes
+	bool multiline = false;
 	if (peek() == '"') {
 		shiftChar();
 		if (peek() == '"') {
@@ -1244,17 +1244,17 @@ static std::string readString(bool raw) {
 			multiline = true;
 		} else {
 			// "" is an empty string, skip the loop
-			goto finish;
+			return ""s;
 		}
 	}
 
-	for (;;) {
+	for (std::string yylval = ""s;;) {
 		int c = peek();
 
 		// '\r', '\n' or EOF ends a single-line string early
 		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
 			error("Unterminated string\n");
-			break;
+			return yylval;
 		}
 
 		// We'll be staying in the string, so we can safely consume the char
@@ -1281,7 +1281,7 @@ static std::string readString(bool raw) {
 				}
 				shiftChar();
 			}
-			goto finish;
+			return yylval;
 
 		case '\\': // Character escape or macro arg
 			if (raw)
@@ -1364,21 +1364,16 @@ static std::string readString(bool raw) {
 
 		yylval += c;
 	}
-
-finish:
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
-
-	return yylval;
 }
 
 static void appendStringLiteral(std::string &yylval, bool raw) {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
-
-	bool multiline = false;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	// We reach this function after reading a single quote, but we also support triple quotes
+	bool multiline = false;
 	yylval += '"';
 	if (peek() == '"') {
 		yylval += '"';
@@ -1390,7 +1385,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			multiline = true;
 		} else {
 			// "" is an empty string, skip the loop
-			goto finish;
+			return;
 		}
 	}
 
@@ -1400,7 +1395,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 		// '\r', '\n' or EOF ends a single-line string early
 		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
 			error("Unterminated string\n");
-			break;
+			return;
 		}
 
 		// We'll be staying in the string, so we can safely consume the char
@@ -1428,7 +1423,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 				shiftChar();
 			}
 			yylval += '"';
-			goto finish;
+			return;
 
 		case '\\': // Character escape or macro arg
 			if (raw)
@@ -1506,10 +1501,6 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 
 		yylval += c;
 	}
-
-finish:
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
 }
 
 // Lexer core
@@ -1981,12 +1972,15 @@ finish:
 static Token skipIfBlock(bool toEndc) {
 	lexer_SetMode(LEXER_NORMAL);
 	uint32_t startingDepth = lexer_GetIFDepth();
-	Token token;
+
 	bool atLineStart = lexerState->atLineStart;
+	DEFER({ lexerState->atLineStart = false; });
 
 	// Prevent expanding macro args and symbol interpolation in this state
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	for (;;) {
 		if (atLineStart) {
@@ -2000,8 +1994,7 @@ static Token skipIfBlock(bool toEndc) {
 
 			if (startsIdentifier(c)) {
 				shiftChar();
-				token = readIdentifier(c);
-				switch (token.type) {
+				switch (Token token = readIdentifier(c); token.type) {
 				case T_(POP_IF):
 					lexer_IncIFDepth();
 					break;
@@ -2010,7 +2003,7 @@ static Token skipIfBlock(bool toEndc) {
 					if (lexer_ReachedELSEBlock())
 						fatalerror("Found ELIF after an ELSE block\n");
 					if (!toEndc && lexer_GetIFDepth() == startingDepth)
-						goto finish;
+						return token;
 					break;
 
 				case T_(POP_ELSE):
@@ -2018,12 +2011,12 @@ static Token skipIfBlock(bool toEndc) {
 						fatalerror("Found ELSE after an ELSE block\n");
 					lexer_ReachELSEBlock();
 					if (!toEndc && lexer_GetIFDepth() == startingDepth)
-						goto finish;
+						return token;
 					break;
 
 				case T_(POP_ENDC):
 					if (lexer_GetIFDepth() == startingDepth)
-						goto finish;
+						return token;
 					lexer_DecIFDepth();
 					break;
 
@@ -2039,8 +2032,7 @@ static Token skipIfBlock(bool toEndc) {
 			int c = nextChar();
 
 			if (c == EOF) {
-				token = Token(T_(YYEOF));
-				goto finish;
+				return Token(T_(YYEOF));
 			} else if (c == '\\') {
 				// Unconditionally skip the next char, including line continuations
 				c = nextChar();
@@ -2056,13 +2048,6 @@ static Token skipIfBlock(bool toEndc) {
 			}
 		} while (!atLineStart);
 	}
-
-finish:
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
-	lexerState->atLineStart = false;
-
-	return token;
 }
 
 static Token yylex_SKIP_TO_ELIF() {
@@ -2076,11 +2061,15 @@ static Token yylex_SKIP_TO_ENDC() {
 static Token yylex_SKIP_TO_ENDR() {
 	lexer_SetMode(LEXER_NORMAL);
 	int depth = 1;
+
 	bool atLineStart = lexerState->atLineStart;
+	DEFER({ lexerState->atLineStart = false; });
 
 	// Prevent expanding macro args and symbol interpolation in this state
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	for (;;) {
 		if (atLineStart) {
@@ -2104,7 +2093,7 @@ static Token yylex_SKIP_TO_ENDR() {
 				case T_(POP_ENDR):
 					depth--;
 					if (!depth)
-						goto finish;
+						return Token(T_(YYEOF)); // yywrap() will finish the REPT/FOR loop
 					break;
 
 				case T_(POP_IF):
@@ -2127,7 +2116,7 @@ static Token yylex_SKIP_TO_ENDR() {
 			int c = nextChar();
 
 			if (c == EOF) {
-				goto finish;
+				return Token(T_(YYEOF));
 			} else if (c == '\\') {
 				// Unconditionally skip the next char, including line continuations
 				c = nextChar();
@@ -2143,14 +2132,6 @@ static Token yylex_SKIP_TO_ENDR() {
 			}
 		} while (!atLineStart);
 	}
-
-finish:
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
-	lexerState->atLineStart = false;
-
-	// yywrap() will finish the REPT/FOR loop
-	return Token(T_(YYEOF));
 }
 
 yy::parser::symbol_type yylex() {
@@ -2195,11 +2176,9 @@ static Capture startCapture() {
 	// The following assertion checks that.
 	assert(lexerState->atLineStart);
 
-	assert(!lexerState->capturing);
+	assert(!lexerState->capturing && lexerState->captureBuf == nullptr);
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
 
 	Capture capture = {.lineNo = lexer_GetLineNo(), .body = nullptr, .size = 0};
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
@@ -2231,12 +2210,15 @@ static void endCapture(Capture &capture) {
 
 	lexerState->capturing = false;
 	lexerState->captureBuf = nullptr;
-	lexerState->disableMacroArgs = false;
-	lexerState->disableInterpolation = false;
 }
 
 Capture lexer_CaptureRept() {
 	Capture capture = startCapture();
+
+	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	size_t depth = 0;
 	int c = EOF;
@@ -2258,10 +2240,11 @@ Capture lexer_CaptureRept() {
 
 			case T_(POP_ENDR):
 				if (!depth) {
+					endCapture(capture);
 					// The final ENDR has been captured, but we don't want it!
 					// We know we have read exactly "ENDR", not e.g. an EQUS
-					lexerState->captureSize -= strlen("ENDR");
-					goto finish;
+					capture.size -= strlen("ENDR");
+					return capture;
 				}
 				depth--;
 				break;
@@ -2275,25 +2258,24 @@ Capture lexer_CaptureRept() {
 		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
-				goto finish;
+				endCapture(capture);
+				capture.body = nullptr; // Indicates that it reached EOF before an ENDR
+				return capture;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
 				break;
 			}
 		}
 	}
-
-finish:
-	endCapture(capture);
-
-	if (c == EOF)
-		capture.body = nullptr; // Indicates that it reached EOF before an ENDR terminated it
-
-	return capture;
 }
 
 Capture lexer_CaptureMacro() {
 	Capture capture = startCapture();
+
+	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
+	DEFER({ lexerState->disableMacroArgs = false; });
+	DEFER({ lexerState->disableInterpolation = false; });
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap)
@@ -2311,10 +2293,11 @@ Capture lexer_CaptureMacro() {
 		if (startsIdentifier(c)) {
 			switch (readIdentifier(c).type) {
 			case T_(POP_ENDM):
+				endCapture(capture);
 				// The ENDM has been captured, but we don't want it!
 				// We know we have read exactly "ENDM", not e.g. an EQUS
-				lexerState->captureSize -= strlen("ENDM");
-				goto finish;
+				capture.size -= strlen("ENDM");
+				return capture;
 
 			default:
 				break;
@@ -2325,19 +2308,13 @@ Capture lexer_CaptureMacro() {
 		for (;; c = nextChar()) {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
-				goto finish;
+				endCapture(capture);
+				capture.body = nullptr; // Indicates that it reached EOF before an ENDM
+				return capture;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
 				break;
 			}
 		}
 	}
-
-finish:
-	endCapture(capture);
-
-	if (c == EOF)
-		capture.body = nullptr; // Indicates that it reached EOF before an ENDM terminated it
-
-	return capture;
 }

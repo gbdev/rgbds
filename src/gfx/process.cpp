@@ -1113,7 +1113,7 @@ void process() {
 			case ProtoPalette::THEY_BIGGER:
 				// Do nothing, they already contain us
 				attrs.protoPaletteID = n;
-				goto contained;
+				goto continue_visiting_tiles; // Can't `continue` from within a nested loop
 
 			case ProtoPalette::NEITHER:
 				break; // Keep going
@@ -1139,7 +1139,7 @@ void process() {
 			);
 		}
 		protoPalettes.push_back(tileColors);
-contained:;
+continue_visiting_tiles:;
 	}
 
 	options.verbosePrint(

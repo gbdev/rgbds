@@ -86,4 +86,16 @@ static inline int clz(unsigned int x) {
 // For lack of <ranges>, this adds some more brevity
 #define RANGE(s) std::begin(s), std::end(s)
 
+// For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
+template<typename T>
+struct Deferred {
+	T deferred;
+	Deferred(T func) : deferred(func) {}
+	~Deferred() { deferred(); }
+};
+#define DEFER(...) \
+	Deferred EXPAND_AND_CAT(deferred, __LINE__) { \
+		[&] __VA_ARGS__ \
+	}
+
 #endif // HELPERS_H

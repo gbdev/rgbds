@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "asm/fstack.hpp"
-
 #include <sys/stat.h>
 
 #include <assert.h>

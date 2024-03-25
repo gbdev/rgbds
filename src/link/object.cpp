@@ -473,7 +473,6 @@ static void readAssertion(
 
 void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	FILE *file;
-
 	if (strcmp(fileName, "-")) {
 		file = fopen(fileName, "rb");
 	} else {
@@ -482,6 +481,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 	if (!file)
 		err("Failed to open file \"%s\"", fileName);
+	DEFER({ fclose(file); });
 
 	// First, check if the object is a RGBDS object or a SDCC one. If the first byte is 'R',
 	// we'll assume it's a RGBDS object file, and otherwise, that it's a SDCC object file.
@@ -630,8 +630,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 			}
 		}
 	}
-
-	fclose(file);
 }
 
 void obj_CheckAssertions() {

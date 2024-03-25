@@ -225,7 +225,6 @@ static uint8_t parseHexDigit(int c) {
 }
 
 yy::parser::symbol_type yylex() {
-try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) think it can end.
 	auto &context = lexerStack.back();
 	auto c = context.file.sbumpc();
 
@@ -245,7 +244,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		// Basically yywrap().
 		if (lexerStack.size() != 1) {
 			lexerStack.pop_back();
-			goto try_again;
+			return yylex();
 		} else if (!atEof) {
 			// Inject a newline at EOF, to avoid errors for files that don't end with one.
 			atEof = true;
@@ -353,7 +352,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 		}
 
 		scriptError(context, "Unknown keyword \"%s\"", ident.c_str());
-		goto try_again; // Try lexing another token.
+		return yylex();
 	} else {
 		scriptError(context, "Unexpected character '%s'", printChar(c));
 		// Keep reading characters until the EOL, to avoid reporting too many errors.
@@ -363,7 +362,7 @@ try_again: // Can't use a `do {} while(0)` loop, otherwise compilers (wrongly) t
 			}
 			context.file.sbumpc();
 		}
-		goto try_again;
+		return yylex();
 	}
 	// Not marking as unreachable; this will generate a warning if any codepath forgets to return.
 }

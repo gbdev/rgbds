@@ -833,8 +833,9 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	if (!checkcodesection())
 		return;
 
-	std::optional<std::string> fullPath = fstk_FindFile(name);
-	FILE *file = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
+	FILE *file = nullptr;
+	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
+		file = fopen(fullPath->c_str(), "rb");
 	if (!file) {
 		if (generatedMissingIncludes) {
 			if (verbose)
@@ -845,6 +846,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		return;
 	}
+	DEFER({ fclose(file); });
 
 	int32_t fsize = -1;
 	int byte;
@@ -854,12 +856,12 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 
 		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
-			goto cleanup;
+			return;
 		}
 
 		fseek(file, startPos, SEEK_SET);
 		if (!reserveSpace(fsize - startPos))
-			goto cleanup;
+			return;
 	} else {
 		if (errno != ESPIPE)
 			error(
@@ -878,9 +880,6 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 
 	if (ferror(file))
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
-
-cleanup:
-	fclose(file);
 }
 
 void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length) {
@@ -901,8 +900,9 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	if (!reserveSpace(length))
 		return;
 
-	std::optional<std::string> fullPath = fstk_FindFile(name);
-	FILE *file = fullPath ? fopen(fullPath->c_str(), "rb") : nullptr;
+	FILE *file = nullptr;
+	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
+		file = fopen(fullPath->c_str(), "rb");
 	if (!file) {
 		if (generatedMissingIncludes) {
 			if (verbose)
@@ -913,6 +913,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		}
 		return;
 	}
+	DEFER({ fclose(file); });
 
 	int32_t fsize;
 
@@ -921,7 +922,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 
 		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
-			goto cleanup;
+			return;
 		}
 
 		if ((startPos + length) > fsize) {
@@ -932,7 +933,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 			    length,
 			    fsize
 			);
-			goto cleanup;
+			return;
 		}
 
 		fseek(file, startPos, SEEK_SET);
@@ -957,9 +958,6 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 			error("Premature end of file (%" PRId32 " bytes left to read)\n", length + 1);
 		}
 	}
-
-cleanup:
-	fclose(file);
 }
 
 // Section stack routines

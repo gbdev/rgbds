@@ -320,7 +320,7 @@ static void parseScrambleSpec(char const *spec) {
 			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNamePrintLen, regionName);
 		}
 
-next:
+next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 		if (spec) {
 			assert(*spec == ',' || *spec == '\0');
 			if (*spec == ',')

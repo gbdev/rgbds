@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "error.hpp"
+#include "helpers.hpp" // DEFER
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -304,7 +305,6 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 // Write an objectfile
 void out_WriteObject() {
 	FILE *file;
-
 	if (objectName != "-") {
 		file = fopen(objectName.c_str(), "wb");
 	} else {
@@ -313,6 +313,7 @@ void out_WriteObject() {
 	}
 	if (!file)
 		err("Failed to open object file '%s'", objectName.c_str());
+	DEFER({ fclose(file); });
 
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol);
@@ -349,8 +350,6 @@ void out_WriteObject() {
 
 	for (Assertion &assert : assertions)
 		writeassert(assert, file);
-
-	fclose(file);
 }
 
 // Set the objectfilename
