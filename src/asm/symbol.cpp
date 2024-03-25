@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <new>
 #include <stdio.h>
 #include <unordered_map>
 
@@ -75,9 +74,9 @@ int32_t Symbol::getOutputValue() const {
 	}
 }
 
-std::string_view *Symbol::getMacro() const {
-	assert(std::holds_alternative<std::string_view *>(data));
-	return std::get<std::string_view *>(data);
+std::string_view Symbol::getMacro() const {
+	assert(std::holds_alternative<std::string_view>(data));
+	return std::get<std::string_view>(data);
 }
 
 std::shared_ptr<std::string> Symbol::getEqus() const {
@@ -172,11 +171,7 @@ void sym_Purge(std::string const &symName) {
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
 			labelScope = std::nullopt;
-
-		// FIXME: this leaks `sym->getEqus()` for SYM_EQUS and `sym->getMacro()` for SYM_MACRO,
-		// but this can't delete either of them because the expansion may be purging itself.
 		symbols.erase(sym->name);
-		// TODO: ideally, also unref the file stack nodes
 	}
 }
 
@@ -500,11 +495,8 @@ Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, char const *
 	if (!sym)
 		return nullptr;
 
-	std::string_view *macro = new (std::nothrow) std::string_view(body, size);
-	if (!macro)
-		fatalerror("No memory for macro: %s\n", strerror(errno));
 	sym->type = SYM_MACRO;
-	sym->data = macro;
+	sym->data = std::string_view(body, size);
 
 	sym->src = fstk_GetFileStack();
 	// The symbol is created at the line after the `ENDM`,

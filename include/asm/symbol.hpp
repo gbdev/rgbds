@@ -38,7 +38,7 @@ struct Symbol {
 	std::variant<
 	    int32_t,                     // If isNumeric()
 	    int32_t (*)(),               // If isNumeric() and has a callback
-	    std::string_view *,          // For SYM_MACRO
+	    std::string_view,            // For SYM_MACRO
 	    std::shared_ptr<std::string> // For SYM_EQUS
 	    >
 	    data;
@@ -61,7 +61,7 @@ struct Symbol {
 
 	int32_t getValue() const;
 	int32_t getOutputValue() const;
-	std::string_view *getMacro() const;
+	std::string_view getMacro() const;
 	std::shared_ptr<std::string> getEqus() const;
 	uint32_t getConstantValue() const;
 };

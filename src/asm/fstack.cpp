@@ -282,10 +282,8 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	    .macroArgs = macroArgs,
 	});
 
-	std::string_view *macroView = macro.getMacro();
-	context.lexerState.setViewAsNextState(
-	    "MACRO", macroView->data(), macroView->size(), macro.fileLine
-	);
+	std::string_view view = macro.getMacro();
+	context.lexerState.setViewAsNextState("MACRO", view.data(), view.size(), macro.fileLine);
 }
 
 static Context &newReptContext(int32_t reptLineNo, char const *body, size_t size, uint32_t count) {
