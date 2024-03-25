@@ -1270,9 +1270,9 @@ int main(int argc, char *argv[]) {
 #define SPEC_G TRASH_GLOBAL_SUM
 #define overrideSpec(cur, bad) \
 	do { \
-		if (fixSpec & SPEC_##bad) \
-			fprintf(stderr, "warning: '" #cur "' overriding '" #bad "' in fix spec\n"); \
-		fixSpec = (fixSpec & ~SPEC_##bad) | SPEC_##cur; \
+		if (fixSpec & CAT(SPEC_, bad)) \
+			fprintf(stderr, "warning: '" STR(cur) "' overriding '" STR(bad) "' in fix spec\n"); \
+		fixSpec = (fixSpec & ~CAT(SPEC_, bad)) | CAT(SPEC_, cur); \
 	} while (0)
 				case 'l':
 					overrideSpec(l, L);

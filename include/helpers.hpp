@@ -75,6 +75,10 @@ static inline int clz(unsigned int x) {
 #define STR(x)            #x
 #define EXPAND_AND_STR(x) STR(x)
 
+// Macros for concatenation
+#define CAT(x, y)            x##y
+#define EXPAND_AND_CAT(x, y) CAT(x, y)
+
 // Obtaining the size of an array; `arr` must be an expression, not a type!
 // (Having two instances of `arr` is OK because the contents of `sizeof` are not evaluated.)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof *(arr))
