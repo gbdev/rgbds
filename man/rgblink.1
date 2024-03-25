@@ -16,7 +16,6 @@
 .Op Fl o Ar out_file
 .Op Fl p Ar pad_value
 .Op Fl S Ar spec
-.Op Fl s Ar symbol
 .Ar
 .Sh DESCRIPTION
 The
@@ -106,10 +105,6 @@ See
 .Sx Scrambling algorithm
 below for an explanation and a description of
 .Ar spec .
-.It Fl s Ar symbol , Fl \-smart Ar symbol
-This option is ignored.
-It was supposed to perform smart linking but fell into disrepair, and so has been removed.
-It will be reimplemented at some point.
 .It Fl t , Fl \-tiny
 Expand the ROM0 section size from 16 KiB to the full 32 KiB assigned to ROM.
 ROMX sections that are fixed to a bank other than 1 become errors, other ROMX sections are treated as ROM0.

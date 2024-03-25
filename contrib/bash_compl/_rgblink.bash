@@ -20,7 +20,6 @@ _rgblink_completions() {
 		[O]="overlay:glob-*.gb *.gbc *.sgb"
 		[o]="output:glob-*.gb *.gbc *.sgb"
 		[p]="pad:unk"
-		[s]="smart:unk"
 	)
 	# Parse command-line up to current word
 	local opt_ena=true
