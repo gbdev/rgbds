@@ -776,7 +776,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
 		fprintf(stderr, "\tMaximum %" PRIu8 " palettes\n", options.nbPalettes);
 		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
-		fprintf(stderr, "\t%s palette spec\n", []() {
+		fprintf(stderr, "\t%s palette spec\n", [] {
 			switch (options.palSpecType) {
 			case Options::NO_SPEC:
 				return "No";

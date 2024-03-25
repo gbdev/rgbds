@@ -450,9 +450,9 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 }
 
 void LexerState::setViewAsNextState(
-    char const *filePath, char const *buf, size_t size, uint32_t lineNo_
+    char const *name, char const *buf, size_t size, uint32_t lineNo_
 ) {
-	path = filePath; // Used to report read errors in `peekInternal`
+	path = name; // Used to report read errors in `peekInternal`
 	content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
 	clear(lineNo_);
 	lexerStateEOL = this;
@@ -1498,9 +1498,8 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
-			auto str = readInterpolation(0);
-			if (str) {
-				appendEscapedSubstring(yylval, *str);
+			if (auto interpolation = readInterpolation(0); interpolation) {
+				appendEscapedSubstring(yylval, *interpolation);
 			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
