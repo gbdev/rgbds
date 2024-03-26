@@ -481,6 +481,7 @@ BufferedContent::~BufferedContent() {
 }
 
 MmappedContent::~MmappedContent() {
+	// FIXME: This never unmaps a referenced file!
 	if (!isReferenced)
 		munmap(ptr, size);
 }
@@ -2188,7 +2189,7 @@ yy::parser::symbol_type yylex() {
 	}
 }
 
-void CaptureBody::startCapture() {
+static Capture startCapture() {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
 	// The following assertion checks that.
@@ -2200,28 +2201,30 @@ void CaptureBody::startCapture() {
 	lexerState->disableMacroArgs = true;
 	lexerState->disableInterpolation = true;
 
-	lineNo = lexer_GetLineNo();
+	Capture capture = {.lineNo = lexer_GetLineNo(), .body = nullptr, .size = 0};
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
 	    mmap && lexerState->expansions.empty()) {
-		body = &mmap->ptr[mmap->offset];
+		capture.body = &mmap->ptr[mmap->offset];
 	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
 	           view && lexerState->expansions.empty()) {
-		body = &view->ptr[view->offset];
+		capture.body = &view->ptr[view->offset];
 	} else {
-		body = nullptr; // Indicates to retrieve the capture buffer when done capturing
+		// `capture.body == nullptr`; indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
+		// FIXME: This leaks the captured text!
 		lexerState->captureBuf = new (std::nothrow) std::vector<char>();
 		if (!lexerState->captureBuf)
 			fatalerror("Failed to allocate capture buffer: %s\n", strerror(errno));
 	}
+	return capture;
 }
 
-void CaptureBody::endCapture() {
+static void endCapture(Capture &capture) {
 	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
-	if (!body)
-		body = lexerState->captureBuf->data();
-	size = lexerState->captureSize;
+	if (!capture.body)
+		capture.body = lexerState->captureBuf->data();
+	capture.size = lexerState->captureSize;
 
 	// ENDR/ENDM or EOF puts us past the start of the line
 	lexerState->atLineStart = false;
@@ -2232,9 +2235,8 @@ void CaptureBody::endCapture() {
 	lexerState->disableInterpolation = false;
 }
 
-CaptureBody lexer_CaptureRept() {
-	CaptureBody capture;
-	capture.startCapture();
+Capture lexer_CaptureRept() {
+	Capture capture = startCapture();
 
 	size_t depth = 0;
 	int c = EOF;
@@ -2282,7 +2284,7 @@ CaptureBody lexer_CaptureRept() {
 	}
 
 finish:
-	capture.endCapture();
+	endCapture(capture);
 
 	if (c == EOF)
 		capture.body = nullptr; // Indicates that it reached EOF before an ENDR terminated it
@@ -2290,9 +2292,8 @@ finish:
 	return capture;
 }
 
-CaptureBody lexer_CaptureMacroBody() {
-	CaptureBody capture;
-	capture.startCapture();
+Capture lexer_CaptureMacro() {
+	Capture capture = startCapture();
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap)
@@ -2333,7 +2334,7 @@ CaptureBody lexer_CaptureMacroBody() {
 	}
 
 finish:
-	capture.endCapture();
+	endCapture(capture);
 
 	if (c == EOF)
 		capture.body = nullptr; // Indicates that it reached EOF before an ENDM terminated it
