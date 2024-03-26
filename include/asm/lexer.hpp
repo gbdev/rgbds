@@ -52,21 +52,19 @@ struct BufferedContent {
 };
 
 struct MmappedContent {
-	char *ptr;
+	std::shared_ptr<char[]> ptr;
 	size_t size;
 	size_t offset = 0;
-	bool isReferenced = false; // If a macro in this file requires not unmapping it
 
-	MmappedContent(char *ptr_, size_t size_) : ptr(ptr_), size(size_) {}
-	~MmappedContent();
+	MmappedContent(std::shared_ptr<char[]> ptr_, size_t size_) : ptr(ptr_), size(size_) {}
 };
 
 struct ViewedContent {
-	char const *ptr;
+	std::shared_ptr<char const[]> ptr;
 	size_t size;
 	size_t offset = 0;
 
-	ViewedContent(char const *ptr_, size_t size_) : ptr(ptr_), size(size_) {}
+	ViewedContent(std::shared_ptr<char const[]> ptr_, size_t size_) : ptr(ptr_), size(size_) {}
 };
 
 struct LexerState {
@@ -80,9 +78,10 @@ struct LexerState {
 
 	std::deque<IfStackEntry> ifStack;
 
-	bool capturing;                // Whether the text being lexed should be captured
-	size_t captureSize;            // Amount of text captured
-	std::vector<char> *captureBuf; // Buffer to send the captured text to if non-null
+	bool capturing;     // Whether the text being lexed should be captured
+	size_t captureSize; // Amount of text captured
+	std::shared_ptr<std::vector<char>>
+	    captureBuf; // Buffer to send the captured text to if non-null
 
 	bool disableMacroArgs;
 	bool disableInterpolation;
@@ -96,7 +95,9 @@ struct LexerState {
 
 	void setAsCurrentState();
 	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
-	void setViewAsNextState(char const *name, char const *buf, size_t size, uint32_t lineNo_);
+	void setViewAsNextState(
+	    char const *name, std::shared_ptr<char const[]> ptr, size_t size, uint32_t lineNo_
+	);
 
 	void clear(uint32_t lineNo_);
 };
@@ -136,7 +137,7 @@ void lexer_DumpStringExpansions();
 
 struct Capture {
 	uint32_t lineNo;
-	char const *body;
+	std::shared_ptr<char const[]> body;
 	size_t size;
 };
 

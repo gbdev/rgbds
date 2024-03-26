@@ -69,9 +69,11 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t)
 	}
 }
 
-static int munmap(void *mappingAddr, size_t) {
-	return UnmapViewOfFile(mappingAddr) == 0 ? -1 : 0;
-}
+struct MunmapDeleter {
+	MunmapDeleter(size_t) {}
+
+	void operator()(char *mappingAddr) { UnmapViewOfFile(mappingAddr); }
+};
 
 #else // defined(_MSC_VER) || defined(__MINGW32__)
 	#include <sys/mman.h>
@@ -87,6 +89,14 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t 
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
 }
+
+struct MunmapDeleter {
+	size_t mappingSize;
+
+	MunmapDeleter(size_t mappingSize_) : mappingSize(mappingSize_) {}
+
+	void operator()(char *mappingAddr) { munmap(mappingAddr, mappingSize); }
+};
 
 #endif // !( defined(_MSC_VER) || defined(__MINGW32__) )
 
@@ -415,7 +425,12 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
-				content.emplace<MmappedContent>((char *)mappingAddr, (size_t)statBuf.st_size);
+				content.emplace<MmappedContent>(
+				    std::shared_ptr<char[]>(
+				        (char *)mappingAddr, MunmapDeleter((size_t)statBuf.st_size)
+				    ),
+				    (size_t)statBuf.st_size
+				);
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path.c_str());
 				isMmapped = true;
@@ -446,10 +461,10 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 }
 
 void LexerState::setViewAsNextState(
-    char const *name, char const *buf, size_t size, uint32_t lineNo_
+    char const *name, std::shared_ptr<char const[]> ptr, size_t size, uint32_t lineNo_
 ) {
 	path = name; // Used to report read errors in `peekInternal`
-	content.emplace<ViewedContent>(buf, size);
+	content.emplace<ViewedContent>(ptr, size);
 	clear(lineNo_);
 	lexerStateEOL = this;
 }
@@ -480,12 +495,6 @@ LexerState::~LexerState() {
 
 BufferedContent::~BufferedContent() {
 	close(fd);
-}
-
-MmappedContent::~MmappedContent() {
-	// FIXME: This never unmaps a referenced file!
-	if (!isReferenced)
-		munmap(ptr, size);
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -2174,17 +2183,14 @@ static Capture startCapture() {
 	Capture capture = {.lineNo = lexer_GetLineNo(), .body = nullptr, .size = 0};
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
 	    mmap && lexerState->expansions.empty()) {
-		capture.body = &mmap->ptr[mmap->offset];
+		capture.body = std::shared_ptr<char const[]>(mmap->ptr, &mmap->ptr[mmap->offset]);
 	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
 	           view && lexerState->expansions.empty()) {
-		capture.body = &view->ptr[view->offset];
+		capture.body = std::shared_ptr<char const[]>(view->ptr, &view->ptr[view->offset]);
 	} else {
 		// `capture.body == nullptr`; indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
-		// FIXME: This leaks the captured text!
-		lexerState->captureBuf = new (std::nothrow) std::vector<char>();
-		if (!lexerState->captureBuf)
-			fatalerror("Failed to allocate capture buffer: %s\n", strerror(errno));
+		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 	}
 	return capture;
 }
@@ -2193,7 +2199,8 @@ static void endCapture(Capture &capture) {
 	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
 	if (!capture.body)
-		capture.body = lexerState->captureBuf->data();
+		capture.body =
+		    std::shared_ptr<char const[]>(lexerState->captureBuf, lexerState->captureBuf->data());
 	capture.size = lexerState->captureSize;
 
 	// ENDR/ENDM or EOF puts us past the start of the line
@@ -2261,10 +2268,6 @@ Capture lexer_CaptureMacro() {
 	Capture capture = startCapture();
 
 	Defer reenableExpansions = scopedDisableExpansions();
-
-	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
-	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap)
-		mmap->isReferenced = true;
 
 	int c = EOF;
 
