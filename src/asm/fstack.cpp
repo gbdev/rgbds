@@ -281,11 +281,13 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	    .macroArgs = macroArgs,
 	});
 
-	std::string_view view = macro.getMacro();
-	context.lexerState.setViewAsNextState("MACRO", view.data(), view.size(), macro.fileLine);
+	auto [body, size] = macro.getMacro();
+	context.lexerState.setViewAsNextState("MACRO", body, size, macro.fileLine);
 }
 
-static Context &newReptContext(int32_t reptLineNo, char const *body, size_t size, uint32_t count) {
+static Context &newReptContext(
+    int32_t reptLineNo, std::shared_ptr<char const[]> body, size_t size, uint32_t count
+) {
 	checkRecursionDepth();
 
 	Context &oldContext = contextStack.top();
@@ -347,7 +349,9 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 	newMacroContext(*macro, macroArgs);
 }
 
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size) {
+void fstk_RunRept(
+    uint32_t count, int32_t reptLineNo, std::shared_ptr<char const[]> body, size_t size
+) {
 	if (count == 0)
 		return;
 
@@ -360,7 +364,7 @@ void fstk_RunFor(
     int32_t stop,
     int32_t step,
     int32_t reptLineNo,
-    char const *body,
+    std::shared_ptr<char const[]> body,
     size_t size
 ) {
 	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR)

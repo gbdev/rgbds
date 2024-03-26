@@ -64,14 +64,16 @@ std::optional<std::string> fstk_FindFile(std::string const &path);
 bool yywrap();
 void fstk_RunInclude(std::string const &path, bool updateStateNow);
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs);
-void fstk_RunRept(uint32_t count, int32_t reptLineNo, char const *body, size_t size);
+void fstk_RunRept(
+    uint32_t count, int32_t reptLineNo, std::shared_ptr<char const[]> body, size_t size
+);
 void fstk_RunFor(
     std::string const &symName,
     int32_t start,
     int32_t stop,
     int32_t step,
     int32_t reptLineNo,
-    char const *body,
+    std::shared_ptr<char const[]> body,
     size_t size
 );
 void fstk_StopRept();
