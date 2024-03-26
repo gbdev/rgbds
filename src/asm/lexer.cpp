@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
 #include "asm/lexer.hpp"
-
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -388,7 +387,7 @@ void LexerState::setAsCurrentState() {
 bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStateNow) {
 	if (filePath == "-") {
 		path = "<stdin>";
-		content = BufferedLexerState{.fd = STDIN_FILENO, .index = 0, .buf = {}, .nbChars = 0};
+		content.emplace<BufferedContent>(STDIN_FILENO);
 		if (verbose)
 			printf("Opening stdin\n");
 	} else {
@@ -414,12 +413,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
-				content = MmappedLexerState{
-				    .ptr = (char *)mappingAddr,
-				    .size = (size_t)statBuf.st_size,
-				    .offset = 0,
-				    .isReferenced = false,
-				};
+				content.emplace<MmappedContent>((char *)mappingAddr, (size_t)statBuf.st_size);
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path.c_str());
 				isMmapped = true;
@@ -428,7 +422,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		if (!isMmapped) {
 			// Sometimes mmap() fails or isn't available, so have a fallback
-			content = BufferedLexerState{.fd = fd, .index = 0, .buf = {}, .nbChars = 0};
+			content.emplace<BufferedContent>(fd);
 			if (verbose) {
 				if (statBuf.st_size == 0) {
 					printf("File \"%s\" is empty\n", path.c_str());
@@ -453,15 +447,15 @@ void LexerState::setViewAsNextState(
     char const *name, char const *buf, size_t size, uint32_t lineNo_
 ) {
 	path = name; // Used to report read errors in `peekInternal`
-	content = ViewedLexerState{.ptr = buf, .size = size, .offset = 0};
+	content.emplace<ViewedContent>(buf, size);
 	clear(lineNo_);
 	lexerStateEOL = this;
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
 		mmap->offset = 0;
-	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 		view->offset = 0;
 	}
 	lexerState->clear(lineNo);
@@ -480,13 +474,15 @@ LexerState::~LexerState() {
 	// It could be argued that deleting a state that's scheduled for EOF could simply clear
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
 	assert(this != lexerStateEOL);
+}
 
-	if (auto *mmap = std::get_if<MmappedLexerState>(&content); mmap) {
-		if (!mmap->isReferenced)
-			munmap(mmap->ptr, mmap->size);
-	} else if (auto *cbuf = std::get_if<BufferedLexerState>(&content); cbuf) {
-		close(cbuf->fd);
-	}
+BufferedContent::~BufferedContent() {
+	close(fd);
+}
+
+MmappedContent::~MmappedContent() {
+	if (!isReferenced)
+		munmap(ptr, size);
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -635,7 +631,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 	}
 }
 
-static size_t readInternal(BufferedLexerState &cbuf, size_t bufIndex, size_t nbChars) {
+static size_t readInternal(BufferedContent &cbuf, size_t bufIndex, size_t nbChars) {
 	// This buffer overflow made me lose WEEKS of my life. Never again.
 	assert(bufIndex + nbChars <= LEXER_BUF_SIZE);
 	ssize_t nbReadChars = read(cbuf.fd, &cbuf.buf[bufIndex], nbChars);
@@ -665,17 +661,17 @@ static int peekInternal(uint8_t distance) {
 		    LEXER_BUF_SIZE
 		);
 
-	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
 		if (size_t idx = mmap->offset + distance; idx < mmap->size)
 			return (uint8_t)mmap->ptr[idx];
 		return EOF;
-	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 		if (size_t idx = view->offset + distance; idx < view->size)
 			return (uint8_t)view->ptr[idx];
 		return EOF;
 	} else {
-		assert(std::holds_alternative<BufferedLexerState>(lexerState->content));
-		auto &cbuf = std::get<BufferedLexerState>(lexerState->content);
+		assert(std::holds_alternative<BufferedContent>(lexerState->content));
+		auto &cbuf = std::get<BufferedContent>(lexerState->content);
 
 		if (cbuf.nbChars > distance)
 			return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
@@ -789,13 +785,13 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap) {
+		if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
 			mmap->offset++;
-		} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content); view) {
+		} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 			view->offset++;
 		} else {
-			assert(std::holds_alternative<BufferedLexerState>(lexerState->content));
-			auto &cbuf = std::get<BufferedLexerState>(lexerState->content);
+			assert(std::holds_alternative<BufferedContent>(lexerState->content));
+			auto &cbuf = std::get<BufferedContent>(lexerState->content);
 			assert(cbuf.index < LEXER_BUF_SIZE);
 			cbuf.index++;
 			if (cbuf.index == LEXER_BUF_SIZE)
@@ -2205,10 +2201,10 @@ void CaptureBody::startCapture() {
 	lexerState->disableInterpolation = true;
 
 	lineNo = lexer_GetLineNo();
-	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content);
+	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
 	    mmap && lexerState->expansions.empty()) {
 		body = &mmap->ptr[mmap->offset];
-	} else if (auto *view = std::get_if<ViewedLexerState>(&lexerState->content);
+	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
 	           view && lexerState->expansions.empty()) {
 		body = &view->ptr[view->offset];
 	} else {
@@ -2299,7 +2295,7 @@ CaptureBody lexer_CaptureMacroBody() {
 	capture.startCapture();
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
-	if (auto *mmap = std::get_if<MmappedLexerState>(&lexerState->content); mmap)
+	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap)
 		mmap->isReferenced = true;
 
 	int c = EOF;

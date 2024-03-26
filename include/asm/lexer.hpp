@@ -41,24 +41,32 @@ struct IfStackEntry {
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
-struct MmappedLexerState {
+struct BufferedContent {
+	int fd;
+	size_t index = 0;              // Read index into the buffer
+	char buf[LEXER_BUF_SIZE] = {}; // Circular buffer
+	size_t nbChars = 0;            // Number of "fresh" chars in the buffer
+
+	BufferedContent(int fd_) : fd(fd_) {}
+	~BufferedContent();
+};
+
+struct MmappedContent {
 	char *ptr;
 	size_t size;
-	size_t offset;
-	bool isReferenced; // If a macro in this file requires not unmapping it
+	size_t offset = 0;
+	bool isReferenced = false; // If a macro in this file requires not unmapping it
+
+	MmappedContent(char *ptr_, size_t size_) : ptr(ptr_), size(size_) {}
+	~MmappedContent();
 };
 
-struct ViewedLexerState {
+struct ViewedContent {
 	char const *ptr;
 	size_t size;
-	size_t offset;
-};
+	size_t offset = 0;
 
-struct BufferedLexerState {
-	int fd;
-	size_t index;             // Read index into the buffer
-	char buf[LEXER_BUF_SIZE]; // Circular buffer
-	size_t nbChars;           // Number of "fresh" chars in the buffer
+	ViewedContent(char const *ptr_, size_t size_) : ptr(ptr_), size(size_) {}
 };
 
 struct LexerState {
@@ -82,18 +90,9 @@ struct LexerState {
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
-	std::variant<std::monostate, MmappedLexerState, ViewedLexerState, BufferedLexerState> content;
+	std::variant<std::monostate, MmappedContent, ViewedContent, BufferedContent> content;
 
-	LexerState() = default;
-	LexerState(LexerState &&) = default;
-	LexerState(LexerState const &) = delete;
-
-	// This destructor unmaps or closes the content file if applicable.
-	// As such, lexer states should not be copyable.
 	~LexerState();
-
-	LexerState &operator=(LexerState &&) = default;
-	LexerState &operator=(LexerState const &) = delete;
 
 	void setAsCurrentState();
 	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
