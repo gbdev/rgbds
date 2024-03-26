@@ -245,8 +245,8 @@
 %token SECT_WRAM0 "WRAM0" SECT_WRAMX "WRAMX" SECT_HRAM "HRAM"
 %token SECT_VRAM "VRAM" SECT_SRAM "SRAM" SECT_OAM "OAM"
 
-%type <CaptureBody> capture_rept
-%type <CaptureBody> capture_macro
+%type <Capture> capture_rept
+%type <Capture> capture_macro
 
 %type <SectionModifier> sect_mod
 %type <std::shared_ptr<MacroArgs>> macro_args
@@ -926,7 +926,7 @@ def_macro:
 
 capture_macro:
 	%empty {
-		$$ = lexer_CaptureMacroBody();
+		$$ = lexer_CaptureMacro();
 	}
 ;
 

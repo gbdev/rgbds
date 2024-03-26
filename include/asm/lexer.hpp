@@ -129,20 +129,18 @@ bool lexer_ReachedELSEBlock();
 void lexer_RunIFBlock();
 void lexer_ReachELSEBlock();
 
-struct CaptureBody {
-	uint32_t lineNo;
-	char const *body;
-	size_t size;
-
-	void startCapture();
-	void endCapture();
-};
-
 void lexer_CheckRecursionDepth();
 uint32_t lexer_GetLineNo();
 uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
-CaptureBody lexer_CaptureRept();
-CaptureBody lexer_CaptureMacroBody();
+
+struct Capture {
+	uint32_t lineNo;
+	char const *body;
+	size_t size;
+};
+
+Capture lexer_CaptureRept();
+Capture lexer_CaptureMacro();
 
 #endif // RGBDS_ASM_LEXER_H
