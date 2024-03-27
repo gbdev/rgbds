@@ -41,6 +41,11 @@ struct IfStackEntry {
 	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
+struct ContentSpan {
+	std::shared_ptr<char[]> ptr;
+	size_t size;
+};
+
 struct BufferedContent {
 	int fd;
 	size_t index = 0;              // Read index into the buffer
@@ -52,19 +57,17 @@ struct BufferedContent {
 };
 
 struct MmappedContent {
-	std::shared_ptr<char[]> ptr;
-	size_t size;
+	ContentSpan span;
 	size_t offset = 0;
 
-	MmappedContent(std::shared_ptr<char[]> ptr_, size_t size_) : ptr(ptr_), size(size_) {}
+	MmappedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
 };
 
 struct ViewedContent {
-	std::shared_ptr<char const[]> ptr;
-	size_t size;
+	ContentSpan span;
 	size_t offset = 0;
 
-	ViewedContent(std::shared_ptr<char const[]> ptr_, size_t size_) : ptr(ptr_), size(size_) {}
+	ViewedContent(ContentSpan const &span_) : span(span_) {}
 };
 
 struct LexerState {
@@ -95,9 +98,7 @@ struct LexerState {
 
 	void setAsCurrentState();
 	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
-	void setViewAsNextState(
-	    char const *name, std::shared_ptr<char const[]> ptr, size_t size, uint32_t lineNo_
-	);
+	void setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_);
 
 	void clear(uint32_t lineNo_);
 };
@@ -137,8 +138,7 @@ void lexer_DumpStringExpansions();
 
 struct Capture {
 	uint32_t lineNo;
-	std::shared_ptr<char const[]> body;
-	size_t size;
+	ContentSpan span;
 };
 
 Capture lexer_CaptureRept();

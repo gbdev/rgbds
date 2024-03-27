@@ -460,11 +460,9 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	return true;
 }
 
-void LexerState::setViewAsNextState(
-    char const *name, std::shared_ptr<char const[]> ptr, size_t size, uint32_t lineNo_
-) {
+void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_) {
 	path = name; // Used to report read errors in `peekInternal`
-	content.emplace<ViewedContent>(ptr, size);
+	content.emplace<ViewedContent>(span);
 	clear(lineNo_);
 	lexerStateEOL = this;
 }
@@ -675,12 +673,12 @@ static int peekInternal(uint8_t distance) {
 		);
 
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
-		if (size_t idx = mmap->offset + distance; idx < mmap->size)
-			return (uint8_t)mmap->ptr[idx];
+		if (size_t idx = mmap->offset + distance; idx < mmap->span.size)
+			return (uint8_t)mmap->span.ptr[idx];
 		return EOF;
 	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
-		if (size_t idx = view->offset + distance; idx < view->size)
-			return (uint8_t)view->ptr[idx];
+		if (size_t idx = view->offset + distance; idx < view->span.size)
+			return (uint8_t)view->span.ptr[idx];
 		return EOF;
 	} else {
 		assert(std::holds_alternative<BufferedContent>(lexerState->content));
@@ -2180,28 +2178,28 @@ static Capture startCapture() {
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 
-	Capture capture = {.lineNo = lexer_GetLineNo(), .body = nullptr, .size = 0};
+	uint32_t lineNo = lexer_GetLineNo();
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
 	    mmap && lexerState->expansions.empty()) {
-		capture.body = std::shared_ptr<char const[]>(mmap->ptr, &mmap->ptr[mmap->offset]);
+		return {.lineNo = lineNo, .span = {.ptr = std::shared_ptr<char[]>(mmap->span.ptr, &mmap->span.ptr[mmap->offset]), .size = 0}};
 	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
 	           view && lexerState->expansions.empty()) {
-		capture.body = std::shared_ptr<char const[]>(view->ptr, &view->ptr[view->offset]);
+		return {.lineNo = lineNo, .span = {.ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]), .size = 0}};
 	} else {
-		// `capture.body == nullptr`; indicates to retrieve the capture buffer when done capturing
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
+		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
+		return {.lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}};
 	}
-	return capture;
 }
 
 static void endCapture(Capture &capture) {
 	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
-	if (!capture.body)
-		capture.body =
-		    std::shared_ptr<char const[]>(lexerState->captureBuf, lexerState->captureBuf->data());
-	capture.size = lexerState->captureSize;
+	if (!capture.span.ptr)
+		capture.span.ptr =
+		    std::shared_ptr<char[]>(lexerState->captureBuf, lexerState->captureBuf->data());
+	capture.span.size = lexerState->captureSize;
 
 	// ENDR/ENDM or EOF puts us past the start of the line
 	lexerState->atLineStart = false;
@@ -2238,7 +2236,7 @@ Capture lexer_CaptureRept() {
 					endCapture(capture);
 					// The final ENDR has been captured, but we don't want it!
 					// We know we have read exactly "ENDR", not e.g. an EQUS
-					capture.size -= strlen("ENDR");
+					capture.span.size -= strlen("ENDR");
 					return capture;
 				}
 				depth--;
@@ -2254,7 +2252,7 @@ Capture lexer_CaptureRept() {
 			if (c == EOF) {
 				error("Unterminated REPT/FOR block\n");
 				endCapture(capture);
-				capture.body = nullptr; // Indicates that it reached EOF before an ENDR
+				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDR
 				return capture;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
@@ -2284,7 +2282,7 @@ Capture lexer_CaptureMacro() {
 				endCapture(capture);
 				// The ENDM has been captured, but we don't want it!
 				// We know we have read exactly "ENDM", not e.g. an EQUS
-				capture.size -= strlen("ENDM");
+				capture.span.size -= strlen("ENDM");
 				return capture;
 
 			default:
@@ -2297,7 +2295,7 @@ Capture lexer_CaptureMacro() {
 			if (c == EOF) {
 				error("Unterminated macro definition\n");
 				endCapture(capture);
-				capture.body = nullptr; // Indicates that it reached EOF before an ENDM
+				capture.span.ptr = nullptr; // Indicates that it reached EOF before an ENDM
 				return capture;
 			} else if (c == '\n' || c == '\r') {
 				handleCRLF(c);
