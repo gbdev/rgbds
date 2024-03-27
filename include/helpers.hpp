@@ -88,14 +88,10 @@ static inline int clz(unsigned int x) {
 
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
 template<typename T>
-struct Deferred {
+struct Defer {
 	T deferred;
-	Deferred(T func) : deferred(func) {}
-	~Deferred() { deferred(); }
+	Defer(T func) : deferred(func) {}
+	~Defer() { deferred(); }
 };
-#define DEFER(...) \
-	Deferred EXPAND_AND_CAT(deferred, __LINE__) { \
-		[&] __VA_ARGS__ \
-	}
 
 #endif // HELPERS_H

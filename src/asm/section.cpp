@@ -846,7 +846,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		return;
 	}
-	DEFER({ fclose(file); });
+	Defer closeFile{[&] { fclose(file); }};
 
 	int32_t fsize = -1;
 	int byte;
@@ -913,7 +913,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		}
 		return;
 	}
-	DEFER({ fclose(file); });
+	Defer closeFile{[&] { fclose(file); }};
 
 	int32_t fsize;
 

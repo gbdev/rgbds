@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "error.hpp"
-#include "helpers.hpp" // DEFER
+#include "helpers.hpp" // Defer
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -313,7 +313,7 @@ void out_WriteObject() {
 	}
 	if (!file)
 		err("Failed to open object file '%s'", objectName.c_str());
-	DEFER({ fclose(file); });
+	Defer closeFile{[&] { fclose(file); }};
 
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol);

@@ -1181,7 +1181,7 @@ static bool processFilename(char const *name) {
 		if (int input = open(name, O_RDWR | O_BINARY); input == -1) {
 			report("FATAL: Failed to open \"%s\" for reading+writing: %s\n", name, strerror(errno));
 		} else {
-			DEFER({ close(input); });
+			Defer closeInput{[&] { close(input); }};
 			struct stat stat;
 			if (fstat(input, &stat) == -1) {
 				report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));

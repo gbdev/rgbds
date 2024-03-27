@@ -530,8 +530,10 @@ static uint32_t readBracketedMacroArgNum() {
 	bool disableInterpolation = lexerState->disableInterpolation;
 	lexerState->disableMacroArgs = false;
 	lexerState->disableInterpolation = false;
-	DEFER({ lexerState->disableMacroArgs = disableMacroArgs; });
-	DEFER({ lexerState->disableInterpolation = disableInterpolation; });
+	Defer restoreExpansions{[&] {
+		lexerState->disableMacroArgs = disableMacroArgs;
+		lexerState->disableInterpolation = disableInterpolation;
+	}};
 
 	uint32_t num = 0;
 	int c = peek();
@@ -818,6 +820,15 @@ static void handleCRLF(int c) {
 		shiftChar();
 }
 
+static auto scopedDisableExpansions() {
+	lexerState->disableMacroArgs = true;
+	lexerState->disableInterpolation = true;
+	return Defer{[&] {
+		lexerState->disableMacroArgs = false;
+		lexerState->disableInterpolation = false;
+	}};
+}
+
 // "Services" provided by the lexer to the rest of the program
 
 uint32_t lexer_GetLineNo() {
@@ -842,10 +853,7 @@ void lexer_DumpStringExpansions() {
 // Functions to discard non-tokenized characters
 
 static void discardBlockComment() {
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 	for (;;) {
 		int c = nextChar();
 
@@ -879,10 +887,7 @@ static void discardBlockComment() {
 }
 
 static void discardComment() {
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 	for (;; shiftChar()) {
 		int c = peek();
 
@@ -1229,10 +1234,7 @@ static void appendEscapedSubstring(std::string &yylval, std::string const &str) 
 }
 
 static std::string readString(bool raw) {
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	bool multiline = false;
@@ -1367,10 +1369,7 @@ static std::string readString(bool raw) {
 }
 
 static void appendStringLiteral(std::string &yylval, bool raw) {
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	bool multiline = false;
@@ -1974,13 +1973,9 @@ static Token skipIfBlock(bool toEndc) {
 	uint32_t startingDepth = lexer_GetIFDepth();
 
 	bool atLineStart = lexerState->atLineStart;
-	DEFER({ lexerState->atLineStart = false; });
+	Defer notAtLineStart{[&] { lexerState->atLineStart = false; }};
 
-	// Prevent expanding macro args and symbol interpolation in this state
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	for (;;) {
 		if (atLineStart) {
@@ -2063,13 +2058,9 @@ static Token yylex_SKIP_TO_ENDR() {
 	int depth = 1;
 
 	bool atLineStart = lexerState->atLineStart;
-	DEFER({ lexerState->atLineStart = false; });
+	Defer notAtLineStart{[&] { lexerState->atLineStart = false; }};
 
-	// Prevent expanding macro args and symbol interpolation in this state
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	for (;;) {
 		if (atLineStart) {
@@ -2215,10 +2206,7 @@ static void endCapture(Capture &capture) {
 Capture lexer_CaptureRept() {
 	Capture capture = startCapture();
 
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	size_t depth = 0;
 	int c = EOF;
@@ -2272,10 +2260,7 @@ Capture lexer_CaptureRept() {
 Capture lexer_CaptureMacro() {
 	Capture capture = startCapture();
 
-	lexerState->disableMacroArgs = true;
-	lexerState->disableInterpolation = true;
-	DEFER({ lexerState->disableMacroArgs = false; });
-	DEFER({ lexerState->disableInterpolation = false; });
+	Defer reenableExpansions = scopedDisableExpansions();
 
 	// If the file is `mmap`ed, we need not to unmap it to keep access to the macro
 	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap)
