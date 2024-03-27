@@ -24,53 +24,6 @@
 }
 #endif
 
-// Use builtins whenever possible, and shim them otherwise
-#ifdef __GNUC__ // GCC or compatible
-	#define ctz __builtin_ctz
-	#define clz __builtin_clz
-
-#elif defined(_MSC_VER)
-	#include <assert.h>
-	#include <intrin.h>
-	#pragma intrinsic(_BitScanReverse, _BitScanForward)
-static inline int ctz(unsigned int x) {
-	unsigned long cnt;
-
-	assert(x != 0);
-	_BitScanForward(&cnt, x);
-	return cnt;
-}
-static inline int clz(unsigned int x) {
-	unsigned long cnt;
-
-	assert(x != 0);
-	_BitScanReverse(&cnt, x);
-	return 31 - cnt;
-}
-
-#else
-	#include <limits.h>
-static inline int ctz(unsigned int x) {
-	int cnt = 0;
-
-	while (!(x & 1)) {
-		x >>= 1;
-		cnt++;
-	}
-	return cnt;
-}
-
-static inline int clz(unsigned int x) {
-	int cnt = 0;
-
-	while (x <= UINT_MAX / 2) {
-		x <<= 1;
-		cnt++;
-	}
-	return cnt;
-}
-#endif
-
 // Macros for stringification
 #define STR(x)            #x
 #define EXPAND_AND_STR(x) STR(x)

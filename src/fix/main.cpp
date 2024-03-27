@@ -4,9 +4,11 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <bit>
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <limits>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1041,13 +1043,12 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			assert(rom0Len == sizeof(rom0));
 		}
 		assert(nbBanks >= 2);
+		// The subtraction would be invalid for 0, but the assertion above means it won't happen.
+		auto logNbBanks = std::bit_width(nbBanks - 1);
 		// Alter number of banks to reflect required value
-		// x&(x-1) is zero iff x is a power of 2, or 0; we know for sure it's non-zero,
-		// so this is true (non-zero) when we don't have a power of 2
-		if (nbBanks & (nbBanks - 1))
-			nbBanks = 1 << (CHAR_BIT * sizeof(nbBanks) - clz(nbBanks));
+		nbBanks = uint32_t(1) << logNbBanks;
 		// Write final ROM size
-		rom0[0x148] = ctz(nbBanks / 2);
+		rom0[0x148] = logNbBanks - 1;
 		// Alter global checksum based on how many bytes will be added (not counting ROM0)
 		globalSum += padValue * ((nbBanks - 1) * BANK_SIZE - totalRomxLen);
 	}
