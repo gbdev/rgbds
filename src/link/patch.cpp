@@ -3,19 +3,28 @@
 #include "link/patch.hpp"
 
 #include <assert.h>
+#include <deque>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <variant>
+#include <vector>
 
 #include "error.hpp"
 #include "helpers.hpp"
 #include "opmath.hpp"
 #include "platform.hpp"
 
+#include "linkdefs.hpp"
+
+#include "link/main.hpp"
 #include "link/object.hpp"
+#include "link/section.hpp"
 #include "link/symbol.hpp"
+
+std::deque<Assertion> assertions;
 
 struct RPNStackEntry {
 	int32_t value;
@@ -88,10 +97,6 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		// So, if there are two `popRPN` in the same expression, make
 		// sure the operation is commutative.
 		switch (command) {
-			Symbol const *symbol;
-			char const *name;
-			Section const *sect;
-
 		case RPN_ADD:
 			value = popRPN(patch) + popRPN(patch);
 			break;
@@ -207,9 +212,8 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			value = 0;
 			for (uint8_t shift = 0; shift < 32; shift += 8)
 				value |= getRPNByte(expression, size, patch) << shift;
-			symbol = getSymbol(fileSymbols, value);
 
-			if (!symbol) {
+			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -232,16 +236,14 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 
-		case RPN_BANK_SECT:
+		case RPN_BANK_SECT: {
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
-			name = (char const *)expression;
+			char const *name = (char const *)expression;
 			while (getRPNByte(expression, size, patch))
 				;
 
-			sect = sect_GetSection(name);
-
-			if (!sect) {
+			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -254,6 +256,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				value = sect->bank;
 			}
 			break;
+		}
 
 		case RPN_BANK_SELF:
 			if (!patch.pcSection) {
@@ -265,15 +268,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 
-		case RPN_SIZEOF_SECT:
+		case RPN_SIZEOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
-			name = (char const *)expression;
+			char const *name = (char const *)expression;
 			while (getRPNByte(expression, size, patch))
 				;
 
-			sect = sect_GetSection(name);
-
-			if (!sect) {
+			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -286,17 +287,15 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				value = sect->size;
 			}
 			break;
+		}
 
-		case RPN_STARTOF_SECT:
+		case RPN_STARTOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
-			name = (char const *)expression;
+			char const *name = (char const *)expression;
 			while (getRPNByte(expression, size, patch))
 				;
 
-			sect = sect_GetSection(name);
-			assert(sect->offset == 0);
-
-			if (!sect) {
+			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -306,9 +305,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				isError = true;
 				value = 1;
 			} else {
+				assert(sect->offset == 0);
 				value = sect->org;
 			}
 			break;
+		}
 
 		case RPN_SIZEOF_SECTTYPE:
 			value = getRPNByte(expression, size, patch);
@@ -373,9 +374,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					value = patch.pcOffset + patch.pcSection->org;
 				}
 			} else {
-				symbol = getSymbol(fileSymbols, value);
-
-				if (!symbol) {
+				if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 					error(
 					    patch.src,
 					    patch.lineNo,
@@ -403,7 +402,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 	return popRPN(patch);
 }
 
-void patch_CheckAssertions(std::deque<Assertion> &assertions) {
+void patch_CheckAssertions() {
 	verbosePrint("Checking assertions...\n");
 
 	for (Assertion &assert : assertions) {

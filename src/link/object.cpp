@@ -28,7 +28,6 @@
 
 static std::deque<std::vector<Symbol>> symbolLists;
 static std::vector<std::vector<FileStackNode>> nodes;
-static std::deque<Assertion> assertions;
 
 // Helper functions for reading object files
 
@@ -630,10 +629,6 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 			}
 		}
 	}
-}
-
-void obj_CheckAssertions() {
-	patch_CheckAssertions(assertions);
 }
 
 void obj_Setup(unsigned int nbFiles) {

@@ -3,7 +3,6 @@
 #include "link/section.hpp"
 
 #include <assert.h>
-#include <deque>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>

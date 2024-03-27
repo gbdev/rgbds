@@ -457,7 +457,7 @@ int main(int argc, char *argv[]) {
 	if (nbErrors != 0)
 		reportErrors();
 	assign_AssignSections();
-	obj_CheckAssertions();
+	patch_CheckAssertions();
 
 	// and finally output the result.
 	patch_ApplyPatches();

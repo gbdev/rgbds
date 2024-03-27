@@ -5,6 +5,7 @@
 
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
+#include <deque>
 #include <memory>
 #include <stdint.h>
 #include <string>
@@ -13,6 +14,7 @@
 #include "linkdefs.hpp"
 
 #include "link/main.hpp"
+#include "link/patch.hpp"
 
 struct FileStackNode;
 struct Section;
@@ -52,6 +54,15 @@ struct Section {
 	std::vector<Symbol *> symbols;
 	std::unique_ptr<Section> nextu; // The next "component" of this unionized sect
 };
+
+struct Assertion {
+	Patch patch; // Also used for its `.type`
+	std::string message;
+	// This would be redundant with `.section->fileSymbols`, but `section` is sometimes `nullptr`!
+	std::vector<Symbol> *fileSymbols;
+};
+
+extern std::deque<Assertion> assertions;
 
 /*
  * Execute a callback for each section currently registered.

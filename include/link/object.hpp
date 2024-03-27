@@ -11,11 +11,6 @@
 void obj_ReadFile(char const *fileName, unsigned int i);
 
 /*
- * Evaluate all assertions
- */
-void obj_CheckAssertions();
-
-/*
  * Sets up object file reading
  * @param nbFiles The number of object files that will be read
  */
