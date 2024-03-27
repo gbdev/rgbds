@@ -10,9 +10,9 @@
 #include <string>
 #include <string_view>
 #include <time.h>
-#include <utility>
 #include <variant>
 
+#include "asm/lexer.hpp"
 #include "asm/section.hpp"
 
 enum SymbolType {
@@ -37,10 +37,10 @@ struct Symbol {
 	uint32_t fileLine;                  // Line where the symbol was defined
 
 	std::variant<
-	    int32_t,                                          // If isNumeric()
-	    int32_t (*)(),                                    // If isNumeric() and has a callback
-	    std::pair<std::shared_ptr<char const[]>, size_t>, // For SYM_MACRO
-	    std::shared_ptr<std::string>                      // For SYM_EQUS
+	    int32_t,                     // If isNumeric()
+	    int32_t (*)(),               // If isNumeric() and has a callback
+	    ContentSpan,                 // For SYM_MACRO
+	    std::shared_ptr<std::string> // For SYM_EQUS
 	    >
 	    data;
 
@@ -62,7 +62,7 @@ struct Symbol {
 
 	int32_t getValue() const;
 	int32_t getOutputValue() const;
-	std::pair<std::shared_ptr<char const[]>, size_t> getMacro() const;
+	ContentSpan const &getMacro() const;
 	std::shared_ptr<std::string> getEqus() const;
 	uint32_t getConstantValue() const;
 };
@@ -89,9 +89,7 @@ Symbol *sym_FindScopedSymbol(std::string const &symName);
 // Find a scoped symbol by name; do not return `@` or `_NARG` when they have no value
 Symbol *sym_FindScopedValidSymbol(std::string const &symName);
 Symbol const *sym_GetPC();
-Symbol *sym_AddMacro(
-    std::string const &symName, int32_t defLineNo, std::shared_ptr<char const[]> body, size_t size
-);
+Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span);
 Symbol *sym_Ref(std::string const &symName);
 Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> value);
 Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> value);

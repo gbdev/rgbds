@@ -74,9 +74,9 @@ int32_t Symbol::getOutputValue() const {
 	}
 }
 
-std::pair<std::shared_ptr<char const []>, size_t> Symbol::getMacro() const {
-	assert((std::holds_alternative<std::pair<std::shared_ptr<char const[]>, size_t>>(data)));
-	return std::get<std::pair<std::shared_ptr<char const[]>, size_t>>(data);
+ContentSpan const &Symbol::getMacro() const {
+	assert((std::holds_alternative<ContentSpan>(data)));
+	return std::get<ContentSpan>(data);
 }
 
 std::shared_ptr<std::string> Symbol::getEqus() const {
@@ -489,16 +489,14 @@ void sym_Export(std::string const &symName) {
 }
 
 // Add a macro definition
-Symbol *sym_AddMacro(
-    std::string const &symName, int32_t defLineNo, std::shared_ptr<char const[]> body, size_t size
-) {
+Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
 	if (!sym)
 		return nullptr;
 
 	sym->type = SYM_MACRO;
-	sym->data = std::make_pair(body, size);
+	sym->data = span;
 
 	sym->src = fstk_GetFileStack();
 	// The symbol is created at the line after the `ENDM`,

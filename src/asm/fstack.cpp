@@ -281,13 +281,10 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	    .macroArgs = macroArgs,
 	});
 
-	auto [body, size] = macro.getMacro();
-	context.lexerState.setViewAsNextState("MACRO", body, size, macro.fileLine);
+	context.lexerState.setViewAsNextState("MACRO", macro.getMacro(), macro.fileLine);
 }
 
-static Context &newReptContext(
-    int32_t reptLineNo, std::shared_ptr<char const[]> body, size_t size, uint32_t count
-) {
+static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint32_t count) {
 	checkRecursionDepth();
 
 	Context &oldContext = contextStack.top();
@@ -309,7 +306,7 @@ static Context &newReptContext(
 	    .macroArgs = oldContext.macroArgs,
 	});
 
-	context.lexerState.setViewAsNextState("REPT", body, size, reptLineNo);
+	context.lexerState.setViewAsNextState("REPT", span, reptLineNo);
 
 	context.nbReptIters = count;
 
@@ -349,13 +346,11 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 	newMacroContext(*macro, macroArgs);
 }
 
-void fstk_RunRept(
-    uint32_t count, int32_t reptLineNo, std::shared_ptr<char const[]> body, size_t size
-) {
+void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span) {
 	if (count == 0)
 		return;
 
-	newReptContext(reptLineNo, body, size, count);
+	newReptContext(reptLineNo, span, count);
 }
 
 void fstk_RunFor(
@@ -364,8 +359,7 @@ void fstk_RunFor(
     int32_t stop,
     int32_t step,
     int32_t reptLineNo,
-    std::shared_ptr<char const[]> body,
-    size_t size
+    ContentSpan const &span
 ) {
 	if (Symbol *sym = sym_AddVar(symName, start); sym->type != SYM_VAR)
 		return;
@@ -386,7 +380,7 @@ void fstk_RunFor(
 	if (count == 0)
 		return;
 
-	Context &context = newReptContext(reptLineNo, body, size, count);
+	Context &context = newReptContext(reptLineNo, span, count);
 	context.isForLoop = true;
 	context.forValue = start;
 	context.forStep = step;

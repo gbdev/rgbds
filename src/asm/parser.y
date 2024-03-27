@@ -866,8 +866,8 @@ load:
 
 rept:
 	POP_REPT uconst NEWLINE capture_rept endofline {
-		if ($4.body)
-			fstk_RunRept($2, $4.lineNo, $4.body, $4.size);
+		if ($4.span.ptr)
+			fstk_RunRept($2, $4.lineNo, $4.span);
 	}
 ;
 
@@ -877,8 +877,8 @@ for:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
-		if ($8.body)
-			fstk_RunFor($3, $6.start, $6.stop, $6.step, $8.lineNo, $8.body, $8.size);
+		if ($8.span.ptr)
+			fstk_RunFor($3, $6.start, $6.stop, $6.step, $8.lineNo, $8.span);
 	}
 ;
 
@@ -919,8 +919,8 @@ def_macro:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
-		if ($6.body)
-			sym_AddMacro($3, $6.lineNo, $6.body, $6.size);
+		if ($6.span.ptr)
+			sym_AddMacro($3, $6.lineNo, $6.span);
 	}
 ;
 
