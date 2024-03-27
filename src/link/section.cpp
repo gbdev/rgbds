@@ -3,6 +3,7 @@
 #include "link/section.hpp"
 
 #include <inttypes.h>
+#include <stack>
 #include <stdlib.h>
 #include <string.h>
 #include <unordered_map>
@@ -10,12 +11,18 @@
 #include "error.hpp"
 #include "helpers.hpp"
 
+#include "link/patch.hpp"
+#include "link/symbol.hpp"
+
 std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
+std::vector<std::string> smartLinkNames;
 
 void sect_ForEach(void (*callback)(Section &)) {
 	for (auto &ptr : sectionList) {
-		callback(*ptr);
+		if (ptr) { // Entries may be null after smart linking
+			callback(*ptr);
+		}
 	}
 }
 
@@ -387,4 +394,85 @@ static void doSanityChecks(Section &section) {
 
 void sect_DoSanityChecks() {
 	sect_ForEach(doSanityChecks);
+}
+
+void sect_AddSmartSection(std::string const &name) {
+	smartLinkNames.push_back(name);
+}
+
+static std::stack<Section *> smartLinkStack;
+
+static void queueSmartSection(Section &section) {
+	if (!section.smartLinked) {
+		section.smartLinked = true;
+		smartLinkStack.push(&section);
+	}
+}
+
+static void smartLinkSection(Section &section) {
+	section.smartLinked = true;
+	// Scan all linked sections
+	for (Patch const &patch : section.patches) {
+		patch_FindReferencedSections(patch, queueSmartSection, *section.fileSymbols);
+	}
+}
+
+void sect_PerformSmartLink() {
+	// If smart linking wasn't requested, do nothing
+	if (smartLinkNames.empty()) {
+		return;
+	}
+
+	// Add all sections requested on the CLI
+	for (std::string const &name : smartLinkNames) {
+		if (Section *section = sect_GetSection(name); !section) {
+			error(
+			    nullptr,
+			    0,
+			    "Section \"%s\" was specified for smart linking, but was not found",
+			    name.c_str()
+			);
+		} else {
+			smartLinkSection(*section);
+		}
+	}
+
+	// If a section isn't smart linked yet, but is fully constrained
+	// by address and bank, we want to smart link it as well
+	for (std::unique_ptr<Section> &section : sectionList) {
+		if (!section->smartLinked && section->isAddressFixed && section->isBankFixed) {
+			smartLinkSection(*section);
+		}
+	}
+
+	// Also add sections referenced by assertions
+	for (Assertion const &assertion : assertions) {
+		patch_FindReferencedSections(assertion.patch, queueSmartSection, *assertion.fileSymbols);
+	}
+
+	// As long as the stack isn't empty, get the last one, and process it
+	while (!smartLinkStack.empty()) {
+		Section *section = smartLinkStack.top();
+		smartLinkStack.pop();
+		smartLinkSection(*section);
+	}
+
+	// Remove all entries that need to be purged
+	std::vector<std::string> sectionsToRemove;
+	for (std::unique_ptr<Section> const &section : sectionList) {
+		if (!section->smartLinked) {
+			verbosePrint("Dropping \"%s\" due to smart linking\n", section->name.c_str());
+			sectionsToRemove.push_back(section->name);
+		}
+	}
+	for (std::string const &name : sectionsToRemove) {
+		auto search = sectionMap.find(name);
+		assume(search != sectionMap.end());
+		std::unique_ptr<Section> section = nullptr;
+		std::swap(section, sectionList[search->second]);
+		sectionMap.erase(search);
+		for (Symbol const *symbol : section->symbols) {
+			sym_RemoveSymbol(symbol->name);
+		}
+	}
 }
