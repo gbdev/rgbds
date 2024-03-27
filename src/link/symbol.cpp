@@ -43,3 +43,8 @@ Symbol *sym_GetSymbol(std::string const &name) {
 	auto search = symbols.find(name);
 	return search != symbols.end() ? search->second : nullptr;
 }
+
+void sym_RemoveSymbol(std::string const &name) {
+	if (auto search = symbols.find(name); search != symbols.end())
+		symbols.erase(search);
+}
