@@ -393,7 +393,7 @@ void assign_AssignSections() {
 				fprintf(stderr, "%c \"%s\"", nbSections == 0 ? ';' : ',', section->name.c_str());
 				nbSections++;
 				if (nbSections == 10)
-					goto max_out;
+					goto max_out; // Can't `break` out of a nested loop
 			}
 		}
 

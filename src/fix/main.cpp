@@ -1166,47 +1166,44 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 static bool processFilename(char const *name) {
 	nbErrors = 0;
+
 	if (!strcmp(name, "-")) {
 		(void)setmode(STDIN_FILENO, O_BINARY);
 		(void)setmode(STDOUT_FILENO, O_BINARY);
 		name = "<stdin>";
 		processFile(STDIN_FILENO, STDOUT_FILENO, name, 0);
-
 	} else {
 		// POSIX specifies that the results of O_RDWR on a FIFO are undefined.
 		// However, this is necessary to avoid a TOCTTOU, if the file was changed between
 		// `stat()` and `open(O_RDWR)`, which could trigger the UB anyway.
 		// Thus, we're going to hope that either the `open` fails, or it succeeds but IO
 		// operations may fail, all of which we handle.
-		int input = open(name, O_RDWR | O_BINARY);
-		struct stat stat;
-
-		if (input == -1) {
+		if (int input = open(name, O_RDWR | O_BINARY); input == -1) {
 			report("FATAL: Failed to open \"%s\" for reading+writing: %s\n", name, strerror(errno));
-			goto finish;
-		}
-
-		if (fstat(input, &stat) == -1) {
-			report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
-		} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support other types?
-			report(
-			    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n", name
-			);
-		} else if (stat.st_size < 0x150) {
-			// This check is in theory redundant with the one in `processFile`, but it
-			// prevents passing a file size of 0, which usually indicates pipes
-			report(
-			    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
-			    name,
-			    (intmax_t)stat.st_size
-			);
 		} else {
-			processFile(input, input, name, stat.st_size);
+			Defer closeInput{[&] { close(input); }};
+			struct stat stat;
+			if (fstat(input, &stat) == -1) {
+				report("FATAL: Failed to stat \"%s\": %s\n", name, strerror(errno));
+			} else if (!S_ISREG(stat.st_mode)) { // TODO: Do we want to support other types?
+				report(
+				    "FATAL: \"%s\" is not a regular file, and thus cannot be modified in-place\n",
+				    name
+				);
+			} else if (stat.st_size < 0x150) {
+				// This check is in theory redundant with the one in `processFile`, but it
+				// prevents passing a file size of 0, which usually indicates pipes
+				report(
+				    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
+				    name,
+				    (intmax_t)stat.st_size
+				);
+			} else {
+				processFile(input, input, name, stat.st_size);
+			}
 		}
-
-		close(input);
 	}
-finish:
+
 	if (nbErrors)
 		fprintf(
 		    stderr,

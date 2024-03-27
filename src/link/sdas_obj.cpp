@@ -797,6 +797,10 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		}
 	}
 
+#undef expectEol
+#undef expectToken
+#undef getToken
+
 	if (!data.empty())
 		warning(&where, lineNo, "Last 'T' line had no 'R' line (ignored)");
 	if (fileSections.size() < expectedNbAreas)
@@ -841,10 +845,4 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		// Calling `sect_AddSection` invalidates the contents of `fileSections`!
 		sect_AddSection(std::move(section));
 	}
-
-#undef expectEol
-#undef expectToken
-#undef getToken
-
-	fclose(file);
 }
