@@ -68,6 +68,12 @@ Symbol *sym_GetSymbol(std::string const &name) {
 	return search != symbols.end() ? search->second : nullptr;
 }
 
+void sym_RemoveSymbol(std::string const &name) {
+	if (auto search = symbols.find(name); search != symbols.end()) {
+		symbols.erase(search);
+	}
+}
+
 void sym_DumpLocalAliasedSymbols(std::string const &name) {
 	std::vector<Symbol *> const &locals = localSymbols[name];
 	int count = 0;

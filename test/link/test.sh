@@ -138,6 +138,22 @@ for i in *.asm; do
 	evaluateTest
 done
 
+for i in smart/*.asm; do
+	test=${i%.asm}
+	startTest
+	"$RGBASM" -o "$otemp" "${test}.asm"
+	continueTest
+	"$RGBLINK" -o "$gbtemp" "$otemp"
+	tryCmp "${test}.bin" "$gbtemp"
+	evaluateTest
+
+	test="${i%.asm}.smart"
+	continueTest
+	"$RGBLINK" -s "root" -o "$gbtemp" "$otemp"
+	tryCmp "${test}.bin" "$gbtemp"
+	evaluateTest
+done
+
 # These tests do their own thing
 
 test="bank-const"

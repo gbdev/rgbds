@@ -26,4 +26,10 @@ void patch_CheckAssertions();
 // Applies all SECTIONs' patches to them
 void patch_ApplyPatches();
 
+// Executes a callback on all sections referenced by expressions in a section's patches
+void patch_FindSectionReferencedSections(Section &section, void (*callback)(Section &));
+
+// Executes a callback on all sections referenced by expressions in assertions' patches
+void patch_FindAssertionReferencedSections(void (*callback)(Section &));
+
 #endif // RGBDS_LINK_PATCH_HPP

@@ -36,6 +36,7 @@ local args=(
 	'(-o --output)'{-o,--output}"+[Write ROM image to this file]:rom file:_files -g '*.{gb,sgb,gbc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
 	'(-S --scramble)'{-s,--scramble}'+[Activate scrambling]:scramble spec'
+	'(-s --smart)'{-s,--smart}'+[Perform smart linking from this section]:section name:'
 	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgblink_warnings'
 
 	'*'":object files:_files -g '*.o'"

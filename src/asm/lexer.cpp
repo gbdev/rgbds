@@ -518,9 +518,7 @@ static uint32_t readDecimalNumber(int initial);
 static uint32_t readBracketedMacroArgNum() {
 	bool disableExpansions = lexerState->disableExpansions;
 	lexerState->disableExpansions = false;
-	Defer restoreExpansions{[&] {
-		lexerState->disableExpansions = disableExpansions;
-	}};
+	Defer restoreExpansions{[&] { lexerState->disableExpansions = disableExpansions; }};
 
 	int32_t num = 0;
 	int c = peek();
@@ -810,9 +808,7 @@ static void handleCRLF(int c) {
 
 static auto scopedDisableExpansions() {
 	lexerState->disableExpansions = true;
-	return Defer{[&] {
-		lexerState->disableExpansions = false;
-	}};
+	return Defer{[&] { lexerState->disableExpansions = false; }};
 }
 
 // "Services" provided by the lexer to the rest of the program
