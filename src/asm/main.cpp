@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
 		// introduced to better match the `-I dir` option of gcc and clang.
 		case 'i':
 			warning(WARNING_OBSOLETE, "`-i` is deprecated; use `-I`\n");
-			// fallthrough
+			[[fallthrough]];
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);
 			break;

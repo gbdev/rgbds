@@ -864,7 +864,7 @@ static void discardBlockComment() {
 		case '\r':
 			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
-			// fallthrough
+			[[fallthrough]];
 		case '\n':
 			if (lexerState->expansions.empty())
 				nextLine();
@@ -879,7 +879,7 @@ static void discardBlockComment() {
 				shiftChar();
 				return;
 			}
-			// fallthrough
+			[[fallthrough]];
 		default:
 			continue;
 		}
@@ -1216,7 +1216,7 @@ static void appendEscapedSubstring(std::string &yylval, std::string const &str) 
 		case '"':
 		case '{':
 			yylval += '\\';
-			// fallthrough
+			[[fallthrough]];
 		default:
 			yylval += c;
 			break;
@@ -1515,7 +1515,7 @@ static Token yylex_NORMAL() {
 
 		case ';':
 			discardComment();
-			// fallthrough
+			[[fallthrough]];
 		case ' ':
 		case '\t':
 			break;
@@ -1729,7 +1729,7 @@ static Token yylex_NORMAL() {
 
 		case '\r':
 			handleCRLF(c);
-			// fallthrough
+			[[fallthrough]];
 		case '\n':
 			return Token(T_(NEWLINE));
 
@@ -1751,7 +1751,7 @@ static Token yylex_NORMAL() {
 				shiftChar();
 				return Token(T_(STRING), readString(true));
 			}
-			// fallthrough
+			[[fallthrough]];
 
 			// Handle identifiers... or report garbage characters
 
@@ -1846,7 +1846,7 @@ static Token yylex_RAW() {
 		case ';': // Comments inside macro args
 			discardComment();
 			c = peek();
-			// fallthrough
+			[[fallthrough]];
 		case '\r': // End of line
 		case '\n':
 		case EOF:
@@ -1920,7 +1920,7 @@ backslash:
 				error("Illegal character escape %s\n", printChar(c));
 				break;
 			}
-			// fallthrough
+			[[fallthrough]];
 
 		default: // Regular characters will just get copied
 append:

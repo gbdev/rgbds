@@ -58,7 +58,7 @@ struct Options {
 	static constexpr uint8_t VERB_DEBUG = 4;    // Internals are logged
 	static constexpr uint8_t VERB_UNMAPPED = 5; // Unused so far
 	static constexpr uint8_t VERB_VVVVVV = 6;   // What, can't I have a little fun?
-	format_(printf, 3, 4) void verbosePrint(uint8_t level, char const *fmt, ...) const;
+	[[gnu::format(printf, 3, 4)]] void verbosePrint(uint8_t level, char const *fmt, ...) const;
 
 	mutable bool hasTransparentPixels = false;
 	uint8_t maxOpaqueColors() const { return nbColorsPerPal - hasTransparentPixels; }
@@ -73,11 +73,11 @@ extern Options options;
 /*
  * Prints a warning, and does not change the error count
  */
-void warning(char const *fmt, ...) format_(printf, 1, 2);
+[[gnu::format(printf, 1, 2)]] void warning(char const *fmt, ...);
 /*
  * Prints an error, and increments the error count
  */
-void error(char const *fmt, ...) format_(printf, 1, 2);
+[[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
 /*
  * Prints an error, and increments the error count
  * Does not take format arguments so `format_` and `-Wformat-security` won't complain about
@@ -87,7 +87,7 @@ void errorMessage(char const *msg);
 /*
  * Prints a fatal error, increments the error count, and gives up
  */
-[[noreturn]] void fatal(char const *fmt, ...) format_(printf, 1, 2);
+[[gnu::format(printf, 1, 2), noreturn]] void fatal(char const *fmt, ...);
 
 struct Palette {
 	// An array of 4 GBC-native (RGB555) colors

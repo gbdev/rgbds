@@ -45,7 +45,7 @@ void FormatSpec::useCharacter(int c) {
 	case '0':
 		if (state < FORMAT_WIDTH)
 			padZero = true;
-		// fallthrough
+		[[fallthrough]];
 	case '1':
 	case '2':
 	case '3':

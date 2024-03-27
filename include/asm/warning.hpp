@@ -62,7 +62,7 @@ void processWarningFlag(char const *flag);
  * Used to warn the user about problems that don't prevent the generation of
  * valid code.
  */
-void warning(WarningID id, char const *fmt, ...) format_(printf, 2, 3);
+[[gnu::format(printf, 2, 3)]] void warning(WarningID id, char const *fmt, ...);
 
 /*
  * Used for errors that compromise the whole assembly process by affecting the
@@ -71,7 +71,7 @@ void warning(WarningID id, char const *fmt, ...) format_(printf, 2, 3);
  * It is also used when the assembler goes into an invalid state (for example,
  * when it fails to allocate memory).
  */
-[[noreturn]] void fatalerror(char const *fmt, ...) format_(printf, 1, 2);
+[[gnu::format(printf, 1, 2), noreturn]] void fatalerror(char const *fmt, ...);
 
 /*
  * Used for errors that make it impossible to assemble correctly, but don't
@@ -79,6 +79,6 @@ void warning(WarningID id, char const *fmt, ...) format_(printf, 2, 3);
  * get a list of all errors at the end, making it easier to fix all of them at
  * once.
  */
-void error(char const *fmt, ...) format_(printf, 1, 2);
+[[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
 
 #endif // WARNING_H

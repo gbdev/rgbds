@@ -76,7 +76,7 @@ static void printUsage() {
 
 static uint8_t nbErrors;
 
-static format_(printf, 1, 2) void report(char const *fmt, ...) {
+[[gnu::format(printf, 1, 2)]] static void report(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -465,7 +465,7 @@ static MbcType parseMBC(char const *name) {
 			static_assert(MBC1 + 2 == MBC1_RAM_BATTERY, "Enum sanity check failed!");
 			static_assert(MMM01 + 1 == MMM01_RAM, "Enum sanity check failed!");
 			static_assert(MMM01 + 2 == MMM01_RAM_BATTERY, "Enum sanity check failed!");
-			// fallthrough
+			[[fallthrough]];
 		case MBC1:
 		case MMM01:
 			if (features == RAM)

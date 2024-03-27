@@ -50,11 +50,11 @@ retry:
 		do {
 			firstChar = getc(file);
 		} while (firstChar != EOF && firstChar != '\r' && firstChar != '\n');
-		// fallthrough
+		[[fallthrough]];
 	case '\r':
 		if (firstChar == '\r' && getc(file) != '\n')
 			consumeLF(where, lineNo, file);
-		// fallthrough
+		[[fallthrough]];
 	case '\n':
 		goto retry;
 	}
@@ -65,7 +65,7 @@ retry:
 		switch (c) {
 		case '\r':
 			consumeLF(where, lineNo, file);
-			// fallthrough
+			[[fallthrough]];
 		case '\n':
 		case EOF:
 			lineBuf.push_back('\0'); // Terminate the string (space was ensured above)

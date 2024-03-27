@@ -5,9 +5,6 @@
 
 // Ideally, we'd use `__has_attribute` and `__has_builtin`, but these were only introduced in GCC 9
 #ifdef __GNUC__ // GCC or compatible
-	#define format_(archetype, str_index, first_arg) \
-		__attribute__((format(archetype, str_index, first_arg)))
-	#define attr_(...) __attribute__((__VA_ARGS__))
 	// In release builds, define "unreachable" as such, but trap in debug builds
 	#ifdef NDEBUG
 		#define unreachable_ __builtin_unreachable
@@ -15,9 +12,6 @@
 		#define unreachable_ __builtin_trap
 	#endif
 #else
-	// Unsupported, but no need to throw a fit
-	#define format_(archetype, str_index, first_arg)
-	#define attr_(...)
 // This seems to generate similar code to __builtin_unreachable, despite different semantics
 // Note that executing this is undefined behavior (declared [[noreturn]], but does return)
 [[noreturn]] static inline void unreachable_() {

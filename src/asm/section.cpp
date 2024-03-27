@@ -47,7 +47,7 @@ std::optional<std::string> currentLoadScope = std::nullopt;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
-attr_(warn_unused_result) static bool checksection() {
+[[nodiscard]] static bool checksection() {
 	if (currentSection)
 		return true;
 
@@ -57,7 +57,7 @@ attr_(warn_unused_result) static bool checksection() {
 
 // A quick check to see if we have an initialized section that can contain
 // this much initialized data
-attr_(warn_unused_result) static bool checkcodesection() {
+[[nodiscard]] static bool checkcodesection() {
 	if (!checksection())
 		return false;
 
@@ -71,7 +71,7 @@ attr_(warn_unused_result) static bool checkcodesection() {
 	return false;
 }
 
-attr_(warn_unused_result) static bool checkSectionSize(Section const &sect, uint32_t size) {
+[[nodiscard]] static bool checkSectionSize(Section const &sect, uint32_t size) {
 	uint32_t maxSize = sectionTypeInfo[sect.type].size;
 
 	// If the new size is reasonable, keep going
@@ -88,7 +88,7 @@ attr_(warn_unused_result) static bool checkSectionSize(Section const &sect, uint
 }
 
 // Check if the section has grown too much.
-attr_(warn_unused_result) static bool reserveSpace(uint32_t delta_size) {
+[[nodiscard]] static bool reserveSpace(uint32_t delta_size) {
 	// This check is here to trap broken code that generates sections that are too big and to
 	// prevent the assembler from generating huge object files or trying to allocate too much
 	// memory.
