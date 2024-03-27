@@ -632,9 +632,9 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		char *ptr = buf;
 		for (uint16_t cgbColor : list) {
 			sprintf(ptr, ", $%04x", cgbColor);
-			ptr += 7;
+			ptr += QUOTEDSTRLEN(", $XXXX");
 		}
-		return &buf[2];
+		return &buf[QUOTEDSTRLEN(", ")];
 	};
 
 	// Iterate through proto-palettes, and try mapping them to the specified palettes

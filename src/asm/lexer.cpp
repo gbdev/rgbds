@@ -21,6 +21,7 @@
 	#include <unistd.h>
 #endif
 
+#include "helpers.hpp" // QUOTEDSTRLEN
 #include "util.hpp"
 
 #include "asm/fixpoint.hpp"
@@ -2233,7 +2234,7 @@ Capture lexer_CaptureRept() {
 					endCapture(capture);
 					// The final ENDR has been captured, but we don't want it!
 					// We know we have read exactly "ENDR", not e.g. an EQUS
-					capture.span.size -= strlen("ENDR");
+					capture.span.size -= QUOTEDSTRLEN("ENDR");
 					return capture;
 				}
 				depth--;
@@ -2279,7 +2280,7 @@ Capture lexer_CaptureMacro() {
 				endCapture(capture);
 				// The ENDM has been captured, but we don't want it!
 				// We know we have read exactly "ENDM", not e.g. an EQUS
-				capture.span.size -= strlen("ENDM");
+				capture.span.size -= QUOTEDSTRLEN("ENDM");
 				return capture;
 
 			default:

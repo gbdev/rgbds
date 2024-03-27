@@ -86,6 +86,9 @@ static inline int clz(unsigned int x) {
 // For lack of <ranges>, this adds some more brevity
 #define RANGE(s) std::begin(s), std::end(s)
 
+// MSVC does not inline `strlen()` or `.length()` of a constant string, so we use `sizeof`
+#define QUOTEDSTRLEN(s) (sizeof(s) - 1)
+
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
 template<typename T>
 struct Defer {

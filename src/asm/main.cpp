@@ -10,7 +10,7 @@
 
 #include "error.hpp"
 #include "extern/getopt.hpp"
-#include "helpers.hpp" // Defer
+#include "helpers.hpp"
 #include "parser.hpp"
 #include "version.hpp"
 
@@ -45,7 +45,7 @@ static std::string make_escape(std::string &str) {
 			break;
 		escaped.append(str, pos, nextPos - pos);
 		escaped.append("$$");
-		pos = nextPos + sizeof("$") - 1;
+		pos = nextPos + QUOTEDSTRLEN("$");
 	}
 	escaped.append(str, pos, str.length() - pos);
 	return escaped;

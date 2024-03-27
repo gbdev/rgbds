@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "error.hpp"
+#include "helpers.hpp" // QUOTEDSTRLEN
 #include "itertools.hpp"
 
 #include "asm/fstack.hpp"
@@ -230,8 +231,8 @@ void processWarningFlag(char const *flag) {
 	}
 
 	// If it's not a meta warning, specially check against `-Werror`
-	if (!strncmp(flag, "error", strlen("error"))) {
-		char const *errorFlag = flag + strlen("error");
+	if (!strncmp(flag, "error", QUOTEDSTRLEN("error"))) {
+		char const *errorFlag = flag + QUOTEDSTRLEN("error");
 
 		switch (*errorFlag) {
 		case '\0':
@@ -254,9 +255,9 @@ void processWarningFlag(char const *flag) {
 
 	WarningState state = setError ? WARNING_ERROR
 	                     // Not an error, then check if this is a negation
-	                     : strncmp(flag, "no-", strlen("no-")) ? WARNING_ENABLED
-	                                                           : WARNING_DISABLED;
-	char const *rootFlag = state == WARNING_DISABLED ? flag + strlen("no-") : flag;
+	                     : strncmp(flag, "no-", QUOTEDSTRLEN("no-")) ? WARNING_ENABLED
+	                                                                 : WARNING_DISABLED;
+	char const *rootFlag = state == WARNING_DISABLED ? flag + QUOTEDSTRLEN("no-") : flag;
 
 	// Is this a "parametric" warning?
 	if (state != WARNING_DISABLED) { // The `no-` form cannot be parametrized
