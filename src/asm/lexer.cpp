@@ -425,7 +425,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 			if (mappingAddr != MAP_FAILED) {
 				close(fd);
-				content.emplace<MmappedContent>(
+				content.emplace<ViewedContent>(
 				    std::shared_ptr<char[]>(
 				        (char *)mappingAddr, MunmapDeleter((size_t)statBuf.st_size)
 				    ),
@@ -468,9 +468,7 @@ void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, u
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
-		mmap->offset = 0;
-	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
+	if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 		view->offset = 0;
 	}
 	lexerState->clear(lineNo);
@@ -672,11 +670,7 @@ static int peekInternal(uint8_t distance) {
 		    LEXER_BUF_SIZE
 		);
 
-	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
-		if (size_t idx = mmap->offset + distance; idx < mmap->span.size)
-			return (uint8_t)mmap->span.ptr[idx];
-		return EOF;
-	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
+	if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 		if (size_t idx = view->offset + distance; idx < view->span.size)
 			return (uint8_t)view->span.ptr[idx];
 		return EOF;
@@ -796,9 +790,7 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content); mmap) {
-			mmap->offset++;
-		} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
+		if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 			view->offset++;
 		} else {
 			assert(std::holds_alternative<BufferedContent>(lexerState->content));
@@ -2179,17 +2171,22 @@ static Capture startCapture() {
 	lexerState->captureSize = 0;
 
 	uint32_t lineNo = lexer_GetLineNo();
-	if (auto *mmap = std::get_if<MmappedContent>(&lexerState->content);
-	    mmap && lexerState->expansions.empty()) {
-		return {.lineNo = lineNo, .span = {.ptr = std::shared_ptr<char[]>(mmap->span.ptr, &mmap->span.ptr[mmap->offset]), .size = 0}};
-	} else if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
-	           view && lexerState->expansions.empty()) {
-		return {.lineNo = lineNo, .span = {.ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]), .size = 0}};
+	if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
+	    view && lexerState->expansions.empty()) {
+		return {
+		    .lineNo = lineNo,
+		    .span = {
+		             .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
+		             .size = 0,
+		             }
+        };
 	} else {
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
-		return {.lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}};
+		return {
+		    .lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}
+        };
 	}
 }
 

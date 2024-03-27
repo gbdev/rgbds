@@ -46,6 +46,14 @@ struct ContentSpan {
 	size_t size;
 };
 
+struct ViewedContent {
+	ContentSpan span;
+	size_t offset = 0;
+
+	ViewedContent(ContentSpan const &span_) : span(span_) {}
+	ViewedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
+};
+
 struct BufferedContent {
 	int fd;
 	size_t index = 0;              // Read index into the buffer
@@ -54,20 +62,6 @@ struct BufferedContent {
 
 	BufferedContent(int fd_) : fd(fd_) {}
 	~BufferedContent();
-};
-
-struct MmappedContent {
-	ContentSpan span;
-	size_t offset = 0;
-
-	MmappedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
-};
-
-struct ViewedContent {
-	ContentSpan span;
-	size_t offset = 0;
-
-	ViewedContent(ContentSpan const &span_) : span(span_) {}
 };
 
 struct LexerState {
@@ -92,7 +86,7 @@ struct LexerState {
 	bool expandStrings;
 	std::deque<Expansion> expansions; // Front is the innermost current expansion
 
-	std::variant<std::monostate, MmappedContent, ViewedContent, BufferedContent> content;
+	std::variant<std::monostate, ViewedContent, BufferedContent> content;
 
 	~LexerState();
 
