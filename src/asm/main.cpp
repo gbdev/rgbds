@@ -20,22 +20,6 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-#ifdef __clang__
-	#if __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-		#define __SANITIZE_ADDRESS__
-	#endif // __has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-#endif     // __clang__
-
-#ifdef __SANITIZE_ADDRESS__
-// There are known, non-trivial to fix leaks. We would still like to have `make develop'
-// detect memory corruption, though.
-extern "C" {
-char const *__asan_default_options() {
-	return "detect_leaks=0";
-}
-}
-#endif
-
 FILE *dependfile = nullptr;
 bool generatedMissingIncludes = false;
 bool failedOnMissingInclude = false;
