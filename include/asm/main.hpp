@@ -16,7 +16,7 @@ extern bool warnOnLdOpt;
 extern bool verbose;
 extern bool warnings; // True to enable warnings, false to disable them.
 
-extern FILE *dependfile;
+extern FILE *dependFile;
 extern std::string targetFileName;
 extern bool generatedMissingIncludes;
 extern bool failedOnMissingInclude;

@@ -10,6 +10,7 @@
 
 #include "error.hpp"
 #include "extern/getopt.hpp"
+#include "helpers.hpp" // Defer
 #include "parser.hpp"
 #include "version.hpp"
 
@@ -20,7 +21,7 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-FILE *dependfile = nullptr;
+FILE *dependFile = nullptr;
 bool generatedMissingIncludes = false;
 bool failedOnMissingInclude = false;
 bool generatePhonyDeps = false;
@@ -37,7 +38,6 @@ bool warnings; // True to enable warnings, false to disable them.
 static std::string make_escape(std::string &str) {
 	std::string escaped;
 	size_t pos = 0;
-
 	for (;;) {
 		// All dollars needs to be doubled
 		size_t nextPos = str.find("$", pos);
@@ -114,18 +114,20 @@ static void printUsage() {
 
 int main(int argc, char *argv[]) {
 	time_t now = time(nullptr);
-	char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH");
-
 	// Support SOURCE_DATE_EPOCH for reproducible builds
 	// https://reproducible-builds.org/docs/source-date-epoch/
-	if (sourceDateEpoch)
+	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch)
 		now = (time_t)strtoul(sourceDateEpoch, nullptr, 0);
+
+	Defer closeDependFile{[&] {
+		if (dependFile)
+			fclose(dependFile);
+	}};
 
 	// Perform some init for below
 	sym_Init(now);
 
 	// Set defaults
-
 	opt_B("01");
 	opt_G("0123");
 	opt_P(0);
@@ -140,7 +142,6 @@ int main(int argc, char *argv[]) {
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
 	char const *dependFileName = nullptr;
 	std::string newTarget;
-
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO))
 		maxErrors = 100;
@@ -219,16 +220,16 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'M':
-			if (dependfile)
+			if (dependFile)
 				warnx("Overriding dependfile %s", dependFileName);
 			if (!strcmp("-", musl_optarg)) {
-				dependfile = stdout;
+				dependFile = stdout;
 				dependFileName = "<stdout>";
 			} else {
-				dependfile = fopen(musl_optarg, "w");
+				dependFile = fopen(musl_optarg, "w");
 				dependFileName = musl_optarg;
 			}
-			if (dependfile == nullptr)
+			if (dependFile == nullptr)
 				err("Failed to open dependfile \"%s\"", dependFileName);
 			break;
 
@@ -357,12 +358,12 @@ int main(int argc, char *argv[]) {
 	if (verbose)
 		printf("Assembling %s\n", mainFileName.c_str());
 
-	if (dependfile) {
+	if (dependFile) {
 		if (targetFileName.empty())
 			errx("Dependency files can only be created if a target file is specified with either "
 			     "-o, -MQ or -MT");
 
-		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
+		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), mainFileName.c_str());
 	}
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
@@ -374,9 +375,6 @@ int main(int argc, char *argv[]) {
 	yy::parser parser;
 	if (parser.parse() != 0 && nbErrors == 0)
 		nbErrors = 1;
-
-	if (dependfile)
-		fclose(dependfile);
 
 	sect_CheckUnionClosed();
 

@@ -302,7 +302,7 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 	}
 }
 
-// Write an objectfile
+// Write an object file
 void out_WriteObject() {
 	FILE *file;
 	if (objectName != "-") {
@@ -352,7 +352,7 @@ void out_WriteObject() {
 		writeassert(assert, file);
 }
 
-// Set the objectfilename
+// Set the object filename
 void out_SetFileName(std::string const &name) {
 	if (!objectName.empty())
 		warnx("Overriding output filename %s", objectName.c_str());

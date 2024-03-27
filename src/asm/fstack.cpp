@@ -142,10 +142,10 @@ void fstk_SetPreIncludeFile(std::string const &path) {
 }
 
 static void printDep(std::string const &path) {
-	if (dependfile) {
-		fprintf(dependfile, "%s: %s\n", targetFileName.c_str(), path.c_str());
+	if (dependFile) {
+		fprintf(dependFile, "%s: %s\n", targetFileName.c_str(), path.c_str());
 		if (generatePhonyDeps)
-			fprintf(dependfile, "%s:\n", path.c_str());
+			fprintf(dependFile, "%s:\n", path.c_str());
 	}
 }
 

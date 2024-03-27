@@ -426,7 +426,7 @@ Symbol *sym_AddLabel(std::string const &symName) {
 	return sym;
 }
 
-static uint32_t anonLabelID;
+static uint32_t anonLabelID = 0;
 
 // Add an anonymous label
 Symbol *sym_AddAnonLabel() {
@@ -533,7 +533,7 @@ void sym_SetExportAll(bool set) {
 	exportAll = set;
 }
 
-// Initialize the symboltable
+// Define the built-in symbols
 void sym_Init(time_t now) {
 	PCSymbol = &createSymbol("@"s);
 	PCSymbol->type = SYM_LABEL;
@@ -598,7 +598,4 @@ void sym_Init(time_t now) {
 	sym_AddEqu("__UTC_HOUR__"s, time_utc->tm_hour)->isBuiltin = true;
 	sym_AddEqu("__UTC_MINUTE__"s, time_utc->tm_min)->isBuiltin = true;
 	sym_AddEqu("__UTC_SECOND__"s, time_utc->tm_sec)->isBuiltin = true;
-
-	labelScope = std::nullopt;
-	anonLabelID = 0;
 }
