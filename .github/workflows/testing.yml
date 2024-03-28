@@ -7,7 +7,7 @@ jobs:
   unix:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, macos-13, macos-14]
         cxx: [g++, clang++]
         buildsys: [make, cmake]
         exclude:
@@ -15,6 +15,10 @@ jobs:
           - os: macos-11
             cxx: g++
           - os: macos-12
+            cxx: g++
+          - os: macos-13
+            cxx: g++
+          - os: macos-14
             cxx: g++
       fail-fast: false
     runs-on: ${{ matrix.os }}
