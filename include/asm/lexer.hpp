@@ -34,8 +34,6 @@ struct Expansion {
 	size_t offset; // Cursor into `contents`
 
 	size_t size() const { return contents->size(); }
-	bool canPeek(uint8_t distance) const { return offset + distance < contents->size(); }
-	uint8_t peek(uint8_t distance) const { return (*contents)[offset + distance]; }
 	bool advance(); // Increment `offset`; return whether it then exceeds `contents`
 };
 
@@ -51,9 +49,6 @@ struct ViewedContent {
 	ViewedContent(ContentSpan const &span_) : span(span_) {}
 	ViewedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
 
-	bool canPeek(uint8_t distance) const { return offset + distance < span.size; }
-	uint8_t peek(uint8_t distance) const { return span.ptr[offset + distance]; }
-
 	std::shared_ptr<char[]> makeSharedContentPtr() const {
 		return std::shared_ptr<char[]>(span.ptr, &span.ptr[offset]);
 	}
@@ -68,8 +63,6 @@ struct BufferedContent {
 	BufferedContent(int fd_) : fd(fd_) {}
 	~BufferedContent();
 
-	bool canPeek(uint8_t distance) const { return size > distance; }
-	uint8_t peek(uint8_t distance) const { return buf[(offset + distance) % LEXER_BUF_SIZE]; }
 	void advance(); // Increment `offset` circularly, decrement `size`
 	void refill();  // Read from `fd` to fill `buf`
 

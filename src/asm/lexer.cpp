@@ -692,25 +692,25 @@ int LexerState::peek(uint8_t distance) {
 	assert(distance == 0 || distance == 1);
 
 	for (Expansion &exp : expansions) {
-		// An expansion that has reached its end will have `exp->offset` == `exp->size()`,
+		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peek()` will continue with its parent
 		assert(exp.offset <= exp.size());
-		if (exp.canPeek(distance))
-			return exp.peek(distance);
+		if (exp.offset + distance < exp.size())
+			return (uint8_t)(*exp.contents)[exp.offset + distance];
 		distance -= exp.size() - exp.offset;
 	}
 
 	if (auto *view = std::get_if<ViewedContent>(&content); view) {
-		if (view->canPeek(distance))
-			return view->peek(distance);
+		if (view->offset + distance < view->span.size)
+			return (uint8_t)view->span.ptr[view->offset + distance];
 	} else {
 		assert(std::holds_alternative<BufferedContent>(content));
 		auto &cbuf = std::get<BufferedContent>(content);
 		assert(distance < LEXER_BUF_SIZE);
-		if (!cbuf.canPeek(distance))
+		if (cbuf.size <= distance)
 			cbuf.refill(); // Buffer isn't full enough, read some chars in
-		if (cbuf.canPeek(distance))
-			return cbuf.peek(distance);
+		if (cbuf.size > distance)
+			return (uint8_t)cbuf.buf[(cbuf.offset + distance) % LEXER_BUF_SIZE];
 	}
 	// If there aren't enough chars, give up
 	return EOF;
