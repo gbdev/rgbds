@@ -3,7 +3,6 @@
 #ifndef RGBDS_GFX_PROTO_PALETTE_HPP
 #define RGBDS_GFX_PROTO_PALETTE_HPP
 
-#include <algorithm>
 #include <array>
 #include <stddef.h>
 #include <stdint.h>

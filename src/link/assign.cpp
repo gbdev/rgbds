@@ -2,7 +2,6 @@
 
 #include "link/assign.hpp"
 
-#include <algorithm>
 #include <deque>
 #include <inttypes.h>
 #include <stdio.h>
@@ -14,9 +13,9 @@
 #include "helpers.hpp"
 #include "itertools.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp"
 
 #include "link/main.hpp"
-#include "link/object.hpp"
 #include "link/output.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"

@@ -6,17 +6,14 @@
 #include <array>
 #include <assert.h>
 #include <errno.h>
-#include <fstream>
 #include <inttypes.h>
 #include <optional>
 #include <png.h>
 #include <string.h>
-#include <tuple>
 #include <vector>
 
 #include "defaultinitalloc.hpp"
 #include "file.hpp"
-#include "helpers.hpp"
 #include "itertools.hpp"
 
 #include "gfx/main.hpp"

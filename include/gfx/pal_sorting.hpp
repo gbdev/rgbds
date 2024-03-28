@@ -4,7 +4,6 @@
 #define RGBDS_GFX_PAL_SORTING_HPP
 
 #include <array>
-#include <assert.h>
 #include <optional>
 #include <png.h>
 #include <vector>

@@ -4,10 +4,8 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <bitset>
 #include <deque>
 #include <inttypes.h>
-#include <numeric>
 #include <optional>
 #include <queue>
 #include <type_traits>
@@ -15,6 +13,7 @@
 
 #include "helpers.hpp"
 
+#include "gfx/main.hpp"
 #include "gfx/proto_palette.hpp"
 
 using std::swap;

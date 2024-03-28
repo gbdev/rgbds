@@ -2,6 +2,7 @@
 
 #include "gfx/proto_palette.hpp"
 
+#include <algorithm>
 #include <assert.h>
 
 #include "helpers.hpp"

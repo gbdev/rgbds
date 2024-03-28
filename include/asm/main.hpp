@@ -3,11 +3,8 @@
 #ifndef RGBDS_MAIN_H
 #define RGBDS_MAIN_H
 
-#include <stdint.h>
 #include <stdio.h>
 #include <string>
-
-#include "helpers.hpp"
 
 extern bool haltNop;
 extern bool warnOnHaltNop;

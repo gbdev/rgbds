@@ -5,11 +5,9 @@
 #include <algorithm>
 #include <assert.h>
 #include <ctype.h>
-#include <fstream>
 #include <inttypes.h>
 #include <ios>
 #include <limits>
-#include <numeric>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

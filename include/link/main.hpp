@@ -9,7 +9,6 @@
 #include <variant>
 #include <vector>
 
-#include "helpers.hpp"
 #include "linkdefs.hpp"
 
 // Variables related to CLI options

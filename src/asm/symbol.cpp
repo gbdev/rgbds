@@ -3,13 +3,11 @@
 #include "asm/symbol.hpp"
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <unordered_map>
 
 #include "error.hpp"
-#include "helpers.hpp"
 #include "version.hpp"
 
 #include "asm/fstack.hpp"

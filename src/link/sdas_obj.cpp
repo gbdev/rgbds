@@ -4,16 +4,13 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <memory>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <tuple>
 #include <variant>
 
-#include "helpers.hpp"
 #include "linkdefs.hpp"
 #include "platform.hpp"
 

@@ -14,7 +14,6 @@
 #include "linkdefs.hpp"
 
 #include "link/main.hpp"
-#include "link/patch.hpp"
 
 struct FileStackNode;
 struct Section;

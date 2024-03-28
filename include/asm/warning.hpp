@@ -3,8 +3,6 @@
 #ifndef WARNING_H
 #define WARNING_H
 
-#include "helpers.hpp"
-
 extern unsigned int nbErrors, maxErrors;
 
 enum WarningState { WARNING_DEFAULT, WARNING_DISABLED, WARNING_ENABLED, WARNING_ERROR };

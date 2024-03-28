@@ -4,14 +4,11 @@
 #define RGBDS_GFX_MAIN_HPP
 
 #include <array>
-#include <limits.h>
 #include <optional>
 #include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "helpers.hpp"
 
 #include "gfx/rgba.hpp"
 

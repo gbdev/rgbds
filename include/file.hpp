@@ -3,9 +3,7 @@
 #ifndef RGBDS_FILE_HPP
 #define RGBDS_FILE_HPP
 
-#include <array>
 #include <assert.h>
-#include <cassert>
 #include <fcntl.h>
 #include <fstream>
 #include <ios>
@@ -13,10 +11,8 @@
 #include <streambuf>
 #include <string.h>
 #include <string>
-#include <string_view>
 #include <variant>
 
-#include "helpers.hpp"
 #include "platform.hpp"
 
 #include "gfx/main.hpp"

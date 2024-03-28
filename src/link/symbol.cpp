@@ -2,15 +2,10 @@
 
 #include "link/symbol.hpp"
 
-#include <inttypes.h>
 #include <stdlib.h>
 #include <unordered_map>
 
-#include "error.hpp"
-#include "helpers.hpp"
-
 #include "link/main.hpp"
-#include "link/object.hpp"
 #include "link/section.hpp"
 
 std::unordered_map<std::string, Symbol *> symbols;

@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "error.hpp"
+#include "helpers.hpp"
 
 std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`

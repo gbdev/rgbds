@@ -8,8 +8,6 @@
 
 #include "defaultinitalloc.hpp"
 
-#include "gfx/main.hpp"
-
 struct Palette;
 class ProtoPalette;
 

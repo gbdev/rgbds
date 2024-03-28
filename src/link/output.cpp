@@ -13,8 +13,9 @@
 
 #include "error.hpp"
 #include "extern/utf8decoder.hpp"
-#include "itertools.hpp"
+#include "helpers.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp"
 
 #include "link/main.hpp"
 #include "link/symbol.hpp"

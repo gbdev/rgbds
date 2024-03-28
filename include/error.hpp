@@ -3,8 +3,6 @@
 #ifndef RGBDS_ERROR_H
 #define RGBDS_ERROR_H
 
-#include "platform.hpp"
-
 extern "C" {
 
 [[gnu::format(printf, 1, 2)]] void warn(char const *fmt...);

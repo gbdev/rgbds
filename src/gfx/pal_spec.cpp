@@ -9,7 +9,6 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <optional>
-#include <ostream>
 #include <stdint.h>
 #include <stdio.h>
 #include <streambuf>
@@ -17,9 +16,8 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
-#include <unordered_map>
 
+#include "helpers.hpp"
 #include "platform.hpp"
 
 #include "gfx/main.hpp"

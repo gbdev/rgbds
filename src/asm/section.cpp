@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "helpers.hpp"
+
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
 #include "asm/main.hpp"

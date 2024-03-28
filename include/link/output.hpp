@@ -3,8 +3,6 @@
 #ifndef RGBDS_LINK_OUTPUT_H
 #define RGBDS_LINK_OUTPUT_H
 
-#include <stdint.h>
-
 #include "link/section.hpp"
 
 /*

@@ -22,7 +22,6 @@
 #include <fcntl.h>
 #include <fstream>
 #include <limits>
-#include <memory>
 #include <png.h>
 #include <stdarg.h>
 #include <stdlib.h>

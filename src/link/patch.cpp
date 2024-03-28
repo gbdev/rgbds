@@ -5,22 +5,15 @@
 #include <assert.h>
 #include <deque>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <variant>
 #include <vector>
 
-#include "error.hpp"
-#include "helpers.hpp"
 #include "opmath.hpp"
-#include "platform.hpp"
 
 #include "linkdefs.hpp"
 
 #include "link/main.hpp"
-#include "link/object.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 

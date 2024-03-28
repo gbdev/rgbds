@@ -3,7 +3,6 @@
 #include "asm/rpn.hpp"
 
 #include <assert.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
@@ -13,7 +12,6 @@
 
 #include "opmath.hpp"
 
-#include "asm/main.hpp"
 #include "asm/output.hpp"
 #include "asm/section.hpp"
 #include "asm/symbol.hpp"

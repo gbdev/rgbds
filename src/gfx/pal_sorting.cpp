@@ -3,11 +3,11 @@
 #include "gfx/pal_sorting.hpp"
 
 #include <algorithm>
+#include <assert.h>
 
 #include "helpers.hpp"
 
 #include "gfx/main.hpp"
-#include "gfx/process.hpp"
 
 namespace sorting {
 

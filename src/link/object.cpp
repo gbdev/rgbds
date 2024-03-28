@@ -2,7 +2,6 @@
 
 #include "link/object.hpp"
 
-#include <algorithm>
 #include <deque>
 #include <errno.h>
 #include <inttypes.h>
@@ -17,11 +16,11 @@
 #include "error.hpp"
 #include "helpers.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp"
 #include "version.hpp"
 
 #include "link/assign.hpp"
 #include "link/main.hpp"
-#include "link/patch.hpp"
 #include "link/sdas_obj.hpp"
 #include "link/section.hpp"
 #include "link/symbol.hpp"

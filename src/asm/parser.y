@@ -45,7 +45,6 @@
 %code {
 	#include <algorithm>
 	#include <ctype.h>
-	#include <errno.h>
 	#include <inttypes.h>
 	#include <stdio.h>
 	#include <stdlib.h>

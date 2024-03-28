@@ -2,7 +2,6 @@
 
 #include "asm/charmap.hpp"
 
-#include <errno.h>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +10,6 @@
 
 #include "util.hpp"
 
-#include "asm/main.hpp"
-#include "asm/output.hpp"
 #include "asm/warning.hpp"
 
 // Charmaps are stored using a structure known as "trie".
