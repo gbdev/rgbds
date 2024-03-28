@@ -2175,19 +2175,18 @@ static Capture startCapture() {
 	    view && lexerState->expansions.empty()) {
 		return {
 		    .lineNo = lineNo,
-		    .span =
-		        {
-		               .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
-		               .size = 0,
-		               }
-		};
+		    .span = {
+		             .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
+		             .size = 0,
+		             }
+        };
 	} else {
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
 		return {
 		    .lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}
-		};
+        };
 	}
 }
 

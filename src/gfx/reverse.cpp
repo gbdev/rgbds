@@ -156,7 +156,7 @@ void reverse() {
 
 	std::vector<std::array<std::optional<Rgba>, 4>> palettes{
 	    {Rgba(0xFFFFFFFF), Rgba(0xAAAAAAFF), Rgba(0x555555FF), Rgba(0x000000FF)}
-	};
+    };
 	// If a palette file is used as input, it overrides the default colors.
 	if (!options.palettes.empty()) {
 		File file;

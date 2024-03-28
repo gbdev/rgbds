@@ -246,8 +246,8 @@ static void placeSection(Section &section) {
 			bankMem.insert(
 			    bankMem.begin() + spaceIdx + 1,
 			    {.address = (uint16_t)(section.org + section.size),
-			     .size = (uint16_t)(freeSpace.address + freeSpace.size - section.org - section.size)
-			    }
+			     .size =
+			         (uint16_t)(freeSpace.address + freeSpace.size - section.org - section.size)}
 			);
 			// **`freeSpace` cannot be reused from this point on**, because `bankMem.insert`
 			// invalidates all references to itself!
