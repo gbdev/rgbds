@@ -1,5 +1,5 @@
 diff --git a/makefile b/makefile
-index 6513518..35826eb 100644
+index 6513518..ba14638 100644
 --- a/makefile
 +++ b/makefile
 @@ -85,10 +85,10 @@ $(title).gb: $(objlisto)
@@ -15,3 +15,12 @@ index 6513518..35826eb 100644
  
  # Files that will be included with incbin
  
+@@ -108,7 +108,7 @@ obj/gb/sgb.o: \
+ 
+ # Local variable allocation
+ 
+-obj/gb/localvars.z80: tools/savescan.py $(wildcard src/*.z80)
++obj/gb/localvars.z80: tools/savescan.py $(sort $(wildcard src/*.z80))
+ 	$(PY) $^ -o $@
+ 
+ # Graphics conversion
