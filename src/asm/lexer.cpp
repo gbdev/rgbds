@@ -36,7 +36,7 @@
 
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
-    // clang-format off
+// clang-format off
 	// (we need these `include`s in this order)
 	#define WIN32_LEAN_AND_MEAN // include less from windows.h
 	#include <windows.h>   // target architecture
@@ -2175,18 +2175,19 @@ static Capture startCapture() {
 	    view && lexerState->expansions.empty()) {
 		return {
 		    .lineNo = lineNo,
-		    .span = {
-		             .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
-		             .size = 0,
-		             }
-        };
+		    .span =
+		        {
+		               .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
+		               .size = 0,
+		               }
+		};
 	} else {
 		assert(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
 		return {
 		    .lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}
-        };
+		};
 	}
 }
 

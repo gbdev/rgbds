@@ -20,7 +20,7 @@
 unsigned int nbErrors = 0;
 unsigned int maxErrors = 0;
 
-static const WarningState defaultWarnings[ARRAY_SIZE(warningStates)] = {
+static WarningState const defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_ENABLED,  // WARNING_ASSERT
     WARNING_DISABLED, // WARNING_BACKWARDS_FOR
     WARNING_DISABLED, // WARNING_BUILTIN_ARG

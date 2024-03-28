@@ -31,7 +31,7 @@
 	#define ssize_t       int
 	#define SSIZE_MAX     INT_MAX
 #else
-	#include <fcntl.h> // IWYU pragma: export
+	#include <fcntl.h>  // IWYU pragma: export
 	#include <limits.h> // IWYU pragma: export
 	#include <unistd.h> // IWYU pragma: export
 #endif

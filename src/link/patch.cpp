@@ -9,9 +9,8 @@
 #include <variant>
 #include <vector>
 
-#include "opmath.hpp"
-
 #include "linkdefs.hpp"
+#include "opmath.hpp"
 
 #include "link/main.hpp"
 #include "link/section.hpp"

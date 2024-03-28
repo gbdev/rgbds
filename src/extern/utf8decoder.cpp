@@ -4,7 +4,7 @@
 
 #include "extern/utf8decoder.hpp"
 
-static const uint8_t utf8d[] = {
+static uint8_t const utf8d[] = {
     0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 00..0f */
     0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 10..1f */
     0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 20..2f */

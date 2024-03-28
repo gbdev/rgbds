@@ -52,7 +52,7 @@ static SectionType typeMap[SECTTYPE_INVALID] = {
 };
 
 void out_AddSection(Section const &section) {
-	static const uint32_t maxNbBanks[SECTTYPE_INVALID] = {
+	static uint32_t const maxNbBanks[SECTTYPE_INVALID] = {
 	    1,          // SECTTYPE_WRAM0
 	    2,          // SECTTYPE_VRAM
 	    UINT32_MAX, // SECTTYPE_ROMX
