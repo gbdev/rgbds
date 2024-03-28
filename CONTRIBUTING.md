@@ -145,12 +145,12 @@ If one *does* exist, RGBGFX's return status is ignored, but its output **must** 
 2. Add the project to `test/fetch-test-deps.sh`: add a new `action` line at the bottom, following the existing pattern:
    
    ```sh
-   action  <owner>/<repo>  <date of last commit>  <hash of last commit>
+   action  <owner>  <repo>  <date of last commit>  <hash of last commit>
    ```
 
    (The date is used to avoid fetching too much history when cloning the repositories.)
 3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at the bottom, following the existing pattern:
 
    ```sh
-   test_downstream  <repo>  <makefile target>
+   test_downstream  <owner>  <repo>  <makefile target>
    ```

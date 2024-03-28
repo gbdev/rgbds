@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
 			break
 			;;
 		*)
-			echo "$(basename $0): internal error"
+			echo "$(basename "$0"): internal error"
 			exit 1
 			;;
 	esac
@@ -54,21 +54,21 @@ done
 # When updating subprojects, change the commit being checked out, and set the `shallow-since`
 # to the day before, to reduce the amount of refs being transferred and thus speed up CI.
 
-test_downstream() { # owner/repo make-target
-	if ! pushd ${1##*/}; then
+test_downstream() { # owner repo make-target
+	if ! pushd "$2"; then
 		echo >&2 'Please run `'"$FETCH_TEST_DEPS"'` before running the test suite'
 		return 1
 	fi
 	make clean
-	make -j4 $2 RGBDS=../../
+	make -j4 "$3" RGBDS=../../
 	popd
 }
 
 if "$nonfree"; then
-	test_downstream pret/pokecrystal       compare
-	test_downstream pret/pokered           compare
-	test_downstream zladx/LADX-Disassembly ''
+	test_downstream pret  pokecrystal      compare
+	test_downstream pret  pokered          compare
+	test_downstream zladx LADX-Disassembly default
 fi
-test_downstream AntonioND/ucity  ''
-test_downstream pinobatch/libbet all
-test_downstream LIJI32/SameBoy   bootroms
+test_downstream AntonioND ucity   all
+test_downstream pinobatch libbet  all
+test_downstream LIJI32    SameBoy bootroms

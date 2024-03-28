@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
 			break
 			;;
 		*)
-			echo "$(basename $0): unknown option "$1""
+			echo "$(basename "$0"): unknown option '$1'"
 			exit 1
 			;;
 	esac
@@ -48,9 +48,9 @@ done
 
 case "$actionname" in
 	--get-deps)
-		action() { # # owner/repo
+		action() { # _ repo _ _
 			# libbet depends on PIL to build
-			if [ "$1" = "pinobatch/libbet" ]; then
+			if [ "$2" = "libbet" ]; then
 				case "${osname%-*}" in
 					ubuntu|macos)
 						python3 -m pip install pillow
@@ -67,38 +67,38 @@ case "$actionname" in
 		;;
 
 	--get-hash)
-		action() { # owner/repo shallow-since commit
-			printf "%s@%s-" "${1##*/}" "$3"
+		action() { # _ repo _ commit
+			printf "%s@%s-" "$2" "$4"
 		}
 		;;
 
 	--get-paths)
-		action() { # owner/repo shallow-since commit
-			printf "test/%s," "${1##*/}"
+		action() { # _ repo
+			printf "test/%s," "$2"
 		}
 		;;
 
 	*)
 		echo "Fetching test dependency repositories"
 
-		action() { # owner/repo shallow-since commit
-			if [ ! -d ${1##*/} ]; then
-				git clone https://github.com/$1.git --shallow-since=$2 --single-branch
+		action() { # owner repo shallow-since commit
+			if [ ! -d "$2" ]; then
+				git clone "https://github.com/$1/$2.git" --shallow-since="$3" --single-branch
 			fi
-			pushd ${1##*/}
-			git checkout -f $3
-			if [ -f ../patches/${1##*/}.patch ]; then
-				git apply --ignore-whitespace ../patches/${1##*/}.patch
+			pushd "$2"
+			git checkout -f "$4"
+			if [ -f "../patches/$2.patch" ]; then
+				git apply --ignore-whitespace "../patches/$2.patch"
 			fi
 			popd
 		}
 esac
 
 if "$nonfree"; then
-	action pret/pokecrystal       2024-03-03 c1da20e2f12f95c935500151d15f455e7e7eb213
-	action pret/pokered           2024-01-02 fabe2b3fb3fb5a849c5220298acabbdc9ad30f3b
-	action zladx/LADX-Disassembly 2024-02-25 583c78d2f2a5258b87bf133f75b7129228255650
+	action pret  pokecrystal      2024-03-03 c1da20e2f12f95c935500151d15f455e7e7eb213
+	action pret  pokered          2024-01-02 fabe2b3fb3fb5a849c5220298acabbdc9ad30f3b
+	action zladx LADX-Disassembly 2024-02-25 583c78d2f2a5258b87bf133f75b7129228255650
 fi
-action AntonioND/ucity  2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
-action pinobatch/libbet 2024-03-09 c98c7574d94f3e1a977bd7e98899f30a1ecbbb17
-action LIJI32/SameBoy   2024-03-08 e7792c16b24c08f55a370973f0beaecb7bd0ab92
+action AntonioND ucity   2023-11-02 c781ae20c0b319262b19b51e5067a2c93cf3b362
+action pinobatch libbet  2024-03-09 c98c7574d94f3e1a977bd7e98899f30a1ecbbb17
+action LIJI32    SameBoy 2024-03-08 e7792c16b24c08f55a370973f0beaecb7bd0ab92
