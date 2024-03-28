@@ -455,7 +455,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 }
 
 void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, uint32_t lineNo_) {
-	path = name; // Used to report read errors in `peekInternal`
+	path = name; // Used to report read errors in `.peek()`
 	content.emplace<ViewedContent>(span);
 	clear(lineNo_);
 	lexerStateEOL = this;
@@ -687,35 +687,33 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 	}
 }
 
-// We only need one character of lookahead, for macro arguments
-static int peekInternal(uint8_t distance) {
-	for (Expansion &exp : lexerState->expansions) {
+int LexerState::peek(uint8_t distance) {
+	// We only need one character of lookahead, for macro arguments
+	assert(distance == 0 || distance == 1);
+
+	for (Expansion &exp : expansions) {
 		// An expansion that has reached its end will have `exp->offset` == `exp->size()`,
-		// and `peekInternal` will continue with its parent
+		// and `.peek()` will continue with its parent
 		assert(exp.offset <= exp.size());
 		if (exp.canPeek(distance))
 			return exp.peek(distance);
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
+	if (auto *view = std::get_if<ViewedContent>(&content); view) {
 		if (view->canPeek(distance))
 			return view->peek(distance);
-		return EOF;
 	} else {
-		assert(std::holds_alternative<BufferedContent>(lexerState->content));
-		auto &cbuf = std::get<BufferedContent>(lexerState->content);
-
+		assert(std::holds_alternative<BufferedContent>(content));
+		auto &cbuf = std::get<BufferedContent>(content);
 		assert(distance < LEXER_BUF_SIZE);
+		if (!cbuf.canPeek(distance))
+			cbuf.refill(); // Buffer isn't full enough, read some chars in
 		if (cbuf.canPeek(distance))
 			return cbuf.peek(distance);
-		// Buffer isn't full enough, read some chars in
-		cbuf.refill();
-		if (cbuf.canPeek(distance))
-			return cbuf.peek(distance);
-		// If there aren't enough chars even after refilling, give up
-		return EOF;
 	}
+	// If there aren't enough chars, give up
+	return EOF;
 }
 
 // forward declarations for peek
@@ -723,7 +721,7 @@ static void shiftChar();
 static std::shared_ptr<std::string> readInterpolation(size_t depth);
 
 static int peek() {
-	int c = peekInternal(0);
+	int c = lexerState->peek(0);
 
 	if (lexerState->macroArgScanDistance > 0)
 		return c;
@@ -733,7 +731,7 @@ static int peek() {
 	if (c == '\\' && !lexerState->disableMacroArgs) {
 		// If character is a backslash, check for a macro arg
 		lexerState->macroArgScanDistance++;
-		c = peekInternal(1);
+		c = lexerState->peek(1);
 		if (isMacroChar(c)) {
 			shiftChar();
 			shiftChar();

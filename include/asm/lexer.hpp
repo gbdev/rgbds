@@ -14,7 +14,7 @@
 #include "platform.hpp" // SSIZE_MAX
 
 #define LEXER_BUF_SIZE 128
-// The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
+// The buffer needs to be large enough for the maximum `lexerState->peek()` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 // This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
@@ -53,6 +53,7 @@ struct ViewedContent {
 
 	bool canPeek(uint8_t distance) const { return offset + distance < span.size; }
 	uint8_t peek(uint8_t distance) const { return span.ptr[offset + distance]; }
+
 	std::shared_ptr<char[]> makeSharedContentPtr() const {
 		return std::shared_ptr<char[]>(span.ptr, &span.ptr[offset]);
 	}
@@ -105,6 +106,8 @@ struct LexerState {
 	std::variant<std::monostate, ViewedContent, BufferedContent> content;
 
 	~LexerState();
+
+	int peek(uint8_t distance);
 
 	std::shared_ptr<char[]> makeSharedCaptureBufPtr() const {
 		return std::shared_ptr<char[]>(captureBuf, captureBuf->data());
