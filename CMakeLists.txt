@@ -21,10 +21,12 @@ option(SANITIZERS "Build with sanitizers enabled" OFF) # Ignored on MSVC
 option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
 
 if(MSVC)
-  # MSVC's standard library triggers warning C5105,
-  # "macro expansion producing 'defined' has undefined behavior"
+  # MSVC's own standard library triggers warning C5105,
+  # "macro expansion producing 'defined' has undefined behavior".
+  # Warning C5030 is about unknown attributes (`[[gnu::ATTR]]`), none of ours being load-bearing.
+  # Warning C4996 is about using POSIX names, which we want to do for portability.
   # We also opt into the C++20-conformant preprocessor.
-  add_compile_options(/MP /wd5105 /Zc:preprocessor)
+  add_compile_options(/MP /wd5105 /wd5030 /wd4996 /Zc:preprocessor)
   add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 
   if(SANITIZERS)
