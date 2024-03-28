@@ -6,10 +6,6 @@
 #include <stdio.h>
 #include <string>
 
-extern bool haltNop;
-extern bool warnOnHaltNop;
-extern bool optimizeLoads;
-extern bool warnOnLdOpt;
 extern bool verbose;
 extern bool warnings; // True to enable warnings, false to disable them.
 

@@ -26,7 +26,6 @@ println \2 ; 10
 purge prefix
 endm
 
-  try "", p
   try "def ", q
   try "redef ", r
 

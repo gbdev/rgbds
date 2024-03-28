@@ -1,3 +1,0 @@
-warning: equs-nest.asm(4): [-Wobsolete]
-    `Z1 EQUS` is deprecated; use `DEF Z1 EQUS`
-while expanding symbol "X1"

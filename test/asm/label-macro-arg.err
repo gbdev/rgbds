@@ -1,7 +1,3 @@
-warning: label-macro-arg.asm(13) -> label-macro-arg.asm::m2(9): [-Wobsolete]
-    `y =` is deprecated; use `DEF y =`
-warning: label-macro-arg.asm(15) -> label-macro-arg.asm::m2(9): [-Wobsolete]
-    `yy =` is deprecated; use `DEF yy =`
 error: label-macro-arg.asm(38) -> label-macro-arg.asm::test_char(25):
     syntax error, unexpected local identifier, expecting identifier
 while expanding symbol "VAR_DEF"
