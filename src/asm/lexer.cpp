@@ -687,13 +687,37 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 	}
 }
 
-int LexerState::peek(uint8_t distance) {
+int LexerState::peekChar() {
+	// This is `.peekCharAhead()` modified for zero lookahead distance
+	for (Expansion &exp : expansions) {
+		if (exp.offset < exp.size())
+			return (uint8_t)(*exp.contents)[exp.offset];
+	}
+
+	if (auto *view = std::get_if<ViewedContent>(&content); view) {
+		if (view->offset < view->span.size)
+			return (uint8_t)view->span.ptr[view->offset];
+	} else {
+		assert(std::holds_alternative<BufferedContent>(content));
+		auto &cbuf = std::get<BufferedContent>(content);
+		if (cbuf.size == 0)
+			cbuf.refill();
+		assert(cbuf.offset < LEXER_BUF_SIZE);
+		if (cbuf.size > 0)
+			return (uint8_t)cbuf.buf[cbuf.offset];
+	}
+
+	// If there aren't enough chars, give up
+	return EOF;
+}
+
+int LexerState::peekCharAhead() {
 	// We only need one character of lookahead, for macro arguments
-	assert(distance == 0 || distance == 1);
+	uint8_t distance = 1;
 
 	for (Expansion &exp : expansions) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
-		// and `.peek()` will continue with its parent
+		// and `.peekCharAhead()` will continue with its parent
 		assert(exp.offset <= exp.size());
 		if (exp.offset + distance < exp.size())
 			return (uint8_t)(*exp.contents)[exp.offset + distance];
@@ -708,10 +732,11 @@ int LexerState::peek(uint8_t distance) {
 		auto &cbuf = std::get<BufferedContent>(content);
 		assert(distance < LEXER_BUF_SIZE);
 		if (cbuf.size <= distance)
-			cbuf.refill(); // Buffer isn't full enough, read some chars in
+			cbuf.refill();
 		if (cbuf.size > distance)
 			return (uint8_t)cbuf.buf[(cbuf.offset + distance) % LEXER_BUF_SIZE];
 	}
+
 	// If there aren't enough chars, give up
 	return EOF;
 }
@@ -721,7 +746,7 @@ static void shiftChar();
 static std::shared_ptr<std::string> readInterpolation(size_t depth);
 
 static int peek() {
-	int c = lexerState->peek(0);
+	int c = lexerState->peekChar();
 
 	if (lexerState->macroArgScanDistance > 0)
 		return c;
@@ -731,7 +756,7 @@ static int peek() {
 	if (c == '\\' && !lexerState->disableMacroArgs) {
 		// If character is a backslash, check for a macro arg
 		lexerState->macroArgScanDistance++;
-		c = lexerState->peek(1);
+		c = lexerState->peekCharAhead();
 		if (isMacroChar(c)) {
 			shiftChar();
 			shiftChar();

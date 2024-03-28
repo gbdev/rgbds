@@ -100,7 +100,8 @@ struct LexerState {
 
 	~LexerState();
 
-	int peek(uint8_t distance);
+	int peekChar();
+	int peekCharAhead();
 
 	std::shared_ptr<char[]> makeSharedCaptureBufPtr() const {
 		return std::shared_ptr<char[]>(captureBuf, captureBuf->data());
