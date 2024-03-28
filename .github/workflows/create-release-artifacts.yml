@@ -83,7 +83,7 @@ jobs:
       - name: Build binaries
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          make -j CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
+          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
@@ -109,7 +109,7 @@ jobs:
           ./.github/scripts/install_deps.sh ubuntu-20.04
       - name: Build binaries
         run: |
-          make -j WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
+          make -kj WARNFLAGS="-Wall -Wextra -pedantic -static" PKG_CONFIG="pkg-config --static" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |

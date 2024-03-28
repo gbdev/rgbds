@@ -30,7 +30,7 @@ jobs:
         if: matrix.buildsys == 'make'
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          make develop -j Q= CXX=${{ matrix.cxx }}
+          make develop -kj Q= CXX=${{ matrix.cxx }}
           sudo make install -j Q=
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
@@ -97,7 +97,7 @@ jobs:
       - name: Build & install
         run: |
           export PATH="/usr/local/opt/bison/bin:$PATH"
-          make -j CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
+          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
       - name: Package binaries
         run: |
           mkdir bins
@@ -254,7 +254,7 @@ jobs:
           sudo ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
       - name: Cross-build Windows binaries
         run: |
-          make mingw${{ matrix.bits }} -j Q=
+          make mingw${{ matrix.bits }} -kj Q=
       - name: Package binaries
         run: | # DLL dependencies can be figured out using e.g. Dependency Walker or objdump -p
           mkdir bins
