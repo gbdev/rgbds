@@ -46,10 +46,8 @@
 	#include <handleapi.h> // CloseHandle
 // clang-format on
 
-	#define MAP_FAILED nullptr
-
-static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t) {
-	mappingAddr = MAP_FAILED;
+static char *mapFile(int fd, std::string const &path, size_t) {
+	void *mappingAddr = nullptr;
 	if (HANDLE file = CreateFileA(
 	        path.c_str(),
 	        GENERIC_READ,
@@ -67,10 +65,11 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t)
 		}
 		CloseHandle(file);
 	}
+	return (char *)mappingAddr;
 }
 
-struct MunmapDeleter {
-	MunmapDeleter(size_t) {}
+struct FileUnmapDeleter {
+	FileUnmapDeleter(size_t) {}
 
 	void operator()(char *mappingAddr) { UnmapViewOfFile(mappingAddr); }
 };
@@ -78,8 +77,8 @@ struct MunmapDeleter {
 #else // defined(_MSC_VER) || defined(__MINGW32__)
 	#include <sys/mman.h>
 
-static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t size) {
-	mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+static char *mapFile(int fd, std::string const &path, size_t size) {
+	void *mappingAddr = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (mappingAddr == MAP_FAILED && errno == ENOTSUP) {
 		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
 		// instead, offering, I believe, weaker guarantees about external modifications to
@@ -88,12 +87,13 @@ static void mapFile(void *&mappingAddr, int fd, std::string const &path, size_t 
 			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
+	return mappingAddr != MAP_FAILED ? (char *)mappingAddr : nullptr;
 }
 
-struct MunmapDeleter {
+struct FileUnmapDeleter {
 	size_t mappingSize;
 
-	MunmapDeleter(size_t mappingSize_) : mappingSize(mappingSize_) {}
+	FileUnmapDeleter(size_t mappingSize_) : mappingSize(mappingSize_) {}
 
 	void operator()(char *mappingAddr) { munmap(mappingAddr, mappingSize); }
 };
@@ -418,18 +418,12 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		bool isMmapped = false;
 
-		if (statBuf.st_size > 0) {
+		if (size_t size = (size_t)statBuf.st_size; statBuf.st_size > 0) {
 			// Try using `mmap` for better performance
-			void *mappingAddr;
-			mapFile(mappingAddr, fd, path, statBuf.st_size);
-
-			if (mappingAddr != MAP_FAILED) {
+			if (char *mappingAddr = mapFile(fd, path, size); mappingAddr != nullptr) {
 				close(fd);
 				content.emplace<ViewedContent>(
-				    std::shared_ptr<char[]>(
-				        (char *)mappingAddr, MunmapDeleter((size_t)statBuf.st_size)
-				    ),
-				    (size_t)statBuf.st_size
+				    std::shared_ptr<char[]>(mappingAddr, FileUnmapDeleter(size)), size
 				);
 				if (verbose)
 					printf("File \"%s\" is mmap()ped\n", path.c_str());
@@ -489,8 +483,61 @@ LexerState::~LexerState() {
 	assert(this != lexerStateEOL);
 }
 
+bool Expansion::advance() {
+	assert(offset <= size());
+	offset++;
+	return offset > size();
+}
+
 BufferedContent::~BufferedContent() {
 	close(fd);
+}
+
+void BufferedContent::advance() {
+	assert(offset < LEXER_BUF_SIZE);
+	offset++;
+	if (offset == LEXER_BUF_SIZE)
+		offset = 0; // Wrap around if necessary
+	assert(size > 0);
+	size--;
+}
+
+void BufferedContent::refill() {
+	size_t target = LEXER_BUF_SIZE - size; // Aim: making the buf full
+
+	// Compute the index we'll start writing to
+	size_t startIndex = (offset + size) % LEXER_BUF_SIZE;
+
+	// If the range to fill passes over the buffer wrapping point, we need two reads
+	if (startIndex + target > LEXER_BUF_SIZE) {
+		size_t nbExpectedChars = LEXER_BUF_SIZE - startIndex;
+		size_t nbReadChars = readMore(startIndex, nbExpectedChars);
+
+		startIndex += nbReadChars;
+		if (startIndex == LEXER_BUF_SIZE)
+			startIndex = 0;
+
+		// If the read was incomplete, don't perform a second read
+		target -= nbReadChars;
+		if (nbReadChars < nbExpectedChars)
+			target = 0;
+	}
+	if (target != 0)
+		readMore(startIndex, target);
+}
+
+size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
+	// This buffer overflow made me lose WEEKS of my life. Never again.
+	assert(startIndex + nbChars <= LEXER_BUF_SIZE);
+	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
+
+	if (nbReadChars == -1)
+		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
+
+	size += nbReadChars;
+
+	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
+	return (size_t)nbReadChars;
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -640,75 +687,32 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 	}
 }
 
-static size_t readInternal(BufferedContent &cbuf, size_t bufIndex, size_t nbChars) {
-	// This buffer overflow made me lose WEEKS of my life. Never again.
-	assert(bufIndex + nbChars <= LEXER_BUF_SIZE);
-	ssize_t nbReadChars = read(cbuf.fd, &cbuf.buf[bufIndex], nbChars);
-
-	if (nbReadChars == -1)
-		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
-
-	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
-	return (size_t)nbReadChars;
-}
-
 // We only need one character of lookahead, for macro arguments
 static int peekInternal(uint8_t distance) {
 	for (Expansion &exp : lexerState->expansions) {
 		// An expansion that has reached its end will have `exp->offset` == `exp->size()`,
 		// and `peekInternal` will continue with its parent
 		assert(exp.offset <= exp.size());
-		if (distance < exp.size() - exp.offset)
-			return (*exp.contents)[exp.offset + distance];
+		if (exp.canPeek(distance))
+			return exp.peek(distance);
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (distance >= LEXER_BUF_SIZE)
-		fatalerror(
-		    "Internal lexer error: buffer has insufficient size for peeking (%" PRIu8 " >= %u)\n",
-		    distance,
-		    LEXER_BUF_SIZE
-		);
-
 	if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
-		if (size_t idx = view->offset + distance; idx < view->span.size)
-			return (uint8_t)view->span.ptr[idx];
+		if (view->canPeek(distance))
+			return view->peek(distance);
 		return EOF;
 	} else {
 		assert(std::holds_alternative<BufferedContent>(lexerState->content));
 		auto &cbuf = std::get<BufferedContent>(lexerState->content);
 
-		if (cbuf.nbChars > distance)
-			return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
-
+		assert(distance < LEXER_BUF_SIZE);
+		if (cbuf.canPeek(distance))
+			return cbuf.peek(distance);
 		// Buffer isn't full enough, read some chars in
-		size_t target = LEXER_BUF_SIZE - cbuf.nbChars; // Aim: making the buf full
-
-		// Compute the index we'll start writing to
-		size_t writeIndex = (cbuf.index + cbuf.nbChars) % LEXER_BUF_SIZE;
-
-		// If the range to fill passes over the buffer wrapping point, we need two reads
-		if (writeIndex + target > LEXER_BUF_SIZE) {
-			size_t nbExpectedChars = LEXER_BUF_SIZE - writeIndex;
-			size_t nbReadChars = readInternal(cbuf, writeIndex, nbExpectedChars);
-
-			cbuf.nbChars += nbReadChars;
-
-			writeIndex += nbReadChars;
-			if (writeIndex == LEXER_BUF_SIZE)
-				writeIndex = 0;
-
-			// If the read was incomplete, don't perform a second read
-			target -= nbReadChars;
-			if (nbReadChars < nbExpectedChars)
-				target = 0;
-		}
-		if (target != 0)
-			cbuf.nbChars += readInternal(cbuf, writeIndex, target);
-
-		if (cbuf.nbChars > distance)
-			return (uint8_t)cbuf.buf[(cbuf.index + distance) % LEXER_BUF_SIZE];
-
+		cbuf.refill();
+		if (cbuf.canPeek(distance))
+			return cbuf.peek(distance);
 		// If there aren't enough chars even after refilling, give up
 		return EOF;
 	}
@@ -777,11 +781,7 @@ static void shiftChar() {
 restart:
 	if (!lexerState->expansions.empty()) {
 		// Advance within the current expansion
-		Expansion &expansion = lexerState->expansions.front();
-
-		assert(expansion.offset <= expansion.size());
-		expansion.offset++;
-		if (expansion.offset > expansion.size()) {
+		if (Expansion &exp = lexerState->expansions.front(); exp.advance()) {
 			// When advancing would go past an expansion's end,
 			// move up to its parent and try again to advance
 			lexerState->expansions.pop_front();
@@ -795,12 +795,7 @@ restart:
 		} else {
 			assert(std::holds_alternative<BufferedContent>(lexerState->content));
 			auto &cbuf = std::get<BufferedContent>(lexerState->content);
-			assert(cbuf.index < LEXER_BUF_SIZE);
-			cbuf.index++;
-			if (cbuf.index == LEXER_BUF_SIZE)
-				cbuf.index = 0; // Wrap around if necessary
-			assert(cbuf.nbChars > 0);
-			cbuf.nbChars--;
+			cbuf.advance();
 		}
 	}
 }
@@ -2174,11 +2169,7 @@ static Capture startCapture() {
 	if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
 	    view && lexerState->expansions.empty()) {
 		return {
-		    .lineNo = lineNo,
-		    .span = {
-		             .ptr = std::shared_ptr<char[]>(view->span.ptr, &view->span.ptr[view->offset]),
-		             .size = 0,
-		             }
+		    .lineNo = lineNo, .span = {.ptr = view->makeSharedContentPtr(), .size = 0}
         };
 	} else {
 		assert(lexerState->captureBuf == nullptr);
@@ -2194,8 +2185,7 @@ static void endCapture(Capture &capture) {
 	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
 	if (!capture.span.ptr)
-		capture.span.ptr =
-		    std::shared_ptr<char[]>(lexerState->captureBuf, lexerState->captureBuf->data());
+		capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
 	capture.span.size = lexerState->captureSize;
 
 	// ENDR/ENDM or EOF puts us past the start of the line

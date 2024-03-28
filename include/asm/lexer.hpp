@@ -13,7 +13,7 @@
 
 #include "platform.hpp" // SSIZE_MAX
 
-#define LEXER_BUF_SIZE 42 // TODO: determine a sane value for this
+#define LEXER_BUF_SIZE 128
 // The buffer needs to be large enough for the maximum `peekInternal` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 // This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
@@ -31,14 +31,12 @@ enum LexerMode {
 struct Expansion {
 	std::optional<std::string> name;
 	std::shared_ptr<std::string> contents;
-	size_t offset; // Cursor into the contents
+	size_t offset; // Cursor into `contents`
 
 	size_t size() const { return contents->size(); }
-};
-
-struct IfStackEntry {
-	bool ranIfBlock;       // Whether an IF/ELIF/ELSE block ran already
-	bool reachedElseBlock; // Whether an ELSE block ran already
+	bool canPeek(uint8_t distance) const { return offset + distance < contents->size(); }
+	uint8_t peek(uint8_t distance) const { return (*contents)[offset + distance]; }
+	bool advance(); // Increment `offset`; return whether it then exceeds `contents`
 };
 
 struct ContentSpan {
@@ -47,21 +45,40 @@ struct ContentSpan {
 };
 
 struct ViewedContent {
-	ContentSpan span;
-	size_t offset = 0;
+	ContentSpan span;  // Span of chars
+	size_t offset = 0; // Cursor into `span.ptr`
 
 	ViewedContent(ContentSpan const &span_) : span(span_) {}
 	ViewedContent(std::shared_ptr<char[]> ptr, size_t size) : span({.ptr = ptr, .size = size}) {}
+
+	bool canPeek(uint8_t distance) const { return offset + distance < span.size; }
+	uint8_t peek(uint8_t distance) const { return span.ptr[offset + distance]; }
+	std::shared_ptr<char[]> makeSharedContentPtr() const {
+		return std::shared_ptr<char[]>(span.ptr, &span.ptr[offset]);
+	}
 };
 
 struct BufferedContent {
-	int fd;
-	size_t index = 0;              // Read index into the buffer
-	char buf[LEXER_BUF_SIZE] = {}; // Circular buffer
-	size_t nbChars = 0;            // Number of "fresh" chars in the buffer
+	int fd;                        // File from which to read chars
+	char buf[LEXER_BUF_SIZE] = {}; // Circular buffer of chars
+	size_t offset = 0;             // Cursor into `buf`
+	size_t size = 0;               // Number of "fresh" chars in `buf`
 
 	BufferedContent(int fd_) : fd(fd_) {}
 	~BufferedContent();
+
+	bool canPeek(uint8_t distance) const { return size > distance; }
+	uint8_t peek(uint8_t distance) const { return buf[(offset + distance) % LEXER_BUF_SIZE]; }
+	void advance(); // Increment `offset` circularly, decrement `size`
+	void refill();  // Read from `fd` to fill `buf`
+
+private:
+	size_t readMore(size_t startIndex, size_t nbChars);
+};
+
+struct IfStackEntry {
+	bool ranIfBlock;       // Whether an IF/ELIF/ELSE block ran already
+	bool reachedElseBlock; // Whether an ELSE block ran already
 };
 
 struct LexerState {
@@ -77,8 +94,7 @@ struct LexerState {
 
 	bool capturing;     // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
-	std::shared_ptr<std::vector<char>>
-	    captureBuf; // Buffer to send the captured text to if non-null
+	std::shared_ptr<std::vector<char>> captureBuf; // Buffer to send the captured text to if set
 
 	bool disableMacroArgs;
 	bool disableInterpolation;
@@ -89,6 +105,10 @@ struct LexerState {
 	std::variant<std::monostate, ViewedContent, BufferedContent> content;
 
 	~LexerState();
+
+	std::shared_ptr<char[]> makeSharedCaptureBufPtr() const {
+		return std::shared_ptr<char[]>(captureBuf, captureBuf->data());
+	}
 
 	void setAsCurrentState();
 	bool setFileAsNextState(std::string const &filePath, bool updateStateNow);
