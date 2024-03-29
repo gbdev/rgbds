@@ -5,11 +5,10 @@ set -e
 make coverage -j
 
 # Run the tests
-for dir in asm link fix gfx; do
-	pushd test/$dir
-	./test.sh
-	popd
-done
+pushd test
+./fetch-test-deps.sh
+./run-tests.sh
+popd
 
 # Generate coverage logs
 gcov src/**/*.cpp
