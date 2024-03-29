@@ -1,17 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 22c65e9..fce4930 100644
+index 244f179..fce4930 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -44,14 +44,14 @@ BIN := $(NAME).$(EXT)
- COMPAT_BIN := $(NAME)_compat.$(EXT)
- 
- # List of relative paths to all folders and subfolders with code or data.
--SOURCE_ALL_DIRS := $(shell find $(SOURCE) -type d -print)
-+SOURCE_ALL_DIRS := $(sort $(shell find $(SOURCE) -type d -print))
- 
- # All files with extension asm are assembled.
--ASMFILES := $(foreach dir,$(SOURCE_ALL_DIRS),$(wildcard $(dir)/*.asm))
-+ASMFILES := $(foreach dir,$(SOURCE_ALL_DIRS),$(sort $(wildcard $(dir)/*.asm)))
+@@ -51,7 +51,7 @@ ASMFILES := $(foreach dir,$(SOURCE_ALL_DIRS),$(sort $(wildcard $(dir)/*.asm)))
  
  # List of include directories: All source and data folders.
  # A '/' is appended to the path.
