@@ -1,5 +1,5 @@
 diff --git a/makefile b/makefile
-index 6513518..ba14638 100644
+index ccfc9d1..ba14638 100644
 --- a/makefile
 +++ b/makefile
 @@ -85,10 +85,10 @@ $(title).gb: $(objlisto)
@@ -15,25 +15,3 @@ index 6513518..ba14638 100644
  
  # Files that will be included with incbin
  
-@@ -108,7 +108,7 @@ obj/gb/sgb.o: \
- 
- # Local variable allocation
- 
--obj/gb/localvars.z80: tools/savescan.py $(wildcard src/*.z80)
-+obj/gb/localvars.z80: tools/savescan.py $(sort $(wildcard src/*.z80))
- 	$(PY) $^ -o $@
- 
- # Graphics conversion
-diff --git a/tools/makeborder.py b/tools/makeborder.py
-index b9fa3f1..dfe5789 100755
---- a/tools/makeborder.py
-+++ b/tools/makeborder.py
-@@ -88,7 +88,7 @@ def main(argv=None):
-     else:
-         iutmrows = b''.join(pb16.pb16(b''.join(utmrows)))
- 
--    palette = im.getpalette()[:48]
-+    palette = im.getpalette()[:12]
-     palette.extend(bytes(48 - len(palette)))
-     snespalette = bytearray()
-     for i in range(0, 48, 3):
