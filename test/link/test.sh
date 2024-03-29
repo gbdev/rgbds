@@ -204,7 +204,7 @@ test="scramble-romx"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
-rgblinkQuiet -o "$gbtemp" -S romx=3 "$otemp" 2>"$outtemp"
+rgblinkQuiet -o "$gbtemp" -S "romx=3,wramx=4,sram=4" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 # This test does not compare its exact output with 'tryCmpRom' because no scrambling order is guaranteed
 tryCmpRomSize "$gbtemp" 65536

@@ -1,0 +1,2 @@
+error: test: ROMX sections must be in bank 1 (if any) with option -t
+Linking failed with 1 error
