@@ -24,3 +24,16 @@ index 6513518..ba14638 100644
  	$(PY) $^ -o $@
  
  # Graphics conversion
+diff --git a/tools/makeborder.py b/tools/makeborder.py
+index b9fa3f1..dfe5789 100755
+--- a/tools/makeborder.py
++++ b/tools/makeborder.py
+@@ -88,7 +88,7 @@ def main(argv=None):
+     else:
+         iutmrows = b''.join(pb16.pb16(b''.join(utmrows)))
+ 
+-    palette = im.getpalette()[:48]
++    palette = im.getpalette()[:12]
+     palette.extend(bytes(48 - len(palette)))
+     snespalette = bytearray()
+     for i in range(0, 48, 3):
