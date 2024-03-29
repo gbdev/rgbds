@@ -152,5 +152,5 @@ If one *does* exist, RGBGFX's return status is ignored, but its output **must** 
 3. Add the project to `test/run-tests.sh`: add a new `test_downstream` line at the bottom, following the existing pattern:
 
    ```sh
-   test_downstream  <owner>  <repo>  <makefile target>
+   test_downstream  <owner>  <repo>  <makefile target>  <build file>  <sha1 hash of build file>
    ```
