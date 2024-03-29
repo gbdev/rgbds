@@ -1225,26 +1225,26 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	return nullptr;
 }
 
-static void appendEscapedSubstring(std::string &yylval, std::string const &str) {
-	for (char c : str) {
+static void appendEscapedString(std::string &str, std::string const &escape) {
+	for (char c : escape) {
 		// Escape characters that need escaping
 		switch (c) {
 		case '\\':
 		case '"':
 		case '{':
-			yylval += '\\';
+			str += '\\';
 			[[fallthrough]];
 		default:
-			yylval += c;
+			str += c;
 			break;
 		case '\n':
-			yylval += "\\n";
+			str += "\\n";
 			break;
 		case '\r':
-			yylval += "\\r";
+			str += "\\r";
 			break;
 		case '\t':
-			yylval += "\\t";
+			str += "\\t";
 			break;
 		}
 	}
@@ -1267,13 +1267,13 @@ static std::string readString(bool raw) {
 		}
 	}
 
-	for (std::string yylval = ""s;;) {
+	for (std::string str = ""s;;) {
 		int c = peek();
 
 		// '\r', '\n' or EOF ends a single-line string early
 		if (c == EOF || (!multiline && (c == '\r' || c == '\n'))) {
 			error("Unterminated string\n");
-			return yylval;
+			return str;
 		}
 
 		// We'll be staying in the string, so we can safely consume the char
@@ -1295,12 +1295,12 @@ static std::string readString(bool raw) {
 					break;
 				shiftChar();
 				if (peek() != '"') {
-					yylval += '"';
+					str += '"';
 					break;
 				}
 				shiftChar();
 			}
-			return yylval;
+			return str;
 
 		case '\\': // Character escape or macro arg
 			if (raw)
@@ -1349,8 +1349,8 @@ static std::string readString(bool raw) {
 			case '9':
 			case '<':
 				shiftChar();
-				if (auto str = readMacroArg(c); str) {
-					yylval.append(*str);
+				if (auto arg = readMacroArg(c); arg) {
+					str.append(*arg);
 				}
 				continue; // Do not copy an additional character
 
@@ -1373,7 +1373,7 @@ static std::string readString(bool raw) {
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
 			if (auto interpolation = readInterpolation(0); interpolation) {
-				yylval.append(*interpolation);
+				str.append(*interpolation);
 			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
@@ -1381,22 +1381,22 @@ static std::string readString(bool raw) {
 			// Regular characters will just get copied
 		}
 
-		yylval += c;
+		str += c;
 	}
 }
 
-static void appendStringLiteral(std::string &yylval, bool raw) {
+static void appendStringLiteral(std::string &str, bool raw) {
 	Defer reenableExpansions = scopedDisableExpansions();
 
 	// We reach this function after reading a single quote, but we also support triple quotes
 	bool multiline = false;
-	yylval += '"';
+	str += '"';
 	if (peek() == '"') {
-		yylval += '"';
+		str += '"';
 		shiftChar();
 		if (peek() == '"') {
 			// """ begins a multi-line string
-			yylval += '"';
+			str += '"';
 			shiftChar();
 			multiline = true;
 		} else {
@@ -1431,14 +1431,14 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 				// Only """ ends a multi-line string
 				if (peek() != '"')
 					break;
-				yylval += '"';
+				str += '"';
 				shiftChar();
 				if (peek() != '"')
 					break;
-				yylval += '"';
+				str += '"';
 				shiftChar();
 			}
-			yylval += '"';
+			str += '"';
 			return;
 
 		case '\\': // Character escape or macro arg
@@ -1455,7 +1455,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			case 'r':
 			case 't':
 				// Return that character unchanged
-				yylval += '\\';
+				str += '\\';
 				shiftChar();
 				break;
 
@@ -1481,9 +1481,8 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			case '9':
 			case '<': {
 				shiftChar();
-				auto str = readMacroArg(c);
-				if (str) {
-					appendEscapedSubstring(yylval, *str);
+				if (auto arg = readMacroArg(c); arg) {
+					appendEscapedString(str, *arg);
 				}
 				continue; // Do not copy an additional character
 			}
@@ -1507,7 +1506,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
 			if (auto interpolation = readInterpolation(0); interpolation) {
-				appendEscapedSubstring(yylval, *interpolation);
+				appendEscapedString(str, *interpolation);
 			}
 			lexerState->disableMacroArgs = true;
 			continue; // Do not copy an additional character
@@ -1515,7 +1514,7 @@ static void appendStringLiteral(std::string &yylval, bool raw) {
 			// Regular characters will just get copied
 		}
 
-		yylval += c;
+		str += c;
 	}
 }
 
@@ -1820,7 +1819,7 @@ static Token yylex_NORMAL() {
 
 static Token yylex_RAW() {
 	// This is essentially a modified `appendStringLiteral`
-	std::string yylval;
+	std::string str;
 	size_t parenDepth = 0;
 	int c;
 
@@ -1848,15 +1847,15 @@ static Token yylex_RAW() {
 		switch (c) {
 		case '"': // String literals inside macro args
 			shiftChar();
-			appendStringLiteral(yylval, false);
+			appendStringLiteral(str, false);
 			break;
 
 		case '#': // Raw string literals inside macro args
-			yylval += c;
+			str += c;
 			shiftChar();
 			if (peek() == '"') {
 				shiftChar();
-				appendStringLiteral(yylval, true);
+				appendStringLiteral(str, true);
 			}
 			break;
 
@@ -1876,7 +1875,7 @@ static Token yylex_RAW() {
 				discardBlockComment();
 				continue;
 			}
-			yylval += c; // Append the slash
+			str += c; // Append the slash
 			break;
 
 		case ',': // End of macro arg
@@ -1941,7 +1940,7 @@ backslash:
 
 		default: // Regular characters will just get copied
 append:
-			yylval += c;
+			str += c;
 			shiftChar();
 			break;
 		}
@@ -1949,8 +1948,8 @@ append:
 
 finish:
 	// Trim right whitespace
-	auto rightPos = std::find_if_not(yylval.rbegin(), yylval.rend(), isWhitespace);
-	yylval.resize(rightPos.base() - yylval.begin());
+	auto rightPos = std::find_if_not(str.rbegin(), str.rend(), isWhitespace);
+	str.resize(rightPos.base() - str.begin());
 
 	// Returning COMMAs to the parser would mean that two consecutive commas
 	// (i.e. an empty argument) need to return two different tokens (STRING
@@ -1958,7 +1957,7 @@ finish:
 	// mode end the current macro argument but are not tokenized themselves.
 	if (c == ',') {
 		shiftChar();
-		return Token(T_(STRING), yylval);
+		return Token(T_(STRING), str);
 	}
 
 	// The last argument may end in a trailing comma, newline, or EOF.
@@ -1967,8 +1966,8 @@ finish:
 	// an empty raw string before it). This will not be treated as a
 	// macro argument. To pass an empty last argument, use a second
 	// trailing comma.
-	if (!yylval.empty())
-		return Token(T_(STRING), yylval);
+	if (!str.empty())
+		return Token(T_(STRING), str);
 	lexer_SetMode(LEXER_NORMAL);
 
 	if (c == '\r' || c == '\n') {

@@ -323,9 +323,8 @@ int main(int argc, char *argv[]) {
 	// Init lexer and file stack, providing file info
 	fstk_Init(mainFileName, maxDepth);
 
-	// Perform parse
-	yy::parser parser;
-	if (parser.parse() != 0 && nbErrors == 0)
+	// Perform parse (`yy::parser` is auto-generated from `parser.y`)
+	if (yy::parser parser; parser.parse() != 0 && nbErrors == 0)
 		nbErrors = 1;
 
 	sect_CheckUnionClosed();
