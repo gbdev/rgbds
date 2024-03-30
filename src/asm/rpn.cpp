@@ -17,10 +17,15 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
+using namespace std::literals;
+
+int32_t Expression::value() const {
+	assert(std::holds_alternative<int32_t>(data));
+	return std::get<int32_t>(data);
+}
+
 void Expression::clear() {
-	val = 0;
-	reason.clear();
-	isKnown = true;
+	data = 0;
 	isSymbol = false;
 	rpn.clear();
 	rpnPatchSize = 0;
@@ -38,11 +43,11 @@ uint8_t *Expression::reserveSpace(uint32_t size, uint32_t patchSize) {
 }
 
 int32_t Expression::getConstVal() const {
-	if (!isKnown) {
-		error("Expected constant expression: %s\n", reason.c_str());
+	if (!isKnown()) {
+		error("Expected constant expression: %s\n", std::get<std::string>(data).c_str());
 		return 0;
 	}
-	return val;
+	return value();
 }
 
 Symbol const *Expression::symbolOf() const {
@@ -65,21 +70,19 @@ bool Expression::isDiffConstant(Symbol const *sym) const {
 
 void Expression::makeNumber(uint32_t value) {
 	clear();
-	val = value;
+	data = (int32_t)value;
 }
 
 void Expression::makeSymbol(std::string const &symName) {
 	clear();
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		error("PC has no value outside a section\n");
-		val = 0;
+		data = 0;
 	} else if (!sym || !sym->isConstant()) {
 		isSymbol = true;
 
-		if (sym_IsPC(sym))
-			makeUnknown("PC is not constant at assembly time");
-		else
-			makeUnknown("'", symName, "' is not constant at assembly time");
+		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
+		                     : "'"s + symName + "' is not constant at assembly time";
 		sym = sym_Ref(symName);
 
 		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
@@ -89,7 +92,7 @@ void Expression::makeSymbol(std::string const &symName) {
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name.c_str(), nameLen);
 	} else {
-		val = sym_GetConstantValue(symName);
+		data = (int32_t)sym_GetConstantValue(symName);
 	}
 }
 
@@ -99,27 +102,27 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		// The @ symbol is treated differently.
 		if (!currentSection) {
 			error("PC has no bank outside a section\n");
-			val = 1;
+			data = 1;
 		} else if (currentSection->bank == (uint32_t)-1) {
-			makeUnknown("Current section's bank is not known");
+			data = "Current section's bank is not known";
 
 			*reserveSpace(1) = RPN_BANK_SELF;
 		} else {
-			val = currentSection->bank;
+			data = (int32_t)currentSection->bank;
 		}
 		return;
 	} else if (sym && !sym->isLabel()) {
 		error("BANK argument must be a label\n");
-		val = 1;
+		data = 1;
 	} else {
 		sym = sym_Ref(symName);
 		assert(sym); // If the symbol didn't exist, it should have been created
 
 		if (sym->getSection() && sym->getSection()->bank != (uint32_t)-1) {
 			// Symbol's section is known and bank is fixed
-			val = sym->getSection()->bank;
+			data = (int32_t)sym->getSection()->bank;
 		} else {
-			makeUnknown("\"", symName, "\"'s bank is not known");
+			data = "\""s + symName + "\"'s bank is not known";
 
 			size_t nameLen = sym->name.length() + 1; // Room for NUL!
 
@@ -134,9 +137,9 @@ void Expression::makeBankSymbol(std::string const &symName) {
 void Expression::makeBankSection(std::string const &sectName) {
 	clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->bank != (uint32_t)-1) {
-		val = sect->bank;
+		data = (int32_t)sect->bank;
 	} else {
-		makeUnknown("Section \"", sectName, "\"'s bank is not known");
+		data = "Section \""s + sectName + "\"'s bank is not known";
 
 		size_t nameLen = sectName.length() + 1; // Room for NUL!
 
@@ -149,9 +152,9 @@ void Expression::makeBankSection(std::string const &sectName) {
 void Expression::makeSizeOfSection(std::string const &sectName) {
 	clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->isSizeKnown()) {
-		val = sect->size;
+		data = (int32_t)sect->size;
 	} else {
-		makeUnknown("Section \"", sectName, "\"'s size is not known");
+		data = "Section \""s + sectName + "\"'s size is not known";
 
 		size_t nameLen = sectName.length() + 1; // Room for NUL!
 
@@ -164,9 +167,9 @@ void Expression::makeSizeOfSection(std::string const &sectName) {
 void Expression::makeStartOfSection(std::string const &sectName) {
 	clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->org != (uint32_t)-1) {
-		val = sect->org;
+		data = (int32_t)sect->org;
 	} else {
-		makeUnknown("Section \"", sectName, "\"'s start is not known");
+		data = "Section \""s + sectName + "\"'s start is not known";
 
 		size_t nameLen = sectName.length() + 1; // Room for NUL!
 
@@ -178,7 +181,7 @@ void Expression::makeStartOfSection(std::string const &sectName) {
 
 void Expression::makeSizeOfSectionType(SectionType type) {
 	clear();
-	makeUnknown("Section type's size is not known");
+	data = "Section type's size is not known";
 
 	uint8_t *ptr = reserveSpace(2);
 	*ptr++ = RPN_SIZEOF_SECTTYPE;
@@ -187,7 +190,7 @@ void Expression::makeSizeOfSectionType(SectionType type) {
 
 void Expression::makeStartOfSectionType(SectionType type) {
 	clear();
-	makeUnknown("Section type's start is not known");
+	data = "Section type's start is not known";
 
 	uint8_t *ptr = reserveSpace(2);
 	*ptr++ = RPN_STARTOF_SECTTYPE;
@@ -216,14 +219,14 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 
 	assert(sym.isNumeric());
 
-	if (!expr.isKnown)
+	if (!expr.isKnown())
 		return -1;
-	// We can now safely use `expr.val`
+	// We can now safely use `expr.value()`
 	Section const &sect = *sym.getSection();
 	int32_t unknownBits = (1 << 16) - (1 << sect.align); // The max alignment is 16
 
 	// The mask must ignore all unknown bits
-	if ((expr.val & unknownBits) != 0)
+	if ((expr.value() & unknownBits) != 0)
 		return -1;
 
 	// `sym.getValue()` attempts to add the section's address, but that's "-1"
@@ -236,8 +239,8 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 
 void Expression::makeHigh() {
 	isSymbol = false;
-	if (isKnown) {
-		val = (uint32_t)val >> 8 & 0xFF;
+	if (isKnown()) {
+		data = (int32_t)((uint32_t)value() >> 8 & 0xFF);
 	} else {
 		uint8_t bytes[] = {RPN_CONST, 8, 0, 0, 0, RPN_SHR, RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
@@ -247,8 +250,8 @@ void Expression::makeHigh() {
 
 void Expression::makeLow() {
 	isSymbol = false;
-	if (isKnown) {
-		val = val & 0xFF;
+	if (isKnown()) {
+		data = value() & 0xFF;
 	} else {
 		uint8_t bytes[] = {RPN_CONST, 0xFF, 0, 0, 0, RPN_AND};
 
@@ -258,8 +261,8 @@ void Expression::makeLow() {
 
 void Expression::makeNeg() {
 	isSymbol = false;
-	if (isKnown) {
-		val = -(uint32_t)val;
+	if (isKnown()) {
+		data = (int32_t) - (uint32_t)value();
 	} else {
 		*reserveSpace(1) = RPN_NEG;
 	}
@@ -267,8 +270,8 @@ void Expression::makeNeg() {
 
 void Expression::makeNot() {
 	isSymbol = false;
-	if (isKnown) {
-		val = ~val;
+	if (isKnown()) {
+		data = ~value();
 	} else {
 		*reserveSpace(1) = RPN_NOT;
 	}
@@ -276,8 +279,8 @@ void Expression::makeNot() {
 
 void Expression::makeLogicNot() {
 	isSymbol = false;
-	if (isKnown) {
-		val = !val;
+	if (isKnown()) {
+		data = !value();
 	} else {
 		*reserveSpace(1) = RPN_LOGNOT;
 	}
@@ -286,130 +289,119 @@ void Expression::makeLogicNot() {
 void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2) {
 	clear();
 	// First, check if the expression is known
-	isKnown = src1.isKnown && src2.isKnown;
-	if (isKnown) {
+	if (src1.isKnown() && src2.isKnown()) {
 		// If both expressions are known, just compute the value
-		uint32_t uleft = src1.val, uright = src2.val;
+		int32_t lval = src1.value(), rval = src2.value();
 
 		switch (op) {
 		case RPN_LOGOR:
-			val = src1.val || src2.val;
+			data = lval || rval;
 			break;
 		case RPN_LOGAND:
-			val = src1.val && src2.val;
+			data = lval && rval;
 			break;
 		case RPN_LOGEQ:
-			val = src1.val == src2.val;
+			data = lval == rval;
 			break;
 		case RPN_LOGGT:
-			val = src1.val > src2.val;
+			data = lval > rval;
 			break;
 		case RPN_LOGLT:
-			val = src1.val < src2.val;
+			data = lval < rval;
 			break;
 		case RPN_LOGGE:
-			val = src1.val >= src2.val;
+			data = lval >= rval;
 			break;
 		case RPN_LOGLE:
-			val = src1.val <= src2.val;
+			data = lval <= rval;
 			break;
 		case RPN_LOGNE:
-			val = src1.val != src2.val;
+			data = lval != rval;
 			break;
 		case RPN_ADD:
-			val = uleft + uright;
+			data = (int32_t)((uint32_t)lval + (uint32_t)rval);
 			break;
 		case RPN_SUB:
-			val = uleft - uright;
+			data = (int32_t)((uint32_t)lval - (uint32_t)rval);
 			break;
 		case RPN_XOR:
-			val = src1.val ^ src2.val;
+			data = lval ^ rval;
 			break;
 		case RPN_OR:
-			val = src1.val | src2.val;
+			data = lval | rval;
 			break;
 		case RPN_AND:
-			val = src1.val & src2.val;
+			data = lval & rval;
 			break;
 		case RPN_SHL:
-			if (src2.val < 0)
+			if (rval < 0)
 				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n", src2.val
+				    WARNING_SHIFT_AMOUNT, "Shifting left by negative amount %" PRId32 "\n", rval
 				);
 
-			if (src2.val >= 32)
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n", src2.val
-				);
+			if (rval >= 32)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting left by large amount %" PRId32 "\n", rval);
 
-			val = op_shift_left(src1.val, src2.val);
+			data = op_shift_left(lval, rval);
 			break;
 		case RPN_SHR:
-			if (src1.val < 0)
-				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", src1.val);
+			if (lval < 0)
+				warning(WARNING_SHIFT, "Shifting right negative value %" PRId32 "\n", lval);
 
-			if (src2.val < 0)
+			if (rval < 0)
 				warning(
-				    WARNING_SHIFT_AMOUNT,
-				    "Shifting right by negative amount %" PRId32 "\n",
-				    src2.val
+				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
 				);
 
-			if (src2.val >= 32)
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", src2.val
-				);
+			if (rval >= 32)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
 
-			val = op_shift_right(src1.val, src2.val);
+			data = op_shift_right(lval, rval);
 			break;
 		case RPN_USHR:
-			if (src2.val < 0)
+			if (rval < 0)
 				warning(
-				    WARNING_SHIFT_AMOUNT,
-				    "Shifting right by negative amount %" PRId32 "\n",
-				    src2.val
+				    WARNING_SHIFT_AMOUNT, "Shifting right by negative amount %" PRId32 "\n", rval
 				);
 
-			if (src2.val >= 32)
-				warning(
-				    WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", src2.val
-				);
+			if (rval >= 32)
+				warning(WARNING_SHIFT_AMOUNT, "Shifting right by large amount %" PRId32 "\n", rval);
 
-			val = op_shift_right_unsigned(src1.val, src2.val);
+			data = op_shift_right_unsigned(lval, rval);
 			break;
 		case RPN_MUL:
-			val = uleft * uright;
+			data = (int32_t)((uint32_t)lval * (uint32_t)rval);
 			break;
 		case RPN_DIV:
-			if (src2.val == 0)
+			if (rval == 0)
 				fatalerror("Division by zero\n");
 
-			if (src1.val == INT32_MIN && src2.val == -1) {
+			if (lval == INT32_MIN && rval == -1) {
 				warning(
 				    WARNING_DIV,
 				    "Division of %" PRId32 " by -1 yields %" PRId32 "\n",
 				    INT32_MIN,
 				    INT32_MIN
 				);
-				val = INT32_MIN;
+				data = INT32_MIN;
 			} else {
-				val = op_divide(src1.val, src2.val);
+				data = op_divide(lval, rval);
 			}
 			break;
 		case RPN_MOD:
-			if (src2.val == 0)
+			if (rval == 0)
 				fatalerror("Modulo by zero\n");
 
-			if (src1.val == INT32_MIN && src2.val == -1)
-				val = 0;
+			if (lval == INT32_MIN && rval == -1)
+				data = 0;
 			else
-				val = op_modulo(src1.val, src2.val);
+				data = op_modulo(lval, rval);
 			break;
 		case RPN_EXP:
-			if (src2.val < 0)
+			if (rval < 0)
 				fatalerror("Exponentiation by negative power\n");
 
-			val = op_exponent(src1.val, src2.val);
+			data = op_exponent(lval, rval);
 			break;
 
 		case RPN_NEG:
@@ -429,20 +421,15 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			fatalerror("%d is not a binary operator\n", op);
 		}
 	} else if (op == RPN_SUB && src1.isDiffConstant(src2.symbolOf())) {
-		Symbol const &symbol1 = *src1.symbolOf();
-		Symbol const &symbol2 = *src2.symbolOf();
-
-		val = symbol1.getValue() - symbol2.getValue();
-		isKnown = true;
+		data = src1.symbolOf()->getValue() - src2.symbolOf()->getValue();
 	} else if (int32_t constVal; op == RPN_AND && (constVal = tryConstMask(src1, src2)) != -1) {
-		val = constVal;
-		isKnown = true;
+		data = constVal;
 	} else {
 		// If it's not known, start computing the RPN expression
 
 		// Convert the left-hand expression if it's constant
-		if (src1.isKnown) {
-			uint32_t lval = src1.val;
+		if (src1.isKnown()) {
+			uint32_t lval = src1.value();
 			uint8_t bytes[] = {
 			    RPN_CONST,
 			    (uint8_t)lval,
@@ -455,67 +442,61 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			memcpy(reserveSpace(sizeof(bytes)), bytes, sizeof(bytes));
 
 			// Use the other expression's un-const reason
-			reason = src2.reason;
+			data = std::move(src2.data);
 		} else {
 			// Otherwise just reuse its RPN buffer
 			rpnPatchSize = src1.rpnPatchSize;
 			std::swap(rpn, src1.rpn);
-			reason = src1.reason;
+			data = std::move(src1.data);
 		}
 
 		// Now, merge the right expression into the left one
-		uint8_t const *srcBytes = nullptr;
-		uint32_t srcLen = 0;
-		uint32_t srcPatchSize = 0;
-
-		// If the right expression is constant, merge a shim instead
-		uint32_t rval = src2.val;
-		uint8_t bytes[] = {
-		    RPN_CONST,
-		    (uint8_t)rval,
-		    (uint8_t)(rval >> 8),
-		    (uint8_t)(rval >> 16),
-		    (uint8_t)(rval >> 24),
-		};
-		if (src2.isKnown) {
-			srcBytes = bytes;
-			srcLen = sizeof(bytes);
-			srcPatchSize = sizeof(bytes);
+		if (src2.isKnown()) {
+			// If the right expression is constant, append a shim instead
+			uint32_t rval = src2.value();
+			uint8_t bytes[] = {
+			    RPN_CONST,
+			    (uint8_t)rval,
+			    (uint8_t)(rval >> 8),
+			    (uint8_t)(rval >> 16),
+			    (uint8_t)(rval >> 24),
+			};
+			uint8_t *ptr = reserveSpace(sizeof(bytes) + 1, sizeof(bytes) + 1);
+			memcpy(ptr, bytes, sizeof(bytes));
+			ptr[sizeof(bytes)] = op;
 		} else {
-			srcBytes = src2.rpn.data(); // Pointer to the right RPN
-			srcLen = src2.rpn.size();   // Size of the right RPN
-			srcPatchSize = src2.rpnPatchSize;
+			// Copy the right RPN and append the operator
+			uint32_t rightRpnSize = src2.rpn.size();
+			uint8_t *ptr = reserveSpace(rightRpnSize + 1, src2.rpnPatchSize + 1);
+			if (rightRpnSize > 0)
+				// If `rightRpnSize == 0`, then `memcpy(ptr, nullptr, rightRpnSize)` would be UB
+				memcpy(ptr, src2.rpn.data(), rightRpnSize);
+			ptr[rightRpnSize] = op;
 		}
-		// Copy the right RPN and append the operator
-		uint8_t *ptr = reserveSpace(srcLen + 1, srcPatchSize + 1);
-		if (srcBytes)
-			// If there were no `srcBytes`, then `memcpy(ptr, nullptr, 0)` would be UB
-			memcpy(ptr, srcBytes, srcLen);
-		ptr[srcLen] = op;
 	}
 }
 
 void Expression::makeCheckHRAM() {
 	isSymbol = false;
-	if (!isKnown) {
+	if (!isKnown()) {
 		*reserveSpace(1) = RPN_HRAM;
-	} else if (val >= 0xFF00 && val <= 0xFFFF) {
+	} else if (int32_t val = value(); val >= 0xFF00 && val <= 0xFFFF) {
 		// That range is valid, but only keep the lower byte
-		val &= 0xFF;
+		data = val & 0xFF;
 	} else if (val < 0 || val > 0xFF) {
 		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", val);
 	}
 }
 
 void Expression::makeCheckRST() {
-	if (isKnown) {
-		// A valid RST address must be masked with 0x38
-		if (val & ~0x38)
-			error("Invalid address $%" PRIx32 " for RST\n", val);
-		// The target is in the "0x38" bits, all other bits are set
-		val |= 0xC7;
-	} else {
+	if (!isKnown()) {
 		*reserveSpace(1) = RPN_RST;
+	} else if (int32_t val = value(); val & ~0x38) {
+		// A valid RST address must be masked with 0x38
+		error("Invalid address $%" PRIx32 " for RST\n", val);
+	} else {
+		// The target is in the "0x38" bits, all other bits are set
+		data = val | 0xC7;
 	}
 }
 
@@ -524,8 +505,8 @@ void Expression::checkNBit(uint8_t n) const {
 	assert(n != 0);                     // That doesn't make sense
 	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
-	if (isKnown) {
-		if (val < -(1 << n) || val >= 1 << n)
+	if (isKnown()) {
+		if (int32_t val = value(); val < -(1 << n) || val >= 1 << n)
 			warning(WARNING_TRUNCATION_1, "Expression must be %u-bit\n", n);
 		else if (val < -(1 << (n - 1)))
 			warning(WARNING_TRUNCATION_2, "Expression must be %u-bit\n", n);

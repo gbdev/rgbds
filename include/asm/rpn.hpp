@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "linkdefs.hpp"
@@ -12,9 +13,10 @@
 struct Symbol;
 
 struct Expression {
-	int32_t val = 0;       // If the expression's value is known, it's here
-	std::string reason{};  // Why the expression is not known, if it isn't
-	bool isKnown = true;   // Whether the expression's value is known at assembly time
+	std::variant<
+		int32_t,    // If the expression's value is known, it's here
+		std::string // Why the expression is not known, if it isn't
+	> data = 0;
 	bool isSymbol = false; // Whether the expression represents a symbol suitable for const diffing
 	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
@@ -27,6 +29,9 @@ struct Expression {
 #endif
 
 	Expression &operator=(Expression &&) = default;
+
+	bool isKnown() const { return std::holds_alternative<int32_t>(data); }
+	int32_t value() const;
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;
@@ -56,14 +61,6 @@ private:
 	void clear();
 	uint8_t *reserveSpace(uint32_t size);
 	uint8_t *reserveSpace(uint32_t size, uint32_t patchSize);
-
-	// Makes an expression "not known", also setting its error message
-	template<typename... Ts>
-	void makeUnknown(Ts... parts) {
-		isKnown = false;
-		reason.clear();
-		(reason.append(parts), ...);
-	}
 };
 
 #endif // RGBDS_ASM_RPN_H

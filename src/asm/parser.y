@@ -711,16 +711,16 @@ assert_type:
 
 assert:
 	POP_ASSERT assert_type relocexpr {
-		if (!$3.isKnown) {
+		if (!$3.isKnown()) {
 			out_CreateAssert($2, $3, "", sect_GetOutputOffset());
-		} else if ($3.val == 0) {
+		} else if ($3.value() == 0) {
 			failAssert($2);
 		}
 	}
 	| POP_ASSERT assert_type relocexpr COMMA string {
-		if (!$3.isKnown) {
+		if (!$3.isKnown()) {
 			out_CreateAssert($2, $3, $5, sect_GetOutputOffset());
-		} else if ($3.val == 0) {
+		} else if ($3.value() == 0) {
 			failAssertMsg($2, $5);
 		}
 	}
@@ -1304,7 +1304,7 @@ relocexpr_no_str:
 		$$.makeLow();
 	}
 	| OP_ISCONST LPAREN relocexpr RPAREN {
-		$$.makeNumber($3.isKnown);
+		$$.makeNumber($3.isKnown());
 	}
 	| OP_BANK LPAREN scoped_anon_id RPAREN {
 		// '@' is also an ID; it is handled here
@@ -1846,7 +1846,7 @@ z80_ldio:
 c_ind:
 	  LBRACK MODE_C RBRACK
 	| LBRACK relocexpr OP_ADD MODE_C RBRACK {
-		if (!$2.isKnown || $2.val != 0xFF00)
+		if (!$2.isKnown() || $2.value() != 0xFF00)
 			::error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
 	}
 ;
@@ -2060,10 +2060,10 @@ z80_rrca:
 z80_rst:
 	Z80_RST reloc_8bit {
 		$2.makeCheckRST();
-		if (!$2.isKnown)
+		if (!$2.isKnown())
 			sect_RelByte($2, 0);
 		else
-			sect_AbsByte(0xC7 | $2.val);
+			sect_AbsByte(0xC7 | $2.value());
 	}
 ;
 
