@@ -3,7 +3,7 @@
 .SUFFIXES:
 .SUFFIXES: .cpp .y .o
 
-.PHONY: all clean install checkdiff develop debug profile coverage mingw32 mingw64 wine-shim dist
+.PHONY: all clean install checkdiff develop debug profile coverage iwyu mingw32 mingw64 wine-shim dist
 
 # User-defined variables
 
@@ -235,6 +235,13 @@ profile:
 coverage:
 	$Qenv ${MAKE} \
 		CXXFLAGS="-ggdb3 -Og --coverage -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+
+# This target is used during development in order to remove unused `#include` headers.
+
+iwyu:
+	$Qenv ${MAKE} \
+		CXX="include-what-you-use" \
+		REALCXXFLAGS="-std=c++2a -I include"
 
 # Targets for the project maintainer to easily create Windows exes.
 # This is not for Windows users!
