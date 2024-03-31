@@ -734,11 +734,11 @@ void sect_RelByte(Expression &expr, uint32_t pcShift) {
 	if (!reserveSpace(1))
 		return;
 
-	if (int32_t *val = std::get_if<int32_t>(&expr.data); val) {
-		writebyte(*val);
-	} else {
+	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
 		writebyte(0);
+	} else {
+		writebyte(expr.value());
 	}
 }
 
@@ -753,11 +753,11 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 	for (uint32_t i = 0; i < n; i++) {
 		Expression &expr = exprs[i % exprs.size()];
 
-		if (int32_t *val = std::get_if<int32_t>(&expr.data); val) {
-			writebyte(*val);
-		} else {
+		if (!expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
 			writebyte(0);
+		} else {
+			writebyte(expr.value());
 		}
 	}
 }
@@ -770,11 +770,11 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 	if (!reserveSpace(2))
 		return;
 
-	if (int32_t *val = std::get_if<int32_t>(&expr.data); val) {
-		writeword(*val);
-	} else {
+	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
 		writeword(0);
+	} else {
+		writeword(expr.value());
 	}
 }
 
@@ -786,11 +786,11 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 	if (!reserveSpace(2))
 		return;
 
-	if (int32_t *val = std::get_if<int32_t>(&expr.data); val) {
-		writelong(*val);
-	} else {
+	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
 		writelong(0);
+	} else {
+		writelong(expr.value());
 	}
 }
 
