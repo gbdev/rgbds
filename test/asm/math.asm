@@ -19,14 +19,18 @@ ENDM
 
 	assert DIV(5.0, 2.0) == 2.5
 	assert DIV(-5.0, 2.0) == -2.5
-	assert DIV(-5.0, 0.0) == $8000_0000
+	assert DIV(5.0, 0.0) == $7fff_ffff ; +inf => INT32_MAX
+	assert DIV(-5.0, 0.0) == $8000_0000 ; -inf => INT32_MIN
+	assert DIV(0.0, 0.0) == $0000_0000 ; nan => 0
 
 	assert MUL(10.0, 0.5) == 5.0
 	assert MUL(10.0, 0.0) == 0.0
 
 	assert FMOD(5.0, 2.0) == 1.0
 	assert FMOD(-5.0, 2.0) == -1.0
-	assert FMOD(-5.0, 0.0) == $8000_0000
+	assert FMOD(5.0, 0.0) == 0 ; nan
+	assert FMOD(-5.0, 0.0) == 0 ; nan
+	assert FMOD(0.0, 0.0) == 0 ; nan
 
 	assert POW(10.0, 2.0) == 100.0
 	assert POW(100.0, 0.5) == 10.0

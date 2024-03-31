@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <inttypes.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -153,11 +154,10 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	char signChar = sign; // 0 or ' ' or '+'
 
 	if (useType == 'd' || useType == 'f') {
-		int32_t v = value;
-
-		if (v < 0 && v != INT32_MIN) {
+		if (int32_t v = value; v < 0) {
 			signChar = '-';
-			value = -v;
+			if (v != INT32_MIN)
+				value = -v;
 		}
 	}
 
@@ -194,16 +194,20 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 			useFracWidth = 255;
 		}
 
-		snprintf(
-		    valueBuf, sizeof(valueBuf), "%.*f", (int)useFracWidth, value / fix_PrecisionFactor()
-		);
+		double fval = fabs(value / fix_PrecisionFactor());
+		snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)useFracWidth, fval);
+	} else if (useType == 'd') {
+		// Decimal numbers may be formatted with a '-' sign by `snprintf`, so `abs` prevents that,
+		// with a special case for `INT32_MIN` since `labs(INT32_MIN)` is UB. The sign will be
+		// printed later from `signChar`.
+		uint32_t uval = value != (uint32_t)INT32_MIN ? labs((int32_t)value) : value;
+		snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, uval);
 	} else {
-		char const *spec = useType == 'd'   ? "%" PRId32
-		                   : useType == 'u' ? "%" PRIu32
+		char const *spec = useType == 'u' ? "%" PRIu32
 		                   : useType == 'X' ? "%" PRIX32
 		                   : useType == 'x' ? "%" PRIx32
 		                   : useType == 'o' ? "%" PRIo32
-		                                    : "%" PRId32;
+		                                    : "%" PRIu32;
 
 		snprintf(valueBuf, sizeof(valueBuf), spec, value);
 	}

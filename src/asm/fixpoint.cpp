@@ -25,6 +25,10 @@ static double fix2double(int32_t i, int32_t q) {
 }
 
 static int32_t double2fix(double d, int32_t q) {
+	if (isnan(d))
+		return 0;
+	if (isinf(d))
+		return d < 0 ? INT32_MIN : INT32_MAX;
 	return (int32_t)round(d * pow(2.0, q));
 }
 
