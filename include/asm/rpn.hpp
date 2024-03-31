@@ -30,9 +30,6 @@ struct Expression {
 
 	Expression &operator=(Expression &&) = default;
 
-	bool isKnown() const { return std::holds_alternative<int32_t>(data); }
-	int32_t value() const;
-
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;
 	bool isDiffConstant(Symbol const *symName) const;
