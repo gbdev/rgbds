@@ -244,14 +244,15 @@ static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 	patch.pcSection = sect_GetSymbolSection();
 	patch.pcOffset = sect_GetSymbolOffset();
 
-	if (expr.isKnown) {
+	if (expr.isKnown()) {
 		// If the RPN expr's value is known, output a constant directly
+		uint32_t val = expr.value();
 		patch.rpn.resize(5);
 		patch.rpn[0] = RPN_CONST;
-		patch.rpn[1] = (uint32_t)expr.val & 0xFF;
-		patch.rpn[2] = (uint32_t)expr.val >> 8;
-		patch.rpn[3] = (uint32_t)expr.val >> 16;
-		patch.rpn[4] = (uint32_t)expr.val >> 24;
+		patch.rpn[1] = val & 0xFF;
+		patch.rpn[2] = val >> 8;
+		patch.rpn[3] = val >> 16;
+		patch.rpn[4] = val >> 24;
 	} else {
 		patch.rpn.resize(expr.rpnPatchSize);
 		writerpn(patch.rpn, expr.rpn);
