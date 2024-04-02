@@ -3,9 +3,10 @@
 #ifndef RGBDS_EITHER_HPP
 #define RGBDS_EITHER_HPP
 
-#include <assert.h>
 #include <type_traits>
 #include <utility>
+
+#include "helpers.hpp" // assume
 
 template<typename T1, typename T2>
 union Either {
