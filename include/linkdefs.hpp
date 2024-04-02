@@ -3,9 +3,10 @@
 #ifndef RGBDS_LINKDEFS_H
 #define RGBDS_LINKDEFS_H
 
-#include <assert.h>
 #include <stdint.h>
 #include <string>
+
+#include "helpers.hpp" // assume
 
 #define RGBDS_OBJECT_VERSION_STRING "RGBA"
 #define RGBDS_OBJECT_REV            10U
@@ -93,7 +94,7 @@ extern struct SectionTypeInfo {
  * @return `true` if the section's definition includes data
  */
 static inline bool sect_HasData(SectionType type) {
-	assert(type != SECTTYPE_INVALID);
+	assume(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 

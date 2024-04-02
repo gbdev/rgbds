@@ -3,9 +3,10 @@
 #include "gfx/rgba.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <math.h>
 #include <stdint.h>
+
+#include "helpers.hpp" // assume
 
 #include "gfx/main.hpp" // options
 
@@ -37,7 +38,7 @@ uint16_t Rgba::cgbColor() const {
 	if (isTransparent()) {
 		return transparent;
 	}
-	assert(isOpaque());
+	assume(isOpaque());
 
 	uint8_t r = red, g = green, b = blue;
 	if (options.useColorCurve) {
@@ -56,7 +57,7 @@ uint16_t Rgba::cgbColor() const {
 }
 
 uint8_t Rgba::grayIndex() const {
-	assert(isGray());
+	assume(isGray());
 	// Convert from [0; 256[ to [0; maxOpaqueColors[
 	return static_cast<uint16_t>(255 - red) * options.maxOpaqueColors() / 256;
 }

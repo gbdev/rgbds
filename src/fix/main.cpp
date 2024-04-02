@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -774,7 +773,7 @@ static uint8_t maxTitleLen() {
 
 static ssize_t readBytes(int fd, uint8_t *buf, size_t len) {
 	// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
-	assert(len <= SSIZE_MAX);
+	assume(len <= SSIZE_MAX);
 
 	ssize_t total = 0;
 
@@ -799,7 +798,7 @@ static ssize_t readBytes(int fd, uint8_t *buf, size_t len) {
 
 static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 	// POSIX specifies that lengths greater than SSIZE_MAX yield implementation-defined results
-	assert(len <= SSIZE_MAX);
+	assume(len <= SSIZE_MAX);
 
 	ssize_t total = 0;
 
@@ -869,9 +868,9 @@ static void overwriteBytes(
 static void processFile(int input, int output, char const *name, off_t fileSize) {
 	// Both of these should be true for seekable files, and neither otherwise
 	if (input == output)
-		assert(fileSize != 0);
+		assume(fileSize != 0);
 	else
-		assert(fileSize == 0);
+		assume(fileSize == 0);
 
 	uint8_t rom0[BANK_SIZE];
 	ssize_t rom0Len = readBytes(input, rom0, sizeof(rom0));
@@ -1037,9 +1036,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			}
 			nbBanks = 2;
 		} else {
-			assert(rom0Len == sizeof(rom0));
+			assume(rom0Len == sizeof(rom0));
 		}
-		assert(nbBanks >= 2);
+		assume(nbBanks >= 2);
 		// Alter number of banks to reflect required value
 		// x&(x-1) is zero iff x is a power of 2, or 0; we know for sure it's non-zero,
 		// so this is true (non-zero) when we don't have a power of 2
@@ -1063,7 +1062,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (fixSpec & (FIX_GLOBAL_SUM | TRASH_GLOBAL_SUM)) {
 		// Computation of the global checksum does not include the checksum bytes
-		assert(rom0Len >= 0x14E);
+		assume(rom0Len >= 0x14E);
 		for (uint16_t i = 0; i < 0x14E; i++)
 			globalSum += rom0[i];
 		for (uint16_t i = 0x150; i < rom0Len; i++)

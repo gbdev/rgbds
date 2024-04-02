@@ -3,7 +3,6 @@
 #ifndef RGBDS_FILE_HPP
 #define RGBDS_FILE_HPP
 
-#include <assert.h>
 #include <fcntl.h>
 #include <fstream>
 #include <ios>
@@ -13,6 +12,7 @@
 #include <string>
 #include <variant>
 
+#include "helpers.hpp" // assume
 #include "platform.hpp"
 
 #include "gfx/main.hpp"
@@ -33,7 +33,7 @@ public:
 		if (path != "-") {
 			return _file.emplace<std::filebuf>().open(path, mode) ? this : nullptr;
 		} else if (mode & std::ios_base::in) {
-			assert(!(mode & std::ios_base::out));
+			assume(!(mode & std::ios_base::out));
 			_file.emplace<std::streambuf *>(std::cin.rdbuf());
 			if (setmode(STDIN_FILENO, (mode & std::ios_base::binary) ? O_BINARY : O_TEXT) == -1) {
 				fatal(
@@ -43,7 +43,7 @@ public:
 				);
 			}
 		} else {
-			assert(mode & std::ios_base::out);
+			assume(mode & std::ios_base::out);
 			_file.emplace<std::streambuf *>(std::cout.rdbuf());
 		}
 		return this;

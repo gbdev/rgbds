@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -12,6 +11,7 @@
 
 #include "error.hpp"
 #include "extern/getopt.hpp"
+#include "helpers.hpp" // assume
 #include "itertools.hpp"
 #include "platform.hpp"
 #include "script.hpp"
@@ -46,28 +46,28 @@ FILE *linkerScript;
 static uint32_t nbErrors = 0;
 
 std::vector<uint32_t> &FileStackNode::iters() {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	assume(std::holds_alternative<std::vector<uint32_t>>(data));
 	return std::get<std::vector<uint32_t>>(data);
 }
 
 std::vector<uint32_t> const &FileStackNode::iters() const {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	assume(std::holds_alternative<std::vector<uint32_t>>(data));
 	return std::get<std::vector<uint32_t>>(data);
 }
 
 std::string &FileStackNode::name() {
-	assert(std::holds_alternative<std::string>(data));
+	assume(std::holds_alternative<std::string>(data));
 	return std::get<std::string>(data);
 }
 
 std::string const &FileStackNode::name() const {
-	assert(std::holds_alternative<std::string>(data));
+	assume(std::holds_alternative<std::string>(data));
 	return std::get<std::string>(data);
 }
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
-		assert(parent); // REPT nodes use their parent's name
+		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
 		fputs(lastName.c_str(), stderr);
@@ -223,7 +223,7 @@ static void parseScrambleSpec(char const *spec) {
 	// indicating their scramble limit.
 	while (spec) {
 		// Invariant: we should not be pointing at whitespace at this point
-		assert(*spec != ' ' && *spec != '\t');
+		assume(*spec != ' ' && *spec != '\t');
 
 		// Remember where the region's name begins and ends
 		char const *regionName = spec;
@@ -232,7 +232,7 @@ static void parseScrambleSpec(char const *spec) {
 		int regionNamePrintLen = regionNameLen > INT_MAX ? INT_MAX : (int)regionNameLen;
 		ScrambledRegion region = SCRAMBLE_UNK;
 
-		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assert
+		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assumption
 		if (regionNameLen == 0) {
 			argErr('S', "Missing region name");
 
@@ -322,7 +322,7 @@ static void parseScrambleSpec(char const *spec) {
 
 next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 		if (spec) {
-			assert(*spec == ',' || *spec == '\0');
+			assume(*spec == ',' || *spec == '\0');
 			if (*spec == ',')
 				spec += 1 + strspn(&spec[1], " \t");
 			if (*spec == '\0')

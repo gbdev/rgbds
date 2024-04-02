@@ -2,13 +2,13 @@
 
 #include "link/patch.hpp"
 
-#include <assert.h>
 #include <deque>
 #include <inttypes.h>
 #include <stdint.h>
 #include <variant>
 #include <vector>
 
+#include "helpers.hpp" // assume
 #include "linkdefs.hpp"
 #include "opmath.hpp"
 
@@ -54,7 +54,7 @@ static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch cons
 }
 
 static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t index) {
-	assert(index != (uint32_t)-1); // PC needs to be handled specially, not here
+	assume(index != (uint32_t)-1); // PC needs to be handled specially, not here
 	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
@@ -297,7 +297,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				isError = true;
 				value = 1;
 			} else {
-				assert(sect->offset == 0);
+				assume(sect->offset == 0);
 				value = sect->org;
 			}
 			break;
@@ -377,7 +377,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				} else if (auto *label = std::get_if<Label>(&symbol->data); label) {
 					value = label->section->org + label->offset;
 				} else {
-					assert(std::holds_alternative<int32_t>(symbol->data));
+					assume(std::holds_alternative<int32_t>(symbol->data));
 					value = std::get<int32_t>(symbol->data);
 				}
 			}

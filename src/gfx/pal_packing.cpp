@@ -3,7 +3,6 @@
 #include "gfx/pal_packing.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <deque>
 #include <inttypes.h>
 #include <optional>
@@ -107,7 +106,7 @@ private:
 			return it;
 		}
 		reference operator*() const {
-			assert((*_iter).has_value());
+			assume((*_iter).has_value());
 			return **_iter;
 		}
 		pointer operator->() const {
@@ -308,7 +307,7 @@ static void decant(
 			// Build up the "component"...
 			colors.clear();
 			members.clear();
-			assert(members.empty()); // Compiler optimization hint
+			assume(members.empty()); // Compiler optimization hint
 			do {
 				ProtoPalette const &protoPal = protoPalettes[attrs->protoPalIndex];
 				// If this is the first proto-pal, or if at least one color matches, add it

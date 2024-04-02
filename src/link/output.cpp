@@ -3,7 +3,6 @@
 #include "link/output.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <deque>
 #include <inttypes.h>
 #include <stdio.h>
@@ -162,7 +161,7 @@ static void
 
 	if (bankSections) {
 		for (Section const *section : *bankSections) {
-			assert(section->offset == 0);
+			assume(section->offset == 0);
 			// Output padding up to the next SECTION
 			while (offset + baseOffset < section->org) {
 				putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
@@ -407,7 +406,7 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 		Section const *sect = *pickedSection;
 
 		used += sect->size;
-		assert(sect->offset == 0);
+		assume(sect->offset == 0);
 
 		writeEmptySpace(prevEndAddr, sect->org);
 

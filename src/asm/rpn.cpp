@@ -2,7 +2,6 @@
 
 #include "asm/rpn.hpp"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
@@ -10,6 +9,7 @@
 #include <string.h>
 #include <string_view>
 
+#include "helpers.hpp" // assume
 #include "opmath.hpp"
 
 #include "asm/output.hpp"
@@ -20,7 +20,7 @@
 using namespace std::literals;
 
 int32_t Expression::value() const {
-	assert(std::holds_alternative<int32_t>(data));
+	assume(std::holds_alternative<int32_t>(data));
 	return std::get<int32_t>(data);
 }
 
@@ -116,7 +116,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		data = 1;
 	} else {
 		sym = sym_Ref(symName);
-		assert(sym); // If the symbol didn't exist, it should have been created
+		assume(sym); // If the symbol didn't exist, it should have been created
 
 		if (sym->getSection() && sym->getSection()->bank != (uint32_t)-1) {
 			// Symbol's section is known and bank is fixed
@@ -217,7 +217,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	Symbol const &sym = lhsIsSymbol ? *lhsSymbol : *rhsSymbol;
 	Expression const &expr = lhsIsSymbol ? rhs : lhs; // Opposite side of `sym`
 
-	assert(sym.isNumeric());
+	assume(sym.isNumeric());
 
 	if (!expr.isKnown())
 		return -1;
@@ -231,7 +231,7 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 
 	// `sym.getValue()` attempts to add the section's address, but that's "-1"
 	// because the section is floating (otherwise we wouldn't be here)
-	assert(sect.org == (uint32_t)-1);
+	assume(sect.org == (uint32_t)-1);
 	int32_t symbolOfs = sym.getValue() + 1;
 
 	return (symbolOfs + sect.alignOfs) & ~unknownBits;
@@ -502,8 +502,8 @@ void Expression::makeCheckRST() {
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void Expression::checkNBit(uint8_t n) const {
-	assert(n != 0);                     // That doesn't make sense
-	assert(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
+	assume(n != 0);                     // That doesn't make sense
+	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
 	if (isKnown()) {
 		if (int32_t val = value(); val < -(1 << n) || val >= 1 << n)

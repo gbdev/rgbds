@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <array>
-#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <optional>
@@ -14,6 +13,7 @@
 
 #include "defaultinitalloc.hpp"
 #include "file.hpp"
+#include "helpers.hpp" // assume
 #include "itertools.hpp"
 
 #include "gfx/main.hpp"
@@ -42,7 +42,7 @@ static DefaultInitVec<uint8_t> readInto(std::string const &path) {
 
 		// Arbitrary, but if you got a better idea...
 		size_t newSize = oldSize != data.capacity() ? data.capacity() : oldSize * 2;
-		assert(oldSize != newSize);
+		assume(oldSize != newSize);
 		data.resize(newSize);
 	}
 
@@ -343,9 +343,9 @@ void reverse() {
 				tileID =
 				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
 			}
-			assert(tileID < nbTileInstances); // Should have been checked earlier
+			assume(tileID < nbTileInstances); // Should have been checked earlier
 			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
-			assert(palID < palettes.size()); // Should be ensured on data read
+			assume(palID < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
 			static std::array<uint8_t, 16> const trimmedTile{

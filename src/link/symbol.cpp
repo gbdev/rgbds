@@ -5,18 +5,20 @@
 #include <stdlib.h>
 #include <unordered_map>
 
+#include "helpers.hpp" // assume
+
 #include "link/main.hpp"
 #include "link/section.hpp"
 
 std::unordered_map<std::string, Symbol *> symbols;
 
 Label &Symbol::label() {
-	assert(std::holds_alternative<Label>(data));
+	assume(std::holds_alternative<Label>(data));
 	return std::get<Label>(data);
 }
 
 Label const &Symbol::label() const {
-	assert(std::holds_alternative<Label>(data));
+	assume(std::holds_alternative<Label>(data));
 	return std::get<Label>(data);
 }
 
