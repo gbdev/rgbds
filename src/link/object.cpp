@@ -566,8 +566,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 		if (symbol.type == SYMTYPE_EXPORT)
 			sym_AddSymbol(symbol);
-		if (auto *label = std::get_if<Label>(&symbol.data); label)
-			nbSymPerSect[label->sectionID]++;
+		if (symbol.data.holds<Label>())
+			nbSymPerSect[symbol.data.get<Label>().sectionID]++;
 	}
 
 	// This file's sections, stored in a table to link symbols to them
@@ -605,12 +605,11 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	// Give symbols' section pointers to their sections
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (auto *label = std::get_if<Label>(&fileSymbols[i].data); label) {
-			Section *section = fileSections[label->sectionID].get();
-
-			label->section = section;
+		if (fileSymbols[i].data.holds<Label>()) {
+			Label &label = fileSymbols[i].data.get<Label>();
+			label.section = fileSections[label.sectionID].get();
 			// Give the section a pointer to the symbol as well
-			linkSymToSect(fileSymbols[i], *section);
+			linkSymToSect(fileSymbols[i], *label.section);
 		}
 	}
 
@@ -622,13 +621,15 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
 	for (uint32_t i = 0; i < nbSymbols; i++) {
-		if (auto *label = std::get_if<Label>(&fileSymbols[i].data); label) {
-			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
-				if (section->modifier == SECTION_FRAGMENT)
+		if (fileSymbols[i].data.holds<Label>()) {
+			Label &label = fileSymbols[i].data.get<Label>();
+			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
+				if (section->modifier == SECTION_FRAGMENT) {
 					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
-					label->offset += section->offset;
+					label.offset += section->offset;
+				}
 				// Associate the symbol with the main section, not the "component" one
-				label->section = sect_GetSection(section->name);
+				label.section = sect_GetSection(section->name);
 			}
 		}
 	}

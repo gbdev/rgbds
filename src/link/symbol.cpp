@@ -12,16 +12,6 @@
 
 std::unordered_map<std::string, Symbol *> symbols;
 
-Label &Symbol::label() {
-	assume(std::holds_alternative<Label>(data));
-	return std::get<Label>(data);
-}
-
-Label const &Symbol::label() const {
-	assume(std::holds_alternative<Label>(data));
-	return std::get<Label>(data);
-}
-
 void sym_ForEach(void (*callback)(Symbol &)) {
 	for (auto &it : symbols)
 		callback(*it.second);
@@ -29,8 +19,9 @@ void sym_ForEach(void (*callback)(Symbol &)) {
 
 void sym_AddSymbol(Symbol &symbol) {
 	Symbol *other = sym_GetSymbol(symbol.name);
-	auto *symValue = std::get_if<int32_t>(&symbol.data);
-	auto *otherValue = other ? std::get_if<int32_t>(&other->data) : nullptr;
+	int32_t *symValue = symbol.data.holds<int32_t>() ? &symbol.data.get<int32_t>() : nullptr;
+	int32_t *otherValue =
+	    other && other->data.holds<int32_t>() ? &other->data.get<int32_t>() : nullptr;
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {

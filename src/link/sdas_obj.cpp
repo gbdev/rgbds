@@ -395,10 +395,11 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					// The same symbol can only be defined twice if neither
 					// definition is in a floating section
 					auto checkSymbol = [](Symbol const &sym) -> std::tuple<Section *, int32_t> {
-						if (auto *label = std::get_if<Label>(&sym.data); label)
-							return {label->section, label->offset};
-						assume(std::holds_alternative<int32_t>(sym.data));
-						return {nullptr, std::get<int32_t>(sym.data)};
+						if (sym.data.holds<Label>()) {
+							Label const &label = sym.data.get<Label>();
+							return {label.section, label.offset};
+						}
+						return {nullptr, sym.data.get<int32_t>()};
 					};
 					auto [symbolSection, symbolValue] = checkSymbol(symbol);
 					auto [otherSection, otherValue] = checkSymbol(*other);
@@ -876,13 +877,15 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 	// This has to run **after** all the `sect_AddSection()` calls,
 	// so that `sect_GetSection()` will work
 	for (Symbol &sym : fileSymbols) {
-		if (auto *label = std::get_if<Label>(&sym.data); label) {
-			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
-				if (section->modifier == SECTION_FRAGMENT)
+		if (sym.data.holds<Label>()) {
+			Label &label = sym.data.get<Label>();
+			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
+				if (section->modifier == SECTION_FRAGMENT) {
 					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
-					label->offset += section->offset;
+					label.offset += section->offset;
+				}
 				// Associate the symbol with the main section, not the "component" one
-				label->section = sect_GetSection(section->name);
+				label.section = sect_GetSection(section->name);
 			}
 		}
 	}
