@@ -2,7 +2,6 @@
 
 #include "link/sdas_obj.hpp"
 
-#include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <memory>
@@ -11,6 +10,7 @@
 #include <tuple>
 #include <variant>
 
+#include "helpers.hpp" // assume
 #include "linkdefs.hpp"
 #include "platform.hpp"
 
@@ -255,7 +255,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			std::unique_ptr<Section> curSection = std::make_unique<Section>();
 
 			getToken(line.data(), "'A' line is too short");
-			assert(strlen(token) != 0); // This should be impossible, tokens are non-empty
+			assume(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
 			for (FileSection &entry : fileSections) {
 				if (!strcmp(token, entry.section->name.c_str()))
@@ -365,7 +365,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				// Symbols in sections are labels; their value is an offset
 				Section *section = fileSections.back().section.get();
 				if (section->isAddressFixed) {
-					assert(value >= section->org && value <= section->org + section->size);
+					assume(value >= section->org && value <= section->org + section->size);
 					value -= section->org;
 				}
 				// No need to set the `sectionID`, since we set the pointer
@@ -392,7 +392,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					auto checkSymbol = [](Symbol const &sym) -> std::tuple<Section *, int32_t> {
 						if (auto *label = std::get_if<Label>(&sym.data); label)
 							return {label->section, label->offset};
-						assert(std::holds_alternative<int32_t>(sym.data));
+						assume(std::holds_alternative<int32_t>(sym.data));
 						return {nullptr, std::get<int32_t>(sym.data)};
 					};
 					auto [symbolSection, symbolValue] = checkSymbol(symbol);
@@ -468,7 +468,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				    areaIdx,
 				    fileSections.size()
 				);
-			assert(!fileSections.empty()); // There should be at least one, from the above check
+			assume(!fileSections.empty()); // There should be at least one, from the above check
 			Section *section = fileSections[areaIdx].section.get();
 			uint16_t *writeIndex = &fileSections[areaIdx].writeIndex;
 			uint8_t writtenOfs = ADDR_SIZE; // Bytes before this have been written to `->data`
@@ -500,7 +500,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    *writeIndex
 					);
 				if (section->data.empty()) {
-					assert(section->size != 0);
+					assume(section->size != 0);
 					section->data.resize(section->size);
 				}
 			}
@@ -584,7 +584,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				uint8_t nbBaseBytes = patch.type == PATCHTYPE_BYTE ? ADDR_SIZE : 2;
 				uint32_t baseValue = 0;
 
-				assert(offset < data.size());
+				assume(offset < data.size());
 				if (data.size() - offset < nbBaseBytes)
 					fatal(
 					    &where,
@@ -755,7 +755,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						patch.rpnExpression.push_back(RPN_AND);
 					}
 				} else if (flags & 1 << RELOC_ISPCREL) {
-					assert(patch.type == PATCHTYPE_WORD);
+					assume(patch.type == PATCHTYPE_WORD);
 					fatal(&where, lineNo, "16-bit PC-relative relocations are not supported");
 				} else if (flags & (1 << RELOC_EXPR16 | 1 << RELOC_EXPR24)) {
 					fatal(
@@ -769,7 +769,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 			// If there is some data left to append, do so
 			if (writtenOfs != data.size()) {
-				assert(data.size() > writtenOfs);
+				assume(data.size() > writtenOfs);
 				if (*writeIndex + (data.size() - writtenOfs) > section->size)
 					fatal(
 					    &where,

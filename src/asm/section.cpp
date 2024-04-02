@@ -3,7 +3,6 @@
 #include "asm/section.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <optional>
@@ -125,7 +124,7 @@ Section *sect_FindSectionByName(std::string const &name) {
 static unsigned int mergeSectUnion(
     Section &sect, SectionType type, uint32_t org, uint8_t alignment, uint16_t alignOffset
 ) {
-	assert(alignment < 16); // Should be ensured by the caller
+	assume(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
 	// Unionized sections only need "compatible" constraints, and they end up with the strictest
@@ -177,7 +176,7 @@ static unsigned int mergeSectUnion(
 
 static unsigned int
     mergeFragments(Section &sect, uint32_t org, uint8_t alignment, uint16_t alignOffset) {
-	assert(alignment < 16); // Should be ensured by the caller
+	assume(alignment < 16); // Should be ensured by the caller
 	unsigned int nbSectErrors = 0;
 
 	// Fragments only need "compatible" constraints, and they end up with the strictest

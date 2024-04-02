@@ -3,12 +3,12 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-// Ideally, we'd use `__has_attribute` and `__has_builtin`, but these were only introduced in GCC 9
+// Ideally we'd use `std::unreachable`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
-	// In release builds, define "unreachable" as such, but trap in debug builds
 	#ifdef NDEBUG
 		#define unreachable_ __builtin_unreachable
 	#else
+		// In release builds, define "unreachable" as such, but trap in debug builds
 		#define unreachable_ __builtin_trap
 	#endif
 #else
@@ -18,32 +18,52 @@
 }
 #endif
 
-// Use builtins whenever possible, and shim them otherwise
+// Ideally we'd use `[[assume()]]`, but it has insufficient compiler support
+#ifdef NDEBUG
+	#ifdef _MSC_VER
+		#define assume(x) __assume(x)
+	#else
+		//  `[[gnu::assume()]]` for GCC or compatible also has insufficient support (GCC 13+ only)
+		#define assume(x) \
+			do { \
+				if (!(x)) \
+					unreachable_(); \
+			} while (0)
+	#endif
+#else
+	// In release builds, define "assume" as such, but `assert` in debug builds
+	#include <assert.h>
+	#define assume assert
+#endif
+
+// Ideally we'd use `std::bit_width`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
 	#define ctz __builtin_ctz
 	#define clz __builtin_clz
 
 #elif defined(_MSC_VER)
-	#include <assert.h>
 	#include <intrin.h>
 	#pragma intrinsic(_BitScanReverse, _BitScanForward)
+
 static inline int ctz(unsigned int x) {
 	unsigned long cnt;
 
-	assert(x != 0);
+	assume(x != 0);
 	_BitScanForward(&cnt, x);
 	return cnt;
 }
+
 static inline int clz(unsigned int x) {
 	unsigned long cnt;
 
-	assert(x != 0);
+	assume(x != 0);
 	_BitScanReverse(&cnt, x);
 	return 31 - cnt;
 }
 
 #else
 	#include <limits.h>
+
 static inline int ctz(unsigned int x) {
 	int cnt = 0;
 

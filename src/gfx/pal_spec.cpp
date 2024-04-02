@@ -3,7 +3,6 @@
 #include "gfx/pal_spec.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <charconv>
 #include <fstream>
 #include <inttypes.h>
@@ -26,13 +25,13 @@ using namespace std::string_view_literals;
 
 constexpr uint8_t nibble(char c) {
 	if (c >= 'a') {
-		assert(c <= 'f');
+		assume(c <= 'f');
 		return c - 'a' + 10;
 	} else if (c >= 'A') {
-		assert(c <= 'F');
+		assume(c <= 'F');
 		return c - 'A' + 10;
 	} else {
-		assert(c >= '0' && c <= '9');
+		assume(c >= '0' && c <= '9');
 		return c - '0';
 	}
 }
@@ -59,8 +58,8 @@ void parseInlinePalSpec(char const * const rawArg) {
 
 	auto parseError = [&rawArg, &arg](size_type ofs, size_type len, char const *msg) {
 		(void)arg; // With NDEBUG, `arg` is otherwise not used
-		assert(ofs <= arg.length());
-		assert(len <= arg.length());
+		assume(ofs <= arg.length());
+		assume(len <= arg.length());
 
 		errorMessage(msg);
 		fprintf(
@@ -178,7 +177,7 @@ void parseInlinePalSpec(char const * const rawArg) {
  */
 template<size_t n>
 static bool readMagic(std::filebuf &file, char const *magic) {
-	assert(strlen(magic) == n);
+	assume(strlen(magic) == n);
 
 	char magicBuf[n];
 	return file.sgetn(magicBuf, n) == n && memcmp(magicBuf, magic, n);

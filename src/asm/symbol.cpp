@@ -2,12 +2,12 @@
 
 #include "asm/symbol.hpp"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <unordered_map>
 
 #include "error.hpp"
+#include "helpers.hpp" // assume
 #include "version.hpp"
 
 #include "asm/fstack.hpp"
@@ -55,7 +55,7 @@ static int32_t CallbackPC() {
 }
 
 int32_t Symbol::getValue() const {
-	assert(std::holds_alternative<int32_t>(data) || std::holds_alternative<int32_t (*)()>(data));
+	assume(std::holds_alternative<int32_t>(data) || std::holds_alternative<int32_t (*)()>(data));
 	if (auto *value = std::get_if<int32_t>(&data); value) {
 		return type == SYM_LABEL ? *value + getSection()->org : *value;
 	}
@@ -73,12 +73,12 @@ int32_t Symbol::getOutputValue() const {
 }
 
 ContentSpan const &Symbol::getMacro() const {
-	assert((std::holds_alternative<ContentSpan>(data)));
+	assume((std::holds_alternative<ContentSpan>(data)));
 	return std::get<ContentSpan>(data);
 }
 
 std::shared_ptr<std::string> Symbol::getEqus() const {
-	assert(std::holds_alternative<std::shared_ptr<std::string>>(data));
+	assume(std::holds_alternative<std::shared_ptr<std::string>>(data));
 	return std::get<std::shared_ptr<std::string>>(data);
 }
 
@@ -361,7 +361,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
  * @return The created symbol
  */
 static Symbol *addLabel(std::string const &symName) {
-	assert(!symName.starts_with('.')); // The symbol name must have been expanded prior
+	assume(!symName.starts_with('.')); // The symbol name must have been expanded prior
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -390,11 +390,11 @@ static Symbol *addLabel(std::string const &symName) {
 // Add a local (`.name` or `Parent.name`) relocatable symbol
 Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// Assuming no dots in `labelScope` if defined
-	assert(!labelScope.has_value() || labelScope->find('.') == std::string::npos);
+	assume(!labelScope.has_value() || labelScope->find('.') == std::string::npos);
 
 	size_t dotPos = symName.find('.');
 
-	assert(dotPos != std::string::npos); // There should be at least one dot in `symName`
+	assume(dotPos != std::string::npos); // There should be at least one dot in `symName`
 
 	// Check for something after the dot
 	if (dotPos == symName.length() - 1) {

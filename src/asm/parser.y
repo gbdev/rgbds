@@ -2542,7 +2542,7 @@ static std::string strfmt(
 		} else if (auto *n = std::get_if<uint32_t>(&args[argIndex]); n) {
 			fmt.appendNumber(str, *n);
 		} else {
-			assert(std::holds_alternative<std::string>(args[argIndex]));
+			assume(std::holds_alternative<std::string>(args[argIndex]));
 			auto &s = std::get<std::string>(args[argIndex]);
 			fmt.appendString(str, s);
 		}

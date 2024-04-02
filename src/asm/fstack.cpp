@@ -3,7 +3,6 @@
 #include "asm/fstack.hpp"
 #include <sys/stat.h>
 
-#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
@@ -50,28 +49,28 @@ static std::vector<std::string> includePaths = {""};
 static std::string preIncludeName;
 
 std::vector<uint32_t> &FileStackNode::iters() {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	assume(std::holds_alternative<std::vector<uint32_t>>(data));
 	return std::get<std::vector<uint32_t>>(data);
 }
 
 std::vector<uint32_t> const &FileStackNode::iters() const {
-	assert(std::holds_alternative<std::vector<uint32_t>>(data));
+	assume(std::holds_alternative<std::vector<uint32_t>>(data));
 	return std::get<std::vector<uint32_t>>(data);
 }
 
 std::string &FileStackNode::name() {
-	assert(std::holds_alternative<std::string>(data));
+	assume(std::holds_alternative<std::string>(data));
 	return std::get<std::string>(data);
 }
 
 std::string const &FileStackNode::name() const {
-	assert(std::holds_alternative<std::string>(data));
+	assume(std::holds_alternative<std::string>(data));
 	return std::get<std::string>(data);
 }
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
-		assert(parent); // REPT nodes use their parent's name
+		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
 		fputs(lastName.c_str(), stderr);
@@ -270,7 +269,7 @@ static void newMacroContext(Symbol const &macro, std::shared_ptr<MacroArgs> macr
 	fileInfoName.append(macro.name);
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_MACRO, fileInfoName);
-	assert(!contextStack.empty()); // The top level context cannot be a MACRO
+	assume(!contextStack.empty()); // The top level context cannot be a MACRO
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = lexer_GetLineNo();
 
@@ -295,7 +294,7 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 	}
 
 	auto fileInfo = std::make_shared<FileStackNode>(NODE_REPT, fileInfoIters);
-	assert(!contextStack.empty()); // The top level context cannot be a REPT
+	assume(!contextStack.empty()); // The top level context cannot be a REPT
 	fileInfo->parent = oldContext.fileInfo;
 	fileInfo->lineNo = reptLineNo;
 

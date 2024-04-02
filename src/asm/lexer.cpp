@@ -5,7 +5,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -20,7 +19,7 @@
 	#include <unistd.h>
 #endif
 
-#include "helpers.hpp" // QUOTEDSTRLEN
+#include "helpers.hpp" // assume, QUOTEDSTRLEN
 #include "util.hpp"
 
 #include "asm/fixpoint.hpp"
@@ -477,14 +476,14 @@ LexerState::~LexerState() {
 	// scheduled at EOF; `lexerStateEOL` thus becomes a (weak) ref to that lexer state...
 	// It has been possible, due to a bug, that the corresponding fstack context gets popped
 	// before EOL, deleting the associated state... but it would still be switched to at EOL.
-	// This assertion checks that this doesn't happen again.
+	// This assumption checks that this doesn't happen again.
 	// It could be argued that deleting a state that's scheduled for EOF could simply clear
 	// `lexerStateEOL`, but there's currently no situation in which this should happen.
-	assert(this != lexerStateEOL);
+	assume(this != lexerStateEOL);
 }
 
 bool Expansion::advance() {
-	assert(offset <= size());
+	assume(offset <= size());
 	offset++;
 	return offset > size();
 }
@@ -494,11 +493,11 @@ BufferedContent::~BufferedContent() {
 }
 
 void BufferedContent::advance() {
-	assert(offset < LEXER_BUF_SIZE);
+	assume(offset < LEXER_BUF_SIZE);
 	offset++;
 	if (offset == LEXER_BUF_SIZE)
 		offset = 0; // Wrap around if necessary
-	assert(size > 0);
+	assume(size > 0);
 	size--;
 }
 
@@ -528,7 +527,7 @@ void BufferedContent::refill() {
 
 size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	// This buffer overflow made me lose WEEKS of my life. Never again.
-	assert(startIndex + nbChars <= LEXER_BUF_SIZE);
+	assume(startIndex + nbChars <= LEXER_BUF_SIZE);
 	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
 
 	if (nbReadChars == -1)
@@ -671,7 +670,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		error("Invalid macro argument '\\0'\n");
 		return nullptr;
 	} else {
-		assert(name > '0' && name <= '9');
+		assume(name > '0' && name <= '9');
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {
@@ -698,11 +697,11 @@ int LexerState::peekChar() {
 		if (view->offset < view->span.size)
 			return (uint8_t)view->span.ptr[view->offset];
 	} else {
-		assert(std::holds_alternative<BufferedContent>(content));
+		assume(std::holds_alternative<BufferedContent>(content));
 		auto &cbuf = std::get<BufferedContent>(content);
 		if (cbuf.size == 0)
 			cbuf.refill();
-		assert(cbuf.offset < LEXER_BUF_SIZE);
+		assume(cbuf.offset < LEXER_BUF_SIZE);
 		if (cbuf.size > 0)
 			return (uint8_t)cbuf.buf[cbuf.offset];
 	}
@@ -718,7 +717,7 @@ int LexerState::peekCharAhead() {
 	for (Expansion &exp : expansions) {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
-		assert(exp.offset <= exp.size());
+		assume(exp.offset <= exp.size());
 		if (exp.offset + distance < exp.size())
 			return (uint8_t)(*exp.contents)[exp.offset + distance];
 		distance -= exp.size() - exp.offset;
@@ -728,9 +727,9 @@ int LexerState::peekCharAhead() {
 		if (view->offset + distance < view->span.size)
 			return (uint8_t)view->span.ptr[view->offset + distance];
 	} else {
-		assert(std::holds_alternative<BufferedContent>(content));
+		assume(std::holds_alternative<BufferedContent>(content));
 		auto &cbuf = std::get<BufferedContent>(content);
-		assert(distance < LEXER_BUF_SIZE);
+		assume(distance < LEXER_BUF_SIZE);
 		if (cbuf.size <= distance)
 			cbuf.refill();
 		if (cbuf.size > distance)
@@ -816,7 +815,7 @@ restart:
 		if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
 			view->offset++;
 		} else {
-			assert(std::holds_alternative<BufferedContent>(lexerState->content));
+			assume(std::holds_alternative<BufferedContent>(lexerState->content));
 			auto &cbuf = std::get<BufferedContent>(lexerState->content);
 			cbuf.advance();
 		}
@@ -1785,7 +1784,7 @@ static Token yylex_NORMAL() {
 					return token;
 
 				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `std::string` value.
-				assert(std::holds_alternative<std::string>(token.value));
+				assume(std::holds_alternative<std::string>(token.value));
 
 				// Local symbols cannot be string expansions
 				if (token.type == T_(ID) && lexerState->expandStrings) {
@@ -1795,7 +1794,7 @@ static Token yylex_NORMAL() {
 					if (sym && sym->type == SYM_EQUS) {
 						std::shared_ptr<std::string> str = sym->getEqus();
 
-						assert(str);
+						assume(str);
 						beginExpansion(str, sym->name);
 						continue; // Restart, reading from the new buffer
 					}
@@ -2172,7 +2171,7 @@ yy::parser::symbol_type yylex() {
 	} else if (auto *strValue = std::get_if<std::string>(&token.value); strValue) {
 		return yy::parser::symbol_type(token.type, *strValue);
 	} else {
-		assert(std::holds_alternative<std::monostate>(token.value));
+		assume(std::holds_alternative<std::monostate>(token.value));
 		return yy::parser::symbol_type(token.type);
 	}
 }
@@ -2180,10 +2179,10 @@ yy::parser::symbol_type yylex() {
 static Capture startCapture() {
 	// Due to parser internals, it reads the EOL after the expression before calling this.
 	// Thus, we don't need to keep one in the buffer afterwards.
-	// The following assertion checks that.
-	assert(lexerState->atLineStart);
+	// The following assumption checks that.
+	assume(lexerState->atLineStart);
 
-	assert(!lexerState->capturing && lexerState->captureBuf == nullptr);
+	assume(!lexerState->capturing && lexerState->captureBuf == nullptr);
 	lexerState->capturing = true;
 	lexerState->captureSize = 0;
 
@@ -2194,7 +2193,7 @@ static Capture startCapture() {
 		    .lineNo = lineNo, .span = {.ptr = view->makeSharedContentPtr(), .size = 0}
         };
 	} else {
-		assert(lexerState->captureBuf == nullptr);
+		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
 		return {

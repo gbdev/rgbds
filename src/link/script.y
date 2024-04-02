@@ -15,7 +15,6 @@
 %code {
 	#include <algorithm>
 	#include <array>
-	#include <assert.h>
 	#include <bit>
 	#include <fstream>
 	#include <inttypes.h>
@@ -329,7 +328,7 @@ yy::parser::symbol_type yylex() {
 		std::string ident;
 		auto strUpperCmp = [](char cmp, char ref) {
 			// `locale::classic()` yields the "C" locale.
-			assert(!std::use_facet<std::ctype<char>>(std::locale::classic())
+			assume(!std::use_facet<std::ctype<char>>(std::locale::classic())
 			            .is(std::ctype_base::lower, ref));
 			return std::use_facet<std::ctype<char>>(std::locale::classic()).toupper(cmp) == ref;
 		};
@@ -522,7 +521,7 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 			return;
 		}
 
-		assert(pc >= typeInfo.startAddr);
+		assume(pc >= typeInfo.startAddr);
 		length %= alignSize;
 	}
 
@@ -556,7 +555,7 @@ static void pad(uint32_t length) {
 	auto const &typeInfo = sectionTypeInfo[activeType];
 	auto &pc = curAddr[activeType][activeBankIdx];
 
-	assert(pc >= typeInfo.startAddr);
+	assume(pc >= typeInfo.startAddr);
 	if (uint16_t offset = pc - typeInfo.startAddr; length + offset > typeInfo.size) {
 		scriptError(
 		    context,
@@ -588,7 +587,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 	}
 
 	auto const &typeInfo = sectionTypeInfo[activeType];
-	assert(section->offset == 0);
+	assume(section->offset == 0);
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
 		// SDCC areas don't have a type assigned yet, so the linker script is used to give them one.

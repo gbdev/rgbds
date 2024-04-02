@@ -3,7 +3,6 @@
 #include "gfx/proto_palette.hpp"
 
 #include <algorithm>
-#include <assert.h>
 
 #include "helpers.hpp"
 
@@ -41,8 +40,8 @@ bool ProtoPalette::add(uint16_t color) {
 
 ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) const {
 	// This works because the sets are sorted numerically
-	assert(std::is_sorted(RANGE(_colorIndices)));
-	assert(std::is_sorted(RANGE(other._colorIndices)));
+	assume(std::is_sorted(RANGE(_colorIndices)));
+	assume(std::is_sorted(RANGE(other._colorIndices)));
 
 	auto ours = _colorIndices.begin(), theirs = other._colorIndices.begin();
 	bool weBigger = true, theyBigger = true;

@@ -2,7 +2,6 @@
 
 #include "asm/output.hpp"
 
-#include <assert.h>
 #include <deque>
 #include <inttypes.h>
 #include <stdio.h>
@@ -12,7 +11,7 @@
 #include <vector>
 
 #include "error.hpp"
-#include "helpers.hpp" // Defer
+#include "helpers.hpp" // assume, Defer
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -75,7 +74,7 @@ static uint32_t getSectIDIfAny(Section *sect) {
 
 // Write a patch to a file
 static void writepatch(Patch const &patch, FILE *file) {
-	assert(patch.src->ID != (uint32_t)-1);
+	assume(patch.src->ID != (uint32_t)-1);
 	putlong(patch.src->ID, file);
 	putlong(patch.lineNo, file);
 	putlong(patch.offset, file);
@@ -117,7 +116,7 @@ static void writesymbol(Symbol const &sym, FILE *file) {
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
 	} else {
-		assert(sym.src->ID != (uint32_t)-1);
+		assume(sym.src->ID != (uint32_t)-1);
 
 		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, file);
 		putlong(sym.src->ID, file);

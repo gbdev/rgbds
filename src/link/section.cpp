@@ -2,7 +2,6 @@
 
 #include "link/section.hpp"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,7 +182,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 			for (Patch &patch : other->patches)
 				patch.pcOffset += other->offset;
 		} else if (!target.data.empty()) {
-			assert(other->size == 0);
+			assume(other->size == 0);
 		}
 		break;
 

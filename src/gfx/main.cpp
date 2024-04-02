@@ -3,7 +3,6 @@
 #include "gfx/main.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <ios>
@@ -17,6 +16,7 @@
 
 #include "extern/getopt.hpp"
 #include "file.hpp"
+#include "helpers.hpp" // assume
 #include "platform.hpp"
 #include "version.hpp"
 
@@ -633,7 +633,7 @@ int main(int argc, char *argv[]) {
 
 		if (musl_optind != curArgc) {
 			// This happens if `--` is passed, process the remaining arg(s) as positional
-			assert(musl_optind < curArgc);
+			assume(musl_optind < curArgc);
 			for (int i = musl_optind; i < curArgc; ++i) {
 				registerInput(argv[i]);
 			}
@@ -845,7 +845,7 @@ int main(int argc, char *argv[]) {
 
 void Palette::addColor(uint16_t color) {
 	for (size_t i = 0; true; ++i) {
-		assert(i < colors.size()); // The packing should guarantee this
+		assume(i < colors.size()); // The packing should guarantee this
 		if (colors[i] == color) {  // The color is already present
 			break;
 		} else if (colors[i] == UINT16_MAX) { // Empty slot

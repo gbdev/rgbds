@@ -3,7 +3,6 @@
 #include "gfx/pal_sorting.hpp"
 
 #include <algorithm>
-#include <assert.h>
 
 #include "helpers.hpp"
 
@@ -55,7 +54,7 @@ void grayscale(
 
 	// This method is only applicable if there are at most as many colors as colors per palette, so
 	// we should only have a single palette.
-	assert(palettes.size() == 1);
+	assume(palettes.size() == 1);
 
 	Palette &palette = palettes[0];
 	std::fill(RANGE(palette.colors), Rgba::transparent);

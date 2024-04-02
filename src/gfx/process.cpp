@@ -3,7 +3,6 @@
 #include "gfx/process.hpp"
 
 #include <algorithm>
-#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <optional>
@@ -48,7 +47,7 @@ public:
 		if (!slot.has_value()) {
 			slot.emplace(rgba);
 		} else if (*slot != rgba) {
-			assert(slot->cgbColor() != UINT16_MAX);
+			assume(slot->cgbColor() != UINT16_MAX);
 			return &*slot;
 		}
 		return nullptr;
@@ -270,7 +269,7 @@ public:
 
 		if (png_get_PLTE(png, info, &embeddedPal, &nbColors) != 0) {
 			if (png_get_tRNS(png, info, &transparencyPal, &nbTransparentEntries, nullptr)) {
-				assert(nbTransparentEntries <= nbColors);
+				assume(nbTransparentEntries <= nbColors);
 			}
 
 			options.verbosePrint(
@@ -326,16 +325,16 @@ public:
 		// Update `info` with the transformations
 		png_read_update_info(png, info);
 		// These shouldn't have changed
-		assert(png_get_image_width(png, info) == width);
-		assert(png_get_image_height(png, info) == height);
+		assume(png_get_image_width(png, info) == width);
+		assume(png_get_image_height(png, info) == height);
 		// These should have changed, however
-		assert(png_get_color_type(png, info) == PNG_COLOR_TYPE_RGBA);
-		assert(png_get_bit_depth(png, info) == 8);
+		assume(png_get_color_type(png, info) == PNG_COLOR_TYPE_RGBA);
+		assume(png_get_bit_depth(png, info) == 8);
 
 		// Now that metadata has been read, we can process the image data
 
 		size_t nbRowBytes = png_get_rowbytes(png, info);
-		assert(nbRowBytes != 0);
+		assume(nbRowBytes != 0);
 		DefaultInitVec<png_byte> row(nbRowBytes);
 		// Holds known-conflicting color pairs to avoid warning about them twice.
 		// We don't need to worry about transitivity, as ImagePalette slots are immutable once
@@ -394,7 +393,7 @@ public:
 				}
 			}
 		} else {
-			assert(interlaceType == PNG_INTERLACE_ADAM7);
+			assume(interlaceType == PNG_INTERLACE_ADAM7);
 
 			// For interlace to work properly, we must read the image `nbPasses` times
 			for (int pass = 0; pass < PNG_INTERLACE_ADAM7_PASSES; ++pass) {
@@ -549,7 +548,7 @@ static void generatePalSpec(Png const &png) {
 
 	// Fill in the palette spec
 	options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
-	assert(options.palSpec.size() == 1);
+	assume(options.palSpec.size() == 1);
 	if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
 		embPalSize = options.maxOpaqueColors();
 	}
@@ -568,7 +567,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// Run a "pagination" problem solver
 	// TODO: allow picking one of several solvers?
 	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
-	assert(mappings.size() == protoPalettes.size());
+	assume(mappings.size() == protoPalettes.size());
 
 	if (options.verbosity >= Options::VERB_INTERM) {
 		fprintf(
@@ -647,7 +646,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		});
 
 		if (iter == palettes.end()) {
-			assert(!protoPal.empty());
+			assume(!protoPal.empty());
 			error("Failed to fit tile colors [%s] in specified palettes", listColors(protoPal));
 			bad = true;
 		}
@@ -725,7 +724,7 @@ public:
 		for (uint32_t x = 0; x < 8; ++x) {
 			row <<= 1;
 			uint8_t index = palette.indexOf(tile.pixel(x, y).cgbColor());
-			assert(index < palette.size()); // The color should be in the palette
+			assume(index < palette.size()); // The color should be in the palette
 			if (index & 1) {
 				row |= 1;
 			}
@@ -803,7 +802,7 @@ public:
 		}
 
 		// If we have both (i.e. we have symmetry), default to vflip only
-		assert(hasVFlip || hasVHFlip);
+		assume(hasVFlip || hasVHFlip);
 		return hasVFlip ? MatchType::VFLIP : MatchType::VHFLIP;
 	}
 	friend bool operator==(TileData const &lhs, TileData const &rhs) {
@@ -854,7 +853,7 @@ static void outputTileData(
 			break;
 		}
 	}
-	assert(remainingTiles == 0);
+	assume(remainingTiles == 0);
 }
 
 static void outputMaps(
@@ -877,7 +876,7 @@ static void outputMaps(
 	uint8_t bank = 0;
 	for (auto attr : attrmap) {
 		if (tileID == options.maxNbTiles[bank]) {
-			assert(bank == 0);
+			assume(bank == 0);
 			bank = 1;
 			tileID = 0;
 		}
@@ -976,7 +975,7 @@ static void outputTileData(UniqueTiles const &tiles) {
 	uint16_t tileID = 0;
 	for (auto iter = tiles.begin(), end = tiles.end() - options.trim; iter != end; ++iter) {
 		TileData const *tile = *iter;
-		assert(tile->tileID == tileID);
+		assume(tile->tileID == tileID);
 		++tileID;
 		output->sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
 	}
