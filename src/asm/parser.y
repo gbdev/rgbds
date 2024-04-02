@@ -7,7 +7,6 @@
 %code requires {
 	#include <stdint.h>
 	#include <string>
-	#include <variant>
 	#include <vector>
 
 	#include "asm/lexer.hpp"
@@ -15,6 +14,7 @@
 	#include "asm/rpn.hpp"
 	#include "asm/section.hpp"
 
+	#include "either.hpp"
 	#include "linkdefs.hpp"
 
 	struct AlignmentSpec {
@@ -30,7 +30,7 @@
 
 	struct StrFmtArgList {
 		std::string format;
-		std::vector<std::variant<uint32_t, std::string>> args;
+		std::vector<Either<uint32_t, std::string>> args;
 
 		StrFmtArgList() = default;
 		StrFmtArgList(StrFmtArgList &&) = default;
@@ -81,8 +81,7 @@
 	    std::string_view str, std::string const &old, std::string const &rep
 	);
 	static std::string strfmt(
-	    std::string const &spec,
-	    std::vector<std::variant<uint32_t, std::string>> const &args
+	    std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args
 	);
 	static void compoundAssignment(std::string const &symName, RPNCommand op, int32_t constValue);
 	static void failAssert(AssertionType type);
@@ -2642,8 +2641,7 @@ static std::string strrpl(std::string_view str, std::string const &old, std::str
 }
 
 static std::string strfmt(
-    std::string const &spec,
-    std::vector<std::variant<uint32_t, std::string>> const &args
+    std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args
 ) {
 	std::string str;
 	size_t argIndex = 0;
@@ -2684,12 +2682,10 @@ static std::string strfmt(
 		} else if (argIndex >= args.size()) {
 			// Will warn after formatting is done.
 			str += '%';
-		} else if (auto *n = std::get_if<uint32_t>(&args[argIndex]); n) {
-			fmt.appendNumber(str, *n);
+		} else if (args[argIndex].holds<uint32_t>()) {
+			fmt.appendNumber(str, args[argIndex].get<uint32_t>());
 		} else {
-			assume(std::holds_alternative<std::string>(args[argIndex]));
-			auto &s = std::get<std::string>(args[argIndex]);
-			fmt.appendString(str, s);
+			fmt.appendString(str, args[argIndex].get<std::string>());
 		}
 
 		argIndex++;
