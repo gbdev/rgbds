@@ -5,7 +5,6 @@
 #include <deque>
 #include <inttypes.h>
 #include <stdint.h>
-#include <variant>
 #include <vector>
 
 #include "helpers.hpp" // assume, clz, ctz

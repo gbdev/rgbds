@@ -503,7 +503,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		// object file. It's better than nothing.
 		nodes[fileID].push_back({
 		    .type = NODE_FILE,
-		    .data = fileName,
+		    .data = Either<std::vector<uint32_t>, std::string>(fileName),
 		    .parent = nullptr,
 		    .lineNo = 0,
 		});

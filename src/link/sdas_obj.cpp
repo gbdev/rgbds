@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <tuple>
-#include <variant>
 
 #include "helpers.hpp" // assume
 #include "linkdefs.hpp"
