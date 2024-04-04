@@ -14,11 +14,11 @@ union Either {
 	typedef T2 type2;
 
 private:
-	template<typename T, bool V>
+	template<typename T, unsigned V>
 	struct Field {
-		constexpr static bool tag_value = V;
+		constexpr static unsigned tag_value = V;
 
-		bool tag = tag_value;
+		unsigned tag = tag_value;
 		T value;
 
 		Field() : value() {}
@@ -28,9 +28,10 @@ private:
 	};
 
 	// The `_tag` unifies with the first `tag` member of each `struct`.
-	bool _tag;
-	Field<T1, false> _t1;
-	Field<T2, true> _t2;
+	constexpr static unsigned nulltag = 0;
+	unsigned _tag = nulltag;
+	Field<T1, 1> _t1;
+	Field<T2, 2> _t2;
 
 	// Value accessors; the function parameters are dummies for overload resolution.
 	// Only used to implement `field()` below.
@@ -50,8 +51,8 @@ private:
 	}
 
 public:
-	// Types should be chosen so `T1` is cheaper to construct.
-	Either() : _t1() {}
+	// Equivalent of `std::monostate` for `std::variant`s.
+	Either() : _tag() {}
 	// These constructors cannot be generic over the value type, because that would prevent
 	// constructible values from being inferred, e.g. a `const char *` string literal for an
 	// `std::string` field value.
@@ -64,10 +65,10 @@ public:
 
 	// Destructor manually calls the appropriate value destructor.
 	~Either() {
-		if (_tag) {
-			_t2.value.~T2();
-		} else {
+		if (_tag == _t1.tag_value) {
 			_t1.value.~T1();
+		} else if (_tag == _t2.tag_value) {
+			_t2.value.~T2();
 		}
 	}
 
@@ -97,29 +98,35 @@ public:
 
 	// Copy assignment operator from another `Either`.
 	Either &operator=(Either other) {
-		if (other._tag) {
+		if (other._tag == other._t1.tag_value) {
+			*this = other._t1.value;
+		} else if (other._tag == other._t2.tag_value) {
 			*this = other._t2.value;
 		} else {
-			*this = other._t1.value;
+			_tag = nulltag;
 		}
 		return *this;
 	}
 
 	// Copy constructor from another `Either`; implemented in terms of value assignment operators.
 	Either(Either const &other) {
-		if (other._tag) {
+		if (other._tag == other._t1.tag_value) {
+			*this = other._t1.value;
+		} else if (other._tag == other._t2.tag_value) {
 			*this = other._t2.value;
 		} else {
-			*this = other._t1.value;
+			_tag = nulltag;
 		}
 	}
 
 	// Move constructor from another `Either`; implemented in terms of value assignment operators.
 	Either(Either &&other) {
-		if (other._tag) {
+		if (other._tag == other._t1.tag_value) {
+			*this = std::move(other._t1.value);
+		} else if (other._tag == other._t2.tag_value) {
 			*this = std::move(other._t2.value);
 		} else {
-			*this = std::move(other._t1.value);
+			_tag = nulltag;
 		}
 	}
 
@@ -127,19 +134,30 @@ public:
 	template<typename T, typename... Args>
 	void emplace(Args &&...args) {
 		this->~Either();
-		if constexpr (std::is_same_v<T, T2>) {
+		if constexpr (std::is_same_v<T, T1>) {
+			_t1.tag = _t1.tag_value;
+			new (&_t1.value) T1(std::forward<Args>(args)...);
+		} else if constexpr (std::is_same_v<T, T2>) {
 			_t2.tag = _t2.tag_value;
 			new (&_t2.value) T2(std::forward<Args>(args)...);
 		} else {
-			_t1.tag = _t1.tag_value;
-			new (&_t1.value) T1(std::forward<Args>(args)...);
+			_tag = nulltag;
 		}
 	}
+
+	// Equivalent of `std::holds_alternative<std::monostate>()` for `std::variant`s.
+	bool empty() const { return _tag == nulltag; }
 
 	// Equivalent of `std::holds_alternative<T>()` for `std::variant`s.
 	template<typename T>
 	bool holds() const {
-		return _tag == std::is_same_v<T, T2>;
+		if constexpr (std::is_same_v<T, T1>) {
+			return _tag == _t1.tag_value;
+		} else if constexpr (std::is_same_v<T, T2>) {
+			return _tag == _t2.tag_value;
+		} else {
+			return false;
+		}
 	}
 
 	// Equivalent of `std::get<T>()` for `std::variant`s.
