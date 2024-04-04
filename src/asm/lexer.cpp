@@ -19,6 +19,7 @@
 	#include <unistd.h>
 #endif
 
+#include "either.hpp"
 #include "helpers.hpp" // assume, QUOTEDSTRLEN
 #include "util.hpp"
 
@@ -106,10 +107,10 @@ using namespace std::literals;
 
 struct Token {
 	int type;
-	std::variant<std::monostate, uint32_t, std::string> value;
+	Either<uint32_t, std::string> value;
 
-	Token() : type(T_(NUMBER)), value(std::monostate{}) {}
-	Token(int type_) : type(type_), value(std::monostate{}) {}
+	Token() : type(T_(NUMBER)), value() {}
+	Token(int type_) : type(type_), value() {}
 	Token(int type_, uint32_t value_) : type(type_), value(value_) {}
 	Token(int type_, std::string const &value_) : type(type_), value(value_) {}
 	Token(int type_, std::string &&value_) : type(type_), value(value_) {}
@@ -1796,12 +1797,12 @@ static Token yylex_NORMAL() {
 					return token;
 
 				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `std::string` value.
-				assume(std::holds_alternative<std::string>(token.value));
+				assume(token.value.holds<std::string>());
 
 				// Local symbols cannot be string expansions
 				if (token.type == T_(ID) && lexerState->expandStrings) {
 					// Attempt string expansion
-					Symbol const *sym = sym_FindExactSymbol(std::get<std::string>(token.value));
+					Symbol const *sym = sym_FindExactSymbol(token.value.get<std::string>());
 
 					if (sym && sym->type == SYM_EQUS) {
 						std::shared_ptr<std::string> str = sym->getEqus();
@@ -2176,17 +2177,22 @@ yy::parser::symbol_type yylex() {
 	Token token = lexerModeFuncs[lexerState->mode]();
 
 	// Captures end at their buffer's boundary no matter what
-	if (token.type == T_(YYEOF) && !lexerState->capturing)
-		token = Token(T_(EOB));
+	if (token.type == T_(YYEOF) && !lexerState->capturing) {
+		// Doing `token = Token(T_(EOB));` here would be valid but redundant, because YYEOF and EOB
+		// both have the same empty value. Furthermore, g++ 11.4.0 was giving a false-positive
+		// '-Wmaybe-uninitialized' warning for `Token::value.Either<...>::_tag` that way.
+		// (This was on a developer's local machine; GitHub Actions CI's g++ was not warning.)
+		token.type = T_(EOB);
+	}
 	lexerState->lastToken = token.type;
 	lexerState->atLineStart = token.type == T_(NEWLINE) || token.type == T_(EOB);
 
-	if (auto *numValue = std::get_if<uint32_t>(&token.value); numValue) {
-		return yy::parser::symbol_type(token.type, *numValue);
-	} else if (auto *strValue = std::get_if<std::string>(&token.value); strValue) {
-		return yy::parser::symbol_type(token.type, *strValue);
+	if (token.value.holds<uint32_t>()) {
+		return yy::parser::symbol_type(token.type, token.value.get<uint32_t>());
+	} else if (token.value.holds<std::string>()) {
+		return yy::parser::symbol_type(token.type, token.value.get<std::string>());
 	} else {
-		assume(std::holds_alternative<std::monostate>(token.value));
+		assume(token.value.empty());
 		return yy::parser::symbol_type(token.type);
 	}
 }
