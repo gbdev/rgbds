@@ -19,7 +19,6 @@
 	#include <unistd.h>
 #endif
 
-#include "either.hpp"
 #include "helpers.hpp" // assume, QUOTEDSTRLEN
 #include "util.hpp"
 
@@ -465,8 +464,8 @@ void LexerState::setViewAsNextState(char const *name, ContentSpan const &span, u
 }
 
 void lexer_RestartRept(uint32_t lineNo) {
-	if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
-		view->offset = 0;
+	if (lexerState->content.holds<ViewedContent>()) {
+		lexerState->content.get<ViewedContent>().offset = 0;
 	}
 	lexerState->clear(lineNo);
 }
@@ -697,12 +696,12 @@ int LexerState::peekChar() {
 			return (uint8_t)(*exp.contents)[exp.offset];
 	}
 
-	if (auto *view = std::get_if<ViewedContent>(&content); view) {
-		if (view->offset < view->span.size)
-			return (uint8_t)view->span.ptr[view->offset];
+	if (content.holds<ViewedContent>()) {
+		auto &view = content.get<ViewedContent>();
+		if (view.offset < view.span.size)
+			return (uint8_t)view.span.ptr[view.offset];
 	} else {
-		assume(std::holds_alternative<BufferedContent>(content));
-		auto &cbuf = std::get<BufferedContent>(content);
+		auto &cbuf = content.get<BufferedContent>();
 		if (cbuf.size == 0)
 			cbuf.refill();
 		assume(cbuf.offset < LEXER_BUF_SIZE);
@@ -727,12 +726,12 @@ int LexerState::peekCharAhead() {
 		distance -= exp.size() - exp.offset;
 	}
 
-	if (auto *view = std::get_if<ViewedContent>(&content); view) {
-		if (view->offset + distance < view->span.size)
-			return (uint8_t)view->span.ptr[view->offset + distance];
+	if (content.holds<ViewedContent>()) {
+		auto &view = content.get<ViewedContent>();
+		if (view.offset + distance < view.span.size)
+			return (uint8_t)view.span.ptr[view.offset + distance];
 	} else {
-		assume(std::holds_alternative<BufferedContent>(content));
-		auto &cbuf = std::get<BufferedContent>(content);
+		auto &cbuf = content.get<BufferedContent>();
 		assume(distance < LEXER_BUF_SIZE);
 		if (cbuf.size <= distance)
 			cbuf.refill();
@@ -816,12 +815,10 @@ restart:
 	} else {
 		// Advance within the file contents
 		lexerState->colNo++;
-		if (auto *view = std::get_if<ViewedContent>(&lexerState->content); view) {
-			view->offset++;
+		if (lexerState->content.holds<ViewedContent>()) {
+			lexerState->content.get<ViewedContent>().offset++;
 		} else {
-			assume(std::holds_alternative<BufferedContent>(lexerState->content));
-			auto &cbuf = std::get<BufferedContent>(lexerState->content);
-			cbuf.advance();
+			lexerState->content.get<BufferedContent>().advance();
 		}
 	}
 }
@@ -2208,10 +2205,10 @@ static Capture startCapture() {
 	lexerState->captureSize = 0;
 
 	uint32_t lineNo = lexer_GetLineNo();
-	if (auto *view = std::get_if<ViewedContent>(&lexerState->content);
-	    view && lexerState->expansions.empty()) {
+	if (lexerState->content.holds<ViewedContent>() && lexerState->expansions.empty()) {
+		auto &view = lexerState->content.get<ViewedContent>();
 		return {
-		    .lineNo = lineNo, .span = {.ptr = view->makeSharedContentPtr(), .size = 0}
+		    .lineNo = lineNo, .span = {.ptr = view.makeSharedContentPtr(), .size = 0}
         };
 	} else {
 		assume(lexerState->captureBuf == nullptr);
