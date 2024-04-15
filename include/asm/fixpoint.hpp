@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_ASM_FIXPOINT_H
-#define RGBDS_ASM_FIXPOINT_H
+#ifndef RGBDS_ASM_FIXPOINT_HPP
+#define RGBDS_ASM_FIXPOINT_HPP
 
 #include <stdint.h>
 
@@ -25,4 +25,4 @@ int32_t fix_Round(int32_t i, int32_t q);
 int32_t fix_Ceil(int32_t i, int32_t q);
 int32_t fix_Floor(int32_t i, int32_t q);
 
-#endif // RGBDS_ASM_FIXPOINT_H
+#endif // RGBDS_ASM_FIXPOINT_HPP

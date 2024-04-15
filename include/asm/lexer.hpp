@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_ASM_LEXER_H
-#define RGBDS_ASM_LEXER_H
+#ifndef RGBDS_ASM_LEXER_HPP
+#define RGBDS_ASM_LEXER_HPP
 
 #include <deque>
 #include <memory>
@@ -155,4 +155,4 @@ struct Capture {
 Capture lexer_CaptureRept();
 Capture lexer_CaptureMacro();
 
-#endif // RGBDS_ASM_LEXER_H
+#endif // RGBDS_ASM_LEXER_HPP

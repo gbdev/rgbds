@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINK_SYMBOL_H
-#define RGBDS_LINK_SYMBOL_H
+#ifndef RGBDS_LINK_SYMBOL_HPP
+#define RGBDS_LINK_SYMBOL_HPP
 
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
@@ -47,4 +47,4 @@ void sym_AddSymbol(Symbol &symbol);
  */
 Symbol *sym_GetSymbol(std::string const &name);
 
-#endif // RGBDS_LINK_SYMBOL_H
+#endif // RGBDS_LINK_SYMBOL_HPP

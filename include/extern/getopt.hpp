@@ -2,8 +2,8 @@
 
 /* This implementation was taken from musl and modified for RGBDS */
 
-#ifndef RGBDS_EXTERN_GETOPT_H
-#define RGBDS_EXTERN_GETOPT_H
+#ifndef RGBDS_EXTERN_GETOPT_HPP
+#define RGBDS_EXTERN_GETOPT_HPP
 
 extern "C" {
 
@@ -27,4 +27,4 @@ int musl_getopt_long_only(
 
 } // extern "C"
 
-#endif
+#endif // RGBDS_EXTERN_GETOPT_HPP

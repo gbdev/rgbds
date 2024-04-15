@@ -1,3 +1,11 @@
+/* SPDX-License-Identifier: MIT */
+
+#ifndef RGBDS_DEFAULT_INIT_ALLOC_HPP
+#define RGBDS_DEFAULT_INIT_ALLOC_HPP
+
+#include <memory>
+#include <vector>
+
 /*
  * Allocator adaptor that interposes construct() calls to convert value-initialization
  * (which is what you get with e.g. `vector::resize`) into default-initialization (which does not
@@ -5,12 +13,6 @@
  * From
  * https://stackoverflow.com/questions/21028299/is-this-behavior-of-vectorresizesize-type-n-under-c11-and-boost-container/21028912#21028912
  */
-
-#ifndef DEFAULT_INIT_ALLOC_H
-#define DEFAULT_INIT_ALLOC_H
-
-#include <memory>
-#include <vector>
 
 template<typename T, typename A = std::allocator<T>>
 class default_init_allocator : public A {
@@ -36,4 +38,4 @@ public:
 template<typename T>
 using DefaultInitVec = std::vector<T, default_init_allocator<T>>;
 
-#endif // DEFAULT_INIT_ALLOC_H
+#endif // RGBDS_DEFAULT_INIT_ALLOC_HPP

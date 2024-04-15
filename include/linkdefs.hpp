@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINKDEFS_H
-#define RGBDS_LINKDEFS_H
+#ifndef RGBDS_LINKDEFS_HPP
+#define RGBDS_LINKDEFS_HPP
 
 #include <stdint.h>
 #include <string>
@@ -129,4 +129,4 @@ enum PatchType {
 	PATCHTYPE_INVALID
 };
 
-#endif // RGBDS_LINKDEFS_H
+#endif // RGBDS_LINKDEFS_HPP

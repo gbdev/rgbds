@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINK_PATCH_H
-#define RGBDS_LINK_PATCH_H
+#ifndef RGBDS_LINK_PATCH_HPP
+#define RGBDS_LINK_PATCH_HPP
 
 /*
  * Checks all assertions
@@ -14,4 +14,4 @@ void patch_CheckAssertions();
  */
 void patch_ApplyPatches();
 
-#endif // RGBDS_LINK_PATCH_H
+#endif // RGBDS_LINK_PATCH_HPP

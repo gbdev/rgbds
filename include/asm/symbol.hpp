@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_SYMBOL_H
-#define RGBDS_SYMBOL_H
+#ifndef RGBDS_ASM_SYMBOL_HPP
+#define RGBDS_ASM_SYMBOL_HPP
 
 #include <memory>
 #include <optional>
@@ -100,4 +100,4 @@ void sym_Init(time_t now);
 std::optional<std::string> const &sym_GetCurrentSymbolScope();
 void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope);
 
-#endif // RGBDS_SYMBOL_H
+#endif // RGBDS_ASM_SYMBOL_HPP

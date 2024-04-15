@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_FORMAT_SPEC_H
-#define RGBDS_FORMAT_SPEC_H
+#ifndef RGBDS_ASM_FORMAT_HPP
+#define RGBDS_ASM_FORMAT_HPP
 
 #include <stddef.h>
 #include <stdint.h>
@@ -41,4 +41,4 @@ public:
 	void appendNumber(std::string &str, uint32_t value) const;
 };
 
-#endif // RGBDS_FORMAT_SPEC_H
+#endif // RGBDS_ASM_FORMAT_HPP

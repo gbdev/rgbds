@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_ASM_RPN_H
-#define RGBDS_ASM_RPN_H
+#ifndef RGBDS_ASM_RPN_HPP
+#define RGBDS_ASM_RPN_HPP
 
 #include <stdint.h>
 #include <string>
@@ -63,4 +63,4 @@ private:
 	uint8_t *reserveSpace(uint32_t size, uint32_t patchSize);
 };
 
-#endif // RGBDS_ASM_RPN_H
+#endif // RGBDS_ASM_RPN_HPP

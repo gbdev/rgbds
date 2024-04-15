@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_MACRO_H
-#define RGBDS_MACRO_H
+#ifndef RGBDS_ASM_MACRO_HPP
+#define RGBDS_ASM_MACRO_HPP
 
 #include <memory>
 #include <stdint.h>
@@ -20,4 +20,4 @@ struct MacroArgs {
 	void shiftArgs(int32_t count);
 };
 
-#endif // RGBDS_MACRO_H
+#endif // RGBDS_ASM_MACRO_HPP

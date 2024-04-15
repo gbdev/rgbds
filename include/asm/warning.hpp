@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef WARNING_H
-#define WARNING_H
+#ifndef RGBDS_ASM_WARNING_HPP
+#define RGBDS_ASM_WARNING_HPP
 
 extern unsigned int nbErrors, maxErrors;
 
@@ -79,4 +79,4 @@ void processWarningFlag(char const *flag);
  */
 [[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
 
-#endif // WARNING_H
+#endif // RGBDS_ASM_WARNING_HPP

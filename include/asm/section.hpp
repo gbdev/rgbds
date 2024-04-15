@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_SECTION_H
-#define RGBDS_SECTION_H
+#ifndef RGBDS_ASM_SECTION_HPP
+#define RGBDS_ASM_SECTION_HPP
 
 #include <deque>
 #include <memory>
@@ -100,4 +100,4 @@ void sect_EndSection();
 void sect_PushSection();
 void sect_PopSection();
 
-#endif // RGBDS_SECTION_H
+#endif // RGBDS_ASM_SECTION_HPP

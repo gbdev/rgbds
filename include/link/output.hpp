@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINK_OUTPUT_H
-#define RGBDS_LINK_OUTPUT_H
+#ifndef RGBDS_LINK_OUTPUT_HPP
+#define RGBDS_LINK_OUTPUT_HPP
 
 #include "link/section.hpp"
 
@@ -23,4 +23,4 @@ Section const *out_OverlappingSection(Section const &section);
  */
 void out_WriteFiles();
 
-#endif // RGBDS_LINK_OUTPUT_H
+#endif // RGBDS_LINK_OUTPUT_HPP

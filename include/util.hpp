@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_UTIL_H
-#define RGBDS_UTIL_H
+#ifndef RGBDS_UTIL_HPP
+#define RGBDS_UTIL_HPP
 
 #include <stddef.h>
 #include <stdint.h>
@@ -14,4 +14,4 @@ char const *printChar(int c);
  */
 size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src);
 
-#endif // RGBDS_UTIL_H
+#endif // RGBDS_UTIL_HPP

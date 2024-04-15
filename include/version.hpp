@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef EXTERN_VERSION_H
-#define EXTERN_VERSION_H
+#ifndef RGBDS_VERSION_HPP
+#define RGBDS_VERSION_HPP
 
 extern "C" {
 
@@ -12,4 +12,4 @@ extern "C" {
 char const *get_package_version_string();
 }
 
-#endif // EXTERN_VERSION_H
+#endif // RGBDS_VERSION_H

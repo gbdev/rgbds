@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_ASM_CHARMAP_H
-#define RGBDS_ASM_CHARMAP_H
+#ifndef RGBDS_ASM_CHARMAP_HPP
+#define RGBDS_ASM_CHARMAP_HPP
 
 #include <stdint.h>
 #include <string>
@@ -18,4 +18,4 @@ bool charmap_HasChar(std::string const &input);
 void charmap_Convert(std::string const &input, std::vector<uint8_t> &output);
 size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output);
 
-#endif // RGBDS_ASM_CHARMAP_H
+#endif // RGBDS_ASM_CHARMAP_HPP

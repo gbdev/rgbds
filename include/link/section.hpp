@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINK_SECTION_H
-#define RGBDS_LINK_SECTION_H
+#ifndef RGBDS_LINK_SECTION_HPP
+#define RGBDS_LINK_SECTION_HPP
 
 // GUIDELINE: external code MUST NOT BE AWARE of the data structure used!
 
@@ -88,4 +88,4 @@ Section *sect_GetSection(std::string const &name);
  */
 void sect_DoSanityChecks();
 
-#endif // RGBDS_LINK_SECTION_H
+#endif // RGBDS_LINK_SECTION_HPP

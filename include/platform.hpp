@@ -2,8 +2,8 @@
 
 // platform-specific hacks
 
-#ifndef RGBDS_PLATFORM_H
-#define RGBDS_PLATFORM_H
+#ifndef RGBDS_PLATFORM_HPP
+#define RGBDS_PLATFORM_HPP
 
 // MSVC doesn't have str(n)casecmp, use a suitable replacement
 #ifdef _MSC_VER
@@ -56,4 +56,4 @@
 	#define setmode(fd, mode) (0)
 #endif
 
-#endif // RGBDS_PLATFORM_H
+#endif // RGBDS_PLATFORM_HPP

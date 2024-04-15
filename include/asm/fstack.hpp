@@ -2,8 +2,8 @@
 
 // Contains some assembler-wide defines and externs
 
-#ifndef RGBDS_ASM_FSTACK_H
-#define RGBDS_ASM_FSTACK_H
+#ifndef RGBDS_ASM_FSTACK_HPP
+#define RGBDS_ASM_FSTACK_HPP
 
 #include <memory>
 #include <optional>
@@ -81,4 +81,4 @@ bool fstk_Break();
 void fstk_NewRecursionDepth(size_t newDepth);
 void fstk_Init(std::string const &mainPath, size_t maxDepth);
 
-#endif // RGBDS_ASM_FSTACK_H
+#endif // RGBDS_ASM_FSTACK_HPP

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef RGBDS_HELPERS_HPP
+#define RGBDS_HELPERS_HPP
 
 // Ideally we'd use `std::unreachable`, but it has insufficient compiler support
 #ifdef __GNUC__ // GCC or compatible
@@ -111,4 +111,4 @@ struct Defer {
 	~Defer() { deferred(); }
 };
 
-#endif // HELPERS_H
+#endif // RGBDS_HELPERS_HPP

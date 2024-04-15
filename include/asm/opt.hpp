@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_OPT_H
-#define RGBDS_OPT_H
+#ifndef RGBDS_ASM_OPT_HPP
+#define RGBDS_ASM_OPT_HPP
 
 #include <stdint.h>
 
@@ -15,4 +15,4 @@ void opt_Parse(char const *option);
 void opt_Push();
 void opt_Pop();
 
-#endif // RGBDS_OPT_H
+#endif // RGBDS_ASM_OPT_HPP

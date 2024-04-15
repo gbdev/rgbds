@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_LINK_MAIN_H
-#define RGBDS_LINK_MAIN_H
+#ifndef RGBDS_LINK_MAIN_HPP
+#define RGBDS_LINK_MAIN_HPP
 
 #include <stdint.h>
 #include <stdio.h>
@@ -65,4 +65,4 @@ struct FileStackNode {
 [[gnu::format(printf, 3, 4), noreturn]] void
     fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...);
 
-#endif // RGBDS_LINK_MAIN_H
+#endif // RGBDS_LINK_MAIN_HPP

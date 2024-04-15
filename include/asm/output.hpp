@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 
-#ifndef RGBDS_ASM_OUTPUT_H
-#define RGBDS_ASM_OUTPUT_H
+#ifndef RGBDS_ASM_OUTPUT_HPP
+#define RGBDS_ASM_OUTPUT_HPP
 
 #include <memory>
 #include <stdint.h>
@@ -22,4 +22,4 @@ void out_CreateAssert(
 );
 void out_WriteObject();
 
-#endif // RGBDS_ASM_OUTPUT_H
+#endif // RGBDS_ASM_OUTPUT_HPP
