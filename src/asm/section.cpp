@@ -817,7 +817,11 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 			offset = sym->getValue() - (pc->getValue() + 1);
 
 		if (offset < -128 || offset > 127) {
-			error("jr target out of reach (expected -129 < %" PRId16 " < 128)\n", offset);
+			error(
+			    "jr target must be between -128 and 127 bytes away, not %" PRId16
+			    "; use jp instead\n",
+			    offset
+			);
 			writebyte(0);
 		} else {
 			writebyte(offset);

@@ -461,7 +461,8 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				error(
 				    patch.src,
 				    patch.lineNo,
-				    "jr target out of reach (expected -129 < %" PRId16 " < 128)",
+				    "jr target must be between -128 and 127 bytes away, not %" PRId16
+				    "; use jp instead\n",
 				    jumpOffset
 				);
 			dataSection.data[offset] = jumpOffset & 0xFF;
