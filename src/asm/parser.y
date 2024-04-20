@@ -289,6 +289,8 @@
 %token CC_NZ "nz" CC_Z "z" CC_NC "nc" // There is no CC_C, only TOKEN_C
 
 %type <int32_t> reg_r
+%type <int32_t> reg_r_no_a
+%type <int32_t> reg_a
 %type <int32_t> reg_ss
 %type <int32_t> reg_rr
 %type <int32_t> reg_tt
@@ -1852,12 +1854,12 @@ c_ind:
 
 z80_ld:
 	  z80_ld_mem
-	| z80_ld_cind
+	| z80_ld_c_ind
 	| z80_ld_rr
 	| z80_ld_ss
 	| z80_ld_hl
 	| z80_ld_sp
-	| z80_ld_r
+	| z80_ld_r_no_a
 	| z80_ld_a
 ;
 
@@ -1893,7 +1895,7 @@ z80_ld_mem:
 	}
 ;
 
-z80_ld_cind:
+z80_ld_c_ind:
 	Z80_LD c_ind COMMA MODE_A {
 		sect_AbsByte(0xE2);
 	}
@@ -1905,12 +1907,12 @@ z80_ld_rr:
 	}
 ;
 
-z80_ld_r:
-	Z80_LD reg_r COMMA reloc_8bit {
+z80_ld_r_no_a:
+	Z80_LD reg_r_no_a COMMA reloc_8bit {
 		sect_AbsByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
-	| Z80_LD reg_r COMMA reg_r {
+	| Z80_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND)
 			::error("LD [HL], [HL] is not a valid instruction\n");
 		else
@@ -1919,25 +1921,22 @@ z80_ld_r:
 ;
 
 z80_ld_a:
-	Z80_LD reg_r COMMA c_ind {
-		if ($2 == REG_A)
-			sect_AbsByte(0xF2);
-		else
-			::error("Destination operand must be A\n");
+	Z80_LD reg_a COMMA reloc_8bit {
+		sect_AbsByte(0x06 | ($2 << 3));
+		sect_RelByte($4, 1);
 	}
-	| Z80_LD reg_r COMMA reg_rr {
-		if ($2 == REG_A)
-			sect_AbsByte(0x0A | ($4 << 4));
-		else
-			::error("Destination operand must be A\n");
+	| Z80_LD reg_a COMMA reg_r {
+		sect_AbsByte(0x40 | ($2 << 3) | $4);
 	}
-	| Z80_LD reg_r COMMA op_mem_ind {
-		if ($2 == REG_A) {
-			sect_AbsByte(0xFA);
-			sect_RelWord($4, 1);
-		} else {
-			::error("Destination operand must be A\n");
-		}
+	| Z80_LD reg_a COMMA c_ind {
+		sect_AbsByte(0xF2);
+	}
+	| Z80_LD reg_a COMMA reg_rr {
+		sect_AbsByte(0x0A | ($4 << 4));
+	}
+	| Z80_LD reg_a COMMA op_mem_ind {
+		sect_AbsByte(0xFA);
+		sect_RelWord($4, 1);
 	}
 ;
 
@@ -2231,7 +2230,9 @@ ccode:
 	}
 ;
 
-reg_r:
+reg_r: reg_r_no_a | reg_a;
+
+reg_r_no_a:
 	MODE_B {
 		$$ = REG_B;
 	}
@@ -2253,7 +2254,10 @@ reg_r:
 	| LBRACK MODE_HL RBRACK {
 		$$ = REG_HL_IND;
 	}
-	| MODE_A {
+;
+
+reg_a:
+	MODE_A {
 		$$ = REG_A;
 	}
 ;

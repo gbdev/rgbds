@@ -5,11 +5,11 @@ error: invalid-instructions.asm(2):
 error: invalid-instructions.asm(3):
     Base value must be equal to $FF00 for $FF00+C
 error: invalid-instructions.asm(4):
-    Destination operand must be A
+    syntax error, unexpected c, expecting hl
 error: invalid-instructions.asm(5):
-    Destination operand must be A
+    syntax error, unexpected bc, expecting hl
 error: invalid-instructions.asm(6):
-    Destination operand must be A
+    syntax error, unexpected number, expecting hl
 error: invalid-instructions.asm(7):
     Bit number must be between 0 and 7, not 8
 error: invalid-instructions.asm(8):
