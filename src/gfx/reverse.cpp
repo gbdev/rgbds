@@ -333,7 +333,7 @@ void reverse() {
 
 	for (size_t ty = 0; ty < height; ++ty) {
 		for (size_t tx = 0; tx < width; ++tx) {
-			size_t index = options.columnMajor ? ty + tx * width : ty * width + tx;
+			size_t index = options.columnMajor ? ty + tx * height : ty * width + tx;
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
 			uint8_t attribute = attrmap.has_value() ? (*attrmap)[index] : 0x00;
 			bool bank = attribute & 0x08;
