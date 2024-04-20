@@ -108,7 +108,8 @@
 %type <int32_t> const_8bit
 %type <int32_t> uconst
 %type <int32_t> rs_uconst
-%type <int32_t> const_3bit
+%type <int32_t> shift_const
+%type <int32_t> bit_const
 %type <Expression> reloc_8bit
 %type <Expression> reloc_8bit_no_str
 %type <Expression> reloc_8bit_offset
@@ -735,20 +736,20 @@ assert:
 ;
 
 shift:
-	POP_SHIFT {
-		if (MacroArgs *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
-			macroArgs->shiftArgs(1);
-		} else {
-			::error("Cannot shift macro arguments outside of a macro\n");
-		}
-	}
-	| POP_SHIFT const {
+	POP_SHIFT shift_const {
 		if (MacroArgs *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
 			macroArgs->shiftArgs($2);
 		} else {
 			::error("Cannot shift macro arguments outside of a macro\n");
 		}
 	}
+;
+
+shift_const:
+	%empty {
+		$$ = 1;
+	}
+	| const
 ;
 
 load:
@@ -1097,15 +1098,12 @@ print_expr:
 	}
 ;
 
-const_3bit:
+bit_const:
 	const {
-		int32_t value = $1;
-
-		if ((value < 0) || (value > 7)) {
-			::error("Immediate value must be 3-bit\n");
+		$$ = $1;
+		if ($$ < 0 || $$ > 7) {
+			::error("Bit number must be between 0 and 7, not %" PRId32 "\n", $$);
 			$$ = 0;
-		} else {
-			$$ = value & 0x7;
 		}
 	}
 ;
@@ -1436,7 +1434,7 @@ opt_q_arg:
 	| COMMA const {
 		$$ = $2;
 		if ($$ < 1 || $$ > 31) {
-			::error("Fixed-point precision must be between 1 and 31\n");
+			::error("Fixed-point precision must be between 1 and 31, not %" PRId32 "\n", $$);
 			$$ = fix_Precision();
 		}
 	}
@@ -1698,7 +1696,7 @@ z80_and:
 ;
 
 z80_bit:
-	Z80_BIT const_3bit COMMA reg_r {
+	Z80_BIT bit_const COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x40 | ($2 << 3) | $4);
 	}
@@ -1846,8 +1844,9 @@ z80_ldio:
 c_ind:
 	  LBRACK MODE_C RBRACK
 	| LBRACK relocexpr OP_ADD MODE_C RBRACK {
-		if (!$2.isKnown() || $2.value() != 0xFF00)
-			::error("Expected constant expression equal to $FF00 for \"$ff00+c\"\n");
+		// This has to use `relocexpr`, not `const`, to avoid a shift/reduce conflict
+		if ($2.getConstVal() != 0xFF00)
+			::error("Base value must be equal to $FF00 for $FF00+C\n");
 	}
 ;
 
@@ -1912,8 +1911,8 @@ z80_ld_r:
 		sect_RelByte($4, 1);
 	}
 	| Z80_LD reg_r COMMA reg_r {
-		if (($2 == REG_HL_IND) && ($4 == REG_HL_IND))
-			::error("LD [HL],[HL] not a valid instruction\n");
+		if ($2 == REG_HL_IND && $4 == REG_HL_IND)
+			::error("LD [HL], [HL] is not a valid instruction\n");
 		else
 			sect_AbsByte(0x40 | ($2 << 3) | $4);
 	}
@@ -1984,7 +1983,7 @@ z80_push:
 ;
 
 z80_res:
-	Z80_RES const_3bit COMMA reg_r {
+	Z80_RES bit_const COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0x80 | ($2 << 3) | $4);
 	}
@@ -2084,7 +2083,7 @@ z80_scf:
 ;
 
 z80_set:
-	Z80_SET const_3bit COMMA reg_r {
+	Z80_SET bit_const COMMA reg_r {
 		sect_AbsByte(0xCB);
 		sect_AbsByte(0xC0 | ($2 << 3) | $4);
 	}

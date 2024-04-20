@@ -1,9 +1,9 @@
 error: invalid-instructions.asm(1):
     Address $10000 is not 16-bit
 error: invalid-instructions.asm(2):
-    LD [HL],[HL] not a valid instruction
+    LD [HL], [HL] is not a valid instruction
 error: invalid-instructions.asm(3):
-    Expected constant expression equal to $FF00 for "$ff00+c"
+    Base value must be equal to $FF00 for $FF00+C
 error: invalid-instructions.asm(4):
     Destination operand must be A
 error: invalid-instructions.asm(5):
@@ -11,7 +11,7 @@ error: invalid-instructions.asm(5):
 error: invalid-instructions.asm(6):
     Destination operand must be A
 error: invalid-instructions.asm(7):
-    Immediate value must be 3-bit
+    Bit number must be between 0 and 7, not 8
 error: invalid-instructions.asm(8):
     Invalid address $40 for RST
 error: Assembly aborted (8 errors)!
