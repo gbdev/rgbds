@@ -181,7 +181,17 @@ rgblinkQuiet -o "$gbtemp2" "$outtemp"
 tryCmp "$gbtemp" "$gbtemp2"
 evaluateTest
 
-test="overlay"
+test="overlay/smaller"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -p 0x42 -O "$test"/overlay.gb "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+# This test does not trim its output with 'dd' because it needs to verify the correct output size
+tryCmp "$test"/out.gb "$gbtemp"
+evaluateTest
+
+test="overlay/tiny"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 continueTest
