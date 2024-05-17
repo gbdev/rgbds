@@ -116,17 +116,13 @@ static uint32_t checkOverlaySize() {
 	fseek(overlayFile, 0, SEEK_SET);
 
 	if (overlaySize % BANK_SIZE)
-		errx("Overlay file must have a size multiple of 0x4000");
+		warnx("Overlay file does not have a size multiple of 0x4000");
+	else if (is32kMode && overlaySize != 0x8000)
+		warnx("Overlay is not exactly 0x8000 bytes large");
+	else if (overlaySize < 0x8000)
+		warnx("Overlay is less than 0x8000 bytes large");
 
-	uint32_t nbOverlayBanks = overlaySize / BANK_SIZE;
-
-	if (is32kMode && nbOverlayBanks != 2)
-		errx("Overlay must be exactly 0x8000 bytes large");
-
-	if (nbOverlayBanks < 2)
-		errx("Overlay must be at least 0x8000 bytes large");
-
-	return nbOverlayBanks;
+	return (overlaySize + BANK_SIZE - 1) / BANK_SIZE;
 }
 
 /*
@@ -149,6 +145,22 @@ static void coverOverlayBanks(uint32_t nbOverlayBanks) {
 	}
 }
 
+static uint8_t getNextFillByte() {
+	if (overlayFile) {
+		int c = getc(overlayFile);
+		if (c != EOF) {
+			return c;
+		}
+
+		if (static bool warned = false; !hasPadValue && !warned) {
+			warnx("Output is larger than overlay file, but no padding value was specified");
+			warned = true;
+		}
+	}
+
+	return padValue;
+}
+
 /*
  * Write a ROM bank's sections to the output file.
  * @param bankSections The bank's sections, ordered by increasing address
@@ -164,7 +176,7 @@ static void
 			assume(section->offset == 0);
 			// Output padding up to the next SECTION
 			while (offset + baseOffset < section->org) {
-				putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
+				putc(getNextFillByte(), outputFile);
 				offset++;
 			}
 
@@ -181,7 +193,7 @@ static void
 
 	if (!disablePadding) {
 		while (offset < size) {
-			putc(overlayFile ? getc(overlayFile) : padValue, outputFile);
+			putc(getNextFillByte(), outputFile);
 			offset++;
 		}
 	}

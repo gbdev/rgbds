@@ -20,6 +20,7 @@ extern char const *symFileName;
 extern char const *overlayFileName;
 extern char const *outputFileName;
 extern uint8_t padValue;
+extern bool hasPadValue;
 extern uint16_t scrambleROMX;
 extern uint8_t scrambleWRAMX;
 extern uint8_t scrambleSRAM;

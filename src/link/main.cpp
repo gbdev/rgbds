@@ -32,6 +32,7 @@ char const *symFileName;     // -n
 char const *overlayFileName; // -O
 char const *outputFileName;  // -o
 uint8_t padValue;            // -p
+bool hasPadValue = false;
 // Setting these three to 0 disables the functionality
 uint16_t scrambleROMX = 0; // -S
 uint8_t scrambleWRAMX = 0;
@@ -387,6 +388,7 @@ int main(int argc, char *argv[]) {
 				value = 0xFF;
 			}
 			padValue = value;
+			hasPadValue = true;
 			break;
 		}
 		case 'S':

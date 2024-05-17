@@ -846,15 +846,14 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 			if (verbose)
 				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
-			return;
+		} else {
+			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		}
-		error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		return;
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	int32_t fsize = -1;
-	int byte;
 
 	if (fseek(file, 0, SEEK_END) != -1) {
 		fsize = ftell(file);
@@ -865,6 +864,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		}
 
 		fseek(file, startPos, SEEK_SET);
+
 		if (!reserveSpace(fsize - startPos))
 			return;
 	} else {
@@ -877,7 +877,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 			(void)fgetc(file);
 	}
 
-	while ((byte = fgetc(file)) != EOF) {
+	for (int byte; (byte = fgetc(file)) != EOF;) {
 		if (fsize == -1)
 			growSection(1);
 		writebyte(byte);
@@ -887,6 +887,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 }
 
+// Output a slice of a binary file
 void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t length) {
 	if (startPos < 0) {
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
@@ -920,10 +921,8 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	int32_t fsize;
-
 	if (fseek(file, 0, SEEK_END) != -1) {
-		fsize = ftell(file);
+		int32_t fsize = ftell(file);
 
 		if (startPos > fsize) {
 			error("Specified start position is greater than length of file\n");
