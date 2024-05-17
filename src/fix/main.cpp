@@ -35,6 +35,7 @@ static char const *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
  * over short opt matching
  */
 static option const longopts[] = {
+    {"analogue",         no_argument,       nullptr, 'a'},
     {"color-only",       no_argument,       nullptr, 'C'},
     {"color-compatible", no_argument,       nullptr, 'c'},
     {"fix-spec",         required_argument, nullptr, 'f'},
@@ -56,7 +57,7 @@ static option const longopts[] = {
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+	    "Usage: rgbfix [-jOsVv] [-a] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
 	    "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
 	    "              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] <file> ...\n"
 	    "Useful options:\n"
@@ -734,6 +735,12 @@ static uint8_t const ninLogo[] = {
     0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E,
 };
 
+static uint8_t const anaLogo[] = {
+    0x01, 0x10, 0xCE, 0xEF, 0x00, 0x00, 0x44, 0xAA, 0x00, 0x74, 0x00, 0x18, 0x11, 0x95, 0x00, 0x34,
+    0x00, 0x1A, 0x00, 0xD5, 0x00, 0x22, 0x00, 0x69, 0x6F, 0xF6, 0xF7, 0x73, 0x09, 0x90, 0xE1, 0x10,
+    0x44, 0x40, 0x9A, 0x90, 0xD5, 0xD0, 0x44, 0x30, 0xA9, 0x21, 0x5D, 0x48, 0x22, 0xE0, 0xF8, 0x60,
+};
+
 static uint8_t const trashLogo[] = {
     0xFF ^ 0xCE, 0xFF ^ 0xED, 0xFF ^ 0x66, 0xFF ^ 0x66, 0xFF ^ 0xCC, 0xFF ^ 0x0D, 0xFF ^ 0x00,
     0xFF ^ 0x0B, 0xFF ^ 0x03, 0xFF ^ 0x73, 0xFF ^ 0x00, 0xFF ^ 0x83, 0xFF ^ 0x00, 0xFF ^ 0x0C,
@@ -755,6 +762,7 @@ static uint8_t fixSpec = 0;
 static char const *gameID = nullptr;
 static uint8_t gameIDLen;
 static bool japanese = true;
+static bool analogue = false;
 static char const *newLicensee = nullptr;
 static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
@@ -894,7 +902,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (fixSpec & (FIX_LOGO | TRASH_LOGO)) {
 		if (fixSpec & FIX_LOGO)
-			overwriteBytes(rom0, 0x0104, ninLogo, sizeof(ninLogo), "Nintendo logo");
+			if (analogue)
+				overwriteBytes(rom0, 0x0104, anaLogo, sizeof(anaLogo), "Analogue logo");
+			else
+				overwriteBytes(rom0, 0x0104, ninLogo, sizeof(ninLogo), "Nintendo logo");
 		else
 			overwriteBytes(rom0, 0x0104, trashLogo, sizeof(trashLogo), "Nintendo logo");
 	}
@@ -1296,6 +1307,10 @@ int main(int argc, char *argv[]) {
 				}
 				musl_optarg++;
 			}
+			break;
+
+		case 'a':
+			analogue = true;
 			break;
 
 		case 'i':
