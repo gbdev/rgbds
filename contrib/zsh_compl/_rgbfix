@@ -49,6 +49,7 @@ local args=(
 	'(-i --game-id)'{-i,--game-id}'+[Set game ID string]:4-char game ID:'
 	'(-k --new-licensee)'{-k,--new-licensee}'+[Set new licensee string]:2-char licensee ID:'
 	'(-l --old-licensee)'{-l,--old-licensee}'+[Set old licensee ID]:licensee number:'
+	'(-L --logo)'{-L,--logo}'+[Set custom logo]:1bpp image:'
 	'(-m --mbc-type)'{-m,--mbc-type}"+[Set MBC flags]:mbc name:_mbc_names"
 	'(-n --rom-version)'{-n,--rom-version}'+[Set ROM version]:rom version byte:'
 	'(-p --pad-value)'{-p,--pad-value}'+[Pad to next valid size using this byte as padding]:padding byte:'

@@ -22,7 +22,7 @@
 #define BANK_SIZE 0x4000
 
 // Short options
-static char const *optstring = "Ccf:i:jk:l:m:n:Op:r:st:Vv";
+static char const *optstring = "Ccf:i:jk:L:l:m:n:Op:r:st:Vv";
 
 /*
  * Equivalent long options
@@ -41,6 +41,7 @@ static option const longopts[] = {
     {"game-id",          required_argument, nullptr, 'i'},
     {"non-japanese",     no_argument,       nullptr, 'j'},
     {"new-licensee",     required_argument, nullptr, 'k'},
+    {"logo",             required_argument, nullptr, 'L'},
     {"old-licensee",     required_argument, nullptr, 'l'},
     {"mbc-type",         required_argument, nullptr, 'm'},
     {"rom-version",      required_argument, nullptr, 'n'},
@@ -57,8 +58,9 @@ static option const longopts[] = {
 static void printUsage() {
 	fputs(
 	    "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
-	    "              [-l <licensee_byte>] [-m <mbc_type>] [-n <rom_version>]\n"
-	    "              [-p <pad_value>] [-r <ram_size>] [-t <title_str>] <file> ...\n"
+	    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
+	    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
+	    "              <file> ...\n"
 	    "Useful options:\n"
 	    "    -m, --mbc-type <value>      set the MBC type byte to this value; refer\n"
 	    "                                  to the man page for a list of values\n"
@@ -728,20 +730,10 @@ static bool hasRAM(MbcType type) {
 	unreachable_();
 }
 
-static uint8_t const ninLogo[] = {
+static uint8_t const nintendoLogo[] = {
     0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
     0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E, 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
     0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E,
-};
-
-static uint8_t const trashLogo[] = {
-    0xFF ^ 0xCE, 0xFF ^ 0xED, 0xFF ^ 0x66, 0xFF ^ 0x66, 0xFF ^ 0xCC, 0xFF ^ 0x0D, 0xFF ^ 0x00,
-    0xFF ^ 0x0B, 0xFF ^ 0x03, 0xFF ^ 0x73, 0xFF ^ 0x00, 0xFF ^ 0x83, 0xFF ^ 0x00, 0xFF ^ 0x0C,
-    0xFF ^ 0x00, 0xFF ^ 0x0D, 0xFF ^ 0x00, 0xFF ^ 0x08, 0xFF ^ 0x11, 0xFF ^ 0x1F, 0xFF ^ 0x88,
-    0xFF ^ 0x89, 0xFF ^ 0x00, 0xFF ^ 0x0E, 0xFF ^ 0xDC, 0xFF ^ 0xCC, 0xFF ^ 0x6E, 0xFF ^ 0xE6,
-    0xFF ^ 0xDD, 0xFF ^ 0xDD, 0xFF ^ 0xD9, 0xFF ^ 0x99, 0xFF ^ 0xBB, 0xFF ^ 0xBB, 0xFF ^ 0x67,
-    0xFF ^ 0x63, 0xFF ^ 0x6E, 0xFF ^ 0x0E, 0xFF ^ 0xEC, 0xFF ^ 0xCC, 0xFF ^ 0xDD, 0xFF ^ 0xDC,
-    0xFF ^ 0x99, 0xFF ^ 0x9F, 0xFF ^ 0xBB, 0xFF ^ 0xB9, 0xFF ^ 0x33, 0xFF ^ 0x3E,
 };
 
 static uint8_t fixSpec = 0;
@@ -756,6 +748,8 @@ static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 static char const *gameID = nullptr;
 static uint8_t gameIDLen;
 static bool japanese = true;
+static char const *logoFilename = nullptr;
+static uint8_t logo[sizeof(nintendoLogo)] = {};
 static char const *newLicensee = nullptr;
 static uint8_t newLicenseeLen;
 static uint16_t oldLicensee = UNSPECIFIED;
@@ -893,12 +887,8 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	}
 	// Accept partial reads if the file contains at least the header
 
-	if (fixSpec & (FIX_LOGO | TRASH_LOGO)) {
-		if (fixSpec & FIX_LOGO)
-			overwriteBytes(rom0, 0x0104, ninLogo, sizeof(ninLogo), "Nintendo logo");
-		else
-			overwriteBytes(rom0, 0x0104, trashLogo, sizeof(trashLogo), "Nintendo logo");
-	}
+	if (fixSpec & (FIX_LOGO | TRASH_LOGO))
+		overwriteBytes(rom0, 0x0104, logo, sizeof(logo), logoFilename ? "logo" : "Nintendo logo");
 
 	if (title)
 		overwriteBytes(rom0, 0x134, (uint8_t const *)title, titleLen, "title");
@@ -1310,6 +1300,10 @@ int main(int argc, char *argv[]) {
 			newLicenseeLen = len;
 			break;
 
+		case 'L':
+			logoFilename = musl_optarg;
+			break;
+
 		case 'l':
 			parseByte(oldLicensee, 'l');
 			break;
@@ -1432,6 +1426,55 @@ int main(int argc, char *argv[]) {
 
 	argv += musl_optind;
 	bool failed = nbErrors;
+
+	if (logoFilename) {
+		FILE *logoFile;
+		if (strcmp(logoFilename, "-")) {
+			logoFile = fopen(logoFilename, "rb");
+		} else {
+			logoFilename = "<stdin>";
+			logoFile = fdopen(STDIN_FILENO, "rb");
+		}
+		if (!logoFile) {
+			fprintf(
+			    stderr,
+			    "FATAL: Failed to open \"%s\" for reading: %s\n",
+			    logoFilename,
+			    strerror(errno)
+			);
+			exit(1);
+		}
+		Defer closeLogo{[&] { fclose(logoFile); }};
+		uint8_t logoBpp[sizeof(logo)];
+		if (size_t nbRead = fread(logoBpp, 1, sizeof(logoBpp), logoFile);
+		    nbRead != sizeof(logo) || fgetc(logoFile) != EOF || ferror(logoFile)) {
+			fprintf(stderr, "FATAL: \"%s\" is not %zu bytes\n", logoFilename, sizeof(logo));
+			exit(1);
+		}
+		auto highs = [&logoBpp](size_t i) {
+			return (logoBpp[i * 2] & 0xF0) | ((logoBpp[i * 2 + 1] & 0xF0) >> 4);
+		};
+		auto lows = [&logoBpp](size_t i) {
+			return ((logoBpp[i * 2] & 0x0F) << 4) | (logoBpp[i * 2 + 1] & 0x0F);
+		};
+		constexpr size_t mid = sizeof(logo) / 2;
+		for (size_t i = 0; i < mid; i += 4) {
+			logo[i + 0] = highs(i + 0);
+			logo[i + 1] = highs(i + 1);
+			logo[i + 2] = lows(i + 0);
+			logo[i + 3] = lows(i + 1);
+			logo[mid + i + 0] = highs(i + 2);
+			logo[mid + i + 1] = highs(i + 3);
+			logo[mid + i + 2] = lows(i + 2);
+			logo[mid + i + 3] = lows(i + 3);
+		}
+	} else {
+		memcpy(logo, nintendoLogo, sizeof(nintendoLogo));
+	}
+	if (fixSpec & TRASH_LOGO) {
+		for (uint16_t i = 0; i < sizeof(logo); i++)
+			logo[i] = 0xFF ^ logo[i];
+	}
 
 	if (!*argv) {
 		fputs(

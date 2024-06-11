@@ -13,6 +13,7 @@
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
 .Op Fl k Ar licensee_str
+.Op Fl L Ar logo_file
 .Op Fl l Ar licensee_id
 .Op Fl m Ar mbc_type
 .Op Fl n Ar rom_version
@@ -104,6 +105,9 @@ Set the new licensee string
 .Pq Ad 0x144 Ns \(en Ns Ad 0x145
 to a given string.
 If it's longer than 2 chars, it will be truncated, and a warning emitted.
+.It Fl L Ar logo_file , Fl \-logo Ar logo_file
+Specify a logo file to use instead of the official Nintendo logo.
+The file must be 48 bytes of 1bpp tile data; the source image should be 48 pixels wide and 8 pixels tall.
 .It Fl l Ar licensee_id , Fl \-old-licensee Ar licensee_id
 Set the old licensee code
 .Pq Ad 0x14B
