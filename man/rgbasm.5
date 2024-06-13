@@ -218,6 +218,9 @@ knows its value.
 This is generally always the case, unless a label is involved, as explained in the
 .Sx SYMBOLS
 section.
+However, some operators can be constant even with non-constant operands, as explained in
+.Sx Operators
+further below.
 .Pp
 The instructions in the macro-language generally require constant expressions.
 .Ss Numeric formats
@@ -306,12 +309,20 @@ equivalent to multiplying and dividing by 2 to the power of b, respectively.
 .Pp
 Comparison operators return 0 if the comparison is false, and 1 otherwise.
 .Pp
-Unlike in a lot of languages, and for technical reasons,
+Unlike in many other languages, and for technical reasons,
 .Nm
 still evaluates both operands of
 .Sq &&
 and
 .Sq || .
+.Pp
+The operators
+.Sq &&
+and
+.Sq &
+with a zero constant as either operand will be constant 0, and
+.Sq ||
+with a non-zero constant as either operand will be constant 1, even if the other operand is non-constant.
 .Pp
 .Ic \&!
 returns 1 if the operand was 0, and 0 otherwise.

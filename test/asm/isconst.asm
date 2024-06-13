@@ -6,7 +6,7 @@ MACRO test_expr
 
 	DEF IS_CONST = ISCONST(\1)
 	PRINTLN "Test #{d:TEST_NUM}: ISCONST reports {IS_CONST}"
-	IF (\1) || 1 ; Only test if the expression can be evaluated
+	IF (\1) || IS_CONST ; Only test if the expression can be evaluated
 		WARN "Test #{d:TEST_NUM}: Compile-time constant"
 	ENDC
 ENDM
