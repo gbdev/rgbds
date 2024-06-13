@@ -489,7 +489,7 @@ static void parseACOFile(std::filebuf &file) {
 		return;
 	}
 	if (readBE<uint16_t>(buf) != 1) {
-		error("Palette file does not appear to be an ACO file");
+		error("Palette file does not appear to be an ACO v1 file");
 		return;
 	}
 
@@ -526,7 +526,8 @@ static void parseACOFile(std::filebuf &file) {
 		uint16_t colorType = readBE<uint16_t>(buf);
 		switch (colorType) {
 		case 0: // RGB
-			color = Rgba(buf[0], buf[2], buf[4], 0xFF);
+			// Only keep the MSB of the (big-endian) 16-bit values.
+			color = Rgba(buf[2], buf[4], buf[6], 0xFF);
 			break;
 		case 1: // HSB
 			error("Unsupported color type (HSB) for ACO file");
@@ -535,7 +536,7 @@ static void parseACOFile(std::filebuf &file) {
 			error("Unsupported color type (CMYK) for ACO file");
 			return;
 		case 7: // Lab
-			error("Unsupported color type (lab) for ACO file");
+			error("Unsupported color type (Lab) for ACO file");
 			return;
 		case 8: // Grayscale
 			error("Unsupported color type (grayscale) for ACO file");
