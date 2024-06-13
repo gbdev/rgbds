@@ -432,7 +432,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		}
 	} else if (op == RPN_SUB && src1.isDiffConstant(src2.symbolOf())) {
 		data = src1.symbolOf()->getValue() - src2.symbolOf()->getValue();
-	} else if ((op == RPN_LOGAND || op == RPN_AND || op == RPN_MUL) && tryConstZero(src1, src2)) {
+	} else if ((op == RPN_LOGAND || op == RPN_AND) && tryConstZero(src1, src2)) {
 		data = 0;
 	} else if (op == RPN_LOGOR && tryConstNonzero(src1, src2)) {
 		data = 1;
