@@ -40,6 +40,22 @@ cmake --build build
 cmake --install build
 ```
 
+Two parameters available when building are a prefix (e.g. to put the executables in a directory)
+and a suffix (e.g. to append the version number or commit ID).
+
+```sh
+make
+sudo make install PREFIX=install_dir/ SUFFIX=-$(git rev-parse --short HEAD)
+```
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSUFFIX=-$(git rev-parse --short HEAD)
+cmake --build build
+cmake --install build --prefix install_dir
+```
+
+(If you set a `SUFFIX`, it should include the `.exe` extension on Windows.)
+
 ## 2. RGBDS Folder Organization
 
 The RGBDS source code file structure is as follows:
