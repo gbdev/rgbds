@@ -380,12 +380,12 @@ static MbcType parseMBC(char const *name) {
 
 		// Read "additional features"
 		uint8_t features = 0;
-#define RAM         0x80
-#define BATTERY     0x40
-#define TIMER       0x20
-#define RUMBLE      0x10
-#define SENSOR      0x08
-#define MULTIRUMBLE 0x04
+#define RAM         (1 << 7)
+#define BATTERY     (1 << 6)
+#define TIMER       (1 << 5)
+#define RUMBLE      (1 << 4)
+#define SENSOR      (1 << 3)
+#define MULTIRUMBLE (1 << 2)
 
 		for (;;) {
 			// Trim off trailing whitespace
@@ -744,14 +744,15 @@ static uint8_t const trashLogo[] = {
     0xFF ^ 0x99, 0xFF ^ 0x9F, 0xFF ^ 0xBB, 0xFF ^ 0xB9, 0xFF ^ 0x33, 0xFF ^ 0x3E,
 };
 
-static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
-#define FIX_LOGO         0x80
-#define TRASH_LOGO       0x40
-#define FIX_HEADER_SUM   0x20
-#define TRASH_HEADER_SUM 0x10
-#define FIX_GLOBAL_SUM   0x08
-#define TRASH_GLOBAL_SUM 0x04
 static uint8_t fixSpec = 0;
+#define FIX_LOGO         (1 << 7)
+#define TRASH_LOGO       (1 << 6)
+#define FIX_HEADER_SUM   (1 << 5)
+#define TRASH_HEADER_SUM (1 << 4)
+#define FIX_GLOBAL_SUM   (1 << 3)
+#define TRASH_GLOBAL_SUM (1 << 2)
+
+static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 static char const *gameID = nullptr;
 static uint8_t gameIDLen;
 static bool japanese = true;
@@ -1257,42 +1258,23 @@ int main(int argc, char *argv[]) {
 			fixSpec = 0;
 			while (*musl_optarg) {
 				switch (*musl_optarg) {
-#define SPEC_l FIX_LOGO
-#define SPEC_L TRASH_LOGO
-#define SPEC_h FIX_HEADER_SUM
-#define SPEC_H TRASH_HEADER_SUM
-#define SPEC_g FIX_GLOBAL_SUM
-#define SPEC_G TRASH_GLOBAL_SUM
-#define overrideSpec(cur, bad) \
-	do { \
-		if (fixSpec & CAT(SPEC_, bad)) \
+#define OVERRIDE_SPEC(cur, bad, curFlag, badFlag) \
+	case STR(cur)[0]: \
+		if (fixSpec & badFlag) \
 			fprintf(stderr, "warning: '" STR(cur) "' overriding '" STR(bad) "' in fix spec\n"); \
-		fixSpec = (fixSpec & ~CAT(SPEC_, bad)) | CAT(SPEC_, cur); \
-	} while (0)
-				case 'l':
-					overrideSpec(l, L);
-					break;
-				case 'L':
-					overrideSpec(L, l);
-					break;
-
-				case 'h':
-					overrideSpec(h, H);
-					break;
-				case 'H':
-					overrideSpec(H, h);
-					break;
-
-				case 'g':
-					overrideSpec(g, G);
-					break;
-				case 'G':
-					overrideSpec(G, g);
-					break;
+		fixSpec = (fixSpec & ~badFlag) | curFlag; \
+		break
+#define overrideSpecs(fix, fixFlag, trash, trashFlag) \
+	OVERRIDE_SPEC(fix, trash, fixFlag, trashFlag); \
+	OVERRIDE_SPEC(trash, fix, trashFlag, fixFlag)
+				overrideSpecs(l, FIX_LOGO,       L, TRASH_LOGO);
+				overrideSpecs(h, FIX_HEADER_SUM, H, TRASH_HEADER_SUM);
+				overrideSpecs(g, FIX_GLOBAL_SUM, G, TRASH_GLOBAL_SUM);
+#undef OVERRIDE_SPEC
+#undef overrideSpecs
 
 				default:
 					fprintf(stderr, "warning: Ignoring '%c' in fix spec\n", *musl_optarg);
-#undef overrideSpec
 				}
 				musl_optarg++;
 			}
