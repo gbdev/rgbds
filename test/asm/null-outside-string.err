@@ -1,0 +1,17 @@
+error: null-outside-string.asm(3):
+    Begun line continuation, but encountered character '0'
+error: null-outside-string.asm(3):
+    syntax error, unexpected number
+error: null-outside-string.asm(4):
+    Begun line continuation, but encountered character '0'
+error: null-outside-string.asm(4):
+    syntax error, unexpected number
+error: null-outside-string.asm(6):
+    Begun line continuation, but encountered character 'X'
+error: null-outside-string.asm(6):
+    syntax error, unexpected identifier
+error: null-outside-string.asm(7):
+    Begun line continuation, but encountered character 'X'
+error: null-outside-string.asm(7):
+    syntax error, unexpected identifier
+error: Assembly aborted (8 errors)!

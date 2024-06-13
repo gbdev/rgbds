@@ -417,6 +417,7 @@ There are a number of escape sequences you can use within a string:
 .It Ql \en Ta Newline ($0A)
 .It Ql \er Ta Carriage return ($0D)
 .It Ql \et Ta Tab ($09)
+.It Ql \e0 Ta Null ($00)
 .It Qo \e1 Qc \[en] Qo \e9 Qc Ta Macro argument Pq Only in the body of a macro; see Sx Invoking macros
 .It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas Pq Only in the body of a macro
 .It Ql \e@ Ta Label name suffix Pq Only in the body of a macro or a Ic REPT No block
@@ -792,7 +793,7 @@ RAMLocation:
     ret
 
 \&.string
-    db "Hello World!", 0
+    db "Hello World!\e0"
 \&.end
   ENDL
 .Ed
