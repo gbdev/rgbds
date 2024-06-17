@@ -1,0 +1,7 @@
+rom0
+	"ROM0" org 1
+	"NONE" optional
+
+romx "1"
+romx 1
+	"ROM1"
