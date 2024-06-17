@@ -7,13 +7,11 @@ jobs:
   unix:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-12]
         cxx: [g++, clang++]
         buildsys: [make, cmake]
         exclude:
           # Don't use `g++` on macOS; it's just an alias to `clang++`.
-          - os: macos-11
-            cxx: g++
           - os: macos-12
             cxx: g++
       fail-fast: false
