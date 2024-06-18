@@ -38,7 +38,10 @@ tryCmp () {
 }
 
 runTest () {
-	flags="$(head -n 1 "$2/$1.flags")" # Allow other lines to serve as comments
+	flags=$(
+		head -n 1 "$2/$1.flags" | # Allow other lines to serve as comments
+		sed "s#-L #-L ${src//#/\\#}/#g" # Prepend src directory to logo file
+	)
 
 	for variant in '' ' piped'; do
 		(( tests++ ))

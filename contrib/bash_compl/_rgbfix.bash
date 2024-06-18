@@ -16,6 +16,7 @@ _rgbfix_completions() {
 		[f]="fix-spec:fix-spec"
 		[i]="game-id:unk"
 		[k]="new-licensee:unk"
+		[L]="custom-logo:glob-*.1bpp"
 		[l]="old-licensee:unk"
 		[m]="mbc-type:mbc"
 		[n]="rom-version:unk"
