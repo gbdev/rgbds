@@ -174,12 +174,12 @@ int main(int argc, char *argv[]) {
 		case 'M':
 			if (dependFile)
 				warnx("Overriding dependfile %s", dependFileName);
-			if (!strcmp("-", musl_optarg)) {
-				dependFile = stdout;
-				dependFileName = "<stdout>";
-			} else {
+			if (strcmp("-", musl_optarg)) {
 				dependFile = fopen(musl_optarg, "w");
 				dependFileName = musl_optarg;
+			} else {
+				dependFile = stdout;
+				dependFileName = "<stdout>";
 			}
 			if (dependFile == nullptr)
 				err("Failed to open dependfile \"%s\"", dependFileName);
