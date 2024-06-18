@@ -91,6 +91,9 @@ foreach(PROG "asm" "fix" "gfx" "link")
                  ${rgb${PROG}_src}
                  ${common_src}
                  )
+  if(SUFFIX)
+    set_target_properties(rgb${PROG} PROPERTIES SUFFIX ${SUFFIX})
+  endif()
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
 

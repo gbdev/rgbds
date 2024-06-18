@@ -11,6 +11,7 @@ Q		:= @
 PREFIX		:= /usr/local
 bindir		:= ${PREFIX}/bin
 mandir		:= ${PREFIX}/share/man
+SUFFIX		:=
 STRIP		:= -s
 BINMODE		:= 755
 MANMODE		:= 644
@@ -185,7 +186,10 @@ clean:
 
 install: all
 	$Qinstall -d ${DESTDIR}${bindir}/ ${DESTDIR}${mandir}/man1/ ${DESTDIR}${mandir}/man5/ ${DESTDIR}${mandir}/man7/
-	$Qinstall ${STRIP} -m ${BINMODE} rgbasm rgblink rgbfix rgbgfx ${DESTDIR}${bindir}/
+	$Qinstall ${STRIP} -m ${BINMODE} rgbasm ${DESTDIR}${bindir}/rgbasm${SUFFIX}
+	$Qinstall ${STRIP} -m ${BINMODE} rgblink ${DESTDIR}${bindir}/rgblink${SUFFIX}
+	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${DESTDIR}${bindir}/rgbfix${SUFFIX}
+	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${DESTDIR}${bindir}/rgbgfx${SUFFIX}
 	$Qinstall -m ${MANMODE} man/rgbasm.1 man/rgblink.1 man/rgbfix.1 man/rgbgfx.1 ${DESTDIR}${mandir}/man1/
 	$Qinstall -m ${MANMODE} man/rgbds.5 man/rgbasm.5 man/rgblink.5 ${DESTDIR}${mandir}/man5/
 	$Qinstall -m ${MANMODE} man/rgbds.7 man/gbz80.7 ${DESTDIR}${mandir}/man7/
