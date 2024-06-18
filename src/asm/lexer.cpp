@@ -566,7 +566,7 @@ void lexer_CheckRecursionDepth() {
 }
 
 static bool isMacroChar(char c) {
-	return c == '@' || c == '#' || c == '<' || (c > '0' && c <= '9');
+	return c == '@' || c == '#' || c == '<' || (c >= '1' && c <= '9');
 }
 
 // forward declarations for readBracketedMacroArgNum
@@ -670,7 +670,7 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		error("Invalid macro argument '\\0'\n");
 		return nullptr;
 	} else {
-		assume(name > '0' && name <= '9');
+		assume(name >= '1' && name <= '9');
 
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
 		if (!macroArgs) {

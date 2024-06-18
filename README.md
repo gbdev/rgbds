@@ -3,10 +3,10 @@
 RGBDS (Rednex Game Boy Development System) is a free assembler/linker package
 for the Game Boy and Game Boy Color. It consists of:
 
-- rgbasm (assembler)
-- rgblink (linker)
-- rgbfix (checksum/header fixer)
-- rgbgfx (PNG‐to‐Game Boy graphics converter)
+- RGBASM (assembler)
+- RGBLINK (linker)
+- RGBFIX (checksum/header fixer)
+- RGBGFX (PNG‐to‐Game Boy graphics converter)
 
 This is a fork of the original RGBDS which aims to make the programs more like
 other UNIX tools.
@@ -16,11 +16,11 @@ This toolchain is maintained [on GitHub](https://github.com/gbdev/rgbds).
 
 The documentation of this toolchain can be [viewed online](https://rgbds.gbdev.io/docs/).
 It is generated from the man pages found in this repository.
-The source code of the website itself is on GitHub as well under the repo
+The source code of the website itself is on GitHub as well under the repository
 [rgbds-www](https://github.com/gbdev/rgbds-www).
 
-If you want to contribute or maintain RGBDS, and have questions regarding the code, its
-organisation, etc. you can find the maintainers [on the gbdev community channels](https://gbdev.io/chat)
+If you want to contribute or maintain RGBDS, or you have questions regarding the code, its
+organization, etc. you can find the maintainers [on the gbdev community channels](https://gbdev.io/chat)
 or via mail at `rgbds at gbdev dot io`.
 
 ## 1. Installing RGBDS
@@ -96,7 +96,7 @@ The RGBDS source code file structure is as follows:
 - `man/` - manual pages.
 - `src/` - source code of RGBDS.
   * Note that the code unique to each RGBDS tool is stored in its respective subdirectory
-    (rgbasm's code is in `src/asm/`, for example). `src/extern/` contains code imported from
+    (RGBASM's code is in `src/asm/`, for example). `src/extern/` contains code imported from
     external sources.
 - `test/` - testing framework used to verify that changes to the code don't break or
   modify the behavior of RGBDS.
@@ -121,9 +121,9 @@ The RGBDS source code file structure is as follows:
   this version as [rgbds-linux](https://github.com/vegard/rgbds-linux).
 - 2010-01-12: Anthony J. Bentley [forks](https://github.com/bentley) Nossum's
   repository. The fork becomes the reference implementation of RGBDS.
-- 2015-01-18: stag019 begins implementing [rgbgfx](https://github.com/stag019/rgbgfx),
+- 2015-01-18: stag019 begins implementing [RGBGFX](https://github.com/stag019/rgbgfx),
   a PNG‐to‐Game Boy graphics converter, for eventual integration into RGBDS.
-- 2016-09-05: rgbgfx is [integrated](https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b)
+- 2016-09-05: RGBGFX is [integrated](https://github.com/gbdev/rgbds/commit/c3c31138ddbd8680d4e67957e387f2816798a71b)
   into Bentley's repository.
 - 2017-02-23: Bentley's repository is moved to the [rednex](https://github.com/rednex)
   organization.
