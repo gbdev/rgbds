@@ -1096,7 +1096,8 @@ print_expr:
 		printf("$%" PRIX32, $1);
 	}
 	| string {
-		fputs($1.c_str(), stdout);
+		// Allow printing NUL characters
+		fwrite($1.data(), 1, $1.length(), stdout);
 	}
 ;
 
@@ -2436,33 +2437,34 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 }
 
 static size_t charlenUTF8(std::string const &str) {
-	char const *ptr = str.c_str();
+	std::string_view view = str;
 	size_t len;
 
-	for (len = 0; charmap_ConvertNext(ptr, nullptr); len++)
+	for (len = 0; charmap_ConvertNext(view, nullptr); len++)
 		;
 
 	return len;
 }
 
 static std::string charsubUTF8(std::string const &str, uint32_t pos) {
-	char const *ptr = str.c_str();
+	std::string_view view = str;
 	size_t charLen = 1;
 
 	// Advance to starting position in source string.
 	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
-		charLen = charmap_ConvertNext(ptr, nullptr);
+		charLen = charmap_ConvertNext(view, nullptr);
 
-	char const *start = ptr;
+	std::string_view start = view;
 
-	if (!charmap_ConvertNext(ptr, nullptr))
+	if (!charmap_ConvertNext(view, nullptr))
 		warning(
 		    WARNING_BUILTIN_ARG,
 		    "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
 		    pos
 		);
 
-	return std::string(start, ptr - start);
+	start = start.substr(0, start.length() - view.length());
+	return std::string(start);
 }
 
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {

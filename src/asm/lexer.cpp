@@ -566,7 +566,7 @@ void lexer_CheckRecursionDepth() {
 }
 
 static bool isMacroChar(char c) {
-	return c == '@' || c == '#' || c == '<' || (c >= '0' && c <= '9');
+	return c == '@' || c == '#' || c == '<' || (c > '0' && c <= '9');
 }
 
 // forward declarations for readBracketedMacroArgNum
@@ -1245,6 +1245,9 @@ static void appendEscapedString(std::string &str, std::string const &escape) {
 		case '\t':
 			str += "\\t";
 			break;
+		case '\0':
+			str += "\\0";
+			break;
 		}
 	}
 }
@@ -1325,6 +1328,10 @@ static std::string readString(bool raw) {
 				c = '\t';
 				shiftChar();
 				break;
+			case '0':
+				c = '\0';
+				shiftChar();
+				break;
 
 			// Line continuation
 			case ' ':
@@ -1336,7 +1343,6 @@ static std::string readString(bool raw) {
 			// Macro arg
 			case '@':
 			case '#':
-			case '0':
 			case '1':
 			case '2':
 			case '3':
@@ -1453,6 +1459,7 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			case 'n':
 			case 'r':
 			case 't':
+			case '0':
 				// Return that character unchanged
 				str += '\\';
 				shiftChar();
@@ -1468,7 +1475,6 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			// Macro arg
 			case '@':
 			case '#':
-			case '0':
 			case '1':
 			case '2':
 			case '3':
@@ -1915,6 +1921,9 @@ backslash:
 				break;
 			case 't':
 				c = '\t';
+				break;
+			case '0':
+				c = '\0';
 				break;
 
 			case ' ':

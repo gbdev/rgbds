@@ -19,7 +19,7 @@ struct CharmapNode {
 	bool isTerminal; // Whether there exists a mapping that ends here
 	uint8_t value;   // If the above is true, its corresponding value
 	// This MUST be indexes and not pointers, because pointers get invalidated by reallocation!
-	size_t next[255]; // Indexes of where to go next, 0 = nowhere
+	size_t next[256]; // Indexes of where to go next, 0 = nowhere
 };
 
 struct Charmap {
@@ -89,7 +89,7 @@ void charmap_Add(std::string const &mapping, uint8_t value) {
 	size_t nodeIdx = 0;
 
 	for (char c : mapping) {
-		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)c - 1];
+		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)c];
 		size_t nextIdx = nextIdxRef;
 
 		if (!nextIdx) {
@@ -118,7 +118,7 @@ bool charmap_HasChar(std::string const &input) {
 	size_t nodeIdx = 0;
 
 	for (char c : input) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)c - 1];
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)c];
 
 		if (!nodeIdx)
 			return false;
@@ -128,12 +128,12 @@ bool charmap_HasChar(std::string const &input) {
 }
 
 void charmap_Convert(std::string const &input, std::vector<uint8_t> &output) {
-	char const *ptr = input.c_str();
-	while (charmap_ConvertNext(ptr, &output))
+	std::string_view inputView = input;
+	while (charmap_ConvertNext(inputView, &output))
 		;
 }
 
-size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
+size_t charmap_ConvertNext(std::string_view &input, std::vector<uint8_t> *output) {
 	// The goal is to match the longest mapping possible.
 	// For that, advance through the trie with each character read.
 	// If that would lead to a dead end, rewind characters until the last match, and output.
@@ -141,14 +141,15 @@ size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
 	Charmap const &charmap = *currentCharmap;
 	size_t matchIdx = 0;
 	size_t rewindDistance = 0;
+	size_t inputIdx = 0;
 
-	for (size_t nodeIdx = 0; *input;) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)*input - 1];
+	for (size_t nodeIdx = 0; inputIdx < input.length();) {
+		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)input[inputIdx]];
 
 		if (!nodeIdx)
 			break;
 
-		input++; // Consume that char
+		inputIdx++; // Consume that char
 
 		if (charmap.nodes[nodeIdx].isTerminal) {
 			matchIdx = nodeIdx; // This node matches, register it
@@ -160,24 +161,22 @@ size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
 
 	// We are at a dead end (either because we reached the end of input, or of the trie),
 	// so rewind up to the last match, and output.
-	input -= rewindDistance; // This will rewind all the way if no match found
+	inputIdx -= rewindDistance; // This will rewind all the way if no match found
 
+	size_t matchLen = 0;
 	if (matchIdx) { // A match was found, use it
 		if (output)
 			output->push_back(charmap.nodes[matchIdx].value);
 
-		return 1;
+		matchLen = 1;
 
-	} else if (*input) { // No match found, but there is some input left
-		int firstChar = *input;
+	} else if (inputIdx < input.length()) { // No match found, but there is some input left
+		int firstChar = input[inputIdx];
 		// This will write the codepoint's value to `output`, little-endian
-		size_t codepointLen = readUTF8Char(output, input);
+		size_t codepointLen = readUTF8Char(output, input.data() + inputIdx);
 
 		if (codepointLen == 0)
 			error("Input string is not valid UTF-8\n");
-
-		// OK because UTF-8 has no NUL in multi-byte chars
-		input += codepointLen;
 
 		// Warn if this character is not mapped but any others are
 		if (charmap.nodes.size() > 1)
@@ -189,9 +188,10 @@ size_t charmap_ConvertNext(char const *&input, std::vector<uint8_t> *output) {
 			    printChar(firstChar)
 			);
 
-		return codepointLen;
-
-	} else { // End of input
-		return 0;
+		inputIdx += codepointLen;
+		matchLen = codepointLen;
 	}
+
+	input = input.substr(inputIdx);
+	return matchLen;
 }

@@ -36,6 +36,9 @@ char const *printChar(int c) {
 	case '\t':
 		buf[2] = 't';
 		break;
+	case '\0':
+		buf[2] = '0';
+		break;
 
 	default: // Print as hex
 		buf[0] = '0';
