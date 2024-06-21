@@ -8,7 +8,7 @@
 
 #include "helpers.hpp" // assume
 
-#define RGBDS_OBJECT_VERSION_STRING "RGBA"
+#define RGBDS_OBJECT_VERSION_STRING "RGB9"
 #define RGBDS_OBJECT_REV            10U
 
 enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
