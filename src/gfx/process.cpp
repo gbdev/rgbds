@@ -547,6 +547,7 @@ static void generatePalSpec(Png const &png) {
 	}
 
 	// Fill in the palette spec
+	options.palSpec.clear();
 	options.palSpec.emplace_back(); // A single palette, with `#00000000`s (transparent)
 	assume(options.palSpec.size() == 1);
 	if (embPalSize > options.maxOpaqueColors()) { // Ignore extraneous colors if they are unused
