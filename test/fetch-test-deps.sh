@@ -52,7 +52,10 @@ case "$actionname" in
 			# libbet depends on PIL to build
 			if [ "$2" = "libbet" ]; then
 				case "${osname%-*}" in
-					ubuntu|macos)
+					macos)
+						python3 -m pip install --break-system-packages pillow
+						;;
+					ubuntu)
 						python3 -m pip install pillow
 						;;
 					windows)
