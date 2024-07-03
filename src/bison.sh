@@ -5,7 +5,7 @@ OUTPUT_CPP="${1:?}"
 INPUT_Y="${2:?}"
 
 BISON_MAJOR=$(bison -V | sed -E 's/^.+ ([0-9]+)\..*$/\1/g;q')
-BISON_MINOR=$(bison -V | sed -E 's/^.+ [0-9]+\.([0-9]+)\..*$/\1/g;q')
+BISON_MINOR=$(bison -V | sed -E 's/^.+ [0-9]+\.([0-9]+)(\..*)?$/\1/g;q')
 
 if [ "$BISON_MAJOR" -lt 3 ]; then
 	echo "Bison $BISON_MAJOR.$BISON_MINOR is not supported" 1>&2
