@@ -500,6 +500,7 @@ There is also a character map stack that can be used to save and restore which c
 .It Ic NEWCHARMAP Ar name , basename Ta Creates a new character map called Ar name , No copied from character map Ar basename , No and switches to it .
 .It Ic SETCHARMAP Ar name Ta Switch to character map Ar name .
 .It Ic PUSHC Ta Push the current character map onto the stack.
+.It Ic PUSHC Ar name Ta Push the current character map onto the stack and switch to character map Ar name .
 .It Ic POPC Ta Pop a character map off the stack and switch to it.
 .El
 .Pp
@@ -756,6 +757,20 @@ will push the current section context on the section stack.
 .Ic POPS
 can then later be used to restore it.
 Useful for defining sections in included files when you don't want to override the section context at the point the file was included.
+.Pp
+.Ic PUSHS
+can also take the same arguments as
+.Ic SECTION ,
+in order to push the current section context and define a new section at the same time:
+.Bd -literal -offset indent
+SECTION "Code", ROM0
+Function:
+    ld a, 42
+    PUSHS "Variables", WRAM0
+        wAnswer: db
+    POPS
+    ld [wAnswer], a
+.Ed
 .Ss RAM code
 Sometimes you want to have some code in RAM.
 But then you can't simply put it in a RAM section, you have to store it in ROM and copy it to RAM at some point.
@@ -2091,6 +2106,15 @@ will push the current set of options on the option stack.
 can then later be used to restore them.
 Useful if you want to change some options in an include file and you don't want to destroy the options set by the program that included your file.
 The stack's number of entries is limited only by the amount of memory in your machine.
+.Pp
+.Ic PUSHO
+can also take a comma-separated list of options, to push the current set and apply the argument set at the same time:
+.Bd -literal -offset indent
+PUSHO b.X, g.oOX
+    DB %..XXXX..
+    DW `..ooOOXX
+POPO
+.Ed
 .Ss Requesting alignment
 While
 .Ic ALIGN

@@ -22,8 +22,7 @@ $3
 setcharmap map1
 pushc
 setcharmap map2
-pushc
-setcharmap map3
+pushc map3
 $1
 $6364
 $6566

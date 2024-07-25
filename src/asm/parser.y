@@ -545,6 +545,7 @@ directive:
 	| setcharmap
 	| pushc
 	| popc
+	| pushc_setcharmap
 	| load
 	| shift
 	| fail
@@ -561,6 +562,7 @@ directive:
 	| purge
 	| pops
 	| pushs
+	| pushs_section
 	| endsection
 	| popo
 	| pusho
@@ -664,7 +666,16 @@ popo:
 pusho:
 	POP_PUSHO {
 		opt_Push();
+		// Parsing 'optional_opt_list' will restore the lexer's normal mode
+		lexer_SetMode(LEXER_RAW);
+	} optional_opt_list
+;
+
+optional_opt_list:
+	%empty {
+		lexer_SetMode(LEXER_NORMAL);
 	}
+	| opt_list
 ;
 
 pops:
@@ -1064,6 +1075,13 @@ setcharmap:
 pushc:
 	POP_PUSHC {
 		charmap_Push();
+	}
+;
+
+pushc_setcharmap:
+	POP_PUSHC ID {
+		charmap_Push();
+		charmap_Set($2);
 	}
 ;
 
@@ -1532,6 +1550,13 @@ strfmt_va_args:
 
 section:
 	POP_SECTION sect_mod string COMMA sect_type sect_org sect_attrs {
+		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
+	}
+;
+
+pushs_section:
+	POP_PUSHS sect_mod string COMMA sect_type sect_org sect_attrs {
+		sect_PushSection();
 		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
 	}
 ;
