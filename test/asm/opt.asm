@@ -12,3 +12,7 @@ popo
 	println $8000_0000 / -1
 	def n = 3.14
 	println "{x:n} = {f:n}"
+
+pusho p99
+	ds 1
+popo

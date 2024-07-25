@@ -10,4 +10,6 @@ error: invalid-opt.asm(5):
     Argument for option 'Q' must be between 1 and 31
 error: invalid-opt.asm(6):
     Must specify an argument for option 'W'
-error: Assembly aborted (6 errors)!
+error: invalid-opt.asm(7):
+    syntax error, unexpected newline, expecting string
+error: Assembly aborted (7 errors)!

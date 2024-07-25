@@ -20,6 +20,11 @@ MACRO push_
 	pushc
 ENDM
 
+MACRO push_set_
+	println "pushc \1"
+	pushc \1
+ENDM
+
 MACRO pop_
 	println "popc"
 	popc
@@ -83,9 +88,8 @@ charmap "ef", $3
 
 	push_
 	set_ map2
-	push_
 
-	set_ map3
+	push_set_ map3
 
 	print_mapped "ab"
 	print_mapped "cd"
