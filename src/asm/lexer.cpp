@@ -1208,7 +1208,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
-	if (!sym) {
+	if (!sym || !sym->isDefined()) {
 		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
 		auto buf = std::make_shared<std::string>();
@@ -1219,7 +1219,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 		fmt.appendNumber(*buf, sym->getConstantValue());
 		return buf;
 	} else {
-		error("Only numerical and string symbols can be interpolated\n");
+		error("Interpolated symbol \"%s\" is not a numeric or string symbol\n", fmtBuf.c_str());
 	}
 	return nullptr;
 }

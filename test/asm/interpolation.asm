@@ -1,4 +1,4 @@
-SECTION "Test", ROM0
+SECTION "Test", ROM0[123]
 
 def NAME equs "ITEM"
 def FMT equs "d"
@@ -13,6 +13,15 @@ PRINTLN STRCAT("{NAME}_{d:INDEX}", " is ", {NAME}_{d:INDEX})
 ; Purges ITEM_100
 PURGE {NAME}_{d:INDEX}
 ASSERT !DEF({NAME}_{d:INDEX})
+
+; undefined
+PRINTLN "undef {undef}"
+
+; referenced but undefined
+ld hl, label
+PRINTLN "label {label}"
+label::
+PRINTLN "label {label}"
 
 ; not string or number
 MACRO foo

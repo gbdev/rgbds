@@ -1,3 +1,7 @@
-error: interpolation.asm(20):
-    Only numerical and string symbols can be interpolated
-error: Assembly aborted (1 error)!
+error: interpolation.asm(18):
+    Interpolated symbol "undef" does not exist
+error: interpolation.asm(22):
+    Interpolated symbol "label" does not exist
+error: interpolation.asm(29):
+    Interpolated symbol "foo" is not a numeric or string symbol
+error: Assembly aborted (3 errors)!
