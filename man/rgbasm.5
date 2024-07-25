@@ -1107,6 +1107,17 @@ DEF y *= 2    ; y == 20
 DEF y >>= 1   ; y == 10
 DEF x ^= y    ; x == 1
 .Ed
+.Pp
+Declaring a variable with
+.Ic EXPORT DEF
+or
+.Ic EXPORT REDEF
+will define and
+.Ic EXPORT
+it at the same time.
+(See
+.Sx Exporting and importing symbols
+below).
 .Ss Numeric constants
 .Ic EQU
 is used to define immutable numeric symbols.
@@ -1143,6 +1154,17 @@ ENDM
     assert NUM_ITEMS == 4
     assert ITEM_04 == 16
 .Ed
+.Pp
+Declaring a numeric constant with
+.Ic EXPORT DEF
+or
+.Ic EXPORT REDEF
+will define and
+.Ic EXPORT
+it at the same time.
+(See
+.Sx Exporting and importing symbols
+below).
 .Ss Offset constants
 The RS group of commands is a handy way of defining structure offsets:
 .Bd -literal -offset indent
@@ -1180,6 +1202,15 @@ is omitted, it's assumed to be 1.
 Note that colons
 .Ql \&:
 following the name are not allowed.
+.Pp
+Declaring an offset constant with
+.Ic EXPORT DEF
+will define and
+.Ic EXPORT
+it at the same time.
+(See
+.Sx Exporting and importing symbols
+below).
 .Ss String constants
 .Ic EQUS
 is used to define string constant symbols.
@@ -1218,8 +1249,6 @@ Note that colons
 .Ql \&:
 following the name are not allowed.
 .Pp
-String constants can't be exported or imported.
-.Pp
 String constants, like numeric constants, cannot be redefined.
 However, the
 .Ic REDEF
@@ -1231,6 +1260,8 @@ REDEF s EQUS "{s}world!"
 ; prints "Hello, world!"
 PRINTLN "{s}\en"
 .Ed
+.Pp
+String constants can't be exported or imported.
 .Pp
 .Sy Important note :
 When a string constant is expanded, its expansion may contain another string constant, which will be expanded as well.
