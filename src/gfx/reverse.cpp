@@ -138,8 +138,9 @@ void reverse() {
 	}
 
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
-	size_t nbTileInstances = tiles.size() / tileSize + options.trim; // Image size in tiles
-	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTileInstances);
+	size_t const nbTiles = tiles.size() / tileSize;
+	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTiles);
+	size_t nbTileInstances = nbTiles + options.trim; // Image size in tiles
 	std::optional<DefaultInitVec<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
@@ -152,7 +153,7 @@ void reverse() {
 	}
 	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 		warning(
-		    "Read %zu tiles, more than the limit of %" PRIu16 " + %" PRIu16,
+		    "Total number of tiles (%zu) is more than the limit of %" PRIu16 " + %" PRIu16,
 		    nbTileInstances,
 		    options.maxNbTiles[0],
 		    options.maxNbTiles[1]
@@ -173,7 +174,7 @@ void reverse() {
 	}
 	if (nbTileInstances % width != 0) {
 		fatal(
-		    "Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
+		    "Total number of tiles (%zu) cannot be divided by image width (%zu tiles)",
 		    nbTileInstances,
 		    width
 		);
@@ -269,15 +270,26 @@ void reverse() {
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
 		bool bad = false;
-		for (auto attr : *attrmap) {
+		for (size_t index = 0; index < nbTileInstances; ++index) {
+			uint8_t attr = (*attrmap)[index];
+			size_t tx = index % width, ty = index / width;
 			if ((attr & 0b111) > palettes.size()) {
 				error(
-				    "Referencing palette %u, but there are only %zu!", attr & 0b111, palettes.size()
+				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu!",
+				    attr & 0b111,
+				    tx,
+				    ty,
+				    palettes.size()
 				);
 				bad = true;
 			}
 			if (attr & 0x08 && !tilemap) {
-				warning("Tile in bank 1 but no tilemap specified; ignoring the bank bit");
+				warning(
+				    "Attribute map assigns tile at (%zu, %zu) to bank 1, but no tilemap specified; "
+				    "ignoring the bank bit",
+				    tx,
+				    ty
+				);
 			}
 		}
 		if (bad) {
@@ -287,24 +299,34 @@ void reverse() {
 
 	if (tilemap) {
 		if (attrmap) {
-			for (auto [id, attr] : zip(*tilemap, *attrmap)) {
-				bool bank = attr & 1 << 3;
-				if (id >= options.maxNbTiles[bank]) {
+			for (size_t index = 0; index < nbTileInstances; ++index) {
+				uint8_t tileID = (*tilemap)[index];
+				uint8_t attr = (*attrmap)[index];
+				if (bool bank = attr & 1 << 3; tileID >= options.maxNbTiles[bank]) {
+					size_t tx = index % width, ty = index / width;
 					warning(
-					    "Tile #%" PRIu8 " was referenced, but the limit for bank %u is %" PRIu16,
-					    id,
+					    "Tilemap references tile #%" PRIu8
+					    " at (%zu, %zu), but the limit for bank %u is %" PRIu16,
+					    tileID,
+					    tx,
+					    ty,
 					    bank,
 					    options.maxNbTiles[bank]
 					);
 				}
 			}
 		} else {
-			for (auto id : *tilemap) {
-				if (id >= options.maxNbTiles[0]) {
-					warning(
-					    "Tile #%" PRIu8 " was referenced, but the limit is %" PRIu16,
-					    id,
-					    options.maxNbTiles[0]
+			size_t limit =
+			    std::min<size_t>(nbTiles, options.maxNbTiles[0]) + options.baseTileIDs[0];
+			for (size_t index = 0; index < nbTileInstances; ++index) {
+				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit) {
+					size_t tx = index % width, ty = index / width;
+					fatal(
+					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
+					    tileID,
+					    tx,
+					    ty,
+					    limit
 					);
 				}
 			}
@@ -389,7 +411,7 @@ void reverse() {
 				tileID =
 				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
 			}
-			assume(tileID < nbTileInstances); // Should have been checked earlier
+			assume(tileID < nbTiles + options.trim); // Should have been checked earlier
 			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
 			assume(palID < palettes.size()); // Should be ensured on data read
 
@@ -412,9 +434,8 @@ void reverse() {
 			    0x00,
 			    0x00,
 			};
-			uint8_t const *tileData = tileID > nbTileInstances - options.trim
-			                              ? trimmedTile.data()
-			                              : &tiles[tileID * tileSize];
+			uint8_t const *tileData =
+			    tileID >= nbTiles ? trimmedTile.data() : &tiles[tileID * tileSize];
 			auto const &palette = palettes[palID];
 			for (uint8_t y = 0; y < 8; ++y) {
 				// If vertically mirrored, fetch the bytes from the other end
