@@ -1,0 +1,3 @@
+error: export.asm(18):
+    syntax error, unexpected EQUS
+error: Assembly aborted (1 error)!

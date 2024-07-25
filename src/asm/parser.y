@@ -196,6 +196,15 @@
 %token <std::string> ANON "anonymous label"
 %type <std::string> def_id
 %type <std::string> redef_id
+%type <std::string> def_numeric
+%type <std::string> def_equ
+%type <std::string> redef_equ
+%type <std::string> def_set
+%type <std::string> def_rb
+%type <std::string> def_rw
+%type <std::string> def_rl
+%type <std::string> def_equs
+%type <std::string> redef_equs
 %type <std::string> scoped_id
 %type <std::string> scoped_anon_id
 %token POP_EQU "EQU"
@@ -529,6 +538,7 @@ directive:
 	| print
 	| println
 	| export
+	| export_def
 	| db
 	| dw
 	| dl
@@ -550,12 +560,7 @@ directive:
 	| fail
 	| warn
 	| assert
-	| def_equ
-	| redef_equ
-	| def_set
-	| def_rb
-	| def_rw
-	| def_rl
+	| def_numeric
 	| def_equs
 	| redef_equs
 	| purge
@@ -566,6 +571,15 @@ directive:
 	| pusho
 	| opt
 	| align
+;
+
+def_numeric:
+	  def_equ
+	| redef_equ
+	| def_set
+	| def_rb
+	| def_rw
+	| def_rl
 ;
 
 trailing_comma: %empty | COMMA;
@@ -920,64 +934,75 @@ dl:
 
 def_equ:
 	def_id POP_EQU const {
-		sym_AddEqu($1, $3);
+		$$ = std::move($1);
+		sym_AddEqu($$, $3);
 	}
 ;
 
 redef_equ:
 	redef_id POP_EQU const {
-		sym_RedefEqu($1, $3);
+		$$ = std::move($1);
+		sym_RedefEqu($$, $3);
 	}
 ;
 
 def_set:
 	def_id POP_EQUAL const {
-		sym_AddVar($1, $3);
+		$$ = std::move($1);
+		sym_AddVar($$, $3);
 	}
 	| redef_id POP_EQUAL const {
-		sym_AddVar($1, $3);
+		$$ = std::move($1);
+		sym_AddVar($$, $3);
 	}
 	| def_id compound_eq const {
-		compoundAssignment($1, $2, $3);
+		$$ = std::move($1);
+		compoundAssignment($$, $2, $3);
 	}
 	| redef_id compound_eq const {
-		compoundAssignment($1, $2, $3);
+		$$ = std::move($1);
+		compoundAssignment($$, $2, $3);
 	}
 ;
 
 def_rb:
 	def_id POP_RB rs_uconst {
+		$$ = std::move($1);
 		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
+		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + $3);
 	}
 ;
 
 def_rw:
 	def_id POP_RW rs_uconst {
+		$$ = std::move($1);
 		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
+		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + 2 * $3);
 	}
 ;
 
 def_rl:
 	def_id Z80_RL rs_uconst {
+		$$ = std::move($1);
 		uint32_t rs = sym_GetRSValue();
-		sym_AddEqu($1, rs);
+		sym_AddEqu($$, rs);
 		sym_SetRSValue(rs + 4 * $3);
 	}
 ;
 
 def_equs:
 	def_id POP_EQUS string {
-		sym_AddString($1, std::make_shared<std::string>($3));
+		$$ = std::move($1);
+		sym_AddString($$, std::make_shared<std::string>($3));
 	}
 ;
 
 redef_equs:
 	redef_id POP_EQUS string {
-		sym_RedefString($1, std::make_shared<std::string>($3));
+		$$ = std::move($1);
+		sym_RedefString($$, std::make_shared<std::string>($3));
 	}
 ;
 
@@ -1011,6 +1036,12 @@ export_list:
 export_list_entry:
 	scoped_id {
 		sym_Export($1);
+	}
+;
+
+export_def:
+	POP_EXPORT def_numeric {
+		sym_Export($2);
 	}
 ;
 

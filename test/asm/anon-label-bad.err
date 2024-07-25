@@ -3,7 +3,7 @@ error: anon-label-bad.asm(2):
 error: anon-label-bad.asm(6):
     Reference to anonymous label 2 before, when only 1 has been created so far
 error: anon-label-bad.asm(9):
-    syntax error, unexpected anonymous label, expecting label or identifier or local identifier
+    syntax error, unexpected anonymous label
 error: anon-label-bad.asm(10):
     syntax error, unexpected anonymous label, expecting label or identifier or local identifier
 error: anon-label-bad.asm(22):
