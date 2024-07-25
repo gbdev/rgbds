@@ -13,6 +13,7 @@
 #include <string.h>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 #include "extern/getopt.hpp"
 #include "file.hpp"
@@ -601,7 +602,6 @@ int main(int argc, char *argv[]) {
 	struct AtFileStackEntry {
 		int parentInd;            // Saved offset into parent argv
 		std::vector<char *> argv; // This context's arg pointer vec
-		std::vector<char> argPool;
 
 		AtFileStackEntry(int parentInd_, std::vector<char *> argv_)
 		    : parentInd(parentInd_), argv(argv_) {}
@@ -610,18 +610,24 @@ int main(int argc, char *argv[]) {
 
 	int curArgc = argc;
 	char **curArgv = argv;
+	std::vector<std::vector<char>> argPools;
 	for (;;) {
 		char *atFileName = parseArgv(curArgc, curArgv);
 		if (atFileName) {
+			// We need to allocate a new arg pool for each at-file, so as not to invalidate pointers
+			// previous at-files may have generated to their own arg pools.
+			// But for the same reason, the arg pool must also outlive the at-file's stack entry!
+			auto &argPool = argPools.emplace_back();
+
 			// Copy `argv[0]` for error reporting, and because option parsing skips it
 			AtFileStackEntry &stackEntry =
 			    atFileStack.emplace_back(musl_optind, std::vector{atFileName});
 			// It would be nice to compute the char pointers on the fly, but reallocs don't allow
 			// that; so we must compute the offsets after the pool is fixed
-			auto offsets = readAtFile(&musl_optarg[1], stackEntry.argPool);
+			auto offsets = readAtFile(&musl_optarg[1], argPool);
 			stackEntry.argv.reserve(offsets.size() + 2); // Avoid a bunch of reallocs
 			for (size_t ofs : offsets) {
-				stackEntry.argv.push_back(&stackEntry.argPool.data()[ofs]);
+				stackEntry.argv.push_back(&argPool.data()[ofs]);
 			}
 			stackEntry.argv.push_back(nullptr); // Don't forget the arg vector terminator!
 
