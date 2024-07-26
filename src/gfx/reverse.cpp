@@ -65,14 +65,34 @@ static void pngWarning(png_structp png, char const *msg) {
 	);
 }
 
-void writePng(png_structp png, png_bytep data, size_t length) {
+static void writePng(png_structp png, png_bytep data, size_t length) {
 	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
 	pngFile->sputn(reinterpret_cast<char *>(data), length);
 }
 
-void flushPng(png_structp png) {
+static void flushPng(png_structp png) {
 	auto &pngFile = *static_cast<File *>(png_get_io_ptr(png));
 	pngFile->pubsync();
+}
+
+static void printColor(std::optional<Rgba> const &color) {
+	if (color) {
+		fprintf(stderr, "#%08x", color->toCSS());
+	} else {
+		fputs("<none>   ", stderr);
+	}
+}
+
+static void printPalette(std::array<std::optional<Rgba>, 4> const &palette) {
+	putc('[', stderr);
+	printColor(palette[0]);
+	fputs(", ", stderr);
+	printColor(palette[1]);
+	fputs(", ", stderr);
+	printColor(palette[2]);
+	fputs(", ", stderr);
+	printColor(palette[3]);
+	putc(']', stderr);
 }
 
 void reverse() {
@@ -199,6 +219,22 @@ void reverse() {
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
 			warning("Colors in the palette file do not match those specified with `-c`!");
+			//     [#111111ff, #222222ff, #333333ff, #444444ff]  [#111111ff, #222222ff, #333333ff, #444444ff]
+			fputs("Colors specified in the palette file:         ...versus with `-c`:\n", stderr);
+			for (size_t i = 0;
+			     i < palettes.size() && i < options.palSpec.size();
+			     ++i) {
+				if (i < palettes.size()) {
+					printPalette(palettes[i]);
+				} else {
+					fputs("                                            ", stderr);
+				}
+				if (i < options.palSpec.size()) {
+					fputs("  ", stderr);
+					printPalette(options.palSpec[i]);
+				}
+				putc('\n', stderr);
+			}
 		}
 	} else if (options.palSpecType == Options::EMBEDDED) {
 		warning("An embedded palette was requested, but no palette file was specified; ignoring "
