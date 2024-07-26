@@ -13,7 +13,7 @@
 
 // Variables related to CLI options
 extern bool isDmgMode;
-extern char *linkerScriptName;
+extern char const *linkerScriptName;
 extern char const *mapFileName;
 extern bool noSymInMap;
 extern char const *symFileName;
