@@ -401,6 +401,10 @@ static void parseHEXFile(std::filebuf &file) {
 		if (!readLine(file, line)) {
 			break;
 		}
+		// Ignore empty lines.
+		if (line.length() == 0) {
+			continue;
+		}
 
 		if (line.length() != 6
 		    || line.find_first_not_of("0123456789ABCDEFabcdef"sv) != std::string::npos) {
