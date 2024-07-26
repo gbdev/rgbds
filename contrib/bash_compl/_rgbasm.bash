@@ -33,6 +33,7 @@ _rgbasm_completions() {
 		[g]="gfx-chars:unk"
 		[I]="include:dir"
 		[M]="dependfile:glob-*.mk *.d"
+		[n]="state:glob-*.sym"
 		[o]="output:glob-*.o"
 		[P]="preinclude:glob-*.asm *.inc"
 		[p]="pad-value:unk"

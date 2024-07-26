@@ -14,6 +14,7 @@
 .Op Fl g Ar chars
 .Op Fl I Ar path
 .Op Fl M Ar depend_file
+.Op Fl n Ar state_file
 .Op Fl MG
 .Op Fl MP
 .Op Fl MT Ar target_file
@@ -82,10 +83,14 @@ first looks up the provided path from its working directory; if this fails, it t
 .Dq include path
 directories, in the order they were provided.
 .It Fl M Ar depend_file , Fl \-dependfile Ar depend_file
-Print
+Write
 .Xr make 1
 dependencies to
 .Ar depend_file .
+.It Fl n Ar state_file , Fl \-state Ar state_file
+Write the values of all numeric constant symbols to
+.Ar state_file .
+External programs can use this information, for example to help debugging ROMs.
 .It Fl MG
 To be used in conjunction with
 .Fl M .

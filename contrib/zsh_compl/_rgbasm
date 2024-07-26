@@ -49,6 +49,7 @@ local args=(
 	-MP'[Add phony targets to all deps]'
 	'*'-MT"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
 	'*'-MQ"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
+	'(-n --state)'{-n,--state}"+[Constant symbol state file]:output file:_files -g '*.sym'"
 	'(-o --output)'{-o,--output}'+[Output file]:output file:_files'
 	'(-P --preinclude)'{-P,--preinclude}"+[Pre-include a file]:include file:_files -g '*.{asm,inc}'"
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'

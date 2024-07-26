@@ -47,7 +47,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:VvW:wX:";
+static char const *optstring = "b:D:Eg:I:M:n:o:P:p:Q:r:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -67,6 +67,7 @@ static option const longopts[] = {
     {"gfx-chars",       required_argument, nullptr,  'g'},
     {"include",         required_argument, nullptr,  'I'},
     {"dependfile",      required_argument, nullptr,  'M'},
+    {"state",           required_argument, nullptr,  'n'},
     {"MG",              no_argument,       &depType, 'G'},
     {"MP",              no_argument,       &depType, 'P'},
     {"MT",              required_argument, &depType, 'T'},
@@ -88,8 +89,8 @@ static void printUsage() {
 	fputs(
 	    "Usage: rgbasm [-EVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
-	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-	    "              [-r depth] [-W warning] [-X max_errors] <file>\n"
+	    "              [-n state_file] [-o out_file] [-P include_file] [-p pad_value]\n"
+	    "              [-Q precision] [-r depth] [-W warning] [-X max_errors] <file>\n"
 	    "Useful options:\n"
 	    "    -E, --export-all         export all labels\n"
 	    "    -M, --dependfile <path>  set the output dependency file\n"
@@ -180,6 +181,10 @@ int main(int argc, char *argv[]) {
 			}
 			if (dependFile == nullptr)
 				err("Failed to open dependfile \"%s\"", dependFileName);
+			break;
+
+		case 'n':
+			out_SetStateFileName(musl_optarg);
 			break;
 
 		case 'o':
@@ -334,6 +339,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 
 	out_WriteObject();
+	out_WriteState();
 
 	return 0;
 }
