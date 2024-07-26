@@ -835,7 +835,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			process();
 		}
-	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT && !options.reverse()) {
+	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
+	           && !options.reverse()) {
 		processPalettes();
 	} else {
 		fputs("FATAL: No input image specified\n", stderr);

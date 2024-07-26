@@ -177,7 +177,8 @@ void parseInlinePalSpec(char const * const rawArg) {
  */
 template<size_t n>
 [[gnu::warn_unused_result]] // Ignoring failure to match is a bad idea.
-static bool readMagic(std::filebuf &file, char const *magic) {
+static bool
+    readMagic(std::filebuf &file, char const *magic) {
 	assume(strlen(magic) == n);
 
 	char magicBuf[n];
@@ -208,7 +209,8 @@ static T readLE(U const *bytes) {
  * @return true if a line was read.
  */
 [[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
-static bool readLine(std::filebuf &file, std::string &buffer) {
+static bool
+    readLine(std::filebuf &file, std::string &buffer) {
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
 		auto c = file.sbumpc();
@@ -227,12 +229,13 @@ static bool readLine(std::filebuf &file, std::string &buffer) {
 	}
 }
 
-#define requireLine(kind, file, buffer) do { \
-	if (!readLine(file, buffer)) { \
-		error(kind " palette file is shorter than expected"); \
-		return; \
-	} \
-} while (0)
+#define requireLine(kind, file, buffer) \
+	do { \
+		if (!readLine(file, buffer)) { \
+			error(kind " palette file is shorter than expected"); \
+			return; \
+		} \
+	} while (0)
 
 /*
  * Parses the initial part of a string_view, advancing the "read index" as it does
@@ -375,7 +378,8 @@ static void parseGPLFile(std::filebuf &file) {
 			return;
 		}
 		// Ignore anything following the three components
-		// (sometimes it's a comment, sometimes it's the color in CSS hex format, sometimes there's nothing...).
+		// (sometimes it's a comment, sometimes it's the color in CSS hex format, sometimes there's
+		// nothing...).
 
 		if (nbColors < maxNbColors) {
 			if (nbColors % options.nbColorsPerPal == 0) {
