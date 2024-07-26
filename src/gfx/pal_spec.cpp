@@ -371,13 +371,13 @@ static void parseGPLFile(std::filebuf &file) {
 			return;
 		}
 
-		++nbColors;
 		if (nbColors < maxNbColors) {
-			if (nbColors % options.nbColorsPerPal == 1) {
+			if (nbColors % options.nbColorsPerPal == 0) {
 				options.palSpec.emplace_back();
 			}
 			options.palSpec.back()[nbColors % options.nbColorsPerPal] = *color;
 		}
+		++nbColors;
 	}
 
 	if (nbColors > maxNbColors) {
@@ -419,13 +419,13 @@ static void parseHEXFile(std::filebuf &file) {
 		Rgba color =
 		    Rgba(toHex(line[0], line[1]), toHex(line[2], line[3]), toHex(line[4], line[5]), 0xFF);
 
-		++nbColors;
 		if (nbColors < maxNbColors) {
-			if (nbColors % options.nbColorsPerPal == 1) {
+			if (nbColors % options.nbColorsPerPal == 0) {
 				options.palSpec.emplace_back();
 			}
 			options.palSpec.back()[nbColors % options.nbColorsPerPal] = color;
 		}
+		++nbColors;
 	}
 
 	if (nbColors > maxNbColors) {
