@@ -176,6 +176,7 @@ void parseInlinePalSpec(char const * const rawArg) {
  * Returns whether the magic was correctly read.
  */
 template<size_t n>
+[[gnu::warn_unused_result]] // Ignoring failure to match is a bad idea.
 static bool readMagic(std::filebuf &file, char const *magic) {
 	assume(strlen(magic) == n);
 
@@ -203,25 +204,35 @@ static T readLE(U const *bytes) {
 
 /*
  * **Appends** the first line read from `file` to the end of the provided `buffer`.
+ *
+ * @return true if a line was read.
  */
-static void readLine(std::filebuf &file, std::string &buffer) {
+[[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
+static bool readLine(std::filebuf &file, std::string &buffer) {
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
 		auto c = file.sbumpc();
 		if (c == std::filebuf::traits_type::eof()) {
-			return;
+			return false;
 		}
 		if (c == '\n') {
 			// Discard a trailing CRLF
 			if (!buffer.empty() && buffer.back() == '\r') {
 				buffer.pop_back();
 			}
-			return;
+			return true;
 		}
 
 		buffer.push_back(c);
 	}
 }
+
+#define requireLine(kind, file, buffer) do { \
+	if (!readLine(file, buffer)) { \
+		error(kind " palette file is shorter than expected"); \
+		return; \
+	} \
+} while (0)
 
 /*
  * Parses the initial part of a string_view, advancing the "read index" as it does
@@ -272,21 +283,20 @@ static void parsePSPFile(std::filebuf &file) {
 	// https://www.selapa.net/swatches/colors/fileformats.php#psp_pal
 
 	std::string line;
-	readLine(file, line);
-	if (line != "JASC-PAL") {
+	if (!readLine(file, line) || line != "JASC-PAL") {
 		error("Palette file does not appear to be a PSP palette file");
 		return;
 	}
 
 	line.clear();
-	readLine(file, line);
+	requireLine("PSP", file, line);
 	if (line != "0100") {
 		error("Unsupported PSP palette file version \"%s\"", line.c_str());
 		return;
 	}
 
 	line.clear();
-	readLine(file, line);
+	requireLine("PSP", file, line);
 	std::string::size_type n = 0;
 	std::optional<uint16_t> nbColors = parseDec<uint16_t>(line, n);
 	if (!nbColors || n != line.length()) {
@@ -309,7 +319,7 @@ static void parsePSPFile(std::filebuf &file) {
 
 	for (uint16_t i = 0; i < *nbColors; ++i) {
 		line.clear();
-		readLine(file, line);
+		requireLine("PSP", file, line);
 
 		n = 0;
 		std::optional<Rgba> color = parseColor(line, n, i + 1);
@@ -336,8 +346,7 @@ static void parseGPLFile(std::filebuf &file) {
 	// https://gitlab.gnome.org/GNOME/gimp/-/blob/gimp-2-10/app/core/gimppalette-load.c#L39
 
 	std::string line;
-	readLine(file, line);
-	if (!line.starts_with("GIMP Palette")) {
+	if (!readLine(file, line) || !line.starts_with("GIMP Palette")) {
 		error("Palette file does not appear to be a GPL palette file");
 		return;
 	}
@@ -347,7 +356,7 @@ static void parseGPLFile(std::filebuf &file) {
 
 	for (;;) {
 		line.clear();
-		readLine(file, line);
+		requireLine("GPL", file, line);
 		if (!line.length()) {
 			break;
 		}
@@ -389,8 +398,7 @@ static void parseHEXFile(std::filebuf &file) {
 
 	for (;;) {
 		std::string line;
-		readLine(file, line);
-		if (!line.length()) {
+		if (!readLine(file, line)) {
 			break;
 		}
 
