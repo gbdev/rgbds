@@ -671,34 +671,44 @@ void sect_AbsByte(uint8_t b) {
 	writebyte(b);
 }
 
-void sect_AbsByteString(std::vector<uint8_t> const &s) {
+void sect_AbsByteString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(s.size()))
 		return;
 
-	for (uint8_t v : s)
-		writebyte(v);
+	for (int32_t v : s) {
+		if (!checkNBit(v, 8, "All character units"))
+			break;
+	}
+
+	for (int32_t v : s)
+		writebyte(static_cast<uint8_t>(v));
 }
 
-void sect_AbsWordString(std::vector<uint8_t> const &s) {
+void sect_AbsWordString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(s.size() * 2))
 		return;
 
-	for (uint8_t v : s)
-		writeword(v);
+	for (int32_t v : s) {
+		if (!checkNBit(v, 16, "All character units"))
+			break;
+	}
+
+	for (int32_t v : s)
+		writeword(static_cast<uint16_t>(v));
 }
 
-void sect_AbsLongString(std::vector<uint8_t> const &s) {
+void sect_AbsLongString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 	if (!reserveSpace(s.size() * 4))
 		return;
 
-	for (uint8_t v : s)
-		writelong(v);
+	for (int32_t v : s)
+		writelong(static_cast<uint32_t>(v));
 }
 
 // Skip this many bytes

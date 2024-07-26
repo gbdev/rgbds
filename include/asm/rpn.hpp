@@ -63,4 +63,6 @@ private:
 	uint8_t *reserveSpace(uint32_t size, uint32_t patchSize);
 };
 
+bool checkNBit(int32_t v, uint8_t n, char const *name);
+
 #endif // RGBDS_ASM_RPN_HPP

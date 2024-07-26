@@ -474,17 +474,22 @@ with its corresponding argument in
 When writing text strings that are meant to be displayed on the Game Boy, the character encoding in the ROM may need to be different than the source file encoding.
 For example, the tiles used for uppercase letters may be placed starting at tile index 128, which differs from ASCII starting at 65.
 .Pp
-Character maps allow mapping strings to arbitrary 8-bit values:
+Character maps allow mapping strings to arbitrary sequences of numbers:
 .Bd -literal -offset indent
-CHARMAP "<LF>", 10
-CHARMAP "&iacute", 20
-CHARMAP "A", 128
+CHARMAP "A", 42
+CHARMAP ":)", 39
+CHARMAP "<br>", 13, 10
+CHARMAP "&euro;", $20ac
 .Ed
 .Pp
 This would result in
-.Ql db \(dqAmen<LF>\(dq
+.Ql db \(dqAmen :)<br>\(dq
 being equivalent to
-.Ql db 128, 109, 101, 110, 10 .
+.Ql db 42, 109, 101, 110, 32, 39, 13, 10 ,
+and
+.Ql dw \(dq25&euro;\(dq
+being equivalent to
+.Ql dw 50, 53, $20ac .
 .Pp
 Any characters in a string without defined mappings will be copied directly, using the source file's encoding of characters to bytes.
 .Pp
