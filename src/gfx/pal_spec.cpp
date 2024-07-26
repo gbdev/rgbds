@@ -352,24 +352,30 @@ static void parseGPLFile(std::filebuf &file) {
 	}
 
 	uint16_t nbColors = 0;
-	uint16_t maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+	uint16_t const maxNbColors = options.nbColorsPerPal * options.nbPalettes;
 
 	for (;;) {
 		line.clear();
-		requireLine("GPL", file, line);
-		if (!line.length()) {
+		if (!readLine(file, line)) {
 			break;
 		}
-
-		if (line.starts_with("#") || line.starts_with("Name:") || line.starts_with("Column:")) {
+		if (line.starts_with("Name:") || line.starts_with("Columns:")) {
 			continue;
 		}
 
 		std::string::size_type n = 0;
+		skipWhitespace(line, n);
+		// Skip empty lines, or lines that contain just a comment.
+		if (line.length() == n || line[n] == '#') {
+			continue;
+		}
+
 		std::optional<Rgba> color = parseColor(line, n, nbColors + 1);
 		if (!color) {
 			return;
 		}
+		// Ignore anything following the three components
+		// (sometimes it's a comment, sometimes it's the color in CSS hex format, sometimes there's nothing...).
 
 		if (nbColors < maxNbColors) {
 			if (nbColors % options.nbColorsPerPal == 0) {
@@ -394,7 +400,7 @@ static void parseHEXFile(std::filebuf &file) {
 	// https://lospec.com/palette-list/tag/gbc
 
 	uint16_t nbColors = 0;
-	uint16_t maxNbColors = options.nbColorsPerPal * options.nbPalettes;
+	uint16_t const maxNbColors = options.nbColorsPerPal * options.nbPalettes;
 
 	for (;;) {
 		std::string line;
