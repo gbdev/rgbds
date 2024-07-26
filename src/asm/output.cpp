@@ -304,6 +304,9 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 
 // Write an object file
 void out_WriteObject() {
+	if (objectName.empty())
+		return;
+
 	FILE *file;
 	if (objectName != "-") {
 		file = fopen(objectName.c_str(), "wb");

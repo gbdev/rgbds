@@ -24,14 +24,14 @@
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 
-bool isDmgMode;              // -d
-char *linkerScriptName;      // -l
-char const *mapFileName;     // -m
-bool noSymInMap;             // -M
-char const *symFileName;     // -n
-char const *overlayFileName; // -O
-char const *outputFileName;  // -o
-uint8_t padValue;            // -p
+bool isDmgMode;               // -d
+char const *linkerScriptName; // -l
+char const *mapFileName;      // -m
+bool noSymInMap;              // -M
+char const *symFileName;      // -n
+char const *overlayFileName;  // -O
+char const *outputFileName;   // -o
+uint8_t padValue;             // -p
 bool hasPadValue = false;
 // Setting these three to 0 disables the functionality
 uint16_t scrambleROMX = 0; // -S
@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'l':
 			if (linkerScriptName)
-				warnx("Overriding linker script %s", musl_optarg);
+				warnx("Overriding linker script %s", linkerScriptName);
 			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
@@ -357,22 +357,22 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'm':
 			if (mapFileName)
-				warnx("Overriding map file %s", musl_optarg);
+				warnx("Overriding map file %s", mapFileName);
 			mapFileName = musl_optarg;
 			break;
 		case 'n':
 			if (symFileName)
-				warnx("Overriding sym file %s", musl_optarg);
+				warnx("Overriding sym file %s", symFileName);
 			symFileName = musl_optarg;
 			break;
 		case 'O':
 			if (overlayFileName)
-				warnx("Overriding overlay file %s", musl_optarg);
+				warnx("Overriding overlay file %s", overlayFileName);
 			overlayFileName = musl_optarg;
 			break;
 		case 'o':
 			if (outputFileName)
-				warnx("Overriding output file %s", musl_optarg);
+				warnx("Overriding output file %s", outputFileName);
 			outputFileName = musl_optarg;
 			break;
 		case 'p': {

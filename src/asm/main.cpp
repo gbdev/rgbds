@@ -21,14 +21,13 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
-FILE *dependFile = nullptr;
-bool generatedMissingIncludes = false;
+FILE *dependFile = nullptr;            // -M
+bool generatedMissingIncludes = false; // -MG
+bool generatePhonyDeps = false;        // -MP
+std::string targetFileName;            // -MQ, -MT
 bool failedOnMissingInclude = false;
-bool generatePhonyDeps = false;
-std::string targetFileName;
-
-bool verbose;
-bool warnings; // True to enable warnings, false to disable them.
+bool verbose = false; // -v
+bool warnings = true; // -w
 
 // Escapes Make-special chars from a string
 static std::string make_escape(std::string &str) {
@@ -62,27 +61,27 @@ static int depType; // Variants of `-M`
 // This is because long opt matching, even to a single char, is prioritized
 // over short opt matching
 static option const longopts[] = {
-    {"binary-digits",    required_argument, nullptr,  'b'},
-    {"define",           required_argument, nullptr,  'D'},
-    {"export-all",       no_argument,       nullptr,  'E'},
-    {"gfx-chars",        required_argument, nullptr,  'g'},
-    {"include",          required_argument, nullptr,  'I'},
-    {"dependfile",       required_argument, nullptr,  'M'},
-    {"MG",               no_argument,       &depType, 'G'},
-    {"MP",               no_argument,       &depType, 'P'},
-    {"MT",               required_argument, &depType, 'T'},
-    {"warning",          required_argument, nullptr,  'W'},
-    {"MQ",               required_argument, &depType, 'Q'},
-    {"output",           required_argument, nullptr,  'o'},
-    {"preinclude",       required_argument, nullptr,  'P'},
-    {"pad-value",        required_argument, nullptr,  'p'},
-    {"q-precision",      required_argument, nullptr,  'Q'},
-    {"recursion-depth",  required_argument, nullptr,  'r'},
-    {"version",          no_argument,       nullptr,  'V'},
-    {"verbose",          no_argument,       nullptr,  'v'},
-    {"warning",          required_argument, nullptr,  'W'},
-    {"max-errors",       required_argument, nullptr,  'X'},
-    {nullptr,            no_argument,       nullptr,  0  }
+    {"binary-digits",   required_argument, nullptr,  'b'},
+    {"define",          required_argument, nullptr,  'D'},
+    {"export-all",      no_argument,       nullptr,  'E'},
+    {"gfx-chars",       required_argument, nullptr,  'g'},
+    {"include",         required_argument, nullptr,  'I'},
+    {"dependfile",      required_argument, nullptr,  'M'},
+    {"MG",              no_argument,       &depType, 'G'},
+    {"MP",              no_argument,       &depType, 'P'},
+    {"MT",              required_argument, &depType, 'T'},
+    {"warning",         required_argument, nullptr,  'W'},
+    {"MQ",              required_argument, &depType, 'Q'},
+    {"output",          required_argument, nullptr,  'o'},
+    {"preinclude",      required_argument, nullptr,  'P'},
+    {"pad-value",       required_argument, nullptr,  'p'},
+    {"q-precision",     required_argument, nullptr,  'Q'},
+    {"recursion-depth", required_argument, nullptr,  'r'},
+    {"version",         no_argument,       nullptr,  'V'},
+    {"verbose",         no_argument,       nullptr,  'v'},
+    {"warning",         required_argument, nullptr,  'W'},
+    {"max-errors",      required_argument, nullptr,  'X'},
+    {nullptr,           no_argument,       nullptr,  0  }
 };
 
 static void printUsage() {
@@ -124,8 +123,6 @@ int main(int argc, char *argv[]) {
 	opt_G("0123");
 	opt_P(0);
 	opt_Q(16);
-	verbose = false;
-	warnings = true;
 	sym_SetExportAll(false);
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
 	char const *dependFileName = nullptr;
@@ -336,8 +333,7 @@ int main(int argc, char *argv[]) {
 	if (failedOnMissingInclude)
 		return 0;
 
-	// If no path specified, don't write file
-	if (!objectName.empty())
-		out_WriteObject();
+	out_WriteObject();
+
 	return 0;
 }

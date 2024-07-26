@@ -203,7 +203,7 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		uint32_t uval = value != (uint32_t)INT32_MIN ? labs((int32_t)value) : value;
 		snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, uval);
 	} else {
-		char const *spec = useType == 'u' ? "%" PRIu32
+		char const *spec = useType == 'u'   ? "%" PRIu32
 		                   : useType == 'X' ? "%" PRIX32
 		                   : useType == 'x' ? "%" PRIx32
 		                   : useType == 'o' ? "%" PRIo32
