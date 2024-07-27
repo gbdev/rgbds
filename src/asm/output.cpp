@@ -27,7 +27,7 @@ struct Assertion {
 	std::string message;
 };
 
-std::string objectName;
+std::string objectFileName;
 
 // List of symbols to put in the object file
 static std::vector<Symbol *> objectSymbols;
@@ -36,7 +36,6 @@ static std::deque<Assertion> assertions;
 
 static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
 
-// Write a long to a file (little-endian)
 static void putlong(uint32_t n, FILE *file) {
 	uint8_t bytes[] = {
 	    (uint8_t)n,
@@ -47,7 +46,6 @@ static void putlong(uint32_t n, FILE *file) {
 	fwrite(bytes, 1, sizeof(bytes), file);
 }
 
-// Write a NUL-terminated string to a file
 static void putstring(std::string const &s, FILE *file) {
 	fputs(s.c_str(), file);
 	putc('\0', file);
@@ -72,7 +70,6 @@ static uint32_t getSectIDIfAny(Section *sect) {
 	fatalerror("Unknown section '%s'\n", sect->name.c_str());
 }
 
-// Write a patch to a file
 static void writepatch(Patch const &patch, FILE *file) {
 	assume(patch.src->ID != (uint32_t)-1);
 	putlong(patch.src->ID, file);
@@ -85,7 +82,6 @@ static void writepatch(Patch const &patch, FILE *file) {
 	fwrite(patch.rpn.data(), 1, patch.rpn.size(), file);
 }
 
-// Write a section to a file
 static void writesection(Section const &sect, FILE *file) {
 	putstring(sect.name, file);
 
@@ -110,7 +106,6 @@ static void writesection(Section const &sect, FILE *file) {
 	}
 }
 
-// Write a symbol to a file
 static void writesymbol(Symbol const &sym, FILE *file) {
 	putstring(sym.name, file);
 	if (!sym.isDefined()) {
@@ -258,7 +253,6 @@ static void initpatch(Patch &patch, uint32_t type, Expression const &expr, uint3
 	}
 }
 
-// Create a new patch (includes the rpn expr)
 void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32_t pcShift) {
 	// Add the patch to the list
 	Patch &patch = currentSection->patches.emplace_front();
@@ -271,7 +265,6 @@ void out_CreatePatch(uint32_t type, Expression const &expr, uint32_t ofs, uint32
 	patch.pcOffset -= pcShift;
 }
 
-// Creates an assert that will be written to the object file
 void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 ) {
@@ -302,20 +295,19 @@ static void writeFileStackNode(FileStackNode const &node, FILE *file) {
 	}
 }
 
-// Write an object file
 void out_WriteObject() {
-	if (objectName.empty())
+	if (objectFileName.empty())
 		return;
 
 	FILE *file;
-	if (objectName != "-") {
-		file = fopen(objectName.c_str(), "wb");
+	if (objectFileName != "-") {
+		file = fopen(objectFileName.c_str(), "wb");
 	} else {
-		objectName = "<stdout>";
+		objectFileName = "<stdout>";
 		file = fdopen(STDOUT_FILENO, "wb");
 	}
 	if (!file)
-		err("Failed to open object file '%s'", objectName.c_str());
+		err("Failed to open object file '%s'", objectFileName.c_str());
 	Defer closeFile{[&] { fclose(file); }};
 
 	// Also write symbols that weren't written above
@@ -355,11 +347,10 @@ void out_WriteObject() {
 		writeassert(assert, file);
 }
 
-// Set the object filename
 void out_SetFileName(std::string const &name) {
-	if (!objectName.empty())
-		warnx("Overriding output filename %s", objectName.c_str());
-	objectName = name;
+	if (!objectFileName.empty())
+		warnx("Overriding output filename %s", objectFileName.c_str());
+	objectFileName = name;
 	if (verbose)
-		printf("Output filename %s\n", objectName.c_str());
+		printf("Output filename %s\n", objectFileName.c_str());
 }

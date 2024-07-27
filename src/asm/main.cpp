@@ -287,8 +287,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (targetFileName.empty() && !objectName.empty())
-		targetFileName = objectName;
+	if (targetFileName.empty() && !objectFileName.empty())
+		targetFileName = objectFileName;
 
 	if (argc == musl_optind) {
 		fputs(

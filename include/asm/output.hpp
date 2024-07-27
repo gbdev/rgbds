@@ -12,7 +12,7 @@
 struct Expression;
 struct FileStackNode;
 
-extern std::string objectName;
+extern std::string objectFileName;
 
 void out_RegisterNode(std::shared_ptr<FileStackNode> node);
 void out_SetFileName(std::string const &name);

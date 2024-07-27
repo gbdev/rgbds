@@ -127,10 +127,11 @@ bool charmap_HasChar(std::string const &input) {
 	return charmap.nodes[nodeIdx].isTerminal;
 }
 
-void charmap_Convert(std::string const &input, std::vector<uint8_t> &output) {
-	std::string_view inputView = input;
-	while (charmap_ConvertNext(inputView, &output))
+std::vector<uint8_t> charmap_Convert(std::string const &input) {
+	std::vector<uint8_t> output;
+	for (std::string_view inputView = input; charmap_ConvertNext(inputView, &output);)
 		;
+	return output;
 }
 
 size_t charmap_ConvertNext(std::string_view &input, std::vector<uint8_t> *output) {

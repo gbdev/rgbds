@@ -1170,10 +1170,8 @@ constlist_8bit_entry:
 		sect_RelByte($1, 0);
 	}
 	| string {
-		std::vector<uint8_t> output;
-
-		charmap_Convert($1, output);
-		sect_AbsByteGroup(output.data(), output.size());
+		std::vector<uint8_t> output = charmap_Convert($1);
+		sect_AbsByteString(output);
 	}
 ;
 
@@ -1187,10 +1185,8 @@ constlist_16bit_entry:
 		sect_RelWord($1, 0);
 	}
 	| string {
-		std::vector<uint8_t> output;
-
-		charmap_Convert($1, output);
-		sect_AbsWordGroup(output.data(), output.size());
+		std::vector<uint8_t> output = charmap_Convert($1);
+		sect_AbsWordString(output);
 	}
 ;
 
@@ -1204,10 +1200,8 @@ constlist_32bit_entry:
 		sect_RelLong($1, 0);
 	}
 	| string {
-		std::vector<uint8_t> output;
-
-		charmap_Convert($1, output);
-		sect_AbsLongGroup(output.data(), output.size());
+		std::vector<uint8_t> output = charmap_Convert($1);
+		sect_AbsLongString(output);
 	}
 ;
 
@@ -1256,9 +1250,7 @@ relocexpr:
 		$$ = std::move($1);
 	}
 	| string {
-		std::vector<uint8_t> output;
-
-		charmap_Convert($1, output);
+		std::vector<uint8_t> output = charmap_Convert($1);
 		$$.makeNumber(str2int2(output));
 	}
 ;

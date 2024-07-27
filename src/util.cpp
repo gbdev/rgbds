@@ -54,12 +54,11 @@ char const *printChar(int c) {
 }
 
 size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src) {
-	uint32_t state = 0;
-	uint32_t codep;
+	uint32_t state = 0, codepoint;
 	size_t i = 0;
 
 	for (;;) {
-		if (decode(&state, &codep, src[i]) == 1)
+		if (decode(&state, &codepoint, src[i]) == 1)
 			return 0;
 
 		if (dest)

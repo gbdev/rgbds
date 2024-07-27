@@ -671,34 +671,34 @@ void sect_AbsByte(uint8_t b) {
 	writebyte(b);
 }
 
-void sect_AbsByteGroup(uint8_t const *s, size_t length) {
+void sect_AbsByteString(std::vector<uint8_t> const &s) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(length))
+	if (!reserveSpace(s.size()))
 		return;
 
-	while (length--)
-		writebyte(*s++);
+	for (uint8_t v : s)
+		writebyte(v);
 }
 
-void sect_AbsWordGroup(uint8_t const *s, size_t length) {
+void sect_AbsWordString(std::vector<uint8_t> const &s) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(length * 2))
+	if (!reserveSpace(s.size() * 2))
 		return;
 
-	while (length--)
-		writeword(*s++);
+	for (uint8_t v : s)
+		writeword(v);
 }
 
-void sect_AbsLongGroup(uint8_t const *s, size_t length) {
+void sect_AbsLongString(std::vector<uint8_t> const &s) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(length * 4))
+	if (!reserveSpace(s.size() * 4))
 		return;
 
-	while (length--)
-		writelong(*s++);
+	for (uint8_t v : s)
+		writelong(v);
 }
 
 // Skip this many bytes
