@@ -38,7 +38,7 @@ struct Options {
 		uint16_t height;
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
-	uint8_t nbPalettes = 8;                            // -n
+	uint16_t nbPalettes = 8;                           // -n
 	std::string output{};                              // -o
 	std::string palettes{};                            // -p, -P
 	std::string palmap{};                              // -q, -Q
