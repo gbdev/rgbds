@@ -683,7 +683,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 		// If the palette generation is wrong, other (dependee) operations are likely to be
 		// nonsensical, so fatal-error outright
 		fatal(
-		    "Generated %zu palettes, over the maximum of %" PRIu8,
+		    "Generated %zu palettes, over the maximum of %" PRIu16,
 		    palettes.size(),
 		    options.nbPalettes
 		);
