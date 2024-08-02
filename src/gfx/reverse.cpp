@@ -191,7 +191,7 @@ void reverse() {
 
 		if (palettes.size() > options.nbPalettes) {
 			warning(
-			    "Read %zu palettes, more than the specified limit of %" PRIu8,
+			    "Read %zu palettes, more than the specified limit of %" PRIu16,
 			    palettes.size(),
 			    options.nbPalettes
 			);

@@ -762,7 +762,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
 		if (options.trim != 0)
 			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
-		fprintf(stderr, "\tMaximum %" PRIu8 " palettes\n", options.nbPalettes);
+		fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
 		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
 		fprintf(stderr, "\t%s palette spec\n", [] {
 			switch (options.palSpecType) {
