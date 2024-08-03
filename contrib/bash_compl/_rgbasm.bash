@@ -38,6 +38,7 @@ _rgbasm_completions() {
 		[p]="pad-value:unk"
 		[Q]="q-precision:unk"
 		[r]="recursion-depth:unk"
+		[s]="state:unk"
 		[W]="warning:warning"
 		[X]="max-errors:unk"
 	)

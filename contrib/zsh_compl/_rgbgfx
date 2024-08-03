@@ -26,6 +26,7 @@ local args=(
 
 	'(-a --attr-map -A --auto-attr-map)'{-a,--attr-map}'+[Generate a map of tile attributes (mirroring)]:attrmap file:_files'
 	'(-b --base-tiles)'{-b,--base-tiles}'+[Base tile IDs for tile map output]:base tile IDs:'
+	'(-c --colors)'{-c,--colors}'+[Specify color palettes]:palette spec:'
 	'(-d --depth)'{-d,--depth}'+[Set bit depth]:bit depth:_depths'
 	'(-L --slice)'{-L,--slice}'+[Only process a portion of the image]:input slice:'
 	'(-N --nb-tiles)'{-N,--nb-tiles}'+[Limit number of tiles]:tile count:'

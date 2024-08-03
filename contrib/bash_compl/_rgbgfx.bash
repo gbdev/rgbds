@@ -17,6 +17,7 @@ _rgbgfx_completions() {
 		[a]="attr-map:glob-*.attrmap"
 		[A]="auto-attr-map:normal"
 		[b]="base-tiles:unk"
+		[c]="colors:unk"
 		[d]="depth:unk"
 		[L]="slice:unk"
 		[N]="nb-tiles:unk"

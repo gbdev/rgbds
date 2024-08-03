@@ -2,6 +2,7 @@
 
 #include "asm/charmap.hpp"
 
+#include <deque>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,56 +19,69 @@
 struct CharmapNode {
 	bool isTerminal; // Whether there exists a mapping that ends here
 	uint8_t value;   // If the above is true, its corresponding value
-	// This MUST be indexes and not pointers, because pointers get invalidated by reallocation!
+	// These MUST be indexes and not pointers, because pointers get invalidated by reallocation!
 	size_t next[256]; // Indexes of where to go next, 0 = nowhere
 };
 
 struct Charmap {
 	std::string name;
-	std::vector<CharmapNode> nodes; // first node is reserved for the root node
+	std::vector<CharmapNode> nodes;                   // first node is reserved for the root node
+	std::unordered_map<size_t, std::string> mappings; // keys are indexes of terminal nodes
 };
 
-static std::unordered_map<std::string, Charmap> charmaps;
+static std::deque<Charmap> charmapList;
+static std::unordered_map<std::string, size_t> charmapMap; // Indexes into `charmapList`
 
 static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
 
+bool charmap_ForEach(
+    void (*mapFunc)(std::string const &), void (*charFunc)(std::string const &, uint8_t value)
+) {
+	for (Charmap &charmap : charmapList) {
+		mapFunc(charmap.name);
+		for (size_t i = 0; i < charmap.nodes.size(); ++i) {
+			if (CharmapNode const &node = charmap.nodes[i]; node.isTerminal)
+				charFunc(charmap.mappings[i], node.value);
+		}
+	}
+	return !charmapList.empty();
+}
+
 void charmap_New(std::string const &name, std::string const *baseName) {
-	Charmap *base = nullptr;
+	size_t baseIdx = (size_t)-1;
 
 	if (baseName != nullptr) {
-		auto search = charmaps.find(*baseName);
-
-		if (search == charmaps.end())
+		if (auto search = charmapMap.find(*baseName); search == charmapMap.end())
 			error("Base charmap '%s' doesn't exist\n", baseName->c_str());
 		else
-			base = &search->second;
+			baseIdx = search->second;
 	}
 
-	if (charmaps.find(name) != charmaps.end()) {
+	if (charmapMap.find(name) != charmapMap.end()) {
 		error("Charmap '%s' already exists\n", name.c_str());
 		return;
 	}
 
 	// Init the new charmap's fields
-	Charmap &charmap = charmaps[name];
+	charmapMap[name] = charmapList.size();
+	Charmap &charmap = charmapList.emplace_back();
 
-	if (base)
-		charmap.nodes = base->nodes; // Copies `base->nodes`
+	if (baseIdx != (size_t)-1)
+		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
 	else
 		charmap.nodes.emplace_back(); // Zero-init the root node
+
 	charmap.name = name;
 
 	currentCharmap = &charmap;
 }
 
 void charmap_Set(std::string const &name) {
-	auto search = charmaps.find(name);
-
-	if (search == charmaps.end())
+	if (auto search = charmapMap.find(name); search == charmapMap.end())
 		error("Charmap '%s' doesn't exist\n", name.c_str());
 	else
-		currentCharmap = &search->second;
+		currentCharmap = &charmapList[search->second];
 }
 
 void charmap_Push() {
@@ -96,6 +110,8 @@ void charmap_Add(std::string const &mapping, uint8_t value) {
 			// Switch to and zero-init the new node
 			nextIdxRef = charmap.nodes.size();
 			nextIdx = nextIdxRef;
+			// Save the mapping of this node
+			charmap.mappings[charmap.nodes.size()] = mapping;
 			// This may reallocate `charmap.nodes` and invalidate `nextIdxRef`,
 			// which is why we keep the actual value in `nextIdx`
 			charmap.nodes.emplace_back();

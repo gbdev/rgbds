@@ -10,6 +10,9 @@
 
 #define DEFAULT_CHARMAP_NAME "main"
 
+bool charmap_ForEach(
+    void (*mapFunc)(std::string const &), void (*charFunc)(std::string const &, uint8_t value)
+);
 void charmap_New(std::string const &name, std::string const *baseName);
 void charmap_Set(std::string const &name);
 void charmap_Push();
