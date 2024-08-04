@@ -1,38 +1,84 @@
-warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(12): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 2 bytes
-warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(12): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 2 bytes
-warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(12): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 1 byte
-warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(13): [-Wnumeric-string]
-    Treating string as a number ignores first 2 bytes
-warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(15): [-Wnumeric-string]
-    Treating 2-byte string as a number
-warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(16): [-Wnumeric-string]
-    Treating 3-byte string as a number
-error: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(12): [-Werror=numeric-string]
-    Treating string as a number ignores first 1 byte
-error: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(13): [-Werror=numeric-string]
-    Treating string as a number ignores first 1 byte
-error: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(13): [-Werror=numeric-string]
-    Treating string as a number ignores first 2 bytes
-error: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(12): [-Werror=numeric-string]
-    Treating string as a number ignores first 1 byte
-error: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(13): [-Werror=numeric-string]
-    Treating string as a number ignores first 1 byte
-error: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(13): [-Werror=numeric-string]
-    Treating string as a number ignores first 2 bytes
-error: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(15): [-Werror=numeric-string]
-    Treating 2-byte string as a number
-error: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(16): [-Werror=numeric-string]
-    Treating 3-byte string as a number
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(19) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(20) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(21) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(22) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(23) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(24) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(7): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(12): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(13): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(15): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: warn-numeric-string.asm(25) -> warn-numeric-string.asm::try(16): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
