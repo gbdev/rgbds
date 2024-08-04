@@ -516,13 +516,22 @@ void Expression::makeCheckRST() {
 
 // Checks that an RPN expression's value fits within N bits (signed or unsigned)
 void Expression::checkNBit(uint8_t n) const {
+	if (isKnown())
+		::checkNBit(value(), n, "Expression");
+}
+
+bool checkNBit(int32_t v, uint8_t n, char const *name) {
 	assume(n != 0);                     // That doesn't make sense
 	assume(n < CHAR_BIT * sizeof(int)); // Otherwise `1 << n` is UB
 
-	if (isKnown()) {
-		if (int32_t val = value(); val < -(1 << n) || val >= 1 << n)
-			warning(WARNING_TRUNCATION_1, "Expression must be %u-bit\n", n);
-		else if (val < -(1 << (n - 1)))
-			warning(WARNING_TRUNCATION_2, "Expression must be %u-bit\n", n);
+	if (v < -(1 << n) || v >= 1 << n) {
+		warning(WARNING_TRUNCATION_1, "%s must be %u-bit\n", name, n);
+		return false;
 	}
+	if (v < -(1 << (n - 1))) {
+		warning(WARNING_TRUNCATION_2, "%s must be %u-bit\n", name, n);
+		return false;
+	}
+
+	return true;
 }

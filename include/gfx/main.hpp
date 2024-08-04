@@ -13,9 +13,6 @@
 #include "gfx/rgba.hpp"
 
 struct Options {
-	uint16_t reversedWidth = 0; // -r, in tiles
-	bool reverse() const { return reversedWidth != 0; }
-
 	bool useColorCurve = false;  // -C
 	bool allowMirroring = false; // -m
 	bool allowDedup = false;     // -u
@@ -42,6 +39,7 @@ struct Options {
 	std::string output{};                              // -o
 	std::string palettes{};                            // -p, -P
 	std::string palmap{};                              // -q, -Q
+	uint16_t reversedWidth = 0;                        // -r, in tiles
 	uint8_t nbColorsPerPal = 0;                        // -s; 0 means "auto" = 1 << bitDepth;
 	std::string tilemap{};                             // -t, -T
 	uint64_t trim = 0;                                 // -x

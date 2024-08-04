@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unordered_map>
 
+#include "helpers.hpp"
 #include "util.hpp"
 
 #include "asm/warning.hpp"
@@ -17,10 +18,11 @@
 // Essentially a tree, where each nodes stores a single character's worth of info:
 // whether there exists a mapping that ends at the current character,
 struct CharmapNode {
-	bool isTerminal; // Whether there exists a mapping that ends here
-	uint8_t value;   // If the above is true, its corresponding value
+	std::vector<int32_t> value;   // The mapped value, if there exists a mapping that ends here
 	// These MUST be indexes and not pointers, because pointers get invalidated by reallocation!
-	size_t next[256]; // Indexes of where to go next, 0 = nowhere
+	size_t next[256];             // Indexes of where to go next, 0 = nowhere
+
+	bool isTerminal() const { return !value.empty(); }
 };
 
 struct Charmap {
@@ -98,7 +100,7 @@ void charmap_Pop() {
 	charmapStack.pop();
 }
 
-void charmap_Add(std::string const &mapping, uint8_t value) {
+void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
@@ -122,11 +124,10 @@ void charmap_Add(std::string const &mapping, uint8_t value) {
 
 	CharmapNode &node = charmap.nodes[nodeIdx];
 
-	if (node.isTerminal)
+	if (node.isTerminal())
 		warning(WARNING_CHARMAP_REDEF, "Overriding charmap mapping\n");
 
-	node.isTerminal = true;
-	node.value = value;
+	std::swap(node.value, value);
 }
 
 bool charmap_HasChar(std::string const &input) {
@@ -140,17 +141,17 @@ bool charmap_HasChar(std::string const &input) {
 			return false;
 	}
 
-	return charmap.nodes[nodeIdx].isTerminal;
+	return charmap.nodes[nodeIdx].isTerminal();
 }
 
-std::vector<uint8_t> charmap_Convert(std::string const &input) {
-	std::vector<uint8_t> output;
+std::vector<int32_t> charmap_Convert(std::string const &input) {
+	std::vector<int32_t> output;
 	for (std::string_view inputView = input; charmap_ConvertNext(inputView, &output);)
 		;
 	return output;
 }
 
-size_t charmap_ConvertNext(std::string_view &input, std::vector<uint8_t> *output) {
+size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output) {
 	// The goal is to match the longest mapping possible.
 	// For that, advance through the trie with each character read.
 	// If that would lead to a dead end, rewind characters until the last match, and output.
@@ -168,7 +169,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<uint8_t> *output
 
 		inputIdx++; // Consume that char
 
-		if (charmap.nodes[nodeIdx].isTerminal) {
+		if (charmap.nodes[nodeIdx].isTerminal()) {
 			matchIdx = nodeIdx; // This node matches, register it
 			rewindDistance = 0; // If no longer match is found, rewind here
 		} else {
@@ -182,11 +183,12 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<uint8_t> *output
 
 	size_t matchLen = 0;
 	if (matchIdx) { // A match was found, use it
+		std::vector<int32_t> const &value = charmap.nodes[matchIdx].value;
+
 		if (output)
-			output->push_back(charmap.nodes[matchIdx].value);
+			output->insert(output->end(), RANGE(value));
 
-		matchLen = 1;
-
+		matchLen = value.size();
 	} else if (inputIdx < input.length()) { // No match found, but there is some input left
 		int firstChar = input[inputIdx];
 		// This will write the codepoint's value to `output`, little-endian
