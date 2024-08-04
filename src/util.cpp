@@ -53,7 +53,7 @@ char const *printChar(int c) {
 	return buf;
 }
 
-size_t readUTF8Char(std::vector<uint8_t> *dest, char const *src) {
+size_t readUTF8Char(std::vector<int32_t> *dest, char const *src) {
 	uint32_t state = 0, codepoint;
 	size_t i = 0;
 
