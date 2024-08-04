@@ -172,9 +172,12 @@ Write all string constants as
 .It Cm char
 Write all characters as
 .Ql Ic charmap Ar name , Ar value .
+.It Cm macro
+Write all macros as
+.Ql Ic macro Ar name ... Ic endm .
 .It Cm all
 Acts like
-.Cm equ,var,equs,char .
+.Cm equ,var,equs,char,macro .
 .El
 .Pp
 This flag may be specified multiple times with different feature subsets to write them to different files (see

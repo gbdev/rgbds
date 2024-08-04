@@ -257,12 +257,13 @@ int main(int argc, char *argv[]) {
 				if (!strcasecmp(feature, "all")) {
 					if (!features.empty())
 						warnx("Redundant feature before \"%s\" for option 's'", feature);
-					features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR});
+					features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
 				} else {
-					StateFeature value = !strcasecmp(feature, "equ")    ? STATE_EQU
-					                     : !strcasecmp(feature, "var")  ? STATE_VAR
-					                     : !strcasecmp(feature, "equs") ? STATE_EQUS
-					                     : !strcasecmp(feature, "char") ? STATE_CHAR
+					StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
+					                     : !strcasecmp(feature, "var")   ? STATE_VAR
+					                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
+					                     : !strcasecmp(feature, "char")  ? STATE_CHAR
+					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
 					                                                    : NB_STATE_FEATURES;
 					if (value == NB_STATE_FEATURES) {
 						errx("Invalid feature for option 's': \"%s\"", feature);

@@ -19,6 +19,7 @@ enum StateFeature {
     STATE_VAR,
     STATE_EQUS,
     STATE_CHAR,
+    STATE_MACRO,
     NB_STATE_FEATURES
 };
 
