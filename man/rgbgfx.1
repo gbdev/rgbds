@@ -22,7 +22,7 @@
 .Op Fl o Ar out_file
 .Op Fl p Ar pal_file | Fl P
 .Op Fl q Ar pal_map | Fl Q
-.Op Fl r Ar stride
+.Op Fl r Ar width
 .Op Fl s Ar nb_colors
 .Op Fl t Ar tilemap | Fl T
 .Op Fl x Ar quantity
@@ -246,6 +246,9 @@ below for details.
 .Pp
 .Ar width
 is the width of the image to generate, in tiles.
+.Fl r 0
+chooses a width to make the image as square as possible.
+This is useful if you do not know the original width.
 .It Fl s Ar nb_colors , Fl \-palette-size Ar nb_colors
 Specify how many colors each palette contains, including the transparent one if any.
 .Ar nb_colors

@@ -36,6 +36,7 @@ static struct LocalOptions {
 	bool autoPalettes;
 	bool autoPalmap;
 	bool groupOutputs;
+	bool reverse;
 } localOptions;
 
 static uintmax_t nbErrors;
@@ -535,12 +536,10 @@ static char *parseArgv(int argc, char *argv[]) {
 			options.palmap = musl_optarg;
 			break;
 		case 'r':
+			localOptions.reverse = true;
 			options.reversedWidth = parseNumber(arg, "Reversed image stride");
 			if (*arg != '\0') {
 				error("Reversed image stride (-r) must be a valid number, not \"%s\"", musl_optarg);
-			}
-			if (options.reversedWidth == 0) {
-				error("Reversed image stride (-r) may not be 0!");
 			}
 			break;
 		case 's':
@@ -830,13 +829,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (!options.input.empty()) {
-		if (options.reverse()) {
+		if (localOptions.reverse) {
 			reverse();
 		} else {
 			process();
 		}
 	} else if (!options.palettes.empty() && options.palSpecType == Options::EXPLICIT
-	           && !options.reverse()) {
+	           && !localOptions.reverse) {
 		processPalettes();
 	} else {
 		fputs("FATAL: No input image specified\n", stderr);

@@ -6,6 +6,7 @@
 #include <array>
 #include <errno.h>
 #include <inttypes.h>
+#include <math.h>
 #include <optional>
 #include <png.h>
 #include <string.h>
@@ -159,6 +160,17 @@ void reverse() {
 	}
 
 	size_t width = options.reversedWidth, height; // In tiles
+	if (width == 0) {
+		// Pick the smallest width that will result in a landscape-aspect rectangular image.
+		// Thus a prime number of tiles will result in a horizontal row.
+		// This avoids redundancy with `-r 1` which results in a vertical column.
+		width = (size_t)ceil(sqrt(nbTileInstances));
+		for (; width < nbTileInstances; ++width) {
+			if (nbTileInstances % width == 0)
+				break;
+		}
+		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
+	}
 	if (nbTileInstances % width != 0) {
 		fatal(
 		    "Total number of tiles read (%zu) cannot be divided by image width (%zu tiles)",
@@ -219,11 +231,9 @@ void reverse() {
 
 		if (options.palSpecType == Options::EXPLICIT && palettes != options.palSpec) {
 			warning("Colors in the palette file do not match those specified with `-c`!");
-			//     [#111111ff, #222222ff, #333333ff, #444444ff]  [#111111ff, #222222ff, #333333ff, #444444ff]
+			// This spacing aligns "...versus with `-c`" above the column of `-c` palettes
 			fputs("Colors specified in the palette file:         ...versus with `-c`:\n", stderr);
-			for (size_t i = 0;
-			     i < palettes.size() && i < options.palSpec.size();
-			     ++i) {
+			for (size_t i = 0; i < palettes.size() && i < options.palSpec.size(); ++i) {
 				if (i < palettes.size()) {
 					printPalette(palettes[i]);
 				} else {
@@ -336,7 +346,7 @@ void reverse() {
 	png_set_IHDR(
 	    png,
 	    pngInfo,
-	    options.reversedWidth * 8,
+	    width * 8,
 	    height * 8,
 	    8,
 	    PNG_COLOR_TYPE_RGB_ALPHA,
@@ -353,8 +363,8 @@ void reverse() {
 	sbitChunk.alpha = 1;
 	png_set_sBIT(png, pngInfo, &sbitChunk);
 
-	constexpr uint8_t SIZEOF_PIXEL = 4; // Each pixel is 4 bytes (RGBA @ 8 bits/component)
-	size_t const SIZEOF_ROW = options.reversedWidth * 8 * SIZEOF_PIXEL;
+	constexpr uint8_t SIZEOF_TILE = 4 * 8; // 4 bytes/pixel (RGBA @ 8 bits/channel) * 8 pixels/tile
+	size_t const SIZEOF_ROW = width * SIZEOF_TILE;
 	std::vector<uint8_t> tileRow(8 * SIZEOF_ROW, 0xFF); // Data for 8 rows of pixels
 	uint8_t * const rowPtrs[8] = {
 	    &tileRow.data()[0 * SIZEOF_ROW],
@@ -415,7 +425,7 @@ void reverse() {
 					bitplane0 = flipTable[bitplane0];
 					bitplane1 = flipTable[bitplane1];
 				}
-				uint8_t *ptr = &rowPtrs[y][tx * 8 * SIZEOF_PIXEL];
+				uint8_t *ptr = &rowPtrs[y][tx * SIZEOF_TILE];
 				for (uint8_t x = 0; x < 8; ++x) {
 					uint8_t bit0 = bitplane0 & 0x80, bit1 = bitplane1 & 0x80;
 					Rgba const &pixel = *palette[bit0 >> 7 | bit1 >> 6];
