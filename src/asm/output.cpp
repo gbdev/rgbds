@@ -394,7 +394,7 @@ static bool dumpEquConstants(FILE *file) {
 	});
 	// Constants are ordered by file, then by definition order
 	std::sort(RANGE(equConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->key < sym2->key;
+		return sym1->defIndex < sym2->defIndex;
 	});
 
 	for (Symbol const *sym : equConstants) {
@@ -415,7 +415,7 @@ static bool dumpVariables(FILE *file) {
 	});
 	// Variables are ordered by file, then by definition order
 	std::sort(RANGE(variables), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->key < sym2->key;
+		return sym1->defIndex < sym2->defIndex;
 	});
 
 	for (Symbol const *sym : variables) {
@@ -436,7 +436,7 @@ static bool dumpEqusConstants(FILE *file) {
 	});
 	// Constants are ordered by file, then by definition order
 	std::sort(RANGE(equsConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
-		return sym1->key < sym2->key;
+		return sym1->defIndex < sym2->defIndex;
 	});
 
 	for (Symbol const *sym : equsConstants) {
@@ -453,13 +453,17 @@ static bool dumpCharmaps(FILE *file) {
 	charmapFile = file;
 
 	// Characters are ordered by charmap, then by definition order
-	return charmap_ForEach([](std::string const &name) {
-		fprintf(charmapFile, "newcharmap %s\n", name.c_str());
-	}, [](std::string const &mapping, uint8_t value) {
-		fputs("charmap \"", charmapFile);
-		dumpString(mapping, charmapFile);
-		fprintf(charmapFile, "\", $%02" PRIx8 "\n", value);
-	});
+	return charmap_ForEach(
+	    [](std::string const &name) { fprintf(charmapFile, "newcharmap %s\n", name.c_str()); },
+	    [](std::string const &mapping, std::vector<int32_t> value) {
+		    fputs("charmap \"", charmapFile);
+		    dumpString(mapping, charmapFile);
+		    putc('"', charmapFile);
+		    for (int32_t v : value)
+			    fprintf(charmapFile, ", $%" PRIx32, v);
+		    putc('\n', charmapFile);
+	    }
+	);
 }
 
 void out_WriteState(std::string name, std::vector<StateFeature> const &features) {
@@ -475,10 +479,10 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 	Defer closeFile{[&] { fclose(file); }};
 
 	static char const *dumpHeadings[NB_STATE_FEATURES] = {
-		"Numeric constants",
-		"Variables",
-		"String constants",
-		"Character maps",
+	    "Numeric constants",
+	    "Variables",
+	    "String constants",
+	    "Character maps",
 	};
 	static bool (* const dumpFuncs[NB_STATE_FEATURES])(FILE *) = {
 	    dumpEquConstants,

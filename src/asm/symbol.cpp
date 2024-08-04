@@ -106,7 +106,7 @@ static void updateSymbolFilename(Symbol &sym) {
 
 // Create a new symbol by name
 static Symbol &createSymbol(std::string const &symName) {
-	static uint32_t nextKey = 0;
+	static uint32_t nextDefIndex = 0;
 
 	Symbol &sym = symbols[symName];
 
@@ -117,7 +117,7 @@ static Symbol &createSymbol(std::string const &symName) {
 	sym.src = fstk_GetFileStack();
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 	sym.ID = -1;
-	sym.key = nextKey++;
+	sym.defIndex = nextDefIndex++;
 
 	return sym;
 }

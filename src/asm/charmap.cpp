@@ -18,9 +18,9 @@
 // Essentially a tree, where each nodes stores a single character's worth of info:
 // whether there exists a mapping that ends at the current character,
 struct CharmapNode {
-	std::vector<int32_t> value;   // The mapped value, if there exists a mapping that ends here
+	std::vector<int32_t> value; // The mapped value, if there exists a mapping that ends here
 	// These MUST be indexes and not pointers, because pointers get invalidated by reallocation!
-	size_t next[256];             // Indexes of where to go next, 0 = nowhere
+	size_t next[256]; // Indexes of where to go next, 0 = nowhere
 
 	bool isTerminal() const { return !value.empty(); }
 };
@@ -38,12 +38,13 @@ static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
 
 bool charmap_ForEach(
-    void (*mapFunc)(std::string const &), void (*charFunc)(std::string const &, uint8_t value)
+    void (*mapFunc)(std::string const &),
+    void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
 	for (Charmap &charmap : charmapList) {
 		mapFunc(charmap.name);
 		for (size_t i = 0; i < charmap.nodes.size(); ++i) {
-			if (CharmapNode const &node = charmap.nodes[i]; node.isTerminal)
+			if (CharmapNode const &node = charmap.nodes[i]; node.isTerminal())
 				charFunc(charmap.mappings[i], node.value);
 		}
 	}
