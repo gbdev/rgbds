@@ -558,6 +558,19 @@ static void writeSym() {
 		for (uint32_t bank = 0; bank < sections[type].size(); bank++)
 			writeSymBank(sections[type][bank], type, bank);
 	}
+
+	// Output the exported numeric constants
+	static std::vector<Symbol *> constants; // `static` so `sym_ForEach` callback can see it
+	sym_ForEach([](Symbol &sym) {
+		// Symbols are already limited to the exported ones
+		if (std::holds_alternative<int32_t>(sym.data))
+			constants.push_back(&sym);
+	});
+	std::sort(RANGE(constants), [](Symbol *sym1, Symbol *sym2) -> bool {
+		return sym1->name < sym2->name;
+	});
+	for (Symbol *sym : constants)
+		fprintf(symFile, "%" PRIx32 " %s\n", std::get<int32_t>(sym->data), sym->name.c_str());
 }
 
 // Writes the map file, if applicable.
