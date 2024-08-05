@@ -27,7 +27,8 @@ struct CharmapNode {
 
 struct Charmap {
 	std::string name;
-	std::vector<CharmapNode> nodes;                   // first node is reserved for the root node
+	std::vector<CharmapNode> nodes; // first node is reserved for the root node
+	// FIXME: strictly speaking, this is redundant, we could walk the trie to get mappings instead
 	std::unordered_map<size_t, std::string> mappings; // keys are indexes of terminal nodes
 };
 
