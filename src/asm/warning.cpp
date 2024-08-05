@@ -37,7 +37,7 @@ static WarningState const defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_DISABLED, // WARNING_SHIFT_AMOUNT
     WARNING_ENABLED,  // WARNING_USER
 
-    WARNING_ENABLED,  // WARNING_NUMERIC_STRING_1
+    WARNING_DISABLED, // WARNING_NUMERIC_STRING_1
     WARNING_DISABLED, // WARNING_NUMERIC_STRING_2
     WARNING_ENABLED,  // WARNING_TRUNCATION_1
     WARNING_DISABLED, // WARNING_TRUNCATION_2
@@ -114,7 +114,10 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, WarningState
 	for (size_t i = 0; i < ARRAY_SIZE(paramWarnings); i++) {
 		uint8_t maxParam = paramWarnings[i].nbLevels;
 
-		if (!strcmp(paramWarnings[i].name, flag)) { // Match!
+		if (!strcmp(flag, paramWarnings[i].name)) { // Match!
+			if (!strcmp(flag, "numeric-string"))
+				warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
+
 			// If making the warning an error but param is 0, set to the maximum
 			// This accommodates `-Werror=flag`, but also `-Werror=flag=0`, which is
 			// thus filtered out by the caller.
@@ -158,7 +161,6 @@ static uint8_t const _wallCommands[] = {
     WARNING_LARGE_CONSTANT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
-    WARNING_NUMERIC_STRING_1,
     WARNING_UNMAPPED_CHAR_1,
     META_WARNING_DONE,
 };
@@ -169,7 +171,6 @@ static uint8_t const _wextraCommands[] = {
     WARNING_MACRO_SHIFT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
-    WARNING_NUMERIC_STRING_2,
     WARNING_TRUNCATION_1,
     WARNING_TRUNCATION_2,
     WARNING_UNMAPPED_CHAR_1,
@@ -191,8 +192,6 @@ static uint8_t const _weverythingCommands[] = {
     WARNING_OBSOLETE,
     WARNING_SHIFT,
     WARNING_SHIFT_AMOUNT,
-    WARNING_NUMERIC_STRING_1,
-    WARNING_NUMERIC_STRING_2,
     WARNING_TRUNCATION_1,
     WARNING_TRUNCATION_2,
     WARNING_UNMAPPED_CHAR_1,

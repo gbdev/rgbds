@@ -1,0 +1,2 @@
+warning: empty-strings.asm(5): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
