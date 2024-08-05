@@ -21,6 +21,7 @@ _rgbasm_warnings() {
 		'nested-comment:Warn on "/*" inside block comments'
 		'numeric-string:Warn when a multi-character string is treated as a number'
 		'obsolete:Warn when using deprecated features'
+		'purge:Warn when purging exported symbols or labels'
 		'shift:Warn when shifting negative values'
 		'shift-amount:Warn when a shift'\''s operand it negative or \> 32'
 		'truncation:Warn when implicit truncation loses bits'
@@ -28,7 +29,7 @@ _rgbasm_warnings() {
 		'user:Warn when executing the WARN built-in'
 	)
 	# TODO: handle `no-` and `error=` somehow?
-	# TODO: handle `=0|1|2` levels for `numeric-string`, `truncation`, and `unmapped-char`?
+	# TODO: handle `=0|1|2` levels for `numeric-string`, `purge`, `truncation`, and `unmapped-char`?
 	_describe warning warnings
 }
 

@@ -1,0 +1,2 @@
+warning: purge-multiple.asm(9): [-Wpurge]
+    Purging an exported symbol "u"

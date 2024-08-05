@@ -169,6 +169,10 @@ void sym_Purge(std::string const &symName) {
 	} else if (sym->ID != (uint32_t)-1) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
+		if (sym->isExported)
+			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"\n", symName.c_str());
+		else if (sym->isLabel())
+			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
 			labelScope = std::nullopt;

@@ -41,6 +41,8 @@ static WarningState const defaultWarnings[ARRAY_SIZE(warningStates)] = {
     WARNING_DISABLED, // WARNING_NUMERIC_STRING_2
     WARNING_ENABLED,  // WARNING_TRUNCATION_1
     WARNING_DISABLED, // WARNING_TRUNCATION_2
+    WARNING_ENABLED,  // WARNING_PURGE_1
+    WARNING_DISABLED, // WARNING_PURGE_2
     WARNING_ENABLED,  // WARNING_UNMAPPED_CHAR_1
     WARNING_DISABLED, // WARNING_UNMAPPED_CHAR_2
 };
@@ -87,6 +89,8 @@ static char const * const warningFlags[NB_WARNINGS] = {
     // Parametric warnings
     "numeric-string",
     "numeric-string",
+    "purge",
+    "purge",
     "truncation",
     "truncation",
     "unmapped-char",
@@ -104,6 +108,7 @@ static const struct {
 	uint8_t defaultLevel;
 } paramWarnings[] = {
     {"numeric-string", 2, 1},
+    {"purge",          2, 1},
     {"truncation",     2, 2},
     {"unmapped-char",  2, 1},
 };
@@ -161,6 +166,8 @@ static uint8_t const _wallCommands[] = {
     WARNING_LARGE_CONSTANT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
+    WARNING_PURGE_1,
+    WARNING_PURGE_2,
     WARNING_UNMAPPED_CHAR_1,
     META_WARNING_DONE,
 };
@@ -171,6 +178,8 @@ static uint8_t const _wextraCommands[] = {
     WARNING_MACRO_SHIFT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
+    WARNING_PURGE_1,
+    WARNING_PURGE_2,
     WARNING_TRUNCATION_1,
     WARNING_TRUNCATION_2,
     WARNING_UNMAPPED_CHAR_1,
@@ -190,6 +199,8 @@ static uint8_t const _weverythingCommands[] = {
     WARNING_MACRO_SHIFT,
     WARNING_NESTED_COMMENT,
     WARNING_OBSOLETE,
+    WARNING_PURGE_1,
+    WARNING_PURGE_2,
     WARNING_SHIFT,
     WARNING_SHIFT_AMOUNT,
     WARNING_TRUNCATION_1,

@@ -1,5 +1,9 @@
+warning: purge.asm(5): [-Wpurge]
+    Purging a label "Label"
 error: purge.asm(9):
     Symbol "Referenced" is referenced and thus cannot be purged
+warning: purge.asm(12): [-Wpurge]
+    Purging an exported symbol "Exported"
 error: purge.asm(15):
     'Undefined' not defined
 error: Assembly aborted (2 errors)!

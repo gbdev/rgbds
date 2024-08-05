@@ -187,6 +187,7 @@ _rgbasm_completions() {
 				nested-comment
 				numeric-string
 				obsolete
+				purge
 				shift
 				shift-amount
 				truncation

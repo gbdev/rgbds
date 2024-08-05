@@ -1,2 +1,4 @@
 warning: trailing-commas.asm(7): [-Wempty-macro-arg]
     Empty macro argument
+warning: trailing-commas.asm(22): [-Wpurge]
+    Purging a label "lobsterThermidor"
