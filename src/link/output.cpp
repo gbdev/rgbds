@@ -561,6 +561,7 @@ static void writeSym() {
 
 	// Output the exported numeric constants
 	static std::vector<Symbol *> constants; // `static` so `sym_ForEach` callback can see it
+	constants.clear();
 	sym_ForEach([](Symbol &sym) {
 		// Symbols are already limited to the exported ones
 		if (std::holds_alternative<int32_t>(sym.data))
