@@ -784,7 +784,7 @@ int main(int argc, char *argv[]) {
 						fputs("#none, ", stderr);
 					}
 				}
-				fputc('\n', stderr);
+				putc('\n', stderr);
 			}
 			fputs("\t]\n", stderr);
 		}

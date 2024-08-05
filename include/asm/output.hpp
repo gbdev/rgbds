@@ -6,11 +6,22 @@
 #include <memory>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "linkdefs.hpp"
 
 struct Expression;
 struct FileStackNode;
+
+enum StateFeature {
+    STATE_EQU,
+    STATE_VAR,
+    STATE_EQUS,
+    STATE_CHAR,
+    STATE_MACRO,
+    NB_STATE_FEATURES
+};
 
 extern std::string objectFileName;
 
@@ -21,5 +32,6 @@ void out_CreateAssert(
     AssertionType type, Expression const &expr, std::string const &message, uint32_t ofs
 );
 void out_WriteObject();
+void out_WriteState(std::string name, std::vector<StateFeature> const &features);
 
 #endif // RGBDS_ASM_OUTPUT_HPP

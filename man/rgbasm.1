@@ -23,6 +23,7 @@
 .Op Fl p Ar pad_value
 .Op Fl Q Ar fix_precision
 .Op Fl r Ar recursion_depth
+.Op Fl s Ar features Ns : Ns Ar state_file
 .Op Fl W Ar warning
 .Op Fl X Ar max_errors
 .Ar asmfile
@@ -143,8 +144,45 @@ The argument may start with a
 to match the Q notation, for example,
 .Ql Fl Q Ar .16 .
 .It Fl r Ar recursion_depth , Fl \-recursion-depth Ar recursion_depth
-Specifies the recursion depth past which RGBASM will assume being in an infinite loop.
+Specifies the recursion depth past which
+.Nm
+will assume being in an infinite loop.
 The default is 64.
+.It Fl s Ar features Ns : Ns Ar state_file , Fl \-state Ar features Ns : Ns Ar state_file
+Write the specified
+.Ar features
+to
+.Ar state_file ,
+based on the final state of
+.Nm
+at the end of its input.
+The expected
+.Ar features
+are a comma-separated subset of the following:
+.Bl -tag -width Ds
+.It Cm equ
+Write all numeric constants as
+.Ql Ic def Ar name Ic equ Ar value .
+.It Cm var
+Write all variables as
+.Ql Ic def Ar name Ic = Ar value .
+.It Cm equs
+Write all string constants as
+.Ql Ic def Ar name Ic equs Qq Ar value .
+.It Cm char
+Write all characters as
+.Ql Ic charmap Ar name , Ar value .
+.It Cm macro
+Write all macros as
+.Ql Ic macro Ar name No ... Ic endm .
+.It Cm all
+Acts like
+.Cm equ,var,equs,char,macro .
+.El
+.Pp
+This flag may be specified multiple times with different feature subsets to write them to different files (see
+.Sx EXAMPLES
+below).
 .It Fl V , Fl \-version
 Print the version of the program and exit.
 .It Fl v , Fl \-verbose
@@ -327,6 +365,12 @@ The resulting object file is not yet a usable ROM image\(emit must first be run 
 .Xr rgblink 1
 and then
 .Xr rgbfix 1 .
+.Pp
+Writing the final assembler state to a file:
+.Dl $ rgbasm -s all:state.dump.asm foo.asm
+.Pp
+Or to multiple files:
+.Dl $ rgbasm -s equ,var:numbers.dump.asm -s equs:strings.dump.asm foo.asm
 .Sh BUGS
 Please report bugs on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .
