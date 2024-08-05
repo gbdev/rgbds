@@ -412,7 +412,6 @@ int main(int argc, char *argv[]) {
 			is32kMode = true;
 			break;
 		default:
-			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}
