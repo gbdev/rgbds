@@ -168,7 +168,7 @@ void sym_Purge(std::string const &symName) {
 	} else {
 		if (sym->isExported)
 			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"\n", symName.c_str());
-		if (sym->isLabel())
+		else if (sym->isLabel())
 			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)

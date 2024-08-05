@@ -1,4 +1,2 @@
 warning: purge-multiple.asm(9): [-Wpurge]
     Purging an exported symbol "u"
-warning: purge-multiple.asm(9): [-Wpurge]
-    Purging a label "u"
