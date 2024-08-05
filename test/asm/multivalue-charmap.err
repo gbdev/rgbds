@@ -2,13 +2,13 @@ warning: multivalue-charmap.asm(11): [-Wtruncation]
     All character units must be 8-bit
 warning: multivalue-charmap.asm(22): [-Wtruncation]
     All character units must be 8-bit
-warning: multivalue-charmap.asm(27): [-Wnumeric-string]
-    Treating 4-byte string as a number
-warning: multivalue-charmap.asm(28): [-Wnumeric-string]
-    Treating 4-byte string as a number
+warning: multivalue-charmap.asm(27): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: multivalue-charmap.asm(28): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
+warning: multivalue-charmap.asm(33): [-Wobsolete]
+    Treating multi-unit strings as numbers is deprecated
 warning: multivalue-charmap.asm(33): [-Wtruncation]
     All character units must be 8-bit
-warning: multivalue-charmap.asm(33): [-Wnumeric-string]
-    Treating 4-byte string as a number
 warning: multivalue-charmap.asm(34): [-Wtruncation]
     All character units must be 8-bit

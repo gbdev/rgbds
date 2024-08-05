@@ -1372,7 +1372,6 @@ int main(int argc, char *argv[]) {
 			break;
 
 		default:
-			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}

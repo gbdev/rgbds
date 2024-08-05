@@ -2,6 +2,7 @@
 
 #include "asm/main.hpp"
 
+#include <algorithm>
 #include <limits.h>
 #include <memory>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:VvW:wX:";
+static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:s:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -77,6 +78,7 @@ static option const longopts[] = {
     {"pad-value",       required_argument, nullptr,  'p'},
     {"q-precision",     required_argument, nullptr,  'Q'},
     {"recursion-depth", required_argument, nullptr,  'r'},
+    {"state",           required_argument, nullptr,  's'},
     {"version",         no_argument,       nullptr,  'V'},
     {"verbose",         no_argument,       nullptr,  'v'},
     {"warning",         required_argument, nullptr,  'W'},
@@ -89,14 +91,16 @@ static void printUsage() {
 	    "Usage: rgbasm [-EVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
-	    "              [-r depth] [-W warning] [-X max_errors] <file>\n"
+	    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
+	    "              <file>\n"
 	    "Useful options:\n"
-	    "    -E, --export-all         export all labels\n"
-	    "    -M, --dependfile <path>  set the output dependency file\n"
-	    "    -o, --output <path>      set the output object file\n"
-	    "    -p, --pad-value <value>  set the value to use for `ds'\n"
-	    "    -V, --version            print RGBASM version and exit\n"
-	    "    -W, --warning <warning>  enable or disable warnings\n"
+	    "    -E, --export-all               export all labels\n"
+	    "    -M, --dependfile <path>        set the output dependency file\n"
+	    "    -o, --output <path>            set the output object file\n"
+	    "    -p, --pad-value <value>        set the value to use for `ds'\n"
+	    "    -s, --state <features>:<path>  set an output state file\n"
+	    "    -V, --version                  print RGBASM version and exit\n"
+	    "    -W, --warning <warning>        enable or disable warnings\n"
 	    "\n"
 	    "For help, use `man rgbasm' or go to https://rgbds.gbdev.io/docs/\n",
 	    stderr
@@ -126,6 +130,7 @@ int main(int argc, char *argv[]) {
 	sym_SetExportAll(false);
 	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
 	char const *dependFileName = nullptr;
+	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs;
 	std::string newTarget;
 	// Maximum of 100 errors only applies if rgbasm is printing errors to a terminal.
 	if (isatty(STDERR_FILENO))
@@ -227,6 +232,58 @@ int main(int argc, char *argv[]) {
 				errx("Invalid argument for option 'r'");
 			break;
 
+		case 's': {
+			// Split "<features>:<name>" so `musl_optarg` is "<features>" and `name` is "<name>"
+			char *name = strchr(musl_optarg, ':');
+			if (!name)
+				errx("Invalid argument for option 's'");
+			*name++ = '\0';
+
+			std::vector<StateFeature> features;
+			for (char *feature = musl_optarg; feature;) {
+				// Split "<feature>,<rest>" so `feature` is "<feature>" and `next` is "<rest>"
+				char *next = strchr(feature, ',');
+				if (next)
+					*next++ = '\0';
+				// Trim whitespace from the beginning of `feature`...
+				feature += strspn(feature, " \t");
+				// ...and from the end
+				if (char *end = strpbrk(feature, " \t"); end)
+					*end = '\0';
+				// A feature must be specified
+				if (*feature == '\0')
+					errx("Empty feature for option 's'");
+				// Parse the `feature` and update the `features` list
+				if (!strcasecmp(feature, "all")) {
+					if (!features.empty())
+						warnx("Redundant feature before \"%s\" for option 's'", feature);
+					features.assign({STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO});
+				} else {
+					StateFeature value = !strcasecmp(feature, "equ")     ? STATE_EQU
+					                     : !strcasecmp(feature, "var")   ? STATE_VAR
+					                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
+					                     : !strcasecmp(feature, "char")  ? STATE_CHAR
+					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
+					                                                    : NB_STATE_FEATURES;
+					if (value == NB_STATE_FEATURES) {
+						errx("Invalid feature for option 's': \"%s\"", feature);
+					} else if (std::find(RANGE(features), value) != features.end()) {
+						warnx("Ignoring duplicate feature for option 's': \"%s\"", feature);
+					} else {
+						features.push_back(value);
+					}
+				}
+				feature = next;
+			}
+
+			if (stateFileSpecs.find(name) != stateFileSpecs.end())
+				warnx("Overriding state filename %s", name);
+			if (verbose)
+				printf("State filename %s\n", name);
+			stateFileSpecs.emplace(name, std::move(features));
+			break;
+		}
+
 		case 'V':
 			printf("rgbasm %s\n", get_package_version_string());
 			exit(0);
@@ -281,7 +338,6 @@ int main(int argc, char *argv[]) {
 
 		// Unrecognized options
 		default:
-			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}
@@ -334,6 +390,9 @@ int main(int argc, char *argv[]) {
 		return 0;
 
 	out_WriteObject();
+
+	for (auto [name, features] : stateFileSpecs)
+		out_WriteState(name, features);
 
 	return 0;
 }

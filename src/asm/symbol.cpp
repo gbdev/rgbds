@@ -106,6 +106,8 @@ static void updateSymbolFilename(Symbol &sym) {
 
 // Create a new symbol by name
 static Symbol &createSymbol(std::string const &symName) {
+	static uint32_t nextDefIndex = 0;
+
 	Symbol &sym = symbols[symName];
 
 	sym.name = symName;
@@ -115,6 +117,7 @@ static Symbol &createSymbol(std::string const &symName) {
 	sym.src = fstk_GetFileStack();
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 	sym.ID = -1;
+	sym.defIndex = nextDefIndex++;
 
 	return sym;
 }
@@ -166,6 +169,10 @@ void sym_Purge(std::string const &symName) {
 	} else if (sym->ID != (uint32_t)-1) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
+		if (sym->isExported)
+			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"\n", symName.c_str());
+		else if (sym->isLabel())
+			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
 		// Do not keep a reference to the label's name after purging it
 		if (sym->name == labelScope)
 			labelScope = std::nullopt;

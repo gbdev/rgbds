@@ -21,6 +21,7 @@ _rgbasm_warnings() {
 		'nested-comment:Warn on "/*" inside block comments'
 		'numeric-string:Warn when a multi-character string is treated as a number'
 		'obsolete:Warn when using deprecated features'
+		'purge:Warn when purging exported symbols or labels'
 		'shift:Warn when shifting negative values'
 		'shift-amount:Warn when a shift'\''s operand it negative or \> 32'
 		'truncation:Warn when implicit truncation loses bits'
@@ -28,7 +29,7 @@ _rgbasm_warnings() {
 		'user:Warn when executing the WARN built-in'
 	)
 	# TODO: handle `no-` and `error=` somehow?
-	# TODO: handle `=0|1|2` levels for `numeric-string`, `truncation`, and `unmapped-char`?
+	# TODO: handle `=0|1|2` levels for `numeric-string`, `purge`, `truncation`, and `unmapped-char`?
 	_describe warning warnings
 }
 
@@ -44,7 +45,7 @@ local args=(
 	'*'{-D,--define}'+[Define a string symbol]:name + value (default 1):'
 	'(-g --gfx-chars)'{-g,--gfx-chars}'+[Change chars for gfx constants]:chars spec:'
 	'(-I --include)'{-I,--include}'+[Add an include directory]:include path:_files -/'
-	'(-M --dependfile)'{-M,--dependfile}"+[List deps in make format]:output file:_files -g '*.{d,mk}'"
+	'(-M --dependfile)'{-M,--dependfile}"+[Write deps in make format]:output file:_files -g '*.{d,mk}'"
 	-MG'[Assume missing files should be generated]'
 	-MP'[Add phony targets to all deps]'
 	'*'-MT"+[Add a target to the rules]:target:_files -g '*.{d,mk,o}'"
@@ -54,6 +55,7 @@ local args=(
 	'(-p --pad-value)'{-p,--pad-value}'+[Set padding byte]:padding byte:'
 	'(-Q --q-precision)'{-Q,--q-precision}'+[Set fixed-point precision]:precision:'
 	'(-r --recursion-depth)'{-r,--recursion-depth}'+[Set maximum recursion depth]:depth:'
+	'(-s --state)'{-s,--state}"+[Write features of final state]:state file:_files -g '*.dump.asm'"
 	'(-W --warning)'{-W,--warning}'+[Toggle warning flags]:warning flag:_rgbasm_warnings'
 	'(-X --max-errors)'{-X,--max-errors}'+[Set maximum errors before aborting]:maximum errors:'
 

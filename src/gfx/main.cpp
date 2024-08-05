@@ -588,7 +588,6 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		default:
-			fprintf(stderr, "FATAL: unknown option '%c'\n", ch);
 			printUsage();
 			exit(1);
 		}
@@ -785,7 +784,7 @@ int main(int argc, char *argv[]) {
 						fputs("#none, ", stderr);
 					}
 				}
-				fputc('\n', stderr);
+				putc('\n', stderr);
 			}
 			fputs("\t]\n", stderr);
 		}

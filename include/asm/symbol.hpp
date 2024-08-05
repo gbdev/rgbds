@@ -44,7 +44,8 @@ struct Symbol {
 	    >
 	    data;
 
-	uint32_t ID; // ID of the symbol in the object file (-1 if none)
+	uint32_t ID;       // ID of the symbol in the object file (-1 if none)
+	uint32_t defIndex; // Ordering of the symbol in the state file
 
 	bool isDefined() const { return type != SYM_REF; }
 	bool isNumeric() const { return type == SYM_LABEL || type == SYM_EQU || type == SYM_VAR; }

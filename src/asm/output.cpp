@@ -2,17 +2,18 @@
 
 #include "asm/output.hpp"
 
+#include <algorithm>
 #include <deque>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <vector>
 
 #include "error.hpp"
 #include "helpers.hpp" // assume, Defer
 
+#include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
 #include "asm/main.hpp"
@@ -353,4 +354,172 @@ void out_SetFileName(std::string const &name) {
 	objectFileName = name;
 	if (verbose)
 		printf("Output filename %s\n", objectFileName.c_str());
+}
+
+static void dumpString(std::string const &escape, FILE *file) {
+	for (char c : escape) {
+		// Escape characters that need escaping
+		switch (c) {
+		case '\\':
+		case '"':
+		case '{':
+			putc('\\', file);
+			[[fallthrough]];
+		default:
+			putc(c, file);
+			break;
+		case '\n':
+			fputs("\\n", file);
+			break;
+		case '\r':
+			fputs("\\r", file);
+			break;
+		case '\t':
+			fputs("\\t", file);
+			break;
+		case '\0':
+			fputs("\\0", file);
+			break;
+		}
+	}
+}
+
+static bool dumpEquConstants(FILE *file) {
+	static std::vector<Symbol *> equConstants; // `static` so `sym_ForEach` callback can see it
+	equConstants.clear();
+
+	sym_ForEach([](Symbol &sym) {
+		if (!sym.isBuiltin && sym.type == SYM_EQU)
+			equConstants.push_back(&sym);
+	});
+	// Constants are ordered by file, then by definition order
+	std::sort(RANGE(equConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
+		return sym1->defIndex < sym2->defIndex;
+	});
+
+	for (Symbol const *sym : equConstants) {
+		uint32_t value = static_cast<uint32_t>(sym->getOutputValue());
+		fprintf(file, "def %s equ $%" PRIx32 "\n", sym->name.c_str(), value);
+	}
+
+	return !equConstants.empty();
+}
+
+static bool dumpVariables(FILE *file) {
+	static std::vector<Symbol *> variables; // `static` so `sym_ForEach` callback can see it
+	variables.clear();
+
+	sym_ForEach([](Symbol &sym) {
+		if (!sym.isBuiltin && sym.type == SYM_VAR)
+			variables.push_back(&sym);
+	});
+	// Variables are ordered by file, then by definition order
+	std::sort(RANGE(variables), [](Symbol *sym1, Symbol *sym2) -> bool {
+		return sym1->defIndex < sym2->defIndex;
+	});
+
+	for (Symbol const *sym : variables) {
+		uint32_t value = static_cast<uint32_t>(sym->getOutputValue());
+		fprintf(file, "def %s = $%" PRIx32 "\n", sym->name.c_str(), value);
+	}
+
+	return !variables.empty();
+}
+
+static bool dumpEqusConstants(FILE *file) {
+	static std::vector<Symbol *> equsConstants; // `static` so `sym_ForEach` callback can see it
+	equsConstants.clear();
+
+	sym_ForEach([](Symbol &sym) {
+		if (!sym.isBuiltin && sym.type == SYM_EQUS)
+			equsConstants.push_back(&sym);
+	});
+	// Constants are ordered by file, then by definition order
+	std::sort(RANGE(equsConstants), [](Symbol *sym1, Symbol *sym2) -> bool {
+		return sym1->defIndex < sym2->defIndex;
+	});
+
+	for (Symbol const *sym : equsConstants) {
+		fprintf(file, "def %s equs \"", sym->name.c_str());
+		dumpString(*sym->getEqus(), file);
+		fputs("\"\n", file);
+	}
+
+	return !equsConstants.empty();
+}
+
+static bool dumpCharmaps(FILE *file) {
+	static FILE *charmapFile; // `static` so `charmap_ForEach` callbacks can see it
+	charmapFile = file;
+
+	// Characters are ordered by charmap, then by definition order
+	return charmap_ForEach(
+	    [](std::string const &name) { fprintf(charmapFile, "newcharmap %s\n", name.c_str()); },
+	    [](std::string const &mapping, std::vector<int32_t> value) {
+		    fputs("charmap \"", charmapFile);
+		    dumpString(mapping, charmapFile);
+		    putc('"', charmapFile);
+		    for (int32_t v : value)
+			    fprintf(charmapFile, ", $%" PRIx32, v);
+		    putc('\n', charmapFile);
+	    }
+	);
+}
+
+static bool dumpMacros(FILE *file) {
+	static std::vector<Symbol *> macros; // `static` so `sym_ForEach` callback can see it
+	macros.clear();
+
+	sym_ForEach([](Symbol &sym) {
+		if (!sym.isBuiltin && sym.type == SYM_MACRO)
+			macros.push_back(&sym);
+	});
+	// Macros are ordered by file, then by definition order
+	std::sort(RANGE(macros), [](Symbol *sym1, Symbol *sym2) -> bool {
+		return sym1->defIndex < sym2->defIndex;
+	});
+
+	for (Symbol const *sym : macros) {
+		auto const &body = sym->getMacro();
+		fprintf(file, "macro %s\n", sym->name.c_str());
+		fwrite(body.ptr.get(), 1, body.size, file);
+		fputs("endm\n", file);
+	}
+
+	return !macros.empty();
+}
+
+void out_WriteState(std::string name, std::vector<StateFeature> const &features) {
+	FILE *file;
+	if (name != "-") {
+		file = fopen(name.c_str(), "w");
+	} else {
+		name = "<stdout>";
+		file = fdopen(STDOUT_FILENO, "w");
+	}
+	if (!file)
+		err("Failed to open state file '%s'", name.c_str());
+	Defer closeFile{[&] { fclose(file); }};
+
+	static char const *dumpHeadings[NB_STATE_FEATURES] = {
+	    "Numeric constants",
+	    "Variables",
+	    "String constants",
+	    "Character maps",
+	    "Macros",
+	};
+	static bool (* const dumpFuncs[NB_STATE_FEATURES])(FILE *) = {
+	    dumpEquConstants,
+	    dumpVariables,
+	    dumpEqusConstants,
+	    dumpCharmaps,
+	    dumpMacros,
+	};
+
+	fputs("; File generated by rgbasm\n", file);
+	for (StateFeature feature : features) {
+		fprintf(file, "\n; %s\n", dumpHeadings[feature]);
+		if (!dumpFuncs[feature](file))
+			fprintf(file, "; No values\n");
+	}
 }

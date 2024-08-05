@@ -38,7 +38,7 @@ void sym_AddSymbol(Symbol &symbol) {
 		symbol.src->dump(symbol.lineNo);
 		fprintf(stderr, " and in %s from ", other->objFileName);
 		other->src->dump(other->lineNo);
-		fputc('\n', stderr);
+		putc('\n', stderr);
 		exit(1);
 	}
 

@@ -31,6 +31,9 @@ enum WarningID {
 	// Treating string as number may lose some bits
 	WARNING_NUMERIC_STRING_1 = PARAM_WARNINGS_START,
 	WARNING_NUMERIC_STRING_2,
+	// Purging an exported symbol or label
+	WARNING_PURGE_1,
+	WARNING_PURGE_2,
 	// Implicit truncation loses some bits
 	WARNING_TRUNCATION_1,
 	WARNING_TRUNCATION_2,

@@ -70,7 +70,7 @@
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
 
-	static uint32_t str2int2(std::vector<int32_t> const &s);
+	static uint32_t strToNum(std::vector<int32_t> const &s);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
 	static size_t strlenUTF8(std::string const &str);
 	static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len);
@@ -1261,7 +1261,7 @@ relocexpr:
 	}
 	| string {
 		std::vector<int32_t> output = charmap_Convert($1);
-		$$.makeNumber(str2int2(output));
+		$$.makeNumber(strToNum(output));
 	}
 ;
 
@@ -2378,7 +2378,7 @@ void yy::parser::error(std::string const &str) {
 	::error("%s\n", str.c_str());
 }
 
-static uint32_t str2int2(std::vector<int32_t> const &s) {
+static uint32_t strToNum(std::vector<int32_t> const &s) {
 	uint32_t length = s.size();
 
 	if (length == 1) {
@@ -2387,22 +2387,12 @@ static uint32_t str2int2(std::vector<int32_t> const &s) {
 		return (uint32_t)s[0];
 	}
 
+	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
+
 	for (int32_t v : s) {
 		if (!checkNBit(v, 8, "All character units"))
 			break;
 	}
-
-	if (length > 4)
-		warning(
-		    WARNING_NUMERIC_STRING_1,
-		    "Treating string as a number ignores first %" PRIu32 " byte%s\n",
-		    length - 4,
-		    length == 5 ? "" : "s"
-		);
-	else if (length > 1)
-		warning(
-		    WARNING_NUMERIC_STRING_2, "Treating %" PRIu32 "-byte string as a number\n", length
-		);
 
 	uint32_t r = 0;
 
