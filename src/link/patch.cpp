@@ -139,6 +139,13 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			}
 			break;
 
+		case RPN_HIGH:
+			value = (popRPN(patch) >> 8) & 0xFF;
+			break;
+		case RPN_LOW:
+			value = popRPN(patch) & 0xFF;
+			break;
+
 		case RPN_OR:
 			value = popRPN(patch) | popRPN(patch);
 			break;

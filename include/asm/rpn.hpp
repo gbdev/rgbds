@@ -45,11 +45,7 @@ struct Expression {
 	void makeStartOfSection(std::string const &sectName);
 	void makeSizeOfSectionType(SectionType type);
 	void makeStartOfSectionType(SectionType type);
-	void makeHigh();
-	void makeLow();
-	void makeNeg();
-	void makeNot();
-	void makeLogicNot();
+	void makeUnaryOp(RPNCommand op, Expression &&src);
 	void makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2);
 
 	void makeCheckHRAM();
