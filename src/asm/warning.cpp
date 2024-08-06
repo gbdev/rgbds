@@ -121,7 +121,7 @@ static bool tryProcessParamWarning(char const *flag, uint8_t param, WarningState
 
 		if (!strcmp(flag, paramWarnings[i].name)) { // Match!
 			if (!strcmp(flag, "numeric-string"))
-				warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
+				warning(WARNING_OBSOLETE, "Warning flag \"numeric-string\" is deprecated\n");
 
 			// If making the warning an error but param is 0, set to the maximum
 			// This accommodates `-Werror=flag`, but also `-Werror=flag=0`, which is
