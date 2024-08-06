@@ -95,6 +95,8 @@ Symbol *sym_Ref(std::string const &symName);
 Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> value);
 Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string> value);
 void sym_Purge(std::string const &symName);
+bool sym_IsPurgedExact(std::string const &symName);
+bool sym_IsPurgedScoped(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.

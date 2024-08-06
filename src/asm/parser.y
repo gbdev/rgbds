@@ -1527,8 +1527,12 @@ string:
 	| POP_SECTION LPAREN scoped_anon_id RPAREN {
 		Symbol *sym = sym_FindScopedValidSymbol($3);
 
-		if (!sym)
-			fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
+		if (!sym) {
+			if (sym_IsPurgedScoped($3))
+				fatalerror("Unknown symbol \"%s\"; it was purged\n", $3.c_str());
+			else
+				fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
+		}
 		Section const *section = sym->getSection();
 
 		if (!section)
