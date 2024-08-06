@@ -1235,8 +1235,7 @@ reloc_8bit_offset:
 		$$.checkNBit(8);
 	}
 	| OP_SUB relocexpr {
-		$$ = std::move($2);
-		$$.makeNeg();
+		$$.makeUnaryOp(RPN_NEG, std::move($2));
 		$$.checkNBit(8);
 	}
 ;
@@ -1273,8 +1272,7 @@ relocexpr_no_str:
 		$$.makeNumber($1);
 	}
 	| OP_LOGICNOT relocexpr %prec NEG {
-		$$ = std::move($2);
-		$$.makeLogicNot();
+		$$.makeUnaryOp(RPN_LOGNOT, std::move($2));
 	}
 	| relocexpr OP_LOGICOR relocexpr {
 		$$.makeBinaryOp(RPN_LOGOR, std::move($1), $3);
@@ -1340,20 +1338,16 @@ relocexpr_no_str:
 		$$ = std::move($2);
 	}
 	| OP_SUB relocexpr %prec NEG {
-		$$ = std::move($2);
-		$$.makeNeg();
+		$$.makeUnaryOp(RPN_NEG, std::move($2));
 	}
 	| OP_NOT relocexpr %prec NEG {
-		$$ = std::move($2);
-		$$.makeNot();
+		$$.makeUnaryOp(RPN_NOT, std::move($2));
 	}
 	| OP_HIGH LPAREN relocexpr RPAREN {
-		$$ = std::move($3);
-		$$.makeHigh();
+		$$.makeUnaryOp(RPN_HIGH, std::move($3));
 	}
 	| OP_LOW LPAREN relocexpr RPAREN {
-		$$ = std::move($3);
-		$$.makeLow();
+		$$.makeUnaryOp(RPN_LOW, std::move($3));
 	}
 	| OP_ISCONST LPAREN relocexpr RPAREN {
 		$$.makeNumber($3.isKnown());

@@ -9,7 +9,7 @@
 #include "helpers.hpp" // assume
 
 #define RGBDS_OBJECT_VERSION_STRING "RGB9"
-#define RGBDS_OBJECT_REV            10U
+#define RGBDS_OBJECT_REV            11U
 
 enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
 
@@ -52,6 +52,9 @@ enum RPNCommand {
 
 	RPN_HRAM = 0x60,
 	RPN_RST = 0x61,
+
+	RPN_HIGH = 0x70,
+	RPN_LOW = 0x71,
 
 	RPN_CONST = 0x80,
 	RPN_SYM = 0x81
