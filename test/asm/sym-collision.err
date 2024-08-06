@@ -1,5 +1,5 @@
 warning: sym-collision.asm(20): [-Wpurge]
     Purging a label "dork"
 error: sym-collision.asm(25):
-    Interpolated symbol "dork" does not exist
+    Interpolated symbol "dork" does not exist; it was purged
 error: Assembly aborted (1 error)!

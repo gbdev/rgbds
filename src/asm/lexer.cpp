@@ -604,7 +604,10 @@ static uint32_t readBracketedMacroArgNum() {
 		Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 		if (!sym) {
-			error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
+			if (sym_IsPurgedScoped(symName))
+				error("Bracketed symbol \"%s\" does not exist; it was purged\n", symName.c_str());
+			else
+				error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
 			num = 0;
 			symbolError = true;
 		} else if (!sym->isNumeric()) {
@@ -1209,7 +1212,10 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
 	if (!sym || !sym->isDefined()) {
-		error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
+		if (sym_IsPurgedScoped(fmtBuf))
+			error("Interpolated symbol \"%s\" does not exist; it was purged\n", fmtBuf.c_str());
+		else
+			error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
 	} else if (sym->type == SYM_EQUS) {
 		auto buf = std::make_shared<std::string>();
 		fmt.appendString(*buf, *sym->getEqus());

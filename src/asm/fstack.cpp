@@ -333,7 +333,10 @@ void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macr
 	Symbol *macro = sym_FindExactSymbol(macroName);
 
 	if (!macro) {
-		error("Macro \"%s\" not defined\n", macroName.c_str());
+		if (sym_IsPurgedExact(macroName))
+			error("Macro \"%s\" not defined; it was purged\n", macroName.c_str());
+		else
+			error("Macro \"%s\" not defined\n", macroName.c_str());
 		return;
 	}
 	if (macro->type != SYM_MACRO) {
