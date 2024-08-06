@@ -9,7 +9,7 @@
 #include <string.h>
 #include <string_view>
 
-#include "helpers.hpp" // assume
+#include "helpers.hpp" // assume, clz, ctz
 #include "opmath.hpp"
 
 #include "asm/output.hpp"
@@ -315,6 +315,12 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 		case RPN_LOW:
 			data = val & 0xFF;
 			break;
+		case RPN_BITWIDTH:
+			data = val != 0 ? 32 - clz((uint32_t)val) : 0;
+			break;
+		case RPN_TZCOUNT:
+			data = val != 0 ? ctz((uint32_t)val) : 32;
+			break;
 
 		case RPN_LOGOR:
 		case RPN_LOGAND:
@@ -494,6 +500,8 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 		case RPN_RST:
 		case RPN_HIGH:
 		case RPN_LOW:
+		case RPN_BITWIDTH:
+		case RPN_TZCOUNT:
 		case RPN_CONST:
 		case RPN_SYM:
 			fatalerror("%d is not a binary operator\n", op);

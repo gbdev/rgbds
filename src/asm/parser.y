@@ -174,6 +174,8 @@
 %type <int32_t> opt_q_arg
 
 %token OP_HIGH "HIGH" OP_LOW "LOW"
+%token OP_BITWIDTH "BITWIDTH"
+%token OP_TZCOUNT "TZCOUNT"
 %token OP_ISCONST "ISCONST"
 
 %token OP_STRCMP "STRCMP"
@@ -1348,6 +1350,12 @@ relocexpr_no_str:
 	}
 	| OP_LOW LPAREN relocexpr RPAREN {
 		$$.makeUnaryOp(RPN_LOW, std::move($3));
+	}
+	| OP_BITWIDTH LPAREN relocexpr RPAREN {
+		$$.makeUnaryOp(RPN_BITWIDTH, std::move($3));
+	}
+	| OP_TZCOUNT LPAREN relocexpr RPAREN {
+		$$.makeUnaryOp(RPN_TZCOUNT, std::move($3));
 	}
 	| OP_ISCONST LPAREN relocexpr RPAREN {
 		$$.makeNumber($3.isKnown());

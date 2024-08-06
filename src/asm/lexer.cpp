@@ -237,6 +237,9 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"LOW",           T_(OP_LOW)           },
     {"ISCONST",       T_(OP_ISCONST)       },
 
+    {"BITWIDTH",      T_(OP_BITWIDTH)      },
+    {"TZCOUNT",       T_(OP_TZCOUNT)       },
+
     {"STRCMP",        T_(OP_STRCMP)        },
     {"STRIN",         T_(OP_STRIN)         },
     {"STRRIN",        T_(OP_STRRIN)        },

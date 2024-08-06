@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-#include "helpers.hpp" // assume
+#include "helpers.hpp" // assume, clz, ctz
 #include "linkdefs.hpp"
 #include "opmath.hpp"
 
@@ -144,6 +144,15 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			break;
 		case RPN_LOW:
 			value = popRPN(patch) & 0xFF;
+			break;
+
+		case RPN_BITWIDTH:
+			value = popRPN(patch);
+			value = value != 0 ? 32 - clz((uint32_t)value) : 0;
+			break;
+		case RPN_TZCOUNT:
+			value = popRPN(patch);
+			value = value != 0 ? ctz((uint32_t)value) : 32;
 			break;
 
 		case RPN_OR:

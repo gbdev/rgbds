@@ -55,6 +55,8 @@ enum RPNCommand {
 
 	RPN_HIGH = 0x70,
 	RPN_LOW = 0x71,
+	RPN_BITWIDTH = 0x72,
+	RPN_TZCOUNT = 0x73,
 
 	RPN_CONST = 0x80,
 	RPN_SYM = 0x81
