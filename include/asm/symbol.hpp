@@ -68,7 +68,7 @@ struct Symbol {
 	uint32_t getConstantValue() const;
 };
 
-void sym_ForEach(void (*func)(Symbol &));
+void sym_ForEach(void (*callback)(Symbol &));
 
 void sym_SetExportAll(bool set);
 Symbol *sym_AddLocalLabel(std::string const &symName);

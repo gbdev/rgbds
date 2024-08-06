@@ -78,7 +78,9 @@ If specified, the map file will not list symbols, only sections.
 .It Fl m Ar map_file , Fl \-map Ar map_file
 Write a map file to the given filename, listing how sections and symbols were assigned.
 .It Fl n Ar sym_file , Fl \-sym Ar sym_file
-Write a symbol file to the given filename, listing the address of all exported symbols.
+Write a symbol file to the given filename, listing all visible labels and exported numeric constants.
+Labels output their bank and address, numeric constants output their value, following
+.Lk https://rgbds.gbdev.io/sym/ this specification .
 Several external programs can use this information, for example to help debugging ROMs.
 .It Fl O Ar overlay_file , Fl \-overlay Ar overlay_file
 If specified, sections will be overlaid "on top" of the ROM image

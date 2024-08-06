@@ -38,6 +38,8 @@ struct Symbol {
 	Label const &label() const;
 };
 
+void sym_ForEach(void (*callback)(Symbol &));
+
 void sym_AddSymbol(Symbol &symbol);
 
 /*
