@@ -303,7 +303,12 @@ void reverse() {
 			}
 		}
 
-		options.verbosePrint(Options::VERB_INTERM, "Nb tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n", nbTilesInBank[0], nbTilesInBank[1]);
+		options.verbosePrint(
+		    Options::VERB_INTERM,
+		    "Nb tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n",
+		    nbTilesInBank[0],
+		    nbTilesInBank[1]
+		);
 
 		for (int bank = 0; bank < 2; ++bank) {
 			if (nbTilesInBank[bank] > options.maxNbTiles[bank]) {
@@ -438,12 +443,13 @@ void reverse() {
 		for (size_t tx = 0; tx < width; ++tx) {
 			size_t index = options.columnMajor ? ty + tx * height : ty * width + tx;
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
-			uint8_t attribute = attrmap.has_value() ? (*attrmap)[index] : 0x00;
+			uint8_t attribute = attrmap ? (*attrmap)[index] : 0x00;
 			bool bank = attribute & 0x08;
 			// Get the tile ID at this location
-			size_t tileOfs = tilemap.has_value() ? (*tilemap)[index] - options.baseTileIDs[bank]
-			                                           + (bank ? nbTilesInBank[0] : 0)
-			                                     : index;
+			size_t tileOfs =
+			    tilemap ? static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
+			                  + (bank ? nbTilesInBank[0] : 0)
+			            : index;
 			assume(tileOfs < nbTiles + options.trim); // Should have been checked earlier
 			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
 			assume(palID < palettes.size()); // Should be ensured on data read
