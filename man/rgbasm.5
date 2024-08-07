@@ -479,12 +479,11 @@ delim off
 These functions are useful for automatic generation of various tables.
 For example:
 .Bd -literal -offset indent
-; Generate a table of sine values from sin(0.0) to sin(1.0), with
-; amplitude scaled from [-1.0, 1.0] to [0.0, 128.0]
-DEF turns = 0.0
-REPT 256
-    db MUL(64.0, SIN(turns) + 1.0) >> 16
-    DEF turns += 1.0 / 256
+; Generate a table of 128 sine values
+; from sin(0.0) to sin(0.5) excluded,
+; with amplitude scaled from [-1.0, 1.0] to [0.0, 128.0].
+FOR angle, 0.0, 0.5, 0.5 / 128
+    db MUL(SIN(angle) + 1.0, 128.0 / 2) >> 16
 ENDR
 .Ed
 .Ss String expressions
