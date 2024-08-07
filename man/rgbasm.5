@@ -464,11 +464,17 @@ this is the opposite of how the integer modulo operator
 .Sq %
 works!
 .Pp
-The trigonometry functions (
-.Ic SIN ,
-.Ic COS ,
-.Ic TAN ,
-etc) are defined in terms of a circle divided into 1.0 "turns" (equal to 2pi radians or 360 degrees).
+The trigonometry functions
+.Pq Ic SIN , Ic COS , Ic TAN , No etc
+are defined in terms of a circle divided into 1.0
+.Dq turns
+.EQ
+delim $$
+.EN
+(equal to $2 pi$ radians, or 360 degrees).
+.EQ
+delim off
+.EN
 .Pp
 These functions are useful for automatic generation of various tables.
 For example:
