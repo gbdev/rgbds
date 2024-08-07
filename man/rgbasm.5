@@ -381,11 +381,6 @@ to it followed by the number of fractional bits, such as
 .Ql 12.34q8 .
 .Pp
 Since fixed-point values are still just integers, you can use them in normal integer expressions.
-Some integer operators like
-.Sq +
-and
-.Sq -
-don't care whether the operands are integers or fixed-point.
 You can easily truncate a fixed-point number into an integer by shifting it right by the number of fractional bits.
 It follows that you can convert an integer to a fixed-point number by shifting it left that same amount.
 .Pp
@@ -417,6 +412,23 @@ delim $$
 .EQ
 delim off
 .EN
+.Pp
+Operators not in the list above, such as
+.Sq +
+and
+.Sq - ,
+function correctly with fixed-point operands as well (but
+.Em both
+operands must be fixed-point: use
+.Ql 1.0 + 2.0 ,
+not
+.Ql 1.0 + 2 ;
+and use
+.Ql MUL(1.0, 2.0)
+or
+.Ql 1.0 * 2 ,
+not
+.Ql MUL(1.0, 2) ) .
 .Pp
 All of these fixed-point functions can take an optional final argument, which is the precision to use.
 For example,
