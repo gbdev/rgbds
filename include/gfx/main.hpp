@@ -66,6 +66,10 @@ extern Options options;
  */
 [[noreturn]] void giveUp();
 /*
+ * If any error has been emitted thus far, calls `giveUp()`.
+ */
+void requireZeroErrors();
+/*
  * Prints a warning, and does not change the error count
  */
 [[gnu::format(printf, 1, 2)]] void warning(char const *fmt, ...);

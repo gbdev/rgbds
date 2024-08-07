@@ -432,10 +432,20 @@ int main(int argc, char *argv[]) {
 
 	{
 		char path[] = "../../rgbgfx", out_opt[] = "-o", out_file[] = "result.2bpp",
-		     pal_opt[] = "-p", pal_file[] = "result.pal", attr_opt[] = "-a",
-		     attr_file[] = "result.attrmap", in_file[] = "out0.png";
+		     tmap_opt[] = "-t", tmap_file[] = "result.tilemap", pal_opt[] = "-p",
+		     pal_file[] = "result.pal", attr_opt[] = "-a", attr_file[] = "result.attrmap",
+		     in_file[] = "out0.png";
 		std::vector<char *> args(
-		    {path, out_opt, out_file, pal_opt, pal_file, attr_opt, attr_file, in_file}
+		    {path,
+		     out_opt,
+		     out_file,
+		     tmap_opt,
+		     tmap_file,
+		     pal_opt,
+		     pal_file,
+		     attr_opt,
+		     attr_file,
+		     in_file}
 		);
 		// Also copy the trailing `nullptr`
 		std::copy_n(&argv[2], argc - 1, std::back_inserter(args));
@@ -449,8 +459,9 @@ int main(int argc, char *argv[]) {
 
 	{
 		char path[] = "../../rgbgfx", reverse_opt[] = "-r", out_opt[] = "-o",
-		     out_file[] = "result.2bpp", pal_opt[] = "-p", pal_file[] = "result.pal",
-		     attr_opt[] = "-a", attr_file[] = "result.attrmap", in_file[] = "result.png";
+		     out_file[] = "result.2bpp", tmap_opt[] = "-t", tmap_file[] = "result.tilemap",
+		     pal_opt[] = "-p", pal_file[] = "result.pal", attr_opt[] = "-a",
+		     attr_file[] = "result.attrmap", in_file[] = "result.png";
 		auto width_string = std::to_string(image0.getWidth() / 8);
 		std::vector<char *> args = {
 		    path,
@@ -458,6 +469,8 @@ int main(int argc, char *argv[]) {
 		    width_string.data(),
 		    out_opt,
 		    out_file,
+		    tmap_opt,
+		    tmap_file,
 		    pal_opt,
 		    pal_file,
 		    attr_opt,

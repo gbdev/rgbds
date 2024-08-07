@@ -15,9 +15,7 @@
 #include "defaultinitalloc.hpp"
 #include "file.hpp"
 #include "helpers.hpp" // assume
-#include "itertools.hpp"
 
-#include "asm/warning.hpp"
 #include "gfx/main.hpp"
 
 static DefaultInitVec<uint8_t> readInto(std::string const &path) {
@@ -256,6 +254,7 @@ void reverse() {
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> attrmap;
+	uint16_t nbTilesInBank[] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
@@ -270,10 +269,10 @@ void reverse() {
 		// We do this now for two reasons:
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
-		bool bad = false;
 		for (size_t index = 0; index < mapSize; ++index) {
 			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
+
 			if ((attr & 0b111) > palettes.size()) {
 				error(
 				    "Attribute map references palette #%u at (%zu, %zu), but there are only %zu!",
@@ -282,30 +281,65 @@ void reverse() {
 				    ty,
 				    palettes.size()
 				);
-				bad = true;
 			}
-			if (attr & 0x08 && !tilemap) {
-				warning(
-				    "Attribute map assigns tile at (%zu, %zu) to bank 1, but no tilemap specified; "
-				    "ignoring the bank bit",
-				    tx,
-				    ty
+
+			bool bank = attr & 0x08;
+
+			if (!tilemap) {
+				if (bank) {
+					warning(
+					    "Attribute map assigns tile at (%zu, %zu) to bank 1, but no tilemap "
+					    "specified; "
+					    "ignoring the bank bit",
+					    tx,
+					    ty
+					);
+				}
+			} else {
+				if (uint8_t tileOfs = (*tilemap)[index] - options.baseTileIDs[bank];
+				    tileOfs >= nbTilesInBank[bank]) {
+					nbTilesInBank[bank] = tileOfs + 1;
+				}
+			}
+		}
+
+		options.verbosePrint(Options::VERB_INTERM, "Nb tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n", nbTilesInBank[0], nbTilesInBank[1]);
+
+		for (int bank = 0; bank < 2; ++bank) {
+			if (nbTilesInBank[bank] > options.maxNbTiles[bank]) {
+				error(
+				    "Bank %d contains %" PRIu16 " tiles, but the specified limit is %" PRIu16,
+				    bank,
+				    nbTilesInBank[bank],
+				    options.maxNbTiles[bank]
 				);
 			}
 		}
-		if (bad) {
-			giveUp();
+
+		if (nbTilesInBank[0] + nbTilesInBank[1] > nbTiles) {
+			fatal(
+			    "The tilemap references %" PRIu16 " tiles in bank 0 and %" PRIu16
+			    " in bank 1, but only %zu have been read in total",
+			    nbTilesInBank[0],
+			    nbTilesInBank[1],
+			    nbTiles
+			);
 		}
+
+		requireZeroErrors();
 	}
 
 	if (tilemap) {
 		if (attrmap) {
 			for (size_t index = 0; index < mapSize; ++index) {
+				size_t tx = index % width, ty = index / width;
 				uint8_t tileID = (*tilemap)[index];
 				uint8_t attr = (*attrmap)[index];
-				if (bool bank = attr & 1 << 3; tileID >= options.maxNbTiles[bank]) {
-					size_t tx = index % width, ty = index / width;
-					warning(
+				bool bank = attr & 0x08;
+
+				if (uint8_t tileOfs = tileID - options.baseTileIDs[bank];
+				    tileOfs >= options.maxNbTiles[bank]) {
+					error(
 					    "Tilemap references tile #%" PRIu8
 					    " at (%zu, %zu), but the limit for bank %u is %" PRIu16,
 					    tileID,
@@ -317,10 +351,10 @@ void reverse() {
 				}
 			}
 		} else {
-			size_t limit =
-			    std::min<size_t>(nbTiles, options.maxNbTiles[0]) + options.baseTileIDs[0];
+			size_t const limit = std::min<size_t>(nbTiles, options.maxNbTiles[0]);
 			for (size_t index = 0; index < mapSize; ++index) {
-				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit) {
+				if (uint8_t tileID = (*tilemap)[index];
+				    static_cast<uint8_t>(tileID - options.baseTileIDs[0]) >= limit) {
 					size_t tx = index % width, ty = index / width;
 					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
@@ -331,10 +365,9 @@ void reverse() {
 					);
 				}
 			}
-			if (nbErrors != 0) {
-				giveUp();
-			}
 		}
+
+		requireZeroErrors();
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> palmap;
@@ -342,9 +375,7 @@ void reverse() {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != mapSize) {
 			fatal(
-			    "Palette map size (%zu tiles) doesn't match image's (%zu)",
-			    palmap->size(),
-			    mapSize
+			    "Palette map size (%zu tiles) doesn't match image's (%zu)", palmap->size(), mapSize
 			);
 		}
 	}
@@ -410,12 +441,10 @@ void reverse() {
 			uint8_t attribute = attrmap.has_value() ? (*attrmap)[index] : 0x00;
 			bool bank = attribute & 0x08;
 			// Get the tile ID at this location
-			size_t tileID = index;
-			if (tilemap.has_value()) {
-				tileID =
-				    (*tilemap)[index] - options.baseTileIDs[bank] + bank * options.maxNbTiles[0];
-			}
-			assume(tileID < nbTiles + options.trim); // Should have been checked earlier
+			size_t tileOfs = tilemap.has_value() ? (*tilemap)[index] - options.baseTileIDs[bank]
+			                                           + (bank ? nbTilesInBank[0] : 0)
+			                                     : index;
+			assume(tileOfs < nbTiles + options.trim); // Should have been checked earlier
 			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
 			assume(palID < palettes.size()); // Should be ensured on data read
 
@@ -439,7 +468,7 @@ void reverse() {
 			    0x00,
 			};
 			uint8_t const *tileData =
-			    tileID >= nbTiles ? trimmedTile.data() : &tiles[tileID * tileSize];
+			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
 			auto const &palette = palettes[palID];
 			for (uint8_t y = 0; y < 8; ++y) {
 				// If vertically mirrored, fetch the bytes from the other end

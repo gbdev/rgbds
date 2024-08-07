@@ -46,6 +46,12 @@ static uintmax_t nbErrors;
 	exit(1);
 }
 
+void requireZeroErrors() {
+	if (nbErrors != 0) {
+		giveUp();
+	}
+}
+
 void warning(char const *fmt, ...) {
 	va_list ap;
 
@@ -822,10 +828,8 @@ int main(int argc, char *argv[]) {
 		fputs("Ready.\n", stderr);
 	}
 
-	// Do not do anything if option parsing went wrong
-	if (nbErrors) {
-		giveUp();
-	}
+	// Do not do anything if option parsing went wrong.
+	requireZeroErrors();
 
 	if (!options.input.empty()) {
 		if (localOptions.reverse) {
@@ -842,9 +846,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (nbErrors) {
-		giveUp();
-	}
+	requireZeroErrors();
 	return 0;
 }
 
