@@ -17,6 +17,7 @@
 #include "helpers.hpp" // assume
 #include "itertools.hpp"
 
+#include "asm/warning.hpp"
 #include "gfx/main.hpp"
 
 static DefaultInitVec<uint8_t> readInto(std::string const &path) {
@@ -321,7 +322,7 @@ void reverse() {
 			for (size_t index = 0; index < nbTileInstances; ++index) {
 				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit) {
 					size_t tx = index % width, ty = index / width;
-					fatal(
+					error(
 					    "Tilemap references tile #%" PRIu8 " at (%zu, %zu), but the limit is %zu",
 					    tileID,
 					    tx,
@@ -329,6 +330,9 @@ void reverse() {
 					    limit
 					);
 				}
+			}
+			if (nbErrors != 0) {
+				giveUp();
 			}
 		}
 	}
