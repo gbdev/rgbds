@@ -9,9 +9,9 @@
 .Nm rgbasm
 .Nd language documentation
 .Sh DESCRIPTION
-This is the full description of the language used by
+This is the full description of the assembly language used by
 .Xr rgbasm 1 .
-The description of the instructions supported by the Game Boy CPU is in
+For the full description of instructions in the machine language supported by the Game Boy CPU, see
 .Xr gbz80 7 .
 .Pp
 It is advisable to have some familiarity with the Game Boy hardware before reading this document.
@@ -46,6 +46,25 @@ They must come first in the line.
 Instructions are assembled into Game Boy opcodes.
 Multiple instructions on one line can be separated by double colons
 .Ql :: .
+
+
+.Pp
+The available instructions are documented in
+.Xr gbz80 7 .
+Note that when some instructions require an 8-bit register
+.Ar r8 ,
+.Nm
+will interpret
+.Ic HIGH Ns Pq Ar r16
+as the top 8-bit register of the given
+.Ar r16 ,
+and
+.Ic LOW Ns Pq Ar r16
+as the bottom one (except for
+.Ic LOW Ns Pq Ic AF ,
+since
+.Ic F
+is not a valid register).
 .Pp
 All reserved keywords (directives, register names, etc.) are case-insensitive;
 all identifiers (labels and other symbol names) are case-sensitive.
@@ -334,18 +353,27 @@ delim $$
 .EN
 .Bl -column "BITWIDTH(n)"
 .It Sy Name Ta Sy Operation
+.It Fn HIGH n Ta Returns the top 8 bits of
+.Ar n .
+.It Fn LOW n Ta Returns the bottom 8 bits of
+.Ar n .
+The result may be constant if
+.Nm
+is able to compute it.
 .It Fn BITWIDTH n Ta Returns the number of bits necessary to represent
 .Ar n .
 Some useful formulas:
-.Ic BITWIDTH Ns Po Ar n Ns Pc - 1
-equals $\[lf] roman log2 ( n ) \[rf]$,
-.Ic BITWIDTH Ns Pq Ar n No - 1
-equals $\[lc] roman log2 ( n ) \[rc]$,
-and
-.Ic No 32 - Ic BITWIDTH Ns Pq Ar n
+.Ic BITWIDTH Ns ( Ar n Ns )\ \-\ 1
+equals $\[lf] log sub 2 ( n ) \[rf]$,
+.Ic BITWIDTH Ns Pq Ar n Ns \ \-\ 1
+equals $\[lc] log sub 2 ( n ) \[rc]$, and
+.No 32\ \-\  Ns Ic BITWIDTH Ns Pq Ar n
 equals $roman clz ( n )$.
 .It Fn TZCOUNT n Ta Returns $roman ctz ( n )$, the count of trailing zero bits at the end of the binary representation of
 .Ar n .
+The result may be constant if
+.Nm
+is able to compute it.
 .El
 .EQ
 delim off
@@ -586,11 +614,6 @@ The result is not constant, since only RGBLINK can compute its value.
 .Ar symbol
 has been defined, 0 otherwise.
 String constants are not expanded within the parentheses.
-.It Fn HIGH arg Ta Returns the top 8 bits of the operand if Ar arg No is a label or constant, or the top 8-bit register if it is a 16-bit register .
-.It Fn LOW arg Ta Returns the bottom 8 bits of the operand if Ar arg No is a label or constant, or the bottom 8-bit register if it is a 16-bit register Pq Cm AF No isn't a valid register for this function .
-The result may be constant if
-.Nm
-is able to compute it.
 .It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
 .Ic IF ) ,
 or 0 if only RGBLINK can compute its value.
