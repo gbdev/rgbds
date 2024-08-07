@@ -346,18 +346,13 @@ returns 1 if the operand was 0, and 0 otherwise.
 Even a non-constant operand with any non-zero bits will return 0.
 .Ss Integer functions
 Besides operators, there are also some functions which have more specialized uses.
+.Bl -column "BITWIDTH(n)"
+.It Sy Name Ta Sy Operation
+.It Fn HIGH n Ta Equivalent to Ql Ar n No & $FF .
+.It Fn LOW n Ta Equivalent to Ql Po Ns Ar n No & $FF00 Pc >> 8 .
 .EQ
 delim $$
 .EN
-.Bl -column "BITWIDTH(n)"
-.It Sy Name Ta Sy Operation
-.It Fn HIGH n Ta Returns the top 8 bits of
-.Ar n .
-.It Fn LOW n Ta Returns the bottom 8 bits of
-.Ar n .
-The result may be constant if
-.Nm
-is able to compute it.
 .It Fn BITWIDTH n Ta Returns the number of bits necessary to represent
 .Ar n .
 Some useful formulas:
@@ -369,9 +364,6 @@ equals $\[lc] log sub 2 ( n ) \[rc]$, and
 equals $roman clz ( n )$.
 .It Fn TZCOUNT n Ta Returns $roman ctz ( n )$, the count of trailing zero bits at the end of the binary representation of
 .Ar n .
-The result may be constant if
-.Nm
-is able to compute it.
 .El
 .EQ
 delim off
