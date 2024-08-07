@@ -297,20 +297,20 @@ A great number of operators you can use in expressions are available (listed fro
 .It Li \&! Ta Unary not
 .El
 .Pp
-.Ic ~
+.Sq ~
 complements a value by inverting all its bits.
 .Pp
-.Ic %
+.Sq %
 is used to get the remainder of the corresponding division, so that
-.Sq a / b * b + a % b == a
+.Ql x / y * y + x % y == x
 is always true.
 The result has the same sign as the divisor.
 This makes
-.Sq a % b .
+.Ql x % y
 equal to
-.Sq (a + b) % b
+.Ql (x + y) % y
 or
-.Sq (a - b) % b .
+.Ql (x - y) % y .
 .Pp
 Shifting works by shifting all bits in the left operand either left
 .Pq Sq <<
@@ -426,6 +426,18 @@ will evaluate to
 no matter what value is set as the current
 .Cm Q
 option.
+.Pp
+The
+.Ic FMOD
+function
+is used to get the remainder of the corresponding fixed-point division, so that
+.Ql MUL(DIV(x, y), y) + FMOD(x, y) == x
+is always true.
+The result has the same sign as the
+.Em dividend ;
+this is the opposite of how the integer modulo operator
+.Sq %
+works!
 .Pp
 The trigonometry functions (
 .Ic SIN ,
@@ -1120,7 +1132,7 @@ and so on.
 .Ed
 .Ss Variables
 An equal sign
-.Ic =
+.Sq =
 is used to define mutable numeric symbols.
 Unlike the other symbols described below, variables can be redefined.
 This is useful for internal symbols in macros, for counters, etc.
@@ -1170,7 +1182,7 @@ below).
 .Ic EQU
 is used to define immutable numeric symbols.
 Unlike
-.Ic =
+.Sq =
 above, constants defined this way cannot be redefined.
 These constants can be used for unchanging values such as properties of the hardware.
 .Bd -literal -offset indent
@@ -1637,17 +1649,17 @@ all have the same value, as do
 and
 .Sq Lives .
 Thus, keep in mind that
-.Ic ld [Health], a
+.Ql ld [Health], a
 is identical to
-.Ic ld [Name], a .
+.Ql ld [Name], a .
 .Pp
 The size of this union is 19 bytes, as this is the size of the largest block (the last one, containing
 .Sq VideoBuffer ) .
 Nesting unions is possible, with each inner union's size being considered as described above.
 .Pp
-Unions may be used in any section, but inside them may only be
-.Ic DS -
-like commands (see
+Unions may be used in any section, but they may only contain space-allocating directives like
+.Ic DS
+(see
 .Sx Statically allocating space in RAM ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
@@ -1847,7 +1859,7 @@ PRINTLN STRFMT("E = %f", 2.718)
 .It Ic PRINT
 prints out each of its comma-separated arguments.
 Numbers are printed as unsigned uppercase hexadecimal with a leading
-.Ic $ .
+.Sq $ .
 For different formats, use
 .Ic STRFMT .
 .It Ic PRINTLN
@@ -2167,9 +2179,8 @@ POPO
     PRINTLN $80000000/-1  ; no warning by default
 .Ed
 .Pp
-The options that
 .Ic OPT
-can modify are currently:
+can modify the options
 .Cm b , g , p , Q ,
 and
 .Cm r .
