@@ -46,15 +46,13 @@ They must come first in the line.
 Instructions are assembled into Game Boy opcodes.
 Multiple instructions on one line can be separated by double colons
 .Ql :: .
-
-
 .Pp
 The available instructions are documented in
 .Xr gbz80 7 .
-Note that when some instructions require an 8-bit register
+Note that where an instruction requires an 8-bit register
 .Ar r8 ,
 .Nm
-will interpret
+can interpret
 .Ic HIGH Ns Pq Ar r16
 as the top 8-bit register of the given
 .Ar r16 ,
@@ -408,9 +406,9 @@ delim $$
 .EN
 .Bl -column -offset indent "ATAN2(y, x)"
 .It Sy Name Ta Sy Operation
-.It Fn DIV x y Ta Fixed-point division $( x ^\[di]^ y ) ^\[mu]^ ( 2 ^\[ha]^ precision )$
-.It Fn MUL x y Ta Fixed-point multiplication $( x ^\[mu]^ y ) ^\[di]^ ( 2 ^\[ha]^ precision )$
-.It Fn FMOD x y Ta Fixed-point modulo $( x ^%^ y ) ^\[di]^ ( 2 ^\[ha]^ precision )$
+.It Fn DIV x y Ta Fixed-point division $( x \[di] y ) \[mu] ( 2 ^ precision )$
+.It Fn MUL x y Ta Fixed-point multiplication $( x \[mu] y ) \[di] ( 2 ^ precision )$
+.It Fn FMOD x y Ta Fixed-point modulo $( x % y ) \[di] ( 2 ^ precision )$
 .It Fn POW x y Ta $x$ to the $y$ power
 .It Fn LOG x y Ta Logarithm of $x$ to the base $y$
 .It Fn ROUND x Ta Round $x$ to the nearest integer
@@ -440,9 +438,11 @@ option.
 .EQ
 delim $$
 .EN
-The trigonometry functions
-.Pq Ic SIN , Ic COS , Ic TAN , No etc
-are defined in terms of a circle divided into 1.0 "turns" (equal to $2 pi$ radians or 360 degrees).
+The trigonometry functions (
+.Ic SIN ,
+.Ic COS ,
+.Ic TAN ,
+etc) are defined in terms of a circle divided into 1.0 "turns" (equal to 2pi radians or 360 degrees).
 .EQ
 delim off
 .EN
