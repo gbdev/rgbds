@@ -141,21 +141,21 @@ void reverse() {
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
 	size_t const nbTiles = tiles.size() / tileSize;
 	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTiles);
-	size_t nbTileInstances = nbTiles + options.trim; // Image size in tiles
+	size_t mapSize = nbTiles + options.trim; // Image size in tiles
 	std::optional<DefaultInitVec<uint8_t>> tilemap;
 	if (!options.tilemap.empty()) {
 		tilemap = readInto(options.tilemap);
-		nbTileInstances = tilemap->size();
-		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", nbTileInstances);
+		mapSize = tilemap->size();
+		options.verbosePrint(Options::VERB_INTERM, "Read %zu tilemap entries.\n", mapSize);
 	}
 
-	if (nbTileInstances == 0) {
+	if (mapSize == 0) {
 		fatal("Cannot generate empty image");
 	}
-	if (nbTileInstances > options.maxNbTiles[0] + options.maxNbTiles[1]) {
+	if (mapSize > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 		warning(
 		    "Total number of tiles (%zu) is more than the limit of %" PRIu16 " + %" PRIu16,
-		    nbTileInstances,
+		    mapSize,
 		    options.maxNbTiles[0],
 		    options.maxNbTiles[1]
 		);
@@ -166,21 +166,21 @@ void reverse() {
 		// Pick the smallest width that will result in a landscape-aspect rectangular image.
 		// Thus a prime number of tiles will result in a horizontal row.
 		// This avoids redundancy with `-r 1` which results in a vertical column.
-		width = (size_t)ceil(sqrt(nbTileInstances));
-		for (; width < nbTileInstances; ++width) {
-			if (nbTileInstances % width == 0)
+		width = (size_t)ceil(sqrt(mapSize));
+		for (; width < mapSize; ++width) {
+			if (mapSize % width == 0)
 				break;
 		}
 		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
 	}
-	if (nbTileInstances % width != 0) {
+	if (mapSize % width != 0) {
 		fatal(
 		    "Total number of tiles (%zu) cannot be divided by image width (%zu tiles)",
-		    nbTileInstances,
+		    mapSize,
 		    width
 		);
 	}
-	height = nbTileInstances / width;
+	height = mapSize / width;
 
 	options.verbosePrint(
 	    Options::VERB_INTERM, "Reversed image dimensions: %zux%zu tiles\n", width, height
@@ -258,11 +258,11 @@ void reverse() {
 	std::optional<DefaultInitVec<uint8_t>> attrmap;
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
-		if (attrmap->size() != nbTileInstances) {
+		if (attrmap->size() != mapSize) {
 			fatal(
 			    "Attribute map size (%zu tiles) doesn't match image's (%zu)",
 			    attrmap->size(),
-			    nbTileInstances
+			    mapSize
 			);
 		}
 
@@ -271,7 +271,7 @@ void reverse() {
 		// 1. Checking those during the main loop is harmful to optimization, and
 		// 2. It clutters the code more, and it's not in great shape to begin with
 		bool bad = false;
-		for (size_t index = 0; index < nbTileInstances; ++index) {
+		for (size_t index = 0; index < mapSize; ++index) {
 			uint8_t attr = (*attrmap)[index];
 			size_t tx = index % width, ty = index / width;
 			if ((attr & 0b111) > palettes.size()) {
@@ -300,7 +300,7 @@ void reverse() {
 
 	if (tilemap) {
 		if (attrmap) {
-			for (size_t index = 0; index < nbTileInstances; ++index) {
+			for (size_t index = 0; index < mapSize; ++index) {
 				uint8_t tileID = (*tilemap)[index];
 				uint8_t attr = (*attrmap)[index];
 				if (bool bank = attr & 1 << 3; tileID >= options.maxNbTiles[bank]) {
@@ -319,7 +319,7 @@ void reverse() {
 		} else {
 			size_t limit =
 			    std::min<size_t>(nbTiles, options.maxNbTiles[0]) + options.baseTileIDs[0];
-			for (size_t index = 0; index < nbTileInstances; ++index) {
+			for (size_t index = 0; index < mapSize; ++index) {
 				if (uint8_t tileID = (*tilemap)[index]; tileID >= limit) {
 					size_t tx = index % width, ty = index / width;
 					error(
@@ -340,11 +340,11 @@ void reverse() {
 	std::optional<DefaultInitVec<uint8_t>> palmap;
 	if (!options.palmap.empty()) {
 		palmap = readInto(options.palmap);
-		if (palmap->size() != nbTileInstances) {
+		if (palmap->size() != mapSize) {
 			fatal(
 			    "Palette map size (%zu tiles) doesn't match image's (%zu)",
 			    palmap->size(),
-			    nbTileInstances
+			    mapSize
 			);
 		}
 	}
