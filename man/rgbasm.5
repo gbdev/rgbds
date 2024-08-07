@@ -369,16 +369,26 @@ equals $roman clz ( n )$.
 delim off
 .EN
 .Ss Fixed-point expressions
-Fixed-point numbers are basically normal (32-bit) integers, which count fractions instead of whole numbers.
-They offer better precision than integers but limit the range of values.
-By default, the upper 16 bits are used for the integer part and the lower 16 bits are used for the fraction (65536ths).
-The default number of fractional bits can be changed with the
+Fixed-point numbers are technically just integers, but conceptually they have a decimal point at a fixed location (hence the name).
+This gives them increased precision, at the cost of a smaller range, while remaining far cheaper to manipulate than floating-point numbers (which
+.Nm
+does not support).
+.Pp
+The default precision of all fixed-point numbers is 16 bits, meaning the lower 16 bits are used for the fractional part; so they count in 65536ths of 1.0.
+This precision can be changed with the
 .Fl Q
-command-line option.
-You can also specify a precise fixed-point value by appending a
+command-line option, and/or by
+.Ic OPT Q
+.Pq see Sx Changing options while assembling .
+An individual fixed-point literal can have its own precision overridden by appending a
 .Dq q
-to it followed by the number of fractional bits, such as
-.Ql 12.34q8 .
+followed by the number of fractional bits: for example,
+.Ql 1234.5q8
+is equal to $0004d280
+.EQ
+delim $$
+.EN
+($= 1234.5 * 2 sup 8$).
 .Pp
 Since fixed-point values are still just integers, you can use them in normal integer expressions.
 You can easily truncate a fixed-point number into an integer by shifting it right by the number of fractional bits.
@@ -388,9 +398,6 @@ Note that the current number of fractional bits can be computed as
 .Ic TZCOUNT Ns Pq 1.0 .
 .Pp
 The following functions are designed to operate with fixed-point numbers:
-.EQ
-delim $$
-.EN
 .Bl -column -offset indent "ATAN2(y, x)"
 .It Sy Name Ta Sy Operation
 .It Fn DIV x y Ta Fixed-point division $( x \[di] y ) \[mu] ( 2 ^ precision )$
@@ -417,7 +424,7 @@ Operators not in the list above, such as
 .Sq +
 and
 .Sq - ,
-function correctly with fixed-point operands as well (but
+work correctly with fixed-point operands as well (but
 .Em both
 operands must be fixed-point: use
 .Ql 1.0 + 2.0 ,
@@ -430,7 +437,7 @@ or
 not
 .Ql MUL(1.0, 2) ) .
 .Pp
-All of these fixed-point functions can take an optional final argument, which is the precision to use.
+All of these fixed-point functions can take an optional final argument, which is the precision to use for that one operation .
 For example,
 .Ql MUL(6.0q8, 7.0q8, 8)
 will evaluate to
