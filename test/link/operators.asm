@@ -27,3 +27,6 @@ db @ <= 7
 dw @ << 1
 dw @ >> 1
 dw @ >>> 1
+
+db BITWIDTH(@)
+db TZCOUNT(@)
