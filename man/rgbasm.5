@@ -389,7 +389,7 @@ don't care whether the operands are integers or fixed-point.
 You can easily truncate a fixed-point number into an integer by shifting it right by the number of fractional bits.
 It follows that you can convert an integer to a fixed-point number by shifting it left that same amount.
 .Pp
-Note that the current number of fractional bits equals
+Note that the current number of fractional bits can be computed as
 .Ic TZCOUNT Ns Pq 1.0 .
 .Pp
 The following functions are designed to operate with fixed-point numbers:
