@@ -445,6 +445,12 @@ will evaluate to
 no matter what value is set as the current
 .Cm Q
 option.
+.Nm
+.Em does not check precisions for consistency ,
+so nonsensical input like
+.Ql MUL(4.2q8, 6.9q12, 16)
+will produce a nonsensical (but technically correct) result:
+.Dq garbage in, garbage out .
 .Pp
 The
 .Ic FMOD
