@@ -150,7 +150,7 @@ void argErr(char flag, char const *fmt, ...) {
 }
 
 // Short options
-static char const *optstring = "dl:m:Mn:O:o:p:S:tVvWwx";
+static char const *optstring = "dl:m:Mn:O:o:p:S:s:tVvWwx";
 
 /*
  * Equivalent long options
@@ -172,6 +172,7 @@ static option const longopts[] = {
     {"output",        required_argument, nullptr, 'o'},
     {"pad",           required_argument, nullptr, 'p'},
     {"scramble",      required_argument, nullptr, 'S'},
+    {"smart",         required_argument, nullptr, 's'},
     {"tiny",          no_argument,       nullptr, 't'},
     {"version",       no_argument,       nullptr, 'V'},
     {"verbose",       no_argument,       nullptr, 'v'},
@@ -184,7 +185,7 @@ static void printUsage() {
 	fputs(
 	    "Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 	    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
-	    "               [-S spec] <file> ...\n"
+	    "               [-S spec] [-s symbol] <file> ...\n"
 	    "Useful options:\n"
 	    "    -l, --linkerscript <path>  set the input linker script\n"
 	    "    -m, --map <path>           set the output map file\n"
@@ -393,6 +394,9 @@ int main(int argc, char *argv[]) {
 		}
 		case 'S':
 			parseScrambleSpec(musl_optarg);
+			break;
+		case 's':
+			sect_AddSmartSection(musl_optarg);
 			break;
 		case 't':
 			is32kMode = true;
