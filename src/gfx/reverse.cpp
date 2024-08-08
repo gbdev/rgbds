@@ -254,7 +254,7 @@ void reverse() {
 	}
 
 	std::optional<DefaultInitVec<uint8_t>> attrmap;
-	uint16_t nbTilesInBank[] = {0, 0}; // Only used if there is an attrmap.
+	uint16_t nbTilesInBank[2] = {0, 0}; // Only used if there is an attrmap.
 	if (!options.attrmap.empty()) {
 		attrmap = readInto(options.attrmap);
 		if (attrmap->size() != mapSize) {
@@ -283,7 +283,7 @@ void reverse() {
 				);
 			}
 
-			bool bank = attr & 0x08;
+			bool bank = attr & 0b1000;
 
 			if (!tilemap) {
 				if (bank) {
@@ -305,7 +305,7 @@ void reverse() {
 
 		options.verbosePrint(
 		    Options::VERB_INTERM,
-		    "Nb tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n",
+		    "Number of tiles in bank {0: %" PRIu16 ", 1: %" PRIu16 "}\n",
 		    nbTilesInBank[0],
 		    nbTilesInBank[1]
 		);
@@ -380,7 +380,7 @@ void reverse() {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != mapSize) {
 			fatal(
-			    "Palette map size (%zu tiles) doesn't match image's (%zu)", palmap->size(), mapSize
+			    "Palette map size (%zu tiles) doesn't match image size (%zu)", palmap->size(), mapSize
 			);
 		}
 	}
@@ -443,8 +443,8 @@ void reverse() {
 		for (size_t tx = 0; tx < width; ++tx) {
 			size_t index = options.columnMajor ? ty + tx * height : ty * width + tx;
 			// By default, a tile is unflipped, in bank 0, and uses palette #0
-			uint8_t attribute = attrmap ? (*attrmap)[index] : 0x00;
-			bool bank = attribute & 0x08;
+			uint8_t attribute = attrmap ? (*attrmap)[index] : 0b0000;
+			bool bank = attribute & 0b1000;
 			// Get the tile ID at this location
 			size_t tileOfs =
 			    tilemap ? static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
