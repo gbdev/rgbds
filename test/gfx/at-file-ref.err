@@ -6,9 +6,9 @@ error: Failed to fit tile colors [$6c8a, $7f55] in specified palettes
 error: Failed to fit tile colors [$6c8a] in specified palettes
 error: Failed to fit tile colors [$7fff] in specified palettes
 note: The following palettes were specified:
-        [$3f65, $36b3, $262a, $50b0]
         [$5f77, $213d, $41a6, $40ee]
-        [$5f77, $267c, $213d, $40ee]
+        [$3f65, $36b3, $262a, $50b0]
         [$53c3, $3f65, $36b3]
-        [$267c, $41a6]
+        [$5f77, $267c, $41a6]
+        [$267c, $213d, $40ee]
 Conversion aborted after 7 errors

@@ -362,7 +362,19 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
 	sortedProtoPalIDs.clear();
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
-		sortedProtoPalIDs.insert(std::lower_bound(RANGE(sortedProtoPalIDs), i), i);
+		sortedProtoPalIDs.insert(
+		    std::lower_bound(
+		        RANGE(sortedProtoPalIDs),
+		        i,
+		        [&protoPalettes](size_t left, size_t right) {
+			        ProtoPalette const &lhs = protoPalettes[left];
+			        ProtoPalette const &rhs = protoPalettes[right];
+			        return lhs.size()
+			               > rhs.size(); // We want the proto-pals to be sorted *largest first*!
+		        }
+		    ),
+		    i
+		);
 	}
 	// Begin with all proto-palettes queued up for insertion
 	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(RANGE(sortedProtoPalIDs)));
