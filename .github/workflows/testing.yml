@@ -98,7 +98,7 @@ jobs:
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: rgbds-canary-${{ matrix.os }}-${{ matrix.buildsys }}
+          name: rgbds-canary-macos-static
           path: bins
       - name: Compute test dependency cache params
         id: test-deps-cache-params
