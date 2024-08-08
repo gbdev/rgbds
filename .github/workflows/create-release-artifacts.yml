@@ -67,7 +67,7 @@ jobs:
           path: rgbds-${{ env.version }}-win${{ matrix.bits }}.zip
 
   macos:
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: Get version from tag
         shell: bash
@@ -78,7 +78,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/scripts/install_deps.sh macos-latest
+          ./.github/scripts/install_deps.sh macos
       # We force linking libpng statically; the other libs are provided by macOS itself
       - name: Build binaries
         run: |
