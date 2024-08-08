@@ -424,24 +424,25 @@ The following functions are designed to operate with fixed-point numbers:
 delim off
 .EN
 .Pp
-Operators not in the list above, such as
+There are no functions for fixed-point addition and subtraction, because the
 .Sq +
 and
 .Sq - ,
-work correctly with fixed-point operands as well (but
-.Em both
-operands must be fixed-point: use
-.Ql 1.0 + 2.0 ,
-not
-.Ql 1.0 + 2 ;
-and use
-.Ql MUL(1.0, 2.0)
-or
-.Ql 1.0 * 2 ,
-not
-.Ql MUL(1.0, 2) ) .
+operators can add and subtract pairs of fixed-point operands.
+.Bd -ragged -offset indent
+Note that some operators or functions are meaningful when combining integers and fixed-point values.
+For example,
+.Ql 2.0 * 3
+is equivalent to
+.Ql MUL(2.0, 3.0) ,
+and
+.Ql 6.0 / 2
+is equivalent to
+.Ql DIV(6.0, 2.0) .
+Be careful and think about what the operations mean when doing this sort of thing.
+.Ed
 .Pp
-All of these fixed-point functions can take an optional final argument, which is the precision to use for that one operation .
+All of these fixed-point functions can take an optional final argument, which is the precision to use for that one operation.
 For example,
 .Ql MUL(6.0q8, 7.0q8, 8)
 will evaluate to
