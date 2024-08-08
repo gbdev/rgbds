@@ -97,7 +97,8 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 void sym_Purge(std::string const &symName);
 bool sym_IsPurgedExact(std::string const &symName);
 bool sym_IsPurgedScoped(std::string const &symName);
-void sym_Init(time_t now);
+void sym_InitBuiltins(time_t now);
+void sym_UpdateFileBuiltins(std::string const &asmName, std::string const &objName);
 
 // Functions to save and restore the current symbol scope.
 std::optional<std::string> const &sym_GetCurrentSymbolScope();

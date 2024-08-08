@@ -1457,6 +1457,8 @@ The following symbols are defined by the assembler:
 .It Dv @ Ta Ic EQU Ta PC value (essentially, the current memory address)
 .It Dv _RS Ta Ic = Ta _RS Counter
 .It Dv _NARG Ta Ic EQU Ta Number of arguments passed to macro, updated by Ic SHIFT
+.It Dv __INPUT_FILE__ Ta Ic EQUS Ta The input .asm file
+.It Dv __OUTPUT_FILE__ Ta Ic EQUS Ta The input .o file, or empty if none was specified by Fl o
 .It Dv __DATE__ Ta Ic EQUS Ta Today's date
 .It Dv __TIME__ Ta Ic EQUS Ta The current time
 .It Dv __ISO_8601_LOCAL__ Ta Ic EQUS Ta ISO 8601 timestamp (local)

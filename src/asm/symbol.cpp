@@ -26,6 +26,8 @@ static std::optional<std::string> labelScope = std::nullopt; // Current section'
 static Symbol *PCSymbol;
 static Symbol *_NARGSymbol;
 static Symbol *_RSSymbol;
+static Symbol *inputFileSymbol; // __INPUT_FILE__
+static Symbol *outputFileSymbol; // __OUTPUT_FILE__
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -563,8 +565,7 @@ void sym_SetExportAll(bool set) {
 	exportAll = set;
 }
 
-// Define the built-in symbols
-void sym_Init(time_t now) {
+void sym_InitBuiltins(time_t now) {
 	PCSymbol = &createSymbol("@"s);
 	PCSymbol->type = SYM_LABEL;
 	PCSymbol->data = CallbackPC;
@@ -577,6 +578,13 @@ void sym_Init(time_t now) {
 
 	_RSSymbol = sym_AddVar("_RS"s, 0);
 	_RSSymbol->isBuiltin = true;
+
+	// Define these built-ins right away so that `-D` cannot define these names.
+	// Their values will be set after argument processing.
+	inputFileSymbol = sym_AddString("__INPUT_FILE__", nullptr);
+	inputFileSymbol->isBuiltin = true;
+	outputFileSymbol = sym_AddString("__OUTPUT_FILE__", nullptr);
+	outputFileSymbol->isBuiltin = true;
 
 	sym_AddString("__RGBDS_VERSION__"s, std::make_shared<std::string>(get_package_version_string()))
 	    ->isBuiltin = true;
@@ -628,4 +636,9 @@ void sym_Init(time_t now) {
 	sym_AddEqu("__UTC_HOUR__"s, time_utc->tm_hour)->isBuiltin = true;
 	sym_AddEqu("__UTC_MINUTE__"s, time_utc->tm_min)->isBuiltin = true;
 	sym_AddEqu("__UTC_SECOND__"s, time_utc->tm_sec)->isBuiltin = true;
+}
+
+void sym_UpdateFileBuiltins(std::string const &asmName, std::string const &objName) {
+	inputFileSymbol->data = std::make_shared<std::string>(asmName);
+	outputFileSymbol->data = std::make_shared<std::string>(objName);
 }

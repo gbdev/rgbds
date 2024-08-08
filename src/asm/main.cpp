@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 	}};
 
 	// Perform some init for below
-	sym_Init(now);
+	sym_InitBuiltins(now);
 
 	// Set defaults
 	opt_B("01");
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 					                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
 					                     : !strcasecmp(feature, "char")  ? STATE_CHAR
 					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
-					                                                    : NB_STATE_FEATURES;
+					                                                     : NB_STATE_FEATURES;
 					if (value == NB_STATE_FEATURES) {
 						errx("Invalid feature for option 's': \"%s\"", feature);
 					} else if (std::find(RANGE(features), value) != features.end()) {
@@ -372,6 +372,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	charmap_New(DEFAULT_CHARMAP_NAME, nullptr);
+
+	// Set the values of `__INPUT_FILE__` and `__OUTPUT_FILE__`
+	sym_UpdateFileBuiltins(
+	    mainFileName == "-" ? "<stdin>" : mainFileName,
+	    objectFileName == "-" ? "<stdout>" : objectFileName
+	);
 
 	// Init lexer and file stack, providing file info
 	fstk_Init(mainFileName, maxDepth);
