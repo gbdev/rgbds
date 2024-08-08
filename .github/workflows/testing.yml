@@ -74,7 +74,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          test/run-tests.sh
+          CXX=${{ matrix.cxx }} test/run-tests.sh
 
   macos-static:
     strategy:
