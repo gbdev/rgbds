@@ -32,7 +32,7 @@ namespace packing {
  * A reference to a proto-palette, and attached attributes for sorting purposes
  */
 struct ProtoPalAttrs {
-	size_t const protoPalIndex;
+	size_t protoPalIndex;
 	/*
 	 * Pages from which we are banned (to prevent infinite loops)
 	 * This is dynamic because we wish not to hard-cap the amount of palettes
@@ -359,23 +359,19 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	);
 
 	// Sort the proto-palettes by size, which improves the packing algorithm's efficiency
+	auto const indexOfLargestProtoPalFirst = [&protoPalettes](size_t left, size_t right) {
+		ProtoPalette const &lhs = protoPalettes[left];
+		ProtoPalette const &rhs = protoPalettes[right];
+		return lhs.size() > rhs.size(); // We want the proto-pals to be sorted *largest first*!
+	};
 	DefaultInitVec<size_t> sortedProtoPalIDs(protoPalettes.size());
 	sortedProtoPalIDs.clear();
 	for (size_t i = 0; i < protoPalettes.size(); ++i) {
 		sortedProtoPalIDs.insert(
-		    std::lower_bound(
-		        RANGE(sortedProtoPalIDs),
-		        i,
-		        [&protoPalettes](size_t left, size_t right) {
-			        ProtoPalette const &lhs = protoPalettes[left];
-			        ProtoPalette const &rhs = protoPalettes[right];
-			        return lhs.size()
-			               > rhs.size(); // We want the proto-pals to be sorted *largest first*!
-		        }
-		    ),
-		    i
+		    std::lower_bound(RANGE(sortedProtoPalIDs), i, indexOfLargestProtoPalFirst), i
 		);
 	}
+
 	// Begin with all proto-palettes queued up for insertion
 	std::queue<ProtoPalAttrs> queue(std::deque<ProtoPalAttrs>(RANGE(sortedProtoPalIDs)));
 	// Begin with no pages
@@ -459,17 +455,25 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 	}
 
 	// Deal with palettes still overloaded, by emptying them
+	auto const &largestProtoPalFirst =
+	    [&protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
+		    return protoPalettes[lhs.protoPalIndex].size()
+		           > protoPalettes[rhs.protoPalIndex].size();
+	    };
+	std::vector<ProtoPalAttrs> overloadQueue{};
 	for (AssignedProtos &pal : assignments) {
 		if (pal.volume() > options.maxOpaqueColors()) {
 			for (ProtoPalAttrs &attrs : pal) {
-				queue.emplace(std::move(attrs));
+				overloadQueue.emplace(
+				    std::lower_bound(RANGE(overloadQueue), attrs, largestProtoPalFirst),
+				    std::move(attrs)
+				);
 			}
 			pal.clear();
 		}
 	}
 	// Place back any proto-palettes now in the queue via first-fit
-	while (!queue.empty()) {
-		ProtoPalAttrs const &attrs = queue.front();
+	for (ProtoPalAttrs const &attrs : overloadQueue) {
 		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
 		auto iter = std::find_if(RANGE(assignments), [&protoPal](AssignedProtos const &pal) {
 			return pal.canFit(protoPal);
@@ -491,7 +495,6 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			);
 			iter->assign(std::move(attrs));
 		}
-		queue.pop();
 	}
 
 	if (options.verbosity >= Options::VERB_INTERM) {
