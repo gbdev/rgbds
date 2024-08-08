@@ -128,7 +128,7 @@ test/gfx/randtilegen: test/gfx/randtilegen.cpp
 	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
 
 test/gfx/rgbgfx_test: test/gfx/rgbgfx_test.cpp
-	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGLDLIBS}
+	$Q${CXX} ${REALLDFLAGS} ${PNGLDFLAGS} -o $@ $^ ${REALCXXFLAGS} ${PNGCFLAGS} ${PNGLDLIBS}
 
 test/link/unmangle: test/link/unmangle.cpp
 	$Q${CXX} ${REALLDFLAGS} -o $@ $^ ${REALCXXFLAGS}
