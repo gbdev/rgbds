@@ -60,11 +60,11 @@ else()
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
                         -Wfloat-equal -Wlogical-op -Wnull-dereference -Wshift-overflow=2
-                        -Wstringop-overflow=4 -Wstrict-overflow=5 -Wundef -Wuninitialized -Wunused
-                        -Wshadow # TODO: -Wshadow=compatible-local ?
+                        -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
+                        -Wshadow # TODO: -Wshadow=compatible-local?
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1
-                        -Wno-format-nonliteral # We have a couple of "dynamic" prints
-                        # We do some range checks that are always false on some platforms (GCC, Clang)
+                        -Wno-format-nonliteral -Wno-strict-overflow
+                        -Wno-unused-but-set-variable # bison's `yynerrs_` is incremented but unused
                         -Wno-type-limits -Wno-tautological-constant-out-of-range-compare
                         -Wvla # MSVC does not support VLAs
                         -Wno-unknown-warning-option) # Clang shouldn't diagnose unknown warnings
