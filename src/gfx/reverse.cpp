@@ -172,6 +172,15 @@ void reverse() {
 		options.verbosePrint(Options::VERB_INTERM, "Picked reversing width of %zu tiles\n", width);
 	}
 	if (mapSize % width != 0) {
+		if (options.trim == 0 && !tilemap) {
+			fatal(
+			    "Total number of tiles (%zu) cannot be divided by image width (%zu tiles)\n"
+			    "(To proceed anyway with this image width, try passing `-x %zu`)",
+			    mapSize,
+			    width,
+			    width - mapSize % width
+			);
+		}
 		fatal(
 		    "Total number of tiles (%zu) cannot be divided by image width (%zu tiles)",
 		    mapSize,
