@@ -226,7 +226,7 @@ develop:
 
 debug:
 	$Qenv ${MAKE} \
-		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+		CXXFLAGS="-ggdb3 -O0 -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # This target is used during development in order to more easily profile with callgrind.
 
