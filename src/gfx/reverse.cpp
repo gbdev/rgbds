@@ -450,7 +450,8 @@ void reverse() {
 			    tilemap ? static_cast<uint8_t>((*tilemap)[index] - options.baseTileIDs[bank])
 			                  + (bank ? nbTilesInBank[0] : 0)
 			            : index;
-			assume(tileOfs < nbTiles + options.trim); // Should have been checked earlier
+			// This should have been enforced by the earlier checking.
+			assume(tileOfs < nbTiles + options.trim);
 			size_t palID = palmap ? (*palmap)[index] : attribute & 0b111;
 			assume(palID < palettes.size()); // Should be ensured on data read
 
