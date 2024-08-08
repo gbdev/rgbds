@@ -380,11 +380,11 @@ This precision can be changed with the
 command-line option, and/or by
 .Ic OPT Q
 .Pq see Sx Changing options while assembling .
-An individual fixed-point literal can have its own precision overridden by appending a
+An individual fixed-point literal can specify its own precision, overriding the current default, by appending a
 .Dq q
 followed by the number of fractional bits: for example,
 .Ql 1234.5q8
-is equal to $0004d280
+is equal to $0004d2_80
 .EQ
 delim $$
 .EN
@@ -427,7 +427,7 @@ delim off
 There are no functions for fixed-point addition and subtraction, because the
 .Sq +
 and
-.Sq - ,
+.Sq -
 operators can add and subtract pairs of fixed-point operands.
 .Bd -ragged -offset indent
 Note that some operators or functions are meaningful when combining integers and fixed-point values.
