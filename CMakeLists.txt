@@ -20,6 +20,11 @@ endif()
 option(SANITIZERS "Build with sanitizers enabled" OFF) # Ignored on MSVC
 option(MORE_WARNINGS "Turn on more warnings" OFF) # Ignored on MSVC
 
+include(GNUInstallDirs)
+if(NOT DEFINED CMAKE_INSTALL_BINDIR)
+  set(CMAKE_INSTALL_BINDIR lib)
+endif()
+
 if(MSVC)
   # MSVC's own standard library triggers warning C5105,
   # "macro expansion producing 'defined' has undefined behavior".
@@ -130,3 +135,5 @@ foreach(SECTION "man1" "man5" "man7")
   set(DEST "${MANDIR}/${SECTION}")
   install(FILES ${${SECTION}} DESTINATION ${DEST})
 endforeach()
+
+install(EXPORT RGBDS DESTINATION "${CMAKE_INSTALL_BINDIR}/cmake/rgbds")

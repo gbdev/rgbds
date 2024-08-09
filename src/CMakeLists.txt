@@ -94,8 +94,10 @@ foreach(PROG "asm" "fix" "gfx" "link")
   if(SUFFIX)
     set_target_properties(rgb${PROG} PROPERTIES SUFFIX ${SUFFIX})
   endif()
-  install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
+install(TARGETS rgbasm rgbfix rgbgfx rgblink
+        EXPORT RGBDS
+        RUNTIME DESTINATION bin)
 
 if(LIBPNG_FOUND) # pkg-config
   target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
