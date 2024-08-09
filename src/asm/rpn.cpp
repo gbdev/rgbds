@@ -213,8 +213,8 @@ static bool tryConstNonzero(Expression const &lhs, Expression const &rhs) {
 
 static bool tryConstLogNot(Expression const &expr) {
 	Symbol const *sym = expr.symbolOf();
-	if (!sym || !sym->getSection())
-		return -1;
+	if (!sym || !sym->getSection() || !sym->isDefined())
+		return false;
 
 	assume(sym->isNumeric());
 
@@ -238,7 +238,7 @@ static bool tryConstLogNot(Expression const &expr) {
  */
 static int32_t tryConstLow(Expression const &expr) {
 	Symbol const *sym = expr.symbolOf();
-	if (!sym || !sym->getSection())
+	if (!sym || !sym->getSection() || !sym->isDefined())
 		return -1;
 
 	assume(sym->isNumeric());
@@ -276,10 +276,11 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	Symbol const &sym = lhsIsSymbol ? *lhsSymbol : *rhsSymbol;
 	Expression const &expr = lhsIsSymbol ? rhs : lhs; // Opposite side of `sym`
 
+	if (!sym.isDefined() || !expr.isKnown())
+		return -1;
+
 	assume(sym.isNumeric());
 
-	if (!expr.isKnown())
-		return -1;
 	// We can now safely use `expr.value()`
 	int32_t mask = expr.value();
 
