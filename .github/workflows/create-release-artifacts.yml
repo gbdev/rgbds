@@ -79,11 +79,13 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh macos
+      - name: Build libpng
+        run: |
+          ./.github/scripts/build_libpng.sh
       # We force linking libpng statically; the other libs are provided by macOS itself
       - name: Build binaries
         run: |
-          export PATH="/usr/local/opt/bison/bin:$PATH"
-          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
+          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PNGCFLAGS="-I libpng-staging/include" PNGLDLIBS="libpng-staging/lib/libpng.a -lz" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
@@ -92,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: rgbds-${{ env.version }}-macos-x86_64.zip
+          path: rgbds-${{ env.version }}-macos.zip
 
   linux:
     runs-on: ubuntu-20.04 # Oldest supported, for best glibc compatibility.

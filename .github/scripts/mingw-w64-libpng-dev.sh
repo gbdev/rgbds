@@ -1,5 +1,5 @@
-#!/bin/sh
-set -e
+#!/bin/bash
+set -euo pipefail
 
 pngver=1.6.43
 arch="$1"
@@ -27,7 +27,7 @@ cd build
 	--prefix="/usr/$arch" \
 	--enable-shared --disable-static \
 	CPPFLAGS="-D_FORTIFY_SOURCE=2" \
-	CFLAGS="-O2 -pipe -fno-plt -fexceptions --param=ssp-buffer-size=4" \
+	CFLAGS="-O2 -pipe -fno-plt -fno-exceptions --param=ssp-buffer-size=4" \
 	LDFLAGS="-Wl,-O1,--sort-common,--as-needed -fstack-protector"
 make -kj
-make install
+sudo make install
