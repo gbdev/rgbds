@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: rgbds-${{ env.version }}-macos-x86_64.zip
+          path: rgbds-${{ env.version }}-macos.zip
 
   linux:
     runs-on: ubuntu-20.04 # Oldest supported, for best glibc compatibility.
