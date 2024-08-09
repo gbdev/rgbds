@@ -239,7 +239,7 @@ jobs:
           sudo apt-get install g++-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
       - name: Install libpng dev headers for MinGW
         run: |
-          sudo ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
+          ./.github/scripts/mingw-w64-libpng-dev.sh ${{ matrix.triplet }}
       - name: Cross-build Windows binaries
         run: |
           make mingw${{ matrix.bits }} -kj Q=
