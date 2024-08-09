@@ -212,7 +212,7 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
 
     {"FRAGMENT",      T_(POP_FRAGMENT)     },
     {"BANK",          T_(OP_BANK)          },
-    {"ALIGN",         T_(OP_ALIGN)         },
+    {"ALIGN",         T_(POP_ALIGN)        },
 
     {"SIZEOF",        T_(OP_SIZEOF)        },
     {"STARTOF",       T_(OP_STARTOF)       },
