@@ -79,10 +79,13 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh macos
+      - name: Build libpng
+        run: |
+          ./.github/scripts/build_libpng.sh
       # We force linking libpng statically; the other libs are provided by macOS itself
       - name: Build binaries
         run: |
-          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
+          make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9 -arch x86_64 -arch arm64" PNGCFLAGS="-I libpng-staging/include" PNGLDLIBS="libpng-staging/lib/libpng.a -lz" Q=
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
