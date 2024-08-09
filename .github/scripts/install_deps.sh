@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 case "${1%-*}" in
 	ubuntu)
@@ -8,8 +8,10 @@ case "${1%-*}" in
 		;;
 	macos)
 		brew install bison libpng pkg-config md5sha1sum
-		# For the version check below exclusively, re-do this before building
-		export PATH="/opt/homebrew/opt/bison/bin:/usr/local/opt/bison/bin:$PATH"
+		# Export `bison` to allow using the version we install from Homebrew,
+		# instead of the outdated one preinstalled on macOS (which doesn't even support `-Wall`...)
+		export PATH="/opt/homebrew/opt/bison/bin:$PATH"
+		printf 'PATH=%s\n' "$PATH" >>"$GITHUB_ENV" # Make it available to later CI steps tpp
 		;;
 	*)
 		echo "WARNING: Cannot install deps for OS '$1'"

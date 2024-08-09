@@ -22,18 +22,14 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh ${{ matrix.os }}
-      # Export `bison` to allow using the version we install from Homebrew,
-      # instead of the outdated 2.3 one preinstalled on macOS.
       - name: Build & install using Make
         if: matrix.buildsys == 'make'
         run: |
-          export PATH="/opt/homebrew/opt/bison/bin:/usr/local/opt/bison/bin:$PATH"
           make develop -kj Q= CXX=${{ matrix.cxx }}
           sudo make install -j Q=
       - name: Build & install using CMake
         if: matrix.buildsys == 'cmake'
         run: |
-          export PATH="/opt/homebrew/opt/bison/bin:/usr/local/opt/bison/bin:$PATH"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
           cmake --build build -j --verbose
           cp build/src/rgb{asm,link,fix,gfx} .
@@ -84,12 +80,8 @@ jobs:
         shell: bash
         run: |
           ./.github/scripts/install_deps.sh macos
-      # Export `bison` to allow using the version we install from Homebrew,
-      # instead of the outdated one preinstalled on macOS (which doesn't
-      # even support `-Wall`...).
       - name: Build & install
         run: |
-          export PATH="/opt/homebrew/opt/bison/bin:/usr/local/opt/bison/bin:$PATH"
           make -kj CXXFLAGS="-O3 -flto -DNDEBUG -mmacosx-version-min=10.9" PKG_CONFIG="pkg-config --static" PNGLDLIBS="$(pkg-config --static --libs-only-L libpng | cut -c 3-)/libpng.a $(pkg-config --static --libs-only-l libpng | sed s/-lpng[0-9]*//g)" Q=
       - name: Package binaries
         run: |
@@ -238,7 +230,7 @@ jobs:
       - name: Install deps
         shell: bash
         run: |
-          ./.github/scripts/install_deps.sh ${{ matrix.os }}
+          ./.github/scripts/install_deps.sh ubuntu
       - name: Install MinGW
         run: | # dpkg-dev is apparently required for pkg-config for cross-building
           sudo apt-get install g++-mingw-w64-${{ matrix.arch }}-win32 mingw-w64-tools libz-mingw-w64-dev dpkg-dev
