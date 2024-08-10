@@ -181,6 +181,16 @@ rgblinkQuiet -o "$gbtemp2" "$outtemp"
 tryCmp "$gbtemp" "$gbtemp2"
 evaluateTest
 
+test="map-file"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -m "$outtemp2" "$otemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryDiff "$test"/ref.out.map "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
 test="overlay/smaller"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

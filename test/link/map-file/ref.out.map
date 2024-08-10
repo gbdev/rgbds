@@ -1,0 +1,56 @@
+SUMMARY:
+	ROM0: 1 byte used / 16383 free
+	ROMX: 2 bytes used / 16382 free in 1 bank
+	SRAM: 4 bytes used / 8188 free in 1 bank
+	WRAM0: 5 bytes used / 4091 free
+	WRAMX: 6 bytes used / 4090 free in 1 bank
+	HRAM: 7 bytes used / 120 free
+
+ROM0 bank #0:
+	SECTION: $0000-$0000 ($0001 byte) ["rom0"]
+	         $0000 = Label0
+	         $0001 = Label0.local
+	EMPTY: $0001-$3fff ($3fff bytes)
+	TOTAL EMPTY: $3fff bytes
+
+ROMX bank #1:
+	SECTION: $4000-$4001 ($0002 bytes) ["romx"]
+	         $4000 = Label1
+	         $4002 = Label1.local
+	EMPTY: $4002-$7fff ($3ffe bytes)
+	TOTAL EMPTY: $3ffe bytes
+
+VRAM bank #0:
+	SECTION: $8000-$8002 ($0003 bytes) ["vram"]
+	         $8000 = vLabel
+	         $8003 = vLabel.local
+	EMPTY: $8003-$9fff ($1ffd bytes)
+	TOTAL EMPTY: $1ffd bytes
+
+SRAM bank #0:
+	SECTION: $a000-$a003 ($0004 bytes) ["sram"]
+	         $a000 = sLabel
+	         $a004 = sLabel.local
+	EMPTY: $a004-$bfff ($1ffc bytes)
+	TOTAL EMPTY: $1ffc bytes
+
+WRAM0 bank #0:
+	SECTION: $c000-$c004 ($0005 bytes) ["wram0"]
+	         $c000 = wLabel0
+	         $c005 = wLabel0.local
+	EMPTY: $c005-$cfff ($0ffb bytes)
+	TOTAL EMPTY: $0ffb bytes
+
+WRAMX bank #1:
+	SECTION: $d000-$d005 ($0006 bytes) ["wramx"]
+	         $d000 = wLabel1
+	         $d006 = wLabel1.local
+	EMPTY: $d006-$dfff ($0ffa bytes)
+	TOTAL EMPTY: $0ffa bytes
+
+HRAM bank #0:
+	SECTION: $ff80-$ff86 ($0007 bytes) ["hram"]
+	         $ff80 = hLabel
+	         $ff87 = hLabel.local
+	EMPTY: $ff87-$fffe ($0078 bytes)
+	TOTAL EMPTY: $0078 bytes
