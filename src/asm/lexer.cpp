@@ -672,9 +672,6 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 			error("Macro argument '\\<%" PRIu32 ">' not defined\n", num);
 		}
 		return str;
-	} else if (name == '0') {
-		error("Invalid macro argument '\\0'\n");
-		return nullptr;
 	} else {
 		assume(name >= '1' && name <= '9');
 
