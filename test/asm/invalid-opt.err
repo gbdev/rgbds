@@ -5,11 +5,19 @@ error: invalid-opt.asm(2):
 error: invalid-opt.asm(3):
     Invalid argument for option 'p'
 error: invalid-opt.asm(4):
-    Invalid argument for option 'Q'
+    Invalid argument for option 'p'
 error: invalid-opt.asm(5):
-    Argument for option 'Q' must be between 1 and 31
+    Invalid argument for option 'Q'
 error: invalid-opt.asm(6):
-    Must specify an argument for option 'W'
+    Invalid argument for option 'Q'
 error: invalid-opt.asm(7):
+    Argument for option 'Q' must be between 1 and 31
+error: invalid-opt.asm(8):
+    Argument to 'r' is out of range ("99999999999999999999999999")
+error: invalid-opt.asm(9):
+    Must specify an argument for option 'W'
+error: invalid-opt.asm(10):
     syntax error, unexpected newline, expecting string
-error: Assembly aborted (7 errors)!
+error: invalid-opt.asm(11):
+    No entries in the option stack
+error: Assembly aborted (11 errors)!
