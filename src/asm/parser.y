@@ -101,100 +101,256 @@
 	enum { CC_NZ, CC_Z, CC_NC, CC_C };
 }
 
-%type <Expression> relocexpr
-%type <Expression> relocexpr_no_str
-%type <int32_t> const
-%type <int32_t> const_no_str
-%type <int32_t> uconst
-%type <int32_t> rs_uconst
-%type <int32_t> shift_const
-%type <int32_t> bit_const
-%type <Expression> reloc_8bit
-%type <Expression> reloc_8bit_no_str
-%type <Expression> reloc_8bit_offset
-%type <Expression> reloc_16bit
-%type <Expression> reloc_16bit_no_str
-%type <int32_t> sect_type
+/******************** Tokens ********************/
 
-%type <std::string> string
-%type <std::string> strcat_args
-%type <StrFmtArgList> strfmt_args
-%type <StrFmtArgList> strfmt_va_args
+%token YYEOF 0 "end of file"
+%token NEWLINE "newline"
+%token EOB "end of buffer"
 
-%type <int32_t> sect_org
-%type <SectionSpec> sect_attrs
-
-%token <int32_t> NUMBER "number"
-%token <std::string> STRING "string"
-
+// General punctuation
 %token PERIOD "."
 %token COMMA ","
 %token COLON ":" DOUBLE_COLON "::"
 %token LBRACK "[" RBRACK "]"
 %token LPAREN "(" RPAREN ")"
-%token NEWLINE "newline"
 
-%token OP_LOGICNOT "!"
-%token OP_LOGICAND "&&" OP_LOGICOR "||"
-%token OP_LOGICGT ">" OP_LOGICLT "<"
-%token OP_LOGICGE ">=" OP_LOGICLE "<="
-%token OP_LOGICNE "!=" OP_LOGICEQU "=="
+// Arithmetic operators
 %token OP_ADD "+" OP_SUB "-"
-%token OP_OR "|" OP_XOR "^" OP_AND "&"
-%token OP_SHL "<<" OP_SHR ">>" OP_USHR ">>>"
 %token OP_MUL "*" OP_DIV "/" OP_MOD "%"
+%token OP_EXP "**"
+
+// Comparison operators
+%token OP_LOGICEQU "==" OP_LOGICNE "!="
+%token OP_LOGICLT "<" OP_LOGICGT ">"
+%token OP_LOGICLE "<=" OP_LOGICGE ">="
+
+// Logical operators
+%token OP_LOGICAND "&&" OP_LOGICOR "||"
+%token OP_LOGICNOT "!"
+
+// Binary operators
+%token OP_AND "&" OP_OR "|" OP_XOR "^"
+%token OP_SHL "<<" OP_SHR ">>" OP_USHR ">>>"
 %token OP_NOT "~"
+
+// Operator precedence
 %left OP_LOGICOR
 %left OP_LOGICAND
-%left OP_LOGICGT OP_LOGICLT OP_LOGICGE OP_LOGICLE OP_LOGICNE OP_LOGICEQU
+%left OP_LOGICEQU OP_LOGICNE OP_LOGICLT OP_LOGICGT OP_LOGICLE OP_LOGICGE
 %left OP_ADD OP_SUB
-%left OP_OR OP_XOR OP_AND
+%left OP_AND OP_OR OP_XOR
 %left OP_SHL OP_SHR OP_USHR
 %left OP_MUL OP_DIV OP_MOD
-
-%precedence NEG // negation -- unary minus
-
-%token OP_EXP "**"
+%precedence NEG // applies to unary OP_LOGICNOT, OP_ADD, OP_SUB, OP_NOT
 %left OP_EXP
 
-%token OP_DEF "DEF"
+// Assignment operators (only for variables)
+%token POP_EQUAL "="
+%token POP_ADDEQ "+=" POP_SUBEQ "-="
+%token POP_MULEQ "*=" POP_DIVEQ "/=" POP_MODEQ "%="
+%token POP_ANDEQ "&=" POP_OREQ "|=" POP_XOREQ "^="
+%token POP_SHLEQ "<<=" POP_SHREQ ">>="
+
+// SM83 registers
+%token TOKEN_A "a"
+%token TOKEN_B "b" TOKEN_C "c"
+%token TOKEN_D "d" TOKEN_E "e"
+%token TOKEN_H "h" TOKEN_L "l"
+%token MODE_AF "af" MODE_BC "bc" MODE_DE "de" MODE_HL "hl" MODE_SP "sp"
+%token MODE_HL_INC "hli/hl+" MODE_HL_DEC "hld/hl-"
+
+// SM83 condition codes
+%token CC_Z "z" CC_NZ "nz" CC_NC "nc" // There is no CC_C, only TOKEN_C
+
+// SM83 instructions
+%token Z80_ADC "adc"
+%token Z80_ADD "add"
+%token Z80_AND "and"
+%token Z80_BIT "bit"
+%token Z80_CALL "call"
+%token Z80_CCF "ccf"
+%token Z80_CP "cp"
+%token Z80_CPL "cpl"
+%token Z80_DAA "daa"
+%token Z80_DEC "dec"
+%token Z80_DI "di"
+%token Z80_EI "ei"
+%token Z80_HALT "halt"
+%token Z80_INC "inc"
+%token Z80_JP "jp"
+%token Z80_JR "jr"
+%token Z80_LDD "ldd"
+%token Z80_LDH "ldh"
+%token Z80_LDI "ldi"
+%token Z80_LD "ld"
+%token Z80_NOP "nop"
+%token Z80_OR "or"
+%token Z80_POP "pop"
+%token Z80_PUSH "push"
+%token Z80_RES "res"
+%token Z80_RETI "reti"
+%token Z80_RET "ret"
+%token Z80_RLA "rla"
+%token Z80_RLCA "rlca"
+%token Z80_RLC "rlc"
+%token Z80_RL "rl"
+%token Z80_RRA "rra"
+%token Z80_RRCA "rrca"
+%token Z80_RRC "rrc"
+%token Z80_RR "rr"
+%token Z80_RST "rst"
+%token Z80_SBC "sbc"
+%token Z80_SCF "scf"
+%token Z80_SET "set"
+%token Z80_SLA "sla"
+%token Z80_SRA "sra"
+%token Z80_SRL "srl"
+%token Z80_STOP "stop"
+%token Z80_SUB "sub"
+%token Z80_SWAP "swap"
+%token Z80_XOR "xor"
+
+// Statement keywords
+%token POP_ALIGN "ALIGN"
+%token POP_ASSERT "ASSERT"
+%token POP_BREAK "BREAK"
+%token POP_CHARMAP "CHARMAP"
+%token POP_DB "DB"
+%token POP_DL "DL"
+%token POP_DS "DS"
+%token POP_DW "DW"
+%token POP_ELIF "ELIF"
+%token POP_ELSE "ELSE"
+%token POP_ENDC "ENDC"
+%token POP_ENDL "ENDL"
+%token POP_ENDM "ENDM"
+%token POP_ENDR "ENDR"
+%token POP_ENDSECTION "ENDSECTION"
+%token POP_ENDU "ENDU"
+%token POP_EQU "EQU"
+%token POP_EQUS "EQUS"
+%token POP_EXPORT "EXPORT"
+%token POP_FAIL "FAIL"
+%token POP_FATAL "FATAL"
+%token POP_FOR "FOR"
+%token POP_FRAGMENT "FRAGMENT"
+%token POP_IF "IF"
+%token POP_INCBIN "INCBIN"
+%token POP_INCLUDE "INCLUDE"
+%token POP_LOAD "LOAD"
+%token POP_MACRO "MACRO"
+%token POP_NEWCHARMAP "NEWCHARMAP"
+%token POP_NEXTU "NEXTU"
+%token POP_OPT "OPT"
+%token POP_POPC "POPC"
+%token POP_POPO "POPO"
+%token POP_POPS "POPS"
+%token POP_PRINTLN "PRINTLN"
+%token POP_PRINT "PRINT"
+%token POP_PURGE "PURGE"
+%token POP_PUSHC "PUSHC"
+%token POP_PUSHO "PUSHO"
+%token POP_PUSHS "PUSHS"
+%token POP_RB "RB"
+%token POP_REDEF "REDEF"
+%token POP_REPT "REPT"
+%token POP_RSRESET "RSRESET"
+%token POP_RSSET "RSSET"
+// There is no POP_RL, only Z80_RL
+%token POP_RW "RW"
+%token POP_SECTION "SECTION"
+%token POP_SETCHARMAP "SETCHARMAP"
+%token POP_SHIFT "SHIFT"
+%token POP_STATIC_ASSERT "STATIC_ASSERT"
+%token POP_UNION "UNION"
+%token POP_WARN "WARN"
+
+// Function keywords
+%token OP_ACOS "ACOS"
+%token OP_ASIN "ASIN"
+%token OP_ATAN "ATAN"
+%token OP_ATAN2 "ATAN2"
 %token OP_BANK "BANK"
-%token OP_ALIGN "ALIGN"
-%token OP_SIZEOF "SIZEOF" OP_STARTOF "STARTOF"
-
-%token OP_SIN "SIN" OP_COS "COS" OP_TAN "TAN"
-%token OP_ASIN "ASIN" OP_ACOS "ACOS" OP_ATAN "ATAN" OP_ATAN2 "ATAN2"
-%token OP_FDIV "FDIV"
-%token OP_FMUL "FMUL"
-%token OP_FMOD "FMOD"
-%token OP_POW "POW"
-%token OP_LOG "LOG"
-%token OP_ROUND "ROUND"
-%token OP_CEIL "CEIL" OP_FLOOR "FLOOR"
-%type <int32_t> opt_q_arg
-
-%token OP_HIGH "HIGH" OP_LOW "LOW"
 %token OP_BITWIDTH "BITWIDTH"
-%token OP_TZCOUNT "TZCOUNT"
-%token OP_ISCONST "ISCONST"
-
-%token OP_STRCMP "STRCMP"
-%token OP_STRIN "STRIN" OP_STRRIN "STRRIN"
-%token OP_STRSUB "STRSUB"
-%token OP_STRLEN "STRLEN"
-%token OP_STRCAT "STRCAT"
-%token OP_STRUPR "STRUPR" OP_STRLWR "STRLWR"
-%token OP_STRRPL "STRRPL"
-%token OP_STRFMT "STRFMT"
-
+%token OP_CEIL "CEIL"
 %token OP_CHARLEN "CHARLEN"
 %token OP_CHARSUB "CHARSUB"
+%token OP_COS "COS"
+%token OP_DEF "DEF"
+%token OP_FDIV "FDIV"
+%token OP_FLOOR "FLOOR"
+%token OP_FMOD "FMOD"
+%token OP_FMUL "FMUL"
+%token OP_HIGH "HIGH"
 %token OP_INCHARMAP "INCHARMAP"
+%token OP_ISCONST "ISCONST"
+%token OP_LOG "LOG"
+%token OP_LOW "LOW"
+%token OP_POW "POW"
+%token OP_ROUND "ROUND"
+%token OP_SIN "SIN"
+%token OP_SIZEOF "SIZEOF"
+%token OP_STARTOF "STARTOF"
+%token OP_STRCAT "STRCAT"
+%token OP_STRCMP "STRCMP"
+%token OP_STRFMT "STRFMT"
+%token OP_STRIN "STRIN"
+%token OP_STRLEN "STRLEN"
+%token OP_STRLWR "STRLWR"
+%token OP_STRRIN "STRRIN"
+%token OP_STRRPL "STRRPL"
+%token OP_STRSUB "STRSUB"
+%token OP_STRUPR "STRUPR"
+%token OP_TAN "TAN"
+%token OP_TZCOUNT "TZCOUNT"
 
+// Section types
+%token SECT_HRAM "HRAM"
+%token SECT_OAM "OAM"
+%token SECT_ROM0 "ROM0"
+%token SECT_ROMX "ROMX"
+%token SECT_SRAM "SRAM"
+%token SECT_VRAM "VRAM"
+%token SECT_WRAM0 "WRAM0"
+%token SECT_WRAMX "WRAMX"
+
+// Literals
+%token <int32_t> NUMBER "number"
+%token <std::string> STRING "string"
 %token <std::string> LABEL "label"
 %token <std::string> ID "identifier"
 %token <std::string> LOCAL_ID "local identifier"
 %token <std::string> ANON "anonymous label"
+
+/******************** Data types ********************/
+
+// The "no_str" types below are to distinguish numeric and string expressions, since many
+// contexts treat strings differently than numbers, e.g. `db "string"` or `print "string"`.
+
+// RPN expressions
+%type <Expression> relocexpr
+%type <Expression> relocexpr_no_str
+%type <Expression> reloc_8bit
+%type <Expression> reloc_8bit_no_str
+%type <Expression> reloc_8bit_offset
+%type <Expression> reloc_16bit
+%type <Expression> reloc_16bit_no_str
+
+// Constant numbers
+%type <int32_t> const
+%type <int32_t> const_no_str
+%type <int32_t> uconst
+// Constant numbers used only in specific contexts
+%type <int32_t> bit_const
+%type <int32_t> precision_arg
+%type <int32_t> rs_uconst
+%type <int32_t> sect_org
+%type <int32_t> shift_const
+
+// Strings
+%type <std::string> string
+%type <std::string> strcat_args
+// Strings used for identifiers
 %type <std::string> def_id
 %type <std::string> redef_id
 %type <std::string> def_numeric
@@ -208,97 +364,8 @@
 %type <std::string> redef_equs
 %type <std::string> scoped_id
 %type <std::string> scoped_anon_id
-%token POP_EQU "EQU"
-%token POP_EQUAL "="
-%token POP_EQUS "EQUS"
 
-%token POP_ADDEQ "+=" POP_SUBEQ "-="
-%token POP_MULEQ "*=" POP_DIVEQ "/=" POP_MODEQ "%="
-%token POP_OREQ "|=" POP_XOREQ "^=" POP_ANDEQ "&="
-%token POP_SHLEQ "<<=" POP_SHREQ ">>="
-%type <RPNCommand> compound_eq
-
-%token POP_INCLUDE "INCLUDE"
-%token POP_PRINT "PRINT" POP_PRINTLN "PRINTLN"
-%token POP_IF "IF" POP_ELIF "ELIF" POP_ELSE "ELSE" POP_ENDC "ENDC"
-%token POP_EXPORT "EXPORT"
-%token POP_DB "DB" POP_DS "DS" POP_DW "DW" POP_DL "DL"
-%token POP_SECTION "SECTION" POP_FRAGMENT "FRAGMENT"
-%token POP_ENDSECTION "ENDSECTION"
-%token POP_RB "RB" POP_RW "RW" // There is no POP_RL, only Z80_RL
-%token POP_MACRO "MACRO"
-%token POP_ENDM "ENDM"
-%token POP_RSRESET "RSRESET" POP_RSSET "RSSET"
-%token POP_UNION "UNION" POP_NEXTU "NEXTU" POP_ENDU "ENDU"
-%token POP_INCBIN "INCBIN" POP_REPT "REPT" POP_FOR "FOR"
-%token POP_CHARMAP "CHARMAP"
-%token POP_NEWCHARMAP "NEWCHARMAP"
-%token POP_SETCHARMAP "SETCHARMAP"
-%token POP_PUSHC "PUSHC"
-%token POP_POPC "POPC"
-%token POP_SHIFT "SHIFT"
-%token POP_ENDR "ENDR"
-%token POP_BREAK "BREAK"
-%token POP_LOAD "LOAD" POP_ENDL "ENDL"
-%token POP_FAIL "FAIL"
-%token POP_WARN "WARN"
-%token POP_FATAL "FATAL"
-%token POP_ASSERT "ASSERT" POP_STATIC_ASSERT "STATIC_ASSERT"
-%token POP_PURGE "PURGE"
-%token POP_REDEF "REDEF"
-%token POP_POPS "POPS"
-%token POP_PUSHS "PUSHS"
-%token POP_POPO "POPO"
-%token POP_PUSHO "PUSHO"
-%token POP_OPT "OPT"
-%token SECT_ROM0 "ROM0" SECT_ROMX "ROMX"
-%token SECT_WRAM0 "WRAM0" SECT_WRAMX "WRAMX" SECT_HRAM "HRAM"
-%token SECT_VRAM "VRAM" SECT_SRAM "SRAM" SECT_OAM "OAM"
-
-%type <Capture> capture_rept
-%type <Capture> capture_macro
-
-%type <SectionModifier> sect_mod
-%type <std::shared_ptr<MacroArgs>> macro_args
-
-%type <AlignmentSpec> align_spec
-
-%type <std::vector<Expression>> ds_args
-%type <std::vector<std::string>> purge_args
-%type <std::vector<int32_t>> charmap_args
-%type <ForArgs> for_args
-
-%token Z80_ADC "adc" Z80_ADD "add" Z80_AND "and"
-%token Z80_BIT "bit"
-%token Z80_CALL "call" Z80_CCF "ccf" Z80_CP "cp" Z80_CPL "cpl"
-%token Z80_DAA "daa" Z80_DEC "dec" Z80_DI "di"
-%token Z80_EI "ei"
-%token Z80_HALT "halt"
-%token Z80_INC "inc"
-%token Z80_JP "jp" Z80_JR "jr"
-%token Z80_LD "ld"
-%token Z80_LDI "ldi"
-%token Z80_LDD "ldd"
-%token Z80_LDH "ldh"
-%token Z80_NOP "nop"
-%token Z80_OR "or"
-%token Z80_POP "pop" Z80_PUSH "push"
-%token Z80_RES "res" Z80_RET "ret" Z80_RETI "reti" Z80_RST "rst"
-%token Z80_RL "rl" Z80_RLA "rla" Z80_RLC "rlc" Z80_RLCA "rlca"
-%token Z80_RR "rr" Z80_RRA "rra" Z80_RRC "rrc" Z80_RRCA "rrca"
-%token Z80_SBC "sbc" Z80_SCF "scf" Z80_SET "set" Z80_STOP "stop"
-%token Z80_SLA "sla" Z80_SRA "sra" Z80_SRL "srl" Z80_SUB "sub"
-%token Z80_SWAP "swap"
-%token Z80_XOR "xor"
-
-%token TOKEN_A "a"
-%token TOKEN_B "b" TOKEN_C "c"
-%token TOKEN_D "d" TOKEN_E "e"
-%token TOKEN_H "h" TOKEN_L "l"
-%token MODE_AF "af" MODE_BC "bc" MODE_DE "de" MODE_SP "sp"
-%token MODE_HL "hl" MODE_HL_DEC "hld/hl-" MODE_HL_INC "hli/hl+"
-%token CC_NZ "nz" CC_Z "z" CC_NC "nc" // There is no CC_C, only TOKEN_C
-
+// SM83 instruction parameters
 %type <int32_t> reg_r
 %type <int32_t> reg_r_no_a
 %type <int32_t> reg_a
@@ -310,13 +377,27 @@
 %type <Expression> op_a_n
 %type <int32_t> op_a_r
 %type <Expression> op_mem_ind
-%type <AssertionType> assert_type
 
-%token EOB "end of buffer"
-%token YYEOF 0 "end of file"
-%start asm_file
+// Data types used only in specific contexts
+%type <AlignmentSpec> align_spec
+%type <AssertionType> assert_type
+%type <Capture> capture_macro
+%type <Capture> capture_rept
+%type <RPNCommand> compound_eq
+%type <std::vector<int32_t>> charmap_args
+%type <std::vector<Expression>> ds_args
+%type <ForArgs> for_args
+%type <std::shared_ptr<MacroArgs>> macro_args
+%type <std::vector<std::string>> purge_args
+%type <SectionSpec> sect_attrs
+%type <SectionModifier> sect_mod
+%type <SectionType> sect_type
+%type <StrFmtArgList> strfmt_args
+%type <StrFmtArgList> strfmt_va_args
 
 %%
+
+/******************** Parser rules ********************/
 
 // Assembly files.
 
@@ -324,12 +405,10 @@ asm_file: lines;
 
 lines:
 	  %empty
-	| lines opt_diff_mark line
+	| lines diff_mark line
 ;
 
-endofline: NEWLINE | EOB;
-
-opt_diff_mark:
+diff_mark:
 	  %empty // OK
 	| OP_ADD {
 		::error(
@@ -373,6 +452,8 @@ line:
 		yyerrok;
 	}
 ;
+
+endofline: NEWLINE | EOB;
 
 // For "logistical" reasons, these directives must manage newlines themselves.
 // This is because we need to switch the lexer's mode *after* the newline has been read,
@@ -518,7 +599,7 @@ label:
 
 macro:
 	ID {
-		// Parsing 'macroargs' will restore the lexer's normal mode
+		// Parsing 'macro_args' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
 	} macro_args {
 		fstk_RunMacro($1, $3);
@@ -622,7 +703,7 @@ compound_eq:
 ;
 
 align:
-	OP_ALIGN align_spec {
+	POP_ALIGN align_spec {
 		sect_AlignPC($2.alignment, $2.alignOfs);
 	}
 ;
@@ -682,12 +763,12 @@ popo:
 pusho:
 	POP_PUSHO {
 		opt_Push();
-		// Parsing 'optional_opt_list' will restore the lexer's normal mode
+		// Parsing 'pusho_opt_list' will restore the lexer's normal mode
 		lexer_SetMode(LEXER_RAW);
-	} optional_opt_list
+	} pusho_opt_list
 ;
 
-optional_opt_list:
+pusho_opt_list:
 	%empty {
 		lexer_SetMode(LEXER_NORMAL);
 	}
@@ -783,7 +864,7 @@ shift_const:
 
 load:
 	POP_LOAD sect_mod string COMMA sect_type sect_org sect_attrs {
-		sect_SetLoadSection($3, (SectionType)$5, $6, $7, $2);
+		sect_SetLoadSection($3, $5, $6, $7, $2);
 	}
 	| POP_ENDL {
 		sect_EndLoadSection();
@@ -900,13 +981,13 @@ ds:
 	| POP_DS uconst COMMA ds_args trailing_comma {
 		sect_RelBytes($2, $4);
 	}
-	| POP_DS OP_ALIGN LBRACK align_spec RBRACK trailing_comma {
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
 		sect_Skip(n, true);
 		sect_AlignPC($4.alignment, $4.alignOfs);
 	}
-	| POP_DS OP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
+	| POP_DS POP_ALIGN LBRACK align_spec RBRACK COMMA ds_args trailing_comma {
 		uint32_t n = sect_GetAlignBytes($4.alignment, $4.alignOfs);
 
 		sect_RelBytes(n, $7);
@@ -1374,10 +1455,10 @@ relocexpr_no_str:
 		$$.makeStartOfSection($3);
 	}
 	| OP_SIZEOF LPAREN sect_type RPAREN {
-		$$.makeSizeOfSectionType((SectionType)$3);
+		$$.makeSizeOfSectionType($3);
 	}
 	| OP_STARTOF LPAREN sect_type RPAREN {
-		$$.makeStartOfSectionType((SectionType)$3);
+		$$.makeStartOfSectionType($3);
 	}
 	| OP_DEF {
 		lexer_ToggleStringExpansion(false);
@@ -1385,49 +1466,49 @@ relocexpr_no_str:
 		$$.makeNumber(sym_FindScopedValidSymbol($4) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
-	| OP_ROUND LPAREN const opt_q_arg RPAREN {
+	| OP_ROUND LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Round($3, $4));
 	}
-	| OP_CEIL LPAREN const opt_q_arg RPAREN {
+	| OP_CEIL LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Ceil($3, $4));
 	}
-	| OP_FLOOR LPAREN const opt_q_arg RPAREN {
+	| OP_FLOOR LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Floor($3, $4));
 	}
-	| OP_FDIV LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_FDIV LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_Div($3, $5, $6));
 	}
-	| OP_FMUL LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_FMUL LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_Mul($3, $5, $6));
 	}
-	| OP_FMOD LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_FMOD LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_Mod($3, $5, $6));
 	}
-	| OP_POW LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_POW LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_Pow($3, $5, $6));
 	}
-	| OP_LOG LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_LOG LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_Log($3, $5, $6));
 	}
-	| OP_SIN LPAREN const opt_q_arg RPAREN {
+	| OP_SIN LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Sin($3, $4));
 	}
-	| OP_COS LPAREN const opt_q_arg RPAREN {
+	| OP_COS LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Cos($3, $4));
 	}
-	| OP_TAN LPAREN const opt_q_arg RPAREN {
+	| OP_TAN LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_Tan($3, $4));
 	}
-	| OP_ASIN LPAREN const opt_q_arg RPAREN {
+	| OP_ASIN LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_ASin($3, $4));
 	}
-	| OP_ACOS LPAREN const opt_q_arg RPAREN {
+	| OP_ACOS LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_ACos($3, $4));
 	}
-	| OP_ATAN LPAREN const opt_q_arg RPAREN {
+	| OP_ATAN LPAREN const precision_arg RPAREN {
 		$$.makeNumber(fix_ATan($3, $4));
 	}
-	| OP_ATAN2 LPAREN const COMMA const opt_q_arg RPAREN {
+	| OP_ATAN2 LPAREN const COMMA const precision_arg RPAREN {
 		$$.makeNumber(fix_ATan2($3, $5, $6));
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
@@ -1477,7 +1558,7 @@ const_no_str:
 	}
 ;
 
-opt_q_arg:
+precision_arg:
 	%empty {
 		$$ = fix_Precision();
 	}
@@ -1583,14 +1664,14 @@ strfmt_va_args:
 
 section:
 	POP_SECTION sect_mod string COMMA sect_type sect_org sect_attrs {
-		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
+		sect_NewSection($3, $5, $6, $7, $2);
 	}
 ;
 
 pushs_section:
 	POP_PUSHS sect_mod string COMMA sect_type sect_org sect_attrs {
 		sect_PushSection();
-		sect_NewSection($3, (SectionType)$5, $6, $7, $2);
+		sect_NewSection($3, $5, $6, $7, $2);
 	}
 ;
 
@@ -1652,7 +1733,7 @@ sect_attrs:
 		$$.alignOfs = 0;
 		$$.bank = -1;
 	}
-	| sect_attrs COMMA OP_ALIGN LBRACK align_spec RBRACK {
+	| sect_attrs COMMA POP_ALIGN LBRACK align_spec RBRACK {
 		$$ = $1;
 		$$.alignment = $5.alignment;
 		$$.alignOfs = $5.alignOfs;
@@ -2378,7 +2459,7 @@ hl_ind_dec:
 
 %%
 
-// Semantic actions.
+/******************** Semantic actions ********************/
 
 void yy::parser::error(std::string const &str) {
 	::error("%s\n", str.c_str());

@@ -51,6 +51,8 @@
 	};
 }
 
+/******************** Tokens and data types ********************/
+
 %token YYEOF 0 "end of file"
 %token newline
 %token COMMA ","
@@ -77,6 +79,8 @@
 %type <bool> optional;
 
 %%
+
+/******************** Parser rules ********************/
 
 lines:
 	  %empty
@@ -147,7 +151,7 @@ optional:
 	    context.lineNo __VA_OPT__(, ) __VA_ARGS__ \
 	)
 
-// Lexer.
+/******************** Lexer ********************/
 
 struct LexerStackEntry {
 	std::filebuf file;
@@ -366,7 +370,7 @@ yy::parser::symbol_type yylex() {
 	// Not marking as unreachable; this will generate a warning if any codepath forgets to return.
 }
 
-// Semantic actions.
+/******************** Semantic actions ********************/
 
 static std::array<std::vector<uint16_t>, SECTTYPE_INVALID> curAddr;
 static SectionType activeType; // Index into curAddr
@@ -677,7 +681,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 	}
 }
 
-// External API.
+/******************** External API ********************/
 
 void script_ProcessScript(char const *path) {
 	activeType = SECTTYPE_INVALID;
