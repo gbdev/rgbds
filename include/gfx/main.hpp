@@ -28,7 +28,8 @@ struct Options {
 		EMBEDDED,
 	} palSpecType = NO_SPEC; // -c
 	std::vector<std::array<std::optional<Rgba>, 4>> palSpec{};
-	uint8_t bitDepth = 2; // -d
+	uint8_t bitDepth = 2;       // -d
+	std::string inputTileset{}; // -i
 	struct {
 		uint16_t left;
 		uint16_t top;

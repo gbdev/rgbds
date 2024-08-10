@@ -427,6 +427,11 @@ static char *parseArgv(int argc, char *argv[]) {
 				options.bitDepth = 2;
 			}
 			break;
+		case 'i':
+			if (!options.inputTileset.empty())
+				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+			options.inputTileset = musl_optarg;
+			break;
 		case 'L':
 			options.inputSlice.left = parseNumber(arg, "Input slice left coordinate");
 			if (options.inputSlice.left > INT16_MAX) {

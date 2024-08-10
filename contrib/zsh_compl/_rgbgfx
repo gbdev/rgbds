@@ -30,6 +30,7 @@ local args=(
 	'(-b --base-tiles)'{-b,--base-tiles}'+[Base tile IDs for tile map output]:base tile IDs:'
 	'(-c --colors)'{-c,--colors}'+[Specify color palettes]:palette spec:'
 	'(-d --depth)'{-d,--depth}'+[Set bit depth]:bit depth:_depths'
+	'(-i --input-tileset)'{-i,--input-tileset}'+[Use specific tiles]:tileset file:_files -g "*.2bpp"'
 	'(-L --slice)'{-L,--slice}'+[Only process a portion of the image]:input slice:'
 	'(-N --nb-tiles)'{-N,--nb-tiles}'+[Limit number of tiles]:tile count:'
 	'(-n --nb-palettes)'{-n,--nb-palettes}'+[Limit number of palettes]:palette count:'
