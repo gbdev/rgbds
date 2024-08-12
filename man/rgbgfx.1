@@ -168,9 +168,7 @@ This changes how tile data is output, and the maximum number of colors per palet
 .It Fl i Ar input_tiles , Fl \-input-tileset Ar input_tiles
 Read tiles that will be used to convert this image, and that will always be given the first IDs.
 .Ar input_tiles
-must contain tile data in
-.Dq raw
-format, as generated through the
+must contain 2bpp tile data, as could be previously generated with the
 .Fl o
 option.
 .Pp
@@ -183,19 +181,28 @@ Otherwise, the image must be able to be generated using
 the tiles from
 .Ar input_tiles ,
 and thus generate different tile data.
-The former is more useful if you want to control more precisely the numeric IDs of specific tiles; the latter, if you want several images to share a given set of tiles, such as different levels sharing a single tileset.
+Using
+.Fl o
+with
+.Fl i
+is useful if you want to precisely control the tile IDs of its tile map.
+Using
+.Fl i
+alone is more useful if you want several images to use a subset of shared tiles.
 .Pp
-If more than one color palette is in use, it is also
-.Sy strongly
-advised to dump it together with the tile data, and to pass it using
-.Fl c Cm gbc: Ns Ar input_palette .
+If the image will use more than one color palette, it is
+.Em strongly
+advised to generate the palette set along with the input tile data, and pass
+.Fl c Cm gbc: Ns Ar input_palette
+along with
+.Fl i input_tiles .
 This is because
 .Nm
-may not pack the palettes the same way that it did when generating
-.Ar input_tiles .
+may not generate an identical palette set for this image as for its input tileset.
+.Pp
 See
 .Sx EXAMPLES
-for an example of how to use this.
+for examples of how to use this option.
 .It Fl L Ar slice , Fl \-slice Ar slice
 Only process a given rectangle of the image.
 This is useful for example if the input image is a sheet of some sort, and you want to convert each cel individually.
