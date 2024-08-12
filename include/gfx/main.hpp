@@ -13,11 +13,12 @@
 #include "gfx/rgba.hpp"
 
 struct Options {
-	bool useColorCurve = false;  // -C
-	bool allowMirroring = false; // -m
-	bool allowDedup = false;     // -u
-	bool columnMajor = false;    // -Z, previously -h
-	uint8_t verbosity = 0;       // -v
+	bool useColorCurve = false;   // -C
+	bool allowDedup = false;      // -u
+	bool allowMirroringX = false; // -X, -m
+	bool allowMirroringY = false; // -Y, -m
+	bool columnMajor = false;     // -Z
+	uint8_t verbosity = 0;        // -v
 
 	std::string attrmap{};                    // -a, -A
 	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b

@@ -747,10 +747,10 @@ public:
 
 			// Update the hash
 			_hash ^= bitplanes;
-			if (options.allowMirroring) {
-				// Count the line itself as mirrorred; vertical mirroring is
-				// already taken care of because the symmetric line will be XOR'd
-				// the same way. (...which is a problem, but probably benign.)
+			if (options.allowMirroringX) {
+				// Count the line itself as mirrorred horizontally; vertical mirroring is already
+				// taken care of because the symmetric line will be XOR'd the same way.
+				// (...this reduces the hash's efficiency, but seems benign with most real-world data.)
 				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 			}
 		}
@@ -773,15 +773,17 @@ public:
 			return MatchType::EXACT;
 		}
 
-		if (!options.allowMirroring) {
-			return MatchType::NOPE;
+		// Check if we have horizontal mirroring, which scans the array forward again
+		if (options.allowMirroringX
+		    && std::equal(RANGE(_data), other._data.begin(), [](uint8_t lhs, uint8_t rhs) {
+			       return lhs == flipTable[rhs];
+		       })) {
+			return MatchType::HFLIP;
 		}
 
-		// Check if we have horizontal mirroring, which scans the array forward again
-		if (std::equal(RANGE(_data), other._data.begin(), [](uint8_t lhs, uint8_t rhs) {
-			    return lhs == flipTable[rhs];
-		    })) {
-			return MatchType::HFLIP;
+		// The remaining possibilities for matching all require vertical mirroring
+		if (!options.allowMirroringY) {
+			return MatchType::NOPE;
 		}
 
 		// Check if we have vertical or vertical+horizontal mirroring, for which we have to read
@@ -803,8 +805,16 @@ public:
 		}
 
 		// If we have both (i.e. we have symmetry), default to vflip only
-		assume(hasVFlip || hasVHFlip);
-		return hasVFlip ? MatchType::VFLIP : MatchType::VHFLIP;
+		if (hasVFlip) {
+			return MatchType::VFLIP;
+		}
+
+		// If we allow both and have both, then use both
+		if (options.allowMirroringX && hasVHFlip) {
+			return MatchType::VHFLIP;
+		}
+
+		return MatchType::NOPE;
 	}
 	friend bool operator==(TileData const &lhs, TileData const &rhs) {
 		return lhs.tryMatching(rhs) != MatchType::NOPE;

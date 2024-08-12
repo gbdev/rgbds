@@ -13,6 +13,8 @@ _rgbgfx_completions() {
 		[O]="group-outputs:normal"
 		[u]="unique-tiles:normal"
 		[v]="verbose:normal"
+		[X]="mirror-x:normal"
+		[Y]="mirror-y:normal"
 		[Z]="columns:normal"
 		[a]="attr-map:glob-*.attrmap"
 		[A]="auto-attr-map:normal"
