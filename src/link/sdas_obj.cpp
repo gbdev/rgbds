@@ -136,7 +136,8 @@ enum RelocFlags {
 };
 
 void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> &fileSymbols) {
-	std::vector<char> line(256);
+	std::vector<char> line;
+	line.reserve(256);
 	char const *token;
 
 #define getToken(ptr, ...) \
