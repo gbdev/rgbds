@@ -594,9 +594,28 @@ static void placeSection(std::string const &name, bool isOptional) {
 	assume(section->offset == 0);
 	// Check that the linker script doesn't contradict what the code says.
 	if (section->type == SECTTYPE_INVALID) {
-		// SDCC areas don't have a type assigned yet, so the linker script is used to give them one.
-		for (Section *fragment = section; fragment; fragment = fragment->nextu.get()) {
-			fragment->type = activeType;
+		// A section that has data must get assigned a type that requires data.
+		if (!sect_HasData(activeType) && !section->data.empty()) {
+			scriptError(
+			    context,
+			    "\"%s\" is specified to be a %s section, but it contains data",
+			    name.c_str(),
+			    typeInfo.name.c_str()
+			);
+		} else if (sect_HasData(activeType) && section->data.empty() && section->size != 0) {
+			// A section that lacks data can only be assigned to a type that requires data
+			// if it's empty.
+			scriptError(
+			    context,
+			    "\"%s\" is specified to be a %s section, but it doesn't contain data",
+			    name.c_str(),
+			    typeInfo.name.c_str()
+			);
+		} else {
+			// SDCC areas don't have a type assigned yet, so the linker script is used to give them one.
+			for (Section *fragment = section; fragment; fragment = fragment->nextu.get()) {
+				fragment->type = activeType;
+			}
 		}
 	} else if (section->type != activeType) {
 		scriptError(
