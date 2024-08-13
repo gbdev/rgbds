@@ -37,6 +37,7 @@ static int
 retry:
 	++lineNo;
 	int firstChar = getc(file);
+	lineBuf.clear();
 
 	switch (firstChar) {
 	case EOF:
