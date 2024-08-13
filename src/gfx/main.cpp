@@ -123,6 +123,7 @@ static char const *optstring = "-Aa:b:Cc:Dd:Ffhi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z
 static option const longopts[] = {
     {"auto-attr-map",    no_argument,       nullptr, 'A'},
     {"attr-map",         required_argument, nullptr, 'a'},
+    {"background-color", required_argument, nullptr, 'B'},
     {"base-tiles",       required_argument, nullptr, 'b'},
     {"color-curve",      no_argument,       nullptr, 'C'},
     {"colors",           required_argument, nullptr, 'c'},
@@ -365,6 +366,43 @@ static char *parseArgv(int argc, char *argv[]) {
 			if (!options.attrmap.empty())
 				warning("Overriding attrmap file %s", options.attrmap.c_str());
 			options.attrmap = musl_optarg;
+			break;
+		case 'B':
+			if (musl_optarg[0] != '#' || musl_optarg[1] == '\0') {
+				error("Background color specification must be either `#rgb` or `#rrggbb`");
+			} else {
+				size_t colorLen = strspn(&musl_optarg[1], "0123456789ABCDEFabcdef");
+				switch (colorLen) {
+				case 3:
+					options.bgColor = Rgba(
+					    singleToHex(musl_optarg[1]),
+					    singleToHex(musl_optarg[2]),
+					    singleToHex(musl_optarg[3]),
+					    0xFF
+					);
+					break;
+				case 6:
+					options.bgColor = Rgba(
+					    toHex(musl_optarg[1], musl_optarg[2]),
+					    toHex(musl_optarg[3], musl_optarg[4]),
+					    toHex(musl_optarg[5], musl_optarg[6]),
+					    0xFF
+					);
+					break;
+				default:
+					error("Unknown background color specification \"%s\"", musl_optarg);
+				}
+
+				options.bgColorStrict = true;
+				if (musl_optarg[colorLen + 1] == '!') {
+					options.bgColorStrict = false;
+					++colorLen;
+				}
+
+				if (musl_optarg[colorLen + 1] != '\0') {
+					error("Unexpected text \"%s\" after background color specification", &musl_optarg[colorLen + 1]);
+				}
+			}
 			break;
 		case 'b':
 			number = parseNumber(arg, "Bank 0 base tile ID", 0);
