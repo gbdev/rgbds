@@ -229,7 +229,9 @@ Section *sect_GetSection(std::string const &name) {
 static void doSanityChecks(Section &section) {
 	// Sanity check the section's type
 	if (section.type < 0 || section.type >= SECTTYPE_INVALID) {
-		error(nullptr, 0, "Section \"%s\" has an invalid type", section.name.c_str());
+		// This is trapped early in RGBDS objects (because then the format is not parseable),
+		// which leaves SDAS objects.
+		error(nullptr, 0, "Section \"%s\" has not been assigned a type by a linker script", section.name.c_str());
 		return;
 	}
 
