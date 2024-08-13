@@ -354,7 +354,11 @@ static void readSection(
 	tryGetc(
 	    uint8_t, byte, file, "%s: Cannot read \"%s\"'s type: %s", fileName, section.name.c_str()
 	);
-	section.type = (SectionType)(byte & 0x3F);
+	if (uint8_t type = byte & 0x3F; type >= SECTTYPE_INVALID) {
+		errx("\"%s\" has unknown section type 0x%02x", section.name.c_str(), type);
+	} else {
+		section.type = SectionType(type);
+	}
 	if (byte >> 7)
 		section.modifier = SECTION_UNION;
 	else if (byte >> 6)
