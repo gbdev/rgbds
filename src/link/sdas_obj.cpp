@@ -223,6 +223,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 	getToken(nullptr, "'H' line is too short");
 	uint32_t expectedNbSymbols = parseNumber(where, lineNo, token, numberType);
+	fileSymbols.reserve(expectedNbSymbols);
 
 	expectToken("global", 'H');
 
@@ -343,13 +344,15 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		}
 
 		case 'S': {
-			if (fileSymbols.size() == expectedNbSymbols)
-				warning(
+			if (fileSymbols.size() == expectedNbSymbols) {
+				error(
 				    &where,
 				    lineNo,
 				    "Got more 'S' lines than the expected %" PRIu32,
 				    expectedNbSymbols
 				);
+				break; // Refuse processing the line further.
+			}
 			Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
