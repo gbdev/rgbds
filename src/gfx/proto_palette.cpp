@@ -46,7 +46,7 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 	auto ours = _colorIndices.begin(), theirs = other._colorIndices.begin();
 	bool weBigger = true, theyBigger = true;
 
-	while (ours != _colorIndices.end() && theirs != other._colorIndices.end()) {
+	while (ours != end() && theirs != other.end()) {
 		if (*ours == *theirs) {
 			++ours;
 			++theirs;
@@ -58,8 +58,8 @@ ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) 
 			weBigger = false;
 		}
 	}
-	weBigger &= theirs == other._colorIndices.end();
-	theyBigger &= ours == _colorIndices.end();
+	weBigger &= theirs == other.end();
+	theyBigger &= ours == end();
 
 	return theyBigger ? THEY_BIGGER : (weBigger ? WE_BIGGER : NEITHER);
 }
