@@ -241,7 +241,7 @@ yy::parser::symbol_type yylex() {
 	}
 	// Then, skip a comment if applicable.
 	if (c == ';') {
-		while (!isNewline(c)) {
+		while (c != EOF && !isNewline(c)) {
 			c = context.file.sbumpc();
 		}
 	}
