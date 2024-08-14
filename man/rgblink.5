@@ -86,6 +86,22 @@ If the bank has never been active thus far, the
 .Dq current address
 defaults to the beginning of the bank
 .Pq e.g. Ad $4000 No for Ic ROMX No sections .
+.Pp
+Instead of giving a bank number, the keyword
+.Ic FLOATING
+can be used instead; this sets the type of the subsequent sections without binding them to a particular bank.
+(If the type only allows a single bank, e.g.
+.Ic ROM0 ,
+then
+.Ic FLOATING
+is valid but redundant and has no effect.)
+Since no particular section is active, the
+.Dq current address
+is made floating (as if by a
+.Ql Ic FLOATING
+directive), and
+.Ic ORG
+is not allowed.
 .It Changing the current address
 A bank must be active for any of these directives to be used.
 .Pp
@@ -104,6 +120,7 @@ causes all sections between it and the next
 .Ic ORG
 or bank specification to be placed at addresses automatically determined by
 .Nm .
+.Pq It is, however, compatible with Ic ALIGN No below.
 .Pp
 .Ql Ic ALIGN Ar addr , Ar offset
 increases the

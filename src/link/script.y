@@ -35,6 +35,7 @@
 	static void includeFile(std::string &&path);
 	static void incLineNo();
 
+	static void setFloatingSectionType(SectionType type);
 	static void setSectionType(SectionType type);
 	static void setSectionType(SectionType type, uint32_t bank);
 	static void setAddr(uint32_t addr);
@@ -106,10 +107,13 @@ line:
 
 directive:
 	sect_type {
-	  	setSectionType($1);
+		setSectionType($1);
 	}
 	| sect_type number {
 		setSectionType($1, $2);
+	}
+	| sect_type FLOATING {
+		setFloatingSectionType($1);
 	}
 	| FLOATING {
 		makeAddrFloating();
@@ -388,6 +392,20 @@ static void setActiveTypeAndIdx(SectionType type, uint32_t idx) {
 	}
 }
 
+static void setFloatingSectionType(SectionType type) {
+	if (nbbanks(type) == 1) {
+		setActiveTypeAndIdx(type, 0); // There is only a single bank anyway, so just set the index to 0.
+	} else {
+		activeType = type;
+		activeBankIdx = UINT32_MAX;
+		// Force PC to be floating for this kind of section.
+		// Because we wouldn't know how to index into `curAddr[activeType]`!
+		isPcFloating = true;
+		floatingAlignMask = 0;
+		floatingAlignOffset = 0;
+	}
+}
+
 static void setSectionType(SectionType type) {
 	auto const &context = lexerStack.back();
 
@@ -431,6 +449,10 @@ static void setAddr(uint32_t addr) {
 	auto const &context = lexerStack.back();
 	if (activeType == SECTTYPE_INVALID) {
 		scriptError(context, "Cannot set the current address: no memory region is active");
+		return;
+	}
+	if (activeBankIdx == UINT32_MAX) {
+		scriptError(context, "Cannot set the current address: the bank is floating");
 		return;
 	}
 
@@ -627,20 +649,24 @@ static void placeSection(std::string const &name, bool isOptional) {
 		);
 	}
 
-	uint32_t bank = activeBankIdx + typeInfo.firstBank;
-	if (section->isBankFixed && bank != section->bank) {
-		scriptError(
-		    context,
-		    "The linker script places section \"%s\" in %s bank %" PRIu32
-		    ", but it was already defined in bank %" PRIu32,
-		    name.c_str(),
-		    sectionTypeInfo[section->type].name.c_str(),
-		    bank,
-		    section->bank
-		);
+	if (activeBankIdx == UINT32_MAX) {
+		section->isBankFixed = false;
+	} else {
+		uint32_t bank = activeBankIdx + typeInfo.firstBank;
+		if (section->isBankFixed && bank != section->bank) {
+			scriptError(
+			    context,
+			    "The linker script places section \"%s\" in %s bank %" PRIu32
+			    ", but it was already defined in bank %" PRIu32,
+			    name.c_str(),
+			    sectionTypeInfo[section->type].name.c_str(),
+			    bank,
+			    section->bank
+			);
+		}
+		section->isBankFixed = true;
+		section->bank = bank;
 	}
-	section->isBankFixed = true;
-	section->bank = bank;
 
 	if (!isPcFloating) {
 		uint16_t &org = curAddr[activeType][activeBankIdx];
