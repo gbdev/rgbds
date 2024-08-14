@@ -828,7 +828,37 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		std::unique_ptr<Section> &section = entry.section;
 
 		// RAM sections can have a size, but don't get any data (they shouldn't have any)
-		if (entry.writeIndex != section->size && entry.writeIndex != 0)
+		if (section->type != SECTTYPE_INVALID) {
+			auto const &typeInfo = sectionTypeInfo[section->type];
+			// Otherwise, how would the type already be known at this point?
+			assume(section->isAddressFixed);
+
+			if (!sect_HasData(section->type)) {
+				if (!section->data.empty()) {
+					fatal(
+					    &where,
+					    lineNo,
+					    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
+					    "), but it has data! (Was a bad `__at()` value used?)",
+					    section->name.c_str(),
+					    typeInfo.name.c_str(),
+					    section->org
+					);
+				}
+			} else if (section->size != 0 && section->data.empty()) {
+				fatal(
+				    &where,
+				    lineNo,
+				    "\"%s\" is implicitly defined as a %s section (being at address $%04" PRIx16
+				    "), but it doesn't have any data! (Was a bad `__at()` value used?)",
+				    section->name.c_str(),
+				    typeInfo.name.c_str(),
+				    section->org
+				);
+			}
+		}
+
+		if (entry.writeIndex != 0 && entry.writeIndex != section->size) {
 			fatal(
 			    &where,
 			    lineNo,
@@ -837,6 +867,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			    entry.writeIndex,
 			    section->size
 			);
+		}
 
 		if (section->modifier == SECTION_FRAGMENT) {
 			// Add the fragment's offset to all of its symbols
