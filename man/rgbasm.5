@@ -603,6 +603,13 @@ Modifications to a character map take effect immediately from that point onward.
 There are a few other functions that do things beyond numeric or string operations:
 .Bl -column "SECTION(symbol)"
 .It Sy Name Ta Sy Operation
+.It Fn DEF symbol Ta Returns 1 if
+.Ar symbol
+has been defined, 0 otherwise.
+String constants are not expanded within the parentheses.
+.It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
+.Ic IF ) ,
+or 0 if only RGBLINK can compute its value.
 .It Fn BANK arg Ta Returns a bank number.
 If
 .Ar arg
@@ -639,13 +646,6 @@ If
 .Ar arg
 is a section type keyword, it returns the starting address of that section type.
 The result is not constant, since only RGBLINK can compute its value.
-.It Fn DEF symbol Ta Returns 1 if
-.Ar symbol
-has been defined, 0 otherwise.
-String constants are not expanded within the parentheses.
-.It Fn ISCONST arg Ta Returns 1 if Ar arg Ap s value is known by RGBASM (e.g. if it can be an argument to
-.Ic IF ) ,
-or 0 if only RGBLINK can compute its value.
 .El
 .Sh SECTIONS
 Before you can start writing code, you must define a section.
@@ -800,7 +800,7 @@ Section examples:
 .Bl -item
 .It
 .Bd -literal -offset indent
-SECTION "Cool Stuff",ROMX
+SECTION "Cool Stuff", ROMX
 .Ed
 This switches to the section called
 .Dq CoolStuff ,
@@ -810,25 +810,25 @@ Code and data may follow.
 .It
 If it is needed, the the base address of the section can be specified:
 .Bd -literal -offset indent
-SECTION "Cool Stuff",ROMX[$4567]
+SECTION "Cool Stuff", ROMX[$4567]
 .Ed
 .It
 An example with a fixed bank:
 .Bd -literal -offset indent
-SECTION "Cool Stuff",ROMX[$4567],BANK[3]
+SECTION "Cool Stuff", ROMX[$4567], BANK[3]
 .Ed
 .It
 And if you want to force only the section's bank, and not its position within the bank, that's also possible:
 .Bd -literal -offset indent
-SECTION "Cool Stuff",ROMX,BANK[7]
+SECTION "Cool Stuff", ROMX, BANK[7]
 .Ed
 .It
 Alignment examples:
 The first one could be useful for defining an OAM buffer to be DMA'd, since it must be aligned to 256 bytes.
 The second could also be appropriate for GBC HDMA, or for an optimized copy code that requires alignment.
 .Bd -literal -offset indent
-SECTION "OAM Data",WRAM0,ALIGN[8] ;\ align to 256 bytes
-SECTION "VRAM Data",ROMX,BANK[2],ALIGN[4] ;\ align to 16 bytes
+SECTION "OAM Data", WRAM0, ALIGN[8] ;\ align to 256 bytes
+SECTION "VRAM Data", ROMX, BANK[2], ALIGN[4] ;\ align to 16 bytes
 .Ed
 .El
 .Pp
@@ -1275,16 +1275,18 @@ DEF str_SIZEOF EQU 259
 .Ed
 .Pp
 There are five commands in the RS group of commands:
-.Bl -column "RSSET constexpr"
+.Bl -column "DEF name RB constexpr"
 .It Sy Command Ta Sy Meaning
 .It Ic RSRESET Ta Equivalent to Ql RSSET 0 .
 .It Ic RSSET Ar constexpr Ta Sets the Ic _RS No counter to Ar constexpr .
-.It Ic RB Ar constexpr Ta Sets the preceding symbol to Ic _RS No and adds Ar constexpr No to Ic _RS .
-.It Ic RW Ar constexpr Ta Sets the preceding symbol to Ic _RS No and adds Ar constexpr No * 2 to Ic _RS .
-.It Ic RL Ar constexpr Ta Sets the preceding symbol to Ic _RS No and adds Ar constexpr No * 4 to Ic _RS .
+.It Ic DEF Ar name Ic RB Ar constexpr Ta Sets Ar name No to Ic _RS No and then adds Ar constexpr No to Ic _RS .
+.It Ic DEF Ar name Ic RW Ar constexpr Ta Sets Ar name No to Ic _RS No and then adds Ar constexpr No * 2 to Ic _RS .
+.It Ic DEF Ar name Ic RL Ar constexpr Ta Sets Ar name No to Ic _RS No and then adds Ar constexpr No * 4 to Ic _RS .
 .El
 .Pp
-If the argument to
+If the
+.Ar constexpr
+argument to
 .Ic RB , RW ,
 or
 .Ic RL
@@ -1319,7 +1321,7 @@ and
 will not expand string constants in their names.
 .Bd -literal -offset indent
 DEF COUNTREG EQUS "[hl+]"
-    ld a,COUNTREG
+    ld a, COUNTREG
 
 DEF PLAYER_NAME EQUS "\e"John\e""
     db PLAYER_NAME
@@ -1327,7 +1329,7 @@ DEF PLAYER_NAME EQUS "\e"John\e""
 .Pp
 This will be interpreted as:
 .Bd -literal -offset indent
-    ld a,[hl+]
+    ld a, [hl+]
     db "John"
 .Ed
 .Pp
@@ -1372,8 +1374,8 @@ Macros can be called with arguments, and can react depending on input using
 constructs.
 .Bd -literal -offset indent
 MACRO MyMacro
-         ld a, 80
-         call MyFunc
+    ld a, 80
+    call MyFunc
 ENDM
 .Ed
 .Pp
@@ -1391,8 +1393,8 @@ So this won't work:
 MACRO outer
     MACRO inner
         PRINTLN "Hello!"
-    ENDM
-ENDM
+    ENDM ; this actually ends the 'outer' macro...
+ENDM     ; ...and then this is a syntax error!
 .Ed
 .Pp
 But this will:
@@ -1436,15 +1438,15 @@ LabelA:
 SECTION "b", WRAM0
 ExportedLabelB1::
 ExportedLabelB2:
-	EXPORT ExportedLabelB2
+    EXPORT ExportedLabelB2
 .Ed
 .Pp
 .Ql c.asm :
 .Bd -literal -offset indent -compact
 SECTION "C", ROM0[0]
-	dw LabelA
-	dw ExportedLabelB1
-	dw ExportedLabelB2
+    dw LabelA
+    dw ExportedLabelB1
+    dw ExportedLabelB2
 .Ed
 .Pp
 Then
@@ -1637,7 +1639,7 @@ You can also include only part of a file with
 .Ic INCBIN .
 The example below includes 256 bytes from data.bin, starting from byte 78.
 .Bd -literal -offset indent
-INCBIN "data.bin",78,256
+INCBIN "data.bin", 78, 256
 .Ed
 .Pp
 The length argument is optional.
@@ -1696,10 +1698,10 @@ Unions may be used in any section, but they may only contain space-allocating di
 .Ss Invoking macros
 You execute the macro by inserting its name.
 .Bd -literal -offset indent
-         add a,b
-         ld sp,hl
-         MyMacro ;\ This will be expanded
-         sub a,87
+    add a, b
+    ld sp, hl
+    MyMacro ;\ This will be expanded
+    sub a, 87
 .Ed
 .Pp
 It's valid to call a macro from a macro (yes, even the same one).
@@ -1716,10 +1718,11 @@ it will insert the macro definition (the code enclosed in
 Suppose your macro contains a loop.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            xor  a,a
-\&.loop       ld   [hl+],a
-            dec  c
-            jr   nz,.loop
+    xor a, a
+\&.loop
+    ld [hl+], a
+    dec  c
+    jr nz, .loop
 ENDM
 .Ed
 .Pp
@@ -1734,10 +1737,11 @@ also works in
 blocks.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            xor  a,a
-\&.loop\e@     ld   [hl+],a
-            dec  c
-            jr   nz,.loop\e@
+    xor a, a
+\&.loop\e@
+    ld [hl+], a
+    dec c
+    jr nz, .loop\e@
 ENDM
 .Ed
 .Pp
@@ -1763,19 +1767,20 @@ through
 being the first argument specified on the macro invocation.
 .Bd -literal -offset indent
 MACRO LoopyMacro
-            ld   hl,\e1
-            ld   c,\e2
-            xor  a,a
-\&.loop\e@     ld   [hl+],a
-            dec  c
-            jr   nz,.loop\e@
-            ENDM
+    ld hl, \e1
+    ld c, \e2
+    xor a, a
+\&.loop\e@
+    ld [hl+], a
+    dec c
+    jr nz, .loop\e@
+ENDM
 .Ed
 .Pp
 Now you can call the macro specifying two arguments, the first being the address and the second being a byte count.
 The generated code will then reset all bytes in this range.
 .Bd -literal -offset indent
-LoopyMacro MyVars,54
+    LoopyMacro MyVars, 54
 .Ed
 .Pp
 Arguments are passed as string constants, although there's no need to enclose them in quotes.
@@ -1907,11 +1912,11 @@ and the matching
 .Ic ENDR
 will be repeated a number of times just as if you had done a copy/paste operation yourself.
 The following example will assemble
-.Ql add a,c
+.Ql add a, c
 four times:
 .Bd -literal -offset indent
 REPT 4
-  add  a,c
+    add a, c
 ENDR
 .Ed
 .Pp
@@ -1946,22 +1951,22 @@ String constants are not expanded within the symbol name.
 For example, this code will produce a table of squared values from 0 to 255:
 .Bd -literal -offset indent
 FOR N, 256
-      dw N * N
+    dw N * N
 ENDR
 .Ed
 .Pp
 It acts just as if you had done:
 .Bd -literal -offset indent
-N = 0
-      dw N * N
-N = 1
-      dw N * N
-N = 2
-      dw N * N
+DEF N = 0
+    dw N * N
+DEF N = 1
+    dw N * N
+DEF N = 2
+    dw N * N
 ; ...
-N = 255
-      dw N * N
-N = 256
+DEF N = 255
+    dw N * N
+DEF N = 256
 .Ed
 .Pp
 You can customize the range of
@@ -2002,10 +2007,10 @@ if so.
 For example:
 .Bd -literal -offset indent
 FOR V, 4, 25, 5
-      PRINT "{d:V} "
-      DEF V *= 2
+    PRINT "{d:V} "
+    DEF V *= 2
 ENDR
-      PRINTLN "done {d:V}"
+    PRINTLN "done {d:V}"
 .Ed
 .Pp
 This will print:
@@ -2036,14 +2041,14 @@ It will continue running code after the block's
 For example:
 .Bd -literal -offset indent
 FOR V, 1, 100
-      PRINT "{d:V}"
-      IF V == 5
-          PRINT " stop! "
-          BREAK
-      ENDC
-      PRINT ", "
+    PRINT "{d:V}"
+    IF V == 5
+        PRINT " stop! "
+        BREAK
+    ENDC
+    PRINT ", "
 ENDR
-      PRINTLN "done {d:V}"
+    PRINTLN "done {d:V}"
 .Ed
 .Pp
 This will print:
@@ -2073,23 +2078,23 @@ and
 Syntax examples are given below:
 .Bd -literal -offset indent
 Function:
-      xor a
+    xor a
 ASSERT LOW(MyByte) == 0
-      ld h, HIGH(MyByte)
-      ld l, a
-      ld a, [hli]
+    ld h, HIGH(MyByte)
+    ld l, a
+    ld a, [hli]
 ; You can also indent this!
-      ASSERT BANK(OtherFunction) == BANK(Function)
-      call OtherFunction
+    ASSERT BANK(OtherFunction) == BANK(Function)
+    call OtherFunction
 ; Lowercase also works
-      ld hl, FirstByte
-      ld a, [hli]
+    ld hl, FirstByte
+    ld a, [hli]
 assert FirstByte + 1 == SecondByte
-      ld b, [hl]
-      ret
+    ld b, [hl]
+    ret
 \&.end
-      ; If you specify one, a message will be printed
-      STATIC_ASSERT .end - Function < 256, "Function is too large!"
+    ; If you specify one, a message will be printed
+    STATIC_ASSERT .end - Function < 256, "Function is too large!"
 .Ed
 .Pp
 First, the difference between
