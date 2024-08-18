@@ -868,14 +868,22 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			    section->size
 			);
 		}
-
-		if (section->modifier == SECTION_FRAGMENT) {
-			// Add the fragment's offset to all of its symbols
-			for (Symbol *symbol : section->symbols)
-				symbol->label().offset += section->offset;
-		}
-
 		// Calling `sect_AddSection` invalidates the contents of `fileSections`!
 		sect_AddSection(std::move(section));
+	}
+
+	// Fix symbols' section pointers to component sections
+	// This has to run **after** all the `sect_AddSection()` calls,
+	// so that `sect_GetSection()` will work
+	for (Symbol &sym : fileSymbols) {
+		if (auto *label = std::get_if<Label>(&sym.data); label) {
+			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
+				if (section->modifier == SECTION_FRAGMENT)
+					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
+					label->offset += section->offset;
+				// Associate the symbol with the main section, not the "component" one
+				label->section = sect_GetSection(section->name);
+			}
+		}
 	}
 }
