@@ -59,7 +59,7 @@ test_downstream() { # owner repo make-target build-file build-hash
 		echo >&2 'Please run `'"$FETCH_TEST_DEPS"'` before running the test suite'
 		return 1
 	fi
-	make clean
+	make clean RGBDS=../../
 	make -j4 "$3" RGBDS=../../
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
