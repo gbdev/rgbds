@@ -625,7 +625,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		if (auto *label = std::get_if<Label>(&fileSymbols[i].data); label) {
 			if (Section *section = label->section; section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT)
-					// Add the fragment's offset to the symbol's
+					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
 					label->offset += section->offset;
 				// Associate the symbol with the main section, not the "component" one
 				label->section = sect_GetSection(section->name);
