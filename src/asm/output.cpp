@@ -490,12 +490,14 @@ static bool dumpMacros(FILE *file) {
 }
 
 void out_WriteState(std::string name, std::vector<StateFeature> const &features) {
+	// State files may include macro bodies, which may contain arbitrary characters,
+	// so output as binary to preserve them.
 	FILE *file;
 	if (name != "-") {
-		file = fopen(name.c_str(), "w");
+		file = fopen(name.c_str(), "wb");
 	} else {
 		name = "<stdout>";
-		file = fdopen(STDOUT_FILENO, "w");
+		file = fdopen(STDOUT_FILENO, "wb");
 	}
 	if (!file)
 		err("Failed to open state file '%s'", name.c_str());
