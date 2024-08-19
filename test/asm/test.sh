@@ -129,6 +129,40 @@ for i in *.asm; do
 	done
 done
 
+# These tests do their own thing
+
+i="state-file"
+if which cygpath &>/dev/null; then
+	# MinGW translates path names before passing them as command-line arguments,
+	# but does not do so when they are prefixed, so we have to do it ourselves.
+	RGBASMFLAGS="-Weverything -s all:$(cygpath -w "$o")"
+else
+	RGBASMFLAGS="-Weverything -s all:$o"
+fi
+for variant in '' '.pipe'; do
+	(( tests++ ))
+	echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
+	if [ -z "$variant" ]; then
+		"$RGBASM" $RGBASMFLAGS "$i"/a.asm >"$output" 2>"$errput"
+	else
+		# shellcheck disable=SC2002
+		cat "$i"/a.asm | "$RGBASM" $RGBASMFLAGS - >"$output" 2>"$errput"
+	fi
+
+	tryDiff /dev/null "$output" out
+	our_rc=$?
+	tryDiff /dev/null "$errput" err
+	(( our_rc = our_rc || $? ))
+	tryDiff "$i"/a.dump.asm "$o" err
+	(( our_rc = our_rc || $? ))
+
+	(( rc = rc || our_rc ))
+	if [[ $our_rc -ne 0 ]]; then
+		(( failed++ ))
+		break
+	fi
+done
+
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
 else
