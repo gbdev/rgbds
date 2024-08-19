@@ -1874,16 +1874,18 @@ then
 will expand to
 .Ql \e<42> .
 .Pp
-Another way to access more than nine macro arguments is the
+The
 .Ic SHIFT
-command, a special command only available in macros.
+directive is one that is only available in macros.
 It will shift the arguments by one to the left, and decrease
 .Dv _NARG
-by 1.
+by 1:
 .Ic \e1
-will get the value of
-.Ic \e2 , \e2
-will get the value of
+takes the value of
+.Ic \e2 ,
+then
+.Ic \e2
+takes the value of
 .Ic \e3 ,
 and so forth.
 .Pp
@@ -1892,9 +1894,9 @@ can optionally be given an integer parameter, and will apply the above shifting 
 A negative parameter will shift the arguments in reverse.
 .Pp
 .Ic SHIFT
-is useful in
+is especially useful in
 .Ic REPT
-blocks to repeat the same commands with multiple arguments.
+loops, to repeat the same commands but with different arguments each time.
 .Ss Printing things during assembly
 The
 .Ic PRINT
