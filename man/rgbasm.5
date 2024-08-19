@@ -49,6 +49,7 @@ Multiple instructions on one line can be separated by double colons
 .Pp
 The available instructions are documented in
 .Xr gbz80 7 .
+.Pp
 Note that where an instruction requires an 8-bit register
 .Ar r8 ,
 .Nm
@@ -56,13 +57,31 @@ can interpret
 .Ic HIGH Ns Pq Ar r16
 as the top 8-bit register of the given
 .Ar r16 ,
+for example,
+.Ic HIGH Ns Pq Ic HL
+for
+.Ic H ;
 and
 .Ic LOW Ns Pq Ar r16
-as the bottom one (except for
+as the bottom one, for example,
+.Ic LOW Ns Pq Ic HL
+for
+.Ic L
+(except for
 .Ic LOW Ns Pq Ic AF ,
 since
 .Ic F
 is not a valid register).
+.Pp
+Note also that where an instruction requires a condition code
+.Ar cc ,
+.Nm
+can interpret
+.Ic ! Ns Ar cc
+as the opposite condition code; for example,
+.Ic !nz
+for
+.Ic z .
 .Pp
 All reserved keywords (directives, register names, etc.) are case-insensitive;
 all identifiers (labels and other symbol names) are case-sensitive.
