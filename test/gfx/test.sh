@@ -7,7 +7,7 @@ errtmp="$(mktemp)"
 
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
-trap "rm -f ${errtmp@Q}" EXIT
+trap "rm -f ${errtmp@Q} result.{png,1bpp,2bpp,pal,tilemap,attrmap,palmap} out*.png" EXIT
 
 tests=0
 failed=0
@@ -37,37 +37,47 @@ failTest () {
 	echo "${bold}${red}Test ${cmdline} failed!${1:+ (RC=$1)}${rescolors}${resbold}"
 }
 
+checkOutput () {
+	out_rc=0
+	for ext in 1bpp 2bpp pal tilemap attrmap palmap; do
+		if [[ -e "$1.out.$ext" ]]; then
+			cmp "$1.out.$ext" "result.$ext"
+			(( out_rc = out_rc || $? ))
+		fi
+	done
+	return $out_rc
+}
 
 # Draw a random tile offset and VRAM0 size
 # Neither should change anything to how the image is displayed
 while [[ "$ofs" -eq 0 ]]; do (( ofs = RANDOM % 256 )); done
 while [[ "$size" -eq 0 ]]; do (( size = RANDOM % 256 )); done
-for f in *.bin; do
+for f in seed*.bin; do
 	for flags in ""{," -b $ofs"}{," -N $size,256"}; do
 		newTest ./rgbgfx_test "$f" $flags
 		runTest || failTest $?
 	done
 done
 
-# Test round-tripping '-r' with '-c #none'
-reverse_cmd="$RGBGFX -c#none,#fff,#000 -o none_round_trip.2bpp -r 1 out.png"
-reconvert_cmd="$RGBGFX -c#none,#fff,#000 -o result.2bpp out.png"
-compare_cmd="cmp none_round_trip.2bpp result.2bpp"
-newTest "$reverse_cmd && $reconvert_cmd && $compare_cmd"
-runTest || failTest $?
-
-# Remove temporaries (also ignored by Git) created by the above tests
-rm -f out*.png result.png result.2bpp
-
 for f in *.png; do
+	# Do not process outputs of other tests as test inputs themselves
+	if [[ "$f" = result.png ]]; then
+		continue
+	fi
+
 	flags="$([[ -e "${f%.png}.flags" ]] && echo "@${f%.png}.flags")"
+	for f_ext in o_1bpp o_2bpp p_pal t_tilemap a_attrmap q_palmap; do
+		if [[ -e "${f%.png}.out.${f_ext#*_}" ]]; then
+			flags="$flags -${f_ext%_*} result.${f_ext#*_}"
+		fi
+	done
 
 	newTest "$RGBGFX" $flags "$f"
 	if [[ -e "${f%.png}.err" ]]; then
 		runTest 2>"$errtmp"
 		diff -u --strip-trailing-cr "${f%.png}.err" "$errtmp" || failTest
 	else
-		runTest || failTest $?
+		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
 
 	newTest "$RGBGFX" $flags - "<$f"
@@ -75,8 +85,20 @@ for f in *.png; do
 		runTest 2>"$errtmp"
 		diff -u --strip-trailing-cr <(sed "s/$f/<stdin>/g" "${f%.png}.err") "$errtmp" || failTest
 	else
-		runTest || failTest $?
+		runTest && checkOutput "${f%.png}" || failTest $?
 	fi
+done
+
+for f in *.[12]bpp; do
+	# Do not process outputs or sample outputs of other tests as test inputs themselves
+	if [[ "$f" = result.[12]bpp ]] || [[ "$f" = *.out.[12]bpp ]]; then
+		continue
+	fi
+
+	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags")"
+
+	newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
+	runTest && cmp "$f" result.2bpp || failTest $?
 done
 
 if [[ "$failed" -eq 0 ]]; then
