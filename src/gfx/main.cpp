@@ -144,14 +144,16 @@ static option const longopts[] = {
     {"unique-tiles",     no_argument,       nullptr, 'u'},
     {"version",          no_argument,       nullptr, 'V'},
     {"verbose",          no_argument,       nullptr, 'v'},
+    {"mirror-x",         no_argument,       nullptr, 'X'},
     {"trim-end",         required_argument, nullptr, 'x'},
+    {"mirror-y",         no_argument,       nullptr, 'Y'},
     {"columns",          no_argument,       nullptr, 'Z'},
     {nullptr,            no_argument,       nullptr, 0  }
 };
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgbgfx [-r stride] [-CmOuVZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
+	    "Usage: rgbgfx [-r stride] [-CmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
 	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
 	    "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
 	    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
@@ -466,8 +468,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			}
 			break;
 		case 'm':
-			options.allowMirroring = true;
-			[[fallthrough]]; // Imply `-u`
+			options.allowMirroringX = true; // Imply `-X`
+			options.allowMirroringY = true; // Imply `-Y`
+			[[fallthrough]];                // Imply `-u`
 		case 'u':
 			options.allowDedup = true;
 			break;
@@ -581,6 +584,14 @@ static char *parseArgv(int argc, char *argv[]) {
 			if (*arg != '\0') {
 				error("Tile trim (-x) argument must be a valid number, not \"%s\"", musl_optarg);
 			}
+			break;
+		case 'X':
+			options.allowMirroringX = true;
+			options.allowDedup = true; // Imply `-u`
+			break;
+		case 'Y':
+			options.allowMirroringY = true;
+			options.allowDedup = true; // Imply `-u`
 			break;
 		case 'Z':
 			options.columnMajor = true;
@@ -757,10 +768,12 @@ int main(int argc, char *argv[]) {
 		fputs("Options:\n", stderr);
 		if (options.columnMajor)
 			fputs("\tVisit image in column-major order\n", stderr);
-		if (options.allowMirroring)
-			fputs("\tAllow mirroring tiles\n", stderr);
 		if (options.allowDedup)
 			fputs("\tAllow deduplicating tiles\n", stderr);
+		if (options.allowMirroringX)
+			fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
+		if (options.allowMirroringY)
+			fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
 		if (options.useColorCurve)
 			fputs("\tUse color curve\n", stderr);
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);

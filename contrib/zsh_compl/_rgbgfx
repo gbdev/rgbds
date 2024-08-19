@@ -22,6 +22,8 @@ local args=(
 	'(-t --tilemap -T --auto-tilemap)'{-T,--auto-tilemap}'[Shortcut for -t <file>.tilemap]'
 	'(-u --unique-tiles)'{-u,--unique-tiles}'[Eliminate redundant tiles]'
 	{-v,--verbose}'[Enable verbose output]'
+	'(-X --mirror-x)'{-X,--mirror-x}'[Eliminate horizontally mirrored tiles from output]'
+	'(-Y --mirror-y)'{-Y,--mirror-y}'[Eliminate vertically mirrored tiles from output]'
 	'(-Z --columns)'{-Z,--columns}'[Read the image in column-major order]'
 
 	'(-a --attr-map -A --auto-attr-map)'{-a,--attr-map}'+[Generate a map of tile attributes (mirroring)]:attrmap file:_files'
