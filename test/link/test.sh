@@ -10,13 +10,14 @@ gbtemp="$(mktemp)"
 gbtemp2="$(mktemp)"
 outtemp="$(mktemp)"
 outtemp2="$(mktemp)"
-tests=0
-failed=0
-rc=0
 
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q}" EXIT
+
+tests=0
+failed=0
+rc=0
 
 bold="$(tput bold)"
 resbold="$(tput sgr0)"
@@ -53,6 +54,7 @@ tryCmp () {
 	fi
 	(( our_rc = our_rc || $? ))
 }
+
 tryCmpRom () {
 	# `printf` lets us keep only the first returned word from `wc`.
 	rom_size=$(printf %s $(wc -c <"$1"))

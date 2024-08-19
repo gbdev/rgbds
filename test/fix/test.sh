@@ -3,16 +3,18 @@
 export LC_ALL=C
 
 tmpdir="$(mktemp -d)"
-src="$PWD"
-tests=0
-failed=0
-rc=0
 
 cp ../../{rgbfix,contrib/gbdiff.bash} "$tmpdir"
+src="$PWD"
 cd "$tmpdir" || exit
+
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "cd; rm -rf ${tmpdir@Q}" EXIT
+
+tests=0
+failed=0
+rc=0
 
 bold="$(tput bold)"
 resbold="$(tput sgr0)"
@@ -110,7 +112,6 @@ $RGBFIX noexist 2>out.err
 rc=$((rc || $? != 1))
 tryDiff "$src/noexist.err" out.err noexist.err
 rc=$((rc || $?))
-
 
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"

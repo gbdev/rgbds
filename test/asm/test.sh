@@ -10,13 +10,14 @@ gb="$(mktemp)"
 input="$(mktemp)"
 output="$(mktemp)"
 errput="$(mktemp)"
-tests=0
-failed=0
-rc=0
 
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
 trap "rm -f ${o@Q} ${gb@Q} ${input@Q} ${output@Q} ${errput@Q}" EXIT
+
+tests=0
+failed=0
+rc=0
 
 bold="$(tput bold)"
 resbold="$(tput sgr0)"
