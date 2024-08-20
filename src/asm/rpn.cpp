@@ -19,11 +19,6 @@
 
 using namespace std::literals;
 
-int32_t Expression::value() const {
-	assume(std::holds_alternative<int32_t>(data));
-	return std::get<int32_t>(data);
-}
-
 void Expression::clear() {
 	data = 0;
 	isSymbol = false;
@@ -44,7 +39,7 @@ uint8_t *Expression::reserveSpace(uint32_t size, uint32_t patchSize) {
 
 int32_t Expression::getConstVal() const {
 	if (!isKnown()) {
-		error("Expected constant expression: %s\n", std::get<std::string>(data).c_str());
+		error("Expected constant expression: %s\n", data.get<std::string>().c_str());
 		return 0;
 	}
 	return value();

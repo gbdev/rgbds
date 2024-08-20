@@ -5,7 +5,6 @@
 #include <deque>
 #include <inttypes.h>
 #include <stdint.h>
-#include <variant>
 #include <vector>
 
 #include "helpers.hpp" // assume, clz, ctz
@@ -230,8 +229,8 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 				);
 				isError = true;
 				value = 1;
-			} else if (auto *label = std::get_if<Label>(&symbol->data); label) {
-				value = label->section->bank;
+			} else if (symbol->data.holds<Label>()) {
+				value = symbol->data.get<Label>().section->bank;
 			} else {
 				error(
 				    patch.src,
@@ -390,11 +389,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					    fileSymbols[value].name.c_str()
 					);
 					isError = true;
-				} else if (auto *label = std::get_if<Label>(&symbol->data); label) {
-					value = label->section->org + label->offset;
+				} else if (symbol->data.holds<Label>()) {
+					Label const &label = symbol->data.get<Label>();
+					value = label.section->org + label.offset;
 				} else {
-					assume(std::holds_alternative<int32_t>(symbol->data));
-					value = std::get<int32_t>(symbol->data);
+					value = symbol->data.get<int32_t>();
 				}
 			}
 			break;

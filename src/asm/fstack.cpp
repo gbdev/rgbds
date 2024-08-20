@@ -48,28 +48,8 @@ static std::vector<std::string> includePaths = {""};
 
 static std::string preIncludeName;
 
-std::vector<uint32_t> &FileStackNode::iters() {
-	assume(std::holds_alternative<std::vector<uint32_t>>(data));
-	return std::get<std::vector<uint32_t>>(data);
-}
-
-std::vector<uint32_t> const &FileStackNode::iters() const {
-	assume(std::holds_alternative<std::vector<uint32_t>>(data));
-	return std::get<std::vector<uint32_t>>(data);
-}
-
-std::string &FileStackNode::name() {
-	assume(std::holds_alternative<std::string>(data));
-	return std::get<std::string>(data);
-}
-
-std::string const &FileStackNode::name() const {
-	assume(std::holds_alternative<std::string>(data));
-	return std::get<std::string>(data);
-}
-
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
-	if (std::holds_alternative<std::vector<uint32_t>>(data)) {
+	if (data.holds<std::vector<uint32_t>>()) {
 		assume(parent); // REPT nodes use their parent's name
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
