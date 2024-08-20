@@ -155,6 +155,7 @@ enum MbcType {
 	MBC_BAD,                // Specified MBC does not exist / syntax error
 	MBC_WRONG_FEATURES,     // MBC incompatible with specified features
 	MBC_BAD_RANGE,          // MBC number out of range
+	MBC_BAD_TPP1,           // Invalid TPP1 major or minor revision numbers
 };
 
 static void printAcceptedMBCNames() {
@@ -170,7 +171,7 @@ static void printAcceptedMBCNames() {
 	fputs("\tMBC6 ($20)\n", stderr);
 	fputs("\tMBC7+SENSOR+RUMBLE+RAM+BATTERY ($22)\n", stderr);
 	fputs("\tPOCKET_CAMERA ($FC)\n", stderr);
-	fputs("\tBANDAI_TAMA5 ($FD)\n", stderr);
+	fputs("\tBANDAI_TAMA5 ($FD) [aka TAMA5]\n", stderr);
 	fputs("\tHUC3 ($FE)\n", stderr);
 	fputs("\tHUC1+RAM+BATTERY ($FF)\n", stderr);
 
@@ -332,12 +333,12 @@ static MbcType parseMBC(char const *name) {
 
 				if (endptr == ptr) {
 					report("error: Failed to parse TPP1 major revision number\n");
-					return MBC_BAD;
+					return MBC_BAD_TPP1;
 				}
 				ptr = endptr;
 				if (val != 1) {
-					report("error: RGBFIX only supports TPP1 versions 1.0\n");
-					return MBC_BAD;
+					report("error: RGBFIX only supports TPP1 version 1.0\n");
+					return MBC_BAD_TPP1;
 				}
 				tpp1Rev[0] = val;
 				tryReadSlice(".");
@@ -345,12 +346,12 @@ static MbcType parseMBC(char const *name) {
 				val = strtoul(ptr, &endptr, 10);
 				if (endptr == ptr) {
 					report("error: Failed to parse TPP1 minor revision number\n");
-					return MBC_BAD;
+					return MBC_BAD_TPP1;
 				}
 				ptr = endptr;
 				if (val > 0xFF) {
 					report("error: TPP1 minor revision number must be 8-bit\n");
-					return MBC_BAD;
+					return MBC_BAD_TPP1;
 				}
 				tpp1Rev[1] = val;
 				mbc = TPP1;
@@ -663,6 +664,7 @@ static char const *mbcName(MbcType type) {
 	case MBC_BAD:
 	case MBC_WRONG_FEATURES:
 	case MBC_BAD_RANGE:
+	case MBC_BAD_TPP1:
 		unreachable_();
 	}
 
@@ -686,6 +688,7 @@ static bool hasRAM(MbcType type) {
 	case MBC_BAD:
 	case MBC_WRONG_FEATURES:
 	case MBC_BAD_RANGE:
+	case MBC_BAD_TPP1:
 		return false;
 
 	case ROM_RAM:
@@ -1324,8 +1327,8 @@ int main(int argc, char *argv[]) {
 			} else if (cartridgeType == ROM_RAM || cartridgeType == ROM_RAM_BATTERY) {
 				fprintf(
 				    stderr,
-				    "warning: ROM+RAM / ROM+RAM+BATTERY are under-specified and poorly "
-				    "supported\n"
+				    "warning: MBC \"%s\" is under-specified and poorly supported\n",
+				    musl_optarg
 				);
 			}
 			break;

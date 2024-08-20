@@ -117,13 +117,14 @@ The object file will be linked with and without said flag, respectively; and in 
 
 ### RGBFIX
 
-Each `.bin` file corresponds to one test, and **must** be accompanied by a `.flags` file and a `.err` file.
-
-The `.flags` file is a text file whose first line contains flags to pass to RGBFIX.
+Each `.flags` file corresponds to one test.
+Each one is a text file whose first line contains flags to pass to RGBFIX.
 (There may be more lines, which will be ignored; they can serve as comments to explain what the test is about.)
 
-RGBFIX will be invoked on the `.bin` file, and its error output must match the contents of the `.err` file.
-(If no errors ought to be printed, then the `.err` file should just be empty.)
+RGBFIX will be invoked on the `.bin` file if it exists, or else on default-input.bin.
+
+If no `.err` file exists, RGBFIX is simply expected to be able to process the file normally.
+If one *does* exist, RGBFIX's return status is ignored, but its output **must** match the `.err` file's contents.
 
 Additionally, if a `.gb` file exists, the output of RGBFIX must match the `.gb`.
 

@@ -1,1 +1,1 @@
--m ROM -r 2
+-m rom_only -r 2
