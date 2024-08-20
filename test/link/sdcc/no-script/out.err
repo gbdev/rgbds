@@ -1,0 +1,8 @@
+error: Section "_INITIALIZER" has not been assigned a type by a linker script
+error: Section "_GSFINAL" has not been assigned a type by a linker script
+error: Section "_GSINIT" has not been assigned a type by a linker script
+error: Section "_HOME" has not been assigned a type by a linker script
+error: Section "_INITIALIZED" has not been assigned a type by a linker script
+error: Section "_DATA" has not been assigned a type by a linker script
+error: Section "_CODE" has not been assigned a type by a linker script
+Linking failed with 7 errors

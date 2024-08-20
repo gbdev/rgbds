@@ -1,0 +1,19 @@
+XL3
+H 9 areas 2 global symbols
+M b
+O -msm83
+S .__.ABS. Def000000
+A _CODE size 6 flags 0 addr 0
+S _function Def000000
+A _DATA size 0 flags 0 addr 0
+A _INITIALIZED size 0 flags 0 addr 0
+A _DABS size 0 flags 8 addr 0
+A _HOME size 0 flags 0 addr 0
+A _GSINIT size 0 flags 0 addr 0
+A _GSFINAL size 0 flags 0 addr 0
+A _INITIALIZER size 0 flags 0 addr 0
+A _CABS size 0 flags 8 addr 0
+T 00 00 00
+R 00 00 00 00
+T 00 00 00 6B 62 29 4D 44 C9
+R 00 00 00 00
