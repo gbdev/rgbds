@@ -232,6 +232,24 @@ tryDiff "$test"/out.err "$outtemp"
 tryCmpRomSize "$gbtemp" 65536
 evaluateTest
 
+test="sdcc/good"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp2" -l "$test"/script.link "$otemp" "$test"/b.rel "$test"/c.rel 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+tryDiff "$test"/ref.out.sym "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
+test="sdcc/no-script"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet "$otemp" "$test"/b.rel 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="section-fragment/good"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm

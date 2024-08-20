@@ -1,0 +1,21 @@
+ROM0
+	FLOATING
+	"_HOME" OPTIONAL
+	"_BASE" OPTIONAL
+	"_CODE_0" OPTIONAL
+	"_LIT_0" OPTIONAL
+	"_INITIALIZER" OPTIONAL ; Initializer of `_INITIALIZED`
+	"_GSINIT" OPTIONAL      ; Reportedly internal to the crt0; TODO: investigate this
+	"_GSFINAL" OPTIONAL
+
+ROMX FLOATING
+	FLOATING
+	"_CODE" OPTIONAL
+	"_LIT" OPTIONAL
+
+WRAM0
+	FLOATING
+	"_DATA" OPTIONAL        ; Uninitialized RAM
+	"_BSS" OPTIONAL         ; Zero-initialized RAM
+	"_INITIALIZED" OPTIONAL ; Initialised by `_INITIALIZER`
+	"_DABS (ABS)" OPTIONAL  ; TODO: what is this?
