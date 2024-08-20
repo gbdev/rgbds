@@ -42,7 +42,7 @@ tryCmp () {
 runTest () {
 	flags=$(
 		head -n 1 "$2/$1.flags" | # Allow other lines to serve as comments
-		sed "s#-L #-L ${src//#/\\#}/#g" # Prepend src directory to logo file
+		sed "s# ./# ${src//#/\\#}/#g" # Prepend src directory to path arguments
 	)
 
 	for variant in '' ' piped'; do
@@ -51,26 +51,37 @@ runTest () {
 		if [[ $progress -ne 0 ]]; then
 			echo "${bold}${green}$1${variant}...${rescolors}${resbold}"
 		fi
+		if [[ -r "$2/$1.bin" ]]; then
+			desired_input="$2/$1.bin"
+		else
+			desired_input="$src/default-input.bin"
+		fi
 		if [[ -z "$variant" ]]; then
-			cp "$2/$1.bin" out.gb
+			cp "$desired_input" out.gb
 			if [[ -n "$(eval "$RGBFIX" $flags out.gb '2>out.err')" ]]; then
 				echo "${bold}${red}Fixing $1 in-place shouldn't output anything on stdout!${rescolors}${resbold}"
 				our_rc=1
 			fi
-			subst='out.gb'
+			subst=out.gb
 		else
 			# Stop! This is not a Useless Use Of Cat. Using cat instead of
 			# stdin redirection makes the input an unseekable pipe - a scenario
 			# that's harder to deal with.
 			# shellcheck disable=SC2002
-			cat "$2/$1.bin" | eval $RGBFIX "$flags" - '>out.gb' '2>out.err'
+			cat "$desired_input" | eval $RGBFIX "$flags" - '>out.gb' '2>out.err'
 			subst='<stdin>'
 		fi
 
-		sed "s/$subst/<filename>/g" "out.err" | tryDiff "$2/$1.err" - "$1.err${variant}"
+		if [[ -r "$2/$1.err" ]]; then
+			desired_errname="$2/$1.err"
+		else
+			desired_errname=/dev/null
+		fi
+		sed "s/$subst/<filename>/g" out.err | tryDiff "$desired_errname" - "$1.err${variant}"
 		(( our_rc = our_rc || $? ))
+
 		if [[ -r "$2/$1.gb" ]]; then
-			tryCmp "$2/$1.gb" "out.gb" "$1.gb${variant}"
+			tryCmp "$2/$1.gb" out.gb "$1.gb${variant}"
 			(( our_rc = our_rc || $? ))
 		fi
 
@@ -85,8 +96,8 @@ runTest () {
 rm -f padding*_* # Delete padding test cases generated but not deleted (e.g. interrupted)
 
 progress=1
-for i in "$src"/*.bin; do
-	runTest "$(basename "$i" .bin)" "$src"
+for i in "$src"/*.flags; do
+	runTest "$(basename "$i" .flags)" "$src"
 done
 
 # Check the result with all different padding bytes
@@ -103,9 +114,7 @@ for (( i=0; i < 10; ++i )); do
 		runTest padding${suffix} .
 	done
 done
-echo "Done!"
-
-# TODO: check MBC names
+echo "${bold}Done checking padding!${resbold}"
 
 # Check that RGBFIX errors out when inputting a non-existent file...
 $RGBFIX noexist 2>out.err
