@@ -21,14 +21,14 @@ section "section", rom0
 #section.romx:
 	println "section.romx is in ", SECTION(.romx)
 
-def #add equs "#"
 def #sub equs "def"
+{#sub} #add equs "#"
 
-for #for, {{#add}{#sub}}
+for #for, {{#add}{sub}}
 	println "for == ", #for
 endr
 	assert #for == 2
-	assert !def(#FOR)
+	assert !{sub}(#FOR)
 
 	newcharmap #charmap, #main
 	charmap "#", $42

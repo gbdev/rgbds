@@ -1147,7 +1147,7 @@ static bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
 }
 
-static Token readIdentifier(char firstChar, bool rawIdentifier) {
+static Token readIdentifier(char firstChar, bool raw) {
 	std::string identifier(1, firstChar);
 	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
 
@@ -1164,7 +1164,7 @@ static Token readIdentifier(char firstChar, bool rawIdentifier) {
 	}
 
 	// Attempt to check for a keyword if the identifier is not raw
-	if (!rawIdentifier) {
+	if (!raw) {
 		if (auto search = keywordDict.find(identifier.c_str()); search != keywordDict.end())
 			return Token(search->second);
 	}
@@ -1797,13 +1797,13 @@ static Token yylex_NORMAL() {
 			// Handle identifiers... or report garbage characters
 
 		default:
-			bool rawIdentifier = c == '#';
-			if (rawIdentifier && startsIdentifier(peek())) {
+			bool raw = c == '#';
+			if (raw && startsIdentifier(peek())) {
 				c = nextChar();
 			}
 
 			if (startsIdentifier(c)) {
-				Token token = readIdentifier(c, rawIdentifier);
+				Token token = readIdentifier(c, raw);
 
 				// An ELIF after a taken IF needs to not evaluate its condition
 				if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
