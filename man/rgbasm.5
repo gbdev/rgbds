@@ -1068,7 +1068,20 @@ Additionally, label names can contain up to a single dot
 .Ql \&. ,
 which may not be the first character.
 .Pp
-A symbol cannot have the same name as a reserved keyword.
+A symbol cannot have the same name as a reserved keyword, unless it is prefixed by a hash
+.Sq # .
+For example,
+.Ql #load
+denotes a symbol named
+.Ql load ,
+and
+.Ql #LOAD
+denotes a different symbol named
+.Ql LOAD ;
+in both cases the
+.Sq #
+prevents them from being treated as the keyword
+.Ic LOAD .
 .Ss Labels
 One of the assembler's main tasks is to keep track of addresses for you, so you can work with meaningful names instead of
 .Dq magic

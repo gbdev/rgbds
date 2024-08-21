@@ -1,0 +1,5 @@
+error: empty-raw-identifier.asm(5) -> empty-raw-identifier.asm::macro(3):
+    Invalid character in bracketed macro argument '?'
+error: empty-raw-identifier.asm(5) -> empty-raw-identifier.asm::macro(3):
+    Empty raw symbol in bracketed macro argument
+error: Assembly aborted (2 errors)!

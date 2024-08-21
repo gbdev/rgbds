@@ -596,7 +596,16 @@ static uint32_t readBracketedMacroArgNum() {
 
 	if (c >= '0' && c <= '9') {
 		num = readNumber(10, 0);
-	} else if (startsIdentifier(c)) {
+	} else if (startsIdentifier(c) || c == '#') {
+		if (c == '#') {
+			shiftChar();
+			c = peek();
+			if (!startsIdentifier(c)) {
+				error("Empty raw symbol in bracketed macro argument\n");
+				return 0;
+			}
+		}
+
 		std::string symName;
 
 		for (; continuesIdentifier(c); c = peek()) {
@@ -1138,8 +1147,7 @@ static bool continuesIdentifier(int c) {
 	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
 }
 
-static Token readIdentifier(char firstChar) {
-	// Lex while checking for a keyword
+static Token readIdentifier(char firstChar, bool rawIdentifier) {
 	std::string identifier(1, firstChar);
 	int tokenType = firstChar == '.' ? T_(LOCAL_ID) : T_(ID);
 
@@ -1155,9 +1163,13 @@ static Token readIdentifier(char firstChar) {
 			tokenType = T_(LOCAL_ID);
 	}
 
-	// Attempt to check for a keyword
-	auto search = keywordDict.find(identifier.c_str());
-	return search != keywordDict.end() ? Token(search->second) : Token(tokenType, identifier);
+	// Attempt to check for a keyword if the identifier is not raw
+	if (!rawIdentifier) {
+		if (auto search = keywordDict.find(identifier.c_str()); search != keywordDict.end())
+			return Token(search->second);
+	}
+
+	return Token(tokenType, identifier);
 }
 
 // Functions to read strings
@@ -1206,6 +1218,10 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 
 	// Don't return before `lexerState->disableInterpolation` is reset!
 	lexerState->disableInterpolation = disableInterpolation;
+
+	// Only skip a '#' raw identifier prefix after expanding any nested interpolations.
+	if (fmtBuf.starts_with('#'))
+		fmtBuf.erase(0, 1);
 
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
@@ -1781,8 +1797,13 @@ static Token yylex_NORMAL() {
 			// Handle identifiers... or report garbage characters
 
 		default:
+			bool rawIdentifier = c == '#';
+			if (rawIdentifier && startsIdentifier(peek())) {
+				c = nextChar();
+			}
+
 			if (startsIdentifier(c)) {
-				Token token = readIdentifier(c);
+				Token token = readIdentifier(c, rawIdentifier);
 
 				// An ELIF after a taken IF needs to not evaluate its condition
 				if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
@@ -2017,7 +2038,7 @@ static Token skipIfBlock(bool toEndc) {
 
 			if (startsIdentifier(c)) {
 				shiftChar();
-				switch (Token token = readIdentifier(c); token.type) {
+				switch (Token token = readIdentifier(c, false); token.type) {
 				case T_(POP_IF):
 					lexer_IncIFDepth();
 					break;
@@ -2103,7 +2124,7 @@ static Token yylex_SKIP_TO_ENDR() {
 
 			if (startsIdentifier(c)) {
 				shiftChar();
-				switch (readIdentifier(c).type) {
+				switch (readIdentifier(c, false).type) {
 				case T_(POP_FOR):
 				case T_(POP_REPT):
 					depth++;
@@ -2250,7 +2271,7 @@ Capture lexer_CaptureRept() {
 		} while (isWhitespace(c));
 		// Now, try to match `REPT`, `FOR` or `ENDR` as a **whole** identifier
 		if (startsIdentifier(c)) {
-			switch (readIdentifier(c).type) {
+			switch (readIdentifier(c, false).type) {
 			case T_(POP_REPT):
 			case T_(POP_FOR):
 				depth++;
@@ -2303,7 +2324,7 @@ Capture lexer_CaptureMacro() {
 		} while (isWhitespace(c));
 		// Now, try to match `ENDM` as a **whole** identifier
 		if (startsIdentifier(c)) {
-			switch (readIdentifier(c).type) {
+			switch (readIdentifier(c, false).type) {
 			case T_(POP_ENDM):
 				endCapture(capture);
 				// The ENDM has been captured, but we don't want it!
