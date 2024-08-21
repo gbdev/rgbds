@@ -559,6 +559,8 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 }
 
 static void growSection(uint32_t growth) {
+	if (growth > 0 && curOffset > UINT32_MAX - growth)
+		fatalerror("Section size would overflow internal counter\n");
 	curOffset += growth;
 	if (curOffset + loadOffset > currentSection->size)
 		currentSection->size = curOffset + loadOffset;
