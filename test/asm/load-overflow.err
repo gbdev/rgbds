@@ -1,11 +1,15 @@
-error: load-overflow.asm(5):
-    Section 'Overflow' grew too big (max size = 0x8000 bytes, reached 0x8001).
-error: load-overflow.asm(5):
-    Section 'oops' grew too big (max size = 0x2000 bytes, reached 0x2001).
-error: load-overflow.asm(13):
-    Section 'Moar overflow' grew too big (max size = 0x8000 bytes, reached 0x8001).
-error: load-overflow.asm(22):
-    Section 'lol' grew too big (max size = 0x2000 bytes, reached 0x2001).
-error: load-overflow.asm(25):
-    Section 'Not overflowing' grew too big (max size = 0x8000 bytes, reached 0x8001).
+warning: load-overflow.asm(5): [-Wempty-data-directive]
+    DB directive without data in ROM
+warning: load-overflow.asm(6): [-Wempty-data-directive]
+    DB directive without data in ROM
+error: load-overflow.asm(26):
+    Section 'Overflow' grew too big (max size = 0x8000 bytes, reached 0x8002).
+error: load-overflow.asm(26):
+    Section 'oops' grew too big (max size = 0x2000 bytes, reached 0x2002).
+error: load-overflow.asm(26):
+    Section 'Moar overflow' grew too big (max size = 0x8000 bytes, reached 0xD000).
+error: load-overflow.asm(26):
+    Section 'hmm' grew too big (max size = 0x2000 bytes, reached 0x4000).
+error: load-overflow.asm(26):
+    Section 'lol' grew too big (max size = 0x2000 bytes, reached 0x3000).
 error: Assembly aborted (5 errors)!

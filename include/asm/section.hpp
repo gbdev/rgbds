@@ -78,6 +78,8 @@ uint32_t sect_GetOutputOffset();
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
+void sect_CheckSizes();
+
 void sect_StartUnion();
 void sect_NextUnionMember();
 void sect_EndUnion();

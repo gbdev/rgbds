@@ -381,6 +381,7 @@ int main(int argc, char *argv[]) {
 		nbErrors = 1;
 
 	sect_CheckUnionClosed();
+	sect_CheckSizes();
 
 	if (nbErrors != 0)
 		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");

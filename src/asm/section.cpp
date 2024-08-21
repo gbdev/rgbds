@@ -72,41 +72,17 @@ int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutput
 	return false;
 }
 
-[[nodiscard]] static bool checkSectionSize(Section const &sect, uint32_t size) {
-	uint32_t maxSize = sectionTypeInfo[sect.type].size;
-
-	// If the new size is reasonable, keep going
-	if (size <= maxSize)
-		return true;
-
-	error(
-	    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32 ").\n",
-	    sect.name.c_str(),
-	    maxSize,
-	    size
-	);
-	return false;
-}
-
-// Check if the section has grown too much.
-[[nodiscard]] static bool reserveSpace(uint32_t delta_size) {
-	// This check is here to trap broken code that generates sections that are too big and to
-	// prevent the assembler from generating huge object files or trying to allocate too much
-	// memory.
-	// A check at the linking stage is still necessary.
-
-	// If the section has already overflowed, skip the check to avoid erroring out ad nauseam
-	if (currentSection->size != UINT32_MAX
-	    && !checkSectionSize(*currentSection, curOffset + loadOffset + delta_size))
-		// Mark the section as overflowed, to avoid repeating the error
-		currentSection->size = UINT32_MAX;
-
-	if (currentLoadSection && currentLoadSection->size != UINT32_MAX
-	    && !checkSectionSize(*currentLoadSection, curOffset + delta_size))
-		currentLoadSection->size = UINT32_MAX;
-
-	return currentSection->size != UINT32_MAX
-	       && (!currentLoadSection || currentLoadSection->size != UINT32_MAX);
+void sect_CheckSizes() {
+	for (Section const &sect : sectionList) {
+		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize)
+			error(
+				"Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
+				").\n",
+				sect.name.c_str(),
+				maxSize,
+				sect.size
+			);
+	}
 }
 
 Section *sect_FindSectionByName(std::string const &name) {
@@ -591,7 +567,8 @@ static void growSection(uint32_t growth) {
 }
 
 static void writebyte(uint8_t byte) {
-	currentSection->data[sect_GetOutputOffset()] = byte;
+	if (uint32_t index = sect_GetOutputOffset(); index < currentSection->data.size())
+		currentSection->data[index] = byte;
 	growSection(1);
 }
 
@@ -665,16 +642,12 @@ void sect_CheckUnionClosed() {
 void sect_AbsByte(uint8_t b) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(1))
-		return;
 
 	writebyte(b);
 }
 
 void sect_AbsByteString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
-		return;
-	if (!reserveSpace(s.size()))
 		return;
 
 	for (int32_t v : s) {
@@ -689,8 +662,6 @@ void sect_AbsByteString(std::vector<int32_t> const &s) {
 void sect_AbsWordString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(s.size() * 2))
-		return;
 
 	for (int32_t v : s) {
 		if (!checkNBit(v, 16, "All character units"))
@@ -704,8 +675,6 @@ void sect_AbsWordString(std::vector<int32_t> const &s) {
 void sect_AbsLongString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(s.size() * 4))
-		return;
 
 	for (int32_t v : s)
 		writelong(static_cast<uint32_t>(v));
@@ -714,8 +683,6 @@ void sect_AbsLongString(std::vector<int32_t> const &s) {
 // Skip this many bytes
 void sect_Skip(uint32_t skip, bool ds) {
 	if (!checksection())
-		return;
-	if (!reserveSpace(skip))
 		return;
 
 	if (!sect_HasData(currentSection->type)) {
@@ -740,8 +707,6 @@ void sect_Skip(uint32_t skip, bool ds) {
 void sect_RelByte(Expression &expr, uint32_t pcShift) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(1))
-		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
@@ -755,8 +720,6 @@ void sect_RelByte(Expression &expr, uint32_t pcShift) {
 // it is an absolute value in disguise.
 void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 	if (!checkcodesection())
-		return;
-	if (!reserveSpace(n))
 		return;
 
 	for (uint32_t i = 0; i < n; i++) {
@@ -776,8 +739,6 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 void sect_RelWord(Expression &expr, uint32_t pcShift) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(2))
-		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
@@ -791,8 +752,6 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 // is an absolute value in disguise.
 void sect_RelLong(Expression &expr, uint32_t pcShift) {
 	if (!checkcodesection())
-		return;
-	if (!reserveSpace(2))
 		return;
 
 	if (!expr.isKnown()) {
@@ -808,11 +767,8 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 	if (!checkcodesection())
 		return;
-	if (!reserveSpace(1))
-		return;
-	Symbol const *pc = sym_GetPC();
 
-	if (!expr.isDiffConstant(pc)) {
+	if (Symbol const *pc = sym_GetPC(); !expr.isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
 		writebyte(0);
 	} else {
@@ -863,35 +819,32 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	int32_t fsize = -1;
-
 	if (fseek(file, 0, SEEK_END) != -1) {
-		fsize = ftell(file);
-
-		if (startPos > fsize) {
-			error("Specified start position is greater than length of file\n");
+		if (startPos > ftell(file)) {
+			error("Specified start position is greater than length of file '%s'\n", name.c_str());
 			return;
 		}
-
+		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
-
-		if (!reserveSpace(fsize - startPos))
-			return;
 	} else {
 		if (errno != ESPIPE)
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
-		// The file isn't seekable, so we'll just skip bytes
-		while (startPos--)
-			(void)fgetc(file);
+		// The file isn't seekable, so we'll just skip bytes one at a time
+		while (startPos--) {
+			if (fgetc(file) == EOF) {
+				error(
+				    "Specified start position is greater than length of file '%s'\n",
+				    name.c_str()
+				);
+				return;
+			}
+		}
 	}
 
-	for (int byte; (byte = fgetc(file)) != EOF;) {
-		if (fsize == -1)
-			growSection(1);
+	for (int byte; (byte = fgetc(file)) != EOF;)
 		writebyte(byte);
-	}
 
 	if (ferror(file))
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -903,17 +856,13 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
 	}
-
 	if (length < 0) {
 		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
-
 	if (!checkcodesection())
 		return;
 	if (length == 0) // Don't even bother with 0-byte slices
-		return;
-	if (!reserveSpace(length))
 		return;
 
 	FILE *file = nullptr;
@@ -932,44 +881,50 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	Defer closeFile{[&] { fclose(file); }};
 
 	if (fseek(file, 0, SEEK_END) != -1) {
-		int32_t fsize = ftell(file);
-
-		if (startPos > fsize) {
-			error("Specified start position is greater than length of file\n");
+		if (int32_t fsize = ftell(file); startPos > fsize) {
+			error("Specified start position is greater than length of file '%s'\n", name.c_str());
 			return;
-		}
-
-		if ((startPos + length) > fsize) {
+		} else if (startPos + length > fsize) {
 			error(
-			    "Specified range in INCBIN is out of bounds (%" PRIu32 " + %" PRIu32 " > %" PRIu32
-			    ")\n",
+			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
+			    " > %" PRIu32 ")\n",
+			    name.c_str(),
 			    startPos,
 			    length,
 			    fsize
 			);
 			return;
 		}
-
+		// The file is seekable; skip to the specified start position
 		fseek(file, startPos, SEEK_SET);
 	} else {
 		if (errno != ESPIPE)
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
-		// The file isn't seekable, so we'll just skip bytes
-		while (startPos--)
-			(void)fgetc(file);
+		// The file isn't seekable, so we'll just skip bytes one at a time
+		while (startPos--) {
+			if (fgetc(file) == EOF) {
+				error(
+				    "Specified start position is greater than length of file '%s'\n",
+				    name.c_str()
+				);
+				return;
+			}
+		}
 	}
 
 	while (length--) {
-		int byte = fgetc(file);
-
-		if (byte != EOF) {
+		if (int byte = fgetc(file); byte != EOF) {
 			writebyte(byte);
 		} else if (ferror(file)) {
 			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		} else {
-			error("Premature end of file (%" PRId32 " bytes left to read)\n", length + 1);
+			error(
+			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
+			    name.c_str(),
+			    length + 1
+			);
 		}
 	}
 }
