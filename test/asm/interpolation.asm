@@ -27,3 +27,6 @@ PRINTLN "label {label}"
 MACRO foo
 ENDM
 PRINTLN "foo {foo}"
+
+; hashless keyword
+PRINTLN "xor {xor}"

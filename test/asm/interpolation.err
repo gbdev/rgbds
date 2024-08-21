@@ -4,4 +4,6 @@ error: interpolation.asm(22):
     Interpolated symbol "label" does not exist
 error: interpolation.asm(29):
     Interpolated symbol "foo" is not a numeric or string symbol
-error: Assembly aborted (3 errors)!
+error: interpolation.asm(32):
+    Interpolated symbol "xor" is a reserved keyword; add a '#' prefix to use it as a raw symbol
+error: Assembly aborted (4 errors)!

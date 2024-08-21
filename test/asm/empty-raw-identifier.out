@@ -1,0 +1,2 @@
+all args: a,#b,c,1,#2,3
+bad args: >, >
