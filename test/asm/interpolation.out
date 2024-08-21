@@ -3,3 +3,4 @@ undef
 label 
 label $7E
 foo 
+xor 

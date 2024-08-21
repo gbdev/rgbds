@@ -24,11 +24,11 @@ section "section", rom0
 def #sub equs "def"
 {#sub} #add equs "#"
 
-for #for, {{#add}{sub}}
+for #for, {{#add}{#sub}}
 	println "for == ", #for
 endr
 	assert #for == 2
-	assert !{sub}(#FOR)
+	assert !{#sub}(#FOR)
 
 	newcharmap #charmap, #main
 	charmap "#", $42

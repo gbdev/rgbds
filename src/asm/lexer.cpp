@@ -1219,9 +1219,17 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	// Don't return before `lexerState->disableInterpolation` is reset!
 	lexerState->disableInterpolation = disableInterpolation;
 
-	// Only skip a '#' raw identifier prefix after expanding any nested interpolations.
-	if (fmtBuf.starts_with('#'))
+	if (fmtBuf.starts_with('#')) {
+		// Skip a '#' raw identifier prefix, but after expanding any nested interpolations.
 		fmtBuf.erase(0, 1);
+	} else if (auto search = keywordDict.find(fmtBuf.c_str()); search != keywordDict.end()) {
+		// Don't allow symbols that alias keywords without a '#' prefix.
+		error(
+		    "Interpolated symbol \"%s\" is a reserved keyword; add a '#' prefix to use it as a raw symbol\n",
+		    fmtBuf.c_str()
+		);
+		return nullptr;
+	}
 
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
