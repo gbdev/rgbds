@@ -1,0 +1,5 @@
+error: charmap-empty.asm(1):
+    Cannot map an empty string
+error: charmap-empty.asm(2):
+    syntax error, unexpected newline
+error: Assembly aborted (2 errors)!
