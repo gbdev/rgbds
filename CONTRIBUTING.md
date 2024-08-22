@@ -130,12 +130,31 @@ Additionally, if a `.gb` file exists, the output of RGBFIX must match the `.gb`.
 
 ### RGBGFX
 
+There are three kinds of test.
+
+#### Simple tests
+
 Each `.png` file corresponds to one test.
 RGBGFX will be invoked on the file.
 If a `.flags` file exists, it will be used as part of the RGBGFX invocation (<code>@<var>&lt;file&gt;</var>.flags</code>).
 
+If `.out.1bpp`, `.out.2bpp`, `.out.pal`, `.out.tilemap`, `.out.attrmap`, or `.out.palmap` files exist, RGBGFX will create the corresponding kind of output, which must match the file's contents.
+Multiple kinds of output may be tested for the same input.
+
 If no `.err` file exists, RGBGFX is simply expected to be able to process the file normally.
 If one *does* exist, RGBGFX's return status is ignored, but its output **must** match the `.err` file's contents.
+
+#### Reverse tests
+
+Each `.1bpp` or `.2bpp` file corresponds to one test.
+RGBGFX will be invoked on the file with `-r 1` for reverse mode, then invoked on the output without `-r 1`.
+The round-trip output must match the input file's contents.
+If a `.flags` file exists, it will be used as part of the RGBGFX invocation (<code>@<var>&lt;file&gt;</var>.flags</code>).
+
+#### Random seed tests
+
+Each `seed*.bin` file corresponds to one test.
+Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
 
 ### Downstream projects
 
