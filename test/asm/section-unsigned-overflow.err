@@ -1,0 +1,2 @@
+FATAL: section-unsigned-overflow.asm(2) -> section-unsigned-overflow.asm::REPT~4(3):
+    Section size would overflow internal counter
