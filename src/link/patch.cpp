@@ -465,8 +465,28 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 		int32_t value = computeRPNExpr(patch, *section.fileSymbols);
 		uint16_t offset = patch.offset + section.offset;
 
-		// `jr` is quite unlike the others...
-		if (patch.type == PATCHTYPE_JR) {
+		struct {
+			uint8_t size;
+			int32_t min;
+			int32_t max;
+		} const types[PATCHTYPE_INVALID] = {
+		    {1, -128,      255      }, // PATCHTYPE_BYTE
+		    {2, -32768,    65536    }, // PATCHTYPE_WORD
+		    {4, INT32_MIN, INT32_MAX}, // PATCHTYPE_LONG
+		    {1, 0,         0        }, // PATCHTYPE_JR
+		};
+		auto const &type = types[patch.type];
+
+		if (dataSection.data.size() < offset + type.size) {
+			error(
+			    patch.src,
+			    patch.lineNo,
+			    "Patch would write %zu bytes past the end of section \"%s\" (%zu bytes long)",
+			    offset + type.size - dataSection.data.size(),
+			    dataSection.name.c_str(),
+			    dataSection.data.size()
+			);
+		} else if (patch.type == PATCHTYPE_JR) { // `jr` is quite unlike the others...
 			// Offset is relative to the byte *after* the operand
 			// PC as operand to `jr` is lower than reference PC by 2
 			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
@@ -483,26 +503,16 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			struct {
-				uint8_t size;
-				int32_t min;
-				int32_t max;
-			} const types[PATCHTYPE_INVALID] = {
-			    {1, -128,      255      }, // PATCHTYPE_BYTE
-			    {2, -32768,    65536    }, // PATCHTYPE_WORD
-			    {4, INT32_MIN, INT32_MAX}, // PATCHTYPE_LONG
-			};
-
-			if (!isError && (value < types[patch.type].min || value > types[patch.type].max))
+			if (!isError && (value < type.min || value > type.max))
 				error(
 				    patch.src,
 				    patch.lineNo,
 				    "Value %" PRId32 "%s is not %u-bit",
 				    value,
 				    value < 0 ? " (maybe negative?)" : "",
-				    types[patch.type].size * 8U
+				    type.size * 8U
 				);
-			for (uint8_t i = 0; i < types[patch.type].size; i++) {
+			for (uint8_t i = 0; i < type.size; i++) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
 			}
