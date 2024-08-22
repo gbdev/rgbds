@@ -105,6 +105,11 @@ void charmap_Pop() {
 }
 
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
+	if (mapping.empty()) {
+		error("Cannot map an empty string\n");
+		return;
+	}
+
 	Charmap &charmap = *currentCharmap;
 	size_t nodeIdx = 0;
 
