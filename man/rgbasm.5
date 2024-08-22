@@ -1688,39 +1688,50 @@ keyword.
 .Ic NEXTU
 separates each block of allocations, and you may use it as many times within a union as necessary.
 .Bd -literal -offset indent
-    ; Let's say PC = $C0DE here
-    UNION
-    ; Here, PC = $C0DE
-Name: ds 8
-    ; PC = $C0E6
-Nickname: ds 8
-    ; PC = $C0EE
-    NEXTU
+; Let's say PC == $C0DE here
+UNION
+    ; Here, PC == $C0DE
+    wName:: ds 10
+    ; Now, PC == $C0E8
+    wNickname:: ds 10
+    ; PC == $C0F2
+NEXTU
     ; PC is back to $C0DE
-Health: dw
-    ; PC = $C0E0
-Something: ds 6
-    ; And so on
-Lives: db
-    NEXTU
-VideoBuffer: ds 19
-    ENDU
+    wHealth:: dw
+    ; PC == $C0E0
+    wLives:: db
+    ; PC == $C0E1
+    ds 7
+    ; PC == $C0E8
+    wBonus:: db
+    ; PC == $C0E9
+NEXTU
+    ; PC is back to $C0DE again
+    wVideoBuffer: ds 16
+    ; PC == $C0EE
+ENDU
+; Afterward, PC == $C0F2
 .Ed
 .Pp
 In the example above,
-.Sq Name , Health , VideoBuffer
-all have the same value, as do
-.Sq Nickname
+.Sq wName , wHealth ,
 and
-.Sq Lives .
+.Sq wVideoBuffer
+all have the same value; so do
+.Sq wNickname
+and
+.Sq wBonus .
 Thus, keep in mind that
-.Ql ld [Health], a
-is identical to
-.Ql ld [Name], a .
+.Ql ld [wHealth], a
+assembles to the exact same thing as
+.Ql ld [wName], a .
 .Pp
-The size of this union is 19 bytes, as this is the size of the largest block (the last one, containing
-.Sq VideoBuffer ) .
-Nesting unions is possible, with each inner union's size being considered as described above.
+This whole union's total size is 20 bytes, the size of the largest block (the first one, containing
+.Sq wName
+and
+.Sq wNickname ) .
+.Pp
+Unions may be nested, with each inner union's size being determined as above, and affecting its outer union like any other allocation.
 .Pp
 Unions may be used in any section, but they may only contain space-allocating directives like
 .Ic DS
@@ -1728,12 +1739,13 @@ Unions may be used in any section, but they may only contain space-allocating di
 .Sx Statically allocating space in RAM ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
-You execute the macro by inserting its name.
+A macro is invoked by writing its name at the beginning of a line, followed by any arguments.
 .Bd -literal -offset indent
     add a, b
     ld sp, hl
-    MyMacro ;\ This will be expanded
+    MyMacro    ;\ This will be expanded
     sub a, 87
+    MyMacro 42 ;\ So will this
 .Ed
 .Pp
 It's valid to call a macro from a macro (yes, even the same one).
