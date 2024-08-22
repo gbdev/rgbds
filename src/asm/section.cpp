@@ -3,6 +3,7 @@
 #include "asm/section.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <errno.h>
 #include <inttypes.h>
 #include <optional>
@@ -12,6 +13,7 @@
 #include <string.h>
 
 #include "helpers.hpp"
+#include "linkdefs.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -288,10 +290,6 @@ static Section *createSection(
 	sect.align = alignment;
 	sect.alignOfs = alignOffset;
 
-	// It is only needed to allocate memory for ROM sections.
-	if (sect_HasData(type))
-		sect.data.resize(sectionTypeInfo[type].size);
-
 	return &sect;
 }
 
@@ -560,7 +558,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 }
 
 static void growSection(uint32_t growth) {
-	if (growth > 0 && curOffset > UINT32_MAX - growth)
+	if (curOffset > UINT32_MAX - growth)
 		fatalerror("Section size would overflow internal counter\n");
 	curOffset += growth;
 	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size)
@@ -569,22 +567,43 @@ static void growSection(uint32_t growth) {
 		currentLoadSection->size = curOffset;
 }
 
-static void writeByte(uint8_t byte) {
-	if (uint32_t index = sect_GetOutputOffset(); index < currentSection->data.size())
-		currentSection->data[index] = byte;
-	growSection(1);
+// This should be paired with one or more calls to `growSection` with equivalent `growth`.
+[[gnu::alloc_size(1), gnu::warn_unused_result]]
+static uint8_t *reserveBytes(uint32_t growth) {
+	if (!requireCodeSection())
+		return nullptr;
+
+	// If the section will grow larger than its max size, don't bother writing any bytes to it.
+	// The caller will just give up.
+	if (uint32_t maxSize = sectionTypeInfo[currentSection->type].size;
+	    currentSection->size + growth > maxSize) {
+		// The caller is going to bail and not emit any of the bytes it should.
+		// But, for the reported final section sizes to still be accurate, the section's size must
+		// still be updated. So we do it here, expecting the caller to bail.
+		growSection(growth);
+		return nullptr;
+	}
+
+	assume(currentSection->size == currentSection->data.size());
+	currentSection->data.resize(currentSection->size + growth);
+	// Return a pointer to the `growth` last bytes that have just been allocated.
+	return &currentSection->data.data()[currentSection->size];
 }
 
-static void writeWord(uint16_t value) {
-	writeByte(value & 0xFF);
-	writeByte(value >> 8);
+static void write16(uint8_t *&ptr, uint16_t b) {
+	ptr[0] = b & 0xFF;
+	ptr[1] = b >> 8;
+
+	ptr += 2;
 }
 
-static void writeLong(uint32_t value) {
-	writeByte(value & 0xFF);
-	writeByte(value >> 8);
-	writeByte(value >> 16);
-	writeByte(value >> 24);
+static void write32(uint8_t *&ptr, uint32_t b) {
+	ptr[0] = b & 0xFF;
+	ptr[1] = b >> 8;
+	ptr[2] = b >> 16;
+	ptr[3] = b >> 24;
+
+	ptr += 4;
 }
 
 static void createPatch(PatchType type, Expression const &expr, uint32_t pcShift) {
@@ -643,15 +662,18 @@ void sect_CheckUnionClosed() {
 
 // Output a constant byte
 void sect_ConstByte(uint8_t byte) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(1);
+	if (bytes == nullptr)
 		return;
 
-	writeByte(byte);
+	bytes[0] = byte;
+	growSection(1);
 }
 
 // Output a string's character units as bytes
 void sect_ByteString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(string.size());
+	if (bytes == nullptr)
 		return;
 
 	for (int32_t unit : string) {
@@ -660,12 +682,14 @@ void sect_ByteString(std::vector<int32_t> const &string) {
 	}
 
 	for (int32_t unit : string)
-		writeByte(static_cast<uint8_t>(unit));
+		*bytes++ = static_cast<uint8_t>(unit);
+	growSection(string.size());
 }
 
 // Output a string's character units as words
 void sect_WordString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(string.size() * 2);
+	if (bytes == nullptr)
 		return;
 
 	for (int32_t unit : string) {
@@ -674,16 +698,19 @@ void sect_WordString(std::vector<int32_t> const &string) {
 	}
 
 	for (int32_t unit : string)
-		writeWord(static_cast<uint16_t>(unit));
+		write16(bytes, static_cast<uint16_t>(unit)); // This increases `bytes` itself.
+	growSection(string.size() * 2);
 }
 
 // Output a string's character units as longs
 void sect_LongString(std::vector<int32_t> const &string) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(string.size() * 4);
+	if (bytes == nullptr)
 		return;
 
 	for (int32_t unit : string)
-		writeLong(static_cast<uint32_t>(unit));
+		write32(bytes, static_cast<uint32_t>(unit)); // This increases `bytes` itself.
+	growSection(string.size() * 4);
 }
 
 // Skip this many bytes
@@ -691,9 +718,7 @@ void sect_Skip(uint32_t skip, bool ds) {
 	if (!requireSection())
 		return;
 
-	if (!sect_HasData(currentSection->type)) {
-		growSection(skip);
-	} else {
+	if (sect_HasData(currentSection->type)) {
 		if (!ds)
 			warning(
 			    WARNING_EMPTY_DATA_DIRECTIVE,
@@ -702,28 +727,34 @@ void sect_Skip(uint32_t skip, bool ds) {
 			    : (skip == 2) ? "DW"
 			                  : "DB"
 			);
-		// We know we're in a code SECTION
-		while (skip--)
-			writeByte(fillByte);
+		// TODO: check if the `requireCodeSection` check inside of `reserveBytes` is elided.
+		// Alternatively, `reserveBytes` unconditionally, and only `return` if in a code section?
+		uint8_t *bytes = reserveBytes(skip);
+		if (bytes == nullptr)
+			return;
+		memset(bytes, fillByte, skip);
 	}
+	growSection(skip);
 }
 
 // Output a byte that can be relocatable or constant
 void sect_RelByte(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(1);
+	if (bytes == nullptr)
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
-		writeByte(0);
 	} else {
-		writeByte(expr.value());
+		*bytes = expr.value();
 	}
+	growSection(1);
 }
 
 // Output several bytes that can be relocatable or constant
 void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(n);
+	if (bytes == nullptr)
 		return;
 
 	for (uint32_t i = 0; i < n; i++) {
@@ -731,47 +762,50 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 
 		if (!expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
-			writeByte(0);
 		} else {
-			writeByte(expr.value());
+			bytes[i] = expr.value();
 		}
+		// TODO: would be better to hoist this out of the loop, but it modifies `curOffset`!
+		growSection(1);
 	}
 }
 
 // Output a word that can be relocatable or constant
 void sect_RelWord(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(2);
+	if (bytes == nullptr)
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
-		writeWord(0);
 	} else {
-		writeWord(expr.value());
+		write16(bytes, expr.value());
 	}
+	growSection(2);
 }
 
 // Output a long that can be relocatable or constant
 void sect_RelLong(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(4);
+	if (bytes == nullptr)
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
-		writeLong(0);
 	} else {
-		writeLong(expr.value());
+		write32(bytes, expr.value());
 	}
+	growSection(4);
 }
 
 // Output a PC-relative byte that can be relocatable or constant
 void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(1);
+	if (bytes == nullptr)
 		return;
 
 	if (Symbol const *pc = sym_GetPC(); !expr.isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
-		writeByte(0);
 	} else {
 		Symbol const *sym = expr.symbolOf();
 		// The offset wraps (jump from ROM to HRAM, for example)
@@ -789,11 +823,11 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 			    "; use jp instead\n",
 			    offset
 			);
-			writeByte(0);
 		} else {
-			writeByte(offset);
+			*bytes = offset;
 		}
 	}
+	growSection(1);
 }
 
 // Output a binary file
@@ -843,8 +877,13 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		}
 	}
 
-	for (int byte; (byte = fgetc(file)) != EOF;)
-		writeByte(byte);
+	for (int byte; (byte = fgetc(file)) != EOF;) {
+		uint8_t *bytes = reserveBytes(1);
+		if (bytes == nullptr)
+			return;
+		*bytes = byte;
+		growSection(1);
+	}
 
 	if (ferror(file))
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -915,7 +954,11 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 
 	while (length--) {
 		if (int byte = fgetc(file); byte != EOF) {
-			writeByte(byte);
+			uint8_t *bytes = reserveBytes(1);
+			if (bytes == nullptr)
+				return;
+			*bytes = byte;
+			growSection(1);
 		} else if (ferror(file)) {
 			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		} else {
