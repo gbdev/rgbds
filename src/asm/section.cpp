@@ -575,18 +575,6 @@ static void writeByte(uint8_t byte) {
 	growSection(1);
 }
 
-static void writeWord(uint16_t value) {
-	writeByte(value & 0xFF);
-	writeByte(value >> 8);
-}
-
-static void writeLong(uint32_t value) {
-	writeByte(value & 0xFF);
-	writeByte(value >> 8);
-	writeByte(value >> 16);
-	writeByte(value >> 24);
-}
-
 static void createPatch(PatchType type, Expression const &expr, uint32_t pcShift) {
 	out_CreatePatch(type, expr, sect_GetOutputOffset(), pcShift);
 }
@@ -659,8 +647,14 @@ void sect_ByteString(std::vector<int32_t> const &string) {
 			break;
 	}
 
-	for (int32_t unit : string)
-		writeByte(static_cast<uint8_t>(unit));
+	// Write bytes
+	size_t growth = string.size();
+	if (size_t index = sect_GetOutputOffset(); index + growth <= currentSection->data.size()) {
+		for (int32_t unit : string) {
+			currentSection->data[index++] = (uint32_t)unit & 0xFF;
+		}
+	}
+	growSection(growth);
 }
 
 // Output a string's character units as words
@@ -673,8 +667,16 @@ void sect_WordString(std::vector<int32_t> const &string) {
 			break;
 	}
 
-	for (int32_t unit : string)
-		writeWord(static_cast<uint16_t>(unit));
+	// Write little-endian words
+	size_t growth = string.size() * 2;
+	if (size_t index = sect_GetOutputOffset(); index + growth <= currentSection->data.size()) {
+		for (int32_t unit : string) {
+			uint32_t value = (uint32_t)unit;
+			currentSection->data[index++] = value & 0xFF;
+			currentSection->data[index++] = (value >> 8) & 0xFF;
+		}
+	}
+	growSection(growth);
 }
 
 // Output a string's character units as longs
@@ -682,8 +684,18 @@ void sect_LongString(std::vector<int32_t> const &string) {
 	if (!requireCodeSection())
 		return;
 
-	for (int32_t unit : string)
-		writeLong(static_cast<uint32_t>(unit));
+	// Write little-endian longs
+	size_t growth = string.size() * 4;
+	if (size_t index = sect_GetOutputOffset(); index + growth <= currentSection->data.size()) {
+		for (int32_t unit : string) {
+			uint32_t value = (uint32_t)unit;
+			currentSection->data[index++] = value & 0xFF;
+			currentSection->data[index++] = (value >> 8) & 0xFF;
+			currentSection->data[index++] = (value >> 16) & 0xFF;
+			currentSection->data[index++] = (value >> 24) & 0xFF;
+		}
+	}
+	growSection(growth);
 }
 
 // Skip this many bytes
@@ -703,8 +715,9 @@ void sect_Skip(uint32_t skip, bool ds) {
 			                  : "DB"
 			);
 		// We know we're in a code SECTION
-		while (skip--)
-			writeByte(fillByte);
+		if (size_t index = sect_GetOutputOffset(); index + skip <= currentSection->data.size())
+			memset(currentSection->data.data() + index, fillByte, skip);
+		growSection(skip);
 	}
 }
 
@@ -743,12 +756,17 @@ void sect_RelWord(Expression &expr, uint32_t pcShift) {
 	if (!requireCodeSection())
 		return;
 
-	if (!expr.isKnown()) {
+	uint32_t value = 0;
+	if (expr.isKnown())
+		value = (uint32_t)expr.value();
+	else
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
-		writeWord(0);
-	} else {
-		writeWord(expr.value());
+
+	if (size_t index = sect_GetOutputOffset(); index + 2 <= currentSection->data.size()) {
+		currentSection->data[index++] = value & 0xFF;
+		currentSection->data[index++] = (value >> 8) & 0xFF;
 	}
+	growSection(2);
 }
 
 // Output a long that can be relocatable or constant
@@ -756,12 +774,19 @@ void sect_RelLong(Expression &expr, uint32_t pcShift) {
 	if (!requireCodeSection())
 		return;
 
-	if (!expr.isKnown()) {
+	uint32_t value = 0;
+	if (expr.isKnown())
+		value = (uint32_t)expr.value();
+	else
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
-		writeLong(0);
-	} else {
-		writeLong(expr.value());
+
+	if (size_t index = sect_GetOutputOffset(); index + 4 <= currentSection->data.size()) {
+		currentSection->data[index++] = value & 0xFF;
+		currentSection->data[index++] = (value >> 8) & 0xFF;
+		currentSection->data[index++] = (value >> 16) & 0xFF;
+		currentSection->data[index++] = (value >> 24) & 0xFF;
 	}
+	growSection(4);
 }
 
 // Output a PC-relative byte that can be relocatable or constant
@@ -820,19 +845,28 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
-		if (startPos > ftell(file)) {
+	if (int32_t fsize = -1; fseek(file, 0, SEEK_END) != -1 && (fsize = ftell(file)) >= 0) {
+		if (startPos > fsize) {
 			error("Specified start position is greater than length of file '%s'\n", name.c_str());
 			return;
 		}
-		// The file is seekable; skip to the specified start position
+
+		// The file is seekable; skip to the specified start position and read bytes all at once
 		fseek(file, startPos, SEEK_SET);
+		std::vector<uint8_t> binary(fsize);
+		size_t nbRead = fread(binary.data(), 1, fsize, file);
+		if (ferror(file))
+			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+		if (size_t index = sect_GetOutputOffset(); index + nbRead <= currentSection->data.size())
+			memcpy(currentSection->data.data() + index, binary.data(), nbRead);
+		growSection(nbRead);
 	} else {
 		if (errno != ESPIPE)
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
-		// The file isn't seekable, so we'll just skip bytes one at a time
+
+		// The file isn't seekable, so we'll just read bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
@@ -841,13 +875,11 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 				return;
 			}
 		}
+		for (int byte; (byte = fgetc(file)) != EOF;)
+			writeByte(byte);
+		if (ferror(file))
+			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 	}
-
-	for (int byte; (byte = fgetc(file)) != EOF;)
-		writeByte(byte);
-
-	if (ferror(file))
-		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 }
 
 // Output a slice of a binary file
@@ -880,8 +912,8 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 	}
 	Defer closeFile{[&] { fclose(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
-		if (int32_t fsize = ftell(file); startPos > fsize) {
+	if (int32_t fsize = -1; fseek(file, 0, SEEK_END) != -1 && (fsize = ftell(file)) >= 0) {
+		if (startPos > fsize) {
 			error("Specified start position is greater than length of file '%s'\n", name.c_str());
 			return;
 		} else if (startPos + length > fsize) {
@@ -895,14 +927,27 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 			);
 			return;
 		}
-		// The file is seekable; skip to the specified start position
+
+		// The file is seekable; skip to the specified start position and read bytes all at once
 		fseek(file, startPos, SEEK_SET);
+		std::vector<uint8_t> binary(length);
+		size_t nbRead = fread(binary.data(), 1, length, file);
+		if (nbRead != (uint32_t)length)
+			error(
+			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
+			    name.c_str(),
+			    length - (int32_t)nbRead
+			);
+		if (size_t index = sect_GetOutputOffset(); index + nbRead <= currentSection->data.size())
+			memcpy(currentSection->data.data() + index, binary.data(), nbRead);
+		growSection(nbRead);
 	} else {
 		if (errno != ESPIPE)
 			error(
 			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
 			);
-		// The file isn't seekable, so we'll just skip bytes one at a time
+
+		// The file isn't seekable, so we'll just read bytes one at a time
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
@@ -911,19 +956,18 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 				return;
 			}
 		}
-	}
-
-	while (length--) {
-		if (int byte = fgetc(file); byte != EOF) {
-			writeByte(byte);
-		} else if (ferror(file)) {
-			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
-		} else {
-			error(
-			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
-			    name.c_str(),
-			    length + 1
-			);
+		while (length--) {
+			if (int byte = fgetc(file); byte != EOF) {
+				writeByte(byte);
+			} else if (ferror(file)) {
+				error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			} else {
+				error(
+					"Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
+					name.c_str(),
+					length + 1
+				);
+			}
 		}
 	}
 }
