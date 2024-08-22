@@ -3,6 +3,7 @@
 #include "asm/charmap.hpp"
 
 #include <deque>
+#include <map>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,11 +41,11 @@ static void traverse(
     Charmap const &charmap,
     size_t nodeIdx,
     std::string mapping,
-    void (*callback)(std::string const &, std::vector<int32_t>)
+    void (*callback)(size_t, std::string const &)
 ) {
 	CharmapNode const &node = charmap.nodes[nodeIdx];
 	if (node.isTerminal())
-		callback(mapping, node.value);
+		callback(nodeIdx, mapping);
 	for (unsigned c = 0; c < 256; c++) {
 		if (size_t nextIdx = node.next[c]; nextIdx)
 			traverse(charmap, nextIdx, mapping + (char)c, callback);
@@ -55,9 +56,16 @@ bool charmap_ForEach(
     void (*mapFunc)(std::string const &),
     void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
+	static std::map<size_t, std::string> mappings; // `static` so `traverse` callback can see it
+
 	for (Charmap const &charmap : charmapList) {
 		mapFunc(charmap.name);
-		traverse(charmap, 0, "", charFunc);
+		mappings.clear();
+		traverse(charmap, 0, "", [](size_t nodeIdx, std::string const &mapping) {
+			mappings[nodeIdx] = mapping;
+		});
+		for (auto [nodeIdx, mapping] : mappings)
+			charFunc(mapping, charmap.nodes[nodeIdx].value);
 	}
 	return !charmapList.empty();
 }

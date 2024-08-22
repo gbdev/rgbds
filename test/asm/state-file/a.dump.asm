@@ -17,9 +17,9 @@ newcharmap main
 charmap "c", $4
 charmap "c2", $a, $fffffff5, $3ade68b1
 newcharmap map2
-charmap "\0\n\t\r", $9, $d, $0, $a
 charmap "c", $4
 charmap "c2", $a, $fffffff5, $3ade68b1
+charmap "\0\n\t\r", $9, $d, $0, $a
 
 ; Macros
 macro mac2
