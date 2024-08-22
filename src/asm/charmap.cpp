@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unordered_map>
+#include <utility>
 
 #include "helpers.hpp"
 #include "util.hpp"
@@ -37,33 +38,25 @@ static std::unordered_map<std::string, size_t> charmapMap; // Indexes into `char
 static Charmap *currentCharmap;
 std::stack<Charmap *> charmapStack;
 
-static void traverse(
-    Charmap const &charmap,
-    size_t nodeIdx,
-    std::string mapping,
-    void (*callback)(size_t, std::string const &)
-) {
-	CharmapNode const &node = charmap.nodes[nodeIdx];
-	if (node.isTerminal())
-		callback(nodeIdx, mapping);
-	for (unsigned c = 0; c < 256; c++) {
-		if (size_t nextIdx = node.next[c]; nextIdx)
-			traverse(charmap, nextIdx, mapping + (char)c, callback);
-	}
-}
-
 bool charmap_ForEach(
     void (*mapFunc)(std::string const &),
     void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
-	static std::map<size_t, std::string> mappings; // `static` so `traverse` callback can see it
-
 	for (Charmap const &charmap : charmapList) {
+		// Traverse the trie depth-first to derive the character mappings in definition order
+		std::map<size_t, std::string> mappings;
+		for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
+			auto [nodeIdx, mapping] = prefixes.top();
+			prefixes.pop();
+			CharmapNode const &node = charmap.nodes[nodeIdx];
+			if (node.isTerminal())
+				mappings[nodeIdx] = mapping;
+			for (unsigned c = 0; c < 256; c++) {
+				if (size_t nextIdx = node.next[c]; nextIdx)
+					prefixes.push({nextIdx, mapping + (char)c});
+			}
+		}
 		mapFunc(charmap.name);
-		mappings.clear();
-		traverse(charmap, 0, "", [](size_t nodeIdx, std::string const &mapping) {
-			mappings[nodeIdx] = mapping;
-		});
 		for (auto [nodeIdx, mapping] : mappings)
 			charFunc(mapping, charmap.nodes[nodeIdx].value);
 	}
