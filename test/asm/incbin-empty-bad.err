@@ -1,3 +1,3 @@
 error: incbin-empty-bad.asm(3):
-    Specified range in INCBIN file 'empty.bin' is out of bounds (0 + 1 > 0)
+    Premature end of INCBIN file "empty.bin" (1 byte left to read)
 error: Assembly aborted (1 error)!

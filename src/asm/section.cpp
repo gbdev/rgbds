@@ -3,8 +3,10 @@
 #include "asm/section.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <cstdint>
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <optional>
 #include <stack>
@@ -14,6 +16,7 @@
 
 #include "helpers.hpp"
 #include "linkdefs.hpp"
+#include "platform.hpp"
 
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
@@ -839,54 +842,83 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	if (!requireCodeSection())
 		return;
 
-	FILE *file = nullptr;
+	int file = -1;
 	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
-		file = fopen(fullPath->c_str(), "rb");
-	if (!file) {
+		file = open(fullPath->c_str(), O_RDONLY | O_BINARY);
+	if (file < 0) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
+				printf("Aborting (-MG) on INCBIN file \"%s\" (%s)\n", name.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
 		} else {
-			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			error("Error opening INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
 		}
 		return;
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { close(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
-		if (startPos > ftell(file)) {
-			error("Specified start position is greater than length of file '%s'\n", name.c_str());
-			return;
-		}
-		// The file is seekable; skip to the specified start position
-		fseek(file, startPos, SEEK_SET);
-	} else {
-		if (errno != ESPIPE)
+	char buf[BUFSIZ];
+	// The file isn't seekable, so we'll just skip bytes one at a time
+	while (startPos) {
+		int nbRead = read(file, buf, std::min(startPos + size_t(0), sizeof(buf)));
+		if (nbRead == 0) { // EOF
 			error(
-			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
+			    "Starting offset is %" PRIu32 " bytes past the end of INCBIN file \"%s\"",
+			    startPos,
+			    name.c_str()
 			);
-		// The file isn't seekable, so we'll just skip bytes one at a time
-		while (startPos--) {
-			if (fgetc(file) == EOF) {
-				error(
-				    "Specified start position is greater than length of file '%s'\n", name.c_str()
-				);
+			return;
+		} else if (nbRead == -1 && errno != EINTR) {
+			error("Error reading INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
+			return;
+		} else if (nbRead != -1) {
+			startPos -= nbRead;
+		}
+		// Just discard the bytes that were just read.
+	}
+
+	// Try to bulk reads from the file, to maximise efficiency.
+	// To that effect, we'll set the section to its maximum size, and read as many bytes as possible
+	uint16_t const maxSize = sectionTypeInfo[currentSection->type].size;
+	if (currentSection->size < maxSize) {
+		// Set the section to its maximum size possible, to give the file a chance to fill up as
+		// much as reasonably feasible.
+		currentSection->data.resize(maxSize);
+		uint8_t *bytes = &currentSection->data[currentSection->size];
+		uint16_t len = maxSize - currentSection->size; // How many bytes have been made available.
+		for (;;) {
+			int nbRead = read(file, bytes, len);
+			if (nbRead == 0) { // EOF
+				break;
+			} else if (nbRead == -1 && errno != EINTR) {
+				error("Error reading INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
 				return;
+			} else if (nbRead != -1) {
+				len -= nbRead;
+				if (len == 0) {
+					break;
+				}
+				bytes += nbRead;
+			}
+		}
+		growSection(maxSize - currentSection->size - len);
+		currentSection->data.resize(currentSection->size);
+	}
+
+	if (currentSection->size >= maxSize) {
+		// If we read even just a single byte more, the section will overflow!
+		for (;;) {
+			int nbRead = read(file, buf, sizeof(buf));
+			if (nbRead == 0) { // EOF
+				break;
+			} else if (nbRead == -1 && errno != EINTR) {
+				error("Error reading INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
+				return;
+			} else if (nbRead != -1) {
+				growSection(nbRead);
 			}
 		}
 	}
-
-	for (int byte; (byte = fgetc(file)) != EOF;) {
-		uint8_t *bytes = reserveBytes(1);
-		if (bytes == nullptr)
-			return;
-		*bytes = byte;
-		growSection(1);
-	}
-
-	if (ferror(file))
-		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 }
 
 // Output a slice of a binary file
@@ -899,74 +931,65 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
-	if (!requireCodeSection())
+	uint8_t *bytes = reserveBytes(length);
+	if (bytes == nullptr)
 		return;
+	growSection(length); // We are able to immediately grow the section accordingly.
 	if (length == 0) // Don't even bother with 0-byte slices
 		return;
 
-	FILE *file = nullptr;
+	int file = -1;
 	if (std::optional<std::string> fullPath = fstk_FindFile(name); fullPath)
-		file = fopen(fullPath->c_str(), "rb");
-	if (!file) {
+		file = open(fullPath->c_str(), O_RDONLY | O_BINARY);
+	if (file < 0) {
 		if (generatedMissingIncludes) {
 			if (verbose)
-				printf("Aborting (-MG) on INCBIN file '%s' (%s)\n", name.c_str(), strerror(errno));
+				printf("Aborting (-MG) on INCBIN file \"%s\" (%s)\n", name.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
 		} else {
-			error("Error opening INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
+			error("Error opening INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
 		}
 		return;
 	}
-	Defer closeFile{[&] { fclose(file); }};
+	Defer closeFile{[&] { close(file); }};
 
-	if (fseek(file, 0, SEEK_END) != -1) {
-		if (int32_t fsize = ftell(file); startPos > fsize) {
-			error("Specified start position is greater than length of file '%s'\n", name.c_str());
-			return;
-		} else if (startPos + length > fsize) {
+	char buf[BUFSIZ];
+	// The file isn't seekable, so we'll just skip bytes one at a time
+	while (startPos) {
+		int nbRead = read(file, buf, std::min(startPos + size_t(0), sizeof(buf)));
+		if (nbRead == 0) { // EOF
 			error(
-			    "Specified range in INCBIN file '%s' is out of bounds (%" PRIu32 " + %" PRIu32
-			    " > %" PRIu32 ")\n",
-			    name.c_str(),
+			    "Starting offset is %" PRIu32 " byte%s past the end of INCBIN file \"%s\"",
 			    startPos,
-			    length,
-			    fsize
+			    startPos == 1 ? "" : "s",
+			    name.c_str()
 			);
 			return;
+		} else if (nbRead == -1 && errno != EINTR) {
+			error("Error reading INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
+			return;
+		} else if (nbRead != -1) {
+			startPos -= nbRead;
 		}
-		// The file is seekable; skip to the specified start position
-		fseek(file, startPos, SEEK_SET);
-	} else {
-		if (errno != ESPIPE)
-			error(
-			    "Error determining size of INCBIN file '%s': %s\n", name.c_str(), strerror(errno)
-			);
-		// The file isn't seekable, so we'll just skip bytes one at a time
-		while (startPos--) {
-			if (fgetc(file) == EOF) {
-				error(
-				    "Specified start position is greater than length of file '%s'\n", name.c_str()
-				);
-				return;
-			}
-		}
+		// Just discard the bytes that were just read.
 	}
 
-	while (length--) {
-		if (int byte = fgetc(file); byte != EOF) {
-			uint8_t *bytes = reserveBytes(1);
-			if (bytes == nullptr)
-				return;
-			*bytes = byte;
-			growSection(1);
-		} else if (ferror(file)) {
-			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
-		} else {
+	while (length) {
+		int nbRead = read(file, bytes, length);
+		if (nbRead == 0) { // EOF
 			error(
-			    "Premature end of INCBIN file '%s' (%" PRId32 " bytes left to read)\n",
+			    "Premature end of INCBIN file \"%s\" (%" PRId32 " byte%s left to read)\n",
 			    name.c_str(),
-			    length + 1
+			    length,
+			    length == 1 ? "" : "s"
 			);
+			return;
+		} else if (nbRead == -1 && errno != EINTR) {
+			error("Error reading INCBIN file \"%s\": %s\n", name.c_str(), strerror(errno));
+			return;
+		} else if (nbRead != -1) {
+			length -= nbRead;
+			bytes += nbRead;
 		}
 	}
 }
