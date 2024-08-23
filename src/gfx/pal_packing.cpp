@@ -393,16 +393,18 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				continue;
 			}
 
+			double relSize = assignments[i].relSizeOf(protoPal);
 			options.verbosePrint(
 			    Options::VERB_DEBUG,
 			    "%zu/%zu: Rel size: %f (size = %zu)\n",
 			    i + 1,
 			    assignments.size(),
-			    assignments[i].relSizeOf(protoPal),
+			    relSize,
 			    protoPal.size()
 			);
-			if (assignments[i].relSizeOf(protoPal) < bestRelSize) {
+			if (relSize < bestRelSize) {
 				bestPalIndex = i;
+				bestRelSize = relSize;
 			}
 		}
 
