@@ -14,7 +14,7 @@
 struct Expression;
 struct FileStackNode;
 
-enum StateFeature {
+enum StateFeature : unsigned char {
     STATE_EQU,
     STATE_VAR,
     STATE_EQUS,

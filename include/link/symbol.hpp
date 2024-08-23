@@ -24,9 +24,9 @@ struct Label {
 struct Symbol {
 	// Info contained in the object files
 	std::string name;
-	ExportLevel type;
 	char const *objFileName;
 	FileStackNode const *src;
+	ExportLevel type;
 	int32_t lineNo;
 	Either<
 	    int32_t, // Constants just have a numeric value

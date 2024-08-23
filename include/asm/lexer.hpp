@@ -21,7 +21,7 @@ static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 // This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB
 static_assert(LEXER_BUF_SIZE <= SSIZE_MAX, "Lexer buffer size is too large");
 
-enum LexerMode {
+enum LexerMode : unsigned char {
 	LEXER_NORMAL,
 	LEXER_RAW,
 	LEXER_SKIP_TO_ELIF,
@@ -80,23 +80,23 @@ struct IfStackEntry {
 struct LexerState {
 	std::string path;
 
-	LexerMode mode;
+	std::deque<Expansion> expansions; // Front is the innermost current expansion
+	size_t macroArgScanDistance; // Max distance already scanned for macro args
+	bool disableMacroArgs;
+	bool disableInterpolation;
+	bool expandStrings;
+
 	bool atLineStart;
 	uint32_t lineNo;
 	uint32_t colNo;
 	int lastToken;
-
-	std::deque<IfStackEntry> ifStack;
+	LexerMode mode;
 
 	bool capturing;     // Whether the text being lexed should be captured
 	size_t captureSize; // Amount of text captured
 	std::shared_ptr<std::vector<char>> captureBuf; // Buffer to send the captured text to if set
 
-	bool disableMacroArgs;
-	bool disableInterpolation;
-	size_t macroArgScanDistance; // Max distance already scanned for macro args
-	bool expandStrings;
-	std::deque<Expansion> expansions; // Front is the innermost current expansion
+	std::deque<IfStackEntry> ifStack;
 
 	Either<ViewedContent, BufferedContent> content;
 

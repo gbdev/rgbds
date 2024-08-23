@@ -13,6 +13,8 @@
 #include "gfx/rgba.hpp"
 
 struct Options {
+	std::string input{}; // positional arg
+
 	bool useColorCurve = false;   // -C
 	bool allowDedup = false;      // -u
 	bool allowMirroringX = false; // -X, -m
@@ -20,15 +22,15 @@ struct Options {
 	bool columnMajor = false;     // -Z
 	uint8_t verbosity = 0;        // -v
 
-	std::string attrmap{};                    // -a, -A
-	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
-	enum {
+	enum : unsigned char {
 		NO_SPEC,
 		EXPLICIT,
 		EMBEDDED,
-	} palSpecType = NO_SPEC; // -c
+	} palSpecType = NO_SPEC;                  // -c
+	uint8_t bitDepth = 2;                     // -d
+	std::string attrmap{};                    // -a, -A
+	std::array<uint8_t, 2> baseTileIDs{0, 0}; // -b
 	std::vector<std::array<std::optional<Rgba>, 4>> palSpec{};
-	uint8_t bitDepth = 2; // -d
 	struct {
 		uint16_t left;
 		uint16_t top;
@@ -36,16 +38,14 @@ struct Options {
 		uint16_t height;
 	} inputSlice{0, 0, 0, 0};                          // -L (margins in clockwise order, like CSS)
 	std::array<uint16_t, 2> maxNbTiles{UINT16_MAX, 0}; // -N
-	uint16_t nbPalettes = 8;                           // -n
 	std::string output{};                              // -o
 	std::string palettes{};                            // -p, -P
 	std::string palmap{};                              // -q, -Q
-	uint16_t reversedWidth = 0;                        // -r, in tiles
-	uint8_t nbColorsPerPal = 0;                        // -s; 0 means "auto" = 1 << bitDepth;
 	std::string tilemap{};                             // -t, -T
 	uint64_t trim = 0;                                 // -x
-
-	std::string input{}; // positional arg
+	uint16_t nbPalettes = 8;                           // -n
+	uint16_t reversedWidth = 0;                        // -r, in tiles
+	uint8_t nbColorsPerPal = 0;                        // -s; 0 means "auto" = 1 << bitDepth;
 
 	static constexpr uint8_t VERB_NONE = 0;     // Normal, no extra output
 	static constexpr uint8_t VERB_CFG = 1;      // Print configuration after parsing options

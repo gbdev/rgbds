@@ -37,16 +37,16 @@ extern bool disablePadding;
 	} while (0)
 
 struct FileStackNode {
-	FileStackNodeType type;
 	Either<
 	    std::vector<uint32_t>, // NODE_REPT
 	    std::string            // NODE_FILE, NODE_MACRO
 	    >
 	    data;
+	FileStackNodeType type;
 
-	FileStackNode *parent;
 	// Line at which the parent context was exited; meaningless for the root level
 	uint32_t lineNo;
+	FileStackNode *parent;
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters() { return data.get<std::vector<uint32_t>>(); }

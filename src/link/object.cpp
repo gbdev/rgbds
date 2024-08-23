@@ -502,10 +502,10 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		// Since SDCC does not provide line info, everything will be reported as coming from the
 		// object file. It's better than nothing.
 		nodes[fileID].push_back({
-		    .type = NODE_FILE,
 		    .data = Either<std::vector<uint32_t>, std::string>(fileName),
-		    .parent = nullptr,
+		    .type = NODE_FILE,
 		    .lineNo = 0,
+		    .parent = nullptr,
 		});
 
 		std::vector<Symbol> &fileSymbols = symbolLists.emplace_front();

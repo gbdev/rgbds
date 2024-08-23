@@ -18,9 +18,9 @@ struct Expression {
 	    std::string // Why the expression is not known, if it isn't
 	    >
 	    data = 0;
-	bool isSymbol = false; // Whether the expression represents a symbol suitable for const diffing
 	std::vector<uint8_t> rpn{}; // Bytes serializing the RPN expression
 	uint32_t rpnPatchSize = 0;  // Size the expression will take in the object file
+	bool isSymbol = false; // Whether the expression represents a symbol suitable for const diffing
 
 	Expression() = default;
 	Expression(Expression &&) = default;

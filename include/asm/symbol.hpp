@@ -15,7 +15,7 @@
 #include "asm/lexer.hpp"
 #include "asm/section.hpp"
 
-enum SymbolType {
+enum SymbolType : unsigned char {
 	SYM_LABEL,
 	SYM_EQU,
 	SYM_VAR,
@@ -29,12 +29,12 @@ bool sym_IsPC(Symbol const *sym); // For the inline `getSection` method
 
 struct Symbol {
 	std::string name;
+	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
+	uint32_t fileLine;                  // Line where the symbol was defined
 	SymbolType type;
 	bool isExported; // Whether the symbol is to be exported
 	bool isBuiltin;  // Whether the symbol is a built-in
 	Section *section;
-	std::shared_ptr<FileStackNode> src; // Where the symbol was defined
-	uint32_t fileLine;                  // Line where the symbol was defined
 
 	std::variant<
 	    int32_t,                     // If isNumeric()

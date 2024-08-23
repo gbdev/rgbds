@@ -5,7 +5,7 @@
 
 extern unsigned int nbErrors, maxErrors;
 
-enum WarningState { WARNING_DEFAULT, WARNING_DISABLED, WARNING_ENABLED, WARNING_ERROR };
+enum WarningState : unsigned char { WARNING_DEFAULT, WARNING_DISABLED, WARNING_ENABLED, WARNING_ERROR };
 
 enum WarningID {
 	WARNING_ASSERT,               // Assertions

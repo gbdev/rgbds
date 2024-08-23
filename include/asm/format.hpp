@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string>
 
-enum FormatState {
+enum FormatState : unsigned char {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
 	FORMAT_PREFIX,  // expects '#' (optional)
 	FORMAT_ALIGN,   // expects '-' (optional)
@@ -18,16 +18,17 @@ enum FormatState {
 };
 
 class FormatSpec {
-	FormatState state;
 	int sign;
 	bool prefix;
 	bool alignLeft;
 	bool padZero;
-	size_t width;
 	bool hasFrac;
 	size_t fracWidth;
+	size_t width;
 	int type;
 	bool valid;
+
+	FormatState state;
 
 public:
 	bool isEmpty() const { return !state; }

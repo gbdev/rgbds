@@ -11,9 +11,9 @@
 #define RGBDS_OBJECT_VERSION_STRING "RGB9"
 #define RGBDS_OBJECT_REV            11U
 
-enum AssertionType { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
+enum AssertionType : unsigned char { ASSERT_WARN, ASSERT_ERROR, ASSERT_FATAL };
 
-enum RPNCommand {
+enum RPNCommand : unsigned char {
 	RPN_ADD = 0x00,
 	RPN_SUB = 0x01,
 	RPN_MUL = 0x02,
@@ -62,7 +62,7 @@ enum RPNCommand {
 	RPN_SYM = 0x81
 };
 
-enum SectionType {
+enum SectionType : unsigned char {
 	SECTTYPE_WRAM0,
 	SECTTYPE_VRAM,
 	SECTTYPE_ROMX,
@@ -77,7 +77,7 @@ enum SectionType {
 	SECTTYPE_INVALID
 };
 
-enum FileStackNodeType {
+enum FileStackNodeType : unsigned char {
 	NODE_REPT,
 	NODE_FILE,
 	NODE_MACRO,
@@ -119,13 +119,13 @@ static inline uint32_t nbbanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }
 
-enum SectionModifier { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
+enum SectionModifier : unsigned char { SECTION_NORMAL, SECTION_UNION, SECTION_FRAGMENT };
 
 extern char const * const sectionModNames[];
 
-enum ExportLevel { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT };
+enum ExportLevel : unsigned char { SYMTYPE_LOCAL, SYMTYPE_IMPORT, SYMTYPE_EXPORT };
 
-enum PatchType {
+enum PatchType : unsigned char {
 	PATCHTYPE_BYTE,
 	PATCHTYPE_WORD,
 	PATCHTYPE_LONG,
