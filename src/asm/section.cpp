@@ -43,11 +43,11 @@ std::stack<UnionStackEntry> currentUnionStack;
 std::deque<SectionStackEntry> sectionStack;
 std::deque<Section> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
-uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
+uint16_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 Section *currentSection = nullptr;
 static Section *currentLoadSection = nullptr;
 std::optional<std::string> currentLoadScope = std::nullopt;
-int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
+int16_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
 [[nodiscard]] static bool requireSection() {
@@ -78,7 +78,7 @@ void sect_CheckSizes() {
 	for (Section const &sect : sectionList) {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize)
 			error(
-			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
+			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX16
 			    ").\n",
 			    sect.name.c_str(),
 			    maxSize,
@@ -494,11 +494,11 @@ Section *sect_GetSymbolSection() {
 }
 
 // The offset into the section above
-uint32_t sect_GetSymbolOffset() {
+uint16_t sect_GetSymbolOffset() {
 	return curOffset;
 }
 
-uint32_t sect_GetOutputOffset() {
+uint16_t sect_GetOutputOffset() {
 	return curOffset + loadOffset;
 }
 
@@ -558,7 +558,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 }
 
 static void growSection(uint32_t growth) {
-	if (curOffset > UINT32_MAX - growth)
+	if (growth > UINT16_MAX || curOffset > UINT16_MAX - growth)
 		fatalerror("Section size would overflow internal counter\n");
 	curOffset += growth;
 	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size)

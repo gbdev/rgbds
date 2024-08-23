@@ -30,15 +30,15 @@ struct Patch {
 
 struct Section {
 	std::string name;
-	SectionType type;
-	SectionModifier modifier;
 	std::shared_ptr<FileStackNode> src; // Where the section was defined
 	uint32_t fileLine;                  // Line where the section was defined
-	uint32_t size;
 	uint32_t org;
 	uint32_t bank;
-	uint8_t align; // Exactly as specified in `ALIGN[]`
+	uint16_t size;
 	uint16_t alignOfs;
+	uint8_t align; // Exactly as specified in `ALIGN[]`
+	SectionType type;
+	SectionModifier modifier;
 	std::deque<Patch> patches;
 	std::vector<uint8_t> data;
 
@@ -73,8 +73,8 @@ void sect_SetLoadSection(
 void sect_EndLoadSection();
 
 Section *sect_GetSymbolSection();
-uint32_t sect_GetSymbolOffset();
-uint32_t sect_GetOutputOffset();
+uint16_t sect_GetSymbolOffset();
+uint16_t sect_GetOutputOffset();
 uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset);
 void sect_AlignPC(uint8_t alignment, uint16_t offset);
 
