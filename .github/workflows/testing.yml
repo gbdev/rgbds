@@ -263,7 +263,6 @@ jobs:
           path: |
             test/gfx/randtilegen.exe
             test/gfx/rgbgfx_test.exe
-            test/link/unmangle.exe
 
   windows-mingw-testing:
     needs: windows-mingw-build
