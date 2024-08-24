@@ -7,10 +7,7 @@ MACRO compare
 		def v1 = \3(\4q\1, \5q\1, \1)
 		def v2 = \3(\4q\2, \5q\2, \2)
 	endc
-	opt Q\1
-	print "{.4f:v1} == "
-	opt Q\2
-	println "{.4f:v2}"
+	println "{.4q\1f:v1} == {.4q\2f:v2}"
 ENDM
 
 	compare  8, 16, mul, 6.0, 7.0
