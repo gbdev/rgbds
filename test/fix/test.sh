@@ -125,7 +125,7 @@ rc=$((rc || $?))
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
 else
-	echo "::warning ${bold}${red}${failed} of the RGBFIX tests failed!${rescolors}${resbold}"
+	echo "${bold}${red}${failed} of the tests failed!${rescolors}${resbold}"
 fi
 
 exit $rc
