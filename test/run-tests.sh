@@ -63,7 +63,7 @@ test_downstream() { # owner repo make-target build-file build-hash
 	make -j4 "$3" RGBDS=../../
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
-		echo >&2 'SHA-1 hash of '"$4"' did not match: '"$hash"
+		echo >&2 '::warning SHA-1 hash of '"$4"' did not match: '"$hash"
 		return 1
 	fi
 	popd

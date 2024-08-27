@@ -13,7 +13,7 @@ edited () {
 
 dependency () {
 	if edited "$1" && ! edited "$2"; then
-		echo "'$1' was modified, but not '$2'! $3" | xargs
+		echo >&2 "::warning '$1' was modified, but not '$2'! $3" | xargs
 	fi
 }
 

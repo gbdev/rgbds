@@ -104,7 +104,7 @@ done
 if [[ "$failed" -eq 0 ]]; then
 	echo "${bold}${green}All ${tests} tests passed!${rescolors}${resbold}"
 else
-	echo "${bold}${red}${failed} of the tests failed!${rescolors}${resbold}"
+	echo "::warning ${bold}${red}${failed} of the RGBGFX tests failed!${rescolors}${resbold}"
 fi
 
 exit $rc
