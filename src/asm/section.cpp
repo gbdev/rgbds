@@ -48,7 +48,7 @@ std::optional<std::string> currentLoadScope = std::nullopt;
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
-[[nodiscard]] static bool checksection() {
+[[nodiscard]] static bool requireSection() {
 	if (currentSection)
 		return true;
 
@@ -58,8 +58,8 @@ int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutput
 
 // A quick check to see if we have an initialized section that can contain
 // this much initialized data
-[[nodiscard]] static bool checkcodesection() {
-	if (!checksection())
+[[nodiscard]] static bool requireCodeSection() {
+	if (!requireSection())
 		return false;
 
 	if (sect_HasData(currentSection->type))
@@ -451,7 +451,7 @@ void sect_SetLoadSection(
 	// Therefore, any interactions are NOT TESTED, so lift either of those restrictions at
 	// your own peril! ^^
 
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	if (currentLoadSection) {
@@ -525,7 +525,7 @@ uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 }
 
 void sect_AlignPC(uint8_t alignment, uint16_t offset) {
-	if (!checksection())
+	if (!requireSection())
 		return;
 
 	Section *sect = sect_GetSymbolSection();
@@ -537,7 +537,8 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 			    "Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",
 			    sect->org + curOffset
 			);
-	} else if (sect->align != 0 && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
+	} else if (sect->align != 0
+	           && (((sect->alignOfs + curOffset) % (1u << sect->align)) - offset) % alignSize) {
 		error(
 		    "Section's alignment fails required alignment (offset from section start = $%04" PRIx32
 		    ")\n",
@@ -562,28 +563,28 @@ static void growSection(uint32_t growth) {
 	if (growth > 0 && curOffset > UINT32_MAX - growth)
 		fatalerror("Section size would overflow internal counter\n");
 	curOffset += growth;
-	if (curOffset + loadOffset > currentSection->size)
-		currentSection->size = curOffset + loadOffset;
+	if (uint32_t outOffset = sect_GetOutputOffset(); outOffset > currentSection->size)
+		currentSection->size = outOffset;
 	if (currentLoadSection && curOffset > currentLoadSection->size)
 		currentLoadSection->size = curOffset;
 }
 
-static void writebyte(uint8_t byte) {
+static void writeByte(uint8_t byte) {
 	if (uint32_t index = sect_GetOutputOffset(); index < currentSection->data.size())
 		currentSection->data[index] = byte;
 	growSection(1);
 }
 
-static void writeword(uint16_t b) {
-	writebyte(b & 0xFF);
-	writebyte(b >> 8);
+static void writeWord(uint16_t value) {
+	writeByte(value & 0xFF);
+	writeByte(value >> 8);
 }
 
-static void writelong(uint32_t b) {
-	writebyte(b & 0xFF);
-	writebyte(b >> 8);
-	writebyte(b >> 16);
-	writebyte(b >> 24);
+static void writeLong(uint32_t value) {
+	writeByte(value & 0xFF);
+	writeByte(value >> 8);
+	writeByte(value >> 16);
+	writeByte(value >> 24);
 }
 
 static void createPatch(PatchType type, Expression const &expr, uint32_t pcShift) {
@@ -640,51 +641,54 @@ void sect_CheckUnionClosed() {
 		error("Unterminated UNION construct\n");
 }
 
-// Output an absolute byte
-void sect_ConstByte(uint8_t b) {
-	if (!checkcodesection())
+// Output a constant byte
+void sect_ConstByte(uint8_t byte) {
+	if (!requireCodeSection())
 		return;
 
-	writebyte(b);
+	writeByte(byte);
 }
 
-void sect_ByteString(std::vector<int32_t> const &s) {
-	if (!checkcodesection())
+// Output a string's character units as bytes
+void sect_ByteString(std::vector<int32_t> const &string) {
+	if (!requireCodeSection())
 		return;
 
-	for (int32_t v : s) {
-		if (!checkNBit(v, 8, "All character units"))
+	for (int32_t unit : string) {
+		if (!checkNBit(unit, 8, "All character units"))
 			break;
 	}
 
-	for (int32_t v : s)
-		writebyte(static_cast<uint8_t>(v));
+	for (int32_t unit : string)
+		writeByte(static_cast<uint8_t>(unit));
 }
 
-void sect_WordString(std::vector<int32_t> const &s) {
-	if (!checkcodesection())
+// Output a string's character units as words
+void sect_WordString(std::vector<int32_t> const &string) {
+	if (!requireCodeSection())
 		return;
 
-	for (int32_t v : s) {
-		if (!checkNBit(v, 16, "All character units"))
+	for (int32_t unit : string) {
+		if (!checkNBit(unit, 16, "All character units"))
 			break;
 	}
 
-	for (int32_t v : s)
-		writeword(static_cast<uint16_t>(v));
+	for (int32_t unit : string)
+		writeWord(static_cast<uint16_t>(unit));
 }
 
-void sect_LongString(std::vector<int32_t> const &s) {
-	if (!checkcodesection())
+// Output a string's character units as longs
+void sect_LongString(std::vector<int32_t> const &string) {
+	if (!requireCodeSection())
 		return;
 
-	for (int32_t v : s)
-		writelong(static_cast<uint32_t>(v));
+	for (int32_t unit : string)
+		writeLong(static_cast<uint32_t>(unit));
 }
 
 // Skip this many bytes
 void sect_Skip(uint32_t skip, bool ds) {
-	if (!checksection())
+	if (!requireSection())
 		return;
 
 	if (!sect_HasData(currentSection->type)) {
@@ -700,28 +704,26 @@ void sect_Skip(uint32_t skip, bool ds) {
 			);
 		// We know we're in a code SECTION
 		while (skip--)
-			writebyte(fillByte);
+			writeByte(fillByte);
 	}
 }
 
-// Output a relocatable byte. Checking will be done to see if it
-// is an absolute value in disguise.
+// Output a byte that can be relocatable or constant
 void sect_RelByte(Expression &expr, uint32_t pcShift) {
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_BYTE, expr, pcShift);
-		writebyte(0);
+		writeByte(0);
 	} else {
-		writebyte(expr.value());
+		writeByte(expr.value());
 	}
 }
 
-// Output several copies of a relocatable byte. Checking will be done to see if
-// it is an absolute value in disguise.
+// Output several bytes that can be relocatable or constant
 void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	for (uint32_t i = 0; i < n; i++) {
@@ -729,50 +731,47 @@ void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs) {
 
 		if (!expr.isKnown()) {
 			createPatch(PATCHTYPE_BYTE, expr, i);
-			writebyte(0);
+			writeByte(0);
 		} else {
-			writebyte(expr.value());
+			writeByte(expr.value());
 		}
 	}
 }
 
-// Output a relocatable word. Checking will be done to see if
-// it's an absolute value in disguise.
+// Output a word that can be relocatable or constant
 void sect_RelWord(Expression &expr, uint32_t pcShift) {
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_WORD, expr, pcShift);
-		writeword(0);
+		writeWord(0);
 	} else {
-		writeword(expr.value());
+		writeWord(expr.value());
 	}
 }
 
-// Output a relocatable longword. Checking will be done to see if
-// is an absolute value in disguise.
+// Output a long that can be relocatable or constant
 void sect_RelLong(Expression &expr, uint32_t pcShift) {
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	if (!expr.isKnown()) {
 		createPatch(PATCHTYPE_LONG, expr, pcShift);
-		writelong(0);
+		writeLong(0);
 	} else {
-		writelong(expr.value());
+		writeLong(expr.value());
 	}
 }
 
-// Output a PC-relative relocatable byte. Checking will be done to see if it
-// is an absolute value in disguise.
+// Output a PC-relative byte that can be relocatable or constant
 void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	if (Symbol const *pc = sym_GetPC(); !expr.isDiffConstant(pc)) {
 		createPatch(PATCHTYPE_JR, expr, pcShift);
-		writebyte(0);
+		writeByte(0);
 	} else {
 		Symbol const *sym = expr.symbolOf();
 		// The offset wraps (jump from ROM to HRAM, for example)
@@ -790,9 +789,9 @@ void sect_PCRelByte(Expression &expr, uint32_t pcShift) {
 			    "; use jp instead\n",
 			    offset
 			);
-			writebyte(0);
+			writeByte(0);
 		} else {
-			writebyte(offset);
+			writeByte(offset);
 		}
 	}
 }
@@ -803,7 +802,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		error("Start position cannot be negative (%" PRId32 ")\n", startPos);
 		startPos = 0;
 	}
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 
 	FILE *file = nullptr;
@@ -845,7 +844,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 	}
 
 	for (int byte; (byte = fgetc(file)) != EOF;)
-		writebyte(byte);
+		writeByte(byte);
 
 	if (ferror(file))
 		error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
@@ -861,7 +860,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		error("Number of bytes to read cannot be negative (%" PRId32 ")\n", length);
 		length = 0;
 	}
-	if (!checkcodesection())
+	if (!requireCodeSection())
 		return;
 	if (length == 0) // Don't even bother with 0-byte slices
 		return;
@@ -916,7 +915,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 
 	while (length--) {
 		if (int byte = fgetc(file); byte != EOF) {
-			writebyte(byte);
+			writeByte(byte);
 		} else if (ferror(file)) {
 			error("Error reading INCBIN file '%s': %s\n", name.c_str(), strerror(errno));
 		} else {
