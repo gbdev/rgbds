@@ -3,7 +3,7 @@
 #ifndef RGBDS_LINK_OUTPUT_HPP
 #define RGBDS_LINK_OUTPUT_HPP
 
-#include "link/section.hpp"
+struct Section;
 
 /*
  * Registers a section for output.
