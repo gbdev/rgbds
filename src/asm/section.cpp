@@ -76,11 +76,11 @@ void sect_CheckSizes() {
 	for (Section const &sect : sectionList) {
 		if (uint32_t maxSize = sectionTypeInfo[sect.type].size; sect.size > maxSize)
 			error(
-				"Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
-				").\n",
-				sect.name.c_str(),
-				maxSize,
-				sect.size
+			    "Section '%s' grew too big (max size = 0x%" PRIX32 " bytes, reached 0x%" PRIX32
+			    ").\n",
+			    sect.name.c_str(),
+			    maxSize,
+			    sect.size
 			);
 	}
 }
@@ -837,8 +837,7 @@ void sect_BinaryFile(std::string const &name, int32_t startPos) {
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
-				    "Specified start position is greater than length of file '%s'\n",
-				    name.c_str()
+				    "Specified start position is greater than length of file '%s'\n", name.c_str()
 				);
 				return;
 			}
@@ -908,8 +907,7 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 		while (startPos--) {
 			if (fgetc(file) == EOF) {
 				error(
-				    "Specified start position is greater than length of file '%s'\n",
-				    name.c_str()
+				    "Specified start position is greater than length of file '%s'\n", name.c_str()
 				);
 				return;
 			}

@@ -183,8 +183,7 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 				location.bank = scrambleROMX + 1;
 			else
 				return -1;
-		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX
-		           && location.bank <= scrambleWRAMX) {
+		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX && location.bank <= scrambleWRAMX) {
 			if (location.bank > typeInfo.firstBank)
 				location.bank--;
 			else if (scrambleWRAMX < typeInfo.lastBank)
@@ -237,8 +236,9 @@ static void placeSection(Section &section) {
 		assignSection(section, location);
 
 		// Update the free space
+		uint16_t sectionEnd = section.org + section.size;
 		bool noLeftSpace = freeSpace.address == section.org;
-		bool noRightSpace = freeSpace.address + freeSpace.size == section.org + section.size;
+		bool noRightSpace = freeSpace.address + freeSpace.size == sectionEnd;
 		if (noLeftSpace && noRightSpace) {
 			// The free space is entirely deleted
 			bankMem.erase(bankMem.begin() + spaceIdx);
@@ -247,12 +247,11 @@ static void placeSection(Section &section) {
 			// Append the new space after the original one
 			bankMem.insert(
 			    bankMem.begin() + spaceIdx + 1,
-			    {.address = (uint16_t)(section.org + section.size),
-			     .size = (uint16_t)(freeSpace.address + freeSpace.size - section.org - section.size)
-			    }
+			    {.address = sectionEnd,
+			     .size = (uint16_t)(freeSpace.address + freeSpace.size - sectionEnd)}
 			);
-			// **`freeSpace` cannot be reused from this point on**, because `bankMem.insert`
-			// invalidates all references to itself!
+			// **`freeSpace` cannot be reused from this point on, because `bankMem.insert`
+			// invalidates all references to itself!**
 
 			// Resize the original space (address is unmodified)
 			bankMem[spaceIdx].size = section.org - bankMem[spaceIdx].address;

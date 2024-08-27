@@ -750,7 +750,7 @@ public:
 			if (options.allowMirroringX) {
 				// Count the line itself as mirrorred horizontally; vertical mirroring is already
 				// taken care of because the symmetric line will be XOR'd the same way.
-				// (...this reduces the hash's efficiency, but seems benign with most real-world data.)
+				// (This reduces the hash's efficiency, but seems benign with most real-world data.)
 				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 			}
 		}

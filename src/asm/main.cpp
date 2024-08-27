@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 					                     : !strcasecmp(feature, "equs")  ? STATE_EQUS
 					                     : !strcasecmp(feature, "char")  ? STATE_CHAR
 					                     : !strcasecmp(feature, "macro") ? STATE_MACRO
-					                                                    : NB_STATE_FEATURES;
+					                                                     : NB_STATE_FEATURES;
 					if (value == NB_STATE_FEATURES) {
 						errx("Invalid feature for option 's': \"%s\"", feature);
 					} else if (std::find(RANGE(features), value) != features.end()) {

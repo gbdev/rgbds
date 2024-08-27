@@ -231,7 +231,12 @@ static void doSanityChecks(Section &section) {
 	if (section.type < 0 || section.type >= SECTTYPE_INVALID) {
 		// This is trapped early in RGBDS objects (because then the format is not parseable),
 		// which leaves SDAS objects.
-		error(nullptr, 0, "Section \"%s\" has not been assigned a type by a linker script", section.name.c_str());
+		error(
+		    nullptr,
+		    0,
+		    "Section \"%s\" has not been assigned a type by a linker script",
+		    section.name.c_str()
+		);
 		return;
 	}
 

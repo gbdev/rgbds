@@ -880,7 +880,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			Label &label = sym.data.get<Label>();
 			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT) {
-					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
+					// Add the fragment's offset to the symbol's
+					// (`section->offset` is computed by `sect_AddSection`)
 					label.offset += section->offset;
 				}
 				// Associate the symbol with the main section, not the "component" one

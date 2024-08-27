@@ -625,7 +625,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 			Label &label = fileSymbols[i].data.get<Label>();
 			if (Section *section = label.section; section->modifier != SECTION_NORMAL) {
 				if (section->modifier == SECTION_FRAGMENT) {
-					// Add the fragment's offset to the symbol's (`section->offset` is computed by `sect_AddSection`)
+					// Add the fragment's offset to the symbol's
+					// (`section->offset` is computed by `sect_AddSection`)
 					label.offset += section->offset;
 				}
 				// Associate the symbol with the main section, not the "component" one

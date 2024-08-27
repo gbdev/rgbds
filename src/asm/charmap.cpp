@@ -72,7 +72,7 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	Charmap &charmap = charmapList.emplace_back();
 
 	if (baseIdx != (size_t)-1) {
-		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
+		charmap.nodes = charmapList[baseIdx].nodes;       // Copies `charmapList[baseIdx].nodes`
 		charmap.mappings = charmapList[baseIdx].mappings; // Copies `charmapList[baseIdx].mappings`
 	} else {
 		charmap.nodes.emplace_back(); // Zero-init the root node
