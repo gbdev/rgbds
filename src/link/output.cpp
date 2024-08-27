@@ -17,6 +17,7 @@
 #include "platform.hpp"
 
 #include "link/main.hpp"
+#include "link/section.hpp"
 #include "link/symbol.hpp"
 
 #define BANK_SIZE 0x4000

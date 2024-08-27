@@ -10,7 +10,6 @@
 #include "asm/fixpoint.hpp"
 #include "asm/fstack.hpp"
 #include "asm/lexer.hpp"
-#include "asm/main.hpp"
 #include "asm/section.hpp"
 #include "asm/warning.hpp"
 
