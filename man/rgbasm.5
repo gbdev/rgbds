@@ -175,11 +175,8 @@ or
 If specified, prints this character in front of non-negative numbers.
 .It Ql <prefix> Ta May be
 .Ql # .
-If specified, prints the appropriate prefix for numbers,
-.Ql $ ,
-.Ql & ,
-or
-.Ql % .
+If specified, prints a base prefix for non-decimal integer types
+.Pq So $ Sc , So & Sc , or So % Sc .
 .It Ql <align> Ta May be
 .Ql - .
 If specified, aligns left instead of right.
@@ -197,7 +194,7 @@ followed by one or more
 .Ql 0
 \[en]
 .Ql 9 .
-If specified, prints this many digits of a fixed-point fraction.
+If specified, prints this many fractional digits of a fixed-point number.
 Defaults to 5 digits, maximum 255 digits.
 .It Ql <type> Ta Specifies the type of value.
 .El
@@ -205,8 +202,8 @@ Defaults to 5 digits, maximum 255 digits.
 All the format specifier parts are optional except the
 .Ql <type> .
 Valid print types are:
-.Bl -column -offset indent "Print type" "Lowercase hexadecimal" "Example"
-.It Sy Print type Ta Sy Format Ta Sy Example
+.Bl -column -offset indent "Type" "Lowercase hexadecimal" "Example"
+.It Sy Type Ta Sy Format Ta Sy Example
 .It Ql d Ta Signed decimal Ta -42
 .It Ql u Ta Unsigned decimal Ta 42
 .It Ql x Ta Lowercase hexadecimal Ta 2a
@@ -214,7 +211,7 @@ Valid print types are:
 .It Ql b Ta Binary Ta 101010
 .It Ql o Ta Octal Ta 52
 .It Ql f Ta Fixed-point Ta 1234.56789
-.It Ql s Ta String Ta \&"example\&"
+.It Ql s Ta String Ta string contents
 .El
 .Pp
 Examples:
@@ -515,21 +512,17 @@ is special in that it causes the character following it to be
 .Dq escaped ,
 meaning that it is treated differently from normal.
 There are a number of escape sequences you can use within a string:
-.Bl -column -offset indent "Qo \e1 Qc \[en] Qo \e9 Qc"
-.It Sy String Ta Sy Meaning
-.It Ql \e\e Ta Produces a backslash
-.It Ql \e" Ta Produces a double quote without terminating
-.It Ql \e{ Ta Curly bracket left
-.It Ql \e} Ta Curly bracket right
-.It Ql \en Ta Newline ($0A)
-.It Ql \er Ta Carriage return ($0D)
-.It Ql \et Ta Tab ($09)
-.It Ql \e0 Ta Null ($00)
-.It Qo \e1 Qc \[en] Qo \e9 Qc Ta Macro argument Pq Only in the body of a macro; see Sx Invoking macros
-.It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas Pq Only in the body of a macro
-.It Ql \e@ Ta Label name suffix Pq Only in the body of a macro or a Ic REPT No block
+.Bl -column -offset indent "Sequence"
+.It Sy Sequence Ta Sy Meaning
+.It Ql \e\e Ta Backslash Pq escapes the escape character itself
+.It Ql \e" Ta Double quote Pq does not terminate the string
+.It Ql \e{ Ta Open curly brace Pq does not start interpolation
+.It Ql \e} Ta Close curly brace Pq does not end interpolation
+.It Ql \en Ta Newline Pq ASCII $0A
+.It Ql \er Ta Carriage return Pq ASCII $0D
+.It Ql \et Ta Tab Pq ASCII $09
+.It Ql \e0 Ta Null Pq ASCII $00
 .El
-(Note that some of those can be used outside of strings, when noted further in this document.)
 .Pp
 Multi-line strings are contained in triple quotes
 .Pq Ql \&"\&"\&"for instance\&"\&"\&" .
@@ -821,6 +814,7 @@ Section examples:
 .Bd -literal -offset indent
 SECTION "Cool Stuff", ROMX
 .Ed
+.Pp
 This switches to the section called
 .Dq CoolStuff ,
 creating it if it doesn't already exist.
@@ -1341,9 +1335,9 @@ below).
 is used to define string constant symbols.
 Wherever the assembler reads a string constant, it gets
 .Em expanded :
-the symbol's name is replaced with its contents.
-If you are familiar with C, you can think of it as similar to
-.Fd #define .
+the symbol's name is replaced with its contents, similarly to
+.Ic #define
+in the C programming language.
 This expansion is disabled in a few contexts:
 .Ql DEF(name) ,
 .Ql DEF name EQU/=/EQUS/etc ... ,
@@ -1389,38 +1383,35 @@ PRINTLN "{s}\en"
 String constants can't be exported or imported.
 .Pp
 .Sy Important note :
-When a string constant is expanded, its expansion may contain another string constant, which will be expanded as well.
+When a string constant is expanded, its expansion may contain another string constant, which will be expanded as well, and may be recursive.
 If this creates an infinite loop,
 .Nm
 will error out once a certain depth is
-reached.
-See the
+reached (see the
 .Fl r
 command-line option in
-.Xr rgbasm 1 .
-The same problem can occur if the expansion of a macro invokes another macro, recursively.
+.Xr rgbasm 1 ) .
+The same problem can occur if the expansion of a string constant invokes a macro, which itself expands.
 .Ss Macros
 One of the best features of an assembler is the ability to write macros for it.
 Macros can be called with arguments, and can react depending on input using
 .Ic IF
 constructs.
 .Bd -literal -offset indent
-MACRO MyMacro
+MACRO my_macro
     ld a, 80
     call MyFunc
 ENDM
 .Ed
 .Pp
 The example above defines
-.Ql MyMacro
+.Ql my_macro
 as a new macro.
 String constants are not expanded within the name of the macro.
 .Pp
 Macros can't be exported or imported.
 .Pp
-Plainly nesting macro definitions is not allowed, but this can be worked around using
-.Ic EQUS .
-So this won't work:
+Nesting macro definitions is not possible, so this won't work:
 .Bd -literal -offset indent
 MACRO outer
     MACRO inner
@@ -1429,22 +1420,20 @@ MACRO outer
 ENDM     ; ...and then this is a syntax error!
 .Ed
 .Pp
-But this will:
+But you can work around this limitation using
+.Ic EQUS ,
+so this will work:
 .Bd -literal -offset indent
 MACRO outer
-DEF definition EQUS "MACRO inner\enPRINTLN \e"Hello!\e"\enENDM"
+    DEF definition EQUS "MACRO inner\enPRINTLN \e"Hello!\e"\enENDM"
     definition
     PURGE definition
 ENDM
 .Ed
 .Pp
-Macro arguments support all the escape sequences of strings, as well as
-.Ql \e,
-to escape commas, as well as
-.Ql \e(
-and
-.Ql \e)
-to escape parentheses, since those otherwise separate and enclose arguments, respectively.
+More about how to define and invoke macros is described in
+.Sx THE MACRO LANGUAGE
+below.
 .Ss Exporting and importing symbols
 Importing and exporting of symbols is a feature that is very useful when your project spans many source files and, for example, you need to jump to a routine defined in another file.
 .Pp
@@ -1739,114 +1728,89 @@ Unions may be used in any section, but they may only contain space-allocating di
 .Sx Statically allocating space in RAM ) .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
-A macro is invoked by writing its name at the beginning of a line, followed by any arguments.
+A macro is invoked by using its name at the beginning of a line, like a directive, followed by any comma-separated arguments.
 .Bd -literal -offset indent
     add a, b
     ld sp, hl
-    MyMacro    ;\ This will be expanded
+    my_macro      ;\ This will be expanded
     sub a, 87
-    MyMacro 42 ;\ So will this
+    my_macro 42   ;\ So will this
+    ret c
+    my_macro 1, 2 ;\ And this
 .Ed
 .Pp
-It's valid to call a macro from a macro (yes, even the same one).
-.Pp
-When
+After
 .Nm
-sees
-.Ic MyMacro
-it will insert the macro definition (the code enclosed in
+has read the macro invocation line, it will expand the body of the macro (the lines between
 .Ic MACRO
-/
-.Ic ENDM ) .
-.Pp
-Suppose your macro contains a loop.
-.Bd -literal -offset indent
-MACRO LoopyMacro
-    xor a, a
-\&.loop
-    ld [hl+], a
-    dec  c
-    jr nz, .loop
-ENDM
-.Ed
-.Pp
-This is fine, but only if you use the macro no more than once per scope.
-To get around this problem, there is the escape sequence
-.Ic \e@
-that expands to a unique string.
-.Pp
-.Ic \e@
-also works in
-.Ic REPT
-blocks.
-.Bd -literal -offset indent
-MACRO LoopyMacro
-    xor a, a
-\&.loop\e@
-    ld [hl+], a
-    dec c
-    jr nz, .loop\e@
-ENDM
-.Ed
+and
+.Ic ENDM )
+in its place.
 .Pp
 .Sy Important note :
-Since a macro can call itself (or a different macro that calls the first one), there can be circular dependency problems.
+When a macro body is expanded, its expansion may contain another macro invocation, which will be expanded as well, and may be recursive.
 If this creates an infinite loop,
 .Nm
 will error out once a certain depth is
-reached.
-See the
+reached (see the
 .Fl r
 command-line option in
-.Xr rgbasm 1 .
-Also, a macro can have inside an
-.Sy EQUS
-which references the same macro, which has the same problem.
+.Xr rgbasm 1 ) .
+The same problem can occur if the expansion of a macro then expands a string constant, which itself expands.
 .Pp
 It's possible to pass arguments to macros as well!
-You retrieve the arguments by using the escape sequences
+.Bd -literal -offset indent
+MACRO lb
+    ld \e1, (\e2) << 8 | (\e3)
+ENDM
+    lb hl, 20, 18        ; Expands to "ld hl, ((20) << 8) | (18)"
+    lb de, 3 + 1, NUM**2 ; Expands to "ld de, ((3 + 1) << 8) | (NUM**2)"
+.Ed
+.Pp
+You expand the arguments inside the macro body by using the escape sequences
 .Ic \e1
 through
 .Ic \e9 , \e1
-being the first argument specified on the macro invocation.
-.Bd -literal -offset indent
-MACRO LoopyMacro
-    ld hl, \e1
-    ld c, \e2
-    xor a, a
-\&.loop\e@
-    ld [hl+], a
-    dec c
-    jr nz, .loop\e@
-ENDM
-.Ed
+being the first argument,
+.Ic \e2
+being the second, and so on. Since there are only nine digits, you can only use the first nine macro arguments that way.
+To use the rest, you put the argument number in angle brackets, like
+.Ic \e<10> .
 .Pp
-Now you can call the macro specifying two arguments, the first being the address and the second being a byte count.
-The generated code will then reset all bytes in this range.
-.Bd -literal -offset indent
-    LoopyMacro MyVars, 54
-.Ed
+This bracketed syntax supports decimal numbers and numeric constant symbols.
+For example,
+.Ql \e<_NARG>
+will get the last argument.
 .Pp
-Arguments are passed as string constants, although there's no need to enclose them in quotes.
-Thus, an expression will not be evaluated first but kind of copy-pasted.
-This means that it's probably a very good idea to use brackets around
-.Ic \e1
-to
-.Ic \e9
-if you perform further calculations on them.
-For instance, consider the following:
-.Bd -literal -offset indent
-MACRO print_double
-    PRINTLN \e1 * 2
-ENDM
-    print_double 1 + 2
-.Ed
+Other macro arguments and symbol interpolations will also be expanded inside the angle brackets.
+For example, if
+.Ql \e1
+is
+.Ql 13 ,
+then
+.Ql \e<\e1>
+inside the macro body will expand to
+.Ql \e<13> .
+Or if
+.Ql DEF v10 = 42
+and
+.Ql DEF x = 10 ,
+then
+.Ql \e<v{d:x}>
+will expand to
+.Ql \e<42> .
 .Pp
-The
-.Ic PRINTLN
-statement will expand to
-.Ql PRINTLN 1 + 2 * 2 ,
-which will print 5 and not 6 as you might have expected.
+Macro arguments are passed as string constants, although there's no need to enclose them in quotes.
+Thus, arguments are not evaluated as expressions, but instead are expanded directly inside the macro body.
+This means that they support all the escape sequences of strings (see
+.Sx String expressions
+above), as well as some of their own:
+.Bl -column -offset indent "Sequence"
+.It Sy Sequence Ta Sy Meaning
+.It Ql \e, Ta Comma Pq does not terminate the argument
+.It Ql \e( Ta Open parenthesis Pq does not start enclosing argument contents
+.It Ql \e) Ta Close parenthesis Pq does not end enclosing argument contents
+.El
 .Pp
 Line continuations work as usual inside macros or lists of macro arguments.
 However, some characters need to be escaped, as in the following example:
@@ -1868,87 +1832,100 @@ The comma in
 needs to be escaped to prevent it from starting another macro argument.
 The comma in
 .Ql PrintMacro2
-does not need escaping because it is inside parentheses, similar to macro arguments in C.
+does not need escaping because it is inside parentheses, similar to macro arguments in the C programming language.
 The backslash in
 .Ql \en
-also does not need escaping because string literals work as usual inside macro arguments.
+also does not need escaping because quoted string literals work as usual inside macro arguments.
 .Pp
-Since there are only nine digits, you can only access the first nine macro arguments like this.
-To use the rest, you need to put the multi-digit argument number in angle brackets, like
-.Ql \e<10> .
-This bracketed syntax supports decimal numbers and numeric constant symbols.
-For example,
-.Ql \e<_NARG>
-will get the last argument.
+Since macro arguments are expanded directly, it's often a good idea to put parentheses around them if they're meant as part of a numeric expression.
+For instance, consider the following:
+.Bd -literal -offset indent
+MACRO print_double
+    PRINTLN \e1 * 3
+ENDM
+    print_double 1 + 2
+.Ed
 .Pp
-Other macro arguments and symbol interpolations will be expanded inside the angle brackets.
-For example, if
-.Ql \e1
-is
-.Ql 13 ,
-then
-.Ql \e<\e1>
-will expand to
-.Ql \e<13> .
-Or if
-.Ql v10 = 42
-and
-.Ql x = 10 ,
-then
-.Ql \e<v{d:x}>
-will expand to
-.Ql \e<42> .
+The body will expand to
+.Ql PRINTLN 1 + 2 * 3 ,
+which will print 7 and not 9 as you might have expected.
 .Pp
 The
 .Ic SHIFT
-directive is only available inside macros.
-It will shift the arguments by one to the left, and decrease
-.Dv _NARG
-by 1:
-.Ic \e1
-takes the value of
-.Ic \e2 ,
-then
+directive is only available inside macro bodies.
+It shifts the argument numbers by one to the left, so what was
 .Ic \e2
-takes the value of
-.Ic \e3 ,
+is now
+.Ic \e1 ,
+what was
+.Ic \e3
+is now
+.Ic \e2 ,
 and so forth.
+(What was
+.Ic \e1
+is no longer accessible, so
+.Dv _NARG
+is decreased by 1.)
 .Pp
 .Ic SHIFT
-can optionally be given an integer parameter, and will apply the above shifting that number of times.
-A negative parameter will shift the arguments in reverse.
+can also take an integer parameter to shift that many times instead of once.
+A negative parameter will shift the arguments to the right, which can regain access to previously shifted ones.
 .Pp
 .Ic SHIFT
 is especially useful in
 .Ic REPT
-loops, to repeat the same commands but with different arguments each time.
-.Ss Printing things during assembly
-The
-.Ic PRINT
-and
-.Ic PRINTLN
-commands print text and values to the standard output.
-Useful for debugging macros, or wherever you may feel the need to tell yourself some important information.
-.Bd -literal -offset indent
-PRINT "Hello world!\en"
-PRINTLN "Hello world!"
-PRINT _NARG, " arguments\en"
-PRINTLN "sum: ", 2+3, " product: ", 2*3
-PRINTLN STRFMT("E = %f", 2.718)
-.Ed
-.Bl -inset
-.It Ic PRINT
-prints out each of its comma-separated arguments.
-Numbers are printed as unsigned uppercase hexadecimal with a leading
-.Sq $ .
-For different formats, use
-.Ic STRFMT .
-.It Ic PRINTLN
-prints out each of its comma-separated arguments, if any, followed by a line feed
-.Pq Ql \en .
+loops to iterate over different arguments, evaluating the same loop body each time.
+.Pp
+There are some escape sequences which are only valid inside the body of a macro:
+.Bl -column -offset indent "Sequence"
+.It Sy Sequence Ta Sy Meaning
+.It So \e1 Sc \[en] So \e9 Sc Ta The 1st\[en]9th macro argument
+.It Ql \e<...> Ta Further macro arguments
+.It Ql \e# Ta All Dv _NARG No macro arguments, separated by commas
+.It Ql \e@ Ta Unique symbol name affix Pq see below
 .El
+.Pp
+The
+.Ic \e@
+escape sequence is often useful in macros which define symbols.
+Suppose your macro expands to a loop of assembly code:
+.Bd -literal -offset indent
+MACRO loop_c_times
+    xor a, a
+\&.loop
+    ld [hl+], a
+    dec c
+    jr nz, .loop
+ENDM
+.Ed
+.Pp
+If you use this macro more than once in the same label scope, it will define
+.Ql \&.loop
+twice, which is an error.
+To work around this problem, you can use
+.Ic \e@
+as a label suffix:
+.Bd -literal -offset indent
+MACRO loop_c_times_fixed
+    xor a, a
+\&.loop\e@
+    ld [hl+], a
+    dec c
+    jr nz, .loop\e@
+ENDM
+.Ed
+.Pp
+This will expand to a different value in each invocation, similar to
+.Ic gensym
+in the Lisp programming language.
+.Pp
+.Ic \e@
+also works in
+.Ic REPT
+blocks, expanding to a different value in each iteration.
 .Ss Automatically repeating blocks of code
-Suppose you want to unroll a time consuming loop without copy-pasting it.
+Suppose you want to unroll a time-consuming loop without copy-pasting it.
 .Ic REPT
 is here for that purpose.
 Everything between
@@ -2016,9 +1993,9 @@ DEF N = 256
 .Pp
 You can customize the range of
 .Ic FOR
-values, similarly to Python's
+values, similarly to the
 .Ql range
-function:
+function in the Python programming language:
 .Bl -column "FOR V, start, stop, step"
 .It Sy Code Ta Sy Range
 .It Ic FOR Ar V , stop Ta Ar V No increments from 0 to Ar stop
@@ -2100,6 +2077,101 @@ This will print:
 .Bd -literal -offset indent
 1, 2, 3, 4, 5 stop! done 5
 .Ed
+.Ss Conditionally assembling blocks of code
+The four commands
+.Ic IF , ELIF , ELSE ,
+and
+.Ic ENDC
+let you have
+.Nm
+skip over parts of your code depending on a condition.
+This is a powerful feature commonly used in macros.
+.Bd -literal -offset indent
+IF NUM < 0
+  PRINTLN "NUM < 0"
+ELIF NUM == 0
+  PRINTLN "NUM == 0"
+ELSE
+  PRINTLN "NUM > 0"
+ENDC
+.Ed
+.Pp
+The
+.Ic ELIF
+(standing for "else if") and
+.Ic ELSE
+blocks are optional.
+.Ic IF
+/
+.Ic ELIF
+/
+.Ic ELSE
+/
+.Ic ENDC
+blocks can be nested.
+.Pp
+Note that if an
+.Ic ELSE
+block is found before an
+.Ic ELIF
+block, the
+.Ic ELIF
+block will be ignored.
+All
+.Ic ELIF
+blocks must go before the
+.Ic ELSE
+block.
+Also, if there is more than one
+.Ic ELSE
+block, all of them but the first one are ignored.
+.Ss Including other source files
+Use
+.Ic INCLUDE
+to process another assembler file and then return to the current file when done.
+If the file isn't found in the current directory, the include path list (see the
+.Fl I
+option in
+.Xr rgbasm 1 )
+will be searched.
+You may nest
+.Ic INCLUDE
+calls infinitely (or until you run out of memory, whichever comes first).
+.Bd -literal -offset indent
+    INCLUDE "irq.inc"
+.Ed
+.Pp
+You may also implicitly
+.Ic INCLUDE
+a file before the source file with the
+.Fl P
+option of
+.Xr rgbasm 1 .
+.Ss Printing things during assembly
+The
+.Ic PRINT
+and
+.Ic PRINTLN
+commands print text and values to the standard output.
+Useful for debugging macros, or wherever you may feel the need to tell yourself some important information.
+.Bd -literal -offset indent
+PRINT "Hello world!\en"
+PRINTLN "Hello world!"
+PRINT _NARG, " arguments\en"
+PRINTLN "sum: ", 2+3, " product: ", 2*3
+PRINTLN STRFMT("E = %f", 2.718)
+.Ed
+.Bl -inset
+.It Ic PRINT
+prints out each of its comma-separated arguments.
+Numbers are printed as unsigned uppercase hexadecimal with a leading
+.Sq $ .
+For different formats, use
+.Ic STRFMT .
+.It Ic PRINTLN
+prints out each of its comma-separated arguments, if any, followed by a line feed
+.Pq Ql \en .
+.El
 .Ss Aborting the assembly process
 .Ic FAIL
 and
@@ -2172,76 +2244,6 @@ to be emitted;
 (the default) will cause a non-fatal error; and
 .Ic FATAL
 immediately aborts.
-.Ss Including other source files
-Use
-.Ic INCLUDE
-to process another assembler file and then return to the current file when done.
-If the file isn't found in the current directory, the include path list (see the
-.Fl I
-option in
-.Xr rgbasm 1 )
-will be searched.
-You may nest
-.Ic INCLUDE
-calls infinitely (or until you run out of memory, whichever comes first).
-.Bd -literal -offset indent
-    INCLUDE "irq.inc"
-.Ed
-.Pp
-You may also implicitly
-.Ic INCLUDE
-a file before the source file with the
-.Fl P
-option of
-.Xr rgbasm 1 .
-.Ss Conditional assembling
-The four commands
-.Ic IF , ELIF , ELSE ,
-and
-.Ic ENDC
-let you have
-.Nm
-skip over parts of your code depending on a condition.
-This is a powerful feature commonly used in macros.
-.Bd -literal -offset indent
-IF NUM < 0
-  PRINTLN "NUM < 0"
-ELIF NUM == 0
-  PRINTLN "NUM == 0"
-ELSE
-  PRINTLN "NUM > 0"
-ENDC
-.Ed
-.Pp
-The
-.Ic ELIF
-(standing for "else if") and
-.Ic ELSE
-blocks are optional.
-.Ic IF
-/
-.Ic ELIF
-/
-.Ic ELSE
-/
-.Ic ENDC
-blocks can be nested.
-.Pp
-Note that if an
-.Ic ELSE
-block is found before an
-.Ic ELIF
-block, the
-.Ic ELIF
-block will be ignored.
-All
-.Ic ELIF
-blocks must go before the
-.Ic ELSE
-block.
-Also, if there is more than one
-.Ic ELSE
-block, all of them but the first one are ignored.
 .Sh MISCELLANEOUS
 .Ss Changing options while assembling
 .Ic OPT
