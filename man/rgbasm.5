@@ -1819,7 +1819,7 @@ MACRO PrintMacro1
     PRINTLN STRCAT(\e1)
 ENDM
     PrintMacro1 "Hello "\e, \e
-                       "world"
+                "world"
 MACRO PrintMacro2
     PRINT \e1
 ENDM
@@ -2169,7 +2169,7 @@ Numbers are printed as unsigned uppercase hexadecimal with a leading
 For different formats, use
 .Ic STRFMT .
 .It Ic PRINTLN
-prints out each of its comma-separated arguments, if any, followed by a line feed
+prints out each of its comma-separated arguments, if any, followed by a newline
 .Pq Ql \en .
 .El
 .Ss Aborting the assembly process
