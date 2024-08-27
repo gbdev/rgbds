@@ -641,14 +641,14 @@ void sect_CheckUnionClosed() {
 }
 
 // Output an absolute byte
-void sect_AbsByte(uint8_t b) {
+void sect_ConstByte(uint8_t b) {
 	if (!checkcodesection())
 		return;
 
 	writebyte(b);
 }
 
-void sect_AbsByteString(std::vector<int32_t> const &s) {
+void sect_ByteString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 
@@ -661,7 +661,7 @@ void sect_AbsByteString(std::vector<int32_t> const &s) {
 		writebyte(static_cast<uint8_t>(v));
 }
 
-void sect_AbsWordString(std::vector<int32_t> const &s) {
+void sect_WordString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 
@@ -674,7 +674,7 @@ void sect_AbsWordString(std::vector<int32_t> const &s) {
 		writeword(static_cast<uint16_t>(v));
 }
 
-void sect_AbsLongString(std::vector<int32_t> const &s) {
+void sect_LongString(std::vector<int32_t> const &s) {
 	if (!checkcodesection())
 		return;
 

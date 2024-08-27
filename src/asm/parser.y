@@ -1263,7 +1263,7 @@ constlist_8bit_entry:
 	}
 	| string {
 		std::vector<int32_t> output = charmap_Convert($1);
-		sect_AbsByteString(output);
+		sect_ByteString(output);
 	}
 ;
 
@@ -1278,7 +1278,7 @@ constlist_16bit_entry:
 	}
 	| string {
 		std::vector<int32_t> output = charmap_Convert($1);
-		sect_AbsWordString(output);
+		sect_WordString(output);
 	}
 ;
 
@@ -1293,7 +1293,7 @@ constlist_32bit_entry:
 	}
 	| string {
 		std::vector<int32_t> output = charmap_Convert($1);
-		sect_AbsLongString(output);
+		sect_LongString(output);
 	}
 ;
 
@@ -1801,163 +1801,163 @@ cpu_command:
 
 z80_adc:
 	Z80_ADC op_a_n {
-		sect_AbsByte(0xCE);
+		sect_ConstByte(0xCE);
 		sect_RelByte($2, 1);
 	}
 	| Z80_ADC op_a_r {
-		sect_AbsByte(0x88 | $2);
+		sect_ConstByte(0x88 | $2);
 	}
 ;
 
 z80_add:
 	Z80_ADD op_a_n {
-		sect_AbsByte(0xC6);
+		sect_ConstByte(0xC6);
 		sect_RelByte($2, 1);
 	}
 	| Z80_ADD op_a_r {
-		sect_AbsByte(0x80 | $2);
+		sect_ConstByte(0x80 | $2);
 	}
 	| Z80_ADD MODE_HL COMMA reg_ss {
-		sect_AbsByte(0x09 | ($4 << 4));
+		sect_ConstByte(0x09 | ($4 << 4));
 	}
 	| Z80_ADD MODE_SP COMMA reloc_8bit {
-		sect_AbsByte(0xE8);
+		sect_ConstByte(0xE8);
 		sect_RelByte($4, 1);
 	}
 ;
 
 z80_and:
 	Z80_AND op_a_n {
-		sect_AbsByte(0xE6);
+		sect_ConstByte(0xE6);
 		sect_RelByte($2, 1);
 	}
 	| Z80_AND op_a_r {
-		sect_AbsByte(0xA0 | $2);
+		sect_ConstByte(0xA0 | $2);
 	}
 ;
 
 z80_bit:
 	Z80_BIT bit_const COMMA reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x40 | ($2 << 3) | $4);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 ;
 
 z80_call:
 	Z80_CALL reloc_16bit {
-		sect_AbsByte(0xCD);
+		sect_ConstByte(0xCD);
 		sect_RelWord($2, 1);
 	}
 	| Z80_CALL ccode_expr COMMA reloc_16bit {
-		sect_AbsByte(0xC4 | ($2 << 3));
+		sect_ConstByte(0xC4 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ccf:
 	Z80_CCF {
-		sect_AbsByte(0x3F);
+		sect_ConstByte(0x3F);
 	}
 ;
 
 z80_cp:
 	Z80_CP op_a_n {
-		sect_AbsByte(0xFE);
+		sect_ConstByte(0xFE);
 		sect_RelByte($2, 1);
 	}
 	| Z80_CP op_a_r {
-		sect_AbsByte(0xB8 | $2);
+		sect_ConstByte(0xB8 | $2);
 	}
 ;
 
 z80_cpl:
 	Z80_CPL {
-		sect_AbsByte(0x2F);
+		sect_ConstByte(0x2F);
 	}
 ;
 
 z80_daa:
 	Z80_DAA {
-		sect_AbsByte(0x27);
+		sect_ConstByte(0x27);
 	}
 ;
 
 z80_dec:
 	Z80_DEC reg_r {
-		sect_AbsByte(0x05 | ($2 << 3));
+		sect_ConstByte(0x05 | ($2 << 3));
 	}
 	| Z80_DEC reg_ss {
-		sect_AbsByte(0x0B | ($2 << 4));
+		sect_ConstByte(0x0B | ($2 << 4));
 	}
 ;
 
 z80_di:
 	Z80_DI {
-		sect_AbsByte(0xF3);
+		sect_ConstByte(0xF3);
 	}
 ;
 
 z80_ei:
 	Z80_EI {
-		sect_AbsByte(0xFB);
+		sect_ConstByte(0xFB);
 	}
 ;
 
 z80_halt:
 	Z80_HALT {
-		sect_AbsByte(0x76);
+		sect_ConstByte(0x76);
 	}
 ;
 
 z80_inc:
 	Z80_INC reg_r {
-		sect_AbsByte(0x04 | ($2 << 3));
+		sect_ConstByte(0x04 | ($2 << 3));
 	}
 	| Z80_INC reg_ss {
-		sect_AbsByte(0x03 | ($2 << 4));
+		sect_ConstByte(0x03 | ($2 << 4));
 	}
 ;
 
 z80_jp:
 	Z80_JP reloc_16bit {
-		sect_AbsByte(0xC3);
+		sect_ConstByte(0xC3);
 		sect_RelWord($2, 1);
 	}
 	| Z80_JP ccode_expr COMMA reloc_16bit {
-		sect_AbsByte(0xC2 | ($2 << 3));
+		sect_ConstByte(0xC2 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
 	| Z80_JP MODE_HL {
-		sect_AbsByte(0xE9);
+		sect_ConstByte(0xE9);
 	}
 ;
 
 z80_jr:
 	Z80_JR reloc_16bit {
-		sect_AbsByte(0x18);
+		sect_ConstByte(0x18);
 		sect_PCRelByte($2, 1);
 	}
 	| Z80_JR ccode_expr COMMA reloc_16bit {
-		sect_AbsByte(0x20 | ($2 << 3));
+		sect_ConstByte(0x20 | ($2 << 3));
 		sect_PCRelByte($4, 1);
 	}
 ;
 
 z80_ldi:
 	Z80_LDI LBRACK MODE_HL RBRACK COMMA MODE_A {
-		sect_AbsByte(0x02 | (2 << 4));
+		sect_ConstByte(0x02 | (2 << 4));
 	}
 	| Z80_LDI MODE_A COMMA LBRACK MODE_HL RBRACK {
-		sect_AbsByte(0x0A | (2 << 4));
+		sect_ConstByte(0x0A | (2 << 4));
 	}
 ;
 
 z80_ldd:
 	Z80_LDD LBRACK MODE_HL RBRACK COMMA MODE_A {
-		sect_AbsByte(0x02 | (3 << 4));
+		sect_ConstByte(0x02 | (3 << 4));
 	}
 	| Z80_LDD MODE_A COMMA LBRACK MODE_HL RBRACK {
-		sect_AbsByte(0x0A | (3 << 4));
+		sect_ConstByte(0x0A | (3 << 4));
 	}
 ;
 
@@ -1965,20 +1965,20 @@ z80_ldio:
 	Z80_LDH MODE_A COMMA op_mem_ind {
 		$4.makeCheckHRAM();
 
-		sect_AbsByte(0xF0);
+		sect_ConstByte(0xF0);
 		sect_RelByte($4, 1);
 	}
 	| Z80_LDH op_mem_ind COMMA MODE_A {
 		$2.makeCheckHRAM();
 
-		sect_AbsByte(0xE0);
+		sect_ConstByte(0xE0);
 		sect_RelByte($2, 1);
 	}
 	| Z80_LDH MODE_A COMMA c_ind {
-		sect_AbsByte(0xF2);
+		sect_ConstByte(0xF2);
 	}
 	| Z80_LDH c_ind COMMA MODE_A {
-		sect_AbsByte(0xE2);
+		sect_ConstByte(0xE2);
 	}
 ;
 
@@ -2004,88 +2004,88 @@ z80_ld:
 
 z80_ld_hl:
 	Z80_LD MODE_HL COMMA MODE_SP reloc_8bit_offset {
-		sect_AbsByte(0xF8);
+		sect_ConstByte(0xF8);
 		sect_RelByte($5, 1);
 	}
 	| Z80_LD MODE_HL COMMA reloc_16bit {
-		sect_AbsByte(0x01 | (REG_HL << 4));
+		sect_ConstByte(0x01 | (REG_HL << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ld_sp:
 	Z80_LD MODE_SP COMMA MODE_HL {
-		sect_AbsByte(0xF9);
+		sect_ConstByte(0xF9);
 	}
 	| Z80_LD MODE_SP COMMA reloc_16bit {
-		sect_AbsByte(0x01 | (REG_SP << 4));
+		sect_ConstByte(0x01 | (REG_SP << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ld_mem:
 	Z80_LD op_mem_ind COMMA MODE_SP {
-		sect_AbsByte(0x08);
+		sect_ConstByte(0x08);
 		sect_RelWord($2, 1);
 	}
 	| Z80_LD op_mem_ind COMMA MODE_A {
-		sect_AbsByte(0xEA);
+		sect_ConstByte(0xEA);
 		sect_RelWord($2, 1);
 	}
 ;
 
 z80_ld_c_ind:
 	Z80_LD c_ind COMMA MODE_A {
-		sect_AbsByte(0xE2);
+		sect_ConstByte(0xE2);
 	}
 ;
 
 z80_ld_rr:
 	Z80_LD reg_rr COMMA MODE_A {
-		sect_AbsByte(0x02 | ($2 << 4));
+		sect_ConstByte(0x02 | ($2 << 4));
 	}
 ;
 
 z80_ld_r_no_a:
 	Z80_LD reg_r_no_a COMMA reloc_8bit {
-		sect_AbsByte(0x06 | ($2 << 3));
+		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
 	| Z80_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND)
 			::error("LD [HL], [HL] is not a valid instruction\n");
 		else
-			sect_AbsByte(0x40 | ($2 << 3) | $4);
+			sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 ;
 
 z80_ld_a:
 	Z80_LD reg_a COMMA reloc_8bit {
-		sect_AbsByte(0x06 | ($2 << 3));
+		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
 	| Z80_LD reg_a COMMA reg_r {
-		sect_AbsByte(0x40 | ($2 << 3) | $4);
+		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 	| Z80_LD reg_a COMMA c_ind {
-		sect_AbsByte(0xF2);
+		sect_ConstByte(0xF2);
 	}
 	| Z80_LD reg_a COMMA reg_rr {
-		sect_AbsByte(0x0A | ($4 << 4));
+		sect_ConstByte(0x0A | ($4 << 4));
 	}
 	| Z80_LD reg_a COMMA op_mem_ind {
-		sect_AbsByte(0xFA);
+		sect_ConstByte(0xFA);
 		sect_RelWord($4, 1);
 	}
 ;
 
 z80_ld_ss:
 	Z80_LD MODE_BC COMMA reloc_16bit {
-		sect_AbsByte(0x01 | (REG_BC << 4));
+		sect_ConstByte(0x01 | (REG_BC << 4));
 		sect_RelWord($4, 1);
 	}
 	| Z80_LD MODE_DE COMMA reloc_16bit {
-		sect_AbsByte(0x01 | (REG_DE << 4));
+		sect_ConstByte(0x01 | (REG_DE << 4));
 		sect_RelWord($4, 1);
 	}
 	// HL is taken care of in z80_ld_hl
@@ -2094,103 +2094,103 @@ z80_ld_ss:
 
 z80_nop:
 	Z80_NOP {
-		sect_AbsByte(0x00);
+		sect_ConstByte(0x00);
 	}
 ;
 
 z80_or:
 	Z80_OR op_a_n {
-		sect_AbsByte(0xF6);
+		sect_ConstByte(0xF6);
 		sect_RelByte($2, 1);
 	}
 	| Z80_OR op_a_r {
-		sect_AbsByte(0xB0 | $2);
+		sect_ConstByte(0xB0 | $2);
 	}
 ;
 
 z80_pop:
 	Z80_POP reg_tt {
-		sect_AbsByte(0xC1 | ($2 << 4));
+		sect_ConstByte(0xC1 | ($2 << 4));
 	}
 ;
 
 z80_push:
 	Z80_PUSH reg_tt {
-		sect_AbsByte(0xC5 | ($2 << 4));
+		sect_ConstByte(0xC5 | ($2 << 4));
 	}
 ;
 
 z80_res:
 	Z80_RES bit_const COMMA reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x80 | ($2 << 3) | $4);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x80 | ($2 << 3) | $4);
 	}
 ;
 
 z80_ret:
 	Z80_RET {
-		sect_AbsByte(0xC9);
+		sect_ConstByte(0xC9);
 	}
 	| Z80_RET ccode_expr {
-		sect_AbsByte(0xC0 | ($2 << 3));
+		sect_ConstByte(0xC0 | ($2 << 3));
 	}
 ;
 
 z80_reti:
 	Z80_RETI {
-		sect_AbsByte(0xD9);
+		sect_ConstByte(0xD9);
 	}
 ;
 
 z80_rl:
 	Z80_RL reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x10 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x10 | $2);
 	}
 ;
 
 z80_rla:
 	Z80_RLA {
-		sect_AbsByte(0x17);
+		sect_ConstByte(0x17);
 	}
 ;
 
 z80_rlc:
 	Z80_RLC reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x00 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x00 | $2);
 	}
 ;
 
 z80_rlca:
 	Z80_RLCA {
-		sect_AbsByte(0x07);
+		sect_ConstByte(0x07);
 	}
 ;
 
 z80_rr:
 	Z80_RR reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x18 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x18 | $2);
 	}
 ;
 
 z80_rra:
 	Z80_RRA {
-		sect_AbsByte(0x1F);
+		sect_ConstByte(0x1F);
 	}
 ;
 
 z80_rrc:
 	Z80_RRC reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x08 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x08 | $2);
 	}
 ;
 
 z80_rrca:
 	Z80_RRCA {
-		sect_AbsByte(0x0F);
+		sect_ConstByte(0x0F);
 	}
 ;
 
@@ -2200,89 +2200,89 @@ z80_rst:
 		if (!$2.isKnown())
 			sect_RelByte($2, 0);
 		else
-			sect_AbsByte(0xC7 | $2.value());
+			sect_ConstByte(0xC7 | $2.value());
 	}
 ;
 
 z80_sbc:
 	Z80_SBC op_a_n {
-		sect_AbsByte(0xDE);
+		sect_ConstByte(0xDE);
 		sect_RelByte($2, 1);
 	}
 	| Z80_SBC op_a_r {
-		sect_AbsByte(0x98 | $2);
+		sect_ConstByte(0x98 | $2);
 	}
 ;
 
 z80_scf:
 	Z80_SCF {
-		sect_AbsByte(0x37);
+		sect_ConstByte(0x37);
 	}
 ;
 
 z80_set:
 	Z80_SET bit_const COMMA reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0xC0 | ($2 << 3) | $4);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0xC0 | ($2 << 3) | $4);
 	}
 ;
 
 z80_sla:
 	Z80_SLA reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x20 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x20 | $2);
 	}
 ;
 
 z80_sra:
 	Z80_SRA reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x28 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x28 | $2);
 	}
 ;
 
 z80_srl:
 	Z80_SRL reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x38 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x38 | $2);
 	}
 ;
 
 z80_stop:
 	Z80_STOP {
-		sect_AbsByte(0x10);
-		sect_AbsByte(0x00);
+		sect_ConstByte(0x10);
+		sect_ConstByte(0x00);
 	}
 	| Z80_STOP reloc_8bit {
-		sect_AbsByte(0x10);
+		sect_ConstByte(0x10);
 		sect_RelByte($2, 1);
 	}
 ;
 
 z80_sub:
 	Z80_SUB op_a_n {
-		sect_AbsByte(0xD6);
+		sect_ConstByte(0xD6);
 		sect_RelByte($2, 1);
 	}
 	| Z80_SUB op_a_r {
-		sect_AbsByte(0x90 | $2);
+		sect_ConstByte(0x90 | $2);
 	}
 ;
 
 z80_swap:
 	Z80_SWAP reg_r {
-		sect_AbsByte(0xCB);
-		sect_AbsByte(0x30 | $2);
+		sect_ConstByte(0xCB);
+		sect_ConstByte(0x30 | $2);
 	}
 ;
 
 z80_xor:
 	Z80_XOR op_a_n {
-		sect_AbsByte(0xEE);
+		sect_ConstByte(0xEE);
 		sect_RelByte($2, 1);
 	}
 	| Z80_XOR op_a_r {
-		sect_AbsByte(0xA8 | $2);
+		sect_ConstByte(0xA8 | $2);
 	}
 ;
 

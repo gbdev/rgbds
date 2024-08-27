@@ -85,10 +85,10 @@ void sect_NextUnionMember();
 void sect_EndUnion();
 void sect_CheckUnionClosed();
 
-void sect_AbsByte(uint8_t b);
-void sect_AbsByteString(std::vector<int32_t> const &s);
-void sect_AbsWordString(std::vector<int32_t> const &s);
-void sect_AbsLongString(std::vector<int32_t> const &s);
+void sect_ConstByte(uint8_t b);
+void sect_ByteString(std::vector<int32_t> const &s);
+void sect_WordString(std::vector<int32_t> const &s);
+void sect_LongString(std::vector<int32_t> const &s);
 void sect_Skip(uint32_t skip, bool ds);
 void sect_RelByte(Expression &expr, uint32_t pcShift);
 void sect_RelBytes(uint32_t n, std::vector<Expression> &exprs);
