@@ -287,6 +287,7 @@ jobs:
       - name: Extract binaries
         shell: bash
         run: |
+          touch test/gfx/{randtilegen,rgbgfx_test}.exe
           cp bins/* .
           cp bins/*.dll test/gfx
       - name: Compute test dependency cache params
