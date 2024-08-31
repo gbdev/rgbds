@@ -283,7 +283,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: testing-programs-mingw-win${{ matrix.bits }}
-          path: test
+          path: test/gfx
       - name: Extract binaries
         shell: bash
         run: |
