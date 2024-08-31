@@ -3,8 +3,6 @@
 export LC_ALL=C
 set -o pipefail
 
-[[ -e ./unmangle ]] || make -C ../.. test/link/unmangle || exit
-
 otemp="$(mktemp)"
 gbtemp="$(mktemp)"
 gbtemp2="$(mktemp)"
@@ -88,13 +86,14 @@ evaluateTest () {
 }
 
 substPath () {
-	# Escape regex metacharacters
+	# Replace the file name with a different one to match changed output, escaping regex metacharacters
 	subst="$(printf '%s\n' "$1" | sed 's:[][\/.^$*]:\\&:g')"
-	# Replace the file name with a different one to match changed output
 	sed -i'' -e "s|$subst|$2|g" "$3"
-	# Escape regex metacharacters in the un-MinGW-mangled path
-	subst="$(./unmangle "$1" | sed 's:[][\/.^$*]:\\&:g')"
-	sed -i'' -e "s|$subst|$2|g" "$3"
+	if which cygpath &>/dev/null; then
+		# Replace the MinGW path with a Windows path, escaping regex metacharacters
+		subst="$(cygpath -m "$1" | sed 's:[][\/.^$*]:\\&:g')"
+		sed -i'' -e "s|$subst|$2|g" "$3"
+	fi
 }
 
 for i in *.asm; do
