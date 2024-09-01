@@ -3,11 +3,13 @@
 #include "asm/charmap.hpp"
 
 #include <deque>
+#include <map>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unordered_map>
+#include <utility>
 
 #include "helpers.hpp"
 #include "util.hpp"
@@ -28,8 +30,6 @@ struct CharmapNode {
 struct Charmap {
 	std::string name;
 	std::vector<CharmapNode> nodes; // first node is reserved for the root node
-	// FIXME: strictly speaking, this is redundant, we could walk the trie to get mappings instead
-	std::unordered_map<size_t, std::string> mappings; // keys are indexes of terminal nodes
 };
 
 static std::deque<Charmap> charmapList;
@@ -42,12 +42,23 @@ bool charmap_ForEach(
     void (*mapFunc)(std::string const &),
     void (*charFunc)(std::string const &, std::vector<int32_t>)
 ) {
-	for (Charmap &charmap : charmapList) {
-		mapFunc(charmap.name);
-		for (size_t i = 0; i < charmap.nodes.size(); ++i) {
-			if (CharmapNode const &node = charmap.nodes[i]; node.isTerminal())
-				charFunc(charmap.mappings[i], node.value);
+	for (Charmap const &charmap : charmapList) {
+		// Traverse the trie depth-first to derive the character mappings in definition order
+		std::map<size_t, std::string> mappings;
+		for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
+			auto [nodeIdx, mapping] = std::move(prefixes.top());
+			prefixes.pop();
+			CharmapNode const &node = charmap.nodes[nodeIdx];
+			if (node.isTerminal())
+				mappings[nodeIdx] = mapping;
+			for (unsigned c = 0; c < 256; c++) {
+				if (size_t nextIdx = node.next[c]; nextIdx)
+					prefixes.push({nextIdx, mapping + (char)c});
+			}
 		}
+		mapFunc(charmap.name);
+		for (auto [nodeIdx, mapping] : mappings)
+			charFunc(mapping, charmap.nodes[nodeIdx].value);
 	}
 	return !charmapList.empty();
 }
@@ -71,12 +82,10 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	charmapMap[name] = charmapList.size();
 	Charmap &charmap = charmapList.emplace_back();
 
-	if (baseIdx != (size_t)-1) {
-		charmap.nodes = charmapList[baseIdx].nodes;       // Copies `charmapList[baseIdx].nodes`
-		charmap.mappings = charmapList[baseIdx].mappings; // Copies `charmapList[baseIdx].mappings`
-	} else {
+	if (baseIdx != (size_t)-1)
+		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
+	else
 		charmap.nodes.emplace_back(); // Zero-init the root node
-	}
 
 	charmap.name = name;
 
@@ -121,8 +130,6 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 			// Switch to and zero-init the new node
 			nextIdxRef = charmap.nodes.size();
 			nextIdx = nextIdxRef;
-			// Save the mapping of this node
-			charmap.mappings[charmap.nodes.size()] = mapping;
 			// This may reallocate `charmap.nodes` and invalidate `nextIdxRef`,
 			// which is why we keep the actual value in `nextIdx`
 			charmap.nodes.emplace_back();
