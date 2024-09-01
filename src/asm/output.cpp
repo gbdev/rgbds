@@ -360,14 +360,6 @@ static void dumpString(std::string const &escape, FILE *file) {
 	for (char c : escape) {
 		// Escape characters that need escaping
 		switch (c) {
-		case '\\':
-		case '"':
-		case '{':
-			putc('\\', file);
-			[[fallthrough]];
-		default:
-			putc(c, file);
-			break;
 		case '\n':
 			fputs("\\n", file);
 			break;
@@ -379,6 +371,14 @@ static void dumpString(std::string const &escape, FILE *file) {
 			break;
 		case '\0':
 			fputs("\\0", file);
+			break;
+		case '\\':
+		case '"':
+		case '{':
+			putc('\\', file);
+			[[fallthrough]];
+		default:
+			putc(c, file);
 			break;
 		}
 	}

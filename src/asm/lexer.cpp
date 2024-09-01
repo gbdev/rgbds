@@ -1257,14 +1257,6 @@ static void appendEscapedString(std::string &str, std::string const &escape) {
 	for (char c : escape) {
 		// Escape characters that need escaping
 		switch (c) {
-		case '\\':
-		case '"':
-		case '{':
-			str += '\\';
-			[[fallthrough]];
-		default:
-			str += c;
-			break;
 		case '\n':
 			str += "\\n";
 			break;
@@ -1276,6 +1268,14 @@ static void appendEscapedString(std::string &str, std::string const &escape) {
 			break;
 		case '\0':
 			str += "\\0";
+			break;
+		case '\\':
+		case '"':
+		case '{':
+			str += '\\';
+			[[fallthrough]];
+		default:
+			str += c;
 			break;
 		}
 	}

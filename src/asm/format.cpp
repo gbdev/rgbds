@@ -119,14 +119,6 @@ static std::string escapeString(std::string const &str) {
 	for (char c : str) {
 		// Escape characters that need escaping
 		switch (c) {
-		case '\\':
-		case '"':
-		case '{':
-			escaped += '\\';
-			[[fallthrough]];
-		default:
-			escaped += c;
-			break;
 		case '\n':
 			escaped += "\\n";
 			break;
@@ -138,6 +130,14 @@ static std::string escapeString(std::string const &str) {
 			break;
 		case '\0':
 			escaped += "\\0";
+			break;
+		case '\\':
+		case '"':
+		case '{':
+			escaped += '\\';
+			[[fallthrough]];
+		default:
+			escaped += c;
 			break;
 		}
 	}
