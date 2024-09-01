@@ -9,10 +9,11 @@
 
 enum FormatState {
 	FORMAT_SIGN,    // expects '+' or ' ' (optional)
-	FORMAT_PREFIX,  // expects '#' (optional)
+	FORMAT_EXACT,   // expects '#' (optional)
 	FORMAT_ALIGN,   // expects '-' (optional)
 	FORMAT_WIDTH,   // expects '0'-'9', max 255 (optional) (leading '0' indicates pad)
 	FORMAT_FRAC,    // got '.', expects '0'-'9', max 255 (optional)
+	FORMAT_PREC,    // got 'q', expects '0'-'9', range 1-31 (optional)
 	FORMAT_DONE,    // got [duXxbofs] (required)
 	FORMAT_INVALID, // got unexpected character
 };
@@ -20,12 +21,14 @@ enum FormatState {
 class FormatSpec {
 	FormatState state;
 	int sign;
-	bool prefix;
+	bool exact;
 	bool alignLeft;
 	bool padZero;
 	size_t width;
 	bool hasFrac;
 	size_t fracWidth;
+	bool hasPrec;
+	size_t precision;
 	int type;
 	bool valid;
 

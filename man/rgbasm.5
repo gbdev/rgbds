@@ -164,19 +164,24 @@ It's possible to change the way symbols are printed by specifying a print format
 The
 .Ql fmt
 specifier consists of these parts:
-.Ql <sign><prefix><align><pad><width><frac><type> .
+.Ql <sign><exact><align><pad><width><frac><prec><type> .
 These parts are:
-.Bl -column "<prefix>"
+.Bl -column "<exact>"
 .It Sy Part Ta Sy Meaning
 .It Ql <sign> Ta May be
 .Ql +
 or
 .Ql \  .
 If specified, prints this character in front of non-negative numbers.
-.It Ql <prefix> Ta May be
+.It Ql <exact> Ta May be
 .Ql # .
-If specified, prints a base prefix for non-decimal integer types
-.Pq So $ Sc , So & Sc , or So % Sc .
+If specified, prints the value in an "exact" format: with a base prefix for non-decimal integer types
+.Pq So $ Sc , So & Sc , or So % Sc ;
+with a
+.Ql q
+precision suffix for fixed-point numbers; or with
+.Ql \e
+escape characters for strings.
 .It Ql <align> Ta May be
 .Ql - .
 If specified, aligns left instead of right.
@@ -196,6 +201,16 @@ followed by one or more
 .Ql 9 .
 If specified, prints this many fractional digits of a fixed-point number.
 Defaults to 5 digits, maximum 255 digits.
+.It Ql <prec> Ta May be
+.Ql q
+followed by one or more
+.Ql 0
+\[en]
+.Ql 9 .
+If specified, prints a fixed-point number at this precision.
+Defaults to the current
+.Fl Q
+option.
 .It Ql <type> Ta Specifies the type of value.
 .El
 .Pp
