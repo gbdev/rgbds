@@ -1144,7 +1144,7 @@ static bool startsIdentifier(int c) {
 }
 
 static bool continuesIdentifier(int c) {
-	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '@';
+	return startsIdentifier(c) || (c <= '9' && c >= '0') || c == '#' || c == '$' || c == '@';
 }
 
 static Token readIdentifier(char firstChar, bool raw) {
