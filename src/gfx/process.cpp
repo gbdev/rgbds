@@ -706,6 +706,17 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	}
 }
 
+static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
+	hash ^= bitplanes;
+	if (options.allowMirroringX) {
+		// Count the line itself as mirrored, which ensures the same hash as the tile's horizontal
+		// flip; vertical mirroring is already taken care of because the symmetric line will be
+		// XOR'd the same way. (This can trivially create some collisions, but real-world tile data
+		// generally doesn't trigger them.)
+		hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
+	}
+}
+
 class TileData {
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
@@ -739,14 +750,7 @@ public:
 	TileData(std::array<uint8_t, 16> &&raw) : _data(raw), _hash(0) {
 		for (uint8_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
-
-			_hash ^= bitplanes;
-			if (options.allowMirroring) {
-				// Count the line itself as mirrorred; vertical mirroring is
-				// already taken care of because the symmetric line will be XOR'd
-				// the same way. (...which is a problem, but probably benign.)
-				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
-			}
+			hashBitplanes(bitplanes, _hash);
 		}
 	}
 
@@ -754,18 +758,11 @@ public:
 		size_t writeIndex = 0;
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
+			hashBitplanes(bitplanes, _hash);
+
 			_data[writeIndex++] = bitplanes & 0xFF;
 			if (options.bitDepth == 2) {
 				_data[writeIndex++] = bitplanes >> 8;
-			}
-
-			// Update the hash
-			_hash ^= bitplanes;
-			if (options.allowMirroringX) {
-				// Count the line itself as mirrorred horizontally; vertical mirroring is already
-				// taken care of because the symmetric line will be XOR'd the same way.
-				// (This reduces the hash's efficiency, but seems benign with most real-world data.)
-				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 			}
 		}
 	}
@@ -774,11 +771,11 @@ public:
 	uint16_t hash() const { return _hash; }
 
 	enum MatchType {
-		NOPE,
 		EXACT,
 		HFLIP,
 		VFLIP,
-		VHFLIP,
+		VHFLIP = VFLIP | HFLIP,
+		NOPE,
 	};
 	MatchType tryMatching(TileData const &other) const {
 		// Check for strict equality first, as that can typically be optimized, and it allows
@@ -1003,18 +1000,22 @@ static UniqueTiles dedupTiles(
 			}
 
 			auto [tileID, matchType] = tiles.addTile(std::move(tile));
-			switch (matchType) {
-			case TileData::NOPE:
-				break;
-			case TileData::HFLIP:
-			case TileData::VFLIP:
-			case TileData::VHFLIP:
-				if (!options.allowMirroring) {
-					break;
+
+			if (matchType != TileData::NOPE) {
+				static_assert(
+				    (TileData::HFLIP & TileData::VFLIP) == 0,
+				    "Cannot use `MatchType` as a bitfield!"
+				);
+				uint8_t disallowed = (options.allowMirroringX ? 0 : TileData::HFLIP)
+				                     | (options.allowMirroringY ? 0 : TileData::VFLIP);
+				if (matchType & disallowed) {
+					error(
+					    "The input tileset's tile #%hu was deduplicated; please check that your "
+					    "deduplication flags (`-u`, `-m`) are consistent with what was used to "
+					    "generate the input tileset",
+					    tileID
+					);
 				}
-				[[fallthrough]];
-			case TileData::EXACT:
-				error("The input tileset contains tiles that were deduplicated; please check that your deduplication flags (`-u`, `-m`) are consistent with what was used to generate the input tileset");
 			}
 		}
 	}
@@ -1023,7 +1024,12 @@ static UniqueTiles dedupTiles(
 		auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
 		if (matchType == TileData::NOPE && options.output.empty()) {
-			error("Tile at (%" PRIu32 ", %" PRIu32 ") is not within the input tileset, and `-o` was not given!", tile.x, tile.y);
+			error(
+			    "Tile at (%" PRIu32 ", %" PRIu32
+			    ") is not within the input tileset, and `-o` was not given!",
+			    tile.x,
+			    tile.y
+			);
 		}
 
 		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
