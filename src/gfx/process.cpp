@@ -771,11 +771,11 @@ public:
 	uint16_t hash() const { return _hash; }
 
 	enum MatchType {
+		NOPE,
 		EXACT,
 		HFLIP,
 		VFLIP,
-		VHFLIP = VFLIP | HFLIP,
-		NOPE,
+		VHFLIP,
 	};
 	MatchType tryMatching(TileData const &other) const {
 		// Check for strict equality first, as that can typically be optimized, and it allows
@@ -1002,20 +1002,12 @@ static UniqueTiles dedupTiles(
 			auto [tileID, matchType] = tiles.addTile(std::move(tile));
 
 			if (matchType != TileData::NOPE) {
-				static_assert(
-				    (TileData::HFLIP & TileData::VFLIP) == 0,
-				    "Cannot use `MatchType` as a bitfield!"
+				error(
+				    "The input tileset's tile #%hu was deduplicated; please check that your "
+				    "deduplication flags (`-u`, `-m`) are consistent with what was used to "
+				    "generate the input tileset",
+				    tileID
 				);
-				uint8_t disallowed = (options.allowMirroringX ? 0 : TileData::HFLIP)
-				                     | (options.allowMirroringY ? 0 : TileData::VFLIP);
-				if (matchType & disallowed) {
-					error(
-					    "The input tileset's tile #%hu was deduplicated; please check that your "
-					    "deduplication flags (`-u`, `-m`) are consistent with what was used to "
-					    "generate the input tileset",
-					    tileID
-					);
-				}
 			}
 		}
 	}
