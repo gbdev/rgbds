@@ -1,0 +1,4 @@
+error: Tile at (0, 0) is not within the input tileset, and `-o` was not given!
+error: Tile at (0, 8) is not within the input tileset, and `-o` was not given!
+error: Tile at (8, 8) is not within the input tileset, and `-o` was not given!
+Conversion aborted after 3 errors

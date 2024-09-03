@@ -1,0 +1,2 @@
+error: The input tileset's tile #7 was deduplicated; please check that your deduplication flags (`-u`, `-m`) are consistent with what was used to generate the input tileset
+Conversion aborted after 1 error
