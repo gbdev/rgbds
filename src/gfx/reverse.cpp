@@ -136,10 +136,6 @@ void reverse() {
 		);
 	}
 
-	if (!options.inputTileset.empty()) {
-		// TODO: check that the tile data is contained within the tileset
-	}
-
 	// By default, assume tiles are not deduplicated, and add the (allegedly) trimmed tiles
 	size_t const nbTiles = tiles.size() / tileSize;
 	options.verbosePrint(Options::VERB_INTERM, "Read %zu tiles.\n", nbTiles);
