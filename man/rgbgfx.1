@@ -166,21 +166,31 @@ for a list of formats and their descriptions.
 Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 2 (the default).
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
 .It Fl i Ar input_tiles , Fl \-input-tileset Ar input_tiles
-Read tiles that will be used to convert this image, and that will always be given the first IDs.
+Use the specified input tiles in addition to having
+.Nm
+automatically determine some.
+The input tiles will always be first in
+.Fl o
+image output, and will always get the first IDs in the
+.Fl t
+tilemap output.
 .Ar input_tiles
-must contain 2bpp tile data, as could be previously generated with the
+must contain 1bpp or 2bpp tile data
+.Pq whichever matches the Fl d No option used here ,
+as could be previously generated with the
 .Fl o
 option.
 .Pp
-If used together with
-.Fl o ,
-then the image can contain tiles not in
-.Ar input_tiles .
-Otherwise, the image must be able to be generated using
+If the
+.Fl o
+option is also specified, then the input tiles will be assigned the first tile IDs, and any tiles from the input image that are not in the input tileset will be assigned subsequent IDs.
+But if the
+.Fl o
+option is
+.Em not
+specified, then the tile map can
 .Em only
-the tiles from
-.Ar input_tiles ,
-and thus generate different tile data.
+use tiles from the input tileset.
 Using
 .Fl o
 with
