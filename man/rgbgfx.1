@@ -205,7 +205,7 @@ If the image will use more than one color palette, it is
 advised to generate the palette set along with the input tile data, and pass
 .Fl c Cm gbc: Ns Ar input_palette
 along with
-.Fl i input_tiles .
+.Fl i Ar input_tiles .
 This is because
 .Nm
 might not generate the same palette set for this image as it did for its input tileset.
@@ -693,8 +693,8 @@ The following will convert two level images using the same tileset, and error ou
 .Pp
 .Bd -literal -offset Ds
 $ rgbgfx tileset.png -o tileset.2bpp -O -P
-$ rgbgfx -i tileset.2bpp -c gbc:tileset.pal level1.png -t level1.tilemap -a level1.attrmap
-$ rgbgfx -i tileset.2bpp -c gbc:tileset.pal level2.png -t level2.tilemap -a level2.attrmap
+$ rgbgfx level1.png -i tileset.2bpp -c gbc:tileset.pal -t level1.tilemap -a level1.attrmap
+$ rgbgfx level2.png -i tileset.2bpp -c gbc:tileset.pal -t level2.tilemap -a level2.attrmap
 .Ed
 .Sh BUGS
 Please report bugs and mistakes in this man page on
