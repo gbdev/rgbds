@@ -155,10 +155,10 @@ static option const longopts[] = {
 static void printUsage() {
 	fputs(
 	    "Usage: rgbgfx [-r stride] [-CmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <in_file>] [-L <slice>]\n"
-	    "       [-N <nb_tiles>] [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P]\n"
-	    "       [-q <pal_map> | -Q] [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>]\n"
-	    "       <file>\n"
+	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
+	    "       [-L <slice>] [-N <nb_tiles>] [-n <nb_pals>] [-o <out_file>]\n"
+	    "       [-p <pal_file> | -P] [-q <pal_map> | -Q] [-s <nb_colors>]\n"
+	    "       [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
 	    "Useful options:\n"
 	    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
 	    "    -o, --output <path>   output the tile data to this path\n"

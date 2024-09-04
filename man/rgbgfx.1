@@ -169,7 +169,7 @@ This changes how tile data is output, and the maximum number of colors per palet
 Use the specified input tiles in addition to having
 .Nm
 automatically determine some.
-The input tiles will always be first in
+The input tiles will always be first in the
 .Fl o
 image output, and will always get the first IDs in the
 .Fl t
@@ -208,7 +208,7 @@ along with
 .Fl i input_tiles .
 This is because
 .Nm
-may not generate an identical palette set for this image as for its input tileset.
+might not generate the same palette set for this image as it did for its input tileset.
 .Pp
 See
 .Sx EXAMPLES
@@ -689,7 +689,7 @@ without needing an input image.
 .Pp
 .Dl $ rgbgfx -c '#fff,#ff0,#f80,#000' -p colors.pal
 .Pp
-The following will convert two levels using the same tileset, and error out of any of the level images contain tiles not in the tileset.
+The following will convert two level images using the same tileset, and error out if any of them contain tiles not in the tileset.
 .Pp
 .Bd -literal -offset Ds
 $ rgbgfx tileset.png -o tileset.2bpp -O -P
