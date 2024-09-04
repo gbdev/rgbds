@@ -9,6 +9,7 @@
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unordered_set>
 
 #include "error.hpp"
 #include "helpers.hpp"
@@ -45,8 +46,8 @@ size_t maxRecursionDepth;
 
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
-
 static std::string preIncludeName;
+static std::unordered_set<std::string> includedFiles;
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (data.holds<std::vector<uint32_t>>()) {
@@ -305,8 +306,22 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 		return;
 	}
 
+	// Remember this path as being INCLUDEd at least once
+	includedFiles.insert(path);
+
 	if (!newFileContext(*fullPath, false))
 		fatalerror("Failed to set up lexer for file include\n");
+}
+
+void fstk_RunIncludeOnce(std::string const &path) {
+	if (includedFiles.find(path) != includedFiles.end()) {
+		if (verbose) {
+			printf("File '%s' already included, skipping INCLUDE_ONCE", path.c_str());
+		}
+		return;
+	}
+
+	fstk_RunInclude(path, false);
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {

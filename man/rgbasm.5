@@ -2158,6 +2158,15 @@ calls infinitely (or until you run out of memory, whichever comes first).
     INCLUDE "irq.inc"
 .Ed
 .Pp
+You may also ensure a file only gets included once by using
+.Ic INCLUDE_ONCE
+instead of
+.Ic INCLUDE .
+This will skip including a file if its exact path has already been included before (with
+.Ic INCLUDE
+or
+.Ic INCLUDE_ONCE ) .
+.Pp
 You may also implicitly
 .Ic INCLUDE
 a file before the source file with the
