@@ -21,6 +21,7 @@ _rgbgfx_completions() {
 		[b]="base-tiles:unk"
 		[c]="colors:unk"
 		[d]="depth:unk"
+		[i]="input-tileset:glob-*.2bpp"
 		[L]="slice:unk"
 		[N]="nb-tiles:unk"
 		[n]="nb-palettes:unk"

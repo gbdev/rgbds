@@ -16,6 +16,7 @@
 .Op Fl b Ar base_ids
 .Op Fl c Ar pal_spec
 .Op Fl d Ar depth
+.Op Fl i Ar input_tiles
 .Op Fl L Ar slice
 .Op Fl N Ar nb_tiles
 .Op Fl n Ar nb_pals
@@ -164,6 +165,57 @@ for a list of formats and their descriptions.
 .It Fl d Ar depth , Fl \-depth Ar depth
 Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 2 (the default).
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
+.It Fl i Ar input_tiles , Fl \-input-tileset Ar input_tiles
+Use the specified input tiles in addition to having
+.Nm
+automatically determine some.
+The input tiles will always be first in the
+.Fl o
+image output, and will always get the first IDs in the
+.Fl t
+tilemap output.
+.Ar input_tiles
+must contain 1bpp or 2bpp tile data
+.Pq whichever matches the Fl d No option used here ,
+as could be previously generated with the
+.Fl o
+option.
+.Pp
+If the
+.Fl o
+option is also specified, then the input tiles will be assigned the first tile IDs, and any tiles from the input image that are not in the input tileset will be assigned subsequent IDs.
+But if the
+.Fl o
+option is
+.Em not
+specified, then the tile map can
+.Em only
+use tiles from the input tileset.
+Using
+.Fl o
+with
+.Fl i
+is useful if you want to precisely control the tile IDs of its tile map.
+Using
+.Fl i
+alone is more useful if you want several images to use a subset of shared tiles.
+.Pp
+If the image will use more than one color palette, it is
+.Em strongly
+advised to generate the palette set along with the input tile data, and pass
+.Fl c Cm gbc: Ns Ar input_palette
+along with
+.Fl i Ar input_tiles .
+This is because
+.Nm
+might not generate the same palette set for this image as it did for its input tileset.
+.Pp
+See
+.Sx EXAMPLES
+for examples of how to use this option.
+.Pp
+This option is ignored in
+.Sx REVERSE MODE .
 .It Fl L Ar slice , Fl \-slice Ar slice
 Only process a given rectangle of the image.
 This is useful for example if the input image is a sheet of some sort, and you want to convert each cel individually.
@@ -637,7 +689,13 @@ without needing an input image.
 .Pp
 .Dl $ rgbgfx -c '#fff,#ff0,#f80,#000' -p colors.pal
 .Pp
-TODO: more examples.
+The following will convert two level images using the same tileset, and error out if any of them contain tiles not in the tileset.
+.Pp
+.Bd -literal -offset Ds
+$ rgbgfx tileset.png -o tileset.2bpp -O -P
+$ rgbgfx level1.png -i tileset.2bpp -c gbc:tileset.pal -t level1.tilemap -a level1.attrmap
+$ rgbgfx level2.png -i tileset.2bpp -c gbc:tileset.pal -t level2.tilemap -a level2.attrmap
+.Ed
 .Sh BUGS
 Please report bugs and mistakes in this man page on
 .Lk https://github.com/gbdev/rgbds/issues GitHub .

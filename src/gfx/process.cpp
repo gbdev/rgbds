@@ -692,7 +692,7 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 	if (!options.palettes.empty()) {
 		File output;
 		if (!output.open(options.palettes, std::ios_base::out | std::ios_base::binary)) {
-			fatal("Failed to open \"%s\": %s", output.c_str(options.palettes), strerror(errno));
+			fatal("Failed to create \"%s\": %s", output.c_str(options.palettes), strerror(errno));
 		}
 
 		for (Palette const &palette : palettes) {
@@ -703,6 +703,17 @@ static void outputPalettes(std::vector<Palette> const &palettes) {
 				output->sputc(color >> 8);
 			}
 		}
+	}
+}
+
+static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
+	hash ^= bitplanes;
+	if (options.allowMirroringX) {
+		// Count the line itself as mirrored, which ensures the same hash as the tile's horizontal
+		// flip; vertical mirroring is already taken care of because the symmetric line will be
+		// XOR'd the same way. (This can trivially create some collisions, but real-world tile data
+		// generally doesn't trigger them.)
+		hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 	}
 }
 
@@ -736,22 +747,22 @@ public:
 		return row;
 	}
 
+	TileData(std::array<uint8_t, 16> &&raw) : _data(raw), _hash(0) {
+		for (uint8_t y = 0; y < 8; ++y) {
+			uint16_t bitplanes = _data[y * 2] | _data[y * 2 + 1] << 8;
+			hashBitplanes(bitplanes, _hash);
+		}
+	}
+
 	TileData(Png::TilesVisitor::Tile const &tile, Palette const &palette) : _hash(0) {
 		size_t writeIndex = 0;
 		for (uint32_t y = 0; y < 8; ++y) {
 			uint16_t bitplanes = rowBitplanes(tile, palette, y);
+			hashBitplanes(bitplanes, _hash);
+
 			_data[writeIndex++] = bitplanes & 0xFF;
 			if (options.bitDepth == 2) {
 				_data[writeIndex++] = bitplanes >> 8;
-			}
-
-			// Update the hash
-			_hash ^= bitplanes;
-			if (options.allowMirroringX) {
-				// Count the line itself as mirrorred horizontally; vertical mirroring is already
-				// taken care of because the symmetric line will be XOR'd the same way.
-				// (This reduces the hash's efficiency, but seems benign with most real-world data.)
-				_hash ^= flipTable[bitplanes >> 8] << 8 | flipTable[bitplanes & 0xFF];
 			}
 		}
 	}
@@ -836,7 +847,7 @@ static void outputTileData(
 ) {
 	File output;
 	if (!output.open(options.output, std::ios_base::out | std::ios_base::binary)) {
-		fatal("Failed to open \"%s\": %s", output.c_str(options.output), strerror(errno));
+		fatal("Failed to create \"%s\": %s", output.c_str(options.output), strerror(errno));
 	}
 
 	uint16_t widthTiles = options.inputSlice.width ? options.inputSlice.width : png.getWidth() / 8;
@@ -875,7 +886,7 @@ static void outputMaps(
 		if (!path.empty()) {
 			file.emplace();
 			if (!file->open(path, std::ios_base::out | std::ios_base::binary)) {
-				fatal("Failed to open \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
+				fatal("Failed to create \"%s\": %s", file->c_str(options.tilemap), strerror(errno));
 			}
 		}
 	};
@@ -923,12 +934,10 @@ struct UniqueTiles {
 	/*
 	 * Adds a tile to the collection, and returns its ID
 	 */
-	std::tuple<uint16_t, TileData::MatchType>
-	    addTile(Png::TilesVisitor::Tile const &tile, Palette const &palette) {
-		TileData newTile(tile, palette);
+	std::tuple<uint16_t, TileData::MatchType> addTile(TileData newTile) {
 		auto [tileData, inserted] = tileset.insert(newTile);
 
-		TileData::MatchType matchType = TileData::EXACT;
+		TileData::MatchType matchType = TileData::NOPE;
 		if (inserted) {
 			// Give the new tile the next available unique ID
 			tileData->tileID = static_cast<uint16_t>(tiles.size());
@@ -963,8 +972,57 @@ static UniqueTiles dedupTiles(
 	// by caching the full tile data anyway, so we might as well.)
 	UniqueTiles tiles;
 
+	if (!options.inputTileset.empty()) {
+		File inputTileset;
+		if (!inputTileset.open(options.inputTileset, std::ios::in | std::ios::binary)) {
+			fatal("Failed to open \"%s\": %s", options.inputTileset.c_str(), strerror(errno));
+		}
+
+		std::array<uint8_t, 16> tile;
+		size_t const tileSize = options.bitDepth * 8;
+		for (;;) {
+			// It's okay to cast between character types.
+			size_t len = inputTileset->sgetn(reinterpret_cast<char *>(tile.data()), tileSize);
+			if (len == 0) { // EOF!
+				break;
+			} else if (len != tileSize) {
+				fatal(
+				    "\"%s\" does not contain a multiple of %zu bytes; is it actually tile data?",
+				    options.inputTileset.c_str(),
+				    tileSize
+				);
+			} else if (len == 8) {
+				// Expand the tile data to 2bpp.
+				for (size_t i = 8; i--;) {
+					tile[i * 2 + 1] = 0;
+					tile[i * 2] = tile[i];
+				}
+			}
+
+			auto [tileID, matchType] = tiles.addTile(std::move(tile));
+
+			if (matchType != TileData::NOPE) {
+				error(
+				    "The input tileset's tile #%hu was deduplicated; please check that your "
+				    "deduplication flags (`-u`, `-m`) are consistent with what was used to "
+				    "generate the input tileset",
+				    tileID
+				);
+			}
+		}
+	}
+
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
-		auto [tileID, matchType] = tiles.addTile(tile, palettes[mappings[attr.protoPaletteID]]);
+		auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
+
+		if (matchType == TileData::NOPE && options.output.empty()) {
+			error(
+			    "Tile at (%" PRIu32 ", %" PRIu32
+			    ") is not within the input tileset, and `-o` was not given!",
+			    tile.x,
+			    tile.y
+			);
+		}
 
 		attr.xFlip = matchType == TileData::HFLIP || matchType == TileData::VHFLIP;
 		attr.yFlip = matchType == TileData::VFLIP || matchType == TileData::VHFLIP;
@@ -1184,6 +1242,12 @@ continue_visiting_tiles:;
 			    options.maxNbTiles[0],
 			    options.maxNbTiles[1]
 			);
+		}
+
+		// I currently cannot figure out useful semantics for this combination of flags.
+		if (!options.inputTileset.empty()) {
+			fatal("Input tilesets are not supported without `-u`\nPlease consider explaining your "
+			      "use case to RGBDS' developers!");
 		}
 
 		if (!options.output.empty()) {

@@ -1,0 +1,3 @@
+-i input_tileset_deduped.in.2bpp
+-u
+-o result.2bpp

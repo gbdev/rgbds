@@ -108,7 +108,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:Dd:FfhL:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:Dd:Ffhi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
 
 /*
  * Equivalent long options
@@ -127,6 +127,7 @@ static option const longopts[] = {
     {"color-curve",      no_argument,       nullptr, 'C'},
     {"colors",           required_argument, nullptr, 'c'},
     {"depth",            required_argument, nullptr, 'd'},
+    {"input-tileset",    required_argument, nullptr, 'i'},
     {"slice",            required_argument, nullptr, 'L'},
     {"mirror-tiles",     no_argument,       nullptr, 'm'},
     {"nb-tiles",         required_argument, nullptr, 'N'},
@@ -154,9 +155,10 @@ static option const longopts[] = {
 static void printUsage() {
 	fputs(
 	    "Usage: rgbgfx [-r stride] [-CmOuVXYZ] [-v [-v ...]] [-a <attr_map> | -A]\n"
-	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-L <slice>] [-N <nb_tiles>]\n"
-	    "       [-n <nb_pals>] [-o <out_file>] [-p <pal_file> | -P] [-q <pal_map> | -Q]\n"
-	    "       [-s <nb_colors>] [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
+	    "       [-b <base_ids>] [-c <colors>] [-d <depth>] [-i <tileset_file>]\n"
+	    "       [-L <slice>] [-N <nb_tiles>] [-n <nb_pals>] [-o <out_file>]\n"
+	    "       [-p <pal_file> | -P] [-q <pal_map> | -Q] [-s <nb_colors>]\n"
+	    "       [-t <tile_map> | -T] [-x <nb_tiles>] <file>\n"
 	    "Useful options:\n"
 	    "    -m, --mirror-tiles    optimize out mirrored tiles\n"
 	    "    -o, --output <path>   output the tile data to this path\n"
@@ -426,6 +428,11 @@ static char *parseArgv(int argc, char *argv[]) {
 				error("Bit depth must be 1 or 2, not %" PRIu8, options.bitDepth);
 				options.bitDepth = 2;
 			}
+			break;
+		case 'i':
+			if (!options.inputTileset.empty())
+				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+			options.inputTileset = musl_optarg;
 			break;
 		case 'L':
 			options.inputSlice.left = parseNumber(arg, "Input slice left coordinate");
