@@ -113,7 +113,7 @@ for i in *.asm; do
 		(( our_rc = our_rc || $? ))
 
 		desired_binname=${i%.asm}.out.bin
-		if [ -f "$desired_binname" ]; then
+		if [[ -f "$desired_binname" && $our_rc -eq 0 ]]; then
 			if ! "$RGBLINK" -o "$gb" "$o"; then
 				echo "${bold}${red}\`$RGBLINK -o $gb $o\` failed!${rescolors}${resbold}"
 			else
