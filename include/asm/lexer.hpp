@@ -131,6 +131,7 @@ static inline void lexer_SetGfxDigits(char const digits[4]) {
 	gfxDigits[3] = digits[3];
 }
 
+bool lexer_AtTopLevel();
 void lexer_RestartRept(uint32_t lineNo);
 void lexer_Init();
 void lexer_SetMode(LexerMode mode);

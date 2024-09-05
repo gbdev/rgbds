@@ -73,7 +73,7 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 }
 
 void fstk_DumpCurrent() {
-	if (contextStack.empty()) {
+	if (lexer_AtTopLevel()) {
 		fputs("at top level", stderr);
 		return;
 	}

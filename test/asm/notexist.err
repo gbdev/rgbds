@@ -1,0 +1,4 @@
+error: at top level:
+    Failed to stat file "notexist.asm": No such file or directory
+FATAL: at top level:
+    Failed to open main file

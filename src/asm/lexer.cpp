@@ -338,6 +338,10 @@ static bool isWhitespace(int c) {
 static LexerState *lexerState = nullptr;
 static LexerState *lexerStateEOL = nullptr;
 
+bool lexer_AtTopLevel() {
+	return lexerState == nullptr;
+}
+
 void LexerState::clear(uint32_t lineNo_) {
 	mode = LEXER_NORMAL;
 	atLineStart = true; // yylex() will init colNo due to this

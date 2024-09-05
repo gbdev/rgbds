@@ -60,13 +60,13 @@ else
 	rm -f version.asm
 fi
 
-for i in *.asm; do
+for i in *.asm notexist.asm; do
 	flags=${i%.asm}.flags
 	RGBASMFLAGS=-Weverything
 	if [ -f "$flags" ]; then
 		RGBASMFLAGS="$(head -n 1 "$flags")" # Allow other lines to serve as comments
 	fi
-	for variant in '' '.pipe'; do
+	for variant in '' ' piped'; do
 		(( tests++ ))
 		echo "${bold}${green}${i%.asm}${variant}...${rescolors}${resbold}"
 		if [ -e "${i%.asm}.out" ]; then
@@ -85,8 +85,9 @@ for i in *.asm; do
 			desired_errput=$desired_errname
 		else
 			# `include-recursion.asm` refers to its own name inside the test code.
-			# Skip testing with stdin input for that file.
-			if [ "$i" = "include-recursion.asm" ]; then
+			# "notexist" doesn't exist, so there's no point in trying to `cat` it.
+			# Skip testing with stdin input for those file.
+			if [[ "$i" = include-recursion.asm || "$i" = notexist.asm ]]; then
 				continue
 			fi
 
