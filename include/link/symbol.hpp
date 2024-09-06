@@ -25,7 +25,6 @@ struct Symbol {
 	// Info contained in the object files
 	std::string name;
 	ExportLevel type;
-	char const *objFileName;
 	FileStackNode const *src;
 	int32_t lineNo;
 	Either<

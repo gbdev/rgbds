@@ -1,4 +1,4 @@
-error: Section "conflicting banks" is defined with conflicting banks 4 and 1
+error: Section "conflicting banks" is defined with bank 4 at section-union/bank-conflict.asm(5), but with bank 1 at section-union/bank-conflict.asm(5)
 ---
 error: <stdin>(14):
     Section already declared with different bank 4

@@ -46,6 +46,8 @@ struct Section {
 	bool isAlignFixed;
 	uint16_t alignMask;
 	uint16_t alignOfs;
+	FileStackNode const *src;
+	int32_t lineNo;
 	std::vector<uint8_t> data; // Array of size `size`, or 0 if `type` does not have data
 	std::vector<Patch> patches;
 	// Extra info computed during linking

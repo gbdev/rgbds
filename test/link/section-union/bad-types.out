@@ -1,4 +1,4 @@
-error: Section "conflicting types" is defined with conflicting types HRAM and WRAM0
+error: Section "conflicting types" is defined with type HRAM at section-union/bad-types.asm(7), but with type WRAM0 at section-union/bad-types.asm(7)
 ---
 error: <stdin>(18):
     Section already exists but with type HRAM

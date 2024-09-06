@@ -256,6 +256,9 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				);
 			std::unique_ptr<Section> curSection = std::make_unique<Section>();
 
+			curSection->src = &where;
+			curSection->lineNo = lineNo;
+
 			getToken(line.data(), "'A' line is too short");
 			assume(strlen(token) != 0); // This should be impossible, tokens are non-empty
 			// The following is required for fragment offsets to be reliably predicted
@@ -355,7 +358,6 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			Symbol &symbol = fileSymbols.emplace_back();
 
 			// Init other members
-			symbol.objFileName = where.name().c_str();
 			symbol.src = &where;
 			symbol.lineNo = lineNo;
 
@@ -408,16 +410,17 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					    || (symbolSection && !symbolSection->isAddressFixed)) {
 						sym_AddSymbol(symbol); // This will error out
 					} else if (otherValue != symbolValue) {
-						error(
-						    &where,
-						    lineNo,
-						    "Definition of \"%s\" conflicts with definition in %s (%" PRId32
-						    " != %" PRId32 ")",
+						fprintf(
+						    stderr,
+						    "error: \"%s\" is defined as %" PRId32 " at ",
 						    symbol.name.c_str(),
-						    other->objFileName,
-						    symbolValue,
-						    otherValue
+						    symbolValue
 						);
+						symbol.src->dump(symbol.lineNo);
+						fprintf(stderr, ", but as %" PRId32 " at ", otherValue);
+						other->src->dump(other->lineNo);
+						putc('\n', stderr);
+						exit(1);
 					}
 				} else {
 					// Add a new definition

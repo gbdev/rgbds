@@ -288,6 +288,8 @@ static Section *createSection(
 	sect.align = alignment;
 	sect.alignOfs = alignOffset;
 
+	out_RegisterNode(sect.src);
+
 	// It is only needed to allocate memory for ROM sections.
 	if (sect_HasData(type))
 		sect.data.resize(sectionTypeInfo[type].size);

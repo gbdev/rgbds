@@ -1,4 +1,4 @@
-error: Section "conflicting address" is defined with conflicting addresses $beef and $babe
+error: Section "conflicting address" is defined with address $beef at section-union/org-conflict.asm(7), but with address $babe at section-union/org-conflict.asm(7)
 ---
 error: <stdin>(16):
     Section already declared as fixed at different address $beef

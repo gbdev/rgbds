@@ -1,1 +1,1 @@
-error: Section "Frag" is defined with conflicting 2-byte alignment (offset 1) and 4-byte alignment (offset 3)
+error: Section "Frag" is defined with 2-byte alignment (offset 1) at fragment-align/base-bad/a.asm(2), but with 4-byte alignment (offset 3) at fragment-align/base-bad/b.asm(2)

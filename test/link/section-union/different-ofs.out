@@ -1,4 +1,4 @@
-error: Section "conflicting alignment" is defined with conflicting 8-byte alignment (offset 7) and 8-byte alignment (offset 6)
+error: Section "conflicting alignment" is defined with 8-byte alignment (offset 7) at section-union/different-ofs.asm(7), but with 8-byte alignment (offset 6) at section-union/different-ofs.asm(7)
 ---
 error: <stdin>(18):
     Section already declared with incompatible 8-byte alignment (offset 7)
