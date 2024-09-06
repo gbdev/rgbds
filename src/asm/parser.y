@@ -1874,6 +1874,9 @@ z80_cpl:
 	Z80_CPL {
 		sect_ConstByte(0x2F);
 	}
+	| Z80_CPL MODE_A {
+		sect_ConstByte(0x2F);
+	}
 ;
 
 z80_daa:

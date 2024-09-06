@@ -11,15 +11,27 @@ This is the list of opcodes supported by
 .Xr rgbasm 1 ,
 including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete them.
 .Pp
-Note: All arithmetic/logic operations that use register
+Note: All arithmetic/logic instructions that use register
 .Sy A
-as destination can omit the destination as it is assumed to be register
+as a destination can omit the destination, since it is assumed to be register
 .Sy A
 by default.
-The following two lines have the same effect:
+So the following two lines have the same effect:
 .Bd -literal -offset indent
 OR A,B
 OR B
+.Ed
+.Pp
+Furthermore, the
+.Sy CPL
+instruction can take an optional
+.Sy A
+destination, since it can only be register
+.Sy A .
+So the following two lines have the same effect:
+.Bd -literal -offset indent
+CPL
+CPL A
 .Ed
 .Sh LEGEND
 List of abbreviations used in this document.
