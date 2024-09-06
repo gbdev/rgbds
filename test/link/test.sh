@@ -8,10 +8,11 @@ gbtemp="$(mktemp)"
 gbtemp2="$(mktemp)"
 outtemp="$(mktemp)"
 outtemp2="$(mktemp)"
+outtemp3="$(mktemp)"
 
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
-trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q}" EXIT
+trap "rm -f ${otemp@Q} ${gbtemp@Q} ${gbtemp2@Q} ${outtemp@Q} ${outtemp2@Q} ${outtemp3@Q}" EXIT
 
 tests=0
 failed=0
@@ -316,7 +317,7 @@ for i in section-union/*.asm; do
 	evaluateTest
 done
 
-test="symbols"
+test="symbols/good"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
@@ -325,6 +326,18 @@ rgblinkQuiet -o "$gbtemp" -n "$outtemp2" "$gbtemp2" "$otemp" 2>"$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 tryDiff "$test"/ref.out.sym "$outtemp2"
 tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
+test="symbols/unknown"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp" "$test"/b.asm
+"$RGBASM" -o "$gbtemp2" "$test"/c.asm
+"$RGBASM" -o "$outtemp" "$test"/d.asm
+"$RGBASM" -o "$outtemp2" "$test"/e.asm
+continueTest
+rgblinkQuiet "$otemp" "$gbtemp" "$gbtemp2" "$outtemp" "$outtemp2" 2>"$outtemp3"
+tryDiff "$test"/out.err "$outtemp3"
 evaluateTest
 
 if [[ "$failed" -eq 0 ]]; then

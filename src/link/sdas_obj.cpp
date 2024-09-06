@@ -382,6 +382,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			// Expected format: /[DR]ef[0-9A-F]+/i
 			if (token[0] == 'R' || token[0] == 'r') {
 				symbol.type = SYMTYPE_IMPORT;
+				sym_AddSymbol(symbol);
 				// TODO: hard error if the rest is not zero
 			} else if (token[0] != 'D' && token[0] != 'd') {
 				fatal(&where, lineNo, "'S' line is neither \"Def\" nor \"Ref\"");
