@@ -4,3 +4,15 @@
 
 # Flags also need Unix line endings (see https://github.com/gbdev/rgbds/issues/955)
 *.flags text eol=lf
+
+# Binary files need exact bytes
+*.bin binary
+*.gb binary
+*.1bpp binary
+*.2bpp binary
+*.pal binary
+*.attrmap binary
+*.tilemap binary
+*.palmap binary
+*.patch binary
+*.png binary
