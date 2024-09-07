@@ -31,7 +31,7 @@ static std::vector<std::vector<FileStackNode>> nodes;
 // Helper functions for reading object files
 
 // Internal, DO NOT USE.
-// For helper wrapper macros defined below, such as `tryReadlong`
+// For helper wrapper macros defined below, such as `tryReadLong`
 #define tryRead(func, type, errval, vartype, var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
@@ -48,7 +48,7 @@ static std::vector<std::vector<FileStackNode>> nodes;
  * @param file The file to read from. This will read 4 bytes from the file.
  * @return The value read, cast to a int64_t, or -1 on failure.
  */
-static int64_t readlong(FILE *file) {
+static int64_t readLong(FILE *file) {
 	uint32_t value = 0;
 
 	// Read the little-endian value byte by byte
@@ -76,8 +76,8 @@ static int64_t readlong(FILE *file) {
  * @param ... A format string and related arguments; note that an extra string
  *            argument is provided, the reason for failure
  */
-#define tryReadlong(var, file, ...) \
-	tryRead(readlong, int64_t, INT64_MAX, long, var, file, __VA_ARGS__)
+#define tryReadLong(var, file, ...) \
+	tryRead(readLong, int64_t, INT64_MAX, long, var, file, __VA_ARGS__)
 
 // There is no `readbyte`, just use `fgetc` or `getc`.
 
@@ -99,7 +99,7 @@ static int64_t readlong(FILE *file) {
  * @param ... A format string and related arguments; note that an extra string
  *            argument is provided, the reason for failure
  */
-#define tryReadstring(var, file, ...) \
+#define tryReadString(var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
 		std::string &tmpVal = var; \
@@ -127,9 +127,9 @@ static void readFileStackNode(
 	FileStackNode &node = fileNodes[i];
 	uint32_t parentID;
 
-	tryReadlong(parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
+	tryReadLong(parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
 	node.parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : nullptr;
-	tryReadlong(
+	tryReadLong(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i
 	);
 	tryGetc(
@@ -144,17 +144,17 @@ static void readFileStackNode(
 	case NODE_FILE:
 	case NODE_MACRO:
 		node.data = "";
-		tryReadstring(
+		tryReadString(
 		    node.name(), file, "%s: Cannot read node #%" PRIu32 "'s file name: %s", fileName, i
 		);
 		break;
 
 		uint32_t depth;
 	case NODE_REPT:
-		tryReadlong(depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
+		tryReadLong(depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
 		node.data = std::vector<uint32_t>(depth);
 		for (uint32_t k = 0; k < depth; k++)
-			tryReadlong(
+			tryReadLong(
 			    node.iters()[k],
 			    file,
 			    "%s: Cannot read node #%" PRIu32 "'s iter #%" PRIu32 ": %s",
@@ -182,7 +182,7 @@ static void readFileStackNode(
 static void readSymbol(
     FILE *file, Symbol &symbol, char const *fileName, std::vector<FileStackNode> const &fileNodes
 ) {
-	tryReadstring(symbol.name, file, "%s: Cannot read symbol name: %s", fileName);
+	tryReadString(symbol.name, file, "%s: Cannot read symbol name: %s", fileName);
 	tryGetc(
 	    ExportLevel,
 	    symbol.type,
@@ -195,11 +195,11 @@ static void readSymbol(
 	if (symbol.type != SYMTYPE_IMPORT) {
 		symbol.objFileName = fileName;
 		uint32_t nodeID;
-		tryReadlong(
+		tryReadLong(
 		    nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s", fileName, symbol.name.c_str()
 		);
 		symbol.src = &fileNodes[nodeID];
-		tryReadlong(
+		tryReadLong(
 		    symbol.lineNo,
 		    file,
 		    "%s: Cannot read \"%s\"'s line number: %s",
@@ -207,14 +207,14 @@ static void readSymbol(
 		    symbol.name.c_str()
 		);
 		int32_t sectionID, value;
-		tryReadlong(
+		tryReadLong(
 		    sectionID,
 		    file,
 		    "%s: Cannot read \"%s\"'s section ID: %s",
 		    fileName,
 		    symbol.name.c_str()
 		);
-		tryReadlong(
+		tryReadLong(
 		    value, file, "%s: Cannot read \"%s\"'s value: %s", fileName, symbol.name.c_str()
 		);
 		if (sectionID == -1) {
@@ -250,7 +250,7 @@ static void readPatch(
 	uint32_t nodeID, rpnSize;
 	PatchType type;
 
-	tryReadlong(
+	tryReadLong(
 	    nodeID,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s node ID: %s",
@@ -259,7 +259,7 @@ static void readPatch(
 	    i
 	);
 	patch.src = &fileNodes[nodeID];
-	tryReadlong(
+	tryReadLong(
 	    patch.lineNo,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s line number: %s",
@@ -267,7 +267,7 @@ static void readPatch(
 	    sectName.c_str(),
 	    i
 	);
-	tryReadlong(
+	tryReadLong(
 	    patch.offset,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s offset: %s",
@@ -275,7 +275,7 @@ static void readPatch(
 	    sectName.c_str(),
 	    i
 	);
-	tryReadlong(
+	tryReadLong(
 	    patch.pcSectionID,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
@@ -283,7 +283,7 @@ static void readPatch(
 	    sectName.c_str(),
 	    i
 	);
-	tryReadlong(
+	tryReadLong(
 	    patch.pcOffset,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s PC offset: %s",
@@ -301,7 +301,7 @@ static void readPatch(
 	    i
 	);
 	patch.type = type;
-	tryReadlong(
+	tryReadLong(
 	    rpnSize,
 	    file,
 	    "%s: Unable to read \"%s\"'s patch #%" PRIu32 "'s RPN size: %s",
@@ -345,8 +345,8 @@ static void readSection(
 	int32_t tmp;
 	uint8_t byte;
 
-	tryReadstring(section.name, file, "%s: Cannot read section name: %s", fileName);
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
+	tryReadString(section.name, file, "%s: Cannot read section name: %s", fileName);
+	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX)
 		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section.name.c_str(), tmp);
 	section.size = tmp;
@@ -365,14 +365,14 @@ static void readSection(
 		section.modifier = SECTION_FRAGMENT;
 	else
 		section.modifier = SECTION_NORMAL;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section.name.c_str());
+	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section.name.c_str());
 	section.isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
 		error(nullptr, 0, "\"%s\"'s org is too large (%" PRId32 ")", section.name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section.org = tmp;
-	tryReadlong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s", fileName, section.name.c_str());
+	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s bank: %s", fileName, section.name.c_str());
 	section.isBankFixed = tmp >= 0;
 	section.bank = tmp;
 	tryGetc(
@@ -387,7 +387,7 @@ static void readSection(
 		byte = 16;
 	section.isAlignFixed = byte != 0;
 	section.alignMask = (1 << byte) - 1;
-	tryReadlong(
+	tryReadLong(
 	    tmp, file, "%s: Cannot read \"%s\"'s alignment offset: %s", fileName, section.name.c_str()
 	);
 	if (tmp > UINT16_MAX) {
@@ -417,7 +417,7 @@ static void readSection(
 
 		uint32_t nbPatches;
 
-		tryReadlong(
+		tryReadLong(
 		    nbPatches,
 		    file,
 		    "%s: Cannot read \"%s\"'s number of patches: %s",
@@ -470,7 +470,7 @@ static void readAssertion(
 
 	assertName += std::to_string(i);
 	readPatch(file, assert.patch, fileName, assertName, 0, fileNodes);
-	tryReadstring(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
+	tryReadString(assert.message, file, "%s: Cannot read assertion's message: %s", fileName);
 }
 
 void obj_ReadFile(char const *fileName, unsigned int fileID) {
@@ -525,7 +525,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	uint32_t revNum;
 
-	tryReadlong(revNum, file, "%s: Cannot read revision number: %s", fileName);
+	tryReadLong(revNum, file, "%s: Cannot read revision number: %s", fileName);
 	if (revNum != RGBDS_OBJECT_REV)
 		errx(
 		    "%s: Unsupported object file for rgblink %s; try rebuilding \"%s\"%s"
@@ -542,12 +542,12 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	uint32_t nbSymbols;
 	uint32_t nbSections;
 
-	tryReadlong(nbSymbols, file, "%s: Cannot read number of symbols: %s", fileName);
-	tryReadlong(nbSections, file, "%s: Cannot read number of sections: %s", fileName);
+	tryReadLong(nbSymbols, file, "%s: Cannot read number of symbols: %s", fileName);
+	tryReadLong(nbSections, file, "%s: Cannot read number of sections: %s", fileName);
 
 	nbSectionsToAssign += nbSections;
 
-	tryReadlong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
+	tryReadLong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].resize(nbNodes);
 	verbosePrint("Reading %u nodes...\n", nbNodes);
 	for (uint32_t i = nbNodes; i--;)
@@ -584,7 +584,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 	uint32_t nbAsserts;
 
-	tryReadlong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
+	tryReadLong(nbAsserts, file, "%s: Cannot read number of assertions: %s", fileName);
 	verbosePrint("Reading %" PRIu32 " assertions...\n", nbAsserts);
 	for (uint32_t i = 0; i < nbAsserts; i++) {
 		Assertion &assertion = assertions.emplace_front();
