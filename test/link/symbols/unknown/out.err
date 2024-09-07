@@ -1,0 +1,6 @@
+error: symbols/unknown/a.asm(2): Unknown symbol "Label"
+    A label with that name is defined but not exported at symbols/unknown/b.asm(2)
+    A constant with that name is defined but not exported at symbols/unknown/c.asm(1)
+    A constant with that name is defined but not exported at symbols/unknown/d.asm(1)
+    ...and 1 more symbol with that name is defined but not exported
+Linking failed with 1 error

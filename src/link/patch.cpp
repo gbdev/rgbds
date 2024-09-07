@@ -388,6 +388,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					    "Unknown symbol \"%s\"",
 					    fileSymbols[value].name.c_str()
 					);
+					sym_DumpLocalAliasedSymbols(fileSymbols[value].name);
 					isError = true;
 				} else if (symbol->data.holds<Label>()) {
 					Label const &label = symbol->data.get<Label>();

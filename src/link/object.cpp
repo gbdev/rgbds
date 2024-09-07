@@ -564,8 +564,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 
 		readSymbol(file, symbol, fileName, nodes[fileID]);
 
-		if (symbol.type == SYMTYPE_EXPORT)
-			sym_AddSymbol(symbol);
+		sym_AddSymbol(symbol);
 		if (symbol.data.holds<Label>())
 			nbSymPerSect[symbol.data.get<Label>().sectionID]++;
 	}
