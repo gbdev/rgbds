@@ -18,54 +18,67 @@ void sect_ForEach(void (*callback)(Section &)) {
 		callback(*it->get());
 }
 
-static void checkSectUnionCompat(Section &target, Section &other) {
-	if (other.isAddressFixed) {
-		if (target.isAddressFixed) {
-			if (target.org != other.org)
-				errx(
-				    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
-				    " and $%04" PRIx16,
-				    other.name.c_str(),
-				    target.org,
-				    other.org
-				);
-		} else if (target.isAlignFixed) {
-			if ((other.org - target.alignOfs) & target.alignMask)
-				errx(
-				    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-				    ") and address $%04" PRIx16,
-				    other.name.c_str(),
-				    target.alignMask + 1,
-				    target.alignOfs,
-				    other.org
-				);
+static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
+	if (target.isAddressFixed) {
+		if (target.org != org) {
+			errx(
+			    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
+			    " and $%04" PRIx16,
+			    other.name.c_str(),
+			    target.org,
+			    other.org
+			);
 		}
-		target.isAddressFixed = true;
-		target.org = other.org;
-
-	} else if (other.isAlignFixed) {
-		if (target.isAddressFixed) {
-			if ((target.org - other.alignOfs) & other.alignMask)
-				errx(
-				    "Section \"%s\" is defined with conflicting address $%04" PRIx16
-				    " and %d-byte alignment (offset %" PRIu16 ")",
-				    other.name.c_str(),
-				    target.org,
-				    other.alignMask + 1,
-				    other.alignOfs
-				);
-		} else if (target.isAlignFixed
-		           && (other.alignMask & target.alignOfs) != (target.alignMask & other.alignOfs)) {
+	} else if (target.isAlignFixed) {
+		if ((org - target.alignOfs) & target.alignMask) {
 			errx(
 			    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-			    ") and %d-byte alignment (offset %" PRIu16 ")",
+			    ") and address $%04" PRIx16,
 			    other.name.c_str(),
 			    target.alignMask + 1,
 			    target.alignOfs,
+			    other.org
+			);
+		}
+	}
+}
+
+static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
+	if (target.isAddressFixed) {
+		if ((target.org - ofs) & other.alignMask) {
+			errx(
+			    "Section \"%s\" is defined with conflicting address $%04" PRIx16
+			    " and %d-byte alignment (offset %" PRIu16 ")",
+			    other.name.c_str(),
+			    target.org,
 			    other.alignMask + 1,
 			    other.alignOfs
 			);
-		} else if (!target.isAlignFixed || (other.alignMask > target.alignMask)) {
+		}
+		return false;
+	} else if (target.isAlignFixed
+	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
+		errx(
+		    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
+		    ") and %d-byte alignment (offset %" PRIu16 ")",
+		    other.name.c_str(),
+		    target.alignMask + 1,
+		    target.alignOfs,
+		    other.alignMask + 1,
+		    other.alignOfs
+		);
+	} else {
+		return !target.isAlignFixed || (other.alignMask > target.alignMask);
+	}
+}
+
+static void checkSectUnionCompat(Section &target, Section &other) {
+	if (other.isAddressFixed) {
+		checkAgainstFixedAddress(target, other, other.org);
+		target.isAddressFixed = true;
+		target.org = other.org;
+	} else if (other.isAlignFixed) {
+		if (checkAgainstFixedAlign(target, other, other.alignOfs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
 		}
@@ -75,60 +88,14 @@ static void checkSectUnionCompat(Section &target, Section &other) {
 static void checkFragmentCompat(Section &target, Section &other) {
 	if (other.isAddressFixed) {
 		uint16_t org = other.org - target.size;
-
-		if (target.isAddressFixed) {
-			if (target.org != org)
-				errx(
-				    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
-				    " and $%04" PRIx16,
-				    other.name.c_str(),
-				    target.org,
-				    other.org
-				);
-
-		} else if (target.isAlignFixed) {
-			if ((org - target.alignOfs) & target.alignMask)
-				errx(
-				    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-				    ") and address $%04" PRIx16,
-				    other.name.c_str(),
-				    target.alignMask + 1,
-				    target.alignOfs,
-				    other.org
-				);
-		}
+		checkAgainstFixedAddress(target, other, org);
 		target.isAddressFixed = true;
 		target.org = org;
-
 	} else if (other.isAlignFixed) {
 		int32_t ofs = (other.alignOfs - target.size) % (other.alignMask + 1);
-
 		if (ofs < 0)
 			ofs += other.alignMask + 1;
-
-		if (target.isAddressFixed) {
-			if ((target.org - ofs) & other.alignMask)
-				errx(
-				    "Section \"%s\" is defined with conflicting address $%04" PRIx16
-				    " and %d-byte alignment (offset %" PRIu16 ")",
-				    other.name.c_str(),
-				    target.org,
-				    other.alignMask + 1,
-				    other.alignOfs
-				);
-
-		} else if (target.isAlignFixed && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-			errx(
-			    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-			    ") and %d-byte alignment (offset %" PRIu16 ")",
-			    other.name.c_str(),
-			    target.alignMask + 1,
-			    target.alignOfs,
-			    other.alignMask + 1,
-			    other.alignOfs
-			);
-
-		} else if (!target.isAlignFixed || (other.alignMask > target.alignMask)) {
+		if (checkAgainstFixedAlign(target, other, ofs)) {
 			target.isAlignFixed = true;
 			target.alignMask = other.alignMask;
 			target.alignOfs = ofs;
