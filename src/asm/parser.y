@@ -1142,7 +1142,7 @@ export_def:
 
 include:
 	label POP_INCLUDE string endofline {
-		fstk_RunInclude($3, false);
+		fstk_RunInclude($3, INCLUDE_NORMAL);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
@@ -1150,7 +1150,7 @@ include:
 
 include_once:
 	label POP_INCLUDE_ONCE string endofline {
-		fstk_RunIncludeOnce($3);
+		fstk_RunInclude($3, INCLUDE_ONCE);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}

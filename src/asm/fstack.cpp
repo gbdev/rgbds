@@ -6,10 +6,11 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <memory>
+#include <set>
 #include <stack>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unordered_set>
+#include <utility>
 
 #include "error.hpp"
 #include "helpers.hpp"
@@ -47,7 +48,7 @@ size_t maxRecursionDepth;
 // The first include path for `fstk_FindFile` to try is none at all
 static std::vector<std::string> includePaths = {""};
 static std::string preIncludeName;
-static std::unordered_set<std::string> includedFiles;
+static std::set<std::pair<dev_t, ino_t>> includedFiles;
 
 std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 	if (data.holds<std::vector<uint32_t>>()) {
@@ -292,11 +293,11 @@ static Context &newReptContext(int32_t reptLineNo, ContentSpan const &span, uint
 	return context;
 }
 
-void fstk_RunInclude(std::string const &path, bool preInclude) {
+void fstk_RunInclude(std::string const &path, IncludeType type) {
 	std::optional<std::string> fullPath = fstk_FindFile(path);
 
 	if (!fullPath) {
-		if (generatedMissingIncludes && !preInclude) {
+		if (generatedMissingIncludes && type != INCLUDE_PRE) {
 			if (verbose)
 				printf("Aborting (-MG) on INCLUDE file '%s' (%s)\n", path.c_str(), strerror(errno));
 			failedOnMissingInclude = true;
@@ -306,22 +307,26 @@ void fstk_RunInclude(std::string const &path, bool preInclude) {
 		return;
 	}
 
-	// Remember this path as being INCLUDEd at least once
-	includedFiles.insert(path);
+	// The pair of device ID and serial number uniquely identify a file, with `stat()`
+	// following symbolic links to identify the actual file.
+	struct stat statBuf;
+	if (stat(fullPath->c_str(), &statBuf) != 0) {
+		error("Failed to stat file '%s': %s\n", fullPath->c_str(), strerror(errno));
+		return;
+	}
+	std::pair<dev_t, ino_t> inode{statBuf.st_dev, statBuf.st_ino};
 
-	if (!newFileContext(*fullPath, false))
-		fatalerror("Failed to set up lexer for file include\n");
-}
-
-void fstk_RunIncludeOnce(std::string const &path) {
-	if (includedFiles.find(path) != includedFiles.end()) {
+	if (type == INCLUDE_ONCE && includedFiles.find(inode) != includedFiles.end()) {
 		if (verbose) {
 			printf("File '%s' already included, skipping INCLUDE_ONCE", path.c_str());
 		}
 		return;
 	}
 
-	fstk_RunInclude(path, false);
+	includedFiles.insert(inode);
+
+	if (!newFileContext(*fullPath, false))
+		fatalerror("Failed to set up lexer for file include\n");
 }
 
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs) {
@@ -410,5 +415,5 @@ void fstk_Init(std::string const &mainPath, size_t maxDepth) {
 	maxRecursionDepth = maxDepth;
 
 	if (!preIncludeName.empty())
-		fstk_RunInclude(preIncludeName, true);
+		fstk_RunInclude(preIncludeName, INCLUDE_PRE);
 }
