@@ -17,6 +17,12 @@
 
 #include "asm/lexer.hpp"
 
+enum IncludeType {
+	INCLUDE_NORMAL,
+	INCLUDE_PRE,
+	INCLUDE_ONCE
+};
+
 struct FileStackNode {
 	FileStackNodeType type;
 	Either<
@@ -64,7 +70,7 @@ void fstk_SetPreIncludeFile(std::string const &path);
 std::optional<std::string> fstk_FindFile(std::string const &path);
 
 bool yywrap();
-void fstk_RunInclude(std::string const &path, bool updateStateNow);
+void fstk_RunInclude(std::string const &path, IncludeType type);
 void fstk_RunMacro(std::string const &macroName, std::shared_ptr<MacroArgs> macroArgs);
 void fstk_RunRept(uint32_t count, int32_t reptLineNo, ContentSpan const &span);
 void fstk_RunFor(

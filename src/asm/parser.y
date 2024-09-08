@@ -236,6 +236,7 @@
 %token POP_IF "IF"
 %token POP_INCBIN "INCBIN"
 %token POP_INCLUDE "INCLUDE"
+%token POP_INCLUDE_ONCE "INCLUDE_ONCE"
 %token POP_LOAD "LOAD"
 %token POP_MACRO "MACRO"
 %token POP_NEWCHARMAP "NEWCHARMAP"
@@ -464,6 +465,7 @@ line_directive:
 	| for
 	| break
 	| include
+	| include_once
 	| if
 	// It's important that all of these require being at line start for `skipIfBlock`
 	| elif
@@ -1140,7 +1142,15 @@ export_def:
 
 include:
 	label POP_INCLUDE string endofline {
-		fstk_RunInclude($3, false);
+		fstk_RunInclude($3, INCLUDE_NORMAL);
+		if (failedOnMissingInclude)
+			YYACCEPT;
+	}
+;
+
+include_once:
+	label POP_INCLUDE_ONCE string endofline {
+		fstk_RunInclude($3, INCLUDE_ONCE);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}

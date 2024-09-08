@@ -11,9 +11,12 @@ input="$(mktemp)"
 output="$(mktemp)"
 errput="$(mktemp)"
 
+# Create a symbolic link for the `include-once.asm` test case.
+ln include-once.inc include-link.inc
+
 # Immediate expansion is the desired behavior.
 # shellcheck disable=SC2064
-trap "rm -f ${o@Q} ${gb@Q} ${input@Q} ${output@Q} ${errput@Q}" EXIT
+trap "rm -f ${o@Q} ${gb@Q} ${input@Q} ${output@Q} ${errput@Q} include-link.inc" EXIT
 
 tests=0
 failed=0
