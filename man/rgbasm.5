@@ -2162,12 +2162,13 @@ You may also ensure a file only gets included once by using
 .Ic INCLUDE_ONCE
 instead of
 .Ic INCLUDE .
-This will skip including a file if its exact path has already been included before (with
-.Ic INCLUDE
+This will skip including a file if it has already been included before (with
+.Ic INCLUDE ,
+.Ic INCLUDE_ONCE ,
 or
-.Ic INCLUDE_ONCE ) .
+.Fl P ) .
 .Pp
-You may also implicitly
+You can implicitly
 .Ic INCLUDE
 a file before the source file with the
 .Fl P
