@@ -256,7 +256,6 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"INCHARMAP",     T_(OP_INCHARMAP)     },
 
     {"INCLUDE",       T_(POP_INCLUDE)      },
-    {"INCLUDE_ONCE",  T_(POP_INCLUDE_ONCE) },
     {"PRINT",         T_(POP_PRINT)        },
     {"PRINTLN",       T_(POP_PRINTLN)      },
     {"EXPORT",        T_(POP_EXPORT)       },

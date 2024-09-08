@@ -1,1 +1,0 @@
-DEF HELLO EQU 1
