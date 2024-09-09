@@ -395,7 +395,7 @@ static void changeSection() {
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentLabelScope(nullptr);
 }
 
 bool Section::isSizeKnown() const {
@@ -473,7 +473,7 @@ void sect_SetLoadSection(
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
-	currentLoadScope = sym_GetCurrentSymbolScope();
+	currentLoadScope = sym_GetCurrentLabelScope();
 	changeSection();
 	loadOffset = curOffset - (mod == SECTION_UNION ? 0 : sect->size);
 	curOffset -= loadOffset;
@@ -490,7 +490,7 @@ void sect_EndLoadSection() {
 	curOffset += loadOffset;
 	loadOffset = 0;
 	currentLoadSection = nullptr;
-	sym_SetCurrentSymbolScope(currentLoadScope);
+	sym_SetCurrentLabelScope(currentLoadScope);
 }
 
 Section *sect_GetSymbolSection() {
@@ -935,7 +935,7 @@ void sect_PushSection() {
 	sectionStack.push_front({
 	    .section = currentSection,
 	    .loadSection = currentLoadSection,
-	    .scope = sym_GetCurrentSymbolScope(),
+	    .scope = sym_GetCurrentLabelScope(),
 	    .offset = curOffset,
 	    .loadOffset = loadOffset,
 	    .unionStack = {},
@@ -944,7 +944,7 @@ void sect_PushSection() {
 	// Reset the section scope
 	currentSection = nullptr;
 	currentLoadSection = nullptr;
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentLabelScope(nullptr);
 	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
@@ -961,7 +961,7 @@ void sect_PopSection() {
 	changeSection();
 	currentSection = entry.section;
 	currentLoadSection = entry.loadSection;
-	sym_SetCurrentSymbolScope(entry.scope);
+	sym_SetCurrentLabelScope(entry.scope);
 	curOffset = entry.offset;
 	loadOffset = entry.loadOffset;
 	std::swap(currentUnionStack, entry.unionStack);
@@ -979,5 +979,5 @@ void sect_EndSection() {
 
 	// Reset the section scope
 	currentSection = nullptr;
-	sym_SetCurrentSymbolScope(nullptr);
+	sym_SetCurrentLabelScope(nullptr);
 }
