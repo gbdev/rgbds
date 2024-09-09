@@ -78,7 +78,6 @@ void sym_Export(std::string const &symName);
 Symbol *sym_AddEqu(std::string const &symName, int32_t value);
 Symbol *sym_RedefEqu(std::string const &symName, int32_t value);
 Symbol *sym_AddVar(std::string const &symName, int32_t value);
-uint32_t sym_GetPCValue();
 int32_t sym_GetRSValue();
 void sym_SetRSValue(int32_t value);
 uint32_t sym_GetConstantValue(std::string const &symName);

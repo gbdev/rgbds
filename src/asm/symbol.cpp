@@ -51,9 +51,7 @@ static int32_t Callback_NARG() {
 }
 
 static int32_t CallbackPC() {
-	Section const *section = sect_GetSymbolSection();
-
-	return section ? section->org + sect_GetSymbolOffset() : 0;
+	return sect_GetSymbolSection()->org + sect_GetSymbolOffset();
 }
 
 int32_t Symbol::getValue() const {
@@ -201,18 +199,6 @@ bool sym_IsPurgedScoped(std::string const &symName) {
 	return sym_IsPurgedExact(symName);
 }
 
-uint32_t sym_GetPCValue() {
-	Section const *sect = sect_GetSymbolSection();
-
-	if (!sect)
-		error("PC has no value outside of a section\n");
-	else if (sect->org == (uint32_t)-1)
-		error("PC does not have a constant value; the current section is not fixed\n");
-	else
-		return CallbackPC();
-	return 0;
-}
-
 int32_t sym_GetRSValue() {
 	return _RSSymbol->getOutputValue();
 }
@@ -224,13 +210,17 @@ void sym_SetRSValue(int32_t value) {
 
 // Return a constant symbol's value, assuming it's defined
 uint32_t Symbol::getConstantValue() const {
-	if (sym_IsPC(this))
-		return sym_GetPCValue();
-
 	if (isConstant())
 		return getValue();
 
-	error("\"%s\" does not have a constant value\n", name.c_str());
+	if (sym_IsPC(this)) {
+		if (!getSection())
+			error("PC has no value outside of a section\n");
+		else
+			error("PC does not have a constant value; the current section is not fixed\n");
+	} else {
+		error("\"%s\" does not have a constant value\n", name.c_str());
+	}
 	return 0;
 }
 
