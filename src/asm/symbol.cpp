@@ -93,7 +93,6 @@ static void dumpFilename(Symbol const &sym) {
 	}
 }
 
-// Update a symbol's definition filename and line
 static void updateSymbolFilename(Symbol &sym) {
 	std::shared_ptr<FileStackNode> oldSrc = std::move(sym.src);
 	sym.src = fstk_GetFileStack();
@@ -104,7 +103,6 @@ static void updateSymbolFilename(Symbol &sym) {
 		out_RegisterNode(sym.src);
 }
 
-// Create a new symbol by name
 static Symbol &createSymbol(std::string const &symName) {
 	static uint32_t nextDefIndex = 0;
 
@@ -208,7 +206,6 @@ void sym_SetRSValue(int32_t value) {
 	RSSymbol->data = value;
 }
 
-// Return a constant symbol's value, assuming it's defined
 uint32_t Symbol::getConstantValue() const {
 	if (isConstant())
 		return getValue();
@@ -224,7 +221,6 @@ uint32_t Symbol::getConstantValue() const {
 	return 0;
 }
 
-// Return a constant symbol's value
 uint32_t sym_GetConstantValue(std::string const &symName) {
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym)
 		return sym->getConstantValue();
@@ -244,13 +240,6 @@ void sym_SetCurrentSymbolScope(Symbol const *newScope) {
 	labelScope = newScope;
 }
 
-/*
- * Create a symbol that will be non-relocatable and ensure that it
- * hasn't already been defined or referenced in a context that would
- * require that it be relocatable
- * @param symName The name of the symbol to create
- * @param numeric If false, the symbol may not have been referenced earlier
- */
 static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
@@ -271,7 +260,6 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 	return sym;
 }
 
-// Add an equated symbol
 Symbol *sym_AddEqu(std::string const &symName, int32_t value) {
 	Symbol *sym = createNonrelocSymbol(symName, true);
 
@@ -306,18 +294,6 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 	return sym;
 }
 
-/*
- * Add a string equated symbol.
- *
- * If the desired symbol is a string it needs to be passed to this function with
- * quotes inside the string, like sym_AddString("name"s, "\"test\"), or the
- * assembler won't be able to use it with DB and similar. This is equivalent to
- * ``` name EQUS "\"test\"" ```
- *
- * If the desired symbol is a register or a number, just the terminator quotes
- * of the string are enough: sym_AddString("M_PI"s, "3.1415"). This is the same
- * as ``` M_PI EQUS "3.1415" ```
- */
 Symbol *sym_AddString(std::string const &symName, std::shared_ptr<std::string> str) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
@@ -353,7 +329,6 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 	return sym;
 }
 
-// Alter a mutable symbol's value
 Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	Symbol *sym = sym_FindExactSymbol(symName);
 
@@ -377,11 +352,6 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	return sym;
 }
 
-/*
- * Add a label (aka "relocatable symbol")
- * @param symName The label's full name (so `.name` is invalid)
- * @return The created symbol
- */
 static Symbol *addLabel(std::string const &symName) {
 	assume(!symName.starts_with('.')); // The symbol name must have been expanded prior
 	Symbol *sym = sym_FindExactSymbol(symName);
@@ -409,7 +379,6 @@ static Symbol *addLabel(std::string const &symName) {
 	return sym;
 }
 
-// Add a local (`.name` or `Parent.name`) relocatable symbol
 Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// Assuming no dots in `labelScope` if defined
 	assume(!labelScope || labelScope->name.find('.') == std::string::npos);
@@ -436,7 +405,6 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 	return addLabel(symName);
 }
 
-// Add a relocatable symbol
 Symbol *sym_AddLabel(std::string const &symName) {
 	Symbol *sym = addLabel(symName);
 
@@ -448,7 +416,6 @@ Symbol *sym_AddLabel(std::string const &symName) {
 
 static uint32_t anonLabelID = 0;
 
-// Add an anonymous label
 Symbol *sym_AddAnonLabel() {
 	if (anonLabelID == UINT32_MAX) {
 		error("Only %" PRIu32 " anonymous labels can be created!", anonLabelID);
@@ -460,7 +427,6 @@ Symbol *sym_AddAnonLabel() {
 	return addLabel(anon);
 }
 
-// Write an anonymous label's name to a buffer
 std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	uint32_t id = 0;
 
@@ -493,7 +459,6 @@ std::string sym_MakeAnonLabelName(uint32_t ofs, bool neg) {
 	return anon;
 }
 
-// Export a symbol
 void sym_Export(std::string const &symName) {
 	if (symName.starts_with('!')) {
 		error("Anonymous labels cannot be exported\n");
@@ -508,7 +473,6 @@ void sym_Export(std::string const &symName) {
 	sym->isExported = true;
 }
 
-// Add a macro definition
 Symbol *sym_AddMacro(std::string const &symName, int32_t defLineNo, ContentSpan const &span) {
 	Symbol *sym = createNonrelocSymbol(symName, false);
 
