@@ -1,2 +1,2 @@
-FATAL: local-without-parent.asm(3):
+FATAL: empty-local-purged.asm(3):
     Unqualified local label '.test' in main scope

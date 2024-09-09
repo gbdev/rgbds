@@ -1,2 +1,2 @@
 FATAL: nested-local-reference.asm(8):
-    'Parent.child.grandchild' is a nonsensical reference to a nested local symbol
+    'Parent.child.grandchild' is a nonsensical reference to a nested local label

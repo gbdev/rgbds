@@ -120,22 +120,42 @@ static Symbol &createSymbol(std::string const &symName) {
 	return sym;
 }
 
+static bool isAutoScoped(std::string const &symName) {
+	// `labelScope` should be global if it's defined
+	assume(!labelScope || labelScope->name.find('.') == std::string::npos);
+
+	size_t dotPos = symName.find('.');
+
+	// If there are no dots, it's not a local label
+	if (dotPos == std::string::npos)
+		return false;
+
+	// Check for nothing after the dot
+	if (dotPos == symName.length() - 1)
+		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName.c_str());
+
+	// Check for more than one dot
+	if (symName.find('.', dotPos + 1) != std::string::npos)
+		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName.c_str());
+
+	// Check for already-qualified local label
+	if (dotPos > 0)
+		return false;
+
+	// Check for unqualifiable local label
+	if (!labelScope)
+		fatalerror("Unqualified local label '%s' in main scope\n", symName.c_str());
+
+	return true;
+}
+
 Symbol *sym_FindExactSymbol(std::string const &symName) {
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
 }
 
 Symbol *sym_FindScopedSymbol(std::string const &symName) {
-	if (size_t dotPos = symName.find('.'); dotPos != std::string::npos) {
-		if (symName.find('.', dotPos + 1) != std::string::npos)
-			fatalerror(
-			    "'%s' is a nonsensical reference to a nested local symbol\n", symName.c_str()
-			);
-		// If auto-scoped local label, expand the name
-		if (dotPos == 0 && labelScope)
-			return sym_FindExactSymbol(labelScope->name + symName);
-	}
-	return sym_FindExactSymbol(symName);
+	return sym_FindExactSymbol(isAutoScoped(symName) ? labelScope->name + symName : symName);
 }
 
 Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
@@ -186,15 +206,7 @@ bool sym_IsPurgedExact(std::string const &symName) {
 }
 
 bool sym_IsPurgedScoped(std::string const &symName) {
-	if (size_t dotPos = symName.find('.'); dotPos != std::string::npos) {
-		// Check for a nonsensical reference to a nested scoped symbol
-		if (symName.find('.', dotPos + 1) != std::string::npos)
-			return false;
-		// If auto-scoped local label, expand the name
-		if (dotPos == 0 && labelScope)
-			return sym_IsPurgedExact(labelScope->name + symName);
-	}
-	return sym_IsPurgedExact(symName);
+	return sym_IsPurgedExact(isAutoScoped(symName) ? labelScope->name + symName : symName);
 }
 
 int32_t sym_GetRSValue() {
@@ -353,7 +365,9 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 }
 
 static Symbol *addLabel(std::string const &symName) {
-	assume(!symName.starts_with('.')); // The symbol name must have been expanded prior
+	// The symbol name should have been expanded already
+	assume(!symName.starts_with('.'));
+
 	Symbol *sym = sym_FindExactSymbol(symName);
 
 	if (!sym) {
@@ -380,29 +394,10 @@ static Symbol *addLabel(std::string const &symName) {
 }
 
 Symbol *sym_AddLocalLabel(std::string const &symName) {
-	// Assuming no dots in `labelScope` if defined
-	assume(!labelScope || labelScope->name.find('.') == std::string::npos);
+	// The symbol name should be local, qualified or not
+	assume(symName.find('.') != std::string::npos);
 
-	size_t dotPos = symName.find('.');
-
-	assume(dotPos != std::string::npos); // There should be at least one dot in `symName`
-
-	// Check for something after the dot
-	if (dotPos == symName.length() - 1) {
-		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName.c_str());
-	}
-	// Check for more than one dot
-	if (symName.find('.', dotPos + 1) != std::string::npos)
-		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName.c_str());
-
-	if (dotPos == 0) {
-		if (!labelScope) {
-			error("Unqualified local label '%s' in main scope\n", symName.c_str());
-			return nullptr;
-		}
-		return addLabel(labelScope->name + symName);
-	}
-	return addLabel(symName);
+	return addLabel(isAutoScoped(symName) ? labelScope->name + symName : symName);
 }
 
 Symbol *sym_AddLabel(std::string const &symName) {
@@ -496,14 +491,7 @@ Symbol *sym_Ref(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		if (symName.starts_with('.')) {
-			if (!labelScope)
-				fatalerror("Local label reference '%s' in main scope\n", symName.c_str());
-			sym = &createSymbol(labelScope->name + symName);
-		} else {
-			sym = &createSymbol(symName);
-		}
-
+		sym = &createSymbol(isAutoScoped(symName) ? labelScope->name + symName : symName);
 		sym->type = SYM_REF;
 	}
 

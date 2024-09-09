@@ -1,0 +1,2 @@
+FATAL: empty-local-referenced.asm(3):
+    'Referenced.' is a nonsensical reference to an empty local label
