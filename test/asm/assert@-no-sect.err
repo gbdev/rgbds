@@ -1,3 +1,3 @@
 error: assert@-no-sect.asm(1):
-    PC has no value outside a section
+    PC has no value outside of a section
 error: Assembly aborted (1 error)!
