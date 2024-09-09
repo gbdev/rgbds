@@ -4,7 +4,6 @@
 #define RGBDS_ASM_SYMBOL_HPP
 
 #include <memory>
-#include <optional>
 #include <stdint.h>
 #include <string.h>
 #include <string>
@@ -100,7 +99,7 @@ bool sym_IsPurgedScoped(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current symbol scope.
-std::optional<std::string> const &sym_GetCurrentSymbolScope();
-void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope);
+Symbol const *sym_GetCurrentSymbolScope();
+void sym_SetCurrentSymbolScope(Symbol const *newScope);
 
 #endif // RGBDS_ASM_SYMBOL_HPP

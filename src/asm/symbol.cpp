@@ -22,7 +22,7 @@ using namespace std::literals;
 std::unordered_map<std::string, Symbol> symbols;
 std::unordered_set<std::string> purgedSymbols;
 
-static std::optional<std::string> labelScope = std::nullopt; // Current section's label scope
+static Symbol const *labelScope = nullptr; // Current section's label scope
 static Symbol *PCSymbol;
 static Symbol *_NARGSymbol;
 static Symbol *_RSSymbol;
@@ -137,7 +137,7 @@ Symbol *sym_FindScopedSymbol(std::string const &symName) {
 			);
 		// If auto-scoped local label, expand the name
 		if (dotPos == 0 && labelScope)
-			return sym_FindExactSymbol(*labelScope + symName);
+			return sym_FindExactSymbol(labelScope->name + symName);
 	}
 	return sym_FindExactSymbol(symName);
 }
@@ -177,9 +177,9 @@ void sym_Purge(std::string const &symName) {
 			warning(WARNING_PURGE_1, "Purging an exported symbol \"%s\"\n", symName.c_str());
 		else if (sym->isLabel())
 			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
-		// Do not keep a reference to the label's name after purging it
-		if (sym->name == labelScope)
-			labelScope = std::nullopt;
+		// Do not keep a reference to the label after purging it
+		if (labelScope == sym)
+			labelScope = nullptr;
 		purgedSymbols.emplace(sym->name);
 		symbols.erase(sym->name);
 	}
@@ -196,7 +196,7 @@ bool sym_IsPurgedScoped(std::string const &symName) {
 			return false;
 		// If auto-scoped local label, expand the name
 		if (dotPos == 0 && labelScope)
-			return sym_IsPurgedExact(*labelScope + symName);
+			return sym_IsPurgedExact(labelScope->name + symName);
 	}
 	return sym_IsPurgedExact(symName);
 }
@@ -246,11 +246,11 @@ uint32_t sym_GetConstantValue(std::string const &symName) {
 	return 0;
 }
 
-std::optional<std::string> const &sym_GetCurrentSymbolScope() {
+Symbol const *sym_GetCurrentSymbolScope() {
 	return labelScope;
 }
 
-void sym_SetCurrentSymbolScope(std::optional<std::string> const &newScope) {
+void sym_SetCurrentSymbolScope(Symbol const *newScope) {
 	labelScope = newScope;
 }
 
@@ -422,7 +422,7 @@ static Symbol *addLabel(std::string const &symName) {
 // Add a local (`.name` or `Parent.name`) relocatable symbol
 Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// Assuming no dots in `labelScope` if defined
-	assume(!labelScope.has_value() || labelScope->find('.') == std::string::npos);
+	assume(!labelScope || labelScope->name.find('.') == std::string::npos);
 
 	size_t dotPos = symName.find('.');
 
@@ -437,11 +437,11 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 		fatalerror("'%s' is a nonsensical reference to a nested local label\n", symName.c_str());
 
 	if (dotPos == 0) {
-		if (!labelScope.has_value()) {
+		if (!labelScope) {
 			error("Unqualified local label '%s' in main scope\n", symName.c_str());
 			return nullptr;
 		}
-		return addLabel(*labelScope + symName);
+		return addLabel(labelScope->name + symName);
 	}
 	return addLabel(symName);
 }
@@ -452,7 +452,7 @@ Symbol *sym_AddLabel(std::string const &symName) {
 
 	// Set the symbol as the new scope
 	if (sym)
-		labelScope = sym->name;
+		labelScope = sym;
 	return sym;
 }
 
@@ -543,11 +543,9 @@ Symbol *sym_Ref(std::string const &symName) {
 
 	if (!sym) {
 		if (symName.starts_with('.')) {
-			if (!labelScope.has_value())
+			if (!labelScope)
 				fatalerror("Local label reference '%s' in main scope\n", symName.c_str());
-			std::string fullName = *labelScope + symName;
-
-			sym = &createSymbol(fullName);
+			sym = &createSymbol(labelScope->name + symName);
 		} else {
 			sym = &createSymbol(symName);
 		}
