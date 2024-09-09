@@ -14,4 +14,20 @@ error: builtin-reserved.asm(12):
     '_NARG' is reserved for a built-in symbol
 error: builtin-reserved.asm(15):
     '_NARG' is reserved for a built-in symbol
-error: Assembly aborted (8 errors)!
+error: builtin-reserved.asm(20):
+    '.' not defined
+error: builtin-reserved.asm(22):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(23):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(25):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(26):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(28):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(29):
+    '.' is reserved for a built-in symbol
+error: builtin-reserved.asm(32):
+    "." has no value outside of a label scope
+error: Assembly aborted (16 errors)!

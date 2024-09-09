@@ -36,10 +36,11 @@ struct Symbol {
 	uint32_t fileLine;                  // Line where the symbol was defined
 
 	std::variant<
-	    int32_t,                     // If isNumeric()
-	    int32_t (*)(),               // If isNumeric() and has a callback
-	    ContentSpan,                 // For SYM_MACRO
-	    std::shared_ptr<std::string> // For SYM_EQUS
+	    int32_t,                           // If isNumeric()
+	    int32_t (*)(),                     // If isNumeric() via a callback
+	    ContentSpan,                       // For SYM_MACRO
+	    std::shared_ptr<std::string>,      // For SYM_EQUS
+	    std::shared_ptr<std::string> (*)() // For SYM_EQUS via a callback
 	    >
 	    data;
 
