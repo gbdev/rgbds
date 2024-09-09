@@ -1,5 +1,5 @@
 error: const-and.asm(2):
-    PC has no value outside a section
+    PC has no value outside of a section
 error: const-and.asm(11):
     Expected constant expression: 'Aligned' is not constant at assembly time
 error: const-and.asm(17):

@@ -45,7 +45,7 @@ static int32_t Callback_NARG() {
 	if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
 		return macroArgs->nbArgs();
 	} else {
-		error("_NARG does not make sense outside of a macro\n");
+		error("_NARG has no value outside of a macro\n");
 		return 0;
 	}
 }
@@ -145,11 +145,11 @@ Symbol *sym_FindScopedSymbol(std::string const &symName) {
 Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
-	// `@` has no value outside a section
+	// `@` has no value outside of a section
 	if (sym_IsPC(sym) && !sect_GetSymbolSection()) {
 		return nullptr;
 	}
-	// `_NARG` has no value outside a macro
+	// `_NARG` has no value outside of a macro
 	if (sym == _NARGSymbol && !fstk_GetCurrentMacroArgs()) {
 		return nullptr;
 	}
@@ -205,9 +205,9 @@ uint32_t sym_GetPCValue() {
 	Section const *sect = sect_GetSymbolSection();
 
 	if (!sect)
-		error("PC has no value outside a section\n");
+		error("PC has no value outside of a section\n");
 	else if (sect->org == (uint32_t)-1)
-		error("Expected constant PC but section is not fixed\n");
+		error("PC does not have a constant value; the current section is not fixed\n");
 	else
 		return CallbackPC();
 	return 0;

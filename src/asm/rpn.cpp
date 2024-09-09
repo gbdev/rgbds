@@ -71,7 +71,7 @@ void Expression::makeNumber(uint32_t value) {
 void Expression::makeSymbol(std::string const &symName) {
 	clear();
 	if (Symbol *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym) && !sect_GetSymbolSection()) {
-		error("PC has no value outside a section\n");
+		error("PC has no value outside of a section\n");
 		data = 0;
 	} else if (!sym || !sym->isConstant()) {
 		isSymbol = true;
@@ -98,7 +98,7 @@ void Expression::makeBankSymbol(std::string const &symName) {
 	if (Symbol const *sym = sym_FindScopedSymbol(symName); sym_IsPC(sym)) {
 		// The @ symbol is treated differently.
 		if (!currentSection) {
-			error("PC has no bank outside a section\n");
+			error("PC has no bank outside of a section\n");
 			data = 1;
 		} else if (currentSection->bank == (uint32_t)-1) {
 			data = "Current section's bank is not known";

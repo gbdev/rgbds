@@ -484,7 +484,7 @@ if:
 elif:
 	POP_ELIF const NEWLINE {
 		if (lexer_GetIFDepth() == 0)
-			fatalerror("Found ELIF outside an IF construct\n");
+			fatalerror("Found ELIF outside of an IF construct\n");
 
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock())
@@ -502,7 +502,7 @@ elif:
 else:
 	POP_ELSE NEWLINE {
 		if (lexer_GetIFDepth() == 0)
-			fatalerror("Found ELSE outside an IF construct\n");
+			fatalerror("Found ELSE outside of an IF construct\n");
 
 		if (lexer_RanIFBlock()) {
 			if (lexer_ReachedELSEBlock())

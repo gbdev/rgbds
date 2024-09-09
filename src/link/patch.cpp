@@ -267,7 +267,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_BANK_SELF:
 			if (!patch.pcSection) {
-				error(patch.src, patch.lineNo, "PC has no bank outside a section");
+				error(patch.src, patch.lineNo, "PC has no bank outside of a section");
 				isError = true;
 				value = 1;
 			} else {
@@ -374,7 +374,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 			if (value == -1) { // PC
 				if (!patch.pcSection) {
-					error(patch.src, patch.lineNo, "PC has no value outside a section");
+					error(patch.src, patch.lineNo, "PC has no value outside of a section");
 					value = 0;
 					isError = true;
 				} else {
