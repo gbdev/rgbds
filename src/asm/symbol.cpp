@@ -253,11 +253,11 @@ uint32_t sym_GetConstantValue(std::string const &symName) {
 	return 0;
 }
 
-Symbol const *sym_GetCurrentSymbolScope() {
+Symbol const *sym_GetCurrentLabelScope() {
 	return labelScope;
 }
 
-void sym_SetCurrentSymbolScope(Symbol const *newScope) {
+void sym_SetCurrentLabelScope(Symbol const *newScope) {
 	labelScope = newScope;
 }
 
@@ -415,6 +415,7 @@ Symbol *sym_AddLabel(std::string const &symName) {
 	// Set the symbol as the new scope
 	if (sym)
 		labelScope = sym;
+
 	return sym;
 }
 
