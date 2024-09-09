@@ -1,3 +1,4 @@
 SECTION "Test", ROM0
 
-dw .test
+Label:
+dw Label.

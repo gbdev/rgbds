@@ -1,3 +1,3 @@
 SECTION "Test", ROM0
 
-dw .test
+PURGE .test
