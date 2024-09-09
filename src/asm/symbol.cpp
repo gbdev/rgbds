@@ -104,6 +104,9 @@ static void updateSymbolFilename(Symbol &sym) {
 }
 
 static Symbol &createSymbol(std::string const &symName) {
+	// The symbol name should have been expanded already
+	assume(!symName.starts_with('.'));
+
 	static uint32_t nextDefIndex = 0;
 
 	Symbol &sym = symbols[symName];
@@ -150,6 +153,9 @@ static bool isAutoScoped(std::string const &symName) {
 }
 
 Symbol *sym_FindExactSymbol(std::string const &symName) {
+	// The symbol name should have been expanded already
+	assume(!symName.starts_with('.'));
+
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
 }
@@ -202,6 +208,9 @@ void sym_Purge(std::string const &symName) {
 }
 
 bool sym_IsPurgedExact(std::string const &symName) {
+	// The symbol name should have been expanded already
+	assume(!symName.starts_with('.'));
+
 	return purgedSymbols.find(symName) != purgedSymbols.end();
 }
 
