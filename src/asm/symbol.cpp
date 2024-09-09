@@ -24,8 +24,8 @@ std::unordered_set<std::string> purgedSymbols;
 
 static Symbol const *labelScope = nullptr; // Current section's label scope
 static Symbol *PCSymbol;
-static Symbol *_NARGSymbol;
-static Symbol *_RSSymbol;
+static Symbol *NARGSymbol;
+static Symbol *RSSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
 static char savedTIMESTAMP_ISO8601_LOCAL[256];
@@ -41,7 +41,7 @@ void sym_ForEach(void (*callback)(Symbol &)) {
 		callback(it.second);
 }
 
-static int32_t Callback_NARG() {
+static int32_t NARGCallback() {
 	if (MacroArgs const *macroArgs = fstk_GetCurrentMacroArgs(); macroArgs) {
 		return macroArgs->nbArgs();
 	} else {
@@ -50,7 +50,7 @@ static int32_t Callback_NARG() {
 	}
 }
 
-static int32_t CallbackPC() {
+static int32_t PCCallback() {
 	return sect_GetSymbolSection()->org + sect_GetSymbolOffset();
 }
 
@@ -148,7 +148,7 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 		return nullptr;
 	}
 	// `_NARG` has no value outside of a macro
-	if (sym == _NARGSymbol && !fstk_GetCurrentMacroArgs()) {
+	if (sym == NARGSymbol && !fstk_GetCurrentMacroArgs()) {
 		return nullptr;
 	}
 	return sym;
@@ -200,12 +200,12 @@ bool sym_IsPurgedScoped(std::string const &symName) {
 }
 
 int32_t sym_GetRSValue() {
-	return _RSSymbol->getOutputValue();
+	return RSSymbol->getOutputValue();
 }
 
 void sym_SetRSValue(int32_t value) {
-	updateSymbolFilename(*_RSSymbol);
-	_RSSymbol->data = value;
+	updateSymbolFilename(*RSSymbol);
+	RSSymbol->data = value;
 }
 
 // Return a constant symbol's value, assuming it's defined
@@ -555,16 +555,16 @@ void sym_SetExportAll(bool set) {
 void sym_Init(time_t now) {
 	PCSymbol = &createSymbol("@"s);
 	PCSymbol->type = SYM_LABEL;
-	PCSymbol->data = CallbackPC;
+	PCSymbol->data = PCCallback;
 	PCSymbol->isBuiltin = true;
 
-	_NARGSymbol = &createSymbol("_NARG"s);
-	_NARGSymbol->type = SYM_EQU;
-	_NARGSymbol->data = Callback_NARG;
-	_NARGSymbol->isBuiltin = true;
+	NARGSymbol = &createSymbol("_NARG"s);
+	NARGSymbol->type = SYM_EQU;
+	NARGSymbol->data = NARGCallback;
+	NARGSymbol->isBuiltin = true;
 
-	_RSSymbol = sym_AddVar("_RS"s, 0);
-	_RSSymbol->isBuiltin = true;
+	RSSymbol = sym_AddVar("_RS"s, 0);
+	RSSymbol->isBuiltin = true;
 
 	sym_AddString("__RGBDS_VERSION__"s, std::make_shared<std::string>(get_package_version_string()))
 	    ->isBuiltin = true;
