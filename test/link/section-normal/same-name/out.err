@@ -1,0 +1,1 @@
+error: Section "Same" is defined at section-normal/same-name/b.asm(1), but also at section-normal/same-name/a.asm(1)

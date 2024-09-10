@@ -1,1 +1,1 @@
-error: Section "Frag" is defined with conflicting address $0000 and 4-byte alignment (offset 2)
+error: Section "Frag" is defined with address $0000 at fragment-align/org-bad/a.asm(2), but with 4-byte alignment (offset 2) at fragment-align/org-bad/b.asm(2)

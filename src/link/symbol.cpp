@@ -2,6 +2,7 @@
 
 #include "link/symbol.hpp"
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <unordered_map>
 #include <vector>
@@ -33,9 +34,19 @@ void sym_AddSymbol(Symbol &symbol) {
 
 	// Check if the symbol already exists with a different value
 	if (other && !(symValue && otherValue && *symValue == *otherValue)) {
-		fprintf(stderr, "error: \"%s\" both in %s from ", symbol.name.c_str(), symbol.objFileName);
+		fprintf(stderr, "error: \"%s\" is defined as ", symbol.name.c_str());
+		if (symValue)
+			fprintf(stderr, "%" PRId32, *symValue);
+		else
+			fputs("a label", stderr);
+		fputs(" at ", stderr);
 		symbol.src->dump(symbol.lineNo);
-		fprintf(stderr, " and in %s from ", other->objFileName);
+		fputs(", but as ", stderr);
+		if (otherValue)
+			fprintf(stderr, "%" PRId32, *otherValue);
+		else
+			fputs("another label", stderr);
+		fputs(" at ", stderr);
 		other->src->dump(other->lineNo);
 		putc('\n', stderr);
 		exit(1);

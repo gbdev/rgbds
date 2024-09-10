@@ -193,7 +193,6 @@ static void readSymbol(
 	);
 	// If the symbol is defined in this file, read its definition
 	if (symbol.type != SYMTYPE_IMPORT) {
-		symbol.objFileName = fileName;
 		uint32_t nodeID;
 		tryReadLong(
 		    nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s", fileName, symbol.name.c_str()
@@ -346,6 +345,18 @@ static void readSection(
 	uint8_t byte;
 
 	tryReadString(section.name, file, "%s: Cannot read section name: %s", fileName);
+	uint32_t nodeID;
+	tryReadLong(
+	    nodeID, file, "%s: Cannot read \"%s\"'s node ID: %s", fileName, section.name.c_str()
+	);
+	section.src = &fileNodes[nodeID];
+	tryReadLong(
+	    section.lineNo,
+	    file,
+	    "%s: Cannot read \"%s\"'s line number: %s",
+	    fileName,
+	    section.name.c_str()
+	);
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX)
 		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section.name.c_str(), tmp);

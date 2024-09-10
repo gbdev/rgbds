@@ -85,7 +85,12 @@ static void writePatch(Patch const &patch, FILE *file) {
 }
 
 static void writeSection(Section const &sect, FILE *file) {
+	assume(sect.src->ID != (uint32_t)-1);
+
 	putString(sect.name, file);
+
+	putLong(sect.src->ID, file);
+	putLong(sect.fileLine, file);
 
 	putLong(sect.size, file);
 

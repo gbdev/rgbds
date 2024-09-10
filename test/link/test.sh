@@ -86,17 +86,6 @@ evaluateTest () {
 	fi
 }
 
-substPath () {
-	# Replace the file name with a different one to match changed output, escaping regex metacharacters
-	subst="$(printf '%s\n' "$1" | sed 's:[][\/.^$*]:\\&:g')"
-	sed -i'' -e "s|$subst|$2|g" "$3"
-	if which cygpath &>/dev/null; then
-		# Replace the MinGW path with a Windows path, escaping regex metacharacters
-		subst="$(cygpath -m "$1" | sed 's:[][\/.^$*]:\\&:g')"
-		sed -i'' -e "s|$subst|$2|g" "$3"
-	fi
-}
-
 for i in *.asm; do
 	test=${i%.asm}
 	startTest
@@ -268,6 +257,15 @@ rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
+test="section-normal/same-name"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet "$otemp" "$gbtemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
+
 test="section-union/good"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
@@ -283,8 +281,6 @@ startTest
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet "$gbtemp2" "$otemp" 2>"$outtemp"
-substPath "$otemp" "$test/a.o" "$outtemp"
-substPath "$gbtemp2" "$test/b.o" "$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 evaluateTest
 
@@ -294,8 +290,6 @@ startTest
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm
 continueTest
 rgblinkQuiet -o "$gbtemp" "$gbtemp2" "$otemp" 2>"$outtemp"
-substPath "$otemp" "$test/a.o" "$outtemp"
-substPath "$gbtemp2" "$test/b.o" "$outtemp"
 tryDiff "$test"/out.err "$outtemp"
 tryCmpRom "$test"/ref.out.bin
 evaluateTest
@@ -316,6 +310,15 @@ for i in section-union/*.asm; do
 	tryDiff "${test}.out" "$outtemp"
 	evaluateTest
 done
+
+test="symbols/conflict"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp" "$test"/b.asm
+continueTest
+rgblinkQuiet "$otemp" "$gbtemp" 2>"$outtemp"
+tryDiff "$test"/out.err "$outtemp"
+evaluateTest
 
 test="symbols/good"
 startTest

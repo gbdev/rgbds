@@ -21,24 +21,32 @@ void sect_ForEach(void (*callback)(Section &)) {
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
 	if (target.isAddressFixed) {
 		if (target.org != org) {
-			errx(
-			    "Section \"%s\" is defined with conflicting addresses $%04" PRIx16
-			    " and $%04" PRIx16,
-			    other.name.c_str(),
-			    target.org,
-			    other.org
+			fprintf(
+			    stderr,
+			    "error: Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			    target.name.c_str(),
+			    target.org
 			);
+			target.src->dump(target.lineNo);
+			fprintf(stderr, ", but with address $%04" PRIx16 " at ", other.org);
+			other.src->dump(other.lineNo);
+			putc('\n', stderr);
+			exit(1);
 		}
 	} else if (target.isAlignFixed) {
 		if ((org - target.alignOfs) & target.alignMask) {
-			errx(
-			    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-			    ") and address $%04" PRIx16,
-			    other.name.c_str(),
+			fprintf(
+			    stderr,
+			    "error: Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+			    target.name.c_str(),
 			    target.alignMask + 1,
-			    target.alignOfs,
-			    other.org
+			    target.alignOfs
 			);
+			target.src->dump(target.lineNo);
+			fprintf(stderr, ", but with address $%04" PRIx16 " at ", other.org);
+			other.src->dump(other.lineNo);
+			putc('\n', stderr);
+			exit(1);
 		}
 	}
 }
@@ -46,27 +54,43 @@ static void checkAgainstFixedAddress(Section const &target, Section const &other
 static bool checkAgainstFixedAlign(Section const &target, Section const &other, int32_t ofs) {
 	if (target.isAddressFixed) {
 		if ((target.org - ofs) & other.alignMask) {
-			errx(
-			    "Section \"%s\" is defined with conflicting address $%04" PRIx16
-			    " and %d-byte alignment (offset %" PRIu16 ")",
-			    other.name.c_str(),
-			    target.org,
+			fprintf(
+			    stderr,
+			    "error: Section \"%s\" is defined with address $%04" PRIx16 " at ",
+			    target.name.c_str(),
+			    target.org
+			);
+			target.src->dump(target.lineNo);
+			fprintf(
+			    stderr,
+			    ", but with %d-byte alignment (offset %" PRIu16 ") at ",
 			    other.alignMask + 1,
 			    other.alignOfs
 			);
+			other.src->dump(other.lineNo);
+			putc('\n', stderr);
+			exit(1);
 		}
 		return false;
 	} else if (target.isAlignFixed
 	           && (other.alignMask & target.alignOfs) != (target.alignMask & ofs)) {
-		errx(
-		    "Section \"%s\" is defined with conflicting %d-byte alignment (offset %" PRIu16
-		    ") and %d-byte alignment (offset %" PRIu16 ")",
-		    other.name.c_str(),
+		fprintf(
+		    stderr,
+		    "error: Section \"%s\" is defined with %d-byte alignment (offset %" PRIu16 ") at ",
+		    target.name.c_str(),
 		    target.alignMask + 1,
-		    target.alignOfs,
+		    target.alignOfs
+		);
+		target.src->dump(target.lineNo);
+		fprintf(
+		    stderr,
+		    ", but with %d-byte alignment (offset %" PRIu16 ") at ",
 		    other.alignMask + 1,
 		    other.alignOfs
 		);
+		other.src->dump(other.lineNo);
+		putc('\n', stderr);
+		exit(1);
 	} else {
 		return !target.isAlignFixed || (other.alignMask > target.alignMask);
 	}
@@ -106,25 +130,36 @@ static void checkFragmentCompat(Section &target, Section &other) {
 static void mergeSections(Section &target, std::unique_ptr<Section> &&other, SectionModifier mod) {
 	// Common checks
 
-	if (target.type != other->type)
-		errx(
-		    "Section \"%s\" is defined with conflicting types %s and %s",
-		    other->name.c_str(),
-		    sectionTypeInfo[target.type].name.c_str(),
-		    sectionTypeInfo[other->type].name.c_str()
+	if (target.type != other->type) {
+		fprintf(
+		    stderr,
+		    "error: Section \"%s\" is defined with type %s at ",
+		    target.name.c_str(),
+		    sectionTypeInfo[target.type].name.c_str()
 		);
+		target.src->dump(target.lineNo);
+		fprintf(stderr, ", but with type %s at ", sectionTypeInfo[other->type].name.c_str());
+		other->src->dump(other->lineNo);
+		putc('\n', stderr);
+		exit(1);
+	}
 
 	if (other->isBankFixed) {
 		if (!target.isBankFixed) {
 			target.isBankFixed = true;
 			target.bank = other->bank;
 		} else if (target.bank != other->bank) {
-			errx(
-			    "Section \"%s\" is defined with conflicting banks %" PRIu32 " and %" PRIu32,
-			    other->name.c_str(),
-			    target.bank,
-			    other->bank
+			fprintf(
+			    stderr,
+			    "error: Section \"%s\" is defined with bank %" PRIu32 " at ",
+			    target.name.c_str(),
+			    target.bank
 			);
+			target.src->dump(target.lineNo);
+			fprintf(stderr, ", but with bank %" PRIu32 " at ", other->bank);
+			other->src->dump(other->lineNo);
+			putc('\n', stderr);
+			exit(1);
 		}
 	}
 
@@ -164,17 +199,28 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 void sect_AddSection(std::unique_ptr<Section> &&section) {
 	// Check if the section already exists
 	if (Section *other = sect_GetSection(section->name); other) {
-		if (section->modifier != other->modifier)
-			errx(
-			    "Section \"%s\" defined as %s and %s",
+		if (section->modifier != other->modifier) {
+			fprintf(
+			    stderr,
+			    "error: Section \"%s\" is defined as %s at ",
 			    section->name.c_str(),
-			    sectionModNames[section->modifier],
-			    sectionModNames[other->modifier]
+			    sectionModNames[section->modifier]
 			);
-		else if (section->modifier == SECTION_NORMAL)
-			errx("Section name \"%s\" is already in use", section->name.c_str());
-		else
+			section->src->dump(section->lineNo);
+			fprintf(stderr, ", but as %s at ", sectionModNames[other->modifier]);
+			other->src->dump(other->lineNo);
+			putc('\n', stderr);
+			exit(1);
+		} else if (section->modifier == SECTION_NORMAL) {
+			fprintf(stderr, "error: Section \"%s\" is defined at ", section->name.c_str());
+			section->src->dump(section->lineNo);
+			fputs(", but also at ", stderr);
+			other->src->dump(other->lineNo);
+			putc('\n', stderr);
+			exit(1);
+		} else {
 			mergeSections(*other, std::move(section), section->modifier);
+		}
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx(
 		    "Section \"%s\" is of type %s, which cannot be unionized",

@@ -1,0 +1,1 @@
+error: "SAME" is defined as 2 at symbols/conflict/b.asm(1), but as 1 at symbols/conflict/a.asm(1)
