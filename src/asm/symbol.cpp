@@ -103,6 +103,29 @@ static void updateSymbolFilename(Symbol &sym) {
 		out_RegisterNode(sym.src);
 }
 
+static void alreadyDefinedError(Symbol const &sym, char const *asType) {
+	if (sym.isBuiltin && !sym_FindScopedValidSymbol(sym.name)) {
+		// `DEF()` would return false, so we should not claim the symbol is already defined
+		error("'%s' is reserved for a built-in symbol\n", sym.name.c_str());
+	} else {
+		error("'%s' already defined", sym.name.c_str());
+		if (asType)
+			fprintf(stderr, " as %s", asType);
+		fputs(" at ", stderr);
+		dumpFilename(sym);
+	}
+}
+
+static void redefinedError(Symbol const &sym) {
+	assume(sym.isBuiltin);
+	if (!sym_FindScopedValidSymbol(sym.name)) {
+		// `DEF()` would return false, so we should not imply the symbol is already defined
+		error("'%s' is reserved for a built-in symbol\n", sym.name.c_str());
+	} else {
+		error("Built-in symbol '%s' cannot be redefined\n", sym.name.c_str());
+	}
+}
+
 static Symbol &createSymbol(std::string const &symName) {
 	// The symbol name should have been expanded already
 	assume(!symName.starts_with('.'));
@@ -268,8 +291,7 @@ static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
 		sym = &createSymbol(symName);
 		purgedSymbols.erase(sym->name);
 	} else if (sym->isDefined()) {
-		error("'%s' already defined at ", symName.c_str());
-		dumpFilename(*sym);
+		alreadyDefinedError(*sym, nullptr);
 		return nullptr; // Don't allow overriding the symbol, that'd be bad!
 	} else if (!numeric) {
 		// The symbol has already been referenced, but it's not allowed
@@ -300,11 +322,10 @@ Symbol *sym_RedefEqu(std::string const &symName, int32_t value) {
 		return sym_AddEqu(symName, value);
 
 	if (sym->isDefined() && sym->type != SYM_EQU) {
-		error("'%s' already defined as non-EQU at ", symName.c_str());
-		dumpFilename(*sym);
+		alreadyDefinedError(*sym, "non-EQU");
 		return nullptr;
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
+		redefinedError(*sym);
 		return nullptr;
 	}
 
@@ -333,14 +354,15 @@ Symbol *sym_RedefString(std::string const &symName, std::shared_ptr<std::string>
 		return sym_AddString(symName, str);
 
 	if (sym->type != SYM_EQUS) {
-		if (sym->isDefined())
-			error("'%s' already defined as non-EQUS at ", symName.c_str());
-		else
+		if (sym->isDefined()) {
+			alreadyDefinedError(*sym, "non-EQUS");
+		} else {
 			error("'%s' already referenced at ", symName.c_str());
-		dumpFilename(*sym);
+			dumpFilename(*sym);
+		}
 		return nullptr;
 	} else if (sym->isBuiltin) {
-		error("Built-in symbol '%s' cannot be redefined\n", symName.c_str());
+		redefinedError(*sym);
 		return nullptr;
 	}
 
@@ -356,12 +378,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 	if (!sym) {
 		sym = &createSymbol(symName);
 	} else if (sym->isDefined() && sym->type != SYM_VAR) {
-		error(
-		    "'%s' already defined as %s at ",
-		    symName.c_str(),
-		    sym->type == SYM_LABEL ? "label" : "constant"
-		);
-		dumpFilename(*sym);
+		alreadyDefinedError(*sym, sym->type == SYM_LABEL ? "label" : "constant");
 		return sym;
 	} else {
 		updateSymbolFilename(*sym);
@@ -382,8 +399,7 @@ static Symbol *addLabel(std::string const &symName) {
 	if (!sym) {
 		sym = &createSymbol(symName);
 	} else if (sym->isDefined()) {
-		error("'%s' already defined at ", symName.c_str());
-		dumpFilename(*sym);
+		alreadyDefinedError(*sym, nullptr);
 		return nullptr;
 	} else {
 		updateSymbolFilename(*sym);
