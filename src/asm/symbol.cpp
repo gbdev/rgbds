@@ -140,9 +140,14 @@ static void redefinedError(Symbol const &sym) {
 	}
 }
 
+static void assumeAlreadyExpanded(std::string const &symName) {
+	// Either the symbol name is `Global.local` or entirely '.'s (for global scope `.`),
+	// but cannot be unqualified `.local`
+	assume(!symName.starts_with('.') || symName.find_first_not_of('.') == symName.npos);
+}
+
 static Symbol &createSymbol(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.') || symName == ".");
+	assumeAlreadyExpanded(symName);
 
 	static uint32_t nextDefIndex = 0;
 
@@ -171,7 +176,7 @@ static bool isAutoScoped(std::string const &symName) {
 		return false;
 
 	// Label scope `.` is the only nonlocal identifier that starts with a dot
-	if (symName == ".")
+	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos)
 		return false;
 
 	// Check for nothing after the dot
@@ -194,8 +199,7 @@ static bool isAutoScoped(std::string const &symName) {
 }
 
 Symbol *sym_FindExactSymbol(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.') || symName == ".");
+	assumeAlreadyExpanded(symName);
 
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
@@ -254,8 +258,7 @@ void sym_Purge(std::string const &symName) {
 }
 
 bool sym_IsPurgedExact(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.') || symName == ".");
+	assumeAlreadyExpanded(symName);
 
 	return purgedSymbols.find(symName) != purgedSymbols.end();
 }
@@ -414,8 +417,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 }
 
 static Symbol *addLabel(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.') || symName == ".");
+	assumeAlreadyExpanded(symName);
 
 	Symbol *sym = sym_FindExactSymbol(symName);
 
