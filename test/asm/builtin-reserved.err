@@ -1,0 +1,17 @@
+error: builtin-reserved.asm(3):
+    '_NARG' not defined
+error: builtin-reserved.asm(5):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(6):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(8):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(9):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(11):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(12):
+    '_NARG' is reserved for a built-in symbol
+error: builtin-reserved.asm(15):
+    '_NARG' is reserved for a built-in symbol
+error: Assembly aborted (8 errors)!
