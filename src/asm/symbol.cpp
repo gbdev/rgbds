@@ -25,6 +25,7 @@ std::unordered_set<std::string> purgedSymbols;
 static Symbol const *labelScope = nullptr; // Current section's label scope
 static Symbol *PCSymbol;
 static Symbol *NARGSymbol;
+static Symbol *labelScopeSymbol;
 static Symbol *RSSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
@@ -48,6 +49,14 @@ static int32_t NARGCallback() {
 		error("_NARG has no value outside of a macro\n");
 		return 0;
 	}
+}
+
+static std::shared_ptr<std::string> labelScopeCallback() {
+	if (!labelScope) {
+		error("\".\" has no value outside of a label scope\n");
+		return std::make_shared<std::string>("");
+	}
+	return std::make_shared<std::string>(labelScope->name);
 }
 
 static int32_t PCCallback() {
@@ -78,7 +87,12 @@ ContentSpan const &Symbol::getMacro() const {
 }
 
 std::shared_ptr<std::string> Symbol::getEqus() const {
-	assume(std::holds_alternative<std::shared_ptr<std::string>>(data));
+	assume(
+	    std::holds_alternative<std::shared_ptr<std::string>>(data)
+	    || std::holds_alternative<std::shared_ptr<std::string> (*)()>(data)
+	);
+	if (auto *callback = std::get_if<std::shared_ptr<std::string> (*)()>(&data); callback)
+		return (*callback)();
 	return std::get<std::shared_ptr<std::string>>(data);
 }
 
@@ -126,9 +140,14 @@ static void redefinedError(Symbol const &sym) {
 	}
 }
 
+static void assumeAlreadyExpanded(std::string const &symName) {
+	// Either the symbol name is `Global.local` or entirely '.'s (for global scope `.`),
+	// but cannot be unqualified `.local`
+	assume(!symName.starts_with('.') || symName.find_first_not_of('.') == symName.npos);
+}
+
 static Symbol &createSymbol(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.'));
+	assumeAlreadyExpanded(symName);
 
 	static uint32_t nextDefIndex = 0;
 
@@ -156,6 +175,10 @@ static bool isAutoScoped(std::string const &symName) {
 	if (dotPos == std::string::npos)
 		return false;
 
+	// Label scope `.` is the only nonlocal identifier that starts with a dot
+	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos)
+		return false;
+
 	// Check for nothing after the dot
 	if (dotPos == symName.length() - 1)
 		fatalerror("'%s' is a nonsensical reference to an empty local label\n", symName.c_str());
@@ -176,8 +199,7 @@ static bool isAutoScoped(std::string const &symName) {
 }
 
 Symbol *sym_FindExactSymbol(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.'));
+	assumeAlreadyExpanded(symName);
 
 	auto search = symbols.find(symName);
 	return search != symbols.end() ? &search->second : nullptr;
@@ -198,6 +220,11 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 	if (sym == NARGSymbol && !fstk_GetCurrentMacroArgs()) {
 		return nullptr;
 	}
+	// `.` has no value outside of a label scope
+	if (sym == labelScopeSymbol && !labelScope) {
+		return nullptr;
+	}
+
 	return sym;
 }
 
@@ -231,8 +258,7 @@ void sym_Purge(std::string const &symName) {
 }
 
 bool sym_IsPurgedExact(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.'));
+	assumeAlreadyExpanded(symName);
 
 	return purgedSymbols.find(symName) != purgedSymbols.end();
 }
@@ -391,8 +417,7 @@ Symbol *sym_AddVar(std::string const &symName, int32_t value) {
 }
 
 static Symbol *addLabel(std::string const &symName) {
-	// The symbol name should have been expanded already
-	assume(!symName.starts_with('.'));
+	assumeAlreadyExpanded(symName);
 
 	Symbol *sym = sym_FindExactSymbol(symName);
 
@@ -540,6 +565,11 @@ void sym_Init(time_t now) {
 	NARGSymbol->type = SYM_EQU;
 	NARGSymbol->data = NARGCallback;
 	NARGSymbol->isBuiltin = true;
+
+	labelScopeSymbol = &createSymbol("."s);
+	labelScopeSymbol->type = SYM_EQUS;
+	labelScopeSymbol->data = labelScopeCallback;
+	labelScopeSymbol->isBuiltin = true;
 
 	RSSymbol = sym_AddVar("_RS"s, 0);
 	RSSymbol->isBuiltin = true;

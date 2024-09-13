@@ -327,8 +327,6 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"POPO",          T_(POP_POPO)         },
 
     {"OPT",           T_(POP_OPT)          },
-
-    {".",             T_(PERIOD)           },
 };
 
 static bool isWhitespace(int c) {
@@ -1172,6 +1170,10 @@ static Token readIdentifier(char firstChar, bool raw) {
 		if (auto search = keywordDict.find(identifier.c_str()); search != keywordDict.end())
 			return Token(search->second);
 	}
+
+	// Label scope `.` is the only nonlocal identifier that starts with a dot
+	if (identifier.find_first_not_of('.') == identifier.npos)
+		tokenType = T_(ID);
 
 	return Token(tokenType, identifier);
 }

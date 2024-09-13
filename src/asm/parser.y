@@ -107,7 +107,6 @@
 %token EOB "end of buffer"
 
 // General punctuation
-%token PERIOD "."
 %token COMMA ","
 %token COLON ":" DOUBLE_COLON "::"
 %token LBRACK "[" RBRACK "]"
