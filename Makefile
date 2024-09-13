@@ -32,8 +32,7 @@ WARNFLAGS	:= -Wall -pedantic -Wno-unknown-warning-option \
 # Overridable CXXFLAGS
 CXXFLAGS	?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include \
-		   -D_POSIX_C_SOURCE=200809L -fno-exceptions -fno-rtti
+REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS		?=
 # Non-overridable LDFLAGS

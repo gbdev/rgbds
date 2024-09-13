@@ -41,7 +41,6 @@ else()
     # does not recognize this yet.
     add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
   endif()
-  add_definitions(-D_POSIX_C_SOURCE=200809L)
   if(SANITIZERS)
     set(SAN_FLAGS -fsanitize=shift -fsanitize=integer-divide-by-zero
                   -fsanitize=unreachable -fsanitize=vla-bound
