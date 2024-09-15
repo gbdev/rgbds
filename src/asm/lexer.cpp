@@ -660,10 +660,13 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 		return str;
 	} else if (name == '#') {
 		MacroArgs *macroArgs = fstk_GetCurrentMacroArgs();
-		auto str = macroArgs ? macroArgs->getAllArgs() : nullptr;
-		if (!str) {
+		if (!macroArgs) {
 			error("'\\#' cannot be used outside of a macro\n");
+			return nullptr;
 		}
+
+		auto str = macroArgs->getAllArgs();
+		assume(str); // '\#' should always be defined (at least as an empty string)
 		return str;
 	} else if (name == '<') {
 		uint32_t num = readBracketedMacroArgNum();
