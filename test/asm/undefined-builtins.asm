@@ -3,10 +3,15 @@ assert !DEF(@)
 println @
 println "{@}?"
 
-; not inside a label scope
+; not inside a global scope
 assert !DEF(.)
 println .
 println "{.}?"
+
+; not inside a local scope
+assert !DEF(..)
+println ..
+println "{..}?"
 
 ; not inside a macro
 assert !DEF(_NARG)
@@ -18,10 +23,15 @@ assert DEF(@)
 println @
 println "{@}!"
 
-LabelScope:
+GlobalScope:
 assert DEF(.)
 println .
 println "{.}!"
+
+.localScope:
+assert DEF(..)
+println ..
+println "{..}!"
 
 MACRO m
 	assert DEF(_NARG)

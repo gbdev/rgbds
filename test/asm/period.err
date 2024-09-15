@@ -1,5 +1,0 @@
-error: period.asm(5):
-    syntax error, unexpected DB, expecting : or ::
-error: period.asm(6):
-    syntax error, unexpected DB, expecting : or ::
-error: Assembly aborted (2 errors)!

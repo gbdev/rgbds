@@ -2,11 +2,15 @@ $0
 ?
 
 ?
+
+?
 $0
 ?
 $42
 $42!
 $42
-LabelScope!
+GlobalScope!
+$42
+GlobalScope.localScope!
 $3
 $3!

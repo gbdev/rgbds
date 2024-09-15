@@ -2,8 +2,12 @@ error: label-scope.asm(3):
     '@' not defined
 error: label-scope.asm(3):
     '.' not defined
-error: label-scope.asm(8):
+error: label-scope.asm(3):
+    '..' not defined
+error: label-scope.asm(12):
     Built-in symbol '@' cannot be purged
-error: label-scope.asm(8):
+error: label-scope.asm(12):
     Built-in symbol '.' cannot be purged
-error: Assembly aborted (4 errors)!
+error: label-scope.asm(12):
+    Built-in symbol '..' cannot be purged
+error: Assembly aborted (6 errors)!

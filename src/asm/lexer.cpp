@@ -1174,7 +1174,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 			return Token(search->second);
 	}
 
-	// Label scope `.` is the only nonlocal identifier that starts with a dot
+	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (identifier.find_first_not_of('.') == identifier.npos)
 		tokenType = T_(ID);
 

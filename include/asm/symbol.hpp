@@ -98,8 +98,10 @@ bool sym_IsPurgedExact(std::string const &symName);
 bool sym_IsPurgedScoped(std::string const &symName);
 void sym_Init(time_t now);
 
-// Functions to save and restore the current label scope.
-Symbol const *sym_GetCurrentLabelScope();
-void sym_SetCurrentLabelScope(Symbol const *newScope);
+// Functions to save and restore the current label scopes.
+Symbol const *sym_GetCurrentGlobalScope();
+Symbol const *sym_GetCurrentLocalScope();
+void sym_SetCurrentGlobalScope(Symbol const *newScope);
+void sym_SetCurrentLocalScope(Symbol const *newScope);
 
 #endif // RGBDS_ASM_SYMBOL_HPP
