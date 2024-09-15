@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <time.h>
+#include <utility>
 #include <variant>
 
 #include "asm/lexer.hpp"
@@ -99,9 +100,8 @@ bool sym_IsPurgedScoped(std::string const &symName);
 void sym_Init(time_t now);
 
 // Functions to save and restore the current label scopes.
-Symbol const *sym_GetCurrentGlobalScope();
-Symbol const *sym_GetCurrentLocalScope();
-void sym_SetCurrentGlobalScope(Symbol const *newScope);
-void sym_SetCurrentLocalScope(Symbol const *newScope);
+std::pair<Symbol const *, Symbol const *> sym_GetCurrentLabelScopes();
+void sym_SetCurrentLabelScopes(std::pair<Symbol const *, Symbol const *> newScopes);
+void sym_ResetCurrentLabelScopes();
 
 #endif // RGBDS_ASM_SYMBOL_HPP

@@ -320,26 +320,23 @@ uint32_t sym_GetConstantValue(std::string const &symName) {
 	return 0;
 }
 
-Symbol const *sym_GetCurrentGlobalScope() {
-	return globalScope;
+std::pair<Symbol const *, Symbol const *> sym_GetCurrentLabelScopes() {
+	return {globalScope, localScope};
 }
 
-void sym_SetCurrentGlobalScope(Symbol const *newScope) {
-	// `newScope` should be global if it's defined
-	assume(!newScope || newScope->name.find('.') == std::string::npos);
+void sym_SetCurrentLabelScopes(std::pair<Symbol const *, Symbol const *> newScopes) {
+	globalScope = std::get<0>(newScopes);
+	localScope = std::get<1>(newScopes);
 
-	globalScope = newScope;
+	// `globalScope` should be global if it's defined
+	assume(!globalScope || globalScope->name.find('.') == std::string::npos);
+	// `localScope` should be qualified local if it's defined
+	assume(!localScope || localScope->name.find('.') != std::string::npos);
 }
 
-Symbol const *sym_GetCurrentLocalScope() {
-	return localScope;
-}
-
-void sym_SetCurrentLocalScope(Symbol const *newScope) {
-	// `newScope` should be qualified local if it's defined
-	assume(!newScope || newScope->name.find('.') != std::string::npos);
-
-	localScope = newScope;
+void sym_ResetCurrentLabelScopes() {
+	globalScope = nullptr;
+	localScope = nullptr;
 }
 
 static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
