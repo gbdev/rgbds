@@ -627,8 +627,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 		static char buf[sizeof(", $XXXX, $XXXX, $XXXX, $XXXX")];
 		char *ptr = buf;
 		for (uint16_t cgbColor : list) {
-			sprintf(ptr, ", $%04x", cgbColor);
-			ptr += QUOTEDSTRLEN(", $XXXX");
+			ptr += snprintf(ptr, sizeof(", $XXXX"), ", $%04x", cgbColor);
 		}
 		return &buf[QUOTEDSTRLEN(", ")];
 	};
