@@ -7,7 +7,11 @@ error: undefined-builtins.asm(8):
 error: undefined-builtins.asm(9):
     Interpolated symbol "." does not exist
 error: undefined-builtins.asm(13):
-    _NARG has no value outside of a macro
+    ".." has no value outside of a local label scope
 error: undefined-builtins.asm(14):
+    Interpolated symbol ".." does not exist
+error: undefined-builtins.asm(18):
+    _NARG has no value outside of a macro
+error: undefined-builtins.asm(19):
     Interpolated symbol "_NARG" does not exist
-error: Assembly aborted (6 errors)!
+error: Assembly aborted (8 errors)!

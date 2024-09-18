@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
 
 #include "helpers.hpp"
 
@@ -31,7 +32,7 @@ struct UnionStackEntry {
 struct SectionStackEntry {
 	Section *section;
 	Section *loadSection;
-	Symbol const *scope;
+	std::pair<Symbol const *, Symbol const *> labelScopes;
 	uint32_t offset;
 	int32_t loadOffset;
 	std::stack<UnionStackEntry> unionStack;
@@ -44,7 +45,7 @@ std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList
 uint32_t curOffset; // Offset into the current section (see sect_GetSymbolOffset)
 Section *currentSection = nullptr;
 static Section *currentLoadSection = nullptr;
-static Symbol const *currentLoadScope = nullptr;
+static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullptr, nullptr};
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
@@ -395,7 +396,7 @@ static void changeSection() {
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot change the section within a UNION\n");
 
-	sym_SetCurrentLabelScope(nullptr);
+	sym_ResetCurrentLabelScopes();
 }
 
 bool Section::isSizeKnown() const {
@@ -473,7 +474,7 @@ void sect_SetLoadSection(
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
-	currentLoadScope = sym_GetCurrentLabelScope();
+	currentLoadLabelScopes = sym_GetCurrentLabelScopes();
 	changeSection();
 	loadOffset = curOffset - (mod == SECTION_UNION ? 0 : sect->size);
 	curOffset -= loadOffset;
@@ -490,7 +491,7 @@ void sect_EndLoadSection() {
 	curOffset += loadOffset;
 	loadOffset = 0;
 	currentLoadSection = nullptr;
-	sym_SetCurrentLabelScope(currentLoadScope);
+	sym_SetCurrentLabelScopes(currentLoadLabelScopes);
 }
 
 Section *sect_GetSymbolSection() {
@@ -935,7 +936,7 @@ void sect_PushSection() {
 	sectionStack.push_front({
 	    .section = currentSection,
 	    .loadSection = currentLoadSection,
-	    .scope = sym_GetCurrentLabelScope(),
+	    .labelScopes = sym_GetCurrentLabelScopes(),
 	    .offset = curOffset,
 	    .loadOffset = loadOffset,
 	    .unionStack = {},
@@ -944,7 +945,7 @@ void sect_PushSection() {
 	// Reset the section scope
 	currentSection = nullptr;
 	currentLoadSection = nullptr;
-	sym_SetCurrentLabelScope(nullptr);
+	sym_ResetCurrentLabelScopes();
 	std::swap(currentUnionStack, sectionStack.front().unionStack);
 }
 
@@ -961,7 +962,7 @@ void sect_PopSection() {
 	changeSection();
 	currentSection = entry.section;
 	currentLoadSection = entry.loadSection;
-	sym_SetCurrentLabelScope(entry.scope);
+	sym_SetCurrentLabelScopes(entry.labelScopes);
 	curOffset = entry.offset;
 	loadOffset = entry.loadOffset;
 	std::swap(currentUnionStack, entry.unionStack);
@@ -979,5 +980,5 @@ void sect_EndSection() {
 
 	// Reset the section scope
 	currentSection = nullptr;
-	sym_SetCurrentLabelScope(nullptr);
+	sym_ResetCurrentLabelScopes();
 }

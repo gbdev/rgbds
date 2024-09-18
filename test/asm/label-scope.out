@@ -1,1 +1,3 @@
-PC: $002A; label scope: "Foobar"; Foobar: $002A
+PC: $002D
+global scope: "Foo" ($002B)
+local scope: "Foo.bar" ($002C)

@@ -22,10 +22,12 @@ using namespace std::literals;
 std::unordered_map<std::string, Symbol> symbols;
 std::unordered_set<std::string> purgedSymbols;
 
-static Symbol const *labelScope = nullptr; // Current section's label scope
+static Symbol const *globalScope = nullptr; // Current section's global label scope
+static Symbol const *localScope = nullptr; // Current section's local label scope
 static Symbol *PCSymbol;
 static Symbol *NARGSymbol;
-static Symbol *labelScopeSymbol;
+static Symbol *globalScopeSymbol;
+static Symbol *localScopeSymbol;
 static Symbol *RSSymbol;
 static char savedTIME[256];
 static char savedDATE[256];
@@ -51,12 +53,20 @@ static int32_t NARGCallback() {
 	}
 }
 
-static std::shared_ptr<std::string> labelScopeCallback() {
-	if (!labelScope) {
+static std::shared_ptr<std::string> globalScopeCallback() {
+	if (!globalScope) {
 		error("\".\" has no value outside of a label scope\n");
 		return std::make_shared<std::string>("");
 	}
-	return std::make_shared<std::string>(labelScope->name);
+	return std::make_shared<std::string>(globalScope->name);
+}
+
+static std::shared_ptr<std::string> localScopeCallback() {
+	if (!localScope) {
+		error("\"..\" has no value outside of a local label scope\n");
+		return std::make_shared<std::string>("");
+	}
+	return std::make_shared<std::string>(localScope->name);
 }
 
 static int32_t PCCallback() {
@@ -141,7 +151,7 @@ static void redefinedError(Symbol const &sym) {
 }
 
 static void assumeAlreadyExpanded(std::string const &symName) {
-	// Either the symbol name is `Global.local` or entirely '.'s (for global scope `.`),
+	// Either the symbol name is `Global.local` or entirely '.'s (for scopes `.` and `..`),
 	// but cannot be unqualified `.local`
 	assume(!symName.starts_with('.') || symName.find_first_not_of('.') == symName.npos);
 }
@@ -166,8 +176,10 @@ static Symbol &createSymbol(std::string const &symName) {
 }
 
 static bool isAutoScoped(std::string const &symName) {
-	// `labelScope` should be global if it's defined
-	assume(!labelScope || labelScope->name.find('.') == std::string::npos);
+	// `globalScope` should be global if it's defined
+	assume(!globalScope || globalScope->name.find('.') == std::string::npos);
+	// `localScope` should be qualified local if it's defined
+	assume(!localScope || localScope->name.find('.') != std::string::npos);
 
 	size_t dotPos = symName.find('.');
 
@@ -175,7 +187,7 @@ static bool isAutoScoped(std::string const &symName) {
 	if (dotPos == std::string::npos)
 		return false;
 
-	// Label scope `.` is the only nonlocal identifier that starts with a dot
+	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
 	if (dotPos == 0 && symName.find_first_not_of('.') == symName.npos)
 		return false;
 
@@ -192,7 +204,7 @@ static bool isAutoScoped(std::string const &symName) {
 		return false;
 
 	// Check for unqualifiable local label
-	if (!labelScope)
+	if (!globalScope)
 		fatalerror("Unqualified local label '%s' in main scope\n", symName.c_str());
 
 	return true;
@@ -206,7 +218,7 @@ Symbol *sym_FindExactSymbol(std::string const &symName) {
 }
 
 Symbol *sym_FindScopedSymbol(std::string const &symName) {
-	return sym_FindExactSymbol(isAutoScoped(symName) ? labelScope->name + symName : symName);
+	return sym_FindExactSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
 }
 
 Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
@@ -220,8 +232,12 @@ Symbol *sym_FindScopedValidSymbol(std::string const &symName) {
 	if (sym == NARGSymbol && !fstk_GetCurrentMacroArgs()) {
 		return nullptr;
 	}
-	// `.` has no value outside of a label scope
-	if (sym == labelScopeSymbol && !labelScope) {
+	// `.` has no value outside of a global label scope
+	if (sym == globalScopeSymbol && !globalScope) {
+		return nullptr;
+	}
+	// `..` has no value outside of a local label scope
+	if (sym == localScopeSymbol && !localScope) {
 		return nullptr;
 	}
 
@@ -250,8 +266,10 @@ void sym_Purge(std::string const &symName) {
 		else if (sym->isLabel())
 			warning(WARNING_PURGE_2, "Purging a label \"%s\"\n", symName.c_str());
 		// Do not keep a reference to the label after purging it
-		if (labelScope == sym)
-			labelScope = nullptr;
+		if (sym == globalScope)
+			globalScope = nullptr;
+		if (sym == localScope)
+			localScope = nullptr;
 		purgedSymbols.emplace(sym->name);
 		symbols.erase(sym->name);
 	}
@@ -264,7 +282,7 @@ bool sym_IsPurgedExact(std::string const &symName) {
 }
 
 bool sym_IsPurgedScoped(std::string const &symName) {
-	return sym_IsPurgedExact(isAutoScoped(symName) ? labelScope->name + symName : symName);
+	return sym_IsPurgedExact(isAutoScoped(symName) ? globalScope->name + symName : symName);
 }
 
 int32_t sym_GetRSValue() {
@@ -302,12 +320,23 @@ uint32_t sym_GetConstantValue(std::string const &symName) {
 	return 0;
 }
 
-Symbol const *sym_GetCurrentLabelScope() {
-	return labelScope;
+std::pair<Symbol const *, Symbol const *> sym_GetCurrentLabelScopes() {
+	return {globalScope, localScope};
 }
 
-void sym_SetCurrentLabelScope(Symbol const *newScope) {
-	labelScope = newScope;
+void sym_SetCurrentLabelScopes(std::pair<Symbol const *, Symbol const *> newScopes) {
+	globalScope = std::get<0>(newScopes);
+	localScope = std::get<1>(newScopes);
+
+	// `globalScope` should be global if it's defined
+	assume(!globalScope || globalScope->name.find('.') == std::string::npos);
+	// `localScope` should be qualified local if it's defined
+	assume(!localScope || localScope->name.find('.') != std::string::npos);
+}
+
+void sym_ResetCurrentLabelScopes() {
+	globalScope = nullptr;
+	localScope = nullptr;
 }
 
 static Symbol *createNonrelocSymbol(std::string const &symName, bool numeric) {
@@ -447,15 +476,25 @@ Symbol *sym_AddLocalLabel(std::string const &symName) {
 	// The symbol name should be local, qualified or not
 	assume(symName.find('.') != std::string::npos);
 
-	return addLabel(isAutoScoped(symName) ? labelScope->name + symName : symName);
+	Symbol *sym = addLabel(isAutoScoped(symName) ? globalScope->name + symName : symName);
+
+	if (sym)
+		localScope = sym;
+
+	return sym;
 }
 
 Symbol *sym_AddLabel(std::string const &symName) {
+	// The symbol name should be global
+	assume(symName.find('.') == std::string::npos);
+
 	Symbol *sym = addLabel(symName);
 
-	// Set the symbol as the new scope
-	if (sym)
-		labelScope = sym;
+	if (sym) {
+		globalScope = sym;
+		// A new global scope resets the local scope
+		localScope = nullptr;
+	}
 
 	return sym;
 }
@@ -542,7 +581,7 @@ Symbol *sym_Ref(std::string const &symName) {
 	Symbol *sym = sym_FindScopedSymbol(symName);
 
 	if (!sym) {
-		sym = &createSymbol(isAutoScoped(symName) ? labelScope->name + symName : symName);
+		sym = &createSymbol(isAutoScoped(symName) ? globalScope->name + symName : symName);
 		sym->type = SYM_REF;
 	}
 
@@ -566,10 +605,15 @@ void sym_Init(time_t now) {
 	NARGSymbol->data = NARGCallback;
 	NARGSymbol->isBuiltin = true;
 
-	labelScopeSymbol = &createSymbol("."s);
-	labelScopeSymbol->type = SYM_EQUS;
-	labelScopeSymbol->data = labelScopeCallback;
-	labelScopeSymbol->isBuiltin = true;
+	globalScopeSymbol = &createSymbol("."s);
+	globalScopeSymbol->type = SYM_EQUS;
+	globalScopeSymbol->data = globalScopeCallback;
+	globalScopeSymbol->isBuiltin = true;
+
+	localScopeSymbol = &createSymbol(".."s);
+	localScopeSymbol->type = SYM_EQUS;
+	localScopeSymbol->data = localScopeCallback;
+	localScopeSymbol->isBuiltin = true;
 
 	RSSymbol = sym_AddVar("_RS"s, 0);
 	RSSymbol->isBuiltin = true;

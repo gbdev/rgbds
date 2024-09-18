@@ -1,12 +1,18 @@
-ASSERT !DEF(@) && !DEF(.)
+ASSERT !DEF(@) && !DEF(.) && !DEF(..)
 
-PURGE @, .
+PURGE @, ., ..
 
 SECTION "test", ROM0[42]
-Foobar:
+db 1
+Foo:
+db 2
+.bar
+db 3
 
-PURGE @, .
+PURGE @, ., ..
 
-ASSERT DEF(@) && DEF(.) && DEF(Foobar)
+ASSERT DEF(@) && DEF(.) && DEF(..) && DEF(Foo) && DEF(.bar)
 
-PRINTLN "PC: {#05X:@}; label scope: \"{.}\"; {.}: {#05X:{.}}"
+PRINTLN "PC: {#05X:@}"
+PRINTLN "global scope: \"{.}\" ({#05X:{.}})"
+PRINTLN "local scope: \"{..}\" ({#05X:{..}})"
