@@ -98,10 +98,10 @@ case "$actionname" in
 esac
 
 if "$nonfree"; then
-	action pret  pokecrystal      2024-08-03 746a06f1de77dd6ffdba76ea33bb0181773326b6
-	action pret  pokered          2024-08-03 59202a2ab5f097262db25eb9b12c41d2389c5164
-	action zladx LADX-Disassembly 2024-07-31 3283fd6bf899eec9d307ac3a495a01c45f24ceec
+	action pret  pokecrystal      2024-08-27 7b5986006f6b325e471fee25903c769ce67f5da9
+	action pret  pokered          2024-09-08 1f6e2bf999401b9444f939bb40c1eb279bc51829
+	action zladx LADX-Disassembly 2024-09-16 008d01541f8cab3f4590cbc94a690af2b9a7979f
 fi
 action AntonioND ucity   2024-08-03 f3c6377f1fb1ea29644bcd90722abaaa5d478a74
 action pinobatch libbet  2024-06-15 ee60f0e4712a938589edd3e5d258e519a475d754
-action LIJI32    SameBoy 2024-08-01 47cdefd3d022b31d984ede91cd0f6965ff88d065
+action LIJI32    SameBoy 2024-09-13 1931c2830fc46cb648dde4fb0bed4f0345b67b2d
