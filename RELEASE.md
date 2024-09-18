@@ -38,7 +38,9 @@ GitHub.
 4. GitHub Actions will run the [create-release-docs.yml](.github/workflows/create-release-docs.yml)
    workflow to add the release documentation to [rgbds-www](https://github.com/gbdev/rgbds-www).
 
-   This is not done automatically for prereleases; if you want to do this manually, 
+   This is not done automatically for prereleases, since we do not normally publish documentation
+   for them. If you want to manually publish prerelease documentation, such as for an April Fools
+   joke prerelease,
 
    1. Clone [rgbds-www](https://github.com/gbdev/rgbds-www). You can use
       `git clone https://github.com/gbdev/rgbds-www.git`.
