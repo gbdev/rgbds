@@ -1170,7 +1170,7 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 	// Attempt to check for a keyword if the identifier is not raw
 	if (!raw) {
-		if (auto search = keywordDict.find(identifier.c_str()); search != keywordDict.end())
+		if (auto search = keywordDict.find(identifier); search != keywordDict.end())
 			return Token(search->second);
 	}
 
@@ -1231,7 +1231,7 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	if (fmtBuf.starts_with('#')) {
 		// Skip a '#' raw identifier prefix, but after expanding any nested interpolations.
 		fmtBuf.erase(0, 1);
-	} else if (keywordDict.find(fmtBuf.c_str()) != keywordDict.end()) {
+	} else if (keywordDict.find(fmtBuf) != keywordDict.end()) {
 		// Don't allow symbols that alias keywords without a '#' prefix.
 		error(
 		    "Interpolated symbol \"%s\" is a reserved keyword; add a '#' prefix to use it as a raw "
