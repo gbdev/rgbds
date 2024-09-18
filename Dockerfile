@@ -1,6 +1,6 @@
 FROM debian:11-slim
 LABEL org.opencontainers.image.source=https://github.com/gbdev/rgbds
-ARG version=0.8.0
+ARG version=0.9.0-rc1
 WORKDIR /rgbds
 
 COPY . .
