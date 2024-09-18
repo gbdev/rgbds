@@ -38,8 +38,7 @@ GitHub.
 4. GitHub Actions will run the [create-release-docs.yml](.github/workflows/create-release-docs.yml)
    workflow to add the release documentation to [rgbds-www](https://github.com/gbdev/rgbds-www).
 
-   For a release candidate, which creates a prerelease, you will have to
-   take these steps yourself.
+   This is not done automatically for prereleases; if you want to do this manually, 
 
    1. Clone [rgbds-www](https://github.com/gbdev/rgbds-www). You can use
       `git clone https://github.com/gbdev/rgbds-www.git`.
@@ -47,7 +46,7 @@ GitHub.
    2. Make sure that you have installed `groff` and `mandoc`. You will
       need `mandoc` 1.14.5 or later to support `-O toc`.
 
-   3. Run <code>.github/actions/get-pages.sh -r <i>&lt;path/to/rgbds-www&gt;</i> <i>&lt;tag&gt;</i></code>.
+   3. Inside of the `man` directory, run <code><i>&lt;path/to/rgbds-www&gt;</i>/maintainer/man_to_html.sh <i>&lt;tag&gt;</i> *</code> then <code><i>&lt;path/to/rgbds-www&gt;</i>/maintainer/new_release.sh <i>&lt;tag&gt;</i></code>.
       This will render the RGBDS documentation as HTML and PDF and copy it to
       `rgbds-www`.
 

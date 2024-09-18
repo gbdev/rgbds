@@ -89,7 +89,7 @@ jobs:
           strip rgb{asm,link,fix,gfx}
       - name: Package binaries
         run: |
-          zip --junk-paths rgbds-${{ env.version }}-macos-x86_64.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
+          zip --junk-paths rgbds-${{ env.version }}-macos.zip rgb{asm,link,fix,gfx} man/* .github/scripts/install.sh
       - name: Upload macOS binaries
         uses: actions/upload-artifact@v4
         with:
@@ -149,7 +149,7 @@ jobs:
           files: |
             win32/rgbds-${{ env.version }}-win32.zip
             win64/rgbds-${{ env.version }}-win64.zip
-            macos/rgbds-${{ env.version }}-macos-x86_64.zip
+            macos/rgbds-${{ env.version }}-macos.zip
             linux/rgbds-${{ env.version }}-linux-x86_64.tar.xz
             rgbds-${{ env.version }}.tar.gz
           fail_on_unmatched_files: true
