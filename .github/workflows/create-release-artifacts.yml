@@ -1,4 +1,4 @@
-name: "Create release artifacts"
+name: Create release artifacts
 on:
   push:
     tags:
@@ -24,30 +24,32 @@ jobs:
         run: | # Turn "vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         run: .github/scripts/get_win_deps.ps1
-      - uses: actions/cache@v4
+      - name: Check libraries cache
         id: cache
+        uses: actions/cache@v4
         with:
           path: |
             zbuild
             pngbuild
           key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
+        if: steps.cache.outputs.cache-hit != 'true'
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
           cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install zlib
         run: |
           cmake --install zbuild
       - name: Build libpng
+        if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=OFF -DPNG_TESTS=OFF
           cmake --build pngbuild --config Release -j
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install libpng
         run: |
           cmake --install pngbuild
@@ -74,7 +76,8 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -104,7 +107,8 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -133,17 +137,19 @@ jobs:
         run: | # Turn "refs/tags/vX.Y.Z" into "X.Y.Z"
           VERSION="${{ github.ref_name }}"
           echo "version=${VERSION#v}" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Package sources
         run: |
           make dist Q=
           ls
-      - uses: actions/download-artifact@v4
+      - name: Download Linux binaries
+        uses: actions/download-artifact@v4
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           body: |
-            Please ensure that the four packages below work properly.
+            Please ensure that the packages below work properly.
             Once that's done, replace this text with the changelog, un-draft the release, and update the `release` branch.
             By the way, if you forgot to update `include/version.hpp`, RGBASM's version test is gonna fail in the tag's regression testing! (Use `git push --delete origin <tag>` to delete it)
           draft: true # Don't publish the release quite yet...

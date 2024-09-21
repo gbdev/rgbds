@@ -1,4 +1,4 @@
-name: "Update master docs"
+name: Update master docs
 on:
   push:
     branches:
@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     if: github.repository_owner == 'gbdev'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout rgbds@master
         uses: actions/checkout@v4

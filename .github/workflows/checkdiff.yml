@@ -1,4 +1,4 @@
-name: "Code coverage checking"
+name: Code coverage checking
 on: pull_request
 
 jobs:
