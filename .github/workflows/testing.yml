@@ -1,4 +1,4 @@
-name: "Regression testing"
+name: Regression testing
 on:
   - push
   - pull_request
@@ -17,7 +17,8 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -58,8 +59,8 @@ jobs:
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
-      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        name: Fetch test dependency repositories
+      - name: Fetch test dependency repositories
+        if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
@@ -75,7 +76,8 @@ jobs:
   macos-static:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -109,8 +111,8 @@ jobs:
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ steps.test-deps-cache-params.outputs.hash }}
-      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        name: Fetch test dependency repositories
+      - name: Fetch test dependency repositories
+        if: steps.test-deps-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           test/fetch-test-deps.sh
@@ -138,30 +140,32 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         run: .github/scripts/get_win_deps.ps1
-      - uses: actions/cache@v4
+      - name: Check libraries cache
         id: cache
+        uses: actions/cache@v4
         with:
           path: |
             zbuild
             pngbuild
           key: ${{ matrix.arch }}-${{ hashFiles('zlib/**', 'libpng/**') }}
       - name: Build zlib
+        if: steps.cache.outputs.cache-hit != 'true'
         run: | # BUILD_SHARED_LIBS causes the output DLL to be correctly called `zlib1.dll`
           cmake -S zlib -B zbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DBUILD_SHARED_LIBS=ON
           cmake --build zbuild --config Release -j
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install zlib
         run: |
           cmake --install zbuild
       - name: Build libpng
+        if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cmake -S libpng -B pngbuild -A ${{ matrix.platform }} -Wno-dev -DCMAKE_INSTALL_PREFIX=install_dir -DPNG_SHARED=ON -DPNG_STATIC=OFF -DPNG_TESTS=OFF
           cmake --build pngbuild --config Release -j
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install libpng
         run: |
           cmake --install pngbuild
@@ -196,8 +200,8 @@ jobs:
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: ${{ matrix.os }}-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
-      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        name: Fetch test dependency repositories
+      - name: Fetch test dependency repositories
+        if: steps.test-deps-cache.outputs.cache-hit != 'true'
         shell: bash
         continue-on-error: true
         run: |
@@ -229,7 +233,8 @@ jobs:
     env:
       DIST_DIR: win${{ matrix.bits }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Install deps
         shell: bash
         run: |
@@ -273,7 +278,8 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Retrieve binaries
         uses: actions/download-artifact@v4
         with:
@@ -303,8 +309,8 @@ jobs:
         with:
           path: ${{ fromJSON(steps.test-deps-cache-params.outputs.paths) }}
           key: mingw-${{ matrix.bits }}-${{ steps.test-deps-cache-params.outputs.hash }}
-      - if: steps.test-deps-cache.outputs.cache-hit != 'true'
-        name: Fetch test dependency repositories
+      - name: Fetch test dependency repositories
+        if: steps.test-deps-cache.outputs.cache-hit != 'true'
         shell: bash
         continue-on-error: true
         run: |

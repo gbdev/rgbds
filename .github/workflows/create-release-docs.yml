@@ -1,4 +1,4 @@
-name: "Create release docs"
+name: Create release docs
 on:
   release:
     types:
@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     if: github.repository_owner == 'gbdev'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout rgbds@release
         uses: actions/checkout@v4
