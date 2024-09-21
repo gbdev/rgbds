@@ -1,4 +1,4 @@
-name: Publish Docker image
+name: Update Docker image
 on:
   push:
     branches:
@@ -8,6 +8,8 @@ jobs:
   publish-docker-image:
     if: github.repository_owner == 'gbdev'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
