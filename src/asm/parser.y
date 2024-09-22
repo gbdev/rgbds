@@ -433,22 +433,6 @@ line:
 		fstk_StopRept();
 		yyerrok;
 	}
-	// Hint about unindented macros parsed as labels
-	| LABEL error {
-		lexer_SetMode(LEXER_NORMAL);
-		lexer_ToggleStringExpansion(true);
-	} endofline {
-		Symbol *macro = sym_FindExactSymbol($1);
-
-		if (macro && macro->type == SYM_MACRO)
-			fprintf(
-			    stderr,
-			    "    To invoke `%s` as a macro it must be indented\n",
-			    $1.c_str()
-			);
-		fstk_StopRept();
-		yyerrok;
-	}
 ;
 
 endofline: NEWLINE | EOB;
