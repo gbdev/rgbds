@@ -103,7 +103,7 @@
 /******************** Tokens ********************/
 
 %token YYEOF 0 "end of file"
-%token NEWLINE "newline"
+%token NEWLINE "end of line"
 %token EOB "end of buffer"
 
 // General punctuation
