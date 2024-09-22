@@ -1,10 +1,11 @@
-MACRO mac
-	println "got {d:_NARG} args"
-ENDM
-	mac
-	mac 42
-notmac
-mac
-mac 42
-mac::
-mac ::
+def x = 1 ; so far so good...
+def n equ 2 + * / ^ 3 ; oops
+def s equs "no closing quote, lol
+section "test", rom0 ; good again
+ld a, 42 ; keep going...
+ld xor, ret ; oh no :(
+label1: ; yes...
+label2:: ; yes...
+label3::: ; no!
+halt stop abort ; please
+println "finally!"

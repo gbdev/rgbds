@@ -1849,7 +1849,19 @@ static Token yylex_NORMAL() {
 					}
 				}
 
-				if (token.type == T_(ID) && (lexerState->atLineStart || peek() == ':'))
+				// This is a "lexer hack"! We need it to distinguish between label definitions
+				// (which start with `LABEL`) and macro invocations (which start with `ID`).
+				//
+				// If we had one `IDENTIFIER` token, the parser would need to perform "lookahead"
+				// to determine which rule applies. But since macros need to enter "raw" mode to
+				// parse their arguments, which may not even be valid tokens in "normal" mode, we
+				// cannot use lookahead to check for the presence of a `COLON`.
+				//
+				// Instead, we have separate `ID` and `LABEL` tokens, lexing as a `LABEL` if a ':'
+				// character *immediately* follows the identifier. Thus, at the beginning of a line,
+				// "Label:" and "mac:" are treated as label definitions, but "Label :" and "mac :"
+				// are treated as macro invocations.
+				if (token.type == T_(ID) && peek() == ':')
 					token.type = T_(LABEL);
 
 				return token;

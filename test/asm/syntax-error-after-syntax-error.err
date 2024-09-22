@@ -1,13 +1,11 @@
+error: syntax-error-after-syntax-error.asm(2):
+    syntax error, unexpected *
+error: syntax-error-after-syntax-error.asm(3):
+    Unterminated string
 error: syntax-error-after-syntax-error.asm(6):
-    syntax error, unexpected newline, expecting : or ::
-error: syntax-error-after-syntax-error.asm(7):
-    syntax error, unexpected newline, expecting : or ::
-    To invoke `mac` as a macro it must be indented
-error: syntax-error-after-syntax-error.asm(8):
-    syntax error, unexpected number, expecting : or ::
-    To invoke `mac` as a macro it must be indented
+    syntax error, unexpected xor
 error: syntax-error-after-syntax-error.asm(9):
-    'mac' already defined at syntax-error-after-syntax-error.asm(1)
+    syntax error, unexpected :
 error: syntax-error-after-syntax-error.asm(10):
-    'mac' already defined at syntax-error-after-syntax-error.asm(1)
+    syntax error, unexpected stop, expecting newline or end of buffer or ::
 error: Assembly aborted (5 errors)!
