@@ -55,7 +55,7 @@
 /******************** Tokens and data types ********************/
 
 %token YYEOF 0 "end of file"
-%token newline
+%token newline "end of line"
 %token COMMA ","
 %token ORG "ORG"
        FLOATING "FLOATING"

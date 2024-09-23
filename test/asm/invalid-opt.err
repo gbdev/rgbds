@@ -17,7 +17,7 @@ error: invalid-opt.asm(8):
 error: invalid-opt.asm(9):
     Must specify an argument for option 'W'
 error: invalid-opt.asm(10):
-    syntax error, unexpected newline, expecting string
+    syntax error, unexpected end of line, expecting string
 error: invalid-opt.asm(11):
     No entries in the option stack
 error: Assembly aborted (11 errors)!
