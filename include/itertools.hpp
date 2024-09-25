@@ -71,7 +71,6 @@ public:
 	}
 };
 
-namespace detail {
 template<typename... Containers>
 class ZipContainer {
 	std::tuple<Containers...> _containers;
@@ -105,12 +104,11 @@ public:
 template<typename T>
 using Holder = std::
     conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_cv_t<std::remove_reference_t<T>>>;
-} // namespace detail
 
 // Does the same number of iterations as the first container's iterator!
 template<typename... Containers>
 static constexpr auto zip(Containers &&...cs) {
-	return detail::ZipContainer<detail::Holder<Containers>...>(std::forward<Containers>(cs)...);
+	return ZipContainer<Holder<Containers>...>(std::forward<Containers>(cs)...);
 }
 
 #endif // RGBDS_ITERTOOLS_HPP
