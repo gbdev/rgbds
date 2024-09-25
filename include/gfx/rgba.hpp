@@ -40,8 +40,8 @@ struct Rgba {
 		auto shl = [](uint8_t val, unsigned shift) { return static_cast<uint32_t>(val) << shift; };
 		return shl(red, 24) | shl(green, 16) | shl(blue, 8) | shl(alpha, 0);
 	}
-	friend bool operator==(Rgba const &lhs, Rgba const &rhs) { return lhs.toCSS() == rhs.toCSS(); }
-	friend bool operator!=(Rgba const &lhs, Rgba const &rhs) { return lhs.toCSS() != rhs.toCSS(); }
+	bool operator==(Rgba const &rhs) const { return toCSS() == rhs.toCSS(); }
+	bool operator!=(Rgba const &rhs) const { return toCSS() != rhs.toCSS(); }
 
 	/*
 	 * CGB colors are RGB555, so we use bit 15 to signify that the color is transparent instead

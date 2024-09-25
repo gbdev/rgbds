@@ -24,13 +24,8 @@ class EnumSeq {
 
 		auto operator*() const { return _value; }
 
-		friend auto operator==(Iterator const &lhs, Iterator const &rhs) {
-			return lhs._value == rhs._value;
-		}
-
-		friend auto operator!=(Iterator const &lhs, Iterator const &rhs) {
-			return lhs._value != rhs._value;
-		}
+		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
+		bool operator!=(Iterator const &rhs) const  { return _value != rhs._value; }
 	};
 
 public:
@@ -61,12 +56,12 @@ public:
 		);
 	}
 
-	friend auto operator==(Zip const &lhs, Zip const &rhs) {
-		return std::get<0>(lhs._iters) == std::get<0>(rhs._iters);
+	bool operator==(Zip const &rhs) const {
+		return std::get<0>(_iters) == std::get<0>(rhs._iters);
 	}
 
-	friend auto operator!=(Zip const &lhs, Zip const &rhs) {
-		return std::get<0>(lhs._iters) != std::get<0>(rhs._iters);
+	bool operator!=(Zip const &rhs) const {
+		return std::get<0>(_iters) != std::get<0>(rhs._iters);
 	}
 };
 

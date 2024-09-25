@@ -446,7 +446,7 @@ public:
 		};
 
 	private:
-		struct iterator {
+		struct Iterator {
 			TilesVisitor const &parent;
 			uint32_t const limit;
 			uint32_t x, y;
@@ -458,7 +458,7 @@ public:
 				return {parent._png, x + options.inputSlice.left, y + options.inputSlice.top};
 			}
 
-			iterator &operator++() {
+			Iterator &operator++() {
 				auto [major, minor] = parent._columnMajor ? std::tie(y, x) : std::tie(x, y);
 				major += 8;
 				if (major == limit) {
@@ -468,19 +468,14 @@ public:
 				return *this;
 			}
 
-			friend bool operator==(iterator const &lhs, iterator const &rhs) {
-				return lhs.coords() == rhs.coords(); // Compare the returned coord pairs
-			}
-
-			friend bool operator!=(iterator const &lhs, iterator const &rhs) {
-				return lhs.coords() != rhs.coords(); // Compare the returned coord pairs
-			}
+			bool operator==(Iterator const &rhs) const { return coords() == rhs.coords(); }
+			bool operator!=(Iterator const &rhs) const { return coords() != rhs.coords(); }
 		};
 
 	public:
-		iterator begin() const { return {*this, _limit, 0, 0}; }
-		iterator end() const {
-			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
+		Iterator begin() const { return {*this, _limit, 0, 0}; }
+		Iterator end() const {
+			Iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
 			return ++it;                                         // ...now one-past-last!
 		}
 	};
@@ -826,9 +821,7 @@ public:
 
 		return MatchType::NOPE;
 	}
-	friend bool operator==(TileData const &lhs, TileData const &rhs) {
-		return lhs.tryMatching(rhs) != MatchType::NOPE;
-	}
+	bool operator==(TileData const &rhs) const { return tryMatching(rhs) != MatchType::NOPE; }
 };
 
 template<>
