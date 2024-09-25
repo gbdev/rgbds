@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-#include "defaultinitalloc.hpp"
+#include "defaultinitvec.hpp" // Reused from RGBDS
 
 #include "gfx/rgba.hpp" // Reused from RGBGFX
 

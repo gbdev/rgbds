@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 
-#include "defaultinitalloc.hpp"
+#include "defaultinitvec.hpp"
 
 struct Palette;
 class ProtoPalette;
