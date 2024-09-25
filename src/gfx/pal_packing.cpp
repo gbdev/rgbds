@@ -15,8 +15,6 @@
 #include "gfx/main.hpp"
 #include "gfx/proto_palette.hpp"
 
-using std::swap;
-
 // The solvers here are picked from the paper at https://arxiv.org/abs/1605.00558:
 // "Algorithms for the Pagination Problem, a Bin Packing with Overlapping Items"
 // Their formulation of the problem consists in packing "tiles" into "pages"; here is a
@@ -112,8 +110,8 @@ private:
 		}
 
 		friend void swap(Iter &lhs, Iter &rhs) {
-			swap(lhs._array, rhs._array);
-			swap(lhs._iter, rhs._iter);
+			std::swap(lhs._array, rhs._array);
+			std::swap(lhs._iter, rhs._iter);
 		}
 	};
 public:
