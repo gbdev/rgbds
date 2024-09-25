@@ -7,39 +7,38 @@
 #include <utility>
 
 template<typename T>
-class EnumSeqIterator {
-	T _value;
-
-public:
-	explicit EnumSeqIterator(T value) : _value(value) {}
-
-	EnumSeqIterator &operator++() {
-		_value = (T)(_value + 1);
-		return *this;
-	}
-
-	auto operator*() const { return _value; }
-
-	friend auto operator==(EnumSeqIterator const &lhs, EnumSeqIterator const &rhs) {
-		return lhs._value == rhs._value;
-	}
-
-	friend auto operator!=(EnumSeqIterator const &lhs, EnumSeqIterator const &rhs) {
-		return lhs._value != rhs._value;
-	}
-};
-
-template<typename T>
 class EnumSeq {
 	T _start;
 	T _stop;
+
+	class Iterator {
+		T _value;
+
+	public:
+		explicit Iterator(T value) : _value(value) {}
+
+		Iterator &operator++() {
+			_value = (T)(_value + 1);
+			return *this;
+		}
+
+		auto operator*() const { return _value; }
+
+		friend auto operator==(Iterator const &lhs, Iterator const &rhs) {
+			return lhs._value == rhs._value;
+		}
+
+		friend auto operator!=(Iterator const &lhs, Iterator const &rhs) {
+			return lhs._value != rhs._value;
+		}
+	};
 
 public:
 	explicit EnumSeq(T stop) : _start((T)0), _stop(stop) {}
 	explicit EnumSeq(T start, T stop) : _start(start), _stop(stop) {}
 
-	EnumSeqIterator<T> begin() { return EnumSeqIterator(_start); }
-	EnumSeqIterator<T> end() { return EnumSeqIterator(_stop); }
+	Iterator begin() { return Iterator(_start); }
+	Iterator end() { return Iterator(_stop); }
 };
 
 // This is not a fully generic implementation; its current use cases only require for-loop behavior.
