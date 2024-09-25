@@ -836,9 +836,7 @@ struct std::hash<TileData> {
 	std::size_t operator()(TileData const &tile) const { return tile.hash(); }
 };
 
-namespace unoptimized {
-
-static void outputTileData(
+static void outputUnoptimizedTileData(
     Png const &png,
     DefaultInitVec<AttrmapEntry> const &attrmap,
     std::vector<Palette> const &palettes,
@@ -877,7 +875,7 @@ static void outputTileData(
 	assume(remainingTiles == 0);
 }
 
-static void outputMaps(
+static void outputUnoptimizedMaps(
     DefaultInitVec<AttrmapEntry> const &attrmap, DefaultInitVec<size_t> const &mappings
 ) {
 	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
@@ -915,10 +913,6 @@ static void outputMaps(
 		++tileID;
 	}
 }
-
-} // namespace unoptimized
-
-namespace optimized {
 
 struct UniqueTiles {
 	std::unordered_set<TileData> tileset;
@@ -1089,8 +1083,6 @@ static void outputPalmap(
 	}
 }
 
-} // namespace optimized
-
 void processPalettes() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
@@ -1251,7 +1243,7 @@ continue_visiting_tiles:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
-			unoptimized::outputTileData(png, attrmap, palettes, mappings);
+			outputUnoptimizedTileData(png, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
@@ -1259,12 +1251,12 @@ continue_visiting_tiles:;
 			    Options::VERB_LOG_ACT,
 			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n"
 			);
-			unoptimized::outputMaps(attrmap, mappings);
+			outputUnoptimizedMaps(attrmap, mappings);
 		}
 	} else {
 		// All of these require the deduplication process to be performed to be output
 		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
-		optimized::UniqueTiles tiles = optimized::dedupTiles(png, attrmap, palettes, mappings);
+		UniqueTiles tiles = dedupTiles(png, attrmap, palettes, mappings);
 
 		if (tiles.size() > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
@@ -1277,22 +1269,22 @@ continue_visiting_tiles:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tile data...\n");
-			optimized::outputTileData(tiles);
+			outputTileData(tiles);
 		}
 
 		if (!options.tilemap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tilemap...\n");
-			optimized::outputTilemap(attrmap);
+			outputTilemap(attrmap);
 		}
 
 		if (!options.attrmap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
-			optimized::outputAttrmap(attrmap, mappings);
+			outputAttrmap(attrmap, mappings);
 		}
 
 		if (!options.palmap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized palmap...\n");
-			optimized::outputPalmap(attrmap, mappings);
+			outputPalmap(attrmap, mappings);
 		}
 	}
 }
