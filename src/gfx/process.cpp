@@ -567,7 +567,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	// Run a "pagination" problem solver
 	// TODO: allow picking one of several solvers?
-	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
+	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
 	assume(mappings.size() == protoPalettes.size());
 
 	if (options.verbosity >= Options::VERB_INTERM) {
