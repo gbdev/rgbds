@@ -601,11 +601,11 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
 	if (embPalRGB != nullptr) {
-		sorting::indexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
+		sortIndexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
 	} else if (png.isSuitableForGrayscale()) {
-		sorting::grayscale(palettes, png.getColors().raw());
+		sortGrayscale(palettes, png.getColors().raw());
 	} else {
-		sorting::rgb(palettes);
+		sortRgb(palettes);
 	}
 	return {mappings, palettes};
 }

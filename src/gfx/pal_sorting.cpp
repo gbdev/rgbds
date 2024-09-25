@@ -8,9 +8,7 @@
 
 #include "gfx/main.hpp"
 
-namespace sorting {
-
-void indexed(
+void sortIndexed(
     std::vector<Palette> &palettes,
     int palSize,
     png_color const *palRGB,
@@ -47,7 +45,7 @@ void indexed(
 	}
 }
 
-void grayscale(
+void sortGrayscale(
     std::vector<Palette> &palettes, std::array<std::optional<Rgba>, 0x8001> const &colors
 ) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting grayscale-only palette...\n");
@@ -73,7 +71,7 @@ static unsigned int legacyLuminance(uint16_t color) {
 	return 2126 * red + 7152 * green + 722 * blue;
 }
 
-void rgb(std::vector<Palette> &palettes) {
+void sortRgb(std::vector<Palette> &palettes) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by \"\"\"luminance\"\"\"...\n");
 
 	for (Palette &pal : palettes) {
@@ -82,5 +80,3 @@ void rgb(std::vector<Palette> &palettes) {
 		});
 	}
 }
-
-} // namespace sorting

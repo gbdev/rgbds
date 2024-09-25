@@ -12,20 +12,16 @@
 
 struct Palette;
 
-namespace sorting {
-
-void indexed(
+void sortIndexed(
     std::vector<Palette> &palettes,
     int palSize,
     png_color const *palRGB,
     int palAlphaSize,
     png_byte *palAlpha
 );
-void grayscale(
+void sortGrayscale(
     std::vector<Palette> &palettes, std::array<std::optional<Rgba>, 0x8001> const &colors
 );
-void rgb(std::vector<Palette> &palettes);
-
-} // namespace sorting
+void sortRgb(std::vector<Palette> &palettes);
 
 #endif // RGBDS_GFX_PAL_SORTING_HPP
