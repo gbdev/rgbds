@@ -107,20 +107,18 @@ struct Palette {
 	uint8_t size() const;
 };
 
-namespace detail {
-template<typename T, T... i>
-static constexpr auto flipTable(std::integer_sequence<T, i...>) {
-	return std::array{[](uint8_t byte) {
+// Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
+static constexpr auto flipTable = ([]() constexpr {
+	std::array<uint16_t, 256> table{};
+	for (uint16_t i = 0; i < table.size(); i++) {
 		// To flip all the bits, we'll flip both nibbles, then each nibble half, etc.
+		uint16_t byte = i;
 		byte = (byte & 0b0000'1111) << 4 | (byte & 0b1111'0000) >> 4;
 		byte = (byte & 0b0011'0011) << 2 | (byte & 0b1100'1100) >> 2;
 		byte = (byte & 0b0101'0101) << 1 | (byte & 0b1010'1010) >> 1;
-		return byte;
-	}(i)...};
-}
-} // namespace detail
-
-// Flipping tends to happen fairly often, so take a bite out of dcache to speed it up
-static constexpr auto flipTable = detail::flipTable(std::make_integer_sequence<uint16_t, 256>());
+		table[i] = byte;
+	}
+	return table;
+})();
 
 #endif // RGBDS_GFX_MAIN_HPP
