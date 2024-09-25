@@ -186,7 +186,8 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		useExact = true;
 	}
 
-	if (useType != 'X' && useType != 'x' && useType != 'b' && useType != 'o' && useType != 'f' && useExact)
+	if (useType != 'X' && useType != 'x' && useType != 'b' && useType != 'o' && useType != 'f'
+	    && useExact)
 		error("Formatting type '%c' with exact flag '#'\n", useType);
 	if (useType != 'f' && hasFrac)
 		error("Formatting type '%c' with fractional width\n", useType);

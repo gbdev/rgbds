@@ -23,7 +23,7 @@ std::unordered_map<std::string, Symbol> symbols;
 std::unordered_set<std::string> purgedSymbols;
 
 static Symbol const *globalScope = nullptr; // Current section's global label scope
-static Symbol const *localScope = nullptr; // Current section's local label scope
+static Symbol const *localScope = nullptr;  // Current section's local label scope
 static Symbol *PCSymbol;
 static Symbol *NARGSymbol;
 static Symbol *globalScopeSymbol;

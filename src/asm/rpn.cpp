@@ -120,8 +120,8 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = (int32_t)sym->getSection()->bank;
 		} else {
 			data = sym_IsPurgedScoped(symName)
-			     ? "\""s + symName + "\"'s bank is not known; it was purged"
-			     : "\""s + symName + "\"'s bank is not known";
+			       ? "\""s + symName + "\"'s bank is not known; it was purged"
+			       : "\""s + symName + "\"'s bank is not known";
 
 			size_t nameLen = sym->name.length() + 1; // Room for NUL!
 

@@ -389,7 +389,9 @@ void reverse() {
 		palmap = readInto(options.palmap);
 		if (palmap->size() != mapSize) {
 			fatal(
-			    "Palette map size (%zu tiles) doesn't match image size (%zu)", palmap->size(), mapSize
+			    "Palette map size (%zu tiles) doesn't match image size (%zu)",
+			    palmap->size(),
+			    mapSize
 			);
 		}
 	}
