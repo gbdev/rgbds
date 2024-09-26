@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "defaultinitalloc.hpp"
+#include "defaultinitvec.hpp"
 #include "file.hpp"
 #include "helpers.hpp"
 #include "itertools.hpp"
@@ -446,7 +446,7 @@ public:
 		};
 
 	private:
-		struct iterator {
+		struct Iterator {
 			TilesVisitor const &parent;
 			uint32_t const limit;
 			uint32_t x, y;
@@ -458,7 +458,7 @@ public:
 				return {parent._png, x + options.inputSlice.left, y + options.inputSlice.top};
 			}
 
-			iterator &operator++() {
+			Iterator &operator++() {
 				auto [major, minor] = parent._columnMajor ? std::tie(y, x) : std::tie(x, y);
 				major += 8;
 				if (major == limit) {
@@ -468,19 +468,14 @@ public:
 				return *this;
 			}
 
-			friend bool operator==(iterator const &lhs, iterator const &rhs) {
-				return lhs.coords() == rhs.coords(); // Compare the returned coord pairs
-			}
-
-			friend bool operator!=(iterator const &lhs, iterator const &rhs) {
-				return lhs.coords() != rhs.coords(); // Compare the returned coord pairs
-			}
+			bool operator==(Iterator const &rhs) const { return coords() == rhs.coords(); }
+			bool operator!=(Iterator const &rhs) const { return coords() != rhs.coords(); }
 		};
 
 	public:
-		iterator begin() const { return {*this, _limit, 0, 0}; }
-		iterator end() const {
-			iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
+		Iterator begin() const { return {*this, _limit, 0, 0}; }
+		Iterator end() const {
+			Iterator it{*this, _limit, _width - 8, _height - 8}; // Last valid one...
 			return ++it;                                         // ...now one-past-last!
 		}
 	};
@@ -567,7 +562,7 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
     generatePalettes(std::vector<ProtoPalette> const &protoPalettes, Png const &png) {
 	// Run a "pagination" problem solver
 	// TODO: allow picking one of several solvers?
-	auto [mappings, nbPalettes] = packing::overloadAndRemove(protoPalettes);
+	auto [mappings, nbPalettes] = overloadAndRemove(protoPalettes);
 	assume(mappings.size() == protoPalettes.size());
 
 	if (options.verbosity >= Options::VERB_INTERM) {
@@ -601,11 +596,11 @@ static std::tuple<DefaultInitVec<size_t>, std::vector<Palette>>
 	// "Sort" colors in the generated palettes, see the man page for the flowchart
 	auto [embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha] = png.getEmbeddedPal();
 	if (embPalRGB != nullptr) {
-		sorting::indexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
+		sortIndexed(palettes, embPalSize, embPalRGB, embPalAlphaSize, embPalAlpha);
 	} else if (png.isSuitableForGrayscale()) {
-		sorting::grayscale(palettes, png.getColors().raw());
+		sortGrayscale(palettes, png.getColors().raw());
 	} else {
-		sorting::rgb(palettes);
+		sortRgb(palettes);
 	}
 	return {mappings, palettes};
 }
@@ -826,9 +821,7 @@ public:
 
 		return MatchType::NOPE;
 	}
-	friend bool operator==(TileData const &lhs, TileData const &rhs) {
-		return lhs.tryMatching(rhs) != MatchType::NOPE;
-	}
+	bool operator==(TileData const &rhs) const { return tryMatching(rhs) != MatchType::NOPE; }
 };
 
 template<>
@@ -836,9 +829,7 @@ struct std::hash<TileData> {
 	std::size_t operator()(TileData const &tile) const { return tile.hash(); }
 };
 
-namespace unoptimized {
-
-static void outputTileData(
+static void outputUnoptimizedTileData(
     Png const &png,
     DefaultInitVec<AttrmapEntry> const &attrmap,
     std::vector<Palette> const &palettes,
@@ -877,7 +868,7 @@ static void outputTileData(
 	assume(remainingTiles == 0);
 }
 
-static void outputMaps(
+static void outputUnoptimizedMaps(
     DefaultInitVec<AttrmapEntry> const &attrmap, DefaultInitVec<size_t> const &mappings
 ) {
 	std::optional<File> tilemapOutput, attrmapOutput, palmapOutput;
@@ -915,10 +906,6 @@ static void outputMaps(
 		++tileID;
 	}
 }
-
-} // namespace unoptimized
-
-namespace optimized {
 
 struct UniqueTiles {
 	std::unordered_set<TileData> tileset;
@@ -1089,8 +1076,6 @@ static void outputPalmap(
 	}
 }
 
-} // namespace optimized
-
 void processPalettes() {
 	options.verbosePrint(Options::VERB_CFG, "Using libpng %s\n", png_get_libpng_ver(nullptr));
 
@@ -1251,7 +1236,7 @@ continue_visiting_tiles:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating unoptimized tile data...\n");
-			unoptimized::outputTileData(png, attrmap, palettes, mappings);
+			outputUnoptimizedTileData(png, attrmap, palettes, mappings);
 		}
 
 		if (!options.tilemap.empty() || !options.attrmap.empty() || !options.palmap.empty()) {
@@ -1259,12 +1244,12 @@ continue_visiting_tiles:;
 			    Options::VERB_LOG_ACT,
 			    "Generating unoptimized tilemap and/or attrmap and/or palmap...\n"
 			);
-			unoptimized::outputMaps(attrmap, mappings);
+			outputUnoptimizedMaps(attrmap, mappings);
 		}
 	} else {
 		// All of these require the deduplication process to be performed to be output
 		options.verbosePrint(Options::VERB_LOG_ACT, "Deduplicating tiles...\n");
-		optimized::UniqueTiles tiles = optimized::dedupTiles(png, attrmap, palettes, mappings);
+		UniqueTiles tiles = dedupTiles(png, attrmap, palettes, mappings);
 
 		if (tiles.size() > options.maxNbTiles[0] + options.maxNbTiles[1]) {
 			fatal(
@@ -1277,22 +1262,22 @@ continue_visiting_tiles:;
 
 		if (!options.output.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tile data...\n");
-			optimized::outputTileData(tiles);
+			outputTileData(tiles);
 		}
 
 		if (!options.tilemap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized tilemap...\n");
-			optimized::outputTilemap(attrmap);
+			outputTilemap(attrmap);
 		}
 
 		if (!options.attrmap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized attrmap...\n");
-			optimized::outputAttrmap(attrmap, mappings);
+			outputAttrmap(attrmap, mappings);
 		}
 
 		if (!options.palmap.empty()) {
 			options.verbosePrint(Options::VERB_LOG_ACT, "Generating optimized palmap...\n");
-			optimized::outputPalmap(attrmap, mappings);
+			outputPalmap(attrmap, mappings);
 		}
 	}
 }
