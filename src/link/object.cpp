@@ -490,7 +490,8 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		file = fopen(fileName, "rb");
 	} else {
 		fileName = "<stdin>";
-		file = fdopen(STDIN_FILENO, "rb"); // `stdin` is in text mode by default
+		(void)setmode(STDIN_FILENO, O_BINARY);
+		file = stdin;
 	}
 	if (!file)
 		err("Failed to open file \"%s\"", fileName);

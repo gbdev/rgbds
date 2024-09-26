@@ -1160,9 +1160,9 @@ static bool processFilename(char const *name) {
 	nbErrors = 0;
 
 	if (!strcmp(name, "-")) {
+		name = "<stdin>";
 		(void)setmode(STDIN_FILENO, O_BINARY);
 		(void)setmode(STDOUT_FILENO, O_BINARY);
-		name = "<stdin>";
 		processFile(STDIN_FILENO, STDOUT_FILENO, name, 0);
 	} else {
 		// POSIX specifies that the results of O_RDWR on a FIFO are undefined.
@@ -1435,7 +1435,8 @@ int main(int argc, char *argv[]) {
 			logoFile = fopen(logoFilename, "rb");
 		} else {
 			logoFilename = "<stdin>";
-			logoFile = fdopen(STDIN_FILENO, "rb");
+			(void)setmode(STDIN_FILENO, O_BINARY);
+			logoFile = stdin;
 		}
 		if (!logoFile) {
 			fprintf(
