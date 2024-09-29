@@ -26,19 +26,16 @@ PNGLDLIBS	:= `${PKG_CONFIG} --libs-only-l libpng`
 # Note: if this comes up empty, `version.cpp` will automatically fall back to last release number
 VERSION_STRING	:= `git --git-dir=.git describe --tags --dirty --always 2>/dev/null`
 
-WARNFLAGS	:= -Wall -pedantic -Wno-unknown-warning-option \
-                   -Wno-gnu-zero-variadic-macro-arguments
+WARNFLAGS	:= -Wall -pedantic -Wno-unknown-warning-option -Wno-gnu-zero-variadic-macro-arguments
 
 # Overridable CXXFLAGS
 CXXFLAGS	?= -O3 -flto -DNDEBUG
 # Non-overridable CXXFLAGS
-REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include \
-		   -D_POSIX_C_SOURCE=200809L -fno-exceptions -fno-rtti
+REALCXXFLAGS	:= ${CXXFLAGS} ${WARNFLAGS} -std=c++2a -I include -fno-exceptions -fno-rtti
 # Overridable LDFLAGS
 LDFLAGS		?=
 # Non-overridable LDFLAGS
-REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} \
-		   -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
+REALLDFLAGS	:= ${LDFLAGS} ${WARNFLAGS} -DBUILD_VERSION_STRING=\"${VERSION_STRING}\"
 
 # Wrapper around bison that passes flags depending on what the version supports
 BISON		:= src/bison.sh
