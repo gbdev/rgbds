@@ -207,7 +207,8 @@ static void writeROM() {
 			outputFile = fopen(outputFileName, "wb");
 		} else {
 			outputFileName = "<stdout>";
-			outputFile = fdopen(STDOUT_FILENO, "wb");
+			(void)setmode(STDOUT_FILENO, O_BINARY);
+			outputFile = stdout;
 		}
 		if (!outputFile)
 			err("Failed to open output file \"%s\"", outputFileName);
@@ -222,7 +223,8 @@ static void writeROM() {
 			overlayFile = fopen(overlayFileName, "rb");
 		} else {
 			overlayFileName = "<stdin>";
-			overlayFile = fdopen(STDIN_FILENO, "rb");
+			(void)setmode(STDIN_FILENO, O_BINARY);
+			overlayFile = stdin;
 		}
 		if (!overlayFile)
 			err("Failed to open overlay file \"%s\"", overlayFileName);
@@ -545,7 +547,8 @@ static void writeSym() {
 		symFile = fopen(symFileName, "w");
 	} else {
 		symFileName = "<stdout>";
-		symFile = fdopen(STDOUT_FILENO, "w");
+		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
+		symFile = stdout;
 	}
 	if (!symFile)
 		err("Failed to open sym file \"%s\"", symFileName);
@@ -589,7 +592,8 @@ static void writeMap() {
 		mapFile = fopen(mapFileName, "w");
 	} else {
 		mapFileName = "<stdout>";
-		mapFile = fdopen(STDOUT_FILENO, "w");
+		(void)setmode(STDOUT_FILENO, O_TEXT); // May have been set to O_BINARY previously
+		mapFile = stdout;
 	}
 	if (!mapFile)
 		err("Failed to open map file \"%s\"", mapFileName);

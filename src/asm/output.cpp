@@ -12,6 +12,7 @@
 
 #include "error.hpp"
 #include "helpers.hpp" // assume, Defer
+#include "platform.hpp"
 
 #include "asm/charmap.hpp"
 #include "asm/fstack.hpp"
@@ -311,7 +312,8 @@ void out_WriteObject() {
 		file = fopen(objectFileName.c_str(), "wb");
 	} else {
 		objectFileName = "<stdout>";
-		file = fdopen(STDOUT_FILENO, "wb");
+		(void)setmode(STDOUT_FILENO, O_BINARY);
+		file = stdout;
 	}
 	if (!file)
 		err("Failed to open object file '%s'", objectFileName.c_str());
@@ -503,7 +505,8 @@ void out_WriteState(std::string name, std::vector<StateFeature> const &features)
 		file = fopen(name.c_str(), "wb");
 	} else {
 		name = "<stdout>";
-		file = fdopen(STDOUT_FILENO, "wb");
+		(void)setmode(STDOUT_FILENO, O_BINARY);
+		file = stdout;
 	}
 	if (!file)
 		err("Failed to open state file '%s'", name.c_str());
