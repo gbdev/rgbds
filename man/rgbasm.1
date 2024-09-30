@@ -295,9 +295,9 @@ This warning is enabled by
 Warn when the block comment start sequence
 .Ql /*
 is found inside of a block comment.
-Block comments cannot be nested, so an "inner"
+Block comments cannot be nested, so the first
 .Ql */
-is likely to have ended the whole comment.
+will end the whole comment.
 .It Fl Wno-obsolete
 Warn when obsolete constructs such as the
 .Ic _PI
@@ -351,7 +351,7 @@ also warns when an N-bit value is less than -2**(N-1), which will not fit in two
 Warn when a character goes through charmap conversion but has no defined mapping.
 .Fl Wunmapped-char=0
 or
-.Fl Wunmapped-char
+.Fl Wno-unmapped-char
 disables this warning.
 .Fl Wunmapped-char=1
 or just
