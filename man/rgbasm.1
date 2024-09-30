@@ -212,13 +212,19 @@ The following options alter the way warnings are processed.
 .Bl -tag -width Ds
 .It Fl Werror
 Make all warnings into errors.
+This can be negated as
+.Fl Wno-error
+to prevent turning all warnings into errors.
 .It Fl Werror=
-Make the specified warning into an error.
+Make the specified warning or meta warning into an error.
 A warning's name is appended
 .Pq example: Fl Werror=obsolete ,
 and this warning is implicitly enabled and turned into an error.
-This is an error if used with a meta warning, such as
-.Fl Werror=all .
+This can be negated as
+.Fl Wno-error=
+to prevent turning a specified warning into an error, even if
+.Fl Werror
+is in effect.
 .El
 .Pp
 The following warnings are
@@ -240,6 +246,10 @@ Note that each of these flag also has a negation (for example,
 .Fl Wcharmap-redef
 enables the warning that
 .Fl Wno-charmap-redef
+disables; and
+.Fl Wall
+enables every warning that
+.Fl Wno-all
 disables).
 Only the non-default flag is listed here.
 Ignoring the

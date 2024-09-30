@@ -5,8 +5,6 @@
 
 extern unsigned int nbErrors, maxErrors;
 
-enum WarningState { WARNING_DEFAULT, WARNING_DISABLED, WARNING_ENABLED, WARNING_ERROR };
-
 enum WarningID {
 	WARNING_ASSERT,               // Assertions
 	WARNING_BACKWARDS_FOR,        // `for` loop with backwards range
@@ -26,10 +24,9 @@ enum WarningID {
 
 	NB_PLAIN_WARNINGS,
 
-// Warnings past this point are "parametric" warnings, only mapping to a single flag
-#define PARAM_WARNINGS_START NB_PLAIN_WARNINGS
+	// Warnings past this point are "parametric" warnings, only mapping to a single flag
 	// Treating string as number may lose some bits
-	WARNING_NUMERIC_STRING_1 = PARAM_WARNINGS_START,
+	WARNING_NUMERIC_STRING_1 = NB_PLAIN_WARNINGS,
 	WARNING_NUMERIC_STRING_2,
 	// Purging an exported symbol or label
 	WARNING_PURGE_1,
@@ -41,20 +38,24 @@ enum WarningID {
 	WARNING_UNMAPPED_CHAR_1,
 	WARNING_UNMAPPED_CHAR_2,
 
-	NB_PLAIN_AND_PARAM_WARNINGS,
-#define NB_PARAM_WARNINGS (NB_PLAIN_AND_PARAM_WARNINGS - PARAM_WARNINGS_START)
-
-// Warnings past this point are "meta" warnings
-#define META_WARNINGS_START NB_PLAIN_AND_PARAM_WARNINGS
-	WARNING_ALL = META_WARNINGS_START,
-	WARNING_EXTRA,
-	WARNING_EVERYTHING,
-
 	NB_WARNINGS,
-#define NB_META_WARNINGS (NB_WARNINGS - META_WARNINGS_START)
 };
 
-extern WarningState warningStates[NB_PLAIN_AND_PARAM_WARNINGS];
+enum WarningAbled { WARNING_DEFAULT, WARNING_ENABLED, WARNING_DISABLED };
+
+struct WarningState {
+	WarningAbled state;
+	WarningAbled error;
+
+	void update(WarningState other);
+};
+
+struct Diagnostics {
+	WarningState flagStates[NB_WARNINGS];
+	WarningState metaStates[NB_WARNINGS];
+};
+
+extern Diagnostics warningStates;
 extern bool warningsAreErrors;
 
 void processWarningFlag(char const *flag);

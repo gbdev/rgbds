@@ -293,7 +293,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'W':
-			processWarningFlag(musl_optarg);
+			opt_W(musl_optarg);
 			break;
 
 		case 'w':

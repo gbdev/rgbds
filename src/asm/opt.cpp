@@ -13,8 +13,6 @@
 #include "asm/section.hpp"
 #include "asm/warning.hpp"
 
-static constexpr size_t numWarningStates = sizeof(warningStates);
-
 struct OptStackEntry {
 	char binary[2];
 	char gbgfx[4];
@@ -22,7 +20,7 @@ struct OptStackEntry {
 	uint8_t fillByte;
 	bool warningsAreErrors;
 	size_t maxRecursionDepth;
-	WarningState warningStates[numWarningStates];
+	Diagnostics warningStates;
 };
 
 static std::stack<OptStackEntry> stack;
@@ -160,7 +158,7 @@ void opt_Push() {
 
 	// Both of these pulled from warning.hpp
 	entry.warningsAreErrors = warningsAreErrors;
-	memcpy(entry.warningStates, warningStates, numWarningStates);
+	entry.warningStates = warningStates;
 
 	entry.maxRecursionDepth = maxRecursionDepth; // Pulled from fstack.h
 
@@ -184,5 +182,5 @@ void opt_Pop() {
 
 	// opt_W does not apply a whole warning state; it processes one flag string
 	warningsAreErrors = entry.warningsAreErrors;
-	memcpy(warningStates, entry.warningStates, numWarningStates);
+	warningStates = entry.warningStates;
 }
