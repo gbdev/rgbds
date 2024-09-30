@@ -211,11 +211,12 @@ static T readLE(U const *bytes) {
 [[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
 static bool
     readLine(std::filebuf &file, std::string &buffer) {
+	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
 		auto c = file.sbumpc();
 		if (c == std::filebuf::traits_type::eof()) {
-			return false;
+			return !buffer.empty();
 		}
 		if (c == '\n') {
 			// Discard a trailing CRLF
