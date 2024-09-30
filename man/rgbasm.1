@@ -292,9 +292,12 @@ Warn when shifting macro arguments past their limits.
 This warning is enabled by
 .Fl Wextra .
 .It Fl Wno-nested-comment
-Warn when
+Warn when the block comment start sequence
 .Ql /*
-appears inside a block comment.
+is found inside of a block comment.
+Block comments cannot be nested, so an "inner"
+.Ql */
+is likely to have ended the whole comment.
 .It Fl Wno-obsolete
 Warn when obsolete constructs such as the
 .Ic _PI
