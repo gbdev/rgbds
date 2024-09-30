@@ -2,6 +2,8 @@ warning: multiple-charmaps.asm(46) -> multiple-charmaps.asm::print_mapped(34): [
     Treating multi-unit strings as numbers is deprecated
 warning: multiple-charmaps.asm(54) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
     Treating multi-unit strings as numbers is deprecated
+warning: multiple-charmaps.asm(64): [-Wcharmap-redef]
+    Overriding charmap mapping
 warning: multiple-charmaps.asm(73) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]
     Treating multi-unit strings as numbers is deprecated
 warning: multiple-charmaps.asm(95) -> multiple-charmaps.asm::print_mapped(34): [-Wobsolete]

@@ -191,6 +191,7 @@ static uint8_t const _wextraCommands[] = {
 static uint8_t const _weverythingCommands[] = {
     WARNING_BACKWARDS_FOR,
     WARNING_BUILTIN_ARG,
+    WARNING_CHARMAP_REDEF,
     WARNING_DIV,
     WARNING_EMPTY_DATA_DIRECTIVE,
     WARNING_EMPTY_MACRO_ARG,
