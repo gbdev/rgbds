@@ -26,6 +26,8 @@ jobs:
         
       - name: Build and push the master container image
         run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i "2i LABEL org.opencontainers.image.description=\"RGBDS container image, containing the git version master:$COMMIT_HASH\"" Dockerfile
           docker build . --tag ghcr.io/gbdev/rgbds:master
           docker push ghcr.io/gbdev/rgbds:master
         
@@ -33,5 +35,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          docker tag ghcr.io/gbdev/rgbds:master ghcr.io/gbdev/rgbds:$TAG_NAME
+          sed -i "2i LABEL org.opencontainers.image.description=\"RGBDS container image for version $TAG_NAME\"" Dockerfile
+          docker build . --tag ghcr.io/gbdev/rgbds:$TAG_NAME
           docker push ghcr.io/gbdev/rgbds:$TAG_NAME
