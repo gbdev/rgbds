@@ -1373,6 +1373,7 @@ static std::string readString(bool raw) {
 
 			// Line continuation
 			case ' ':
+			case '\t':
 			case '\r':
 			case '\n':
 				discardLineContinuation();
@@ -1505,6 +1506,7 @@ static void appendStringLiteral(std::string &str, bool raw) {
 
 			// Line continuation
 			case ' ':
+			case '\t':
 			case '\r':
 			case '\n':
 				discardLineContinuation();
@@ -1982,6 +1984,7 @@ backslash:
 				break;
 
 			case ' ':
+			case '\t':
 			case '\r':
 			case '\n':
 				discardLineContinuation();
