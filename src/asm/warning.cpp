@@ -133,11 +133,11 @@ void processWarningFlag(char const *flag) {
 
 	// Check for `-Werror` or `-Wno-error` to return early
 	if (rootFlag == "error") {
-		// `-Werror` simply makes all warnings into errors
+		// `-Werror` promotes warnings to errors
 		warningsAreErrors = true;
 		return;
 	} else if (rootFlag == "no-error") {
-		// `-Wno-error` simply prevents all warnings from being errors
+		// `-Wno-error` disables promotion of warnings to errors
 		warningsAreErrors = false;
 		return;
 	}
