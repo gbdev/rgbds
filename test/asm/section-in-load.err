@@ -1,2 +1,3 @@
-FATAL: section-in-load.asm(3):
-    Cannot change the section within a `LOAD` block
+error: section-in-load.asm(4):
+    Found `ENDL` outside of a `LOAD` block
+error: Assembly aborted (1 error)!
