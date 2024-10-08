@@ -272,12 +272,12 @@ further below.
 The instructions in the macro-language generally require constant expressions.
 .Ss Numeric formats
 There are a number of numeric formats.
-.Bl -column -offset indent "Precise fixed-point" "Prefix"
-.It Sy Format type Ta Sy Prefix Ta Sy Accepted characters
+.Bl -column -offset indent "Precise fixed-point" "Possible prefixes"
+.It Sy Format type Ta Sy Possible prefixes Ta Sy Accepted characters
 .It Decimal Ta none Ta 0123456789
-.It Hexadecimal Ta Li $ 0x 0X Ta 0123456789ABCDEF
-.It Octal Ta Li & 0o 0O Ta 01234567
-.It Binary Ta Li % 0b 0B Ta 01
+.It Hexadecimal Ta Li $ , 0x , 0X Ta 0123456789ABCDEF
+.It Octal Ta Li & , 0o , 0O Ta 01234567
+.It Binary Ta Li % , 0b , 0B Ta 01
 .It Fixed-point Ta none Ta 01234.56789
 .It Precise fixed-point Ta none Ta 12.34q8
 .It Character constant Ta none Ta \(dqABYZ\(dq
