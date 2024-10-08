@@ -903,7 +903,7 @@ SECTION "LOAD example", ROMX
 CopyCode:
     ld de, RAMCode
     ld hl, RAMLocation
-    ld c, RAMLocation.end - RAMLocation
+    ld c, RAMCode.end - RAMCode
 \&.loop
     ld a, [de]
     inc de
@@ -927,8 +927,8 @@ RAMLocation:
 
 \&.string
     db "Hello World!\e0"
-\&.end
   ENDL
+\&.end
 .Ed
 .Pp
 A
@@ -938,7 +938,9 @@ block feels similar to a
 declaration because it creates a new one.
 All data and code generated within such a block is placed in the current section like usual, but all labels are created as if they were placed in this newly-created section.
 .Pp
-In the example above, all of the code and data will end up in the "LOAD example" section.
+In the example above, all of the code and data will end up in the
+.Dq LOAD example
+section.
 You will notice the
 .Sq RAMCode
 and
@@ -949,6 +951,19 @@ The former is situated in ROM, where the code is stored, the latter in RAM, wher
 You cannot nest
 .Ic LOAD
 blocks, nor can you change or stop the current section within them.
+.Pp
+The current
+.Ic LOAD
+block can be ended by using
+.Ic ENDL .
+This directive is only necessary if you want to resume writing code in its containing ROM section.
+Any of
+.Ic LOAD , SECTION , ENDSECTION ,
+or
+.Ic POPS
+will end the current
+.Ic LOAD
+block before performing its own function.
 .Pp
 .Ic LOAD
 blocks can use the

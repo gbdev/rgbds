@@ -1,2 +1,3 @@
-FATAL: endsection-in-load.asm(3):
-    Cannot end the section within a `LOAD` block
+error: endsection-in-load.asm(4):
+    Found `ENDL` outside of a `LOAD` block
+error: Assembly aborted (1 error)!

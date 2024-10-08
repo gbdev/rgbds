@@ -425,13 +425,13 @@ void sect_NewSection(
     SectionSpec const &attrs,
     SectionModifier mod
 ) {
-	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block\n");
-
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name)
 			fatalerror("Section '%s' is already on the stack\n", name.c_str());
 	}
+
+	if (currentLoadSection)
+		sect_EndLoadSection();
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -457,11 +457,6 @@ void sect_SetLoadSection(
 	if (!requireCodeSection())
 		return;
 
-	if (currentLoadSection) {
-		error("`LOAD` blocks cannot be nested\n");
-		return;
-	}
-
 	if (sect_HasData(type)) {
 		error("`LOAD` blocks cannot create a ROM section\n");
 		return;
@@ -471,6 +466,9 @@ void sect_SetLoadSection(
 		error("`LOAD FRAGMENT` is not allowed\n");
 		return;
 	}
+
+	if (currentLoadSection)
+		sect_EndLoadSection();
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -954,7 +952,7 @@ void sect_PopSection() {
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block\n");
+		sect_EndLoadSection();
 
 	SectionStackEntry entry = sectionStack.front();
 	sectionStack.pop_front();
@@ -972,11 +970,11 @@ void sect_EndSection() {
 	if (!currentSection)
 		fatalerror("Cannot end the section outside of a SECTION\n");
 
-	if (currentLoadSection)
-		fatalerror("Cannot end the section within a `LOAD` block\n");
-
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot end the section within a UNION\n");
+
+	if (currentLoadSection)
+		sect_EndLoadSection();
 
 	// Reset the section scope
 	currentSection = nullptr;
