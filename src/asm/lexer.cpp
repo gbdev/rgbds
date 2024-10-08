@@ -1733,7 +1733,25 @@ static Token yylex_NORMAL() {
 
 			// Handle numbers
 
-		case '0': // Decimal or fixed-point number
+		case '0': // Decimal, fixed-point, or base-prefix number
+			switch (peek()) {
+			case 'x':
+			case 'X':
+				shiftChar();
+				return Token(T_(NUMBER), readHexNumber());
+			case 'o':
+			case 'O':
+				shiftChar();
+				return Token(T_(NUMBER), readNumber(8, 0));
+			case 'b':
+			case 'B':
+				shiftChar();
+				return Token(T_(NUMBER), readBinaryNumber());
+			}
+			[[fallthrough]];
+
+			// Decimal or fixed-point number
+
 		case '1':
 		case '2':
 		case '3':
