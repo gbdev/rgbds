@@ -84,13 +84,7 @@ else(GIT)
   message(STATUS "Cannot determine RGBDS version (Git not installed), falling back")
 endif(GIT)
 
-find_package(PkgConfig)
-if(MSVC OR NOT PKG_CONFIG_FOUND)
-  # fallback to find_package
-  find_package(PNG REQUIRED)
-else()
-  pkg_check_modules(LIBPNG REQUIRED libpng)
-endif()
+find_package(PNG REQUIRED)
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 

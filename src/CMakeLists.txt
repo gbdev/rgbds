@@ -97,15 +97,9 @@ foreach(PROG "asm" "fix" "gfx" "link")
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
 endforeach()
 
-if(LIBPNG_FOUND) # pkg-config
-  target_include_directories(rgbgfx PRIVATE ${LIBPNG_INCLUDE_DIRS})
-  target_link_directories(rgbgfx PRIVATE ${LIBPNG_LIBRARY_DIRS})
-  target_link_libraries(rgbgfx PRIVATE ${LIBPNG_LIBRARIES})
-else()
-  target_compile_definitions(rgbgfx PRIVATE ${PNG_DEFINITIONS})
-  target_include_directories(rgbgfx PRIVATE ${PNG_INCLUDE_DIRS})
-  target_link_libraries(rgbgfx PRIVATE ${PNG_LIBRARIES})
-endif()
+target_compile_definitions(rgbgfx PRIVATE ${PNG_DEFINITIONS})
+target_include_directories(rgbgfx PRIVATE ${PNG_INCLUDE_DIRS})
+target_link_libraries(rgbgfx PRIVATE ${PNG_LIBRARIES})
 
 include(CheckLibraryExists)
 check_library_exists("m" "sin" "" HAS_LIBM)
