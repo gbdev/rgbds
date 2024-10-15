@@ -1,0 +1,2 @@
+error: ldh-bad.asm(2): Address $1234 for LDH is not in HRAM range
+Linking failed with 1 error

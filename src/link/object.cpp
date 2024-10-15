@@ -359,7 +359,7 @@ static void readSection(
 	);
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
 	if (tmp < 0 || tmp > UINT16_MAX)
-		errx("\"%s\"'s section size (%" PRId32 ") is invalid", section.name.c_str(), tmp);
+		errx("\"%s\"'s section size ($%" PRIx32 ") is invalid", section.name.c_str(), tmp);
 	section.size = tmp;
 	section.offset = 0;
 	tryGetc(
@@ -379,7 +379,7 @@ static void readSection(
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section.name.c_str());
 	section.isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
-		error(nullptr, 0, "\"%s\"'s org is too large (%" PRId32 ")", section.name.c_str(), tmp);
+		error(nullptr, 0, "\"%s\"'s org is too large ($%" PRIx32 ")", section.name.c_str(), tmp);
 		tmp = UINT16_MAX;
 	}
 	section.org = tmp;
@@ -405,7 +405,7 @@ static void readSection(
 		error(
 		    nullptr,
 		    0,
-		    "\"%s\"'s alignment offset is too large (%" PRId32 ")",
+		    "\"%s\"'s alignment offset is too large ($%" PRIx32 ")",
 		    section.name.c_str(),
 		    tmp
 		);
