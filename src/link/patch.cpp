@@ -101,9 +101,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_DIV:
 			value = popRPN(patch);
 			if (value == 0) {
-				if (!isError)
+				if (!isError) {
 					error(patch.src, patch.lineNo, "Division by 0");
-				isError = true;
+					isError = true;
+				}
 				popRPN(patch);
 				value = INT32_MAX;
 			} else {
@@ -113,9 +114,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_MOD:
 			value = popRPN(patch);
 			if (value == 0) {
-				if (!isError)
+				if (!isError) {
 					error(patch.src, patch.lineNo, "Modulo by 0");
-				isError = true;
+					isError = true;
+				}
 				popRPN(patch);
 				value = 0;
 			} else {
@@ -128,9 +130,10 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_EXP:
 			value = popRPN(patch);
 			if (value < 0) {
-				if (!isError)
-					error(patch.src, patch.lineNo, "Exponent by negative");
-				isError = true;
+				if (!isError) {
+					error(patch.src, patch.lineNo, "Exponent by negative value %" PRId32, value);
+					isError = true;
+				}
 				popRPN(patch);
 				value = 0;
 			} else {
@@ -342,9 +345,17 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_HRAM:
 			value = popRPN(patch);
-			if (!isError && (value < 0 || (value > 0xFF && value < 0xFF00) || value > 0xFFFF)) {
-				error(patch.src, patch.lineNo, "Value %" PRId32 " is not in HRAM range", value);
-				isError = true;
+			if (value < 0 || (value > 0xFF && value < 0xFF00) || value > 0xFFFF) {
+				if (!isError) {
+					error(
+					    patch.src,
+					    patch.lineNo,
+					    "Address $%" PRIx32 " for LDH is not in HRAM range",
+					    value
+					);
+					isError = true;
+				}
+				value = 0;
 			}
 			value &= 0xFF;
 			break;
@@ -354,9 +365,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			// Acceptable values are 0x00, 0x08, 0x10, ..., 0x38
 			// They can be easily checked with a bitmask
 			if (value & ~0x38) {
-				if (!isError)
-					error(patch.src, patch.lineNo, "Value %" PRId32 " is not a RST vector", value);
-				isError = true;
+				if (!isError) {
+					error(patch.src, patch.lineNo, "Value $%" PRIx32 " is not a RST vector", value);
+					isError = true;
+				}
+				value = 0;
 			}
 			value |= 0xC7;
 			break;
