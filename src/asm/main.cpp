@@ -381,6 +381,7 @@ int main(int argc, char *argv[]) {
 		nbErrors = 1;
 
 	sect_CheckUnionClosed();
+	sect_CheckLoadClosed();
 	sect_CheckSizes();
 
 	if (nbErrors != 0)

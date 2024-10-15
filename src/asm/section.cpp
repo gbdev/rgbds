@@ -431,7 +431,7 @@ void sect_NewSection(
 	}
 
 	if (currentLoadSection)
-		sect_EndLoadSection();
+		sect_EndLoadSection("SECTION");
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -468,7 +468,7 @@ void sect_SetLoadSection(
 	}
 
 	if (currentLoadSection)
-		sect_EndLoadSection();
+		sect_EndLoadSection("LOAD");
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -479,7 +479,14 @@ void sect_SetLoadSection(
 	currentLoadSection = sect;
 }
 
-void sect_EndLoadSection() {
+void sect_EndLoadSection(char const *cause) {
+	if (cause)
+		warning(
+		    WARNING_UNTERMINATED_LOAD,
+		    "`LOAD` block without `ENDL` terminated by `%s`\n",
+		    cause
+		);
+
 	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
 		return;
@@ -490,6 +497,11 @@ void sect_EndLoadSection() {
 	loadOffset = 0;
 	currentLoadSection = nullptr;
 	sym_SetCurrentLabelScopes(currentLoadLabelScopes);
+}
+
+void sect_CheckLoadClosed() {
+	if (currentLoadSection)
+		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by EOF\n");
 }
 
 Section *sect_GetSymbolSection() {
@@ -952,7 +964,7 @@ void sect_PopSection() {
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
-		sect_EndLoadSection();
+		sect_EndLoadSection("POPS");
 
 	SectionStackEntry entry = sectionStack.front();
 	sectionStack.pop_front();
@@ -974,7 +986,7 @@ void sect_EndSection() {
 		fatalerror("Cannot end the section within a UNION\n");
 
 	if (currentLoadSection)
-		sect_EndLoadSection();
+		sect_EndLoadSection("ENDSECTION");
 
 	// Reset the section scope
 	currentSection = nullptr;

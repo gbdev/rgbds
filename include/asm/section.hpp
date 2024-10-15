@@ -70,7 +70,8 @@ void sect_SetLoadSection(
     SectionSpec const &attrs,
     SectionModifier mod
 );
-void sect_EndLoadSection();
+void sect_EndLoadSection(char const *cause);
+void sect_CheckLoadClosed();
 
 Section *sect_GetSymbolSection();
 uint32_t sect_GetSymbolOffset();

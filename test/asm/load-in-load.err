@@ -1,3 +1,5 @@
+warning: load-in-load.asm(3): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `LOAD`
 error: load-in-load.asm(5):
     Found `ENDL` outside of a `LOAD` block
 error: Assembly aborted (1 error)!

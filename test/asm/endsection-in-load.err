@@ -1,3 +1,5 @@
+warning: endsection-in-load.asm(3): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `ENDSECTION`
 error: endsection-in-load.asm(4):
     Found `ENDL` outside of a `LOAD` block
 error: Assembly aborted (1 error)!
