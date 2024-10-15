@@ -33,9 +33,7 @@ jobs:
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DSANITIZERS=ON -DMORE_WARNINGS=ON
           cmake --build build -j --verbose
-          cp build/src/rgb{asm,link,fix,gfx} .
           sudo cmake --install build --verbose
-          cmake --install build --verbose --component "Test support programs"
       - name: Package binaries
         run: |
           mkdir bins
@@ -175,7 +173,6 @@ jobs:
           cmake -S . -B build -A ${{ matrix.platform }} -DCMAKE_INSTALL_PREFIX=install_dir -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release -j --verbose
           cmake --install build --verbose --prefix install_dir
-          cmake --install build --verbose --component "Test support programs"
       - name: Package binaries
         shell: bash
         run: |

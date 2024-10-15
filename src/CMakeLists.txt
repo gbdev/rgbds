@@ -91,10 +91,11 @@ foreach(PROG "asm" "fix" "gfx" "link")
                  ${rgb${PROG}_src}
                  ${common_src}
                  )
-  if(SUFFIX)
-    set_target_properties(rgb${PROG} PROPERTIES SUFFIX ${SUFFIX})
-  endif()
   install(TARGETS rgb${PROG} RUNTIME DESTINATION bin)
+  # Required to run tests
+  set_target_properties(rgb${PROG} PROPERTIES
+  # hack for MSVC: no-op generator expression to stop generation of "per-configuration subdirectory"
+                        RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_SOURCE_DIR}>)
 endforeach()
 
 if(LIBPNG_FOUND) # pkg-config

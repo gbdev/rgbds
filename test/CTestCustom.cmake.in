@@ -1,0 +1,1 @@
+set(CTEST_CUSTOM_PRE_TEST "bash -c 'cd @CMAKE_CURRENT_SOURCE_DIR@\; ./fetch-test-deps.sh @ONLY_FREE@'")

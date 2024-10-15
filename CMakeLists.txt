@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: MIT
 
 # 3.9 required for LTO checks
-cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
+# 3.17 optional for CMAKE_CTEST_ARGUMENTS
+cmake_minimum_required(VERSION 3.9..3.17 FATAL_ERROR)
 
 project(rgbds
         LANGUAGES CXX)
+
+include(CTest)
 
 # get real path of source and binary directories
 get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
@@ -87,6 +90,8 @@ endif(GIT)
 find_package(PkgConfig)
 if(MSVC OR NOT PKG_CONFIG_FOUND)
   # fallback to find_package
+  # cmake's FindPNG is very fragile; it breaks when multiple versions are installed
+  # this is most evident on macOS but can occur on Linux too
   find_package(PNG REQUIRED)
 else()
   pkg_check_modules(LIBPNG REQUIRED libpng)
@@ -98,6 +103,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
+set(CMAKE_CTEST_ARGUMENTS "--verbose")
 add_subdirectory(test)
 
 # By default, build in Release mode; Debug mode must be explicitly requested
