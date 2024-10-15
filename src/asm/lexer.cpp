@@ -797,11 +797,9 @@ static int peek() {
 	} else if (c == '{' && !lexerState->disableInterpolation) {
 		// If character is an open brace, do symbol interpolation
 		shiftChar();
-
 		if (auto str = readInterpolation(0); str) {
 			beginExpansion(str, *str);
 		}
-
 		return peek();
 	}
 
@@ -1201,9 +1199,9 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 
 		if (c == '{') { // Nested interpolation
 			shiftChar();
-			auto str = readInterpolation(depth + 1);
-
-			beginExpansion(str, *str);
+			if (auto str = readInterpolation(depth + 1); str) {
+				beginExpansion(str, *str);
+			}
 			continue; // Restart, reading from the new buffer
 		} else if (c == EOF || c == '\r' || c == '\n' || c == '"') {
 			error("Missing }\n");
