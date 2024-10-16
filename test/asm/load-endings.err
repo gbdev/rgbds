@@ -1,0 +1,8 @@
+warning: load-endings.asm(23): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `LOAD`
+warning: load-endings.asm(28): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `SECTION`
+warning: load-endings.asm(45): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `POPS`
+warning: load-endings.asm(50): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `ENDSECTION`

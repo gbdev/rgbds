@@ -1,2 +1,5 @@
-FATAL: section-in-load.asm(3):
-    Cannot change the section within a `LOAD` block
+warning: section-in-load.asm(3): [-Wunterminated-load]
+    `LOAD` block without `ENDL` terminated by `SECTION`
+error: section-in-load.asm(4):
+    Found `ENDL` outside of a `LOAD` block
+error: Assembly aborted (1 error)!

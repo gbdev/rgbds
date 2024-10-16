@@ -849,7 +849,7 @@ load:
 		sect_SetLoadSection($3, $5, $6, $7, $2);
 	}
 	| POP_ENDL {
-		sect_EndLoadSection();
+		sect_EndLoadSection(nullptr);
 	}
 ;
 

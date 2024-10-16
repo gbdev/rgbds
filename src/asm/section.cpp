@@ -425,13 +425,13 @@ void sect_NewSection(
     SectionSpec const &attrs,
     SectionModifier mod
 ) {
-	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block\n");
-
 	for (SectionStackEntry &entry : sectionStack) {
 		if (entry.section && entry.section->name == name)
 			fatalerror("Section '%s' is already on the stack\n", name.c_str());
 	}
+
+	if (currentLoadSection)
+		sect_EndLoadSection("SECTION");
 
 	Section *sect = getSection(name, type, org, attrs, mod);
 
@@ -457,11 +457,6 @@ void sect_SetLoadSection(
 	if (!requireCodeSection())
 		return;
 
-	if (currentLoadSection) {
-		error("`LOAD` blocks cannot be nested\n");
-		return;
-	}
-
 	if (sect_HasData(type)) {
 		error("`LOAD` blocks cannot create a ROM section\n");
 		return;
@@ -472,6 +467,9 @@ void sect_SetLoadSection(
 		return;
 	}
 
+	if (currentLoadSection)
+		sect_EndLoadSection("LOAD");
+
 	Section *sect = getSection(name, type, org, attrs, mod);
 
 	currentLoadLabelScopes = sym_GetCurrentLabelScopes();
@@ -481,7 +479,14 @@ void sect_SetLoadSection(
 	currentLoadSection = sect;
 }
 
-void sect_EndLoadSection() {
+void sect_EndLoadSection(char const *cause) {
+	if (cause)
+		warning(
+		    WARNING_UNTERMINATED_LOAD,
+		    "`LOAD` block without `ENDL` terminated by `%s`\n",
+		    cause
+		);
+
 	if (!currentLoadSection) {
 		error("Found `ENDL` outside of a `LOAD` block\n");
 		return;
@@ -492,6 +497,11 @@ void sect_EndLoadSection() {
 	loadOffset = 0;
 	currentLoadSection = nullptr;
 	sym_SetCurrentLabelScopes(currentLoadLabelScopes);
+}
+
+void sect_CheckLoadClosed() {
+	if (currentLoadSection)
+		warning(WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by EOF\n");
 }
 
 Section *sect_GetSymbolSection() {
@@ -954,7 +964,7 @@ void sect_PopSection() {
 		fatalerror("No entries in the section stack\n");
 
 	if (currentLoadSection)
-		fatalerror("Cannot change the section within a `LOAD` block\n");
+		sect_EndLoadSection("POPS");
 
 	SectionStackEntry entry = sectionStack.front();
 	sectionStack.pop_front();
@@ -972,11 +982,11 @@ void sect_EndSection() {
 	if (!currentSection)
 		fatalerror("Cannot end the section outside of a SECTION\n");
 
-	if (currentLoadSection)
-		fatalerror("Cannot end the section within a `LOAD` block\n");
-
 	if (!currentUnionStack.empty())
 		fatalerror("Cannot end the section within a UNION\n");
+
+	if (currentLoadSection)
+		sect_EndLoadSection("ENDSECTION");
 
 	// Reset the section scope
 	currentSection = nullptr;
