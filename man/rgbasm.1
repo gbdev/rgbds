@@ -370,6 +370,13 @@ only warns if the active charmap is not empty.
 .Fl Wunmapped-char=2
 warns if the active charmap is empty, and/or is not the default charmap
 .Sq main .
+.It Fl Wunterminated-load
+Warn when a
+.Ic LOAD
+block is not terminated by an
+.Ic ENDL .
+This warning is enabled by
+.Fl Wextra .
 .It Fl Wno-user
 Warn when the
 .Ic WARN

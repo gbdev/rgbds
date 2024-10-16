@@ -191,8 +191,8 @@ _rgbasm_completions() {
 				shift
 				shift-amount
 				truncation
-				unterminated-load
 				unmapped-char
+				unterminated-load
 				user
 				all
 				extra
