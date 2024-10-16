@@ -378,8 +378,8 @@ Even a non-constant operand with any non-zero bits will return 0.
 Besides operators, there are also some functions which have more specialized uses.
 .Bl -column "BITWIDTH(n)"
 .It Sy Name Ta Sy Operation
-.It Fn HIGH n Ta Equivalent to Ql Ar n No & $FF .
-.It Fn LOW n Ta Equivalent to Ql Po Ns Ar n No & $FF00 Pc >> 8 .
+.It Fn HIGH n Ta Equivalent to Ql Po Ns Ar n No & $FF00 Pc >> 8 .
+.It Fn LOW n Ta Equivalent to Ql Ar n No & $FF .
 .EQ
 delim $$
 .EN
