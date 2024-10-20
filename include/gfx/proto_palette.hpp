@@ -18,12 +18,8 @@ private:
 	std::array<uint16_t, capacity> _colorIndices{UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
 
 public:
-	/*
-	 * Adds the specified color to the set, or **silently drops it** if the set is full.
-	 *
-	 * Returns whether the color was unique.
-	 */
-	bool add(uint16_t color);
+	// Adds the specified color to the set, or **silently drops it** if the set is full.
+	void add(uint16_t color);
 
 	enum ComparisonResult {
 		NEITHER,
