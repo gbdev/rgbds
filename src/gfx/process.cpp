@@ -1115,20 +1115,26 @@ void process() {
 	DefaultInitVec<AttrmapEntry> attrmap{};
 
 	for (auto tile : png.visitAsTiles()) {
-		ProtoPalette tileColors;
 		AttrmapEntry &attrs = attrmap.emplace_back();
-		uint8_t nbColorsInTile = 0;
 
+		// Count the unique non-transparent colors for packing
+		std::unordered_set<uint16_t> tileColors;
 		for (uint32_t y = 0; y < 8; ++y) {
 			for (uint32_t x = 0; x < 8; ++x) {
-				Rgba color = tile.pixel(x, y);
-				if (!color.isTransparent()) { // Do not count transparency in for packing
-					// Add the color to the proto-pal (if not full), and count it if it was unique.
-					if (tileColors.add(color.cgbColor())) {
-						++nbColorsInTile;
-					}
+				if (Rgba color = tile.pixel(x, y); !color.isTransparent()) {
+					tileColors.insert(color.cgbColor());
 				}
 			}
+		}
+
+		if (tileColors.size() > options.maxOpaqueColors()) {
+			fatal(
+			    "Tile at (%" PRIu32 ", %" PRIu32 ") has %zu colors, more than %" PRIu8 "!",
+			    tile.x,
+			    tile.y,
+			    tileColors.size(),
+			    options.maxOpaqueColors()
+			);
 		}
 
 		if (tileColors.empty()) {
@@ -1137,11 +1143,16 @@ void process() {
 			continue;
 		}
 
+		ProtoPalette protoPalette;
+		for (uint16_t cgbColor : tileColors) {
+			protoPalette.add(cgbColor);
+		}
+
 		// Insert the proto-palette, making sure to avoid overlaps
 		for (size_t n = 0; n < protoPalettes.size(); ++n) {
-			switch (tileColors.compare(protoPalettes[n])) {
+			switch (protoPalette.compare(protoPalettes[n])) {
 			case ProtoPalette::WE_BIGGER:
-				protoPalettes[n] = tileColors; // Override them
+				protoPalettes[n] = protoPalette; // Override them
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
 				/*
@@ -1151,7 +1162,7 @@ void process() {
 				 * Investigation is necessary, especially if pathological cases are found.
 				 *
 				 * for (size_t i = protoPalettes.size(); --i != n;) {
-				 *     if (tileColors.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
+				 *     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
 				 *         protoPalettes.erase(protoPalettes.begin() + i);
 				 *     }
 				 * }
@@ -1168,17 +1179,6 @@ void process() {
 			}
 		}
 
-		if (nbColorsInTile > options.maxOpaqueColors()) {
-			fatal(
-			    "Tile at (%" PRIu32 ", %" PRIu32 ") has %" PRIu8 " opaque colors, more than %" PRIu8
-			    "!",
-			    tile.x,
-			    tile.y,
-			    nbColorsInTile,
-			    options.maxOpaqueColors()
-			);
-		}
-
 		attrs.protoPaletteID = protoPalettes.size();
 		if (protoPalettes.size() == AttrmapEntry::transparent) { // Check for overflow
 			fatal(
@@ -1186,7 +1186,7 @@ void process() {
 			    AttrmapEntry::transparent
 			);
 		}
-		protoPalettes.push_back(tileColors);
+		protoPalettes.push_back(protoPalette);
 continue_visiting_tiles:;
 	}
 

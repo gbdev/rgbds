@@ -6,7 +6,7 @@
 
 #include "helpers.hpp"
 
-bool ProtoPalette::add(uint16_t color) {
+void ProtoPalette::add(uint16_t color) {
 	size_t i = 0;
 
 	// Seek the first slot greater than the new color
@@ -16,12 +16,12 @@ bool ProtoPalette::add(uint16_t color) {
 		++i;
 		if (i == _colorIndices.size()) {
 			// We reached the end of the array without finding the color, so it's a new one.
-			return true;
+			return;
 		}
 	}
 	// If we found it, great! Nothing else to do.
 	if (_colorIndices[i] == color) {
-		return false;
+		return;
 	}
 
 	// Swap entries until the end
@@ -30,12 +30,11 @@ bool ProtoPalette::add(uint16_t color) {
 		++i;
 		if (i == _colorIndices.size()) {
 			// The set is full, but doesn't include the new color.
-			return true;
+			return;
 		}
 	}
 	// Write that last one into the new slot
 	_colorIndices[i] = color;
-	return true;
 }
 
 ProtoPalette::ComparisonResult ProtoPalette::compare(ProtoPalette const &other) const {
