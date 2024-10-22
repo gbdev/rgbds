@@ -10,6 +10,7 @@ ROM0 bank #0:
 	SECTION: $0000-$0000 ($0001 byte) ["rom0"]
 	         $0000 = Label0
 	         $0001 = Label0.local
+	SECTION: $0001 ($0000 bytes) ["\n\r\t\"\\"]
 	EMPTY: $0001-$3fff ($3fff bytes)
 	TOTAL EMPTY: $3fff bytes
 

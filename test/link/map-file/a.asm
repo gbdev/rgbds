@@ -25,3 +25,5 @@ wLabel1:: ds 6
 SECTION "hram", HRAM
 hLabel:: ds 7
 .local::
+
+SECTION "\n\r\t\"\\", ROM0[1]
