@@ -266,15 +266,15 @@ static bool isLegalForSymName(char c) {
 	       || c == '@' || c == '#' || c == '$' || c == '.';
 }
 
-// Prints a symbol's name to `symFile`, assuming that the first character is legal.
+// Prints a symbol's name to a file, assuming that the first character is legal.
 // Illegal characters are UTF-8-decoded (errors are replaced by U+FFFD) and emitted as `\u`/`\U`.
-static void printSymName(char const *name) {
-	for (char const *ptr = name; *ptr != '\0';) {
+static void printSymName(std::string const &name, FILE *file) {
+	for (char const *ptr = name.c_str(); *ptr != '\0';) {
 		char c = *ptr;
 
 		if (isLegalForSymName(c)) {
 			// Output legal ASCII characters as-is
-			putc(c, symFile);
+			putc(c, file);
 			++ptr;
 		} else {
 			// Output illegal characters using Unicode escapes
@@ -295,7 +295,7 @@ static void printSymName(char const *name) {
 				++ptr;
 			} while (state != 0);
 
-			fprintf(symFile, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
+			fprintf(file, codepoint <= 0xFFFF ? "\\u%04" PRIx32 : "\\U%08" PRIx32, codepoint);
 		}
 	}
 }
@@ -376,7 +376,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 
 	for (SortedSymbol &sym : symList) {
 		fprintf(symFile, "%02" PRIx32 ":%04" PRIx16 " ", symBank, sym.addr);
-		printSymName(sym.sym->name.c_str());
+		printSymName(sym.sym->name, symFile);
 		putc('\n', symFile);
 	}
 }
@@ -393,6 +393,31 @@ static void writeEmptySpace(uint16_t begin, uint16_t end) {
 		    len,
 		    len == 1 ? "" : "s"
 		);
+	}
+}
+
+// Prints a section's name to a file.
+static void printSectionName(std::string const &name, FILE *file) {
+	for (char c : name) {
+		// Escape characters that need escaping
+		switch (c) {
+		case '\n':
+			fputs("\\n", file);
+			break;
+		case '\r':
+			fputs("\\r", file);
+			break;
+		case '\t':
+			fputs("\\t", file);
+			break;
+		case '\\':
+		case '"':
+			putc('\\', file);
+			[[fallthrough]];
+		default:
+			putc(c, file);
+			break;
+		}
 	}
 }
 
@@ -430,32 +455,26 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 		if (sect->size != 0)
 			fprintf(
 			    mapFile,
-			    "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16 " byte%s) [\"%s\"]\n",
+			    "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16 " byte%s) [\"",
 			    sect->org,
 			    prevEndAddr - 1,
 			    sect->size,
-			    sect->size == 1 ? "" : "s",
-			    sect->name.c_str()
+			    sect->size == 1 ? "" : "s"
 			);
 		else
-			fprintf(
-			    mapFile,
-			    "\tSECTION: $%04" PRIx16 " (0 bytes) [\"%s\"]\n",
-			    sect->org,
-			    sect->name.c_str()
-			);
+			fprintf(mapFile, "\tSECTION: $%04" PRIx16 " (0 bytes) [\"", sect->org);
+		printSectionName(sect->name, mapFile);
+		fputs("\"]\n", mapFile);
 
 		if (!noSymInMap) {
 			// Also print symbols in the following "pieces"
 			for (uint16_t org = sect->org; sect; sect = sect->nextu.get()) {
-				for (Symbol *sym : sect->symbols)
+				for (Symbol *sym : sect->symbols) {
 					// Space matches "\tSECTION: $xxxx ..."
-					fprintf(
-					    mapFile,
-					    "\t         $%04" PRIx32 " = %s\n",
-					    sym->label().offset + org,
-					    sym->name.c_str()
-					);
+					fprintf(mapFile, "\t         $%04" PRIx32 " = ", sym->label().offset + org);
+					printSymName(sym->name, mapFile);
+					putc('\n', mapFile);
+				}
 
 				if (sect->nextu) {
 					// Announce the following "piece"
@@ -579,7 +598,9 @@ static void writeSym() {
 	for (Symbol *sym : constants) {
 		int32_t val = sym->data.get<int32_t>();
 		int width = val < 0x100 ? 2 : val < 0x10000 ? 4 : 8;
-		fprintf(symFile, "%0*" PRIx32 " %s\n", width, val, sym->name.c_str());
+		fprintf(symFile, "%0*" PRIx32 " ", width, val);
+		printSymName(sym->name, symFile);
+		putc('\n', symFile);
 	}
 }
 
