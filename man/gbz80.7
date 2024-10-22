@@ -11,7 +11,7 @@ This is the list of opcodes supported by
 .Xr rgbasm 1 ,
 including a short description, the number of bytes needed to encode them and the number of CPU cycles at 1MHz (or 2MHz in GBC dual speed mode) needed to complete them.
 .Pp
-Note: All arithmetic/logic instructions that use register
+Note: All arithmetic and logic instructions that use register
 .Sy A
 as a destination can omit the destination, since it is assumed to be register
 .Sy A
@@ -79,76 +79,7 @@ and
 .Ad 0x38 Pc .
 .El
 .Sh INSTRUCTION OVERVIEW
-.Ss 8-bit Arithmetic and Logic Instructions
-.Bl -inset -compact
-.It Sx ADC A,r8
-.It Sx ADC A,[HL]
-.It Sx ADC A,n8
-.It Sx ADD A,r8
-.It Sx ADD A,[HL]
-.It Sx ADD A,n8
-.It Sx AND A,r8
-.It Sx AND A,[HL]
-.It Sx AND A,n8
-.It Sx CP A,r8
-.It Sx CP A,[HL]
-.It Sx CP A,n8
-.It Sx DEC r8
-.It Sx DEC [HL]
-.It Sx INC r8
-.It Sx INC [HL]
-.It Sx OR A,r8
-.It Sx OR A,[HL]
-.It Sx OR A,n8
-.It Sx SBC A,r8
-.It Sx SBC A,[HL]
-.It Sx SBC A,n8
-.It Sx SUB A,r8
-.It Sx SUB A,[HL]
-.It Sx SUB A,n8
-.It Sx XOR A,r8
-.It Sx XOR A,[HL]
-.It Sx XOR A,n8
-.El
-.Ss 16-bit Arithmetic Instructions
-.Bl -inset -compact
-.It Sx ADD HL,r16
-.It Sx DEC r16
-.It Sx INC r16
-.El
-.Ss Bit Operations Instructions
-.Bl -inset -compact
-.It Sx BIT u3,r8
-.It Sx BIT u3,[HL]
-.It Sx RES u3,r8
-.It Sx RES u3,[HL]
-.It Sx SET u3,r8
-.It Sx SET u3,[HL]
-.It Sx SWAP r8
-.It Sx SWAP [HL]
-.El
-.Ss Bit Shift Instructions
-.Bl -inset -compact
-.It Sx RL r8
-.It Sx RL [HL]
-.It Sx RLA
-.It Sx RLC r8
-.It Sx RLC [HL]
-.It Sx RLCA
-.It Sx RR r8
-.It Sx RR [HL]
-.It Sx RRA
-.It Sx RRC r8
-.It Sx RRC [HL]
-.It Sx RRCA
-.It Sx SLA r8
-.It Sx SLA [HL]
-.It Sx SRA r8
-.It Sx SRA [HL]
-.It Sx SRL r8
-.It Sx SRL [HL]
-.El
-.Ss Load Instructions
+.Ss Load instructions
 .Bl -inset -compact
 .It Sx LD r8,r8
 .It Sx LD r8,n8
@@ -169,7 +100,80 @@ and
 .It Sx LD A,[HLI]
 .It Sx LD A,[HLD]
 .El
-.Ss Jumps and Subroutines
+.Ss 8-bit arithmetic instructions
+.Bl -inset -compact
+.It Sx ADC A,r8
+.It Sx ADC A,[HL]
+.It Sx ADC A,n8
+.It Sx ADD A,r8
+.It Sx ADD A,[HL]
+.It Sx ADD A,n8
+.It Sx CP A,r8
+.It Sx CP A,[HL]
+.It Sx CP A,n8
+.It Sx DEC r8
+.It Sx DEC [HL]
+.It Sx INC r8
+.It Sx INC [HL]
+.It Sx SBC A,r8
+.It Sx SBC A,[HL]
+.It Sx SBC A,n8
+.It Sx SUB A,r8
+.It Sx SUB A,[HL]
+.It Sx SUB A,n8
+.El
+.Ss 16-bit arithmetic instructions
+.Bl -inset -compact
+.It Sx ADD HL,r16
+.It Sx DEC r16
+.It Sx INC r16
+.El
+.Ss Bitwise logic instructions
+.Bl -inset -compact
+.It Sx AND A,r8
+.It Sx AND A,[HL]
+.It Sx AND A,n8
+.It Sx CPL
+.It Sx OR A,r8
+.It Sx OR A,[HL]
+.It Sx OR A,n8
+.It Sx XOR A,r8
+.It Sx XOR A,[HL]
+.It Sx XOR A,n8
+.El
+.Ss Bit flag instructions
+.Bl -inset -compact
+.It Sx BIT u3,r8
+.It Sx BIT u3,[HL]
+.It Sx RES u3,r8
+.It Sx RES u3,[HL]
+.It Sx SET u3,r8
+.It Sx SET u3,[HL]
+.El
+.Ss Bit shift instructions
+.Bl -inset -compact
+.It Sx RL r8
+.It Sx RL [HL]
+.It Sx RLA
+.It Sx RLC r8
+.It Sx RLC [HL]
+.It Sx RLCA
+.It Sx RR r8
+.It Sx RR [HL]
+.It Sx RRA
+.It Sx RRC r8
+.It Sx RRC [HL]
+.It Sx RRCA
+.It Sx SLA r8
+.It Sx SLA [HL]
+.It Sx SRA r8
+.It Sx SRA [HL]
+.It Sx SRL r8
+.It Sx SRL [HL]
+.It Sx SWAP r8
+.It Sx SWAP [HL]
+.El
+.Ss Jumps and subroutine instructions
 .Bl -inset -compact
 .It Sx CALL n16
 .It Sx CALL cc,n16
@@ -183,7 +187,12 @@ and
 .It Sx RETI
 .It Sx RST vec
 .El
-.Ss Stack Operations Instructions
+.Ss Carry flag instructions
+.Bl -inset -compact
+.It Sx CCF
+.It Sx SCF
+.El
+.Ss Stack manipulation instructions
 .Bl -inset -compact
 .It Sx ADD HL,SP
 .It Sx ADD SP,e8
@@ -198,16 +207,16 @@ and
 .It Sx PUSH AF
 .It Sx PUSH r16
 .El
-.Ss Miscellaneous Instructions
+.Ss Interrupt-related instructions
 .Bl -inset -compact
-.It Sx CCF
-.It Sx CPL
-.It Sx DAA
 .It Sx DI
 .It Sx EI
 .It Sx HALT
+.El
+.Ss Miscellaneous instructions
+.Bl -inset -compact
+.It Sx DAA
 .It Sx NOP
-.It Sx SCF
 .It Sx STOP
 .El
 .Sh INSTRUCTION REFERENCE
@@ -222,7 +231,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -267,7 +276,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -312,7 +321,7 @@ Cycles: 2
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy N
 0
 .It Sy H
@@ -343,7 +352,7 @@ Cycles: 4
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -364,7 +373,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -410,7 +419,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if the selected bit is 0.
 .It Sy N
@@ -466,7 +475,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy N
 0
 .It Sy H
@@ -487,7 +496,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -538,7 +547,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy N
 1
 .It Sy H
@@ -552,7 +561,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy H
@@ -570,7 +579,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -682,7 +691,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1090,7 +1099,7 @@ Cycles: 3
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -1132,7 +1141,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1189,7 +1198,7 @@ Cycles: 3
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set from bit 7 of the popped low byte.
 .It Sy N
@@ -1339,7 +1348,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1382,7 +1391,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -1408,7 +1417,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1451,7 +1460,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -1477,7 +1486,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1520,7 +1529,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -1546,7 +1555,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1589,7 +1598,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 0
 .It Sy N
@@ -1623,7 +1632,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1669,7 +1678,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy N
 0
 .It Sy H
@@ -1717,7 +1726,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1757,7 +1766,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1797,7 +1806,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1842,7 +1851,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1889,7 +1898,7 @@ Cycles: 2
 Bytes: 2
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
@@ -1921,7 +1930,7 @@ Cycles: 1
 Bytes: 1
 .Pp
 Flags:
-.Bl -hang -compact
+.Bl -tag -width Ds
 .It Sy Z
 Set if result is 0.
 .It Sy N
