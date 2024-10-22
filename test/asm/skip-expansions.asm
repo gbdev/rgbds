@@ -28,4 +28,4 @@ ENDM
 	mac2 elif, 6 * 7  ; this prints "it's $2A" because it skips the `\1` line and takes the `else`
 	mac2 elif, 6 * 9
 	mac2 elif
-	mac2
+	mac2 ; this prints "args:" *and* "forty-two!" since it doesn't create an `elif`

@@ -404,6 +404,14 @@ asm_file: lines;
 lines:
 	  %empty
 	| lines diff_mark line
+	// Continue parsing the next line on a syntax error
+	| error {
+		lexer_SetMode(LEXER_NORMAL);
+		lexer_ToggleStringExpansion(true);
+	} endofline {
+		fstk_StopRept();
+		yyerrok;
+	}
 ;
 
 diff_mark:
@@ -425,14 +433,6 @@ diff_mark:
 line:
 	  plain_directive endofline
 	| line_directive // Directives that manage newlines themselves
-	// Continue parsing the next line on a syntax error
-	| error {
-		lexer_SetMode(LEXER_NORMAL);
-		lexer_ToggleStringExpansion(true);
-	} endofline {
-		fstk_StopRept();
-		yyerrok;
-	}
 ;
 
 endofline: NEWLINE | EOB;
