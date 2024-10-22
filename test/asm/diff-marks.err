@@ -2,4 +2,18 @@ error: diff-marks.asm(2):
     syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)
 error: diff-marks.asm(3):
     syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)
-error: Assembly aborted (2 errors)!
+error: diff-marks.asm(4):
+    syntax error, unexpected <<<<<<< line (is it a leftover merge conflict mark?)
+error: diff-marks.asm(6):
+    syntax error, unexpected ======= line (is it a leftover merge conflict mark?)
+error: diff-marks.asm(8):
+    syntax error, unexpected >>>>>>> line (is it a leftover merge conflict mark?)
+error: diff-marks.asm(9):
+    syntax error, unexpected + at the beginning of the line (is it a leftover diff mark?)
+error: diff-marks.asm(9):
+    syntax error, unexpected <<<<<<< line (is it a leftover merge conflict mark?)
+error: diff-marks.asm(10):
+    syntax error, unexpected - at the beginning of the line (is it a leftover diff mark?)
+error: diff-marks.asm(10):
+    syntax error, unexpected >>>>>>> line (is it a leftover merge conflict mark?)
+error: Assembly aborted (9 errors)!

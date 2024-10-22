@@ -420,10 +420,29 @@ diff_mark:
 	}
 ;
 
+merge_conflict:
+	OP_SHL OP_SHL OP_SHL OP_LOGICLT {
+		::error(
+			"syntax error, unexpected <<<<<<< line (is it a leftover merge conflict mark?)\n"
+		);
+	}
+	| OP_USHR OP_USHR OP_LOGICGT {
+		::error(
+			"syntax error, unexpected >>>>>>> line (is it a leftover merge conflict mark?)\n"
+		);
+	}
+	| OP_LOGICEQU OP_LOGICEQU OP_LOGICEQU POP_EQUAL {
+		::error(
+			"syntax error, unexpected ======= line (is it a leftover merge conflict mark?)\n"
+		);
+	}
+;
+
 // Lines and line directives.
 
 line:
 	  plain_directive endofline
+	| merge_conflict endofline
 	| line_directive // Directives that manage newlines themselves
 	// Continue parsing the next line on a syntax error
 	| error {
