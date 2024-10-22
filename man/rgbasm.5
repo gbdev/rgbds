@@ -253,7 +253,7 @@ Although, for these examples,
 .Ic STRFMT
 would be more appropriate; see
 .Sx String expressions
-further below.
+below.
 .Sh EXPRESSIONS
 An expression can be composed of many things.
 Numeric expressions are always evaluated using signed 32-bit math.
@@ -267,7 +267,7 @@ This is generally always the case, unless a label is involved, as explained in t
 section.
 However, some operators can be constant even with non-constant operands, as explained in
 .Sx Operators
-further below.
+below.
 .Pp
 The instructions in the macro-language generally require constant expressions.
 .Ss Numeric formats
@@ -968,12 +968,14 @@ block before performing its own function.
 .Ic LOAD
 blocks can use the
 .Ic UNION
-modifier as described below, but not the
+modifier as described in
+.Sx Unionized sections
+below, but not the
 .Ic FRAGMENT
 modifier.
 .Ss Unionized sections
 When you're tight on RAM, you may want to define overlapping static memory allocations, as explained in the
-.Sx Unions
+.Sx Allocating overlapping spaces in RAM
 section.
 However, a
 .Ic UNION
@@ -1014,7 +1016,7 @@ or
 .El
 .Pp
 Different declarations of the same unionized section are not appended, but instead overlaid on top of each other, just like
-.Sx Unions .
+.Sx Allocating overlapping spaces in RAM .
 Similarly, the size of an unionized section is the largest of all its declarations.
 .Ss Section fragments
 Section fragments are sections with a small twist: when several of the same name are encountered, they are concatenated instead of producing an error.
@@ -1137,7 +1139,7 @@ otherwise, it is said to be
 .Dq exported ,
 explained in
 .Sx Exporting and importing symbols
-further below).
+below).
 More than one dot in label names is not allowed.
 .Pp
 For convenience, local labels can use a shorthand syntax: when a symbol name starting with a dot is found (for example, inside an expression, or when declaring a label), then the current
@@ -1567,47 +1569,6 @@ environment variable if that is defined as a UNIX timestamp.
 Refer to the spec at
 .Lk https://reproducible-builds.org/docs/source-date-epoch/ reproducible-builds.org .
 .Sh DEFINING DATA
-.Ss Statically allocating space in RAM
-.Ic DS
-statically allocates a number of empty bytes.
-This is the preferred method of allocating space in a RAM section.
-You can also use
-.Ic DB , DW
-and
-.Ic DL
-without any arguments instead (see
-.Sx Defining constant data in ROM
-below).
-.Bd -literal -offset indent
-DS 42 ;\ Allocates 42 bytes
-.Ed
-.Pp
-Empty space in RAM sections will not be initialized.
-In ROM sections, it will be filled with the value passed to the
-.Fl p
-command-line option, except when using overlays with
-.Fl O .
-.Pp
-Instead of an exact number of bytes, you can specify
-.Ic ALIGN Ns Bq Ar align , offset
-to allocate however many bytes are required to align the subsequent data.
-Thus,
-.Sq Ic DS ALIGN Ns Bo Ar align , offset Bc , No ...
-is equivalent to
-.Sq Ic DS Ar n , No ...
-followed by
-.Sq Ic ALIGN Ns Bq Ar align , offset ,
-where
-.Ar n
-is the minimum value needed to satisfy the
-.Ic ALIGN
-constraint (see
-.Sx Requesting alignment
-below).
-Note that
-.Ic ALIGN Ns Bq Ar align
-is a shorthand for
-.Ic ALIGN Ns Bq Ar align , No 0 .
 .Ss Defining constant data in ROM
 .Ic DB
 defines a list of bytes that will be stored in the final image.
@@ -1674,7 +1635,7 @@ can be used in a
 /
 .Ic SRAM
 section.
-.Ss Including binary files
+.Ss Including binary data files
 You probably have some graphics, level data, etc. you'd like to include.
 Use
 .Ic INCBIN
@@ -1698,7 +1659,48 @@ INCBIN "data.bin", 78, 256
 .Pp
 The length argument is optional.
 If only the start position is specified, the bytes from the start position until the end of the file will be included.
-.Ss Unions
+.Ss Statically allocating space in RAM
+.Ic DS
+statically allocates a number of empty bytes.
+This is the preferred method of allocating space in a RAM section.
+You can also use
+.Ic DB , DW
+and
+.Ic DL
+without any arguments instead (see
+.Sx Defining constant data in ROM
+below).
+.Bd -literal -offset indent
+DS 42 ;\ Allocates 42 bytes
+.Ed
+.Pp
+Empty space in RAM sections will not be initialized.
+In ROM sections, it will be filled with the value passed to the
+.Fl p
+command-line option, except when using overlays with
+.Fl O .
+.Pp
+Instead of an exact number of bytes, you can specify
+.Ic ALIGN Ns Bq Ar align , offset
+to allocate however many bytes are required to align the subsequent data.
+Thus,
+.Sq Ic DS ALIGN Ns Bo Ar align , offset Bc , No ...
+is equivalent to
+.Sq Ic DS Ar n , No ...
+followed by
+.Sq Ic ALIGN Ns Bq Ar align , offset ,
+where
+.Ar n
+is the minimum value needed to satisfy the
+.Ic ALIGN
+constraint (see
+.Sx Requesting alignment
+below).
+Note that
+.Ic ALIGN Ns Bq Ar align
+is a shorthand for
+.Ic ALIGN Ns Bq Ar align , No 0 .
+.Ss Allocating overlapping spaces in RAM
 Unions allow multiple static memory allocations to overlap, like unions in C.
 This does not increase the amount of memory available, but allows re-using the same memory region for different purposes.
 .Pp
@@ -1759,6 +1761,37 @@ Unions may be used in any section, but they may only contain space-allocating di
 .Ic DS
 (see
 .Sx Statically allocating space in RAM ) .
+.Ss Requesting alignment
+While
+.Ic ALIGN
+as presented in
+.Sx SECTIONS
+is often useful as-is, sometimes you instead want a particular piece of data (or code) in the middle of the section to be aligned.
+This is made easier through the use of mid-section
+.Ic ALIGN Ar align , offset .
+It will retroactively alter the section's attributes to ensure that the location the
+.Ic ALIGN
+directive is at, has its
+.Ar align
+lower bits equal to
+.Ar offset .
+.Pp
+If the constraint cannot be met (for example because the section is fixed at an incompatible address), an error is produced.
+Note that
+.Ic ALIGN Ar align
+is a shorthand for
+.Ic ALIGN Ar align , No 0 .
+.Pp
+There may be times when you don't just want to specify an alignment constraint at the current location, but also skip ahead until the constraint can be satisfied.
+In that case, you can use
+.Ic DS ALIGN Ns Bq Ar align , offset
+to allocate however many bytes are required to align the subsequent data.
+.Pp
+If the constraint cannot be met by skipping any amount of space, an error is produced.
+Note that
+.Ic ALIGN Ns Bq Ar align
+is a shorthand for
+.Ic ALIGN Ns Bq Ar align , No 0 .
 .Sh THE MACRO LANGUAGE
 .Ss Invoking macros
 A macro is invoked by using its name at the beginning of a line, like a directive, followed by any comma-separated arguments.
@@ -2320,37 +2353,6 @@ PUSHO b.X, g.oOX
     DW `..ooOOXX
 POPO
 .Ed
-.Ss Requesting alignment
-While
-.Ic ALIGN
-as presented in
-.Sx SECTIONS
-is often useful as-is, sometimes you instead want a particular piece of data (or code) in the middle of the section to be aligned.
-This is made easier through the use of mid-section
-.Ic ALIGN Ar align , offset .
-It will alter the section's attributes to ensure that the location the
-.Ic ALIGN
-directive is at, has its
-.Ar align
-lower bits equal to
-.Ar offset .
-.Pp
-If the constraint cannot be met (for example because the section is fixed at an incompatible address), an error is produced.
-Note that
-.Ic ALIGN Ar align
-is a shorthand for
-.Ic ALIGN Ar align , No 0 .
-.Pp
-There may be times when you don't just want to specify an alignment constraint at the current location, but also skip ahead until the constraint can be satisfied.
-In that case, you can use
-.Ic DS ALIGN Ns Bq Ar align , offset
-to allocate however many bytes are required to align the subsequent data.
-.Pp
-If the constraint cannot be met by skipping any amount of space, an error is produced.
-Note that
-.Ic ALIGN Ns Bq Ar align
-is a shorthand for
-.Ic ALIGN Ns Bq Ar align , No 0 .
 .Sh SEE ALSO
 .Xr rgbasm 1 ,
 .Xr rgblink 1 ,
