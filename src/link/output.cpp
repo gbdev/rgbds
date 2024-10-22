@@ -452,17 +452,10 @@ static void writeMapBank(SortedSections const &sectList, SectionType type, uint3
 
 		prevEndAddr = sect->org + sect->size;
 
+		fprintf(mapFile, "\tSECTION: $%04" PRIx16, sect->org);
 		if (sect->size != 0)
-			fprintf(
-			    mapFile,
-			    "\tSECTION: $%04" PRIx16 "-$%04x ($%04" PRIx16 " byte%s) [\"",
-			    sect->org,
-			    prevEndAddr - 1,
-			    sect->size,
-			    sect->size == 1 ? "" : "s"
-			);
-		else
-			fprintf(mapFile, "\tSECTION: $%04" PRIx16 " (0 bytes) [\"", sect->org);
+			fprintf(mapFile, "-$%04x", prevEndAddr - 1);
+		fprintf(mapFile, " ($%04" PRIx16 " byte%s) [\"", sect->size, sect->size == 1 ? "" : "s");
 		printSectionName(sect->name, mapFile);
 		fputs("\"]\n", mapFile);
 
