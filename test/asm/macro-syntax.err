@@ -6,4 +6,6 @@ error: macro-syntax.asm(8):
     '\1' cannot be used outside of a macro
 error: macro-syntax.asm(9):
     syntax error, unexpected ENDM
-error: Assembly aborted (4 errors)!
+error: macro-syntax.asm(11):
+    "old" is not a macro
+error: Assembly aborted (5 errors)!
