@@ -462,11 +462,6 @@ void sect_SetLoadSection(
 		return;
 	}
 
-	if (mod == SECTION_FRAGMENT) {
-		error("`LOAD FRAGMENT` is not allowed\n");
-		return;
-	}
-
 	if (currentLoadSection)
 		sect_EndLoadSection("LOAD");
 

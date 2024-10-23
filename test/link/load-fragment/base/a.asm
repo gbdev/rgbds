@@ -1,0 +1,9 @@
+SECTION "Test", ROM0[0]
+AA: db 1
+LOAD FRAGMENT "RAM section", WRAM0[$c000]
+BB: db 2
+ENDL
+CC: db 3
+LOAD FRAGMENT "RAM section", WRAM0
+DD: db 4
+ENDL
