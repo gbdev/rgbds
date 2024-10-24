@@ -172,6 +172,36 @@ rgblinkQuiet -o "$gbtemp2" "$outtemp"
 tryCmp "$gbtemp" "$gbtemp2"
 evaluateTest
 
+test="load-fragment/base"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -n "$outtemp" "$otemp"
+tryCmpRom "$test"/ref.out.bin
+tryDiff "$test"/ref.out.sym "$outtemp"
+evaluateTest
+
+test="load-fragment/multiple-objects"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
+test="load-fragment/section-fragment"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$outtemp" "$test"/b.asm
+"$RGBASM" -o "$outtemp2" "$test"/c.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" -m "$outtemp3" -n "$gbtemp2" "$otemp" "$outtemp" "$outtemp2"
+tryCmpRom "$test"/ref.out.bin
+tryDiff "$test"/ref.out.map "$outtemp3"
+tryDiff "$test"/ref.out.sym "$gbtemp2"
+evaluateTest
+
 test="map-file"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
@@ -249,6 +279,15 @@ tryCmpRom "$test"/ref.out.bin
 evaluateTest
 
 test="section-fragment/jr-offset"
+startTest
+"$RGBASM" -o "$otemp" "$test"/a.asm
+"$RGBASM" -o "$gbtemp2" "$test"/b.asm
+continueTest
+rgblinkQuiet -o "$gbtemp" "$otemp" "$gbtemp2"
+tryCmpRom "$test"/ref.out.bin
+evaluateTest
+
+test="section-fragment/jr-offset-load"
 startTest
 "$RGBASM" -o "$otemp" "$test"/a.asm
 "$RGBASM" -o "$gbtemp2" "$test"/b.asm

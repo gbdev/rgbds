@@ -1,0 +1,24 @@
+SUMMARY:
+	ROM0: 20 bytes used / 16364 free
+	WRAM0: 8 bytes used / 4088 free
+
+ROM0 bank #0:
+	SECTION: $0000-$0013 ($0014 bytes) ["rom"]
+	         $0000 = Part1
+	         $0004 = Part1End
+	         ; Next fragment
+	         $0010 = Part3
+	         $0014 = Part3End
+	         ; Next fragment
+	         $0004 = Part2
+	         $0010 = Part2End
+	EMPTY: $0014-$3fff ($3fec bytes)
+	TOTAL EMPTY: $3fec bytes
+
+WRAM0 bank #0:
+	SECTION: $c000-$c007 ($0008 bytes) ["ram"]
+	         $c000 = wPart1
+	         ; Next fragment
+	         $c004 = wPart3
+	EMPTY: $c008-$cfff ($0ff8 bytes)
+	TOTAL EMPTY: $0ff8 bytes
