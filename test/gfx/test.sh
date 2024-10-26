@@ -37,11 +37,19 @@ failTest () {
 	echo "${bold}${red}Test ${cmdline} failed!${1:+ (RC=$1)}${rescolors}${resbold}"
 }
 
+tryCmp () {
+	if ! cmp "$1" "$2"; then
+		../../contrib/gbdiff.bash "$1" "$2"
+		echo "${bold}${red}$1 mismatch!${rescolors}${resbold}"
+		false
+	fi
+}
+
 checkOutput () {
 	out_rc=0
 	for ext in 1bpp 2bpp pal tilemap attrmap palmap; do
 		if [[ -e "$1.out.$ext" ]]; then
-			cmp "$1.out.$ext" "result.$ext"
+			tryCmp "$1.out.$ext" "result.$ext"
 			(( out_rc = out_rc || $? ))
 		fi
 	done
@@ -95,10 +103,10 @@ for f in *.[12]bpp; do
 		continue
 	fi
 
-	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags")"
+	flags="$([[ -e "${f%.[12]bpp}.flags" ]] && echo "@${f%.[12]bpp}.flags") $([[ -e "${f%.1bpp}.flags" ]] && echo "-d 1")"
 
 	newTest "$RGBGFX $flags -o $f -r 1 result.png && $RGBGFX $flags -o result.2bpp result.png"
-	runTest && cmp "$f" result.2bpp || failTest $?
+	runTest && tryCmp "$f" result.2bpp || failTest $?
 done
 
 if [[ "$failed" -eq 0 ]]; then

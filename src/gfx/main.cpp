@@ -108,7 +108,7 @@ void Options::verbosePrint(uint8_t level, char const *fmt, ...) const {
 }
 
 // Short options
-static char const *optstring = "-Aa:b:Cc:Dd:Ffhi:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvx:Z";
+static char const *optstring = "-Aa:b:Cc:d:i:L:mN:n:Oo:Pp:Qq:r:s:Tt:U:uVvXx:YZ";
 
 /*
  * Equivalent long options
@@ -139,6 +139,7 @@ static option const longopts[] = {
     {"auto-palette-map", no_argument,       nullptr, 'Q'},
     {"palette-map",      required_argument, nullptr, 'q'},
     {"reverse",          required_argument, nullptr, 'r'},
+    {"palette-size",     required_argument, nullptr, 's'},
     {"auto-tilemap",     no_argument,       nullptr, 'T'},
     {"tilemap",          required_argument, nullptr, 't'},
     {"unit-size",        required_argument, nullptr, 'U'},
