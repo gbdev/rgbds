@@ -174,3 +174,17 @@ Each one is a binary RNG file which is passed to the `rgbgfx_test` program.
    ```sh
    test_downstream  <owner>  <repo>  <makefile target>  <build file>  <sha1 hash of build file>
    ```
+
+## Container images
+
+The CI will [take care](https://github.com/gbdev/rgbds/blob/master/.github/workflows/build-container.yml) of updating the [rgbds container](https://github.com/gbdev/rgbds/pkgs/container/rgbds) image tagged `master`.
+
+When a git tag is pushed, the image is also tagged with that tag.
+
+The image can be built locally and pushed to the GitHub container registry by manually running:
+
+```bash
+# e.g. to build and tag as 'master'
+docker build . --tag ghcr.io/gbdev/rgbds:master
+docker push ghcr.io/gbdev/rgbds:master
+```
