@@ -10,7 +10,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
-.Op Fl CmOuVZ
+.Op Fl CmOuVXYZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl b Ar base_ids
@@ -229,9 +229,8 @@ The second number pair specifies how many tiles to process horizontally and vert
 .Pp
 .Fl L Sy is ignored in reverse mode , No no padding is inserted .
 .It Fl m , Fl \-mirror-tiles
-Deduplicate tiles that are symmetrical mirror images of each other.
+Deduplicate tiles that are horizontally and/or vertically symmetrical mirror images of each other.
 Only one of each unique tile will be saved in the tile data file, with mirror images counting as duplicates.
-Tiles are checked for horizontal, vertical, and horizontal-vertical mirroring.
 Useful with a tile map and attribute map together (see
 .Fl a
 and
@@ -239,6 +238,8 @@ and
 to keep track of the duplicated tiles and the dimension(s) mirrored.
 Implies
 .Fl u .
+Equivalent to
+.Fl XY .
 .It Fl N Ar nb_tiles , Fl \-nb-tiles Ar nb_tiles
 Set a maximum number of tiles that can be placed in each VRAM bank.
 .Ar nb_tiles
@@ -353,6 +354,10 @@ Some internal debug printing is enabled.
 The verbosity level does not go past 6.
 .Pp
 Note that verbose output is only intended to be consumed by humans, and may change without notice between RGBDS releases; relying on those for scripts is not advised.
+.It Fl X , Fl \-mirror-x
+Deduplicate tiles that are horizontally symmetrical mirror images of each other across the X axis.
+Implies
+.Fl u .
 .It Fl x Ar quantity , Fl \-trim-end Ar quantity
 Do not output the last
 .Ar quantity
@@ -373,6 +378,10 @@ was enabled, so you probably don't want to use this option in combination with
 Note also that the tiles that don't get output will not count towards
 .Fl N Ap s
 limit.
+.It Fl Y , Fl \-mirror-y
+Deduplicate tiles that are vertically symmetrical mirror images of each other across the Y axis.
+Implies
+.Fl u .
 .It Fl Z , Fl \-columns
 Read squares from the PNG in column-major order (column by column), instead of the default row-major order (line by line).
 This primarily affects tile map and attribute map output, although it may also change generated tile data and palettes.
