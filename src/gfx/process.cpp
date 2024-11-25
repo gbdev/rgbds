@@ -712,6 +712,9 @@ static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
 }
 
 class TileData {
+	// Importantly, `TileData` is **always** 2bpp.
+	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as 1bpp.
+	// This massively simplifies internal processing, since bit depth is always identical outside of I/O / serialization boundaries.
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in
@@ -755,9 +758,7 @@ public:
 			hashBitplanes(bitplanes, _hash);
 
 			_data[writeIndex++] = bitplanes & 0xFF;
-			if (options.bitDepth == 2) {
-				_data[writeIndex++] = bitplanes >> 8;
-			}
+			_data[writeIndex++] = bitplanes >> 8;
 		}
 	}
 
@@ -1032,7 +1033,14 @@ static void outputTileData(UniqueTiles const &tiles) {
 		TileData const *tile = *iter;
 		assume(tile->tileID == tileID);
 		++tileID;
-		output->sputn(reinterpret_cast<char const *>(tile->data().data()), options.bitDepth * 8);
+		if (options.bitDepth == 2) {
+			output->sputn(reinterpret_cast<char const *>(tile->data().data()), 16);
+		} else {
+			assume(options.bitDepth == 1);
+			for (size_t y = 0; y < 8; ++y) {
+				output->sputc(tile->data()[y * 2]);
+			}
+		}
 	}
 }
 
