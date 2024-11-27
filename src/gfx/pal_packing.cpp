@@ -423,24 +423,36 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				);
 
 				// Look for a proto-pal minimizing "efficiency" (size / rel_size)
-				auto efficiency = [&bestPal](ProtoPalette const &pal) {
-					return pal.size() / bestPal.relSizeOf(pal);
-				};
 				auto [minEfficiencyIter, maxEfficiencyIter] = std::minmax_element(
 				    RANGE(bestPal),
-				    [&efficiency,
-				     &protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
-					    return efficiency(protoPalettes[lhs.protoPalIndex])
-					           < efficiency(protoPalettes[rhs.protoPalIndex]);
+				    [&bestPal, &protoPalettes](ProtoPalAttrs const &lhs, ProtoPalAttrs const &rhs) {
+					    ProtoPalette const &lhsProtoPal = protoPalettes[lhs.protoPalIndex];
+					    ProtoPalette const &rhsProtoPal = protoPalettes[rhs.protoPalIndex];
+					    size_t lhsSize = lhsProtoPal.size();
+					    size_t rhsSize = rhsProtoPal.size();
+					    double lhsRelSize = bestPal.relSizeOf(lhsProtoPal);
+					    double rhsRelSize = bestPal.relSizeOf(rhsProtoPal);
+
+					    // This comparison is algebraically equivalent to
+					    // `lhsSize / lhsRelSize < rhsSize / rhsRelSize`,
+					    // but without potential precision loss from floating-point division.
+					    return lhsSize * rhsRelSize < rhsSize * lhsRelSize;
 				    }
 				);
 
 				// All efficiencies are identical iff min equals max
 				// TODO: maybe not ideal to re-compute these two?
+				ProtoPalette const &minProtoPal = protoPalettes[minEfficiencyIter->protoPalIndex];
+				ProtoPalette const &maxProtoPal = protoPalettes[maxEfficiencyIter->protoPalIndex];
+				size_t minSize = minProtoPal.size();
+				size_t maxSize = maxProtoPal.size();
+				double minRelSize = bestPal.relSizeOf(minProtoPal);
+				double maxRelSize = bestPal.relSizeOf(maxProtoPal);
+				// This comparison is algebraically equivalent to
+				// `maxSize / maxRelSize - minSize / minRelSize < .001`,
+				// but without potential precision loss from floating-point division.
 				// TODO: yikes for float comparison! I *think* this threshold is OK?
-				if (efficiency(protoPalettes[maxEfficiencyIter->protoPalIndex])
-				        - efficiency(protoPalettes[minEfficiencyIter->protoPalIndex])
-				    < .001) {
+				if (maxSize * minRelSize - minSize * maxRelSize < minRelSize * maxRelSize * .001) {
 					break;
 				}
 
