@@ -375,7 +375,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 	for (; !queue.empty(); queue.pop()) {
 		ProtoPalAttrs const &attrs = queue.front(); // Valid until the `queue.pop()`
-		options.verbosePrint(Options::VERB_DEBUG, "Handling proto-pal %zu\n", attrs.protoPalIndex);
+		options.verbosePrint(
+		    Options::VERB_TRACE, "Handling proto-palette %zu\n", attrs.protoPalIndex
+		);
 
 		ProtoPalette const &protoPal = protoPalettes[attrs.protoPalIndex];
 		size_t bestPalIndex = assignments.size();
@@ -391,9 +393,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 			double relSize = assignments[i].relSizeOf(protoPal);
 			options.verbosePrint(
-			    Options::VERB_DEBUG,
-			    "%zu/%zu: Rel size: %f (size = %zu)\n",
-			    i + 1,
+			    Options::VERB_TRACE,
+			    "  Relative size to palette %zu (of %zu): %.20f (size = %zu)\n",
+			    i,
 			    assignments.size(),
 			    relSize,
 			    protoPal.size()
@@ -406,8 +408,20 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 
 		if (bestPalIndex == assignments.size()) {
 			// Found nowhere to put it, create a new page containing just that one
+			options.verbosePrint(
+			    Options::VERB_TRACE,
+			    "Assigning proto-palette %zu to new palette %zu\n",
+			    attrs.protoPalIndex,
+			    bestPalIndex
+			);
 			assignments.emplace_back(protoPalettes, std::move(attrs));
 		} else {
+			options.verbosePrint(
+			    Options::VERB_TRACE,
+			    "Assigning proto-palette %zu to palette %zu\n",
+			    attrs.protoPalIndex,
+			    bestPalIndex
+			);
 			auto &bestPal = assignments[bestPalIndex];
 			// Add the color to that palette
 			bestPal.assign(std::move(attrs));
@@ -415,7 +429,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 			// If this overloads the palette, get it back to normal (if possible)
 			while (bestPal.volume() > options.maxOpaqueColors()) {
 				options.verbosePrint(
-				    Options::VERB_DEBUG,
+				    Options::VERB_TRACE,
 				    "Palette %zu is overloaded! (%zu > %" PRIu8 ")\n",
 				    bestPalIndex,
 				    bestPal.volume(),
@@ -436,6 +450,17 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					    // This comparison is algebraically equivalent to
 					    // `lhsSize / lhsRelSize < rhsSize / rhsRelSize`,
 					    // but without potential precision loss from floating-point division.
+					    options.verbosePrint(
+					        Options::VERB_TRACE,
+					        "  Proto-palettes %zu <=> %zu: Efficiency: %zu / %.20f <=> %zu / "
+					        "%.20f\n",
+					        lhs.protoPalIndex,
+					        rhs.protoPalIndex,
+					        lhsSize,
+					        lhsRelSize,
+					        rhsSize,
+					        rhsRelSize
+					    );
 					    return lhsSize * rhsRelSize < rhsSize * lhsRelSize;
 				    }
 				);
@@ -452,11 +477,27 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				// `maxSize / maxRelSize - minSize / minRelSize < .001`,
 				// but without potential precision loss from floating-point division.
 				// TODO: yikes for float comparison! I *think* this threshold is OK?
+				options.verbosePrint(
+				    Options::VERB_TRACE,
+				    "  Proto-palettes %zu <= %zu: Efficiency: %zu / %.20f <= %zu / %.20f\n",
+				    minEfficiencyIter->protoPalIndex,
+				    maxEfficiencyIter->protoPalIndex,
+				    minSize,
+				    minRelSize,
+				    maxSize,
+				    maxRelSize
+				);
 				if (maxSize * minRelSize - minSize * maxRelSize < minRelSize * maxRelSize * .001) {
+					options.verbosePrint(Options::VERB_TRACE, "  All efficiencies are identical\n");
 					break;
 				}
 
 				// Remove the proto-pal with minimal efficiency
+				options.verbosePrint(
+				    Options::VERB_TRACE,
+				    "  Removing proto-palette %zu\n",
+				    minEfficiencyIter->protoPalIndex
+				);
 				queue.emplace(std::move(*minEfficiencyIter));
 				queue.back().banFrom(bestPalIndex); // Ban it from this palette
 				bestPal.remove(minEfficiencyIter);
@@ -491,7 +532,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		if (iter == assignments.end()) { // No such page, create a new one
 			options.verbosePrint(
 			    Options::VERB_DEBUG,
-			    "Adding new palette (%zu) for overflowing proto-pal %zu\n",
+			    "Adding new palette (%zu) for overflowing proto-palette %zu\n",
 			    assignments.size(),
 			    attrs.protoPalIndex
 			);
@@ -499,7 +540,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		} else {
 			options.verbosePrint(
 			    Options::VERB_DEBUG,
-			    "Assigning overflowing proto-pal %zu to palette %zu\n",
+			    "Assigning overflowing proto-palette %zu to palette %zu\n",
 			    attrs.protoPalIndex,
 			    iter - assignments.begin()
 			);
