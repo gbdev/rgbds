@@ -554,7 +554,66 @@ Flags:
 1
 .El
 .Ss DAA
-Decimal Adjust Accumulator to get a correct BCD representation after an arithmetic instruction.
+Decimal Adjust Accumulator.
+.Pp
+Designed to be used after performing an arithmetic instruction
+.Pq Sy ADD , ADC , SUB , SBC
+whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
+.Pp
+The exact behavior of this instruction is as follows:
+.Bl -tag -width Ds -offset indent
+.It If the subtract flag Sy Sy N No is set:
+.Bl -enum -compact
+.It
+Initialize the adjustment to 0.
+.It
+If the half-carry flag
+.Sy H
+is set, then add
+.Ad $6
+to the adjustment.
+.It
+If the carry flag is set, then add
+.Ad $60
+to the adjustment.
+.It
+Subtract the adjustment from
+.Sy A .
+.It
+Set the carry flag if borrow (i.e. if adjustment >
+.Sy A ) .
+.El
+.It If the subtract flag Sy N No is not set:
+.Bl -enum -compact
+.It
+Initialize the adjustment to 0.
+.It
+If the half-carry flag
+.Sy H
+is set or
+.Sy A
+&
+.Ad $F
+>
+.Ad $9 ,
+then add
+.Ad $6
+to the adjustment.
+.It
+If the carry flag is set or
+.Sy A
+>
+.Ad $9F ,
+then add
+.Ad $60
+to the adjustment.
+.It
+Add the adjustment to
+.Sy A .
+.It
+Set the carry flag if overflow from bit 7.
+.El
+.El
 .Pp
 Cycles: 1
 .Pp
@@ -1072,11 +1131,14 @@ Bytes: 3
 Flags: None affected.
 .Ss LD [n16],SP
 Store
-.Sy SP & $FF
+.Sy SP
+&
+.Ad $FF
 at address
 .Ar n16
 and
-.Sy SP >> 8
+.Sy SP
+>> 8
 at address
 .Ar n16
 + 1.
@@ -1859,7 +1921,7 @@ Set if result is 0.
 .It Sy H
 Set if borrow from bit 4.
 .It Sy C
-Set if borrow (set if
+Set if borrow (i.e. if
 .Ar r8
 >
 .Sy A ) .
