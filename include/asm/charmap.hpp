@@ -18,6 +18,7 @@ void charmap_New(std::string const &name, std::string const *baseName);
 void charmap_Set(std::string const &name);
 void charmap_Push();
 void charmap_Pop();
+void charmap_CheckStack();
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value);
 bool charmap_HasChar(std::string const &input);
 std::vector<int32_t> charmap_Convert(std::string const &input);

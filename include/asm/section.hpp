@@ -102,5 +102,6 @@ void sect_BinaryFileSlice(std::string const &name, int32_t startPos, int32_t len
 void sect_EndSection();
 void sect_PushSection();
 void sect_PopSection();
+void sect_CheckStack();
 
 #endif // RGBDS_ASM_SECTION_HPP

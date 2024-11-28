@@ -384,6 +384,10 @@ int main(int argc, char *argv[]) {
 	sect_CheckLoadClosed();
 	sect_CheckSizes();
 
+	charmap_CheckStack();
+	opt_CheckStack();
+	sect_CheckStack();
+
 	if (nbErrors != 0)
 		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");
 

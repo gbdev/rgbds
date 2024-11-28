@@ -3,3 +3,4 @@ SECTION "This is invalid", ROM0
 	PUSHS
 	; We should be outside of section scope now
 	db 69
+	POPS

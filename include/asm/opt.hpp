@@ -14,5 +14,6 @@ void opt_Parse(char const *option);
 
 void opt_Push();
 void opt_Pop();
+void opt_CheckStack();
 
 #endif // RGBDS_ASM_OPT_HPP

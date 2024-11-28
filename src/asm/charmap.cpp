@@ -113,6 +113,12 @@ void charmap_Pop() {
 	charmapStack.pop();
 }
 
+void charmap_CheckStack() {
+	if (!charmapStack.empty()) {
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHC` without corresponding `POPC`\n");
+	}
+}
+
 void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	if (mapping.empty()) {
 		error("Cannot map an empty string\n");
