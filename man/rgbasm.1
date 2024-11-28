@@ -370,6 +370,17 @@ only warns if the active charmap is not empty.
 .Fl Wunmapped-char=2
 warns if the active charmap is empty, and/or is not the default charmap
 .Sq main .
+.It Fl Wunmatched-directive
+Warn when a
+.Ic PUSHC , PUSHO ,
+or
+.Ic PUSHS
+directive does not have a corresponding
+.Ic POPC , POPO ,
+or
+.Ic POPS .
+This warning is enabled by
+.Fl Wextra .
 .It Fl Wunterminated-load
 Warn when a
 .Ic LOAD

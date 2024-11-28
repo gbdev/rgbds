@@ -184,3 +184,9 @@ void opt_Pop() {
 	warningsAreErrors = entry.warningsAreErrors;
 	warningStates = entry.warningStates;
 }
+
+void opt_CheckStack() {
+	if (!stack.empty()) {
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHO` without corresponding `POPO`\n");
+	}
+}

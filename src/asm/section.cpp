@@ -973,6 +973,12 @@ void sect_PopSection() {
 	std::swap(currentUnionStack, entry.unionStack);
 }
 
+void sect_CheckStack() {
+	if (!sectionStack.empty()) {
+		warning(WARNING_UNMATCHED_DIRECTIVE, "`PUSHS` without corresponding `POPS`\n");
+	}
+}
+
 void sect_EndSection() {
 	if (!currentSection)
 		fatalerror("Cannot end the section outside of a SECTION\n");

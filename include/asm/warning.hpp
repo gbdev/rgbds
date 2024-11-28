@@ -20,6 +20,7 @@ enum WarningID {
 	WARNING_OBSOLETE,             // Obsolete/deprecated things
 	WARNING_SHIFT,                // Undefined `SHIFT` behavior
 	WARNING_SHIFT_AMOUNT,         // Strange `SHIFT` amount
+	WARNING_UNMATCHED_DIRECTIVE,  // `PUSH[C|O|S]` without `POP[C|O|S]`
 	WARNING_UNTERMINATED_LOAD,    // `LOAD` without `ENDL`
 	WARNING_USER,                 // User-defined `WARN`ings
 
