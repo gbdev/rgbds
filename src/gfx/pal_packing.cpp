@@ -208,9 +208,10 @@ public:
 	// leads to imprecision and even platform-specific differences.
 	// We avoid this by multiplying the reciprocals by a factor such that division always produces
 	// an integer; the LCM of all values the denominator can take is the smallest suitable factor.
-	static constexpr uint32_t scaleFactor = [] { // LCM(a, b, c) = LCM(LCM(a, b), c)
+	static constexpr uint32_t scaleFactor = [] {
+		// Fold over 1..=17 with the associative LCM function
+		// (17 is the largest the denominator in `relSizeOf` below can be)
 		uint32_t factor = 1;
-		// 17 is the largest the denominator in `relSizeOf` below can be.
 		for (uint32_t n = 2; n <= 17; ++n) {
 			factor = std::lcm(factor, n);
 		}
@@ -219,7 +220,7 @@ public:
 
 	/*
 	 * Computes the "relative size" of a proto-palette on this palette;
-	 * roughly speaking, it's a measure of how much this proto-palette would "cost" to introduce.
+	 * it's a measure of how much this proto-palette would "cost" to introduce.
 	 */
 	uint32_t relSizeOf(ProtoPalette const &protoPal) const {
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
@@ -233,11 +234,11 @@ public:
 			    });
 			// We increase the denominator by 1 here; the reference code does this,
 			// but the paper does not. Not adding 1 makes a multiplicity of 0 cause a division by 0
-			// (that is, if the color is not found in any proto-palette), while adding 1 does not
-			// seem to invalidate the paper's reasoning.
-			assume( // The scale factor should ensure integer divisions only.
-			    scaleFactor % (multiplicity + 1) == 0
-			);
+			// (that is, if the color is not found in any proto-palette), and adding 1 still seems
+			// to preserve the paper's reasoning.
+			//
+			// The scale factor should ensure integer divisions only.
+			assume(scaleFactor % (multiplicity + 1) == 0);
 			relSize += scaleFactor / (multiplicity + 1);
 		}
 		return relSize;
