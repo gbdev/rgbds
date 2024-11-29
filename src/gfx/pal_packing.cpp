@@ -5,10 +5,13 @@
 #include <algorithm>
 #include <deque>
 #include <inttypes.h>
+#include <numeric>
 #include <optional>
 #include <queue>
+#include <stdint.h>
 #include <type_traits>
 #include <unordered_set>
+#include <utility>
 
 #include "helpers.hpp"
 
@@ -199,21 +202,44 @@ public:
 		return colors.size() <= options.maxOpaqueColors();
 	}
 
+	// The `relSizeOf` method below should compute the sum, for each color in `protoPal`, of
+	// the reciprocal of the "multiplicity" of the color across "our" proto-palettes.
+	// However, literally computing the reciprocals would involve floating-point division, which
+	// leads to imprecision and even platform-specific differences.
+	// We avoid this by multiplying the reciprocals by a factor such that division always produces
+	// an integer; the LCM of all values the denominator can take is the smallest suitable factor.
+	static constexpr uint32_t scaleFactor = [] {
+		// Fold over 1..=17 with the associative LCM function
+		// (17 is the largest the denominator in `relSizeOf` below can be)
+		uint32_t factor = 1;
+		for (uint32_t n = 2; n <= 17; ++n) {
+			factor = std::lcm(factor, n);
+		}
+		return factor;
+	}();
+
 	/*
-	 * Computes the "relative size" of a proto-palette on this palette
+	 * Computes the "relative size" of a proto-palette on this palette;
+	 * it's a measure of how much this proto-palette would "cost" to introduce.
 	 */
-	double relSizeOf(ProtoPalette const &protoPal) const {
+	uint32_t relSizeOf(ProtoPalette const &protoPal) const {
 		// NOTE: this function must not call `uniqueColors`, or one of its callers will break!
-		double relSize = 0.;
+
+		uint32_t relSize = 0;
 		for (uint16_t color : protoPal) {
-			auto n = std::count_if(RANGE(*this), [this, &color](ProtoPalAttrs const &attrs) {
-				ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
-				return std::find(RANGE(pal), color) != pal.end();
-			});
-			// NOTE: The paper and the associated code disagree on this: the code has
-			// this `1 +`, whereas the paper does not; its lack causes a division by 0
-			// if the symbol is not found anywhere, so I'm assuming the paper is wrong.
-			relSize += 1. / (1 + n);
+			auto multiplicity = // How many of our proto-palettes does this color also belong to?
+			    std::count_if(RANGE(*this), [this, &color](ProtoPalAttrs const &attrs) {
+				    ProtoPalette const &pal = (*_protoPals)[attrs.protoPalIndex];
+				    return std::find(RANGE(pal), color) != pal.end();
+			    });
+			// We increase the denominator by 1 here; the reference code does this,
+			// but the paper does not. Not adding 1 makes a multiplicity of 0 cause a division by 0
+			// (that is, if the color is not found in any proto-palette), and adding 1 still seems
+			// to preserve the paper's reasoning.
+			//
+			// The scale factor should ensure integer divisions only.
+			assume(scaleFactor % (multiplicity + 1) == 0);
+			relSize += scaleFactor / (multiplicity + 1);
 		}
 		return relSize;
 	}
@@ -383,7 +409,7 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 		size_t bestPalIndex = assignments.size();
 		// We're looking for a palette where the proto-palette's relative size is less than
 		// its actual size; so only overwrite the "not found" index on meeting that criterion
-		double bestRelSize = protoPal.size();
+		uint32_t bestRelSize = protoPal.size() * AssignedProtos::scaleFactor;
 
 		for (size_t i = 0; i < assignments.size(); ++i) {
 			// Skip the page if this one is banned from it
@@ -391,10 +417,10 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				continue;
 			}
 
-			double relSize = assignments[i].relSizeOf(protoPal);
+			uint32_t relSize = assignments[i].relSizeOf(protoPal);
 			options.verbosePrint(
 			    Options::VERB_TRACE,
-			    "  Relative size to palette %zu (of %zu): %.20f (size = %zu)\n",
+			    "  Relative size to palette %zu (of %zu): %" PRIu32 " (size = %zu)\n",
 			    i,
 			    assignments.size(),
 			    relSize,
@@ -444,16 +470,13 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					    ProtoPalette const &rhsProtoPal = protoPalettes[rhs.protoPalIndex];
 					    size_t lhsSize = lhsProtoPal.size();
 					    size_t rhsSize = rhsProtoPal.size();
-					    double lhsRelSize = bestPal.relSizeOf(lhsProtoPal);
-					    double rhsRelSize = bestPal.relSizeOf(rhsProtoPal);
+					    uint32_t lhsRelSize = bestPal.relSizeOf(lhsProtoPal);
+					    uint32_t rhsRelSize = bestPal.relSizeOf(rhsProtoPal);
 
-					    // This comparison is algebraically equivalent to
-					    // `lhsSize / lhsRelSize < rhsSize / rhsRelSize`,
-					    // but without potential precision loss from floating-point division.
 					    options.verbosePrint(
 					        Options::VERB_TRACE,
-					        "  Proto-palettes %zu <=> %zu: Efficiency: %zu / %.20f <=> %zu / "
-					        "%.20f\n",
+					        "  Proto-palettes %zu <=> %zu: Efficiency: %zu / %" PRIu32 " <=> %zu / "
+					        "%" PRIu32 "\n",
 					        lhs.protoPalIndex,
 					        rhs.protoPalIndex,
 					        lhsSize,
@@ -461,6 +484,9 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 					        rhsSize,
 					        rhsRelSize
 					    );
+					    // This comparison is algebraically equivalent to
+					    // `lhsSize / lhsRelSize < rhsSize / rhsRelSize`,
+					    // but without potential precision loss from floating-point division.
 					    return lhsSize * rhsRelSize < rhsSize * lhsRelSize;
 				    }
 				);
@@ -471,15 +497,12 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				ProtoPalette const &maxProtoPal = protoPalettes[maxEfficiencyIter->protoPalIndex];
 				size_t minSize = minProtoPal.size();
 				size_t maxSize = maxProtoPal.size();
-				double minRelSize = bestPal.relSizeOf(minProtoPal);
-				double maxRelSize = bestPal.relSizeOf(maxProtoPal);
-				// This comparison is algebraically equivalent to
-				// `maxSize / maxRelSize - minSize / minRelSize < .001`,
-				// but without potential precision loss from floating-point division.
-				// TODO: yikes for float comparison! I *think* this threshold is OK?
+				uint32_t minRelSize = bestPal.relSizeOf(minProtoPal);
+				uint32_t maxRelSize = bestPal.relSizeOf(maxProtoPal);
 				options.verbosePrint(
 				    Options::VERB_TRACE,
-				    "  Proto-palettes %zu <= %zu: Efficiency: %zu / %.20f <= %zu / %.20f\n",
+				    "  Proto-palettes %zu <= %zu: Efficiency: %zu / %" PRIu32 " <= %zu / %" PRIu32
+				    "\n",
 				    minEfficiencyIter->protoPalIndex,
 				    maxEfficiencyIter->protoPalIndex,
 				    minSize,
@@ -487,7 +510,10 @@ std::tuple<DefaultInitVec<size_t>, size_t>
 				    maxSize,
 				    maxRelSize
 				);
-				if (maxSize * minRelSize - minSize * maxRelSize < minRelSize * maxRelSize * .001) {
+				// This comparison is algebraically equivalent to
+				// `maxSize / maxRelSize == minSize / minRelSize`,
+				// but without potential precision loss from floating-point division.
+				if (maxSize * minRelSize == minSize * maxRelSize) {
 					options.verbosePrint(Options::VERB_TRACE, "  All efficiencies are identical\n");
 					break;
 				}
