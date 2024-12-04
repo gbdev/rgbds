@@ -140,7 +140,7 @@
 %left OP_SHL OP_SHR OP_USHR
 %left OP_MUL OP_DIV OP_MOD
 %precedence NEG // applies to unary OP_LOGICNOT, OP_ADD, OP_SUB, OP_NOT
-%left OP_EXP
+%right OP_EXP
 
 // Assignment operators (only for variables)
 %token POP_EQUAL "="
