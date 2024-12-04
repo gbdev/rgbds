@@ -329,6 +329,8 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"OPT",           T_(POP_OPT)          },
 };
 
+static auto ldio = keywordDict.find("LDIO");
+
 static bool isWhitespace(int c) {
 	return c == ' ' || c == '\t';
 }
@@ -1168,8 +1170,12 @@ static Token readIdentifier(char firstChar, bool raw) {
 
 	// Attempt to check for a keyword if the identifier is not raw
 	if (!raw) {
-		if (auto search = keywordDict.find(identifier); search != keywordDict.end())
+		if (auto search = keywordDict.find(identifier); search != keywordDict.end()) {
+			if (search == ldio) {
+				warning(WARNING_OBSOLETE, "LDIO is deprecated; use LDH\n");
+			}
 			return Token(search->second);
+		}
 	}
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot

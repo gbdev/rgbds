@@ -1010,8 +1010,6 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO [n16],A ,
-or
 .Ql LD [$FF00+n8],A .
 .Ss LDH [C],A
 Copy the value in register
@@ -1026,8 +1024,6 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO [C],A ,
-or
 .Ql LD [$FF00+C],A .
 .Ss LD A,[r16]
 Copy the byte pointed to by
@@ -1068,8 +1064,6 @@ Bytes: 2
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO A,[n16] ,
-or
 .Ql LD A,[$FF00+n8] .
 .Ss LDH A,[C]
 Copy the byte at address
@@ -1084,8 +1078,6 @@ Bytes: 1
 Flags: None affected.
 .Pp
 This is sometimes written as
-.Ql LDIO A,[C] ,
-or
 .Ql LD A,[$FF00+C] .
 .Ss LD [HLI],A
 Copy the value in register

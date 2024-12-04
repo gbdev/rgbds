@@ -1752,8 +1752,8 @@ cpu_command:
 	| z80_jr
 	| z80_ld
 	| z80_ldd
+	| z80_ldh
 	| z80_ldi
-	| z80_ldio
 	| z80_nop
 	| z80_or
 	| z80_pop
@@ -1947,7 +1947,7 @@ z80_ldd:
 	}
 ;
 
-z80_ldio:
+z80_ldh:
 	Z80_LDH MODE_A COMMA op_mem_ind {
 		$4.makeCheckHRAM();
 

@@ -1,0 +1,16 @@
+warning: deprecated-ldio.asm(13): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(14): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(15): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(16): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(28): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(29): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(30): [-Wobsolete]
+    LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(31): [-Wobsolete]
+    LDIO is deprecated; use LDH
