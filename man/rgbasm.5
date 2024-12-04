@@ -309,26 +309,35 @@ is equivalent to
 .Pp
 You can also use symbols, which are implicitly replaced with their value.
 .Ss Operators
-A great number of operators you can use in expressions are available (listed from highest to lowest precedence):
+You can use these operators in numeric expressions (listed from highest to lowest precedence):
 .Bl -column -offset indent "!= == <= >= < >"
 .It Sy Operator Ta Sy Meaning
-.It Li \&( \&) Ta Precedence override
+.It Li \&( \&) Ta Grouping
 .It Li FUNC() Ta Built-in function call
-.It Li ** Ta Exponent
-.It Li ~ + - Ta Unary complement/plus/minus
-.It Li * / % Ta Multiply/divide/modulo
-.It Li << Ta Shift left
-.It Li >> Ta Signed shift right (sign-extension)
-.It Li >>> Ta Unsigned shift right (zero-extension)
-.It Li & \&| ^ Ta Binary and/or/xor
-.It Li + - Ta Add/subtract
-.It Li != == <= >= < > Ta Comparison
-.It Li && || Ta Boolean and/or
-.It Li \&! Ta Unary not
+.It Li ** Ta Exponentiation
+.It Li + - ~ \&! Ta Unary plus, minus (negation), complement (bitwise negation), and Boolean negation
+.It Li * / % Ta Multiplication, division, and modulo (remainder)
+.It Li << >> >>> Ta Bit shifts (left, sign-extended right, zero-extended right)
+.It Li & \&| ^ Ta Bitwise AND/OR/XOR
+.It Li + - Ta Addition and subtraction
+.It Li == != < > <= >= Ta Comparisons
+.It Li && Ta Boolean AND
+.It Li || Ta Boolean OR
 .El
 .Pp
+.Sq **
+raises a number to a non-negative power. It is the only
+.Em right-associative
+operator, meaning that
+.Ql p ** q ** r
+is equal to
+.Ql p ** (q ** r) ,
+not
+.Ql (p ** q) ** r .
+All other binary operators are left-associative.
+.Pp
 .Sq ~
-complements a value by inverting all its bits.
+complements a value by inverting all 32 of its bits.
 .Pp
 .Sq %
 is used to get the remainder of the corresponding division, so that
