@@ -50,7 +50,6 @@ jobs:
           # commands. The post-job step removes the PAT.
           # needs delete:packages permissions
           # required: true
-          # [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
           token: ${{ secrets.PAT_TOKEN }}
           # Repository name or  name with owner
           # Delete only from repository name
