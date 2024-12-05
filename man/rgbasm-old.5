@@ -1,0 +1,333 @@
+'\" e
+.\"
+.\" SPDX-License-Identifier: MIT
+.\"
+.Dd October 21, 2024
+.Dt RGBASM-OLD 5
+.Os
+.Sh NAME
+.Nm rgbasm-old
+.Nd obsolete language documentation
+.Sh DESCRIPTION
+This is the list of features that have been removed from the
+.Xr rgbasm 5
+assembly language over its decades of evolution, along with their modern alternatives.
+Its goal is to be a reference for backwards incompatibility, when upgrading an old assembly codebase to work with the latest RGBDS release.
+It does
+.Em not
+attempt to list syntax bugs that were fixed, nor new reserved keywords that may conflict with old identifiers.
+.Sh REMOVED
+.Ss Global labels without colons
+Deprecated in 0.4.0, removed in 0.5.0.
+.Pp
+Labels used to be definable with just a name, but had to be typed in column 1.
+.Pp
+Instead, use explicit colons; for example,
+.Ql Label:
+or exported
+.Ql Label:: .
+.Ss Automatic LD to LDH conversion (rgbasm -l)
+Deprecated in 0.7.0, removed in 0.8.0.
+.Pp
+.Xr rgbasm 1
+used to automatically treat
+.Ql LD
+as
+.Ql LDH
+if the address was known to be in the
+.Ad $FF00-$FFFF
+range, with the
+.Fl L
+flag to opt out.
+.Xr rgbasm 1
+0.6.0 added a
+.Fl l
+flag to opt in instead.
+.Pp
+Instead, use
+.Ql LDH ,
+and remove the
+.Fl L
+and
+.Fl l
+flags from
+.Xr rgbasm 1 .
+.Ss Automatic NOP after HALT (rgbasm -H)
+Deprecated in 0.7.0, removed in 0.8.0.
+.Pp
+.Xr rgbasm 1
+used to automatically insert a
+.Ql NOP
+after
+.Ql HALT ,
+with the
+.Fl h
+flag to opt out.
+.Xr rgbasm 1
+0.6.0 added a
+.Fl H
+flag to opt in instead.
+.Pp
+Instead, use an explicit
+.Ql NOP
+after
+.Ql HALT ,
+and remove the
+.Fl h
+and
+.Fl H
+flags from
+.Xr rgbasm 1 .
+.Ss IMPORT and XREF
+Removed in 0.4.0.
+.Pp
+Symbols are now automatically resolved if they were exported from elsewhere.
+.Pp
+Instead, just remove these directives.
+.Ss __FILE__ and __LINE__
+Deprecated in 0.6.0, removed in 0.7.0.
+.Pp
+Instead, use
+.Ic WARN
+or
+.Ic FAIL
+to print a complete trace of filenames and line numbers.
+.Ss _PI
+Deprecated in 0.5.0, removed in 0.6.0.
+.Pp
+Instead, use
+.Ql DEF _PI EQU 3.141592653 .
+.Ss '\e,' in strings in macro arguments
+Deprecated in 0.5.0, removed in 0.7.0.
+.Pp
+Macro arguments now handle quoted strings and parenthesized expressions as single arguments, so commas inside them are not argument separators and do not need escaping.
+.Pp
+Instead, just use commas without backslashes.
+.Ss '*' comments
+Deprecated in 0.4.1, removed in 0.5.0.
+.Pp
+Instead, use
+.Ql \&;
+comments.
+.Ss Nested macro definitions
+Removed in 0.4.2.
+.Pp
+Instead, put the nested macro definition inside a quoted string (making sure that none of its lines start with
+.Ic ENDM ) ,
+then interpolate that string.
+For example:
+.Bd -literal -offset indent
+MACRO outer
+    DEF definition EQUS """
+        MACRO inner
+            println (\1) - (\\1)
+        \enENDM"""
+    {definition}
+    PURGE definition
+ENDM
+    outer 10
+    inner 3 ; prints 7
+.Ed
+.Ss Negative DS
+Removed in 0.3.2.
+.Pp
+This was used to "rewind" the value of
+.Ic @
+in RAM sections, allowing labeled space allocations to overlap.
+.Pp
+Instead, use
+.Ic UNION .
+.Ss Treating multi-character strings as numbers
+Deprecated in 0.9.0.
+.Pp
+Instead, use a multi-value
+.Ic CHARMAP ,
+or explicitly combine the values of individual characters.
+.Ss rgbgfx -f/--fix and -F/--fix-and-save
+Removed in 0.6.0.
+.Pp
+Instead, use
+.Ql rgbgfx -c/--colors
+to explicitly specify a color palette.
+If using
+.Ql -c embedded ,
+arrange the PNG's indexed palette in a separate graphics editor.
+.Ss rgbgfx -D/--debug
+Removed in 0.6.0.
+.Sh REPLACED
+.Ss Defining constants and variables without DEF
+Deprecated in 0.7.0, removed in 0.8.0.
+.Pp
+.Ic EQU , EQUS , = , RB , RW ,
+and
+.Ic RL
+definitions used to just start with the symbol name, but had to be typed in column 1.
+.Pp
+Instead, use
+.Ic DEF
+before constant and variable definitions.
+Note that
+.Ic EQUS
+expansion does not occur for the symbol name, so you have to use explicit
+.Ql {interpolation} .
+.Ss Defining macros like labels
+Deprecated in 0.6.0, removed in 0.7.0.
+.Pp
+Macros used to be defined as
+.Ql name: MACRO .
+.Pp
+Instead, use
+.Ql MACRO name .
+.Ss Defining variables with SET
+Deprecated in 0.5.2, removed in 0.6.0.
+.Pp
+Variables used to be defined as
+.Ql name SET value .
+.Pp
+Instead, use
+.Ql DEF name = value .
+.Ss PRINTT, PRINTI, PRINTV, and PRINTF
+Deprecated in 0.5.0, removed in 0.6.0.
+.Pp
+These directives were each specific to one type of value.
+.Pp
+Instead, use
+.Ic PRINT
+and
+.Ic PRINTLN ,
+with
+.Ic STRFMT
+or
+.Ql {interpolation}
+for type-specific formatting.
+.Ss GLOBAL and XDEF
+Deprecated in 0.4.2, removed in 0.5.0.
+.Pp
+Instead, use
+.Ic EXPORT .
+.Ss HOME, CODE, DATA, and BSS
+Deprecated in 0.3.0, removed in 0.4.0.
+.Pp
+Instead of
+.Ic HOME ,
+use
+.Ic ROM0 ;
+instead of
+.Ic CODE
+and
+.Ic DATA ,
+use
+.Ic ROMX ;
+instead of
+.Ic BSS ,
+use
+.Ic  WRAM0 .
+.Ss JP [HL]
+Deprecated in 0.3.0, removed in ???.
+.Pp
+Instead, use
+.Ql JP HL .
+.Ss LDI A, HL and LDD A, HL
+Deprecated in 0.3.0, removed in ???.
+.Pp
+Instead, use
+.Ql LDI A, [HL]
+and
+LDD A, [HL]
+(or
+.Ql LD A, [HLI]
+and
+.Ql LD A, [HLD] ;
+or
+LD A, [HL+]
+and
+.Ql LD A, [HL-] ) .
+.Ss LD HL, [SP + e8]
+Removed in ???.
+.Pp
+Instead, use
+.Ql LD HL, SP + e8 .
+.Ss LDIO
+Deprecated in 0.9.0.
+.Pp
+Instead, use
+.Ql LDH .
+.Ss rgbasm -i
+Deprecated in 0.6.0, removed in 0.8.0.
+.Pp
+Instead, use
+.Fl I
+or
+.Fl -include .
+.Ss rgbgfx -h
+Removed in 0.6.0.
+.Pp
+Instead, use
+.Fl Z
+or
+.Fl -columns .
+.Ss rgbgfx --output-*
+Deprecated in 0.7.0, removed in 0.8.0.
+.Pp
+Instead, use
+.Fl -auto-* .
+.Sh CHANGED
+.Ss Trigonometry function units
+Changed in 0.6.0.
+.Pp
+Instead of dividing a circle into 65536.0 "binary degrees", it is now divided into 1.0 "turns".
+.Pp
+For example, previously we had:
+.EQ
+delim $$
+.EN
+.Bl -bullet -offset indent
+.It
+.Ql SIN(0.25) == 0.00002 ,
+because 0.25 binary degrees = $0.25 / 65536.0$ turns = $0.000004 tau$ radians = $0.000008 pi$ radians, and $sin ( 0.000008 pi ) = 0.00002$
+.It
+.Ql SIN(16384.0) == 1.0 ,
+because 16384.0 binary degrees = $16384.0 / 65536.0$ turns = $0.25 tau$ radians = $pi / 2$ radians, and $sin ( pi / 2 ) = 1$
+.It
+.Ql ASIN(1.0) == 16384.0
+.El
+.Pp
+Instead, now we have:
+.Bl -bullet -offset indent
+.It
+.Ql SIN(0.25) == 1.0 ,
+because $0.25$ turns = $0.25 tau$ radians = $pi / 2$ radians, and $sin ( pi / 2 ) = 1$
+.It
+.Ql SIN(16384.0) == 0.0 ,
+because $16384$ turns = $16384 tau$ radians = $32768 pi$ radians, and $sin ( 32768 pi ) = 0$
+.It
+.Ql ASIN(1.0) == 0.25
+.El
+.EQ
+delim off
+.EN
+.Ss ** operator associativity
+Changed in 0.9.0.
+.Pp
+Instead of being left-associative,
+.Ql **
+is now right-associative.
+.Pp
+Previously we had
+.Ql p ** q ** r == (p ** q) ** r .
+.Pp
+Instead, now we have
+.Ql p ** q ** r == p ** (q ** r) .
+.Sh SEE ALSO
+.Xr rgbasm 1 ,
+.Xr gbz80 7 ,
+.Xr rgbds 5 ,
+.Xr rgbds 7
+.Sh HISTORY
+.Xr rgbasm 1
+was originally written by
+.An Carsten S\(/orensen
+as part of the ASMotor package, and was later repackaged in RGBDS by
+.An Justin Lloyd .
+It is now maintained by a number of contributors at
+.Lk https://github.com/gbdev/rgbds .
