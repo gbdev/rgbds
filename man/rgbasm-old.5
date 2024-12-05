@@ -17,6 +17,8 @@ It does
 .Em not
 attempt to list syntax bugs that were fixed, nor new reserved keywords that may conflict with old identifiers.
 .Sh REMOVED
+These are features which have been completely removed, without any direct alternatives.
+Usually these features were limiting the addition of other features, or had awkward limits on their own intended effects.
 .Ss Global labels without colons
 Deprecated in 0.4.0, removed in 0.5.0.
 .Pp
@@ -97,7 +99,7 @@ Deprecated in 0.5.0, removed in 0.6.0.
 .Pp
 Instead, use
 .Ql DEF _PI EQU 3.141592653 .
-.Ss '\e,' in strings in macro arguments
+.Ss '\e,' in strings within macro arguments
 Deprecated in 0.5.0, removed in 0.7.0.
 .Pp
 Macro arguments now handle quoted strings and parenthesized expressions as single arguments, so commas inside them are not argument separators and do not need escaping.
@@ -155,6 +157,8 @@ arrange the PNG's indexed palette in a separate graphics editor.
 .Ss rgbgfx -D/--debug
 Removed in 0.6.0.
 .Sh REPLACED
+These are features whose syntax has been changed without affecting functionality.
+They can generally be updated with a single search-and-replace.
 .Ss Defining constants and variables without DEF
 Deprecated in 0.7.0, removed in 0.8.0.
 .Pp
@@ -178,6 +182,10 @@ Macros used to be defined as
 .Pp
 Instead, use
 .Ql MACRO name .
+Note that
+.Ic EQUS
+expansion does not occur for the macro name, so you have to use explicit
+.Ql {interpolation} .
 .Ss Defining variables with SET
 Deprecated in 0.5.2, removed in 0.6.0.
 .Pp
@@ -223,12 +231,12 @@ instead of
 use
 .Ic  WRAM0 .
 .Ss JP [HL]
-Deprecated in 0.3.0, removed in ???.
+Deprecated in 0.3.0, removed in 0.4.0.
 .Pp
 Instead, use
 .Ql JP HL .
 .Ss LDI A, HL and LDD A, HL
-Deprecated in 0.3.0, removed in ???.
+Deprecated in 0.3.0, removed in 0.4.0.
 .Pp
 Instead, use
 .Ql LDI A, [HL]
@@ -243,7 +251,7 @@ LD A, [HL+]
 and
 .Ql LD A, [HL-] ) .
 .Ss LD HL, [SP + e8]
-Removed in ???.
+Deprecated in 0.3.0, removed in 0.4.0.
 .Pp
 Instead, use
 .Ql LD HL, SP + e8 .
@@ -272,6 +280,7 @@ Deprecated in 0.7.0, removed in 0.8.0.
 Instead, use
 .Fl -auto-* .
 .Sh CHANGED
+These are breaking changes that did not alter syntax, and so could not practically be deprecated.
 .Ss Trigonometry function units
 Changed in 0.6.0.
 .Pp
