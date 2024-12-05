@@ -55,8 +55,8 @@ GitHub.
 
       If you do not have `groff` installed, you can change
       `groff -Tpdf -mdoc -wall` to `mandoc -Tpdf -I os=Linux` in
-      [.github/actions/get-pages.sh](.github/actions/get-pages.sh) and it
-      will suffice.
+      [maintainer/man_to_html.sh](https://github.com/gbdev/rgbds-www/blob/master/maintainer/man_to_html.sh)
+      and it will suffice.
 
    4. Commit and push the documentation. You can use <code>git commit -m
       "Create RGBDS <i>&lt;tag&gt;</i> documentation"</code> and `git push origin master`

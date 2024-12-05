@@ -126,6 +126,7 @@ set(man1 "man/rgbasm.1"
          "man/rgbgfx.1"
          "man/rgblink.1")
 set(man5 "man/rgbasm.5"
+         "man/rgbasm-old.5"
          "man/rgblink.5"
          "man/rgbds.5")
 set(man7 "man/gbz80.7"
