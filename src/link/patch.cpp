@@ -356,6 +356,12 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 					isError = true;
 				}
 				value = 0;
+			} else if (value >= 0 && value <= 0xFF) {
+				warning(
+				    patch.src,
+				    patch.lineNo,
+				    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF"
+				);
 			}
 			value &= 0xFF;
 			break;
