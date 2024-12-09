@@ -1949,13 +1949,23 @@ z80_ldd:
 
 z80_ldh:
 	Z80_LDH MODE_A COMMA op_mem_ind {
-		$4.makeCheckHRAM();
+		if ($4.makeCheckHRAM()) {
+			warning(
+			    WARNING_OBSOLETE,
+			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF\n"
+			);
+		}
 
 		sect_ConstByte(0xF0);
 		sect_RelByte($4, 1);
 	}
 	| Z80_LDH op_mem_ind COMMA MODE_A {
-		$2.makeCheckHRAM();
+		if ($2.makeCheckHRAM()) {
+			warning(
+			    WARNING_OBSOLETE,
+			    "LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF\n"
+			);
+		}
 
 		sect_ConstByte(0xE0);
 		sect_RelByte($2, 1);

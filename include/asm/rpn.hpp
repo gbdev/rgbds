@@ -53,7 +53,7 @@ struct Expression {
 	void makeUnaryOp(RPNCommand op, Expression &&src);
 	void makeBinaryOp(RPNCommand op, Expression &&src1, Expression const &src2);
 
-	void makeCheckHRAM();
+	bool makeCheckHRAM();
 	void makeCheckRST();
 
 	void checkNBit(uint8_t n) const;
