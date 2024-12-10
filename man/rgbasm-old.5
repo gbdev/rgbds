@@ -82,7 +82,7 @@ For example:
 MACRO outer
     DEF definition EQUS """
         MACRO inner
-            println (\1) - (\\1)
+            println (\e1) - (\e\e1)
         \enENDM"""
     {definition}
     PURGE definition
@@ -111,7 +111,7 @@ to print a complete trace of filenames and line numbers.
 Deprecated in 0.5.0, removed in 0.6.0.
 .Pp
 Instead, use
-.Ql DEF _PI EQU 3.141592653 .
+.Ql 3.141592653 .
 .Ss Treating multi-character strings as numbers
 Deprecated in 0.9.0.
 .Pp
