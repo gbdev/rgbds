@@ -48,7 +48,7 @@ int32_t Expression::getConstVal() const {
 Symbol const *Expression::symbolOf() const {
 	if (!isSymbol)
 		return nullptr;
-	return sym_FindScopedSymbol((char const *)&rpn[1]);
+	return sym_FindScopedSymbol(reinterpret_cast<char const *>(&rpn[1]));
 }
 
 bool Expression::isDiffConstant(Symbol const *sym) const {
@@ -65,7 +65,7 @@ bool Expression::isDiffConstant(Symbol const *sym) const {
 
 void Expression::makeNumber(uint32_t value) {
 	clear();
-	data = (int32_t)value;
+	data = static_cast<int32_t>(value);
 }
 
 void Expression::makeSymbol(std::string const &symName) {
@@ -89,7 +89,7 @@ void Expression::makeSymbol(std::string const &symName) {
 		*ptr++ = RPN_SYM;
 		memcpy(ptr, sym->name.c_str(), nameLen);
 	} else {
-		data = (int32_t)sym_GetConstantValue(symName);
+		data = static_cast<int32_t>(sym_GetConstantValue(symName));
 	}
 }
 
@@ -100,12 +100,12 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		if (!currentSection) {
 			error("PC has no bank outside of a section\n");
 			data = 1;
-		} else if (currentSection->bank == (uint32_t)-1) {
+		} else if (currentSection->bank == UINT32_MAX) {
 			data = "Current section's bank is not known";
 
 			*reserveSpace(1) = RPN_BANK_SELF;
 		} else {
-			data = (int32_t)currentSection->bank;
+			data = static_cast<int32_t>(currentSection->bank);
 		}
 		return;
 	} else if (sym && !sym->isLabel()) {
@@ -115,9 +115,9 @@ void Expression::makeBankSymbol(std::string const &symName) {
 		sym = sym_Ref(symName);
 		assume(sym); // If the symbol didn't exist, it should have been created
 
-		if (sym->getSection() && sym->getSection()->bank != (uint32_t)-1) {
+		if (sym->getSection() && sym->getSection()->bank != UINT32_MAX) {
 			// Symbol's section is known and bank is fixed
-			data = (int32_t)sym->getSection()->bank;
+			data = static_cast<int32_t>(sym->getSection()->bank);
 		} else {
 			data = sym_IsPurgedScoped(symName)
 			       ? "\""s + symName + "\"'s bank is not known; it was purged"
@@ -135,8 +135,8 @@ void Expression::makeBankSymbol(std::string const &symName) {
 
 void Expression::makeBankSection(std::string const &sectName) {
 	clear();
-	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->bank != (uint32_t)-1) {
-		data = (int32_t)sect->bank;
+	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->bank != UINT32_MAX) {
+		data = static_cast<int32_t>(sect->bank);
 	} else {
 		data = "Section \""s + sectName + "\"'s bank is not known";
 
@@ -151,7 +151,7 @@ void Expression::makeBankSection(std::string const &sectName) {
 void Expression::makeSizeOfSection(std::string const &sectName) {
 	clear();
 	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->isSizeKnown()) {
-		data = (int32_t)sect->size;
+		data = static_cast<int32_t>(sect->size);
 	} else {
 		data = "Section \""s + sectName + "\"'s size is not known";
 
@@ -165,8 +165,8 @@ void Expression::makeSizeOfSection(std::string const &sectName) {
 
 void Expression::makeStartOfSection(std::string const &sectName) {
 	clear();
-	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->org != (uint32_t)-1) {
-		data = (int32_t)sect->org;
+	if (Section *sect = sect_FindSectionByName(sectName); sect && sect->org != UINT32_MAX) {
+		data = static_cast<int32_t>(sect->org);
 	} else {
 		data = "Section \""s + sectName + "\"'s start is not known";
 
@@ -216,9 +216,9 @@ static bool tryConstLogNot(Expression const &expr) {
 	Section const &sect = *sym->getSection();
 	int32_t unknownBits = (1 << 16) - (1 << sect.align);
 
-	// `sym->getValue()` attempts to add the section's address, but that's "-1"
+	// `sym->getValue()` attempts to add the section's address, but that's `UINT32_MAX`
 	// because the section is floating (otherwise we wouldn't be here)
-	assume(sect.org == (uint32_t)-1);
+	assume(sect.org == UINT32_MAX);
 	int32_t symbolOfs = sym->getValue() + 1;
 
 	int32_t knownBits = (symbolOfs + sect.alignOfs) & ~unknownBits;
@@ -243,9 +243,9 @@ static int32_t tryConstLow(Expression const &expr) {
 	if (sect.align < 8)
 		return -1;
 
-	// `sym->getValue()` attempts to add the section's address, but that's "-1"
+	// `sym->getValue()` attempts to add the section's address, but that's `UINT32_MAX`
 	// because the section is floating (otherwise we wouldn't be here)
-	assume(sect.org == (uint32_t)-1);
+	assume(sect.org == UINT32_MAX);
 	int32_t symbolOfs = sym->getValue() + 1;
 
 	return (symbolOfs + sect.alignOfs) & 0xFF;
@@ -284,9 +284,9 @@ static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	if (int32_t unknownBits = (1 << 16) - (1 << sect.align); (unknownBits & mask) != 0)
 		return -1;
 
-	// `sym.getValue()` attempts to add the section's address, but that's "-1"
+	// `sym.getValue()` attempts to add the section's address, but that's `UINT32_MAX`
 	// because the section is floating (otherwise we wouldn't be here)
-	assume(sect.org == (uint32_t)-1);
+	assume(sect.org == UINT32_MAX);
 	int32_t symbolOfs = sym.getValue() + 1;
 
 	return (symbolOfs + sect.alignOfs) & mask;
@@ -298,10 +298,11 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 	if (src.isKnown()) {
 		// If the expressions is known, just compute the value
 		int32_t val = src.value();
+		uint32_t uval = static_cast<uint32_t>(val);
 
 		switch (op) {
 		case RPN_NEG:
-			data = (int32_t) - (uint32_t)val;
+			data = static_cast<int32_t>(-uval);
 			break;
 		case RPN_NOT:
 			data = ~val;
@@ -310,16 +311,16 @@ void Expression::makeUnaryOp(RPNCommand op, Expression &&src) {
 			data = !val;
 			break;
 		case RPN_HIGH:
-			data = (int32_t)((uint32_t)val >> 8 & 0xFF);
+			data = static_cast<int32_t>(uval >> 8 & 0xFF);
 			break;
 		case RPN_LOW:
 			data = val & 0xFF;
 			break;
 		case RPN_BITWIDTH:
-			data = val != 0 ? 32 - clz((uint32_t)val) : 0;
+			data = val != 0 ? 32 - clz(uval) : 0;
 			break;
 		case RPN_TZCOUNT:
-			data = val != 0 ? ctz((uint32_t)val) : 32;
+			data = val != 0 ? ctz(uval) : 32;
 			break;
 
 		case RPN_LOGOR:
@@ -374,6 +375,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 	if (src1.isKnown() && src2.isKnown()) {
 		// If both expressions are known, just compute the value
 		int32_t lval = src1.value(), rval = src2.value();
+		uint32_t ulval = static_cast<uint32_t>(lval), urval = static_cast<uint32_t>(rval);
 
 		switch (op) {
 		case RPN_LOGOR:
@@ -401,10 +403,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = lval != rval;
 			break;
 		case RPN_ADD:
-			data = (int32_t)((uint32_t)lval + (uint32_t)rval);
+			data = static_cast<int32_t>(ulval + urval);
 			break;
 		case RPN_SUB:
-			data = (int32_t)((uint32_t)lval - (uint32_t)rval);
+			data = static_cast<int32_t>(ulval - urval);
 			break;
 		case RPN_XOR:
 			data = lval ^ rval;
@@ -452,7 +454,7 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			data = op_shift_right_unsigned(lval, rval);
 			break;
 		case RPN_MUL:
-			data = (int32_t)((uint32_t)lval * (uint32_t)rval);
+			data = static_cast<int32_t>(ulval * urval);
 			break;
 		case RPN_DIV:
 			if (rval == 0)
@@ -522,10 +524,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			uint32_t lval = src1.value();
 			uint8_t bytes[] = {
 			    RPN_CONST,
-			    (uint8_t)lval,
-			    (uint8_t)(lval >> 8),
-			    (uint8_t)(lval >> 16),
-			    (uint8_t)(lval >> 24),
+			    static_cast<uint8_t>(lval),
+			    static_cast<uint8_t>(lval >> 8),
+			    static_cast<uint8_t>(lval >> 16),
+			    static_cast<uint8_t>(lval >> 24),
 			};
 			rpn.clear();
 			rpnPatchSize = 0;
@@ -546,10 +548,10 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 			uint32_t rval = src2.value();
 			uint8_t bytes[] = {
 			    RPN_CONST,
-			    (uint8_t)rval,
-			    (uint8_t)(rval >> 8),
-			    (uint8_t)(rval >> 16),
-			    (uint8_t)(rval >> 24),
+			    static_cast<uint8_t>(rval),
+			    static_cast<uint8_t>(rval >> 8),
+			    static_cast<uint8_t>(rval >> 16),
+			    static_cast<uint8_t>(rval >> 24),
 			};
 			uint8_t *ptr = reserveSpace(sizeof(bytes) + 1, sizeof(bytes) + 1);
 			memcpy(ptr, bytes, sizeof(bytes));

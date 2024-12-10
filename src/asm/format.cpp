@@ -250,15 +250,16 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		}
 
 		double fval = fabs(value / pow(2.0, usePrec));
-		if (useExact)
-			snprintf(valueBuf, sizeof(valueBuf), "%.*fq%zu", (int)useFracWidth, fval, usePrec);
+		if (int fracWidthArg = static_cast<int>(useFracWidth); useExact)
+			snprintf(valueBuf, sizeof(valueBuf), "%.*fq%zu", fracWidthArg, fval, usePrec);
 		else
-			snprintf(valueBuf, sizeof(valueBuf), "%.*f", (int)useFracWidth, fval);
+			snprintf(valueBuf, sizeof(valueBuf), "%.*f", fracWidthArg, fval);
 	} else if (useType == 'd') {
 		// Decimal numbers may be formatted with a '-' sign by `snprintf`, so `abs` prevents that,
 		// with a special case for `INT32_MIN` since `labs(INT32_MIN)` is UB. The sign will be
 		// printed later from `signChar`.
-		uint32_t uval = value != (uint32_t)INT32_MIN ? labs((int32_t)value) : value;
+		uint32_t uval =
+		    value != static_cast<uint32_t>(INT32_MIN) ? labs(static_cast<int32_t>(value)) : value;
 		snprintf(valueBuf, sizeof(valueBuf), "%" PRIu32, uval);
 	} else {
 		char const *spec = useType == 'u'   ? "%" PRIu32

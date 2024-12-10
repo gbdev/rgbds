@@ -248,7 +248,7 @@ static void placeSection(Section &section) {
 			bankMem.insert(
 			    bankMem.begin() + spaceIdx + 1,
 			    {.address = sectionEnd,
-			     .size = (uint16_t)(freeSpace.address + freeSpace.size - sectionEnd)}
+			     .size = static_cast<uint16_t>(freeSpace.address + freeSpace.size - sectionEnd)}
 			);
 			// **`freeSpace` cannot be reused from this point on, because `bankMem.insert`
 			// invalidates all references to itself!**
@@ -279,7 +279,7 @@ static void placeSection(Section &section) {
 			    sizeof(where),
 			    "in bank $%02" PRIx32 " with align mask $%" PRIx16,
 			    section.bank,
-			    (uint16_t)~section.alignMask
+			    static_cast<uint16_t>(~section.alignMask)
 			);
 		else
 			snprintf(where, sizeof(where), "in bank $%02" PRIx32, section.bank);
@@ -291,7 +291,7 @@ static void placeSection(Section &section) {
 			    where,
 			    sizeof(where),
 			    "with align mask $%" PRIx16 " and offset $%" PRIx16,
-			    (uint16_t)~section.alignMask,
+			    static_cast<uint16_t>(~section.alignMask),
 			    section.alignOfs
 			);
 		else

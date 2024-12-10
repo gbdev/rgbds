@@ -707,7 +707,7 @@ align_spec:
 		} else if ($3 <= -(1 << $1) || $3 >= 1 << $1) {
 			::error(
 				"The absolute alignment offset (%" PRIu32 ") must be less than alignment size (%d)\n",
-				(uint32_t)($3 < 0 ? -$3 : $3),
+				static_cast<uint32_t>($3 < 0 ? -$3 : $3),
 				1 << $1
 			);
 			$$.alignment = $$.alignOfs = 0;
@@ -1636,7 +1636,7 @@ strfmt_va_args:
 	  %empty {}
 	| strfmt_va_args COMMA const_no_str {
 		$$ = std::move($1);
-		$$.args.push_back((uint32_t)$3);
+		$$.args.push_back(static_cast<uint32_t>($3));
 	}
 	| strfmt_va_args COMMA string {
 		$$ = std::move($1);
@@ -2456,7 +2456,7 @@ static uint32_t strToNum(std::vector<int32_t> const &s) {
 	if (length == 1) {
 		// The string is a single character with a single value,
 		// which can be used directly as a number.
-		return (uint32_t)s[0];
+		return static_cast<uint32_t>(s[0]);
 	}
 
 	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
@@ -2601,7 +2601,7 @@ static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionN
 		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
 		pos = 1;
 	}
-	return (uint32_t)pos;
+	return static_cast<uint32_t>(pos);
 }
 
 static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep) {

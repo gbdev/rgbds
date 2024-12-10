@@ -123,7 +123,7 @@ static void updateSymbolFilename(Symbol &sym) {
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
 
 	// If the old node was registered, ensure the new one is too
-	if (oldSrc && oldSrc->ID != (uint32_t)-1)
+	if (oldSrc && oldSrc->ID != UINT32_MAX)
 		out_RegisterNode(sym.src);
 }
 
@@ -258,7 +258,7 @@ void sym_Purge(std::string const &symName) {
 			error("'%s' not defined\n", symName.c_str());
 	} else if (sym->isBuiltin) {
 		error("Built-in symbol '%s' cannot be purged\n", symName.c_str());
-	} else if (sym->ID != (uint32_t)-1) {
+	} else if (sym->ID != UINT32_MAX) {
 		error("Symbol \"%s\" is referenced and thus cannot be purged\n", symName.c_str());
 	} else {
 		if (sym->isExported)
@@ -460,7 +460,7 @@ static Symbol *addLabel(std::string const &symName) {
 	}
 	// If the symbol already exists as a ref, just "take over" it
 	sym->type = SYM_LABEL;
-	sym->data = (int32_t)sect_GetSymbolOffset();
+	sym->data = static_cast<int32_t>(sect_GetSymbolOffset());
 	// Don't export anonymous labels
 	if (exportAll && !symName.starts_with('!'))
 		sym->isExported = true;
@@ -627,7 +627,7 @@ void sym_Init(time_t now) {
 	sym_AddEqu("__RGBDS_RC__"s, PACKAGE_VERSION_RC)->isBuiltin = true;
 #endif
 
-	if (now == (time_t)-1) {
+	if (now == static_cast<time_t>(-1)) {
 		warn("Failed to determine current time");
 		// Fall back by pretending we are at the Epoch
 		now = 0;

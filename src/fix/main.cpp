@@ -227,7 +227,7 @@ static MbcType parseMBC(char const *name) {
 			return MBC_BAD;
 		if (mbc > 0xFF)
 			return MBC_BAD_RANGE;
-		return (MbcType)mbc;
+		return static_cast<MbcType>(mbc);
 
 	} else {
 		// Begin by reading the MBC type:
@@ -568,7 +568,7 @@ static MbcType parseMBC(char const *name) {
 		if (*ptr)
 			return MBC_BAD;
 
-		return (MbcType)mbc;
+		return static_cast<MbcType>(mbc);
 	}
 }
 
@@ -882,9 +882,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		report(
 		    "FATAL: \"%s\" too short, expected at least %jd ($%jx) bytes, got only %jd\n",
 		    name,
-		    (intmax_t)headerSize,
-		    (intmax_t)headerSize,
-		    (intmax_t)rom0Len
+		    static_cast<intmax_t>(headerSize),
+		    static_cast<intmax_t>(headerSize),
+		    static_cast<intmax_t>(rom0Len)
 		);
 		return;
 	}
@@ -894,17 +894,27 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		overwriteBytes(rom0, 0x0104, logo, sizeof(logo), logoFilename ? "logo" : "Nintendo logo");
 
 	if (title)
-		overwriteBytes(rom0, 0x134, (uint8_t const *)title, titleLen, "title");
+		overwriteBytes(rom0, 0x134, reinterpret_cast<uint8_t const *>(title), titleLen, "title");
 
 	if (gameID)
-		overwriteBytes(rom0, 0x13F, (uint8_t const *)gameID, gameIDLen, "manufacturer code");
+		overwriteBytes(
+		    rom0,
+		    0x13F,
+		    reinterpret_cast<uint8_t const *>(gameID),
+		    gameIDLen,
+		    "manufacturer code"
+		);
 
 	if (model != DMG)
 		overwriteByte(rom0, 0x143, model == BOTH ? 0x80 : 0xC0, "CGB flag");
 
 	if (newLicensee)
 		overwriteBytes(
-		    rom0, 0x144, (uint8_t const *)newLicensee, newLicenseeLen, "new licensee code"
+		    rom0,
+		    0x144,
+		    reinterpret_cast<uint8_t const *>(newLicensee),
+		    newLicenseeLen,
+		    "new licensee code"
 		);
 
 	if (sgb)
@@ -1076,7 +1086,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		if (fixSpec & TRASH_GLOBAL_SUM)
 			globalSum = ~globalSum;
 
-		uint8_t bytes[2] = {(uint8_t)(globalSum >> 8), (uint8_t)(globalSum & 0xFF)};
+		uint8_t bytes[2] = {
+		    static_cast<uint8_t>(globalSum >> 8),
+		    static_cast<uint8_t>(globalSum & 0xFF)
+		};
 
 		overwriteBytes(rom0, 0x14E, bytes, sizeof(bytes), "global checksum");
 	}
@@ -1086,7 +1099,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// In case the output depends on the input, reset to the beginning of the file, and only
 	// write the header
 	if (input == output) {
-		if (lseek(output, 0, SEEK_SET) == (off_t)-1) {
+		if (lseek(output, 0, SEEK_SET) == static_cast<off_t>(-1)) {
 			report("FATAL: Failed to rewind \"%s\": %s\n", name, strerror(errno));
 			return;
 		}
@@ -1103,9 +1116,9 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	} else if (writeLen < rom0Len) {
 		report(
 		    "FATAL: Could only write %jd of \"%s\"'s %jd ROM0 bytes\n",
-		    (intmax_t)writeLen,
+		    static_cast<intmax_t>(writeLen),
 		    name,
-		    (intmax_t)rom0Len
+		    static_cast<intmax_t>(rom0Len)
 		);
 		return;
 	}
@@ -1118,10 +1131,10 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 		if (writeLen == -1) {
 			report("FATAL: Failed to write \"%s\"'s ROMX: %s\n", name, strerror(errno));
 			return;
-		} else if ((size_t)writeLen < totalRomxLen) {
+		} else if (static_cast<size_t>(writeLen) < totalRomxLen) {
 			report(
 			    "FATAL: Could only write %jd of \"%s\"'s %zu ROMX bytes\n",
-			    (intmax_t)writeLen,
+			    static_cast<intmax_t>(writeLen),
 			    name,
 			    totalRomxLen
 			);
@@ -1132,7 +1145,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 	// Output padding
 	if (padValue != UNSPECIFIED) {
 		if (input == output) {
-			if (lseek(output, 0, SEEK_END) == (off_t)-1) {
+			if (lseek(output, 0, SEEK_END) == static_cast<off_t>(-1)) {
 				report("FATAL: Failed to seek to end of \"%s\": %s\n", name, strerror(errno));
 				return;
 			}
@@ -1147,7 +1160,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 			// The return value is either -1, or at most `thisLen`,
 			// so it's fine to cast to `size_t`
-			if ((size_t)ret != thisLen) {
+			if (static_cast<size_t>(ret) != thisLen) {
 				report("FATAL: Failed to write \"%s\"'s padding: %s\n", name, strerror(errno));
 				break;
 			}
@@ -1188,7 +1201,7 @@ static bool processFilename(char const *name) {
 				report(
 				    "FATAL: \"%s\" too short, expected at least 336 ($150) bytes, got only %jd\n",
 				    name,
-				    (intmax_t)stat.st_size
+				    static_cast<intmax_t>(stat.st_size)
 				);
 			} else {
 				processFile(input, input, name, stat.st_size);

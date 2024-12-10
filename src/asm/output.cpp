@@ -40,10 +40,10 @@ static std::deque<std::shared_ptr<FileStackNode>> fileStackNodes;
 
 static void putLong(uint32_t n, FILE *file) {
 	uint8_t bytes[] = {
-	    (uint8_t)n,
-	    (uint8_t)(n >> 8),
-	    (uint8_t)(n >> 16),
-	    (uint8_t)(n >> 24),
+	    static_cast<uint8_t>(n),
+	    static_cast<uint8_t>(n >> 8),
+	    static_cast<uint8_t>(n >> 16),
+	    static_cast<uint8_t>(n >> 24),
 	};
 	fwrite(bytes, 1, sizeof(bytes), file);
 }
@@ -55,25 +55,25 @@ static void putString(std::string const &s, FILE *file) {
 
 void out_RegisterNode(std::shared_ptr<FileStackNode> node) {
 	// If node is not already registered, register it (and parents), and give it a unique ID
-	for (; node && node->ID == (uint32_t)-1; node = node->parent) {
+	for (; node && node->ID == UINT32_MAX; node = node->parent) {
 		node->ID = fileStackNodes.size();
 		fileStackNodes.push_front(node);
 	}
 }
 
-// Return a section's ID, or -1 if the section is not in the list
+// Return a section's ID, or UINT32_MAX if the section is not in the list
 static uint32_t getSectIDIfAny(Section *sect) {
 	if (!sect)
-		return (uint32_t)-1;
+		return UINT32_MAX;
 
 	if (auto search = sectionMap.find(sect->name); search != sectionMap.end())
-		return (uint32_t)(sectionMap.size() - search->second - 1);
+		return static_cast<uint32_t>(sectionMap.size() - search->second - 1);
 
 	fatalerror("Unknown section '%s'\n", sect->name.c_str());
 }
 
 static void writePatch(Patch const &patch, FILE *file) {
-	assume(patch.src->ID != (uint32_t)-1);
+	assume(patch.src->ID != UINT32_MAX);
 
 	putLong(patch.src->ID, file);
 	putLong(patch.lineNo, file);
@@ -86,7 +86,7 @@ static void writePatch(Patch const &patch, FILE *file) {
 }
 
 static void writeSection(Section const &sect, FILE *file) {
-	assume(sect.src->ID != (uint32_t)-1);
+	assume(sect.src->ID != UINT32_MAX);
 
 	putString(sect.name, file);
 
@@ -119,7 +119,7 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 	if (!sym.isDefined()) {
 		putc(SYMTYPE_IMPORT, file);
 	} else {
-		assume(sym.src->ID != (uint32_t)-1);
+		assume(sym.src->ID != UINT32_MAX);
 
 		putc(sym.isExported ? SYMTYPE_EXPORT : SYMTYPE_LOCAL, file);
 		putLong(sym.src->ID, file);
@@ -131,7 +131,7 @@ static void writeSymbol(Symbol const &sym, FILE *file) {
 
 static void registerUnregisteredSymbol(Symbol &sym) {
 	// Check for `sym.src`, to skip any built-in symbol from rgbasm
-	if (sym.src && sym.ID == (uint32_t)-1 && !sym_IsPC(&sym)) {
+	if (sym.src && sym.ID == UINT32_MAX && !sym_IsPC(&sym)) {
 		sym.ID = objectSymbols.size(); // Set the symbol's ID within the object file
 		objectSymbols.push_back(&sym);
 		out_RegisterNode(sym.src);
@@ -288,7 +288,7 @@ static void writeAssert(Assertion &assert, FILE *file) {
 }
 
 static void writeFileStackNode(FileStackNode const &node, FILE *file) {
-	putLong(node.parent ? node.parent->ID : (uint32_t)-1, file);
+	putLong(node.parent ? node.parent->ID : UINT32_MAX, file);
 	putLong(node.lineNo, file);
 	putc(node.type, file);
 	if (node.type != NODE_REPT) {

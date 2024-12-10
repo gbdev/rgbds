@@ -43,7 +43,7 @@ char const *printChar(int c) {
 	default: // Print as hex
 		buf[0] = '0';
 		buf[1] = 'x';
-		snprintf(&buf[2], 3, "%02hhX", (uint8_t)c); // includes the '\0'
+		snprintf(&buf[2], 3, "%02hhX", static_cast<uint8_t>(c)); // includes the '\0'
 		return buf;
 	}
 	buf[0] = '\'';

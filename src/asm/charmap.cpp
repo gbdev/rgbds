@@ -53,7 +53,7 @@ bool charmap_ForEach(
 				mappings[nodeIdx] = mapping;
 			for (unsigned c = 0; c < 256; c++) {
 				if (size_t nextIdx = node.next[c]; nextIdx)
-					prefixes.push({nextIdx, mapping + (char)c});
+					prefixes.push({nextIdx, mapping + static_cast<char>(c)});
 			}
 		}
 		mapFunc(charmap.name);
@@ -64,7 +64,7 @@ bool charmap_ForEach(
 }
 
 void charmap_New(std::string const &name, std::string const *baseName) {
-	size_t baseIdx = (size_t)-1;
+	size_t baseIdx = SIZE_MAX;
 
 	if (baseName != nullptr) {
 		if (auto search = charmapMap.find(*baseName); search == charmapMap.end())
@@ -82,7 +82,7 @@ void charmap_New(std::string const &name, std::string const *baseName) {
 	charmapMap[name] = charmapList.size();
 	Charmap &charmap = charmapList.emplace_back();
 
-	if (baseIdx != (size_t)-1)
+	if (baseIdx != SIZE_MAX)
 		charmap.nodes = charmapList[baseIdx].nodes; // Copies `charmapList[baseIdx].nodes`
 	else
 		charmap.nodes.emplace_back(); // Zero-init the root node
@@ -129,7 +129,7 @@ void charmap_Add(std::string const &mapping, std::vector<int32_t> &&value) {
 	size_t nodeIdx = 0;
 
 	for (char c : mapping) {
-		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[(uint8_t)c];
+		size_t &nextIdxRef = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(c)];
 		size_t nextIdx = nextIdxRef;
 
 		if (!nextIdx) {
@@ -157,7 +157,7 @@ bool charmap_HasChar(std::string const &input) {
 	size_t nodeIdx = 0;
 
 	for (char c : input) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)c];
+		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(c)];
 
 		if (!nodeIdx)
 			return false;
@@ -184,7 +184,7 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 	size_t inputIdx = 0;
 
 	for (size_t nodeIdx = 0; inputIdx < input.length();) {
-		nodeIdx = charmap.nodes[nodeIdx].next[(uint8_t)input[inputIdx]];
+		nodeIdx = charmap.nodes[nodeIdx].next[static_cast<uint8_t>(input[inputIdx])];
 
 		if (!nodeIdx)
 			break;

@@ -104,7 +104,7 @@ class Png {
 			    "bytes after reading %zu)",
 			    self->c_str(),
 			    length - nbBytesRead,
-			    (size_t)self->file->pubseekoff(0, std::ios_base::cur)
+			    static_cast<size_t>(self->file->pubseekoff(0, std::ios_base::cur))
 			);
 		}
 	}
@@ -193,7 +193,7 @@ public:
 		options.verbosePrint(Options::VERB_INTERM, "PNG header signature is OK\n");
 
 		png = png_create_read_struct(
-		    PNG_LIBPNG_VER_STRING, (png_voidp)this, handleError, handleWarning
+		    PNG_LIBPNG_VER_STRING, static_cast<png_voidp>(this), handleError, handleWarning
 		);
 		if (!png) {
 			fatal("Failed to allocate PNG structure: %s", strerror(errno));

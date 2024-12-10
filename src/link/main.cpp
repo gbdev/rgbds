@@ -209,8 +209,8 @@ static void parseScrambleSpec(char const *spec) {
 		// Remember where the region's name begins and ends
 		char const *regionName = spec;
 		size_t regionNameLen = strcspn(spec, "=, \t");
-		// Length of region name string slice for printing, truncated if too long
-		int regionNamePrintLen = regionNameLen > INT_MAX ? INT_MAX : (int)regionNameLen;
+		// Length of region name string slice for print formatting, truncated if too long
+		int regionNameFmtLen = regionNameLen > INT_MAX ? INT_MAX : static_cast<int>(regionNameLen);
 		ScrambledRegion region = SCRAMBLE_UNK;
 
 		// If this trips, `spec` must be pointing at a ',' or '=' (or NUL) due to the assumption
@@ -228,7 +228,7 @@ static void parseScrambleSpec(char const *spec) {
 		spec += regionNameLen + strspn(&spec[regionNameLen], " \t");
 		if (*spec != '\0' && *spec != ',' && *spec != '=') {
 			argErr(
-			    'S', "Unexpected '%c' after region name \"%.*s\"", regionNamePrintLen, regionName
+			    'S', "Unexpected '%c' after region name \"%.*s\"", regionNameFmtLen, regionName
 			);
 			// Skip to next ',' or '=' (or NUL) and keep parsing
 			spec += 1 + strcspn(&spec[1], ",=");
@@ -246,7 +246,7 @@ static void parseScrambleSpec(char const *spec) {
 		}
 
 		if (region == SCRAMBLE_UNK)
-			argErr('S', "Unknown region \"%.*s\"", regionNamePrintLen, regionName);
+			argErr('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
 
 		if (*spec == '=') {
 			spec++; // `strtoul` will skip the whitespace on its own
@@ -254,7 +254,7 @@ static void parseScrambleSpec(char const *spec) {
 			char *endptr;
 
 			if (*spec == '\0' || *spec == ',') {
-				argErr('S', "Empty limit for region \"%.*s\"", regionNamePrintLen, regionName);
+				argErr('S', "Empty limit for region \"%.*s\"", regionNameFmtLen, regionName);
 				goto next;
 			}
 			limit = strtoul(spec, &endptr, 10);
@@ -263,7 +263,7 @@ static void parseScrambleSpec(char const *spec) {
 				argErr(
 				    'S',
 				    "Invalid non-numeric limit for region \"%.*s\"",
-				    regionNamePrintLen,
+				    regionNameFmtLen,
 				    regionName
 				);
 				endptr = strchr(endptr, ',');
@@ -274,7 +274,7 @@ static void parseScrambleSpec(char const *spec) {
 				argErr(
 				    'S',
 				    "Limit for region \"%.*s\" may not exceed %" PRIu16,
-				    regionNamePrintLen,
+				    regionNameFmtLen,
 				    regionName,
 				    scrambleSpecs[region].max
 				);
@@ -298,7 +298,7 @@ static void parseScrambleSpec(char const *spec) {
 			// Only WRAMX can be implied, since ROMX and SRAM size may vary
 			scrambleWRAMX = 7;
 		} else {
-			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNamePrintLen, regionName);
+			argErr('S', "Cannot imply limit for region \"%.*s\"", regionNameFmtLen, regionName);
 		}
 
 next: // Can't `continue` a `for` loop with this nontrivial iteration logic

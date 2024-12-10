@@ -109,9 +109,9 @@ static unsigned int mergeSectUnion(
 	if (sect_HasData(type))
 		sectError("Cannot declare ROM sections as UNION\n");
 
-	if (org != (uint32_t)-1) {
+	if (org != UINT32_MAX) {
 		// If both are fixed, they must be the same
-		if (sect.org != (uint32_t)-1 && sect.org != org)
+		if (sect.org != UINT32_MAX && sect.org != org)
 			sectError(
 			    "Section already declared as fixed at different address $%04" PRIx32 "\n", sect.org
 			);
@@ -127,7 +127,7 @@ static unsigned int mergeSectUnion(
 
 	} else if (alignment != 0) {
 		// Make sure any fixed address given is compatible
-		if (sect.org != (uint32_t)-1) {
+		if (sect.org != UINT32_MAX) {
 			if ((sect.org - alignOffset) & mask(alignment))
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
@@ -159,11 +159,11 @@ static unsigned int
 	// Fragments only need "compatible" constraints, and they end up with the strictest
 	// combination of both.
 	// The merging is however performed at the *end* of the original section!
-	if (org != (uint32_t)-1) {
+	if (org != UINT32_MAX) {
 		uint16_t curOrg = org - sect.size;
 
 		// If both are fixed, they must be the same
-		if (sect.org != (uint32_t)-1 && sect.org != curOrg)
+		if (sect.org != UINT32_MAX && sect.org != curOrg)
 			sectError(
 			    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
 			    sect.org
@@ -185,7 +185,7 @@ static unsigned int
 			curOfs += 1U << alignment;
 
 		// Make sure any fixed address given is compatible
-		if (sect.org != (uint32_t)-1) {
+		if (sect.org != UINT32_MAX) {
 			if ((sect.org - curOfs) & mask(alignment))
 				sectError(
 				    "Section already declared as fixed at incompatible address $%04" PRIx32 "\n",
@@ -238,10 +238,10 @@ static void mergeSections(
 			// Common checks
 
 			// If the section's bank is unspecified, override it
-			if (sect.bank == (uint32_t)-1)
+			if (sect.bank == UINT32_MAX)
 				sect.bank = bank;
 			// If both specify a bank, it must be the same one
-			else if (bank != (uint32_t)-1 && sect.bank != bank)
+			else if (bank != UINT32_MAX && sect.bank != bank)
 				sectError("Section already declared with different bank %" PRIu32 "\n", sect.bank);
 			break;
 
@@ -312,7 +312,7 @@ static Section *getSection(
 
 	// First, validate parameters, and normalize them if applicable
 
-	if (bank != (uint32_t)-1) {
+	if (bank != UINT32_MAX) {
 		if (type != SECTTYPE_ROMX && type != SECTTYPE_VRAM && type != SECTTYPE_SRAM
 		    && type != SECTTYPE_WRAMX)
 			error("BANK only allowed for ROMX, WRAMX, SRAM, or VRAM sections\n");
@@ -338,7 +338,7 @@ static Section *getSection(
 		alignOffset = 0;
 	}
 
-	if (org != (uint32_t)-1) {
+	if (org != UINT32_MAX) {
 		if (org < sectionTypeInfo[type].startAddr || org > endaddr(type))
 			error(
 			    "Section \"%s\"'s fixed address $%04" PRIx32 " is outside of range [$%04" PRIx16
@@ -358,7 +358,7 @@ static Section *getSection(
 		// It doesn't make sense to have both alignment and org set
 		uint32_t mask = mask(alignment);
 
-		if (org != (uint32_t)-1) {
+		if (org != UINT32_MAX) {
 			if ((org - alignOffset) & mask)
 				error("Section \"%s\"'s fixed address doesn't match its alignment\n", name.c_str());
 			alignment = 0; // Ignore it if it's satisfied
@@ -518,7 +518,7 @@ uint32_t sect_GetAlignBytes(uint8_t alignment, uint16_t offset) {
 	if (!sect)
 		return 0;
 
-	bool isFixed = sect->org != (uint32_t)-1;
+	bool isFixed = sect->org != UINT32_MAX;
 
 	// If the section is not aligned, no bytes are needed
 	// (fixed sections count as being maximally aligned for this purpose)
@@ -539,7 +539,7 @@ void sect_AlignPC(uint8_t alignment, uint16_t offset) {
 	Section *sect = sect_GetSymbolSection();
 	uint32_t alignSize = 1 << alignment; // Size of an aligned "block"
 
-	if (sect->org != (uint32_t)-1) {
+	if (sect->org != UINT32_MAX) {
 		if ((sect->org + curOffset - offset) % alignSize)
 			error(
 			    "Section's fixed address fails required alignment (PC = $%04" PRIx32 ")\n",

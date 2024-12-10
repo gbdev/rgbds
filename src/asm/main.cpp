@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 	// Support SOURCE_DATE_EPOCH for reproducible builds
 	// https://reproducible-builds.org/docs/source-date-epoch/
 	if (char const *sourceDateEpoch = getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch)
-		now = (time_t)strtoul(sourceDateEpoch, nullptr, 0);
+		now = static_cast<time_t>(strtoul(sourceDateEpoch, nullptr, 0));
 
 	Defer closeDependFile{[&] {
 		if (dependFile)

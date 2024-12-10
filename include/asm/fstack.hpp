@@ -30,8 +30,8 @@ struct FileStackNode {
 	// Meaningless at the root level, but gets written to the object file anyway, so init it
 	uint32_t lineNo = 0;
 
-	// Set only if referenced: ID within the object file, -1 if not output yet
-	uint32_t ID = -1;
+	// Set only if referenced: ID within the object file, `UINT32_MAX` if not output yet
+	uint32_t ID = UINT32_MAX;
 
 	// REPT iteration counts since last named node, in reverse depth order
 	std::vector<uint32_t> &iters() { return data.get<std::vector<uint32_t>>(); }

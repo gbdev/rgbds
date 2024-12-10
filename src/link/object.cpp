@@ -40,13 +40,13 @@ static std::vector<std::vector<FileStackNode>> nodes;
 		if (tmpVal == (errval)) { \
 			errx(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
 		} \
-		var = (vartype)tmpVal; \
+		var = static_cast<vartype>(tmpVal); \
 	} while (0)
 
 /*
  * Reads an unsigned long (32-bit) value from a file.
  * @param file The file to read from. This will read 4 bytes from the file.
- * @return The value read, cast to a int64_t, or -1 on failure.
+ * @return The value read, cast to a int64_t, or `INT64_MAX` on failure.
  */
 static int64_t readLong(FILE *file) {
 	uint32_t value = 0;
@@ -63,7 +63,7 @@ static int64_t readLong(FILE *file) {
 		// `uint8_t`, because int is large enough to hold a byte. This
 		// however causes values larger than 127 to be too large when
 		// shifted, potentially triggering undefined behavior.
-		value |= (unsigned int)byte << shift;
+		value |= static_cast<unsigned int>(byte) << shift;
 	}
 	return value;
 }
@@ -128,7 +128,7 @@ static void readFileStackNode(
 	uint32_t parentID;
 
 	tryReadLong(parentID, file, "%s: Cannot read node #%" PRIu32 "'s parent ID: %s", fileName, i);
-	node.parent = parentID != (uint32_t)-1 ? &fileNodes[parentID] : nullptr;
+	node.parent = parentID != UINT32_MAX ? &fileNodes[parentID] : nullptr;
 	tryReadLong(
 	    node.lineNo, file, "%s: Cannot read node #%" PRIu32 "'s line number: %s", fileName, i
 	);
@@ -329,7 +329,7 @@ static void readPatch(
 static void
     linkPatchToPCSect(Patch &patch, std::vector<std::unique_ptr<Section>> const &fileSections) {
 	patch.pcSection =
-	    patch.pcSectionID != (uint32_t)-1 ? fileSections[patch.pcSectionID].get() : nullptr;
+	    patch.pcSectionID != UINT32_MAX ? fileSections[patch.pcSectionID].get() : nullptr;
 }
 
 /*

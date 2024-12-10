@@ -557,8 +557,8 @@ static void alignTo(uint32_t alignment, uint32_t alignOfs) {
 		    "Cannot align: the next suitable address after $%04" PRIx16 " is $%04" PRIx16
 		    ", past $%04" PRIx16,
 		    pc,
-		    (uint16_t)(pc + length),
-		    (uint16_t)(endaddr(activeType) + 1)
+		    static_cast<uint16_t>(pc + length),
+		    static_cast<uint16_t>(endaddr(activeType) + 1)
 		);
 		return;
 	}
@@ -588,7 +588,7 @@ static void pad(uint32_t length) {
 		    "Cannot increase the current address by %u bytes: only %u bytes to $%04" PRIx16,
 		    length,
 		    typeInfo.size - offset,
-		    (uint16_t)(endaddr(activeType) + 1)
+		    static_cast<uint16_t>(endaddr(activeType) + 1)
 		);
 	} else {
 		pc += length;
@@ -689,7 +689,7 @@ static void placeSection(std::string const &name, bool isOptional) {
 			    name.c_str(),
 			    org,
 			    alignment,
-			    (uint16_t)(org & section->alignMask),
+			    static_cast<uint16_t>(org & section->alignMask),
 			    alignment,
 			    section->alignOfs
 			);

@@ -29,7 +29,7 @@ static int32_t double2fix(double d, int32_t q) {
 		return 0;
 	if (isinf(d))
 		return d < 0 ? INT32_MIN : INT32_MAX;
-	return (int32_t)round(d * pow(2.0, q));
+	return static_cast<int32_t>(round(d * pow(2.0, q)));
 }
 
 static double turn2rad(double t) {
