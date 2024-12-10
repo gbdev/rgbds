@@ -2,7 +2,7 @@
 .\"
 .\" SPDX-License-Identifier: MIT
 .\"
-.Dd October 21, 2024
+.Dd December 10, 2024
 .Dt RGBASM-OLD 5
 .Os
 .Sh NAME
@@ -19,15 +19,6 @@ attempt to list syntax bugs that were fixed, nor new reserved keywords that may 
 .Sh REMOVED
 These are features which have been completely removed, without any direct alternatives.
 Usually these features were limiting the addition of other features, or had awkward limits on their own intended effects.
-.Ss Global labels without colons
-Deprecated in 0.4.0, removed in 0.5.0.
-.Pp
-Labels used to be definable with just a name, but had to be typed in column 1.
-.Pp
-Instead, use explicit colons; for example,
-.Ql Label:
-or exported
-.Ql Label:: .
 .Ss Automatic LD to LDH conversion (rgbasm -l)
 Deprecated in 0.7.0, removed in 0.8.0.
 .Pp
@@ -80,37 +71,6 @@ and
 .Fl H
 flags from
 .Xr rgbasm 1 .
-.Ss IMPORT and XREF
-Removed in 0.4.0.
-.Pp
-Symbols are now automatically resolved if they were exported from elsewhere.
-.Pp
-Instead, just remove these directives.
-.Ss __FILE__ and __LINE__
-Deprecated in 0.6.0, removed in 0.7.0.
-.Pp
-Instead, use
-.Ic WARN
-or
-.Ic FAIL
-to print a complete trace of filenames and line numbers.
-.Ss _PI
-Deprecated in 0.5.0, removed in 0.6.0.
-.Pp
-Instead, use
-.Ql DEF _PI EQU 3.141592653 .
-.Ss '\e,' in strings within macro arguments
-Deprecated in 0.5.0, removed in 0.7.0.
-.Pp
-Macro arguments now handle quoted strings and parenthesized expressions as single arguments, so commas inside them are not argument separators and do not need escaping.
-.Pp
-Instead, just use commas without backslashes.
-.Ss '*' comments
-Deprecated in 0.4.1, removed in 0.5.0.
-.Pp
-Instead, use
-.Ql \&;
-comments.
 .Ss Nested macro definitions
 Removed in 0.4.2.
 .Pp
@@ -139,6 +99,19 @@ in RAM sections, allowing labeled space allocations to overlap.
 .Pp
 Instead, use
 .Ic UNION .
+.Ss __FILE__ and __LINE__
+Deprecated in 0.6.0, removed in 0.7.0.
+.Pp
+Instead, use
+.Ic WARN
+or
+.Ic FAIL
+to print a complete trace of filenames and line numbers.
+.Ss _PI
+Deprecated in 0.5.0, removed in 0.6.0.
+.Pp
+Instead, use
+.Ql DEF _PI EQU 3.141592653 .
 .Ss Treating multi-character strings as numbers
 Deprecated in 0.9.0.
 .Pp
@@ -194,6 +167,27 @@ Variables used to be defined as
 .Pp
 Instead, use
 .Ql DEF name = value .
+.Ss Global labels without colons
+Deprecated in 0.4.0, removed in 0.5.0.
+.Pp
+Labels used to be definable with just a name, but had to be typed in column 1.
+.Pp
+Instead, use explicit colons; for example,
+.Ql Label:
+or exported
+.Ql Label:: .
+.Ss '\e,' in strings within macro arguments
+Deprecated in 0.5.0, removed in 0.7.0.
+.Pp
+Macro arguments now handle quoted strings and parenthesized expressions as single arguments, so commas inside them are not argument separators and do not need escaping.
+.Pp
+Instead, just use commas without backslashes.
+.Ss '*' comments
+Deprecated in 0.4.1, removed in 0.5.0.
+.Pp
+Instead, use
+.Ql \&;
+comments.
 .Ss PRINTT, PRINTI, PRINTV, and PRINTF
 Deprecated in 0.5.0, removed in 0.6.0.
 .Pp
@@ -208,6 +202,12 @@ with
 or
 .Ql {interpolation}
 for type-specific formatting.
+.Ss IMPORT and XREF
+Removed in 0.4.0.
+.Pp
+Symbols are now automatically resolved if they were exported from elsewhere.
+.Pp
+Instead, just remove these directives.
 .Ss GLOBAL and XDEF
 Deprecated in 0.4.2, removed in 0.5.0.
 .Pp
