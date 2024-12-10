@@ -18,6 +18,7 @@ _rgbgfx_completions() {
 		[Z]="columns:normal"
 		[a]="attr-map:glob-*.attrmap"
 		[A]="auto-attr-map:normal"
+		[B]="background-color:unk"
 		[b]="base-tiles:unk"
 		[c]="colors:unk"
 		[d]="depth:unk"
