@@ -28,7 +28,7 @@ struct Rgba {
 		    _5to8(cgbColor),
 		    _5to8(cgbColor >> 5),
 		    _5to8(cgbColor >> 10),
-		    (uint8_t)(cgbColor & 0x8000 ? 0x00 : 0xFF),
+		    static_cast<uint8_t>(cgbColor & 0x8000 ? 0x00 : 0xFF),
 		};
 	}
 

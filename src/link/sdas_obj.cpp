@@ -468,7 +468,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 			getToken(nullptr, "'R' line is too short");
 			areaIdx = parseByte(where, lineNo, token, numberType);
 			getToken(nullptr, "'R' line is too short");
-			areaIdx |= (uint16_t)parseByte(where, lineNo, token, numberType) << 8;
+			areaIdx |= static_cast<uint16_t>(parseByte(where, lineNo, token, numberType)) << 8;
 			if (areaIdx >= fileSections.size())
 				fatal(
 				    &where,
@@ -532,8 +532,9 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 
 				if ((flags & 0xF0) == 0xF0) {
 					getToken(nullptr, "Incomplete relocation");
-					flags =
-					    (flags & 0x0F) | (uint16_t)parseByte(where, lineNo, token, numberType) << 4;
+					flags = (flags & 0x0F)
+					        | static_cast<uint16_t>(parseByte(where, lineNo, token, numberType))
+					              << 4;
 				}
 
 				getToken(nullptr, "Incomplete relocation");
@@ -560,7 +561,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 				uint16_t idx = parseByte(where, lineNo, token, numberType);
 
 				getToken(nullptr, "Incomplete relocation");
-				idx |= (uint16_t)parseByte(where, lineNo, token, numberType);
+				idx |= static_cast<uint16_t>(parseByte(where, lineNo, token, numberType));
 
 				// Loudly fail on unknown flags
 				if (flags & (1 << RELOC_ZPAGE | 1 << RELOC_NPAGE))
@@ -646,7 +647,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_SIZEOF_SECT;
 						memcpy(
-						    (char *)&patch.rpnExpression[1],
+						    reinterpret_cast<char *>(&patch.rpnExpression[1]),
 						    &sym.name.c_str()[2],
 						    sym.name.length() - 2 + 1
 						);
@@ -654,7 +655,7 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 						patch.rpnExpression.resize(1 + sym.name.length() - 2 + 1);
 						patch.rpnExpression[0] = RPN_STARTOF_SECT;
 						memcpy(
-						    (char *)&patch.rpnExpression[1],
+						    reinterpret_cast<char *>(&patch.rpnExpression[1]),
 						    &sym.name.c_str()[2],
 						    sym.name.length() - 2 + 1
 						);
@@ -700,7 +701,11 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 					patch.rpnExpression.resize(1 + name.length() + 1);
 					patch.rpnExpression[0] = RPN_STARTOF_SECT;
 					// The cast is fine, it's just different signedness
-					memcpy((char *)&patch.rpnExpression[1], name.c_str(), name.length() + 1);
+					memcpy(
+					    reinterpret_cast<char *>(&patch.rpnExpression[1]),
+					    name.c_str(),
+					    name.length() + 1
+					);
 				}
 
 				patch.rpnExpression.push_back(RPN_CONST);

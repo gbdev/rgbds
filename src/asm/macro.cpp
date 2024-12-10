@@ -55,10 +55,10 @@ void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
 
 void MacroArgs::shiftArgs(int32_t count) {
 	if (size_t nbArgs = args.size();
-	    count > 0 && ((uint32_t)count > nbArgs || shift > nbArgs - count)) {
+	    count > 0 && (static_cast<uint32_t>(count) > nbArgs || shift > nbArgs - count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their end\n");
 		shift = nbArgs;
-	} else if (count < 0 && shift < (uint32_t)-count) {
+	} else if (count < 0 && shift < static_cast<uint32_t>(-count)) {
 		warning(WARNING_MACRO_SHIFT, "Cannot shift macro arguments past their beginning\n");
 		shift = 0;
 	} else {

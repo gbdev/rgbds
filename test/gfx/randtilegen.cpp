@@ -37,7 +37,7 @@ static unsigned long long getRandomBits(unsigned count) {
 		if (data == EOF) {
 			exit(0);
 		}
-		randbits |= (unsigned long long)data << randcount;
+		randbits |= static_cast<unsigned long long>(data) << randcount;
 		randcount += 8;
 	}
 	unsigned long long result = randbits & ((1ULL << count) - 1);

@@ -86,7 +86,7 @@ static char *mapFile(int fd, std::string const &path, size_t size) {
 			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
-	return mappingAddr != MAP_FAILED ? (char *)mappingAddr : nullptr;
+	return mappingAddr != MAP_FAILED ? static_cast<char *>(mappingAddr) : nullptr;
 }
 
 struct FileUnmapDeleter {
@@ -102,7 +102,7 @@ struct FileUnmapDeleter {
 using namespace std::literals;
 
 // Bison 3.6 changed token "types" to "kinds"; cast to int for simple compatibility
-#define T_(name) (int)yy::parser::token::name
+#define T_(name) static_cast<int>(yy::parser::token::name)
 
 struct Token {
 	int type;
@@ -424,7 +424,7 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 
 		bool isMmapped = false;
 
-		if (size_t size = (size_t)statBuf.st_size; statBuf.st_size > 0) {
+		if (size_t size = static_cast<size_t>(statBuf.st_size); statBuf.st_size > 0) {
 			// Try using `mmap` for better performance
 			if (char *mappingAddr = mapFile(fd, path, size); mappingAddr != nullptr) {
 				close(fd);
@@ -543,7 +543,7 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	size += nbReadChars;
 
 	// `nbReadChars` cannot be negative, so it's fine to cast to `size_t`
-	return (size_t)nbReadChars;
+	return static_cast<size_t>(nbReadChars);
 }
 
 void lexer_SetMode(LexerMode mode) {
@@ -709,20 +709,20 @@ int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
 	for (Expansion &exp : expansions) {
 		if (exp.offset < exp.size())
-			return (uint8_t)(*exp.contents)[exp.offset];
+			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
 	}
 
 	if (content.holds<ViewedContent>()) {
 		auto &view = content.get<ViewedContent>();
 		if (view.offset < view.span.size)
-			return (uint8_t)view.span.ptr[view.offset];
+			return static_cast<uint8_t>(view.span.ptr[view.offset]);
 	} else {
 		auto &cbuf = content.get<BufferedContent>();
 		if (cbuf.size == 0)
 			cbuf.refill();
 		assume(cbuf.offset < LEXER_BUF_SIZE);
 		if (cbuf.size > 0)
-			return (uint8_t)cbuf.buf[cbuf.offset];
+			return static_cast<uint8_t>(cbuf.buf[cbuf.offset]);
 	}
 
 	// If there aren't enough chars, give up
@@ -738,21 +738,21 @@ int LexerState::peekCharAhead() {
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
 		if (exp.offset + distance < exp.size())
-			return (uint8_t)(*exp.contents)[exp.offset + distance];
+			return static_cast<uint8_t>((*exp.contents)[exp.offset + distance]);
 		distance -= exp.size() - exp.offset;
 	}
 
 	if (content.holds<ViewedContent>()) {
 		auto &view = content.get<ViewedContent>();
 		if (view.offset + distance < view.span.size)
-			return (uint8_t)view.span.ptr[view.offset + distance];
+			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
 	} else {
 		auto &cbuf = content.get<BufferedContent>();
 		assume(distance < LEXER_BUF_SIZE);
 		if (cbuf.size <= distance)
 			cbuf.refill();
 		if (cbuf.size > distance)
-			return (uint8_t)cbuf.buf[(cbuf.offset + distance) % LEXER_BUF_SIZE];
+			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % LEXER_BUF_SIZE]);
 	}
 
 	// If there aren't enough chars, give up
@@ -1032,11 +1032,12 @@ static uint32_t readFractionalPart(uint32_t integer) {
 		precision = fixPrecision;
 	}
 
-	if (integer >= ((uint64_t)1 << (32 - precision)))
+	if (integer >= (1ULL << (32 - precision)))
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
 
 	// Cast to unsigned avoids undefined overflow behavior
-	uint32_t fractional = (uint32_t)round((double)value / divisor * pow(2.0, precision));
+	uint32_t fractional =
+	    static_cast<uint32_t>(round(static_cast<double>(value) / divisor * pow(2.0, precision)));
 
 	return (integer << precision) | fractional;
 }

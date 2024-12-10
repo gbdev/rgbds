@@ -43,11 +43,11 @@ private:
 	// Generic field accessors; for internal use only.
 	template<typename T>
 	auto &field() {
-		return pick((T *)nullptr);
+		return pick(static_cast<T *>(nullptr));
 	}
 	template<typename T>
 	auto const &field() const {
-		return pick((T *)nullptr);
+		return pick(static_cast<T *>(nullptr));
 	}
 
 public:

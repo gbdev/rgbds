@@ -53,7 +53,7 @@ static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch cons
 }
 
 static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t index) {
-	assume(index != (uint32_t)-1); // PC needs to be handled specially, not here
+	assume(index != UINT32_MAX); // PC needs to be handled specially, not here
 	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
@@ -73,12 +73,12 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
  */
 static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fileSymbols) {
 	uint8_t const *expression = patch.rpnExpression.data();
-	int32_t size = (int32_t)patch.rpnExpression.size();
+	int32_t size = static_cast<int32_t>(patch.rpnExpression.size());
 
 	rpnStack.clear();
 
 	while (size > 0) {
-		RPNCommand command = (RPNCommand)getRPNByte(expression, size, patch);
+		RPNCommand command = static_cast<RPNCommand>(getRPNByte(expression, size, patch));
 		int32_t value;
 
 		isError = false;
@@ -150,11 +150,11 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_BITWIDTH:
 			value = popRPN(patch);
-			value = value != 0 ? 32 - clz((uint32_t)value) : 0;
+			value = value != 0 ? 32 - clz(static_cast<uint32_t>(value)) : 0;
 			break;
 		case RPN_TZCOUNT:
 			value = popRPN(patch);
-			value = value != 0 ? ctz((uint32_t)value) : 32;
+			value = value != 0 ? ctz(static_cast<uint32_t>(value)) : 32;
 			break;
 
 		case RPN_OR:
@@ -249,7 +249,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_BANK_SECT: {
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
-			char const *name = (char const *)expression;
+			char const *name = reinterpret_cast<char const *>(expression);
 			while (getRPNByte(expression, size, patch))
 				;
 
@@ -280,7 +280,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_SIZEOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
-			char const *name = (char const *)expression;
+			char const *name = reinterpret_cast<char const *>(expression);
 			while (getRPNByte(expression, size, patch))
 				;
 
@@ -301,7 +301,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_STARTOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
-			char const *name = (char const *)expression;
+			char const *name = reinterpret_cast<char const *>(expression);
 			while (getRPNByte(expression, size, patch))
 				;
 
@@ -428,7 +428,7 @@ void patch_CheckAssertions() {
 
 	for (Assertion &assert : assertions) {
 		int32_t value = computeRPNExpr(assert.patch, *assert.fileSymbols);
-		AssertionType type = (AssertionType)assert.patch.type;
+		AssertionType type = static_cast<AssertionType>(assert.patch.type);
 
 		if (!isError && !value) {
 			switch (type) {

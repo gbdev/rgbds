@@ -61,7 +61,7 @@ else()
   if(MORE_WARNINGS)
     add_compile_options(-Werror -Wextra
                         -Walloc-zero -Wcast-align -Wcast-qual -Wduplicated-branches -Wduplicated-cond
-                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wshift-overflow=2
+                        -Wfloat-equal -Wlogical-op -Wnull-dereference -Wold-style-cast -Wshift-overflow=2
                         -Wstringop-overflow=4 -Wundef -Wuninitialized -Wunused
                         -Wshadow # TODO: -Wshadow=compatible-local?
                         -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1

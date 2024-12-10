@@ -170,8 +170,10 @@ bool yywrap() {
 		// If this is a FOR, update the symbol value
 		if (context.isForLoop && fileInfoIters.front() <= context.nbReptIters) {
 			// Avoid arithmetic overflow runtime error
-			uint32_t forValue = (uint32_t)context.forValue + (uint32_t)context.forStep;
-			context.forValue = forValue <= INT32_MAX ? forValue : -(int32_t)~forValue - 1;
+			uint32_t forValue =
+			    static_cast<uint32_t>(context.forValue) + static_cast<uint32_t>(context.forStep);
+			context.forValue =
+			    forValue <= INT32_MAX ? forValue : -static_cast<int32_t>(~forValue) - 1;
 			Symbol *sym = sym_AddVar(context.forName, context.forValue);
 
 			// This error message will refer to the current iteration
@@ -347,9 +349,9 @@ void fstk_RunFor(
 
 	uint32_t count = 0;
 	if (step > 0 && start < stop)
-		count = ((int64_t)stop - start - 1) / step + 1;
+		count = (static_cast<int64_t>(stop) - start - 1) / step + 1;
 	else if (step < 0 && stop < start)
-		count = ((int64_t)start - stop - 1) / -(int64_t)step + 1;
+		count = (static_cast<int64_t>(start) - stop - 1) / -static_cast<int64_t>(step) + 1;
 	else if (step == 0)
 		error("FOR cannot have a step value of 0\n");
 

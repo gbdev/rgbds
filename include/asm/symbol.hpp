@@ -45,7 +45,7 @@ struct Symbol {
 	    >
 	    data;
 
-	uint32_t ID;       // ID of the symbol in the object file (-1 if none)
+	uint32_t ID;       // ID of the symbol in the object file (`UINT32_MAX` if none)
 	uint32_t defIndex; // Ordering of the symbol in the state file
 
 	bool isDefined() const { return type != SYM_REF; }
@@ -55,7 +55,7 @@ struct Symbol {
 	bool isConstant() const {
 		if (type == SYM_LABEL) {
 			Section const *sect = getSection();
-			return sect && sect->org != (uint32_t)-1;
+			return sect && sect->org != UINT32_MAX;
 		}
 		return type == SYM_EQU || type == SYM_VAR;
 	}

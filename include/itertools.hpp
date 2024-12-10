@@ -18,7 +18,7 @@ class EnumSeq {
 		explicit Iterator(T value) : _value(value) {}
 
 		Iterator &operator++() {
-			_value = (T)(_value + 1);
+			_value = static_cast<T>(_value + 1);
 			return *this;
 		}
 
@@ -29,7 +29,7 @@ class EnumSeq {
 	};
 
 public:
-	explicit EnumSeq(T stop) : _start((T)0), _stop(stop) {}
+	explicit EnumSeq(T stop) : _start(static_cast<T>(0)), _stop(stop) {}
 	explicit EnumSeq(T start, T stop) : _start(start), _stop(stop) {}
 
 	Iterator begin() { return Iterator(_start); }

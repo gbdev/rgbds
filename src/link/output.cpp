@@ -363,7 +363,7 @@ static void writeSymBank(SortedSections const &bankSections, SectionType type, u
 			if (!sym->name.empty() && canStartSymName(sym->name[0]))
 				symList.push_back({
 				    .sym = sym,
-				    .addr = (uint16_t)(sym->label().offset + sect->org),
+				    .addr = static_cast<uint16_t>(sym->label().offset + sect->org),
 				});
 		}
 	});
