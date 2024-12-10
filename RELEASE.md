@@ -5,11 +5,13 @@ GitHub.
 
 1. Update the following files, then commit and push.
    You can use <code>git commit -m "Release <i>&lt;version&gt;</i>"</code> and `git push origin master`.
-   
-   - [include/version.hpp](include/version.hpp): set appropriate values for `PACKAGE_VERSION_MAJOR`, `PACKAGE_VERSION_MINOR`, `PACKAGE_VERSION_PATCH`, and `PACKAGE_VERSION_RC`
+
+   - [include/version.hpp](include/version.hpp): set appropriate values for `PACKAGE_VERSION_MAJOR`,
+     `PACKAGE_VERSION_MINOR`, `PACKAGE_VERSION_PATCH`, and `PACKAGE_VERSION_RC`.
      **Only** define `PACKAGE_VERSION_RC` if you are publishing a release candidate!
    - [Dockerfile](Dockerfile): update `ARG version`.
-   - [test/fetch-test-deps.sh](test/fetch-test-deps.sh): update test dependency commits (preferably, use the latest available).
+   - [test/fetch-test-deps.sh](test/fetch-test-deps.sh): update test dependency commits
+     (preferably, use the latest available).
    - [man/\*](man/): update dates and authors.
 
 2. Create a Git tag formatted as <code>v<i>&lt;MAJOR&gt;</i>.<i>&lt;MINOR&gt;</i>.<i>&lt;PATCH&gt;</i></code>,
@@ -67,3 +69,12 @@ GitHub.
 6. Click the "Publish release" button to publish it!
 
 7. Update the `release` branch. You can use `git push origin release`.
+
+8. Update the following related projects.
+
+   - [rgbobj](https://github.com/gbdev/rgbobj) and [rgbds-obj](https://github.com/gbdev/rgbds-obj):
+     make sure that object files created by the latest RGBASM can be parsed and displayed.
+     If the object file revision has been updated, rgbobj will need a corresponding release.
+   - [rgbds-www](https://github.com/gbdev/rgbds-www): update
+     [src/pages/versions.mdx](https://github.com/gbdev/rgbds-www/blob/master/src/pages/versions.mdx)
+     to list the new release.
