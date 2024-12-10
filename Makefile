@@ -185,7 +185,7 @@ install: all
 	$Qinstall ${STRIP} -m ${BINMODE} rgbfix ${DESTDIR}${bindir}/rgbfix${SUFFIX}
 	$Qinstall ${STRIP} -m ${BINMODE} rgbgfx ${DESTDIR}${bindir}/rgbgfx${SUFFIX}
 	$Qinstall -m ${MANMODE} man/rgbasm.1 man/rgblink.1 man/rgbfix.1 man/rgbgfx.1 ${DESTDIR}${mandir}/man1/
-	$Qinstall -m ${MANMODE} man/rgbds.5 man/rgbasm.5 man/rgblink.5 ${DESTDIR}${mandir}/man5/
+	$Qinstall -m ${MANMODE} man/rgbds.5 man/rgbasm.5 man/rgbasm-old.5 man/rgblink.5 ${DESTDIR}${mandir}/man5/
 	$Qinstall -m ${MANMODE} man/rgbds.7 man/gbz80.7 ${DESTDIR}${mandir}/man7/
 
 # Target used to check for suspiciously missing changed files.
