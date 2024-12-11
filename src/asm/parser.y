@@ -2022,6 +2022,7 @@ z80_ld_mem:
 
 z80_ld_c_ind:
 	Z80_LD c_ind COMMA MODE_A {
+		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A\n");
 		sect_ConstByte(0xE2);
 	}
 ;
@@ -2054,6 +2055,7 @@ z80_ld_a:
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 	| Z80_LD reg_a COMMA c_ind {
+		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]\n");
 		sect_ConstByte(0xF2);
 	}
 	| Z80_LD reg_a COMMA reg_rr {
