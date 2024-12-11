@@ -1702,7 +1702,7 @@ sect_org:
 	}
 	| LBRACK uconst RBRACK {
 		$$ = $2;
-		if ($$ < 0 || $$ >= 0x10000) {
+		if ($$ < 0 || $$ > 0xFFFF) {
 			::error("Address $%x is not 16-bit\n", $$);
 			$$ = -1;
 		}

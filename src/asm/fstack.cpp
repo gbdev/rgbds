@@ -162,7 +162,7 @@ bool yywrap() {
 		// If the node is referenced outside this context, we can't edit it, so duplicate it
 		if (context.fileInfo.use_count() > 1) {
 			context.fileInfo = std::make_shared<FileStackNode>(*context.fileInfo);
-			context.fileInfo->ID = -1; // The copy is not yet registered
+			context.fileInfo->ID = UINT32_MAX; // The copy is not yet registered
 		}
 
 		std::vector<uint32_t> &fileInfoIters = context.fileInfo->iters();

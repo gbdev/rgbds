@@ -169,7 +169,7 @@ static Symbol &createSymbol(std::string const &symName) {
 	sym.section = nullptr;
 	sym.src = fstk_GetFileStack();
 	sym.fileLine = sym.src ? lexer_GetLineNo() : 0;
-	sym.ID = -1;
+	sym.ID = UINT32_MAX;
 	sym.defIndex = nextDefIndex++;
 
 	return sym;
