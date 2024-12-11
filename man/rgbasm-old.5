@@ -267,6 +267,23 @@ Instead, use
 .Ql LDH [C], A
 and
 .Ql LDH A, [C] .
+.Ss LDH [n8], A and LDH A, [n8]
+Deprecated in 0.9.0.
+.Pp
+.Ql LDH
+used to treat "addresses" from
+.Ad $00
+to
+.Ad $FF
+as if they were the low byte of an address from
+.Ad $FF00
+to
+.Ad $FFFF .
+.Pp
+Instead, use
+.Ql LDH [n16], A
+and
+.Ql LDH A, [n16] .
 .Ss rgbasm -i
 Deprecated in 0.6.0, removed in 0.8.0.
 .Pp

@@ -1,3 +1,7 @@
+warning: deprecated-ldio.asm(5): [-Wobsolete]
+    LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF
+warning: deprecated-ldio.asm(6): [-Wobsolete]
+    LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF
 warning: deprecated-ldio.asm(8): [-Wobsolete]
     LD [C], A is deprecated; use LDH [C], A
 warning: deprecated-ldio.asm(9): [-Wobsolete]
@@ -10,6 +14,10 @@ warning: deprecated-ldio.asm(15): [-Wobsolete]
     LDIO is deprecated; use LDH
 warning: deprecated-ldio.asm(16): [-Wobsolete]
     LDIO is deprecated; use LDH
+warning: deprecated-ldio.asm(20): [-Wobsolete]
+    LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF
+warning: deprecated-ldio.asm(21): [-Wobsolete]
+    LDH is deprecated with values from $00 to $FF; use $FF00 to $FFFF
 warning: deprecated-ldio.asm(23): [-Wobsolete]
     LD [C], A is deprecated; use LDH [C], A
 warning: deprecated-ldio.asm(24): [-Wobsolete]

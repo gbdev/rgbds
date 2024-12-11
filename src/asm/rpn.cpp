@@ -568,16 +568,20 @@ void Expression::makeBinaryOp(RPNCommand op, Expression &&src1, Expression const
 	}
 }
 
-void Expression::makeCheckHRAM() {
+bool Expression::makeCheckHRAM() {
 	isSymbol = false;
 	if (!isKnown()) {
 		*reserveSpace(1) = RPN_HRAM;
 	} else if (int32_t val = value(); val >= 0xFF00 && val <= 0xFFFF) {
 		// That range is valid, but only keep the lower byte
 		data = val & 0xFF;
-	} else if (val < 0 || val > 0xFF) {
+	} else if (val >= 0 && val <= 0xFF) {
+		// That range is valid, but deprecated
+		return true;
+	} else {
 		error("Source address $%" PRIx32 " not between $FF00 to $FFFF\n", val);
 	}
+	return false;
 }
 
 void Expression::makeCheckRST() {
