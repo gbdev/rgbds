@@ -250,11 +250,6 @@ or
 LD A, [HL+]
 and
 .Ql LD A, [HL-] ) .
-.Ss LD HL, [SP + e8]
-Deprecated in 0.3.0, removed in 0.4.0.
-.Pp
-Instead, use
-.Ql LD HL, SP + e8 .
 .Ss LDIO
 Deprecated in 0.9.0.
 .Pp
@@ -284,6 +279,16 @@ Instead, use
 .Ql LDH [n16], A
 and
 .Ql LDH A, [n16] .
+.Ss LD HL, [SP + e8]
+Deprecated in 0.3.0, removed in 0.4.0.
+.Pp
+Instead, use
+.Ql LD HL, SP + e8 .
+.Ss LDHL, SP, e8
+Supported in ASMotor, removed in RGBDS.
+.Pp
+Instead, use
+.Ql LD HL, SP + e8 .
 .Ss rgbasm -i
 Deprecated in 0.6.0, removed in 0.8.0.
 .Pp
