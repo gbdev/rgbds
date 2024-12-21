@@ -185,6 +185,10 @@ Instead, just use commas without backslashes.
 .Ss '*' comments
 Deprecated in 0.4.1, removed in 0.5.0.
 .Pp
+These comments had to have the
+.Ql *
+typed in column 1.
+.Pp
 Instead, use
 .Ql \&;
 comments.
@@ -241,13 +245,13 @@ Deprecated in 0.3.0, removed in 0.4.0.
 Instead, use
 .Ql LDI A, [HL]
 and
-LDD A, [HL]
+.Ql LDD A, [HL]
 (or
 .Ql LD A, [HLI]
 and
 .Ql LD A, [HLD] ;
 or
-LD A, [HL+]
+.Ql LD A, [HL+]
 and
 .Ql LD A, [HL-] ) .
 .Ss LDIO
