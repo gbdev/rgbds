@@ -335,7 +335,7 @@
 %type <Expression> reloc_16bit_no_str
 
 // Constant numbers
-%type <int32_t> const
+%type <int32_t> iconst
 %type <int32_t> const_no_str
 %type <int32_t> uconst
 // Constant numbers used only in specific contexts
@@ -454,7 +454,7 @@ line_directive:
 ;
 
 if:
-	POP_IF const NEWLINE {
+	POP_IF iconst NEWLINE {
 		lexer_IncIFDepth();
 
 		if ($2)
@@ -465,7 +465,7 @@ if:
 ;
 
 elif:
-	POP_ELIF const NEWLINE {
+	POP_ELIF iconst NEWLINE {
 		if (lexer_GetIFDepth() == 0)
 			fatalerror("Found ELIF outside of an IF construct\n");
 
@@ -700,7 +700,7 @@ align_spec:
 			$$.alignOfs = 0;
 		}
 	}
-	| uconst COMMA const {
+	| uconst COMMA iconst {
 		if ($1 > 16) {
 			::error("Alignment must be between 0 and 16, not %u\n", $1);
 			$$.alignment = $$.alignOfs = 0;
@@ -817,11 +817,11 @@ assert:
 			failAssertMsg($2, $5);
 		}
 	}
-	| POP_STATIC_ASSERT assert_type const {
+	| POP_STATIC_ASSERT assert_type iconst {
 		if ($3 == 0)
 			failAssert($2);
 	}
-	| POP_STATIC_ASSERT assert_type const COMMA string {
+	| POP_STATIC_ASSERT assert_type iconst COMMA string {
 		if ($3 == 0)
 			failAssertMsg($2, $5);
 	}
@@ -841,7 +841,7 @@ shift_const:
 	%empty {
 		$$ = 1;
 	}
-	| const
+	| iconst
 ;
 
 load:
@@ -878,17 +878,17 @@ capture_rept:
 ;
 
 for_args:
-	const {
+	iconst {
 		$$.start = 0;
 		$$.stop = $1;
 		$$.step = 1;
 	}
-	| const COMMA const {
+	| iconst COMMA iconst {
 		$$.start = $1;
 		$$.stop = $3;
 		$$.step = 1;
 	}
-	| const COMMA const COMMA const {
+	| iconst COMMA iconst COMMA iconst {
 		$$.start = $1;
 		$$.stop = $3;
 		$$.step = $5;
@@ -1009,33 +1009,33 @@ dl:
 ;
 
 def_equ:
-	def_id POP_EQU const {
+	def_id POP_EQU iconst {
 		$$ = std::move($1);
 		sym_AddEqu($$, $3);
 	}
 ;
 
 redef_equ:
-	redef_id POP_EQU const {
+	redef_id POP_EQU iconst {
 		$$ = std::move($1);
 		sym_RedefEqu($$, $3);
 	}
 ;
 
 def_set:
-	def_id POP_EQUAL const {
+	def_id POP_EQUAL iconst {
 		$$ = std::move($1);
 		sym_AddVar($$, $3);
 	}
-	| redef_id POP_EQUAL const {
+	| redef_id POP_EQUAL iconst {
 		$$ = std::move($1);
 		sym_AddVar($$, $3);
 	}
-	| def_id compound_eq const {
+	| def_id compound_eq iconst {
 		$$ = std::move($1);
 		compoundAssignment($$, $2, $3);
 	}
-	| redef_id compound_eq const {
+	| redef_id compound_eq iconst {
 		$$ = std::move($1);
 		compoundAssignment($$, $2, $3);
 	}
@@ -1135,12 +1135,12 @@ incbin:
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
-	| POP_INCBIN string COMMA const {
+	| POP_INCBIN string COMMA iconst {
 		sect_BinaryFile($2, $4);
 		if (failedOnMissingInclude)
 			YYACCEPT;
 	}
-	| POP_INCBIN string COMMA const COMMA const {
+	| POP_INCBIN string COMMA iconst COMMA iconst {
 		sect_BinaryFileSlice($2, $4, $6);
 		if (failedOnMissingInclude)
 			YYACCEPT;
@@ -1154,10 +1154,10 @@ charmap:
 ;
 
 charmap_args:
-	const {
+	iconst {
 		$$.push_back(std::move($1));
 	}
-	| charmap_args COMMA const {
+	| charmap_args COMMA iconst {
 		$$ = std::move($1);
 		$$.push_back(std::move($3));
 	}
@@ -1226,7 +1226,7 @@ print_expr:
 ;
 
 bit_const:
-	const {
+	iconst {
 		$$ = $1;
 		if ($$ < 0 || $$ > 7) {
 			::error("Bit number must be between 0 and 7, not %" PRId32 "\n", $$);
@@ -1448,49 +1448,49 @@ relocexpr_no_str:
 		$$.makeNumber(sym_FindScopedValidSymbol($4) != nullptr);
 		lexer_ToggleStringExpansion(true);
 	}
-	| OP_ROUND LPAREN const precision_arg RPAREN {
+	| OP_ROUND LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Round($3, $4));
 	}
-	| OP_CEIL LPAREN const precision_arg RPAREN {
+	| OP_CEIL LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Ceil($3, $4));
 	}
-	| OP_FLOOR LPAREN const precision_arg RPAREN {
+	| OP_FLOOR LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Floor($3, $4));
 	}
-	| OP_FDIV LPAREN const COMMA const precision_arg RPAREN {
+	| OP_FDIV LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Div($3, $5, $6));
 	}
-	| OP_FMUL LPAREN const COMMA const precision_arg RPAREN {
+	| OP_FMUL LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Mul($3, $5, $6));
 	}
-	| OP_FMOD LPAREN const COMMA const precision_arg RPAREN {
+	| OP_FMOD LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Mod($3, $5, $6));
 	}
-	| OP_POW LPAREN const COMMA const precision_arg RPAREN {
+	| OP_POW LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Pow($3, $5, $6));
 	}
-	| OP_LOG LPAREN const COMMA const precision_arg RPAREN {
+	| OP_LOG LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Log($3, $5, $6));
 	}
-	| OP_SIN LPAREN const precision_arg RPAREN {
+	| OP_SIN LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Sin($3, $4));
 	}
-	| OP_COS LPAREN const precision_arg RPAREN {
+	| OP_COS LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Cos($3, $4));
 	}
-	| OP_TAN LPAREN const precision_arg RPAREN {
+	| OP_TAN LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_Tan($3, $4));
 	}
-	| OP_ASIN LPAREN const precision_arg RPAREN {
+	| OP_ASIN LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_ASin($3, $4));
 	}
-	| OP_ACOS LPAREN const precision_arg RPAREN {
+	| OP_ACOS LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_ACos($3, $4));
 	}
-	| OP_ATAN LPAREN const precision_arg RPAREN {
+	| OP_ATAN LPAREN iconst precision_arg RPAREN {
 		$$.makeNumber(fix_ATan($3, $4));
 	}
-	| OP_ATAN2 LPAREN const COMMA const precision_arg RPAREN {
+	| OP_ATAN2 LPAREN iconst COMMA iconst precision_arg RPAREN {
 		$$.makeNumber(fix_ATan2($3, $5, $6));
 	}
 	| OP_STRCMP LPAREN string COMMA string RPAREN {
@@ -1521,14 +1521,14 @@ relocexpr_no_str:
 ;
 
 uconst:
-	const {
+	iconst {
 		$$ = $1;
 		if ($$ < 0)
 			fatalerror("Constant must not be negative: %d\n", $$);
 	}
 ;
 
-const:
+iconst:
 	relocexpr {
 		$$ = $1.getConstVal();
 	}
@@ -1544,7 +1544,7 @@ precision_arg:
 	%empty {
 		$$ = fix_Precision();
 	}
-	| COMMA const {
+	| COMMA iconst {
 		$$ = $2;
 		if ($$ < 1 || $$ > 31) {
 			::error("Fixed-point precision must be between 1 and 31, not %" PRId32 "\n", $$);
@@ -1557,19 +1557,19 @@ string:
 	STRING {
 		$$ = std::move($1);
 	}
-	| OP_STRSUB LPAREN string COMMA const COMMA uconst RPAREN {
+	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
 		size_t len = strlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
 		$$ = strsubUTF8($3, pos, $7);
 	}
-	| OP_STRSUB LPAREN string COMMA const RPAREN {
+	| OP_STRSUB LPAREN string COMMA iconst RPAREN {
 		size_t len = strlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
 		$$ = strsubUTF8($3, pos, pos > len ? 0 : len + 1 - pos);
 	}
-	| OP_CHARSUB LPAREN string COMMA const RPAREN {
+	| OP_CHARSUB LPAREN string COMMA iconst RPAREN {
 		size_t len = charlenUTF8($3);
 		uint32_t pos = adjustNegativePos($5, len, "CHARSUB");
 
@@ -1981,7 +1981,7 @@ z80_ldh:
 c_ind:
 	  LBRACK MODE_C RBRACK
 	| LBRACK relocexpr OP_ADD MODE_C RBRACK {
-		// This has to use `relocexpr`, not `const`, to avoid a shift/reduce conflict
+		// This has to use `relocexpr`, not `iconst`, to avoid a shift/reduce conflict
 		if ($2.getConstVal() != 0xFF00)
 			::error("Base value must be equal to $FF00 for $FF00+C\n");
 	}
