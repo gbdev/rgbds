@@ -590,9 +590,6 @@ void Expression::makeCheckRST() {
 	} else if (int32_t val = value(); val & ~0x38) {
 		// A valid RST address must be masked with 0x38
 		error("Invalid address $%" PRIx32 " for RST\n", val);
-	} else {
-		// The target is in the "0x38" bits, all other bits are set
-		data = val | 0xC7;
 	}
 }
 
