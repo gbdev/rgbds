@@ -30,13 +30,11 @@ static std::vector<std::vector<FileStackNode>> nodes;
 
 // Helper functions for reading object files
 
-// Internal, DO NOT USE.
-// For helper wrapper macros defined below, such as `tryReadLong`
+// For internal use only by `tryReadLong` and `tryGetc`!
 #define tryRead(func, type, errval, vartype, var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
 		type tmpVal = func(tmpFile); \
-		/* TODO: maybe mark the condition as `unlikely`; how to do that portably? */ \
 		if (tmpVal == (errval)) { \
 			errx(__VA_ARGS__, feof(tmpFile) ? "Unexpected end of file" : strerror(errno)); \
 		} \
