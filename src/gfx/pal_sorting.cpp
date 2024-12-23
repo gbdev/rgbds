@@ -48,7 +48,7 @@ void sortIndexed(
 void sortGrayscale(
     std::vector<Palette> &palettes, std::array<std::optional<Rgba>, 0x8001> const &colors
 ) {
-	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting grayscale-only palette...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palette by grayscale bins...\n");
 
 	// This method is only applicable if there are at most as many colors as colors per palette, so
 	// we should only have a single palette.
@@ -56,7 +56,7 @@ void sortGrayscale(
 
 	Palette &palette = palettes[0];
 	std::fill(RANGE(palette.colors), Rgba::transparent);
-	for (auto const &slot : colors) {
+	for (std::optional<Rgba> const &slot : colors) {
 		if (!slot.has_value() || slot->isTransparent()) {
 			continue;
 		}
@@ -64,7 +64,7 @@ void sortGrayscale(
 	}
 }
 
-static unsigned int legacyLuminance(uint16_t color) {
+static unsigned int luminance(uint16_t color) {
 	uint8_t red = color & 0b11111;
 	uint8_t green = color >> 5 & 0b11111;
 	uint8_t blue = color >> 10;
@@ -72,11 +72,11 @@ static unsigned int legacyLuminance(uint16_t color) {
 }
 
 void sortRgb(std::vector<Palette> &palettes) {
-	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by \"\"\"luminance\"\"\"...\n");
+	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palettes by luminance...\n");
 
 	for (Palette &pal : palettes) {
 		std::sort(RANGE(pal), [](uint16_t lhs, uint16_t rhs) {
-			return legacyLuminance(lhs) > legacyLuminance(rhs);
+			return luminance(lhs) > luminance(rhs);
 		});
 	}
 }
