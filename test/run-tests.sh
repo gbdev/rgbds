@@ -41,13 +41,21 @@ if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; th
 	false
 fi
 
+rc=0
+
 # Tests included with the repository
 
 for dir in asm link fix gfx; do
 	pushd $dir
-	./test.sh
+	our_rc=
+	./test.sh || our_rc=$?
+	(( rc = rc || our_rc ))
 	popd
 done
+
+if [[ $rc -ne 0 ]]; then
+	false
+fi
 
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
