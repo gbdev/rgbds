@@ -805,13 +805,11 @@ static ssize_t writeBytes(int fd, uint8_t *buf, size_t len) {
 
 		if (ret == -1 && errno != EINTR) // Return errors, unless we only were interrupted
 			return -1;
-		// EOF reached
-		if (ret == 0)
-			return total;
-		// If anything was read, accumulate it, and continue
+		// If anything was written, accumulate it, and continue
 		if (ret != -1) {
 			total += ret;
 			len -= ret;
+			buf += ret;
 		}
 	}
 
