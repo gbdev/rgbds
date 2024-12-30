@@ -5,6 +5,7 @@
 	#include <sys/stat.h>
 	#include <sys/wait.h>
 
+	#include <signal.h>
 	#include <spawn.h>
 	#include <unistd.h>
 #else
