@@ -54,7 +54,7 @@ IncludeCategories:
 IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: false
-IndentExternBlock: NoIndent
+IndentExternBlock: Indent
 IndentGotoLabels: false
 IndentPPDirectives: BeforeHash
 IndentRequires: true

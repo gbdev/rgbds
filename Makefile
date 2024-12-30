@@ -206,12 +206,8 @@ develop:
 		-Wformat=2 -Wformat-overflow=2 -Wformat-truncation=1 \
 		-Wno-format-nonliteral -Wno-strict-overflow -Wno-unused-but-set-variable \
 		-Wno-type-limits -Wno-tautological-constant-out-of-range-compare -Wvla \
-		-D_GLIBCXX_ASSERTIONS \
-		-fsanitize=shift -fsanitize=integer-divide-by-zero \
-		-fsanitize=unreachable -fsanitize=vla-bound \
-		-fsanitize=signed-integer-overflow -fsanitize=bounds \
-		-fsanitize=object-size -fsanitize=bool -fsanitize=enum \
-		-fsanitize=alignment -fsanitize=null -fsanitize=address" \
+		-D_GLIBCXX_ASSERTIONS -fsanitize=address -fsanitize=undefined \
+		-fsanitize=float-divide-by-zero" \
 		CXXFLAGS="-ggdb3 -Og -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 
 # This target is used during development in order to more easily debug with gdb.

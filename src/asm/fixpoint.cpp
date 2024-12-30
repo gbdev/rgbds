@@ -73,7 +73,11 @@ int32_t fix_Mul(int32_t i, int32_t j, int32_t q) {
 }
 
 int32_t fix_Div(int32_t i, int32_t j, int32_t q) {
-	return double2fix(fix2double(i, q) / fix2double(j, q), q);
+	double dividend = fix2double(i, q);
+	double divisor = fix2double(j, q);
+	if (fpclassify(divisor) == FP_ZERO)
+		return dividend < 0 ? INT32_MIN : dividend > 0 ? INT32_MAX : 0;
+	return double2fix(dividend / divisor, q);
 }
 
 int32_t fix_Mod(int32_t i, int32_t j, int32_t q) {
@@ -85,7 +89,10 @@ int32_t fix_Pow(int32_t i, int32_t j, int32_t q) {
 }
 
 int32_t fix_Log(int32_t i, int32_t j, int32_t q) {
-	return double2fix(log(fix2double(i, q)) / log(fix2double(j, q)), q);
+	double divisor = log(fix2double(j, q));
+	if (fpclassify(divisor) == FP_ZERO)
+		return INT32_MAX;
+	return double2fix(log(fix2double(i, q)) / divisor, q);
 }
 
 int32_t fix_Round(int32_t i, int32_t q) {

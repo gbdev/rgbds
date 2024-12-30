@@ -37,6 +37,9 @@ ENDM
 
 	assert LOG(100.0, 10.0) == 2.0
 	assert LOG(256.0, 2.0) == 8.0
+	assert LOG(10.0, 1.0) == $7fff_ffff ; +inf
+	assert LOG(0.0, 2.71828) == $8000_0000 ; -inf
+	assert LOG(-1.0, 2.71828) == 0 ; nan
 
 	assert ROUND(1.5) == 2.0
 	assert ROUND(-1.5) == -2.0
