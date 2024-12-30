@@ -999,10 +999,11 @@ static UniqueTiles dedupTiles(
 		}
 	}
 
+	bool inputWithoutOutput = !options.inputTileset.empty() && options.output.empty();
 	for (auto [tile, attr] : zip(png.visitAsTiles(), attrmap)) {
 		auto [tileID, matchType] = tiles.addTile({tile, palettes[mappings[attr.protoPaletteID]]});
 
-		if (matchType == TileData::NOPE && options.output.empty()) {
+		if (inputWithoutOutput && matchType == TileData::NOPE) {
 			error(
 			    "Tile at (%" PRIu32 ", %" PRIu32
 			    ") is not within the input tileset, and `-o` was not given!",
