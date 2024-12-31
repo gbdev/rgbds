@@ -13,7 +13,7 @@
 		#define __SANITIZE_ADDRESS__
 	#endif
 #endif
-#if defined(__SANITIZE_ADDRESS__) && !defined(__APPLE__)
+#if !defined(NDEBUG) && defined(__SANITIZE_ADDRESS__) && !defined(__APPLE__)
 extern "C" {
 	char const *__asan_default_options(void) {
 		return "detect_leaks=1";
