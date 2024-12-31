@@ -45,11 +45,8 @@ else()
     add_compile_options(-Wno-gnu-zero-variadic-macro-arguments)
   endif()
   if(SANITIZERS)
-    set(SAN_FLAGS -fsanitize=shift -fsanitize=integer-divide-by-zero
-                  -fsanitize=unreachable -fsanitize=vla-bound
-                  -fsanitize=signed-integer-overflow -fsanitize=bounds
-                  -fsanitize=object-size -fsanitize=bool -fsanitize=enum
-                  -fsanitize=alignment -fsanitize=null -fsanitize=address)
+    set(SAN_FLAGS -fsanitize=address -fsanitize=undefined
+                  -fsanitize=float-divide-by-zero)
     add_compile_options(${SAN_FLAGS})
     add_link_options(${SAN_FLAGS})
     add_definitions(-D_GLIBCXX_ASSERTIONS)
