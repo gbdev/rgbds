@@ -33,5 +33,5 @@ endm
 
     ; Representative numeric and string builtins
     ; (SOURCE_DATE_EPOCH in test.sh makes this reproducible)
-    tickle __UTC_YEAR__, 1
-    tickle __ISO_8601_UTC__, 0
+    tickle __UTC_YEAR__
+    tickle __ISO_8601_UTC__

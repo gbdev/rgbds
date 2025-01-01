@@ -1,3 +1,5 @@
 error: line-continuation-whitespace.asm(7):
     Label "foo" created outside of a SECTION
+warning: line-continuation-whitespace.asm(8) -> line-continuation-whitespace.asm::bar(5): [-Wunused-macro-arg]
+    Unused macro arg \1
 error: Assembly aborted (1 error)!

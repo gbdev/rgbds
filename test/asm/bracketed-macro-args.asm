@@ -1,3 +1,5 @@
+OPT Wno-unused-macro-arg ; various macro arguments go unused
+
 MACRO printargs
 	PRINTLN "first = \<1>"
 	FOR I, 2, _NARG

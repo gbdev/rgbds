@@ -1,3 +1,5 @@
+OPT Wno-unused-macro-arg ; various macro arguments go unused
+
 ; skipping ahead to `elif`/`else`/`endc`/`endr`/`endm` disables expansions!
 
 MACRO mac1

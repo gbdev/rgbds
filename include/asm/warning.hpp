@@ -22,6 +22,7 @@ enum WarningID {
 	WARNING_SHIFT_AMOUNT,         // Strange `SHIFT` amount
 	WARNING_UNMATCHED_DIRECTIVE,  // `PUSH[C|O|S]` without `POP[C|O|S]`
 	WARNING_UNTERMINATED_LOAD,    // `LOAD` without `ENDL`
+	WARNING_UNUSED_MACRO_ARG,     // Unused macro argument
 	WARNING_USER,                 // User-defined `WARN`ings
 
 	NB_PLAIN_WARNINGS,
