@@ -44,9 +44,6 @@ struct FileStackNode {
 	    : type(type_), data(data_){};
 
 	std::string const &dump(uint32_t curLineNo) const;
-
-	// If true, entering this context generates a new unique ID.
-	bool generatesUniqueID() const { return type == NODE_REPT || type == NODE_MACRO; }
 };
 
 #define DEFAULT_MAX_DEPTH 64
