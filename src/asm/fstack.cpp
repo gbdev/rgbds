@@ -210,7 +210,7 @@ static bool newFileContext(std::string const &filePath, bool updateStateNow) {
 	std::shared_ptr<MacroArgs> macroArgs = nullptr;
 
 	auto fileInfo =
-	    std::make_shared<FileStackNode>(NODE_MACRO, filePath == "-" ? "<stdin>" : filePath);
+	    std::make_shared<FileStackNode>(NODE_FILE, filePath == "-" ? "<stdin>" : filePath);
 	if (!contextStack.empty()) {
 		Context &oldContext = contextStack.top();
 		fileInfo->parent = oldContext.fileInfo;
