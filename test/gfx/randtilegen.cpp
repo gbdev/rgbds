@@ -217,8 +217,8 @@ static void write_image(
 }
 
 static void generate_random_image(char const *filename) {
-#define MIN_TILES_PER_SIDE 3
-#define MAX_TILES          ((MIN_TILES_PER_SIDE + 7) * (MIN_TILES_PER_SIDE + 7))
+	static constexpr uint8_t MIN_TILES_PER_SIDE = 3;
+	static constexpr uint8_t MAX_TILES = (MIN_TILES_PER_SIDE + 7) * (MIN_TILES_PER_SIDE + 7);
 	Attributes attributes[MAX_TILES];
 	unsigned char tileData[MAX_TILES][8][8];
 	uint8_t width = getRandomBits(3) + MIN_TILES_PER_SIDE,

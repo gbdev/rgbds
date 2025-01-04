@@ -17,9 +17,10 @@
 #include "platform.hpp"
 #include "version.hpp"
 
-#define UNSPECIFIED 0x200 // Should not be in byte range
+static constexpr uint16_t UNSPECIFIED = 0x200;
+static_assert(UNSPECIFIED > 0xFF, "UNSPECIFIED should not be in byte range!");
 
-#define BANK_SIZE 0x4000
+static constexpr off_t BANK_SIZE = 0x4000;
 
 // Short options
 static char const *optstring = "Ccf:i:jk:L:l:m:n:Op:r:st:Vv";
@@ -383,12 +384,12 @@ static MbcType parseMBC(char const *name) {
 
 		// Read "additional features"
 		uint8_t features = 0;
-#define RAM         (1 << 7)
-#define BATTERY     (1 << 6)
-#define TIMER       (1 << 5)
-#define RUMBLE      (1 << 4)
-#define SENSOR      (1 << 3)
-#define MULTIRUMBLE (1 << 2)
+		static constexpr uint8_t RAM         = 1 << 7;
+		static constexpr uint8_t BATTERY     = 1 << 6;
+		static constexpr uint8_t TIMER       = 1 << 5;
+		static constexpr uint8_t RUMBLE      = 1 << 4;
+		static constexpr uint8_t SENSOR      = 1 << 3;
+		static constexpr uint8_t MULTIRUMBLE = 1 << 2;
 
 		for (;;) {
 			// Trim off trailing whitespace
@@ -740,12 +741,12 @@ static uint8_t const nintendoLogo[] = {
 };
 
 static uint8_t fixSpec = 0;
-#define FIX_LOGO         (1 << 7)
-#define TRASH_LOGO       (1 << 6)
-#define FIX_HEADER_SUM   (1 << 5)
-#define TRASH_HEADER_SUM (1 << 4)
-#define FIX_GLOBAL_SUM   (1 << 3)
-#define TRASH_GLOBAL_SUM (1 << 2)
+static constexpr uint8_t FIX_LOGO         = 1 << 7;
+static constexpr uint8_t TRASH_LOGO       = 1 << 6;
+static constexpr uint8_t FIX_HEADER_SUM   = 1 << 5;
+static constexpr uint8_t TRASH_HEADER_SUM = 1 << 4;
+static constexpr uint8_t FIX_GLOBAL_SUM   = 1 << 3;
+static constexpr uint8_t TRASH_GLOBAL_SUM = 1 << 2;
 
 static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 static char const *gameID = nullptr;
@@ -896,11 +897,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 
 	if (gameID)
 		overwriteBytes(
-		    rom0,
-		    0x13F,
-		    reinterpret_cast<uint8_t const *>(gameID),
-		    gameIDLen,
-		    "manufacturer code"
+		    rom0, 0x13F, reinterpret_cast<uint8_t const *>(gameID), gameIDLen, "manufacturer code"
 		);
 
 	if (model != DMG)

@@ -201,7 +201,8 @@ void sdobj_ReadFile(FileStackNode const &where, FILE *file, std::vector<Symbol> 
 		fatal(&where, lineNo, "Unknown endianness type '%c'", line[0]);
 	}
 
-#define ADDR_SIZE 3
+	static constexpr uint8_t ADDR_SIZE = 3;
+
 	if (line[1] != '0' + ADDR_SIZE)
 		fatal(&where, lineNo, "Unknown or unsupported address size '%c'", line[1]);
 

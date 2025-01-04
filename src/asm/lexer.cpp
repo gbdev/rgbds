@@ -19,7 +19,7 @@
 	#include <unistd.h>
 #endif
 
-#include "helpers.hpp" // assume, QUOTEDSTRLEN
+#include "helpers.hpp"
 #include "util.hpp"
 
 #include "asm/fixpoint.hpp"
@@ -500,27 +500,27 @@ BufferedContent::~BufferedContent() {
 }
 
 void BufferedContent::advance() {
-	assume(offset < LEXER_BUF_SIZE);
+	assume(offset < ARRAY_SIZE(buf));
 	offset++;
-	if (offset == LEXER_BUF_SIZE)
+	if (offset == ARRAY_SIZE(buf))
 		offset = 0; // Wrap around if necessary
 	assume(size > 0);
 	size--;
 }
 
 void BufferedContent::refill() {
-	size_t target = LEXER_BUF_SIZE - size; // Aim: making the buf full
+	size_t target = ARRAY_SIZE(buf) - size; // Aim: making the buf full
 
 	// Compute the index we'll start writing to
-	size_t startIndex = (offset + size) % LEXER_BUF_SIZE;
+	size_t startIndex = (offset + size) % ARRAY_SIZE(buf);
 
 	// If the range to fill passes over the buffer wrapping point, we need two reads
-	if (startIndex + target > LEXER_BUF_SIZE) {
-		size_t nbExpectedChars = LEXER_BUF_SIZE - startIndex;
+	if (startIndex + target > ARRAY_SIZE(buf)) {
+		size_t nbExpectedChars = ARRAY_SIZE(buf) - startIndex;
 		size_t nbReadChars = readMore(startIndex, nbExpectedChars);
 
 		startIndex += nbReadChars;
-		if (startIndex == LEXER_BUF_SIZE)
+		if (startIndex == ARRAY_SIZE(buf))
 			startIndex = 0;
 
 		// If the read was incomplete, don't perform a second read
@@ -534,7 +534,7 @@ void BufferedContent::refill() {
 
 size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	// This buffer overflow made me lose WEEKS of my life. Never again.
-	assume(startIndex + nbChars <= LEXER_BUF_SIZE);
+	assume(startIndex + nbChars <= ARRAY_SIZE(buf));
 	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
 
 	if (nbReadChars == -1)
@@ -720,7 +720,7 @@ int LexerState::peekChar() {
 		auto &cbuf = content.get<BufferedContent>();
 		if (cbuf.size == 0)
 			cbuf.refill();
-		assume(cbuf.offset < LEXER_BUF_SIZE);
+		assume(cbuf.offset < ARRAY_SIZE(cbuf.buf));
 		if (cbuf.size > 0)
 			return static_cast<uint8_t>(cbuf.buf[cbuf.offset]);
 	}
@@ -748,11 +748,11 @@ int LexerState::peekCharAhead() {
 			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
 	} else {
 		auto &cbuf = content.get<BufferedContent>();
-		assume(distance < LEXER_BUF_SIZE);
+		assume(distance < ARRAY_SIZE(cbuf.buf));
 		if (cbuf.size <= distance)
 			cbuf.refill();
 		if (cbuf.size > distance)
-			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % LEXER_BUF_SIZE]);
+			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % ARRAY_SIZE(cbuf.buf)]);
 	}
 
 	// If there aren't enough chars, give up

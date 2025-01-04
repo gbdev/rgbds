@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 	opt_P(0);
 	opt_Q(16);
 	sym_SetExportAll(false);
-	uint32_t maxDepth = DEFAULT_MAX_DEPTH;
+	uint32_t maxDepth = 64;
 	char const *dependFileName = nullptr;
 	std::unordered_map<std::string, std::vector<StateFeature>> stateFileSpecs;
 	std::string newTarget;

@@ -20,7 +20,7 @@
 #include "link/section.hpp"
 #include "link/symbol.hpp"
 
-#define BANK_SIZE 0x4000
+static constexpr size_t BANK_SIZE = 0x4000;
 
 FILE *outputFile;
 FILE *overlayFile;
