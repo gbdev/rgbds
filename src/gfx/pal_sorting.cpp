@@ -46,7 +46,7 @@ void sortIndexed(
 }
 
 void sortGrayscale(
-    std::vector<Palette> &palettes, std::array<std::optional<Rgba>, 0x8001> const &colors
+    std::vector<Palette> &palettes, std::array<std::optional<Rgba>, NB_COLOR_SLOTS> const &colors
 ) {
 	options.verbosePrint(Options::VERB_LOG_ACT, "Sorting palette by grayscale bins...\n");
 

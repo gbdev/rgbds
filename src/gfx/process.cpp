@@ -26,8 +26,7 @@
 #include "gfx/proto_palette.hpp"
 
 class ImagePalette {
-	// Use as many slots as there are CGB colors (plus transparency)
-	std::array<std::optional<Rgba>, 0x8001> _colors;
+	std::array<std::optional<Rgba>, NB_COLOR_SLOTS> _colors;
 
 public:
 	ImagePalette() = default;
