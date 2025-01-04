@@ -322,7 +322,7 @@ void out_WriteObject() {
 	// Also write symbols that weren't written above
 	sym_ForEach(registerUnregisteredSymbol);
 
-	fprintf(file, RGBDS_OBJECT_VERSION_STRING);
+	fputs(RGBDS_OBJECT_VERSION_STRING, file);
 	putLong(RGBDS_OBJECT_REV, file);
 
 	putLong(objectSymbols.size(), file);
