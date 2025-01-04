@@ -15,7 +15,7 @@
 
 // This value is a compromise between `LexerState` allocation performance when `mmap` works, and
 // buffering performance when it doesn't/can't (e.g. when piping a file into RGBASM).
-#define LEXER_BUF_SIZE 64
+static constexpr size_t LEXER_BUF_SIZE = 64;
 // The buffer needs to be large enough for the maximum `lexerState->peek()` lookahead distance
 static_assert(LEXER_BUF_SIZE > 1, "Lexer buffer size is too small");
 // This caps the size of buffer reads, and according to POSIX, passing more than SSIZE_MAX is UB

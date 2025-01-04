@@ -328,9 +328,9 @@ static void placeSection(Section &section) {
 		);
 }
 
-#define BANK_CONSTRAINED  (1 << 2)
-#define ORG_CONSTRAINED   (1 << 1)
-#define ALIGN_CONSTRAINED (1 << 0)
+static constexpr uint8_t BANK_CONSTRAINED  = 1 << 2;
+static constexpr uint8_t ORG_CONSTRAINED   = 1 << 1;
+static constexpr uint8_t ALIGN_CONSTRAINED = 1 << 0;
 static std::deque<Section *> unassignedSections[1 << 3];
 
 /*
