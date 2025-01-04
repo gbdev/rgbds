@@ -46,7 +46,6 @@ struct FileStackNode {
 	std::string const &dump(uint32_t curLineNo) const;
 };
 
-#define DEFAULT_MAX_DEPTH 64
 extern size_t maxRecursionDepth;
 
 struct MacroArgs;
