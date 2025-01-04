@@ -6,11 +6,7 @@
 #include <string.h>
 #include <string>
 
-#include "helpers.hpp"
-
 #include "asm/warning.hpp"
-
-#define MAXMACROARGS 99999
 
 std::shared_ptr<std::string> MacroArgs::getArg(uint32_t i) const {
 	uint32_t realIndex = i + shift - 1;
@@ -48,8 +44,6 @@ std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
 	if (arg->empty())
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
-	if (args.size() == MAXMACROARGS)
-		error("A maximum of " EXPAND_AND_STR(MAXMACROARGS) " arguments is allowed\n");
 	args.push_back(arg);
 }
 
