@@ -10,6 +10,10 @@
 
 #include "gfx/rgba.hpp"
 
+// Allow a slot for every possible CGB color, plus one for transparency
+// 32 (1 << 5) per channel, times 3 RGB channels = 32768 CGB colors
+static constexpr size_t nb_color_slots = (1 << (5 * 3)) + 1;
+
 struct Palette;
 
 void sortIndexed(
@@ -20,7 +24,7 @@ void sortIndexed(
     png_byte *palAlpha
 );
 void sortGrayscale(
-    std::vector<Palette> &palettes, std::array<std::optional<Rgba>, 0x8001> const &colors
+    std::vector<Palette> &palettes, std::array<std::optional<Rgba>, nb_color_slots> const &colors
 );
 void sortRgb(std::vector<Palette> &palettes);
 
