@@ -6,13 +6,15 @@ cd "$(dirname "$0")"
 usage() {
 	echo "Runs regression tests on RGBDS."
 	echo "Options:"
-	echo "    -h, --help      show this help message"
-	echo "    --only-free     skip tests that build nonfree codebases"
+	echo "    -h, --help          show this help message"
+	echo "    --only-free         skip tests that build nonfree codebases"
+	echo "    --only-internal     skip tests that build external codebases"
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
+external=true
 FETCH_TEST_DEPS="fetch-test-deps.sh"
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -23,6 +25,9 @@ while [[ $# -gt 0 ]]; do
 		--only-free)
 			nonfree=false
 			FETCH_TEST_DEPS="fetch-test-deps.sh --only-free"
+			;;
+		--only-internal)
+			external=false
 			;;
 		--)
 			break
@@ -48,6 +53,10 @@ for dir in asm link fix gfx; do
 	./test.sh
 	popd
 done
+
+if ! "$external"; then
+	exit
+fi
 
 # Test some significant external projects that use RGBDS
 # When adding new ones, don't forget to add them to the .gitignore!
