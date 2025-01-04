@@ -4,4 +4,10 @@ warning: rept-shift.asm(15) -> rept-shift.asm::m(11): [-Wmacro-shift]
     Cannot shift macro arguments past their end
 error: rept-shift.asm(15) -> rept-shift.asm::m(12):
     Macro argument '\1' not defined
+warning: rept-shift.asm(15) -> rept-shift.asm::m(13): [-Wunused-macro-arg]
+    Unused macro arg \2
+warning: rept-shift.asm(15) -> rept-shift.asm::m(13): [-Wunused-macro-arg]
+    Unused macro arg \3
+warning: rept-shift.asm(15) -> rept-shift.asm::m(13): [-Wunused-macro-arg]
+    Unused macro arg \4
 error: Assembly aborted (1 error)!

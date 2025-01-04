@@ -17,4 +17,6 @@ MACRO m
 	shift -1
 	shift -1
 ENDM
+	pusho Wno-unused-macro-arg
 	m one
+	popo

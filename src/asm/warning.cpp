@@ -58,6 +58,7 @@ static const WarningFlag warningFlags[NB_WARNINGS] = {
     {"shift-amount",         LEVEL_EVERYTHING},
     {"unmatched-directive",  LEVEL_EXTRA     },
     {"unterminated-load",    LEVEL_EXTRA     },
+    {"unused-macro-arg",     LEVEL_ALL       },
     {"user",                 LEVEL_DEFAULT   },
     // Parametric warnings
     {"numeric-string",       LEVEL_EVERYTHING},

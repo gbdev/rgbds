@@ -2,4 +2,8 @@ error: macro-arg-0.asm(5) -> macro-arg-0.asm::m(2):
     Begun line continuation, but encountered character '0'
 error: macro-arg-0.asm(5) -> macro-arg-0.asm::m(3):
     Invalid bracketed macro argument '\<0>'
+warning: macro-arg-0.asm(5) -> macro-arg-0.asm::m(4): [-Wunused-macro-arg]
+    Unused macro arg \1
+warning: macro-arg-0.asm(5) -> macro-arg-0.asm::m(4): [-Wunused-macro-arg]
+    Unused macro arg \2
 error: Assembly aborted (2 errors)!

@@ -37,5 +37,7 @@ MACRO m
 	assert DEF(_NARG)
 	println _NARG
 	println "{_NARG}!"
+	; Avoid `-Wunused-macro-arg` by evaluating all args
+	redef _use_all_args equs "\#"
 ENDM
 	m 1, 2, 3

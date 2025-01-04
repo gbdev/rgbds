@@ -2,6 +2,8 @@ error: use-purged-symbol.asm(6):
     Macro "m" not defined; it was purged
 error: use-purged-symbol.asm(13) -> use-purged-symbol.asm::m2(10):
     Bracketed symbol "argi" does not exist; it was purged
+warning: use-purged-symbol.asm(13) -> use-purged-symbol.asm::m2(11): [-Wunused-macro-arg]
+    Unused macro arg \1
 error: use-purged-symbol.asm(15):
     Expected constant expression: 'argi' is not constant at assembly time; it was purged
 error: use-purged-symbol.asm(17):

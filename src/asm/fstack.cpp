@@ -188,8 +188,13 @@ bool yywrap() {
 			context.uniqueIDStr->clear(); // Invalidate the current unique ID (if any).
 			return false;
 		}
-	} else if (contextStack.size() == 1) {
-		return true;
+	} else {
+		// If the context is a MACRO body, warn about unused arguments
+		if (context.fileInfo->type == NODE_MACRO && context.macroArgs)
+			context.macroArgs->checkUsedArgs();
+		// Do not pop the very top of the context stack
+		if (contextStack.size() == 1)
+			return true;
 	}
 
 	contextStack.pop();

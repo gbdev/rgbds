@@ -1,3 +1,5 @@
+OPT Wno-unused-macro-arg ; various macro arguments go unused
+
 MACRO testing
 	db _NARG
 	shift
