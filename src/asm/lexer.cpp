@@ -347,6 +347,7 @@ void LexerState::clear(uint32_t lineNo_) {
 	mode = LEXER_NORMAL;
 	atLineStart = true;
 	lastToken = T_(YYEOF);
+	nextToken = 0;
 
 	ifStack.clear();
 
@@ -1183,6 +1184,7 @@ static uint32_t readGfxConstant() {
 
 static bool startsIdentifier(int c) {
 	// Anonymous labels internally start with '!'
+	// Fragment literal labels internally start with '$'
 	return (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a') || c == '.' || c == '_';
 }
 
@@ -1621,6 +1623,11 @@ static void appendStringLiteral(std::string &str, bool raw) {
 static Token yylex_SKIP_TO_ENDC(); // forward declaration for yylex_NORMAL
 
 static Token yylex_NORMAL() {
+	if (int nextToken = lexerState->nextToken; nextToken) {
+		lexerState->nextToken = 0;
+		return Token(nextToken);
+	}
+
 	for (;;) {
 		int c = nextChar();
 
@@ -1644,10 +1651,6 @@ static Token yylex_NORMAL() {
 			return Token(T_(ID), symName);
 		}
 
-		case '[':
-			return Token(T_(LBRACK));
-		case ']':
-			return Token(T_(RBRACK));
 		case '(':
 			return Token(T_(LPAREN));
 		case ')':
@@ -1656,6 +1659,23 @@ static Token yylex_NORMAL() {
 			return Token(T_(COMMA));
 
 			// Handle ambiguous 1- or 2-char tokens
+
+		case '[': // Either [ or [[
+			if (peek() == '[') {
+				shiftChar();
+				return Token(T_(LBRACKS));
+			}
+			return Token(T_(LBRACK));
+
+		case ']': // Either ] or ]]
+			if (peek() == ']') {
+				shiftChar();
+				// `[[ Fragment literals ]]` inject an EOL token to end their contents
+				// even without a newline. Retroactively lex the `]]` after it.
+				lexerState->nextToken = T_(RBRACKS);
+				return Token(T_(EOL));
+			}
+			return Token(T_(RBRACK));
 
 		case '+': // Either += or ADD
 			if (peek() == '=') {

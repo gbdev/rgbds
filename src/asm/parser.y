@@ -103,11 +103,13 @@
 %token YYEOF 0 "end of file"
 %token NEWLINE "end of line"
 %token EOB "end of buffer"
+%token EOL "end of fragment literal"
 
 // General punctuation
 %token COMMA ","
 %token COLON ":" DOUBLE_COLON "::"
 %token LBRACK "[" RBRACK "]"
+%token LBRACKS "[[" RBRACKS "]]"
 %token LPAREN "(" RPAREN ")"
 
 // Arithmetic operators
@@ -360,6 +362,8 @@
 %type <std::string> redef_equs
 %type <std::string> scoped_id
 %type <std::string> scoped_anon_id
+%type <std::string> fragment_literal
+%type <std::string> fragment_literal_name
 
 // SM83 instruction parameters
 %type <int32_t> reg_r
@@ -433,7 +437,7 @@ line:
 	| line_directive // Directives that manage newlines themselves
 ;
 
-endofline: NEWLINE | EOB;
+endofline: NEWLINE | EOB | EOL;
 
 // For "logistical" reasons, these directives must manage newlines themselves.
 // This is because we need to switch the lexer's mode *after* the newline has been read,
@@ -1320,12 +1324,32 @@ reloc_16bit:
 		$$ = std::move($1);
 		$$.checkNBit(16);
 	}
+	| fragment_literal {
+		$$.makeSymbol($1);
+	}
 ;
 
 reloc_16bit_no_str:
 	relocexpr_no_str {
 		$$ = std::move($1);
 		$$.checkNBit(16);
+	}
+	| fragment_literal {
+		$$.makeSymbol($1);
+	}
+;
+
+fragment_literal:
+	LBRACKS fragment_literal_name asm_file RBRACKS {
+		sect_PopSection();
+		$$ = std::move($2);
+	}
+;
+
+fragment_literal_name:
+	%empty {
+		$$ = sect_PushSectionFragmentLiteral();
+		sym_AddLabel($$);
 	}
 ;
 
