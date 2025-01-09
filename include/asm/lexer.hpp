@@ -84,6 +84,7 @@ struct LexerState {
 	bool atLineStart;
 	uint32_t lineNo;
 	int lastToken;
+	int nextToken;
 
 	std::deque<IfStackEntry> ifStack;
 

@@ -68,8 +68,12 @@ static uint32_t getSectIDIfAny(Section *sect) {
 		return UINT32_MAX;
 	}
 
-	if (auto search = sectionMap.find(sect->name); search != sectionMap.end()) {
-		return static_cast<uint32_t>(search->second);
+	// Search in `sectionList` instead of `sectionMap`, since section fragments share the
+	// same name but have different IDs
+	if (auto search =
+	        std::find_if(RANGE(sectionList), [&sect](Section const &s) { return &s == sect; });
+	    search != sectionList.end()) {
+		return static_cast<uint32_t>(std::distance(sectionList.begin(), search));
 	}
 
 	// Every section that exists should be in `sectionMap`

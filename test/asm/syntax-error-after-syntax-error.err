@@ -7,5 +7,5 @@ error: syntax-error-after-syntax-error.asm(6):
 error: syntax-error-after-syntax-error.asm(9):
     syntax error, unexpected :
 error: syntax-error-after-syntax-error.asm(10):
-    syntax error, unexpected stop, expecting end of line or end of buffer or ::
+    syntax error, unexpected stop, expecting end of line or end of buffer or end of fragment literal or ::
 Assembly aborted with 5 errors!

@@ -22,6 +22,8 @@
 #include "asm/symbol.hpp"
 #include "asm/warning.hpp"
 
+using namespace std::literals;
+
 uint8_t fillByte;
 
 struct UnionStackEntry {
@@ -307,6 +309,32 @@ static Section *createSection(
 	if (sect_HasData(type)) {
 		sect.data.resize(sectionTypeInfo[type].size);
 	}
+
+	return &sect;
+}
+
+// Create a new section fragment literal, not yet in the list.
+static Section *createSectionFragmentLiteral(Section const &parent) {
+	// Add the new section to the list, but do not update the map
+	Section &sect = sectionList.emplace_back();
+	assume(sectionMap.find(parent.name) != sectionMap.end());
+
+	sect.name = parent.name;
+	sect.type = parent.type;
+	sect.modifier = SECTION_FRAGMENT;
+	sect.src = fstk_GetFileStack();
+	sect.fileLine = lexer_GetLineNo();
+	sect.size = 0;
+	sect.org = UINT32_MAX;
+	sect.bank = parent.bank == 0 ? UINT32_MAX : parent.bank;
+	sect.align = 0;
+	sect.alignOfs = 0;
+
+	out_RegisterNode(sect.src);
+
+	// Section fragment literals must be ROM sections.
+	assume(sect_HasData(sect.type));
+	sect.data.resize(sectionTypeInfo[sect.type].size);
 
 	return &sect;
 }
@@ -1066,4 +1094,41 @@ void sect_EndSection() {
 	// Reset the section scope
 	currentSection = nullptr;
 	sym_ResetCurrentLabelScopes();
+}
+
+std::string sect_PushSectionFragmentLiteral() {
+	static uint64_t nextFragmentLiteralID = 0;
+
+	// Like `requireCodeSection` but fatal
+	if (!currentSection) {
+		fatal("Cannot output fragment literals outside of a SECTION");
+	}
+	if (!sect_HasData(currentSection->type)) {
+		fatal(
+		    "Section '%s' cannot contain fragment literals (not ROM0 or ROMX)",
+		    currentSection->name.c_str()
+		);
+	}
+
+	if (currentLoadSection) {
+		fatal("`LOAD` blocks cannot contain fragment literals");
+	}
+	if (currentSection->modifier == SECTION_UNION) {
+		fatal("`SECTION UNION` cannot contain fragment literals");
+	}
+
+	// A section containing a fragment literal has to become a fragment too
+	currentSection->modifier = SECTION_FRAGMENT;
+
+	Section *parent = currentSection;
+	sect_PushSection(); // Resets `currentSection`
+
+	Section *sect = createSectionFragmentLiteral(*parent);
+
+	changeSection();
+	curOffset = sect->size;
+	currentSection = sect;
+
+	// Return a symbol ID to use for the address of this section fragment
+	return "$"s + std::to_string(nextFragmentLiteralID++);
 }
