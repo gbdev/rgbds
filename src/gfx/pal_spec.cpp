@@ -171,20 +171,6 @@ void parseInlinePalSpec(char const * const rawArg) {
 	}
 }
 
-/*
- * Tries to read some magic bytes from the provided `file`.
- * Returns whether the magic was correctly read.
- */
-template<size_t n>
-[[gnu::warn_unused_result]] // Ignoring failure to match is a bad idea.
-static bool
-    readMagic(std::filebuf &file, char const *magic) {
-	assume(strlen(magic) == n);
-
-	char magicBuf[n];
-	return file.sgetn(magicBuf, n) == n && memcmp(magicBuf, magic, n);
-}
-
 template<typename T, typename U>
 static T readBE(U const *bytes) {
 	T val = 0;
@@ -209,8 +195,7 @@ static T readLE(U const *bytes) {
  * @return true if a line was read.
  */
 [[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
-static bool
-    readLine(std::filebuf &file, std::string &buffer) {
+static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
