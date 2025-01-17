@@ -14,8 +14,8 @@ std::vector<std::unique_ptr<Section>> sectionList;
 std::unordered_map<std::string, size_t> sectionMap; // Indexes into `sectionList`
 
 void sect_ForEach(void (*callback)(Section &)) {
-	for (auto it = sectionList.rbegin(); it != sectionList.rend(); it++)
-		callback(*it->get());
+	for (auto &ptr : sectionList)
+		callback(*ptr);
 }
 
 static void checkAgainstFixedAddress(Section const &target, Section const &other, uint16_t org) {
