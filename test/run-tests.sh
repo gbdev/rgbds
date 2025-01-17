@@ -74,6 +74,6 @@ if "$nonfree"; then
 	test_downstream pret  pokered          compare pokered.gbc     ea9bcae617fdf159b045185467ae58b2e4a48b9a
 	test_downstream zladx LADX-Disassembly default azle.gbc        d90ac17e9bf17b6c61624ad9f05447bdb5efc01a
 fi
-test_downstream AntonioND ucity   all      ucity.gbc 5e9ded318aa09cf479b30910ba6f2fba5d848fd4
-test_downstream pinobatch libbet  all      libbet.gb 608d3f727d5c503b6d746d6dbf7b41ab6495e208
+test_downstream AntonioND ucity   all      ucity.gbc d2f4a7db48ee208b1bd69a78bd492a1c9ac4a030
+test_downstream pinobatch libbet  all      libbet.gb f117089aa056600e2d404bbcbac96b016fc64611
 test_downstream LIJI32    SameBoy bootroms build/bin/BootROMs/cgb_boot.bin 113903775a9d34b798c2f8076672da6626815a91
