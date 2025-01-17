@@ -64,7 +64,7 @@ static char *mapFile(int fd, std::string const &path, size_t) {
 		}
 		CloseHandle(file);
 	}
-	return (char *)mappingAddr;
+	return static_cast<char *>(mappingAddr);
 }
 
 struct FileUnmapDeleter {
