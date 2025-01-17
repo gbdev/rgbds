@@ -2577,8 +2577,7 @@ static size_t charlenUTF8(std::string const &str) {
 	std::string_view view = str;
 	size_t len;
 
-	for (len = 0; charmap_ConvertNext(view, nullptr); len++)
-		;
+	for (len = 0; charmap_ConvertNext(view, nullptr); len++) {}
 
 	return len;
 }

@@ -250,8 +250,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 			// `expression` is not guaranteed to be '\0'-terminated. If it is not,
 			// `getRPNByte` will have a fatal internal error.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
@@ -281,8 +280,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_SIZEOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(
@@ -302,8 +300,7 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		case RPN_STARTOF_SECT: {
 			// This has assumptions commented in the `RPN_BANK_SECT` case above.
 			char const *name = reinterpret_cast<char const *>(expression);
-			while (getRPNByte(expression, size, patch))
-				;
+			while (getRPNByte(expression, size, patch)) {}
 
 			if (Section const *sect = sect_GetSection(name); !sect) {
 				error(

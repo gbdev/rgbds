@@ -168,8 +168,7 @@ bool charmap_HasChar(std::string const &input) {
 
 std::vector<int32_t> charmap_Convert(std::string const &input) {
 	std::vector<int32_t> output;
-	for (std::string_view inputView = input; charmap_ConvertNext(inputView, &output);)
-		;
+	for (std::string_view inputView = input; charmap_ConvertNext(inputView, &output);) {}
 	return output;
 }
 
