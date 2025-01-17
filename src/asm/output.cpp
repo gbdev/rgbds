@@ -282,7 +282,7 @@ void out_CreateAssert(
 	assertion.message = message;
 }
 
-static void writeAssert(Assertion &assert, FILE *file) {
+static void writeAssert(Assertion const &assert, FILE *file) {
 	writePatch(assert.patch, file);
 	putString(assert.message, file);
 }
@@ -352,7 +352,7 @@ void out_WriteObject() {
 
 	putLong(assertions.size(), file);
 
-	for (Assertion &assert : assertions)
+	for (Assertion const &assert : assertions)
 		writeAssert(assert, file);
 }
 
