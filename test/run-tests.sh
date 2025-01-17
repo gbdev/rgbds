@@ -24,10 +24,11 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
-			FETCH_TEST_DEPS="fetch-test-deps.sh --only-free"
+			FETCH_TEST_DEPS="$FETCH_TEST_DEPS --only-free"
 			;;
 		--only-internal)
 			external=false
+			FETCH_TEST_DEPS="$FETCH_TEST_DEPS --only-internal"
 			;;
 		--)
 			break
