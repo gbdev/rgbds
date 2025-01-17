@@ -107,7 +107,7 @@ static int64_t readLong(FILE *file) {
 			} else { \
 				tmpVal.push_back(tmpByte); \
 			} \
-		}; \
+		} \
 	} while (0)
 
 // Functions to parse object files

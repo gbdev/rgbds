@@ -41,7 +41,7 @@ struct FileStackNode {
 	std::string const &name() const { return data.get<std::string>(); }
 
 	FileStackNode(FileStackNodeType type_, Either<std::vector<uint32_t>, std::string> data_)
-	    : type(type_), data(data_){};
+	    : type(type_), data(data_) {}
 
 	std::string const &dump(uint32_t curLineNo) const;
 };
