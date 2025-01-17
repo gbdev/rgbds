@@ -127,10 +127,27 @@ static void checkFragmentCompat(Section &target, Section &other) {
 	}
 }
 
-static void mergeSections(Section &target, std::unique_ptr<Section> &&other, SectionModifier mod) {
-	// Common checks
-
-	if (target.type != other->type) {
+static void mergeSections(Section &target, std::unique_ptr<Section> &&other) {
+	if (target.modifier != other->modifier) {
+		fprintf(
+		    stderr,
+		    "error: Section \"%s\" is defined as %s at ",
+		    target.name.c_str(),
+		    sectionModNames[target.modifier]
+		);
+		target.src->dump(target.lineNo);
+		fprintf(stderr, ", but as %s at ", sectionModNames[other->modifier]);
+		other->src->dump(other->lineNo);
+		putc('\n', stderr);
+		exit(1);
+	} else if (other->modifier == SECTION_NORMAL) {
+		fprintf(stderr, "error: Section \"%s\" is defined at ", target.name.c_str());
+		target.src->dump(target.lineNo);
+		fputs(", but also at ", stderr);
+		other->src->dump(other->lineNo);
+		putc('\n', stderr);
+		exit(1);
+	} else if (target.type != other->type) {
 		fprintf(
 		    stderr,
 		    "error: Section \"%s\" is defined with type %s at ",
@@ -163,7 +180,7 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 		}
 	}
 
-	switch (mod) {
+	switch (other->modifier) {
 	case SECTION_UNION:
 		checkSectUnionCompat(target, *other);
 		if (other->size > target.size)
@@ -173,8 +190,6 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 	case SECTION_FRAGMENT:
 		checkFragmentCompat(target, *other);
 		// Append `other` to `target`
-		// Note that the order in which fragments are stored in the `nextu` list does not
-		// really matter, only that offsets are properly computed
 		other->offset = target.size;
 		target.size += other->size;
 		// Normally we'd check that `sect_HasData`, but SDCC areas may be `_INVALID` here
@@ -192,35 +207,16 @@ static void mergeSections(Section &target, std::unique_ptr<Section> &&other, Sec
 		unreachable_();
 	}
 
+	// Note that the order in which fragments are stored in the `nextu` list does not
+	// really matter, only that offsets were properly computed above
 	other->nextu = std::move(target.nextu);
 	target.nextu = std::move(other);
 }
 
 void sect_AddSection(std::unique_ptr<Section> &&section) {
 	// Check if the section already exists
-	if (Section *other = sect_GetSection(section->name); other) {
-		if (section->modifier != other->modifier) {
-			fprintf(
-			    stderr,
-			    "error: Section \"%s\" is defined as %s at ",
-			    section->name.c_str(),
-			    sectionModNames[section->modifier]
-			);
-			section->src->dump(section->lineNo);
-			fprintf(stderr, ", but as %s at ", sectionModNames[other->modifier]);
-			other->src->dump(other->lineNo);
-			putc('\n', stderr);
-			exit(1);
-		} else if (section->modifier == SECTION_NORMAL) {
-			fprintf(stderr, "error: Section \"%s\" is defined at ", section->name.c_str());
-			section->src->dump(section->lineNo);
-			fputs(", but also at ", stderr);
-			other->src->dump(other->lineNo);
-			putc('\n', stderr);
-			exit(1);
-		} else {
-			mergeSections(*other, std::move(section), section->modifier);
-		}
+	if (Section *target = sect_GetSection(section->name); target) {
+		mergeSections(*target, std::move(section));
 	} else if (section->modifier == SECTION_UNION && sect_HasData(section->type)) {
 		errx(
 		    "Section \"%s\" is of type %s, which cannot be unionized",
