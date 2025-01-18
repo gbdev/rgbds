@@ -154,7 +154,7 @@ ENDM
     ld  [hl],a
     ld  [$ABCD],a
     ldh [$ff00+$DB],a
-    ldh [$ff00+c],a
+    ld  [$ff00+c],a
     ldh [$ff00 + c],a
     ldh [c],a
 
@@ -164,7 +164,7 @@ ENDM
     ld  a,[$ABCD]
     ldh a,[$ff00+$DB]
     ldh a,[$ff00+c]
-    ldh a,[$ff00 + c]
+    ld  a,[$ff00 + c]
     ldh a,[c]
 
     ld  [hl+],a

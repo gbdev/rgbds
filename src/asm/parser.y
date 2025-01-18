@@ -1973,14 +1973,21 @@ z80_ldh:
 	| Z80_LDH MODE_A COMMA c_ind {
 		sect_ConstByte(0xF2);
 	}
+	| Z80_LDH MODE_A COMMA ff00_c_ind {
+		sect_ConstByte(0xF2);
+	}
 	| Z80_LDH c_ind COMMA MODE_A {
+		sect_ConstByte(0xE2);
+	}
+	| Z80_LDH ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
 	}
 ;
 
-c_ind:
-	  LBRACK MODE_C RBRACK
-	| LBRACK relocexpr OP_ADD MODE_C RBRACK {
+c_ind: LBRACK MODE_C RBRACK;
+
+ff00_c_ind:
+	LBRACK relocexpr OP_ADD MODE_C RBRACK {
 		// This has to use `relocexpr`, not `iconst`, to avoid a shift/reduce conflict
 		if ($2.getConstVal() != 0xFF00)
 			::error("Base value must be equal to $FF00 for $FF00+C\n");
@@ -2031,7 +2038,10 @@ z80_ld_mem:
 ;
 
 z80_ld_c_ind:
-	Z80_LD c_ind COMMA MODE_A {
+	Z80_LD ff00_c_ind COMMA MODE_A {
+		sect_ConstByte(0xE2);
+	}
+	| Z80_LD c_ind COMMA MODE_A {
 		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A\n");
 		sect_ConstByte(0xE2);
 	}
@@ -2063,6 +2073,9 @@ z80_ld_a:
 	}
 	| Z80_LD reg_a COMMA reg_r {
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
+	}
+	| Z80_LD reg_a COMMA ff00_c_ind {
+		sect_ConstByte(0xF2);
 	}
 	| Z80_LD reg_a COMMA c_ind {
 		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]\n");
