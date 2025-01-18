@@ -176,6 +176,33 @@ Instead, use explicit colons; for example,
 .Ql Label:
 or exported
 .Ql Label:: .
+.Ss Space between exported labels' colons
+Removed in 0.7.0.
+.Pp
+Labels with two colons used to allow a space between them; for example,
+.Ql Label:\ : .
+.Pp
+Instead, use
+.Ql Label:: .
+.Ss Space between label and colon
+Removed in 0.9.0.
+.Pp
+Space between a label and its colon(s) used to be allowed; for example,
+.Ql Label\ :
+and
+.Ql Label\ :: .
+Now they are treated as invocations of the
+.Ql Label
+macro with
+.Ql \&:
+and
+.Ql ::
+as arguments.
+.Pp
+Instead, use
+.Ql Label:
+and
+.Ql Label:: .
 .Ss '\e,' in strings within macro arguments
 Deprecated in 0.5.0, removed in 0.7.0.
 .Pp
@@ -288,11 +315,27 @@ Deprecated in 0.3.0, removed in 0.4.0.
 .Pp
 Instead, use
 .Ql LD HL, SP + e8 .
-.Ss LDHL, SP, e8
+.Ss LDHL SP, e8
 Supported in ASMotor, removed in RGBDS.
 .Pp
 Instead, use
 .Ql LD HL, SP + e8 .
+.Ss ADD r16 with implicit first HL operand
+Removed in 0.5.0.
+.Pp
+For example,
+.Ql ADD BC
+used to be treated as
+.Ql ADD HL, BC ,
+and likewise for
+.Ql DE ,
+.Ql HL ,
+and
+.Ql SP .
+.Pp
+Instead, use an explicit first
+.Ql HL
+operand.
 .Ss rgbasm -i
 Deprecated in 0.6.0, removed in 0.8.0.
 .Pp
