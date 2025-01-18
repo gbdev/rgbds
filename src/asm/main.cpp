@@ -48,7 +48,7 @@ static std::string make_escape(std::string &str) {
 }
 
 // Short options
-static char const *optstring = "b:D:Eg:I:M:o:P:p:Q:r:s:VvW:wX:";
+static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
 
 // Variables for the long-only options
 static int depType; // Variants of `-M`
@@ -69,6 +69,7 @@ static option const longopts[] = {
     {"include",         required_argument, nullptr,  'I'},
     {"dependfile",      required_argument, nullptr,  'M'},
     {"MG",              no_argument,       &depType, 'G'},
+    {"help",            no_argument,       nullptr,  'h'},
     {"MP",              no_argument,       &depType, 'P'},
     {"MT",              required_argument, &depType, 'T'},
     {"warning",         required_argument, nullptr,  'W'},
@@ -88,7 +89,7 @@ static option const longopts[] = {
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgbasm [-EVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
+	    "Usage: rgbasm [-EhVvw] [-b chars] [-D name[=value]] [-g chars] [-I path]\n"
 	    "              [-M depend_file] [-MG] [-MP] [-MT target_file] [-MQ target_file]\n"
 	    "              [-o out_file] [-P include_file] [-p pad_value] [-Q precision]\n"
 	    "              [-r depth] [-s features:state_file] [-W warning] [-X max_errors]\n"
@@ -168,6 +169,10 @@ int main(int argc, char *argv[]) {
 			else
 				errx("Must specify exactly 4 characters for option 'g'");
 			break;
+
+		case 'h':
+			printUsage();
+			exit(0);
 
 		case 'I':
 			fstk_AddIncludePath(musl_optarg);

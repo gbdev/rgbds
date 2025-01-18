@@ -130,7 +130,7 @@ void argErr(char flag, char const *fmt, ...) {
 }
 
 // Short options
-static char const *optstring = "dl:m:Mn:O:o:p:S:tVvWwx";
+static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvWwx";
 
 /*
  * Equivalent long options
@@ -144,6 +144,7 @@ static char const *optstring = "dl:m:Mn:O:o:p:S:tVvWwx";
  */
 static option const longopts[] = {
     {"dmg",           no_argument,       nullptr, 'd'},
+    {"help",          no_argument,       nullptr, 'h'},
     {"linkerscript",  required_argument, nullptr, 'l'},
     {"map",           required_argument, nullptr, 'm'},
     {"no-sym-in-map", no_argument,       nullptr, 'M'},
@@ -162,7 +163,7 @@ static option const longopts[] = {
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgblink [-dMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
+	    "Usage: rgblink [-dhMtVvwx] [-l script] [-m map_file] [-n sym_file]\n"
 	    "               [-O overlay_file] [-o out_file] [-p pad_value]\n"
 	    "               [-S spec] <file> ...\n"
 	    "Useful options:\n"
@@ -327,6 +328,9 @@ int main(int argc, char *argv[]) {
 			isDmgMode = true;
 			isWRAM0Mode = true;
 			break;
+		case 'h':
+			printUsage();
+			exit(0);
 		case 'l':
 			if (linkerScriptName)
 				warnx("Overriding linker script %s", linkerScriptName);

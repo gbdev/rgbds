@@ -1,8 +1,9 @@
 #compdef rgblink
 
 local args=(
-	# Arguments are listed here in the same order as in the manual, except for the version
+	# Arguments are listed here in the same order as in the manual, except for the version and help
 	'(- : * options)'{-V,--version}'[Print version number]'
+	'(-h --help)'{-h,--help}'[Print help with usage]'
 
 	'(-d --dmg)'{-d,--dmg}'[Enable DMG mode (-w + no VRAM banking)]'
 	'(-t --tiny)'{-t,--tiny}'[Enable tiny mode, disabling ROM banking]'

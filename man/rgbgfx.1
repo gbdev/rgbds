@@ -10,7 +10,7 @@
 .Nd Game Boy graphics converter
 .Sh SYNOPSIS
 .Nm
-.Op Fl CmOuVXYZ
+.Op Fl CmhOuVXYZ
 .Op Fl v Op Fl v No ...
 .Op Fl a Ar attrmap | Fl A
 .Op Fl b Ar base_ids
@@ -165,6 +165,8 @@ for a list of formats and their descriptions.
 .It Fl d Ar depth , Fl \-depth Ar depth
 Set the bit depth of the output tile data, in bits per pixel (bpp), either 1 or 2 (the default).
 This changes how tile data is output, and the maximum number of colors per palette (2 and 4 respectively).
+.It Fl h , Fl \-help
+Print help with usage of the program and exit.
 .It Fl i Ar input_tiles , Fl \-input-tileset Ar input_tiles
 Use the specified input tiles in addition to having
 .Nm
