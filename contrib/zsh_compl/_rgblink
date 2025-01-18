@@ -2,8 +2,8 @@
 
 local args=(
 	# Arguments are listed here in the same order as in the manual, except for the version and help
-	'(- : * options)'{-V,--version}'[Print version number]'
-	'(-h --help)'{-h,--help}'[Print help with usage]'
+	'(- : * options)'{-V,--version}'[Print version number and exit]'
+	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-d --dmg)'{-d,--dmg}'[Enable DMG mode (-w + no VRAM banking)]'
 	'(-t --tiny)'{-t,--tiny}'[Enable tiny mode, disabling ROM banking]'
