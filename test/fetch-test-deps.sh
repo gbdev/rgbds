@@ -6,16 +6,18 @@ cd "$(dirname "$0")"
 usage() {
 	echo "Downloads source code of Game Boy programs used as RGBDS test cases."
 	echo "Options:"
-	echo "    -h, --help      show this help message"
-	echo "    --only-free     download only freely licensed codebases"
-	echo "    --get-deps      install programs' own dependencies instead of themselves"
-	echo "    --get-hash      print programs' commit hashes instead of downloading them"
-	echo "    --get-paths     print programs' GitHub paths instead of downloading them"
+	echo "    -h, --help          show this help message"
+	echo "    --only-free         download only freely licensed codebases"
+	echo "    --only-internal     do not download any codebases"
+	echo "    --get-deps          install programs' own dependencies instead of themselves"
+	echo "    --get-hash          print programs' commit hashes instead of downloading them"
+	echo "    --get-paths         print programs' GitHub paths instead of downloading them"
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
 nonfree=true
+external=true
 actionname=
 osname=
 while [[ $# -gt 0 ]]; do
@@ -26,6 +28,9 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--only-free)
 			nonfree=false
+			;;
+		--only-internal)
+			external=false
 			;;
 		--get-deps)
 			actionname="$1"
@@ -96,6 +101,10 @@ case "$actionname" in
 			popd
 		}
 esac
+
+if ! "$external"; then
+	exit
+fi
 
 if "$nonfree"; then
 	action pret  pokecrystal      2024-12-28 86a87a355e6805663cfecf150a3af71c66441a3e

@@ -354,6 +354,29 @@ jobs:
           make install -j Q=
       - name: Run tests
         shell: C:\cygwin\bin\env.exe CYGWIN_NOWINPATH=1 CHERE_INVOKING=1 C:\cygwin\bin\bash.exe -o igncr '{0}'
-        run: | # Allow asm/test.sh to run `git describe` for the version test
-          git config --global --add safe.directory '*'
+        run: |
           test/run-tests.sh --only-internal
+
+  freebsd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Build & test using CMake on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          usesh: true
+          prepare: |
+            pkg install -y \
+              bash \
+              bison \
+              cmake \
+              git \
+              png
+          run: | # FreeBSD `c++` compiler does not support `make develop` sanitizers ASan or UBSan
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=c++ -DUSE_EXTERNAL_TESTS=OFF
+            cmake --build build -j4 --verbose
+            cmake --install build --verbose
+            cmake --build build --target test
