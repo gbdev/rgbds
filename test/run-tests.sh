@@ -6,27 +6,27 @@ cd "$(dirname "$0")"
 usage() {
 	echo "Runs regression tests on RGBDS."
 	echo "Options:"
-	echo "    -h, --help          show this help message"
-	echo "    --only-free         skip tests that build nonfree codebases"
-	echo "    --only-internal     skip tests that build external codebases"
+	echo "    -h, --help            show this help message"
+	echo "    --only-internal       only run tests that build local examples"
+	echo "    --only-external       only run tests that build external codebases"
+	echo "    --only-free           skip tests that build nonfree codebases"
+	echo "    --installed-rgbds     use the system installed RGBDS"
+	echo "                          (only compatible with external codebases)"
 }
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
-installedrgbds=false
 nonfree=true
 internal=true
 external=true
+installedrgbds=false
 FETCH_TEST_DEPS="fetch-test-deps.sh"
+RGBDS_PATH="RGBDS=../../"
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		-h|--help)
 			usage
 			exit 0
-			;;
-		--only-free)
-			nonfree=false
-			FETCH_TEST_DEPS="$FETCH_TEST_DEPS --only-free"
 			;;
 		--only-internal)
 			external=false
@@ -35,8 +35,13 @@ while [[ $# -gt 0 ]]; do
 		--only-external)
 			internal=false
 			;;
+		--only-free)
+			nonfree=false
+			FETCH_TEST_DEPS="$FETCH_TEST_DEPS --only-free"
+			;;
 		--installed-rgbds)
 			installedrgbds=true
+			RGBDS_PATH=
 			;;
 		--)
 			break
@@ -49,24 +54,27 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
-if ! ("$external" || "$internal"); then
-	echo "No tests to run."
+if ! ("$internal" || "$external"); then
+	echo "Specifying --only-internal with --only-external is a contradiction"
 	false
 fi
 
 if "$internal" && "$installedrgbds"; then
-	echo "Internal tests don't support running with the system-installed rgbds."
+	echo "Please specify --only-external with --installed-rgbds"
+	echo "(internal tests don't support running with system-installed RGBDS)"
 	false
 fi
 
+# Refuse to run if RGBDS isn't available
 if "$installedrgbds"; then
-	# Refuse to run if RGBDS isn't installed
-	if ! (command -v rgbasm 2>&1 >/dev/null && command -v rgblink 2>&1 >/dev/null && command -v rgbfix 2>&1 >/dev/null && command -v rgbgfx 2>&1 >/dev/null); then
+	is_installed() {
+		command -v "$1" >/dev/null 2>&1
+	}
+	if ! (is_installed rgbasm && is_installed rgblink && is_installed rgbfix && is_installed rgbgfx); then
 		echo "Please install RGBDS before running the tests"
 		false
 	fi
 else
-	# Refuse to run if RGBDS isn't present
 	if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
 		echo "Please build RGBDS before running the tests"
 		false
@@ -96,13 +104,8 @@ test_downstream() { # owner repo make-target build-file build-hash
 		echo >&2 'Please run `'"$FETCH_TEST_DEPS"'` before running the test suite'
 		return 1
 	fi
-	if "$installedrgbds"; then
-		make clean
-		make -j4 "$3"
-	else
-		make clean RGBDS=../../
-		make -j4 "$3" RGBDS=../../
-	fi
+	make clean $RGBDS_PATH
+	make -j4 "$3" $RGBDS_PATH
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
 		echo >&2 'SHA-1 hash of '"$4"' did not match: '"$hash"
