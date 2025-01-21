@@ -615,6 +615,9 @@ to the adjustment.
 .It
 Subtract the adjustment from
 .Sy A .
+.It
+Set the carry flag if borrow (i.e. if adjustment >
+.Sy A ) .
 .El
 .It If the subtract flag Sy N No is not set:
 .Bl -enum -compact
@@ -636,13 +639,15 @@ to the adjustment.
 If the carry flag is set or
 .Sy A
 >
-.Ad $99 ,
+.Ad $9F ,
 then add
 .Ad $60
-to the adjustment and set the carry flag.
+to the adjustment.
 .It
 Add the adjustment to
 .Sy A .
+.It
+Set the carry flag if overflow from bit 7.
 .El
 .El
 .Pp

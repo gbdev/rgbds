@@ -13,7 +13,9 @@ usage() {
 
 # Parse options in pure Bash because macOS `getopt` is stuck
 # in what util-linux `getopt` calls `GETOPT_COMPATIBLE` mode
+installedrgbds=false
 nonfree=true
+internal=true
 external=true
 FETCH_TEST_DEPS="fetch-test-deps.sh"
 while [[ $# -gt 0 ]]; do
@@ -29,6 +31,12 @@ while [[ $# -gt 0 ]]; do
 		--only-internal)
 			external=false
 			;;
+		--only-external)
+			internal=false
+			;;
+		--installed-rgbds)
+			installedrgbds=true
+			;;
 		--)
 			break
 			;;
@@ -40,19 +48,28 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
-# Refuse to run if RGBDS isn't present
-if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
-	echo "Please build RGBDS before running the tests"
-	false
+if "$installedrgbds"; then
+	# Refuse to run if RGBDS isn't installed
+	if ! (command -v rgbasm 2>&1 >/dev/null && command -v rgblink 2>&1 >/dev/null && command -v rgbfix 2>&1 >/dev/null && command -v rgbgfx 2>&1 >/dev/null); then
+		echo "Please install RGBDS before running the tests"
+		false
+	fi
+else
+	# Refuse to run if RGBDS isn't present
+	if [[ ! ( -x ../rgbasm && -x ../rgblink && -x ../rgbfix && -x ../rgbgfx ) ]]; then
+		echo "Please build RGBDS before running the tests"
+		false
+	fi
 fi
 
 # Tests included with the repository
-
-for dir in asm link fix gfx; do
-	pushd $dir
-	./test.sh
-	popd
-done
+if "$internal"; then
+	for dir in asm link fix gfx; do
+		pushd $dir
+		./test.sh
+		popd
+	done
+fi
 
 if ! "$external"; then
 	exit
@@ -68,8 +85,13 @@ test_downstream() { # owner repo make-target build-file build-hash
 		echo >&2 'Please run `'"$FETCH_TEST_DEPS"'` before running the test suite'
 		return 1
 	fi
-	make clean RGBDS=../../
-	make -j4 "$3" RGBDS=../../
+	if "$installedrgbds"; then
+		make clean
+		make -j4 "$3"
+	else
+		make clean RGBDS=../../
+		make -j4 "$3" RGBDS=../../
+	fi
 	hash="$(sha1sum -b "$4" | head -c 40)"
 	if [ "$hash" != "$5" ]; then
 		echo >&2 'SHA-1 hash of '"$4"' did not match: '"$hash"
