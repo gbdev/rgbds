@@ -48,6 +48,16 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
+if ! ("$external" || "$internal"); then
+	echo "No tests to run."
+	false
+fi
+
+if "$internal" && "$installedrgbds"; then
+	echo "Internal tests don't support running with the system-installed rgbds."
+	false
+fi
+
 if "$installedrgbds"; then
 	# Refuse to run if RGBDS isn't installed
 	if ! (command -v rgbasm 2>&1 >/dev/null && command -v rgblink 2>&1 >/dev/null && command -v rgbfix 2>&1 >/dev/null && command -v rgbgfx 2>&1 >/dev/null); then
