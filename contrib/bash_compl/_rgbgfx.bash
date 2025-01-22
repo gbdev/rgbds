@@ -8,6 +8,7 @@ _rgbgfx_completions() {
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
 		[V]="version:normal"
+		[h]="help:normal"
 		[C]="color-curve:normal"
 		[m]="mirror-tiles:normal"
 		[O]="group-outputs:normal"

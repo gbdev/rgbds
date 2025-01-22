@@ -10,8 +10,9 @@ _depths() {
 }
 
 local args=(
-	# Arguments are listed here in the same order as in the manual, except for the version
-	'(- : * options)'{-V,--version}'[Print version number]'
+	# Arguments are listed here in the same order as in the manual, except for the version and help
+	'(- : * options)'{-V,--version}'[Print version number and exit]'
+	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-a --attr-map -A --auto-attr-map)'{-A,--auto-attr-map}'[Shortcut for -a <file>.attrmap]'
 	'(-C --color-curve)'{-C,--color-curve}'[Generate palettes using GBC color curve]'

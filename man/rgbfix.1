@@ -8,7 +8,7 @@
 .Nd Game Boy header utility and checksum fixer
 .Sh SYNOPSIS
 .Nm
-.Op Fl jOsVv
+.Op Fl hjOsVv
 .Op Fl C | c
 .Op Fl f Ar fix_spec
 .Op Fl i Ar game_id
@@ -91,6 +91,8 @@ Fix the global checksum
 .It Cm G
 Trash the global checksum.
 .El
+.It Fl h , Fl \-help
+Print help text for the program and exit.
 .It Fl i Ar game_id , Fl \-game-id Ar game_id
 Set the game ID string
 .Pq Ad 0x13F Ns \(en Ns Ad 0x142

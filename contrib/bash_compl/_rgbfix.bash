@@ -8,6 +8,7 @@ _rgbfix_completions() {
 	# See the `state` variable below for info about `state_after`
 	declare -A opts=(
 		[V]="version:normal"
+		[h]="help:normal"
 		[j]="non-japanese:normal"
 		[s]="sgb-compatible:normal"
 		[v]="validate:normal"

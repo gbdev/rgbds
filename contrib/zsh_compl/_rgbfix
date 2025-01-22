@@ -35,8 +35,9 @@ _mbc_names() {
 }
 
 local args=(
-	# Arguments are listed here in the same order as in the manual, except for the version
-	'(- : * options)'{-V,--version}'[Print version number]'
+	# Arguments are listed here in the same order as in the manual, except for the version and help
+	'(- : * options)'{-V,--version}'[Print version number and exit]'
+	'(- : * options)'{-h,--help}'[Print help text and exit]'
 
 	'(-C --color-only -c --color-compatible)'{-C,--color-only}'[Mark ROM as GBC-only]'
 	'(-C --color-only -c --color-compatible)'{-c,--color-compatible}'[Mark ROM as GBC-compatible]'

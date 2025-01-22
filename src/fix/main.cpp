@@ -23,7 +23,7 @@ static_assert(UNSPECIFIED > 0xFF, "UNSPECIFIED should not be in byte range!");
 static constexpr off_t BANK_SIZE = 0x4000;
 
 // Short options
-static char const *optstring = "Ccf:i:jk:L:l:m:n:Op:r:st:Vv";
+static char const *optstring = "Ccf:hi:jk:L:l:m:n:Op:r:st:Vv";
 
 /*
  * Equivalent long options
@@ -39,6 +39,7 @@ static option const longopts[] = {
     {"color-only",       no_argument,       nullptr, 'C'},
     {"color-compatible", no_argument,       nullptr, 'c'},
     {"fix-spec",         required_argument, nullptr, 'f'},
+    {"help",             no_argument,       nullptr, 'h'},
     {"game-id",          required_argument, nullptr, 'i'},
     {"non-japanese",     no_argument,       nullptr, 'j'},
     {"new-licensee",     required_argument, nullptr, 'k'},
@@ -58,7 +59,7 @@ static option const longopts[] = {
 
 static void printUsage() {
 	fputs(
-	    "Usage: rgbfix [-jOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
+	    "Usage: rgbfix [-hjOsVv] [-C | -c] [-f <fix_spec>] [-i <game_id>] [-k <licensee>]\n"
 	    "              [-L <logo_file>] [-l <licensee_byte>] [-m <mbc_type>]\n"
 	    "              [-n <rom_version>] [-p <pad_value>] [-r <ram_size>] [-t <title_str>]\n"
 	    "              <file> ...\n"
@@ -1280,6 +1281,10 @@ int main(int argc, char *argv[]) {
 				musl_optarg++;
 			}
 			break;
+
+		case 'h':
+			printUsage();
+			exit(0);
 
 		case 'i':
 			gameID = musl_optarg;
