@@ -528,7 +528,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	int matchedElems;
 
 	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
-	    && matchedElems != QUOTEDSTRLEN(RGBDS_OBJECT_VERSION_STRING))
+	    && matchedElems != literal_strlen(RGBDS_OBJECT_VERSION_STRING))
 		errx("%s: Not a RGBDS object file", fileName);
 
 	verbosePrint("Reading object file %s\n", fileName);

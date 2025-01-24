@@ -41,7 +41,7 @@ static std::string make_escape(std::string &str) {
 			break;
 		escaped.append(str, pos, nextPos - pos);
 		escaped.append("$$");
-		pos = nextPos + QUOTEDSTRLEN("$");
+		pos = nextPos + literal_strlen("$");
 	}
 	escaped.append(str, pos, str.length() - pos);
 	return escaped;

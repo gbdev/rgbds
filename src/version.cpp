@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 char const *get_package_version_string() {
-	if constexpr (QUOTEDSTRLEN(BUILD_VERSION_STRING) > 0) {
+	if constexpr (literal_strlen(BUILD_VERSION_STRING) > 0) {
 		return BUILD_VERSION_STRING;
 	}
 	// Fallback if version string can't be obtained from Git

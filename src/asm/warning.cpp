@@ -149,16 +149,16 @@ void processWarningFlag(char const *flag) {
 	if (rootFlag.starts_with("error=")) {
 		// `-Werror=<flag>` enables the flag as an error
 		state = {.state = WARNING_ENABLED, .error = WARNING_ENABLED};
-		rootFlag.erase(0, QUOTEDSTRLEN("error="));
+		rootFlag.erase(0, literal_strlen("error="));
 	} else if (rootFlag.starts_with("no-error=")) {
 		// `-Wno-error=<flag>` prevents the flag from being an error,
 		// without affecting whether it is enabled
 		state = {.state = WARNING_DEFAULT, .error = WARNING_DISABLED};
-		rootFlag.erase(0, QUOTEDSTRLEN("no-error="));
+		rootFlag.erase(0, literal_strlen("no-error="));
 	} else if (rootFlag.starts_with("no-")) {
 		// `-Wno-<flag>` disables the flag
 		state = {.state = WARNING_DISABLED, .error = WARNING_DEFAULT};
-		rootFlag.erase(0, QUOTEDSTRLEN("no-"));
+		rootFlag.erase(0, literal_strlen("no-"));
 	} else {
 		// `-W<flag>` enables the flag
 		state = {.state = WARNING_ENABLED, .error = WARNING_DEFAULT};

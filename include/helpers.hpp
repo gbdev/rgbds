@@ -93,15 +93,14 @@ static inline int clz(unsigned int x) {
 #define CAT(x, y)            x##y
 #define EXPAND_AND_CAT(x, y) CAT(x, y)
 
-// Obtaining the size of an array; `arr` must be an expression, not a type!
-// (Having two instances of `arr` is OK because the contents of `sizeof` are not evaluated.)
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof *(arr))
-
 // For lack of <ranges>, this adds some more brevity
 #define RANGE(s) std::begin(s), std::end(s)
 
-// MSVC does not inline `strlen()` or `.length()` of a constant string, so we use `sizeof`
-#define QUOTEDSTRLEN(s) (sizeof(s) - 1)
+// MSVC does not inline `strlen()` or `.length()` of a constant string
+template<int N>
+static constexpr int literal_strlen(char const (&)[N]) {
+	return N - 1;
+}
 
 // For ad-hoc RAII in place of a `defer` statement or cross-platform `__attribute__((cleanup))`
 template<typename T>
