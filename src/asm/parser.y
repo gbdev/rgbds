@@ -161,52 +161,52 @@
 %token CC_Z "z" CC_NZ "nz" CC_NC "nc" // There is no CC_C, only TOKEN_C
 
 // SM83 instructions
-%token Z80_ADC "adc"
-%token Z80_ADD "add"
-%token Z80_AND "and"
-%token Z80_BIT "bit"
-%token Z80_CALL "call"
-%token Z80_CCF "ccf"
-%token Z80_CP "cp"
-%token Z80_CPL "cpl"
-%token Z80_DAA "daa"
-%token Z80_DEC "dec"
-%token Z80_DI "di"
-%token Z80_EI "ei"
-%token Z80_HALT "halt"
-%token Z80_INC "inc"
-%token Z80_JP "jp"
-%token Z80_JR "jr"
-%token Z80_LDD "ldd"
-%token Z80_LDH "ldh"
-%token Z80_LDI "ldi"
-%token Z80_LD "ld"
-%token Z80_NOP "nop"
-%token Z80_OR "or"
-%token Z80_POP "pop"
-%token Z80_PUSH "push"
-%token Z80_RES "res"
-%token Z80_RETI "reti"
-%token Z80_RET "ret"
-%token Z80_RLA "rla"
-%token Z80_RLCA "rlca"
-%token Z80_RLC "rlc"
-%token Z80_RL "rl"
-%token Z80_RRA "rra"
-%token Z80_RRCA "rrca"
-%token Z80_RRC "rrc"
-%token Z80_RR "rr"
-%token Z80_RST "rst"
-%token Z80_SBC "sbc"
-%token Z80_SCF "scf"
-%token Z80_SET "set"
-%token Z80_SLA "sla"
-%token Z80_SRA "sra"
-%token Z80_SRL "srl"
-%token Z80_STOP "stop"
-%token Z80_SUB "sub"
-%token Z80_SWAP "swap"
-%token Z80_XOR "xor"
+%token SM83_ADC "adc"
+%token SM83_ADD "add"
+%token SM83_AND "and"
+%token SM83_BIT "bit"
+%token SM83_CALL "call"
+%token SM83_CCF "ccf"
+%token SM83_CP "cp"
+%token SM83_CPL "cpl"
+%token SM83_DAA "daa"
+%token SM83_DEC "dec"
+%token SM83_DI "di"
+%token SM83_EI "ei"
+%token SM83_HALT "halt"
+%token SM83_INC "inc"
+%token SM83_JP "jp"
+%token SM83_JR "jr"
+%token SM83_LDD "ldd"
+%token SM83_LDH "ldh"
+%token SM83_LDI "ldi"
+%token SM83_LD "ld"
+%token SM83_NOP "nop"
+%token SM83_OR "or"
+%token SM83_POP "pop"
+%token SM83_PUSH "push"
+%token SM83_RES "res"
+%token SM83_RETI "reti"
+%token SM83_RET "ret"
+%token SM83_RLA "rla"
+%token SM83_RLCA "rlca"
+%token SM83_RLC "rlc"
+%token SM83_RL "rl"
+%token SM83_RRA "rra"
+%token SM83_RRCA "rrca"
+%token SM83_RRC "rrc"
+%token SM83_RR "rr"
+%token SM83_RST "rst"
+%token SM83_SBC "sbc"
+%token SM83_SCF "scf"
+%token SM83_SET "set"
+%token SM83_SLA "sla"
+%token SM83_SRA "sra"
+%token SM83_SRL "srl"
+%token SM83_STOP "stop"
+%token SM83_SUB "sub"
+%token SM83_SWAP "swap"
+%token SM83_XOR "xor"
 
 // Statement keywords
 %token POP_ALIGN "ALIGN"
@@ -254,7 +254,7 @@
 %token POP_REPT "REPT"
 %token POP_RSRESET "RSRESET"
 %token POP_RSSET "RSSET"
-// There is no POP_RL, only Z80_RL
+// There is no POP_RL, only SM83_RL
 %token POP_RW "RW"
 %token POP_SECTION "SECTION"
 %token POP_SETCHARMAP "SETCHARMAP"
@@ -1060,7 +1060,7 @@ def_rw:
 ;
 
 def_rl:
-	def_id Z80_RL rs_uconst {
+	def_id SM83_RL rs_uconst {
 		$$ = std::move($1);
 		uint32_t rs = sym_GetRSValue();
 		sym_AddEqu($$, rs);
@@ -1734,221 +1734,221 @@ cpu_commands:
 ;
 
 cpu_command:
-	  z80_adc
-	| z80_add
-	| z80_and
-	| z80_bit
-	| z80_call
-	| z80_ccf
-	| z80_cp
-	| z80_cpl
-	| z80_daa
-	| z80_dec
-	| z80_di
-	| z80_ei
-	| z80_halt
-	| z80_inc
-	| z80_jp
-	| z80_jr
-	| z80_ld
-	| z80_ldd
-	| z80_ldh
-	| z80_ldi
-	| z80_nop
-	| z80_or
-	| z80_pop
-	| z80_push
-	| z80_res
-	| z80_ret
-	| z80_reti
-	| z80_rl
-	| z80_rla
-	| z80_rlc
-	| z80_rlca
-	| z80_rr
-	| z80_rra
-	| z80_rrc
-	| z80_rrca
-	| z80_rst
-	| z80_sbc
-	| z80_scf
-	| z80_set
-	| z80_sla
-	| z80_sra
-	| z80_srl
-	| z80_stop
-	| z80_sub
-	| z80_swap
-	| z80_xor
+	  sm83_adc
+	| sm83_add
+	| sm83_and
+	| sm83_bit
+	| sm83_call
+	| sm83_ccf
+	| sm83_cp
+	| sm83_cpl
+	| sm83_daa
+	| sm83_dec
+	| sm83_di
+	| sm83_ei
+	| sm83_halt
+	| sm83_inc
+	| sm83_jp
+	| sm83_jr
+	| sm83_ld
+	| sm83_ldd
+	| sm83_ldh
+	| sm83_ldi
+	| sm83_nop
+	| sm83_or
+	| sm83_pop
+	| sm83_push
+	| sm83_res
+	| sm83_ret
+	| sm83_reti
+	| sm83_rl
+	| sm83_rla
+	| sm83_rlc
+	| sm83_rlca
+	| sm83_rr
+	| sm83_rra
+	| sm83_rrc
+	| sm83_rrca
+	| sm83_rst
+	| sm83_sbc
+	| sm83_scf
+	| sm83_set
+	| sm83_sla
+	| sm83_sra
+	| sm83_srl
+	| sm83_stop
+	| sm83_sub
+	| sm83_swap
+	| sm83_xor
 ;
 
-z80_adc:
-	Z80_ADC op_a_n {
+sm83_adc:
+	SM83_ADC op_a_n {
 		sect_ConstByte(0xCE);
 		sect_RelByte($2, 1);
 	}
-	| Z80_ADC op_a_r {
+	| SM83_ADC op_a_r {
 		sect_ConstByte(0x88 | $2);
 	}
 ;
 
-z80_add:
-	Z80_ADD op_a_n {
+sm83_add:
+	SM83_ADD op_a_n {
 		sect_ConstByte(0xC6);
 		sect_RelByte($2, 1);
 	}
-	| Z80_ADD op_a_r {
+	| SM83_ADD op_a_r {
 		sect_ConstByte(0x80 | $2);
 	}
-	| Z80_ADD MODE_HL COMMA reg_ss {
+	| SM83_ADD MODE_HL COMMA reg_ss {
 		sect_ConstByte(0x09 | ($4 << 4));
 	}
-	| Z80_ADD MODE_SP COMMA reloc_8bit {
+	| SM83_ADD MODE_SP COMMA reloc_8bit {
 		sect_ConstByte(0xE8);
 		sect_RelByte($4, 1);
 	}
 ;
 
-z80_and:
-	Z80_AND op_a_n {
+sm83_and:
+	SM83_AND op_a_n {
 		sect_ConstByte(0xE6);
 		sect_RelByte($2, 1);
 	}
-	| Z80_AND op_a_r {
+	| SM83_AND op_a_r {
 		sect_ConstByte(0xA0 | $2);
 	}
 ;
 
-z80_bit:
-	Z80_BIT bit_const COMMA reg_r {
+sm83_bit:
+	SM83_BIT bit_const COMMA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
 ;
 
-z80_call:
-	Z80_CALL reloc_16bit {
+sm83_call:
+	SM83_CALL reloc_16bit {
 		sect_ConstByte(0xCD);
 		sect_RelWord($2, 1);
 	}
-	| Z80_CALL ccode_expr COMMA reloc_16bit {
+	| SM83_CALL ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0xC4 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
 ;
 
-z80_ccf:
-	Z80_CCF {
+sm83_ccf:
+	SM83_CCF {
 		sect_ConstByte(0x3F);
 	}
 ;
 
-z80_cp:
-	Z80_CP op_a_n {
+sm83_cp:
+	SM83_CP op_a_n {
 		sect_ConstByte(0xFE);
 		sect_RelByte($2, 1);
 	}
-	| Z80_CP op_a_r {
+	| SM83_CP op_a_r {
 		sect_ConstByte(0xB8 | $2);
 	}
 ;
 
-z80_cpl:
-	Z80_CPL {
+sm83_cpl:
+	SM83_CPL {
 		sect_ConstByte(0x2F);
 	}
-	| Z80_CPL MODE_A {
+	| SM83_CPL MODE_A {
 		sect_ConstByte(0x2F);
 	}
 ;
 
-z80_daa:
-	Z80_DAA {
+sm83_daa:
+	SM83_DAA {
 		sect_ConstByte(0x27);
 	}
 ;
 
-z80_dec:
-	Z80_DEC reg_r {
+sm83_dec:
+	SM83_DEC reg_r {
 		sect_ConstByte(0x05 | ($2 << 3));
 	}
-	| Z80_DEC reg_ss {
+	| SM83_DEC reg_ss {
 		sect_ConstByte(0x0B | ($2 << 4));
 	}
 ;
 
-z80_di:
-	Z80_DI {
+sm83_di:
+	SM83_DI {
 		sect_ConstByte(0xF3);
 	}
 ;
 
-z80_ei:
-	Z80_EI {
+sm83_ei:
+	SM83_EI {
 		sect_ConstByte(0xFB);
 	}
 ;
 
-z80_halt:
-	Z80_HALT {
+sm83_halt:
+	SM83_HALT {
 		sect_ConstByte(0x76);
 	}
 ;
 
-z80_inc:
-	Z80_INC reg_r {
+sm83_inc:
+	SM83_INC reg_r {
 		sect_ConstByte(0x04 | ($2 << 3));
 	}
-	| Z80_INC reg_ss {
+	| SM83_INC reg_ss {
 		sect_ConstByte(0x03 | ($2 << 4));
 	}
 ;
 
-z80_jp:
-	Z80_JP reloc_16bit {
+sm83_jp:
+	SM83_JP reloc_16bit {
 		sect_ConstByte(0xC3);
 		sect_RelWord($2, 1);
 	}
-	| Z80_JP ccode_expr COMMA reloc_16bit {
+	| SM83_JP ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0xC2 | ($2 << 3));
 		sect_RelWord($4, 1);
 	}
-	| Z80_JP MODE_HL {
+	| SM83_JP MODE_HL {
 		sect_ConstByte(0xE9);
 	}
 ;
 
-z80_jr:
-	Z80_JR reloc_16bit {
+sm83_jr:
+	SM83_JR reloc_16bit {
 		sect_ConstByte(0x18);
 		sect_PCRelByte($2, 1);
 	}
-	| Z80_JR ccode_expr COMMA reloc_16bit {
+	| SM83_JR ccode_expr COMMA reloc_16bit {
 		sect_ConstByte(0x20 | ($2 << 3));
 		sect_PCRelByte($4, 1);
 	}
 ;
 
-z80_ldi:
-	Z80_LDI LBRACK MODE_HL RBRACK COMMA MODE_A {
+sm83_ldi:
+	SM83_LDI LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_ConstByte(0x02 | (2 << 4));
 	}
-	| Z80_LDI MODE_A COMMA LBRACK MODE_HL RBRACK {
+	| SM83_LDI MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_ConstByte(0x0A | (2 << 4));
 	}
 ;
 
-z80_ldd:
-	Z80_LDD LBRACK MODE_HL RBRACK COMMA MODE_A {
+sm83_ldd:
+	SM83_LDD LBRACK MODE_HL RBRACK COMMA MODE_A {
 		sect_ConstByte(0x02 | (3 << 4));
 	}
-	| Z80_LDD MODE_A COMMA LBRACK MODE_HL RBRACK {
+	| SM83_LDD MODE_A COMMA LBRACK MODE_HL RBRACK {
 		sect_ConstByte(0x0A | (3 << 4));
 	}
 ;
 
-z80_ldh:
-	Z80_LDH MODE_A COMMA op_mem_ind {
+sm83_ldh:
+	SM83_LDH MODE_A COMMA op_mem_ind {
 		if ($4.makeCheckHRAM()) {
 			warning(
 			    WARNING_OBSOLETE,
@@ -1959,7 +1959,7 @@ z80_ldh:
 		sect_ConstByte(0xF0);
 		sect_RelByte($4, 1);
 	}
-	| Z80_LDH op_mem_ind COMMA MODE_A {
+	| SM83_LDH op_mem_ind COMMA MODE_A {
 		if ($2.makeCheckHRAM()) {
 			warning(
 			    WARNING_OBSOLETE,
@@ -1970,16 +1970,16 @@ z80_ldh:
 		sect_ConstByte(0xE0);
 		sect_RelByte($2, 1);
 	}
-	| Z80_LDH MODE_A COMMA c_ind {
+	| SM83_LDH MODE_A COMMA c_ind {
 		sect_ConstByte(0xF2);
 	}
-	| Z80_LDH MODE_A COMMA ff00_c_ind {
+	| SM83_LDH MODE_A COMMA ff00_c_ind {
 		sect_ConstByte(0xF2);
 	}
-	| Z80_LDH c_ind COMMA MODE_A {
+	| SM83_LDH c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
 	}
-	| Z80_LDH ff00_c_ind COMMA MODE_A {
+	| SM83_LDH ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
 	}
 ;
@@ -1994,71 +1994,71 @@ ff00_c_ind:
 	}
 ;
 
-z80_ld:
-	  z80_ld_mem
-	| z80_ld_c_ind
-	| z80_ld_rr
-	| z80_ld_ss
-	| z80_ld_hl
-	| z80_ld_sp
-	| z80_ld_r_no_a
-	| z80_ld_a
+sm83_ld:
+	  sm83_ld_mem
+	| sm83_ld_c_ind
+	| sm83_ld_rr
+	| sm83_ld_ss
+	| sm83_ld_hl
+	| sm83_ld_sp
+	| sm83_ld_r_no_a
+	| sm83_ld_a
 ;
 
-z80_ld_hl:
-	Z80_LD MODE_HL COMMA MODE_SP reloc_8bit_offset {
+sm83_ld_hl:
+	SM83_LD MODE_HL COMMA MODE_SP reloc_8bit_offset {
 		sect_ConstByte(0xF8);
 		sect_RelByte($5, 1);
 	}
-	| Z80_LD MODE_HL COMMA reloc_16bit {
+	| SM83_LD MODE_HL COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_HL << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
-z80_ld_sp:
-	Z80_LD MODE_SP COMMA MODE_HL {
+sm83_ld_sp:
+	SM83_LD MODE_SP COMMA MODE_HL {
 		sect_ConstByte(0xF9);
 	}
-	| Z80_LD MODE_SP COMMA reloc_16bit {
+	| SM83_LD MODE_SP COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_SP << 4));
 		sect_RelWord($4, 1);
 	}
 ;
 
-z80_ld_mem:
-	Z80_LD op_mem_ind COMMA MODE_SP {
+sm83_ld_mem:
+	SM83_LD op_mem_ind COMMA MODE_SP {
 		sect_ConstByte(0x08);
 		sect_RelWord($2, 1);
 	}
-	| Z80_LD op_mem_ind COMMA MODE_A {
+	| SM83_LD op_mem_ind COMMA MODE_A {
 		sect_ConstByte(0xEA);
 		sect_RelWord($2, 1);
 	}
 ;
 
-z80_ld_c_ind:
-	Z80_LD ff00_c_ind COMMA MODE_A {
+sm83_ld_c_ind:
+	SM83_LD ff00_c_ind COMMA MODE_A {
 		sect_ConstByte(0xE2);
 	}
-	| Z80_LD c_ind COMMA MODE_A {
+	| SM83_LD c_ind COMMA MODE_A {
 		warning(WARNING_OBSOLETE, "LD [C], A is deprecated; use LDH [C], A\n");
 		sect_ConstByte(0xE2);
 	}
 ;
 
-z80_ld_rr:
-	Z80_LD reg_rr COMMA MODE_A {
+sm83_ld_rr:
+	SM83_LD reg_rr COMMA MODE_A {
 		sect_ConstByte(0x02 | ($2 << 4));
 	}
 ;
 
-z80_ld_r_no_a:
-	Z80_LD reg_r_no_a COMMA reloc_8bit {
+sm83_ld_r_no_a:
+	SM83_LD reg_r_no_a COMMA reloc_8bit {
 		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
-	| Z80_LD reg_r_no_a COMMA reg_r {
+	| SM83_LD reg_r_no_a COMMA reg_r {
 		if ($2 == REG_HL_IND && $4 == REG_HL_IND)
 			::error("LD [HL], [HL] is not a valid instruction\n");
 		else
@@ -2066,147 +2066,147 @@ z80_ld_r_no_a:
 	}
 ;
 
-z80_ld_a:
-	Z80_LD reg_a COMMA reloc_8bit {
+sm83_ld_a:
+	SM83_LD reg_a COMMA reloc_8bit {
 		sect_ConstByte(0x06 | ($2 << 3));
 		sect_RelByte($4, 1);
 	}
-	| Z80_LD reg_a COMMA reg_r {
+	| SM83_LD reg_a COMMA reg_r {
 		sect_ConstByte(0x40 | ($2 << 3) | $4);
 	}
-	| Z80_LD reg_a COMMA ff00_c_ind {
+	| SM83_LD reg_a COMMA ff00_c_ind {
 		sect_ConstByte(0xF2);
 	}
-	| Z80_LD reg_a COMMA c_ind {
+	| SM83_LD reg_a COMMA c_ind {
 		warning(WARNING_OBSOLETE, "LD A, [C] is deprecated; use LDH A, [C]\n");
 		sect_ConstByte(0xF2);
 	}
-	| Z80_LD reg_a COMMA reg_rr {
+	| SM83_LD reg_a COMMA reg_rr {
 		sect_ConstByte(0x0A | ($4 << 4));
 	}
-	| Z80_LD reg_a COMMA op_mem_ind {
+	| SM83_LD reg_a COMMA op_mem_ind {
 		sect_ConstByte(0xFA);
 		sect_RelWord($4, 1);
 	}
 ;
 
-z80_ld_ss:
-	Z80_LD MODE_BC COMMA reloc_16bit {
+sm83_ld_ss:
+	SM83_LD MODE_BC COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_BC << 4));
 		sect_RelWord($4, 1);
 	}
-	| Z80_LD MODE_DE COMMA reloc_16bit {
+	| SM83_LD MODE_DE COMMA reloc_16bit {
 		sect_ConstByte(0x01 | (REG_DE << 4));
 		sect_RelWord($4, 1);
 	}
-	// HL is taken care of in z80_ld_hl
-	// SP is taken care of in z80_ld_sp
+	// HL is taken care of in sm83_ld_hl
+	// SP is taken care of in sm83_ld_sp
 ;
 
-z80_nop:
-	Z80_NOP {
+sm83_nop:
+	SM83_NOP {
 		sect_ConstByte(0x00);
 	}
 ;
 
-z80_or:
-	Z80_OR op_a_n {
+sm83_or:
+	SM83_OR op_a_n {
 		sect_ConstByte(0xF6);
 		sect_RelByte($2, 1);
 	}
-	| Z80_OR op_a_r {
+	| SM83_OR op_a_r {
 		sect_ConstByte(0xB0 | $2);
 	}
 ;
 
-z80_pop:
-	Z80_POP reg_tt {
+sm83_pop:
+	SM83_POP reg_tt {
 		sect_ConstByte(0xC1 | ($2 << 4));
 	}
 ;
 
-z80_push:
-	Z80_PUSH reg_tt {
+sm83_push:
+	SM83_PUSH reg_tt {
 		sect_ConstByte(0xC5 | ($2 << 4));
 	}
 ;
 
-z80_res:
-	Z80_RES bit_const COMMA reg_r {
+sm83_res:
+	SM83_RES bit_const COMMA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x80 | ($2 << 3) | $4);
 	}
 ;
 
-z80_ret:
-	Z80_RET {
+sm83_ret:
+	SM83_RET {
 		sect_ConstByte(0xC9);
 	}
-	| Z80_RET ccode_expr {
+	| SM83_RET ccode_expr {
 		sect_ConstByte(0xC0 | ($2 << 3));
 	}
 ;
 
-z80_reti:
-	Z80_RETI {
+sm83_reti:
+	SM83_RETI {
 		sect_ConstByte(0xD9);
 	}
 ;
 
-z80_rl:
-	Z80_RL reg_r {
+sm83_rl:
+	SM83_RL reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x10 | $2);
 	}
 ;
 
-z80_rla:
-	Z80_RLA {
+sm83_rla:
+	SM83_RLA {
 		sect_ConstByte(0x17);
 	}
 ;
 
-z80_rlc:
-	Z80_RLC reg_r {
+sm83_rlc:
+	SM83_RLC reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x00 | $2);
 	}
 ;
 
-z80_rlca:
-	Z80_RLCA {
+sm83_rlca:
+	SM83_RLCA {
 		sect_ConstByte(0x07);
 	}
 ;
 
-z80_rr:
-	Z80_RR reg_r {
+sm83_rr:
+	SM83_RR reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x18 | $2);
 	}
 ;
 
-z80_rra:
-	Z80_RRA {
+sm83_rra:
+	SM83_RRA {
 		sect_ConstByte(0x1F);
 	}
 ;
 
-z80_rrc:
-	Z80_RRC reg_r {
+sm83_rrc:
+	SM83_RRC reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x08 | $2);
 	}
 ;
 
-z80_rrca:
-	Z80_RRCA {
+sm83_rrca:
+	SM83_RRCA {
 		sect_ConstByte(0x0F);
 	}
 ;
 
-z80_rst:
-	Z80_RST reloc_8bit {
+sm83_rst:
+	SM83_RST reloc_8bit {
 		$2.makeCheckRST();
 		if (!$2.isKnown())
 			sect_RelByte($2, 0);
@@ -2215,84 +2215,84 @@ z80_rst:
 	}
 ;
 
-z80_sbc:
-	Z80_SBC op_a_n {
+sm83_sbc:
+	SM83_SBC op_a_n {
 		sect_ConstByte(0xDE);
 		sect_RelByte($2, 1);
 	}
-	| Z80_SBC op_a_r {
+	| SM83_SBC op_a_r {
 		sect_ConstByte(0x98 | $2);
 	}
 ;
 
-z80_scf:
-	Z80_SCF {
+sm83_scf:
+	SM83_SCF {
 		sect_ConstByte(0x37);
 	}
 ;
 
-z80_set:
-	Z80_SET bit_const COMMA reg_r {
+sm83_set:
+	SM83_SET bit_const COMMA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0xC0 | ($2 << 3) | $4);
 	}
 ;
 
-z80_sla:
-	Z80_SLA reg_r {
+sm83_sla:
+	SM83_SLA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x20 | $2);
 	}
 ;
 
-z80_sra:
-	Z80_SRA reg_r {
+sm83_sra:
+	SM83_SRA reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x28 | $2);
 	}
 ;
 
-z80_srl:
-	Z80_SRL reg_r {
+sm83_srl:
+	SM83_SRL reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x38 | $2);
 	}
 ;
 
-z80_stop:
-	Z80_STOP {
+sm83_stop:
+	SM83_STOP {
 		sect_ConstByte(0x10);
 		sect_ConstByte(0x00);
 	}
-	| Z80_STOP reloc_8bit {
+	| SM83_STOP reloc_8bit {
 		sect_ConstByte(0x10);
 		sect_RelByte($2, 1);
 	}
 ;
 
-z80_sub:
-	Z80_SUB op_a_n {
+sm83_sub:
+	SM83_SUB op_a_n {
 		sect_ConstByte(0xD6);
 		sect_RelByte($2, 1);
 	}
-	| Z80_SUB op_a_r {
+	| SM83_SUB op_a_r {
 		sect_ConstByte(0x90 | $2);
 	}
 ;
 
-z80_swap:
-	Z80_SWAP reg_r {
+sm83_swap:
+	SM83_SWAP reg_r {
 		sect_ConstByte(0xCB);
 		sect_ConstByte(0x30 | $2);
 	}
 ;
 
-z80_xor:
-	Z80_XOR op_a_n {
+sm83_xor:
+	SM83_XOR op_a_n {
 		sect_ConstByte(0xEE);
 		sect_RelByte($2, 1);
 	}
-	| Z80_XOR op_a_r {
+	| SM83_XOR op_a_r {
 		sect_ConstByte(0xA8 | $2);
 	}
 ;
