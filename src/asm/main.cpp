@@ -385,13 +385,15 @@ int main(int argc, char *argv[]) {
 	if (yy::parser parser; parser.parse() != 0 && nbErrors == 0)
 		nbErrors = 1;
 
-	sect_CheckUnionClosed();
-	sect_CheckLoadClosed();
-	sect_CheckSizes();
+	if (!failedOnMissingInclude) {
+		sect_CheckUnionClosed();
+		sect_CheckLoadClosed();
+		sect_CheckSizes();
 
-	charmap_CheckStack();
-	opt_CheckStack();
-	sect_CheckStack();
+		charmap_CheckStack();
+		opt_CheckStack();
+		sect_CheckStack();
+	}
 
 	if (nbErrors != 0)
 		errx("Assembly aborted (%u error%s)!", nbErrors, nbErrors == 1 ? "" : "s");
