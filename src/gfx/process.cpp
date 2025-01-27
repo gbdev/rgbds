@@ -712,8 +712,9 @@ static void hashBitplanes(uint16_t bitplanes, uint16_t &hash) {
 
 class TileData {
 	// Importantly, `TileData` is **always** 2bpp.
-	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as 1bpp.
-	// This massively simplifies internal processing, since bit depth is always identical outside of I/O / serialization boundaries.
+	// If the active bit depth is 1bpp, all tiles are processed as 2bpp nonetheless, but emitted as
+	// 1bpp. This massively simplifies internal processing, since bit depth is always identical
+	// outside of I/O / serialization boundaries.
 	std::array<uint8_t, 16> _data;
 	// The hash is a bit lax: it's the XOR of all lines, and every other nibble is identical
 	// if horizontal mirroring is in effect. It should still be a reasonable tie-breaker in

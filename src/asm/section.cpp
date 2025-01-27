@@ -477,9 +477,7 @@ void sect_SetLoadSection(
 void sect_EndLoadSection(char const *cause) {
 	if (cause)
 		warning(
-		    WARNING_UNTERMINATED_LOAD,
-		    "`LOAD` block without `ENDL` terminated by `%s`\n",
-		    cause
+		    WARNING_UNTERMINATED_LOAD, "`LOAD` block without `ENDL` terminated by `%s`\n", cause
 		);
 
 	if (!currentLoadSection) {

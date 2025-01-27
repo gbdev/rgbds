@@ -385,12 +385,14 @@ static MbcType parseMBC(char const *name) {
 
 		// Read "additional features"
 		uint8_t features = 0;
+		// clang-format off: vertically align values
 		static constexpr uint8_t RAM         = 1 << 7;
 		static constexpr uint8_t BATTERY     = 1 << 6;
 		static constexpr uint8_t TIMER       = 1 << 5;
 		static constexpr uint8_t RUMBLE      = 1 << 4;
 		static constexpr uint8_t SENSOR      = 1 << 3;
 		static constexpr uint8_t MULTIRUMBLE = 1 << 2;
+		// clang-format on
 
 		for (;;) {
 			// Trim off trailing whitespace
@@ -742,12 +744,14 @@ static uint8_t const nintendoLogo[] = {
 };
 
 static uint8_t fixSpec = 0;
+// clang-format off: vertically align values
 static constexpr uint8_t FIX_LOGO         = 1 << 7;
 static constexpr uint8_t TRASH_LOGO       = 1 << 6;
 static constexpr uint8_t FIX_HEADER_SUM   = 1 << 5;
 static constexpr uint8_t TRASH_HEADER_SUM = 1 << 4;
 static constexpr uint8_t FIX_GLOBAL_SUM   = 1 << 3;
 static constexpr uint8_t TRASH_GLOBAL_SUM = 1 << 2;
+// clang-format on
 
 static enum { DMG, BOTH, CGB } model = DMG; // If DMG, byte is left alone
 static char const *gameID = nullptr;
@@ -1083,8 +1087,7 @@ static void processFile(int input, int output, char const *name, off_t fileSize)
 			globalSum = ~globalSum;
 
 		uint8_t bytes[2] = {
-		    static_cast<uint8_t>(globalSum >> 8),
-		    static_cast<uint8_t>(globalSum & 0xFF)
+		    static_cast<uint8_t>(globalSum >> 8), static_cast<uint8_t>(globalSum & 0xFF)
 		};
 
 		overwriteBytes(rom0, 0x14E, bytes, sizeof(bytes), "global checksum");
@@ -1269,9 +1272,9 @@ int main(int argc, char *argv[]) {
 #define overrideSpecs(fix, fixFlag, trash, trashFlag) \
 	OVERRIDE_SPEC(fix, trash, fixFlag, trashFlag); \
 	OVERRIDE_SPEC(trash, fix, trashFlag, fixFlag)
-				overrideSpecs(l, FIX_LOGO,       L, TRASH_LOGO);
-				overrideSpecs(h, FIX_HEADER_SUM, H, TRASH_HEADER_SUM);
-				overrideSpecs(g, FIX_GLOBAL_SUM, G, TRASH_GLOBAL_SUM);
+					overrideSpecs(l, FIX_LOGO, L, TRASH_LOGO);
+					overrideSpecs(h, FIX_HEADER_SUM, H, TRASH_HEADER_SUM);
+					overrideSpecs(g, FIX_GLOBAL_SUM, G, TRASH_GLOBAL_SUM);
 #undef OVERRIDE_SPEC
 #undef overrideSpecs
 

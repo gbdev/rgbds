@@ -14,14 +14,7 @@
 struct Expression;
 struct FileStackNode;
 
-enum StateFeature {
-    STATE_EQU,
-    STATE_VAR,
-    STATE_EQUS,
-    STATE_CHAR,
-    STATE_MACRO,
-    NB_STATE_FEATURES
-};
+enum StateFeature { STATE_EQU, STATE_VAR, STATE_EQUS, STATE_CHAR, STATE_MACRO, NB_STATE_FEATURES };
 
 extern std::string objectFileName;
 

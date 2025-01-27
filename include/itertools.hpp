@@ -25,7 +25,7 @@ class EnumSeq {
 		auto operator*() const { return _value; }
 
 		bool operator==(Iterator const &rhs) const { return _value == rhs._value; }
-		bool operator!=(Iterator const &rhs) const  { return _value != rhs._value; }
+		bool operator!=(Iterator const &rhs) const { return _value != rhs._value; }
 	};
 
 public:

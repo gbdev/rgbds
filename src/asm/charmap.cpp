@@ -45,7 +45,10 @@ bool charmap_ForEach(
 	for (Charmap const &charmap : charmapList) {
 		// Traverse the trie depth-first to derive the character mappings in definition order
 		std::map<size_t, std::string> mappings;
-		for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}}); !prefixes.empty();) {
+		// clang-format off: nested initializers
+		for (std::stack<std::pair<size_t, std::string>> prefixes({{0, ""}});
+		     !prefixes.empty();) {
+			// clang-format on
 			auto [nodeIdx, mapping] = std::move(prefixes.top());
 			prefixes.pop();
 			CharmapNode const &node = charmap.nodes[nodeIdx];
