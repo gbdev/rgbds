@@ -7,8 +7,6 @@
 #define PACKAGE_VERSION_MINOR 9
 #define PACKAGE_VERSION_PATCH 0
 
-extern "C" {
-	char const *get_package_version_string();
-}
+char const *get_package_version_string();
 
 #endif // RGBDS_VERSION_H
