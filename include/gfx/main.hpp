@@ -48,6 +48,7 @@ struct Options {
 
 	std::string input{}; // positional arg
 
+	// clang-format off: vertically align values
 	static constexpr uint8_t VERB_NONE    = 0; // Normal, no extra output
 	static constexpr uint8_t VERB_CFG     = 1; // Print configuration after parsing options
 	static constexpr uint8_t VERB_LOG_ACT = 2; // Log actions before doing them
@@ -55,6 +56,7 @@ struct Options {
 	static constexpr uint8_t VERB_DEBUG   = 4; // Internals are logged
 	static constexpr uint8_t VERB_TRACE   = 5; // Step-by-step algorithm details
 	static constexpr uint8_t VERB_VVVVVV  = 6; // What, can't I have a little fun?
+	// clang-format on
 	[[gnu::format(printf, 3, 4)]] void verbosePrint(uint8_t level, char const *fmt, ...) const;
 
 	mutable bool hasTransparentPixels = false;

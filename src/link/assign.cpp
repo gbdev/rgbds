@@ -183,7 +183,8 @@ static ssize_t getPlacement(Section const &section, MemoryLocation &location) {
 				location.bank = scrambleROMX + 1;
 			else
 				return -1;
-		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX && location.bank <= scrambleWRAMX) {
+		} else if (scrambleWRAMX && section.type == SECTTYPE_WRAMX
+		           && location.bank <= scrambleWRAMX) {
 			if (location.bank > typeInfo.firstBank)
 				location.bank--;
 			else if (scrambleWRAMX < typeInfo.lastBank)
@@ -328,9 +329,11 @@ static void placeSection(Section &section) {
 		);
 }
 
+// clang-format off: vertically align values
 static constexpr uint8_t BANK_CONSTRAINED  = 1 << 2;
 static constexpr uint8_t ORG_CONSTRAINED   = 1 << 1;
 static constexpr uint8_t ALIGN_CONSTRAINED = 1 << 0;
+// clang-format on
 static std::deque<Section *> unassignedSections[1 << 3];
 
 /*

@@ -190,7 +190,7 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
     {"NZ",            T_(CC_NZ)            },
     {"Z",             T_(CC_Z)             },
     {"NC",            T_(CC_NC)            },
- // There is no `T_(CC_C)`; it's handled before as `T_(TOKEN_C)`
+    // There is no `T_(CC_C)`; it's handled before as `T_(TOKEN_C)`
 
     {"AF",            T_(MODE_AF)          },
     {"BC",            T_(MODE_BC)          },
@@ -315,7 +315,7 @@ static std::unordered_map<std::string, int, CaseInsensitive, CaseInsensitive> ke
 
     {"RB",            T_(POP_RB)           },
     {"RW",            T_(POP_RW)           },
- // There is no `T_(POP_RL)`; it's handled before as `T_(SM83_RL)`
+    // There is no `T_(POP_RL)`; it's handled before as `T_(SM83_RL)`
 
     {"EQU",           T_(POP_EQU)          },
     {"EQUS",          T_(POP_EQUS)         },
@@ -2286,14 +2286,14 @@ static Capture startCapture() {
 		auto &view = lexerState->content.get<ViewedContent>();
 		return {
 		    .lineNo = lineNo, .span = {.ptr = view.makeSharedContentPtr(), .size = 0}
-        };
+		};
 	} else {
 		assume(lexerState->captureBuf == nullptr);
 		lexerState->captureBuf = std::make_shared<std::vector<char>>();
 		// `.span.ptr == nullptr`; indicates to retrieve the capture buffer when done capturing
 		return {
 		    .lineNo = lineNo, .span = {.ptr = nullptr, .size = 0}
-        };
+		};
 	}
 }
 

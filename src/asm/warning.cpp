@@ -35,13 +35,13 @@ struct WarningFlag {
 	WarningLevel level;
 };
 
-static const WarningFlag metaWarnings[] = {
+static WarningFlag const metaWarnings[] = {
     {"all",        LEVEL_ALL       },
     {"extra",      LEVEL_EXTRA     },
     {"everything", LEVEL_EVERYTHING},
 };
 
-static const WarningFlag warningFlags[NB_WARNINGS] = {
+static WarningFlag const warningFlags[NB_WARNINGS] = {
     {"assert",               LEVEL_DEFAULT   },
     {"backwards-for",        LEVEL_ALL       },
     {"builtin-args",         LEVEL_ALL       },

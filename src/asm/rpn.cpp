@@ -77,9 +77,9 @@ void Expression::makeSymbol(std::string const &symName) {
 		isSymbol = true;
 
 		data = sym_IsPC(sym) ? "PC is not constant at assembly time"
-		                     : sym_IsPurgedScoped(symName)
-		                     ? "'"s + symName + "' is not constant at assembly time; it was purged"
-		                     : "'"s + symName + "' is not constant at assembly time";
+		       : sym_IsPurgedScoped(symName)
+		           ? "'"s + symName + "' is not constant at assembly time; it was purged"
+		           : "'"s + symName + "' is not constant at assembly time";
 		sym = sym_Ref(symName);
 
 		size_t nameLen = sym->name.length() + 1; // Don't forget NUL!
@@ -120,8 +120,8 @@ void Expression::makeBankSymbol(std::string const &symName) {
 			data = static_cast<int32_t>(sym->getSection()->bank);
 		} else {
 			data = sym_IsPurgedScoped(symName)
-			       ? "\""s + symName + "\"'s bank is not known; it was purged"
-			       : "\""s + symName + "\"'s bank is not known";
+			           ? "\""s + symName + "\"'s bank is not known; it was purged"
+			           : "\""s + symName + "\"'s bank is not known";
 
 			size_t nameLen = sym->name.length() + 1; // Room for NUL!
 

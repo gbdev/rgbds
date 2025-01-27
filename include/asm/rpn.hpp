@@ -31,12 +31,8 @@ struct Expression {
 
 	Expression &operator=(Expression &&) = default;
 
-	bool isKnown() const {
-		return data.holds<int32_t>();
-	}
-	int32_t value() const {
-		return data.get<int32_t>();
-	}
+	bool isKnown() const { return data.holds<int32_t>(); }
+	int32_t value() const { return data.get<int32_t>(); }
 
 	int32_t getConstVal() const;
 	Symbol const *symbolOf() const;

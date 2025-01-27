@@ -194,8 +194,7 @@ static T readLE(U const *bytes) {
  *
  * @return true if a line was read.
  */
-[[gnu::warn_unused_result]] // Ignoring EOF is a bad idea.
-static bool readLine(std::filebuf &file, std::string &buffer) {
+[[gnu::warn_unused_result]] static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {
