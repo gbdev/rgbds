@@ -5,24 +5,24 @@
 #ifndef RGBDS_EXTERN_GETOPT_HPP
 #define RGBDS_EXTERN_GETOPT_HPP
 
-extern "C" {
-	extern char *musl_optarg;
-	extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
+// clang-format off: vertically align values
+static constexpr int no_argument       = 0;
+static constexpr int required_argument = 1;
+static constexpr int optional_argument = 2;
+// clang-format on
 
-	struct option {
-		char const *name;
-		int has_arg;
-		int *flag;
-		int val;
-	};
+extern char *musl_optarg;
+extern int musl_optind, musl_opterr, musl_optopt, musl_optreset;
 
-	int musl_getopt_long_only(
-	    int argc, char **argv, char const *optstring, option const *longopts, int *idx
-	);
+struct option {
+	char const *name;
+	int has_arg;
+	int *flag;
+	int val;
+};
 
-#define no_argument       0
-#define required_argument 1
-#define optional_argument 2
-}
+int musl_getopt_long_only(
+    int argc, char **argv, char const *optstring, option const *longopts, int *idx
+);
 
 #endif // RGBDS_EXTERN_GETOPT_HPP
