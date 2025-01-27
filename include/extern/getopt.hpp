@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
-/* This implementation was taken from musl and modified for RGBDS */
+// This implementation was taken from musl and modified for RGBDS
 
 #ifndef RGBDS_EXTERN_GETOPT_HPP
 #define RGBDS_EXTERN_GETOPT_HPP

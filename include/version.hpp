@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_VERSION_HPP
 #define RGBDS_VERSION_HPP

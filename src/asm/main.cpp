@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/main.hpp"
 
@@ -54,13 +54,12 @@ static char const *optstring = "b:D:Eg:hI:M:o:P:p:Q:r:s:VvW:wX:";
 static int depType; // Variants of `-M`
 
 // Equivalent long options
-// Please keep in the same order as short opts
-//
+// Please keep in the same order as short opts.
 // Also, make sure long opts don't create ambiguity:
 // A long opt's name should start with the same letter as its short opt,
 // except if it doesn't create any ambiguity (`verbose` versus `version`).
 // This is because long opt matching, even to a single char, is prioritized
-// over short opt matching
+// over short opt matching.
 static option const longopts[] = {
     {"binary-digits",   required_argument, nullptr,  'b'},
     {"define",          required_argument, nullptr,  'D'},

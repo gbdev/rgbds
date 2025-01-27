@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_GFX_MAIN_HPP
 #define RGBDS_GFX_MAIN_HPP
@@ -65,31 +65,19 @@ struct Options {
 
 extern Options options;
 
-/*
- * Prints the error count, and exits with failure
- */
+// Prints the error count, and exits with failure
 [[noreturn]] void giveUp();
-/*
- * If any error has been emitted thus far, calls `giveUp()`.
- */
+// If any error has been emitted thus far, calls `giveUp()`.
 void requireZeroErrors();
-/*
- * Prints a warning, and does not change the error count
- */
+// Prints a warning, and does not change the error count
 [[gnu::format(printf, 1, 2)]] void warning(char const *fmt, ...);
-/*
- * Prints an error, and increments the error count
- */
+// Prints an error, and increments the error count
 [[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
-/*
- * Prints an error, and increments the error count
- * Does not take format arguments so `format_` and `-Wformat-security` won't complain about
- * calling `errorMessage(msg)`.
- */
+// Prints an error, and increments the error count
+// Does not take format arguments so `format_` and `-Wformat-security` won't complain about
+// calling `errorMessage(msg)`.
 void errorMessage(char const *msg);
-/*
- * Prints a fatal error, increments the error count, and gives up
- */
+// Prints a fatal error, increments the error count, and gives up
 [[gnu::format(printf, 1, 2), noreturn]] void fatal(char const *fmt, ...);
 
 struct Palette {

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_GFX_PROTO_PALETTE_HPP
 #define RGBDS_GFX_PROTO_PALETTE_HPP

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_OUTPUT_HPP
 #define RGBDS_ASM_OUTPUT_HPP

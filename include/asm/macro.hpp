@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_ASM_MACRO_HPP
 #define RGBDS_ASM_MACRO_HPP

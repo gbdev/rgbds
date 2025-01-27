@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "link/object.hpp"
 
@@ -41,11 +41,9 @@ static std::vector<std::vector<FileStackNode>> nodes;
 		var = static_cast<vartype>(tmpVal); \
 	} while (0)
 
-/*
- * Reads an unsigned long (32-bit) value from a file.
- * @param file The file to read from. This will read 4 bytes from the file.
- * @return The value read, cast to a int64_t, or `INT64_MAX` on failure.
- */
+// Reads an unsigned long (32-bit) value from a file.
+// @param file The file to read from. This will read 4 bytes from the file.
+// @return The value read, cast to a int64_t, or `INT64_MAX` on failure.
 static int64_t readLong(FILE *file) {
 	uint32_t value = 0;
 
@@ -66,37 +64,31 @@ static int64_t readLong(FILE *file) {
 	return value;
 }
 
-/*
- * Helper macro for reading longs from a file, and errors out if it fails to.
- * Not as a function to avoid overhead in the general case.
- * @param var The variable to stash the number into
- * @param file The file to read from. Its position will be advanced
- * @param ... A format string and related arguments; note that an extra string
- *            argument is provided, the reason for failure
- */
+// Helper macro for reading longs from a file, and errors out if it fails to.
+// Not as a function to avoid overhead in the general case.
+// @param var The variable to stash the number into
+// @param file The file to read from. Its position will be advanced
+// @param ... A format string and related arguments; note that an extra string
+//            argument is provided, the reason for failure
 #define tryReadLong(var, file, ...) \
 	tryRead(readLong, int64_t, INT64_MAX, long, var, file, __VA_ARGS__)
 
-// There is no `readbyte`, just use `fgetc` or `getc`.
+// There is no `readByte`, just use `fgetc` or `getc`.
 
-/*
- * Helper macro for reading bytes from a file, and errors out if it fails to.
- * Not as a function to avoid overhead in the general case.
- * @param var The variable to stash the number into
- * @param file The file to read from. Its position will be advanced
- * @param ... A format string and related arguments; note that an extra string
- *            argument is provided, the reason for failure
- */
+// Helper macro for reading bytes from a file, and errors out if it fails to.
+// Not as a function to avoid overhead in the general case.
+// @param var The variable to stash the number into
+// @param file The file to read from. Its position will be advanced
+// @param ... A format string and related arguments; note that an extra string
+//            argument is provided, the reason for failure
 #define tryGetc(type, var, file, ...) tryRead(getc, int, EOF, type, var, file, __VA_ARGS__)
 
-/*
- * Helper macro for readings '\0'-terminated strings from a file, and errors out if it fails to.
- * Not as a function to avoid overhead in the general case.
- * @param var The variable to stash the string into
- * @param file The file to read from. Its position will be advanced
- * @param ... A format string and related arguments; note that an extra string
- *            argument is provided, the reason for failure
- */
+// Helper macro for readings '\0'-terminated strings from a file, and errors out if it fails to.
+// Not as a function to avoid overhead in the general case.
+// @param var The variable to stash the string into
+// @param file The file to read from. Its position will be advanced
+// @param ... A format string and related arguments; note that an extra string
+//            argument is provided, the reason for failure
 #define tryReadString(var, file, ...) \
 	do { \
 		FILE *tmpFile = file; \
@@ -112,13 +104,11 @@ static int64_t readLong(FILE *file) {
 
 // Functions to parse object files
 
-/*
- * Reads a file stack node form a file.
- * @param file The file to read from
- * @param nodes The file's array of nodes
- * @param i The ID of the node in the array
- * @param fileName The filename to report in errors
- */
+// Reads a file stack node form a file.
+// @param file The file to read from
+// @param nodes The file's array of nodes
+// @param i The ID of the node in the array
+// @param fileName The filename to report in errors
 static void readFileStackNode(
     FILE *file, std::vector<FileStackNode> &fileNodes, uint32_t i, char const *fileName
 ) {
@@ -171,12 +161,10 @@ static void readFileStackNode(
 	}
 }
 
-/*
- * Reads a symbol from a file.
- * @param file The file to read from
- * @param symbol The symbol to fill
- * @param fileName The filename to report in errors
- */
+// Reads a symbol from a file.
+// @param file The file to read from
+// @param symbol The symbol to fill
+// @param fileName The filename to report in errors
 static void readSymbol(
     FILE *file, Symbol &symbol, char const *fileName, std::vector<FileStackNode> const &fileNodes
 ) {
@@ -229,13 +217,11 @@ static void readSymbol(
 	}
 }
 
-/*
- * Reads a patch from a file.
- * @param file The file to read from
- * @param patch The patch to fill
- * @param fileName The filename to report in errors
- * @param i The number of the patch to report in errors
- */
+// Reads a patch from a file.
+// @param file The file to read from
+// @param patch The patch to fill
+// @param fileName The filename to report in errors
+// @param i The number of the patch to report in errors
 static void readPatch(
     FILE *file,
     Patch &patch,
@@ -320,22 +306,18 @@ static void readPatch(
 		);
 }
 
-/*
- * Sets a patch's pcSection from its pcSectionID.
- * @param patch The patch to fix
- */
+// Sets a patch's pcSection from its pcSectionID.
+// @param patch The patch to fix
 static void
     linkPatchToPCSect(Patch &patch, std::vector<std::unique_ptr<Section>> const &fileSections) {
 	patch.pcSection =
 	    patch.pcSectionID != UINT32_MAX ? fileSections[patch.pcSectionID].get() : nullptr;
 }
 
-/*
- * Reads a section from a file.
- * @param file The file to read from
- * @param section The section to fill
- * @param fileName The filename to report in errors
- */
+// Reads a section from a file.
+// @param file The file to read from
+// @param section The section to fill
+// @param fileName The filename to report in errors
 static void readSection(
     FILE *file, Section &section, char const *fileName, std::vector<FileStackNode> const &fileNodes
 ) {
@@ -440,11 +422,9 @@ static void readSection(
 	}
 }
 
-/*
- * Links a symbol to a section, keeping the section's symbol list sorted.
- * @param symbol The symbol to link
- * @param section The section to link
- */
+// Links a symbol to a section, keeping the section's symbol list sorted.
+// @param symbol The symbol to link
+// @param section The section to link
 static void linkSymToSect(Symbol &symbol, Section &section) {
 	uint32_t a = 0, b = section.symbols.size();
 	int32_t symbolOffset = symbol.label().offset;
@@ -462,12 +442,10 @@ static void linkSymToSect(Symbol &symbol, Section &section) {
 	section.symbols.insert(section.symbols.begin() + a, &symbol);
 }
 
-/*
- * Reads an assertion from a file
- * @param file The file to read from
- * @param assert The assertion to fill
- * @param fileName The filename to report in errors
- */
+// Reads an assertion from a file
+// @param file The file to read from
+// @param assert The assertion to fill
+// @param fileName The filename to report in errors
 static void readAssertion(
     FILE *file,
     Assertion &assert,

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "asm/rpn.hpp"
 
@@ -225,12 +225,9 @@ static bool tryConstLogNot(Expression const &expr) {
 	return knownBits != 0;
 }
 
-/*
- * Attempts to compute a constant LOW() from non-constant argument
- * This is possible if the argument is a symbol belonging to an `ALIGN[8]` section.
- *
- * @return The constant `LOW(expr)` result if it can be computed, or -1 otherwise.
- */
+// Attempts to compute a constant LOW() from non-constant argument
+// This is possible if the argument is a symbol belonging to an `ALIGN[8]` section.
+// @return The constant `LOW(expr)` result if it can be computed, or -1 otherwise.
 static int32_t tryConstLow(Expression const &expr) {
 	Symbol const *sym = expr.symbolOf();
 	if (!sym || !sym->getSection() || !sym->isDefined())
@@ -251,13 +248,10 @@ static int32_t tryConstLow(Expression const &expr) {
 	return (symbolOfs + sect.alignOfs) & 0xFF;
 }
 
-/*
- * Attempts to compute a constant binary AND with one non-constant operands
- * This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
- * a constant that only keeps (some of) the lower N bits.
- *
- * @return The constant `lhs & rhs` result if it can be computed, or -1 otherwise.
- */
+// Attempts to compute a constant binary AND with one non-constant operands
+// This is possible if one operand is a symbol belonging to an `ALIGN[N]` section, and the other is
+// a constant that only keeps (some of) the lower N bits.
+// @return The constant `lhs & rhs` result if it can be computed, or -1 otherwise.
 static int32_t tryConstMask(Expression const &lhs, Expression const &rhs) {
 	Symbol const *lhsSymbol = lhs.symbolOf();
 	Symbol const *rhsSymbol = lhsSymbol ? nullptr : rhs.symbolOf();

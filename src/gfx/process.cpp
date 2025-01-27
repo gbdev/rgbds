@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/process.hpp"
 
@@ -31,11 +31,9 @@ class ImagePalette {
 public:
 	ImagePalette() = default;
 
-	/*
-	 * Registers a color in the palette.
-	 * If the newly inserted color "conflicts" with another one (different color, but same CGB
-	 * color), then the other color is returned. Otherwise, `nullptr` is returned.
-	 */
+	// Registers a color in the palette.
+	// If the newly inserted color "conflicts" with another one (different color, but same CGB
+	// color), then the other color is returned. Otherwise, `nullptr` is returned.
 	[[nodiscard]] Rgba const *registerColor(Rgba const &rgba) {
 		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
 
@@ -165,15 +163,13 @@ public:
 		return true;
 	}
 
-	/*
-	 * Reads a PNG and notes all of its colors
-	 *
-	 * This code is more complicated than strictly necessary, but that's because of the API
-	 * being used: the "high-level" interface doesn't provide all the transformations we need,
-	 * so we use the "lower-level" one instead.
-	 * We also use that occasion to only read the PNG one line at a time, since we store all of
-	 * the pixel data in `pixels`, which saves on memory allocations.
-	 */
+	// Reads a PNG and notes all of its colors
+	//
+	// This code is more complicated than strictly necessary, but that's because of the API
+	// being used: the "high-level" interface doesn't provide all the transformations we need,
+	// so we use the "lower-level" one instead.
+	// We also use that occasion to only read the PNG one line at a time, since we store all of
+	// the pixel data in `pixels`, which saves on memory allocations.
 	explicit Png(std::string const &filePath) : path(filePath), colors() {
 		if (file.open(path, std::ios_base::in | std::ios_base::binary) == nullptr) {
 			fatal("Failed to open input image (\"%s\"): %s", file.c_str(path), strerror(errno));
@@ -490,9 +486,7 @@ public:
 };
 
 class RawTiles {
-	/*
-	 * A tile which only contains indices into the image's global palette
-	 */
+	// A tile which only contains indices into the image's global palette
 	class RawTile {
 		std::array<std::array<size_t, 8>, 8> _pixelIndices{};
 
@@ -505,9 +499,7 @@ private:
 	std::vector<RawTile> _tiles;
 
 public:
-	/*
-	 * Creates a new raw tile, and returns a reference to it so it can be filled in
-	 */
+	// Creates a new raw tile, and returns a reference to it so it can be filled in
 	RawTile &newTile() {
 		_tiles.emplace_back();
 		return _tiles.back();
@@ -515,11 +507,9 @@ public:
 };
 
 struct AttrmapEntry {
-	/*
-	 * This field can either be a proto-palette ID, or `transparent` to indicate that the
-	 * corresponding tile is fully transparent. If you are looking to get the palette ID for this
-	 * attrmap entry while correctly handling the above, use `getPalID`.
-	 */
+	// This field can either be a proto-palette ID, or `transparent` to indicate that the
+	// corresponding tile is fully transparent. If you are looking to get the palette ID for this
+	// attrmap entry while correctly handling the above, use `getPalID`.
 	size_t protoPaletteID; // Only this field is used when outputting "unoptimized" data
 	uint8_t tileID;        // This is the ID as it will be output to the tilemap
 	bool bank;
@@ -918,9 +908,7 @@ struct UniqueTiles {
 	UniqueTiles(UniqueTiles const &) = delete;
 	UniqueTiles(UniqueTiles &&) = default;
 
-	/*
-	 * Adds a tile to the collection, and returns its ID
-	 */
+	// Adds a tile to the collection, and returns its ID
 	std::tuple<uint16_t, TileData::MatchType> addTile(TileData newTile) {
 		auto [tileData, inserted] = tileset.insert(newTile);
 
@@ -942,12 +930,10 @@ struct UniqueTiles {
 	auto end() const { return tiles.end(); }
 };
 
-/*
- * Generate tile data while deduplicating unique tiles (via mirroring if enabled)
- * Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
- * 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
- * twice)
- */
+// Generate tile data while deduplicating unique tiles (via mirroring if enabled)
+// Additionally, while we have the info handy, convert from the 16-bit "global" tile IDs to
+// 8-bit tile IDs + the bank bit; this will save the work when we output the data later (potentially
+// twice)
 static UniqueTiles dedupTiles(
     Png const &png,
     DefaultInitVec<AttrmapEntry> &attrmap,
@@ -1164,18 +1150,17 @@ void process() {
 				protoPalettes[n] = protoPalette; // Override them
 				// Remove any other proto-palettes that we encompass
 				// (Example [(0, 1), (0, 2)], inserting (0, 1, 2))
-				/*
-				 * The following code does its job, except that references to the removed
-				 * proto-palettes are not updated, causing issues.
-				 * TODO: overlap might not be detrimental to the packing algorithm.
-				 * Investigation is necessary, especially if pathological cases are found.
-				 *
-				 * for (size_t i = protoPalettes.size(); --i != n;) {
-				 *     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
-				 *         protoPalettes.erase(protoPalettes.begin() + i);
-				 *     }
-				 * }
-				 */
+				//
+				// The following code does its job, except that references to the removed
+				// proto-palettes are not updated, causing issues.
+				// TODO: overlap might not be detrimental to the packing algorithm.
+				// Investigation is necessary, especially if pathological cases are found.
+				//
+				// for (size_t i = protoPalettes.size(); --i != n;) {
+				//     if (protoPalette.compare(protoPalettes[i]) == ProtoPalette::WE_BIGGER) {
+				//         protoPalettes.erase(protoPalettes.begin() + i);
+				//     }
+				// }
 				[[fallthrough]];
 
 			case ProtoPalette::THEY_BIGGER:

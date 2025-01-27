@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_GFX_PAL_PACKING_HPP
 #define RGBDS_GFX_PAL_PACKING_HPP
@@ -11,9 +11,7 @@
 struct Palette;
 class ProtoPalette;
 
-/*
- * Returns which palette each proto-palette maps to, and how many palettes are necessary
- */
+// Returns which palette each proto-palette maps to, and how many palettes are necessary
 std::tuple<DefaultInitVec<size_t>, size_t>
     overloadAndRemove(std::vector<ProtoPalette> const &protoPalettes);
 

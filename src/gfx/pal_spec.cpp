@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/pal_spec.hpp"
 
@@ -189,11 +189,8 @@ static T readLE(U const *bytes) {
 	return val;
 }
 
-/*
- * **Appends** the first line read from `file` to the end of the provided `buffer`.
- *
- * @return true if a line was read.
- */
+// **Appends** the first line read from `file` to the end of the provided `buffer`.
+// @return true if a line was read.
 [[gnu::warn_unused_result]] static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
@@ -222,9 +219,7 @@ static T readLE(U const *bytes) {
 		} \
 	} while (0)
 
-/*
- * Parses the initial part of a string_view, advancing the "read index" as it does
- */
+// Parses the initial part of a string_view, advancing the "read index" as it does
 template<typename U> // Should be uint*_t
 static std::optional<U> parseDec(std::string const &str, std::string::size_type &n) {
 	uintmax_t value = 0;

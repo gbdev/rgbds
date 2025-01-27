@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_EXTERN_UTF8DECODER_HPP
 #define RGBDS_EXTERN_UTF8DECODER_HPP
