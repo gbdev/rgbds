@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_LINK_SYMBOL_HPP
 #define RGBDS_LINK_SYMBOL_HPP
@@ -41,11 +41,9 @@ void sym_ForEach(void (*callback)(Symbol &));
 
 void sym_AddSymbol(Symbol &symbol);
 
-/*
- * Finds a symbol in all the defined symbols.
- * @param name The name of the symbol to look for
- * @return A pointer to the symbol, or `nullptr` if not found.
- */
+// Finds a symbol in all the defined symbols.
+// @param name The name of the symbol to look for
+// @return A pointer to the symbol, or `nullptr` if not found.
 Symbol *sym_GetSymbol(std::string const &name);
 
 void sym_DumpLocalAliasedSymbols(std::string const &name);

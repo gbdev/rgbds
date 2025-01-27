@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_LINKDEFS_HPP
 #define RGBDS_LINKDEFS_HPP
@@ -92,29 +92,23 @@ extern struct SectionTypeInfo {
 	uint32_t lastBank;
 } sectionTypeInfo[SECTTYPE_INVALID];
 
-/*
- * Tells whether a section has data in its object file definition,
- * depending on type.
- * @param type The section's type
- * @return `true` if the section's definition includes data
- */
+// Tells whether a section has data in its object file definition,
+// depending on type.
+// @param type The section's type
+// @return `true` if the section's definition includes data
 static inline bool sect_HasData(SectionType type) {
 	assume(type != SECTTYPE_INVALID);
 	return type == SECTTYPE_ROM0 || type == SECTTYPE_ROMX;
 }
 
-/*
- * Computes a memory region's end address (last byte), eg. 0x7FFF
- * @return The address of the last byte in that memory region
- */
+// Computes a memory region's end address (last byte), eg. 0x7FFF
+// @return The address of the last byte in that memory region
 static inline uint16_t endaddr(SectionType type) {
 	return sectionTypeInfo[type].startAddr + sectionTypeInfo[type].size - 1;
 }
 
-/*
- * Computes a memory region's number of banks
- * @return The number of banks, 1 for regions without banking
- */
+// Computes a memory region's number of banks
+// @return The number of banks, 1 for regions without banking
 static inline uint32_t nbbanks(SectionType type) {
 	return sectionTypeInfo[type].lastBank - sectionTypeInfo[type].firstBank + 1;
 }

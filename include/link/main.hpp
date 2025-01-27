@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_LINK_MAIN_HPP
 #define RGBDS_LINK_MAIN_HPP

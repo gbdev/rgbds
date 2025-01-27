@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -132,16 +132,13 @@ void argErr(char flag, char const *fmt, ...) {
 // Short options
 static char const *optstring = "dhl:m:Mn:O:o:p:S:tVvWwx";
 
-/*
- * Equivalent long options
- * Please keep in the same order as short opts
- *
- * Also, make sure long opts don't create ambiguity:
- * A long opt's name should start with the same letter as its short opt,
- * except if it doesn't create any ambiguity (`verbose` versus `version`).
- * This is because long opt matching, even to a single char, is prioritized
- * over short opt matching
- */
+// Equivalent long options
+// Please keep in the same order as short opts.
+// Also, make sure long opts don't create ambiguity:
+// A long opt's name should start with the same letter as its short opt,
+// except if it doesn't create any ambiguity (`verbose` versus `version`).
+// This is because long opt matching, even to a single char, is prioritized
+// over short opt matching.
 static option const longopts[] = {
     {"dmg",           no_argument,       nullptr, 'd'},
     {"help",          no_argument,       nullptr, 'h'},

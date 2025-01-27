@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "gfx/rgba.hpp"
 
@@ -10,11 +10,9 @@
 
 #include "gfx/main.hpp" // options
 
-/*
- * Based on inverting the "Modern - Accurate" formula used by SameBoy
- * since commit b5a611c5db46d6a0649d04d24d8d6339200f9ca1 (Dec 2020),
- * with gaps in the scale curve filled by polynomial interpolation.
- */
+// Based on inverting the "Modern - Accurate" formula used by SameBoy
+// since commit b5a611c5db46d6a0649d04d24d8d6339200f9ca1 (Dec 2020),
+// with gaps in the scale curve filled by polynomial interpolation.
 // clang-format off: vertically align columns of values
 static std::array<uint8_t, 256> reverse_curve{
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,

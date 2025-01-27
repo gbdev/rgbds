@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #include "linkdefs.hpp"
 
@@ -10,7 +10,7 @@ SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
     {
      .name = "WRAM0"s,
      .startAddr = 0xC000,
-     .size = 0x2000 /* Patched to 0x1000 if !isWRAM0Mode */,
+     .size = 0x2000, // Patched to 0x1000 if !isWRAM0Mode
      .firstBank = 0,
      .lastBank = 0,
      },
@@ -19,7 +19,7 @@ SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
      .startAddr = 0x8000,
      .size = 0x2000,
      .firstBank = 0,
-     .lastBank = 1 /* Patched to 0 if isDmgMode */,
+     .lastBank = 1, // Patched to 0 if isDmgMode
      },
     {
      .name = "ROMX"s,
@@ -31,7 +31,7 @@ SectionTypeInfo sectionTypeInfo[SECTTYPE_INVALID] = {
     {
      .name = "ROM0"s,
      .startAddr = 0x0000,
-     .size = 0x8000 /* Patched to 0x4000 if !is32kMode */,
+     .size = 0x8000, // Patched to 0x4000 if !is32kMode
      .firstBank = 0,
      .lastBank = 0,
      },

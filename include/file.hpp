@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_FILE_HPP
 #define RGBDS_FILE_HPP
@@ -25,10 +25,8 @@ public:
 	File() {}
 	~File() { close(); }
 
-	/**
-	 * This should only be called once, and before doing any `->` operations.
-	 * Returns `nullptr` on error, and a non-null pointer otherwise.
-	 */
+	// This should only be called once, and before doing any `->` operations.
+	// Returns `nullptr` on error, and a non-null pointer otherwise.
 	File *open(std::string const &path, std::ios_base::openmode mode) {
 		if (path != "-") {
 			_file.emplace<std::filebuf>();

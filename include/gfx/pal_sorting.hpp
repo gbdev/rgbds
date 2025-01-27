@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: MIT */
+// SPDX-License-Identifier: MIT
 
 #ifndef RGBDS_GFX_PAL_SORTING_HPP
 #define RGBDS_GFX_PAL_SORTING_HPP
