@@ -467,24 +467,7 @@ void reverse() {
 			assume(palID < palettes.size()); // Should be ensured on data read
 
 			// We do not have data for tiles trimmed with `-x`, so assume they are "blank"
-			static std::array<uint8_t, 16> const trimmedTile{
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			    0x00,
-			};
+			static std::array<uint8_t, 16> const trimmedTile{0x00};
 			uint8_t const *tileData =
 			    tileOfs >= nbTiles ? trimmedTile.data() : &tiles[tileOfs * tileSize];
 			auto const &palette = palettes[palID];
