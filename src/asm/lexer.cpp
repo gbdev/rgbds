@@ -35,15 +35,14 @@
 
 // Neither MSVC nor MinGW provide `mmap`
 #if defined(_MSC_VER) || defined(__MINGW32__)
-// clang-format off
-	// (we need these `include`s in this order)
-	#define WIN32_LEAN_AND_MEAN // include less from windows.h
+// clang-format off: maintain `include` order
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
 	#include <windows.h>   // target architecture
-	#include <fileapi.h>   // CreateFileA
-	#include <winbase.h>   // CreateFileMappingA
-	#include <memoryapi.h> // MapViewOfFile
-	#include <handleapi.h> // CloseHandle
 // clang-format on
+	#include <fileapi.h>   // CreateFileA
+	#include <handleapi.h> // CloseHandle
+	#include <memoryapi.h> // MapViewOfFile
+	#include <winbase.h>   // CreateFileMappingA
 
 static char *mapFile(int fd, std::string const &path, size_t) {
 	void *mappingAddr = nullptr;
