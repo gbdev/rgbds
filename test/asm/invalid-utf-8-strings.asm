@@ -21,3 +21,17 @@ println "\"{invalid}\" == \"{copy}\" ({d:n})"
 DEF mid1 EQUS STRSUB("{invalid}", 5, 2)
 DEF mid2 EQUS STRSUB("{invalid}", 9, 1)
 println "\"{mid2}{mid1}\""
+
+; characters:
+; 1: U+0041 A
+; 2: U+0020 space
+; 3: invalid byte 0xFE
+; 4: invalid byte 0x81
+; 5: invalid byte 0xFF
+; 6: U+0020 space
+; 7: U+0042 B
+REDEF invalid EQUS "A şÿ B"
+
+DEF n = strlen("{invalid}")
+DEF r = charlen("{invalid}")
+println "\"{#s:invalid}\": {d:n} != {d:r}"

@@ -42,4 +42,12 @@ error: invalid-utf-8-strings.asm(22):
     STRSUB: Invalid UTF-8 byte 0xA3
 error: invalid-utf-8-strings.asm(22):
     STRSUB: Invalid UTF-8 byte 0xA4
-error: Assembly aborted (22 errors)!
+error: invalid-utf-8-strings.asm(35):
+    STRLEN: Invalid UTF-8 byte 0xFE
+error: invalid-utf-8-strings.asm(35):
+    STRLEN: Invalid UTF-8 byte 0x81
+error: invalid-utf-8-strings.asm(35):
+    STRLEN: Invalid UTF-8 byte 0xFF
+error: invalid-utf-8-strings.asm(36):
+    Input string is not valid UTF-8
+error: Assembly aborted (26 errors)!
