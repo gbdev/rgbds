@@ -227,24 +227,22 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 	} else if (inputIdx < input.length()) { // No match found, but there is some input left
 		size_t codepointLen = 0;
 		// This will write the codepoint's value to `output`, little-endian
-		for (uint32_t state = 0, codepoint = 0;;) {
+		for (uint32_t state = 0, codepoint = 0; inputIdx + codepointLen < input.length();) {
 			if (decode(&state, &codepoint, input[inputIdx + codepointLen]) == 1) {
-				codepointLen = 0;
+				error("Input string is not valid UTF-8\n");
+				codepointLen = 1;
 				break;
 			}
-
-			if (output) {
-				output->push_back(input[inputIdx + codepointLen]);
-			}
 			codepointLen++;
-
 			if (state == 0) {
 				break;
 			}
 		}
 
-		if (codepointLen == 0) {
-			error("Input string is not valid UTF-8\n");
+		if (output) {
+			output->insert(
+			    output->end(), input.data() + inputIdx, input.data() + inputIdx + codepointLen
+			);
 		}
 
 		// Warn if this character is not mapped but any others are
