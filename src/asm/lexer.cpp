@@ -345,7 +345,7 @@ bool lexer_AtTopLevel() {
 
 void LexerState::clear(uint32_t lineNo_) {
 	mode = LEXER_NORMAL;
-	atLineStart = true; // yylex() will init colNo due to this
+	atLineStart = true;
 	lastToken = T_(YYEOF);
 
 	ifStack.clear();
@@ -365,7 +365,6 @@ void LexerState::clear(uint32_t lineNo_) {
 
 static void nextLine() {
 	lexerState->lineNo++;
-	lexerState->colNo = 1;
 }
 
 uint32_t lexer_GetIFDepth() {
@@ -852,7 +851,6 @@ restart:
 		}
 	} else {
 		// Advance within the file contents
-		lexerState->colNo++;
 		if (lexerState->content.holds<ViewedContent>()) {
 			lexerState->content.get<ViewedContent>().offset++;
 		} else {
@@ -892,10 +890,6 @@ uint32_t lexer_GetLineNo() {
 	return lexerState->lineNo;
 }
 
-uint32_t lexer_GetColNo() {
-	return lexerState->colNo;
-}
-
 void lexer_DumpStringExpansions() {
 	if (!lexerState) {
 		return;
@@ -921,7 +915,6 @@ static void discardBlockComment() {
 			error("Unterminated block comment\n");
 			return;
 		case '\r':
-			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			[[fallthrough]];
 		case '\n':
@@ -965,7 +958,6 @@ static void discardLineContinuation() {
 			shiftChar();
 		} else if (c == '\r' || c == '\n') {
 			shiftChar();
-			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			if (lexerState->expansions.empty()) {
 				nextLine();
@@ -1376,7 +1368,6 @@ static std::string readString(bool raw) {
 
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
-			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			nextLine();
 			c = '\n';
@@ -1521,7 +1512,6 @@ static void appendStringLiteral(std::string &str, bool raw) {
 
 		// Handle '\r' or '\n' (in multiline strings only, already handled above otherwise)
 		if (c == '\r' || c == '\n') {
-			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
 			nextLine();
 			c = '\n';
@@ -2212,7 +2202,6 @@ static Token skipIfBlock(bool toEndc) {
 			}
 
 			if (c == '\r' || c == '\n') {
-				// Handle CRLF before nextLine() since shiftChar updates colNo
 				handleCRLF(c);
 				// Do this both on line continuations and plain EOLs
 				nextLine();
@@ -2294,7 +2283,6 @@ static Token yylex_SKIP_TO_ENDR() {
 			}
 
 			if (c == '\r' || c == '\n') {
-				// Handle CRLF before nextLine() since shiftChar updates colNo
 				handleCRLF(c);
 				// Do this both on line continuations and plain EOLs
 				nextLine();

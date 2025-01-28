@@ -83,7 +83,6 @@ struct LexerState {
 	LexerMode mode;
 	bool atLineStart;
 	uint32_t lineNo;
-	uint32_t colNo;
 	int lastToken;
 
 	std::deque<IfStackEntry> ifStack;
@@ -147,7 +146,6 @@ void lexer_ReachELSEBlock();
 
 void lexer_CheckRecursionDepth();
 uint32_t lexer_GetLineNo();
-uint32_t lexer_GetColNo();
 void lexer_DumpStringExpansions();
 
 struct Capture {
