@@ -16,11 +16,11 @@ DEF invalid EQUS "aÃ¤bæ¼¢,a£¤bæð¢!"
 DEF n = STRLEN("{invalid}")
 DEF copy EQUS STRSUB("{invalid}", 1)
 
-println "\"{invalid}\" == \"{copy}\" ({d:n})"
+println "\"{#s:invalid}\" == \"{#s:copy}\" ({d:n})"
 
 DEF mid1 EQUS STRSUB("{invalid}", 5, 2)
 DEF mid2 EQUS STRSUB("{invalid}", 9, 1)
-println "\"{mid2}{mid1}\""
+println "\"{#s:mid2}{#s:mid1}\""
 
 ; characters:
 ; 1: U+0041 A
@@ -38,4 +38,18 @@ println "\"{#s:invalid}\": {d:n} == {d:r}"
 
 REDEF mid1 EQUS CHARSUB("{invalid}", 4)
 REDEF mid2 EQUS CHARSUB("{invalid}", 7)
-println "\"{mid2}{mid1}\""
+println "\"{#s:mid2}{#s:mid1}\""
+
+; characters:
+; 1: U+0061 a
+; 2: U+0062 b
+; 3: U+0063 c
+; 4: incomplete U+6F22 kanji (0xE6 0xBC without 0xA2)
+REDEF invalid EQUS "abcæ¼"
+
+DEF n = STRLEN("{invalid}")
+DEF r = CHARLEN("{invalid}")
+println "\"{#s:invalid}\": {d:n} == {d:r}"
+
+DEF final EQUS STRSUB("{invalid}", 4, 1)
+println "\"{#s:invalid}\" ends \"{#s:final}\""
