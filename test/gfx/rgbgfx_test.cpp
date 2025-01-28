@@ -27,10 +27,13 @@
 	#include <spawn.h>
 	#include <unistd.h>
 #else
-	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h` to avoid conflicts
+// clang-format off: maintain `include` order
+	#define WIN32_LEAN_AND_MEAN // Include less from `windows.h`
 	#include <windows.h>
+// clang-format on
 	#include <errhandlingapi.h>
 	#include <processthreadsapi.h>
+
 	#undef max // This macro conflicts with `std::numeric_limits<...>::max()`
 #endif
 
