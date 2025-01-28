@@ -8,7 +8,6 @@
 extern uint8_t fixPrecision;
 
 uint8_t fix_Precision();
-double fix_PrecisionFactor();
 int32_t fix_Sin(int32_t i, int32_t q);
 int32_t fix_Cos(int32_t i, int32_t q);
 int32_t fix_Tan(int32_t i, int32_t q);

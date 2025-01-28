@@ -16,10 +16,6 @@ uint8_t fix_Precision() {
 	return fixPrecision;
 }
 
-double fix_PrecisionFactor() {
-	return pow(2.0, fixPrecision);
-}
-
 static double fix2double(int32_t i, int32_t q) {
 	return i / pow(2.0, q);
 }
