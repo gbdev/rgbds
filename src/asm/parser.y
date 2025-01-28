@@ -72,7 +72,7 @@
 
 	static uint32_t strToNum(std::vector<int32_t> const &s);
 	static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName);
-	static size_t strlenUTF8(std::string const &str, char const *functionName);
+	static size_t strlenUTF8(std::string const &str, bool printErrors);
 	static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len);
 	static size_t charlenUTF8(std::string const &str);
 	static std::string charsubUTF8(std::string const &str, uint32_t pos);
@@ -1517,7 +1517,7 @@ relocexpr_no_str:
 		$$.makeNumber(pos != std::string::npos ? pos + 1 : 0);
 	}
 	| OP_STRLEN LPAREN string RPAREN {
-		$$.makeNumber(strlenUTF8($3, "STRLEN"));
+		$$.makeNumber(strlenUTF8($3, true));
 	}
 	| OP_CHARLEN LPAREN string RPAREN {
 		$$.makeNumber(charlenUTF8($3));
@@ -1569,13 +1569,13 @@ string:
 		$$ = std::move($1);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst COMMA uconst RPAREN {
-		size_t len = strlenUTF8($3, "STRSUB");
+		size_t len = strlenUTF8($3, false);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
 		$$ = strsubUTF8($3, pos, $7);
 	}
 	| OP_STRSUB LPAREN string COMMA iconst RPAREN {
-		size_t len = strlenUTF8($3, "STRSUB");
+		size_t len = strlenUTF8($3, false);
 		uint32_t pos = adjustNegativePos($5, len, "STRSUB");
 
 		$$ = strsubUTF8($3, pos, pos > len ? 0 : len + 1 - pos);
@@ -2522,7 +2522,7 @@ static void errorInvalidUTF8Byte(uint8_t byte, char const *functionName) {
 	error("%s: Invalid UTF-8 byte 0x%02hhX\n", functionName, byte);
 }
 
-static size_t strlenUTF8(std::string const &str, char const *functionName) {
+static size_t strlenUTF8(std::string const &str, bool printErrors) {
 	char const *ptr = str.c_str();
 	size_t len = 0;
 	uint32_t state = 0;
@@ -2532,7 +2532,9 @@ static size_t strlenUTF8(std::string const &str, char const *functionName) {
 
 		switch (decode(&state, &codepoint, byte)) {
 		case 1:
-			errorInvalidUTF8Byte(byte, functionName);
+			if (printErrors) {
+				errorInvalidUTF8Byte(byte, "STRLEN");
+			}
 			state = 0;
 			// fallthrough
 		case 0:
@@ -2543,7 +2545,9 @@ static size_t strlenUTF8(std::string const &str, char const *functionName) {
 
 	// Check for partial code point.
 	if (state != 0) {
-		error("%s: Incomplete UTF-8 character\n", functionName);
+		if (printErrors) {
+			error("STRLEN: Incomplete UTF-8 character\n");
+		}
 		len++;
 	}
 
