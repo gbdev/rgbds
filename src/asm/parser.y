@@ -9,13 +9,13 @@
 	#include <string>
 	#include <vector>
 
+	#include "either.hpp"
+	#include "linkdefs.hpp"
+
 	#include "asm/lexer.hpp"
 	#include "asm/macro.hpp"
 	#include "asm/rpn.hpp"
 	#include "asm/section.hpp"
-
-	#include "either.hpp"
-	#include "linkdefs.hpp"
 
 	struct AlignmentSpec {
 		uint8_t alignment;
@@ -42,6 +42,7 @@
 		StrFmtArgList &operator=(StrFmtArgList &&) = default;
 	};
 }
+
 %code {
 	#include <algorithm>
 	#include <ctype.h>
@@ -50,6 +51,9 @@
 	#include <stdlib.h>
 	#include <string.h>
 	#include <string_view>
+
+	#include "extern/utf8decoder.hpp"
+	#include "helpers.hpp"
 
 	#include "asm/charmap.hpp"
 	#include "asm/fixpoint.hpp"
@@ -62,10 +66,6 @@
 	#include "asm/symbol.hpp"
 	#include "asm/warning.hpp"
 
-	#include "extern/utf8decoder.hpp"
-
-	#include "helpers.hpp"
-
 	using namespace std::literals;
 
 	yy::parser::symbol_type yylex(); // Provided by lexer.cpp
@@ -77,9 +77,7 @@
 	static size_t charlenUTF8(std::string const &str);
 	static std::string charsubUTF8(std::string const &str, uint32_t pos);
 	static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName);
-	static std::string strrpl(
-	    std::string_view str, std::string const &old, std::string const &rep
-	);
+	static std::string strrpl(std::string_view str, std::string const &old, std::string const &rep);
 	static std::string strfmt(
 	    std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args
 	);
@@ -2650,9 +2648,8 @@ static std::string strrpl(std::string_view str, std::string const &old, std::str
 	return rpl;
 }
 
-static std::string strfmt(
-    std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args
-) {
+static std::string
+    strfmt(std::string const &spec, std::vector<Either<uint32_t, std::string>> const &args) {
 	std::string str;
 	size_t argIndex = 0;
 
