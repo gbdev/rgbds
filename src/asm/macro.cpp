@@ -17,13 +17,15 @@ std::shared_ptr<std::string> MacroArgs::getArg(uint32_t i) const {
 std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 	size_t nbArgs = args.size();
 
-	if (shift >= nbArgs)
+	if (shift >= nbArgs) {
 		return std::make_shared<std::string>("");
+	}
 
 	size_t len = 0;
 
-	for (uint32_t i = shift; i < nbArgs; i++)
+	for (uint32_t i = shift; i < nbArgs; i++) {
 		len += args[i]->length() + 1; // 1 for comma
+	}
 
 	auto str = std::make_shared<std::string>();
 	str->reserve(len + 1); // 1 for comma
@@ -34,16 +36,18 @@ std::shared_ptr<std::string> MacroArgs::getAllArgs() const {
 		str->append(*arg);
 
 		// Commas go between args and after a last empty arg
-		if (i < nbArgs - 1 || arg->empty())
+		if (i < nbArgs - 1 || arg->empty()) {
 			str->push_back(','); // no space after comma
+		}
 	}
 
 	return str;
 }
 
 void MacroArgs::appendArg(std::shared_ptr<std::string> arg) {
-	if (arg->empty())
+	if (arg->empty()) {
 		warning(WARNING_EMPTY_MACRO_ARG, "Empty macro argument\n");
+	}
 	args.push_back(arg);
 }
 

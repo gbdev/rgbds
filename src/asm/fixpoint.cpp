@@ -25,10 +25,12 @@ static double fix2double(int32_t i, int32_t q) {
 }
 
 static int32_t double2fix(double d, int32_t q) {
-	if (isnan(d))
+	if (isnan(d)) {
 		return 0;
-	if (isinf(d))
+	}
+	if (isinf(d)) {
 		return d < 0 ? INT32_MIN : INT32_MAX;
+	}
 	return static_cast<int32_t>(round(d * pow(2.0, q)));
 }
 
@@ -75,8 +77,9 @@ int32_t fix_Mul(int32_t i, int32_t j, int32_t q) {
 int32_t fix_Div(int32_t i, int32_t j, int32_t q) {
 	double dividend = fix2double(i, q);
 	double divisor = fix2double(j, q);
-	if (fpclassify(divisor) == FP_ZERO)
+	if (fpclassify(divisor) == FP_ZERO) {
 		return dividend < 0 ? INT32_MIN : dividend > 0 ? INT32_MAX : 0;
+	}
 	return double2fix(dividend / divisor, q);
 }
 
@@ -90,8 +93,9 @@ int32_t fix_Pow(int32_t i, int32_t j, int32_t q) {
 
 int32_t fix_Log(int32_t i, int32_t j, int32_t q) {
 	double divisor = log(fix2double(j, q));
-	if (fpclassify(divisor) == FP_ZERO)
+	if (fpclassify(divisor) == FP_ZERO) {
 		return INT32_MAX;
+	}
 	return double2fix(log(fix2double(i, q)) / divisor, q);
 }
 

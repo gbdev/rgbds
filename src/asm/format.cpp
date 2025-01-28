@@ -13,39 +13,44 @@
 #include "asm/warning.hpp"
 
 void FormatSpec::useCharacter(int c) {
-	if (state == FORMAT_INVALID)
+	if (state == FORMAT_INVALID) {
 		return;
+	}
 
 	switch (c) {
 	// sign
 	case ' ':
 	case '+':
-		if (state > FORMAT_SIGN)
+		if (state > FORMAT_SIGN) {
 			goto invalid;
+		}
 		state = FORMAT_EXACT;
 		sign = c;
 		break;
 
 	// exact
 	case '#':
-		if (state > FORMAT_EXACT)
+		if (state > FORMAT_EXACT) {
 			goto invalid;
+		}
 		state = FORMAT_ALIGN;
 		exact = true;
 		break;
 
 	// align
 	case '-':
-		if (state > FORMAT_ALIGN)
+		if (state > FORMAT_ALIGN) {
 			goto invalid;
+		}
 		state = FORMAT_WIDTH;
 		alignLeft = true;
 		break;
 
 	// pad, width, and prec values
 	case '0':
-		if (state < FORMAT_WIDTH)
+		if (state < FORMAT_WIDTH) {
 			padZero = true;
+		}
 		[[fallthrough]];
 	case '1':
 	case '2':
@@ -72,16 +77,18 @@ void FormatSpec::useCharacter(int c) {
 
 	// width
 	case '.':
-		if (state > FORMAT_WIDTH)
+		if (state > FORMAT_WIDTH) {
 			goto invalid;
+		}
 		state = FORMAT_FRAC;
 		hasFrac = true;
 		break;
 
 	// prec
 	case 'q':
-		if (state > FORMAT_PREC)
+		if (state > FORMAT_PREC) {
 			goto invalid;
+		}
 		state = FORMAT_PREC;
 		hasPrec = true;
 		break;
@@ -95,8 +102,9 @@ void FormatSpec::useCharacter(int c) {
 	case 'o':
 	case 'f':
 	case 's':
-		if (state >= FORMAT_DONE)
+		if (state >= FORMAT_DONE) {
 			goto invalid;
+		}
 		state = FORMAT_DONE;
 		valid = true;
 		type = c;
@@ -110,8 +118,9 @@ invalid:
 }
 
 void FormatSpec::finishCharacters() {
-	if (!isValid())
+	if (!isValid()) {
 		state = FORMAT_INVALID;
+	}
 }
 
 static std::string escapeString(std::string const &str) {
@@ -151,16 +160,21 @@ void FormatSpec::appendString(std::string &str, std::string const &value) const 
 		useType = 's';
 	}
 
-	if (sign)
+	if (sign) {
 		error("Formatting string with sign flag '%c'\n", sign);
-	if (padZero)
+	}
+	if (padZero) {
 		error("Formatting string with padding flag '0'\n");
-	if (hasFrac)
+	}
+	if (hasFrac) {
 		error("Formatting string with fractional width\n");
-	if (hasPrec)
+	}
+	if (hasPrec) {
 		error("Formatting string with fractional precision\n");
-	if (useType != 's')
+	}
+	if (useType != 's') {
 		error("Formatting string as type '%c'\n", useType);
+	}
 
 	std::string useValue = exact ? escapeString(value) : value;
 	size_t valueLen = useValue.length();
@@ -187,22 +201,27 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 	}
 
 	if (useType != 'X' && useType != 'x' && useType != 'b' && useType != 'o' && useType != 'f'
-	    && useExact)
+	    && useExact) {
 		error("Formatting type '%c' with exact flag '#'\n", useType);
-	if (useType != 'f' && hasFrac)
+	}
+	if (useType != 'f' && hasFrac) {
 		error("Formatting type '%c' with fractional width\n", useType);
-	if (useType != 'f' && hasPrec)
+	}
+	if (useType != 'f' && hasPrec) {
 		error("Formatting type '%c' with fractional precision\n", useType);
-	if (useType == 's')
+	}
+	if (useType == 's') {
 		error("Formatting number as type 's'\n");
+	}
 
 	char signChar = sign; // 0 or ' ' or '+'
 
 	if (useType == 'd' || useType == 'f') {
 		if (int32_t v = value; v < 0) {
 			signChar = '-';
-			if (v != INT32_MIN)
+			if (v != INT32_MIN) {
 				value = -v;
+			}
 		}
 	}
 
@@ -250,10 +269,11 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 		}
 
 		double fval = fabs(value / pow(2.0, usePrec));
-		if (int fracWidthArg = static_cast<int>(useFracWidth); useExact)
+		if (int fracWidthArg = static_cast<int>(useFracWidth); useExact) {
 			snprintf(valueBuf, sizeof(valueBuf), "%.*fq%zu", fracWidthArg, fval, usePrec);
-		else
+		} else {
 			snprintf(valueBuf, sizeof(valueBuf), "%.*f", fracWidthArg, fval);
+		}
 	} else if (useType == 'd') {
 		// Decimal numbers may be formatted with a '-' sign by `snprintf`, so `abs` prevents that,
 		// with a special case for `INT32_MIN` since `labs(INT32_MIN)` is UB. The sign will be
@@ -278,27 +298,33 @@ void FormatSpec::appendNumber(std::string &str, uint32_t value) const {
 
 	str.reserve(str.length() + totalLen);
 	if (alignLeft) {
-		if (signChar)
+		if (signChar) {
 			str += signChar;
-		if (prefixChar)
+		}
+		if (prefixChar) {
 			str += prefixChar;
+		}
 		str.append(valueBuf);
 		str.append(padLen, ' ');
 	} else {
 		if (padZero) {
 			// sign, then prefix, then zero padding
-			if (signChar)
+			if (signChar) {
 				str += signChar;
-			if (prefixChar)
+			}
+			if (prefixChar) {
 				str += prefixChar;
+			}
 			str.append(padLen, '0');
 		} else {
 			// space padding, then sign, then prefix
 			str.append(padLen, ' ');
-			if (signChar)
+			if (signChar) {
 				str += signChar;
-			if (prefixChar)
+			}
+			if (prefixChar) {
 				str += prefixChar;
+			}
 		}
 		str.append(valueBuf);
 	}

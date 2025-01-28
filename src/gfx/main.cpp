@@ -72,15 +72,17 @@ void error(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 }
 
 void errorMessage(char const *msg) {
 	fprintf(stderr, "error: %s\n", msg);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 }
 
 [[noreturn]]
@@ -93,8 +95,9 @@ void fatal(char const *fmt, ...) {
 	va_end(ap);
 	putc('\n', stderr);
 
-	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max())
+	if (nbErrors != std::numeric_limits<decltype(nbErrors)>::max()) {
 		nbErrors++;
+	}
 
 	giveUp();
 }
@@ -354,8 +357,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'a':
 			localOptions.autoAttrmap = false;
-			if (!options.attrmap.empty())
+			if (!options.attrmap.empty()) {
 				warning("Overriding attrmap file %s", options.attrmap.c_str());
+			}
 			options.attrmap = musl_optarg;
 			break;
 		case 'b':
@@ -425,8 +429,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			printUsage();
 			exit(0);
 		case 'i':
-			if (!options.inputTileset.empty())
+			if (!options.inputTileset.empty()) {
 				warning("Overriding input tileset file %s", options.inputTileset.c_str());
+			}
 			options.inputTileset = musl_optarg;
 			break;
 		case 'L':
@@ -524,8 +529,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			localOptions.groupOutputs = true;
 			break;
 		case 'o':
-			if (!options.output.empty())
+			if (!options.output.empty()) {
 				warning("Overriding tile data file %s", options.output.c_str());
+			}
 			options.output = musl_optarg;
 			break;
 		case 'P':
@@ -533,8 +539,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'p':
 			localOptions.autoPalettes = false;
-			if (!options.palettes.empty())
+			if (!options.palettes.empty()) {
 				warning("Overriding palettes file %s", options.palettes.c_str());
+			}
 			options.palettes = musl_optarg;
 			break;
 		case 'Q':
@@ -542,8 +549,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 'q':
 			localOptions.autoPalmap = false;
-			if (!options.palmap.empty())
+			if (!options.palmap.empty()) {
 				warning("Overriding palette map file %s", options.palmap.c_str());
+			}
 			options.palmap = musl_optarg;
 			break;
 		case 'r':
@@ -569,8 +577,9 @@ static char *parseArgv(int argc, char *argv[]) {
 			break;
 		case 't':
 			localOptions.autoTilemap = false;
-			if (!options.tilemap.empty())
+			if (!options.tilemap.empty()) {
 				warning("Overriding tilemap file %s", options.tilemap.c_str());
+			}
 			options.tilemap = musl_optarg;
 			break;
 		case 'V':
@@ -768,19 +777,25 @@ int main(int argc, char *argv[]) {
 		}
 
 		fputs("Options:\n", stderr);
-		if (options.columnMajor)
+		if (options.columnMajor) {
 			fputs("\tVisit image in column-major order\n", stderr);
-		if (options.allowDedup)
+		}
+		if (options.allowDedup) {
 			fputs("\tAllow deduplicating tiles\n", stderr);
-		if (options.allowMirroringX)
+		}
+		if (options.allowMirroringX) {
 			fputs("\tAllow deduplicating horizontally mirrored tiles\n", stderr);
-		if (options.allowMirroringY)
+		}
+		if (options.allowMirroringY) {
 			fputs("\tAllow deduplicating vertically mirrored tiles\n", stderr);
-		if (options.useColorCurve)
+		}
+		if (options.useColorCurve) {
 			fputs("\tUse color curve\n", stderr);
+		}
 		fprintf(stderr, "\tBit depth: %" PRIu8 "bpp\n", options.bitDepth);
-		if (options.trim != 0)
+		if (options.trim != 0) {
 			fprintf(stderr, "\tTrim the last %" PRIu64 " tiles\n", options.trim);
+		}
 		fprintf(stderr, "\tMaximum %" PRIu16 " palettes\n", options.nbPalettes);
 		fprintf(stderr, "\tPalettes contain %" PRIu8 " colors\n", options.nbColorsPerPal);
 		fprintf(stderr, "\t%s palette spec\n", [] {

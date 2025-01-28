@@ -81,8 +81,9 @@ static char *mapFile(int fd, std::string const &path, size_t size) {
 		// The implementation may not support MAP_PRIVATE; try again with MAP_SHARED
 		// instead, offering, I believe, weaker guarantees about external modifications to
 		// the file while reading it. That's still better than not opening it at all, though.
-		if (verbose)
+		if (verbose) {
 			printf("mmap(%s, MAP_PRIVATE) failed, retrying with MAP_SHARED\n", path.c_str());
+		}
 		mappingAddr = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
 	}
 	return mappingAddr != MAP_FAILED ? static_cast<char *>(mappingAddr) : nullptr;
@@ -119,8 +120,9 @@ struct CaseInsensitive {
 	size_t operator()(std::string const &str) const {
 		size_t hash = 0x811C9DC5;
 
-		for (char const &c : str)
+		for (char const &c : str) {
 			hash = (hash ^ toupper(c)) * 16777619;
+		}
 		return hash;
 	}
 
@@ -375,8 +377,9 @@ void lexer_IncIFDepth() {
 }
 
 void lexer_DecIFDepth() {
-	if (lexerState->ifStack.empty())
+	if (lexerState->ifStack.empty()) {
 		fatalerror("Found ENDC outside of an IF construct\n");
+	}
 
 	lexerState->ifStack.pop_front();
 }
@@ -405,8 +408,9 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	if (filePath == "-") {
 		path = "<stdin>";
 		content.emplace<BufferedContent>(STDIN_FILENO);
-		if (verbose)
+		if (verbose) {
 			printf("Opening stdin\n");
+		}
 	} else {
 		struct stat statBuf;
 		if (stat(filePath.c_str(), &statBuf) != 0) {
@@ -430,8 +434,9 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 				content.emplace<ViewedContent>(
 				    std::shared_ptr<char[]>(mappingAddr, FileUnmapDeleter(size)), size
 				);
-				if (verbose)
+				if (verbose) {
 					printf("File \"%s\" is mmap()ped\n", path.c_str());
+				}
 				isMmapped = true;
 			}
 		}
@@ -452,10 +457,11 @@ bool LexerState::setFileAsNextState(std::string const &filePath, bool updateStat
 	}
 
 	clear(0);
-	if (updateStateNow)
+	if (updateStateNow) {
 		lexerState = this;
-	else
+	} else {
 		lexerStateEOL = this;
+	}
 	return true;
 }
 
@@ -501,8 +507,9 @@ BufferedContent::~BufferedContent() {
 void BufferedContent::advance() {
 	assume(offset < std::size(buf));
 	offset++;
-	if (offset == std::size(buf))
+	if (offset == std::size(buf)) {
 		offset = 0; // Wrap around if necessary
+	}
 	assume(size > 0);
 	size--;
 }
@@ -519,16 +526,19 @@ void BufferedContent::refill() {
 		size_t nbReadChars = readMore(startIndex, nbExpectedChars);
 
 		startIndex += nbReadChars;
-		if (startIndex == std::size(buf))
+		if (startIndex == std::size(buf)) {
 			startIndex = 0;
+		}
 
 		// If the read was incomplete, don't perform a second read
 		target -= nbReadChars;
-		if (nbReadChars < nbExpectedChars)
+		if (nbReadChars < nbExpectedChars) {
 			target = 0;
+		}
 	}
-	if (target != 0)
+	if (target != 0) {
 		readMore(startIndex, target);
+	}
 }
 
 size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
@@ -536,8 +546,9 @@ size_t BufferedContent::readMore(size_t startIndex, size_t nbChars) {
 	assume(startIndex + nbChars <= std::size(buf));
 	ssize_t nbReadChars = read(fd, &buf[startIndex], nbChars);
 
-	if (nbReadChars == -1)
+	if (nbReadChars == -1) {
 		fatalerror("Error while reading \"%s\": %s\n", lexerState->path.c_str(), strerror(errno));
+	}
 
 	size += nbReadChars;
 
@@ -556,19 +567,22 @@ void lexer_ToggleStringExpansion(bool enable) {
 // Functions for the actual lexer to obtain characters
 
 static void beginExpansion(std::shared_ptr<std::string> str, std::optional<std::string> name) {
-	if (name)
+	if (name) {
 		lexer_CheckRecursionDepth();
+	}
 
 	// Do not expand empty strings
-	if (str->empty())
+	if (str->empty()) {
 		return;
+	}
 
 	lexerState->expansions.push_front({.name = name, .contents = str, .offset = 0});
 }
 
 void lexer_CheckRecursionDepth() {
-	if (lexerState->expansions.size() > maxRecursionDepth + 1)
+	if (lexerState->expansions.size() > maxRecursionDepth + 1) {
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+	}
 }
 
 static bool isMacroChar(char c) {
@@ -619,10 +633,11 @@ static uint32_t readBracketedMacroArgNum() {
 		Symbol const *sym = sym_FindScopedValidSymbol(symName);
 
 		if (!sym) {
-			if (sym_IsPurgedScoped(symName))
+			if (sym_IsPurgedScoped(symName)) {
 				error("Bracketed symbol \"%s\" does not exist; it was purged\n", symName.c_str());
-			else
+			} else {
 				error("Bracketed symbol \"%s\" does not exist\n", symName.c_str());
+			}
 			num = 0;
 			symbolError = true;
 		} else if (!sym->isNumeric()) {
@@ -707,21 +722,25 @@ static std::shared_ptr<std::string> readMacroArg(char name) {
 int LexerState::peekChar() {
 	// This is `.peekCharAhead()` modified for zero lookahead distance
 	for (Expansion &exp : expansions) {
-		if (exp.offset < exp.size())
+		if (exp.offset < exp.size()) {
 			return static_cast<uint8_t>((*exp.contents)[exp.offset]);
+		}
 	}
 
 	if (content.holds<ViewedContent>()) {
 		auto &view = content.get<ViewedContent>();
-		if (view.offset < view.span.size)
+		if (view.offset < view.span.size) {
 			return static_cast<uint8_t>(view.span.ptr[view.offset]);
+		}
 	} else {
 		auto &cbuf = content.get<BufferedContent>();
-		if (cbuf.size == 0)
+		if (cbuf.size == 0) {
 			cbuf.refill();
+		}
 		assume(cbuf.offset < std::size(cbuf.buf));
-		if (cbuf.size > 0)
+		if (cbuf.size > 0) {
 			return static_cast<uint8_t>(cbuf.buf[cbuf.offset]);
+		}
 	}
 
 	// If there aren't enough chars, give up
@@ -736,22 +755,26 @@ int LexerState::peekCharAhead() {
 		// An expansion that has reached its end will have `exp.offset` == `exp.size()`,
 		// and `.peekCharAhead()` will continue with its parent
 		assume(exp.offset <= exp.size());
-		if (exp.offset + distance < exp.size())
+		if (exp.offset + distance < exp.size()) {
 			return static_cast<uint8_t>((*exp.contents)[exp.offset + distance]);
+		}
 		distance -= exp.size() - exp.offset;
 	}
 
 	if (content.holds<ViewedContent>()) {
 		auto &view = content.get<ViewedContent>();
-		if (view.offset + distance < view.span.size)
+		if (view.offset + distance < view.span.size) {
 			return static_cast<uint8_t>(view.span.ptr[view.offset + distance]);
+		}
 	} else {
 		auto &cbuf = content.get<BufferedContent>();
 		assume(distance < std::size(cbuf.buf));
-		if (cbuf.size <= distance)
+		if (cbuf.size <= distance) {
 			cbuf.refill();
-		if (cbuf.size > distance)
+		}
+		if (cbuf.size > distance) {
 			return static_cast<uint8_t>(cbuf.buf[(cbuf.offset + distance) % std::size(cbuf.buf)]);
+		}
 	}
 
 	// If there aren't enough chars, give up
@@ -765,8 +788,9 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth);
 static int peek() {
 	int c = lexerState->peekChar();
 
-	if (lexerState->macroArgScanDistance > 0)
+	if (lexerState->macroArgScanDistance > 0) {
 		return c;
+	}
 
 	lexerState->macroArgScanDistance++; // Do not consider again
 
@@ -809,8 +833,9 @@ static int peek() {
 
 static void shiftChar() {
 	if (lexerState->capturing) {
-		if (lexerState->captureBuf)
+		if (lexerState->captureBuf) {
 			lexerState->captureBuf->push_back(peek());
+		}
 		lexerState->captureSize++;
 	}
 
@@ -840,14 +865,16 @@ static int nextChar() {
 	int c = peek();
 
 	// If not at EOF, advance read position
-	if (c != EOF)
+	if (c != EOF) {
 		shiftChar();
+	}
 	return c;
 }
 
 static void handleCRLF(int c) {
-	if (c == '\r' && peek() == '\n')
+	if (c == '\r' && peek() == '\n') {
 		shiftChar();
+	}
 }
 
 static auto scopedDisableExpansions() {
@@ -870,13 +897,15 @@ uint32_t lexer_GetColNo() {
 }
 
 void lexer_DumpStringExpansions() {
-	if (!lexerState)
+	if (!lexerState) {
 		return;
+	}
 
 	for (Expansion &exp : lexerState->expansions) {
 		// Only register EQUS expansions, not string args
-		if (exp.name)
+		if (exp.name) {
 			fprintf(stderr, "while expanding symbol \"%s\"\n", exp.name->c_str());
+		}
 	}
 }
 
@@ -896,8 +925,9 @@ static void discardBlockComment() {
 			handleCRLF(c);
 			[[fallthrough]];
 		case '\n':
-			if (lexerState->expansions.empty())
+			if (lexerState->expansions.empty()) {
 				nextLine();
+			}
 			continue;
 		case '/':
 			if (peek() == '*') {
@@ -921,8 +951,9 @@ static void discardComment() {
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c == EOF || c == '\r' || c == '\n')
+		if (c == EOF || c == '\r' || c == '\n') {
 			break;
+		}
 	}
 }
 
@@ -936,8 +967,9 @@ static void discardLineContinuation() {
 			shiftChar();
 			// Handle CRLF before nextLine() since shiftChar updates colNo
 			handleCRLF(c);
-			if (lexerState->expansions.empty())
+			if (lexerState->expansions.empty()) {
 				nextLine();
+			}
 			break;
 		} else if (c == ';') {
 			discardComment();
@@ -968,12 +1000,14 @@ static uint32_t readNumber(int radix, uint32_t baseValue) {
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c == '_')
+		if (c == '_') {
 			continue;
-		else if (c < '0' || c > '0' + radix - 1)
+		} else if (c < '0' || c > '0' + radix - 1) {
 			break;
-		if (value > (UINT32_MAX - (c - '0')) / radix)
+		}
+		if (value > (UINT32_MAX - (c - '0')) / radix) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		}
 		value = value * radix + (c - '0');
 	}
 
@@ -1005,8 +1039,9 @@ static uint32_t readFractionalPart(uint32_t integer) {
 				warning(WARNING_LARGE_CONSTANT, "Precision of fixed-point constant is too large\n");
 				// Discard any additional digits
 				shiftChar();
-				while (c = peek(), (c >= '0' && c <= '9') || c == '_')
+				while (c = peek(), (c >= '0' && c <= '9') || c == '_') {
 					shiftChar();
+				}
 				break;
 			}
 			value = value * 10 + (c - '0');
@@ -1023,16 +1058,18 @@ static uint32_t readFractionalPart(uint32_t integer) {
 	}
 
 	if (precision == 0) {
-		if (state >= READFRACTIONALPART_PRECISION)
+		if (state >= READFRACTIONALPART_PRECISION) {
 			error("Invalid fixed-point constant, no significant digits after 'q'\n");
+		}
 		precision = fixPrecision;
 	} else if (precision > 31) {
 		error("Fixed-point constant precision must be between 1 and 31\n");
 		precision = fixPrecision;
 	}
 
-	if (integer >= (1ULL << (32 - precision)))
+	if (integer >= (1ULL << (32 - precision))) {
 		warning(WARNING_LARGE_CONSTANT, "Magnitude of fixed-point constant is too large\n");
+	}
 
 	// Cast to unsigned avoids undefined overflow behavior
 	uint32_t fractional =
@@ -1051,16 +1088,18 @@ static uint32_t readBinaryNumber() {
 		int bit;
 
 		// Check for '_' after digits in case one of the digits is '_'
-		if (c == binDigits[0])
+		if (c == binDigits[0]) {
 			bit = 0;
-		else if (c == binDigits[1])
+		} else if (c == binDigits[1]) {
 			bit = 1;
-		else if (c == '_')
+		} else if (c == '_') {
 			continue;
-		else
+		} else {
 			break;
-		if (value > (UINT32_MAX - bit) / 2)
+		}
+		if (value > (UINT32_MAX - bit) / 2) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		}
 		value = value * 2 + bit;
 	}
 
@@ -1074,26 +1113,29 @@ static uint32_t readHexNumber() {
 	for (;; shiftChar()) {
 		int c = peek();
 
-		if (c >= 'a' && c <= 'f')
+		if (c >= 'a' && c <= 'f') {
 			c = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'F')
+		} else if (c >= 'A' && c <= 'F') {
 			c = c - 'A' + 10;
-		else if (c >= '0' && c <= '9')
+		} else if (c >= '0' && c <= '9') {
 			c = c - '0';
-		else if (c == '_' && !empty)
+		} else if (c == '_' && !empty) {
 			continue;
-		else
+		} else {
 			break;
+		}
 
-		if (value > (UINT32_MAX - c) / 16)
+		if (value > (UINT32_MAX - c) / 16) {
 			warning(WARNING_LARGE_CONSTANT, "Integer constant is too large\n");
+		}
 		value = value * 16 + c;
 
 		empty = false;
 	}
 
-	if (empty)
+	if (empty) {
 		error("Invalid integer constant, no digits after '$'\n");
+	}
 
 	return value;
 }
@@ -1109,34 +1151,37 @@ static uint32_t readGfxConstant() {
 		uint32_t pixel;
 
 		// Check for '_' after digits in case one of the digits is '_'
-		if (c == gfxDigits[0])
+		if (c == gfxDigits[0]) {
 			pixel = 0;
-		else if (c == gfxDigits[1])
+		} else if (c == gfxDigits[1]) {
 			pixel = 1;
-		else if (c == gfxDigits[2])
+		} else if (c == gfxDigits[2]) {
 			pixel = 2;
-		else if (c == gfxDigits[3])
+		} else if (c == gfxDigits[3]) {
 			pixel = 3;
-		else if (c == '_' && width > 0)
+		} else if (c == '_' && width > 0) {
 			continue;
-		else
+		} else {
 			break;
+		}
 
 		if (width < 8) {
 			bitPlaneLower = bitPlaneLower << 1 | (pixel & 1);
 			bitPlaneUpper = bitPlaneUpper << 1 | (pixel >> 1);
 		}
-		if (width < 9)
+		if (width < 9) {
 			width++;
+		}
 	}
 
-	if (width == 0)
+	if (width == 0) {
 		error("Invalid graphics constant, no digits after '`'\n");
-	else if (width == 9)
+	} else if (width == 9) {
 		warning(
 		    WARNING_LARGE_CONSTANT,
 		    "Graphics constant is too long, only first 8 pixels considered\n"
 		);
+	}
 
 	return bitPlaneUpper << 8 | bitPlaneLower;
 }
@@ -1164,8 +1209,9 @@ static Token readIdentifier(char firstChar, bool raw) {
 		identifier += c;
 
 		// If the char was a dot, mark the identifier as local
-		if (c == '.')
+		if (c == '.') {
 			tokenType = T_(LOCAL_ID);
+		}
 	}
 
 	// Attempt to check for a keyword if the identifier is not raw
@@ -1179,8 +1225,9 @@ static Token readIdentifier(char firstChar, bool raw) {
 	}
 
 	// Label scopes `.` and `..` are the only nonlocal identifiers that start with a dot
-	if (identifier.find_first_not_of('.') == identifier.npos)
+	if (identifier.find_first_not_of('.') == identifier.npos) {
 		tokenType = T_(ID);
+	}
 
 	return Token(tokenType, identifier);
 }
@@ -1188,8 +1235,9 @@ static Token readIdentifier(char firstChar, bool raw) {
 // Functions to read strings
 
 static std::shared_ptr<std::string> readInterpolation(size_t depth) {
-	if (depth > maxRecursionDepth)
+	if (depth > maxRecursionDepth) {
 		fatalerror("Recursion limit (%zu) exceeded\n", maxRecursionDepth);
+	}
 
 	std::string fmtBuf;
 	FormatSpec fmt{};
@@ -1217,11 +1265,13 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 			break;
 		} else if (c == ':' && !fmt.isFinished()) { // Format spec, only once
 			shiftChar();
-			for (char f : fmtBuf)
+			for (char f : fmtBuf) {
 				fmt.useCharacter(f);
+			}
 			fmt.finishCharacters();
-			if (!fmt.isValid())
+			if (!fmt.isValid()) {
 				error("Invalid format spec '%s'\n", fmtBuf.c_str());
+			}
 			fmtBuf.clear(); // Now that format has been set, restart at beginning of string
 		} else {
 			shiftChar();
@@ -1248,10 +1298,11 @@ static std::shared_ptr<std::string> readInterpolation(size_t depth) {
 	Symbol const *sym = sym_FindScopedValidSymbol(fmtBuf);
 
 	if (!sym || !sym->isDefined()) {
-		if (sym_IsPurgedScoped(fmtBuf))
+		if (sym_IsPurgedScoped(fmtBuf)) {
 			error("Interpolated symbol \"%s\" does not exist; it was purged\n", fmtBuf.c_str());
-		else
+		} else {
 			error("Interpolated symbol \"%s\" does not exist\n", fmtBuf.c_str());
+		}
 	} else if (sym->type == SYM_EQUS) {
 		auto buf = std::make_shared<std::string>();
 		fmt.appendString(*buf, *sym->getEqus());
@@ -1335,8 +1386,9 @@ static std::string readString(bool raw) {
 		case '"':
 			if (multiline) {
 				// Only """ ends a multi-line string
-				if (peek() != '"')
+				if (peek() != '"') {
 					break;
+				}
 				shiftChar();
 				if (peek() != '"') {
 					str += '"';
@@ -1347,8 +1399,9 @@ static std::string readString(bool raw) {
 			return str;
 
 		case '\\': // Character escape or macro arg
-			if (raw)
+			if (raw) {
 				break;
+			}
 			c = peek();
 			switch (c) {
 			case '\\':
@@ -1415,8 +1468,9 @@ static std::string readString(bool raw) {
 			break;
 
 		case '{': // Symbol interpolation
-			if (raw)
+			if (raw) {
 				break;
+			}
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
@@ -1477,12 +1531,14 @@ static void appendStringLiteral(std::string &str, bool raw) {
 		case '"':
 			if (multiline) {
 				// Only """ ends a multi-line string
-				if (peek() != '"')
+				if (peek() != '"') {
 					break;
+				}
 				str += '"';
 				shiftChar();
-				if (peek() != '"')
+				if (peek() != '"') {
 					break;
+				}
 				str += '"';
 				shiftChar();
 			}
@@ -1490,8 +1546,9 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			return;
 
 		case '\\': // Character escape or macro arg
-			if (raw)
+			if (raw) {
 				break;
+			}
 			c = peek();
 			switch (c) {
 			// Character escape
@@ -1549,8 +1606,9 @@ static void appendStringLiteral(std::string &str, bool raw) {
 			break;
 
 		case '{': // Symbol interpolation
-			if (raw)
+			if (raw) {
 				break;
+			}
 			// We'll be exiting the string scope, so re-enable expansions
 			// (Not interpolations, since they're handled by the function itself...)
 			lexerState->disableMacroArgs = false;
@@ -1849,12 +1907,14 @@ static Token yylex_NORMAL() {
 
 				// An ELIF after a taken IF needs to not evaluate its condition
 				if (token.type == T_(POP_ELIF) && lexerState->lastToken == T_(NEWLINE)
-				    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock())
+				    && lexer_GetIFDepth() > 0 && lexer_RanIFBlock() && !lexer_ReachedELSEBlock()) {
 					return yylex_SKIP_TO_ENDC();
+				}
 
 				// If a keyword, don't try to expand
-				if (token.type != T_(ID) && token.type != T_(LOCAL_ID))
+				if (token.type != T_(ID) && token.type != T_(LOCAL_ID)) {
 					return token;
+				}
 
 				// `token` is either an `ID` or a `LOCAL_ID`, and both have a `std::string` value.
 				assume(token.value.holds<std::string>());
@@ -1885,8 +1945,9 @@ static Token yylex_NORMAL() {
 				// character *immediately* follows the identifier. Thus, at the beginning of a line,
 				// "Label:" and "mac:" are treated as label definitions, but "Label :" and "mac :"
 				// are treated as macro invocations.
-				if (token.type == T_(ID) && peek() == ':')
+				if (token.type == T_(ID) && peek() == ':') {
 					token.type = T_(LABEL);
+				}
 
 				return token;
 			}
@@ -1916,8 +1977,9 @@ static Token yylex_RAW() {
 			shiftChar();
 			c = peek();
 			// If not a line continuation, handle as a normal char
-			if (!isWhitespace(c) && c != '\n' && c != '\r')
+			if (!isWhitespace(c) && c != '\n' && c != '\r') {
 				goto backslash;
+			}
 			// Line continuations count as "whitespace"
 			discardLineContinuation();
 		} else {
@@ -1963,18 +2025,21 @@ static Token yylex_RAW() {
 			break;
 
 		case ',': // End of macro arg
-			if (parenDepth == 0)
+			if (parenDepth == 0) {
 				goto finish;
+			}
 			goto append;
 
 		case '(': // Open parentheses inside macro args
-			if (parenDepth < UINT_MAX)
+			if (parenDepth < UINT_MAX) {
 				parenDepth++;
+			}
 			goto append;
 
 		case ')': // Close parentheses inside macro args
-			if (parenDepth > 0)
+			if (parenDepth > 0) {
 				parenDepth--;
+			}
 			goto append;
 
 		case '\\': // Character escape
@@ -2054,8 +2119,9 @@ finish:
 	// an empty raw string before it). This will not be treated as a
 	// macro argument. To pass an empty last argument, use a second
 	// trailing comma.
-	if (!str.empty())
+	if (!str.empty()) {
 		return Token(T_(STRING), str);
+	}
 	lexer_SetMode(LEXER_NORMAL);
 
 	if (c == '\r' || c == '\n') {
@@ -2087,8 +2153,9 @@ static Token skipIfBlock(bool toEndc) {
 
 			for (;; shiftChar()) {
 				c = peek();
-				if (!isWhitespace(c))
+				if (!isWhitespace(c)) {
 					break;
+				}
 			}
 
 			if (startsIdentifier(c)) {
@@ -2099,23 +2166,28 @@ static Token skipIfBlock(bool toEndc) {
 					break;
 
 				case T_(POP_ELIF):
-					if (lexer_ReachedELSEBlock())
+					if (lexer_ReachedELSEBlock()) {
 						fatalerror("Found ELIF after an ELSE block\n");
-					if (!toEndc && lexer_GetIFDepth() == startingDepth)
+					}
+					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 						return token;
+					}
 					break;
 
 				case T_(POP_ELSE):
-					if (lexer_ReachedELSEBlock())
+					if (lexer_ReachedELSEBlock()) {
 						fatalerror("Found ELSE after an ELSE block\n");
+					}
 					lexer_ReachELSEBlock();
-					if (!toEndc && lexer_GetIFDepth() == startingDepth)
+					if (!toEndc && lexer_GetIFDepth() == startingDepth) {
 						return token;
+					}
 					break;
 
 				case T_(POP_ENDC):
-					if (lexer_GetIFDepth() == startingDepth)
+					if (lexer_GetIFDepth() == startingDepth) {
 						return token;
+					}
 					lexer_DecIFDepth();
 					break;
 
@@ -2172,8 +2244,9 @@ static Token yylex_SKIP_TO_ENDR() {
 
 			for (;;) {
 				c = peek();
-				if (!isWhitespace(c))
+				if (!isWhitespace(c)) {
 					break;
+				}
 				shiftChar();
 			}
 
@@ -2187,8 +2260,9 @@ static Token yylex_SKIP_TO_ENDR() {
 
 				case T_(POP_ENDR):
 					depth--;
-					if (!depth)
+					if (!depth) {
 						return Token(T_(YYEOF)); // yywrap() will finish the REPT/FOR loop
+					}
 					break;
 
 				case T_(POP_IF):
@@ -2234,11 +2308,13 @@ yy::parser::symbol_type yylex() {
 		lexerState = lexerStateEOL;
 		lexerStateEOL = nullptr;
 	}
-	if (lexerState->lastToken == T_(EOB) && yywrap())
+	if (lexerState->lastToken == T_(EOB) && yywrap()) {
 		return yy::parser::make_YYEOF();
+	}
 	// Newlines read within an expansion should not increase the line count
-	if (lexerState->atLineStart && lexerState->expansions.empty())
+	if (lexerState->atLineStart && lexerState->expansions.empty()) {
 		nextLine();
+	}
 
 	static Token (* const lexerModeFuncs[NB_LEXER_MODES])() = {
 	    yylex_NORMAL,
@@ -2299,8 +2375,9 @@ static Capture startCapture() {
 static void endCapture(Capture &capture) {
 	// This being `nullptr` means we're capturing from the capture buffer, which is reallocated
 	// during the whole capture process, and so MUST be retrieved at the end
-	if (!capture.span.ptr)
+	if (!capture.span.ptr) {
 		capture.span.ptr = lexerState->makeSharedCaptureBufPtr();
+	}
 	capture.span.size = lexerState->captureSize;
 
 	// ENDR/ENDM or EOF puts us past the start of the line

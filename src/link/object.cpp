@@ -51,8 +51,9 @@ static int64_t readLong(FILE *file) {
 	for (uint8_t shift = 0; shift < sizeof(value) * CHAR_BIT; shift += 8) {
 		int byte = getc(file);
 
-		if (byte == EOF)
+		if (byte == EOF) {
 			return INT64_MAX;
+		}
 		// This must be casted to `unsigned`, not `uint8_t`. Rationale:
 		// the type of the shift is the type of `byte` after undergoing
 		// integer promotion, which would be `int` if this was casted to
@@ -141,7 +142,7 @@ static void readFileStackNode(
 	case NODE_REPT:
 		tryReadLong(depth, file, "%s: Cannot read node #%" PRIu32 "'s rept depth: %s", fileName, i);
 		node.data = std::vector<uint32_t>(depth);
-		for (uint32_t k = 0; k < depth; k++)
+		for (uint32_t k = 0; k < depth; k++) {
 			tryReadLong(
 			    node.iters()[k],
 			    file,
@@ -150,7 +151,8 @@ static void readFileStackNode(
 			    i,
 			    k
 			);
-		if (!node.parent)
+		}
+		if (!node.parent) {
 			fatal(
 			    nullptr,
 			    0,
@@ -158,6 +160,7 @@ static void readFileStackNode(
 			    fileName,
 			    i
 			);
+		}
 	}
 }
 
@@ -296,7 +299,7 @@ static void readPatch(
 	patch.rpnExpression.resize(rpnSize);
 	size_t nbElementsRead = fread(patch.rpnExpression.data(), 1, rpnSize, file);
 
-	if (nbElementsRead != rpnSize)
+	if (nbElementsRead != rpnSize) {
 		errx(
 		    "%s: Cannot read \"%s\"'s patch #%" PRIu32 "'s RPN expression: %s",
 		    fileName,
@@ -304,6 +307,7 @@ static void readPatch(
 		    i,
 		    feof(file) ? "Unexpected end of file" : strerror(errno)
 		);
+	}
 }
 
 // Sets a patch's pcSection from its pcSectionID.
@@ -338,8 +342,9 @@ static void readSection(
 	    section.name.c_str()
 	);
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s' size: %s", fileName, section.name.c_str());
-	if (tmp < 0 || tmp > UINT16_MAX)
+	if (tmp < 0 || tmp > UINT16_MAX) {
 		errx("\"%s\"'s section size ($%" PRIx32 ") is invalid", section.name.c_str(), tmp);
+	}
 	section.size = tmp;
 	section.offset = 0;
 	tryGetc(
@@ -350,12 +355,13 @@ static void readSection(
 	} else {
 		section.type = SectionType(type);
 	}
-	if (byte >> 7)
+	if (byte >> 7) {
 		section.modifier = SECTION_UNION;
-	else if (byte >> 6)
+	} else if (byte >> 6) {
 		section.modifier = SECTION_FRAGMENT;
-	else
+	} else {
 		section.modifier = SECTION_NORMAL;
+	}
 	tryReadLong(tmp, file, "%s: Cannot read \"%s\"'s org: %s", fileName, section.name.c_str());
 	section.isAddressFixed = tmp >= 0;
 	if (tmp > UINT16_MAX) {
@@ -374,8 +380,9 @@ static void readSection(
 	    fileName,
 	    section.name.c_str()
 	);
-	if (byte > 16)
+	if (byte > 16) {
 		byte = 16;
+	}
 	section.isAlignFixed = byte != 0;
 	section.alignMask = (1 << byte) - 1;
 	tryReadLong(
@@ -397,13 +404,14 @@ static void readSection(
 		if (section.size) {
 			section.data.resize(section.size);
 			if (size_t nbRead = fread(section.data.data(), 1, section.size, file);
-			    nbRead != section.size)
+			    nbRead != section.size) {
 				errx(
 				    "%s: Cannot read \"%s\"'s data: %s",
 				    fileName,
 				    section.name.c_str(),
 				    feof(file) ? "Unexpected end of file" : strerror(errno)
 				);
+			}
 		}
 
 		uint32_t nbPatches;
@@ -417,8 +425,9 @@ static void readSection(
 		);
 
 		section.patches.resize(nbPatches);
-		for (uint32_t i = 0; i < nbPatches; i++)
+		for (uint32_t i = 0; i < nbPatches; i++) {
 			readPatch(file, section.patches[i], fileName, section.name, i, fileNodes);
+		}
 	}
 }
 
@@ -433,10 +442,11 @@ static void linkSymToSect(Symbol &symbol, Section &section) {
 		uint32_t c = (a + b) / 2;
 		int32_t otherOffset = section.symbols[c]->label().offset;
 
-		if (otherOffset > symbolOffset)
+		if (otherOffset > symbolOffset) {
 			b = c;
-		else
+		} else {
 			a = c + 1;
+		}
 	}
 
 	section.symbols.insert(section.symbols.begin() + a, &symbol);
@@ -469,8 +479,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		(void)setmode(STDIN_FILENO, O_BINARY);
 		file = stdin;
 	}
-	if (!file)
+	if (!file) {
 		err("Failed to open file \"%s\"", fileName);
+	}
 	Defer closeFile{[&] { fclose(file); }};
 
 	// First, check if the object is a RGBDS object or a SDCC one. If the first byte is 'R',
@@ -506,15 +517,16 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	int matchedElems;
 
 	if (fscanf(file, RGBDS_OBJECT_VERSION_STRING "%n", &matchedElems) == 1
-	    && matchedElems != literal_strlen(RGBDS_OBJECT_VERSION_STRING))
+	    && matchedElems != literal_strlen(RGBDS_OBJECT_VERSION_STRING)) {
 		errx("%s: Not a RGBDS object file", fileName);
+	}
 
 	verbosePrint("Reading object file %s\n", fileName);
 
 	uint32_t revNum;
 
 	tryReadLong(revNum, file, "%s: Cannot read revision number: %s", fileName);
-	if (revNum != RGBDS_OBJECT_REV)
+	if (revNum != RGBDS_OBJECT_REV) {
 		errx(
 		    "%s: Unsupported object file for rgblink %s; try rebuilding \"%s\"%s"
 		    " (expected revision %d, got %d)",
@@ -525,6 +537,7 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		    RGBDS_OBJECT_REV,
 		    revNum
 		);
+	}
 
 	uint32_t nbNodes;
 	uint32_t nbSymbols;
@@ -538,8 +551,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	tryReadLong(nbNodes, file, "%s: Cannot read number of nodes: %s", fileName);
 	nodes[fileID].resize(nbNodes);
 	verbosePrint("Reading %u nodes...\n", nbNodes);
-	for (uint32_t i = nbNodes; i--;)
+	for (uint32_t i = nbNodes; i--;) {
 		readFileStackNode(file, nodes[fileID], i, fileName);
+	}
 
 	// This file's symbols, kept to link sections to them
 	std::vector<Symbol> &fileSymbols = symbolLists.emplace_front(nbSymbols);
@@ -553,8 +567,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 		readSymbol(file, symbol, fileName, nodes[fileID]);
 
 		sym_AddSymbol(symbol);
-		if (symbol.data.holds<Label>())
+		if (symbol.data.holds<Label>()) {
 			nbSymPerSect[symbol.data.get<Label>().sectionID]++;
+		}
 	}
 
 	// This file's sections, stored in a table to link symbols to them
@@ -585,8 +600,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	// Give patches' PC section pointers to their sections
 	for (uint32_t i = 0; i < nbSections; i++) {
 		if (sect_HasData(fileSections[i]->type)) {
-			for (Patch &patch : fileSections[i]->patches)
+			for (Patch &patch : fileSections[i]->patches) {
 				linkPatchToPCSect(patch, fileSections);
+			}
 		}
 	}
 
@@ -601,8 +617,9 @@ void obj_ReadFile(char const *fileName, unsigned int fileID) {
 	}
 
 	// Calling `sect_AddSection` invalidates the contents of `fileSections`!
-	for (uint32_t i = 0; i < nbSections; i++)
+	for (uint32_t i = 0; i < nbSections; i++) {
 		sect_AddSection(std::move(fileSections[i]));
+	}
 
 	// Fix symbols' section pointers to component sections
 	// This has to run **after** all the `sect_AddSection()` calls,

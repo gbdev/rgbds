@@ -33,8 +33,9 @@ static void pushRPN(int32_t value, bool comesFromError) {
 static bool isError = false;
 
 static int32_t popRPN(Patch const &patch) {
-	if (rpnStack.empty())
+	if (rpnStack.empty()) {
 		fatal(patch.src, patch.lineNo, "Internal error, RPN stack empty");
+	}
 
 	RPNStackEntry entry = rpnStack.front();
 
@@ -46,8 +47,9 @@ static int32_t popRPN(Patch const &patch) {
 // RPN operators
 
 static uint32_t getRPNByte(uint8_t const *&expression, int32_t &size, Patch const &patch) {
-	if (!size--)
+	if (!size--) {
 		fatal(patch.src, patch.lineNo, "Internal error, RPN expression overread");
+	}
 
 	return *expression++;
 }
@@ -57,8 +59,9 @@ static Symbol const *getSymbol(std::vector<Symbol> const &symbolList, uint32_t i
 	Symbol const &symbol = symbolList[index];
 
 	// If the symbol is defined elsewhere...
-	if (symbol.type == SYMTYPE_IMPORT)
+	if (symbol.type == SYMTYPE_IMPORT) {
 		return sym_GetSymbol(symbol.name);
+	}
 
 	return &symbol;
 }
@@ -218,8 +221,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_BANK_SYM:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 
 			if (Symbol const *symbol = getSymbol(fileSymbols, value); !symbol) {
 				error(
@@ -377,14 +381,16 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 
 		case RPN_CONST:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 			break;
 
 		case RPN_SYM:
 			value = 0;
-			for (uint8_t shift = 0; shift < 32; shift += 8)
+			for (uint8_t shift = 0; shift < 32; shift += 8) {
 				value |= getRPNByte(expression, size, patch) << shift;
+			}
 
 			if (value == -1) { // PC
 				if (!patch.pcSection) {
@@ -417,8 +423,9 @@ static int32_t computeRPNExpr(Patch const &patch, std::vector<Symbol> const &fil
 		pushRPN(value, isError);
 	}
 
-	if (rpnStack.size() > 1)
+	if (rpnStack.size() > 1) {
 		error(patch.src, patch.lineNo, "RPN stack has %zu entries on exit, not 1", rpnStack.size());
+	}
 
 	isError = false;
 	return popRPN(patch);
@@ -505,7 +512,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 			uint16_t address = patch.pcSection->org + patch.pcOffset + 2;
 			int16_t jumpOffset = value - address;
 
-			if (!isError && (jumpOffset < -128 || jumpOffset > 127))
+			if (!isError && (jumpOffset < -128 || jumpOffset > 127)) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -513,10 +520,11 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				    "; use jp instead\n",
 				    jumpOffset
 				);
+			}
 			dataSection.data[offset] = jumpOffset & 0xFF;
 		} else {
 			// Patch a certain number of bytes
-			if (!isError && (value < type.min || value > type.max))
+			if (!isError && (value < type.min || value > type.max)) {
 				error(
 				    patch.src,
 				    patch.lineNo,
@@ -525,6 +533,7 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 				    value < 0 ? " (maybe negative?)" : "",
 				    type.size * 8U
 				);
+			}
 			for (uint8_t i = 0; i < type.size; i++) {
 				dataSection.data[offset + i] = value & 0xFF;
 				value >>= 8;
@@ -536,11 +545,13 @@ static void applyFilePatches(Section &section, Section &dataSection) {
 // Applies all of a section's patches, iterating over "components" of unionized sections
 // @param section The section to patch
 static void applyPatches(Section &section) {
-	if (!sect_HasData(section.type))
+	if (!sect_HasData(section.type)) {
 		return;
+	}
 
-	for (Section *component = &section; component; component = component->nextu.get())
+	for (Section *component = &section; component; component = component->nextu.get()) {
 		applyFilePatches(*component, section);
+	}
 }
 
 void patch_ApplyPatches() {

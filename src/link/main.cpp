@@ -52,8 +52,9 @@ std::string const &FileStackNode::dump(uint32_t curLineNo) const {
 		std::string const &lastName = parent->dump(lineNo);
 		fputs(" -> ", stderr);
 		fputs(lastName.c_str(), stderr);
-		for (uint32_t iter : iters())
+		for (uint32_t iter : iters()) {
 			fprintf(stderr, "::REPT~%" PRIu32, iter);
+		}
 		fprintf(stderr, "(%" PRIu32 ")", curLineNo);
 		return lastName;
 	} else {
@@ -96,8 +97,9 @@ void error(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	printDiag(fmt, args, "error", where, lineNo);
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 }
 
 void argErr(char flag, char const *fmt, ...) {
@@ -109,8 +111,9 @@ void argErr(char flag, char const *fmt, ...) {
 	va_end(args);
 	putc('\n', stderr);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 }
 
 [[noreturn]]
@@ -121,8 +124,9 @@ void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	printDiag(fmt, args, "FATAL", where, lineNo);
 	va_end(args);
 
-	if (nbErrors != UINT32_MAX)
+	if (nbErrors != UINT32_MAX) {
 		nbErrors++;
+	}
 
 	fprintf(
 	    stderr, "Linking aborted after %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
@@ -216,10 +220,12 @@ static void parseScrambleSpec(char const *spec) {
 		if (regionNameLen == 0) {
 			argErr('S', "Missing region name");
 
-			if (*spec == '\0')
+			if (*spec == '\0') {
 				break;
-			if (*spec == '=')                 // Skip the limit, too
+			}
+			if (*spec == '=') {               // Skip the limit, too
 				spec = strchr(&spec[1], ','); // Skip to next comma, if any
+			}
 			goto next;
 		}
 
@@ -242,8 +248,9 @@ static void parseScrambleSpec(char const *spec) {
 			}
 		}
 
-		if (region == SCRAMBLE_UNK)
+		if (region == SCRAMBLE_UNK) {
 			argErr('S', "Unknown region \"%.*s\"", regionNameFmtLen, regionName);
+		}
 
 		if (*spec == '=') {
 			spec++; // `strtoul` will skip the whitespace on its own
@@ -301,10 +308,12 @@ static void parseScrambleSpec(char const *spec) {
 next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 		if (spec) {
 			assume(*spec == ',' || *spec == '\0');
-			if (*spec == ',')
+			if (*spec == ',') {
 				spec += 1 + strspn(&spec[1], " \t");
-			if (*spec == '\0')
+			}
+			if (*spec == '\0') {
 				break;
+			}
 		}
 	}
 }
@@ -329,31 +338,36 @@ int main(int argc, char *argv[]) {
 			printUsage();
 			exit(0);
 		case 'l':
-			if (linkerScriptName)
+			if (linkerScriptName) {
 				warnx("Overriding linker script %s", linkerScriptName);
+			}
 			linkerScriptName = musl_optarg;
 			break;
 		case 'M':
 			noSymInMap = true;
 			break;
 		case 'm':
-			if (mapFileName)
+			if (mapFileName) {
 				warnx("Overriding map file %s", mapFileName);
+			}
 			mapFileName = musl_optarg;
 			break;
 		case 'n':
-			if (symFileName)
+			if (symFileName) {
 				warnx("Overriding sym file %s", symFileName);
+			}
 			symFileName = musl_optarg;
 			break;
 		case 'O':
-			if (overlayFileName)
+			if (overlayFileName) {
 				warnx("Overriding overlay file %s", overlayFileName);
+			}
 			overlayFileName = musl_optarg;
 			break;
 		case 'o':
-			if (outputFileName)
+			if (outputFileName) {
 				warnx("Overriding output file %s", outputFileName);
+			}
 			outputFileName = musl_optarg;
 			break;
 		case 'p': {
@@ -410,18 +424,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Patch the size array depending on command-line options
-	if (!is32kMode)
+	if (!is32kMode) {
 		sectionTypeInfo[SECTTYPE_ROM0].size = 0x4000;
-	if (!isWRAM0Mode)
+	}
+	if (!isWRAM0Mode) {
 		sectionTypeInfo[SECTTYPE_WRAM0].size = 0x1000;
+	}
 
 	// Patch the bank ranges array depending on command-line options
-	if (isDmgMode)
+	if (isDmgMode) {
 		sectionTypeInfo[SECTTYPE_VRAM].lastBank = 0;
+	}
 
 	// Read all object files first,
-	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++)
+	for (obj_Setup(argc - curArgIndex); curArgIndex < argc; curArgIndex++) {
 		obj_ReadFile(argv[curArgIndex], argc - curArgIndex - 1);
+	}
 
 	// apply the linker script's modifications,
 	if (linkerScriptName) {
@@ -430,20 +448,23 @@ int main(int argc, char *argv[]) {
 		script_ProcessScript(linkerScriptName);
 
 		// If the linker script produced any errors, some sections may be in an invalid state
-		if (nbErrors != 0)
+		if (nbErrors != 0) {
 			reportErrors();
+		}
 	}
 
 	// then process them,
 	sect_DoSanityChecks();
-	if (nbErrors != 0)
+	if (nbErrors != 0) {
 		reportErrors();
+	}
 	assign_AssignSections();
 	patch_CheckAssertions();
 
 	// and finally output the result.
 	patch_ApplyPatches();
-	if (nbErrors != 0)
+	if (nbErrors != 0) {
 		reportErrors();
+	}
 	out_WriteFiles();
 }

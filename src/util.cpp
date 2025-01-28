@@ -15,8 +15,9 @@ char const *printChar(int c) {
 	// "0xFF" + '\0': 5 bytes
 	static char buf[5];
 
-	if (c == EOF)
+	if (c == EOF) {
 		return "EOF";
+	}
 
 	if (isprint(c)) {
 		buf[0] = '\'';
@@ -58,14 +59,17 @@ size_t readUTF8Char(std::vector<int32_t> *dest, char const *src) {
 	size_t i = 0;
 
 	for (;;) {
-		if (decode(&state, &codepoint, src[i]) == 1)
+		if (decode(&state, &codepoint, src[i]) == 1) {
 			return 0;
+		}
 
-		if (dest)
+		if (dest) {
 			dest->push_back(src[i]);
+		}
 		i++;
 
-		if (state == 0)
+		if (state == 0) {
 			return i;
+		}
 	}
 }
