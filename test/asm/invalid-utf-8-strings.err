@@ -7,14 +7,6 @@ error: invalid-utf-8-strings.asm(16):
 error: invalid-utf-8-strings.asm(16):
     STRLEN: Invalid UTF-8 byte 0xA2
 error: invalid-utf-8-strings.asm(17):
-    STRLEN: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(17):
-    STRLEN: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(17):
-    STRLEN: Invalid UTF-8 byte 0xF0
-error: invalid-utf-8-strings.asm(17):
-    STRLEN: Invalid UTF-8 byte 0xA2
-error: invalid-utf-8-strings.asm(17):
     STRSUB: Invalid UTF-8 byte 0xA3
 error: invalid-utf-8-strings.asm(17):
     STRSUB: Invalid UTF-8 byte 0xA4
@@ -22,22 +14,6 @@ error: invalid-utf-8-strings.asm(17):
     STRSUB: Invalid UTF-8 byte 0xF0
 error: invalid-utf-8-strings.asm(17):
     STRSUB: Invalid UTF-8 byte 0xA2
-error: invalid-utf-8-strings.asm(21):
-    STRLEN: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(21):
-    STRLEN: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(21):
-    STRLEN: Invalid UTF-8 byte 0xF0
-error: invalid-utf-8-strings.asm(21):
-    STRLEN: Invalid UTF-8 byte 0xA2
-error: invalid-utf-8-strings.asm(22):
-    STRLEN: Invalid UTF-8 byte 0xA3
-error: invalid-utf-8-strings.asm(22):
-    STRLEN: Invalid UTF-8 byte 0xA4
-error: invalid-utf-8-strings.asm(22):
-    STRLEN: Invalid UTF-8 byte 0xF0
-error: invalid-utf-8-strings.asm(22):
-    STRLEN: Invalid UTF-8 byte 0xA2
 error: invalid-utf-8-strings.asm(22):
     STRSUB: Invalid UTF-8 byte 0xA3
 error: invalid-utf-8-strings.asm(22):
@@ -76,4 +52,8 @@ error: invalid-utf-8-strings.asm(40):
     Input string is not valid UTF-8
 error: invalid-utf-8-strings.asm(40):
     Input string is not valid UTF-8
-error: Assembly aborted (39 errors)!
+error: invalid-utf-8-strings.asm(50):
+    STRLEN: Incomplete UTF-8 character
+error: invalid-utf-8-strings.asm(54):
+    STRSUB: Incomplete UTF-8 character
+error: Assembly aborted (29 errors)!
