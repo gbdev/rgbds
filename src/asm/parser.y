@@ -455,22 +455,23 @@ if:
 	POP_IF iconst NEWLINE {
 		lexer_IncIFDepth();
 
-		if ($2)
+		if ($2) {
 			lexer_RunIFBlock();
-		else
+		} else {
 			lexer_SetMode(LEXER_SKIP_TO_ELIF);
+		}
 	}
 ;
 
 elif:
 	POP_ELIF iconst NEWLINE {
-		if (lexer_GetIFDepth() == 0)
+		if (lexer_GetIFDepth() == 0) {
 			fatalerror("Found ELIF outside of an IF construct\n");
-
+		}
 		if (lexer_RanIFBlock()) {
-			if (lexer_ReachedELSEBlock())
+			if (lexer_ReachedELSEBlock()) {
 				fatalerror("Found ELIF after an ELSE block\n");
-
+			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else if ($2) {
 			lexer_RunIFBlock();
@@ -482,13 +483,13 @@ elif:
 
 else:
 	POP_ELSE NEWLINE {
-		if (lexer_GetIFDepth() == 0)
+		if (lexer_GetIFDepth() == 0) {
 			fatalerror("Found ELSE outside of an IF construct\n");
-
+		}
 		if (lexer_RanIFBlock()) {
-			if (lexer_ReachedELSEBlock())
+			if (lexer_ReachedELSEBlock()) {
 				fatalerror("Found ELSE after an ELSE block\n");
-
+			}
 			lexer_SetMode(LEXER_SKIP_TO_ENDC);
 		} else {
 			lexer_RunIFBlock();
@@ -816,12 +817,14 @@ assert:
 		}
 	}
 	| POP_STATIC_ASSERT assert_type iconst {
-		if ($3 == 0)
+		if ($3 == 0) {
 			failAssert($2);
+		}
 	}
 	| POP_STATIC_ASSERT assert_type iconst COMMA string {
-		if ($3 == 0)
+		if ($3 == 0) {
 			failAssertMsg($2, $5);
+		}
 	}
 ;
 
@@ -853,8 +856,9 @@ load:
 
 rept:
 	POP_REPT uconst NEWLINE capture_rept endofline {
-		if ($4.span.ptr)
+		if ($4.span.ptr) {
 			fstk_RunRept($2, $4.lineNo, $4.span);
+		}
 	}
 ;
 
@@ -864,8 +868,9 @@ for:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} COMMA for_args NEWLINE capture_rept endofline {
-		if ($8.span.ptr)
+		if ($8.span.ptr) {
 			fstk_RunFor($3, $6.start, $6.stop, $6.step, $8.lineNo, $8.span);
+		}
 	}
 ;
 
@@ -895,8 +900,9 @@ for_args:
 
 break:
 	label POP_BREAK endofline {
-		if (fstk_Break())
+		if (fstk_Break()) {
 			lexer_SetMode(LEXER_SKIP_TO_ENDR);
+		}
 	}
 ;
 
@@ -906,8 +912,9 @@ def_macro:
 	} ID {
 		lexer_ToggleStringExpansion(true);
 	} NEWLINE capture_macro endofline {
-		if ($6.span.ptr)
+		if ($6.span.ptr) {
 			sym_AddMacro($3, $6.lineNo, $6.span);
+		}
 	}
 ;
 
@@ -1084,8 +1091,9 @@ purge:
 	POP_PURGE {
 		lexer_ToggleStringExpansion(false);
 	} purge_args trailing_comma {
-		for (std::string &arg : $3)
+		for (std::string &arg : $3) {
 			sym_Purge(arg);
+		}
 		lexer_ToggleStringExpansion(true);
 	}
 ;
@@ -1122,26 +1130,30 @@ export_def:
 include:
 	label POP_INCLUDE string endofline {
 		fstk_RunInclude($3, false);
-		if (failedOnMissingInclude)
+		if (failedOnMissingInclude) {
 			YYACCEPT;
+		}
 	}
 ;
 
 incbin:
 	POP_INCBIN string {
 		sect_BinaryFile($2, 0);
-		if (failedOnMissingInclude)
+		if (failedOnMissingInclude) {
 			YYACCEPT;
+		}
 	}
 	| POP_INCBIN string COMMA iconst {
 		sect_BinaryFile($2, $4);
-		if (failedOnMissingInclude)
+		if (failedOnMissingInclude) {
 			YYACCEPT;
+		}
 	}
 	| POP_INCBIN string COMMA iconst COMMA iconst {
 		sect_BinaryFileSlice($2, $4, $6);
-		if (failedOnMissingInclude)
+		if (failedOnMissingInclude) {
 			YYACCEPT;
+		}
 	}
 ;
 
@@ -1521,8 +1533,9 @@ relocexpr_no_str:
 uconst:
 	iconst {
 		$$ = $1;
-		if ($$ < 0)
+		if ($$ < 0) {
 			fatalerror("Constant must not be negative: %d\n", $$);
+		}
 	}
 ;
 
@@ -1597,15 +1610,17 @@ string:
 		Symbol *sym = sym_FindScopedValidSymbol($3);
 
 		if (!sym) {
-			if (sym_IsPurgedScoped($3))
+			if (sym_IsPurgedScoped($3)) {
 				fatalerror("Unknown symbol \"%s\"; it was purged\n", $3.c_str());
-			else
+			} else {
 				fatalerror("Unknown symbol \"%s\"\n", $3.c_str());
+			}
 		}
 		Section const *section = sym->getSection();
 
-		if (!section)
+		if (!section) {
 			fatalerror("\"%s\" does not belong to any section\n", sym->name.c_str());
+		}
 		// Section names are capped by rgbasm's maximum string length,
 		// so this currently can't overflow.
 		$$ = section->name;
@@ -1987,8 +2002,9 @@ c_ind: LBRACK MODE_C RBRACK;
 ff00_c_ind:
 	LBRACK relocexpr OP_ADD MODE_C RBRACK {
 		// This has to use `relocexpr`, not `iconst`, to avoid a shift/reduce conflict
-		if ($2.getConstVal() != 0xFF00)
+		if ($2.getConstVal() != 0xFF00) {
 			::error("Base value must be equal to $FF00 for $FF00+C\n");
+		}
 	}
 ;
 
@@ -2057,10 +2073,11 @@ sm83_ld_r_no_a:
 		sect_RelByte($4, 1);
 	}
 	| SM83_LD reg_r_no_a COMMA reg_r {
-		if ($2 == REG_HL_IND && $4 == REG_HL_IND)
+		if ($2 == REG_HL_IND && $4 == REG_HL_IND) {
 			::error("LD [HL], [HL] is not a valid instruction\n");
-		else
+		} else {
 			sect_ConstByte(0x40 | ($2 << 3) | $4);
+		}
 	}
 ;
 
@@ -2206,10 +2223,11 @@ sm83_rrca:
 sm83_rst:
 	SM83_RST reloc_8bit {
 		$2.makeCheckRST();
-		if (!$2.isKnown())
+		if (!$2.isKnown()) {
 			sect_RelByte($2, 0);
-		else
+		} else {
 			sect_ConstByte(0xC7 | $2.value());
+		}
 	}
 ;
 
@@ -2485,8 +2503,9 @@ static uint32_t strToNum(std::vector<int32_t> const &s) {
 	warning(WARNING_OBSOLETE, "Treating multi-unit strings as numbers is deprecated\n");
 
 	for (int32_t v : s) {
-		if (!checkNBit(v, 8, "All character units"))
+		if (!checkNBit(v, 8, "All character units")) {
 			break;
+		}
 	}
 
 	uint32_t r = 0;
@@ -2523,8 +2542,9 @@ static size_t strlenUTF8(std::string const &str) {
 	}
 
 	// Check for partial code point.
-	if (state != 0)
+	if (state != 0) {
 		error("STRLEN: Incomplete UTF-8 character\n");
+	}
 
 	return len;
 }
@@ -2552,10 +2572,11 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 
 	// A position 1 past the end of the string is allowed, but will trigger the
 	// "Length too big" warning below if the length is nonzero.
-	if (!ptr[index] && pos > curPos)
+	if (!ptr[index] && pos > curPos) {
 		warning(
 		    WARNING_BUILTIN_ARG, "STRSUB: Position %" PRIu32 " is past the end of the string\n", pos
 		);
+	}
 
 	size_t startIndex = index;
 	uint32_t curLen = 0;
@@ -2574,12 +2595,14 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 		index++;
 	}
 
-	if (curLen < len)
+	if (curLen < len) {
 		warning(WARNING_BUILTIN_ARG, "STRSUB: Length too big: %" PRIu32 "\n", len);
+	}
 
 	// Check for partial code point.
-	if (state != 0)
+	if (state != 0) {
 		error("STRSUB: Incomplete UTF-8 character\n");
+	}
 
 	return std::string(ptr + startIndex, ptr + index);
 }
@@ -2598,17 +2621,19 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 	size_t charLen = 1;
 
 	// Advance to starting position in source string.
-	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++)
+	for (uint32_t curPos = 1; charLen && curPos < pos; curPos++) {
 		charLen = charmap_ConvertNext(view, nullptr);
+	}
 
 	std::string_view start = view;
 
-	if (!charmap_ConvertNext(view, nullptr))
+	if (!charmap_ConvertNext(view, nullptr)) {
 		warning(
 		    WARNING_BUILTIN_ARG,
 		    "CHARSUB: Position %" PRIu32 " is past the end of the string\n",
 		    pos
 		);
+	}
 
 	start = start.substr(0, start.length() - view.length());
 	return std::string(start);
@@ -2617,8 +2642,9 @@ static std::string charsubUTF8(std::string const &str, uint32_t pos) {
 static uint32_t adjustNegativePos(int32_t pos, size_t len, char const *functionName) {
 	// STRSUB and CHARSUB adjust negative `pos` arguments the same way,
 	// such that position -1 is the last character of a string.
-	if (pos < 0)
+	if (pos < 0) {
 		pos += len + 1;
+	}
 	if (pos < 1) {
 		warning(WARNING_BUILTIN_ARG, "%s: Position starts at 1\n", functionName);
 		pos = 1;
@@ -2672,8 +2698,9 @@ static std::string
 
 		while (c != '\0') {
 			fmt.useCharacter(c);
-			if (fmt.isFinished())
+			if (fmt.isFinished()) {
 				break;
+			}
 			c = spec[++i];
 		}
 
@@ -2698,14 +2725,15 @@ static std::string
 		argIndex++;
 	}
 
-	if (argIndex < args.size())
+	if (argIndex < args.size()) {
 		error("STRFMT: %zu unformatted argument(s)\n", args.size() - argIndex);
-	else if (argIndex > args.size())
+	} else if (argIndex > args.size()) {
 		error(
 		    "STRFMT: Not enough arguments for format spec, got: %zu, need: %zu\n",
 		    args.size(),
 		    argIndex
 		);
+	}
 
 	return str;
 }
