@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "extern/utf8decoder.hpp"
 #include "helpers.hpp"
 #include "util.hpp"
 
@@ -224,16 +225,30 @@ size_t charmap_ConvertNext(std::string_view &input, std::vector<int32_t> *output
 
 		matchLen = value.size();
 	} else if (inputIdx < input.length()) { // No match found, but there is some input left
-		int firstChar = input[inputIdx];
+		size_t codepointLen = 0;
 		// This will write the codepoint's value to `output`, little-endian
-		size_t codepointLen = readUTF8Char(output, input.data() + inputIdx);
+		for (uint32_t state = 0, codepoint = 0;;) {
+			if (decode(&state, &codepoint, input[inputIdx + codepointLen]) == 1) {
+				codepointLen = 0;
+				break;
+			}
+
+			if (output) {
+				output->push_back(input[inputIdx + codepointLen]);
+			}
+			codepointLen++;
+
+			if (state == 0) {
+				break;
+			}
+		}
 
 		if (codepointLen == 0) {
 			error("Input string is not valid UTF-8\n");
 		}
 
 		// Warn if this character is not mapped but any others are
-		if (charmap.nodes.size() > 1) {
+		if (int firstChar = input[inputIdx]; charmap.nodes.size() > 1) {
 			warning(WARNING_UNMAPPED_CHAR_1, "Unmapped character %s\n", printChar(firstChar));
 		} else if (charmap.name != DEFAULT_CHARMAP_NAME) {
 			warning(

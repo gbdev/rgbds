@@ -2527,10 +2527,10 @@ static size_t strlenUTF8(std::string const &str) {
 	size_t len = 0;
 	uint32_t state = 0;
 
-	for (uint32_t codep = 0; *ptr; ptr++) {
+	for (uint32_t codepoint = 0; *ptr; ptr++) {
 		uint8_t byte = *ptr;
 
-		switch (decode(&state, &codep, byte)) {
+		switch (decode(&state, &codepoint, byte)) {
 		case 1:
 			errorInvalidUTF8Byte(byte, "STRLEN");
 			state = 0;
@@ -2553,12 +2553,12 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 	char const *ptr = str.c_str();
 	size_t index = 0;
 	uint32_t state = 0;
-	uint32_t codep = 0;
+	uint32_t codepoint = 0;
 	uint32_t curPos = 1; // RGBASM strings are 1-indexed!
 
 	// Advance to starting position in source string.
 	while (ptr[index] && curPos < pos) {
-		switch (decode(&state, &codep, ptr[index])) {
+		switch (decode(&state, &codepoint, ptr[index])) {
 		case 1:
 			errorInvalidUTF8Byte(ptr[index], "STRSUB");
 			state = 0;
@@ -2583,7 +2583,7 @@ static std::string strsubUTF8(std::string const &str, uint32_t pos, uint32_t len
 
 	// Compute the result length in bytes.
 	while (ptr[index] && curLen < len) {
-		switch (decode(&state, &codep, ptr[index])) {
+		switch (decode(&state, &codepoint, ptr[index])) {
 		case 1:
 			errorInvalidUTF8Byte(ptr[index], "STRSUB");
 			state = 0;
