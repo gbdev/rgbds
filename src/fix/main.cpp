@@ -75,7 +75,8 @@ static void printUsage() {
 
 static uint8_t nbErrors;
 
-[[gnu::format(printf, 1, 2)]] static void report(char const *fmt, ...) {
+[[gnu::format(printf, 1, 2)]]
+static void report(char const *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);

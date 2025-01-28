@@ -191,7 +191,8 @@ static T readLE(U const *bytes) {
 
 // **Appends** the first line read from `file` to the end of the provided `buffer`.
 // @return true if a line was read.
-[[gnu::warn_unused_result]] static bool readLine(std::filebuf &file, std::string &buffer) {
+[[gnu::warn_unused_result]]
+static bool readLine(std::filebuf &file, std::string &buffer) {
 	assume(buffer.empty());
 	// TODO: maybe this can be optimized to bulk reads?
 	for (;;) {

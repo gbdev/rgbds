@@ -64,19 +64,22 @@ void processWarningFlag(char const *flag);
 
 // Used to warn the user about problems that don't prevent the generation of
 // valid code.
-[[gnu::format(printf, 2, 3)]] void warning(WarningID id, char const *fmt, ...);
+[[gnu::format(printf, 2, 3)]]
+void warning(WarningID id, char const *fmt, ...);
 
 // Used for errors that compromise the whole assembly process by affecting the
 // following code, potencially making the assembler generate errors caused by
 // the first one and unrelated to the code that the assembler complains about.
 // It is also used when the assembler goes into an invalid state (for example,
 // when it fails to allocate memory).
-[[gnu::format(printf, 1, 2), noreturn]] void fatalerror(char const *fmt, ...);
+[[gnu::format(printf, 1, 2), noreturn]]
+void fatalerror(char const *fmt, ...);
 
 // Used for errors that make it impossible to assemble correctly, but don't
 // affect the following code. The code will fail to assemble but the user will
 // get a list of all errors at the end, making it easier to fix all of them at
 // once.
-[[gnu::format(printf, 1, 2)]] void error(char const *fmt, ...);
+[[gnu::format(printf, 1, 2)]]
+void error(char const *fmt, ...);
 
 #endif // RGBDS_ASM_WARNING_HPP

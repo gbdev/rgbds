@@ -34,7 +34,8 @@ public:
 	// Registers a color in the palette.
 	// If the newly inserted color "conflicts" with another one (different color, but same CGB
 	// color), then the other color is returned. Otherwise, `nullptr` is returned.
-	[[nodiscard]] Rgba const *registerColor(Rgba const &rgba) {
+	[[nodiscard]]
+	Rgba const *registerColor(Rgba const &rgba) {
 		decltype(_colors)::value_type &slot = _colors[rgba.cgbColor()];
 
 		if (rgba.cgbColor() == Rgba::transparent) {
@@ -77,7 +78,8 @@ class Png {
 	int nbTransparentEntries;
 	png_bytep transparencyPal = nullptr;
 
-	[[noreturn]] static void handleError(png_structp png, char const *msg) {
+	[[noreturn]]
+	static void handleError(png_structp png, char const *msg) {
 		Png *self = reinterpret_cast<Png *>(png_get_error_ptr(png));
 
 		fatal("Error reading input image (\"%s\"): %s", self->c_str(), msg);

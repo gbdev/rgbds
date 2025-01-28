@@ -92,7 +92,7 @@ int32_t Symbol::getOutputValue() const {
 }
 
 ContentSpan const &Symbol::getMacro() const {
-	assume((std::holds_alternative<ContentSpan>(data)));
+	assume(std::holds_alternative<ContentSpan>(data));
 	return std::get<ContentSpan>(data);
 }
 

@@ -113,7 +113,8 @@ void argErr(char flag, char const *fmt, ...) {
 		nbErrors++;
 }
 
-[[noreturn]] void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
+[[noreturn]]
+void fatal(FileStackNode const *where, uint32_t lineNo, char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
@@ -308,7 +309,8 @@ next: // Can't `continue` a `for` loop with this nontrivial iteration logic
 	}
 }
 
-[[noreturn]] void reportErrors() {
+[[noreturn]]
+void reportErrors() {
 	fprintf(
 	    stderr, "Linking failed with %" PRIu32 " error%s\n", nbErrors, nbErrors == 1 ? "" : "s"
 	);

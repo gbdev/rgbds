@@ -49,7 +49,8 @@ static std::pair<Symbol const *, Symbol const *> currentLoadLabelScopes = {nullp
 int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutputOffset)
 
 // A quick check to see if we have an initialized section
-[[nodiscard]] static bool requireSection() {
+[[nodiscard]]
+static bool requireSection() {
 	if (currentSection)
 		return true;
 
@@ -59,7 +60,8 @@ int32_t loadOffset; // Offset into the LOAD section's parent (see sect_GetOutput
 
 // A quick check to see if we have an initialized section that can contain
 // this much initialized data
-[[nodiscard]] static bool requireCodeSection() {
+[[nodiscard]]
+static bool requireCodeSection() {
 	if (!requireSection())
 		return false;
 

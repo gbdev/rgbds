@@ -308,7 +308,8 @@ void error(char const *fmt, ...) {
 		);
 }
 
-[[noreturn]] void fatalerror(char const *fmt, ...) {
+[[noreturn]]
+void fatalerror(char const *fmt, ...) {
 	va_list args;
 
 	va_start(args, fmt);
